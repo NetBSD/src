@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1083 2012/12/05 16:19:46 christos Exp $
+# $NetBSD: GENERIC,v 1.1084 2012/12/10 02:03:45 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1083 $"
+#ident 		"GENERIC-$Revision: 1.1084 $"
 
 maxusers	64		# estimated number of users
 
@@ -972,7 +972,7 @@ jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
-malo*   at pci? dev ? function ?    # Marvell Libertas Wireless
+malo*	at pci? dev ? function ?	# Marvell Libertas Wireless
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
