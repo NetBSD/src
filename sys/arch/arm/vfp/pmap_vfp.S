@@ -1,0 +1,101 @@
+/*-
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Matt Thomas of 3am Software Foundry.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include "opt_cputypes.h"
+
+#include <machine/asm.h>
+#include "assym.h"
+
+/*
+ * This zeroes a page 64-bytes at a time.  64 is chosen over 32 since
+ * 64 is the cache line size of the Cortex-A8.
+ */
+ENTRY(pmap_zero_page_vfp)
+	mrc	p10, 7, r3, c8, c0, 0
+	orr	r2, r3, #VFP_FPEXC_EN
+	mcr	p10, 7, r2, c8, c0, 0
+	vpush	{d0-d7}
+#if (CPU_CORTEX == 0)
+	mov	ip, #0
+	vmov	s0, ip
+	vmov	s1, ip
+	vmov.f64 d1, d0
+	vmov.f64 d2, d0
+	vmov.f64 d3, d0
+	vmov.f64 d4, d0
+	vmov.f64 d5, d0
+	vmov.f64 d6, d0
+	vmov.f64 d7, d0
+#else
+	veor	q0, q0, q0
+	veor	q1, q1, q1
+	veor	q2, q2, q2
+	veor	q3, q3, q3
+#endif
+	add	r2, r0, #PAGE_SIZE
+1:	vstmia	r0!, {d0-d7}
+	vstmia	r0!, {d0-d7}
+	vstmia	r0!, {d0-d7}
+	vstmia	r0!, {d0-d7}
+	cmp	r0, r2
+	blt	1b
+	vpop	{d0-d7}
+	mcr	p10, 7, r3, c8, c0, 0
+	bx	lr
+END(pmap_zero_page_vfp)
+
+/*
+ * This copies a page 64-bytes at a time.  64 is chosen over 32 since
+ * 64 is the cache line size of the Cortex-A8.
+ */
+ENTRY(pmap_copy_page_vfp)
+	pld	[r0]			@ preload the first 128 bytes
+	pld	[r0, #32]
+	pld	[r0, #64]
+	pld	[r0, #96]
+	mrc	p10, 7, r3, c8, c0, 0
+	orr	r2, r3, #VFP_FPEXC_EN
+	mcr	p10, 7, r2, c8, c0, 0
+	vpush	{d0-d7}
+	add	r2, r0, #PAGE_SIZE-128
+1:	pld	[r0, #128]		@ preload the next 128
+	pld	[r0, #160]
+	pld	[r0, #192]
+	pld	[r0, #224]
+2:	vldmia	r0!, {d0-d7}		@ read   0-63
+	vstmia	r1!, {d0-d7}		@ write  0-63
+	vldmia	r0!, {d0-d7}		@ read  64-127
+	vstmia	r1!, {d0-d7}		@ write 64-127
+	cmp	r0, r2
+	blt	1b
+	beq	2b
+	vpop	{d0-d7}
+	mcr	p10, 7, r3, c8, c0, 0
+	bx	lr
+END(pmap_copy_page_vfp)
