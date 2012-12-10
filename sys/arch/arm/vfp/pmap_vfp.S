@@ -32,11 +32,19 @@
 #include <machine/asm.h>
 #include "assym.h"
 
+RCSID("$NetBSD: pmap_vfp.S,v 1.2 2012/12/10 06:51:05 matt Exp $")
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+
 /*
  * This zeroes a page 64-bytes at a time.  64 is chosen over 32 since
  * 64 is the cache line size of the Cortex-A8.
  */
 ENTRY(pmap_zero_page_vfp)
+	ldr	ip, .Lkbase		@ phys
+	ldr	r3, .Lkbase+4		@ virt
+	sub	r3, r3, ip		@ diff = virt - phys
+	add	r0, r0, r3		@ phys -> virt
 	mrc	p10, 7, r3, c8, c0, 0
 	orr	r2, r3, #VFP_FPEXC_EN
 	mcr	p10, 7, r2, c8, c0, 0
@@ -75,6 +83,11 @@ END(pmap_zero_page_vfp)
  * 64 is the cache line size of the Cortex-A8.
  */
 ENTRY(pmap_copy_page_vfp)
+	ldr	ip, .Lkbase		@ phys
+	ldr	r3, .Lkbase+4		@ virt
+	sub	r3, r3, ip		@ diff = virt - phys
+	add	r0, r0, r3		@ convert from phys to virt
+	add	r1, r1, r3		@ convert from phys to virt
 	pld	[r0]			@ preload the first 128 bytes
 	pld	[r0, #32]
 	pld	[r0, #64]
@@ -99,3 +112,10 @@ ENTRY(pmap_copy_page_vfp)
 	mcr	p10, 7, r3, c8, c0, 0
 	bx	lr
 END(pmap_copy_page_vfp)
+
+	.p2align 2
+.Lkbase:
+	.word	KERNEL_BASE_phys
+	.word	KERNEL_BASE_virt
+
+#endif /* __HAVE_MM_MD_DIRECT_MAPPED_PHYS */
