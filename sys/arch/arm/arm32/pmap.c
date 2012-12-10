@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.242 2012/11/12 18:00:35 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.243 2012/12/10 06:54:23 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.242 2012/11/12 18:00:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.243 2012/12/10 06:54:23 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3050,7 +3050,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		KASSERT(uvm_page_locked_p(pg));
 #endif
 		KASSERT((md->pvh_attrs & PVF_DMOD) == 0 || (md->pvh_attrs & (PVF_DIRTY|PVF_NC)));
-		KASSERT(arm_cache_prefer_mask == 0 || ((md->pvh_attrs & PVF_WRITE) == 0) == (md->urw_mappings + md->krw_mappings == 0));
+		KASSERTMSG(arm_cache_prefer_mask == 0 || ((md->pvh_attrs & PVF_WRITE) == 0) == (md->urw_mappings + md->krw_mappings == 0),
+		    "pg %p: attrs=%#x urw=%u krw=%u", pg,
+		    md->pvh_attrs, md->urw_mappings, md->krw_mappings);
 	}
 #endif
 
