@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.181 2012/12/09 22:06:21 spz Exp $
+# $NetBSD: md.amd64,v 1.182 2012/12/10 00:32:24 rmind Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -300,6 +300,9 @@
 ./usr/lib/i386/npf/ext_normalise.so		base-npf-shlib		compat,pic
 ./usr/lib/i386/npf/ext_normalise.so.0		base-npf-shlib		compat,pic
 ./usr/lib/i386/npf/ext_normalise.so.0.0		base-npf-shlib		compat,pic
+./usr/lib/i386/npf/ext_rndblock.so		base-npf-shlib		compat,pic
+./usr/lib/i386/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
+./usr/lib/i386/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
 ./usr/lib/i386/security				base-compat-shlib	compat
 ./usr/lib/i386/security/pam_afslog.so.3		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/i386/security/pam_chroot.so.3		base-compat-shlib	compat,pic,pam

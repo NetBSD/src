@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.105 2012/12/09 22:06:21 spz Exp $
+# $NetBSD: ad.mips64el,v 1.106 2012/12/10 00:32:24 rmind Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -297,6 +297,9 @@
 ./usr/lib/64/npf/ext_normalise.so		base-npf-shlib		compat,pic
 ./usr/lib/64/npf/ext_normalise.so.0		base-npf-shlib		compat,pic
 ./usr/lib/64/npf/ext_normalise.so.0.0		base-npf-shlib		compat,pic
+./usr/lib/64/npf/ext_rndblock.so		base-npf-shlib		compat,pic
+./usr/lib/64/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
+./usr/lib/64/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
 ./usr/lib/64/security				base-compat-shlib
 ./usr/lib/64/security/pam_afslog.so.3		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/64/security/pam_chroot.so.3		base-compat-shlib	compat,pic,pam
@@ -610,6 +613,9 @@
 ./usr/lib/o32/npf/ext_normalise.so		base-npf-shlib		compat,pic
 ./usr/lib/o32/npf/ext_normalise.so.0		base-npf-shlib		compat,pic
 ./usr/lib/o32/npf/ext_normalise.so.0.0		base-npf-shlib		compat,pic
+./usr/lib/o32/npf/ext_rndblock.so		base-npf-shlib		compat,pic
+./usr/lib/o32/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
+./usr/lib/o32/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
 ./usr/lib/o32/security				base-compat-shlib
 ./usr/lib/o32/security/pam_afslog.so.3		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/o32/security/pam_chroot.so.3		base-compat-shlib	compat,pic,pam

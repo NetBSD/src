@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.28 2012/09/21 08:42:33 martin Exp $
+# $NetBSD: md.evbppc,v 1.29 2012/12/10 00:32:24 rmind Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -116,6 +116,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_log/npf_ext_log.kmod	base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalise		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_rndblock		base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_rndblock/npf_ext_rndblock.kmod	base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ntfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ntfs/ntfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/null				base-kernel-modules	kmod,compatmodules
@@ -307,6 +309,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_log/npf_ext_log.kmod	base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalise		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_rndblock		base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_rndblock/npf_ext_rndblock.kmod	base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/ntfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/ntfs/ntfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/null				base-kernel-modules	kmod,compatmodules
