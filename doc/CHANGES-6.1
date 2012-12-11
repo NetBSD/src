@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.55 2012/12/10 21:19:08 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.56 2012/12/11 04:45:01 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -7115,4 +7115,31 @@ external/cddl/osnet/include/unistd.h		1.5
 
 	Fix MKDTRACE and MKZFS builds.
 	[riastradh, ticket #733]
+
+lib/libterminfo/tparm.c				1.9
+
+	Fix off by one error.
+	[msaitoh, ticket #734]
+
+share/examples/npf/host-npf.conf		1.3
+share/examples/npf/soho_gw-npf.conf		1.3
+sys/net/npf/npf_tableset.c			1.16
+usr.sbin/npf/npfctl/npf.conf.5			1.24
+usr.sbin/npf/npfctl/npf_build.c			1.15
+usr.sbin/npf/npfctl/npf_data.c			1.19
+usr.sbin/npf/npfctl/npf_parse.y			1.17
+usr.sbin/npf/npfctl/npf_scan.l			1.9
+usr.sbin/npf/npfctl/npf_var.h			1.6
+usr.sbin/npf/npfctl/npfctl.h			1.23
+
+	Extend npfctl syntax for extracting interface IP address(es) by
+	family.  Please check your NPF config syntax on upgrade!
+	[rmind, ticket #736]
+
+sys/arch/arm/marvell/mvsoc.c			patch
+sys/arch/arm/marvell/mvsocreg.h			patch
+
+	Add CLKGATING_BIT, enable it for some 88F6281 devices, and don't
+	configure devices if their clock is disabled.
+	[msaitoh, ticket #737]
 
