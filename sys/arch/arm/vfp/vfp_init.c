@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.11 2012/12/10 01:35:28 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.12 2012/12/11 01:52:30 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -40,6 +40,8 @@
 #include <arm/undefined.h>
 #include <arm/vfpreg.h>
 #include <arm/mcontext.h>
+
+#include <uvm/uvm_extern.h>		/* for pmap.h */
 
 /* 
  * Use generic co-processor instructions to avoid assembly problems.
@@ -236,6 +238,33 @@ vfp_attach(void)
 }
 
 #else
+static bool
+vfp_patch_branch(uintptr_t code, uintptr_t func, uintptr_t newfunc)
+{
+	for (;; code += sizeof(uint32_t)) {
+		uint32_t insn = *(uint32_t *)code; 
+		if ((insn & 0xffd08000) == 0xe8908000)	/* ldm ... { pc } */
+			return false;
+		if ((insn & 0xfffffff0) == 0xe12fff10)	/* bx rN */
+			return false;
+		if ((insn & 0xf1a0f000) == 0xe1a0f000)	/* mov pc, ... */
+			return false;
+		if ((insn >> 25) != 0x75)		/* not b/bl insn */
+			continue;
+		intptr_t imm26 = ((int32_t)insn << 8) >> 6;
+		if (code + imm26 + 8 == func) {
+			int32_t imm24 = (newfunc - (code + 8)) >> 2;
+			uint32_t new_insn = (insn & 0xff000000)
+			   | (imm24 & 0xffffff);
+			KASSERTMSG((uint32_t)((imm24 >> 24) + 1) <= 1, "%x",
+			    ((imm24 >> 24) + 1));
+			*(uint32_t *)code = new_insn;
+			cpu_idcache_wbinv_range(code, sizeof(uint32_t));
+			return true;
+		}
+	}
+}
+
 void
 vfp_attach(void)
 {
@@ -243,7 +272,6 @@ vfp_attach(void)
 	const char *model = NULL;
 	bool vfp_p = false;
 
-#ifdef FPU_VFP
 	if (CPU_ID_ARM11_P(curcpu()->ci_arm_cpuid)
 	    || CPU_ID_CORTEX_P(curcpu()->ci_arm_cpuid)) {
 		const uint32_t cpacr_vfp = CPACR_CPn(VFP_COPROC);
@@ -273,7 +301,6 @@ vfp_attach(void)
 		vfp_p = __SHIFTOUT(cpacr, cpacr_vfp2) != CPACR_NOACCESS
 		    || __SHIFTOUT(cpacr, cpacr_vfp) != CPACR_NOACCESS;
 	}
-#endif
 
 	void *uh = install_coproc_handler(VFP_COPROC, vfp_test);
 
@@ -317,11 +344,16 @@ vfp_attach(void)
 		    model);
 	}
 	evcnt_attach_dynamic(&vfpevent_use, EVCNT_TYPE_MISC, NULL,
-	    "VFP", "proc use");
+	    "VFP", "coproc use");
 	evcnt_attach_dynamic(&vfpevent_reuse, EVCNT_TYPE_MISC, NULL,
-	    "VFP", "proc re-use");
+	    "VFP", "coproc re-use");
 	install_coproc_handler(VFP_COPROC, vfp_handler);
 	install_coproc_handler(VFP_COPROC2, vfp_handler);
+
+	vfp_patch_branch((uintptr_t)pmap_copy_page_generic,
+	   (uintptr_t)bcopy_page, (uintptr_t)bcopy_page_vfp);
+	vfp_patch_branch((uintptr_t)pmap_zero_page_generic,
+	   (uintptr_t)bzero_page, (uintptr_t)bzero_page_vfp);
 }
 
 /* The real handler for VFP bounces.  */
