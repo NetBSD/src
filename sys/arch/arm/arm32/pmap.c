@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.245 2012/12/11 01:51:14 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.246 2012/12/11 23:51:34 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245 2012/12/11 01:51:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.246 2012/12/11 23:51:34 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4670,7 +4670,7 @@ pmap_copy_page_generic(paddr_t src, paddr_t dst)
 	const bool src_okcolor = false;
 	const bool dst_okcolor = false;
 	const vaddr_t vsrcp = csrcp + src_va_offset;
-	const vaddr_t vdstp = cdstp + src_va_offset;
+	const vaddr_t vdstp = cdstp + dst_va_offset;
 #endif
 	pt_entry_t * const src_ptep = &csrc_pte[src_va_offset >> PGSHIFT];
 	pt_entry_t * const dst_ptep = &cdst_pte[dst_va_offset >> PGSHIFT];
