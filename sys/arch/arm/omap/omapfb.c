@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.4 2012/10/29 18:11:36 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.5 2012/12/11 21:57:41 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.4 2012/10/29 18:11:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.5 2012/12/11 21:57:41 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,23 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	/*
+	 * XXX
+	 * different u-boot versions initialize the graphics controller in
+	 * different ways, so we look for the display resolution in a few
+	 * different places...
+	 */
 	sz = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_SIZE);
+	if (sz == 0) {
+		sz = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_SIZE_LCD);
+	}
+	if (sz == 0) {
+		sz = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_SIZE_DIG);
+	}
+	
+	/* ... and make sure it ends up where we need it */
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_SIZE, sz);
+
 	sc->sc_width = (sz & 0xfff) + 1;
 	sc->sc_height = ((sz & 0x0fff0000 ) >> 16) + 1;
 	sc->sc_depth = 16;
@@ -293,9 +309,11 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_DEFAULT_COLOR_1,
 	    0x00ff0000);
 #endif
+
+	/* now we make sure the video output is actually running */
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL,
-	    reg | OMAP_DISPC_CTRL_GO_LCD);
+	    reg | OMAP_DISPC_CTRL_GO_LCD | OMAP_DISPC_CTRL_GO_DIGITAL);
 
 #ifdef OMAPFB_DEBUG
 	printf("attr: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_ATTRIBUTES));
