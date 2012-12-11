@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.3 2012/12/11 01:54:42 khorben Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.4 2012/12/11 19:26:40 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.3 2012/12/11 01:54:42 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.4 2012/12/11 19:26:40 riastradh Exp $");
 
 #include "opt_omap.h"
 
@@ -44,6 +44,11 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.3 2012/12/11 01:54:42 khorben Exp $
 
 #include <arm/omap/omap2_obiovar.h>
 #include <arm/omap/omap3_sdmmcreg.h>
+
+#ifdef TI_AM335X
+#  include <arm/omap/am335x_prcm.h>
+#  include <arm/omap/omap2_prcm.h>
+#endif
 
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
@@ -72,6 +77,22 @@ struct obiosdhc_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
+#ifdef TI_AM335X
+struct am335x_sdhc {
+	const char *as_name;
+	bus_addr_t as_base_addr;
+	int as_intr;
+	struct omap_module as_module;
+};
+
+static const struct am335x_sdhc am335x_sdhc[] = {
+	/* XXX All offset by 0x100 because of the am335x's mmc registers.  */
+	{ "MMCHS0",	0x48060100, 64, { AM335X_PRCM_CM_PER, 0x3c } },
+	{ "MMC1",	0x481d8100, 28, { AM335X_PRCM_CM_PER, 0xf4 } },
+	{ "MMCHS2",	0x47810100, 29, { AM335X_PRCM_CM_WKUP, 0xf8 } },
+};
+#endif
+
 CFATTACH_DECL_NEW(obiosdhc, sizeof(struct obiosdhc_softc),
     obiosdhc_match, obiosdhc_attach, obiosdhc_detach, NULL);
 
@@ -80,6 +101,10 @@ obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
 #if defined(OMAP_3430) || defined(OMAP_3530)
 	struct obio_attach_args * const oa = aux;
+#endif
+#ifdef TI_AM335X
+	struct obio_attach_args * const oa = aux;
+	size_t i;
 #endif
 
 #if defined(OMAP_3430)
@@ -94,6 +119,13 @@ obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
                 return 1;
 #endif
 
+#ifdef TI_AM335X
+	for (i = 0; i < __arraycount(am335x_sdhc); i++)
+		if ((oa->obio_addr == am335x_sdhc[i].as_base_addr) &&
+		    (oa->obio_intr == am335x_sdhc[i].as_intr))
+			return 1;
+#endif
+
         return 0;
 }
 
@@ -104,6 +136,9 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	struct obio_attach_args * const oa = aux;
 	uint32_t clkd, stat;
 	int error, timo, clksft, n;
+#ifdef TI_AM335X
+	size_t i;
+#endif
 
 	sc->sc.sc_dmat = oa->obio_dmat;
 	sc->sc.sc_dev = self;
@@ -135,6 +170,17 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive(": SDHC controller\n");
 	aprint_normal(": SDHC controller\n");
+
+#ifdef TI_AM335X
+	/* XXX Not really AM335X-specific.  */
+	for (i = 0; i < __arraycount(am335x_sdhc); i++)
+		if ((oa->obio_addr == am335x_sdhc[i].as_base_addr) &&
+		    (oa->obio_intr == am335x_sdhc[i].as_intr)) {
+			prcm_module_enable(&am335x_sdhc[i].as_module);
+			break;
+		}
+	KASSERT(i < __arraycount(am335x_sdhc));
+#endif
 
 	/* XXXXXX: Turn-on regurator via I2C. */
 	/* XXXXXX: And enable ICLOCK/FCLOCK. */
