@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdmmcreg.h,v 1.2 2012/10/29 13:30:25 kiyohara Exp $	*/
+/*	$NetBSD: omap3_sdmmcreg.h,v 1.3 2012/12/11 01:54:43 khorben Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,6 +30,10 @@
 
 #ifndef _ARM_OMAP_OMAP3_SDMMCREG_H_
 #define _ARM_OMAP_OMAP3_SDMMCREG_H_
+
+#define SDMMC1_BASE_3430	0x4809C000
+#define SDMMC2_BASE_3430	0x480B4000
+#define SDMMC3_BASE_3430	0x480AD000
 
 #define SDMMC1_BASE_3530	0x4809C000
 #define SDMMC2_BASE_3530	0x480B4000
