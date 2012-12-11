@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.16 2012/12/11 01:54:41 khorben Exp $
+#	$NetBSD: files.omap2,v 1.17 2012/12/11 19:21:05 riastradh Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -47,6 +47,14 @@ file	arch/arm/omap/omap2430_intr.c		omap2 & !omapicu & !omap4
 device	omapgpio: gpiobus
 attach	omapgpio at obio with omap2gpio
 file	arch/arm/omap/omap2_gpio.c		(omap2 | omap3) & omapgpio
+
+# OMAP dual-mode timer
+device	omapdmtimer
+file	arch/arm/omap/omap_dmtimer.c		omapdmtimer
+defparam opt_omap.h				OMAP_SYSTEM_CLOCK_FREQ
+
+attach	omapdmtimer at obio with omap_dmtimer_obio
+file	arch/arm/omap/am335x_dmtimer.c		ti_am335x & omapdmtimer
 
 # OMAP 2430 General Purpose Timer
 device	omapmputmr
@@ -98,6 +106,7 @@ file	arch/arm/omap/omap2_nand.c		omapnand
 device	prcm
 attach	prcm at obio
 file	arch/arm/omap/omap2_prcm.c		prcm needs-flag
+file	arch/arm/omap/am335x_prcm.c		ti_am335x
 
 # OHCI USB controller
 attach	ohci at obio with obioohci
