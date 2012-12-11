@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.15 2012/12/11 01:33:32 matt Exp $	*/
+/*	$Id: omap2_obio.c,v 1.16 2012/12/11 01:54:42 khorben Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.15 2012/12/11 01:33:32 matt Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.16 2012/12/11 01:54:42 khorben Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.15 2012/12/11 01:33:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.16 2012/12/11 01:54:42 khorben Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -351,6 +351,9 @@ static const struct {
 } critical_devs[] = {
 #if defined(OMAP_2430) || defined(OMAP_2420)
 	{ .name = "avic", .addr = INTC_BASE, .required = true },
+#endif
+#if defined(OMAP_3430)
+	{ .name = "avic", .addr = INTC_BASE_3430, .required = true },
 #endif
 #if defined(OMAP_3530)
 	{ .name = "avic", .addr = INTC_BASE_3530, .required = true },

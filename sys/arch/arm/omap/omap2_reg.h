@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.11 2012/09/05 00:19:59 matt Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.12 2012/12/11 01:54:42 khorben Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -45,10 +45,22 @@
 #define OMAP2430_L4_WAKEUP_BASE		0x49000000
 #define OMAP2430_L4_WAKEUP_SIZE		(8 << 20)	/* 8 MB */
 
+#define OMAP3430_L4_CORE_BASE		0x48000000
+#define OMAP3430_L4_CORE_SIZE		0x01000000	/* 16 MB */
+
 #define OMAP3530_L4_CORE_BASE		0x48000000
 #define OMAP3530_L4_CORE_SIZE		0x01000000	/* 16 MB */
 
 /* OMAP3 processors */
+
+#define OMAP3430_L4_WAKEUP_BASE		0x48300000
+#define OMAP3430_L4_WAKEUP_SIZE		0x00040000	/* 256KB */
+
+#define OMAP3430_L4_PERIPHERAL_BASE	0x49000000
+#define OMAP3430_L4_PERIPHERAL_SIZE	0x00100000	/* 1MB */
+
+#define OMAP3430_L4_EMULATION_BASE	0x54000000
+#define OMAP3430_L4_EMULATION_SIZE	0x00800000	/* 8MB */
 
 #define OMAP3530_L4_WAKEUP_BASE		0x48300000
 #define OMAP3530_L4_WAKEUP_SIZE		0x00040000	/* 256KB */
@@ -106,6 +118,9 @@
 #endif
 #ifdef OMAP_2420
 #define OMAP2_CM_BASE			0x48008000
+#endif
+#ifdef OMAP_3430
+#define OMAP2_CM_BASE			(OMAP3430_L4_CORE_BASE + 0x04000)
 #endif
 #ifdef OMAP_3530
 #define OMAP2_CM_BASE			(OMAP3530_L4_CORE_BASE + 0x04000)
@@ -304,6 +319,9 @@
 /*
  * Power Management registers base, offsets, and size
  */
+#ifdef OMAP_3430
+#define	OMAP2_PRM_BASE			0x48306000
+#endif
 #ifdef OMAP_3530
 #define	OMAP2_PRM_BASE			0x48306000
 #endif
@@ -513,6 +531,7 @@
  * Interrupts
  */
 #define	INTC_BASE		0x480FE000
+#define	INTC_BASE_3430		0x48200000
 #define	INTC_BASE_3530		0x48200000	/* Also TI_AM335X and TI_DM37XX */
 #define	INTC_REVISISON		0x0000
 #define	INTC_SYSCONFIG		0x0010
@@ -554,7 +573,7 @@
 /*
  * GPT - General Purpose Timers
  */
-#if defined(OMAP_3530) || defined(TI_DM37XX)
+#if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
 #define	GPT1_BASE			0x48318000
 #define	GPT2_BASE			0x49032000
 #define	GPT3_BASE			0x49034000
@@ -566,6 +585,9 @@
 #define	GPT9_BASE			0x49040000
 #define	GPT10_BASE			0x48086000
 #define	GPT11_BASE			0x48088000
+#if defined(OMAP_3430)
+#define	GPT12_BASE			0x48304000
+#endif
 #if defined(OMAP_3530)
 #define	GPT12_BASE			0x48304000
 #endif
@@ -608,6 +630,13 @@
 #define	GPIO2_BASE_2420			0x4801a000
 #define	GPIO3_BASE_2420			0x4801c000
 #define	GPIO4_BASE_2420			0x4801e000
+
+#define	GPIO1_BASE_3430			0x48310000
+#define	GPIO2_BASE_3430			0x49050000
+#define	GPIO3_BASE_3430			0x49052000
+#define	GPIO4_BASE_3430			0x49054000
+#define	GPIO5_BASE_3430			0x49056000
+#define	GPIO6_BASE_3430			0x49058000
 
 #define	GPIO1_BASE_3530			0x48310000
 #define	GPIO2_BASE_3530			0x49050000
@@ -663,6 +692,9 @@
  * USB Host
  */
 #define	OHCI1_BASE_2430			0x4805e000
+
+#define	OHCI1_BASE_3430			0x48064400
+#define	EHCI1_BASE_3430			0x48064800
 
 #define	OHCI1_BASE_3530			0x48064400
 #define	EHCI1_BASE_3530			0x48064800

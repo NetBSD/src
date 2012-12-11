@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.22 2012/09/05 00:06:21 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.23 2012/12/11 01:54:43 khorben Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.22 2012/09/05 00:06:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.23 2012/12/11 01:54:43 khorben Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -207,7 +207,7 @@ static void kgdb_port_init(void);
 static void init_clocks(void);
 static void beagle_device_register(device_t, void *);
 static void beagle_reset(void);
-#if defined(OMAP_3530) || defined(TI_DM37XX)
+#if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
 static void omap3_cpu_clk(void);
 #endif
 #if defined(OMAP_4430)
@@ -369,7 +369,7 @@ initarm(void *arg)
 	 * peripherals and SDRAM.  The temporary first level translation table
 	 * is at the end of SDRAM.
 	 */
-#if defined(OMAP_3530) || defined(TI_DM37XX)
+#if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
 	omap3_cpu_clk();		// find our CPU speed.
 #endif
 #if defined(OMAP_4430)
@@ -542,7 +542,7 @@ static kgdb_port_init(void)
 }
 #endif
 
-#if defined(OMAP_3530) || defined(TI_DM37XX)
+#if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
 void
 omap3_cpu_clk(void)
 {
@@ -562,7 +562,7 @@ omap3_cpu_clk(void)
 	 */
 	curcpu()->ci_data.cpu_cc_freq = ((sys_clk * m) / ((n + 1) * m2 * 2)) * OMAP3_PRM_CLKSEL_MULT;
 }
-#endif /* OMAP_3530 || TI_DM37XX */
+#endif /* OMAP_3430 || OMAP_3530 || TI_DM37XX */
 
 #if defined(OMAP_4430)
 void
