@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.16 2012/12/11 01:54:42 khorben Exp $	*/
+/*	$Id: omap2_obio.c,v 1.17 2012/12/11 19:18:56 riastradh Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.16 2012/12/11 01:54:42 khorben Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.17 2012/12/11 19:18:56 riastradh Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.16 2012/12/11 01:54:42 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.17 2012/12/11 19:18:56 riastradh Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -177,6 +177,11 @@ obio_match(device_t parent, cfdata_t match, void *aux)
 		return 1;
 #endif
 
+#ifdef TI_AM335X
+	if (obio_attached == 0)
+		return 1;
+#endif
+
 	return 0;
 }
 
@@ -220,6 +225,9 @@ obio_attach(device_t parent, device_t self, void *aux)
 #ifdef OMAP2_OBIO_3_BASE
 	else if (mb->mb_iobase == OMAP2_OBIO_3_BASE)
 		obio_attached |= 8;
+#endif
+#ifdef TI_AM335X
+	obio_attached = 1;
 #endif
 
 	/*
@@ -369,6 +377,10 @@ static const struct {
 #endif
 #if 0
 	{ .name = "dmac", .addr = DMAC_BASE, .required = true },
+#endif
+#if defined(TI_AM335X)
+	{ .name = "omapicu", .addr = 0x48200000, .required = true },
+	{ .name = "prcm", .addr = 0x44e00000, .required = true },
 #endif
 };
 
