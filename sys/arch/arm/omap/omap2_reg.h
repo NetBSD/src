@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.12 2012/12/11 01:54:42 khorben Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.13 2012/12/11 19:24:38 riastradh Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -129,7 +129,7 @@
 #define OMAP2_CM_BASE			(OMAP4430_L4_CORE_BASE + 0x04000)
 #endif
 #ifdef TI_AM335X
-#define OMAP2_CM_BASE			TI_AM335X_L4_WAKEUP_BASE
+#define OMAP2_CM_BASE			(TI_AM335X_L4_WAKEUP_BASE + 0x200000)
 #endif
 #ifdef TI_DM37XX
 #define OMAP2_CM_BASE			0x48004000
@@ -316,6 +316,18 @@
 #define	OMAP4_CM_CLKSEL_DPLL_MPU_DPLL_DIV	__BITS(6,0)
 
 #define	OMAP4_CM_DIV_M2_DPLL_MPU_DPLL_CLKOUT_DIV	__BITS(4,0)
+
+#define	TI_AM335X_CM_CLKSEL_DPLL_MPU			0x2c
+#define	  TI_AM335X_CM_CLKSEL_DPLL_MPU_DPLL_BYP_CLKSEL	__BIT(23)
+#define	  TI_AM335X_CM_CLKSEL_DPLL_MPU_DPLL_MULT	__BITS(18,8)
+#define	  TI_AM335X_CM_CLKSEL_DPLL_MPU_DPLL_DIV		__BITS(6,0)
+
+#define	TI_AM335X_CM_DIV_M2_DPLL_MPU				0xa8
+#define	  TI_AM335X_CM_DIV_M2_DPLL_MPU_ST_DPLL_CLKOUT		__BIT(9)
+#define	  TI_AM335X_CM_DIV_M2_DPLL_MPU_DPLL_CLKOUT_GATE_CTRL	__BIT(8)
+#define	  TI_AM335X_CM_DIV_M2_DPLL_MPU_DPLL_CLKOUT_DIVCHACK	__BIT(5)
+#define	  TI_AM335X_CM_DIV_M2_DPLL_MPU_DPLL_CLKOUT_DIV		__BITS(4,0)
+
 /*
  * Power Management registers base, offsets, and size
  */
