@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtadvd.conf.5,v 1.17 2012/04/21 12:27:30 roy Exp $
+.\"	$NetBSD: rtadvd.conf.5,v 1.18 2012/12/11 16:37:23 roy Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.50 2005/01/14 05:30:59 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 5, 2012
+.Dd December 11, 2012
 .Dt RTADVD.CONF 5
 .Os
 .Sh NAME
@@ -175,13 +175,30 @@ which will be attached to router advertisement header.
 These items can be omitted, then
 .Nm rtadvd
 will automatically get appropriate prefixes from the kernel's routing table,
-and advertise the prefixes with the default parameters.
+and advertise the prefixes with the default parameters, unless the
+.Cm noifprefix
+flag is specified.
 Keywords other than
 .Cm clockskew
+and
+.Cm noifprefix
 can be augmented with a number, like
 .Dq Li prefix2 ,
 to specify multiple prefixes.
 .Bl -tag -width indent
+.It Cm \&noifprefix
+(bool) Specified whether
+.Nm rtadvd
+should gather prefix information from the interface if no
+.Cm addr
+is specified.
+If no
+.Cm addr
+is given, and
+.Cm noifprefix
+is set,
+.Nm rtadvd
+will send RA packets with no prefix information.
 .It Cm \&clockskew
 (num) Time skew to adjust link propagation delays and clock skews
 between routers on the link

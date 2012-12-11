@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.28 2012/08/08 04:05:26 msaitoh Exp $	*/
+/*	$NetBSD: config.c,v 1.29 2012/12/11 16:37:23 roy Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -396,7 +396,7 @@ getconfig(const char *intface)
 				now.tv_sec + pfx->preflifetime;
 		}
 	}
-	if (TAILQ_FIRST(&tmp->prefix) == NULL)
+	if (TAILQ_FIRST(&tmp->prefix) == NULL && !agetflag("noifprefix"))
 		get_prefix(tmp);
 
 	MAYHAVE(val64, "mtu", 0);
