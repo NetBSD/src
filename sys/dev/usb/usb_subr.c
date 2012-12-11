@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.183 2012/07/15 21:13:31 mrg Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.184 2012/12/11 12:59:03 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.183 2012/07/15 21:13:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.184 2012/12/11 12:59:03 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -741,9 +741,9 @@ usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 	usbd_pipe_handle p;
 	usbd_status err;
 
-	DPRINTFN(1,("usbd_setup_pipe: dev=%p iface=%p ep=%p pipe=%p\n",
-		    dev, iface, ep, pipe));
 	p = malloc(dev->bus->pipe_size, M_USB, M_NOWAIT);
+	DPRINTFN(1,("usbd_setup_pipe: dev=%p iface=%p ep=%p pipe=%p\n",
+		    dev, iface, ep, p));
 	if (p == NULL)
 		return (USBD_NOMEM);
 	p->device = dev;
