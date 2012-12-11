@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.43 2012/07/16 13:55:01 pgoyette Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.44 2012/12/11 15:39:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -63,14 +63,31 @@ struct workqueue;
 /*
  * Thresholds/limits that are being monitored
  */
-struct sysmon_envsys_lim {
-	int32_t		sel_critmax;
-	int32_t		sel_warnmax;
-	int32_t		sel_warnmin;
-	int32_t		sel_critmin;
+
+enum envsys_lims {
+	ENVSYS_LIM_CRITMAX,
+	ENVSYS_LIM_WARNMAX,
+	ENVSYS_LIM_WARNMIN,
+	ENVSYS_LIM_CRITMIN,
+	ENVSYS_LIM_LASTLIM
 };
 
-typedef struct sysmon_envsys_lim sysmon_envsys_lim_t;
+struct sysmon_envsys_lim {
+	int32_t critmax;
+	int32_t warnmax;
+	int32_t warnmin;
+	int32_t critmin;
+};
+
+typedef union {
+	int32_t sel_limit_list[ENVSYS_LIM_LASTLIM];
+	struct sysmon_envsys_lim sel_limits;
+} sysmon_envsys_lim_t;
+
+#define	sel_critmax sel_limits.critmax
+#define	sel_warnmax sel_limits.warnmax
+#define	sel_warnmin sel_limits.warnmin
+#define	sel_critmin sel_limits.critmin
 
 /* struct used by a sensor */
 struct envsys_data {
