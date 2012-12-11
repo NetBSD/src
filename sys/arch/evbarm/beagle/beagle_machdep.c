@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.23 2012/12/11 01:54:43 khorben Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.24 2012/12/11 19:24:38 riastradh Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.23 2012/12/11 01:54:43 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.24 2012/12/11 19:24:38 riastradh Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -173,6 +173,9 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.23 2012/12/11 01:54:43 khorben 
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_wdtvar.h>
 #include <arm/omap/omap2_prcm.h>
+#ifdef TI_AM335X
+#  include <arm/omap/am335x_prcm.h>
+#endif
 
 #include <evbarm/include/autoconf.h>
 #include <evbarm/beagle/beagle.h>
@@ -212,6 +215,9 @@ static void omap3_cpu_clk(void);
 #endif
 #if defined(OMAP_4430)
 static void omap4_cpu_clk(void);
+#endif
+#if defined(TI_AM335X)
+static void am335x_cpu_clk(void);
 #endif
 
 bs_protos(bs_notimpl);
@@ -374,6 +380,9 @@ initarm(void *arg)
 #endif
 #if defined(OMAP_4430)
 	omap4_cpu_clk();		// find our CPU speed.
+#endif
+#if defined(TI_AM335X)
+	am335x_cpu_clk();
 #endif
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	if (set_cpufuncs())
@@ -588,6 +597,26 @@ omap4_cpu_clk(void)
 	    sys_clk, m, n, n+1, m2, OMAP4_CM_CLKSEL_MULT);
 }
 #endif /* OMAP_4400 */
+
+#if defined(TI_AM335X)
+void
+am335x_cpu_clk(void)
+{
+	const vaddr_t cm_base = OMAP2_CM_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
+	const vaddr_t cm_wkup_base = cm_base + AM335X_PRCM_CM_WKUP;
+	const uint32_t sys_clk = 24000000;
+	const uint32_t clksel_dpll_mpu = *(volatile uint32_t *)(cm_wkup_base + TI_AM335X_CM_CLKSEL_DPLL_MPU);
+	const uint32_t div_m2_dpll_mpu = *(volatile uint32_t *)(cm_wkup_base + TI_AM335X_CM_DIV_M2_DPLL_MPU);
+	const uint32_t m = __SHIFTOUT(clksel_dpll_mpu, TI_AM335X_CM_CLKSEL_DPLL_MPU_DPLL_MULT);
+	const uint32_t n = __SHIFTOUT(clksel_dpll_mpu, TI_AM335X_CM_CLKSEL_DPLL_MPU_DPLL_DIV);
+	const uint32_t m2 = __SHIFTOUT(div_m2_dpll_mpu, TI_AM335X_CM_DIV_M2_DPLL_MPU_DPLL_CLKOUT_DIV);
+	/* XXX This ignores CM_CLKSEL_DPLL_MPU[DPLL_REGM4XEN].  */
+	curcpu()->ci_data.cpu_cc_freq = ((m * (sys_clk / (n + 1))) / m2);
+	printf("%s: %"PRIu64": sys_clk=%u m=%u n=%u (%u) m2=%u\n",
+	    __func__, curcpu()->ci_data.cpu_cc_freq,
+	    sys_clk, m, n, n+1, m2);
+}
+#endif
 
 void
 beagle_device_register(device_t self, void *aux)
