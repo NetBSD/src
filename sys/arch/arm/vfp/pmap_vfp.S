@@ -32,22 +32,18 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: pmap_vfp.S,v 1.2 2012/12/10 06:51:05 matt Exp $")
-
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+RCSID("$NetBSD: pmap_vfp.S,v 1.3 2012/12/11 01:13:05 matt Exp $")
 
 /*
- * This zeroes a page 64-bytes at a time.  64 is chosen over 32 since
+ * This zeroes a page 64-bytes at a time.  64 was chosen over 32 since
  * 64 is the cache line size of the Cortex-A8.
  */
-ENTRY(pmap_zero_page_vfp)
-	ldr	ip, .Lkbase		@ phys
-	ldr	r3, .Lkbase+4		@ virt
-	sub	r3, r3, ip		@ diff = virt - phys
-	add	r0, r0, r3		@ phys -> virt
+/* LINTSTUB: void bzero_page_vfp(vaddr_t); */
+ENTRY(bzero_page_vfp)
 	mrc	p10, 7, r3, c8, c0, 0
-	orr	r2, r3, #VFP_FPEXC_EN
-	mcr	p10, 7, r2, c8, c0, 0
+	tst	r3, #VFP_FPEXC_EN
+	orreq	r2, r3, #VFP_FPEXC_EN
+	mcreq	p10, 7, r2, c8, c0, 0
 	vpush	{d0-d7}
 #if (CPU_CORTEX == 0)
 	mov	ip, #0
@@ -76,25 +72,22 @@ ENTRY(pmap_zero_page_vfp)
 	vpop	{d0-d7}
 	mcr	p10, 7, r3, c8, c0, 0
 	bx	lr
-END(pmap_zero_page_vfp)
+END(bzero_page_vfp)
 
 /*
- * This copies a page 64-bytes at a time.  64 is chosen over 32 since
+ * This copies a page 64-bytes at a time.  64 was chosen over 32 since
  * 64 is the cache line size of the Cortex-A8.
  */
-ENTRY(pmap_copy_page_vfp)
-	ldr	ip, .Lkbase		@ phys
-	ldr	r3, .Lkbase+4		@ virt
-	sub	r3, r3, ip		@ diff = virt - phys
-	add	r0, r0, r3		@ convert from phys to virt
-	add	r1, r1, r3		@ convert from phys to virt
+/* LINTSTUB: void bcopy_page_vfp(vaddr_t, vaddr_t); */
+ENTRY(bcopy_page_vfp)
 	pld	[r0]			@ preload the first 128 bytes
 	pld	[r0, #32]
 	pld	[r0, #64]
 	pld	[r0, #96]
 	mrc	p10, 7, r3, c8, c0, 0
-	orr	r2, r3, #VFP_FPEXC_EN
-	mcr	p10, 7, r2, c8, c0, 0
+	tst	r3, #VFP_FPEXC_EN
+	orreq	r2, r3, #VFP_FPEXC_EN
+	mcreq	p10, 7, r2, c8, c0, 0
 	vpush	{d0-d7}
 	add	r2, r0, #PAGE_SIZE-128
 1:	pld	[r0, #128]		@ preload the next 128
@@ -111,11 +104,4 @@ ENTRY(pmap_copy_page_vfp)
 	vpop	{d0-d7}
 	mcr	p10, 7, r3, c8, c0, 0
 	bx	lr
-END(pmap_copy_page_vfp)
-
-	.p2align 2
-.Lkbase:
-	.word	KERNEL_BASE_phys
-	.word	KERNEL_BASE_virt
-
-#endif /* __HAVE_MM_MD_DIRECT_MAPPED_PHYS */
+END(bcopy_page_vfp)
