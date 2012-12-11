@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.5 2012/12/11 21:57:41 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.6 2012/12/11 22:47:40 matt Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.5 2012/12/11 21:57:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.6 2012/12/11 22:47:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 #endif	
 	dict = device_properties(self);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
-	is_console = 1;
+	//is_console = 1;
 
 	/* setup video DMA */
 	sc->sc_vramsize = (12 << 20) + 0x1000; /* 12MB + CLUT */
