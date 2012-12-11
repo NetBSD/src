@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: pmap_vfp.S,v 1.3 2012/12/11 01:13:05 matt Exp $")
+RCSID("$NetBSD: pmap_vfp.S,v 1.4 2012/12/11 23:59:18 matt Exp $")
 
 /*
  * This zeroes a page 64-bytes at a time.  64 was chosen over 32 since
@@ -71,7 +71,7 @@ ENTRY(bzero_page_vfp)
 	blt	1b
 	vpop	{d0-d7}
 	mcr	p10, 7, r3, c8, c0, 0
-	bx	lr
+	RET
 END(bzero_page_vfp)
 
 /*
@@ -80,20 +80,25 @@ END(bzero_page_vfp)
  */
 /* LINTSTUB: void bcopy_page_vfp(vaddr_t, vaddr_t); */
 ENTRY(bcopy_page_vfp)
+#ifdef _ARM_ARCH_DWORD_OK
 	pld	[r0]			@ preload the first 128 bytes
 	pld	[r0, #32]
 	pld	[r0, #64]
 	pld	[r0, #96]
+#endif
 	mrc	p10, 7, r3, c8, c0, 0
 	tst	r3, #VFP_FPEXC_EN
 	orreq	r2, r3, #VFP_FPEXC_EN
 	mcreq	p10, 7, r2, c8, c0, 0
 	vpush	{d0-d7}
 	add	r2, r0, #PAGE_SIZE-128
-1:	pld	[r0, #128]		@ preload the next 128
+1:	
+#ifdef _ARM_ARCH_DWORD_OK
+	pld	[r0, #128]		@ preload the next 128
 	pld	[r0, #160]
 	pld	[r0, #192]
 	pld	[r0, #224]
+#endif
 2:	vldmia	r0!, {d0-d7}		@ read   0-63
 	vstmia	r1!, {d0-d7}		@ write  0-63
 	vldmia	r0!, {d0-d7}		@ read  64-127
@@ -103,5 +108,5 @@ ENTRY(bcopy_page_vfp)
 	beq	2b
 	vpop	{d0-d7}
 	mcr	p10, 7, r3, c8, c0, 0
-	bx	lr
+	RET
 END(bcopy_page_vfp)
