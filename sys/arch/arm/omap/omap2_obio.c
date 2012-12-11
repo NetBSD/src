@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.14 2012/09/05 00:19:59 matt Exp $	*/
+/*	$Id: omap2_obio.c,v 1.15 2012/12/11 01:33:32 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.14 2012/09/05 00:19:59 matt Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.15 2012/12/11 01:33:32 matt Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.14 2012/09/05 00:19:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.15 2012/12/11 01:33:32 matt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -181,6 +181,15 @@ obio_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static void
+obio_attach1(device_t self)
+{
+	/*
+	 * Attach the rest of our devices
+	 */
+	config_search_ia(obio_search, self, "obio", NULL);
+}
+
+static void
 obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct obio_softc *sc = device_private(self);
@@ -219,9 +228,10 @@ obio_attach(device_t parent, device_t self, void *aux)
 	obio_attach_critical(sc);
 
 	/*
-	 * Then attach the rest of our devices
+	 * Attach the rest of our devices once all obio devices
+	 * have attached.
 	 */
-	config_search_ia(obio_search, self, "obio", NULL);
+	config_defer(self, obio_attach1);
 }
 
 static int
@@ -348,6 +358,12 @@ static const struct {
 	{ .name = "gpio1", .addr = GPIO1_BASE, .required = false },
 	{ .name = "gpio2", .addr = GPIO2_BASE, .required = false },
 	{ .name = "gpio3", .addr = GPIO3_BASE, .required = false },
+#if defined(GPIO4_BASE)
+	{ .name = "gpio4", .addr = GPIO4_BASE, .required = false },
+#endif
+#if defined(GPIO5_BASE)
+	{ .name = "gpio5", .addr = GPIO5_BASE, .required = false },
+#endif
 #if 0
 	{ .name = "dmac", .addr = DMAC_BASE, .required = true },
 #endif
