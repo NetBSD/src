@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.10 2012/11/26 17:55:11 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.11 2012/12/11 21:16:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.10 2012/11/26 17:55:11 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.11 2012/12/11 21:16:22 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -213,6 +213,53 @@ getsymbols(struct link_map *map)
 			hashtab = (Elf_Symindx *)adjptr(map, edptr);
 			cursymcount = hashtab[1];
 			break;
+#ifdef DT_GNU_HASH
+		/*
+		 * DT_GNU_HASH is a bit more complicated than DT_HASH
+		 * in this regard since apparently there is no field
+		 * telling us the total symbol count.  Instead, we look
+		 * for the last valid hash bucket and add its chain lenght
+		 * to the bucket's base index.
+		 */
+		case DT_GNU_HASH: {
+			Elf32_Word nbuck, symndx, maskwords, maxchain = 0;
+			Elf32_Word *gnuhash, *buckets, *ptr;
+			int bi;
+
+			DYNn_GETMEMBER(ed_base, i, d_un.d_ptr, edptr);
+			gnuhash = (Elf32_Word *)adjptr(map, edptr);
+
+			nbuck = gnuhash[0];
+			symndx = gnuhash[1];
+			maskwords = gnuhash[2];
+
+			/*
+			 * First, find the last valid bucket and grab its index
+			 */
+			if (eident == ELFCLASS64)
+				maskwords *= 2; /* sizeof(*buckets) == 4 */
+			buckets = gnuhash + 4 + maskwords;
+			for (bi = nbuck-1; bi >= 0; bi--) {
+				if (buckets[bi] != 0) {
+					maxchain = buckets[bi];
+					break;
+				}
+			}
+			if (maxchain == 0 || maxchain < symndx)
+				break;
+
+			/*
+			 * Then, traverse the last chain and count symbols.
+			 */
+
+			cursymcount = maxchain;
+			ptr = buckets + nbuck + (maxchain - symndx);
+			do {
+				cursymcount++;
+			} while ((*ptr++ & 1) == 0);
+		}	
+			break;
+#endif
 		case DT_SYMENT:
 			DYNn_GETMEMBER(ed_base, i, d_un.d_val, edval);
 			assert(edval == SYM_GETSIZE());
