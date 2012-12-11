@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.2 2012/10/29 13:30:25 kiyohara Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.3 2012/12/11 01:54:42 khorben Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.2 2012/10/29 13:30:25 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.3 2012/12/11 01:54:42 khorben Exp $");
 
 #include "opt_omap.h"
 
@@ -78,11 +78,16 @@ CFATTACH_DECL_NEW(obiosdhc, sizeof(struct obiosdhc_softc),
 static int
 obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
-#ifdef OMAP_3530
+#if defined(OMAP_3430) || defined(OMAP_3530)
 	struct obio_attach_args * const oa = aux;
 #endif
 
-#ifdef OMAP_3530
+#if defined(OMAP_3430)
+	if (oa->obio_addr == SDMMC1_BASE_3430
+	    || oa->obio_addr == SDMMC2_BASE_3430
+	    || oa->obio_addr == SDMMC3_BASE_3430)
+                return 1;
+#elif defined(OMAP_3530)
 	if (oa->obio_addr == SDMMC1_BASE_3530
 	    || oa->obio_addr == SDMMC2_BASE_3530
 	    || oa->obio_addr == SDMMC3_BASE_3530)
