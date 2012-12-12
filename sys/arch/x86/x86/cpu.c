@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.101 2012/12/08 12:36:31 kiyohara Exp $	*/
+/*	$NetBSD: cpu.c,v 1.102 2012/12/12 22:43:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101 2012/12/08 12:36:31 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.102 2012/12/12 22:43:35 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -89,13 +89,16 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101 2012/12/08 12:36:31 kiyohara Exp $");
 
 #include <uvm/uvm.h>
 
+#include "acpica.h"		/* for NACPICA, for mp_verbose */
+
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
-#if MPBIOS > 0
+#if defined(MULTIPROCESSOR)
 #include <machine/mpbiosvar.h>
 #endif
+#include <machine/mpconfig.h>		/* for mp_verbose */
 #include <machine/pcb.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
