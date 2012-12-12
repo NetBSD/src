@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.1,v 1.21 2010/05/14 16:48:02 joerg Exp $
+.\"	$NetBSD: chflags.1,v 1.22 2012/12/12 13:28:06 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,22 +88,21 @@ Flags are a comma separated list of keywords.
 The following keywords are currently defined:
 .Bl -column -offset indent "Keyword   " "system append-only" "Permission"
 .It Sy Keyword Ta Sy Flag Ta Sy Permission
-.It Em arch Ta archived Ta super-user only
-.It Em opaque Ta opaque Ta owner or super-user
-.It Em nodump Ta nodump Ta owner or super-user
-.It Em sappnd Ta system append-only Ta super-user only
-.It Em schg Ta system immutable Ta super-user only
-.It Em uappnd Ta user append-only Ta owner or super-user
-.It Em uchg Ta user immutable Ta owner or super-user
+.It arch Ta archived Ta super-user only
+.It opaque Ta opaque Ta owner or super-user
+.It nodump Ta nodump Ta owner or super-user
+.It sappnd Ta system append-only Ta super-user only
+.It schg Ta system immutable Ta super-user only
+.It uappnd Ta user append-only Ta owner or super-user
+.It uchg Ta user immutable Ta owner or super-user
 .El
 .Pp
 Putting the letters
 .Dq no
 before an option causes the flag to be turned off.
 For example:
-.Pp
-.Bl -tag -offset indent -width ".Em nouchg"
-.It Em nouchg
+.Bl -tag -offset indent -width "nouchg"
+.It nouchg
 the immutable bit should be cleared
 .El
 .Pp
