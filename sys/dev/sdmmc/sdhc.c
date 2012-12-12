@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.32 2012/10/29 13:30:25 kiyohara Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.33 2012/12/12 06:24:01 riastradh Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.32 2012/10/29 13:30:25 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.33 2012/12/12 06:24:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -244,8 +244,28 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	uint32_t caps;
 	uint16_t sdhcver;
 
-	sdhcver = bus_space_read_2(iot, ioh, SDHC_HOST_CTL_VERSION);
+	/* Allocate one more host structure. */
+	hp = malloc(sizeof(struct sdhc_host), M_DEVBUF, M_WAITOK|M_ZERO);
+	if (hp == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't alloc memory (sdhc host)\n");
+		goto err1;
+	}
+	sc->sc_host[sc->sc_nhosts++] = hp;
+
+	/* Fill in the new host structure. */
+	hp->sc = sc;
+	hp->iot = iot;
+	hp->ioh = ioh;
+	hp->dmat = sc->sc_dmat;
+
+	mutex_init(&hp->host_mtx, MUTEX_DEFAULT, IPL_SDMMC);
+	mutex_init(&hp->intr_mtx, MUTEX_DEFAULT, IPL_SDMMC);
+	cv_init(&hp->intr_cv, "sdhcintr");
+
+	sdhcver = HREAD2(hp, SDHC_HOST_CTL_VERSION);
 	aprint_normal_dev(sc->sc_dev, "SD Host Specification ");
+	hp->specver = SDHC_SPEC_VERSION(sdhcver);
 	switch (SDHC_SPEC_VERSION(sdhcver)) {
 	case SDHC_SPEC_VERS_100:
 		aprint_normal("1.0");
@@ -265,26 +285,6 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		break;
 	}
 	aprint_normal(", rev.%u\n", SDHC_VENDOR_VERSION(sdhcver));
-
-	/* Allocate one more host structure. */
-	hp = malloc(sizeof(struct sdhc_host), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (hp == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't alloc memory (sdhc host)\n");
-		goto err1;
-	}
-	sc->sc_host[sc->sc_nhosts++] = hp;
-
-	/* Fill in the new host structure. */
-	hp->sc = sc;
-	hp->iot = iot;
-	hp->ioh = ioh;
-	hp->dmat = sc->sc_dmat;
-	hp->specver = SDHC_SPEC_VERSION(sdhcver);
-
-	mutex_init(&hp->host_mtx, MUTEX_DEFAULT, IPL_SDMMC);
-	mutex_init(&hp->intr_mtx, MUTEX_DEFAULT, IPL_SDMMC);
-	cv_init(&hp->intr_cv, "sdhcintr");
 
 	/*
 	 * Reset the host controller and enable interrupts.
