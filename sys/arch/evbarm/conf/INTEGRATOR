@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.70 2012/10/17 14:48:10 apb Exp $
+#	$NetBSD: INTEGRATOR,v 1.71 2012/12/12 00:05:05 matt Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -24,7 +24,7 @@ options 	CPU_ARM11	# Support the ARM11 core
 options 	FPU_VFP
 
 # XXX Should be armv5 for ARM10 processor.
-makeoptions	CPUFLAGS="-march=armv4"
+makeoptions	CPUFLAGS="-march=armv4 -mfpu=vfp"
 
 # File systems
 
