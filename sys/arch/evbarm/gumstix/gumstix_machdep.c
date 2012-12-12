@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.44 2012/10/27 17:17:47 chs Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.45 2012/12/12 19:47:44 matt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -171,11 +171,13 @@
 #include <machine/frame.h>
 
 #include <arm/arm32/machdep.h>
+#ifdef OVERO
 #include <arm/omap/omap2_gpmcreg.h>
 #include <arm/omap/omap2_prcm.h>
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_com.h>
+#endif
 #include <arm/undefined.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
