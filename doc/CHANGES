@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1765 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1766 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -150,3 +150,6 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	arm: ARMFPE support had bitrotted and has been removed. [matt 20121205]
 	dhcpcd(8): Import dhcpcd-5.6.4 [roy 20121206]
 	openresolv(8): Import openresolv-3.5.3 [roy 20121206]
+	arm: fix EHCI support for OMAP3.  [jmcneill 20121211]
+	arm: enable direct-mapped poolpage support.  [matt 20121211]
+	arm: enable VFP-based pmap page zero/copy ops.  [matt 20121211]
