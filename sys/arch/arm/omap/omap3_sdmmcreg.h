@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdmmcreg.h,v 1.3 2012/12/11 01:54:43 khorben Exp $	*/
+/*	$NetBSD: omap3_sdmmcreg.h,v 1.4 2012/12/12 15:19:53 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,6 +46,8 @@
 #  define SYSCONFIG_CLOCKACTIVITY_MASK	(3 << 8)
 #  define SYSCONFIG_CLOCKACTIVITY_FCLK	(2 << 8)
 #  define SYSCONFIG_CLOCKACTIVITY_ICLK	(1 << 8)
+#  define SYSCONFIG_SIDLEMODE_MASK	(3 << 3)
+#  define SYSCONFIG_SIDLEMODE_AUTO	(2 << 3)
 #  define SYSCONFIG_ENAWAKEUP		(1 << 2)
 #  define SYSCONFIG_SOFTRESET		(1 << 1)
 #  define SYSCONFIG_AUTOIDLE		(1 << 0)
@@ -74,5 +76,7 @@
 #  define CON_INIT			(1 << 1)	/* Send init stream */
 #  define CON_OD			(1 << 0)	/* Card open drain */
 #define MMCHS_PWCNT		0x030	/* Power counter */
+#define MMCHS_SYSCTL		0x12c	/* SD system control register */
+#  define SYSCTL_CEN			(1 << 2)	/* Clock enable */
 
 #endif
