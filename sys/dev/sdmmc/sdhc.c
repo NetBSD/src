@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.33 2012/12/12 06:24:01 riastradh Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.34 2012/12/12 15:15:31 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.33 2012/12/12 06:24:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.34 2012/12/12 15:15:31 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -812,6 +812,12 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 #endif
 
 	mutex_enter(&hp->host_mtx);
+
+	if (hp->sc->sc_vendor_bus_clock) {
+		error = (*hp->sc->sc_vendor_bus_clock)(hp->sc, freq);
+		if (error != 0)
+			goto out;
+	}
 
 	/*
 	 * Stop SD clock before changing the frequency.
