@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.13 2012/12/11 19:24:38 riastradh Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.14 2012/12/12 00:33:45 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -31,6 +31,8 @@
 
 #ifndef _ARM_OMAP_OMAP2_REG_H_
 #define _ARM_OMAP_OMAP2_REG_H_
+
+#include "opt_omap.h"
 
 /*
  * Header for misc. omap2/3/4 registers

@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.24 2012/12/11 19:24:38 riastradh Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.25 2012/12/12 00:33:45 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.24 2012/12/11 19:24:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.25 2012/12/12 00:33:45 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -173,6 +173,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.24 2012/12/11 19:24:38 riastrad
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_wdtvar.h>
 #include <arm/omap/omap2_prcm.h>
+#include <arm/omap/omap2_gpio.h>
 #ifdef TI_AM335X
 #  include <arm/omap/am335x_prcm.h>
 #endif
@@ -649,4 +650,21 @@ beagle_device_register(device_t self, void *aux)
 		    curcpu()->ci_data.cpu_cc_freq / 2);
 		return;
 	}	
+
+	if (device_is_a(self, "ehci")) {
+#if defined(OMAP_3530)
+		/* XXX Beagleboard specific port configuration */
+		prop_dictionary_set_cstring(dict, "port0-mode", "none");
+		prop_dictionary_set_cstring(dict, "port1-mode", "phy");
+		prop_dictionary_set_cstring(dict, "port2-mode", "none");
+		prop_dictionary_set_bool(dict, "phy-reset", true);
+		prop_dictionary_set_int16(dict, "port0-gpio", -1);
+		prop_dictionary_set_int16(dict, "port1-gpio", 147);
+		prop_dictionary_set_int16(dict, "port2-gpio", -1);
+		prop_dictionary_set_uint16(dict, "dpll5-m", 443);
+		prop_dictionary_set_uint16(dict, "dpll5-n", 11);
+		prop_dictionary_set_uint16(dict, "dpll5-m2", 4);
+#endif
+		return;
+	}
 }
