@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp.c,v 1.9 2012/05/02 02:41:08 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.134 2011/11/16 12:24:28 oga Exp $ */
+/*	$NetBSD: sftp.c,v 1.10 2012/12/12 17:42:40 christos Exp $	*/
+/* $OpenBSD: sftp.c,v 1.136 2012/06/22 14:36:33 dtucker Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.9 2012/05/02 02:41:08 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.10 2012/12/12 17:42:40 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
@@ -766,7 +766,6 @@ static int
 do_globbed_ls(struct sftp_conn *conn, char *path, char *strip_path,
     int lflag)
 {
-	Attrib *a = NULL;
 	char *fname, *lname;
 	glob_t g;
 	int err;
@@ -822,7 +821,7 @@ do_globbed_ls(struct sftp_conn *conn, char *path, char *strip_path,
 		colspace = width / columns;
 	}
 
-	for (i = 0; g.gl_pathv[i] && !interrupted; i++, a = NULL) {
+	for (i = 0; g.gl_pathv[i] && !interrupted; i++) {
 		fname = path_strip(g.gl_pathv[i], strip_path);
 		if (lflag & LS_LONG_VIEW) {
 #if GLOB_KEEPSTAT != 0
@@ -1934,8 +1933,8 @@ interactive_loop(struct sftp_conn *conn, const char *file1, const char *file2)
 		xfree(dir);
 	}
 
-	setvbuf(stdout, NULL, _IOLBF, 0);
-	setvbuf(infile, NULL, _IOLBF, 0);
+	setlinebuf(stdout);
+	setlinebuf(infile);
 
 	interactive = !batchmode && isatty(STDIN_FILENO);
 	err = 0;

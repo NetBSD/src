@@ -1,5 +1,5 @@
-/*	$NetBSD: mac.c,v 1.5 2012/05/02 02:41:08 christos Exp $	*/
-/* $OpenBSD: mac.c,v 1.17 2011/12/02 00:43:57 djm Exp $ */
+/*	$NetBSD: mac.c,v 1.6 2012/12/12 17:42:39 christos Exp $	*/
+/* $OpenBSD: mac.c,v 1.18 2012/06/28 05:07:45 dtucker Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mac.c,v 1.5 2012/05/02 02:41:08 christos Exp $");
+__RCSID("$NetBSD: mac.c,v 1.6 2012/12/12 17:42:39 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/hmac.h>
@@ -60,9 +60,7 @@ struct {
 	{ "hmac-sha1",			SSH_EVP, EVP_sha1, 0, -1, -1 },
 	{ "hmac-sha1-96",		SSH_EVP, EVP_sha1, 96, -1, -1 },
 	{ "hmac-sha2-256",		SSH_EVP, EVP_sha256, 0, -1, -1 },
-	{ "hmac-sha2-256-96",		SSH_EVP, EVP_sha256, 96, -1, -1 },
 	{ "hmac-sha2-512",		SSH_EVP, EVP_sha512, 0, -1, -1 },
-	{ "hmac-sha2-512-96",		SSH_EVP, EVP_sha512, 96, -1, -1 },
 	{ "hmac-md5",			SSH_EVP, EVP_md5, 0, -1, -1 },
 	{ "hmac-md5-96",		SSH_EVP, EVP_md5, 96, -1, -1 },
 	{ "hmac-ripemd160",		SSH_EVP, EVP_ripemd160, 0, -1, -1 },
