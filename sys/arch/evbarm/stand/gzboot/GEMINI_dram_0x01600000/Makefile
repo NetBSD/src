@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/08/06 02:14:15 matt Exp $
+#	$NetBSD: Makefile,v 1.4 2012/12/12 15:08:44 matt Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -12,7 +12,7 @@ CPPFLAGS+= -DCONADDR=0x42000000UL
 CPPFLAGS+= -DNS16550_AX4
 CPPFLAGS+= -DNS16550_FREQ=48000000
 
-CPUFLAGS+=  -march=armv4
+CPUFLAGS= -march=armv4
 
 LDSCRIPT= ${.CURDIR}/ldscript
 
