@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.9 2012/10/29 13:30:25 kiyohara Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.10 2012/12/12 15:15:31 matt Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -55,6 +55,7 @@ struct sdhc_softc {
 	int (*sc_vendor_rod)(struct sdhc_softc *, int);
 	int (*sc_vendor_write_protect)(struct sdhc_softc *);
 	int (*sc_vendor_card_detect)(struct sdhc_softc *);
+	int (*sc_vendor_bus_clock)(struct sdhc_softc *, int);
 };
 
 /* Host controller functions called by the attachment driver. */
