@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.4 2012/12/11 19:26:40 riastradh Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.5 2012/12/12 15:19:53 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.4 2012/12/11 19:26:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.5 2012/12/12 15:19:53 matt Exp $");
 
 #include "opt_omap.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.4 2012/12/11 19:26:40 riastradh Exp
 #include <sys/bus.h>
 
 #include <arm/omap/omap2_obiovar.h>
+#include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap3_sdmmcreg.h>
 
 #ifdef TI_AM335X
@@ -64,6 +65,7 @@ static int obiosdhc_match(device_t, cfdata_t, void *);
 static void obiosdhc_attach(device_t, device_t, void *);
 static int obiosdhc_detach(device_t, int);
 
+static int obiosdhc_bus_clock(struct sdhc_softc *, int);
 static int obiosdhc_rod(struct sdhc_softc *, int);
 static int obiosdhc_write_protect(struct sdhc_softc *);
 static int obiosdhc_card_detect(struct sdhc_softc *);
@@ -134,6 +136,7 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 {
 	struct obiosdhc_softc * const sc = device_private(self);
 	struct obio_attach_args * const oa = aux;
+	prop_dictionary_t prop = device_properties(self);
 	uint32_t clkd, stat;
 	int error, timo, clksft, n;
 #ifdef TI_AM335X
@@ -149,10 +152,12 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags |= SDHC_FLAG_SINGLE_ONLY;
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = 96000;	/* 96MHZ */
-	sc->sc.sc_clkmsk = 0x0000ffc0;
+	if (!prop_dictionary_get_uint32(prop, "clkmask", &sc->sc.sc_clkmsk))
+		sc->sc.sc_clkmsk = 0x0000ffc0;
 	sc->sc.sc_vendor_rod = obiosdhc_rod;
 	sc->sc.sc_vendor_write_protect = obiosdhc_write_protect;
 	sc->sc.sc_vendor_card_detect = obiosdhc_card_detect;
+	sc->sc.sc_vendor_bus_clock = obiosdhc_bus_clock;
 	sc->sc_bst = oa->obio_iot;
 
 	clksft = ffs(sc->sc.sc_clkmsk) - 1;
@@ -198,7 +203,8 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	if (timo == 0)
 		aprint_error_dev(self, "Soft reset timeout\n");
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MMCHS_SYSCONFIG,
-	    SYSCONFIG_ENAWAKEUP | SYSCONFIG_AUTOIDLE);
+	    SYSCONFIG_ENAWAKEUP | SYSCONFIG_AUTOIDLE | SYSCONFIG_SIDLEMODE_AUTO |
+	    SYSCONFIG_CLOCKACTIVITY_FCLK | SYSCONFIG_CLOCKACTIVITY_ICLK);
 
 	sc->sc_ih = intr_establish(oa->obio_intr, IPL_VM, IST_LEVEL,
 	    sdhc_intr, &sc->sc);
@@ -339,4 +345,21 @@ obiosdhc_card_detect(struct sdhc_softc *sc)
 
 	/* Maybe board dependent, using GPIO. Get GPIO-pin from prop? */
 	return 1;	/* XXXXXXXX */
+}
+
+static int
+obiosdhc_bus_clock(struct sdhc_softc *sc, int clk)
+{
+	struct obiosdhc_softc *osc = (struct obiosdhc_softc *)sc;
+	uint32_t ctl;
+
+	ctl = bus_space_read_4(osc->sc_bst, osc->sc_bsh, MMCHS_SYSCTL);
+	if (clk == 0) {
+		clk &= ~SYSCTL_CEN;
+	} else {
+		clk |= SYSCTL_CEN;
+	}
+	bus_space_write_4(osc->sc_bst, osc->sc_bsh, MMCHS_SYSCTL, ctl);
+
+	return 0;
 }
