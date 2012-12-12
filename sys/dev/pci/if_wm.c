@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.238 2012/11/15 06:14:54 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.239 2012/12/12 09:20:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.238 2012/11/15 06:14:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.239 2012/12/12 09:20:35 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -931,13 +931,13 @@ static const struct wm_product {
 	  WM_T_PCH,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_D_DC,
 	  "PCH LAN (82578DC) Controller",
-	  WM_T_PCH2,		WMP_F_1000T },
+	  WM_T_PCH,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH2_LV_LM,
 	  "PCH2 LAN (82579LM) Controller",
 	  WM_T_PCH2,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH2_LV_V,
 	  "PCH2 LAN (82579V) Controller",
-	  WM_T_PCH,		WMP_F_1000T },
+	  WM_T_PCH2,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82575EB_COPPER,
 	  "82575EB dual-1000baseT Ethernet",
 	  WM_T_82575,		WMP_F_1000T },
@@ -4126,7 +4126,7 @@ wm_reset(struct wm_softc *sc)
 		if (wm_check_reset_block(sc) == 0) {
 			/*
 			 * Gate automatic PHY configuration by hardware on
-			 * manaed 82579
+			 * non-managed 82579
 			 */
 			if ((sc->sc_type == WM_T_PCH2)
 			    && ((CSR_READ(sc, WMREG_FWSM) & FWSM_FW_VALID)
