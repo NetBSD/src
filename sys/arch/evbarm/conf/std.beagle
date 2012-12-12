@@ -1,4 +1,4 @@
-#	$NetBSD: std.beagle,v 1.7 2012/11/04 23:30:39 khorben Exp $
+#	$NetBSD: std.beagle,v 1.8 2012/12/12 00:04:21 matt Exp $
 #
 # standard NetBSD/evbarm for BEAGLEBOARD options
 
@@ -16,6 +16,7 @@ options 	__HAVE_CPU_COUNTER
 options 	ARM32
 options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	TPIDRPRW_IS_CURCPU
 options 	KERNEL_BASE_EXT=0x80000000
 options 	FPU_VFP
