@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.20 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.21 2012/12/12 13:34:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.20 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.21 2012/12/12 13:34:49 tsutsui Exp $");
 
 #include "opt_cache.h"
 
@@ -222,14 +222,15 @@ sh4_icache_sync_all(void)
 	vaddr_t va = 0;
 	vaddr_t eva = SH4_ICACHE_SIZE;
 
-	sh4_dcache_wbinv_all();
+	/* d$ index ops must be called via P2 on 7750 and 7750S */
+	(*sh_cache_ops._dcache_wbinv_all)();
 
 	RUN_P2;
 	while (va < eva) {
 		cache_sh4_op_8lines_32(va, SH4_CCIA, CCIA_ENTRY_MASK, CCIA_V);
 		va += 32 * 8;
 	}
-	PAD_P1_SWITCH;
+	RUN_P1;
 }
 
 void
@@ -248,7 +249,7 @@ sh4_icache_sync_range(vaddr_t va, vsize_t sz)
 		_reg_write_4(ccia, va & CCIA_TAGADDR_MASK); /* V = 0 */
 		va += 32;
 	}
-	PAD_P1_SWITCH;
+	RUN_P1;
 }
 
 void
@@ -257,7 +258,8 @@ sh4_icache_sync_range_index(vaddr_t va, vsize_t sz)
 	vaddr_t eva = round_line(va + sz);
 	va = trunc_line(va);
 
-	sh4_dcache_wbinv_range_index(va, eva - va);
+	/* d$ index ops must be called via P2 on 7750 and 7750S */
+	(*sh_cache_ops._dcache_wbinv_range_index)(va, eva - va);
 
 	RUN_P2;
 	while ((eva - va) >= (8 * 32)) {
@@ -269,7 +271,7 @@ sh4_icache_sync_range_index(vaddr_t va, vsize_t sz)
 		cache_sh4_op_line_32(va, SH4_CCIA, CCIA_ENTRY_MASK, CCIA_V);
 		va += 32;
 	}
-	PAD_P1_SWITCH;
+	RUN_P1;
 }
 
 void
@@ -419,7 +421,7 @@ sh4_emode_icache_sync_all(void)
 		    CCIA_V, 13);
 		va += 32 * 8;
 	}
-	PAD_P1_SWITCH;
+	RUN_P1;
 }
 
 void
@@ -442,7 +444,7 @@ sh4_emode_icache_sync_range_index(vaddr_t va, vsize_t sz)
 		    CCIA_V, 13);
 		va += 32;
 	}
-	PAD_P1_SWITCH;
+	RUN_P1;
 }
 
 void
