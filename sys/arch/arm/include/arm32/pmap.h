@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.118 2012/12/12 00:29:17 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.119 2012/12/12 15:09:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -890,6 +890,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_MAPPABLE_P(va, pa, size)					\
 	((((va) | (pa)) & L2_L_OFFSET) == 0 && (size) >= L2_L_SIZE)
 
+#ifndef _LOCORE
 /*
  * Hooks for the pool allocator.
  */
@@ -905,8 +906,6 @@ struct vm_page *arm_pmap_alloc_poolpage(int);
 #define PMAP_UNMAP_POOLPAGE(va) \
         ((paddr_t)((vaddr_t)(va) - KERNEL_BASE + physical_start))
 #endif
-
-#ifndef _LOCORE
 
 /*
  * pmap-specific data store in the vm_page structure.
