@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.c,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: auth.c,v 1.94 2011/05/23 03:33:38 djm Exp $ */
+/*	$NetBSD: auth.c,v 1.6 2012/12/12 17:42:39 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.96 2012/05/13 01:42:32 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.5 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.6 2012/12/12 17:42:39 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -398,7 +398,8 @@ expand_authorized_keys(const char *filename, struct passwd *pw)
 char *
 authorized_principals_file(struct passwd *pw)
 {
-	if (options.authorized_principals_file == NULL)
+	if (options.authorized_principals_file == NULL ||
+	    strcasecmp(options.authorized_principals_file, "none") == 0)
 		return NULL;
 	return expand_authorized_keys(options.authorized_principals_file, pw);
 }
@@ -585,9 +586,10 @@ getpwnamallow(const char *user)
 #endif
 #endif
 	struct passwd *pw;
+	struct connection_info *ci = get_connection_info(1, options.use_dns);
 
-	parse_server_match_config(&options, user,
-	    get_canonical_hostname(options.use_dns), get_remote_ipaddr());
+	ci->user = user;
+	parse_server_match_config(&options, ci);
 
 	pw = getpwnam(user);
 	if (pw == NULL) {
