@@ -1,4 +1,4 @@
-#	$NetBSD: std.bcm53xx,v 1.7 2012/10/17 20:21:26 matt Exp $
+#	$NetBSD: std.bcm53xx,v 1.8 2012/12/12 00:04:21 matt Exp $
 #
 # standard NetBSD/evbarm for BEAGLEBAORD options
 
@@ -12,12 +12,14 @@ options 	EXEC_ELF32
 options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
+options 	SOSEND_NO_LOAN
 options 	COM_TOLERANCE=40
 options 	ARM32
 options 	FPU_VFP
 options 	CORTEX_PMC
 #options 	_ARM32_NEED_BUS_DMA_BOUNCE
 options 	PMAP_NEED_ALLOC_POOLPAGE
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_CPU_COUNTER
