@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.182 2012/12/10 00:32:24 rmind Exp $
+# $NetBSD: md.amd64,v 1.183 2012/12/12 17:47:58 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -260,8 +260,8 @@
 ./usr/lib/i386/libsl.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libsqlite3.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libsqlite3.so.1.1		base-compat-shlib	compat,pic
-./usr/lib/i386/libssh.so.19			base-compat-shlib	compat,pic
-./usr/lib/i386/libssh.so.19.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libssh.so.20			base-compat-shlib	compat,pic
+./usr/lib/i386/libssh.so.20.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.10			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.10.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds
