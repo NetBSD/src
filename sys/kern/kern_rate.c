@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rate.c,v 1.1 2008/09/25 17:17:10 pooka Exp $	*/
+/*	$NetBSD: kern_rate.c,v 1.2 2012/12/12 11:10:56 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rate.c,v 1.1 2008/09/25 17:17:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rate.c,v 1.2 2012/12/12 11:10:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -95,7 +95,7 @@ ppsratecheck(struct timeval *lasttime, int *curpps, int maxpps)
 
 #if 1 /*DIAGNOSTIC?*/
 	/* be careful about wrap-around */
-	if (*curpps + 1 > *curpps)
+	if (__predict_true(*curpps != INT_MAX))
 		*curpps = *curpps + 1;
 #else
 	/*
