@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.41 2012/08/10 16:05:27 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.42 2012/12/12 15:10:27 matt Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -36,7 +36,7 @@ KERNLIBLN=	${KERNDST}/${LIBKERNLNBN}
 KERNMAKE= \
 	cd ${KERNDST} && ${MAKE} -f ${KERNDIR:Q}/Makefile \
 	    KERNDIR=${KERNDIR:Q} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
+	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} CPUFLAGS= \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
 	    LORDER=${LORDER:Q} \
 	    TSORT=${TSORT:Q} \
