@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.22 2012/12/12 15:43:44 tsutsui Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.23 2012/12/12 16:24:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.22 2012/12/12 15:43:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.23 2012/12/12 16:24:49 tsutsui Exp $");
 
 #include "opt_cache.h"
 
@@ -230,6 +230,7 @@ sh4_icache_sync_all(void)
 		cache_sh4_op_8lines_32(va, SH4_CCIA, CCIA_ENTRY_MASK, CCIA_V);
 		va += 32 * 8;
 	}
+	/* assume we are returning into a P1 caller */
 	PAD_P1_SWITCH;
 }
 
@@ -249,6 +250,7 @@ sh4_icache_sync_range(vaddr_t va, vsize_t sz)
 		_reg_write_4(ccia, va & CCIA_TAGADDR_MASK); /* V = 0 */
 		va += 32;
 	}
+	/* assume we are returning into a P1 caller */
 	PAD_P1_SWITCH;
 }
 
@@ -271,6 +273,7 @@ sh4_icache_sync_range_index(vaddr_t va, vsize_t sz)
 		cache_sh4_op_line_32(va, SH4_CCIA, CCIA_ENTRY_MASK, CCIA_V);
 		va += 32;
 	}
+	/* assume we are returning into a P1 caller */
 	PAD_P1_SWITCH;
 }
 
@@ -286,6 +289,7 @@ sh4_dcache_wbinv_all(void)
 		    (CCDA_U | CCDA_V));
 		va += 32 * 8;
 	}
+	/* assume we are returning into a P1 caller */
 	PAD_P1_SWITCH;
 }
 
@@ -319,6 +323,7 @@ sh4_dcache_wbinv_range_index(vaddr_t va, vsize_t sz)
 		    (CCDA_U | CCDA_V));
 		va += 32;
 	}
+	/* assume we are returning into a P1 caller */
 	PAD_P1_SWITCH;
 }
 
@@ -421,6 +426,7 @@ sh4_emode_icache_sync_all(void)
 		    CCIA_V, 13);
 		va += 32 * 8;
 	}
+	/* assume we are returning into a P1 caller */
 	PAD_P1_SWITCH;
 }
 
@@ -444,6 +450,7 @@ sh4_emode_icache_sync_range_index(vaddr_t va, vsize_t sz)
 		    CCIA_V, 13);
 		va += 32;
 	}
+	/* assume we are returning into a P1 caller */
 	PAD_P1_SWITCH;
 }
 
