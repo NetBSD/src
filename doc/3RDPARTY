@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.987 2012/12/12 17:44:09 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.988 2012/12/12 18:21:08 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -834,11 +834,11 @@ Notes:
 Please submit all changes to the author.
 
 Package:	HPN-SSH
-Version:	5.6p1 13 v11
-Current Vers:	5.6p1 13 v11
+Version:	6.1p1 13 v14
+Current Vers:	6.1p1 13 v14
 Maintainer:	www.psc.edu
-Archive Site:	http://www.psc.edu/networking/projects/hpn-ssh/openssh-5.6p1-hpn13v11.diff.gz
-Home Page:	http://www.psc.edu/networking/projects/hpn-ssh/
+Archive Site:	No direct link anymore, @#$#$ psc.
+Home Page:	http://www.psc.edu/index.php/hpn-ssh
 Mailing List:
 Responsible:	christos
 License:	
