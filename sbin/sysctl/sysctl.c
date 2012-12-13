@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.148 2012/12/07 02:27:29 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.149 2012/12/13 05:27:01 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.148 2012/12/07 02:27:29 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.149 2012/12/13 05:27:01 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -2358,6 +2358,7 @@ kern_drivers(HANDLER_ARGS)
 	rc = prog_sysctl(name, namelen, kd, &sz, NULL, 0);
 	if (rc == -1) {
 		sysctlerror(1);
+		free(kd);
 		return;
 	}
 
