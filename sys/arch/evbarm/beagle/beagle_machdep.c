@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.30 2012/12/13 02:12:16 jakllsch Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.31 2012/12/13 05:58:14 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.30 2012/12/13 02:12:16 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.31 2012/12/13 05:58:14 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -184,8 +184,15 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.30 2012/12/13 02:12:16 jakllsch
 #include "prcm.h"
 #include "omapwdt32k.h"
 
+#ifdef BOOT_ARGS
+#define DEFAULT_BOOT_ARGS BOOT_ARGS
+#else
+#define DEFAULT_BOOT_ARGS "-a"
+#endif
+
 BootConfig bootconfig;		/* Boot config storage */
-char *boot_args = NULL;
+static char beagle_default_boot_args[] = DEFAULT_BOOT_ARGS;
+char *boot_args = beagle_default_boot_args;
 char *boot_file = NULL;
 
 u_int uboot_args[4] = { 0 };	/* filled in by beagle_start.S (not in bss) */
@@ -416,6 +423,7 @@ initarm(void *arg)
 #endif
 	printf("uboot arg = %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
+
 #ifdef KGDB
 	kgdb_port_init();
 #endif
@@ -447,8 +455,12 @@ initarm(void *arg)
 	 * If MEMSIZE specified less than what we really have, limit ourselves
 	 * to that.
 	 */
+#ifdef MEMSIZE
 	if (ram_size == 0 || ram_size > MEMSIZE * 1024 * 1024)
 		ram_size = MEMSIZE * 1024 * 1024;
+#else
+	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
+#endif
 
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
@@ -458,6 +470,12 @@ initarm(void *arg)
 	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
 	    KERNEL_BASE_PHYS);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap, true);
+
+	/* "bootargs" env variable is passed as 4th argument to kernel */
+	if ((uboot_args[3] & 0xf0000000) == 0x80000000) {
+		boot_args = (char *)uboot_args[3];
+	}
+	parse_mi_bootargs(boot_args);
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = beagle_device_register;
