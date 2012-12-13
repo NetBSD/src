@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.29 2012/12/13 01:23:16 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.30 2012/12/13 02:12:16 jakllsch Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.29 2012/12/13 01:23:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.30 2012/12/13 02:12:16 jakllsch Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -530,6 +530,8 @@ beagle_reset(void)
 {
 #if defined(OMAP_4430)
 	*(volatile uint32_t *)(OMAP_L4_CORE_VBASE + (OMAP_L4_WAKEUP_BASE - OMAP_L4_CORE_BASE) + OMAP4_PRM_RSTCTRL) = OMAP4_PRM_RSTCTRL_WARM;
+#elif defined(TI_AM335X)
+	*(volatile uint32_t *)(OMAP_L4_CORE_VBASE + (OMAP2_CM_BASE - OMAP_L4_CORE_BASE) + AM335X_PRCM_PRM_DEVICE + PRM_RSTCTRL) = RST_GLOBAL_WARM_SW;
 #else
 #if NPRCM > 0
 	prcm_cold_reset();

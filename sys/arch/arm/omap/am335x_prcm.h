@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_prcm.h,v 1.1 2012/12/11 18:53:26 riastradh Exp $	*/
+/*	$NetBSD: am335x_prcm.h,v 1.2 2012/12/13 02:12:15 jakllsch Exp $	*/
 
 /*
  * TI OMAP Power, Reset, and Clock Management on the AM335x
@@ -60,5 +60,9 @@ struct omap_module {
 #define AM335X_PRCM_PRM_RTC	0x1000
 #define AM335X_PRCM_PRM_GFX	0x1100
 #define AM335X_PRCM_PRM_CEFUSE	0x1200
+
+#define PRM_RSTCTRL		0x00	/* offset from AM335X_PRCM_PRM_DEVICE */
+#define RST_GLOBAL_WARM_SW	__BIT(0)
+#define RST_GLOBAL_COLD_SW	__BIT(1)
 
 #endif  /* _ARM_OMAP_AM335X_PRCM_H_ */
