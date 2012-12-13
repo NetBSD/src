@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.5 2012/12/12 15:19:53 matt Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.6 2012/12/13 06:43:38 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.5 2012/12/12 15:19:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.6 2012/12/13 06:43:38 riastradh Exp $");
 
 #include "opt_omap.h"
 
@@ -150,6 +150,9 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags |= SDHC_FLAG_NO_LED_ON;
 	sc->sc.sc_flags |= SDHC_FLAG_RSP136_CRC;
 	sc->sc.sc_flags |= SDHC_FLAG_SINGLE_ONLY;
+#ifdef TI_AM335X
+	sc->sc.sc_flags |= SDHC_FLAG_WAIT_RESET;
+#endif
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = 96000;	/* 96MHZ */
 	if (!prop_dictionary_get_uint32(prop, "clkmask", &sc->sc.sc_clkmsk))
