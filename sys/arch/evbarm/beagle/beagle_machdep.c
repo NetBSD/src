@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.28 2012/12/13 01:16:39 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.29 2012/12/13 01:23:16 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.28 2012/12/13 01:16:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.29 2012/12/13 01:23:16 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -383,7 +383,7 @@ beagle_putchar(char c)
 u_int
 initarm(void *arg)
 {
-	psize_t ram_size;
+	psize_t ram_size = 0;
 #if 1
 	beagle_putchar('d');
 #endif
@@ -442,9 +442,13 @@ initarm(void *arg)
 	 */
 #if defined(OMAP_3530) || defined(OMAP_3430)
 	ram_size = omap3530_memprobe();
-#else
-	ram_size = MEMSIZE * 1024 * 1024;
 #endif
+	/*
+	 * If MEMSIZE specified less than what we really have, limit ourselves
+	 * to that.
+	 */
+	if (ram_size == 0 || ram_size > MEMSIZE * 1024 * 1024)
+		ram_size = MEMSIZE * 1024 * 1024;
 
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
