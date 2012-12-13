@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.16 2012/11/21 17:36:17 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.17 2012/12/13 17:17:21 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -9,7 +9,7 @@
 
 #include <rump/rump_namei.h>
 
-/*	NetBSD: fcntl.h,v 1.42 2012/01/25 00:28:35 christos Exp 	*/
+/*	NetBSD: fcntl.h,v 1.43 2012/11/18 17:41:54 manu Exp 	*/
 #define	RUMP_O_RDONLY	0x00000000	/* open for reading only */
 #define	RUMP_O_WRONLY	0x00000001	/* open for writing only */
 #define	RUMP_O_RDWR		0x00000002	/* open for reading and writing */
@@ -275,5 +275,20 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define RUMP_SO_SNDTIMEO	0x100b		
 #define RUMP_SO_RCVTIMEO	0x100c		
 #define	RUMP_SOL_SOCKET	0xffff		
+
+/*	NetBSD: module.h,v 1.32 2012/10/17 17:48:48 dyoung Exp 	*/
+struct rump_modctl_load {
+	const char *ml_filename;
+
+	int ml_flags;
+
+	const char *ml_props;
+	size_t ml_propslen;
+};
+
+/*	NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp 	*/
+struct rump_ufs_args {
+	char	*fspec;			/* block special device to mount */
+};
 
 #endif /* _RUMP_RUMPDEFS_H_ */
