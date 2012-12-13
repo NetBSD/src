@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.30 2012/12/13 17:43:30 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.31 2012/12/13 23:42:29 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -242,4 +242,9 @@ external/bsd/bind/dist/bin/named/query.c		patch
 	Address CVE-2012-5688: Named could die on specific queries with dns64
 	enabled.
 	[spz, ticket #740]
+
+sys/arch/x86/acpi/acpi_cpu_md.c			1.72
+
+	Disable C1E on AMD K8 CPUs, to prevent freeze during boot. PR#47224.
+	[jruoho, ticket #741]
 
