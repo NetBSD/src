@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.9 2011/12/11 20:44:44 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.10 2012/12/13 15:36:36 roy Exp $	*/
 /*	$KAME: if.h,v 1.12 2003/09/21 07:17:03 itojun Exp $	*/
 
 /*
@@ -32,10 +32,6 @@
 
 #define RTADV_TYPE2BITMASK(type) (0x1 << type)
 
-extern struct if_msghdr **iflist;
-extern size_t ifblock_size;
-extern char *ifblock;
-
 struct nd_opt_hdr;
 struct sockaddr_dl *if_nametosdl(const char *);
 int if_getmtu(const char *);
@@ -48,10 +44,11 @@ int get_rtm_ifindex(char *);
 int get_ifm_ifindex(char *);
 int get_ifam_ifindex(char *);
 int get_ifm_flags(char *);
+#ifdef RTM_IFANNOUNCE
+int get_ifan_ifindex(char *);
+int get_ifan_what(char *);
+#endif
 int get_prefixlen(char *);
 int prefixlen(const unsigned char *, const unsigned char *);
 int rtmsg_type(char *);
-int ifmsg_type(char *);
 int rtmsg_len(char *);
-int ifmsg_len(char *);
-void init_iflist(void);

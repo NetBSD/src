@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtadvd.8,v 1.22 2011/04/28 12:12:47 wiz Exp $
+.\"	$NetBSD: rtadvd.8,v 1.23 2012/12/13 15:36:36 roy Exp $
 .\"	$KAME: rtadvd.8,v 1.24 2002/05/31 16:16:08 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 5, 2006
+.Dd December 13, 2006
 .Dt RTADVD 8
 .Os
 .Sh NAME
@@ -36,8 +36,9 @@
 .Nd router advertisement daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl DdfMRs
+.Op Fl DdfRs
 .Op Fl c Ar configfile
+.Op Fl M Ar ifname
 .Ar interface ...
 .Sh DESCRIPTION
 .Nm
@@ -126,7 +127,7 @@ Print debugging information.
 .It Fl f
 Foreground mode (useful when debugging).
 Log messages will be dumped to stderr when this option is specified.
-.It Fl M
+.It Fl M Ar ifname
 Specify an interface to join the all-routers site-local multicast group.
 By default,
 .Nm
@@ -154,6 +155,17 @@ with a warning message.
 Do not add or delete prefixes dynamically.
 Only statically configured prefixes, if any, will be advertised.
 .El
+.Pp
+Use
+.Dv SIGHUP
+to reload the configuration file
+.Pa /etc/rtadvd.conf.
+If an invalid parameter is found in the configuration file upon the reload, the
+entry will be ignored and the old configuration will be used.
+When parameters in an existing entry are updated,
+.Nm
+will send Router Advertisement messages with the old configuration but zero
+router lifetime to the interface first, and then start to send a new message.
 .Pp
 Upon receipt of signal
 .Dv SIGUSR1 ,

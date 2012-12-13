@@ -1,4 +1,4 @@
-/*	$NetBSD: advcap.c,v 1.13 2011/12/10 19:14:29 roy Exp $	*/
+/*	$NetBSD: advcap.c,v 1.14 2012/12/13 15:36:35 roy Exp $	*/
 /*	$KAME: advcap.c,v 1.11 2003/05/19 09:46:50 keiichi Exp $	*/
 
 /*
@@ -46,6 +46,10 @@
 #include <errno.h>
 #include <string.h>
 #include "pathnames.h"
+
+#ifndef __UNCONST
+#define __UNCONST(a)		((void *)(unsigned long)(const void *)(a))
+#endif
 
 #ifndef BUFSIZ
 #define	BUFSIZ		1024
