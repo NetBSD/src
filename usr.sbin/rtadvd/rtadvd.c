@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.39 2012/12/13 15:36:36 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.40 2012/12/13 15:40:05 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -364,9 +364,10 @@ die(void)
 	for (i = 0; i < retrans; i++) {
 		TAILQ_FOREACH(rai, &ralist, next)
 			ra_output(rai);
-		//sleep(MIN_DELAY_BETWEEN_RAS);
+		sleep(MIN_DELAY_BETWEEN_RAS);
 	}
 
+#ifdef __VALGRIND__
 	while ((rai = TAILQ_FIRST(&ralist))) {
 		TAILQ_REMOVE(&ralist, rai, next);
 		if (rai->leaving)
@@ -375,6 +376,7 @@ die(void)
 	}
 	free(rcvcmsgbuf);
 	free(sndcmsgbuf);
+#endif
 
 	exit(0);
 	/*NOTREACHED*/
