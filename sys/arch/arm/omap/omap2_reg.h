@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.14 2012/12/12 00:33:45 matt Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.15 2012/12/13 01:15:50 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -703,6 +703,13 @@
 #define GPIO_SETDATAOUT			0x094
 
 /*
+ * I2C
+ */
+#define I2C1_BASE_3530			0x48070000
+#define I2C2_BASE_3530			0x48072000
+#define I2C3_BASE_3530			0x48060000
+
+/*
  * USB Host
  */
 #define	OHCI1_BASE_2430			0x4805e000
@@ -715,5 +722,11 @@
 
 #define	OHCI1_BASE_4430			0x4A064800
 #define	EHCI1_BASE_4430			0x4A064C00
+
+/*
+ * SDRC
+ */
+#define OMAP3530_SDRC_BASE		0x6d000000
+#define OMAP3530_SDRC_SIZE		0x00010000	/* 16KB */
 
 #endif	/* _ARM_OMAP_OMAP2_REG_H_ */
