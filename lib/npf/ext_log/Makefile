@@ -1,9 +1,17 @@
-# $NetBSD: Makefile,v 1.1.4.2 2012/11/18 22:38:29 riz Exp $
+# $NetBSD: Makefile,v 1.1.4.3 2012/12/13 23:50:29 riz Exp $
 
 .include <bsd.own.mk>
 
 LIBISMODULE= yes
-LIBDIR=	/usr/lib/npf
+.if defined(MLIBDIR)
+LIBDIR=         /usr/lib/${MLIBDIR}/npf
+SHLIBDIR=       /usr/lib/${MLIBDIR}/npf
+SHLIBINSTALLDIR=/usr/lib/${MLIBDIR}/npf
+.else
+LIBDIR=         /usr/lib/npf
+SHLIBDIR=       /usr/lib/npf
+SHLIBINSTALLDIR=/usr/lib/npf
+.endif
 
 LIB=	ext_log
 
