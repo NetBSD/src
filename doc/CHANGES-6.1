@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.57 2012/12/13 17:38:55 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.58 2012/12/13 23:51:40 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -7148,4 +7148,31 @@ xsrc/external/mit/xf86-video-nv/dist/src/nv_driver.c	1.2
 
 	Make xf86-video-nv work out of the box on macppc.
 	[macallan, ticket #739]
+
+sys/arch/x86/acpi/acpi_cpu_md.c			1.72
+
+	Disable C1E on AMD K8 CPUs, to prevent freeze during boot. PR#47224.
+	[jruoho, ticket #741]
+
+sys/compat/netbsd32/netbsd32.h			1.94
+sys/compat/netbsd32/netbsd32_fs.c		1.63
+
+	Allow mounting ext2fs and msdosfs in 32-bit compat code.
+	[bouyer, ticket #742]
+
+distrib/sets/lists/base/ad.mips64eb		1.105
+distrib/sets/lists/base/ad.mips64el		1.105
+distrib/sets/lists/base/md.amd64		1.181
+distrib/sets/lists/base/md.sparc64		1.170
+etc/mtree/NetBSD.dist.mips64eb			1.4
+etc/mtree/NetBSD.dist.mips64el			1.5
+etc/mtree/NetBSD.dist.sparc64			1.4
+etc/mtree/NetBSD.dist.x86_64			1.4
+lib/npf/ext_log/Makefile			1.2
+lib/npf/ext_normalise/Makefile			1.2
+
+	Make the compat libs of npf extension shared libraries go to the
+	compat directories instead of overwriting the arch native libs.
+	Also, make sure the compat directories get created.
+	[rmind, ticket #743]
 
