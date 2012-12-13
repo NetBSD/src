@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.12 2012/11/21 17:35:21 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.13 2012/12/13 17:17:00 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -17,6 +17,20 @@ printf '#include <rump/rump_namei.h>\n'
 fromvers () {
 	echo
 	sed -n '1{s/\$//gp;q;}' $1
+}
+
+# not perfect, but works well enough for the cases so far
+getstruct () {
+	sed -n '/struct[ 	]*'"$2"'[ 	]*{/{
+		a\
+struct rump_'"$2"' {
+		:loop
+		n
+		s/^}.*;$/};/p
+		t
+		/#define/!p
+		b loop
+	}' < $1
 }
 
 fromvers ../../../sys/fcntl.h
@@ -46,5 +60,11 @@ sed -n '/#define[ 	]*SO_[A-Z]/s/SO_/RUMP_&/gp' <../../../sys/socket.h \
     | sed 's,/\*.*$,,'
 sed -n '/#define[ 	]*SOL_[A-Z]/s/SOL_/RUMP_&/gp' <../../../sys/socket.h \
     | sed 's,/\*.*$,,'
+
+fromvers ../../../sys/module.h
+getstruct ../../../sys/module.h modctl_load
+
+fromvers ../../../ufs/ufs/ufsmount.h
+getstruct ../../../ufs/ufs/ufsmount.h ufs_args
 
 printf '\n#endif /* _RUMP_RUMPDEFS_H_ */\n'
