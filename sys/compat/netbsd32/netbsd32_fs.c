@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.63 2012/03/06 07:37:05 macallan Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.64 2012/12/13 15:16:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.63 2012/03/06 07:37:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.64 2012/12/13 15:16:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,7 +597,7 @@ netbsd32___fhstat50(struct lwp *l, const struct netbsd32___fhstat50_args *uap, r
 	int error;
 
 	error = do_fhstat(l, SCARG_P32(uap, fhp), SCARG(uap, fh_size), &sb);
-	if (error != 0) {
+	if (error == 0) {
 		netbsd32_from_stat(&sb, &sb32);
 		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb));
 	}
