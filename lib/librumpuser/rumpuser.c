@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.23 2012/11/18 19:29:40 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.24 2012/12/13 15:35:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.23 2012/11/18 19:29:40 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.24 2012/12/13 15:35:09 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -261,7 +261,7 @@ rumpuser_anonmmap(void *prefaddr, size_t size, int alignbit,
 	if (exec)
 		prot |= PROT_EXEC;
 	rv = mmap(prefaddr, size, prot,
-	    MAP_ANON | MAP_ALIGNED(alignbit), -1, 0);
+	    MAP_PRIVATE | MAP_ANON | MAP_ALIGNED(alignbit), -1, 0);
 	if (rv == MAP_FAILED) {
 		seterror(errno);
 		return NULL;
