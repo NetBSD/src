@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.7.2.2 2012/10/09 23:58:09 riz Exp $	*/
+/*	$NetBSD: query.c,v 1.7.2.2.2.1 2012/12/13 17:42:04 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -5178,10 +5178,12 @@ dns64_ttl(dns_db_t *db, dns_dbversion_t *version) {
 	isc_result_t result;
 	isc_uint32_t ttl = ISC_UINT32_MAX;
 
+	dns_rdataset_init(&rdataset);
+
 	result = dns_db_getoriginnode(db, &node);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
-	dns_rdataset_init(&rdataset);
+
 	result = dns_db_findrdataset(db, node, version, dns_rdatatype_soa,
 				     0, 0, &rdataset, NULL);
 	if (result != ISC_R_SUCCESS)
