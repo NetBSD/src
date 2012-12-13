@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.27 2012/12/12 15:20:44 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.28 2012/12/13 01:16:39 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.27 2012/12/12 15:20:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.28 2012/12/13 01:16:39 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -221,6 +221,10 @@ static void omap4_cpu_clk(void);
 static void am335x_cpu_clk(void);
 #endif
 
+#if defined(OMAP_3530) || defined(OMAP_3430)
+static psize_t omap3530_memprobe(void);
+#endif
+
 bs_protos(bs_notimpl);
 
 #include "com.h"
@@ -311,6 +315,18 @@ static const struct pmap_devmap devmap[] = {
 		.pd_cache = PTE_NOCACHE
 	},
 #endif
+#ifdef OMAP_SDRC_BASE
+	{
+		/*
+		 * Map SDRAM Controller (SDRC) registers
+		 */
+		.pd_va = _A(OMAP_SDRC_VBASE),
+		.pd_pa = _A(OMAP_SDRC_BASE),
+		.pd_size = _S(OMAP_SDRC_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE,
+	},
+#endif
 	{0}
 };
 
@@ -367,6 +383,7 @@ beagle_putchar(char c)
 u_int
 initarm(void *arg)
 {
+	psize_t ram_size;
 #if 1
 	beagle_putchar('d');
 #endif
@@ -423,14 +440,18 @@ initarm(void *arg)
 	 * Set up the variables that define the availability of physical
 	 * memory.
 	 */
-#define	MEMSIZE_BYTES 	(MEMSIZE * 1024 * 1024)
+#if defined(OMAP_3530) || defined(OMAP_3430)
+	ram_size = omap3530_memprobe();
+#else
+	ram_size = MEMSIZE * 1024 * 1024;
+#endif
 
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = KERNEL_BASE_PHYS & -0x400000;
-	bootconfig.dram[0].pages = MEMSIZE_BYTES;
+	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
 
-	arm32_bootmem_init(bootconfig.dram[0].address, MEMSIZE_BYTES,
+	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
 	    KERNEL_BASE_PHYS);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap, true);
 
@@ -616,6 +637,23 @@ am335x_cpu_clk(void)
 	printf("%s: %"PRIu64": sys_clk=%u m=%u n=%u (%u) m2=%u\n",
 	    __func__, curcpu()->ci_data.cpu_cc_freq,
 	    sys_clk, m, n, n+1, m2);
+}
+#endif
+
+#if defined(OMAP_3530) || defined(OMAP_3430)
+#define SDRC_MCFG(p)		(0x80 + (0x30 * (p)))
+#define SDRC_MCFG_MEMSIZE(m)	((((m) & __BITS(8,17)) >> 8) * 2)
+static psize_t 
+omap3530_memprobe(void)
+{
+	const vaddr_t gpmc_base = OMAP_SDRC_VBASE;
+	const uint32_t mcfg0 = *(volatile uint32_t *)(gpmc_base + SDRC_MCFG(0));
+	const uint32_t mcfg1 = *(volatile uint32_t *)(gpmc_base + SDRC_MCFG(1));
+
+	printf("mcfg0 = %#x, size %lld\n", mcfg0, SDRC_MCFG_MEMSIZE(mcfg0));
+	printf("mcfg1 = %#x, size %lld\n", mcfg1, SDRC_MCFG_MEMSIZE(mcfg1));
+
+	return (SDRC_MCFG_MEMSIZE(mcfg0) + SDRC_MCFG_MEMSIZE(mcfg1)) * 1024 * 1024;
 }
 #endif
 
