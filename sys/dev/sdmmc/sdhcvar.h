@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.10 2012/12/12 15:15:31 matt Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.11 2012/12/13 06:43:37 riastradh Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -47,6 +47,7 @@ struct sdhc_softc {
 #define	SDHC_FLAG_HOSTCAPS	0x0200	/* No device provided capabilities */
 #define	SDHC_FLAG_RSP136_CRC	0x0400	/* Resp 136 with CRC and end-bit */
 #define	SDHC_FLAG_SINGLE_ONLY	0x0800	/* Single transfer only */
+#define	SDHC_FLAG_WAIT_RESET	0x1000	/* Wait for soft resets to start */
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */
