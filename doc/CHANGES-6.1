@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.56 2012/12/11 04:45:01 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.57 2012/12/13 17:38:55 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -7142,4 +7142,10 @@ sys/arch/arm/marvell/mvsocreg.h			patch
 	Add CLKGATING_BIT, enable it for some 88F6281 devices, and don't
 	configure devices if their clock is disabled.
 	[msaitoh, ticket #737]
+
+external/mit/xorg/server/drivers/xf86-video-nv/Makefile 1.5
+xsrc/external/mit/xf86-video-nv/dist/src/nv_driver.c	1.2
+
+	Make xf86-video-nv work out of the box on macppc.
+	[macallan, ticket #739]
 
