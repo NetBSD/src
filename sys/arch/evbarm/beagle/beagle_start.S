@@ -92,7 +92,13 @@
 #include <arm/omap/omap2_obioreg.h>
 #include <evbarm/beagle/beagle.h>  
 
-RCSID("$NetBSD: beagle_start.S,v 1.11 2012/09/05 00:06:21 matt Exp $")
+#ifdef MEMSIZE
+#define INIT_MEMSIZE	MEMSIZE
+#else
+#define INIT_MEMSIZE	128
+#endif
+
+RCSID("$NetBSD: beagle_start.S,v 1.12 2012/12/13 01:16:39 matt Exp $")
 
 #define Invalidate_I_cache(reg) \
 	mcr	p15, 0, reg, c7, c5, 0	/* Invalidate Entire I cache */
@@ -225,7 +231,7 @@ Ll1_s_frame:
 	.word	L1_S_FRAME
 Ltemp_l1_table:
 	/* Put the temporary L1 translation table at the end of SDRAM. */
-	.word	0x80000000 + MEMSIZE * 0x100000 - L1_TABLE_SIZE
+	.word	0x80000000 + INIT_MEMSIZE * 0x100000 - L1_TABLE_SIZE
 
 /*
  * Coprocessor register initialization values
@@ -270,7 +276,7 @@ Lauxctl_CZ_restrict:
 mmu_init_table:
 	/* Map KERNEL_BASE VA to SDRAM PA, write-back cacheable */
 	MMU_INIT(KERNEL_BASE, KERNEL_BASE,
-		(MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		(INIT_MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C)
 
 	/* Map first 1MB of L4 CORE (so console will work) */
@@ -294,6 +300,13 @@ mmu_init_table:
 	/* Map first 1MB of L4 FAST (so console will work) */
 	MMU_INIT(OMAP_L4_FAST_VBASE, OMAP_L4_FAST_BASE,
 		(OMAP_L4_FAST_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO | L1_S_APv7_KRW)
+#endif
+
+#ifdef OMAP_SDRC_BASE
+	/* Map 64KB SDRAM Controller (SDRC) */
+	MMU_INIT(OMAP_SDRC_VBASE, OMAP_SDRC_BASE,
+		(OMAP_SDRC_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW)
 #endif
 
