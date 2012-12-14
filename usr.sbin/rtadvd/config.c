@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.30 2012/12/13 15:36:36 roy Exp $	*/
+/*	$NetBSD: config.c,v 1.31 2012/12/14 09:48:31 roy Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -738,8 +738,6 @@ getconfig(const char *intface, int exithard)
 
 	}
 
-	/* If we are advertising an existing RA configuration,
-	 * expire it */
 	TAILQ_FOREACH(rai, &ralist, next) {
 		if (rai->ifindex == tmp->ifindex) {
 			TAILQ_REMOVE(&ralist, rai, next);
@@ -759,6 +757,7 @@ getconfig(const char *intface, int exithard)
 				dnssl->lifetime = 0;
 			rai->leaving_for = tmp;
 			tmp->leaving = rai;
+			rai->initcounter = MAX_INITIAL_RTR_ADVERTISEMENTS;
 			rai->mininterval = MIN_DELAY_BETWEEN_RAS;
 			rai->maxinterval = MIN_DELAY_BETWEEN_RAS;
 			rai->leaving_adv = MAX_FINAL_RTR_ADVERTISEMENTS;
