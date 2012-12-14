@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdate.3,v 1.3 2012/12/14 22:22:51 khorben Exp $
+.\"	$NetBSD: getdate.3,v 1.4 2012/12/14 22:33:17 uwe Exp $
 .\"
 .\" Copyright (c) 2009, 2011, 2012, The NetBSD Foundation.
 .\" All Rights Reserved.
@@ -178,12 +178,12 @@ run job at 3 PM, december 2nd
 The following examples show how local data and time specification can be
 defined in the template.
 .Pp
-.Bl -column -offset indent ".Sy Input String" ".Sy Line in Template"
+.Bl -column -offset indent ".Li Friday 12:00:00" ".Sy Line in Template"
 .It Sy "Input String" Ta Sy "Line in Template"
 .It Li 11/27/86 Ta Li \&%m/\&%d/\&%y
 .It Li 27.11.86 Ta Li \&%d.\&%m/\&%y
 .It Li 86-11-27 Ta Li \&%y-\&%m-\&%d
-.It Li "Friday 12:00:00" Ta "\&%A \&%H:\&%M:\&%S"
+.It Li "Friday 12:00:00" Ta Li "\&%A \&%H:\&%M:\&%S"
 .El
 .Pp
 The following examples illustrate the Internal Format Conversion rules
@@ -193,7 +193,7 @@ and the
 .Ev LC_TIME
 environment variable is set to the default C locale.
 .Pp
-.Bl -column -offset indent ".Sy Input String" ".Sy Line in Template" ".Sy Date"
+.Bl -column -offset indent ".Li Jan Wed 1989" ".Sy Line in Template" ".Sy Date"
 .It Sy Input String Ta Sy Line in Template Ta Sy Date
 .It Li Mon Ta Li \&%a Ta Li "Mon Sep 22 12:19:47 EDT 1986"
 .It Li Sun Ta Li \&%a Ta Li "Sun Sep 28 12:19:47 EDT 1986"
