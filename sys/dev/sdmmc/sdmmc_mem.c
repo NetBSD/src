@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.24 2012/10/13 07:31:25 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.25 2012/12/14 23:22:21 jakllsch Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.24 2012/10/13 07:31:25 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.25 2012/12/14 23:22:21 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -321,7 +321,6 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 			SET(sf->flags, SFF_SDHC);
 			csd->capacity = SD_CSD_V2_CAPACITY(resp);
 			csd->read_bl_len = SD_CSD_V2_BL_LEN;
-			csd->ccc = SD_CSD_CCC(resp);
 			break;
 
 		case SD_CSD_CSDVER_1_0:
@@ -343,6 +342,7 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 		e = SD_CSD_SPEED_EXP(resp);
 		m = SD_CSD_SPEED_MANT(resp);
 		csd->tran_speed = speed_exponent[e] * speed_mantissa[m] / 10;
+		csd->ccc = SD_CSD_CCC(resp);
 	} else {
 		csd->csdver = MMC_CSD_CSDVER(resp);
 		if (csd->csdver == MMC_CSD_CSDVER_1_0) {
