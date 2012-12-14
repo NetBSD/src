@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.15 2012/10/27 17:18:39 chs Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.16 2012/12/14 18:39:48 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.15 2012/10/27 17:18:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.16 2012/12/14 18:39:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -873,7 +873,7 @@ bool
 vfs_unmountall(struct lwp *l)
 {
 
-	printf("unmounting file systems...");
+	printf("unmounting file systems...\n");
 	return vfs_unmountall1(l, true, true);
 }
 
@@ -904,7 +904,7 @@ vfs_unmount_forceone(struct lwp *l)
 	}
 
 #ifdef DEBUG
-	printf("\nforcefully unmounting %s (%s)...",
+	printf("forcefully unmounting %s (%s)...\n",
 	    nmp->mnt_stat.f_mntonname, nmp->mnt_stat.f_mntfromname);
 #endif
 	atomic_inc_uint(&nmp->mnt_refcnt);
@@ -935,7 +935,7 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 	     mp = nmp) {
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
 #ifdef DEBUG
-		printf("\nunmounting %p %s (%s)...",
+		printf("unmounting %p %s (%s)...\n",
 		    (void *)mp, mp->mnt_stat.f_mntonname,
 		    mp->mnt_stat.f_mntfromname);
 #endif
@@ -953,7 +953,7 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 		}
 	}
 	if (verbose) {
-		printf(" done\n");
+		printf("unmounting done\n");
 	}
 	if (any_error && verbose) {
 		printf("WARNING: some file systems would not unmount\n");
