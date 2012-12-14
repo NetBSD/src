@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdate.3,v 1.4 2012/12/14 22:33:17 uwe Exp $
+.\"	$NetBSD: getdate.3,v 1.5 2012/12/14 22:57:00 uwe Exp $
 .\"
 .\" Copyright (c) 2009, 2011, 2012, The NetBSD Foundation.
 .\" All Rights Reserved.
@@ -49,7 +49,7 @@ The
 function converts a date or time character string pointed to by
 .Fa str
 into a static
-.Va tm
+.Vt tm
 structure described in
 .Xr tm 3 .
 .Pp
@@ -83,7 +83,7 @@ If only the year is given, the values of the
 and
 .Fa tm_isdst
 members of the returned
-.Va "struct tm"
+.Vt "struct tm"
 are unspecified.
 .It
 If the century is given, but the year within the century is not given,
@@ -105,7 +105,7 @@ environment timezone.
 If successful, the
 .Fn getdate
 function returns a pointer to a static
-.Va tm
+.Vt tm
 structure containing the broken-down time.
 Otherwise, a null pointer is returned and
 .Va getdate_err
@@ -131,10 +131,9 @@ Cannot allocate memory.
 .It 7
 Input string does not match any line in the template file.
 .It 8
-Input string is invalid
-.Pq for example February 31
+Input string is invalid (for example, February 31)
 or could not be represented in a
-.Va time_t .
+.Vt time_t .
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width DATEMSK
