@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.93 2012/12/13 20:06:42 christos Exp $ */
+/* $NetBSD: envstat.c,v 1.94 2012/12/14 05:29:28 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.93 2012/12/13 20:06:42 christos Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.94 2012/12/14 05:29:28 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -255,7 +255,6 @@ int main(int argc, char **argv)
 			syslog(LOG_ERR, "fopen failed: %s", strerror(errno));
 			errx(EXIT_FAILURE, "%s", strerror(errno));
 		}
-		free(configfile);
 
 		rval = send_dictionary(cf);
 		(void)fclose(cf);
