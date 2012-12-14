@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.24 2012/12/13 15:35:09 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.25 2012/12/14 10:48:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.24 2012/12/13 15:35:09 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.25 2012/12/14 10:48:48 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -41,8 +41,11 @@ __RCSID("$NetBSD: rumpuser.c,v 1.24 2012/12/13 15:35:09 pooka Exp $");
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
-#include <sys/sysctl.h>
 #include <sys/event.h>
+#endif
+
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#include <sys/sysctl.h>
 #endif
 
 #include <assert.h>
@@ -733,7 +736,7 @@ rumpuser_getnhostcpu(void)
 {
 	int ncpu = 1;
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	size_t sz = sizeof(ncpu);
 
 	sysctlbyname("hw.ncpu", &ncpu, &sz, NULL, 0);
