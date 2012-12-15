@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.8.4.1 2012/06/05 21:14:55 bouyer Exp $	*/
+/*	$NetBSD: zone.h,v 1.8.4.2 2012/12/15 05:40:02 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -1863,7 +1863,7 @@ dns_zone_setsignatures(dns_zone_t *zone, isc_uint32_t signatures);
 
 isc_result_t
 dns_zone_signwithkey(dns_zone_t *zone, dns_secalg_t algorithm,
-		     isc_uint16_t keyid, isc_boolean_t delete);
+		     isc_uint16_t keyid, isc_boolean_t deleteit);
 /*%<
  * Initiate/resume signing of the entire zone with the zone DNSKEY(s)
  * that match the given algorithm and keyid.
