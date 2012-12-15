@@ -364,7 +364,7 @@ fmn_init_xlp(fmn_info_t *fmn)
 		si->si_qid_first = 1000;
 		si->si_qid_last = 1019;
 	} else {
-		KASSERT(RMIXLP_3XX_P);
+		KASSERT(RMIXLP_3XX_P || RMIXLP_2XX_P);
 		si->si_qid_first = 496;
 		si->si_qid_last = 504;
 	}

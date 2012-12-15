@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.6 2012/01/19 17:28:50 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.7 2012/12/15 03:05:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -81,6 +81,7 @@ static const uint8_t xlgpio_pincnt_by_variant[] = {
         [RMIXLP_3XXL] = RMIXLP_GPIO_3XXL_MAXPINS,
         [RMIXLP_3XXH] = RMIXLP_GPIO_3XXL_MAXPINS,
         [RMIXLP_3XXQ] = RMIXLP_GPIO_3XXL_MAXPINS,
+        [RMIXLP_2XX] = RMIXLP_GPIO_2XXL_MAXPINS,
 };
 
 
@@ -286,7 +287,7 @@ xlgpio_pci_attach(device_t parent, device_t self, void *aux)
 		/*
 		 * These are at different offsets on the 3xx than the 8xx/4xx.
 		 */
-		if (rcp->rc_xlp_variant >= RMIXLP_3XX) {
+		if (RMIXLP_3XX_P || RMIXLP_2XX_P) {
 			gg->gg_r_intpol = RMIXLP_GPIO_3XX_INTPOL(group);
 			gg->gg_r_inttype = RMIXLP_GPIO_3XX_INTTYPE(group);
 			gg->gg_r_intstat = RMIXLP_GPIO_3XX_INTSTAT(group);

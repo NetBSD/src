@@ -429,6 +429,13 @@ rmixl_mach_xlp_init(struct rmixl_config *rcp)
 		}
 		msd = '3';
 		rcp->rc_xlp_variant = RMIXLP_3XX + variant;
+	} else if (mips_options.mips_cpu->cpu_pid == MIPS_XLP2XX) {
+		const uint32_t cfg_status1 = rmixlp_read_4(RMIXLP_SM_PCITAG,
+		    RMIXLP_SM_EFUSE_DEVICE_CFG_STATUS1);
+		printf("cfg0/1=%#x/%#x\n", cfg_status0, cfg_status1);
+		rcp->rc_xlp_variant = RMIXLP_2XX;
+		msd = '2';
+		ncores = 2;
 	} else {
 		panic("%s: unknown RMI XLP variant %#x!",
 		    __func__, mips_options.mips_cpu->cpu_pid);
@@ -446,18 +453,24 @@ rmixl_get_xlp_freq(struct rmixl_config *rcp)
 {
 	uint32_t por_cfg = rmixlp_read_4(RMIXLP_SM_PCITAG,
 	    RMIXLP_SM_POWER_ON_RESET_CFG);
-	u_int cdv = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CDV) + 1;
-	u_int cdf = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CDF) + 1;
-	u_int cdr = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CDR) + 1;
-	u_int cpll_dfs = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CPLL_DFS) + 1;
 
-	uint64_t freq_in = 133333333;
-	uint64_t freq_out = (freq_in / cdr) * cdf / (cdv * cpll_dfs);
-	if (freq_out % 1000 > 900) {
-		freq_out = (freq_out + 99) / 100;
-		freq_out *= 100;
+	if (mips_options.mips_cpu->cpu_pid == MIPS_XLP2XX) {
+		u_int cpm = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CPM_2XX);
+		uint64_t freq_out = 400000000 + 33333333 * cpm;
+		rcp->rc_psb_info.cpu_frequency = freq_out;
+	} else {
+		u_int cdv = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CDV) + 1;
+		u_int cdf = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CDF) + 1;
+		u_int cdr = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CDR) + 1;
+		u_int cpll_dfs = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CPLL_DFS) + 1;
+		uint64_t freq_in = 133333333;
+		uint64_t freq_out = (freq_in / cdr) * cdf / (cdv * cpll_dfs);
+		if (freq_out % 1000 > 900) {
+			freq_out = (freq_out + 99) / 100;
+			freq_out *= 100;
+		}
+		rcp->rc_psb_info.cpu_frequency = freq_out;
 	}
-	rcp->rc_psb_info.cpu_frequency = freq_out;
 }
 
 static void
@@ -468,7 +481,7 @@ rmixl_pcr_init_xlp_core(void)
 	rmixl_mtcr(RMIXLP_PCR_IFU_THREAD_EN, 1);
 		/* disable all threads except #0 */
 #endif
-	rmixl_mtcr(RMIXLP_PCR_MMU_SETUP, 1);
+	rmixl_mtcr(RMIXLP_PCR_MMU_SETUP, 1);	/* 1 is not for XLP */
 		/* enable MMU clock gating */
 		/* TLB is global */
 
@@ -975,8 +988,9 @@ rmixlp_physaddr_pcie_mem_init(struct extent *ext)
 	struct rmixl_config * const rcp = &rmixl_configuration;
 
 	{
-		pcireg_t barl = rmixlp_read_4(RMIXLP_EHCI0_PCITAG, PCI_BAR0);
-		pcireg_t baru = rmixlp_read_4(RMIXLP_EHCI0_PCITAG, PCI_BAR1);
+		pcitag_t tag = RMIXLP_2XX_P ? RMIXLP_NAE_PCITAG : RMIXLP_EHCI0_PCITAG;
+		pcireg_t barl = rmixlp_read_4(tag, PCI_BAR0);
+		pcireg_t baru = rmixlp_read_4(tag, PCI_BAR1);
 		KASSERT(PCI_MAPREG_TYPE(barl) == PCI_MAPREG_TYPE_MEM);
 		KASSERT(PCI_MAPREG_MEM_TYPE(barl) == PCI_MAPREG_MEM_TYPE_64BIT);
 
