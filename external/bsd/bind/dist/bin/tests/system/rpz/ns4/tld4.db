@@ -1,4 +1,4 @@
-; Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,16 +12,14 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: tld4.db,v 1.2 2011/10/13 04:53:07 marka Exp 
+; Id: tld4.db,v 1.2.6.1 2012/02/24 17:22:37 vjs Exp 
 
 ; RPZ rewrite responses from this zone
 
 $TTL	120
 @		SOA	tld4.  hostmaster.ns.tld4. ( 1 3600 1200 604800 60 )
 		NS	ns
-		NS	ns2
 ns		A	10.53.0.4
-ns2		A	10.53.0.4
 
 
 txt-only	TXT	"txt-only-tld4"

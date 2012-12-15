@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.3.6.1 2012/06/05 21:15:28 bouyer Exp $	*/
+/*	$NetBSD: list.h,v 1.3.6.2 2012/12/15 05:40:07 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -182,7 +182,7 @@
 		} \
 		(list2).head = NULL; \
 		(list2).tail = NULL; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define ISC_LIST_ENQUEUE(list, elt, link) ISC_LIST_APPEND(list, elt, link)
 #define __ISC_LIST_ENQUEUEUNSAFE(list, elt, link) \
