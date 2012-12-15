@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.31 2012/12/15 01:02:26 uwe Exp $
+.\"	$NetBSD: vis.3,v 1.32 2012/12/15 01:04:02 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -146,11 +146,12 @@ of characters encoded from
 (plus one for the
 .Dv NUL ) .
 Both
-forms return the number of characters in dst (not including
-the trailing
+forms return the number of characters in
+.Fa dst
+(not including the trailing
 .Dv NUL ) .
 The
-.Dq n
+.Dq Nm n
 versions of the functions also take an additional argument
 .Fa dlen
 that indicates the length of the
@@ -213,9 +214,8 @@ and
 .Fn strnvisx ) ,
 and the type of representation used.
 By default, all non-graphic characters,
-except space, tab, and newline are encoded.
-(See
-.Xr isgraph 3 . )
+except space, tab, and newline are encoded (see
+.Xr isgraph 3 ) .
 The following flags
 alter this:
 .Bl -tag -width VIS_WHITEX
@@ -242,11 +242,13 @@ Synonym for
 \&|
 .Dv VIS_NL .
 .It Dv VIS_SAFE
-Only encode "unsafe" characters.
+Only encode
+.Dq unsafe
+characters.
 Unsafe means control characters which may cause common terminals to perform
 unexpected functions.
 Currently this form allows space, tab, newline, backspace, bell, and
-return - in addition to all graphic characters - unencoded.
+return \(em in addition to all graphic characters \(em unencoded.
 .El
 .Pp
 (The above flags have no effect for
@@ -286,8 +288,8 @@ Use an
 to represent meta characters (characters with the 8th
 bit set), and use caret
 .Ql ^
-to represent control characters see
-.Pf ( Xr iscntrl 3 ) .
+to represent control characters (see
+.Xr iscntrl 3 ) .
 The following formats are used:
 .Bl -tag -width xxxxx
 .It Dv \e^C
@@ -334,19 +336,20 @@ Use C-style backslash sequences to represent standard non-printable
 characters.
 The following sequences are used to represent the indicated characters:
 .Bd -unfilled -offset indent
-.Li \ea Tn  - BEL No (007)
-.Li \eb Tn  - BS No (010)
-.Li \ef Tn  - NP No (014)
-.Li \en Tn  - NL No (012)
-.Li \er Tn  - CR No (015)
-.Li \es Tn  - SP No (040)
-.Li \et Tn  - HT No (011)
-.Li \ev Tn  - VT No (013)
-.Li \e0 Tn  - NUL No (000)
+.Li \ea Tn  \(em BEL No (007)
+.Li \eb Tn  \(em BS No (010)
+.Li \ef Tn  \(em NP No (014)
+.Li \en Tn  \(em NL No (012)
+.Li \er Tn  \(em CR No (015)
+.Li \es Tn  \(em SP No (040)
+.Li \et Tn  \(em HT No (011)
+.Li \ev Tn  \(em VT No (013)
+.Li \e0 Tn  \(em NUL No (000)
 .Ed
 .Pp
-When using this format, the nextc parameter is looked at to determine
-if a
+When using this format, the
+.Fa nextc
+parameter is looked at to determine if a
 .Dv NUL
 character can be encoded as
 .Ql \e0
@@ -373,7 +376,7 @@ represents a lower case hexadecimal digit.
 .It Dv VIS_MIMESTYLE
 Use MIME Quoted-Printable encoding as described in RFC 2045, only don't
 break lines and don't handle CRLF.
-The form is:
+The form is
 .Ql =XX
 where
 .Em X
@@ -410,7 +413,7 @@ destination buffer size is not enough to perform the conversion while
 setting
 .Va errno
 to:
-.Bl -tag -width Er
+.Bl -tag -width ".Bq Er ENOSPC"
 .It Bq Er ENOSPC
 The destination buffer size is not large enough to perform the conversion.
 .El
@@ -429,7 +432,7 @@ The
 .Fn vis ,
 .Fn strvis ,
 and
-.Fa strvisx
+.Fn strvisx
 functions first appeared in
 .Bx 4.4 .
 The
