@@ -591,7 +591,7 @@ static const char * const rmixl_irtnames_xlp3xx[RMIXLP_NIRTS] = {
 	[121] = "pic int 121 (dma)",
 	[122] = "pic int 122 (sae)",
 	[123] = "pic int 123 (pke)",
-	[124] = "pic int 124 (?)",
+	[124] = "pic int 124 (cde0)",
 	[125] = "pic int 125 (?)",
 	[126] = "pic int 126 (?)",
 	[127] = "pic int 127 (?)",
@@ -775,7 +775,7 @@ evbmips_intr_init(void)
 	 */
 	if (is_xlp_p) {
 #ifdef MIPS64_XLP
-		if (RMIXLP_3XX_P) {
+		if (RMIXLP_3XX_P || RMIXLP_2XX_P) {
 			rmixl_irtnames = rmixl_irtnames_xlp3xx;
 			rmixl_nirts = __arraycount(rmixl_irtnames_xlp3xx);
 		} else {
