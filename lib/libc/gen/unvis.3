@@ -1,4 +1,4 @@
-.\"	$NetBSD: unvis.3,v 1.26 2012/12/15 02:38:46 uwe Exp $
+.\"	$NetBSD: unvis.3,v 1.27 2012/12/15 07:34:36 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -208,7 +208,7 @@ The functions
 and
 .Fn strnunvisx
 will return \-1 on error and set
-.Va errno 
+.Va errno
 to:
 .Bl -tag -width Er
 .It Bq Er EINVAL
@@ -216,7 +216,7 @@ An invalid escape sequence was detected, or the decoder is in an unknown state.
 .El
 .Pp
 In addition the functions
-.Fn strnunvis 
+.Fn strnunvis
 and
 .Fn strnunvisx
 will can also set
@@ -248,10 +248,11 @@ and
 functions appeared in
 .Nx 6.0 .
 .Sh BUGS
+The names
 .Dv VIS_HTTP1808
 and
 .Dv VIS_HTTP1866
-names are wrong.
+are wrong.
 Percent-encoding was defined in RFC 1738, the original RFC for URL.
 RFC 1866 defines HTML 2.0, an application of SGML, from which it
 inherits concepts of numeric character references and entity
