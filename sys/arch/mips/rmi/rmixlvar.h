@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.26 2012/01/19 08:03:22 matt Exp $	*/
+/*	rmixlvar.h,v 1.1.2.26 2012/01/19 08:03:22 matt Exp	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -134,6 +134,8 @@ typedef enum {
 	RMIXLP_3XXL,
 	RMIXLP_3XXH,
 	RMIXLP_3XXQ,
+	RMIXLP_2XX,
+	RMIXLP_1XX,
 	RMIXLP_ANY,		/* must be last */
 } rmixlp_variant_t;
 
@@ -141,6 +143,8 @@ typedef enum {
 			 && rmixl_configuration.rc_xlp_variant <= RMIXLP_4XX)
 #define	RMIXLP_3XX_P	(RMIXLP_3XX <= rmixl_configuration.rc_xlp_variant \
 			 && rmixl_configuration.rc_xlp_variant <= RMIXLP_3XXQ)
+#define	RMIXLP_2XX_P	(RMIXLP_2XX <= rmixl_configuration.rc_xlp_variant \
+			 && rmixl_configuration.rc_xlp_variant <= RMIXLP_1XX)
 
 struct rmixl_region {
 	bus_addr_t		r_pbase;

@@ -911,10 +911,11 @@
 #define	MIPS_XLR_C4	0x91	/* RMI XLR Production Rev C4		*/
 
 /*
- * CPU processor IDs for company ID == 12 (RMI)
+ * CPU processor IDs for company ID == 12 (RMI, NetLogic, Broadcom)
  */
 #define	MIPS_XLP8XX	0x10	/* RMI XLP8XX/XLP4XX 		ISA 64  Rel 2 */
 #define	MIPS_XLP3XX	0x11	/* RMI XLP3XX	 		ISA 64  Rel 2 */
+#define	MIPS_XLP2XX	0x12	/* Broadcom XLP2XX/XLP1XX	ISA 64  Rel 2 */
 #define	MIPS_XLR308B	0x06	/* RMI XLR308-B	 		ISA 64  */
 #define	MIPS_XLR508B	0x07	/* RMI XLR508-B	 		ISA 64  */
 #define	MIPS_XLR516B	0x08	/* RMI XLR516-B	 		ISA 64  */

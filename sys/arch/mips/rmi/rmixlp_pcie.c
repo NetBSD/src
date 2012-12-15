@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.8 2012/01/09 22:03:13 matt Exp $	*/
+/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.9 2012/12/15 03:05:56 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.8 2012/01/09 22:03:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.9 2012/12/15 03:05:56 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -186,6 +186,9 @@ static const rmixlp_pcie_lnkcfg_t rmixlp_pcie_lnkcfgs[] = {
 	{ RMIXLP_3XXL,	1, 0, 0, { 4, 0, 0, 0 } },
 	{ RMIXLP_3XXH,	2, 0, 0, { 2, 0, 2, 0 } },
 	{ RMIXLP_3XXQ,	4, 0, 0, { 1, 1, 1, 1 } },
+	{ RMIXLP_2XX,	1, 3, 0, { 4, 0, 0, 0 } },
+	{ RMIXLP_2XX,	2, 3, 0, { 2, 0, 2, 0 } },
+	{ RMIXLP_2XX,	4, 3, 0, { 1, 1, 1, 1 } },
 	{ RMIXLP_ANY,	4, 3, 0, { 8, 0, 8, 0 } },	/* 8XX, 4XX, 3XX */
 	{ RMIXLP_ANY,	4, 3, 1, { 4, 4, 8, 0 } },	/* 8XX, 4XX, 3XX */
 	{ RMIXLP_ANY,	4, 3, 2, { 8, 0, 4, 4 } },	/* 8XX, 4XX, 3XX */
