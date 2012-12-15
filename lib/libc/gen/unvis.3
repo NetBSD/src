@@ -1,4 +1,4 @@
-.\"	$NetBSD: unvis.3,v 1.25 2012/12/15 02:08:13 uwe Exp $
+.\"	$NetBSD: unvis.3,v 1.26 2012/12/15 02:38:46 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -247,3 +247,12 @@ and
 .Fn strnunvisx
 functions appeared in
 .Nx 6.0 .
+.Sh BUGS
+.Dv VIS_HTTP1808
+and
+.Dv VIS_HTTP1866
+names are wrong.
+Percent-encoding was defined in RFC 1738, the original RFC for URL.
+RFC 1866 defines HTML 2.0, an application of SGML, from which it
+inherits concepts of numeric character references and entity
+references.
