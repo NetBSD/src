@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.30 2012/12/15 00:48:19 uwe Exp $
+.\"	$NetBSD: vis.3,v 1.31 2012/12/15 01:02:26 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -158,7 +158,7 @@ that indicates the length of the
 buffer.
 If
 .Fa dlen
-is not large enough to fix the converted string then the
+is not large enough to fit the converted string then the
 .Fn strnvis
 and
 .Fn strnvisx
@@ -406,7 +406,7 @@ and
 .Fn strsnvisx ,
 will return \-1 when the
 .Fa dlen
-destination buffer length size is not enough to perform the conversion while
+destination buffer size is not enough to perform the conversion while
 setting
 .Va errno
 to:
