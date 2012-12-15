@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.60 2012/12/15 05:46:35 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.61 2012/12/15 23:47:17 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -7811,4 +7811,33 @@ distrib/sets/lists/man/mi				patch
 
 	Update bind to version 9.9.2-P1, addressing CVE-2012-5688.
 	[spz, ticket #751]
+
+share/examples/npf/host-npf.conf		1.4
+share/examples/npf/soho_gw-npf.conf		1.4
+usr.sbin/npf/npfctl/npf.conf.5			1.25
+
+	Fix errors in NPF examples.
+	[rmind, ticket #744]
+
+distrib/sets/lists/base/ad.mips64eb		1.106
+distrib/sets/lists/base/ad.mips64el		1.106
+distrib/sets/lists/base/md.amd64		1.182
+distrib/sets/lists/base/md.sparc64		1.171
+distrib/sets/lists/base/shl.mi			1.643
+distrib/sets/lists/comp/shl.mi			1.241
+distrib/sets/lists/modules/md.evbppc		1.29
+distrib/sets/lists/modules/mi			1.49 via patch
+lib/npf/Makefile				1.2
+lib/npf/ext_rndblock/Makefile			1.1
+lib/npf/ext_rndblock/npfext_rndblock.c		1.1
+lib/npf/ext_rndblock/shlib_version		1.1
+sys/modules/Makefile				1.117 via patch
+sys/modules/npf_ext_rndblock/Makefile		1.1
+sys/net/npf/files.npf				1.9
+sys/net/npf/npf_ext_rndblock.c			1.1
+
+	Add NPF "rndblock" extension to randomly drop packets.  This
+	is a demo module, although it can be used for packet
+	loss simulation.
+	[rmind, ticket #745]
 
