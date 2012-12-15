@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.16 2012/12/15 00:05:44 jakllsch Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.17 2012/12/15 00:07:47 jakllsch Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.16 2012/12/15 00:05:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.17 2012/12/15 00:07:47 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -519,7 +519,7 @@ sdmmc_enable(struct sdmmc_softc *sc)
 		/* Initialize SD I/O card function(s). */
 		error = sdmmc_io_enable(sc);
 		if (error) {
-			DPRINTF(1, ("%s: sdmmc_io_enable failed %d\n", DEVNAME(sc), error);
+			DPRINTF(1, ("%s: sdmmc_io_enable failed %d\n", DEVNAME(sc), error));
 			goto out;
 		}
 	}
@@ -529,7 +529,7 @@ sdmmc_enable(struct sdmmc_softc *sc)
 	    ISSET(sc->sc_flags, SMF_MEM_MODE)) {
 		error = sdmmc_mem_enable(sc);
 		if (error) {
-			DPRINTF(1, ("%s: sdmmc_mem_enable failed %d\n", DEVNAME(sc), error);
+			DPRINTF(1, ("%s: sdmmc_mem_enable failed %d\n", DEVNAME(sc), error));
 			goto out;
 		}
 	}
