@@ -1,4 +1,4 @@
-/* $NetBSD: wakeonlan.c,v 1.1 2012/05/26 01:58:21 uebayasi Exp $ */
+/* $NetBSD: wakeonlan.c,v 1.2 2012/12/15 04:40:33 jakllsch Exp $ */
 
 /*
  * Copyright (C) 2006, 2007, 2008, 2009, 2010 Marc Balmer <marc@msys.ch>
@@ -167,6 +167,7 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 	ssize_t bw, len;
 
 	memset(pkt.hdr.ether_dhost, 0xff, sizeof(pkt.hdr.ether_dhost));
+	memset(pkt.hdr.ether_shost, 0x00, sizeof(pkt.hdr.ether_shost));
 	pkt.hdr.ether_type = htons(0);
 	memset(pkt.data, 0xff, SYNC_LEN);
 	for (p = pkt.data + SYNC_LEN, i = 0; i < DESTADDR_COUNT;
