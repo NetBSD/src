@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.101 2012/12/15 04:09:24 jakllsch Exp $	*/
+/*	$NetBSD: ucom.c,v 1.102 2012/12/15 04:10:05 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.101 2012/12/15 04:09:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.102 2012/12/15 04:10:05 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,7 +442,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 * unless explicitly requested to deassert it.  Ditto RTS.
 		 */
 		ucom_dtr(sc, 1);
-		ucom_rts(sc, 1);		
+		ucom_rts(sc, 1);
 
 		DPRINTF(("ucomopen: open pipes in=%d out=%d\n",
 			 sc->sc_bulkin_no, sc->sc_bulkout_no));
