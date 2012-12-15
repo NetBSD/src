@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 
 rm -f */K* */dsset-* */*.signed */trusted.conf
 rm -f ns1/root.db
+rm -f ns1/signer.err
 rm -f dig.out*
 rm -f random.data
 rm -f */named.run

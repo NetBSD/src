@@ -1,7 +1,7 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.in by autoheader.  */
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: acconfig.h,v 1.53 2008/12/01 23:47:44 tbox Exp */
 
 /*! \file */
 
@@ -87,7 +87,7 @@
  */
 /* #undef CALL_PTHREAD_SETCONCURRENCY */
 
-#if 0	/* We'll define this in each Makefile as necessary */
+#if 0  /* We'll define this in each Makefile as necessary */
 /** define if IPv6 is not disabled */
 #define WANT_IPV6 1
 #endif
@@ -127,7 +127,7 @@ int sigwait(const unsigned int *set, int *sig);
 		union { const void *konst; long *var; } _u; \
 		_u.konst = &(last); \
 		ap = (va_list)(_u.var + __va_words(__typeof(last))); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif /** SHUTUP_STDARG_CAST && __GNUC__ */
 
 /** define if the system has a random number generating device */
@@ -147,6 +147,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define if OpenSSL includes DSA support */
 #define HAVE_OPENSSL_DSA 1
+
+/* Define if OpenSSL includes ECDSA support */
+#define HAVE_OPENSSL_ECDSA 1
 
 /* Define to the length type used by the socket API (socklen_t, size_t, int). */
 #define ISC_SOCKADDR_LEN_T socklen_t
@@ -211,6 +214,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `EVP_sha256' function. */
 #define HAVE_EVP_SHA256 1
+
+/* Define to 1 if you have the `EVP_sha384' function. */
+#define HAVE_EVP_SHA384 1
 
 /* Define to 1 if you have the `EVP_sha512' function. */
 #define HAVE_EVP_SHA512 1
@@ -288,7 +294,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef HAVE_NET_IF6_H */
 
 /* Define if your OpenSSL version supports GOST. */
-/* #undef HAVE_OPENSSL_GOST */
+#define HAVE_OPENSSL_GOST 1
 
 /* Define to 1 if you have the `readline' function. */
 #define HAVE_READLINE 1

@@ -461,5 +461,28 @@ if [ $ret -ne 0 ]; then
     status=1
 fi
 
+n=`expr $n + 1`
+ret=0
+echo "I:check command list ($n)"
+(
+while read cmd 
+do
+    echo "$cmd" | $NSUPDATE  > /dev/null 2>&1
+    if test $? -gt 1 ; then
+	echo "I: failed ($cmd)"
+	ret=1
+    fi
+    echo "$cmd " | $NSUPDATE  > /dev/null 2>&1
+    if test $? -gt 1 ; then
+	echo "I: failed ($cmd)"
+	ret=1
+    fi
+done
+exit $ret
+) < commandlist || ret=1
+if [ $ret -ne 0 ]; then
+    status=1
+fi
+
 echo "I:exit status: $status"
 exit $status

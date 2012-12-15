@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_result.c,v 1.2.6.1 2012/06/05 21:15:02 bouyer Exp $	*/
+/*	$NetBSD: dst_result.c,v 1.2.6.2 2012/12/15 05:39:57 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,7 +32,7 @@
 
 static const char *text[DST_R_NRESULTS] = {
 	"algorithm is unsupported",		/*%< 0 */
-	"openssl failure",			/*%< 1 */
+	"crypto failure",			/*%< 1 */
 	"built with no crypto support",		/*%< 2 */
 	"illegal operation for a null key",	/*%< 3 */
 	"public key is invalid",		/*%< 4 */

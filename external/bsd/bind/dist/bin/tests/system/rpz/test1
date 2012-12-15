@@ -25,13 +25,13 @@ server 10.53.0.3 5300
 ; QNAME tests
 
 ; NXDOMAIN
+;	2, 20, 25
 update add  a0-1.tld2.bl.	300 CNAME .
-update add  a0-1.signed-tld2.bl.	300 CNAME .
-;
 ; NODATA
+;	3, 21
 update add  a3-1.tld2.bl.	300 CNAME *.
 ; and no assert-botch
-;	5
+;	5, 22
 update add  a3-2.tld2.bl.	300 DNAME example.com.
 ;
 ; NXDOMAIN for a4-2-cname.tld2 via its target a4-2.tld2.
@@ -57,24 +57,32 @@ update add nxc2.sub1.tld2.bl.	300 CNAME a12-cname.tld2.
 ;
 ; prefer the first conflicting zone
 ;	13
-update add a4-4.tld2.bl.	300 A	127.0.0.1
+update add a4-4.tld2.bl.	300 A	127.4.4.1
+update add a6-1.tld2.bl.	300 CNAME a6-1.tld2.
+update add a6-2.tld2.bl.	300 A	127.6.2.1
+update add a6-1.tld2.bl.	300 A	127.6.1.1
+update add a6-2.tld2.bl.	300 CNAME a6-2.tld2.
 send
-update add a4-4.tld2.bl-2.	300 A	127.0.0.2
+update add a4-4.tld2.bl-2.	300 A	127.4.4.2
 send
-;
+
 ; wildcard CNAME
-;	14
-update add  a3-6.tld2.bl.	300 CNAME *.tld4.
-;	15
-update add  *.sub1.tld2.bl.	300 CNAME *.tld4.
-; CNAME chains
 ;	16
-update add  a4-5.tld2.bl.	300 A	127.0.0.16
+update add  a3-6.tld2.bl.	300 CNAME *.tld4.
 ;	17
+update add  *.sub1.tld2.bl.	300 CNAME *.tld4.
+; CNAME chain
+;	18
+update add  a4-5.tld2.bl.	300 A	127.0.0.16
+; stop at first hit in CNAME chain
+;	19
 update add  a4-6.tld2.bl.	300 CNAME .
 update add  a4-6-cname.tld2.bl.	300 A	127.0.0.17
-
-;	18
+;
+; assert in rbtdb.c
+;	24
 update	add c1.crash2.tld3.bl.	300 CNAME .
-
+; DO=1 without signatures, DO=0 with signatures are rewritten
+;	26 - 27
+update add  a0-1.tld2s.bl.	300 CNAME .
 send
