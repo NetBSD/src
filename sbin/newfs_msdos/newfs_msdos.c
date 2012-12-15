@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.39 2012/11/04 14:27:15 jakllsch Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.40 2012/12/15 04:34:36 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.39 2012/11/04 14:27:15 jakllsch Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.40 2012/12/15 04:34:36 jakllsch Exp $");
 #endif
 #endif /* not lint */
 
@@ -409,15 +409,8 @@ main(int argc, char *argv[])
     if (oflag)
 	bpb.hid = opt_o;
     if (!(opt_f || (opt_h && opt_u && opt_S && opt_s && oflag))) {
-	off_t delta;
 	getbpbinfo(fd, fname, dtype, oflag, &bpb, opt_create != 0);
 	bpb.bsec -= (opt_ofs / bpb.bps);
-	delta = bpb.bsec % bpb.spt;
-	if (delta != 0) {
-	    warnx("trim %d sectors to adjust to a multiple of %d",
-		(int)delta, bpb.spt);
-	    bpb.bsec -= delta;
-	}
 	if (bpb.spc == 0) {     /* set defaults */
 	    if (bpb.bsec <= 6000)       /* about 3MB -> 512 bytes */
 		bpb.spc = 1;
