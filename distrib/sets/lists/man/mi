@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1410 2012/12/04 23:38:58 spz Exp $
+# $NetBSD: mi,v 1.1411 2012/12/16 13:09:19 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1454,6 +1454,7 @@
 ./usr/share/man/cat4/prep/nvram.0		man-sys-catman		.cat
 ./usr/share/man/cat4/pseye.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pss.0			man-obsolete		obsolete
+./usr/share/man/cat4/ptcd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ptm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pty.0			man-sys-catman		.cat
 ./usr/share/man/cat4/puc.0			man-sys-catman		.cat
@@ -4311,6 +4312,7 @@
 ./usr/share/man/html4/prep/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/prep/nvram.html		man-sys-htmlman		html
 ./usr/share/man/html4/pseye.html		man-sys-htmlman		html
+./usr/share/man/html4/ptcd.html			man-sys-htmlman		html
 ./usr/share/man/html4/ptm.html			man-sys-htmlman		html
 ./usr/share/man/html4/pty.html			man-sys-htmlman		html
 ./usr/share/man/html4/puc.html			man-sys-htmlman		html
@@ -7068,6 +7070,7 @@
 ./usr/share/man/man4/prep/nvram.4		man-sys-man		.man
 ./usr/share/man/man4/pseye.4			man-sys-man		.man
 ./usr/share/man/man4/pss.4			man-obsolete		obsolete
+./usr/share/man/man4/ptcd.4			man-sys-man		.man
 ./usr/share/man/man4/ptm.4			man-sys-man		.man
 ./usr/share/man/man4/pty.4			man-sys-man		.man
 ./usr/share/man/man4/puc.4			man-sys-man		.man
