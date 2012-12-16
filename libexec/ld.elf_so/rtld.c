@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.160 2012/12/16 11:15:21 dsl Exp $	 */
+/*	$NetBSD: rtld.c,v 1.161 2012/12/16 23:00:46 dsl Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.160 2012/12/16 11:15:21 dsl Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.161 2012/12/16 23:00:46 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1602,7 +1602,7 @@ _rtld_exclusive_enter(sigset_t *mask)
 			_rtld_die();
 		}
 		if (cur)
-			_lwp_park(NULL, -1, __UNVOLATILE(&_rtld_mutex), NULL);
+			_lwp_park(NULL, 0, __UNVOLATILE(&_rtld_mutex), NULL);
 		atomic_cas_uint(&_rtld_waiter_exclusive, self, 0);
 		if (waiter)
 			_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));
