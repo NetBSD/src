@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.368 2012/10/28 16:25:03 alnsn Exp $
+#	$NetBSD: files.i386,v 1.369 2012/12/16 13:09:20 mbalmer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -248,6 +248,11 @@ include	"dev/isa/files.isa"
 # PC clock
 file	arch/x86/isa/clock.c		isa
 file	arch/x86/isa/rtc.c		isa
+
+# Protech PS3100 cash drawer
+device	ptcd: gpiobus
+attach	ptcd at isa
+file	dev/isa/ptcd.c			ptcd
 
 # TSC support
 file	arch/x86/x86/tsc.c
