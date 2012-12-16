@@ -1,12 +1,12 @@
-.\"	$NetBSD: sqlite3.1,v 1.2 2012/12/16 20:25:40 christos Exp $
+.\"	$NetBSD: sqlite3.1,v 1.3 2012/12/16 23:37:34 wiz Exp $
 .Dd December 16, 2012
 .Dt SQLITE3 1
 .Os
 .Sh NAME
-.Nm sqlite3 
+.Nm sqlite3
 .Nd A command line interface for SQLite version 3
 .Sh SYNOPSIS
-.Nm 
+.Nm
 .Op Ar options
 .Op Ar databasefile
 .Op Ar SQL
@@ -19,13 +19,13 @@ can also be used within shell scripts and other applications to provide
 batch processing features.
 .Pp
 To start a
-.Nm 
+.Nm
 interactive session, invoke the
 .Nm
 command and optionally provide the name of a database file.
 If the database file does not exist, it will be created.
 If the database file does exist, it will be opened.
-
+.Pp
 For example, to create a new database file named "mydata.db", create
 a table named "memos" and insert a couple of records into that table:
 .Bd -literal -offset indent
@@ -41,7 +41,7 @@ lunch with Christine|100
 sqlite>
 .Ed
 .Pp
-If no database name is supplied, the 
+If no database name is supplied, the
 .Em ATTACH
 sql command can be used
 to attach to existing or create new database files.
@@ -66,7 +66,7 @@ The interactive interpreter offers a set of meta-commands that can be
 used to control the output format, examine the currently attached
 database files, or perform administrative operations upon the
 attached databases (such as rebuilding indices).
-Meta-commands are always prefixed with a dot 
+Meta-commands are always prefixed with a dot
 .Dq \. .
 .Pp
 A list of available meta-commands can be viewed at any time by issuing
@@ -74,17 +74,16 @@ the '.help' command.
 For example:
 .Bd -literal -offset indent
 sqlite> .help
-.cc |
-.databases             List names and files of attached databases
-.dump ?TABLE? ...      Dump the database in an SQL text format
-.echo ON|OFF           Turn command echo on or off
-.exit                  Exit this program
-.explain ON|OFF        Turn output mode suitable for EXPLAIN on or off.
-.header(s) ON|OFF      Turn display of headers on or off
-.help                  Show this message
-.import FILE TABLE     Import data from FILE into TABLE
-.indices TABLE         Show names of all indices on TABLE
-.mode MODE ?TABLE?     Set output mode where MODE is one of:
+\&.databases             List names and files of attached databases
+\&.dump ?TABLE? ...      Dump the database in an SQL text format
+\&.echo ON|OFF           Turn command echo on or off
+\&.exit                  Exit this program
+\&.explain ON|OFF        Turn output mode suitable for EXPLAIN on or off.
+\&.header(s) ON|OFF      Turn display of headers on or off
+\&.help                  Show this message
+\&.import FILE TABLE     Import data from FILE into TABLE
+\&.indices TABLE         Show names of all indices on TABLE
+\&.mode MODE ?TABLE?     Set output mode where MODE is one of:
                          csv      Comma-separated values
                          column   Left-aligned columns.  (See .width)
                          html     HTML <table> code
@@ -93,23 +92,22 @@ sqlite> .help
                          list     Values delimited by .separator string
                          tabs     Tab-separated values
                          tcl      TCL list elements
-.nullvalue STRING      Print STRING in place of NULL values
-.output FILENAME       Send output to FILENAME
-.output stdout         Send output to the screen
-.prompt MAIN CONTINUE  Replace the standard prompts
-.quit                  Exit this program
-.read FILENAME         Execute SQL in FILENAME
-.schema ?TABLE?        Show the CREATE statements
-.separator STRING      Change separator used by output mode and .import
-.show                  Show the current values for various settings
-.tables ?PATTERN?      List names of tables matching a LIKE pattern
-.timeout MS            Try opening locked tables for MS milliseconds
-.width NUM NUM ...     Set column widths for "column" mode
+\&.nullvalue STRING      Print STRING in place of NULL values
+\&.output FILENAME       Send output to FILENAME
+\&.output stdout         Send output to the screen
+\&.prompt MAIN CONTINUE  Replace the standard prompts
+\&.quit                  Exit this program
+\&.read FILENAME         Execute SQL in FILENAME
+\&.schema ?TABLE?        Show the CREATE statements
+\&.separator STRING      Change separator used by output mode and .import
+\&.show                  Show the current values for various settings
+\&.tables ?PATTERN?      List names of tables matching a LIKE pattern
+\&.timeout MS            Try opening locked tables for MS milliseconds
+\&.width NUM NUM ...     Set column widths for "column" mode
 sqlite>
-|cc .
 .Ed
 .Sh OPTIONS
-.Nm 
+.Nm
 has the following options:
 .Bl -tag -width abcdefghij
 .It Fl init Ar file
@@ -142,10 +140,10 @@ Default is
 .It Fl nullvalue Ar string
 Set
 .Ar string
-used to represent 
+used to represent
 .Dv NULL
 values.
-Default is 
+Default is
 .Dq \e
 (empty string).
 .It Fl version
@@ -157,31 +155,36 @@ Show help on options and exit.
 .Nm
 reads an initialization file to set the configuration of the
 interactive environment.
-Throughout initialization, any previously specified setting can be overridden.  The sequence of initialization is as follows:
-.Bl
-.It The default configuration is established as follows:
-.sp
+Throughout initialization, any previously specified setting can be overridden.
+The sequence of initialization is as follows:
+.Bl -enum
+.It
+The default configuration is established as follows:
 .Bd -literal -offset indent
-.cc |
 mode            = LIST
 separator       = "|"
 main prompt     = "sqlite> "
 continue prompt = "   ...> "
-|cc .
 .Ed
-.It If the file 
+.It
+If the file
 .Fi ~/.sqliterc
 exists, it is processed first.
 can be found in the user's home directory, it is
 read and processed.
 It should generally only contain meta-commands.
-.It If the -init option is present, the specified file is processed.
-.It All other command line options are processed.
+.It
+If the
+.Fl init
+option is present, the specified file is processed.
+.It
+All other command line options are processed.
 .El
 .Sh SEE ALSO
-http://www.sqlite.org/
-.Sh AUTHOR
+.Lk http://www.sqlite.org/
+.Sh AUTHORS
 This manual page was originally written by Andreas Rottmann
-\*[Lt]rotty@debian.org\*[Gt], for the Debian GNU/Linux system (but may be used
-by others).
-It was subsequently revised by Bill Bumgarner \*[Lt]bbum@mac.com\*[Gt].
+.Aq rotty@debian.org ,
+for the Debian GNU/Linux system (but may be used by others).
+It was subsequently revised by Bill Bumgarner
+.Aq bbum@mac.com .
