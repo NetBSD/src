@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.14.2.6 2012/07/25 20:45:23 jdc Exp $	*/
+/*	$NetBSD: npf.h,v 1.14.2.6.4.1 2012/12/16 18:20:09 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@ int		nbuf_advstore(nbuf_t **, void **, u_int, size_t, void *);
 int		nbuf_fetch_datum(nbuf_t *, void *, size_t, void *);
 int		nbuf_store_datum(nbuf_t *, void *, size_t, void *);
 
+void		nbuf_cksum_barrier(nbuf_t *);
 int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
 
