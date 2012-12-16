@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptcd.4,v 1.1 2012/12/16 13:09:18 mbalmer Exp $
+.\"	$NetBSD: ptcd.4,v 1.2 2012/12/16 13:49:48 wiz Exp $
 .\"
 .\" Copyright (c) 2012 Marc Balmer <marc@msys.ch>
 .\" All rights reserved.
@@ -46,10 +46,6 @@ is open.
 .Pp
 To open the cash drawer, set pin 0 to logical 1 for a short period
 of time (e.g. < 1 sec) and then reset the pin to logical 0.
-.Sh CAVEATS
-As it is not possible to detect the hardware at runtime, this driver, when
-enabled, will always attach.
-Only enable it in your kernel configuration if you have the proper hardware.
 .Sh SEE ALSO
 .Xr gpio 4 ,
 .Xr gpioctl 8
@@ -64,3 +60,7 @@ The
 .Nm
 driver was written by
 .An Marc Balmer Aq marc@msys.ch .
+.Sh CAVEATS
+As it is not possible to detect the hardware at runtime, this driver, when
+enabled, will always attach.
+Only enable it in your kernel configuration if you have the proper hardware.
