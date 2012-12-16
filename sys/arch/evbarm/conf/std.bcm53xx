@@ -1,6 +1,6 @@
-#	$NetBSD: std.bcm53xx,v 1.9 2012/12/16 20:44:16 matt Exp $
+#	$NetBSD: std.bcm53xx,v 1.10 2012/12/16 23:47:56 matt Exp $
 #
-# standard NetBSD/evbarm for BEAGLEBAORD options
+# standard NetBSD/evbarm for BCM5301X options
 
 machine	evbarm arm
 include 	"arch/evbarm/conf/std.evbarm"
