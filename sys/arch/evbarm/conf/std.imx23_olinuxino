@@ -1,15 +1,12 @@
-# $Id: std.imx23_olinuxino,v 1.2 2012/12/16 20:38:14 matt Exp $
+# $Id: std.imx23_olinuxino,v 1.3 2012/12/16 23:47:56 matt Exp $
 #
 # IMX23_OLINUXINO standard kernel options.
 
 machine		evbarm arm
-include		"conf/std"		# Standard MI options.
+include		"arch/evbarm/conf/std.evbarm"
 
-options		EXEC_ELF32
 options		CPU_ARM9E
 
-# To support easy transit to ../arch/arm/arm32
-options		ARM32
 options		ARM_INTR_IMPL="<arch/arm/imx/imx23_intr.h>"
 options		EVBARM_BOARDTYPE=OLinuXino
 options		KERNEL_BASE_EXT=0x40000000
