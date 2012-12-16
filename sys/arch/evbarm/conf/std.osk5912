@@ -1,10 +1,9 @@
-#	$NetBSD: std.osk5912,v 1.3 2008/04/27 18:58:46 matt Exp $
+#	$NetBSD: std.osk5912,v 1.4 2012/12/16 20:38:15 matt Exp $
 #
 # standard NetBSD/evbarm for OSK5912 options
 
 machine	evbarm arm
 include		"conf/std"	# MI standard options
-include		"arch/arm/conf/std.arm"	# arch standard options
 
 # Pull in OSK5912 config definitions.
 include "arch/evbarm/conf/files.osk5912"
