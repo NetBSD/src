@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.63 2012/12/16 19:13:15 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.64 2012/12/16 19:42:28 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -7863,4 +7863,14 @@ sys/arch/i386/i386/multiboot.c			1.22
 
 	Fix off by one error.
 	[msaitoh, ticket #749]
+
+usr.sbin/npf/npfctl/npf_build.c			1.16
+usr.sbin/npf/npfctl/npf_disassemble.c		1.13
+usr.sbin/npf/npfctl/npfctl.8			1.11
+usr.sbin/npf/npfctl/npfctl.c			1.25
+usr.sbin/npf/npfctl/npfctl.h			1.24
+
+	npfctl: add 'validate' command to check the config, but not load it.
+	PR#47298.
+	[rmind, ticket #750]
 
