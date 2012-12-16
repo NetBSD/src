@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1411 2012/12/16 13:09:19 mbalmer Exp $
+# $NetBSD: mi,v 1.1412 2012/12/16 20:33:43 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -496,6 +496,7 @@
 ./usr/share/man/cat1/source.0			man-util-catman		.cat
 ./usr/share/man/cat1/spell.0			man-util-catman		.cat
 ./usr/share/man/cat1/split.0			man-util-catman		.cat
+./usr/share/man/cat1/sqlite3.0			man-util-catman		.cat
 ./usr/share/man/cat1/srtconfig.0		man-netutil-catman	.cat
 ./usr/share/man/cat1/ssh-add.0			man-secsh-catman	crypto,.cat
 ./usr/share/man/cat1/ssh-agent.0		man-secsh-catman	crypto,.cat
@@ -3479,6 +3480,7 @@
 ./usr/share/man/html1/source.html		man-util-htmlman	html
 ./usr/share/man/html1/spell.html		man-util-htmlman	html
 ./usr/share/man/html1/split.html		man-util-htmlman	html
+./usr/share/man/html1/sqlite3.html		man-util-htmlman	html
 ./usr/share/man/html1/srtconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html1/ssh-add.html		man-secsh-htmlman	crypto,html
 ./usr/share/man/html1/ssh-agent.html		man-secsh-htmlman	crypto,html
@@ -6112,6 +6114,7 @@
 ./usr/share/man/man1/source.1			man-util-man		.man
 ./usr/share/man/man1/spell.1			man-util-man		.man
 ./usr/share/man/man1/split.1			man-util-man		.man
+./usr/share/man/man1/sqlite3.1			man-util-man		.man
 ./usr/share/man/man1/srtconfig.1		man-netutil-man		.man
 ./usr/share/man/man1/ssh-add.1			man-secsh-man		crypto,.man
 ./usr/share/man/man1/ssh-agent.1		man-secsh-man		crypto,.man
