@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.1 2012/11/20 19:08:45 jkunz Exp $
+# $Id: IMX23_OLINUXINO,v 1.2 2012/12/16 19:45:52 jkunz Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -7,7 +7,7 @@ include "arch/evbarm/conf/std.imx23_olinuxino"
 
 maxusers	8
 
-config	netbsd	root on ? type ?
+config netbsd root on ld0a type ?
 
 # The main bus device
 mainbus0	at root
@@ -25,9 +25,9 @@ apbh0		at mainbus? base 0x80000000 size 0x00040000
 icoll0		at apbh? addr 0x80000000 size 0x2000 irq -1
 
 # Synchronous serial port for SD/MMC
-#ssp0		at apbh? addr 0x80010000 size 0x2000 irq 15
-#sdmmc*		at ssp?
-#ld*		at sdmmc?
+ssp0		at apbh? addr 0x80010000 size 0x2000 irq 15
+sdmmc*		at ssp?
+ld*			at sdmmc?
 
 # APBX bus
 apbx0		at mainbus? base 0x80040000 size 0x00040000
@@ -47,11 +47,7 @@ options		MEMSIZE=64
 options		DDB
 options		HZ=100
 
-options		MEMORY_DISK_HOOKS
-options		MEMORY_DISK_IS_ROOT
-options		MEMORY_DISK_ROOT_SIZE=12288 # 6 megs
-options		MEMORY_DISK_RBFLAGS=RB_SINGLE
-
-pseudo-device	md
-
 file-system	FFS
+file-system	EXT2FS
+file-system	MSDOSFS
+
