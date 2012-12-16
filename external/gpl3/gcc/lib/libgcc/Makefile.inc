@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2012/12/07 15:38:04 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2012/12/16 15:32:38 skrll Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -138,7 +138,7 @@ dp-bit.c: ${.CURDIR}/Makefile
 #
 
 .PATH: ${DIST}/gcc ${DIST}/gcc/cp ${DIST}/gcc/cp/inc ${DIST}/gcc/config \
-	${G_CONFIGDIR} ${G_LIB2ADD:H:O:u}
+	${G_LIB2ADD:H:O:u} ${G_LIB2ADDEH:H:O:u}
 
 .include "../Makefile.tconfigh"
 DPSRCS+=	tconfig.h
