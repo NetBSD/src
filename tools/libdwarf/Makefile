@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2012/12/02 12:48:32 apb Exp $
+#	$NetBSD: Makefile,v 1.5 2012/12/16 06:47:39 apb Exp $
 
 HOSTLIB=dwarf
 
@@ -45,7 +45,7 @@ CPPFLAGS+=	-DHAVE_NBTOOL_CONFIG_H=1 -D_FILE_OFFSET_BITS=64
 
 .PATH:		${LIBDWARF_DIR}
 
-HOST_CPPFLAGS:=	${CPPFLAGS}
+HOST_CPPFLAGS:=	${CPPFLAGS} ${HOST_CPPFLAGS}
 CPPFLAGS:=	# empty
 
 .include "${.CURDIR}/../Makefile.nbincludes"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/12/02 12:48:33 apb Exp $
+#	$NetBSD: Makefile,v 1.7 2012/12/16 06:47:39 apb Exp $
 
 HOSTLIB=	elf
 
@@ -73,7 +73,7 @@ COMPATLIB_NO_LIB= yes # only the include files, not the library
 
 .PATH:		${LIBELF_DIR}
 
-HOST_CPPFLAGS:=	${CPPFLAGS}
+HOST_CPPFLAGS:=	${CPPFLAGS} ${HOST_CPPFLAGS}
 CPPFLAGS:=	# empty
 
 .include "${.CURDIR}/../Makefile.nbincludes"
