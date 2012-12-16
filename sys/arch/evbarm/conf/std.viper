@@ -1,17 +1,12 @@
-#	$NetBSD: std.viper,v 1.7 2012/12/16 20:38:15 matt Exp $
+#	$NetBSD: std.viper,v 1.8 2012/12/16 23:47:57 matt Exp $
 #
 # Arcom Viper standard kernel options
 #
 
 machine evbarm arm
-include		"conf/std"	# MI standard options
+include 	"arch/evbarm/conf/std.evbarm"
 
-include "arch/evbarm/conf/files.viper"
-
-options 	EXEC_ELF32
-options 	EXEC_SCRIPT
-
-options 	ARM32
+include		"arch/evbarm/conf/files.viper"
 
 options 	KERNEL_BASE_EXT=0xc0000000
 makeoptions	LOADADDRESS="0xc0200000"

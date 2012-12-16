@@ -1,19 +1,14 @@
-#	$NetBSD: std.adi_brh,v 1.9 2012/12/16 20:38:14 matt Exp $
+#	$NetBSD: std.adi_brh,v 1.10 2012/12/16 23:47:56 matt Exp $
 #
 # standard NetBSD/evbarm for ADI BRH options
 
 machine	evbarm arm
-include		"conf/std"	# MI standard options
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in ADI BRH config definitions.
-include "arch/evbarm/conf/files.adi_brh"
+include		"arch/evbarm/conf/files.adi_brh"
 
-options 	EXEC_ELF32
 options 	EXEC_AOUT
-options 	EXEC_SCRIPT
-
-# To support easy transit to ../arch/arm/arm32
-options 	ARM32
 
 options 	KERNEL_BASE_EXT=0xc0000000
 makeoptions	LOADADDRESS="0xc0200000"
