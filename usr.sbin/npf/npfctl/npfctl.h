@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.11.2.10 2012/12/11 04:31:52 riz Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.11.2.11 2012/12/16 19:41:37 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -178,6 +178,7 @@ int		npfctl_ncode_disassemble(nc_inf_t *, const void *, size_t);
 
 void		npfctl_config_init(bool);
 int		npfctl_config_send(int, const char *);
+nl_config_t *	npfctl_config_ref(void);
 int		npfctl_config_show(int);
 unsigned long	npfctl_debug_addif(const char *);
 
