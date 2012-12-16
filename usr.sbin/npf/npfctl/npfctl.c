@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.10.2.9 2012/11/26 17:39:29 riz Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.10.2.10 2012/12/16 19:41:37 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.10.2.9 2012/11/26 17:39:29 riz Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.10.2.10 2012/12/16 19:41:37 riz Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -57,6 +57,7 @@ enum {
 	NPFCTL_RELOAD,
 	NPFCTL_SHOWCONF,
 	NPFCTL_FLUSH,
+	NPFCTL_VALIDATE,
 	NPFCTL_TABLE,
 	NPFCTL_STATS,
 	NPFCTL_SESSIONS_SAVE,
@@ -73,6 +74,7 @@ static const struct operations_s {
 	{	"reload",		NPFCTL_RELOAD		},
 	{	"show",			NPFCTL_SHOWCONF,	},
 	{	"flush",		NPFCTL_FLUSH		},
+	{	"valid",		NPFCTL_VALIDATE		},
 	/* Table */
 	{	"table",		NPFCTL_TABLE		},
 	/* Stats */
@@ -382,6 +384,11 @@ npfctl(int action, int argc, char **argv)
 	case NPFCTL_FLUSH:
 		ret = npf_config_flush(fd);
 		break;
+	case NPFCTL_VALIDATE:
+		npfctl_config_init(false);
+		npfctl_parsecfg(argc < 3 ? NPF_CONF_PATH : argv[2]);
+		ret = npfctl_config_show(0);
+		break;
 	case NPFCTL_TABLE:
 		if ((argc -= 2) < 2) {
 			usage();
@@ -433,7 +440,8 @@ main(int argc, char **argv)
 
 	/* Find and call the subroutine. */
 	for (int n = 0; operations[n].cmd != NULL; n++) {
-		if (strcmp(cmd, operations[n].cmd) != 0)
+		const char *opcmd = operations[n].cmd;
+		if (strncmp(cmd, opcmd, strlen(opcmd)) != 0)
 			continue;
 		npfctl(operations[n].action, argc, argv);
 		return EXIT_SUCCESS;

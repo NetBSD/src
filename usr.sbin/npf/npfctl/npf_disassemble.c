@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.3.2.9 2012/11/26 17:39:29 riz Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.3.2.10 2012/12/16 19:41:37 riz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * FIXME: config generation should be redesigned..
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.3.2.9 2012/11/26 17:39:29 riz Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.3.2.10 2012/12/16 19:41:37 riz Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -702,13 +702,18 @@ npfctl_config_show(int fd)
 	bool active, loaded;
 	int error = 0;
 
-	ncf = npf_config_retrieve(fd, &active, &loaded);
-	if (ncf == NULL) {
-		return errno;
+	if (fd) {
+		ncf = npf_config_retrieve(fd, &active, &loaded);
+		if (ncf == NULL) {
+			return errno;
+		}
+		printf("Filtering:\t%s\nConfiguration:\t%s\n\n",
+		    active ? "active" : "inactive",
+		    loaded ? "loaded" : "empty");
+	} else {
+		ncf = npfctl_config_ref();
+		loaded = true;
 	}
-	printf("Filtering:\t%s\nConfiguration:\t%s\n\n",
-	    active ? "active" : "inactive",
-	    loaded ? "loaded" : "empty");
 
 	if (loaded) {
 		_npf_table_foreach(ncf, npfctl_show_table);
