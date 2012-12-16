@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.61 2012/12/15 23:47:17 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.62 2012/12/16 18:25:07 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -7840,4 +7840,22 @@ sys/net/npf/npf_ext_rndblock.c			1.1
 	is a demo module, although it can be used for packet
 	loss simulation.
 	[rmind, ticket #745]
+
+sys/net/npf/npf.h				1.23
+sys/net/npf/npf_inet.c				1.18
+sys/net/npf/npf_mbuf.c				1.8
+
+	npf_rwrcksum: handle delayed checksums in the network stack; also fix
+	non-NPF_NAT_PORTS case and add some comments.  PR/47235.
+	[rmind, ticket #746]
+
+sys/dev/pcmcia/if_ray.c				1.81
+
+	Use the correct size for a memcpy().
+	[msaitoh, ticket #747]
+
+sys/fs/v7fs/v7fs_file.c				1.5
+
+	Fix off by one error.
+	[msaitoh, ticket #748]
 
