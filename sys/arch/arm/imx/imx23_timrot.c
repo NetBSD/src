@@ -1,4 +1,4 @@
-/* $Id: imx23_timrot.c,v 1.1 2012/11/20 19:06:14 jkunz Exp $ */
+/* $Id: imx23_timrot.c,v 1.2 2012/12/16 19:40:00 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -290,7 +290,7 @@ stattimer_irq(void *frame)
 /*
  * Reset the TIMROT block.
  *
- * Inspired by i.MX233 RM "39.3.10 Correct Way to Soft Reset a Block"
+ * Inspired by i.MX23 RM "39.3.10 Correct Way to Soft Reset a Block"
  */
 static void
 timrot_reset(void)
