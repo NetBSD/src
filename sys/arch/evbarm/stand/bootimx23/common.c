@@ -1,4 +1,4 @@
-/* $Id: common.c,v 1.1 2012/11/20 19:08:46 jkunz Exp $ */
+/* $Id: common.c,v 1.2 2012/12/16 19:08:44 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/cdefs.h>
 
 #include <arm/imx/imx23_digctlreg.h>
@@ -38,16 +39,33 @@
 #include "common.h"
 
 /*
- * Delay "delay" microseconds.
+ * Delay us microseconds.
  */
 void
-delay_us(unsigned int delay)
+delay(unsigned int us)
 {
+	uint32_t start;
+	uint32_t now;
+	uint32_t elapsed;
+	uint32_t total;
+	uint32_t last;
 
-	/* Set microsecond timer to 0 */
-	REG_WRITE(HW_DIGCTL_BASE + HW_DIGCTL_MICROSECONDS_CLR, 0xFFFFFFFF);
+	total = 0;
+	last = 0;
+	start = REG_RD(HW_DIGCTL_BASE + HW_DIGCTL_MICROSECONDS);
 
-	while (REG_READ(HW_DIGCTL_BASE + HW_DIGCTL_MICROSECONDS) < delay);
+	do {
+		now = REG_RD(HW_DIGCTL_BASE + HW_DIGCTL_MICROSECONDS);
+
+		if (start <= now)
+			elapsed = now - start;
+		else	/* Take care of overflow. */
+			elapsed = (UINT32_MAX - start) + 1 + now;
+
+		total += elapsed - last;
+		last = elapsed;
+
+	} while (total < us);
 
 	return;
 }
@@ -60,10 +78,14 @@ putchar(int ch)
 {
 
 	/* Wait until transmit FIFO has space for the new character. */
-	while (REG_READ(HW_UARTDBG_BASE + HW_UARTDBGFR) & HW_UARTDBGFR_TXFF);
+	while (REG_RD(HW_UARTDBG_BASE + HW_UARTDBGFR) & HW_UARTDBGFR_TXFF);
 
-	REG_WRITE_BYTE(HW_UARTDBG_BASE + HW_UARTDBGDR,
+	REG_WR_BYTE(HW_UARTDBG_BASE + HW_UARTDBGDR,
 	    __SHIFTIN(ch, HW_UARTDBGDR_DATA));
+#ifdef DEBUG
+	/* Flush: Wait until transmit FIFO contents are written to UART. */
+	while (!(REG_RD(HW_UARTDBG_BASE + HW_UARTDBGFR) & HW_UARTDBGFR_TXFE));
+#endif
 
 	return;
 }

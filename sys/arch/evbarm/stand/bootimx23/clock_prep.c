@@ -1,4 +1,4 @@
-/* $Id: clock_prep.c,v 1.1 2012/11/20 19:08:46 jkunz Exp $ */
+/* $Id: clock_prep.c,v 1.2 2012/12/16 19:08:44 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -39,26 +39,28 @@
 
 #include "common.h"
 
-void enable_pll(void);
-void enable_ref_cpu(int);
-void enable_ref_emi(int);
-void enable_ref_io(int);
-void use_ref_cpu(void);
-void use_ref_emi(void);
-void use_ref_io(void);
-void set_hbus_div(int);
-void set_emi_div(int);
-void set_ssp_div(int);
+static void enable_pll(void);
+static void enable_ref_cpu(int);
+static void enable_ref_emi(int);
+static void enable_ref_io(int);
+static void use_ref_cpu(void);
+static void use_ref_emi(void);
+static void use_ref_io(void);
+static void set_hbus_div(int);
+static void set_emi_div(int);
+static void set_ssp_div(int);
 
-/* Clock frequences after clock_prep() */
-#define CPU_FRAC 0x13		/* CPUCLK @ 454.74 MHz */
-#define HBUS_DIV 0x3		/* AHBCLK @ 151.58 MHz */
-#define EMI_FRAC 0x21		/* EMICLK @ 130.91 MHz */
-#define EMI_DIV 0x2
-#define IO_FRAC 0x12		/* IOCLK  @ 480.00 MHz */
-#define SSP_DIV 0x5		/* SSPCLK @  96.00 MHz */
+/*
+ * Clock frequences set by clock_prep()
+ */
+#define CPU_FRAC	0x13		/* CPUCLK @ 454.74 MHz */
+#define HBUS_DIV	0x3		/* AHBCLK @ 151.58 MHz */
+#define EMI_FRAC	0x21		/* EMICLK @ 130.91 MHz */
+#define EMI_DIV		0x2
+#define IO_FRAC		0x12		/* IOCLK  @ 480.00 MHz */
+#define SSP_DIV		0x5		/* SSPCLK @  96.00 MHz */
 
-/* Offset to frac register for byte store instructions. (strb) */
+/* Offset to frac register for CLKCTRL_WR_BYTE macro. */
 #define HW_CLKCTRL_FRAC_CPU (HW_CLKCTRL_FRAC+0)
 #define HW_CLKCTRL_FRAC_EMI (HW_CLKCTRL_FRAC+1)
 #define HW_CLKCTRL_FRAC_IO (HW_CLKCTRL_FRAC+3)
@@ -86,9 +88,7 @@ clock_prep(void)
 	enable_ref_io(IO_FRAC);
 	set_emi_div(EMI_DIV);
 	set_hbus_div(HBUS_DIV);
-	delay_us(1000);
 	use_ref_cpu();
-	//delay_us(1000);
 	use_ref_emi();
 	use_ref_io();
 	set_ssp_div(SSP_DIV);
@@ -99,7 +99,7 @@ clock_prep(void)
 /*
  * Turn PLL on and wait until it's locked to 480 MHz.
  */
-void
+static void
 enable_pll(void)
 {
 
@@ -112,7 +112,7 @@ enable_pll(void)
 /*
  * Enable fractional divider clock ref_cpu with divide value "frac".
  */
-void
+static void
 enable_ref_cpu(int frac)
 {
 	uint32_t reg;
@@ -128,7 +128,7 @@ enable_ref_cpu(int frac)
 /*
  * Enable fractional divider clock ref_emi with divide value "frac".
  */
-void
+static void
 enable_ref_emi(int frac)
 {
 	uint32_t reg;
@@ -144,7 +144,7 @@ enable_ref_emi(int frac)
 /*
  * Enable fractional divider clock ref_io with divide value "frac".
  */
-void
+static void
 enable_ref_io(int frac)
 {
 	uint32_t reg;
@@ -160,7 +160,7 @@ enable_ref_io(int frac)
 /*
  * Divide CLK_P by "div" to get CLK_H frequency.
  */
-void
+static void
 set_hbus_div(int div)
 {
 	uint32_t reg;
@@ -177,7 +177,7 @@ set_hbus_div(int div)
 /*
  * ref_emi is divied "div" to get CLK_EMI.
  */
-void
+static void
 set_emi_div(int div)
 {
 	uint32_t reg;
@@ -193,7 +193,7 @@ set_emi_div(int div)
 /*
  * ref_io is divied "div" to get CLK_SSP.
  */
-void
+static void
 set_ssp_div(int div)
 {
 	uint32_t reg;
@@ -209,7 +209,7 @@ set_ssp_div(int div)
 /*
  * Transition from ref_xtal to use ref_cpu.
  */
-void
+static void
 use_ref_cpu(void)
 {
 	CLKCTRL_WR(HW_CLKCTRL_CLKSEQ_CLR, HW_CLKCTRL_CLKSEQ_BYPASS_CPU);
@@ -219,7 +219,7 @@ use_ref_cpu(void)
 /*
  * Transition from ref_xtal to use ref_emi and source CLK_EMI from ref_emi.
  */
-void
+static void
 use_ref_emi(void)
 {
 	uint32_t reg;
@@ -238,7 +238,7 @@ use_ref_emi(void)
 /*
  * Transition from ref_xtal to use ref_io and source CLK_SSP from ref_io.
  */
-void
+static void
 use_ref_io(void)
 {
 	uint32_t reg;
