@@ -1,4 +1,4 @@
-/* $Id: imx23_apbdma.c,v 1.1 2012/11/20 19:06:12 jkunz Exp $ */
+/* $Id: imx23_apbdma.c,v 1.2 2012/12/16 19:40:00 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ apbdma_activate(device_t self, enum devact act)
 /*
  * Reset the APB{H,X}DMA block.
  *
- * Inspired by i.MX233 RM "39.3.10 Correct Way to Soft Reset a Block"
+ * Inspired by i.MX23 RM "39.3.10 Correct Way to Soft Reset a Block"
  */
 static void
 apbdma_reset(struct apbdma_softc *sc)
