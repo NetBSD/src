@@ -1,19 +1,14 @@
-#	$NetBSD: std.smdk2410,v 1.6 2012/12/16 20:38:15 matt Exp $
+#	$NetBSD: std.smdk2410,v 1.7 2012/12/16 23:47:56 matt Exp $
 #
 # standard NetBSD/evbarm for SMDK2410 options
 
 machine	evbarm arm
-include		"conf/std"	# MI standard options
+include 	"arch/evbarm/conf/std.evbarm"
 
 # Config definitions for SMDK2410
-include "arch/evbarm/conf/files.smdk2410"
+include		"arch/evbarm/conf/files.smdk2410"
 
-options 	EXEC_ELF32
 options 	EXEC_AOUT
-options 	EXEC_SCRIPT
-
-# To support easy transit to ../arch/arm/arm32
-options 	ARM32
 
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
