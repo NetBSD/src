@@ -1,4 +1,9 @@
-# $NetBSD: files.cortex,v 1.2 2012/09/02 16:55:10 matt Exp $
+# $NetBSD: files.cortex,v 1.3 2012/12/17 00:44:03 matt Exp $
+
+defflag opt_cpu_in_cksum.h			NEON_IN_CKSUM
+
+file	arch/arm/cortex/cpu_in_cksum_neon.c	(inet | inet6) & neon_in_cksum
+file	arch/arm/cortex/cpu_in_cksum_asm_neon.S	(inet | inet6) & neon_in_cksum
 
 device	armperiph {}
 attach	armperiph at mainbus
