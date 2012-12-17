@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1412 2012/12/16 20:33:43 christos Exp $
+# $NetBSD: mi,v 1.1413 2012/12/17 20:38:00 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1180,6 +1180,7 @@
 ./usr/share/man/cat4/i4btrc.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i915drm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iavc.0			man-sys-catman		.cat
+./usr/share/man/cat4/ibmcd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ibmhawk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ichlpcib.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ichsmb.0			man-sys-catman		.cat
@@ -4074,6 +4075,7 @@
 ./usr/share/man/html4/i386/viac7temp.html	man-sys-htmlman		html
 ./usr/share/man/html4/i915drm.html		man-sys-htmlman		html
 ./usr/share/man/html4/iavc.html			man-sys-htmlman		html
+./usr/share/man/html4/ibmcd.html		man-sys-htmlman		html
 ./usr/share/man/html4/ibmhawk.html		man-sys-htmlman		html
 ./usr/share/man/html4/ichlpcib.html		man-obsolete		obsolete
 ./usr/share/man/html4/ichsmb.html		man-sys-htmlman		html
@@ -6798,6 +6800,7 @@
 ./usr/share/man/man4/i4btrc.4			man-obsolete		obsolete
 ./usr/share/man/man4/i915drm.4			man-sys-man		.man
 ./usr/share/man/man4/iavc.4			man-sys-man		.man
+./usr/share/man/man4/ibmcd.4			man-sys-man		.man
 ./usr/share/man/man4/ibmhawk.4			man-sys-man		.man
 ./usr/share/man/man4/ichlpcib.4			man-obsolete		obsolete
 ./usr/share/man/man4/ichsmb.4			man-sys-man		.man
