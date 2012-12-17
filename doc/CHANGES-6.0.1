@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.35 2012/12/16 19:13:03 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.36 2012/12/17 00:28:40 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -270,4 +270,20 @@ sys/arch/i386/i386/multiboot.c			1.22
 
 	Fix off by one error.
 	[msaitoh, ticket #749]
+
+sys/dev/lockstat.c				1.16
+
+	Fix off by one error.
+	[msaitoh, ticket #752]
+
+sys/dev/raidframe/rf_driver.c			1.131
+
+	Fix off by one read.
+	[msaitoh, ticket #753]
+
+sys/external/isc/atheros_hal/dist/ah_eeprom_v14.c 1.6
+sys/external/isc/atheros_hal/dist/ah_eeprom_v4k.c 1.4
+
+	Fix off by one read error.
+	[msaitoh, ticket #754]
 
