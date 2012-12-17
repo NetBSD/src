@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: random_seed,v 1.4 2012/12/14 18:42:25 apb Exp $
+# $NetBSD: random_seed,v 1.5 2012/12/17 18:20:50 apb Exp $
 #
 
 # PROVIDE: random_seed
@@ -59,7 +59,7 @@ random_load()
 {
 	if [ -f $random_file ]; then
 
-		if ! fs_safe "${random_file}"; then
+		if ! fs_safe "$(dirname "${random_file}")"; then
 			return 1
 		fi
 
@@ -90,7 +90,7 @@ random_save()
 
 	rm -Pf "${random_file}"
 
-	if ! fs_safe "${random_file}"; then
+	if ! fs_safe "$(dirname "${random_file}")"; then
 		return 1
 	fi
 
