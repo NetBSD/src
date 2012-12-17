@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.348 2012/12/16 18:52:17 mbalmer Exp $
+# $NetBSD: ALL,v 1.349 2012/12/17 20:38:00 mbalmer Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.348 $"
+#ident 		"ALL-$Revision: 1.349 $"
 
 maxusers	64		# estimated number of users
 
@@ -520,6 +520,10 @@ isa0	at pcib?
 # Protech PS3100 cash drawer port
 ptcd0	at isa?
 gpio*	at ptcd?
+
+# IBM 4810 BSP cash drawer port
+ibmcd*	at pci? dev ? function ?
+gpio*	at ibmcd?
 
 # PCMCIA bus support
 pcmcia* at pcic? controller ? socket ?
