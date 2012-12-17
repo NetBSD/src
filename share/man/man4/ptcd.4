@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptcd.4,v 1.2 2012/12/16 13:49:48 wiz Exp $
+.\"	$NetBSD: ptcd.4,v 1.3 2012/12/17 20:39:23 mbalmer Exp $
 .\"
 .\" Copyright (c) 2012 Marc Balmer <marc@msys.ch>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 16, 2012
+.Dd December 17, 2012
 .Dt PTCD 4
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@ is open.
 To open the cash drawer, set pin 0 to logical 1 for a short period
 of time (e.g. < 1 sec) and then reset the pin to logical 0.
 .Sh SEE ALSO
+.Xr ibmcd 4 ,
 .Xr gpio 4 ,
 .Xr gpioctl 8
 .Sh HISTORY
