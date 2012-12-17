@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: ptcd.c,v 1.2 2012/12/17 17:44:18 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2012 Marc Balmer <marc@msys.ch>
