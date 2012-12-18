@@ -28,11 +28,10 @@
  */
 
 #include <machine/asm.h>
-#include "assym.h"
 
 #ifdef _ARM_ARCH_7
 
-RCSID("$NetBSD: neon_mask.S,v 1.1 2012/12/17 00:46:14 matt Exp $")
+RCSID("$NetBSD: neon_mask.S,v 1.2 2012/12/18 06:14:23 matt Exp $")
 
 /*
  * __neon_loading_qword_bitmask(size_t len);
@@ -45,7 +44,7 @@ ENTRY(__neon_leading_qword_bitmask)
 	sublt		r0, r0, #64	/* 1st dword needs MSBs cleared */
 	subge		r1, r0, #128	/* 2nd dword needs MSBs cleared */
 #else
-	rsblt		r0, r0 	#64	/* 1st dword needs LSBs cleared */
+	rsblt		r0, r0, #64	/* 1st dword needs LSBs cleared */
 	rsbge		r1, r0, #128	/* 2nd dword needs LSBs cleared */
 #endif
 	movge		r0, #0		/* 1st dword needs to left alone */
