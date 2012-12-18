@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob.c,v 1.1 2011/07/07 15:53:27 jruoho Exp $	*/
+/*	$NetBSD: t_glob.c,v 1.2 2012/12/18 01:37:28 christos Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob.c,v 1.1 2011/07/07 15:53:27 jruoho Exp $");
+__RCSID("$NetBSD: t_glob.c,v 1.2 2012/12/18 01:37:28 christos Exp $");
 
 #include <atf-c.h>
 
@@ -144,10 +144,33 @@ gl_stat(const char *name , __gl_stat_t *st)
 	char buf[MAXPATHLEN];
 	trim(buf, sizeof(buf), name);
 	memset(st, 0, sizeof(*st));
-	if (strcmp(buf, "a") == 0 || strcmp(buf, "a/b") == 0)
+
+	if (strcmp(buf, "a") == 0 || strcmp(buf, "a/b") == 0) {
 		st->st_mode |= _S_IFDIR;
+		return 0;
+	}
+
+	if (buf[0] == 'a' && buf[1] == '/') {
+		struct gl_file *f;
+		size_t offs, count;
+
+		if (buf[2] == 'b' && buf[3] == '/') {
+			offs = 4;
+			count = __arraycount(b);
+			f = b;
+		} else {
+			offs = 2;
+			count = __arraycount(a);
+			f = a;
+		}
+		
+		for (size_t i = 0; i < count; i++)
+			if (strcmp(f[i].name, buf + offs) == 0)
+				return 0;
+	}
 	DPRINTF(("stat %s %d\n", buf, st->st_mode));
-	return 0;
+	errno = ENOENT;
+	return -1;
 }
 
 static int
@@ -215,10 +238,29 @@ ATF_TC_BODY(glob_star_not, tc)
 	run("a/**", 0, glob_star_not, __arraycount(glob_star_not));
 }
 
+ATF_TC(glob_nocheck);
+ATF_TC_HEAD(glob_nocheck, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test glob(3) pattern with backslash and GLOB_NOCHECK");
+}
+
+
+ATF_TC_BODY(glob_nocheck, tc)
+{
+	static const char pattern[] = { 'f', 'o', 'o', '\\', ';', 'b', 'a',
+	    'r', '\0' };
+	static const char *glob_nocheck[] = {
+	    pattern
+	};
+	run(pattern, GLOB_NOCHECK, glob_nocheck, __arraycount(glob_nocheck));
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, glob_star);
 	ATF_TP_ADD_TC(tp, glob_star_not);
+	ATF_TP_ADD_TC(tp, glob_nocheck);
 
 	return atf_no_error();
 }
