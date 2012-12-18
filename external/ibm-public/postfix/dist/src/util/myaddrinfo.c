@@ -1,4 +1,4 @@
-/*	$NetBSD: myaddrinfo.c,v 1.1.1.2 2011/03/02 19:32:44 tron Exp $	*/
+/*	$NetBSD: myaddrinfo.c,v 1.1.1.3 2012/12/18 09:02:23 tron Exp $	*/
 
 /*++
 /* NAME
@@ -80,6 +80,7 @@
 /*	into printable form. The result buffers should be large
 /*	enough to hold the printable address or port including the
 /*	null terminator.
+/*	This function strips off the IPv6 datalink suffix.
 /*
 /*	sockaddr_to_hostname() converts a binary network address
 /*	into a hostname or service.  The result buffer should be
@@ -204,6 +205,7 @@
 #include <msg.h>
 #include <inet_proto.h>
 #include <myaddrinfo.h>
+#include <split_at.h>
 
 /* Application-specific. */
 
@@ -609,16 +611,20 @@ int     sockaddr_to_hostaddr(const struct sockaddr * sa, SOCKADDR_SIZE salen,
     }
     return (0);
 #else
+    int     ret;
 
     /*
      * Native getnameinfo(3) version.
      */
-    return (getnameinfo(sa, salen,
-			hostaddr ? hostaddr->buf : (char *) 0,
-			hostaddr ? sizeof(hostaddr->buf) : 0,
-			portnum ? portnum->buf : (char *) 0,
-			portnum ? sizeof(portnum->buf) : 0,
-			NI_NUMERICHOST | NI_NUMERICSERV));
+    ret = getnameinfo(sa, salen,
+		      hostaddr ? hostaddr->buf : (char *) 0,
+		      hostaddr ? sizeof(hostaddr->buf) : 0,
+		      portnum ? portnum->buf : (char *) 0,
+		      portnum ? sizeof(portnum->buf) : 0,
+		      NI_NUMERICHOST | NI_NUMERICSERV);
+    if (hostaddr != 0 && ret == 0 && sa->sa_family == AF_INET6)
+	(void) split_at(hostaddr->buf, '%');
+    return (ret);
 #endif
 }
 
