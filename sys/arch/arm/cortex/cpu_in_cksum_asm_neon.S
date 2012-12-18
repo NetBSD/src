@@ -28,9 +28,8 @@
  */
 
 #include <machine/asm.h>
-#include "assym.h"
 
-RCSID("$NetBSD: cpu_in_cksum_asm_neon.S,v 1.1 2012/12/17 00:44:03 matt Exp $")
+RCSID("$NetBSD: cpu_in_cksum_asm_neon.S,v 1.2 2012/12/18 06:05:56 matt Exp $")
 
 /*
  * uint32_t
@@ -102,6 +101,9 @@ END(cpu_in_cksum_neon)
 partial_qword:
 	str		lr, [sp, #-8]!	/* save LR */
 	vld1.64		{d4-d5}, [ip:128]!	/* fetch data */
+#ifdef __ARMEB__
+	vswp		d5, d4		/* on BE, MSW should be in d5 */
+#endif
 	veor		q0, q0, q0	/* create a null mask */
 	movs		r0, r1, lsl #3	/* any leading bytes? */
 	blne		_C_LABEL(__neon_leading_qword_bitmask)
@@ -123,16 +125,13 @@ partial_qword:
  * uint32_t cpu_in_cksum_neon_v4hdr(void *dptr)
  */
 ENTRY(cpu_in_cksum_neon_v4hdr)
-	veor		q1, q1, q1
 	bic		ip, r0, #7
 	vld1.32		{d0-d2},[ip]	/* it must be in 24 bytes */
-	mov		r1, #0		/* now we must clear one register */
 	tst		r0, #4		/* depending on 64-bit alignment */
 	beq		1f
 	vmov		s0, s5		/* move last U32 to first U32 */
 1:	vmovl.u32	q1, d2		/* move s5 to d3 and clear s5 */
-	vmovl.u16	q2, d0		/* 4 U16 -> 4 U32 */
-	vadd.u32	q3, q3, q2	/* add 4 U32 to accumulator */
+	vmovl.u16	q3, d0		/* 4 U16 -> 4 U32 */
 	vmovl.u16	q2, d1		/* 4 U16 -> 4 U32 */
 	vadd.u32	q3, q3, q2	/* add 4 U32 to accumulator */
 	vmovl.u16	q2, d2		/* 4 U16 -> 4 U32 */
