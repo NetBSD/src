@@ -29,18 +29,30 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: cpu_in_cksum_v4hdr.S,v 1.1 2012/12/18 13:41:42 matt Exp $")
+RCSID("$NetBSD: cpu_in_cksum_v4hdr.S,v 1.2 2012/12/18 14:08:25 matt Exp $")
 
 ENTRY(cpu_in_cksum_v4hdr)
+#ifdef _ARM_ARCH_DWORD_OK
+	tst	r0, #4			/* 64-bit aligned? */
+	ldreqd	r2, [r0], #8		/* load 1st/2nd words */
+	ldrne	ip, [r0], #4		/* load 1st word */
+	ldreq	ip, [r0, #8]		/* load 5th word */
+	ldrned	r2, [r0, #8]		/* load 4th/5th words */
+#else
 	ldr	ip, [r0]		/* load 1st word */
 	ldr	r3, [r0, #4]		/* load 2nd word */
-	adds	r3, r3, ip		/* add 1st to 2nd */
 	ldr	r2, [r0, #8]		/* load 3rd word */
-	adcs	r2, r2, r3		/* add sum to 3rd */
+#endif
+	adds	r3, r3, ip		/* accumulate */
+	adcs	r2, r2, r3		/* accumulate */
+#ifdef _ARM_ARCH_DWORD_OK
+	ldrd	r0, [r0]		/* load remaining words */
+#else
 	ldr	r1, [r0, #12]		/* load 4th word */
-	adcs	r1, r1, r2		/* add sum to 4th */
 	ldr	r0, [r0, #16]		/* load 5th word */
-	adcs	r0, r0, r1		/* add sum to 5th */
+#endif
+	adcs	r1, r1, r2		/* accumulate */
+	adcs	r0, r0, r1		/* accumulate */
 	/*
 	 * We now have a 33-bit (r0 + carry) sum which needs to resolved to a
 	 * 16-bit sum.
@@ -62,7 +74,7 @@ ENTRY(cpu_in_cksum_v4hdr)
 	movw	r1, #0xffff		/* load 0xffff */
 #else
 	mov	r1, #0x10000		/* load 0x10000 */
-	sub	r1, r1, #1		/* subtract 1 to get 0xffff */
+	sub	r1, r1, #1		/* subtract by 1 to get 0xffff */
 #endif
 	subge	r0, r0, r1		/* subtract 0xffff */
 	eor	r0, r0, r1		/* complement lower halfword */
