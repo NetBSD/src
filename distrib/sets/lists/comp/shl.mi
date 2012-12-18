@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.242 2012/12/12 17:47:59 christos Exp $
+# $NetBSD: shl.mi,v 1.243 2012/12/18 22:45:14 spz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -262,6 +262,9 @@
 ./usr/libdata/debug/usr/lib/i18n/libmapper_serial.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug		debug
 ./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug
+./usr/libdata/debug/usr/lib/npf/libext_log.so.0.0.debug	comp-npf-debug		debug
+./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-npf-debug		debug
+./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-npf-debug		debug
 ./usr/libdata/debug/usr/lib/libamu.so.4.0.debug		comp-amd-debug	debug
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug	comp-krb5-debug	kerberos,debug
