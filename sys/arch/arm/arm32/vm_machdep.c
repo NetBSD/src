@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.63 2012/12/10 01:37:31 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.64 2012/12/18 06:30:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.63 2012/12/10 01:37:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64 2012/12/18 06:30:18 matt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -64,15 +64,12 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.63 2012/12/10 01:37:31 matt Exp $")
 
 #include <uvm/uvm_extern.h>
 
+#include <arm/vfpreg.h>
+
 #include <machine/pcb.h>
 #include <machine/pmap.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
-
-extern pv_addr_t systempage;
-
-int process_read_regs(struct proc *p, struct reg *regs);
-int process_read_fpregs(struct proc *p, struct fpreg *regs);
 
 void lwp_trampoline(void);
 
@@ -114,29 +111,28 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb1, *pcb2;
 	struct switchframe *sf;
 	vaddr_t uv;
 
-	pcb1 = lwp_getpcb(l1);
-	pcb2 = lwp_getpcb(l2);
+	const struct pcb * const pcb1 = lwp_getpcb(l1);
+	struct pcb * const pcb2 = lwp_getpcb(l2);
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("cpu_lwp_fork: %p %p %p %p\n", l1, l2, curlwp, &lwp0);
 #endif	/* PMAP_DEBUG */
 
-#if 0 /* XXX */
-	if (l1 == curlwp) {
-		/* Sync the PCB before we copy it. */
-		savectx(curpcb);
-	}
-#endif
-
-	l2->l_md.md_flags = l1->l_md.md_flags & MDLWP_VFPUSED;
-
 	/* Copy the pcb */
 	*pcb2 = *pcb1;
+
+#ifdef FPU_VFP
+	/*
+	 * Disable the VFP for a newly created LWP but remember if the
+	 * VFP state is valid.
+	 */
+	pcb2->pcb_vfp.vfp_fpexc &= ~VFP_FPEXC_EN;
+	l2->l_md.md_flags = l1->l_md.md_flags & MDLWP_VFPUSED;
+#endif
 
 	/* 
 	 * Set up the kernel stack for the process.
