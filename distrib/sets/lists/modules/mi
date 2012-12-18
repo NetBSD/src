@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.49 2012/12/10 00:32:24 rmind Exp $
+# $NetBSD: mi,v 1.50 2012/12/18 10:59:38 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -35,6 +35,8 @@
 ./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/coredump				base-kernel-modules	kmod
 ./@MODULEDIR@/coredump/coredump.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/cyclic				base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/cyclic/cyclic.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dbcool				base-kernel-modules	kmod
 ./@MODULEDIR@/dbcool/dbcool.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/dirhash				base-obsolete	obsolete
@@ -141,6 +143,8 @@
 ./@MODULEDIR@/ppp_deflate/ppp_deflate.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/procfs				base-kernel-modules	kmod
 ./@MODULEDIR@/procfs/procfs.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/profile				base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/profile/profile.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/ptyfs				base-kernel-modules	kmod
 ./@MODULEDIR@/ptyfs/ptyfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/puffs				base-kernel-modules	kmod
