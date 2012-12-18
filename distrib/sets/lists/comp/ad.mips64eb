@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.95 2012/12/12 17:47:58 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.96 2012/12/18 22:45:13 spz Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -1295,6 +1295,9 @@
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_serial.so.5.0.debug	comp-i18n-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug		debug,compat
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug,compat
+./usr/libdata/debug/usr/lib/64/npf/libext_log.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/64/npf/libext_normalise.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/64/npf/libext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/usr/lib/64/libamu.so.4.0.debug		comp-amd-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
@@ -1312,6 +1315,7 @@
 ./usr/libdata/debug/usr/lib/64/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libcrypto.so.8.0.debug	comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/64/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
 ./usr/libdata/debug/usr/lib/64/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/64/libcurses.so.7.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
@@ -1452,6 +1456,9 @@
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_serial.so.5.0.debug	comp-i18n-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug		debug,compat
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug,compat
+./usr/libdata/debug/usr/lib/o32/npf/libext_log.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/o32/npf/libext_normalise.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/o32/npf/libext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/usr/lib/o32/libamu.so.4.0.debug		comp-amd-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
@@ -1469,6 +1476,7 @@
 ./usr/libdata/debug/usr/lib/o32/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libcrypto.so.8.0.debug	comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/o32/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libcurses.so.7.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
