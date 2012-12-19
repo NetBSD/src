@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.13 2012/09/11 19:43:09 msaitoh Exp $
+#	$NetBSD: IGEPV2,v 1.14 2012/12/19 07:54:41 msaitoh Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -284,3 +284,4 @@ pseudo-device	pty			# pseudo-terminals
 #options	RND_COM
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling

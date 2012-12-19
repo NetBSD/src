@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.4 2012/12/11 19:29:29 riastradh Exp $
+#	$NetBSD: BEAGLEBONE,v 1.5 2012/12/19 07:54:42 msaitoh Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -311,3 +311,4 @@ pseudo-device	pty			# pseudo-terminals
 #options	RND_COM
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling
