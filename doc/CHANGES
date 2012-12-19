@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1771 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1772 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -159,3 +159,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	ibmcd(4): Add a driver for the IBM 4810 BSP cash drawer port.
 		[mbalmer 20121217]
 	postfix(1): Import version 2.8.13 [tron 20121218]
+	dhcpcd(8): Import dhcpcd-5.6.6 [roy 20121219]
