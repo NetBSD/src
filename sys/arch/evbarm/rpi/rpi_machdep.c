@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.18 2012/10/30 20:14:22 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.19 2012/12/19 15:49:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.18 2012/10/30 20:14:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.19 2012/12/19 15:49:47 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -130,6 +130,7 @@ static struct {
 	struct vcprop_tag_boardserial	vbt_serial;
 	struct vcprop_tag_cmdline	vbt_cmdline;
 	struct vcprop_tag_clockrate	vbt_emmcclockrate;
+	struct vcprop_tag_clockrate	vbt_armclockrate;
 	struct vcprop_tag end;
 } vb __packed __aligned(16) =
 {
@@ -194,6 +195,14 @@ static struct {
 		},
 		.id = VCPROP_CLK_EMMC
 	},
+	.vbt_armclockrate = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_armclockrate),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+		.id = VCPROP_CLK_ARM
+	},
 	.end = {
 		.vpt_tag = VCPROPTAG_NULL
 	}
@@ -239,6 +248,9 @@ rpi_bootparams(void)
 			bootconfig.dramblocks++;
 		}
 	}
+	
+	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag))
+		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
 
 #ifdef VERBOSE_INIT_ARM
 	if (vcprop_tag_success_p(&vb.vbt_fwrev.tag))
