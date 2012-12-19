@@ -115,6 +115,8 @@ const struct option cf_options[] = {
 	{"ipv6ra_fork",     no_argument,       NULL, O_IPV6RA_FORK},
 	{"ipv6ra_own",      no_argument,       NULL, O_IPV6RA_OWN},
 	{"ipv6ra_own_default", no_argument,    NULL, O_IPV6RA_OWN_D},
+	{"ipv4only",        no_argument,       NULL, '4'},
+	{"ipv6only",        no_argument,       NULL, '6'},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -731,6 +733,14 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 	case 'Z':
 		ifdv = splitv(&ifdc, ifdv, arg);
 		break;
+	case '4':
+		ifo->options &= ~(DHCPCD_IPV6 | DHCPCD_IPV6RS);
+		ifo->options |= DHCPCD_IPV4;
+		break;
+	case '6':
+		ifo->options &= ~DHCPCD_IPV4;
+		ifo->options |= DHCPCD_IPV6 | DHCPCD_IPV6RS;
+		break;
 	case O_ARPING:
 		if (parse_addr(&addr, NULL, arg) != 0)
 			return -1;
@@ -810,9 +820,10 @@ read_config(const char *file,
 
 	/* Seed our default options */
 	ifo = xzalloc(sizeof(*ifo));
+	ifo->options |= DHCPCD_IPV4 | DHCPCD_IPV4LL;
 	ifo->options |= DHCPCD_GATEWAY | DHCPCD_DAEMONISE | DHCPCD_LINK;
-	ifo->options |= DHCPCD_ARP | DHCPCD_IPV4LL;
-	ifo->options |= DHCPCD_IPV6RS | DHCPCD_IPV6RA_REQRDNSS;
+	ifo->options |= DHCPCD_ARP;
+	ifo->options |= DHCPCD_IPV6 | DHCPCD_IPV6RS | DHCPCD_IPV6RA_REQRDNSS;
 	ifo->timeout = DEFAULT_TIMEOUT;
 	ifo->reboot = DEFAULT_REBOOT;
 	ifo->metric = -1;

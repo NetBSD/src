@@ -384,7 +384,11 @@ ipv6_remove_subnet(struct ra *rap, struct ipv6_addr *addr)
 #else
 		if (!find_route6(routes, rt))
 #endif
+		{
 			r = del_route6(rt);
+			if (r == -1 && errno == ESRCH)
+				r = 0;
+		}
 		free(rt);
 	}
 	return r;
@@ -410,6 +414,8 @@ ipv6_build_routes(void)
 	TAILQ_FOREACH(rap, &ipv6_routers, next) {
 		if (options & DHCPCD_IPV6RA_OWN) {
 			TAILQ_FOREACH(addr, &rap->addrs, next) {
+				if (!addr->onlink)
+					continue;
 				rt = make_prefix(rap, addr);
 				if (rt)
 					TAILQ_INSERT_TAIL(&dnr, rt, next);
