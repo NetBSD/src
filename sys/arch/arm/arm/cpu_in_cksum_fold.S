@@ -27,46 +27,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
-
-RCSID("$NetBSD: cpu_in_cksum_v4hdr.S,v 1.3 2012/12/19 15:05:16 matt Exp $")
-
-ENTRY(cpu_in_cksum_v4hdr)
-#ifdef _ARM_ARCH_DWORD_OK
-	tst	r0, #4			/* 64-bit aligned? */
-	ldreqd	r2, [r0], #8		/* load 1st/2nd words */
-	ldrne	ip, [r0], #4		/* load 1st word */
-	ldreq	ip, [r0, #8]		/* load 5th word */
-	ldrned	r2, [r0, #8]		/* load 4th/5th words */
-#else
-	ldr	ip, [r0]		/* load 1st word */
-	ldr	r3, [r0, #4]		/* load 2nd word */
-	ldr	r2, [r0, #8]		/* load 3rd word */
-#endif
-	adds	ip, ip, r3		/* accumulate */
-	adcs	ip, ip, r2		/* accumulate */
-#ifdef _ARM_ARCH_DWORD_OK
-	ldrd	r0, [r0]		/* load remaining words */
-#else
-	ldr	r1, [r0, #12]		/* load 4th word */
-	ldr	r0, [r0, #16]		/* load 5th word */
-#endif
-	adcs	ip, ip, r1		/* accumulate */
-	adcs	ip, ip, r0		/* accumulate */
-	/*
-	 * We now have a 33-bit (r0 + carry) sum which needs to resolved to a
-	 * 16-bit sum.  But first, let's put 0xffff in a register.
-	 */
-#ifdef _ARM_ARCH_7
-	movw	r1, #0xffff		/* load 0xffff */
-#else
-	mov	r1, #0x10000		/* load 0x10000 */
-	sub	r1, r1, #1		/* subtract by 1 to get 0xffff */
-#endif
+/*
+ * This file is intended to be included at the end of a in_cksum routine
+ * to reduce the 33-bit sum in <carry>, ip to a 16-bit return value.
+ */
 
 	/*
-	 * We now have the 33-bit result in <carry>, ip.  Pull in the
-	 * standard folding code.
+	 * Add the final carry bit.  If it overflows, we have a 33-bit value
+	 * of 0x1.0000.0000 which we know is just equivalent to 1.  Since we
+	 * return a complement of the lower halfword, that's 0xfffe.
 	 */
-#include "cpu_in_cksum_fold.S"
-END(cpu_in_cksum_v4hdr)
+	adcs	ip, ip, #0		/* add final carry bit */
+	subeq	r0, r1, #1		/* zero?  complement the carry */
+	RETc(eq)			/*	  and return 0xfffe */
+	/*
+	 * Now prevent the adding of 0xffff to 0xffff by making sure the upper
+	 * halfword isn't 0xffff.  If it is, just complement all 32-bits
+	 * which clears the upper halfword and complements the lower halfword.
+	 */
+	cmp	ip, r1, lsl #16		/* is the upper halfword 0xffff? */
+	mvneq	r0, ip			/*   yes, complement */
+	RETc(eq)			/*	  and return */
+	/*
+	 * Finally add the lower halfword to the upper halfword.  If we have
+	 * a result >= 0x10000, carry will be set.  The maximum result will
+	 * be 0x[1]fffe.  So if the carry bit is set, just add 0x10000
+	 * (which is equivalent to subtracting 0xffff.0000).
+	 */
+	adds	ip, ip, ip, lsl #16
+	addcs	ip, ip, #0x10000
+	eor	r0, r1, ip, lsr #16
+	RET
