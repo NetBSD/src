@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.418 2012/12/19 13:35:45 mbalmer Exp $
+.\"	$NetBSD: options.4,v 1.419 2012/12/19 15:00:34 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2229,7 +2229,7 @@ This means that the system always starts in secure level \-1 mode, even when
 running multiuser, unless the securelevel variable is set to value > \-1 in
 .Pa /etc/rc.conf .
 In this case the kernel security level will be raised to that value when the
-.Pa /etc/rc.d/securlevel
+.Pa /etc/rc.d/securelevel
 script is run during system startup.
 See the manual page for
 .Xr init 8
