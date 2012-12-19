@@ -291,6 +291,7 @@ ipv6rs_freedrop_addrs(struct ra *rap, int drop)
 		 * This is safe because the RA is removed from the list
 		 * before we are called. */
 		if (drop && (options & DHCPCD_IPV6RA_OWN) &&
+		    !IN6_IS_ADDR_UNSPECIFIED(&ap->addr) &&
 		    !ipv6rs_addrexists(ap))
 		{
 			syslog(LOG_INFO, "%s: deleting address %s",
@@ -568,21 +569,41 @@ ipv6rs_handledata(_unused void *arg)
 				    sizeof(ap->prefix.s6_addr)) == 0)
 					break;
 			if (ap == NULL) {
+				/* As we haven't added the prefix before
+				 * check if we can make an address with it */
+				if (!(pi->nd_opt_pi_flags_reserved &
+				    ND_OPT_PI_FLAG_AUTO) &&
+				    !(pi->nd_opt_pi_flags_reserved &
+				    ND_OPT_PI_FLAG_ONLINK))
+					break;
 				ap = xmalloc(sizeof(*ap));
 				ap->new = 1;
+				ap->onlink = 0;
 				ap->prefix_len = pi->nd_opt_pi_prefix_len;
 				memcpy(ap->prefix.s6_addr,
 				   pi->nd_opt_pi_prefix.s6_addr,
 				   sizeof(ap->prefix.s6_addr));
-				ipv6_makeaddr(&ap->addr, ifp->name,
-				    &ap->prefix, pi->nd_opt_pi_prefix_len);
-				cbp = inet_ntop(AF_INET6, ap->addr.s6_addr,
-				    ntopbuf, INET6_ADDRSTRLEN);
-				if (cbp)
-					snprintf(ap->saddr, sizeof(ap->saddr),
-					    "%s/%d", cbp, ap->prefix_len);
-				else
+				if (pi->nd_opt_pi_flags_reserved &
+				    ND_OPT_PI_FLAG_AUTO)
+				{
+					ipv6_makeaddr(&ap->addr, ifp->name,
+					    &ap->prefix,
+					    pi->nd_opt_pi_prefix_len);
+					cbp = inet_ntop(AF_INET6,
+					    ap->addr.s6_addr,
+					    ntopbuf, INET6_ADDRSTRLEN);
+					if (cbp)
+						snprintf(ap->saddr,
+						    sizeof(ap->saddr),
+						    "%s/%d",
+						    cbp, ap->prefix_len);
+					else
+						ap->saddr[0] = '\0';
+				} else {
+					memset(ap->addr.s6_addr, 0,
+					    sizeof(ap->addr.s6_addr));
 					ap->saddr[0] = '\0';
+				}
 				TAILQ_INSERT_TAIL(&rap->addrs, ap, next);
 			} else if (ap->prefix_vltime !=
 			    ntohl(pi->nd_opt_pi_valid_time) ||
@@ -591,6 +612,10 @@ ipv6rs_handledata(_unused void *arg)
 				ap->new = 1;
 			else
 				ap->new = 0;
+			/* onlink should not change from on to off */
+			if (pi->nd_opt_pi_flags_reserved &
+			    ND_OPT_PI_FLAG_ONLINK)
+				ap->onlink = 1;
 			ap->prefix_vltime =
 			    ntohl(pi->nd_opt_pi_valid_time);
 			ap->prefix_pltime =
@@ -722,7 +747,8 @@ ipv6rs_handledata(_unused void *arg)
 		add_router(rap);
 	if (options & DHCPCD_IPV6RA_OWN && !(options & DHCPCD_TEST)) {
 		TAILQ_FOREACH(ap, &rap->addrs, next) {
-			if (ap->prefix_vltime == 0)
+			if (ap->prefix_vltime == 0 ||
+			    IN6_IS_ADDR_UNSPECIFIED(&ap->addr))
 				continue;
 			syslog(ap->new ? LOG_INFO : LOG_DEBUG,
 			    "%s: adding address %s",
@@ -774,7 +800,8 @@ ipv6rs_handledata(_unused void *arg)
 handle_flag:
 	if (rap->flags & (ND_RA_FLAG_MANAGED | ND_RA_FLAG_OTHER)) {
 		if (new_data)
-			syslog(LOG_WARNING, "%s: no support for DHCPv6 management",
+			syslog(LOG_WARNING,
+			    "%s: no support for DHCPv6 management",
 			    ifp->name);
 		if (options & DHCPCD_TEST)
 			exit(EXIT_SUCCESS);
