@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.275 2012/11/19 22:22:56 rkujawa Exp $ */
+/*	$NetBSD: wdc.c,v 1.276 2012/12/19 14:05:29 kiyohara Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.275 2012/11/19 22:22:56 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.276 2012/12/19 14:05:29 kiyohara Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -406,6 +406,7 @@ wdc_drvprobe(struct ata_channel *chp)
 			if (chp->ch_drive[i].drive_type != ATA_DRIVET_ATA ||
 			    (wdc->cap & WDC_CAPABILITY_PREATA) == 0) {
 				chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
+				splx(s);
 				continue;
 			}
 			splx(s);
