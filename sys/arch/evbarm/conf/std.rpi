@@ -1,4 +1,4 @@
-#	$NetBSD: std.rpi,v 1.3 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.rpi,v 1.4 2012/12/19 15:51:51 skrll Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
@@ -8,6 +8,7 @@ include 	"arch/evbarm/conf/std.evbarm"
 # Pull in Raspberry Pi config definitions.
 include		"arch/evbarm/conf/files.rpi"
 
+options 	__HAVE_CPU_COUNTER
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	TPIDRPRW_IS_CURCPU
