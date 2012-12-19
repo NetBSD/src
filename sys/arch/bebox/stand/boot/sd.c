@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.2 2011/07/17 20:54:38 joerg Exp $	*/
+/*	$NetBSD: sd.c,v 1.3 2012/12/19 13:53:47 kiyohara Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -583,7 +583,7 @@ sdopen(struct open_file *f, ...)
 	part = va_arg(ap, u_int);
 	va_end(ap);
 
-	DPRINTF(("sdopen: scsi/%d/%d/%d_%d\n", bus, target, lun, part));
+	DPRINTF(("sdopen: scsi/%d%d%d/0_%d\n", bus, target, lun, part));
 
 	sd = alloc(sizeof(struct sd_softc));
 	if (sd == NULL)
