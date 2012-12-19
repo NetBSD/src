@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.18 2012/12/07 22:21:03 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.19 2012/12/19 02:44:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -71,7 +71,6 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.18 2012/12/07 22:21:03 matt Exp $"
 #endif
 #define	BCMETH_EVCNT_INCR(a)	BCMETH_EVCNT_ADD((a), 1)
 
-#define	BCMETH_RCVOFFSET	10
 #define	BCMETH_MAXTXMBUFS	128
 #define	BCMETH_NTXSEGS		30
 #define	BCMETH_MAXRXMBUFS	255
@@ -79,7 +78,7 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.18 2012/12/07 22:21:03 matt Exp $"
 #define	BCMETH_NRXSEGS		1
 #define	BCMETH_RINGSIZE		PAGE_SIZE
 
-#if 0
+#if 1
 #define	BCMETH_RCVMAGIC		0xfeedface
 #endif
 
@@ -148,6 +147,7 @@ struct bcmeth_softc {
 	struct bcmeth_rxqueue sc_rxq;
 	struct bcmeth_txqueue sc_txq;
 
+	size_t sc_rcvoffset;
 	uint32_t sc_maxfrm;
 	uint32_t sc_cmdcfg;
 	uint32_t sc_intmask;
@@ -434,7 +434,7 @@ bcmeth_macaddr_create(const uint8_t *enaddr)
 	return (enaddr[3] << 0)			// UNIMAC_MAC_0
 	    |  (enaddr[2] << 8)			// UNIMAC_MAC_0
 	    |  (enaddr[1] << 16)		// UNIMAC_MAC_0
-	    |  (enaddr[0] << 24)		// UNIMAC_MAC_0
+	    |  ((uint64_t)enaddr[0] << 24)	// UNIMAC_MAC_0
 	    |  ((uint64_t)enaddr[5] << 32)	// UNIMAC_MAC_1
 	    |  ((uint64_t)enaddr[4] << 40);	// UNIMAC_MAC_1
 }
@@ -455,6 +455,21 @@ bcmeth_ifinit(struct ifnet *ifp)
 	 * Stop the interface
 	 */
 	bcmeth_ifstop(ifp, 0);
+
+	/*
+	 * Reserve enough space at the front so that we can insert a maxsized
+	 * link header and a VLAN tag.  Also make sure we have enough room for
+	 * the rcvsts field as well.
+	 */
+	KASSERT(ALIGN(max_linkhdr) == max_linkhdr);
+	KASSERTMSG(max_linkhdr > sizeof(struct ether_header), "%u > %zu",
+	    max_linkhdr, sizeof(struct ether_header));
+	sc->sc_rcvoffset = max_linkhdr + 4 - sizeof(struct ether_header);
+	if (sc->sc_rcvoffset <= 4)
+		sc->sc_rcvoffset += 4;
+	KASSERT((sc->sc_rcvoffset & 3) == 2);
+	KASSERT(sc->sc_rcvoffset <= __SHIFTOUT(RCVCTL_RCVOFFSET, RCVCTL_RCVOFFSET));
+	KASSERT(sc->sc_rcvoffset >= 6);
 
 	/*
 	 * If our frame size has changed (or it's our first time through)
@@ -492,7 +507,7 @@ bcmeth_ifinit(struct ifnet *ifp)
 	bcmeth_rxq_reset(sc, &sc->sc_rxq);
 
 	bcmeth_write_4(sc, sc->sc_rxq.rxq_reg_rcvctl,
-	    __SHIFTIN(BCMETH_RCVOFFSET, RCVCTL_RCVOFFSET)
+	    __SHIFTIN(sc->sc_rcvoffset, RCVCTL_RCVOFFSET)
 	    | RCVCTL_PARITY_DIS
 	    | RCVCTL_OFLOW_CONTINUE
 	    | __SHIFTIN(3, RCVCTL_BURSTLEN));
@@ -958,7 +973,7 @@ bcmeth_rx_input(
 
 	bcmeth_rx_map_unload(sc, m);
 
-	m_adj(m, BCMETH_RCVOFFSET);
+	m_adj(m, sc->sc_rcvoffset);
 
 	switch (__SHIFTOUT(rxdb_flags, RXSTS_PKTTYPE)) {
 	case RXSTS_PKTTYPE_UC:
@@ -1091,7 +1106,7 @@ bcmeth_rxq_consume(
 			} while (m);
 		} else {
 			uint32_t framelen = __SHIFTOUT(rxsts, RXSTS_FRAMELEN);
-			framelen += BCMETH_RCVOFFSET;
+			framelen += sc->sc_rcvoffset;
 			m->m_pkthdr.len = framelen;
 			if (desc_count == 1) {
 				KASSERT(framelen <= MCLBYTES);
