@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.3 2012/12/20 01:15:30 khorben Exp $
+#	$NetBSD: N900,v 1.4 2012/12/20 01:20:54 khorben Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -168,7 +168,7 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # Specify the memory size in megabytes.
-options		MEMSIZE=256
+#options	MEMSIZE=256
 
 # L3 Interconnect
 L3i0		at mainbus?
