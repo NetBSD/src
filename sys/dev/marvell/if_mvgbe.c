@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.32 2012/11/09 09:04:19 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.33 2012/12/20 10:01:28 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.32 2012/11/09 09:04:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.33 2012/12/20 10:01:28 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -429,7 +429,9 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 			if (child) {
 				port = device_private(child);
 				mii  = LIST_FIRST(&port->sc_mii.mii_phys);
-				phyaddr |= MVGBE_PHYADDR_PHYAD(j, mii->mii_phy);
+				if (mii != NULL)
+					phyaddr |= MVGBE_PHYADDR_PHYAD(j,
+					    mii->mii_phy);
 			}
 		}
 		break;
