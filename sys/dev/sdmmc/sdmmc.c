@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.17 2012/12/15 00:07:47 jakllsch Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.18 2012/12/20 14:24:11 jakllsch Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.17 2012/12/15 00:07:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.18 2012/12/20 14:24:11 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -308,7 +308,7 @@ sdmmc_discover_task(void *arg)
 	} else {
 		if (ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
 			CLR(sc->sc_flags, SMF_CARD_PRESENT);
-			sdmmc_card_detach(sc, DETACH_FORCE);
+			sdmmc_card_detach(sc, 0);
 		}
 	}
 }
@@ -398,7 +398,7 @@ sdmmc_card_attach(struct sdmmc_softc *sc)
 	return;
 
 err:
-	sdmmc_card_detach(sc, DETACH_FORCE);
+	sdmmc_card_detach(sc, 0);
 }
 
 /*
@@ -415,7 +415,7 @@ sdmmc_card_detach(struct sdmmc_softc *sc, int flags)
 	if (ISSET(sc->sc_flags, SMF_CARD_ATTACHED)) {
 		SIMPLEQ_FOREACH(sf, &sc->sf_head, sf_list) {
 			if (sf->child != NULL) {
-				config_detach(sf->child, DETACH_FORCE);
+				config_detach(sf->child, flags);
 				sf->child = NULL;
 			}
 		}
@@ -425,8 +425,10 @@ sdmmc_card_detach(struct sdmmc_softc *sc, int flags)
 		CLR(sc->sc_flags, SMF_CARD_ATTACHED);
 	}
 
-	/* Power down. */
-	sdmmc_disable(sc);
+	if ((flags & DETACH_FORCE) == 0) {
+		/* Power down. */
+		sdmmc_disable(sc);
+	}
 
 	/* Free all sdmmc_function structures. */
 	for (sf = SIMPLEQ_FIRST(&sc->sf_head); sf != NULL; sf = sfnext) {
