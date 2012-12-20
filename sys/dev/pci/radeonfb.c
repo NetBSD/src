@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.66 2012/12/20 01:03:23 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.67 2012/12/20 02:58:32 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.66 2012/12/20 01:03:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.67 2012/12/20 02:58:32 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2581,6 +2581,9 @@ radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			data8 = data;
 			for (i = 0; i < h; i++) {
 				reg = *data8;
+#if BYTE_ORDER == LITTLE_ENDIAN
+				reg = reg << 24;
+#endif
 				bus_space_write_stream_4(sc->sc_regt, 
 				    sc->sc_regh, RADEON_HOST_DATA0, reg);
 				data8++;
@@ -2591,6 +2594,9 @@ radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			data16 = data;
 			for (i = 0; i < h; i++) {
 				reg = *data16;
+#if BYTE_ORDER == LITTLE_ENDIAN
+				reg = reg << 16;
+#endif
 				bus_space_write_stream_4(sc->sc_regt, 
 				    sc->sc_regh, RADEON_HOST_DATA0, reg);
 				data16++;
@@ -2804,10 +2810,10 @@ radeonfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 				((g & 0xe000) >> 11) |
 				((b & 0xc000) >> 14);
 		}
-		latch = (latch << 8) | pixel;
+		latch |= pixel << (8 * (i & 3));
 		/* write in 32bit chunks */
 		if ((i & 3) == 3) {
-			PUT32S(sc, RADEON_HOST_DATA0, latch);
+			PUT32(sc, RADEON_HOST_DATA0, latch);
 			/*
 			 * not strictly necessary, old data should be shifted 
 			 * out 
@@ -3138,12 +3144,6 @@ radeonfb_engine_init(struct radeonfb_display *dp)
 	PUT32(sc, RADEON_SRC_PITCH_OFFSET,
 	    (pitch << 22) | (sc->sc_aperbase >> 10));
 
-	radeonfb_wait_fifo(sc, 1);
-#if _BYTE_ORDER == _BIG_ENDIAN
-	SET32(sc, RADEON_DP_DATATYPE, RADEON_HOST_BIG_ENDIAN_EN);
-#else
-	CLR32(sc, RADEON_DP_DATATYPE, RADEON_HOST_BIG_ENDIAN_EN);
-#endif
 	junk = GET32(sc, RADEON_DP_DATATYPE);
 
 	/* default scissors -- no clipping */
