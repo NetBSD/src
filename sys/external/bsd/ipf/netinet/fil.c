@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.6 2012/10/09 21:32:54 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.7 2012/12/20 21:42:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.6 2012/10/09 21:32:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.7 2012/12/20 21:42:27 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -9436,11 +9436,10 @@ ipf_rule_expire(ipf_main_softc_t *softc)
 }
 
 
-static int ipf_ht_node_cmp(struct host_node_s *, struct host_node_s *);
+static int ipf_ht_node_cmp(const struct host_node_s *, const struct host_node_s *);
 static void ipf_ht_node_make_key(host_track_t *, host_node_t *, int,
 				 i6addr_t *);
 
-host_node_t RBI_ZERO(ipf_rb);
 RBI_CODE(ipf_rb, host_node_t, hn_entry, ipf_ht_node_cmp)
 
 
@@ -9463,7 +9462,7 @@ RBI_CODE(ipf_rb, host_node_t, hn_entry, ipf_ht_node_cmp)
 /* for /48's, etc.                                                          */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_ht_node_cmp(struct host_node_s *k1, struct host_node_s *k2)
+ipf_ht_node_cmp(const struct host_node_s *k1, const struct host_node_s *k2)
 {
 	int i;
 
@@ -9627,7 +9626,7 @@ ipf_ht_node_add(ipf_main_softc_t *softc, host_track_t *htp, int family,
 /* NOTE: THIS FUNCTION MUST BE CALLED WITH AN EXCLUSIVE LOCK THAT PREVENTS  */
 /*       ipf_ht_node_add FROM RUNNING CONCURRENTLY ON THE SAME htp.         */
 /*                                                                          */
-/* Try and find the address passed in amongst the leavese on this tree to   */
+/* Try and find the address passed in amongst the leaves on this tree to    */
 /* be friend. If found then drop the active account for that node drops by  */
 /* one. If that count reaches 0, it is time to free it all up.              */
 /* ------------------------------------------------------------------------ */
@@ -9695,6 +9694,7 @@ ipf_rb_ht_freenode(host_node_t *node, void *arg)
 void
 ipf_rb_ht_flush(host_track_t *head)
 {
+	/* XXX - May use node members after freeing the node. */
 	RBI_WALK(ipf_rb, &head->ht_root, ipf_rb_ht_freenode, NULL);
 }
 
