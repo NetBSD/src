@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.23 2012/12/20 11:13:53 plunky Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.24 2012/12/20 11:17:47 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.23 2012/12/20 11:13:53 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.24 2012/12/20 11:17:47 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -193,6 +193,7 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 	int locs[BTHIDBUSCF_NLOCS];
 	int maxid, rep, dlen;
 	int vendor, product;
+	int err;
 
 	/*
 	 * Init softc
@@ -337,8 +338,9 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 	 * start bluetooth connections
 	 */
 	mutex_enter(bt_lock);
-	if ((sc->sc_flags & BTHID_RECONNECT) == 0)
-		bthidev_listen(sc);
+	if ((sc->sc_flags & BTHID_RECONNECT) == 0
+	    && (err = bthidev_listen(sc)) != 0)
+		aprint_error_dev(self, "failed to listen (%d)\n", err);
 
 	if (sc->sc_flags & BTHID_CONNECTING)
 		bthidev_connect(sc);
@@ -561,8 +563,10 @@ bthidev_connect(struct bthidev_softc *sc)
 	}
 
 	err = l2cap_setopt(sc->sc_ctl, &sc->sc_mode);
-	if (err)
+	if (err) {
+		aprint_error_dev(sc->sc_dev, "l2cap_setopt failed (%d)\n", err);
 		return err;
+	}
 
 	bdaddr_copy(&sa.bt_bdaddr, &sc->sc_laddr);
 	err = l2cap_bind(sc->sc_ctl, &sa);
@@ -802,7 +806,7 @@ bthidev_ctl_disconnected(void *arg, int err)
 	sc->sc_state = BTHID_CLOSED;
 
 	if (sc->sc_int == NULL) {
-		aprint_normal_dev(sc->sc_dev, "disconnected\n");
+		aprint_normal_dev(sc->sc_dev, "disconnected (%d)\n", err);
 		sc->sc_flags &= ~BTHID_CONNECTING;
 
 		if (sc->sc_flags & BTHID_RECONNECT)
@@ -834,7 +838,7 @@ bthidev_int_disconnected(void *arg, int err)
 	sc->sc_state = BTHID_CLOSED;
 
 	if (sc->sc_ctl == NULL) {
-		aprint_normal_dev(sc->sc_dev, "disconnected\n");
+		aprint_normal_dev(sc->sc_dev, "disconnected (%d)\n", err);
 		sc->sc_flags &= ~BTHID_CONNECTING;
 
 		if (sc->sc_flags & BTHID_RECONNECT)
