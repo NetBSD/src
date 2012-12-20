@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_cardbus.c,v 1.4 2012/02/02 22:49:17 nonaka Exp $	*/
+/*	$NetBSD: sdhc_cardbus.c,v 1.5 2012/12/20 14:37:00 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_cardbus.c,v 1.4 2012/02/02 22:49:17 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_cardbus.c,v 1.5 2012/12/20 14:37:00 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -191,7 +191,7 @@ sdhc_cardbus_detach(device_t self, int flags)
 	struct cardbus_devfunc *ct = sc->sc_ct;
 	int rv;
 
-	rv = sdhc_detach((device_t)sc->sc.sc_host[0], flags);
+	rv = sdhc_detach(&sc->sc, flags);
 	if (rv)
 		return rv;
 	if (sc->sc_ih != NULL) {
