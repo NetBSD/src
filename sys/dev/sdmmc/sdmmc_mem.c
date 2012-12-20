@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.26 2012/12/15 00:03:00 jakllsch Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.27 2012/12/20 03:51:04 jakllsch Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.26 2012/12/15 00:03:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.27 2012/12/20 03:51:04 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1089,7 +1089,7 @@ sdmmc_mem_sd_switch(struct sdmmc_function *sf, int mode, int group,
 		return EINVAL;
 
 	if (group <= 0 || group > 6 ||
-	    function < 0 || function > 16)
+	    function < 0 || function > 15)
 		return EINVAL;
 
 	gsft = (group - 1) << 2;
