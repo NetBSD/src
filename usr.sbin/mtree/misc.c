@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.33 2012/12/12 15:51:04 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.34 2012/12/20 19:09:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: misc.c,v 1.33 2012/12/12 15:51:04 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.34 2012/12/20 19:09:25 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,6 +49,8 @@ __RCSID("$NetBSD: misc.c,v 1.33 2012/12/12 15:51:04 christos Exp $");
 #include <string.h>
 
 #include "extern.h"
+
+enum flavor	flavor = F_MTREE;
 
 typedef struct _key {
 	const char	*name;		/* key name */
