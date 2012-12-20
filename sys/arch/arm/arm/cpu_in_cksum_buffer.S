@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: cpu_in_cksum_buffer.S,v 1.2 2012/12/20 07:18:33 matt Exp $")
+RCSID("$NetBSD: cpu_in_cksum_buffer.S,v 1.3 2012/12/20 08:03:21 matt Exp $")
 
 /*
  * Special note:
@@ -111,11 +111,14 @@ ENTRY(cpu_in_cksum_buffer)
 	bne	3b			/*   yep, do them */
 
 .Lfinal_dword:
+	ldr	r5, [r0], #4		/* load next word */
+	tst	r1, #3			/* final amount one word exactly? */
+	beq	.Lfinal_add_one_word	/*   yes, and go add it */
 	sub	r3, r1, #1		/* 0-3 = 1 word, 4-7 = 2 words */
-	tst	r3, #4			/* more than one word more left? */
-	moveq	r4, #0			/*   no, just use zero */
-	ldreq	r5, [r0]		/*   no, load last word */
-	ldmneia	r0, {r4-r5}		/*   yes, load last dword */
+	tst	r3, #4			/* one more word left? */
+	moveq	r4, #0			/*   no, use 0 for 1st word  */
+	movne	r4, r5			/*   yes, move from 2nd word to 1st */
+	ldrne	r5, [r0]		/*   yes, load last word */
 .Lfinal_dword_noload:
 	rsb	r1, r1, #4		/* find out many bytes to discard */
 #ifdef __ARMEL__
