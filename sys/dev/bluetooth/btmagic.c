@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.3 2012/06/02 21:36:43 dsl Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.4 2012/12/20 11:13:53 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.3 2012/06/02 21:36:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.4 2012/12/20 11:13:53 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -306,7 +306,8 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 
 		aprint_verbose(" %s %s", BTDEVmode,
 		    prop_string_cstring_nocopy(obj));
-	}
+	} else
+		sockopt_setint(&sc->sc_mode, 0);
 
 	aprint_normal(": 3 buttons, W and Z dirs\n");
 	aprint_naive("\n");
