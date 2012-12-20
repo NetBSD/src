@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.65 2012/12/04 11:24:12 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.66 2012/12/20 01:03:23 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.65 2012/12/04 11:24:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.66 2012/12/20 01:03:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,6 +554,12 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		goto error;
 	}
 
+	PRINTREG(RADEON_CRTC_EXT_CNTL);
+	PRINTREG(RADEON_CRTC_GEN_CNTL);
+	PRINTREG(RADEON_CRTC2_GEN_CNTL);
+	PRINTREG(RADEON_DISP_OUTPUT_CNTL);
+	PRINTREG(RADEON_DAC_CNTL2);
+
 	PRINTREG(RADEON_BIOS_4_SCRATCH);
 	PRINTREG(RADEON_FP_GEN_CNTL);
 	sc->sc_fp_gen_cntl = GET32(sc, RADEON_FP_GEN_CNTL);
@@ -934,8 +940,10 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	 * here after we took over
 	 */
 	radeonfb_init_palette(sc, 0); 
-	if (HAS_CRTC2(sc))
+	if (HAS_CRTC2(sc)) {
 		radeonfb_init_palette(sc, 1);
+		CLR32(sc, RADEON_CRTC2_GEN_CNTL, RADEON_CRTC2_DISP_DIS);
+	}
 	                                
 	pmf_event_register(dev, PMFE_DISPLAY_BRIGHTNESS_UP,
 	    radeonfb_brightness_up, TRUE);
@@ -943,6 +951,12 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	    radeonfb_brightness_down, TRUE);
 
 	config_found_ia(dev, "drm", aux, radeonfb_drm_print);
+
+	PRINTREG(RADEON_CRTC_EXT_CNTL);
+	PRINTREG(RADEON_CRTC_GEN_CNTL);
+	PRINTREG(RADEON_CRTC2_GEN_CNTL);
+	PRINTREG(RADEON_DISP_OUTPUT_CNTL);
+	PRINTREG(RADEON_DAC_CNTL2);
 
 	return;
 
