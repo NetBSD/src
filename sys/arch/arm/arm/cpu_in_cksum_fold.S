@@ -1,3 +1,4 @@
+/*	$NetBSD: cpu_in_cksum_fold.S,v 1.3 2012/12/20 07:20:04 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
