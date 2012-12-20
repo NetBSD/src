@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.6 2012/07/30 19:27:46 pgoyette Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.7 2012/12/20 21:42:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.6 2012/07/30 19:27:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.7 2012/12/20 21:42:28 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -3032,12 +3032,12 @@ ipf_nat_newrdr(fr_info_t *fin, nat_t *nat, natinfo_t *ni)
 /* Attempts to create a new NAT entry.  Does not actually change the packet */
 /* in any way.                                                              */
 /*                                                                          */
-/* This fucntion is in three main parts: (1) deal with creating a new NAT   */
+/* This function is in three main parts: (1) deal with creating a new NAT   */
 /* structure for a "MAP" rule (outgoing NAT translation); (2) deal with     */
 /* creating a new NAT structure for a "RDR" rule (incoming NAT translation) */
 /* and (3) building that structure and putting it into the NAT table(s).    */
 /*                                                                          */
-/* NOTE: natsave should NOT be used top point back to an ipstate_t struct   */
+/* NOTE: natsave should NOT be used to point back to an ipstate_t struct    */
 /*       as it can result in memory being corrupted.                        */
 /* ------------------------------------------------------------------------ */
 nat_t *
@@ -3353,6 +3353,7 @@ ipf_nat_insert(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
 	u_int hv0, hv1;
 	u_int sp, dp;
 	ipnat_t *in;
+	int ret;
 
 	/*
 	 * Try and return an error as early as possible, so calculate the hash
@@ -3435,7 +3436,10 @@ ipf_nat_insert(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
 		nat->nat_mtu[1] = GETIFMTU_4(nat->nat_ifps[1]);
 	}
 
-	return ipf_nat_hashtab_add(softc, softn, nat);
+	ret = ipf_nat_hashtab_add(softc, softn, nat);
+	if (ret == -1)
+		MUTEX_DESTROY(&nat->nat_lock);
+	return ret;
 }
 
 
