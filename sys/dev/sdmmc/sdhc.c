@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.36 2012/12/20 14:37:00 jakllsch Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.37 2012/12/20 22:56:38 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.36 2012/12/20 14:37:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.37 2012/12/20 22:56:38 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1299,7 +1299,7 @@ sdhc_transfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		mutex_exit(&hp->host_mtx);
 
 		if ((seg == (cmd->c_dmamap->dm_nsegs-1)) && (posaddr == (segaddr + seglen))) {
-			break;
+			continue;
 		}
 		mutex_enter(&hp->host_mtx);
 		if ((posaddr >= segaddr) && (posaddr < (segaddr + seglen)))
