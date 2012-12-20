@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: cpu_in_cksum_v4hdr.S,v 1.3 2012/12/19 15:05:16 matt Exp $")
+RCSID("$NetBSD: cpu_in_cksum_v4hdr.S,v 1.4 2012/12/20 07:16:01 matt Exp $")
 
 ENTRY(cpu_in_cksum_v4hdr)
 #ifdef _ARM_ARCH_DWORD_OK
@@ -53,16 +53,6 @@ ENTRY(cpu_in_cksum_v4hdr)
 #endif
 	adcs	ip, ip, r1		/* accumulate */
 	adcs	ip, ip, r0		/* accumulate */
-	/*
-	 * We now have a 33-bit (r0 + carry) sum which needs to resolved to a
-	 * 16-bit sum.  But first, let's put 0xffff in a register.
-	 */
-#ifdef _ARM_ARCH_7
-	movw	r1, #0xffff		/* load 0xffff */
-#else
-	mov	r1, #0x10000		/* load 0x10000 */
-	sub	r1, r1, #1		/* subtract by 1 to get 0xffff */
-#endif
 
 	/*
 	 * We now have the 33-bit result in <carry>, ip.  Pull in the
