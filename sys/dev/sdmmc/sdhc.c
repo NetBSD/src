@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.35 2012/12/13 06:43:37 riastradh Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.36 2012/12/20 14:37:00 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.35 2012/12/13 06:43:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.36 2012/12/20 14:37:00 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -62,6 +62,7 @@ struct sdhc_host {
 
 	bus_space_tag_t iot;		/* host register set tag */
 	bus_space_handle_t ioh;		/* host register set handle */
+	bus_size_t ios;			/* host register space size */
 	bus_dma_tag_t dmat;		/* host DMA tag */
 
 	device_t sdmmc;			/* generic SD/MMC device */
@@ -257,6 +258,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	hp->sc = sc;
 	hp->iot = iot;
 	hp->ioh = ioh;
+	hp->ios = iosize;
 	hp->dmat = sc->sc_dmat;
 
 	mutex_init(&hp->host_mtx, MUTEX_DEFAULT, IPL_SDMMC);
@@ -430,20 +432,40 @@ err1:
 }
 
 int
-sdhc_detach(device_t dev, int flags)
+sdhc_detach(struct sdhc_softc *sc, int flags)
 {
-	struct sdhc_host *hp = (struct sdhc_host *)dev;
-	struct sdhc_softc *sc = hp->sc;
+	struct sdhc_host *hp;
 	int rv = 0;
 
-	if (hp->sdmmc)
-		rv = config_detach(hp->sdmmc, flags);
-
-	cv_destroy(&hp->intr_cv);
-	mutex_destroy(&hp->intr_mtx);
-	mutex_destroy(&hp->host_mtx);
-	free(hp, M_DEVBUF);
-	sc->sc_host[--sc->sc_nhosts] = NULL;
+	for (size_t n = 0; n < sc->sc_nhosts; n++) {
+		hp = sc->sc_host[n];
+		if (hp == NULL)
+			continue;
+		if (hp->sdmmc != NULL) {
+			rv = config_detach(hp->sdmmc, flags);
+			if (rv)
+				break;
+			hp->sdmmc = NULL;
+		}
+		/* disable interrupts */
+		if ((flags & DETACH_FORCE) == 0) {
+			if (ISSET(hp->sc->sc_flags, SDHC_FLAG_32BIT_ACCESS)) {
+				HWRITE4(hp, SDHC_NINTR_SIGNAL_EN, 0);
+			} else {
+				HWRITE2(hp, SDHC_NINTR_SIGNAL_EN, 0);
+			}
+			sdhc_soft_reset(hp, SDHC_RESET_ALL);
+		}
+		cv_destroy(&hp->intr_cv);
+		mutex_destroy(&hp->intr_mtx);
+		mutex_destroy(&hp->host_mtx);
+		if (hp->ios > 0) {
+			bus_space_unmap(hp->iot, hp->ioh, hp->ios);
+			hp->ios = 0;
+		}
+		free(hp, M_DEVBUF);
+		sc->sc_host[n] = NULL;
+	}
 
 	return rv;
 }
