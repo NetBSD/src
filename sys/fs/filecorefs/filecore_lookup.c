@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.16 2012/11/05 17:27:37 dholland Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.17 2012/12/20 08:03:42 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.16 2012/11/05 17:27:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.17 2012/12/20 08:03:42 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -204,7 +204,6 @@ filecore_lookup(void *v)
 
 	error = filecore_dbread(dp, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return error;
 	}
 
