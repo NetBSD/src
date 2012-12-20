@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.120 2012/11/05 17:27:40 dholland Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.121 2012/12/20 08:03:45 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.120 2012/11/05 17:27:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.121 2012/12/20 08:03:45 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1523,7 +1523,6 @@ ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp,
 	error = breadn(vp, blks[0], blksizes[0], &blks[1], &blksizes[1],
 	    run - 1, NOCRED, (modify ? B_MODIFY : 0), &bp);
 	if (error != 0) {
-		brelse(bp, 0);
 		*bpp = NULL;
 		goto out;
 	}
