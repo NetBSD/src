@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.17 2010/12/24 13:38:57 mlelstv Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.18 2012/12/20 08:03:44 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.17 2010/12/24 13:38:57 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.18 2012/12/20 08:03:44 hannken Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -821,8 +821,11 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 		DPRINTF("check cg %d of %d\n", cg, fs->fs_ncg);
 		error = bread(devvp, fsbtodb(fs, cgtod(fs, cg)),
 		    fs->fs_cgsize, FSCRED, 0, &bp);
+		if (error) {
+			continue;
+		}
 		cgp = (struct cg *)bp->b_data;
-		if (error || !cg_chkmagic(cgp, UFS_FSNEEDSWAP(fs))) {
+		if (!cg_chkmagic(cgp, UFS_FSNEEDSWAP(fs))) {
 			brelse(bp, 0);
 			continue;
 		}

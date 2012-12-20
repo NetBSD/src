@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.119 2012/03/13 18:41:13 elad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.120 2012/12/20 08:03:44 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.119 2012/03/13 18:41:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.120 2012/12/20 08:03:44 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -576,7 +576,6 @@ snapshot_copyfs(struct mount *mp, struct vnode *vp, void **sbbuf)
 	if (len > 0) {
 		if ((error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + loc),
 		    len, l->l_cred, 0, &bp)) != 0) {
-			brelse(bp, 0);
 			free(copyfs->fs_csp, M_UFSMNT);
 			free(*sbbuf, M_UFSMNT);
 			*sbbuf = NULL;
@@ -857,7 +856,6 @@ snapshot_writefs(struct mount *mp, struct vnode *vp, void *sbbuf)
 		error = bread(vp, blkno + loc, fs->fs_bsize, l->l_cred,
 		    B_MODIFY, &bp);
 		if (error) {
-			brelse(bp, 0);
 			break;
 		}
 		memcpy(bp->b_data, space, fs->fs_bsize);
@@ -869,7 +867,6 @@ snapshot_writefs(struct mount *mp, struct vnode *vp, void *sbbuf)
 	error = bread(vp, lblkno(fs, fs->fs_sblockloc),
 	    fs->fs_bsize, l->l_cred, B_MODIFY, &bp);
 	if (error) {
-		brelse(bp, 0);
 		goto out;
 	} else {
 		memcpy(bp->b_data, sbbuf, fs->fs_bsize);
@@ -963,7 +960,6 @@ cgaccount1(int cg, struct vnode *vp, void *data, int passno)
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, l->l_cred, 0, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return (error);
 	}
 	cgp = (struct cg *)bp->b_data;
@@ -2159,9 +2155,10 @@ snapblkaddr(struct vnode *vp, daddr_t lbn, daddr_t *res)
 		return error;
 	}
 	error = bread(vp, indirs[num-1].in_lbn, fs->fs_bsize, NOCRED, 0, &bp);
-	if (error == 0)
+	if (error == 0) {
 		*res = idb_get(ip, bp->b_data, indirs[num-1].in_off);
-	brelse(bp, 0);
+		brelse(bp, 0);
+	}
 
 	return error;
 }
