@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.22 2012/04/03 09:32:53 plunky Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.23 2012/12/20 11:13:53 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.22 2012/04/03 09:32:53 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.23 2012/12/20 11:13:53 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -241,7 +241,8 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 
 		aprint_verbose(" %s %s", BTDEVmode,
 					 prop_string_cstring_nocopy(obj));
-	}
+	} else
+		sockopt_setint(&sc->sc_mode, 0);
 
 	obj = prop_dictionary_get(dict, BTHIDEVcontrolpsm);
 	if (prop_object_type(obj) == PROP_TYPE_NUMBER) {
