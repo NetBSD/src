@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_bmap.c,v 1.9 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: filecore_bmap.c,v 1.10 2012/12/20 08:03:42 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.9 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.10 2012/12/20 08:03:42 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,10 +169,6 @@ filecore_map(struct filecore_mnt *fcmp, u_int32_t addr, daddr_t lbn, daddr_t *bn
 		printf("block is at %p\n", bp->b_data);
 #endif
 		if (error != 0) {
-#ifdef FILECORE_DEBUG_BR
-			printf("brelse(%p) bm1\n", bp);
-#endif
-			brelse(bp, 0);
 			return error;
 		}
 		ptr = (u_long *)(bp->b_data) + 1; /* skip map zone header */

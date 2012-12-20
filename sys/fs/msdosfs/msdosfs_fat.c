@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.21 2012/11/04 17:57:59 jakllsch Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.22 2012/12/20 08:03:42 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.21 2012/11/04 17:57:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.22 2012/12/20 08:03:42 hannken Exp $");
 
 /*
  * kernel include files.
@@ -406,7 +406,6 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, u_long fatbn)
 			 * Ignore the error, but turn off FSInfo update for the future.
 			 */
 			pmp->pm_fsinfo = 0;
-			brelse(bpn, 0);
 		} else {
 			struct fsinfo *fp = (struct fsinfo *)bpn->b_data;
 
@@ -573,7 +572,6 @@ fatentry(int function, struct msdosfsmount *pmp, u_long cn, u_long *oldcontents,
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
 	    0, &bp)) != 0) {
-		brelse(bp, 0);
 		return (error);
 	}
 
@@ -654,7 +652,6 @@ fatchain(struct msdosfsmount *pmp, u_long start, u_long count, u_long fillwith)
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
 		    B_MODIFY, &bp);
 		if (error) {
-			brelse(bp, 0);
 			return (error);
 		}
 		while (count > 0) {
@@ -880,7 +877,6 @@ freeclusterchain(struct msdosfsmount *pmp, u_long cluster)
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
 			    NOCRED, B_MODIFY, &bp);
 			if (error) {
-				brelse(bp, 0);
 				return (error);
 			}
 			lbn = bn;
@@ -954,7 +950,6 @@ fillinusemap(struct msdosfsmount *pmp)
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
 			    NOCRED, 0, &bp);
 			if (error) {
-				brelse(bp, 0);
 				return (error);
 			}
 		}
