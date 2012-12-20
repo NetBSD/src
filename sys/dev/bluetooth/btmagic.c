@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.4 2012/12/20 11:13:53 plunky Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.5 2012/12/20 11:17:47 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.4 2012/12/20 11:13:53 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.5 2012/12/20 11:17:47 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -272,6 +272,7 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 	struct wsmousedev_attach_args wsma;
 	const struct sysctlnode *node;
 	prop_object_t obj;
+	int err;
 
 	/*
 	 * Init softc
@@ -392,7 +393,8 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 	 * start bluetooth connections
 	 */
 	mutex_enter(bt_lock);
-	btmagic_listen(sc);
+	if ((err = btmagic_listen(sc)) != 0)
+		aprint_error_dev(self, "failed to listen (%d)\n", err);
 	btmagic_connect(sc);
 	mutex_exit(bt_lock);
 }
@@ -533,8 +535,11 @@ btmagic_connect(struct btmagic_softc *sc)
 	}
 
 	err = l2cap_setopt(sc->sc_ctl, &sc->sc_mode);
-	if (err)
+	if (err) {
+		printf("%s: l2cap_setopt failed (%d)\n",
+		    device_xname(sc->sc_dev), err);
 		return err;
+	}
 
 	bdaddr_copy(&sa.bt_bdaddr, &sc->sc_laddr);
 	err = l2cap_bind(sc->sc_ctl, &sa);
@@ -885,7 +890,7 @@ btmagic_ctl_disconnected(void *arg, int err)
 	}
 
 	if (sc->sc_int == NULL) {
-		printf("%s: disconnected\n", device_xname(sc->sc_dev));
+		printf("%s: disconnected (%d)\n", device_xname(sc->sc_dev), err);
 		CLR(sc->sc_flags, BTMAGIC_CONNECTING);
 		sc->sc_state = BTMAGIC_WAIT_CTL;
 	} else {
@@ -911,7 +916,7 @@ btmagic_int_disconnected(void *arg, int err)
 	}
 
 	if (sc->sc_ctl == NULL) {
-		printf("%s: disconnected\n", device_xname(sc->sc_dev));
+		printf("%s: disconnected (%d)\n", device_xname(sc->sc_dev), err);
 		CLR(sc->sc_flags, BTMAGIC_CONNECTING);
 		sc->sc_state = BTMAGIC_WAIT_CTL;
 	} else {
