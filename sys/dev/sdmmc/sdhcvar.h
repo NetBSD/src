@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.11 2012/12/13 06:43:37 riastradh Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.12 2012/12/20 14:37:00 jakllsch Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ struct sdhc_softc {
 int	sdhc_host_found(struct sdhc_softc *, bus_space_tag_t,
 	    bus_space_handle_t, bus_size_t);
 int	sdhc_intr(void *);
-int	sdhc_detach(device_t, int);
+int	sdhc_detach(struct sdhc_softc *, int);
 bool	sdhc_suspend(device_t, const pmf_qual_t *);
 bool	sdhc_resume(device_t, const pmf_qual_t *);
 bool	sdhc_shutdown(device_t, int);
