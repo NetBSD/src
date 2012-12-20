@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.296 2012/04/30 22:51:28 rmind Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.297 2012/12/20 08:03:45 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.296 2012/04/30 22:51:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.297 2012/12/20 08:03:45 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1443,7 +1443,6 @@ retry:
 		 * list by vput().
 		 */
 		vput(vp);
-		brelse(bp, 0);
 		*vpp = NULL;
 		return (error);
 	}
@@ -2093,6 +2092,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	 */
 	rw_enter(&fs->lfs_iflock, RW_WRITER);
 	for (i = 0; i < ilast; i++) {
+		/* XXX what to do if bread fails? */
 		bread(ivp, i, fs->lfs_bsize, NOCRED, 0, &bp);
 		brelse(bp, 0);
 	}
@@ -2201,6 +2201,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 		    NOCRED);
 
 	/* Update cleaner info so the cleaner can die */
+	/* XXX what to do if bread fails? */
 	bread(ivp, 0, fs->lfs_bsize, NOCRED, B_MODIFY, &bp);
 	((CLEANERINFO *)bp->b_data)->clean = fs->lfs_nclean;
 	((CLEANERINFO *)bp->b_data)->dirty = fs->lfs_nseg - fs->lfs_nclean;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.35 2012/11/21 23:11:23 jakllsch Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.36 2012/12/20 08:03:44 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.35 2012/11/21 23:11:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.36 2012/12/20 08:03:44 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -132,7 +132,6 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 				error = bread(vp, bn, fs->e2fs_bsize, NOCRED,
 					      B_MODIFY, &bp);
 				if (error) {
-					brelse(bp, 0);
 					return (error);
 				}
 				*bpp = bp;
@@ -211,7 +210,6 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		error = bread(vp,
 		    indirs[i].in_lbn, (int)fs->e2fs_bsize, NOCRED, 0, &bp);
 		if (error) {
-			brelse(bp, 0);
 			goto fail;
 		}
 		bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
@@ -297,7 +295,6 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 			error = bread(vp, lbn, (int)fs->e2fs_bsize, NOCRED,
 				      B_MODIFY, &nbp);
 			if (error) {
-				brelse(nbp, 0);
 				goto fail;
 			}
 		} else {
@@ -326,7 +323,6 @@ fail:
 			    (int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 			if (r) {
 				panic("Could not unwind indirect block, error %d", r);
-				brelse(bp, 0);
 			} else {
 				bap = (int32_t *)bp->b_data; /* XXX ondisk32 */
 				bap[indirs[unwindidx].in_off] = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.8 2011/06/12 03:35:53 rmind Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.9 2012/12/20 08:03:43 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.8 2011/06/12 03:35:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.9 2012/12/20 08:03:43 hannken Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -216,7 +216,6 @@ nilfs_btree_lookup_level(struct nilfs_node *node, uint64_t lblocknr,
 	/* get our block */
 	error = nilfs_dev_bread(nilfsdev, btree_blknr, NOCRED, 0, &bp);
 	if (error) {
-		brelse(bp, BC_AGE);
 		return error;
 	}
 
@@ -389,7 +388,6 @@ nilfs_vtop(struct nilfs_device *nilfsdev, uint64_t vblocknr, uint64_t *pblocknr)
 	error = nilfs_bread(nilfsdev->dat_node, ldatblknr, NOCRED, 0, &bp);
 	if (error) {
 		printf("vtop: can't read in DAT block %"PRIu64"!\n", ldatblknr);
-		brelse(bp, BC_AGE);
 		return error;
 	}
 

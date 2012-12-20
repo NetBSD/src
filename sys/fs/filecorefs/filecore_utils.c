@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_utils.c,v 1.10 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: filecore_utils.c,v 1.11 2012/12/20 08:03:42 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.10 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.11 2012/12/20 08:03:42 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,6 @@ filecore_getparent(struct filecore_node *ip)
 	error = filecore_bread(ip->i_mnt, addr, FILECORE_DIR_SIZE,
 	    NOCRED, &pbp);
 	if (error) {
-		brelse(pbp, 0);
 		return error;
 	}
 	paddr = fcdirtail(pbp->b_data)->parent1
@@ -283,7 +282,6 @@ filecore_getparent(struct filecore_node *ip)
 	error = filecore_bread(ip->i_mnt, paddr, FILECORE_DIR_SIZE,
 	    NOCRED, &pbp);
 	if (error) {
-		brelse(pbp, 0);
 		return error;
 	}
 	while (fcdirentry(pbp->b_data,i)->addr != addr) {

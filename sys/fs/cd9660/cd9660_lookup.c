@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.22 2012/11/05 17:27:37 dholland Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.23 2012/12/20 08:03:42 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.22 2012/11/05 17:27:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.23 2012/12/20 08:03:42 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -425,7 +425,6 @@ cd9660_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 	bsize = blksize(imp, ip, lbn);
 
 	if ((error = bread(vp, lbn, bsize, NOCRED, 0, &bp)) != 0) {
-		brelse(bp, 0);
 		*bpp = NULL;
 		return (error);
 	}
