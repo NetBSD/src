@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.67 2012/12/20 02:58:32 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.68 2012/12/20 03:08:39 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.67 2012/12/20 02:58:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.68 2012/12/20 03:08:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,6 +547,8 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	}
 	sc->sc_romt = sc->sc_memt;
 
+	sc->sc_mapped = TRUE;
+
 	/* scratch register test... */
 	if (radeonfb_scratch_test(sc, RADEON_BIOS_0_SCRATCH, 0x55555555) ||
 	    radeonfb_scratch_test(sc, RADEON_BIOS_0_SCRATCH, 0xaaaaaaaa)) {
@@ -974,24 +976,32 @@ error:
 static void
 radeonfb_map(struct radeonfb_softc *sc)
 {
-	if (bus_space_map(sc->sc_regt, sc->sc_regaddr, sc->sc_regsz, 0,
-	    &sc->sc_regh) != 0) {
-		aprint_error("%s: unable to map registers!\n", XNAME(sc));
-		return;
-	}
-	if (bus_space_map(sc->sc_memt, sc->sc_memaddr, sc->sc_memsz,
-		BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
-		sc->sc_memsz = 0;
-		aprint_error("%s: Unable to map frame buffer\n", XNAME(sc));
-		return;
+	if (!sc->sc_mapped) {
+		if (bus_space_map(sc->sc_regt, sc->sc_regaddr, sc->sc_regsz, 0,
+		    &sc->sc_regh) != 0) {
+			aprint_error_dev(sc->sc_dev, 
+			    "unable to map registers!\n");
+			return;
+		}
+		if (bus_space_map(sc->sc_memt, sc->sc_memaddr, sc->sc_memsz,
+		    BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
+			sc->sc_memsz = 0;
+			aprint_error_dev(sc->sc_dev,
+			    "Unable to map frame buffer\n");
+			return;
+		}
+		sc->sc_mapped = TRUE;
 	}
 }
 
 static void
 radeonfb_unmap(struct radeonfb_softc *sc)
 {
-	bus_space_unmap(sc->sc_regt, sc->sc_regh, sc->sc_regsz);
-	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsz);
+	if (sc->sc_mapped) {
+		bus_space_unmap(sc->sc_regt, sc->sc_regh, sc->sc_regsz);
+		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsz);
+		sc->sc_mapped = FALSE;
+	}
 }
 
 static int
@@ -2177,6 +2187,9 @@ radeonfb_isblank(struct radeonfb_display *dp)
 {
 	uint32_t	reg, mask;
 
+	if(!dp->rd_softc->sc_mapped)
+		return 1;
+
 	if (dp->rd_crtcs[0].rc_number) {
 		reg = RADEON_CRTC2_GEN_CNTL;
 		mask = RADEON_CRTC2_DISP_DIS;
@@ -2194,6 +2207,9 @@ radeonfb_blank(struct radeonfb_display *dp, int blank)
 	uint32_t		reg, mask;
 	uint32_t		fpreg, fpval;
 	int			i;
+
+	if (!sc->sc_mapped)
+		return;
 
 	for (i = 0; i < dp->rd_ncrtcs; i++) {
 
