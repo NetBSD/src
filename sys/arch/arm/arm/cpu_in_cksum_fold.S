@@ -31,6 +31,16 @@
  * This file is intended to be included at the end of a in_cksum routine
  * to reduce the 33-bit sum in <carry>, ip to a 16-bit return value.
  */
+	/*
+	 * We now have a 33-bit (r0 + carry) sum which needs to resolved to a
+	 * 16-bit sum.  But first, let's put 0xffff in a register.
+	 */
+#ifdef _ARM_ARCH_7
+	movw	r1, #0xffff		/* load 0xffff */
+#else
+	mov	r1, #0x10000		/* load 0x10000 */
+	sub	r1, r1, #1		/* subtract by 1 to get 0xffff */
+#endif
 
 	/*
 	 * Add the final carry bit.  If it overflows, we have a 33-bit value
