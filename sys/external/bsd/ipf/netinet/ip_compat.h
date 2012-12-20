@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.4 2012/09/15 16:56:45 plunky Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.5 2012/12/20 21:42:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -897,6 +897,10 @@ typedef unsigned int    u_32_t;
 #   define	SPL_X(x)		;
 #  endif
 # endif
+
+#if (__NetBSD_Version__ >= 699000000)
+#  define HAVE_RBTREE	1
+#endif
 
 # ifdef _KERNEL
 #  include <sys/cprng.h>
