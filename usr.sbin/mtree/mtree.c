@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.45 2012/12/20 18:58:37 mlelstv Exp $	*/
+/*	$NetBSD: mtree.c,v 1.46 2012/12/20 19:09:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.45 2012/12/20 18:58:37 mlelstv Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.46 2012/12/20 19:09:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,6 @@ int	ftsoptions = FTS_PHYSICAL;
 int	bflag, cflag, Cflag, dflag, Dflag, eflag, iflag, jflag, lflag, mflag,
     	nflag, qflag, rflag, sflag, tflag, uflag, Uflag, wflag;
 char	fullpath[MAXPATHLEN];
-enum flavor	flavor = F_MTREE;
 
 static struct {
 	enum flavor flavor;
