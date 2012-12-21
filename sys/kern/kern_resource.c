@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.170 2012/11/03 23:22:22 njoly Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.171 2012/12/21 19:39:48 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.170 2012/11/03 23:22:22 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.171 2012/12/21 19:39:48 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 	mutex_enter(proc_lock);
 	switch (SCARG(uap, which)) {
 	case PRIO_PROCESS:
-		p = who ? proc_find(who) : curp;;
+		p = who ? proc_find(who) : curp;
 		if (p != NULL)
 			low = p->p_nice;
 		break;
