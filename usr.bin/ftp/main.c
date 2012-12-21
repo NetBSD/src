@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.120 2011/12/10 05:53:58 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.121 2012/12/21 18:07:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.120 2011/12/10 05:53:58 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.121 2012/12/21 18:07:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,6 +150,9 @@ main(int volatile argc, char **volatile argv)
 
 	ftpport = "ftp";
 	httpport = "http";
+#ifdef WITH_SSL
+	httpsport = "https";
+#endif
 	gateport = NULL;
 	cp = getenv("FTPSERVERPORT");
 	if (cp != NULL)
@@ -1044,6 +1047,9 @@ usage(void)
 "           [[user@]host [port]] [host:path[/]] [file:///file]\n"
 "           [ftp://[user[:pass]@]host[:port]/path[/]]\n"
 "           [http://[user[:pass]@]host[:port]/path] [...]\n"
+#ifdef WITH_SSL
+"           [https://[user[:pass]@]host[:port]/path] [...]\n"
+#endif
 "       %s -u URL file [...]\n", progname, progname);
 	exit(1);
 }
