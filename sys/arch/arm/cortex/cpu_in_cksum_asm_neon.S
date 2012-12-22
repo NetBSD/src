@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: cpu_in_cksum_asm_neon.S,v 1.2 2012/12/18 06:05:56 matt Exp $")
+RCSID("$NetBSD: cpu_in_cksum_asm_neon.S,v 1.3 2012/12/22 18:58:29 matt Exp $")
 
 /*
  * uint32_t
@@ -39,102 +39,144 @@ RCSID("$NetBSD: cpu_in_cksum_asm_neon.S,v 1.2 2012/12/18 06:05:56 matt Exp $")
  *	r1 = dlen
  */
 ENTRY(cpu_in_cksum_neon)
-	str		lr, [sp, #-8]!	/* save lr */
 	mov		ip, r0		/* leave r0 as temp */
 	add		r3, r1, ip	/* get end pointer */
-	ands		r1, ip, #15	/* get qword offset */
-	bic		ip, ip, #15	/* start on a qword boundary */
-	veor		q3, q3, q3	/* clear accumulator */
-	beq		.Lpre_main_loop	/* ya, qword boundary start */
-
-	sub		r0, r3, ip	/* get length to qword start */
-	cmp		r0, #16		/* do we have at least a qword? */
-	andlt		r2, r3, #15	/* no, factor in trailing bytes */
-	blt		.Ltrailing_bytes /*   and do the last partial qword */
-	mov		r2, #0		/* yes, no trailing bytes */
-	bl		partial_qword	/* do the partial initial qword */
-	mov		r1, #0		/* no more leading bytes */
+	and		r1, ip, #7	/* get start offset (leading btyes) */
+	and		r2, r3, #7	/* get end offset (trailing bytes) */
+	bic		ip, ip, #7	/* start on a dword boundary */
+	add		r3, r3, #7	/* round up to a dword boundary */
+	bic		r3, r3, #7	/* end on a dword boundary */
+	veor		q2, q2, q2	/* clear accumulator */
+	vmvn.u64	q1, q2		/* create leading/trailing masks */
+	/*
+	 * Normally the lower addressed is in d6 but in this case we want to
+	 * reverse it since we might only have a single dword and the final
+	 * fold will want the dword to trim in d7 so put the first dword in
+	 * d7 until we know we are going to read more than one. 
+	 */
+	veor		d6, d6, d6	/* clear second dword */
+	vld1.64		{d7}, [ip:64]!	/* load first dword */
+	orrs		r0, r1, r2	/* do we have any offsets */
+	beq		.Lpre_main_loop	/*   no, proceed to main loop. */
+	mov		r1, r1, lsl #3	/* leading bytes -> bits */
+	movs		r2, r2, lsl #3	/* trailing bytes -> bits */
+#ifdef __ARMEL__
+	subne		r2, r2, #64	/* trim trailing MSBs */
+#else
+	rsb		r1, r1, #0	/* trim leading MSBs */
+	rsbne		r2, r2, #64	/* trim trailing LSBs */
+#endif
+	vmov		d0, r1, r2	/* move shifts */
+	vmovl.u32	q0, d0		/* 2 U32 -> 2 U64 */
+	vshl.u64	q1, q1, q0	/* apply shifts to masks */
+	vand.u32	d7, d7, d2	/* apply leading mask to 1st dword */
+	tst		r1, #8		/* was the starting address odd? */
+	beq		.Lpre_main_loop	/*   no, go to pre_main_loop */
+	veor		d2, d2, d2	/* clear d2 (indicate odd addr) */
 
 .Lpre_main_loop:
-	and		r2, r3, #15	/* trailing bytes */
-	bic		r3, r3, #15	/* last partial or empty qword */
-	cmp		ip, r3		/* at or past the end? */
-	bge		.Ltrailing_bytes /* yes, deal with any trailing bytes */
+	cmp		ip, r3		/* do we just have a single dword? */
+	beq		.Lfinish_up	/*   yes, let finish up! */
+	vmov		d6, d7		/* move 1st dword to loaddr reg */
+	vld1.64		{d7}, [ip:64]!	/* read rest of initial qword */
 
 .Lmain_loop:
-	vld1.64		{d4-d5}, [ip:128]!
-	vmovl.u16	q0, d4		/* 4 U16 -> 4 U32 */
-	vadd.u32	q3, q3, q0	/* add 4 U32 to accumulator */
-	vmovl.u16	q0, d5		/* 4 U16 -> 4 U32 */
-	vadd.u32	q3, q3, q0	/* add 4 U32 to accumulator */
-	cmp		ip, r3
-	blt		.Lmain_loop
+	subs		r1, r3, ip	/* how much left to do? */
+	beq		.Lfinish_up	/*   = 0? we are done. */
 
-.Ltrailing_bytes:
-	cmp		r2, #0		/* any trailing bytes? */
-	blne		partial_qword	/* yes, do final qword */
-	ldr		lr, [sp], #8	/* fetch LR */
+	bics		r0, r1, #31	/* we deal with octawords only */
+	beq		.Lloop_end	/*   no octawords? exit loop */
+	rsbs		r0, r0, #128	/* subtract from 128 */
+	ble		.Lloop128	/*   <= 0?, do 128 at a time. */
+	add		r0, r0, r0, lsr #2 /* multiple by 1.25 */
+	add		pc, pc, r0	/* and jump! */
+	nop
 
-.Lfold_csum:
+.Lloop128:
+	vld1.64		{d8-d9}, [ip:64]!	/* 128 left */
+	vmovl.u16	q0, d6		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vmovl.u16	q0, d7		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vld1.64		{d6-d7}, [ip:64]!
+	vmovl.u16	q0, d8		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vmovl.u16	q0, d9		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+
+	vld1.64		{d8-d9}, [ip:64]!	/* 96 left */
+	vmovl.u16	q0, d6		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vmovl.u16	q0, d7		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vld1.64		{d6-d7}, [ip:64]!
+	vmovl.u16	q0, d8		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vmovl.u16	q0, d9		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+
+	vld1.64		{d8-d9}, [ip:64]!	/* 64 left */
+	vmovl.u16	q0, d6		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vmovl.u16	q0, d7		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vld1.64		{d6-d7}, [ip:64]!
+	vmovl.u16	q0, d8		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vmovl.u16	q0, d9		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+
+	vld1.64		{d8-d9}, [ip:64]!	/* 32 left */
+	vmovl.u16	q0, d6		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vmovl.u16	q0, d7		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vld1.64		{d6-d7}, [ip:64]!
+	vmovl.u16	q0, d8		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vmovl.u16	q0, d9		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+
+	b		.Lmain_loop
+
+.Lloop_end:
 	/*
-	 * We now have 4 32-bit sums in q3 (each is 20-bits or less).
+	 * We have one to 3 more dwords to process
+	 */
+	rsb		r0, r1, #24
+	add		r0, r0, r0, lsr #1
+	add		pc, pc, r0
+	nop
+	vmovl.u16	q0, d6		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vld1.64		{d6}, [ip:64]!
+	vmovl.u16	q0, d6		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vld1.64		{d6}, [ip:64]!
+	vmovl.u16	q0, d7		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vld1.64		{d7}, [ip:64]!
+
+.Lfinish_up:
+	/*
+	 * Apply remaining data in d6 and d7
+	 */
+	vmovl.u16	q0, d6		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+	vand		d7, d7, d3	/* apply trailing mask */
+	vmovl.u16	q0, d7		/* 4 U16 -> 4 U32 */
+	vadd.u32	q2, q2, q0	/* add 4 U32 to accumulator */
+
+	/*
+	 * We now have 4 32-bit sums in q2 (each is 20-bits or less).
 	 * Now to get to 1 I32 bit sum.
 	 */
-	vadd.u32	d6, d6, d7	/* 4 I32 -> 2 I32 */
-	vmovl.u32	q3, d6		/* split two I32 into two I64 */
-	vadd.u32	d6, d6, d7	/* 2 I32 -> 1 I32 */
-	vmovl.u16	q3, d6		/* split two I16 into two I32 */
-	vmovl.u32	q3, d6		/* split two I32 into two I64 */
-	vadd.u32	d6, d6, d7	/* 2 I16 -> 1 I32 */
-	vmov		r0, s12		/* fetch csum from d6/q3 */
-	/*
-	 * The result could be 0x10000 but we expect the caller to deal
-	 * with it
-	 */
-	RET
+	vadd.u32	d4, d4, d5	/* 4 I32 -> 2 I32 */
+	vmov		r2, s4		/* get flag for odd start */
+	teq		r2, #0		/* was start addr even? */
+	vmov		r0, r1, d4	/* extract two I32 */
+	rev16eq		r0, r0		/* byte swap if start was odd */
+	rev16eq		r1, r1		/* byte swap if start was odd */
+	adds		ip, r0, r1	/* add them producing carry */
+#include "arm/arm/cpu_in_cksum_fold.S"
 END(cpu_in_cksum_neon)
-
-/*
- * Handling partial qwords is tricky.
- */
-	.type		partial_qword, %function
-partial_qword:
-	str		lr, [sp, #-8]!	/* save LR */
-	vld1.64		{d4-d5}, [ip:128]!	/* fetch data */
-#ifdef __ARMEB__
-	vswp		d5, d4		/* on BE, MSW should be in d5 */
-#endif
-	veor		q0, q0, q0	/* create a null mask */
-	movs		r0, r1, lsl #3	/* any leading bytes? */
-	blne		_C_LABEL(__neon_leading_qword_bitmask)
-	vmvn.u64	q0, q0		/* invert leading mask to trailing */
-	vand.u32	q2, q2, q0	/* preserve them */
-	vmvn.u64	q0, #0		/* create mask */
-	movs		r0, r2, lsl #3	/* if equal, no trailing bytes */
-	blne		_C_LABEL(__neon_leading_qword_bitmask)
-	vand.u32	q2, q2, q0	/* preserve them */
-	ldr		lr, [sp], #8	/* Fetch LR */
-	vmovl.u16	q0, d4		/* 4 U16 -> 4 U32 */
-	vadd.u32	q3, q3, q0	/* add 4 U32 to accumulator */
-	vmovl.u16	q0, d5		/* 4 U16 -> 4 U32 */
-	vadd.u32	q3, q3, q0	/* add 4 U32 to accumulator */
-	RET
-	.size		partial_qword, . - partial_qword
-
-/*
- * uint32_t cpu_in_cksum_neon_v4hdr(void *dptr)
- */
-ENTRY(cpu_in_cksum_neon_v4hdr)
-	bic		ip, r0, #7
-	vld1.32		{d0-d2},[ip]	/* it must be in 24 bytes */
-	tst		r0, #4		/* depending on 64-bit alignment */
-	beq		1f
-	vmov		s0, s5		/* move last U32 to first U32 */
-1:	vmovl.u32	q1, d2		/* move s5 to d3 and clear s5 */
-	vmovl.u16	q3, d0		/* 4 U16 -> 4 U32 */
-	vmovl.u16	q2, d1		/* 4 U16 -> 4 U32 */
-	vadd.u32	q3, q3, q2	/* add 4 U32 to accumulator */
-	vmovl.u16	q2, d2		/* 4 U16 -> 4 U32 */
-	vadd.u32	q3, q3, q2	/* add 4 U32 to accumulator */
-	b		.Lfold_csum
-END(cpu_in_cksum_neon_v4hdr)
