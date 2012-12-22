@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.37 2012/12/20 22:56:38 jakllsch Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.38 2012/12/22 03:56:58 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.37 2012/12/20 22:56:38 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.38 2012/12/22 03:56:58 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -398,12 +398,18 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	saa.saa_sct = &sdhc_functions;
 	saa.saa_sch = hp;
 	saa.saa_dmat = hp->dmat;
-	saa.saa_clkmin = hp->clkbase / 256;
 	saa.saa_clkmax = hp->clkbase;
 	if (ISSET(sc->sc_flags, SDHC_FLAG_HAVE_CGM))
-		saa.saa_clkmin /= 2046;
+		saa.saa_clkmin = hp->clkbase / 256 / 2046;
 	else if (ISSET(sc->sc_flags, SDHC_FLAG_HAVE_DVS))
-		saa.saa_clkmin /= 16;
+		saa.saa_clkmin = hp->clkbase / 256 / 16;
+	else if (hp->sc->sc_clkmsk != 0)
+		saa.saa_clkmin = hp->clkbase / (hp->sc->sc_clkmsk >>
+		    (ffs(hp->sc->sc_clkmsk) - 1));
+	else if (hp->specver == SDHC_SPEC_VERS_300)
+		saa.saa_clkmin = hp->clkbase / 0x3ff;
+	else
+		saa.saa_clkmin = hp->clkbase / 256;
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|SMC_CAPS_AUTO_STOP;
 	if (ISSET(sc->sc_flags, SDHC_FLAG_8BIT_MODE))
 		saa.saa_caps |= SMC_CAPS_8BIT_MODE;
@@ -795,13 +801,35 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, u_int *divp)
 		}
 		/* No divisor found. */
 		return false;
-	} else {
-		if (hp->sc->sc_clkmsk != 0)
-			*divp = (hp->clkbase / freq) <<
-			    (ffs(hp->sc->sc_clkmsk) - 1);
-		else
-			*divp = (hp->clkbase / freq) << SDHC_SDCLK_DIV_SHIFT;
+	}
+	if (hp->sc->sc_clkmsk != 0) {
+		div = howmany(hp->clkbase, freq);
+		if (div > (hp->sc->sc_clkmsk >> (ffs(hp->sc->sc_clkmsk) - 1)))
+			return false;
+		*divp = div << (ffs(hp->sc->sc_clkmsk) - 1);
+		//freq = hp->clkbase / div;
 		return true;
+	}
+	if (hp->specver == SDHC_SPEC_VERS_300) {
+		div = howmany(hp->clkbase, freq);
+		if (div > 0x3ff)
+			return false;
+		*divp = (((div >> 8) & SDHC_SDCLK_XDIV_MASK)
+			 << SDHC_SDCLK_XDIV_SHIFT) |
+			(((div >> 0) & SDHC_SDCLK_DIV_MASK)
+			 << SDHC_SDCLK_DIV_SHIFT);
+		//freq = hp->clkbase / div;
+		return true;
+	} else {
+		for (div = 1; div <= 256; div *= 2) {
+			if ((hp->clkbase / div) <= freq) {
+				*divp = (div / 2) << SDHC_SDCLK_DIV_SHIFT;
+				//freq = hp->clkbase / div;
+				return true;
+			}
+		}
+		/* No divisor found. */
+		return false;
 	}
 	/* No divisor found. */
 	return false;
