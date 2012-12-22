@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.19 2012/12/22 20:21:09 jakllsch Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.20 2012/12/22 21:24:49 jakllsch Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.19 2012/12/22 20:21:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.20 2012/12/22 21:24:49 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -271,8 +271,15 @@ sdmmc_task_thread(void *arg)
 	}
 	/* time to die. */
 	sc->sc_dying = 0;
-	if (ISSET(sc->sc_flags, SMF_CARD_PRESENT))
+	if (ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
+		/*
+		 * sdmmc_card_detach() may issue commands,
+		 * so temporarily drop the interrupt-blocking lock.
+		 */
+		mutex_exit(&sc->sc_tskq_mtx);
 		sdmmc_card_detach(sc, DETACH_FORCE);
+		mutex_enter(&sc->sc_tskq_mtx);
+	}
 	sc->sc_tskq_lwp = NULL;
 	cv_broadcast(&sc->sc_tskq_cv);
 	mutex_exit(&sc->sc_tskq_mtx);
