@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.200 2012/12/22 16:57:09 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.201 2012/12/22 16:58:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.200 2012/12/22 16:57:09 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.201 2012/12/22 16:58:51 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -625,8 +625,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		int hasleading;
 
 		if (proxyenv == NULL) {
+#ifdef WITH_SSL
 			if (urltype == HTTPS_URL_T)
 				proxyenv = getoptionvalue("https_proxy");
+#endif
 			if (proxyenv == NULL && IS_HTTP_TYPE(urltype))
 				proxyenv = getoptionvalue("http_proxy");
 			else if (urltype == FTP_URL_T)
