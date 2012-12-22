@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: cpu_in_cksum_buffer.S,v 1.4 2012/12/21 06:35:34 matt Exp $")
+RCSID("$NetBSD: cpu_in_cksum_buffer.S,v 1.5 2012/12/22 08:10:40 matt Exp $")
 
 /*
  * Special note:
@@ -79,8 +79,9 @@ ENTRY(cpu_in_cksum_buffer)
 	LOAD_DWORD_INTO_R4(r0)		/* load first dword */
 	sub	r1, r2, r0		/* we've read one dword */
 .Ldword_aligned_noload:
+	add	r3, r1, #3		/* round up to word length */
 #if !defined(__OPTIMIZE_SIZE__)
-	bics	r3, r1, #63		/* at least 64 bytes to do? */
+	bics	r3, r3, #63		/* at least 64 bytes to do? */
 	beq	2f			/*   no, then do final collection */
 	push	{r6-r7}
 1:	
@@ -110,7 +111,8 @@ ENTRY(cpu_in_cksum_buffer)
 	adcs	ip, ip, r7
 
 	sub	r1, r2, r0		/* find how much is left */
-	bics	r3, r1, #63		/* at least 64 bytes to do? */
+	add	r3, r1, #3		/* round up to word length */
+	bics	r3, r3, #63		/* at least 64 bytes to do? */
 	bne	1b			/*   yes, run the loop again */
 
 	pop	{r6-r7}			/* done with these so restore them */
@@ -124,7 +126,8 @@ ENTRY(cpu_in_cksum_buffer)
 	pld	[r0, #32]		/* grab next cache line */
 #endif
 #ifndef __OPTIMIZE_SIZE__
-	bic	r3, r1, #7		/* find out how many dwords to do */
+	add	r3, r1, #3		/* round to word length */
+	bic	r3, r3, #7		/* find out how many dwords to do */
 	rsb	r3, r3, #56		/* subtract from 56 */
 	add	r3, r3, r3, lsr #1	/* multiply by 1.5 */
 	add	pc, pc, r3		/* and jump! */
@@ -154,22 +157,19 @@ ENTRY(cpu_in_cksum_buffer)
 	sub	r1, r2, r0		/* find out much left to do? */
 	teq	r1, #0			/* at the end? */
 	beq	.Lfinal_add_one_dword	/*   yep, proceed to fold */
+	bmi	.Lfinal_dword_noload	/*   past it, handle the final dword */
 #ifdef __OPTIMIZE_SIZE__
-	bics	r3, r1, #7		/* exhaust all dwords? */
+	add	r3, r1, #3		/* round up to word length */
+	bics	r3, r3, #7		/* exhaust all dwords? */
 	bne	3b			/*   not yet, do more */
 #endif
-	adcs	ip, ip, r4
-	adcs	ip, ip, r5
-	ldr	RHI, [r0], #4		/* we have at least one word to read */
-	sub	r3, r1, #4		/* subtract 4 from length */
-	teq	r3, #0			/* is the result positive? */
-	beq	.Lfinal_add_one_word	/*   = 0? just add that word. */
-	movpl	RLO, RHI		/*   > 0? move from hi to lo word */
-	ldrpl	RHI, [r0]		/*   > 0? load new hi word */
-	movmi	RLO, #0			/*   < 0? clear lo word */
+	adcs	ip, ip, RHI		/*   > 0? add previous HI */
+	ldr	RHI, [r0]		/*   > 0? load new hi word */
+	tst	r1, #3
+	beq	.Lfinal_add_one_dword	/*   = 0? just add that word. */
 
 .Lfinal_dword_noload:
-	rsb	r1, r1, #8		/* find out many bytes to discard */
+	rsb	r1, r1, #4		/* find out many bytes to discard */
 	tst	r1, #2			/* discard at least 2? */
 #ifdef __ARMEL__
 	movne	RHI, RHI, lsl #16	/*   yes, discard upper halfword */
