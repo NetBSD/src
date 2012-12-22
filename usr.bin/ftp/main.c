@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.121 2012/12/21 18:07:36 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.122 2012/12/22 16:57:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.121 2012/12/21 18:07:36 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.122 2012/12/22 16:57:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,6 +126,7 @@ __RCSID("$NetBSD: main.c,v 1.121 2012/12/21 18:07:36 christos Exp $");
 
 #define	FTP_PROXY	"ftp_proxy"	/* env var with FTP proxy location */
 #define	HTTP_PROXY	"http_proxy"	/* env var with HTTP proxy location */
+#define	HTTPS_PROXY	"https_proxy"	/* env var with HTTPS proxy location */
 #define	NO_PROXY	"no_proxy"	/* env var with list of non-proxied
 					 * hosts, comma or space separated */
 
@@ -488,6 +489,7 @@ main(int volatile argc, char **volatile argv)
 	setupoption("anonpass",		getenv("FTPANONPASS"),	anonpass);
 	setupoption("ftp_proxy",	getenv(FTP_PROXY),	"");
 	setupoption("http_proxy",	getenv(HTTP_PROXY),	"");
+	setupoption("https_proxy",	getenv(HTTPS_PROXY),	"");
 	setupoption("no_proxy",		getenv(NO_PROXY),	"");
 	setupoption("pager",		getenv("PAGER"),	DEFAULTPAGER);
 	setupoption("prompt",		getenv("FTPPROMPT"),	DEFAULTPROMPT);
