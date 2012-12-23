@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.225 2012/11/20 21:16:01 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.226 2012/12/23 17:00:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.225 2012/11/20 21:16:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.226 2012/12/23 17:00:13 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2209,7 +2209,10 @@ ohci_open(usbd_pipe_handle pipe)
 			ival = pipe->interval;
 			if (ival == USBD_DEFAULT_INTERVAL)
 				ival = ed->bInterval;
-			return (ohci_device_setintr(sc, opipe, ival));
+			err = ohci_device_setintr(sc, opipe, ival);
+			if (err)
+				goto bad;
+			break;
 		case UE_ISOCHRONOUS:
 			pipe->methods = &ohci_device_isoc_methods;
 			return (ohci_setup_isoc(pipe));
