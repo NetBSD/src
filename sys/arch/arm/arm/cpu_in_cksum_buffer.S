@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: cpu_in_cksum_buffer.S,v 1.6 2012/12/22 08:12:26 matt Exp $")
+RCSID("$NetBSD: cpu_in_cksum_buffer.S,v 1.7 2012/12/23 03:44:24 matt Exp $")
 
 /*
  * Special note:
@@ -67,27 +67,47 @@ ENTRY(cpu_in_cksum_buffer)
 #if defined(_ARM_ARCH_DWORD_OK) && !defined(__OPTIMIZE_SIZE__)
 	pld	[r0]			/* prefetch the first data */
 #endif
-	mov	ip, r2			/* initialize accumulator */
-	adds	ip, ip, #0		/* clear carry */
+	adds	ip, r2, #0		/* initialize accumulator/clear carry */
 	teq	r1, #0			/* did we get passed a zero length? */
-	beq	.Lfold_nopop		/* fold the checksum */
-	ands	r2, r0, #7		/* test for dword alignment */
+	beq	.Lfold			/* fold the checksum */
+	add	r2, r0, r1		/* point r2 just past end */
+	push	{r4-r5,r10-r11}		/* save registers */
+	mvn	r11, #0			/* initialize trailing mask */
+	ands	r3, r2, #3		/* limit to a word */
+	beq	1f			/* no trailing bytes? */
+	/*
+	 * This buffer doesn't end on a word boundary so create a mask
+	 * to discard the unneeded bytes in the last word and then round
+	 * up the length and ending address to a word boundary.
+	 */
+	rsb	r3, r3, #4		/* find out how many bytes to clear */
+	add	r2, r2, r3		/* align to word boundary */
+	add	r1, r1, r3		/* align to word boundary */
+	mov	r3, r3, lsl #3		/* bytes -> bits */
+#ifdef __ARMEL__
+	mov	r11, r11, lsr r3	/* replace with zero bits */
+#else
+	mov	r11, r11, lsl r3	/* replace with zero bits */
+#endif
+1:
+	ands	r10, r0, #7		/* test for dword alignment */
 	bne	.Ldword_misaligned	/*   no, fixup non dword aligned */
-	push	{r4-r5}			/* save temporaries */
-	sub	RLO, r1, #1		/* subtract 1 from length */
-	bics	RLO, RLO, #3		/* more than 1 word? */
-	beq	.Lfinal_word		/*   no, just load final word */
-	add	r2, r1, r0		/* point r2 just past end */
+	/*
+	 * If the (now rounded up) length is 4, then only bit 2 will be set.
+	 * So if we clear that bit and the result is 0, then the length must
+	 * have been 4.
+	 */
+	bics	RLO, r1, #4		/* more than 1 word? */
+	beq	.Lfinal_word_load	/*   no, just load final word */
 	LOAD_DWORD_INTO_R4(r0)		/* load first dword */
-	sub	r1, r1, #8		/* we've read one dword */
 #if defined(_ARM_ARCH_DWORD_OK) && !defined(__OPTIMIZE_SIZE__)
 	pld	[r0, #32]		/* prefetch data */
 #endif
 	.p2align 3
 .Ldword_aligned_noload:
-	add	r1, r1, #3		/* round up word length */
+	sub	r1, r2, r0		/* how much is remaining? */
 	bics	r3, r1, #15		/* at least 16 bytes to do? */
-	beq	3f
+	beq	.Lfinal_words		/*   no, but we have at least 1 word */
 	push	{r6-r7}
 #if !defined(__OPTIMIZE_SIZE__)
 	bics	r3, r1, #63		/* at least 64 bytes to do? */
@@ -125,7 +145,6 @@ ENTRY(cpu_in_cksum_buffer)
 	adcs	ip, ip, r7
 
 	sub	r1, r2, r0		/* find how much is left */
-	add	r1, r1, #3		/* round up word length */
 #if !defined(__OPTIMIZE_SIZE__)
 	bics	r3, r1, #63		/* at least 64 bytes to do? */
 	bne	.Lloop64		/*   yes, run the loop again */
@@ -138,69 +157,47 @@ ENTRY(cpu_in_cksum_buffer)
 
 	pop	{r6-r7}			/* done with these so restore them */
 
-3:	sub	r1, r2, r0		/* find how much is left */
 	teq	r1, #0			/* how much left?? */
-	beq	.Lfinal_add_one_dword	/*   = 0? do the final add */
-	bmi	.Lfinal_dword_noload	/*   < 0? trim last word */
+	beq	.Ladd_final_dword	/*   = 0? do the final add */
+.Lfinal_words:
 	/*
-	 * We have from 1-12 bytes left to do.
+	 * We have 1 to 3 words left to load.
 	 */
-	add	r3, r1, #3		/* round up word length */
-	tst	r3, #8			/* at least one dword (5+ bytes)? */
-	beq	.Lfinal_word		/*   no, deal with the final word. */
+	tst	r1, #8			/* at least one dword (5+ bytes)? */
+	beq	.Lfinal_word_load	/*   no, deal with the final word. */
 	/*
-	 * We have at least 5 bytes so we need to load at least 8 (maybe 12)
-	 * so load 8.
+	 * We have at least 8 bytes left so accumulate the pending dword
+	 * and then load the next dword.
 	 */
 	adcs	ip, ip, r4
 	adcs	ip, ip, r5
 	LOAD_DWORD_INTO_R4(r0)
-	sub	r1, r1, #8		/* subtract dword from length */
-	teq	r1, #0			/* how much left?? */
-	beq	.Lfinal_add_one_dword	/*   = 0? do the final add */
-	bmi	.Lfinal_dword_noload	/*   < 0? trim last word */
-.Lfinal_word:
+	/*
+	 * At this point r1 is either 8 or 12 so we can just clear bit 3
+	 * to see if we have one more word to read.
+	 */
+	bics	r1, r1, #8		/* subtract dword from length */
+	beq	.Ladd_final_dword	/*   = 0? do the final add */
+.Lfinal_word_load:
 	/*
 	 * Finally we are at the word to load.
 	 */
 	adcs	ip, ip, RHI		/* accumulate RHI */
-	ldr	RHI, [r0]		/* load last word */
-	tst	r1, #3			/* are we word aligned */
-	beq	.Lfinal_add_one_dword	/*   yes, accumulate last dword */
-
-.Lfinal_dword_noload:
-	rsb	r1, r1, #4		/* find out many bytes to discard */
-	and	r1, r1, #3		/* limit to a single word length */
-	mov	r1, r1, lsl #3		/* bytes -> bits */
-#ifdef __ARMEL__
-	mov	RHI, RHI, lsl r1	/* discard unneeded bits */
-	mov	RHI, RHI, lsr r1	/* replace with zero bits */
-#else
-	mov	RHI, RHI, lsr r1	/* discard unneeded bits */
-	mov	RHI, RHI, lsl r1	/* replace with zero bits */
-#endif
-#if 0 
-	tst	r1, #2			/* discard at least 2? */
-#ifdef __ARMEL__
-	movne	RHI, RHI, lsl #16	/*   yes, discard upper halfword */
-#else
-	movne	RHI, RHI, lsr #16	/*   yes, discard lower halfword */
-#endif
-	tst	r1, #1			/* discard odd? */
-	bicne	RHI, RHI, #BYTE3	/*   yes, discard odd byte */
-#endif
-.Lfinal_add_one_dword:
-	adcs	ip, ip, RLO		/* add 1st to accumulator */
-.Lfinal_add_one_word:
-	adcs	ip, ip, RHI		/* add 2nd to accumulator */
+	ldr	RHI, [r0]		/* load last word into RHI */
+.Ladd_final_dword:
+	adcs	ip, ip, RLO		/* add RLO to accumulator */
+.Ladd_final_word:
+	and	RHI, RHI, r11		/* apply trailing mask to RHI */
+	adcs	ip, ip, RHI		/* add RHI to accumulator */
 
 	/*
 	 * Fall into fold.
 	 */
+	tst	r10, #1			/* was starting address odd? */
+	movne	ip, ip, ror #8		/*   yes, compensate */
 
+	pop	{r4-r5,r10-r11}		/* we don't need these anymore */
 .Lfold:
-	pop	{r4-r5}			/* we don't need these anymore */
-.Lfold_nopop:
 	/*
 	 * We now have the 33-bit result in <carry>, ip.  Pull in the
 	 * standard folding code.
@@ -213,14 +210,11 @@ ENTRY(cpu_in_cksum_buffer)
 #endif
 	tst	r0, #3			/* are at least word aligned? */
 	bne	.Lword_misaligned	/*   no, do it the hard way */
-	push	{r4-r5}			/* save temporaries */
 	ldr	RHI, [r0], #4		/* load word here in case of partial */
 	sub	r1, r1, #4		/* subtract length of one word */
 	teq	r1, #0 			/* what is length? */
-	beq	.Lfinal_add_one_word	/*   = 0? just do the final add */
-	mov	RLO, #0			/*   <= 0? zero this */
-	bmi	.Lfinal_dword_noload	/*   < 0? handle final partial dword */
-	add	r2, r1, r0		/*   > 0? point r2 just past end */
+	beq	.Ladd_final_word	/*  <= 0? just do the final add */
+	mov	RLO, #0			/*   > 0? clear RLO */
 	b	.Ldword_aligned_noload	/*   > 0? accumulate it and loop */
 
 .Lword_misaligned:
@@ -228,13 +222,9 @@ ENTRY(cpu_in_cksum_buffer)
 	 * If we start on an odd boundary, set up our stack frame so we
 	 * can fixup the return value to be byteswapped.
 	 */
-	tst	r0, #1			/* start address odd? */
-	strne	lr, [sp, #-8]!		/*   yes, save our return address */
-	adrne	lr, .Lmisaligned_fixup	/*   yes, return to fixup code. */
-	push	{r4-r5}			/* save temporaries */
 	tst	r0, #4			/* do we load 1 or 2 words? */
 	bic	r0, r0, #3		/* force word alignment */
-	add	r1, r1, r2		/* add initial offset to length */
+	add	r1, r1, r10		/* add initial offset to length */
 	sub	r1, r1, #8		/* subtract length of one dword */
 #ifdef _ARM_ARCH_DWORD_OK
 	ldreqd	r4, [r0], #8		/* load first dword */
@@ -246,7 +236,7 @@ ENTRY(cpu_in_cksum_buffer)
 	/*
 	 * We are now dword aligned.
 	 */
-	and	r3, r2, #3		/* limit to a single word length */
+	and	r3, r10, #3		/* limit to a single word length */
 	mov	r3, r3, lsl #3		/* bytes -> bits */
 #ifdef __ARMEL__
 	mov	RLO, RLO, lsr r3	/* discard unneeded bits */
@@ -260,34 +250,8 @@ ENTRY(cpu_in_cksum_buffer)
 	 * into the main loop as if we just load a single dword.
 	 */
 	teq	r1, #0 			/* what is length? */
-	beq	.Lfinal_add_one_dword	/*   = 0? just do the final add */
-	addpl	r2, r1, r0		/*   > 0? point r2 just past end */
+	beq	.Ladd_final_dword	/*   = 0? just do the final add */
 	bpl	.Ldword_aligned_noload	/*   > 0? accumulate it and loop */
-
-	/*
-	 * Not a full dword so do the final dword processing to find out
-	 * bytes to discard.  If we only loaded one word, move it to 2nd
-	 * word since that is what final_dword will be discarding from and
-	 * clear the 1st word.
-	 */
-	tst	r2, #4			/* one or two words? */
-	movne	RHI, RLO		/*   one, move lo word to hi word */
-	movne	RLO, #0			/*        and clear lo word */
-	b	.Lfinal_dword_noload	/* handle final dword */
-
-	/*
-	 * If we had an odd address, we have byte swap the return value.
-	 * instead of testing everywhere, we inserted a fake callframe and
-	 * set LR to return to do the fixup and return to the caller.
-	 */
-.Lmisaligned_fixup:
-	ldr	lr, [sp], #8		/* fetch saved LR */
-#ifdef _ARM_ARCH_6
-	rev16	r0, r0			/* byte swap */
-#else
-	mov	r0, r0, r0, ror #8	/* move 0:7 to 24:31 and 8:15 to 0:7 */
-	orr	r0, r0, r0, lsl #16	/* move 0:7 to 16:23 */
-	mov	r0, r0, r0, lsr #16	/* clear 16:31 to 0:15 */
-#endif
-	RET
+	movne	RHI, RLO		/*   yes? move RLO to RHI */
+	b	.Ladd_final_word	/* handle final word */
 END(cpu_in_cksum_buffer)
