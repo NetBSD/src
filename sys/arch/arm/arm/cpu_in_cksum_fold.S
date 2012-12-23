@@ -1,4 +1,3 @@
-/*	$NetBSD: cpu_in_cksum_fold.S,v 1.3 2012/12/20 07:20:04 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,16 +48,15 @@
 	 * return a complement of the lower halfword, that's 0xfffe.
 	 */
 	adcs	ip, ip, #0		/* add final carry bit */
-	subeq	r0, r1, #1		/* zero?  complement the carry */
-	RETc(eq)			/*	  and return 0xfffe */
+	beq	1f			/*   0?  return 0xfffe */
+
 	/*
 	 * Now prevent the adding of 0xffff to 0xffff by making sure the upper
 	 * halfword isn't 0xffff.  If it is, just complement all 32-bits
 	 * which clears the upper halfword and complements the lower halfword.
 	 */
 	cmp	ip, r1, lsl #16		/* is the upper halfword 0xffff? */
-	mvneq	r0, ip			/*   yes, complement */
-	RETc(eq)			/*	  and return */
+	beq	2f			/*   yes, complement and return */
 	/*
 	 * Finally add the lower halfword to the upper halfword.  If we have
 	 * a result >= 0x10000, carry will be set.  The maximum result will
@@ -69,3 +67,9 @@
 	addcs	ip, ip, #0x10000
 	eor	r0, r1, ip, lsr #16
 	RET
+
+1:	sub	r0, r1, #1		/* set return value to 0xfffe */
+	RET				/* return */
+2:	mvn	r0, ip			/* complement */
+	RET				/* return */
+
