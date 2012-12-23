@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.25 2012/12/06 22:36:51 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.26 2012/12/23 21:01:04 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 6, 2012
+.Dd December 23, 2012
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -98,9 +98,11 @@ The file should contain a list of IP addresses and/or networks in the form of:
 Tables of type "hash" can only contain IP addresses.
 .Ss Interfaces
 Interfaces can be specified as the values of the variables:
+.Pp
 .Bd -literal
 $pub_if_list = { ifnet(wm0), ifnet(wm1) }
 .Ed
+.Pp
 In the context of filtering, an interface provides a list of its
 all IP addresses, including IPv4 and IPv6.
 Specific interface addresses can be selected by the family, e.g.:
@@ -285,6 +287,7 @@ map $ext_if dynamic 10.1.1.2 port 22 <- $ext_if 9022
 
 procedure "log" {
 	# Note: npf_ext_log kernel module should be loaded, if not built-in.
+	# Also, the interface created, e.g.: ifconfig npflog0 create
 	log: npflog0
 }
 
