@@ -1,4 +1,4 @@
-.\"	$NetBSD: npf.3,v 1.5 2012/07/01 23:21:07 rmind Exp $
+.\"	$NetBSD: npf.3,v 1.6 2012/12/23 21:01:05 rmind Exp $
 .\"
 .\" Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 1, 2012
+.Dd December 23, 2012
 .Dt NPF 3
 .Os
 .Sh NAME
@@ -77,20 +77,14 @@
 .Ft nl_table_t *
 .Fn npf_table_create "u_int id" "int type"
 .Ft int
-.Fn npf_table_add_entry "nl_table_t *tl" "in_addr_t addr" "in_addr_t mask"
+.Fn npf_table_add_entry "nl_table_t *tl" "int "af" \
+"in_addr_t addr" "in_addr_t mask"
 .Ft bool
 .Fn npf_table_exists_p "nl_config_t *ncf" "u_int tid"
 .Ft int
 .Fn npf_table_insert "nl_config_t *ncf" "nl_table_t *tl"
 .Ft void
 .Fn npf_table_destroy "nl_table_t *tl"
-.\" ---
-.Ft int
-.Fn npf_update_rule "int fd" "const char *rname" "nl_rule_t *rl"
-.Ft int
-.Fn npf_sessions_send "int fd" "const char *fpath"
-.Ft int
-.Fn npf_sessions_recv "int fd" "const char *fpath"
 .\" -----
 .Sh DESCRIPTION
 The
@@ -261,13 +255,20 @@ Table is identified by
 which should be in the range between 1 and
 .Dv NPF_MAX_TABLE_ID .
 .El
-.It Fn npf_table_add_entry "tl" "addr" "mask"
-Add an entry of IPv4 address and mask, specified by
+.It Fn npf_table_add_entry "tl" "af" "addr" "mask"
+Add an entry of IP address and mask, specified by
 .Fa addr
 and
 .Fa mask ,
 to the table specified by
 .Fa tl .
+Family, specified by
+.Fa fa ,
+must be either
+.Dv AF_INET
+for IPv4 or
+.Dv AF_INET6
+for IPv6 address.
 .It Fn npf_table_exists_p "ncf" "name"
 Determine whether table with ID
 .Fa tid
@@ -283,19 +284,6 @@ Insert table into set of configuration.
 Routine performs a check for duplicate table ID.
 .It Fn npf_table_destroy "tl"
 Destroy the specified table.
-.El
-.\" -----
-.Ss Session interface
-.Bl -tag -width 4n
-.It Fn npf_update_rule "fd" "rname" "rl"
-.It Fn npf_sessions_send "fd" "fpath"
-Read the file specified by
-.Fa fpath ,
-and send sessions saved in it to the kernel.
-.It Fn npf_sessions_recv "fd" "fpath"
-Receive currently loaded session from the kernel, and save them to a file
-specified by
-.Fa fpath .
 .El
 .\" -----
 .Sh SEE ALSO
