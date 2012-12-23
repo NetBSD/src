@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.25 2012/12/10 02:26:04 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.26 2012/12/23 21:01:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.25 2012/12/10 02:26:04 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.26 2012/12/23 21:01:04 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -294,7 +294,7 @@ again:
 			errx(EXIT_FAILURE, "invalid CIDR '%s'", arg);
 		}
 		nct.nct_data.ent.alen = alen;
-		memcpy(&nct.nct_data.ent.addr, &fam.fam_addr, sizeof(npf_addr_t));
+		memcpy(&nct.nct_data.ent.addr, &fam.fam_addr, alen);
 		nct.nct_data.ent.mask = fam.fam_mask;
 	}
 
