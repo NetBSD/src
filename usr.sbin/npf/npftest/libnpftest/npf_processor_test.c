@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor_test.c,v 1.3 2012/08/21 20:52:11 rmind Exp $	*/
+/*	$NetBSD: npf_processor_test.c,v 1.4 2012/12/24 19:05:48 rmind Exp $	*/
 
 /*
  * NPF n-code processor test.
@@ -141,36 +141,49 @@ retcode_fail_p(const char *msg, bool verbose, int ret, int expected)
 	return fail;
 }
 
+static void
+npf_nc_cachetest(struct mbuf *m, npf_cache_t *npc, nbuf_t *nbuf)
+{
+	const void *dummy_ifp = (void *)0xdeadbeef;
+
+	nbuf_init(nbuf, m, dummy_ifp);
+	memset(npc, 0, sizeof(npf_cache_t));
+	npf_cache_all(npc, nbuf);
+}
+
 bool
 npf_processor_test(bool verbose)
 {
 	npf_cache_t npc;
 	struct mbuf *m;
+	nbuf_t nbuf;
 	int errat, ret;
 	bool fail = false;
 
+#if 0
 	/* Layer 2 (Ethernet + IP + TCP). */
-	m = fill_packet(IPPROTO_TCP, true);
 	ret = npf_ncode_validate(nc_match, sizeof(nc_match), &errat);
 	fail |= retcode_fail_p("Ether validation", verbose, ret, 0);
 
-	memset(&npc, 0, sizeof(npf_cache_t));
-	ret = npf_ncode_process(&npc, nc_match, m, NPF_LAYER_2);
+	m = fill_packet(IPPROTO_TCP, true);
+	npf_nc_cachetest(m, &npc, &nbuf);
+	ret = npf_ncode_process(&npc, nc_match, &nbuf, NPF_LAYER_2);
 	fail |= retcode_fail_p("Ether", verbose, ret, 0);
 	m_freem(m);
+#endif
 
 	/* Layer 3 (IP + TCP). */
 	m = fill_packet(IPPROTO_TCP, false);
-	memset(&npc, 0, sizeof(npf_cache_t));
-	ret = npf_ncode_process(&npc, nc_match, m, NPF_LAYER_3);
+	npf_nc_cachetest(m, &npc, &nbuf);
+	ret = npf_ncode_process(&npc, nc_match, &nbuf, NPF_LAYER_3);
 	fail |= retcode_fail_p("IPv4 mask 1", verbose, ret, 0);
 
 	/* Non-matching IPv4 case. */
 	ret = npf_ncode_validate(nc_nmatch, sizeof(nc_nmatch), &errat);
 	fail |= retcode_fail_p("IPv4 mask 2 validation", verbose, ret, 0);
 
-	memset(&npc, 0, sizeof(npf_cache_t));
-	ret = npf_ncode_process(&npc, nc_nmatch, m, NPF_LAYER_3);
+	npf_nc_cachetest(m, &npc, &nbuf);
+	ret = npf_ncode_process(&npc, nc_nmatch, &nbuf, NPF_LAYER_3);
 	fail |= retcode_fail_p("IPv4 mask 2", verbose, ret, 255);
 
 	/* Invalid n-code case. */
@@ -181,8 +194,8 @@ npf_processor_test(bool verbose)
 	ret = npf_ncode_validate(nc_rmatch, sizeof(nc_rmatch), &errat);
 	fail |= retcode_fail_p("RISC-like n-code validation", verbose, ret, 0);
 
-	memset(&npc, 0, sizeof(npf_cache_t));
-	ret = npf_ncode_process(&npc, nc_rmatch, m, NPF_LAYER_3);
+	npf_nc_cachetest(m, &npc, &nbuf);
+	ret = npf_ncode_process(&npc, nc_rmatch, &nbuf, NPF_LAYER_3);
 	fail |= retcode_fail_p("RISC-like n-code", verbose, ret, 1);
 	m_freem(m);
 
@@ -191,8 +204,8 @@ npf_processor_test(bool verbose)
 	fail |= retcode_fail_p("IPv6 mask validation", verbose, ret, 0);
 
 	m = fill_packet6(IPPROTO_TCP);
-	memset(&npc, 0, sizeof(npf_cache_t));
-	ret = npf_ncode_process(&npc, nc_match6, m, NPF_LAYER_3);
+	npf_nc_cachetest(m, &npc, &nbuf);
+	ret = npf_ncode_process(&npc, nc_match6, &nbuf, NPF_LAYER_3);
 	fail |= retcode_fail_p("IPv6 mask", verbose, ret, 0);
 	m_freem(m);
 
