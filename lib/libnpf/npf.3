@@ -1,4 +1,4 @@
-.\"	$NetBSD: npf.3,v 1.6 2012/12/23 21:01:05 rmind Exp $
+.\"	$NetBSD: npf.3,v 1.7 2012/12/24 00:35:56 wiz Exp $
 .\"
 .\" Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,7 +77,7 @@
 .Ft nl_table_t *
 .Fn npf_table_create "u_int id" "int type"
 .Ft int
-.Fn npf_table_add_entry "nl_table_t *tl" "int "af" \
+.Fn npf_table_add_entry "nl_table_t *tl" "int af" \
 "in_addr_t addr" "in_addr_t mask"
 .Ft bool
 .Fn npf_table_exists_p "nl_config_t *ncf" "u_int tid"
@@ -230,7 +230,7 @@ is used.
 Translation address is specified by
 .Fa addr ,
 and its family by
-.Fa fa .
+.Fa af .
 Family must be either
 .Dv AF_INET
 for IPv4 or
@@ -263,7 +263,7 @@ and
 to the table specified by
 .Fa tl .
 Family, specified by
-.Fa fa ,
+.Fa af ,
 must be either
 .Dv AF_INET
 for IPv4 or
