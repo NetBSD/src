@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.11 2012/10/06 23:50:17 rmind Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.12 2012/12/24 19:05:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.11 2012/10/06 23:50:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.12 2012/12/24 19:05:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -296,10 +296,9 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
  * and thus part of the connection we are tracking.
  */
 static bool
-npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
-    const int di)
+npf_tcp_inwindow(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, const int di)
 {
-	const struct tcphdr * const th = &npc->npc_l4.tcp;
+	const struct tcphdr * const th = npc->npc_l4.tcp;
 	const int tcpfl = th->th_flags;
 	npf_tcpstate_t *fstate, *tstate;
 	int tcpdlen, ackskew;
@@ -462,9 +461,9 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
  * the connection and track its state.
  */
 bool
-npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
+npf_state_tcp(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
 {
-	const struct tcphdr * const th = &npc->npc_l4.tcp;
+	const struct tcphdr * const th = npc->npc_l4.tcp;
 	const int tcpfl = th->th_flags, state = nst->nst_state;
 	int nstate;
 

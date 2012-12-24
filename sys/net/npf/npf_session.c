@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.18 2012/09/13 21:09:36 joerg Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.19 2012/12/24 19:05:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -65,12 +65,12 @@
  *	and should be released by the caller.  Reference guarantees that the
  *	session will not be destroyed, although it may be expired.
  *
- * External session identifiers
+ * Querying ALGs
  *
- *	Application-level gateways (ALGs) can inspect the packet and fill
- *	the packet cache (npf_cache_t) representing the IDs.  It is done
- *	via npf_alg_sessionid() call.  In such case, ALGs are responsible
- *	for correct filling of protocol, addresses and ports/IDs.
+ *	Application-level gateways (ALGs) can inspect the packet and
+ *	determine whether the packet matches an ALG case.  An ALG may
+ *	also lookup a session using different identifiers and return.
+ *	the packet cache (npf_cache_t) representing the IDs.
  *
  * Lock order
  *
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.18 2012/09/13 21:09:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.19 2012/12/24 19:05:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -453,72 +453,45 @@ npf_session_tracking(bool track)
 }
 
 /*
- * npf_session_inspect: lookup for an established session (connection).
+ * npf_session_lookup: lookup for an established session (connection).
  *
- * => If found, we will hold a reference for caller.
+ * => If found, we will hold a reference for the caller.
  */
 npf_session_t *
-npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const ifnet_t *ifp,
-    const int di, int *error)
+npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
+    const int di, bool *forw)
 {
-	npf_sehash_t *sh;
-	npf_sentry_t *sen;
+	const u_int proto = npf_cache_ipproto(npc);
+	const ifnet_t *ifp = nbuf->nb_ifp;
+	npf_sentry_t senkey, *sen;
 	npf_session_t *se;
+	npf_sehash_t *sh;
 	int flags;
-
-	/*
-	 * Check if session tracking is on.  Also, if layer 3 and 4 are not
-	 * cached - protocol is not supported or packet is invalid.
-	 */
-	if (sess_tracking == SESS_TRACKING_OFF) {
-		return NULL;
-	}
-	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
-		return NULL;
-	}
-
-	/*
-	 * Construct a key for hash and tree lookup.  Execute ALG session
-	 * helpers, which may construct a custom key.
-	 */
-	npf_cache_t algkey = { .npc_info = 0 }, *key;
-	npf_sentry_t senkey;
-
-	if (!npf_alg_sessionid(npc, nbuf, &algkey)) {
-		/* Default: use the cache data of original packet. */
-		key = npc;
-	} else {
-		/* Unique IDs filled by ALG in a separate key cache. */
-		key = &algkey;
-	}
-
-	/* Note: take protocol from the key. */
-	const u_int proto = npf_cache_ipproto(key);
 
 	switch (proto) {
 	case IPPROTO_TCP: {
-		const struct tcphdr *th = &key->npc_l4.tcp;
+		const struct tcphdr *th = npc->npc_l4.tcp;
 		senkey.se_src_id = th->th_sport;
 		senkey.se_dst_id = th->th_dport;
 		break;
 	}
 	case IPPROTO_UDP: {
-		const struct udphdr *uh = &key->npc_l4.udp;
+		const struct udphdr *uh = npc->npc_l4.udp;
 		senkey.se_src_id = uh->uh_sport;
 		senkey.se_dst_id = uh->uh_dport;
 		break;
 	}
 	case IPPROTO_ICMP:
-		if (npf_iscached(key, NPC_ICMP_ID)) {
-			const struct icmp *ic = &key->npc_l4.icmp;
+		if (npf_iscached(npc, NPC_ICMP_ID)) {
+			const struct icmp *ic = npc->npc_l4.icmp;
 			senkey.se_src_id = ic->icmp_id;
 			senkey.se_dst_id = ic->icmp_id;
 			break;
 		}
 		return NULL;
 	case IPPROTO_ICMPV6:
-		if (npf_iscached(key, NPC_ICMP_ID)) {
-			const struct icmp6_hdr *ic6 = &key->npc_l4.icmp6;
+		if (npf_iscached(npc, NPC_ICMP_ID)) {
+			const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
 			senkey.se_src_id = ic6->icmp6_id;
 			senkey.se_dst_id = ic6->icmp6_id;
 			break;
@@ -529,10 +502,10 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const ifnet_t *ifp,
 		return NULL;
 	}
 
-	KASSERT(key->npc_srcip && key->npc_dstip && key->npc_alen > 0);
-	memcpy(&senkey.se_src_addr, key->npc_srcip, key->npc_alen);
-	memcpy(&senkey.se_dst_addr, key->npc_dstip, key->npc_alen);
-	senkey.se_alen = key->npc_alen;
+	KASSERT(npc->npc_srcip && npc->npc_dstip && npc->npc_alen > 0);
+	memcpy(&senkey.se_src_addr, npc->npc_srcip, npc->npc_alen);
+	memcpy(&senkey.se_dst_addr, npc->npc_dstip, npc->npc_alen);
+	senkey.se_alen = npc->npc_alen;
 
 	/*
 	 * Note: this is a special case where we use common ID pointer
@@ -577,19 +550,60 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const ifnet_t *ifp,
 		rw_exit(&sh->sh_lock);
 		return NULL;
 	}
+	*forw = sforw;
+
+	/* Update the last activity time, hold a reference and unlock. */
+	getnanouptime(&se->s_atime);
+	atomic_inc_uint(&se->s_refcnt);
+	rw_exit(&sh->sh_lock);
+	return se;
+}
+
+/*
+ * npf_session_inspect: lookup a session inspecting the protocol data.
+ *
+ * => If found, we will hold a reference for the caller.
+ */
+npf_session_t *
+npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
+{
+	npf_session_t *se;
+	bool forw;
+
+	/*
+	 * Check if session tracking is on.  Also, if layer 3 and 4 are not
+	 * cached - protocol is not supported or packet is invalid.
+	 */
+	if (sess_tracking == SESS_TRACKING_OFF) {
+		return NULL;
+	}
+	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
+		return NULL;
+	}
+
+	/* Query ALG which may lookup session for us. */
+	if ((se = npf_alg_session(npc, nbuf, di)) != NULL) {
+		/* Note: reference is held. */
+		return se;
+	}
+	if (nbuf_head_mbuf(nbuf) == NULL) {
+		*error = ENOMEM;
+		return NULL;
+	}
+
+	/* Main lookup of the session. */
+	if ((se = npf_session_lookup(npc, nbuf, di, &forw)) == NULL) {
+		return NULL;
+	}
 
 	/* Inspect the protocol data and handle state changes. */
-	if (npf_state_inspect(npc, nbuf, &se->s_state, sforw)) {
-		/* Update the last activity time and hold a reference. */
-		getnanouptime(&se->s_atime);
-		atomic_inc_uint(&se->s_refcnt);
-	} else {
+	if (!npf_state_inspect(npc, nbuf, &se->s_state, forw)) {
 		/* Silently block invalid packets. */
+		npf_session_release(se);
 		npf_stats_inc(NPF_STAT_INVALID_STATE);
 		*error = ENETUNREACH;
 		se = NULL;
 	}
-	rw_exit(&sh->sh_lock);
 	return se;
 }
 
@@ -600,9 +614,9 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const ifnet_t *ifp,
  * => Session will be activated on the first reference release.
  */
 npf_session_t *
-npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf,
-    const ifnet_t *ifp, const int di)
+npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 {
+	const ifnet_t *ifp = nbuf->nb_ifp;
 	const struct tcphdr *th;
 	const struct udphdr *uh;
 	npf_sentry_t *fw, *bk;
@@ -658,7 +672,7 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf,
 	switch (proto) {
 	case IPPROTO_TCP:
 		KASSERT(npf_iscached(npc, NPC_TCP));
-		th = &npc->npc_l4.tcp;
+		th = npc->npc_l4.tcp;
 		/* Additional IDs: ports. */
 		fw->se_src_id = th->th_sport;
 		fw->se_dst_id = th->th_dport;
@@ -666,14 +680,14 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf,
 	case IPPROTO_UDP:
 		KASSERT(npf_iscached(npc, NPC_UDP));
 		/* Additional IDs: ports. */
-		uh = &npc->npc_l4.udp;
+		uh = npc->npc_l4.udp;
 		fw->se_src_id = uh->uh_sport;
 		fw->se_dst_id = uh->uh_dport;
 		break;
 	case IPPROTO_ICMP:
 		if (npf_iscached(npc, NPC_ICMP_ID)) {
 			/* ICMP query ID. */
-			const struct icmp *ic = &npc->npc_l4.icmp;
+			const struct icmp *ic = npc->npc_l4.icmp;
 			fw->se_src_id = ic->icmp_id;
 			fw->se_dst_id = ic->icmp_id;
 			break;
@@ -683,7 +697,7 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf,
 	case IPPROTO_ICMPV6:
 		if (npf_iscached(npc, NPC_ICMP_ID)) {
 			/* ICMP query ID. */
-			const struct icmp6_hdr *ic6 = &npc->npc_l4.icmp6;
+			const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
 			fw->se_src_id = ic6->icmp6_id;
 			fw->se_dst_id = ic6->icmp6_id;
 			break;
@@ -1215,10 +1229,10 @@ npf_sessions_dump(void)
 			timespecsub(&tsnow, &se->s_atime, &tsdiff);
 			etime = npf_state_etime(&se->s_state, proto);
 
-			printf("    %p[%p]: %s proto %d flags 0x%x tsdiff %d "
-			    "etime %d\n", sen, se, sen == &se->s_forw_entry ?
-			    "forw" : "back", proto, se->s_flags,
-			    (int)tsdiff.tv_sec, etime);
+			printf("    %p[%p]:\n\t%s proto %d flags 0x%x "
+			    "tsdiff %d etime %d\n", sen, se,
+			    sen == &se->s_forw_entry ? "forw" : "back",
+			    proto, se->s_flags, (int)tsdiff.tv_sec, etime);
 			memcpy(&ip, &sen->se_src_addr, sizeof(ip));
 			printf("\tsrc (%s, %d) ",
 			    inet_ntoa(ip), ntohs(sen->se_src_id));

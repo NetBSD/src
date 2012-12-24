@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_log.c,v 1.1 2012/09/16 13:47:41 rmind Exp $	*/
+/*	$NetBSD: npf_ext_log.c,v 1.2 2012/12/24 19:05:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.1 2012/09/16 13:47:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.2 2012/12/24 19:05:42 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -176,8 +176,8 @@ npf_log_dtor(npf_rproc_t *rp, void *meta)
 static void
 npf_log(npf_cache_t *npc, nbuf_t *nbuf, void *meta, int *decision)
 {
+	struct mbuf *m = nbuf_head_mbuf(nbuf);
 	const npf_ext_log_t *log = meta;
-	struct mbuf *m = nbuf;
 	ifnet_t *ifp;
 	int family;
 

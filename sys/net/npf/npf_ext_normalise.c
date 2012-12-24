@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_normalise.c,v 1.1 2012/09/16 13:47:41 rmind Exp $	*/
+/*	$NetBSD: npf_ext_normalise.c,v 1.2 2012/12/24 19:05:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalise.c,v 1.1 2012/09/16 13:47:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalise.c,v 1.2 2012/12/24 19:05:42 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -99,16 +99,14 @@ npf_normalise_dtor(npf_rproc_t *rp, void *params)
  * npf_normalise_ip4: routine to normalise IPv4 header (randomise ID,
  * clear "don't fragment" and/or enforce minimum TTL).
  */
-static inline bool
-npf_normalise_ip4(npf_cache_t *npc, nbuf_t *nbuf, npf_normalise_t *np)
+static inline void
+npf_normalise_ip4(npf_cache_t *npc, npf_normalise_t *np)
 {
-	void *n_ptr = nbuf_dataptr(nbuf);
-	struct ip *ip = &npc->npc_ip.v4;
+	struct ip *ip = npc->npc_ip.v4;
 	uint16_t cksum = ip->ip_sum;
 	uint16_t ip_off = ip->ip_off;
 	uint8_t ttl = ip->ip_ttl;
 	u_int minttl = np->n_minttl;
-	u_int offby = 0;
 
 	KASSERT(np->n_random_id || np->n_no_df || minttl);
 
@@ -117,10 +115,6 @@ npf_normalise_ip4(npf_cache_t *npc, nbuf_t *nbuf, npf_normalise_t *np)
 		uint16_t oid = ip->ip_id, nid;
 
 		nid = htons(ip_randomid(ip_ids, 0));
-		offby = offsetof(struct ip, ip_id);
-		if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(nid), &nid)) {
-			return false;
-		}
 		cksum = npf_fixup16_cksum(cksum, oid, nid);
 		ip->ip_id = nid;
 	}
@@ -129,35 +123,18 @@ npf_normalise_ip4(npf_cache_t *npc, nbuf_t *nbuf, npf_normalise_t *np)
 	if (np->n_no_df && (ip_off & htons(IP_DF)) != 0) {
 		uint16_t nip_off = ip_off & ~htons(IP_DF);
 
-		if (nbuf_advstore(&nbuf, &n_ptr,
-		    offsetof(struct ip, ip_off) - offby,
-		    sizeof(uint16_t), &nip_off)) {
-			return false;
-		}
 		cksum = npf_fixup16_cksum(cksum, ip_off, nip_off);
 		ip->ip_off = nip_off;
-		offby = offsetof(struct ip, ip_off);
 	}
 
 	/* Enforce minimum TTL. */
 	if (minttl && ttl < minttl) {
-		if (nbuf_advstore(&nbuf, &n_ptr,
-		    offsetof(struct ip, ip_ttl) - offby,
-		    sizeof(uint8_t), &minttl)) {
-			return false;
-		}
 		cksum = npf_fixup16_cksum(cksum, ttl, minttl);
 		ip->ip_ttl = minttl;
-		offby = offsetof(struct ip, ip_ttl);
 	}
 
 	/* Update IPv4 checksum. */
-	offby = offsetof(struct ip, ip_sum) - offby;
-	if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(cksum), &cksum)) {
-		return false;
-	}
 	ip->ip_sum = cksum;
-	return true;
 }
 
 /*
@@ -167,10 +144,8 @@ static void
 npf_normalise(npf_cache_t *npc, nbuf_t *nbuf, void *params, int *decision)
 {
 	npf_normalise_t *np = params;
-	void *n_ptr = nbuf_dataptr(nbuf);
-	struct tcphdr *th = &npc->npc_l4.tcp;
-	u_int offby, maxmss = np->n_maxmss;
-	uint16_t cksum, mss;
+	struct tcphdr *th = npc->npc_l4.tcp;
+	uint16_t cksum, mss, maxmss = np->n_maxmss;
 	int wscale;
 
 	/* Skip, if already blocking. */
@@ -178,14 +153,9 @@ npf_normalise(npf_cache_t *npc, nbuf_t *nbuf, void *params, int *decision)
 		return;
 	}
 
-	/* Normalise IPv4. */
+	/* Normalise IPv4.  Nothing to do for IPv6. */
 	if (npf_iscached(npc, NPC_IP4) && (np->n_random_id || np->n_minttl)) {
-		if (!npf_normalise_ip4(npc, nbuf, np)) {
-			return;
-		}
-	} else if (!npf_iscached(npc, NPC_IP6)) {
-		/* If not IPv6, then nothing to do. */
-		return;
+		npf_normalise_ip4(npc, np);
 	}
 
 	/*
@@ -205,18 +175,12 @@ npf_normalise(npf_cache_t *npc, nbuf_t *nbuf, void *params, int *decision)
 		/* Nothing else to do. */
 		return;
 	}
-
-	/* Calculate TCP checksum, then rewrite MSS and the checksum. */
 	maxmss = htons(maxmss);
-	cksum = npf_fixup16_cksum(th->th_sum, mss, maxmss);
-	th->th_sum = cksum;
-	mss = maxmss;
-	if (!npf_fetch_tcpopts(npc, nbuf, &mss, &wscale)) {
-		return;
-	}
-	offby = npf_cache_hlen(npc) + offsetof(struct tcphdr, th_sum);
-	if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(cksum), &cksum)) {
-		return;
+
+	/* Store new MSS, calculate TCP checksum and update it. */
+	if (npf_fetch_tcpopts(npc, nbuf, &maxmss, &wscale)) {
+		cksum = npf_fixup16_cksum(th->th_sum, mss, maxmss);
+		th->th_sum = cksum;
 	}
 }
 
