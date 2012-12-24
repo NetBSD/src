@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.39 2012/12/23 22:33:09 jakllsch Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.40 2012/12/24 06:09:50 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.39 2012/12/23 22:33:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.40 2012/12/24 06:09:50 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -350,7 +350,8 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	/*
 	 * Determine SD bus voltage levels supported by the controller.
 	 */
-	if (ISSET(caps, SDHC_VOLTAGE_SUPP_1_8V)) {
+	if (ISSET(caps, SDHC_EMBEDDED_SLOT) &&
+	    ISSET(caps, SDHC_VOLTAGE_SUPP_1_8V)) {
 		SET(hp->ocr, MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V);
 	}
 	if (ISSET(caps, SDHC_VOLTAGE_SUPP_3_0V)) {
