@@ -123,6 +123,7 @@ static const struct arm_opcode arm_opcodes[] =
   {ARM_EXT_V7A, 0x07a00050, 0x0fa00070, "%22?usbfx%c\t%12-15r, %0-3r, #%7-11d, #%16-20W"},
   {ARM_EXT_V7A, 0x07c0001f, 0x0fa0007f, "bfc%c\t%12-15R, %E"},
   {ARM_EXT_V7A, 0x07c00010, 0x0fa00070, "bfi%c\t%12-15R, %0-3r, %E"},
+  {ARM_EXT_V7A, 0x03000000, 0x0ff00000, "movw%c\t%12-15r, #%16-19,0-11d"},
   {ARM_EXT_V7A, 0xf57ff05f, 0xffffffff, "dmb"},
   {ARM_EXT_V7A, 0xf57ff050, 0xfffffff0, "dmb\t#%0-3d"},
   {ARM_EXT_V7A, 0xf57ff05f, 0xffffffff, "dsb"},
@@ -392,7 +393,8 @@ static const struct arm_opcode arm_opcodes[] =
   {ARM_EXT_V1, 0x00e00000, 0x0de00000, "rsc%c%20's\t%12-15r, %16-19r, %o"},
   {ARM_EXT_V3, 0x0120f000, 0x0db0f000, "msr%c\t%22?SCPSR%C, %o"},
   {ARM_EXT_V3, 0x010f0000, 0x0fbf0fff, "mrs%c\t%12-15r, %22?SCPSR"},
-  {ARM_EXT_V1, 0x01000000, 0x0de00000, "tst%c%p\t%16-19r, %o"},
+  {ARM_EXT_V1, 0x01100000, 0x0df00000, "tst%c%p\t%16-19r, %o"},
+  {ARM_EXT_V1, 0x03100000, 0x0df00000, "tst%c%p\t%16-19r, %o"},
   {ARM_EXT_V1, 0x01200000, 0x0de00000, "teq%c%p\t%16-19r, %o"},
   {ARM_EXT_V1, 0x01400000, 0x0de00000, "cmp%c%p\t%16-19r, %o"},
   {ARM_EXT_V1, 0x01600000, 0x0de00000, "cmn%c%p\t%16-19r, %o"},
@@ -1332,60 +1334,59 @@ print_insn_arm (pc, info, given)
 		      {
 			int bitstart = *c++ - '0';
 			int bitend = 0;
+			long value = 0;
+
 			while (*c >= '0' && *c <= '9')
 			  bitstart = (bitstart * 10) + *c++ - '0';
 
 			switch (*c)
 			  {
 			  case '-':
-			    c++;
+			    while (*c == '-')
+			      {
+				c++;
+				bitend = 0;
+				while (*c >= '0' && *c <= '9')
+				  bitend = (bitend * 10) + *c++ - '0';
 
-			    while (*c >= '0' && *c <= '9')
-			      bitend = (bitend * 10) + *c++ - '0';
+				if (!bitend)
+				  abort ();
 
-			    if (!bitend)
-			      abort ();
+				if (*c == ',')
+				  {
+				    c++;
+				    value <<= (bitend - bitstart + 1);
+				    value |= (given & ((2 << bitend) - 1)) >> bitstart;
+
+				    bitstart = 0;
+				    while (*c >= '0' && *c <= '9')
+				      bitstart = (bitstart * 10) + *c++ - '0';
+				  }
+			      }
+
+			    value <<= (bitend - bitstart + 1);
+			    value |= (given & ((2 << bitend) - 1)) >> bitstart;
 
 			    switch (*c)
 			      {
 			      case 'r':
 				{
-				  long reg;
-
-				  reg = given >> bitstart;
-				  reg &= (2 << (bitend - bitstart)) - 1;
-
-				  func (stream, "%s", arm_regnames[reg]);
+				  func (stream, "%s", arm_regnames[value]);
 				}
 				break;
 			      case 'd':
 				{
-				  long reg;
-
-				  reg = given >> bitstart;
-				  reg &= (2 << (bitend - bitstart)) - 1;
-
-				  func (stream, "%d", reg);
+				  func (stream, "%d", value);
 				}
 				break;
 			      case 'W':
 				{
-				  long reg;
-				  
-				  reg = given >> bitstart;
-				  reg &= (2 << (bitend - bitstart)) - 1;
-				  
-				  func (stream, "%d", reg + 1);
+				  func (stream, "%d", value + 1);
 				}
 				break;
 			      case 'x':
 				{
-				  long reg;
-
-				  reg = given >> bitstart;
-				  reg &= (2 << (bitend - bitstart)) - 1;
-
-				  func (stream, "0x%08x", reg);
+				  func (stream, "0x%08x", value);
 
 				  /* Some SWI instructions have special
 				     meanings.  */
@@ -1397,44 +1398,31 @@ print_insn_arm (pc, info, given)
 				break;
 			      case 'X':
 				{
-				  long reg;
-
-				  reg = given >> bitstart;
-				  reg &= (2 << (bitend - bitstart)) - 1;
-
-				  func (stream, "%01x", reg & 0xf);
+				  func (stream, "%01x", value & 0xf);
 				}
 				break;
 			      case 'f':
 				{
-				  long reg;
-
-				  reg = given >> bitstart;
-				  reg &= (2 << (bitend - bitstart)) - 1;
-
-				  if (reg > 7)
+				  if (value > 7)
 				    func (stream, "#%s",
-					  arm_fp_const[reg & 7]);
+					  arm_fp_const[value & 7]);
 				  else
-				    func (stream, "f%d", reg);
+				    func (stream, "f%d", value);
 				}
 				break;
 
 			      case 'w':
 				{
-				  long reg;
-
 				  if (bitstart != bitend)
 				    {
-				      reg = given >> bitstart;
-				      reg &= (2 << (bitend - bitstart)) - 1;
 				      if (bitend - bitstart == 1)
-					func (stream, "%s", iwmmxt_wwnames[reg]);
+					func (stream, "%s", iwmmxt_wwnames[value]);
 				      else
-					func (stream, "%s", iwmmxt_wwssnames[reg]);
+					func (stream, "%s", iwmmxt_wwssnames[value]);
 				    }
 				  else
 				    {
+				      long reg;
 				      reg = (((given >> 8)  & 0x1) |
 					     ((given >> 22) & 0x1));
 				      func (stream, "%s", iwmmxt_wwnames[reg]);
@@ -1444,7 +1432,6 @@ print_insn_arm (pc, info, given)
 
 			      case 'g':
 				{
-				  long reg;
 				  int current_regnames;
 
 				  if (! iwmmxt_regnames)
@@ -1452,16 +1439,13 @@ print_insn_arm (pc, info, given)
 				  current_regnames = set_arm_regname_option
 				    (iwmmxt_regnames);
 
-				  reg = given >> bitstart;
-				  reg &= (2 << (bitend - bitstart)) - 1;
-				  func (stream, "%s", arm_regnames[reg]);
+				  func (stream, "%s", arm_regnames[value]);
 				  set_arm_regname_option (current_regnames);
 				}
 				break;
 
 			      case 'G':
 				{
-				  long reg;
 				  int current_regnames;
 
 				  if (! iwmmxt_regnames)
@@ -1469,9 +1453,7 @@ print_insn_arm (pc, info, given)
 				  current_regnames = set_arm_regname_option
 				    (iwmmxt_regnames + 1);
 
-				  reg = given >> bitstart;
-				  reg &= (2 << (bitend - bitstart)) - 1;
-				  func (stream, "%s", arm_regnames[reg]);
+				  func (stream, "%s", arm_regnames[value]);
 				  set_arm_regname_option (current_regnames);
 				}
 				break;
