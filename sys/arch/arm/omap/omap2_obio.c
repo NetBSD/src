@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.17 2012/12/11 19:18:56 riastradh Exp $	*/
+/*	$Id: omap2_obio.c,v 1.18 2012/12/24 06:28:55 kiyohara Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.17 2012/12/11 19:18:56 riastradh Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.18 2012/12/24 06:28:55 kiyohara Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.17 2012/12/11 19:18:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.18 2012/12/24 06:28:55 kiyohara Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -374,6 +374,9 @@ static const struct {
 #endif
 #if defined(GPIO5_BASE)
 	{ .name = "gpio5", .addr = GPIO5_BASE, .required = false },
+#endif
+#if defined(GPIO6_BASE)
+	{ .name = "gpio6", .addr = GPIO6_BASE, .required = false },
 #endif
 #if 0
 	{ .name = "dmac", .addr = DMAC_BASE, .required = true },
