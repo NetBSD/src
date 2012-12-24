@@ -22,6 +22,7 @@ mbuf_getwithdata(const void *data, size_t len)
 	assert(m != NULL);
 	dst = mtod(m, void *);
 	memcpy(dst, data, len);
+	m->m_pkthdr.len = len;
 	m->m_len = len;
 	return m;
 }
@@ -35,6 +36,7 @@ mbuf_construct_ether(int proto)
 	m0 = m_gethdr(M_WAITOK, MT_HEADER);
 	ethdr = mtod(m0, struct ether_header *);
 	ethdr->ether_type = htons(ETHERTYPE_IP);
+	m0->m_pkthdr.len = sizeof(struct ether_header);
 	m0->m_len = sizeof(struct ether_header);
 
 	m1 = mbuf_construct(proto);
@@ -87,6 +89,7 @@ mbuf_construct(int proto)
 	size += mbuf_fill_proto(proto, l4data);
 	iphdr->ip_len = htons(size);
 
+	m->m_pkthdr.len = size;
 	m->m_len = size;
 	m->m_next = NULL;
 	return m;
@@ -112,6 +115,7 @@ mbuf_construct6(int proto)
 	size += mbuf_fill_proto(proto, l4data);
 	ip6->ip6_plen = htons(size);
 
+	m->m_pkthdr.len = size;
 	m->m_len = size;
 	m->m_next = NULL;
 	return m;
@@ -138,10 +142,11 @@ mbuf_icmp_append(struct mbuf *m, struct mbuf *m_orig)
 	struct ip *iphdr = mtod(m, struct ip *);
 	const size_t hlen = iphdr->ip_hl << 2;
 	struct icmp *ic = (struct icmp *)((uint8_t *)iphdr + hlen);
-	const size_t addlen = m_orig->m_len;
+	const size_t addlen = m_length(m_orig);
 
 	iphdr->ip_len = htons(ntohs(iphdr->ip_len) + addlen);
 	memcpy(&ic->icmp_ip, mtod(m_orig, struct ip *), addlen);
+	m->m_pkthdr.len += addlen;
 	m->m_len += addlen;
 	m_freem(m_orig);
 }

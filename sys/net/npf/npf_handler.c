@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.23 2012/10/06 23:38:20 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.24 2012/12/24 19:05:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.23 2012/10/06 23:38:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.24 2012/12/24 19:05:43 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,6 +71,52 @@ npf_ifhook(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	return 0;
 }
 
+static int
+npf_reassembly(npf_cache_t *npc, nbuf_t *nbuf, struct mbuf **mp)
+{
+	int error = EINVAL;
+
+	/* Reset the mbuf as it may have changed. */
+	*mp = nbuf_head_mbuf(nbuf);
+	nbuf_reset(nbuf);
+
+	if (npf_iscached(npc, NPC_IP4)) {
+		struct ip *ip = nbuf_dataptr(nbuf);
+		error = ip_reass_packet(mp, ip);
+	} else if (npf_iscached(npc, NPC_IP6)) {
+#ifdef INET6
+		/*
+		 * Note: ip6_reass_packet() offset is the start of
+		 * the fragment header.
+		 */
+		const u_int hlen = npf_cache_hlen(npc);
+		error = ip6_reass_packet(mp, hlen);
+#endif
+	}
+	if (error) {
+		npf_stats_inc(NPF_STAT_REASSFAIL);
+		return error;
+	}
+	if (*mp == NULL) {
+		/* More fragments should come. */
+		npf_stats_inc(NPF_STAT_FRAGMENTS);
+		return 0;
+	}
+
+	/*
+	 * Reassembly is complete, we have the final packet.
+	 * Cache again, since layer 4 data is accessible now.
+	 */
+	nbuf_init(nbuf, *mp, nbuf->nb_ifp);
+	npc->npc_info = 0;
+
+	if (npf_cache_all(npc, nbuf) & NPC_IPFRAG) {
+		return EINVAL;
+	}
+	npf_stats_inc(NPF_STAT_REASSEMBLY);
+	return 0;
+}
+
 /*
  * npf_packet_handler: main packet handling routine for layer 3.
  *
@@ -79,7 +125,7 @@ npf_ifhook(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 int
 npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 {
-	nbuf_t *nbuf = *mp;
+	nbuf_t nbuf;
 	npf_cache_t npc;
 	npf_session_t *se;
 	npf_ruleset_t *rlset;
@@ -92,6 +138,8 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	 * Initialise packet information cache.
 	 * Note: it is enough to clear the info bits.
 	 */
+	KASSERT(ifp != NULL);
+	nbuf_init(&nbuf, *mp, ifp);
 	npc.npc_info = 0;
 	decision = NPF_DECISION_BLOCK;
 	error = 0;
@@ -99,52 +147,23 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	rp = NULL;
 
 	/* Cache everything.  Determine whether it is an IP fragment. */
-	if (npf_cache_all(&npc, nbuf) & NPC_IPFRAG) {
+	if (npf_cache_all(&npc, &nbuf) & NPC_IPFRAG) {
 		/*
 		 * Pass to IPv4 or IPv6 reassembly mechanism.
 		 */
-		error = EINVAL;
-
-		if (npf_iscached(&npc, NPC_IP4)) {
-			struct ip *ip = nbuf_dataptr(*mp);
-			error = ip_reass_packet(mp, ip);
-		} else if (npf_iscached(&npc, NPC_IP6)) {
-#ifdef INET6
-			/*
-			 * Note: ip6_reass_packet() offset is the start of
-			 * the fragment header.
-			 */
-			const u_int hlen = npf_cache_hlen(&npc);
-			error = ip6_reass_packet(mp, hlen);
-#endif
-		}
+		error = npf_reassembly(&npc, &nbuf, mp);
 		if (error) {
-			npf_stats_inc(NPF_STAT_REASSFAIL);
 			se = NULL;
 			goto out;
 		}
 		if (*mp == NULL) {
 			/* More fragments should come; return. */
-			npf_stats_inc(NPF_STAT_FRAGMENTS);
 			return 0;
 		}
-
-		/*
-		 * Reassembly is complete, we have the final packet.
-		 * Cache again, since layer 4 data is accessible now.
-		 */
-		nbuf = (nbuf_t *)*mp;
-		npc.npc_info = 0;
-
-		if (npf_cache_all(&npc, nbuf) & NPC_IPFRAG) {
-			se = NULL;
-			goto out;
-		}
-		npf_stats_inc(NPF_STAT_REASSEMBLY);
 	}
 
 	/* Inspect the list of sessions. */
-	se = npf_session_inspect(&npc, nbuf, ifp, di, &error);
+	se = npf_session_inspect(&npc, &nbuf, di, &error);
 
 	/* If "passing" session found - skip the ruleset inspection. */
 	if (se && npf_session_pass(se, &rp)) {
@@ -153,13 +172,15 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		goto pass;
 	}
 	if (error) {
-		goto block;
+		if (error == ENETUNREACH)
+			goto block;
+		goto out;
 	}
 
 	/* Acquire the lock, inspect the ruleset using this packet. */
 	npf_core_enter();
 	rlset = npf_core_ruleset();
-	rl = npf_ruleset_inspect(&npc, nbuf, rlset, ifp, di, NPF_LAYER_3);
+	rl = npf_ruleset_inspect(&npc, &nbuf, rlset, di, NPF_LAYER_3);
 	if (rl == NULL) {
 		bool default_pass = npf_default_pass();
 		npf_core_exit();
@@ -173,14 +194,14 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	}
 
 	/*
-	 * Get the rule procedure (acquires a reference) for assocation
+	 * Get the rule procedure (acquires a reference) for association
 	 * with a session (if any) and execution.
 	 */
 	KASSERT(rp == NULL);
 	rp = npf_rule_getrproc(rl);
 
 	/* Apply the rule, release the lock. */
-	error = npf_rule_apply(&npc, nbuf, rl, &retfl);
+	error = npf_rule_apply(&npc, &nbuf, rl, &retfl);
 	if (error) {
 		npf_stats_inc(NPF_STAT_BLOCK_RULESET);
 		goto block;
@@ -195,7 +216,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	 * session.  It will be released on session destruction.
 	 */
 	if ((retfl & NPF_RULE_STATEFUL) != 0 && !se) {
-		se = npf_session_establish(&npc, nbuf, ifp, di);
+		se = npf_session_establish(&npc, &nbuf, di);
 		if (se) {
 			npf_session_setpass(se, rp);
 		}
@@ -206,14 +227,14 @@ pass:
 	/*
 	 * Perform NAT.
 	 */
-	error = npf_do_nat(&npc, se, nbuf, ifp, di);
+	error = npf_do_nat(&npc, se, &nbuf, di);
 block:
 	/*
 	 * Execute the rule procedure, if any is associated.
 	 * It may reverse the decision from pass to block.
 	 */
 	if (rp) {
-		npf_rproc_run(&npc, nbuf, rp, &decision);
+		npf_rproc_run(&npc, &nbuf, rp, &decision);
 	}
 out:
 	/*
@@ -224,6 +245,11 @@ out:
 		npf_session_release(se);
 	} else if (rp) {
 		npf_rproc_release(rp);
+	}
+
+	/* Reset mbuf pointer before returning to the caller. */
+	if ((*mp = nbuf_head_mbuf(&nbuf)) == NULL) {
+		return ENOMEM;
 	}
 
 	/* Pass the packet if decided and there is no error. */
@@ -241,7 +267,7 @@ out:
 	 * Depending on the flags and protocol, return TCP reset (RST) or
 	 * ICMP destination unreachable.
 	 */
-	if (retfl && npf_return_block(&npc, nbuf, retfl)) {
+	if (retfl && npf_return_block(&npc, &nbuf, retfl)) {
 		*mp = NULL;
 	}
 
