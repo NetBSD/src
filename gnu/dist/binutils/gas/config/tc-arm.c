@@ -6757,6 +6757,51 @@ do_dsb (char * str)
 }
 
 static void
+do_movw (char * str)
+{
+  expressionS expr;
+  int reg;
+
+  skip_whitespace (str);
+
+  if ((reg = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL)
+    return;
+
+  if (reg == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  if (is_immediate_prefix (*str))
+    str++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+
+  if (my_get_expression (&expr, &str))
+    return;
+
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return;
+    }
+
+  if ((expr.X_add_number >> 16) != 0)
+    {
+      inst.error = _("invalid unsigned 16-bit value");
+      return;
+    }
+
+  inst.instruction |= (expr.X_add_number & 0xf000) << 4;
+  inst.instruction |= (expr.X_add_number & 0x0fff);
+}
+
+static void
 do_bfci (char * str)
 {
   expressionS expr;
@@ -10195,12 +10240,13 @@ static const struct asm_opcode insns[] =
   { "smi",       0xe1600070, 3,  ARM_EXT_V6Z,      do_smi},
 
   /*  ARM V7A.  */
+  { "bfi",       0xe7c00010, 3,  ARM_EXT_V7A,      do_bfci},
+  { "bfc",       0xe7c0001f, 3,  ARM_EXT_V7A,      do_bfci},
   { "dmb",       0xf57ff05f, 0,  ARM_EXT_V7A,      do_dsb},
   { "dsb",       0xf57ff04f, 0,  ARM_EXT_V7A,      do_dsb},
   { "isb",       0xf57ff06f, 0,  ARM_EXT_V7A,      do_dsb},
+  { "movw",	 0xe3000000, 2,  ARM_EXT_V7A,      do_movw},
   { "sbfx",      0xe7a00050, 4,  ARM_EXT_V7A,      do_bfx},
-  { "bfi",       0xe7c00010, 3,  ARM_EXT_V7A,      do_bfci},
-  { "bfc",       0xe7c0001f, 3,  ARM_EXT_V7A,      do_bfci},
   { "ubfx",      0xe7e00050, 4,  ARM_EXT_V7A,      do_bfx},
 
   /* Core FPA instruction set (V1).  */
