@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.14 2012/07/19 21:52:29 spz Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.15 2012/12/24 19:05:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.14 2012/07/19 21:52:29 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.15 2012/12/24 19:05:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,23 +56,22 @@ __KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.14 2012/07/19 21:52:29 spz Exp $");
  * => Returns zero on success or -1 on failure.
  */
 int
-npf_match_ether(nbuf_t *nbuf, int sd, int _res, uint16_t ethertype, uint32_t *r)
+npf_match_ether(nbuf_t *nbuf, int sd, uint16_t ethertype, uint32_t *r)
 {
-	void *n_ptr = nbuf_dataptr(nbuf);
+	const u_int off = nbuf_offset(nbuf);
+	bool vlan = false;
+	void *nptr;
 	u_int offby;
 	uint16_t val16;
-	bool vlan;
-
-	vlan = false;
-	*r = 0;
 
 	/* Ethernet header: check EtherType. */
 	offby = offsetof(struct ether_header, ether_type);
+	*r = 0;
 again:
-	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint16_t), &val16)) {
+	if ((nptr = nbuf_advance(nbuf, offby, sizeof(uint16_t))) == NULL) {
 		return -1;
 	}
-	val16 = ntohs(val16);
+	memcpy(&val16, nptr, sizeof(val16));
 	*r += offby;
 
 	/* Handle VLAN tags. */
@@ -81,10 +80,14 @@ again:
 		vlan = true;
 		goto again;
 	}
+
+	/* Restore the offset. */
+	nbuf_reset(nbuf);
+	nbuf_advance(nbuf, off, 0);
+
 	if (val16 != ETHERTYPE_IP) {
 		return -1;
 	}
-
 	*r += ETHER_TYPE_LEN;
 	return 0;
 }
@@ -93,18 +96,12 @@ again:
  * npf_match_proto: match IP address length and/or layer 4 protocol.
  */
 int
-npf_match_proto(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t ap)
+npf_match_proto(const npf_cache_t *npc, uint32_t ap)
 {
 	const int alen = (ap >> 8) & 0xff;
 	const int proto = ap & 0xff;
 
-	if (!npf_iscached(npc, NPC_IP46)) {
-		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
-			return -1;
-		}
-		KASSERT(npf_iscached(npc, NPC_IP46));
-	}
-
+	KASSERT(npf_iscached(npc, NPC_IP46));
 	if (alen && npc->npc_alen != alen) {
 		return -1;
 	}
@@ -115,24 +112,14 @@ npf_match_proto(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t ap)
  * npf_match_table: match IP address against NPF table.
  */
 int
-npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
-    const int sd, const u_int tid)
+npf_match_table(const npf_cache_t *npc, int sd, u_int tid)
 {
-	npf_tableset_t *tblset;
-	npf_addr_t *addr;
-	int alen;
+	npf_tableset_t *tblset = npf_core_tableset();
+	const npf_addr_t *addr = sd ? npc->npc_srcip : npc->npc_dstip;
+	const int alen = npc->npc_alen;
 
 	KASSERT(npf_core_locked());
-
-	if (!npf_iscached(npc, NPC_IP46)) {
-		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
-			return -1;
-		}
-		KASSERT(npf_iscached(npc, NPC_IP46));
-	}
-	addr = sd ? npc->npc_srcip : npc->npc_dstip;
-	tblset = npf_core_tableset();
-	alen = npc->npc_alen;
+	KASSERT(npf_iscached(npc, NPC_IP46));
 
 	/* Match address against NPF table. */
 	return npf_table_lookup(tblset, tid, alen, addr) ? -1 : 0;
@@ -142,18 +129,13 @@ npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
  * npf_match_ipmask: match an address against netaddr/mask.
  */
 int
-npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
-    const int szsd, const npf_addr_t *maddr, npf_netmask_t mask)
+npf_match_ipmask(const npf_cache_t *npc, int szsd,
+    const npf_addr_t *maddr, npf_netmask_t mask)
 {
 	const int alen = szsd >> 1;
-	npf_addr_t *addr;
+	const npf_addr_t *addr;
 
-	if (!npf_iscached(npc, NPC_IP46)) {
-		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
-			return -1;
-		}
-		KASSERT(npf_iscached(npc, NPC_IP46));
-	}
+	KASSERT(npf_iscached(npc, NPC_IP46));
 	if (npc->npc_alen != alen) {
 		return -1;
 	}
@@ -165,19 +147,12 @@ npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
  * npf_match_tcp_ports: match TCP port in header against the range.
  */
 int
-npf_match_tcp_ports(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
-    const int sd, const uint32_t prange)
+npf_match_tcp_ports(const npf_cache_t *npc, int sd, uint32_t prange)
 {
-	struct tcphdr *th = &npc->npc_l4.tcp;
-	in_port_t p;
+	const struct tcphdr *th = npc->npc_l4.tcp;
+	const in_port_t p = sd ? th->th_sport : th->th_dport;
 
-	if (!npf_iscached(npc, NPC_TCP)) {
-		if (!npf_fetch_tcp(npc, nbuf, n_ptr)) {
-			return -1;
-		}
-		KASSERT(npf_iscached(npc, NPC_TCP));
-	}
-	p = sd ? th->th_sport : th->th_dport;
+	KASSERT(npf_iscached(npc, NPC_TCP));
 
 	/* Match against the port range. */
 	return NPF_PORTRANGE_MATCH(prange, p) ? 0 : -1;
@@ -187,19 +162,12 @@ npf_match_tcp_ports(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
  * npf_match_udp_ports: match UDP port in header against the range.
  */
 int
-npf_match_udp_ports(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
-    const int sd, const uint32_t prange)
+npf_match_udp_ports(const npf_cache_t *npc, int sd, uint32_t prange)
 {
-	struct udphdr *uh = &npc->npc_l4.udp;
-	in_port_t p;
+	const struct udphdr *uh = npc->npc_l4.udp;
+	const in_port_t p = sd ? uh->uh_sport : uh->uh_dport;
 
-	if (!npf_iscached(npc, NPC_UDP)) {
-		if (!npf_fetch_udp(npc, nbuf, n_ptr)) {
-			return -1;
-		}
-		KASSERT(npf_iscached(npc, NPC_UDP));
-	}
-	p = sd ? uh->uh_sport : uh->uh_dport;
+	KASSERT(npf_iscached(npc, NPC_UDP));
 
 	/* Match against the port range. */
 	return NPF_PORTRANGE_MATCH(prange, p) ? 0 : -1;
@@ -209,16 +177,11 @@ npf_match_udp_ports(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
  * npf_match_icmp4: match ICMPv4 packet.
  */
 int
-npf_match_icmp4(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t tc)
+npf_match_icmp4(const npf_cache_t *npc, uint32_t tc)
 {
-	struct icmp *ic = &npc->npc_l4.icmp;
+	const struct icmp *ic = npc->npc_l4.icmp;
 
-	if (!npf_iscached(npc, NPC_ICMP)) {
-		if (!npf_fetch_icmp(npc, nbuf, n_ptr)) {
-			return -1;
-		}
-		KASSERT(npf_iscached(npc, NPC_ICMP));
-	}
+	KASSERT(npf_iscached(npc, NPC_ICMP));
 
 	/* Match code/type, if required. */
 	if ((1 << 31) & tc) {
@@ -240,16 +203,11 @@ npf_match_icmp4(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t tc)
  * npf_match_icmp6: match ICMPv6 packet.
  */
 int
-npf_match_icmp6(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t tc)
+npf_match_icmp6(const npf_cache_t *npc, uint32_t tc)
 {
-	struct icmp6_hdr *ic6 = &npc->npc_l4.icmp6;
+	const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
 
-	if (!npf_iscached(npc, NPC_ICMP)) {
-		if (!npf_fetch_icmp(npc, nbuf, n_ptr)) {
-			return -1;
-		}
-		KASSERT(npf_iscached(npc, NPC_ICMP));
-	}
+	KASSERT(npf_iscached(npc, NPC_ICMP));
 
 	/* Match code/type, if required. */
 	if ((1 << 31) & tc) {
@@ -271,16 +229,11 @@ npf_match_icmp6(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t tc)
  * npf_match_tcpfl: match TCP flags.
  */
 int
-npf_match_tcpfl(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t fl)
+npf_match_tcpfl(const npf_cache_t *npc, uint32_t fl)
 {
 	const uint8_t tcpfl = (fl >> 8) & 0xff, mask = fl & 0xff;
-	struct tcphdr *th = &npc->npc_l4.tcp;
+	const struct tcphdr *th = npc->npc_l4.tcp;
 
-	if (!npf_iscached(npc, NPC_TCP)) {
-		if (!npf_fetch_tcp(npc, nbuf, n_ptr)) {
-			return -1;
-		}
-		KASSERT(npf_iscached(npc, NPC_TCP));
-	}
-	return ((th->th_flags & mask) == tcpfl) ? 0 : -1;
+	KASSERT(npf_iscached(npc, NPC_TCP));
+	return (th->th_flags & mask) == tcpfl ? 0 : -1;
 }
