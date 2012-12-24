@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.19 2012/12/24 19:05:43 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.20 2012/12/24 23:11:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.19 2012/12/24 19:05:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.20 2012/12/24 23:11:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -487,7 +487,7 @@ again:
 void
 npf_recache(npf_cache_t *npc, nbuf_t *nbuf)
 {
-	const int mflags = npc->npc_info & (NPC_IP46 | NPC_LAYER4);
+	const int mflags __unused = npc->npc_info & (NPC_IP46 | NPC_LAYER4);
 	int flags;
 
 	nbuf_reset(nbuf);
