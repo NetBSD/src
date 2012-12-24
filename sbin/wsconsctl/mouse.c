@@ -1,4 +1,4 @@
-/*	$NetBSD: mouse.c,v 1.9 2012/12/24 01:27:23 khorben Exp $ */
+/*	$NetBSD: mouse.c,v 1.10 2012/12/24 01:29:20 khorben Exp $ */
 
 /*-
  * Copyright (c) 1998, 2006, 2012 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ static char *calibration_samples;
 static struct wsmouse_repeat repeat;
 
 static void mouse_get_calibration(int);
+static void mouse_put_calibration(int);
 
 static void mouse_get_repeat(int);
 static void mouse_put_repeat(int);
@@ -59,15 +60,15 @@ struct field mouse_field_tab[] = {
     { "samplerate",		&samplerate,	FMT_UINT,	FLG_WRONLY },
     { "type",			&mstype,	FMT_MSTYPE,	FLG_RDONLY },
     { "calibration.minx",	&calibration.minx,
-    						FMT_INT,	FLG_RDONLY },
+    						FMT_INT,	FLG_MODIFY },
     { "calibration.miny",	&calibration.miny,
-    						FMT_INT,	FLG_RDONLY },
+    						FMT_INT,	FLG_MODIFY },
     { "calibration.maxx",	&calibration.maxx,
-    						FMT_INT,	FLG_RDONLY },
+    						FMT_INT,	FLG_MODIFY },
     { "calibration.maxy",	&calibration.maxy,
-    						FMT_INT,	FLG_RDONLY },
+    						FMT_INT,	FLG_MODIFY },
     { "calibration.samples",	&calibration_samples,
-	    					FMT_STRING,	FLG_RDONLY },
+	    					FMT_STRING,	FLG_MODIFY },
     { "repeat.buttons",		&repeat.wr_buttons,
     						FMT_BITFIELD, FLG_MODIFY },
     { "repeat.delay.first",	&repeat.wr_delay_first,
@@ -192,11 +193,82 @@ mouse_put_values(int fd)
 		pr_field(field_by_value(&samplerate), " -> ");
 	}
 
+	if (field_by_value(&calibration.minx)->flags & FLG_SET ||
+	    field_by_value(&calibration.miny)->flags & FLG_SET ||
+	    field_by_value(&calibration.maxx)->flags & FLG_SET ||
+	    field_by_value(&calibration.maxy)->flags & FLG_SET ||
+	    field_by_value(&calibration_samples)->flags & FLG_SET)
+		mouse_put_calibration(fd);
+
 	if (field_by_value(&repeat.wr_buttons)->flags & FLG_SET ||
 	    field_by_value(&repeat.wr_delay_first)->flags & FLG_SET ||
 	    field_by_value(&repeat.wr_delay_decrement)->flags & FLG_SET ||
 	    field_by_value(&repeat.wr_delay_minimum)->flags & FLG_SET)
 		mouse_put_repeat(fd);
+}
+
+static void
+mouse_put_calibration(int fd)
+{
+	struct wsmouse_calibcoords tmp;
+	int i;
+	const char *p;
+	char *q;
+
+	/* Fetch current values into the temporary structure. */
+	if (ioctl(fd, WSMOUSEIO_GCALIBCOORDS, &tmp) < 0)
+		err(EXIT_FAILURE, "WSMOUSEIO_GCALIBCOORDS");
+
+	/* Overwrite the desired values in the temporary structure. */
+	if (field_by_value(&calibration.minx)->flags & FLG_SET)
+		tmp.minx = calibration.minx;
+	if (field_by_value(&calibration.miny)->flags & FLG_SET)
+		tmp.miny = calibration.miny;
+	if (field_by_value(&calibration.maxx)->flags & FLG_SET)
+		tmp.maxx = calibration.maxx;
+	if (field_by_value(&calibration.maxy)->flags & FLG_SET)
+		tmp.maxy = calibration.maxy;
+	if (field_by_value(&calibration_samples)->flags & FLG_SET) {
+		p = calibration_samples;
+		for (i = 0; p[0] != '\0' && i < WSMOUSE_CALIBCOORDS_MAX; i++) {
+			tmp.samples[i].rawx = strtol(p, &q, 0);
+			if (*q != ',')
+				break;
+			p = q + 1;
+			tmp.samples[i].rawy = strtol(p, &q, 0);
+			if (*q != ',')
+				break;
+			p = q + 1;
+			tmp.samples[i].x = strtol(p, &q, 0);
+			if (*q != ',')
+				break;
+			p = q + 1;
+			tmp.samples[i].y = strtol(p, &q, 0);
+			p = q + 1;
+			if (*q != '\0' && *q != ':')
+				break;
+		}
+		if (p[0] != '\0')
+			errx(EXIT_FAILURE, "%s: invalid calibration data",
+					calibration_samples);
+		tmp.samplelen = i;
+	}
+
+	/* Set new values for calibrating events. */
+	if (ioctl(fd, WSMOUSEIO_SCALIBCOORDS, &tmp) < 0)
+		err(EXIT_FAILURE, "WSMOUSEIO_SCALIBCOORDS");
+
+	/* Now print what changed. */
+	if (field_by_value(&calibration.minx)->flags & FLG_SET)
+		pr_field(field_by_value(&calibration.minx), " -> ");
+	if (field_by_value(&calibration.miny)->flags & FLG_SET)
+		pr_field(field_by_value(&calibration.miny), " -> ");
+	if (field_by_value(&calibration.maxx)->flags & FLG_SET)
+		pr_field(field_by_value(&calibration.maxx), " -> ");
+	if (field_by_value(&calibration.maxy)->flags & FLG_SET)
+		pr_field(field_by_value(&calibration.maxy), " -> ");
+	if (field_by_value(&calibration_samples)->flags & FLG_SET)
+		pr_field(field_by_value(&calibration_samples), " -> ");
 }
 
 static void
