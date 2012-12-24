@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.c,v 1.1 2012/12/21 18:07:36 christos Exp $	*/
+/*	$NetBSD: ssl.c,v 1.2 2012/12/24 22:12:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssl.c,v 1.1 2012/12/21 18:07:36 christos Exp $");
+__RCSID("$NetBSD: ssl.c,v 1.2 2012/12/24 22:12:28 christos Exp $");
 #endif
 
 #include <time.h>
@@ -248,7 +248,9 @@ struct fetch_connect *
 fetch_fdopen(int sd, const char *fmode)
 {
 	struct fetch_connect *conn;
+#if defined(SO_NOSIGPIPE) || defined(TCP_NOPUSH)
 	int opt = 1;
+#endif
 
 	if ((conn = calloc(1, sizeof(*conn))) == NULL)
 		return NULL;
@@ -256,7 +258,9 @@ fetch_fdopen(int sd, const char *fmode)
 	conn->sd = sd;
 	conn->issock = 1;
 	fcntl(sd, F_SETFD, FD_CLOEXEC);
+#ifdef SO_NOSIGPIPE
 	setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &opt, sizeof(opt));
+#endif
 #ifdef TCP_NOPUSH
 	setsockopt(sd, IPPROTO_TCP, TCP_NOPUSH, &opt, sizeof(opt));
 #endif
