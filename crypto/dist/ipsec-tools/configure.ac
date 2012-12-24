@@ -207,12 +207,12 @@ AC_MSG_CHECKING(openssl version)
 AC_TRY_COMPILE(
 [#include <openssl/opensslv.h>
 ],
-[#if OPENSSL_VERSION_NUMBER < 0x0090602fL
+[#if OPENSSL_VERSION_NUMBER < 0x0090813fL
 #error OpenSSL version is too old ...
 #endif],
 [AC_MSG_RESULT([ok])],
 [AC_MSG_RESULT(too old)
-AC_MSG_ERROR([OpenSSL version must be 0.9.6 or higher. Aborting.])
+AC_MSG_ERROR([OpenSSL version must be 0.9.8s or higher. Aborting.])
 ])
 
 AC_CHECK_HEADERS(openssl/engine.h)
