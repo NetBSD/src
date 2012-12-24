@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.22 2012/11/29 15:31:24 vanhu Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.23 2012/12/24 08:46:27 tteras Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -44,8 +44,8 @@
 /* get openssl/ssleay version number */
 #include <openssl/opensslv.h>
 
-#if !defined(OPENSSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x0090602fL)
-#error OpenSSL version 0.9.6 or later required.
+#if !defined(OPENSSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x0090813fL)
+#error OpenSSL version 0.9.8s or later required.
 #endif
 
 #include <openssl/pem.h>
@@ -91,12 +91,7 @@
 #endif
 #include "plog.h"
 
-/* 0.9.7 stuff? */
-#if OPENSSL_VERSION_NUMBER < 0x0090700fL
-typedef STACK_OF(GENERAL_NAME) GENERAL_NAMES;
-#else
 #define USE_NEW_DES_API
-#endif
 
 #define OpenSSL_BUG()	do { plog(LLV_ERROR, LOCATION, NULL, "OpenSSL function failed\n"); } while(0)
 
@@ -505,10 +500,8 @@ eay_check_x509cert(cert, CApath, CAfile, local)
 	if (csc == NULL)
 		goto end;
 	X509_STORE_CTX_init(csc, cert_ctx, x509, NULL);
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L
 	X509_STORE_CTX_set_flags (csc, X509_V_FLAG_CRL_CHECK);
 	X509_STORE_CTX_set_flags (csc, X509_V_FLAG_CRL_CHECK_ALL);
-#endif
 	error = X509_verify_cert(csc);
 	X509_STORE_CTX_free(csc);
 
