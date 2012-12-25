@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1085 2012/12/17 20:38:00 mbalmer Exp $
+# $NetBSD: GENERIC,v 1.1086 2012/12/25 10:51:03 mbalmer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1085 $"
+#ident 		"GENERIC-$Revision: 1.1086 $"
 
 maxusers	64		# estimated number of users
 
@@ -1530,8 +1530,8 @@ ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 # Trusted Platform Module
 tpm*   at isa? iomem 0xfed40000 irq 7
 #tpm*  at isa? port 0x02e
-#tpm*  at isa? port 0x04e 
-#tpm*  at isa? port 0x07e 
+#tpm*  at isa? port 0x04e
+#tpm*  at isa? port 0x07e
 #tpm*  at isa? port 0x0ee
 
 # Joysticks
