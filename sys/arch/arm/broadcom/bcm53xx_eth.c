@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.19 2012/12/19 02:44:39 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.20 2012/12/25 21:17:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1009,29 +1009,27 @@ bcmeth_rx_input(
 #endif
 }
 
-static void
+static bool
 bcmeth_rxq_consume(
 	struct bcmeth_softc *sc,
-	struct bcmeth_rxqueue *rxq)
+	struct bcmeth_rxqueue *rxq,
+	size_t atmost)
 {
 	struct ifnet * const ifp = &sc->sc_if;
 	struct gmac_rxdb *consumer = rxq->rxq_consumer;
 	size_t rxconsumed = 0;
+	bool didconsume = false;
 
-	for (;;) {
+	while (atmost-- > 0) {
 		if (consumer == rxq->rxq_producer) {
-			rxq->rxq_consumer = consumer;
-			rxq->rxq_inuse -= rxconsumed;
 			KASSERT(rxq->rxq_inuse == 0);
-			return;
+			break;
 		}
 		
 		uint32_t rcvsts0 = bcmeth_read_4(sc, rxq->rxq_reg_rcvsts0);
 		uint32_t currdscr = __SHIFTOUT(rcvsts0, RCV_CURRDSCR);
 		if (consumer == rxq->rxq_first + currdscr) {
-			rxq->rxq_consumer = consumer;
-			rxq->rxq_inuse -= rxconsumed;
-			return;
+			break;
 		}
 		bcmeth_rxq_desc_postsync(sc, rxq, consumer, 1);
 
@@ -1039,6 +1037,7 @@ bcmeth_rxq_consume(
 		 * We own this packet again.  Copy the rxsts word from it.
 		 */
 		rxconsumed++;
+		didconsume = true;
 		uint32_t rxsts;
 		KASSERT(rxq->rxq_mhead != NULL);
 		bus_dmamap_t map = M_GETCTX(rxq->rxq_mhead, bus_dmamap_t);
@@ -1152,6 +1151,17 @@ bcmeth_rxq_consume(
 			consumer = rxq->rxq_first;
 		}
 	}
+
+	/*
+	 * Update queue info.
+	 */
+	rxq->rxq_consumer = consumer;
+	rxq->rxq_inuse -= rxconsumed;
+
+	/*
+	 * Did we consume anything?
+	 */
+	return didconsume;
 }
 
 static void
@@ -1896,7 +1906,14 @@ bcmeth_soft_intr(void *arg)
 		/*
 		 * Let's consume 
 		 */
-		bcmeth_rxq_consume(sc, &sc->sc_rxq);
+		while (bcmeth_rxq_consume(sc, &sc->sc_rxq,
+		    sc->sc_rxq.rxq_threshold / 4)) {
+			/*
+			 * We've consumed a quarter of the ring and still have
+			 * more to do.  Refill the ring.
+			 */
+			bcmeth_rxq_produce(sc, &sc->sc_rxq);
+		}
 		intmask |= RCVINT;
 	}
 
@@ -1949,7 +1966,14 @@ bcmeth_worker(struct work *wk, void *arg)
 		/*
 		 * Let's consume 
 		 */
-		bcmeth_rxq_consume(sc, &sc->sc_rxq);
+		while (bcmeth_rxq_consume(sc, &sc->sc_rxq,
+		    sc->sc_rxq.rxq_threshold / 4)) {
+			/*
+			 * We've consumed a quarter of the ring and still have
+			 * more to do.  Refill the ring.
+			 */
+			bcmeth_rxq_produce(sc, &sc->sc_rxq);
+		}
 		intmask |= RCVINT;
 	}
 
