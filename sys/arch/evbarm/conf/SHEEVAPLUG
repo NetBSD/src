@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.26 2012/12/03 23:38:29 msaitoh Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.27 2012/12/25 05:04:56 msaitoh Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -200,7 +200,10 @@ mvsata* at mvsoc? offset ? irq ?
 # On-chip Gigabit Ethernet Controller Interface
 mvgbec* at mvsoc? offset ?
 mvgbe*	at mvgbec? port ? irq ?
+
+# MII/PHY support
 makphy* at mii? phy ?
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # On-chip USB 2.0 Interface
 ehci*	at mvsoc? offset ? irq ?
