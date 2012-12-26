@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_dsp.c,v 1.1 2011/08/16 06:58:15 matt Exp $	*/
+/*	$NetBSD: mips_dsp.c,v 1.2 2012/12/26 19:17:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_dsp.c,v 1.1 2011/08/16 06:58:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_dsp.c,v 1.2 2012/12/26 19:17:48 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_dsp.c,v 1.1 2011/08/16 06:58:15 matt Exp $");
 #include <mips/regnum.h>
 #include <mips/pcb.h>
 
-static void mips_dsp_state_save(lwp_t *);
-static void mips_dsp_state_load(lwp_t *, bool);
-static void mips_dsp_state_release(lwp_t *);
+static void mips_dsp_state_save(lwp_t *, u_int);
+static void mips_dsp_state_load(lwp_t *, u_int);
+static void mips_dsp_state_release(lwp_t *, u_int);
 
 const pcu_ops_t mips_dsp_ops = {
 	.pcu_id = PCU_DSP,
@@ -82,7 +82,7 @@ dsp_used_p(void)
 }
 
 void
-mips_dsp_state_save(lwp_t *l)
+mips_dsp_state_save(lwp_t *l, u_int flags)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct pcb * const pcb = lwp_getpcb(l);
@@ -134,7 +134,7 @@ mips_dsp_state_save(lwp_t *l)
 }
 
 void
-mips_dsp_state_load(lwp_t *l, bool used)
+mips_dsp_state_load(lwp_t *l, u_int flags)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct pcb * const pcb = lwp_getpcb(l);
@@ -146,7 +146,7 @@ mips_dsp_state_load(lwp_t *l, bool used)
 	/*
 	 * If this is the first time the state is being loaded, zero it first.
 	 */
-	if (__predict_false(!used)) {
+	if (__predict_false((flags & PCU_LOADED) == 0)) {
 		memset(&pcb->pcb_dspregs, 0, sizeof(pcb->pcb_dspregs));
 	}
 
@@ -192,7 +192,7 @@ mips_dsp_state_load(lwp_t *l, bool used)
 }
 
 void
-mips_dsp_state_release(lwp_t *l)
+mips_dsp_state_release(lwp_t *l, u_int flags)
 {
 
 	KASSERT(l == curlwp);
