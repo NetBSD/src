@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.30 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: alpha.h,v 1.31 2012/12/26 19:13:19 matt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -109,9 +109,9 @@ char *	dot_conv(unsigned long);
 
 extern const pcu_ops_t fpu_ops;
 
-void    fpu_state_load(struct lwp *, bool);
-void    fpu_state_save(struct lwp *);
-void    fpu_state_release(struct lwp *);
+void    fpu_state_load(struct lwp *, u_int);
+void    fpu_state_save(struct lwp *, u_int);
+void    fpu_state_release(struct lwp *, u_int);
 
 static inline void
 fpu_load(void)
