@@ -408,6 +408,8 @@ void ucas_ras_check(trapframe_t *);
 void vfp_attach(void);
 void vfp_discardcontext(void);
 void vfp_savecontext(void);
+void vfp_kernel_acquire(void);
+void vfp_kernel_release(void);
 extern const pcu_ops_t arm_vfp_ops;
 
 #endif	/* !_LOCORE */
