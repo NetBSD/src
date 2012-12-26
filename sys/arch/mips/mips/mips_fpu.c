@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.9 2012/12/26 19:09:07 matt Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.10 2012/12/26 19:15:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.9 2012/12/26 19:09:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.10 2012/12/26 19:15:16 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -218,7 +218,7 @@ mips_fpu_state_load(lwp_t *l, u_int flags)
 	/*
 	 * If this is the first time the state is being loaded, zero it first.
 	 */
-	if (__predict_false(!(flags & PCU_LOADED) == 0)) {
+	if (__predict_false((flags & PCU_LOADED) == 0)) {
 		memset(&pcb->pcb_fpregs, 0, sizeof(pcb->pcb_fpregs));
 	}
 
