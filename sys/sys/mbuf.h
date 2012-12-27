@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.149 2012/04/29 16:36:54 dsl Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.150 2012/12/27 14:41:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -508,7 +508,7 @@ do {									\
 #define	MEXTMALLOC(m, size, how)					\
 do {									\
 	(m)->m_ext_storage.ext_buf =					\
-	    (void *)malloc((size), mbtypes[(m)->m_type], (how));	\
+	    malloc((size), mbtypes[(m)->m_type], (how));		\
 	if ((m)->m_ext_storage.ext_buf != NULL) {			\
 		MCLINITREFERENCE(m);					\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
@@ -559,10 +559,10 @@ do {									\
 		m_tag_delete_chain((m), NULL);				\
 	(n) = (m)->m_next;						\
 	if ((m)->m_flags & M_EXT) {					\
-		m_ext_free(m);						\
+		m_ext_free((m));						\
 	} else {							\
-		KASSERT(m->m_type != MT_FREE);				\
-		m->m_type = MT_FREE;					\
+		KASSERT((m)->m_type != MT_FREE);				\
+		(m)->m_type = MT_FREE;					\
 		pool_cache_put(mb_cache, (m));				\
 	}								\
 
