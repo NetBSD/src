@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.111 2012/07/22 14:33:04 matt Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.112 2012/12/27 16:23:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.111 2012/07/22 14:33:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.112 2012/12/27 16:23:48 jmcneill Exp $");
 
 
 
@@ -230,6 +230,11 @@ struct vr_softc {
 	uint32_t	vr_save_iobase;
 	uint32_t	vr_save_membase;
 	uint32_t	vr_save_irq;
+
+	bool		vr_link;
+	int		vr_flags;
+#define VR_F_RESTART	0x1		/* restart on next tick */
+	int		vr_if_flags;
 
 	krndsource_t rnd_source;	/* random source */
 };
@@ -399,21 +404,44 @@ static void
 vr_mii_statchg(struct ifnet *ifp)
 {
 	struct vr_softc *sc = ifp->if_softc;
+	int i;
 
 	/*
 	 * In order to fiddle with the 'full-duplex' bit in the netconfig
 	 * register, we first have to put the transmit and/or receive logic
 	 * in the idle state.
 	 */
-	VR_CLRBIT16(sc, VR_COMMAND, (VR_CMD_TX_ON|VR_CMD_RX_ON));
+	if ((sc->vr_mii.mii_media_status & IFM_ACTIVE) &&
+	    IFM_SUBTYPE(sc->vr_mii.mii_media_active) != IFM_NONE) {
+		sc->vr_link = true;
 
-	if (sc->vr_mii.mii_media_active & IFM_FDX)
-		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
-	else
-		VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
+		if (CSR_READ_2(sc, VR_COMMAND) & (VR_CMD_TX_ON|VR_CMD_RX_ON))
+			VR_CLRBIT16(sc, VR_COMMAND,
+			    (VR_CMD_TX_ON|VR_CMD_RX_ON));
 
-	if (sc->vr_ec.ec_if.if_flags & IFF_RUNNING)
+		if (sc->vr_mii.mii_media_active & IFM_FDX)
+			VR_SETBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
+		else
+			VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
+
 		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_RX_ON);
+	} else {
+		sc->vr_link = false;
+		VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_RX_ON);
+		for (i = VR_TIMEOUT; i > 0; i--) {
+			delay(10);
+			if (!(CSR_READ_2(sc, VR_COMMAND) &
+			    (VR_CMD_TX_ON|VR_CMD_RX_ON)))
+				break;
+		}
+		if (i == 0) {
+#ifdef VR_DEBUG
+			printf("%s: rx shutdown error!\n",
+			    device_xname(sc->vr_dev));
+#endif
+			sc->vr_flags |= VR_F_RESTART;
+		}
+	}
 }
 
 #define	vr_calchash(addr) \
@@ -979,6 +1007,11 @@ vr_start(struct ifnet *ifp)
 	struct vr_descsoft *ds;
 	int error, firsttx, nexttx, opending;
 
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+	if (sc->vr_link == false)
+		return;
+
 	/*
 	 * Remember the previous txpending and the first transmit
 	 * descriptor we use.
@@ -1228,6 +1261,7 @@ vr_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, VR_TXADDR, VR_CDTXADDR(sc, VR_NEXTTX(sc->vr_txlast)));
 
 	/* Set current media. */
+	sc->vr_link = true;
 	if ((error = ether_mediachange(ifp)) != 0)
 		goto out;
 
@@ -1263,19 +1297,37 @@ vr_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	error = ether_ioctl(ifp, command, data);
-	if (error == ENETRESET) {
-		/*
-		 * Multicast list has changed; set the hardware filter
-		 * accordingly.
-		 */
-		if (ifp->if_flags & IFF_RUNNING)
-			vr_setmulti(sc);
-		error = 0;
-	}
+	switch (command) {
+	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
 
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
+		case IFF_RUNNING:
+			vr_stop(ifp, 1);
+			break;
+		case IFF_UP:
+			vr_init(ifp);
+			break;
+		case IFF_UP | IFF_RUNNING:
+			if ((ifp->if_flags ^ sc->vr_if_flags) == IFF_PROMISC)
+				vr_setmulti(sc);
+			else
+				vr_init(ifp);
+			break;
+		}
+		sc->vr_if_flags = ifp->if_flags;
+		break;
+	default:
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+			break;
+		error = 0;
+		if (command == SIOCADDMULTI || command == SIOCDELMULTI)
+			vr_setmulti(sc);
+	}
 	splx(s);
-	return (error);
+
+	return error;
 }
 
 static void
@@ -1299,6 +1351,11 @@ vr_tick(void *arg)
 	int s;
 
 	s = splnet();
+	if (sc->vr_flags & VR_F_RESTART) {
+		printf("%s: restarting\n", device_xname(sc->vr_dev));
+		vr_init(&sc->vr_ec.ec_if);
+		sc->vr_flags &= ~VR_F_RESTART;
+	}
 	mii_tick(&sc->vr_mii);
 	splx(s);
 
