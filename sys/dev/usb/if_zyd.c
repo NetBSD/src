@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.32 2012/09/23 14:40:29 joerg Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.33 2012/12/27 16:42:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.32 2012/09/23 14:40:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.33 2012/12/27 16:42:32 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -365,7 +365,8 @@ zyd_complete_attach(struct zyd_softc *sc)
 
 	error = usbd_set_config_no(sc->sc_udev, ZYD_CONFIG_NO, 1);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "setting config no failed\n");
+		aprint_error_dev(sc->sc_dev, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		goto fail;
 	}
 
