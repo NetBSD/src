@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: signal.h,v 1.2 2012/12/27 08:22:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -33,5 +33,7 @@
 
 #ifndef _IA64_SIGNAL_H_
 #define _IA64_SIGNAL_H_
+
+typedef long	sig_atomic_t;
 
 #endif	/* !_IA64_SIGNAL_H_ */
