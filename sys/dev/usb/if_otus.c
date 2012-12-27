@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.15 2012/12/27 01:11:13 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.16 2012/12/27 14:47:27 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.15 2012/12/27 01:11:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.16 2012/12/27 14:47:27 christos Exp $");
 /*-
  * Driver for Atheros AR9001U chipset.
  * http://www.atheros.com/pt/bulletins/AR9001USBBulletin.pdf
@@ -1788,10 +1788,9 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
 		/* XXX: derived from upgt_tx_task() and ural_tx_data() */
 		k = ieee80211_crypto_encap(ic, ni, m);
-		if (k == NULL) {
-			m_freem(m);
+		if (k == NULL)
 			return ENOBUFS;
-		}
+
 		wh = mtod(m, struct ieee80211_frame *);
 	}
 
@@ -1875,7 +1874,6 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	xferlen = sizeof(*head) + m->m_pkthdr.len;
 	m_copydata(m, 0, m->m_pkthdr.len, (void *)&head[1]);
-	m_freem(m);
 
 	DPRINTFN(5, "tx queued=%d len=%d mac=0x%04x phy=0x%08x rate=%d\n",
 	    sc->sc_tx_queued, head->len, head->macctl, head->phyctl,
@@ -1886,7 +1884,6 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	if (__predict_false(error != USBD_IN_PROGRESS && error != 0))
 		return error;
 
-	ieee80211_free_node(ni);
 	sc->sc_tx_queued++;
 	sc->sc_tx_cur = (sc->sc_tx_cur + 1) % OTUS_TX_DATA_LIST_COUNT;
 
@@ -1950,11 +1947,14 @@ sendit:
 			bpf_mtap3(ic->ic_rawbpf, m);
 
 		if (otus_tx(sc, m, ni) != 0) {
+			m_freem(m);
 			ieee80211_free_node(ni);
 			ifp->if_oerrors++;
 			continue;
 		}
 
+		m_freem(m);
+		ieee80211_free_node(ni);
 		sc->sc_tx_timer = 5;
 		ifp->if_timer = 1;
 	}
