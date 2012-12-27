@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.8 2012/03/11 01:06:06 mrg Exp $ */
+/* $NetBSD: emdtv.c,v 1.9 2012/12/27 16:42:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.8 2012/03/11 01:06:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.9 2012/12/27 16:42:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,8 @@ emdtv_attach(device_t parent, device_t self, void *opaque)
 
 	status = usbd_set_config_no(sc->sc_udev, 1, 1);
         if (status != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(sc->sc_dev, "couldn't set config no\n");
+		aprint_error_dev(sc->sc_dev, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(status));
 		return;
 	}
 

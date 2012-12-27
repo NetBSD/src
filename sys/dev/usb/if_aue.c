@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.127 2012/07/22 14:33:05 matt Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.128 2012/12/27 16:42:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.127 2012/07/22 14:33:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.128 2012/12/27 16:42:32 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -745,7 +745,8 @@ aue_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_no(dev, AUE_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, "setting config no failed\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
 

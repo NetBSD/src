@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.39 2012/03/06 03:35:30 mrg Exp $	*/
+/*	$NetBSD: urio.c,v 1.40 2012/12/27 16:42:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.39 2012/03/06 03:35:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.40 2012/12/27 16:42:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,8 @@ urio_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_no(dev, URIO_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, "setting config no failed\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
 
