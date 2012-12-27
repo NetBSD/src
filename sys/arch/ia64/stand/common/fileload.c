@@ -1,4 +1,4 @@
-/*	$NetBSD: fileload.c,v 1.2 2009/03/18 16:00:12 cegger Exp $	*/
+/*	$NetBSD: fileload.c,v 1.3 2012/12/27 20:21:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -33,8 +33,9 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
+#include <lib/libkern/libkern.h>
 #include <sys/param.h>
-#include <sys/lkm.h>
 #include <sys/queue.h>
 
 #include "bootstrap.h"
@@ -266,10 +267,11 @@ file_alloc(void)
     
     if ((fp = alloc(sizeof(struct preloaded_file))) != NULL) {
 	memset(fp, 0, sizeof(struct preloaded_file));
-
+/*
 	if (fp->marks = alloc(sizeof(u_long))) {
 		memset(fp->marks, 0, sizeof(u_long));
 	}
+*/
     }
     return (fp);
 }
