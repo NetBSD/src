@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 2006/08/30 11:14:23 cherry Exp $	*/
+/*	$NetBSD: asm.h,v 1.5 2012/12/27 06:29:50 martin Exp $	*/
 
 /* -
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -183,3 +183,38 @@ label:	ASCIZ msg;				\
 #define STRONG_ALIAS(alias,sym)					\
 	.globl alias;						\
 	alias = sym
+
+/*
+ * WARN_REFERENCES: create a warning if the specified symbol is referenced.
+ */
+#ifdef __STDC__
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning. ## sym;				\
+	.ascii msg;							\
+	.popsection
+#else
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning./**/sym;				\
+	.ascii msg;							\
+	.popsection
+#endif /* __STDC__ */
+
+
+/*
+ * Kernel RCS ID tag and copyright macros
+ */
+
+#ifdef _KERNEL
+
+#define	__KERNEL_SECTIONSTRING(_sec, _str)				\
+	.pushsection _sec ; .asciz _str ; .popsection
+
+#define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident, _s)
+#define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.copyright, _s)
+
+#ifdef NO_KERNEL_RCSIDS
+#undef __KERNEL_RCSID
+#define	__KERNEL_RCSID(_n, _s)		/* nothing */
+#endif
+
+#endif /* _KERNEL */
