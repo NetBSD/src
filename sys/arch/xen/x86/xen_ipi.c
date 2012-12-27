@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.10 2012/02/17 18:40:20 bouyer Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.11 2012/12/27 06:42:14 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.10 2012/02/17 18:40:20 bouyer Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.11 2012/12/27 06:42:14 cherry Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.10 2012/02/17 18:40:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.11 2012/12/27 06:42:14 cherry Exp $");
 
 #include <sys/types.h>
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.10 2012/02/17 18:40:20 bouyer Exp $");
 #include <machine/frame.h>
 #include <machine/segments.h>
 
+#include <xen/evtchn.h>
 #include <xen/intr.h>
 #include <xen/intrdefs.h>
 #include <xen/hypervisor.h>
