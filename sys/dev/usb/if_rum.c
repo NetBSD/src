@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.43 2012/09/23 01:08:17 chs Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.44 2012/12/27 16:42:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.43 2012/09/23 01:08:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.44 2012/12/27 16:42:32 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -330,8 +330,10 @@ rum_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	if (usbd_set_config_no(sc->sc_udev, RT2573_CONFIG_NO, 0) != 0) {
-		aprint_error_dev(self, "could not set configuration no\n");
+	error = usbd_set_config_no(sc->sc_udev, RT2573_CONFIG_NO, 0);
+	if (error != 0) {
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		return;
 	}
 

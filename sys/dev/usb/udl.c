@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.6 2011/11/20 12:29:33 nonaka Exp $	*/
+/*	$NetBSD: udl.c,v 1.7 2012/12/27 16:42:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.6 2011/11/20 12:29:33 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.7 2012/12/27 16:42:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -361,8 +361,11 @@ udl_attach(device_t parent, device_t self, void *aux)
 	 * Set device configuration descriptor number.
 	 */
 	error = usbd_set_config_no(sc->sc_udev, 1, 0);
-	if (error != USBD_NORMAL_COMPLETION)
+	if (error != USBD_NORMAL_COMPLETION) {
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		return;
+	}
 
 	/*
 	 * Create device handle to interface descriptor.
