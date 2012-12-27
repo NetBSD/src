@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 2012/12/27 15:58:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -71,6 +71,7 @@
 
 typedef uint64_t pt_entry_t;
 
+#ifdef _KERNEL
 static __inline pt_entry_t
 pte_atomic_clear(pt_entry_t *ptep, uint64_t val)
 {
@@ -82,6 +83,7 @@ pte_atomic_set(pt_entry_t *ptep, uint64_t val)
 {
 	return (atomic_set_64(ptep, val));
 }
+#endif
 
 /*
  * A long-format VHPT entry.
