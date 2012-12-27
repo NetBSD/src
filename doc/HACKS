@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.126 2012/12/27 08:07:36 martin Exp $
+# $NetBSD: HACKS,v 1.127 2012/12/27 14:16:57 martin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -766,4 +766,16 @@ port	ia64
 		{standard input}:87: Warning: Only the first path encountering the conflict is reported
 		{standard input}:85: Warning: This is the location of the conflicting usage
 	kcah
+
+	hack	compiler error with gcc 4.5.x
+	cdate	Thu Dec 27 15:15:25 CET 2012
+	who	martin
+	file	src/crypto/external/bsd/netpgp/lib/verify/Makefile: 1.5
+	descr
+		workaround for:
+		{standard input}: Assembler messages:
+		{standard input}:22979: Warning: Use of 'mov' may violate WAW dependency 'GR%, % in 1 - 127' (impliedf), specific resource number is 8
+		{standard input}:22978: Warning: This is the location of the conflicting usage
+	kcah
+
 
