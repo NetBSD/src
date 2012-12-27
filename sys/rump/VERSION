@@ -1,0 +1,12 @@
+#	$NetBSD: VERSION,v 1.1 2012/12/27 15:17:01 pooka Exp $
+#
+# Since cvs does not provide a version number for the entire tree, provide
+# identifiers which can be used by external parties to check if the NetBSD
+# source tree is of required vintage.
+# 
+# This file is of the format NAME=date:subdate.  Subdate is incremented
+# if there are multiple version bumps during one day and is reset to 0
+# when date is bumped.
+#
+
+BUILDRUMP=20121227:0
