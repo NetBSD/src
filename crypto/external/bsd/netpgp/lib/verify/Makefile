@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2012/11/22 21:20:44 agc Exp $
+# $NetBSD: Makefile,v 1.5 2012/12/27 14:16:16 martin Exp $
 
 LIB=netpgpverify
 SRCS=libverify.c b64.c pgpsum.c
@@ -17,3 +17,8 @@ INCS=verify.h
 INCSDIR=/usr/include/netpgp
 
 .include <bsd.lib.mk>
+
+.if ${HAVE_GCC:U} == "45" && ${MACHINE_CPU} == "ia64"
+COPTS.bignum.c+=	${${ACTIVE_CC} == "gcc" :? -O1 :}
+.endif
+
