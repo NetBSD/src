@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.40 2012/05/31 12:32:35 nonaka Exp $ */
+/*	$NetBSD: if_ural.c,v 1.41 2012/12/27 16:42:32 skrll Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.40 2012/05/31 12:32:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.41 2012/12/27 16:42:32 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -388,8 +388,10 @@ ural_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	if (usbd_set_config_no(sc->sc_udev, RAL_CONFIG_NO, 0) != 0) {
-		aprint_error_dev(self, "could not set configuration no\n");
+	error = usbd_set_config_no(sc->sc_udev, RAL_CONFIG_NO, 0);
+	if (error != 0) {
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		return;
 	}
 

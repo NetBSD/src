@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.4 2012/08/20 07:32:49 christos Exp $	*/
+/*	$NetBSD: if_run.c,v 1.5 2012/12/27 16:42:32 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.4 2012/08/20 07:32:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.5 2012/12/27 16:42:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -500,9 +500,10 @@ run_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(sc->sc_dev, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	if (usbd_set_config_no(sc->sc_udev, 1, 0) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not set configuration no\n");
+	error = usbd_set_config_no(sc->sc_udev, 1, 0);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		return;
 	}
 

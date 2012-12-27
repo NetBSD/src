@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.72 2012/03/06 03:35:30 mrg Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.73 2012/12/27 16:42:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.72 2012/03/06 03:35:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.73 2012/12/27 16:42:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,8 @@ uscanner_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_no(uaa->device, 1, 1); /* XXX */
 	if (err) {
-		aprint_error_dev(self, "setting config no failed\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		sc->sc_dying = 1;
 		return;
 	}

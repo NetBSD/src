@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.6 2012/03/11 01:06:06 mrg Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.7 2012/12/27 16:42:32 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.6 2012/03/11 01:06:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.7 2012/12/27 16:42:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -244,9 +244,10 @@ upgt_attach(device_t parent, device_t self, void *aux)
 		return;
 
 	/* set configuration number */
-	if (usbd_set_config_no(sc->sc_udev, UPGT_CONFIG_NO, 0) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not set configuration no\n");
+	error = usbd_set_config_no(sc->sc_udev, UPGT_CONFIG_NO, 0);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		return;
 	}
 

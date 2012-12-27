@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.63 2012/03/11 01:06:06 mrg Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.64 2012/12/27 16:42:32 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.63 2012/03/11 01:06:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.64 2012/12/27 16:42:32 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -477,7 +477,8 @@ cue_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_no(dev, CUE_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, "setting config no failed\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
 

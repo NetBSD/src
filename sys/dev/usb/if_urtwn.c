@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.5 2012/06/14 04:14:36 riz Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.6 2012/12/27 16:42:32 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.5 2012/06/14 04:14:36 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.6 2012/12/27 16:42:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -268,8 +268,10 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_calib_to, 0);
 	callout_setfunc(&sc->sc_calib_to, urtwn_calib_to, sc);
 
-	if (usbd_set_config_no(sc->sc_udev, 1, 0) != 0) {
-		aprint_error_dev(self, "could not set configuration no\n");
+	error = usbd_set_config_no(sc->sc_udev, 1, 0);
+	if (error != 0) {
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		goto fail;
 	}
 

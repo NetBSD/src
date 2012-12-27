@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.60 2012/11/26 21:15:34 christos Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.61 2012/12/27 16:42:32 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.60 2012/11/26 21:15:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.61 2012/12/27 16:42:32 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -603,7 +603,8 @@ axe_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_no(dev, AXE_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, "getting interface handle failed\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
 

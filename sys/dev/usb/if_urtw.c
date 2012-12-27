@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.1 2012/05/29 14:06:23 christos Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.2 2012/12/27 16:42:32 skrll Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.1 2012/05/29 14:06:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.2 2012/12/27 16:42:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2317,8 +2317,8 @@ urtw_init(struct ifnet *ifp)
 	if (!(sc->sc_flags & URTW_INIT_ONCE)) {
 		error = usbd_set_config_no(sc->sc_udev, URTW_CONFIG_NO, 0);
 		if (error != 0) {
-			printf("%s: could not set configuration no\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev, "failed to set configuration"
+			    ", err=%s\n", usbd_errstr(error));
 			goto fail;
 		}
 		/* get the first interface handle */
@@ -3686,8 +3686,9 @@ urtw_8187b_init(struct ifnet *ifp)
 	if (!(sc->sc_flags & URTW_INIT_ONCE)) {
 		error = usbd_set_config_no(sc->sc_udev, URTW_CONFIG_NO, 0);
 		if (error != 0) {
-			printf("%s: could not set configuration no\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev, "failed to set configuration"
+			    ", err=%s\n", usbd_errstr(error));
+
 			goto fail;
 		}
 		/* Get the first interface handle. */

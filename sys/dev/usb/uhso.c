@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.9 2012/04/05 16:31:53 plunky Exp $	*/
+/*	$NetBSD: uhso.c,v 1.10 2012/12/27 16:42:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.9 2012/04/05 16:31:53 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.10 2012/12/27 16:42:32 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -478,9 +478,8 @@ uhso_attach(device_t parent, device_t self, void *aux)
 
 	status = usbd_set_config_no(sc->sc_udev, UHSO_CONFIG_NO, 1);
 	if (status != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "could not set config no %d: %s\n",
-		    UHSO_CONFIG_NO, usbd_errstr(status));
-
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(status));
 		return;
 	}
 

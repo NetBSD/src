@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.16 2012/12/27 14:47:27 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.17 2012/12/27 16:42:32 skrll Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.16 2012/12/27 14:47:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.17 2012/12/27 16:42:32 skrll Exp $");
 /*-
  * Driver for Atheros AR9001U chipset.
  * http://www.atheros.com/pt/bulletins/AR9001USBBulletin.pdf
@@ -611,9 +611,10 @@ otus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_amrr.amrr_min_success_threshold =  1;
 	sc->sc_amrr.amrr_max_success_threshold = 10;
 
-	if (usbd_set_config_no(sc->sc_udev, 1, 0) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not set configuration no\n");
+	error = usbd_set_config_no(sc->sc_udev, 1, 0);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		return;
 	}
 
