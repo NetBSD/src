@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/12/19 09:01:32 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2012/12/27 08:06:28 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -48,6 +48,10 @@ LIBELF_GENSRCS=	libelf_fsize.c libelf_msize.c libelf_convert.c
 
 CLEANFILES+=	${LIBELF_GENSRCS}
 CPPFLAGS+=	-I${.CURDIR}
+
+.if ${HAVE_GCC:U} == "45" && ${MACHINE_CPU} == "ia64"
+COPTS.libelf_extended.c+=	${${ACTIVE_CC} == "gcc" :? -O1 :}
+.endif
 
 MAN=		elf.3							\
 		elf_begin.3						\
