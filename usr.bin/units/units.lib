@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.16 2012/12/28 13:45:53 apb Exp $
+/	$NetBSD: units.lib,v 1.17 2012/12/28 17:57:46 apb Exp $
 
 / primitive units
 
@@ -220,7 +220,7 @@ sovereign		34 bottle
 
 pony			split
 fillette		half
-tappit-hen		3 imperial
+tappithen		3 bottle
 rheoboam		rehoboam
 shalmaneser		salmanazar
 
