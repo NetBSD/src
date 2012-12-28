@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.35 2012/12/19 07:54:42 msaitoh Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.36 2012/12/28 23:24:47 jmcneill Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -242,9 +242,8 @@ omapmputmr2	at obio2 addr 0x49036000 intr 40	# GP Timer 4
 options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 
 # Watchdog timers
-omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
-#omapwdt32k*	at obio1 addr 0x4830c000 size 2048	# WDT1
-#omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
+#omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
+omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
 
 # onboard video
 #omapfb* 	at obio0 addr 0x48050000 size 0x10000
