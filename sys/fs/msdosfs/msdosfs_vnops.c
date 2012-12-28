@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.84 2012/12/20 08:03:42 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.85 2012/12/28 08:03:59 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.84 2012/12/20 08:03:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.85 2012/12/28 08:03:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,10 +525,10 @@ msdosfs_read(void *v)
 		 */
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, lbn), blsize,
 		    NOCRED, 0, &bp);
-		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
 			goto bad;
 		}
+		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		error = uiomove((char *)bp->b_data + on, (int) n, uio);
 		brelse(bp, 0);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
