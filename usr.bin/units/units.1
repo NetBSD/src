@@ -1,5 +1,5 @@
-.\"	$NetBSD: units.1,v 1.17 2011/04/03 19:44:15 dholland Exp $
-.Dd April 3, 2011
+.\"	$NetBSD: units.1,v 1.18 2012/12/28 13:25:25 apb Exp $
+.Dd December 28, 2012
 .Dt UNITS 1
 .Os
 .Sh NAME
@@ -21,8 +21,8 @@ their equivalents in other scales.
 can only handle multiplicative scale changes.
 It cannot convert Centigrade to Fahrenheit, for example.
 .Pp
-The following options are supported:
-.Bl -tag -width "from-unit to-unit" -offset indent
+The following options and arguments are supported:
+.Bl -tag -width "-fXfilenameX" -offset indent
 .It Fl f Ar filename
 Specifies the name of the units data file to load.
 .It Fl q
@@ -30,17 +30,20 @@ Suppresses prompting of the user for units and the display of statistics
 about the number of units loaded.
 .It Fl v
 Prints the version number.
-.It Ar from-unit Ar to-unit
+.It Oo Ar count Oc Ar from-unit Ar to-unit
 Allows a single unit conversion to be done directly from the command
 line.
 No prompting will occur.
 .Nm
 will print out only the result of this single conversion.
-The
+Specifying
 .Ar count
-argument can be prepended to the
+and
 .Ar from-unit
-or it can be separate.
+as two separate arguments is equivalent to embedding both parts
+inside a single
+.Ar from-unit
+argument, with the parts separated by a space.
 .El
 .Pp
 .Nm
