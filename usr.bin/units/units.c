@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.18 2012/03/20 20:34:59 matt Exp $	*/
+/*	$NetBSD: units.c,v 1.19 2012/12/28 17:07:03 apb Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -321,22 +321,30 @@ addunit(struct unittype * theunit, const char *toadd, int flip)
 	do {
 		item = strtok(scratch, " *\t\n/");
 		while (item) {
-			if (strchr("0123456789.", *item)) { /* item is a number */
+			if (strchr("0123456789.", *item)) {
+				/* item starts with a number */
+				char *endptr;
 				double num;
 
 				divider = strchr(item, '|');
 				if (divider) {
 					*divider = 0;
-					num = atof(item);
+					num = strtod(item, &endptr);
 					if (!num) {
 						zeroerror();
+						return 1;
+					}
+					if (endptr != divider) {
+						/* "6foo|2" is an error */
+						warnx("Junk between number "
+						      "and '|'");
 						return 1;
 					}
 					if (doingtop ^ flip)
 						theunit->factor *= num;
 					else
 						theunit->factor /= num;
-					num = atof(divider + 1);
+					num = strtod(divider + 1, &endptr);
 					if (!num) {
 						zeroerror();
 						return 1;
@@ -345,9 +353,14 @@ addunit(struct unittype * theunit, const char *toadd, int flip)
 						theunit->factor /= num;
 					else
 						theunit->factor *= num;
+					if (*endptr) {
+						/* "6|2foo" is like "6|2 foo" */
+						item = endptr;
+						continue;
+					}
 				}
 				else {
-					num = atof(item);
+					num = strtod(item, &endptr);
 					if (!num) {
 						zeroerror();
 						return 1;
@@ -356,7 +369,11 @@ addunit(struct unittype * theunit, const char *toadd, int flip)
 						theunit->factor *= num;
 					else
 						theunit->factor /= num;
-
+					if (*endptr) {
+						/* "3foo" is like "3 foo" */
+						item = endptr;
+						continue;
+					}
 				}
 			}
 			else {	/* item is not a number */
