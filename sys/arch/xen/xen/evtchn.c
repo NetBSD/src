@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.65 2012/11/25 20:56:33 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.66 2012/12/28 06:29:56 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.65 2012/11/25 20:56:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.66 2012/12/28 06:29:56 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -89,7 +89,7 @@ static kmutex_t evtchn_lock;
 struct evtsource *evtsource[NR_EVENT_CHANNELS];
 
 /* channel locks */
-static kmutex_t evtlock[NR_EVENT_CHANNELS];
+kmutex_t evtlock[NR_EVENT_CHANNELS];
 
 /* Reference counts for bindings to event channels XXX: redo for SMP */
 static uint8_t evtch_bindcount[NR_EVENT_CHANNELS];
@@ -228,6 +228,50 @@ events_resume (void)
 }
 
 
+static int
+xspllower(int ilevel, void *regs)
+{
+	int i;
+	uint32_t iplbit;
+	uint32_t iplpending;
+	
+	struct cpu_info *ci;
+	
+	KASSERT(kpreempt_disabled());
+	KASSERT(x86_read_psl() != 0); /* Interrupts must be disabled */
+
+	ci = curcpu();
+	ci->ci_idepth++;
+	
+	KASSERT(ilevel < ci->ci_ilevel);
+	/*
+	 * C version of spllower(). ASTs will be checked when
+	 * hypevisor_callback() exits, so no need to check here.
+	 */
+	iplpending = (IUNMASK(ci, ilevel) & ci->ci_ipending);
+	while (iplpending != 0) {
+		iplbit = 1 << (NIPL - 1);
+		i = (NIPL - 1);
+		while (iplpending != 0 && i > ilevel) {
+			while (iplpending & iplbit) {
+				ci->ci_ipending &= ~iplbit;
+				ci->ci_ilevel = i;
+				hypervisor_do_iplpending(i, regs);
+				KASSERT(x86_read_psl() != 0);
+				/* more pending IPLs may have been registered */
+				iplpending =
+				    (IUNMASK(ci, ilevel) & ci->ci_ipending);
+			}
+			i--;
+			iplbit >>= 1;
+		}
+	}
+	KASSERT(x86_read_psl() != 0);
+	ci->ci_ilevel = ilevel;
+	ci->ci_idepth--;
+	return 0;
+}
+
 unsigned int
 evtchn_do_event(int evtch, struct intrframe *regs)
 {
@@ -236,8 +280,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	struct intrhand *ih;
 	int	(*ih_fun)(void *, void *);
 	uint32_t iplmask;
-	int i;
-	uint32_t iplbit;
 
 #ifdef DIAGNOSTIC
 	if (evtch >= NR_EVENT_CHANNELS) {
@@ -292,9 +334,12 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	}
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
 	iplmask = evtsource[evtch]->ev_imask;
-	sti();
+
+	KASSERT(x86_read_psl() != 0);
+	x86_enable_intr();
 	mutex_spin_enter(&evtlock[evtch]);
 	ih = evtsource[evtch]->ev_handlers;
+
 	while (ih != NULL) {
 		if (ih->ih_cpu != ci) {
 			hypervisor_send_event(ih->ih_cpu, evtch);
@@ -307,60 +352,44 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		if (evtch == IRQ_DEBUG)
 		    printf("ih->ih_level %d <= ilevel %d\n", ih->ih_level, ilevel);
 #endif
-			cli();
-			hypervisor_set_ipending(iplmask,
-			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
-			/* leave masked */
 			mutex_spin_exit(&evtlock[evtch]);
+			x86_disable_intr();
+ 			hypervisor_set_ipending(iplmask,
+ 			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
+
+			/* leave masked */
 			goto splx;
 		}
 		iplmask &= ~IUNMASK(ci, ih->ih_level);
-		ci->ci_ilevel = ih->ih_level;
+
+		KASSERT(x86_read_psl() == 0);
+		KASSERT(ih->ih_level > ilevel);
+
+		{ /* Lower current spl to current handler */
+			x86_disable_intr();
+
+			/* assert for handlers being sorted by spl */
+			KASSERT(ci->ci_ilevel >= ih->ih_level);
+
+			/* Lower it */
+			ci->ci_ilevel = ih->ih_level; 
+
+			x86_enable_intr();
+		}
+
+		/* Assert handler doesn't break spl rules */
+		KASSERT(ih->ih_level > ilevel); 
+
 		ih_fun = (void *)ih->ih_fun;
 		ih_fun(ih->ih_arg, regs);
 		ih = ih->ih_evt_next;
 	}
 	mutex_spin_exit(&evtlock[evtch]);
-	cli();
+	x86_disable_intr();
 	hypervisor_enable_event(evtch);
 splx:
-	/*
-	 * C version of spllower(). ASTs will be checked when
-	 * hypevisor_callback() exits, so no need to check here.
-	 */
-	iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending);
-	while (iplmask != 0) {
-		iplbit = 1 << (NIPL - 1);
-		i = (NIPL - 1);
-		while (iplmask != 0 && i > ilevel) {
-			while (iplmask & iplbit) {
-				ci->ci_ipending &= ~iplbit;
-				ci->ci_ilevel = i;
-				for (ih = ci->ci_isources[i]->ipl_handlers;
-				    ih != NULL; ih = ih->ih_ipl_next) {
-					KASSERT(ih->ih_cpu == ci);
-					sti();
-					ih_fun = (void *)ih->ih_fun;
-					ih_fun(ih->ih_arg, regs);
-					cli();
-					if (ci->ci_ilevel != i) {
-						printf("evtchn_do_event: "
-						    "handler %p didn't lower "
-						    "ipl %d %d\n",
-						    ih_fun, ci->ci_ilevel, i);
-						ci->ci_ilevel = i;
-					}
-				}
-				hypervisor_enable_ipl(i);
-				/* more pending IPLs may have been registered */
-				iplmask =
-				    (IUNMASK(ci, ilevel) & ci->ci_ipending);
-			}
-			i--;
-			iplbit >>= 1;
-		}
-	}
-	ci->ci_ilevel = ilevel;
+	KASSERT(ci->ci_ilevel > ilevel);
+	xspllower(ilevel, regs);
 	return 0;
 }
 
