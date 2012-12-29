@@ -1,7 +1,7 @@
 #
-#	$NetBSD: OVERO,v 1.21 2012/12/24 07:05:24 kiyohara Exp $
+#	$NetBSD: OVERO,v 1.22 2012/12/29 14:32:45 kiyohara Exp $
 #
-#	OVERO -- Gumstix. Inc. Overo platforms kernel
+#	OVERO -- Gumstix. Inc. Overo COMS platforms kernel
 #
 
 include	"arch/evbarm/conf/std.overo"
@@ -179,18 +179,18 @@ gpmc0		at mainbus? base 0x6e000000
 
 # Interrupt Controller
 omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
-omapgpio0	at obio1 addr 0x48310000 size 0x0400 intrbase 96  intr 29
-omapgpio1	at obio2 addr 0x49050000 size 0x0400 intrbase 128 intr 30
-omapgpio2	at obio2 addr 0x49052000 size 0x0400 intrbase 160 intr 31
-omapgpio3	at obio2 addr 0x49054000 size 0x0400 intrbase 192 intr 32
-omapgpio4	at obio2 addr 0x49056000 size 0x0400 intrbase 224 intr 33
-omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
+omapgpio0	at obio1 addr 0x48310000 size 0x1000 intrbase 96  intr 29
+omapgpio1	at obio2 addr 0x49050000 size 0x1000 intrbase 128 intr 30
+omapgpio2	at obio2 addr 0x49052000 size 0x1000 intrbase 160 intr 31
+omapgpio3	at obio2 addr 0x49054000 size 0x1000 intrbase 192 intr 32
+omapgpio4	at obio2 addr 0x49056000 size 0x1000 intrbase 224 intr 33
+omapgpio5	at obio2 addr 0x49058000 size 0x1000 intrbase 256 intr 34
 
 gpio*		at omapgpio?
 
 # I2C Controller
-#omapiic0	at obio0 addr 0x48070000 size 0x80 intr 56
-#omapiic1	at obio0 addr 0x48060000 size 0x80 intr 61
+#omapiic0	at obio0 addr 0x48070000 size 0x1000 intr 56	# I2C1
+#omapiic1	at obio0 addr 0x48060000 size 0x1000 intr 61	# I2C3
 
 #iic*		at omapiic?
 
@@ -211,15 +211,15 @@ omapmputmr2	at obio2 addr 0x49036000 intr 40		# GP Timer 4
 options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 
 # Watchdog timers
-omapwdt32k*	at obio1 addr 0x48314000 size 0x0800		# WDT2
-#omapwdt32k*	at obio2 addr 0x49030000 size 0x0800		# WDT3
+omapwdt32k*	at obio1 addr 0x48314000 size 0x1000		# WDT2
+#omapwdt32k*	at obio2 addr 0x49030000 size 0x1000		# WDT3
 
 # Power, Reset and Clock Management
 prcm*		at obio1 addr 0x48306000 size 0x2000		# PRM Module
 
 # SDHC controllers
-sdhc0		at obio0 addr 0x4809c000 size 0x0400 intr 83
-#sdhc1		at obio0 addr 0x480b4000 size 0x0400 intr 86 # Wifi
+sdhc0		at obio0 addr 0x4809c000 size 0x1000 intr 83
+#sdhc1		at obio0 addr 0x480b4000 size 0x1000 intr 86 # Wifi
 
 sdmmc*		at sdhc?					# SD/MMC bus
 ld*		at sdmmc?
@@ -240,13 +240,12 @@ smsh1		at gpmc? addr 0x02000000 intr 161	# Tobi-Duo
 ukphy*		at mii? phy ?				# smsh(4) internal PHY
 
 # LCD/DVI-D
-#omapfb* 	at obio0 addr 0x48050000 size 0x10000	# Chestnut*, Palo*,
+#omapfb* 	at obio0 addr 0x48050000 size 0x1000	# Chestnut*, Palo*,
 							# Gallop* (LCD)
 							# Tobi, Summit (DVI-D)
 
 # make sure the console display is always wsdisplay0
-#wsdisplay0	at wsemuldisplaydev? console 1
-#wsdisplay*	at wsemuldisplaydev?
+#wsdisplay*	at wsemuldisplaydev? console ?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
@@ -262,7 +261,7 @@ options 	FONT_QVSS8x15
 #options 	FONT_GALLANT12x22		# the console font
 
 # USB Host
-ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
+ehci*		at obio0 addr 0x48064800 size 0x1000 intr 77
 							# Chestnut*, Palo*,
 							# RoboVero, Summit,
 							# Tobi, TurtleCore
