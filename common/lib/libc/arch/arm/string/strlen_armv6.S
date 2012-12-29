@@ -29,27 +29,27 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_armv6.S,v 1.1 2012/12/28 07:10:41 matt Exp $")
+RCSID("$NetBSD: strlen_armv6.S,v 1.2 2012/12/29 05:36:57 matt Exp $")
 
 	.text
 ENTRY(strlen)
+	add	ip, r0, #4		/* for the final post-inc */
 	ands	r1, r0, #3		/* get misalignment */
-	bic	ip, r0, #3		/* align to word boundary */
-	ldr	r3, [ip], #4		/* load first word */
-	neg	r0, r1			/* subtract misalignment from length */
+	bic	r0, r0, #3		/* align to word boundary */
+	ldr	r3, [r0], #4		/* load first word */
 	beq	.Lpre_main_loop		/*   misaligned?  no, go to loop */
 	/*
 	 * For misaligned string, we need to make sure that the bytes before
 	 * the start of the string will not cause a false match to a NUL.
 	 */
 	mvn	r2, #0			/* create a mask */
-	and	r1, r0, #3		/* find out how many bytes to clear */
 	mov	r1, r1, lsl #3		/* bytes -> bits */
 #ifdef __ARMEL__
-	mov	r2, r2, lsr r1		/* clear relavent bytes */
-#else
 	mov	r2, r2, lsl r1		/* clear relavent bytes */
+#else
+	mov	r2, r2, lsr r1		/* clear relavent bytes */
 #endif
+	mvn	r2, r2			/* invert mask */
 	orr	r3, r3, r2		/* orr in mask for leading bytes */
 .Lpre_main_loop:
 #ifdef _ARM_ARCH_7
@@ -68,19 +68,24 @@ ENTRY(strlen)
 	 */
 	uqadd8	r3, r3, r1		/* magic happens here */
 	mvns	r3, r3			/* is the complemented result 0? */
-	bne	.Lreturn		/*    no, return # of bytes */
-	add	r0, r0, #4		/* add 4 to the count */
-	ldr	r3, [ip], #4		/* load next word */
+	bne	.Lreturn		/*    no, then we encountered a NUL */
+	ldr	r3, [r0], #4		/* load next word */
 	b	.Lmain_loop		/* and go */
-.Lreturn:
 	/*
 	 * We encountered a NUL.  Find out where by doing a CLZ and then
 	 * shifting right by 3.  That will be the number of non-NUL bytes.
 	 */
+.Lreturn:
 #ifdef __ARMEL__
 	rev	r3, r3			/* we want this in BE for the CLZ */
 #endif
 	clz	r3, r3			/* count how many leading zeros */
 	add	r0, r0, r3, lsr #3	/* divide that by 8 and add to count */
+	/*
+	 * r0 now points to 4 past the NUL due to the post-inc.  Subtract
+	 * the start of the string (which also has 4 added to it to compensate
+	 * for the post-inc.
+	 */
+	sub	r0, r0, ip		/* subtract start to get length */
 	RET
 END(strlen)
