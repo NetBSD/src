@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.157 2012/12/29 10:22:40 mlelstv Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.158 2012/12/29 18:51:39 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.157 2012/12/29 10:22:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.158 2012/12/29 18:51:39 mlelstv Exp $");
 
 #include "opt_pipe.h"
 
@@ -547,11 +547,6 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 	control = (mp->msg_flags & MSG_CONTROLMBUF) ? mp->msg_control : NULL;
 	iovsz = mp->msg_iovlen * sizeof(struct iovec);
 
-	if (iovsz <= 0) {
-		error = EMSGSIZE;
-		goto bad;
-	}
-
 	if (mp->msg_flags & MSG_IOVUSRSPACE) {
 		if ((unsigned int)mp->msg_iovlen > UIO_SMALLIOV) {
 			if ((unsigned int)mp->msg_iovlen > IOV_MAX) {
@@ -609,7 +604,7 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 		}
 	}
 
-	if (ktrpoint(KTR_GENIO)) {
+	if (ktrpoint(KTR_GENIO) && iovsz > 0) {
 		ktriov = kmem_alloc(iovsz, KM_SLEEP);
 		memcpy(ktriov, auio.uio_iov, iovsz);
 	}
@@ -915,11 +910,6 @@ do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
 
 	iovsz = mp->msg_iovlen * sizeof(struct iovec);
 
-	if (iovsz <= 0) {
-		error = EMSGSIZE;
-		goto out;
-	}
-
 	if (mp->msg_flags & MSG_IOVUSRSPACE) {
 		if ((unsigned int)mp->msg_iovlen > UIO_SMALLIOV) {
 			if ((unsigned int)mp->msg_iovlen > IOV_MAX) {
@@ -957,7 +947,7 @@ do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
 		}
 	}
 
-	if (ktrpoint(KTR_GENIO)) {
+	if (ktrpoint(KTR_GENIO) && iovsz > 0) {
 		ktriov = kmem_alloc(iovsz, KM_SLEEP);
 		memcpy(ktriov, auio.uio_iov, iovsz);
 	}
