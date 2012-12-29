@@ -1,5 +1,5 @@
-/* $NetBSD: ppath_extant.c,v 1.1 2011/08/25 14:55:36 dyoung Exp $ */
-/* $Id: ppath_extant.c,v 1.1 2011/08/25 14:55:36 dyoung Exp $ */
+/* $NetBSD: ppath_extant.c,v 1.2 2012/12/29 20:08:23 christos Exp $ */
+
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$Id: ppath_extant.c,v 1.1 2011/08/25 14:55:36 dyoung Exp $");
+__RCSID("$NetBSD: ppath_extant.c,v 1.2 2012/12/29 20:08:23 christos Exp $");
 
 #include <ppath/ppath_impl.h>
 
