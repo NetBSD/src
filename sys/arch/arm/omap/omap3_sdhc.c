@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.8 2012/12/29 00:05:45 jmcneill Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.9 2012/12/29 00:08:26 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.8 2012/12/29 00:05:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.9 2012/12/29 00:08:26 jmcneill Exp $");
 
 #include "opt_omap.h"
 
@@ -220,8 +220,6 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 		     oa->obio_intr);
 		goto fail;
 	}
-	aprint_normal_dev(self, "interrupting on irq %d\n",
-	     oa->obio_intr);
 
 	error = sdhc_host_found(&sc->sc, sc->sc_bst, sc->sc_sdhc_bsh,
 	    oa->obio_size - OMAP3_SDMMC_SDHC_OFFSET);
