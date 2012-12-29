@@ -1,4 +1,4 @@
-/* $NetBSD: crc32.c,v 1.3 2012/12/29 15:11:56 jmcneill Exp $ */
+/* $NetBSD: crc32.c,v 1.4 2012/12/29 16:18:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -33,13 +33,14 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crc32.c,v 1.3 2012/12/29 15:11:56 jmcneill Exp $");
+__RCSID("$NetBSD: crc32.c,v 1.4 2012/12/29 16:18:08 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <stdint.h>
 
 uint32_t	crc32(const void *, size_t);
+uint32_t	crc32v(const struct iovec *, int);
 
 static uint32_t crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
