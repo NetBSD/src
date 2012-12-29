@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.240 2012/12/20 08:03:43 hannken Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.241 2012/12/29 21:56:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.240 2012/12/20 08:03:43 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.241 2012/12/29 21:56:04 christos Exp $");
 
 #include "opt_bufcache.h"
 
@@ -727,12 +727,11 @@ bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 
 	/* Wait for the read to complete, and return result. */
 	error = biowait(bp);
-	if (error == 0 && (flags & B_MODIFY) != 0) {
+	if (error == 0 && (flags & B_MODIFY) != 0)
 		error = fscow_run(bp, true);
-		if (error) {
-			brelse(bp, 0);
-			*bpp = NULL;
-		}
+	if (error) {
+		brelse(bp, 0);
+		*bpp = NULL;
 	}
 
 	return error;
