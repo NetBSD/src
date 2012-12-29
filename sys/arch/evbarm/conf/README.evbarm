@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.5 2012/12/07 00:02:36 khorben Exp $
+$NetBSD: README.evbarm,v 1.6 2012/12/29 14:35:01 kiyohara Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ NSLU2		2006/02/28	Linksys NSLU2 (a.k.a. "Slug")
 OPENBLOCKS_A6	2012/08/01	Plat'Home. OpenBlockS A6
 OPENRD		2012/08/10	open-rd.org Marvell Orion board
 OSK5912		2007/01/06	TI OMAP 5912 OSK board
-OVERO		2010/07/10	Gumstix Inc. OMAP3530 based Overo boards
+OVERO		2010/07/10	Gumstix Inc. Overo COMS boards
 PANDABOARD	2012/08/20	TI OMAP4430 PandaBoard
 SHEEVAPLUG	2010/10/02	Marvell SheevaPlug
 SMDK2410	2003/07/31	Samsung SMDK2410 S3C2410 eval board
