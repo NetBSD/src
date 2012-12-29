@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.16 2012/02/17 08:28:36 matt Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.17 2012/12/29 15:11:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,11 +30,12 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.16 2012/02/17 08:28:36 matt Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.17 2012/12/29 15:11:56 jmcneill Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/endian.h>
+#include <sys/uio.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -53,6 +54,7 @@ __RCSID("$NetBSD: mkubootimage.c,v 1.16 2012/02/17 08:28:36 matt Exp $");
 #endif
 
 extern uint32_t crc32(const void *, size_t);
+extern uint32_t crc32v(const struct iovec *, int);
 
 static enum uboot_image_os image_os = IH_OS_NETBSD;
 static enum uboot_image_arch image_arch = IH_ARCH_UNKNOWN;
@@ -143,6 +145,7 @@ static const struct uboot_type {
 	{ IH_TYPE_KERNEL,	"kernel" },
 	{ IH_TYPE_RAMDISK,	"ramdisk" },
 	{ IH_TYPE_FILESYSTEM,	"fs" },
+	{ IH_TYPE_SCRIPT,	"script" },
 };
 
 static enum uboot_image_type
@@ -214,7 +217,7 @@ usage(void)
 	fprintf(stderr, "usage: mkubootimage -A <arm|mips|mips64|powerpc>");
 	fprintf(stderr, " -C <none|bz2|gz|lzma|lzo>");
 	fprintf(stderr, " -O <openbsd|netbsd|freebsd|linux>");
-	fprintf(stderr, " -T <standalone|kernel|ramdisk|fs>");
+	fprintf(stderr, " -T <standalone|kernel|ramdisk|fs|script>");
 	fprintf(stderr, " -a <addr> [-e <ep>] [-m <magic>] -n <name>");
 	fprintf(stderr, " <srcfile> <dstfile>\n");
 
@@ -249,7 +252,7 @@ generate_header(struct uboot_image_header *hdr, int kernel_fd)
 {
 	uint8_t *p;
 	struct stat st;
-	uint32_t crc;
+	uint32_t crc, dsize, size_buf[2];
 	int error;
 
 	error = fstat(kernel_fd, &st);
@@ -268,13 +271,28 @@ generate_header(struct uboot_image_header *hdr, int kernel_fd)
 		perror("mmap kernel");
 		return EINVAL;
 	}
-	crc = crc32(p, st.st_size);
+	if (image_type == IH_TYPE_SCRIPT) {
+		struct iovec iov[3];
+		dsize = st.st_size + (sizeof(uint32_t) * 2);
+		size_buf[0] = htonl(st.st_size);
+		size_buf[1] = htonl(0);
+		iov[0].iov_base = &size_buf[0];
+		iov[0].iov_len = sizeof(size_buf[0]);
+		iov[1].iov_base = &size_buf[1];
+		iov[1].iov_len = sizeof(size_buf[1]);
+		iov[2].iov_base = p;
+		iov[2].iov_len = st.st_size;
+		crc = crc32v(iov, 3);
+	} else {
+		dsize = st.st_size;
+		crc = crc32(p, st.st_size);
+	}
 	munmap(p, st.st_size);
 
 	memset(hdr, 0, sizeof(*hdr));
 	hdr->ih_magic = htonl(image_magic);
 	hdr->ih_time = htonl(st.st_mtime);
-	hdr->ih_size = htonl(st.st_size);
+	hdr->ih_size = htonl(dsize);
 	hdr->ih_load = htonl(image_loadaddr);
 	hdr->ih_ep = htonl(image_entrypoint);
 	hdr->ih_dcrc = htonl(crc);
@@ -296,11 +314,30 @@ write_image(struct uboot_image_header *hdr, int kernel_fd, int image_fd)
 {
 	uint8_t buf[4096];
 	ssize_t rlen, wlen;
+	struct stat st;
+	uint32_t size_buf[2];
+	int error;
+
+	error = fstat(kernel_fd, &st);
+	if (error == -1) {
+		perror("stat");
+		return errno;
+	}
 
 	wlen = write(image_fd, hdr, sizeof(*hdr));
 	if (wlen != sizeof(*hdr)) {
 		perror("short write");
 		return errno;
+	}
+
+	if (image_type == IH_TYPE_SCRIPT) {
+		size_buf[0] = htonl(st.st_size);
+		size_buf[1] = htonl(0);
+		wlen = write(image_fd, &size_buf, sizeof(size_buf));
+		if (wlen != sizeof(size_buf)) {
+			perror("short write");
+			return errno;
+		}
 	}
 
 	while ((rlen = read(kernel_fd, buf, sizeof(buf))) > 0) {
@@ -388,7 +425,7 @@ main(int argc, char *argv[])
 
 	if (image_arch == IH_ARCH_UNKNOWN ||
 	    image_type == IH_TYPE_UNKNOWN ||
-	    image_loadaddr == 0 ||
+	    (image_type != IH_TYPE_SCRIPT && image_loadaddr == 0) ||
 	    image_name == NULL)
 		usage();
 
