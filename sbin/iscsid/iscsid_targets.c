@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_targets.c,v 1.4 2012/05/27 16:50:32 riz Exp $	*/
+/*	$NetBSD: iscsid_targets.c,v 1.5 2012/12/29 08:28:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -872,8 +872,7 @@ refresh_send_target(uint32_t id)
 						&addr, PORTAL_TYPE_SENDTARGET,
 						id);
 				} else {
-					DEBOUT(("Syntax error in returned target address <%s>\n",
-							tp));
+					DEBOUT(("Syntax error in returned target address <%s>\n", sp));
 					break;
 				}
 			}
