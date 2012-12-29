@@ -843,7 +843,7 @@ Node *unary(Node *np)
  * to nelson beebe for the suggestion; let's see if it works everywhere.
  */
 
-/* #define HAS_ISBLANK */
+#define HAS_ISBLANK
 
 static const struct charclass {
 	const char *cc_name;
@@ -852,7 +852,11 @@ static const struct charclass {
 } charclasses[] = {
 	{ "alnum",	5,	isalnum },
 	{ "alpha",	5,	isalpha },
+#ifndef HAS_ISBLANK
+	{ "blank",	5,	isspace }, /* was isblank */
+#else
 	{ "blank",	5,	isblank },
+#endif
 	{ "cntrl",	5,	iscntrl },
 	{ "digit",	5,	isdigit },
 	{ "graph",	5,	isgraph },
