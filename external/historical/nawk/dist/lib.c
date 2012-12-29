@@ -546,7 +546,7 @@ void recbld(void)	/* create $0 from $1..$NF if necessary */
 	fldtab[0]->tval = REC | STR | DONTFREE;
 	fldtab[0]->sval = record;
 
-	   dprintf( ("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]) );
+	   dprintf( ("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, fldtab[0]) );
 	   dprintf( ("recbld = |%s|\n", record) );
 	donerec = 1;
 }
