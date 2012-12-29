@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.7 2012/12/23 18:34:01 jakllsch Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.8 2012/12/29 00:05:45 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.7 2012/12/23 18:34:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.8 2012/12/29 00:05:45 jmcneill Exp $");
 
 #include "opt_omap.h"
 
@@ -152,6 +152,9 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags |= SDHC_FLAG_SINGLE_ONLY;
 #ifdef TI_AM335X
 	sc->sc.sc_flags |= SDHC_FLAG_WAIT_RESET;
+	sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
+#endif
+#ifdef OMAP_3530
 	sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
 #endif
 	sc->sc.sc_host = sc->sc_hosts;
