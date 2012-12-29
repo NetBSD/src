@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.5 2012/12/19 07:54:42 msaitoh Exp $
+#	$NetBSD: BEAGLEBONE,v 1.6 2012/12/29 05:00:36 riz Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -245,7 +245,7 @@ omapdmtimer2	at obio0 addr 0x48044000 size 0x1000 intr 92	# DM Timer 4
 options OMAP_SYSTEM_CLOCK_FREQ=24000000
 
 # Watchdog timers
-#omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1
+omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1
 
 # onboard video
 #omapfb* 	at obio0 addr 0x48050000 size 0x10000
