@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: random_seed,v 1.5 2012/12/17 18:20:50 apb Exp $
+# $NetBSD: random_seed,v 1.6 2012/12/29 22:15:07 christos Exp $
 #
 
 # PROVIDE: random_seed
@@ -22,7 +22,22 @@ rcvar=$name
 start_cmd="random_load"
 stop_cmd="random_save"
 
-random_file=${random_file:-/var/db/entropy-file}
+random_file="${random_file:-/var/db/entropy-file}"
+
+message()
+{
+	echo "${name}: ${random_file}: $@" 1>&2
+}
+
+getfstype() {
+	df -G "$1" | while read line; do
+		set -- $line
+		if [ "$2" = "fstype" ]; then
+			echo "$1"
+			return
+		fi
+	done
+}
 
 fs_safe()
 {
@@ -30,75 +45,67 @@ fs_safe()
 	# Enforce that the file's on a local filesystem.
 	# Include only the types we can actually write.
 	#
-	fstype=$(df -G "$1" |
-		while read line ; do
-		    set -- $line
-		    if [ "$2" = "fstype" ]; then echo "$1" ; break ; fi
-		done )
-	case $fstype in
-	    ffs)
+	fstype="$(getfstype "$1")"
+	case "${fstype}" in
+	ffs|lfs|ext2fs|msdos|v7fs)
 		return 0
 		;;
-	    lfs)
-		return 0
+	*)
+		message "Bad filesystem type ${fstype}"
+		return 1
 		;;
-	    ext2fs)
-		return 0;
-		;;
-	    msdos)
-		return 0;
-		;;
-	    v7fs)
-		return 0;
-		;;
-	 esac
-	 return 1
+	esac
 }
 
 random_load()
 {
-	if [ -f $random_file ]; then
-
-		if ! fs_safe "$(dirname "${random_file}")"; then
-			return 1
-		fi
-
-		set -- $(ls -ldn "${random_file}")
-		st_mode="$1" # should be "-rw-------"
-		st_uid="$3"  # should be "0" for root
-
-		# The file must be owned by root,
-		if [ "$st_uid" != "0" ]; then
-			return 1
-		fi
-		# and root read/write only.
-		if [ "$st_mode" != "-rw-------" ]; then
-			return 1
-		fi
-
-		if rndctl -L "${random_file}"; then
-			echo "Loaded entropy from disk."
-		fi
-		
+	if [ ! -f "${random_file}" ]; then
+		message "Not present"
+		return
 	fi
-}
-
-random_save()
-{
-	oum=$(umask)
-	umask 077
-
-	rm -Pf "${random_file}"
 
 	if ! fs_safe "$(dirname "${random_file}")"; then
 		return 1
 	fi
 
-	if rndctl -S "${random_file}"; then
-		echo "Saved entropy to disk."
+	set -- $(ls -ldn "${random_file}")
+	st_mode="$1" # should be "-rw-------"
+	st_uid="$3"  # should be "0" for root
+
+	# The file must be owned by root,
+	if [ "$st_uid" != "0" ]; then
+		message "Bad owner ${st_uid}"
+		return 1
+	fi
+	# and root read/write only.
+	if [ "$st_mode" != "-rw-------" ]; then
+		message "Bad mode ${st_mode}"
+		return 1
+	fi
+
+	if rndctl -L "${random_file}"; then
+		echo "Loaded entropy from ${random_file}."
 	fi
 }
 
+random_save()
+{
+	oum="$(umask)"
+	umask 077
 
-load_rc_config $name
+	rm -Pf "${random_file}"
+
+	if ! fs_safe "$(dirname "${random_file}")"; then
+		umask "${oum}"
+		return 1
+	fi
+
+	if rndctl -S "${random_file}"; then
+		echo "Saved entropy to ${random_file}."
+	fi
+	umask "${oum}"
+}
+
+
+load_rc_config "${name}"
 run_rc_command "$1"
