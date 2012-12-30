@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.104 2012/12/30 02:41:11 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.105 2012/12/30 03:19:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.104 2012/12/30 02:41:11 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.105 2012/12/30 03:19:24 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -468,8 +468,8 @@ main(int argc, char *argv[])
 	} else
 		phdrlen = 0;
 
-	datalen -= phdrlen;
 	packlen = datalen + 60 + 76;	/* MAXIP + MAXICMP */
+	datalen -= phdrlen;
 	if ((packet = malloc(packlen)) == NULL)
 		err(1, "Out of memory");
 
@@ -637,7 +637,7 @@ main(int argc, char *argv[])
 #endif /*IPSEC*/
 
 	(void)printf("PING %s (%s): %d data bytes\n", hostname,
-		     inet_ntoa(whereto.sin_addr), datalen);
+		     inet_ntoa(whereto.sin_addr), datalen + phdrlen);
 
 	/* When pinging the broadcast address, you can get a lot
 	 * of answers.  Doing something so evil is useful if you
