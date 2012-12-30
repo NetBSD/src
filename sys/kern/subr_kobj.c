@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.44 2011/08/13 21:04:06 christos Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.45 2012/12/30 20:52:20 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.44 2011/08/13 21:04:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.45 2012/12/30 20:52:20 pooka Exp $");
 
 #include "opt_modular.h"
 
@@ -1013,7 +1013,7 @@ kobj_read_mem(kobj_t ko, void **basep, size_t size, off_t off,
 	} else if ((uint8_t *)base != (uint8_t *)ko->ko_source + off) {
 		kobj_error(__func__, __LINE__, ko, "object not aligned");
 		kobj_error(__func__, __LINE__, ko, "source=%p base=%p off=%d "
-		    "size=%zd", ko->ko_source, base, (int)off, size);
+		    "size=%zu", ko->ko_source, base, (int)off, size);
 		error = EINVAL;
 	} else {
 		/* Nothing to do.  Loading in-situ. */
