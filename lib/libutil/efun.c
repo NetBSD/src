@@ -1,4 +1,4 @@
-/*	$NetBSD: efun.c,v 1.7 2012/12/30 17:36:00 dholland Exp $	*/
+/*	$NetBSD: efun.c,v 1.8 2012/12/30 17:37:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: efun.c,v 1.7 2012/12/30 17:36:00 dholland Exp $");
+__RCSID("$NetBSD: efun.c,v 1.8 2012/12/30 17:37:13 dholland Exp $");
 #endif
 
 #include <err.h>
@@ -114,7 +114,7 @@ ecalloc(size_t n, size_t s)
 {
 	void *p = calloc(n, s);
 	if (p == NULL && n != 0 && s != 0)
-		(*efunc)(1, "Cannot allocate %zu bytes", n);
+		(*efunc)(1, "Cannot allocate %zu blocks of size %zu", n, s);
 	return p;
 }
 
