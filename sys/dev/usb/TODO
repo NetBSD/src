@@ -6,8 +6,6 @@ High priority:
 
 On a short control transfer the status phase needs to be executed anyway.
 
-Allow interrupt out endpoints. (USB 1.1)
-
 Fix flow control in ucom (copy from com driver).
 
 Use some encapsulation in the upl driver to allow multiple protocols.
@@ -38,8 +36,6 @@ Try to get specs, and check if Linux driver is really right.
 Add lots of bus_dmamap_sync().
 
 Do bandwidth accounting.
-
-Use lock manager locks.
 
 Use the pool allocator for TDs et al.
 
