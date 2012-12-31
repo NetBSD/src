@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: pmap_vfp.S,v 1.5 2012/12/26 18:35:47 matt Exp $")
+RCSID("$NetBSD: pmap_vfp.S,v 1.6 2012/12/31 01:19:36 matt Exp $")
 
 /*
  * This zeroes a page 64-bytes at a time.  64 was chosen over 32 since
@@ -40,16 +40,9 @@ RCSID("$NetBSD: pmap_vfp.S,v 1.5 2012/12/26 18:35:47 matt Exp $")
  */
 /* LINTSTUB: void bzero_page_vfp(vaddr_t); */
 ENTRY(bzero_page_vfp)
-#if 0
-	str	lr, [sp, #-8]!
+	push	{r0, lr}
 	bl	_C_LABEL(vfp_kernel_acquire)
-#else
-	mrc	p10, 7, r3, c8, c0, 0
-	tst	r3, #VFP_FPEXC_EN
-	orreq	r2, r3, #VFP_FPEXC_EN
-	mcreq	p10, 7, r2, c8, c0, 0
-	vpush	{d0-d7}
-#endif
+	pop	{r0, lr}
 #if (CPU_CORTEX == 0)
 	mov	ip, #0
 	vmov	s0, ip
@@ -74,14 +67,7 @@ ENTRY(bzero_page_vfp)
 	vstmia	r0!, {d0-d7}
 	cmp	r0, r2
 	blt	1b
-#if 0
-	ldr	lr, [sp], #8		/* fetch LR */
 	b	_C_LABEL(vfp_kernel_release)	/* tailcall the vfp release */
-#else
-	vpop	{d0-d7}
-	mcr	p10, 7, r3, c8, c0, 0
-	RET
-#endif
 END(bzero_page_vfp)
 
 /*
@@ -96,17 +82,12 @@ ENTRY(bcopy_page_vfp)
 	pld	[r0, #64]
 	pld	[r0, #96]
 #endif
-#if 0
 	str	lr, [sp, #-8]!
+	push	{r0, r1}
 	bl	_C_LABEL(vfp_kernel_acquire)
-#else
-	mrc	p10, 7, r3, c8, c0, 0
-	tst	r3, #VFP_FPEXC_EN
-	orreq	r2, r3, #VFP_FPEXC_EN
-	mcreq	p10, 7, r2, c8, c0, 0
-	vpush	{d0-d7}
+	pop	{r0, r1}
+	ldr	lr, [sp], #8		/* fetch LR */
 	add	r2, r0, #PAGE_SIZE-128
-#endif
 1:	
 #ifdef _ARM_ARCH_DWORD_OK
 	pld	[r0, #128]		@ preload the next 128
@@ -121,12 +102,5 @@ ENTRY(bcopy_page_vfp)
 	cmp	r0, r2
 	blt	1b
 	beq	2b
-#if 0
-	ldr	lr, [sp], #8		/* fetch LR */
 	b	_C_LABEL(vfp_kernel_release)	/* tailcall the vfp release */
-#else
-	vpop	{d0-d7}
-	mcr	p10, 7, r3, c8, c0, 0
-	RET
-#endif
 END(bcopy_page_vfp)
