@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.70 2012/12/31 10:31:19 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.71 2012/12/31 10:38:51 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.70 2012/12/31 10:31:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.71 2012/12/31 10:38:51 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,6 +354,7 @@ static struct {
 	{ PCI_PRODUCT_ATI_RADEON_RV370_5B64,	RADEON_RV380, 0 },
 	{ PCI_PRODUCT_ATI_RADEON_RV370_5B65,	RADEON_RV380, 0 },
 
+#if notyet
 	/* R420/R423 family */
 	{ PCI_PRODUCT_ATI_RADEON_R420_JH,	RADEON_R420, 0 },
 	{ PCI_PRODUCT_ATI_RADEON_R420_JI,	RADEON_R420, 0 },
@@ -372,7 +373,7 @@ static struct {
 	{ PCI_PRODUCT_ATI_RADEON_R423_UT,	RADEON_R420, 0 },
 	{ PCI_PRODUCT_ATI_RADEON_R423_5D57,	RADEON_R420, 0 },
 	{ PCI_PRODUCT_ATI_RADEON_R430_554F,	RADEON_R420, 0 },
-
+#endif
 	{ 0, 0, 0 }
 };
 
