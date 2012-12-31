@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.14 2012/12/31 00:01:48 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.15 2012/12/31 03:23:53 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -468,8 +468,8 @@ vfp_state_load(lwp_t *l, u_int flags)
 	if (flags & PCU_KERNEL) {
 		if ((flags & PCU_LOADED) == 0) {
 			pcb->pcb_kernel_vfp.vfp_fpexc = pcb->pcb_vfp.vfp_fpexc;
-			pcb->pcb_vfp.vfp_fpexc = VFP_FPEXC_EN;
 		}
+		pcb->pcb_vfp.vfp_fpexc = VFP_FPEXC_EN;
 		write_fpexc(pcb->pcb_vfp.vfp_fpexc);
 		/*
 		 * Load the kernel registers (just the first 16) if they've
