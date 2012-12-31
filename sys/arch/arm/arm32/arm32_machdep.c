@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.87 2012/12/10 08:19:10 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.88 2012/12/31 21:34:31 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.87 2012/12/10 08:19:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.88 2012/12/31 21:34:31 jmcneill Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -177,7 +177,7 @@ halt(void)
 }
 
 
-/* Sync the discs and unmount the filesystems */
+/* Sync the discs, unmount the filesystems, and adjust the todr */
 
 void
 bootsync(void)
@@ -201,6 +201,8 @@ bootsync(void)
 	}
 
 	vfs_shutdown();
+
+	resettodr();
 }
 
 /*
