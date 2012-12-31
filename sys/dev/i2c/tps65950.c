@@ -1,4 +1,4 @@
-/* $NetBSD: tps65950.c,v 1.1 2012/12/31 13:26:42 jmcneill Exp $ */
+/* $NetBSD: tps65950.c,v 1.2 2012/12/31 19:47:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.1 2012/12/31 13:26:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.2 2012/12/31 19:47:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,16 @@ __KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.1 2012/12/31 13:26:42 jmcneill Exp $"
 #include <sys/bus.h>
 #include <sys/kmem.h>
 #include <sys/sysctl.h>
+#include <sys/wdog.h>
 
 #include <dev/i2c/i2cvar.h>
+
+#include <dev/sysmon/sysmonvar.h>
+
+/* Default watchdog period, in seconds */
+#ifndef TPS65950_WDOG_DEFAULT_PERIOD
+#define TPS65950_WDOG_DEFAULT_PERIOD	30
+#endif
 
 /* I2C Bus Addressing */
 #define	TPS65950_ADDR_ID1		0x48	/* GP */
@@ -50,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.1 2012/12/31 13:26:42 jmcneill Exp $"
 #define TPS65950_ADDR_ID4		0x4b	/* GP */
 #define TPS65950_ADDR_ID5		0x12	/* SmartReflex */
 
+/* ID2 */
 #define TPS65950_ID2_IDCODE_7_0		0x85
 #define TPS65950_ID2_IDCODE_15_8	0x86
 #define TPS65950_ID2_IDCODE_23_16	0x87
@@ -57,13 +66,17 @@ __KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.1 2012/12/31 13:26:42 jmcneill Exp $"
 #define TPS65950_ID2_UNLOCK_TEST_REG	0x97
 #define TPS65950_ID2_UNLOCK_TEST_REG_MAGIC 0x49
 
+/* ID3 */
 #define TPS65950_LED_BASE		0xee
-
 #define	TPS65950_ID3_REG_LED		(TPS65950_LED_BASE + 0)
 #define	TPS65950_ID3_REG_LED_LEDAON	__BIT(0)
 #define	TPS65950_ID3_REG_LED_LEDBON	__BIT(1)
 #define TPS65950_ID3_REG_LED_LEDAPWM	__BIT(4)
 #define TPS65950_ID3_REG_LED_LEDBPWM	__BIT(5)
+
+/* ID4 */
+#define TPS65950_PM_RECEIVER_BASE	0x5b
+#define TPS65950_ID4_REG_WATCHDOG_CFG	(TPS65950_PM_RECEIVER_BASE + 3)
 
 struct tps65950_softc {
 	device_t	sc_dev;
@@ -71,6 +84,8 @@ struct tps65950_softc {
 	i2c_addr_t	sc_addr;
 
 	struct sysctllog *sc_sysctllog;
+	struct sysmon_wdog sc_smw;
+	uint8_t		sc_watchdog_cfg;
 };
 
 static int	tps65950_match(device_t, cfdata_t, void *);
@@ -80,6 +95,10 @@ static int	tps65950_read_1(struct tps65950_softc *, uint8_t, uint8_t *);
 static int	tps65950_write_1(struct tps65950_softc *, uint8_t, uint8_t);
 
 static void	tps65950_sysctl_attach(struct tps65950_softc *);
+static void	tps65950_wdog_attach(struct tps65950_softc *);
+
+static int	tps65950_wdog_setmode(struct sysmon_wdog *);
+static int	tps65950_wdog_tickle(struct sysmon_wdog *);
 
 CFATTACH_DECL_NEW(tps65950pm, sizeof(struct tps65950_softc),
     tps65950_match, tps65950_attach, NULL, NULL);
@@ -118,22 +137,28 @@ tps65950_attach(device_t parent, device_t self, void *aux)
 	switch (sc->sc_addr) {
 	case TPS65950_ADDR_ID2:
 		memset(buf, 0, sizeof(buf));
+		iic_acquire_bus(sc->sc_i2c, 0);
 		tps65950_write_1(sc, TPS65950_ID2_UNLOCK_TEST_REG,
 		    TPS65950_ID2_UNLOCK_TEST_REG_MAGIC);
 		tps65950_read_1(sc, TPS65950_ID2_IDCODE_7_0, &buf[0]);
 		tps65950_read_1(sc, TPS65950_ID2_IDCODE_15_8, &buf[1]);
 		tps65950_read_1(sc, TPS65950_ID2_IDCODE_23_16, &buf[2]);
 		tps65950_read_1(sc, TPS65950_ID2_IDCODE_31_24, &buf[3]);
+		iic_release_bus(sc->sc_i2c, 0);
 		idcode = (buf[0] << 0) | (buf[1] << 8) |
 			 (buf[2] << 16) | (buf[3] << 24);
 		aprint_normal(": IDCODE %08X\n", idcode);
 		break;
 	case TPS65950_ADDR_ID3:
-		aprint_normal(": group %02x\n", sc->sc_addr);
+		aprint_normal(": LED\n");
 		tps65950_sysctl_attach(sc);
 		break;
+	case TPS65950_ADDR_ID4:
+		aprint_normal(": WATCHDOG\n");
+		tps65950_wdog_attach(sc);
+		break;
 	default:
-		aprint_normal(": group %02x\n", sc->sc_addr);
+		aprint_normal("\n");
 		break;
 	}
 }
@@ -164,7 +189,9 @@ tps65950_sysctl_leda(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	sc = node.sysctl_data;
+	iic_acquire_bus(sc->sc_i2c, 0);
 	error = tps65950_read_1(sc, TPS65950_ID3_REG_LED, &val);
+	iic_release_bus(sc->sc_i2c, 0);
 	if (error)
 		return error;
 	leda = (val & TPS65950_ID3_REG_LED_LEDAON) ? 1 : 0;
@@ -178,7 +205,12 @@ tps65950_sysctl_leda(SYSCTLFN_ARGS)
 	else
 		val &= ~(TPS65950_ID3_REG_LED_LEDAON|TPS65950_ID3_REG_LED_LEDAPWM);
 
-	return tps65950_write_1(sc, TPS65950_ID3_REG_LED, val);
+	
+	iic_acquire_bus(sc->sc_i2c, 0);
+	error = tps65950_write_1(sc, TPS65950_ID3_REG_LED, val);
+	iic_release_bus(sc->sc_i2c, 0);
+
+	return error;
 }
 
 static int
@@ -192,7 +224,9 @@ tps65950_sysctl_ledb(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	sc = node.sysctl_data;
+	iic_acquire_bus(sc->sc_i2c, 0);
 	error = tps65950_read_1(sc, TPS65950_ID3_REG_LED, &val);
+	iic_release_bus(sc->sc_i2c, 0);
 	if (error)
 		return error;
 	ledb = (val & TPS65950_ID3_REG_LED_LEDBON) ? 1 : 0;
@@ -206,7 +240,11 @@ tps65950_sysctl_ledb(SYSCTLFN_ARGS)
 	else
 		val &= ~(TPS65950_ID3_REG_LED_LEDBON|TPS65950_ID3_REG_LED_LEDBPWM);
 
-	return tps65950_write_1(sc, TPS65950_ID3_REG_LED, val);
+	iic_acquire_bus(sc->sc_i2c, 0);
+	error = tps65950_write_1(sc, TPS65950_ID3_REG_LED, val);
+	iic_release_bus(sc->sc_i2c, 0);
+
+	return error;
 }
 
 static void
@@ -240,4 +278,59 @@ tps65950_sysctl_attach(struct tps65950_softc *sc)
 	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
 	if (error)
 		return;
+}
+
+static void
+tps65950_wdog_attach(struct tps65950_softc *sc)
+{
+	sc->sc_smw.smw_name = device_xname(sc->sc_dev);
+	sc->sc_smw.smw_cookie = sc;
+	sc->sc_smw.smw_setmode = tps65950_wdog_setmode;
+	sc->sc_smw.smw_tickle = tps65950_wdog_tickle;
+	sc->sc_smw.smw_period = TPS65950_WDOG_DEFAULT_PERIOD;
+
+	if (sysmon_wdog_register(&sc->sc_smw) != 0)
+		aprint_error_dev(sc->sc_dev, "couldn't register watchdog\n");
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	tps65950_write_1(sc, TPS65950_ID4_REG_WATCHDOG_CFG, 0);
+	iic_release_bus(sc->sc_i2c, 0);
+}
+
+static int
+tps65950_wdog_setmode(struct sysmon_wdog *smw)
+{
+	struct tps65950_softc *sc = smw->smw_cookie;
+	int error;
+
+	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
+		iic_acquire_bus(sc->sc_i2c, 0);
+		error = tps65950_write_1(sc, TPS65950_ID4_REG_WATCHDOG_CFG, 0);
+		iic_release_bus(sc->sc_i2c, 0);
+	} else {
+		if (smw->smw_period == WDOG_PERIOD_DEFAULT) {
+			smw->smw_period = TPS65950_WDOG_DEFAULT_PERIOD;
+		}
+		if (smw->smw_period > 30) {
+			error = EINVAL;
+		} else {
+			error = tps65950_wdog_tickle(smw);
+		}
+	}
+	return error;
+}
+
+static int
+tps65950_wdog_tickle(struct sysmon_wdog *smw)
+{
+	struct tps65950_softc *sc = smw->smw_cookie;
+	int error;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	tps65950_write_1(sc, TPS65950_ID4_REG_WATCHDOG_CFG, 0);
+	error = tps65950_write_1(sc, TPS65950_ID4_REG_WATCHDOG_CFG,
+	    smw->smw_period + 1);
+	iic_release_bus(sc->sc_i2c, 0);
+
+	return error;
 }
