@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.992 2012/12/19 09:46:16 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.993 2012/12/31 16:05:39 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -742,8 +742,8 @@ Notes:
 Delete the otherOS directory before importing.
 
 Package:	nawk
-Version:	2010-05-23
-Current Vers:	2011-08-10
+Version:	2012-12-20
+Current Vers:	2012-12-20
 Maintainer:	Brian Kernighan <bwk@princeton.edu>
 Archive Site:	http://www.cs.princeton.edu/~bwk/btl.mirror/
 Home Page:	http://www.cs.princeton.edu/~bwk/btl.mirror/
@@ -977,9 +977,9 @@ The authoritative version is in pkgsrc/pkgtools/pkg_install.
 Package:	ping
 Version:	980911
 Current Vers:	980911
-Maintainer:	Vernon Schryver <vjs@rhyolite.com>
-Archive Site:	ftp://ftp.rhyolite.com/src/
-Home Page:	http://www.rhyolite.com/src/
+Maintainer:	Mike Muuss
+Archive Site:	
+Home Page:	http://ftp.arl.mil/mike/ping.html
 Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
@@ -987,7 +987,8 @@ Location:	sbin/ping
 Notes:
 We use err() and friends. We have changes for snprintf, extra
 formatting in man pages, disallowing flood pinging, alignment fixes,
-and more.
+and more. Vern's ping is gone. We are too different from everyone else
+now to do a new import.
 
 Package:	Postfix
 Version:	2.8.13
