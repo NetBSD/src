@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.69 2012/12/30 09:45:05 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.70 2012/12/31 10:31:19 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.69 2012/12/30 09:45:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.70 2012/12/31 10:31:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ static void radeonfb_modeswitch(struct radeonfb_display *);
 static void radeonfb_setcrtc(struct radeonfb_display *, int);
 static void radeonfb_init_misc(struct radeonfb_softc *);
 static void radeonfb_set_fbloc(struct radeonfb_softc *);
-static void radeonfb_init_palette(struct radeonfb_softc *, int);
+static void radeonfb_init_palette(struct radeonfb_display *);
 static void radeonfb_r300cg_workaround(struct radeonfb_softc *);
 
 static int radeonfb_isblank(struct radeonfb_display *);
@@ -645,9 +645,6 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 
 	radeonfb_init_misc(sc);
-	radeonfb_init_palette(sc, 0);
-	if (HAS_CRTC2(sc))
-		radeonfb_init_palette(sc, 1);
 
 	/* program the DAC wirings */
 	for (i = 0; i < (HAS_CRTC2(sc) ? 2 : 1); i++) {
@@ -668,7 +665,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 			    i ? 0 : RADEON_CRT2_DISP1_SEL,
 			    ~RADEON_CRT2_DISP1_SEL);
 			/* we're using CRTC2 for the 2nd port */
-			if (sc->sc_ports[i].rp_number == 99) {
+			if (sc->sc_ports[i].rp_number == 1) {
 				PATCH32(sc, RADEON_DISP_OUTPUT_CNTL,
 				    RADEON_DISP_DAC2_SOURCE_CRTC2,
 				    ~RADEON_DISP_DAC2_SOURCE_MASK);
@@ -676,9 +673,13 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 			
 			break;
 		}
+		DPRINTF(("%s: port %d tmds type %d\n", __func__, i,
+		    sc->sc_ports[i].rp_tmds_type));
 		switch (sc->sc_ports[i].rp_tmds_type) {
 		case RADEON_TMDS_INT:
 			/* point FP0 at the CRTC this port uses */
+			DPRINTF(("%s: plugging internal TMDS into CRTC %d\n",
+			    __func__, sc->sc_ports[i].rp_number));
 			if (IS_R300(sc)) {
 				PATCH32(sc, RADEON_FP_GEN_CNTL,
 				    sc->sc_ports[i].rp_number ?
@@ -973,16 +974,13 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		radeonfb_set_backlight(dp, dp->rd_bl_level);
 	}
 
-	/*
-	 * if we have console output via firmware like on sparc64 it may
-	 * interfere with DAC programming so program the palette again
-	 * here after we took over
-	 */
-	radeonfb_init_palette(sc, 0); 
+	for (i = i; i < RADEON_NDISPLAYS; i++)
+		radeonfb_init_palette(&sc->sc_displays[i]);
+ 
 	if (HAS_CRTC2(sc)) {
-		radeonfb_init_palette(sc, 1);
 		CLR32(sc, RADEON_CRTC2_GEN_CNTL, RADEON_CRTC2_DISP_DIS);
 	}
+
 	CLR32(sc, RADEON_CRTC_EXT_CNTL, RADEON_CRTC_DISPLAY_DIS);
 	SET32(sc, RADEON_FP_GEN_CNTL, RADEON_FP_FPON);
 	pmf_event_register(dev, PMFE_DISPLAY_BRIGHTNESS_UP,
@@ -1121,7 +1119,7 @@ radeonfb_ioctl(void *v, void *vs,
 			    	radeonfb_map(sc);
 				radeonfb_engine_init(dp);
 				glyphcache_wipe(&dp->rd_gc);
-				radeonfb_init_palette(sc, dp == &sc->sc_displays[0] ? 0 : 1);
+				radeonfb_init_palette(dp);
 				radeonfb_modeswitch(dp);
 				vcons_redraw_screen(dp->rd_vd.active);
 			} else {
@@ -1754,7 +1752,7 @@ nobios:
 			sc->sc_ports[1].rp_ddc_type = RADEON_DDC_VGA;
 			sc->sc_ports[1].rp_dac_type = RADEON_DAC_PRIMARY;
 			sc->sc_ports[1].rp_conn_type = RADEON_CONN_CRT;
-			sc->sc_ports[1].rp_tmds_type = RADEON_TMDS_EXT;
+			sc->sc_ports[1].rp_tmds_type = RADEON_TMDS_UNKNOWN;
 			sc->sc_ports[1].rp_number = 0;
 		}
 	}
@@ -2535,10 +2533,12 @@ radeonfb_init_misc(struct radeonfb_softc *sc)
  * This loads a linear color map for true color.
  */
 void
-radeonfb_init_palette(struct radeonfb_softc *sc, int crtc)
+radeonfb_init_palette(struct radeonfb_display *dp)
 {
-	int		i;
+	struct radeonfb_softc *sc = dp->rd_softc;
+	int		i, cc;
 	uint32_t	vclk;
+	int		crtc;
 
 #define	DAC_WIDTH ((1 << 10) - 1)
 #define	CLUT_WIDTH ((1 << 8) - 1)
@@ -2547,50 +2547,57 @@ radeonfb_init_palette(struct radeonfb_softc *sc, int crtc)
 	vclk = GETPLL(sc, RADEON_VCLK_ECP_CNTL);
 	PUTPLL(sc, RADEON_VCLK_ECP_CNTL, vclk & ~RADEON_PIXCLK_DAC_ALWAYS_ONb);
 
-	if (crtc)
-		SET32(sc, RADEON_DAC_CNTL2, RADEON_DAC2_PALETTE_ACC_CTL);
-	else
-		CLR32(sc, RADEON_DAC_CNTL2, RADEON_DAC2_PALETTE_ACC_CTL);
+	/* initialize the palette for every CRTC used by this display */
+	for (cc = 0; cc < dp->rd_ncrtcs; cc++) {
+		crtc = dp->rd_crtcs[cc].rc_number;
 
-	PUT32(sc, RADEON_PALETTE_INDEX, 0);
-	if (sc->sc_displays[crtc].rd_bpp == 0)
-		sc->sc_displays[crtc].rd_bpp = RADEONFB_DEFAULT_DEPTH;
+		if (crtc)
+			SET32(sc, RADEON_DAC_CNTL2, RADEON_DAC2_PALETTE_ACC_CTL);
+		else
+			CLR32(sc, RADEON_DAC_CNTL2, RADEON_DAC2_PALETTE_ACC_CTL);
 
-	if (sc->sc_displays[crtc].rd_bpp == 8) {
-		/* ANSI palette */
-		int j = 0;
-		uint32_t tmp, r, g, b;
+		PUT32(sc, RADEON_PALETTE_INDEX, 0);
 
-                for (i = 0; i <= CLUT_WIDTH; ++i) {
-    			tmp = i & 0xe0;
-			/*
-			 * replicate bits so 0xe0 maps to a red value of 0xff
-			 * in order to make white look actually white
-			 */
-			tmp |= (tmp >> 3) | (tmp >> 6);
-			r = tmp;
+		if (dp->rd_bpp == 0)
+			dp->rd_bpp = RADEONFB_DEFAULT_DEPTH;
 
-			tmp = (i & 0x1c) << 3;
-			tmp |= (tmp >> 3) | (tmp >> 6);
-			g = tmp;
+		if (dp->rd_bpp == 8) {
+			/* ANSI palette */
+			int j = 0;
+			uint32_t tmp, r, g, b;
 
-			tmp = (i & 0x03) << 6;
-			tmp |= tmp >> 2;
-			tmp |= tmp >> 4;
-			b = tmp;
-            	PUT32(sc, RADEON_PALETTE_30_DATA,
-				(r << 22) |
-				(g << 12) |
-				(b << 2));
-			j += 3;
-		}
-	} else {
-		/* linear ramp */
-		for (i = 0; i <= CLUT_WIDTH; ++i) {
-			PUT32(sc, RADEON_PALETTE_30_DATA,
-			    (CLUT_COLOR(i) << 10) |
-			    (CLUT_COLOR(i) << 20) |
-			    (CLUT_COLOR(i)));
+        	        for (i = 0; i <= CLUT_WIDTH; ++i) {
+    				tmp = i & 0xe0;
+				/*
+				 * replicate bits so 0xe0 maps to a red value of 0xff
+				 * in order to make white look actually white
+				 */
+				tmp |= (tmp >> 3) | (tmp >> 6);
+				r = tmp;
+
+				tmp = (i & 0x1c) << 3;
+				tmp |= (tmp >> 3) | (tmp >> 6);
+				g = tmp;
+
+				tmp = (i & 0x03) << 6;
+				tmp |= tmp >> 2;
+				tmp |= tmp >> 4;
+				b = tmp;
+
+		            	PUT32(sc, RADEON_PALETTE_30_DATA,
+					(r << 22) |
+					(g << 12) |
+					(b << 2));
+				j += 3;
+			}
+		} else {
+			/* linear ramp */
+			for (i = 0; i <= CLUT_WIDTH; ++i) {
+				PUT32(sc, RADEON_PALETTE_30_DATA,
+				    (CLUT_COLOR(i) << 10) |
+				    (CLUT_COLOR(i) << 20) |
+				    (CLUT_COLOR(i)));
+			}
 		}
 	}
 
