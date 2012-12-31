@@ -1,5 +1,5 @@
 /*	Id: local.c,v 1.66 2012/03/23 17:03:09 ragge Exp 	*/	
-/*	$NetBSD: local.c,v 1.1.1.4 2012/03/26 14:26:17 plunky Exp $	*/
+/*	$NetBSD: local.c,v 1.2 2012/12/31 18:47:41 christos Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -540,10 +540,12 @@ myp2tree(NODE *p)
 
 #ifdef mach_amd64
 	{
-		/* Do not loose negative zeros */
-		long long *llp = (long long *)(&p->n_dcon);
-		short *ssp = (short *)&llp[1];
-		if (*llp == 0 && *ssp == 0)
+		/* Do not lose negative zeros */
+		long long ll[2];
+		short ss;
+		memcpy(ll, &p->n_dcon, sizeof(ll));
+		memcpy(&ss, &ll[1], sizeof(ss));
+		if (ll[0] == 0 && ss == 0)
 			return;
 	}
 #else
