@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.13 2012/12/26 18:34:56 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.14 2012/12/31 00:01:48 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -410,7 +410,7 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame,
 
 	/* This shouldn't ever happen.  */
 	if (fault_code != FAULT_USER)
-		panic("VFP fault in non-user mode");
+		panic("VFP fault at %#x in non-user mode", frame->tf_pc);
 
 	if (ci->ci_vfp_id == 0)
 		/* No VFP detected, just fault.  */
