@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.6 2012/12/15 21:50:43 dsl Exp $	*/
+/*	$NetBSD: fpu.h,v 1.7 2012/12/31 16:20:17 dsl Exp $	*/
 
 #ifndef	_AMD64_FPU_H_
 #define	_AMD64_FPU_H_
@@ -7,7 +7,9 @@
  * NetBSD/amd64 only uses the extended save/restore format used
  * by fxsave/fsrestore, to always deal with the SSE registers,
  * which are part of the ABI to pass floating point values.
- * Must be stored in memory on a 16-byte boundary.
+ *
+ * The memory used for the 'fsave' instruction must be 16 byte aligned,
+ * but the definition here isn't aligned to avoid padding elsewhere.
  */
 
 struct fxsave64 {
@@ -30,10 +32,12 @@ __CTASSERT(sizeof (struct fxsave64) == 512);
 
 struct savefpu {
 	struct fxsave64 fp_fxsave;	/* see above */
+};
+
+struct savefpu_i387 {
 	uint16_t fp_ex_sw;		/* saved status from last exception */
 	uint16_t fp_ex_tw;		/* saved tag from last exception */
-} __aligned(16);
-
+};
 
 /*
  * The i387 defaults to Intel extended precision mode and round to nearest,
