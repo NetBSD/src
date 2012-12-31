@@ -1,4 +1,4 @@
-/* $NetBSD: tps65950.c,v 1.2 2012/12/31 19:47:27 jmcneill Exp $ */
+/* $NetBSD: tps65950.c,v 1.3 2012/12/31 21:45:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.2 2012/12/31 19:47:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3 2012/12/31 21:45:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.2 2012/12/31 19:47:27 jmcneill Exp $"
 
 #include <dev/i2c/i2cvar.h>
 
+#include <dev/clock_subr.h>
 #include <dev/sysmon/sysmonvar.h>
 
 /* Default watchdog period, in seconds */
@@ -77,6 +78,17 @@ __KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.2 2012/12/31 19:47:27 jmcneill Exp $"
 /* ID4 */
 #define TPS65950_PM_RECEIVER_BASE	0x5b
 #define TPS65950_ID4_REG_WATCHDOG_CFG	(TPS65950_PM_RECEIVER_BASE + 3)
+#define TPS65950_RTC_BASE		0x1c
+#define TPS65950_ID4_REG_SECONDS_REG	(TPS65950_RTC_BASE + 0)
+#define TPS65950_ID4_REG_MINUTES_REG	(TPS65950_RTC_BASE + 1)
+#define TPS65950_ID4_REG_HOURS_REG	(TPS65950_RTC_BASE + 2)
+#define TPS65950_ID4_REG_DAYS_REG	(TPS65950_RTC_BASE + 3)
+#define TPS65950_ID4_REG_MONTHS_REG	(TPS65950_RTC_BASE + 4)
+#define TPS65950_ID4_REG_YEARS_REG	(TPS65950_RTC_BASE + 5)
+#define TPS65950_ID4_REG_WEEKS_REG	(TPS65950_RTC_BASE + 6)
+#define TPS65950_ID4_REG_RTC_CTRL_REG	(TPS65950_RTC_BASE + 13)
+#define TPS65950_ID4_REG_RTC_CTRL_REG_GET_TIME __BIT(6)
+#define TPS65950_ID4_REG_RTC_CTRL_REG_STOP_RTC __BIT(1)
 
 struct tps65950_softc {
 	device_t	sc_dev;
@@ -85,7 +97,7 @@ struct tps65950_softc {
 
 	struct sysctllog *sc_sysctllog;
 	struct sysmon_wdog sc_smw;
-	uint8_t		sc_watchdog_cfg;
+	struct todr_chip_handle sc_todr;
 };
 
 static int	tps65950_match(device_t, cfdata_t, void *);
@@ -95,8 +107,13 @@ static int	tps65950_read_1(struct tps65950_softc *, uint8_t, uint8_t *);
 static int	tps65950_write_1(struct tps65950_softc *, uint8_t, uint8_t);
 
 static void	tps65950_sysctl_attach(struct tps65950_softc *);
-static void	tps65950_wdog_attach(struct tps65950_softc *);
 
+static void	tps65950_rtc_attach(struct tps65950_softc *);
+static int	tps65950_rtc_enable(struct tps65950_softc *, bool);
+static int	tps65950_rtc_gettime(todr_chip_handle_t, struct clock_ymdhms *);
+static int	tps65950_rtc_settime(todr_chip_handle_t, struct clock_ymdhms *);
+
+static void	tps65950_wdog_attach(struct tps65950_softc *);
 static int	tps65950_wdog_setmode(struct sysmon_wdog *);
 static int	tps65950_wdog_tickle(struct sysmon_wdog *);
 
@@ -154,7 +171,8 @@ tps65950_attach(device_t parent, device_t self, void *aux)
 		tps65950_sysctl_attach(sc);
 		break;
 	case TPS65950_ADDR_ID4:
-		aprint_normal(": WATCHDOG\n");
+		aprint_normal(": RTC, WATCHDOG\n");
+		tps65950_rtc_attach(sc);
 		tps65950_wdog_attach(sc);
 		break;
 	default:
@@ -278,6 +296,106 @@ tps65950_sysctl_attach(struct tps65950_softc *sc)
 	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
 	if (error)
 		return;
+}
+
+static void
+tps65950_rtc_attach(struct tps65950_softc *sc)
+{
+	sc->sc_todr.todr_gettime_ymdhms = tps65950_rtc_gettime;
+	sc->sc_todr.todr_settime_ymdhms = tps65950_rtc_settime;
+	sc->sc_todr.cookie = sc;
+	todr_attach(&sc->sc_todr);
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	tps65950_rtc_enable(sc, true);
+	iic_release_bus(sc->sc_i2c, 0);
+}
+
+static int
+tps65950_rtc_enable(struct tps65950_softc *sc, bool enable)
+{
+	uint8_t rtc_ctrl;
+	int error;
+
+	error = tps65950_read_1(sc, TPS65950_ID4_REG_RTC_CTRL_REG, &rtc_ctrl);
+	if (error)
+		return error;
+
+	if (enable) {
+		rtc_ctrl |= TPS65950_ID4_REG_RTC_CTRL_REG_STOP_RTC;
+	} else {
+		rtc_ctrl &= ~TPS65950_ID4_REG_RTC_CTRL_REG_STOP_RTC;
+	}
+
+	return tps65950_write_1(sc, TPS65950_ID4_REG_RTC_CTRL_REG, rtc_ctrl);
+}
+
+#define RTC_READ(reg, var)						 \
+	do {								 \
+		tps65950_write_1(sc, TPS65950_ID4_REG_RTC_CTRL_REG,	 \
+		    TPS65950_ID4_REG_RTC_CTRL_REG_GET_TIME);		 \
+		if ((error = tps65950_read_1(sc, (reg), &(var))) != 0) { \
+			iic_release_bus(sc->sc_i2c, 0);			 \
+			return error;					 \
+		}							 \
+	} while (0)
+
+#define RTC_WRITE(reg, val)						 \
+	do {								 \
+		if ((error = tps65950_write_1(sc, (reg), (val))) != 0) { \
+			iic_release_bus(sc->sc_i2c, 0);			 \
+			return error;					 \
+		}							 \
+	} while (0)
+
+static int
+tps65950_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
+{
+	struct tps65950_softc *sc = tch->cookie;
+	uint8_t seconds_reg, minutes_reg, hours_reg,
+		days_reg, months_reg, years_reg, weeks_reg;
+	int error = 0;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	RTC_READ(TPS65950_ID4_REG_SECONDS_REG, seconds_reg);
+	RTC_READ(TPS65950_ID4_REG_MINUTES_REG, minutes_reg);
+	RTC_READ(TPS65950_ID4_REG_HOURS_REG, hours_reg);
+	RTC_READ(TPS65950_ID4_REG_DAYS_REG, days_reg);
+	RTC_READ(TPS65950_ID4_REG_MONTHS_REG, months_reg);
+	RTC_READ(TPS65950_ID4_REG_YEARS_REG, years_reg);
+	RTC_READ(TPS65950_ID4_REG_WEEKS_REG, weeks_reg);
+	iic_release_bus(sc->sc_i2c, 0);
+
+	dt->dt_sec = FROMBCD(seconds_reg);
+	dt->dt_min = FROMBCD(minutes_reg);
+	dt->dt_hour = FROMBCD(hours_reg);
+	dt->dt_day = FROMBCD(days_reg);
+	dt->dt_mon = FROMBCD(months_reg);
+	dt->dt_year = FROMBCD(years_reg) + 2000;
+	dt->dt_wday = FROMBCD(weeks_reg);
+
+	return 0;
+}
+
+static int
+tps65950_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
+{
+	struct tps65950_softc *sc = tch->cookie;
+	int error = 0;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	tps65950_rtc_enable(sc, false);
+	RTC_WRITE(TPS65950_ID4_REG_SECONDS_REG, TOBCD(dt->dt_sec));
+	RTC_WRITE(TPS65950_ID4_REG_MINUTES_REG, TOBCD(dt->dt_min));
+	RTC_WRITE(TPS65950_ID4_REG_HOURS_REG, TOBCD(dt->dt_hour));
+	RTC_WRITE(TPS65950_ID4_REG_DAYS_REG, TOBCD(dt->dt_day));
+	RTC_WRITE(TPS65950_ID4_REG_MONTHS_REG, TOBCD(dt->dt_mon));
+	RTC_WRITE(TPS65950_ID4_REG_YEARS_REG, TOBCD(dt->dt_year % 100));
+	RTC_WRITE(TPS65950_ID4_REG_WEEKS_REG, TOBCD(dt->dt_wday));
+	tps65950_rtc_enable(sc, true);
+	iic_release_bus(sc->sc_i2c, 0);
+
+	return error;
 }
 
 static void
