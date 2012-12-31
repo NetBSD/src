@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.36 2012/12/28 23:24:47 jmcneill Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.37 2012/12/31 12:47:25 jmcneill Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -220,13 +220,10 @@ omapgpio4	at obio2 addr 0x49056000 size 0x0400 intrbase 224 intr 33
 gpio*		at omapgpio?
 
 # # I2C Controller
-# omapi2c0	at tipb? addr 0xfffb3800 intr 36 mult 4
-# iic*		at omapi2c?
-# # omap's own i2c address
-# options		OMAP_I2C_ADDRESS=0xe
-# # i2c bus clock low and high times in ns
-# options		I2C_LOW_TIME_nSEC=1500
-# options		I2C_HIGH_TIME_nSEC=1000
+omapiic0	at obio0 addr 0x48070000 size 0x80
+omapiic1	at obio0 addr 0x48072000 size 0x80
+omapiic2	at obio0 addr 0x48060000 size 0x80
+iic*		at omapiic?
 
 # On-board 16550 UARTs
 com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
