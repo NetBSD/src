@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.26 2012/11/12 18:00:34 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.27 2012/12/31 08:57:27 skrll Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.26 2012/11/12 18:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.27 2012/12/31 08:57:27 skrll Exp $");
 
 #include <sys/proc.h>
 #include <arm/armreg.h>
@@ -92,6 +92,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 	bool		kernel_only = true;
 	bool		trace_thread = false;
 	bool		lwpaddr = false;
+	db_addr_t	scp, pc;
 	int		scp_offset;
 
 	while ((c = *cp++) != 0) {
@@ -151,13 +152,28 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 	lastframe = NULL;
 	scp_offset = -(get_pc_str_offset() >> 2);
 
+	/*
+	 * In theory, the SCP isn't guaranteed to be in the function
+	 * that generated the stack frame.  We hope for the best.
+	 */
+#ifdef __PROG26
+	scp = frame[FR_SCP] & R15_PC;
+#else
+	scp = frame[FR_SCP];
+#endif
+	pc = scp;
+
 	while (count-- && frame != NULL) {
-		db_addr_t	scp;
 		uint32_t	savecode;
 		int		r;
 		uint32_t	*rp;
 		const char	*sep;
 
+#ifdef __PROG26
+		scp = frame[FR_SCP] & R15_PC;
+#else
+		scp = frame[FR_SCP];
+#endif
 		lastframe = frame;
 #ifndef _KERNEL
 		uint32_t frameb[4];
@@ -166,24 +182,14 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		frame = frameb + 3;
 #endif
 
-		/*
-		 * In theory, the SCP isn't guaranteed to be in the function
-		 * that generated the stack frame.  We hope for the best.
-		 */
-#ifdef __PROG26
-		scp = frame[FR_SCP] & R15_PC;
-#else
-		scp = frame[FR_SCP];
-#endif
-
-		db_printsym(scp, DB_STGY_PROC, pr);
+		db_printsym(pc, DB_STGY_PROC, pr);
 		(*pr)("\n\t");
 #ifdef __PROG26
-		(*pr)("scp=0x%08x rlv=0x%08x (", scp, frame[FR_RLV] & R15_PC);
+		(*pr)("pc =0x%08x rlv=0x%08x (", pc, frame[FR_RLV] & R15_PC);
 		db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC, pr);
 		(*pr)(")\n");
 #else
-		(*pr)("scp=0x%08x rlv=0x%08x (", scp, frame[FR_RLV]);
+		(*pr)("pc =0x%08x rlv=0x%08x (", pc, frame[FR_RLV]);
 		db_printsym(frame[FR_RLV], DB_STGY_PROC, pr);
 		(*pr)(")\n");
 #endif
@@ -220,7 +226,12 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		 */
 		if (frame[FR_RFP] == 0)
 			break; /* Top of stack */
-
+#ifdef __PROG26
+		pc = frame[FR_RLV] & R15_PC;
+#else
+		pc = frame[FR_RLV];
+#endif
+		
 		frame = (uint32_t *)(frame[FR_RFP]);
 
 		if (INKERNEL((int)frame)) {
