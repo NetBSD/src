@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.13 2012/12/26 18:30:23 matt Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.14 2012/12/31 01:20:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.13 2012/12/26 18:30:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.14 2012/12/31 01:20:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -453,7 +453,6 @@ pcu_kernel_acquire(const pcu_ops_t *pcu)
 	/*
 	 * Mark the PCU as hijacked and take ownership of it.
 	 */
-	printf("!");
 	pcu_lwp_op(pcu, l, PCU_KERNEL | PCU_CLAIM | PCU_ENABLE | PCU_RELOAD);
 }
 
