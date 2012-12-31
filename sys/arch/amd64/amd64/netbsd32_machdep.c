@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.79 2012/07/15 15:17:56 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.80 2012/12/31 16:20:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.79 2012/07/15 15:17:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.80 2012/12/31 16:20:17 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -568,7 +568,6 @@ int
 netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 {
 	struct pcb *pcb = lwp_getpcb(l);
-	struct savefpu *sf = &pcb->pcb_savefpu;
 	struct fpreg regs64;
 	struct save87 *s87 = (struct save87 *)regs;
 	int error, i;
@@ -598,13 +597,13 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 
 		s87->sv_ex_tw |=
 		    (xmm_to_s87_tag((uint8_t *)&regs64.fxstate.fx_st[i][0], i,
-		     sf->fp_ex_tw) << (i * 2));
+		     pcb->pcb_savefpu_i387.fp_ex_tw) << (i * 2));
 
 		memcpy(&s87->sv_ac[i].fp_bytes, &regs64.fxstate.fx_st[i][0],
 		    sizeof(s87->sv_ac[i].fp_bytes));
 	}
 
-	s87->sv_ex_sw = sf->fp_ex_sw;
+	s87->sv_ex_sw = pcb->pcb_savefpu_i387.fp_ex_sw;
 
 	return (0);
 }
