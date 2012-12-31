@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.71 2012/12/31 10:38:51 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.72 2012/12/31 11:11:17 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.71 2012/12/31 10:38:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.72 2012/12/31 11:11:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -975,7 +975,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		radeonfb_set_backlight(dp, dp->rd_bl_level);
 	}
 
-	for (i = i; i < RADEON_NDISPLAYS; i++)
+	for (i = 0; i < RADEON_NDISPLAYS; i++)
 		radeonfb_init_palette(&sc->sc_displays[i]);
  
 	if (HAS_CRTC2(sc)) {
@@ -2551,6 +2551,7 @@ radeonfb_init_palette(struct radeonfb_display *dp)
 	/* initialize the palette for every CRTC used by this display */
 	for (cc = 0; cc < dp->rd_ncrtcs; cc++) {
 		crtc = dp->rd_crtcs[cc].rc_number;
+		DPRINTF(("%s: doing crtc %d %d\n", __func__, cc, crtc));
 
 		if (crtc)
 			SET32(sc, RADEON_DAC_CNTL2, RADEON_DAC2_PALETTE_ACC_CTL);
@@ -2559,11 +2560,9 @@ radeonfb_init_palette(struct radeonfb_display *dp)
 
 		PUT32(sc, RADEON_PALETTE_INDEX, 0);
 
-		if (dp->rd_bpp == 0)
-			dp->rd_bpp = RADEONFB_DEFAULT_DEPTH;
-
 		if (dp->rd_bpp == 8) {
-			/* ANSI palette */
+
+			/* R3G3B2 palette */
 			int j = 0;
 			uint32_t tmp, r, g, b;
 
