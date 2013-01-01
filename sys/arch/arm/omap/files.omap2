@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.20 2013/01/01 13:05:21 jmcneill Exp $
+#	$NetBSD: files.omap2,v 1.21 2013/01/01 23:22:44 jmcneill Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -125,7 +125,7 @@ file	arch/arm/omap/obio_ohci.c		obioohci
 attach	ehci at obio with omap3_ehci
 file	arch/arm/omap/omap3_ehci.c		omap3_ehci
 
-device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons
+device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons, edid
 attach	omapfb at obio
 file	arch/arm/omap/omapfb.c			omapfb
 
