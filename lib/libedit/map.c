@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.32 2013/01/01 15:33:06 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.33 2013/01/01 15:34:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.32 2013/01/01 15:33:06 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.33 2013/01/01 15:34:02 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1249,7 +1249,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 	Char inbuf[EL_BUFSIZ];
 	Char outbuf[EL_BUFSIZ];
 	const Char *in = NULL;
-	Char *out = NULL;
+	Char *out;
 	el_bindings_t *bp, *ep;
 	int cmd;
 	int key;
