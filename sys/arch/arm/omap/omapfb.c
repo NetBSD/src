@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.6 2012/12/11 22:47:40 matt Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.7 2013/01/01 23:22:44 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.6 2012/12/11 22:47:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.7 2013/01/01 23:22:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.6 2012/12/11 22:47:40 matt Exp $");
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
+#include <dev/videomode/edidvar.h>
+
 struct omapfb_softc {
 	device_t sc_dev;
 
@@ -77,6 +79,9 @@ struct omapfb_softc {
 	struct vcons_data vd;
 	int sc_mode;
 	uint8_t sc_cmap_red[256], sc_cmap_green[256], sc_cmap_blue[256];
+
+	uint8_t sc_edid_data[1024];
+	size_t sc_edid_size;
 };
 
 static int	omapfb_match(device_t, cfdata_t, void *);
@@ -157,8 +162,9 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	struct rasops_info	*ri;
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
+	prop_data_t		edid_data;
 	unsigned long		defattr;
-	bool			is_console;
+	bool			is_console = false;
 	uint32_t		sz, reg;
 	int			segs, i, j, adr;
 
@@ -208,7 +214,23 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 #endif	
 	dict = device_properties(self);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
+	edid_data = prop_dictionary_get(dict, "EDID");
 	//is_console = 1;
+
+	if (edid_data != NULL) {
+		struct edid_info ei;
+
+		sc->sc_edid_size = min(prop_data_size(edid_data), 1024);
+		memset(sc->sc_edid_data, 0, sizeof(sc->sc_edid_data));
+		memcpy(sc->sc_edid_data, prop_data_data_nocopy(edid_data),
+		    sc->sc_edid_size);
+
+		edid_parse(sc->sc_edid_data, &ei);
+		edid_print(&ei);
+	}
+
+	if (!is_console)
+		return;
 
 	/* setup video DMA */
 	sc->sc_vramsize = (12 << 20) + 0x1000; /* 12MB + CLUT */
