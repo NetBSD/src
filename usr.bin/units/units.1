@@ -1,4 +1,4 @@
-.\"	$NetBSD: units.1,v 1.18 2012/12/28 13:25:25 apb Exp $
+.\"	$NetBSD: units.1,v 1.19 2013/01/01 11:51:55 apb Exp $
 .Dd December 28, 2012
 .Dt UNITS 1
 .Os
@@ -8,7 +8,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl f Ar filename
-.Op Fl qv
+.Op Fl lLqv
 .Oo
 .Op Ar count
 .Ar from-unit to-unit
@@ -25,6 +25,24 @@ The following options and arguments are supported:
 .Bl -tag -width "-fXfilenameX" -offset indent
 .It Fl f Ar filename
 Specifies the name of the units data file to load.
+.It Fl l No or Fl L
+List all unit definitions to the standard output,
+instead of performing any conversions.
+The result may include error messages and comments, beginning with
+.Ql \&/ .
+.Pp
+With the
+.Fl l
+option, unit definitions will be listed in a format
+almost identical to the the units data file that was loaded,
+except that comments will be removed, spacing may be changed,
+and lines may be re-ordered.
+.Pp
+With the
+.Fl L
+option, all unit definitions will be reduced to a form that
+depends on only a few primitive units (such as
+.Sy m , kg , sec ) .
 .It Fl q
 Suppresses prompting of the user for units and the display of statistics
 about the number of units loaded.
