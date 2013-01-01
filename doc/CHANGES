@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1773 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1774 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -162,3 +162,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	dhcpcd(8): Import dhcpcd-5.6.6 [roy 20121219]
 	arm: support NEON in userland [matt 20121226]
 	kernel: allow MD kernel code to use PCUs [matt 20121226]
+	units(1): add -l and -L options.  [apb 20130101]
