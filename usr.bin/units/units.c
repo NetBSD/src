@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.21 2013/01/01 11:51:55 apb Exp $	*/
+/*	$NetBSD: units.c,v 1.22 2013/01/01 12:45:06 apb Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -768,7 +768,7 @@ listunits(int expand)
 			 * expand thename, not thedefn, so that
 			 * we can catch errors in the name itself.
 			 * e.g. a name that contains a hyphen
-			 * will be interpreted
+			 * will be interpreted as multiplication.
 			 */
 			initializeunit(&theunit);
 			if (addunit(&theunit, thedefn/*XXX*/, 0) != 0
