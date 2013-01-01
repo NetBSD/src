@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.19 2012/12/28 17:07:03 apb Exp $	*/
+/*	$NetBSD: units.c,v 1.20 2013/01/01 11:44:00 apb Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -109,7 +109,7 @@ readunits(const char *userfile)
 {
 	FILE *unitfile;
 	char line[80], *lineptr;
-	int len, linenum, i;
+	int len, linenum, i, isdup;
 
 	unitcount = 0;
 	linenum = 0;
@@ -173,14 +173,20 @@ readunits(const char *userfile)
 				continue;
 			}
 			lineptr[strlen(lineptr) - 1] = 0;
-			prefixtable[prefixcount].prefixname = dupstr(lineptr);
-			for (i = 0; i < prefixcount; i++)
-				if (!strcmp(prefixtable[i].prefixname, lineptr)) {
-					warnx(
-			"Redefinition of prefix '%s' on line %d ignored",
-					    lineptr, linenum);
-					continue;
+			for (isdup = 0, i = 0; i < prefixcount; i++) {
+				if (!strcmp(prefixtable[i].prefixname,
+				    lineptr)) {
+					isdup = 1;
+					break;
 				}
+			}
+			if (isdup) {
+				warnx(
+			"Redefinition of prefix '%s' on line %d ignored",
+				    lineptr, linenum);
+				continue;
+			}
+			prefixtable[prefixcount].prefixname = dupstr(lineptr);
 			lineptr += len + 1;
 			if (!strlen(lineptr)) {
 				readerror(linenum);
@@ -197,14 +203,19 @@ readunits(const char *userfile)
 				    linenum);
 				continue;
 			}
-			unittable[unitcount].uname = dupstr(lineptr);
-			for (i = 0; i < unitcount; i++)
+			for (isdup = 0, i = 0; i < unitcount; i++) {
 				if (!strcmp(unittable[i].uname, lineptr)) {
-					warnx(
-				"Redefinition of unit '%s' on line %d ignored",
-					    lineptr, linenum);
-					continue;
+					isdup = 1;
+					break;
 				}
+			}
+			if (isdup) {
+				warnx(
+				"Redefinition of unit '%s' on line %d ignored",
+				    lineptr, linenum);
+				continue;
+			}
+			unittable[unitcount].uname = dupstr(lineptr);
 			lineptr += len + 1;
 			lineptr += strspn(lineptr, " \n\t");
 			if (!strlen(lineptr)) {
