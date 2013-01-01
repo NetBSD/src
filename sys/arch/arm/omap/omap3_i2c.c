@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_i2c.c,v 1.1 2012/12/31 12:45:49 jmcneill Exp $ */
+/* $NetBSD: omap3_i2c.c,v 1.2 2013/01/01 23:20:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_i2c.c,v 1.1 2012/12/31 12:45:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_i2c.c,v 1.2 2013/01/01 23:20:24 jmcneill Exp $");
 
 #include "opt_omap.h"
 
@@ -87,6 +87,8 @@ static int	omap3_i2c_write(struct omap3_i2c_softc *, i2c_addr_t,
 static int	omap3_i2c_wait(struct omap3_i2c_softc *, uint16_t, uint16_t);
 static int	omap3_i2c_stat(struct omap3_i2c_softc *);
 static int	omap3_i2c_flush(struct omap3_i2c_softc *);
+
+i2c_tag_t	omap3_i2c_get_tag(device_t);
 
 CFATTACH_DECL2_NEW(omap3_i2c, sizeof(struct omap3_i2c_softc),
     omap3_i2c_match, omap3_i2c_attach, NULL, NULL,
@@ -433,4 +435,16 @@ omap3_i2c_flush(struct omap3_i2c_softc *sc)
 	I2C_WRITE_REG(sc, OMAP3_I2C_CNT, 0);
 
 	return 0;
+}
+
+i2c_tag_t
+omap3_i2c_get_tag(device_t dev)
+{
+	struct omap3_i2c_softc *sc;
+
+	if (dev == NULL)
+		return NULL;
+	sc = device_private(dev);
+
+	return &sc->sc_ic;
 }
