@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.72 2012/12/31 11:11:17 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.73 2013/01/01 12:13:28 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.72 2012/12/31 11:11:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.73 2013/01/01 12:13:28 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,9 @@ static void radeonfb_cursor(void *, int, int, int);
 static void radeonfb_putchar(void *, int, int, unsigned, long);
 static void radeonfb_putchar_aa32(void *, int, int, unsigned, long);
 static void radeonfb_putchar_aa8(void *, int, int, unsigned, long);
+#ifndef RADEONFB_ALWAYS_ACCEL_PUTCHAR
 static void radeonfb_putchar_wrapper(void *, int, int, unsigned, long);
+#endif
 
 static int radeonfb_set_backlight(struct radeonfb_display *, int);
 static int radeonfb_get_backlight(struct radeonfb_display *);
@@ -2396,6 +2398,7 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	/* pick a putchar method based on font and Radeon model */
 	if (ri->ri_font->stride < ri->ri_font->fontwidth) {
 		/* got a bitmap font */
+#ifndef RADEONFB_ALWAYS_ACCEL_PUTCHAR
 		if (IS_R300(dp->rd_softc)) {
 			/*
 			 * radeonfb_putchar() doesn't work right on some R3xx
@@ -2404,9 +2407,9 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 			 * into vram
 			 */
 			ri->ri_ops.putchar = radeonfb_putchar_wrapper;
-		} else {
+		} else
+#endif
 			ri->ri_ops.putchar = radeonfb_putchar;
-		}
 	} else {
 		/* got an alpha font */
 		switch(ri->ri_depth) {
@@ -2965,6 +2968,7 @@ radeonfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
  * just sync the engine and call rasops*_putchar()
  */
 
+#ifndef RADEONFB_ALWAYS_ACCEL_PUTCHAR
 static void
 radeonfb_putchar_wrapper(void *cookie, int row, int col, u_int c, long attr)
 {
@@ -2975,6 +2979,7 @@ radeonfb_putchar_wrapper(void *cookie, int row, int col, u_int c, long attr)
 	radeonfb_engine_idle(dp->rd_softc);
 	dp->rd_putchar(ri, row, col, c, attr);
 }
+#endif
 	
 static void
 radeonfb_eraserows(void *cookie, int row, int nrows, long fillattr)
