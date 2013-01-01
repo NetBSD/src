@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.32 2012/12/31 13:20:16 jmcneill Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.33 2013/01/01 23:21:26 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.32 2012/12/31 13:20:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.33 2013/01/01 23:21:26 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -181,6 +181,9 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.32 2012/12/31 13:20:16 jmcneill
 #include <evbarm/include/autoconf.h>
 #include <evbarm/beagle/beagle.h>
 
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/ddcreg.h>
+
 #include "prcm.h"
 #include "omapwdt32k.h"
 
@@ -194,6 +197,8 @@ BootConfig bootconfig;		/* Boot config storage */
 static char beagle_default_boot_args[] = DEFAULT_BOOT_ARGS;
 char *boot_args = beagle_default_boot_args;
 char *boot_file = NULL;
+
+static uint8_t beagle_edid[128];	/* EDID storage */
 
 u_int uboot_args[4] = { 0 };	/* filled in by beagle_start.S (not in bss) */
 
@@ -681,6 +686,40 @@ omap3530_memprobe(void)
 }
 #endif
 
+/*
+ * EDID can be read from DVI-D (HDMI) port on BeagleBoard from
+ * If EDID data is present, this function fills in the supplied edid_buf
+ * and returns true. Otherwise, it returns false and the contents of the
+ * buffer are undefined.
+ */
+static bool
+beagle_read_edid(uint8_t *edid_buf, size_t edid_buflen)
+{
+	i2c_tag_t ic = NULL;
+	uint8_t reg;
+	int error;
+
+#if defined(OMAP_3530)
+	/* On Beagleboard, EDID is accessed using I2C2 ("omapiic2"). */
+	extern i2c_tag_t omap3_i2c_get_tag(device_t);
+	ic = omap3_i2c_get_tag(device_find_by_xname("omapiic2"));
+#endif
+
+	if (ic == NULL)
+		return false;
+
+	iic_acquire_bus(ic, 0);
+	for (reg = DDC_EDID_START; reg < edid_buflen; reg++) {
+		error = iic_exec(ic, I2C_OP_READ_WITH_STOP, DDC_ADDR,
+		    &reg, sizeof(reg), &edid_buf[reg], 1, 0);
+		if (error)
+			break;
+	}
+	iic_release_bus(ic, 0);
+
+	return error == 0 ? true : false;
+}
+
 void
 beagle_device_register(device_t self, void *aux)
 {
@@ -735,6 +774,15 @@ beagle_device_register(device_t self, void *aux)
 		prop_dictionary_set_uint32(dict, "clkmask", 0);
 		prop_dictionary_set_bool(dict, "8bit", true);
 #endif
+		return;
+	}
+
+	if (device_is_a(self, "omapfb")) {
+		if (beagle_read_edid(beagle_edid, sizeof(beagle_edid))) {
+			prop_dictionary_set(dict, "EDID",
+			    prop_data_create_data(beagle_edid,
+						  sizeof(beagle_edid)));
+		}
 		return;
 	}
 }
