@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.19 2012/12/31 12:45:49 jmcneill Exp $
+#	$NetBSD: files.omap2,v 1.20 2013/01/01 13:05:21 jmcneill Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -52,6 +52,11 @@ file	arch/arm/omap/omap2_gpio.c		(omap2 | omap3) & omapgpio
 device	omapiic: i2cbus, i2cexec
 attach	omapiic at obio with omap3_i2c
 file	arch/arm/omap/omap3_i2c.c		omap3_i2c
+
+# OMAP3 system control module
+device	omapscm: sysmon_envsys
+attach	omapscm at obio with omap3_scm
+file	arch/arm/omap/omap3_scm.c		omap3_scm
 
 # OMAP dual-mode timer
 device	omapdmtimer
