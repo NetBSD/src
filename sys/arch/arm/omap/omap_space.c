@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_space.c,v 1.6 2012/09/01 14:44:43 matt Exp $ */
+/*	$NetBSD: omap_space.c,v 1.7 2013/01/01 17:28:27 jakllsch Exp $ */
 
 /*
  * bus_space functions for Texas Instruments OMAP processor.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_space.c,v 1.6 2012/09/01 14:44:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_space.c,v 1.7 2013/01/01 17:28:27 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ struct bus_space omap_bs_tag = {
 	/* set region */
 	generic_bs_sr_1,
 	generic_armv4_bs_sr_2,
-	bs_notimpl_bs_sr_4,
+	generic_bs_sr_4,
 	bs_notimpl_bs_sr_8,
 
 	/* copy */
