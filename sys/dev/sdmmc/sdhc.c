@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.10.2.3 2012/08/09 06:36:48 jdc Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.10.2.4 2013/01/02 23:34:56 riz Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.10.2.3 2012/08/09 06:36:48 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.10.2.4 2013/01/02 23:34:56 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -78,6 +78,8 @@ struct sdhc_host {
 	uint16_t intr_error_status;	/* soft error status */
 	struct kmutex intr_mtx;
 	struct kcondvar intr_cv;
+
+	int specver;			/* spec. version */
 
 	uint32_t flags;			/* flags for this host */
 #define SHF_USE_DMA		0x0001
@@ -223,25 +225,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	struct sdmmcbus_attach_args saa;
 	struct sdhc_host *hp;
 	uint32_t caps;
-#ifdef SDHC_DEBUG
 	uint16_t sdhcver;
-
-	sdhcver = bus_space_read_2(iot, ioh, SDHC_HOST_CTL_VERSION);
-	aprint_normal_dev(sc->sc_dev, "SD Host Specification/Vendor Version ");
-	switch (SDHC_SPEC_VERSION(sdhcver)) {
-	case 0x00:
-		aprint_normal("1.0/%u\n", SDHC_VENDOR_VERSION(sdhcver));
-		break;
-
-	case 0x01:
-		aprint_normal("2.0/%u\n", SDHC_VENDOR_VERSION(sdhcver));
-		break;
-
-	default:
-		aprint_normal(">2.0/%u\n", SDHC_VENDOR_VERSION(sdhcver));
-		break;
-	}
-#endif
 
 	/* Allocate one more host structure. */
 	hp = malloc(sizeof(struct sdhc_host), M_DEVBUF, M_WAITOK|M_ZERO);
@@ -261,6 +245,29 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	mutex_init(&hp->host_mtx, MUTEX_DEFAULT, IPL_SDMMC);
 	mutex_init(&hp->intr_mtx, MUTEX_DEFAULT, IPL_SDMMC);
 	cv_init(&hp->intr_cv, "sdhcintr");
+
+	sdhcver = HREAD2(hp, SDHC_HOST_CTL_VERSION);
+	aprint_normal_dev(sc->sc_dev, "SD Host Specification ");
+	hp->specver = SDHC_SPEC_VERSION(sdhcver);
+	switch (SDHC_SPEC_VERSION(sdhcver)) {
+	case SDHC_SPEC_VERS_100:
+		aprint_normal("1.0");
+		break;
+
+	case SDHC_SPEC_VERS_200:
+		aprint_normal("2.0");
+		break;
+
+	case SDHC_SPEC_VERS_300:
+		aprint_normal("3.0");
+		break;
+
+	default:
+		aprint_normal("unknown version(0x%x)",
+		    SDHC_SPEC_VERSION(sdhcver));
+		break;
+	}
+	aprint_normal(", rev.%u\n", SDHC_VENDOR_VERSION(sdhcver));
 
 	/*
 	 * Reset the host controller and enable interrupts.
@@ -289,8 +296,11 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	/*
 	 * Determine the base clock frequency. (2.2.24)
 	 */
-	if (SDHC_BASE_FREQ_KHZ(caps) != 0)
+	if (hp->specver == SDHC_SPEC_VERS_300) {
+		hp->clkbase = SDHC_BASE_V3_FREQ_KHZ(caps);
+	} else {
 		hp->clkbase = SDHC_BASE_FREQ_KHZ(caps);
+	}
 	if (hp->clkbase == 0) {
 		if (sc->sc_clkbase == 0) {
 			/* The attachment driver must tell us. */
@@ -370,12 +380,16 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	saa.saa_sct = &sdhc_functions;
 	saa.saa_sch = hp;
 	saa.saa_dmat = hp->dmat;
-	saa.saa_clkmin = hp->clkbase / 256;
 	saa.saa_clkmax = hp->clkbase;
 	if (ISSET(sc->sc_flags, SDHC_FLAG_HAVE_CGM))
-		saa.saa_clkmin /= 2046;
+		saa.saa_clkmin = hp->clkbase / 256 / 2046;
 	else if (ISSET(sc->sc_flags, SDHC_FLAG_HAVE_DVS))
-		saa.saa_clkmin /= 16;
+		saa.saa_clkmin = hp->clkbase / 256 / 16;
+	else if (hp->specver == SDHC_SPEC_VERS_300)
+		saa.saa_clkmin = hp->clkbase / 0x3ff;
+	else
+		saa.saa_clkmin = hp->clkbase / 256;
+
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|SMC_CAPS_AUTO_STOP;
 	if (ISSET(sc->sc_flags, SDHC_FLAG_8BIT_MODE))
 		saa.saa_caps |= SMC_CAPS_8BIT_MODE;
@@ -725,16 +739,29 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, u_int *divp)
 			 */
 			roundup |= dvs & 1;
 		}
-		panic("%s: can't find divisor for freq %u", HDEVNAME(hp), freq);
+		/* No divisor found. */
+		return false;
+	}
+	if (hp->specver == SDHC_SPEC_VERS_300) {
+		div = howmany(hp->clkbase, freq);
+		if (div > 0x3ff)
+			return false;
+		*divp = (((div >> 8) & SDHC_SDCLK_XDIV_MASK)
+			 << SDHC_SDCLK_XDIV_SHIFT) |
+			(((div >> 0) & SDHC_SDCLK_DIV_MASK)
+			 << SDHC_SDCLK_DIV_SHIFT);
+		return true;
 	} else {
 		for (div = 1; div <= 256; div *= 2) {
 			if ((hp->clkbase / div) <= freq) {
 				*divp = (div / 2) << SDHC_SDCLK_DIV_SHIFT;
+				//freq = hp->clkbase / div;
 				return true;
 			}
 		}
+		/* No divisor found. */
+		return false;
 	}
-
 	/* No divisor found. */
 	return false;
 }
