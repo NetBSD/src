@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.11 2008/11/19 18:35:58 ad Exp $	*/
+/*	$NetBSD: signal.h,v 1.12 2013/01/02 19:40:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -45,7 +45,6 @@ typedef int sig_atomic_t;
  * Get the "code" values
  */
 #include <machine/trap.h>
-#include <machine/fpu.h>
 #include <machine/mcontext.h>
 
 #ifdef _KERNEL_OPT
