@@ -1,0 +1,14 @@
+allascii.c 915
+alldig.c 928
+allprint.c 943
+allspace.c 931
+argv.c 5271
+argv_split.c 2780
+attr_clnt.c 5813
+attr_print0.c 7243
+attr_print64.c 8104
+attr_print_plain.c 7086
+attr_scan0.c 15454
+attr_scan64.c 17256
+attr_scan_plain.c 16924
+auto_clnt.c 9819

@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_rename.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: sane_rename.c,v 1.1.1.2 2013/01/02 18:59:14 tron Exp $	*/
 
 /*++
 /* NAME
@@ -36,6 +36,7 @@
 
 #include "msg.h"
 #include "sane_fsops.h"
+#include "warn_stat.h"
 
 /* sane_rename - sanitize rename() error returns */
 

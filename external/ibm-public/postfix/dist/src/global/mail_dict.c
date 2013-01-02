@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_dict.c,v 1.1.1.2 2011/03/02 19:32:15 tron Exp $	*/
+/*	$NetBSD: mail_dict.c,v 1.1.1.3 2013/01/02 18:58:58 tron Exp $	*/
 
 /*++
 /* NAME
@@ -39,6 +39,7 @@
 #include <dict_mysql.h>
 #include <dict_pgsql.h>
 #include <dict_sqlite.h>
+#include <dict_memcache.h>
 #include <mail_dict.h>
 
 typedef struct {
@@ -60,6 +61,7 @@ static const DICT_OPEN_INFO dict_open_info[] = {
 #ifdef HAS_SQLITE
     DICT_TYPE_SQLITE, dict_sqlite_open,
 #endif
+    DICT_TYPE_MEMCACHE, dict_memcache_open,
     0,
 };
 
@@ -72,3 +74,24 @@ void    mail_dict_init(void)
     for (dp = dict_open_info; dp->type; dp++)
 	dict_open_register(dp->type, dp->open);
 }
+
+#ifdef TEST
+ /*
+  * Proof-of-concept test program.
+  */
+
+#include <mail_proto.h>
+#include <mail_params.h>
+
+int     main(int argc, char **argv)
+{
+    var_queue_dir = DEF_QUEUE_DIR;
+    var_proxymap_service = DEF_PROXYMAP_SERVICE;
+    var_proxywrite_service = DEF_PROXYWRITE_SERVICE;
+    var_ipc_timeout = 3600;
+    mail_dict_init();
+    dict_test(argc, argv);
+    return (0);
+}
+
+#endif

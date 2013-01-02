@@ -1,4 +1,4 @@
-/*	$NetBSD: remove.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: remove.c,v 1.1.1.2 2013/01/02 18:59:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -39,6 +39,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <warn_stat.h>
 
 /* Utility library. */
 
