@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_armv6.S,v 1.3 2012/12/31 07:58:44 matt Exp $")
+RCSID("$NetBSD: strlen.S,v 1.1 2013/01/02 15:24:21 matt Exp $")
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
