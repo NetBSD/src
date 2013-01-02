@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2012/03/24 02:08:34 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2013/01/02 15:50:34 dsl Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -9,6 +9,10 @@ MAN=		ipresend.1
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../ipsend -I${NETBSDSRCDIR}/sys 
 .PATH:		${UDIST}/ipsend
+
+# There is some very dubious code to locate the values of
+# tcb.rcv_adv, tcb.snd_nxt and tcb.rcv_nxt for a socket.
+CPPFLAGS+=	-D_KMEMUSER
 
 #.BEGIN:
 #	rm -f machine x86
