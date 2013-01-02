@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.166 2012/12/26 18:30:22 matt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.167 2013/01/02 19:39:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -32,6 +32,8 @@
 
 #ifndef _SYS_LWP_H_
 #define _SYS_LWP_H_
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -67,7 +69,6 @@
  * Fields are clustered together by usage (to increase the likelyhood
  * of cache hits) and by size (to reduce dead space in the structure).
  */
-#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <sys/pcu.h>
 
@@ -196,7 +197,6 @@ struct lwp {
 
 	struct kdtrace_thread *l_dtrace; /* (: DTrace-specific data. */
 };
-#endif /* _KERNEL || _KMEMUSER */
 
 /*
  * UAREA_PCB_OFFSET: an offset of PCB structure in the uarea.  MD code may
@@ -219,6 +219,8 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	cpu_maxlwp()	MAXLWP
 #endif
 #endif
+
+#endif /* _KERNEL || _KMEMUSER */
 
 /* These flags are kept in l_flag. */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
