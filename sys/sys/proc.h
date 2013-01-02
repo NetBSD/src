@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.318 2012/12/05 08:05:54 msaitoh Exp $	*/
+/*	$NetBSD: proc.h,v 1.319 2013/01/02 19:39:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,6 +68,10 @@
 #ifndef _SYS_PROC_H_
 #define	_SYS_PROC_H_
 
+#include <sys/lwp.h>
+
+#if defined(_KMEMUSER) || defined(_KERNEL)
+
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_kstack.h"
@@ -81,7 +85,6 @@
 #include <sys/mqueue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
-#include <sys/lwp.h>
 #include <sys/queue.h>
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
@@ -324,6 +327,8 @@ struct proc {
 #define	p_session	p_pgrp->pg_session
 #define	p_pgid		p_pgrp->pg_id
 
+#endif	/* _KMEMUSER || _KERNEL */
+
 /*
  * Status values.
  */
@@ -389,6 +394,8 @@ struct proc {
 #define	PL_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
 #define	PL_SIGCOMPAT	0x00000200 /* Has used compat signal trampoline */
 #define	PL_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
+
+#if defined(_KMEMUSER) || defined(_KERNEL)
 
 /*
  * Macro to compute the exit signal to be delivered.
@@ -537,8 +544,6 @@ void	kstack_check_magic(const struct lwp *);
 extern struct emul emul_netbsd;
 
 #endif	/* _KERNEL */
-
-#if defined(_KMEMUSER) || defined(_KERNEL)
 
 /*
  * Kernel stack parameters.
