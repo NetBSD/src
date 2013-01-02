@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/03/04 16:12:25 tron Exp $
+#	$NetBSD: Makefile,v 1.4 2013/01/02 22:33:20 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ DIST=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist/man/man5
 MAN=	access.5 aliases.5 bounce.5 canonical.5 relocated.5 \
 	transport.5 virtual.5 sqlite_table.5 regexp_table.5 \
 	cidr_table.5 header_checks.5 ldap_table.5 master.5  \
-	nisplus_table.5 generic.5
+	nisplus_table.5 generic.5 memcache_table.5
 MAN+=	postconf.5 postfix-wrapper.5
 
 MLINKS=	header_checks.5 body_checks.5
