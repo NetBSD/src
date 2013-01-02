@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_addr.c,v 1.1.1.2 2011/03/02 19:32:09 tron Exp $	*/
+/*	$NetBSD: cleanup_addr.c,v 1.1.1.3 2013/01/02 18:58:54 tron Exp $	*/
 
 /*++
 /* NAME
@@ -138,7 +138,7 @@ void    cleanup_addr_sender(CLEANUP_STATE *state, const char *buf)
 				cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
 	if (cleanup_masq_domains
 	    && (cleanup_masq_flags & CLEANUP_MASQ_FLAG_ENV_FROM))
-	    cleanup_masquerade_internal(clean_addr, cleanup_masq_domains);
+	    cleanup_masquerade_internal(state, clean_addr, cleanup_masq_domains);
     }
     CLEANUP_OUT_BUF(state, REC_TYPE_FROM, clean_addr);
     if (state->sender)				/* XXX Can't happen */
@@ -146,10 +146,16 @@ void    cleanup_addr_sender(CLEANUP_STATE *state, const char *buf)
     state->sender = mystrdup(STR(clean_addr));	/* Used by Milter client */
     if ((state->flags & CLEANUP_FLAG_BCC_OK)
 	&& *STR(clean_addr)
-	&& cleanup_send_bcc_maps
-	&& (bcc = mail_addr_find(cleanup_send_bcc_maps, STR(clean_addr),
-				 IGNORE_EXTENSION)) != 0)
-	cleanup_addr_bcc(state, bcc);
+	&& cleanup_send_bcc_maps) {
+	if ((bcc = mail_addr_find(cleanup_send_bcc_maps, STR(clean_addr),
+				  IGNORE_EXTENSION)) != 0) {
+	    cleanup_addr_bcc(state, bcc);
+	} else if (cleanup_send_bcc_maps->error) {
+	    msg_warn("%s: %s lookup problem",
+		     state->queue_id, cleanup_send_bcc_maps->title);
+	    state->errs |= CLEANUP_STAT_WRITE;
+	}
+    }
     vstring_free(clean_addr);
 }
 
@@ -180,7 +186,7 @@ void    cleanup_addr_recipient(CLEANUP_STATE *state, const char *buf)
 				cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
 	if (cleanup_masq_domains
 	    && (cleanup_masq_flags & CLEANUP_MASQ_FLAG_ENV_RCPT))
-	    cleanup_masquerade_internal(clean_addr, cleanup_masq_domains);
+	    cleanup_masquerade_internal(state, clean_addr, cleanup_masq_domains);
     }
     cleanup_out_recipient(state, state->dsn_orcpt, state->dsn_notify,
 			  state->orig_rcpt, STR(clean_addr));
@@ -189,17 +195,23 @@ void    cleanup_addr_recipient(CLEANUP_STATE *state, const char *buf)
     state->recip = mystrdup(STR(clean_addr));	/* Used by Milter client */
     if ((state->flags & CLEANUP_FLAG_BCC_OK)
 	&& *STR(clean_addr)
-	&& cleanup_rcpt_bcc_maps
-	&& (bcc = mail_addr_find(cleanup_rcpt_bcc_maps, STR(clean_addr),
-				 IGNORE_EXTENSION)) != 0)
-	cleanup_addr_bcc(state, bcc);
+	&& cleanup_rcpt_bcc_maps) {
+	if ((bcc = mail_addr_find(cleanup_rcpt_bcc_maps, STR(clean_addr),
+				  IGNORE_EXTENSION)) != 0) {
+	    cleanup_addr_bcc(state, bcc);
+	} else if (cleanup_rcpt_bcc_maps->error) {
+	    msg_warn("%s: %s lookup problem",
+		     state->queue_id, cleanup_rcpt_bcc_maps->title);
+	    state->errs |= CLEANUP_STAT_WRITE;
+	}
+    }
     vstring_free(clean_addr);
 }
 
 /* cleanup_addr_bcc_dsn - process automatic BCC recipient */
 
 void    cleanup_addr_bcc_dsn(CLEANUP_STATE *state, const char *bcc,
-			         const char *dsn_orcpt, int dsn_notify)
+			             const char *dsn_orcpt, int dsn_notify)
 {
     VSTRING *clean_addr = vstring_alloc(100);
 
@@ -219,7 +231,7 @@ void    cleanup_addr_bcc_dsn(CLEANUP_STATE *state, const char *bcc,
 				cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
 	if (cleanup_masq_domains
 	    && (cleanup_masq_flags & CLEANUP_MASQ_FLAG_ENV_RCPT))
-	    cleanup_masquerade_internal(clean_addr, cleanup_masq_domains);
+	    cleanup_masquerade_internal(state, clean_addr, cleanup_masq_domains);
     }
     cleanup_out_recipient(state, dsn_orcpt, dsn_notify,
 			  STR(clean_addr), STR(clean_addr));

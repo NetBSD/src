@@ -1,4 +1,4 @@
-/*	$NetBSD: name_mask.c,v 1.1.1.2 2011/03/02 19:32:44 tron Exp $	*/
+/*	$NetBSD: name_mask.c,v 1.1.1.3 2013/01/02 18:59:13 tron Exp $	*/
 
 /*++
 /* NAME
@@ -242,6 +242,7 @@ int     name_mask_delim_opt(const char *context, const NAME_MASK *table,
 		} else if (flags & NAME_MASK_RETURN) {
 		    msg_warn("unknown %s value \"%s\" in \"%s\"",
 			     context, name, names);
+		    myfree(saved_names);
 		    return (0);
 		} else if (flags & NAME_MASK_WARN) {
 		    msg_warn("unknown %s value \"%s\" in \"%s\"",
@@ -355,6 +356,7 @@ long    long_name_mask_delim_opt(const char *context,
 		} else if (flags & NAME_MASK_RETURN) {
 		    msg_warn("unknown %s value \"%s\" in \"%s\"",
 			     context, name, names);
+		    myfree(saved_names);
 		    return (0);
 		} else if (flags & NAME_MASK_WARN) {
 		    msg_warn("unknown %s value \"%s\" in \"%s\"",

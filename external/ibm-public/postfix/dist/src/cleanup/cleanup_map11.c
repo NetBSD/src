@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_map11.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: cleanup_map11.c,v 1.1.1.2 2013/01/02 18:58:54 tron Exp $	*/
 
 /*++
 /* NAME
@@ -121,7 +121,7 @@ int     cleanup_map11_external(CLEANUP_STATE *state, VSTRING *addr,
 	    argv_free(new_addr);
 	    if (expand_to_self)
 		return (did_rewrite);
-	} else if (dict_errno != 0) {
+	} else if (maps->error != 0) {
 	    msg_warn("%s: %s map lookup problem for %s",
 		     state->queue_id, maps->title, STR(addr));
 	    state->errs |= CLEANUP_STAT_WRITE;
