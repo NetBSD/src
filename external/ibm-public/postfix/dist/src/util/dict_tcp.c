@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_tcp.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: dict_tcp.c,v 1.1.1.2 2013/01/02 18:59:12 tron Exp $	*/
 
 /*++
 /* NAME
@@ -161,7 +161,7 @@ static const char *dict_tcp_lookup(DICT *dict, const char *key)
     char   *start;
     int     last_ch;
 
-#define RETURN(errval, result) { dict_errno = errval; return (result); }
+#define RETURN(errval, result) { dict->error = errval; return (result); }
 
     if (msg_verbose)
 	msg_info("%s: key %s", myname, key);
@@ -288,17 +288,17 @@ DICT   *dict_tcp_open(const char *map, int open_flags, int dict_flags)
 {
     DICT_TCP *dict_tcp;
 
-    dict_errno = 0;
-
     /*
      * Sanity checks.
      */
     if (dict_flags & DICT_FLAG_NO_UNAUTH)
-	msg_fatal("%s:%s map is not allowed for security sensitive data",
-		  DICT_TYPE_TCP, map);
+	return (dict_surrogate(DICT_TYPE_TCP, map, open_flags, dict_flags,
+		     "%s:%s map is not allowed for security sensitive data",
+			       DICT_TYPE_TCP, map));
     if (open_flags != O_RDONLY)
-	msg_fatal("%s:%s map requires O_RDONLY access mode",
-		  DICT_TYPE_TCP, map);
+	return (dict_surrogate(DICT_TYPE_TCP, map, open_flags, dict_flags,
+			       "%s:%s map requires O_RDONLY access mode",
+			       DICT_TYPE_TCP, map));
 
     /*
      * Create the dictionary handle. Do not open the connection until the

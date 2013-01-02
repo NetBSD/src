@@ -1,4 +1,4 @@
-.\"	$NetBSD: postkick.1,v 1.1.1.1 2009/06/23 10:08:32 tron Exp $
+.\"	$NetBSD: postkick.1,v 1.1.1.2 2013/01/02 18:58:44 tron Exp $
 .\"
 .TH POSTKICK 1 
 .ad
@@ -66,7 +66,7 @@ The default location of the Postfix main.cf and master.cf
 configuration files.
 .IP "\fBapplication_event_drain_time (100s)\fR"
 How long the \fBpostkick\fR(1) command waits for a request to enter the
-server's input buffer before giving up.
+Postfix daemon process input buffer before giving up.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 The location of the Postfix top-level queue directory.
 .SH "FILES"

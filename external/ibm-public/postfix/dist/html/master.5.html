@@ -119,47 +119,50 @@ MASTER(5)                                                            MASTER(5)
                      trolled with the <b><a href="postconf.5.html#queue_directory">queue_directory</a></b>  configura-
                      tion parameter in <a href="postconf.5.html">main.cf</a>).
 
+                     On  Solaris  systems the <b>pass</b> type is imple-
+                     mented with streams sockets.
+
                      This feature is available as of Postfix ver-
                      sion 2.5.
 
        <b>Private (default: y)</b>
-              Whether or not access is  restricted  to  the  mail
-              system.   Internet  (type  <b>inet</b>)  services can't be
+              Whether  or  not  access  is restricted to the mail
+              system.  Internet (type  <b>inet</b>)  services  can't  be
               private.
 
        <b>Unprivileged (default: y)</b>
               Whether the service runs with root privileges or as
-              the  owner of the Postfix system (the owner name is
+              the owner of the Postfix system (the owner name  is
               controlled by the <b><a href="postconf.5.html#mail_owner">mail_owner</a></b> configuration variable
               in the <a href="postconf.5.html">main.cf</a> file).
 
-              The  <a href="local.8.html"><b>local</b>(8)</a>,  <a href="pipe.8.html"><b>pipe</b>(8)</a>,  <a href="spawn.8.html"><b>spawn</b>(8)</a>,  and <a href="virtual.8.html"><b>virtual</b>(8)</a>
+              The <a href="local.8.html"><b>local</b>(8)</a>,  <a href="pipe.8.html"><b>pipe</b>(8)</a>,  <a href="spawn.8.html"><b>spawn</b>(8)</a>,  and  <a href="virtual.8.html"><b>virtual</b>(8)</a>
               daemons require privileges.
 
        <b>Chroot (default: y)</b>
-              Whether or not the service  runs  chrooted  to  the
+              Whether  or  not  the  service runs chrooted to the
               mail queue directory (pathname is controlled by the
-              <b><a href="postconf.5.html#queue_directory">queue_directory</a></b>  configuration  variable   in   the
+              <b><a href="postconf.5.html#queue_directory">queue_directory</a></b>   configuration   variable  in  the
               <a href="postconf.5.html">main.cf</a> file).
 
               Chroot  should  not  be  used  with  the  <a href="local.8.html"><b>local</b>(8)</a>,
-              <a href="pipe.8.html"><b>pipe</b>(8)</a>,   <a href="spawn.8.html"><b>spawn</b>(8)</a>,   and   <a href="virtual.8.html"><b>virtual</b>(8)</a>    daemons.
-              Although  the  <a href="proxymap.8.html"><b>proxymap</b>(8)</a> server can run chrooted,
+              <a href="pipe.8.html"><b>pipe</b>(8)</a>,    <a href="spawn.8.html"><b>spawn</b>(8)</a>,   and   <a href="virtual.8.html"><b>virtual</b>(8)</a>   daemons.
+              Although the <a href="proxymap.8.html"><b>proxymap</b>(8)</a> server can  run  chrooted,
               doing so defeats most of the purpose of having that
               service in the first place.
 
               The files in the examples/chroot-setup subdirectory
               of the Postfix source archive show set up a Postfix
-              chroot  environment  on  a  variety of systems. See
-              also <a href="BASIC_CONFIGURATION_README.html">BASIC_CONFIGURATION_README</a> for issues  related
+              chroot environment on a  variety  of  systems.  See
+              also  <a href="BASIC_CONFIGURATION_README.html">BASIC_CONFIGURATION_README</a> for issues related
               to running daemons chrooted.
 
        <b>Wake up time (default: 0)</b>
-              Automatically  wake  up the named service after the
-              specified number of seconds. The wake up is  imple-
-              mented  by  connecting to the service and sending a
-              wake up request.  A ? at the  end  of  the  wake-up
-              time  field requests that no wake up events be sent
+              Automatically wake up the named service  after  the
+              specified  number of seconds. The wake up is imple-
+              mented by connecting to the service and  sending  a
+              wake  up  request.   A  ? at the end of the wake-up
+              time field requests that no wake up events be  sent
               before the first time a service is used.  Specify 0
               for no automatic wake up.
 
@@ -167,59 +170,59 @@ MASTER(5)                                                            MASTER(5)
               a wake up timer.
 
        <b>Process limit (default: $<a href="postconf.5.html#default_process_limit">default_process_limit</a>)</b>
-              The maximum number of processes  that  may  execute
+              The  maximum  number  of processes that may execute
               this  service  simultaneously.  Specify  0  for  no
               process count limit.
 
               NOTE: Some Postfix services must be configured as a
-              single-process  service  (for example, <a href="qmgr.8.html"><b>qmgr</b>(8)</a>) and
-              some services must be configured  with  no  process
+              single-process service (for example,  <a href="qmgr.8.html"><b>qmgr</b>(8)</a>)  and
+              some  services  must  be configured with no process
               limit (for example, <a href="cleanup.8.html"><b>cleanup</b>(8)</a>).  These limits must
               not be changed.
 
        <b>Command name + arguments</b>
-              The command to be executed.   Characters  that  are
-              special  to  the  shell  such as "&gt;" or "|" have no
-              special meaning here, and quotes cannot be used  to
+              The  command  to  be executed.  Characters that are
+              special to the shell such as "&gt;"  or  "|"  have  no
+              special  meaning here, and quotes cannot be used to
               protect arguments containing whitespace.
 
-              The  command name is relative to the Postfix daemon
+              The command name is relative to the Postfix  daemon
               directory  (pathname  is  controlled  by  the  <b><a href="postconf.5.html#daemon_directory">dae</a>-</b>
               <b><a href="postconf.5.html#daemon_directory">mon_directory</a></b> configuration variable).
 
-              The  command  argument syntax for specific commands
-              is specified in the respective daemon manual  page.
+              The command argument syntax for  specific  commands
+              is  specified in the respective daemon manual page.
 
-              The  following  command-line  options have the same
+              The following command-line options  have  the  same
               effect for all daemon programs:
 
-              <b>-D</b>     Run the daemon under control by the  command
+              <b>-D</b>     Run  the daemon under control by the command
                      specified with the <b><a href="postconf.5.html#debugger_command">debugger_command</a></b> variable
                      in  the  <a href="postconf.5.html">main.cf</a>  configuration  file.   See
                      <a href="DEBUG_README.html">DEBUG_README</a> for hints and tips.
 
               <b>-o</b> <i>name</i>=<i>value</i>
                      Override  the  named  <a href="postconf.5.html">main.cf</a>  configuration
-                     parameter. The parameter value can refer  to
+                     parameter.  The parameter value can refer to
                      other parameters as <i>$name</i> etc., just like in
                      <a href="postconf.5.html">main.cf</a>.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for syntax.
 
                      NOTE 1: do not specify whitespace around the
-                     "=".   In  parameter  values,  either  avoid
+                     "=".  In  parameter  values,  either   avoid
                      whitespace altogether, use commas instead of
-                     spaces,   or  consider  overrides  like  "-o
-                     name=$override_parameter"    with     $over-
+                     spaces,  or  consider  overrides  like   "-o
+                     name=$override_parameter"     with    $over-
                      ride_parameter set in <a href="postconf.5.html">main.cf</a>.
 
-                     NOTE  2: Over-zealous use of parameter over-
-                     rides makes the Postfix  configuration  hard
-                     to  understand  and  maintain.  At a certain
-                     point, it might be easier to configure  mul-
-                     tiple  instances of Postfix, instead of con-
+                     NOTE 2: Over-zealous use of parameter  over-
+                     rides  makes  the Postfix configuration hard
+                     to understand and maintain.   At  a  certain
+                     point,  it might be easier to configure mul-
+                     tiple instances of Postfix, instead of  con-
                      figuring  multiple  personalities  via  mas-
                      ter.cf.
 
-              <b>-v</b>     Increase  the verbose logging level. Specify
+              <b>-v</b>     Increase the verbose logging level.  Specify
                      multiple <b>-v</b> options to make a Postfix daemon
                      process increasingly verbose.
 
@@ -232,7 +235,7 @@ MASTER(5)                                                            MASTER(5)
        <a href="DEBUG_README.html">DEBUG_README</a>, Postfix debugging
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>

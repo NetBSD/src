@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_trouble.c,v 1.1.1.2 2010/06/17 18:07:04 tron Exp $	*/
+/*	$NetBSD: smtp_trouble.c,v 1.1.1.3 2013/01/02 18:59:08 tron Exp $	*/
 
 /*++
 /* NAME
@@ -433,6 +433,10 @@ int     smtp_stream_except(SMTP_STATE *state, int code, const char *description)
 	dsb_simple(why, "4.4.2", "conversation with %s timed out while %s",
 		   session->namaddr, description);
 	break;
+    case SMTP_ERR_DATA:
+	session->error_mask |= MAIL_ERROR_DATA;
+	dsb_simple(why, "4.3.0", "local data error while talking to %s",
+		   session->namaddr);
     }
     return (smtp_bulk_fail(state, SMTP_THROTTLE));
 }

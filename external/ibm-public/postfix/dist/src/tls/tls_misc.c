@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_misc.c,v 1.1.1.4 2012/06/09 11:27:18 tron Exp $	*/
+/*	$NetBSD: tls_misc.c,v 1.1.1.5 2013/01/02 18:59:05 tron Exp $	*/
 
 /*++
 /* NAME
@@ -20,14 +20,15 @@
 /*	bool    var_tls_append_def_CA;
 /*	bool	var_tls_preempt_clist;
 /*
-/*	TLS_APPL_STATE *tls_alloc_app_context(ssl_ctx)
+/*	TLS_APPL_STATE *tls_alloc_app_context(ssl_ctx, log_mask)
 /*	SSL_CTX	*ssl_ctx;
+/*	int	log_mask;
 /*
 /*	void	tls_free_app_context(app_ctx)
 /*	void	*app_ctx;
 /*
-/*	TLS_SESS_STATE *tls_alloc_sess_context(log_level, namaddr)
-/*	int	log_level;
+/*	TLS_SESS_STATE *tls_alloc_sess_context(log_mask, namaddr)
+/*	int	log_mask;
 /*	const char *namaddr;
 /*
 /*	void	tls_free_context(TLScontext)
@@ -68,6 +69,10 @@
 /*	int	argi;
 /*	long	argl; /* unused */
 /*	long	ret;
+/*
+/*	int	tls_log_mask(log_param, log_level)
+/*	const char *log_param;
+/*	const char *log_level;
 /* DESCRIPTION
 /*	This module implements routines that support the TLS client
 /*	and server internals.
@@ -128,6 +133,10 @@
 /*	tls_bio_dump_cb() is a call-back routine for the
 /*	BIO_set_callback() routine. It logs SSL content to the
 /*	Postfix logfile.
+/*
+/*	tls_log_mask() converts a TLS log_level value from string
+/*	to mask.  The main.cf parameter name is passed along for
+/*	diagnostics.
 /* LICENSE
 /* .ad
 /* .fi
@@ -302,6 +311,43 @@ const NAME_CODE tls_cipher_grade_table[] = {
 };
 
  /*
+  * Log keyword <=> mask conversion.
+  */
+#define TLS_LOG_0 TLS_LOG_NONE
+#define TLS_LOG_1 TLS_LOG_SUMMARY
+#define TLS_LOG_2 (TLS_LOG_1 | TLS_LOG_VERBOSE | TLS_LOG_CACHE | TLS_LOG_DEBUG)
+#define TLS_LOG_3 (TLS_LOG_2 | TLS_LOG_TLSPKTS)
+#define TLS_LOG_4 (TLS_LOG_3 | TLS_LOG_ALLPKTS)
+
+static const NAME_MASK tls_log_table[] = {
+    "0", TLS_LOG_0,
+    "none", TLS_LOG_NONE,
+    "1", TLS_LOG_1,
+    "routine", TLS_LOG_1,
+    "2", TLS_LOG_2,
+    "debug", TLS_LOG_2,
+    "3", TLS_LOG_3,
+    "ssl-expert", TLS_LOG_3,
+    "4", TLS_LOG_4,
+    "ssl-developer", TLS_LOG_4,
+    "5", TLS_LOG_4,			/* for good measure */
+    "6", TLS_LOG_4,			/* for good measure */
+    "7", TLS_LOG_4,			/* for good measure */
+    "8", TLS_LOG_4,			/* for good measure */
+    "9", TLS_LOG_4,			/* for good measure */
+    "summary", TLS_LOG_SUMMARY,
+    "untrusted", TLS_LOG_UNTRUSTED,
+    "peercert", TLS_LOG_PEERCERT,
+    "certmatch", TLS_LOG_CERTMATCH,
+    "verbose", TLS_LOG_VERBOSE,		/* Postfix TLS library verbose */
+    "cache", TLS_LOG_CACHE,
+    "ssl-debug", TLS_LOG_DEBUG,		/* SSL library debug/verbose */
+    "ssl-handshake-packet-dump", TLS_LOG_TLSPKTS,
+    "ssl-session-packet-dump", TLS_LOG_TLSPKTS | TLS_LOG_ALLPKTS,
+    0, 0,
+};
+
+ /*
   * Parsed OpenSSL version number.
   */
 typedef struct {
@@ -327,6 +373,17 @@ static const cipher_probe_t cipher_probes[] = {
     "CAMELLIA", 256, "CAMELLIA-256-CBC",
     0, 0, 0,
 };
+
+/* tls_log_mask - Convert user TLS loglevel to internal log feature mask */
+
+int     tls_log_mask(const char *log_param, const char *log_level)
+{
+    int     mask;
+
+    mask = name_mask_opt(log_param, tls_log_table, log_level,
+			 NAME_MASK_ANY_CASE | NAME_MASK_RETURN);
+    return (mask);
+}
 
 /* tls_exclude_missing - Append exclusions for missing ciphers */
 
@@ -610,14 +667,16 @@ const char *tls_set_ciphers(TLS_APPL_STATE *app_ctx, const char *context,
 
 /* tls_alloc_app_context - allocate TLS application context */
 
-TLS_APPL_STATE *tls_alloc_app_context(SSL_CTX *ssl_ctx)
+TLS_APPL_STATE *tls_alloc_app_context(SSL_CTX *ssl_ctx, int log_mask)
 {
     TLS_APPL_STATE *app_ctx;
 
     app_ctx = (TLS_APPL_STATE *) mymalloc(sizeof(*app_ctx));
 
+    /* See portability note below with other memset() call. */
     memset((char *) app_ctx, 0, sizeof(*app_ctx));
     app_ctx->ssl_ctx = ssl_ctx;
+    app_ctx->log_mask = log_mask;
 
     /* See also: cache purging code in tls_set_ciphers(). */
     app_ctx->cipher_grade = TLS_CIPHER_NONE;
@@ -649,7 +708,7 @@ void    tls_free_app_context(TLS_APPL_STATE *app_ctx)
 
 /* tls_alloc_sess_context - allocate TLS session context */
 
-TLS_SESS_STATE *tls_alloc_sess_context(int log_level, const char *namaddr)
+TLS_SESS_STATE *tls_alloc_sess_context(int log_mask, const char *namaddr)
 {
     TLS_SESS_STATE *TLScontext;
 
@@ -670,9 +729,10 @@ TLS_SESS_STATE *tls_alloc_sess_context(int log_level, const char *namaddr)
     TLScontext->peer_CN = 0;
     TLScontext->issuer_CN = 0;
     TLScontext->peer_fingerprint = 0;
+    TLScontext->peer_pkey_fprint = 0;
     TLScontext->protocol = 0;
     TLScontext->cipher_name = 0;
-    TLScontext->log_level = log_level;
+    TLScontext->log_mask = log_mask;
     TLScontext->namaddr = lowercase(mystrdup(namaddr));
     TLScontext->fpt_dgst = 0;
 
@@ -703,6 +763,8 @@ void    tls_free_context(TLS_SESS_STATE *TLScontext)
 	myfree(TLScontext->issuer_CN);
     if (TLScontext->peer_fingerprint)
 	myfree(TLScontext->peer_fingerprint);
+    if (TLScontext->peer_pkey_fprint)
+	myfree(TLScontext->peer_pkey_fprint);
     if (TLScontext->fpt_dgst)
 	myfree(TLScontext->fpt_dgst);
 
@@ -800,7 +862,6 @@ void    tls_check_version(void)
 long    tls_bug_bits(void)
 {
     long    bits = SSL_OP_ALL;		/* Work around all known bugs */
-    long    mask;
 
 #if OPENSSL_VERSION_NUMBER >= 0x00908000L
     long    lib_version = SSLeay();

@@ -10,3 +10,7 @@ hhh:1pp
 [hh.]
 hh.
 999
+[::1]
+[ipv6:::1]
+[ipv6:127.0.0.1]
+[ipv6:example.com]

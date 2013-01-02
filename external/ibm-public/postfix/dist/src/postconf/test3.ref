@@ -1,0 +1,4 @@
+always_bcc = $bar
+bar = $foo
+config_directory = .
+foo = yes

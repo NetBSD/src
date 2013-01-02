@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.1.1.3 2011/07/31 10:02:46 tron Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.1.1.4 2013/01/02 18:59:03 tron Exp $	*/
 
 /*++
 /* NAME
@@ -110,6 +110,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <errno.h>
+#include <warn_stat.h>
 
 /* Utility library. */
 
@@ -266,6 +267,11 @@ int     main(int argc, char **argv)
     msg_vstream_init(argv[0], VSTREAM_ERR);
     msg_syslog_init(mail_task("postdrop"), LOG_PID, LOG_FACILITY);
     set_mail_conf_str(VAR_PROCNAME, var_procname = mystrdup(argv[0]));
+
+    /*
+     * Check the Postfix library version as soon as we enable logging.
+     */
+    MAIL_VERSION_CHECK;
 
     /*
      * Parse JCL. This program is set-gid and must sanitize all command-line

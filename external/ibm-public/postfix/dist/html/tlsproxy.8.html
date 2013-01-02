@@ -132,8 +132,8 @@ TLSPROXY(8)                                                        TLSPROXY(8)
 
        <b><a href="postconf.5.html#tlsproxy_tls_fingerprint_digest">tlsproxy_tls_fingerprint_digest</a>        ($<a href="postconf.5.html#smtpd_tls_fingerprint_digest">smtpd_tls_finger</a>-</b>
        <b><a href="postconf.5.html#smtpd_tls_fingerprint_digest">print_digest</a>)</b>
-              The  message  digest  algorithm  used  to construct
-              client-certificate fingerprints.
+              The  message  digest  algorithm to construct remote
+              SMTP client-certificate fingerprints.
 
        <b><a href="postconf.5.html#tlsproxy_tls_key_file">tlsproxy_tls_key_file</a> ($<a href="postconf.5.html#smtpd_tls_key_file">smtpd_tls_key_file</a>)</b>
               File with the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server  RSA  pri-
@@ -187,13 +187,13 @@ TLSPROXY(8)                                                        TLSPROXY(8)
 
        <b><a href="postconf.5.html#tlsproxy_use_tls">tlsproxy_use_tls</a> ($<a href="postconf.5.html#smtpd_use_tls">smtpd_use_tls</a>)</b>
               Opportunistic TLS:  announce  STARTTLS  support  to
-              SMTP  clients,  but do not require that clients use
-              TLS encryption.
+              remote  SMTP  clients,  but  do  not  require  that
+              clients use TLS encryption.
 
        <b><a href="postconf.5.html#tlsproxy_enforce_tls">tlsproxy_enforce_tls</a> ($<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a>)</b>
-              Mandatory TLS: announce STARTTLS  support  to  SMTP
-              clients,  and  require that clients use TLS encryp-
-              tion.
+              Mandatory TLS: announce STARTTLS support to  remote
+              SMTP  clients,  and  require  that  clients use TLS
+              encryption.
 
 <b>RESOURCE CONTROLS</b>
        <b><a href="postconf.5.html#tlsproxy_watchdog_timeout">tlsproxy_watchdog_timeout</a> (10s)</b>

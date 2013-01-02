@@ -1,4 +1,4 @@
-/*	$NetBSD: include.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: include.c,v 1.1.1.2 2013/01/02 18:59:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -51,6 +51,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 
 /* Utility library. */
 
@@ -158,8 +159,9 @@ int     deliver_include(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
      * that is owned by their victim.
      */
     if (usr_attr.uid == 0) {
-	if ((file_pwd = mypwuid(st.st_uid)) == 0) {
-	    msg_warn("cannot find username for uid %ld", (long) st.st_uid);
+	if ((errno = mypwuid_err(st.st_uid, &file_pwd)) != 0 || file_pwd == 0) {
+	    msg_warn(errno ? "cannot find username for uid %ld: %m" :
+		     "cannot find username for uid %ld", (long) st.st_uid);
 	    msg_warn("%s: cannot find :include: file owner username", path);
 	    dsb_simple(state.msg_attr.why, "4.3.5",
 		       "mail system configuration error");

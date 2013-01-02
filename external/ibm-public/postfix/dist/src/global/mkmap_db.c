@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap_db.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mkmap_db.c,v 1.1.1.2 2013/01/02 18:58:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -49,6 +49,7 @@
 #include <dict.h>
 #include <dict_db.h>
 #include <myflock.h>
+#include <warn_stat.h>
 
 /* Global library. */
 

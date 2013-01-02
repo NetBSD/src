@@ -1,4 +1,4 @@
-/*	$NetBSD: postmulti.c,v 1.1.1.3 2010/06/17 18:06:59 tron Exp $	*/
+/*	$NetBSD: postmulti.c,v 1.1.1.4 2013/01/02 18:59:04 tron Exp $	*/
 
 /*++
 /* NAME
@@ -417,6 +417,7 @@
 #include <htable.h>
 #include <name_code.h>
 #include <ring.h>
+#include <warn_stat.h>
 
 /* Global library. */
 
@@ -1659,6 +1660,11 @@ int     main(int argc, char **argv)
     if (isatty(STDERR_FILENO))
 	msg_vstream_init(argv[0], VSTREAM_ERR);
     msg_syslog_init(argv[0], LOG_PID, LOG_FACILITY);
+
+    /*
+     * Check the Postfix library version as soon as we enable logging.
+     */
+    MAIL_VERSION_CHECK;
 
     if ((config_dir = getenv(CONF_ENV_PATH)) != 0
 	&& strcmp(config_dir, DEF_CONFIG_DIR) != 0)

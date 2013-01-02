@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_flow.c,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
+/*	$NetBSD: mail_flow.c,v 1.1.1.2 2013/01/02 18:59:01 tron Exp $	*/
 
 /*++
 /* NAME
@@ -55,6 +55,7 @@
 
 #include <msg.h>
 #include <iostuff.h>
+#include <warn_stat.h>
 
 /* Global library. */
 

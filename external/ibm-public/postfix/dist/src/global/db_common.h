@@ -1,4 +1,4 @@
-/*	$NetBSD: db_common.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: db_common.h,v 1.1.1.2 2013/01/02 18:58:56 tron Exp $	*/
 
 #ifndef _DB_COMMON_H_INCLUDED_
 #define _DB_COMMON_H_INCLUDED_
@@ -23,6 +23,7 @@
 typedef void (*db_quote_callback_t)(DICT *, const char *, VSTRING *);
 
 extern int db_common_parse(DICT *, void **, const char *, int);
+extern void *db_common_alloc(DICT *);
 extern void db_common_parse_domain(CFG_PARSER *, void *);
 extern int db_common_dict_partial(void *);
 extern int db_common_expand(void *, const char *, const char *,

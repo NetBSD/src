@@ -82,4 +82,5 @@ postdrop.o: ../../include/user_acl.h
 postdrop.o: ../../include/vbuf.h
 postdrop.o: ../../include/vstream.h
 postdrop.o: ../../include/vstring.h
+postdrop.o: ../../include/warn_stat.h
 postdrop.o: postdrop.c

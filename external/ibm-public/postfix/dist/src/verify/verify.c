@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.1.1.3 2011/05/11 09:11:28 tron Exp $	*/
+/*	$NetBSD: verify.c,v 1.1.1.4 2013/01/02 18:59:15 tron Exp $	*/
 
 /*++
 /* NAME
@@ -80,15 +80,23 @@
 /*
 /*	The text below provides only a parameter summary. See
 /*	\fBpostconf\fR(5) for more details including examples.
+/* PROBE MESSAGE CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBaddress_verify_sender ($double_bounce_sender)\fR"
+/*	The sender address to use in address verification probes; prior
+/*	to Postfix 2.5 the default was "postmaster".
+/* .PP
+/*	Available with Postfix 2.9 and later:
+/* .IP "\fBaddress_verify_sender_ttl (0s)\fR"
+/*	The time between changes in the time-dependent portion of address
+/*	verification probe sender addresses.
 /* CACHE CONTROLS
 /* .ad
 /* .fi
 /* .IP "\fBaddress_verify_map (see 'postconf -d' output)\fR"
 /*	Lookup table for persistent address verification status
 /*	storage.
-/* .IP "\fBaddress_verify_sender ($double_bounce_sender)\fR"
-/*	The sender address to use in address verification probes; prior
-/*	to Postfix 2.5 the default was "postmaster".
 /* .IP "\fBaddress_verify_positive_expire_time (31d)\fR"
 /*	The time after which a successful probe expires from the address
 /*	verification cache.
@@ -223,6 +231,7 @@
 #include <post_mail.h>
 #include <data_redirect.h>
 #include <verify_clnt.h>
+#include <verify_sender_addr.h>
 
 /* Server skeleton. */
 
@@ -239,7 +248,6 @@ int     var_verify_pos_try;
 int     var_verify_neg_exp;
 int     var_verify_neg_try;
 int     var_verify_scan_cache;
-char   *var_verify_sender;
 
  /*
   * State.
@@ -492,8 +500,7 @@ static void verify_query_service(VSTREAM *client_stream)
 	    if (msg_verbose)
 		msg_info("PROBE %s status=%d probed=%ld updated=%ld",
 			 STR(addr), addr_status, now, updated);
-	    post_mail_fopen_async(strcmp(var_verify_sender, "<>") == 0 ?
-				  "" : var_verify_sender, STR(addr),
+	    post_mail_fopen_async(make_verify_sender_addr(), STR(addr),
 				  INT_FILT_MASK_NONE,
 				  DEL_REQ_FLAG_MTA_VRFY,
 				  (VSTRING *) 0,
@@ -701,6 +708,7 @@ int     main(int argc, char **argv)
 	VAR_VERIFY_NEG_EXP, DEF_VERIFY_NEG_EXP, &var_verify_neg_exp, 1, 0,
 	VAR_VERIFY_NEG_TRY, DEF_VERIFY_NEG_TRY, &var_verify_neg_try, 1, 0,
 	VAR_VERIFY_SCAN_CACHE, DEF_VERIFY_SCAN_CACHE, &var_verify_scan_cache, 0, 0,
+	VAR_VERIFY_SENDER_TTL, DEF_VERIFY_SENDER_TTL, &var_verify_sender_ttl, 0, 0,
 	0,
     };
 

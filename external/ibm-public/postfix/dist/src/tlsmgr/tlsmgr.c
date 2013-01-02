@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsmgr.c,v 1.1.1.1 2009/06/23 10:08:58 tron Exp $	*/
+/*	$NetBSD: tlsmgr.c,v 1.1.1.2 2013/01/02 18:59:10 tron Exp $	*/
 
 /*++
 /* NAME
@@ -202,6 +202,7 @@
 #include <attr.h>
 #include <set_eugid.h>
 #include <htable.h>
+#include <warn_stat.h>
 
 /* Global library. */
 
@@ -220,6 +221,7 @@
 /* TLS library. */
 
 #ifdef USE_TLS
+#define TLS_INTERNAL
 #include <tls.h>			/* TLS_MGR_SCACHE_<type> */
 #include <tls_prng.h>
 #include <tls_scache.h>
@@ -233,13 +235,13 @@ char   *var_tls_rand_source;
 int     var_tls_rand_bytes;
 int     var_tls_reseed_period;
 int     var_tls_prng_exch_period;
-int     var_smtpd_tls_loglevel;
+char   *var_smtpd_tls_loglevel;
 char   *var_smtpd_tls_scache_db;
 int     var_smtpd_tls_scache_timeout;
-int     var_smtp_tls_loglevel;
+char   *var_smtp_tls_loglevel;
 char   *var_smtp_tls_scache_db;
 int     var_smtp_tls_scache_timeout;
-int     var_lmtp_tls_loglevel;
+char   *var_lmtp_tls_loglevel;
 char   *var_lmtp_tls_scache_db;
 int     var_lmtp_tls_scache_timeout;
 char   *var_tls_rand_exch_name;
@@ -284,16 +286,20 @@ typedef struct {
     TLS_SCACHE *cache_info;		/* cache handle */
     int     cache_active;		/* cache status */
     char  **cache_db;			/* main.cf parameter value */
-    int    *cache_loglevel;		/* main.cf parameter value */
+    const char *log_param;		/* main.cf parameter name */
+    char  **log_level;			/* main.cf parameter value */
     int    *cache_timeout;		/* main.cf parameter value */
 } TLSMGR_SCACHE;
 
 TLSMGR_SCACHE cache_table[] = {
     TLS_MGR_SCACHE_SMTPD, 0, 0, &var_smtpd_tls_scache_db,
+    VAR_SMTPD_TLS_LOGLEVEL,
     &var_smtpd_tls_loglevel, &var_smtpd_tls_scache_timeout,
     TLS_MGR_SCACHE_SMTP, 0, 0, &var_smtp_tls_scache_db,
+    VAR_SMTP_TLS_LOGLEVEL,
     &var_smtp_tls_loglevel, &var_smtp_tls_scache_timeout,
     TLS_MGR_SCACHE_LMTP, 0, 0, &var_lmtp_tls_scache_db,
+    VAR_LMTP_TLS_LOGLEVEL,
     &var_lmtp_tls_loglevel, &var_lmtp_tls_scache_timeout,
     0,
 };
@@ -851,7 +857,8 @@ static void tlsmgr_pre_init(char *unused_name, char **unused_argv)
 	    ent->cache_info =
 		tls_scache_open(data_redirect_map(redirect, *ent->cache_db),
 				ent->cache_label,
-				*ent->cache_loglevel >= 2,
+				tls_log_mask(ent->log_param,
+					   *ent->log_level) & TLS_LOG_CACHE,
 				*ent->cache_timeout);
 	}
     }
@@ -935,6 +942,9 @@ int     main(int argc, char **argv)
 	VAR_SMTPD_TLS_SCACHE_DB, DEF_SMTPD_TLS_SCACHE_DB, &var_smtpd_tls_scache_db, 0, 0,
 	VAR_SMTP_TLS_SCACHE_DB, DEF_SMTP_TLS_SCACHE_DB, &var_smtp_tls_scache_db, 0, 0,
 	VAR_LMTP_TLS_SCACHE_DB, DEF_LMTP_TLS_SCACHE_DB, &var_lmtp_tls_scache_db, 0, 0,
+	VAR_SMTPD_TLS_LOGLEVEL, DEF_SMTPD_TLS_LOGLEVEL, &var_smtpd_tls_loglevel, 0, 0,
+	VAR_SMTP_TLS_LOGLEVEL, DEF_SMTP_TLS_LOGLEVEL, &var_smtp_tls_loglevel, 0, 0,
+	VAR_LMTP_TLS_LOGLEVEL, DEF_LMTP_TLS_LOGLEVEL, &var_lmtp_tls_loglevel, 0, 0,
 	0,
     };
     static const CONFIG_TIME_TABLE time_table[] = {
@@ -947,9 +957,6 @@ int     main(int argc, char **argv)
     };
     static const CONFIG_INT_TABLE int_table[] = {
 	VAR_TLS_RAND_BYTES, DEF_TLS_RAND_BYTES, &var_tls_rand_bytes, 1, 0,
-	VAR_SMTPD_TLS_LOGLEVEL, DEF_SMTPD_TLS_LOGLEVEL, &var_smtpd_tls_loglevel, 0, 0,
-	VAR_SMTP_TLS_LOGLEVEL, DEF_SMTP_TLS_LOGLEVEL, &var_smtp_tls_loglevel, 0, 0,
-	VAR_LMTP_TLS_LOGLEVEL, DEF_LMTP_TLS_LOGLEVEL, &var_lmtp_tls_loglevel, 0, 0,
 	0,
     };
 

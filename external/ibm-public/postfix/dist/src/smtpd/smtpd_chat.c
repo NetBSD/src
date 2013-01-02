@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_chat.c,v 1.1.1.2 2011/03/02 19:32:34 tron Exp $	*/
+/*	$NetBSD: smtpd_chat.c,v 1.1.1.3 2013/01/02 18:59:09 tron Exp $	*/
 
 /*++
 /* NAME
@@ -129,7 +129,12 @@ void    smtpd_chat_query(SMTPD_STATE *state)
 {
     int     last_char;
 
-    last_char = smtp_get(state->buffer, state->client, var_line_limit);
+    /*
+     * We can't parse or store input that exceeds var_line_limit, so we skip
+     * over it to avoid loss of synchronization.
+     */
+    last_char = smtp_get(state->buffer, state->client, var_line_limit,
+			 SMTP_GET_FLAG_SKIP);
     smtp_chat_append(state, "In:  ", STR(state->buffer));
     if (last_char != '\n')
 	msg_warn("%s: request longer than %d: %.30s...",
@@ -179,7 +184,10 @@ void    smtpd_chat_reply(SMTPD_STATE *state, const char *format,...)
 	/* This is why we use strlen() above instead of VSTRING_LEN(). */
 	if ((next = strstr(cp, "\r\n")) != 0) {
 	    *next = 0;
-	    cp[3] = '-';			/* contact footer kludge */
+	    if (next[2] != 0)
+		cp[3] = '-';			/* contact footer kludge */
+	    else
+		next = end;			/* strip trailing \r\n */
 	} else {
 	    next = end;
 	}

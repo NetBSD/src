@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_version.h,v 1.1.1.16 2012/12/18 09:02:08 tron Exp $	*/
+/*	$NetBSD: mail_version.h,v 1.1.1.17 2013/01/02 18:58:59 tron Exp $	*/
 
 #ifndef _MAIL_VERSION_H_INCLUDED_
 #define _MAIL_VERSION_H_INCLUDED_
@@ -23,7 +23,7 @@
   * patchlevel; they change the release date only.
   */
 #define MAIL_RELEASE_DATE	"20121213"
-#define MAIL_VERSION_NUMBER	"2.8.13"
+#define MAIL_VERSION_NUMBER	"2.9.5"
 
 #ifdef SNAPSHOT
 # define MAIL_VERSION_DATE	"-" MAIL_RELEASE_DATE
@@ -68,6 +68,29 @@ extern char *var_mail_release;
 
 #define MAIL_VERSION_STAMP_ALLOCATE \
     mail_version_stamp = strdup(VAR_MAIL_VERSION "=" DEF_MAIL_VERSION)
+
+ /*
+  * Mail version string parser, plus support to compare the compile-time
+  * version string of a Postfix program with the run-time version string of a
+  * Postfix shared library. When programs are not updated, they may fail in
+  * erratic ways when linked against a newer run-time library. Of course the
+  * right solution is so-number versioning of the Postfix run-time library.
+  */
+typedef struct {
+    char   *program;			/* postfix */
+    int     major;			/* 2 */
+    int     minor;			/* 9 */
+    int     patch;			/* null */
+    char   *snapshot;			/* 20111209-nonprod */
+} MAIL_VERSION;
+
+extern MAIL_VERSION *mail_version_parse(const char *, const char **);
+extern void mail_version_free(MAIL_VERSION *);
+extern const char *get_mail_version(void);
+extern void check_mail_version(const char *);
+
+#define MAIL_VERSION_CHECK \
+    check_mail_version(DEF_MAIL_VERSION)
 
 /* LICENSE
 /* .ad

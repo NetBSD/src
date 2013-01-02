@@ -1,4 +1,5 @@
-./dict_open: warning: regexp map dict_regexp.map, line 1: ignoring extra text after IF
+./dict_open: warning: regexp map dict_regexp.map, line 1: ignoring extra text after IF statement: "fodder"
+./dict_open: warning: regexp map dict_regexp.map, line 1: do not prepend whitespace to statements between IF and ENDIF
 ./dict_open: warning: regexp map dict_regexp.map, line 5: ignoring extra text after ENDIF
 ./dict_open: warning: regexp map dict_regexp.map, line 9: using empty replacement string
 ./dict_open: warning: regexp map dict_regexp.map, line 10: out of range replacement index "5": skipping this rule

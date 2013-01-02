@@ -1,4 +1,4 @@
-/*	$NetBSD: safe_open.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: safe_open.c,v 1.1.1.2 2013/01/02 18:59:14 tron Exp $	*/
 
 /*++
 /* NAME
@@ -87,6 +87,7 @@
 #include <vstring.h>
 #include <stringops.h>
 #include <safe_open.h>
+#include <warn_stat.h>
 
 /* safe_open_exist - open existing file */
 

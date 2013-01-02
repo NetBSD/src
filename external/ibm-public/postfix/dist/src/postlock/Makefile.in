@@ -78,4 +78,5 @@ postlock.o: ../../include/sys_exits.h
 postlock.o: ../../include/vbuf.h
 postlock.o: ../../include/vstream.h
 postlock.o: ../../include/vstring.h
+postlock.o: ../../include/warn_stat.h
 postlock.o: postlock.c

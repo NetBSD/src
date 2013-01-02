@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg_parser.c,v 1.1.1.2 2011/03/02 19:32:13 tron Exp $	*/
+/*	$NetBSD: cfg_parser.c,v 1.1.1.3 2013/01/02 18:58:56 tron Exp $	*/
 
 /*++
 /* NAME
@@ -32,6 +32,9 @@
 /*	const CFG_PARSER *parser;
 /*	const char *name;
 /*	int defval;
+/*
+/*	DICT_OWNER cfg_get_owner(parser)
+/*	const CFG_PARSER *parser;
 /* DESCRIPTION
 /*	This module implements utilities for parsing parameters defined
 /*	either as "\fIname\fR = \fBvalue\fR" in a file pointed to by
@@ -39,7 +42,8 @@
 /*	\fBvalue\fR" in main.cf (the old LDAP style).  It unifies the
 /*	two styles and provides support for range checking.
 /*
-/*	\fIcfg_parser_alloc\fR initializes the parser.
+/*	\fIcfg_parser_alloc\fR initializes the parser. The result
+/*	is NULL if a configuration file could not be opened.
 /*
 /*	\fIcfg_parser_free\fR releases the parser.
 /*
@@ -57,6 +61,8 @@
 /*	Conveniently, \fIcfg_get_str\fR returns \fBNULL\fR if
 /*	\fIdefval\fR is \fBNULL\fR and no value was found.  The returned
 /*	string has to be freed by the caller if not \fBNULL\fR.
+/*
+/*	cfg_get_owner() looks up the configuration file owner.
 /* DIAGNOSTICS
 /*	Fatal errors: bad string length, malformed numerical value, malformed
 /*	boolean value.
@@ -224,21 +230,31 @@ CFG_PARSER *cfg_parser_alloc(const char *pname)
 {
     const char *myname = "cfg_parser_alloc";
     CFG_PARSER *parser;
+    DICT   *dict;
 
     if (pname == 0 || *pname == 0)
 	msg_fatal("%s: null parser name", myname);
     parser = (CFG_PARSER *) mymalloc(sizeof(*parser));
     parser->name = mystrdup(pname);
     if (*parser->name == '/' || *parser->name == '.') {
-	dict_load_file(parser->name, parser->name);
+	if (dict_load_file_xt(parser->name, parser->name) == 0) {
+	    myfree(parser->name);
+	    myfree((char *) parser);
+	    return (0);
+	}
 	parser->get_str = get_dict_str;
 	parser->get_int = get_dict_int;
 	parser->get_bool = get_dict_bool;
+	dict = dict_handle(parser->name);
     } else {
 	parser->get_str = get_main_str;
 	parser->get_int = get_main_int;
 	parser->get_bool = get_main_bool;
+	dict = dict_handle(CONFIG_DICT);	/* XXX Use proper API */
     }
+    if (dict == 0)
+	msg_panic("%s: dict_handle failed", myname);
+    parser->owner = dict->owner;
     return (parser);
 }
 

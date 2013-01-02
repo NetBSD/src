@@ -1,0 +1,24 @@
+using config files in CONFIGDIR
+"aa@bb.MYDOMAIN" matches self: "aa@bb.MYDOMAIN"
+using config files in CONFIGDIR
+"aaSTAMP@bb.MYDOMAIN" matches prev2: "nope"
+"aaSTAMP@bb.MYDOMAIN" matches prev1: "aa@bb.MYDOMAIN"
+"aaSTAMP@bb.MYDOMAIN" matches self: "aa@bb.MYDOMAIN"
+"aaSTAMP@bb.MYDOMAIN" matches next1: "aa@bb.MYDOMAIN"
+"aaSTAMP@bb.MYDOMAIN" matches next2: "nope"
+using config files in CONFIGDIR
+"aa@MYORIGIN" matches self: "aa@MYORIGIN"
+using config files in CONFIGDIR
+"aaSTAMP@MYORIGIN" matches prev2: "nope"
+"aaSTAMP@MYORIGIN" matches prev1: "aa@MYORIGIN"
+"aaSTAMP@MYORIGIN" matches self: "aa@MYORIGIN"
+"aaSTAMP@MYORIGIN" matches next1: "aa@MYORIGIN"
+"aaSTAMP@MYORIGIN" matches next2: "nope"
+using config files in CONFIGDIR
+"" matches self: ""
+using config files in CONFIGDIR
+"" matches prev2: ""
+"" matches prev1: ""
+"" matches self: ""
+"" matches next1: ""
+"" matches next2: ""

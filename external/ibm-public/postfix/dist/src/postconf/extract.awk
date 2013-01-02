@@ -74,6 +74,14 @@
 	}
     }
 }
+/^(static| )*(const +)?CONFIG_LONG_TABLE .*\{/,/\};/ { 
+    if ($1 ~ /VAR/) {
+	long_vars["long " substr($3,2,length($3)-2) ";"] = 1
+	if (++itab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
+	    long_table[$0] = 1
+	}
+    }
+}
 
 END { 
     # Print parameter declarations without busting old AWK's file limit.
@@ -112,6 +120,11 @@ END {
 	print key
     print "EOF"
 
+    print "cat >long_vars.h <<'EOF'"
+    for (key in long_vars)
+	print key
+    print "EOF"
+
     # Print parameter initializations without busting old AWK's file limit.
     print "sed 's/[ 	][ 	]*/ /g' >int_table.h <<'EOF'"
     for (key in int_table)
@@ -145,6 +158,11 @@ END {
 
     print "sed 's/[ 	][ 	]*/ /g' >nbool_table.h <<'EOF'"
     for (key in nbool_table)
+	print key
+    print "EOF"
+
+    print "sed 's/[ 	][ 	]*/ /g' >long_table.h <<'EOF'"
+    for (key in long_table)
 	print key
     print "EOF"
 

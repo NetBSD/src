@@ -116,4 +116,5 @@ postcat.o: ../../include/vbuf.h
 postcat.o: ../../include/vstream.h
 postcat.o: ../../include/vstring.h
 postcat.o: ../../include/vstring_vstream.h
+postcat.o: ../../include/warn_stat.h
 postcat.o: postcat.c

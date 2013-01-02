@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp-source.c,v 1.1.1.2 2011/03/02 19:32:39 tron Exp $	*/
+/*	$NetBSD: smtp-source.c,v 1.1.1.3 2013/01/02 18:59:10 tron Exp $	*/
 
 /*++
 /* NAME
@@ -318,7 +318,7 @@ static RESPONSE *response(VSTREAM *stream, VSTRING *buf)
 #define BUF ((char *) vstring_str(buf))
     VSTRING_RESET(rdata.buf);
     for (;;) {
-	smtp_get(buf, stream, var_line_limit);
+	smtp_get(buf, stream, var_line_limit, SMTP_GET_FLAG_SKIP);
 	for (cp = BUF; *cp != 0; cp++)
 	    if (!ISPRINT(*cp) && !ISSPACE(*cp))
 		*cp = '?';

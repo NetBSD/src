@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_nisplus.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: dict_nisplus.c,v 1.1.1.2 2013/01/02 18:59:12 tron Exp $	*/
 
 /*++
 /* NAME
@@ -128,10 +128,11 @@ static const char *dict_nisplus_lookup(DICT *dict, const char *key)
     int     last_col;
     int     ch;
 
+    dict->error = 0;
+
     /*
      * Initialize.
      */
-    dict_errno = 0;
     if (quoted_key == 0) {
 	query = vstring_alloc(100);
 	retval = vstring_alloc(100);
@@ -224,7 +225,7 @@ static const char *dict_nisplus_lookup(DICT *dict, const char *key)
 	    msg_warn("lookup %s, NIS+ map %s: %s",
 		     key, dict_nisplus->dict.name,
 		     nis_sperrno(reply->status));
-	    dict_errno = DICT_ERR_RETRY;
+	    dict->error = DICT_ERR_RETRY;
 	} else {
 	    if (msg_verbose)
 		msg_info("%s: not found: query %s", myname, STR(query));
@@ -258,8 +259,9 @@ DICT   *dict_nisplus_open(const char *map, int open_flags, int dict_flags)
      * Sanity check.
      */
     if (open_flags != O_RDONLY)
-	msg_fatal("%s:%s map requires O_RDONLY access mode",
-		  DICT_TYPE_NISPLUS, map);
+	return (dict_surrogate(DICT_TYPE_NISPLUS, map, open_flags, dict_flags,
+			       "%s:%s map requires O_RDONLY access mode",
+			       DICT_TYPE_NISPLUS, map));
 
     /*
      * Initialize. This is a read-only map with fixed strings, not with
@@ -272,6 +274,7 @@ DICT   *dict_nisplus_open(const char *map, int open_flags, int dict_flags)
     dict_nisplus->dict.flags = dict_flags | DICT_FLAG_FIXED;
     if (dict_flags & DICT_FLAG_FOLD_FIX)
 	dict_nisplus->dict.fold_buf = vstring_alloc(10);
+    dict_nisplus->dict.owner.status = DICT_OWNER_TRUSTED;
 
     /*
      * Convert the query template into an indexed name and column number. The

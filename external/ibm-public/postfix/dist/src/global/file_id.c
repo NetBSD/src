@@ -1,4 +1,4 @@
-/*	$NetBSD: file_id.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: file_id.c,v 1.1.1.2 2013/01/02 18:58:58 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,26 +8,37 @@
 /* SYNOPSIS
 /*	#include <file_id.h>
 /*
+/*	const char *get_file_id_fd(fd, long_flag)
+/*	int	fd;
+/*	int	long_flag;
+/*
+/*	const char *get_file_id_st(st, long_flag)
+/*	struct stat *st;
+/*	int	long_flag;
+/*
 /*	const char *get_file_id(fd)
 /*	int	fd;
-/*
-/*	int	check_file_id(fd, id)
-/*	int	fd;
-/*	const char *id;
 /* DESCRIPTION
-/*	get_file_id() queries the operating system for the unique identifier
-/*	for the specified file and returns a printable representation.
-/*	The result is volatile.  Make a copy if it is to be used for any
-/*	appreciable amount of time.
+/*	get_file_id_fd() queries the operating system for the unique
+/*	file identifier for the specified file descriptor and returns
+/*	a printable representation.  The result is volatile.  Make
+/*	a copy if it is to be used for any appreciable amount of
+/*	time.
 /*
-/*	check_file_id() tests if an open file matches the given
-/*	printable FILE ID representation.
+/*	get_file_id_st() returns the unique identifier for the
+/*	specified file status information.
+/*
+/*	get_file_id() provides binary compatibility for old programs.
+/*	This function should not be used by new programs.
 /*
 /*	Arguments:
 /* .IP fd
 /*	A valid file descriptor that is associated with an open file.
-/* .IP id
-/*	Printable file ID.
+/* .IP st
+/*	The result from e.g., stat(2) or fstat(2).
+/* .IP long_flag
+/*	Encode the result as appropriate for long or short queue
+/*	identifiers.
 /* DIAGNOSTICS
 /*	All errors are fatal.
 /* LICENSE
@@ -51,29 +62,42 @@
 
 #include <msg.h>
 #include <vstring.h>
+#include <warn_stat.h>
 
 /* Global library. */
 
+#define MAIL_QUEUE_INTERNAL
+#include <mail_queue.h>
 #include "file_id.h"
 
-/* get_file_id - lookup file ID, convert to printable form */
+/* get_file_id - binary compatibility */
 
 const char *get_file_id(int fd)
 {
-    static VSTRING *result;
+    return (get_file_id_fd(fd, 0));
+}
+
+/* get_file_id_fd - return printable file identifier for file descriptor */
+
+const char *get_file_id_fd(int fd, int long_flag)
+{
     struct stat st;
+
+    if (fstat(fd, &st) < 0)
+	msg_fatal("fstat: %m");
+    return (get_file_id_st(&st, long_flag));
+}
+
+/* get_file_id_st - return printable file identifier for file status */
+
+const char *get_file_id_st(struct stat * st, int long_flag)
+{
+    static VSTRING *result;
 
     if (result == 0)
 	result = vstring_alloc(1);
-    if (fstat(fd, &st) < 0)
-	msg_fatal("fstat: %m");
-    vstring_sprintf(result, "%lX", (long) st.st_ino);
-    return (vstring_str(result));
-}
-
-/* check_file_id - make sure file name matches ID */
-
-int     check_file_id(int fd, const char *name)
-{
-    return (strcmp(get_file_id(fd), name));
+    if (long_flag)
+	return (MQID_LG_ENCODE_INUM(result, st->st_ino));
+    else
+	return (MQID_SH_ENCODE_INUM(result, st->st_ino));
 }

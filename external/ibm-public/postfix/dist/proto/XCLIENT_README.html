@@ -80,7 +80,7 @@ names are shown in upper case, they are in fact case insensitive.
     xclient-command = XCLIENT 1*( SP attribute-name"="attribute-value )
 </p>
 <p>
-    attribute-name = ( NAME | ADDR | PORT | PROTO | HELO )
+    attribute-name = ( NAME | ADDR | PORT | PROTO | HELO | LOGIN )
 </p>
 <p>
     attribute-value = xtext
@@ -113,6 +113,10 @@ names are shown in upper case, they are in fact case insensitive.
     value, or the value [UNAVAILABLE] when the information is
     unavailable.  </p>
 
+    <li> <p> The LOGIN attribute specifies a SASL login name, or
+    the value [UNAVAILABLE] when the information is unavailable.
+    </p>
+
 </ul>
 
 <p> Note 1: syntactically valid NAME and HELO attribute-value
@@ -130,8 +134,8 @@ xtext encode attribute values. Servers that wish to interoperate
 with these older implementations should be prepared to receive
 unencoded information. </p>
 
-<p> Note 4: Postfix implementations prior to version 2.5 do not
-implement the PORT attribute.  </p>
+<p> Note 4: Some Postfix implementations do not implement the PORT
+or LOGIN attributes.  </p>
 
 <h2>XCLIENT Server response</h2>
 

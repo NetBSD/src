@@ -1,4 +1,4 @@
-/*	$NetBSD: showq.c,v 1.1.1.1 2009/06/23 10:08:53 tron Exp $	*/
+/*	$NetBSD: showq.c,v 1.1.1.2 2013/01/02 18:59:07 tron Exp $	*/
 
 /*++
 /* NAME
@@ -69,6 +69,10 @@
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
 /*	The mail system name that is prepended to the process name in syslog
 /*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/* .PP
+/*	Available in Postfix version 2.9 and later:
+/* .IP "\fBenable_long_queue_ids (no)\fR"
+/*	Enable long, non-repeating, queue IDs (queue file names).
 /* FILES
 /*	/var/spool/postfix, queue directories
 /* SEE ALSO
@@ -138,9 +142,17 @@
 int     var_dup_filter_limit;
 char   *var_empty_addr;
 
-#define STRING_FORMAT	"%-10s %8s %-20s %s\n"
-#define SENDER_FORMAT	"%-11s %7ld %20.20s %s\n"
-#define DROP_FORMAT	"%-10s%c %7ld %20.20s (maildrop queue, sender UID %u)\n"
+#define S_STRING_FORMAT	"%-10s %8s %-20s %s\n"
+#define S_SENDER_FORMAT	"%-11s %7ld %20.20s %s\n"
+#define S_DROP_FORMAT	"%-10s%c %7ld %20.20s (maildrop queue, sender UID %u)\n"
+#define S_HEADINGS	"-Queue ID-", "--Size--", \
+			    "----Arrival Time----", "-Sender/Recipient-------"
+
+#define L_STRING_FORMAT	"%-17s %8s %-19s %s\n"
+#define L_SENDER_FORMAT	"%-17s %8ld %19.19s %s\n"
+#define L_DROP_FORMAT	"%-16s%c %8ld %19.19s (maildrop queue, sender UID %u)\n"
+#define L_HEADINGS	"----Queue ID-----", "--Size--", \
+			    "---Arrival Time----", "--Sender/Recipient------"
 
 static void showq_reasons(VSTREAM *, BOUNCE_LOG *, RCPT_BUF *, DSN_BUF *,
 			          HTABLE *);
@@ -200,7 +212,8 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 	    printable(STR(printable_quoted_addr), '?');
 	    /* quote_822_local() saves buf, so we can reuse its space. */
 	    vstring_sprintf(buf, "%s%c", id, status);
-	    vstream_fprintf(client, SENDER_FORMAT, STR(buf),
+	    vstream_fprintf(client, var_long_queue_ids ?
+			    L_SENDER_FORMAT : S_SENDER_FORMAT, STR(buf),
 			  msg_size > 0 ? msg_size : size, arrival_time > 0 ?
 			    asctime(localtime(&arrival_time)) :
 			    asctime(localtime(&mtime)),
@@ -213,7 +226,8 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 	    printable(STR(printable_quoted_addr), '?');
 	    if (dup_filter == 0
 	      || htable_locate(dup_filter, STR(printable_quoted_addr)) == 0)
-		vstream_fprintf(client, STRING_FORMAT,
+		vstream_fprintf(client, var_long_queue_ids ?
+				L_STRING_FORMAT : S_STRING_FORMAT,
 				"", "", "", STR(printable_quoted_addr));
 	    break;
 	case REC_TYPE_MESG:
@@ -289,7 +303,8 @@ static void showq_reasons(VSTREAM *client, BOUNCE_LOG *bp, RCPT_BUF *rcpt_buf,
 		padding = 0;
 	    vstream_fprintf(client, "%*s(%s)\n", padding, "", saved_reason);
 	}
-	vstream_fprintf(client, STRING_FORMAT, "", "", "", rcpt->address);
+	vstream_fprintf(client, var_long_queue_ids ? L_STRING_FORMAT :
+			S_STRING_FORMAT, "", "", "", rcpt->address);
     }
     if (saved_reason)
 	myfree(saved_reason);
@@ -355,12 +370,12 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
 	    saved_id = mystrdup(id);
 	    status = mail_open_ok(qp->name, id, &st, &path);
 	    if (status == MAIL_OPEN_YES) {
-		if (file_count == 0)
-		    vstream_fprintf(client, STRING_FORMAT,
-				    "-Queue ID-", "--Size--",
-				    "----Arrival Time----",
-				    "-Sender/Recipient-------");
-		else
+		if (file_count == 0) {
+		    if (var_long_queue_ids)
+			vstream_fprintf(client, L_STRING_FORMAT, L_HEADINGS);
+		    else
+			vstream_fprintf(client, S_STRING_FORMAT, S_HEADINGS);
+		} else
 		    vstream_fprintf(client, "\n");
 		if ((qfile = mail_queue_open(qp->name, id, O_RDONLY, 0)) != 0) {
 		    queue_size += st.st_size;
@@ -370,7 +385,8 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
 			msg_warn("close file %s %s: %m", qp->name, id);
 		} else if (strcmp(qp->name, MAIL_QUEUE_MAILDROP) == 0) {
 		    queue_size += st.st_size;
-		    vstream_fprintf(client, DROP_FORMAT, id, ' ',
+		    vstream_fprintf(client, var_long_queue_ids ?
+				    L_DROP_FORMAT : S_DROP_FORMAT, id, ' ',
 				    (long) st.st_size,
 				    asctime(localtime(&st.st_mtime)),
 				    (unsigned) st.st_uid);

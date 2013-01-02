@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cidr.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: dict_cidr.c,v 1.1.1.2 2013/01/02 18:59:12 tron Exp $	*/
 
 /*++
 /* NAME
@@ -34,6 +34,7 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -54,6 +55,7 @@
 #include <myaddrinfo.h>
 #include <cidr_match.h>
 #include <dict_cidr.h>
+#include <warn_stat.h>
 
 /* Application-specific. */
 
@@ -80,7 +82,7 @@ static const char *dict_cidr_lookup(DICT *dict, const char *key)
     if (msg_verbose)
 	msg_info("dict_cidr_lookup: %s: %s", dict->name, key);
 
-    dict_errno = 0;
+    dict->error = 0;
 
     if ((entry = (DICT_CIDR_ENTRY *)
 	 cidr_match_execute(&(dict_cidr->head->cidr_info), key)) != 0)
@@ -166,8 +168,9 @@ DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
 {
     DICT_CIDR *dict_cidr;
     VSTREAM *map_fp;
-    VSTRING *line_buffer = vstring_alloc(100);
-    VSTRING *why = vstring_alloc(100);
+    struct stat st;
+    VSTRING *line_buffer;
+    VSTRING *why;
     DICT_CIDR_ENTRY *rule;
     DICT_CIDR_ENTRY *last_rule = 0;
     int     lineno = 0;
@@ -176,8 +179,24 @@ DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
      * Sanity checks.
      */
     if (open_flags != O_RDONLY)
-	msg_fatal("%s:%s map requires O_RDONLY access mode",
-		  DICT_TYPE_CIDR, mapname);
+	return (dict_surrogate(DICT_TYPE_CIDR, mapname, open_flags, dict_flags,
+			       "%s:%s map requires O_RDONLY access mode",
+			       DICT_TYPE_CIDR, mapname));
+
+    /*
+     * Open the configuration file.
+     */
+    if ((map_fp = vstream_fopen(mapname, O_RDONLY, 0)) == 0)
+	return (dict_surrogate(DICT_TYPE_CIDR, mapname, open_flags, dict_flags,
+			       "open %s: %m", mapname));
+    if (fstat(vstream_fileno(map_fp), &st) < 0)
+	msg_fatal("fstat %s: %m", mapname);
+
+    /*
+     * No early returns without memory leaks.
+     */
+    line_buffer = vstring_alloc(100);
+    why = vstring_alloc(100);
 
     /*
      * XXX Eliminate unnecessary queries by setting a flag that says "this
@@ -190,8 +209,8 @@ DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
     dict_cidr->dict.flags = dict_flags | DICT_FLAG_PATTERN;
     dict_cidr->head = 0;
 
-    if ((map_fp = vstream_fopen(mapname, O_RDONLY, 0)) == 0)
-	msg_fatal("open %s: %m", mapname);
+    dict_cidr->dict.owner.uid = st.st_uid;
+    dict_cidr->dict.owner.status = (st.st_uid != 0);
 
     while (readlline(line_buffer, map_fp, &lineno)) {
 	rule = dict_cidr_parse_rule(vstring_str(line_buffer), why);

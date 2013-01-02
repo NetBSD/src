@@ -1,0 +1,76 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix memcache client Howto</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix memcache client Howto</h1>
+
+<hr>
+
+<h2>Introduction</h2>
+
+<p>The Postfix memcache client allows you to hook up Postfix to a
+memcache server. The current implementation supports one memcache
+server per Postfix table, with one optional Postfix database that
+provides persistent backup.  The Postfix memcache client supports
+the lookup, update, delete and sequence operations.  The sequence
+(i.e. first/next) operation requires a backup database that supports
+this operation. </p>
+
+<p> Typically, the Postfix memcache client is used to reduce query
+load on a persistent database, but it may also be used to query a
+memory-only database for low-value, easy-to-recreate, information
+such as a reputation cache for <a href="postscreen.8.html">postscreen(8)</a>, <a href="verify.8.html">verify(8)</a> or greylisting.
+</p>
+
+<h2>Limitations</h2>
+
+<ul>
+
+<li> <p> The Postfix memcache client cannot be used for security-sensitive
+tables such as <tt><a href="postconf.5.html#alias_maps">alias_maps</a></tt> (these may contain "<tt>|command</tt>"
+and "<tt>/file/name</tt>" destinations), or <tt><a href="postconf.5.html#virtual_uid_maps">virtual_uid_maps</a></tt>,
+<tt><a href="postconf.5.html#virtual_gid_maps">virtual_gid_maps</a></tt> and <tt><a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a></tt> (these
+specify UNIX process privileges or "<tt>/file/name</tt>" destinations).
+Typically, a memcache database is writable by any process that can
+talk to the memcache server; in contrast, security-sensitive tables
+must never be writable by the unprivileged Postfix user.  </p>
+
+<li> <p> The Postfix memcache client requires additional configuration
+when used as <a href="postscreen.8.html">postscreen(8)</a> or <a href="verify.8.html">verify(8)</a> cache.  For details see the
+<tt>backup</tt> and <tt>ttl</tt> parameter discussions in the
+<a href="memcache_table.5.html">memcache_table(5)</a> manual page. </p>
+
+</ul>
+
+<h2>Building Postfix with memcache support</h2>
+
+<p>The Postfix memcache client has no external dependencies,
+and is therefore built into Postfix by default. </p>
+
+<h2>Configuring memcache lookup tables</h2>
+
+<p> Configuration is described in the <a href="memcache_table.5.html">memcache_table(5)</a> manpage. </p>
+
+<h2>Credits</h2>
+
+<p> The first memcache client for Postfix was written by Omar Kilani,
+and was based on the libmemcache library. </p>
+
+<p> Wietse wrote the current memcache client from the ground up for
+Postfix version 2.9.  This implementation does not use libmemcache,
+and bears no resemblance to earlier work.  </p>
+
+</body>
+
+</html>

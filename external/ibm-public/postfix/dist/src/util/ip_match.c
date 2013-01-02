@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_match.c,v 1.1.1.1 2011/03/02 19:32:44 tron Exp $	*/
+/*	$NetBSD: ip_match.c,v 1.1.1.2 2013/01/02 18:59:13 tron Exp $	*/
 
 /*++
 /* NAME
@@ -447,7 +447,7 @@ char   *ip_match_parse(VSTRING *byte_codes, char *pattern)
      * Simplify this if we change to {} for wildcard notation.
      */
 #define FIND_TERMINATOR(start, cp) do { \
-	int _level = 1; \
+	int _level = 0; \
 	for (cp = (start) ; *cp; cp++) { \
 	    if (*cp == '[') _level++; \
 	    if (*cp != ']') continue; \

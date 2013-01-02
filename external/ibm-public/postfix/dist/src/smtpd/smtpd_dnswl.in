@@ -54,3 +54,7 @@ client example.tld 168.100.189.2
 rcpt rname@rdomain
 # Authorized destination - accept.
 rcpt wietse@porcupine.org
+# Numeric TLD - dunno.
+rcpt wietse@12345
+rcpt wietse@12345.porcupine.org
+rcpt wietse@porcupine.12345

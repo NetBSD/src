@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_session.c,v 1.1.1.1 2009/06/23 10:08:54 tron Exp $	*/
+/*	$NetBSD: smtp_session.c,v 1.1.1.2 2013/01/02 18:59:08 tron Exp $	*/
 
 /*++
 /* NAME
@@ -125,6 +125,7 @@
 #include <debug_peer.h>
 #include <mail_params.h>
 #include <maps.h>
+#include <smtp_stream.h>
 
 /* Application-specific. */
 
@@ -198,6 +199,8 @@ static void tls_site_lookup(int *site_level, const char *site_name,
 	    msg_warn("Table %s: ignoring unknown TLS policy '%s' for %s %s",
 		     var_smtp_tls_per_site, lookup, site_class, site_name);
 	}
+    } else if (tls_per_site->error) {
+	msg_fatal("%s lookup error for %s", tls_per_site->title, site_name);
     }
 }
 
@@ -222,6 +225,12 @@ static int tls_policy_lookup_one(SMTP_SESSION *session, int *site_level,
     if ((lookup = maps_find(tls_policy, site_name, 0)) == 0)
 	return (0);
 
+    if (tls_policy->error) {
+	msg_warn("%s: %s lookup error for %s",
+		 session->state->request->queue_id,
+		 tls_policy->title, site_name);
+	vstream_longjmp(session->stream, SMTP_ERR_DATA);
+    }
     if (cbuf == 0)
 	cbuf = vstring_alloc(10);
 

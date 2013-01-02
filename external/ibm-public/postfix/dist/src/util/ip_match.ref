@@ -53,3 +53,17 @@ Match 1.2.4.5: no
 Match 1.2.11.5: yes
 Match 1.2.12.5: no
 Match 1.2.11.6: no
+> [1;2].3.4.5 1.3.4.5 2.3.4.5 3.3.4.5
+Code: [1;2].3.4.5
+Match 1.3.4.5: yes
+Match 2.3.4.5: yes
+Match 3.3.4.5: no
+> [[1;2].3.4.5] 1.3.4.5 2.3.4.5 3.3.4.5
+Code: [1;2].3.4.5
+Match 1.3.4.5: yes
+Match 2.3.4.5: yes
+Match 3.3.4.5: no
+> [[1;2].3.4.5
+Error: missing "]" character
+> 1;2].3.4.5
+Error: need "." at "1>;<2].3.4.5"

@@ -1,4 +1,4 @@
-/*	$NetBSD: maps.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: maps.h,v 1.1.1.2 2013/01/02 18:58:59 tron Exp $	*/
 
 #ifndef _MAPS_H_INCLUDED_
 #define _MAPS_H_INCLUDED_
@@ -24,6 +24,7 @@
 typedef struct MAPS {
     char   *title;
     struct ARGV *argv;
+    int     error;			/* last request only */
 } MAPS;
 
 extern MAPS *maps_create(const char *, const char *, int);
