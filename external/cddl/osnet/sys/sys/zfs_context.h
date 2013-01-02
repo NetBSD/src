@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.12 2011/11/21 17:51:03 christos Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.13 2013/01/02 10:33:19 dsl Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -146,7 +146,7 @@ extern void vcmn_err(int, const char *, va_list); */
 	const TYPE __left = (TYPE)(LEFT); \
 	const TYPE __right = (TYPE)(RIGHT); \
 	if (!(__left OP __right)) { \
-		char *__buf = alloca(256); \
+		char __buf[256]; \
 		(void) snprintf(__buf, 256, "%s %s %s (0x%llx %s 0x%llx)", \
 			#LEFT, #OP, #RIGHT, \
 			(u_longlong_t)__left, #OP, (u_longlong_t)__right); \
