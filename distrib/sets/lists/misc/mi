@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.177 2012/09/15 17:33:28 plunky Exp $
+# $NetBSD: mi,v 1.178 2013/01/02 22:33:20 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -361,6 +361,7 @@
 ./usr/share/doc/html/postfix/mailq.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/master.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/master.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/memcache_table.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/motivation.html	misc-obsolete		obsolete
 ./usr/share/doc/html/postfix/mysql_table.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/newaliases.1.html	misc-postfix-htmldoc	postfix,doc
@@ -806,6 +807,7 @@
 ./usr/share/examples/postfix/LMTP_README	misc-obsolete	obsolete
 ./usr/share/examples/postfix/LOCAL_RECIPIENT_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MAILDROP_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/MEMCACHE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MILTER_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MULTI_INSTANCE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MYSQL_README	misc-postfix-examples	postfix,doc
