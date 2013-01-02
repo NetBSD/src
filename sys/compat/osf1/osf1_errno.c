@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_errno.c,v 1.5 2002/03/31 22:22:48 christos Exp $ */
+/* $NetBSD: osf1_errno.c,v 1.6 2013/01/02 18:48:22 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,10 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_errno.c,v 1.5 2002/03/31 22:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_errno.c,v 1.6 2013/01/02 18:48:22 dsl Exp $");
 
 #include <compat/osf1/osf1.h>
-#include <compat/osf1/osf1_cvt.h>
 
 /*
  * This table is used to translate NetBSD errnos to OSF/1 errnos
