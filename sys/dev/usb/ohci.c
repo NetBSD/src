@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.226 2012/12/23 17:00:13 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.227 2013/01/02 09:50:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.226 2012/12/23 17:00:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.227 2013/01/02 09:50:26 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3255,7 +3255,7 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 	return (USBD_IN_PROGRESS);
 }
 
-/* Abort a device control request. */
+/* Abort a device interrupt request. */
 Static void
 ohci_device_intr_abort(usbd_xfer_handle xfer)
 {
