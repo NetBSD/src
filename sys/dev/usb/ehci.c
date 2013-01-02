@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.193 2012/11/04 12:01:55 matt Exp $ */
+/*	$NetBSD: ehci.c,v 1.194 2013/01/02 09:49:14 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.193 2012/11/04 12:01:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.194 2013/01/02 09:49:14 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3393,8 +3393,10 @@ ehci_device_request(usbd_xfer_handle xfer)
 	sqh = epipe->sqh;
 	epipe->u.ctl.length = len;
 
-	/* Update device address and length since they may have changed
-	   during the setup of the control pipe in usbd_new_device(). */
+	/*
+	 * Update device address and length since they may have changed
+	 * during the setup of the control pipe in usbd_new_device().
+	 */
 	/* XXX This only needs to be done once, but it's too early in open. */
 	/* XXXX Should not touch ED here! */
 	sqh->qh.qh_endp =
