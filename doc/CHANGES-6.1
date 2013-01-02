@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.66 2012/12/17 00:32:05 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.67 2013/01/02 23:36:11 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -7899,4 +7899,16 @@ sys/compat/netbsd32/netbsd32_fs.c		1.64
 
 	Fix inverted error check.
 	[matt, ticket #756]
+
+sys/kern/vfs_wapbl.c				1.53-1.54
+
+	Coalesce writes to the journal to speed up wapbl_flush() on
+	raid5 by a factor of 3-4.
+	[hannken, ticket #758]
+
+sys/dev/sdmmc/sdhc.c				patch
+sys/dev/sdmmc/sdhcreg.h				patch
+
+	Support SDHC version 3 clocks.
+	[skrll, ticket #759]
 
