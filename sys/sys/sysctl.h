@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.204 2012/12/01 11:41:50 mbalmer Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.205 2013/01/02 19:29:40 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -69,6 +69,8 @@
  * identifiers are defined here, and other identifiers are defined in the
  * respective subsystem header files.
  */
+
+struct sysctlnode;
 
 #define	CTL_MAXNAME	12	/* largest number of components supported */
 #define SYSCTL_NAMELEN	32	/* longest name allowed for a node */
@@ -411,6 +413,8 @@ struct ki_ucred {
 	gid_t		cr_groups[NGROUPS];	/* groups */
 };
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
  */
@@ -434,14 +438,13 @@ struct kinfo_proc {
 		short	e_xrssize;		/* text rss */
 		short	e_xccount;		/* text references */
 		short	e_xswrss;
-		long	e_flag;
-#define	EPROC_CTTY	0x01	/* controlling tty vnode active */
-#define	EPROC_SLEADER	0x02	/* session leader */
+		long	e_flag;			/* see p_eflag  below */
 		char	e_login[MAXLOGNAME];	/* setlogin() name */
 		pid_t	e_sid;			/* session id */
 		long	e_spare[3];
 	} kp_eproc;
 };
+#endif /* defined(_KERNEL) || defined(_KMEMUSER) */
 
 /*
  * Convert pointer to 64 bit unsigned integer for struct
@@ -486,6 +489,8 @@ struct kinfo_proc2 {
 	uint64_t p_ru;			/* PTR: Exit information. XXX */
 
 	int32_t	p_eflag;		/* LONG: extra kinfo_proc2 flags */
+#define	EPROC_CTTY	0x01	/* controlling tty vnode active */
+#define	EPROC_SLEADER	0x02	/* session leader */
 	int32_t	p_exitsig;		/* INT: signal to sent to parent on exit */
 	int32_t	p_flag;			/* INT: P_* flags. */
 
