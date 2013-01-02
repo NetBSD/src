@@ -1,4 +1,4 @@
-/*	$NetBSD: vbuf.h,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: vbuf.h,v 1.1.1.2 2013/01/02 18:59:14 tron Exp $	*/
 
 #ifndef _VBUF_H_INCLUDED_
 #define _VBUF_H_INCLUDED_
@@ -61,11 +61,20 @@ struct VBUF {
  /*
   * Buffer status management.
   */
-#define	VBUF_FLAG_ERR	(1<<0)		/* some I/O error */
-#define VBUF_FLAG_EOF	(1<<1)		/* end of data */
-#define VBUF_FLAG_TIMEOUT (1<<2)	/* timeout error */
+#define VBUF_FLAG_RD_ERR	(1<<0)	/* read error */
+#define VBUF_FLAG_WR_ERR	(1<<1)	/* write error */
+#define VBUF_FLAG_ERR		(VBUF_FLAG_RD_ERR | VBUF_FLAG_WR_ERR)
+#define VBUF_FLAG_EOF		(1<<2)	/* end of data */
+#define VBUF_FLAG_RD_TIMEOUT	(1<<3)	/* read timeout */
+#define VBUF_FLAG_WR_TIMEOUT	(1<<4)	/* write timeout */
+#define VBUF_FLAG_TIMEOUT	(VBUF_FLAG_RD_TIMEOUT | VBUF_FLAG_WR_TIMEOUT)
 #define VBUF_FLAG_BAD	(VBUF_FLAG_ERR | VBUF_FLAG_EOF | VBUF_FLAG_TIMEOUT)
-#define VBUF_FLAG_FIXED	(1<<3)		/* fixed-size buffer */
+#define VBUF_FLAG_FIXED		(1<<5)	/* fixed-size buffer */
+
+#define vbuf_rd_error(v) ((v)->flags & (VBUF_FLAG_RD_ERR | VBUF_FLAG_RD_TIMEOUT))
+#define vbuf_wr_error(v) ((v)->flags & (VBUF_FLAG_WR_ERR | VBUF_FLAG_WR_TIMEOUT))
+#define vbuf_rd_timeout(v)	((v)->flags & VBUF_FLAG_RD_TIMEOUT)
+#define vbuf_wr_timeout(v)	((v)->flags & VBUF_FLAG_WR_TIMEOUT)
 
 #define vbuf_error(v)	((v)->flags & (VBUF_FLAG_ERR | VBUF_FLAG_TIMEOUT))
 #define vbuf_eof(v)	((v)->flags & VBUF_FLAG_EOF)

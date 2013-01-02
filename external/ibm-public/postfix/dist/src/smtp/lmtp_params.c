@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_params.c,v 1.1.1.3 2011/03/02 19:32:31 tron Exp $	*/
+/*	$NetBSD: lmtp_params.c,v 1.1.1.4 2013/01/02 18:59:07 tron Exp $	*/
 
     static const CONFIG_STR_TABLE lmtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
@@ -28,6 +28,7 @@
 	VAR_LMTP_TLS_CIPH, DEF_LMTP_TLS_CIPH, &var_smtp_tls_ciph, 1, 0,
 	VAR_LMTP_TLS_ECCERT_FILE, DEF_LMTP_TLS_ECCERT_FILE, &var_smtp_tls_eccert_file, 0, 0,
 	VAR_LMTP_TLS_ECKEY_FILE, DEF_LMTP_TLS_ECKEY_FILE, &var_smtp_tls_eckey_file, 0, 0,
+	VAR_LMTP_TLS_LOGLEVEL, DEF_LMTP_TLS_LOGLEVEL, &var_smtp_tls_loglevel, 0, 0,
 #endif
 	VAR_LMTP_SASL_MECHS, DEF_LMTP_SASL_MECHS, &var_smtp_sasl_mechs, 0, 0,
 	VAR_LMTP_SASL_TYPE, DEF_LMTP_SASL_TYPE, &var_smtp_sasl_type, 1, 0,
@@ -86,7 +87,6 @@
 	VAR_LMTP_MXSESS_LIMIT, DEF_LMTP_MXSESS_LIMIT, &var_smtp_mxsess_limit, 0, 0,
 #ifdef USE_TLS
 	VAR_LMTP_TLS_SCERT_VD, DEF_LMTP_TLS_SCERT_VD, &var_smtp_tls_scert_vd, 0, 0,
-	VAR_LMTP_TLS_LOGLEVEL, DEF_LMTP_TLS_LOGLEVEL, &var_smtp_tls_loglevel, 0, 0,
 #endif
 	0,
     };
@@ -110,5 +110,7 @@
 	VAR_LMTP_CNAME_OVERR, DEF_LMTP_CNAME_OVERR, &var_smtp_cname_overr,
 	VAR_LMTP_SASL_AUTH_SOFT_BOUNCE, DEF_LMTP_SASL_AUTH_SOFT_BOUNCE, &var_smtp_sasl_auth_soft_bounce,
 	VAR_LMTP_ASSUME_FINAL, DEF_LMTP_ASSUME_FINAL, &var_lmtp_assume_final,
+	VAR_LMTP_REC_DEADLINE, DEF_LMTP_REC_DEADLINE, &var_smtp_rec_deadline,
+	VAR_LMTP_DUMMY_MAIL_AUTH, DEF_LMTP_DUMMY_MAIL_AUTH, &var_smtp_dummy_mail_auth,
 	0,
     };

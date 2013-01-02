@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsproxy.c,v 1.1.1.2 2012/02/17 08:36:20 tron Exp $	*/
+/*	$NetBSD: tlsproxy.c,v 1.1.1.3 2013/01/02 18:59:10 tron Exp $	*/
 
 /*++
 /* NAME
@@ -104,7 +104,8 @@
 /*	List of ciphers or cipher types to exclude from the \fBtlsproxy\fR(8)
 /*	server cipher list at all TLS security levels.
 /* .IP "\fBtlsproxy_tls_fingerprint_digest ($smtpd_tls_fingerprint_digest)\fR"
-/*	The message digest algorithm used to construct client-certificate
+/*	The message digest algorithm to construct remote SMTP
+/*	client-certificate
 /*	fingerprints.
 /* .IP "\fBtlsproxy_tls_key_file ($smtpd_tls_key_file)\fR"
 /*	File with the Postfix \fBtlsproxy\fR(8) server RSA private key in PEM
@@ -140,10 +141,10 @@
 /*	These parameters are supported for compatibility with
 /*	\fBsmtpd\fR(8) legacy parameters.
 /* .IP "\fBtlsproxy_use_tls ($smtpd_use_tls)\fR"
-/*	Opportunistic TLS: announce STARTTLS support to SMTP clients,
+/*	Opportunistic TLS: announce STARTTLS support to remote SMTP clients,
 /*	but do not require that clients use TLS encryption.
 /* .IP "\fBtlsproxy_enforce_tls ($smtpd_enforce_tls)\fR"
-/*	Mandatory TLS: announce STARTTLS support to SMTP clients, and
+/*	Mandatory TLS: announce STARTTLS support to remote SMTP clients, and
 /*	require that clients use TLS encryption.
 /* RESOURCE CONTROLS
 /* .ad
@@ -231,7 +232,7 @@
   * avoid any confusion about which parameters are used by this program.
   */
 int     var_smtpd_tls_ccert_vd;
-int     var_smtpd_tls_loglevel;
+char   *var_smtpd_tls_loglevel;
 int     var_smtpd_tls_scache_timeout;
 bool    var_smtpd_use_tls;
 bool    var_smtpd_enforce_tls;
@@ -260,7 +261,7 @@ char   *var_smtpd_tls_fpt_dgst;
 char   *var_smtpd_tls_level;
 
 int     var_tlsp_tls_ccert_vd;
-int     var_tlsp_tls_loglevel;
+char   *var_tlsp_tls_loglevel;
 int     var_tlsp_tls_scache_timeout;
 bool    var_tlsp_use_tls;
 bool    var_tlsp_enforce_tls;
@@ -690,11 +691,10 @@ static void tlsp_start_tls(TLSP_STATE *state)
 			 ctx = tlsp_server_ctx,
 			 stream = (VSTREAM *) 0,/* unused */
 			 fd = state->ciphertext_fd,
-			 log_level = var_tlsp_tls_loglevel,
 			 timeout = 0,		/* unused */
 			 requirecert = (var_tlsp_tls_req_ccert
 					&& var_tlsp_enforce_tls),
-			 serverid = MAIL_SERVICE_SMTPD,	/* XXX */
+			 serverid = state->server_id,
 			 namaddr = state->remote_endpt,
 			 cipher_grade = cipher_grade,
 			 cipher_exclusions = STR(cipher_exclusions),
@@ -777,6 +777,7 @@ static void tlsp_get_request_event(int event, char *context)
     VSTREAM *plaintext_stream = state->plaintext_stream;
     int     plaintext_fd = vstream_fileno(plaintext_stream);
     static VSTRING *remote_endpt;
+    static VSTRING *server_id;
     int     req_flags;
     int     timeout;
     int     ready;
@@ -784,8 +785,10 @@ static void tlsp_get_request_event(int event, char *context)
     /*
      * One-time initialization.
      */
-    if (remote_endpt == 0)
+    if (remote_endpt == 0) {
 	remote_endpt = vstring_alloc(10);
+	server_id = vstring_alloc(10);
+    }
 
     /*
      * At this point we still manually manage plaintext read/write/timeout
@@ -805,7 +808,8 @@ static void tlsp_get_request_event(int event, char *context)
 		     ATTR_TYPE_STR, MAIL_ATTR_REMOTE_ENDPT, remote_endpt,
 		     ATTR_TYPE_INT, MAIL_ATTR_FLAGS, &req_flags,
 		     ATTR_TYPE_INT, MAIL_ATTR_TIMEOUT, &timeout,
-		     ATTR_TYPE_END) != 3) {
+		     ATTR_TYPE_STR, MAIL_ATTR_SERVER_ID, server_id,
+		     ATTR_TYPE_END) != 4) {
 	msg_warn("%s: receive request attributes: %m", myname);
 	event_disable_readwrite(plaintext_fd);
 	tlsp_state_free(state);
@@ -837,6 +841,7 @@ static void tlsp_get_request_event(int event, char *context)
      */
     else {
 	state->remote_endpt = mystrdup(STR(remote_endpt));
+	state->server_id = mystrdup(STR(server_id));
 	msg_info("CONNECT %s %s",
 		 (req_flags & TLS_PROXY_FLAG_ROLE_SERVER) ? "from" :
 		 (req_flags & TLS_PROXY_FLAG_ROLE_CLIENT) ? "to" :
@@ -965,6 +970,7 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
 	 */
 	tlsp_server_ctx =
 	    TLS_SERVER_INIT(&props,
+			    log_param = VAR_TLSP_TLS_LOGLEVEL,
 			    log_level = var_tlsp_tls_loglevel,
 			    verifydepth = var_tlsp_tls_ccert_vd,
 			    cache_type = TLS_MGR_SCACHE_SMTPD,
@@ -1019,12 +1025,10 @@ int     main(int argc, char **argv)
 {
     static const CONFIG_INT_TABLE int_table[] = {
 	VAR_SMTPD_TLS_CCERT_VD, DEF_SMTPD_TLS_CCERT_VD, &var_smtpd_tls_ccert_vd, 0, 0,
-	VAR_SMTPD_TLS_LOGLEVEL, DEF_SMTPD_TLS_LOGLEVEL, &var_smtpd_tls_loglevel, 0, 0,
 	0,
     };
     static const CONFIG_NINT_TABLE nint_table[] = {
 	VAR_TLSP_TLS_CCERT_VD, DEF_TLSP_TLS_CCERT_VD, &var_tlsp_tls_ccert_vd, 0, 0,
-	VAR_TLSP_TLS_LOGLEVEL, DEF_TLSP_TLS_LOGLEVEL, &var_tlsp_tls_loglevel, 0, 0,
 	0,
     };
     static const CONFIG_TIME_TABLE time_table[] = {
@@ -1068,6 +1072,7 @@ int     main(int argc, char **argv)
 	VAR_SMTPD_TLS_1024_FILE, DEF_SMTPD_TLS_1024_FILE, &var_smtpd_tls_dh1024_param_file, 0, 0,
 	VAR_SMTPD_TLS_EECDH, DEF_SMTPD_TLS_EECDH, &var_smtpd_tls_eecdh, 1, 0,
 	VAR_SMTPD_TLS_FPT_DGST, DEF_SMTPD_TLS_FPT_DGST, &var_smtpd_tls_fpt_dgst, 1, 0,
+	VAR_SMTPD_TLS_LOGLEVEL, DEF_SMTPD_TLS_LOGLEVEL, &var_smtpd_tls_loglevel, 0, 0,
 	VAR_SMTPD_TLS_LEVEL, DEF_SMTPD_TLS_LEVEL, &var_smtpd_tls_level, 0, 0,
 	VAR_TLSP_TLS_CERT_FILE, DEF_TLSP_TLS_CERT_FILE, &var_tlsp_tls_cert_file, 0, 0,
 	VAR_TLSP_TLS_KEY_FILE, DEF_TLSP_TLS_KEY_FILE, &var_tlsp_tls_key_file, 0, 0,
@@ -1087,6 +1092,7 @@ int     main(int argc, char **argv)
 	VAR_TLSP_TLS_1024_FILE, DEF_TLSP_TLS_1024_FILE, &var_tlsp_tls_dh1024_param_file, 0, 0,
 	VAR_TLSP_TLS_EECDH, DEF_TLSP_TLS_EECDH, &var_tlsp_tls_eecdh, 1, 0,
 	VAR_TLSP_TLS_FPT_DGST, DEF_TLSP_TLS_FPT_DGST, &var_tlsp_tls_fpt_dgst, 1, 0,
+	VAR_TLSP_TLS_LOGLEVEL, DEF_TLSP_TLS_LOGLEVEL, &var_tlsp_tls_loglevel, 0, 0,
 	VAR_TLSP_TLS_LEVEL, DEF_TLSP_TLS_LEVEL, &var_tlsp_tls_level, 0, 0,
 	0,
     };

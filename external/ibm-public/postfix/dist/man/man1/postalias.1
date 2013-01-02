@@ -1,4 +1,4 @@
-.\"	$NetBSD: postalias.1,v 1.1.1.1 2009/06/23 10:08:32 tron Exp $
+.\"	$NetBSD: postalias.1,v 1.1.1.2 2013/01/02 18:58:43 tron Exp $
 .\"
 .TH POSTALIAS 1 
 .ad
@@ -129,6 +129,10 @@ This is available on systems with support for \fBdbm\fR databases.
 .IP \fBhash\fR
 The output is a hashed file, named \fIfile_name\fB.db\fR.
 This is available on systems with support for \fBdb\fR databases.
+.IP \fBfail\fR
+A table that reliably fails all requests. The lookup table
+name is used for logging only. This table exists to simplify
+Postfix error tests.
 .IP \fBsdbm\fR
 The output consists of two files, named \fIfile_name\fB.pag\fR and
 \fIfile_name\fB.dir\fR.

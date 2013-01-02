@@ -103,6 +103,9 @@
 #	The service name is a pathname relative to the Postfix
 #	queue directory (pathname controlled with the \fBqueue_directory\fR
 #	configuration parameter in main.cf).
+# .sp
+#	On Solaris systems the \fBpass\fR type is implemented with
+#	streams sockets.
 #
 #	This feature is available as of Postfix version 2.5.
 # .RE

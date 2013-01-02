@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_verify.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls_verify.c,v 1.1.1.2 2013/01/02 18:59:05 tron Exp $	*/
 
 /*++
 /* NAME
@@ -199,7 +199,7 @@ int     tls_verify_certificate_callback(int ok, X509_STORE_CTX *ctx)
 	ok = 0;
 	X509_STORE_CTX_set_error(ctx, X509_V_ERR_CERT_CHAIN_TOO_LONG);
     }
-    if (TLScontext->log_level >= 2) {
+    if (TLScontext->log_mask & TLS_LOG_VERBOSE) {
 	X509_NAME_oneline(X509_get_subject_name(cert), buf, sizeof(buf));
 	msg_info("%s: certificate verification depth=%d verify=%d subject=%s",
 		 TLScontext->namaddr, depth, ok, printable(buf, '?'));
@@ -208,13 +208,13 @@ int     tls_verify_certificate_callback(int ok, X509_STORE_CTX *ctx)
     /*
      * If no errors, or we are not logging verification errors, we are done.
      */
-    if (ok || (TLScontext->peer_status & TLS_CERT_FLAG_LOGGED) != 0)
+    if (ok || (TLScontext->log_mask & TLS_LOG_UNTRUSTED) == 0)
 	return (1);
 
     /*
      * One counter-example is enough.
      */
-    TLScontext->peer_status |= TLS_CERT_FLAG_LOGGED;
+    TLScontext->log_mask &= ~TLS_LOG_UNTRUSTED;
 
 #define PURPOSE ((depth>0) ? "CA": TLScontext->am_server ? "client": "server")
 
@@ -492,9 +492,12 @@ char   *tls_issuer_CN(X509 *peer, const TLS_SESS_STATE *TLScontext)
     return (cn ? cn : mystrdup(""));
 }
 
-/* tls_fingerprint - extract fingerprint from certificate */
+typedef int (*x509_dgst_cb) (const X509 *, const EVP_MD *, unsigned char *, unsigned int *);
 
-char   *tls_fingerprint(X509 *peercert, const char *dgst)
+/* tls_fprint - extract cert or pkey fingerprint from certificate */
+
+static char *tls_fprint(X509 *peercert, x509_dgst_cb x509_dgst,
+			        const char *dgst)
 {
     const char *myname = "tls_fingerprint";
     const EVP_MD *md_alg;
@@ -508,7 +511,7 @@ char   *tls_fingerprint(X509 *peercert, const char *dgst)
 	msg_panic("%s: digest algorithm \"%s\" not found", myname, dgst);
 
     /* Fails when serialization to ASN.1 runs out of memory */
-    if (X509_digest(peercert, md_alg, md_buf, &md_len) == 0)
+    if (x509_dgst(peercert, md_alg, md_buf, &md_len) == 0)
 	msg_fatal("%s: error computing certificate %s digest (out of memory?)",
 		  myname, dgst);
 
@@ -524,6 +527,20 @@ char   *tls_fingerprint(X509 *peercert, const char *dgst)
 	result[(i * 3) + 2] = (i + 1 != md_len) ? ':' : '\0';
     }
     return (result);
+}
+
+/* tls_fingerprint - extract certificate fingerprint */
+
+char   *tls_fingerprint(X509 *peercert, const char *dgst)
+{
+    return (tls_fprint(peercert, X509_digest, dgst));
+}
+
+/* tls_pkey_fprint - extract public key fingerprint from certificate */
+
+char   *tls_pkey_fprint(X509 *peercert, const char *dgst)
+{
+    return (tls_fprint(peercert, X509_pubkey_digest, dgst));
 }
 
 #endif
