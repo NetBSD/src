@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.32 2012/08/29 17:13:23 drochner Exp $	*/
+/*	$NetBSD: i386.c,v 1.33 2013/01/02 19:24:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,13 +57,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.32 2012/08/29 17:13:23 drochner Exp $");
+__RCSID("$NetBSD: i386.c,v 1.33 2013/01/02 19:24:30 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/bitops.h>
 #include <sys/sysctl.h>
+#include <sys/ioctl.h>
 #include <sys/cpuio.h>
 
 #include <string.h>
