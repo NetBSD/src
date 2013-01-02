@@ -843,7 +843,7 @@ Node *unary(Node *np)
  * to nelson beebe for the suggestion; let's see if it works everywhere.
  */
 
-#define HAS_ISBLANK
+/* #define HAS_ISBLANK */
 
 static const struct charclass {
 	const char *cc_name;
