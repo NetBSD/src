@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/03/02 22:24:56 tron Exp $
+#	$NetBSD: Makefile,v 1.4 2013/01/02 19:45:49 tron Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -15,16 +15,18 @@ PROG=	postconf
 DIST=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist/src/${PROG}
 .PATH:	${DIST}
 
-PSRCS=	postconf.c
-GENSRCS=bool_table.h bool_vars.h int_table.h int_vars.h nbool_table.h \
-	nbool_vars.h nint_table.h nint_vars.h str_table.h str_vars.h \
-	time_table.h time_vars.h raw_table.h raw_vars.h
-AUTOSRCS=auto_table.h auto_vars.h
+PSRCS=	postconf.c postconf_builtin.c postconf_dbms.c postconf_edit.c \
+	postconf_main.c postconf_master.c postconf_misc.c postconf_node.c \
+	postconf_other.c postconf_service.c postconf_unused.c postconf_user.c
+GENSRCS=bool_table.h bool_vars.h int_table.h int_vars.h str_table.h \
+	str_vars.h time_table.h time_vars.h raw_table.h raw_vars.h \
+	nint_table.h nint_vars.h nbool_table.h nbool_vars.h long_table.h \
+	long_vars.h
 
-SRCS=	${PSRCS} ${GENSRCS} ${AUTOSRCS}
-DPSRCS=	${GENSRCS} ${AUTOSRCS}
+SRCS=	${PSRCS} ${GENSRCS}
+DPSRCS=	${GENSRCS}
 
-CLEANFILES+= ${GENSRCS} ${AUTOSRCS}
+CLEANFILES+= ${GENSRCS}
 
 CPPFLAGS+= -I.
 
@@ -38,8 +40,5 @@ postconf-hdrs.stamp: ${DIST}/../global/mail_params.h ${DIST}/../global/mail_para
 	rm -f ${.TARGET}
 	${TOOL_AWK} -f ${DIST}/extract.awk ${DIST}/../*/*.c | ${HOST_SH} -
 	touch ${.TARGET}
-
-auto_table.h auto_vars.h: ${DIST}/auto.awk
-	${TOOL_AWK} -f ${DIST}/auto.awk
 
 .include <bsd.prog.mk>
