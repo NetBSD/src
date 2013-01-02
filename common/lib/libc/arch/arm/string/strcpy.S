@@ -29,14 +29,21 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcpy.S,v 1.1 2013/01/02 05:54:58 matt Exp $")
+RCSID("$NetBSD: strcpy.S,v 1.2 2013/01/02 15:38:03 matt Exp $")
 
 #ifdef STRLCPY
+#ifdef _LIBC
+WEAK_ALIAS(strlcpy, _strlcpy)
+#endif
 #define	FUNCNAME	strlcpy
 #elif defined(STRNCPY)
 #define	FUNCNAME	strncpy
 #else
 #define	FUNCNAME	strcpy
+#endif
+
+#ifdef _LIBC
+#include "namespace.h"
 #endif
 
 #ifdef __ARMEL__
@@ -80,7 +87,7 @@ ENTRY(FUNCNAME)
 	moveq	r3, #0			/*   = 1? load NUL */
 	streqb	r3, [r0]		/*   = 1? write NUL to dst */
 	mov	r0, r1			/* move src to r0 */
-	b	_C_LABEL(strlen)	/* and tailcall strlen */
+	b	PLT_SYM(_C_LABEL(strlen)) /* and tailcall strlen */
 1:
 	sub	r2, r2, #1		/* leave one byte for NUL */
 #endif
@@ -376,6 +383,7 @@ ENTRY(FUNCNAME)
 	strb	ip, [r0]		/*   yes, write trailing NUL */
 	b	.Lend_of_string		/*   yes, and we are the end */
 1:
+#endif
 #if defined(STRLCPY) || defined(STRNCPY)
 	cmp	r2, ip, lsr #3		/* is there enough room? */
 	movlt	ip, r2, lsl #3		/*   no, only fill remaining space */
@@ -491,7 +499,7 @@ ENTRY(FUNCNAME)
 	cmp	r2, #16			/* some, but not a lot? */
 	ble	1f
 	mov	r4, lr			/* preserve lr */
-	bl	_C_LABEL(memset)	/*   yes, and let memset do it */
+	bl	PLT_SYM(_C_LABEL(memset)) /*   yes, and let memset do it */
 	mov	lr, r4			/* restore lr */
 	b	3f			/* return */
 1:	add	ip, r0, r2		/* calculate stopping point */
