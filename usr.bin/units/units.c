@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.22 2013/01/01 12:45:06 apb Exp $	*/
+/*	$NetBSD: units.c,v 1.23 2013/01/02 14:05:04 apb Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -771,7 +771,7 @@ listunits(int expand)
 			 * will be interpreted as multiplication.
 			 */
 			initializeunit(&theunit);
-			if (addunit(&theunit, thedefn/*XXX*/, 0) != 0
+			if (addunit(&theunit, thename, 0) != 0
 			    || completereduce(&theunit) != 0) {
 				errors++;
 				printexpansion = 0;
