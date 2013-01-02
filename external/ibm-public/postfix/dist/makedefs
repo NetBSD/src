@@ -25,6 +25,8 @@
 #	\fIinclude\fR directory.
 #	The following directives are special:
 # .RS
+# .IP \fB-DNO_DB\fR
+#	Do not build with Berkeley DB support.
 # .IP \fB-DNO_DEVPOLL\fR
 #	Do not build with Solaris /dev/poll support.
 #	By default, /dev/poll support is compiled in on platforms that
@@ -44,10 +46,15 @@
 #	Do not build with FreeBSD/NetBSD/OpenBSD/MacOSX KQUEUE support.
 #	By default, KQUEUE support is compiled in on platforms that
 #	are known to support it.
+# .IP \fB-DNO_NIS\fR
+#	Do not build with NIS or NISPLUS support. Support for NIS
+#	is unavailable on some recent Linux and Solaris distributions.
 # .IP \fB-DNO_PCRE\fR
 #	Do not build with PCRE support.
 #	By default, PCRE support is compiled in when the \fBpcre-config\fR
 #	utility is installed.
+# .IP \fB-DNO_POSIX_GETPW_R\fR
+#	Disable support for POSIX getpwnam_r/getpwuid_r.
 # .IP \fB-DNO_SIGSETJMP\fR
 #	Use setjmp()/longjmp() instead of sigsetjmp()/siglongjmp().
 #	By default, Postfix uses sigsetjmp()/siglongjmp() when they
@@ -190,9 +197,9 @@ case "$SYSTEM.$RELEASE" in
 		SYSLIBS="-lresolv -lsocket -lnsl"
 		# Stock awk breaks with >10 files.
 		test -x /usr/xpg4/bin/awk && AWK=/usr/xpg4/bin/awk
-		# Solaris 2.5 added usleep() and POSIX regular expressions
+		# Solaris 2.5 added usleep(), POSIX regexp, POSIX getpwnam/uid_r
 		case $RELEASE in
-		    5.[0-4]) CCARGS="$CCARGS -DMISSING_USLEEP -DNO_POSIX_REGEXP";;
+		    5.[0-4]) CCARGS="$CCARGS -DMISSING_USLEEP -DNO_POSIX_REGEXP -DNO_POSIX_GETPW_R";;
 		esac
 		# Solaris 8 added IPv6 and /dev/poll
 		case $RELEASE in
@@ -459,6 +466,10 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
 		case $RELEASE in
 		 [1-6].*) CCARGS="$CCARGS -DNO_IPV6";;
 		       *) CCARGS="$CCARGS -DBIND_8_COMPAT -DNO_NETINFO";;
+		esac
+		# Darwin 9.0 (MacOS X 10.5) adds POSIX getpwnam_r/getpwuid_r
+		case $RELEASE in
+		 [1-8].*) CCARGS="$CCARGS -DNO_POSIX_GETPW_R";;
 		esac
 		# Darwin 10.3.0 no longer has <nameser8_compat.h>.
 		case $RELEASE in
