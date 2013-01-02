@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.51.2.1 2012/05/07 03:01:13 riz Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.51.2.2 2013/01/02 23:23:15 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.51.2.1 2012/05/07 03:01:13 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.51.2.2 2013/01/02 23:23:15 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -184,6 +184,10 @@ struct wapbl {
 
 	SIMPLEQ_HEAD(, wapbl_entry) wl_entries; /* On disk transaction
 						   accounting */
+
+	u_char *wl_buffer;	/* l:   buffer for wapbl_buffered_write() */
+	daddr_t wl_buffer_dblk;	/* l:   buffer disk block address */
+	size_t wl_buffer_used;	/* l:   buffer current use */
 };
 
 #ifdef WAPBL_DEBUG_PRINT
@@ -489,6 +493,9 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	wl->wl_dealloclens = wapbl_alloc(sizeof(*wl->wl_dealloclens) *
 	    wl->wl_dealloclim);
 
+	wl->wl_buffer = wapbl_alloc(MAXPHYS);
+	wl->wl_buffer_used = 0;
+
 	wapbl_inodetrk_init(wl, WAPBL_INODETRK_SIZE);
 
 	/* Initialize the commit header */
@@ -537,6 +544,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	    sizeof(*wl->wl_deallocblks) * wl->wl_dealloclim);
 	wapbl_free(wl->wl_dealloclens,
 	    sizeof(*wl->wl_dealloclens) * wl->wl_dealloclim);
+	wapbl_free(wl->wl_buffer, MAXPHYS);
 	wapbl_inodetrk_free(wl);
 	wapbl_free(wl, sizeof(*wl));
 
@@ -716,6 +724,7 @@ wapbl_stop(struct wapbl *wl, int force)
 	    sizeof(*wl->wl_deallocblks) * wl->wl_dealloclim);
 	wapbl_free(wl->wl_dealloclens,
 	    sizeof(*wl->wl_dealloclens) * wl->wl_dealloclim);
+	wapbl_free(wl->wl_buffer, MAXPHYS);
 	wapbl_inodetrk_free(wl);
 
 	cv_destroy(&wl->wl_reclaimable_cv);
@@ -791,6 +800,81 @@ wapbl_read(void *data, size_t len, struct vnode *devvp, daddr_t pbn)
 }
 
 /*
+ * Flush buffered data if any.
+ */
+static int
+wapbl_buffered_flush(struct wapbl *wl)
+{
+	int error;
+
+	if (wl->wl_buffer_used == 0)
+		return 0;
+
+	error = wapbl_doio(wl->wl_buffer, wl->wl_buffer_used,
+	    wl->wl_devvp, wl->wl_buffer_dblk, B_WRITE);
+	wl->wl_buffer_used = 0;
+
+	return error;
+}
+
+/*
+ * Write data to the log.
+ * Try to coalesce writes and emit MAXPHYS aligned blocks.
+ */
+static int
+wapbl_buffered_write(void *data, size_t len, struct wapbl *wl, daddr_t pbn)
+{
+	int error;
+	size_t resid;
+
+	/*
+	 * If not adjacent to buffered data flush first.  Disk block
+	 * address is always valid for non-empty buffer.
+	 */
+	if (wl->wl_buffer_used > 0 &&
+	    pbn != wl->wl_buffer_dblk + btodb(wl->wl_buffer_used)) {
+		error = wapbl_buffered_flush(wl);
+		if (error)
+			return error;
+	}
+	/*
+	 * If this write goes to an empty buffer we have to
+	 * save the disk block address first.
+	 */
+	if (wl->wl_buffer_used == 0)
+		wl->wl_buffer_dblk = pbn;
+	/*
+	 * Remaining space so this buffer ends on a MAXPHYS boundary.
+	 *
+	 * Cannot become less or equal zero as the buffer would have been
+	 * flushed on the last call then.
+	 */
+	resid = MAXPHYS - dbtob(wl->wl_buffer_dblk % btodb(MAXPHYS)) -
+	    wl->wl_buffer_used;
+	KASSERT(resid > 0);
+	KASSERT(dbtob(btodb(resid)) == resid);
+	if (len >= resid) {
+		memcpy(wl->wl_buffer + wl->wl_buffer_used, data, resid);
+		wl->wl_buffer_used += resid;
+		error = wapbl_doio(wl->wl_buffer, wl->wl_buffer_used,
+		    wl->wl_devvp, wl->wl_buffer_dblk, B_WRITE);
+		data = (uint8_t *)data + resid;
+		len -= resid;
+		wl->wl_buffer_dblk = pbn + btodb(resid);
+		wl->wl_buffer_used = 0;
+		if (error)
+			return error;
+	}
+	KASSERT(len < MAXPHYS);
+	if (len > 0) {
+		memcpy(wl->wl_buffer + wl->wl_buffer_used, data, len);
+		wl->wl_buffer_used += len;
+	}
+
+	return 0;
+}
+
+/*
  * Off is byte offset returns new offset for next write
  * handles log wraparound
  */
@@ -813,7 +897,7 @@ wapbl_circ_write(struct wapbl *wl, void *data, size_t len, off_t *offp)
 #ifdef _KERNEL
 		pbn = btodb(pbn << wl->wl_log_dev_bshift);
 #endif
-		error = wapbl_write(data, slen, wl->wl_devvp, pbn);
+		error = wapbl_buffered_write(data, slen, wl, pbn);
 		if (error)
 			return error;
 		data = (uint8_t *)data + slen;
@@ -824,7 +908,7 @@ wapbl_circ_write(struct wapbl *wl, void *data, size_t len, off_t *offp)
 #ifdef _KERNEL
 	pbn = btodb(pbn << wl->wl_log_dev_bshift);
 #endif
-	error = wapbl_write(data, len, wl->wl_devvp, pbn);
+	error = wapbl_buffered_write(data, len, wl, pbn);
 	if (error)
 		return error;
 	off += len;
@@ -1224,6 +1308,9 @@ wapbl_biodone(struct buf *bp)
 {
 	struct wapbl_entry *we = bp->b_private;
 	struct wapbl *wl = we->we_wapbl;
+#ifdef WAPBL_DEBUG_BUFBYTES
+	const int bufsize = bp->b_bufsize;
+#endif
 
 	/*
 	 * Handle possible flushing of buffers after log has been
@@ -1233,8 +1320,8 @@ wapbl_biodone(struct buf *bp)
 		KASSERT(we->we_bufcount > 0);
 		we->we_bufcount--;
 #ifdef WAPBL_DEBUG_BUFBYTES
-		KASSERT(we->we_unsynced_bufbytes >= bp->b_bufsize);
-		we->we_unsynced_bufbytes -= bp->b_bufsize;
+		KASSERT(we->we_unsynced_bufbytes >= bufsize);
+		we->we_unsynced_bufbytes -= bufsize;
 #endif
 
 		if (we->we_bufcount == 0) {
@@ -1300,15 +1387,22 @@ wapbl_biodone(struct buf *bp)
 #endif
 	}
 
+	/*
+	 * Release the buffer here. wapbl_flush() may wait for the
+	 * log to become empty and we better unbusy the buffer before
+	 * wapbl_flush() returns.
+	 */
+	brelse(bp, 0);
+
 	mutex_enter(&wl->wl_mtx);
 
 	KASSERT(we->we_bufcount > 0);
 	we->we_bufcount--;
 #ifdef WAPBL_DEBUG_BUFBYTES
-	KASSERT(we->we_unsynced_bufbytes >= bp->b_bufsize);
-	we->we_unsynced_bufbytes -= bp->b_bufsize;
-	KASSERT(wl->wl_unsynced_bufbytes >= bp->b_bufsize);
-	wl->wl_unsynced_bufbytes -= bp->b_bufsize;
+	KASSERT(we->we_unsynced_bufbytes >= bufsize);
+	we->we_unsynced_bufbytes -= bufsize;
+	KASSERT(wl->wl_unsynced_bufbytes >= bufsize);
+	wl->wl_unsynced_bufbytes -= bufsize;
 #endif
 
 	/*
@@ -1345,7 +1439,6 @@ wapbl_biodone(struct buf *bp)
 	}
 
 	mutex_exit(&wl->wl_mtx);
-	brelse(bp, 0);
 }
 
 /*
@@ -1958,6 +2051,9 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	int error;
 	daddr_t pbn;
 
+	error = wapbl_buffered_flush(wl);
+	if (error)
+		return error;
 	/*
 	 * flush disk cache to ensure that blocks we've written are actually
 	 * written to the stable storage before the commit header.
@@ -1989,7 +2085,10 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 #ifdef _KERNEL
 	pbn = btodb(pbn << wc->wc_log_dev_bshift);
 #endif
-	error = wapbl_write(wc, wc->wc_len, wl->wl_devvp, pbn);
+	error = wapbl_buffered_write(wc, wc->wc_len, wl, pbn);
+	if (error)
+		return error;
+	error = wapbl_buffered_flush(wl);
 	if (error)
 		return error;
 
