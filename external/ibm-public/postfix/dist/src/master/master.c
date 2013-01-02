@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
+/*	$NetBSD: master.c,v 1.1.1.2 2013/01/02 18:59:01 tron Exp $	*/
 
 /*++
 /* NAME
@@ -116,7 +116,7 @@
 /* .IP "\fBinet_interfaces (all)\fR"
 /*	The network interface addresses that this mail system receives
 /*	mail on.
-/* .IP "\fBinet_protocols (ipv4)\fR"
+/* .IP "\fBinet_protocols (all)\fR"
 /*	The Internet protocols Postfix will attempt to use when making
 /*	or accepting connections.
 /* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
@@ -152,7 +152,7 @@
 /*	qmgr(8), queue manager
 /*	verify(8), address verification
 /*	master(5), master.cf configuration file syntax
-/*	postconf(5), main.cf configuration parameter syntax
+/*	postconf(5), main.cf configuration file syntax
 /*	syslogd(8), system logging
 /* LICENSE
 /* .ad
@@ -294,6 +294,11 @@ int     main(int argc, char **argv)
      * Initialize logging and exit handler.
      */
     msg_syslog_init(mail_task(var_procname), LOG_PID, LOG_FACILITY);
+
+    /*
+     * Check the Postfix library version as soon as we enable logging.
+     */
+    MAIL_VERSION_CHECK;
 
     /*
      * The mail system must be run by the superuser so it can revoke

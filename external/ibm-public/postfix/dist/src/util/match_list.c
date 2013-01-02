@@ -1,4 +1,4 @@
-/*	$NetBSD: match_list.c,v 1.1.1.2 2010/06/17 18:07:14 tron Exp $	*/
+/*	$NetBSD: match_list.c,v 1.1.1.3 2013/01/02 18:59:13 tron Exp $	*/
 
 /*++
 /* NAME
@@ -37,6 +37,10 @@
 /*	The hostname pattern foo.com matches any name within the domain
 /*	foo.com. If this flag is cleared, foo.com matches itself
 /*	only, and .foo.com matches any name below the domain foo.com.
+/* .IP MATCH_FLAG_RETURN
+/*	Request that match_list_match() logs a warning and returns
+/*	zero (with list->error set to a non-zero dictionary error
+/*	code) instead of raising a fatal run-time error.
 /* .RE
 /*	Specify MATCH_FLAG_NONE to request none of the above.
 /*	The pattern_list argument specifies a list of patterns.  The third
@@ -50,7 +54,7 @@
 /*	match_list_free() releases storage allocated by match_list_init().
 /* DIAGNOSTICS
 /*	Fatal error: unable to open or read a match_list file; invalid
-/*	match_list pattern.
+/*	match_list pattern. 
 /* SEE ALSO
 /*	host_match(3) match hosts by name or by address
 /* LICENSE
@@ -83,18 +87,9 @@
 #include <stringops.h>
 #include <argv.h>
 #include <dict.h>
-#include <match_ops.h>
 #include <match_list.h>
 
 /* Application-specific */
-
-struct MATCH_LIST {
-    int     flags;			/* processing options */
-    ARGV   *patterns;			/* one pattern each */
-    int     match_count;		/* match function/argument count */
-    MATCH_LIST_FN *match_func;		/* match functions */
-    const char **match_args;		/* match arguments */
-};
 
 #define MATCH_DICTIONARY(pattern) \
     ((pattern)[0] != '[' && strchr((pattern), ':') != 0)
@@ -113,6 +108,10 @@ static ARGV *match_list_parse(ARGV *list, char *string, int init_match)
     char   *map_type_name_flags;
     int     match;
 
+#define OPEN_FLAGS	O_RDONLY
+#define DICT_FLAGS	(DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX)
+#define STR(x)		vstring_str(x)
+
     /*
      * /filename contents are expanded in-line. To support !/filename we
      * prepend the negation operator to each item from the file.
@@ -120,7 +119,7 @@ static ARGV *match_list_parse(ARGV *list, char *string, int init_match)
     while ((start = mystrtok(&bp, delim)) != 0) {
 	if (*start == '#') {
 	    msg_warn("%s: comment at end of line is not supported: %s %s",
-		      myname, start, bp);
+		     myname, start, bp);
 	    break;
 	}
 	for (match = init_match, item = start; *item == '!'; item++)
@@ -128,20 +127,27 @@ static ARGV *match_list_parse(ARGV *list, char *string, int init_match)
 	if (*item == 0)
 	    msg_fatal("%s: no pattern after '!'", myname);
 	if (*item == '/') {			/* /file/name */
-	    if ((fp = vstream_fopen(item, O_RDONLY, 0)) == 0)
-		msg_fatal("%s: open file %s: %m", myname, item);
-	    while (vstring_fgets(buf, fp))
-		if (vstring_str(buf)[0] != '#')
-		    list = match_list_parse(list, vstring_str(buf), match);
-	    if (vstream_fclose(fp))
-		msg_fatal("%s: read file %s: %m", myname, item);
+	    if ((fp = vstream_fopen(item, O_RDONLY, 0)) == 0) {
+		vstring_sprintf(buf, "%s:%s", DICT_TYPE_NOFILE, item);
+		/* XXX Should increment existing map refcount. */
+		if (dict_handle(STR(buf)) == 0)
+		    dict_register(STR(buf),
+				  dict_surrogate(DICT_TYPE_NOFILE, item,
+						 OPEN_FLAGS, DICT_FLAGS,
+						 "open file %s: %m", item));
+		argv_add(list, STR(buf), (char *) 0);
+	    } else {
+		while (vstring_fgets(buf, fp))
+		    if (vstring_str(buf)[0] != '#')
+			list = match_list_parse(list, vstring_str(buf), match);
+		if (vstream_fclose(fp))
+		    msg_fatal("%s: read file %s: %m", myname, item);
+	    }
 	} else if (MATCH_DICTIONARY(item)) {	/* type:table */
-#define OPEN_FLAGS	O_RDONLY
-#define DICT_FLAGS	(DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX)
-#define STR(x)		vstring_str(x)
 	    vstring_sprintf(buf, "%s%s(%o,%s)", match ? "" : "!",
 			    item, OPEN_FLAGS, dict_flags_str(DICT_FLAGS));
 	    map_type_name_flags = STR(buf) + (match == 0);
+	    /* XXX Should increment existing map refcount. */
 	    if (dict_handle(map_type_name_flags) == 0)
 		dict_register(map_type_name_flags,
 			      dict_open(item, OPEN_FLAGS, DICT_FLAGS));
@@ -178,6 +184,7 @@ MATCH_LIST *match_list_init(int flags, const char *patterns, int match_count,...
     for (i = 0; i < match_count; i++)
 	list->match_func[i] = va_arg(ap, MATCH_LIST_FN);
     va_end(ap);
+    list->error = 0;
 
 #define DO_MATCH	1
 
@@ -190,7 +197,7 @@ MATCH_LIST *match_list_init(int flags, const char *patterns, int match_count,...
 
 /* match_list_match - match strings against pattern list */
 
-int     match_list_match(MATCH_LIST * list,...)
+int     match_list_match(MATCH_LIST *list,...)
 {
     const char *myname = "match_list_match";
     char  **cpp;
@@ -207,12 +214,15 @@ int     match_list_match(MATCH_LIST * list,...)
 	list->match_args[i] = va_arg(ap, const char *);
     va_end(ap);
 
+    list->error = 0;
     for (cpp = list->patterns->argv; (pat = *cpp) != 0; cpp++) {
 	for (match = 1; *pat == '!'; pat++)
 	    match = !match;
 	for (i = 0; i < list->match_count; i++)
-	    if (list->match_func[i] (list->flags, list->match_args[i], pat))
+	    if (list->match_func[i] (list, list->match_args[i], pat))
 		return (match);
+	    else if (list->error != 0)
+		return (0);
     }
     if (msg_verbose)
 	for (i = 0; i < list->match_count; i++)
@@ -222,8 +232,9 @@ int     match_list_match(MATCH_LIST * list,...)
 
 /* match_list_free - release storage */
 
-void    match_list_free(MATCH_LIST * list)
+void    match_list_free(MATCH_LIST *list)
 {
+    /* XXX Should decrement map refcounts. */
     argv_free(list->patterns);
     myfree((char *) list->match_func);
     myfree((char *) list->match_args);

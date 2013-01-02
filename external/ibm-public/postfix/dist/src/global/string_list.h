@@ -1,4 +1,4 @@
-/*	$NetBSD: string_list.h,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: string_list.h,v 1.1.1.2 2013/01/02 18:59:00 tron Exp $	*/
 
 #ifndef _STRING_LIST_H_INCLUDED_
 #define _STRING_LIST_H_INCLUDED_
@@ -17,7 +17,6 @@
   * Utility library.
   */
 #include <match_list.h>
-#include <match_ops.h>
 
  /*
   * External interface.

@@ -74,4 +74,5 @@ postlog.o: ../../include/vbuf.h
 postlog.o: ../../include/vstream.h
 postlog.o: ../../include/vstring.h
 postlog.o: ../../include/vstring_vstream.h
+postlog.o: ../../include/warn_stat.h
 postlog.o: postlog.c

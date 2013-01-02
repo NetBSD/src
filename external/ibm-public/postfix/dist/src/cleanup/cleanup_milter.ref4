@@ -24,18 +24,15 @@
       747 original_recipient: alias@hades.porcupine.org
       774 recipient: root@porcupine.org
       794 pointer_record:            1258
-     1258 named_attribute: notify_flags=1
-     1274 original_recipient: 01
-     1278 canceled_recipient: 01
-     1282 pointer_record:            1299
-     1299 named_attribute: notify_flags=1
-     1315 original_recipient: 02
-     1319 canceled_recipient: 02
-     1323 pointer_record:            1340
-     1340 named_attribute: notify_flags=1
-     1356 original_recipient: 03
-     1360 canceled_recipient: 03
-     1364 pointer_record:             811
+     1258 original_recipient: 01
+     1262 canceled_recipient: 01
+     1266 pointer_record:            1283
+     1283 original_recipient: 02
+     1287 canceled_recipient: 02
+     1291 pointer_record:            1308
+     1308 original_recipient: 03
+     1312 canceled_recipient: 03
+     1316 pointer_record:             811
       811 *** MESSAGE CONTENTS test-queue-file4.tmp ***
       813 regular_text: Received: from hades.porcupine.org (hades.porcupine.org [168.100.189.10])
       888 regular_text: 	by hades.porcupine.org (Postfix) with SMTP id 38132290405;
