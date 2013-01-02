@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.4 2011/03/02 19:56:38 tron Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.5 2013/01/02 19:18:33 tron Exp $	*/
 
 /*++
 /* NAME
@@ -273,9 +273,9 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *, const char *, MAPS *, int);
  /*
   * cleanup_masquerade.c
   */
-extern int cleanup_masquerade_external(VSTRING *, ARGV *);
-extern int cleanup_masquerade_internal(VSTRING *, ARGV *);
-extern int cleanup_masquerade_tree(TOK822 *, ARGV *);
+extern int cleanup_masquerade_external(CLEANUP_STATE *, VSTRING *, ARGV *);
+extern int cleanup_masquerade_internal(CLEANUP_STATE *, VSTRING *, ARGV *);
+extern int cleanup_masquerade_tree(CLEANUP_STATE *, TOK822 *, ARGV *);
 
  /*
   * cleanup_recipient.c
