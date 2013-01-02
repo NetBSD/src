@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.512 2012/12/04 06:57:44 jruoho Exp $
+# $NetBSD: mi,v 1.513 2013/01/02 18:12:57 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3360,7 +3360,9 @@
 ./usr/tests/usr.sbin/mtree/d_convert_C_S.out	tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/mtree/d_convert_D.out	tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/mtree/d_convert_D_S.out	tests-usr.sbin-tests	atf
-./usr/tests/usr.sbin/mtree/d_create.out		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/d_create.out		tests-obsolete		obsolete
+./usr/tests/usr.sbin/mtree/mtree_d_create.out	tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/netbsd6_d_create.out	tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/mtree/d_merge.in		tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/mtree/d_merge_C_M.out	tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/mtree/d_merge_C_M_S.out	tests-usr.sbin-tests	atf
