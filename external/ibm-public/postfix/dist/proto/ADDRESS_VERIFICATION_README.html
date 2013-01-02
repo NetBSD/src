@@ -245,6 +245,14 @@ server does not reject mail for this address. </p>
 mis-configured sites that reject MAIL FROM:  &lt;&gt;, while
 probes from "double-bounce@$myorigin" would succeed. </p>
 
+<li> <p> The downside of using a non-empty sender address is that
+the address may end op on spammer mailing lists. Although Postfix
+always discards mail to the double-bounce address, this still results
+in wasted network bandwidth and server capacity.  To defeat
+address harvesting, Postfix 2.9 and later support time-dependent
+sender addresses when you specify a non-zero address_verify_sender_ttl
+value.  </p>
+
 </ul>
 
 <h2><a name="recipient">Recipient address verification</a></h2>
@@ -447,6 +455,16 @@ results are lost after "postfix reload" or "postfix stop". </p>
     # Default setting for Postfix 2.7 and later.
     # Note: avoid hash files here. Use btree instead.
     address_verify_map = btree:$data_directory/verify_cache
+
+    # Shared persistent cache (requires Postfix 2.9 or later).  
+    address_verify_map = proxy:btree:$data_directory/verify_cache
+    # Disable automatic cache cleanup in all Postfix instances except
+    # for one instance that will be responsible for cache cleanup.
+    # address_verify_cache_cleanup_interval = 0
+
+    # Shared memory cache (requires Postfix 2.9 or later).
+    # See memcache_table(5) for details.
+    address_verify_map = memcache:/etc/postfix/verify-memcache.cf
 
     # Default setting for Postfix 2.6 and earlier.
     # This uses non-persistent storage only.
