@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_starttls.c,v 1.1.1.1 2011/03/02 19:32:26 tron Exp $	*/
+/*	$NetBSD: postscreen_starttls.c,v 1.1.1.2 2013/01/02 18:59:04 tron Exp $	*/
 
 /*++
 /* NAME
@@ -231,6 +231,7 @@ void    psc_starttls_open(PSC_STATE *smtp_state, EVENT_NOTIFY_FN resume_event)
 	       ATTR_TYPE_STR, MAIL_ATTR_REMOTE_ENDPT, STR(remote_endpt),
 	       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, TLS_PROXY_FLAG_ROLE_SERVER,
 	       ATTR_TYPE_INT, MAIL_ATTR_TIMEOUT, psc_normal_cmd_time_limit,
+	       ATTR_TYPE_STR, MAIL_ATTR_SERVER_ID, MAIL_SERVICE_SMTPD,	/* XXX */
 	       ATTR_TYPE_END);
     if (vstream_fflush(tlsproxy_stream) != 0) {
 	msg_warn("error sending request to %s service: %m", psc_tlsp_service);

@@ -5,8 +5,8 @@ PPoossttffiixx SSMMTTPP AAcccceessss PPoolliiccyy DDeel
 PPuurrppoossee ooff PPoossttffiixx SSMMTTPP aacccceessss ppoolliiccyy ddeelleeggaattiioonn
 
 The Postfix SMTP server has a number of built-in mechanisms to block or accept
-mail at specific SMTP protocol stages. As of version 2.1, Postfix can delegate
-policy decisions to an external server that runs outside Postfix.
+mail at specific SMTP protocol stages. In addition, the Postfix SMTP server can
+delegate decisions to an external policy server (Postfix 2.1 and later).
 
 With this policy delegation mechanism, a simple greylist policy can be
 implemented with only a dozen lines of Perl, as is shown at the end of this
@@ -71,6 +71,8 @@ a delegated SMTPD access policy request:
     etrn_domain=
     PPoossttffiixx vveerrssiioonn 22..55 aanndd llaatteerr::
     stress=
+    PPoossttffiixx vveerrssiioonn 22..99 aanndd llaatteerr::
+    ccert_pubkey_fingerprint=68:B3:29:DA:98:93:E3:40:99:C7:D8:AD:5C:B9:C9:40
     [empty line]
 
 Notes:
@@ -195,20 +197,29 @@ use something like this:
 
 NOTES:
 
-  * Lines 2, 11: the Postfix spawn(8) daemon by default kills its child process
-    after 1000 seconds. This is too short for a policy daemon that may need to
-    run for as long as the SMTP server process that talks to it. The default
-    time limit is overruled in main.cf with an explicit "policy_time_limit"
-    setting. The name of the parameter is the name of the master.cf entry
-    ("policy") concatenated with the "_time_limit" suffix. See spawn(8) for
-    more information about the time limit parameter.
+  * Lines 2-3: this creates the service called "policy" that listens on a UNIX-
+    domain socket. The service is implemented by the Postfix spawn(8) daemon,
+    which executes the policy server program that is specified with the aarrggvv
+    attribute, using the privileges specified with the uusseerr attribute.
 
   * Line 2: specify a "0" process limit instead of the default "-", to avoid
-    "connection refused" and other problems when the smtpd process limit
-    exceeds the default_process_limit setting.
+    "connection refused" and other problems when you increase the smtpd process
+    limit.
 
   * Lines 8, 9: always specify "check_policy_service" AFTER
     "reject_unauth_destination" or else your system could become an open relay.
+
+  * Line 11: this increases the time that a policy server process may run to
+    3600 seconds. The default time limit of 1000 seconds is too short; the
+    policy daemon needs to run long as the SMTP server process that talks to
+    it. See the spawn(8) manpage for more information about the
+    transport_time_limit parameter.
+
+        Note: the "policy_time_limit" parameter will not show up in "postconf"
+        command output before Postfix version 2.9. This limitation applies to
+        many parameters whose name is a combination of a master.cf service name
+        (in the above example, "policy") and a built-in suffix (in the above
+        example: "_time_limit").
 
   * Solaris UNIX-domain sockets do not work reliably. Use TCP sockets instead:
 
@@ -280,41 +291,58 @@ The greylist.pl Perl script can be run under control by the Postfix master
 daemon. For example, to run the script as user "nobody", using a UNIX-domain
 socket that is accessible by Postfix processes only:
 
-    1 /etc/postfix/master.cf:
-    2     policy  unix  -       n       n       -       0       spawn
-    3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
-    4
-    5 /etc/postfix/main.cf:
-    6      policy_time_limit = 3600
+     1 /etc/postfix/master.cf:
+     2     greylist  unix  -       n       n       -       0       spawn
+     3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
+     4
+     5 /etc/postfix/main.cf:
+     6     greylist_time_limit = 3600
+     7     smtpd_recipient_restrictions =
+     8         ...
+     9         reject_unauth_destination
+    10         check_policy_service unix:private/greylist
+    11         ...
 
 Notes:
+
+  * Lines 2-3: this creates the service called "greylist" that listens on a
+    UNIX-domain socket. The service is implemented by the Postfix spawn(8)
+    daemon, which executes the greylist.pl script that is specified with the
+    aarrggvv attribute, using the privileges specified with the uusseerr attribute.
+
+  * Line 2: specify a "0" process limit instead of the default "-", to avoid
+    "connection refused" and other problems when you increase the smtpd process
+    limit.
 
   * Line 3: Specify "greylist.pl -v" for verbose logging of each request and
     reply.
 
-  * Lines 2, 6: the Postfix spawn(8) daemon by default kills its child process
-    after 1000 seconds. This is too short for a policy daemon that may run for
-    as long as an SMTP client is connected to an SMTP server process. The
-    default time limit is overruled in main.cf with an explicit
-    "policy_time_limit" setting. The name of the parameter is the name of the
-    master.cf entry ("policy") concatenated with the "_time_limit" suffix.
+  * Line 6: this increases the time that a greylist server process may run to
+    3600 seconds. The default time limit of 1000 seconds is too short; the
+    greylist daemon needs to run long as the SMTP server process that talks to
+    it. See the spawn(8) manpage for more information about the
+    transport_time_limit parameter.
 
-  * Line 2: specify a "0" process limit instead of the default "-", to avoid
-    "connection refused" and other problems when the smtpd process limit
-    exceeds the default_process_limit setting.
+        Note: the "greylist_time_limit" parameter will not show up in
+        "postconf" command output before Postfix version 2.9. This limitation
+        applies to many parameters whose name is a combination of a master.cf
+        service name (in the above example, "greylist") and a built-in suffix
+        (in the above example: "_time_limit").
 
 On Solaris you must use inet: style sockets instead of unix: style, as detailed
 in the "Policy client/server configuration" section above.
 
-    1 /etc/postfix/master.cf:
-    2     127.0.0.1:9998  inet  n       n       n       -       0       spawn
-    3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
-    4
-    5 /etc/postfix/main.cf:
-    6      127.0.0.1:9998_time_limit = 3600
-
-To invoke this service you would specify "check_policy_service inet:127.0.0.1:
-9998".
+     1 /etc/postfix/master.cf:
+     2     127.0.0.1:9998  inet  n       n       n       -       0       spawn
+     3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
+     4
+     5 /etc/postfix/main.cf:
+     6     127.0.0.1:9998_time_limit = 3600
+     7     smtpd_recipient_restrictions =
+     8         ...
+     9         reject_unauth_destination
+    10         check_policy_service inet:127.0.0.1:9998
+    11         ...
 
 GGrreeyylliissttiinngg mmaaiill ffrroomm ffrreeqquueennttllyy ffoorrggeedd ddoommaaiinnss
 
@@ -331,7 +359,7 @@ filtering/sender-domain-validate.in.
      6         check_sender_access hash:/etc/postfix/sender_access
      7         ...
      8     smtpd_restriction_classes = greylist
-     9     greylist = check_policy_service unix:private/policy
+     9     greylist = check_policy_service unix:private/greylist
     10
     11 /etc/postfix/sender_access:
     12     aol.com     greylist
@@ -357,9 +385,12 @@ NOTES:
 
 GGrreeyylliissttiinngg aallll yyoouurr mmaaiill
 
-If you turn on greylisting for all mail you will almost certainly want to make
-exceptions for mailing lists that use one-time sender addresses, because such
-mailing lists can pollute your greylist database relatively quickly.
+If you turn on greylisting for all mail you may want to make exceptions for
+mailing lists that use one-time sender addresses, because each message will be
+delayed due to greylisting, and the one-time sender addresses can pollute your
+greylist database relatively quickly. Instead of making exceptions, you can
+automatically whitelist clients that survive greylisting repeatedly; this
+avoids most of the delays and most of the database pollution problem.
 
      1 /etc/postfix/main.cf:
      2     smtpd_recipient_restrictions =

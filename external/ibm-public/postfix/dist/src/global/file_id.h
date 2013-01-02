@@ -1,4 +1,4 @@
-/*	$NetBSD: file_id.h,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: file_id.h,v 1.1.1.2 2013/01/02 18:58:58 tron Exp $	*/
 
 #ifndef _FILE_ID_H_INCLUDED_
 #define _FILE_ID_H_INCLUDED_
@@ -13,10 +13,18 @@
 /* DESCRIPTION
 /* .nf
 
+ /*
+System library.
+*/
+#include <sys/stat.h>
+
  /* External interface. */
 
+extern const char *get_file_id_fd(int, int);
+extern const char *get_file_id_st(struct stat *, int);
+
+ /* Legacy interface. */
 extern const char *get_file_id(int);
-extern int check_file_id(int, const char *);
 
 /* LICENSE
 /* .ad

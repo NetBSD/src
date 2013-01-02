@@ -1,4 +1,4 @@
-/*	$NetBSD: transport.h,v 1.1.1.1 2009/06/23 10:08:58 tron Exp $	*/
+/*	$NetBSD: transport.h,v 1.1.1.2 2013/01/02 18:59:11 tron Exp $	*/
 
 /*++
 /* NAME
@@ -32,7 +32,7 @@ typedef struct TRANSPORT_INFO {
     MAPS   *transport_path;
     VSTRING *wildcard_channel;
     VSTRING *wildcard_nexthop;
-    int     transport_errno;
+    int     wildcard_errno;
     time_t  expire;
 } TRANSPORT_INFO;
 

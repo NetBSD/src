@@ -111,7 +111,10 @@ Library routines:
 
     src/dns/		DNS client library
     src/global/		Postfix-specific support routines
+    src/milter/		Postfix Milter (mail filter) client
+    src/tls/		TLS client and server support
     src/util/		General-purpose support routines
+    src/xsasl/		SASL plug-in API
 
 Command-line utilities:
 
@@ -124,6 +127,7 @@ Command-line utilities:
     src/postlock/	Postfix locking for shell scripts
     src/postlog/	Postfix logging for shell scripts
     src/postmap/	Postfix lookup table management
+    src/postmulti/	Postfix multi-instance manager
     src/postqueue/	Postfix queue control program
     src/postsuper/	Postfix house keeping program
     src/sendmail/	Sendmail compatibility interface
@@ -134,19 +138,25 @@ Postfix daemons:
     src/bounce/		Bounce or defer mail
     src/cleanup/	Canonicalize and enqueue mail
     src/discard/	Trivial discard mailer
+    src/dnsblog/	DNS agent for postscreen
     src/error/		Trivial error mailer
+    src/flush/		Support for ETRN, sendmail -qI, sendmail -qR
     src/local/		Local delivery
     src/master/		Postfix resident superserver
     src/oqmgr/		Old queue manager
     src/pickup/		Local pickup
     src/pipe/		Pipe delivery
+    src/postscreen/	Zombie blocker
+    src/proxymap/	Table lookup proxy agent
     src/qmgr/		Queue manager
     src/qmqpd/		QMQPD server
+    src/scache/		Postfix SMTP session cache
     src/showq/		List Postfix queue status
     src/smtp/		SMTP and LMTP client
     src/smtpd/		SMTP server
     src/spawn/		Run non-Postfix server
     src/tlsmgr/		TLS session keys and random pool
+    src/tlsproxy/	TLS proxy for postscreen
     src/trivial-rewrite/ Address rewriting and resolving
     src/verify/		address verification service
     src/virtual/	virtual mailbox-only delivery agent
