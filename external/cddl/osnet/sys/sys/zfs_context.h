@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.13 2013/01/02 10:33:19 dsl Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.14 2013/01/02 16:31:24 dsl Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -212,11 +212,13 @@ typedef pthread_t kthread_t;
 	
 extern kthread_t *zk_thread_create(void (*func)(), void *arg);
 
-/* In NetBSD struct proc is visible in userspace therefore we use it's original
+/* In NetBSD struct proc may be visible in userspace therefore we use it's original
    definition. */
-/* struct proc {
+#if !defined(p_startzero)
+struct proc {
 	uintptr_t   this_is_never_used_dont_dereference_it;
-	}; */
+	};
+#endif
 
 extern struct proc p0;
 	
