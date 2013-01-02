@@ -292,6 +292,12 @@ the ".dir" or ".pag" suffix.  </dd>
 variable name. The lookup table name in "environ:table" is ignored.
 </dd>
 
+<dt> <b>fail</b> </dt>
+
+<dd> A table that reliably fails all requests. The lookup table
+name is used for logging only. This table exists to simplify Postfix
+error tests. </dd>
+
 <dt> <b>hash</b> </dt>
 
 <dd> An indexed file type based on hashing.  This is available only
@@ -309,6 +315,11 @@ a process terminates. </dd>
 
 <dd> Perform lookups using the LDAP protocol. Configuration details
 are given in the <a href="ldap_table.5.html">ldap_table(5)</a>. </dd>
+
+<dt> <b>memcache</b> </dt>
+
+<dd> Perform memcache database lookups or updates. Configuration
+details are given in <a href="memcache_table.5.html">memcache_table(5)</a>. </dd>
 
 <dt> <b>mysql</b> (read-only) </dt>
 
@@ -340,7 +351,7 @@ file.  </dd>
 <dd> Perform PostgreSQL database lookups.  Configuration details
 are given in <a href="pgsql_table.5.html">pgsql_table(5)</a>. </dd>
 
-<dt> <b>proxy</b> (read-only) </dt>
+<dt> <b>proxy</b> </dt>
 
 <dd> Access information via the Postfix <a href="proxymap.8.html">proxymap(8)</a> service. The
 lookup table name syntax is "<a href="proxymap.8.html">proxy</a>:<a href="DATABASE_README.html">type:table</a>". </dd>
@@ -367,7 +378,7 @@ in <a href="sqlite_table.5.html">sqlite_table(5)</a>. </dd>
 <dt> <b>static</b> (read-only) </dt>
 
 <dd> Always returns its lookup table name as lookup result.  For
-example, the lookup table "static:foobar" always returns the string
+example, the lookup table "<a href="DATABASE_README.html#types">static</a>:foobar" always returns the string
 "foobar" as lookup result. </dd>
 
 <dt> <b>tcp</b> </dt>
@@ -383,8 +394,8 @@ number.
 
 <dd> This produces similar results as hash: files, except that you
 don't have to run the <a href="postmap.1.html">postmap(1)</a> command before you can use the
-file, and that texthash: does not detect changes after the file is
-read.  The lookup table name is "texthash:filename", where the file
+file, and that <a href="DATABASE_README.html#types">texthash</a>: does not detect changes after the file is
+read.  The lookup table name is "<a href="DATABASE_README.html#types">texthash</a>:filename", where the file
 name is taken literally; no suffix is appended. </dd>
 
 <dt> <b>unix</b> (read-only) </dt>

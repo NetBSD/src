@@ -2,6 +2,14 @@ PPoossttffiixx QQuueeuuee SScchheedduulleerr
 
 -------------------------------------------------------------------------------
 
+DDiissccllaaiimmeerr
+
+Many of the transport-specific configuration parameters discussed in this
+document will not show up in "postconf" command output before Postfix version
+2.9. This limitation applies to many parameters whose name is a combination of
+a master.cf service name such as "relay" and a built-in suffix such as
+"_destination_concurrency_limit".
+
 OOvveerrvviieeww
 
 The queue manager is by far the most complex part of the Postfix mail system.

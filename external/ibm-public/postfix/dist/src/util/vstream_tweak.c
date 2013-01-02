@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream_tweak.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: vstream_tweak.c,v 1.1.1.2 2013/01/02 18:59:14 tron Exp $	*/
 
 /*++
 /* NAME
@@ -42,6 +42,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <errno.h>
 
 /* Utility library. */
 
@@ -87,7 +88,7 @@ int     vstream_tweak_sock(VSTREAM *fp)
 int     vstream_tweak_tcp(VSTREAM *fp)
 {
     const char *myname = "vstream_tweak_tcp";
-    int     mss;
+    int     mss = 0;
     SOCKOPT_SIZE mss_len = sizeof(mss);
     int     err;
 
@@ -100,9 +101,15 @@ int     vstream_tweak_tcp(VSTREAM *fp)
      * Instead we ask the kernel what the current MSS is, and take appropriate
      * action. Linux <= 2.2 getsockopt(TCP_MAXSEG) always returns zero (or
      * whatever value was stored last with setsockopt()).
+     * 
+     * Some ancient FreeBSD kernels don't report 'host unreachable' errors with
+     * getsockopt(SO_ERROR), and then treat getsockopt(TCP_MAXSEG) as a NOOP,
+     * leaving the mss parameter value unchanged. To work around these two
+     * getsockopt() bugs we set mss = 0, which is a harmless value.
      */
     if ((err = getsockopt(vstream_fileno(fp), IPPROTO_TCP, TCP_MAXSEG,
-			  (char *) &mss, &mss_len)) < 0) {
+			  (char *) &mss, &mss_len)) < 0
+	&& errno != ECONNRESET) {
 	msg_warn("%s: getsockopt TCP_MAXSEG: %m", myname);
 	return (err);
     }
@@ -133,7 +140,8 @@ int     vstream_tweak_tcp(VSTREAM *fp)
 	int     nodelay = 1;
 
 	if ((err = setsockopt(vstream_fileno(fp), IPPROTO_TCP, TCP_NODELAY,
-			      (char *) &nodelay, sizeof(nodelay))) < 0)
+			      (char *) &nodelay, sizeof(nodelay))) < 0
+	    && errno != ECONNRESET)
 	    msg_warn("%s: setsockopt TCP_NODELAY: %m", myname);
     }
 #endif

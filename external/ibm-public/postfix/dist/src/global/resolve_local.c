@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_local.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: resolve_local.c,v 1.1.1.2 2013/01/02 18:59:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -18,6 +18,9 @@
 /*	against the domains, files or tables listed in $mydestination,
 /*	or by a match of an [address-literal] against of the network
 /*	addresses listed in $inet_interfaces or in $proxy_interfaces.
+/*	The result is > 0 if the domain matches the list of local
+/*	domains and IP addresses, 0 when it does not match, and < 0
+/*	in case of error.
 /*
 /*	resolve_local_init() performs initialization. If this routine is
 /*	not called explicitly ahead of time, it will be called on the fly.
@@ -65,9 +68,10 @@ static STRING_LIST *resolve_local_list;
 
 void    resolve_local_init(void)
 {
+    /* Allow on-the-fly update to make testing easier. */
     if (resolve_local_list)
-	msg_panic("resolve_local_init: duplicate initialization");
-    resolve_local_list = string_list_init(MATCH_FLAG_NONE, var_mydest);
+	string_list_free(resolve_local_list);
+    resolve_local_list = string_list_init(MATCH_FLAG_RETURN, var_mydest);
 }
 
 /* resolve_local - match domain against list of local destinations */
@@ -115,6 +119,8 @@ int     resolve_local(const char *addr)
      */
     if (string_list_match(resolve_local_list, saved_addr))
 	RETURN(1);
+    if (resolve_local_list->error != 0)
+	RETURN(resolve_local_list->error);
 
     /*
      * Compare the destination against the list of interface addresses that
@@ -170,10 +176,16 @@ int     resolve_local(const char *addr)
 
 int     main(int argc, char **argv)
 {
-    if (argc != 2)
-	msg_fatal("usage: %s domain", argv[0]);
+    int     rc;
+
+    if (argc != 3)
+	msg_fatal("usage: %s mydestination domain", argv[0]);
     mail_conf_read();
-    vstream_printf("%s\n", resolve_local(argv[1]) ? "yes" : "no");
+    myfree(var_mydest);
+    var_mydest = mystrdup(argv[1]);
+    vstream_printf("mydestination=%s destination=%s %s\n", argv[1], argv[2],
+		   (rc = resolve_local(argv[2])) > 0 ? "YES" :
+		   rc == 0 ? "NO" : "ERROR");
     vstream_fflush(VSTREAM_OUT);
     return (0);
 }

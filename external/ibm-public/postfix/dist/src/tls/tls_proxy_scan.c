@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_scan.c,v 1.1.1.1 2011/03/02 19:32:28 tron Exp $	*/
+/*	$NetBSD: tls_proxy_scan.c,v 1.1.1.2 2013/01/02 18:59:05 tron Exp $	*/
 
 /*++
 /* NAME
@@ -55,13 +55,14 @@
 /* tls_proxy_context_scan - receive TLS session state from stream */
 
 int     tls_proxy_context_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
-			             int flags, void *ptr)
+			               int flags, void *ptr)
 {
     TLS_SESS_STATE *tls_context = (TLS_SESS_STATE *) ptr;
     int     ret;
     VSTRING *peer_CN = vstring_alloc(25);
     VSTRING *issuer_CN = vstring_alloc(25);
-    VSTRING *peer_fingerprint = vstring_alloc(25);
+    VSTRING *peer_fingerprint = vstring_alloc(60);	/* 60 for SHA-1 */
+    VSTRING *peer_pkey_fprint = vstring_alloc(60);	/* 60 for SHA-1 */
     VSTRING *protocol = vstring_alloc(25);
     VSTRING *cipher_name = vstring_alloc(25);
 
@@ -73,6 +74,7 @@ int     tls_proxy_context_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
 		  ATTR_TYPE_STR, MAIL_ATTR_PEER_CN, peer_CN,
 		  ATTR_TYPE_STR, MAIL_ATTR_ISSUER_CN, issuer_CN,
 		  ATTR_TYPE_STR, MAIL_ATTR_PEER_FPT, peer_fingerprint,
+		  ATTR_TYPE_STR, MAIL_ATTR_PEER_PKEY_FPT, peer_pkey_fprint,
 		  ATTR_TYPE_INT, MAIL_ATTR_PEER_STATUS,
 		  &tls_context->peer_status,
 		  ATTR_TYPE_STR, MAIL_ATTR_CIPHER_PROTOCOL, protocol,
@@ -85,9 +87,10 @@ int     tls_proxy_context_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
     tls_context->peer_CN = vstring_export(peer_CN);
     tls_context->issuer_CN = vstring_export(issuer_CN);
     tls_context->peer_fingerprint = vstring_export(peer_fingerprint);
+    tls_context->peer_pkey_fprint = vstring_export(peer_pkey_fprint);
     tls_context->protocol = vstring_export(protocol);
     tls_context->cipher_name = vstring_export(cipher_name);
-    return (ret == 8 ? 1 : -1);
+    return (ret == 9 ? 1 : -1);
 }
 
 #endif
