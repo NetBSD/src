@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob.c,v 1.2 2012/12/18 01:37:28 christos Exp $	*/
+/*	$NetBSD: t_glob.c,v 1.3 2013/01/02 11:28:48 martin Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob.c,v 1.2 2012/12/18 01:37:28 christos Exp $");
+__RCSID("$NetBSD: t_glob.c,v 1.3 2013/01/02 11:28:48 martin Exp $");
 
 #include <atf-c.h>
 
@@ -238,6 +238,7 @@ ATF_TC_BODY(glob_star_not, tc)
 	run("a/**", 0, glob_star_not, __arraycount(glob_star_not));
 }
 
+#if 0
 ATF_TC(glob_nocheck);
 ATF_TC_HEAD(glob_nocheck, tc)
 {
@@ -255,12 +256,18 @@ ATF_TC_BODY(glob_nocheck, tc)
 	};
 	run(pattern, GLOB_NOCHECK, glob_nocheck, __arraycount(glob_nocheck));
 }
+#endif
 
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, glob_star);
 	ATF_TP_ADD_TC(tp, glob_star_not);
-	ATF_TP_ADD_TC(tp, glob_nocheck);
+/*
+ * Remove this test for now - the GLOB_NOCHECK return value has been
+ * re-defined to return a modified pattern in revision 1.33 of glob.c
+ *
+ *	ATF_TP_ADD_TC(tp, glob_nocheck);
+ */
 
 	return atf_no_error();
 }
