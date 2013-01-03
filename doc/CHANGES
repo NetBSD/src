@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1775 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1776 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -164,3 +164,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	kernel: allow MD kernel code to use PCUs [matt 20121226]
 	units(1): add -l and -L options.  [apb 20130101]
 	postfix(1): Import version 2.9.5 [tron 20130102]
+	file(1): upgraded to 5.12 [christos 20130103]
