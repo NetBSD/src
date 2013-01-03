@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.278 2012/03/25 02:31:00 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.279 2013/01/03 09:40:55 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.278 2012/03/25 02:31:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.279 2013/01/03 09:40:55 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1175,14 +1175,23 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 
 #ifdef MODULAR
 	/*
-	 * Reserve 16 MB of VA for module loading. Right now our full
-	 * GENERIC kernel is about 13 MB, so this looks good enough.
-	 * If we make this bigger, we should adjust the KERNEND and
-	 * associated defines in param.h.
+	 * For 32bit kernels:
+	 *   Reserve 16 MB of VA for module loading. Right now our full
+	 *   GENERIC kernel is about 13 MB, so this looks good enough.
+	 * For 64bit kernels:
+	 *   We can use all the space left before the special addresses,
+	 *   but leave 2 pages at vmmap alone (see pmap_virtual_space)
+	 *   and another red zone page.
 	 */
+#ifdef __arch64__
+	module_start = vmmap + 3*PAGE_SIZE;
+	module_end = 0x08000000;	/* keep all modules within 2GB */
+	KASSERT(module_end < KERNEND);	/* of kernel text */
+#else
 	module_start = vmmap;
 	vmmap += 16 * 1024*1024;
 	module_end = vmmap;
+#endif
 #endif
 
 	/*
@@ -1325,11 +1334,23 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 {
 
 	/*
-	 * Reserve one segment for kernel virtual memory
+	 * Reserve one segment for kernel virtual memory.
 	 */
-	/* Reserve two pages for pmap_copy_page && /dev/mem */
+#ifdef __arch64__
+	/*
+	 * On 64 bit kernels, start it beyound firmware, so
+	 * we are basically unrestricted.
+	 */
+	*start = kbreak = VM_KERNEL_MEM_VA_START;
+	*end = VM_MAX_KERNEL_ADDRESS;
+#else
+	/*
+	 * Reserve two pages for pmap_copy_page && /dev/mem, but otherwise
+	 * end it beyound the iospace and other special fixed addresses.
+	 */
 	*start = kbreak = (vaddr_t)(vmmap + 2*PAGE_SIZE);
 	*end = VM_MAX_KERNEL_ADDRESS;
+#endif
 	BDPRINTF(PDB_BOOT1, ("pmap_virtual_space: %x-%x\n", *start, *end));
 }
 
@@ -1349,9 +1370,9 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	struct pmap *pm = pmap_kernel();
 	paddr_t pa;
 
-	if (maxkvaddr >= KERNEND) {
+	if (maxkvaddr >= VM_MAX_KERNEL_ADDRESS) {
 		printf("WARNING: cannot extend kernel pmap beyond %p to %p\n",
-		       (void *)KERNEND, (void *)maxkvaddr);
+		       (void *)VM_MAX_KERNEL_ADDRESS, (void *)maxkvaddr);
 		return (kbreak);
 	}
 	DPRINTF(PDB_GROW, ("pmap_growkernel(%lx...%lx)\n", kbreak, maxkvaddr));
