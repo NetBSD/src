@@ -1388,7 +1388,7 @@ zfs_do_get(int argc, char **argv)
 	cb.cb_first = B_TRUE;
 
 	/* run for each object */
-	ret = zfs_for_each(argc, argv, flags, ZFS_TYPE_DATASET, NULL,
+	ret = zfs_for_each(argc, argv, flags, ZFS_TYPE_DATASET, 0,
 	    &cb.cb_proplist, limit, get_callback, &cb);
 
 	if (cb.cb_proplist == &fake_name)
