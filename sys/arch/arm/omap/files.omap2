@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.21 2013/01/01 23:22:44 jmcneill Exp $
+#	$NetBSD: files.omap2,v 1.22 2013/01/03 21:13:26 jakllsch Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -128,6 +128,10 @@ file	arch/arm/omap/omap3_ehci.c		omap3_ehci
 device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons, edid
 attach	omapfb at obio
 file	arch/arm/omap/omapfb.c			omapfb
+
+device	cpsw: ether, ifnet, arp, mii, mii_phy
+attach	cpsw at obio
+file	arch/arm/omap/if_cpsw.c			cpsw
 
 # these bus space methods are not bus-specific ...
 #
