@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.16 2011/10/08 08:45:37 njoly Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.17 2013/01/03 10:12:36 para Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,15 +37,16 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.16 2011/10/08 08:45:37 njoly Exp $
+ * $Id: m_netbsd.c,v 1.17 2013/01/03 10:12:36 para Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.16 2011/10/08 08:45:37 njoly Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.17 2013/01/03 10:12:36 para Exp $");
 #endif
 
 #include <sys/param.h>
+#include <sys/resource.h>
 #include <sys/sysctl.h>
 #include <sys/sched.h>
 #include <sys/swap.h>
