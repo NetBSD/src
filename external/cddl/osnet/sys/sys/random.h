@@ -1,4 +1,4 @@
-/*	$NetBSD: random.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: random.h,v 1.4 2013/01/03 16:42:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -31,9 +31,9 @@
 #ifndef _OPENSOLARIS_SYS_RANDOM_H_
 #define	_OPENSOLARIS_SYS_RANDOM_H_
 
-#include <sys/rnd.h>
+#include <sys/cprng.h>
 
-#define	random_get_bytes(p, s)		rnd_extract_data((p), (uint32_t)(s), 0)
-#define	random_get_pseudo_bytes(p, s)	rnd_extract_data((p), (uint32_t)(s), 0)
+#define	random_get_bytes(p, s)		cprgn_fast(p, s)
+#define	random_get_pseudo_bytes(p, s)	cprgn_fast(p, s)
 
 #endif	/* !_OPENSOLARIS_SYS_RANDOM_H_ */
