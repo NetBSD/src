@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.205 2013/01/02 19:29:40 dsl Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.206 2013/01/03 13:19:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,16 +37,20 @@
 #ifndef _SYS_SYSCTL_H_
 #define	_SYS_SYSCTL_H_
 
+#include <sys/param.h> /* precautionary upon removal from ucred.h */
+#include <sys/proc.h>  /* Needed for things like P_ZOMBIE() and LW_SINTR */
+#include <uvm/uvm_param.h>
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
 /*
  * These are for the eproc structure defined below.
  */
-#include <sys/param.h> /* precautionary upon removal from ucred.h */
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/ucontext.h>
-#include <sys/proc.h>
 #include <sys/mallocvar.h>
 #include <uvm/uvm_extern.h>
+#endif
 
 
 /* For offsetof() */
