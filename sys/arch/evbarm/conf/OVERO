@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.22 2012/12/29 14:32:45 kiyohara Exp $
+#	$NetBSD: OVERO,v 1.23 2013/01/03 13:33:51 kiyohara Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo COMS platforms kernel
 #
@@ -188,14 +188,19 @@ omapgpio5	at obio2 addr 0x49058000 size 0x1000 intrbase 256 intr 34
 
 gpio*		at omapgpio?
 
+# System Control Module
+omapscm0 	at obio0 addr 0x48002000 size 0x1000
+
 # I2C Controller
-#omapiic0	at obio0 addr 0x48070000 size 0x1000 intr 56	# I2C1
-#omapiic1	at obio0 addr 0x48060000 size 0x1000 intr 61	# I2C3
+omapiic0	at obio0 addr 0x48070000 size 0x1000 intr 56	# I2C1
+omapiic1	at obio0 addr 0x48060000 size 0x1000 intr 61	# I2C3
+iic*		at omapiic?
 
-#iic*		at omapiic?
-
-# Integrated Power Management/Audio Codec
-#gaia*		at iic? addr 0x48..0x4b
+# Power Managent and System Companion Device
+tps65950pm0	at iic0 addr 0x48
+tps65950pm1	at iic0 addr 0x49
+tps65950pm2	at iic0 addr 0x4a
+tps65950pm3	at iic0 addr 0x4b
 
 # On-board 16550 UARTs
 com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
