@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.6 2012/12/29 05:00:36 riz Exp $
+#	$NetBSD: BEAGLEBONE,v 1.7 2013/01/03 21:13:27 jakllsch Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -286,6 +286,10 @@ pseudo-device	wsfont
 #wsmouse*	at ums?
 
 #axe*		at uhub? port ? configuration ? interface ?
+
+# Ethernet
+cpsw*		at obio0 addr 0x4a100000 size 0x8000 intrbase 40
+ukphy*		at mii?
 
 # Hardware clocking and power management
 
