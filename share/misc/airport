@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.41 2012/11/02 12:07:58 mbalmer Exp $
+#	$NetBSD: airport,v 1.42 2013/01/03 12:55:18 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -3411,6 +3411,7 @@ JCX:Los Angeles (Citicorp Heliport), CA, USA
 JCY:Johnson City Airport, TX, USA
 JDA:John Day State Airport, OR, USA
 JDB:Dallas (Downtown Heliport), TX, USA
+JDC:Jingdezhen-Luojia Airport
 JDF:Juiz do Fora, MG, Brazil
 JDH:Jodhpur, India
 JDM:Miami (Heliport), FL, USA
