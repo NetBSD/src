@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.14 2012/04/29 23:50:22 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.15 2013/01/04 01:43:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.14 2012/04/29 23:50:22 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.15 2013/01/04 01:43:59 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -236,7 +236,7 @@ content_encoding_core(void *fh, const char *ctype)
 	while ((c = fgetc(fh)) != EOF) {
 		curlen++;
 
-		if (c == '\0' || (lastc == '\r' && c != '\n'))
+		if (c == '\0')
 			return MIME_TRANSFER_BASE64;
 
 		if (c > 0x7f) {
@@ -252,7 +252,7 @@ content_encoding_core(void *fh, const char *ctype)
 				maxlen = curlen;
 			curlen = 0;
 		}
-		else if ((c < 0x20 && c != '\t') || c == 0x7f)
+		else if ((c < 0x20 && c != '\t') || c == 0x7f || lastc == '\r')
 			ctrlchar = 1;
 
 		lastc = c;
