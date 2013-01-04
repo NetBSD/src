@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: file2netbsd,v 1.4 2013/01/03 23:04:52 christos Exp $
+#	$NetBSD: file2netbsd,v 1.5 2013/01/04 15:34:47 christos Exp $
 #
 # Copyright (c) 2003, 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,13 @@ then
 fi
 FILE="$1"
 
-file_vers="$(awk -F', ' '/AC_INIT\(/ { print $2 }' "$FILE/configure.ac")"
+file_vers="$(awk -F',' '/AC_INIT\(/ { print $2 }' "$FILE/configure.ac" | tr -d '[' | tr -d ']' | tr -d ' ')"
+
+case $file_vers in
+[0-9].[0-9][0-9]) ;;
+*)	echo "$PROG: Cannot determine file version: $file_vers" 1>&2
+	exit 1;;
+esac
 
 ### Wipe out stuff we don't want
 find "$FILE" -name .cvsignore -delete
