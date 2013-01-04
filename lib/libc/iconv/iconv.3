@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.3,v 1.15 2013/01/04 01:21:45 christos Exp $
+.\" $NetBSD: iconv.3,v 1.16 2013/01/04 07:27:57 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -236,7 +236,7 @@ conform to
 .St -p1003.1-2001 .
 .Pp
 Unfortunately due a historical mistake (documented in 
-.Pa https://www5.opengroup.org/sophocles2/show_mail.tpl?&source=L&listname=austin-group-l&id=7404 ),
+.Lk https://www5.opengroup.org/sophocles2/show_mail.tpl?&source=L&listname=austin-group-l&id=7404 ) ,
 where the unix header page had the
 second argument of
 .Fn iconv
@@ -249,8 +249,8 @@ the definition of
 has not been consistent across operating systems.
 Given the committee's decicion to follow the header definition, we had to make
 a decision between following the committee's change or keeping our existing
-definition which is arguably more correct like others have (
-.Pa http://www.gnu.org/savannah-checkouts/gnu/libiconv/documentation/libiconv-1.14/ ).
+definition which is arguably more correct like others have
+.Pq Lk http://www.gnu.org/savannah-checkouts/gnu/libiconv/documentation/libiconv-1.14/ .
 We chose to keep our definition and we believe that this is not a problem because
 most packages are aware of this issue and handle it anyway during configuration.
 .\" ----------------------------------------------------------------------
