@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.5 2012/08/22 12:36:35 jakllsch Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.6 2013/01/04 21:00:23 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.5 2012/08/22 12:36:35 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.6 2013/01/04 21:00:23 jakllsch Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -60,7 +60,6 @@ static bool obio_attached;
 static int	obio_match(device_t, cfdata_t, void *);
 static void	obio_attach(device_t, device_t, void *);
 static int	obio_print(void *, const char *);
-static int	obio_search(device_t, cfdata_t, const int *, void *);
 
 /* attach structures */
 CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
@@ -132,6 +131,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	struct obio_softc *sc = device_private(self);
 	const struct ambadev_locators *ad = bcm2835_ambadev_locs;
 	struct amba_attach_args aaa;
+	int locs[OBIOCF_NLOCS];
 
 	if (obio_attached)
 		return;
@@ -162,8 +162,12 @@ obio_attach(device_t parent, device_t self, void *aux)
 		aaa.aaa_intr = ad->ad_intr;
 		/* ad->ad_instance; */
 
-		config_found_sm_loc(self, "obio", NULL, &aaa, obio_print, 
-		    obio_search);
+		locs[OBIOCF_ADDR] = ad->ad_addr;
+		locs[OBIOCF_SIZE] = ad->ad_size;
+		locs[OBIOCF_INTR] = ad->ad_intr;
+
+		config_found_sm_loc(self, "obio", locs, &aaa, obio_print, 
+		    config_stdsubmatch);
 	}
 
 	return;
@@ -193,11 +197,4 @@ obio_print(void *aux, const char *name)
 	}
 
 	return UNCONF;
-}
-
-static int
-obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
-{
-
-	return config_match(parent, cf, aux);
 }
