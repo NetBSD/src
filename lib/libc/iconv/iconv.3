@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.3,v 1.14 2010/05/05 22:07:58 wiz Exp $
+.\" $NetBSD: iconv.3,v 1.15 2013/01/04 01:21:45 christos Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 5, 2010
+.Dd January 3, 2013
 .Dt ICONV 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -234,6 +234,25 @@ and
 .Fn iconv
 conform to
 .St -p1003.1-2001 .
+.Pp
+Unfortunately due a historical mistake (documented in 
+.Pa https://www5.opengroup.org/sophocles2/show_mail.tpl?&source=L&listname=austin-group-l&id=7404 ),
+where the unix header page had the
+second argument of
+.Fn iconv
+as
+.Ft char **
+and the manual page had the same as
+.Ft const char ** ,
+the definition of
+.Ft iconv
+has not been consistent across operating systems.
+Given the committee's decicion to follow the header definition, we had to make
+a decision between following the committee's change or keeping our existing
+definition which is arguably more correct like others have (
+.Pa http://www.gnu.org/savannah-checkouts/gnu/libiconv/documentation/libiconv-1.14/ ).
+We chose to keep our definition and we believe that this is not a problem because
+most packages are aware of this issue and handle it anyway during configuration.
 .\" ----------------------------------------------------------------------
 .Sh BUGS
 If
