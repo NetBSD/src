@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.68 2013/01/05 23:27:33 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.69 2013/01/05 23:38:02 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -7939,4 +7939,24 @@ sys/external/bsd/drm/dist/shared-core/i915_suspend.c 1.6
 
 	Avoid out-of-bounds access.
 	[msaitoh, ticket #762]
+
+sys/dev/usb/ohci.c				1.226
+
+	Fix a memory leak. PR#41602.
+	[skrll, ticket #765]
+
+sys/dev/marvell/if_mvgbe.c			1.33
+
+	Prevent panic if MII PHY port is not used.
+	[msaitoh, ticket #766]
+
+sys/arch/evbarm/conf/NSLU2			1.28 via patch
+
+	Enable PTYFS in NSLU2 kernel.
+	[msaitoh, ticket #767]
+
+sys/arch/evbarm/conf/SHEEVAPLUG			1.27
+
+	Add ukphy.
+	[msaitoh, ticket #768]
 
