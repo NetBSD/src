@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.39 2012/12/27 16:42:32 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.40 2013/01/05 01:30:16 christos Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,9 +45,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.39 2012/12/27 16:42:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.40 2013/01/05 01:30:16 christos Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +169,7 @@ static const struct udav_type {
 
 
 /* Probe */
-int 
+int
 udav_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -177,7 +179,7 @@ udav_match(device_t parent, cfdata_t match, void *aux)
 }
 
 /* Attach */
-void 
+void
 udav_attach(device_t parent, device_t self, void *aux)
 {
 	struct udav_softc *sc = device_private(self);
@@ -324,7 +326,7 @@ udav_attach(device_t parent, device_t self, void *aux)
 }
 
 /* detach */
-int 
+int
 udav_detach(device_t self, int flags)
 {
 	struct udav_softc *sc = device_private(self);

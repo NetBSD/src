@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.64 2012/12/27 16:42:32 skrll Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.65 2013/01/05 01:30:15 christos Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,9 +56,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.64 2012/12/27 16:42:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.65 2013/01/05 01:30:15 christos Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

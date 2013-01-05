@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.121 2012/12/04 05:50:57 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.122 2013/01/05 01:30:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,9 +37,11 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.121 2012/12/04 05:50:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.122 2013/01/05 01:30:16 christos Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +177,7 @@ CFATTACH_DECL_NEW(ugen, sizeof(struct ugen_softc), ugen_match, ugen_attach, ugen
 /* toggle to control attach priority. -1 means "let autoconf decide" */
 int ugen_override = -1;
 
-int 
+int
 ugen_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -194,7 +196,7 @@ ugen_match(device_t parent, cfdata_t match, void *aux)
 		return (UMATCH_NONE);
 }
 
-void 
+void
 ugen_attach(device_t parent, device_t self, void *aux)
 {
 	struct ugen_softc *sc = device_private(self);
@@ -671,7 +673,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 						sce->cur = sce->ibuf;
 				}
 
-				/* 
+				/*
 				 * If the transfers stopped because the
 				 * buffer was full, restart them.
 				 */
@@ -843,7 +845,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 				return (EWOULDBLOCK);
 			}
 			while (uio->uio_resid > 0 && !error) {
-				while (sce->ra_wb_used == 
+				while (sce->ra_wb_used ==
 				       sce->limit - sce->ibuf) {
 					sce->state |= UGEN_ASLP;
 					DPRINTFN(5,
@@ -1004,7 +1006,7 @@ ugen_activate(device_t self, enum devact act)
 	}
 }
 
-int 
+int
 ugen_detach(device_t self, int flags)
 {
 	struct ugen_softc *sc = device_private(self);
@@ -1259,7 +1261,7 @@ ugen_bulkwb_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 	/* Update buffer pointers. */
 	sce->cur += count;
 	if (sce->cur >= sce->limit)
-		sce->cur = sce->ibuf + (sce->cur - sce->limit); 
+		sce->cur = sce->ibuf + (sce->cur - sce->limit);
 
 	/* Set up next request if necessary. */
 	if (sce->ra_wb_used > 0) {
@@ -1560,7 +1562,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			sce->state &= ~UGEN_BULK_WB;
 			/*
 			 * XXX Discard whatever's in the buffer, but we
-			 * should keep it around and keep writing to 
+			 * should keep it around and keep writing to
 			 * drain the buffer instead.
 			 */
 			usbd_abort_pipe(sce->pipeh);
@@ -1588,7 +1590,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		    opt->ra_wb_request_size < 1 ||
 		    opt->ra_wb_request_size > opt->ra_wb_buffer_size)
 			return (EINVAL);
-		/* 
+		/*
 		 * XXX These changes do not take effect until the
 		 * next time RA/WB mode is enabled but they ought to
 		 * take effect immediately.

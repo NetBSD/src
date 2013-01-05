@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.185 2013/01/02 09:53:58 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.186 2013/01/05 01:30:17 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,11 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.185 2013/01/02 09:53:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.186 2013/01/05 01:30:17 christos Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
 #include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

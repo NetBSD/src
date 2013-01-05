@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.84 2012/04/30 17:27:50 christos Exp $	*/
+/*	$NetBSD: ums.c,v 1.85 2013/01/05 01:30:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.84 2012/04/30 17:27:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.85 2013/01/05 01:30:17 christos Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,12 +244,12 @@ ums_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Try the wheel first as the Z activator since it's tradition. */
-	hl = hid_locate(desc, 
-			size, 
-			HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL), 
-			uha->reportid, 
-			hid_input, 
-			&sc->sc_loc_z, 
+	hl = hid_locate(desc,
+			size,
+			HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL),
+			uha->reportid,
+			hid_input,
+			&sc->sc_loc_z,
 			&flags);
 
 	zloc = &sc->sc_loc_z;
@@ -264,8 +268,8 @@ ums_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	hl = hid_locate(desc, 
-			size, 
+	hl = hid_locate(desc,
+			size,
 			HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
 			uha->reportid,
 			hid_input,
@@ -278,9 +282,9 @@ ums_attach(device_t parent, device_t self, void *aux)
 	 * any Z then check that.
 	 */
 	if (!hl) {
-		hl = hid_locate(desc, 
-				size, 
-				HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN), 
+		hl = hid_locate(desc,
+				size,
+				HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN),
 				uha->reportid,
 				hid_input,
 				zloc,
@@ -307,7 +311,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (uha->uaa->vendor == USB_VENDOR_MICROSOFT &&
 	    (uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR10 ||
-	     uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR20)) {	
+	     uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR20)) {
 		if ((sc->flags & UMS_Z) && sc->sc_loc_z.pos == 0)
 			sc->sc_loc_z.pos = 24;
 		if ((sc->flags & UMS_W) && sc->sc_loc_w.pos == 0)
@@ -322,7 +326,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 
 	if (isdigitizer) {
 		for (size_t j = 0; j < __arraycount(digbut); j++) {
-			if (hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS, 
+			if (hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS,
 			    digbut[j].feature), uha->reportid, hid_input,
 			    &sc->sc_loc_btn[i - 1], 0)) {
 				if (i <= MAX_BUTTONS) {
