@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_64-asm.S,v 1.2 2008/10/19 15:22:17 christos Exp $	*/
+/*	$NetBSD: x86_64-asm.S,v 1.3 2013/01/05 15:33:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -28,15 +28,6 @@
 
 #include <machine/asm.h>
 
-	.data
-
-_C_LABEL(cpu):
-	.long	0
-	.globl	_C_LABEL(cpu)
-_C_LABEL(cpu_info_level):
-	.long	-1
-	.globl	_C_LABEL(cpu_info_level)
-
 	.text
 
 ENTRY(x86_cpuid2)
@@ -53,8 +44,5 @@ ENTRY(x86_cpuid2)
 	ret
 
 ENTRY(x86_identify)
-	pushq	%rbx
-	cpuid
-	movl	%eax, PIC_GOT(_C_LABEL(cpu_info_level))
-	popq	%rbx
+	movl	$-1,%eax
 	ret
