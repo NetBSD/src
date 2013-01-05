@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.5 2012/08/22 13:21:31 jakllsch Exp $
+#	$NetBSD: files.bcm2835,v 1.6 2013/01/05 19:55:18 jakllsch Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -47,3 +47,7 @@ file	arch/arm/broadcom/bcm2835_plcom.c	bcmplcom
 # External Mass Media Controller (BCM2835_EMMC_BASE)
 attach	sdhc at obio with bcmemmc
 file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
+
+# GPIO misc. functions
+define	bcm2835_gpio_subr
+file	arch/arm/broadcom/bcm2835_gpio_subr.c	bcm2835_gpio_subr
