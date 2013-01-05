@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.4 2012/09/15 16:56:45 plunky Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.5 2013/01/05 16:34:43 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -97,10 +97,10 @@ struct ap_session;
  */
 typedef	struct	nat	{
 	ipfmutex_t	nat_lock;
-	struct	nat	*nat_next;
-	struct	nat	**nat_pnext;
-	struct	nat	*nat_hnext[2];
-	struct	nat	**nat_phnext[2];
+	struct	nat	*nat_next;    /* next nat_t in global linked list */
+	struct	nat	**nat_pnext;  /* ptr to the nat_next that points here */
+	struct	nat	*nat_hnext[2];	 /* next nat_t in hashtable bucket */
+	struct	nat	**nat_phnext[2]; /* ptr to nat_hnext that points here */
 	struct	hostmap	*nat_hm;
 	void		*nat_data;
 	struct	nat	**nat_me;

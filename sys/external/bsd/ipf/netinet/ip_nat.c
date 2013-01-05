@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.7 2012/12/20 21:42:28 christos Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.8 2013/01/05 16:34:43 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.7 2012/12/20 21:42:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.8 2013/01/05 16:34:43 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -226,6 +226,7 @@ static	void	ipf_nat_addrdr(ipf_nat_softc_t *, ipnat_t *);
 static	int	ipf_nat_builddivertmp(ipf_nat_softc_t *, ipnat_t *);
 static	int	ipf_nat_clearlist(ipf_main_softc_t *, ipf_nat_softc_t *);
 static	int	ipf_nat_cmp_rules(ipnat_t *, ipnat_t *);
+static	void	ipf_nat_compute_hashes(nat_t *nat);
 static	int	ipf_nat_decap(fr_info_t *, nat_t *);
 static	void	ipf_nat_delrule(ipf_main_softc_t *, ipf_nat_softc_t *,
 				     ipnat_t *, int);
@@ -2253,12 +2254,26 @@ void
 ipf_nat_delete(ipf_main_softc_t *softc, struct nat *nat, int logtype)
 {
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
-	int madeorphan = 0, bkt, removed = 0;
+	int madeorphan = 0, removed = 0;
+	u_int hv0;
+	u_int hv1;
 	nat_stat_side_t *nss;
 	struct ipnat *ipn;
 
 	if (logtype != 0 && softn->ipf_nat_logging != 0)
 		ipf_nat_log(softc, softn, nat, logtype);
+
+	/* Get the hash values, swapped as necessary. */
+	hv0 = nat->nat_hv[0] % softn->ipf_nat_table_sz;
+	hv1 = nat->nat_hv[1] % softn->ipf_nat_table_sz;
+
+	if (nat->nat_dir == NAT_INBOUND || nat->nat_dir == NAT_DIVERTIN) {
+		u_int swap;
+
+		swap = hv0;
+		hv0 = hv1;
+		hv1 = swap;
+	}
 
 	/*
 	 * Take it as a general indication that all the pointers are set if
@@ -2267,17 +2282,15 @@ ipf_nat_delete(ipf_main_softc_t *softc, struct nat *nat, int logtype)
 	if (nat->nat_pnext != NULL) {
 		removed = 1;
 
-		bkt = nat->nat_hv[0] % softn->ipf_nat_table_sz;
 		nss = &softn->ipf_nat_stats.ns_side[0];
-		nss->ns_bucketlen[bkt]--;
-		if (nss->ns_bucketlen[bkt] == 0) {
+		nss->ns_bucketlen[hv0]--;
+		if (nss->ns_bucketlen[hv0] == 0) {
 			nss->ns_inuse--;
 		}
 
-		bkt = nat->nat_hv[1] % softn->ipf_nat_table_sz;
 		nss = &softn->ipf_nat_stats.ns_side[1];
-		nss->ns_bucketlen[bkt]--;
-		if (nss->ns_bucketlen[bkt] == 0) {
+		nss->ns_bucketlen[hv1]--;
+		if (nss->ns_bucketlen[hv1] == 0) {
 			nss->ns_inuse--;
 		}
 
@@ -3337,58 +3350,48 @@ ipf_nat_finalise(fr_info_t *fin, nat_t *nat)
 
 
 /* ------------------------------------------------------------------------ */
-/* Function:    ipf_nat_insert                                              */
-/* Returns:     int - 0 == sucess, -1 == failure                            */
-/* Parameters:  softc(I) - pointer to soft context main structure           */
-/*              softn(I) - pointer to NAT context structure                 */
-/*              nat(I) - pointer to NAT structure                           */
+/* Function:    ipf_nat_compute_hashes                                              */
+/* Parameters:  nat(I) - pointer to NAT structure                           */
 /* Write Lock:  ipf_nat                                                     */
 /*                                                                          */
-/* Insert a NAT entry into the hash tables for searching and add it to the  */
-/* list of active NAT entries.  Adjust global counters when complete.       */
+/* Compute and set the values for nat->nat_hv[0] and nat->nat_hv[1]         */
 /* ------------------------------------------------------------------------ */
-int
-ipf_nat_insert(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
+void
+ipf_nat_compute_hashes(nat_t *nat)
 {
 	u_int hv0, hv1;
-	u_int sp, dp;
-	ipnat_t *in;
-	int ret;
+	u_int sport, dport;
 
-	/*
-	 * Try and return an error as early as possible, so calculate the hash
-	 * entry numbers first and then proceed.
-	 */
 	if ((nat->nat_flags & (SI_W_SPORT|SI_W_DPORT)) == 0) {
 		if ((nat->nat_flags & IPN_TCPUDP) != 0) {
-			sp = nat->nat_osport;
-			dp = nat->nat_odport;
+			sport = nat->nat_osport;
+			dport = nat->nat_odport;
 		} else if ((nat->nat_flags & IPN_ICMPQUERY) != 0) {
-			sp = 0;
-			dp = nat->nat_oicmpid;
+			sport = 0;
+			dport = nat->nat_oicmpid;
 		} else {
-			sp = 0;
-			dp = 0;
+			sport = 0;
+			dport = 0;
 		}
-		hv0 = NAT_HASH_FN(nat->nat_osrcaddr, sp, 0xffffffff);
-		hv0 = NAT_HASH_FN(nat->nat_odstaddr, hv0 + dp, 0xffffffff);
+		hv0 = NAT_HASH_FN(nat->nat_osrcaddr, sport, 0xffffffff);
+		hv0 = NAT_HASH_FN(nat->nat_odstaddr, hv0 + dport, 0xffffffff);
 		/*
 		 * TRACE nat_osrcaddr, nat_osport, nat_odstaddr,
 		 * nat_odport, hv0
 		 */
 
 		if ((nat->nat_flags & IPN_TCPUDP) != 0) {
-			sp = nat->nat_nsport;
-			dp = nat->nat_ndport;
+			sport = nat->nat_nsport;
+			dport = nat->nat_ndport;
 		} else if ((nat->nat_flags & IPN_ICMPQUERY) != 0) {
-			sp = 0;
-			dp = nat->nat_nicmpid;
+			sport = 0;
+			dport = nat->nat_nicmpid;
 		} else {
-			sp = 0;
-			dp = 0;
+			sport = 0;
+			dport = 0;
 		}
-		hv1 = NAT_HASH_FN(nat->nat_nsrcaddr, sp, 0xffffffff);
-		hv1 = NAT_HASH_FN(nat->nat_ndstaddr, hv1 + dp, 0xffffffff);
+		hv1 = NAT_HASH_FN(nat->nat_nsrcaddr, sport, 0xffffffff);
+		hv1 = NAT_HASH_FN(nat->nat_ndstaddr, hv1 + dport, 0xffffffff);
 		/*
 		 * TRACE nat_nsrcaddr, nat_nsport, nat_ndstaddr,
 		 * nat_ndport, hv1
@@ -3405,6 +3408,31 @@ ipf_nat_insert(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
 
 	nat->nat_hv[0] = hv0;
 	nat->nat_hv[1] = hv1;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    ipf_nat_insert                                              */
+/* Returns:     int - 0 == sucess, -1 == failure                            */
+/* Parameters:  softc(I) - pointer to soft context main structure           */
+/*              softn(I) - pointer to NAT context structure                 */
+/*              nat(I) - pointer to NAT structure                           */
+/* Write Lock:  ipf_nat                                                     */
+/*                                                                          */
+/* Insert a NAT entry into the hash tables for searching and add it to the  */
+/* list of active NAT entries.  Adjust global counters when complete.       */
+/* ------------------------------------------------------------------------ */
+int
+ipf_nat_insert(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
+{
+	ipnat_t *in;
+	int ret;
+
+	/*
+	 * Try and return an error as early as possible, so calculate the hash
+	 * entry numbers first and then proceed.
+	 */
+	ipf_nat_compute_hashes(nat);
 
 	MUTEX_INIT(&nat->nat_lock, "nat entry lock");
 
@@ -4269,14 +4297,14 @@ ipf_nat_tabmove(ipf_nat_softc_t *softn, nat_t *nat)
 	if (nat->nat_hnext[0])
 		nat->nat_hnext[0]->nat_phnext[0] = nat->nat_phnext[0];
 	*nat->nat_phnext[0] = nat->nat_hnext[0];
-	nsp->ns_side[0].ns_bucketlen[nat->nat_hv[0] %
-				     softn->ipf_nat_table_sz]--;
+	hv0 = nat->nat_hv[0] % softn->ipf_nat_table_sz;
+	nsp->ns_side[0].ns_bucketlen[hv0]--;
 
 	if (nat->nat_hnext[1])
 		nat->nat_hnext[1]->nat_phnext[1] = nat->nat_phnext[1];
 	*nat->nat_phnext[1] = nat->nat_hnext[1];
-	nsp->ns_side[1].ns_bucketlen[nat->nat_hv[1] %
-				     softn->ipf_nat_table_sz]--;
+	hv1 = nat->nat_hv[1] % softn->ipf_nat_table_sz;
+	nsp->ns_side[1].ns_bucketlen[hv1]--;
 
 	/*
 	 * Add into the NAT table in the new position
@@ -7986,6 +8014,8 @@ ipf_nat_rehash(ipf_main_softc_t *softc, ipftuneable_t *t, ipftuneval_t *p)
 	 */
 	softn->ipf_nat_stats.ns_side[0].ns_inuse = 0;
 	softn->ipf_nat_stats.ns_side[1].ns_inuse = 0;
+
+	/* XXX(gadams): Still need to deal with hv0/hv1 swapping! */
 
 	for (nat = softn->ipf_nat_instances; nat != NULL; nat = nat->nat_next) {
 		nat->nat_hnext[0] = NULL;
