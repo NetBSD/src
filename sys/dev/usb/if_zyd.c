@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.34 2013/01/05 01:32:50 christos Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.35 2013/01/05 23:34:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,11 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.34 2013/01/05 01:32:50 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.35 2013/01/05 23:34:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -69,10 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.34 2013/01/05 01:32:50 christos Exp $")
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_zydreg.h>
-
-#ifdef USB_DEBUG
-#define ZYD_DEBUG
-#endif
 
 #ifdef ZYD_DEBUG
 #define DPRINTF(x)	do { if (zyddebug > 0) printf x; } while (0)
