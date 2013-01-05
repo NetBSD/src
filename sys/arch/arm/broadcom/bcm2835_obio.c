@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.6 2013/01/04 21:00:23 jakllsch Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.7 2013/01/05 19:47:17 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.6 2013/01/04 21:00:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.7 2013/01/05 19:47:17 jakllsch Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -76,7 +76,7 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_size = BCM2835_ARMICU_SIZE,
 		.ad_intr = -1,
 	},
-        {
+	{
 		/* Mailbox */
 		.ad_name = "bcmmbox",
 		.ad_addr = BCM2835_ARMMBOX_BASE,
@@ -166,7 +166,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 		locs[OBIOCF_SIZE] = ad->ad_size;
 		locs[OBIOCF_INTR] = ad->ad_intr;
 
-		config_found_sm_loc(self, "obio", locs, &aaa, obio_print, 
+		config_found_sm_loc(self, "obio", locs, &aaa, obio_print,
 		    config_stdsubmatch);
 	}
 
