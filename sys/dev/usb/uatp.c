@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.1 2012/08/04 04:34:55 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.2 2013/01/05 01:30:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2012 Taylor R. Campbell
@@ -143,7 +143,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.1 2012/08/04 04:34:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.2 2013/01/05 01:30:16 christos Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_uatp_debug.h"
+#endif
 
 #include <sys/atomic.h>
 #include <sys/device.h>
@@ -170,12 +174,6 @@ extern int hz;
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
-
-#if 1
-#  define UATP_DEBUG	1
-#else
-#  include "opt_uatp_debug.h"
-#endif
 
 #define CHECK(condition, fail) do {					\
 	if (! (condition)) {						\

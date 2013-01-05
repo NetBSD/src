@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.128 2012/12/27 16:42:32 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.129 2013/01/05 01:30:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,9 +78,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.128 2012/12/27 16:42:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.129 2013/01/05 01:30:15 christos Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -687,9 +689,9 @@ aue_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	/* 
+	/*
 	 * Some manufacturers use the same vendor and product id for
-	 * different devices. We need to sanity check the DeviceClass 
+	 * different devices. We need to sanity check the DeviceClass
 	 * in this case
 	 * Currently known guilty products:
 	 * 0x050d/0x0121 Belkin Bluetooth and USB2LAN
@@ -700,13 +702,13 @@ aue_match(device_t parent, cfdata_t match, void *aux)
 	if (uaa->vendor == USB_VENDOR_BELKIN &&
 		uaa->product == USB_PRODUCT_BELKIN_USB2LAN) {
 		usb_device_descriptor_t *dd;
-		
+
 		dd = usbd_get_device_descriptor(uaa->device);
 		if (dd != NULL &&
 			dd->bDeviceClass != UDCLASS_IN_INTERFACE)
 			return (UMATCH_NONE);
 	}
-	
+
 	return (aue_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
