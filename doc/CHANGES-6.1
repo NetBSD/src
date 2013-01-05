@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.67 2013/01/02 23:36:11 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.68 2013/01/05 23:27:33 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -7911,4 +7911,32 @@ sys/dev/sdmmc/sdhcreg.h				patch
 
 	Support SDHC version 3 clocks.
 	[skrll, ticket #759]
+
+distrib/sets/lists/base/ad.mips64eb		patch
+distrib/sets/lists/base/ad.mips64el		patch
+distrib/sets/lists/base/md.amd64		patch
+distrib/sets/lists/base/md.sparc64		patch
+distrib/sets/lists/comp/ad.mips64eb		patch
+distrib/sets/lists/comp/ad.mips64el		patch
+distrib/sets/lists/comp/md.amd64		patch
+distrib/sets/lists/comp/md.sparc64		patch
+distrib/sets/lists/comp/mi			patch
+distrib/sets/lists/comp/shl.mi			patch
+etc/mtree/NetBSD.dist.mips64eb			patch
+etc/mtree/NetBSD.dist.mips64el			patch
+etc/mtree/NetBSD.dist.sparc64			patch
+etc/mtree/NetBSD.dist.x86_64			patch
+
+	Fix MKDEBUG/MKDEBUGLIB set lists.  PR bin/47337.
+	[spz, ticket #760]
+
+sys/dev/usb/ubsa_common.c			1.9
+
+	Fix off by one read error.
+	[msaitoh, ticket #761]
+
+sys/external/bsd/drm/dist/shared-core/i915_suspend.c 1.6
+
+	Avoid out-of-bounds access.
+	[msaitoh, ticket #762]
 
