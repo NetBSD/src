@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.150 2012/12/12 18:58:05 christos Exp $
+.\"	$NetBSD: ddb.4,v 1.151 2013/01/05 15:26:59 christos Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd December 12, 2012
+.Dd January 5, 2013
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -698,6 +698,8 @@ Print the vm_page at
 If
 .Cm /f
 is specified, the complete page is printed.
+.It Ic show panic
+Print the current "panic" string.
 .It Ic show pool Ns Oo Cm /clp Oc Ar address
 Print the pool at
 .Ar address .
@@ -970,8 +972,6 @@ modifier to write two bytes.
 Given a trap frame address, print out the trap frame.
 .It Ic irqstat
 Display the IRQ statistics
-.It Ic panic
-Print the current "panic" string.
 .El
 .Ss ALPHA
 .Bl -tag -width "traptrace" -compact
@@ -991,8 +991,6 @@ Switch to another cpu.
 .Bl -tag -width "traptrace" -compact
 .It Ic frame
 Given a trap frame address, print out the trap frame.
-.It Ic panic
-Print the current "panic" string.
 .El
 .Ss HP700
 .Bl -tag -width "traptrace" -compact
