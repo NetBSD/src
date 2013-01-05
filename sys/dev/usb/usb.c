@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.137 2013/01/05 01:30:17 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.138 2013/01/05 23:34:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.137 2013/01/05 01:30:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.138 2013/01/05 23:34:19 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
-#include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
