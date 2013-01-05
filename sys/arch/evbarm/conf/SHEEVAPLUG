@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.12 2011/12/18 05:49:26 dholland Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.12.2.1 2013/01/05 23:36:59 riz Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -194,7 +194,10 @@ options 	PCI_NETBSD_CONFIGURE
 # On-chip Gigabit Ethernet Controller Interface
 mvgbec* at mvsoc? offset ?
 mvgbe*	at mvgbec? port ? irq ?
+
+# MII/PHY support
 makphy* at mii? phy ?
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # On-chip USB 2.0 Interface
 ehci*	at mvsoc? offset ? irq ?
