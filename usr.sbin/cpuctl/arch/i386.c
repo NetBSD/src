@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.34 2013/01/05 15:27:45 dsl Exp $	*/
+/*	$NetBSD: i386.c,v 1.35 2013/01/05 16:38:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.34 2013/01/05 15:27:45 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.35 2013/01/05 16:38:12 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: i386.c,v 1.34 2013/01/05 15:27:45 dsl Exp $");
 #include <sys/ioctl.h>
 #include <sys/cpuio.h>
 
+#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1530,9 +1531,22 @@ identifycpu(int fd, const char *cpuname)
 		ucode.loader_version = CPU_UCODE_LOADER_INTEL1;
 	else
 		return;
+
 	ucode.data = &ucvers;
-	if (ioctl(fd, IOC_CPU_UCODE_GET_VERSION, &ucode) < 0)
-		return;
+	if (ioctl(fd, IOC_CPU_UCODE_GET_VERSION, &ucode) < 0) {
+#ifdef __i386__
+		struct cpu_ucode_version_64 ucode_64;
+		if (errno != ENOTTY)
+			return;
+		/* Try the 64 bit ioctl */
+		memset(&ucode_64, 0, sizeof ucode_64);
+		ucode_64.data = &ucvers;
+		ucode_64.loader_version = ucode.loader_version;
+		if (ioctl(fd, IOC_CPU_UCODE_GET_VERSION_64, &ucode_64) < 0)
+			return;
+#endif
+	}
+
 	if (cpu_vendor == CPUVENDOR_AMD)
 		printf("%s: UCode version: 0x%"PRIx64"\n", cpuname, ucvers.amd.version);
 	else if (cpu_vendor == CPUVENDOR_INTEL)
