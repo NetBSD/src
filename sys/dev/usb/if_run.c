@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.6 2013/01/05 01:30:16 christos Exp $	*/
+/*	$NetBSD: if_run.c,v 1.7 2013/01/05 23:34:17 christos Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,11 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.6 2013/01/05 01:30:16 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.7 2013/01/05 23:34:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -68,10 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.6 2013/01/05 01:30:16 christos Exp $");
 
 #include <dev/ic/rt2860reg.h>		/* shared with ral(4) */
 #include <dev/usb/if_runvar.h>
-
-#ifdef USB_DEBUG
-#define RUN_DEBUG
-#endif
 
 #ifdef RUN_DEBUG
 #define DPRINTF(x)	do { if (run_debug) printf x; } while (0)

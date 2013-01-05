@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.2 2013/01/05 01:30:18 christos Exp $	*/
+/*	$NetBSD: uts.c,v 1.3 2013/01/05 23:34:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,11 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.2 2013/01/05 01:30:18 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.3 2013/01/05 23:34:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.2 2013/01/05 01:30:18 christos Exp $");
 #include <dev/wscons/wsmousevar.h>
 #include <dev/wscons/tpcalibvar.h>
 
-#ifdef USB_DEBUG
+#ifdef UTS_DEBUG
 #define DPRINTF(x)	if (utsdebug) printf x
 #define DPRINTFN(n,x)	if (utsdebug>(n)) printf x
 int	utsdebug = 0;
@@ -213,7 +209,7 @@ uts_attach(device_t parent, device_t self, void *aux)
 
 	/* multi-touch support would need HUD_CONTACTID and HUD_CONTACTMAX */
 
-#ifdef USB_DEBUG
+#ifdef UTS_DEBUG
 	DPRINTF(("uts_attach: sc=%p\n", sc));
 	DPRINTF(("uts_attach: X\t%d/%d\n",
 		sc->sc_loc_x.pos, sc->sc_loc_x.size));

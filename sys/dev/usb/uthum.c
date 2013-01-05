@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.9 2013/01/05 01:30:18 christos Exp $   */
+/*	$NetBSD: uthum.c,v 1.10 2013/01/05 23:34:21 christos Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,11 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.9 2013/01/05 01:30:18 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10 2013/01/05 23:34:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,10 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.9 2013/01/05 01:30:18 christos Exp $");
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 #include <dev/usb/hid.h>
-
-#ifdef USB_DEBUG
-#define UTHUM_DEBUG
-#endif
 
 #ifdef UTHUM_DEBUG
 int	uthumdebug = 0;

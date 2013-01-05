@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.c,v 1.14 2013/01/05 01:30:15 christos Exp $	*/
+/*	$NetBSD: ezload.c,v 1.15 2013/01/05 23:34:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,11 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.14 2013/01/05 01:30:15 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.15 2013/01/05 23:34:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.14 2013/01/05 01:30:15 christos Exp $")
  * device.
  */
 
-#ifdef USB_DEBUG
+#ifdef EZLOAD_DEBUG
 #define DPRINTF(x)	if (ezloaddebug) printf x
 #define DPRINTFN(n,x)	if (ezloaddebug>(n)) printf x
 int ezloaddebug = 0;
