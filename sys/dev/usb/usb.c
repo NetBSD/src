@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.136 2012/11/27 04:54:58 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.137 2013/01/05 01:30:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,10 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.136 2012/11/27 04:54:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.137 2013/01/05 01:30:17 christos Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,7 +561,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 				case USB_EVENT_DRIVER_DETACH:
 					ueo->u.ue_driver.ue_cookie=ue->u.ue_driver.ue_cookie;
 					memcpy(ueo->u.ue_driver.ue_devname,
-					       ue->u.ue_driver.ue_devname,  
+					       ue->u.ue_driver.ue_devname,
 					       sizeof(ue->u.ue_driver.ue_devname));
 					break;
 				default:
@@ -1073,7 +1075,7 @@ usb_copy_old_devinfo(struct usb_device_info_old *uo,
 	int i, n;
 
 	uo->udi_bus = ue->udi_bus;
-	uo->udi_addr = ue->udi_addr;       
+	uo->udi_addr = ue->udi_addr;
 	uo->udi_cookie = ue->udi_cookie;
 	for (i = 0, p = (const unsigned char *)ue->udi_product,
 	     q = (unsigned char *)uo->udi_product;
@@ -1112,7 +1114,7 @@ usb_copy_old_devinfo(struct usb_device_info_old *uo,
 	uo->udi_protocol = ue->udi_protocol;
 	uo->udi_config = ue->udi_config;
 	uo->udi_speed = ue->udi_speed;
-	uo->udi_power = ue->udi_power;    
+	uo->udi_power = ue->udi_power;
 	uo->udi_nports = ue->udi_nports;
 
 	for (n=0; n<USB_MAX_DEVNAMES; n++)
