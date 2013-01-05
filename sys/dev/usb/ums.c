@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.85 2013/01/05 01:30:17 christos Exp $	*/
+/*	$NetBSD: ums.c,v 1.86 2013/01/05 23:34:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,11 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.85 2013/01/05 01:30:17 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.86 2013/01/05 23:34:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.85 2013/01/05 01:30:17 christos Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-#ifdef USB_DEBUG
+#ifdef UMS_DEBUG
 #define DPRINTF(x)	if (umsdebug) printf x
 #define DPRINTFN(n,x)	if (umsdebug>(n)) printf x
 int	umsdebug = 0;
@@ -351,7 +347,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 	    sc->flags & UMS_BARREL_SWITCH ? ", barrel" : "",
 	    sc->flags & UMS_ERASER ? ", eraser" : "");
 
-#ifdef USB_DEBUG
+#ifdef UMS_DEBUG
 	DPRINTF(("ums_attach: sc=%p\n", sc));
 	DPRINTF(("ums_attach: X\t%d/%d\n",
 		 sc->sc_loc_x.pos, sc->sc_loc_x.size));

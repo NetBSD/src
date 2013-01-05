@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.228 2013/01/05 01:30:16 christos Exp $	*/
+/*	$NetBSD: ohci.c,v 1.229 2013/01/05 23:34:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,11 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.228 2013/01/05 01:30:16 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.229 2013/01/05 23:34:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2264,10 +2260,8 @@ ohci_close_pipe(usbd_pipe_handle pipe, ohci_soft_ed_t *head)
 		       (int)O32TOH(sed->ed.ed_headp),
 		       (int)O32TOH(sed->ed.ed_tailp),
 		       pipe, std);
-#ifdef USB_DEBUG
-		usbd_dump_pipe(&opipe->pipe);
-#endif
 #ifdef OHCI_DEBUG
+		usbd_dump_pipe(&opipe->pipe);
 		ohci_dump_ed(sc, sed);
 		if (std)
 			ohci_dump_td(sc, std);

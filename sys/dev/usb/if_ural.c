@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.42 2013/01/05 01:30:16 christos Exp $ */
+/*	$NetBSD: if_ural.c,v 1.43 2013/01/05 23:34:17 christos Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,11 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.42 2013/01/05 01:30:16 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.43 2013/01/05 23:34:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -70,10 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.42 2013/01/05 01:30:16 christos Exp $"
 
 #include <dev/usb/if_uralreg.h>
 #include <dev/usb/if_uralvar.h>
-
-#ifdef USB_DEBUG
-#define URAL_DEBUG
-#endif
 
 #ifdef URAL_DEBUG
 #define DPRINTF(x)	do { if (ural_debug) printf x; } while (0)

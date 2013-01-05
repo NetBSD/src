@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.8 2013/01/05 01:30:18 christos Exp $ */
+/*	$NetBSD: uyurex.c,v 1.9 2013/01/05 23:34:21 christos Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -22,11 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.8 2013/01/05 01:30:18 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9 2013/01/05 23:34:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -46,10 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.8 2013/01/05 01:30:18 christos Exp $");
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 #include <dev/usb/hid.h>
-
-#ifdef USB_DEBUG
-#define UYUREX_DEBUG
-#endif
 
 #define	CMD_NONE	0xf0
 #define CMD_EOF		0x0d

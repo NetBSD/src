@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.120 2013/01/05 01:30:17 christos Exp $	*/
+/*	$NetBSD: uhub.c,v 1.121 2013/01/05 23:34:19 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,11 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.120 2013/01/05 01:30:17 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.121 2013/01/05 23:34:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

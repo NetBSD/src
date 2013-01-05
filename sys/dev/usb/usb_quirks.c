@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.76 2013/01/05 01:30:17 christos Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.77 2013/01/05 23:34:20 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,11 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.76 2013/01/05 01:30:17 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.77 2013/01/05 23:34:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

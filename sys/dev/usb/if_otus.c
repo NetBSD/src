@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.18 2013/01/05 01:32:50 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.19 2013/01/05 23:34:17 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,11 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.18 2013/01/05 01:32:50 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.19 2013/01/05 23:34:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -69,10 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.18 2013/01/05 01:32:50 christos Exp $"
 
 #include <dev/usb/if_otusreg.h>
 #include <dev/usb/if_otusvar.h>
-
-#ifdef USB_DEBUG
-#define OTUS_DEBUG
-#endif
 
 #ifdef OTUS_DEBUG
 int otus_debug = 0;

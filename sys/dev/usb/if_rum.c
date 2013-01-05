@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.45 2013/01/05 01:30:16 christos Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.46 2013/01/05 23:34:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,11 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.45 2013/01/05 01:30:16 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.46 2013/01/05 23:34:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -73,10 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.45 2013/01/05 01:30:16 christos Exp $")
 
 #include <dev/usb/if_rumreg.h>
 #include <dev/usb/if_rumvar.h>
-
-#ifdef USB_DEBUG
-#define RUM_DEBUG
-#endif
 
 #ifdef RUM_DEBUG
 #define DPRINTF(x)	do { if (rum_debug) printf x; } while (0)

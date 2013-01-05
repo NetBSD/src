@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.8 2013/01/05 01:32:50 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.9 2013/01/05 23:34:18 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,11 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.8 2013/01/05 01:32:50 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.9 2013/01/05 23:34:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -72,10 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.8 2013/01/05 01:32:50 christos Exp $"
 #include <dev/usb/if_urtwnreg.h>
 #include <dev/usb/if_urtwnvar.h>
 #include <dev/usb/if_urtwn_data.h>
-
-#ifdef USB_DEBUG
-#define URTWN_DEBUG
-#endif
 
 #ifdef URTWN_DEBUG
 #define	DBG_INIT	__BIT(0)
