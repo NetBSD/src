@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.7 2013/01/05 20:15:17 jakllsch Exp $
+#	$NetBSD: files.bcm2835,v 1.8 2013/01/05 20:31:23 jakllsch Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -51,6 +51,11 @@ file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
 # GPIO misc. functions
 define	bcm2835_gpio_subr
 file	arch/arm/broadcom/bcm2835_gpio_subr.c	bcm2835_gpio_subr
+
+# SPI controller (BCM2835_SPI0_BASE)
+device	bcmspi: spibus, bcm2835_gpio_subr
+attach	bcmspi at obio
+file	arch/arm/broadcom/bcm2835_spi.c		bcmspi
 
 # BSC (I2C) controller (BCM2835_BSC[01]_BASE)
 device	bsciic: i2cbus, bcm2835_gpio_subr
