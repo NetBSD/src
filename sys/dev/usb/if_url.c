@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.45 2012/12/27 16:42:32 skrll Exp $	*/
+/*	$NetBSD: if_url.c,v 1.46 2013/01/05 01:30:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,9 +44,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.45 2012/12/27 16:42:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.46 2013/01/05 01:30:16 christos Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +167,7 @@ static const struct url_type {
 
 
 /* Probe */
-int 
+int
 url_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -174,7 +176,7 @@ url_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 /* Attach */
-void 
+void
 url_attach(device_t parent, device_t self, void *aux)
 {
 	struct url_softc *sc = device_private(self);
@@ -329,7 +331,7 @@ url_attach(device_t parent, device_t self, void *aux)
 }
 
 /* detach */
-int 
+int
 url_detach(device_t self, int flags)
 {
 	struct url_softc *sc = device_private(self);
@@ -1580,4 +1582,3 @@ url_ext_miibus_writereg(device_t dev, int phy, int reg, int data)
 	return;
 }
 #endif
-
