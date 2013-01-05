@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.33 2012/12/27 16:42:32 skrll Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.34 2013/01/05 01:32:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -18,12 +18,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
+/*-
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.33 2012/12/27 16:42:32 skrll Exp $");
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.34 2013/01/05 01:32:50 christos Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/sockio.h>
