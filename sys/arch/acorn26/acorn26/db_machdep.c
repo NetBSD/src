@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.8 2011/07/19 16:05:09 dyoung Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.9 2013/01/05 15:04:00 christos Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.8 2011/07/19 16:05:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.9 2013/01/05 15:04:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,20 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.8 2011/07/19 16:05:09 dyoung Exp $"
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
-
-
-void
-db_show_panic_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
-    const char *modif)
-{
-	int s;
-	
-	s = splhigh();
-
-	db_printf("Panic string: %s\n", panicstr);
-
-	(void)splx(s);
-}
 
 
 void
