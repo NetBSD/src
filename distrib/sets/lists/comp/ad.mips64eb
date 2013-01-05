@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.69.2.5 2012/09/17 19:00:27 riz Exp $
+# $NetBSD: ad.mips64eb,v 1.69.2.6 2013/01/05 23:10:31 riz Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -1267,13 +1267,16 @@
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_serial.so.5.0.debug	comp-i18n-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug		debug,compat
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug,compat
+./usr/libdata/debug/usr/lib/64/npf/libext_log.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/64/npf/libext_normalise.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/64/npf/libext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/usr/lib/64/libamu.so.4.0.debug		comp-amd-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/64/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/64/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat
-./usr/libdata/debug/usr/lib/64/libbind9.so.5.7.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libbind9.so.5.8.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
@@ -1287,7 +1290,7 @@
 ./usr/libdata/debug/usr/lib/64/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat
 ./usr/libdata/debug/usr/lib/64/libdm.so.0.0.debug 		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libdns.so.5.7.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libdns.so.5.8.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat
 ./usr/libdata/debug/usr/lib/64/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/64/libdwarf.so.0.0.debug	comp-sys-debug	debug,compat
@@ -1312,9 +1315,9 @@
 ./usr/libdata/debug/usr/lib/64/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/64/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libipsec.so.3.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libisc.so.5.7.debug		comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libisccc.so.5.7.debug	comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libisccfg.so.5.7.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libisc.so.5.8.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libisccc.so.5.8.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libisccfg.so.5.8.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/64/libisns.so.0.0.debug	comp-isns-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
@@ -1331,7 +1334,7 @@
 ./usr/libdata/debug/usr/lib/64/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/64/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/64/liblua.so.1.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/liblwres.so.5.7.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/liblwres.so.5.8.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/liblzf.so.0.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libm.so.0.10.debug		comp-sys-debug	debug,compat
@@ -1420,13 +1423,16 @@
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_serial.so.5.0.debug	comp-i18n-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug		debug,compat
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug,compat
+./usr/libdata/debug/usr/lib/o32/npf/libext_log.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/o32/npf/libext_normalise.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/o32/npf/libext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/usr/lib/o32/libamu.so.4.0.debug		comp-amd-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat
-./usr/libdata/debug/usr/lib/o32/libbind9.so.5.7.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libbind9.so.5.8.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
@@ -1440,7 +1446,7 @@
 ./usr/libdata/debug/usr/lib/o32/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdm.so.0.0.debug 		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libdns.so.5.7.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libdns.so.5.8.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdwarf.so.0.0.debug	comp-sys-debug	debug,compat
@@ -1465,9 +1471,9 @@
 ./usr/libdata/debug/usr/lib/o32/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libipsec.so.3.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libisc.so.5.7.debug		comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libisccc.so.5.7.debug	comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libisccfg.so.5.7.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libisc.so.5.8.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libisccc.so.5.8.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libisccfg.so.5.8.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libisns.so.0.0.debug	comp-isns-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
@@ -1484,7 +1490,7 @@
 ./usr/libdata/debug/usr/lib/o32/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/o32/liblua.so.1.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/liblwres.so.5.7.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/liblwres.so.5.8.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/liblzf.so.0.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libm.so.0.10.debug		comp-sys-debug	debug,compat

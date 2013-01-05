@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.15 2012/12/02 02:06:19 riz Exp $
+#	$NetBSD: mi,v 1.1738.2.16 2013/01/05 23:10:32 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4096,6 +4096,7 @@
 ./usr/libdata/debug/usr/sbin/dnssec-revoke.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-settime.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-signzone.debug	comp-bind-debug		debug
+./usr/libdata/debug/usr/sbin/dnssec-verify.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-isdn-debug		debug
 ./usr/libdata/debug/usr/sbin/dtrace.debug	comp-util-debug		dtrace,debug
 ./usr/libdata/debug/usr/sbin/dumpfs.debug	comp-sysutil-debug	debug

@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.147.2.8 2012/12/15 23:45:56 riz Exp $
+# $NetBSD: md.sparc64,v 1.147.2.9 2013/01/05 23:10:31 riz Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -314,6 +314,7 @@
 ./usr/lib/sparc/security/pam_unix.so.3		base-compat-shlib	compat,pic
 ./usr/libdata/debug/usr/lib/sparc		base-compat-lib		compat
 ./usr/libdata/debug/usr/lib/sparc/i18n		base-compat-lib		compat
+./usr/libdata/debug/usr/lib/sparc/npf		base-compat-lib		compat
 ./usr/libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./usr/lkm/compat_netbsd32.o			base-obsolete		obsolete
 ./usr/lkm/compat_sunos32.o			base-obsolete		obsolete

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.x86_64,v 1.3.4.1 2012/12/13 23:50:28 riz Exp $
+#	$NetBSD: NetBSD.dist.x86_64,v 1.3.4.2 2013/01/05 23:10:31 riz Exp $
 
 ./usr/lib/i386
 ./usr/lib/i386/i18n
@@ -8,3 +8,4 @@
 ./usr/lib/i386/security
 ./usr/libdata/debug/usr/lib/i386
 ./usr/libdata/debug/usr/lib/i386/i18n
+./usr/libdata/debug/usr/lib/i386/npf
