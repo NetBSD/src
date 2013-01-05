@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.1 2013/01/05 23:16:39 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.2 2013/01/05 23:17:49 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -8,4 +8,9 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 6.0.1_PATCH.
 	[riz]
+
+sys/dev/usb/ubsa_common.c			1.9
+
+	Fix off by one read error.
+	[msaitoh, ticket #761]
 
