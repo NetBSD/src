@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.46 2013/01/05 01:30:15 christos Exp $ */
+/*	$NetBSD: if_atu.c,v 1.47 2013/01/05 23:34:16 christos Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,11 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.46 2013/01/05 01:30:15 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_usb.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.47 2013/01/05 23:34:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -94,10 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.46 2013/01/05 01:30:15 christos Exp $")
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
-
-#ifdef USB_DEBUG
-#define ATU_DEBUG
-#endif
 
 #include <dev/usb/if_atureg.h>
 
