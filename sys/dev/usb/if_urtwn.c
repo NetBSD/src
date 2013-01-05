@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.6 2012/12/27 16:42:32 skrll Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.7 2013/01/05 01:30:16 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.6 2012/12/27 16:42:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.7 2013/01/05 01:30:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1490,7 +1490,7 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 			      R92C_RCR_CBSSID_DATA | R92C_RCR_CBSSID_BCN);
 		}
 		break;
-	
+
 	case IEEE80211_S_AUTH:
 	case IEEE80211_S_ASSOC:
 		break;
@@ -3561,7 +3561,7 @@ urtwn_init(struct ifnet *ifp)
 	default:
 		reg = RW(reg, R92C_CR_NETTYPE, R92C_CR_NETTYPE_INFRA);
 		break;
-	
+
 	case IEEE80211_M_IBSS:
 		reg = RW(reg, R92C_CR_NETTYPE, R92C_CR_NETTYPE_ADHOC);
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.37 2012/04/05 16:31:53 plunky Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.38 2013/01/05 01:30:15 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,9 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.37 2012/04/05 16:31:53 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38 2013/01/05 01:30:15 christos Exp $");
 
-#if defined(_KERNEL_OPT)
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
 

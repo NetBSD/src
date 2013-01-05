@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.45 2012/12/27 16:42:32 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.46 2013/01/05 01:30:15 christos Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,8 +48,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.45 2012/12/27 16:42:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.46 2013/01/05 01:30:15 christos Exp $");
 
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/sockio.h>

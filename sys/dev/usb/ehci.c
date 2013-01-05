@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.194 2013/01/02 09:49:14 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.195 2013/01/05 01:30:15 christos Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,11 +53,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.194 2013/01/02 09:49:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.195 2013/01/05 01:30:15 christos Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
+#ifdef _KERNEL_OPT
 #include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1493,12 +1495,12 @@ ehci_dump_sqtds(ehci_soft_qtd_t *sqtd)
 	for (i = 0; sqtd && i < 20 && !stop; sqtd = sqtd->nextqtd, i++) {
 		ehci_dump_sqtd(sqtd);
 		usb_syncmem(&sqtd->dma,
-		    sqtd->offs + offsetof(ehci_qtd_t, qtd_next), 
+		    sqtd->offs + offsetof(ehci_qtd_t, qtd_next),
 		    sizeof(sqtd->qtd),
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 		stop = sqtd->qtd.qtd_next & htole32(EHCI_LINK_TERMINATE);
 		usb_syncmem(&sqtd->dma,
-		    sqtd->offs + offsetof(ehci_qtd_t, qtd_next), 
+		    sqtd->offs + offsetof(ehci_qtd_t, qtd_next),
 		    sizeof(sqtd->qtd), BUS_DMASYNC_PREREAD);
 	}
 	if (sqtd)
@@ -1508,11 +1510,11 @@ ehci_dump_sqtds(ehci_soft_qtd_t *sqtd)
 Static void
 ehci_dump_sqtd(ehci_soft_qtd_t *sqtd)
 {
-	usb_syncmem(&sqtd->dma, sqtd->offs, 
+	usb_syncmem(&sqtd->dma, sqtd->offs,
 	    sizeof(sqtd->qtd), BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	printf("QTD(%p) at 0x%08x:\n", sqtd, sqtd->physaddr);
 	ehci_dump_qtd(&sqtd->qtd);
-	usb_syncmem(&sqtd->dma, sqtd->offs, 
+	usb_syncmem(&sqtd->dma, sqtd->offs,
 	    sizeof(sqtd->qtd), BUS_DMASYNC_PREREAD);
 }
 
@@ -1544,7 +1546,7 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 	ehci_qh_t *qh = &sqh->qh;
 	u_int32_t endp, endphub;
 
-	usb_syncmem(&sqh->dma, sqh->offs, 
+	usb_syncmem(&sqh->dma, sqh->offs,
 	    sizeof(sqh->qh), BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	printf("QH(%p) at 0x%08x:\n", sqh, sqh->physaddr);
 	printf("  link="); ehci_dump_link(qh->qh_link, 1); printf("\n");
@@ -1566,7 +1568,7 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 	printf("  curqtd="); ehci_dump_link(qh->qh_curqtd, 0); printf("\n");
 	printf("Overlay qTD:\n");
 	ehci_dump_qtd(&qh->qh_qtd);
-	usb_syncmem(&sqh->dma, sqh->offs, 
+	usb_syncmem(&sqh->dma, sqh->offs,
 	    sizeof(sqh->qh), BUS_DMASYNC_PREREAD);
 }
 
@@ -2368,7 +2370,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			 * If we are doing embedded transaction translation,
 			 * then directly attached LS/FS devices are reset by
 			 * the EHCI controller itself.  PSPD is encoded
-			 * the same way as in USBSTATUS. 
+			 * the same way as in USBSTATUS.
 			 */
 			i = __SHIFTOUT(v, EHCI_PS_PSPD) * UPS_LOW_SPEED;
 		}
@@ -4059,7 +4061,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 			 */
 
 			itd->itd.itd_ctl[j] = htole32 ( EHCI_ITD_ACTIVE |
-			    EHCI_ITD_SET_LEN(xfer->frlengths[trans_count]) | 
+			    EHCI_ITD_SET_LEN(xfer->frlengths[trans_count]) |
 			    EHCI_ITD_SET_PG(addr) |
 			    EHCI_ITD_SET_OFFS(EHCI_PAGE_OFFSET(DMAADDR(dma_buf,offs))));
 
@@ -4071,7 +4073,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 				itd->itd.itd_ctl[j] |= htole32(EHCI_ITD_IOC);
 				break;
 			}
-		}	
+		}
 
 		/* Step 1.75, set buffer pointers. To simplify matters, all
 		 * pointers are filled out for the next 7 hardware pages in
@@ -4111,7 +4113,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 		    EHCI_ITD_SET_MAXPKT(UE_GET_SIZE(j)));
 
 		/* FIXME: handle invalid trans */
-		itd->itd.itd_bufr[2] |= 
+		itd->itd.itd_bufr[2] |=
 		    htole32(EHCI_ITD_SET_MULTI(UE_GET_TRANS(j)+1));
 
 		usb_syncmem(&itd->dma,
