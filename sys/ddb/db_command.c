@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.138 2012/04/28 23:03:39 rmind Exp $	*/
+/*	$NetBSD: db_command.c,v 1.139 2013/01/05 15:23:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.138 2012/04/28 23:03:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.139 2013/01/05 15:23:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -264,6 +264,8 @@ static const struct db_command db_show_cmds[] = {
 	    "Print the vm_object at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("page",	db_page_print_cmd,	0,
 	    "Print the vm_page at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("panic",	db_show_panic,	0,
+	    "Print the current panic string",NULL,NULL) },
 	{ DDB_ADD_CMD("pool",	db_pool_print_cmd,	0,
 	    "Print the pool at address.", "[/clp] address",NULL) },
 	{ DDB_ADD_CMD("registers",	db_show_regs,		0,
