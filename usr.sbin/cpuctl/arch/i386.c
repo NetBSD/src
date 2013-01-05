@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.33 2013/01/02 19:24:30 dsl Exp $	*/
+/*	$NetBSD: i386.c,v 1.34 2013/01/05 15:27:45 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.33 2013/01/02 19:24:30 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.34 2013/01/05 15:27:45 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -84,18 +84,15 @@ __RCSID("$NetBSD: i386.c,v 1.33 2013/01/02 19:24:30 dsl Exp $");
 #include <x86/cpu_ucode.h>
 
 #include "../cpuctl.h"
+#include "cpuctl_i386.h"
 
 /* Size of buffer for printing humanized numbers */
 #define HUMAN_BUFSIZE sizeof("999KB")
 
-#define       x86_cpuid(a,b)  x86_cpuid2((a),0,(b))
-
-void	x86_cpuid2(uint32_t, uint32_t, uint32_t *);
-void	x86_identify(void);
-
 struct cpu_info {
 	const char	*ci_dev;
-	int32_t		ci_cpuid_level;
+	int32_t		ci_cpu_type;     /* for cpu's without cpuid */
+	int32_t		ci_cpuid_level;	 /* highest cpuid supported */
 	uint32_t	ci_signature;	 /* X86 cpuid type */
 	uint32_t	ci_feat_val[5];	 /* X86 CPUID feature bits
 					  *	[0] basic features %edx
@@ -985,7 +982,7 @@ amd_amd64_name(struct cpu_info *ci)
 }
 
 static void
-cpu_probe_base_features(struct cpu_info *ci)
+cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 {
 	const struct x86_cache_info *cai;
 	u_int descs[4];
@@ -994,8 +991,15 @@ cpu_probe_base_features(struct cpu_info *ci)
 	uint32_t miscbytes;
 	uint32_t brand[12];
 
-	if (ci->ci_cpuid_level < 0)
+	memset(ci, 0, sizeof(*ci));
+	ci->ci_dev = cpuname;
+
+	ci->ci_cpu_type = x86_identify();
+	if (ci->ci_cpu_type >= 0) {
+		/* Old pre-cpuid instruction cpu */
+		ci->ci_cpuid_level = -1;
 		return;
+	}
 
 	x86_cpuid(0, descs);
 	ci->ci_cpuid_level = descs[0];
@@ -1077,8 +1081,6 @@ cpu_probe_features(struct cpu_info *ci)
 {
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	int i, xmax, family;
-
-	cpu_probe_base_features(ci);
 
 	if (ci->ci_cpuid_level < 1)
 		return;
@@ -1246,8 +1248,6 @@ identifycpu(int fd, const char *cpuname)
 	const struct cpu_cpuid_family *cpufam;
 	const char *feature_str[5];
 	struct cpu_info *ci, cistore;
-	extern int cpu;
-	extern int cpu_info_level;
 	size_t sz;
 	char buf[512];
 	char *bp;
@@ -1258,21 +1258,17 @@ identifycpu(int fd, const char *cpuname)
 	} ucvers;
 
 	ci = &cistore;
-	memset(ci, 0, sizeof(*ci));
-	ci->ci_dev = cpuname;
-
-	x86_identify();
-	ci->ci_cpuid_level = cpu_info_level;
+	cpu_probe_base_features(ci, cpuname);
 	cpu_probe_features(ci);
 
-	if (ci->ci_cpuid_level == -1) {
-		if ((size_t)cpu >= __arraycount(i386_nocpuid_cpus))
-			errx(1, "unknown cpu type %d", cpu);
-		name = i386_nocpuid_cpus[cpu].cpu_name;
-		cpu_vendor = i386_nocpuid_cpus[cpu].cpu_vendor;
-		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
-		class = i386_nocpuid_cpus[cpu].cpu_class;
-		ci->ci_info = i386_nocpuid_cpus[cpu].cpu_info;
+	if (ci->ci_cpu_type >= 0) {
+		if (ci->ci_cpu_type >= (int)__arraycount(i386_nocpuid_cpus))
+			errx(1, "unknown cpu type %d", ci->ci_cpu_type);
+		name = i386_nocpuid_cpus[ci->ci_cpu_type].cpu_name;
+		cpu_vendor = i386_nocpuid_cpus[ci->ci_cpu_type].cpu_vendor;
+		vendorname = i386_nocpuid_cpus[ci->ci_cpu_type].cpu_vendorname;
+		class = i386_nocpuid_cpus[ci->ci_cpu_type].cpu_class;
+		ci->ci_info = i386_nocpuid_cpus[ci->ci_cpu_type].cpu_info;
 		modifier = "";
 	} else {
 		xmax = __arraycount(i386_cpuid_cpus);
@@ -1468,7 +1464,7 @@ identifycpu(int fd, const char *cpuname)
 		errx(1, "NetBSD requires an 80486 or later processor");
 	}
 
-	if (cpu == CPU_486DLC) {
+	if (ci->ci_cpu_type == CPU_486DLC) {
 #ifndef CYRIX_CACHE_WORKS
 		aprint_error("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
 #else
@@ -2026,11 +2022,9 @@ ucodeupdate_check(int fd, struct cpu_ucode *uc)
 	struct cpu_info ci;
 	int loader_version, res;
 	struct cpu_ucode_version versreq;
-	extern int cpu_info_level;
 
-	x86_identify();
-	ci.ci_cpuid_level = cpu_info_level;
-	cpu_probe_base_features(&ci);
+	cpu_probe_base_features(&ci, "unknown");
+
 	if (!strcmp((char *)ci.ci_vendor, "AuthenticAMD"))
 		loader_version = CPU_UCODE_LOADER_AMD;
 	else if (!strcmp((char *)ci.ci_vendor, "GenuineIntel"))
