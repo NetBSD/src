@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.2 2013/01/05 01:30:16 christos Exp $	*/
+/*	$NetBSD: uatp.c,v 1.3 2013/01/05 08:01:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2012 Taylor R. Campbell
@@ -143,11 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.2 2013/01/05 01:30:16 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_uatp_debug.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.3 2013/01/05 08:01:13 martin Exp $");
 
 #include <sys/atomic.h>
 #include <sys/device.h>
@@ -1278,9 +1274,8 @@ uatp_disable(void *v)
 static int
 uatp_ioctl(void *v, unsigned long cmd, void *data, int flag, struct lwp *p)
 {
-	struct uatp_softc *sc = v;
 
-	DPRINTF(sc, UATP_DEBUG_IOCTL,
+	DPRINTF((struct uatp_softc*)v, UATP_DEBUG_IOCTL,
 	    ("cmd %lx, data %p, flag %x, lwp %p\n", cmd, data, flag, p));
 
 	/* XXX Implement any relevant wsmouse(4) ioctls.  */
