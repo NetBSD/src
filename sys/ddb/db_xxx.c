@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.67 2013/01/05 15:23:27 christos Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.68 2013/01/06 03:23:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.67 2013/01/05 15:23:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.68 2013/01/06 03:23:55 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -318,5 +318,35 @@ db_show_panic(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 	db_printf("Panic string: %s\n", panicstr);
 
 	(void)splx(s);
+#endif
+}
+
+extern kmutex_t log_lock;
+
+void
+db_show_dmesg(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
+{
+#ifdef _KERNEL	/* XXX CRASH(8) */
+	long maxlen, beg, end, len;
+
+	mutex_spin_enter(&log_lock);
+	maxlen = msgbufp->msg_bufs;
+	beg = msgbufp->msg_bufx;
+	end = msgbufp->msg_bufs;
+	mutex_spin_exit(&log_lock);
+
+	while (maxlen > 0) {
+		len = MIN(end - beg, maxlen);
+		if (len == 0)
+			break;
+		db_printf("%.*s", (int)len, (const char *)&msgbufp->msg_bufc[beg]);
+		maxlen -= len;
+		/*
+		 * ... then, copy from the beginning of message buffer to
+		 * the write pointer.
+		 */
+		beg = 0;
+		end = msgbufp->msg_bufx;
+	}
 #endif
 }
