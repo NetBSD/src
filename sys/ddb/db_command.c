@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.140 2013/01/06 03:23:55 christos Exp $	*/
+/*	$NetBSD: db_command.c,v 1.141 2013/01/06 03:34:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.140 2013/01/06 03:23:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.141 2013/01/06 03:34:52 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -317,8 +317,6 @@ static const struct db_command db_command_table[] = {
 	    "Delete a breakpoint.", "address | #number",NULL) },
 	{ DDB_ADD_CMD("delete",	db_delete_cmd,		0,
 	    "Delete a breakpoint.", "address | #number",NULL) },
-	{ DDB_ADD_CMD("dmesg",	db_dmesg,		0,
-	    "Show kernel message buffer.", "[count]",NULL) },
 	{ DDB_ADD_CMD("dwatch",	db_deletewatch_cmd,	0,
 	    "Delete the watchpoint.", "address",NULL) },
 	{ DDB_ADD_CMD("examine",	db_examine_cmd,		CS_SET_DOT,

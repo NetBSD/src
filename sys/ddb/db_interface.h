@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.30 2013/01/06 03:23:55 christos Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.31 2013/01/06 03:34:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@ void		db_stack_trace_print(db_expr_t, bool, db_expr_t, const char *,
 void		db_kgdb_cmd(db_expr_t, bool, db_expr_t, const char *);
 void		db_show_files_cmd(db_expr_t, bool, db_expr_t, const char *);
 void		db_show_panic(db_expr_t, bool, db_expr_t, const char *);
-void		db_show_dmesg(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/kern_proc.c */
 void		db_kill_proc(db_expr_t, bool, db_expr_t, const char *);
