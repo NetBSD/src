@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.10 2012/02/19 21:06:12 rmind Exp $ */
+/* $NetBSD: trap.c,v 1.11 2013/01/06 11:25:13 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2005 Marcel Moolenaar
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10 2012/02/19 21:06:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.11 2013/01/06 11:25:13 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -549,6 +549,21 @@ trap(int vector, struct trapframe *tf)
 
 /* XXX: Fill in the rest */
 
+	case IA64_VEC_SPECULATION:
+		/*
+		 * The branching behaviour of the chk instruction is not
+		 * implemented by the processor. All we need to do is
+		 * compute the target address of the branch and make sure
+		 * that control is transfered to that address.
+		 * We should do this in the IVT table and not by entring
+		 * the kernel...
+		 */
+		tf->tf_special.iip += tf->tf_special.ifa << 4;
+		tf->tf_special.psr &= ~IA64_PSR_RI;
+		goto out;
+
+/* XXX: Fill in the rest */
+
 	case IA64_VEC_DEBUG:
 	case IA64_VEC_SINGLE_STEP_TRAP:
 		tf->tf_special.psr &= ~IA64_PSR_SS;
@@ -575,14 +590,9 @@ trap(int vector, struct trapframe *tf)
 	ksi.ksi_code = ucode;
 	trapsignal(l, &ksi);
 
-#if 1
 out:
-#endif
-
 	if (user) {
 		mi_userret(l);
 	}
-
-
 	return;
 }
