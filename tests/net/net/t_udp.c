@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_udp.c,v 1.1 2013/01/06 00:35:22 christos Exp $");
+__RCSID("$NetBSD: t_udp.c,v 1.2 2013/01/06 02:22:50 christos Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -65,11 +65,11 @@ sendit(int family)
 	    strerror(errno));
 
 	e = connect(s, res->ai_addr, res->ai_addrlen);
-	ATF_REQUIRE_MSG(e == 0, "connect(1) AF=%d: %s", family,
+	ATF_REQUIRE_MSG(e == 0, "connect(2) AF=%d: %s", family,
 	    strerror(errno));
 
 	e = send(s, msg, sizeof(msg), 0);
-	ATF_REQUIRE_MSG(e == sizeof(msg), "send(1) AF=%d: %s", family,
+	ATF_REQUIRE_MSG(e == sizeof(msg), "send(2) AF=%d: %s", family,
 	    strerror(errno));
 
 	close(s);
