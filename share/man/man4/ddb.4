@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.151 2013/01/05 15:26:59 christos Exp $
+.\"	$NetBSD: ddb.4,v 1.152 2013/01/06 03:25:01 christos Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -614,6 +614,8 @@ Print the struct buf at
 The
 .Cm /f
 does nothing at this time.
+.It Ic show dmesg
+Display the contents of the current kernel message buffer.
 .It Ic show event Ns Oo Cm /f Oc Ns Oo Cm /i Oc Ns Oo Cm /m Oc Ns \
 Oo Cm /t Oc
 Print all the non-zero
