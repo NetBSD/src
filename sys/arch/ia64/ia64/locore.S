@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4 2011/10/01 15:59:28 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.5 2013/01/06 11:29:35 kiyohara Exp $	*/
 	
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -95,6 +95,8 @@ ENTRY_NOPROFILE(start, 1)
 //	br.call.sptk.many rp=_reloc	// XXX:	Look into relocs
 	;;
 	br.call.sptk.many rp=ia64_init
+	;;
+	br.call.sptk.many rp=main
 	;;
 	/* NOTREACHED */
 1:	br.cond.sptk.few 1b
