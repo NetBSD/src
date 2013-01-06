@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.61 2013/01/03 23:03:57 dsl Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.62 2013/01/06 22:37:36 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -336,7 +336,13 @@
 #define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 0xf)
 #define CPUID2STEPPING(cpuid)	((cpuid) & 0xf)
 
-/* Extended family and model are defined on amd64 processors */
+/*
+ * The Extended family bits should only be inspected when CPUID2FAMILY()
+ * returns 15. They are use to encode family value 16 to 270 (add 15).
+ * The Extended model hits are the high 4 bits of the model.
+ * They are only valid for family >= 15 or family 6 (intel, but all amd
+ * family 6 are documented to return zero bits for them).
+ */
 #define CPUID2EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
 #define CPUID2EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
 
@@ -357,6 +363,28 @@
 
 #define XCR0_FLAGS1	"\20" \
 	"\1" "x87"	"\2" "SSE"	"\3" "AVX"	"\4" "B03"
+
+/*
+ * CPUID Processor extended state Enumeration Fn0000000d
+ *
+ * %ecx == 0: supported features info:
+ *	%edx:%eax bits valid for XCR0
+ *	%ebx Save area size for features enabled in XCR0
+ *	%ecx Maximim save area size for all cpu features
+ *
+ * %ecx == 1: Bit 0 => xsaveopt instruction avalaible (sandy bridge onwards)
+ *
+ * %ecx >= 2: Save area details for XCR0 bit n
+ *	%eax: size of save area for this feature
+ *	%ebx: offset of save area for this feature
+ *	%ecx, %edx: reserved
+ *	All of %eax, %ebx, %ecx and %edx zero for unsupported features.
+ */
+
+#define	CPUID_PES1_XSAVEOPT	0x00000001	/* xsaveopt instruction */
+
+#define CPUID_PES1_FLAGS	"\20" \
+	"\1" "XSAVEOPT"
 
 /*
  * Model-specific registers for the i386 family
