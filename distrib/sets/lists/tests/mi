@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.513 2013/01/02 18:12:57 christos Exp $
+# $NetBSD: mi,v 1.514 2013/01/06 00:36:29 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -764,6 +764,7 @@
 ./usr/libdata/debug/usr/tests/net/if_loop/t_pr.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/net					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/net/t_raw.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/net/t_udp.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/net/t_unix.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/sys					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-obsolete		obsolete
@@ -2921,6 +2922,7 @@
 ./usr/tests/net/net				tests-net-tests
 ./usr/tests/net/net/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_raw		tests-net-tests		atf,rump
+./usr/tests/net/net/t_udp		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_unix		tests-net-tests		atf,rump
 ./usr/tests/net/npf			tests-net-tests
 ./usr/tests/net/npf/Atffile		tests-net-tests		atf,rump
