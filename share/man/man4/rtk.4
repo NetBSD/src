@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtk.4,v 1.9 2009/10/19 18:41:09 bouyer Exp $
+.\"	$NetBSD: rtk.4,v 1.10 2013/01/06 21:27:11 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Manuel Bouyer
 .\" All rights reserved.
@@ -33,7 +33,8 @@
 .Cd "rtk* at cardbus? function ?"
 .Cd "rtk* at pci? dev ? function ?"
 .Pp
-Configuration of PHYs are necessary.  See
+Configuration of PHYs is necessary.
+See
 .Xr mii 4 .
 .Sh DESCRIPTION
 The
@@ -45,7 +46,8 @@ Media selection is done using
 .Xr ifconfig 8
 using the standard
 .Xr ifmedia 4
-mechanism.  Refer to those manual pages for more information.
+mechanism.
+Refer to those manual pages for more information.
 .Sh SEE ALSO
 .Xr cardbus 4 ,
 .Xr ifmedia 4 ,
