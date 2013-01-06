@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.23 2013/01/02 14:05:04 apb Exp $	*/
+/*	$NetBSD: units.c,v 1.24 2013/01/06 00:19:13 wiz Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -794,8 +794,10 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "\nunits [-f unitsfile] [-q] [-v] [from-unit to-unit]\n");
+	    "\nunits [-Llqv] [-f filename] [[count] from-unit to-unit]\n");
 	fprintf(stderr, "\n    -f specify units file\n");
+	fprintf(stderr, "    -L list units in standardized base units\n");
+	fprintf(stderr, "    -l list units\n");
 	fprintf(stderr, "    -q suppress prompting (quiet)\n");
 	fprintf(stderr, "    -v print version number\n");
 	exit(3);
