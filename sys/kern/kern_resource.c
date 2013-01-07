@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.171 2012/12/21 19:39:48 njoly Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.172 2013/01/07 16:54:54 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.171 2012/12/21 19:39:48 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.172 2013/01/07 16:54:54 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,20 +409,21 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 			vaddr_t addr;
 			vsize_t size;
 			vm_prot_t prot;
+			char *base, *tmp;
 
+			base = p->p_vmspace->vm_minsaddr;
 			if (limp->rlim_cur > alimp->rlim_cur) {
 				prot = VM_PROT_READ | VM_PROT_WRITE;
 				size = limp->rlim_cur - alimp->rlim_cur;
-				addr = (vaddr_t)p->p_vmspace->vm_minsaddr -
-				    limp->rlim_cur;
+				tmp = STACK_GROW(base, alimp->rlim_cur);
 			} else {
 				prot = VM_PROT_NONE;
 				size = alimp->rlim_cur - limp->rlim_cur;
-				addr = (vaddr_t)p->p_vmspace->vm_minsaddr -
-				     alimp->rlim_cur;
+				tmp = STACK_GROW(base, limp->rlim_cur);
 			}
+			addr = (vaddr_t)STACK_ALLOC(tmp, size);
 			(void) uvm_map_protect(&p->p_vmspace->vm_map,
-			    addr, addr+size, prot, false);
+			    addr, addr + size, prot, false);
 		}
 		break;
 
