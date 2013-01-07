@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.40 2012/12/24 06:09:50 jakllsch Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.41 2013/01/07 02:56:24 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.40 2012/12/24 06:09:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.41 2013/01/07 02:56:24 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -89,7 +89,6 @@ struct sdhc_host {
 };
 
 #define HDEVNAME(hp)	(device_xname((hp)->sc->sc_dev))
-#define HDEVINST(hp)	((int)(((hp)-(hp)->sc->sc_host[0])/sizeof(*(hp))))
 
 static uint8_t
 hread1(struct sdhc_host *hp, bus_size_t reg)
@@ -227,7 +226,11 @@ sdhc_cfprint(void *aux, const char *pnp)
 	if (pnp) {
 		aprint_normal("sdmmc at %s", pnp);
 	}
-	aprint_normal(" slot %d", HDEVINST(hp));
+	for (size_t host = 0; host < hp->sc->sc_nhosts; host++) {
+		if (hp->sc->sc_host[host] == hp) {
+			aprint_normal(" slot %zu", host);
+		}
+	}
 
 	return UNCONF;
 }
