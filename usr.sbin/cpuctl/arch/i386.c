@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.37 2013/01/06 23:17:35 dsl Exp $	*/
+/*	$NetBSD: i386.c,v 1.38 2013/01/07 23:20:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.37 2013/01/06 23:17:35 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.38 2013/01/07 23:20:42 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -97,12 +97,14 @@ struct cpu_info {
 	uint32_t	ci_signature;	 /* X86 cpuid type */
 	uint32_t	ci_family;	 /* from ci_signature */
 	uint32_t	ci_model;	 /* from ci_signature */
-	uint32_t	ci_feat_val[5];	 /* X86 CPUID feature bits
+	uint32_t	ci_feat_val[8];	 /* X86 CPUID feature bits
 					  *	[0] basic features %edx
 					  *	[1] basic features %ecx
 					  *	[2] extended features %edx
 					  *	[3] extended features %ecx
 					  *	[4] VIA padlock features
+					  *	[5] XCR0 bits (d:0 %eax)
+					  *	[6] xsave flags (d:1 %eax)
 					  */
 	uint32_t	ci_cpu_class;	 /* CPU class */
 	uint32_t	ci_brand_id;	 /* Intel brand id */
@@ -113,6 +115,10 @@ struct cpu_info {
 	uint8_t		ci_coreid;
 	uint8_t		ci_smtid;
 	uint32_t	ci_initapicid;
+
+	uint32_t	ci_cur_xsave;
+	uint32_t	ci_max_xsave;
+
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
 	void		(*ci_info)(struct cpu_info *);
 };
@@ -202,11 +208,6 @@ static void cyrix6x86_cpu_setup(struct cpu_info *);
 static void winchip_cpu_setup(struct cpu_info *);
 static void amd_family5_setup(struct cpu_info *);
 static void powernow_probe(struct cpu_info *);
-
-/*
- * Info for CTL_HW
- */
-static char	cpu_model[120];
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.
@@ -999,6 +1000,19 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 		ci->ci_cpu_serial[2] = descs[2];
 		ci->ci_cpu_serial[1] = descs[3];
 	}
+
+	if (ci->ci_cpuid_level < 0xd)
+		return;
+
+	/* Get support XRC0 bits */
+	x86_cpuid2(0xd, 0, descs);
+	ci->ci_feat_val[5] = descs[0];	/* Actually 64 bits */
+	ci->ci_cur_xsave = descs[1];
+	ci->ci_max_xsave = descs[2];
+
+	/* Additional flags (eg xsaveopt support) */
+	x86_cpuid2(0xd, 1, descs);
+	ci->ci_feat_val[6] = descs[0];   /* Actually 64 bits */
 }
 
 static void
@@ -1159,6 +1173,26 @@ transmeta_cpu_info(struct cpu_info *ci)
 	}
 }
 
+static void
+print_bits(const char *cpuname, const char *hdr, const char *fmt, uint32_t val)
+{
+	char buf[32 * 16];
+	char *bp;
+
+#define	MAX_LINE_LEN	79	/* get from command arg or 'stty cols' ? */
+
+	if (val == 0 || fmt == NULL)
+		return;
+
+	snprintb_m(buf, sizeof(buf), fmt, val,
+	    MAX_LINE_LEN - strlen(cpuname) - 2 - strlen(hdr) - 1);
+	bp = buf;
+	while (*bp != '\0') {
+		aprint_verbose("%s: %s %s\n", cpuname, hdr, bp);
+		bp += strlen(bp) + 1;
+	}
+}
+
 void
 identifycpu(int fd, const char *cpuname)
 {
@@ -1168,11 +1202,8 @@ identifycpu(int fd, const char *cpuname)
 	int modif, family;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
-	const char *feature_str[5];
 	struct cpu_info *ci, cistore;
 	size_t sz;
-	char buf[512];
-	char *bp;
 	struct cpu_ucode_version ucode;
 	union {
 		struct cpu_ucode_version_amd amd;
@@ -1279,20 +1310,31 @@ identifycpu(int fd, const char *cpuname)
 	(void)sysctlbyname("machdep.pae", &use_pae, &sz, NULL, 0);
 	largepagesize = (use_pae ? 2 * 1024 * 1024 : 4 * 1024 * 1024);
 
-	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
-	    vendorname,
-	    *modifier ? " " : "", modifier,
-	    *name ? " " : "", name,
-	    *brand ? " " : "", brand,
-	    classnames[class]);
-	aprint_normal("%s: %s", cpuname, cpu_model);
+	/*
+	 * The 'cpu_brand_string' is much more useful than the 'cpu_model'
+	 * we try to determine from the family/model values.
+	 */
+	if (*cpu_brand_string != '\0')
+		aprint_normal("%s: \"%s\"\n", cpuname, cpu_brand_string);
+
+	aprint_normal("%s: %s", cpuname, vendorname);
+	if (*modifier)
+		aprint_normal(" %s", modifier);
+	if (*name)
+		aprint_normal(" %s", name);
+	if (*brand)
+		aprint_normal(" %s", brand);
+	aprint_normal(" (%s-class)", classnames[class]);
 
 	if (ci->ci_tsc_freq != 0)
-		aprint_normal(", %ju.%02ju MHz",
+		aprint_normal(", %ju.%02ju MHz\n",
 		    ((uintmax_t)ci->ci_tsc_freq + 4999) / 1000000,
 		    (((uintmax_t)ci->ci_tsc_freq + 4999) / 10000) % 100);
+
+	aprint_normal_dev(ci->ci_dev, "family %#x model %#x stepping %#x",
+	    ci->ci_family, ci->ci_model, CPUID2STEPPING(ci->ci_signature));
 	if (ci->ci_signature != 0)
-		aprint_normal(", id 0x%x", ci->ci_signature);
+		aprint_normal(" (id %#x)", ci->ci_signature);
 	aprint_normal("\n");
 
 	if (ci->ci_info)
@@ -1302,45 +1344,33 @@ identifycpu(int fd, const char *cpuname)
 	 * display CPU feature flags
 	 */
 
-#define	MAX_FEATURE_LEN	60	/* XXX Need to find a better way to set this */
+	print_bits(cpuname, "features", CPUID_FLAGS1, ci->ci_feat_val[0]);
+	print_bits(cpuname, "features1", CPUID2_FLAGS1, ci->ci_feat_val[1]);
 
-	feature_str[0] = CPUID_FLAGS1;
-	feature_str[1] = CPUID2_FLAGS1;
-	feature_str[2] = CPUID_EXT_FLAGS;
-	feature_str[3] = NULL;
-	feature_str[4] = NULL;
+	/* These next two are actually common definitions! */
+	print_bits(cpuname, "features2",
+	    cpu_vendor == CPUVENDOR_INTEL ? CPUID_INTEL_EXT_FLAGS
+		: CPUID_EXT_FLAGS, ci->ci_feat_val[2]);
+	print_bits(cpuname, "features3",
+	    cpu_vendor == CPUVENDOR_INTEL ? CPUID_INTEL_FLAGS4
+		: CPUID_AMD_FLAGS4, ci->ci_feat_val[3]);
 
-	switch (cpu_vendor) {
-	case CPUVENDOR_AMD:
-		feature_str[3] = CPUID_AMD_FLAGS4;
-		break;
-	case CPUVENDOR_INTEL:
-		feature_str[2] = CPUID_INTEL_EXT_FLAGS;
-		feature_str[3] = CPUID_INTEL_FLAGS4;
-		break;
-	case CPUVENDOR_IDT:
-		feature_str[4] = CPUID_FLAGS_PADLOCK;
-		break;
-	default:
-		break;
+	print_bits(cpuname, "padloack features", CPUID_FLAGS_PADLOCK,
+	    ci->ci_feat_val[4]);
+
+	print_bits(cpuname, "xsave features", XCR0_FLAGS1, ci->ci_feat_val[5]);
+	print_bits(cpuname, "xsave instructions", CPUID_PES1_FLAGS,
+	    ci->ci_feat_val[6]);
+
+	if (ci->ci_max_xsave != 0) {
+		aprint_normal("%s: xsave area size: current %d, maximum %d",
+			cpuname, ci->ci_cur_xsave, ci->ci_max_xsave);
+		aprint_normal(", xgetbv %sabled\n",
+		    ci->ci_feat_val[1] & CPUID2_OSXSAVE ? "en" : "dis");
+		if (ci->ci_feat_val[1] & CPUID2_OSXSAVE)
+			print_bits(cpuname, "enabled xsave", XCR0_FLAGS1,
+			    x86_xgetbv());
 	}
-	
-	for (i = 0; i <= 4; i++) {
-		if (ci->ci_feat_val[i] && feature_str[i] != NULL) {
-			snprintb_m(buf, sizeof(buf), feature_str[i],
-				   ci->ci_feat_val[i], MAX_FEATURE_LEN);
-			bp = buf;
-			while (*bp != '\0') {
-				aprint_verbose("%s: %sfeatures%c %s\n",
-				    cpuname, (i == 4)?"padlock ":"", 
-				    (i == 4 || i == 0)?' ':'1' + i, bp);
-				bp += strlen(bp) + 1;
-			}
-		}
-	}
-
-	if (*cpu_brand_string != '\0')
-		aprint_normal("%s: \"%s\"\n", cpuname, cpu_brand_string);
 
 	x86_print_cacheinfo(ci);
 
@@ -1390,28 +1420,18 @@ identifycpu(int fd, const char *cpuname)
 
 		if ((data[0] >= 0x8000000a)
 		   && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
-
 			x86_cpuid(0x8000000a, data);
 			aprint_verbose("%s: SVM Rev. %d\n", cpuname,
 			    data[0] & 0xf);
 			aprint_verbose("%s: SVM NASID %d\n", cpuname, data[1]);
-			snprintb_m(buf, sizeof(buf), CPUID_AMD_SVM_FLAGS,
-				   data[3], MAX_FEATURE_LEN);
-			bp = buf;
-			while (*bp != '\0') {
-				aprint_verbose("%s: SVM features %s\n",
-				    cpuname, bp);
-				bp += strlen(bp) + 1;
-			}
+			print_bits(cpuname, "SVM features", CPUID_AMD_SVM_FLAGS,
+				   data[3]);
 		}
 	}
 
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();
 #endif
-
-	aprint_normal_dev(ci->ci_dev, "family %02x model %02x stepping %02x\n",
-	    ci->ci_family, ci->ci_model, CPUID2STEPPING(ci->ci_signature));
 
 	if (cpu_vendor == CPUVENDOR_AMD)
 		ucode.loader_version = CPU_UCODE_LOADER_AMD;
