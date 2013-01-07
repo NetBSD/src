@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.3 2013/01/05 23:21:41 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.4 2013/01/07 16:54:20 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -18,4 +18,9 @@ sys/external/bsd/drm/dist/shared-core/i915_suspend.c 1.6
 
 	Avoid out-of-bounds access.
 	[msaitoh, ticket #762]
+
+sys/kern/uipc_syscalls.c			1.157-1.158
+
+	Prevent ktrace from being able to crash the kernel.
+	[mlelstv, ticket #778]
 
