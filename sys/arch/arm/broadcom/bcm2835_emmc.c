@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.4 2012/12/23 18:26:16 jakllsch Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.5 2013/01/07 13:23:46 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.4 2012/12/23 18:26:16 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.5 2013/01/07 13:23:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,12 +83,16 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	sc->sc.sc_dev = self;
-// 	sc->sc.sc_dmat = aaa->amba_dmat;
+ 	sc->sc.sc_dmat = aaa->aaa_dmat;
 	sc->sc.sc_flags = 0;
-// 	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;		/* not available (yet) */
 	sc->sc.sc_flags |= SDHC_FLAG_32BIT_ACCESS;
 	sc->sc.sc_flags |= SDHC_FLAG_HOSTCAPS;
-	sc->sc.sc_caps = SDHC_VOLTAGE_SUPP_3_3V | SDHC_HIGH_SPEED_SUPP;
+	sc->sc.sc_caps = SDHC_VOLTAGE_SUPP_3_3V | SDHC_HIGH_SPEED_SUPP |
+	    SDHC_MAX_BLK_LEN_1024;
+#if notyet
+ 	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
+	sc->sc.sc_caps |= SDHC_DMA_SUPPORT;
+#endif
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = 50000;	/* Default to 50MHz */
 	sc->sc_iot = aaa->aaa_iot;
