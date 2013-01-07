@@ -16846,3 +16846,33 @@ Apologies for any names omitted.
 
 	Bugfix (introduced: 20000314): AUTH is not allowed after
 	MAIL. Timo Sirainen.  File: smtpd/smtpd_sasl_proto.c.
+
+20121003
+
+	Bugfix: the postscreen_access_list feature was case-sensitive
+	in the first character of permit, reject, etc. Reported by
+	Francis Picabia. File: global/server_acl.c.
+
+20121010
+
+	Bugfix (introduced: Postfix 2.5): memory leak in program
+	initialization. Reported by Coverity. File: tls/tls_misc.c.
+
+	Bugfix (introduced: Postfix 2.3): memory leak in the unused
+	oqmgr program. Reported by Coverity. File: oqmgr/qmgr_message.c.
+
+20121013
+
+	Cleanup: to compute the LDAP connection cache lookup key,
+	join the numeric fields with null, just like string fields.
+	Viktor Dukhovni. File: global/dict_ldap.c.
+
+20121029
+
+	Workaround: strip datalink suffix from IPv6 addresses
+	returned by the system getaddrinfo() routine.  Such suffixes
+	mess up the default mynetworks value, host name/address
+	verification and possibly more. This change obsoletes the
+	20101108 change that removes datalink suffixes in the SMTP
+	and QMQP servers, but we leave that code alone.  File:
+	util/myaddrinfo.c.

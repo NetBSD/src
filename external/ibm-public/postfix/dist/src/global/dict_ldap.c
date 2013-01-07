@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.c,v 1.1.1.3.6.1 2012/02/19 18:28:54 riz Exp $	*/
+/*	$NetBSD: dict_ldap.c,v 1.1.1.3.6.2 2013/01/07 15:41:56 riz Exp $	*/
 
 /*++
 /* NAME
@@ -932,8 +932,11 @@ static void dict_ldap_conn_find(DICT_LDAP *dict_ldap)
 #endif
     LDAP_CONN *conn;
 
+    /*
+     * Join key fields with null characters.
+     */
 #define ADDSTR(vp, s) vstring_memcat((vp), (s), strlen((s))+1)
-#define ADDINT(vp, i) vstring_sprintf_append((vp), "%lu", (unsigned long)(i))
+#define ADDINT(vp, i) vstring_sprintf_append((vp), "%lu%c", (unsigned long)(i), 0)
 
     ADDSTR(keybuf, dict_ldap->server_host);
     ADDINT(keybuf, dict_ldap->server_port);
