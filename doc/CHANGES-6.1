@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.70 2013/01/07 04:16:05 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.71 2013/01/07 16:54:59 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -7967,4 +7967,52 @@ usr.sbin/btdevctl/btdevctl.8			1.8
 	Fix a problem with Bluetooth HID devices when configured for
 	connections without authentication.  PR#47286.
 	[plunky, ticket #769]
+
+doc/3RDPARTY					1.989, 1.991 via patch
+external/ibm-public/postfix/dist/HISTORY	patch
+external/ibm-public/postfix/dist/makedefs	patch
+external/ibm-public/postfix/dist/src/global/dict_ldap.c	patch
+external/ibm-public/postfix/dist/src/global/mail_version.h	patch
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_message.c	patch
+external/ibm-public/postfix/dist/src/postscreen/postscreen_access.c patch
+external/ibm-public/postfix/dist/src/util/myaddrinfo.c	patch
+external/ibm-public/postfix/dist/src/util/sys_defs.h	patch
+
+	Update Postfix to version 2.8.13.
+	[tron, ticket #771]
+
+lib/librefuse/refuse.c				1.96
+
+	Avoid protocol errors in case of a short write.  PR#45129.
+	[tron, ticket #772]
+
+sys/arch/arm/arm/cpufunc.c			1.119
+
+	Enable DCache Streaming Switch and Write Allocate, improving
+	system performance.
+	[msaitoh, ticket #774]
+
+sys/dev/marvell/if_mvgbe.c			1.34
+
+	Fix a bug that a multicast filter entry is incorrectly overridden
+	in some cases.
+	[msaitoh, ticket #775]
+
+dist/pf/usr.sbin/ftp-proxy/npf.c		1.2
+lib/libnpf/npf.3				1.6-1.7
+lib/libnpf/npf.c				1.15
+lib/libnpf/npf.h				1.12
+sys/net/npf/npf.h				1.24
+sys/net/npf/npf_ctl.c				1.20
+usr.sbin/npf/npfctl/npf.conf.5			1.26
+usr.sbin/npf/npfctl/npf_build.c			1.17
+usr.sbin/npf/npfctl/npfctl.c			1.26
+
+	Various bug fixes and minor updates to NPF.
+	[rmind, ticket #776]
+
+sys/kern/uipc_syscalls.c			1.157-1.158
+
+	Prevent ktrace from being able to crash the kernel.
+	[mlelstv, ticket #778]
 
