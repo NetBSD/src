@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.16.2.2 2013/01/05 23:32:27 riz Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.16.2.3 2013/01/07 16:45:30 riz Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.16.2.2 2013/01/05 23:32:27 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.16.2.3 2013/01/07 16:45:30 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1966,11 +1966,11 @@ mvgbe_filter_setup(struct mvgbe_softc *sc)
 		/* chip handles some IPv4 multicast specially */
 		if (memcmp(enm->enm_addrlo, special, 5) == 0) {
 			i = enm->enm_addrlo[5];
-			dfsmt[i>>2] =
+			dfsmt[i>>2] |=
 			    MVGBE_DF(i&3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
 		} else {
 			i = mvgbe_crc8(enm->enm_addrlo, ETHER_ADDR_LEN);
-			dfomt[i>>2] =
+			dfomt[i>>2] |=
 			    MVGBE_DF(i&3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
 		}
 
