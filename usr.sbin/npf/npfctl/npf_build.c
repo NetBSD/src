@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.4.2.9 2012/12/16 19:41:37 riz Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.4.2.10 2013/01/07 16:51:07 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.4.2.9 2012/12/16 19:41:37 riz Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.4.2.10 2013/01/07 16:51:07 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -617,7 +617,8 @@ npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname)
 		}
 
 		/* Create and add a table entry. */
-		npf_table_add_entry(tl, alen, &fam.fam_addr, fam.fam_mask);
+		npf_table_add_entry(tl, fam.fam_family,
+		    &fam.fam_addr, fam.fam_mask);
 	}
 	if (buf != NULL) {
 		free(buf);

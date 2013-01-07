@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.7.2.7 2012/11/19 18:16:17 riz Exp $	*/
+/*	$NetBSD: npf.c,v 1.7.2.8 2013/01/07 16:51:08 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7.2.7 2012/11/19 18:16:17 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7.2.8 2013/01/07 16:51:08 riz Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -121,14 +121,15 @@ npf_config_submit(nl_config_t *ncf, int fd)
 	if (npf_dict == NULL) {
 		return ENOMEM;
 	}
-	if (ncf->ncf_debug) {
-		prop_dictionary_set(npf_dict, "debug", ncf->ncf_debug);
-	}
+	prop_dictionary_set_uint32(npf_dict, "version", NPF_VERSION);
 	prop_dictionary_set(npf_dict, "rules", ncf->ncf_rules_list);
 	prop_dictionary_set(npf_dict, "rprocs", ncf->ncf_rproc_list);
 	prop_dictionary_set(npf_dict, "tables", ncf->ncf_table_list);
 	prop_dictionary_set(npf_dict, "translation", ncf->ncf_nat_list);
 	prop_dictionary_set_bool(npf_dict, "flush", ncf->ncf_flush);
+	if (ncf->ncf_debug) {
+		prop_dictionary_set(npf_dict, "debug", ncf->ncf_debug);
+	}
 
 	if (plist) {
 		if (!prop_dictionary_externalize_to_file(npf_dict, plist)) {
@@ -664,24 +665,36 @@ npf_table_create(u_int id, int type)
 }
 
 int
-npf_table_add_entry(nl_table_t *tl, const int alen,
-    const npf_addr_t *addr, const npf_netmask_t mask)
+npf_table_add_entry(nl_table_t *tl, int af, const npf_addr_t *addr,
+    const npf_netmask_t mask)
 {
 	prop_dictionary_t tldict = tl->ntl_dict, entdict;
 	prop_array_t tblents;
 	prop_data_t addrdata;
+	unsigned alen;
 
 	/* Create the table entry. */
 	entdict = prop_dictionary_create();
 	if (entdict == NULL) {
 		return ENOMEM;
 	}
+
+	switch (af) {
+	case AF_INET:
+		alen = sizeof(struct in_addr);
+		break;
+	case AF_INET6:
+		alen = sizeof(struct in6_addr);
+		break;
+	default:
+		return EINVAL;
+	}
+
 	addrdata = prop_data_create_data(addr, alen);
 	prop_dictionary_set(entdict, "addr", addrdata);
 	prop_dictionary_set_uint8(entdict, "mask", mask);
 	prop_object_release(addrdata);
 
-	/* Insert the entry. */
 	tblents = prop_dictionary_get(tldict, "entries");
 	prop_array_add(tblents, entdict);
 	prop_object_release(entdict);
