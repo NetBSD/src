@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19 2010/11/16 09:34:24 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.20 2013/01/07 16:57:28 chs Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.33 2006/06/04 17:21:24 miod Exp $	*/
 
@@ -28,6 +28,8 @@
 #ifndef _HPPA_VMPARAM_H_
 #define _HPPA_VMPARAM_H_
 
+#define __USE_TOPDOWN_VM
+
 /*
  * Machine dependent constants for HP PA
  */
@@ -43,8 +45,8 @@
 /*
  * USRSTACK is the bottom (start) of the user stack.
  */
-#define	USRSTACK	0x70000000		/* Start of user stack */
-#define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
+#define	USRSTACK	(VM_MAXUSER_ADDRESS - MAXSSIZ) /* Start of user stack */
+#define	SYSCALLGATE	0xc0000000		/* syscall gateway page */
 
 /*
  * Virtual memory related constants, all in bytes
