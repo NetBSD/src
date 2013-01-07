@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.73 2013/01/01 12:13:28 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.74 2013/01/07 23:24:28 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.73 2013/01/01 12:13:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.74 2013/01/07 23:24:28 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,6 +353,7 @@ static struct {
 	{ PCI_PRODUCT_ATI_RADEON_RV370_5460,	RADEON_RV380, RFB_MOB },
 	{ PCI_PRODUCT_ATI_RADEON_RV370_5464,	RADEON_RV380, RFB_MOB },
 	{ PCI_PRODUCT_ATI_RADEON_RV370_5B60,	RADEON_RV380, 0 },
+	{ PCI_PRODUCT_ATI_RADEON_RV370_5B63,	RADEON_RV380, 0 },
 	{ PCI_PRODUCT_ATI_RADEON_RV370_5B64,	RADEON_RV380, 0 },
 	{ PCI_PRODUCT_ATI_RADEON_RV370_5B65,	RADEON_RV380, 0 },
 
