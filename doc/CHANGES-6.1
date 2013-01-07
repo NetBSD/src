@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.69 2013/01/05 23:38:02 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.70 2013/01/07 04:16:05 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -7959,4 +7959,12 @@ sys/arch/evbarm/conf/SHEEVAPLUG			1.27
 
 	Add ukphy.
 	[msaitoh, ticket #768]
+
+sys/dev/bluetooth/bthidev.c			1.23-1.24
+sys/dev/bluetooth/btmagic.c			1.4-1.5
+usr.sbin/btdevctl/btdevctl.8			1.8
+
+	Fix a problem with Bluetooth HID devices when configured for
+	connections without authentication.  PR#47286.
+	[plunky, ticket #769]
 
