@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.196 2013/01/05 23:34:16 christos Exp $ */
+/*	$NetBSD: ehci.c,v 1.197 2013/01/07 15:07:40 prlw1 Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.196 2013/01/05 23:34:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.197 2013/01/07 15:07:40 prlw1 Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1336,12 +1336,18 @@ ehci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 	struct ehci_softc *sc = bus->hci_private;
 	usbd_status err;
 
-	err = usb_allocmem(&sc->sc_bus, size, 0, dma);
+	err = usb_allocmem_flags(&sc->sc_bus, size, 0, dma, USBMALLOC_MULTISEG);
+#ifdef EHCI_DEBUG
+	if (err)
+		printf("ehci_allocm: usb_allocmem_flags()= %s (%d)\n",
+			usbd_errstr(err), err);
+#endif
 	if (err == USBD_NOMEM)
 		err = usb_reserve_allocm(&sc->sc_dma_reserve, dma, size);
 #ifdef EHCI_DEBUG
 	if (err)
-		printf("ehci_allocm: usb_allocmem()=%d\n", err);
+		printf("ehci_allocm: usb_reserve_allocm()= %s (%d)\n",
+			usbd_errstr(err), err);
 #endif
 	return (err);
 }
@@ -2727,18 +2733,20 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		     ehci_soft_qtd_t **sp, ehci_soft_qtd_t **ep)
 {
 	ehci_soft_qtd_t *next, *cur;
-	ehci_physaddr_t dataphys, dataphyspage, dataphyslastpage, nextphys;
+	ehci_physaddr_t nextphys;
 	u_int32_t qtdstatus;
 	int len, curlen, mps;
 	int i, tog;
+	int pages, pageoffs;
+	bus_size_t curoffs;
+	vaddr_t va, va_offs;
 	usb_dma_t *dma = &xfer->dmabuf;
 	u_int16_t flags = xfer->flags;
+	paddr_t a;
 
 	DPRINTFN(alen<4*4096,("ehci_alloc_sqtd_chain: start len=%d\n", alen));
 
 	len = alen;
-	dataphys = DMAADDR(dma, 0);
-	dataphyslastpage = EHCI_PAGE(dataphys + len - 1);
 	qtdstatus = EHCI_QTD_ACTIVE |
 	    EHCI_QTD_SET_PID(rd ? EHCI_QTD_PID_IN : EHCI_QTD_PID_OUT) |
 	    EHCI_QTD_SET_CERR(3)
@@ -2756,28 +2764,18 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 
 	usb_syncmem(dma, 0, alen,
 	    rd ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+	curoffs = 0;
 	for (;;) {
-		dataphyspage = EHCI_PAGE(dataphys);
 		/* The EHCI hardware can handle at most 5 pages. */
-		if (dataphyslastpage - dataphyspage <
-		    EHCI_QTD_NBUFFERS * EHCI_PAGE_SIZE) {
+		va_offs = (vaddr_t)KERNADDR(dma, curoffs);
+		va_offs = EHCI_PAGE_OFFSET(va_offs);
+		if (len-curoffs < EHCI_QTD_NBUFFERS*EHCI_PAGE_SIZE - va_offs) {
 			/* we can handle it in this QTD */
-			curlen = len;
+			curlen = len - curoffs;
 		} else {
 			/* must use multiple TDs, fill as much as possible. */
-			curlen = EHCI_QTD_NBUFFERS * EHCI_PAGE_SIZE -
-				 EHCI_PAGE_OFFSET(dataphys);
-#ifdef DIAGNOSTIC
-			if (curlen > len) {
-				printf("ehci_alloc_sqtd_chain: curlen=0x%x "
-				       "len=0x%x offs=0x%x\n", curlen, len,
-				       EHCI_PAGE_OFFSET(dataphys));
-				printf("lastpage=0x%x page=0x%x phys=0x%x\n",
-				       dataphyslastpage, dataphyspage,
-				       dataphys);
-				curlen = len;
-			}
-#endif
+			curlen = EHCI_QTD_NBUFFERS * EHCI_PAGE_SIZE - va_offs;
+
 			/* the length must be a multiple of the max size */
 			curlen -= curlen % mps;
 			DPRINTFN(1,("ehci_alloc_sqtd_chain: multiple QTDs, "
@@ -2787,18 +2785,16 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 				panic("ehci_alloc_sqtd_chain: curlen == 0");
 #endif
 		}
-		DPRINTFN(4,("ehci_alloc_sqtd_chain: dataphys=0x%08x "
-			    "dataphyslastpage=0x%08x len=%d curlen=%d\n",
-			    dataphys, dataphyslastpage,
-			    len, curlen));
-		len -= curlen;
+		DPRINTFN(4,("ehci_alloc_sqtd_chain: len=%d curlen=%d "
+			    "curoffs=%d\n", len, curlen, curoffs));
 
 		/*
 		 * Allocate another transfer if there's more data left,
 		 * or if force last short transfer flag is set and we're
 		 * allocating a multiple of the max packet size.
 		 */
-		if (len != 0 ||
+
+		if (curoffs + curlen != len ||
 		    ((curlen % mps) == 0 && !rd && curlen != 0 &&
 		     (flags & USBD_FORCE_SHORT_XFER))) {
 			next = ehci_alloc_sqtd(sc);
@@ -2810,20 +2806,21 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 			nextphys = EHCI_NULL;
 		}
 
-		for (i = 0; i * EHCI_PAGE_SIZE <
-		            curlen + EHCI_PAGE_OFFSET(dataphys); i++) {
-			ehci_physaddr_t a = dataphys + i * EHCI_PAGE_SIZE;
-			if (i != 0) /* use offset only in first buffer */
-				a = EHCI_PAGE(a);
-			if (i >= EHCI_QTD_NBUFFERS) {
-#ifdef DIAGNOSTIC
-				printf("ehci_alloc_sqtd_chain: i=%d\n", i);
-#endif
-				goto nomem;
-			}
-			cur->qtd.qtd_buffer[i] = htole32(a);
-			cur->qtd.qtd_buffer_hi[i] = 0;
+		/* Find number of pages we'll be using, insert dma addresses */
+		pages = EHCI_PAGE(curlen + EHCI_PAGE_SIZE -1) >> 12;
+		KASSERT(pages <= EHCI_QTD_NBUFFERS);
+		pageoffs = EHCI_PAGE(curoffs);
+		for (i = 0; i < pages; i++) {
+			a = DMAADDR(dma, pageoffs + i * EHCI_PAGE_SIZE);
+			cur->qtd.qtd_buffer[i] = htole32(a & 0xFFFFF000);
+			/* Cast up to avoid compiler warnings */
+			cur->qtd.qtd_buffer_hi[i] = htole32((uint64_t)a >> 32);
 		}
+
+		/* First buffer pointer requires a page offset to start at */
+		va = (vaddr_t)KERNADDR(dma, curoffs);
+		cur->qtd.qtd_buffer[0] |= htole32(EHCI_PAGE_OFFSET(va));
+
 		cur->nextqtd = next;
 		cur->qtd.qtd_next = cur->qtd.qtd_altnext = nextphys;
 		cur->qtd.qtd_status =
@@ -2832,7 +2829,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		cur->len = curlen;
 
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: cbp=0x%08x end=0x%08x\n",
-			    dataphys, dataphys + curlen));
+			    curoffs, curoffs + curlen));
+
 		/* adjust the toggle based on the number of packets in this
 		   qtd */
 		if (((curlen + mps - 1) / mps) & 1) {
@@ -2845,7 +2843,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: extend chain\n"));
 		if (len)
-			dataphys += curlen;
+			curoffs += curlen;
 		cur = next;
 	}
 	cur->qtd.qtd_status |= htole32(EHCI_QTD_IOC);

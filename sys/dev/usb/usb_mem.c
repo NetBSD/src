@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.54 2013/01/05 23:34:20 christos Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.55 2013/01/07 15:07:41 prlw1 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,12 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.54 2013/01/05 23:34:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.55 2013/01/07 15:07:41 prlw1 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/device.h>		/* for usbdivar.h */
 #include <sys/bus.h>
@@ -82,7 +82,7 @@ struct usb_frag_dma {
 };
 
 Static usbd_status	usb_block_allocmem(bus_dma_tag_t, size_t, size_t,
-					   usb_dma_block_t **);
+					   usb_dma_block_t **, bool);
 Static void		usb_block_freemem(usb_dma_block_t *);
 
 LIST_HEAD(usb_dma_block_qh, usb_dma_block);
@@ -113,12 +113,19 @@ usb_mem_init(void)
 
 Static usbd_status
 usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
-		   usb_dma_block_t **dmap)
+		   usb_dma_block_t **dmap, bool multiseg)
 {
 	usb_dma_block_t *b;
 	int error;
 
 	DPRINTFN(5, ("usb_block_allocmem: size=%zu align=%zu\n", size, align));
+
+	if (size == 0) {
+#ifdef DIAGNOSTIC
+		printf("usb_block_allocmem: called with size==0\n");
+#endif
+		return USBD_INVAL;
+	}
 
 #ifdef DIAGNOSTIC
 	if (cpu_intr_p()) {
@@ -131,6 +138,9 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 
 	/* First check the free list. */
 	LIST_FOREACH(b, &usb_blk_freelist, next) {
+		/* Don't allocate multiple segments to unwilling callers */
+		if (b->nsegs != 1 && !multiseg)
+			continue;
 		if (b->tag == tag && b->size >= size && b->align >= align) {
 			LIST_REMOVE(b, next);
 			usb_blk_nfree--;
@@ -149,15 +159,27 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 #endif
 
 	DPRINTFN(6, ("usb_block_allocmem: no free\n"));
-	b = malloc(sizeof *b, M_USB, M_NOWAIT | M_ZERO);
+	b = kmem_zalloc(sizeof *b, KM_SLEEP);
 	if (b == NULL)
 		return (USBD_NOMEM);
 
 	b->tag = tag;
 	b->size = size;
 	b->align = align;
+
+	b->nsegs = (size + (PAGE_SIZE-1)) / PAGE_SIZE;
+	if (!multiseg)
+		/* Caller wants one segment */
+		b->nsegs = 1;
+
+	b->segs = kmem_alloc(b->nsegs * sizeof(*b->segs), KM_SLEEP);
+	if (b->segs == NULL) {
+		kmem_free(b, sizeof *b);
+		return USBD_NOMEM;
+	}
+
 	error = bus_dmamem_alloc(tag, b->size, align, 0,
-				 b->segs, __arraycount(b->segs),
+				 b->segs, b->nsegs,
 				 &b->nsegs, BUS_DMA_NOWAIT);
 	if (error)
 		goto free0;
@@ -167,7 +189,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	if (error)
 		goto free1;
 
-	error = bus_dmamap_create(tag, b->size, 1, b->size,
+	error = bus_dmamap_create(tag, b->size, b->nsegs, b->size,
 				  0, BUS_DMA_NOWAIT, &b->map);
 	if (error)
 		goto unmap;
@@ -181,6 +203,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 #ifdef USB_FRAG_DMA_WORKAROUND
 	memset(b->kaddr, 0, b->size);
 #endif
+
 	return (USBD_NORMAL_COMPLETION);
 
  destroy:
@@ -190,7 +213,8 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
  free1:
 	bus_dmamem_free(tag, b->segs, b->nsegs);
  free0:
-	free(b, M_USB);
+	kmem_free(b->segs, b->nsegs * sizeof(*b->segs));
+	kmem_free(b, sizeof *b);
 	return (USBD_NOMEM);
 }
 
@@ -208,7 +232,8 @@ usb_block_real_freemem(usb_dma_block_t *b)
 	bus_dmamap_destroy(b->tag, b->map);
 	bus_dmamem_unmap(b->tag, b->kaddr, b->size);
 	bus_dmamem_free(b->tag, b->segs, b->nsegs);
-	free(p, M_USB);
+	kmem_free(b->segs, b->nsegs * sizeof(*b->segs));
+	kmem_free(b, sizeof *b);
 }
 #endif
 
@@ -247,21 +272,31 @@ usb_block_freemem(usb_dma_block_t *b)
 usbd_status
 usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 {
+	return usb_allocmem_flags(bus, size, align, p, 0);
+}
+
+usbd_status
+usb_allocmem_flags(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p,
+		   int flags)
+{
 	bus_dma_tag_t tag = bus->dmatag;
 	usbd_status err;
 	struct usb_frag_dma *f;
 	usb_dma_block_t *b;
 	int i;
 	static ONCE_DECL(init_control);
+	bool frag;
 
 	RUN_ONCE(&init_control, usb_mem_init);
+
+	frag = (flags & USBMALLOC_MULTISEG);
 
 	/* If the request is large then just use a full block. */
 	if (size > USB_MEM_SMALL || align > USB_MEM_SMALL) {
 		DPRINTFN(1, ("usb_allocmem: large alloc %d\n", (int)size));
 		size = (size + USB_MEM_BLOCK - 1) & ~(USB_MEM_BLOCK - 1);
 		mutex_enter(&usb_blk_lock);
-		err = usb_block_allocmem(tag, size, align, &p->block);
+		err = usb_block_allocmem(tag, size, align, &p->block, frag);
 		if (!err) {
 #ifdef DEBUG
 			LIST_INSERT_HEAD(&usb_blk_fulllist, p->block, next);
@@ -284,7 +319,8 @@ usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 	}
 	if (f == NULL) {
 		DPRINTFN(1, ("usb_allocmem: adding fragments\n"));
-		err = usb_block_allocmem(tag, USB_MEM_BLOCK, USB_MEM_SMALL,&b);
+		err = usb_block_allocmem(tag, USB_MEM_BLOCK, USB_MEM_SMALL, &b,
+					 false);
 		if (err) {
 			mutex_exit(&usb_blk_lock);
 			return (err);
@@ -313,6 +349,7 @@ usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 	LIST_REMOVE(f, next);
 	mutex_exit(&usb_blk_lock);
 	DPRINTFN(5, ("usb_allocmem: use frag=%p size=%d\n", f, (int)size));
+
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -349,6 +386,38 @@ usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 	DPRINTFN(5, ("usb_freemem: frag=%p\n", f));
 }
 
+bus_addr_t
+usb_dmaaddr(usb_dma_t *dma, unsigned int offset)
+{
+	unsigned int i;
+	bus_size_t seg_offs;
+
+	offset += dma->offs;
+
+	KASSERT(offset < dma->block->size);
+
+	if (dma->block->nsegs == 1) {
+		KASSERT(dma->block->map->dm_segs[0].ds_len > offset);
+		return dma->block->map->dm_segs[0].ds_addr + offset;
+	}
+
+	/* Search for a bus_segment_t corresponding to this offset. With no
+	 * record of the offset in the map to a particular dma_segment_t, we
+	 * have to iterate from the start of the list each time. Could be
+	 * improved */
+	seg_offs = 0;
+	for (i = 0; i < dma->block->nsegs; i++) {
+		if (seg_offs + dma->block->map->dm_segs[i].ds_len > offset)
+			break;
+
+		seg_offs += dma->block->map->dm_segs[i].ds_len;
+	}
+
+	KASSERT(i != dma->block->nsegs);
+	offset -= seg_offs;
+	return dma->block->map->dm_segs[i].ds_addr + offset;
+}
+
 void
 usb_syncmem(usb_dma_t *p, bus_addr_t offset, bus_size_t len, int ops)
 {
@@ -367,7 +436,7 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	if (rs->vaddr == 0 || size > USB_MEM_RESERVE)
 		return USBD_NOMEM;
 
-	dma->block = malloc(sizeof *dma->block, M_USB, M_ZERO | M_NOWAIT);
+	dma->block = kmem_zalloc(sizeof *dma->block, KM_SLEEP);
 	if (dma->block == NULL)
 		return USBD_NOMEM;
 
@@ -403,7 +472,8 @@ usb_reserve_freem(struct usb_dma_reserve *rs, usb_dma_t *dma)
 
 	error = extent_free(rs->extent,
 	    (u_long)(rs->paddr + dma->offs), dma->block->size, 0);
-	free(dma->block, M_USB);
+	/* XXXPW correct that segs[0] is not used? */
+	kmem_free(dma->block, dma->block->size);
 }
 
 int
