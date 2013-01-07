@@ -1,4 +1,4 @@
-/*	$NetBSD: i386-asm.S,v 1.2 2013/01/05 15:27:45 dsl Exp $	*/
+/*	$NetBSD: i386-asm.S,v 1.3 2013/01/07 23:20:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,6 +47,11 @@ ENTRY(x86_cpuid2)
 	popl	%ebx
 	ret
 END(x86_cpuid2)
+
+ENTRY(x86_xgetbv)
+	xgetbv
+	ret
+END(x86_xgetbv)
 
 ENTRY(x86_identify)
 	/* Try to toggle alignment check flag; does not exist on 386. */

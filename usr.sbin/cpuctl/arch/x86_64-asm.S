@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_64-asm.S,v 1.3 2013/01/05 15:33:00 dsl Exp $	*/
+/*	$NetBSD: x86_64-asm.S,v 1.4 2013/01/07 23:20:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,6 +41,10 @@ ENTRY(x86_cpuid2)
 	movl	%ecx, 8(%rsi)
 	movl	%edx, 12(%rsi)
 	popq	%rbx
+	ret
+
+ENTRY(x86_xgetbv)
+	xgetbv
 	ret
 
 ENTRY(x86_identify)
