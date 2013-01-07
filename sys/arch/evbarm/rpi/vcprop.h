@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.2 2012/10/30 20:11:37 skrll Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.3 2013/01/07 20:18:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -48,11 +48,23 @@ struct vcprop_tag {
 #define	VCPROPTAG_GET_VCMEMORY		0x00010006
 #define	VCPROPTAG_GET_CLOCKS		0x00010007
 
+#define VCPROPTAG_GET_POWERSTATE	0x00020001
+#define VCPROPTAG_GET_POWERTIMING	0x00020002
+#define VCPROPTAG_SET_POWERSTATE	0x00028001
+
 #define	VCPROPTAG_GET_CLOCKSTATE	0x00030001
 #define	VCPROPTAG_SET_CLOCKSTATE	0x00038001
 #define	VCPROPTAG_GET_CLOCKRATE		0x00030002
 #define	VCPROPTAG_SET_CLOCKRATE		0x00038002
-	
+
+#define VCPROPTAG_GET_VOLTAGE		0x00030003
+#define VCPROPTAG_SET_VOLTAGE		0x00038003
+#define VCPROPTAG_GET_MIN_VOLTAGE	0x00030008
+#define VCPROPTAG_GET_MAX_VOLTAGE	0x00030005
+
+#define VCPROPTAG_GET_TEMPERATURE	0x00030006
+#define VCPROPTAG_GET_MAX_TEMPERATURE	0x0003000a
+
 #define	VCPROPTAG_GET_CMDLINE		0x00050001
 #define	VCPROPTAG_GET_DMACHAN		0x00060001
 	uint32_t vpt_len;
@@ -100,7 +112,6 @@ struct vcprop_tag_boardserial {
 	uint64_t sn;
 };
 
-
 #define	VCPROP_CLK_EMMC		1
 #define	VCPROP_CLK_UART		2
 #define	VCPROP_CLK_ARM		3
@@ -144,6 +155,47 @@ struct vcprop_tag_clockrate {
 	struct vcprop_tag tag;
 	uint32_t id;
 	uint32_t rate;
+};
+
+#define VCPROP_VOLTAGE_CORE	1
+#define VCPROP_VOLTAGE_SDRAM_C	2
+#define VCPROP_VOLTAGE_SDRAM_P	3
+#define VCPROP_VOLTAGE_SDRAM_I	4
+
+struct vcprop_tag_voltage {
+	struct vcprop_tag tag;
+	uint32_t id;
+	uint32_t value;
+};
+
+#define VCPROP_TEMP_SOC		0
+
+struct vcprop_tag_temperature {
+	struct vcprop_tag tag;
+	uint32_t id;
+	uint32_t value;
+};
+
+#define	VCPROP_POWER_SDCARD	0
+#define	VCPROP_POWER_UART0	1
+#define	VCPROP_POWER_UART1	2
+#define	VCPROP_POWER_USB	3
+#define	VCPROP_POWER_I2C0	4
+#define	VCPROP_POWER_I2C1	5
+#define	VCPROP_POWER_I2C2	6
+#define	VCPROP_POWER_SPI	7
+#define	VCPROP_POWER_CCP2TX	8
+
+struct vcprop_tag_powertiming {
+	struct vcprop_tag tag;
+	uint32_t id;
+	uint32_t waitusec;
+};
+
+struct vcprop_tag_powerstate {
+	struct vcprop_tag tag;
+	uint32_t id;
+	uint32_t state;
 };
 
 struct vcprop_buffer_hdr {
