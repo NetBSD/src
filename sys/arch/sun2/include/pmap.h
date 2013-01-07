@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.24 2011/06/03 17:03:52 tsutsui Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25 2013/01/07 16:58:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ int _pmap_fault(struct vm_map *, vaddr_t, vm_prot_t);
 
 /* This lets us have some say in choosing VA locations. */
 extern void pmap_prefer(vaddr_t, vaddr_t *);
-#define PMAP_PREFER(fo, ap, sz, td) pmap_prefer((fo), (ap))
+#define PMAP_PREFER(fo, ap, sz, td) pmap_prefer((fo), (ap), (td))
 
 /* This needs to be a macro for kern_sysctl.c */
 extern segsz_t pmap_resident_pages(pmap_t);
