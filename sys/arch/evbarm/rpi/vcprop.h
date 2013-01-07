@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.3 2013/01/07 20:18:28 jmcneill Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.4 2013/01/07 22:32:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -56,6 +56,8 @@ struct vcprop_tag {
 #define	VCPROPTAG_SET_CLOCKSTATE	0x00038001
 #define	VCPROPTAG_GET_CLOCKRATE		0x00030002
 #define	VCPROPTAG_SET_CLOCKRATE		0x00038002
+#define	VCPROPTAG_GET_MIN_CLOCKRATE	0x00030007
+#define	VCPROPTAG_GET_MAX_CLOCKRATE	0x00030004
 
 #define VCPROPTAG_GET_VOLTAGE		0x00030003
 #define VCPROPTAG_SET_VOLTAGE		0x00038003
