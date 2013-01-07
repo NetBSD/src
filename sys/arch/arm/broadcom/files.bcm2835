@@ -1,9 +1,11 @@
-#	$NetBSD: files.bcm2835,v 1.8 2013/01/05 20:31:23 jakllsch Exp $
+#	$NetBSD: files.bcm2835,v 1.9 2013/01/07 20:15:32 jmcneill Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
 
 include "arch/arm/pic/files.pic"
+
+define bcmmboxbus { }
 
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/broadcom/bcm2835_dma.c
@@ -26,7 +28,7 @@ attach	bcmicu at obio with bcmicu
 file	arch/arm/broadcom/bcm2835_intr.c	bcmicu
 
 # VC Mailbox (BCM2835_ARMMBOX_BASE)
-device	bcmmbox
+device	bcmmbox: bcmmboxbus
 attach	bcmmbox at obio with bcmmbox
 file	arch/arm/broadcom/bcm2835_mbox.c	bcmmbox
 
