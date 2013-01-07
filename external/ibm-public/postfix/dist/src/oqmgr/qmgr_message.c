@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.1.1.3 2011/03/02 19:32:23 tron Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.1.1.3.6.1 2013/01/07 15:41:57 riz Exp $	*/
 
 /*++
 /* NAME
@@ -751,7 +751,7 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	if (rec_type > 0)
 	    msg_warn("%s: ignoring out-of-order DSN original recipient <%.200s>",
 		     message->queue_id, dsn_orcpt);
-	myfree(orig_rcpt);
+	myfree(dsn_orcpt);
     }
     if (orig_rcpt != 0) {
 	if (rec_type > 0)
