@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.19 2012/12/19 15:49:47 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.20 2013/01/07 20:42:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.19 2012/12/19 15:49:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.20 2013/01/07 20:42:24 jmcneill Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -362,6 +362,8 @@ initarm(void *arg)
 	md_root_setconf(memory_disk, sizeof memory_disk);
 #endif
 
+	if (vcprop_tag_success_p(&vb.vbt_cmdline.tag))
+		strlcpy(bootargs, vb.vbt_cmdline.cmdline, sizeof(bootargs));
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
 
