@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.90 2011/02/14 10:22:19 he Exp $ */
+/*	$NetBSD: pmap.h,v 1.91 2013/01/07 16:59:18 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -240,7 +240,7 @@ int	pmap_dumpmmu(int (*)(dev_t, daddr_t, void *, size_t), daddr_t);
 #define	pmap_resident_count(pm)	((pm)->pm_stats.resident_count)
 #define	pmap_wired_count(pm)	((pm)->pm_stats.wired_count)
 
-#define PMAP_PREFER(fo, ap, sz, td)	pmap_prefer((fo), (ap))
+#define PMAP_PREFER(fo, ap, sz, td)	pmap_prefer((fo), (ap), (sz), (td))
 
 #define PMAP_EXCLUDE_DECLS	/* tells MI pmap.h *not* to include decls */
 
@@ -249,7 +249,7 @@ int	pmap_dumpmmu(int (*)(dev_t, daddr_t, void *, size_t), daddr_t);
 void		pmap_activate(struct lwp *);
 void		pmap_deactivate(struct lwp *);
 void		pmap_bootstrap(int nmmu, int nctx, int nregion);
-void		pmap_prefer(vaddr_t, vaddr_t *);
+void		pmap_prefer(vaddr_t, vaddr_t *, size_t, int);
 int		pmap_pa_exists(paddr_t);
 void		pmap_unwire(pmap_t, vaddr_t);
 void		pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
