@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.154.2.1 2012/07/20 23:10:06 riz Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.154.2.1.4.1 2013/01/07 16:53:36 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.154.2.1 2012/07/20 23:10:06 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.154.2.1.4.1 2013/01/07 16:53:36 riz Exp $");
 
 #include "opt_pipe.h"
 
@@ -640,10 +640,9 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		*retsize = len - auio.uio_resid;
 
 bad:
-	if (ktrpoint(KTR_GENIO)) {
+	if (ktriov != NULL) {
 		ktrgeniov(s, UIO_WRITE, ktriov, *retsize, error);
-		if (ktriov != NULL)
-			kmem_free(ktriov, iovsz);
+		kmem_free(ktriov, iovsz);
 	}
 
  	if (iov != aiov)
@@ -897,10 +896,9 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 		/* Some data transferred */
 		error = 0;
 
-	if (ktrpoint(KTR_GENIO)) {
+	if (ktriov != NULL) {
 		ktrgeniov(s, UIO_READ, ktriov, len, error);
-		if (ktriov != NULL)
-			kmem_free(ktriov, iovsz);
+		kmem_free(ktriov, iovsz);
 	}
 
 	if (error != 0) {
