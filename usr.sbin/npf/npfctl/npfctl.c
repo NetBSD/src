@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.10.2.10 2012/12/16 19:41:37 riz Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.10.2.11 2013/01/07 16:51:07 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.10.2.10 2012/12/16 19:41:37 riz Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.10.2.11 2013/01/07 16:51:07 riz Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -146,6 +146,10 @@ npfctl_print_stats(int fd)
 		{ NPF_STAT_SESSION_DESTROY,	"session destructions"	},
 		{ NPF_STAT_NAT_CREATE,		"NAT entry allocations"	},
 		{ NPF_STAT_NAT_DESTROY,		"NAT entry destructions"},
+
+		{ -1, "Network buffers"					},
+		{ NPF_STAT_NBUF_NONCONTIG,	"non-contiguous cases"	},
+		{ NPF_STAT_NBUF_CONTIG_FAIL,	"contig alloc failures"	},
 
 		{ -1, "Invalid packet state cases"			},
 		{ NPF_STAT_INVALID_STATE,	"cases in total"	},
@@ -294,7 +298,7 @@ again:
 			errx(EXIT_FAILURE, "invalid CIDR '%s'", arg);
 		}
 		nct.nct_data.ent.alen = alen;
-		memcpy(&nct.nct_data.ent.addr, &fam.fam_addr, sizeof(npf_addr_t));
+		memcpy(&nct.nct_data.ent.addr, &fam.fam_addr, alen);
 		nct.nct_data.ent.mask = fam.fam_mask;
 	}
 

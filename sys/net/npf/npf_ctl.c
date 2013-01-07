@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.12.2.6 2012/11/24 04:34:42 riz Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.12.2.7 2013/01/07 16:51:08 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.12.2.6 2012/11/24 04:34:42 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.12.2.7 2013/01/07 16:51:08 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -458,6 +458,7 @@ npfctl_reload(u_long cmd, void *data)
 	npf_tableset_t *tblset = NULL;
 	npf_ruleset_t *rlset = NULL;
 	npf_ruleset_t *nset = NULL;
+	uint32_t ver = 0;
 	bool flush;
 	int error;
 
@@ -470,8 +471,13 @@ npfctl_reload(u_long cmd, void *data)
 	npf_dict = (prop_dictionary_t)pref;
 #endif
 
-	/* Dictionary for error reporting. */
+	/* Dictionary for error reporting and version check. */
 	errdict = prop_dictionary_create();
+	prop_dictionary_get_uint32(npf_dict, "version", &ver);
+	if (ver != NPF_VERSION) {
+		error = EPROGMISMATCH;
+		goto fail;
+	}
 
 	/* NAT policies. */
 	nset = npf_ruleset_create();
@@ -720,6 +726,7 @@ npfctl_table(void *data)
 	case NPF_IOCTL_TBLENT_LOOKUP:
 		error = npf_table_lookup(tblset, nct->nct_tid,
 		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr);
+		break;
 	case NPF_IOCTL_TBLENT_ADD:
 		error = npf_table_insert(tblset, nct->nct_tid,
 		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr,
