@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.4 2013/01/07 22:32:24 jmcneill Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.5 2013/01/08 10:23:50 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -69,6 +69,16 @@ struct vcprop_tag {
 
 #define	VCPROPTAG_GET_CMDLINE		0x00050001
 #define	VCPROPTAG_GET_DMACHAN		0x00060001
+
+#define	VCPROPTAG_ALLOCATE_BUFFER	0x00040001
+#define	VCPROPTAG_GET_FB_RES		0x00040003
+#define	VCPROPTAG_GET_FB_DEPTH		0x00040005
+#define	VCPROPTAG_GET_FB_PIXEL_ORDER	0x00040006
+#define	VCPROPTAG_GET_FB_PITCH		0x00040008
+
+#define	VCPROPTAG_GET_EDID_BLOCK	0x00030020
+
+
 	uint32_t vpt_len;
 	uint32_t vpt_rcode;
 #define	VCPROPTAG_REQUEST	(0U << 31)
@@ -198,6 +208,43 @@ struct vcprop_tag_powerstate {
 	struct vcprop_tag tag;
 	uint32_t id;
 	uint32_t state;
+};
+
+struct vcprop_tag_allocbuf {
+	struct vcprop_tag tag;
+	uint32_t address;	/* alignment for request */
+	uint32_t size;
+};
+
+struct vcprop_tag_fbres {
+	struct vcprop_tag tag;
+	uint32_t width;
+	uint32_t height;
+};
+
+struct vcprop_tag_fbdepth {
+	struct vcprop_tag tag;
+	uint32_t bpp;
+};
+
+#define VCPROP_PIXEL_BGR	0
+#define VCPROP_PIXEL_RGB	1
+
+struct vcprop_tag_fbpixelorder {
+	struct vcprop_tag tag;
+	uint32_t state;
+};
+
+struct vcprop_tag_fbpitch {
+	struct vcprop_tag tag;
+	uint32_t linebytes;
+};
+
+struct vcprop_tag_edidblock {
+	struct vcprop_tag tag;
+	uint32_t blockno;
+	uint32_t status;
+	uint8_t data[128];
 };
 
 struct vcprop_buffer_hdr {
