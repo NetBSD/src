@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835reg.h,v 1.6 2013/01/05 19:44:44 jakllsch Exp $	*/
+/*	$NetBSD: bcm2835reg.h,v 1.7 2013/01/08 21:58:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #define	BCM2835_BSC_SIZE	0x1000
 #define	BCM2835_AUX_SIZE	0x1000
 #define	BCM2835_EMMC_SIZE	0x1000
-#define	BCM2835_USB_SIZE	0x1000
+#define	BCM2835_USB_SIZE	0x20000
 #define	BCM2835_DMA15_SIZE	0x100
 
 #define BCM2835_IOPHYSTOVIRT(a) \
