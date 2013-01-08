@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.13 2013/01/07 20:20:22 jmcneill Exp $
+#	$NetBSD: RPI,v 1.14 2013/01/08 16:39:28 jakllsch Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -204,6 +204,14 @@ ld*     at sdmmc?
 
 # USB device drivers, just as soon as we have something to attach them to
 #include "dev/usb/usbdevices.config"
+
+# Broadcom Serial Control (I2C)
+bsciic* at obio?
+iic* at i2cbus?
+
+# SPI controller
+bcmspi* at obio?
+spi* at spibus?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
