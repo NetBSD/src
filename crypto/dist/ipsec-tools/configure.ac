@@ -4,14 +4,13 @@ dnl Id: configure.ac,v 1.77 2006/07/20 19:19:27 manubsd Exp
 AC_PREREQ(2.52)
 AC_INIT(ipsec-tools, 0.8.0)
 AC_CONFIG_SRCDIR([configure.ac])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 
 AM_INIT_AUTOMAKE(dist-bzip2)
 
 AC_ENABLE_SHARED(no)
 
 AC_PROG_CC
-AM_PROG_CC_STDC
 AC_HEADER_STDC
 AC_PROG_LIBTOOL
 AC_PROG_YACC
