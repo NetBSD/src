@@ -28,7 +28,7 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_naive.S,v 1.1 2013/01/08 13:14:54 matt Exp $)
+RCSID("$NetBSD: strlen_naive.S,v 1.2 2013/01/08 16:58:59 pgoyette Exp $")
 
 /* LINTSTUB: size_t strlen(const char *) */
 ENTRY(strlen)
