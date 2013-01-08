@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.41 2013/01/07 02:56:24 jakllsch Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.42 2013/01/08 19:36:38 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.41 2013/01/07 02:56:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.42 2013/01/08 19:36:38 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1127,6 +1127,12 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	 */
 	if (cmd->c_error == 0 && cmd->c_data != NULL)
 		sdhc_transfer_data(hp, cmd);
+	else if (ISSET(cmd->c_flags, SCF_RSP_BSY)) {
+		if (!sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE, hz * 10)) {
+			cmd->c_error = ETIMEDOUT;
+			goto out;
+		}
+	}
 
 out:
 	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)
