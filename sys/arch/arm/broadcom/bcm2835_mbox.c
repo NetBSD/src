@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.c,v 1.4 2013/01/08 09:11:11 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_mbox.c,v 1.5 2013/01/08 12:15:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.4 2013/01/08 09:11:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.5 2013/01/08 12:15:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ bcmmbox_attach(device_t parent, device_t self, void *aux)
 
 	if (bcm2835mbox_sc == NULL)
 		bcm2835mbox_sc = sc;
-	
+
 	sc->sc_dev = self;
 	sc->sc_iot = aaa->aaa_iot;
 	sc->sc_dmat = aaa->aaa_dmat;
@@ -174,5 +174,6 @@ create_failed:
 	bus_dmamem_unmap(sc->sc_dmat, dma_buf, buflen);
 map_failed:
 	bus_dmamem_free(sc->sc_dmat, segs, nsegs);
+	
 	return error;
 }
