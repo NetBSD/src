@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.104 2012/04/17 10:19:57 bsh Exp $ */
+/* $NetBSD: wsconsio.h,v 1.105 2013/01/08 23:49:56 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -329,6 +329,7 @@ struct wsmouse_repeat {
 #define WSDISPLAY_TYPE_VNC	53	/* Usermode vnc framebuffer */
 #define WSDISPLAY_TYPE_VALKYRIE	54	/* Apple onboard video 'valkyrie' */
 #define WSDISPLAY_TYPE_IMXIPU	55	/* i.MX ipu */
+#define WSDISPLAY_TYPE_VC4	56	/* Broadcom VideoCore 4 */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -555,6 +556,7 @@ struct wsdisplayio_bus_id {
     u_int bus_type;
 #define WSDISPLAYIO_BUS_PCI	0
 #define WSDISPLAYIO_BUS_SBUS	1
+#define WSDISPLAYIO_BUS_SOC	2
     union bus_data {
         struct bus_pci {
             uint32_t domain;
