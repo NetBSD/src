@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.10 2013/01/08 16:24:23 skrll Exp $
+#	$NetBSD: files.bcm2835,v 1.11 2013/01/08 23:52:48 jmcneill Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -63,3 +63,7 @@ file	arch/arm/broadcom/bcm2835_spi.c		bcmspi	needs-flag
 device	bsciic: i2cbus, bcm2835_gpio_subr
 attach	bsciic at obio
 file	arch/arm/broadcom/bcm2835_bsc.c		bsciic	needs-flag
+
+# Generic framebuffer console driver
+attach	genfb at obio with bcmgenfb: edid
+file	arch/arm/broadcom/bcm2835_genfb.c	bcmgenfb	needs-flag
