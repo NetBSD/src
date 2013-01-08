@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.9 2013/01/05 20:31:23 jakllsch Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.10 2013/01/08 23:51:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.9 2013/01/05 20:31:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.10 2013/01/08 23:51:33 jmcneill Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -105,11 +105,25 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_intr = BCM2835_INT_UART0,
 	},
 	{
+		/* Framebuffer */
+		.ad_name = "fb",
+		.ad_addr = 0,
+		.ad_size = 0,
+		.ad_intr = -1,
+	},
+	{
 		/* eMMC interface */
 		.ad_name = "emmc",
 		.ad_addr = BCM2835_EMMC_BASE,
 		.ad_size = BCM2835_EMMC_SIZE,
 		.ad_intr = BCM2835_INT_EMMC,
+	},
+	{
+		/* DOTG interface */
+		.ad_name = "dotg",
+		.ad_addr = BCM2835_USB_BASE,
+		.ad_size = BCM2835_USB_SIZE,
+		.ad_intr = BCM2835_INT_USB,
 	},
 	{
 		.ad_name = "bcmspi",
