@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.20 2013/01/07 20:42:24 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.21 2013/01/08 16:49:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,9 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.20 2013/01/07 20:42:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.21 2013/01/08 16:49:43 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
+
+#include "sdhc.h"
+#include "bcmspi.h"
+#include "bsciic.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.20 2013/01/07 20:42:24 jmcneill Ex
 #include <arm/broadcom/bcm2835_mbox.h>
 
 #include <evbarm/rpi/vcio.h>
+#include <evbarm/rpi/vcpm.h>
 #include <evbarm/rpi/vcprop.h>
 
 #include <evbarm/rpi/rpi.h>
@@ -214,6 +219,23 @@ rpi_bootparams(void)
 	bus_space_tag_t iot = &bcm2835_bs_tag;
 	bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(BCM2835_ARMMBOX_BASE);
 	uint32_t res;
+
+	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANPM, (
+#if (NSDHC > 0)
+	    (1 << VCPM_POWER_SDCARD) | 
+#endif
+#if (NPLCOM > 0)
+	    (1 << VCPM_POWER_UART0) |
+#endif
+
+#if (NBSCIIC > 0)
+	    (1 << VCPM_POWER_I2C0) | (1 << VCPM_POWER_I2C1) | 
+	/*  (1 << VCPM_POWER_I2C2) | */
+#endif
+#if (NBCMSPI > 0)
+	    (1 << VCPM_POWER_SPI) | 
+#endif
+	    0) << 4);
 
 	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANARM2VC, KERN_VTOPHYS(&vb));
 
