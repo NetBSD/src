@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.c,v 1.3 2013/01/07 20:15:32 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_mbox.c,v 1.4 2013/01/08 09:11:11 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.3 2013/01/07 20:15:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.4 2013/01/08 09:11:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.3 2013/01/07 20:15:32 jmcneill Ex
 #include <sys/kernel.h>
 #include <sys/timetc.h>
 #include <sys/bus.h>
+#include <sys/mutex.h>
 
 #include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835_mbox.h>
@@ -51,6 +52,8 @@ struct bcm2835mbox_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_dma_tag_t sc_dmat;
+
+	kmutex_t sc_lock;
 };
 
 static struct bcm2835mbox_softc *bcm2835mbox_sc;
@@ -89,6 +92,7 @@ bcmmbox_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_iot = aaa->aaa_iot;
 	sc->sc_dmat = aaa->aaa_dmat;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, BCM2835_MBOX_SIZE, 0,
 	    &sc->sc_ioh)) {
@@ -151,11 +155,15 @@ bcmmbox_request(uint8_t chan, void *buf, size_t buflen, uint32_t *pres)
 
 	memcpy(dma_buf, buf, buflen);
 
+	mutex_enter(&sc->sc_lock);
+
 	bus_dmamap_sync(sc->sc_dmat, map, 0, buflen, BUS_DMASYNC_PREWRITE);
 	bcmmbox_write(chan, map->dm_segs[0].ds_addr);
 	bus_dmamap_sync(sc->sc_dmat, map, 0, buflen, BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_sync(sc->sc_dmat, map, 0, buflen, BUS_DMASYNC_PREREAD);
 	bcmmbox_read(chan, pres);
+
+	mutex_exit(&sc->sc_lock);
 
 	memcpy(buf, dma_buf, buflen);
 
