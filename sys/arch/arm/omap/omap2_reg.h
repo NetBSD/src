@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.15 2012/12/13 01:15:50 matt Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.16 2013/01/08 19:03:16 macallan Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -143,7 +143,8 @@
 #define	OMAP2_CM_ICLKEN1_CORE	0x210
 #define	OMAP2_CM_ICLKEN2_CORE	0x214
 #define	OMAP2_CM_CLKSEL2_CORE	0x244
-#define	OMAP2_CM_SIZE		(OMAP2_CM_CLKSEL2_CORE + 4)
+#define OMAP3_CM_IDLEST1_CORE	0xa20
+#define	OMAP2_CM_SIZE		(0x1000)
 
 /*
  * bit defines for OMAP2_CM_CLKSEL_MPU
@@ -729,4 +730,10 @@
 #define OMAP3530_SDRC_BASE		0x6d000000
 #define OMAP3530_SDRC_SIZE		0x00010000	/* 16KB */
 
+/*
+ * DMA
+ */
+#define OMAP3530_SDMA_BASE		0x48056000
+#define OMAP3530_SDMA_SIZE		0x00001000	/* 4KB */
+	
 #endif	/* _ARM_OMAP_OMAP2_REG_H_ */
