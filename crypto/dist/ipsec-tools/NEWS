@@ -1,5 +1,13 @@
 Version history:
 ----------------
+0.8.1	- 08 January 2013
+	o Improved X.509 subject name comparation (Götz Babin-Ebell)
+	o Relax DPD cookie check for Cisco IOS compatibility (Roman Antink)
+	o Allow simplified syntax for inherited remote blocks (Roman Antink)
+	o Never shring pfkey socket buffer (Marcelo Leitner)
+	o Privilege separation child process exit fix
+	o Multiple memory allocation and use-after-free fixes
+
 0.8	- 18 March 2011
 	o Fix authentication method ambiguity with kerberos and xauth
 	o RFC2253 compliant escaping of asn1dn identifiers (Cyrus Rahman)
