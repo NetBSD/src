@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.138 2013/01/05 23:34:19 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.139 2013/01/08 06:47:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.138 2013/01/05 23:34:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.139 2013/01/08 06:47:45 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -226,8 +226,8 @@ usb_once_init(void)
 
 		TAILQ_INIT(&taskq->tasks);
 		/*
-		 * Since USB tasks are callable from any context, we have to
-		 * make this lock a spinlock.
+		 * Since USB task methods usb_{add,rem}_task are callable
+		 * from any context, we have to make this lock a spinlock.
 		 */
 		mutex_init(&taskq->lock, MUTEX_DEFAULT, IPL_USB);
 		cv_init(&taskq->cv, "usbtsk");
