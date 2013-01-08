@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.6 2013/01/08 13:02:54 jmcneill Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.7 2013/01/08 15:07:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -71,12 +71,17 @@ struct vcprop_tag {
 #define	VCPROPTAG_GET_DMACHAN		0x00060001
 
 #define	VCPROPTAG_ALLOCATE_BUFFER	0x00040001
+#define	VCPROPTAG_BLANK_SCREEN		0x00040002
 #define	VCPROPTAG_GET_FB_RES		0x00040003
 #define	VCPROPTAG_SET_FB_RES		0x00048003
+#define	VCPROPTAG_GET_FB_VRES		0x00040004
+#define	VCPROPTAG_SET_FB_VRES		0x00048004
 #define	VCPROPTAG_GET_FB_DEPTH		0x00040005
 #define	VCPROPTAG_SET_FB_DEPTH		0x00048005
 #define	VCPROPTAG_GET_FB_PIXEL_ORDER	0x00040006
 #define	VCPROPTAG_SET_FB_PIXEL_ORDER	0x00048006
+#define	VCPROPTAG_GET_FB_ALPHA_MODE	0x00040007
+#define	VCPROPTAG_SET_FB_ALPHA_MODE	0x00048007
 #define	VCPROPTAG_GET_FB_PITCH		0x00040008
 
 #define	VCPROPTAG_GET_EDID_BLOCK	0x00030020
@@ -219,6 +224,14 @@ struct vcprop_tag_allocbuf {
 	uint32_t size;
 };
 
+#define VCPROP_BLANK_OFF	0
+#define VCPROP_BLANK_ON		1
+
+struct vcprop_tag_blankscreen {
+	struct vcprop_tag tag;
+	uint32_t state;
+};
+
 struct vcprop_tag_fbres {
 	struct vcprop_tag tag;
 	uint32_t width;
@@ -241,6 +254,15 @@ struct vcprop_tag_fbpixelorder {
 struct vcprop_tag_fbpitch {
 	struct vcprop_tag tag;
 	uint32_t linebytes;
+};
+
+#define VCPROP_ALPHA_ENABLED	0
+#define VCPROP_ALPHA_REVERSED	1
+#define VCPROP_ALPHA_IGNORED	2
+
+struct vcprop_tag_fbalpha {
+	struct vcprop_tag tag;
+	uint32_t state;
 };
 
 struct vcprop_tag_edidblock {
