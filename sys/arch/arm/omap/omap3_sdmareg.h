@@ -1,4 +1,4 @@
-/*	$NetBSD: omapdmareg.h,v 1.1 2013/01/08 19:03:16 macallan Exp $ */
+/*	$NetBSD: omap3_sdmareg.h,v 1.1 2013/01/09 03:35:11 macallan Exp $ */
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapdmareg.h,v 1.1 2013/01/08 19:03:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdmareg.h,v 1.1 2013/01/09 03:35:11 macallan Exp $");
 
 #ifndef OMAPDMA_REG_H
 #define OMAPDMA_REG_H
