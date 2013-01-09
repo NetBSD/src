@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.18 2013/01/09 23:04:27 skrll Exp $
+#	$NetBSD: RPI,v 1.19 2013/01/09 23:19:13 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -89,7 +89,7 @@ options		NFS_BOOT_RWSIZE=1024
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
