@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 2013/01/07 16:58:08 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 2013/01/09 08:11:09 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ struct pmap {
 int _pmap_fault(struct vm_map *, vaddr_t, vm_prot_t);
 
 /* This lets us have some say in choosing VA locations. */
-extern void pmap_prefer(vaddr_t, vaddr_t *);
+extern void pmap_prefer(vaddr_t, vaddr_t *, int);
 #define PMAP_PREFER(fo, ap, sz, td) pmap_prefer((fo), (ap), (td))
 
 /* This needs to be a macro for kern_sysctl.c */
