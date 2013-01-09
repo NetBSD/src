@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.34 2012/03/06 03:35:29 mrg Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.35 2013/01/09 23:02:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.34 2012/03/06 03:35:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.35 2013/01/09 23:02:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,8 @@ struct ucycom_softc {
 	struct uhidev		sc_hdev;
 
 	struct tty		*sc_tty;
+
+	kmutex_t sc_lock;	/* protects refcnt, others */
 
 	/* uhidev parameters */
 	size_t			sc_flen; /* feature report length */
