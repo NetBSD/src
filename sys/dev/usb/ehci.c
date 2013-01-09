@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.197 2013/01/07 15:07:40 prlw1 Exp $ */
+/*	$NetBSD: ehci.c,v 1.198 2013/01/09 23:02:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.197 2013/01/07 15:07:40 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.198 2013/01/09 23:02:59 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -115,7 +115,6 @@ struct ehci_pipe {
 		/* Control pipe */
 		struct {
 			usb_dma_t reqdma;
-			u_int length;
 		} ctl;
 		/* Interrupt pipe */
 		struct {
@@ -3388,7 +3387,6 @@ ehci_device_request(usbd_xfer_handle xfer)
 	mutex_enter(&sc->sc_lock);
 
 	sqh = epipe->sqh;
-	epipe->u.ctl.length = len;
 
 	/*
 	 * Update device address and length since they may have changed
