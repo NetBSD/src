@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.8 2013/01/09 04:40:46 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.9 2013/01/09 04:52:47 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.8 2013/01/09 04:40:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.9 2013/01/09 04:52:47 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,7 +657,7 @@ omapfb_rectfill(struct omapfb_softc *sc, int x, int y, int wi, int he,
 	    CCR_SRC_AMODE_CONST_ADDR);
 	omapdma_write_ch_reg(0, OMAPDMAC_CDEI, 1);
 	omapdma_write_ch_reg(0, OMAPDMAC_CDFI, (sc->sc_stride - width_in_bytes) + 1);
-	omapdma_write_ch_reg(0, OMAPDMAC_COLOR, colour & ~0xe000);
+	omapdma_write_ch_reg(0, OMAPDMAC_COLOR, colour);
 	omapdma_write_ch_reg(0, OMAPDMAC_CCR,
 	    CCR_CONST_FILL_ENABLE | CCR_DST_AMODE_DOUBLE_INDEX |
 	    CCR_SRC_AMODE_CONST_ADDR | CCR_ENABLE);
