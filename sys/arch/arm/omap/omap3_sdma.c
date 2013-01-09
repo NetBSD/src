@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdma.c,v 1.1 2013/01/09 03:35:11 macallan Exp $	*/
+/*	$NetBSD: omap3_sdma.c,v 1.2 2013/01/09 04:38:14 macallan Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdma.c,v 1.1 2013/01/09 03:35:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdma.c,v 1.2 2013/01/09 04:38:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,10 @@ omapdma_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPDMA_SYSCONFIG,
 	    OMAPDMA_IDLEMODE_SMART_STANDBY | OMAPDMA_SMART_IDLE | 
 	    OMAPDMA_AUTOIDLE);
+
+	/* allow more FIFO space for large bursts used by omapfb */
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPDMA_GCR, 
+		(1 << OMAPDMA_GCR_ARB_RATE_SHIFT) | 0x80);
 
 	omapdma_sc = sc;
 
