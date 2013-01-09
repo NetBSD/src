@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_arm.S,v 1.1 2013/01/08 13:17:45 matt Exp $")
+RCSID("$NetBSD: strlen_arm.S,v 1.2 2013/01/09 00:01:07 matt Exp $")
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
@@ -55,13 +55,12 @@ ENTRY(strlen)
 	sub	r0, r0, ip		/* subtract start */
 	RET				/* return */
 .Lpre_main_loop:
-#if defined(_ARM_ARCH_6)
 #if defined(_ARM_ARCH_7)
 	movw	r1, #0xfefe		/* magic constant; 254 in each byte */
-#else
+	movt	r1, #0xfefe		/* magic constant; 254 in each byte */
+#elif defined(_ARM_ARCH_6)
 	mov	r1, #0xfe		/* put 254 in low byte */
 	orr	r1, r1, r1, lsl #8	/* move to next byte */
-#endif
 	orr	r1, r1, r1, lsl #16	/* move to next halfword */
 #endif /* _ARM_ARCH_6 */
 .Lmain_loop:
