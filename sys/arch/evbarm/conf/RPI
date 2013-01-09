@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.16 2013/01/09 01:39:44 jmcneill Exp $
+#	$NetBSD: RPI,v 1.17 2013/01/09 22:49:39 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -202,12 +202,12 @@ sdmmc*  at sdhc?
 
 ld*     at sdmmc?
 
-# On-SoC USB 2.0 OTG Controller (as USB host) - some day soon(tm)
-#unimplementedusbhcd* at obio?
-#usb* at unimplementedusbhcd?
+# On-board USB
+dotg*          at obio?
+usb*           at dotg?
 
 # USB device drivers, just as soon as we have something to attach them to
-#include "dev/usb/usbdevices.config"
+include "dev/usb/usbdevices.config"
 
 # Broadcom Serial Control (I2C)
 bsciic* at obio?
