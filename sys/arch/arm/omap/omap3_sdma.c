@@ -1,4 +1,4 @@
-/*	$NetBSD: omapdma.c,v 1.1 2013/01/08 19:03:16 macallan Exp $	*/
+/*	$NetBSD: omap3_sdma.c,v 1.1 2013/01/09 03:35:11 macallan Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapdma.c,v 1.1 2013/01/08 19:03:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdma.c,v 1.1 2013/01/09 03:35:11 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: omapdma.c,v 1.1 2013/01/08 19:03:16 macallan Exp $")
 #include <sys/kauth.h>
 
 #include <sys/bus.h>
-#include <arm/omap/omapdmareg.h>
-#include <arm/omap/omapdmavar.h>
+#include <arm/omap/omap3_sdmareg.h>
+#include <arm/omap/omap3_sdmavar.h>
 #include <arm/omap/omap2_obiovar.h>
 #include <arm/omap/omap2_obioreg.h>
 #include <arm/omap/omap2_prcm.h>
@@ -106,7 +106,7 @@ omapdma_attach(device_t parent, device_t self, void *aux)
 	    OMAPDMA_IRQSTATUS_L3, 0xffffffff);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPDMA_SYSCONFIG,
-	    OMAPDMA_IDLEMODE_NO_STANDBY | OMAPDMA_SMART_IDLE | 
+	    OMAPDMA_IDLEMODE_SMART_STANDBY | OMAPDMA_SMART_IDLE | 
 	    OMAPDMA_AUTOIDLE);
 
 	omapdma_sc = sc;
