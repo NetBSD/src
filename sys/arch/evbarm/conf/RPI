@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.14 2013/01/08 16:39:28 jakllsch Exp $
+#	$NetBSD: RPI,v 1.15 2013/01/09 00:28:54 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -186,6 +186,10 @@ vcmbox0 	at bcmmbox0
 # PL011 uart
 plcom0		at obio?
 
+# Framebuffer console
+#genfb0		at obio?
+#wsdisplay*	at genfb?
+
 # System timer
 bcmtmr0		at obio?
 
@@ -223,7 +227,7 @@ options 	WS_KERNEL_BG=WSCOL_BLACK
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
-options		FONT_QVSS8x15
+#options 	FONT_QVSS8x15
 #options 	FONT_GALLANT12x22	# the console font
 
 # Pseudo-Devices
