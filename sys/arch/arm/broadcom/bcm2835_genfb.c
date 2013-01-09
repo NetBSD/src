@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_genfb.c,v 1.1 2013/01/08 23:52:48 jmcneill Exp $ */
+/* $NetBSD: bcm2835_genfb.c,v 1.2 2013/01/09 23:58:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.1 2013/01/08 23:52:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.2 2013/01/09 23:58:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +49,8 @@ struct bcmgenfb_softc {
 	struct genfb_softc	sc_gen;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	uint32_t		sc_wstype;
 };
 
 static int	bcmgenfb_match(device_t, cfdata_t, void *);
@@ -73,11 +75,15 @@ bcmgenfb_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcmgenfb_softc *sc = device_private(self);
 	struct amba_attach_args *aaa = aux;
+	prop_dictionary_t dict = device_properties(self);
 	struct genfb_ops ops;
 	int error;
 
 	sc->sc_gen.sc_dev = self;
 	sc->sc_iot = aaa->aaa_iot;
+
+	sc->sc_wstype = WSDISPLAY_TYPE_VC4;
+	prop_dictionary_get_uint32(dict, "wsdisplay_type", &sc->sc_wstype);
 
 	genfb_init(&sc->sc_gen);
 
@@ -110,11 +116,12 @@ bcmgenfb_attach(device_t parent, device_t self, void *aux)
 static int
 bcmgenfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 {
+	struct bcmgenfb_softc *sc = v;
 	struct wsdisplayio_bus_id *busid;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_VC4;
+		*(u_int *)data = sc->sc_wstype;
 		return 0;
 	case WSDISPLAYIO_GET_BUSID:
 		busid = data;
