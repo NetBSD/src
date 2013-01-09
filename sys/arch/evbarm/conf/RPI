@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.17 2013/01/09 22:49:39 skrll Exp $
+#	$NetBSD: RPI,v 1.18 2013/01/09 23:04:27 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -208,6 +208,8 @@ usb*           at dotg?
 
 # USB device drivers, just as soon as we have something to attach them to
 include "dev/usb/usbdevices.config"
+
+ukphy*		at mii? phy ?
 
 # Broadcom Serial Control (I2C)
 bsciic* at obio?
