@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.401 2012/10/19 17:09:07 drochner Exp $ */
+/*	$NetBSD: wd.c,v 1.402 2013/01/09 22:03:49 riastradh Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.401 2012/10/19 17:09:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.402 2013/01/09 22:03:49 riastradh Exp $");
 
 #include "opt_ata.h"
 
@@ -2195,5 +2195,6 @@ wdioctlstrategy(struct buf *bp)
 	return;
 bad:
 	bp->b_error = error;
+	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 }
