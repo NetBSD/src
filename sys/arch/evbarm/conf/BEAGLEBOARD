@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.39 2013/01/01 13:05:46 jmcneill Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.40 2013/01/09 04:44:54 macallan Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -251,8 +251,11 @@ options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 #omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
 omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
 
+# onboard DMA
+omapdma0	at obio0 addr 0x48056000 size 0x1000
+
 # onboard video
-#omapfb* 	at obio0 addr 0x48050000 size 0x10000
+omapfb* 	at obio0 addr 0x48050000 size 0x10000
 
 # make sure the console display is always wsdisplay0
 #wsdisplay0	at wsemuldisplaydev? console 1
