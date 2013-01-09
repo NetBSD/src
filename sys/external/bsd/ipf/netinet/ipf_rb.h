@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_rb.h,v 1.4 2012/12/20 21:42:28 christos Exp $	*/
+/*	$NetBSD: ipf_rb.h,v 1.5 2013/01/09 13:23:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -352,7 +352,6 @@ colour:									\
 void									\
 _n##_rb_init(struct _n##_rb_head *head)					\
 {									\
-	memset(head, 0, sizeof(*head));					\
 	memset(&_n##_rb_zero, 0, sizeof(_n##_rb_zero));			\
 	head->top._f.left = &_n##_rb_zero;				\
 	head->top._f.right = &_n##_rb_zero;				\

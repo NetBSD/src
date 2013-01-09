@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.4 2012/12/20 21:42:28 christos Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.5 2013/01/09 13:23:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -100,7 +100,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.4 2012/12/20 21:42:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.5 2013/01/09 13:23:20 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 1.1.1.2 2012/07/22 13:45:37 darrenr Exp";
@@ -3572,10 +3572,10 @@ ipf_state_del(ipf_main_softc_t *softc, ipstate_t *is, int why)
 		is->is_me = NULL;
 		is->is_ref--;
 	}
-	if (is->is_ref > 1) {
+	is->is_ref--;
+	if (is->is_ref > 0) {
 		int refs;
 
-		is->is_ref--;
 		refs = is->is_ref;
 		MUTEX_EXIT(&is->is_lock);
 		if (!orphan)
@@ -3592,7 +3592,7 @@ ipf_state_del(ipf_main_softc_t *softc, ipstate_t *is, int why)
 		}
 	}
 
-	is->is_ref = 0;
+	ASSERT(is->is_ref == 0);
 	MUTEX_EXIT(&is->is_lock);
 
 	if (is->is_tqehead[0] != NULL) {
