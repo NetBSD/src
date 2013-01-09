@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.125 2012/09/01 18:17:51 jakllsch Exp $
+#	$NetBSD: files.usb,v 1.126 2013/01/09 23:02:59 skrll Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -377,6 +377,11 @@ file	dev/usb/if_atu.c		atu
 device	upgt: ether, ifnet, arp, wlan, firmload
 attach	upgt at usbdevif
 file	dev/usb/if_upgt.c		upgt
+
+# SMSC LAN95xx
+device	usmsc: arp, ether, ifnet, mii, mii_phy
+attach	usmsc at usbdevif
+file	dev/usb/if_smsc.c		usmsc
 
 # Ralink Technology RT2500USB
 device	ural: arp, ether, ifnet, wlan, firmload
