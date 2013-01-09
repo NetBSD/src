@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1777 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1778 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -167,3 +167,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	file(1): upgraded to 5.12 [christos 20130103]
 	luna68k: Add native bootloader. Based on 4.4BSD-Lite2/luna68k
 		"Stinger" loader. [tsutsui 20130105]
+	kernel: Add dotg(4), a driver for Synopsys DesignWare USB OTG,
+		ported from NetBSD. [skrll 20130109]
+	kernel: Add usmsc(4), a driver for SMSC LAN95xx USB LAN devices, 
+		ported from OpenBSD. [skrll 20130109]
