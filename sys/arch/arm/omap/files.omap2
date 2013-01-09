@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.23 2013/01/09 03:35:11 macallan Exp $
+#	$NetBSD: files.omap2,v 1.24 2013/01/09 04:49:05 macallan Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -135,7 +135,7 @@ file	arch/arm/omap/if_cpsw.c			cpsw
 
 device 	omapdma
 attach 	omapdma at obio
-file	arch/arm/omap/omap3_sdma.c		omapdma
+file	arch/arm/omap/omap3_sdma.c		omapdma needs-flag
 
 # these bus space methods are not bus-specific ...
 #
