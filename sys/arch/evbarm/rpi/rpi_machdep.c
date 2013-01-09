@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.23 2013/01/09 22:23:44 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.24 2013/01/09 22:36:07 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.23 2013/01/09 22:23:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.24 2013/01/09 22:36:07 jmcneill Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -300,7 +300,7 @@ static struct {
 			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_pixelorder),
 			.vpt_rcode = VCPROPTAG_REQUEST,
 		},
-		.state = VCPROP_PIXEL_RGB,
+		.state = VCPROP_PIXEL_BGR,
 	},
 	.vbt_alpha = {
 		.tag = {
@@ -690,6 +690,8 @@ rpi_fb_init(prop_dictionary_t dict)
 	    vb_setfb.vbt_res.width, vb_setfb.vbt_res.height);
 	printf("%s: vwidth = %d vheight = %d\n", __func__,
 	    vb_setfb.vbt_vres.width, vb_setfb.vbt_vres.height);
+	printf("%s: pixelorder = %d\n", __func__,
+	    vb_setfb.vbt_pixelorder.state);
 #endif
 
 	if (vb_setfb.vbt_allocbuf.address == 0 ||
@@ -711,6 +713,8 @@ rpi_fb_init(prop_dictionary_t dict)
 	    vb_setfb.vbt_pitch.linebytes);
 	prop_dictionary_set_uint32(dict, "address",
 	    vb_setfb.vbt_allocbuf.address);
+	if (vb_setfb.vbt_pixelorder.state == VCPROP_PIXEL_BGR)
+		prop_dictionary_set_bool(dict, "is_bgr", true);
 
 	return true;
 }
