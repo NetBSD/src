@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/01/05 17:44:24 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2013/01/09 16:28:41 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 NOMAN= # defined
@@ -47,6 +47,8 @@ SRCS+=	ufs_disksubr.c
 
 PROG=   boot
 
+NEWVERSWHAT=	"${PROG}"
+
 SRCS+=          vers.c
 CLEANFILES+=    vers.c
 
@@ -68,7 +70,7 @@ LIBS=	${SALIB} ${ZLIB} ${KERNLIB}
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version "${MACHINE}"
+	    ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} ${LINKFORMAT} -x -o ${PROG}.elf ${OBJS} ${LIBS}
