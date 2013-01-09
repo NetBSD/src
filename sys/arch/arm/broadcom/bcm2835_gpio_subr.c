@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio_subr.c,v 1.1 2013/01/05 19:55:18 jakllsch Exp $	*/
+/*	$NetBSD: bcm2835_gpio_subr.c,v 1.2 2013/01/09 01:58:41 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio_subr.c,v 1.1 2013/01/05 19:55:18 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio_subr.c,v 1.2 2013/01/09 01:58:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,7 +60,7 @@ bcm2835gpio_function_select(u_int pin, u_int func)
 		return;
 	}
 
-	aprint_verbose("bcm2835: changing FSEL%u to %#o\n", pin, func);
+	aprint_debug("bcm2835: changing FSEL%u to %#o\n", pin, func);
 
 	v &= ~(mask << shift);
 	v |=  (func << shift);
