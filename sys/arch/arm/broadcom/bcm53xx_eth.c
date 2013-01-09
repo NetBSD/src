@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.20 2012/12/25 21:17:40 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.21 2013/01/09 18:19:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -148,6 +148,7 @@ struct bcmeth_softc {
 	struct bcmeth_txqueue sc_txq;
 
 	size_t sc_rcvoffset;
+	uint32_t sc_macaddr[2];
 	uint32_t sc_maxfrm;
 	uint32_t sc_cmdcfg;
 	uint32_t sc_intmask;
@@ -498,8 +499,24 @@ bcmeth_ifinit(struct ifnet *ifp)
 		sc->sc_cmdcfg &= ~PROMISC_EN;
 	}
 
-	const uint64_t macstnaddr =
-	    bcmeth_macaddr_create(CLLADDR(ifp->if_sadl));
+	const uint8_t * const lladdr = CLLADDR(ifp->if_sadl);
+	const uint64_t macstnaddr = bcmeth_macaddr_create(lladdr);
+
+	/*
+	 * We make sure that a received Ethernet packet start on a non-word
+	 * boundary so that the packet payload will be on a word boundary.
+	 * So to check the destination address we keep around two words to
+	 * quickly compare with.
+	 */
+#if __ARMEL__
+	sc->sc_macaddr[0] = lladdr[0] | (lladdr[1] << 8);
+	sc->sc_macaddr[1] = lladdr[2] | (lladdr[3] << 8)
+	    | (lladdr[4] << 16) | (lladdr[5] << 24);
+#else
+	sc->sc_macaddr[0] = lladdr[1] | (lladdr[0] << 8);
+	sc->sc_macaddr[1] = lladdr[5] | (lladdr[4] << 8)
+	    | (lladdr[1] << 16) | (lladdr[2] << 24);
+#endif
 
 	sc->sc_intmask = DESCPROTOERR|DATAERR|DESCERR;
 
@@ -975,19 +992,16 @@ bcmeth_rx_input(
 
 	m_adj(m, sc->sc_rcvoffset);
 
-	switch (__SHIFTOUT(rxdb_flags, RXSTS_PKTTYPE)) {
-	case RXSTS_PKTTYPE_UC:
-		break;
-	case RXSTS_PKTTYPE_MC:
-		m->m_flags |= M_MCAST;
-		break;
-	case RXSTS_PKTTYPE_BC:
-		m->m_flags |= M_BCAST|M_MCAST;
-		break;
-	default:
-		if (sc->sc_cmdcfg & PROMISC_EN) 
-			m->m_flags |= M_PROMISC;
-		break;
+	/*
+	 * If we are in promiscuous mode and this isn't a multicast, check the
+	 * destination address to make sure it matches our own.  If it doesn't,
+	 * mark the packet as being received promiscuously.
+	 */
+	if ((sc->sc_cmdcfg & PROMISC_EN)
+	    && (m->m_data[0] & 1) == 0
+	    && (*(uint16_t *)&m->m_data[0] != sc->sc_macaddr[0]
+		|| *(uint32_t *)&m->m_data[2] != sc->sc_macaddr[1])) {
+		m->m_flags |= M_PROMISC;
 	}
 	m->m_pkthdr.rcvif = ifp;
 
