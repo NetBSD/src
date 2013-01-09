@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.24 2013/01/09 22:36:07 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.25 2013/01/09 23:04:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.24 2013/01/09 22:36:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.25 2013/01/09 23:04:10 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.24 2013/01/09 22:36:07 jmcneill Ex
 #include <sys/termios.h>
 #include <sys/bus.h>
 
+#include <net/if_ether.h>
 #include <prop/proplib.h>
 
 #include <dev/cons.h>
@@ -402,6 +403,11 @@ rpi_bootparams(void)
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag))
 		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
 
+	if (vcprop_tag_success_p(&vb.vbt_macaddr.tag))
+		printf("%s: mac-address  %llx\n", __func__,
+		    vb.vbt_macaddr.addr);
+
+
 #ifdef VERBOSE_INIT_ARM
 	if (vcprop_tag_success_p(&vb.vbt_fwrev.tag))
 		printf("%s: firmware rev %x\n", __func__,
@@ -732,6 +738,26 @@ rpi_device_register(device_t dev, void *aux)
 		    "frequency", vb.vbt_emmcclockrate.rate);
 	}
 #endif
+	if (device_is_a(dev, "usmsc") &&
+	    vcprop_tag_success_p(&vb.vbt_macaddr.tag)) {
+		const uint8_t enaddr[ETHER_ADDR_LEN] = {
+		     (vb.vbt_macaddr.addr >> 0) & 0xff,
+		     (vb.vbt_macaddr.addr >> 8) & 0xff,
+		     (vb.vbt_macaddr.addr >> 16) & 0xff,
+		     (vb.vbt_macaddr.addr >> 24) & 0xff,
+		     (vb.vbt_macaddr.addr >> 32) & 0xff,
+		     (vb.vbt_macaddr.addr >> 40) & 0xff
+		};
+
+		prop_data_t pd = prop_data_create_data(enaddr, ETHER_ADDR_LEN);
+		KASSERT(pd != NULL);
+		if (prop_dictionary_set(device_properties(dev), "mac-address",
+		    pd) == false) {
+			aprint_error_dev(dev,
+			    "WARNING: Unable to set mac-address property\n");
+		}
+		prop_object_release(pd);
+	}
 
 #if NGENFB > 0
 	if (device_is_a(dev, "genfb")) {
