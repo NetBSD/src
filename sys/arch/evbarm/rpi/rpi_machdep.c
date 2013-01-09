@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.25 2013/01/09 23:04:10 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.26 2013/01/09 23:58:40 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.25 2013/01/09 23:04:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.26 2013/01/09 23:58:40 jmcneill Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -641,6 +641,7 @@ rpi_fb_init(prop_dictionary_t dict)
 	uint32_t width = 0, height = 0;
 	uint32_t res;
 	char *ptr;
+	int integer; 
 	int error;
 
 	if (get_bootconf_option(boot_args, "console",
@@ -721,6 +722,12 @@ rpi_fb_init(prop_dictionary_t dict)
 	    vb_setfb.vbt_allocbuf.address);
 	if (vb_setfb.vbt_pixelorder.state == VCPROP_PIXEL_BGR)
 		prop_dictionary_set_bool(dict, "is_bgr", true);
+
+	/* if "genfb.type=<n>" is passed in cmdline, override wsdisplay type */
+	if (get_bootconf_option(boot_args, "genfb.type",
+				BOOTOPT_TYPE_INT, &integer)) {
+		prop_dictionary_set_uint32(dict, "wsdisplay_type", integer);
+	}
 
 	return true;
 }
