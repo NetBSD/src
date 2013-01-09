@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.21 2013/01/08 16:49:43 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.22 2013/01/09 00:24:54 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.21 2013/01/08 16:49:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.22 2013/01/09 00:24:54 jmcneill Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
 #include "sdhc.h"
 #include "bcmspi.h"
 #include "bsciic.h"
+#include "plcom.h"
+#include "genfb.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,10 +69,14 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.21 2013/01/08 16:49:43 skrll Exp $
 
 #include <evbarm/rpi/rpi.h>
 
-#include "plcom.h"
-#if (NPLCOM > 0)
+#if NPLCOM > 0
 #include <evbarm/dev/plcomreg.h>
 #include <evbarm/dev/plcomvar.h>
+#endif
+
+#if NGENFB > 0
+#include <dev/videomode/videomode.h>
+#include <dev/videomode/edidvar.h>
 #endif
 
 #include "ksyms.h"
@@ -93,6 +99,13 @@ static void rpi_device_register(device_t, void *);
 #define	KERN_VTOPDIFF	((vaddr_t)KERNEL_BASE_phys - (vaddr_t)KERNEL_BASE_virt)
 #define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va + KERN_VTOPDIFF))
 #define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa - KERN_VTOPDIFF))
+
+#ifndef RPI_FB_WIDTH
+#define RPI_FB_WIDTH	1280
+#endif
+#ifndef RPI_FB_HEIGHT
+#define RPI_FB_HEIGHT	720
+#endif
 
 #define	PLCONADDR 0x20201000
 
@@ -213,6 +226,118 @@ static struct {
 	}
 };
 
+#if NGENFB > 0
+static struct {
+	struct vcprop_buffer_hdr	vb_hdr;
+	struct vcprop_tag_edidblock	vbt_edid;
+	struct vcprop_tag end;
+} vb_edid __packed __aligned(16) =
+{
+	.vb_hdr = {
+		.vpb_len = sizeof(vb_edid),
+		.vpb_rcode = VCPROP_PROCESS_REQUEST,
+	},
+	.vbt_edid = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_EDID_BLOCK,
+			.vpt_len = VCPROPTAG_LEN(vb_edid.vbt_edid),
+			.vpt_rcode = VCPROPTAG_REQUEST,
+		},
+		.blockno = 0,
+	},
+	.end = {
+		.vpt_tag = VCPROPTAG_NULL
+	}
+};
+
+static struct {
+	struct vcprop_buffer_hdr	vb_hdr;
+	struct vcprop_tag_fbres		vbt_res;
+	struct vcprop_tag_fbres		vbt_vres;
+	struct vcprop_tag_fbdepth	vbt_depth;
+	struct vcprop_tag_fbpixelorder	vbt_pixelorder;
+	struct vcprop_tag_fbalpha	vbt_alpha;
+	struct vcprop_tag_allocbuf	vbt_allocbuf;
+	struct vcprop_tag_blankscreen	vbt_blank;
+	struct vcprop_tag_fbpitch	vbt_pitch;
+	struct vcprop_tag end;
+} vb_setfb __packed __aligned(16) =
+{
+	.vb_hdr = {
+		.vpb_len = sizeof(vb_setfb),
+		.vpb_rcode = VCPROP_PROCESS_REQUEST,
+	},
+	.vbt_res = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_SET_FB_RES,
+			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_res),
+			.vpt_rcode = VCPROPTAG_REQUEST,
+		},
+		.width = 0,
+		.height = 0,
+	},
+	.vbt_vres = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_SET_FB_VRES,
+			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_vres),
+			.vpt_rcode = VCPROPTAG_REQUEST,
+		},
+		.width = 0,
+		.height = 0,
+	},
+	.vbt_depth = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_SET_FB_DEPTH,
+			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_depth),
+			.vpt_rcode = VCPROPTAG_REQUEST,
+		},
+		.bpp = 32,
+	},
+	.vbt_pixelorder = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_SET_FB_PIXEL_ORDER,
+			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_pixelorder),
+			.vpt_rcode = VCPROPTAG_REQUEST,
+		},
+		.state = VCPROP_PIXEL_RGB,
+	},
+	.vbt_alpha = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_SET_FB_ALPHA_MODE,
+			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_alpha),
+			.vpt_rcode = VCPROPTAG_REQUEST,
+		},
+		.state = VCPROP_ALPHA_IGNORED,
+	},
+	.vbt_allocbuf = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_ALLOCATE_BUFFER,
+			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_allocbuf),
+			.vpt_rcode = VCPROPTAG_REQUEST,
+		},
+		.address = PAGE_SIZE,	/* alignment */
+	},
+	.vbt_blank = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_BLANK_SCREEN,
+			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_blank),
+			.vpt_rcode = VCPROPTAG_REQUEST,
+		},
+		.state = VCPROP_BLANK_OFF,
+	},
+	.vbt_pitch = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_FB_PITCH,
+			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_pitch),
+			.vpt_rcode = VCPROPTAG_REQUEST,
+		},
+	},
+	.end = {
+		.vpt_tag = VCPROPTAG_NULL,
+	},
+};
+#endif
+
 static void
 rpi_bootparams(void)
 {
@@ -227,7 +352,6 @@ rpi_bootparams(void)
 #if (NPLCOM > 0)
 	    (1 << VCPM_POWER_UART0) |
 #endif
-
 #if (NBSCIIC > 0)
 	    (1 << VCPM_POWER_I2C0) | (1 << VCPM_POWER_I2C1) | 
 	/*  (1 << VCPM_POWER_I2C2) | */
@@ -244,9 +368,9 @@ rpi_bootparams(void)
 	/*
 	 * No need to invalid the cache as the memory has never been referenced
 	 * by the ARM.
-	 * 
+	 *
 	 * cpu_dcache_inv_range((vaddr_t)&vb, sizeof(vb));
-	 * 
+	 *
 	 */
 
 	if (!vcprop_buffer_success_p(&vb.vb_hdr)) {
@@ -254,10 +378,10 @@ rpi_bootparams(void)
 		bootconfig.dram[0].address = 0x0;
 		bootconfig.dram[0].pages = atop(RPI_MINIMUM_SPLIT);
 		return;
-	} 
+	}
 
 	struct vcprop_tag_memory *vptp_mem = &vb.vbt_memory;
-	
+
 	if (vcprop_tag_success_p(&vptp_mem->tag)) {
 		size_t n = vcprop_tag_resplen(&vptp_mem->tag) /
 		    sizeof(struct vcprop_memory);
@@ -270,7 +394,7 @@ rpi_bootparams(void)
 			bootconfig.dramblocks++;
 		}
 	}
-	
+
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag))
 		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
 
@@ -290,6 +414,7 @@ rpi_bootparams(void)
 	if (vcprop_tag_success_p(&vb.vbt_serial.tag))
 		printf("%s: board serial %llx\n", __func__,
 		    vb.vbt_serial.sn);
+
 	if (vcprop_tag_success_p(&vb.vbt_cmdline.tag))
 		printf("%s: cmdline      %s\n", __func__,
 		    vb.vbt_cmdline.cmdline);
@@ -365,6 +490,12 @@ initarm(void *arg)
 
 	rpi_bootparams();
 
+	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag)) {
+		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
+		printf("%s: arm clock   %d\n", __func__,
+		    vb.vbt_armclockrate.rate);
+	}
+
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
 #endif
@@ -422,22 +553,183 @@ consinit(void)
 	 * This allows a means of generating output during initarm().
 	 */
 	rpi_pi.pi_iobase = consaddr;
-	
+
 	plcomcnattach(&rpi_pi, plcomcnspeed, BCM2835_UART0_CLK,
 	    plcomcnmode, PLCOMCNUNIT);
 
 #endif
 }
 
+#if NGENFB > 0
+static bool
+rpi_fb_parse_mode(const char *s, uint32_t *pwidth, uint32_t *pheight)
+{
+	if (strncmp(s, "fb", 2) != 0)
+		return false;
+
+	if (strncmp(s, "fb:", 3) == 0) {
+		char *x = strchr(s + 3, 'x');
+		if (x) {
+			*pwidth = strtoul(s + 3, NULL, 10);
+			*pheight = strtoul(x + 1, NULL, 10);
+		}	 
+	}
+
+	return true;
+}
+
+static bool
+rpi_fb_get_edid_mode(uint32_t *pwidth, uint32_t *pheight)
+{
+	struct edid_info ei;
+	uint8_t edid_data[1024];
+	uint32_t res;
+	int error;
+	
+	error = bcmmbox_request(BCMMBOX_CHANARM2VC, &vb_edid,
+	    sizeof(vb_edid), &res);
+	if (error) {
+		printf("%s: mbox request failed (%d)\n", __func__, error);
+		return false;
+	}
+
+	if (!vcprop_buffer_success_p(&vb_edid.vb_hdr) ||
+	    !vcprop_tag_success_p(&vb_edid.vbt_edid.tag))
+		return false;
+
+	memset(edid_data, 0, sizeof(edid_data));
+	memcpy(edid_data, vb_edid.vbt_edid.data,
+	    sizeof(vb_edid.vbt_edid.data));
+	edid_parse(edid_data, &ei);
+#ifdef VERBOSE_INIT_ARM
+	edid_print(&ei);
+#endif
+
+	*pwidth = ei.edid_preferred_mode->hdisplay;
+	*pheight = ei.edid_preferred_mode->vdisplay;
+
+	return true;
+}
+
+/*
+ * Initialize framebuffer console.
+ *
+ * Some notes about boot parameters:
+ *  - If "console=" specifies something other than fb, ignore framebuffer
+ *    completely.
+ *  - If "console=fb" is present, try to use the preferred mode of the
+ *    display from the EDID block. If the EDID block is not present, use
+ *    RPI_FB_WIDTH and RPI_FB_HEIGHT.
+ *  - If "console=fb:<width>x<height>" is present, use the specified mode.
+ * 
+ * If the specified mode cannot be set, the framebuffer will not be used
+ * as the console device.
+ */
+static bool
+rpi_fb_init(prop_dictionary_t dict)
+{
+	uint32_t width = 0, height = 0;
+	uint32_t res;
+	char *ptr;
+	int error;
+
+	if (get_bootconf_option(boot_args, "console",
+			      BOOTOPT_TYPE_STRING, &ptr)) {
+		if (rpi_fb_parse_mode(ptr, &width, &height) == false)
+			return false;
+		if (width == 0 || height == 0)
+			rpi_fb_get_edid_mode(&width, &height);
+		if (width == 0 || height == 0) {
+			width = RPI_FB_WIDTH;
+			height = RPI_FB_HEIGHT;
+		}
+	} else {
+		/* console= not specified, so only attach if EDID block found */
+		if (rpi_fb_get_edid_mode(&width, &height) == false)
+			return false;
+	}
+
+	if (width == 0 || height == 0)
+		return false;
+
+	vb_setfb.vbt_res.width = width;
+	vb_setfb.vbt_res.height = height;
+	vb_setfb.vbt_vres.width = width;
+	vb_setfb.vbt_vres.height = height;
+	error = bcmmbox_request(BCMMBOX_CHANARM2VC, &vb_setfb,
+	    sizeof(vb_setfb), &res);
+	if (error) {
+		printf("%s: mbox request failed (%d)\n", __func__, error);
+		return false;
+	}
+
+	if (!vcprop_buffer_success_p(&vb_setfb.vb_hdr) ||
+	    !vcprop_tag_success_p(&vb_setfb.vbt_res.tag) ||
+	    !vcprop_tag_success_p(&vb_setfb.vbt_vres.tag) ||
+	    !vcprop_tag_success_p(&vb_setfb.vbt_depth.tag) ||
+	    !vcprop_tag_success_p(&vb_setfb.vbt_pixelorder.tag) ||
+	    !vcprop_tag_success_p(&vb_setfb.vbt_allocbuf.tag) ||
+	    !vcprop_tag_success_p(&vb_setfb.vbt_blank.tag) ||
+	    !vcprop_tag_success_p(&vb_setfb.vbt_pitch.tag)) {
+		printf("%s: prop tag failed\n", __func__);
+		return false;
+	}
+
+#ifdef VERBOSE_INIT_ARM
+	printf("%s: addr = 0x%x size = %d\n", __func__,
+	    vb_setfb.vbt_allocbuf.address,
+	    vb_setfb.vbt_allocbuf.size);
+	printf("%s: depth = %d\n", __func__, vb_setfb.vbt_depth.bpp);
+	printf("%s: pitch = %d\n", __func__,
+	    vb_setfb.vbt_pitch.linebytes);
+	printf("%s: width = %d height = %d\n", __func__,
+	    vb_setfb.vbt_res.width, vb_setfb.vbt_res.height);
+	printf("%s: vwidth = %d vheight = %d\n", __func__,
+	    vb_setfb.vbt_vres.width, vb_setfb.vbt_vres.height);
+#endif
+
+	if (vb_setfb.vbt_allocbuf.address == 0 ||
+	    vb_setfb.vbt_allocbuf.size == 0 ||
+	    vb_setfb.vbt_res.width == 0 ||
+	    vb_setfb.vbt_res.height == 0 ||
+	    vb_setfb.vbt_vres.width == 0 ||
+	    vb_setfb.vbt_vres.height == 0 ||
+	    vb_setfb.vbt_pitch.linebytes == 0) {
+		printf("%s: failed to set mode %ux%u\n", __func__,
+		    width, height);
+		return false;
+	}
+
+	prop_dictionary_set_uint32(dict, "width", vb_setfb.vbt_res.width);
+	prop_dictionary_set_uint32(dict, "height", vb_setfb.vbt_res.height);
+	prop_dictionary_set_uint8(dict, "depth", vb_setfb.vbt_depth.bpp);
+	prop_dictionary_set_uint16(dict, "linebytes",
+	    vb_setfb.vbt_pitch.linebytes);
+	prop_dictionary_set_uint32(dict, "address",
+	    vb_setfb.vbt_allocbuf.address);
+
+	return true;
+}
+#endif
 
 static void
 rpi_device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict = device_properties(dev);
 
+#if NSDHC > 0
 	if (device_is_a(dev, "sdhc") &&
 	    vcprop_tag_success_p(&vb.vbt_emmcclockrate.tag)) {
 		prop_dictionary_set_uint32(dict,
 		    "frequency", vb.vbt_emmcclockrate.rate);
 	}
+#endif
+
+#if NGENFB > 0
+	if (device_is_a(dev, "genfb")) {
+		if (rpi_fb_init(dict) == false)
+			return;
+		prop_dictionary_set_bool(dict, "is_console", true);
+	}
+#endif
 }
