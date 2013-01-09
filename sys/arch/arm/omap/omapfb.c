@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.7 2013/01/01 23:22:44 jmcneill Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.8 2013/01/09 04:40:46 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.7 2013/01/01 23:22:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.8 2013/01/09 04:40:46 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.7 2013/01/01 23:22:44 jmcneill Exp $");
 #include <arm/omap/omapfbreg.h>
 #include <arm/omap/omap2_obiovar.h>
 #include <arm/omap/omap2_obioreg.h>
+#include <arm/omap/omap3_sdmareg.h>
+#include <arm/omap/omap3_sdmavar.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -57,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.7 2013/01/01 23:22:44 jmcneill Exp $");
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include <dev/videomode/edidvar.h>
+
+#include "omapdma.h"
 
 struct omapfb_softc {
 	device_t sc_dev;
@@ -71,6 +75,7 @@ struct omapfb_softc {
 	int sc_width, sc_height, sc_depth, sc_stride;
 	int sc_locked;
 	void *sc_fbaddr, *sc_vramaddr;
+	bus_addr_t sc_fbhwaddr;
 	uint32_t *sc_clut;
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
@@ -79,6 +84,7 @@ struct omapfb_softc {
 	struct vcons_data vd;
 	int sc_mode;
 	uint8_t sc_cmap_red[256], sc_cmap_green[256], sc_cmap_blue[256];
+	void (*sc_putchar)(void *, int, int, u_int, long);
 
 	uint8_t sc_edid_data[1024];
 	size_t sc_edid_size;
@@ -95,16 +101,15 @@ static int	omapfb_ioctl(void *, void *, u_long, void *, int,
 static paddr_t	omapfb_mmap(void *, void *, off_t, int);
 static void	omapfb_init_screen(void *, struct vcons_screen *, int, long *);
 
-static void	omapfb_init(struct omapfb_softc *);
-
 static int	omapfb_putcmap(struct omapfb_softc *, struct wsdisplay_cmap *);
 static int 	omapfb_getcmap(struct omapfb_softc *, struct wsdisplay_cmap *);
 static void	omapfb_restore_palette(struct omapfb_softc *);
 static void 	omapfb_putpalreg(struct omapfb_softc *, int, uint8_t,
 			    uint8_t, uint8_t);
 
-#if 0
-static void	omapfb_flush_engine(struct omapfb_softc *);
+#if NOMAPDMA > 0
+static void	omapfb_init(struct omapfb_softc *);
+static void	omapfb_wait_idle(struct omapfb_softc *);
 static void	omapfb_rectfill(struct omapfb_softc *, int, int, int, int,
 			    uint32_t);
 static void	omapfb_bitblt(struct omapfb_softc *, int, int, int, int, int,
@@ -116,7 +121,7 @@ static void	omapfb_copycols(void *, int, int, int, int);
 static void	omapfb_erasecols(void *, int, int, int, long);
 static void	omapfb_copyrows(void *, int, int, int);
 static void	omapfb_eraserows(void *, int, int, long);
-#endif
+#endif /* NOMAPDMA > 0 */
 
 struct wsdisplay_accessops omapfb_accessops = {
 	omapfb_ioctl,
@@ -215,7 +220,6 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	dict = device_properties(self);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
 	edid_data = prop_dictionary_get(dict, "EDID");
-	//is_console = 1;
 
 	if (edid_data != NULL) {
 		struct edid_info ei;
@@ -294,8 +298,9 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	reg = 0x8;
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONFIG, reg);
 	
+	sc->sc_fbhwaddr = sc->sc_dmamem->ds_addr + 0x1000;
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_BASE_0, 
-	    sc->sc_dmamem->ds_addr + 0x1000);
+	    sc->sc_fbhwaddr);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_TABLE_BASE, 
 	    sc->sc_dmamem->ds_addr);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_POSITION, 
@@ -367,7 +372,9 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	sc->vd.init_screen = omapfb_init_screen;
 
 	/* init engine here */
+#if NOMAPDMA > 0
 	omapfb_init(sc);
+#endif
 
 	ri = &sc->sc_console_screen.scr_ri;
 
@@ -376,7 +383,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 		    &defattr);
 		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-#if 0
+#if NOMAPDMA > 0
 		omapfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
 		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
 #endif
@@ -401,7 +408,19 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
-	
+#ifdef OMAPFB_DEBUG
+#if NOMAPDMA > 0
+	omapfb_rectfill(sc, 100, 100, 100, 100, 0xe000);
+	omapfb_rectfill(sc, 100, 200, 100, 100, 0x01f8);
+	omapfb_rectfill(sc, 200, 100, 100, 100, 0x01f8);
+	omapfb_rectfill(sc, 200, 200, 100, 100, 0xe000);
+	omapfb_bitblt(sc, 100, 100, 400, 100, 200, 200, 0);
+	/* let's see if we can draw something */
+	printf("OMAPDMAC_CDAC: %08x\n", omapdma_read_ch_reg(0, OMAPDMAC_CDAC));
+	printf("OMAPDMAC_CSR: %08x\n", omapdma_read_ch_reg(0, OMAPDMAC_CSR));
+	printf("OMAPDMAC_CCR: %08x\n", omapdma_read_ch_reg(0, OMAPDMAC_CCR));
+#endif
+#endif	
 }
 
 static int
@@ -491,7 +510,9 @@ omapfb_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_bits = (char *)sc->sc_fbaddr;
 
+#if NOMAPDMA < 1
 	scr->scr_flags |= VCONS_DONT_READ;
+#endif
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
@@ -504,12 +525,14 @@ omapfb_init_screen(void *cookie, struct vcons_screen *scr,
 		    sc->sc_width / ri->ri_font->fontwidth);
 
 	ri->ri_hw = scr;
-#if 0
+
+#if NOMAPDMA > 0
 	ri->ri_ops.copyrows = omapfb_copyrows;
 	ri->ri_ops.copycols = omapfb_copycols;
 	ri->ri_ops.eraserows = omapfb_eraserows;
 	ri->ri_ops.erasecols = omapfb_erasecols;
 	ri->ri_ops.cursor = omapfb_cursor;
+	sc->sc_putchar = ri->ri_ops.putchar;
 	ri->ri_ops.putchar = omapfb_putchar;
 #endif
 }
@@ -600,22 +623,74 @@ omapfb_putpalreg(struct omapfb_softc *sc, int idx, uint8_t r, uint8_t g,
 	
 }
 
+#if NOMAPDMA > 0
 static void
 omapfb_init(struct omapfb_softc *sc)
 {
+	omapdma_write_ch_reg(0, OMAPDMAC_CLNK_CTRL, 0);
+	omapdma_write_ch_reg(0, OMAPDMAC_CICRI, 0);
+	omapdma_write_ch_reg(0, OMAPDMAC_CSDPI,
+	    CSDPI_SRC_BURST_64 | CSDPI_DST_BURST_64 |
+	    CSDPI_WRITE_POSTED | CSDPI_DATA_TYPE_16);
 }
 
-#if 0
+static void
+omapfb_wait_idle(struct omapfb_softc *sc)
+{
+	while ((omapdma_read_ch_reg(0, OMAPDMAC_CCR) & CCR_WR_ACTIVE) != 0);
+}
+
 static void
 omapfb_rectfill(struct omapfb_softc *sc, int x, int y, int wi, int he,
      uint32_t colour)
 {
+	int width_in_bytes = wi * (sc->sc_depth >> 3);
+
+	omapfb_wait_idle(sc);
+
+	omapdma_write_ch_reg(0, OMAPDMAC_CEN, wi);
+	omapdma_write_ch_reg(0, OMAPDMAC_CFN, he);
+	omapdma_write_ch_reg(0, OMAPDMAC_CDSA,
+	    sc->sc_fbhwaddr + sc->sc_stride * y + x * (sc->sc_depth >> 3));
+	omapdma_write_ch_reg(0, OMAPDMAC_CCR,
+	    CCR_CONST_FILL_ENABLE | CCR_DST_AMODE_DOUBLE_INDEX |
+	    CCR_SRC_AMODE_CONST_ADDR);
+	omapdma_write_ch_reg(0, OMAPDMAC_CDEI, 1);
+	omapdma_write_ch_reg(0, OMAPDMAC_CDFI, (sc->sc_stride - width_in_bytes) + 1);
+	omapdma_write_ch_reg(0, OMAPDMAC_COLOR, colour & ~0xe000);
+	omapdma_write_ch_reg(0, OMAPDMAC_CCR,
+	    CCR_CONST_FILL_ENABLE | CCR_DST_AMODE_DOUBLE_INDEX |
+	    CCR_SRC_AMODE_CONST_ADDR | CCR_ENABLE);
 }
 
 static void
 omapfb_bitblt(struct omapfb_softc *sc, int xs, int ys, int xd, int yd,
     int wi, int he, int rop)
 {
+	int width_in_bytes = wi * (sc->sc_depth >> 3);
+
+	omapfb_wait_idle(sc);
+
+	/*
+	 * TODO:
+	 * handle overlaps ( as in, go backwards when needed )
+	 */
+	omapdma_write_ch_reg(0, OMAPDMAC_CEN, wi);
+	omapdma_write_ch_reg(0, OMAPDMAC_CFN, he);
+	omapdma_write_ch_reg(0, OMAPDMAC_CSSA,
+	    sc->sc_fbhwaddr + sc->sc_stride * ys + xs * (sc->sc_depth >> 3));
+	omapdma_write_ch_reg(0, OMAPDMAC_CDSA,
+	    sc->sc_fbhwaddr + sc->sc_stride * yd + xd * (sc->sc_depth >> 3));
+	omapdma_write_ch_reg(0, OMAPDMAC_CCR,
+	    CCR_DST_AMODE_DOUBLE_INDEX |
+	    CCR_SRC_AMODE_DOUBLE_INDEX);
+	omapdma_write_ch_reg(0, OMAPDMAC_CSEI, 1);
+	omapdma_write_ch_reg(0, OMAPDMAC_CSFI, (sc->sc_stride - width_in_bytes) + 1);
+	omapdma_write_ch_reg(0, OMAPDMAC_CDEI, 1);
+	omapdma_write_ch_reg(0, OMAPDMAC_CDFI, (sc->sc_stride - width_in_bytes) + 1);
+	omapdma_write_ch_reg(0, OMAPDMAC_CCR,
+	    CCR_DST_AMODE_DOUBLE_INDEX |
+	    CCR_SRC_AMODE_DOUBLE_INDEX | CCR_ENABLE);
 }
 
 static void
@@ -624,24 +699,25 @@ omapfb_cursor(void *cookie, int on, int row, int col)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct omapfb_softc *sc = scr->scr_cookie;
-	int x, y, wi, he;
+	int wi, he, pos;
 	
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+	pos = col + row * ri->ri_cols;
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	pos += scr->scr_offset_to_zero;
+#endif
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
-		x = ri->ri_ccol * wi + ri->ri_xorigin;
-		y = ri->ri_crow * he + ri->ri_yorigin;
 		if (ri->ri_flg & RI_CURSOR) {
-			omapfb_bitblt(sc, x, y, x, y, wi, he, 3);
+			omapfb_putchar(cookie, row, col, scr->scr_chars[pos],
+			    scr->scr_attrs[pos]);
 			ri->ri_flg &= ~RI_CURSOR;
 		}
 		ri->ri_crow = row;
 		ri->ri_ccol = col;
 		if (on) {
-			x = ri->ri_ccol * wi + ri->ri_xorigin;
-			y = ri->ri_crow * he + ri->ri_yorigin;
-			omapfb_bitblt(sc, x, y, x, y, wi, he, 3);
+			omapfb_putchar(cookie, row, col, scr->scr_chars[pos],
+			    scr->scr_attrs[pos] ^ 0x000f0f00);
 			ri->ri_flg |= RI_CURSOR;
 		}
 	} else {
@@ -652,12 +728,16 @@ omapfb_cursor(void *cookie, int on, int row, int col)
 
 }
 
-#if 0
 static void
 omapfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct omapfb_softc *sc = scr->scr_cookie;
+
+	omapfb_wait_idle(sc);
+	sc->sc_putchar(cookie, row, col, c, attr);	
 }
-#endif
 
 static void
 omapfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
@@ -709,7 +789,7 @@ omapfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
 		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
 		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight*nrows;
+		height = ri->ri_font->fontheight * nrows;
 		omapfb_bitblt(sc, x, ys, x, yd, width, height, 12);
 	}
 }
@@ -732,4 +812,4 @@ omapfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 		omapfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
 	}
 }
-#endif
+#endif /* NOMAPDMA > 0 */
