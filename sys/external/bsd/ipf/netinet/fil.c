@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.7 2012/12/20 21:42:27 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.8 2013/01/09 13:23:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.7 2012/12/20 21:42:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.8 2013/01/09 13:23:20 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -9664,6 +9664,7 @@ ipf_ht_node_del(host_track_t *htp, int family, i6addr_t *addr)
 void
 ipf_rb_ht_init(host_track_t *head)
 {
+	memset(head, 0, sizeof(*head));
 	RBI_INIT(ipf_rb, &head->ht_root);
 }
 
