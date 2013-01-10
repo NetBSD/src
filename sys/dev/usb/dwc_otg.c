@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.3 2013/01/10 21:25:53 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.4 2013/01/10 21:50:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.3 2013/01/10 21:25:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.4 2013/01/10 21:50:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3059,6 +3059,7 @@ dwc_otg_host_data_tx(struct dwc_otg_td *td)
 		if (hcint & HCINT_ACK) {
 			if (!dwc_otg_host_channel_wait(td))
 				break;
+			td->actlen += td->tx_bytes;
 			td->offset += td->tx_bytes;
 			td->remainder -= td->tx_bytes;
 			td->toggle ^= 1;
