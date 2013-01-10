@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.9 2013/01/09 04:52:47 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.10 2013/01/10 02:18:06 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.9 2013/01/09 04:52:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.10 2013/01/10 02:18:06 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,17 +481,15 @@ static paddr_t
 omapfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	paddr_t pa = -1;
-#if 0
 	struct vcons_data *vd = v;
 	struct omapfb_softc *sc = vd->cookie;
 
 	/* 'regular' framebuffer mmap()ing */
-	if (offset < sc->sc_fbsize) {
-		pa = bus_space_mmap(sc->sc_memt, sc->sc_fb + offset, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+	if (offset < (12 << 20)) {
+		pa = bus_dmamem_mmap(sc->sc_dmat, sc->sc_dmamem, 1,
+		    offset + 0x1000, prot, BUS_DMA_COHERENT);
 		return pa;
 	}
-#endif
 	return pa;
 }
 
