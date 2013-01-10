@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/01/10 13:10:26 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2013/01/10 15:51:32 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 NOMAN= # defined
@@ -73,10 +73,11 @@ vers.c: ${.CURDIR}/version
 	    ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
-	${LD} ${LINKFORMAT} -x -o ${PROG}.aout ${OBJS} ${LIBS}
+	${LD} ${LINKFORMAT} -x -o ${PROG}.elf ${OBJS} ${LIBS}
+	${ELF2AOUT} ${PROG}.elf ${PROG}.aout
 	mv ${PROG}.aout ${PROG}
 
-CLEANFILES+=	${PROG}.aout
+CLEANFILES+=	${PROG}.aout ${PROG}.elf
 
 cleandir distclean: .WAIT cleanlibdir
 
