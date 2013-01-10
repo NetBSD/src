@@ -1,6 +1,6 @@
-/* $NetBSD: strcpy.S,v 1.3 2013/01/08 13:21:05 matt Exp $ */
+/* $NetBSD: strcpy.S,v 1.4 2013/01/10 02:13:49 matt Exp $ */
 
-#ifdef _STANDALONE
+#if defined(_STANDALONE)
 #include "strcpy_naive.S"
 #else
 #include "strcpy_arm.S"
