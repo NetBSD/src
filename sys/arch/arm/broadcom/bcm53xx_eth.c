@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.21 2013/01/09 18:19:09 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.22 2013/01/10 22:07:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -551,8 +551,9 @@ bcmeth_ifinit(struct ifnet *ifp)
 	bcmeth_write_4(sc, GMAC_DEVCONTROL, devctl);
 
 	/* Setup lazy receive (at most 1ms). */
+	const struct cpu_softc * const cpu = curcpu()->ci_softc;
 	sc->sc_rcvlazy =  __SHIFTIN(4, INTRCVLAZY_FRAMECOUNT)
-	     | __SHIFTIN(125000000 / 1000, INTRCVLAZY_TIMEOUT);
+	     | __SHIFTIN(cpu->cpu_clk.clk_apb / 1000, INTRCVLAZY_TIMEOUT);
 	bcmeth_write_4(sc, GMAC_INTRCVLAZY, sc->sc_rcvlazy);
 
 	/* 11. Enable transmit queues in TQUEUE, and ensure that the transmit scheduling mode is correctly set in TCTRL. */
