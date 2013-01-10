@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.16 2010/03/03 17:37:01 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.17 2013/01/10 08:35:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -81,6 +81,10 @@ main(int argc, char *argv[])
 		}
 	}
 	mount_lfs_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
+
+	/* Reset getopt for lfs_cleaner_main.  */
+	optreset = 1;
+	optind = 1;
 
 	p2m = p2k_init(0);
 	if (!p2m)
