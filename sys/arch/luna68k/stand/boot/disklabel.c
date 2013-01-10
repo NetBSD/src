@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.2 2013/01/10 16:20:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -112,7 +112,7 @@ int
 disklabel(int argc, char *argv[])
 {
 	struct scd_dk_label *omp = (struct scd_dk_label *) lbl_buff;
-	struct disklabel    *bp  = (struct disklabel *)omp->dkl_pad;
+	struct disklabel    *bp  = (struct disklabel *)&lbl_buff[LABELOFFSET];
 	struct fs *fp = (struct fs *) lbl_buff;
 	u_short *p;
 	u_long chksum, count;
@@ -147,7 +147,7 @@ disklabel(int argc, char *argv[])
 		printf("Offset = %d\n", i);
 		printf("\n");
 		printf("Checksum of Bad Track:\t0x%x\n",	omp->dkl_badchk);
-		printf("Logical Block Total:\t%lu(0x%lx)\n",	omp->dkl_maxblk, omp->dkl_maxblk);
+		printf("Logical Block Total:\t%u(0x%x)\n",	omp->dkl_maxblk, omp->dkl_maxblk);
 		printf("Disk Drive Type:\t0x%x\n",		omp->dkl_dtype);
 		printf("Number of Disk Drives:\t%d(0x%x)\n",	omp->dkl_ndisk, omp->dkl_ndisk);
 		printf("Number of Data Cylinders:\t%d(0x%x)\n",	omp->dkl_ncyl, omp->dkl_ncyl);
@@ -162,8 +162,8 @@ disklabel(int argc, char *argv[])
 		printf("Physical Partition Number:\t%d(0x%x)\n",
 		       omp->dkl_ppart, omp->dkl_ppart);
 		for (i = 0; i < NLPART; i++)
-			printf("\t%d:\t%ld\t%ld\n", i,
-			       (long)omp->dkl_map[i].dkl_blkno, (long)omp->dkl_map[i].dkl_nblk);
+			printf("\t%d:\t%d\t%d\n", i,
+			       omp->dkl_map[i].dkl_blkno, omp->dkl_map[i].dkl_nblk);
 		printf("Identifies This Label Format:\t0x%x\n",	omp->dkl_magic);
 		printf("XOR Checksum of Sector:\t0x%x\n",	omp->dkl_cksum);
 	} else if (!strcmp(argv[1], "checksum")) {
