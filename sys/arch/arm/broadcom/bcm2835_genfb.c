@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_genfb.c,v 1.2 2013/01/09 23:58:40 jmcneill Exp $ */
+/* $NetBSD: bcm2835_genfb.c,v 1.3 2013/01/10 14:12:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.2 2013/01/09 23:58:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.3 2013/01/10 14:12:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -77,6 +77,7 @@ bcmgenfb_attach(device_t parent, device_t self, void *aux)
 	struct amba_attach_args *aaa = aux;
 	prop_dictionary_t dict = device_properties(self);
 	struct genfb_ops ops;
+	bool is_console = false;
 	int error;
 
 	sc->sc_gen.sc_dev = self;
@@ -84,6 +85,7 @@ bcmgenfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_wstype = WSDISPLAY_TYPE_VC4;
 	prop_dictionary_get_uint32(dict, "wsdisplay_type", &sc->sc_wstype);
+	prop_dictionary_get_bool(dict, "is_console", &is_console);
 
 	genfb_init(&sc->sc_gen);
 
@@ -108,7 +110,11 @@ bcmgenfb_attach(device_t parent, device_t self, void *aux)
 	ops.genfb_mmap = bcmgenfb_mmap;
 
 	aprint_naive("\n");
-	aprint_normal(": switching to framebuffer console\n");
+
+	if (is_console)
+		aprint_normal(": switching to framebuffer console\n");
+	else
+		aprint_normal("\n");
 
 	genfb_attach(&sc->sc_gen, &ops);
 }
