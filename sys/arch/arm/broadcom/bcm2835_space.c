@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.1 2012/07/26 06:21:57 skrll Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.2 2013/01/10 21:57:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.1 2012/07/26 06:21:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.2 2013/01/10 21:57:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ struct bus_space bcm2835_bs_tag = {
 	bcm2835_bs_vaddr,
 
 	/* mmap */
-	bs_notimpl_bs_mmap,
+	bcm2835_bs_mmap,
 
 	/* barrier */
 	bcm2835_bs_barrier,
@@ -373,6 +373,12 @@ bcm2835_bs_vaddr(void *t, bus_space_handle_t bsh)
 	return (void *)bsh;
 }
 
+paddr_t
+bcm2835_bs_mmap(void *t, bus_addr_t paddr, off_t offset, int prot, int flags)
+{
+
+	return (arm_btop((paddr + offset)));
+}
 
 int
 bcm2835_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
