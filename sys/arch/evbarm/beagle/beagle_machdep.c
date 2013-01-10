@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.33 2013/01/01 23:21:26 jmcneill Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.34 2013/01/10 17:36:35 macallan Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.33 2013/01/01 23:21:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.34 2013/01/10 17:36:35 macallan Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -186,6 +186,8 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.33 2013/01/01 23:21:26 jmcneill
 
 #include "prcm.h"
 #include "omapwdt32k.h"
+#include "ukbd.h"
+#include <dev/usb/ukbdvar.h>
 
 #ifdef BOOT_ARGS
 #define DEFAULT_BOOT_ARGS BOOT_ARGS
@@ -206,6 +208,8 @@ u_int uboot_args[4] = { 0 };	/* filled in by beagle_start.S (not in bss) */
 
 extern char KERNEL_BASE_phys[];
 extern char _end[];
+
+int use_fb_console = false;
 
 /*
  * Macros to translate between physical and virtual for a subset of the
@@ -396,6 +400,7 @@ u_int
 initarm(void *arg)
 {
 	psize_t ram_size = 0;
+	char *ptr;
 #if 1
 	beagle_putchar('d');
 #endif
@@ -440,7 +445,7 @@ initarm(void *arg)
 	printf("\nNetBSD/evbarm (beagle) booting ...\n");
 #endif
 
-#ifdef BOOT_ARGS
+#ifdef BOOT_ARGSt
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
@@ -487,7 +492,13 @@ initarm(void *arg)
 
 	db_trap_callback = beagle_db_trap;
 
+	if (get_bootconf_option(boot_args, "console",
+		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
+		use_fb_console = true;
+	}
+	
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+
 }
 
 static void
@@ -543,6 +554,10 @@ consinit(void)
 		panic("Serial console can not be initialized.");
 
 	bus_space_unmap(&omap_a4x_bs_tag, bh, OMAP_COM_SIZE);
+
+#if NUKBD > 0
+	ukbd_cnattach();	/* allow USB keyboard to become console */
+#endif
 
 	beagle_putchar('f');
 	beagle_putchar('g');
@@ -783,6 +798,12 @@ beagle_device_register(device_t self, void *aux)
 			    prop_data_create_data(beagle_edid,
 						  sizeof(beagle_edid)));
 		}
+		if (use_fb_console)
+			prop_dictionary_set_bool(dict, "is_console", true);
 		return;
+	}
+	if (device_is_a(self, "com")) {
+		if (use_fb_console)
+			prop_dictionary_set_bool(dict, "is_console", false);
 	}
 }
