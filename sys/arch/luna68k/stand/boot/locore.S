@@ -102,82 +102,83 @@
 
 	.text
 
-	.globl	Reset
-	.globl	_buserr,_addrerr
-	.globl	_illinst,_zerodiv,_chkinst,_trapvinst,_privinst
-	.globl	_lev6intr,_lev5intr,_lev3intr,_lev2intr,_badtrap
-
 ASENTRY_NOPROFILE(start)
-Reset:
+ASGLOBAL(Reset)
 	jmp _C_LABEL(start1)	/* 0: NOT USED (reset PC) */
 	.word	0		/* 1: NOT USED (reset PC) */
-	.long	_buserr		/* 2: bus error */
-	.long	_addrerr	/* 3: address error */
-	.long	_illinst	/* 4: illegal instruction */
-	.long	_zerodiv	/* 5: zero divide */
-	.long	_chkinst	/* 6: CHK instruction */
-	.long	_trapvinst	/* 7: TRAPV instruction */
-	.long	_privinst	/* 8: privilege violation */
-	.long	_badtrap	/* 9: trace */
-	.long	_illinst	/* 10: line 1010 emulator */
-	.long	_illinst	/* 11: line 1111 emulator */
-	.long	_badtrap	/* 12: unassigned, reserved */
-	.long	_coperr		/* 13: coprocessor protocol violation */
-	.long	_fmterr		/* 14: format error */
-	.long	_badtrap	/* 15: uninitialized interrupt vector */
-	.long	_badtrap	/* 16: unassigned, reserved */
-	.long	_badtrap	/* 17: unassigned, reserved */
-	.long	_badtrap	/* 18: unassigned, reserved */
-	.long	_badtrap	/* 19: unassigned, reserved */
-	.long	_badtrap	/* 20: unassigned, reserved */
-	.long	_badtrap	/* 21: unassigned, reserved */
-	.long	_badtrap	/* 22: unassigned, reserved */
-	.long	_badtrap	/* 23: unassigned, reserved */
-	.long	_badtrap	/* 24: spurious interrupt */
-	.long	_badtrap	/* 25: level 1 interrupt autovector */
-	.long	_lev2intr	/* 26: level 2 interrupt autovector */
-	.long	_lev3intr	/* 27: level 3 interrupt autovector */
-	.long	_badtrap	/* 28: level 4 interrupt autovector */
-	.long	_lev5intr	/* 29: level 5 interrupt autovector */
-	.long	_lev6intr	/* 30: level 6 interrupt autovector */
-	.long	_badtrap	/* 31: level 7 interrupt autovector */
-	.long	_illinst	/* 32: syscalls */
-	.long	_illinst	/* 33: sigreturn syscall or breakpoint */
-	.long	_illinst	/* 34: breakpoint or sigreturn syscall */
-	.long	_illinst	/* 35: TRAP instruction vector */
-	.long	_illinst	/* 36: TRAP instruction vector */
-	.long	_illinst	/* 37: TRAP instruction vector */
-	.long	_illinst	/* 38: TRAP instruction vector */
-	.long	_illinst	/* 39: TRAP instruction vector */
-	.long	_illinst	/* 40: TRAP instruction vector */
-	.long	_illinst	/* 41: TRAP instruction vector */
-	.long	_illinst	/* 42: TRAP instruction vector */
-	.long	_illinst	/* 43: TRAP instruction vector */
-	.long	_illinst	/* 44: TRAP instruction vector */
-	.long	_illinst	/* 45: TRAP instruction vector */
-	.long	_illinst	/* 46: TRAP instruction vector */
-	.long	_illinst	/* 47: TRAP instruction vector */
- 	.long	_fptrap		/* 48: FPCP branch/set on unordered cond */
- 	.long	_fptrap		/* 49: FPCP inexact result */
- 	.long	_fptrap		/* 50: FPCP divide by zero */
- 	.long	_fptrap		/* 51: FPCP underflow */
- 	.long	_fptrap		/* 52: FPCP operand error */
- 	.long	_fptrap		/* 53: FPCP overflow */
- 	.long	_fptrap		/* 54: FPCP signalling NAN */
+	VECTOR(buserr)		/* 2: bus error */
+	VECTOR(addrerr)		/* 3: address error */
+	VECTOR(illinst)		/* 4: illegal instruction */
+	VECTOR(zerodiv)		/* 5: zero divide */
+	VECTOR(chkinst)		/* 6: CHK instruction */
+	VECTOR(trapvinst)	/* 7: TRAPV instruction */
+	VECTOR(privinst)	/* 8: privilege violation */
+	VECTOR(badtrap)		/* 9: trace */
+	VECTOR(illinst)		/* 10: line 1010 emulator */
+	VECTOR(illinst)		/* 11: line 1111 emulator */
+	VECTOR(badtrap)		/* 12: unassigned, reserved */
+	VECTOR(coperr)		/* 13: coprocessor protocol violation */
+	VECTOR(fmterr)		/* 14: format error */
+	VECTOR(badtrap)		/* 15: uninitialized interrupt vector */
+	VECTOR(badtrap)		/* 16: unassigned, reserved */
+	VECTOR(badtrap)		/* 17: unassigned, reserved */
+	VECTOR(badtrap)		/* 18: unassigned, reserved */
+	VECTOR(badtrap)		/* 19: unassigned, reserved */
+	VECTOR(badtrap)		/* 20: unassigned, reserved */
+	VECTOR(badtrap)		/* 21: unassigned, reserved */
+	VECTOR(badtrap)		/* 22: unassigned, reserved */
+	VECTOR(badtrap)		/* 23: unassigned, reserved */
+	VECTOR(badtrap)		/* 24: unassigned, reserved */
+	VECTOR(badtrap)		/* 25: unassigned, reserved */
+	VECTOR(lev2intr)	/* 26: level 2 interrupt autovector */
+	VECTOR(lev3intr)	/* 27: level 3 interrupt autovector */
+	VECTOR(badtrap)		/* 28: level 4 interrupt autovector */
+	VECTOR(lev5intr)	/* 29: level 5 interrupt autovector */
+	VECTOR(lev6intr)	/* 30: level 6 interrupt autovector */
+	VECTOR(badtrap)		/* 31: level 7 interrupt autovector */
+	VECTOR(illinst)		/* 32: syscalls */
+	VECTOR(illinst)		/* 33: sigreturn syscall or breakpoint */
+	VECTOR(illinst)		/* 34: breakpoint or sigreturn syscall */
+	VECTOR(illinst)		/* 35: TRAP instruction vector */
+	VECTOR(illinst)		/* 36: TRAP instruction vector */
+	VECTOR(illinst)		/* 37: TRAP instruction vector */
+	VECTOR(illinst)		/* 38: TRAP instruction vector */
+	VECTOR(illinst)		/* 39: TRAP instruction vector */
+	VECTOR(illinst)		/* 40: TRAP instruction vector */
+	VECTOR(illinst)		/* 41: TRAP instruction vector */
+	VECTOR(illinst)		/* 42: TRAP instruction vector */
+	VECTOR(illinst)		/* 43: TRAP instruction vector */
+	VECTOR(illinst)		/* 44: TRAP instruction vector */
+	VECTOR(illinst)		/* 45: TRAP instruction vector */
+	VECTOR(illinst)		/* 45: TRAP instruction vector */
+	VECTOR(illinst)		/* 47: TRAP instruction vector */
+ 	VECTOR(fptrap)		/* 48: FPCP branch/set on unordered cond */
+ 	VECTOR(fptrap)		/* 49: FPCP inexact result */
+ 	VECTOR(fptrap)		/* 50: FPCP divide by zero */
+ 	VECTOR(fptrap)		/* 51: FPCP underflow */
+ 	VECTOR(fptrap)		/* 52: FPCP operand error */
+ 	VECTOR(fptrap)		/* 53: FPCP overflow */
+ 	VECTOR(fptrap)		/* 54: FPCP signalling NAN */
 
-	.long	_badtrap	/* 55: unassigned, reserved */
-	.long	_badtrap	/* 56: unassigned, reserved */
-	.long	_badtrap	/* 57: unassigned, reserved */
-	.long	_badtrap	/* 58: unassigned, reserved */
-	.long	_badtrap	/* 59: unassigned, reserved */
-	.long	_badtrap	/* 60: unassigned, reserved */
-	.long	_badtrap	/* 61: unassigned, reserved */
-	.long	_badtrap	/* 62: unassigned, reserved */
-	.long	_badtrap	/* 63: unassigned, reserved */
-#define BADTRAP16	.long	_badtrap,_badtrap,_badtrap,_badtrap,\
-				_badtrap,_badtrap,_badtrap,_badtrap,\
-				_badtrap,_badtrap,_badtrap,_badtrap,\
-				_badtrap,_badtrap,_badtrap,_badtrap
+	VECTOR(badtrap)		/* 55: unassigned, reserved */
+	VECTOR(badtrap)		/* 56: unassigned, reserved */
+	VECTOR(badtrap)		/* 57: unassigned, reserved */
+	VECTOR(badtrap)		/* 58: unassigned, reserved */
+	VECTOR(badtrap)		/* 59: unassigned, reserved */
+	VECTOR(badtrap)		/* 60: unassigned, reserved */
+	VECTOR(badtrap)		/* 61: unassigned, reserved */
+	VECTOR(badtrap)		/* 62: unassigned, reserved */
+	VECTOR(badtrap)		/* 63: unassigned, reserved */
+#define BADTRAP16       \
+	VECTOR(badtrap) ; VECTOR(badtrap) ; \
+	VECTOR(badtrap) ; VECTOR(badtrap) ; \
+	VECTOR(badtrap) ; VECTOR(badtrap) ; \
+	VECTOR(badtrap) ; VECTOR(badtrap) ; \
+	VECTOR(badtrap) ; VECTOR(badtrap) ; \
+	VECTOR(badtrap) ; VECTOR(badtrap) ; \
+	VECTOR(badtrap) ; VECTOR(badtrap) ; \
+	VECTOR(badtrap) ; VECTOR(badtrap)
+
 	BADTRAP16		/* 64-255: user interrupt vectors */
 	BADTRAP16		/* 64-255: user interrupt vectors */
 	BADTRAP16		/* 64-255: user interrupt vectors */
@@ -191,8 +192,6 @@ Reset:
 	BADTRAP16		/* 64-255: user interrupt vectors */
 	BADTRAP16		/* 64-255: user interrupt vectors */
 
-
-	.globl	_etext,_edata,_end
 
 	START = 0x700000
 	STACK = 0x800000
@@ -203,7 +202,7 @@ ASENTRY_NOPROFILE(start1)
 	movl	#STACK,%sp		| set SP
 
 	movl	#_C_LABEL(prgcore), %a2	| save program address
-	movl	#Reset, %a2@+		| save start of core
+	movl	#_ASM_LABEL(Reset), %a2@+	| save start of core
 	movl	#_C_LABEL(end),  %a2@+	| save end of core
 	movl	#STACK, %a2@		| save initial stack addr
 
@@ -220,7 +219,7 @@ Lbssclr:
 	movl	%a0@(NMIVEC),%d0	| restore NMIVEC
 	movl	#_ASM_LABEL(gotoROM),%a0	| save to _gotoROM
 	movl	%d0,%a0@		|
-	movl	#Reset,%a0		| BP vbr to %a0
+	movl	#_ASM_LABEL(Reset),%a0	| BP vbr to %a0
 	movl	#_C_LABEL(exit),%a0@(NMIVEC)	| save address
 	
 
@@ -229,7 +228,7 @@ Lbssclr:
 	movl	%a0@(ILLGINST),%sp@-	| save ILLINST vector for BrkPtr
 	movl	%a0@(EVTRAPF),%sp@-
 
-	movl	#Reset,%a0
+	movl	#_ASM_LABEL(Reset),%a0
 	movl	%sp@+,%a0@(EVTRAPF)
 	movl	%sp@+,%a0@(ILLGINST)	| restore ILLINST vector
 	movec	%a0,%vbr
@@ -267,12 +266,12 @@ GLOBAL(_rtt)
  * Trap/interrupt vector routines
  */ 
 
-_buserr:
+ENTRY_NOPROFILE(buserr)
 	tstl	_C_LABEL(nofault)	| device probe?
-	jeq	_addrerr		| no, handle as usual
+	jeq	_C_LABEL(addrerr)	| no, handle as usual
 	movl	_C_LABEL(nofault),%sp@-	| yes,
 	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
-_addrerr:
+ENTRY_NOPROFILE(addrerr)
 	clrw	%sp@-			| pad SR to longword
 	moveml	#0xFFFF,%sp@-		| save user registers
 	movl	%usp,%a0		| save the user SP
@@ -344,16 +343,16 @@ Lbexit:
 	moveml	%sp@+,#0x7FFF		| restore most user regs
 	addql	#4,%sp			| toss SSP
 	tstw	%sp@+			| do we need to clean up stack?
-	jeq	rei			| no, just continue
+	jeq	_ASM_LABEL(rei)		| no, just continue
 	btst	#7,%sp@(6)		| type 9/10/11 frame?
-	jeq	rei			| no, nothing to do
+	jeq	_ASM_LABEL(rei)		| no, nothing to do
 	btst	#5,%sp@(6)		| type 9?
 	jne	Lbex1			| no, skip
 	movw	%sp@,%sp@(12)		| yes, push down SR
 	movl	%sp@(2),%sp@(14)	| and PC
 	clrw	%sp@(18)		| and mark as type 0 frame
 	lea	%sp@(12),%sp		| clean the excess
-	jra	rei			| all done
+	jra	_ASM_LABEL(rei)		| all done
 Lbex1:
 	btst	#4,%sp@(6)		| type 10?
 	jne	Lbex2			| no, skip
@@ -361,57 +360,57 @@ Lbex1:
 	movl	%sp@(2),%sp@(26)	| and PC
 	clrw	%sp@(30)		| and mark as type 0 frame
 	lea	%sp@(24),%sp		| clean the excess
-	jra	rei			| all done
+	jra	_ASM_LABEL(rei)		| all done
 Lbex2:
 	movw	%sp@,%sp@(84)		| type 11, push down SR
 	movl	%sp@(2),%sp@(86)	| and PC
 	clrw	%sp@(90)		| and mark as type 0 frame
 	lea	%sp@(84),%sp		| clean the excess
-	jra	rei			| all done
+	jra	_ASM_LABEL(rei)		| all done
 
-_illinst:
+ENTRY_NOPROFILE(illinst)
 	clrw	%sp@-
 	moveml	#0xFFFF,%sp@-
 	moveq	#T_ILLINST,%d0
-	jra	_fault
+	jra	_C_LABEL(fault)
 
-_zerodiv:
+ENTRY_NOPROFILE(zerodiv)
 	clrw	%sp@-
 	moveml	#0xFFFF,%sp@-
 	moveq	#T_ZERODIV,%d0
-	jra	_fault
+	jra	_C_LABEL(fault)
 
-_chkinst:
+ENTRY_NOPROFILE(chkinst)
 	clrw	%sp@-
 	moveml	#0xFFFF,%sp@-
 	moveq	#T_CHKINST,%d0
-	jra	_fault
+	jra	_C_LABEL(fault)
 
-_trapvinst:
+ENTRY_NOPROFILE(trapvinst)
 	clrw	%sp@-
 	moveml	#0xFFFF,%sp@-
 	moveq	#T_TRAPVINST,%d0
-	jra	_fault
+	jra	_C_LABEL(fault)
 
-_privinst:
+ENTRY_NOPROFILE(privinst)
 	clrw	%sp@-
 	moveml	#0xFFFF,%sp@-
 	moveq	#T_PRIVINST,%d0
-	jra	_fault
+	jra	_C_LABEL(fault)
 
-_coperr:
+ENTRY_NOPROFILE(coperr)
 	clrw	%sp@-
 	moveml	#0xFFFF,%sp@-
 	moveq	#T_COPERR,%d0
-	jra	_fault
+	jra	_C_LABEL(fault)
 
-_fmterr:
+ENTRY_NOPROFILE(fmterr)
 	clrw	%sp@-
 	moveml	#0xFFFF,%sp@-
 	moveq	#T_FMTERR,%d0
-	jra	_fault
+	jra	_C_LABEL(fault)
 
-_fptrap:
+ENTRY_NOPROFILE(fptrap)
 #ifdef FPCOPROC
 	clrw	%sp@-		| pad SR to longword
 	moveml	#0xFFFF,%sp@-	| save user registers
@@ -439,13 +438,12 @@ Lfptnull:
 	movl	%a0,%usp	|   user SP
 	moveml	%sp@+,#0x7FFF	| and remaining user registers
 	addql	#6,%sp		| pop SSP and align word
-	jra	rei		| all done
+	jra	_ASM_LABEL(rei)	| all done
 #else
-	jra	_badtrap	| treat as an unexpected trap
+	jra	_C_LABEL(badtrap)	| treat as an unexpected trap
 #endif
 
-	.globl	_fault
-_fault:
+ENTRY_NOPROFILE(fault)
 	movl	%usp,%a0	| get and save
 	movl	%a0,%sp@(60)	|   the user stack pointer
 	clrl	%sp@-		| no VA arg
@@ -457,9 +455,9 @@ _fault:
 	movl	%a0,%usp	|   user SP
 	moveml	%sp@+,#0x7FFF	| restore most user regs
 	addql	#6,%sp		| pop SP and pad word
-	jra	rei		| all done
+	jra	_ASM_LABEL(rei)	| all done
 
-_badtrap:
+ENTRY_NOPROFILE(badtrap)
 	clrw	%sp@-
 	moveml	#0xC0C0,%sp@-
 	movw	%sp@(24),%sp@-
@@ -468,7 +466,7 @@ _badtrap:
 	addql	#4,%sp
 	moveml	%sp@+,#0x0303
 	addql	#2,%sp
-	jra	rei
+	jra	_ASM_LABEL(rei)
 
 /*
  * Interrupt handlers.
@@ -485,22 +483,22 @@ _badtrap:
  *	Level 7:	Non-maskable: Abort Key (Dispatched vector to ROM monitor)
  */
 
-_lev2intr:
+ENTRY_NOPROFILE(lev2intr)
 	clrw	%sp@-
 	moveml	#0xC0C0,%sp@-
 	jbsr	_C_LABEL(scintr)
 	moveml	%sp@+,#0x0303
 	addql	#2,%sp
-	jra	rei
+	jra	_ASM_LABEL(rei)
 
-_lev3intr:
+ENTRY_NOPROFILE(lev3intr)
 	clrw	%sp@-
 	moveml	#0xC0C0,%sp@-
 	moveml	%sp@+,#0x0303
 	addql	#2,%sp
-	jra	rei
+	jra	_ASM_LABEL(rei)
 
-_lev5intr:
+ENTRY_NOPROFILE(lev5intr)
 	clrw	%sp@-			| push pad word
 	moveml	#0xC0C0,%sp@-		| save scratch regs
 	movl	#CLOCK_REG,%a0		| get clock CR addr
@@ -512,17 +510,17 @@ _lev5intr:
 	addql	#8,%sp			| pop params
 	moveml	%sp@+,#0x0303		| restore scratch regs
 	addql	#2,%sp			| pop pad word
-	jra	rei			| all done
+	jra	_ASM_LABEL(rei)		| all done
 ENTRY_NOPROFILE(hardclock)
 	rts
 
-_lev6intr:
+ENTRY_NOPROFILE(lev6intr)
 	clrw	%sp@-
 	moveml	#0xC0C0,%sp@-
 	jbsr	_C_LABEL(_siointr)
 	moveml	%sp@+,#0x0303
 	addql	#2,%sp
-	jra	rei
+	jra	_ASM_LABEL(rei)
 
 
 /*
@@ -541,9 +539,9 @@ _lev6intr:
  */
 #if 0
 	.comm	_ssir,1
-rei:
+ASENTRY_NOPROFILE(rei)
 #ifdef DEBUG
-	tstl	_panicstr		| have we paniced?
+	tstl	_C_LABEL(panicstr)		| have we paniced?
 	jne	Ldorte			| yes, do not make matters worse
 #endif
 	btst	#PCB_ASTB,_u+PCB_FLAGS+1| AST pending?
@@ -557,7 +555,7 @@ rei:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_ASTFLT,%sp@-		| type == async system trap
-	jbsr	_trap			| go handle it
+	jbsr	_C_LABEL(trap)		| go handle it
 	lea	%sp@(12),%sp		| pop value args
 	movl	%sp@(60),%a0		| restore
 	movl	%a0,%usp		|   user SP
@@ -618,7 +616,7 @@ Lnosir:
 	movl	%sp@+,%d0		| restore scratch register
 Ldorte:
 #else
-rei:					| dummy Entry of rei
+ASENTRY_NOPROFILE(rei)			| dummy Entry of rei
 #endif
 	rte				| real return
 
@@ -744,7 +742,7 @@ GLOBAL(prgcore)
 	.long	0
 	.long	0
 
-gotoROM:
+ASLOCAL(gotoROM)
 	.long	0
 
 GLOBAL(dipsw1)
