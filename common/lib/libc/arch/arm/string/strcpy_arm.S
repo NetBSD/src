@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcpy_arm.S,v 1.1 2013/01/08 13:17:45 matt Exp $")
+RCSID("$NetBSD: strcpy_arm.S,v 1.2 2013/01/10 04:51:49 matt Exp $")
 
 #ifdef STRLCPY
 #ifdef _LIBC
@@ -224,10 +224,10 @@ ENTRY(FUNCNAME)
 	 * fill the bytes in the word we don't want to match with all 1s.
 	 */
 	mvn	r3, #0			/* create a mask */
-	mov	r3, r3, lslo r8		/* zero out byte being kept */
-	orr	r3, r3, r5		/* merge src and mask */
+	mov	r3, r3, lslo r8		/* zero out bytes being kept */
+	orr	r5, r5, r3		/* merge src and mask */
 #ifdef _ARM_ARCH_6
-	uqadd8	r3, r3, r7		/* NUL detection magic happens */
+	uqadd8	r3, r5, r7		/* NUL detection magic happens */
 	mvns	r3, r3			/* is the complemented result 0? */
 	beq	.Lincongruent_mainloop_load /*   yes, no NUL encountered! */
 #ifdef __ARMEL__
