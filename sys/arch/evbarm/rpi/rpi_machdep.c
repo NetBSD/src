@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.26 2013/01/09 23:58:40 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.27 2013/01/10 14:15:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.26 2013/01/09 23:58:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.27 2013/01/10 14:15:20 jmcneill Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -574,15 +574,15 @@ consinit(void)
 static bool
 rpi_fb_parse_mode(const char *s, uint32_t *pwidth, uint32_t *pheight)
 {
-	if (strncmp(s, "fb", 2) != 0)
+	char *x;
+
+	if (strncmp(s, "disable", 7) == 0)
 		return false;
 
-	if (strncmp(s, "fb:", 3) == 0) {
-		char *x = strchr(s + 3, 'x');
-		if (x) {
-			*pwidth = strtoul(s + 3, NULL, 10);
-			*pheight = strtoul(x + 1, NULL, 10);
-		}	 
+	x = strchr(s, 'x');
+	if (x) {
+		*pwidth = strtoul(s, NULL, 10);
+		*pheight = strtoul(x + 1, NULL, 10);
 	}
 
 	return true;
@@ -625,15 +625,9 @@ rpi_fb_get_edid_mode(uint32_t *pwidth, uint32_t *pheight)
  * Initialize framebuffer console.
  *
  * Some notes about boot parameters:
- *  - If "console=" specifies something other than fb, ignore framebuffer
- *    completely.
- *  - If "console=fb" is present, try to use the preferred mode of the
- *    display from the EDID block. If the EDID block is not present, use
- *    RPI_FB_WIDTH and RPI_FB_HEIGHT.
- *  - If "console=fb:<width>x<height>" is present, use the specified mode.
- * 
- * If the specified mode cannot be set, the framebuffer will not be used
- * as the console device.
+ *  - If "fb=disable" is present, ignore framebuffer completely.
+ *  - If "fb=<width>x<height> is present, use the specified mode.
+ *  - If "console=fb" is present, attach framebuffer to console.
  */
 static bool
 rpi_fb_init(prop_dictionary_t dict)
@@ -644,24 +638,18 @@ rpi_fb_init(prop_dictionary_t dict)
 	int integer; 
 	int error;
 
-	if (get_bootconf_option(boot_args, "console",
+	if (get_bootconf_option(boot_args, "fb",
 			      BOOTOPT_TYPE_STRING, &ptr)) {
 		if (rpi_fb_parse_mode(ptr, &width, &height) == false)
 			return false;
-		if (width == 0 || height == 0)
-			rpi_fb_get_edid_mode(&width, &height);
-		if (width == 0 || height == 0) {
-			width = RPI_FB_WIDTH;
-			height = RPI_FB_HEIGHT;
-		}
-	} else {
-		/* console= not specified, so only attach if EDID block found */
-		if (rpi_fb_get_edid_mode(&width, &height) == false)
-			return false;
 	}
-
-	if (width == 0 || height == 0)
-		return false;
+	if (width == 0 || height == 0) {
+		rpi_fb_get_edid_mode(&width, &height);
+	}
+	if (width == 0 || height == 0) {
+		width = RPI_FB_WIDTH;
+		height = RPI_FB_HEIGHT;
+	}
 
 	vb_setfb.vbt_res.width = width;
 	vb_setfb.vbt_res.height = height;
@@ -768,9 +756,15 @@ rpi_device_register(device_t dev, void *aux)
 
 #if NGENFB > 0
 	if (device_is_a(dev, "genfb")) {
+		char *ptr;
 		if (rpi_fb_init(dict) == false)
 			return;
-		prop_dictionary_set_bool(dict, "is_console", true);
+		if (get_bootconf_option(boot_args, "console",
+		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
+			prop_dictionary_set_bool(dict, "is_console", true);
+		} else {
+			prop_dictionary_set_bool(dict, "is_console", false);
+		}
 	}
 #endif
 }
