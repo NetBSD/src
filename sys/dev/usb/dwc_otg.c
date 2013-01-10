@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.5 2013/01/10 22:02:12 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.6 2013/01/10 22:15:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.5 2013/01/10 22:02:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.6 2013/01/10 22:15:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2273,36 +2273,6 @@ dwc_otg_host_channel_alloc(struct dwc_otg_td *td)
 		return (0);		/* already allocated */
 	}
 
-	if ((int)td < 0xc0000000) {
-		printf("%s: td %p\n", __func__, td);
-		panic("td");
-	}
-	if ((int)td->xfer < 0xc0000000) {
-		printf("%s: td %p\n", __func__, td);
-		printf("%s: td->xfer %p\n", __func__, td->xfer);
-		panic("xfer");
-	}
-	if ((int)td->xfer->pipe < 0xc0000000) {
-		printf("%s: td %p\n", __func__, td);
-		printf("%s: td->xfer %p\n", __func__, td->xfer);
-		printf("%s: td->xfer->pipe %p\n", __func__, td->xfer->pipe);
-		panic("pipe");
-	}
-	if ((int)td->xfer->pipe->device < 0xc0000000) {
-		printf("%s: td %p\n", __func__, td);
-		printf("%s: td->xfer %p\n", __func__, td->xfer);
-		printf("%s: td->xfer->pipe %p\n", __func__, td->xfer->pipe);
-		printf("%s: td->xfer->pipe->device %p\n", __func__, td->xfer->pipe->device);	
-		panic("device");
-	}
-	if ((int)td->xfer->pipe->device->bus < 0xc0000000) {
-		printf("%s: td %p\n", __func__, td);
-		printf("%s: td->xfer %p\n", __func__, td->xfer);
-		printf("%s: td->xfer->pipe %p\n", __func__, td->xfer->pipe);
-		printf("%s: td->xfer->pipe->device %p\n", __func__, td->xfer->pipe->device);	
-		printf("%s: td->xfer->pipe->device->bus %p\n", __func__, td->xfer->pipe->device->bus);
-		panic("bus");
-	}
 	/* get pointer to softc */
 	sc = DWC_OTG_TD2SC(td);
 
@@ -2414,12 +2384,6 @@ dwc_otg_host_setup_tx(struct dwc_otg_td *td)
 	    DWC_OTG_READ_4(sc, DOTG_HCCHAR(td->channel)),
 	    DWC_OTG_READ_4(sc, DOTG_HCTSIZ(td->channel)));
 
-// 	printf("GNPTXFSIZ      0x%08x\n", DWC_OTG_READ_4(sc, DOTG_GNPTXFSIZ));
-// 	printf("GNPTXSTS       0x%08x\n", DWC_OTG_READ_4(sc, DOTG_GNPTXSTS));
-// 	printf("HFIR           0x%08x\n", DWC_OTG_READ_4(sc, DOTG_HFIR));
-// 	printf("HFNUM          0x%08x\n", DWC_OTG_READ_4(sc, DOTG_HFNUM));
-// 	printf("HPTXSTS        0x%08x\n", DWC_OTG_READ_4(sc, DOTG_HPTXSTS));
-
 	if (hcint & (HCINT_RETRY |
 	    HCINT_ACK | HCINT_NYET)) {
 		/* give success bits priority over failure bits */
@@ -2429,8 +2393,6 @@ dwc_otg_host_setup_tx(struct dwc_otg_td *td)
 		td->error_any = 1;
 		return (0);		/* complete */
 	} else if (hcint & HCINT_ERRORS) {
-// printf("%s: ch=%d hcint %08x\n", __func__, td->channel, hcint);
-// 		DPRINTF("CH=%d ERROR\n", td->channel);
 		td->errcnt++;
 		if (td->hcsplt != 0 || td->errcnt >= 3) {
 			td->error_any = 1;
@@ -2539,7 +2501,6 @@ send_pkt_sync:
 	/* XXX Why ? */
 	usbd_copy_out(td->buf, 0, &req, sizeof(req));
 
-// mutex_spin_enter(&sc->sc_intr_lock);
 	DWC_OTG_WRITE_4(sc, DOTG_HCTSIZ(td->channel),
 	    (sizeof(req) << HCTSIZ_XFERSIZE_SHIFT) |
 	    (1 << HCTSIZ_PKTCNT_SHIFT) |
@@ -2560,12 +2521,10 @@ send_pkt_sync:
 	/* store number of bytes transmitted */
 	td->tx_bytes = sizeof(req);
 
-// mutex_spin_exit(&sc->sc_intr_lock);
 
 	return (1);	/* busy */
 
 send_cpkt:
-// 	DPRINTF("send_cpkt td->buf %p size %zu\n", td->buf, sizeof(req));
 
 	td->hcsplt |= HCSPLT_COMPSPLT;
 	td->state = DWC_CHAN_ST_WAIT_C_ANE;
@@ -2716,7 +2675,6 @@ dwc_otg_host_data_rx(struct dwc_otg_td *td)
 				td->short_pkt = 1;
 				td->got_short = 1;
 			} else {
-printf("%s: count %d td->max_packet_size %d\n", __func__, count, td->max_packet_size);
 				/* invalid USB packet */
 				td->error_any = 1;
 
@@ -3326,7 +3284,6 @@ repeat:
 	for (ch = 0; ch < sc->sc_host_ch_max; ++ch) {
 		intrs = DWC_OTG_READ_4(sc, DOTG_HCINT(ch));
 		if (intrs != 0) {
-// 			printf("%s: ch %d intrs %08x\n", __func__, ch, intrs);
 // 			DPRINTF("ch %d intrs %08x\n", ch, intrs);
 
 			DWC_OTG_WRITE_4(sc, DOTG_HCINT(ch), intrs);
@@ -3452,20 +3409,6 @@ dwc_otg_vbus_interrupt(struct dwc_otg_softc *sc)
 	}
 }
 
-#define NSTAT 128
-
-int nhbgintsts[NSTAT];
-int nhbhprt[NSTAT];
-int nhbhaint[NSTAT];
-int nhbhfnum[NSTAT];
-
-int nhagintsts[NSTAT];
-int nhahprt[NSTAT];
-int nhahaint[NSTAT];
-int nhahfnum[NSTAT];
-
-int nhcur;
-
 int
 dwc_otg_interrupt(struct dwc_otg_softc *sc)
 {
@@ -3476,33 +3419,6 @@ dwc_otg_interrupt(struct dwc_otg_softc *sc)
 	DWC_OTG_WRITE_4(sc, DOTG_GINTSTS, status);
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
-// nhhaint = DWC_OTG_READ_4(sc, DOTG_HAINT);
-// nhhfnum = DWC_OTG_READ_4(sc, DOTG_HFNUM);
-//
-// 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, 0x1000, BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
-// 	delay(10000);
-
-// 	printf("%s: GINTSTS=0x%08x HAINT=0x%08x HFNUM=0x%08x HPRT=0x%08x\n",
-// 	    __func__, status,
-// 	    DWC_OTG_READ_4(sc, DOTG_HAINT),
-// 	    DWC_OTG_READ_4(sc, DOTG_HFNUM),
-// 	    DWC_OTG_READ_4(sc, DOTG_HPRT)
-// 	);
-// 	DPRINTFN(14, "GINTSTS=0x%08x HAINT=0x%08x HFNUM=0x%08x\n",
-// 	    status, DWC_OTG_READ_4(sc, DOTG_HAINT),
-// 	    DWC_OTG_READ_4(sc, DOTG_HFNUM));
-
-// 	nhbgintsts[nhcur] = status;
-// 	nhbhaint[nhcur] = DWC_OTG_READ_4(sc, DOTG_HAINT);
-// 	nhbhprt[nhcur] = DWC_OTG_READ_4(sc, DOTG_HPRT);
-// 	nhbhfnum[nhcur] = DWC_OTG_READ_4(sc, DOTG_HFNUM);
-// 	nhagintsts[nhcur] = DWC_OTG_READ_4(sc, DOTG_GINTSTS);
-// 	nhahaint[nhcur] = DWC_OTG_READ_4(sc, DOTG_HAINT);
-// 	nhahprt[nhcur] = DWC_OTG_READ_4(sc, DOTG_HPRT);
-// 	nhahfnum[nhcur] = DWC_OTG_READ_4(sc, DOTG_HFNUM);
-// 	if (++nhcur == NSTAT)
-// 		nhcur = 0;
-//
 	if (status & GINTSTS_USBRST) {
 		DPRINTF("GINTSTS_USBRST\n");
 		/* set correct state */
@@ -3822,7 +3738,6 @@ dwc_otg_setup_ctrl_chain(usbd_xfer_handle xfer)
 	} else {
 		temp.func = &dwc_otg_host_data_rx;
 	}
-DPRINTF("ST temp.len %d temp.buf %p\n", temp.len, temp.buf);
 
 	dwc_otg_setup_standard_chain_sub(&temp);
 
@@ -3940,7 +3855,6 @@ dwc_otg_setup_standard_chain(usbd_xfer_handle xfer)
 	uint32_t ival;
 
 // 	DPRINTF(("%s: xfer->length %d\n", __func__, xfer->length));
-// 	temp.max_frame_size = UGETW(ed->wMaxPacketSize);
 
 	/* get first again */
 	td = dxfer->td_transfer_first;
@@ -4006,25 +3920,6 @@ dwc_otg_setup_standard_chain(usbd_xfer_handle xfer)
 	case UE_ISOCHRONOUS:
 // 		td->tmr_val = xfer->endpoint->isoc_next & 0xFF;
 
-#if 0
-464 		switch (parm->speed) {
-465 		case USB_SPEED_LOW:
-466 		case USB_SPEED_FULL:
-467 			frame_limit = USB_MAX_FS_ISOC_FRAMES_PER_XFER;
-468 			xfer->fps_shift = 0;
-469 			break;
-470 		default:
-471 			frame_limit = USB_MAX_HS_ISOC_FRAMES_PER_XFER;
-472 			xfer->fps_shift = edesc->bInterval;
-473 			if (xfer->fps_shift > 0)
-474 				xfer->fps_shift--;
-475 			if (xfer->fps_shift > 3)
-476 				xfer->fps_shift = 3;
-477 			if (xfer->flags.pre_scale_frames != 0)
-478 				xfer->nframes <<= (3 - xfer->fps_shift);
-479 			break;
-480 		}
-#endif
 		ival = 1 << fps_shift;
 		break;
 	case UE_INTERRUPT:
@@ -4043,7 +3938,6 @@ dwc_otg_setup_standard_chain(usbd_xfer_handle xfer)
 	}
 
 	DPRINTF("hcchar 0x%08x hcchar 0x%08x ival %d\n", hcchar, hcsplt, ival);
-// 	printf("xfer %p hcchar 0x%08x hcchar 0x%08x ival %d\n", xfer, hcchar, hcsplt, ival);
 
 	/* store configuration in all TD's */
 	while (1) {
@@ -4093,9 +3987,6 @@ dwc_otg_start_standard_chain(usbd_xfer_handle xfer)
 	DPRINTFN(9, "done\n");
 }
 
-
-
-/* 2731 */
 Static void
 dwc_otg_rhc(void *addr)
 {
@@ -4150,19 +4041,6 @@ dwc_otg_standard_done_sub(usbd_xfer_handle xfer)
 		/* store last data toggle */
 		pipe->endpoint->datatoggle = td->toggle;
 
-#if 0
-		if (xfer->aframes != xfer->nframes) {
-			/*
-			 * Verify the length and subtract
-			 * the remainder from "frlengths[]":
-			 */
-			if (len > xfer->frlengths[xfer->aframes]) {
-				td->error_any = 1;
-			} else {
-				xfer->frlengths[xfer->aframes] -= len;
-			}
-		}
-#endif
 		/* Check for transfer error */
 		if (td->error_any) {
 			/* the transfer is finished */
@@ -4242,24 +4120,6 @@ dwc_otg_standard_done(usbd_xfer_handle xfer)
 			break;
 		td = td->obj_next;
 	};
-#if 0
-	while (xfer->aframes != xfer->nframes) {
-
-		err = dwc_otg_standard_done_sub(xfer);
-		xfer->aframes++;
-
-		if (xfer->hcpriv == NULL) {
-			goto done;
-		}
-	}
-#endif
-#if 0
-	if (xfer->flags_int.control_xfr &&
-	    !xfer->flags_int.control_act) {
-
-		err = dwc_otg_standard_done_sub(xfer);
-	}
-#endif
 done:
 	dwc_otg_device_done(xfer, err);
 }
