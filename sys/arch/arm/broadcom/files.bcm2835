@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.12 2013/01/09 22:23:44 skrll Exp $
+#	$NetBSD: files.bcm2835,v 1.13 2013/01/10 02:23:26 jmcneill Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -38,7 +38,7 @@ attach	bcmtmr at obio with bcmtmr_amba
 file	arch/arm/broadcom/bcm2835_tmr.c		bcmtmr
 
 # Power Management, Reset Controller, and Watchdog (BCM2835_PM_BASE)
-device	bcmpm
+device	bcmpm: sysmon_wdog
 attach	bcmpm at obio with bcmpm_amba
 file	arch/arm/broadcom/bcm2835_pm.c		bcmpm
 
