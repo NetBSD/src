@@ -1,6 +1,6 @@
-/*	$NetBSD: boot.ldscript,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: boot.ldscript,v 1.2 2013/01/10 13:10:26 tsutsui Exp $	*/
 
-OUTPUT_FORMAT("elf32-m68k")
+OUTPUT_FORMAT("a.out-m68k-netbsd")
 OUTPUT_ARCH(m68k)
 ENTRY(start)
 SECTIONS
@@ -45,4 +45,6 @@ SECTIONS
   _end = .;
   _bss_end__ = . ; __bss_end__ = . ; __end__ = . ;
   PROVIDE (end = .);
+
+  /DISCARD/ : { *(.ident) *(.stab) *(.stabstr) *(.comment) }
 }
