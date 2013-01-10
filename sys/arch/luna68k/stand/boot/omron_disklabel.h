@@ -1,4 +1,4 @@
-/*	$NetBSD: omron_disklabel.h,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: omron_disklabel.h,v 1.2 2013/01/10 16:20:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -80,20 +80,20 @@
 struct scd_dk_label {
 	char	dkl_asciilabel[128];		/* for compatibility */
 	char	dkl_pad[512-(128+8*8+11*2+4)];
-	unsigned short	dkl_badchk;		/* checksum of bad track */
-	unsigned long	dkl_maxblk;		/* # of total logical block */
-	unsigned short	dkl_dtype;		/* disk drive type */
-	unsigned short	dkl_ndisk;		/* # of disk drives */
-	unsigned short	dkl_ncyl;		/* # of data cylinders */
-	unsigned short	dkl_acyl;		/* # of alternate cylinders */
-	unsigned short	dkl_nhead;		/* # of heads in this partition */
-	unsigned short	dkl_nsect;		/* # of 512 byte sectors per track */
-	unsigned short	dkl_bhead;		/* identifies proper label locations */
-	unsigned short	dkl_ppart;		/* physical partition # */
+	uint16_t	dkl_badchk;		/* checksum of bad track */
+	uint32_t	dkl_maxblk;		/* # of total logical block */
+	uint16_t	dkl_dtype;		/* disk drive type */
+	uint16_t	dkl_ndisk;		/* # of disk drives */
+	uint16_t	dkl_ncyl;		/* # of data cylinders */
+	uint16_t	dkl_acyl;		/* # of alternate cylinders */
+	uint16_t	dkl_nhead;		/* # of heads in this partition */
+	uint16_t	dkl_nsect;		/* # of 512 byte sectors per track */
+	uint16_t	dkl_bhead;		/* identifies proper label locations */
+	uint16_t	dkl_ppart;		/* physical partition # */
 	struct dk_map {				/* logical partitions */
-		daddr_t	dkl_blkno;		/* starting block */
-		daddr_t dkl_nblk;		/* number of blocks */
+		int32_t dkl_blkno;		/* starting block */
+		int32_t dkl_nblk;		/* number of blocks */
 	} dkl_map[NLPART];
-	unsigned short	dkl_magic;		/* identifies this label format */
-	unsigned short	dkl_cksum;		/* xor checksum of sector */
+	uint16_t	dkl_magic;		/* identifies this label format */
+	uint16_t	dkl_cksum;		/* xor checksum of sector */
 };
