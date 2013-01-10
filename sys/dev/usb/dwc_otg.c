@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.4 2013/01/10 21:50:56 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.5 2013/01/10 22:02:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.4 2013/01/10 21:50:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.5 2013/01/10 22:02:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2510,8 +2510,6 @@ dwc_otg_host_setup_tx(struct dwc_otg_td *td)
 	return (1);		/* busy */
 
 send_pkt:
-// 	printf("%s: send_pkt %zu td->remainder %d\n", __func__, sizeof(req), td->remainder);
-// 	DPRINTF("send_pkt %zu td->remainder %d\n", sizeof(req), td->remainder);
 	if (sizeof(req) != td->remainder) {
 		td->error_any = 1;
 		return (0);		/* complete */
@@ -2862,7 +2860,6 @@ receive_pkt:
 	td->state = DWC_CHAN_ST_WAIT_ANE;
 
 	/* receive one packet */
-	/* receive one packet */
 	uint32_t hctsiz =
 	    (td->max_packet_size << HCTSIZ_XFERSIZE_SHIFT) |
 	    (1 << HCTSIZ_PKTCNT_SHIFT) |
@@ -2878,12 +2875,6 @@ receive_pkt:
 
 	/* must enable channel before data can be received */
 	DWC_OTG_WRITE_4(sc, DOTG_HCCHAR(td->channel), hcchar);
-
-#if 0
-	if (ep_type == UE_BULK && td->retrycnt < 2) {
-		printf("%s: xfer = %p, write HCTSIZ = %08x HCSPLT = %08x HCCHAR = %08x retry = %d\n", __func__, td->xfer, hctsiz, td->hcsplt, hcchar, td->retrycnt);
-	}
-#endif
 
 	goto busy;
 
@@ -3327,9 +3318,8 @@ dwc_otg_interrupt_poll(struct dwc_otg_softc *sc)
 	uint8_t got_rx_status;
 
 // 	DPRINTF("\n");
-// 	printf("%s: \n", __func__);
 
-// 	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 repeat:
 	/* get all channel interrupts */
@@ -3339,10 +3329,6 @@ repeat:
 // 			printf("%s: ch %d intrs %08x\n", __func__, ch, intrs);
 // 			DPRINTF("ch %d intrs %08x\n", ch, intrs);
 
-// // if (intrs & HCINT_XACTERR)
-// // 	printf("%s: ch=%d xacterr\n", __func__, ch);
-// // if (intrs & HCINT_AHBERR)
-// // 	printf("%s: ch=%d ahberrerr\n", __func__, ch);
 			DWC_OTG_WRITE_4(sc, DOTG_HCINT(ch), intrs);
 			intrs &= ~HCINT_SOFTWARE_ONLY;
 			sc->sc_chan_state[ch].hcint |= intrs;
@@ -3376,8 +3362,6 @@ repeat:
 
 			/* receive data, if any */
 			if (bcnt != 0) {
-// 				printf("%s: Reading %d bytes from ep %d\n", __func__, bcnt,
-// 				    ep_no);
 				DPRINTF("Reading %d bytes from ep %d\n", bcnt,
 				    ep_no);
 				bus_space_barrier(sc->sc_iot, sc->sc_ioh,
@@ -3387,15 +3371,6 @@ repeat:
 				    DOTG_DFIFO(ep_no), sc->sc_rx_bounce_buffer,
 				    (bcnt + 3) / 4);
 			}
-#if 0
- 			if (bcnt != 0) {
- 				printf("%s: (bcnt  = %d) - ", __func__, bcnt);
- 				int i = 0;
- 				for (; i < bcnt; i++)
- 					printf("%02x ", *((uint8_t *)sc->sc_rx_bounce_buffer + i));
- 				printf("\n");
- 			}
-#endif
 
 			/* check if we should dump the data */
 			if (!(sc->sc_active_rx_ep & (1U << ep_no))) {
@@ -3722,24 +3697,14 @@ static void
 dwc_otg_setup_standard_chain_sub(struct dwc_otg_std_temp *temp)
 {
 	struct dwc_otg_td *td;
-	const char *msg;
 
 	/* get current Transfer Descriptor */
 	td = temp->td_next;
 	temp->td = td;
 
-	if (temp->func == dwc_otg_host_setup_tx) {
-		msg = "setup tx";
-	} else if (temp->func == dwc_otg_host_data_tx) {
-		msg = "data  tx";
-	} else if (temp->func == dwc_otg_host_data_rx) {
-		msg = "data  rx";
-	} else {
-		msg = "wtf     ";
-	}
 	DPRINTF("td %p buf %p \n", td, temp->buf);
-	DPRINTF("td %p %s offset %08x remainder %08x shrt %d alt %d\n", td,
-	    msg, temp->offset, temp->len, temp->short_pkt,
+	DPRINTF("td %p func %p offset %08x remainder %08x shrt %d alt %d\n",
+	    td, td->func, temp->offset, temp->len, temp->short_pkt,
 	    temp->setup_alt_next);
 	/* prepare for next TD */
 	temp->td_next = td->obj_next;
