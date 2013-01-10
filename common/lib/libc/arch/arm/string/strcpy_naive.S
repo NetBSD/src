@@ -28,7 +28,14 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcpy_naive.S,v 1.1 2013/01/08 13:14:54 matt Exp $")
+RCSID("$NetBSD: strcpy_naive.S,v 1.2 2013/01/10 02:08:22 matt Exp $")
+
+#ifdef _LIBC
+#ifdef STRLCPY
+WEAK_ALIAS(strlcpy, _strlcpy)           
+#endif
+#include "namespace.h"
+#endif
 
 /*
  * These are "naive" versions of the str*cpy routines designed to be simple
