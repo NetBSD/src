@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.49 2013/01/09 01:57:59 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.50 2013/01/10 22:06:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.49 2013/01/09 01:57:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.50 2013/01/10 22:06:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,7 +380,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			if (sc->sc_ops.genfb_ioctl)
 				error = sc->sc_ops.genfb_ioctl(sc, vs,
 					    cmd, data, flag, l);
-			if (error)
+			if (error && error != EPASSTHROUGH)
 				return error;
 
 			if (new_mode != sc->sc_mode) {
