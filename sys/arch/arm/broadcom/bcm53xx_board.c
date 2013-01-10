@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.8 2012/10/21 10:29:23 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.9 2013/01/10 22:06:32 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.8 2012/10/21 10:29:23 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.9 2013/01/10 22:06:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,7 +65,6 @@ bus_space_tag_t bcm53xx_armcore_bst = &bcmgen_bs_tag;
 bus_space_handle_t bcm53xx_armcore_bsh;
 
 static struct cpu_softc cpu_softc;
-static struct bcm53xx_clock_info clk_info;
 
 struct arm32_dma_range bcm53xx_dma_ranges[2] = {
 	[0] = {
@@ -450,23 +449,24 @@ void
 bcm53xx_print_clocks(void)
 {
 #if defined(VERBOSE_ARM_INIT)
-	printf("ref clk =	%u (%#x)\n", clk_info.clk_ref, clk_info.clk_ref);
-	printf("sys clk =	%u (%#x)\n", clk_info.clk_sys, clk_info.clk_sys);
-	printf("lcpll clk =	%u (%#x)\n", clk_info.clk_lcpll, clk_info.clk_lcpll);
-	printf("pcie ref clk =	%u (%#x) [CH0]\n", clk_info.clk_pcie_ref, clk_info.clk_pcie_ref);
-	printf("sdio clk =	%u (%#x) [CH1]\n", clk_info.clk_sdio, clk_info.clk_sdio);
-	printf("ddr ref clk =	%u (%#x) [CH2]\n", clk_info.clk_ddr_ref, clk_info.clk_ddr_ref);
-	printf("axi clk =	%u (%#x) [CH3]\n", clk_info.clk_axi, clk_info.clk_axi);
-	printf("genpll clk =	%u (%#x)\n", clk_info.clk_genpll, clk_info.clk_genpll);
-	printf("mac clk =	%u (%#x) [CH0]\n", clk_info.clk_mac, clk_info.clk_mac);
-	printf("robo clk =	%u (%#x) [CH1]\n", clk_info.clk_robo, clk_info.clk_robo);
-	printf("usb2 clk =	%u (%#x) [CH2]\n", clk_info.clk_usb2, clk_info.clk_usb2);
-	printf("iproc clk =	%u (%#x) [CH3]\n", clk_info.clk_iproc, clk_info.clk_iproc);
-	printf("ddr clk =	%u (%#x)\n", clk_info.clk_ddr, clk_info.clk_ddr);
-	printf("ddr mhz =	%u (%#x)\n", clk_info.clk_ddr_mhz, clk_info.clk_ddr_mhz);
-	printf("cpu clk =	%u (%#x)\n", clk_info.clk_cpu, clk_info.clk_cpu);
-	printf("apb clk =	%u (%#x)\n", clk_info.clk_apb, clk_info.clk_apb);
-	printf("usb ref clk =	%u (%#x)\n", clk_info.clk_usb_ref, clk_info.clk_usb_ref);
+	const struct bcm53xx_clock_info * const clk = &cpu_softc.cpu_clk;
+	printf("ref clk =	%u (%#x)\n", clk->clk_ref, clk->clk_ref);
+	printf("sys clk =	%u (%#x)\n", clk->clk_sys, clk->clk_sys);
+	printf("lcpll clk =	%u (%#x)\n", clk->clk_lcpll, clk->clk_lcpll);
+	printf("pcie ref clk =	%u (%#x) [CH0]\n", clk->clk_pcie_ref, clk->clk_pcie_ref);
+	printf("sdio clk =	%u (%#x) [CH1]\n", clk->clk_sdio, clk->clk_sdio);
+	printf("ddr ref clk =	%u (%#x) [CH2]\n", clk->clk_ddr_ref, clk->clk_ddr_ref);
+	printf("axi clk =	%u (%#x) [CH3]\n", clk->clk_axi, clk->clk_axi);
+	printf("genpll clk =	%u (%#x)\n", clk->clk_genpll, clk->clk_genpll);
+	printf("mac clk =	%u (%#x) [CH0]\n", clk->clk_mac, clk->clk_mac);
+	printf("robo clk =	%u (%#x) [CH1]\n", clk->clk_robo, clk->clk_robo);
+	printf("usb2 clk =	%u (%#x) [CH2]\n", clk->clk_usb2, clk->clk_usb2);
+	printf("iproc clk =	%u (%#x) [CH3]\n", clk->clk_iproc, clk->clk_iproc);
+	printf("ddr clk =	%u (%#x)\n", clk->clk_ddr, clk->clk_ddr);
+	printf("ddr mhz =	%u (%#x)\n", clk->clk_ddr_mhz, clk->clk_ddr_mhz);
+	printf("cpu clk =	%u (%#x)\n", clk->clk_cpu, clk->clk_cpu);
+	printf("apb clk =	%u (%#x)\n", clk->clk_apb, clk->clk_apb);
+	printf("usb ref clk =	%u (%#x)\n", clk->clk_usb_ref, clk->clk_usb_ref);
 #endif
 }
 
@@ -500,7 +500,7 @@ bcm53xx_bootstrap(vaddr_t iobase)
 	bcm53xx_get_chip_ioreg_state(&bcs, bcm53xx_ioreg_bst, bcm53xx_ioreg_bsh);
 	bcm53xx_get_chip_armcore_state(&bcs, bcm53xx_armcore_bst, bcm53xx_armcore_bsh);
 
-	struct bcm53xx_clock_info * const clk = &clk_info;
+	struct bcm53xx_clock_info * const clk = &cpu_softc.cpu_clk;
 
 	bcm53xx_clock_init(clk);
 	bcm53xx_lcpll_clock_init(clk, bcs.bcs_lcpll_control1,
@@ -575,7 +575,7 @@ bcm53xx_device_register(device_t self, void *aux)
 		 * to timers that are part of the A9 MP core subsystem.
 		 */
                 prop_dictionary_set_uint32(dict, "frequency",
-		    clk_info.clk_cpu / 2);
+		    cpu_softc.cpu_clk.clk_cpu / 2);
 		return;
 	}
 
