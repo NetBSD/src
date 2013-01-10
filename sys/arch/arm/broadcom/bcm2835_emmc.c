@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.6 2013/01/10 03:59:22 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.7 2013/01/10 17:21:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.6 2013/01/10 03:59:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.7 2013/01/10 17:21:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,9 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags = 0;
 	sc->sc.sc_flags |= SDHC_FLAG_32BIT_ACCESS;
 	sc->sc.sc_flags |= SDHC_FLAG_HOSTCAPS;
-	sc->sc.sc_caps = SDHC_VOLTAGE_SUPP_3_3V | SDHC_MAX_BLK_LEN_1024;
+	sc->sc.sc_flags |= SDHC_FLAG_NO_HS_BIT;
+	sc->sc.sc_caps = SDHC_VOLTAGE_SUPP_3_3V | SDHC_HIGH_SPEED_SUPP |
+	    SDHC_MAX_BLK_LEN_1024;
 #if notyet
  	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
 	sc->sc.sc_caps |= SDHC_DMA_SUPPORT;
