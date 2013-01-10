@@ -1,4 +1,9 @@
-/* $NetBSD: strncpy.S,v 1.1 2013/01/02 05:54:58 matt Exp $ */
+/* $NetBSD: strncpy.S,v 1.2 2013/01/10 02:13:49 matt Exp $ */
 
 #define STRNCPY
-#include "strcpy.S"
+
+#if defined(_STANDALONE)
+#include "strcpy_naive.S"
+#else
+#include "strcpy_arm.S"
+#endif
