@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.26 2013/01/10 19:13:04 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.27 2013/01/10 19:14:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.26 2013/01/10 19:13:04 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.27 2013/01/10 19:14:12 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -706,7 +706,7 @@ rumpuser_writewatchfile_setup(int inotify, int fd, intptr_t notused, int *error)
 	static int warned = 0;
 
 	if (!warned) {
-		fprintf("WARNING: rumpuser writewatchfile routines are "
+		fprintf(stderr, "WARNING: rumpuser writewatchfile routines are "
 		    "polling-only on this platform\n");
 		warned = 1;
 	}
