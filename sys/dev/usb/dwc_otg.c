@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.1 2013/01/09 22:23:44 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.2 2013/01/10 20:31:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.1 2013/01/09 22:23:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.2 2013/01/10 20:31:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1410,6 +1410,7 @@ dwc_otg_device_bulk_done(usbd_xfer_handle xfer)
 
 	DPRINTF("\n");
 
+	dwc_otg_xfer_end(xfer);
 	sc = sc;
 }
 
