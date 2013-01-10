@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.12 2012/12/20 14:37:00 jakllsch Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.13 2013/01/10 17:19:33 jmcneill Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -48,6 +48,7 @@ struct sdhc_softc {
 #define	SDHC_FLAG_RSP136_CRC	0x0400	/* Resp 136 with CRC and end-bit */
 #define	SDHC_FLAG_SINGLE_ONLY	0x0800	/* Single transfer only */
 #define	SDHC_FLAG_WAIT_RESET	0x1000	/* Wait for soft resets to start */
+#define	SDHC_FLAG_NO_HS_BIT	0x2000	/* Don't set SDHC_HIGH_SPEED bit */
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */
