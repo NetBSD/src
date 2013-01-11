@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.6 2013/01/10 22:15:04 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.7 2013/01/11 02:20:41 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.6 2013/01/10 22:15:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.7 2013/01/11 02:20:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,9 +648,10 @@ dwc_otg_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	}
 
 	mutex_spin_enter(&sc->sc_intr_lock);
+	dxfer->queued = false;
 	TAILQ_REMOVE(&sc->sc_active, dxfer, xnext);
 	mutex_spin_exit(&sc->sc_intr_lock);
-	
+
 	/*
 	 * Step 4: Execute callback.
 	 */
