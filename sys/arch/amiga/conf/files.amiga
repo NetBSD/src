@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.166 2012/11/25 23:33:56 rkujawa Exp $
+#	$NetBSD: files.amiga,v 1.167 2013/01/11 11:00:33 he Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -505,6 +505,9 @@ include "compat/ossaudio/files.ossaudio"
 
 # Bluetooth stack
 include "dev/bluetooth/files.bluetooth"
+
+# USB stack
+include "dev/usb/files.usb"
 
 # Phase5 BPPC/CSPPC internal bus
 device	p5bus {}
