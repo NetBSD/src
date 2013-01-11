@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.10 2013/01/11 18:52:38 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.11 2013/01/11 20:35:51 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.10 2013/01/11 18:52:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.11 2013/01/11 20:35:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,13 +237,13 @@ Static void		dwc_otg_resume_irq(struct dwc_otg_softc *);
 Static void		dwc_otg_suspend_irq(struct dwc_otg_softc *);
 Static void		dwc_otg_wakeup_peer(struct dwc_otg_softc *);
 Static int		dwc_otg_interrupt(struct dwc_otg_softc *);
-Static void		dwc_otg_timer(void*);
+Static void		dwc_otg_timer(struct dwc_otg_softc *);
 Static void		dwc_otg_timer_tick(void *);
 Static void		dwc_otg_timer_start(struct dwc_otg_softc *);
 Static void		dwc_otg_timer_stop(struct dwc_otg_softc *);
 Static void		dwc_otg_interrupt_poll(struct dwc_otg_softc *);
 Static void		dwc_otg_do_poll(struct usbd_bus *);
-Static void		dwc_otg_intr_worker(struct work *, void *);
+Static void		dwc_otg_worker(struct work *, void *);
 Static void		dwc_otg_rhc(void *);
 Static void		dwc_otg_vbus_interrupt(struct dwc_otg_softc *);
 Static void		dwc_otg_standard_done(usbd_xfer_handle);
@@ -1682,16 +1682,21 @@ dwc_otg_do_poll(struct usbd_bus *bus)
 }
 
 Static void
-dwc_otg_intr_worker(struct work *wk, void *priv)
+dwc_otg_worker(struct work *wk, void *priv)
 {
 	struct dwc_otg_work *dwork = (struct dwc_otg_work *)wk;
 	usbd_xfer_handle xfer = dwork->xfer;
-	struct dwc_otg_softc *sc = DWC_OTG_XFER2SC(xfer);
+	struct dwc_otg_softc *sc = dwork->sc;
 
 	DOTG_EVCNT_INCR(sc->sc_ev_work);
 
 	mutex_enter(&sc->sc_lock);
-	dwc_otg_start_standard_chain(xfer);
+	if (dwork == &sc->sc_timer_work) {
+		dwc_otg_timer(sc);
+	} else {
+		KASSERT(dwork->xfer != NULL);
+		dwc_otg_start_standard_chain(xfer);
+	}
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -3214,17 +3219,15 @@ dwc_otg_timer_tick(void *_sc)
 {
 	struct dwc_otg_softc *sc = _sc;
 
-	softint_schedule(sc->sc_timer_si);
+	workqueue_enqueue(sc->sc_wq, (struct work *)&sc->sc_timer_work, NULL);
 }
 
 Static void
-dwc_otg_timer(void *_sc)
+dwc_otg_timer(struct dwc_otg_softc *sc)
 {
-	struct dwc_otg_softc *sc = _sc;
 	struct dwc_otg_xfer *xfer;
 	struct dwc_otg_td *td;
 
-	mutex_enter(&sc->sc_lock);
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	/* increment timer value */
@@ -3237,19 +3240,15 @@ dwc_otg_timer(void *_sc)
 	}
 
 	/* poll jobs */
-	if (mutex_tryenter(&sc->sc_intr_lock)) {
-		dwc_otg_interrupt_poll(sc);
-		mutex_spin_exit(&sc->sc_intr_lock);
-	} else {
-		printf("%s: busy!\n", __func__);
-	}
+	mutex_spin_enter(&sc->sc_intr_lock);
+	dwc_otg_interrupt_poll(sc);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	if (sc->sc_timer_active) {
 		/* restart timer */
 		callout_reset(&sc->sc_timer, mstohz(DWC_OTG_HOST_TIMER_RATE),
 		    dwc_otg_timer_tick, sc);
 	}
-	mutex_exit(&sc->sc_lock);
 }
 
 Static void
@@ -4197,11 +4196,10 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 
 	sc->sc_rhc_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    dwc_otg_rhc, sc);
-	sc->sc_timer_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
-	    dwc_otg_timer, sc);
 
-	workqueue_create(&sc->sc_wq, xname, dwc_otg_intr_worker, sc, PRI_NONE,
+	workqueue_create(&sc->sc_wq, xname, dwc_otg_worker, sc, PRI_NONE,
 	    IPL_USB, WQ_MPSAFE);
+	sc->sc_timer_work.sc = sc;
 
 	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
@@ -4432,6 +4430,7 @@ dwc_otg_xfer_setup(usbd_xfer_handle xfer)
 	void *last_obj;
 	int ntd, n;
 
+	dxfer->work.sc = sc;
 	dxfer->work.xfer = xfer;
 
 	/*
