@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_sockio.h,v 1.3 2009/11/13 21:45:03 joerg Exp $ */
+/* $NetBSD: linux32_sockio.h,v 1.4 2013/01/11 19:01:36 christos Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -55,5 +55,16 @@ struct linux32_ifreq {
 #define ifr_hwaddr	ifr_ifru.ifru_hwaddr	/* MAC address          */
 #define ifr_map		ifr_ifru.ifru_map	/* device map           */
 };
+
+struct linux32_ifconf {
+        int ifc_len;
+	union {
+		netbsd32_caddr_t ifcu_buf;      
+		netbsd32_ifreq_tp_t ifcu_req;   
+	} ifc_ifcu;
+};
+
+#define ifc_buf ifc_ifcu.ifcu_buf
+#define ifc_req ifc_ifcu.ifcu_req
 
 #endif /* !_LINUX32_SOCKIO_H */
