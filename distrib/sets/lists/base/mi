@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1015 2012/12/04 23:38:57 spz Exp $
+# $NetBSD: mi,v 1.1016 2013/01/11 23:49:23 mlelstv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -201,6 +201,7 @@
 ./libexec					base-sys-root
 ./libexec/devpubd-hooks				base-sysutil-root
 ./libexec/devpubd-hooks/01-makedev		base-sysutil-root
+./libexec/devpubd-hooks/02-wedgenames		base-sysutil-root
 ./libexec/devpubd-run-hooks			base-sysutil-root
 ./libexec/dhcpcd-hooks				base-dhcpcd-root
 ./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root
