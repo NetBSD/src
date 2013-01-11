@@ -1,4 +1,4 @@
-# $NetBSD: ad.armeb,v 1.8 2012/10/14 12:36:58 msaitoh Exp $
+# $NetBSD: ad.armeb,v 1.9 2013/01/11 14:22:55 matt Exp $
 #
 # The armeb MACHINE_ARCH never existed in NetBSD as a.out, so we
 #	skip the old a.out compatibility tools.
@@ -42,7 +42,7 @@
 ./usr/include/arm/float.h			comp-c-include
 ./usr/include/arm/footbridge			comp-c-include
 ./usr/include/arm/footbridge/footbridge_intr.h	comp-c-include
-./usr/include/arm/fp.h				comp-c-include
+./usr/include/arm/fp.h				comp-obsolete		obsolete
 ./usr/include/arm/frame.h			comp-c-include
 ./usr/include/arm/ieee.h			comp-c-include
 ./usr/include/arm/ieeefp.h			comp-c-include
