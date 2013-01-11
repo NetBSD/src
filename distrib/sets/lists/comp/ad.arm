@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.41 2012/08/15 20:38:50 matt Exp $
+# $NetBSD: ad.arm,v 1.42 2013/01/11 14:22:55 matt Exp $
 ./usr/include/gcc-4.5/arm_neon.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
@@ -38,7 +38,7 @@
 ./usr/include/arm/float.h			comp-c-include
 ./usr/include/arm/footbridge			comp-c-include
 ./usr/include/arm/footbridge/footbridge_intr.h	comp-c-include
-./usr/include/arm/fp.h				comp-c-include
+./usr/include/arm/fp.h				comp-obsolete		obsolete
 ./usr/include/arm/frame.h			comp-c-include
 ./usr/include/arm/ieee.h			comp-c-include
 ./usr/include/arm/ieeefp.h			comp-c-include

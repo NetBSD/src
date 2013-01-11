@@ -1,4 +1,4 @@
-# $NetBSD: md.netwinder,v 1.14 2011/07/18 17:18:14 dyoung Exp $
+# $NetBSD: md.netwinder,v 1.15 2013/01/11 14:22:55 matt Exp $
 ./usr/include/netwinder				comp-c-include
 ./usr/include/netwinder/ansi.h			comp-c-include
 ./usr/include/netwinder/aout_machdep.h		comp-c-include
@@ -13,7 +13,7 @@
 ./usr/include/netwinder/endian.h		comp-c-include
 ./usr/include/netwinder/endian_machdep.h	comp-c-include
 ./usr/include/netwinder/float.h			comp-c-include
-./usr/include/netwinder/fp.h			comp-c-include
+./usr/include/netwinder/fp.h			comp-obsolete		obsolete
 ./usr/include/netwinder/frame.h			comp-c-include
 ./usr/include/netwinder/ieee.h			comp-c-include
 ./usr/include/netwinder/ieeefp.h		comp-c-include

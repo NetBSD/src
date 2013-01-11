@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcarm,v 1.17 2011/07/19 15:37:38 dyoung Exp $
+# $NetBSD: md.hpcarm,v 1.18 2013/01/11 14:22:55 matt Exp $
 ./usr/include/hpcarm				comp-c-include
 ./usr/include/hpcarm/ansi.h			comp-c-include
 ./usr/include/hpcarm/aout_machdep.h		comp-c-include
@@ -14,7 +14,7 @@
 ./usr/include/hpcarm/endian.h			comp-c-include
 ./usr/include/hpcarm/endian_machdep.h		comp-c-include
 ./usr/include/hpcarm/float.h			comp-c-include
-./usr/include/hpcarm/fp.h			comp-c-include
+./usr/include/hpcarm/fp.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/frame.h			comp-c-include
 ./usr/include/hpcarm/ieee.h			comp-c-include
 ./usr/include/hpcarm/ieeefp.h			comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.iyonix,v 1.7 2011/07/18 17:18:14 dyoung Exp $
+# $NetBSD: md.iyonix,v 1.8 2013/01/11 14:22:55 matt Exp $
 ./usr/include/iyonix				comp-c-include
 ./usr/include/iyonix/ansi.h			comp-c-include
 ./usr/include/iyonix/aout_machdep.h		comp-c-include
@@ -13,7 +13,7 @@
 ./usr/include/iyonix/endian.h			comp-c-include
 ./usr/include/iyonix/endian_machdep.h		comp-c-include
 ./usr/include/iyonix/float.h			comp-c-include
-./usr/include/iyonix/fp.h			comp-c-include
+./usr/include/iyonix/fp.h			comp-obsolete		obsolete
 ./usr/include/iyonix/frame.h			comp-c-include
 ./usr/include/iyonix/ieee.h			comp-c-include
 ./usr/include/iyonix/ieeefp.h			comp-c-include

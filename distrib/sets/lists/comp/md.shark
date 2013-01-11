@@ -1,4 +1,4 @@
-# $NetBSD: md.shark,v 1.20 2011/12/19 15:09:52 njoly Exp $
+# $NetBSD: md.shark,v 1.21 2013/01/11 14:22:55 matt Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/shark				comp-c-include
 ./usr/include/shark/ansi.h			comp-c-include
@@ -15,7 +15,7 @@
 ./usr/include/shark/endian.h			comp-c-include
 ./usr/include/shark/endian_machdep.h		comp-c-include
 ./usr/include/shark/float.h			comp-c-include
-./usr/include/shark/fp.h			comp-c-include
+./usr/include/shark/fp.h			comp-obsolete		obsolete
 ./usr/include/shark/frame.h			comp-c-include
 ./usr/include/shark/ieee.h			comp-c-include
 ./usr/include/shark/ieeefp.h			comp-c-include

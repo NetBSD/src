@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.17 2011/07/18 17:18:14 dyoung Exp $
+# $NetBSD: md.cats,v 1.18 2013/01/11 14:22:55 matt Exp $
 ./usr/include/cats				comp-c-include
 ./usr/include/cats/ansi.h			comp-c-include
 ./usr/include/cats/aout_machdep.h		comp-c-include
@@ -14,7 +14,7 @@
 ./usr/include/cats/endian.h			comp-c-include
 ./usr/include/cats/endian_machdep.h		comp-c-include
 ./usr/include/cats/float.h			comp-c-include
-./usr/include/cats/fp.h				comp-c-include
+./usr/include/cats/fp.h				comp-obsolete		obsolete
 ./usr/include/cats/frame.h			comp-c-include
 ./usr/include/cats/ieee.h			comp-c-include
 ./usr/include/cats/ieeefp.h			comp-c-include
