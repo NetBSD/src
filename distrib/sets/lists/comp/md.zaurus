@@ -1,4 +1,4 @@
-# $NetBSD: md.zaurus,v 1.9 2011/07/19 15:12:26 dyoung Exp $
+# $NetBSD: md.zaurus,v 1.10 2013/01/11 14:22:55 matt Exp $
 ./usr/include/zaurus				comp-c-include
 ./usr/include/zaurus/ansi.h			comp-c-include
 ./usr/include/zaurus/aout_machdep.h		comp-c-include
@@ -13,7 +13,7 @@
 ./usr/include/zaurus/endian.h			comp-c-include
 ./usr/include/zaurus/endian_machdep.h		comp-c-include
 ./usr/include/zaurus/float.h			comp-c-include
-./usr/include/zaurus/fp.h			comp-c-include
+./usr/include/zaurus/fp.h			comp-obsolete		obsolete
 ./usr/include/zaurus/frame.h			comp-c-include
 ./usr/include/zaurus/ieee.h			comp-c-include
 ./usr/include/zaurus/ieeefp.h			comp-c-include
