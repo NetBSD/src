@@ -1,4 +1,4 @@
-.\"	$NetBSD: devpubd.8,v 1.2 2012/11/22 17:16:30 reed Exp $
+.\"	$NetBSD: devpubd.8,v 1.3 2013/01/11 23:49:23 mlelstv Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,9 @@ or
 and the device file name.
 The default installation supplies the
 .Pa 01-makedev
-script for creating a device node.
+script for creating a device node and the
+.Pa 02-wedgenames
+script for creating symlinks to wedge devices under /dev/wedges.
 Additional scripts may be added for other dynamic device actions.
 .Sh SEE ALSO
 .Xr drvctl 8 ,
