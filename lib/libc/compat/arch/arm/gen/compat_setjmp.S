@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_setjmp.S,v 1.1 2005/10/16 17:27:50 christos Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.2 2013/01/11 13:55:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -56,21 +56,13 @@ ENTRY(setjmp)
 	ldmfd	sp!, {r0, r14}
 
 	/* Store signal mask */
-	str	r1, [r0, #(25 * 4)]
+	str	r1, [r0, #(_JB_SIGMASK * 4)]
 
 	ldr	r1, .Lsetjmp_magic
-	str	r1, [r0], #4
+	str	r1, [r0]
 
-#ifdef SOFTFLOAT
-	add	r0, r0, #52
-#else
-	/* Store fp registers */
-	sfm	f4, 4, [r0], #48
-	/* Store fpsr */
-	rfs	r1
-	str	r1, [r0], #0x0004
-#endif	/*SOFTFLOAT*/
 	/* Store integer registers */
+	add	r0, r0, #(_JB_REG_R4 * 4)
         stmia	r0, {r4-r14}
         mov	r0, #0x00000000
         RET
@@ -86,7 +78,7 @@ ENTRY(longjmp)
 	bne	botch
 
 	/* Fetch signal mask */
-	ldr	r2, [r0, #(25 * 4)]
+	ldr	r2, [r0, #(_JB_SIGMASK * 4)]
 
 	/* Set signal mask */
 	stmfd	sp!, {r0, r1, r14}
@@ -98,17 +90,8 @@ ENTRY(longjmp)
 	add	sp, sp, #4	/* unalign the stack */
 	ldmfd	sp!, {r0, r1, r14} 
 
-	add	r0, r0, #4
-#ifdef SOFTFLOAT
-	add	r0, r0, #52
-#else
-	/* Restore fp registers */
-	lfm	f4, 4, [r0], #48
-	/* Restore FPSR */
-	ldr	r4, [r0], #0x0004
-	wfs	r4
-#endif	/* SOFTFLOAT */
 	/* Restore integer registers */
+	add	r0, r0, #(_JB_REG_R4 * 4)
         ldmia	r0, {r4-r14}
 
 	/* Validate sp and r14 */
