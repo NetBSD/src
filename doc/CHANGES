@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1778 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1779 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -171,3 +171,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		ported from NetBSD. [skrll 20130109]
 	kernel: Add usmsc(4), a driver for SMSC LAN95xx USB LAN devices, 
 		ported from OpenBSD. [skrll 20130109]
+	arm: kill userland FPA support, replace with VFP. [matt 20130111]
