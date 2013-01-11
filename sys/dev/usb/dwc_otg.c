@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.7 2013/01/11 02:20:41 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.8 2013/01/11 13:01:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.7 2013/01/11 02:20:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.8 2013/01/11 13:01:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -569,7 +569,7 @@ dwc_otg_poll(struct usbd_bus *bus)
 {
 	struct dwc_otg_softc *sc = bus->hci_private;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 	mutex_spin_enter(&sc->sc_intr_lock);
 	dwc_otg_interrupt(sc);
 	mutex_spin_exit(&sc->sc_intr_lock);
