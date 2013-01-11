@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.101 2012/10/13 06:12:23 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.102 2013/01/11 12:03:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.101 2012/10/13 06:12:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.102 2013/01/11 12:03:04 tsutsui Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -827,7 +827,10 @@ hp300_cninit(void)
 		goto find_kbd;
 #endif
 
+#if (NDVBOX + NGBOX + NRBOX + NTOPCAT + NDVBOX + NGBOX + NHYPER + NRBOX + \
+     NTOPCAT + NTVRX + NGENDIOFB) > 0
 find_kbd:
+#endif
 
 #if NDNKBD > 0
 	dnkbdcnattach(bst, FRODO_BASE + FRODO_APCI_OFFSET(0))
