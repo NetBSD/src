@@ -1,4 +1,4 @@
-# $NetBSD: md.acorn26,v 1.14 2011/07/19 16:05:09 dyoung Exp $
+# $NetBSD: md.acorn26,v 1.15 2013/01/11 14:22:55 matt Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-c-include
 ./usr/include/acorn26/aout_machdep.h		comp-c-include
@@ -14,7 +14,7 @@
 ./usr/include/acorn26/endian.h			comp-c-include
 ./usr/include/acorn26/endian_machdep.h		comp-c-include
 ./usr/include/acorn26/float.h			comp-c-include
-./usr/include/acorn26/fp.h			comp-c-include
+./usr/include/acorn26/fp.h			comp-obsolete		obsolete
 ./usr/include/acorn26/frame.h			comp-c-include
 ./usr/include/acorn26/ieee.h			comp-c-include
 ./usr/include/acorn26/ieeefp.h			comp-c-include
