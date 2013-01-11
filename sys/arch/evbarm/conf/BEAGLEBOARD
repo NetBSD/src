@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.40 2013/01/09 04:44:54 macallan Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.41 2013/01/11 09:45:53 he Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -258,8 +258,8 @@ omapdma0	at obio0 addr 0x48056000 size 0x1000
 omapfb* 	at obio0 addr 0x48050000 size 0x10000
 
 # make sure the console display is always wsdisplay0
-#wsdisplay0	at wsemuldisplaydev? console 1
-#wsdisplay*	at wsemuldisplaydev?
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
