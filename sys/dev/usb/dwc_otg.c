@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.8 2013/01/11 13:01:44 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.9 2013/01/11 13:48:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.8 2013/01/11 13:01:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.9 2013/01/11 13:48:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,13 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.8 2013/01/11 13:01:44 skrll Exp $");
 
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835_mbox.h>
+
+#ifdef DOTG_COUNTERS
+#define	DOTG_EVCNT_ADD(a,b)	((void)((a).ev_count += (b)))
+#else
+#define	DOTG_EVCNT_ADD(a,b)	do { } while (/*CONSTCOND*/0)
+#endif
+#define	DOTG_EVCNT_INCR(a)	DOTG_EVCNT_ADD((a), 1)
 
 #ifdef DWC_OTG_DEBUG
 #define	DPRINTFN(n,fmt,...) do {			\
@@ -422,6 +429,8 @@ dwc_otg_softintr(void *v)
 	struct dwc_otg_xfer *dxfer, *tmp;
 
 	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
+
+	DOTG_EVCNT_INCR(sc->sc_ev_soft_intr);
 
 	DPRINTF("\n");
 	TAILQ_FOREACH_SAFE(dxfer, &sc->sc_complete, xnext, tmp) {
@@ -1679,6 +1688,8 @@ dwc_otg_intr_worker(struct work *wk, void *priv)
 	struct dwc_otg_work *dwork = (struct dwc_otg_work *)wk;
 	usbd_xfer_handle xfer = dwork->xfer;
 	struct dwc_otg_softc *sc = DWC_OTG_XFER2SC(xfer);
+
+	DOTG_EVCNT_INCR(sc->sc_ev_work);
 
 	mutex_enter(&sc->sc_lock);
 	dwc_otg_start_standard_chain(xfer);
@@ -3415,6 +3426,8 @@ dwc_otg_interrupt(struct dwc_otg_softc *sc)
 {
 	uint32_t status;
 
+	DOTG_EVCNT_INCR(sc->sc_ev_intr);
+
 	/* read and clear interrupt status */
 	status = DWC_OTG_READ_4(sc, DOTG_GINTSTS);
 	DWC_OTG_WRITE_4(sc, DOTG_GINTSTS, status);
@@ -4162,6 +4175,7 @@ dwc_otg_device_done(usbd_xfer_handle xfer, usbd_status error)
 usbd_status
 dwc_otg_init(struct dwc_otg_softc *sc)
 {
+	const char * const xname = device_xname(sc->sc_dev);
 	uint32_t temp;
 
 	sc->sc_bus.hci_private = sc;
@@ -4179,21 +4193,33 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 	TAILQ_INIT(&sc->sc_active);
 	TAILQ_INIT(&sc->sc_complete);
 
-	pool_init(&sc->sc_tdpool,
-	    sizeof(struct dwc_otg_td), 0, 0, 0,
-	    "dwctdpool", NULL, IPL_USB);
-	pool_prime(&sc->sc_tdpool, DWC_OTG_POOL_SIZE);
+	sc->sc_tdpool = pool_cache_init(sizeof(struct dwc_otg_td), 0, 0, 0,
+	    "dotgtd", NULL, IPL_USB, NULL, NULL, NULL);
 
 	sc->sc_rhc_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    dwc_otg_rhc, sc);
 	sc->sc_timer_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    dwc_otg_timer, sc);
 
-	workqueue_create(&sc->sc_wq, device_xname(sc->sc_dev),
-	    dwc_otg_intr_worker, sc, PRI_NONE, IPL_USB, WQ_MPSAFE);
+	workqueue_create(&sc->sc_wq, xname, dwc_otg_intr_worker, sc, PRI_NONE,
+	    IPL_USB, WQ_MPSAFE);
 
 	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
+	
+#ifdef DOTG_COUNTERS
+	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
+	    NULL, xname, "intr");
+	evcnt_attach_dynamic(&sc->sc_ev_soft_intr, EVCNT_TYPE_INTR,
+	    NULL, xname, "soft intr");
+	evcnt_attach_dynamic(&sc->sc_ev_work, EVCNT_TYPE_MISC,
+	    NULL, xname, "work items");
+
+	evcnt_attach_dynamic(&sc->sc_ev_tdpoolget, EVCNT_TYPE_MISC,
+	    NULL, xname, "pool get");
+	evcnt_attach_dynamic(&sc->sc_ev_tdpoolput, EVCNT_TYPE_MISC,
+	    NULL, xname, "pool put");
+#endif
 
 	temp = DWC_OTG_READ_4(sc, DOTG_GUSBCFG);
 	temp |= GUSBCFG_FORCEHOSTMODE;
@@ -4426,7 +4452,9 @@ dwc_otg_xfer_setup(usbd_xfer_handle xfer)
 	for (n = 0; n != ntd; n++) {
 		struct dwc_otg_td *td;
 
-		td = pool_get(&sc->sc_tdpool, PR_NOWAIT);
+		DOTG_EVCNT_INCR(sc->sc_ev_tdpoolget);
+
+		td = pool_cache_get(sc->sc_tdpool, PR_NOWAIT);
 		if (td == NULL) {
 			printf("%s: pool empty\n", __func__);
 			goto done;
@@ -4458,7 +4486,9 @@ dwc_otg_xfer_end(usbd_xfer_handle xfer)
 
 	for (td = dxfer->td_start[0]; td; ) {
 		td_next = td->obj_next;
-		pool_put(&sc->sc_tdpool, td);
+		DOTG_EVCNT_INCR(sc->sc_ev_tdpoolput);
+
+		pool_cache_put(sc->sc_tdpool, td);
 		td = td_next;
 	}
 }
