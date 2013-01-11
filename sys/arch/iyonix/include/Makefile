@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/07/17 23:46:49 dyoung Exp $
+#	$NetBSD: Makefile,v 1.8 2013/01/11 14:09:56 matt Exp $
 
 INCSDIR= /usr/include/iyonix
 
@@ -7,7 +7,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
-	float.h fp.h frame.h \
+	float.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
