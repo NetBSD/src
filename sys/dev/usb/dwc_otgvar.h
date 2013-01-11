@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otgvar.h,v 1.1 2013/01/09 22:23:44 skrll Exp $ */
+/*	$NetBSD: dwc_otgvar.h,v 1.2 2013/01/11 13:48:46 skrll Exp $ */
 
 /* $FreeBSD: src/sys/dev/usb/controller/dwc_otg.h,v 1.12 2012/09/27 15:23:38 hselasky Exp $ */
 /*-
@@ -39,8 +39,6 @@
 #define	DWC_OTG_MAX_CHANNELS 16
 #define	DWC_OTG_MAX_ENDPOINTS 16
 #define	DWC_OTG_HOST_TIMER_RATE 10 /* ms */
-
-#define DWC_OTG_POOL_SIZE	4096	/* XXXNH measure */
 
 struct dwc_otg_td;
 
@@ -201,7 +199,18 @@ typedef struct dwc_otg_softc {
 
 	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
 
-	struct pool sc_tdpool;
+	pool_cache_t sc_tdpool;
+
+#ifdef DOTG_COUNTERS
+	
+	struct evcnt sc_ev_intr;
+	struct evcnt sc_ev_soft_intr;
+	struct evcnt sc_ev_work;
+	
+	struct evcnt sc_ev_tdpoolget;
+	struct evcnt sc_ev_tdpoolput;
+	
+#endif	
 
 	/* From FreeBSD softc */
 	struct callout sc_timer;
