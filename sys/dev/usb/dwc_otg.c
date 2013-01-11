@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.9 2013/01/11 13:48:46 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.10 2013/01/11 18:52:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.9 2013/01/11 13:48:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.10 2013/01/11 18:52:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1507,7 +1507,8 @@ dwc_otg_device_intr_close(usbd_pipe_handle pipe)
 Static void
 dwc_otg_device_intr_done(usbd_xfer_handle xfer)
 {
-	//struct dwc_otg_softc *sc = xfer->pipe->device->bus->hci_private;
+	struct dwc_otg_xfer *dxfer = (struct dwc_otg_xfer *)xfer;
+	struct dwc_otg_softc *sc = xfer->pipe->device->bus->hci_private;
 	DPRINTF("\n");
 
 #if 0
@@ -1515,12 +1516,6 @@ dwc_otg_device_intr_done(usbd_xfer_handle xfer)
 #endif
 
 	if (xfer->pipe->repeat)	{
-		
-		//if (xfer->timeout && !sc->sc_bus.use_polling) {
-		//	callout_reset(&xfer->timeout_handle,
-		//	    mstohz(xfer->timeout), dwc_otg_timeout, xfer);
-		//}
-
 		/* XXX JDM */
 		dwc_otg_xfer_end(xfer);
 		dwc_otg_xfer_setup(xfer);
@@ -1528,8 +1523,12 @@ dwc_otg_device_intr_done(usbd_xfer_handle xfer)
 		xfer->actlen = 0;
 		xfer->status = USBD_IN_PROGRESS;
 		dwc_otg_setup_intr_chain(xfer);
-		dwc_otg_start_standard_chain(xfer);
-
+		if (sc->sc_bus.use_polling) {
+			dwc_otg_start_standard_chain(xfer);
+		} else {
+			workqueue_enqueue(sc->sc_wq,
+			    (struct work *)&dxfer->work, NULL);
+		}
 	} else {
 		dwc_otg_xfer_end(xfer);
 	}
