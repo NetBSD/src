@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.42 2013/01/03 12:55:18 mbalmer Exp $
+#	$NetBSD: airport,v 1.43 2013/01/11 20:42:20 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -7502,6 +7502,7 @@ TCL:Tuscaloosa Municipal Airport, AL, USA
 TCM:Tacoma (McChord Air Force), WA, USA
 TCN:Tehuacan, Mexico
 TCO:Tumaco, Colombia
+TCP:Taba International Airport, Egypt
 TCQ:Tacna (Coronel Carlos Ciriani), Peru
 TCS:Truth or Consequences, NM, USA
 TCT:Takotna Airport, AK, USA
