@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otgvar.h,v 1.2 2013/01/11 13:48:46 skrll Exp $ */
+/*	$NetBSD: dwc_otgvar.h,v 1.3 2013/01/11 20:35:51 jmcneill Exp $ */
 
 /* $FreeBSD: src/sys/dev/usb/controller/dwc_otg.h,v 1.12 2012/09/27 15:23:38 hselasky Exp $ */
 /*-
@@ -41,6 +41,7 @@
 #define	DWC_OTG_HOST_TIMER_RATE 10 /* ms */
 
 struct dwc_otg_td;
+struct dwc_otg_softc;
 
 typedef uint8_t (dwc_otg_cmd_t)(struct dwc_otg_td *td);
 
@@ -141,6 +142,7 @@ typedef struct dwc_otg_soft_td {
 
 struct dwc_otg_work {
 	struct work wk;
+	struct dwc_otg_softc *sc;
 	usbd_xfer_handle xfer;
 };
 
@@ -181,7 +183,7 @@ typedef struct dwc_otg_softc {
 	//void *sc_intr_si;
 
 	struct workqueue *sc_wq;
-	struct dwc_otg_work sc_wk;
+	struct dwc_otg_work sc_timer_work;
 
 	int sc_noport;
 
@@ -214,7 +216,6 @@ typedef struct dwc_otg_softc {
 
 	/* From FreeBSD softc */
 	struct callout sc_timer;
-	void *sc_timer_si;
 
 	uint32_t sc_rx_bounce_buffer[1024 / 4];
 	uint32_t sc_tx_bounce_buffer[(512 * DWC_OTG_MAX_TXP) / 4];
