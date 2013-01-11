@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.114 2012/06/20 15:03:18 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.115 2013/01/11 19:01:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.114 2012/06/20 15:03:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.115 2013/01/11 19:01:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1083,7 +1083,7 @@ int
 linux_getifconf(struct lwp *l, register_t *retval, void *data)
 {
 	struct linux_ifreq ifr, *ifrp;
-	struct ifconf *ifc = data;
+	struct linux_ifconf ifc;
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 	struct sockaddr *sa;
@@ -1091,11 +1091,15 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	int space, error = 0;
 	const int sz = (int)sizeof(ifr);
 
-	ifrp = (struct linux_ifreq *)ifc->ifc_req;
+	error = copyin(data, &ifc, sizeof(ifc));
+	if (error)
+		return error;
+
+	ifrp = ifc.ifc_req;
 	if (ifrp == NULL)
 		space = 0;
 	else
-		space = ifc->ifc_len;
+		space = ifc.ifc_len;
 
 	IFNET_FOREACH(ifp) {
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
@@ -1123,11 +1127,11 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	}
 
 	if (ifrp != NULL)
-		ifc->ifc_len -= space;
+		ifc.ifc_len -= space;
 	else
-		ifc->ifc_len = -space;
+		ifc.ifc_len = -space;
 
-	return 0;
+	return copyout(&ifc, data, sizeof(ifc));
 }
 
 int

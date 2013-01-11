@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sockio.h,v 1.18 2009/11/28 22:11:42 dsl Exp $	*/
+/*	$NetBSD: linux_sockio.h,v 1.19 2013/01/11 19:01:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -75,5 +75,16 @@ struct linux_ifreq {
 #define ifr_hwaddr	ifr_ifru.ifru_hwaddr	/* MAC address          */
 #define ifr_map		ifr_ifru.ifru_map	/* device map           */
 };
+
+struct linux_ifconf {
+        int ifc_len;
+	union {
+		char *ifcu_buf;
+		struct linux_ifreq *ifcu_req;
+	} ifc_ifcu;
+};
+
+#define ifc_buf ifc_ifcu.ifcu_buf
+#define ifc_req ifc_ifcu.ifcu_req
 
 #endif /* !_LINUX_SOCKIO_H */
