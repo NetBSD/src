@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.27 2013/01/10 14:15:20 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.28 2013/01/11 12:47:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.27 2013/01/10 14:15:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.28 2013/01/11 12:47:38 jmcneill Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.27 2013/01/10 14:15:20 jmcneill Ex
 #include "bsciic.h"
 #include "plcom.h"
 #include "genfb.h"
+#include "ukbd.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,6 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.27 2013/01/10 14:15:20 jmcneill Ex
 #if NGENFB > 0
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>
+#endif
+
+#if NUKBD > 0
+#include <dev/usb/ukbdvar.h>
 #endif
 
 #include "ksyms.h"
@@ -762,6 +767,10 @@ rpi_device_register(device_t dev, void *aux)
 		if (get_bootconf_option(boot_args, "console",
 		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
 			prop_dictionary_set_bool(dict, "is_console", true);
+#if NUKBD > 0
+			/* allow ukbd to be the console keyboard */
+			ukbd_cnattach();
+#endif
 		} else {
 			prop_dictionary_set_bool(dict, "is_console", false);
 		}
