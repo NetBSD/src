@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1415 2013/01/06 18:30:11 jakllsch Exp $
+# $NetBSD: mi,v 1.1416 2013/01/11 16:32:48 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1745,6 +1745,7 @@
 ./usr/share/man/cat4/uscanner.0			man-sys-catman		.cat
 ./usr/share/man/cat4/userconf.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uslsa.0			man-sys-catman		.cat
+./usr/share/man/cat4/usmsc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/usscanner.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ustir.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uthum.0			man-sys-catman		.cat
@@ -4596,6 +4597,7 @@
 ./usr/share/man/html4/uscanner.html		man-sys-htmlman		html
 ./usr/share/man/html4/userconf.html		man-sys-htmlman		html
 ./usr/share/man/html4/uslsa.html		man-sys-htmlman		html
+./usr/share/man/html4/usmsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/usscanner.html		man-sys-htmlman		html
 ./usr/share/man/html4/ustir.html		man-sys-htmlman		html
 ./usr/share/man/html4/uthum.html		man-sys-htmlman		html
@@ -7369,6 +7371,7 @@
 ./usr/share/man/man4/uscanner.4			man-sys-man		.man
 ./usr/share/man/man4/userconf.4			man-sys-man		.man
 ./usr/share/man/man4/uslsa.4			man-sys-man		.man
+./usr/share/man/man4/usmsc.4			man-sys-man		.man
 ./usr/share/man/man4/usscanner.4		man-sys-man		.man
 ./usr/share/man/man4/ustir.4			man-sys-man		.man
 ./usr/share/man/man4/uthum.4			man-sys-man		.man
