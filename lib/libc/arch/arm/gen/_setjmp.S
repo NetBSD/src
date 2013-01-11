@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.7 2012/08/01 06:02:13 matt Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.8 2013/01/11 13:55:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -32,6 +32,10 @@
  * SUCH DAMAGE.
  */
 
+#if !defined(__SOFTFP__) && !defined(__VFP_FP__)
+#error FPA is not supported anymore
+#endif
+
 #include <machine/asm.h>
 #include <machine/setjmp.h>
 
@@ -50,18 +54,16 @@
 
 ENTRY(_setjmp)
 	ldr	r1, .L_setjmp_magic
-	str	r1, [r0], #4
-#ifdef SOFTFLOAT
-	add	r0, r0, #52
-#elif defined(__VFP_FP__)
-#error _setjmp VFP support missing
-#else
-	/* Store fp registers */
-	sfm	f4, 4, [r0], #48
-	/* Store fpsr */
-	rfs	r1
-	str	r1, [r0], #0x0004
-#endif	/* SOFTFLOAT */
+	str	r1, [r0]
+
+#ifndef __SOFTFP__
+	add	r1, r0, #(_JB_REG_D8 * 4)
+	vstmia	r1, {d8-d15}
+	vmrs	r1, fpscr
+	str	r1, [r0, #(_JB_REG_FPSCR * 4)]
+#endif
+
+	add	r0, r0, #(_JB_REG_R4 * 4)
 	/* Store integer registers */
         stmia	r0, {r4-r14}
 
@@ -69,25 +71,26 @@ ENTRY(_setjmp)
         RET
 
 .L_setjmp_magic:
+#ifdef __SOFTFP__
 	.word	_JB_MAGIC__SETJMP
+#else
+	.word	_JB_MAGIC__SETJMP_VFP
+#endif
 
 ENTRY(_longjmp)
 	ldr	r2, .L_setjmp_magic
-	ldr	r3, [r0], #4
+	ldr	r3, [r0]
 	teq	r2, r3
 	bne	botch
 
-#ifdef SOFTFLOAT
-	add	r0, r0, #52
-#elif defined(__VFP_FP__)
-#error _longjmp VFP support missing
-#else
-	/* Restore fp registers */
-	lfm	f4, 4, [r0], #48
-	/* Restore fpsr */
-	ldr	r4, [r0], #0x0004
-	wfs	r4
-#endif	/* SOFTFLOAT */
+#ifndef __SOFTFP__
+	add	r1, r0, #(_JB_REG_D8 * 4)
+	vldmia	r1, {d8-d15}
+	ldr	r1, [r0, #(_JB_REG_FPSCR * 4)]
+	vmsr	fpscr, r1
+#endif
+
+	add	r0, r0, #(_JB_REG_R4 * 4)
        	/* Restore integer registers */
         ldmia	r0, {r4-r14}
 
