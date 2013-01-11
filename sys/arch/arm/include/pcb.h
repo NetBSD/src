@@ -37,7 +37,6 @@
 #define	_ARM_PCB_H_
 
 #include <machine/frame.h>
-#include <machine/fp.h>
 
 #include <arm/arm32/pte.h>
 #include <arm/reg.h>

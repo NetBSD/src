@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.4 2012/12/07 18:49:13 matt Exp $	*/
+/*	$NetBSD: reg.h,v 1.5 2013/01/11 14:04:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1994, 1995 Frank Lancaster
@@ -35,8 +35,6 @@
 
 #ifndef _ARM32_REG_H_
 #define _ARM32_REG_H_
-
-#include <machine/fp.h>
 
 struct reg {
 	unsigned int r[13];
