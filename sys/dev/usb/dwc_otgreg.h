@@ -28,8 +28,6 @@
 #ifndef _DWC_OTGREG_H_
 #define	_DWC_OTGREG_H_
 
-#define	DOTG_REGSIZE		0x2000
-
 /* Core Global Registers *****************************************/
 
 #define	DOTG_GOTGCTL		0x0000
