@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.21 2012/12/28 06:29:56 cherry Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.22 2013/01/12 17:39:46 bouyer Exp $	*/
 
 /*
  *
@@ -32,9 +32,6 @@
 #define NR_PIRQS	256
 
 extern struct evtsource *evtsource[];
-
-#include <sys/mutex.h>
-extern kmutex_t evtlock[];
 
 void events_default_setup(void);
 void events_init(void);
