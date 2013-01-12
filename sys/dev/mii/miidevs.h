@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.113 2013/01/12 21:26:24 jakllsch Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.114 2013/01/12 21:43:26 jakllsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.110 2013/01/12 21:25:58 jakllsch Exp
+ *	NetBSD: miidevs,v 1.111 2013/01/12 21:43:13 jakllsch Exp
  */
 
 /*-
@@ -420,9 +420,9 @@
 
 /* SMSC PHYs */
 #define	MII_MODEL_SMSC_LAN8700	0x000c
-#define	MII_STR_SMSC_LAN8700	"LAN8700 10/100 Ethernet Transceiver"
+#define	MII_STR_SMSC_LAN8700	"SMSC LAN8700 10/100 Ethernet Transceiver"
 #define	MII_MODEL_SMSC_LAN8710_LAN8720	0x000f
-#define	MII_STR_SMSC_LAN8710_LAN8720	"LAN8710/LAN8720 10/100 Ethernet Transceiver"
+#define	MII_STR_SMSC_LAN8710_LAN8720	"SMSC LAN8710/LAN8720 10/100 Ethernet Transceiver"
 
 /* Texas Instruments PHYs */
 #define	MII_MODEL_TI_TLAN10T	0x0001
