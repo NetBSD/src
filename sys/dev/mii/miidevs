@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.110 2013/01/12 21:25:58 jakllsch Exp $
+$NetBSD: miidevs,v 1.111 2013/01/12 21:43:13 jakllsch Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -287,8 +287,8 @@ model SEEQ 80225		0x0008 Seeq 80225 10/100 media interface
 model SIS 900			0x0000 SiS 900 10/100 media interface
 
 /* SMSC PHYs */
-model SMSC LAN8700		0x000c LAN8700 10/100 Ethernet Transceiver
-model SMSC LAN8710_LAN8720	0x000f LAN8710/LAN8720 10/100 Ethernet Transceiver
+model SMSC LAN8700		0x000c SMSC LAN8700 10/100 Ethernet Transceiver
+model SMSC LAN8710_LAN8720	0x000f SMSC LAN8710/LAN8720 10/100 Ethernet Transceiver
 
 /* Texas Instruments PHYs */
 model TI TLAN10T		0x0001 ThunderLAN 10BASE-T media interface
