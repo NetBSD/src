@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.36 2013/01/12 02:50:09 jakllsch Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.37 2013/01/12 02:52:59 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.36 2013/01/12 02:50:09 jakllsch Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.37 2013/01/12 02:52:59 jakllsch Exp $");
 #endif
 
 
@@ -575,7 +575,7 @@ device_format(int argc, char *argv[])
 	}
 
 	scsi_command(fd, &cmd, sizeof(cmd), &dfl, sizeof(dfl),
-	    8 * 60 * 60 * 1000, 0);
+	    8 * 60 * 60 * 1000, SCCMD_WRITE);
 
 	/*
 	 * Poll device for completion of Format
