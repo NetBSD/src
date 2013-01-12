@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2013/01/12 13:39:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -117,7 +117,7 @@ configure(void)
 #ifdef DEBUG
 		if (!found) {
 			printf("unconfigured %s ", hw->hw_name);
-			printf("at 0x%x\n", hw->hw_addr);
+			printf("at 0x%x\n", (u_int)hw->hw_addr);
 		}
 #endif
 	}
@@ -141,7 +141,7 @@ find_controller(struct hp_hw *hw)
 #ifdef DEBUG
 	if (acdebug)
 		printf("find_controller: hw: %s at sc%d (%x), type %x...",
-		       hw->hw_name, hw->hw_sc, hw->hw_addr, hw->hw_type);
+		       hw->hw_name, hw->hw_sc, (u_int)hw->hw_addr, hw->hw_type);
 #endif
 	sc = hw->hw_sc;
 	match_c = NULL;
@@ -216,7 +216,7 @@ find_device(struct hp_hw *hw)
 #ifdef DEBUG
 	if (acdebug)
 		printf("find_device: hw: %s at sc%d (%x), type %x...",
-		       hw->hw_name, hw->hw_sc, hw->hw_addr, hw->hw_type);
+		       hw->hw_name, hw->hw_sc, (u_int)hw->hw_addr, hw->hw_type);
 #endif
 	match_d = NULL;
 	for (hd = hp_dinit; hd->hp_driver; hd++) {
