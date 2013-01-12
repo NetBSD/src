@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.2 2013/01/12 07:11:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -109,6 +109,7 @@ int getline(char *, char *);
 
 /* init_main.c */
 extern int nplane;
+extern int machtype;
 
 /* kbd.c */
 int kbd_decode(u_char);
@@ -116,6 +117,7 @@ int kbd_decode(u_char);
 /* locore.S */
 extern	u_int bootdev;
 extern int dipsw1, dipsw2;
+extern int cputype;
 int setjmp(label_t *);
 int splhigh(void);
 void splx(int);
