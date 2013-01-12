@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otgvar.h,v 1.3 2013/01/11 20:35:51 jmcneill Exp $ */
+/*	$NetBSD: dwc_otgvar.h,v 1.4 2013/01/12 23:26:06 jmcneill Exp $ */
 
 /* $FreeBSD: src/sys/dev/usb/controller/dwc_otg.h,v 1.12 2012/09/27 15:23:38 hselasky Exp $ */
 /*-
@@ -199,9 +199,8 @@ typedef struct dwc_otg_softc {
 	TAILQ_HEAD(, dwc_otg_xfer) sc_active;	/* active transfers */
 	TAILQ_HEAD(, dwc_otg_xfer) sc_complete;	/* complete transfers */
 
-	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
-
 	pool_cache_t sc_tdpool;
+	pool_cache_t sc_xferpool;
 
 #ifdef DOTG_COUNTERS
 	
@@ -211,6 +210,8 @@ typedef struct dwc_otg_softc {
 	
 	struct evcnt sc_ev_tdpoolget;
 	struct evcnt sc_ev_tdpoolput;
+	struct evcnt sc_ev_xferpoolget;
+	struct evcnt sc_ev_xferpoolput;
 	
 #endif	
 
