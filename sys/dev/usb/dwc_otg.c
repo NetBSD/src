@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.18 2013/01/12 22:42:49 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.19 2013/01/12 22:57:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.18 2013/01/12 22:42:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.19 2013/01/12 22:57:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2373,8 +2373,7 @@ dwc_otg_host_setup_tx(struct dwc_otg_td *td)
 	    DWC_OTG_READ_4(sc, DOTG_HCCHAR(td->channel)),
 	    DWC_OTG_READ_4(sc, DOTG_HCTSIZ(td->channel)));
 
-	if (hcint & (HCINT_RETRY |
-	    HCINT_ACK | HCINT_NYET)) {
+	if (hcint & (HCINT_RETRY | HCINT_ACK | HCINT_NYET)) {
 		/* give success bits priority over failure bits */
 	} else if (hcint & HCINT_STALL) {
 		DPRINTF("CH=%d STALL\n", td->channel);
@@ -2602,8 +2601,7 @@ dwc_otg_host_data_rx(struct dwc_otg_td *td)
 
 	/* check interrupt bits */
 
-	if (hcint & (HCINT_RETRY |
-	    HCINT_ACK | HCINT_NYET)) {
+	if (hcint & (HCINT_RETRY | HCINT_ACK | HCINT_NYET)) {
 		/* give success bits priority over failure bits */
 	} else if (hcint & HCINT_STALL) {
 		DPRINTF("CH=%d STALL\n", td->channel);
@@ -2621,8 +2619,7 @@ dwc_otg_host_data_rx(struct dwc_otg_td *td)
 
 	/* channel must be disabled before we can complete the transfer */
 
-	if (hcint & (HCINT_ERRORS | HCINT_RETRY |
-	    HCINT_ACK | HCINT_NYET)) {
+	if (hcint & (HCINT_ERRORS | HCINT_RETRY | HCINT_ACK | HCINT_NYET)) {
 
 		dwc_otg_host_channel_disable(sc, td->channel);
 
@@ -2908,8 +2905,7 @@ dwc_otg_host_data_tx(struct dwc_otg_td *td)
 	    DWC_OTG_READ_4(sc, DOTG_HCCHAR(td->channel)),
 	    DWC_OTG_READ_4(sc, DOTG_HCTSIZ(td->channel)));
 
-	if (hcint & (HCINT_RETRY |
-	    HCINT_ACK | HCINT_NYET)) {
+	if (hcint & (HCINT_RETRY | HCINT_ACK | HCINT_NYET)) {
 		/* give success bits priority over failure bits */
 	} else if (hcint & HCINT_STALL) {
 		DPRINTF("CH=%d STALL\n", td->channel);
@@ -2927,8 +2923,7 @@ dwc_otg_host_data_tx(struct dwc_otg_td *td)
 
 	/* channel must be disabled before we can complete the transfer */
 
-	if (hcint & (HCINT_ERRORS | HCINT_RETRY |
-	    HCINT_ACK | HCINT_NYET)) {
+	if (hcint & (HCINT_ERRORS | HCINT_RETRY | HCINT_ACK | HCINT_NYET)) {
 
 		dwc_otg_host_channel_disable(sc, td->channel);
 
