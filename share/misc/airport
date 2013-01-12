@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.47 2013/01/12 13:32:10 asau Exp $
+#	$NetBSD: airport,v 1.48 2013/01/12 13:38:22 asau Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -5891,7 +5891,7 @@ PET:Pelotas, RS, Brazil
 PEU:Puerto Lenpira, Honduras
 PEW:Peshawar, Pakistan
 PEY:Penong, South Australia, Australia
-PEZ:Penza, Penza, Russia
+PEZ:Penza (Ternovka), Russia
 PFA:Paf Warren, AK, USA
 PFB:Passo Fundo, RS, Brazil
 PFC:Pacific City (State Airport), OR, USA
