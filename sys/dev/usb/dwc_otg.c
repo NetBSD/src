@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.17 2013/01/12 18:53:21 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.18 2013/01/12 22:42:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.17 2013/01/12 18:53:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.18 2013/01/12 22:42:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,15 +109,15 @@ int dwc_otgdebug = 0;
 #endif
 
 #define	DWC_OTG_MSK_GINT_ENABLED	\
-   (GINTSTS_ENUMDONE |			\
-   GINTSTS_USBRST |			\
-   GINTSTS_USBSUSP |			\
-   GINTSTS_IEPINT |			\
-   GINTSTS_RXFLVL |			\
-   GINTSTS_SESSREQINT |			\
+   (GINTMSK_ENUMDONEMSK |		\
+   GINTMSK_USBRSTMSK |			\
+   GINTMSK_USBSUSPMSK |			\
+   GINTMSK_IEPINTMSK |			\
+   GINTMSK_RXFLVLMSK |			\
+   GINTMSK_SESSREQINTMSK |		\
    GINTMSK_OTGINTMSK |			\
    GINTMSK_HCHINTMSK |			\
-   GINTSTS_PRTINT)
+   GINTMSK_PRTINTMSK)
 
 #define	DWC_OTG_BUS2SC(bus)	((bus)->hci_private)
 
@@ -2050,9 +2050,9 @@ dwc_otg_pull_down(struct dwc_otg_softc *sc)
 Static void
 dwc_otg_enable_sof_irq(struct dwc_otg_softc *sc)
 {
-	if (sc->sc_irq_mask & GINTSTS_SOF)
+	if (sc->sc_irq_mask & GINTMSK_SOFMSK)
 		return;
-	sc->sc_irq_mask |= GINTSTS_SOF;
+	sc->sc_irq_mask |= GINTMSK_SOFMSK;
 	DWC_OTG_WRITE_4(sc, DOTG_GINTMSK, sc->sc_irq_mask);
 }
 
@@ -2069,8 +2069,8 @@ dwc_otg_resume_irq(struct dwc_otg_softc *sc)
 			 * Disable resume interrupt and enable suspend
 			 * interrupt:
 			 */
-			sc->sc_irq_mask &= ~GINTSTS_WKUPINT;
-			sc->sc_irq_mask |= GINTSTS_USBSUSP;
+			sc->sc_irq_mask &= ~GINTMSK_WKUPINTMSK;
+			sc->sc_irq_mask |= GINTMSK_USBSUSPMSK;
 			DWC_OTG_WRITE_4(sc, DOTG_GINTMSK, sc->sc_irq_mask);
 		}
 
@@ -2092,8 +2092,8 @@ dwc_otg_suspend_irq(struct dwc_otg_softc *sc)
 			 * Disable suspend interrupt and enable resume
 			 * interrupt:
 			 */
-			sc->sc_irq_mask &= ~GINTSTS_USBSUSP;
-			sc->sc_irq_mask |= GINTSTS_WKUPINT;
+			sc->sc_irq_mask &= ~GINTMSK_USBSUSPMSK;
+			sc->sc_irq_mask |= GINTMSK_WKUPINTMSK;
 			DWC_OTG_WRITE_4(sc, DOTG_GINTMSK, sc->sc_irq_mask);
 		}
 
@@ -2168,7 +2168,7 @@ dwc_otg_common_rx_ack(struct dwc_otg_softc *sc)
 	DPRINTFN(5, "RX status clear\n");
 
 	/* enable RX FIFO level interrupt */
-	sc->sc_irq_mask |= GINTSTS_RXFLVL;
+	sc->sc_irq_mask |= GINTMSK_RXFLVLMSK;
 	DWC_OTG_WRITE_4(sc, DOTG_GINTMSK, sc->sc_irq_mask);
 
 	/* clear cached status */
@@ -3354,7 +3354,7 @@ repeat:
 			goto repeat;
 
 		/* disable RX FIFO level interrupt */
-		sc->sc_irq_mask &= ~GINTSTS_RXFLVL;
+		sc->sc_irq_mask &= ~GINTMSK_RXFLVLMSK;
 		DWC_OTG_WRITE_4(sc, DOTG_GINTMSK, sc->sc_irq_mask);
 	}
 }
@@ -3444,8 +3444,8 @@ dwc_otg_interrupt(struct dwc_otg_softc *sc)
 
 		/* disable resume interrupt and enable suspend interrupt */
 
-		sc->sc_irq_mask &= ~GINTSTS_WKUPINT;
-		sc->sc_irq_mask |= GINTSTS_USBSUSP;
+		sc->sc_irq_mask &= ~GINTMSK_WKUPINTMSK;
+		sc->sc_irq_mask |= GINTMSK_USBSUSPMSK;
 		DWC_OTG_WRITE_4(sc, DOTG_GINTMSK, sc->sc_irq_mask);
 
 		/* complete root HUB interrupt endpoint */
@@ -3540,9 +3540,7 @@ dwc_otg_interrupt(struct dwc_otg_softc *sc)
 	}
 
 	/* check VBUS */
-	if (status & (GINTSTS_USBSUSP |
-	    GINTSTS_USBRST |
-	    GINTMSK_OTGINTMSK |
+	if (status & (GINTSTS_USBSUSP | GINTSTS_USBRST | GINTSTS_OTGINT |
 	    GINTSTS_SESSREQINT)) {
 		DPRINTFN(5, "vbus interrupt\n");
 
