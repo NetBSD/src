@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.13 2013/01/12 12:41:43 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.14 2013/01/12 16:18:42 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.13 2013/01/12 12:41:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.14 2013/01/12 16:18:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1375,6 +1375,9 @@ dwc_otg_device_bulk_start(usbd_xfer_handle xfer)
 		workqueue_enqueue(sc->sc_wq, (struct work *)&dxfer->work, NULL);
 	}
 	mutex_exit(&sc->sc_lock);
+
+	if (sc->sc_bus.use_polling)
+		dwc_otg_waitintr(sc, xfer);
 
 	return USBD_IN_PROGRESS;
 }
