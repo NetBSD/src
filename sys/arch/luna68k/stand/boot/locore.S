@@ -242,6 +242,28 @@ Lbssclr:
 	andl	#0xFF,%d0
 	movl	%d0,_C_LABEL(dipsw2)
 
+/* determine our CPU */
+
+	/* XXX should be generated via assym.h */
+	CACHE_OFF = 0x0808
+	DC_FREEZE = 0x0200
+	CPU_68030 = 1
+	CPU_68040 = 2
+
+	movl	#CACHE_OFF,%d0
+	movc	%d0,%cacr		| clear and disable on-chip cache(s)
+	movl	#DC_FREEZE,%d0		| data freeze bit
+	movc	%d0,%cacr		|   only exists on 68030
+	movc	%cacr,%d0		| read it back
+	tstl	%d0			| zero?
+	jeq	Lnot68030		| yes, we have 68040
+	movl	#CPU_68030,%d0
+	jra	Lstart0
+Lnot68030:
+	movl	#CPU_68040,%d0
+Lstart0:
+	movl	%d0,_C_LABEL(cputype)
+
 /* final setup for C code */
 	movw	#PSL_LOWIPL,%sr		| no interrupts
 	jsr	_C_LABEL(main)		| lets go
@@ -750,3 +772,6 @@ GLOBAL(dipsw1)
 
 GLOBAL(dipsw2)
 	.long	0
+
+GLOBAL(cputype)
+	.long	CPU_68030
