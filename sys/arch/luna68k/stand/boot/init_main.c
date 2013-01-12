@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.2 2013/01/12 07:11:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -82,7 +82,8 @@
 static int get_plane_numbers(void);
 static int reorder_dipsw(int);
 
-int cpuspeed;
+int cpuspeed;	/* for DELAY() macro */
+int machtype;
 
 #define	VERS_LOCAL	"Phase-31"
 
@@ -109,11 +110,20 @@ void
 main(void)
 {
 	int i, status = 0;
+	const char *machstr;
 
 	/*
 	 * Initialize the console before we print anything out.
 	 */
-	cpuspeed = MHZ_25;				/* for DELAY() macro */
+	if (cputype == CPU_68030) {
+		machtype = LUNA_I;
+		machstr  = "LUNA-I";
+		cpuspeed = MHZ_25;
+	} else {
+		machtype = LUNA_II;
+		machstr  = "LUNA-II";
+		cpuspeed = MHZ_25 * 2;	/* XXX */
+	}
 
 	nplane   = get_plane_numbers();
 
@@ -129,6 +139,7 @@ main(void)
 	kiff->plane   = nplane;
 
 	i = (int) kiff->maxaddr + 1;
+	printf("Machine model   = %s\n", machstr);
 	printf("Physical Memory = 0x%x  ", i);
 	i >>= 20;
 	printf("(%d MB)\n", i);
