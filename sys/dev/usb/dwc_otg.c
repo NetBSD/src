@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.19 2013/01/12 22:57:26 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.20 2013/01/12 23:26:06 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.19 2013/01/12 22:57:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.20 2013/01/12 23:26:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,24 +376,14 @@ dwc_otg_allocx(struct usbd_bus *bus)
 
 	DPRINTF("\n");
 
-	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
+	DOTG_EVCNT_INCR(sc->sc_ev_xferpoolget);
+	xfer = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
 	if (xfer != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
-#ifdef DIAGNOSTIC
-		if (xfer->busy_free != XFER_FREE) {
-			DPRINTF("xfer=%p not free, 0x%08x\n", xfer,
-			    xfer->busy_free);
-		}
-#endif
 		memset(xfer, 0, sizeof(struct dwc_otg_xfer));
-	} else {
-		xfer = kmem_zalloc(sizeof(struct dwc_otg_xfer), KM_SLEEP);
-	}
 #ifdef DIAGNOSTIC
-	if (xfer != NULL) {
 		xfer->busy_free = XFER_BUSY;
-	}
 #endif
+	}
 	return xfer;
 }
 
@@ -410,7 +400,8 @@ dwc_otg_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	}
 	xfer->busy_free = XFER_FREE;
 #endif
-	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
+	DOTG_EVCNT_INCR(sc->sc_ev_xferpoolput);
+	pool_cache_put(sc->sc_xferpool, xfer);
 }
 
 
@@ -4141,6 +4132,8 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 
 	sc->sc_tdpool = pool_cache_init(sizeof(struct dwc_otg_td), 0, 0, 0,
 	    "dotgtd", NULL, IPL_USB, NULL, NULL, NULL);
+	sc->sc_xferpool = pool_cache_init(sizeof(struct dwc_otg_xfer), 0, 0, 0,
+	    "dotgxfer", NULL, IPL_USB, NULL, NULL, NULL);
 
 	sc->sc_rhc_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    dwc_otg_rhc, sc);
