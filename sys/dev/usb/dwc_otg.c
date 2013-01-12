@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.16 2013/01/12 18:37:09 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.17 2013/01/12 18:53:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.16 2013/01/12 18:37:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.17 2013/01/12 18:53:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3093,7 +3093,7 @@ send_pkt_sync:
 		    DOTG_DFIFO(td->channel),
 		    sc->sc_tx_bounce_buffer, (count + 3) / 4);
  		bus_space_barrier(sc->sc_iot, sc->sc_ioh,
-		    DOTG_DFIFO(td->channel), (count + 3) /4,
+		    DOTG_DFIFO(td->channel), ((count + 3) / 4) * 4,
 		    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 	}
 
