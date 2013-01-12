@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.11 2013/01/11 20:35:51 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.12 2013/01/12 12:31:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.11 2013/01/11 20:35:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.12 2013/01/12 12:31:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1322,19 +1322,12 @@ dwc_otg_device_ctrl_close(usbd_pipe_handle pipe)
 Static void
 dwc_otg_device_ctrl_done(usbd_xfer_handle xfer)
 {
-// 	struct dwc_otg_pipe *dpipe = DWC_OTG_XFER2DPIPE(xfer);
 	struct dwc_otg_softc *sc = DWC_OTG_XFER2SC(xfer);
-// 	struct dwc_otg_xfer *next;
 
 	DPRINTF("xfer=%p\n", xfer);
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	dwc_otg_xfer_end(xfer);
-	/* dequeue transfer and start next transfer */
-// 	next = TAILQ_FIRST(&sc->sc_xferhead);
-// 	if (next)
-// 		TAILQ_REMOVE(&sc->sc_xferhead, next, xnext);
-
 }
 
 /***********************************************************************/
@@ -1372,10 +1365,7 @@ dwc_otg_device_bulk_start(usbd_xfer_handle xfer)
 	struct dwc_otg_xfer *dxfer = (struct dwc_otg_xfer *)xfer;
 	struct dwc_otg_softc *sc = xfer->pipe->device->bus->hci_private;
 
-	DPRINTF("\n");
-#if 0
-	printf("%s, xfer = %p\n", __func__, xfer);
-#endif
+	DPRINTF("xfer=%p\n", xfer);
 
 	mutex_enter(&sc->sc_lock);
 	xfer->status = USBD_IN_PROGRESS;
@@ -1457,7 +1447,6 @@ dwc_otg_device_intr_start(usbd_xfer_handle xfer)
 	struct dwc_otg_softc *sc = dev->bus->hci_private;
 
 	DPRINTF("\n");
-// 	printf("%s: xfer = %p\n", __func__, xfer);
 
 	mutex_enter(&sc->sc_lock);
 	xfer->status = USBD_IN_PROGRESS;
@@ -3601,7 +3590,6 @@ dwc_otg_interrupt(struct dwc_otg_softc *sc)
 			uint8_t x;
 			uint8_t y;
 
-//  			DPRINTFN(5, "SOF interrupt\n");
 			for (x = y = 0; x != sc->sc_host_ch_max; x++) {
 				if (sc->sc_chan_state[x].wait_sof != 0) {
 					if (--(sc->sc_chan_state[x].wait_sof) != 0)
@@ -4112,17 +4100,6 @@ dwc_otg_standard_done(usbd_xfer_handle xfer)
 	dxfer->td_transfer_cache = dxfer->td_transfer_first;
 	td = dxfer->td_transfer_first;
 
-	if (xfertype == UE_CONTROL) {
-		if (1 /*xfer->flags_int.control_hdr*/) {
-
-			err = dwc_otg_standard_done_sub(xfer);
-		}
-// 		xfer->aframes = 1;
-
-		if (dxfer->td_transfer_cache == NULL) {
-			goto done;
-		}
-	}
 	while (td != NULL) {
 		err = dwc_otg_standard_done_sub(xfer);
 		if (dxfer->td_transfer_cache == NULL) {
@@ -4248,10 +4225,6 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 	temp &= ~GAHBCFG_GLBLINTRMSK;
 	DWC_OTG_WRITE_4(sc, DOTG_GAHBCFG, temp);
 
-	/* --------------------------------*/
-	/*
-	 * taken from dwc_otg_core_init
-	 */
 	temp = 	DWC_OTG_READ_4(sc, DOTG_GUSBCFG);
 	temp &= ~GUSBCFG_ULPIEXTVBUSDRV;
 	temp &= ~GUSBCFG_TERMSELDLPULSE;
@@ -4262,14 +4235,14 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 
 	/* --------------------------------*/
 
-	DWC_OTG_WRITE_4(sc, DOTG_PCGCCTL, 0);	/* dwc_otg_core_host_init */
+	DWC_OTG_WRITE_4(sc, DOTG_PCGCCTL, 0);
 
 	temp = 0;
 // 	temp = DWC_OTG_READ_4(sc, DOTG_HCFG);
 	temp &= ~HCFG_FSLSPCLKSEL_MASK;
 	temp |= 1; /* 30 or 60 Mhz */
 
-	DWC_OTG_WRITE_4(sc, DOTG_HCFG, temp);	/* init_fslspclksel */
+	DWC_OTG_WRITE_4(sc, DOTG_HCFG, temp);
 
 	/* enable PORT reset */
 	temp = DWC_OTG_READ_4(sc, DOTG_HPRT);
