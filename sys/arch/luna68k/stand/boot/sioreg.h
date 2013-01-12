@@ -1,4 +1,4 @@
-/*	$NetBSD: sioreg.h,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: sioreg.h,v 1.2 2013/01/12 07:04:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -153,13 +153,14 @@ struct siodevice {
 #define WR4_BAUD24	0xc0	/* Clock Rate (2400 BAUD) */
 
 #define WR5_TXCRC	0x01	/* Tx CRC Check */
-#define WR5_REQSND	0x02	/* Request To Send (LOW) */
+#define WR5_RTS		0x02	/* Request To Send     [RTS] */
 #define WR5_TXENBL	0x08	/* Transmit Enable */
 #define WR5_BREAK	0x10	/* Send Break */
 #define WR5_TX5BIT	0x00	/* Tx Bits/Character: 5 Bits */
 #define WR5_TX7BIT	0x20	/* Tx Bits/Character: 7 Bits */
 #define WR5_TX6BIT	0x40	/* Tx Bits/Character: 6 Bits */
 #define WR5_TX8BIT	0x60	/* Tx Bits/Character: 8 Bits */
+#define WR5_DTR		0x80	/* Data Terminal Ready [DTR] */
 
 #define RR0_RXAVAIL	0x01	/* Rx Character Available */
 #define RR0_INTRPEND	0x02	/* Interrupt Pending (Channel-A Only) */

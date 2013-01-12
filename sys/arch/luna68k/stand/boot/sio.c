@@ -1,4 +1,4 @@
-/*	$NetBSD: sio.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: sio.c,v 1.2 2013/01/12 07:04:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -220,7 +220,7 @@ sioinit(void)
 	sioreg(REG(0, WR0), WR0_RSTINT);		/* Reset E/S Interrupt */
 	sioreg(REG(0, WR4), WR4_BAUD96 | WR4_STOP1 | WR4_NPARITY);	/* Tx/Rx */
 	sioreg(REG(0, WR3), WR3_RX8BIT | WR3_RXENBL);		/* Rx */
-	sioreg(REG(0, WR5), WR5_TX8BIT | WR5_TXENBL);		/* Tx */
+	sioreg(REG(0, WR5), WR5_TX8BIT | WR5_TXENBL | WR5_DTR | WR5_RTS);		/* Tx */
 	sioreg(REG(0, WR0), WR0_RSTINT);		/* Reset E/S Interrupt */
 	sioreg(REG(0, WR1), WR1_RXALLS);		/* Interrupted All Char. */
 
