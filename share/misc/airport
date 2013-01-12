@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.45 2013/01/12 13:23:33 asau Exp $
+#	$NetBSD: airport,v 1.46 2013/01/12 13:27:01 asau Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -3990,7 +3990,7 @@ KUB:Kuala Belait, Brunei
 KUC:Kuria, Kiribati
 KUD:Kudat, Sabah, Malaysia
 KUE:Kukundu, Solomon Islands
-KUF:Samara, Russia
+KUF:Samara (Kurumoch), Russia
 KUG:Kubin Island, Australia
 KUH:Kushiro, Japan
 KUI:Kawau Island, New Zealand
