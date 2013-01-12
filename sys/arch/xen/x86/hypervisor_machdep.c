@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.24 2012/12/28 06:29:56 cherry Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.25 2013/01/12 17:39:46 bouyer Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.24 2012/12/28 06:29:56 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.25 2013/01/12 17:39:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ stipending(void)
 	 */
 
 	while (vci->evtchn_upcall_pending) {
-		x86_disable_intr();
+		cli();
 
 		vci->evtchn_upcall_pending = 0;
 
@@ -195,7 +195,7 @@ stipending(void)
 		    s->evtchn_pending, s->evtchn_mask,
 		    evt_set_pending, &ret);
 
-		x86_enable_intr();
+		sti();
 	}
 
 #if 0
@@ -283,82 +283,6 @@ do_hypervisor_callback(struct intrframe *regs)
 		    level, ci->ci_ilevel, ci->ci_ipending);
 #endif
 }
-
-/* Iterate through pending events and call the event handler */
-struct splargs {
-	int ipl;
-	struct intrframe *regs;
-};
-
-static inline void
-evt_do_iplcallback(unsigned int evtch, unsigned int l1i,
-    unsigned int l2i, void *args)
-{
-	KASSERT(args != NULL);
-	struct splargs *sargs = args;
-	
-	struct intrhand *ih;
-	int	(*ih_fun)(void *, void *);
-
-	int ipl = sargs->ipl;
-	struct cpu_info *ci = curcpu();
-	struct intrframe *regs = sargs->regs;
-
-	KASSERT(evtsource[evtch] != 0);
-
-	KASSERT(ci->ci_ilevel == ipl);
-
-	KASSERT(x86_read_psl() != 0);
-	x86_enable_intr();
-	mutex_spin_enter(&evtlock[evtch]);
-	ih = evtsource[evtch]->ev_handlers;
-	while (ih != NULL) {
-		if (ih->ih_cpu != ci) { /* Skip non-local handlers */
-			ih = ih->ih_evt_next;
-			continue;
-		}
-		if (ih->ih_level == ipl) {
-			KASSERT(x86_read_psl() == 0);
-			x86_disable_intr();
-			ci->ci_ilevel = ih->ih_level;
-			x86_enable_intr();
-			ih_fun = (void *)ih->ih_fun;
-			ih_fun(ih->ih_arg, regs);
-			if (ci->ci_ilevel != ipl) {
-			    printf("evtchn_do_event: "
-				   "handler %p didn't lower "
-				   "ipl %d %d\n",
-				   ih_fun, ci->ci_ilevel, ipl);
-			}
-		}
-		ih = ih->ih_evt_next;
-	}
-	mutex_spin_exit(&evtlock[evtch]);
-	hypervisor_enable_event(evtch);
-	x86_disable_intr();
-
-	KASSERT(ci->ci_ilevel == ipl);
-}
-
-/*
- * Iterate through all pending interrupt handlers at 'ipl', on current
- * cpu.
- */
-void
-hypervisor_do_iplpending(unsigned int ipl, void *regs)
-{
-	struct cpu_info *ci;
-	struct splargs splargs = {
-		.ipl = ipl,
-		.regs = regs};
-	
-	ci = curcpu();
-
-	evt_iterate_bits(&ci->ci_isources[ipl]->ipl_evt_mask1,
-	    ci->ci_isources[ipl]->ipl_evt_mask2, NULL, 
-	    evt_do_iplcallback, &splargs);
-}
-
 
 void
 hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
@@ -513,6 +437,13 @@ hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 	KASSERT(ci->ci_isources[ipl] != NULL);
 	ci->ci_isources[ipl]->ipl_evt_mask1 |= 1UL << l1;
 	ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1UL << l2;
+	if (__predict_false(ci != curcpu())) {
+		if (xen_send_ipi(ci, XEN_IPI_HVCB)) {
+			panic("hypervisor_set_ipending: "
+			    "xen_send_ipi(cpu%d, XEN_IPI_HVCB) failed\n",
+			    (int) ci->ci_cpuid);
+		}
+	}
 }
 
 void
