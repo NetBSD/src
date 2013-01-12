@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.633 2013/01/12 20:04:02 jakllsch Exp $
+$NetBSD: usbdevs,v 1.634 2013/01/12 21:34:48 jakllsch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2896,9 +2896,9 @@ product SMK MCE_IR		0x031d	eHome Infrared Transceiver
 product SMSC 2020HUB		0x2020	USB Hub
 product SMSC SMSC9500		0x9500	SMSC9500 Ethernet device
 product SMSC SMSC9505		0x9505	SMSC9505 Ethernet device
-product SMSC SMSC9500A		0x9e00	SMSC9500A Ethernet device
-product SMSC SMSC9505A		0x9e01	SMSC9505A Ethernet device
-product SMSC SMSC9512_14	0xec00	SMSC9512/9514 USB Hub & Ethernet device
+product SMSC SMSC9512		0x9512	SMSC9512 USB Hub
+product SMSC LAN9530		0x9530	LAN9530 Ethernet Device
+product SMSC LAN9730		0x9730	LAN9730 Ethernet Device
 product SMSC SMSC9500_SAL10	0x9900	SMSC9500 Ethernet device (SAL10)
 product SMSC SMSC9505_SAL10	0x9901	SMSC9505 Ethernet device (SAL10)
 product SMSC SMSC9500A_SAL10	0x9902	SMSC9500A Ethernet device (SAL10)
@@ -2909,9 +2909,10 @@ product SMSC SMSC9505A_HAL	0x9906	SMSC9505A Ethernet Device (HAL)
 product SMSC SMSC9500_ALT	0x9907	SMSC9500 Ethernet Device
 product SMSC SMSC9500A_ALT	0x9908	SMSC9500A Ethernet Device
 product SMSC SMSC9512_14_ALT	0x9909	SMSC9512 Hub & Ethernet Device
-product SMSC LAN9530		0x9530	LAN9530 Ethernet Device
-product SMSC LAN9730		0x9730	LAN9730 Ethernet Device
+product SMSC SMSC9500A		0x9e00	SMSC9500A Ethernet device
+product SMSC SMSC9505A		0x9e01	SMSC9505A Ethernet device
 product SMSC LAN89530		0x9e08	LAN89530
+product SMSC SMSC9512_14	0xec00	SMSC9512/9514 USB Hub & Ethernet device
 
 /* SOHOware products */
 product SOHOWARE NUB100		0x9100	10/100 USB Ethernet
