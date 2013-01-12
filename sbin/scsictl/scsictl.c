@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.35 2012/11/03 19:26:52 jakllsch Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.36 2013/01/12 02:50:09 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.35 2012/11/03 19:26:52 jakllsch Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.36 2013/01/12 02:50:09 jakllsch Exp $");
 #endif
 
 
@@ -588,7 +588,7 @@ device_format(int argc, char *argv[])
 			scsireq_t req;
 			struct scsi_test_unit_ready tcmd;
 
-			memset(&tcmd, 0, sizeof(cmd));
+			memset(&tcmd, 0, sizeof(tcmd));
 			tcmd.opcode = SCSI_TEST_UNIT_READY;
 
 			memset(&req, 0, sizeof(req));
