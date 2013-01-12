@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.44 2013/01/12 13:19:34 asau Exp $
+#	$NetBSD: airport,v 1.45 2013/01/12 13:23:33 asau Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -8215,7 +8215,7 @@ VNS:Varanasi, India
 VNW:Van Wert County Airport, OH, USA
 VNX:Vilanculos, Mozambique
 VNY:Los Angeles (Van Nuys Airport), CA, USA
-VOG:Volgograd (Stalingrad), Russia
+VOG:Volgograd (Gumrak, Stalingrad), Russia
 VOH:Vohemar, Madagascar
 VOI:Voinjama, Liberia
 VOK:Camp Douglas (Volk Field), WI, USA
