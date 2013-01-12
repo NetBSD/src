@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.43 2013/01/11 20:42:20 mbalmer Exp $
+#	$NetBSD: airport,v 1.44 2013/01/12 13:19:34 asau Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -2650,7 +2650,7 @@ GOE:Gonaila, Papua New Guinea
 GOF:San Angelo (Goodfellow AFB), TX, USA
 GOH:Godthab, Nuuk, Greenland
 GOI:Goa, India
-GOJ:Nizhniy Novgorod (Sormavo), Russia
+GOJ:Nizhniy Novgorod (Sormovo), Russia
 GOK:Guthrie Municipal Airport, OK, USA
 GOL:Gold Beach Municipal Airport, OR, USA
 GOM:Goma, Dem. Rep. of the Congo
