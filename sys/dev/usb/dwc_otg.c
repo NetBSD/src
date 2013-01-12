@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.14 2013/01/12 16:18:42 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.15 2013/01/12 16:32:16 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.14 2013/01/12 16:18:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.15 2013/01/12 16:32:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,6 +216,7 @@ Static void		dwc_otg_timeout(void *);
 Static void		dwc_otg_timeout_task(void *);
 
 Static void		dwc_otg_xfer_setup(usbd_xfer_handle);
+Static void		dwc_otg_xfer_start(usbd_xfer_handle);
 Static void		dwc_otg_xfer_end(usbd_xfer_handle);
 
 // static dwc_otg_cmd_t dwc_otg_setup_rx;
@@ -1285,9 +1286,7 @@ dwc_otg_device_ctrl_start(usbd_xfer_handle xfer)
 
 	mutex_enter(&sc->sc_lock);
 	xfer->status = USBD_IN_PROGRESS;
-
-	dwc_otg_start_standard_chain(xfer);
-
+	dwc_otg_xfer_start(xfer);
 	mutex_exit(&sc->sc_lock);
 
 	if (sc->sc_bus.use_polling)
@@ -1362,18 +1361,13 @@ dwc_otg_device_bulk_transfer(usbd_xfer_handle xfer)
 Static usbd_status
 dwc_otg_device_bulk_start(usbd_xfer_handle xfer)
 {
-	struct dwc_otg_xfer *dxfer = (struct dwc_otg_xfer *)xfer;
 	struct dwc_otg_softc *sc = xfer->pipe->device->bus->hci_private;
 
 	DPRINTF("xfer=%p\n", xfer);
 
 	mutex_enter(&sc->sc_lock);
 	xfer->status = USBD_IN_PROGRESS;
-	if (sc->sc_bus.use_polling) {
-		dwc_otg_start_standard_chain(xfer);
-	} else {
-		workqueue_enqueue(sc->sc_wq, (struct work *)&dxfer->work, NULL);
-	}
+	dwc_otg_xfer_start(xfer);
 	mutex_exit(&sc->sc_lock);
 
 	if (sc->sc_bus.use_polling)
@@ -1444,7 +1438,6 @@ dwc_otg_device_intr_transfer(usbd_xfer_handle xfer)
 Static usbd_status
 dwc_otg_device_intr_start(usbd_xfer_handle xfer)
 {
-	struct dwc_otg_xfer *dxfer = (struct dwc_otg_xfer *)xfer;
 	struct dwc_otg_pipe *dpipe = (struct dwc_otg_pipe *)xfer->pipe;
 	usbd_device_handle dev = dpipe->pipe.device;
 	struct dwc_otg_softc *sc = dev->bus->hci_private;
@@ -1453,11 +1446,7 @@ dwc_otg_device_intr_start(usbd_xfer_handle xfer)
 
 	mutex_enter(&sc->sc_lock);
 	xfer->status = USBD_IN_PROGRESS;
-	if (sc->sc_bus.use_polling) {
-		dwc_otg_start_standard_chain(xfer);
-	} else {
-		workqueue_enqueue(sc->sc_wq, (struct work *)&dxfer->work, NULL);
-	}
+	dwc_otg_xfer_start(xfer);
 	mutex_exit(&sc->sc_lock);
 
 	if (sc->sc_bus.use_polling)
@@ -1499,8 +1488,6 @@ dwc_otg_device_intr_close(usbd_pipe_handle pipe)
 Static void
 dwc_otg_device_intr_done(usbd_xfer_handle xfer)
 {
-	struct dwc_otg_xfer *dxfer = (struct dwc_otg_xfer *)xfer;
-	struct dwc_otg_softc *sc = xfer->pipe->device->bus->hci_private;
 	DPRINTF("\n");
 
 #if 0
@@ -1511,16 +1498,10 @@ dwc_otg_device_intr_done(usbd_xfer_handle xfer)
 		/* XXX JDM */
 		dwc_otg_xfer_end(xfer);
 		dwc_otg_xfer_setup(xfer);
-
+		dwc_otg_setup_intr_chain(xfer);
 		xfer->actlen = 0;
 		xfer->status = USBD_IN_PROGRESS;
-		dwc_otg_setup_intr_chain(xfer);
-		if (sc->sc_bus.use_polling) {
-			dwc_otg_start_standard_chain(xfer);
-		} else {
-			workqueue_enqueue(sc->sc_wq,
-			    (struct work *)&dxfer->work, NULL);
-		}
+		dwc_otg_xfer_start(xfer);
 	} else {
 		dwc_otg_xfer_end(xfer);
 	}
@@ -4443,6 +4424,23 @@ dwc_otg_xfer_setup(usbd_xfer_handle xfer)
 
 done:
 	dxfer->td_start[0] = last_obj;
+}
+
+Static void
+dwc_otg_xfer_start(usbd_xfer_handle xfer)
+{
+ 	struct dwc_otg_xfer *dxfer = (struct dwc_otg_xfer *)xfer;
+	struct dwc_otg_pipe *dpipe = (struct dwc_otg_pipe *)xfer->pipe;
+	struct dwc_otg_softc *sc = dpipe->pipe.device->bus->hci_private;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	if (sc->sc_bus.use_polling) {
+		dwc_otg_start_standard_chain(xfer);
+	} else {
+		workqueue_enqueue(sc->sc_wq,
+		    (struct work *)&dxfer->work, NULL);
+	}
 }
 
 Static void
