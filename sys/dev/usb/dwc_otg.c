@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.12 2013/01/12 12:31:06 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.13 2013/01/12 12:41:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.12 2013/01/12 12:31:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.13 2013/01/12 12:41:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4085,9 +4085,6 @@ Static void
 dwc_otg_standard_done(usbd_xfer_handle xfer)
 {
 	struct dwc_otg_xfer *dxfer = DWC_OTG_XFER2DXFER(xfer);
-	struct dwc_otg_pipe *dpipe = (struct dwc_otg_pipe *)xfer->pipe;
-	usb_endpoint_descriptor_t *ed = dpipe->pipe.endpoint->edesc;
-	uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 
 	struct dwc_otg_td *td;
 	usbd_status err = 0;
