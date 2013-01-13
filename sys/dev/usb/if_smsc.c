@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.2 2013/01/12 20:06:47 jakllsch Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.3 2013/01/13 08:05:30 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -273,9 +273,10 @@ smsc_miibus_readreg(device_t dev, int phy, int reg)
 		smsc_warn_printf(sc, "MII read timeout\n");
 
 	smsc_read_reg(sc, SMSC_MII_DATA, &val);
-	smsc_unlock_mii(sc);
 
 done:
+	smsc_unlock_mii(sc);
+
 	return (val & 0xFFFF);
 }
 
