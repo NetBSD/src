@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.22 2013/01/13 14:46:21 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.23 2013/01/13 15:21:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.22 2013/01/13 14:46:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.23 2013/01/13 15:21:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3389,9 +3389,16 @@ dwc_otg_interrupt(struct dwc_otg_softc *sc)
 	status = DWC_OTG_READ_4(sc, DOTG_GINTSTS);
 	DWC_OTG_WRITE_4(sc, DOTG_GINTSTS, status);
 
+	for (size_t i = 0; i < 32; i++) {
+		if (status & (1<<i)) {
+			DOTG_EVCNT_INCR(sc->sc_ev_intr_bit[i]);
+		}
+	}
+
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	if (status & GINTSTS_USBRST) {
 		DPRINTF("GINTSTS_USBRST\n");
+
 		/* set correct state */
 		sc->sc_flags.status_device_mode = 1;
 		sc->sc_flags.status_bus_reset = 0;
@@ -4112,6 +4119,18 @@ dwc_otg_device_done(usbd_xfer_handle xfer, usbd_status error)
 	usb_schedsoftintr(&sc->sc_bus);
 }
 
+static const char * const intnames[32] = {
+	"curmod",	"modemis",	"otgint",	"sof",
+	"rxflvl",	"nptxfemp",	"ginnakeff",	"goutnakeff",
+	"ulpickint",	"i2cint",	"erlysusp",	"usbsusp",
+	"usbrst",	"enumdone",	"isooutdrop",	"eopf",
+	"restore_done",	"epmis",	"iepint",	"oepint",
+	"incompisoin",	"incomplp",	"fetsusp",	"resetdet",
+	"prtint",	"hchint",	"ptxfemp",	"lpm",
+	"conidstschng",	"disconnint",	"sessreqint",	"wkupint"
+};
+
+
 usbd_status
 dwc_otg_init(struct dwc_otg_softc *sc)
 {
@@ -4165,6 +4184,12 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 	    NULL, xname, "xfer pool get");
 	evcnt_attach_dynamic(&sc->sc_ev_xferpoolput, EVCNT_TYPE_MISC,
 	    NULL, xname, "xfer pool put");
+
+	for (size_t i = 0; i < 32; i++) {
+		evcnt_attach_dynamic(&sc->sc_ev_intr_bit[i], EVCNT_TYPE_INTR,
+		    NULL, xname, intnames[i]);
+	}	
+
 #endif
 
 	temp = DWC_OTG_READ_4(sc, DOTG_GUSBCFG);
