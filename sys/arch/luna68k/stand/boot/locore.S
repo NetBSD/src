@@ -516,6 +516,7 @@ ENTRY_NOPROFILE(lev2intr)
 ENTRY_NOPROFILE(lev3intr)
 	clrw	%sp@-
 	moveml	#0xC0C0,%sp@-
+	jbsr	_C_LABEL(lance_intr)
 	moveml	%sp@+,#0x0303
 	addql	#2,%sp
 	jra	_ASM_LABEL(rei)

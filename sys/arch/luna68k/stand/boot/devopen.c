@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 2013/01/13 14:10:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -101,6 +101,13 @@ devopen(struct open_file *f, const char *fname, char **file)
 	}
 
 	file_system[0] = file_system_ufs[0];
+#ifdef SUPPORT_ETHERNET
+	if (strcmp(dp->dv_name, "le") == 0) {
+		/* XXX mixing local fs_ops on netboot could be troublesome */
+		file_system[0] = file_system_nfs[0];
+	}
+#endif
+
 	f->f_dev = dp;
 
 	return 0;
