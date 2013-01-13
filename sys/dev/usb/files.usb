@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.126 2013/01/09 23:02:59 skrll Exp $
+#	$NetBSD: files.usb,v 1.127 2013/01/13 01:15:02 jakllsch Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -235,6 +235,11 @@ file	dev/usb/uyap.c			uyap
 device	udsbr: radiodev
 attach	udsbr at usbdevif
 file	dev/usb/udsbr.c			udsbr
+
+# Silicon Labs USB radio module (FM)
+device	slurm: radiodev
+attach	slurm at usbifif
+file	dev/usb/slurm.c			slurm
 
 # TEMPerHUM HID
 device	uthum: hid, sysmon_envsys
