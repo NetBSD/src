@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkimage,v 1.3 2012/02/29 04:49:50 agc Exp $
+# $NetBSD: mkimage,v 1.4 2013/01/13 20:57:18 christos Exp $
 
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -70,6 +70,12 @@ next_avail ()
 
 # find the size of the gzipped files in a .tgz archive
 sizeone() {
+	if [ ! -f "$1" ]
+	then
+		echo "$PROG: Missing set $1" 1>&2
+		echo 0
+		return;
+	fi
         case "$1" in 
         *.tgz|*.tar.gz)
                 tar tvzf "$1" | awk '{ tot += $5 } END { print tot }'
@@ -83,31 +89,66 @@ sizeone() {
         esac
 }
 
-bar="==="
-custom=custom
-h=usermode1.$(uname -n)
-image=usermode.img
-overhead=8 # in MB
-sets="base etc modules"
-setsdir=/usr/build/release/$(uname -m)/binary/sets
-size=0	# in MB
-specialdirs="/kern /proc"
-usermodedirs="/var.cow /etc.cow /root.cow /pkgs"
-sudo="sudo"
+usage() {
+	cat << EOF 1>&2
+Usage: $PROG [-S <setsdir>] [-c <custom-files-dir>] [-h <host-arch>] [-s <size>]
+EOF
+exit 1
+}
 
-while [ $# -gt 0 ]; do
-	case "$1" in
-	-S)	setsdir=$2; shift ;;
-	-c)	custom=$2; shift ;;
-	-h)	h=$2; shift ;;
-	-s)	size=$2; shift ;;
-	-x)	set -x ;;
-	*)	break ;;
+finish() {
+    cleanup
+    ${sudo} umount ${mnt}
+    ${sudo} vnconfig -u ${vnddev}
+}
+
+trap finish 0 1 2 3 15
+DIR="$(dirname "$0")"
+PROG="$(basename "$0")"
+bar="==="
+sudo=
+mnt="/tmp/image.$$"
+src="/usr/src"
+obj="/usr/obj"
+
+# First pass for options to get the host
+OPTS="S:c:h:s:x"
+while getopts "$OPTS" f
+do
+	case $f in
+	h)	h="$OPTARG";;
+	*)	;;
 	esac
-	shift
 done
 
-if [ $# -gt 0 ]; then
+if [ -z "$h" ]
+then
+	usage
+fi
+
+if [ ! -f "${DIR}/${h}.conf" ]
+then
+	echo $PROG: ${DIR}/${h}.conf is not present 1>&2
+	exit 1
+fi
+
+. "${DIR}/${h}.conf"
+
+OPTIND=1
+while getopts "$OPTS" f
+do
+	case $f in
+	S)	setsdir="$OPTARG";;
+	c)	custom="$OPTARG";;
+	h)	;;
+	s)	size="$OPTARG";;
+	x)	set -x;;
+	*)	;;
+	esac
+done
+
+shift $(( "$OPTIND" - 1 ))
+if [ -n "$1" ]; then
 	# take the next argument as being the image name
 	image="$1"
 	shift
@@ -115,69 +156,52 @@ fi
 
 total=0
 for s in ${sets}; do
-	total=$(expr ${total} + $(sizeone ${setsdir}/${s}.tgz))
+	one="$(sizeone ${setsdir}/${s}.tgz)"
+	total=$(( ${total} +  ${one} ))
 done
 # calculate size of custom files
 custsize=0
 if [ -d "${custom}" ]; then
 	custsize=$(ls -lR "${custom}" | awk 'NF == 9 { tot += $5 } END { print tot }')
 fi
-total=$(expr \( \( ${total} + ${custsize} \) / 1000000 \) + ${overhead})
+total=$(( ( ( ${total} + ${custsize} ) / 1000000 ) + ${overhead} ))
 if [ $size -eq 0 ]; then
         # auto-size the pkgs fs
         size=${total}
 else
         # check that we've been given enough space
         if [ ${total} -gt ${size} ]; then
-                echo "File system size given as ${size} MB, but it needs ${total} MB" >&2
+                echo "$PROG: Given size is ${size} MB, but we need ${total} MB" >&2
                 exit 1
         fi
 fi
 
 echo "${bar} making a new ${size} MB image in ${image} ${bar}"
-dd if=/dev/zero of=${image} bs=1m count=${size}
+dd if=/dev/zero of=${image} bs=1m count=${size} conv=sparse
 
 vnddev=$(next_avail vnd)
 echo "${bar} mounting image via vnd ${vnddev} ${bar}"
 ${sudo} vnconfig ${vnddev} ${image}
-${sudo} newfs /dev/r${vnddev}a
-${sudo} mount /dev/${vnddev}a /mnt
+${sudo} mkdir -p ${mnt}
+make_filesystems
+
+${sudo} mkdir -p ${mnt}/etc ${mnt}/dev
 
 echo "${bar} installing sets ${bar}"
-(cd /mnt &&
+(cd ${mnt} &&
 	for s in ${sets}; do
-		echo ${s}
-		${sudo} tar xpzf ${setsdir}/${s}.tgz
+		if [ -f "${s}" ]; then
+			echo ${s}
+			${sudo} tar xpzf ${setsdir}/${s}.tgz
+		fi
 	done
 )
 
 echo "${bar} performing customisations ${bar}"
-${sudo} rm -f /mnt/etc/motd
 
-tmp=/tmp/usermode.$$
-cat > ${tmp} << EOF
-# NetBSD/usermode /etc/fstab
-/dev/ld0a       /               ffs     ro              1 1
-/dev/ld1a	/pkgs		ffs	ro		1 2
-kernfs          /kern           kernfs  rw
-ptyfs           /dev/pts        ptyfs   rw
-procfs          /proc           procfs  rw
-# mount /root as tmpfs on top of existing dir
-tmpfs           /root.cow       tmpfs   rw,-s2M         0 0
-/root.cow       /root           union   rw,hidden       0 0
-# mount /etc as tmpfs on top of existing dir
-tmpfs           /etc.cow        tmpfs   rw,-s12M        0 0
-/etc.cow        /etc            union   rw,hidden       0 0
-# mount /var as tmpfs on top of existing dir
-tmpfs           /var.cow        tmpfs   rw,-s32M         0 0
-/var.cow        /var            union   rw,hidden       - -
-tmpfs           /tmp            tmpfs   rw,-s32M        0 0
-/dev/cd0a       /cdrom          cd9660  ro,noauto
-EOF
-${sudo} mv ${tmp} /mnt/etc/fstab
+make_fstab
 
-cat > ${tmp} << EOF
-#       $NetBSD: mkimage,v 1.3 2012/02/29 04:49:50 agc Exp $
+${sudo} cat > ${mnt}/etc/rc.conf << EOF
 #
 # see rc.conf(5) for more information.
 #
@@ -196,48 +220,19 @@ fi
 #
 rc_configured=YES
 
-# make sure we have the right rw filesystem at boot
-critical_filesystems_local="/var.cow /var /etc.cow /etc /root.cow /root"
-
-# Add local overrides below
-#
-dhcpcd=YES
-sshd=YES
-
 hostname=${h}
+
 EOF
-${sudo} mv ${tmp} /mnt/etc/rc.conf
 
-echo "${bar} making extra directories ${bar}"
-for d in ${usermodedirs}; do
-	${sudo} mkdir -p /mnt/${d}
-done
+customize
+
 for d in ${specialdirs}; do
-	${sudo} mkdir -p /mnt/${d}
+	${sudo} mkdir -p ${mnt}/${d}
 done
 
-echo "${bar} customising /var/tmp ${bar}"
-${sudo} rm -rf /mnt/var/tmp
-(cd /mnt/var && ${sudo} ln -s /tmp tmp)
-
-# package-related stuff
-(cat /mnt/etc/csh.cshrc;echo "setenv PKG_DBDIR /usr/pkg/.dbdir") > ${tmp}
-${sudo} mv ${tmp} /mnt/etc/csh.cshrc
-(cat /mnt/etc/profile;echo "export PKG_DBDIR=/usr/pkg/.dbdir") > ${tmp}
-${sudo} mv ${tmp} /mnt/etc/profile
-(echo "PKG_DBDIR=/usr/pkg/.dbdir") > ${tmp}
-${sudo} mv ${tmp} /mnt/etc/mk.conf
-(cd /mnt/usr && ${sudo} ln -s /pkgs/usr/pkg pkg)
-
-# last, customisation stage
-if [ -d ${custom} ]; then
+if [ \( -n "${custom}" \) -a \( -d "${custom}" \) ]; then
 	echo "${bar} user customisations from files in ${custom} ${bar}"
-	(cd ${custom} && ${sudo} pax -rwpe . /mnt)
+	(cd ${custom} && ${sudo} pax -rwpe . ${mnt})
 fi
-
-df /mnt
-
-${sudo} umount /mnt
-${sudo} vnconfig -u ${vnddev}
 
 exit 0
