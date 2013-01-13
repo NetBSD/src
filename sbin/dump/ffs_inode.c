@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.18 2008/07/20 01:20:22 lukem Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.19 2013/01/13 22:59:31 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.18 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.19 2013/01/13 22:59:31 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,10 +60,9 @@ __RCSID("$NetBSD: ffs_inode.c,v 1.18 2008/07/20 01:20:22 lukem Exp $");
 
 #include "dump.h"
 
-struct fs *sblock;
+static struct fs *sblock;
 
 static off_t sblock_try[] = SBLOCKSEARCH;
-off_t sblockloc;
 
 int is_ufs2;
 
