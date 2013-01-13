@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.12 2008/08/28 03:59:06 lukem Exp $	*/
+/*	$NetBSD: grep.c,v 1.12.4.1 2013/01/13 17:12:55 bouyer Exp $	*/
 
 /* grep.c - main driver file for grep.
    Copyright 1992, 1997-1999, 2000 Free Software Foundation, Inc.
@@ -1283,9 +1283,9 @@ int
 main (int argc, char **argv)
 {
   char *keys;
-  size_t keycc, oldcc, keyalloc;
+  size_t cc, keycc, oldcc, keyalloc;
   int with_filenames;
-  int opt, cc, status;
+  int opt, status;
   int default_context;
   FILE *fp;
   extern char *optarg;
