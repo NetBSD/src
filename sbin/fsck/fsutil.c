@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.23 2012/04/08 04:19:14 christos Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.24 2013/01/13 19:53:16 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.23 2012/04/08 04:19:14 christos Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.24 2013/01/13 19:53:16 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -173,6 +173,7 @@ blockcheck(const char *origname)
 	const char *newname, *raw, *cooked;
 	struct fstab *fsp;
 	int retried = 0;
+	ssize_t len;
 	char cbuf[MAXPATHLEN];
 	static char buf[MAXPATHLEN];
 
@@ -181,7 +182,13 @@ blockcheck(const char *origname)
 		perr("Can't stat `/'");
 		return (origname);
 	}
-	newname = origname;
+	len = readlink(origname, cbuf, sizeof(cbuf)-1);
+	if (len == -1) {
+		newname = origname;
+	} else {
+		cbuf[len] = '\0';
+		newname = cbuf;
+	}
 retry:
 	if (stat(newname, &stblock) < 0) {
 		perr("Can't stat `%s'", newname);
