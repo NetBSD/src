@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.229 2013/01/05 23:34:18 christos Exp $	*/
+/*	$NetBSD: ohci.c,v 1.230 2013/01/13 01:10:59 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.229 2013/01/05 23:34:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.230 2013/01/13 01:10:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1667,7 +1667,7 @@ ohci_waitintr(ohci_softc_t *sc, usbd_xfer_handle xfer)
 			ohci_intr1(sc);
 			mutex_spin_exit(&sc->sc_intr_lock);
 			if (xfer->status != USBD_IN_PROGRESS)
-				return;
+				goto done;
 		}
 	}
 
@@ -1678,6 +1678,7 @@ ohci_waitintr(ohci_softc_t *sc, usbd_xfer_handle xfer)
 
 	/* XXX should free TD */
 
+done:
 	mutex_exit(&sc->sc_lock);
 }
 
