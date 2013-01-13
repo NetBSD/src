@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.38 2012/04/07 16:44:10 christos Exp $	*/
+/*	$NetBSD: optr.c,v 1.39 2013/01/13 22:53:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.38 2012/04/07 16:44:10 christos Exp $");
+__RCSID("$NetBSD: optr.c,v 1.39 2013/01/13 22:53:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: optr.c,v 1.38 2012/04/07 16:44:10 christos Exp $");
 #include "pathnames.h"
 
 void	alarmcatch(int);
-struct fstab *allocfsent(struct fstab *);
+struct fstab *allocfsent(const struct fstab *);
 int	datesort(const void *, const void *);
 extern  char *time_string;
 extern  char default_time_string[];
@@ -319,7 +319,7 @@ quit(const char *fmt, ...)
  */
 
 struct fstab *
-allocfsent(struct fstab *fs)
+allocfsent(const struct fstab *fs)
 {
 	struct fstab *new;
 	char buf[MAXPATHLEN];

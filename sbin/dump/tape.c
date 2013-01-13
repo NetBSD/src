@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.50 2011/09/16 16:13:17 plunky Exp $	*/
+/*	$NetBSD: tape.c,v 1.51 2013/01/13 22:53:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.50 2011/09/16 16:13:17 plunky Exp $");
+__RCSID("$NetBSD: tape.c,v 1.51 2013/01/13 22:53:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ extern	const char *host;
 char	*nexttape;
 
 static	ssize_t atomic_read(int, char *, int);
-static	ssize_t atomic_write(int, char *, int);
+static	ssize_t atomic_write(int, const char *, int);
 static	void doslave(int, int);
 static	void enslave(void);
 static	void flushtape(void);
@@ -157,12 +157,12 @@ alloctape(void)
 }
 
 void
-writerec(char *dp, int isspcl)
+writerec(const char *dp, int isspcl)
 {
 
 	slp->req[trecno].dblk = (daddr_t)0;
 	slp->req[trecno].count = 1;
-	*(union u_spcl *)(*(nextblock)++) = *(union u_spcl *)dp;
+	*(union u_spcl *)(*(nextblock)++) = *(const union u_spcl *)dp;
 	if (isspcl)
 		lastspclrec = iswap64(spcl.c_tapea);
 	trecno++;
@@ -948,7 +948,7 @@ atomic_read(int fd, char *buf, int count)
  * loop until the count is satisfied (or error).
  */
 static ssize_t
-atomic_write(int fd, char *buf, int count)
+atomic_write(int fd, const char *buf, int count)
 {
 	ssize_t got, need = count;
 
