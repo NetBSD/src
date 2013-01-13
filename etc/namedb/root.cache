@@ -1,4 +1,4 @@
-;	$NetBSD: root.cache,v 1.13 2008/02/05 09:19:06 tron Exp $
+;	$NetBSD: root.cache,v 1.13.20.1 2013/01/13 17:07:29 bouyer Exp $
 ;
 ;       This file holds the information on root name servers needed to
 ;       initialize cache of Internet domain name servers
@@ -33,7 +33,8 @@ C.ROOT-SERVERS.NET.      3600000      A     192.33.4.12
 ; formerly TERP.UMD.EDU
 ;
 .                        3600000      NS    D.ROOT-SERVERS.NET.
-D.ROOT-SERVERS.NET.      3600000      A     128.8.10.90
+D.ROOT-SERVERS.NET.      3600000      A     199.7.91.13
+D.ROOT-SERVERS.NET.	 3600000      AAAA  2001:500:2D::D
 ;
 ; formerly NS.NASA.GOV
 ;
