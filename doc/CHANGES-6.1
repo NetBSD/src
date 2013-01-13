@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.72 2013/01/08 07:07:33 msaitoh Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.73 2013/01/13 18:58:59 bouyer Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8015,4 +8015,14 @@ sys/kern/uipc_syscalls.c			1.157-1.158
 
 	Prevent ktrace from being able to crash the kernel.
 	[mlelstv, ticket #778]
+
+sbin/fsck_ffs/pass1.c				1.50
+
+	Show pass1 SIGINFO output on stderr like other passes, not on stdout.
+	[riastradh, ticket #779]
+
+etc/namedb/root.cache				1.17
+
+	D.ROOT-SERVERS.NET changes IPv4 address.
+	[taca, ticket #781]
 
