@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.35 2011/01/01 16:56:18 jym Exp $
+#	$NetBSD: Makefile.mdset,v 1.36 2013/01/13 14:43:23 mlelstv Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -69,7 +69,10 @@ _MAKEFILE_MDSET_=1
 
 .include <bsd.kernobj.mk>
 
+ALL_KERNELS?= "+"
 .for _K _I _F in ${MDSETTARGETS}			# {
+.for currentsel in ${ALL_KERNELS}			# {
+.if ${currentsel} == "+" || ${_K} == ${currentsel}
 
 _KERNEL:=${_K}			# (work around obscure issue in make(1))
 .if (${_KERNEL:M*/*} != "")
@@ -166,6 +169,8 @@ ${_KERNEL.${_K}.${_F}}.gz: ${_KERNEL.${_K}.${_F}}
 	gzip -9nc ${.ALLSRC} > ${.TARGET}
 .endif							# }
 
+.endif
+.endfor							# }
 .endfor							# }
 
 CLEANFILES+=	${KERNELS} ${KERNELSYMS}
@@ -174,6 +179,7 @@ realall: ${KERNELS}
 
 .if defined(MDSET_RELEASEDIR)
 release:: check_RELEASEDIR .WAIT ${KERNELS}
+	test -z "${KERNELS}" || \
 	${RELEASE_INSTALL} ${KERNELS} ${KERNELSYMS} \
 	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/${MDSET_RELEASEDIR}
 .endif
