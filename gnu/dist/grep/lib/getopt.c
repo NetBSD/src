@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.1.1.1 2003/01/26 23:15:12 wiz Exp $	*/
+/*	$NetBSD: getopt.c,v 1.1.1.1.56.1 2013/01/13 19:08:05 bouyer Exp $	*/
 
 /* Getopt for GNU.
    NOTE: The canonical source of this file is maintained with the GNU
@@ -431,7 +431,7 @@ _getopt_initialize (argc, argv, optstring)
 	  else
 	    {
 	      const char *orig_str = __getopt_nonoption_flags;
-	      int len = nonoption_flags_max_len = strlen (orig_str);
+	      size_t len = nonoption_flags_max_len = strlen (orig_str);
 	      if (nonoption_flags_max_len < argc)
 		nonoption_flags_max_len = argc;
 	      __getopt_nonoption_flags =
