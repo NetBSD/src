@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkimage,v 1.5 2013/01/13 20:58:38 christos Exp $
+# $NetBSD: mkimage,v 1.6 2013/01/13 20:59:22 christos Exp $
 
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -143,7 +143,7 @@ do
 	h)	;;
 	s)	size="$OPTARG";;
 	x)	set -x;;
-	*)	;;
+	*)	usage;;
 	esac
 done
 
