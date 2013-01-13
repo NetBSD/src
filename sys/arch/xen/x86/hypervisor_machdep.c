@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.26 2013/01/12 21:09:10 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.27 2013/01/13 21:01:05 bouyer Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.26 2013/01/12 21:09:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.27 2013/01/13 21:01:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,11 +87,11 @@ static void update_p2m_frame_list_list(void);
 // #define EARLY_DEBUG_EVENT
 
 /* callback function type */
-typedef void (*iterate_func_t)(struct cpu_info *, unsigned int,
-			       unsigned int, unsigned int, void *);
+typedef void (*iterate_func_t)(unsigned int, unsigned int,
+			       unsigned int, void *);
 
 static inline void
-evt_iterate_bits(struct cpu_info *ci, volatile unsigned long *pendingl1,
+evt_iterate_bits(volatile unsigned long *pendingl1,
 		 volatile unsigned long *pendingl2, 
 		 volatile unsigned long *mask,
 		 iterate_func_t iterate_pending, void *iterate_args)
@@ -109,7 +109,7 @@ evt_iterate_bits(struct cpu_info *ci, volatile unsigned long *pendingl1,
 		l1 &= ~(1UL << l1i);
 
 		l2 = pendingl2[l1i] & (mask != NULL ? ~mask[l1i] : -1UL);
-		l2 &= ci->ci_evtmask[l1i];
+		l2 &= curcpu()->ci_evtmask[l1i];
 
 		if (mask != NULL) xen_atomic_setbits_l(&mask[l1i], l2);
 		xen_atomic_clearbits_l(&pendingl2[l1i], l2);
@@ -120,7 +120,7 @@ evt_iterate_bits(struct cpu_info *ci, volatile unsigned long *pendingl1,
 
 			port = (l1i << LONG_SHIFT) + l2i;
 
-			iterate_pending(ci, port, l1i, l2i, iterate_args);
+			iterate_pending(port, l1i, l2i, iterate_args);
 		}
 	}
 }
@@ -131,20 +131,18 @@ evt_iterate_bits(struct cpu_info *ci, volatile unsigned long *pendingl1,
  */
    
 static inline void
-evt_set_pending(struct cpu_info *ci, unsigned int port, unsigned int l1i,
+evt_set_pending(unsigned int port, unsigned int l1i,
 		unsigned int l2i, void *args)
 {
 
 	KASSERT(args != NULL);
-	KASSERT(ci != NULL);
 
 	int *ret = args;
 
 	if (evtsource[port]) {
-		hypervisor_set_ipending(evtsource[port]->ev_cpu,
-		    evtsource[port]->ev_imask, l1i, l2i);
+		hypervisor_set_ipending(evtsource[port]->ev_imask, l1i, l2i);
 		evtsource[port]->ev_evcnt.ev_count++;
-		if (*ret == 0 && ci->ci_ilevel <
+		if (*ret == 0 && curcpu()->ci_ilevel <
 		    evtsource[port]->ev_maxlevel)
 			*ret = 1;
 	}
@@ -193,7 +191,7 @@ stipending(void)
 
 		vci->evtchn_upcall_pending = 0;
 
-		evt_iterate_bits(ci, &vci->evtchn_pending_sel,
+		evt_iterate_bits(&vci->evtchn_pending_sel,
 		    s->evtchn_pending, s->evtchn_mask,
 		    evt_set_pending, &ret);
 
@@ -214,12 +212,12 @@ stipending(void)
 /* Iterate through pending events and call the event handler */
 
 static inline void
-evt_do_hypervisor_callback(struct cpu_info *ci, unsigned int port,
-			   unsigned int l1i, unsigned int l2i, void *args)
+evt_do_hypervisor_callback(unsigned int port, unsigned int l1i,
+			   unsigned int l2i, void *args)
 {
 	KASSERT(args != NULL);
-	KASSERT(ci == curcpu());
 
+	struct cpu_info *ci = curcpu();
 	struct intrframe *regs = args;
 
 #ifdef PORT_DEBUG
@@ -273,7 +271,7 @@ do_hypervisor_callback(struct intrframe *regs)
 	while (vci->evtchn_upcall_pending) {
 		vci->evtchn_upcall_pending = 0;
 
-		evt_iterate_bits(ci, &vci->evtchn_pending_sel,
+		evt_iterate_bits(&vci->evtchn_pending_sel,
 		    s->evtchn_pending, s->evtchn_mask,
 		    evt_do_hypervisor_callback, regs);
 	}
@@ -390,10 +388,9 @@ hypervisor_clear_event(unsigned int ev)
 }
 
 static inline void
-evt_enable_event(struct cpu_info *ci, unsigned int port,  
-		 unsigned int l1i, unsigned int l2i, void *args)
+evt_enable_event(unsigned int port, unsigned int l1i,
+		 unsigned int l2i, void *args)
 {
-	KASSERT(ci != NULL);
 	KASSERT(args == NULL);
 	hypervisor_enable_event(port);
 }
@@ -409,16 +406,21 @@ hypervisor_enable_ipl(unsigned int ipl)
 	 * we know that all callback for this event have been processed.
 	 */
 
-	evt_iterate_bits(ci, &ci->ci_isources[ipl]->ipl_evt_mask1,
+	evt_iterate_bits(&ci->ci_isources[ipl]->ipl_evt_mask1,
 	    ci->ci_isources[ipl]->ipl_evt_mask2, NULL, 
 	    evt_enable_event, NULL);
 
 }
 
 void
-hypervisor_set_ipending(struct cpu_info *ci, uint32_t iplmask, int l1, int l2)
+hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 {
+
+	/* This function is not re-entrant */
+	KASSERT(x86_read_psl() != 0);
+
 	int ipl;
+	struct cpu_info *ci = curcpu();
 
 	/* set pending bit for the appropriate IPLs */	
 	ci->ci_ipending |= iplmask;
