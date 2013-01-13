@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.118.10.2 2009/12/10 22:59:16 snj Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.118.10.2.2.1 2013/01/13 16:15:09 bouyer Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.118.10.2 2009/12/10 22:59:16 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.118.10.2.2.1 2013/01/13 16:15:09 bouyer Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -868,7 +868,7 @@ rf_ConfigureDebug(RF_Config_t *cfgPtr)
 	int     i;
 
 	rf_ResetDebugOptions();
-	for (i = 0; cfgPtr->debugVars[i][0] && i < RF_MAXDBGV; i++) {
+	for (i = 0; i < RF_MAXDBGV && cfgPtr->debugVars[i][0]; i++) {
 		name_p = rf_find_non_white(&cfgPtr->debugVars[i][0]);
 		white_p = rf_find_white(name_p);	/* skip to start of 2nd
 							 * word */
