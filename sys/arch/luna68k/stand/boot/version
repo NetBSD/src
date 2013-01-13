@@ -1,7 +1,8 @@
-$NetBSD: version,v 1.1 2013/01/05 17:44:24 tsutsui Exp $
+$NetBSD: version,v 1.2 2013/01/13 14:10:55 tsutsui Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
 is taken as the current.
 
 1.0:	Initial revision, based on 4.4BSD-Lite2/luna68k and NetBSD/hp300
+1.1:	Add netboot support.
