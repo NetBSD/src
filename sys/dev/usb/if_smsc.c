@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.3 2013/01/13 08:05:30 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.4 2013/01/13 08:38:04 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -642,9 +642,13 @@ smsc_start(struct ifnet *ifp)
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 	bpf_mtap(ifp, m_head);
-	//m_freem(m_head);			/* XXXNH needed? */
 
 	ifp->if_flags |= IFF_OACTIVE;
+
+	/*
+	 * Set a timeout in case the chip goes out to lunch.
+	 */
+	ifp->if_timer = 5;
 }
 
 void
@@ -1351,6 +1355,9 @@ smsc_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	s = splnet();
 
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
 			splx(s);
@@ -1364,9 +1371,7 @@ smsc_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		splx(s);
 		return;
 	}
-
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifp->if_opackets++;
 
 	m_freem(c->sc_mbuf);
 	c->sc_mbuf = NULL;
@@ -1374,7 +1379,6 @@ smsc_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		smsc_start(ifp);
 
-	ifp->if_opackets++;
 	splx(s);
 }
 
