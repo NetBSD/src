@@ -1,4 +1,4 @@
-/*	$NetBSD: dfa.c,v 1.2 2003/01/26 23:55:52 wiz Exp $	*/
+/*	$NetBSD: dfa.c,v 1.2.62.1 2013/01/13 19:08:40 bouyer Exp $	*/
 
 /* dfa.c - deterministic extended regexp routines for GNU
    Copyright 1988, 1998, 2000 Free Software Foundation, Inc.
@@ -334,9 +334,10 @@ static int hard_LC_COLLATE;	/* Nonzero if LC_COLLATE is hard.  */
 #ifdef MBS_SUPPORT
 /* These variables are used only if (MB_CUR_MAX > 1).  */
 static mbstate_t mbs;		/* Mbstate for mbrlen().  */
-static int cur_mb_len;		/* Byte length of the current scanning
-				   multibyte character.  */
-static int cur_mb_index;        /* Byte index of the current scanning multibyte
+static ssize_t cur_mb_len;	/* Byte length of the current scanning
+				   multibyte character.  Must also handle
+				   negative result from mbrlen().  */
+static ssize_t cur_mb_index;    /* Byte index of the current scanning multibyte
                                    character.
 
 				   singlebyte character : cur_mb_index = 0
@@ -369,7 +370,7 @@ static unsigned char const *buf_end;	/* refference to end in dfaexec().  */
 /* This function update cur_mb_len, and cur_mb_index.
    p points current lexptr, len is the remaining buffer length.  */
 static void
-update_mb_len_index (unsigned char const *p, int len)
+update_mb_len_index (unsigned char const *p, size_t len)
 {
   /* If last character is a part of a multibyte character,
      we update cur_mb_index.  */
@@ -2465,7 +2466,7 @@ match_mb_charset (struct dfa *d, int s, position pos, int index)
   int match;		/* Flag which represent that matching succeed.  */
   int match_len;	/* Length of the character (or collating element)
 			   with which this operator match.  */
-  int op_len;		/* Length of the operator.  */
+  size_t op_len;	/* Length of the operator.  */
   char buffer[128];
   wchar_t wcbuf[6];
 
