@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.46 2008/10/12 23:26:12 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.46.10.1 2013/01/13 16:55:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.46 2008/10/12 23:26:12 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.46.10.1 2013/01/13 16:55:29 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,8 @@ pass1(void)
 		else
 			inosused = sblock->fs_ipg;
 		if (got_siginfo) {
-			printf("%s: phase 1: cyl group %d of %d (%d%%)\n",
+			fprintf(stderr,
+			    "%s: phase 1: cyl group %d of %d (%d%%)\n",
 			    cdevname(), c, sblock->fs_ncg,
 			    c * 100 / sblock->fs_ncg);
 			got_siginfo = 0;
