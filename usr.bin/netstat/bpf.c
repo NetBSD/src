@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.8 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: bpf.c,v 1.8.6.1 2013/01/13 16:36:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -165,6 +165,7 @@ bpf_dump(char *interface)
 				printf("%s\n", p.p_comm);
 #undef BPFEXT
 		}
+		free(v);
 	} else {
                 /* XXX */
                 errx(1, "bpf_dump not implemented using kvm");
