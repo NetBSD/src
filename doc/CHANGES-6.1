@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.73 2013/01/13 18:58:59 bouyer Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.74 2013/01/13 19:03:27 bouyer Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8025,4 +8025,11 @@ etc/namedb/root.cache				1.17
 
 	D.ROOT-SERVERS.NET changes IPv4 address.
 	[taca, ticket #781]
+
+sys/arch/arm/marvell/files.marvell		1.5
+sys/arch/arm/marvell/mvsoctmr.c			1.4 - 1.7
+
+	Add support for the watchdog timer in mvsoctmr.
+	Tested on DreamPlug system.
+	[riz, ticket #770]
 
