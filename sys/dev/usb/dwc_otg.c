@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.23 2013/01/13 15:21:47 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.24 2013/01/13 15:27:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.23 2013/01/13 15:21:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.24 2013/01/13 15:27:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4324,6 +4324,8 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 	/* setup fifo */
 	if (dwc_otg_init_fifo(sc, DWC_MODE_OTG))
 		return EINVAL;
+
+	DWC_OTG_WRITE_4(sc, DOTG_GINTMSK, 0);
 
 	DWC_OTG_WRITE_4(sc, DOTG_GOTGINT, 0xffffffff);
 	DWC_OTG_WRITE_4(sc, DOTG_GINTSTS, 0xffffffff);
