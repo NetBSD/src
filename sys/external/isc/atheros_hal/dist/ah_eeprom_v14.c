@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_eeprom_v14.c,v 1.4.10.2 2009/08/07 06:43:30 snj Exp $
+ * $Id: ah_eeprom_v14.c,v 1.4.10.2.2.1 2013/01/13 16:17:56 bouyer Exp $
  */
 #include <sys/endian.h>
 #include "opt_ah.h"
@@ -270,7 +270,7 @@ v14EepromReadCTLInfo(struct ath_hal *ah, HAL_EEPROM_v14 *ee)
 	
 	HALASSERT(AR5416_NUM_CTLS <= sizeof(ee->ee_rdEdgesPower)/NUM_EDGES);
 
-	for (i = 0; ee->ee_base.ctlIndex[i] != 0 && i < AR5416_NUM_CTLS; i++) {
+	for (i = 0; i < AR5416_NUM_CTLS && ee->ee_base.ctlIndex[i] != 0; i++) {
 		for (j = 0; j < NUM_EDGES; j ++) {
 			/* XXX Confirm this is the right thing to do when an invalid channel is stored */
 			if (ee->ee_base.ctlData[i].ctlEdges[CTL_CHAIN][j].bChannel == AR5416_BCHAN_UNUSED) {
