@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.35 2013/01/13 22:53:01 dholland Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.36 2013/01/13 22:54:24 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.35 2013/01/13 22:53:01 dholland Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.36 2013/01/13 22:54:24 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ static int
 okname(const char *cp0)
 {
 	const char *cp;
-	int c;
+	unsigned char c;
 
 	for (cp = cp0; *cp; cp++) {
 		c = *cp;
