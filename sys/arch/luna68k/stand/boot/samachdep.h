@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.2 2013/01/12 07:11:59 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.3 2013/01/13 14:10:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -107,12 +107,25 @@ int fsrestore(int, char **);
 /* getline.c */
 int getline(char *, char *);
 
+/* if_le.c */
+int leinit(void *);
+
 /* init_main.c */
 extern int nplane;
 extern int machtype;
 
 /* kbd.c */
 int kbd_decode(u_char);
+
+/* lance.c */
+void *lance_attach(int, void *, void *, uint8_t *);
+void *lance_cookie(int);
+uint8_t *lance_eaddr(void *);
+bool lance_init(void *);
+int lance_get(void *, void *, size_t);
+bool lance_put(void *, void *, size_t);
+bool lance_end(void *); 
+int lance_intr(void);
 
 /* locore.S */
 extern	u_int bootdev;
