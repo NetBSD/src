@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.21 2013/01/13 01:04:46 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.22 2013/01/13 14:46:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.21 2013/01/13 01:04:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.22 2013/01/13 14:46:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3241,7 +3241,7 @@ dwc_otg_interrupt_poll(struct dwc_otg_softc *sc)
 	uint8_t ch;
 	uint32_t temp;
 	uint32_t intrs;
-	struct dwc_otg_xfer *dxfer, *tmp;
+	struct dwc_otg_xfer *dxfer;
 	uint8_t got_rx_status;
 
 // 	DPRINTF("\n");
@@ -3330,8 +3330,11 @@ repeat:
 		got_rx_status = 1;
 	}
 
-	TAILQ_FOREACH_SAFE(dxfer, &sc->sc_active, xnext, tmp) {
-		dwc_otg_xfer_do_fifo(&dxfer->xfer);
+	TAILQ_FOREACH(dxfer, &sc->sc_active, xnext) {
+		if (!dwc_otg_xfer_do_fifo(&dxfer->xfer)) {
+			/* queue has been modified */
+			goto repeat;
+		}
 	}
 
 	if (got_rx_status) {
