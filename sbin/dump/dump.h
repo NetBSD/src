@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.47 2012/05/05 21:03:02 christos Exp $	*/
+/*	$NetBSD: dump.h,v 1.48 2013/01/13 22:53:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -182,7 +182,7 @@ void	quit(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
 time_t	do_stats(void);
 void	statussig(int);
 void	timeest(void);
-time_t	unctime(char *);
+time_t	unctime(const char *);
 
 /* mapping routines */
 union	dinode;
@@ -212,7 +212,7 @@ void	close_rewind(void);
 void	dumpblock(daddr_t, int);
 void	startnewtape(int);
 void	trewind(int);
-void	writerec(char *, int);
+void	writerec(const char *, int);
 
 void	Exit(int);
 void	dumpabort(int);
