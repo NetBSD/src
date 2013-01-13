@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.4 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.4.14.1 2013/01/13 16:29:00 bouyer Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.4 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.4.14.1 2013/01/13 16:29:00 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ ubsa_request(struct ubsa_softc *sc, int portno, u_int8_t request, u_int16_t valu
 	else
 		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 
-	if (portno > UBSA_MAXCONN) {
+	if (portno >= UBSA_MAXCONN) {
 		printf("%s: ubsa_request: invalid port(%d)#\n",
 			USBDEVNAME(sc->sc_dev), portno);
 		return USBD_INVAL; 
