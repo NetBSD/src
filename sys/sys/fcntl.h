@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.44 2012/12/01 08:20:55 skrll Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.45 2013/01/13 08:15:03 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -131,7 +131,7 @@
 #define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
 			 O_ASYNC|O_SYNC|O_CREAT|O_TRUNC|O_EXCL|O_DSYNC|\
 			 O_RSYNC|O_NOCTTY|O_ALT_IO|O_NOFOLLOW|O_DIRECT|\
-			 O_DIRECTORY|O_CLOEXEC|O_NOSIGPIPE|O_SEARCH)
+			 O_DIRECTORY|O_CLOEXEC|O_NOSIGPIPE)
 
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */
@@ -141,7 +141,7 @@
 #define	FKIOCTL		0x80000000	/* kernel originated ioctl */
 /* bits settable by fcntl(F_SETFL, ...) */
 #define	FCNTLFLAGS	(FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|FRSYNC|FALTIO|\
-			 FDIRECT|FNOSIGPIPE|FSEARCH)
+			 FDIRECT|FNOSIGPIPE)
 /* bits to save after open(2) */
 #define	FMASK		(FREAD|FWRITE|FCNTLFLAGS)
 #endif /* _KERNEL */
@@ -166,7 +166,6 @@
 #define	FRSYNC		O_RSYNC		/* kernel */
 #define	FALTIO		O_ALT_IO	/* kernel */
 #define	FDIRECT		O_DIRECT	/* kernel */
-#define	FSEARCH		O_SEARCH	/* kernel */
 #endif
 
 /*
