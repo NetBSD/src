@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.5 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: lance.c,v 1.6 2013/01/13 14:24:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ bool lance_put(void *, size_t);
 
 void lance_setup(void);
 bool lance_set_initblock(struct leinit *);
-bool lacne_do_initialize(void);
+bool lance_do_initialize(void);
 
 bool lance_test(void);
 bool lance_internal_loopback_test(bool);
@@ -83,7 +83,7 @@ lance_init(void)
 	if (!lance_set_initblock(&lance_mem.leinit))
 		return false;
 
-	if (!lacne_do_initialize())
+	if (!lance_do_initialize())
 		return false;
 
 	*LANCE_RDP = LE_C0_STRT;
@@ -280,7 +280,7 @@ lance_set_initblock(struct leinit *leinit)
 }
 
 bool
-lacne_do_initialize(void)
+lance_do_initialize(void)
 {
 
 	/* Initialze LANCE */
@@ -380,7 +380,7 @@ lance_internal_loopback_test(bool crc)
 	if (!lance_set_initblock(&lance_mem.leinit))
 		return false;
 
-	if (!lacne_do_initialize())
+	if (!lance_do_initialize())
 		return false;
 
 	/* Transmit Start */
