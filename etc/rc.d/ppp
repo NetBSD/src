@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ppp,v 1.10 2012/12/13 21:51:52 wiz Exp $
+# $NetBSD: ppp,v 1.11 2013/01/13 18:47:58 prlw1 Exp $
 #
 
 # PROVIDE: ppp
@@ -14,6 +14,7 @@
 $_rc_subr_loaded . /etc/rc.subr
 
 name="ppp"
+rcvar=$name
 start_cmd="ppp_start"
 stop_cmd="ppp_stop"
 sig_stop="-INT"

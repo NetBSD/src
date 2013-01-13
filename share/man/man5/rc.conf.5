@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.154 2012/10/02 09:18:59 roy Exp $
+.\"	$NetBSD: rc.conf.5,v 1.155 2013/01/13 18:47:58 prlw1 Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -887,9 +887,17 @@ Boolean value.
 Run
 .Xr pflogd 8
 for dumping packet filter logging information to a file.
+.It Sy ppp
+A boolean. Toggles starting
+.Xr pppd 8
+on startup. See
+.Sy ppp_peers
+below.
 .It Sy ppp_peers
 A string.
 If
+.Sy ppp
+is true and
 .Sy ppp_peers
 is not empty, then
 .Pa /etc/rc.d/ppp
