@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.2 2013/01/13 17:16:06 bouyer Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.3 2013/01/13 17:58:06 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -130,4 +130,13 @@ gnu/dist/grep/src/search.c			1.4
 	variable.
 
 	[apb, ticket #1838]
+
+lib/librefuse/refuse.c				1.96 via patch
+
+	FUSE seems to allow short writes without errors but PUFFS doesn't. Work
+	around this by returning ENOSPC in case of a short write to avoid
+	protocol errors. This change is based on problem analysis provided by
+	Antti Kantee.
+	This fixes PR lib/45129 by myself.
+	[tron, ticket #1836]
 
