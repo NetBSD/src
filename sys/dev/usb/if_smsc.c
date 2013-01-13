@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.4 2013/01/13 08:38:04 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.5 2013/01/13 15:34:03 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -292,6 +292,7 @@ smsc_miibus_writereg(device_t dev, int phy, int reg, int val)
 	smsc_lock_mii(sc);
 	if (smsc_wait_for_bits(sc, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(sc, "MII is busy\n");
+		smsc_unlock_mii(sc);
 		return;
 	}
 
@@ -472,7 +473,7 @@ smsc_sethwcsum(struct smsc_softc *sc)
 	int err;
 
 	if (!ifp)
-		return (-EIO);
+		return EIO;
 
 	err = smsc_read_reg(sc, SMSC_COE_CTRL, &val);
 	if (err != 0) {
