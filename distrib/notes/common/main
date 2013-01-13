@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.493 2012/11/03 07:59:45 mbalmer Exp $
+.\"	$NetBSD: main,v 1.494 2013/01/13 00:19:41 htodd Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1181,6 +1181,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Matt Fredette Ta Mt fredette@NetBSD.org
 .It Ta Thorsten Frueauf Ta Mt frueauf@NetBSD.org
 .It Ta Castor Fu Ta Mt castor@NetBSD.org
+.It Ta Hisashi Todd Fujinaka Ta Mt htodd@NetBSD.org
 .It Ta Makoto Fujiwara Ta Mt mef@NetBSD.org
 .It Ta Ichiro Fukuhara Ta Mt ichiro@NetBSD.org
 .It Ta Quentin Garnier Ta Mt cube@NetBSD.org
