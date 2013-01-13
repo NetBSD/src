@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.74 2013/01/13 19:03:27 bouyer Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.75 2013/01/13 19:09:38 bouyer Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8032,4 +8032,18 @@ sys/arch/arm/marvell/mvsoctmr.c			1.4 - 1.7
 	Add support for the watchdog timer in mvsoctmr.
 	Tested on DreamPlug system.
 	[riz, ticket #770]
+
+gnu/dist/grep/lib/getopt.c			1.2
+gnu/dist/grep/lib/regex.c			1.2
+gnu/dist/grep/src/ansi2knr.c			1.2
+gnu/dist/grep/src/dfa.c				1.3
+gnu/dist/grep/src/grep.c			1.14
+gnu/dist/grep/src/search.c			1.4
+
+	Change several int variables to size_t, ssize_t, or ptrdiff_t.
+	This should fix the bug described in CVE-2012-5667 when an input
+	line is so long that its length cannot be stored in an int
+	variable.
+
+	[apb, ticket #780]
 
