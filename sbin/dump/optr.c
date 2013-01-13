@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.39 2013/01/13 22:53:01 dholland Exp $	*/
+/*	$NetBSD: optr.c,v 1.40 2013/01/13 23:07:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.39 2013/01/13 22:53:01 dholland Exp $");
+__RCSID("$NetBSD: optr.c,v 1.40 2013/01/13 23:07:16 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,12 +63,12 @@ __RCSID("$NetBSD: optr.c,v 1.39 2013/01/13 22:53:01 dholland Exp $");
 #include "dump.h"
 #include "pathnames.h"
 
-void	alarmcatch(int);
-struct fstab *allocfsent(const struct fstab *);
-int	datesort(const void *, const void *);
 extern  char *time_string;
 extern  char default_time_string[];
 
+static void alarmcatch(int);
+static struct fstab *allocfsent(const struct fstab *);
+static int datesort(const void *, const void *);
 static void do_timestamp(time_t, const char *);
 
 /*
@@ -144,7 +144,7 @@ char lastmsg[200];
  *	Alert the console operator, and enable the alarm clock to
  *	sleep for 2 minutes in case nobody comes to satisfy dump
  */
-void
+static void
 alarmcatch(int dummy __unused)
 {
 
@@ -318,7 +318,7 @@ quit(const char *fmt, ...)
  *	we don't actually do it
  */
 
-struct fstab *
+static struct fstab *
 allocfsent(const struct fstab *fs)
 {
 	struct fstab *new;
@@ -501,7 +501,7 @@ lastdump(char arg)
 	}
 }
 
-int
+static int
 datesort(const void *a1, const void *a2)
 {
 	const struct dumpdates *d1 = *(const struct dumpdates *const *)a1;
