@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.20 2013/01/12 23:26:06 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.21 2013/01/13 01:04:46 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.20 2013/01/12 23:26:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.21 2013/01/13 01:04:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4154,9 +4154,14 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 	    NULL, xname, "work items");
 
 	evcnt_attach_dynamic(&sc->sc_ev_tdpoolget, EVCNT_TYPE_MISC,
-	    NULL, xname, "pool get");
+	    NULL, xname, "td pool get");
 	evcnt_attach_dynamic(&sc->sc_ev_tdpoolput, EVCNT_TYPE_MISC,
-	    NULL, xname, "pool put");
+	    NULL, xname, "td pool put");
+
+	evcnt_attach_dynamic(&sc->sc_ev_xferpoolget, EVCNT_TYPE_MISC,
+	    NULL, xname, "xfer pool get");
+	evcnt_attach_dynamic(&sc->sc_ev_xferpoolput, EVCNT_TYPE_MISC,
+	    NULL, xname, "xfer pool put");
 #endif
 
 	temp = DWC_OTG_READ_4(sc, DOTG_GUSBCFG);
