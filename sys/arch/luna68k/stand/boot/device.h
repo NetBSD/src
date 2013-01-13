@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: device.h,v 1.2 2013/01/13 04:39:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -73,10 +73,7 @@
 struct driver {
 	int	(*d_init)(void *);
 	char	*d_name;
-	int	(*d_start)(void);
-	int	(*d_go)(void);
 	int	(*d_intr)(void);
-	int	(*d_done)(void);
 };
 
 struct hp_ctlr {
