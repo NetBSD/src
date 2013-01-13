@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkimage,v 1.6 2013/01/13 20:59:22 christos Exp $
+# $NetBSD: mkimage,v 1.7 2013/01/13 21:51:47 christos Exp $
 
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -107,7 +107,7 @@ DIR="$(dirname "$0")"
 PROG="$(basename "$0")"
 bar="==="
 sudo=
-mnt="/tmp/image.$$"
+mnt="${TMPDIR:-/tmp}/image.$$"
 src="/usr/src"
 obj="/usr/obj"
 
