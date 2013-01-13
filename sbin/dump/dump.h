@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.48 2013/01/13 22:53:01 dholland Exp $	*/
+/*	$NetBSD: dump.h,v 1.49 2013/01/13 23:45:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -175,10 +175,10 @@ void	fs_mapinodes(ino_t, u_int64_t *, int *);
 /* operator interface functions */
 void	broadcast(const char *);
 void	lastdump(char);
-void	msg(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
-void	msgtail(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
+void	msg(const char *fmt, ...) __printflike(1, 2);
+void	msgtail(const char *fmt, ...) __printflike(1, 2);
 int	query(const char *);
-void	quit(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
+void	quit(const char *fmt, ...) __printflike(1, 2);
 time_t	do_stats(void);
 void	statussig(int);
 void	timeest(void);
