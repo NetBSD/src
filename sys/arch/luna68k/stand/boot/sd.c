@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: sd.c,v 1.2 2013/01/13 04:39:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -106,13 +106,10 @@ struct sd_devdata {
 };
  
 static int sdinit(void *);
-static int sdstart(void);
-static int sdgo(void);
-static int sdintr(void);
 static int sdident(struct sd_softc *, struct hp_device *);
 
 struct	driver sddriver = {
-	sdinit, "sd", sdstart, sdgo, sdintr,
+	sdinit, "sd", NULL,
 };
 
 struct sd_softc sd_softc[NSD];
@@ -360,27 +357,6 @@ sdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
 	stat = scsi_immed_command(ctlr, slave, sc->sc_punit, cdb, buf, size);
 	if (rsize)
 		*rsize = size;
-
-	return 0;
-}
-
-int
-sdstart(void)
-{
-
-	return 0;
-}
-
-int
-sdgo(void)
-{
-
-	return 0;
-}
-
-int
-sdintr(void)
-{
 
 	return 0;
 }
