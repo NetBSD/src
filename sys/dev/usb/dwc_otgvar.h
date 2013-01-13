@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otgvar.h,v 1.4 2013/01/12 23:26:06 jmcneill Exp $ */
+/*	$NetBSD: dwc_otgvar.h,v 1.5 2013/01/13 15:21:47 skrll Exp $ */
 
 /* $FreeBSD: src/sys/dev/usb/controller/dwc_otg.h,v 1.12 2012/09/27 15:23:38 hselasky Exp $ */
 /*-
@@ -180,7 +180,6 @@ typedef struct dwc_otg_softc {
 	kmutex_t sc_intr_lock;
 
 	void *sc_rhc_si;
-	//void *sc_intr_si;
 
 	struct workqueue *sc_wq;
 	struct dwc_otg_work sc_timer_work;
@@ -201,19 +200,20 @@ typedef struct dwc_otg_softc {
 
 	pool_cache_t sc_tdpool;
 	pool_cache_t sc_xferpool;
-
-#ifdef DOTG_COUNTERS
 	
+#ifdef DOTG_COUNTERS
+
 	struct evcnt sc_ev_intr;
+	struct evcnt sc_ev_intr_bit[32];
+
 	struct evcnt sc_ev_soft_intr;
 	struct evcnt sc_ev_work;
-	
+
 	struct evcnt sc_ev_tdpoolget;
 	struct evcnt sc_ev_tdpoolput;
 	struct evcnt sc_ev_xferpoolget;
 	struct evcnt sc_ev_xferpoolput;
-	
-#endif	
+#endif
 
 	/* From FreeBSD softc */
 	struct callout sc_timer;
