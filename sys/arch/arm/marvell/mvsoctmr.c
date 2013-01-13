@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmr.c,v 1.3 2012/02/12 16:34:07 matt Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.3.2.1 2013/01/13 19:03:05 bouyer Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.3 2012/02/12 16:34:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.3.2.1 2013/01/13 19:03:05 bouyer Exp $");
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -36,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.3 2012/02/12 16:34:07 matt Exp $");
 #include <sys/time.h>
 #include <sys/timetc.h>
 #include <sys/systm.h>
+#include <sys/wdog.h>
 
 #include <machine/intr.h>
 
@@ -47,9 +50,20 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.3 2012/02/12 16:34:07 matt Exp $");
 
 #include <dev/marvell/marvellvar.h>
 
+#include <dev/sysmon/sysmonvar.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#endif
+
 
 struct mvsoctmr_softc {
 	device_t sc_dev;
+
+	struct sysmon_wdog sc_wdog;
+	uint32_t sc_wdog_period;
+	uint32_t sc_wdog_armed;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -64,6 +78,15 @@ static int clockhandler(void *);
 static u_int mvsoctmr_get_timecount(struct timecounter *);
 
 static void mvsoctmr_cntl(struct mvsoctmr_softc *, int, u_int, int, int);
+
+static int mvsoctmr_wdog_tickle(struct sysmon_wdog *);
+static int mvsoctmr_wdog_setmode(struct sysmon_wdog *);
+
+#ifdef DDB
+static void mvsoctmr_wdog_ddb_trap(int);
+#endif
+
+#define MVSOC_WDOG_MAX_PERIOD	(0xffffffff / mvTclk)
 
 static struct mvsoctmr_softc *mvsoctmr_sc;
 static struct timecounter mvsoctmr_timecounter = {
@@ -102,6 +125,7 @@ mvsoctmr_attach(device_t parent, device_t self, void *aux)
 {
         struct mvsoctmr_softc *sc = device_private(self);
 	struct marvell_attach_args *mva = aux;
+	uint32_t rstoutn;
 
 	aprint_naive("\n");
 	aprint_normal(": Marvell SoC Timer\n");
@@ -117,6 +141,28 @@ mvsoctmr_attach(device_t parent, device_t self, void *aux)
 
 	mvsoctmr_timecounter.tc_name = device_xname(self);
 	mvsoctmr_cntl(sc, MVSOCTMR_TIMER1, 0xffffffff, 1, 1);
+
+	/*
+	 * stop watchdog timer, enable watchdog timer resets
+	 */
+	mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, 0xffffffff, 0, 0);
+	rstoutn = read_mlmbreg(MVSOC_MLMB_RSTOUTNMASKR);
+	write_mlmbreg(MVSOC_MLMB_RSTOUTNMASKR,
+		      rstoutn | MVSOC_MLMB_RSTOUTNMASKR_WDRSTOUTEN);
+
+#ifdef DDB
+	db_trap_callback = mvsoctmr_wdog_ddb_trap;
+#endif
+
+	sc->sc_wdog.smw_name = device_xname(self);
+	sc->sc_wdog.smw_cookie = sc;
+	sc->sc_wdog.smw_setmode = mvsoctmr_wdog_setmode;
+	sc->sc_wdog.smw_tickle = mvsoctmr_wdog_tickle;
+	sc->sc_wdog.smw_period = MVSOC_WDOG_MAX_PERIOD;
+
+	if (sysmon_wdog_register(&sc->sc_wdog) != 0)
+		aprint_error_dev(self,
+				 "unable to register watchdog with sysmon\n");
 }
 
 /*
@@ -257,3 +303,54 @@ mvsoctmr_cntl(struct mvsoctmr_softc *sc, int num, u_int ticks, int en,
 		ctrl &= ~MVSOCTMR_CTCR_CPUTIMERAUTO(num);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSOCTMR_CTCR, ctrl);
 }
+
+static int
+mvsoctmr_wdog_setmode(struct sysmon_wdog *smw)
+{
+	struct mvsoctmr_softc *sc = smw->smw_cookie;
+
+	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
+		sc->sc_wdog_armed = 0;
+		mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, 0xffffffff, 0, 0);
+	} else {
+		sc->sc_wdog_armed = 1;
+		if (smw->smw_period == WDOG_PERIOD_DEFAULT)
+			smw->smw_period = MVSOC_WDOG_MAX_PERIOD;
+		else if (smw->smw_period > MVSOC_WDOG_MAX_PERIOD ||
+			 smw->smw_period <= 0)
+			return (EOPNOTSUPP);
+		sc->sc_wdog_period = smw->smw_period * mvTclk;
+		mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, sc->sc_wdog_period, 1, 0);
+	}
+
+	return (0);
+}
+
+static int
+mvsoctmr_wdog_tickle(struct sysmon_wdog *smw)
+{
+	struct mvsoctmr_softc *sc = smw->smw_cookie;
+
+	mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, sc->sc_wdog_period, 1, 0);
+
+	return (0);
+}
+
+#ifdef DDB
+static void
+mvsoctmr_wdog_ddb_trap(int enter)
+{
+	struct mvsoctmr_softc *sc = mvsoctmr_sc;
+
+	if (sc == NULL)
+		return;
+
+	if (sc->sc_wdog_armed) {
+		if (enter)
+			mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, 0xffffffff, 0, 0);
+		else
+			mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG,
+				      sc->sc_wdog_period, 1, 0);
+	}
+}
+#endif

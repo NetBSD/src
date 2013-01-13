@@ -1,4 +1,4 @@
-#       $NetBSD: files.marvell,v 1.4 2011/03/12 22:34:52 nonaka Exp $
+#       $NetBSD: files.marvell,v 1.4.10.1 2013/01/13 19:03:05 bouyer Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
@@ -24,7 +24,7 @@ file	arch/arm/marvell/kirkwood.c		kirkwood
 include "dev/marvell/files.discovery"
 
 # Timers
-device	mvsoctmr
+device	mvsoctmr: sysmon_wdog
 attach	mvsoctmr at mvsoc
 file	arch/arm/marvell/mvsoctmr.c		mvsoctmr
 
