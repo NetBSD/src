@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.3 2008/08/01 15:24:35 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.3.26.1 2013/01/13 19:08:40 bouyer Exp $	*/
 
 /* search.c - searching subroutines using dfa, kwset and regex for grep.
    Copyright 1992, 1998, 2000 Free Software Foundation, Inc.
@@ -153,7 +153,7 @@ check_multibyte_string(char const *buf, size_t size)
 {
   char *mb_properties = malloc(size);
   mbstate_t cur_state;
-  int i;
+  size_t i;
   memset(&cur_state, 0, sizeof(mbstate_t));
   memset(mb_properties, 0, sizeof(char)*size);
   for (i = 0; i < size ;)
@@ -339,7 +339,8 @@ EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
 {
   register char const *buflim, *beg, *end;
   char eol = eolbyte;
-  int backref, start, len;
+  int backref;
+  ptrdiff_t start, len;
   struct kwsmatch kwsm;
   size_t i;
 #ifdef MBS_SUPPORT
