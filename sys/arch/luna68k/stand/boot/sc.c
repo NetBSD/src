@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.2 2013/01/13 04:39:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -96,12 +96,9 @@ static void ixfer_in(struct scsidevice *, int, u_char *);
 static int scrun(int, int, u_char *, int, u_char *, int, volatile int *);
 static int scfinish(int);
 static void scabort(struct scsi_softc *, struct scsidevice *);
-static int scstart(void);
-static int scgo(void);
-static int scdone(void);
 
 struct	driver scdriver = {
-	scinit, "sc", scstart, scgo, scintr, scdone
+	scinit, "sc", scintr,
 };
 
 struct	scsi_softc scsi_softc[NSC];
@@ -519,32 +516,6 @@ scsi_format_unit(int ctlr, int slave, int unit)
 	} else {
 		return(lock);
 	}
-}
-
-
-/*
- * ????
- */
-
-int
-scstart(void)
-{
-
-	return 0;
-}
-
-int
-scgo(void)
-{
-
-	return 0;
-}
-
-int
-scdone(void)
-{
-
-	return 0;
 }
 
 
