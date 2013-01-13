@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.65.6.1 2012/02/17 16:01:28 sborrill Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.65.6.2 2013/01/13 16:03:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.65.6.1 2012/02/17 16:01:28 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.65.6.2 2013/01/13 16:03:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,9 +229,10 @@ smbfs_open(v)
 		return EACCES;
 	}
 	if (vp->v_type == VDIR) {
-		np->n_flag |= NOPEN;
-		if ((sv_caps & SMB_CAP_NT_SMBS) == 0)
+		if ((sv_caps & SMB_CAP_NT_SMBS) == 0) {
+			np->n_flag |= NOPEN;
 			return 0;
+		}
 		goto do_open;	/* skip 'modified' check */
 	}
 
@@ -317,13 +318,22 @@ smbfs_close(v)
 	 * Ideally, the lookup routines should handle such case, and
 	 * the context would be removed only in smbfs_inactive().
 	 */
-	if (vp->v_type == VDIR && (np->n_flag & NOPEN) != 0 &&
-	    np->n_dirseq != NULL) {
+	if (vp->v_type == VDIR && (np->n_flag & NOPEN) != 0) {
+		struct smb_share *ssp = np->n_mount->sm_share;
 		struct smb_cred scred;
 
 		smb_makescred(&scred, l, ap->a_cred);
-		smbfs_findclose(np->n_dirseq, &scred);
-		np->n_dirseq = NULL;
+
+		if (np->n_dirseq != NULL) {
+			smbfs_findclose(np->n_dirseq, &scred);
+			np->n_dirseq = NULL;
+		}
+
+		if (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_NT_SMBS)
+			smbfs_smb_close(ssp, np->n_fid, &np->n_mtime, &scred);
+
+		np->n_flag &= ~NOPEN;
+		smbfs_attr_cacheremove(vp);
 	}
 
 	return (0);
@@ -620,6 +630,8 @@ smbfs_remove(v)
 		smb_makescred(&scred, curlwp, cnp->cn_cred);
 		error = smbfs_smb_delete(np, &scred);
 	}
+	if (error == 0)
+		np->n_flag |= NGONE;
 
 	VN_KNOTE(ap->a_vp, NOTE_DELETE);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
@@ -698,12 +710,14 @@ smbfs_rename(v)
 			error = smbfs_smb_delete(VTOSMB(tvp), &scred);
 			if (error)
 				goto out;
+			VTOSMB(tvp)->n_flag |= NGONE;
 			VN_KNOTE(tdvp, NOTE_WRITE);
 			VN_KNOTE(tvp, NOTE_DELETE);
 			cache_purge(tvp);
 		}
 		error = smbfs_smb_rename(VTOSMB(fvp), VTOSMB(tdvp),
 		    tcnp->cn_nameptr, tcnp->cn_namelen, &scred);
+		VTOSMB(fvp)->n_flag |= NGONE;
 		VN_KNOTE(fdvp, NOTE_WRITE);
 		VN_KNOTE(fvp, NOTE_RENAME);
 	}
@@ -829,6 +843,8 @@ smbfs_rmdir(v)
 
 	smb_makescred(&scred, curlwp, cnp->cn_cred);
 	error = smbfs_smb_rmdir(np, &scred);
+	if (error == 0)
+		np->n_flag |= NGONE;
 	dnp->n_flag |= NMODIFIED;
 	smbfs_attr_cacheremove(dvp);
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
@@ -1211,6 +1227,7 @@ smbfs_lookup(v)
 		struct vattr vattr;
 		struct vnode *newvp;
 		int err2;
+		bool killit = false;
 
 		if (error && error != ENOENT) {
 			*vpp = NULLVP;
@@ -1239,7 +1256,21 @@ smbfs_lookup(v)
 		}
 
 		newvp = *vpp;
-		if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred)
+		error = VOP_GETATTR(newvp, &vattr, cnp->cn_cred);
+		/*
+		 * If the file type on the server is inconsistent
+		 * with what it was when we created the vnode,
+		 * kill the bogus vnode now and fall through to
+		 * the code below to create a new one with the
+		 * right type.
+		 */
+		if (error == 0 &&
+		    ((newvp->v_type == VDIR &&
+		    (VTOSMB(newvp)->n_dosattr & SMB_FA_DIR) == 0) ||
+		    (newvp->v_type == VREG &&
+		    (VTOSMB(newvp)->n_dosattr & SMB_FA_DIR) != 0)))
+			killit = true;
+		else if (error == 0
 			&& vattr.va_ctime.tv_sec == VTOSMB(newvp)->n_ctime)
 		{
 			/* nfsstats.lookupcache_hits++; */
@@ -1250,9 +1281,13 @@ smbfs_lookup(v)
 		}
 
 		cache_purge(newvp);
-		if (newvp != dvp)
-			vput(newvp);
-		else
+		if (newvp != dvp) {
+			if (killit) {
+				VOP_UNLOCK(newvp, 0);
+				vgone(newvp);
+			} else
+				vput(newvp);
+		} else
 			vrele(newvp);
 		*vpp = NULLVP;
 	}

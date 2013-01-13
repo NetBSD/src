@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.39.6.1 2009/10/03 23:05:25 snj Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.39.6.2 2013/01/13 16:03:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.39.6.1 2009/10/03 23:05:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.39.6.2 2013/01/13 16:03:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,7 @@ static int
 smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 	const char *name, int nmlen, struct smbfattr *fap, struct vnode **vpp)
 {
+	struct vattr vattr;
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct smbnode_hashhead *nhpp;
 	struct smbnode *np, *np2, *dnp;
@@ -136,11 +137,26 @@ retry:
 		mutex_exit(&smp->sm_hashlock);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK) != 0)
 			goto retry;
+		/* Force cached attributes to be refreshed if stale. */
+		(void)VOP_GETATTR(vp, &vattr, curlwp->l_cred);
+		/*
+		 * If the file type on the server is inconsistent with
+		 * what it was when we created the vnode, kill the
+		 * bogus vnode now and fall through to the code below
+		 * to create a new one with the right type.
+		 */
+		if ((vp->v_type == VDIR && (np->n_dosattr & SMB_FA_DIR) == 0) ||
+		    (vp->v_type == VREG && (np->n_dosattr & SMB_FA_DIR) != 0)) {
+			VOP_UNLOCK(vp, 0);
+			vgone(vp);
+			goto allocnew;
+		}
 		*vpp = vp;
 		return (0);
 	}
 	mutex_exit(&smp->sm_hashlock);
 
+allocnew:
 	/*
 	 * If we don't have node attributes, then it is an explicit lookup
 	 * for an existing vnode.
@@ -306,6 +322,8 @@ smbfs_inactive(v)
 		smbfs_attr_cacheremove(vp);
 	}
 	VOP_UNLOCK(vp, 0);
+	if (np->n_flag & NGONE)
+		vrecycle(vp, NULL, l);
 	return (0);
 }
 /*
