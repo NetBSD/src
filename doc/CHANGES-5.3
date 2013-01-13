@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.1 2012/12/18 21:59:28 riz Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.2 2013/01/13 17:16:06 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -10,4 +10,124 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 5.2_STABLE.
 	[riz]
+
+sys/fs/smbfs/smbfs_node.c			1.48, 1.49 via patch
+sys/fs/smbfs/smbfs_node.h			1.13 via patch
+sys/fs/smbfs/smbfs_vnops.c			1.83, 1.84 via patch
+
+	Various fixes for smbfs:
+
+	- Implement NGONE to fix caching issue described in PR kern/25070.
+	  Mostly taken from FreeBSD r125637.
+	- Revert revision 1.70 of smbfs_vnops.c to fix setattr to opened
+	  direcotry.  In case of SMB_CAP_NT_SMBS, NOPEN is set after
+	  smbfs_smb_ntcreatex() call.  If NOPEN is set in front, it will
+	  immediately return by condition at do_open label.
+	- In smbfs_close(), call smbfs_smb_close() and drop NOPEN bit in
+	  the case of direcotry.  Otherwise smbfs_rmdir() fails when the
+	  directory was opened.
+	- Remove redundant vput() before vgone().
+	- Avoid unnecessary mutex_exit() in smbfs_node_alloc().
+	- Set NGONE bit to from-name vnode to invalidate the smbnode cache.
+	[nakayama, ticket #1823]
+
+sys/fs/smbfs/smbfs_smb.c			1.44
+sys/fs/smbfs/smbfs_subr.c			1.16
+sys/fs/smbfs/smbfs_subr.h			1.21
+sys/fs/smbfs/smbfs_vnops.c			1.85
+sys/netsmb/smb.h				1.20
+
+	Improve smbfs timestamp handling.
+	Don't round timestamp to 2 seconds resolution if the server
+	supports the CAP_INFOLEVEL_PASSTHRU capability.
+	[nakayama, ticket #1824]
+
+sys/netsmb/smb_iod.c				1.31 - 1.35
+sys/netsmb/smb_rq.c				1.32
+
+	Do not call callout_stop() unless the structure was previoulsy
+	initialised for a non null timeout.
+	Do initialise the callout when fetching a new request structure from
+	the pool, not when starting the timer. Likewise, destroy the callout
+	when giving back the item to the pool.
+	Send data for as long as there is new data available.  Otherwise
+	there was a danger of smb_iod_recvall() blocking, hence releasing
+	the kernel lock, new data creeping into the queue, and a wakeup
+	being missed (well, there's still a race, but since it's theoretical
+	enough for me to never have encountered it, I'll rather solve it
+	by periodic wakeups).
+	defensive programming: wake up iod thread once a second "just in case"
+	add comment to previous stating periodic wakeups can be nuked
+	once smb is mpsafe.
+	[nakayama, ticket #1825]
+
+sys/dev/lockstat.c				1.16
+
+	Fix off by one.
+	[msaitoh, ticket #1826]
+
+sys/dev/raidframe/rf_driver.c			1.131
+
+	Fix off by one read.
+	[msaitoh, ticket #1827]
+
+sys/external/isc/atheros_hal/dist/ah_eeprom_v14.c		patch
+
+	Fix off by one read.
+	[msaitoh, ticket #1828]
+
+sys/compat/netbsd32/netbsd32_fs.c		1.64
+
+	Fix inverted error check.
+	[matt, ticket #1829]
+
+sys/dev/usb/ubsa_common.c			1.9
+
+	Fix off by one read error.
+	[msaitoh, ticket #1830]
+
+sys/external/bsd/drm/dist/shared-core/i915_suspend.c 1.6
+
+	Fix wrong reference to dev_priv->saveSWF1. It was clearly wrong.
+	[msaitoh, ticket #1831]
+
+sbin/sysctl/sysctl.c				1.149 via patch
+
+	Add missing free() in error path.
+	[msaitoh, ticket #1832]
+
+usr.bin/netstat/bpf.c				1.11
+
+	Fix memory leak.
+	[msaitoh, ticket #1833]
+
+sys/arch/i386/conf/XEN2_DOMU:			patch
+sys/arch/amd64/conf/XEN3_DOMU:			patch
+
+	Add drvctl to Xen DOMU kernels
+	[sborrill, ticket #1834]
+
+sbin/fsck_ffs/pass1.c				1.50
+
+	Show pass1 SIGINFO output on stderr like other passes, not on stdout.
+	[riastradh, ticket #1837]
+
+etc/namedb/root.cache				1.17
+
+	D.ROOT-SERVERS.NET changes IPv4 address.
+	[taca, ticket #1839]
+
+gnu/dist/grep/lib/getopt.c			1.2
+gnu/dist/grep/lib/regex.c			1.2
+gnu/dist/grep/src/ansi2knr.c			1.2
+gnu/dist/grep/src/dfa.c				1.3
+gnu/dist/grep/src/grep.c			1.14
+gnu/dist/grep/src/search.c			1.4
+
+	Change several int variables to size_t, ssize_t, or ptrdiff_t.
+	This should fix the bug described in CVE-2012-5667 when an input
+	line is so long that its length cannot be stored in an int
+	variable.
+
+	[apb, ticket #1838]
 
