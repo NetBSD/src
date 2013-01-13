@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkimage,v 1.4 2013/01/13 20:57:18 christos Exp $
+# $NetBSD: mkimage,v 1.5 2013/01/13 20:58:38 christos Exp $
 
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -126,13 +126,13 @@ then
 	usage
 fi
 
-if [ ! -f "${DIR}/${h}.conf" ]
+if [ ! -f "${DIR}/conf/${h}.conf" ]
 then
-	echo $PROG: ${DIR}/${h}.conf is not present 1>&2
+	echo $PROG: ${DIR}/conf/${h}.conf is not present 1>&2
 	exit 1
 fi
 
-. "${DIR}/${h}.conf"
+. "${DIR}/conf/${h}.conf"
 
 OPTIND=1
 while getopts "$OPTS" f
