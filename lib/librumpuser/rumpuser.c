@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.27 2013/01/10 19:14:12 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.28 2013/01/14 21:04:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.27 2013/01/10 19:14:12 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.28 2013/01/14 21:04:15 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -765,7 +765,7 @@ rumpuser_getnhostcpu(void)
 	size_t sz = sizeof(ncpu);
 
 	sysctlbyname("hw.ncpu", &ncpu, &sz, NULL, 0);
-#elif __linux__
+#elif defined(__linux__) || defined(__CYGWIN__)
 	FILE *fp;
 	char *line = NULL;
 	size_t n = 0;
