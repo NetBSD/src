@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.7 2012/10/06 15:33:59 wiz Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.8 2013/01/14 18:01:59 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.7 2012/10/06 15:33:59 wiz Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.8 2013/01/14 18:01:59 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: apropos-utils.c,v 1.7 2012/10/06 15:33:59 wiz Exp $");
 
 #include "apropos-utils.h"
 #include "manconf.h"
-#include "mandoc.h"
+#include "dist/mandoc.h"
 #include "sqlite3.h"
 
 typedef struct orig_callback_data {
