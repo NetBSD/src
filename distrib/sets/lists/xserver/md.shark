@@ -1,4 +1,4 @@
-# $NetBSD: md.shark,v 1.39 2011/10/08 18:00:40 christos Exp $
+# $NetBSD: md.shark,v 1.40 2013/01/14 22:30:13 christos Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -444,3 +444,20 @@
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
 ./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg
+./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/bin/cvt.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri2.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libextmod.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libglx.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/librecord.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libshadow.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libexa.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libfb.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libi2c.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libshadowfb.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug	-unknown-	xorg,debug
