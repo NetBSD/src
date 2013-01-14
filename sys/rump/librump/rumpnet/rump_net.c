@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.13 2011/01/11 09:22:33 pooka Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.14 2013/01/14 16:45:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.13 2011/01/11 09:22:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.14 2013/01/14 16:45:47 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -45,8 +45,7 @@ void nocomponent(void);
 void nocomponent() {}
 __weak_alias(rump_net_components,nocomponent);
 
-void
-rump_net_init(void)
+RUMP_COMPONENT(RUMP__FACTION_NET)
 {
 
 	bpf_setops();
