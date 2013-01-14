@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.7 2012/12/27 16:42:32 skrll Exp $	*/
+/*	$NetBSD: udl.c,v 1.8 2013/01/14 18:24:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.7 2012/12/27 16:42:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.8 2013/01/14 18:24:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -323,6 +323,7 @@ static const struct usb_devno udl_devs[] = {
 	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LCD8000UD_DVI },
 	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LDEWX015U },
 	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LT1421WIDE },
+	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_SD_U2VDH },
 	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_UM7X0 }
 };
 
