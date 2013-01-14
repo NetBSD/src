@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.634 2013/01/12 21:34:48 jakllsch Exp $
+$NetBSD: usbdevs,v 1.635 2013/01/14 18:24:05 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1271,6 +1271,7 @@ product DISPLAYLINK LUM70	0x02a9	Lilliput UM-70
 product DISPLAYLINK LCD8000UD_DVI	0x02b8	LCD-8000UD-DVI
 product DISPLAYLINK LDEWX015U	0x02e3	Logitec LDE-WX015U
 product DISPLAYLINK LT1421WIDE	0x03e0	Lenovo ThinkVision LT1421 Wide
+product DISPLAYLINK SD_U2VDH	0x046d	AREA SD-U2VDH
 product DISPLAYLINK UM7X0	0x401a	nanovision MiMo
 
 /* D-Link products */
