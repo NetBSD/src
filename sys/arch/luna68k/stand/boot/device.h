@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.2 2013/01/13 04:39:28 tsutsui Exp $	*/
+/*	$NetBSD: device.h,v 1.3 2013/01/14 11:59:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -111,8 +111,6 @@ struct hp_hw {
 	char	*hw_addr;	/* physical address of registers */
 	short	hw_sc;		/* select code (if applicable) */
 	short	hw_type;	/* type (defined below) */
-	short	hw_id;		/* HW returned id */
-	short	hw_id2;		/* secondary HW id (displays) */
 	char	*hw_name;	/* HP product name */
 };
 
