@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2013/01/14 18:01:59 christos Exp $
+# $NetBSD: Makefile,v 1.5 2013/01/14 18:04:58 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -26,8 +26,8 @@ MDOCMLLIB=	${MDOCMLOBJDIR}/libmandoc.a
 
 DPADD.makemandb+= 	${MDOCMLLIB} ${LIBARCHIVE} ${LIBBZ2} ${LIBLZMA}
 LDADD.makemandb+= 	-L${MDOCMLOBJDIR} -lmandoc -larchive -lbz2 -llzma
-DPADD+=		${LIBSQLITE3} ${LIBM} ${LIBZ} ${LIBUTIL}
-LDADD+=		-lsqlite3 -lm -lz -lutil
+DPADD+=		${LIBSQLITE3} ${LIBM} ${LIBZ} ${LIBTERMLIB} ${LIBUTIL}
+LDADD+=		-lsqlite3 -lm -lz -ltermlib -lutil
 
 stopwords.c: stopwords.txt
 	( set -e; ${TOOL_NBPERF} -n stopwords_hash -s -p ${.ALLSRC};	\
