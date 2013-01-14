@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.34 2013/01/10 17:36:35 macallan Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.35 2013/01/14 11:23:48 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.34 2013/01/10 17:36:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.35 2013/01/14 11:23:48 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -189,15 +189,9 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.34 2013/01/10 17:36:35 macallan
 #include "ukbd.h"
 #include <dev/usb/ukbdvar.h>
 
-#ifdef BOOT_ARGS
-#define DEFAULT_BOOT_ARGS BOOT_ARGS
-#else
-#define DEFAULT_BOOT_ARGS "-a"
-#endif
-
 BootConfig bootconfig;		/* Boot config storage */
-static char beagle_default_boot_args[] = DEFAULT_BOOT_ARGS;
-char *boot_args = beagle_default_boot_args;
+static char bootargs[MAX_BOOT_STRING];
+char *boot_args = NULL;
 char *boot_file = NULL;
 
 static uint8_t beagle_edid[128];	/* EDID storage */
@@ -483,8 +477,9 @@ initarm(void *arg)
 
 	/* "bootargs" env variable is passed as 4th argument to kernel */
 	if ((uboot_args[3] & 0xf0000000) == 0x80000000) {
-		boot_args = (char *)uboot_args[3];
+		strlcpy(bootargs, (char *)uboot_args[3], sizeof(bootargs));
 	}
+	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
 
 	/* we've a specific device_register routine */
