@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkimage,v 1.7 2013/01/13 21:51:47 christos Exp $
+# $NetBSD: mkimage,v 1.8 2013/01/14 12:12:19 jmcneill Exp $
 
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -102,7 +102,6 @@ finish() {
     ${sudo} vnconfig -u ${vnddev}
 }
 
-trap finish 0 1 2 3 15
 DIR="$(dirname "$0")"
 PROG="$(basename "$0")"
 bar="==="
@@ -146,6 +145,8 @@ do
 	*)	usage;;
 	esac
 done
+
+trap finish 0 1 2 3 15
 
 shift $(( "$OPTIND" - 1 ))
 if [ -n "$1" ]; then
