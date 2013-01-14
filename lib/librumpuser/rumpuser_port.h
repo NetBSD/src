@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.10 2012/11/26 20:03:40 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.11 2013/01/14 21:00:16 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -51,7 +51,7 @@
 
 /* maybe this should be !__NetBSD__ ? */
 #if defined(__linux__) || defined(__sun__) || defined(__FreeBSD__)	\
-    || defined(__DragonFly__)
+    || defined(__DragonFly__) || defined(__CYGWIN__)
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -103,7 +103,7 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #define _DIAGASSERT(_p_)
 #endif
 
-#if defined(__linux__) || defined(__sun__)
+#if defined(__linux__) || defined(__sun__) || defined(__CYGWIN__)
 #define SIN_SETLEN(a,b)
 #else /* BSD */
 #define SIN_SETLEN(_sin_, _len_) _sin_.sin_len = _len_
@@ -138,8 +138,9 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #define __UNCONST(_a_) ((void *)(unsigned long)(const void *)(_a_))
 #endif
 
-#if defined(__linux__) || defined(__sun__)
+#if defined(__linux__) || defined(__sun__) || defined (__CYGWIN__)
 #define arc4random() random()
+#define RUMPUSER_USE_RANDOM
 #endif
 
 #ifndef __NetBSD_Prereq__
