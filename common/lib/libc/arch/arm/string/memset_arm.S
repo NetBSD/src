@@ -1,4 +1,4 @@
-/*	$NetBSD: memset_arm.S,v 1.1 2013/01/12 20:27:13 matt Exp $	*/
+/*	$NetBSD: memset_arm.S,v 1.2 2013/01/14 19:15:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ ENTRY(memset)
 	 * copy so we don't have to worry about the length at the moment.
 	 */
 	rsb		r2, r2, #64	/* how many bytes until 64 bytes */
-	sub		r1, r1, r2	?* subtract from remaining length */
+	sub		r1, r1, r2	/* subtract from remaining length */
 #if !defined(NEON) && !defined(VFP)
 	mov		r2, r3		/* put fill back in r2 */
 #endif
@@ -123,7 +123,7 @@ ENTRY(memset)
 	STORE16				/*   no, store a quadword */
 2:	tst		ip, #32		/* 32 word aligned? */
 	beq		.Lmemset_mainloop		/*   yes */
-	STORE32				/*   no, make 64-byte aligned
+	STORE32				/*   no, make 64-byte aligned */
 #endif
 
 .Lmemset_mainloop:
