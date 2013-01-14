@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2011/11/10 09:28:25 yamt Exp $
+#	$NetBSD: Makefile,v 1.15 2013/01/14 15:50:18 pooka Exp $
 
 LIBISPRIVATE=	yes
 
@@ -114,17 +114,16 @@ gtyp-gen.h: Makefile
 	(\
 	echo "static const char *srcdir = \"$(G_GTFILES_SRCDIR)\";"	; \
 	echo "static const char *lang_files[] = {"			; \
-	for f in $(G_GTFILES_FILES_FILES); do echo "\"$$f\", "; done	; \
+	for f in $$empty $(G_GTFILES_FILES_FILES); do echo "\"$$f\", "; done ; \
 	echo "NULL };"							; \
 	echo "static const char *langs_for_lang_files[] = {"		; \
-	for f in $(G_GTFILES_FILES_LANGS); do echo "\"$$f\", "; done 	; \
+	for f in $$empty $(G_GTFILES_FILES_LANGS); do echo "\"$$f\", "; done ; \
 	echo "NULL };"							; \
 	echo "static const char *all_files[] = {"			; \
-	for f in $(G_GTFILES); do echo "\"$$f\", "; done		; \
+	for f in $$empty $(G_GTFILES); do echo "\"$$f\", "; done	; \
 	echo " NULL };"							; \
 	echo "static const char *lang_dir_names[] = {"			; \
-	echo "\"c\", "							; \
-	for f in $(G_GTFILES_LANG_DIR_NAMES); do echo "\"$$f\", "; done	; \
+	for f in c $(G_GTFILES_LANG_DIR_NAMES); do echo "\"$$f\", "; done ; \
 	echo "NULL };"							; \
 	) >${.TARGET}
 
