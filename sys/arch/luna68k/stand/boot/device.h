@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.3 2013/01/14 11:59:18 tsutsui Exp $	*/
+/*	$NetBSD: device.h,v 1.4 2013/01/14 12:17:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -109,7 +109,6 @@ struct	devqueue {
 
 struct hp_hw {
 	char	*hw_addr;	/* physical address of registers */
-	short	hw_sc;		/* select code (if applicable) */
 	short	hw_type;	/* type (defined below) */
 	char	*hw_name;	/* HP product name */
 };
