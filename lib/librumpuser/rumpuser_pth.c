@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.10 2012/11/26 17:54:51 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.11 2013/01/14 21:00:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.10 2012/11/26 17:54:51 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.11 2013/01/14 21:00:16 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -182,7 +182,7 @@ rumpuser_biothread(void *arg)
 void
 rumpuser_thrinit(kernel_lockfn lockfn, kernel_unlockfn unlockfn, int threads)
 {
-#ifdef __linux__
+#ifdef RUMPUSER_USE_RANDOM
 	/* XXX: there's no rumpuser_bootstrap, so do this here */
 	uint32_t rv;
 	int fd;

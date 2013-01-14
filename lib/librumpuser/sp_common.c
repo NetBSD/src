@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.35 2012/11/26 16:30:14 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.36 2013/01/14 21:00:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -665,7 +665,7 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 		}
 	}
 	strcat(s_un.sun_path, addr);
-#if defined(__linux__) || defined(__sun__)
+#if defined(__linux__) || defined(__sun__) || defined(__CYGWIN__)
 	slen = sizeof(s_un);
 #else
 	s_un.sun_len = SUN_LEN(&s_un);
