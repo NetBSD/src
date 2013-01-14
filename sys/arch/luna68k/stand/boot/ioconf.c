@@ -1,4 +1,4 @@
-/*	$NetBSD: ioconf.c,v 1.2 2013/01/13 14:10:55 tsutsui Exp $	*/
+/*	$NetBSD: ioconf.c,v 1.3 2013/01/14 01:37:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -86,6 +86,7 @@ extern struct driver stdriver;
 struct hp_ctlr hp_cinit[] = {
 /*	driver,		unit,	alive,	addr,	flags */
 	{ &scdriver,	0,	0,	C 0x0,	0x0 },
+	{ &scdriver,	1,	0,	C 0x0,	0x0 },
 	{0},
 };
 
@@ -93,6 +94,8 @@ struct hp_device hp_dinit[] = {
 /*driver,	cdriver,	unit,	ctlr,	slave,	addr,	dk,	flags*/
 { &sddriver,	&scdriver,	0,	0,	6,	C 0x0,	1,	0x0 },
 { &sddriver,	&scdriver,	1,	0,	5,	C 0x0,	1,	0x0 },
+{ &sddriver,	&scdriver,	2,	1,	6,	C 0x0,	1,	0x0 },
+{ &sddriver,	&scdriver,	3,	1,	5,	C 0x0,	1,	0x0 },
 { &ledriver,	NULL,		0,	0,	0,	C 0x0,	0,	0x0 },
 #ifdef notyet
 { &stdriver,	&scdriver,	0,	0,	4,	C 0x0,	0,	0x0 },
