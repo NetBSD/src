@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net_private.h,v 1.5 2010/03/01 13:12:20 pooka Exp $	*/
+/*	$NetBSD: rump_net_private.h,v 1.6 2013/01/14 16:45:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,6 @@
 #ifndef _SYS_RUMP_NET_PRIVATE_H_
 #define _SYS_RUMP_NET_PRIVATE_H_
 
-void		rump_net_init(void);
 void		rump_netisr_init(void);
 
 #define DOMAINADD(dom)							\
