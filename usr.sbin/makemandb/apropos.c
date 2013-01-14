@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.8 2012/10/06 15:33:59 wiz Exp $	*/
+/*	$NetBSD: apropos.c,v 1.9 2013/01/14 18:04:58 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.8 2012/10/06 15:33:59 wiz Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.9 2013/01/14 18:04:58 christos Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: apropos.c,v 1.8 2012/10/06 15:33:59 wiz Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <term.h>
 
 #include "apropos-utils.h"
 #include "sqlite3.h"
@@ -65,12 +66,40 @@ __dead static void usage(void);
 
 #define _PATH_PAGER	"/usr/bin/more -s"
 
+static int
+term_init(int fd, const char *sa[3])
+{
+	if (!isatty(fd))
+		return 0;
+
+	TERMINAL *ti;
+	int error;
+	if (ti_setupterm(&ti, NULL, fd, &error) == -1)
+		return 0;
+
+	const char *rmso = ti_getstr(ti, "rmso");
+	if (rmso == NULL)
+		goto out;
+
+	const char *smso = ti_getstr(ti, "smso");
+	if (smso == NULL)
+		goto out;
+
+	sa[0] = estrdup(smso);
+	sa[1] = estrdup(rmso);
+	sa[2] = estrdup("...");
+	del_curterm(ti);
+	return 1;
+out:
+	del_curterm(ti);
+	return 0;
+
+}
+
 int
 main(int argc, char *argv[])
 {
-#ifdef NOTYET
-	static const char *snippet_args[] = {"\033[1m", "\033[0m", "..."};
-#endif
+	const char *snippet_args[3];
 	query_args args;
 	char *query = NULL;	// the user query
 	char *errmsg = NULL;
@@ -175,12 +204,12 @@ main(int argc, char *argv[])
 	args.callback_data = &cbdata;
 	args.errmsg = &errmsg;
 
-#ifdef NOTYET
-	rc = run_query(db, snippet_args, &args);
-#else
-	rc = run_query_pager(db, &args);
-#endif
 
+	if (term_init(STDOUT_FILENO, snippet_args))
+		rc = run_query(db, snippet_args, &args);
+	else
+		rc = run_query_pager(db, &args);
+		
 	free(query);
 	close_db(db);
 	if (errmsg) {
