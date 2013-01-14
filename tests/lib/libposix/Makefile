@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/07/16 13:56:31 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2013/01/14 13:37:57 pooka Exp $
 
 NOMAN=		# defined
 
@@ -6,8 +6,8 @@ NOMAN=		# defined
 
 TESTSDIR=	${TESTSBASE}/lib/libposix
 
-SUBDIR=		bsd
-SUBDIR+=	posix1
-SUBDIR+=	posix2
+TESTS_SUBDIRS=	bsd
+TESTS_SUBDIRS+=	posix1
+TESTS_SUBDIRS+=	posix2
 
 .include <bsd.test.mk>
