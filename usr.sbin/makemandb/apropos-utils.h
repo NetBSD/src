@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.h,v 1.4 2012/10/06 15:33:59 wiz Exp $	*/
+/*	$NetBSD: apropos-utils.h,v 1.5 2013/01/14 21:26:25 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -90,4 +90,5 @@ char *get_dbpath(const char *);
 int run_query(sqlite3 *, const char *[3], query_args *);
 int run_query_html(sqlite3 *, query_args *);
 int run_query_pager(sqlite3 *, query_args *);
+int run_query_term(sqlite3 *, query_args *);
 #endif 
