@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.16 2012/11/08 19:17:54 christos Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.17 2013/01/14 18:01:59 christos Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.16 2012/11/08 19:17:54 christos Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.17 2013/01/14 18:01:59 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -36,9 +36,9 @@ __RCSID("$NetBSD: makemandb.c,v 1.16 2012/11/08 19:17:54 christos Exp $");
 #include <util.h>
 
 #include "apropos-utils.h"
-#include "man.h"
-#include "mandoc.h"
-#include "mdoc.h"
+#include "dist/man.h"
+#include "dist/mandoc.h"
+#include "dist/mdoc.h"
 #include "sqlite3.h"
 
 #define BUFLEN 1024
