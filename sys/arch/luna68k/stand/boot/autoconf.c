@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2013/01/14 11:59:18 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2013/01/14 12:17:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -137,14 +137,14 @@ find_controller(struct hp_hw *hw)
 	struct hp_ctlr *hc;
 	struct hp_ctlr *match_c;
 	uint8_t *oaddr;
-	int sc;
+	char *addr;
 
 #ifdef DEBUG
 	if (acdebug)
 		printf("find_controller: hw: %s at sc%d (%x), type %x...",
 		       hw->hw_name, hw->hw_sc, (u_int)hw->hw_addr, hw->hw_type);
 #endif
-	sc = hw->hw_sc;
+	addr = hw->hw_addr;
 	match_c = NULL;
 	for (hc = hp_cinit; hc->hp_driver; hc++) {
 		if (hc->hp_alive)
@@ -158,7 +158,7 @@ find_controller(struct hp_hw *hw)
 		/*
 		 * Exact match; all done
 		 */
-		if ((int)hc->hp_addr == sc) {
+		if (hc->hp_addr == addr) {
 			match_c = hc;
 			break;
 		}
@@ -212,7 +212,7 @@ find_device(struct hp_hw *hw)
 	struct hp_device *hd;
 	struct hp_device *match_d;
 	uint8_t *oaddr;
-	int sc;
+	char *addr;
 
 #ifdef DEBUG
 	if (acdebug)
@@ -226,11 +226,11 @@ find_device(struct hp_hw *hw)
 		/* Must not be a slave */
 		if (hd->hp_cdriver)
 			continue;
-		sc = (int) hd->hp_addr;
+		addr = hd->hp_addr;
 		/*
 		 * Exact match; all done.
 		 */
-		if (sc > 0 && sc == hw->hw_sc) {
+		if (addr != NULL && addr == hw->hw_addr) {
 			match_d = hd;
 			break;
 		}
@@ -238,7 +238,7 @@ find_device(struct hp_hw *hw)
 		 * Wildcard; possible match so remember first instance
 		 * but continue looking for exact match.
 		 */
-		if (sc == 0 && same_hw_device(hw, hd) && match_d == NULL)
+		if (addr == NULL && same_hw_device(hw, hd) && match_d == NULL)
 			match_d = hd;
 	}
 #ifdef DEBUG
@@ -479,9 +479,8 @@ same_hw_device(struct hp_hw *hw, struct hp_device *hd)
 	return(found);
 }
 
-#define setup_hw(hw, addr, sc, type, name) \
+#define setup_hw(hw, addr, type, name) \
 	(hw)->hw_addr = addr; \
-	(hw)->hw_sc   = sc; \
 	(hw)->hw_type = type; \
 	(hw)->hw_name = name
 
@@ -490,21 +489,21 @@ find_devs(void)
 {
 	struct hp_hw *hw = sc_table;
 	
-	setup_hw(hw, (char *) 0x51000000, 0x5, SIO,      "uPD7201A (SIO)");
+	setup_hw(hw, (char *) 0x51000000, SIO,      "uPD7201A (SIO)");
 	hw++;
 	
-	setup_hw(hw, (char *) 0x51000004, 0x5, KEYBOARD, "uPD7201A (KBD)");
+	setup_hw(hw, (char *) 0x51000004, KEYBOARD, "uPD7201A (KBD)");
 	hw++;
 	
-	setup_hw(hw, (char *) 0xe1000000, 0xe, SCSI,     "MB89352  (SPC)");
+	setup_hw(hw, (char *) 0xe1000000, SCSI,     "MB89352  (SPC)");
 	hw++;
 
 	if (machtype == LUNA_II && !badaddr((void *) 0xe1000040)) {
-		setup_hw(hw, (char *) 0xe1000040, 0xe, SCSI,     "MB89352  (SPC)");
+		setup_hw(hw, (char *) 0xe1000040, SCSI,     "MB89352  (SPC)");
 		hw++;
 	}
 	if (!badaddr((void *) 0xf1000000)) {
-		setup_hw(hw, (char *) 0xf1000000, 0xf, NET,      "Am7990 (LANCE)");
+		setup_hw(hw, (char *) 0xf1000000, NET,      "Am7990 (LANCE)");
 		hw++;
 	}
 }
