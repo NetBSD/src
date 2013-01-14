@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.42 2013/01/07 23:40:52 dsl Exp $ */
+/* $NetBSD: param.h,v 1.43 2013/01/14 10:46:14 he Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,8 @@
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
+#else
+#define ALPHA_PGSHIFT	13
 #endif
 
 #define	NBPG		(1 << ALPHA_PGSHIFT)		/* bytes/page */
