@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.249 2013/01/14 16:45:47 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.250 2013/01/14 16:52:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.249 2013/01/14 16:45:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.250 2013/01/14 16:52:35 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -500,7 +500,7 @@ rump__init(int rump_version)
 		}
 	}
 
-	rump_component_init(RUMP_COMPONENT_POSTBOOT);
+	rump_component_init(RUMP_COMPONENT_POSTINIT);
 
 	/* release cpu */
 	rump_unschedule();
