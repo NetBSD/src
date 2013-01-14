@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2013/01/14 12:17:17 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2013/01/14 12:28:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -136,8 +136,7 @@ find_controller(struct hp_hw *hw)
 {
 	struct hp_ctlr *hc;
 	struct hp_ctlr *match_c;
-	uint8_t *oaddr;
-	char *addr;
+	uint8_t *addr, *oaddr;
 
 #ifdef DEBUG
 	if (acdebug)
@@ -211,8 +210,7 @@ find_device(struct hp_hw *hw)
 {
 	struct hp_device *hd;
 	struct hp_device *match_d;
-	uint8_t *oaddr;
-	char *addr;
+	uint8_t *addr, *oaddr;
 
 #ifdef DEBUG
 	if (acdebug)
@@ -489,21 +487,21 @@ find_devs(void)
 {
 	struct hp_hw *hw = sc_table;
 	
-	setup_hw(hw, (char *) 0x51000000, SIO,      "uPD7201A (SIO)");
+	setup_hw(hw, (uint8_t *)0x51000000, SIO,      "uPD7201A (SIO)");
 	hw++;
 	
-	setup_hw(hw, (char *) 0x51000004, KEYBOARD, "uPD7201A (KBD)");
+	setup_hw(hw, (uint8_t *)0x51000004, KEYBOARD, "uPD7201A (KBD)");
 	hw++;
 	
-	setup_hw(hw, (char *) 0xe1000000, SCSI,     "MB89352  (SPC)");
+	setup_hw(hw, (uint8_t *)0xe1000000, SCSI,     "MB89352  (SPC)");
 	hw++;
 
 	if (machtype == LUNA_II && !badaddr((void *) 0xe1000040)) {
-		setup_hw(hw, (char *) 0xe1000040, SCSI,     "MB89352  (SPC)");
+		setup_hw(hw, (uint8_t *)0xe1000040, SCSI,     "MB89352  (SPC)");
 		hw++;
 	}
 	if (!badaddr((void *) 0xf1000000)) {
-		setup_hw(hw, (char *) 0xf1000000, NET,      "Am7990 (LANCE)");
+		setup_hw(hw, (uint8_t *)0xf1000000, NET,      "Am7990 (LANCE)");
 		hw++;
 	}
 }
