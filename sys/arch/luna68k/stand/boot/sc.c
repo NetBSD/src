@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.2 2013/01/13 04:39:28 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.3 2013/01/14 01:37:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -76,7 +76,7 @@
  */
 
 
-#define NSC	1
+#define NSC	2
 
 #include <sys/param.h>
 #include <luna68k/stand/boot/samachdep.h>
@@ -111,7 +111,14 @@ int
 scinit(void *arg)
 {
 	struct hp_ctlr *hc = arg;
-	struct scsi_softc *hs = &scsi_softc[hc->hp_unit];
+	struct scsi_softc *hs;
+	int unit;
+
+	unit = hc->hp_unit;
+	if (unit < 0 || unit >= NSC)
+		return 0;
+
+	hs = &scsi_softc[unit];
 
 	hc->hp_ipl    = SCSI_IPL;
 	hs->sc_hc     = hc;
