@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.260 2012/12/02 19:19:36 apb Exp $
+#	$NetBSD: build.sh,v 1.261 2013/01/14 13:02:59 pooka Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -430,6 +430,7 @@ initdefaults()
 	unsetmakeenv INFODIR
 	unsetmakeenv LESSCHARSET
 	unsetmakeenv MAKEFLAGS
+	unsetmakeenv TERMINFO
 	setmakeenv LC_ALL C
 
 	# Find information about the build platform.  This should be
@@ -1715,7 +1716,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.260 2012/12/02 19:19:36 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.261 2013/01/14 13:02:59 pooka Exp $
 # with these arguments: ${_args}
 #
 
