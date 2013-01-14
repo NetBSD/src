@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2013/01/14 15:50:18 pooka Exp $
+#	$NetBSD: Makefile,v 1.16 2013/01/14 16:00:49 pooka Exp $
 
 LIBISPRIVATE=	yes
 
@@ -112,6 +112,7 @@ gengtype: gengtype.lo gengtype-lex.lo gengtype-parse.lo build-errors.lo
 gtyp-gen.h: Makefile
 	${_MKTARGET_CREATE}
 	(\
+	unset empty							; \
 	echo "static const char *srcdir = \"$(G_GTFILES_SRCDIR)\";"	; \
 	echo "static const char *lang_files[] = {"			; \
 	for f in $$empty $(G_GTFILES_FILES_FILES); do echo "\"$$f\", "; done ; \
