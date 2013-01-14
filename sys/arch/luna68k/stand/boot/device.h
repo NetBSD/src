@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.4 2013/01/14 12:17:17 tsutsui Exp $	*/
+/*	$NetBSD: device.h,v 1.5 2013/01/14 12:28:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -80,7 +80,7 @@ struct hp_ctlr {
 	struct driver	*hp_driver;
 	int		hp_unit;
 	int		hp_alive;
-	char		*hp_addr;
+	uint8_t		*hp_addr;
 	int		hp_flags;
 	int		hp_ipl;
 };
@@ -91,7 +91,7 @@ struct hp_device {
 	int		hp_unit;
 	int		hp_ctlr;
 	int		hp_slave;
-	char		*hp_addr;
+	uint8_t		*hp_addr;
 	int		hp_dk;
 	int		hp_flags;
 	int		hp_alive;
@@ -108,7 +108,7 @@ struct	devqueue {
 };
 
 struct hp_hw {
-	char	*hw_addr;	/* physical address of registers */
+	uint8_t	*hw_addr;	/* physical address of registers */
 	short	hw_type;	/* type (defined below) */
 	char	*hw_name;	/* HP product name */
 };
