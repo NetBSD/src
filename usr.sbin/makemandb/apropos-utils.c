@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.8 2013/01/14 18:01:59 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.9 2013/01/14 21:26:25 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.8 2013/01/14 18:01:59 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.9 2013/01/14 21:26:25 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: apropos-utils.c,v 1.8 2013/01/14 18:01:59 christos Exp $");
 #include <string.h>
 #include <util.h>
 #include <zlib.h>
+#include <term.h>
+#undef tab	// XXX: manconf.h
 
 #include "apropos-utils.h"
 #include "manconf.h"
@@ -712,6 +714,28 @@ run_query_html(sqlite3 *db, query_args *args)
 }
 
 /*
+ * underline a string, pager style.
+ */
+static char *
+ul_pager(const char *s)
+{
+	size_t len;
+	char *dst, *d;
+
+	// a -> _\ba
+	len = strlen(s) * 3 + 1;
+
+	d = dst = emalloc(len);
+	while (*s) {
+		*d++ = '_';
+		*d++ = '\b';
+		*d++ = *s++;
+	}
+	*d = '\0';
+	return dst;
+}
+
+/*
  * callback_pager --
  *  A callback similar to callback_html. It overstrikes the matching text in
  *  the snippet so that it appears emboldened when viewed using a pager like
@@ -771,9 +795,57 @@ callback_pager(void *data, const char *section, const char *name,
 	}
 
 	psnippet[i] = 0;
-	(orig_data->callback)(orig_data->data, section, name, name_desc, psnippet,
-		psnippet_length);
+	char *ul_section = ul_pager(section);
+	char *ul_name = ul_pager(name);
+	char *ul_name_desc = ul_pager(name_desc);
+	(orig_data->callback)(orig_data->data, ul_section, ul_name,
+	    ul_name_desc, psnippet, psnippet_length);
+	free(ul_section);
+	free(ul_name);
+	free(ul_name_desc);
 	free(psnippet);
+	return 0;
+}
+
+struct term_args {
+	struct orig_callback_data *orig_data;
+	const char *smul;
+	const char *rmul;
+};
+
+/*
+ * underline a string, pager style.
+ */
+static char *
+ul_term(const char *s, const struct term_args *ta)
+{
+	char *dst;
+
+	easprintf(&dst, "%s%s%s", ta->smul, s, ta->rmul);
+	return dst;
+}
+
+/*
+ * callback_term --
+ *  A callback similar to callback_html. It overstrikes the matching text in
+ *  the snippet so that it appears emboldened when viewed using a pager like
+ *  more or less.
+ */
+static int
+callback_term(void *data, const char *section, const char *name, 
+	const char *name_desc, const char *snippet, size_t snippet_length)
+{
+	struct term_args *ta = data;
+	struct orig_callback_data *orig_data = ta->orig_data;
+
+	char *ul_section = ul_term(section, ta);
+	char *ul_name = ul_term(name, ta);
+	char *ul_name_desc = ul_term(name_desc, ta);
+	(orig_data->callback)(orig_data->data, ul_section, ul_name,
+	    ul_name_desc, snippet, snippet_length);
+	free(ul_section);
+	free(ul_name);
+	free(ul_name_desc);
 	return 0;
 }
 
@@ -793,5 +865,68 @@ run_query_pager(sqlite3 *db, query_args *args)
 	const char *snippet_args[] = {"\002", "\003", "..."};
 	args->callback = &callback_pager;
 	args->callback_data = (void *) &orig_data;
+	return run_query(db, snippet_args, args);
+}
+
+static void
+term_init(int fd, const char *sa[5])
+{
+	TERMINAL *ti;
+	int error;
+	const char *bold, *sgr0, *smso, *rmso, *smul, *rmul;
+
+	if (ti_setupterm(&ti, NULL, fd, &error) == -1) {
+		bold = sgr0 = NULL;
+		smso = rmso = smul = rmul = "";
+		ti = NULL;
+	} else {
+		bold = ti_getstr(ti, "bold");
+		sgr0 = ti_getstr(ti, "sgr0");
+		if (bold == NULL || sgr0 == NULL) {
+			smso = ti_getstr(ti, "smso");
+
+			if (smso == NULL ||
+			    (rmso = ti_getstr(ti, "rmso")) == NULL)
+				smso = rmso = "";
+			bold = sgr0 = NULL;
+		} else
+			smso = rmso = "";
+
+		smul = ti_getstr(ti, "smul");
+		if (smul == NULL || (rmul = ti_getstr(ti, "rmul")) == NULL)
+			smul = rmul = "";
+	}
+
+	sa[0] = estrdup(bold ? bold : smso);
+	sa[1] = estrdup(sgr0 ? sgr0 : rmso);
+	sa[2] = estrdup("...");
+	sa[3] = estrdup(smul);
+	sa[4] = estrdup(rmul);
+	if (ti)
+		del_curterm(ti);
+}
+
+/*
+ * run_query_term --
+ *  Utility function similar to run_query_html. This function tries to
+ *  pre-process the result assuming it will be displayed on a terminal
+ *  For this purpose it first calls it's own callback function callback_pager
+ *  which then delegates the call to the user supplied callback.
+ */
+int
+run_query_term(sqlite3 *db, query_args *args)
+{
+	struct orig_callback_data orig_data;
+	struct term_args ta;
+	orig_data.callback = args->callback;
+	orig_data.data = args->callback_data;
+	const char *snippet_args[5];
+	term_init(STDOUT_FILENO, snippet_args);
+	ta.smul = snippet_args[3];
+	ta.rmul = snippet_args[4];
+	ta.orig_data = (void *) &orig_data;
+
+	args->callback = &callback_term;
+	args->callback_data = &ta;
 	return run_query(db, snippet_args, args);
 }
