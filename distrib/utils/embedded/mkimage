@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkimage,v 1.9 2013/01/15 02:50:08 jmcneill Exp $
+# $NetBSD: mkimage,v 1.10 2013/01/15 03:26:27 christos Exp $
 
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -168,17 +168,18 @@ fi
 total=$(( ( ( ${total} + ${custsize} ) / 1000000 ) + ${overhead} ))
 if [ $size -eq 0 ]; then
         # auto-size the pkgs fs
-        size=${total}
+        newsize=${total}
 else
         # check that we've been given enough space
         if [ ${total} -gt ${size} ]; then
                 echo "$PROG: Given size is ${size} MB, but we need ${total} MB" >&2
                 exit 1
         fi
+	newsize=${size}
 fi
 
-echo "${bar} making a new ${size} MB image in ${image} ${bar}"
-dd if=/dev/zero of=${image} bs=1m count=${size} conv=sparse
+echo "${bar} making a new ${newsize} MB image in ${image} ${bar}"
+dd if=/dev/zero of=${image} bs=1m count=${newsize} conv=sparse
 
 vnddev=$(next_avail vnd)
 echo "${bar} mounting image via vnd ${vnddev} ${bar}"
@@ -188,15 +189,17 @@ make_filesystems
 
 ${sudo} mkdir -p ${mnt}/etc ${mnt}/dev
 
-echo "${bar} installing sets ${bar}"
+echo -n "${bar} installing sets:"
 (cd ${mnt} &&
 	for s in ${sets}; do
-		if [ -f "${setsdir}/${s}.tgz" ]; then
-			echo ${s}
-			${sudo} tar xpzf ${setsdir}/${s}.tgz
+		ss="${setsdir}/${s}.tgz"
+		if [ -f "${ss}" ]; then
+			echo -n " ${s}"
+			${sudo} tar xpzf "${ss}"
 		fi
 	done
 )
+echo " ${bar}"
 
 echo "${bar} performing customisations ${bar}"
 
