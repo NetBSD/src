@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.3 2013/01/14 22:30:13 christos Exp $
+# $NetBSD: md.evbarm,v 1.4 2013/01/15 00:25:33 christos Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -139,3 +139,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libkbd_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmouse_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libws_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libwsfb_drv.so.0.debug	-unknown-	xorg,debug
