@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 2012/12/27 06:29:50 martin Exp $	*/
+/*	$NetBSD: asm.h,v 1.6 2013/01/15 13:30:12 kiyohara Exp $	*/
 
 /* -
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -33,6 +33,8 @@
  *	Some rules to make assembly code understandable by
  *	a debugger are also noted.
  */
+
+#define _C_LABEL(x)	x
 
 /*
  * Macro to make a local label name.
