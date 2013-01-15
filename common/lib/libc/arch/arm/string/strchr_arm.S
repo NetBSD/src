@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strchr_arm.S,v 1.1 2013/01/15 02:04:04 matt Exp $")
+RCSID("$NetBSD: strchr_arm.S,v 1.2 2013/01/15 16:52:35 matt Exp $")
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
@@ -92,8 +92,6 @@ ENTRY(strchr)
 	 */
 	mvns	ip, ip			/* did we encounter a NUL? */
 	beq	.Lfind_match		/*   no, find the match */
-	eors	r3, r3, ip		/* remove NUL bit */
-	beq	.Lnomatch		/*   if no other bits, no match */
 	movs	ip, ip, lshi #8		/* replicate NUL bit to other bytes */
 	orrne	ip, ip, lshi #8		/* replicate NUL bit to other bytes */
 	orrne	ip, ip, lshi #8		/* replicate NUL bit to other bytes */
@@ -128,27 +126,30 @@ ENTRY(strchr)
 
 	sub	r2, r0, #4		/* un post-inc */
 	mov	r0, #0			/* assume no match */
-	tst	r3, #BYTE0		/* is this byte NUL? */
-	RETc(eq)			/*   yes, return NULL */
+
 	tst	ip, #BYTE0		/* does this byte match? */
 	moveq	r0, r2			/*   yes, point to it */
 	RETc(eq)			/*        and return */
-	tst	r3, #BYTE1		/* is this byte NUL? */
+	tst	r3, #BYTE0		/* is this byte NUL? */
 	RETc(eq)			/*   yes, return NULL */
+
 	tst	ip, #BYTE1		/* does this byte match? */
 	addeq	r0, r2, #1		/*   yes, point to it */
 	RETc(eq)			/*        and return */
-	tst	r3, #BYTE2		/* is this byte NUL? */
+	tst	r3, #BYTE1		/* is this byte NUL? */
 	RETc(eq)			/*   yes, return NULL */
+
 	tst	ip, #BYTE2		/* does this byte match? */
 	addeq	r0, r2, #2		/*   yes, point to it */
 	RETc(eq)			/*        and return */
-	tst	r3, #BYTE3		/* is this byte NUL? */
+	tst	r3, #BYTE2		/* is this byte NUL? */
 	RETc(eq)			/*   yes, return NULL */
+
+	tst	ip, #BYTE3		/* does this byte match? */
+	addeq	r0, r2, #3		/*   yes, point to it */
 	/*
 	 * Since no NULs and no matches this must be the only case left.
 	 */
-	add	r0, r2, #3		/* point to it */
 	RET				/* return */
 #endif /* _ARM_ARCH_6 */
 END(strchr)
