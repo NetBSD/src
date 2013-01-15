@@ -33,7 +33,7 @@
  * Implementation of strcat using strlen/strcpy.
  */
 ENTRY(strcat)
-	str	lr, [sp, #-8]		/* save return address */
+	str	lr, [sp, #-8]!		/* save return address */
 	push	{r4, r5}		/* save registers */
 
 	mov	r4, r0			/* save dst */
