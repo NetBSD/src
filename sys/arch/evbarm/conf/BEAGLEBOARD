@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.41 2013/01/11 09:45:53 he Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.42 2013/01/15 13:52:26 jmcneill Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -35,9 +35,9 @@ file-system	NFS		# Network file system
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
-#file-system	KERNFS		# /kern
+file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
-#file-system	PROCFS		# /proc
+file-system	PROCFS		# /proc
 #file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -325,3 +325,5 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
+
+cinclude "arch/evbarm/conf/BEAGLEBOARD.local"
