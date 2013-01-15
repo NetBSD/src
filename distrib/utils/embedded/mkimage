@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkimage,v 1.8 2013/01/14 12:12:19 jmcneill Exp $
+# $NetBSD: mkimage,v 1.9 2013/01/15 02:50:08 jmcneill Exp $
 
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -191,7 +191,7 @@ ${sudo} mkdir -p ${mnt}/etc ${mnt}/dev
 echo "${bar} installing sets ${bar}"
 (cd ${mnt} &&
 	for s in ${sets}; do
-		if [ -f "${s}" ]; then
+		if [ -f "${setsdir}/${s}.tgz" ]; then
 			echo ${s}
 			${sudo} tar xpzf ${setsdir}/${s}.tgz
 		fi
