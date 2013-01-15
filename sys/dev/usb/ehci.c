@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.201 2013/01/15 10:41:57 mbalmer Exp $ */
+/*	$NetBSD: ehci.c,v 1.202 2013/01/15 17:45:05 christos Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.201 2013/01/15 10:41:57 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.202 2013/01/15 17:45:05 christos Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2784,7 +2784,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 #endif
 		}
 		DPRINTFN(4,("ehci_alloc_sqtd_chain: len=%d curlen=%d "
-			    "curoffs=%ld\n", len, curlen, (size_t)curoffs));
+			    "curoffs=%zu\n", len, curlen, (size_t)curoffs));
 
 		/*
 		 * Allocate another transfer if there's more data left,
