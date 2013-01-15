@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.142 2013/01/05 23:34:20 christos Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.143 2013/01/15 23:57:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.142 2013/01/05 23:34:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.143 2013/01/15 23:57:13 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -319,7 +319,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 	if (err != USBD_IN_PROGRESS)
 		return (err);
 	usbd_lock_pipe(pipe);
-	if (!xfer->done) {
+	while (!xfer->done) {
 		if (pipe->device->bus->use_polling)
 			panic("usbd_transfer: not done");
 
