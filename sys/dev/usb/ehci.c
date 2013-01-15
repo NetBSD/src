@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.198 2013/01/09 23:02:59 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.199 2013/01/15 03:24:00 christos Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.198 2013/01/09 23:02:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.199 2013/01/15 03:24:00 christos Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -83,14 +83,13 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.198 2013/01/09 23:02:59 skrll Exp $");
 #include <dev/usb/usbroothub_subr.h>
 
 #ifdef EHCI_DEBUG
-#include <sys/kprintf.h>
 static void
 ehciprintf(const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	kprintf(fmt, TOLOG|TOCONS, NULL, NULL, ap);
+	vprintf(fmt, ap);
 	va_end(ap);
 }
 
