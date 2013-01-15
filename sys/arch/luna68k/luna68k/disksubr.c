@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.29 2009/10/26 19:16:56 cegger Exp $ */
+/* $NetBSD: disksubr.c,v 1.30 2013/01/15 17:23:39 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.29 2009/10/26 19:16:56 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.30 2013/01/15 17:23:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,14 +180,20 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
 	int error;
+	int i;
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = 1;
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
-	lp->d_partitions[0].p_offset = 0;
+	if (lp->d_npartitions < RAW_PART + 1)
+		lp->d_npartitions = RAW_PART + 1;
+	for (i = 0; i < RAW_PART; i++) {
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
+	}
+	if (lp->d_partitions[RAW_PART].p_size == 0)
+		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
+	lp->d_partitions[RAW_PART].p_offset = 0;
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
