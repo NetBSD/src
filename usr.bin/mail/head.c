@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.22 2012/12/01 11:41:50 mbalmer Exp $	*/
+/*	$NetBSD: head.c,v 1.23 2013/01/15 17:25:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.22 2012/12/01 11:41:50 mbalmer Exp $");
+__RCSID("$NetBSD: head.c,v 1.23 2013/01/15 17:25:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: head.c,v 1.22 2012/12/01 11:41:50 mbalmer Exp $");
  * Return 1 if they match, 0 if they don't
  */
 static int
-cmatch(const char *cp, char *tp)
+cmatch(const char *cp, const char *tp)
 {
 
 	while (*cp && *tp)
@@ -86,6 +86,11 @@ cmatch(const char *cp, char *tp)
 			if (*cp++ != '\n')
 				return 0;
 			break;
+		case '+':
+			if (*cp != '+' && *cp != '-')
+				return 0;
+			cp++;
+			break;
 		}
 	if (*cp || *tp)
 		return 0;
@@ -108,19 +113,25 @@ cmatch(const char *cp, char *tp)
  * 'O'	An optional digit or space
  * ':'	A colon
  * 'N'	A new line
+ * '+'	A plus or minus sign
  */
-static char ctype[] = "Aaa Aaa O0 00:00:00 0000";
-static char SysV_ctype[] = "Aaa Aaa O0 00:00 0000";
-static char tmztype[] = "Aaa Aaa O0 00:00:00 AAA 0000";
-static char SysV_tmztype[] = "Aaa Aaa O0 00:00 AAA 0000";
+static const char *datetypes[] = {
+ 	"Aaa Aaa O0 00:00:00 0000",		/* BSD ctype */
+	"Aaa Aaa O0 00:00 0000",		/* SysV ctype */
+	"Aaa Aaa O0 00:00:00 AAA 0000",		/* BSD tmztype */
+	"Aaa Aaa O0 00:00 AAA 0000",		/* SysV tmztype */
+	"Aaa Aaa O0 00:00:00 0000 +0000",	/* RFC822 type */
+	"Aaa Aaa O0 00:00:00 0000 AAA",		/* RFC822 alttype */
+};
 
 static int
 isdate(const char date[])
 {
 
-	return cmatch(date, ctype) ||
-	       cmatch(date, tmztype) ||
-	       cmatch(date, SysV_tmztype) || cmatch(date, SysV_ctype);
+	for (size_t i = 0; i < __arraycount(datetypes); i++)
+		if (cmatch(date, datetypes[i]))
+			return 1;
+	return 0;
 }
 
 static void
