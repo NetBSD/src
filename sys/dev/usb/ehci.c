@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.199 2013/01/15 03:24:00 christos Exp $ */
+/*	$NetBSD: ehci.c,v 1.200 2013/01/15 04:02:56 christos Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.199 2013/01/15 03:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.200 2013/01/15 04:02:56 christos Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.199 2013/01/15 03:24:00 christos Exp $");
 #include <dev/usb/usbroothub_subr.h>
 
 #ifdef EHCI_DEBUG
-static void
+static void __printflike(1, 2)
 ehciprintf(const char *fmt, ...)
 {
 	va_list ap;
@@ -2783,8 +2783,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 				panic("ehci_alloc_sqtd_chain: curlen == 0");
 #endif
 		}
-		DPRINTFN(4,("ehci_alloc_sqtd_chain: len=%d curlen=%d "
-			    "curoffs=%d\n", len, curlen, curoffs));
+		DPRINTFN(4,("ehci_alloc_sqtd_chain: len=%d curlen=%zu "
+			    "curoffs=%d\n", len, curlen, (size_t)curoffs));
 
 		/*
 		 * Allocate another transfer if there's more data left,
@@ -2826,8 +2826,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		cur->xfer = xfer;
 		cur->len = curlen;
 
-		DPRINTFN(10,("ehci_alloc_sqtd_chain: cbp=0x%08x end=0x%08x\n",
-			    curoffs, curoffs + curlen));
+		DPRINTFN(10,("ehci_alloc_sqtd_chain: cbp=0x%08zx end=0x%08zx\n",
+			    (size_t)curoffs, (size_t)(curoffs + curlen)));
 
 		/* adjust the toggle based on the number of packets in this
 		   qtd */
