@@ -1,4 +1,4 @@
-# $NetBSD: md.prep,v 1.27 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.prep,v 1.28 2013/01/16 16:01:06 christos Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/prep				comp-c-include
 ./usr/include/prep/_G_config.h			comp-obsolete		obsolete
@@ -62,5 +62,3 @@
 ./usr/include/prep/varargs.h			comp-obsolete		obsolete
 ./usr/include/prep/vmparam.h			comp-c-include
 ./usr/include/prep/wchar_limits.h		comp-c-include
-./usr/libdata/debug/usr/mdec/mkbootimage.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
