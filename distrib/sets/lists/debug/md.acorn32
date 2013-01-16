@@ -1,4 +1,2 @@
-# $NetBSD: md.acorn32,v 1.1 2013/01/16 16:01:07 christos Exp $
+# $NetBSD: md.acorn32,v 1.2 2013/01/16 21:11:06 christos Exp $
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/X11R6/bin/Xarm32VIDC.debug		-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug			-unknown-	debug,x11
