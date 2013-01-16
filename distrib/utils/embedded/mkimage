@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkimage,v 1.11 2013/01/15 21:04:41 christos Exp $
+# $NetBSD: mkimage,v 1.12 2013/01/16 15:58:19 christos Exp $
 
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -68,6 +68,32 @@ next_avail ()
 	echo "${dev}${N}"
 }
 
+usage() {
+	cat << EOF 1>&2
+Usage: $PROG [-S <setsdir>] [-c <custom-files-dir>] [-h <host-arch>] [-s <size>]
+EOF
+exit 1
+}
+
+# Return the filesystem size for an ls -l or tar -xvf list
+# Directories and symlinks in tar are 0 size, we assume one block
+# (which is too much), we round up by the fragment size the rest.
+getfssize() {
+	local bsize="$1"
+	local fsize="$2"
+
+	awk -v fsize=${fsize} -v bsize=${bsize} '
+	NF >= 9 && $1 != "tar:" {
+		if ($5 == 0)
+			tot += bsize;
+		else
+			tot += ((int)(($5 + fsize - 1) / fsize)) * fsize;
+	}
+	END {
+		printf("%d\n", tot);
+	}'
+}
+
 # find the size of the gzipped files in a .tgz archive
 # Directories appear as 0, so count them as one block
 # and round up files to a fragment.
@@ -78,19 +104,10 @@ sizeone() {
 		echo 0
 		return;
 	fi
+
         case "$1" in 
         *.tgz|*.tar.gz|*.tbz|*.tar.bz2|*.txz|*.tar.xz)
-                tar tvzf "$1" |
-		awk -v fsize=${fsize} -v bsize=${bsize} '
-		{
-			if ($5 == 0)
-				tot += bsize;
-			else
-				tot += ((int)(($5 + fsize - 1) / fsize)) * fsize;
-		}
-		END {
-			printf("%d\n", tot);
-		}'
+                tar tvzf "$1" | getfssize ${bsize} ${fsize}
                 ;;
         *)
                 echo 0
@@ -98,12 +115,6 @@ sizeone() {
         esac
 }
 
-usage() {
-	cat << EOF 1>&2
-Usage: $PROG [-S <setsdir>] [-c <custom-files-dir>] [-h <host-arch>] [-s <size>]
-EOF
-exit 1
-}
 
 # Return the usable filesystem size in bytes, given the total size in bytes,
 # and optionally block and fragment sizes
@@ -181,6 +192,7 @@ obj="/usr/obj"
 # Presumable block and fragment size.
 bsize=16384
 fsize=2048
+mtob=$(( 1024 * 1024 ))
 
 # First pass for options to get the host
 OPTS="S:c:h:s:x"
@@ -232,24 +244,23 @@ setbytes=0
 echo -n "${bar} computing set sizes ("
 for s in ${sets}; do
 	one="$(sizeone ${setsdir}/${s}.tgz)"
-	echo -n " $s=$(( ${one} / 1024 / 1024 ))MB"
+	echo -n " $s=$(( ${one} / ${mtob} ))MB"
 	setbytes=$(( ${setbytes} +  ${one} ))
 done
-echo "): $(( ${setbytes} / 1024 / 1024 ))MB ${bar}"
+echo "): $(( ${setbytes} / ${mtob} ))MB ${bar}"
 
 # calculate size of custom files
 custbytes=0
 if [ -d "${custom}" ]; then
-	custbytes=$(ls -lR "${custom}" | 
-	    awk 'NF == 9 { tot += $5 } END { print tot }')
+	custbytes=$(ls -lR "${custom}" | getfssize ${bsize} ${fsize})
 fi
-echo "${bar} computing custom sizes: $(( ${custbytes} / 1024 / 1024 ))MB ${bar}"
+echo "${bar} computing custom sizes: $(( ${custbytes} / ${mtob} ))MB ${bar}"
 
 # how many bytes
 rawbytes="$(( ${setbytes} + ${custbytes} ))"
-echo -n "${bar} computing ffs filesystem size for $(( ${rawbytes} / 1024 / 1024 ))MB: "
+echo -n "${bar} computing ffs filesystem size for $(( ${rawbytes} / ${mtob} ))MB: "
 ffsbytes="$(makeffssize "${rawbytes}")"
-ffsmb=$(( ${ffsbytes} / 1024 / 1024 ))
+ffsmb=$(( ${ffsbytes} / ${mtob} ))
 echo " ${ffsmb}MB ${bar}"
 
 # total in MB
