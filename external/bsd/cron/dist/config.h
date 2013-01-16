@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.3 2010/05/07 20:43:27 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.3.6.1 2013/01/16 05:27:43 yamt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -93,6 +93,8 @@
 #define HAVE_TM_GMTOFF		/*-*/
 #define HAVE_FCHOWN		/*-*/
 #define HAVE_UTIMES		/*-*/
+#define HAVE_UTIMENSAT
+#define _INCOMPLETE_XOPEN_C063
 
 			/* if your OS supports a BSD-style login.conf file */
 /* #define LOGIN_CAP			*/

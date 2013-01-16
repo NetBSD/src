@@ -1,4 +1,4 @@
-/*	$NetBSD: e500var.h,v 1.4.2.2 2012/10/30 17:20:12 yamt Exp $	*/
+/*	$NetBSD: e500var.h,v 1.4.2.3 2013/01/16 05:33:02 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -91,6 +91,9 @@ void	e500_tlb1_sync(void);
 void	e500_ipi_halt(void);
 void	e500_spinup_trampoline(void);
 void	e500_cpu_hatch(struct cpu_info *);
+struct e500_xtlb *
+	e500_tlb_lookup_xtlb(vaddr_t, u_int *);
+
 
 void	pq3gpio_attach(device_t, device_t, void *);
 

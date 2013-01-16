@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.6.2.3 2012/10/30 19:00:44 yamt Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.6.2.4 2013/01/16 05:34:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ yyerror(const char *fmt, ...)
 	extern int yyleng;
 	extern char *yytext;
 
-	char *msg, *context = xstrndup(yytext, yyleng);
+	char *msg, *context = estrndup(yytext, yyleng);
 	bool eol = (*context == '\n');
 	va_list ap;
 
@@ -66,7 +66,7 @@ yyerror(const char *fmt, ...)
 	    yylineno - (int)eol, yycolumn, msg);
 	if (!eol) {
 		size_t len = strlen(context);
-		char *dst = zalloc(len * 4 + 1);
+		char *dst = ecalloc(1, len * 4 + 1);
 
 		strvisx(dst, context, len, VIS_WHITE|VIS_CSTYLE);
 		fprintf(stderr, " near '%s'", dst);
@@ -100,6 +100,7 @@ yyerror(const char *fmt, ...)
 %token			HASH
 %token			ICMPTYPE
 %token			ID
+%token			IFNET
 %token			IN
 %token			INET
 %token			INET6
@@ -143,10 +144,11 @@ yyerror(const char *fmt, ...)
 
 %type	<str>		addr, some_name, list_elem, table_store
 %type	<str>		proc_param_val, opt_apply
-%type	<num>		ifindex, port, opt_final, on_iface
-%type	<num>		block_or_pass, rule_dir, block_opts, opt_family
+%type	<num>		ifindex, port, opt_final, on_ifindex
+%type	<num>		afamily, opt_family
+%type	<num>		block_or_pass, rule_dir, block_opts
 %type	<num>		opt_stateful, icmp_type, table_type, map_sd, map_type
-%type	<var>		addr_or_iface, port_range, icmp_type_and_code
+%type	<var>		ifnet, addr_or_ifnet, port_range, icmp_type_and_code
 %type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
 %type	<var>		procs, proc_call, proc_param_list, proc_param
 %type	<addrport>	mapseg
@@ -158,9 +160,9 @@ yyerror(const char *fmt, ...)
 	char *		str;
 	unsigned long	num;
 	double		fpnum;
+	npfvar_t *	var;
 	addr_port_t	addrport;
 	filt_opts_t	filtopts;
-	npfvar_t *	var;
 	opt_proto_t	optproto;
 	rule_group_t	rulegroup;
 }
@@ -241,6 +243,10 @@ list_elem
 		npfvar_add_element(vp, NPFVAR_VAR_ID, $1, strlen($1) + 1);
 		npfvar_add_elements(cvar, vp);
 	}
+	| ifnet
+	{
+		npfvar_add_elements(cvar, $1);
+	}
 	| addr_and_mask
 	{
 		npfvar_add_elements(cvar, $1);
@@ -277,7 +283,7 @@ map_type
 	;
 
 mapseg
-	: addr_or_iface port_range
+	: addr_or_ifnet port_range
 	{
 		$$.ap_netaddr = $1;
 		$$.ap_portrange = $2;
@@ -315,7 +321,7 @@ proc_call
 	{
 		proc_call_t pc;
 
-		pc.pc_name = xstrdup($1);
+		pc.pc_name = estrdup($1);
 		pc.pc_opts = $3;
 		$$ = npfvar_create(".proc_call");
 		npfvar_add_element($$, NPFVAR_PROC, &pc, sizeof(pc));
@@ -338,8 +344,8 @@ proc_param
 	{
 		proc_param_t pp;
 
-		pp.pp_param = xstrdup($1);
-		pp.pp_value = $2 ? xstrdup($2) : NULL;
+		pp.pp_param = estrdup($1);
+		pp.pp_value = $2 ? estrdup($2) : NULL;
 		$$ = npfvar_create(".proc_param");
 		npfvar_add_element($$, NPFVAR_PROC_PARAM, &pp, sizeof(pp));
 	}
@@ -420,8 +426,8 @@ rules
 	;
 
 rule
-	: block_or_pass opt_stateful rule_dir opt_final on_iface opt_family
-	  opt_proto all_or_filt_opts opt_apply
+	: block_or_pass opt_stateful rule_dir opt_final on_ifindex
+	  opt_family opt_proto all_or_filt_opts opt_apply
 	{
 		/*
 		 * Arguments: attributes, interface index, address
@@ -449,14 +455,18 @@ opt_final
 	|			{ $$ = 0; }
 	;
 
-on_iface
+on_ifindex
 	: ON ifindex		{ $$ = $2; }
 	|			{ $$ = 0; }
 	;
 
+afamily
+	: INET			{ $$ = AF_INET; }
+	| INET6			{ $$ = AF_INET6; }
+	;
+
 opt_family
-	: FAMILY INET		{ $$ = AF_INET; }
-	| FAMILY INET6		{ $$ = AF_INET6; }
+	: FAMILY afamily	{ $$ = $2; }
 	|			{ $$ = AF_UNSPEC; }
 	;
 
@@ -546,7 +556,7 @@ filt_opts
 	;
 
 filt_addr
-	: addr_or_iface		{ $$ = $1; }
+	: addr_or_ifnet		{ $$ = $1; }
 	| TABLE_ID		{ $$ = npfctl_parse_table_id($1); }
 	| ANY			{ $$ = NULL; }
 	;
@@ -570,36 +580,37 @@ addr_and_mask
 	}
 	;
 
-addr_or_iface
+addr_or_ifnet
 	: addr_and_mask
 	{
 		assert($1 != NULL);
 		$$ = $1;
 	}
-	| some_name
+	| ifnet
 	{
-		$$ = npfctl_parse_iface($1);
+		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
+		$$ = ifna->ifna_addrs;
 	}
 	| VAR_ID
 	{
 		npfvar_t *vp = npfvar_lookup($1);
 		const int type = npfvar_get_type(vp, 0);
+		ifnet_addr_t *ifna;
 
 		switch (type) {
-		case NPFVAR_VAR_ID:
-		case NPFVAR_STRING:
-			$$ = npfctl_parse_iface(npfvar_expand_string(vp));
-			break;
 		case NPFVAR_FAM:
 			$$ = vp;
 			break;
+		case NPFVAR_INTERFACE:
+			ifna = npfvar_get_data(vp, type, 0);
+			$$ = ifna->ifna_addrs;
+			break;
 		case -1:
-			yyerror("undefined variable '%s' for interface", $1);
+			yyerror("undefined variable '%s'", $1);
 			break;
 		default:
-			yyerror("wrong variable '%s' type '%s' or interface",
-			    $1, npfvar_type(type));
-			$$ = NULL;
+			yyerror("wrong variable '%s' type '%s' for address "
+			    "or interface", $1, npfvar_type(type));
 			break;
 		}
 	}
@@ -609,7 +620,6 @@ addr
 	: IPV4ADDR	{ $$ = $1; }
 	| IPV6ADDR	{ $$ = $1; }
 	;
-
 
 port_range
 	: PORT port		/* just port */
@@ -646,12 +656,14 @@ icmp_type_and_code
 	}
 	| ICMPTYPE icmp_type CODE IDENTIFIER
 	{
-		$$ = npfctl_parse_icmp($<num>0, $2, npfctl_icmpcode($<num>0, $2, $4));
+		$$ = npfctl_parse_icmp($<num>0, $2,
+		    npfctl_icmpcode($<num>0, $2, $4));
 	}
 	| ICMPTYPE icmp_type CODE VAR_ID
 	{
 		char *s = npfvar_expand_string(npfvar_lookup($4));
-		$$ = npfctl_parse_icmp($<num>0, $2, npfctl_icmpcode($<num>0, $2, s));
+		$$ = npfctl_parse_icmp($<num>0, $2,
+		    npfctl_icmpcode($<num>0, $2, s));
 	}
 	|
 	{
@@ -688,20 +700,40 @@ icmp_type
 	}
 	;
 
+ifnet
+	: IFNET PAR_OPEN IDENTIFIER PAR_CLOSE
+	{
+		$$ = npfctl_parse_ifnet($3, AF_UNSPEC);
+	}
+	| afamily PAR_OPEN IDENTIFIER PAR_CLOSE
+	{
+		$$ = npfctl_parse_ifnet($3, $1);
+	}
+
 ifindex
 	: some_name
 	{
 		$$ = npfctl_find_ifindex($1);
 	}
+	| ifnet
+	{
+		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
+		$$ = ifna->ifna_index;
+	}
 	| VAR_ID
 	{
 		npfvar_t *vp = npfvar_lookup($1);
 		const int type = npfvar_get_type(vp, 0);
+		ifnet_addr_t *ifna;
 
 		switch (type) {
-		case NPFVAR_VAR_ID:
 		case NPFVAR_STRING:
+		case NPFVAR_IDENTIFIER:
 			$$ = npfctl_find_ifindex(npfvar_expand_string(vp));
+			break;
+		case NPFVAR_INTERFACE:
+			ifna = npfvar_get_data(vp, type, 0);
+			$$ = ifna->ifna_index;
 			break;
 		case -1:
 			yyerror("undefined variable '%s' for interface", $1);
@@ -709,7 +741,6 @@ ifindex
 		default:
 			yyerror("wrong variable '%s' type '%s' for interface",
 			    $1, npfvar_type(type));
-			$$ = -1;
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.4.2.4 2012/10/30 17:22:58 yamt Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.4.2.5 2013/01/16 05:33:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -86,8 +86,9 @@ chfs_lookup(void *v)
 
 	/* Avoid doing a linear scan of the directory if the requested
 	 * directory/name couple is already in the cache. */
-	error = cache_lookup(dvp, vpp, cnp);
-	if (error >= 0) {
+	if (cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
+		error = *vpp == NULLVP ? ENOENT : 0;
 		goto out;
 	}
 
@@ -155,7 +156,8 @@ chfs_lookup(void *v)
 	 * request was for creation, as it does not improve timings on
 	 * emprical tests. */
 	if (cnp->cn_nameiop != CREATE && (cnp->cn_flags & ISDOTDOT) == 0) {
-		cache_enter(dvp, *vpp, cnp);
+		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 	}
 
 out:

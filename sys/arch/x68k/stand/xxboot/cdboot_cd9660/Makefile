@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2012/04/17 00:07:03 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2013/01/16 05:33:09 yamt Exp $
 
 DEV=		xx
 DEVDRV=		xx
 FS=		cd9660
-BOOTCPPFLAGS=	-DCDBOOT -DFDBOOT -DSDBOOT
+BOOTCPPFLAGS=	-DCDBOOT
 
 TOUCHPROG=								\
 	( ( echo -n X68SCSI1 | dd bs=2048 conv=sync ) ;			\

@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_com.c,v 1.4.2.1 2012/10/30 17:19:18 yamt Exp $ */
+/*	$NetBSD: armadillo9_com.c,v 1.4.2.2 2013/01/16 05:32:52 yamt Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_com.c,v 1.4.2.1 2012/10/30 17:19:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_com.c,v 1.4.2.2 2013/01/16 05:32:52 yamt Exp $");
 
 /* Front-end of epcom */
 
@@ -73,7 +73,7 @@ armadillo9com_attach(device_t parent, device_t self, void *aux)
 {
 	struct epcom_softc *sc = device_private(self);
 	struct epsoc_attach_args *sa = aux;
-	u_int32_t pwrcnt;
+	uint32_t pwrcnt;
 	bus_space_handle_t ioh;
 
 	sc->sc_dev = self;

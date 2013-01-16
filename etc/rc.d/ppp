@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ppp,v 1.8 2004/10/11 15:00:51 christos Exp $
+# $NetBSD: ppp,v 1.8.50.1 2013/01/16 05:26:13 yamt Exp $
 #
 
 # PROVIDE: ppp
@@ -14,6 +14,7 @@
 $_rc_subr_loaded . /etc/rc.subr
 
 name="ppp"
+rcvar=$name
 start_cmd="ppp_start"
 stop_cmd="ppp_stop"
 sig_stop="-INT"
@@ -40,6 +41,8 @@ ppp_start()
 			fi
 		done
 		echo "."
+	else
+		warn "\${ppp_peers} is not set - pppd was not started."
 	fi
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.3.2.1 2012/10/30 18:52:57 yamt Exp $	*/
+/*	$NetBSD: view.c,v 1.3.2.2 2013/01/16 05:27:20 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -191,9 +191,12 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	view->flush = ISC_FALSE;
 	view->dlv = NULL;
 	view->maxudp = 0;
+	view->maxbits = 0;
 	view->v4_aaaa = dns_v4_aaaa_ok;
 	view->v4_aaaa_acl = NULL;
 	ISC_LIST_INIT(view->rpz_zones);
+	view->rpz_recursive_only = ISC_TRUE;
+	view->rpz_break_dnssec = ISC_FALSE;
 	dns_fixedname_init(&view->dlv_fixed);
 	view->managed_keys = NULL;
 	view->redirect = NULL;

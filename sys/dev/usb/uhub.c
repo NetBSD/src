@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.114.2.2 2012/10/30 17:22:08 yamt Exp $	*/
+/*	$NetBSD: uhub.c,v 1.114.2.3 2013/01/16 05:33:35 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.114.2.2 2012/10/30 17:22:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.114.2.3 2013/01/16 05:33:35 yamt Exp $");
 
 #include "opt_usb.h"
 
@@ -189,7 +189,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	USETW2(req.wValue, UDESC_HUB, 0);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, USB_HUB_DESCRIPTOR_SIZE);
-	DPRINTFN(1,("usb_init_hub: getting hub descriptor\n"));
+	DPRINTFN(1,("%s: getting hub descriptor\n", __func__));
 	err = usbd_do_request(dev, &req, &hubdesc);
 	nports = hubdesc.bNbrPorts;
 	if (!err && nports > 7) {

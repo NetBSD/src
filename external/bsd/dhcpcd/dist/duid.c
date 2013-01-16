@@ -25,12 +25,15 @@
  * SUCH DAMAGE.
  */
 
-#define THIRTY_YEARS_IN_SECONDS    946707779
+#define DUID_TIME_EPOCH 946684800
+#define DUID_LLT	1
+#define DUID_LL		3
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -38,16 +41,40 @@
 #include "duid.h"
 #include "net.h"
 
+static size_t
+make_duid(unsigned char *duid, const struct interface *ifp, uint16_t type)
+{
+	unsigned char *p;
+	uint16_t u16;
+	time_t t;
+	uint32_t u32;
+
+	p = duid;
+	u16 = htons(type);
+	memcpy(p, &u16, 2);
+	p += 2;
+	u16 = htons(ifp->family);
+	memcpy(p, &u16, 2);
+	p += 2;
+	if (type == DUID_LLT) {
+		/* time returns seconds from jan 1 1970, but DUID-LLT is
+		 * seconds from jan 1 2000 modulo 2^32 */
+		t = time(NULL) - DUID_TIME_EPOCH;
+		u32 = htonl(t & 0xffffffff);
+		memcpy(p, &u32, 4);
+		p += 4;
+	}
+	/* Finally, add the MAC address of the interface */
+	memcpy(p, ifp->hwaddr, ifp->hwlen);
+	p += ifp->hwlen;
+	return p - duid;
+}
+
 size_t
-get_duid(unsigned char *duid, const struct interface *iface)
+get_duid(unsigned char *duid, const struct interface *ifp)
 {
 	FILE *f;
-	uint16_t type = 0;
-	uint16_t hw = 0;
-	uint32_t ul;
-	time_t t;
 	int x = 0;
-	unsigned char *p = duid;
 	size_t len = 0;
 	char *line;
 
@@ -66,35 +93,25 @@ get_duid(unsigned char *duid, const struct interface *iface)
 		if (len)
 			return len;
 	} else {
-		if (errno != ENOENT)
-			return 0;
+		if (errno != ENOENT) {
+			syslog(LOG_ERR, "error reading DUID: %s: %m", DUID);
+			return make_duid(duid, ifp, DUID_LL);
+		}
 	}
 
 	/* No file? OK, lets make one based on our interface */
-	if (!(f = fopen(DUID, "w")))
-		return 0;
-	type = htons(1); /* DUI-D-LLT */
-	memcpy(p, &type, 2);
-	p += 2;
-	hw = htons(iface->family);
-	memcpy(p, &hw, 2);
-	p += 2;
-	/* time returns seconds from jan 1 1970, but DUID-LLT is
-	 * seconds from jan 1 2000 modulo 2^32 */
-	t = time(NULL) - THIRTY_YEARS_IN_SECONDS;
-	ul = htonl(t & 0xffffffff);
-	memcpy(p, &ul, 4);
-	p += 4;
-	/* Finally, add the MAC address of the interface */
-	memcpy(p, iface->hwaddr, iface->hwlen);
-	p += iface->hwlen;
-	len = p - duid;
+	if (!(f = fopen(DUID, "w"))) {
+		syslog(LOG_ERR, "error writing DUID: %s: %m", DUID);
+		return make_duid(duid, ifp, DUID_LL);
+	}
+	len = make_duid(duid, ifp, DUID_LLT);
 	x = fprintf(f, "%s\n", hwaddr_ntoa(duid, len));
 	fclose(f);
 	/* Failed to write the duid? scrub it, we cannot use it */
 	if (x < 1) {
-		len = 0;
+		syslog(LOG_ERR, "error writing DUID: %s: %m", DUID);
 		unlink(DUID);
+		return make_duid(duid, ifp, DUID_LL);
 	}
 	return len;
 }

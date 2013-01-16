@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic_machdep.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: cyclic_machdep.c,v 1.2.6.1 2013/01/16 05:28:01 yamt Exp $	*/
 
 /*-
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/cddl/dev/cyclic/i386/cyclic_machdep.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD$
  *
  */
 
@@ -60,6 +60,9 @@ cyclic_machdep_init(void)
 {
 	/* Register the cyclic backend. */
 	cyclic_init(&be);
+#ifdef __NetBSD__
+	cyclic_ap_start(NULL);
+#endif
 }
 
 static void
@@ -69,7 +72,7 @@ cyclic_machdep_uninit(void)
 
 	for (i = 0; i <= mp_maxid; i++)
 		/* Reset the cyclic clock callback hook. */
-		lapic_cyclic_clock_func[i] = NULL;
+		cyclic_clock_func[i] = NULL;
 
 	/* De-register the cyclic backend. */
 	cyclic_uninit();
@@ -82,11 +85,11 @@ static hrtime_t exp_due[MAXCPU];
  * initialiser as the callback for high speed timer events.
  */
 static void
-cyclic_clock(struct trapframe *frame)
+cyclic_clock(struct clockframe *frame)
 {
-	cpu_t *c = &solaris_cpu[curcpu];
+	cpu_t *c = &solaris_cpu[cpu_number()];
 
-	if (c->cpu_cyclic != NULL && gethrtime() >= exp_due[curcpu]) {
+	if (c->cpu_cyclic != NULL && gethrtime() >= exp_due[cpu_number()]) {
 		if (TRAPF_USERMODE(frame)) {
 			c->cpu_profile_pc = 0;
 			c->cpu_profile_upc = TRAPF_PC(frame);
@@ -107,29 +110,39 @@ cyclic_clock(struct trapframe *frame)
 static void enable(cyb_arg_t arg)
 {
 	/* Register the cyclic clock callback function. */
-	lapic_cyclic_clock_func[curcpu] = cyclic_clock;
+	cyclic_clock_func[cpu_number()] = cyclic_clock;
 }
 
 static void disable(cyb_arg_t arg)
 {
 	/* Reset the cyclic clock callback function. */
-	lapic_cyclic_clock_func[curcpu] = NULL;
+	cyclic_clock_func[cpu_number()] = NULL;
 }
 
 static void reprogram(cyb_arg_t arg, hrtime_t exp)
 {
-	exp_due[curcpu] = exp;
+	exp_due[cpu_number()] = exp;
 }
+
+#ifdef __NetBSD__
+static void xcall_func(void *arg0, void *arg1)
+{
+	cyc_func_t func;
+
+	func = arg0;
+	(*func)(arg1);
+}
+#endif
 
 static void xcall(cyb_arg_t arg, cpu_t *c, cyc_func_t func, void *param)
 {
-	/*
-	 * If the target CPU is the current one, just call the
-	 * function. This covers the non-SMP case.
-	 */
-	if (c == &solaris_cpu[curcpu])
-		(*func)(param);
-	else
-		smp_rendezvous_cpus((cpumask_t) (1 << c->cpuid), NULL,
-		    func, smp_no_rendevous_barrier, param);
+#ifdef __NetBSD__
+	uint64_t xc;
+
+	xc = xc_unicast(XC_HIGHPRI, xcall_func, func, param, cpu_lookup(c->cpuid));
+	xc_wait(xc);
+#else
+	smp_rendezvous_cpus((cpumask_t) (1 << c->cpuid),
+	    smp_no_rendevous_barrier, func, smp_no_rendevous_barrier, param);
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.21.2.1 2012/10/30 17:19:18 yamt Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.21.2.2 2013/01/16 05:32:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.21.2.1 2012/10/30 17:19:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.21.2.2 2013/01/16 05:32:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -376,8 +376,8 @@ cpu_reboot(int howto, char *bootstr)
 	epwdog_reset();
 #else
 	{
-	u_int32_t ctrl = EP93XX_APB_VBASE + EP93XX_APB_WDOG + EP93XX_WDOG_Ctrl;
-	u_int32_t val = EP93XX_WDOG_ENABLE;
+	uint32_t ctrl = EP93XX_APB_VBASE + EP93XX_APB_WDOG + EP93XX_WDOG_Ctrl;
+	uint32_t val = EP93XX_WDOG_ENABLE;
 	__asm volatile (
 		"str %1, [%0]\n"
 		:

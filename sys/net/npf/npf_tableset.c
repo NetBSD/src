@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.5.6.3 2012/10/30 17:22:45 yamt Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.5.6.4 2013/01/16 05:33:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.5.6.3 2012/10/30 17:22:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.5.6.4 2013/01/16 05:33:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -575,8 +575,7 @@ npf_table_list(npf_tableset_t *tset, u_int tid, void *ubuf, size_t len)
 		if (error)
 			break;
 		error = table_tree_list(&t->t_tree[1], 128, ubuf, len, &off);
-		if (error)
-			break;
+		break;
 	default:
 		KASSERT(false);
 	}

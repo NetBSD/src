@@ -67,6 +67,14 @@ struct ra {
 
 extern TAILQ_HEAD(rahead, ra) ipv6_routers;
 
+struct rs_state {
+	unsigned char *rs;
+	size_t rslen;
+	int rsprobes;
+};
+
+#define RS_STATE(a) ((struct rs_state *)(ifp)->if_data[IF_DATA_IPV6RS])
+
 int ipv6rs_open(void);
 void ipv6rs_handledata(void *);
 int ipv6rs_start(struct interface *);

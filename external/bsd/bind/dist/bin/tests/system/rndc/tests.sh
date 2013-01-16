@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -222,6 +222,12 @@ END
 $DIGCMD text6.nil. TXT | grep 'addition 6' >/dev/null || ret=1
 $DIGCMD text7.nil. TXT | grep 'addition 7' >/dev/null || ret=1
 $DIGCMD frozen.nil. TXT | grep 'frozen addition' >/dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:test using second key"
+ret=0
+$RNDC -s 10.53.0.2 -p 9953 -c ns2/secondkey.conf status > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

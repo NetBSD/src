@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.126.6.1 2012/04/17 00:09:54 yamt Exp $ */
+/* $NetBSD: user.c,v 1.126.6.2 2013/01/16 05:34:13 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.126.6.1 2012/04/17 00:09:54 yamt Exp $");
+__RCSID("$NetBSD: user.c,v 1.126.6.2 2013/01/16 05:34:13 yamt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1576,9 +1576,15 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 					errx(EXIT_FAILURE,
 					    "Can't modify user `%s': "
 					    "gid %d is already in use",
-					    login_name, up->u_uid);
+					    login_name, pwp->pw_uid);
 				}
 				pwp->pw_gid = pwp->pw_uid;
+				if (!creategid(newlogin, pwp->pw_uid, "")) {
+					errx(EXIT_FAILURE, 
+					    "Could not create group %s "
+					    "with uid %d", newlogin, 
+					    up->u_uid);
+				}
 			} else if ((grp = getgrnam(up->u_primgrp)) != NULL) {
 				pwp->pw_gid = grp->gr_gid;
 			} else if (is_number(up->u_primgrp) &&

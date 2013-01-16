@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.1.1.1.2.1 2012/10/30 18:52:57 yamt Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.1.2.2 2013/01/16 05:27:20 yamt Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -78,7 +78,7 @@
 #define CHECK(op) \
 	do { result = (op); \
 		if (result != ISC_R_SUCCESS) goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Fail unconditionally with result 'code', which must not
@@ -93,7 +93,7 @@
 	do {							\
 		result = (code);				\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Fail unconditionally and log as a client error.
@@ -115,7 +115,7 @@
 			   "update %s: %s (%s)", _what,		\
 			   msg, isc_result_totext(result));	\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define FAILN(code, name, msg) \
 	do {								\
@@ -136,7 +136,7 @@
 				   msg, isc_result_totext(result));	\
 		}							\
 		if (result != ISC_R_SUCCESS) goto failure;		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define FAILNT(code, name, type, msg) \
 	do {								\
@@ -160,7 +160,7 @@
 				   isc_result_totext(result));		\
 		}							\
 		if (result != ISC_R_SUCCESS) goto failure;		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Fail unconditionally and log as a server error.
@@ -174,7 +174,7 @@
 			   "error: %s: %s",			\
 			   msg, isc_result_totext(result));	\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /**************************************************************************/
 

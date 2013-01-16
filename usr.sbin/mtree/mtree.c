@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.37.2.1 2012/10/30 19:00:41 yamt Exp $	*/
+/*	$NetBSD: mtree.c,v 1.37.2.2 2013/01/16 05:34:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.37.2.1 2012/10/30 19:00:41 yamt Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.37.2.2 2013/01/16 05:34:09 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ main(int argc, char **argv)
 	spec2 = NULL;
 
 	while ((ch = getopt(argc, argv,
-	    "cCdDeE:f:I:ik:K:lLmMnN:p:PqrR:s:StuUWxX:"))
+	    "cCdDeE:f:I:ijk:K:lLmMnN:p:PqrR:s:StuUWxX:"))
 	    != -1) {
 		switch((char)ch) {
 		case 'c':
@@ -257,7 +257,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-CcDdejLlMnPqrSUuWx] [-i|-m] [-E tags]\n"
+	    "usage: %s [-CcDdejLlMnPqrStUuWx] [-i|-m] [-E tags]\n"
 	    "\t\t[-f spec] [-f spec]\n"
 	    "\t\t[-I tags] [-K keywords] [-k keywords] [-N dbdir] [-p path]\n"
 	    "\t\t[-R keywords] [-s seed] [-X exclude-file]\n",

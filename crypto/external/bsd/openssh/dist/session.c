@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.8.2.1 2012/05/23 10:07:05 yamt Exp $	*/
-/* $OpenBSD: session.c,v 1.259 2011/10/24 02:13:13 djm Exp $ */
+/*	$NetBSD: session.c,v 1.8.2.2 2013/01/16 05:25:59 yamt Exp $	*/
+/* $OpenBSD: session.c,v 1.260 2012/03/15 03:10:27 guenther Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.8.2.1 2012/05/23 10:07:05 yamt Exp $");
+__RCSID("$NetBSD: session.c,v 1.8.2.2 2013/01/16 05:25:59 yamt Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -1321,7 +1321,7 @@ do_nologin(struct passwd *pw)
 	struct stat sb;
 
 #ifdef HAVE_LOGIN_CAP
-	if (login_getcapbool(lc, "ignorenologin", 0) && pw->pw_uid)
+	if (login_getcapbool(lc, "ignorenologin", 0) || pw->pw_uid == 0)
 		return;
 	nl = login_getcapstr(lc, "nologin", def_nl, def_nl);
 

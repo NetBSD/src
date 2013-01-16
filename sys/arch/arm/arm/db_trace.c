@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.22.8.2 2012/10/30 17:18:55 yamt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.22.8.3 2013/01/16 05:32:42 yamt Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.22.8.2 2012/10/30 17:18:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.22.8.3 2013/01/16 05:32:42 yamt Exp $");
 
 #include <sys/proc.h>
 #include <arm/armreg.h>
@@ -86,7 +86,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		db_expr_t count, const char *modif,
 		void (*pr)(const char *, ...))
 {
-	u_int32_t	*frame, *lastframe;
+	uint32_t	*frame, *lastframe;
 	const char	*cp = modif;
 	char c;
 	bool		kernel_only = true;
@@ -106,7 +106,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 	}
 
 	if (!have_addr)
-		frame = (u_int32_t *)(DDB_REGS->tf_r11);
+		frame = (uint32_t *)(DDB_REGS->tf_r11);
 	else {
 		if (trace_thread) {
 			struct pcb *pcb;
@@ -146,16 +146,16 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 #endif
 			(*pr)("at %p\n", frame);
 		} else
-			frame = (u_int32_t *)(addr);
+			frame = (uint32_t *)(addr);
 	}
 	lastframe = NULL;
 	scp_offset = -(get_pc_str_offset() >> 2);
 
 	while (count-- && frame != NULL) {
 		db_addr_t	scp;
-		u_int32_t	savecode;
+		uint32_t	savecode;
 		int		r;
-		u_int32_t	*rp;
+		uint32_t	*rp;
 		const char	*sep;
 
 		lastframe = frame;
@@ -190,11 +190,11 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		(*pr)("\trsp=0x%08x rfp=0x%08x", frame[FR_RSP], frame[FR_RFP]);
 
 #ifndef _KERNEL
-		db_read_bytes((db_addr_t)((u_int32_t *)scp + scp_offset),
+		db_read_bytes((db_addr_t)((uint32_t *)scp + scp_offset),
 		    sizeof(savecode), (void *)&savecode);
 #else
 		if ((scp & 3) == 0) {
-			savecode = ((u_int32_t *)scp)[scp_offset];
+			savecode = ((uint32_t *)scp)[scp_offset];
 		} else {
 			savecode = 0;
 		}
@@ -221,7 +221,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		if (frame[FR_RFP] == 0)
 			break; /* Top of stack */
 
-		frame = (u_int32_t *)(frame[FR_RFP]);
+		frame = (uint32_t *)(frame[FR_RFP]);
 
 		if (INKERNEL((int)frame)) {
 			/* staying in kernel */

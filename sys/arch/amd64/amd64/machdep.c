@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.168.2.4 2012/10/30 17:18:43 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.168.2.5 2013/01/16 05:32:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168.2.4 2012/10/30 17:18:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168.2.5 2013/01/16 05:32:39 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -317,7 +317,7 @@ int dump_seg_iter(int (*)(paddr_t, paddr_t));
 
 #ifndef NO_SPARSE_DUMP
 void sparse_dump_reset(void);
-void sparse_dump_mark(vaddr_t, vaddr_t, int);
+void sparse_dump_mark(void);
 void cpu_dump_prep_sparse(void);
 #endif
 
@@ -821,7 +821,7 @@ haltsys:
  * XXXfvdl share dumpcode.
  */
 
- /*
+/*
  * Perform assorted dump-related initialization tasks.  Assumes that
  * the maximum physical memory address will not increase afterwards.
  */
@@ -873,34 +873,39 @@ sparse_dump_reset(void)
 }
 
 /*
- * Include or exclude pages in a sparse dump, by half-open virtual
- * address interval (which may wrap around the end of the space).
+ * Include or exclude pages in a sparse dump.
  */
 void
-sparse_dump_mark(vaddr_t vbegin, vaddr_t vend, int includep)
+sparse_dump_mark(void)
 {
-	pmap_t pmap;
-	paddr_t p;
-	vaddr_t v;
+	paddr_t p, pstart, pend;
+	struct vm_page *pg;
+	int i;
 
 	/*
-	 * If a partial page is called for, the whole page must be included.
+	 * Mark all memory pages, then unmark pages that are uninteresting.
+	 * Dereferenceing pg->uobject might crash again if another CPU
+	 * frees the object out from under us, but we can't lock anything
+	 * so it's a risk we have to take.
 	 */
-	if (includep) {
-		vbegin = rounddown(vbegin, PAGE_SIZE);
-		vend = roundup(vend, PAGE_SIZE);
-	} else {
-		vbegin = roundup(vbegin, PAGE_SIZE);
-		vend = rounddown(vend, PAGE_SIZE);
-	}
 
-	pmap = pmap_kernel();
-	for (v = vbegin; v != vend; v += PAGE_SIZE) {
-		if (pmap_extract(pmap, v, &p)) {
-			if (includep)
-				setbit(sparse_dump_physmap, p/PAGE_SIZE);
-			else
-				clrbit(sparse_dump_physmap, p/PAGE_SIZE);
+	for (i = 0; i < mem_cluster_cnt; ++i) {
+		pstart = mem_clusters[i].start / PAGE_SIZE;
+		pend = pstart + mem_clusters[i].size / PAGE_SIZE;
+
+		for (p = pstart; p < pend; p++) {
+			setbit(sparse_dump_physmap, p);
+		}
+	}
+	for (i = 0; i < vm_nphysseg; i++) {
+		struct vm_physseg *seg = VM_PHYSMEM_PTR(i);
+
+		for (pg = seg->pgs; pg < seg->lastpg; pg++) {
+			if (pg->uanon || (pg->pqflags & PQ_FREE) ||
+			    (pg->uobject && pg->uobject->pgops)) {
+				p = VM_PAGE_TO_PHYS(pg) / PAGE_SIZE;
+				clrbit(sparse_dump_physmap, p);
+			}
 		}
 	}
 }
@@ -914,7 +919,7 @@ cpu_dump_prep_sparse(void)
 {
 	sparse_dump_reset();
 	/* XXX could the alternate recursive page table be skipped? */
-	sparse_dump_mark((vaddr_t)PTE_BASE, (vaddr_t)KERN_BASE, 1);
+	sparse_dump_mark();
 	/* Memory for I/O buffers could be unmarked here, for example. */
 	/* The kernel text could also be unmarked, but gdb would be upset. */
 }
@@ -1206,6 +1211,7 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 		pmap_update(pmap_kernel());
 
 		error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
+		pmap_kremove_local(dumpspace, n);
 		if (error)
 			return error;
 		maddr += n;

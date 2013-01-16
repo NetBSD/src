@@ -1,7 +1,7 @@
-/*	$NetBSD: t_names.c,v 1.3.2.1 2012/10/30 18:50:00 yamt Exp $	*/
+/*	$NetBSD: t_names.c,v 1.3.2.2 2013/01/16 05:26:28 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -123,20 +123,30 @@ chkdata(unsigned char *buf, size_t buflen, char *exp_data,
 
 			if (('0' <= *q) && (*q <= '9'))
 				*p = *q - '0';
-			else if (('a' <= *q) && (*q <= 'z'))
+			else if (('a' <= *q) && (*q <= 'f'))
 				*p = *q - 'a' + 10;
-			else if (('A' <= *q) && (*q <= 'Z'))
+			else if (('A' <= *q) && (*q <= 'F'))
 				*p = *q - 'A' + 10;
+			else {
+				t_info("malformed comparison data\n");
+				free(data);
+				return (-1);
+			}
 			++q;
 
 			*p <<= 4;
 
 			if (('0' <= *q) && (*q <= '9'))
 				*p |= ((*q - '0') & 0x0f);
-			else if (('a' <= *q) && (*q <= 'z'))
+			else if (('a' <= *q) && (*q <= 'f'))
 				*p |= ((*q - 'a' + 10) & 0x0f);
-			else if (('A' <= *q) && (*q <= 'Z'))
+			else if (('A' <= *q) && (*q <= 'F'))
 				*p |= ((*q - 'A' + 10) & 0x0f);
+			else {
+				t_info("malformed comparison data\n");
+				free(data);
+				return (-1);
+			}
 			++p;
 			++q;
 			++cnt;
@@ -205,9 +215,9 @@ getmsg(char *datafile_name, unsigned char *buf, int buflen, isc_buffer_t *pbuf)
 		}
 		if (('0' <= c) && (c <= '9'))
 			val = c - '0';
-		else if (('a' <= c) && (c <= 'z'))
+		else if (('a' <= c) && (c <= 'f'))
 			val = c - 'a' + 10;
-		else if (('A' <= c) && (c <= 'Z'))
+		else if (('A' <= c) && (c <= 'F'))
 			val = c - 'A'+ 10;
 		else {
 			(void)fclose(fp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.39 2011/10/26 01:46:11 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.39.2.1 2013/01/16 05:33:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -106,7 +106,7 @@
 # define SF_LR		16
 # define SF_PARAM	SF_HEADER_SZ
 
-# define ENTRY(y)			\
+# define _ENTRY(y)			\
 	.globl	y;			\
 	.section ".opd","aw";		\
 	.align	3;			\
@@ -117,6 +117,8 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	.globl	.y;			\
 	.align	3;			\
 .y:
+
+# define ENTRY(y) _ENTRY(y)
 
 # define END(y)
 

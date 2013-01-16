@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.9 2010/11/30 16:27:31 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.9.8.1 2013/01/16 05:33:52 yamt Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.7 2010/11/30 15:41:35 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.8 2012/11/18 18:39:23 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
@@ -24,7 +24,7 @@ rump_vfs_unavailable(void)
 }
 
 void
-rump_pub_getvninfo(struct vnode *arg1, enum vtype *arg2, off_t *arg3, dev_t *arg4)
+rump_pub_getvninfo(struct vnode *arg1, enum rump_vtype *arg2, off_t *arg3, dev_t *arg4)
 {
 
 	rump_schedule();
@@ -69,7 +69,7 @@ rump_pub_vattr_init(void)
 }
 
 void
-rump_pub_vattr_settype(struct vattr *arg1, enum vtype arg2)
+rump_pub_vattr_settype(struct vattr *arg1, enum rump_vtype arg2)
 {
 
 	rump_schedule();

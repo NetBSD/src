@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.8.2.1 2012/04/17 00:07:12 yamt Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.8.2.2 2013/01/16 05:33:11 yamt Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.8.2.1 2012/04/17 00:07:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.8.2.2 2013/01/16 05:33:11 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -423,7 +423,7 @@ xpci_do_op(struct xen_pci_op *op)
 	   _XEN_PCIF_active)) {
 		hypervisor_clear_event(xpci_sc->sc_evtchn);
 		/* HYPERVISOR_yield(); */
-	} 
+	}
 	memcpy(op, active_op, sizeof(struct xen_pci_op));
 	__cpu_simple_unlock(&pci_conf_lock);
 	splx(s);

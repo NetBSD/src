@@ -1,4 +1,4 @@
-/*      $NetBSD: ixdp425_pci.c,v 1.8 2011/07/01 20:42:36 dyoung Exp $ */
+/*      $NetBSD: ixdp425_pci.c,v 1.8.2.1 2013/01/16 05:32:54 yamt Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.8 2011/07/01 20:42:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.8.2.1 2013/01/16 05:32:54 yamt Exp $");
 
 /*
  * IXDP425 PCI interrupt support.
@@ -62,7 +62,7 @@ void
 ixp425_md_pci_init(struct ixp425_softc *sc)
 {
 	pci_chipset_tag_t pc = &sc->ia_pci_chipset;
-	u_int32_t reg;
+	uint32_t reg;
 
 	/*
 	 * PCI initialization

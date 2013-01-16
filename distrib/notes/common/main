@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.482.2.3 2012/10/30 18:48:34 yamt Exp $
+.\"	$NetBSD: main,v 1.482.2.4 2013/01/16 05:26:02 yamt Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -651,7 +651,7 @@ range of operating systems can check the integrity of the release files.
 .item)
 .Pp
 Other directories provide unpacked source trees e.g. for distribution via
-the the software update protocol (SUP) or the
+the software update protocol (SUP) or the
 concurrent version system (CVS). For more information see:
 .Lk http://www.NetBSD.org/mirrors/
 .\}

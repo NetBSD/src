@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.9.2.2 2012/10/30 17:19:11 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.9.2.3 2013/01/16 05:32:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -125,8 +125,8 @@ CFATTACH_DECL_NEW(pxaacu, sizeof(struct acu_softc),
     pxaacu_match, pxaacu_attach, NULL, NULL);
 
 static int acu_codec_attach(void *, struct ac97_codec_if *);
-static int acu_codec_read(void *, u_int8_t, u_int16_t *);
-static int acu_codec_write(void *, u_int8_t, u_int16_t);
+static int acu_codec_read(void *, uint8_t, uint16_t *);
+static int acu_codec_write(void *, uint8_t, uint16_t);
 static int acu_codec_reset(void *);
 static int acu_intr(void *);
 
@@ -198,7 +198,7 @@ static const struct audio_format acu_formats[] = {
 };
 #define	ACU_NFORMATS	(sizeof(acu_formats) / sizeof(struct audio_format))
 
-static inline u_int32_t
+static inline uint32_t
 acu_reg_read(struct acu_softc *sc, int reg)
 {
 
@@ -206,7 +206,7 @@ acu_reg_read(struct acu_softc *sc, int reg)
 }
 
 static inline void
-acu_reg_write(struct acu_softc *sc, int reg, u_int32_t val)
+acu_reg_write(struct acu_softc *sc, int reg, uint32_t val)
 {
 
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, reg, val);
@@ -220,10 +220,10 @@ acu_codec_ready(struct acu_softc *sc)
 }
 
 static inline int
-acu_wait_gsr(struct acu_softc *sc, u_int32_t bit)
+acu_wait_gsr(struct acu_softc *sc, uint32_t bit)
 {
 	int timeout;
-	u_int32_t rv;
+	uint32_t rv;
 
 	for (timeout = 5000; timeout; timeout--) {
 		if ((rv = acu_reg_read(sc, AC97_GSR)) & bit) {
@@ -362,10 +362,10 @@ acu_codec_attach(void *arg, struct ac97_codec_if *aci)
 }
 
 static int
-acu_codec_read(void *arg, u_int8_t codec_reg, u_int16_t *valp)
+acu_codec_read(void *arg, uint8_t codec_reg, uint16_t *valp)
 {
 	struct acu_softc *sc = arg;
-	u_int32_t val;
+	uint32_t val;
 	int reg, rv = 1;
 
 	/*
@@ -416,10 +416,10 @@ out_nocar:
 }
 
 static int
-acu_codec_write(void *arg, u_int8_t codec_reg, u_int16_t val)
+acu_codec_write(void *arg, uint8_t codec_reg, uint16_t val)
 {
 	struct acu_softc *sc = arg;
-	u_int16_t rv;
+	uint16_t rv;
 
 	/*
 	 * If we're currently closed, chances are the user is just
@@ -458,7 +458,7 @@ static int
 acu_codec_reset(void *arg)
 {
 	struct acu_softc *sc = arg;
-	u_int32_t rv;
+	uint32_t rv;
 
 	rv = acu_reg_read(sc, AC97_GCR);
 	acu_reg_write(sc, AC97_GCR, rv | GCR_WARM_RST);
@@ -479,7 +479,7 @@ static int
 acu_intr(void *arg)
 {
 	struct acu_softc *sc = arg;
-	u_int32_t gsr, reg;
+	uint32_t gsr, reg;
 
 	mutex_spin_enter(&sc->sc_intr_lock);
 	gsr = acu_reg_read(sc, AC97_GSR);

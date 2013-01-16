@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.161.2.3 2012/10/30 17:22:59 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.161.2.4 2013/01/16 05:33:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.161.2.3 2012/10/30 17:22:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.161.2.4 2013/01/16 05:33:55 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1075,8 +1075,9 @@ retry:
 
 	/* If the inode was deleted, reset all fields */
 	if (ip->i_e2fs_dtime != 0) {
-		ip->i_e2fs_mode = ip->i_e2fs_nblock = 0;
+		ip->i_e2fs_mode = 0;
 		(void)ext2fs_setsize(ip, 0);
+		(void)ext2fs_setnblock(ip, 0);
 		memset(ip->i_e2fs_blocks, 0, sizeof(ip->i_e2fs_blocks));
 	}
 

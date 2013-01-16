@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.338.2.1 2012/04/17 00:06:56 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.338.2.2 2013/01/16 05:33:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3206,9 +3206,9 @@ ret_from_intr_vector:
 
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
- * on a soft interrupt, is we should check which bits in ASR_SOFTINT(0x16)
+ * on a soft interrupt, is we should check which bits in SOFTINT(%asr22)
  * are set, handle those interrupts, then clear them by setting the
- * appropriate bits in ASR_CLEAR_SOFTINT(0x15).
+ * appropriate bits in CLEAR_SOFTINT(%asr21).
  *
  * We have an array of 8 interrupt vector slots for each of 15 interrupt
  * levels.  If a vectored interrupt can be dispatched, the dispatch
@@ -3270,13 +3270,16 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
 #endif
 	/*
-	 * If this is a %tick softint, clear it then call interrupt_vector.
+	 * If this is a %tick or %stick softint, clear it then call
+	 * interrupt_vector. Only one of them should be enabled at any given
+	 * time.
 	 */
 	rd	SOFTINT, %g1
-	btst	1, %g1
+	set	TICK_INT|STICK_INT, %g5
+	andcc	%g5, %g1, %g5
 	bz,pt	%icc, 0f
 	 sethi	%hi(CPUINFO_VA+CI_TICK_IH), %g3
-	wr	%g0, 1, CLEAR_SOFTINT
+	wr	%g0, %g5, CLEAR_SOFTINT
 	ba,pt	%icc, setup_sparcintr
 	 LDPTR	[%g3 + %lo(CPUINFO_VA+CI_TICK_IH)], %g5
 0:
@@ -6058,6 +6061,63 @@ Ltick_ovflw:
 	 wr	%o2, TICK_CMPR
 #endif
 
+/*
+ * next_stick(long increment)
+ *
+ * Sets the %stick_cmpr register to fire off in `increment' machine
+ * cycles in the future.  Also handles %stick wraparound.  In 32-bit
+ * mode we're limited to a 32-bit increment.
+ */
+ENTRY(next_stick)
+	rd	STICK_CMPR, %o2
+	rd	STICK, %o1
+
+	mov	1, %o3		! Mask off high bits of these registers
+	sllx	%o3, 63, %o3
+	andn	%o1, %o3, %o1
+	andn	%o2, %o3, %o2
+	cmp	%o1, %o2	! Did we wrap?  (tick < tick_cmpr)
+	bgt,pt	%icc, 1f
+	 add	%o1, 1000, %o1	! Need some slack so we don't lose intrs.
+
+	/*
+	 * Handle the unlikely case of %stick wrapping.
+	 *
+	 * This should only happen every 10 years or more.
+	 *
+	 * We need to increment the time base by the size of %stick in
+	 * microseconds.  This will require some divides and multiplies
+	 * which can take time.  So we re-read %stick.
+	 *
+	 */
+
+	/* XXXXX NOT IMPLEMENTED */
+
+
+
+1:
+	add	%o2, %o0, %o2
+	andn	%o2, %o3, %o4
+	brlz,pn	%o4, Lstick_ovflw
+	 cmp	%o2, %o1	! Has this stick passed?
+	blt,pn	%xcc, 1b	! Yes
+	 nop
+	retl
+	 wr	%o2, STICK_CMPR
+
+Lstick_ovflw:
+/*
+ * When we get here tick_cmpr has wrapped, but we don't know if %stick
+ * has wrapped.  If bit 62 is set then we have not wrapped and we can
+ * use the current value of %o4 as %stick.  Otherwise we need to return
+ * to our loop with %o4 as %stick_cmpr (%o2).
+ */
+	srlx	%o3, 1, %o5
+	btst	%o5, %o1
+	bz,pn	%xcc, 1b
+	 mov	%o4, %o2
+	retl
+	 wr	%o2, STICK_CMPR
 
 ENTRY(setjmp)
 	save	%sp, -CC64FSZ, %sp	! Need a frame to return to.

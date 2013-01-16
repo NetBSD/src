@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2011/10/09 02:03:19 christos Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2013/01/16 05:28:02 yamt Exp $
 
 .include "../Makefile.inc"
-
-#SUBDIR+= libsim .WAIT
 
 SUBDIR=		libbfd libiberty libopcodes libgdb libdecnumber
 .if ${USE_LIBEDIT} == no || ${USE_TUI} == yes

@@ -1,4 +1,4 @@
-/* $NetBSD: tlv_stack.c,v 1.4 2011/06/15 18:16:48 kefren Exp $ */
+/* $NetBSD: tlv_stack.c,v 1.4.2.1 2013/01/16 05:34:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -253,8 +253,8 @@ send_label_tlv(struct ldp_peer * peer, struct in_addr * addr,
 
 	/* Now let's do the even a dirtier job: PREFIX TLV */
 	p = (struct prefix_tlv *) & fec[1];
-	/* Cisco and Juniper don't support FEC type HOST
-	 * so everything is FEC_PREFIX..
+	/*
+	 * RFC5036 obsoletes FEC_HOST
 	 *
 	 * if (prefixlen == 32) p->type = FEC_HOST; else
 	 */
@@ -344,7 +344,8 @@ send_withdraw_tlv(struct ldp_peer * peer, struct in_addr * addr,
 
 	/* Now the even dirtier job: PREFIX TLV */
 	p = (struct prefix_tlv *) & fec[1];
-	/* See above comment
+	/*
+	 * RFC5036 obsoletes FEC_HOST
 	 *
 	 * if (prefixlen == 32) p->type = FEC_HOST; else
 	 */

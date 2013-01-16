@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/04/17 12:52:26 tron Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2013/01/16 05:34:04 yamt Exp $
 
 HOSTLIB=dwarf
 
@@ -25,8 +25,8 @@ INCS=		dwarf.h libdwarf.h
 INCSDIR=	/usr/include
 
 .ifndef NOCOMPATLIB
-COMPATOBJ!=     cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
-CPPFLAGS+=	-I${COMPATOBJ}
+COMPATLIB_NO_LIB= yes # only the include files, not the library
+.-include	"${TOOLDIR}/share/compat/defs.mk"
 .endif
 
 CPPFLAGS+=	-I${.CURDIR}/../compat -I${LIBDWARF_DIR} -I${LIBELF_DIR}

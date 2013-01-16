@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.95.2.4 2012/10/30 17:22:41 yamt Exp $
+#	$NetBSD: Makefile,v 1.95.2.5 2013/01/16 05:33:47 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -50,6 +50,7 @@ SUBDIR+=	npf
 SUBDIR+=	npf_alg_icmp
 SUBDIR+=	npf_ext_log
 SUBDIR+=	npf_ext_normalise
+SUBDIR+=	npf_ext_rndblock
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	onewire
@@ -122,7 +123,8 @@ SUBDIR+=	vmt
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64"
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "sparc"
 SUBDIR+=	bpfjit
 SUBDIR+=	sljit
 .endif
@@ -240,6 +242,7 @@ SUBDIR+= 	dm
 .endif
 
 .if (${MKDTRACE} != "no")
+SUBDIR+=	cyclic
 SUBDIR+=	dtrace
 .endif
 

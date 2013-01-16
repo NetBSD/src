@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.118.2.1 2012/10/30 19:00:50 yamt Exp $	*/
+/*	$NetBSD: pstat.c,v 1.118.2.2 2013/01/16 05:34:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.118.2.1 2012/10/30 19:00:50 yamt Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.118.2.2 2013/01/16 05:34:10 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: pstat.c,v 1.118.2.1 2012/10/30 19:00:50 yamt Exp $");
 #include <sys/sysctl.h>
 
 #include <err.h>
+#include <errno.h>
 #include <kvm.h>
 #include <limits.h>
 #include <nlist.h>
@@ -681,7 +682,8 @@ char *
 loadvnodes(int *avnodes)
 {
 	int mib[2];
-	size_t copysize;
+	int status;
+	size_t copysize, oldsize;
 	char *vnodebase;
 
 	if (totalflag) {
@@ -696,12 +698,34 @@ loadvnodes(int *avnodes)
 	}
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_VNODE;
+	/*
+	 * First sysctl call gets the necessary buffer size; second
+	 * sysctl call gets the data.  We allow for some growth in the
+	 * data size between the two sysctl calls (increases of a few
+	 * thousand vnodes in between the two calls have been observed).
+	 * We ignore ENOMEM from the second sysctl call, which can
+	 * happen if the kernel's data grew by even more than we allowed
+	 * for.
+	 */
 	if (sysctl(mib, 2, NULL, &copysize, NULL, 0) == -1)
 		err(1, "sysctl: KERN_VNODE");
+	oldsize = copysize;
+	copysize += 100 * sizeof(struct vnode) + copysize / 20;
 	if ((vnodebase = malloc(copysize)) == NULL)
 		err(1, "malloc");
-	if (sysctl(mib, 2, vnodebase, &copysize, NULL, 0) == -1)
+	status = sysctl(mib, 2, vnodebase, &copysize, NULL, 0);
+	if (status == -1 && errno != ENOMEM)
 		err(1, "sysctl: KERN_VNODE");
+#if 0 /* for debugging the amount of growth allowed for */
+	if (copysize != oldsize) {
+		warnx("count changed from %ld to %ld (%+ld)%s",
+		    (long)(oldsize / sizeof(struct vnode)),
+		    (long)(copysize / sizeof(struct vnode)),
+		    (long)(copysize / sizeof(struct vnode)) -
+			(long)(oldsize / sizeof(struct vnode)),
+		    (status == 0 ? "" : ", and errno = ENOMEM"));
+	}
+#endif
 	if (copysize % (VPTRSZ + VNODESZ))
 		errx(1, "vnode size mismatch");
 	*avnodes = copysize / (VPTRSZ + VNODESZ);

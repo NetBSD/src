@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.42 2011/09/27 02:05:10 christos Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.42.2.1 2013/01/16 05:33:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.42 2011/09/27 02:05:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.42.2.1 2013/01/16 05:33:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,7 +430,6 @@ smbfs_smb_setptime2(struct smbnode *np, struct timespec *mtime,
 /*
  * NT level. Specially for win9x
  */
-#if 0
 int
 smbfs_smb_setpattrNT(struct smbnode *np, u_short attr, struct timespec *mtime,
 	struct timespec *atime, struct smb_cred *scred)
@@ -442,13 +441,22 @@ smbfs_smb_setpattrNT(struct smbnode *np, u_short attr, struct timespec *mtime,
 	int64_t tm;
 	int error, tzoff;
 
+	/*
+	 * SMB_SET_FILE_BASIC_INFO isn't supported for
+	 * SMB_TRANS2_SET_PATH_INFORMATION,
+	 * so use SMB_SET_FILE_BASIC_INFORMATION instead,
+	 * but it requires SMB_CAP_INFOLEVEL_PASSTHRU capability.
+	 */
+	if ((SMB_CAPS(vcp) & SMB_CAP_INFOLEVEL_PASSTHRU) == 0)
+		return smbfs_smb_setptime2(np, mtime, atime, attr, scred);
+
 	error = smb_t2_alloc(SSTOCP(ssp), SMB_TRANS2_SET_PATH_INFORMATION,
 	    scred, &t2p);
 	if (error)
 		return error;
 	mbp = &t2p->t2_tparam;
 	mb_init(mbp);
-	mb_put_uint16le(mbp, SMB_SET_FILE_BASIC_INFO);
+	mb_put_uint16le(mbp, SMB_SET_FILE_BASIC_INFORMATION);
 	mb_put_uint32le(mbp, 0);		/* MBZ */
 	error = smbfs_fullpath(mbp, vcp, np, NULL, 0);
 	if (error) {
@@ -471,13 +479,13 @@ smbfs_smb_setpattrNT(struct smbnode *np, u_short attr, struct timespec *mtime,
 	mb_put_int64le(mbp, tm);
 	mb_put_int64le(mbp, tm);		/* change time */
 	mb_put_uint32le(mbp, attr);		/* attr */
-	t2p->t2_maxpcount = 24;
-	t2p->t2_maxdcount = 56;
+	mb_put_uint32le(mbp, 0);		/* padding */
+	t2p->t2_maxpcount = 2;
+	t2p->t2_maxdcount = 0;
 	error = smb_t2_request(t2p);
 	smb_t2_done(t2p);
 	return error;
 }
-#endif
 
 /*
  * Set file atime and mtime. Doesn't supported by core dialect.
@@ -560,9 +568,8 @@ smbfs_smb_setfattrNT(struct smbnode *np, u_int16_t attr, struct timespec *mtime,
 		tm = 0;
 	mb_put_int64le(mbp, tm);
 	mb_put_int64le(mbp, tm);		/* change time */
-	mb_put_uint16le(mbp, attr);
-	mb_put_uint32le(mbp, 0);			/* padding */
-	mb_put_uint16le(mbp, 0);
+	mb_put_uint32le(mbp, attr);		/* attr */
+	mb_put_uint32le(mbp, 0);		/* padding */
 	t2p->t2_maxpcount = 2;
 	t2p->t2_maxdcount = 0;
 	error = smb_t2_request(t2p);
@@ -689,7 +696,7 @@ smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 			smb_rq_getreply(rqp, &mdp);
 			md_get_uint8(mdp, &wc);
 			if (wc == 1)
-				md_get_uint16le(mdp, &fid);
+				md_get_uint16(mdp, &fid);
 			else
 				error = EBADRPC;
 		}
@@ -1422,8 +1429,6 @@ smbfs_smb_ntcreatex(struct smbnode *np, int accmode,
 	mb_put_uint8(mbp, 0);		/* Security tracking mode flags */
 	smb_rq_wend(rqp);
 	smb_rq_bstart(rqp);
-	smb_rq_bend(rqp);
-	mbp->mb_count = 0;
 
 	error = smbfs_fullpath(mbp, SSTOVC(ssp), np, NULL, 0);
 	if (error)
@@ -1435,6 +1440,7 @@ smbfs_smb_ntcreatex(struct smbnode *np, int accmode,
 	flen = mbp->mb_count;
 	SMBRQ_PUTLE16(nmlen, flen);
 
+	smb_rq_bend(rqp);
 	error = smb_rq_simple(rqp);
 	if (error)
 		goto bad;

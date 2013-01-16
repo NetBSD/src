@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.161.2.3 2012/10/30 17:22:25 yamt Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.161.2.4 2013/01/16 05:33:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.161.2.3 2012/10/30 17:22:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.161.2.4 2013/01/16 05:33:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -526,9 +526,16 @@ puffs_vnop_lookup(void *v)
 	 * Check if someone fed it into the cache
 	 */
 	if (!isdot && PUFFS_USE_NAMECACHE(pmp)) {
-		error = cache_lookup(dvp, ap->a_vpp, cnp);
+		int found, iswhiteout;
 
-		if ((error == 0) && PUFFS_USE_FS_TTL(pmp)) {
+		found = cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+				     cnp->cn_nameiop, cnp->cn_flags,
+				     &iswhiteout, ap->a_vpp);
+		if (iswhiteout) {
+			cnp->cn_flags |= ISWHITEOUT;
+		}
+
+		if (found && *ap->a_vpp != NULLVP && PUFFS_USE_FS_TTL(pmp)) {
 			cvp = *ap->a_vpp;
 			cpn = VPTOPP(cvp);
 
@@ -540,7 +547,7 @@ puffs_vnop_lookup(void *v)
 				 * successful lookup. 
 				 */
 				*ap->a_vpp = NULL;
-				error = -1;
+				found = 0;
 			}
 		}
 
@@ -548,11 +555,20 @@ puffs_vnop_lookup(void *v)
 		 * Do not use negative caching, since the filesystem
 		 * provides no TTL for it.
 		 */
-		if ((error == ENOENT) && PUFFS_USE_FS_TTL(pmp))
-			error = -1;
+		if (found && *ap->a_vpp == NULLVP && PUFFS_USE_FS_TTL(pmp))
+			found = 0;
 
-		if (error >= 0)
-			return error;
+		if (found) {
+			return *ap->a_vpp == NULLVP ? ENOENT : 0;
+		}
+
+		/*
+		 * This is what would have been left in ERROR before
+		 * the rearrangement of cache_lookup(). What with all
+		 * the macros, I am not sure if this is a dead value
+		 * below or not.
+		 */
+		error = -1;
 	}
 
 	if (isdot) {
@@ -606,7 +622,8 @@ puffs_vnop_lookup(void *v)
 			} else {
 				if (PUFFS_USE_NAMECACHE(pmp) &&
 				    !PUFFS_USE_FS_TTL(pmp))
-					cache_enter(dvp, NULL, cnp);
+					cache_enter(dvp, NULL, cnp->cn_nameptr,
+						cnp->cn_namelen, cnp->cn_flags);
 			}
 		}
 		goto out;
@@ -682,7 +699,8 @@ puffs_vnop_lookup(void *v)
 	*ap->a_vpp = vp;
 
 	if (PUFFS_USE_NAMECACHE(pmp))
-		cache_enter(dvp, vp, cnp);
+		cache_enter(dvp, vp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 
 	/* XXX */
 	if ((lookup_msg->pvnr_cn.pkcn_flags & REQUIREDIR) == 0)

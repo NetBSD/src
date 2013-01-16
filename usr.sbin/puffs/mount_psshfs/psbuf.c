@@ -1,4 +1,4 @@
-/*      $NetBSD: psbuf.c,v 1.18 2010/01/08 10:53:31 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.18.6.1 2013/01/16 05:34:11 yamt Exp $        */
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.18 2010/01/08 10:53:31 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.18.6.1 2013/01/16 05:34:11 yamt Exp $");
 #endif /* !lint */
 
 /*
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: psbuf.c,v 1.18 2010/01/08 10:53:31 pooka Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
+#include <sys/socket.h>
 
 #include <err.h>
 #include <errno.h>

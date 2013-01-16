@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.21 2007/10/23 14:58:44 christos Exp $	*/
+/*	$NetBSD: head.c,v 1.21.28.1 2013/01/16 05:34:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.21 2007/10/23 14:58:44 christos Exp $");
+__RCSID("$NetBSD: head.c,v 1.21.28.1 2013/01/16 05:34:06 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ parse(const char line[], struct headline *hl, char pbuf[])
 /*
  * See if the passed line buffer is a mail header.
  * Return true if yes.  Note the extreme pains to
- * accomodate all funny formats.
+ * accommodate all funny formats.
  */
 PUBLIC int
 ishead(const char linebuf[])

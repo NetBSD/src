@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_obio.c,v 1.4.2.1 2012/10/30 17:19:24 yamt Exp $ */
+/*	$NetBSD: if_sm_obio.c,v 1.4.2.2 2013/01/16 05:32:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_obio.c,v 1.4.2.1 2012/10/30 17:19:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_obio.c,v 1.4.2.2 2013/01/16 05:32:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ sm_obio_match(device_t parent, cfdata_t match, void *aux)
 	struct obio_attach_args *oba = aux;
 	bus_space_tag_t iot = &smobio8_bs_tag;
 	bus_space_handle_t ioh;
-	u_int16_t tmp;
+	uint16_t tmp;
 	int rv = 0;
 	extern const char *smc91cxx_idstrs[];
 

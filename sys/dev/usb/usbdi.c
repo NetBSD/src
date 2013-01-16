@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.133.2.2 2012/10/30 17:22:11 yamt Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.133.2.3 2013/01/16 05:33:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.133.2.2 2012/10/30 17:22:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.133.2.3 2013/01/16 05:33:37 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -418,7 +418,7 @@ usbd_free_xfer(usbd_xfer_handle xfer)
 #if defined(DIAGNOSTIC)
 	if (callout_pending(&xfer->timeout_handle)) {
 		callout_stop(&xfer->timeout_handle);
-		printf("usbd_free_xfer: timout_handle pending");
+		printf("usbd_free_xfer: timeout_handle pending\n");
 	}
 #endif
 	cv_destroy(&xfer->cv);

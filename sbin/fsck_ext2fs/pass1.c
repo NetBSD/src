@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.21 2010/02/04 23:55:42 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.21.6.1 2013/01/16 05:32:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.21 2010/02/04 23:55:42 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.21.6.1 2013/01/16 05:32:33 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,16 +302,17 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	idesc->id_number = inumber;
 	(void)ckinode(dp, idesc);
 	idesc->id_entryno *= btodb(sblock.e2fs_bsize);
-	if (fs2h32(dp->e2di_nblock) != (uint32_t)idesc->id_entryno) {
-		pwarn("INCORRECT BLOCK COUNT I=%llu (%d should be %d)",
-		    (unsigned long long)inumber, fs2h32(dp->e2di_nblock),
+	if (inonblock(dp) != (uint32_t)idesc->id_entryno) {
+		pwarn("INCORRECT BLOCK COUNT I=%llu (%llu should be %d)",
+		    (unsigned long long)inumber,
+		    (unsigned long long)inonblock(dp),
 		    idesc->id_entryno);
 		if (preen)
 			printf(" (CORRECTED)\n");
 		else if (reply("CORRECT") == 0)
 			return;
 		dp = ginode(inumber);
-		dp->e2di_nblock = h2fs32(idesc->id_entryno);
+		inosnblock(dp, idesc->id_entryno);
 		inodirty();
 	}
 	return;

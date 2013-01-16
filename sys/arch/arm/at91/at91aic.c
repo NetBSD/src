@@ -1,5 +1,5 @@
-/*	$Id: at91aic.c,v 1.7.2.2 2012/10/30 17:18:58 yamt Exp $	*/
-/*	$NetBSD: at91aic.c,v 1.7.2.2 2012/10/30 17:18:58 yamt Exp $	*/
+/*	$Id: at91aic.c,v 1.7.2.3 2013/01/16 05:32:44 yamt Exp $	*/
+/*	$NetBSD: at91aic.c,v 1.7.2.3 2013/01/16 05:32:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -65,12 +65,12 @@
 struct intrq intrq[NIRQ];
 
 /* Interrupts to mask at each level. */
-static u_int32_t aic_imask[NIPL];
+static uint32_t aic_imask[NIPL];
 
 /* Software copy of the IRQs we have enabled. */
-volatile u_int32_t aic_intr_enabled;
+volatile uint32_t aic_intr_enabled;
 
-#define	AICREG(reg)	*((volatile u_int32_t*) (AT91AIC_BASE + (reg)))
+#define	AICREG(reg)	*((volatile uint32_t*) (AT91AIC_BASE + (reg)))
 
 static int	at91aic_match(device_t, cfdata_t, void *);
 static void	at91aic_attach(device_t, device_t, void *);
@@ -100,7 +100,7 @@ at91aic_attach(device_t parent, device_t self, void *aux)
 }
 
 static inline void
-at91_set_intrmask(u_int32_t aic_irqs)
+at91_set_intrmask(uint32_t aic_irqs)
 {
 	AICREG(AIC_IDCR)	= aic_irqs;
 	AICREG(AIC_IECR)	= aic_intr_enabled & ~aic_irqs;
@@ -261,7 +261,7 @@ at91aic_init(void)
 	AICREG(AIC_DCR)		= 0;	/* not in debug mode, just to make sure */
 	for (i = 0; i < NIRQ; i++) {
 	  AICREG(AIC_SMR(i))	= 0;	/* disable interrupt */
-	  AICREG(AIC_SVR(i))	= (u_int32_t)&intrq[i];	// address of interrupt queue
+	  AICREG(AIC_SVR(i))	= (uint32_t)&intrq[i];	// address of interrupt queue
 	}
 	AICREG(AIC_FVR)		= 0;	// fast interrupt...
 	AICREG(AIC_SPU)		= 0;	// spurious interrupt vector

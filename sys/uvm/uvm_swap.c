@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.157.2.1 2012/04/17 00:09:00 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.157.2.2 2013/01/16 05:33:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.157.2.1 2012/04/17 00:09:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.157.2.2 2013/01/16 05:33:56 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1533,6 +1533,19 @@ uvm_swap_alloc(int *nslots /* IN/OUT */, bool lessok)
 	 */
 	if (uvmexp.nswapdev < 1)
 		return 0;
+
+	/*
+	 * XXXJAK: BEGIN HACK
+	 *
+	 * blist_alloc() in subr_blist.c will panic if we try to allocate
+	 * too many slots.
+	 */
+	if (*nslots > BLIST_MAX_ALLOC) {
+		if (__predict_false(lessok == false))
+			return 0;
+		*nslots = BLIST_MAX_ALLOC;
+	}
+	/* XXXJAK: END HACK */
 
 	/*
 	 * lock data lock, convert slots into blocks, and enter loop

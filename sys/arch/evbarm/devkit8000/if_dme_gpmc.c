@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dme_gpmc.c,v 1.2 2011/07/01 20:38:16 dyoung Exp $	*/
+/*	$NetBSD: if_dme_gpmc.c,v 1.2.2.1 2013/01/16 05:32:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 Adam Hoka
@@ -130,7 +130,7 @@ dme_gpmc_attach(device_t parent, device_t self, void *aux)
 	/* XXX read eeprom or derive from die id */
 #define DME_ETHER_ADDR_FIXED 0,0x0a,0xb1,0,1,0xff
 #ifdef DME_ETHER_ADDR_FIXED
-	static u_int8_t enaddr[ETHER_ADDR_LEN] = {DME_ETHER_ADDR_FIXED};
+	static uint8_t enaddr[ETHER_ADDR_LEN] = {DME_ETHER_ADDR_FIXED};
 #else
 #define enaddr NULL
 #endif

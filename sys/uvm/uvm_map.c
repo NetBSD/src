@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.305.2.3 2012/10/30 17:23:02 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.305.2.4 2013/01/16 05:33:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.305.2.3 2012/10/30 17:23:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.305.2.4 2013/01/16 05:33:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2369,7 +2369,7 @@ uvm_map_reserve(struct vm_map *map, vsize_t size,
     vaddr_t offset	/* hint for pmap_prefer */,
     vsize_t align	/* alignment */,
     vaddr_t *raddr	/* IN:hint, OUT: reserved VA */,
-    uvm_flag_t flags	/* UVM_FLAG_FIXED or 0 */)
+    uvm_flag_t flags	/* UVM_FLAG_FIXED or UVM_FLAG_COLORMATCH or 0 */)
 {
 	UVMHIST_FUNC("uvm_map_reserve"); UVMHIST_CALLED(maphist);
 
@@ -2576,8 +2576,11 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 	if ((flags & UVM_EXTRACT_RESERVED) == 0) {
 		dstaddr = vm_map_min(dstmap);
-		if (!uvm_map_reserve(dstmap, len, start, 0, &dstaddr, 0))
+		if (!uvm_map_reserve(dstmap, len, start, 
+		    atop(start) & uvmexp.colormask, &dstaddr,
+		    UVM_FLAG_COLORMATCH))
 			return (ENOMEM);
+		KASSERT((atop(start ^ dstaddr) & uvmexp.colormask) == 0);
 		*dstaddrp = dstaddr;	/* pass address back to caller */
 		UVMHIST_LOG(maphist, "  dstaddr=0x%x", dstaddr,0,0,0);
 	} else {

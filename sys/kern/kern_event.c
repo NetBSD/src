@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.72.2.2 2012/10/30 17:22:28 yamt Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.72.2.3 2013/01/16 05:33:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.72.2.2 2012/10/30 17:22:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.72.2.3 2013/01/16 05:33:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,14 +450,25 @@ filt_kqueue(struct knote *kn, long hint)
 static int
 filt_procattach(struct knote *kn)
 {
-	struct proc *p, *curp;
+	struct proc *p;
 	struct lwp *curl;
 
 	curl = curlwp;
-	curp = curl->l_proc;
 
 	mutex_enter(proc_lock);
-	p = proc_find(kn->kn_id);
+	if (kn->kn_flags & EV_FLAG1) {
+		/*
+		 * NOTE_TRACK attaches to the child process too early
+		 * for proc_find, so do a raw look up and check the state
+		 * explicitly.
+		 */
+		p = proc_find_raw(kn->kn_id);
+		if (p != NULL && p->p_stat != SIDL)
+			p = NULL;
+	} else {
+		p = proc_find(kn->kn_id);
+	}
+
 	if (p == NULL) {
 		mutex_exit(proc_lock);
 		return ESRCH;
@@ -961,6 +972,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			kn = newkn;
 			newkn = NULL;
 			kn->kn_obj = fp;
+			kn->kn_id = kev->ident;
 			kn->kn_kq = kq;
 			kn->kn_fop = kfilter->filtops;
 			kn->kn_kfilter = kfilter;
@@ -1002,6 +1014,10 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			error = (*kfilter->filtops->f_attach)(kn);
 			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 			if (error != 0) {
+#ifdef DIAGNOSTIC
+				printf("%s: event not supported for file type"
+				    " %d\n", __func__, fp ? fp->f_type : -1);
+#endif
 				/* knote_detach() drops fdp->fd_lock */
 				knote_detach(kn, fdp, false);
 				goto done;
@@ -1017,6 +1033,13 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			kn->kn_sdata = kev->data;
 			kn->kn_kevent.udata = kev->udata;
 		}
+		/*
+		 * We can get here if we are trying to attach
+		 * an event to a file descriptor that does not
+		 * support events, and the attach routine is
+		 * broken and does not return an error.
+		 */
+		KASSERT(kn->kn_fop->f_event != NULL);
 		KERNEL_LOCK(1, NULL);			/* XXXSMP */
 		rv = (*kn->kn_fop->f_event)(kn, 0);
 		KERNEL_UNLOCK_ONE(NULL);		/* XXXSMP */
@@ -1421,6 +1444,8 @@ kqueue_close(file_t *fp)
 	int i;
 
 	kq = fp->f_data;
+	fp->f_data = NULL;
+	fp->f_type = 0;
 	fdp = curlwp->l_fd;
 
 	mutex_enter(&fdp->fd_lock);
@@ -1441,7 +1466,6 @@ kqueue_close(file_t *fp)
 	cv_destroy(&kq->kq_cv);
 	seldestroy(&kq->kq_sel);
 	kmem_free(kq, sizeof(*kq));
-	fp->f_data = NULL;
 
 	return (0);
 }

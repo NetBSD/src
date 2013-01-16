@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2010/12/13 17:35:08 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.8.6.1 2013/01/16 05:32:33 yamt Exp $
 
 # shared stuff with src/distrib/utils/x_ifconfig for install media.
 # stuff not required by install media should be into Makefile.
@@ -13,6 +13,7 @@ SRCS+= af_inet.c
 SRCS+= af_inetany.c
 SRCS+= agr.c
 SRCS+= env.c
+SRCS+= ether.c
 SRCS+= ieee80211.c
 SRCS+= ifconfig.c
 SRCS+= media.c

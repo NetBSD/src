@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.27.8.1 2012/10/30 17:19:52 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.27.8.2 2013/01/16 05:33:00 yamt Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27.8.1 2012/10/30 17:19:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27.8.2 2013/01/16 05:33:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,9 +272,6 @@ static int
 pmap_remove_entry(pmap_t pmap, struct vm_page * pg, vaddr_t va, pv_entry_t pv);
 static void
 pmap_insert_entry(pmap_t pmap, vaddr_t va, struct vm_page *pg);
-
-static __inline int
-pmap_track_modified(vaddr_t va);
 
 static void
 pmap_enter_vhpt(struct ia64_lpte *, vaddr_t);
@@ -1162,7 +1159,6 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	if ((sva & PAGE_MASK) || (eva & PAGE_MASK))
 		panic("pmap_protect: unaligned addresses");
 
-	//uvm_lock_pageq();
 	PMAP_LOCK(pmap);
 	oldpmap = pmap_install(pmap);
 	while (sva < eva) {
@@ -1179,7 +1175,8 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			if (pmap_managed(pte)) {
 				pa = pmap_ppn(pte);
 				pg = PHYS_TO_VM_PAGE(pa);
-				if (pmap_dirty(pte)) pmap_clear_dirty(pte);
+				if (pmap_dirty(pte))
+					pmap_clear_dirty(pte);
 				if (pmap_accessed(pte)) {
 					pmap_clear_accessed(pte);
 				}
@@ -1190,7 +1187,6 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 		sva += PAGE_SIZE;
 	}
-	//uvm_unlock_pageq();
 	pmap_install(oldpmap);
 	PMAP_UNLOCK(pmap);
 }
@@ -1285,8 +1281,6 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
                         pmap_install(oldpmap);
                         PMAP_UNLOCK(pmap);
                 }
-
-		//UVM_LOCK_ASSERT_PAGEQ(); 
 
                 pg->flags |= PG_RDONLY;
         } else {
@@ -1425,7 +1419,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
                  * We might be turning off write access to the page,
                  * so we go ahead and sense modify status.
                  */
-                if (managed && pmap_dirty(&origpte) && pmap_track_modified(va)) 
+                if (managed && pmap_dirty(&origpte))
 			pg->flags &= ~PG_CLEAN;
 
                 pmap_invalidate_page(pmap, va);
@@ -1494,8 +1488,6 @@ pmap_page_purge(struct vm_page *pg)
 	pmap_t oldpmap;
 	pv_entry_t pv;
 
-	//UVM_LOCK_ASSERT_PAGEQ();
-
 	while ((pv = TAILQ_FIRST(&md->pv_list)) != NULL) {
 		struct ia64_lpte *pte;
 		pmap_t pmap = pv->pv_pmap;
@@ -1512,7 +1504,6 @@ pmap_page_purge(struct vm_page *pg)
 		PMAP_UNLOCK(pmap);
 	}
 
-	//UVM_LOCK_ASSERT_PAGEQ(); 
 	pg->flags |= PG_RDONLY;
 
 }
@@ -1766,8 +1757,7 @@ pmap_remove_pte(pmap_t pmap, struct ia64_lpte *pte, vaddr_t va,
 	if (pmap_managed(pte)) {
 		pg = PHYS_TO_VM_PAGE(pmap_ppn(pte));
 		if (pmap_dirty(pte))
-			if (pmap_track_modified(va))
-				pg->flags &= ~(PG_CLEAN);
+			pg->flags &= ~(PG_CLEAN);
 		if (pmap_accessed(pte))
 			pg->flags &= ~PG_CLEAN; /* XXX: Do we need this ? */
 
@@ -1801,21 +1791,6 @@ pmap_free_pte(struct ia64_lpte *pte, vaddr_t va)
 }
 
 
-/*
- * this routine defines the region(s) of memory that should
- * not be tested for the modified bit.
- */
-static __inline int
-pmap_track_modified(vaddr_t va)
-{
-	extern char *kmembase, kmemlimit;
-	if ((va < (vaddr_t) kmembase) || (va >= (vaddr_t) kmemlimit)) 
-		return 1;
-	else
-		return 0;
-}
-
-
 /***************************************************
  * page management routines.
  ***************************************************/
@@ -1837,7 +1812,6 @@ get_pv_entry(pmap_t locked_pmap)
 	pv_entry_t allocated_pv;
 
 	//LOCK_ASSERT(simple_lock_held(locked_pmap->slock));
-	//UVM_LOCK_ASSERT_PAGEQ();
 	allocated_pv = 	pool_get(&pmap_pv_pool, PR_NOWAIT);
 	return allocated_pv;
 
@@ -1985,7 +1959,6 @@ pmap_remove_entry(pmap_t pmap, struct vm_page *pg, vaddr_t va, pv_entry_t pv)
 		TAILQ_REMOVE(&md->pv_list, pv, pv_list);
 		md->pv_list_count--;
 		if (TAILQ_FIRST(&md->pv_list) == NULL) {
-			//UVM_LOCK_ASSERT_PAGEQ(); 
 			pg->flags |= PG_RDONLY;
 		}
 
@@ -2013,7 +1986,6 @@ pmap_insert_entry(pmap_t pmap, vaddr_t va, struct vm_page *pg)
 	pv->pv_va = va;
 
 	//LOCK_ASSERT(simple_lock_held(pmap->slock));
-	//UVM_LOCK_ASSERT_PAGEQ(); 
 	TAILQ_INSERT_TAIL(&pmap->pm_pvlist, pv, pv_plist);
 	TAILQ_INSERT_TAIL(&md->pv_list, pv, pv_list);
 	md->pv_list_count++;

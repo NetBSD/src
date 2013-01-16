@@ -1,4 +1,4 @@
-/*	$NetBSD: xx.c,v 1.1.2.2 2012/04/17 00:07:03 yamt Exp $	*/
+/*	$NetBSD: xx.c,v 1.1.2.3 2013/01/16 05:33:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 MINOURA Makoto.
@@ -26,31 +26,30 @@
  */
 
 #include <sys/param.h>
+#include <lib/libsa/stand.h>
 
-struct open_file;
-extern void RAW_READ __P((void *buf, u_int32_t blkpos, size_t bytelen));
-int xxopen(struct open_file *);
-int xxclose(struct open_file *);
-int xxstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+extern void RAW_READ(void *buf, uint32_t blkpos, size_t bytelen);
 
 int
-xxopen(struct open_file *f)
+xxopen(struct open_file *f, ...)
 {
+
 	return 0;
 }
 
 int
 xxclose(struct open_file *f)
 {
+
 	return 0;
 }
 
-extern unsigned int SCSI_BLKLEN;
 int
 xxstrategy(void *arg, int rw, daddr_t dblk, size_t size,
            void *buf, size_t *rsize)
 {
-	RAW_READ(buf, (u_int32_t)dblk, size);
+
+	RAW_READ(buf, (uint32_t)dblk, size);
 	if (rsize)
 		*rsize = size;
 	return 0;

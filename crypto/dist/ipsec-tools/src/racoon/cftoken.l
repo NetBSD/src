@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.24.2.1 2012/04/17 00:01:41 yamt Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.24.2.2 2013/01/16 05:25:54 yamt Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -453,6 +453,7 @@ rc4 		{ YYD; yylval.num = algtype_rc4;	return(ALGORITHMTYPE); }
 null_enc	{ YYD; yylval.num = algtype_null_enc;	return(ALGORITHMTYPE); }
 null		{ YYD; yylval.num = algtype_null_enc;	return(ALGORITHMTYPE); }
 aes		{ YYD; yylval.num = algtype_aes;	return(ALGORITHMTYPE); }
+aes_gcm_16		{ YYD; yylval.num = algtype_aesgcm16;	return(ALGORITHMTYPE); }
 rijndael	{ YYD; yylval.num = algtype_aes;	return(ALGORITHMTYPE); }
 twofish		{ YYD; yylval.num = algtype_twofish;	return(ALGORITHMTYPE); }
 camellia	{ YYD; yylval.num = algtype_camellia;	return(ALGORITHMTYPE); }

@@ -189,6 +189,7 @@ int get_option_uint8(uint8_t *, const struct dhcp_message *, uint8_t);
 struct rt *get_option_routes(const struct dhcp_message *, const char *,
     unsigned long long *);
 ssize_t decode_rfc3397(char *, ssize_t, int, const uint8_t *);
+ssize_t print_string(char *, ssize_t, int, const uint8_t *);
 ssize_t configure_env(char **, const char *, const struct dhcp_message *,
     const struct if_options *);
 

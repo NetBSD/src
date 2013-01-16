@@ -1,4 +1,4 @@
-/*	$NetBSD: builtin.c,v 1.3.2.1 2012/10/30 18:49:32 yamt Exp $	*/
+/*	$NetBSD: builtin.c,v 1.3.2.2 2013/01/16 05:26:22 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -101,9 +101,9 @@ static size_t
 dns64_rdata(unsigned char *v, size_t start, unsigned char *rdata) {
 	size_t i, j = 0;
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 4U; i++) {
 		unsigned char c = v[start++];
-		if (start == 7)
+		if (start == 7U)
 			start++;
 		if (c > 99) {
 			rdata[j++] = 3;
@@ -166,7 +166,7 @@ dns64_cname(const dns_name_t *zone, const dns_name_t *name,
 	i = (nlen % 4) == 2U ? 1 : 0;
 	j = nlen;
 	memset(v, 0, sizeof(v));
-	while (j != 0) {
+	while (j != 0U) {
 		INSIST((i/2) < sizeof(v));
 		if (ndata[0] != 1)
 			return (ISC_R_NOTFOUND);

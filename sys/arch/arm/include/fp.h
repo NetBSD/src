@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.h,v 1.1 2001/01/10 19:02:06 bjh21 Exp $	*/
+/*	$NetBSD: fp.h,v 1.1.170.1 2013/01/16 05:32:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -51,9 +51,9 @@
  */
 
 typedef struct fp_extended_precision {
-	u_int32_t fp_exponent;
-	u_int32_t fp_mantissa_hi;
-	u_int32_t fp_mantissa_lo;
+	uint32_t fp_exponent;
+	uint32_t fp_mantissa_hi;
+	uint32_t fp_mantissa_lo;
 } fp_extended_precision_t;
 
 typedef struct fp_extended_precision fp_reg_t;
@@ -77,7 +77,7 @@ struct fpe_sp_state {
  */
  
 typedef struct {
-	u_int32_t fpsr;
+	uint32_t fpsr;
 	fp_extended_precision_t regs[8];
 } fp_state_t;
 

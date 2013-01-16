@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.16 2010/08/06 15:26:16 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.16.6.1 2013/01/16 05:34:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,12 +33,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.16 2010/08/06 15:26:16 pooka Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.16.6.1 2013/01/16 05:34:11 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
+#include <stdio.h>
 #include <assert.h>
 #include <err.h>
 #include <errno.h>

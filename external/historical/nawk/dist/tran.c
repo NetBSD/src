@@ -71,6 +71,18 @@ Cell	*literal0;
 
 extern Cell **fldtab;
 
+static void
+setfree(Cell *vp)
+{
+	if (&vp->sval == FS || &vp->sval == RS ||
+	    &vp->sval == OFS || &vp->sval == ORS ||
+	    &vp->sval == OFMT || &vp->sval == CONVFMT ||
+	    &vp->sval == FILENAME || &vp->sval == SUBSEP)
+		vp->tval |= DONTFREE;
+	else
+		vp->tval &= ~DONTFREE;
+}
+
 void syminit(void)	/* initialize symbol table with builtin vars */
 {
 	literal0 = setsymtab("0", "0", 0.0, NUM|STR|CON|DONTFREE, symtab);
@@ -349,7 +361,7 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 		xfree(vp->sval);
 	vp->tval &= ~NUM;
 	vp->tval |= STR;
-	vp->tval &= ~DONTFREE;
+	setfree(vp);
 	   dprintf( ("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n", 
 		vp, NN(vp->nval), t,t, vp->tval, donerec, donefld) );
 
@@ -400,8 +412,8 @@ static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cel
 		else
 			snprintf(s, sizeof(s), *fmt, vp->fval);
 		vp->sval = tostring(s);
-		vp->tval &= ~DONTFREE;
 		vp->tval |= STR;
+		setfree(vp);
 	}
 	   dprintf( ("getsval %p: %s = \"%s (%p)\", t=%o\n", vp, NN(vp->nval), vp->sval, vp->sval, vp->tval) );
 	return(vp->sval);

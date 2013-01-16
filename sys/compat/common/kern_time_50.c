@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.19.4.2 2012/10/30 17:20:39 yamt Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.19.4.3 2013/01/16 05:33:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.19.4.2 2012/10/30 17:20:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.19.4.3 2013/01/16 05:33:12 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -509,27 +509,15 @@ compat_50_sys_getrusage(struct lwp *l,
 		syscallarg(int) who;
 		syscallarg(struct rusage50 *) rusage;
 	} */
+	int error;
 	struct rusage ru;
 	struct rusage50 ru50;
 	struct proc *p = l->l_proc;
 
-	switch (SCARG(uap, who)) {
-	case RUSAGE_SELF:
-		mutex_enter(p->p_lock);
-		memcpy(&ru, &p->p_stats->p_ru, sizeof(ru));
-		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
-		mutex_exit(p->p_lock);
-		break;
+	error = getrusage1(p, SCARG(uap, who), &ru);
+	if (error != 0)
+		return error;
 
-	case RUSAGE_CHILDREN:
-		mutex_enter(p->p_lock);
-		memcpy(&ru, &p->p_stats->p_cru, sizeof(ru));
-		mutex_exit(p->p_lock);
-		break;
-
-	default:
-		return EINVAL;
-	}
 	rusage_to_rusage50(&ru, &ru50);
 	return copyout(&ru50, SCARG(uap, rusage), sizeof(ru50));
 }

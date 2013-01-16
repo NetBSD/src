@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835reg.h,v 1.3.4.2 2012/10/30 17:18:59 yamt Exp $	*/
+/*	$NetBSD: bcm2835reg.h,v 1.3.4.3 2013/01/16 05:32:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 /*
  * Reference: BCM2835 ARM Periperhals
- * 
+ *
  * 	http://dmkenr5gtnd8f.cloudfront.net/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf
  */
 
@@ -69,6 +69,7 @@
 #define	BCM2835_BSC_SIZE	0x1000
 #define	BCM2835_AUX_SIZE	0x1000
 #define	BCM2835_EMMC_SIZE	0x1000
+#define	BCM2835_USB_SIZE	0x1000
 #define	BCM2835_DMA15_SIZE	0x100
 
 #define BCM2835_IOPHYSTOVIRT(a) \

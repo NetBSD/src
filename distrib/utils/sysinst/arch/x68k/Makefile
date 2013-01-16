@@ -1,11 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 2005/02/19 17:00:40 dsl Exp $
+#	$NetBSD: Makefile,v 1.10.52.1 2013/01/16 05:26:11 yamt Exp $
 #
 # Makefile for x68k
 #
 
-# Note: we have no french or german messages, because x68k console does not
-# support ISO-8859-1 (right half) character set.
-
-LANGUAGES=	en pl
+LANGUAGES=	# no translations
 
 .include "../../Makefile.inc"

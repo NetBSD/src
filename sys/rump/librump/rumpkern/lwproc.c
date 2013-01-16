@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.18 2011/05/01 02:52:42 pgoyette Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.18.4.1 2013/01/16 05:33:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.18 2011/05/01 02:52:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.18.4.1 2013/01/16 05:33:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -179,7 +179,6 @@ static void
 lwproc_freelwp(struct lwp *l)
 {
 	struct proc *p;
-	bool freeproc;
 
 	p = l->l_proc;
 	mutex_enter(p->p_lock);
@@ -195,7 +194,6 @@ lwproc_freelwp(struct lwp *l)
 		KASSERT(p != &proc0);
 		p->p_stat = SDEAD;
 	}
-	freeproc = p->p_nlwps == 0;
 	cv_broadcast(&p->p_lwpcv); /* nobody sleeps on this in rump? */
 	kauth_cred_free(l->l_cred);
 	mutex_exit(p->p_lock);

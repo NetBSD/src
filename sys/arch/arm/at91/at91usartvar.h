@@ -1,4 +1,4 @@
-/*      $NetBSD: at91usartvar.h,v 1.3.12.1 2012/04/17 00:06:04 yamt Exp $	*/
+/*      $NetBSD: at91usartvar.h,v 1.3.12.2 2013/01/16 05:32:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -92,6 +92,6 @@ struct at91usart_softc {
 
 struct at91bus_attach_args;
 void	at91usart_attach_subr(struct at91usart_softc *, struct at91bus_attach_args *);
-int	at91usart_cn_attach(bus_space_tag_t, bus_addr_t, bus_space_handle_t, u_int32_t mstclk, int, tcflag_t);
+int	at91usart_cn_attach(bus_space_tag_t, bus_addr_t, bus_space_handle_t, uint32_t mstclk, int, tcflag_t);
 
 #endif /* _AT91USARTVAR_H_ */

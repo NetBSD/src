@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.3 2010/12/30 11:29:21 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.3.6.1 2013/01/16 05:34:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -68,7 +68,8 @@ ldp_peer_init(void)
  */
 struct ldp_peer *
 ldp_peer_new(struct in_addr * ldp_id, struct in_addr * a,
-	     struct in_addr * tradd, uint16_t holdtime, int soc)
+	     struct in_addr * tradd, struct in6_addr * tradd6,
+	     uint16_t holdtime, int soc)
 {
 	struct ldp_peer *p;
 	int s = soc;

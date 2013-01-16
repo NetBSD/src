@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.100.2.2 2012/10/30 17:19:05 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.100.2.3 2013/01/16 05:32:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -143,16 +143,16 @@ struct l2_dtable;
 union pmap_cache_state {
 	struct {
 		union {
-			u_int8_t csu_cache_b[2];
-			u_int16_t csu_cache;
+			uint8_t csu_cache_b[2];
+			uint16_t csu_cache;
 		} cs_cache_u;
 
 		union {
-			u_int8_t csu_tlb_b[2];
-			u_int16_t csu_tlb;
+			uint8_t csu_tlb_b[2];
+			uint16_t csu_tlb;
 		} cs_tlb_u;
 	} cs_s;
-	u_int32_t cs_all;
+	uint32_t cs_all;
 };
 #define	cs_cache_id	cs_s.cs_cache_u.csu_cache_b[0]
 #define	cs_cache_d	cs_s.cs_cache_u.csu_cache_b[1]
@@ -182,7 +182,7 @@ struct pmap_devmap {
  * The pmap structure itself
  */
 struct pmap {
-	u_int8_t		pm_domain;
+	uint8_t			pm_domain;
 	bool			pm_remove_all;
 	bool			pm_activated;
 	struct l1_ttable	*pm_l1;
@@ -462,6 +462,14 @@ pmap_ptesync(pt_entry_t *ptep, size_t cnt)
 /* Size of the kernel part of the L1 page table */
 #define KERNEL_PD_SIZE	\
 	(L1_TABLE_SIZE - (KERNEL_BASE >> L1_S_SHIFT) * sizeof(pd_entry_t))
+
+void	bzero_page(vaddr_t);
+void	bcopy_page(vaddr_t, vaddr_t);
+
+#ifdef FPU_VFP
+void	bzero_page_vfp(vaddr_t);
+void	bcopy_page_vfp(vaddr_t, vaddr_t);
+#endif
 
 /************************* ARM MMU configuration *****************************/
 
@@ -882,21 +890,22 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_MAPPABLE_P(va, pa, size)					\
 	((((va) | (pa)) & L2_L_OFFSET) == 0 && (size) >= L2_L_SIZE)
 
+#ifndef _LOCORE
 /*
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
+extern paddr_t physical_start, physical_end;
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
-extern paddr_t physical_start;
 struct vm_page *arm_pmap_alloc_poolpage(int);
 #define	PMAP_ALLOC_POOLPAGE	arm_pmap_alloc_poolpage
+#endif
+#if defined(PMAP_NEED_ALLOC_POOLPAGE) || defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
 #define	PMAP_MAP_POOLPAGE(pa) \
         ((vaddr_t)((paddr_t)(pa) - physical_start + KERNEL_BASE))
 #define PMAP_UNMAP_POOLPAGE(va) \
         ((paddr_t)((vaddr_t)(va) - KERNEL_BASE + physical_start))
 #endif
-
-#ifndef _LOCORE
 
 /*
  * pmap-specific data store in the vm_page structure.

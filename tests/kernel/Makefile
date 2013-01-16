@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21.2.2 2012/10/30 18:59:59 yamt Exp $
+# $NetBSD: Makefile,v 1.21.2.3 2013/01/16 05:33:58 yamt Exp $
 
 NOMAN=		# defined
 
@@ -8,7 +8,10 @@ TESTSDIR=	${TESTSBASE}/kernel
 
 TESTS_SUBDIRS=	kqueue
 TESTS_C=	t_lock
+TESTS_C+=	t_lockf
 TESTS_C+=	t_pty
+TESTS_C+=	t_mqueue
+TESTS_C+=	t_sysv
 TESTS_C+=	t_subr_prf
 
 TESTS_SH=	t_umount
@@ -17,6 +20,8 @@ TESTS_SH+=	t_ps_strings
 BINDIR=		${TESTSDIR}
 PROGS=		h_ps_strings1
 PROGS+=		h_ps_strings2
+
+LDADD.t_mqueue+= -lrt
 
 
 .if (${MKRUMP} != "no")

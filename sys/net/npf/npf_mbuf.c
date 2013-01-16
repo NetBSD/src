@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.6.8.1 2012/04/17 00:08:39 yamt Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.6.8.2 2013/01/16 05:33:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.6.8.1 2012/04/17 00:08:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.6.8.2 2013/01/16 05:33:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -231,6 +231,17 @@ nbuf_advstore(nbuf_t **nbuf, void **n_ptr, u_int n, size_t len, void *buf)
 		*n_ptr = orig_nptr;
 	}
 	return error;
+}
+
+void
+nbuf_cksum_barrier(nbuf_t *nbuf)
+{
+	struct mbuf *m = nbuf;
+
+	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
+		in_delayed_cksum(m);
+		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4 | M_CSUM_UDPv4);
+	}
 }
 
 /*

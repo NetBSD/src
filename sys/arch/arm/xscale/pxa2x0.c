@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.20.2.1 2012/10/30 17:19:11 yamt Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.20.2.2 2013/01/16 05:32:50 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.20.2.1 2012/10/30 17:19:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.20.2.2 2013/01/16 05:32:50 yamt Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -387,10 +387,10 @@ pxa2x0_turbo_mode(int f)
 void
 pxa2x0_probe_sdram(vaddr_t memctl_va, paddr_t *start, paddr_t *size)
 {
-	u_int32_t mdcnfg, dwid, dcac, drac, dnb;
+	uint32_t mdcnfg, dwid, dcac, drac, dnb;
 	int i;
 
-	mdcnfg = *((volatile u_int32_t *)(memctl_va + MEMCTL_MDCNFG));
+	mdcnfg = *((volatile uint32_t *)(memctl_va + MEMCTL_MDCNFG));
 
 	/*
 	 * Scan all 4 SDRAM banks

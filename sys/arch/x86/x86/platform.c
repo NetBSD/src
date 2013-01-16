@@ -1,4 +1,4 @@
-/* $NetBSD: platform.c,v 1.11.6.1 2012/04/17 00:07:06 yamt Exp $ */
+/* $NetBSD: platform.c,v 1.11.6.2 2013/01/16 05:33:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "isa.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.11.6.1 2012/04/17 00:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.11.6.2 2013/01/16 05:33:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,7 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.11.6.1 2012/04/17 00:07:06 yamt Exp $
 #include <sys/uuid.h>
 #include <sys/pmf.h>
 
+#if NISA > 0
 #include <dev/isa/isavar.h>
+#endif
 
 #include <arch/x86/include/smbiosvar.h>
 

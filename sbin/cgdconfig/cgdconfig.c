@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.33 2011/08/29 14:34:59 joerg Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.33.2.1 2013/01/16 05:32:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.33 2011/08/29 14:34:59 joerg Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.33.2.1 2013/01/16 05:32:32 yamt Exp $");
 #endif
 
 #include <err.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.33 2011/08/29 14:34:59 joerg Exp $");
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/resource.h>
+#include <sys/statvfs.h>
 
 #include <dev/cgdvar.h>
 
@@ -73,7 +74,8 @@ enum action {
 	 ACTION_GENERATE_CONVERT,	/* generate a ``dup'' paramsfile */
 	 ACTION_CONFIGALL,		/* configure all from config file */
 	 ACTION_UNCONFIGALL,		/* unconfigure all from config file */
-	 ACTION_CONFIGSTDIN		/* configure, key from stdin */
+	 ACTION_CONFIGSTDIN,		/* configure, key from stdin */
+	 ACTION_LIST			/* list configured devices */
 };
 
 /* if nflag is set, do not configure/unconfigure the cgd's */
@@ -93,6 +95,7 @@ static int	generate_convert(struct params *, int, char **, const char *);
 static int	unconfigure(int, char **, struct params *, int);
 static int	do_all(const char *, int, char **,
 		       int (*)(int, char **, struct params *, int));
+static int	do_list(int, char **);
 
 #define CONFIG_FLAGS_FROMALL	1	/* called from configure_all() */
 #define CONFIG_FLAGS_FROMMAIN	2	/* called from main() */
@@ -129,13 +132,14 @@ usage(void)
 	(void)fprintf(stderr, "usage: %s [-nv] [-V vmeth] cgd dev [paramsfile]\n",
 	    getprogname());
 	(void)fprintf(stderr, "       %s -C [-nv] [-f configfile]\n", getprogname());
-	(void)fprintf(stderr, "       %s -U [-nv] [-f configfile]\n", getprogname());
 	(void)fprintf(stderr, "       %s -G [-nv] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] paramsfile\n", getprogname());
 	(void)fprintf(stderr, "       %s -g [-nv] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] alg [keylen]\n", getprogname());
+	(void)fprintf(stderr, "       %s -l\n", getprogname());
 	(void)fprintf(stderr, "       %s -s [-nv] [-i ivmeth] cgd dev alg "
 	    "[keylen]\n", getprogname());
+	(void)fprintf(stderr, "       %s -U [-nv] [-f configfile]\n", getprogname());
 	(void)fprintf(stderr, "       %s -u [-nv] cgd\n", getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -188,7 +192,7 @@ main(int argc, char **argv)
 	p = params_new();
 	kg = NULL;
 
-	while ((ch = getopt(argc, argv, "CGUV:b:f:gi:k:no:spuv")) != -1)
+	while ((ch = getopt(argc, argv, "CGUV:b:f:gi:k:lno:spuv")) != -1)
 		switch (ch) {
 		case 'C':
 			set_action(&action, ACTION_CONFIGALL);
@@ -234,6 +238,9 @@ main(int argc, char **argv)
 			if (!kg)
 				usage();
 			keygen_addlist(&p->keygen, kg);
+			break;
+		case 'l':
+			set_action(&action, ACTION_LIST);
 			break;
 		case 'n':
 			nflag = 1;
@@ -290,6 +297,8 @@ main(int argc, char **argv)
 		return do_all(cfile, argc, argv, unconfigure);
 	case ACTION_CONFIGSTDIN:
 		return configure_stdin(p, argc, argv);
+	case ACTION_LIST:
+		return do_list(argc, argv);
 	default:
 		errx(EXIT_FAILURE, "undefined action");
 		/* NOTREACHED */
@@ -497,7 +506,7 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	int		 ret;
 	char		 cgdname[PATH_MAX];
 
-	if (argc == 2) {	
+	if (argc == 2) {
 		char *pfile;
 
 		if (asprintf(&pfile, "%s/%s",
@@ -974,6 +983,85 @@ do_all(const char *cfile, int argc, char **argv,
 		words_free(my_argv, my_argc);
 	}
 	return ret;
+}
+
+static const char *
+iv_method(int mode)
+{
+
+	switch (mode) {
+	case CGD_CIPHER_CBC_ENCBLKNO8:
+		return "encblkno8";
+	case CGD_CIPHER_CBC_ENCBLKNO1:
+		return "encblkno1";
+	default:
+		return "unknown";
+	}
+}
+
+static int
+do_list(int argc, char **argv)
+{
+	char path[64], buf[16];
+	struct cgd_user cgu;
+	const char *fn;
+	int fd, n, rv;
+
+	if (argc != 0 && argc != 1)
+		usage();
+
+	fn = argc ? argv[0] : "cgd0";
+	n = 0;
+	for (;;) {
+		fd = opendisk(fn, O_RDONLY, path, sizeof(path), 0);
+		if (fd == -1) {
+			if (argc)
+				err(1, "open: %s", fn);
+			break;
+		}
+
+		cgu.cgu_unit = argc ? -1 : n;
+		rv = prog_ioctl(fd, CGDIOCGET, &cgu);
+		if (rv == -1) {
+			close(fd);
+			err(1, "CGDIOCGET");
+		}
+
+		printf("%s: ", fn);
+
+		if (cgu.cgu_dev == 0)
+			printf("not in use");
+		else {
+			char *dev;
+
+			dev = devname(cgu.cgu_dev, S_IFBLK);
+			if (dev != NULL)
+				printf("%s ", dev);
+			else
+				printf("dev %llu,%llu ",
+				    (unsigned long long)major(cgu.cgu_dev),
+				    (unsigned long long)minor(cgu.cgu_dev));
+
+			if (verbose)
+				printf("%s ", cgu.cgu_alg);
+			if (verbose > 1) {
+				printf("keylen %d ", cgu.cgu_keylen);
+				printf("blksize %zd ", cgu.cgu_blocksize);
+				printf("%s ", iv_method(cgu.cgu_mode));
+			}
+		}
+		putchar('\n');
+		close(fd);
+
+		if (argc)
+			break;
+
+		n++;
+		snprintf(buf, sizeof(buf), "cgd%d", n);
+		fn = buf;
+	}
+
+	return 0;
 }
 
 static void

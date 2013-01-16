@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_resource.c,v 1.14 2009/03/29 01:02:50 mrg Exp $ */
+/* $NetBSD: osf1_resource.c,v 1.14.12.1 2013/01/16 05:33:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.14 2009/03/29 01:02:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.14.12.1 2013/01/16 05:33:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,7 @@ osf1_sys_getrlimit(struct lwp *l, const struct osf1_sys_getrlimit_args *uap, reg
 int
 osf1_sys_getrusage(struct lwp *l, const struct osf1_sys_getrusage_args *uap, register_t *retval)
 {
+	int error, who;
 	struct osf1_rusage osf1_rusage;
 	struct rusage ru;
 	struct proc *p = l->l_proc;
@@ -95,21 +96,21 @@ osf1_sys_getrusage(struct lwp *l, const struct osf1_sys_getrusage_args *uap, reg
 
 	switch (SCARG(uap, who)) {
 	case OSF1_RUSAGE_SELF:
-		mutex_enter(p->p_lock);
-		ru = p->p_stats->p_ru;
-		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
-		rulwps(p, &ru);
-		mutex_exit(p->p_lock);
+		who = RUSAGE_SELF;
 		break;
 
 	case OSF1_RUSAGE_CHILDREN:
-		ru = p->p_stats->p_cru;
+		who = RUSAGE_CHILDREN;
 		break;
 
 	case OSF1_RUSAGE_THREAD:		/* XXX not supported */
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
+
+	error = getrusage1(p, who, &ru);
+	if (error != 0)
+		return error;
 
 	osf1_cvt_rusage_from_native(&ru, &osf1_rusage);
 

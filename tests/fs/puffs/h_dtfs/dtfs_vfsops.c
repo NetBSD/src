@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.2 2010/08/12 09:22:14 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.2.6.1 2013/01/16 05:33:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/resource.h>
 
+#include <stdio.h>
 #include <assert.h>
 #include <err.h>
 #include <errno.h>

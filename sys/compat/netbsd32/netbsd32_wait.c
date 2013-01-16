@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.21 2009/11/04 21:23:03 rmind Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.21.12.1 2013/01/16 05:33:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.21 2009/11/04 21:23:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.21.12.1 2013/01/16 05:33:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,26 +86,15 @@ netbsd32___getrusage50(struct lwp *l,
 		syscallarg(int) who;
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */
+	int error;
 	struct proc *p = l->l_proc;
-	struct rusage *rup;
-	struct netbsd32_rusage ru;
+	struct rusage ru;
+	struct netbsd32_rusage ru32;
 
-	switch (SCARG(uap, who)) {
+	error = getrusage1(p, SCARG(uap, who), &ru);
+	if (error != 0)
+		return error;
 
-	case RUSAGE_SELF:
-		rup = &p->p_stats->p_ru;
-		mutex_enter(p->p_lock);
-		calcru(p, &rup->ru_utime, &rup->ru_stime, NULL, NULL);
-		mutex_exit(p->p_lock);
-		break;
-
-	case RUSAGE_CHILDREN:
-		rup = &p->p_stats->p_cru;
-		break;
-
-	default:
-		return (EINVAL);
-	}
-	netbsd32_from_rusage(rup, &ru);
-	return copyout(&ru, SCARG_P32(uap, rusage), sizeof(ru));
+	netbsd32_from_rusage(&ru, &ru32);
+	return copyout(&ru32, SCARG_P32(uap, rusage), sizeof(ru32));
 }

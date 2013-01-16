@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.32 2009/10/18 23:20:31 tron Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.32.12.1 2013/01/16 05:33:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.32 2009/10/18 23:20:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.32.12.1 2013/01/16 05:33:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 					SMBERROR(("Unexpected length of security blob (%d)\n", sblen));
 					break;
 				}
-				error = md_get_uint16(mdp, &bc);
+				error = md_get_uint16le(mdp, &bc);
 				if (error)
 					break;
 				if (sp->sv_caps & SMB_CAP_EXT_SECURITY)
@@ -210,7 +210,7 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 				if (swlen > SMB_MAXCHALLENGELEN)
 					break;
 				md_get_uint16(mdp, NULL);	/* mbz */
-				if (md_get_uint16(mdp, &bc) != 0)
+				if (md_get_uint16le(mdp, &bc) != 0)
 					break;
 				if (bc < swlen)
 					break;

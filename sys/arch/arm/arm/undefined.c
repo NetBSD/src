@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.41.4.2 2012/10/30 17:18:56 yamt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.41.4.3 2013/01/16 05:32:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.41.4.2 2012/10/30 17:18:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.41.4.3 2013/01/16 05:32:42 yamt Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -201,7 +201,7 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 				KSI_INIT_TRAP(&ksi);
 				ksi.ksi_signo = SIGTRAP;
 				ksi.ksi_code = TRAP_BRKPT;
-				ksi.ksi_addr = (u_int32_t *)addr;
+				ksi.ksi_addr = (uint32_t *)addr;
 				ksi.ksi_trap = 0;
 				trapsignal(l, &ksi);
 				return 0;
@@ -318,7 +318,7 @@ undefinedinstruction(trapframe_t *frame)
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGILL;
 			ksi.ksi_code = ILL_ILLOPC;
-			ksi.ksi_addr = (u_int32_t *)(intptr_t) fault_pc;
+			ksi.ksi_addr = (uint32_t *)(intptr_t) fault_pc;
 			trapsignal(l, &ksi);
 			userret(l);
 			return;
@@ -332,7 +332,7 @@ undefinedinstruction(trapframe_t *frame)
 		 * not really matter does it ?
 		 */
 
-		fault_instruction = *(u_int32_t *)fault_pc;
+		fault_instruction = *(uint32_t *)fault_pc;
 	}
 
 	/* Update vmmeter statistics */
@@ -416,7 +416,7 @@ undefinedinstruction(trapframe_t *frame)
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
-		ksi.ksi_addr = (u_int32_t *)fault_pc;
+		ksi.ksi_addr = (uint32_t *)fault_pc;
 		ksi.ksi_trap = fault_instruction;
 		trapsignal(l, &ksi);
 	}

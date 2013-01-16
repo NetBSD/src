@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.10 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.188 2011/05/24 07:15:47 djm Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.10.2.1 2013/01/16 05:25:59 yamt Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.189 2012/06/22 12:30:26 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.10 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.10.2.1 2013/01/16 05:25:59 yamt Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -2031,8 +2031,6 @@ authmethod_get(char *authlist)
 			return current;
 		}
 	}
-	if (name != NULL)
-		xfree(name);
 }
 
 static char *

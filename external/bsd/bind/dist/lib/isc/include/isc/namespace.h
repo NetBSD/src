@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.3.2.1 2012/10/30 18:53:57 yamt Exp $	*/
+/*	$NetBSD: namespace.h,v 1.3.2.2 2013/01/16 05:27:30 yamt Exp $	*/
 
 /*
  * Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -153,6 +153,8 @@
 #define isc_taskmgr_setmode isc__taskmgr_setmode
 #define isc_taskmgr_mode isc__taskmgr_mode
 #define isc_taskmgr_destroy isc__taskmgr_destroy
+#define isc_taskmgr_setexcltask isc__taskmgr_setexcltask
+#define isc_taskmgr_excltask isc__taskmgr_excltask
 #define isc_task_beginexclusive isc__task_beginexclusive
 #define isc_task_endexclusive isc__task_endexclusive
 #define isc_task_setprivilege isc__task_setprivilege

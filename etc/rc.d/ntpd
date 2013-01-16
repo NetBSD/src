@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpd,v 1.13 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: ntpd,v 1.13.50.1 2013/01/16 05:26:13 yamt Exp $
 #
 
 # PROVIDE: ntpd
@@ -19,6 +19,7 @@ required_files="/etc/ntp.conf"
 
 ntpd_precmd()
 {
+	rc_flags="-p ${pidfile} $rc_flags"
 	if [ -z "$ntpd_chrootdir" ]; then
 		return 0;
 	fi

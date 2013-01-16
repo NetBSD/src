@@ -31,6 +31,7 @@
 
 void sljit_test(void);
 
+#if 0
 void error(SLJIT_CONST char* str)
 {
 	printf("An error occured: %s\n", str);
@@ -76,6 +77,7 @@ void devel(void)
 	printf("buf[3] = %ld\n", (long)buf[3]);
 	sljit_free_code(code.code);
 }
+#endif
 
 int main(int argc, char* argv[])
 {

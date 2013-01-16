@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.20 2010/12/13 17:47:40 pooka Exp $
+#	$NetBSD: Makefile,v 1.20.6.1 2013/01/16 05:32:34 yamt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
-#CFLAGS+=-g
+#DBG=-g
 
 RUMPPRG=sysctl
 MAN=	sysctl.8

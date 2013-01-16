@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.15 2011/08/07 14:03:16 rmind Exp $	*/
+/*	$NetBSD: threads.c,v 1.15.2.1 2013/01/16 05:33:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.15 2011/08/07 14:03:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.15.2.1 2013/01/16 05:33:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -74,6 +74,19 @@ threadbouncer(void *arg)
 	panic("unreachable, should kthread_exit()");
 }
 
+static struct {
+	const char *t_name;
+	bool t_ncmp;
+} nothreads[] = {
+	{ "vrele", false },
+	{ "vdrain", false },
+	{ "cachegc", false },
+	{ "nfssilly", false },
+	{ "unpgc", false },
+	{ "pmf", true },
+	{ "xcall", true },
+};
+
 int
 kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	void (*func)(void *), void *arg, lwp_t **newlp, const char *fmt, ...)
@@ -104,33 +117,25 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	}
 
 	if (!rump_threads) {
-		/* fake them */
-		if (strcmp(thrstore, "vrele") == 0) {
-			printf("rump warning: threads not enabled, not starting"
-			   " vrele thread\n");
-			return 0;
-		} else if (strcmp(thrstore, "cachegc") == 0) {
-			printf("rump warning: threads not enabled, not starting"
-			   " namecache g/c thread\n");
-			return 0;
-		} else if (strcmp(thrstore, "nfssilly") == 0) {
-			printf("rump warning: threads not enabled, not enabling"
-			   " nfs silly rename\n");
-			return 0;
-		} else if (strcmp(thrstore, "unpgc") == 0) {
-			printf("rump warning: threads not enabled, not enabling"
-			   " UNP garbage collection\n");
-			return 0;
-		} else if (strncmp(thrstore, "pmf", sizeof("pmf")-1) == 0) {
-			printf("rump warning: threads not enabled, not enabling"
-			   " pmf thread\n");
-			return 0;
-		} else if (strncmp(thrstore, "xcall", sizeof("xcall")-1) == 0) {
-			printf("rump warning: threads not enabled, CPU xcall"
-			   " not functional\n");
-			return 0;
-		} else
-			panic("threads not available, setenv RUMP_THREADS 1");
+		bool matched;
+		int i;
+
+		/* do we want to fake it? */
+		for (i = 0; i < __arraycount(nothreads); i++) {
+			if (nothreads[i].t_ncmp) {
+				matched = strncmp(thrstore, nothreads[i].t_name,
+				    strlen(nothreads[i].t_name)) == 0;
+			} else {
+				matched = strcmp(thrstore,
+				    nothreads[i].t_name) == 0;
+			}
+			if (matched) {
+				aprint_error("rump kernel threads not enabled, "
+				    "%s not functional\n", nothreads[i].t_name);
+				return 0;
+			}
+		}
+		panic("threads not available");
 	}
 	KASSERT(fmt != NULL);
 

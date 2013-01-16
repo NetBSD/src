@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.96.2.3 2012/10/30 17:18:46 yamt Exp $
+# $NetBSD: INSTALL,v 1.96.2.4 2013/01/16 05:32:41 yamt Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.101 2012/06/07 23:30:52 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.107 2012/11/25 23:37:10 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.96.2.3 $"
+#ident 		"GENERIC-$Revision: 1.96.2.4 $"
 
 makeoptions	COPTS="-Os"
 
@@ -226,6 +226,9 @@ options        KFONT_CONS_ISO8859_1
 #options 	FONT_VT220L8x10
 #options	FONT_VT220ISO8x16
 
+#z3rambd*	at zbus0		# Zorro III RAM block devices
+#altmem*	at z3rambd?
+
 p5bus0		at zbus0		# Phase5 CSPPC/BPPC internal bus
 
 grfcc0		at mainbus0		# custom chips
@@ -327,6 +330,7 @@ qn*		at zbus0		# Quicknet
 xsurf*		at zbus0		# X-Surf
 ne*		at xsurfbus?		# NE2000 chip on X-Surf
 gencp*		at xsurfbus?		# clockports on X-Surf
+wdc*		at xsurfbus?		# IDE on X-Surf
 clockport*	at gencp?
 
 # Arcnet
@@ -461,16 +465,16 @@ bthub*  at btuart?
 bthidev* at bthub?
 
 # Bluetooth Mouse
-btms*   at bthidev? reportid ?
-wsmouse* at btms? mux 0
+#btms*   at bthidev? reportid ?
+#wsmouse* at btms? mux 0
 
 # Bluetooth Keyboard
 #btkbd* at bthidev? reportid ?
 #wskbd* at btkbd? console ? mux 1
 
 # Bluetooth Apple Magic Mouse
-btmagic* at bthub?
-wsmouse* at btmagic? mux 0
+#btmagic* at bthub?
+#wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 #btsco* at bthub?

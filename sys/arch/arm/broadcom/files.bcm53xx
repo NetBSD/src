@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm53xx,v 1.2.2.2 2012/10/30 17:19:00 yamt Exp $
+#	$NetBSD: files.bcm53xx,v 1.2.2.3 2013/01/16 05:32:46 yamt Exp $
 #
 # Configuration info for Broadcom BCM5301X ARM Peripherals
 #
@@ -20,6 +20,7 @@ defparam opt_broadcom.h				CONSPEED
 defparam opt_broadcom.h				CONMODE
 defparam opt_broadcom.h				MEMSIZE
 defflag opt_broadcom.h				BCM53XX_CONSOLE_EARLY
+defflag opt_broadcom.h				BCMETH_COUNTERS
 
 # ChipCommonA attach point
 device	bcmcca { [channel=-1] } : bus_space_generic, gpiobus, sysmon_wdog

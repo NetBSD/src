@@ -138,10 +138,9 @@ parse_resolv()
 					cd "$IFACEDIR"
 					private=false
 					for p in $private_interfaces; do
-						if [ "$p" = "$iface" ]; then
-							private=true
-							break
-						fi
+						case "$iface" in
+						"$p"|"$p":*) private=true; break;;
+						esac
 					done
 				fi
 			fi
@@ -254,11 +253,19 @@ list_resolv()
 		cd "$IFACEDIR"
 		for i in $interface_order; do
 			[ -e "$i" ] && list="$list $i"
+			for ii in "$i":*; do
+				[ -e "$ii" ] && list="$list $ii"
+			done
 		done
 		for i in $dynamic_order; do
 			if [ -e "$i" -a ! -e "$METRICDIR/"*" $i" ]; then
 				list="$list $i"
 			fi
+			for ii in "$i":*; do
+				if [ -e "$ii" -a ! -e "$METRICDIR/"*" $ii" ]; then
+					list="$list $ii"
+				fi
+			done
 		done
 		if [ -d "$METRICDIR" ]; then
 			cd "$METRICDIR"

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.51.2.1 2012/04/17 00:08:21 yamt Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.51.2.2 2013/01/16 05:33:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.51.2.1 2012/04/17 00:08:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.51.2.2 2013/01/16 05:33:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ static u_long uhash_mask;		/* size of hash table - 1 */
 static kmutex_t uhash_lock;
 
 void union_updatevp(struct union_node *, struct vnode *, struct vnode *);
-static int union_do_lookup(struct vnode *, struct componentname *, kauth_cred_t,    const char *, u_long);
+static int union_do_lookup(struct vnode *, struct componentname *, kauth_cred_t,    const char *);
 int union_vn_close(struct vnode *, int, kauth_cred_t, struct lwp *);
 static void union_dircache_r(struct vnode *, struct vnode ***, int *);
 struct vnode *union_dircache(struct vnode *, struct lwp *);
@@ -451,7 +451,6 @@ found:
 		if (lowervp != un->un_lowervp) {
 			union_newlower(un, lowervp);
 			if (cnp && (lowervp != NULLVP)) {
-				un->un_hash = cnp->cn_hash;
 				un->un_path = malloc(cnp->cn_namelen+1,
 						M_TEMP, M_WAITOK);
 				memcpy(un->un_path, cnp->cn_nameptr,
@@ -572,14 +571,12 @@ found:
 	union_newsize(*vpp, uppersz, lowersz);
 
 	if (dvp && cnp && (lowervp != NULLVP)) {
-		un->un_hash = cnp->cn_hash;
 		un->un_path = malloc(cnp->cn_namelen+1, M_TEMP, M_WAITOK);
 		memcpy(un->un_path, cnp->cn_nameptr, cnp->cn_namelen);
 		un->un_path[cnp->cn_namelen] = '\0';
 		vref(dvp);
 		un->un_dirvp = dvp;
 	} else {
-		un->un_hash = 0;
 		un->un_path = 0;
 		un->un_dirvp = 0;
 	}
@@ -778,10 +775,9 @@ union_copyup(struct union_node *un, int docopy, kauth_cred_t cred,
  */
 static int
 union_do_lookup(struct vnode *dvp, struct componentname *cnp, kauth_cred_t cred,
-    const char *path, u_long hash)
+    const char *path)
 {
 	int error;
-	const char *cp;
 	struct vnode *vp;
 
 	cnp->cn_nameiop = CREATE;
@@ -789,13 +785,6 @@ union_do_lookup(struct vnode *dvp, struct componentname *cnp, kauth_cred_t cred,
 	cnp->cn_cred = cred;
 	cnp->cn_nameptr = path;
 	cnp->cn_namelen = strlen(path);
-	if (hash == 0) {
-		cp = NULL;
-		cnp->cn_hash = namei_hash(cnp->cn_nameptr, &cp);
-		KASSERT(*cp == 0);
-	} else {
-		cnp->cn_hash = hash;
-	}
 
 	error = VOP_LOOKUP(dvp, &vp, cnp);
 
@@ -847,7 +836,7 @@ union_mkshadow(struct union_mount *um, struct vnode *dvp,
 	vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 
 	error = union_do_lookup(dvp, &cn,
-	    (um->um_op == UNMNT_ABOVE ? cnp->cn_cred : um->um_cred), pnbuf, 0);
+	    (um->um_op == UNMNT_ABOVE ? cnp->cn_cred : um->um_cred), pnbuf);
 	if (error) {
 		VOP_UNLOCK(dvp);
 		PNBUF_PUT(pnbuf);
@@ -891,7 +880,7 @@ union_mkwhiteout(struct union_mount *um, struct vnode *dvp,
 
 	error = union_do_lookup(dvp, &cn,
 	    (um->um_op == UNMNT_ABOVE ? cnp->cn_cred : um->um_cred),
-	    un->un_path, un->un_hash);
+	    un->un_path);
 	if (error)
 		return error;
 
@@ -924,7 +913,7 @@ union_vn_create(struct vnode **vpp, struct union_node *un, struct lwp *l)
 	vn_lock(un->un_dirvp, LK_EXCLUSIVE | LK_RETRY);
 
 	error = union_do_lookup(un->un_dirvp, &cn, l->l_cred,
-	    un->un_path, un->un_hash);
+	    un->un_path);
 	if (error) {
 		VOP_UNLOCK(un->un_dirvp);
 		return error;
@@ -1197,7 +1186,6 @@ union_check_rmdir(struct union_node *un, kauth_cred_t cred)
 			cn.cn_cred = cred;
 			cn.cn_nameptr = dp->d_name;
 			cn.cn_namelen = dp->d_namlen;
-			cn.cn_hash = 0;
 			error = VOP_LOOKUP(un->un_uppervp, &tvp, &cn);
 			if (error == ENOENT && (cn.cn_flags & ISWHITEOUT)) {
 				error = 0;

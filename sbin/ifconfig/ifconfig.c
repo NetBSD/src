@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.226.2.1 2012/04/17 00:05:40 yamt Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.226.2.2 2013/01/16 05:32:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.226.2.1 2012/04/17 00:05:40 yamt Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.226.2.2 2013/01/16 05:32:33 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1163,6 +1163,9 @@ print_human_bytes(bool humanize, uint64_t n)
  * Print the status of the interface.  If an address family was
  * specified, show it and it only; otherwise, show them all.
  */
+
+#define MAX_PRINT_LEN 58	/* XXX need a better way to determine this! */
+
 void
 status(const struct sockaddr *sdl, prop_dictionary_t env,
     prop_dictionary_t oenv)
@@ -1174,6 +1177,7 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 	struct ifreq ifr;
 	struct ifdrv ifdrv;
 	char fbuf[BUFSIZ];
+	char *bp;
 	int af, s;
 	const char *ifname;
 	struct ifcapreq ifcr;
@@ -1193,8 +1197,12 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 	if ((ifname = getifinfo(env, oenv, &flags)) == NULL)
 		err(EXIT_FAILURE, "%s: getifinfo", __func__);
 
-	(void)snprintb(fbuf, sizeof(fbuf), IFFBITS, flags);
-	printf("%s: flags=%s", ifname, &fbuf[2]);
+	(void)snprintb_m(fbuf, sizeof(fbuf), IFFBITS, flags, MAX_PRINT_LEN);
+	bp = fbuf;
+	while (*bp != '\0') {
+		printf("%s: flags=%s", ifname, &bp[2]);
+		bp += strlen(bp) + 1;
+	}
 
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (prog_ioctl(s, SIOCGIFMETRIC, &ifr) == -1)
@@ -1211,12 +1219,20 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 		err(EXIT_FAILURE, "%s: getifcaps", __func__);
 
 	if (ifcr.ifcr_capabilities != 0) {
-		(void)snprintb(fbuf, sizeof(fbuf), IFCAPBITS,
-		    ifcr.ifcr_capabilities);
-		printf("\tcapabilities=%s\n", &fbuf[2]);
-		(void)snprintb(fbuf, sizeof(fbuf), IFCAPBITS,
-		    ifcr.ifcr_capenable);
-		printf("\tenabled=%s\n", &fbuf[2]);
+		(void)snprintb_m(fbuf, sizeof(fbuf), IFCAPBITS,
+		    ifcr.ifcr_capabilities, MAX_PRINT_LEN);
+		bp = fbuf;
+		while (*bp != '\0') {
+			printf("\tcapabilities=%s\n", &bp[2]);
+			bp += strlen(bp) + 1;
+		}
+		(void)snprintb_m(fbuf, sizeof(fbuf), IFCAPBITS,
+		    ifcr.ifcr_capenable, MAX_PRINT_LEN);
+		bp = fbuf;
+		while (*bp != '\0') {
+			printf("\tenabled=%s\n", &bp[2]);
+			bp += strlen(bp) + 1;
+		}
 	}
 
 	SIMPLEQ_FOREACH(status_f, &status_funcs, f_next)

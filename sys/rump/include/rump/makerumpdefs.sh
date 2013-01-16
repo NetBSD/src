@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.6.8.1 2012/10/30 17:22:53 yamt Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.6.8.2 2013/01/16 05:33:51 yamt Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -19,37 +19,17 @@ fromvers () {
 	sed -n '1{s/\$//gp;q;}' $1
 }
 
-# Odds of sockaddr_in changing are zero, so no acrobatics needed.  Alas,
-# dealing with in_addr_t for s_addr is very difficult, so have it as
-# an incompatible uint32_t for now.
-echo
-cat <<EOF
-struct rump_sockaddr_in {
-	uint8_t		sin_len;
-	uint8_t		sin_family;
-	uint16_t	sin_port;
-	struct {
-			uint32_t s_addr;
-	} sin_addr;
-	int8_t		sin_zero[8];
-};
-EOF
-
 fromvers ../../../sys/fcntl.h
 sed -n '/#define	O_[A-Z]*	*0x/s/O_/RUMP_O_/gp' \
     < ../../../sys/fcntl.h
 
 fromvers ../../../sys/vnode.h
-printf '#ifndef __VTYPE_DEFINED\n#define __VTYPE_DEFINED\n'
-sed -n '/enum vtype.*{/p' < ../../../sys/vnode.h
-printf '#endif /* __VTYPE_DEFINED */\n'
+sed -n '/enum vtype.*{/{s/vtype/rump_&/;s/ V/ RUMP_V/gp}' < ../../../sys/vnode.h
 sed -n '/#define.*LK_[A-Z]/s/LK_/RUMP_LK_/gp' <../../../sys/vnode.h	\
     | sed 's,/\*.*$,,'
 
 fromvers ../../../sys/errno.h
-printf '#ifndef EJUSTRETURN\n'
-sed -n '/EJUSTRETURN/p'	< ../../../sys/errno.h
-printf '#endif /* EJUSTRETURN */\n'
+sed -n '/#define[ 	]*E/s/E[A-Z]*/RUMP_&/p' < ../../../sys/errno.h
 
 fromvers ../../../sys/reboot.h
 sed -n '/#define.*RB_[A-Z]/s/RB_/RUMP_RB_/gp' <../../../sys/reboot.h	\

@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.10 2009/04/23 01:56:49 snj Exp $
+.\"	$NetBSD: prep,v 1.10.6.1 2013/01/16 05:26:02 yamt Exp $
 .\"
 .\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@ serial port and the on-chip Ethernet.
 These notes assume that the Ethernet will be used to load the kernel.
 RedBoot can either use TFTP or HTTP to load the kernel via the network.
 .Pp
-These notes also assume the the TS-7200 will be run from the CompactFlash;
+These notes also assume the TS-7200 will be run from the CompactFlash;
 that a FFS filesystem on the CompactFlash card will provide the root file
 system.  The minimum size of the CompactFlash card is 64MB with 512MB being
 the recommended minimum size if attempting a full installation.

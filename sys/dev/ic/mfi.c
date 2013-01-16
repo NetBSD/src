@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.36.2.2 2012/10/30 17:21:05 yamt Exp $ */
+/* $NetBSD: mfi.c,v 1.36.2.3 2013/01/16 05:33:15 yamt Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.36.2.2 2012/10/30 17:21:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.36.2.3 2013/01/16 05:33:15 yamt Exp $");
 
 #include "bio.h"
 
@@ -587,12 +587,14 @@ mfi_transition_firmware(struct mfi_softc *sc)
 			max_wait = 20;
 			break;
 		case MFI_STATE_BOOT_MESSAGE_PENDING:
-			if (sc->sc_ioptype == MFI_IOP_TBOLT) {
+			if (sc->sc_ioptype == MFI_IOP_SKINNY ||
+			    sc->sc_ioptype == MFI_IOP_TBOLT) {
 				mfi_write(sc, MFI_SKINNY_IDB, MFI_INIT_HOTPLUG);
-				max_wait = 180;
-				break;
+			} else {
+				mfi_write(sc, MFI_IDB, MFI_INIT_HOTPLUG);
 			}
-			/* FALLTHROUGH */
+			max_wait = 180;
+			break;
 		default:
 			aprint_error_dev(sc->sc_dev,
 			    "unknown firmware state %d\n", fw_state);

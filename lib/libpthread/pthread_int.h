@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.81.2.3 2012/10/30 18:59:15 yamt Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.81.2.4 2013/01/16 05:32:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
 #include <sys/atomic.h>
-#include <sys/tree.h>
+#include <sys/rbtree.h>
 
 #include <limits.h>
 #include <lwp.h>
@@ -126,7 +126,7 @@ struct	__pthread_st {
 
 	/* LWP ID and entry on the list of all threads. */
 	lwpid_t		pt_lid;
-	RB_ENTRY(__pthread_st) pt_alltree;
+	rb_node_t	pt_alltree;
 	PTQ_ENTRY(__pthread_st) pt_allq;
 	PTQ_ENTRY(__pthread_st)	pt_deadq;
 
@@ -148,7 +148,10 @@ struct	__pthread_st {
 
 	/* Thread-specific data.  Large so it sits close to the end. */
 	int		pt_havespecific;
-	void		*pt_specific[PTHREAD_KEYS_MAX];
+	struct pt_specific {
+		void *pts_value;
+		PTQ_ENTRY(pt_specific) pts_next;
+	} pt_specific[PTHREAD_KEYS_MAX];
 
 	/*
 	 * Context for thread creation.  At the end as it's cached
@@ -295,6 +298,7 @@ char	*pthread__getenv(const char *) PTHREAD_HIDE;
 __dead void	pthread__cancelled(void) PTHREAD_HIDE;
 void	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
 int	pthread__checkpri(int) PTHREAD_HIDE;
+int	pthread__add_specific(pthread_t, pthread_key_t, const void *) PTHREAD_HIDE;
 
 #ifndef pthread__smt_pause
 #define	pthread__smt_pause()	/* nothing */

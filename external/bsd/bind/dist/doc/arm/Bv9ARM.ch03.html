@@ -54,7 +54,7 @@
 <dt><span class="sect1"><a href="Bv9ARM.ch03.html#id2568369">Name Server Operations</a></span></dt>
 <dd><dl>
 <dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2568374">Tools for Use With the Name Server Daemon</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2570632">Signals</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2570597">Signals</a></span></dt>
 </dl></dd>
 </dl>
 </div>
@@ -806,11 +806,31 @@ zone "eng.example.com" {
                         <span><strong class="command">inline-signing</strong></span> zones.
                         Parameters are specified in the same format as
                         an NSEC3PARAM resource record: hash algorithm,
-                        flags, iterations, salt.  For example, to set an
-                        NSEC3 chain using the SHA-1 hash algorithm,
-                        no opt-out flag, 10 iterations, and a salt value
-                        of "FFFF", use:
-                        <span><strong class="command">rndc signing -nsec3param 1 0 10 FFFF</strong></span>.
+                        flags, iterations, and salt, in that order.
+                      </p>
+<p>
+                        Currently, the only defined value for hash algorithm 
+                        is <code class="literal">1</code>, representing SHA-1.
+                        The <code class="option">flags</code> may be set to
+                        <code class="literal">0</code> or <code class="literal">1</code>,
+                        depending on whether you wish to set the opt-out
+                        bit in the NSEC3 chain.  <code class="option">iterations</code>
+                        defines the number of additional times to apply
+                        the algorithm when generating an NSEC3 hash.  The
+                        <code class="option">salt</code> is a string of data expressed
+                        in hexidecimal, or a hyphen (`-') if no salt is
+                        to be used.
+                      </p>
+<p>
+                        So, for example, to create an NSEC3 chain using
+                        the SHA-1 hash algorithm, no opt-out flag,
+                        10 iterations, and a salt value of "FFFF", use:
+                        <span><strong class="command">rndc signing -nsec3param 1 0 10 FFFF &lt;zone&gt;</strong></span>.
+                        To set the opt-out flag, 15 iterations, and no
+                        salt, use:
+                        <span><strong class="command">rndc signing -nsec3param 1 1 15 - &lt;zone&gt;</strong></span>.
+                      </p>
+<p>
                         <span><strong class="command">rndc signing -nsec3param none</strong></span>
                         removes an existing NSEC3 chain and replaces it
                         with NSEC.
@@ -968,7 +988,7 @@ controls {
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2570632"></a>Signals</h3></div></div></div>
+<a name="id2570597"></a>Signals</h3></div></div></div>
 <p>
           Certain UNIX signals cause the name server to take specific
           actions, as described in the following table.  These signals can

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.347.2.1 2012/04/17 00:06:55 yamt Exp $ */
+/*	$NetBSD: pmap.c,v 1.347.2.2 2013/01/16 05:33:05 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.347.2.1 2012/04/17 00:06:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.347.2.2 2013/01/16 05:33:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -7440,31 +7440,19 @@ void
 pmap_activate(struct lwp *l)
 {
 	pmap_t pm = l->l_proc->p_vmspace->vm_map.pmap;
-	int s;
 
-	/*
-	 * This is essentially the same thing that happens in cpu_switch()
-	 * when the newly selected process is about to run, except that we
-	 * have to make sure to clean the register windows before we set
-	 * the new context.
-	 */
-
-	s = splvm();
-	if (l == curlwp) {
-		write_user_windows();
-		if (pm->pm_ctx == NULL) {
-			ctx_alloc(pm);	/* performs setcontext() */
-		} else {
-			/* Do any cache flush needed on context switch */
-			(*cpuinfo.pure_vcache_flush)();
-			setcontext(pm->pm_ctxnum);
-		}
-#if defined(MULTIPROCESSOR)
-		if (pm != pmap_kernel())
-			PMAP_SET_CPUSET(pm, &cpuinfo);
-#endif
+	if (pm == pmap_kernel() || l != curlwp) {
+		return;
 	}
-	splx(s);
+
+	PMAP_LOCK();
+	if (pm->pm_ctx == NULL) {
+		ctx_alloc(pm);	/* performs setcontext() */
+	} else {
+		setcontext(pm->pm_ctxnum);
+	}
+	PMAP_SET_CPUSET(pm, &cpuinfo);
+	PMAP_UNLOCK();
 }
 
 /*
@@ -7473,22 +7461,27 @@ pmap_activate(struct lwp *l)
 void
 pmap_deactivate(struct lwp *l)
 {
-#if defined(MULTIPROCESSOR)
-	pmap_t pm;
-	struct proc *p;
+	struct proc *p = l->l_proc;
+	pmap_t pm = p->p_vmspace->vm_map.pmap;
 
-	p = l->l_proc;
-	if (p->p_vmspace &&
-	    (pm = p->p_vmspace->vm_map.pmap) != pmap_kernel()) {
+	if (pm == pmap_kernel() || l != curlwp) {
+		return;
+	}
+
+	write_user_windows();
+	PMAP_LOCK();
+	if (pm->pm_ctx) {
+		(*cpuinfo.pure_vcache_flush)();
+
 #if defined(SUN4M) || defined(SUN4D)
-		if (pm->pm_ctx && CPU_HAS_SRMMU)
+		if (CPU_HAS_SRMMU)
 			sp_tlb_flush(0, pm->pm_ctxnum, ASI_SRMMUFP_L0);
 #endif
-
-		/* we no longer need broadcast tlb flushes for this pmap. */
-		PMAP_CLR_CPUSET(pm, &cpuinfo);
 	}
-#endif
+
+	/* we no longer need broadcast tlb flushes for this pmap. */
+	PMAP_CLR_CPUSET(pm, &cpuinfo);
+	PMAP_UNLOCK();
 }
 
 #ifdef DEBUG

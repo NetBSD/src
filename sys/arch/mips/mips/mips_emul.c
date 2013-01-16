@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.25 2011/08/18 21:04:23 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.25.2.1 2013/01/16 05:33:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.25 2011/08/18 21:04:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.25.2.1 2013/01/16 05:33:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,7 +457,7 @@ mips_emul_special3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 		case 29:
 			tf->tf_regs[instfmt.RType.rt] =
 			    (mips_reg_t)(intptr_t)curlwp->l_private;
-			break;
+			goto done;
 		}
 		/* FALLTHROUGH */
 	illopc:
@@ -472,7 +472,7 @@ mips_emul_special3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
 		return;
 	}
-
+done:
 	update_pc(tf, cause);
 }
 

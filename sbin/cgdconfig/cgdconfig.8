@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.31 2011/07/03 19:05:10 dholland Exp $
+.\" $NetBSD: cgdconfig.8,v 1.31.2.1 2013/01/16 05:32:32 yamt Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 19, 2009
+.Dd December 3, 2012
 .Dt CGDCONFIG 8
 .Os
 .Sh NAME
@@ -41,10 +41,6 @@
 .Op Ar paramsfile
 .Nm
 .Fl C
-.Op Fl nv
-.Op Fl f Ar configfile
-.Nm
-.Fl U
 .Op Fl nv
 .Op Fl f Ar configfile
 .Nm
@@ -63,6 +59,9 @@
 .Ar alg
 .Op Ar keylen
 .Nm
+.Fl l
+.Op Fl cgd
+.Nm
 .Fl s
 .Op Fl nv
 .Op Fl i Ar ivmeth
@@ -70,6 +69,10 @@
 .Ar dev
 .Ar alg
 .Op Ar keylen
+.Nm
+.Fl U
+.Op Fl nv
+.Op Fl f Ar configfile
 .Nm
 .Fl u
 .Op Fl nv
@@ -100,6 +103,11 @@ Generate a paramsfile (to stdout).
 Specify the IV method (default: encblkno1).
 .It Fl k Ar kgmeth
 Specify the key generation method (default: pkcs5_pbkdf2/sha1).
+.It Fl l Op Ar cgd
+List state of all devices or just the one
+.Ar cgd
+device.
+The verbosity level affects the output.
 .It Fl n
 Do not actually configure or unconfigure a cryptographic disk
 device, but instead report the steps that would be taken.
@@ -170,7 +178,8 @@ a disk volume with meaningless data prior to use.
 .It urandomkey
 The method simply reads
 .Pa /dev/urandom
-and uses the resulting bits as the key.  This is similar to the
+and uses the resulting bits as the key.
+This is similar to the
 .Pa randomkey
 method, but it guarantees that cgdconfig will not stall waiting for
 hard-random bits (useful when configuring a cgd for swap at boot time).
@@ -335,22 +344,29 @@ when we configure the first time to set up the disk.
 Here is the
 sequence of commands that is recommended:
 .Bd -literal
-             # cgdconfig -g -o /etc/cgd/wd0e -V disklabel aes-cbc
-             # cgdconfig -V re-enter cgd0 /dev/wd0e
-             /dev/wd0e's passphrase:
-             re-enter device's passphrase:
-             # disklabel -e -I cgd0
-             # cgdconfig -u cgd0
-             # cgdconfig cgd0 /dev/wd0e
-             /dev/wd0e's passphrase:
+	# cgdconfig -g -o /etc/cgd/wd0e -V disklabel aes-cbc
+	# cgdconfig -V re-enter cgd0 /dev/wd0e
+	/dev/wd0e's passphrase:
+	re-enter device's passphrase:
+	# disklabel -e -I cgd0
+	# cgdconfig -u cgd0
+	# cgdconfig cgd0 /dev/wd0e
+	/dev/wd0e's passphrase:
+.Ed
+.Pp
+To scrub data from a disk before setting up a cgd:
+.Bd -literal
+	# cgdconfig -s cgd0 /dev/sd0e aes-cbc 256 < /dev/urandom
+	# dd if=/dev/zero of=/dev/rcgd0d bs=32k progress=512
+	# cgdconfig -u cgd0
 .Ed
 .Pp
 To create a new parameters file that will generate the same key as an old
 parameters file:
 .Bd -literal
-             # cgdconfig -G -o newparamsfile oldparamsfile
-             old file's passphrase:
-             new file's passphrase:
+	# cgdconfig -G -o newparamsfile oldparamsfile
+	old file's passphrase:
+	new file's passphrase:
 .Ed
 .Pp
 To configure a cgd that uses Blowfish with a 200 bit key that it
@@ -395,9 +411,13 @@ An example
 	cgd1		/dev/sd0h	/usr/local/etc/cgd/sd0h
 .Ed
 .Pp
-Note that this will store the parameters file as
+Note the first entry will store the parameters file as
 .Pa /etc/cgd/wd0e .
 And use the entered passphrase to generate the key.
+.Pp
+Although not required, the partition type
+.Ar cgd
+should be used in the disklabel for the cgd partition.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "cgdconfig: could not calibrate pkcs5_pbkdf2"

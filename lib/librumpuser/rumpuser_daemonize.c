@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_daemonize.c,v 1.2.4.1 2012/10/30 18:59:17 yamt Exp $	*/
+/*	$NetBSD: rumpuser_daemonize.c,v 1.2.4.2 2013/01/16 05:32:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_daemonize.c,v 1.2.4.1 2012/10/30 18:59:17 yamt Exp $");
+__RCSID("$NetBSD: rumpuser_daemonize.c,v 1.2.4.2 2013/01/16 05:32:28 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -36,9 +36,14 @@ __RCSID("$NetBSD: rumpuser_daemonize.c,v 1.2.4.1 2012/10/30 18:59:17 yamt Exp $"
 
 #include <errno.h>
 #include <fcntl.h>
-#include <paths.h>
 #include <stdio.h>
 #include <unistd.h>
+
+#ifdef __sun__
+#define _PATH_DEVNULL "/dev/null"
+#else
+#include <paths.h>
+#endif
 
 static int isdaemonizing;
 static int daemonpipe[2];

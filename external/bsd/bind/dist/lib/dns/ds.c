@@ -1,7 +1,7 @@
-/*	$NetBSD: ds.c,v 1.2.4.1 2012/10/30 18:52:46 yamt Exp $	*/
+/*	$NetBSD: ds.c,v 1.2.4.2 2013/01/16 05:27:16 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -54,12 +54,13 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 {
 	dns_fixedname_t fname;
 	dns_name_t *name;
-	unsigned char digest[ISC_SHA256_DIGESTLENGTH];
+	unsigned char digest[ISC_SHA384_DIGESTLENGTH];
 	isc_region_t r;
 	isc_buffer_t b;
 	dns_rdata_ds_t ds;
 	isc_sha1_t sha1;
 	isc_sha256_t sha256;
+	isc_sha384_t sha384;
 #ifdef HAVE_OPENSSL_GOST
 	EVP_MD_CTX ctx;
 	const EVP_MD *md;
@@ -88,17 +89,18 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 		isc_sha1_update(&sha1, r.base, r.length);
 		isc_sha1_final(&sha1, digest);
 		break;
+
 #ifdef HAVE_OPENSSL_GOST
 #define CHECK(x)					\
 	if ((x) != 1) {					\
 		EVP_MD_CTX_cleanup(&ctx);		\
-		return (DST_R_OPENSSLFAILURE);		\
+		return (DST_R_CRYPTOFAILURE);		\
 	}
 
 	case DNS_DSDIGEST_GOST:
 		md = EVP_gost();
 		if (md == NULL)
-			return (DST_R_OPENSSLFAILURE);
+			return (DST_R_CRYPTOFAILURE);
 		EVP_MD_CTX_init(&ctx);
 		CHECK(EVP_DigestInit(&ctx, md));
 		dns_name_toregion(name, &r);
@@ -113,6 +115,18 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 		CHECK(EVP_DigestFinal(&ctx, digest, NULL));
 		break;
 #endif
+
+	case DNS_DSDIGEST_SHA384:
+		isc_sha384_init(&sha384);
+		dns_name_toregion(name, &r);
+		isc_sha384_update(&sha384, r.base, r.length);
+		dns_rdata_toregion(key, &r);
+		INSIST(r.length >= 4);
+		isc_sha384_update(&sha384, r.base, r.length);
+		isc_sha384_final(digest, &sha384);
+		break;
+
+	case DNS_DSDIGEST_SHA256:
 	default:
 		isc_sha256_init(&sha256);
 		dns_name_toregion(name, &r);
@@ -134,11 +148,18 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 	case DNS_DSDIGEST_SHA1:
 		ds.length = ISC_SHA1_DIGESTLENGTH;
 		break;
+
 #ifdef HAVE_OPENSSL_GOST
 	case DNS_DSDIGEST_GOST:
 		ds.length = ISC_GOST_DIGESTLENGTH;
 		break;
 #endif
+
+	case DNS_DSDIGEST_SHA384:
+		ds.length = ISC_SHA384_DIGESTLENGTH;
+		break;
+
+	case DNS_DSDIGEST_SHA256:
 	default:
 		ds.length = ISC_SHA256_DIGESTLENGTH;
 		break;
@@ -154,9 +175,11 @@ dns_ds_digest_supported(unsigned int digest_type) {
 #ifdef HAVE_OPENSSL_GOST
 	return  (ISC_TF(digest_type == DNS_DSDIGEST_SHA1 ||
 			digest_type == DNS_DSDIGEST_SHA256 ||
-			digest_type == DNS_DSDIGEST_GOST));
+			digest_type == DNS_DSDIGEST_GOST ||
+			digest_type == DNS_DSDIGEST_SHA384));
 #else
 	return  (ISC_TF(digest_type == DNS_DSDIGEST_SHA1 ||
-			digest_type == DNS_DSDIGEST_SHA256));
+			digest_type == DNS_DSDIGEST_SHA256 ||
+			digest_type == DNS_DSDIGEST_SHA384));
 #endif
 }

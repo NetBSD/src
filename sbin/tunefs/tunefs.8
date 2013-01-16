@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.40.4.1 2012/04/17 00:05:43 yamt Exp $
+.\"	$NetBSD: tunefs.8,v 1.40.4.2 2013/01/16 05:32:35 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)tunefs.8	8.3 (Berkeley) 5/3/95
 .\"
-.Dd December 15, 2010
+.Dd December 3, 2012
 .Dt TUNEFS 8
 .Os
 .Sh NAME
@@ -102,7 +102,12 @@ The default journaling log file size is described in
 .Xr wapbl 4 .
 Specifying a size of zero will cause the in-filesystem journaling log file
 to be removed the next time the filesystem is mounted.
-The size of an existing in-filesystem journaling log file can not be changed.
+The size of an existing in-filesystem journaling log file can not be changed
+directly.
+You need to first set the log file size to zero, then mount the
+filesystem without logging enabled (which will remove the log without
+creating a new one), unmount, set the size to the new value and finally
+re-mount with logging enabled.
 .It Fl m Ar minfree
 This value specifies the percentage of space held back
 from normal users; the minimum free space threshold.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.46.8.1 2012/04/17 00:01:41 yamt Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.46.8.2 2013/01/16 05:25:55 yamt Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -1973,6 +1973,7 @@ check_trns_esp(t_id)
 	case IPSECDOI_ESP_CAST:
 	case IPSECDOI_ESP_BLOWFISH:
 	case IPSECDOI_ESP_AES:
+	case IPSECDOI_ESP_AESGCM16:
 	case IPSECDOI_ESP_TWOFISH:
 	case IPSECDOI_ESP_CAMELLIA:
 		return 0;

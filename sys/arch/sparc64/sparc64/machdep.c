@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262.2.3 2012/10/30 17:20:25 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.262.2.4 2013/01/16 05:33:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262.2.3 2012/10/30 17:20:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262.2.4 2013/01/16 05:33:07 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2295,7 +2295,6 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 			(unsigned long long)size,
 			(unsigned long long)hp->_ptr));
 		return (0);
-		/* FALLTHROUGH */
 	case PCI_IO_BUS_SPACE:
 		map_little = 1;
 		break;

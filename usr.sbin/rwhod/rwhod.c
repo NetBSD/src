@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.39 2011/08/31 13:32:41 joerg Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.39.2.1 2013/01/16 05:34:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.39 2011/08/31 13:32:41 joerg Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.39.2.1 2013/01/16 05:34:12 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: rwhod.c,v 1.39 2011/08/31 13:32:41 joerg Exp $");
 #include <arpa/inet.h>
 
 #include <ctype.h>
+#include <pwd.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>

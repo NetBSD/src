@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.19.2.2 2012/10/30 17:22:45 yamt Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.19.2.3 2013/01/16 05:33:49 yamt Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.19.2.2 2012/10/30 17:22:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.19.2.3 2013/01/16 05:33:49 yamt Exp $");
 #endif
 
 /*
@@ -80,6 +80,10 @@ static int
 ieee80211_init0(void)
 {
 	ieee80211_setup_func * const *ieee80211_setup, f;
+
+	if (max_linkhdr < ALIGN(sizeof(struct ieee80211_qosframe_addr4))) {
+		max_linkhdr = ALIGN(sizeof(struct ieee80211_qosframe_addr4));
+	}
 
         __link_set_foreach(ieee80211_setup, ieee80211_funcs) {
 		f = (void*)*ieee80211_setup;

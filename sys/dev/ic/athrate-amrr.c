@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-amrr.c,v 1.11 2008/12/11 05:45:29 alc Exp $ */
+/*	$NetBSD: athrate-amrr.c,v 1.11.14.1 2013/01/16 05:33:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 INRIA
@@ -43,7 +43,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-amrr.c,v 1.11 2008/12/11 05:45:29 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-amrr.c,v 1.11.14.1 2013/01/16 05:33:15 yamt Exp $");
 #endif
 
 /*
@@ -202,7 +202,7 @@ ath_rate_update(struct ath_softc *sc, struct ieee80211_node *ni, int rate)
 	const HAL_RATE_TABLE *rt = sc->sc_currates;
 	u_int8_t rix;
 
-	KASSERT(rt != NULL, ("no rate table, mode %u", sc->sc_curmode));
+	KASSERTMSG(rt != NULL, "no rate table, mode %u", sc->sc_curmode);
 
 	DPRINTF(sc, "%s: set xmit rate for %s to %dM\n",
 	    __func__, ether_sprintf(ni->ni_macaddr),
@@ -280,7 +280,7 @@ ath_rate_ctl_start(struct ath_softc *sc, struct ieee80211_node *ni)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int srate;
 
-	KASSERT(ni->ni_rates.rs_nrates > 0, ("no rates"));
+	KASSERTMSG(ni->ni_rates.rs_nrates > 0, "no rates");
 	if (ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE) {
 		/*
 		 * No fixed rate is requested. For 11b start with
@@ -296,7 +296,7 @@ ath_rate_ctl_start(struct ath_softc *sc, struct ieee80211_node *ni)
 			/* NB: the rate set is assumed sorted */
 			for (; srate >= 0 && RATE(srate) > 72; srate--)
 				;
-			KASSERT(srate >= 0, ("bogus rate set"));
+			KASSERTMSG(srate >= 0, "bogus rate set");
 		}
 	} else {
 		/*
@@ -313,8 +313,8 @@ ath_rate_ctl_start(struct ath_softc *sc, struct ieee80211_node *ni)
 		srate = ni->ni_rates.rs_nrates - 1;
 		for (; srate >= 0 && RATE(srate) != r; srate--)
 			;
-		KASSERT(srate >= 0,
-			("fixed rate %d not in rate set", ic->ic_fixed_rate));
+		KASSERTMSG(srate >= 0,
+			"fixed rate %d not in rate set", ic->ic_fixed_rate);
 	}
 	ath_rate_update(sc, ni, srate);
 #undef RATE

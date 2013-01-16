@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.125.2.3 2012/10/30 18:59:14 yamt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.125.2.4 2013/01/16 05:32:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.125.2.3 2012/10/30 18:59:14 yamt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.125.2.4 2013/01/16 05:32:26 yamt Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: pthread.c,v 1.125.2.3 2012/10/30 18:59:14 yamt Exp $");
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <syslog.h>
 #include <ucontext.h>
@@ -59,12 +60,16 @@ __RCSID("$NetBSD: pthread.c,v 1.125.2.3 2012/10/30 18:59:14 yamt Exp $");
 #include "pthread_int.h"
 
 pthread_rwlock_t pthread__alltree_lock = PTHREAD_RWLOCK_INITIALIZER;
-RB_HEAD(__pthread__alltree, __pthread_st) pthread__alltree;
+static rb_tree_t	pthread__alltree;
 
-#ifndef lint
-static int	pthread__cmp(struct __pthread_st *, struct __pthread_st *);
-RB_PROTOTYPE_STATIC(__pthread__alltree, __pthread_st, pt_alltree, pthread__cmp)
-#endif
+static signed int	pthread__cmp(void *, const void *, const void *);
+
+static const rb_tree_ops_t pthread__alltree_ops = {
+	.rbto_compare_nodes = pthread__cmp,
+	.rbto_compare_key = pthread__cmp,
+	.rbto_node_offset = offsetof(struct __pthread_st, pt_alltree),
+	.rbto_context = NULL
+};
 
 static void	pthread__create_tramp(void *);
 static void	pthread__initthread(pthread_t);
@@ -157,7 +162,7 @@ pthread__init(void)
 	extern int __isthreaded;
 
 	pthread__pagesize = (size_t)sysconf(_SC_PAGESIZE);
-	pthread__concurrency = sysconf(_SC_NPROCESSORS_CONF);
+	pthread__concurrency = (int)sysconf(_SC_NPROCESSORS_CONF);
 
 	/* Initialize locks first; they're needed elsewhere. */
 	pthread__lockprim_init();
@@ -176,7 +181,8 @@ pthread__init(void)
 	pthread_attr_init(&pthread_default_attr);
 	PTQ_INIT(&pthread__allqueue);
 	PTQ_INIT(&pthread__deadqueue);
-	RB_INIT(&pthread__alltree);
+
+	rb_tree_init(&pthread__alltree, &pthread__alltree_ops);
 
 	/* Create the thread structure corresponding to main() */
 	pthread__initmain(&first);
@@ -185,7 +191,7 @@ pthread__init(void)
 
 	first->pt_lid = _lwp_self();
 	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
-	RB_INSERT(__pthread__alltree, &pthread__alltree, first);
+	(void)rb_tree_insert_node(&pthread__alltree, first);
 
 	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &first->pt_lwpctl) != 0) {
 		err(1, "_lwp_ctl");
@@ -458,7 +464,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		/* Add to list of all threads. */
 		pthread_rwlock_wrlock(&pthread__alltree_lock);
 		PTQ_INSERT_TAIL(&pthread__allqueue, newthread, pt_allq);
-		RB_INSERT(__pthread__alltree, &pthread__alltree, newthread);
+		(void)rb_tree_insert_node(&pthread__alltree, newthread);
 		pthread_rwlock_unlock(&pthread__alltree_lock);
 
 		/* Will be reset by the thread upon exit. */
@@ -933,24 +939,20 @@ pthread_testcancel(void)
 /*
  * POSIX requires that certain functions return an error rather than
  * invoking undefined behavior even when handed completely bogus
- * pthread_t values, e.g. stack garbage or (pthread_t)666. This
- * utility routine searches the list of threads for the pthread_t
- * value without dereferencing it.
+ * pthread_t values, e.g. stack garbage.
  */
 int
 pthread__find(pthread_t id)
 {
 	pthread_t target;
+	int error;
 
 	pthread_rwlock_rdlock(&pthread__alltree_lock);
-	/* LINTED */
-	target = RB_FIND(__pthread__alltree, &pthread__alltree, id);
+	target = rb_tree_find_node(&pthread__alltree, id);
+	error = (target && target->pt_state != PT_STATE_DEAD) ? 0 : ESRCH;
 	pthread_rwlock_unlock(&pthread__alltree_lock);
 
-	if (target == NULL || target->pt_state == PT_STATE_DEAD)
-		return ESRCH;
-
-	return 0;
+	return error;
 }
 
 
@@ -1300,20 +1302,19 @@ pthread__initmain(pthread_t *newt)
 	pthread__main.pt_tls->tcb_pthread = &pthread__main;
 }
 
-#ifndef lint
-static int
-pthread__cmp(struct __pthread_st *a, struct __pthread_st *b)
+static signed int
+/*ARGSUSED*/
+pthread__cmp(void *ctx, const void *n1, const void *n2)
 {
+	const uintptr_t p1 = (const uintptr_t)n1;
+	const uintptr_t p2 = (const uintptr_t)n2;
 
-	if ((uintptr_t)a < (uintptr_t)b)
-		return (-1);
-	else if (a == b)
-		return 0;
-	else
+	if (p1 < p2)
+		return -1;
+	if (p1 > p2)
 		return 1;
+	return 0;
 }
-RB_GENERATE_STATIC(__pthread__alltree, __pthread_st, pt_alltree, pthread__cmp)
-#endif
 
 /* Because getenv() wants to use locks. */
 char *

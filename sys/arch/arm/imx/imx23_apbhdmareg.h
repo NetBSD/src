@@ -1,0 +1,201 @@
+/* $Id: imx23_apbhdmareg.h,v 1.1.2.2 2013/01/16 05:32:47 yamt Exp $ */
+
+/*
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Petri Laakso.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef _ARM_IMX_IMX23_APBHDMAREG_H_
+#define _ARM_IMX_IMX23_APBHDMAREG_H_
+
+#include <sys/cdefs.h>
+
+#define HW_APBHDMA_BASE 0x80004000
+#define HW_APBHDMA_SIZE 0x2000 /* 8 kB */
+
+/*
+ * AHB to APBH Bridge Control and Status Register 0.
+ */
+#define HW_APBH_CTRL0		0x000
+#define HW_APBH_CTRL0_SET	0x004
+#define HW_APBH_CTRL0_CLR	0x008
+#define HW_APBH_CTRL0_TOG	0x00C
+
+#define HW_APBH_CTRL0_SFTRST		__BIT(31)
+#define HW_APBH_CTRL0_CLKGATE		__BIT(30)
+#define HW_APBH_CTRL0_AHB_BURST8_EN	__BIT(29)
+#define HW_APBH_CTRL0_APB_BURST4_EN	__BIT(28)
+#define HW_APBH_CTRL0_RSVD0		__BITS(27, 24)
+#define HW_APBH_CTRL0_RESET_CHANNEL	__BITS(23, 16)
+#define HW_APBH_CTRL0_CLKGATE_CHANNEL	__BITS(15, 8)
+#define HW_APBH_CTRL0_FREEZE_CHANNEL	__BITS(7, 0)
+
+/*
+ * AHB to APBH Bridge Control and Status Register 1.
+ */
+#define HW_APBH_CTRL1		0x010
+#define HW_APBH_CTRL1_SET	0x014
+#define HW_APBH_CTRL1_CLR	0x018
+#define HW_APBH_CTRL1_TOG	0x01C
+
+#define HW_APBH_CTRL1_RSVD1			__BITS(31, 24)
+#define HW_APBH_CTRL1_CH7_CMDCMPLT_IRQ_EN	__BIT(23)
+#define HW_APBH_CTRL1_CH6_CMDCMPLT_IRQ_EN	__BIT(22)
+#define HW_APBH_CTRL1_CH5_CMDCMPLT_IRQ_EN	__BIT(21)
+#define HW_APBH_CTRL1_CH4_CMDCMPLT_IRQ_EN	__BIT(20)
+#define HW_APBH_CTRL1_CH3_CMDCMPLT_IRQ_EN	__BIT(19)
+#define HW_APBH_CTRL1_CH2_CMDCMPLT_IRQ_EN	__BIT(18)
+#define HW_APBH_CTRL1_CH1_CMDCMPLT_IRQ_EN	__BIT(17)
+#define HW_APBH_CTRL1_CH0_CMDCMPLT_IRQ_EN	__BIT(16)
+#define HW_APBH_CTRL1_RSVD0			__BITS(15, 8)
+#define HW_APBH_CTRL1_CH7_CMDCMPLT_IRQ		__BIT(7)
+#define HW_APBH_CTRL1_CH6_CMDCMPLT_IRQ		__BIT(6)
+#define HW_APBH_CTRL1_CH5_CMDCMPLT_IRQ		__BIT(5)
+#define HW_APBH_CTRL1_CH4_CMDCMPLT_IRQ		__BIT(4)
+#define HW_APBH_CTRL1_CH3_CMDCMPLT_IRQ		__BIT(3)
+#define HW_APBH_CTRL1_CH2_CMDCMPLT_IRQ		__BIT(2)
+#define HW_APBH_CTRL1_CH1_CMDCMPLT_IRQ		__BIT(1)
+#define HW_APBH_CTRL1_CH0_CMDCMPLT_IRQ		__BIT(0)
+
+/*
+ * AHB to APBH Bridge Control and Status Register 2.
+ */
+#define HW_APBH_CTRL2		0x020
+#define HW_APBH_CTRL2_SET	0x024
+#define HW_APBH_CTRL2_CLR	0x028
+#define HW_APBH_CTRL2_TOG	0x02C
+
+#define HW_APBH_CTRL2_RSVD1		__BITS(31, 24)
+#define HW_APBH_CTRL2_CH7_ERROR_STATUS	__BIT(23)
+#define HW_APBH_CTRL2_CH6_ERROR_STATUS	__BIT(22)
+#define HW_APBH_CTRL2_CH5_ERROR_STATUS	__BIT(21)
+#define HW_APBH_CTRL2_CH4_ERROR_STATUS	__BIT(20)
+#define HW_APBH_CTRL2_CH3_ERROR_STATUS	__BIT(19)
+#define HW_APBH_CTRL2_CH2_ERROR_STATUS	__BIT(18)
+#define HW_APBH_CTRL2_CH1_ERROR_STATUS	__BIT(17)
+#define HW_APBH_CTRL2_CH0_ERROR_STATUS	__BIT(16)
+#define HW_APBH_CTRL2_RSVD0		__BITS(15, 8)
+#define HW_APBH_CTRL2_CH7_ERROR_IRQ	__BIT(7)
+#define HW_APBH_CTRL2_CH6_ERROR_IRQ	__BIT(6)
+#define HW_APBH_CTRL2_CH5_ERROR_IRQ	__BIT(5)
+#define HW_APBH_CTRL2_CH4_ERROR_IRQ	__BIT(4)
+#define HW_APBH_CTRL2_CH3_ERROR_IRQ	__BIT(3)
+#define HW_APBH_CTRL2_CH2_ERROR_IRQ	__BIT(2)
+#define HW_APBH_CTRL2_CH1_ERROR_IRQ	__BIT(1)
+#define HW_APBH_CTRL2_CH0_ERROR_IRQ	__BIT(0)
+
+/*
+ * AHB to APBH DMA Device Assignment Register.
+ */
+#define HW_APBH_DEVSEL	0x030
+
+#define HW_APBH_DEVSEL_CH7	__BITS(31, 28)
+#define HW_APBH_DEVSEL_CH6	__BITS(27, 24)
+#define HW_APBH_DEVSEL_CH5	__BITS(23, 20)
+#define HW_APBH_DEVSEL_CH4	__BITS(19, 16)
+#define HW_APBH_DEVSEL_CH3	__BITS(15, 12)
+#define HW_APBH_DEVSEL_CH2	__BITS(11, 8)
+#define HW_APBH_DEVSEL_CH1	__BITS(7, 4)
+#define HW_APBH_DEVSEL_CH0	__BITS(3, 0)
+
+/*
+ * APBH DMA Channel 1 Current Command Address Register.
+ */
+#define HW_APBH_CH1_CURCMDAR	0x0B0
+
+#define HW_APBH_CH1_CURCMDAR_CMD_ADDR	__BITS(31, 0)
+
+/*
+ * APBH DMA Channel 1 Next Command Address Register.
+ */
+#define HW_APBH_CH1_NXTCMDAR	0x0C0
+
+#define HW_APBH_CH1_NXTCMDAR_CMD_ADDR	__BITS(31, 0)
+
+/*
+ * APBH DMA Channel 1 Command Register.
+ */
+#define HW_APBH_CH1_CMD	0x0D0
+
+#define HW_APBH_CH1_CMD_XFER_COUNT	__BITS(31, 16)
+#define HW_APBH_CH1_CMD_CMDWORDS	__BITS(15, 12)
+#define HW_APBH_CH1_CMD_RSVD1		__BITS(11, 9)
+#define HW_APBH_CH1_CMD_HALTONTERMINATE	__BIT(8)
+#define HW_APBH_CH1_CMD_WAIT4ENDCMD	__BIT(7)
+#define HW_APBH_CH1_CMD_SEMAPHORE	__BIT(6)
+#define HW_APBH_CH1_CMD_NANDWAIT4READY	__BIT(5)
+#define HW_APBH_CH1_CMD_NANDLOCK	__BIT(4)
+#define HW_APBH_CH1_CMD_IRQONCMPLT	__BIT(3)
+#define HW_APBH_CH1_CMD_CHAIN		__BIT(2)
+#define HW_APBH_CH1_CMD_COMMAND		__BITS(1, 0)
+
+/*
+ * APBH DMA Channel 1 Buffer Address Register.
+ */
+#define HW_APBH_CH1_BAR 0x0E0
+
+#define HW_APBH_CH1_BAR_ADDRESS	__BITS(31, 0)
+
+/*
+ * APBH DMA Channel 1 Semaphore Register.
+ */
+#define HW_APBH_CH1_SEMA	0x0F0
+
+#define HW_APBH_CH1_SEMA_RSVD2		__BITS(31, 24)
+#define HW_APBH_CH1_SEMA_PHORE		__BITS(23, 16)
+#define HW_APBH_CH1_SEMA_RSVD1		__BITS(15, 8)
+#define HW_APBH_CH1_SEMA_INCREMENT_SEMA	__BITS(7, 0)
+
+/*
+ * AHB to APBH DMA Channel 1 Debug Information.
+ */
+#define HW_APBH_CH1_DEBUG1 0x100
+
+#define HW_APBH_CH1_DEBUG1_REQ			__BIT(31)
+#define HW_APBH_CH1_DEBUG1_BURST		__BIT(30)
+#define HW_APBH_CH1_DEBUG1_KICK			__BIT(29)
+#define HW_APBH_CH1_DEBUG1_END			__BIT(28)
+#define HW_APBH_CH1_DEBUG1_SENSE		__BIT(27)
+#define HW_APBH_CH1_DEBUG1_READY		__BIT(26)
+#define HW_APBH_CH1_DEBUG1_LOCK			__BIT(25)
+#define HW_APBH_CH1_DEBUG1_NEXTCMDADDRVALID	__BIT(24)
+#define HW_APBH_CH1_DEBUG1_RD_FIFO_EMPTY	__BIT(23)
+#define HW_APBH_CH1_DEBUG1_RD_FIFO_FULL		__BIT(22)
+#define HW_APBH_CH1_DEBUG1_WR_FIFO_EMPTY	__BIT(21)
+#define HW_APBH_CH1_DEBUG1_WR_FIFO_FULL		__BIT(20)
+#define HW_APBH_CH1_DEBUG1_RSVD1		__BITS(19, 5)
+#define HW_APBH_CH1_DEBUG1_STATEMACHINE		__BITS(4, 0)
+
+/*
+ * AHB to APBH DMA Channel 1 Debug Information.
+ */
+#define HW_APBH_CH1_DEBUG2 0x110
+
+#define HW_APBH_CH1_DEBUG2_APB_BYTES	__BITS(31, 16)
+#define HW_APBH_CH1_DEBUG2_AHB_BYTES	__BITS(15, 0)
+
+#endif /* !_ARM_IMX_IMX23_APBHDMAREG_H_ */

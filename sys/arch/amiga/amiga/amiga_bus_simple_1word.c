@@ -1,4 +1,4 @@
-/* $NetBSD: amiga_bus_simple_1word.c,v 1.6.2.1 2012/04/17 00:06:00 yamt Exp $ */
+/* $NetBSD: amiga_bus_simple_1word.c,v 1.6.2.2 2013/01/16 05:32:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <machine/pte.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_1word.c,v 1.6.2.1 2012/04/17 00:06:00 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_1word.c,v 1.6.2.2 2013/01/16 05:32:40 yamt Exp $");
 
 #define AMIGA_SIMPLE_BUS_STRIDE 1		/* 1 byte per byte */
 #define AMIGA_SIMPLE_BUS_WORD_METHODS
@@ -44,6 +44,8 @@ __KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_1word.c,v 1.6.2.1 2012/04/17 00:06:
 
 #include "simple_busfuncs.c"
 
+bsr(oabs(bsr2_swap_), u_int16_t);
+bsw(oabs(bsw2_swap_), u_int16_t);
 bsr(oabs(bsr4_swap_), u_int32_t);
 bsw(oabs(bsw4_swap_), u_int32_t);
 
@@ -61,6 +63,30 @@ oabs(bsm_absolute_)(bus_space_tag_t tag, bus_addr_t address,
 	uint32_t pa = kvtop((void*) tag->base);
 	*handlep = tag->base + (address - pa) * AMIGA_SIMPLE_BUS_STRIDE;
 	return 0;
+}
+
+/* ARGSUSED */
+u_int16_t
+oabs(bsr2_swap_)(bus_space_handle_t handle, bus_size_t offset)
+{
+	volatile u_int16_t *p;
+	u_int16_t x;
+
+	p = (volatile u_int16_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	x = *p;
+	amiga_bus_reorder_protect();
+	return bswap16(x);
+}
+
+/* ARGSUSED */
+void
+oabs(bsw2_swap_)(bus_space_handle_t handle, bus_size_t offset, unsigned value)
+{
+	volatile u_int16_t *p;
+
+	p = (volatile u_int16_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	*p = bswap16( (u_int16_t)value );
+	amiga_bus_reorder_protect();
 }
 
 /* ARGSUSED */
@@ -185,8 +211,8 @@ const struct amiga_bus_space_methods amiga_bus_stride_1swap = {
 	.bssr1 =	oabs(bssr1_),
 	.bscr1 =	oabs(bscr1_),
 
-	.bsr2 =		oabs(bsr2_),		/* XXX swap? */
-	.bsw2 =		oabs(bsw2_),		/* XXX swap? */
+	.bsr2 =		oabs(bsr2_swap_),
+	.bsw2 =		oabs(bsw2_swap_),
 	.bsrs2 =	oabs(bsr2_),
 	.bsws2 =	oabs(bsw2_),
 	.bsrm2 =	oabs(bsrm2_swap_),
@@ -215,4 +241,3 @@ const struct amiga_bus_space_methods amiga_bus_stride_1swap = {
 	.bssr4 = 	oabs(bssr4_),		/* XXX swap? */
 	.bscr4 =	oabs(bscr4_)		/* XXX swap? */
 };
-

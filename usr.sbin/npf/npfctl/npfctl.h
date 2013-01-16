@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.6.4.3 2012/10/30 19:00:45 yamt Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.6.4.4 2013/01/16 05:34:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include <assert.h>
+#include <util.h>
 
 #include <net/npf_ncode.h>
 #include <net/npf.h>
@@ -50,8 +51,15 @@ typedef struct fam_addr_mask {
 	sa_family_t	fam_family;
 	npf_addr_t	fam_addr;
 	npf_netmask_t	fam_mask;
-	npfvar_t *	fam_interface;
+	unsigned long	fam_ifindex;
 } fam_addr_mask_t;
+
+typedef struct ifnet_addr {
+	unsigned long	ifna_index;
+	sa_family_t	ifna_family;
+	npfvar_t *	ifna_filter;
+	npfvar_t *	ifna_addrs;
+} ifnet_addr_t;
 
 typedef struct port_range {
 	in_port_t	pr_start;
@@ -90,10 +98,6 @@ typedef struct proc_param {
 } proc_param_t;
 
 void		yyerror(const char *, ...) __printflike(1, 2) __dead;
-void *		zalloc(size_t);
-void *		xrealloc(void *, size_t);
-char *		xstrdup(const char *);
-char *		xstrndup(const char *, size_t);
 
 void		npfctl_print_error(const nl_error_t *);
 char *		npfctl_print_addrmask(int, npf_addr_t *, npf_netmask_t);
@@ -103,10 +107,10 @@ in_port_t	npfctl_portno(const char *);
 uint8_t		npfctl_icmpcode(int, uint8_t, const char *);
 uint8_t		npfctl_icmptype(int, const char *);
 unsigned long   npfctl_find_ifindex(const char *);
+npfvar_t *	npfctl_parse_ifnet(const char *, const int);
 npfvar_t *	npfctl_parse_tcpflag(const char *);
 npfvar_t *	npfctl_parse_table_id(const char *);
 npfvar_t * 	npfctl_parse_icmp(int, int, int);
-npfvar_t *	npfctl_parse_iface(const char *);
 npfvar_t *	npfctl_parse_port_range(in_port_t, in_port_t);
 npfvar_t *	npfctl_parse_port_range_variable(const char *);
 npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
@@ -173,6 +177,7 @@ int		npfctl_ncode_disassemble(nc_inf_t *, const void *, size_t);
 
 void		npfctl_config_init(bool);
 int		npfctl_config_send(int, const char *);
+nl_config_t *	npfctl_config_ref(void);
 int		npfctl_config_show(int);
 unsigned long	npfctl_debug_addif(const char *);
 

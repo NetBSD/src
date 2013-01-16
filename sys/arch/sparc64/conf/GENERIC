@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.144.2.2 2012/10/30 17:20:23 yamt Exp $
+# $NetBSD: GENERIC,v 1.144.2.3 2013/01/16 05:33:05 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.144.2.2 $"
+#ident 		"GENERIC-$Revision: 1.144.2.3 $"
 
 maxusers	64
 
@@ -593,6 +593,9 @@ wsmouse* at uep? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
+# USB TEMPer and TEMPerHUM
+uthum*	at uhidev? reportid ?
+
 # USB serial adapter
 ucycom*	at uhidev? reportid ?
 
@@ -940,6 +943,9 @@ alipm*		at pci?
 iic*		at alipm?
 
 # I2C devices
+spdmem*		at iic? addr 0x50	# SPARCle memory
+spdmem*		at iic? addr 0x51	# SPARCle memory
+
 spdmem*		at iic? addr?
 admtemp*	at iic? addr?
 ecadc*		at iic? addr?	# envctrl/envctrltwo on E250/E450

@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.133.2.2 2012/10/30 18:48:37 yamt Exp $
+#	$NetBSD: sets.subr,v 1.133.2.3 2013/01/16 05:26:03 yamt Exp $
 #
 
 #
@@ -172,7 +172,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.133.2.2 2012/10/30 18:48:37 yamt Exp $
+# 	# $NetBSD: sets.subr,v 1.133.2.3 2013/01/16 05:26:03 yamt Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -239,8 +239,10 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	rump			${MKRUMP} != no
 #	share			${MKSHARE} != no
 #	skey			${MKSKEY} != no
+#	sljit			${MKSLJIT} != no
 #	solaris			${MKDTRACE} != no or ${MKZFS} != no
 #	ssp			${HAS_SSP} != no
+#	tpm			${MKTPM} != no
 #	x11			${MKX11} != no && ${X11FLAVOUR} != "Xorg"
 #	xorg			${MKX11} != no && ${X11FLAVOUR} == "Xorg"
 #	yp			${MKYP} != no

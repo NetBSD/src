@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.58.2.3 2012/10/30 17:23:00 yamt Exp $	*/
+/*	$NetBSD: inode.h,v 1.58.2.4 2013/01/16 05:33:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -220,14 +220,15 @@ struct inode {
 #define	i_e2fs_nlink		i_din.e2fs_din->e2di_nlink
 #define	i_e2fs_nblock		i_din.e2fs_din->e2di_nblock
 #define	i_e2fs_flags		i_din.e2fs_din->e2di_flags
+#define	i_e2fs_version		i_din.e2fs_din->e2di_version
 #define	i_e2fs_blocks		i_din.e2fs_din->e2di_blocks
+#define	i_e2fs_rdev		i_din.e2fs_din->e2di_rdev
 #define	i_e2fs_gen		i_din.e2fs_din->e2di_gen
 #define	i_e2fs_facl		i_din.e2fs_din->e2di_facl
 #define	i_e2fs_dacl		i_din.e2fs_din->e2di_dacl
 #define	i_e2fs_faddr		i_din.e2fs_din->e2di_faddr
-#define	i_e2fs_nfrag		i_din.e2fs_din->e2di_nfrag
-#define	i_e2fs_fsize		i_din.e2fs_din->e2di_fsize
-#define	i_e2fs_rdev		i_din.e2fs_din->e2di_rdev
+#define	i_e2fs_nblock_high	i_din.e2fs_din->e2di_nblock_high
+#define	i_e2fs_facl_high	i_din.e2fs_din->e2di_facl_high
 #define	i_e2fs_uid_high		i_din.e2fs_din->e2di_uid_high
 #define	i_e2fs_gid_high		i_din.e2fs_din->e2di_gid_high
 

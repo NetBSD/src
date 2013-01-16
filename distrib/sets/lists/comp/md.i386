@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.123.2.2 2012/10/30 18:48:41 yamt Exp $
+# $NetBSD: md.i386,v 1.123.2.3 2013/01/16 05:26:06 yamt Exp $
 ./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
@@ -18,6 +18,8 @@
 ./usr/include/clang-3.0/wmmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/x86intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/xmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.2/__wmmintrin_aes.h	comp-c-include		llvm
+./usr/include/clang-3.2/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-3.2/ammintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/avx2intrin.h		comp-c-include		llvm
@@ -35,6 +37,7 @@
 ./usr/include/clang-3.2/nmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/pmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/popcntintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/rtmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/smmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/tmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/wmmintrin.h		comp-c-include		llvm
@@ -142,6 +145,7 @@
 ./usr/include/i386/segments.h			comp-c-include
 ./usr/include/i386/setjmp.h			comp-c-include
 ./usr/include/i386/signal.h			comp-c-include
+./usr/include/i386/sljitarch.h			comp-c-include
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
 ./usr/include/i386/stdarg.h			comp-obsolete		obsolete

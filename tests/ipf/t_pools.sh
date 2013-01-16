@@ -1,4 +1,4 @@
-# $NetBSD: t_pools.sh,v 1.2.6.1 2012/10/30 18:59:54 yamt Exp $
+# $NetBSD: t_pools.sh,v 1.2.6.2 2013/01/16 05:33:58 yamt Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -73,9 +73,9 @@ test_case p5 ptest text text
 test_case p6 ptest text text
 test_case p7 ptest text text
 test_case p9 ptest text text
-broken_test_case p10 ptest text text
-broken_test_case p11 ptest text text
-broken_test_case p12 ptest text text
+test_case p10 ptest text text
+test_case p11 ptest text text
+test_case p12 ptest text text
 test_case p13 ptest text text
 test_case ip1 iptest text text
 test_case ip2 iptest text text

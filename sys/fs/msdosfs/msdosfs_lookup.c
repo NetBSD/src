@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.23.8.1 2012/10/30 17:22:23 yamt Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.23.8.2 2013/01/16 05:33:39 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.23.8.1 2012/10/30 17:22:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.23.8.2 2013/01/16 05:33:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,10 @@ msdosfs_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
-		return (error);
+	if (cache_lookup(vdp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
+		return *vpp == NULLVP ? ENOENT: 0;
+	}
 
 	/*
 	 * If they are going after the . or .. entry in the root directory,
@@ -400,7 +402,8 @@ notfound:
 	 * for 'FOO'.
 	 */
 	if (nameiop != CREATE)
-		cache_enter(vdp, *vpp, cnp);
+		cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 #endif
 
 	return (ENOENT);
@@ -553,7 +556,7 @@ foundroot:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
-	cache_enter(vdp, *vpp, cnp);
+	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 
 	return 0;
 }

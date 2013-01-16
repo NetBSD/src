@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 2011/08/23 10:47:06 christos Exp $
+#	$NetBSD: Makefile,v 1.98.2.1 2013/01/16 05:25:53 yamt Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -74,8 +74,7 @@ nodes.c nodes.h: mknodes.sh nodetypes nodes.c.pat
 	[ -f nodes.h ]
 
 .if ${USETOOLS} == "yes"
-COMPATOBJDIR!=	cd ${NETBSDSRCDIR}/tools/compat && ${PRINTOBJDIR}
-NBCOMPATLIB=	-L${COMPATOBJDIR} -lnbcompat
+NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
 .endif
 
 .if make(install)

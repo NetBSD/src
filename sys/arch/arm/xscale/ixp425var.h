@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425var.h,v 1.13.2.1 2012/10/30 17:19:11 yamt Exp $ */
+/*	$NetBSD: ixp425var.h,v 1.13.2.2 2013/01/16 05:32:50 yamt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -66,7 +66,7 @@ struct ixp425_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;		/* IRQ handle */
 
-	u_int32_t sc_intrmask;
+	uint32_t sc_intrmask;
 
 	/* Handles for the various subregions. */
 	bus_space_handle_t sc_pci_ioh;		/* PCI mem handler */
@@ -84,10 +84,10 @@ struct ixp425_softc {
 	struct arm32_dma_range ia_pci_dma_range;
 
 	/* GPIO configuration */
-	u_int32_t sc_gpio_out;
-	u_int32_t sc_gpio_oe;
-	u_int32_t sc_gpio_intr1;
-	u_int32_t sc_gpio_intr2;
+	uint32_t sc_gpio_out;
+	uint32_t sc_gpio_oe;
+	uint32_t sc_gpio_intr1;
+	uint32_t sc_gpio_intr2;
 };
 
 /*
@@ -108,9 +108,9 @@ struct intrhand {
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
 	struct evcnt iq_ev;		/* event counter */
-	u_int32_t iq_mask;		/* IRQs to mask while handling */
-	u_int32_t iq_pci_mask;		/* PCI IRQs to mask while handling */
-	u_int32_t iq_levels;		/* IPL_*'s this IRQ has */
+	uint32_t iq_mask;		/* IRQs to mask while handling */
+	uint32_t iq_pci_mask;		/* PCI IRQs to mask while handling */
+	uint32_t iq_levels;		/* IPL_*'s this IRQ has */
 	char iq_name[IRQNAMESIZE];	/* interrupt name */
 	int iq_ist;			/* share type */
 };

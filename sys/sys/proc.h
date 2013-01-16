@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.311.2.2 2012/10/30 17:22:57 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.311.2.3 2013/01/16 05:33:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
 #endif
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct */
+#include <machine/pcb.h>
 #include <sys/aio.h>
 #include <sys/rwlock.h>
 #include <sys/mqueue.h>

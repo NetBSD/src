@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_msdos.8,v 1.34.2.1 2012/10/30 18:59:30 yamt Exp $
+.\" $NetBSD: mount_msdos.8,v 1.34.2.2 2013/01/16 05:32:34 yamt Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd September 27, 2012
+.Dd November 16, 2012
 .Dt MOUNT_MSDOS 8
 .Os
 .Sh NAME
@@ -84,6 +84,7 @@ This option causes the filesystem to be interpreted as an Atari-Gemdos
 filesystem.
 The differences to the MS-DOS filesystem are minimal and
 limited to the boot block.
+This option also allows mounting X680x0's Human68k floppies.
 This option enforces
 .Fl s .
 .It Fl g Ar gid

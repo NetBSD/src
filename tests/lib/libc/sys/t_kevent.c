@@ -1,4 +1,4 @@
-/*	$NetBSD: t_kevent.c,v 1.2.2.3 2012/10/30 19:00:01 yamt Exp $ */
+/*	$NetBSD: t_kevent.c,v 1.2.2.4 2013/01/16 05:34:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_kevent.c,v 1.2.2.3 2012/10/30 19:00:01 yamt Exp $");
+__RCSID("$NetBSD: t_kevent.c,v 1.2.2.4 2013/01/16 05:34:00 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -41,7 +41,9 @@ __RCSID("$NetBSD: t_kevent.c,v 1.2.2.3 2012/10/30 19:00:01 yamt Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <err.h>
+#include <sys/drvctlio.h>
 #include <sys/event.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -137,11 +139,42 @@ ATF_TC_BODY(kqueue_desc_passing, tc)
 	ATF_CHECK(WIFEXITED(status) && WEXITSTATUS(status)==0);
 }
 
+ATF_TC(kqueue_unsupported_fd);
+ATF_TC_HEAD(kqueue_unsupported_fd, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks that watching an fd whose"
+	    " type is not supported does not crash the kernel");
+}
+
+ATF_TC_BODY(kqueue_unsupported_fd, tc)
+{
+	/* mqueue and semaphore use fnullop_kqueue also */
+	int fd, kq;
+	struct kevent ev;
+
+	fd = open(DRVCTLDEV, O_RDONLY);
+	if (fd == -1 && errno == ENOENT)
+		atf_tc_skip("no " DRVCTLDEV " available for testing");
+	ATF_REQUIRE(fd != -1);
+	ATF_REQUIRE((kq = kqueue()) != -1);
+
+	EV_SET(&ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
+	   NOTE_DELETE|NOTE_WRITE|NOTE_EXTEND|NOTE_ATTRIB|NOTE_LINK|
+	   NOTE_RENAME|NOTE_REVOKE, 0, 0);
+
+	ATF_REQUIRE(kevent(kq, &ev, 1, NULL, 0, NULL) == -1);
+	ATF_REQUIRE_ERRNO(EOPNOTSUPP, true);
+
+	(void)close(fd);
+}
+
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, kevent_zerotimer);
 	ATF_TP_ADD_TC(tp, kqueue_desc_passing);
+	ATF_TP_ADD_TC(tp, kqueue_unsupported_fd);
 
 	return atf_no_error();
 }

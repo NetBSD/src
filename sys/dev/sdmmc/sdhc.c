@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.9.2.2 2012/10/30 17:22:01 yamt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.9.2.3 2013/01/16 05:33:32 yamt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.9.2.2 2012/10/30 17:22:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.9.2.3 2013/01/16 05:33:32 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -244,8 +244,28 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	uint32_t caps;
 	uint16_t sdhcver;
 
-	sdhcver = bus_space_read_2(iot, ioh, SDHC_HOST_CTL_VERSION);
+	/* Allocate one more host structure. */
+	hp = malloc(sizeof(struct sdhc_host), M_DEVBUF, M_WAITOK|M_ZERO);
+	if (hp == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't alloc memory (sdhc host)\n");
+		goto err1;
+	}
+	sc->sc_host[sc->sc_nhosts++] = hp;
+
+	/* Fill in the new host structure. */
+	hp->sc = sc;
+	hp->iot = iot;
+	hp->ioh = ioh;
+	hp->dmat = sc->sc_dmat;
+
+	mutex_init(&hp->host_mtx, MUTEX_DEFAULT, IPL_SDMMC);
+	mutex_init(&hp->intr_mtx, MUTEX_DEFAULT, IPL_SDMMC);
+	cv_init(&hp->intr_cv, "sdhcintr");
+
+	sdhcver = HREAD2(hp, SDHC_HOST_CTL_VERSION);
 	aprint_normal_dev(sc->sc_dev, "SD Host Specification ");
+	hp->specver = SDHC_SPEC_VERSION(sdhcver);
 	switch (SDHC_SPEC_VERSION(sdhcver)) {
 	case SDHC_SPEC_VERS_100:
 		aprint_normal("1.0");
@@ -265,26 +285,6 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		break;
 	}
 	aprint_normal(", rev.%u\n", SDHC_VENDOR_VERSION(sdhcver));
-
-	/* Allocate one more host structure. */
-	hp = malloc(sizeof(struct sdhc_host), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (hp == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't alloc memory (sdhc host)\n");
-		goto err1;
-	}
-	sc->sc_host[sc->sc_nhosts++] = hp;
-
-	/* Fill in the new host structure. */
-	hp->sc = sc;
-	hp->iot = iot;
-	hp->ioh = ioh;
-	hp->dmat = sc->sc_dmat;
-	hp->specver = SDHC_SPEC_VERSION(sdhcver);
-
-	mutex_init(&hp->host_mtx, MUTEX_DEFAULT, IPL_SDMMC);
-	mutex_init(&hp->intr_mtx, MUTEX_DEFAULT, IPL_SDMMC);
-	cv_init(&hp->intr_cv, "sdhcintr");
 
 	/*
 	 * Reset the host controller and enable interrupts.
@@ -812,6 +812,12 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 #endif
 
 	mutex_enter(&hp->host_mtx);
+
+	if (hp->sc->sc_vendor_bus_clock) {
+		error = (*hp->sc->sc_vendor_bus_clock)(hp->sc, freq);
+		if (error != 0)
+			goto out;
+	}
 
 	/*
 	 * Stop SD clock before changing the frequency.
@@ -1512,17 +1518,37 @@ sdhc_soft_reset(struct sdhc_host *hp, int mask)
 
 	DPRINTF(1,("%s: software reset reg=%08x\n", HDEVNAME(hp), mask));
 
+	/* Request the reset.  */
 	HWRITE1(hp, SDHC_SOFTWARE_RESET, mask);
+
+	/*
+	 * If necessary, wait for the controller to set the bits to
+	 * acknowledge the reset.
+	 */
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_WAIT_RESET) &&
+	    ISSET(mask, (SDHC_RESET_DAT | SDHC_RESET_CMD))) {
+		for (timo = 10000; timo > 0; timo--) {
+			if (ISSET(HREAD1(hp, SDHC_SOFTWARE_RESET), mask))
+				break;
+			/* Short delay because I worry we may miss it...  */
+			sdmmc_delay(1);
+		}
+		if (timo == 0)
+			return ETIMEDOUT;
+	}
+
+	/*
+	 * Wait for the controller to clear the bits to indicate that
+	 * the reset has completed.
+	 */
 	for (timo = 10; timo > 0; timo--) {
 		if (!ISSET(HREAD1(hp, SDHC_SOFTWARE_RESET), mask))
 			break;
 		sdmmc_delay(10000);
-		HWRITE1(hp, SDHC_SOFTWARE_RESET, 0);
 	}
 	if (timo == 0) {
 		DPRINTF(1,("%s: timeout reg=%08x\n", HDEVNAME(hp),
 		    HREAD1(hp, SDHC_SOFTWARE_RESET)));
-		HWRITE1(hp, SDHC_SOFTWARE_RESET, 0);
 		return ETIMEDOUT;
 	}
 

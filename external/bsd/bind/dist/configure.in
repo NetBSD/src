@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -135,6 +135,69 @@ AC_SUBST(ETAGS)
 #
 AC_PATH_PROGS(PERL, perl5 perl)
 AC_SUBST(PERL)
+
+#
+# Python is also optional; it is used by the tools in bin/python.
+# If python is unavailable, we simply don't build those.
+#
+AC_ARG_WITH(python,
+[  --with-python=PATH   Specify path to python interpreter],
+    use_python="$withval", use_python="unspec")
+
+case "$use_python" in
+	no)
+		AC_MSG_RESULT(disabled)
+		;;
+	unspec|yes|*)
+		case "$use_python" in
+		unspec|yes|'')
+			AC_PATH_PROGS(PYTHON, python)
+			;;
+		*)
+			AC_PATH_PROGS(PYTHON, $use_python)
+			;;
+		esac
+		if test "X$PYTHON" == "X"
+		then
+			case "$use_python" in
+			unspec)
+				AC_MSG_RESULT(disabled)
+				;;
+			yes|*)
+				AC_MSG_ERROR([missing python])
+				;;
+			esac
+			break
+		fi
+                testscript='try: import argparse
+except: exit(1)'
+		AC_MSG_CHECKING([python module 'argparse'])
+                if $PYTHON -c "$testscript"; then
+                        AC_MSG_RESULT([found, using $PYTHON])
+                else
+			case "$use_python" in
+			unspec)
+				PYTHON=""
+				AC_SUBST(CHECKDS)
+				AC_MSG_RESULT([not found, python disabled])
+				;;
+			yes)
+                        AC_MSG_RESULT([no found])
+                        AC_MSG_ERROR([python 'argparse' module not supported])
+				;;
+			esac
+                fi
+		;;
+esac
+
+PYTHON_TOOLS=''
+CHECKDS=''
+if test "X$PYTHON" != "X"; then
+        PYTHON_TOOLS=python
+	CHECKDS=checkds
+fi
+AC_SUBST(CHECKDS)
+AC_SUBST(PYTHON_TOOLS)
 
 #
 # Special processing of paths depending on whether --prefix,
@@ -543,6 +606,7 @@ then
 		fi
 	done
 fi
+OPENSSL_ECDSA=""
 OPENSSL_GOST=""
 case "$use_openssl" in
 	no)
@@ -698,7 +762,40 @@ esac
 		else
 			AC_MSG_RESULT(no)
 		fi
-		AC_CHECK_FUNCS(EVP_sha256 EVP_sha512)
+
+		AC_CHECK_FUNCS(EVP_sha256 EVP_sha384 EVP_sha512)
+
+		AC_MSG_CHECKING(for OpenSSL ECDSA support)
+		have_ecdsa=""
+		AC_TRY_RUN([
+#include <stdio.h>
+#include <openssl/ecdsa.h>
+#include <openssl/objects.h>
+int main() {
+	EC_KEY *ec256, *ec384;
+
+#if !defined(HAVE_EVP_SHA256) || !defined(HAVE_EVP_SHA384)
+	return (1);
+#endif
+	ec256 = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+	ec384 = EC_KEY_new_by_curve_name(NID_secp384r1);
+	if (ec256 == NULL || ec384 == NULL)
+		return (2);
+	return (0);
+}
+],
+		[AC_MSG_RESULT(yes)
+		have_ecdsa="yes"],
+		[AC_MSG_RESULT(no)
+		have_ecdsa="no"])
+		case $have_ecdsa in
+		yes)
+			OPENSSL_ECDSA="yes"
+			AC_DEFINE(HAVE_OPENSSL_ECDSA)
+			;;
+		*)
+			;;
+		esac
 
 		AC_MSG_CHECKING(for OpenSSL GOST support)
 		have_gost=""
@@ -772,7 +869,9 @@ AC_SUBST(USE_OPENSSL)
 AC_SUBST(DST_OPENSSL_INC)
 AC_SUBST(OPENSSLLINKOBJS)
 AC_SUBST(OPENSSLLINKSRCS)
+AC_SUBST(OPENSSL_ECDSA)
 AC_SUBST(OPENSSL_GOST)
+
 DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DNS_OPENSSL_LIBS"
 
 #
@@ -1222,7 +1321,7 @@ case "$use_libxml2" in
 		;;
 	auto|yes)
 		case X`(xml2-config --version) 2>/dev/null` in
-		X2.[[67]].*)
+		X2.[[678]].*)
 			libxml2_libs=`xml2-config --libs`
 			libxml2_cflags=`xml2-config --cflags`
 			;;
@@ -2981,7 +3080,7 @@ AC_ARG_WITH(docbook-xsl,
 case "$docbook_path" in
 auto)
 	AC_MSG_RESULT(auto)
-	docbook_xsl_trees="/usr/pkg/share/xsl/docbook /usr/local/share/xsl/docbook /usr/share/xsl/docbook"
+	docbook_xsl_trees="/usr/pkg/share/xsl/docbook /usr/local/share/xsl/docbook /usr/share/xsl/docbook /opt/local/share/xsl/docbook-xsl/"
 	;;
 *)
 	docbook_xsl_trees="$withval"
@@ -3465,6 +3564,8 @@ AC_CONFIG_FILES([
 	bin/named/unix/Makefile
 	bin/nsupdate/Makefile
 	bin/pkcs11/Makefile
+	bin/python/Makefile
+	bin/python/dnssec-checkds.py
 	bin/rndc/Makefile
 	bin/tests/Makefile
 	bin/tests/atomic/Makefile
@@ -3484,10 +3585,12 @@ AC_CONFIG_FILES([
 	bin/tests/system/dlz/prereq.sh
 	bin/tests/system/dlzexternal/Makefile
 	bin/tests/system/dlzexternal/ns1/named.conf
+	bin/tests/system/ecdsa/prereq.sh
 	bin/tests/system/filter-aaaa/Makefile
 	bin/tests/system/gost/prereq.sh
 	bin/tests/system/lwresd/Makefile
 	bin/tests/system/rpz/Makefile
+	bin/tests/system/rsabigexponent/Makefile
 	bin/tests/system/tkey/Makefile
 	bin/tests/system/tsiggss/Makefile
 	bin/tests/tasks/Makefile

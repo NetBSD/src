@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.223.2.2 2012/10/30 17:21:34 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.223.2.3 2013/01/16 05:33:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.223.2.2 2012/10/30 17:21:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.223.2.3 2013/01/16 05:33:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -931,13 +931,13 @@ static const struct wm_product {
 	  WM_T_PCH,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_D_DC,
 	  "PCH LAN (82578DC) Controller",
-	  WM_T_PCH2,		WMP_F_1000T },
+	  WM_T_PCH,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH2_LV_LM,
 	  "PCH2 LAN (82579LM) Controller",
 	  WM_T_PCH2,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH2_LV_V,
 	  "PCH2 LAN (82579V) Controller",
-	  WM_T_PCH,		WMP_F_1000T },
+	  WM_T_PCH2,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82575EB_COPPER,
 	  "82575EB dual-1000baseT Ethernet",
 	  WM_T_82575,		WMP_F_1000T },
@@ -4025,7 +4025,8 @@ wm_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
 		while (timeout--) {
-			if ((CSR_READ(sc, WMREG_STATUS) & STATUS_GIO_M_ENA) == 0)
+			if ((CSR_READ(sc, WMREG_STATUS) & STATUS_GIO_M_ENA)
+			    == 0)
 				break;
 			delay(100);
 		}
@@ -4125,7 +4126,7 @@ wm_reset(struct wm_softc *sc)
 		if (wm_check_reset_block(sc) == 0) {
 			/*
 			 * Gate automatic PHY configuration by hardware on
-			 * manaed 82579
+			 * non-managed 82579
 			 */
 			if ((sc->sc_type == WM_T_PCH2)
 			    && ((CSR_READ(sc, WMREG_FWSM) & FWSM_FW_VALID)
@@ -4372,7 +4373,7 @@ wm_init(struct ifnet *ifp)
 
 	reg = CSR_READ(sc, WMREG_CTRL_EXT);
 	/* Enable PHY low-power state when MAC is at D3 w/o WoL */
-	if ((sc->sc_type == WM_T_PCH) && (sc->sc_type == WM_T_PCH2))
+	if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2))
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_PHYPDEN);
 
 	/* Initialize the transmit descriptor ring. */
@@ -4457,16 +4458,16 @@ wm_init(struct ifnet *ifp)
 		} else {
 			CSR_WRITE(sc, WMREG_RDH, 0);
 			CSR_WRITE(sc, WMREG_RDT, 0);
-			CSR_WRITE(sc, WMREG_RDTR, 375 | RDTR_FPD);	/* ITR/4 */
-			CSR_WRITE(sc, WMREG_RADV, 375);		/* MUST be same */
+			CSR_WRITE(sc, WMREG_RDTR, 375 | RDTR_FPD); /* ITR/4 */
+			CSR_WRITE(sc, WMREG_RADV, 375);	/* MUST be same */
 		}
 	}
 	for (i = 0; i < WM_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
 		if (rxs->rxs_mbuf == NULL) {
 			if ((error = wm_add_rxbuf(sc, i)) != 0) {
-				log(LOG_ERR, "%s: unable to allocate or map rx "
-				    "buffer %d, error = %d\n",
+				log(LOG_ERR, "%s: unable to allocate or map "
+				    "rx buffer %d, error = %d\n",
 				    device_xname(sc->sc_dev), i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
@@ -6705,9 +6706,9 @@ wm_gmii_bm_readreg(device_t self, int phy, int reg)
 			wm_gmii_i82544_writereg(self, phy, 0x1f,
 			    reg);
 		else
-			wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
+			wm_gmii_i82544_writereg(self, phy,
+			    GG82563_PHY_PAGE_SELECT,
 			    reg >> GG82563_PAGE_SHIFT);
-
 	}
 
 	rv = wm_gmii_i82544_readreg(self, phy, reg & GG82563_MAX_REG_ADDRESS);
@@ -6740,9 +6741,9 @@ wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
 			wm_gmii_i82544_writereg(self, phy, 0x1f,
 			    reg);
 		else
-			wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
+			wm_gmii_i82544_writereg(self, phy,
+			    GG82563_PHY_PAGE_SELECT,
 			    reg >> GG82563_PAGE_SHIFT);
-
 	}
 
 	wm_gmii_i82544_writereg(self, phy, reg & GG82563_MAX_REG_ADDRESS, val);
@@ -7315,7 +7316,10 @@ wm_read_eeprom_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 		return error;
 	}
 
-	/* Adjust offset appropriately if we're on bank 1 - adjust for word size */
+	/*
+	 * Adjust offset appropriately if we're on bank 1 - adjust for word
+	 * size
+	 */
 	bank_offset = flash_bank * (sc->sc_ich8_flash_bank_size * 2);
 
 	error = wm_get_swfwhw_semaphore(sc);
@@ -7330,8 +7334,8 @@ wm_read_eeprom_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 		act_offset = bank_offset + ((offset + i) * 2);
 		error = wm_read_ich8_word(sc, act_offset, &word);
 		if (error) {
-			aprint_error_dev(sc->sc_dev, "%s: failed to read NVM\n",
-			    __func__);
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to read NVM\n", __func__);
 			break;
 		}
 		data[i] = word;

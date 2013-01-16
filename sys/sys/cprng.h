@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.4.4.3 2012/05/23 10:08:17 yamt Exp $ */
+/*	$NetBSD: cprng.h,v 1.4.4.4 2013/01/16 05:33:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -92,6 +92,10 @@ typedef struct _cprng_strong {
 #define CPRNG_INIT_ANY		0x00000001
 #define CPRNG_REKEY_ANY		0x00000002
 #define CPRNG_USE_CV		0x00000004
+#define CPRNG_FMT	"\177\020\
+b\0INIT_ANY\0\
+b\1REKEY_ANY\0\
+b\2USE_CV\0"
 
 cprng_strong_t *cprng_strong_create(const char *const, int, int);
 

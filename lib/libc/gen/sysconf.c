@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.33.2.1 2012/10/30 18:58:48 yamt Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.33.2.2 2013/01/16 05:32:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.33.2.1 2012/10/30 18:58:48 yamt Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.33.2.2 2013/01/16 05:32:24 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,6 +75,7 @@ sysconf(int name)
 {
 	struct rlimit rl;
 	size_t len;
+	uint64_t mem;
 	int mib[CTL_MAXNAME], value;
 	unsigned int mib_len;
 	struct clockinfo tmpclock;
@@ -366,6 +367,14 @@ yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 		mib[0] = CTL_HW;
 		mib[1] = HW_NCPUONLINE;
 		break;
+
+/* Linux/Solaris */
+	case _SC_PHYS_PAGES:
+		len = sizeof(mem);
+		mib[0] = CTL_HW;
+		mib[1] = HW_PHYSMEM64;
+		return sysctl(mib, 2, &mem, &len, NULL, 0) == -1 ? -1 : 
+		    (long)(mem / _getpagesize()); 
 
 /* Native */
 	case _SC_SCHED_RT_TS:

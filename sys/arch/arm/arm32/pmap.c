@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.224.2.2 2012/10/30 17:18:57 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.224.2.3 2013/01/16 05:32:43 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224.2.2 2012/10/30 17:18:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224.2.3 2013/01/16 05:32:43 yamt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -502,8 +502,8 @@ struct l1_ttable {
 	 * We avoid using ffs() and a bitmap to track domains since ffs()
 	 * is slow on ARM.
 	 */
-	u_int8_t l1_domain_first;
-	u_int8_t l1_domain_free[PMAP_DOMAINS];
+	uint8_t l1_domain_first;
+	uint8_t l1_domain_free[PMAP_DOMAINS];
 
 	/* Physical address of this L1 page table */
 	paddr_t l1_physaddr;
@@ -666,12 +666,6 @@ static void		pmap_page_remove(struct vm_page_md *, paddr_t);
 static void		pmap_init_l1(struct l1_ttable *, pd_entry_t *);
 static vaddr_t		kernel_pt_lookup(paddr_t);
 
-
-/*
- * External function prototypes
- */
-extern void bzero_page(vaddr_t);
-extern void bcopy_page(vaddr_t, vaddr_t);
 
 /*
  * Misc variables
@@ -1123,7 +1117,7 @@ static void
 pmap_alloc_l1(pmap_t pm)
 {
 	struct l1_ttable *l1;
-	u_int8_t domain;
+	uint8_t domain;
 
 	/*
 	 * Remove the L1 at the head of the LRU list
@@ -3050,7 +3044,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		KASSERT(uvm_page_locked_p(pg));
 #endif
 		KASSERT((md->pvh_attrs & PVF_DMOD) == 0 || (md->pvh_attrs & (PVF_DIRTY|PVF_NC)));
-		KASSERT(arm_cache_prefer_mask == 0 || ((md->pvh_attrs & PVF_WRITE) == 0) == (md->urw_mappings + md->krw_mappings == 0));
+		KASSERTMSG(arm_cache_prefer_mask == 0 || ((md->pvh_attrs & PVF_WRITE) == 0) == (md->urw_mappings + md->krw_mappings == 0),
+		    "pg %p: attrs=%#x urw=%u krw=%u", pg,
+		    md->pvh_attrs, md->urw_mappings, md->krw_mappings);
 	}
 #endif
 
@@ -4440,13 +4436,25 @@ pmap_zero_page_generic(paddr_t phys)
 	struct vm_page *pg = PHYS_TO_VM_PAGE(phys);
 	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 #endif
-#ifdef PMAP_CACHE_VIPT
+#if defined(PMAP_CACHE_VIPT)
 	/* Choose the last page color it had, if any */
 	const vsize_t va_offset = md->pvh_attrs & arm_cache_prefer_mask;
 #else
 	const vsize_t va_offset = 0;
 #endif
+#if defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+	/*
+	 * Is this page mapped at its natural color?
+	 * If we have all of memory mapped, then just convert PA to VA.
+	 */
+	const bool okcolor = va_offset == (phys & arm_cache_prefer_mask);
+	const vaddr_t vdstp = KERNEL_BASE + (phys - physical_start);
+#else
+	const bool okcolor = false;
+	const vaddr_t vdstp = cdstp + va_offset;
+#endif
 	pt_entry_t * const ptep = &cdst_pte[va_offset >> PGSHIFT];
+
 
 #ifdef DEBUG
 	if (!SLIST_EMPTY(&md->pvh_list))
@@ -4455,25 +4463,39 @@ pmap_zero_page_generic(paddr_t phys)
 
 	KDASSERT((phys & PGOFSET) == 0);
 
-	/*
-	 * Hook in the page, zero it, and purge the cache for that
-	 * zeroed page. Invalidate the TLB as needed.
-	 */
-	*ptep = L2_S_PROTO | phys |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_l2_s_cache_mode;
-	PTE_SYNC(ptep);
-	cpu_tlb_flushD_SE(cdstp + va_offset);
-	cpu_cpwait();
-	bzero_page(cdstp + va_offset);
-	/*
-	 * Unmap the page.
-	 */
-	*ptep = 0;
-	PTE_SYNC(ptep);
-	cpu_tlb_flushD_SE(cdstp + va_offset);
-#ifdef PMAP_CACHE_VIVT
-	cpu_dcache_wbinv_range(cdstp + va_offset, PAGE_SIZE);
+	if (!okcolor) {
+		/*
+		 * Hook in the page, zero it, and purge the cache for that
+		 * zeroed page. Invalidate the TLB as needed.
+		 */
+		*ptep = L2_S_PROTO | phys |
+		    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_l2_s_cache_mode;
+		PTE_SYNC(ptep);
+		cpu_tlb_flushD_SE(cdstp + va_offset);
+		cpu_cpwait();
+#if defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS) && defined(PMAP_CACHE_VIPT)
+		/*
+		 * If we are direct-mapped and our color isn't ok, then before
+		 * we bzero the page invalidate its contents from the cache and
+		 * reset the color to its natural color.
+		 */
+		cpu_dcache_inv_range(cdstp + va_offset, PAGE_SIZE);
+		md->pvh_attrs &= ~arm_cache_prefer_mask;
+		md->pvh_attrs |= (phys & arm_cache_prefer_mask);
 #endif
+	}
+	bzero_page(vdstp);
+	if (!okcolor) {
+		/*
+		 * Unmap the page.
+		 */
+		*ptep = 0;
+		PTE_SYNC(ptep);
+		cpu_tlb_flushD_SE(cdstp + va_offset);
+#ifdef PMAP_CACHE_VIVT
+		cpu_dcache_wbinv_range(cdstp + va_offset, PAGE_SIZE);
+#endif
+	}
 #ifdef PMAP_CACHE_VIPT
 	/*
 	 * This page is now cache resident so it now has a page color.
@@ -4633,6 +4655,23 @@ pmap_copy_page_generic(paddr_t src, paddr_t dst)
 	const vsize_t src_va_offset = 0;
 	const vsize_t dst_va_offset = 0;
 #endif
+#if defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+	/*
+	 * Is this page mapped at its natural color?
+	 * If we have all of memory mapped, then just convert PA to VA.
+	 */
+	const bool src_okcolor = src_va_offset == (src & arm_cache_prefer_mask);
+	const bool dst_okcolor = dst_va_offset == (dst & arm_cache_prefer_mask);
+	const vaddr_t vsrcp = src_okcolor
+	    ? KERNEL_BASE + (src - physical_start)
+	    : csrcp + src_va_offset;
+	const vaddr_t vdstp = KERNEL_BASE + (dst - physical_start);
+#else
+	const bool src_okcolor = false;
+	const bool dst_okcolor = false;
+	const vaddr_t vsrcp = csrcp + src_va_offset;
+	const vaddr_t vdstp = cdstp + dst_va_offset;
+#endif
 	pt_entry_t * const src_ptep = &csrc_pte[src_va_offset >> PGSHIFT];
 	pt_entry_t * const dst_ptep = &cdst_pte[dst_va_offset >> PGSHIFT];
 
@@ -4664,38 +4703,57 @@ pmap_copy_page_generic(paddr_t src, paddr_t dst)
 	 * the cache for the appropriate page. Invalidate the TLB
 	 * as required.
 	 */
-	*src_ptep = L2_S_PROTO
-	    | src
+	if (!src_okcolor) {
+		*src_ptep = L2_S_PROTO
+		    | src
 #ifdef PMAP_CACHE_VIPT
-	    | ((src_md->pvh_attrs & PVF_NC) ? 0 : pte_l2_s_cache_mode)
+		    | ((src_md->pvh_attrs & PVF_NC) ? 0 : pte_l2_s_cache_mode)
 #endif
 #ifdef PMAP_CACHE_VIVT
-	    | pte_l2_s_cache_mode
+		    | pte_l2_s_cache_mode
 #endif
-	    | L2_S_PROT(PTE_KERNEL, VM_PROT_READ);
-	*dst_ptep = L2_S_PROTO | dst |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_l2_s_cache_mode;
-	PTE_SYNC(src_ptep);
-	PTE_SYNC(dst_ptep);
-	cpu_tlb_flushD_SE(csrcp + src_va_offset);
-	cpu_tlb_flushD_SE(cdstp + dst_va_offset);
-	cpu_cpwait();
-	bcopy_page(csrcp + src_va_offset, cdstp + dst_va_offset);
-#ifdef PMAP_CACHE_VIVT
-	cpu_dcache_inv_range(csrcp + src_va_offset, PAGE_SIZE);
+		    | L2_S_PROT(PTE_KERNEL, VM_PROT_READ);
+		PTE_SYNC(src_ptep);
+		cpu_tlb_flushD_SE(csrcp + src_va_offset);
+		cpu_cpwait();
+	}
+	if (!dst_okcolor) {
+		*dst_ptep = L2_S_PROTO | dst |
+		    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_l2_s_cache_mode;
+		PTE_SYNC(dst_ptep);
+		cpu_tlb_flushD_SE(cdstp + dst_va_offset);
+		cpu_cpwait();
+#if defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS) && defined(PMAP_CACHE_VIPT)
+		/*
+		 * If we are direct-mapped and our color isn't ok, then before
+		 * we bcopy to the new page invalidate its contents from the
+		 * cache and reset its color to its natural color.
+		 */
+		cpu_dcache_inv_range(cdstp + dst_va_offset, PAGE_SIZE);
+		dst_md->pvh_attrs &= ~arm_cache_prefer_mask;
+		dst_md->pvh_attrs |= (dst & arm_cache_prefer_mask);
 #endif
+	}
+	bcopy_page(vsrcp, vdstp);
 #ifdef PMAP_CACHE_VIVT
-	cpu_dcache_wbinv_range(cdstp + dst_va_offset, PAGE_SIZE);
+	cpu_dcache_inv_range(vsrcp, PAGE_SIZE);
+	cpu_dcache_wbinv_range(vdstp, PAGE_SIZE);
 #endif
 	/*
 	 * Unmap the pages.
 	 */
-	*src_ptep = 0;
-	*dst_ptep = 0;
-	PTE_SYNC(src_ptep);
-	PTE_SYNC(dst_ptep);
-	cpu_tlb_flushD_SE(csrcp + src_va_offset);
-	cpu_tlb_flushD_SE(cdstp + dst_va_offset);
+	if (!src_okcolor) {
+		*src_ptep = 0;
+		PTE_SYNC(src_ptep);
+		cpu_tlb_flushD_SE(csrcp + src_va_offset);
+		cpu_cpwait();
+	}
+	if (!dst_okcolor) {
+		*dst_ptep = 0;
+		PTE_SYNC(dst_ptep);
+		cpu_tlb_flushD_SE(cdstp + dst_va_offset);
+		cpu_cpwait();
+	}
 #ifdef PMAP_CACHE_VIPT
 	/*
 	 * Now that the destination page is in the cache, mark it as colored.

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.4.2 2012/04/17 00:01:58 yamt Exp $
+# $NetBSD: Makefile,v 1.1.4.3 2013/01/16 05:26:00 yamt Exp $
 .include "../Makefile.inc"
 
 .PATH.c: ${DIST}/lib
@@ -10,7 +10,6 @@ tpm_unseal.c
 SHLIB_MAJOR=1
 SHLIB_MINOR=0
 
-LDADD+=-ltspi
-DPADD+=${LIBTSPI}
+LIBDPLIBS+=tspi ${.CURDIR}/../../../trousers/lib/libtspi
 
 .include <bsd.lib.mk>

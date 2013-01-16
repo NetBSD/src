@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.43.2.3 2012/10/30 18:59:14 yamt Exp $ */
+/*  $NetBSD: ops.c,v 1.43.2.4 2013/01/16 05:32:26 yamt Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -432,6 +432,16 @@ node_lookup_common(struct puffs_usermount *pu, puffs_cookie_t opc,
 		return error;
 
 	feo = GET_OUTPAYLOAD(ps, pm, fuse_entry_out);
+
+	/* 
+	 * Starting with ABI 7.4, inode number 0 means ENOENT, 
+	 * with entry_valid / entry_valid_nsec giving negative
+	 * cache timeout (which we do not implement yet).
+	 */
+	if (feo->attr.ino == 0) {
+		ps->ps_destroy_msg(pm);
+		return ENOENT;
+	}
 
 	/*
 	 * Check for a known node, not reclaimed, with another name.

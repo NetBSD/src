@@ -1,4 +1,4 @@
-/*	$NetBSD: nandemulator.c,v 1.5 2011/06/28 10:32:45 ahoka Exp $	*/
+/*	$NetBSD: nandemulator.c,v 1.5.4.1 2013/01/16 05:33:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.5 2011/06/28 10:32:45 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.5.4.1 2013/01/16 05:33:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -235,11 +235,11 @@ nandemulator_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < 4; i++) {
 		opp = &sc->sc_parameter_page[i];
 
-		opp->param_signature = *(uint32_t *)sig;
-		opp->param_pagesize = sc->sc_page_size;
-		opp->param_blocksize = sc->sc_block_size;
-		opp->param_sparesize = sc->sc_spare_size;
-		opp->param_lunsize = sc->sc_lun_size;
+		opp->param_signature = htole32(*(uint32_t *)sig);
+		opp->param_pagesize = htole32(sc->sc_page_size);
+		opp->param_blocksize = htole32(sc->sc_block_size);
+		opp->param_sparesize = htole16(sc->sc_spare_size);
+		opp->param_lunsize = htole32(sc->sc_lun_size);
 		opp->param_numluns = 1;
 
 		opp->param_manufacturer_id = 0x00;
@@ -248,7 +248,8 @@ nandemulator_attach(device_t parent, device_t self, void *aux)
 		memcpy(opp->param_model,
 		    "NANDEMULATOR", strlen("NANDEMULATOR"));
 
-		opp->param_features = ONFI_FEATURE_16BIT;
+		uint16_t features = ONFI_FEATURE_16BIT;
+		opp->param_features = htole16(features);
 
 		/* the lower 4 bits contain the row address cycles
 		 * the upper 4 bits contain the column address cycles

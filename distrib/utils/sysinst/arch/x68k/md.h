@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.20 2011/04/04 08:30:45 mbalmer Exp $	*/
+/*	$NetBSD: md.h,v 1.20.4.1 2013/01/16 05:26:11 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,6 +59,9 @@
 #define DEFVARSIZE	32	/* Default /var size, if created */
 #define DEFUSRSIZE	70	/* Default /usr size, if /home */
 #define XNEEDMB		35	/* Extra megs for full X installation */
+
+/* have support for booting from UFS2 */
+#define HAVE_UFS2_BOOT
 
 /*
  *  Default filesets to fetch and install during installation

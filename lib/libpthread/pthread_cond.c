@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.56.6.1 2012/10/30 18:59:15 yamt Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.56.6.2 2013/01/16 05:32:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,11 +46,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.56.6.1 2012/10/30 18:59:15 yamt Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.56.6.2 2013/01/16 05:32:26 yamt Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <stdlib.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -60,7 +61,7 @@ int	_sys___nanosleep50(const struct timespec *, struct timespec *);
 extern int pthread__started;
 
 static int pthread_cond_wait_nothread(pthread_t, pthread_mutex_t *,
-    const struct timespec *);
+    pthread_cond_t *, const struct timespec *);
 
 int	_pthread_cond_has_waiters_np(pthread_cond_t *);
 
@@ -84,6 +85,14 @@ pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
 	pthread_lockinit(&cond->ptc_lock);
 	PTQ_INIT(&cond->ptc_waiters);
 	cond->ptc_mutex = NULL;
+	if (attr && attr->ptca_private) {
+		cond->ptc_private = malloc(sizeof(clockid_t));
+		if (cond->ptc_private == NULL)
+			return errno;
+		*(clockid_t *)cond->ptc_private =
+		    *(clockid_t *)attr->ptca_private;
+	} else
+		cond->ptc_private = NULL;
 
 	return 0;
 }
@@ -99,6 +108,7 @@ pthread_cond_destroy(pthread_cond_t *cond)
 	    cond->ptc_mutex == NULL);
 
 	cond->ptc_magic = _PT_COND_DEAD;
+	free(cond->ptc_private);
 
 	return 0;
 }
@@ -127,7 +137,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 
 	/* Just hang out for a while if threads aren't running yet. */
 	if (__predict_false(pthread__started == 0)) {
-		return pthread_cond_wait_nothread(self, mutex, abstime);
+		return pthread_cond_wait_nothread(self, mutex, cond, abstime);
 	}
 	if (__predict_false(self->pt_cancel)) {
 		pthread__cancelled();
@@ -318,8 +328,26 @@ pthread_condattr_init(pthread_condattr_t *attr)
 {
 
 	attr->ptca_magic = _PT_CONDATTR_MAGIC;
+	attr->ptca_private = NULL;
 
 	return 0;
+}
+
+int
+pthread_condattr_setclock(pthread_condattr_t *attr, clockid_t clck)
+{
+	switch (clck) {
+	case CLOCK_MONOTONIC:
+	case CLOCK_REALTIME:
+		if (attr->ptca_private == NULL)
+			attr->ptca_private = malloc(sizeof(clockid_t));
+		if (attr->ptca_private == NULL)
+			return errno;
+		*(clockid_t *)attr->ptca_private = clck;
+		return 0;
+	default:
+		return EINVAL;
+	}
 }
 
 int
@@ -330,6 +358,7 @@ pthread_condattr_destroy(pthread_condattr_t *attr)
 	    attr->ptca_magic == _PT_CONDATTR_MAGIC);
 
 	attr->ptca_magic = _PT_CONDATTR_DEAD;
+	free(attr->ptca_private);
 
 	return 0;
 }
@@ -337,7 +366,7 @@ pthread_condattr_destroy(pthread_condattr_t *attr)
 /* Utility routine to hang out for a while if threads haven't started yet. */
 static int
 pthread_cond_wait_nothread(pthread_t self, pthread_mutex_t *mutex,
-    const struct timespec *abstime)
+    pthread_cond_t *cond, const struct timespec *abstime)
 {
 	struct timespec now, diff;
 	int retval;
@@ -346,7 +375,9 @@ pthread_cond_wait_nothread(pthread_t self, pthread_mutex_t *mutex,
 		diff.tv_sec = 99999999;
 		diff.tv_nsec = 0;
 	} else {
-		clock_gettime(CLOCK_REALTIME, &now);
+		clockid_t clck = cond->ptc_private ?
+		    *(clockid_t *)cond->ptc_private : CLOCK_REALTIME;
+		clock_gettime(clck, &now);
 		if  (timespeccmp(abstime, &now, <))
 			timespecclear(&diff);
 		else

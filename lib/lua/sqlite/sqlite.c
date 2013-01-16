@@ -1,4 +1,4 @@
-/*	$NetBSD: sqlite.c,v 1.3.2.1 2012/04/17 00:05:35 yamt Exp $ */
+/*	$NetBSD: sqlite.c,v 1.3.2.2 2013/01/16 05:32:28 yamt Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -207,7 +207,7 @@ stmt_bind(lua_State *L)
 		break;
 	case LUA_TSTRING:
 		lua_pushinteger(L, sqlite3_bind_text(*stmt, pidx,
-		    lua_tostring(L, 3), -1, NULL));
+		    lua_tostring(L, 3), -1, SQLITE_TRANSIENT));
 		break;
 	case LUA_TNIL:
 		lua_pushinteger(L, sqlite3_bind_null(*stmt, pidx));
@@ -391,13 +391,14 @@ static void
 gpio_set_info(lua_State *L)
 {
 	lua_pushliteral(L, "_COPYRIGHT");
-	lua_pushliteral(L, "Copyright (C) 2011 Marc Balmer <marc@msys.ch>");
+	lua_pushliteral(L, "Copyright (C) 2011, 2012 by "
+	    "Marc Balmer <marc@msys.ch>");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_DESCRIPTION");
 	lua_pushliteral(L, "SQLite interface for Lua");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_VERSION");
-	lua_pushliteral(L, "sqlite 1.0.0");
+	lua_pushliteral(L, "sqlite 1.0.2");
 	lua_settable(L, -3);
 }
 
@@ -405,36 +406,36 @@ int
 luaopen_sqlite(lua_State* L)
 {
 	static const struct luaL_Reg sqlite_methods[] = {
-		{ "initialize",		sqlite_initialize },
-		{ "shutdown",		sqlite_shutdown },
-		{ "open",		sqlite_open },
-		{ "libversion",		sqlite_libversion },
-		{ "libversion_number",	sqlite_libversion_number },
-		{ "sourceid",		sqlite_sourceid },
-		{ NULL,			NULL }
+		{ "initialize",			sqlite_initialize },
+		{ "shutdown",			sqlite_shutdown },
+		{ "open",			sqlite_open },
+		{ "libversion",			sqlite_libversion },
+		{ "libversion_number",		sqlite_libversion_number },
+		{ "sourceid",			sqlite_sourceid },
+		{ NULL,				NULL }
 	};
 	static const struct luaL_Reg db_methods[] = {
-		{ "close",		db_close },
-		{ "prepare",		db_prepare },
-		{ "exec",		db_exec },
-		{ "errcode",		db_errcode },
-		{ "errmsg",		db_errmsg },
-		{ "get_autocommit",	db_get_autocommit },
-		{ "changes",		db_changes },
-		{ NULL,			NULL }
+		{ "close",			db_close },
+		{ "prepare",			db_prepare },
+		{ "exec",			db_exec },
+		{ "errcode",			db_errcode },
+		{ "errmsg",			db_errmsg },
+		{ "get_autocommit",		db_get_autocommit },
+		{ "changes",			db_changes },
+		{ NULL,				NULL }
 	};
 	static const struct luaL_Reg stmt_methods[] = {
-		{ "bind",		stmt_bind },
+		{ "bind",			stmt_bind },
 		{ "bind_parameter_count",	stmt_bind_parameter_count },
 		{ "bind_parameter_index",	stmt_bind_parameter_index },
 		{ "bind_parameter_name",	stmt_bind_parameter_name },
-		{ "step",		stmt_step },
-		{ "column",		stmt_column },
-		{ "reset",		stmt_reset },
-		{ "clear_bindings",	stmt_clear_bindings },
-		{ "finalize",		stmt_finalize },
-		{ "column_name",	stmt_column_name },
-		{ "column_count",	stmt_column_count },
+		{ "step",			stmt_step },
+		{ "column",			stmt_column },
+		{ "reset",			stmt_reset },
+		{ "clear_bindings",		stmt_clear_bindings },
+		{ "finalize",			stmt_finalize },
+		{ "column_name",		stmt_column_name },
+		{ "column_count",		stmt_column_count },
 		{ NULL,		NULL }
 	};
 	int n;

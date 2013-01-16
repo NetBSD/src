@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.installimage,v 1.2.4.3 2012/05/23 10:07:08 yamt Exp $
+#	$NetBSD: Makefile.installimage,v 1.2.4.4 2013/01/16 05:26:01 yamt Exp $
 #
 # Common Makefile to create a bootable installation image for USB flash etc.
 #
@@ -7,6 +7,11 @@
 # Required variables:
 #	INSTIMGBASE
 #		Basename of the liveimage
+#
+# Optional variables:
+#	INSTIMAGEMB
+#		target image size in MB
+#		(if empty default IMAGEMB in Makefile.bootimage is used)
 #
 # See Makefile.bootimage for other variables.
 #
@@ -21,6 +26,9 @@ check_INSTIMGBASE: .PHONY .NOTMAIN
 .endif
 .endif
 
+.if defined(INSTIMAGEMB)
+IMAGEMB=	${INSTIMAGEMB}
+.endif
 SWAPMB=		0			# no swap
 OMIT_SWAPIMG=	yes			# nothing to write
 

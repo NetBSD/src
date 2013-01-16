@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.4 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.4.4.1 2013/01/16 05:25:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,11 @@ _ENTRY(_C_LABEL(ntohs))
 _ENTRY(_C_LABEL(htons))
 #endif
 _PROF_PROLOGUE
+#ifdef _ARM_ARCH_6
+	rev16		r0, r0
+#else
 	and		r1, r0, #0xff
 	mov		r0, r0, lsr #8
 	orr		r0, r0, r1, lsl #8
+#endif
 	RET

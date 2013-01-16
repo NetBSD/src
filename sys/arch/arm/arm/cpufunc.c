@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.103.4.3 2012/10/30 17:18:55 yamt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.103.4.4 2013/01/16 05:32:42 yamt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.103.4.3 2012/10/30 17:18:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.103.4.4 2013/01/16 05:32:42 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1574,7 +1574,7 @@ get_cachetype_cp15(void)
     defined(CPU_SA1100) || defined(CPU_SA1110) || defined(CPU_IXP12X0)
 /* Cache information for CPUs without cache type registers. */
 struct cachetab {
-	u_int32_t ct_cpuid;
+	uint32_t ct_cpuid;
 	int	ct_pcache_type;
 	int	ct_pcache_unified;
 	int	ct_pdcache_size;
@@ -1609,7 +1609,7 @@ static void
 get_cachetype_table(void)
 {
 	int i;
-	u_int32_t cpuid = cpu_id();
+	uint32_t cpuid = cpu_id();
 
 	for (i = 0; cachetab[i].ct_cpuid != 0; i++) {
 		if (cachetab[i].ct_cpuid == (cpuid & CPU_ID_CPU_MASK)) {

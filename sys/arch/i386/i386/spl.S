@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.36.4.1 2012/10/30 17:19:50 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.36.4.2 2013/01/16 05:32:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.36.4.1 2012/10/30 17:19:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.36.4.2 2013/01/16 05:32:59 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -321,42 +321,6 @@ doreti_checkast:
 1:	.asciz	"DORETI: INTERRUPT ENABLED"
 #endif /* defined(DEBUG) */
 IDTVEC_END(doreti)
-
-#ifdef XEN
-/*
- * void evtchn_do_event(int evtch, struct intrframe *regs)
- */
-
-ENTRY(call_evtchn_do_event)
-	IDEPTH_INCR
-	/*
-	 * IDEPTH_INCR leaves old %esp in %eax.
-	 */
-	pushl	8(%eax)	/* regs */
-	pushl	4(%eax)	/* evtch */
-	call	_C_LABEL(evtchn_do_event)
-	addl	$8, %esp
-	IDEPTH_DECR
-	ret
-END(call_evtchn_do_event)
-#ifdef DOM0OPS
-/*
- * void xenevt_event(int port)
- */
-
-ENTRY(call_xenevt_event)
-	IDEPTH_INCR
-	/*
-	 * IDEPTH_INCR leaves old %esp in %eax.
-	 */
-	pushl	4(%eax)	/* evtch */
-	call	_C_LABEL(xenevt_event)
-	addl	$4, %esp
-	IDEPTH_DECR
-	ret
-END(call_xenevt_event)
-#endif /* DOM0OPS */
-#endif /* XEN */
 
 #ifndef XEN
 /*

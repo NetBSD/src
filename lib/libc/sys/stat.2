@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.2,v 1.49.2.1 2012/04/17 00:05:26 yamt Exp $
+.\"	$NetBSD: stat.2,v 1.49.2.2 2013/01/16 05:32:25 yamt Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,13 +29,14 @@
 .\"
 .\"     @(#)stat.2	8.4 (Berkeley) 5/1/95
 .\"
-.Dd September 14, 2011
+.Dd November 18, 2012
 .Dt STAT 2
 .Os
 .Sh NAME
 .Nm stat ,
 .Nm lstat ,
-.Nm fstat
+.Nm fstat ,
+.Nm fstatat ,
 .Nd get file status
 .Sh LIBRARY
 .Lb libc
@@ -47,6 +48,8 @@
 .Fn lstat "const char *path" "struct stat *sb"
 .Ft int
 .Fn fstat "int fd" "struct stat *sb"
+.Ft int
+.Fn fstatat "int fd" "const char *path" "struct stat *sb" "int flag"
 .Sh DESCRIPTION
 The
 .Fn stat
@@ -72,6 +75,31 @@ The
 function obtains the same information about an open file
 known by the file descriptor
 .Fa fd .
+.Pp
+.Fn fstatat
+works the same way as
+.Fn stat
+(or
+.Fn lstat
+if
+.Dv AT_SYMLINK_NOFOLLOW
+is set in
+.Fa flag )
+except if
+.Fa path
+is relative.
+In that case, it is looked up from a directory whose file
+descriptor was passed as
+.Fa fd .
+Search permission is required on
+.Fa fd
+except if that file descriptor was opened with the
+.Dv O_SEARCH
+option.
+.Fa fd
+can be set to
+.Dv AT_FDCWD
+in order to specify the current directory.
 .Pp
 The
 .Fa sb
@@ -340,8 +368,15 @@ An I/O error occurred while reading from or writing to the file system.
 .Xr types 3 ,
 .Xr symlink 7
 .Sh STANDARDS
-The described functions conform to
+.Fn stat ,
+.Fn lstat ,
+and
+.Fn fstat
+conform to
 .St -p1003.1-2004 .
+.Fn fstatat
+conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 A
 .Fn stat

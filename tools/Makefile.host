@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.host,v 1.28 2011/04/10 16:52:36 joerg Exp $
+#	$NetBSD: Makefile.host,v 1.28.4.1 2013/01/16 05:34:03 yamt Exp $
 
 NOINFO=		# defined
 NOLINT=		# defined
@@ -7,8 +7,8 @@ NOMAN=		# defined
 .include <bsd.own.mk>
 
 .ifndef NOCOMPATLIB
-COMPATOBJ!=	cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
-.-include	"${COMPATOBJ}/defs.mk"
+# Use TOOLDIR copy of libnbcompat and associated *.h files
+.-include	"${TOOLDIR}/share/compat/defs.mk"
 .endif
 
 # Resolve pathnames in variables.

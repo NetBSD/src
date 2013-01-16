@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.16.2.1 2012/10/30 17:19:28 yamt Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.16.2.2 2013/01/16 05:32:57 yamt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.16.2.1 2012/10/30 17:19:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.16.2.2 2013/01/16 05:32:57 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -288,7 +288,7 @@ cpu_reboot(int howto, char *bootstr)
 	(void) disable_interrupts(I32_bit|F32_bit);
 
 	{
-		u_int32_t feed, ctrl;
+		uint32_t feed, ctrl;
 
 		feed = TS7XXX_IO16_VBASE + TS7XXX_WDOGFEED;
 		ctrl = TS7XXX_IO16_VBASE + TS7XXX_WDOGCTRL;

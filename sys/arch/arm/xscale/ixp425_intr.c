@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.23.2.1 2012/10/30 17:19:10 yamt Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.23.2.2 2013/01/16 05:32:50 yamt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.23.2.1 2012/10/30 17:19:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.23.2.2 2013/01/16 05:32:50 yamt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -162,11 +162,11 @@ ixp425_disable_irq(int irq)
 	ixp425_set_intrmask();
 }
 
-static inline u_int32_t
+static inline uint32_t
 ixp425_irq2gpio_bit(int irq)
 {
 
-	static const u_int8_t int2gpio[32] __attribute__ ((aligned(32))) = {
+	static const uint8_t int2gpio[32] __attribute__ ((aligned(32))) = {
 		0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* INT#0 -> INT#5 */
 		0x00, 0x01,				/* GPIO#0 -> GPIO#1 */
 		0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* INT#8 -> INT#13 */
@@ -340,7 +340,7 @@ ixp425_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 		panic("ixp425_intr_establish: IRQ %d out of range", irq);
 #ifdef DEBUG
 	printf("ixp425_intr_establish(irq=%d, ipl=%d, func=%08x, arg=%08x)\n",
-	       irq, ipl, (u_int32_t) func, (u_int32_t) arg);
+	       irq, ipl, (uint32_t) func, (uint32_t) arg);
 #endif
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);

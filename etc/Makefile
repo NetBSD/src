@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.392.2.3 2012/10/30 18:48:58 yamt Exp $
+#	$NetBSD: Makefile,v 1.392.2.4 2013/01/16 05:26:13 yamt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -114,21 +114,8 @@ BIN1+=	etc.${MACHINE}/ttyaction
 .endif
 
 # -rw-rw-r--
-.if !empty(DISTRIBVER:M*.99.*)
-BIN2+=	motd.current
-FILESNAME_motd.current=	motd
-.elif !empty(DISTRIBVER:M*BETA*)
-BIN2+=	motd.beta
-FILESNAME_motd.beta=	motd
-.elif !empty(DISTRIBVER:M*RC*)
-BIN2+=	motd.rc
-FILESNAME_motd.rc=	motd
-.elif !empty(DISTRIBVER:M*STABLE*)
-BIN2+=	motd.stable
-FILESNAME_motd.stable=	motd
-.else
 BIN2+=	motd
-.endif
+FILESBUILD_motd=	YES
 
 # -rw-------
 BIN3+=	hosts.equiv
@@ -172,6 +159,24 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 .endif	# !DISTRIBUTION_DONE
 
 
+# motd is copied from a different ${MOTD_SOURCE} depending on DISTRIBVER
+#
+.if !empty(DISTRIBVER:M*.99.*)
+MOTD_SOURCE=	motd.current
+.elif !empty(DISTRIBVER:M*BETA*)
+MOTD_SOURCE=	motd.beta
+.elif !empty(DISTRIBVER:M*RC*)
+MOTD_SOURCE=	motd.rc
+.elif !empty(DISTRIBVER:M*STABLE*)
+MOTD_SOURCE=	motd.stable
+.else
+MOTD_SOURCE=	motd.default
+.endif
+CLEANFILES+= motd
+motd: ${.CURDIR}/${MOTD_SOURCE} ${_NETBSD_VERSION_DEPENDS}
+	${_MKTARGET_CREATE}
+	${HOST_INSTALL_FILE} ${.CURDIR}/${MOTD_SOURCE} ${.TARGET}
+
 CLEANFILES+=	MAKEDEV
 MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
     ${.CURDIR}/etc.${MACHINE}/MAKEDEV.conf
@@ -181,40 +186,7 @@ MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 	    ${TOOL_AWK} -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 	    > ${.TARGET}
 
-RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
-		DESTDIR EXTERNAL_TOOLCHAIN HAVE_GCC HAVE_GDB \
-		INSTALLWORLDDIR \
-		KERNARCHDIR KERNCONFDIR KERNOBJDIR KERNSRCDIR \
-		MACHINE MACHINE_ARCH MAKE MAKECONF MAKEFLAGS \
-		MAKEOBJDIR MAKEOBJDIRPREFIX MAKEVERBOSE \
-		MKBFD MKBINUTILS MKCATPAGES \
-		MKCRYPTO MKCRYPTO_RC5 MKCVS \
-		MKDEBUG MKDEBUGLIB MKDOC MKDTRACE MKDYNAMICROOT \
-		MKGCC MKGCCCMDS MKGDB \
-		MKHESIOD MKHTML MKIEEEFP MKINET6 MKINFO MKIPFILTER \
-		MKKERBEROS MKLDAP MKLINKLIB MKLINT \
-		MKMAN MKMANZ MKMDNS MKNLS MKNPF MKOBJ MKOBJDIRS \
-		MKPAM MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
-		MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
-		MKUNPRIVED MKUPDATE MKX11 MKYP \
-		NBUILDJOBS NETBSDSRCDIR \
-		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
-		OBJMACHINE \
-		RELEASEDIR RELEASEMACHINEDIR TOOLCHAIN_MISSING TOOLDIR \
-		USE_HESIOD USE_INET6 USE_JEMALLOC USE_KERBEROS USE_LDAP \
-		USE_PAM USE_SKEY USE_YP \
-		USETOOLS USR_OBJMACHINE \
-		X11SRCDIR X11FLAVOUR
-
-params: .PHONY
-.for var in ${RELEASEVARS}
-.if defined(${var})
-	@printf "%20s = '%-s'\n" ${var} ${${var}:Q}
-.else
-	@printf "%20s = (undefined)\n" ${var}
-.endif
-.endfor
-
+.include "${NETBSDSRCDIR}/etc/Makefile.params"
 CLEANFILES+=	etc-release
 etc-release: .EXEC .MAKE
 	${_MKTARGET_CREATE}
@@ -226,7 +198,7 @@ etc-release: .EXEC .MAKE
 		printf "%20s   %s\n"  "Build date" "$$(date -u)"; \
 		printf "%20s   %s\n"  "Built by" "$${USER-root}@$$(hostname)"; \
 		echo ; \
-		(cd ${.CURDIR}; ${MAKE} ${MFLAGS} -j1 params); \
+		${PRINT_PARAMS} ; \
 	) >${.OBJDIR}/${.TARGET}
 
 install-etc-release: .PHONY etc-release

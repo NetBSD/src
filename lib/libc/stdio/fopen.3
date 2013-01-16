@@ -1,4 +1,4 @@
-.\"	$NetBSD: fopen.3,v 1.27.2.1 2012/10/30 18:58:57 yamt Exp $
+.\"	$NetBSD: fopen.3,v 1.27.2.2 2013/01/16 05:32:24 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)fopen.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 18, 2011
+.Dd November 14, 2012
 .Dt FOPEN 3
 .Os
 .Sh NAME
@@ -117,6 +117,12 @@ will fail.
 This is a non
 .St -ansiC
 extension.
+.It Sq x
+The letter
+.Sq x
+in the mode turns on exclusive open mode to the file (
+.Dv O_EXCL )
+which means that the file will not be created if it already exists.
 .El
 .Pp
 Any created files will have mode

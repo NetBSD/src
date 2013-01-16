@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.50.2.2 2012/10/30 17:22:04 yamt Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.50.2.3 2013/01/16 05:33:34 yamt Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.50.2.2 2012/10/30 17:22:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.50.2.3 2013/01/16 05:33:34 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -145,6 +145,8 @@ static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88172}, 0 },
 	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772}, AX772 },
 	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772A}, AX772 },
+	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772B}, AX772 | AX772B },
+	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772B_1}, AX772 | AX772B },
 	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88178}, AX178 },
 	{ { USB_VENDOR_ATEN,		USB_PRODUCT_ATEN_UC210T}, 0 },
 	{ { USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D5055 }, AX178 },
@@ -153,9 +155,11 @@ static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB2_TX }, 0},
 	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100}, 0 },
 	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100B1 }, AX772 },
+	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100C1 }, AX772 | AX772B },
 	{ { USB_VENDOR_GOODWAY,		USB_PRODUCT_GOODWAY_GWUSB2E}, 0 },
 	{ { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_ETGUS2 }, AX178 },
 	{ { USB_VENDOR_JVC,		USB_PRODUCT_JVC_MP_PRX1}, 0 },
+	{ { USB_VENDOR_LENOVO,		USB_PRODUCT_LENOVO_ETHERNET }, AX772 | AX772B },
 	{ { USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_USB200M}, 0 },
 	{ { USB_VENDOR_LINKSYS4,	USB_PRODUCT_LINKSYS4_USB1000 }, AX178 },
 	{ { USB_VENDOR_LOGITEC,		USB_PRODUCT_LOGITEC_LAN_GTJU2}, AX178 },
@@ -918,12 +922,14 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			total_len -= sizeof(hdr);
 			buf += sizeof(hdr);
 
-			if ((hdr.len ^ hdr.ilen) != 0xffff) {
+			if (((le16toh(hdr.len) & AXE_RH1M_RXLEN_MASK) ^
+			    (le16toh(hdr.ilen) & AXE_RH1M_RXLEN_MASK)) != 
+			    AXE_RH1M_RXLEN_MASK) {		
 				ifp->if_ierrors++;
 				goto done;
 			}
 
-			rxlen = le16toh(hdr.len);
+			rxlen = le16toh(hdr.len & AXE_RH1M_RXLEN_MASK);
 			if (total_len < rxlen) {
 				pktlen = total_len;
 				total_len = 0;
@@ -1241,7 +1247,9 @@ axe_init(struct ifnet *ifp)
 
 	/* Enable receiver, set RX mode */
 	rxmode = AXE_RXCMD_BROADCAST | AXE_RXCMD_MULTICAST | AXE_RXCMD_ENABLE;
-	if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
+	if (sc->axe_flags & AX772B)
+		rxmode |= AXE_772B_RXCMD_RH1M;
+	else if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
 		if (sc->axe_udev->speed == USB_SPEED_HIGH) {
 			/* Largest possible USB buffer size for AX88178 */
 			rxmode |= AXE_178_RXCMD_MFB;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.151 2011/06/12 03:35:46 rmind Exp $
+#	$NetBSD: files.sparc,v 1.151.2.1 2013/01/16 05:33:04 yamt Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -205,6 +205,11 @@ file	dev/sun/sunms.c			ms_tty		# mouse lower layer
 attach ms at pckbport with ms_pckbport
 file	arch/sparc/dev/ms_pckbport.c	ms_pckbport	# lower/middle layers
 
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"
 
 #
 # Machine-independent SCSI drivers

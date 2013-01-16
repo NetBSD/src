@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.31.10.1 2012/10/30 17:22:56 yamt Exp $ */
+/* $NetBSD: envsys.h,v 1.31.10.2 2013/01/16 05:33:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 /* sensor units */
 enum envsys_units {
-	ENVSYS_STEMP		= 0,	/* Temperature */
+	ENVSYS_STEMP		= 0,	/* Temperature (microkelvins) */
 	ENVSYS_SFANRPM,			/* Fan RPM */
 	ENVSYS_SVOLTS_AC,		/* AC Volts */
 	ENVSYS_SVOLTS_DC,		/* DC Volts */

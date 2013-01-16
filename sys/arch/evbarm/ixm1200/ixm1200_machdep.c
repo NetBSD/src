@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.49.2.1 2012/10/30 17:19:24 yamt Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.49.2.2 2013/01/16 05:32:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.49.2.1 2012/10/30 17:19:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.49.2.2 2013/01/16 05:32:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -361,7 +361,7 @@ initarm(void *arg)
 	bootconfig.dram[0].pages   = 0x10000000 / PAGE_SIZE; /* SDRAM 256MB */
 	bootconfig.dramblocks = 1;
 
-	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
+	kerneldatasize = (uint32_t)&end - (uint32_t)KERNEL_TEXT_BASE;
 
 	symbolsize = 0;
 

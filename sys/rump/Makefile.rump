@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.61.4.1 2012/10/30 17:22:52 yamt Exp $
+#	$NetBSD: Makefile.rump,v 1.61.4.2 2013/01/16 05:33:51 yamt Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -15,23 +15,29 @@ CPPFLAGS+=	-D_RUMPKERNEL
 CPPFLAGS+=	-D_RUMP_NATIVE_ABI
 .endif
 
-CFLAGS+=	-ffreestanding -fno-strict-aliasing
-.if (defined(HAVE_GCC) && ${HAVE_GCC} >= 3) || defined(HAVE_LLVM)
-CFLAGS+=	-Wsign-compare
-CFLAGS+=	-Wno-pointer-sign -Wno-attributes
-CFLAGS+=	-std=gnu99
-.endif
-CWARNFLAGS+=	-Wno-format-zero-length -Wno-pointer-sign
-CPPFLAGS+=	-D_KERNEL -DMULTIPROCESSOR -D_MODULE -DMODULAR
 CPPFLAGS+=	-DMAXUSERS=32
 CPPFLAGS+=	-DCOMPAT_50=1
+
+CPPFLAGS+=	-nostdinc
+CFLAGS+=	-ffreestanding -fno-strict-aliasing
+
+CWARNFLAGS+=	-Wno-format-zero-length -Wno-pointer-sign
+CPPFLAGS+=	-D_KERNEL -DMULTIPROCESSOR -D_MODULE -DMODULAR
 CPPFLAGS+=	-DDEBUGPRINT
 CPPFLAGS+=	-I${.CURDIR} -I.
-CPPFLAGS+=	-I${RUMPTOP}/../../common/include -isystem ${RUMPTOP}/../arch
+CPPFLAGS+=	-I${RUMPTOP}/../../common/include
 CPPFLAGS+=	-I${RUMPTOP}/include
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt
-CPPFLAGS+=	-nostdinc -isystem ${RUMPTOP}/..
-LDFLAGS+=	-T ${RUMPTOP}/ldscript.rump
+
+.ifdef NEED_ISYSTEM
+CPPFLAGS+=	-isystem ${RUMPTOP}/../arch
+CPPFLAGS+=	-isystem ${RUMPTOP}/..
+.else
+CPPFLAGS+=	-I${RUMPTOP}/../arch
+CPPFLAGS+=	-I${RUMPTOP}/..
+.endif
+
+LDFLAGS+=	-Wl,-T ${RUMPTOP}/ldscript.rump
 
 RUMP_DIAGNOSTIC?=yes
 .if ${RUMP_DIAGNOSTIC} == "yes"
@@ -53,7 +59,8 @@ CPPFLAGS+=	-DLOCKDEBUG
 #LDFLAGS+=	-nodefaultlibs
 
 # make sure __NetBSD__ gets defined (for builds on non-NetBSD)
-CPPFLAGS+=	-D__NetBSD__
+# also, give those builds a way to undef the local compiler's macros
+CPPFLAGS+=	-D__NetBSD__ ${RUMPKERN_UNDEF}
 
 RUMPKERNEL=	This is NetBSD and I am the rump.  Good evening.
 

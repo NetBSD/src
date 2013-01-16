@@ -1,7 +1,7 @@
 | file: putimage.S
 | author: ITOH Yasufumi
 |
-| $NetBSD: putimage.S,v 1.4 2011/02/21 02:31:59 itohy Exp $
+| $NetBSD: putimage.S,v 1.4.4.1 2013/01/16 05:33:08 yamt Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -21,7 +21,7 @@ ENTRY_NOPROFILE(put_image)
 		movel	%a1@+,%a4@+
 
 		lea	%pc@(img_title),%a2
-		moveaw	%a2@+,%a3		| only the lower word is valid
+		moveal	%a2@+,%a3
 
 1:		tstb	%a2@+			| skip human readable comment
 		jne	1b
@@ -98,7 +98,7 @@ Lrxabort:	moveml	%sp@+,%d2-%d7/%a2-%a4
 		rts
 
 img_title:
-	.word	imgend1
+	.long	imgend1
 	| compressed image data
 
 	| BSD Daemon Image, used for NetBSD boot by permission.

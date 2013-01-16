@@ -1,5 +1,5 @@
-/*	$Id: at91streg.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
-/*      $NetBSD: at91streg.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
+/*	$Id: at91streg.h,v 1.3.12.1 2013/01/16 05:32:45 yamt Exp $	*/
+/*      $NetBSD: at91streg.h,v 1.3.12.1 2013/01/16 05:32:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy
@@ -68,7 +68,7 @@
 #define	WDT_TIMEOUT	20000	/* milliseconds				*/
 
 //
-#define	STREG(reg)	*((volatile u_int32_t *)(AT91ST_BASE + (reg)))
+#define	STREG(reg)	*((volatile uint32_t *)(AT91ST_BASE + (reg)))
 #define	WDog()		do {CPUReg->ST.CR = ST_CR_WDRST;} while (0)
 
 #endif /* _AT91STREG_H_ */

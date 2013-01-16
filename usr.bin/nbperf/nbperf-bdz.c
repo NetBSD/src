@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-bdz.c,v 1.4.2.1 2012/10/30 19:00:24 yamt Exp $	*/
+/*	$NetBSD: nbperf-bdz.c,v 1.4.2.2 2013/01/16 05:34:07 yamt Exp $	*/
 /*-
  * Copyright (c) 2009, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-bdz.c,v 1.4.2.1 2012/10/30 19:00:24 yamt Exp $");
+__RCSID("$NetBSD: nbperf-bdz.c,v 1.4.2.2 2013/01/16 05:34:07 yamt Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -227,12 +227,12 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	    state->graph.v);
 
 	fprintf(nbperf->output,
-	    "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) &1)"
-	    "\t      + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)"
-	    "\t      + ((g1[h[2] >> 6] >> (h[2] & 63)) & 1)"
-	    "\t      - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)"
-	    "\t      - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1)"
-	    "\t      - ((g2[h[2] >> 6] >> (h[2] & 63)) & 1);"
+	    "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) &1)\n"
+	    "\t      + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
+	    "\t      + ((g1[h[2] >> 6] >> (h[2] & 63)) & 1)\n"
+	    "\t      - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
+	    "\t      - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
+	    "\t      - ((g2[h[2] >> 6] >> (h[2] & 63)) & 1);\n"
 	    );
 
 	fprintf(nbperf->output,

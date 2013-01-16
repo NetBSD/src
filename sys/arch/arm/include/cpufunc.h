@@ -581,9 +581,9 @@ void	sheeva_cpu_sleep(int);
  * Macros for manipulating CPU interrupts
  */
 #ifdef __PROG32
-static __inline u_int32_t __set_cpsr_c(uint32_t bic, uint32_t eor) __attribute__((__unused__));
-static __inline u_int32_t disable_interrupts(uint32_t mask) __attribute__((__unused__));
-static __inline u_int32_t enable_interrupts(uint32_t mask) __attribute__((__unused__));
+static __inline uint32_t __set_cpsr_c(uint32_t bic, uint32_t eor) __attribute__((__unused__));
+static __inline uint32_t disable_interrupts(uint32_t mask) __attribute__((__unused__));
+static __inline uint32_t enable_interrupts(uint32_t mask) __attribute__((__unused__));
 
 static __inline uint32_t
 __set_cpsr_c(uint32_t bic, uint32_t eor)

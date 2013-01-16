@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2009/10/21 13:56:36 wiz Exp $	*/
+/*	$NetBSD: syscall.c,v 1.7.6.1 2013/01/16 05:34:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syscall.c,v 1.7 2009/10/21 13:56:36 wiz Exp $");
+__RCSID("$NetBSD: syscall.c,v 1.7.6.1 2013/01/16 05:34:08 yamt Exp $");
 
 /* System call stats */
 
@@ -54,8 +54,6 @@ __RCSID("$NetBSD: syscall.c,v 1.7 2009/10/21 13:56:36 wiz Exp $");
 
 #include <sys/syscall.h>
 #include <../../sys/kern/syscalls.c>
-
-#define nelem(x) (sizeof (x) / sizeof *(x))
 
 static struct Info {
 	struct	 uvmexp_sysctl uvmexp;
@@ -117,11 +115,12 @@ initsyscall(void)
 	/* drvinit gets number of cpus! */
 	drvinit(1);
 
-	counts_mib_len = nelem(counts_mib);
-	if (sysctlnametomib("kern.syscalls.counts", counts_mib, &counts_mib_len))
+	counts_mib_len = __arraycount(counts_mib);
+	if (sysctlnametomib("kern.syscalls.counts", counts_mib,
+	    &counts_mib_len))
 		counts_mib_len = 0;
 
-	times_mib_len = nelem(times_mib);
+	times_mib_len = __arraycount(times_mib);
 	if (sysctlnametomib("kern.syscalls.times", times_mib, &times_mib_len))
 		times_mib_len = 0;
 
@@ -222,7 +221,7 @@ showsyscall(void)
 	show_vmstat_top(&s.Total, &s.uvmexp, &s1.uvmexp);
 
 	/* Sort out the values we are going to display */
-	for (i = 0; i < (int)nelem(s.counts); i++) {
+	for (i = 0; i < (int)__arraycount(s.counts); i++) {
 		switch (show) {
 		default:
 		case SHOW_COUNTS:
@@ -256,19 +255,28 @@ showsyscall(void)
 
 	if (sort_order == COUNTS) {
 		/* mergesort() doesn't swap equal values about... */
-		mergesort(syscall_sort, nelem(syscall_sort),
+		mergesort(syscall_sort, __arraycount(syscall_sort),
 			sizeof syscall_sort[0], compare_irf);
 	}
 
 	l = SYSCALLROW;
 	c = 0;
 	move(l, c);
-	for (ii = 0; ii < (int)nelem(s.counts); ii++) {
+#define FMT "compile kernel with \"options SYSCALL_%s\" to get syscall %s"
+	if (counts_mib_len == 0) {
+		mvprintw(l, c, FMT, "STATS", "counts");
+		l++;
+	}
+	if (times_mib_len == 0) {
+		mvprintw(l, c, FMT, "TIMES", "times");
+		l++;
+	}
+	for (ii = 0; ii < (int)__arraycount(s.counts); ii++) {
 		i = syscall_sort[ii];
 		if (val[i] == 0 && irf[i] == 0)
 			continue;
 
-		if (i < (int)nelem(syscallnames)) {
+		if (i < (int)__arraycount(syscallnames)) {
 			const char *name = syscallnames[i];
 			while (name[0] == '_')
 				name++;
@@ -360,12 +368,12 @@ syscall_order(char *args)
 		goto usage;
 
 	/* Undo all the sorting */
-	for (i = 0; i < (int)nelem(syscall_sort); i++)
+	for (i = 0; i < (int)__arraycount(syscall_sort); i++)
 		syscall_sort[i] = i;
 
 	if (sort_order == NAMES) {
 		/* Only sort the entries we have names for */
-		qsort(syscall_sort, nelem(syscallnames), sizeof syscall_sort[0],
+		qsort(syscall_sort, __arraycount(syscallnames), sizeof syscall_sort[0],
 			compare_names);
 	}
 	return;
@@ -415,21 +423,25 @@ getinfo(struct Info *stats, int get_what)
 
 	if (get_what & SHOW_COUNTS) {
 		size = sizeof stats->counts;
-		if (!counts_mib_len ||
-		    sysctl(counts_mib, counts_mib_len, &stats->counts, &size,
-			    NULL, 0)) {
-			error("can't get syscall counts: %s\n", strerror(errno));
-			memset(&stats->counts, 0, sizeof stats->counts);
+		if (counts_mib_len != 0) {
+			if (sysctl(counts_mib, counts_mib_len, &stats->counts,
+			    &size, NULL, 0)) {
+				error("can't get syscall counts: %s\n",
+				    strerror(errno));
+				memset(&stats->counts, 0, sizeof stats->counts);
+			}
 		}
 	}
 
 	if (get_what & SHOW_TIMES) {
 		size = sizeof stats->times;
-		if (!times_mib_len ||
-		    sysctl(times_mib, times_mib_len, &stats->times, &size,
-			    NULL, 0)) {
-			error("can't get syscall times: %s\n", strerror(errno));
-			memset(&stats->times, 0, sizeof stats->times);
+		if (times_mib_len != 0) {
+			if (sysctl(times_mib, times_mib_len, &stats->times,
+			    &size, NULL, 0)) {
+				error("can't get syscall times: %s\n",
+				    strerror(errno));
+				memset(&stats->times, 0, sizeof stats->times);
+			}
 		}
 	}
 

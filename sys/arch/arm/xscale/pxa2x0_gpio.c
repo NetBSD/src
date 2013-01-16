@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.15.2.1 2013/01/16 05:32:51 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.15.2.1 2013/01/16 05:32:51 yamt Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 
@@ -69,7 +69,7 @@ struct pxagpio_softc {
 	bus_space_tag_t sc_bust;
 	bus_space_handle_t sc_bush;
 	void *sc_irqcookie[4];
-	u_int32_t sc_mask[4];
+	uint32_t sc_mask[4];
 #ifdef PXAGPIO_HAS_GPION_INTRS
 	struct gpio_irq_handler *sc_handlers[GPIO_NPINS];
 #else
@@ -86,7 +86,7 @@ CFATTACH_DECL_NEW(pxagpio, sizeof(struct pxagpio_softc),
 static struct pxagpio_softc *pxagpio_softc;
 static vaddr_t pxagpio_regs;
 #define GPIO_BOOTSTRAP_REG(reg)	\
-	(*((volatile u_int32_t *)(pxagpio_regs + (reg))))
+	(*((volatile uint32_t *)(pxagpio_regs + (reg))))
 
 static int gpio_intr0(void *);
 static int gpio_intr1(void *);
@@ -95,7 +95,7 @@ static int gpio_dispatch(struct pxagpio_softc *, int);
 static int gpio_intrN(void *);
 #endif
 
-static inline u_int32_t
+static inline uint32_t
 pxagpio_reg_read(struct pxagpio_softc *sc, int reg)
 {
 	if (__predict_true(sc != NULL))
@@ -107,7 +107,7 @@ pxagpio_reg_read(struct pxagpio_softc *sc, int reg)
 }
 
 static inline void
-pxagpio_reg_write(struct pxagpio_softc *sc, int reg, u_int32_t val)
+pxagpio_reg_write(struct pxagpio_softc *sc, int reg, uint32_t val)
 {
 	if (__predict_true(sc != NULL))
 		bus_space_write_4(sc->sc_bust, sc->sc_bush, reg, val);
@@ -200,7 +200,7 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 {
 	struct pxagpio_softc *sc = pxagpio_softc;
 	struct gpio_irq_handler *gh;
-	u_int32_t bit, reg;
+	uint32_t bit, reg;
 
 #ifdef PXAGPIO_HAS_GPION_INTRS
 	if (gpio >= GPIO_NPINS)
@@ -280,7 +280,7 @@ pxa2x0_gpio_intr_disestablish(void *cookie)
 {
 	struct pxagpio_softc *sc = pxagpio_softc;
 	struct gpio_irq_handler *gh = cookie;
-	u_int32_t bit, reg;
+	uint32_t bit, reg;
 
 	bit = GPIO_BIT(gh->gh_gpio);
 
@@ -358,7 +358,7 @@ gpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
 {
 	struct gpio_irq_handler **ghp, *gh;
 	int i, s, nhandled, handled, pins;
-	u_int32_t gedr, mask;
+	uint32_t gedr, mask;
 	int bank;
 
 	/* Fetch bitmap of pending interrupts on this GPIO bank */
@@ -441,7 +441,7 @@ u_int
 pxa2x0_gpio_get_function(u_int gpio)
 {
 	struct pxagpio_softc *sc = pxagpio_softc;
-	u_int32_t rv, io;
+	uint32_t rv, io;
 
 	KDASSERT(gpio < GPIO_NPINS);
 
@@ -463,7 +463,7 @@ u_int
 pxa2x0_gpio_set_function(u_int gpio, u_int fn)
 {
 	struct pxagpio_softc *sc = pxagpio_softc;
-	u_int32_t rv, bit;
+	uint32_t rv, bit;
 	u_int oldfn;
 
 	KDASSERT(gpio < GPIO_NPINS);
@@ -573,7 +573,7 @@ pxa2x0_gpio_set_dir(u_int gpio, int dir)
 {
 	struct pxagpio_softc *sc = pxagpio_softc;
 	int bit;
-	u_int32_t reg;
+	uint32_t reg;
 
 	bit = GPIO_BIT(gpio);
 
@@ -629,9 +629,9 @@ void
 pxa2x0_gpio_set_intr_level(u_int gpio, int level)
 {
 	struct pxagpio_softc *sc = pxagpio_softc;
-	u_int32_t bit;
-	u_int32_t gfer;
-	u_int32_t grer;
+	uint32_t bit;
+	uint32_t gfer;
+	uint32_t grer;
 	int s;
 
 	s = splhigh();

@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.310.2.4 2012/10/30 18:48:57 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.310.2.5 2013/01/16 05:26:12 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -617,7 +617,7 @@ Description:	page cache related changes
 Status:		Active
 Start Date:	Wed Nov 2 2011
 End Date:	
-Base Tag:	yamt-pagecache-base5
+Base Tag:	yamt-pagecache-base6
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src
 Notes:		- maintain object pages in radix tree rather than rb tree.

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.9.42.1 2012/04/17 00:09:53 yamt Exp $	*/
+/*	$NetBSD: timer.c,v 1.9.42.2 2013/01/16 05:34:12 yamt Exp $	*/
 /*	$KAME: timer.c,v 1.11 2005/04/14 06:22:35 suz Exp $	*/
 
 /*
@@ -93,9 +93,11 @@ void
 rtadvd_remove_timer(struct rtadvd_timer **timer)
 {
 
-	TAILQ_REMOVE(&ra_timer, *timer, next);
-	free(*timer);
-	*timer = NULL;
+	if (*timer) {
+		TAILQ_REMOVE(&ra_timer, *timer, next);
+		free(*timer);
+		*timer = NULL;
+	}
 }
 
 void
@@ -125,12 +127,12 @@ rtadvd_check_timer(void)
 {
 	static struct timeval returnval;
 	struct timeval now;
-	struct rtadvd_timer *tm;
+	struct rtadvd_timer *tm, *tmn;
 
 	gettimeofday(&now, NULL);
 	tm_max = tm_limit;
 
-	TAILQ_FOREACH(tm, &ra_timer, next) {
+	TAILQ_FOREACH_SAFE(tm, &ra_timer, next, tmn) {
 		if (TIMEVAL_LEQ(tm->tm, now)) {
 			if ((*tm->expire)(tm->expire_data) == NULL)
 				continue; /* the timer was removed */

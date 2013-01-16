@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/03/25 15:26:49 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8.6.1 2013/01/16 05:26:01 yamt Exp $
 
 HOSTPROG=	macppc_installboot
 SRCS=		installboot.c cd9660.c cd9660_util.c
@@ -24,9 +24,7 @@ cleaninc:
 .include <bsd.own.mk>
 
 .ifndef NOCOMPATLIB
-COMPATOBJ!=	cd ${NETBSDSRCDIR}/tools/compat && ${PRINTOBJDIR}
-.-include	"${COMPATOBJ}/defs.mk"
-HOST_CPPFLAGS+=	-I${NETBSDSRCDIR}/tools/compat
+.-include	"${TOOLDIR}/share/compat/defs.mk"
 .endif
 
 .include <bsd.hostprog.mk>

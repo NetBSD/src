@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.33.2.1 2012/10/30 19:00:23 yamt Exp $
+# $NetBSD: Makefile,v 1.33.2.2 2013/01/16 05:34:06 yamt Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -36,6 +36,7 @@ SUBFILES= \
 	modorder \
 	modts \
 	modword \
+	order \
 	phony-end \
 	posix \
 	qequals \
@@ -48,6 +49,7 @@ SUBFILES= \
 all: ${SUBFILES}
 
 flags.doterror=
+flags.order=-j1
 
 # the tests are actually done with sub-makes.
 .PHONY: ${SUBFILES}

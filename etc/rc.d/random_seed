@@ -1,12 +1,19 @@
 #!/bin/sh
 #
-# $NetBSD: random_seed,v 1.1.4.3 2012/10/30 18:49:10 yamt Exp $
+# $NetBSD: random_seed,v 1.1.4.4 2013/01/16 05:26:14 yamt Exp $
 #
 
 # PROVIDE: random_seed
 # REQUIRE: mountcritlocal
 # BEFORE: securelevel
+# BEFORE: bootconf
 # KEYWORD: shutdown
+#
+# The "BEFORE: securelevel" is a real dependency, in that
+# this script won't work if run after the securelevel is changed.
+#
+# The "BEFORE: bootconf" is intended to cause this to
+# be the first script to runs after mountcritlocal.
 
 $_rc_subr_loaded . /etc/rc.subr
 

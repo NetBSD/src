@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.63 2011/08/14 11:46:28 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.63.2.1 2013/01/16 05:32:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.63 2011/08/14 11:46:28 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.63.2.1 2013/01/16 05:32:29 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: conf.c,v 1.63 2011/08/14 11:46:28 christos Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <glob.h>
 #include <netdb.h>
 #include <signal.h>

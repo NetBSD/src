@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.12 2011/07/01 20:42:37 dyoung Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.12.2.1 2013/01/16 05:32:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.12 2011/07/01 20:42:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.12.2.1 2013/01/16 05:32:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ static void
 sacc_obio_attach(device_t parent, device_t self, void *aux)
 {
 	int i;
-	u_int32_t skid, tmp;
+	uint32_t skid, tmp;
 	struct sacc_softc *sc = device_private(self);
 	struct obio_softc *psc = device_private(parent);
 	struct obio_attach_args *sa = aux;

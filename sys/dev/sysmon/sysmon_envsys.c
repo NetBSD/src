@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.117.2.2 2012/10/30 17:22:03 yamt Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.117.2.3 2013/01/16 05:33:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.117.2.2 2012/10/30 17:22:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.117.2.3 2013/01/16 05:33:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -778,8 +778,25 @@ out:
 		 */
 		TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
 			if (edata->flags & ENVSYS_FHAS_ENTROPY) {
+				size_t n;
+				int tail = 1;
+
 				snprintf(rnd_name, sizeof(rnd_name), "%s-%s",
 				    sme->sme_name, edata->desc);
+				n = strlen(rnd_name);
+				/*
+				 * 1) Remove trailing white space(s).
+				 * 2) If space exist, replace it with '-'
+				 */
+				while (--n) {
+					if (rnd_name[n] == ' ') {
+						if (tail != 0)
+							rnd_name[n] = '\0';
+						else
+							rnd_name[n] = '-';
+					} else
+						tail = 0;
+				}
 				rnd_attach_source(&edata->rnd_src, rnd_name,
 				    RND_TYPE_ENV, 0);
 			}

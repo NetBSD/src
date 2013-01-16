@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.39 2011/08/27 18:46:19 joerg Exp $	*/
+/*	$NetBSD: reboot.c,v 1.39.2.1 2013/01/16 05:32:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.39 2011/08/27 18:46:19 joerg Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.39.2.1 2013/01/16 05:32:34 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,9 @@ __RCSID("$NetBSD: reboot.c,v 1.39 2011/08/27 18:46:19 joerg Exp $");
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 
 __dead static void usage(void);
 

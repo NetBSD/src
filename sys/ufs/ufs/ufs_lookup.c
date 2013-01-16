@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.111.2.3 2012/10/30 17:23:00 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.111.2.4 2013/01/16 05:33:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.111.2.3 2012/10/30 17:23:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.111.2.4 2013/01/16 05:33:56 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -153,6 +153,7 @@ ufs_lookup(void *v)
 	int dirblksiz = ump->um_dirblksiz;
 	ino_t foundino;
 	struct ufs_lookup_results *results;
+	int iswhiteout;			/* temp result from cache_lookup() */
 
 	flags = cnp->cn_flags;
 
@@ -186,8 +187,25 @@ ufs_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0) {
-		return (error);
+	if (cache_lookup(vdp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, &iswhiteout, vpp)) {
+		if (iswhiteout) {
+			cnp->cn_flags |= ISWHITEOUT;
+		}
+		return *vpp == NULLVP ? ENOENT : 0;
+	}
+	if (iswhiteout) {
+		/*
+		 * The namecache set iswhiteout without finding a
+		 * cache entry. As of this writing (20121014), this
+		 * can happen if there was a whiteout entry that has
+		 * been invalidated by the lookup. It is not clear if
+		 * it is correct to set ISWHITEOUT in this case or
+		 * not; however, doing so retains the prior behavior,
+		 * so we'll go with that until some clearer answer
+		 * appears. XXX
+		 */
+		cnp->cn_flags |= ISWHITEOUT;
 	}
 
 	fstrans_start(vdp->v_mount, FSTRANS_SHARED);
@@ -497,7 +515,8 @@ notfound:
 	 * Insert name into cache (as non-existent) if appropriate.
 	 */
 	if (nameiop != CREATE) {
-		cache_enter(vdp, *vpp, cnp);
+		cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 	}
 	error = ENOENT;
 	goto out;
@@ -661,7 +680,7 @@ found:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
-	cache_enter(vdp, *vpp, cnp);
+	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 	error = 0;
 
 out:

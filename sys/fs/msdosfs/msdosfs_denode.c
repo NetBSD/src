@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.46 2011/06/16 09:21:02 hannken Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.46.2.1 2013/01/16 05:33:39 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.46 2011/06/16 09:21:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.46.2.1 2013/01/16 05:33:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct denode
 	ldep->de_dev = pmp->pm_dev;
 	ldep->de_dirclust = dirclust;
 	ldep->de_diroffset = diroffset;
-	fc_purge(ldep, 0);	/* init the fat cache for this denode */
+	fc_purge(ldep, 0);	/* init the FAT cache for this denode */
 
 	/*
 	 * Insert the denode into the hash queue and lock the denode so it

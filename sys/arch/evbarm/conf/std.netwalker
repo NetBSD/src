@@ -1,4 +1,4 @@
-#	$NetBSD: std.netwalker,v 1.1.12.2 2012/05/23 10:07:42 yamt Exp $
+#	$NetBSD: std.netwalker,v 1.1.12.3 2013/01/16 05:32:53 yamt Exp $
 #
 # standard NetBSD/evbarm options for Sharp NetWalker
 
@@ -14,7 +14,7 @@ options 	NETWALKER
 options 	EXEC_ELF32
 options 	EXEC_SCRIPT
 options 	KERNEL_BASE_EXT=0xc0000000
-makeoptions	CPUFLAGS="-mcpu=cortex-a8"
+makeoptions	CPUFLAGS="-mcpu=cortex-a8 -mfpu=neon"
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32

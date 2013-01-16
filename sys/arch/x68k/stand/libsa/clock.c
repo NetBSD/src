@@ -1,5 +1,4 @@
-/* $NetBSD: clock.c,v 1.1.2.2 2012/10/30 17:20:31 yamt Exp $ */
-/* Id: clock.c,v 1.4 2011/04/10 09:21:45 isaki Exp  */
+/* $NetBSD: clock.c,v 1.1.2.3 2013/01/16 05:33:08 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Tetsuya Isaki. All rights reserved.

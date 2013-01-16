@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.1.6.2 2012/10/30 17:18:58 yamt Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.1.6.3 2013/01/16 05:32:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.1.6.2 2012/10/30 17:18:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.1.6.3 2013/01/16 05:32:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,9 @@ static void
 bcmemmc_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcmemmc_softc *sc = device_private(self);
+	prop_dictionary_t dict = device_properties(self);
 	struct amba_attach_args *aaa = aux;
+	prop_number_t frequency;
 	int error;
 
 	sc->sc.sc_dev = self;
@@ -88,9 +90,15 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags |= SDHC_FLAG_HOSTCAPS;
 	sc->sc.sc_caps = SDHC_VOLTAGE_SUPP_3_3V;
 	sc->sc.sc_host = sc->sc_hosts;
-	sc->sc.sc_clkbase = 50000;	/* 50MHz */
+	sc->sc.sc_clkbase = 50000;	/* Default to 50MHz */
 	sc->sc_iot = aaa->aaa_iot;
 
+	/* Fetch the EMMC clock frequency from property if set. */
+	frequency = prop_dictionary_get(dict, "frequency");
+	if (frequency != NULL) {
+		sc->sc.sc_clkbase = prop_number_integer_value(frequency) / 1000;
+	}    
+	
 	error = bus_space_map(sc->sc_iot, aaa->aaa_addr, aaa->aaa_size, 0,
 	    &sc->sc_ioh);
 	if (error) {
@@ -107,7 +115,7 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		     aaa->aaa_intr);
+		    aaa->aaa_intr);
 		goto fail;
 	}
 	aprint_normal_dev(self, "interrupting on intr %d\n", aaa->aaa_intr);

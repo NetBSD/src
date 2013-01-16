@@ -1,0 +1,57 @@
+# $Id: IMX23_OLINUXINO,v 1.2.2.2 2013/01/16 05:32:52 yamt Exp $
+#
+# IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
+#
+
+include "arch/evbarm/conf/std.imx23_olinuxino"
+
+maxusers	8
+
+config	netbsd	root on ? type ?
+
+# The main bus device
+mainbus0	at root
+
+# The boot CPU
+cpu0		at mainbus?
+
+# APBH bus
+apbh0		at mainbus? base 0x80000000 size 0x00040000
+
+# APBH DMA
+#apbdma0	at apbh? addr 0x80004000 size 0x2000 irq -1
+
+# Interrupt controller
+icoll0		at apbh? addr 0x80000000 size 0x2000 irq -1
+
+# Synchronous serial port for SD/MMC
+#ssp0		at apbh? addr 0x80010000 size 0x2000 irq 15
+#sdmmc*		at ssp?
+#ld*		at sdmmc?
+
+# APBX bus
+apbx0		at mainbus? base 0x80040000 size 0x00040000
+
+# APBX DMA
+#apbdma1	at apbx? addr 0x80024000 size 0x2000 irq -1
+
+# Timers and rotary decoder
+timrot0		at apbx? addr 0x80068020 size 0x20 irq 28
+timrot1		at apbx? addr 0x80068040 size 0x20 irq 29
+#timrot2	at apbx? addr 0x80068060 size 0x20 irq 30
+#timrot3	at apbx? addr 0x80068080 size 0x20 irq 31
+
+plcom0		at apbx? addr 0x80070000 size 0x1000 irq 0
+
+options		MEMSIZE=64
+options		DDB
+options		HZ=100
+
+options		MEMORY_DISK_HOOKS
+options		MEMORY_DISK_IS_ROOT
+options		MEMORY_DISK_ROOT_SIZE=12288 # 6 megs
+options		MEMORY_DISK_RBFLAGS=RB_SINGLE
+
+pseudo-device	md
+
+file-system	FFS

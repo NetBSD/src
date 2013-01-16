@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.1,v 1.21 2010/05/14 16:48:02 joerg Exp $
+.\"	$NetBSD: chflags.1,v 1.21.6.1 2013/01/16 05:34:05 yamt Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)chflags.1	8.4 (Berkeley) 5/2/95
 .\"
-.Dd May 14, 2010
+.Dd December 12, 2012
 .Dt CHFLAGS 1
 .Os
 .Sh NAME
@@ -62,6 +62,11 @@ If the
 .Fl R
 option is specified, symbolic links on the command line are followed.
 (Symbolic links encountered in the tree traversal are not followed.)
+.It Fl h
+If the
+.Ar file
+or a file encountered during directory traversal is a symbolic link,
+the file flags of the link itself is changed.
 .It Fl L
 If the
 .Fl R
@@ -77,33 +82,27 @@ in the
 instead of just the
 .Ar files
 themselves.
-.It Fl h
-If the
-.Ar file
-or a file encountered during directory traversal is a symbolic link,
-the file flags of the link itself is changed.
 .El
 .Pp
 Flags are a comma separated list of keywords.
 The following keywords are currently defined:
 .Bl -column -offset indent "Keyword   " "system append-only" "Permission"
 .It Sy Keyword Ta Sy Flag Ta Sy Permission
-.It Em arch Ta archived Ta super-user only
-.It Em opaque Ta opaque Ta owner or super-user
-.It Em nodump Ta nodump Ta owner or super-user
-.It Em sappnd Ta system append-only Ta super-user only
-.It Em schg Ta system immutable Ta super-user only
-.It Em uappnd Ta user append-only Ta owner or super-user
-.It Em uchg Ta user immutable Ta owner or super-user
+.It arch Ta archived Ta super-user only
+.It opaque Ta opaque Ta owner or super-user
+.It nodump Ta nodump Ta owner or super-user
+.It sappnd Ta system append-only Ta super-user only
+.It schg Ta system immutable Ta super-user only
+.It uappnd Ta user append-only Ta owner or super-user
+.It uchg Ta user immutable Ta owner or super-user
 .El
 .Pp
 Putting the letters
 .Dq no
 before an option causes the flag to be turned off.
 For example:
-.Pp
-.Bl -tag -offset indent -width ".Em nouchg"
-.It Em nouchg
+.Bl -tag -offset indent -width "nouchg"
+.It nouchg
 the immutable bit should be cleared
 .El
 .Pp
@@ -125,12 +124,10 @@ of
 .Xr ls 1
 is used to display the flags.
 .Pp
-The
-.Nm
-utility exits 0 on success, and \*[Gt]0 if an error occurs.
-.Pp
 The kernel does not allow the flags on block and character
 devices to be changed except by the super-user.
+.Sh EXIT STATUS
+.Ex -std
 .Sh SEE ALSO
 .Xr ls 1 ,
 .Xr chflags 2 ,

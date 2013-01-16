@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137.2.9 2012/11/02 08:22:33 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137.2.10 2013/01/16 05:33:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.9 2012/11/02 08:22:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.10 2013/01/16 05:33:10 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1108,8 +1108,8 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
  * => must be followed by call to pmap_update() before reuse of page
  */
 
-void
-pmap_kremove(vaddr_t sva, vsize_t len)
+static inline void
+pmap_kremove1(vaddr_t sva, vsize_t len, bool localonly)
 {
 	pt_entry_t *pte, opte;
 	vaddr_t va, eva;
@@ -1118,19 +1118,40 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 
 	kpreempt_disable();
 	for (va = sva; va < eva; va += PAGE_SIZE) {
-		if (va < VM_MIN_KERNEL_ADDRESS)
-			pte = vtopte(va);
-		else
-			pte = kvtopte(va);
+		pte = kvtopte(va);
 		opte = pmap_pte_testset(pte, 0); /* zap! */
-		if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
+		if ((opte & (PG_V | PG_U)) == (PG_V | PG_U) && !localonly) {
 			pmap_tlb_shootdown(pmap_kernel(), va, opte,
 			    TLBSHOOT_KREMOVE);
 		}
 		KASSERT((opte & PG_PS) == 0);
 		KASSERT((opte & PG_PVLIST) == 0);
 	}
+	if (localonly) {
+		tlbflushg();
+	}
 	kpreempt_enable();
+}
+
+void
+pmap_kremove(vaddr_t sva, vsize_t len)
+{
+
+	pmap_kremove1(sva, len, false);
+}
+
+/*
+ * pmap_kremove_local: like pmap_kremove(), but only worry about
+ * TLB invalidations on the current CPU.  this is only intended
+ * for use while writing kernel crash dumps.
+ */
+
+void
+pmap_kremove_local(vaddr_t sva, vsize_t len)
+{
+
+	KASSERT(panicstr != NULL);
+	pmap_kremove1(sva, len, true);
 }
 
 /*
@@ -2979,32 +3000,6 @@ pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
 {
 	*startp = virtual_avail;
 	*endp = virtual_end;
-}
-
-/*
- * pmap_map: map a range of PAs into kvm.
- *
- * => used during crash dump
- * => XXX: pmap_map() should be phased out?
- */
-
-vaddr_t
-pmap_map(vaddr_t sva, paddr_t spa, paddr_t epa, vm_prot_t prot)
-{
-	paddr_t pa;
-	vaddr_t va;
-
-	KASSERT((prot & ~VM_PROT_ALL) == 0);
-	for (pa = spa, va = sva; pa < epa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pt_entry_t *pte = kvtopte(va);
-		pt_entry_t npte;
-
-		npte = pmap_pa2pte(pa);
-		npte |= protection_codes[prot] | PG_k | PG_V;
-		pmap_pte_set(pte, npte);
-		pmap_update_pg(va);
-	}
-	return sva;
 }
 
 /*

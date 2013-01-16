@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11-helper.c,v 1.3 2011/05/24 14:27:07 joerg Exp $	*/
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.3 2010/02/24 06:12:53 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11-helper.c,v 1.3.4.1 2013/01/16 05:25:59 yamt Exp $	*/
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.4 2012/07/02 12:13:26 dtucker Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.3 2011/05/24 14:27:07 joerg Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.3.4.1 2013/01/16 05:25:59 yamt Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
@@ -165,13 +165,13 @@ process_sign(void)
 {
 	u_char *blob, *data, *signature = NULL;
 	u_int blen, dlen, slen = 0;
-	int ok = -1, flags, ret;
+	int ok = -1, ret;
 	Key *key, *found;
 	Buffer msg;
 
 	blob = get_string(&blen);
 	data = get_string(&dlen);
-	flags = get_int(); /* XXX ignore */
+	(void)get_int(); /* XXX ignore flags */
 
 	if ((key = key_from_blob(blob, blen)) != NULL) {
 		if ((found = lookup_key(key)) != NULL) {

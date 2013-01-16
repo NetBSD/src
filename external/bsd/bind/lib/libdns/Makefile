@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2012/10/30 18:54:53 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2013/01/16 05:27:42 yamt Exp $
 
 LIB=dns
 
@@ -20,7 +20,8 @@ COPTS.${f}.c+=  -Wno-pointer-sign -fno-strict-aliasing
 
 DNSSEC_SRCS=	dst_api.c dst_lib.c dst_parse.c dst_result.c \
 	gssapi_link.c gssapictx.c hmac_link.c key.c openssl_link.c \
-	openssldh_link.c openssldsa_link.c opensslrsa_link.c
+	openssldh_link.c openssldsa_link.c opensslrsa_link.c \
+	opensslecdsa_link.c opensslgost_link.c
 
 SRCS=	acl.c acache.c adb.c byaddr.c cache.c callbacks.c clientinfo.c \
 	compress.c \

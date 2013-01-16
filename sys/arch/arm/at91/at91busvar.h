@@ -1,5 +1,5 @@
-/*	$Id: at91busvar.h,v 1.4.2.1 2012/10/30 17:18:58 yamt Exp $	*/
-/*	$NetBSD: at91busvar.h,v 1.4.2.1 2012/10/30 17:18:58 yamt Exp $ */
+/*	$Id: at91busvar.h,v 1.4.2.2 2013/01/16 05:32:45 yamt Exp $	*/
+/*	$NetBSD: at91busvar.h,v 1.4.2.2 2013/01/16 05:32:45 yamt Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -40,12 +40,12 @@
 
 /* clocks: */
 struct at91bus_clocks {
-	u_int32_t		slow;		/* slow clock in Hz	*/
-	u_int32_t		main;		/* main clock in Hz	*/
-	u_int32_t		cpu;		/* processor clock in Hz */
-	u_int32_t		master;		/* master clock in Hz	*/
-	u_int32_t		plla;		/* PLLA clock */
-	u_int32_t		pllb;		/* PLLB clock */
+	uint32_t		slow;		/* slow clock in Hz	*/
+	uint32_t		main;		/* main clock in Hz	*/
+	uint32_t		cpu;		/* processor clock in Hz */
+	uint32_t		master;		/* master clock in Hz	*/
+	uint32_t		plla;		/* PLLA clock */
+	uint32_t		pllb;		/* PLLB clock */
 };
 
 extern struct at91bus_clocks at91bus_clocks;
@@ -108,7 +108,7 @@ typedef const struct at91bus_machdep * at91bus_tag_t;
 extern const struct at91bus_machdep at91rm9200bus;
 #endif
 
-extern u_int32_t at91_chip_id;
+extern uint32_t at91_chip_id;
 #define	AT91_CHIP_ID()	at91_chip_id
 extern at91bus_tag_t at91bus_tag;
 extern struct bus_space at91_bs_tag;

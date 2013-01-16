@@ -1,0 +1,149 @@
+#	$NetBSD: Makefile.params,v 1.1.2.2 2013/01/16 05:26:13 yamt Exp $
+#
+# Makefile fragment for printing build parameters.
+#
+# Public variables:
+#	RELEASEVARS
+#		List of variables whose value should be printed.
+#
+#	PRINT_PARAMS
+#		A command to print the desired variables and values.
+#		Values are printed as single-quoted strings, with
+#		embedded quotes and newlines escaped in a way that's
+#		acceptable to sh(1).  Undefined values are printed
+#		as "(undefined)" (without quotation marks).
+#
+# Internal targets:
+# 	_params:
+# 		Prints the names and values of all the variables
+# 		listed in ${RELEASEVARS}.  The output may be intermixed
+# 		with debugging information, which can be removed by the
+# 		${_PARAMS_POSTPROCESS} command.
+#
+# Internal variables:
+#	_PARAMS_POSTPROCESS
+#		A command to postprocess the output from "make _params",
+#		to remove debugging information and other noise.
+#
+# Example:
+#	. ${NETBSDSRCDIR}/etc/Makefile.params
+#	show-params: .MAKE .PHONY # print params to stdout
+#		@${PRINT_PARAMS}
+#
+
+.include <bsd.sys.mk>		# for TOOL_AWK, ...
+
+RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
+		DESTDIR DISTRIBVER EXTERNAL_TOOLCHAIN HAVE_GCC HAVE_GDB \
+		INSTALLWORLDDIR \
+		KERNARCHDIR KERNCONFDIR KERNOBJDIR KERNSRCDIR \
+		MACHINE MACHINE_ARCH MAKE MAKECONF MAKEFLAGS \
+		MAKEOBJDIR MAKEOBJDIRPREFIX MAKEVERBOSE \
+		MKBFD MKBINUTILS MKCATPAGES \
+		MKCRYPTO MKCRYPTO_RC5 MKCVS \
+		MKDEBUG MKDEBUGLIB MKDOC MKDTRACE MKDYNAMICROOT \
+		MKGCC MKGCCCMDS MKGDB \
+		MKHESIOD MKHTML MKIEEEFP MKINET6 MKINFO MKIPFILTER \
+		MKKERBEROS MKLDAP MKLINKLIB MKLINT \
+		MKMAN MKMANZ MKMDNS MKNLS MKNPF MKOBJ MKOBJDIRS \
+		MKPAM MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
+		MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
+		MKUNPRIVED MKUPDATE MKX11 MKYP \
+		NBUILDJOBS NETBSDSRCDIR \
+		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
+		OBJMACHINE \
+		RELEASEDIR RELEASEMACHINEDIR TOOLCHAIN_MISSING TOOLDIR \
+		USE_HESIOD USE_INET6 USE_JEMALLOC USE_KERBEROS USE_LDAP \
+		USE_PAM USE_SKEY USE_YP \
+		USETOOLS USR_OBJMACHINE \
+		X11SRCDIR X11FLAVOUR
+
+PRINT_PARAMS= (cd ${.CURDIR}; ${MAKE} _params) | ${_PARAMS_POSTPROCESS}
+
+_params: .PHONY
+.for var in ${RELEASEVARS}
+.if defined(${var})
+	@printf "%20s = '%-s'\n" ${var} ${${var}:C/'/'\\\\''/gW:Q}
+.else
+	@printf "%20s = (undefined)\n" ${var}
+.endif
+.endfor
+
+# _PARAMS_POSTPROCESS:
+#
+# The output from the "make _params" can include the following types of
+# unwanted lines:
+#
+#     make -j prints "--- params ---";
+#
+#     if MAKEVERBOSE is set to 3 or more then make prints each "printf"
+#     command in addition to executing it;
+#
+#     if MAKEVERBOSE is set to 4 then the shell prints each command
+#     (prefixed with "+").
+#
+# So the resulting output can look like this:
+#
+#	--- params ---
+#	+ echo 'printf "%20s = '\''%-s'\''\n" BSDOBJDIR /usr/obj'
+#	printf "%20s = '%-s'\n" BSDOBJDIR /usr/obj
+#	+ printf '%20s = '\''%-s'\''\n' BSDOBJDIR /usr/obj
+#	           BSDOBJDIR = '/usr/obj'
+#	+ echo 'printf "%20s = '\''%-s'\''\n" BSDSRCDIR /usr/src'
+#	printf "%20s = '%-s'\n" BSDSRCDIR /usr/src
+#	+ printf '%20s = '\''%-s'\''\n' BSDSRCDIR /usr/src
+#	           BSDSRCDIR = '/usr/src'
+#	[...]
+#
+# where what we want is just this:
+#
+#	           BSDOBJDIR = '/usr/obj'
+#	           BSDSRCDIR = '/usr/src'
+#	           [...]
+#
+# The awk program in ${PARAMS_POSTPROCESS} removes the unwanted noise,
+# taking care with variables whose values contain embedded newlines
+# (assuming that embedded newlines appear only inside single quotes).
+#
+_PARAMS_POSTPROCESS= ${TOOL_AWK} '\
+	BEGIN { single_quote = "'\''"; \
+		NORMAL = 0; \
+		SKIP_HEADING = 1; \
+		SKIP_MULTILINE = 2; \
+		PRINT_MULTILINE = 3; \
+		state = SKIP_HEADING; \
+	} \
+	function quotes_balanced_p(line) { \
+		return (line ~ /^([^\\"'\'']|\\.|'\''[^'\'']*'\''|"(\\.|[^\\"])*")*$$/); \
+	} \
+	state == SKIP_MULTILINE { \
+		if (quotes_balanced_p(single_quote $$0)) { \
+			state = NORMAL; \
+		} \
+		next; \
+	} \
+	state == PRINT_MULTILINE { \
+		if (quotes_balanced_p(single_quote $$0)) { \
+			state = NORMAL; \
+		} \
+		print; next; \
+	} \
+	state == SKIP_HEADING && $$0 ~ /^--- .* ---$$/ { next; } \
+	state == SKIP_HEADING && $$0 ~ / ===> / { next; } \
+	/^(\+ )?(echo ["'\''])?printf.* = / { \
+		if (quotes_balanced_p($$0)) { \
+			state = NORMAL; \
+		} else { \
+			state = SKIP_MULTILINE; \
+		} \
+		next; \
+	} \
+	// { \
+		if (quotes_balanced_p($$0)) { \
+			state = NORMAL; \
+		} else { \
+			state = PRINT_MULTILINE; \
+		} \
+		print; next; \
+	} \
+	'

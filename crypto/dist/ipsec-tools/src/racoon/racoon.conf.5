@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.62.2.1 2012/04/17 00:01:42 yamt Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.62.2.2 2013/01/16 05:25:55 yamt Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 15, 2011
+.Dd November 29, 2012
 .Dt RACOON.CONF 5
 .Os
 .\"
@@ -1102,7 +1102,7 @@ Note that the kernel may not support the algorithm you have specified.
 .Ic des , 3des , des_iv64 , des_iv32 ,
 .Ic rc5 , rc4 , idea , 3idea ,
 .Ic cast128 , blowfish , null_enc ,
-.Ic twofish , rijndael , aes , camellia
+.Ic twofish , rijndael , aes , camellia , aes_gcm_16
 .Pq used with ESP
 .\"
 .It Ic authentication_algorithm Ar algorithms ;

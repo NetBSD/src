@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.1.4.4 2012/10/30 17:22:12 yamt Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.1.4.5 2013/01/16 05:33:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -75,6 +75,14 @@ glyphcache_init(glyphcache *gc, int first, int lines, int width,
 	buckets = (gc->gc_numcells / 223);
 	if ((buckets * 223) < gc->gc_numcells)
 		buckets++;
+
+	/*
+	 * if we don't have enough video memory to cache at least a few glyphs
+	 * we stop right here
+	 */
+	if (buckets < 1)
+		return ENOMEM;
+
 	gc->gc_buckets = kmem_alloc(sizeof(gc_bucket) * buckets, KM_SLEEP);
 	if (gc->gc_buckets == NULL) {
 		aprint_error("%s: can't allocate memory\n", __func__);

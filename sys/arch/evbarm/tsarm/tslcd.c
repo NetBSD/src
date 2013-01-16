@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.14.2.1 2012/10/30 17:19:28 yamt Exp $ */
+/* $NetBSD: tslcd.c,v 1.14.2.2 2013/01/16 05:32:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.14.2.1 2012/10/30 17:19:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.14.2.2 2013/01/16 05:32:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,8 @@ struct tslcd_softc {
 static int	tslcd_match(device_t, cfdata_t, void *);
 static void	tslcd_attach(device_t, device_t, void *);
 
-static void	tslcd_writereg(struct hd44780_chip *, u_int32_t, u_int32_t, u_int8_t);
-static u_int8_t	tslcd_readreg(struct hd44780_chip *, u_int32_t, u_int32_t);
+static void	tslcd_writereg(struct hd44780_chip *, uint32_t, uint32_t, uint8_t);
+static uint8_t	tslcd_readreg(struct hd44780_chip *, uint32_t, uint32_t);
 
 dev_type_open(tslcdopen);
 dev_type_close(tslcdclose);
@@ -159,10 +159,10 @@ tslcd_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-tslcd_writereg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs, u_int8_t cmd)
+tslcd_writereg(struct hd44780_chip *hd, uint32_t en, uint32_t rs, uint8_t cmd)
 {
 	struct tslcd_softc *sc = device_private(hd->sc_dev);
-	u_int8_t ctrl;
+	uint8_t ctrl;
 
 	if (hd->sc_dev_ok == 0)
 		return;
@@ -204,11 +204,11 @@ tslcd_writereg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs, u_int8_t cmd
 	delay(1000);
 }
 
-static u_int8_t
-tslcd_readreg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs)
+static uint8_t
+tslcd_readreg(struct hd44780_chip *hd, uint32_t en, uint32_t rs)
 {
 	struct tslcd_softc *sc = device_private(hd->sc_dev);
-	u_int8_t ret, ctrl;
+	uint8_t ret, ctrl;
 
 	if (hd->sc_dev_ok == 0)
 		return 0;

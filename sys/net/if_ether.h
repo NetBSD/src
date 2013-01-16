@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.58.8.1 2012/10/30 17:22:43 yamt Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.58.8.2 2013/01/16 05:33:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -186,6 +186,19 @@ struct ethercom {
 #define	ETHERCAP_VLAN_MTU	0x00000001	/* VLAN-compatible MTU */
 #define	ETHERCAP_VLAN_HWTAGGING	0x00000002	/* hardware VLAN tag support */
 #define	ETHERCAP_JUMBO_MTU	0x00000004	/* 9000 byte MTU supported */
+
+#define	ECCAPBITS		\
+	"\020"			\
+	"\1VLAN_MTU"		\
+	"\2VLAN_HWTAGGING"	\
+	"\3JUMBO_MTU"
+
+/* ioctl() for Ethernet capabilities */
+struct eccapreq {
+	char		eccr_name[IFNAMSIZ];	/* if name, e.g. "en0" */
+	int		eccr_capabilities;	/* supported capabiliites */
+	int		eccr_capenable;		/* capabilities enabled */
+};
 
 #ifdef	_KERNEL
 extern const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN];

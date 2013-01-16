@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: test5,v 1.5 2011/10/13 01:32:33 vjs Exp 
+; Id: test5,v 1.5.4.1 2012/02/24 17:22:37 vjs Exp 
 
 
 ; Use comment lines instead of blank lines to combine update requests into
@@ -24,22 +24,37 @@
 
 server 10.53.0.3 5300
 
+;	1
 update add  a3-1.tld2.bl-given.	    300 A 127.0.0.1
 send
+;	2
 update add  a3-2.tld2.bl-passthru.  300 A 127.0.0.2
 send
+;	3
 update add  a3-3.tld2.bl-no-op.	    300 A 127.0.0.3
 send
+;	4
 update add  a3-4.tld2.bl-disabled.  300 A 127.0.0.4
 send
+;	5 - 8
 update add  a3-5.tld2.bl-nodata.    300 A 127.0.0.5
+;	9 - 10
+update add  a3-5.tld2s.bl-nodata.   300 A 127.0.0.9
 send
-update add  a3-6.tld2.bl-nxdomain.  300 A 127.0.0.6
+;	11
+update add  a3-6.tld2.bl-nxdomain.  300 A 127.0.0.11
 send
-update add  a3-7.tld2.bl-cname.	    300 A 127.0.0.7
+;	12
+update add  a3-7.tld2.bl-cname.	    300 A 127.0.0.12
 send
-update add  a3-8.tld2.bl-wildcname. 300 A 127.0.0.8
-update add  *.sub9.tld2.bl-wildcname. 300 A 127.0.1.9
+;	13
+update add  a3-8.tld2.bl-wildcname. 300 A 127.0.0.13
+;	14
+update add  *.sub9.tld2.bl-wildcname. 300 A 127.0.1.14
 send
-update add  a3-10.tld2.bl-garden.    300 A 127.0.0.10
+;	15
+update add  a3-15.tld2.bl-garden.   300 A 127.0.0.15
+send
+;	16
+update add  a3-16.tld2.bl.	    300 A 127.0.0.16
 send

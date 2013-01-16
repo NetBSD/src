@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.217.2.1 2012/04/17 00:08:23 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.217.2.2 2013/01/16 05:33:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.217.2.1 2012/04/17 00:08:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.217.2.2 2013/01/16 05:33:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1885,7 +1885,7 @@ int
 fnullop_kqfilter(file_t *fp, struct knote *kn)
 {
 
-	return 0;
+	return EOPNOTSUPP;
 }
 
 void

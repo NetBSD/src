@@ -1,7 +1,7 @@
-/*	$NetBSD: stat.h,v 1.2.4.1 2012/10/30 18:54:20 yamt Exp $	*/
+/*	$NetBSD: stat.h,v 1.2.4.2 2013/01/16 05:27:35 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -23,6 +23,11 @@
 #define ISC_STAT_H 1
 
 #include <sys/stat.h>
+
+/*
+ * Windows doesn't typedef this.
+ */
+typedef unsigned short mode_t;
 
 /* open() under unix allows setting of read/write permissions
  * at the owner, group and other levels.  These don't exist in NT

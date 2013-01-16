@@ -1,4 +1,4 @@
-/*	$NetBSD: portalgo.c,v 1.1.4.2 2012/10/30 17:22:46 yamt Exp $	*/
+/*	$NetBSD: portalgo.c,v 1.1.4.3 2013/01/16 05:33:49 yamt Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.1.4.2 2012/10/30 17:22:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.1.4.3 2013/01/16 05:33:49 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.1.4.2 2012/10/30 17:22:46 yamt Exp $"
 #include <sys/domain.h>
 #include <sys/md5.h>
 #include <sys/cprng.h>
+#include <sys/bitops.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -85,11 +86,14 @@ static bool portalgo_debug = true;
 #define DPRINTF while (/*CONSTCOND*/0) printf
 #endif
 
+typedef __BITMAP_TYPE(, uint32_t, 0x10000) bitmap;
 #ifdef INET
 static int inet4_portalgo = PORTALGO_BSD;
+static bitmap inet4_reserve;
 #endif
 #ifdef INET6
 static int inet6_portalgo = PORTALGO_BSD;
+static bitmap inet6_reserve;
 #endif
 
 typedef struct {
@@ -250,6 +254,9 @@ check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 		struct inpcb *pcb;
 		struct sockaddr_in sin;
 
+		if (__BITMAP_ISSET(port, &inet4_reserve))
+			return false;
+
 		sin.sin_addr = inp->inp_laddr;
 		pcb = in_pcblookup_port(table, sin.sin_addr, htons(port), 1,
 		    &vestigial);
@@ -291,6 +298,9 @@ check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 		struct in6pcb *in6p = (struct in6pcb *)(void *)inp_hdr;
 		struct sockaddr_in6 sin6;
 		void *t;
+
+		if (__BITMAP_ISSET(port, &inet6_reserve))
+			return false;
 
 		sin6.sin6_addr = in6p->in6p_laddr;
 		so = in6p->in6p_socket;
@@ -853,10 +863,10 @@ portalgo_algo_index_select(struct inpcb_hdr *inp, int algo)
 
 /*
  * The sysctl hook that is supposed to check that we are picking one
- * of the valid algorithms. IPv4.
+ * of the valid algorithms.
  */
 static int
-sysctl_portalgo_helper(SYSCTLFN_ARGS, int *algo)
+sysctl_portalgo_selected(SYSCTLFN_ARGS, int *algo)
 {
 	struct sysctlnode node;
 	int error;
@@ -891,23 +901,64 @@ sysctl_portalgo_helper(SYSCTLFN_ARGS, int *algo)
 	return error;
 }
 
+static int
+sysctl_portalgo_reserve(SYSCTLFN_ARGS, bitmap *bt)
+{
+	struct sysctlnode node;
+	int error;
+
+	DPRINTF("%s called\n", __func__);
+
+	node = *rnode;
+	node.sysctl_data = bt;
+	node.sysctl_size = sizeof(*bt);
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+#ifdef KAUTH_NETWORK_SOCKET_PORT_RESERVE
+	if (l != NULL && (error = kauth_authorize_system(l->l_cred,
+	    KAUTH_NETWORK_SOCKET, KAUTH_NETWORK_SOCKET_PORT_RESERVE, bt,
+	    NULL, NULL)) != 0)
+		return error;
+#endif
+	return error;
+}
+
+#ifdef INET
 /*
  * The sysctl hook that is supposed to check that we are picking one
  * of the valid algorithms.
  */
 int
-sysctl_portalgo_selected(SYSCTLFN_ARGS)
+sysctl_portalgo_selected4(SYSCTLFN_ARGS)
 {
 
-	return sysctl_portalgo_helper(SYSCTLFN_CALL(rnode), &inet4_portalgo);
+	return sysctl_portalgo_selected(SYSCTLFN_CALL(rnode), &inet4_portalgo);
 }
+
+int
+sysctl_portalgo_reserve4(SYSCTLFN_ARGS)
+{
+
+	return sysctl_portalgo_reserve(SYSCTLFN_CALL(rnode), &inet4_reserve);
+}
+#endif
 
 #ifdef INET6
 int
 sysctl_portalgo_selected6(SYSCTLFN_ARGS)
 {
 
-	return sysctl_portalgo_helper(SYSCTLFN_CALL(rnode), &inet6_portalgo);
+	return sysctl_portalgo_selected(SYSCTLFN_CALL(rnode), &inet6_portalgo);
+}
+
+int
+sysctl_portalgo_reserve6(SYSCTLFN_ARGS)
+{
+	return sysctl_portalgo_reserve(SYSCTLFN_CALL(rnode), &inet6_reserve);
 }
 #endif
 

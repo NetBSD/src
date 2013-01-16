@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.147.2.1 2012/04/17 00:05:45 yamt Exp $
+.\"	$NetBSD: ddb.4,v 1.147.2.2 2013/01/16 05:32:35 yamt Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd February 12, 2012
+.Dd December 12, 2012
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -814,7 +814,7 @@ On machines with software-emulated single-stepping (e.g., pmax),
 stepping through code executed by interrupt handlers will probably
 do the wrong thing.
 .It Ic sync
-Force a crash dump, and then reboot.
+Sync the disks, force a crash dump, and then reboot.
 .It Ic trace Ns Oo Cm /u Ns Oo Cm l Oc Oc Oo Ar frame-address Oc Ns \
 Oo Cm , Ns Ar count Oc
 Stack trace from

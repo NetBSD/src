@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.30.8.1 2012/10/30 19:00:40 yamt Exp $	*/
+/*	$NetBSD: misc.c,v 1.30.8.2 2013/01/16 05:34:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: misc.c,v 1.30.8.1 2012/10/30 19:00:40 yamt Exp $");
+__RCSID("$NetBSD: misc.c,v 1.30.8.2 2013/01/16 05:34:09 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,7 +74,6 @@ static KEY keylist[] = {
 	{"nochange",	F_NOCHANGE,	0},
 	{"optional",	F_OPT,		0},
 	{"ripemd160digest", F_RMD160,	NEEDVALUE},
-	{"rmd160digest",F_RMD160,	NEEDVALUE},
 	{"rmd160",	F_RMD160,	NEEDVALUE},
 	{"rmd160digest",F_RMD160,	NEEDVALUE},
 	{"sha1",	F_SHA1,		NEEDVALUE},

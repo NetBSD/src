@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.92.2.2 2012/10/30 17:22:23 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.92.2.3 2013/01/16 05:33:39 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.92.2.2 2012/10/30 17:22:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.92.2.3 2013/01/16 05:33:39 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -104,7 +104,7 @@ int msdosfs_mountfs(struct vnode *, struct mount *, struct lwp *,
 static int update_mp(struct mount *, struct msdosfs_args *);
 
 MALLOC_JUSTDEFINE(M_MSDOSFSMNT, "MSDOSFS mount", "MSDOS FS mount structure");
-MALLOC_JUSTDEFINE(M_MSDOSFSFAT, "MSDOSFS fat", "MSDOS FS fat table");
+MALLOC_JUSTDEFINE(M_MSDOSFSFAT, "MSDOSFS FAT", "MSDOS FS FAT table");
 MALLOC_JUSTDEFINE(M_MSDOSFSTMP, "MSDOSFS temp", "MSDOS FS temp. structures");
 
 #define ROOTNAME "root_device"
@@ -506,7 +506,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		bsize = secsize;
 		if (bsize != 512) {
-			DPRINTF(("Invalid block bsize %d for gemdos\n", bsize));
+			DPRINTF(("Invalid block bsize %d for GEMDOS\n", bsize));
 			error = EINVAL;
 			goto error_exit;
 		}
@@ -604,9 +604,9 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		if (FAT32(pmp)) {
-			DPRINTF(("fat32 for gemdos\n"));
+			DPRINTF(("FAT32 for GEMDOS\n"));
 			/*
-			 * GEMDOS doesn't know fat32.
+			 * GEMDOS doesn't know FAT32.
 			 */
 			error = EINVAL;
 			goto error_exit;
@@ -625,12 +625,12 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		  || (pmp->pm_HugeSectors == 0)
 		  || (pmp->pm_HugeSectors * (pmp->pm_BytesPerSec / bsize)
 		      > psize)) {
-			DPRINTF(("consistency checks for gemdos\n"));
+			DPRINTF(("consistency checks for GEMDOS\n"));
 			error = EINVAL;
 			goto error_exit;
 		}
 		/*
-		 * XXX - Many parts of the msdos fs driver seem to assume that
+		 * XXX - Many parts of the msdosfs driver seem to assume that
 		 * the number of bytes per logical sector (BytesPerSec) will
 		 * always be the same as the number of bytes per disk block
 		 * Let's pretend it is.
@@ -687,7 +687,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		    <= ((CLUST_RSRVD - CLUST_FIRST) & FAT12_MASK)) {
 			/*
 			 * This will usually be a floppy disk. This size makes
-			 * sure that one fat entry will not be split across
+			 * sure that one FAT entry will not be split across
 			 * multiple blocks.
 			 */
 			pmp->pm_fatmask = FAT12_MASK;
@@ -763,7 +763,8 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	 * XXX
 	 */
 	if (pmp->pm_fsinfo) {
-		if (pmp->pm_nxtfree == (u_long)-1)
+		if ((pmp->pm_nxtfree == 0xffffffffUL) ||
+		    (pmp->pm_nxtfree > pmp->pm_maxcluster))
 			pmp->pm_fsinfo = 0;
 	}
 
@@ -791,9 +792,9 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	}
 
 	/*
-	 * If they want fat updates to be synchronous then let them suffer
+	 * If they want FAT updates to be synchronous then let them suffer
 	 * the performance degradation in exchange for the on disk copy of
-	 * the fat being correct just about all the time.  I suppose this
+	 * the FAT being correct just about all the time.  I suppose this
 	 * would be a good thing to turn on if the kernel is still flakey.
 	 */
 	if (mp->mnt_flag & MNT_SYNCHRONOUS)
@@ -946,14 +947,14 @@ msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	int error, allerror = 0;
 
 	/*
-	 * If we ever switch to not updating all of the fats all the time,
+	 * If we ever switch to not updating all of the FATs all the time,
 	 * this would be the place to update them from the first one.
 	 */
 	if (pmp->pm_fmod != 0) {
 		if (pmp->pm_flags & MSDOSFSMNT_RONLY)
 			panic("msdosfs_sync: rofs mod");
 		else {
-			/* update fats here */
+			/* update FATs here */
 		}
 	}
 	/* Allocate a marker vnode. */

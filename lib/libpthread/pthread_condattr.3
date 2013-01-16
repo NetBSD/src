@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_condattr.3,v 1.7 2010/07/09 17:54:08 jruoho Exp $
+.\" $NetBSD: pthread_condattr.3,v 1.7.6.1 2013/01/16 05:32:26 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_condattr.3,v 1.10 2002/09/16 19:29:28 mini Exp $
-.Dd July 9, 2010
+.Dd November 2, 2012
 .Dt PTHREAD_CONDATTR 3
 .Os
 .Sh NAME
@@ -63,6 +63,8 @@
 .Ft int
 .Fn pthread_condattr_init "pthread_condattr_t *attr"
 .Ft int
+.Fn pthread_condattr_setclock "pthread_condattr_t *attr" "clockid_t clock"
+.Ft int
 .Fn pthread_condattr_destroy "pthread_condattr_t *attr"
 .Sh DESCRIPTION
 Condition attribute objects are used to specify parameters to the
@@ -74,6 +76,16 @@ function initializes a condition attribute object with the default attributes
 and the
 .Fn pthread_condattr_destroy
 function destroys a condition attribute object.
+The
+.Fn pthread_condattr_setclock
+function sets the system clock to be used for time comparisons to
+the one specified in
+.Fa clock .
+Valid clock values are
+.Dv CLOCK_MONOTONIC
+and
+.Dv CLOCK_REALTIME
+(the default).
 .Sh RETURN VALUES
 If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.

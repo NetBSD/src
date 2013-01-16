@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.5 2011/06/16 14:48:30 kefren Exp $ */
+/* $NetBSD: fsm.c,v 1.5.2.1 2013/01/16 05:34:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 {
 	struct ldp_peer *peer = NULL;
 	struct in_addr  peer_addr;
+	struct in6_addr	peer_addr6;
 	struct transport_address_tlv *trtlv;
 	struct hello_info *hi;
 
@@ -113,16 +114,20 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 			if (trtlv->type == TLV_IPV4_TRANSPORT)
 				memcpy(&peer_addr, &trtlv->address,
 				    sizeof(struct in_addr));
+			else if (trtlv->type == TLV_IPV6_TRANSPORT)
+				memcpy(&peer_addr6, &trtlv->address,
+				    sizeof(struct in6_addr));
 		} else
 			trtlv = NULL;
 		/*
-		 * RFC says: If A1 > A2, LSR1 plays the active role;
+		 * RFC 5036 2.5.2: If A1 > A2, LSR1 plays the active role;
 		 * otherwise it is passive.
 		 */
 		if (ntohl(peer_addr.s_addr) < ntohl(ladd->s_addr)) {
-#define	TRADDR (trtlv && trtlv->type == TLV_IPV4_TRANSPORT) ? &peer_addr : NULL
+#define	TR_INET4_ADDR (trtlv && trtlv->type == TLV_IPV4_TRANSPORT) ? &peer_addr : NULL
+#define TR_INET6_ADDR NULL
 			peer = ldp_peer_new(&pduid->ldp_id, padd,
-				TRADDR, ht->ch.holdtime, 0);
+				TR_INET4_ADDR, TR_INET6_ADDR, ht->ch.holdtime, 0);
 			if (!peer)
 				return;
 			if (peer && peer->state == LDP_PEER_CONNECTED)

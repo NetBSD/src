@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond.3,v 1.5 2010/07/09 20:56:01 wiz Exp $
+.\" $NetBSD: pthread_cond.3,v 1.5.6.1 2013/01/16 05:32:26 yamt Exp $
 .\"
 .\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,6 +66,7 @@
 .Ft int
 .Fn pthread_cond_init "pthread_cond_t * restrict cond" \
 "const pthread_condattr_t * restrict attr"
+.Vt pthread_cond_t cond No = Dv PTHREAD_COND_INITIALIZER;
 .Ft int
 .Fn pthread_cond_destroy "pthread_cond_t *cond"
 .Ft int
@@ -78,8 +79,6 @@
 .Ft int
 .Fn pthread_cond_timedwait "pthread_cond_t * restrict cond" \
 "pthread_mutex_t * restrict mutex" "const struct timespec * restrict abstime"
-.Pp
-.Va pthread_cond_t cond = Dv PTHREAD_COND_INITIALIZER;
 .\" ----------------------------------------------------------------------------
 .Sh DESCRIPTION
 Condition variables are intended to be used to communicate changes in

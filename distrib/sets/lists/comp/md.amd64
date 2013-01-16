@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.143.2.4 2012/10/30 18:48:41 yamt Exp $
+# $NetBSD: md.amd64,v 1.143.2.5 2013/01/16 05:26:06 yamt Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -57,6 +57,7 @@
 ./usr/include/amd64/segments.h			comp-c-include
 ./usr/include/amd64/setjmp.h			comp-c-include
 ./usr/include/amd64/signal.h			comp-c-include
+./usr/include/amd64/sljitarch.h			comp-c-include
 ./usr/include/amd64/specialreg.h		comp-c-include
 ./usr/include/amd64/stdarg.h			comp-obsolete		obsolete
 ./usr/include/amd64/sysarch.h			comp-c-include
@@ -86,6 +87,8 @@
 ./usr/include/clang-3.0/wmmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/x86intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/xmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.2/__wmmintrin_aes.h	comp-c-include		llvm
+./usr/include/clang-3.2/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-3.2/ammintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/avx2intrin.h		comp-c-include		llvm
@@ -103,6 +106,7 @@
 ./usr/include/clang-3.2/nmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/pmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/popcntintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/rtmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/smmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/tmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/wmmintrin.h		comp-c-include		llvm
@@ -202,6 +206,7 @@
 ./usr/include/i386/segments.h			comp-c-include
 ./usr/include/i386/setjmp.h			comp-c-include
 ./usr/include/i386/signal.h			comp-c-include
+./usr/include/i386/sljitarch.h			comp-c-include
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
 ./usr/include/i386/stdarg.h			comp-obsolete		obsolete
@@ -799,6 +804,11 @@
 ./usr/lib/i386/libnetpgp_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libnetpgp_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libnetpgp_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libnetpgpverify.a		comp-c-lib		compat
+./usr/lib/i386/libnetpgpverify.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/libnetpgpverify_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/libnetpgpverify_p.a		comp-c-proflib		compat,profile
+./usr/lib/i386/libnetpgpverify_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/i386/libnpf.a				comp-c-lib		compat,npf
 ./usr/lib/i386/libnpf.so			comp-sys-shlib		compat,npf,pic
 ./usr/lib/i386/libnpf_g.a			comp-c-proflib		compat,npf,debuglib
@@ -1091,7 +1101,7 @@
 ./usr/libdata/debug/usr/lib/i386/libatf-c.so.0.0.debug	comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/i386/libatf-c++.so.0.0.debug	comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/i386/libbfd.so.12.0.debug	comp-compat-shlib	compat,pic,binutils,debug
-./usr/libdata/debug/usr/lib/i386/libbind9.so.5.7.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libbind9.so.5.8.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbluetooth.so.4.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbsdmalloc.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbz2.so.1.1.debug	comp-compat-shlib	compat,pic,debug
@@ -1104,7 +1114,7 @@
 ./usr/libdata/debug/usr/lib/i386/libdes.so.8.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdevmapper.so.1.0.debug	comp-compat-shlib	compat,pic,lvm,debug
 ./usr/libdata/debug/usr/lib/i386/libdm.so.0.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libdns.so.5.7.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libdns.so.5.8.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdns_sd.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdwarf.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libedit.so.3.0.debug	comp-compat-shlib	compat,pic,debug
@@ -1129,9 +1139,9 @@
 ./usr/libdata/debug/usr/lib/i386/libi386.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libintl.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libipsec.so.3.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libisc.so.5.7.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libisccc.so.5.7.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libisccfg.so.5.7.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libisc.so.5.8.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libisccc.so.5.8.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libisccfg.so.5.8.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libiscsi.so.2.0.debug	comp-compat-shlib	compat,pic,debug,iscsi
 ./usr/libdata/debug/usr/lib/i386/libisns.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libkadm5clnt.so.12.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
@@ -1148,7 +1158,7 @@
 ./usr/libdata/debug/usr/lib/i386/libldap.so.4.2.debug	comp-compat-shlib	compat,pic,ldap,debug
 ./usr/libdata/debug/usr/lib/i386/libldap_r.so.4.2.debug	comp-compat-shlib	compat,pic,ldap,debug
 ./usr/libdata/debug/usr/lib/i386/liblua.so.1.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/liblwres.so.5.7.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/liblwres.so.5.8.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblzf.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblzma.so.1.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libm.so.0.10.debug	comp-compat-shlib	compat,pic,debug
@@ -1158,6 +1168,7 @@
 ./usr/libdata/debug/usr/lib/i386/libmpc.so.2.0.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libmpfr.so.4.1.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libnetpgp.so.3.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libnetpgpverify.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libnpf.so.0.0.debug	comp-compat-shlib	compat,pic,npf,debug
 ./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libopcodes.so.5.0.debug	comp-compat-shlib	compat,pic,binutils,debug
@@ -1176,7 +1187,7 @@
 ./usr/libdata/debug/usr/lib/i386/libquota.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libradius.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librefuse.so.2.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libresolv.so.2.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libresolv.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libroken.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libroken.so.19.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/librpcsvc.so.1.0.debug	comp-compat-shlib	compat,pic,debug
@@ -1195,7 +1206,7 @@
 ./usr/libdata/debug/usr/lib/i386/libsl.so.5.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libsqlite3.so.1.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libss.so.6.0.debug	comp-compat-shlib	obsolete
-./usr/libdata/debug/usr/lib/i386/libssh.so.19.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libssh.so.20.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libssl.so.10.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug

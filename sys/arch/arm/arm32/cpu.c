@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.78.4.2 2012/10/30 17:18:56 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.78.4.3 2013/01/16 05:32:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78.4.2 2012/10/30 17:18:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78.4.3 2013/01/16 05:32:43 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -59,11 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78.4.2 2012/10/30 17:18:56 yamt Exp $");
 
 #include <arm/cpuconf.h>
 #include <arm/undefined.h>
-
-#ifdef ARMFPE
-#include <machine/bootconfig.h> /* For boot args */
-#include <arm/fpe-arm/armfpe.h>
-#endif
 
 char cpu_model[256];
 
@@ -209,39 +204,6 @@ cpu_attach(device_t dv, cpuid_t id)
  	}
 #endif
 
-#ifdef ARMFPE
-	/*
-	 * Ok now we test for an FPA
-	 * At this point no floating point emulator has been installed.
-	 * This means any FP instruction will cause undefined exception.
-	 * We install a temporay coproc 1 handler which will modify
-	 * undefined_test if it is called.
-	 * We then try to read the FP status register. If undefined_test
-	 * has been decremented then the instruction was not handled by
-	 * an FPA so we know the FPA is missing. If undefined_test is
-	 * still 1 then we know the instruction was handled by an FPA.
-	 * We then remove our test handler and look at the
-	 * FP status register for identification.
-	 */
- 
-	/*
-	 * Ok if ARMFPE is defined and the boot options request the 
-	 * ARM FPE then it will be installed as the FPE.
-	 * This is just while I work on integrating the new FPE.
-	 * It means the new FPE gets installed if compiled int (ARMFPE
-	 * defined) and also gives me a on/off option when I boot in
-	 * case the new FPE is causing panics.
-	 */
-
-
-	int usearmfpe = 1;
-	if (boot_args)
-		get_bootconf_option(boot_args, "armfpe",
-		    BOOTOPT_TYPE_BOOLEAN, &usearmfpe);
-	if (usearmfpe)
-		initialise_arm_fpe();
-#endif
-
 	vfp_attach();		/* XXX SMP */
 }
 
@@ -363,7 +325,7 @@ static const char * const ixp425_steppings[16] = {
 };
 
 struct cpuidtab {
-	u_int32_t	cpuid;
+	uint32_t	cpuid;
 	enum		cpu_class cpu_class;
 	const char	*cpu_classname;
 	const char * const *cpu_steppings;
@@ -612,9 +574,9 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 		if (cpuids[i].cpuid == (cpuid & CPU_ID_CPU_MASK)) {
 			cpu_class = cpuids[i].cpu_class;
 			steppingstr = cpuids[i].cpu_steppings[cpuid &
-			    CPU_ID_REVISION_MASK],
-			sprintf(cpu_model, "%s%s%s (%s core)",
-			    cpuids[i].cpu_classname,
+			    CPU_ID_REVISION_MASK];
+			snprintf(cpu_model, sizeof(cpu_model),
+			    "%s%s%s (%s core)", cpuids[i].cpu_classname,
 			    steppingstr[0] == '*' ? "" : " ",
 			    &steppingstr[steppingstr[0] == '*'],
 			    cpu_classes[cpu_class].class_name);
@@ -622,7 +584,8 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 		}
 
 	if (cpuids[i].cpuid == 0)
-		sprintf(cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
+		snprintf(cpu_model, sizeof(cpu_model),
+		    "unknown CPU (ID = 0x%x)", cpuid);
 
 	if (ci->ci_data.cpu_cc_freq != 0) {
 		char freqbuf[8];

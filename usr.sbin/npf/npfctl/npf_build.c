@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.6.2.3 2012/10/30 19:00:43 yamt Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.6.2.4 2013/01/16 05:34:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.6.2.3 2012/10/30 19:00:43 yamt Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.6.2.4 2013/01/16 05:34:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -83,6 +83,12 @@ npfctl_config_send(int fd, const char *out)
 	}
 	npf_config_destroy(npf_conf);
 	return error;
+}
+
+nl_config_t *
+npfctl_config_ref(void)
+{
+	return npf_conf;
 }
 
 unsigned long
@@ -145,7 +151,7 @@ npfctl_build_fam(nc_ctx_t *nc, sa_family_t family,
 	 * Otherwise, address of invalid family was passed manually.
 	 */
 	if (family != AF_UNSPEC && family != fam->fam_family) {
-		if (!fam->fam_interface) {
+		if (!fam->fam_ifindex) {
 			yyerror("specified address is not of the required "
 			    "family %d", family);
 		}

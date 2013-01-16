@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.10.2.1 2012/10/30 18:49:36 yamt Exp $	*/
+/*	$NetBSD: server.c,v 1.10.2.2 2013/01/16 05:26:23 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -1442,15 +1442,14 @@ cleanup:
 }
 
 static isc_result_t
-configure_rpz(dns_view_t *view, const cfg_listelt_t *element) {
-	const cfg_obj_t *rpz_obj, *policy_obj;
+configure_rpz(dns_view_t *view, const cfg_listelt_t *element,
+	      isc_boolean_t recursive_only_def, dns_ttl_t ttl_def)
+{
+	const cfg_obj_t *rpz_obj, *policy_obj, *obj;
 	const char *str;
-	dns_fixedname_t fixed;
-	dns_name_t *origin;
 	dns_rpz_zone_t *old, *new;
 	dns_zone_t *zone = NULL;
 	isc_result_t result;
-	unsigned int l1, l2;
 
 	new = isc_mem_get(view->mctx, sizeof(*new));
 	if (new == NULL) {
@@ -1459,9 +1458,10 @@ configure_rpz(dns_view_t *view, const cfg_listelt_t *element) {
 	}
 
 	memset(new, 0, sizeof(*new));
-	dns_name_init(&new->nsdname, NULL);
 	dns_name_init(&new->origin, NULL);
+	dns_name_init(&new->nsdname, NULL);
 	dns_name_init(&new->cname, NULL);
+	dns_name_init(&new->passthru, NULL);
 	ISC_LIST_INITANDAPPEND(view->rpz_zones, new, link);
 
 	rpz_obj = cfg_listelt_value(element);
@@ -1469,15 +1469,31 @@ configure_rpz(dns_view_t *view, const cfg_listelt_t *element) {
 	if (cfg_obj_isvoid(policy_obj)) {
 		new->policy = DNS_RPZ_POLICY_GIVEN;
 	} else {
-		str = cfg_obj_asstring(policy_obj);
+		str = cfg_obj_asstring(cfg_tuple_get(policy_obj,
+						     "policy name"));
 		new->policy = dns_rpz_str2policy(str);
 		INSIST(new->policy != DNS_RPZ_POLICY_ERROR);
 	}
 
-	dns_fixedname_init(&fixed);
-	origin = dns_fixedname_name(&fixed);
-	str = cfg_obj_asstring(cfg_tuple_get(rpz_obj, "name"));
-	result = dns_name_fromstring(origin, str, DNS_NAME_DOWNCASE, NULL);
+	obj = cfg_tuple_get(rpz_obj, "recursive-only");
+	if (cfg_obj_isvoid(obj)) {
+		new->recursive_only = recursive_only_def;
+	} else {
+		new->recursive_only = cfg_obj_asboolean(obj);
+	}
+	if (!new->recursive_only)
+		view->rpz_recursive_only = ISC_FALSE;
+
+	obj = cfg_tuple_get(rpz_obj, "max-policy-ttl");
+	if (cfg_obj_isuint32(obj)) {
+		new->max_policy_ttl = cfg_obj_asuint32(obj);
+	} else {
+		new->max_policy_ttl = ttl_def;
+	}
+
+	str = cfg_obj_asstring(cfg_tuple_get(rpz_obj, "zone name"));
+	result = dns_name_fromstring(&new->origin, str, DNS_NAME_DOWNCASE,
+				     view->mctx);
 	if (result != ISC_R_SUCCESS) {
 		cfg_obj_log(rpz_obj, ns_g_lctx, DNS_RPZ_ERROR_LEVEL,
 			    "invalid zone '%s'", str);
@@ -1485,31 +1501,28 @@ configure_rpz(dns_view_t *view, const cfg_listelt_t *element) {
 	}
 
 	result = dns_name_fromstring2(&new->nsdname, DNS_RPZ_NSDNAME_ZONE,
-				      origin, DNS_NAME_DOWNCASE, view->mctx);
+				      &new->origin, DNS_NAME_DOWNCASE,
+				      view->mctx);
 	if (result != ISC_R_SUCCESS) {
 		cfg_obj_log(rpz_obj, ns_g_lctx, DNS_RPZ_ERROR_LEVEL,
 			    "invalid zone '%s'", str);
 		goto cleanup;
 	}
 
-	/*
-	 * The origin is part of 'nsdname' so we don't need to keep it
-	 * seperately.
-	 */
-	l1 = dns_name_countlabels(&new->nsdname);
-	l2 = dns_name_countlabels(origin);
-	dns_name_getlabelsequence(&new->nsdname, l1 - l2, l2, &new->origin);
+	result = dns_name_fromstring(&new->passthru, DNS_RPZ_PASSTHRU_ZONE,
+				     DNS_NAME_DOWNCASE, view->mctx);
+	if (result != ISC_R_SUCCESS) {
+		cfg_obj_log(rpz_obj, ns_g_lctx, DNS_RPZ_ERROR_LEVEL,
+			    "invalid zone '%s'", str);
+		goto cleanup;
+	}
 
-	/*
-	 * Are we configured to with the reponse policy zone?
-	 */
 	result = dns_view_findzone(view, &new->origin, &zone);
 	if (result != ISC_R_SUCCESS) {
 		cfg_obj_log(rpz_obj, ns_g_lctx, DNS_RPZ_ERROR_LEVEL,
 			    "unknown zone '%s'", str);
 		goto cleanup;
 	}
-
 	if (dns_zone_gettype(zone) != dns_zone_master &&
 	    dns_zone_gettype(zone) != dns_zone_slave) {
 		cfg_obj_log(rpz_obj, ns_g_lctx, DNS_RPZ_ERROR_LEVEL,
@@ -1533,8 +1546,9 @@ configure_rpz(dns_view_t *view, const cfg_listelt_t *element) {
 	}
 
 	if (new->policy == DNS_RPZ_POLICY_CNAME) {
-		str = cfg_obj_asstring(cfg_tuple_get(rpz_obj, "cname"));
-		result = dns_name_fromstring(&new->cname, str, 0, view->mctx);
+		str = cfg_obj_asstring(cfg_tuple_get(policy_obj, "cname"));
+		result = dns_name_fromstring(&new->cname, str,
+					     DNS_NAME_DOWNCASE, view->mctx);
 		if (result != ISC_R_SUCCESS) {
 			cfg_obj_log(rpz_obj, ns_g_lctx, DNS_RPZ_ERROR_LEVEL,
 				    "invalid cname '%s'", str);
@@ -1597,6 +1611,7 @@ configure_view(dns_view_t *view, cfg_obj_t *config, cfg_obj_t *vconfig,
 	const char *cachename = NULL;
 	dns_order_t *order = NULL;
 	isc_uint32_t udpsize;
+	isc_uint32_t maxbits;
 	unsigned int resopts = 0;
 	dns_zone_t *zone = NULL;
 	isc_uint32_t max_clients_per_query;
@@ -2222,6 +2237,19 @@ configure_view(dns_view_t *view, cfg_obj_t *config, cfg_obj_t *vconfig,
 	if (udpsize > 4096)
 		udpsize = 4096;
 	view->maxudp = udpsize;
+
+	/*
+	 * Set the maximum rsa exponent bits.
+	 */
+	obj = NULL;
+	result = ns_config_get(maps, "max-rsa-exponent-size", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	maxbits = cfg_obj_asuint32(obj);
+	if (maxbits != 0 && maxbits < 35)
+		maxbits = 35;
+	if (maxbits > 4096)
+		maxbits = 4096;
+	view->maxbits = maxbits;
 
 	/*
 	 * Set supported DNSSEC algorithms.
@@ -2860,19 +2888,39 @@ configure_view(dns_view_t *view, cfg_obj_t *config, cfg_obj_t *vconfig,
 	 * Make the list of response policy zone names for views that
 	 * are used for real lookups and so care about hints.
 	 */
-	zonelist = NULL;
-	if (view->rdclass == dns_rdataclass_in && need_hints) {
 		obj = NULL;
-		result = ns_config_get(maps, "response-policy", &obj);
-		if (result == ISC_R_SUCCESS)
-			cfg_map_get(obj, "zone", &zonelist);
-	}
+	if (view->rdclass == dns_rdataclass_in && need_hints &&
+	    ns_config_get(maps, "response-policy", &obj) == ISC_R_SUCCESS) {
+		const cfg_obj_t *recursive_only_obj;
+		const cfg_obj_t *break_dnssec_obj, *ttl_obj;
+		isc_boolean_t recursive_only_def;
+		dns_ttl_t ttl_def;
 
-	if (zonelist != NULL) {
-		for (element = cfg_list_first(zonelist);
+		recursive_only_obj = cfg_tuple_get(obj, "recursive-only");
+		if (!cfg_obj_isvoid(recursive_only_obj) &&
+		    !cfg_obj_asboolean(recursive_only_obj))
+			recursive_only_def = ISC_FALSE;
+		else
+			recursive_only_def = ISC_TRUE;
+
+		break_dnssec_obj = cfg_tuple_get(obj, "break-dnssec");
+		if (!cfg_obj_isvoid(break_dnssec_obj) &&
+		    cfg_obj_asboolean(break_dnssec_obj))
+			view->rpz_break_dnssec = ISC_TRUE;
+		else
+			view->rpz_break_dnssec = ISC_FALSE;
+
+		ttl_obj = cfg_tuple_get(obj, "max-policy-ttl");
+		if (cfg_obj_isuint32(ttl_obj))
+			ttl_def = cfg_obj_asuint32(ttl_obj);
+		else
+			ttl_def = DNS_RPZ_MAX_TTL_DEFAULT;
+
+		for (element = cfg_list_first(cfg_tuple_get(obj, "zone list"));
 		     element != NULL;
 		     element = cfg_list_next(element)) {
-			result = configure_rpz(view, element);
+			result = configure_rpz(view, element,
+					       recursive_only_def, ttl_def);
 			if (result != ISC_R_SUCCESS)
 				goto cleanup;
 			dns_rpz_set_need(ISC_TRUE);
@@ -5540,11 +5588,13 @@ ns_server_create(isc_mem_t *mctx, ns_server_t **serverp) {
 
 	/*
 	 * Setup the server task, which is responsible for coordinating
-	 * startup and shutdown of the server.
+	 * startup and shutdown of the server, as well as all exclusive
+	 * tasks.
 	 */
 	CHECKFATAL(isc_task_create(ns_g_taskmgr, 0, &server->task),
 		   "creating server task");
 	isc_task_setname(server->task, "server", server);
+	isc_taskmgr_setexcltask(ns_g_taskmgr, server->task);
 	CHECKFATAL(isc_task_onshutdown(server->task, shutdown_server, server),
 		   "isc_task_onshutdown");
 	CHECKFATAL(isc_app_onrun(ns_g_mctx, server->task, run_server, server),
@@ -7945,7 +7995,6 @@ ns_server_signing(ns_server_t *server, char *args, isc_buffer_t *text) {
 		memcpy(keystr, ptr, sizeof(keystr));
 	} else if(strcasecmp(ptr, "-nsec3param") == 0) {
 		const char *hashstr, *flagstr, *iterstr;
-		isc_buffer_t buf;
 		char nbuf[512];
 
 		chain = ISC_TRUE;
@@ -7973,9 +8022,13 @@ ns_server_signing(ns_server_t *server, char *args, isc_buffer_t *text) {
 			ptr = next_token(&args, " \t");
 			if (ptr == NULL)
 				return (ISC_R_UNEXPECTEDEND);
+			if (strcmp(ptr, "-") != 0) {
+				isc_buffer_t buf;
+
 			isc_buffer_init(&buf, salt, sizeof(salt));
 			CHECK(isc_hex_decodestring(ptr, &buf));
 			saltlen = isc_buffer_usedlength(&buf);
+		}
 		}
 	} else
 		CHECK(DNS_R_SYNTAX);

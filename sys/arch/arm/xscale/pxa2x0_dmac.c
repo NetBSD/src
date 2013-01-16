@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.c,v 1.8.2.2 2012/10/30 17:19:11 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.c,v 1.8.2.3 2013/01/16 05:32:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -104,7 +104,7 @@ struct dmac_xfer_state {
 	struct dmac_xfer_state_head *dxs_queue;
 	u_int dxs_channel;
 #define	DMAC_NO_CHANNEL	(~0)
-	u_int32_t dxs_dcmd;
+	uint32_t dxs_dcmd;
 	struct dmac_desc_segs dxs_segs[2];
 	bool dxs_misaligned_flag;
 };
@@ -191,11 +191,11 @@ struct pxadmac_softc {
 	 * Channel Priority Allocation
 	 */
 	struct {
-		u_int8_t p_first;
-		u_int8_t p_pri[DMAC_N_CHANNELS];
+		uint8_t p_first;
+		uint8_t p_pri[DMAC_N_CHANNELS];
 	} sc_prio[DMAC_N_PRIORITIES];
 #define	DMAC_PRIO_END		(~0)
-	u_int8_t sc_channel_priority[DMAC_N_CHANNELS];
+	uint8_t sc_channel_priority[DMAC_N_CHANNELS];
 
 	/*
 	 * DMA descriptor management
@@ -236,7 +236,7 @@ static void dmac_dmover_run(struct dmover_backend *);
 static void dmac_dmover_done(struct dmac_xfer *, int);
 #endif
 
-static inline u_int32_t
+static inline uint32_t
 dmac_reg_read(struct pxadmac_softc *sc, int reg)
 {
 
@@ -244,7 +244,7 @@ dmac_reg_read(struct pxadmac_softc *sc, int reg)
 }
 
 static inline void
-dmac_reg_write(struct pxadmac_softc *sc, int reg, u_int32_t val)
+dmac_reg_write(struct pxadmac_softc *sc, int reg, uint32_t val)
 {
 
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, reg, val);
@@ -856,8 +856,8 @@ pxa2x0_dmac_start_xfer(struct dmac_xfer *dx)
 
 	SLIST_INIT(&dxs->dxs_descs);
 	dxs->dxs_channel = DMAC_NO_CHANNEL;
-	dxs->dxs_dcmd = (((u_int32_t)dxs->dxs_dev_width) << DCMD_WIDTH_SHIFT) |
-	    (((u_int32_t)dxs->dxs_burst_size) << DCMD_SIZE_SHIFT);
+	dxs->dxs_dcmd = (((uint32_t)dxs->dxs_dev_width) << DCMD_WIDTH_SHIFT) |
+	    (((uint32_t)dxs->dxs_burst_size) << DCMD_SIZE_SHIFT);
 
 	switch (dxs->dxs_flow) {
 	case DMAC_FLOW_CTRL_NONE:
@@ -900,7 +900,7 @@ pxa2x0_dmac_abort_xfer(struct dmac_xfer *dx)
 	struct dmac_xfer_state *ndxs, *dxs = (struct dmac_xfer_state *)dx;
 	struct dmac_desc *desc, *ndesc;
 	struct dmac_xfer_state_head *queue;
-	u_int32_t rv;
+	uint32_t rv;
 	int s, timeout, need_start = 0;
 
 	s = splbio();
@@ -1194,7 +1194,7 @@ dmac_channel_intr(struct pxadmac_softc *sc, u_int channel)
 {
 	struct dmac_xfer_state *dxs;
 	struct dmac_desc *desc, *ndesc;
-	u_int32_t dcsr;
+	uint32_t dcsr;
 	u_int rv = 0;
 
 	dcsr = dmac_reg_read(sc, DMAC_DCSR(channel));
@@ -1306,7 +1306,7 @@ static int
 dmac_intr(void *arg)
 {
 	struct pxadmac_softc *sc = arg;
-	u_int32_t rv, mask;
+	uint32_t rv, mask;
 	u_int chan, pri;
 
 	rv = dmac_reg_read(sc, DMAC_DINT);

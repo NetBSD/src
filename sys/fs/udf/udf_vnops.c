@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.68.2.3 2012/10/30 17:22:26 yamt Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.68.2.4 2013/01/16 05:33:41 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.68.2.3 2012/10/30 17:22:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.68.2.4 2013/01/16 05:33:41 yamt Exp $");
 #endif /* not lint */
 
 
@@ -687,10 +687,11 @@ udf_lookup(void *v)
 
 	DPRINTF(LOOKUP, ("\tlooking up cnp->cn_nameptr '%s'\n",
 	    cnp->cn_nameptr));
-	/* look in the nami cache; returns 0 on success!! */
-	error = cache_lookup(dvp, vpp, cnp);
-	if (error >= 0)
-		return error;
+	/* look in the namecache */
+	if (cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
+		return *vpp == NULLVP ? ENOENT : 0;
+	}
 
 	DPRINTF(LOOKUP, ("\tNOT found in cache\n"));
 
@@ -796,7 +797,8 @@ out:
 	 * might be seen as negative caching.
 	 */
 	if (nameiop != CREATE)
-		cache_enter(dvp, *vpp, cnp);
+		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 
 	DPRINTFIF(LOOKUP, error, ("udf_lookup returing error %d\n", error));
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.h,v 1.6 2008/04/28 20:23:46 martin Exp $ */
+/* $NetBSD: cgd_crypto.h,v 1.6.34.1 2013/01/16 05:33:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,12 +41,13 @@ typedef void  (cfunc_destroy)(void *);
 typedef void  (cfunc_cipher)(void *, struct uio *, struct uio *, void *, int);
 
 struct cryptfuncs {
+	const char	 *cf_name;	/* cipher name */
 	cfunc_init	 *cf_init;	/* Initialisation function */
 	cfunc_destroy	 *cf_destroy;	/* destruction function */
 	cfunc_cipher	 *cf_cipher;	/* the cipher itself */
 };
 
-struct cryptfuncs	*cryptfuncs_find(const char *);
+const struct cryptfuncs	*cryptfuncs_find(const char *);
 #endif /* _KERNEL */
 
 #endif /* _DEV_CGD_CRYPTO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.7.2.2 2012/10/30 17:19:00 yamt Exp $	*/
+/*	$NetBSD: pl310.c,v 1.7.2.3 2013/01/16 05:32:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.7.2.2 2012/10/30 17:19:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.7.2.3 2013/01/16 05:32:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,8 +67,8 @@ __CTASSERT(offsetof(struct arml2cc_softc, sc_ev_wbinv.ev_count) % 8 == 0);
 CFATTACH_DECL_NEW(arml2cc, sizeof(struct arml2cc_softc),
     arml2cc_match, arml2cc_attach, NULL, NULL);
 
-static void arml2cc_disable(struct arml2cc_softc *);
-static void arml2cc_enable(struct arml2cc_softc *);
+static inline void arml2cc_disable(struct arml2cc_softc *);
+static inline void arml2cc_enable(struct arml2cc_softc *);
 static void arml2cc_sdcache_wb_range(vaddr_t, paddr_t, psize_t);
 static void arml2cc_sdcache_inv_range(vaddr_t, paddr_t, psize_t);
 static void arml2cc_sdcache_wbinv_range(vaddr_t, paddr_t, psize_t);
@@ -237,7 +237,7 @@ arml2cc_enable(struct arml2cc_softc *sc)
 
 	arml2cc_write_4(sc, L2C_CTL, 1);	// turn it on
 
-	//arml2cc_cache_way_op(sc, L2C_INV_WAY, sc->sc_waymask);
+	arml2cc_cache_way_op(sc, L2C_INV_WAY, sc->sc_waymask);
 	arml2cc_cache_sync(sc);
 
 	mutex_spin_exit(&sc->sc_lock);

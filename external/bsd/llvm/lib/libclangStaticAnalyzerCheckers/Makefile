@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.2 2012/10/30 18:55:55 yamt Exp $
+#	$NetBSD: Makefile,v 1.8.2.3 2013/01/16 05:27:59 yamt Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -49,6 +49,7 @@ SRCS+=	AnalyzerStatsChecker.cpp \
 	ObjCAtSyncChecker.cpp \
 	ObjCContainersASTChecker.cpp \
 	ObjCContainersChecker.cpp \
+	ObjCMissingSuperCallChecker.cpp \
 	ObjCSelfInitChecker.cpp \
 	ObjCUnusedIVarsChecker.cpp \
 	PointerArithChecker.cpp \
@@ -57,6 +58,7 @@ SRCS+=	AnalyzerStatsChecker.cpp \
 	RetainCountChecker.cpp \
 	ReturnPointerRangeChecker.cpp \
 	ReturnUndefChecker.cpp \
+	SimpleStreamChecker.cpp \
 	StackAddrEscapeChecker.cpp \
 	StreamChecker.cpp \
 	TaintTesterChecker.cpp \

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.38.8.1 2012/10/30 18:58:33 yamt Exp $	*/
+/*	$NetBSD: resolv.h,v 1.38.8.2 2013/01/16 05:32:22 yamt Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -63,6 +63,7 @@
 #include <sys/cdefs.h>
 #include <sys/socket.h>
 #include <stdio.h>
+#include <netinet/in.h>
 #include <arpa/nameser.h>
 
 /*%

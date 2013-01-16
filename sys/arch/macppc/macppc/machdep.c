@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.162.2.1 2012/04/17 00:06:38 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.162.2.2 2013/01/16 05:33:00 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162.2.1 2012/04/17 00:06:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162.2.2 2013/01/16 05:33:00 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -112,6 +112,7 @@ struct genfb_parameter_callback gpc_backlight, gpc_brightness;
  * state so we assume the backlight is on and about 4/5 up which seems 
  * reasonable for most laptops
  */
+
 int backlight_state = 1;
 int brightness_level = 200;
 
@@ -269,9 +270,11 @@ callback(void *p)
 void
 copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 {
+	char name[32];
 	uint32_t temp;
 	uint64_t cmap_cb, backlight_cb, brightness_cb;
 	int have_backlight = 0;
+	int have_palette = 1;
 
 	if (node != console_node) {
 		/*
@@ -316,7 +319,19 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 		if (fbaddr != 0)
 			prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}
-	of_to_dataprop(dict, node, "EDID", "EDID");
+	if (of_to_dataprop(dict, node, "EDID", "EDID")) {
+		aprint_verbose("found EDID property...\n");
+	} else if (of_to_dataprop(dict, node, "EDID,A", "EDID")) {
+		aprint_verbose("found EDID,A\n");
+	} else if (of_to_dataprop(dict, node, "EDID,B", "EDID")) {
+		memset(name, 0, sizeof(name));
+		OF_getprop(node, "name", name, sizeof(name));
+		if (strcmp(name, "NVDA,NVMac") == 0) {
+			aprint_verbose("found EDID,B on nvidia - assuming digital output\n");
+			prop_dictionary_set_bool(dict, "no_palette_control", 1);
+			have_palette = 0;
+		}
+	}
 	add_model_specifics(dict);
 
 	temp = 0;
@@ -328,10 +343,12 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 	if (temp != 0)
 		prop_dictionary_set_uint32(dict, "refclk", temp / 10);
 
-	gfb_cb.gcc_cookie = (void *)console_instance;
-	gfb_cb.gcc_set_mapreg = of_set_palette;
-	cmap_cb = (uint64_t)(uintptr_t)&gfb_cb;
-	prop_dictionary_set_uint64(dict, "cmap_callback", cmap_cb);
+	if (have_palette) {
+		gfb_cb.gcc_cookie = (void *)console_instance;
+		gfb_cb.gcc_set_mapreg = of_set_palette;
+		cmap_cb = (uint64_t)(uintptr_t)&gfb_cb;
+		prop_dictionary_set_uint64(dict, "cmap_callback", cmap_cb);
+	}
 
 	/* not let's look for backlight control */
 	have_backlight = 0;
@@ -342,6 +359,7 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 		have_backlight = 1;
 	}
 	if (have_backlight) {
+
 		gpc_backlight.gpc_cookie = (void *)console_instance;
 		gpc_backlight.gpc_set_parameter = of_set_backlight;
 		gpc_backlight.gpc_get_parameter = of_get_backlight;

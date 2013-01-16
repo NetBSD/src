@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.21 2009/10/21 14:15:51 rmind Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.21.12.1 2013/01/16 05:32:50 yamt Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -432,10 +432,10 @@
 #define	BE_32BIT(a)		0x00
 
 /* PCI byte selects */
-#define	READ_8BIT(v,a)		((u_int8_t)((v) >> (((a) & 3) * 8)))
-#define	READ_16BIT(v,a)		((u_int16_t)((v) >> (((a) & 2) * 8)))
-#define	WRITE_8BIT(v,a)		(((u_int32_t)(v)) << (((a) & 3) * 8))
-#define	WRITE_16BIT(v,a)	(((u_int32_t)(v)) << (((a) & 2) * 8))
+#define	READ_8BIT(v,a)		((uint8_t)((v) >> (((a) & 3) * 8)))
+#define	READ_16BIT(v,a)		((uint16_t)((v) >> (((a) & 2) * 8)))
+#define	WRITE_8BIT(v,a)		(((uint32_t)(v)) << (((a) & 3) * 8))
+#define	WRITE_16BIT(v,a)	(((uint32_t)(v)) << (((a) & 2) * 8))
 
 /* PCI Controller Configuration Commands for PCI_CRP_AD_CBE */
 #define COMMAND_CRP_READ	0x00

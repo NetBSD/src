@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.24.4.2 2012/10/30 17:22:22 yamt Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.24.4.3 2013/01/16 05:33:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.24.4.2 2012/10/30 17:22:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.24.4.3 2013/01/16 05:33:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,9 +73,10 @@ efs_lookup(void *v)
 	if (err)
 		return (err);
 
-	err = cache_lookup(ap->a_dvp, ap->a_vpp, cnp);
-	if (err != -1)
-		return (err);
+	if (cache_lookup(ap->a_dvp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, NULL, ap->a_vpp)) {
+		return *ap->a_vpp == NULLVP ? ENOENT : 0;
+	}
 
 	/*
 	 * Handle the three lookup types: '.', '..', and everything else.
@@ -103,7 +104,8 @@ efs_lookup(void *v)
 		    EFS_VTOI(ap->a_dvp), ap->a_cnp, &ino);
 		if (err) {
 			if (err == ENOENT && nameiop != CREATE)
-				cache_enter(ap->a_dvp, NULL, cnp);
+				cache_enter(ap->a_dvp, NULL, cnp->cn_nameptr,
+					    cnp->cn_namelen, cnp->cn_flags);
 			if (err == ENOENT && (nameiop == CREATE ||
 			    nameiop == RENAME)) {
 				err = VOP_ACCESS(ap->a_dvp, VWRITE,
@@ -120,7 +122,8 @@ efs_lookup(void *v)
 		*ap->a_vpp = vp;
 	}
 
-	cache_enter(ap->a_dvp, *ap->a_vpp, cnp);
+	cache_enter(ap->a_dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
+		    cnp->cn_flags);
 
 	return 0;
 }

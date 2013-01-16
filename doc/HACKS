@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.120.2.2 2012/04/17 00:02:55 yamt Exp $
+# $NetBSD: HACKS,v 1.120.2.3 2013/01/16 05:26:13 yamt Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -554,6 +554,24 @@ port	arm
 		http://gcc.gnu.org/bugzilla/show_bug.cgi?id=48863#c4
 	kcah
 
+	hack	gcc-4.5 arm without -fno-tree-vrp generate broken code
+	cdate	Wed Nov 14 13:02:02 JST 2012
+	who	msaitoh
+	file	lib/libc/softfloat/Makefile.inc
+	pr	46953
+	regress	src/tests/lib/libm/t_cbrt
+	regress	src/tests/lib/libm/t_ceil
+	regress	src/tests/lib/libm/t_exp
+	regress	src/tests/lib/libm/t_log
+	regress	src/tests/lib/libm/t_scalbn
+	regress	src/tests/lib/libm/t_sinh
+	regress	src/tests/lib/libm/t_sqrt
+	descr	Gcc has a bug in tree optimization. For adddf3,
+		-INF + -INF returns 0 without -fno-tree-vrp.
+		Debugging with -fdump-tree-all shows that
+		softfloat.c.021t.cleanup_cfg is ok but softfloat.c.023t.ssa
+		is broken.
+	kcah
 
 port	sh3
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.liveimage,v 1.2.4.2 2012/04/17 00:02:32 yamt Exp $
+#	$NetBSD: Makefile.liveimage,v 1.2.4.3 2013/01/16 05:26:01 yamt Exp $
 #
 # Common Makefile to create a bootable FS image for USB flash or emulators
 #
@@ -7,6 +7,11 @@
 # Required variables:
 #	LIVEIMGBASE
 #		Basename of the liveimage
+#
+# Optional variables:
+#	LIVEIMAGEMB
+#		target image size in MB
+#		(if empty default IMAGEMB in Makefile.bootimage is used)
 #
 # See Makefile.bootimage for other variables.
 #
@@ -19,6 +24,10 @@ check_LIVEIMGBASE: .PHONY .NOTMAIN
 .else
 	@true
 .endif
+.endif
+
+.if defined(LIVEIMAGEMB)
+IMAGEMB=	${LIVEIMAGEMB}
 .endif
 
 IMGBASE=	${LIVEIMGBASE}

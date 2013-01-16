@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.209.2.2 2012/10/30 18:59:02 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.209.2.3 2013/01/16 05:32:25 yamt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -275,7 +275,11 @@ MLINKS+=extattr_get_file.2 extattr_set_file.2 \
 	extattr_get_file.2 extattr_set_link.2 \
 	extattr_get_file.2 extattr_delete_link.2 \
 	extattr_get_file.2 extattr_list_link.2
+MLINKS+=access.2 faccessat.2
+MLINKS+=chmod.2 fchmodat.2
+MLINKS+=chown.2 fchownat.2
 MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatvfs.2 fhopen.2 fhstatvfs1.2
+MLINKS+=stat.2 fstatat.2
 MLINKS+=fsync.2 fsync_range.2
 MLINKS+=getcontext.2 setcontext.2
 MLINKS+=getgid.2 getegid.2
@@ -299,18 +303,25 @@ MLINKS+=_lwp_getprivate.2 _lwp_setprivate.2
 MLINKS+=madvise.2 posix_madvise.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mlockall.2 munlockall.2
+MLINKS+=mkdir.2 mkdirat.2
+MLINKS+=mkfifo.2 mkfifoat.2
+MLINKS+=mknod.2 mknodat.2
 MLINKS+=mount.2 unmount.2
+MLINKS+=open.2 openat.2
 MLINKS+=ntp_adjtime.2 ntp_gettime.2
 MLINKS+=pathconf.2 fpathconf.2
 MLINKS+=pmc_control.2 pmc_get_info.2
 MLINKS+=poll.2 pollts.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
+MLINKS+=readlink.2 readlinkat.2
 MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2 recv.2 recvmmsg.2
+MLINKS+=rename.2 renameat.2
 MLINKS+=select.2 pselect.2
 MLINKS+=send.2 sendmsg.2 send.2 sendto.2 send.2 sendmmsg.2
 MLINKS+=setpgid.2 setpgrp.2
 MLINKS+=setuid.2 setegid.2 setuid.2 seteuid.2 setuid.2 setgid.2
 MLINKS+=shmat.2 shmdt.2
+MLINKS+=symlink.2 symlinkat.2
 MLINKS+=timer_settime.2 timer_gettime.2 timer_settime.2 timer_getoverrun.2
 MLINKS+=sigqueue.2 sigqueueinfo.2
 MLINKS+=sigtimedwait.2 sigwaitinfo.2
@@ -321,6 +332,7 @@ MLINKS+=statvfs.2 statvfs1.2
 MLINKS+=statvfs.2 fstatvfs1.2
 MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
+MLINKS+=unlink.2 unlinkat.2
 MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
 MLINKS+=utimes.2 futimens.2 utimes.2 utimensat.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.10.4.1 2012/10/30 17:22:53 yamt Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.10.4.2 2013/01/16 05:33:51 yamt Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -8,16 +8,6 @@
 #define _RUMP_RUMPDEFS_H_
 
 #include <rump/rump_namei.h>
-
-struct rump_sockaddr_in {
-	uint8_t		sin_len;
-	uint8_t		sin_family;
-	uint16_t	sin_port;
-	struct {
-			uint32_t s_addr;
-	} sin_addr;
-	int8_t		sin_zero[8];
-};
 
 /*	NetBSD: fcntl.h,v 1.42 2012/01/25 00:28:35 christos Exp 	*/
 #define	RUMP_O_RDONLY	0x00000000	/* open for reading only */
@@ -43,20 +33,117 @@ struct rump_sockaddr_in {
 #define	RUMP_O_SEARCH	0x00800000	/* skip search permission checks */
 #define	RUMP_O_NOSIGPIPE	0x01000000	/* don't deliver sigpipe */
 
-/*	NetBSD: vnode.h,v 1.236 2011/11/24 15:51:30 ahoka Exp 	*/
-#ifndef __VTYPE_DEFINED
-#define __VTYPE_DEFINED
-enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
-#endif /* __VTYPE_DEFINED */
+/*	NetBSD: vnode.h,v 1.237 2012/11/18 18:39:24 pooka Exp 	*/
+enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VLNK, RUMP_VSOCK, RUMP_VFIFO, RUMP_VBAD };
 #define	RUMP_LK_SHARED	0x00000001	
 #define	RUMP_LK_EXCLUSIVE	0x00000002	
 #define	RUMP_LK_NOWAIT	0x00000010	
 #define	RUMP_LK_RETRY	0x00020000	
 
 /*	NetBSD: errno.h,v 1.39 2006/10/31 00:38:07 cbiere Exp 	*/
-#ifndef EJUSTRETURN
-#define	EJUSTRETURN	-2		/* don't modify regs, just return */
-#endif /* EJUSTRETURN */
+#define	RUMP_EPERM		1		/* Operation not permitted */
+#define	RUMP_ENOENT		2		/* No such file or directory */
+#define	RUMP_ESRCH		3		/* No such process */
+#define	RUMP_EINTR		4		/* Interrupted system call */
+#define	RUMP_EIO		5		/* Input/output error */
+#define	RUMP_ENXIO		6		/* Device not configured */
+#define	RUMP_E2BIG		7		/* Argument list too long */
+#define	RUMP_ENOEXEC		8		/* Exec format error */
+#define	RUMP_EBADF		9		/* Bad file descriptor */
+#define	RUMP_ECHILD		10		/* No child processes */
+#define	RUMP_EDEADLK		11		/* Resource deadlock avoided */
+#define	RUMP_ENOMEM		12		/* Cannot allocate memory */
+#define	RUMP_EACCES		13		/* Permission denied */
+#define	RUMP_EFAULT		14		/* Bad address */
+#define	RUMP_ENOTBLK		15		/* Block device required */
+#define	RUMP_EBUSY		16		/* Device busy */
+#define	RUMP_EEXIST		17		/* File exists */
+#define	RUMP_EXDEV		18		/* Cross-device link */
+#define	RUMP_ENODEV		19		/* Operation not supported by device */
+#define	RUMP_ENOTDIR		20		/* Not a directory */
+#define	RUMP_EISDIR		21		/* Is a directory */
+#define	RUMP_EINVAL		22		/* Invalid argument */
+#define	RUMP_ENFILE		23		/* Too many open files in system */
+#define	RUMP_EMFILE		24		/* Too many open files */
+#define	RUMP_ENOTTY		25		/* Inappropriate ioctl for device */
+#define	RUMP_ETXTBSY		26		/* Text file busy */
+#define	RUMP_EFBIG		27		/* File too large */
+#define	RUMP_ENOSPC		28		/* No space left on device */
+#define	RUMP_ESPIPE		29		/* Illegal seek */
+#define	RUMP_EROFS		30		/* Read-only file system */
+#define	RUMP_EMLINK		31		/* Too many links */
+#define	RUMP_EPIPE		32		/* Broken pipe */
+#define	RUMP_EDOM		33		/* Numerical argument out of domain */
+#define	RUMP_ERANGE		34		/* Result too large or too small */
+#define	RUMP_EAGAIN		35		/* Resource temporarily unavailable */
+#define	RUMP_EWOULDBLOCK	EAGAIN		/* Operation would block */
+#define	RUMP_EINPROGRESS	36		/* Operation now in progress */
+#define	RUMP_EALREADY	37		/* Operation already in progress */
+#define	RUMP_ENOTSOCK	38		/* Socket operation on non-socket */
+#define	RUMP_EDESTADDRREQ	39		/* Destination address required */
+#define	RUMP_EMSGSIZE	40		/* Message too long */
+#define	RUMP_EPROTOTYPE	41		/* Protocol wrong type for socket */
+#define	RUMP_ENOPROTOOPT	42		/* Protocol option not available */
+#define	RUMP_EPROTONOSUPPORT	43		/* Protocol not supported */
+#define	RUMP_ESOCKTNOSUPPORT	44		/* Socket type not supported */
+#define	RUMP_EOPNOTSUPP	45		/* Operation not supported */
+#define	RUMP_EPFNOSUPPORT	46		/* Protocol family not supported */
+#define	RUMP_EAFNOSUPPORT	47		/* Address family not supported by protocol family */
+#define	RUMP_EADDRINUSE	48		/* Address already in use */
+#define	RUMP_EADDRNOTAVAIL	49		/* Can't assign requested address */
+#define	RUMP_ENETDOWN	50		/* Network is down */
+#define	RUMP_ENETUNREACH	51		/* Network is unreachable */
+#define	RUMP_ENETRESET	52		/* Network dropped connection on reset */
+#define	RUMP_ECONNABORTED	53		/* Software caused connection abort */
+#define	RUMP_ECONNRESET	54		/* Connection reset by peer */
+#define	RUMP_ENOBUFS		55		/* No buffer space available */
+#define	RUMP_EISCONN		56		/* Socket is already connected */
+#define	RUMP_ENOTCONN	57		/* Socket is not connected */
+#define	RUMP_ESHUTDOWN	58		/* Can't send after socket shutdown */
+#define	RUMP_ETOOMANYREFS	59		/* Too many references: can't splice */
+#define	RUMP_ETIMEDOUT	60		/* Operation timed out */
+#define	RUMP_ECONNREFUSED	61		/* Connection refused */
+#define	RUMP_ELOOP		62		/* Too many levels of symbolic links */
+#define	RUMP_ENAMETOOLONG	63		/* File name too long */
+#define	RUMP_EHOSTDOWN	64		/* Host is down */
+#define	RUMP_EHOSTUNREACH	65		/* No route to host */
+#define	RUMP_ENOTEMPTY	66		/* Directory not empty */
+#define	RUMP_EPROCLIM	67		/* Too many processes */
+#define	RUMP_EUSERS		68		/* Too many users */
+#define	RUMP_EDQUOT		69		/* Disc quota exceeded */
+#define	RUMP_ESTALE		70		/* Stale NFS file handle */
+#define	RUMP_EREMOTE		71		/* Too many levels of remote in path */
+#define	RUMP_EBADRPC		72		/* RPC struct is bad */
+#define	RUMP_ERPCMISMATCH	73		/* RPC version wrong */
+#define	RUMP_EPROGUNAVAIL	74		/* RPC prog. not avail */
+#define	RUMP_EPROGMISMATCH	75		/* Program version wrong */
+#define	RUMP_EPROCUNAVAIL	76		/* Bad procedure for program */
+#define	RUMP_ENOLCK		77		/* No locks available */
+#define	RUMP_ENOSYS		78		/* Function not implemented */
+#define	RUMP_EFTYPE		79		/* Inappropriate file type or format */
+#define	RUMP_EAUTH		80		/* Authentication error */
+#define	RUMP_ENEEDAUTH	81		/* Need authenticator */
+#define	RUMP_EIDRM		82		/* Identifier removed */
+#define	RUMP_ENOMSG		83		/* No message of desired type */
+#define	RUMP_EOVERFLOW	84		/* Value too large to be stored in data type */
+#define	RUMP_EILSEQ		85		/* Illegal byte sequence */
+#define RUMP_ENOTSUP		86		/* Not supported */
+#define RUMP_ECANCELED	87		/* Operation canceled */
+#define RUMP_EBADMSG		88		/* Bad or Corrupt message */
+#define RUMP_ENODATA		89		/* No message available */
+#define RUMP_ENOSR		90		/* No STREAM resources */
+#define RUMP_ENOSTR		91		/* Not a STREAM */
+#define RUMP_ETIME		92		/* STREAM ioctl timeout */
+#define	RUMP_ENOATTR		93		/* Attribute not found */
+#define	RUMP_EMULTIHOP	94		/* Multihop attempted */ 
+#define	RUMP_ENOLINK		95		/* Link has been severed */
+#define	RUMP_EPROTO		96		/* Protocol error */
+#define	RUMP_ELAST		96		/* Must equal largest errno */
+#define	RUMP_EJUSTRETURN	-2		/* don't modify regs, just return */
+#define	RUMP_ERESTART	-3		/* restart syscall */
+#define	RUMP_EPASSTHROUGH	-4		/* ioctl not handled by this layer */
+#define	RUMP_EDUPFD		-5		/* Dup given fd */
+#define	RUMP_EMOVEFD		-6		/* Move given fd */
 
 /*	NetBSD: reboot.h,v 1.25 2007/12/25 18:33:48 perry Exp 	*/
 #define	RUMP_RB_AUTOBOOT	0	

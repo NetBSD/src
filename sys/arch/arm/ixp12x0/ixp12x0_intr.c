@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.22.2.1 2012/10/30 17:19:05 yamt Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.22.2.2 2013/01/16 05:32:49 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.22.2.1 2012/10/30 17:19:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.22.2.2 2013/01/16 05:32:49 yamt Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -54,37 +54,37 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.22.2.1 2012/10/30 17:19:05 yamt E
 #include <arm/ixp12x0/ixp12x0_pcireg.h> 
 
 
-extern u_int32_t	ixpcom_cr;	/* current cr from *_com.c */
-extern u_int32_t	ixpcom_imask;	/* tell mask to *_com.c */
+extern uint32_t	ixpcom_cr;	/* current cr from *_com.c */
+extern uint32_t	ixpcom_imask;	/* tell mask to *_com.c */
 
 /* Interrupt handler queues. */
 struct intrq intrq[NIRQ];
 
 /* Interrupts to mask at each level. */
-static u_int32_t imask[NIPL];
-static u_int32_t pci_imask[NIPL];
+static uint32_t imask[NIPL];
+static uint32_t pci_imask[NIPL];
 
 /* Current interrupt priority level. */
 volatile int hardware_spl_level;
 
 /* Software copy of the IRQs we have enabled. */
-volatile u_int32_t intr_enabled;
-volatile u_int32_t pci_intr_enabled;
+volatile uint32_t intr_enabled;
+volatile uint32_t pci_intr_enabled;
 
 /* Interrupts pending. */
 static volatile int ipending;
 
 void	ixp12x0_intr_dispatch(struct trapframe *);
 
-#define IXPREG(reg)	*((volatile u_int32_t*) (reg))
+#define IXPREG(reg)	*((volatile uint32_t*) (reg))
 
-static inline u_int32_t
+static inline uint32_t
 ixp12x0_irq_read(void)
 {
 	return IXPREG(IXP12X0_IRQ_VBASE) & IXP12X0_INTR_MASK;
 }
 
-static inline u_int32_t
+static inline uint32_t
 ixp12x0_pci_irq_read(void)
 {
 	return IXPREG(IXPPCI_IRQ_STATUS);
@@ -109,7 +109,7 @@ ixp12x0_disable_uart_irq(void)
 }
 
 static void
-ixp12x0_set_intrmask(u_int32_t irqs, u_int32_t pci_irqs)
+ixp12x0_set_intrmask(uint32_t irqs, uint32_t pci_irqs)
 {
 	if (irqs & (1U << IXP12X0_INTR_UART)) {
 		ixp12x0_disable_uart_irq();
@@ -341,7 +341,7 @@ ixp12x0_intr_establish(int irq, int ipl, int (*ih_func)(void *), void *arg)
 	u_int			oldirqstate;
 #ifdef DEBUG
 	printf("ixp12x0_intr_establish(irq=%d, ipl=%d, ih_func=%08x, arg=%08x)\n",
-	       irq, ipl, (u_int32_t) ih_func, (u_int32_t) arg);
+	       irq, ipl, (uint32_t) ih_func, (uint32_t) arg);
 #endif
 	if (irq < 0 || irq > NIRQ)
 		panic("ixp12x0_intr_establish: IRQ %d out of range", ipl);
@@ -389,10 +389,10 @@ ixp12x0_intr_dispatch(struct trapframe *frame)
 	struct cpu_info* const	ci = curcpu();
 	const int		ppl = ci->ci_cpl;
 	u_int			oldirqstate;
-	u_int32_t		hwpend;
-	u_int32_t		pci_hwpend;
+	uint32_t		hwpend;
+	uint32_t		pci_hwpend;
 	int			irq;
-	u_int32_t		ibit;
+	uint32_t		ibit;
 
 
 	hwpend = ixp12x0_irq_read();

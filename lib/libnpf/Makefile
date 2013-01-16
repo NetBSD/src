@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.1.6.2 2012/10/30 18:59:13 yamt Exp $
+# $NetBSD: Makefile,v 1.1.6.3 2013/01/16 05:32:25 yamt Exp $
 
 .include <bsd.own.mk>
+
+USE_SHLIBDIR=   yes
 
 LIB=		npf
 MAN=		npf.3

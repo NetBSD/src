@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.251.2.2 2012/10/30 18:46:04 yamt Exp $
+#	$NetBSD: build.sh,v 1.251.2.3 2013/01/16 05:25:52 yamt Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -263,6 +263,8 @@ progname=${0##*/}
 toppid=$$
 results=/dev/null
 tab='	'
+nl='
+'
 trap "exit 1" 1 2 3 15
 
 bomb()
@@ -546,203 +548,238 @@ initdefaults()
 
 }
 
+# valid_MACHINE_ARCH -- A multi-line string, listing all valid
+# MACHINE/MACHINE_ARCH pairs.
+#
+# Each line contains a MACHINE and MACHINE_ARCH value, an optional ALIAS
+# which may be used to refer to the MACHINE/MACHINE_ARCH pair, and an
+# optional DEFAULT or NO_DEFAULT keyword.
+#
+# When a MACHINE corresponds to multiple possible values of
+# MACHINE_ARCH, then this table should list all allowed combinations.
+# If the MACHINE is associated with a default MACHINE_ARCH (to be
+# used when the user specifies the MACHINE but fails to specify the
+# MACHINE_ARCH), then one of the lines should have the "DEFAULT"
+# keyword.  If there is no default MACHINE_ARCH for a particular
+# MACHINE, then there should be a line with the "NO_DEFAULT" keyword,
+# and with a blank MACHINE_ARCH.
+#
+valid_MACHINE_ARCH='
+MACHINE=acorn26		MACHINE_ARCH=arm
+MACHINE=acorn32		MACHINE_ARCH=arm
+MACHINE=algor		MACHINE_ARCH=mips64el	ALIAS=algor64
+MACHINE=algor		MACHINE_ARCH=mipsel	DEFAULT
+MACHINE=alpha		MACHINE_ARCH=alpha
+MACHINE=amd64		MACHINE_ARCH=x86_64
+MACHINE=amiga		MACHINE_ARCH=m68k
+MACHINE=amigappc	MACHINE_ARCH=powerpc
+MACHINE=arc		MACHINE_ARCH=mips64el	ALIAS=arc64
+MACHINE=arc		MACHINE_ARCH=mipsel	DEFAULT
+MACHINE=atari		MACHINE_ARCH=m68k
+MACHINE=bebox		MACHINE_ARCH=powerpc
+MACHINE=cats		MACHINE_ARCH=arm	DEFAULT
+MACHINE=cats		MACHINE_ARCH=earm
+MACHINE=cesfic		MACHINE_ARCH=m68k
+MACHINE=cobalt		MACHINE_ARCH=mips64el	ALIAS=cobalt64
+MACHINE=cobalt		MACHINE_ARCH=mipsel	DEFAULT
+MACHINE=dreamcast	MACHINE_ARCH=sh3el
+MACHINE=emips		MACHINE_ARCH=mipseb
+MACHINE=evbarm		MACHINE_ARCH=arm	ALIAS=evbarm-el	DEFAULT
+MACHINE=evbarm		MACHINE_ARCH=armeb	ALIAS=evbarm-eb
+MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el
+MACHINE=evbarm		MACHINE_ARCH=earmeb	ALIAS=evbearm-eb
+MACHINE=evbmips		MACHINE_ARCH=		NO_DEFAULT
+MACHINE=evbmips		MACHINE_ARCH=mips64eb	ALIAS=evbmips64-eb
+MACHINE=evbmips		MACHINE_ARCH=mips64el	ALIAS=evbmips64-el
+MACHINE=evbmips		MACHINE_ARCH=mipseb	ALIAS=evbmips-eb
+MACHINE=evbmips		MACHINE_ARCH=mipsel	ALIAS=evbmips-el
+MACHINE=evbppc		MACHINE_ARCH=powerpc	DEFAULT
+MACHINE=evbppc		MACHINE_ARCH=powerpc64	ALIAS=evbppc64
+MACHINE=evbsh3		MACHINE_ARCH=		NO_DEFAULT
+MACHINE=evbsh3		MACHINE_ARCH=sh3eb	ALIAS=evbsh3-eb
+MACHINE=evbsh3		MACHINE_ARCH=sh3el	ALIAS=evbsh3-el
+MACHINE=ews4800mips	MACHINE_ARCH=mipseb
+MACHINE=hp300		MACHINE_ARCH=m68k
+MACHINE=hp700		MACHINE_ARCH=hppa
+MACHINE=hpcarm		MACHINE_ARCH=arm
+MACHINE=hpcmips		MACHINE_ARCH=mipsel
+MACHINE=hpcsh		MACHINE_ARCH=sh3el
+MACHINE=i386		MACHINE_ARCH=i386
+MACHINE=ia64		MACHINE_ARCH=ia64
+MACHINE=ibmnws		MACHINE_ARCH=powerpc
+MACHINE=iyonix		MACHINE_ARCH=arm	DEFAULT
+MACHINE=iyonix		MACHINE_ARCH=earm
+MACHINE=landisk		MACHINE_ARCH=sh3el
+MACHINE=luna68k		MACHINE_ARCH=m68k
+MACHINE=mac68k		MACHINE_ARCH=m68k
+MACHINE=macppc		MACHINE_ARCH=powerpc	DEFAULT
+MACHINE=macppc		MACHINE_ARCH=powerpc64	ALIAS=macppc64
+MACHINE=mipsco		MACHINE_ARCH=mipseb
+MACHINE=mmeye		MACHINE_ARCH=sh3eb
+MACHINE=mvme68k		MACHINE_ARCH=m68k
+MACHINE=mvmeppc		MACHINE_ARCH=powerpc
+MACHINE=netwinder	MACHINE_ARCH=arm	DEFAULT
+MACHINE=netwinder	MACHINE_ARCH=earm
+MACHINE=news68k		MACHINE_ARCH=m68k
+MACHINE=newsmips	MACHINE_ARCH=mipseb
+MACHINE=next68k		MACHINE_ARCH=m68k
+MACHINE=ofppc		MACHINE_ARCH=powerpc	DEFAULT
+MACHINE=ofppc		MACHINE_ARCH=powerpc64	ALIAS=ofppc64
+MACHINE=pmax		MACHINE_ARCH=mips64el	ALIAS=pmax64
+MACHINE=pmax		MACHINE_ARCH=mipsel	DEFAULT
+MACHINE=prep		MACHINE_ARCH=powerpc
+MACHINE=rs6000		MACHINE_ARCH=powerpc
+MACHINE=sandpoint	MACHINE_ARCH=powerpc
+MACHINE=sbmips		MACHINE_ARCH=		NO_DEFAULT
+MACHINE=sbmips		MACHINE_ARCH=mips64eb	ALIAS=sbmips64-eb
+MACHINE=sbmips		MACHINE_ARCH=mips64el	ALIAS=sbmips64-el
+MACHINE=sbmips		MACHINE_ARCH=mipseb	ALIAS=sbmips-eb
+MACHINE=sbmips		MACHINE_ARCH=mipsel	ALIAS=sbmips-el
+MACHINE=sgimips		MACHINE_ARCH=mips64eb	ALIAS=sgimips64
+MACHINE=sgimips		MACHINE_ARCH=mipseb	DEFAULT
+MACHINE=shark		MACHINE_ARCH=arm	DEFAULT
+MACHINE=shark		MACHINE_ARCH=earm
+MACHINE=sparc		MACHINE_ARCH=sparc
+MACHINE=sparc64		MACHINE_ARCH=sparc64
+MACHINE=sun2		MACHINE_ARCH=m68000
+MACHINE=sun3		MACHINE_ARCH=m68k
+MACHINE=vax		MACHINE_ARCH=vax
+MACHINE=x68k		MACHINE_ARCH=m68k
+MACHINE=zaurus		MACHINE_ARCH=arm	DEFAULT
+MACHINE=zaurus		MACHINE_ARCH=earm
+'
+
+# getarch -- find the default MACHINE_ARCH for a MACHINE,
+# or convert an alias to a MACHINE/MACHINE_ARCH pair.
+#
+# Saves MACHINE in makewrappermachine before possibly modifying MACHINE.
+#
+# Sets MACHINE and MACHINE_ARCH if the input MACHINE value is
+# recognised as an alias, or recognised as a machine that has a default
+# MACHINE_ARCH (or that has only one possible MACHINE_ARCH).
+#
+# Leaves MACHINE and MACHINE_ARCH unchanged if MACHINE is recognised
+# as being associated with multiple MACHINE_ARCH values with no default.
+#
+# Bombs if MACHINE is not recognised.
+#
 getarch()
 {
-	# Translate some MACHINE name aliases (known only to build.sh)
-	# into proper MACHINE and MACHINE_ARCH names.  Save the alias
-	# name in makewrappermachine.
-	#
-	case "${MACHINE}" in
+	local IFS
+	local found=""
+	local line
 
-	evbearm-e[bl])
-		makewrappermachine=${MACHINE}
-		# MACHINE_ARCH is "arm" or "armeb", not "armel"
-		MACHINE_ARCH=earm${MACHINE##*-}
-		MACHINE_ARCH=${MACHINE_ARCH%el}
-		MACHINE=evbarm
+	IFS="${nl}"
+	makewrappermachine="${MACHINE}"
+	for line in ${valid_MACHINE_ARCH}; do
+		line="${line%%#*}" # ignore comments
+		line="$( IFS=" ${tab}" ; echo $line )" # normalise white space
+		case "${line} " in
+		"")
+			# skip blank lines or comment lines
+			continue
+			;;
+		*" ALIAS=${MACHINE} "*)
+			# Found a line with a matching ALIAS=<alias>.
+			found="$line"
+			break
+			;;
+		"MACHINE=${MACHINE} "*" NO_DEFAULT"*)
+			# Found an explicit "NO_DEFAULT" for this MACHINE.
+			found="$line"
+			break
+			;;
+		"MACHINE=${MACHINE} "*" DEFAULT"*)
+			# Found an explicit "DEFAULT" for this MACHINE.
+			found="$line"
+			break
+			;;
+		"MACHINE=${MACHINE} "*)
+			# Found a line for this MACHINE.  If it's the
+			# first such line, then tentatively accept it.
+			# If it's not the first matching line, then
+			# remember that there was more than one match.
+			case "$found" in
+			'')	found="$line" ;;
+			*)	found="MULTIPLE_MATCHES" ; break ;;
+			esac
+			;;
+		esac
+	done
+
+	case "$found" in
+	*NO_DEFAULT*|*MULTIPLE_MATCHES*)
+		# MACHINE is OK, but MACHINE_ARCH is still unknown
+		return
 		;;
-
-	evbarm-e[bl])
-		makewrappermachine=${MACHINE}
-		# MACHINE_ARCH is "arm" or "armeb", not "armel"
-		MACHINE_ARCH=arm${MACHINE##*-}
-		MACHINE_ARCH=${MACHINE_ARCH%el}
-		MACHINE=${MACHINE%-e[bl]}
+	"MACHINE="*" MACHINE_ARCH="*)
+		# Obey the MACHINE= and MACHINE_ARCH= parts of the line.
+		IFS=" "
+		for frag in ${found}; do
+			case "$frag" in
+			MACHINE=*|MACHINE_ARCH=*)
+				eval "$frag"
+				;;
+			esac
+		done
 		;;
-
-	evbmips-e[bl]|sbmips-e[bl])
-		makewrappermachine=${MACHINE}
-		MACHINE_ARCH=mips${MACHINE##*-}
-		MACHINE=${MACHINE%-e[bl]}
-		;;
-
-	evbmips64-e[bl]|sbmips64-e[bl])
-		makewrappermachine=${MACHINE}
-		MACHINE_ARCH=mips64${MACHINE##*-}
-		MACHINE=${MACHINE%64-e[bl]}
-		;;
-
-	evbsh3-e[bl])
-		makewrappermachine=${MACHINE}
-		MACHINE_ARCH=sh3${MACHINE##*-}
-		MACHINE=${MACHINE%-e[bl]}
-		;;
-
-	esac
-
-	# Translate a MACHINE into a default MACHINE_ARCH.
-	#
-	case "${MACHINE}" in
-
-	acorn26|acorn32|cats|hpcarm|iyonix|netwinder|shark|zaurus)
-		MACHINE_ARCH=arm
-		;;
-
-	evbarm)		# unspecified MACHINE_ARCH gets LE
-		MACHINE_ARCH=${MACHINE_ARCH:=arm}
-		;;
-
-	hp700)
-		MACHINE_ARCH=hppa
-		;;
-
-	sun2)
-		MACHINE_ARCH=m68000
-		;;
-
-	amiga|atari|cesfic|hp300|luna68k|mac68k|mvme68k|news68k|next68k|sun3|x68k)
-		MACHINE_ARCH=m68k
-		;;
-
-	evbmips|sbmips)		# no default MACHINE_ARCH
-		;;
-
-	sgimips64)
-		makewrappermachine=${MACHINE}
-		MACHINE=${MACHINE%64}
-		MACHINE_ARCH=mips64eb
-		;;
-
-	ews4800mips|mipsco|newsmips|sgimips|emips)
-		MACHINE_ARCH=mipseb
-		;;
-
-	algor64|arc64|cobalt64|pmax64)
-		makewrappermachine=${MACHINE}
-		MACHINE=${MACHINE%64}
-		MACHINE_ARCH=mips64el
-		;;
-
-	algor|arc|cobalt|hpcmips|pmax)
-		MACHINE_ARCH=mipsel
-		;;
-
-	evbppc64|macppc64|ofppc64)
-		makewrappermachine=${MACHINE}
-		MACHINE=${MACHINE%64}
-		MACHINE_ARCH=powerpc64
-		;;
-
-	amigappc|bebox|evbppc|ibmnws|macppc|mvmeppc|ofppc|prep|rs6000|sandpoint)
-		MACHINE_ARCH=powerpc
-		;;
-
-	evbsh3)			# no default MACHINE_ARCH
-		;;
-
-	mmeye)
-		MACHINE_ARCH=sh3eb
-		;;
-
-	dreamcast|hpcsh|landisk)
-		MACHINE_ARCH=sh3el
-		;;
-
-	amd64)
-		MACHINE_ARCH=x86_64
-		;;
-
-	alpha|i386|sparc|sparc64|vax|ia64)
-		MACHINE_ARCH=${MACHINE}
-		;;
-
 	*)
 		bomb "Unknown target MACHINE: ${MACHINE}"
 		;;
-
 	esac
 }
 
+# validatearch -- check that the MACHINE/MACHINE_ARCH pair is supported.
+#
+# Bombs if the pair is not supported.
+#
 validatearch()
 {
-	# Ensure that the MACHINE_ARCH exists (and is supported by build.sh).
-	#
+	local IFS
+	local line
+	local foundpair=false foundmachine=false foundarch=false
+
 	case "${MACHINE_ARCH}" in
-
-	alpha|arm|armeb|earm|earmeb|hppa|i386|m68000|m68k|mipse[bl]|mips64e[bl]|powerpc|powerpc64|sh3e[bl]|sparc|sparc64|vax|x86_64|ia64)
-		;;
-
 	"")
 		bomb "No MACHINE_ARCH provided"
 		;;
+	esac
 
-	*)
+	IFS="${nl}"
+	for line in ${valid_MACHINE_ARCH}; do
+		line="${line%%#*}" # ignore comments
+		line="$( IFS=" ${tab}" ; echo $line )" # normalise white space
+		case "${line} " in
+		"")
+			# skip blank lines or comment lines
+			continue
+			;;
+		"MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} "*)
+			foundpair=true
+			;;
+		"MACHINE=${MACHINE} "*)
+			foundmachine=true
+			;;
+		*"MACHINE_ARCH=${MACHINE_ARCH} "*)
+			foundarch=true
+			;;
+		esac
+	done
+
+	case "${foundpair}:${foundmachine}:${foundarch}" in
+	true:*)
+		: OK
+		;;
+	*:false:*)
+		bomb "Unknown target MACHINE: ${MACHINE}"
+		;;
+	*:*:false)
 		bomb "Unknown target MACHINE_ARCH: ${MACHINE_ARCH}"
 		;;
-
-	esac
-
-	# Determine valid MACHINE_ARCHs for MACHINE
-	#
-	case "${MACHINE}" in
-
-	evbarm)
-		arches="arm armeb earm earmeb"
-		;;
-
-	cats|iyonix|netwinder|shark|zaurus)
-		arches="arm earm"
-		;;
-
-	algor|arc|cobalt|pmax)
-		arches="mipsel mips64el"
-		;;
-
-	evbmips|sbmips)
-		arches="mipseb mipsel mips64eb mips64el"
-		;;
-
-	sgimips)
-		arches="mipseb mips64eb"
-		;;
-
-	evbsh3)
-		arches="sh3eb sh3el"
-		;;
-
-	macppc|evbppc|ofppc)
-		arches="powerpc powerpc64"
-		;;
 	*)
-		oma="${MACHINE_ARCH}"
-		getarch
-		arches="${MACHINE_ARCH}"
-		MACHINE_ARCH="${oma}"
+		bomb "MACHINE_ARCH '${MACHINE_ARCH}' does not support MACHINE '${MACHINE}'"
 		;;
-
 	esac
-
-	# Ensure that MACHINE_ARCH supports MACHINE
-	#
-	archok=false
-	for a in ${arches}; do
-		if [ "${a}" = "${MACHINE_ARCH}" ]; then
-			archok=true
-			break
-		fi
-	done
-	${archok} ||
-	    bomb "MACHINE_ARCH '${MACHINE_ARCH}' does not support MACHINE '${MACHINE}'"
 }
 
 # nobomb_getmakevar --
@@ -1216,6 +1253,24 @@ parseoptions()
 #
 sanitycheck()
 {
+	# Non-root should always use either the -U or -E flag.
+	#
+	if ! ${do_expertmode} && \
+	    [ "$id_u" -ne 0 ] && \
+	    [ "${MKUNPRIVED}" = "no" ] ; then
+		bomb "-U or -E must be set for build as an unprivileged user."
+	fi
+
+	# Install as non-root is a bad idea.
+	#
+	if ${do_install} && [ "$id_u" -ne 0 ] ; then
+		if ${do_expertmode}; then
+			warning "Will install as an unprivileged user."
+		else
+			bomb "-E must be set for install as an unprivileged user."
+		fi
+	fi
+
 	# If the PATH contains any non-absolute components (including,
 	# but not limited to, "." or ""), then complain.  As an exception,
 	# allow "" or "." as the last component of the PATH.  This is fatal
@@ -1543,43 +1598,24 @@ validatemakeparams()
 	removedirs="${TOOLDIR}"
 
 	if [ -z "${DESTDIR}" ] || [ "${DESTDIR}" = "/" ]; then
-		if ${do_build} || ${do_distribution} || ${do_release}; then
-			if ! ${do_build} || \
-			   [ "${uname_s}" != "NetBSD" ] || \
-			   [ "${uname_m}" != "${MACHINE}" ]; then
-				bomb "DESTDIR must != / for cross builds, or ${progname} 'distribution' or 'release'."
-			fi
-			if ! ${do_expertmode}; then
-				bomb "DESTDIR must != / for non -E (expert) builds"
-			fi
-			statusmsg "WARNING: Building to /, in expert mode."
-			statusmsg "         This may cause your system to break!  Reasons include:"
-			statusmsg "            - your kernel is not up to date"
-			statusmsg "            - the libraries or toolchain have changed"
-			statusmsg "         YOU HAVE BEEN WARNED!"
+		if ${do_distribution} || ${do_release} || \
+		   [ "${uname_s}" != "NetBSD" ] || \
+		   [ "${uname_m}" != "${MACHINE}" ]; then
+			bomb "DESTDIR must != / for cross builds, or ${progname} 'distribution' or 'release'."
 		fi
+		if ! ${do_expertmode}; then
+			bomb "DESTDIR must != / for non -E (expert) builds"
+		fi
+		statusmsg "WARNING: Building to /, in expert mode."
+		statusmsg "         This may cause your system to break!  Reasons include:"
+		statusmsg "            - your kernel is not up to date"
+		statusmsg "            - the libraries or toolchain have changed"
+		statusmsg "         YOU HAVE BEEN WARNED!"
 	else
 		removedirs="${removedirs} ${DESTDIR}"
 	fi
-	if ${do_build} || ${do_distribution} || ${do_release}; then
-		if ! ${do_expertmode} && \
-		    [ "$id_u" -ne 0 ] && \
-		    [ "${MKUNPRIVED}" = "no" ] ; then
-			bomb "-U or -E must be set for build as an unprivileged user."
-		fi
-	fi
 	if ${do_releasekernel} && [ -z "${RELEASEDIR}" ]; then
 		bomb "Must set RELEASEDIR with \`releasekernel=...'"
-	fi
-
-	# Install as non-root is a bad idea.
-	#
-	if ${do_install} && [ "$id_u" -ne 0 ] ; then
-		if ${do_expertmode}; then
-			warning "Will install as an unprivileged user."
-		else
-			bomb "-E must be set for install as an unprivileged user."
-		fi
 	fi
 
 	# If a previous build.sh run used -U (and therefore created a
@@ -1592,9 +1628,7 @@ validatemakeparams()
 		# DESTDIR is about to be removed
 		;;
 	*)
-		if ( ${do_build} || ${do_distribution} || ${do_release} || \
-		    ${do_install} ) && \
-		    [ -e "${DESTDIR}/METALOG" ] && \
+		if [ -e "${DESTDIR}/METALOG" ] && \
 		    [ "${MKUNPRIVED}" = "no" ] ; then
 			if $do_expertmode; then
 				warning "A previous build.sh run specified -U."
@@ -1681,7 +1715,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.251.2.2 2012/10/30 18:46:04 yamt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.251.2.3 2013/01/16 05:25:52 yamt Exp $
 # with these arguments: ${_args}
 #
 
@@ -1730,8 +1764,7 @@ buildtools()
 	if [ "${MKUPDATE}" = "no" ]; then
 		make_in_dir tools cleandir
 	fi
-	make_in_dir tools dependall
-	make_in_dir tools install
+	make_in_dir tools build_install
 	statusmsg "Tools built to ${TOOLDIR}"
 }
 

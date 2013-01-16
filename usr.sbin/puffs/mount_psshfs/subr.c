@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.50 2010/04/01 02:34:09 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.50.6.1 2013/01/16 05:34:11 yamt Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,9 +27,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.50 2010/04/01 02:34:09 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.50.6.1 2013/01/16 05:34:11 yamt Exp $");
 #endif /* !lint */
 
+#include <stdio.h>
 #include <assert.h>
 #include <err.h>
 #include <errno.h>

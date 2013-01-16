@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.289.2.3 2012/10/30 18:59:46 yamt Exp $
+#	$NetBSD: bsd.README,v 1.289.2.4 2013/01/16 05:32:37 yamt Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -330,6 +330,10 @@ MKSKEY		If "no", disables building of S/key authentication
 		infrastructure (libraries and support programs).
 		Default: yes
 
+MKSLJIT		If "no", disables buildin of sljit (stack-less platform
+		independent JIT compiler) private library and tests.
+		Default: yes on amd64, i386 and sparc, no elsewhere.
+
 MKSOFTFLOAT	If not "no", build with options to enable the compiler to
 		generate output containing library calls for floating
 		point and possibly soft-float library support.
@@ -338,6 +342,10 @@ MKSOFTFLOAT	If not "no", build with options to enable the compiler to
 MKSTATICLIB	If "no", don't build or install the normal static (*.a)
 		libraries.
 		Default: yes
+
+MKTPM		If "no" then don't build the Trusted Platform Module
+		infrastructure.
+		Default: no
 
 MKUNPRIVED	If not "no", don't set the owner/group/mode when installing
 		files or directories, and keep a metadata log of what
@@ -499,6 +507,28 @@ _SRC_TOP_	Top of the system source tree, as determined by <bsd.own.mk>
 		is "internal" to <bsd.own.mk>, although its value is only
 		determined once and then propagated to all sub-makes.
 
+_NETBSD_VERSION_DEPENDS
+		A list of files which contain information about
+		the version of the NetBSD being built.  This is
+		defined only if the current directory appears
+		to be inside a NetBSD source tree.  The list of
+		files includes ${NETBSDSRCDIR}/sys/sys/param.h
+		(which contains the kernel version number),
+		${NETBSDSRCDIR}/sys/conf/newvers.sh and
+		${NETBSDSRCDIR}/sys/conf/osrelease.sh (which
+		interpret the information in sys/sys/param.h), and
+		${_SRC_TOP_OBJ_}/params (which is an optional file,
+		created by "make build" in ${_SRC_TOP_}/Makefile,
+		containing all the variables that may influence the
+		build).
+
+		Targets that depend on the NetBSD version, or on
+		variables defined at build time, can declare a
+		dependency on ${_NETBSD_VERSION_DEPENDS}, like this:
+
+			version.c: ${_NETBSD_VERSION_DEPENDS}
+				commands to create version.c
+
 BSDSRCDIR	The real path to the system sources, so that 'make obj'
 		will work correctly.  [/usr/src]
 
@@ -597,6 +627,10 @@ COPY		The flag passed to the install program to cause the binary
 		building our own install script so that the entire system
 		can either be installed with copies, or with moves using
 		a single knob.  [-c]
+
+MAKEDIRTARGETENV
+		Environment variables passed to the child make process
+		invoked by MAKEDIRTARGET.
 
 MAKEDIRTARGET dir target [params]
 		Runs "cd $${dir} && ${MAKE} [params] $${target}",
@@ -878,6 +912,11 @@ or CLEANDIRFILES variables.  For example:
 
 	    .include <bsd.clean.mk>
 
+The files listed in CLEANFILES and CLEANDIRFILES must not be
+directories, because the potential risk from running "rm -rf" commands
+in bsd.clean.mk is considered too great.  If you want to recursively
+delete a directory as part of "make clean" or "make cleandir" then you
+need to provide your own target.
 
 =-=-=-=-=   bsd.dep.mk   =-=-=-=-=
 
@@ -1138,6 +1177,11 @@ LIBDPLIBS	A list of the tuples:
 		     *	LDADD gets  -L${LIBDO.libname} -llibname    added.
 		     *	DPADD gets  ${LIBDO.libname}/liblibname.so  or
 				    ${LIBDO.libname}/liblibname.a   added.
+
+		The special value "_external" for LIBDO.lib makes the
+		build system to assume the library comes from outside
+		of the NetBSD source tree and only causes -llibname
+		to be added to LDADD.
 
 		This variable may be used for individual libraries, as
 		well as in parent directories to cache common libraries

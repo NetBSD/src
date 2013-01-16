@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.h,v 1.9 2002/05/14 00:08:22 matt Exp $	*/
+/*	$NetBSD: rtc.h,v 1.9.150.1 2013/01/16 05:32:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,7 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * information on A2000 clock from Harald Backert.
  * information on A3000 clock from Holger Emden.
  */
 #ifndef _RTCVAR_H_
@@ -40,35 +39,6 @@
 
 extern int (*ugettod)(struct timeval *);
 extern int (*usettod)(struct timeval *);
-
-struct rtclock2000 {
-	u_int  :28, second2:4;	/* lower digit */
-	u_int  :28, second1:4;	/* upper digit */
-	u_int  :28, minute2:4;	/* lower digit */
-	u_int  :28, minute1:4;	/* upper digit */
-	u_int  :28, hour2:4;	/* lower digit */
-	u_int  :28, hour1:4;	/* upper digit */
-	u_int  :28, day2:4;	/* lower digit */
-	u_int  :28, day1:4;	/* upper digit */
-	u_int  :28, month2:4;	/* lower digit */
-	u_int  :28, month1:4;	/* upper digit */
-	u_int  :28, year2:4;	/* lower digit */
-	u_int  :28, year1:4;	/* upper digit */
-	u_int  :28, weekday:4;	/* weekday */
-	u_int  :28, control1:4;	/* control-byte 1 */
-	u_int  :28, control2:4;	/* control-byte 2 */
-	u_int  :28, control3:4;	/* control-byte 3 */
-};
-
-/*
- * commands written to control1, HOLD before reading the clock,
- * FREE after done reading.
- */
-
-#define A2CONTROL1_HOLD		(1<<0)
-#define A2CONTROL1_BUSY		(1<<1)
-#define A2CONTROL3_24HMODE	(1<<2)
-#define A2HOUR1_PM		(1<<2)
 
 struct rtclock3000 {
 	u_int  :28, second2:4;	/* 0x03  lower digit */

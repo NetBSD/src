@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_prcm.c,v 1.2.2.1 2012/04/17 00:06:06 yamt Exp $	*/
+/*	$NetBSD: omap2_prcm.c,v 1.2.2.2 2013/01/16 05:32:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Adam Hoka
@@ -28,7 +28,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_prcm.c,v 1.2.2.1 2012/04/17 00:06:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_prcm.c,v 1.2.2.2 2013/01/16 05:32:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,6 +77,7 @@ prcm_attach(device_t parent, device_t self, void *aux)
 {
 	struct obio_attach_args *obio = aux;
 
+	KASSERT(prcm_sc == NULL);
 	prcm_sc = device_private(self);
 
 	prcm_sc->sc_dev = self;
@@ -84,7 +85,7 @@ prcm_attach(device_t parent, device_t self, void *aux)
 
 	prcm_sc->sc_base = obio->obio_addr;
 	prcm_sc->sc_size = OMAP2_PRM_SIZE;
-	
+
 	/* map i/o space for PRM */
 	if (bus_space_map(prcm_sc->sc_iot, prcm_sc->sc_base, prcm_sc->sc_size,
 	    0, &prcm_sc->sc_ioh) != 0) {
@@ -95,16 +96,20 @@ prcm_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Power, Reset and Clock Management\n");
 }
 
-static uint32_t
-prcm_read(bus_addr_t module, bus_addr_t reg)
-{	
+uint32_t
+prcm_read_4(bus_size_t module, bus_size_t reg)
+{
+
+	KASSERT(prcm_sc != NULL);
 	return bus_space_read_4(prcm_sc->sc_iot, prcm_sc->sc_ioh,
 	    module + reg);
 }
 
-static void
-prcm_write(bus_addr_t module, bus_addr_t reg, uint32_t data)
-{	
+void
+prcm_write_4(bus_size_t module, bus_size_t reg, uint32_t data)
+{
+
+	KASSERT(prcm_sc != NULL);
 	bus_space_write_4(prcm_sc->sc_iot, prcm_sc->sc_ioh,
 	    module + reg, data);
 }
@@ -113,10 +118,10 @@ void
 prcm_cold_reset(void)
 {
 	uint32_t val;
-	
-	val = prcm_read(OMAP3430_GR_MOD, OMAP2_RM_RSTCTRL);
+
+	val = prcm_read_4(OMAP3430_GR_MOD, OMAP2_RM_RSTCTRL);
 
 	val |= OMAP_RST_DPLL3;
 
-	prcm_write(OMAP3430_GR_MOD, OMAP2_RM_RSTCTRL, val);
+	prcm_write_4(OMAP3430_GR_MOD, OMAP2_RM_RSTCTRL, val);
 }

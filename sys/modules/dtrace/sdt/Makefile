@@ -8,8 +8,7 @@ KMOD=		sdt
 SRCS=		sdt.c
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
-		-I${NETBSDSRCDIR}/external/cddl/osnet/dev/sdt \
-		-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common 
+		-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common
 
 CPPFLAGS+=	-Wno-unknown-pragmas
 

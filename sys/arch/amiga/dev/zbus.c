@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.67.2.2 2012/10/30 17:18:51 yamt Exp $ */
+/*	$NetBSD: zbus.c,v 1.67.2.3 2013/01/16 05:32:42 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.67.2.2 2012/10/30 17:18:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.67.2.3 2013/01/16 05:32:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,6 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.67.2.2 2012/10/30 17:18:51 yamt Exp $");
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/zbusvar.h>
+#include <amiga/dev/z3rambdvar.h>
+
+#include "z3rambd.h"
 
 struct aconfdata {
 	const char *name;
@@ -326,13 +329,22 @@ zbusattach(device_t parent, device_t self, void *aux)
 		if (amiga_realconfig == 0 && pcp >= epcp)
 			continue;
 
+#if NZ3RAMBD > 0
+		if (z3rambd_match_id(cdp->rom.manid, cdp->rom.prodid) > 0)
+		{ }
+		else 
+#endif /* NZ3RAMBD */
 		/*
 		 * check if it's a Zorro II or III board and not linked into
 		 * MemList (i.e. not a memory board)
 		 */
-		if ((cdp->rom.type & 0xe0) != 0xc0 &&
-		    (cdp->rom.type & 0xe0) != 0x80)
-			continue;	/* er_Type != Zorro I/O */
+		switch (cdp->rom.type & (ERT_TYPEMASK | ERTF_MEMLIST)) {
+		case ERT_ZORROII:
+		case ERT_ZORROIII:
+			break;
+		default:
+			continue;
+		}
 
 		za.pa = cdp->addr;
 		za.size = cdp->size;

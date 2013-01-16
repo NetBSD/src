@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_misc.c,v 1.14 2011/09/01 07:18:51 plunky Exp $	*/
+/*	$NetBSD: pcnfsd_misc.c,v 1.14.2.1 2013/01/16 05:34:11 yamt Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_misc.c 1.5 92/01/24 19:59:13 SMI */
 /*
@@ -37,6 +37,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 
 #ifdef ISC_2_0
 #include <sys/fcntl.h>

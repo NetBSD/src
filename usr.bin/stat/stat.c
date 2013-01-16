@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.36 2011/09/22 20:23:56 apb Exp $ */
+/*	$NetBSD: stat.c,v 1.36.2.1 2013/01/16 05:34:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.36 2011/09/22 20:23:56 apb Exp $");
+__RCSID("$NetBSD: stat.c,v 1.36.2.1 2013/01/16 05:34:07 yamt Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -76,7 +76,7 @@ __RCSID("$NetBSD: stat.c,v 1.36 2011/09/22 20:23:56 apb Exp $");
 #if HAVE_STRUCT_STAT_ST_BIRTHTIME
 #define DEF_B "\"%SB\" "
 #define RAW_B "%B "
-#define SHELL_B "st_birthtime=%B "
+#define SHELL_B "st_birthtime=%SB "
 #else /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
 #define DEF_B
 #define RAW_B
@@ -99,7 +99,7 @@ __RCSID("$NetBSD: stat.c,v 1.36 2011/09/22 20:23:56 apb Exp $");
 #define SHELL_FORMAT \
 	"st_dev=%d st_ino=%i st_mode=%#p st_nlink=%l " \
 	"st_uid=%u st_gid=%g st_rdev=%r st_size=%z " \
-	"st_atime=%a st_mtime=%m st_ctime=%c " SHELL_B \
+	"st_atime=%Sa st_mtime=%Sm st_ctime=%Sc " SHELL_B \
 	"st_blksize=%k st_blocks=%b" SHELL_F
 #define LINUX_FORMAT \
 	"  File: \"%N\"%n" \
@@ -299,6 +299,8 @@ main(int argc, char *argv[])
 		break;
 	case 's':
 		statfmt = SHELL_FORMAT;
+		if (timefmt == NULL)
+			timefmt = "%s";
 		break;
 	case 'x':
 		statfmt = LINUX_FORMAT;

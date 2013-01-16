@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.h,v 1.12.2.1 2012/10/30 17:21:00 yamt Exp $ */
+/*	$NetBSD: ath_netbsd.h,v 1.12.2.2 2013/01/16 05:33:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -29,9 +29,6 @@
 
 #include <sys/sysctl.h>
 
-#undef KASSERT
-#define KASSERT(__cond, __complaint) if (!(__cond)) panic __complaint
-
 typedef struct ath_task {
 	void	(*t_func)(void*, int);
 	void	*t_context;
@@ -53,14 +50,14 @@ typedef kmutex_t ath_txq_lock_t;
 #define	ATH_TXQ_LOCK_DESTROY(_tq)	mutex_destroy(&(_tq)->axq_lock)
 #define	ATH_TXQ_LOCK(_tq)		mutex_enter(&(_tq)->axq_lock)
 #define	ATH_TXQ_UNLOCK(_tq)		mutex_exit(&(_tq)->axq_lock)
-#define	ATH_TXQ_LOCK_ASSERT(_tq)	do { KASSERT(mutex_owned(&(_tq)->axq_lock), ("txq lock unheld")); } while (/*CONSTCOND*/true)
+#define	ATH_TXQ_LOCK_ASSERT(_tq)	do { KASSERTMSG(mutex_owned(&(_tq)->axq_lock), "txq lock unheld"); } while (/*CONSTCOND*/true)
 
 typedef kmutex_t ath_txbuf_lock_t;
 #define	ATH_TXBUF_LOCK_INIT(_sc)	mutex_init(&(_sc)->sc_txbuflock, MUTEX_DEFAULT, IPL_NET)
 #define	ATH_TXBUF_LOCK_DESTROY(_sc)	mutex_destroy(&(_sc)->sc_txbuflock)
 #define	ATH_TXBUF_LOCK(_sc)		mutex_enter(&(_sc)->sc_txbuflock)
 #define	ATH_TXBUF_UNLOCK(_sc)		mutex_exit(&(_sc)->sc_txbuflock)
-#define	ATH_TXBUF_LOCK_ASSERT(_sc)	do { KASSERT(mutex_owned(&(_sc)->sc_txbuflock), ("txbuf lock unheld")); } while (/*CONSTCOND*/true)
+#define	ATH_TXBUF_LOCK_ASSERT(_sc)	do { KASSERTMSG(mutex_owned(&(_sc)->sc_txbuflock), "txbuf lock unheld"); } while (/*CONSTCOND*/true)
 
 #define	NET_LOCK_GIANT()
 #define	NET_UNLOCK_GIANT()
