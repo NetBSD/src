@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.179 2013/01/16 16:01:08 christos Exp $
+# $NetBSD: mi,v 1.180 2013/01/16 21:11:10 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -916,6 +916,7 @@
 ./usr/share/examples/supfiles/sup.no.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.uk.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-sup-examples	share
+./usr/share/examples/syslogd/all.debug		misc-sysutil-examples	share
 ./usr/share/examples/syslogd/all.newsyslog.conf	misc-sysutil-examples	share
 ./usr/share/examples/tmux			misc-tmux-examples	share
 ./usr/share/examples/tmux/screen-keys.conf	misc-tmux-examples	share
