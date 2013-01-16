@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.106 2012/08/09 07:46:18 manu Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.107 2013/01/16 21:10:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.106 2012/08/09 07:46:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.107 2013/01/16 21:10:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,7 +85,7 @@ static struct putter_ops puffs_putter = {
  * Try to ensure data structures used by the puffs protocol
  * do not unexpectedly change.
  */
-#ifdef __i386__
+#if defined(__i386__) && defined(__ELF__)
 CTASSERT(sizeof(struct puffs_kargs) == 3928);
 CTASSERT(sizeof(struct vattr) == 136);
 CTASSERT(sizeof(struct puffs_req) == 44);
