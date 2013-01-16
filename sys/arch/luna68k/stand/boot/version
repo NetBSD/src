@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.3 2013/01/14 01:37:57 tsutsui Exp $
+$NetBSD: version,v 1.4 2013/01/16 15:46:20 tsutsui Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -7,3 +7,4 @@ is taken as the current.
 1.0:	Initial revision, based on 4.4BSD-Lite2/luna68k and NetBSD/hp300
 1.1:	Add netboot support.
 1.2:	Add support for secondary SPC SCSI on LUNA-II.
+1.3:	Add UFS2 support.
