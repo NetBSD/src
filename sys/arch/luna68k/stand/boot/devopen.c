@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 2013/01/13 14:10:55 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3 2013/01/16 15:46:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -82,6 +82,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	int dev, unit, part;
 	int error;
 	struct devsw *dp;
+	int i;
 
 	if (make_device(fname, &dev, &unit, &part, file) != 0)
 		return ENXIO;
@@ -100,11 +101,15 @@ devopen(struct open_file *f, const char *fname, char **file)
 		return error;
 	}
 
-	file_system[0] = file_system_ufs[0];
+	for (i = 0; i < nfsys_disk; i++)
+		file_system[i] = file_system_disk[i];
+	nfsys = nfsys_disk;
+
 #ifdef SUPPORT_ETHERNET
 	if (strcmp(dp->dv_name, "le") == 0) {
 		/* XXX mixing local fs_ops on netboot could be troublesome */
 		file_system[0] = file_system_nfs[0];
+		nfsys = 1;
 	}
 #endif
 
