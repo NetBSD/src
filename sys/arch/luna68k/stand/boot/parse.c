@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: parse.c,v 1.2 2013/01/16 15:15:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -112,6 +112,7 @@ struct command_entry entries[] = {
 	{ "fsrestore",	fsrestore    },
 #endif
 	{ "howto",	how_to_boot  },
+	{ "ls",		cmd_ls       },
 	{ "screen",	screen	     },
 #ifdef notyet
 	{ "tape",	tape	     },

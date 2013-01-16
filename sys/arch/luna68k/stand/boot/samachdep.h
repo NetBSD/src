@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.4 2013/01/14 01:37:57 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.5 2013/01/16 15:15:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -143,6 +143,9 @@ int spl3(void);
 int spl4(void);
 int spl5(void);
 int spl6(void);
+
+/* ls.c */
+int cmd_ls(int, char **);
 
 /* machdep.c */
 void straytrap(int);
