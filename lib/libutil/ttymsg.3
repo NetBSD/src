@@ -1,4 +1,4 @@
-.\" $NetBSD: ttymsg.3,v 1.12 2013/01/15 22:42:14 christos Exp $
+.\" $NetBSD: ttymsg.3,v 1.13 2013/01/16 06:44:27 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,6 +56,8 @@ returns a pointer to an error string on unexpected
 error; the string is not newline-terminated.
 Various "normal" errors are
 ignored (exclusive-use, lack of permission, etc.).
+.Sh SEE ALSO
+.Xr writev 2
 .Sh BUGS
 .Nm
 could grow some flags and a username/uid who is the expected owner
@@ -64,5 +66,3 @@ If the flags say so then the owner should be checked against the tty
 owner, and the message should not be sent if there is a mismatch.
 Also another flag could say check against group writable, and don't
 send a message.
-.Sh SEE ALSO
-.Xr writev 2
