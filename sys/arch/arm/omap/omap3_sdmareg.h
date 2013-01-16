@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdmareg.h,v 1.2 2013/01/09 04:38:14 macallan Exp $ */
+/*	$NetBSD: omap3_sdmareg.h,v 1.3 2013/01/16 20:32:24 macallan Exp $ */
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdmareg.h,v 1.2 2013/01/09 04:38:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdmareg.h,v 1.3 2013/01/16 20:32:24 macallan Exp $");
 
 #ifndef OMAPDMA_REG_H
 #define OMAPDMA_REG_H
@@ -154,7 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_sdmareg.h,v 1.2 2013/01/09 04:38:14 macallan E
 	#define CSDPI_WRITE_MODE_MASK		0x00018000
 	#define CSDPI_WRITE_NONPOSTED		0x00000000
 	#define CSDPI_WRITE_POSTED		0x00008000
-	#define CSDPI_WRITE_EXCEPT_LAST		0x00010000
+	#define CSDPI_WRITE_POSTED_EXCEPT_LAST	0x00010000
 	#define CSDPI_DST_BURST_MASK		0x0000c000
 	#define CSDPI_DST_BURST_SINGLE		0x00000000
 	#define CSDPI_DST_BURST_16		0x00004000
