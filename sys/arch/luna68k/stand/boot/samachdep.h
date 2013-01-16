@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.5 2013/01/16 15:15:01 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.6 2013/01/16 15:46:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -222,7 +222,8 @@ do {									\
 	} while (__N > 0);						\
 } while (/* CONSTCOND */ 0)
 
-extern	struct fs_ops file_system_ufs[];
+extern	struct fs_ops file_system_disk[];
+extern	int nfsys_disk;
 extern	struct fs_ops file_system_nfs[];
 
 extern	const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
