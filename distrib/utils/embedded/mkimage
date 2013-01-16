@@ -1,7 +1,7 @@
 #! /bin/sh
 
-# $NetBSD: mkimage,v 1.12 2013/01/16 15:58:19 christos Exp $
-
+# $NetBSD: mkimage,v 1.13 2013/01/16 23:27:34 christos Exp $
+#
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
 #
@@ -72,7 +72,7 @@ usage() {
 	cat << EOF 1>&2
 Usage: $PROG [-S <setsdir>] [-c <custom-files-dir>] [-h <host-arch>] [-s <size>]
 EOF
-exit 1
+	exit 1
 }
 
 # Return the filesystem size for an ls -l or tar -xvf list
@@ -174,9 +174,10 @@ makeffssize() {
 }
 
 finish() {
-    cleanup
-    ${sudo} umount ${mnt}
-    ${sudo} vnconfig -u ${vnddev}
+	cleanup
+	${sudo} umount ${mnt}
+	${sudo} vnconfig -u ${vnddev}
+	rm -fr ${mnt}
 }
 
 
@@ -188,6 +189,8 @@ mnt="${TMPDIR:-/tmp}/image.$$"
 src="/usr/src"
 obj="/usr/obj"
 
+sets="base comp etc games man misc modules text"
+xsets="xbase xcomp xetc xfont xserver"
 
 # Presumable block and fragment size.
 bsize=16384
@@ -225,7 +228,7 @@ do
 	c)	custom="$OPTARG";;
 	h)	;;
 	s)	size="$OPTARG";;
-	x)	set -x;;
+	x)	sets="$sets $xsets";;
 	*)	usage;;
 	esac
 done
@@ -242,10 +245,12 @@ fi
 # calculate the set bytes
 setbytes=0
 echo -n "${bar} computing set sizes ("
+b=
 for s in ${sets}; do
 	one="$(sizeone ${setsdir}/${s}.tgz)"
-	echo -n " $s=$(( ${one} / ${mtob} ))MB"
+	echo -n "$b$s=$(( ${one} / ${mtob} ))MB"
 	setbytes=$(( ${setbytes} +  ${one} ))
+	b=" "
 done
 echo "): $(( ${setbytes} / ${mtob} ))MB ${bar}"
 
