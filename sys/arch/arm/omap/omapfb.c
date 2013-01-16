@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.10 2013/01/10 02:18:06 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.11 2013/01/16 00:09:27 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.10 2013/01/10 02:18:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.11 2013/01/16 00:09:27 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -666,26 +666,43 @@ omapfb_bitblt(struct omapfb_softc *sc, int xs, int ys, int xd, int yd,
     int wi, int he, int rop)
 {
 	int width_in_bytes = wi * (sc->sc_depth >> 3);
+	int hstep, vstep;
+	uint32_t saddr, daddr;
 
 	omapfb_wait_idle(sc);
 
-	/*
-	 * TODO:
-	 * handle overlaps ( as in, go backwards when needed )
-	 */
+	saddr = sc->sc_fbhwaddr + sc->sc_stride * ys + xs * (sc->sc_depth >> 3);
+	daddr = sc->sc_fbhwaddr + sc->sc_stride * yd + xd * (sc->sc_depth >> 3);
+	if (ys < yd) {
+		/* need to go vertically backwards */
+		vstep = 1 - (sc->sc_stride + width_in_bytes);
+		saddr += sc->sc_stride * (he - 1);
+		daddr += sc->sc_stride * (he - 1);
+	} else
+		vstep = (sc->sc_stride - width_in_bytes) + 1;
+	if ((xs < xd) && (ys == yd)) {
+		/*
+		 * need to go horizontally backwards, only needed if source
+		 * and destination pixels are on the same line
+		 */
+		hstep = 1 - (sc->sc_depth >> 2);
+		vstep = sc->sc_stride + (sc->sc_depth >> 3) * (wi - 1) + 1;
+		saddr += (sc->sc_depth >> 3) * (wi - 1);
+		daddr += (sc->sc_depth >> 3) * (wi - 1);
+	} else
+		hstep = 1;
+
 	omapdma_write_ch_reg(0, OMAPDMAC_CEN, wi);
 	omapdma_write_ch_reg(0, OMAPDMAC_CFN, he);
-	omapdma_write_ch_reg(0, OMAPDMAC_CSSA,
-	    sc->sc_fbhwaddr + sc->sc_stride * ys + xs * (sc->sc_depth >> 3));
-	omapdma_write_ch_reg(0, OMAPDMAC_CDSA,
-	    sc->sc_fbhwaddr + sc->sc_stride * yd + xd * (sc->sc_depth >> 3));
+	omapdma_write_ch_reg(0, OMAPDMAC_CSSA, saddr);
+	omapdma_write_ch_reg(0, OMAPDMAC_CDSA, daddr);
 	omapdma_write_ch_reg(0, OMAPDMAC_CCR,
 	    CCR_DST_AMODE_DOUBLE_INDEX |
 	    CCR_SRC_AMODE_DOUBLE_INDEX);
-	omapdma_write_ch_reg(0, OMAPDMAC_CSEI, 1);
-	omapdma_write_ch_reg(0, OMAPDMAC_CSFI, (sc->sc_stride - width_in_bytes) + 1);
-	omapdma_write_ch_reg(0, OMAPDMAC_CDEI, 1);
-	omapdma_write_ch_reg(0, OMAPDMAC_CDFI, (sc->sc_stride - width_in_bytes) + 1);
+	omapdma_write_ch_reg(0, OMAPDMAC_CSEI, hstep);
+	omapdma_write_ch_reg(0, OMAPDMAC_CSFI, vstep);
+	omapdma_write_ch_reg(0, OMAPDMAC_CDEI, hstep);
+	omapdma_write_ch_reg(0, OMAPDMAC_CDFI, vstep);
 	omapdma_write_ch_reg(0, OMAPDMAC_CCR,
 	    CCR_DST_AMODE_DOUBLE_INDEX |
 	    CCR_SRC_AMODE_DOUBLE_INDEX | CCR_ENABLE);
@@ -715,7 +732,7 @@ omapfb_cursor(void *cookie, int on, int row, int col)
 		ri->ri_ccol = col;
 		if (on) {
 			omapfb_putchar(cookie, row, col, scr->scr_chars[pos],
-			    scr->scr_attrs[pos] ^ 0x000f0f00);
+			    scr->scr_attrs[pos] ^ 0x0f0f0000);
 			ri->ri_flg |= RI_CURSOR;
 		}
 	} else {
@@ -723,7 +740,6 @@ omapfb_cursor(void *cookie, int on, int row, int col)
 		scr->scr_ri.ri_ccol = col;
 		scr->scr_ri.ri_flg &= ~RI_CURSOR;
 	}
-
 }
 
 static void
