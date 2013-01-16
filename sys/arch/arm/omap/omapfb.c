@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.11 2013/01/16 00:09:27 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.12 2013/01/16 20:34:10 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.11 2013/01/16 00:09:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.12 2013/01/16 20:34:10 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -642,14 +642,43 @@ static void
 omapfb_rectfill(struct omapfb_softc *sc, int x, int y, int wi, int he,
      uint32_t colour)
 {
-	int width_in_bytes = wi * (sc->sc_depth >> 3);
+	int bpp = sc->sc_depth >> 3;	/* bytes per pixel */
+	int width_in_bytes = wi * bpp;
+	uint32_t daddr;
 
+	daddr = sc->sc_fbhwaddr + sc->sc_stride * y + x * bpp;
 	omapfb_wait_idle(sc);
+
+	/*
+	 * stupid hardware
+	 * in 32bit mode the DMA controller always writes 0 into the upper byte, so we
+	 * can use this mode only if we actually want that
+	 */
+	if (((colour & 0xff00) == 0) &&
+	   (((daddr | width_in_bytes) & 3) == 0)) {
+		/*
+		 * everything is properly aligned so we can copy stuff in
+		 * 32bit chunks instead of pixel by pixel
+		 */
+		wi = wi >> 1;
+
+		/* just in case */
+		colour |= colour << 16;
+
+		omapdma_write_ch_reg(0, OMAPDMAC_CSDPI,
+		    CSDPI_SRC_BURST_64 | CSDPI_DST_BURST_64 |
+		    CSDPI_DST_PACKED | CSDPI_WRITE_POSTED_EXCEPT_LAST |
+		    CSDPI_DATA_TYPE_32);
+	} else {
+		omapdma_write_ch_reg(0, OMAPDMAC_CSDPI,
+		    CSDPI_SRC_BURST_64 | CSDPI_DST_BURST_64 |
+		    CSDPI_DST_PACKED | CSDPI_WRITE_POSTED_EXCEPT_LAST |
+		    CSDPI_DATA_TYPE_16);
+	}
 
 	omapdma_write_ch_reg(0, OMAPDMAC_CEN, wi);
 	omapdma_write_ch_reg(0, OMAPDMAC_CFN, he);
-	omapdma_write_ch_reg(0, OMAPDMAC_CDSA,
-	    sc->sc_fbhwaddr + sc->sc_stride * y + x * (sc->sc_depth >> 3));
+	omapdma_write_ch_reg(0, OMAPDMAC_CDSA, daddr);
 	omapdma_write_ch_reg(0, OMAPDMAC_CCR,
 	    CCR_CONST_FILL_ENABLE | CCR_DST_AMODE_DOUBLE_INDEX |
 	    CCR_SRC_AMODE_CONST_ADDR);
@@ -665,14 +694,19 @@ static void
 omapfb_bitblt(struct omapfb_softc *sc, int xs, int ys, int xd, int yd,
     int wi, int he, int rop)
 {
-	int width_in_bytes = wi * (sc->sc_depth >> 3);
+	int bpp = sc->sc_depth >> 3;	/* bytes per pixel */
+	int width_in_bytes = wi * bpp;
+	
 	int hstep, vstep;
 	uint32_t saddr, daddr;
 
-	omapfb_wait_idle(sc);
-
-	saddr = sc->sc_fbhwaddr + sc->sc_stride * ys + xs * (sc->sc_depth >> 3);
-	daddr = sc->sc_fbhwaddr + sc->sc_stride * yd + xd * (sc->sc_depth >> 3);
+	/*
+	 * TODO:
+	 * - use 32bit transfers if we're properly aligned
+	 */
+	saddr = sc->sc_fbhwaddr + sc->sc_stride * ys + xs * bpp;
+	daddr = sc->sc_fbhwaddr + sc->sc_stride * yd + xd * bpp;
+		
 	if (ys < yd) {
 		/* need to go vertically backwards */
 		vstep = 1 - (sc->sc_stride + width_in_bytes);
@@ -686,11 +720,29 @@ omapfb_bitblt(struct omapfb_softc *sc, int xs, int ys, int xd, int yd,
 		 * and destination pixels are on the same line
 		 */
 		hstep = 1 - (sc->sc_depth >> 2);
-		vstep = sc->sc_stride + (sc->sc_depth >> 3) * (wi - 1) + 1;
-		saddr += (sc->sc_depth >> 3) * (wi - 1);
-		daddr += (sc->sc_depth >> 3) * (wi - 1);
+		vstep = sc->sc_stride + bpp * (wi - 1) + 1;
+		saddr += bpp * (wi - 1);
+		daddr += bpp * (wi - 1);
 	} else
 		hstep = 1;
+
+	omapfb_wait_idle(sc);
+	if (((saddr | daddr | width_in_bytes) & 3) == 0) {
+		/*
+		 * everything is properly aligned so we can copy stuff in
+		 * 32bit chunks instead of pixel by pixel
+		 */
+		wi = wi >> 1;
+		omapdma_write_ch_reg(0, OMAPDMAC_CSDPI,
+		    CSDPI_SRC_BURST_64 | CSDPI_DST_BURST_64 |
+		    CSDPI_DST_PACKED | CSDPI_WRITE_POSTED_EXCEPT_LAST |
+		    CSDPI_DATA_TYPE_32);
+	} else {
+		omapdma_write_ch_reg(0, OMAPDMAC_CSDPI,
+		    CSDPI_SRC_BURST_64 | CSDPI_DST_BURST_64 |
+		    CSDPI_DST_PACKED | CSDPI_WRITE_POSTED_EXCEPT_LAST |
+		    CSDPI_DATA_TYPE_16);
+	}
 
 	omapdma_write_ch_reg(0, OMAPDMAC_CEN, wi);
 	omapdma_write_ch_reg(0, OMAPDMAC_CFN, he);
