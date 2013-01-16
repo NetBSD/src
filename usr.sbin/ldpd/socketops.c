@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.15 2012/11/13 06:58:58 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.16 2013/01/16 08:28:45 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -147,8 +147,8 @@ create_hello_sockets()
 #endif
 
 	/* We don't need to receive back our messages */
-	if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, &(uint8_t){0},
-	    sizeof(uint8_t)) == -1) {
+	if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, &(u_char){0},
+	    sizeof(u_char)) == -1) {
 		fatalp("INET setsockopt IP_MCAST_LOOP: %s\n", strerror(errno));
 		goto chs_error;
 	}
@@ -260,27 +260,25 @@ socket_reuse_port(int s)
 static int
 bind_socket(int s, uint8_t stype)
 {
-	struct sockaddr sa;
+	union sockunion su;
 
 	assert (stype == 4 || stype == 6);
 
 	if (stype == 4) {
-		struct sockaddr_in *sa_inet = (struct sockaddr_in *)(&sa);
-		sa_inet->sin_len = sizeof(*sa_inet);
-		sa_inet->sin_family = AF_INET;
-		sa_inet->sin_addr.s_addr = INADDR_ANY;
-		sa_inet->sin_port = htons(LDP_PORT);
+		su.sin.sin_len = sizeof(su.sin);
+		su.sin.sin_family = AF_INET;
+		su.sin.sin_addr.s_addr = INADDR_ANY;
+		su.sin.sin_port = htons(LDP_PORT);
 	}
 #ifdef INET6
 	else if (stype == 6) {
-		struct sockaddr_in6 *sa_inet6 = (struct sockaddr_in6 *)(&sa);
-		sa_inet6->sin6_len = sizeof(*sa_inet6);
-		sa_inet6->sin6_family = AF_INET6;
-		sa_inet6->sin6_addr = in6addr_any;
-		sa_inet6->sin6_port = htons(LDP_PORT);
+		su.sin6.sin6_len = sizeof(su.sin6);
+		su.sin6.sin6_family = AF_INET6;
+		su.sin6.sin6_addr = in6addr_any;
+		su.sin6.sin6_port = htons(LDP_PORT);
 	}
 #endif
-	if (bind(s, &sa, sa.sa_len)) {
+	if (bind(s, &su.sa, su.sa.sa_len)) {
 		fatalp("bind_socket: %s\n", strerror(errno));
 		return -1;
 	}
