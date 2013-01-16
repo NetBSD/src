@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.23 2013/01/15 17:25:42 christos Exp $	*/
+/*	$NetBSD: head.c,v 1.24 2013/01/16 15:21:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.23 2013/01/15 17:25:42 christos Exp $");
+__RCSID("$NetBSD: head.c,v 1.24 2013/01/16 15:21:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,22 +115,52 @@ cmatch(const char *cp, const char *tp)
  * 'N'	A new line
  * '+'	A plus or minus sign
  */
-static const char *datetypes[] = {
- 	"Aaa Aaa O0 00:00:00 0000",		/* BSD ctype */
-	"Aaa Aaa O0 00:00 0000",		/* SysV ctype */
-	"Aaa Aaa O0 00:00:00 AAA 0000",		/* BSD tmztype */
-	"Aaa Aaa O0 00:00 AAA 0000",		/* SysV tmztype */
-	"Aaa Aaa O0 00:00:00 0000 +0000",	/* RFC822 type */
-	"Aaa Aaa O0 00:00:00 0000 AAA",		/* RFC822 alttype */
+static struct cmatch_data {
+	size_t		tlen;
+	char const	*tdata;
+} const	cmatch_data[] = {
+#define TSZ(a)	(sizeof(a) - 1), a
+	{ TSZ("Aaa Aaa O0 00:00:00 0000") },		/* BSD ctype */
+	{ TSZ("Aaa Aaa O0 00:00 0000") },		/* SysV ctype */
+	{ TSZ("Aaa Aaa O0 00:00:00 AAA 0000") },	/* BSD tmztype */
+	{ TSZ("Aaa Aaa O0 00:00 AAA 0000") },		/* SysV tmztype */
+	/*
+	 * RFC 822-alike From_ lines do not conform to RFC 4155, but seem to
+	 * be used in the wild by UW-imap (MBX format plus)
+	 */
+	{ TSZ("Aaa Aaa O0 00:00:00 0000 +0000") },	/* RFC822, UT offset */
+	/*
+	 * RFC 822 with zone spec:
+	 *    1. military,
+	 *    2. UT,
+	 *    3. north america time zone strings
+	 * note that 1. is strictly speaking not correct as some letters are
+	 * not used
+	 */
+	{ TSZ("Aaa Aaa O0 00:00:00 0000 A") },
+	{ TSZ("Aaa Aaa O0 00:00:00 0000 AA") },
+        { TSZ("Aaa Aaa O0 00:00:00 0000 AAA") },
+	{ 0, NULL },
 };
 
 static int
 isdate(const char date[])
 {
+	static size_t cmatch_minlen = 0;
+	struct cmatch_data const *cmdp;
+	size_t dl = strlen(date);
 
-	for (size_t i = 0; i < __arraycount(datetypes); i++)
-		if (cmatch(date, datetypes[i]))
+	if (cmatch_minlen == 0)
+		for (cmdp = cmatch_data; cmdp->tdata != NULL; ++cmdp)
+			cmatch_minlen = MIN(cmatch_minlen, cmdp->tlen);
+
+	if (dl < cmatch_minlen)
+		return 0;
+
+	for (cmdp = cmatch_data; cmdp->tdata != NULL; ++cmdp)
+		if (dl == cmdp->tlen && cmatch(date, cmdp->tdata))
 			return 1;
+
 	return 0;
 }
 
