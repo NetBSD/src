@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.18.42.1 2012/04/17 00:09:53 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.18.42.2 2013/01/16 05:34:12 yamt Exp $	*/
 /*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
@@ -31,13 +31,18 @@
  */
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <net/if_types.h>
 #include <ifaddrs.h>
+#ifdef __FreeBSD__
+#include <net/ethernet.h>
+#else
 #include <net/if_ether.h>
+#endif
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <netinet/in.h>
@@ -47,6 +52,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+
 #include "rtadvd.h"
 #include "if.h"
 
@@ -55,15 +61,6 @@
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define RT_ADVANCE(x, n) (x += RT_ROUNDUP((n)->sa_len))
 #endif
-
-struct if_msghdr **iflist;
-int iflist_init_ok;
-size_t ifblock_size;
-char *ifblock;
-
-static void get_iflist(char **buf, size_t *size);
-static void parse_iflist(struct if_msghdr ***ifmlist_p, char *buf,
-		       size_t bufsize);
 
 static void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
@@ -111,44 +108,22 @@ if_nametosdl(const char *name)
 int
 if_getmtu(const char *name)
 {
-	struct ifaddrs *ifap, *ifa;
-	struct if_data *ifd;
-	u_long mtu = 0;
+	struct ifreq ifr;
+	int s, mtu;
 
-	if (getifaddrs(&ifap) < 0)
-		return(0);
-	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (strcmp(ifa->ifa_name, name) == 0) {
-			ifd = ifa->ifa_data;
-			if (ifd)
-				mtu = ifd->ifi_mtu;
-			break;
-		}
-	}
-	freeifaddrs(ifap);
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+		return 0;
 
-#ifdef SIOCGIFMTU		/* XXX: this ifdef may not be necessary */
-	if (mtu == 0) {
-		struct ifreq ifr;
-		int s;
-
-		if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
-			return(0);
-
-		ifr.ifr_addr.sa_family = AF_INET6;
-		strncpy(ifr.ifr_name, name,
-			sizeof(ifr.ifr_name));
-		if (ioctl(s, SIOCGIFMTU, &ifr) < 0) {
-			close(s);
-			return(0);
-		}
-		close(s);
-
+	memset(&ifr, 0, sizeof(ifr));
+	ifr.ifr_addr.sa_family = AF_INET6;
+	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFMTU, &ifr) != -1)
 		mtu = ifr.ifr_mtu;
-	}
-#endif
+	else
+		mtu = 0;
+	close(s);
 
-	return(mtu);
+	return mtu;
 }
 
 /* give interface index and its old flags, then new flags returned */
@@ -164,6 +139,7 @@ if_getflags(int ifindex, int oifflags)
 		return (oifflags & ~IFF_UP);
 	}
 
+	memset(&ifr, 0, sizeof(ifr));
 	if_indextoname(ifindex, ifr.ifr_name);
 	if (ioctl(s, SIOCGIFFLAGS, &ifr) < 0) {
 		syslog(LOG_ERR, "<%s> ioctl:SIOCGIFFLAGS: failed for %s",
@@ -288,6 +264,9 @@ get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 			*lenp = ifam->ifam_msglen;
 			return (char *)rtm;
 			/* NOTREACHED */
+#ifdef RTM_IFANNOUNCE
+		case RTM_IFANNOUNCE:
+#endif
 		case RTM_IFINFO:
 			/* found */
 			*lenp = rtm->rtm_msglen;
@@ -347,6 +326,24 @@ get_ifm_flags(char *buf)
 
 	return (ifm->ifm_flags);
 }
+
+#ifdef RTM_IFANNOUNCE
+int
+get_ifan_ifindex(char *buf)
+{
+	struct if_announcemsghdr *ifan = (struct if_announcemsghdr *)buf;
+
+	return ((int)ifan->ifan_index);
+}
+
+int
+get_ifan_what(char *buf)
+{
+	struct if_announcemsghdr *ifan = (struct if_announcemsghdr *)buf;
+
+	return ((int)ifan->ifan_what);
+}
+#endif
 
 int
 get_prefixlen(char *buf)
@@ -419,123 +416,4 @@ rtmsg_len(char *buf)
 	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
 
 	return(rtm->rtm_msglen);
-}
-
-int
-ifmsg_len(char *buf)
-{
-	struct if_msghdr *ifm = (struct if_msghdr *)buf;
-
-	return(ifm->ifm_msglen);
-}
-
-/*
- * alloc buffer and get if_msghdrs block from kernel,
- * and put them into the buffer
- */
-static void
-get_iflist(char **buf, size_t *size)
-{
-	int mib[6];
-
-	mib[0] = CTL_NET;
-	mib[1] = PF_ROUTE;
-	mib[2] = 0;
-	mib[3] = AF_INET6;
-	mib[4] = NET_RT_IFLIST;
-	mib[5] = 0;
-
-	if (sysctl(mib, 6, NULL, size, NULL, 0) < 0) {
-		syslog(LOG_ERR, "<%s> sysctl: iflist size get failed",
-		       __func__);
-		exit(1);
-	}
-	if ((*buf = malloc(*size)) == NULL) {
-		syslog(LOG_ERR, "<%s> malloc failed", __func__);
-		exit(1);
-	}
-	if (sysctl(mib, 6, *buf, size, NULL, 0) < 0) {
-		syslog(LOG_ERR, "<%s> sysctl: iflist get failed",
-		       __func__);
-		exit(1);
-	}
-	return;
-}
-
-/*
- * alloc buffer and parse if_msghdrs block passed as arg,
- * and init the buffer as list of pointers ot each of the if_msghdr.
- */
-static void
-parse_iflist(struct if_msghdr ***ifmlist_p, char *buf, size_t bufsize)
-{
-	int iflentry_size, malloc_size;
-	struct if_msghdr *ifm;
-	struct ifa_msghdr *ifam;
-	char *lim;
-
-	/*
-	 * Estimate least size of an iflist entry, to be obtained from kernel.
-	 * Should add sizeof(sockaddr) ??
-	 */
-	iflentry_size = sizeof(struct if_msghdr);
-	/* roughly estimate max list size of pointers to each if_msghdr */
-	malloc_size = (bufsize/iflentry_size) * sizeof(void *);
-	if ((*ifmlist_p = (struct if_msghdr **)malloc(malloc_size)) == NULL) {
-		syslog(LOG_ERR, "<%s> malloc failed", __func__);
-		exit(1);
-	}
-
-	lim = buf + bufsize;
-	for (ifm = (struct if_msghdr *)buf; ifm < (struct if_msghdr *)lim;) {
-		if (ifm->ifm_msglen == 0) {
-			syslog(LOG_WARNING, "<%s> ifm_msglen is 0 "
-			       "(buf=%p lim=%p ifm=%p)", __func__,
-			       buf, lim, ifm);
-			return;
-		}
-
-		if (ifm->ifm_type == RTM_IFINFO) {
-			(*ifmlist_p)[ifm->ifm_index] = ifm;
-		} else {
-			syslog(LOG_ERR, "out of sync parsing NET_RT_IFLIST\n"
-			       "expected %d, got %d\n msglen = %d\n"
-			       "buf:%p, ifm:%p, lim:%p\n",
-			       RTM_IFINFO, ifm->ifm_type, ifm->ifm_msglen,
-			       buf, ifm, lim);
-			exit (1);
-		}
-		for (ifam = (struct ifa_msghdr *)
-			((char *)ifm + ifm->ifm_msglen);
-		     ifam < (struct ifa_msghdr *)lim;
-		     ifam = (struct ifa_msghdr *)
-		     	((char *)ifam + ifam->ifam_msglen)) {
-			/* just for safety */
-			if (!ifam->ifam_msglen) {
-				syslog(LOG_WARNING, "<%s> ifa_msglen is 0 "
-				       "(buf=%p lim=%p ifam=%p)", __func__,
-				       buf, lim, ifam);
-				return;
-			}
-			if (ifam->ifam_type != RTM_NEWADDR)
-				break;
-		}
-		ifm = (struct if_msghdr *)ifam;
-	}
-}
-
-void
-init_iflist()
-{
-	if (ifblock) {
-		free(ifblock);
-		ifblock_size = 0;
-	}
-	if (iflist)
-		free(iflist);
-	/* get iflist block from kernel */
-	get_iflist(&ifblock, &ifblock_size);
-
-	/* make list of pointers to each if_msghdr */
-	parse_iflist(&iflist, ifblock, ifblock_size);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22.8.1 2012/10/30 17:19:23 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.22.8.2 2013/01/16 05:32:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -64,23 +64,6 @@
 #define IST_EDGE_RISING	5
 #define IST_EDGE_BOTH	6
 #define IST_SOFT	7
-
-#ifdef __OLD_INTERRUPT_CODE	/* XXX XXX XXX */
-
-/* Software interrupt priority levels */
-
-#ifdef __HAVE_FAST_SOFTINTS
-#define SOFTIRQ_CLOCK   0
-#define SOFTIRQ_BIO     1
-#define SOFTIRQ_NET     2
-#define SOFTIRQ_SERIAL  3
-
-#define SOFTIRQ_BIT(x)  (1 << x)
-#endif
-
-#include <arm/arm32/psl.h>
-
-#else /* ! __OLD_INTERRUPT_CODE */
 
 #ifndef _LOCORE
 
@@ -166,8 +149,6 @@ splraiseipl(ipl_cookie_t icookie)
 #include <sys/spl.h>
 
 #endif /* ! _LOCORE */
-
-#endif /* __OLD_INTERRUPT_CODE */
 
 #endif /* _KERNEL */
 

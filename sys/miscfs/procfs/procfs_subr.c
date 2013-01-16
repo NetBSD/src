@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.100.2.1 2012/10/30 17:22:40 yamt Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.100.2.2 2013/01/16 05:33:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.100.2.1 2012/10/30 17:22:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.100.2.2 2013/01/16 05:33:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,6 +253,7 @@ procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid,
 				break;
 			case DTYPE_KQUEUE:
 			case DTYPE_MISC:
+			case DTYPE_SEM:
 			symlink:
 				pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|
 				    S_IXGRP|S_IROTH|S_IXOTH;

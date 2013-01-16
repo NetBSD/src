@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.76 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.sparc,v 1.76.2.1 2013/01/16 05:26:06 yamt Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -57,6 +57,7 @@
 ./usr/include/sparc/rwlock.h			comp-c-include
 ./usr/include/sparc/setjmp.h			comp-c-include
 ./usr/include/sparc/signal.h			comp-c-include
+./usr/include/sparc/sljitarch.h			comp-c-include
 ./usr/include/sparc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/sparc/tctrl.h			comp-c-include
 ./usr/include/sparc/trap.h			comp-c-include

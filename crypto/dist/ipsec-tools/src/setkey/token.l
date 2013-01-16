@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.16.4.1 2012/04/17 00:01:42 yamt Exp $	*/
+/*	$NetBSD: token.l,v 1.16.4.2 2013/01/16 05:25:55 yamt Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -229,6 +229,16 @@ tcp		{
 #endif
 }
 <S_ENCALG>aes-gmac	{
+#ifdef SADB_X_EALG_AESGMAC
+	yylval.num = SADB_X_EALG_AESGMAC; BEGIN INITIAL; return(ALG_ENC);
+#endif
+}
+<S_ENCALG>aes-gcm-16   {
+#ifdef SADB_X_EALG_AESGCM16
+	yylval.num = SADB_X_EALG_AESGCM16; BEGIN INITIAL; return(ALG_ENC);
+#endif
+}
+<S_ENCALG>aes-gmac     {
 #ifdef SADB_X_EALG_AESGMAC
 	yylval.num = SADB_X_EALG_AESGMAC; BEGIN INITIAL; return(ALG_ENC);
 #endif

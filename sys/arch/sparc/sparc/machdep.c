@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.313.2.3 2012/10/30 17:20:22 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.313.2.4 2013/01/16 05:33:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.313.2.3 2012/10/30 17:20:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.313.2.4 2013/01/16 05:33:05 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.313.2.3 2012/10/30 17:20:22 yamt Exp $
 #include <sys/simplelock.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
+#include <sys/ras.h>
 
 #include <dev/mm.h>
 
@@ -594,6 +595,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_tf;
 	__greg_t *r = mcp->__gregs;
+	__greg_t ras_pc;
 #ifdef FPU_CONTEXT
 	__fpregset_t *f = &mcp->__fpregs;
 	struct fpstate *fps = l->l_md.md_fpstate;
@@ -632,6 +634,12 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	r[_REG_O5] = tf->tf_out[5];
 	r[_REG_O6] = tf->tf_out[6];
 	r[_REG_O7] = tf->tf_out[7];
+
+	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
+	    (void *) r[_REG_PC])) != -1) {
+		r[_REG_PC] = ras_pc;
+		r[_REG_nPC] = ras_pc + 4;
+	}
 
 	*flags |= (_UC_CPU|_UC_TLSBASE);
 

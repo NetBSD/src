@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.c,v 1.5 2009/01/18 07:20:00 lukem Exp $	*/
+/*	$NetBSD: drvstats.c,v 1.5.8.1 2013/01/16 05:34:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -425,10 +425,8 @@ drvinit(int selected)
 	} else {
 		p = iostathead;
 		for (i = 0; i < ndrive; i++) {
-			char	buf[10];
 			deref_kptr(p, &cur_drive, sizeof(cur_drive));
-			deref_kptr(cur_drive.io_name, buf, sizeof(buf));
-			cur.name[i] = strdup(buf);
+			cur.name[i] = strdup(cur_drive.io_name);
 			if (!cur.name[i])
 				err(1, "strdup");
 			cur.select[i] = selected;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.65.2.1 2012/04/17 00:08:24 yamt Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.65.2.2 2013/01/16 05:33:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.65.2.1 2012/04/17 00:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.65.2.2 2013/01/16 05:33:43 yamt Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -299,12 +299,10 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	tab->sd_maxsym = 0;
 	tab->sd_usroffset = 0;
 	tab->sd_gone = false;
-#ifdef KDTRACE_HOOKS
 	tab->sd_ctfstart = ctfstart;
 	tab->sd_ctfsize = ctfsize;
 	tab->sd_nmap = nmap;
 	tab->sd_nmapsize = nsyms;
-#endif
 #ifdef KSYMS_DEBUG
 	printf("newstart %p sym %p ksyms_symsz %zu str %p strsz %zu send %p\n",
 	    newstart, symstart, symsize, strstart, strsize,
@@ -896,7 +894,6 @@ ksyms_hdr_init(void *hdraddr)
 	ksyms_hdr.kh_shdr[SHBSS].sh_addralign = PAGE_SIZE;
 	ksyms_hdr.kh_shdr[SHBSS].sh_flags = SHF_ALLOC | SHF_EXECINSTR;
 
-#ifdef KDTRACE_HOOKS
 	/* Sixth section header; ".SUNW_ctf" */
 	ksyms_hdr.kh_shdr[SHCTF].sh_name = 32; /* Section 6 offset */
 	ksyms_hdr.kh_shdr[SHCTF].sh_type = SHT_PROGBITS;
@@ -904,7 +901,6 @@ ksyms_hdr_init(void *hdraddr)
 /*	ksyms_hdr.kh_shdr[SHCTF].sh_size = filled in at open */
 	ksyms_hdr.kh_shdr[SHCTF].sh_link = SYMTAB; /* Corresponding symtab */
 	ksyms_hdr.kh_shdr[SHCTF].sh_addralign = sizeof(char);
-#endif
 
 	/* Set section names */
 	strlcpy(&ksyms_hdr.kh_strtab[1], ".symtab",
@@ -915,10 +911,8 @@ ksyms_hdr_init(void *hdraddr)
 	    sizeof(ksyms_hdr.kh_strtab) - 17);
 	strlcpy(&ksyms_hdr.kh_strtab[27], ".bss",
 	    sizeof(ksyms_hdr.kh_strtab) - 27);
-#ifdef KDTRACE_HOOKS
 	strlcpy(&ksyms_hdr.kh_strtab[32], ".SUNW_ctf",
 	    sizeof(ksyms_hdr.kh_strtab) - 32);
-#endif
 }
 
 static int
@@ -938,11 +932,9 @@ ksymsopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	ksyms_hdr.kh_shdr[STRTAB].sh_offset = ksyms_symsz +
 	    ksyms_hdr.kh_shdr[SYMTAB].sh_offset;
 	ksyms_hdr.kh_shdr[STRTAB].sh_size = ksyms_strsz;
-#ifdef KDTRACE_HOOKS
 	ksyms_hdr.kh_shdr[SHCTF].sh_offset = ksyms_strsz +
 	    ksyms_hdr.kh_shdr[STRTAB].sh_offset;
 	ksyms_hdr.kh_shdr[SHCTF].sh_size = ksyms_ctfsz;
-#endif
 	ksyms_isopen = true;
 	mutex_exit(&ksyms_lock);
 
@@ -980,9 +972,6 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 	struct ksyms_symtab *st;
 	size_t filepos, inpos, off;
 	int error;
-#ifdef KDTRACE_HOOKS
-	struct ksyms_symtab *cst;
-#endif
 
 	/*
 	 * First: Copy out the ELF header.   XXX Lose if ksymsopen()
@@ -1031,24 +1020,22 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 		filepos += st->sd_strsize;
 	}
 
-#ifdef KDTRACE_HOOKS
 	/*
 	 * Copy out the CTF table.
 	 */
-	cst = TAILQ_FIRST(&ksyms_symtabs);
-	if (cst->sd_ctfstart != NULL) {
+	st = TAILQ_FIRST(&ksyms_symtabs);
+	if (st->sd_ctfstart != NULL) {
 		if (uio->uio_resid == 0)
 			return 0;
-		if (uio->uio_offset <= cst->sd_ctfsize + filepos) {
+		if (uio->uio_offset <= st->sd_ctfsize + filepos) {
 			inpos = uio->uio_offset - filepos;
-			error = uiomove((char *)cst->sd_ctfstart + inpos,
-			   cst->sd_ctfsize - inpos, uio);
+			error = uiomove((char *)st->sd_ctfstart + inpos,
+			    st->sd_ctfsize - inpos, uio);
 			if (error != 0)
 				return error;
 		}
-		filepos += cst->sd_ctfsize;
+		filepos += st->sd_ctfsize;
 	}
-#endif
 
 	return 0;
 }

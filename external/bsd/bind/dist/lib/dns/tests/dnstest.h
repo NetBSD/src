@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstest.h,v 1.1.1.1.2.1 2012/10/30 18:53:27 yamt Exp $	*/
+/*	$NetBSD: dnstest.h,v 1.1.1.1.2.2 2013/01/16 05:27:23 yamt Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,7 @@
 		result = (r); \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 extern isc_mem_t *mctx;
 extern isc_entropy_t *ectx;

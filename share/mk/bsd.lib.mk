@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.318.2.2 2012/10/30 18:59:46 yamt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.318.2.3 2013/01/16 05:32:38 yamt Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -54,8 +54,12 @@ AFLAGS+=        ${PIE_AFLAGS}
 LIBDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=LIBDO.${_lib}
 .endif
+.if ${LIBDO.${_lib}} == "_external"
+LDADD+=		-l${_lib}
+.else
 LDADD+=		-L${LIBDO.${_lib}} -l${_lib}
 DPADD+=		${LIBDO.${_lib}}/lib${_lib}.so
+.endif
 .endfor
 .endif									# }
 

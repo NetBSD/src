@@ -1,5 +1,5 @@
 
-#	$NetBSD: Makefile,v 1.1 2010/10/06 11:24:55 haad Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2013/01/16 05:33:57 yamt Exp $
 #
 
 .include <bsd.own.mk>
@@ -8,10 +8,11 @@ TESTSDIR=	${TESTSBASE}/dev/dm
 FILESDIR=	${TESTSDIR}
 
 TESTS_SH=	t_dm
-TESTS_C=	h_dm
 
-ATFFILE=	yes
+BINDIR=		${TESTSDIR}
+MKMAN=no
 
+PROGS=		h_dm
 
 LDADD+= -lprop -lutil
 LDADD+= -lrumpdev_disk -lrumpdev_dm

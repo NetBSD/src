@@ -1,4 +1,4 @@
-/*	$NetBSD: isctest.c,v 1.1.1.1.2.1 2012/10/30 18:54:09 yamt Exp $	*/
+/*	$NetBSD: isctest.c,v 1.1.1.1.2.2 2013/01/16 05:27:34 yamt Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -44,6 +44,7 @@ isc_log_t *lctx = NULL;
 isc_taskmgr_t *taskmgr = NULL;
 isc_timermgr_t *timermgr = NULL;
 isc_socketmgr_t *socketmgr = NULL;
+isc_task_t *maintask = NULL;
 int ncpus;
 
 static isc_boolean_t hash_active = ISC_FALSE;
@@ -65,6 +66,8 @@ static isc_logcategory_t categories[] = {
 
 static void
 cleanup_managers() {
+	if (maintask != NULL)
+		isc_task_destroy(&maintask);
 	if (socketmgr != NULL)
 		isc_socketmgr_destroy(&socketmgr);
 	if (taskmgr != NULL)
@@ -83,6 +86,9 @@ create_managers() {
 #endif
 
 	CHECK(isc_taskmgr_create(mctx, ncpus, 0, &taskmgr));
+	CHECK(isc_task_create(taskmgr, 0, &maintask));
+	isc_taskmgr_setexcltask(taskmgr, maintask);
+
 	CHECK(isc_timermgr_create(mctx, &timermgr));
 	CHECK(isc_socketmgr_create(mctx, &socketmgr));
 	return (ISC_R_SUCCESS);
@@ -140,6 +146,8 @@ isc_test_begin(FILE *logfile, isc_boolean_t start_managers) {
 
 void
 isc_test_end() {
+	if (maintask != NULL)
+		isc_task_detach(&maintask);
 	if (taskmgr != NULL)
 		isc_taskmgr_destroy(&taskmgr);
 	if (lctx != NULL)

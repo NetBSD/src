@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.12.8.1 2012/04/17 00:08:06 yamt Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.12.8.2 2013/01/16 05:33:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -134,6 +134,12 @@
 #define AXE_NOPHY				0xE0
 #define AXE_INTPHY				0x10
 
+#define AXE_772B_RXCMD_RH1M	0x0100
+#define AXE_772B_RXCMD_RH2M	0x0200
+#define AXE_772B_RXCMD_RH3M	0x0400
+
+#define AXE_RH1M_RXLEN_MASK	0x07ff
+
 #define AXE_TIMEOUT		1000
 
 #define AXE_172_BUFSZ		1536
@@ -167,6 +173,7 @@ struct axe_type {
 	uint16_t		axe_flags;
 #define AX178		0x0001		/* AX88178 */
 #define AX772		0x0002		/* AX88772 */
+#define AX772B		0x0004		/* AX88772B */
 #define AXE_ANY_PHY	0x1000		/* Chip lies about valid phys */
 #define AXE_MII		0x2000		/* Chip-specific MII handling */
 };

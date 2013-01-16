@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.65.2.1 2012/04/17 00:06:23 yamt Exp $
+#	$NetBSD: IPAQ,v 1.65.2.2 2013/01/16 05:32:58 yamt Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -23,9 +23,6 @@ options 	CPU_SA1110	# Support the SA1110 core
 # Architecture options
 options 	SAEGPIO_BASE="0x49000000"
 				# we have Extended GPIO
-# FPA options
-#options 	ARMFPE		# ARM Ltd FPE
-
 # File systems
 
 file-system	FFS		# UFS

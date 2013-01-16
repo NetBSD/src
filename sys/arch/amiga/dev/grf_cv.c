@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.52.2.2 2012/10/30 17:18:48 yamt Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.52.2.3 2013/01/16 05:32:41 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.52.2.2 2012/10/30 17:18:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.52.2.3 2013/01/16 05:32:41 yamt Exp $");
 
 #include "grfcv.h"
 #include "ite.h"
@@ -555,7 +555,7 @@ grfcvattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach grf
 	 */
-	if (amiga_config_found(cfdata, self, gp, grfcvprint)) {
+	if (amiga_config_found(cfdata, gp->g_device, gp, grfcvprint)) {
 		if (self != NULL)
 			printf("grfcv: CyberVision64 with %dMB being used\n",
 			    cv_fbsize/0x100000);

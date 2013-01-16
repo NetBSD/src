@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.44.34.1 2012/04/17 00:05:37 yamt Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.44.34.2 2013/01/16 05:32:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.44.34.1 2012/04/17 00:05:37 yamt Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.44.34.2 2013/01/16 05:32:30 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,8 +44,12 @@ __RCSID("$NetBSD: sys_term.c,v 1.44.34.1 2012/04/17 00:05:37 yamt Exp $");
 #include <util.h>
 #include <vis.h>
 
+#ifdef SUPPORT_UTMP
 #include <utmp.h>
-struct	utmp wtmp;
+#endif
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 
 #define SCPYN(a, b)	(void) strncpy(a, b, sizeof(a))
 #define SCMPN(a, b)	strncmp(a, b, sizeof(a))

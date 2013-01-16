@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.1.2.2 2012/10/30 17:19:26 yamt Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.1.2.3 2013/01/16 05:32:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -47,6 +47,11 @@ struct vcprop_tag {
 #define	VCPROPTAG_GET_ARMMEMORY		0x00010005
 #define	VCPROPTAG_GET_VCMEMORY		0x00010006
 #define	VCPROPTAG_GET_CLOCKS		0x00010007
+
+#define	VCPROPTAG_GET_CLOCKSTATE	0x00030001
+#define	VCPROPTAG_SET_CLOCKSTATE	0x00038001
+#define	VCPROPTAG_GET_CLOCKRATE		0x00030002
+#define	VCPROPTAG_SET_CLOCKRATE		0x00038002
 	
 #define	VCPROPTAG_GET_CMDLINE		0x00050001
 #define	VCPROPTAG_GET_DMACHAN		0x00060001
@@ -95,6 +100,18 @@ struct vcprop_tag_boardserial {
 	uint64_t sn;
 };
 
+
+#define	VCPROP_CLK_EMMC		1
+#define	VCPROP_CLK_UART		2
+#define	VCPROP_CLK_ARM		3
+#define	VCPROP_CLK_CORE		4
+#define	VCPROP_CLK_V3D		5
+#define	VCPROP_CLK_H264		6
+#define	VCPROP_CLK_ISP		7
+#define	VCPROP_CLK_SDRAM	8
+#define	VCPROP_CLK_PIXEL	9
+#define	VCPROP_CLK_PWM		10
+
 struct vcprop_clock {
 	uint32_t pclk;
 	uint32_t cclk;
@@ -115,6 +132,18 @@ struct vcprop_tag_cmdline {
 struct vcprop_tag_dmachan {
 	struct vcprop_tag tag;
 	uint32_t mask;
+};
+
+struct vcprop_tag_clockstate {
+	struct vcprop_tag tag;
+	uint32_t id;
+	uint32_t state;
+};
+
+struct vcprop_tag_clockrate {
+	struct vcprop_tag tag;
+	uint32_t id;
+	uint32_t rate;
 };
 
 struct vcprop_buffer_hdr {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.201.2.1 2012/04/17 00:08:52 yamt Exp $	*/
+/*	$NetBSD: mount.h,v 1.201.2.2 2013/01/16 05:33:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -277,7 +277,7 @@ int	fsname##_mount(struct mount *, const char *, void *,		\
 int	fsname##_start(struct mount *, int);				\
 int	fsname##_unmount(struct mount *, int);				\
 int	fsname##_root(struct mount *, struct vnode **);			\
-int	fsname##_quotactl(struct mount *, int, struct quotactl_args *);	\
+int	fsname##_quotactl(struct mount *, struct quotactl_args *);	\
 int	fsname##_statvfs(struct mount *, struct statvfs *);		\
 int	fsname##_sync(struct mount *, int, struct kauth_cred *);	\
 int	fsname##_vget(struct mount *, ino_t, struct vnode **);		\

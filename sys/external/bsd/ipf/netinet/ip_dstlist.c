@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_dstlist.c,v 1.2.4.3 2012/10/30 17:22:19 yamt Exp $	*/
+/*	$NetBSD: ip_dstlist.c,v 1.2.4.4 2013/01/16 05:33:37 yamt Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -1076,12 +1076,15 @@ ipf_dstlist_select(fr_info_t *fin, ippool_dst_t *d)
 {
 	ipf_dstnode_t *node, *sel;
 	int connects;
-	u_32_t hash[4];
+	union {
+	    u_32_t hash[4];
+	    unsigned char bytes[16];
+	} h;
 	MD5_CTX ctx;
 	int family;
 	int x;
 
-	if (d->ipld_dests == NULL || *d->ipld_dests == NULL)
+	if (d == NULL || d->ipld_dests == NULL || *d->ipld_dests == NULL)
 		return NULL;
 
 	family = fin->fin_family;
@@ -1139,8 +1142,8 @@ ipf_dstlist_select(fr_info_t *fin, ippool_dst_t *d)
 			  sizeof(fin->fin_src6));
 		MD5Update(&ctx, (u_char *)&fin->fin_dst6,
 			  sizeof(fin->fin_dst6));
-		MD5Final((u_char *)hash, &ctx);
-		x = hash[0] % d->ipld_nodes;
+		MD5Final(h.bytes, &ctx);
+		x = h.hash[0] % d->ipld_nodes;
 		sel = d->ipld_dests[x];
 		break;
 
@@ -1149,8 +1152,8 @@ ipf_dstlist_select(fr_info_t *fin, ippool_dst_t *d)
 		MD5Update(&ctx, (u_char *)&d->ipld_seed, sizeof(d->ipld_seed));
 		MD5Update(&ctx, (u_char *)&fin->fin_src6,
 			  sizeof(fin->fin_src6));
-		MD5Final((u_char *)hash, &ctx);
-		x = hash[0] % d->ipld_nodes;
+		MD5Final(h.bytes, &ctx);
+		x = h.hash[0] % d->ipld_nodes;
 		sel = d->ipld_dests[x];
 		break;
 
@@ -1159,8 +1162,8 @@ ipf_dstlist_select(fr_info_t *fin, ippool_dst_t *d)
 		MD5Update(&ctx, (u_char *)&d->ipld_seed, sizeof(d->ipld_seed));
 		MD5Update(&ctx, (u_char *)&fin->fin_dst6,
 			  sizeof(fin->fin_dst6));
-		MD5Final((u_char *)hash, &ctx);
-		x = hash[0] % d->ipld_nodes;
+		MD5Final(h.bytes, &ctx);
+		x = h.hash[0] % d->ipld_nodes;
 		sel = d->ipld_dests[x];
 		break;
 
@@ -1169,7 +1172,7 @@ ipf_dstlist_select(fr_info_t *fin, ippool_dst_t *d)
 		break;
 	}
 
-	if (sel->ipfd_dest.fd_addr.adf_family != family)
+	if (sel && sel->ipfd_dest.fd_addr.adf_family != family)
 		sel = NULL;
 	d->ipld_selected = sel;
 

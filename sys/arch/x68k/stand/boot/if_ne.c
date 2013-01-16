@@ -1,5 +1,4 @@
-/* $NetBSD: if_ne.c,v 1.1.2.2 2012/10/30 17:20:31 yamt Exp $ */
-/* Id: if_ne.c,v 1.28 2011/10/05 13:17:06 isaki Exp  */
+/* $NetBSD: if_ne.c,v 1.1.2.3 2013/01/16 05:33:08 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Tetsuya Isaki. All rights reserved.

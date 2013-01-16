@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.197.2.2 2012/10/30 17:22:57 yamt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.197.2.3 2013/01/16 05:33:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -800,7 +800,7 @@ struct kinfo_file {
  * kern.evcnt returns an array of these structures, which are designed both to
  * be immune to 32/64 bit emulation issues.  Note that the struct here differs
  * from the real struct evcnt but contains the same information in order to
- * accomodate sysctl.
+ * accommodate sysctl.
  */
 struct evcnt_sysctl {
 	uint64_t	ev_count;		/* current count */

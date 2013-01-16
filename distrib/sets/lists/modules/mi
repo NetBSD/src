@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.34.2.4 2012/10/30 18:48:46 yamt Exp $
+# $NetBSD: mi,v 1.34.2.5 2013/01/16 05:26:10 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -119,6 +119,8 @@
 ./@MODULEDIR@/npf_ext_log/npf_ext_log.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/npf_ext_normalise			base-kernel-modules	kmod
 ./@MODULEDIR@/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_rndblock			base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_rndblock/npf_ext_rndblock.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/ntfs				base-kernel-modules	kmod
 ./@MODULEDIR@/ntfs/ntfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/null				base-kernel-modules	kmod

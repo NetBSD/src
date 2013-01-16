@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.73.2.1 2012/04/17 00:05:50 yamt Exp $
+#	$NetBSD: bsd.dep.mk,v 1.73.2.2 2013/01/16 05:32:37 yamt Exp $
 
 ##### Basic targets
 realdepend:	beforedepend .depend afterdepend
@@ -13,7 +13,7 @@ MKDEP_SUFFIXES?=	.o
 ##### Build rules
 # some of the rules involve .h sources, so remove them from mkdep line
 
-.if defined(SRCS)							# {
+.if defined(SRCS) && !empty(SRCS)
 __acpp_flags=	${_ASM_TRADITIONAL_CPP}
 
 .if defined(NODPSRCS)
@@ -67,17 +67,17 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 	    ${CXXFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
-.endif # defined(SRCS)							# }
+.endif # defined(SRCS) && !empty(SRCS)					# }
 
 ##### Clean rules
-.if defined(SRCS)
+.if defined(SRCS) && !empty(SRCS)
 CLEANDIRFILES+= .depend ${__DPSRCS.d} ${.CURDIR}/tags ${CLEANDEPEND}
 .endif
 
 ##### Custom rules
 .if !target(tags)
 tags: ${SRCS}
-.if defined(SRCS)
+.if defined(SRCS) && !empty(SRCS)
 	-cd "${.CURDIR}"; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
 	    ${TOOL_SED} "s;\${.CURDIR}/;;" > tags
 .endif

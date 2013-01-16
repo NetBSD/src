@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.145.2.4 2012/10/30 18:48:38 yamt Exp $
+# $NetBSD: md.amd64,v 1.145.2.5 2013/01/16 05:26:03 yamt Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -65,7 +65,7 @@
 ./usr/lib/i386/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libbind9.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libbind9.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/i386/libbind9.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbsdmalloc.so.0		base-compat-shlib	compat,pic
@@ -101,7 +101,7 @@
 ./usr/lib/i386/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdns.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libdns.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/i386/libdns.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/i386/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/i386/libdwarf.so.0			base-compat-shlib	compat,pic
@@ -143,11 +143,11 @@
 ./usr/lib/i386/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libipsec.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisc.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libisc.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/i386/libisc.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccc.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libisccc.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/i386/libisccc.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccfg.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libisccfg.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/i386/libisccfg.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/i386/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/i386/libisns.so.0			base-compat-shlib	compat,pic
@@ -174,7 +174,7 @@
 ./usr/lib/i386/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblwres.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/liblwres.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/i386/liblwres.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzma.so.1			base-compat-shlib	compat,pic
@@ -189,6 +189,8 @@
 ./usr/lib/i386/libmj.so.1.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/i386/libnetpgp.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libnetpgp.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libnetpgpverify.so.4		base-compat-shlib	compat,pic
+./usr/lib/i386/libnetpgpverify.so.4.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libnpf.so.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/i386/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/i386/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds
@@ -226,8 +228,8 @@
 ./usr/lib/i386/libradius.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librefuse.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/librefuse.so.2.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libresolv.so.2			base-compat-shlib	compat,pic
-./usr/lib/i386/libresolv.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libresolv.so.3			base-compat-shlib	compat,pic
+./usr/lib/i386/libresolv.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libroken.so.19			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libroken.so.19.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/librpcsvc.so.1			base-compat-shlib	compat,pic
@@ -258,8 +260,8 @@
 ./usr/lib/i386/libsl.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libsqlite3.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libsqlite3.so.1.1		base-compat-shlib	compat,pic
-./usr/lib/i386/libssh.so.19			base-compat-shlib	compat,pic
-./usr/lib/i386/libssh.so.19.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libssh.so.20			base-compat-shlib	compat,pic
+./usr/lib/i386/libssh.so.20.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.10			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.10.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds
@@ -291,6 +293,16 @@
 ./usr/lib/i386/lua/5.1				base-compat-shlib	compat
 ./usr/lib/i386/lua/5.1/gpio.so			base-compat-shlib	compat,pic
 ./usr/lib/i386/lua/5.1/sqlite.so		base-compat-shlib	compat,pic
+./usr/lib/i386/npf				base-npf-shlib		compat
+./usr/lib/i386/npf/ext_log.so			base-npf-shlib		compat,pic
+./usr/lib/i386/npf/ext_log.so.0			base-npf-shlib		compat,pic
+./usr/lib/i386/npf/ext_log.so.0.0		base-npf-shlib		compat,pic
+./usr/lib/i386/npf/ext_normalise.so		base-npf-shlib		compat,pic
+./usr/lib/i386/npf/ext_normalise.so.0		base-npf-shlib		compat,pic
+./usr/lib/i386/npf/ext_normalise.so.0.0		base-npf-shlib		compat,pic
+./usr/lib/i386/npf/ext_rndblock.so		base-npf-shlib		compat,pic
+./usr/lib/i386/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
+./usr/lib/i386/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
 ./usr/lib/i386/security				base-compat-shlib	compat
 ./usr/lib/i386/security/pam_afslog.so.3		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/i386/security/pam_chroot.so.3		base-compat-shlib	compat,pic,pam

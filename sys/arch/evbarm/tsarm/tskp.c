@@ -1,4 +1,4 @@
-/* $NetBSD: tskp.c,v 1.8.2.1 2012/10/30 17:19:28 yamt Exp $ */
+/* $NetBSD: tskp.c,v 1.8.2.2 2013/01/16 05:32:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.8.2.1 2012/10/30 17:19:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.8.2.2 2013/01/16 05:32:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ struct wskbd_mapdata mxkp_keymapdata = {
 
 static int	tskp_match(device_t, cfdata_t, void *);
 static void	tskp_attach(device_t, device_t, void *);
-static void	tskp_scankeys(struct matrixkp_softc *, u_int32_t *);
+static void	tskp_scankeys(struct matrixkp_softc *, uint32_t *);
 
 CFATTACH_DECL_NEW(tskp, sizeof(struct tskp_softc),
     tskp_match, tskp_attach, NULL, NULL);
@@ -154,10 +154,10 @@ tskp_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-tskp_scankeys(struct matrixkp_softc *mxkp_sc, u_int32_t *keys)
+tskp_scankeys(struct matrixkp_softc *mxkp_sc, uint32_t *keys)
 {
 	struct tskp_softc *sc = device_private(mxkp_sc->sc_dev);
-	u_int32_t pos;
+	uint32_t pos;
 
 	for(pos = 0; pos < 4; pos++) {
 		GPIO_SET(PBDDR, (1 << pos));

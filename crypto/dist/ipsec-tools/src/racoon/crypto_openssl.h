@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.h,v 1.7 2009/08/17 11:59:10 vanhu Exp $	*/
+/*	$NetBSD: crypto_openssl.h,v 1.7.8.1 2013/01/16 05:25:55 yamt Exp $	*/
 
 /* Id: crypto_openssl.h,v 1.11 2004/11/13 11:28:01 manubsd Exp */
 
@@ -123,6 +123,9 @@ extern vchar_t *eay_aes_encrypt __P((vchar_t *, vchar_t *, vchar_t *));
 extern vchar_t *eay_aes_decrypt __P((vchar_t *, vchar_t *, vchar_t *));
 extern int eay_aes_weakkey __P((vchar_t *));
 extern int eay_aes_keylen __P((int));
+
+/* AES GCM 16*/
+extern int eay_aesgcm_keylen __P((int));
 
 #if defined(HAVE_OPENSSL_CAMELLIA_H)
 /* Camellia */

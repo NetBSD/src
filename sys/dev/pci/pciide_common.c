@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.51.4.2 2012/10/30 17:21:50 yamt Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.51.4.3 2013/01/16 05:33:30 yamt Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.51.4.2 2012/10/30 17:21:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.51.4.3 2013/01/16 05:33:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -249,12 +249,16 @@ pciide_detach(device_t self, int flags)
 	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (cp->compat != 0)
-			if (cp->ih != NULL)
+			if (cp->ih != NULL) {
 			       pciide_unmap_compat_intr(sc->sc_pc, cp, channel);
+			       cp->ih = NULL;
+			}
 	}
 
-	if (sc->sc_pci_ih != NULL)
+	if (sc->sc_pci_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_pci_ih);
+		sc->sc_pci_ih = NULL;
+	}
 
 	return pciide_common_detach(sc, flags);
 }

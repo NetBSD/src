@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.41 2011/09/16 16:13:17 plunky Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.41.2.1 2013/01/16 05:32:30 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.41 2011/09/16 16:13:17 plunky Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.41.2.1 2013/01/16 05:32:30 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,9 @@ __RCSID("$NetBSD: rlogind.c,v 1.41 2011/09/16 16:13:17 plunky Exp $");
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 #include <util.h>
 #include "pathnames.h"
 

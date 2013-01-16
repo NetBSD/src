@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.102.2.1 2012/04/17 00:05:40 yamt Exp $	*/
+/*	$NetBSD: init.c,v 1.102.2.2 2013/01/16 05:32:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.102.2.1 2012/04/17 00:05:40 yamt Exp $");
+__RCSID("$NetBSD: init.c,v 1.102.2.2 2013/01/16 05:32:33 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,12 @@ __RCSID("$NetBSD: init.c,v 1.102.2.1 2012/04/17 00:05:40 yamt Exp $");
 #include <util.h>
 #include <paths.h>
 #include <err.h>
+#ifdef SUPPORT_UTMP
+#include <utmp.h>
+#endif
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 
 #include <stdarg.h>
 
@@ -1097,8 +1103,10 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 	sp->se_index = session_index;
 
 	(void)asprintf(&sp->se_device, "%s%s", _PATH_DEV, typ->ty_name);
-	if (!sp->se_device)
+	if (!sp->se_device) {
+		free(sp);
 		return NULL;
+	}
 
 	if (setupargv(sp, typ) == 0) {
 		free_session(sp);

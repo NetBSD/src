@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.37.4.1 2012/04/17 00:06:53 yamt Exp $
+#	$NetBSD: OFWGENCFG,v 1.37.4.2 2013/01/16 05:33:04 yamt Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -28,10 +28,6 @@ makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 # Architecture options
 
 options 	OFWGENCFG	# Enable Open Firmware bits specific to GENERIC configuration
-
-# FPA options
-
-#options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
 

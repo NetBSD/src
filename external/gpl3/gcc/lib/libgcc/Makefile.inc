@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13.2.1 2012/10/30 18:57:35 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.13.2.2 2013/01/16 05:28:01 yamt Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -143,7 +143,7 @@ dp-bit.c: ${.CURDIR}/Makefile
 .include "../Makefile.tconfigh"
 DPSRCS+=	tconfig.h
 
-.if ${MKGCC} != "no"
+.if ${MKGCC} != "no" && defined(G_UNWIND_H) && !empty(G_UNWIND_H)
 # XXX figure out why Makefile.hacks doesn't work
 BUILDSYMLINKS+=	${G_UNWIND_H} unwind.h
 DPSRCS+=	unwind.h

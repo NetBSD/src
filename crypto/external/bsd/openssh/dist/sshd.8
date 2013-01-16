@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.7.2.1 2012/05/23 10:07:05 yamt Exp $
+.\"	$NetBSD: sshd.8,v 1.7.2.2 2013/01/16 05:25:59 yamt Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,8 +35,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.264 2011/09/23 00:22:04 dtucker Exp $
-.Dd September 23 2011
+.\" $OpenBSD: sshd.8,v 1.266 2012/06/18 12:07:07 dtucker Exp $
+.Dd June 18 2012
 .Dt SSHD 8
 .Os
 .Sh NAME
@@ -116,6 +116,8 @@ The connection parameters are supplied as keyword=value pairs.
 The keywords are
 .Dq user ,
 .Dq host ,
+.Dq laddr ,
+.Dq lport ,
 and
 .Dq addr .
 All are required and may be supplied in any order, either with multiple
@@ -859,7 +861,7 @@ rlogin/rsh.
 .It Pa /etc/ssh/ssh_host_dsa_key
 .It Pa /etc/ssh/ssh_host_ecdsa_key
 .It Pa /etc/ssh/ssh_host_rsa_key
-These three files contain the private parts of the host keys.
+These files contain the private parts of the host keys.
 These files should only be owned by root, readable only by root, and not
 accessible to others.
 Note that
@@ -870,7 +872,7 @@ does not start if these files are group/world-accessible.
 .It Pa /etc/ssh/ssh_host_dsa_key.pub
 .It Pa /etc/ssh/ssh_host_ecdsa_key.pub
 .It Pa /etc/ssh/ssh_host_rsa_key.pub
-These three files contain the public parts of the host keys.
+These files contain the public parts of the host keys.
 These files should be world-readable but writable only by
 root.
 Their contents should match the respective private parts.

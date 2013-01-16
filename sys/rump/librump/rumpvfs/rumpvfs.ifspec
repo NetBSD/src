@@ -1,4 +1,4 @@
-;       $NetBSD: rumpvfs.ifspec,v 1.7 2010/11/30 15:41:35 pooka Exp $
+;       $NetBSD: rumpvfs.ifspec,v 1.7.8.1 2013/01/16 05:33:52 yamt Exp $
 
 NAME|vfs
 PUBHDR|include/rump/rumpvfs_if_pub.h
@@ -8,13 +8,14 @@ WRAPPERS|librump/rumpvfs/rumpvfs_if_wrappers.c
 ; type          | name          | args		| attrs
 ;
 
-void		|getvninfo	|struct vnode *, enum vtype *, off_t *, dev_t *
+void		|getvninfo	|struct vnode *, enum rump_vtype *,	\
+				 off_t *, dev_t *
 
 struct vfsops *	|vfslist_iterate|struct vfsops *
 struct vfsops *	|vfs_getopsbyname|const char *
 
 struct vattr *	|vattr_init	|void
-void		|vattr_settype	|struct vattr *, enum vtype
+void		|vattr_settype	|struct vattr *, enum rump_vtype
 void		|vattr_setmode	|struct vattr *, mode_t
 void		|vattr_setrdev	|struct vattr *, dev_t
 void		|vattr_free	|struct vattr *

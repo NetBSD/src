@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.16.2.1 2012/10/30 17:21:21 yamt Exp $	*/
+/*	$NetBSD: nand.c,v 1.16.2.2 2013/01/16 05:33:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.16.2.1 2012/10/30 17:21:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.16.2.2 2013/01/16 05:33:16 yamt Exp $");
 
 #include "locators.h"
 
@@ -332,6 +332,8 @@ nand_fill_chip_structure_legacy(device_t self, struct nand_chip *chip)
 	switch (chip->nc_manf_id) {
 	case NAND_MFR_MICRON:
 		return nand_read_parameters_micron(self, chip);
+	case NAND_MFR_SAMSUNG:
+		return nand_read_parameters_samsung(self, chip);
 	default:
 		return 1;
 	}
@@ -400,21 +402,20 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 #endif
 
 	aprint_normal_dev(self,
-	    "page size: %zu bytes, spare size: %zu bytes, "
-	    "block size: %zu bytes\n",
+	    "page size: %" PRIu32 " bytes, spare size: %" PRIu32 " bytes, "
+	    "block size: %" PRIu32 " bytes\n",
 	    chip->nc_page_size, chip->nc_spare_size, chip->nc_block_size);
 
 	aprint_normal_dev(self,
 	    "LUN size: %" PRIu32 " blocks, LUNs: %" PRIu8
-	    ", total storage size: %zu MB\n",
+	    ", total storage size: %" PRIu64 " MB\n",
 	    chip->nc_lun_blocks, chip->nc_num_luns,
 	    chip->nc_size / 1024 / 1024);
 
-#ifdef NAND_VERBOSE
 	aprint_normal_dev(self, "column cycles: %" PRIu8 ", row cycles: %"
-	    PRIu8 "\n",
-	    chip->nc_addr_cycles_column, chip->nc_addr_cycles_row);
-#endif
+	    PRIu8 ", width: %s\n",
+	    chip->nc_addr_cycles_column, chip->nc_addr_cycles_row,
+	    (chip->nc_flags & NC_BUSWIDTH_16) ? "x16" : "x8");
 
 	ecc = chip->nc_ecc = &sc->nand_if->ecc;
 
@@ -439,7 +440,7 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 		ecc->necc_offset = 80;
 		break;
 	default:
-		panic("OOB size %zu is unexpected", chip->nc_spare_size);
+		panic("OOB size %" PRIu32 " is unexpected", chip->nc_spare_size);
 	}
 
 	ecc->necc_steps = chip->nc_page_size / ecc->necc_block_size;
@@ -549,34 +550,29 @@ nand_fill_chip_structure(device_t self, struct nand_chip *chip)
 
 	aprint_normal_dev(self, "vendor: %s, model: %s\n", vendor, model);
 
-	/* XXX TODO multiple LUNs */
-	if (params.param_numluns != 1) {
-		aprint_error_dev(self,
-		    "more than one LUNs are not supported yet!\n");
-
-		return 1;
-	}
-
-	chip->nc_size = params.param_pagesize * params.param_blocksize *
-	    params.param_lunsize * params.param_numluns;
-
-	chip->nc_page_size = params.param_pagesize;
-	chip->nc_block_pages = params.param_blocksize;
-	chip->nc_block_size = params.param_blocksize * params.param_pagesize;
-	chip->nc_spare_size = params.param_sparesize;
-	chip->nc_lun_blocks = params.param_lunsize;
+	chip->nc_page_size = le32toh(params.param_pagesize);
+	chip->nc_block_size =
+	    le32toh(params.param_blocksize) * chip->nc_page_size;
+	chip->nc_spare_size = le16toh(params.param_sparesize);
+	chip->nc_lun_blocks = le32toh(params.param_lunsize);
 	chip->nc_num_luns = params.param_numluns;
+
+	chip->nc_size =
+	    chip->nc_block_size * chip->nc_lun_blocks * chip->nc_num_luns;
 
 	/* the lower 4 bits contain the row address cycles */
 	chip->nc_addr_cycles_row = params.param_addr_cycles & 0x07;
 	/* the upper 4 bits contain the column address cycles */
 	chip->nc_addr_cycles_column = (params.param_addr_cycles & ~0x07) >> 4;
 
-	if (params.param_features & ONFI_FEATURE_16BIT)
+	uint16_t features = le16toh(params.param_features);
+	if (features & ONFI_FEATURE_16BIT) {
 		chip->nc_flags |= NC_BUSWIDTH_16;
+	}
 
-	if (params.param_features & ONFI_FEATURE_EXTENDED_PARAM)
+	if (features & ONFI_FEATURE_EXTENDED_PARAM) {
 		chip->nc_flags |= NC_EXTENDED_PARAM;
+	}
 
 	return 0;
 }
@@ -595,7 +591,7 @@ nand_address_column(device_t self, size_t row, size_t column)
 	struct nand_chip *chip = &sc->sc_chip;
 	uint8_t i;
 
-	DPRINTF(("addressing row: 0x%jx column: %zu\n",
+	DPRINTF(("addressing row: 0x%jx column: %" PRIu32 "\n",
 		(uintmax_t )row, column));
 
 	/* XXX TODO */
@@ -1152,7 +1148,7 @@ nand_flash_write_unaligned(device_t self, flash_off_t offset, size_t len,
 			/* XXX debug */
 			if (left > chip->nc_page_size) {
 				printf("left: %zu, i: %d, count: %zu\n",
-				    (size_t )left, i, count);
+				    left, i, count);
 			}
 			KASSERT(left > chip->nc_page_size);
 
@@ -1230,7 +1226,7 @@ nand_flash_write(device_t self, flash_off_t offset, size_t len, size_t *retlen,
 	}
 out:
 	mutex_exit(&sc->sc_device_lock);
-	DPRINTF(("page programming: retlen: %zu, len: %zu\n", *retlen, len));
+	DPRINTF(("page programming: retlen: %" PRIu32 ", len: %" PRIu32 "\n", *retlen, len));
 
 	return error;
 }
@@ -1322,11 +1318,11 @@ nand_flash_read(device_t self, flash_off_t offset, size_t len, size_t *retlen,
 
 	*retlen = 0;
 
-	DPRINTF(("nand_flash_read: off: 0x%jx, len: %zu\n",
+	DPRINTF(("nand_flash_read: off: 0x%jx, len: %" PRIu32 "\n",
 		(uintmax_t)offset, len));
 
 	if (__predict_false((offset + len) > chip->nc_size)) {
-		DPRINTF(("nand_flash_read: read (off: 0x%jx, len: %zu),"
+		DPRINTF(("nand_flash_read: read (off: 0x%jx, len: %" PRIu32 "),"
 			" is over device size (%ju)\n", (uintmax_t)offset,
 			len, (uintmax_t)chip->nc_size));
 		return EINVAL;

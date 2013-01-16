@@ -1,4 +1,4 @@
-/* $NetBSD: mktemp.c,v 1.11 2009/08/15 20:02:28 christos Exp $ */
+/* $NetBSD: mktemp.c,v 1.11.6.1 2013/01/16 05:34:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996, 1998 Peter Wemm <peter@netplex.com.au>
@@ -50,7 +50,7 @@
 #include <unistd.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: mktemp.c,v 1.11 2009/08/15 20:02:28 christos Exp $");
+__RCSID("$NetBSD: mktemp.c,v 1.11.6.1 2013/01/16 05:34:06 yamt Exp $");
 #endif /* !__lint */
 
 static void usage(void) __dead;
@@ -99,6 +99,9 @@ main(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
+
+	if (tflag == 0 && argc < 1)
+		tflag = 1;
 
 	if (tflag) {
 		if (tmpdir == NULL)

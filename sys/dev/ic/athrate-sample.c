@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-sample.c,v 1.18 2011/02/20 03:55:56 jmcneill Exp $ */
+/*	$NetBSD: athrate-sample.c,v 1.18.4.1 2013/01/16 05:33:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 John Bicket
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.18 2011/02/20 03:55:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.18.4.1 2013/01/16 05:33:15 yamt Exp $");
 #endif
 
 
@@ -351,7 +351,7 @@ ath_rate_findrate(struct ath_softc *sc, struct ath_node *an,
 		}
 	}
 
-	KASSERT(ndx >= 0 && ndx < sn->num_rates, ("ndx is %d", ndx));
+	KASSERTMSG(ndx >= 0 && ndx < sn->num_rates, "ndx is %d", ndx);
 
 	*rix = sn->rates[ndx].rix;
 	if (shortPreamble) {
@@ -654,7 +654,7 @@ ath_rate_ctl_reset(struct ath_softc *sc, struct ieee80211_node *ni)
 	const HAL_RATE_TABLE *rt = sc->sc_currates;
 	int x, y, srate;
 
-	KASSERT(rt != NULL, ("no rate table, mode %u", sc->sc_curmode));
+	KASSERTMSG(rt != NULL, "no rate table, mode %u", sc->sc_curmode);
         sn->static_rate_ndx = -1;
 	if (ic->ic_fixed_rate != IEEE80211_FIXED_RATE_NONE) {
 		/*
@@ -671,8 +671,8 @@ ath_rate_ctl_reset(struct ath_softc *sc, struct ieee80211_node *ni)
 		srate = ni->ni_rates.rs_nrates - 1;
 		for (; srate >= 0 && RATE(srate) != r; srate--)
 			;
-		KASSERT(srate >= 0,
-			("fixed rate %d not in rate set", ic->ic_fixed_rate));
+		KASSERTMSG(srate >= 0,
+			"fixed rate %d not in rate set", ic->ic_fixed_rate);
                 sn->static_rate_ndx = srate;
 	}
 

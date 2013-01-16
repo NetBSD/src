@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.1 2012/04/17 00:03:31 yamt Exp $
+#	$NetBSD: Makefile,v 1.3.2.2 2013/01/16 05:27:59 yamt Exp $
 
 LIB=	LLVMMCJIT
 
@@ -6,7 +6,6 @@ LIB=	LLVMMCJIT
 
 .PATH: ${LLVM_SRCDIR}/lib/ExecutionEngine/MCJIT
 
-SRCS+=	MCJIT.cpp \
-	MCJITMemoryManager.cpp
+SRCS+=	MCJIT.cpp
 
 .include <bsd.lib.mk>

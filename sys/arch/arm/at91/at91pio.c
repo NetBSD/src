@@ -1,5 +1,5 @@
-/*	$Id: at91pio.c,v 1.4.2.1 2012/10/30 17:18:58 yamt Exp $	*/
-/*	$NetBSD: at91pio.c,v 1.4.2.1 2012/10/30 17:18:58 yamt Exp $	*/
+/*	$Id: at91pio.c,v 1.4.2.2 2013/01/16 05:32:45 yamt Exp $	*/
+/*	$NetBSD: at91pio.c,v 1.4.2.2 2013/01/16 05:32:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91pio.c,v 1.4.2.1 2012/10/30 17:18:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91pio.c,v 1.4.2.2 2013/01/16 05:32:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ at91pio_intr(void *arg)
 {
 	struct at91pio_softc *sc = arg;
 	int bit;
-	u_int32_t isr;
+	uint32_t isr;
 
 	isr = (PIO_READ(sc, PIO_ISR) & PIO_READ(sc, PIO_IMR));
 	if (!isr)

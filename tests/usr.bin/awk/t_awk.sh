@@ -1,4 +1,4 @@
-# $NetBSD: t_awk.sh,v 1.4.2.2 2012/04/17 00:09:17 yamt Exp $
+# $NetBSD: t_awk.sh,v 1.4.2.3 2013/01/16 05:34:01 yamt Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -335,6 +335,19 @@ newline_rs_body() {
 		-x "printf '\n\n\nr1f1\nr1f2\n\nr2f1\nr2f2\n\n\n' | $awk '{\$1=\$1}1' RS= OFS=:"
 }
 
+atf_test_case modify_subsep
+
+modify_subsep_head() {
+	atf_set "descr" "Test awk(1) SUPSEP modification (PR/47306)"
+}
+
+modify_subsep_body() {
+	atf_check \
+		-o "inline:1\n1\n1\n" \
+		-x "printf '1\n1 2\n' | \
+		$awk '1{ arr[\$1 SUBSEP \$2 SUBSEP ++cnt[\$1]]=1} {for (f in arr) print arr[f];}'"
+}
+
 atf_init_test_cases() {
 
 	atf_add_test_case big_regexp
@@ -361,4 +374,5 @@ atf_init_test_cases() {
 	atf_add_test_case regex_reallocation_rs
 	atf_add_test_case empty_rs
 	atf_add_test_case newline_rs
+	atf_add_test_case modify_subsep
 }

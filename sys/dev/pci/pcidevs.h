@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1096.2.3 2012/10/30 17:21:38 yamt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1096.2.4 2013/01/16 05:33:19 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1143 2012/10/21 23:06:59 matt Exp
+ *	NetBSD: pcidevs,v 1.1146 2012/12/06 12:46:49 msaitoh Exp
  */
 
 /*
@@ -2780,7 +2780,7 @@
 #define	PCI_PRODUCT_INTEL_C600_PCIE_7	0x1d1c		/* C600/X79 PCIE */
 #define	PCI_PRODUCT_INTEL_C600_PCIE_8	0x1d1e		/* C600/X79 PCIE */
 #define	PCI_PRODUCT_INTEL_C600_HDA	0x1d20		/* C600 HD Audio */
-#define	PCI_PRODUCT_INTEL_C600_SMB_1	0x1d22		/* C600/X79 SMBus Controller */
+#define	PCI_PRODUCT_INTEL_C600_SMBUS	0x1d22		/* C600 SMBus Controller */
 #define	PCI_PRODUCT_INTEL_C600_THERM	0x1d24		/* C600 Thermal Management Controller */
 #define	PCI_PRODUCT_INTEL_C600_EHCI_1	0x1d26		/* C600 USB */
 #define	PCI_PRODUCT_INTEL_C600_EHCI_2	0x1d2d		/* C600 USB */
@@ -2806,7 +2806,9 @@
 #define	PCI_PRODUCT_INTEL_C600_SAS_11	0x1d6d		/* C600 SAS Controller */
 #define	PCI_PRODUCT_INTEL_C600_SAS_12	0x1d6e		/* C600 SAS Controller */
 #define	PCI_PRODUCT_INTEL_C600_SAS_SATA_4	0x1d6f		/* C600 SAS Controller (SATA) */
-#define	PCI_PRODUCT_INTEL_C600_SMB_2	0x1d70		/* C600/X79 Series SMBus Controller */
+#define	PCI_PRODUCT_INTEL_C600_SMB_0	0x1d70		/* C600/X79 Series SMBus Controller */
+#define	PCI_PRODUCT_INTEL_C600_SMB_1	0x1d71		/* C606/C608 SMBus Controller */
+#define	PCI_PRODUCT_INTEL_C600_SMB_2	0x1d72		/* C608 SMBus Controller */
 #define	PCI_PRODUCT_INTEL_7SER_DT_SATA_1	0x1e00		/* 7 Series (desktop) SATA Controller */
 #define	PCI_PRODUCT_INTEL_7SER_MO_SATA_1	0x1e01		/* 7 Series (mobile) SATA Controller */
 #define	PCI_PRODUCT_INTEL_7SER_DT_SATA_AHCI	0x1e02		/* 7 Series (desktop) SATA Controller (AHCI) */
@@ -2876,6 +2878,7 @@
 #define	PCI_PRODUCT_INTEL_82801BA_IDE	0x244b		/* 82801BA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801BAM_LPC	0x244c		/* 82801BAM LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801BA_HPB	0x244e		/* 82801BA Hub-PCI Bridge */
+#define	PCI_PRODUCT_INTEL_82801E_LPC	0x2450		/* 82801E LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801E_SMB	0x2453		/* 82801E SMBus Controller */
 #define	PCI_PRODUCT_INTEL_82801E_LAN_1	0x2459		/* 82801E LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801E_LAN_2	0x245d		/* 82801E LAN Controller */
@@ -3035,6 +3038,7 @@
 #define	PCI_PRODUCT_INTEL_82945GM_IGD_1	0x27a6		/* 82945GM/PM/GMS Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82945GME_HB	0x27ac		/* 82945GME Host Bridge */
 #define	PCI_PRODUCT_INTEL_82945GME_IGD	0x27ae		/* 82945GME Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82801GH_LPC	0x27b0		/* 82801GH LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801G_LPC	0x27b8		/* 82801GB/GR LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801GBM_LPC	0x27b9		/* 82801GBM LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_NM10_LPC	0x27bc		/* NM10 Family LPC Interface Bridge */
@@ -3257,7 +3261,18 @@
 #define	PCI_PRODUCT_INTEL_82801JD_PCIE_5	0x3a78		/* 82801JD PCI Express Port */
 #define	PCI_PRODUCT_INTEL_82801JD_PCIE_6	0x3a7a		/* 82801JD PCI Express Port */
 #define	PCI_PRODUCT_INTEL_82801JD_LAN	0x3a7c		/* 82801JD LAN Controller */
-#define	PCI_PRODUCT_INTEL_3400_LPC	0x3b14		/* 3400 LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_P55_LPC	0x3b02		/* P55 LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_PM55_LPC	0x3b03		/* PM55 LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_H55_LPC	0x3b06		/* H55 LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_QM57_LPC	0x3b07		/* QM57 LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_H57_LPC	0x3b08		/* H57 LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_HM55_LPC	0x3b09		/* HM55 LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_Q57_LPC	0x3b0a		/* Q57 LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_HM57_LPC	0x3b0b		/* HM57 LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_QS57_LPC	0x3b0f		/* QS57 LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_3400_LPC	0x3b12		/* 3400 LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_3420_LPC	0x3b14		/* 3420 LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_3450_LPC	0x3b16		/* 3450 LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_3400_SATA_1	0x3b20		/* 3400 SATA */
 #define	PCI_PRODUCT_INTEL_3400_SATA_2	0x3b21		/* 3400 SATA */
 #define	PCI_PRODUCT_INTEL_3400_AHCI_1	0x3b22		/* 3400 AHCI */
@@ -3391,6 +3406,7 @@
 #define	PCI_PRODUCT_INTEL_82443GX_NOAGP	0x71a2		/* 82443GX Host Bridge/Controller (AGP disabled) */
 #define	PCI_PRODUCT_INTEL_I740	0x7800		/* i740 Graphics Accelerator */
 #define	PCI_PRODUCT_INTEL_SCH_IDE	0x811a		/* SCH IDE Controller */
+#define	PCI_PRODUCT_INTEL_E600_LPC	0x8186		/* Atom Processor E6xx LPC Bridge */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 82454KX/GX PCI Bridge (PB) */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
 #define	PCI_PRODUCT_INTEL_82451NX_MIOC	0x84ca		/* 82451NX Memory & I/O Controller (MIOC) */

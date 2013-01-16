@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_readinode.c,v 1.2.6.3 2012/10/30 17:22:58 yamt Exp $	*/
+/*	$NetBSD: chfs_readinode.c,v 1.2.6.4 2013/01/16 05:33:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -164,7 +164,7 @@ chfs_check_td_data(struct chfs_mount *chmp,
 	}
 	err = chfs_read_leb(chmp, nref->nref_lnr, buf, ofs, len, &retlen);
 	if (err) {
-		dbg("error wile reading: %d\n", err);
+		dbg("error while reading: %d\n", err);
 		err = 2;
 		goto out;
 	}

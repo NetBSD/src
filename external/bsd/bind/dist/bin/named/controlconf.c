@@ -1,4 +1,4 @@
-/*	$NetBSD: controlconf.c,v 1.3.2.1 2012/10/30 18:49:32 yamt Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.3.2.2 2013/01/16 05:26:22 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -375,8 +375,10 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 		if (result == ISC_R_SUCCESS)
 			break;
 		isc_mem_put(listener->mctx, secret.rstart, REGION_SIZE(secret));
+		if (result != ISCCC_R_BADAUTH) {
 		log_invalid(&conn->ccmsg, result);
 		goto cleanup;
+	}
 	}
 
 	if (key == NULL) {

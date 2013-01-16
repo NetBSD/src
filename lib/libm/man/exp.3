@@ -27,7 +27,7 @@
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
 .\" $FreeBSD: src/lib/msun/man/exp.3,v 1.24 2008/01/18 21:43:00 das Exp $
-.\"	$NetBSD: exp.3,v 1.28 2011/09/17 10:52:52 jruoho Exp $
+.\"	$NetBSD: exp.3,v 1.28.2.1 2013/01/16 05:32:25 yamt Exp $
 .\"
 .Dd September 13, 2011
 .Dt EXP 3
@@ -63,7 +63,7 @@
 .Sh DESCRIPTION
 The
 .Fn exp
-and the
+and
 .Fn expf
 functions compute the base
 .Ms e
@@ -71,7 +71,7 @@ exponential value of the given argument
 .Fa x .
 .Pp
 The
-.Fn exp2 ,
+.Fn exp2
 and
 .Fn exp2f
 .\" .Fn exp2f ,
@@ -82,9 +82,9 @@ functions compute the base 2 exponential of the given argument
 .Pp
 The
 .Fn expm1
-and the
+and
 .Fn expm1f
-functions computes the value exp(x)\-1 accurately even for tiny argument
+functions compute the value exp(x)\-1 accurately even for tiny argument
 .Fa x .
 .Sh RETURN VALUES
 These functions will return the appropriate computation unless an error

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_efun.c,v 1.2 2011/03/30 17:03:02 jruoho Exp $ */
+/*	$NetBSD: t_efun.c,v 1.2.4.1 2013/01/16 05:34:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,10 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_efun.c,v 1.2 2011/03/30 17:03:02 jruoho Exp $");
+__RCSID("$NetBSD: t_efun.c,v 1.2.4.1 2013/01/16 05:34:01 yamt Exp $");
 
 #include <atf-c.h>
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <util.h>

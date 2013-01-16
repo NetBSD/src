@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2011 Roy Marples
+# Copyright (c) 2007-2012 Roy Marples
 # All rights reserved
 
 # named subscriber for resolvconf
@@ -40,6 +40,9 @@ then
 	if [ -x "@RCDIR@"/bind9 ]; then
 		# Debian and derivatives
 		named_service=bind9
+	elif [ -x "@RCDIR@"/rc.bind ]; then
+		# Slackware
+		named_service=rc.bind
 	fi
 fi
 : ${named_service:=named}

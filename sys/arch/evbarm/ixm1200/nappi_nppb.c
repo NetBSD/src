@@ -1,4 +1,4 @@
-/*	$NetBSD: nappi_nppb.c,v 1.9.2.1 2012/10/30 17:19:24 yamt Exp $ */
+/*	$NetBSD: nappi_nppb.c,v 1.9.2.2 2013/01/16 05:32:54 yamt Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.9.2.1 2012/10/30 17:19:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.9.2.2 2013/01/16 05:32:54 yamt Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -89,7 +89,7 @@ static int
 nppbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	u_int32_t class, id;
+	uint32_t class, id;
 
 	class = pa->pa_class;
 	id = pa->pa_id;

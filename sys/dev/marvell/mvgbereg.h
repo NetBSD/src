@@ -1,4 +1,4 @@
-/*	$NetBSD: mvgbereg.h,v 1.3.4.1 2012/10/30 17:21:18 yamt Exp $	*/
+/*	$NetBSD: mvgbereg.h,v 1.3.4.2 2013/01/16 05:33:16 yamt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -348,7 +348,7 @@
  */
 #define MVGBE_MRU		9022
 
-#define MVGBE_RXBUF_ALIGN	8
+#define MVGBE_RXBUF_ALIGN	32	/* Cache line size */
 #define MVGBE_RXBUF_MASK	(MVGBE_RXBUF_ALIGN - 1)
 #define MVGBE_HWHEADER_SIZE	2
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1055.2.3 2012/10/30 17:19:47 yamt Exp $
+# $NetBSD: GENERIC,v 1.1055.2.4 2013/01/16 05:32:58 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1055.2.3 $"
+#ident 		"GENERIC-$Revision: 1.1055.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -457,6 +457,8 @@ ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-LPC w/ timecounter,
 					# watchdog, SpeedStep and HPET
 fwhrng* at ichlpcib?		# Intel 82802 FWH Random Number Generator
 #hpet*	at ichlpcib?
+tcpcib* at pci? dev ? function ?	# Intel Atom E6xx PCI-LPC
+hpet* at tcpcib?
 gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
 					# timecounter, watchdog and GPIO
 #piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
@@ -486,6 +488,7 @@ eisa0	at pceb?
 #isa0	at amdpcib?
 isa0	at gcscpcib?
 isa0	at ichlpcib?
+isa0	at tcpcib?
 #isa0	at piixpcib?
 #isa0	at gscpcib?
 isa0	at viapcib?
@@ -969,7 +972,7 @@ jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
-malo*   at pci? dev ? function ?    # Marvell Libertas Wireless
+malo*	at pci? dev ? function ?	# Marvell Libertas Wireless
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet

@@ -1,0 +1,43 @@
+# $Id: files.imx23,v 1.1.2.2 2013/01/16 05:32:47 yamt Exp $
+#
+# Freescale i.MX23 applications processor configuration info.
+#
+
+file	arch/arm/imx/imx23_space.c	apbh|apbx
+file	arch/arm/imx/imx23_dma.c	apbh|apbx
+
+# APBH bus interface
+device	apbh {addr=0, size=0, irq=-1} : bus_space_generic
+attach	apbh at mainbus
+file	arch/arm/imx/imx23_apbh.c	apbh
+
+# APBX bus interface
+device	apbx {addr=0, size=0, irq=-1} : bus_space_generic
+attach	apbx at mainbus
+file	arch/arm/imx/imx23_apbx.c	apbx
+
+# Interrupt controller
+include "arch/arm/pic/files.pic"
+device	icoll: pic, pic_splfuncs
+attach	icoll at apbh
+file	arch/arm/imx/imx23_icoll.c	icoll
+file	arch/arm/arm32/irq_dispatch.S
+
+# Synchronous serial port (for SD/MMC)
+device	ssp: sdmmcbus
+attach	ssp at apbh
+file	arch/arm/imx/imx23_ssp.c	ssp
+
+# PL011 Debug console
+attach	plcom at apbx with imx23plcom
+file	arch/arm/imx/imx23_plcom.c	imx23plcom
+
+# Timers and rotary decoder
+device	timrot
+attach	timrot at apbx
+file	arch/arm/imx/imx23_timrot.c	timrot
+
+# APB{H,X} DMA
+device	apbdma
+attach	apbdma at apbh, apbx
+file	arch/arm/imx/imx23_apbdma.c	apbdma

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.4.3 2012/10/30 18:48:37 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.4.4 2013/01/16 05:26:03 yamt Exp $
 
 LIVEIMGBASE=	NetBSD-${DISTRIBVER}-pmax-live-sd0root	# gives ${IMGBASE}.img
 
@@ -6,6 +6,9 @@ LIVEIMGBASE=	NetBSD-${DISTRIBVER}-pmax-live-sd0root	# gives ${IMGBASE}.img
 
 KERN_SET=		kern-GENERIC
 BOOTDISK=		sd0
+.if defined(EMUIMAGEMB)
+LIVEIMAGEMB=		${EMUIMAGEMB}
+.endif
 PRIMARY_BOOT=		bootxx_ffs
 #SECONDARY_BOOT=	# boot.pmax is extracted from base.tgz
 SECONDARY_BOOT_ARG=	# nothing

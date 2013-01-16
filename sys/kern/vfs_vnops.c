@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.183.2.2 2012/10/30 17:22:39 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.183.2.3 2013/01/16 05:33:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.183.2.2 2012/10/30 17:22:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.183.2.3 2013/01/16 05:33:45 yamt Exp $");
 
 #include "veriexec.h"
 
@@ -807,15 +807,6 @@ vn_lock(struct vnode *vp, int flags)
 		} else {
 			mutex_exit(vp->v_interlock);
 			error = VOP_LOCK(vp, (flags & ~LK_RETRY));
-			if (error == 0 && (flags & LK_RETRY) == 0) {
-				mutex_enter(vp->v_interlock);
-				if ((vp->v_iflag & VI_CLEAN)) {
-					mutex_exit(vp->v_interlock);
-					VOP_UNLOCK(vp);
-					return ENOENT;
-				}
-				mutex_exit(vp->v_interlock);
-			}
 			if (error == 0 || error == EDEADLK || error == EBUSY)
 				return (error);
 		}

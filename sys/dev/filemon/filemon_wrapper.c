@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.3 2011/09/24 18:08:15 sjg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.3.2.1 2013/01/16 05:33:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -378,11 +378,13 @@ filemon_wrapper_install(void)
 	sv_table[SYS_vfork].sy_call = (sy_call_t *) filemon_wrapper_vfork;
 }
 
-void
+int
 filemon_wrapper_deinstall(void)
 {
 	struct sysent *sv_table = curproc->p_emul->e_sysent;
 
+	if (sv_table[SYS_chdir].sy_call != (sy_call_t *) filemon_wrapper_chdir)
+	    return EBUSY;
 	sv_table[SYS_chdir].sy_call = (sy_call_t *) sys_chdir;
 	sv_table[SYS_execve].sy_call = (sy_call_t *) sys_execve;
 	sv_table[SYS_exit].sy_call = (sy_call_t *) sys_exit;
@@ -393,4 +395,5 @@ filemon_wrapper_deinstall(void)
 	sv_table[SYS_symlink].sy_call = (sy_call_t *) sys_symlink;
 	sv_table[SYS_unlink].sy_call = (sy_call_t *) sys_unlink;
 	sv_table[SYS_vfork].sy_call = (sy_call_t *) sys_vfork;
+	return 0;
 }

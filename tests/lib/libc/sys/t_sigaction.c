@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigaction.c,v 1.1 2011/10/15 07:00:48 jruoho Exp $ */
+/* $NetBSD: t_sigaction.c,v 1.1.2.1 2013/01/16 05:34:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sigaction.c,v 1.1 2011/10/15 07:00:48 jruoho Exp $");
+__RCSID("$NetBSD: t_sigaction.c,v 1.1.2.1 2013/01/16 05:34:00 yamt Exp $");
 
 #include <sys/wait.h>
 
@@ -79,6 +79,31 @@ wait_and_check_child(const pid_t pid, const char *fail_message)
 		atf_tc_fail("%s; raw exit status was %d", fail_message, status);
 }
 
+static void
+catch(int sig)
+{
+	return;
+}
+
+ATF_TC(sigaction_basic);
+ATF_TC_HEAD(sigaction_basic, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks for correct I&D cache"
+	    "synchronization after copying out the trampoline code.");
+}
+
+ATF_TC_BODY(sigaction_basic, tc)
+{
+	static struct sigaction sa;
+
+	sa.sa_handler = catch;
+
+	sigaction(SIGUSR1, &sa, 0);
+	kill(getpid(), SIGUSR1);
+	atf_tc_pass();
+}
+
 ATF_TC(sigaction_noflags);
 ATF_TC_HEAD(sigaction_noflags, tc)
 {
@@ -121,6 +146,7 @@ ATF_TC_BODY(sigaction_resethand, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, sigaction_basic);
 	ATF_TP_ADD_TC(tp, sigaction_noflags);
 	ATF_TP_ADD_TC(tp, sigaction_resethand);
 

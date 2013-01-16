@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.98 2011/07/30 19:29:12 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.98.2.1 2013/01/16 05:33:05 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,7 +128,8 @@ struct cpu_info {
 
 	/* %tick and cpu frequency information */
 	u_long			ci_tick_increment;
-	uint64_t		ci_cpu_clockrate[2];
+	uint64_t		ci_cpu_clockrate[2];	/* %tick */
+	uint64_t		ci_system_clockrate[2];	/* %stick */
 
 	/* Interrupts */
 	struct intrhand		*ci_intrpending[16];
@@ -351,10 +352,12 @@ void *	reserve_dumppages(void *);
 /* clock.c */
 struct timeval;
 int	tickintr(void *);	/* level 10/14 (tick) interrupt code */
+int	stickintr(void *);	/* system tick interrupt code */
 int	clockintr(void *);	/* level 10 (clock) interrupt code */
 int	statintr(void *);	/* level 14 (statclock) interrupt code */
 int	schedintr(void *);	/* level 10 (schedclock) interrupt code */
 void	tickintr_establish(int, int (*)(void *));
+void	stickintr_establish(int, int (*)(void *));
 /* locore.s */
 struct fpstate64;
 void	savefpstate(struct fpstate64 *);
@@ -372,6 +375,7 @@ struct frame *getfp(void);
 void	switchtoctx_us(int);
 void	switchtoctx_usiii(int);
 void	next_tick(long);
+void	next_stick(long);
 /* trap.c */
 void	cpu_vmspace_exec(struct lwp *, vaddr_t, vaddr_t);
 int	rwindow_save(struct lwp *);

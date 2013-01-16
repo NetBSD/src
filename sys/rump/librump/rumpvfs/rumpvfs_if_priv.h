@@ -1,16 +1,16 @@
-/*	$NetBSD: rumpvfs_if_priv.h,v 1.9 2010/11/30 16:27:31 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_priv.h,v 1.9.8.1 2013/01/16 05:33:52 yamt Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.7 2010/11/30 15:41:35 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.8 2012/11/18 18:39:23 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
-void rump_getvninfo(struct vnode *, enum vtype *, off_t *, dev_t *);
+void rump_getvninfo(struct vnode *, enum rump_vtype *, off_t *, dev_t *);
 struct vfsops * rump_vfslist_iterate(struct vfsops *);
 struct vfsops * rump_vfs_getopsbyname(const char *);
 struct vattr * rump_vattr_init(void);
-void rump_vattr_settype(struct vattr *, enum vtype);
+void rump_vattr_settype(struct vattr *, enum rump_vtype);
 void rump_vattr_setmode(struct vattr *, mode_t);
 void rump_vattr_setrdev(struct vattr *, dev_t);
 void rump_vattr_free(struct vattr *);

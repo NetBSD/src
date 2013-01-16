@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.50.8.2 2012/10/30 17:22:02 yamt Exp $ */
+/*	$NetBSD: cgsix.c,v 1.50.8.3 2013/01/16 05:33:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.50.8.2 2012/10/30 17:22:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.50.8.3 2013/01/16 05:33:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -598,7 +598,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	sc->sc_width = fb->fb_type.fb_width;
 	sc->sc_stride = fb->fb_type.fb_width;
 	sc->sc_height = fb->fb_type.fb_height;
-
+	
 	printf("%s: framebuffer size: %d MB\n", device_xname(sc->sc_dev), 
 	    sc->sc_ramsize >> 20);
 
@@ -634,14 +634,15 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 		SCREEN_VISIBLE(&cg6_console_screen);
 		sc->vd.active = &cg6_console_screen;
 		wsdisplay_cnattach(&cgsix_defaultscreen, ri, 0, 0, defattr);
-		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+		if (ri->ri_flg & RI_ENABLE_ALPHA) {
+			glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(sc->sc_ramsize / sc->sc_stride) - 
 				  sc->sc_height - 5,
 				sc->sc_width,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
-		
+		}	
 		vcons_replay_msgbuf(&cg6_console_screen);
 	} else {
 		/*
@@ -653,13 +654,15 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 			vcons_init_screen(&sc->vd, &cg6_console_screen, 1,
 			    &defattr);
 		}
-		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+		if (ri->ri_flg & RI_ENABLE_ALPHA) {
+			glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(sc->sc_ramsize / sc->sc_stride) - 
 				  sc->sc_height - 5,
 				sc->sc_width,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
+		}
 	}
 	cg6_setup_palette(sc);
 	
@@ -1280,13 +1283,17 @@ cgsix_init_screen(void *cookie, struct vcons_screen *scr,
 {
 	struct cgsix_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
+	int av;
 
 	ri->ri_depth = 8;
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER | RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
-
+	av = sc->sc_ramsize - (sc->sc_height * sc->sc_stride);
+	ri->ri_flg = RI_CENTER  | RI_8BIT_IS_RGB;
+	if (av > (128 * 1024)) {
+		ri->ri_flg |= RI_ENABLE_ALPHA;
+	}
 	ri->ri_bits = sc->sc_fb.fb_pixels;
 	
 	/* We need unaccelerated initial screen clear on old revisions */

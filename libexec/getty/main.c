@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.58.6.1 2012/10/30 18:59:21 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.58.6.2 2013/01/16 05:32:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,13 +40,11 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.58.6.1 2012/10/30 18:59:21 yamt Exp $");
+__RCSID("$NetBSD: main.c,v 1.58.6.2 2013/01/16 05:32:29 yamt Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/stat.h>
-#include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
@@ -58,10 +56,12 @@ __RCSID("$NetBSD: main.c,v 1.58.6.1 2012/10/30 18:59:21 yamt Exp $");
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <term.h>
+#include <termios.h>
 #include <time.h>
 #include <ttyent.h>
 #include <unistd.h>

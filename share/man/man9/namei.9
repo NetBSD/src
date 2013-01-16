@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.27 2010/12/02 12:54:13 wiz Exp $
+.\"     $NetBSD: namei.9,v 1.27.6.1 2013/01/16 05:32:37 yamt Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 16, 2010
+.Dd November 5, 2012
 .Dt NAMEI 9
 .Os
 .Sh NAME
@@ -36,6 +36,7 @@
 .Nm lookup_for_nfsd_index ,
 .Nm relookup ,
 .Nm NDINIT ,
+.Nm NDAT ,
 .Nm namei_simple_kernel ,
 .Nm namei_simple_user
 .Nd pathname lookup
@@ -56,6 +57,7 @@
 .Ft void
 .Fn NDINIT "struct nameidata *ndp" "u_long op" "u_long flags" \
 "struct pathbuf *pathbuf"
+.Fn NDAT "struct nameidata *ndp" "struct vnode *dvp"
 .Ft int
 .Fn namei_simple_kernel "const char *path" "namei_simple_flags_t sflags" \
 "struct vnode **ret"
@@ -79,14 +81,15 @@ Except for the simple forms, the arguments passed to the functions are
 encapsulated in the
 .Em nameidata
 structure.
-It has the following structure:
+It has the following layout:
 .Bd -literal
 struct nameidata {
         /*
          * Arguments to namei/lookup.
          */
-        const char *ni_dirp;            /* pathname pointer */
-        enum    uio_seg ni_segflg;      /* location of pathname */
+        struct vnode *ni_startdir;      /* starting dir, cwd if null */
+        struct pathbuf *ni_pathbuf;     /* pathname container */
+        char *ni_pnbuf;                 /* extra pathname buffer ref (XXX) */
         /*
          * Arguments to lookup.
          */
@@ -100,9 +103,9 @@ struct nameidata {
         /*
          * Shared between namei and lookup/commit routines.
          */
-        size_t  ni_pathlen;             /* remaining chars in path */
+        size_t ni_pathlen;              /* remaining chars in path */
         const char *ni_next;            /* next location in pathname */
-        u_long  ni_loopcnt;             /* count of symlinks encountered */
+        unsigned int ni_loopcnt;        /* count of symlinks encountered */
         /*
          * Lookup parameters
          */
@@ -110,17 +113,15 @@ struct nameidata {
                 /*
                  * Arguments to lookup.
                  */
-                u_long  cn_nameiop;     /* namei operation */
-                u_long  cn_flags;       /* flags to namei */
+                uint32_t cn_nameiop;    /* namei operation */
+                uint32_t cn_flags;      /* flags to namei */
                 kauth_cred_t cn_cred;   /* credentials */
                 /*
                  * Shared between lookup and commit routines.
                  */
-                char    *cn_pnbuf;      /* pathname buffer */
                 const char *cn_nameptr; /* pointer to looked up name */
-                long    cn_namelen;     /* length of looked up component */
-                u_long  cn_hash;        /* hash value of looked up name */
-                long    cn_consume;     /* chars to consume in lookup() */
+                size_t cn_namelen;      /* length of looked up component */
+                size_t cn_consume;      /* chars to consume in lookup() */
         } ni_cnd;
 };
 .Ed
@@ -224,18 +225,14 @@ Pathname lookups cannot be done in interrupt context.
 .Bl -tag -width compact
 .It Fn namei "ndp"
 Convert a pathname into a pointer to a vnode.
-The pathname is specified by
-.Em ndp-\*[Gt]ni_dirp
-and is of length
-.Em ndp-\*[Gt]ni_pathlen .
-The
-.Em ndp-\*[Gt]segflg
-flags defines whether the name in
-.Em ndp-\*[Gt]ni_dirp
-is an address in kernel space
-.Pq Dv UIO_SYSSPACE
-or an address in user space
-.Pq Dv UIO_USERSPACE .
+The nameidata structure pointed to by
+.Fa ndp
+should be initialized with the
+.Fn NDINIT
+macro.
+Direct initialization of members of struct nameidata is
+.Em not
+supported and may break silently in the future.
 .Pp
 The vnode for the pathname is returned in
 .Em ndp-\*[Gt]ni_vp .
@@ -329,18 +326,11 @@ Initialise a nameidata structure pointed to by
 for use by the
 .Nm
 interface.
-It saves having to deal with the componentname structure inside
-.Fa ndp .
 The operation and flags are specified by
 .Fa op
 and
 .Fa flags
 respectively.
-These are the values to which
-.Em ndp-\*[Gt]ni_cnd.cn_nameiop
-and
-.Em ndp-\*[Gt]ni_cnd.cn_flags
-are respectively set.
 The pathname is passed as a pathbuf structure, which should be
 initialized using one of the
 .Xr pathbuf 9
@@ -358,6 +348,47 @@ In the rare case that another set of credentials is required for the
 namei operation,
 .Em ndp-\*[Gt]ni_cnd.cn_cred
 must be set manually.
+.Pp
+The following fields of
+.Fa ndp
+are set:
+.Bl -tag -width compact
+.It Fa ni_cnd.cn_nameiop
+is set to
+.Fa op .
+.It Fa ni_cnd.cn_flags
+is set to
+.Fa flags .
+.It Fa ni_startdir
+is set to
+.Dv NULL .
+.It Fa ni_pathbuf
+is set to
+.Fa pathbuf .
+.It Fa ni_cnd.cn_cred
+is set using
+.Xr kauth_cred_get 9 .
+.El
+Other fields of struct nameidata are not
+.Pq normally
+initialized before
+.Nm
+is called.
+Direct assignment of these or other fields other than by using
+.Fn NDINIT
+or
+.Fn NDAT ,
+except as specifically described above, is not supported and may break
+silently in the future.
+.It Fn NDAT "ndp" "dvp"
+This macro is used after
+.Fn NDINIT
+to set the starting directory.
+This supersedes the current process's current working directory as the
+initial point of departure for looking up relative paths.
+This mechanism is used by
+.Xr openat 3
+and related calls.
 .It Fn namei_simple_kernel "path" "sflags" "ret"
 Look up the path
 .Fa path

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.h,v 1.2.6.1 2012/10/30 18:53:06 yamt Exp $	*/
+/*	$NetBSD: rpz.h,v 1.2.6.2 2013/01/16 05:27:22 yamt Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -32,6 +32,7 @@ ISC_LANG_BEGINDECLS
 #define DNS_RPZ_IP_ZONE		"rpz-ip"
 #define DNS_RPZ_NSIP_ZONE	"rpz-nsip"
 #define DNS_RPZ_NSDNAME_ZONE	"rpz-nsdname"
+#define DNS_RPZ_PASSTHRU_ZONE	"rpz-passthru"
 
 typedef isc_uint8_t		dns_rpz_cidr_bits_t;
 
@@ -68,11 +69,14 @@ typedef struct dns_rpz_zone dns_rpz_zone_t;
 
 struct dns_rpz_zone {
 	ISC_LINK(dns_rpz_zone_t) link;
-	int			 num;
+	int			 num;	  /* ordinal in list of policy zones */
 	dns_name_t		 origin;  /* Policy zone name */
 	dns_name_t		 nsdname; /* DNS_RPZ_NSDNAME_ZONE.origin */
-	dns_rpz_policy_t	 policy;  /* DNS_RPZ_POLICY_GIVEN or override */
+	dns_name_t		 passthru;/* DNS_RPZ_PASSTHRU_ZONE. */
 	dns_name_t		 cname;	  /* override value for ..._CNAME */
+	dns_ttl_t		 max_policy_ttl;
+	dns_rpz_policy_t	 policy;  /* DNS_RPZ_POLICY_GIVEN or override */
+	isc_boolean_t		 recursive_only;
 };
 
 /*
@@ -145,6 +149,7 @@ typedef struct {
 } dns_rpz_st_t;
 
 #define DNS_RPZ_TTL_DEFAULT		5
+#define DNS_RPZ_MAX_TTL_DEFAULT		DNS_RPZ_TTL_DEFAULT
 
 /*
  * So various response policy zone messages can be turned up or down.
@@ -154,6 +159,7 @@ typedef struct {
 #define DNS_RPZ_DEBUG_LEVEL1	ISC_LOG_DEBUG(1)
 #define DNS_RPZ_DEBUG_LEVEL2	ISC_LOG_DEBUG(2)
 #define DNS_RPZ_DEBUG_LEVEL3	ISC_LOG_DEBUG(3)
+#define DNS_RPZ_DEBUG_QUIET	(DNS_RPZ_DEBUG_LEVEL3+1)
 
 const char *
 dns_rpz_type2str(dns_rpz_type_t type);
@@ -194,7 +200,8 @@ dns_rpz_cidr_find(dns_rpz_cidr_t *cidr, const isc_netaddr_t *netaddr,
 		  dns_name_t *search_name, dns_rpz_cidr_bits_t *prefix);
 
 dns_rpz_policy_t
-dns_rpz_decode_cname(dns_rdataset_t *, dns_name_t *selfname);
+dns_rpz_decode_cname(dns_rpz_zone_t *rpz, dns_rdataset_t *rdataset,
+		     dns_name_t *selfname);
 
 ISC_LANG_ENDDECLS
 

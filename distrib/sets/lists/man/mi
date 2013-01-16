@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1351.2.4 2012/10/30 18:48:44 yamt Exp $
+# $NetBSD: mi,v 1.1351.2.5 2013/01/16 05:26:09 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -159,6 +159,7 @@
 ./usr/share/man/cat1/fincore.0			man-util-catman		.cat
 ./usr/share/man/cat1/find.0			man-util-catman		.cat
 ./usr/share/man/cat1/finger.0			man-util-catman		.cat
+./usr/share/man/cat1/flock.0			man-util-catman		.cat
 ./usr/share/man/cat1/fmt.0			man-util-catman		.cat
 ./usr/share/man/cat1/fold.0			man-util-catman		.cat
 ./usr/share/man/cat1/foreach.0			man-util-catman		.cat
@@ -299,6 +300,7 @@
 ./usr/share/man/cat1/mkfilters.0		man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat1/mklocale.0			man-util-catman		.cat
 ./usr/share/man/cat1/mktemp.0			man-util-catman		.cat
+./usr/share/man/cat1/mkubootimage.0		man-util-catman		.cat
 ./usr/share/man/cat1/mopa.out.0			man-obsolete		obsolete
 ./usr/share/man/cat1/mopchk.0			man-bootserver-catman	.cat
 ./usr/share/man/cat1/mopcopy.0			man-bootserver-catman	.cat
@@ -529,6 +531,8 @@
 ./usr/share/man/cat1/top.0			man-util-catman		.cat
 ./usr/share/man/cat1/touch.0			man-util-catman		.cat
 ./usr/share/man/cat1/tpfmt.0			man-util-catman		.cat
+./usr/share/man/cat1/tpm_sealdata.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat1/tpm_version.0		man-tpm-catman		tpm,.cat
 ./usr/share/man/cat1/tput.0			man-util-catman		.cat
 ./usr/share/man/cat1/tr.0			man-util-catman		.cat
 ./usr/share/man/cat1/true.0			man-util-catman		.cat
@@ -765,6 +769,7 @@
 ./usr/share/man/cat4/amiga/ser.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/wesc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/xsurf.0		man-sys-catman		.cat
+./usr/share/man/cat4/amiga/z3rambd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/zssc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ams.0			man-sys-catman		.cat
@@ -1318,6 +1323,7 @@
 ./usr/share/man/cat4/mr.0			man-obsolete		obsolete
 ./usr/share/man/cat4/msk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mskc.0			man-sys-catman		.cat
+./usr/share/man/cat4/msm6242b.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mt2131.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtio.0			man-sys-catman		.cat
@@ -2280,6 +2286,7 @@
 ./usr/share/man/cat8/dnssec-settime.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dnssec-signkey.0		man-obsolete		obsolete
 ./usr/share/man/cat8/dnssec-signzone.0		man-bind-catman		.cat
+./usr/share/man/cat8/dnssec-verify.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dreamcast/MAKEDEV.0	man-obsolete		obsolete
 ./usr/share/man/cat8/dreamcast/boot.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/dreamcast/makedev.0	man-obsolete		obsolete
@@ -2301,6 +2308,9 @@
 ./usr/share/man/cat8/etcupdate.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/evbarm/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbarm/bootmini2440.0	man-sysutil-catman	.cat
+./usr/share/man/cat8/evbarm/elftosb.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/evbarm/sbkeygen.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/evbarm/sbtool.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/evbarm/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbmips/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbmips/makedev.0		man-obsolete		obsolete
@@ -2900,7 +2910,32 @@
 ./usr/share/man/cat8/tlsmgr.0			man-postfix-catman	postfix,crypto,.cat
 ./usr/share/man/cat8/tlsproxy.0			man-postfix-catman	postfix,crypto,.cat
 ./usr/share/man/cat8/tpctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/tpm_changeownerauth.0	man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_clear.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_createek.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_getpubek.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_nvdefine.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_nvinfo.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_nvread.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_nvrelease.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_nvwrite.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_resetdalock.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_restrictpubek.0	man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_revokeek.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_selftest.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_setactive.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_setclearable.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_setenable.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_setoperatorauth.0	man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_setownable.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_setpresence.0		man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tpm_takeownership.0	man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tprof.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/trace.0			man-postfix-catman	postfix,.cat
+./usr/share/man/cat8/trace.0		man-postfix-catman	postfix,.cat
+./usr/share/man/cat8/traceroute.0		man-netutil-catman	.cat
+./usr/share/man/cat8/traceroute6.0		man-netutil-catman	use_inet6,.cat
+./usr/share/man/cat8/trivial-rewrite.0	man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/traceroute.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/traceroute6.0		man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/trivial-rewrite.0		man-postfix-catman	postfix,.cat
@@ -3125,6 +3160,7 @@
 ./usr/share/man/html1/fincore.html		man-util-htmlman	html
 ./usr/share/man/html1/find.html			man-util-htmlman	html
 ./usr/share/man/html1/finger.html		man-util-htmlman	html
+./usr/share/man/html1/flock.html		man-util-htmlman	html
 ./usr/share/man/html1/fmt.html			man-util-htmlman	html
 ./usr/share/man/html1/fold.html			man-util-htmlman	html
 ./usr/share/man/html1/foreach.html		man-util-htmlman	html
@@ -3252,6 +3288,7 @@
 ./usr/share/man/html1/mkfilters.html		man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html1/mklocale.html		man-util-htmlman	html
 ./usr/share/man/html1/mktemp.html		man-util-htmlman	html
+./usr/share/man/html1/mkubootimage.html		man-util-htmlman	html
 ./usr/share/man/html1/mopchk.html		man-bootserver-htmlman	html
 ./usr/share/man/html1/mopcopy.html		man-bootserver-htmlman	html
 ./usr/share/man/html1/mopprobe.html		man-bootserver-htmlman	html
@@ -3475,6 +3512,8 @@
 ./usr/share/man/html1/top.html			man-util-htmlman	html
 ./usr/share/man/html1/touch.html		man-util-htmlman	html
 ./usr/share/man/html1/tpfmt.html		man-util-htmlman	html
+./usr/share/man/html1/tpm_sealdata.html		man-tpm-htmlman		tpm,html
+./usr/share/man/html1/tpm_version.html		man-tpm-htmlman		tpm,html
 ./usr/share/man/html1/tput.html			man-util-htmlman	html
 ./usr/share/man/html1/tr.html			man-util-htmlman	html
 ./usr/share/man/html1/true.html			man-util-htmlman	html
@@ -3690,6 +3729,7 @@
 ./usr/share/man/html4/amiga/ser.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/wesc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/xsurf.html		man-sys-htmlman		html
+./usr/share/man/html4/amiga/z3rambd.html	man-sys-htmlman		html
 ./usr/share/man/html4/amiga/zssc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amr.html			man-sys-htmlman		html
 ./usr/share/man/html4/ams.html			man-sys-htmlman		html
@@ -4166,6 +4206,7 @@
 ./usr/share/man/html4/mr.html			man-obsolete		obsolete
 ./usr/share/man/html4/msk.html			man-sys-htmlman		html
 ./usr/share/man/html4/mskc.html			man-sys-htmlman		html
+./usr/share/man/html4/msm6242b.html		man-sys-htmlman		html
 ./usr/share/man/html4/mt2131.html		man-sys-htmlman		html
 ./usr/share/man/html4/mtd.html			man-sys-htmlman		html
 ./usr/share/man/html4/mtio.html			man-sys-htmlman		html
@@ -5024,6 +5065,7 @@
 ./usr/share/man/html8/dnssec-revoke.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-settime.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-signzone.html	man-bind-htmlman	html
+./usr/share/man/html8/dnssec-verify.html	man-bind-htmlman	html
 ./usr/share/man/html8/dreamcast/boot.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/drvctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/dump.html			man-sysutil-htmlman	html
@@ -5034,6 +5076,9 @@
 ./usr/share/man/html8/eeprom.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/emips/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/evbarm/bootmini2440.html	man-sysutil-htmlman	html
+./usr/share/man/html8/evbarm/elftosb.html	man-sysutil-htmlman	html
+./usr/share/man/html8/evbarm/sbkeygen.html	man-sysutil-htmlman	html
+./usr/share/man/html8/evbarm/sbtool.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/envstat.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/error.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/eshconfig.html		man-sysutil-htmlman	html
@@ -5502,11 +5547,31 @@
 ./usr/share/man/html8/tlsmgr.html		man-postfix-htmlman	postfix,crypto,html
 ./usr/share/man/html8/tlsproxy.html		man-postfix-htmlman	postfix,crypto,html
 ./usr/share/man/html8/tpctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/tpm_changeownerauth.html	man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_clear.html		man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_createek.html		man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_getpubek.html		man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_nvdefine.html		man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_nvinfo.html		man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_nvread.html		man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_nvrelease.html	man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_nvwrite.html		man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_resetdalock.html	man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_restrictpubek.html	man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_revokeek.html		man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_selftest.html		man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_setactive.html	man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_setclearable.html	man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_setenable.html	man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_setoperatorauth.html	man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_setownable.html	man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_setpresence.html	man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tpm_takeownership.html	man-tpm-htmlman		tpm,html
+./usr/share/man/html8/tprof.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/trace.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/traceroute.html		man-netutil-htmlman	html
 ./usr/share/man/html8/traceroute6.html		man-netutil-htmlman	use_inet6,html
 ./usr/share/man/html8/trivial-rewrite.html	man-postfix-htmlman	postfix,html
-./usr/share/man/html8/tprof.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/trpt.html			man-netutil-htmlman	html
 ./usr/share/man/html8/ttyflags.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/tunefs.html		man-sysutil-htmlman	html
@@ -5708,6 +5773,7 @@
 ./usr/share/man/man1/fincore.1			man-util-man		.man
 ./usr/share/man/man1/find.1			man-util-man		.man
 ./usr/share/man/man1/finger.1			man-util-man		.man
+./usr/share/man/man1/flock.1			man-util-man		.man
 ./usr/share/man/man1/fmt.1			man-util-man		.man
 ./usr/share/man/man1/fold.1			man-util-man		.man
 ./usr/share/man/man1/foreach.1			man-util-man		.man
@@ -5848,6 +5914,7 @@
 ./usr/share/man/man1/mkfilters.1		man-ipf-man		ipfilter,.man
 ./usr/share/man/man1/mklocale.1			man-util-man		.man
 ./usr/share/man/man1/mktemp.1			man-util-man		.man
+./usr/share/man/man1/mkubootimage.1		man-util-man		.man
 ./usr/share/man/man1/mopa.out.1			man-obsolete		obsolete
 ./usr/share/man/man1/mopchk.1			man-bootserver-man	.man
 ./usr/share/man/man1/mopcopy.1			man-bootserver-man	.man
@@ -6078,6 +6145,8 @@
 ./usr/share/man/man1/top.1			man-util-man		.man
 ./usr/share/man/man1/touch.1			man-util-man		.man
 ./usr/share/man/man1/tpfmt.1			man-util-man		.man
+./usr/share/man/man1/tpm_sealdata.1		man-tpm-man		tpm,.man
+./usr/share/man/man1/tpm_version.1		man-tpm-man		tpm,.man
 ./usr/share/man/man1/tput.1			man-util-man		.man
 ./usr/share/man/man1/tr.1			man-util-man		.man
 ./usr/share/man/man1/true.1			man-util-man		.man
@@ -6314,6 +6383,7 @@
 ./usr/share/man/man4/amiga/ser.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/wesc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/xsurf.4		man-sys-man		.man
+./usr/share/man/man4/amiga/z3rambd.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/zssc.4		man-sys-man		.man
 ./usr/share/man/man4/amr.4			man-sys-man		.man
 ./usr/share/man/man4/ams.4			man-sys-man		.man
@@ -6867,6 +6937,7 @@
 ./usr/share/man/man4/mr.4			man-obsolete		obsolete
 ./usr/share/man/man4/msk.4			man-sys-man		.man
 ./usr/share/man/man4/mskc.4			man-sys-man		.man
+./usr/share/man/man4/msm6242b.4			man-sys-man		.man
 ./usr/share/man/man4/mt2131.4			man-sys-man		.man
 ./usr/share/man/man4/mtd.4			man-sys-man		.man
 ./usr/share/man/man4/mtio.4			man-sys-man		.man
@@ -7828,6 +7899,7 @@
 ./usr/share/man/man8/dnssec-settime.8		man-bind-man		.man
 ./usr/share/man/man8/dnssec-signkey.8		man-obsolete		obsolete
 ./usr/share/man/man8/dnssec-signzone.8		man-bind-man		.man
+./usr/share/man/man8/dnssec-verify.8		man-bind-man		.man
 ./usr/share/man/man8/dreamcast/MAKEDEV.8	man-obsolete		obsolete
 ./usr/share/man/man8/dreamcast/boot.8		man-sysutil-man		.man
 ./usr/share/man/man8/dreamcast/makedev.8	man-obsolete		obsolete
@@ -7844,6 +7916,9 @@
 ./usr/share/man/man8/emips/installboot.8		man-obsolete		obsolete
 ./usr/share/man/man8/emips/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/evbarm/bootmini2440.8	man-sysutils-man	.man
+./usr/share/man/man8/evbarm/elftosb.8		man-sysutil-man		.man
+./usr/share/man/man8/evbarm/sbkeygen.8		man-sysutil-man		.man
+./usr/share/man/man8/evbarm/sbtool.8		man-sysutil-man		.man
 ./usr/share/man/man8/envstat.8			man-sysutil-man		.man
 ./usr/share/man/man8/error.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/eshconfig.8		man-sysutil-man		.man
@@ -8449,6 +8524,26 @@
 ./usr/share/man/man8/tlsmgr.8			man-postfix-man		postfix,crypto,.man
 ./usr/share/man/man8/tlsproxy.8			man-postfix-man		postfix,crypto,.man
 ./usr/share/man/man8/tpctl.8			man-sysutil-man		.man
+./usr/share/man/man8/tpm_changeownerauth.8	man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_clear.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_createek.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_getpubek.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_nvdefine.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_nvinfo.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_nvread.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_nvrelease.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_nvwrite.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_resetdalock.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_restrictpubek.8	man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_revokeek.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_selftest.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_setactive.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_setclearable.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_setenable.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_setoperatorauth.8	man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_setownable.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_setpresence.8		man-tpm-man		tpm,.man
+./usr/share/man/man8/tpm_takeownership.8	man-tpm-man		tpm,.man
 ./usr/share/man/man8/trace.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/traceroute.8		man-netutil-man		.man
 ./usr/share/man/man8/traceroute6.8		man-netutil-man		use_inet6,.man

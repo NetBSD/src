@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.58.6.1 2012/10/30 19:00:40 yamt Exp $	*/
+/*	$NetBSD: create.c,v 1.58.6.2 2013/01/16 05:34:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.58.6.1 2012/10/30 19:00:40 yamt Exp $");
+__RCSID("$NetBSD: create.c,v 1.58.6.2 2013/01/16 05:34:09 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,9 +142,12 @@ cwalk(void)
 			statf(indent, p);
 			break;
 		case FTS_DP:
-			if (!nflag && p->fts_level > 0)
-				printf("%*s# %s\n%*s..\n\n", indent, "",
-				    p->fts_path, indent, "");
+			if (p->fts_level > 0) {
+				if (!nflag)
+					printf("%*s# %s\n", indent, "",
+					    p->fts_path);
+				printf("%*s..\n\n", indent, "");
+			}
 			break;
 		case FTS_DNR:
 		case FTS_ERR:

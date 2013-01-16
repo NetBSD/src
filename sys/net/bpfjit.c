@@ -27,6 +27,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifdef _KERNEL
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.1.2.3 2013/01/16 05:33:48 yamt Exp $");
+#else
+__RCSID("$NetBSD: bpfjit.c,v 1.1.2.3 2013/01/16 05:33:48 yamt Exp $");
+#endif
+
 #include <net/bpfjit.h>
 
 #ifndef _KERNEL
@@ -187,10 +194,10 @@ read_width(struct bpf_insn *pc)
 /*
  * Get offset of M[k] on the stack.
  */
-static int
-mem_local_offset(uint32_t k, int minm)
+static size_t
+mem_local_offset(uint32_t k, unsigned int minm)
 {
-	int moff = (k - minm) * sizeof(uint32_t);
+	size_t moff = (k - minm) * sizeof(uint32_t);
 
 #ifdef _KERNEL
 	/*
@@ -1093,7 +1100,7 @@ bpfjit_optimization_hints(struct bpf_insn *insns, size_t insn_count)
 {
 	unsigned int rv = BPFJIT_INIT_A;
 	struct bpf_insn *pc;
-	int minm, maxm;
+	unsigned int minm, maxm;
 
 	BPFJIT_ASSERT(BPF_MEMWORDS - 1 <= 0xff);
 
@@ -1203,9 +1210,9 @@ bpfjit_generate_code(struct bpf_insn *insns, size_t insn_count)
 	int branching, negate;
 	unsigned int rval, mode, src;
 	int ntmp;
-	int locals_size;
-	int minm, maxm; /* min/max k for M[k] */
-	int mem_locals_start; /* start of M[] array */
+	unsigned int locals_size;
+	unsigned int minm, maxm; /* min/max k for M[k] */
+	size_t mem_locals_start; /* start of M[] array */
 	unsigned int opts;
 	struct bpf_insn *pc;
 	struct sljit_compiler* compiler;

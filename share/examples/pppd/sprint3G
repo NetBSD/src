@@ -1,0 +1,27 @@
+# $NetBSD: sprint3G,v 1.1.4.2 2013/01/16 05:32:35 yamt Exp $
+# Script to connect to Sprint-3G's service.
+#
+#kdebug 10
+#debug 10
+/dev/ttyU0 460800
+holdoff 10
+#idle 600
+demand
+#active-filter-out "icmp or (udp and not udp port route) or (tcp and not tcp port ntp)"
+#active-filter-in "icmp or (udp and not udp port route) or (tcp and not tcp port ntp)"
+#pass-filter-in "tcp or (udp and not udp port route) or icmp"
+#pass-filter-out "tcp or (udp and not udp port route) or icmp"
+#netmask 0xffffff00
+ipcp-accept-local
+#lcp-echo-failure 5
+#lcp-echo-interval 5
+#mtu 296
+defaultroute
+crtscts
+modem
+lock
+connect /etc/ppp/connect/sprint3G.chat
+noauth
+user
+password
+usepeerdns

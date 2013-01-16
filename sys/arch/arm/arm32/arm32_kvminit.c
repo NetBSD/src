@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.14.2.2 2012/10/30 17:18:56 yamt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.14.2.3 2013/01/16 05:32:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.14.2.2 2012/10/30 17:18:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.14.2.3 2013/01/16 05:32:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -370,6 +370,10 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	const size_t cpu_num = arm_cpu_max + 1;
 #else
 	const size_t cpu_num = 1;
+#endif
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	KASSERT(mapallmem_p);
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.2.4.1 2012/10/30 18:53:07 yamt Exp $	*/
+/*	$NetBSD: stats.h,v 1.2.4.2 2013/01/16 05:27:22 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -65,6 +65,16 @@ enum {
 	dns_resstatscounter_queryrtt5 = 29,
 
 	dns_resstatscounter_max = 30,
+
+	/*
+	 * DNSSEC stats.
+	 */
+	dns_dnssecstats_asis = 0,
+	dns_dnssecstats_downcase = 1,
+	dns_dnssecstats_wildcard = 2,
+	dns_dnssecstats_fail = 3,
+
+	dns_dnssecstats_max = 4,
 
 	/*%
 	 * Zone statistics counters.

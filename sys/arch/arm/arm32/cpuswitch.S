@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.63.4.1 2012/10/30 17:18:56 yamt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.63.4.2 2013/01/16 05:32:43 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.63.4.1 2012/10/30 17:18:56 yamt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.63.4.2 2013/01/16 05:32:43 yamt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -258,7 +258,7 @@ ENTRY(cpu_switchto)
 	ldr	r10, [r7, #(PCB_R10)]
 	ldr	r11, [r7, #(PCB_R11)]
 	ldr	r12, [r7, #(PCB_R12)]
-	ldr	r13, [r7, #(PCB_SP)]
+	ldr	r13, [r7, #(PCB_KSP)]
 #elif defined(_ARM_ARCH_6)
 	ldrd	r8, [r7, #(PCB_R8)]
 	ldrd	r10, [r7, #(PCB_R10)]
@@ -276,17 +276,6 @@ ENTRY(cpu_switchto)
 	/* rem: r5 = new lwp's proc */
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new pcb */
-
-#ifdef ARMFPE
-	add	r0, r7, #(PCB_SIZE) & 0x00ff
-	add	r0, r0, #(PCB_SIZE) & 0xff00 
-	bl	_C_LABEL(arm_fpe_core_changecontext)
-#endif
-
-	/* rem: r4 = old lwp */
-	/* rem: r5 = new lwp's proc */
-	/* rem: r6 = new lwp */
-	/* rem: r7 = new PCB */
 
 	/* 
 	 * Check for restartable atomic sequences (RAS).
@@ -322,7 +311,7 @@ ENTRY(cpu_switchto)
 	strne	r0, [r1, #(TF_PC)]
 	b	.Lswitch_return
 
-ENTRY(lwp_trampoline)
+ENTRY_NP(lwp_trampoline)
 	/*
 	 * cpu_switchto gives us:
 	 *	arg0(r0) = old lwp
@@ -441,7 +430,7 @@ ENTRY_NP(softint_switch)
 	mcr	p15, 0, r4, c13, c0, 4		/* restore pinned lwp */
 #endif
 	str	r4, [r7, #(CI_CURLWP)]		/* restore pinned lwp */
-	ldr	sp, [r2, #(PCB_SP)]	/* now running on the old stack. */
+	ldr	sp, [r2, #(PCB_KSP)]	/* now running on the old stack. */
 
 	/* At this point we can allow IRQ's again. */
 	msr	cpsr_c, r6

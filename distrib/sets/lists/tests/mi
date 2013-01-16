@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.413.2.4 2012/10/30 18:48:46 yamt Exp $
+# $NetBSD: mi,v 1.413.2.5 2013/01/16 05:26:10 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -321,6 +321,7 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_ioctl.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc1.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc2.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc3.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_sig.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write			tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_fifo.debug		tests-kernel-tests	debug,atf
@@ -337,8 +338,10 @@
 ./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_filedesc.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_lock.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_lockf.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_mkdir.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/kernel/t_mqueue.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_pipe.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_poll3w.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_pollts.debug			tests-obsolete		obsolete
@@ -347,6 +350,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_sigaction.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_subr_prf.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_sysv.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-obsolete		obsolete
@@ -365,7 +369,26 @@
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_match.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_put.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_set.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libbpfjit				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libbpfjit/t_bpfjit.debug		tests-lib-debug		debug,atf,sljit
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/c063				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_faccessat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_fchmodat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_fchownat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_fexecve.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_fstatat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_linkat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_mkdirat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_mkfifoat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_mknodat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_o_search.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_openat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_readlinkat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_renameat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_symlinkat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_unlinkat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_utimensat.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/db				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/db/h_db.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug
@@ -404,6 +427,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_setdomainname.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_sethostname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_siginfo.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_sleep.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_time.debug			tests-lib-debug		debug,atf
@@ -524,6 +548,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_swab.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_access.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_bitops.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_chroot.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_clock_gettime.debug	tests-lib-debug		debug,atf
@@ -691,6 +716,8 @@
 ./usr/libdata/debug/usr/tests/lib/librumphijack/h_netget.debug			tests-lib-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/lib/libskey				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms.debug		tests-lib-debug		debug,atf,skey
+./usr/libdata/debug/usr/tests/lib/libsljit				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libsljit/h_sljit.debug		tests-lib-debug		debug,atf,sljit
 ./usr/libdata/debug/usr/tests/lib/libtre				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libtre/h_regex_att.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libtre/t_exhaust.debug		tests-lib-debug		debug,atf
@@ -809,6 +836,7 @@
 ./usr/libdata/debug/usr/tests/usr.bin					tests-usr.bin-debug
 ./usr/libdata/debug/usr/tests/usr.bin/id				tests-usr.bin-debug
 ./usr/libdata/debug/usr/tests/usr.bin/id/h_id.debug			tests-usr.bin-debug	debug
+./usr/libdata/debug/usr/tests/usr.bin/netpgpverify			tests-usr.bin-debug
 ./usr/libdata/debug/usr/tests/usr.sbin					tests-usr.sbin-debug
 ./usr/libdata/debug/usr/tests/util					tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/util/df					tests-obsolete		obsolete
@@ -2108,7 +2136,7 @@
 ./usr/tests/ipf/regress/p7.pool			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/p9.nat			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/p9.pool			tests-ipf-tests		ipfilter
-./usr/tests/ipf/t_bpf				tests-ipf-tests		atf,ipfilter
+./usr/tests/ipf/t_bpf				tests-obsolete		obsolete
 ./usr/tests/ipf/t_filter_exec			tests-ipf-tests		atf,ipfilter
 ./usr/tests/ipf/t_filter_parse			tests-ipf-tests		atf,ipfilter
 ./usr/tests/ipf/t_ipf				tests-obsolete		obsolete
@@ -2133,6 +2161,7 @@
 ./usr/tests/kernel/kqueue/t_ioctl		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/t_proc1		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/t_proc2		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/t_proc3		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/t_sig			tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/write			tests-kernel-tests
 ./usr/tests/kernel/kqueue/write/Atffile		tests-kernel-tests		atf
@@ -2153,8 +2182,10 @@
 ./usr/tests/kernel/t_extent			tests-kernel-tests		atf
 ./usr/tests/kernel/t_filedesc			tests-kernel-tests		atf,rump
 ./usr/tests/kernel/t_lock			tests-kernel-tests		atf
+./usr/tests/kernel/t_lockf			tests-kernel-tests		atf
 ./usr/tests/kernel/t_lwpctl			tests-obsolete			obsolete
 ./usr/tests/kernel/t_mkdir			tests-obsolete			obsolete
+./usr/tests/kernel/t_mqueue			tests-kernel-tests		atf
 ./usr/tests/kernel/t_pipe			tests-obsolete			obsolete
 ./usr/tests/kernel/t_poll3w			tests-obsolete			obsolete
 ./usr/tests/kernel/t_pollts			tests-obsolete			obsolete
@@ -2164,6 +2195,7 @@
 ./usr/tests/kernel/t_rnd			tests-kernel-tests		atf,rump
 ./usr/tests/kernel/t_sigaction			tests-obsolete			obsolete
 ./usr/tests/kernel/t_subr_prf			tests-kernel-tests		atf
+./usr/tests/kernel/t_sysv			tests-kernel-tests		atf
 ./usr/tests/kernel/t_time			tests-obsolete			obsolete
 ./usr/tests/kernel/t_ucontext			tests-obsolete			obsolete
 ./usr/tests/kernel/t_umount			tests-kernel-tests		atf
@@ -2190,6 +2222,24 @@
 ./usr/tests/lib/libbluetooth/t_sdp_set		tests-lib-tests		atf
 ./usr/tests/lib/libc				tests-lib-tests
 ./usr/tests/lib/libc/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libc/c063			tests-lib-tests
+./usr/tests/lib/libc/c063/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_faccessat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_fchmodat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_fchownat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_fexecve		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_fstatat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_linkat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_mkdirat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_mkfifoat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_mknodat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_o_search		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_openat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_readlinkat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_renameat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_symlinkat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_unlinkat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_utimensat		tests-lib-tests		atf
 ./usr/tests/lib/libc/db				tests-lib-tests
 ./usr/tests/lib/libc/db/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libc/db/README			tests-lib-tests		atf
@@ -2235,6 +2285,7 @@
 ./usr/tests/lib/libc/gen/t_setdomainname	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_sethostname		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_siginfo		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_sleep		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_syslog		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_syslog_pthread	tests-obsolete		obsolete
 ./usr/tests/lib/libc/gen/t_time			tests-lib-tests		atf
@@ -2440,6 +2491,7 @@
 ./usr/tests/lib/libc/sys			tests-lib-tests
 ./usr/tests/lib/libc/sys/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_access		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_bitops		tests-obsolete		obsolete
 ./usr/tests/lib/libc/sys/t_cerror		tests-obsolete		obsolete
 ./usr/tests/lib/libc/sys/t_chroot		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_clock_gettime	tests-lib-tests		atf
@@ -2638,6 +2690,9 @@
 ./usr/tests/lib/semaphore/pthread		tests-lib-tests
 ./usr/tests/lib/semaphore/pthread/Atffile	tests-lib-tests		atf,rump
 ./usr/tests/lib/semaphore/pthread/t_sem_pth	tests-lib-tests		atf,rump
+./usr/tests/lib/libbpfjit			tests-lib-tests		atf
+./usr/tests/lib/libbpfjit/Atffile		tests-lib-tests		atf,sljit
+./usr/tests/lib/libbpfjit/t_bpfjit		tests-lib-tests		atf,sljit
 ./usr/tests/lib/libevent			tests-lib-tests
 ./usr/tests/lib/libevent/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libevent/h_event		tests-lib-tests		atf
@@ -2751,6 +2806,10 @@
 ./usr/tests/lib/libskey				tests-lib-tests		atf
 ./usr/tests/lib/libskey/Atffile			tests-lib-tests		atf,skey
 ./usr/tests/lib/libskey/t_algorithms		tests-lib-tests		atf,skey
+./usr/tests/lib/libsljit			tests-lib-tests		atf
+./usr/tests/lib/libsljit/Atffile		tests-lib-tests		atf,sljit
+./usr/tests/lib/libsljit/h_sljit		tests-lib-tests		atf,sljit
+./usr/tests/lib/libsljit/t_sljit		tests-lib-tests		atf,sljit
 ./usr/tests/lib/libtre				tests-lib-tests		atf
 ./usr/tests/lib/libtre/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libtre/h_regex_att		tests-obsolete		obsolete
@@ -3184,6 +3243,9 @@
 ./usr/tests/usr.bin/nbperf/h_nbperf		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/nbperf/hash_driver.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/nbperf/t_nbperf		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/netpgpverify			tests-usr.bin-tests
+./usr/tests/usr.bin/netpgpverify/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/netpgpverify/t_netpgpverify		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/pr				tests-usr.bin-tests
 ./usr/tests/usr.bin/pr/Atffile			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/pr/d_basic.in		tests-usr.bin-tests	atf

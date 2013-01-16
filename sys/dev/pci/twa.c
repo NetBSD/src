@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.38.2.2 2012/10/30 17:21:54 yamt Exp $ */
+/*	$NetBSD: twa.c,v 1.38.2.3 2013/01/16 05:33:31 yamt Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.38.2.2 2012/10/30 17:21:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.38.2.3 2013/01/16 05:33:31 yamt Exp $");
 
 //#define TWA_DEBUG
 
@@ -86,9 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.38.2.2 2012/10/30 17:21:54 yamt Exp $");
 #include <sys/disk.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
-#if 1
-#include <sys/ktrace.h>
-#endif
 
 #include <sys/bus.h>
 
@@ -388,7 +385,7 @@ struct twa_pci_identity {
 	const char	*name;
 };
 
-static const struct twa_pci_identity pci_twa_products[] = {
+static const struct twa_pci_identity twa_pci_products[] = {
 	{ PCI_VENDOR_3WARE,
 	  PCI_PRODUCT_3WARE_9000,
 	  "3ware 9000 series",
@@ -436,23 +433,31 @@ twa_request_wait_handler(struct twa_request *tr)
 	wakeup(tr);
 }
 
-static int
-twa_match(device_t parent, cfdata_t cfdata,
-    void *aux)
+static const struct twa_pci_identity *
+twa_lookup(pcireg_t id)
 {
+	const struct twa_pci_identity *entry;
 	int i;
-	struct pci_attach_args *pa = aux;
-	const struct twa_pci_identity *entry = 0;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3WARE) {
-		for (i = 0; (pci_twa_products[i].product_id); i++) {
-			entry = &pci_twa_products[i];
-			if (entry->product_id == PCI_PRODUCT(pa->pa_id)) {
-				aprint_normal("%s: (rev. 0x%02x)\n",
-				    entry->name, PCI_REVISION(pa->pa_class));
-				return (1);
-			}
+	for (i = 0; i < __arraycount(twa_pci_products); i++) {
+		entry = &twa_pci_products[i];
+		if (entry->vendor_id == PCI_VENDOR(id) &&
+		    entry->product_id == PCI_PRODUCT(id)) {
+			return entry;
 		}
+	}
+	return NULL;
+}
+
+static int
+twa_match(device_t parent, cfdata_t cfdata, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	const struct twa_pci_identity *entry;
+
+	entry = twa_lookup(pa->pa_id);
+	if (entry != NULL) {
+		return 1;
 	}
 	return (0);
 }
@@ -715,7 +720,6 @@ twa_inquiry(struct twa_request *tr, int lunid)
 		SID_QUAL_LU_NOTPRESENT;
 
 	error = twa_immediate_request(tr, TWA_REQUEST_TIMEOUT_PERIOD);
-
 	if (error != 0)
 		return (error);
 
@@ -1497,6 +1501,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	const struct sysctlnode *node; 
+	const struct twa_pci_identity *entry;
 	int i;
 	bool use_64bit;
 
@@ -1509,7 +1514,8 @@ twa_attach(device_t parent, device_t self, void *aux)
 	sc->pc = pa->pa_pc;
 	sc->tag = pa->pa_tag;
 
-	pci_aprint_devinfo_fancy(pa, "RAID controller", "3ware Apache", 0);
+	entry = twa_lookup(pa->pa_id);
+	pci_aprint_devinfo_fancy(pa, "RAID controller", entry->name, 1);
 
 	sc->sc_quirks = 0;
 		

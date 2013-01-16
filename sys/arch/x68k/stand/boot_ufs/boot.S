@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.9 2011/02/21 02:31:58 itohy Exp $
+| $NetBSD: boot.S,v 1.9.4.1 2013/01/16 05:33:08 yamt Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -64,7 +64,7 @@ clrbss:		clrb	%a1@+
 
 		| we use 68020 instructions, and check MPU beforehand
 		|
-		| here d1.w = -1, and the above "subw a1,d0" = 0x9049, and
+		| here d0.w = -1, and the above "subw a1,d0" = 0x9049, and
 		|	if MPU <= 010	loads 0x49,
 		|	if MPU >= 020	loads 0x90.
 		| This is a move, not a tst instruction

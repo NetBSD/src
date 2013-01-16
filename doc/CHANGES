@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1621.2.4 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1621.2.5 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -134,3 +134,25 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	libc: Import tzcode2012g. [christos 20121023]
 	zoneinfo: Import tzdata2012h. [apb 20121027]
 	libc: Update to tzcode2012h. [christos 20121028]
+	flock(1): Add a utility to provide locks to shell scripts similar
+		to shlock(1) [christos 20121101]
+	zoneinfo: Import tzdata2012i. [apb 20121104]
+	voodoofb(4): Add 3Dfx Voodoo Banshee support. [rkujawa 20121109]
+	zoneinfo: Import tzdata2012j. [apb 20121113]
+	msm6242b(4): Add MI OKI MSM6242B driver. [rkujawa 20121114]
+	amiga: A2000-style RTCs are now driven by the msm6242b(4) driver.
+		[rkujawa 20121114]
+	xsurf(4): Add X-Surf IDE controller support. [rkujawa 20121119]
+	z3rambd(4): Add driver for Zorro III RAM boards as block devices.
+		[rkujawa 20121126]
+	bind: update to 9.9.2-P1 to fix the DNS64 vulnerability.
+		[spz 20121204]
+	arm: ARMFPE support had bitrotted and has been removed. [matt 20121205]
+	dhcpcd(8): Import dhcpcd-5.6.4 [roy 20121206]
+	openresolv(8): Import openresolv-3.5.3 [roy 20121206]
+	arm: fix EHCI support for OMAP3.  [jmcneill 20121211]
+	arm: enable direct-mapped poolpage support.  [matt 20121211]
+	arm: enable VFP-based pmap page zero/copy ops.  [matt 20121211]
+	openssh: Import 6.1. [christos 20121212]
+
+

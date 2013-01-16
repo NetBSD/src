@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.4 2012/10/30 18:55:51 yamt Exp $
+#	$NetBSD: Makefile,v 1.4.2.5 2013/01/16 05:27:59 yamt Exp $
 
 LIB=	LLVMMipsCodeGen
 
@@ -13,7 +13,6 @@ SRCS+=	Mips16InstrInfo.cpp \
 	MipsAsmPrinter.cpp \
 	MipsCodeEmitter.cpp \
 	MipsDelaySlotFiller.cpp \
-	MipsELFWriterInfo.cpp \
 	MipsFrameLowering.cpp \
 	MipsInstrInfo.cpp \
 	MipsISelDAGToDAG.cpp \

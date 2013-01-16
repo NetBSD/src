@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.125.2.2 2012/10/30 17:22:09 yamt Exp $	*/
+/*	$NetBSD: usb.c,v 1.125.2.3 2013/01/16 05:33:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.2.2 2012/10/30 17:22:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.2.3 2013/01/16 05:33:35 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -224,7 +224,11 @@ usb_once_init(void)
 		taskq = &usb_taskq[i];
 
 		TAILQ_INIT(&taskq->tasks);
-		mutex_init(&taskq->lock, MUTEX_DEFAULT, IPL_NONE);
+		/*
+		 * Since USB tasks are callable from any context, we have to
+		 * make this lock a spinlock.
+		 */
+		mutex_init(&taskq->lock, MUTEX_DEFAULT, IPL_USB);
 		cv_init(&taskq->cv, "usbtsk");
 		taskq->name = taskq_names[i];
 		if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,

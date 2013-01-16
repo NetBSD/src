@@ -1,4 +1,4 @@
-/*	$Id: at91pdcvar.h,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
+/*	$Id: at91pdcvar.h,v 1.2.32.1 2013/01/16 05:32:45 yamt Exp $	*/
 
 #ifndef	_AT91PDCVAR_H_
 #define	_AT91PDCVAR_H_
@@ -150,7 +150,7 @@ static __inline void AT91PDC_FIFO_POSTREAD(bus_space_tag_t iot,
 					    uint offset,
 					    at91pdc_fifo_t *fifo)
 {
-	u_int32_t	pdc_ptr = bus_space_read_4(iot, ioh, offset + PDC_RPR);
+	uint32_t	pdc_ptr = bus_space_read_4(iot, ioh, offset + PDC_RPR);
 	int32_t		cc = pdc_ptr - fifo->f_buf_addr - fifo->f_pdc_rd_ndx;
 
 	/* handle fifo wrapping: */
@@ -245,7 +245,7 @@ static __inline void AT91PDC_FIFO_POSTWRITE(bus_space_tag_t iot,
 					     uint offset,
 					     at91pdc_fifo_t *fifo)
 {
-	u_int32_t	pdc_ptr = bus_space_read_4(iot, ioh, offset + PDC_TPR);
+	uint32_t	pdc_ptr = bus_space_read_4(iot, ioh, offset + PDC_TPR);
 	int32_t		cc = pdc_ptr - fifo->f_buf_addr - fifo->f_pdc_wr_ndx;
 
 	/* handle fifo wrapping: */

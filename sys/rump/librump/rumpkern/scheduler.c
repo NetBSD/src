@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.27.2.2 2012/10/30 17:22:54 yamt Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.27.2.3 2013/01/16 05:33:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.27.2.2 2012/10/30 17:22:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.27.2.3 2013/01/16 05:33:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -127,7 +127,6 @@ getnextcpu(void)
 void
 rump_cpus_bootstrap(int *nump)
 {
-	struct rumpcpu *rcpu;
 	struct cpu_info *ci;
 	int num = *nump;
 	int i;
@@ -139,7 +138,6 @@ rump_cpus_bootstrap(int *nump)
 	}
 
 	for (i = 0; i < num; i++) {
-		rcpu = &rcpu_storage[i];
 		ci = &rump_cpus[i];
 		ci->ci_index = i;
 	}
@@ -514,14 +512,14 @@ void
 kpreempt_disable(void)
 {
 
-	KPREEMPT_DISABLE(curlwp);
+	//KPREEMPT_DISABLE(curlwp);
 }
 
 void
 kpreempt_enable(void)
 {
 
-	KPREEMPT_ENABLE(curlwp);
+	//KPREEMPT_ENABLE(curlwp);
 }
 
 bool

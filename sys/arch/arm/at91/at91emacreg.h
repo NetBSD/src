@@ -1,5 +1,5 @@
-/*	$Id: at91emacreg.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
-/*      $NetBSD: at91emacreg.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
+/*	$Id: at91emacreg.h,v 1.3.12.1 2013/01/16 05:32:45 yamt Exp $	*/
+/*      $NetBSD: at91emacreg.h,v 1.3.12.1 2013/01/16 05:32:45 yamt Exp $	*/
 /*-
  * Copyright (c) 2007 Embedtronics Oy
  * All rights reserved
@@ -183,8 +183,8 @@
 #define	ETH_RDSC_SIZE		0x08U
 
 typedef struct eth_rdsc {
-	volatile u_int32_t	Addr;
-	volatile u_int32_t	Info;
+	volatile uint32_t	Addr;
+	volatile uint32_t	Info;
 } __attribute__ ((aligned(4))) eth_rdsc_t;
 
 /* flags: */

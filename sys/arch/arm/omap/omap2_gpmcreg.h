@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpmcreg.h,v 1.5.4.1 2012/10/30 17:19:07 yamt Exp $	*/
+/*	$NetBSD: omap2_gpmcreg.h,v 1.5.4.2 2013/01/16 05:32:49 yamt Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -43,6 +43,9 @@
 #endif
 #ifdef OMAP_2420
 #define GPMC_BASE			0x6800a000
+#endif
+#ifdef OMAP_3430
+#define GPMC_BASE			0x6e000000
 #endif
 #ifdef OMAP_3530
 #define GPMC_BASE			0x6e000000

@@ -2353,9 +2353,6 @@ SLJIT_API_FUNC_ATTRIBUTE int sljit_emit_ijump(struct sljit_compiler *compiler, i
 		}
 		if (src == SLJIT_MEM1(SLJIT_LOCALS_REG) && type >= SLJIT_CALL3)
 			srcw += sizeof(sljit_w);
-#else
-		if (src == SLJIT_MEM1(SLJIT_LOCALS_REG))
-			srcw += sizeof(sljit_w) * (type - SLJIT_CALL0);
 #endif
 #endif
 #if (defined SLJIT_CONFIG_X86_64 && SLJIT_CONFIG_X86_64) && defined(_WIN64)

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.4.2.1 2012/10/30 18:49:32 yamt Exp $	*/
+/*	$NetBSD: config.c,v 1.4.2.2 2013/01/16 05:26:22 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -75,6 +75,7 @@ options {\n\
 	listen-on {any;};\n\
 	listen-on-v6 {none;};\n\
 	match-mapped-addresses no;\n\
+	max-rsa-exponent-size 0; /* no limit */\n\
 	memstatistics-file \"named.memstats\";\n\
 	multiple-cnames no;\n\
 #	named-xfer <obsolete>;\n\
@@ -91,7 +92,7 @@ options {\n\
 #endif
 "\
 	recursive-clients 1000;\n\
-	resolver-query-timeout 30;\n\
+	resolver-query-timeout 10;\n\
 	rrset-order { order random; };\n\
 	serial-queries 20;\n\
 	serial-query-rate 20;\n\

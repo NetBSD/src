@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.16.2.1 2012/10/30 17:19:01 yamt Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.16.2.2 2013/01/16 05:32:46 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.16.2.1 2012/10/30 17:19:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.16.2.2 2013/01/16 05:32:46 yamt Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -56,28 +56,28 @@ __KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.16.2.1 2012/10/30 17:19:01 yamt Ex
 struct intrq intrq[NIRQ];
 
 /* Interrupts to mask at each level. */
-static u_int32_t vic1_imask[NIPL];
-static u_int32_t vic2_imask[NIPL];
+static uint32_t vic1_imask[NIPL];
+static uint32_t vic2_imask[NIPL];
 
 /* Current interrupt priority level. */
 volatile int hardware_spl_level;
 
 /* Software copy of the IRQs we have enabled. */
-volatile u_int32_t vic1_intr_enabled;
-volatile u_int32_t vic2_intr_enabled;
+volatile uint32_t vic1_intr_enabled;
+volatile uint32_t vic2_intr_enabled;
 
 /* Interrupts pending. */
 static volatile int ipending;
 
 void	ep93xx_intr_dispatch(struct trapframe *);
 
-#define VIC1REG(reg)	*((volatile u_int32_t*) (EP93XX_AHB_VBASE + \
+#define VIC1REG(reg)	*((volatile uint32_t*) (EP93XX_AHB_VBASE + \
 	EP93XX_AHB_VIC1 + (reg)))
-#define VIC2REG(reg)	*((volatile u_int32_t*) (EP93XX_AHB_VBASE + \
+#define VIC2REG(reg)	*((volatile uint32_t*) (EP93XX_AHB_VBASE + \
 	EP93XX_AHB_VIC2 + (reg)))
 
 static void
-ep93xx_set_intrmask(u_int32_t vic1_irqs, u_int32_t vic2_irqs)
+ep93xx_set_intrmask(uint32_t vic1_irqs, uint32_t vic2_irqs)
 {
 	VIC1REG(EP93XX_VIC_IntEnClear) = vic1_irqs;
 	VIC1REG(EP93XX_VIC_IntEnable) = vic1_intr_enabled & ~vic1_irqs;
@@ -330,8 +330,8 @@ ep93xx_intr_dispatch(struct trapframe *frame)
 	struct intrhand*	ih;
 	u_int			oldirqstate;
 	int			pcpl;
-	u_int32_t		vic1_hwpend;
-	u_int32_t		vic2_hwpend;
+	uint32_t		vic1_hwpend;
+	uint32_t		vic2_hwpend;
 	int			irq;
 
 	pcpl = curcpl();

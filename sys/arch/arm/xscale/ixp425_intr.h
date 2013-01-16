@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.h,v 1.9 2009/02/27 03:56:29 msaitoh Exp $	*/
+/*	$NetBSD: ixp425_intr.h,v 1.9.12.1 2013/01/16 05:32:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
 
 #include <arm/xscale/ixp425reg.h>
 
-#define IXPREG(reg)     *((volatile u_int32_t*) (reg))
+#define IXPREG(reg)     *((volatile uint32_t*) (reg))
 
 static inline void __attribute__((__unused__))
 ixp425_set_intrmask(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.2.2 2012/10/30 17:22:04 yamt Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.2.3 2013/01/16 05:33:33 yamt Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.2.2 2012/10/30 17:22:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.2.3 2013/01/16 05:33:33 yamt Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2363,7 +2363,6 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		DPRINTFN(8,("ehci_root_ctrl_start: port status=0x%04x\n", v));
 
 		i = UPS_HIGH_SPEED;
-#if 0
 		if (sc->sc_flags & EHCIF_ETTF) {
 			/*
 			 * If we are doing embedded transaction translation,
@@ -2373,7 +2372,6 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			 */
 			i = __SHIFTOUT(v, EHCI_PS_PSPD) * UPS_LOW_SPEED;
 		}
-#endif
 		if (v & EHCI_PS_CS)	i |= UPS_CURRENT_CONNECT_STATUS;
 		if (v & EHCI_PS_PE)	i |= UPS_PORT_ENABLED;
 		if (v & EHCI_PS_SUSP)	i |= UPS_SUSPEND;

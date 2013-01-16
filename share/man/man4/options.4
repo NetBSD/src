@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.409.2.2 2012/10/30 18:59:38 yamt Exp $
+.\"	$NetBSD: options.4,v 1.409.2.3 2013/01/16 05:32:36 yamt Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd May 25, 2012
+.Dd November 3, 2012
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -957,9 +957,8 @@ See also
 .Xr dumpfs 8
 for file system byte order status and manipulation.
 .It Cd options FFS_NO_SNAPSHOT
-Disable the
-.Dq file system snapshot
-support in FFS file systems.
+Disable support for the creation of file system internal snapshot
+of FFS file systems.
 Maybe useful for install media kernels, small memory systems and
 embedded systems which don't require the snapshot support.
 .It Cd options UFS_EXTATTR

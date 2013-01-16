@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.31.4.1 2012/10/30 18:59:17 yamt Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.31.4.2 2013/01/16 05:32:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -86,8 +86,10 @@ mydprintf(const char *fmt, ...)
 #define host_setsockopt setsockopt
 #endif
 
-#define IOVPUT(_io_, _b_) _io_.iov_base = &_b_; _io_.iov_len = sizeof(_b_);
-#define IOVPUT_WITHSIZE(_io_, _b_, _l_) _io_.iov_base = _b_; _io_.iov_len = _l_;
+#define IOVPUT(_io_, _b_) _io_.iov_base = 			\
+    (void *)&_b_; _io_.iov_len = sizeof(_b_);
+#define IOVPUT_WITHSIZE(_io_, _b_, _l_) _io_.iov_base =		\
+    (void *)(_b_); _io_.iov_len = _l_;
 #define SENDIOV(_spc_, _iov_) dosend(_spc_, _iov_, __arraycount(_iov_))
 
 /*
@@ -346,7 +348,8 @@ dosend(struct spclient *spc, struct iovec *iov, size_t iovlen)
 			_DIAGASSERT(n == 0);
 			break;
 		} else {
-			iov[0].iov_base = (uint8_t *)iov[0].iov_base + n;
+			iov[0].iov_base =
+			    (void *)((uint8_t *)iov[0].iov_base + n);
 			iov[0].iov_len -= n;
 		}
 	}
@@ -543,7 +546,7 @@ tcp_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 	int port;
 
 	memset(&sin, 0, sizeof(sin));
-	SA_SETLEN(&sin, sizeof(sin));
+	SIN_SETLEN(sin, sizeof(sin));
 	sin.sin_family = AF_INET;
 
 	p = strchr(addr, ':');
@@ -630,11 +633,11 @@ static char parsedurl[256];
 static int
 unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 {
-	struct sockaddr_un sun;
+	struct sockaddr_un s_un;
 	size_t slen;
 	int savepath = 0;
 
-	if (strlen(addr) >= sizeof(sun.sun_path))
+	if (strlen(addr) >= sizeof(s_un.sun_path))
 		return ENAMETOOLONG;
 
 	/*
@@ -644,8 +647,8 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 	 * one and the server does a chdir() between now than the
 	 * cleanup.
 	 */
-	memset(&sun, 0, sizeof(sun));
-	sun.sun_family = AF_LOCAL;
+	memset(&s_un, 0, sizeof(s_un));
+	s_un.sun_family = AF_LOCAL;
 	if (*addr != '/') {
 		char mywd[PATH_MAX];
 
@@ -653,30 +656,31 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 			fprintf(stderr, "warning: cannot determine cwd, "
 			    "omitting socket cleanup\n");
 		} else {
-			if (strlen(addr)+strlen(mywd)+1 >= sizeof(sun.sun_path))
+			if (strlen(addr)+strlen(mywd)+1
+			    >= sizeof(s_un.sun_path))
 				return ENAMETOOLONG;
-			strcpy(sun.sun_path, mywd);
-			strcat(sun.sun_path, "/");
+			strcpy(s_un.sun_path, mywd);
+			strcat(s_un.sun_path, "/");
 			savepath = 1;
 		}
 	}
-	strcat(sun.sun_path, addr);
-#ifdef __linux__
-	slen = sizeof(sun);
+	strcat(s_un.sun_path, addr);
+#if defined(__linux__) || defined(__sun__)
+	slen = sizeof(s_un);
 #else
-	sun.sun_len = SUN_LEN(&sun);
-	slen = sun.sun_len+1; /* get the 0 too */
+	s_un.sun_len = SUN_LEN(&s_un);
+	slen = s_un.sun_len+1; /* get the 0 too */
 #endif
 
 	if (savepath && *parsedurl == '\0') {
 		snprintf(parsedurl, sizeof(parsedurl),
-		    "unix://%s", sun.sun_path);
+		    "unix://%s", s_un.sun_path);
 	}
 
 	*sa = malloc(slen);
 	if (*sa == NULL)
 		return errno;
-	memcpy(*sa, &sun, slen);
+	memcpy(*sa, &s_un, slen);
 
 	return 0;
 }
@@ -684,13 +688,13 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 static void
 unix_cleanup(struct sockaddr *sa)
 {
-	struct sockaddr_un *sun = (void *)sa;
+	struct sockaddr_un *s_sun = (void *)sa;
 
 	/*
 	 * cleanup only absolute paths.  see unix_parse() above
 	 */
-	if (*sun->sun_path == '/') {
-		unlink(sun->sun_path);
+	if (*s_sun->sun_path == '/') {
+		unlink(s_sun->sun_path);
 	}
 }
 

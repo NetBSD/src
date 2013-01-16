@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.884.2.4 2012/10/30 18:48:57 yamt Exp $
+#	$NetBSD: 3RDPARTY,v 1.884.2.5 2013/01/16 05:26:12 yamt Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -110,8 +110,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.9.1-P2
-Current Vers:	9.9.1-P2
+Version:	9.9.2-P1
+Current Vers:	9.9.2-P1
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
@@ -154,7 +154,7 @@ Todo[5]: Reconcile the doc directory.
 
 Package:	binutils
 Version:	2.21.1a
-Current Vers:	2.22
+Current Vers:	2.23.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	http://www.gnu.org/software/binutils/
@@ -300,8 +300,8 @@ No changes for NetBSD integration - just import the new distribution on
 top of the current tree.
 
 Package:	dhcpcd
-Version:	5.6.2
-Current Vers:	5.6.2
+Version:	5.6.4
+Current Vers:	5.6.4
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -331,7 +331,7 @@ Version:	2.1.0
 Current Vers:	2.1.0
 Maintainer:	mrg
 Archive Site:	http://sourceforge.net/projects/expat/files/expat/
-Home Page:	http://expat.sourceforge.net/
+Home Page:	http://www.libexpat.org/
 Mailing List:	expat-discuss@libexpat.org
 Responsible:
 License:	MIT
@@ -822,8 +822,8 @@ Notes:
 Next import will need $ Id removal..
 
 Package:	openresolv
-Version:	3.5.1
-Current Vers:	3.5.1
+Version:	3.5.3
+Current Vers:	3.5.3
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/openresolv/
 Home Page:	http://roy.marples.name/projects/openresolv/
@@ -834,11 +834,11 @@ Notes:
 Please submit all changes to the author.
 
 Package:	HPN-SSH
-Version:	5.6p1 13 v11
-Current Vers:	5.6p1 13 v11
+Version:	6.1p1 13 v14
+Current Vers:	6.1p1 13 v14
 Maintainer:	www.psc.edu
-Archive Site:	http://www.psc.edu/networking/projects/hpn-ssh/openssh-5.6p1-hpn13v11.diff.gz
-Home Page:	http://www.psc.edu/networking/projects/hpn-ssh/
+Archive Site:	No direct link anymore, @#$#$ psc.
+Home Page:	http://www.psc.edu/index.php/hpn-ssh
 Mailing List:
 Responsible:	christos
 License:	
@@ -847,7 +847,7 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	6.0
+Version:	6.1
 Current Vers:	6.1 / portable 6.1p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
@@ -1189,8 +1189,8 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2012h / tzdata2012h
-Current Vers:	tzcode2012h / tzdata2012h
+Version:	tzcode2012h / tzdata2012j
+Current Vers:	tzcode2012j / tzdata2012j
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
@@ -1336,6 +1336,19 @@ Responsible:	mrg
 License:	LGPL3
 Location:	external/lgpl3/gmp/dist
 Notes:
+
+Package:	sljit
+Version:	svn revision 186
+Current Vers:	svn revision 201
+Maintainer:	Zoltán Herczeg <hzmester@freemail.hu
+Archive Site:	http://sourceforge.net/projects/sljit/
+Home Page:	http://sljit.sourceforge.net/
+Mailing List:	none
+Responsible:	alnsn
+License:	BSD (2-clause)
+Location:	sys/external/bsd/sljit/dist
+Notes:
+		Need to feed back local changes
 
 Package:	tre
 Version:	0.8.0

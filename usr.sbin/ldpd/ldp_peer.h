@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.h,v 1.1 2010/12/08 07:20:14 kefren Exp $ */
+/* $NetBSD: ldp_peer.h,v 1.1.6.1 2013/01/16 05:34:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ struct peer_map {
 
 void            ldp_peer_init(void);
 struct ldp_peer *	ldp_peer_new(struct in_addr *, struct in_addr *,
-				struct in_addr *, uint16_t, int);
+				struct in_addr *, struct in6_addr *, uint16_t, int);
 void            ldp_peer_holddown(struct ldp_peer *);
 void            ldp_peer_delete(struct ldp_peer *);
 struct ldp_peer *	get_ldp_peer(struct in_addr *);

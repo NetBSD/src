@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.136.2.1 2012/10/30 17:22:43 yamt Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.136.2.2 2013/01/16 05:33:48 yamt Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.136.2.1 2012/10/30 17:22:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.136.2.2 2013/01/16 05:33:48 yamt Exp $");
 
 #include "ppp.h"
 
@@ -1266,7 +1266,7 @@ ppp_ccp(struct ppp_softc *sc, struct mbuf *m, int rcvd)
 	mp = m->m_next;
 	if (mp == NULL)
 	    return;
-	dp = (mp != NULL)? mtod(mp, u_char *): NULL;
+	dp = mtod(mp, u_char *);
     } else {
 	mp = m;
 	dp = mtod(mp, u_char *) + PPP_HDRLEN;

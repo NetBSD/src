@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.49 2011/07/12 07:51:34 mrg Exp $ */
+/*	$NetBSD: psl.h,v 1.49.2.1 2013/01/16 05:33:06 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -264,6 +264,20 @@
 
 #define CWP		0x01f
 
+/*
+ * UltraSPARC Ancillary State Registers
+ */
+#define SET_SOFTINT	%asr20	/* Set Software Interrupt register bits */
+#define CLEAR_SOFTINT	%asr21	/* Clear Software Interrupt register bits */
+#define SOFTINT		%asr22	/* Software Interrupt register */
+#define TICK_CMPR	%asr23	/* TICK Compare register */
+#define STICK		%asr24	/* STICK register */
+#define STICK_CMPR	%asr25	/* STICK Compare register */
+
+/* SOFTINT bit descriptions */
+#define TICK_INT	0x01		/* CPU clock timer interrupt */
+#define STICK_INT	(0x1<<16)	/* system clock timer interrupt */
+
 /* 64-byte alignment -- this seems the best place to put this. */
 #define SPARC64_BLOCK_SIZE	64
 #define SPARC64_BLOCK_ALIGN	0x3f
@@ -271,65 +285,77 @@
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 /*
- * Inlines for manipulating privileged registers
+ * Inlines for manipulating privileged and ancillary state registers
  */
-#define SPARC64_GETPR_DEF(pr, type)	\
-static __inline type get##pr(void)					\
+#define SPARC64_RD_DEF(rd, name, reg, type)				\
+static __inline type get##name(void)					\
 {									\
-	type pr;							\
-	__asm volatile("rdpr %%" #pr ",%0" : "=r" (pr));		\
-	return pr;							\
+	type _val;							\
+	__asm volatile(#rd " %" #reg ",%0" : "=r" (_val));		\
+	return _val;							\
 }
-#define SPARC64_SETPR_DEF(pr, type)	\
-static __inline void set##pr(type pr)					\
+#define SPARC64_WR_DEF(wr, name, reg, type)				\
+static __inline void set##name(type _val)				\
 {									\
-	__asm volatile("wrpr %0,0,%%" #pr : : "r" (pr) : "memory");	\
+	__asm volatile(#wr " %0,0,%" #reg : : "r" (_val) : "memory");	\
 }
 
 #ifdef __arch64__
-#define SPARC64_GETPR64_DEF(pr)	SPARC64_GETPR_DEF(pr, uint64_t)
-#define SPARC64_SETPR64_DEF(pr)	SPARC64_SETPR_DEF(pr, uint64_t)
+#define SPARC64_RD64_DEF(rd, name, reg) SPARC64_RD_DEF(rd, name, reg, uint64_t)
+#define SPARC64_WR64_DEF(wr, name, reg) SPARC64_WR_DEF(wr, name, reg, uint64_t)
 #else
-#define SPARC64_GETPR64_DEF(pr)	\
-static __inline uint64_t get##pr(void)					\
+#define SPARC64_RD64_DEF(rd, name, reg)					\
+static __inline uint64_t get##name(void)				\
 {									\
 	uint32_t _hi, _lo;						\
-	__asm volatile("rdpr %%" #pr ",%0; srl %0,0,%1; srlx %0,32,%0"	\
+	__asm volatile(#rd " %" #reg ",%0; srl %0,0,%1; srlx %0,32,%0"	\
 		: "=r" (_hi), "=r" (_lo));				\
 	return ((uint64_t)_hi << 32) | _lo;				\
 }
-#define SPARC64_SETPR64_DEF(pr)	\
-static __inline void set##pr(uint64_t pr)				\
+#define SPARC64_WR64_DEF(wr, name, reg)					\
+static __inline void set##name(uint64_t _val)				\
 {									\
-	uint32_t _hi = pr >> 32, _lo = pr;				\
-	__asm volatile("sllx %1,32,%0; or %0,%2,%0; wrpr %0,0,%%" #pr	\
+	uint32_t _hi = _val >> 32, _lo = _val;				\
+	__asm volatile("sllx %1,32,%0; or %0,%2,%0; " #wr " %0,0,%" #reg\
 		       : "=&r" (_hi) /* scratch register */		\
 		       : "r" (_hi), "r" (_lo) : "memory");		\
 }
 #endif
 
+#define SPARC64_RDPR_DEF(name, reg, type) SPARC64_RD_DEF(rdpr, name, reg, type)
+#define SPARC64_WRPR_DEF(name, reg, type) SPARC64_WR_DEF(wrpr, name, reg, type)
+#define SPARC64_RDPR64_DEF(name, reg)	SPARC64_RD64_DEF(rdpr, name, reg)
+#define SPARC64_WRPR64_DEF(name, reg)	SPARC64_WR64_DEF(wrpr, name, reg)
+#define SPARC64_RDASR64_DEF(name, reg)	SPARC64_RD64_DEF(rd, name, reg)
+#define SPARC64_WRASR64_DEF(name, reg)	SPARC64_WR64_DEF(wr, name, reg)
+
 /* Tick Register (PR 4) */
-SPARC64_GETPR64_DEF(tick)			/* gettick() */
-SPARC64_SETPR64_DEF(tick)			/* settick() */
+SPARC64_RDPR64_DEF(tick, %tick)			/* gettick() */
+SPARC64_WRPR64_DEF(tick, %tick)			/* settick() */
 
 /* Processor State Register (PR 6) */
-SPARC64_GETPR_DEF(pstate, int)			/* getpstate() */
-SPARC64_SETPR_DEF(pstate, int)			/* setpstate() */
+SPARC64_RDPR_DEF(pstate, %pstate, int)		/* getpstate() */
+SPARC64_WRPR_DEF(pstate, %pstate, int)		/* setpstate() */
 
 /* Trap Level Register (PR 7) */
-SPARC64_GETPR_DEF(tl, int)			/* gettl() */
+SPARC64_RDPR_DEF(tl, %tl, int)			/* gettl() */
 
 /* Current Window Pointer Register (PR 9) */
-SPARC64_GETPR_DEF(cwp, int)			/* getcwp() */
-SPARC64_SETPR_DEF(cwp, int)			/* setcwp() */
+SPARC64_RDPR_DEF(cwp, %cwp, int)		/* getcwp() */
+SPARC64_WRPR_DEF(cwp, %cwp, int)		/* setcwp() */
 
 /* Version Register (PR 31) */
-SPARC64_GETPR64_DEF(ver)			/* getver() */
+SPARC64_RDPR64_DEF(ver, %ver)			/* getver() */
+
+/* System Tick Register (ASR 24) */
+SPARC64_RDASR64_DEF(stick, STICK)		/* getstick() */
+SPARC64_WRASR64_DEF(stick, STICK)		/* setstick() */
 
 /* Some simple macros to check the cpu type. */
 #define GETVER_CPU_IMPL()	((getver() & VER_IMPL) >> VER_IMPL_SHIFT)
 #define GETVER_CPU_MANUF()	((getver() & VER_MANUF) >> VER_MANUF_SHIFT)
 #define CPU_IS_SPITFIRE()	(GETVER_CPU_IMPL() == IMPL_SPITFIRE)
+#define CPU_IS_HUMMINGBIRD()	(GETVER_CPU_IMPL() == IMPL_HUMMINGBIRD)
 #define CPU_IS_USIIIi()		((GETVER_CPU_IMPL() == IMPL_JALAPENO) || \
 				 (GETVER_CPU_IMPL() == IMPL_SERRANO))
 #define CPU_IS_USIII_UP()	(GETVER_CPU_IMPL() >= IMPL_CHEETAH)

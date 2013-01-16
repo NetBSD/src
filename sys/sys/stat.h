@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.63 2011/09/04 10:02:33 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.63.2.1 2013/01/16 05:33:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -244,11 +244,16 @@ int	lchmod(const char *, mode_t);
 /*
  * X/Open Extended API set 2 (a.k.a. C063)
  */
-#if defined(_INCOMPLETE_XOPEN_C063) 
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
+    defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
 int     fstatat(int, const char *, struct stat *, int);
 int     utimensat(int, const char *, const struct timespec *, int);
 #endif
 
+#ifdef _NETBSD_SOURCE
+int utimens(const char *, const struct timespec *);
+int lutimens(const char *, const struct timespec *);
+#endif
 int futimens(int, const struct timespec *);
 #endif
 

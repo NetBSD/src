@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.61 2011/06/22 18:06:35 matt Exp $
+#	$NetBSD: files.prep,v 1.61.2.1 2013/01/16 05:33:02 yamt Exp $
 #
 # prep-specific configuration info
 #
@@ -178,7 +178,7 @@ file arch/prep/pnpbus/wdc_pnpbus.c	wdc_pnpbus needs-flag
 attach fdc at pnpbus with fdc_pnpbus: isadma
 file arch/prep/pnpbus/fdc_pnpbus.c	fdc_pnpbus
 
-device nvram
+device nvram: mk48txx
 attach nvram at pnpbus with nvram_pnpbus
 file arch/prep/pnpbus/nvram_pnpbus.c	nvram_pnpbus
 

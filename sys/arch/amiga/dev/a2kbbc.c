@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.23.2.1 2012/10/30 17:18:47 yamt Exp $ */
+/*	$NetBSD: a2kbbc.c,v 1.23.2.2 2013/01/16 05:32:41 yamt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,37 +39,42 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.23.2.1 2012/10/30 17:18:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.23.2.2 2013/01/16 05:32:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
-#include <amiga/dev/rtc.h>
 #include <amiga/dev/zbusvar.h>
 
 #include <dev/clock_subr.h>
 
-int a2kbbc_match(device_t, cfdata_t, void *);
-void a2kbbc_attach(device_t, device_t, void *);
+#include <dev/ic/msm6242bvar.h>
+#include <dev/ic/msm6242breg.h>
 
-CFATTACH_DECL_NEW(a2kbbc, 0,
+#define	A2KBBC_ADDR	0xDC0000	/* XXX: possible D80000 on A2000 "A"? */
+
+static int a2kbbc_match(device_t, cfdata_t, void *);
+static void a2kbbc_attach(device_t, device_t, void *);
+
+struct a2kbbc_softc {
+	struct msm6242b_softc sc_msm6242b;
+	struct bus_space_tag sc_bst;
+};
+
+CFATTACH_DECL_NEW(a2kbbc, sizeof(struct a2kbbc_softc),
     a2kbbc_match, a2kbbc_attach, NULL, NULL);
 
-void *a2kclockaddr;
-int a2kugettod(todr_chip_handle_t, struct clock_ymdhms *);
-int a2kusettod(todr_chip_handle_t, struct clock_ymdhms *);
-static struct todr_chip_handle a2ktodr;
-
-int
+static int
 a2kbbc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct clock_ymdhms dt;
+	//struct clock_ymdhms dt;
 	static int a2kbbc_matched = 0;
 
 	if (!matchname("a2kbbc", aux))
@@ -86,10 +91,6 @@ a2kbbc_match(device_t parent, cfdata_t cf, void *aux)
 	    )
 		return (0);
 
-	a2kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
-	if (a2kugettod(&a2ktodr, &dt) != 0)
-		return (0);
-
 	a2kbbc_matched = 1;
 	return (1);
 }
@@ -100,141 +101,24 @@ a2kbbc_match(device_t parent, cfdata_t cf, void *aux)
 void
 a2kbbc_attach(device_t parent, device_t self, void *aux)
 {
-	printf("\n");
-	a2kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
+	struct a2kbbc_softc *sc;
+	struct msm6242b_softc *msc;
 
-	a2ktodr.cookie = a2kclockaddr;
-	a2ktodr.todr_gettime_ymdhms = a2kugettod;
-	a2ktodr.todr_settime_ymdhms = a2kusettod;
-	todr_attach(&a2ktodr);
-}
+	sc = device_private(self);
+	msc = &sc->sc_msm6242b;
+	msc->sc_dev = self;
 
-int
-a2kugettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
-{
-	struct rtclock2000 *rt;
-	int i;
+	sc->sc_bst.base = (bus_addr_t) __UNVOLATILE(ztwomap(A2KBBC_ADDR+1));
+	sc->sc_bst.absm = &amiga_bus_stride_4;
 
-	rt = a2kclockaddr;
+	msc->sc_iot = &sc->sc_bst;
 
-	/*
-	 * hold clock
-	 */
-	rt->control1 |= A2CONTROL1_HOLD;
-	i = 0x1000;
-	while (rt->control1 & A2CONTROL1_BUSY && i--)
-		;
-	if (rt->control1 & A2CONTROL1_BUSY)
-		return (ENXIO);		/* Give up and say it's not there */
-
-	/* Copy the info.  Careful about the order! */
-	dt->dt_sec   = rt->second1 * 10 + rt->second2;
-	dt->dt_min   = rt->minute1 * 10 + rt->minute2;
-	dt->dt_hour  = (rt->hour1 & 3) * 10 + rt->hour2;
-	dt->dt_day   = rt->day1    * 10 + rt->day2;
-	dt->dt_mon   = rt->month1  * 10 + rt->month2;
-	dt->dt_year  = rt->year1   * 10 + rt->year2;
-	dt->dt_wday  = rt->weekday;
-
-	/*
-	 * The oki clock chip has a register to put the clock into
-	 * 12/24h mode.
-	 *
-	 *  clockmode   |    A2HOUR1_PM
-	 *  24h   12h   |  am = 0, pm = 1
-	 * ---------------------------------
-	 *   0    12    |       0
-	 *   1     1    |       0
-	 *  ..    ..    |       0
-	 *  11    11    |       0
-	 *  12    12    |       1
-	 *  13     1    |       1
-	 *  ..    ..    |       1
-	 *  23    11    |       1
-	 *
-	 */
-
-	if ((rt->control3 & A2CONTROL3_24HMODE) == 0) {
-		if ((rt->hour1 & A2HOUR1_PM) == 0 && dt->dt_hour == 12)
-			dt->dt_hour = 0;
-		else if ((rt->hour1 & A2HOUR1_PM) && dt->dt_hour != 12)
-			dt->dt_hour += 12;
+	if (bus_space_map(msc->sc_iot, 0, MSM6242B_SIZE, 0, &msc->sc_ioh)) {
+		aprint_error_dev(msc->sc_dev, "couldn't map registers\n");
+		return;
 	}
 
-	/*
-	 * release the clock
-	 */
-	rt->control1 &= ~A2CONTROL1_HOLD;
-
-	dt->dt_year += CLOCK_BASE_YEAR;
-	if (dt->dt_year < STARTOFTIME)
-		dt->dt_year += 100;
-
-	/*
-	 * Note that this check is redundant with one in kern_todr.c, but
-	 * attach relies on it being here.
-	 */
-	if ((dt->dt_hour > 23) ||
-	    (dt->dt_day  > 31) ||
-	    (dt->dt_mon  > 12) ||
-	    /* (dt->dt_year < STARTOFTIME) || */ (dt->dt_year > 2036))
-		return (EINVAL);
-
-	return (0);
+	msm6242b_attach(msc);
 }
 
-int
-a2kusettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
-{
-	struct rtclock2000 *rt;
-	int ampm, i;
 
-	rt = a2kclockaddr;
-	/*
-	 * there seem to be problems with the bitfield addressing
-	 * currently used..
-	 */
-	if (! rt)
-		return (ENXIO);
-
-	/*
-	 * hold clock
-	 */
-	rt->control1 |= A2CONTROL1_HOLD;
-	i = 0x1000;
-	while (rt->control1 & A2CONTROL1_BUSY && i--)
-		;
-	if (rt->control1 & A2CONTROL1_BUSY)
-		return (ENXIO);		/* Give up and say it's not there */
-
-	ampm = 0;
-	if ((rt->control3 & A2CONTROL3_24HMODE) == 0) {
-		if (dt->dt_hour >= 12) {
-			ampm = A2HOUR1_PM;
-			if (dt->dt_hour != 12)
-				dt->dt_hour -= 12;
-		} else if (dt->dt_hour == 0) {
-			dt->dt_hour = 12;
-		}
-	}
-	rt->hour1   = (dt->dt_hour / 10) | ampm;
-	rt->hour2   = dt->dt_hour % 10;
-	rt->second1 = dt->dt_sec / 10;
-	rt->second2 = dt->dt_sec % 10;
-	rt->minute1 = dt->dt_min / 10;
-	rt->minute2 = dt->dt_min % 10;
-	rt->day1    = dt->dt_day / 10;
-	rt->day2    = dt->dt_day % 10;
-	rt->month1  = dt->dt_mon / 10;
-	rt->month2  = dt->dt_mon % 10;
-	rt->year1   = (dt->dt_year / 10) % 10;
-	rt->year2   = dt->dt_year % 10;
-	rt->weekday = dt->dt_wday;
-
-	/*
-	 * release the clock
-	 */
-	rt->control2 &= ~A2CONTROL1_HOLD;
-
-	return (0);
-}

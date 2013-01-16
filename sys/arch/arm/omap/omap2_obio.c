@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.12.2.1 2012/10/30 17:19:08 yamt Exp $	*/
+/*	$Id: omap2_obio.c,v 1.12.2.2 2013/01/16 05:32:49 yamt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.12.2.1 2012/10/30 17:19:08 yamt Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.12.2.2 2013/01/16 05:32:49 yamt Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.12.2.1 2012/10/30 17:19:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.12.2.2 2013/01/16 05:32:49 yamt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -177,7 +177,21 @@ obio_match(device_t parent, cfdata_t match, void *aux)
 		return 1;
 #endif
 
+#ifdef TI_AM335X
+	if (obio_attached == 0)
+		return 1;
+#endif
+
 	return 0;
+}
+
+static void
+obio_attach1(device_t self)
+{
+	/*
+	 * Attach the rest of our devices
+	 */
+	config_search_ia(obio_search, self, "obio", NULL);
 }
 
 static void
@@ -212,6 +226,9 @@ obio_attach(device_t parent, device_t self, void *aux)
 	else if (mb->mb_iobase == OMAP2_OBIO_3_BASE)
 		obio_attached |= 8;
 #endif
+#ifdef TI_AM335X
+	obio_attached = 1;
+#endif
 
 	/*
 	 * Attach critical devices first.
@@ -219,9 +236,10 @@ obio_attach(device_t parent, device_t self, void *aux)
 	obio_attach_critical(sc);
 
 	/*
-	 * Then attach the rest of our devices
+	 * Attach the rest of our devices once all obio devices
+	 * have attached.
 	 */
-	config_search_ia(obio_search, self, "obio", NULL);
+	config_defer(self, obio_attach1);
 }
 
 static int
@@ -342,14 +360,27 @@ static const struct {
 #if defined(OMAP_2430) || defined(OMAP_2420)
 	{ .name = "avic", .addr = INTC_BASE, .required = true },
 #endif
+#if defined(OMAP_3430)
+	{ .name = "avic", .addr = INTC_BASE_3430, .required = true },
+#endif
 #if defined(OMAP_3530)
 	{ .name = "avic", .addr = INTC_BASE_3530, .required = true },
 #endif
 	{ .name = "gpio1", .addr = GPIO1_BASE, .required = false },
 	{ .name = "gpio2", .addr = GPIO2_BASE, .required = false },
 	{ .name = "gpio3", .addr = GPIO3_BASE, .required = false },
+#if defined(GPIO4_BASE)
+	{ .name = "gpio4", .addr = GPIO4_BASE, .required = false },
+#endif
+#if defined(GPIO5_BASE)
+	{ .name = "gpio5", .addr = GPIO5_BASE, .required = false },
+#endif
 #if 0
 	{ .name = "dmac", .addr = DMAC_BASE, .required = true },
+#endif
+#if defined(TI_AM335X)
+	{ .name = "omapicu", .addr = 0x48200000, .required = true },
+	{ .name = "prcm", .addr = 0x44e00000, .required = true },
 #endif
 };
 

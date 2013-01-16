@@ -1,4 +1,4 @@
-.\" $NetBSD: ldpd.8,v 1.5 2011/07/07 05:20:16 kefren Exp $
+.\" $NetBSD: ldpd.8,v 1.5.2.1 2013/01/16 05:34:09 yamt Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 7, 2011
+.Dd November 12, 2012
 .Dt LDPD 8
 .Os
 .Sh NAME
@@ -38,35 +38,41 @@
 .Sh DESCRIPTION
 .Nm
 is a utility used to automatically distribute labels between two MPLS LSRs
-almost conforming to RFC3036.
-Right now it is in BETA stage and many features
-are not implemented or may not work.
+almost conforming to RFC5036.
+Right now some features requested by RFC5036 are not fully implemented.
+For more information please consult the
+.Sx BUGS
+section.
 As a security measure you SHOULD filter the LDP well-known (646)
 TCP and UDP ports using your favourite packet filter before starting
 .Nm .
-Also this is the current measure used to filter neighbours.
-You should see some logs reported via
+This is the current way used to filter neighbours and to protect the
+system of external attacks like route injections.
+.Pp
+.Nm
+logs information using the
 .Xr syslog 3
 interface.
-.Pp
 You can increase the log verbosity using the
 .Fl W
 and
 .Fl D
 flags.
-Also you can telnet to the control port (default: 2626) and use
-this interface in order to get informations about protocol, neighbours
-etc. but also to set runtime parameters.
-The required password is the same as the root password.
+.Pp
+Administrators can use
+.Xr telnet 1
+to connect to the control port (default: 2626) and use
+this interface in order to get informations about protocol status,
+neighbours et cetera but also to set runtime parameters.
+The password required for connecting is the same as the root password.
 .Pp
 .Nm
 computes existing routes and tries to match them on MPLS labels
 announced by other LDP peers.
-This means that
-.Dq normal
+This means that usual IP
 routes will be changed into tagged routes, and MPLS routing table
 will be populated.
-It will also announce its mappings to its peers.
+Any change in MPLS topology will also be announced to LDP neighbors.
 .Nm
 will listen on a route socket and compute the necessary changes in
 order to change untagged routes into tagged routes.
@@ -86,6 +92,8 @@ for configuration file format.
 Enable debug mode.
 .It Fl d
 Don't use route interception code.
+.Nm
+will not make any changes to routing table if started with this option.
 .It Fl f
 Run in foreground.
 Use STDOUT for warning and debug messages.
@@ -99,8 +107,8 @@ Enable output of warning messages.
 .Sh SEE ALSO
 .Rs
 .%R RFC
-.%N 3036
-.%D January 2001
+.%N 5036
+.%D October 2007
 .%T LDP Specification
 .Re
 .Rs

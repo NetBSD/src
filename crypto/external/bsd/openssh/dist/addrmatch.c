@@ -1,5 +1,5 @@
-/*	$NetBSD: addrmatch.c,v 1.4 2011/09/07 17:49:19 christos Exp $	*/
-/*	$OpenBSD: addrmatch.c,v 1.5 2010/02/26 20:29:54 djm Exp $ */
+/*	$NetBSD: addrmatch.c,v 1.4.2.1 2013/01/16 05:25:58 yamt Exp $	*/
+/*	$OpenBSD: addrmatch.c,v 1.6 2012/06/21 00:16:07 dtucker Exp $ */
 
 /*
  * Copyright (c) 2004-2008 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: addrmatch.c,v 1.4 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: addrmatch.c,v 1.4.2.1 2013/01/16 05:25:58 yamt Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -317,7 +317,7 @@ addr_pton_cidr(const char *p, struct xaddr *n, u_int *l)
 	char addrbuf[64], *mp, *cp;
 
 	/* Don't modify argument */
-	if (p == NULL || strlcpy(addrbuf, p, sizeof(addrbuf)) > sizeof(addrbuf))
+	if (p == NULL || strlcpy(addrbuf, p, sizeof(addrbuf)) >= sizeof(addrbuf))
 		return -1;
 
 	if ((mp = strchr(addrbuf, '/')) != NULL) {

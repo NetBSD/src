@@ -1,4 +1,4 @@
-# $NetBSD: t_filter_parse.sh,v 1.2.6.2 2012/10/30 18:59:54 yamt Exp $
+# $NetBSD: t_filter_parse.sh,v 1.2.6.3 2013/01/16 05:33:57 yamt Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -99,9 +99,9 @@ test_case i13 itest text ipf
 test_case i14 itest text ipf
 test_case i15 itest text ipf
 test_case i16 itest text ipf
-broken_test_case i17 itest text ipftest
+test_case i17 itest text ipftest
 test_case i18 itest text ipf
-test_case i19 itest_i19 text ipf
+test_case i19 itest_i19 "PR kern/47262 Proto-family missing from logs" text ipf
 test_case i20 itest text ipf
 test_case i21 itest text ipf
 test_case i22 itest text ipf

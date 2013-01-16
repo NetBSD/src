@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_exec.sh,v 1.3.6.2 2012/10/30 18:59:54 yamt Exp $
+# $NetBSD: t_nat_exec.sh,v 1.3.6.3 2013/01/16 05:33:57 yamt Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,9 +48,11 @@ nattest()
 
 	format="$format"
 
+	test -f in  && test -f reg || atf_fail "Test input file missing"
+
 	{ while read rule; do
 		atf_check -o save:save -x \
-		    "echo \"$rule\" | ipftest $format -RbN - -i in $args"
+		    "echo \"$rule\" | ipftest $format -RDbN - -i in $args"
 		cat save >>out
 		echo "-------------------------------" >>out
 	done; } <reg
@@ -58,43 +60,44 @@ nattest()
 	diff -u exp out || atf_fail "results differ"
 }
 
-broken_test_case n1 nattest text text
-broken_test_case n2 nattest text text
-broken_test_case n3 nattest text text
-broken_test_case n4 nattest text text
-broken_test_case n5 nattest text text
-broken_test_case n6 nattest text text
-broken_test_case n7 nattest text text
-broken_test_case n8 nattest hex hex -T update_ipid=0
-broken_test_case n9 nattest hex hex -T update_ipid=0
-test_case n10 nattest hex hex -T update_ipid=0 -D
-broken_test_case n11 nattest text text
-broken_test_case n12 nattest hex hex -T update_ipid=0 -v
-broken_test_case n13 nattest text text
-broken_test_case n14 nattest text text
-broken_test_case n15 nattest text text -T update_ipid=0
+test_case n1 nattest text text
+test_case n2 nattest text text
+test_case n3 nattest text text
+test_case n4 nattest text text
+test_case n5 nattest text text
+test_case n6 nattest text text
+test_case n7 nattest text text
+test_case n8 nattest hex hex -T update_ipid=0
+test_case n9 nattest hex hex -T update_ipid=0
+test_case n10 nattest hex hex -T update_ipid=0
+test_case n11 nattest text text
+test_case n12 nattest hex hex -T update_ipid=0 -v
+test_case n13 nattest text text
+test_case n14 nattest text text
+test_case n15 nattest text text -T update_ipid=0
 test_case n16 nattest hex hex -D
 test_case n17 nattest hex hex -D
-broken_test_case n100 nattest text text
-broken_test_case n101 nattest text text
-broken_test_case n102 nattest text text
-broken_test_case n103 nattest text text
-broken_test_case n104 nattest hex hex -T update_ipid=0
-broken_test_case n105 nattest hex hex -T update_ipid=0
-broken_test_case n106 nattest hex hex -T update_ipid=0
-broken_test_case n200 nattest hex hex -T update_ipid=0
-broken_test_case n1_6 nattest text text -6
-broken_test_case n2_6 nattest text text -6
-broken_test_case n4_6 nattest text text -6
-broken_test_case n5_6 nattest text text -6
-broken_test_case n6_6 nattest text text -6
-broken_test_case n7_6 nattest text text -6
-test_case n8_6 nattest hex hex -6D
-test_case n9_6 nattest hex hex -6D
-broken_test_case n11_6 nattest text text -6
-test_case n12_6 nattest hex hex -D6
-broken_test_case n15_6 nattest text text -6
-broken_test_case n17_6 nattest hex hex -6
+test_case n100 nattest text text
+test_case n101 nattest text text
+test_case n102 nattest text text
+test_case n103 nattest text text
+test_case n104 nattest hex hex -T update_ipid=0
+test_case n105 nattest hex hex -T update_ipid=0
+test_case n106 nattest hex hex -T update_ipid=0
+test_case n200 nattest hex hex -T update_ipid=0
+test_case n1_6 nattest text text -6
+test_case n2_6 nattest text text -6
+#test_case n3_6 nattest text text -6
+test_case n4_6 nattest text text -6
+test_case n5_6 nattest text text -6
+test_case n6_6 nattest text text -6
+test_case n7_6 nattest text text -6
+test_case n8_6 nattest hex hex -6
+test_case n9_6 nattest hex hex -6
+test_case n11_6 nattest text text -6
+test_case n12_6 nattest hex hex -6
+test_case n15_6 nattest text text -6
+failing_test_case n17_6 nattest "Test golden output file missing" hex hex -6
 
 atf_init_test_cases()
 {

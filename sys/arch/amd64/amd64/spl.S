@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.24 2011/03/18 15:18:16 joerg Exp $	*/
+/*	$NetBSD: spl.S,v 1.24.4.1 2013/01/16 05:32:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -186,7 +186,7 @@ ENTRY(splraise)
 /*
  * void spllower(int s);
  *
- * Must be the same size as i686_spllower().  This must use
+ * Must be the same size as cx8_spllower().  This must use
  * pushf/cli/popf as it is used early in boot where interrupts
  * are disabled via eflags/IE.
  */
@@ -344,18 +344,3 @@ doreti_checkast:
 	call	_C_LABEL(do_pmap_load)
 	CLI(si)
 	jmp	doreti_checkast		/* recheck ASTs */
-
-#ifdef XEN
-NENTRY(call_evtchn_do_event)
-	incl	CPUVAR(IDEPTH)
-	call    _C_LABEL(evtchn_do_event)
-	decl	CPUVAR(IDEPTH)
-	ret
-#ifdef DOM0OPS
-NENTRY(call_xenevt_event)
-	incl	CPUVAR(IDEPTH)
-	call    _C_LABEL(xenevt_event)
-	decl	CPUVAR(IDEPTH)
-	ret
-#endif /* DOM0OPS */
-#endif /* XEN */

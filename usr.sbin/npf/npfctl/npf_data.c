@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.7.4.3 2012/10/30 19:00:43 yamt Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.7.4.4 2013/01/16 05:34:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.7.4.3 2012/10/30 19:00:43 yamt Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.7.4.4 2013/01/16 05:34:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -273,63 +273,60 @@ npfctl_parse_port_range_variable(const char *v)
 }
 
 npfvar_t *
-npfctl_parse_iface(const char *ifname)
+npfctl_parse_ifnet(const char *ifname, const int family)
 {
-	npfvar_t *vp = npfvar_create(".iface");
+	npfvar_t *vpa, *vp;
 	struct ifaddrs *ifa;
-	fam_addr_mask_t fam;
-	bool gotif = false;
+	ifnet_addr_t ifna;
 
 	if (ifs_list == NULL && getifaddrs(&ifs_list) == -1) {
 		err(EXIT_FAILURE, "getifaddrs");
 	}
-	memset(&fam, 0, sizeof(fam));
 
-	npfvar_t *ip = npfvar_create(".ifname");
-	if (!npfvar_add_element(ip, NPFVAR_STRING, ifname, strlen(ifname) + 1))
-		goto out;
+	vpa = npfvar_create(".ifaddrs");
+	ifna.ifna_addrs = vpa;
+	ifna.ifna_index = npfctl_find_ifindex(ifname);
+	assert(ifna.ifna_index != 0);
 
 	for (ifa = ifs_list; ifa != NULL; ifa = ifa->ifa_next) {
+		fam_addr_mask_t fam;
 		struct sockaddr *sa;
-		sa_family_t family;
 
 		if (strcmp(ifa->ifa_name, ifname) != 0)
 			continue;
 
-		gotif = true;
 		if ((ifa->ifa_flags & IFF_UP) == 0)
 			warnx("interface '%s' is down", ifname);
 
 		sa = ifa->ifa_addr;
-		family = sa->sa_family;
-		if (family != AF_INET && family != AF_INET6)
+		if (sa->sa_family != AF_INET && sa->sa_family != AF_INET6)
+			continue;
+		if (family != AF_UNSPEC && sa->sa_family != family)
 			continue;
 
-		fam.fam_family = family;
-		fam.fam_interface = ip;
+		memset(&fam, 0, sizeof(fam));
+		fam.fam_family = sa->sa_family;
+		fam.fam_ifindex = ifna.ifna_index;
 
-		if (!npfctl_copy_address(family, &fam.fam_addr, sa))
+		if (!npfctl_copy_address(sa->sa_family, &fam.fam_addr, sa))
 			goto out;
 
 		if (!npfctl_parse_mask(NULL, fam.fam_family, &fam.fam_mask))
 			goto out;
 
-		if (!npfvar_add_element(vp, NPFVAR_FAM, &fam, sizeof(fam)))
+		if (!npfvar_add_element(vpa, NPFVAR_FAM, &fam, sizeof(fam)))
 			goto out;
-
 	}
-	if (!gotif) {
-		yyerror("interface '%s' not found", ifname);
-		goto out;
-	}
-	if (npfvar_get_count(vp) == 0) {
+	if (npfvar_get_count(vpa) == 0) {
 		yyerror("no addresses matched for interface '%s'", ifname);
 		goto out;
 	}
+
+	vp = npfvar_create(".interface");
+	npfvar_add_element(vp, NPFVAR_INTERFACE, &ifna, sizeof(ifna));
 	return vp;
 out:
-	npfvar_destroy(vp);
-	npfvar_destroy(ip);
+	npfvar_destroy(ifna.ifna_addrs);
 	return NULL;
 }
 

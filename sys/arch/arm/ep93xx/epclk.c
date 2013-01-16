@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.18.2.1 2012/10/30 17:19:01 yamt Exp $	*/
+/*	$NetBSD: epclk.c,v 1.18.2.2 2013/01/16 05:32:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.18.2.1 2012/10/30 17:19:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.18.2.2 2013/01/16 05:32:46 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,7 +102,7 @@ CFATTACH_DECL_NEW(epclk, sizeof(struct epclk_softc),
 
 /* This is a quick ARM way to multiply by 983040/1000000 (w/o overflow) */
 #define US_TO_TIMER4VAL(x, y) { \
-	u_int32_t hi, lo, scalar = 4222124650UL; \
+	uint32_t hi, lo, scalar = 4222124650UL; \
 	__asm volatile ( \
 		"umull %0, %1, %2, %3;" \
 		: "=&r"(lo), "=&r"(hi) \
@@ -111,7 +111,7 @@ CFATTACH_DECL_NEW(epclk, sizeof(struct epclk_softc),
 	(y) = hi; \
 }
 
-#define TIMER4VAL()	(*(volatile u_int32_t *)(EP93XX_APB_VBASE + \
+#define TIMER4VAL()	(*(volatile uint32_t *)(EP93XX_APB_VBASE + \
 	EP93XX_APB_TIMERS + EP93XX_TIMERS_Timer4ValueLow))
 
 static int

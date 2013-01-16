@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.969.2.4 2012/10/30 18:48:38 yamt Exp $
+# $NetBSD: mi,v 1.969.2.5 2013/01/16 05:26:03 yamt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -321,6 +321,7 @@
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
 ./sbin/nologin					base-sysutil-root
+./sbin/npfctl					base-npf-bin		npf
 ./sbin/pdisk					base-sysutil-root
 ./sbin/pfctl					base-pf-root		pf
 ./sbin/pflogd					base-pf-root		pf
@@ -462,6 +463,7 @@
 ./usr/bin/fincore				base-util-bin
 ./usr/bin/find					base-util-bin
 ./usr/bin/finger				base-util-bin
+./usr/bin/flock					base-util-bin
 ./usr/bin/fmt					base-util-bin
 ./usr/bin/fold					base-util-bin
 ./usr/bin/from					base-mail-bin
@@ -706,6 +708,9 @@
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
 ./usr/bin/tpfmt					base-util-bin
+./usr/bin/tpm_sealdata				base-tpm-bin		tpm
+./usr/bin/tpm_unsealdata			base-tpm-bin		tpm
+./usr/bin/tpm_version				base-tpm-bin		tpm
 ./usr/bin/tput					base-util-bin
 ./usr/bin/tr					base-util-bin
 ./usr/bin/true					base-util-bin
@@ -898,6 +903,7 @@
 ./usr/include/netmpls				base-c-usr
 ./usr/include/netnatm				base-c-usr
 ./usr/include/netns				base-obsolete		obsolete
+./usr/include/netpgp				base-c-usr
 ./usr/include/netsmb				base-c-usr
 ./usr/include/nfs				base-c-usr
 ./usr/include/ntfs				base-c-usr
@@ -1220,6 +1226,7 @@
 ./usr/sbin/dnssec-settime			base-bind-bin
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
 ./usr/sbin/dnssec-signzone			base-bind-bin
+./usr/sbin/dnssec-verify			base-bind-bin
 ./usr/sbin/download-vulnerability-list		base-pkgutil-bin	crypto
 ./usr/sbin/dtmfdecode				base-isdn-bin
 ./usr/sbin/dtrace				base-debug-bin		dtrace
@@ -1356,7 +1363,7 @@
 ./usr/sbin/netgroup_mkdb			base-nis-bin
 ./usr/sbin/nfsd					base-nfsserver-bin
 ./usr/sbin/nfsiod				base-obsolete		obsolete
-./usr/sbin/npfctl				base-npf-bin		npf
+./usr/sbin/npfctl				base-obsolete		obsolete
 ./usr/sbin/npftest				base-npf-bin		npf,rump,pic
 ./usr/sbin/nsec3hash				base-bind-bin
 ./usr/sbin/nslookup				base-obsolete		obsolete
@@ -1495,9 +1502,31 @@
 ./usr/sbin/tcpdmatch				base-netutil-bin
 ./usr/sbin/tcpdrop				base-netutil-bin
 ./usr/sbin/tcpdump				base-netutil-bin
+./usr/sbin/tcsd					base-tpm-bin		tpm
 ./usr/sbin/timed				base-timed-bin
 ./usr/sbin/timedc				base-timed-bin
 ./usr/sbin/tprof				base-sysutil-bin
+./usr/sbin/tpm_changeownerauth			base-tpm-bin		tpm
+./usr/sbin/tpm_clear				base-tpm-bin		tpm
+./usr/sbin/tpm_createek				base-tpm-bin		tpm
+./usr/sbin/tpm_getpubek				base-tpm-bin		tpm
+./usr/sbin/tpm_nvdefine				base-tpm-bin		tpm
+./usr/sbin/tpm_nvinfo				base-tpm-bin		tpm
+./usr/sbin/tpm_nvread				base-tpm-bin		tpm
+./usr/sbin/tpm_nvrelease			base-tpm-bin		tpm
+./usr/sbin/tpm_nvwrite				base-tpm-bin		tpm
+./usr/sbin/tpm_resetdalock			base-tpm-bin		tpm
+./usr/sbin/tpm_restrictpubek			base-tpm-bin		tpm
+./usr/sbin/tpm_restrictsrk			base-tpm-bin		tpm
+./usr/sbin/tpm_revokeek				base-tpm-bin		tpm
+./usr/sbin/tpm_selftest				base-tpm-bin		tpm
+./usr/sbin/tpm_setactive			base-tpm-bin		tpm
+./usr/sbin/tpm_setclearable			base-tpm-bin		tpm
+./usr/sbin/tpm_setenable			base-tpm-bin		tpm
+./usr/sbin/tpm_setoperatorauth			base-tpm-bin		tpm
+./usr/sbin/tpm_setownable			base-tpm-bin		tpm
+./usr/sbin/tpm_setpresence			base-tpm-bin		tpm
+./usr/sbin/tpm_takeownership			base-tpm-bin		tpm
 ./usr/sbin/traceroute				base-netutil-bin
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
@@ -3797,6 +3826,7 @@
 ./usr/share/misc/vgrindefs.db			base-groff-share	share
 ./usr/share/mk					base-util-share
 ./usr/share/mk/bsd.README			base-mk-share		share
+./usr/share/mk/bsd.buildinstall.mk			base-mk-share		share
 ./usr/share/mk/bsd.clang-analyze.mk		base-mk-share		share
 ./usr/share/mk/bsd.clean.mk			base-mk-share		share
 ./usr/share/mk/bsd.crypto.mk			base-obsolete		obsolete

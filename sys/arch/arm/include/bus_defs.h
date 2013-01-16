@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1.2.1 2012/10/30 17:19:04 yamt Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.1.2.2 2013/01/16 05:32:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -121,84 +121,84 @@ struct bus_space {
 			    bus_size_t, bus_size_t, int);
 
 	/* read (single) */
-	u_int8_t	(*bs_r_1)(void *, bus_space_handle_t,
+	uint8_t		(*bs_r_1)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int16_t	(*bs_r_2)(void *, bus_space_handle_t,
+	uint16_t	(*bs_r_2)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int32_t	(*bs_r_4)(void *, bus_space_handle_t,
+	uint32_t	(*bs_r_4)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int64_t	(*bs_r_8)(void *, bus_space_handle_t,
+	uint64_t	(*bs_r_8)(void *, bus_space_handle_t,
 			    bus_size_t);
 
 	/* read multiple */
 	void		(*bs_rm_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*bs_rm_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t);
+			    bus_size_t, uint16_t *, bus_size_t);
 	void		(*bs_rm_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t);
+			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*bs_rm_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t *, bus_size_t);
+			    bus_size_t, uint64_t *, bus_size_t);
 					
 	/* read region */
 	void		(*bs_rr_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*bs_rr_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t);
+			    bus_size_t, uint16_t *, bus_size_t);
 	void		(*bs_rr_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t);
+			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*bs_rr_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t *, bus_size_t);
+			    bus_size_t, uint64_t *, bus_size_t);
 					
 	/* write (single) */
 	void		(*bs_w_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t);
+			    bus_size_t, uint8_t);
 	void		(*bs_w_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t);
+			    bus_size_t, uint16_t);
 	void		(*bs_w_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t);
+			    bus_size_t, uint32_t);
 	void		(*bs_w_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t);
+			    bus_size_t, uint64_t);
 
 	/* write multiple */
 	void		(*bs_wm_1)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t);
+			    bus_size_t, const uint8_t *, bus_size_t);
 	void		(*bs_wm_2)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t);
+			    bus_size_t, const uint16_t *, bus_size_t);
 	void		(*bs_wm_4)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t);
+			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*bs_wm_8)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int64_t *, bus_size_t);
+			    bus_size_t, const uint64_t *, bus_size_t);
 					
 	/* write region */
 	void		(*bs_wr_1)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t);
+			    bus_size_t, const uint8_t *, bus_size_t);
 	void		(*bs_wr_2)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t);
+			    bus_size_t, const uint16_t *, bus_size_t);
 	void		(*bs_wr_4)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t);
+			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*bs_wr_8)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int64_t *, bus_size_t);
+			    bus_size_t, const uint64_t *, bus_size_t);
 
 	/* set multiple */
 	void		(*bs_sm_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t, bus_size_t);
+			    bus_size_t, uint8_t, bus_size_t);
 	void		(*bs_sm_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t, bus_size_t);
+			    bus_size_t, uint16_t, bus_size_t);
 	void		(*bs_sm_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t, bus_size_t);
+			    bus_size_t, uint32_t, bus_size_t);
 	void		(*bs_sm_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t, bus_size_t);
+			    bus_size_t, uint64_t, bus_size_t);
 
 	/* set region */
 	void		(*bs_sr_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t, bus_size_t);
+			    bus_size_t, uint8_t, bus_size_t);
 	void		(*bs_sr_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t, bus_size_t);
+			    bus_size_t, uint16_t, bus_size_t);
 	void		(*bs_sr_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t, bus_size_t);
+			    bus_size_t, uint32_t, bus_size_t);
 	void		(*bs_sr_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t, bus_size_t);
+			    bus_size_t, uint64_t, bus_size_t);
 
 	/* copy */
 	void		(*bs_c_1)(void *, bus_space_handle_t, bus_size_t,
@@ -212,64 +212,64 @@ struct bus_space {
 
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 	/* read stream (single) */
-	u_int8_t	(*bs_r_1_s)(void *, bus_space_handle_t,
+	uint8_t		(*bs_r_1_s)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int16_t	(*bs_r_2_s)(void *, bus_space_handle_t,
+	uint16_t	(*bs_r_2_s)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int32_t	(*bs_r_4_s)(void *, bus_space_handle_t,
+	uint32_t	(*bs_r_4_s)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int64_t	(*bs_r_8_s)(void *, bus_space_handle_t,
+	uint64_t	(*bs_r_8_s)(void *, bus_space_handle_t,
 			    bus_size_t);
 
 	/* read multiple stream */
 	void		(*bs_rm_1_s)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*bs_rm_2_s)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t);
+			    bus_size_t, uint16_t *, bus_size_t);
 	void		(*bs_rm_4_s)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t);
+			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*bs_rm_8_s)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t *, bus_size_t);
+			    bus_size_t, uint64_t *, bus_size_t);
 					
 	/* read region stream */
 	void		(*bs_rr_1_s)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*bs_rr_2_s)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t);
+			    bus_size_t, uint16_t *, bus_size_t);
 	void		(*bs_rr_4_s)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t);
+			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*bs_rr_8_s)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t *, bus_size_t);
+			    bus_size_t, uint64_t *, bus_size_t);
 					
 	/* write stream (single) */
 	void		(*bs_w_1_s)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t);
+			    bus_size_t, uint8_t);
 	void		(*bs_w_2_s)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t);
+			    bus_size_t, uint16_t);
 	void		(*bs_w_4_s)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t);
+			    bus_size_t, uint32_t);
 	void		(*bs_w_8_s)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t);
+			    bus_size_t, uint64_t);
 
 	/* write multiple stream */
 	void		(*bs_wm_1_s)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t);
+			    bus_size_t, const uint8_t *, bus_size_t);
 	void		(*bs_wm_2_s)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t);
+			    bus_size_t, const uint16_t *, bus_size_t);
 	void		(*bs_wm_4_s)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t);
+			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*bs_wm_8_s)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int64_t *, bus_size_t);
+			    bus_size_t, const uint64_t *, bus_size_t);
 					
 	/* write region stream */
 	void		(*bs_wr_1_s)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t);
+			    bus_size_t, const uint8_t *, bus_size_t);
 	void		(*bs_wr_2_s)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t);
+			    bus_size_t, const uint16_t *, bus_size_t);
 	void		(*bs_wr_4_s)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t);
+			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*bs_wr_8_s)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int64_t *, bus_size_t);
+			    bus_size_t, const uint64_t *, bus_size_t);
 #endif	/* __BUS_SPACE_HAS_STREAM_METHODS */
 };
 

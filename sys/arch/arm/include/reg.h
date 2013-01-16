@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.2 2008/03/15 10:16:43 rearnsha Exp $	*/
+/*	$NetBSD: reg.h,v 1.2.38.1 2013/01/16 05:32:48 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994, 1995 Frank Lancaster
@@ -46,17 +46,17 @@ struct reg {
 	unsigned int r_cpsr;
 };
 
-struct fpreg {
-	unsigned int fpr_fpsr;
-	fp_reg_t fpr[8];
-};
-
 struct vfpreg {
 	uint32_t vfp_fpexc;
 	uint32_t vfp_fpscr;
 	uint32_t vfp_fpinst;
 	uint32_t vfp_fpinst2;
-	uint32_t vfp_regs[33];	/* In case we need fstmx format.  */
+	uint64_t vfp_regs[33];	/* In case we need fstmx format.  */
 };
+
+struct fpreg {
+	struct vfpreg fpr_vfp;
+};
+
 
 #endif /* !_ARM32_REG_H_ */

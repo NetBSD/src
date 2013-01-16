@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_gpio.c,v 1.6 2011/07/01 20:30:21 dyoung Exp $ */
+/*	$NetBSD: omap_gpio.c,v 1.6.2.1 2013/01/16 05:32:50 yamt Exp $ */
 
 /*
  * The OMAP GPIO Controller interface is inspired by pxa2x0_gpio.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.6 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.6.2.1 2013/01/16 05:32:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ struct omapgpio_softc {
 	bus_space_tag_t sc_bust;
 	bus_space_handle_t sc_bush;
 	void *sc_irqcookie;
-	u_int16_t sc_mask;
+	uint16_t sc_mask;
 	struct gpio_irq_handler *sc_handlers[GPIO_NPINS];
 };
 

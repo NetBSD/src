@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.48.2.2 2012/10/30 17:19:04 yamt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.48.2.3 2013/01/16 05:32:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -580,6 +580,8 @@ ARMREG_READ_INLINE(clidr, "p15,1,%0,c0,c0,1") /* Cache Level ID Register */
 ARMREG_READ_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
 ARMREG_WRITE_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
 /* c1 registers */
+ARMREG_READ_INLINE(sctrl, "p15,0,%0,c1,c0,0") /* System Control Register */
+ARMREG_WRITE_INLINE(sctrl, "p15,0,%0,c1,c0,0") /* System Control Register */
 ARMREG_READ_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
 ARMREG_WRITE_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
 ARMREG_READ_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */

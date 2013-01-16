@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.23 2009/11/21 20:32:17 rmind Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.23.12.1 2013/01/16 05:32:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.23 2009/11/21 20:32:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.23.12.1 2013/01/16 05:32:42 yamt Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -94,8 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.23 2009/11/21 20:32:17 rmind Exp
 #define LINUX_SYS_ARMBASE	0x000180 /* Must agree with syscalls.master */
 
 void linux_syscall_intern(struct proc *);
-void linux_syscall_plain(struct trapframe *, struct lwp *, u_int32_t);
-void linux_syscall_fancy(struct trapframe *, struct lwp *, u_int32_t);
+void linux_syscall_plain(struct trapframe *, struct lwp *, uint32_t);
+void linux_syscall_fancy(struct trapframe *, struct lwp *, uint32_t);
 
 void
 linux_syscall_intern(struct proc *p)
@@ -108,7 +108,7 @@ linux_syscall_intern(struct proc *p)
 }
 
 void
-linux_syscall_plain(trapframe_t *frame, struct lwp *l, u_int32_t insn)
+linux_syscall_plain(trapframe_t *frame, struct lwp *l, uint32_t insn)
 {
 	const struct sysent *callp;
 	struct proc *p = l->l_proc;
@@ -153,7 +153,7 @@ linux_syscall_plain(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 }
 
 void
-linux_syscall_fancy(trapframe_t *frame, struct lwp *l, u_int32_t insn)
+linux_syscall_fancy(trapframe_t *frame, struct lwp *l, uint32_t insn)
 {
 	const struct sysent *callp;
 	struct proc *p = l->l_proc;

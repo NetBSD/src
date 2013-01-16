@@ -1,4 +1,4 @@
-/*	$NetBSD: text_test.c,v 1.1.1.1 2011/09/11 17:20:33 christos Exp $	*/
+/*	$NetBSD: text_test.c,v 1.1.1.1.2.1 2013/01/16 05:27:41 yamt Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
@@ -48,7 +48,7 @@
         atf_error_t err = exp; \
         ATF_REQUIRE(atf_is_error(err)); \
         atf_error_free(err); \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 static
 size_t

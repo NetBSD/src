@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_apm.c,v 1.2.12.1 2012/10/30 17:19:11 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_apm.c,v 1.2.12.2 2013/01/16 05:32:51 yamt Exp $	*/
 /*	$OpenBSD: pxa2x0_apm.c,v 1.28 2007/03/29 18:42:38 uwe Exp $	*/
 
 /*-
@@ -129,14 +129,14 @@ struct filterops apmread_filtops =
 /* This structure must be kept in sync with pxa2x0_apm_asm.S. */
 struct pxa2x0_memcfg {
 	/* SDRAM refresh */
-	u_int32_t mdrefr_high;		/* 0x00 */
-	u_int32_t mdrefr_low;		/* 0x04 */
-	u_int32_t mdrefr_low2;		/* 0x08 */
+	uint32_t mdrefr_high;		/* 0x00 */
+	uint32_t mdrefr_low;		/* 0x04 */
+	uint32_t mdrefr_low2;		/* 0x08 */
 	/* Synchronous, static, or VLIO interfaces */
-	u_int32_t msc_high[3];		/* 0x0c */
-	u_int32_t msc_low[3];		/* 0x18 */
+	uint32_t msc_high[3];		/* 0x0c */
+	uint32_t msc_low[3];		/* 0x18 */
 	/* XXX move up */
-	u_int32_t mdrefr_91;		/* 0x24 */
+	uint32_t mdrefr_91;		/* 0x24 */
 };
 
 /* XXX */
@@ -229,7 +229,7 @@ bus_space_handle_t pxa2x0_memctl_ioh;
 
 /* pxa2x0_apm_asm.S */
 void	pxa27x_run_mode(void);
-void	pxa27x_fastbus_run_mode(int, u_int32_t);
+void	pxa27x_fastbus_run_mode(int, uint32_t);
 void	pxa27x_frequency_change(int, int, struct pxa2x0_memcfg *);
 void	pxa2x0_cpu_suspend(void);
 void	pxa2x0_cpu_resume(void);
@@ -681,9 +681,9 @@ void
 pxa2x0_wakeup_config(u_int wsrc, int enable)
 {
 	struct pxa2x0_apm_softc *sc;
-	u_int32_t prer;
-	u_int32_t pfer;
-	u_int32_t pkwr;
+	uint32_t prer;
+	uint32_t pfer;
+	uint32_t pkwr;
 
 	if (zapm_cd.cd_ndevs < 1 || zapm_cd.cd_devs[0] == NULL)
 		return;
@@ -770,7 +770,7 @@ u_int
 pxa2x0_wakeup_status(void)
 {
 	struct pxa2x0_apm_softc *sc;
-	u_int32_t rv;
+	uint32_t rv;
 	u_int	wsrc;
 
 	if (zapm_cd.cd_ndevs < 1 || zapm_cd.cd_devs[0] == NULL)
@@ -828,30 +828,30 @@ pxa2x0_wakeup_status(void)
 
 struct pxa2x0_sleep_data {
 	/* OS timer registers */
-	u_int32_t sd_osmr0, sd_osmr1, sd_osmr2, sd_osmr3;
-	u_int32_t sd_oscr0;
-	u_int32_t sd_osmr4, sd_osmr5;
-	u_int32_t sd_oscr4;
-	u_int32_t sd_omcr4, sd_omcr5;
-	u_int32_t sd_oier;
+	uint32_t sd_osmr0, sd_osmr1, sd_osmr2, sd_osmr3;
+	uint32_t sd_oscr0;
+	uint32_t sd_osmr4, sd_osmr5;
+	uint32_t sd_oscr4;
+	uint32_t sd_omcr4, sd_omcr5;
+	uint32_t sd_oier;
 	/* GPIO registers */
-	u_int32_t sd_gpdr0, sd_gpdr1, sd_gpdr2, sd_gpdr3;
-	u_int32_t sd_grer0, sd_grer1, sd_grer2, sd_grer3;
-	u_int32_t sd_gfer0, sd_gfer1, sd_gfer2, sd_gfer3;
-	u_int32_t sd_gafr0_l, sd_gafr1_l, sd_gafr2_l, sd_gafr3_l;
-	u_int32_t sd_gafr0_u, sd_gafr1_u, sd_gafr2_u, sd_gafr3_u;
-	u_int32_t sd_gplr0, sd_gplr1, sd_gplr2, sd_gplr3;
+	uint32_t sd_gpdr0, sd_gpdr1, sd_gpdr2, sd_gpdr3;
+	uint32_t sd_grer0, sd_grer1, sd_grer2, sd_grer3;
+	uint32_t sd_gfer0, sd_gfer1, sd_gfer2, sd_gfer3;
+	uint32_t sd_gafr0_l, sd_gafr1_l, sd_gafr2_l, sd_gafr3_l;
+	uint32_t sd_gafr0_u, sd_gafr1_u, sd_gafr2_u, sd_gafr3_u;
+	uint32_t sd_gplr0, sd_gplr1, sd_gplr2, sd_gplr3;
 	/* Interrupt controller registers */
-	u_int32_t sd_iclr;
-	u_int32_t sd_icmr;
-	u_int32_t sd_iccr;
+	uint32_t sd_iclr;
+	uint32_t sd_icmr;
+	uint32_t sd_iccr;
 	/* Memory controller registers */
-	u_int32_t sd_mecr;
-	u_int32_t sd_mcmem0, sd_mcmem1;
-	u_int32_t sd_mcatt0, sd_mcatt1;
-	u_int32_t sd_mcio0, sd_mcio1;
+	uint32_t sd_mecr;
+	uint32_t sd_mcmem0, sd_mcmem1;
+	uint32_t sd_mcatt0, sd_mcatt1;
+	uint32_t sd_mcio0, sd_mcio1;
 	/* Clocks manager registers */
-	u_int32_t sd_cken;
+	uint32_t sd_cken;
 };
 
 void
@@ -860,7 +860,7 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 	struct pxa2x0_sleep_data sd;
 	bus_space_handle_t ost_ioh;
 	int save;
-	u_int32_t rv;
+	uint32_t rv;
 
 	ost_ioh = (bus_space_handle_t)0;
 	if (bus_space_map(sc->sc_iot, PXA2X0_OST_BASE, PXA2X0_OST_SIZE, 0,
@@ -1038,7 +1038,7 @@ suspend_again:
 	bus_space_write_4(sc->sc_iot, pxa2x0_gpio_ioh, GPIO_GPDR3, 0x01e3e10c);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PSPR,
-	    (u_int32_t)&pxa2x0_cpu_resume - 0xc0200000 + 0xa0200000);
+	    (uint32_t)&pxa2x0_cpu_resume - 0xc0200000 + 0xa0200000);
 
 	pxa2x0_cpu_suspend();
 
@@ -1171,7 +1171,7 @@ out:
 void
 pxa2x0_pi2c_open(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
-	u_int32_t rv;
+	uint32_t rv;
 
 	/* Enable the I2C unit, and disable automatic voltage change. */
 	rv = bus_space_read_4(iot, ioh, POWMAN_PCFR);
@@ -1188,7 +1188,7 @@ pxa2x0_pi2c_open(bus_space_tag_t iot, bus_space_handle_t ioh)
 void
 pxa2x0_pi2c_close(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
-	u_int32_t rv;
+	uint32_t rv;
 
 	bus_space_write_4(iot, ioh, POWMAN_PICR, PICR_UR);
 	bus_space_write_4(iot, ioh, POWMAN_PISAR, 0);
@@ -1209,7 +1209,7 @@ int
 pxa2x0_pi2c_read(bus_space_tag_t iot, bus_space_handle_t ioh,
     u_char slave, u_char *valuep)
 {
-	u_int32_t rv;
+	uint32_t rv;
 	int timeout;
 	int tries = PI2C_RETRY_COUNT;
 
@@ -1282,7 +1282,7 @@ int
 pxa2x0_pi2c_write(bus_space_tag_t iot, bus_space_handle_t ioh,
     u_char slave, u_char value)
 {
-	u_int32_t rv;
+	uint32_t rv;
 	int timeout;
 	int tries = PI2C_RETRY_COUNT;
 

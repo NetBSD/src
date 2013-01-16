@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_rwlock.3,v 1.3 2010/07/09 10:55:11 wiz Exp $
+.\" $NetBSD: pthread_rwlock.3,v 1.3.6.1 2013/01/16 05:32:27 yamt Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,8 +63,7 @@
 .Ft int
 .Fn pthread_rwlock_init "pthread_rwlock_t * restrict lock" \
 "const pthread_rwlockattr_t * restrict attr"
-.Pp
-.Va pthread_rwlock_t lock = Dv PTHREAD_RWLOCK_INITIALIZER;
+.Vt pthread_rwlock_t lock No = Dv PTHREAD_RWLOCK_INITIALIZER;
 .Ft int
 .Fn pthread_rwlock_destroy "pthread_rwlock_t *lock"
 .Ft int
@@ -342,4 +341,6 @@ These functions conform to
 .St -p1003.1-2001 .
 .\" ----------------------------------------------------------------------------
 .Sh BUGS
-The PTHREAD_PROCESS_SHARED attribute is not supported.
+The
+.Dv PTHREAD_PROCESS_SHARED
+attribute is not supported.

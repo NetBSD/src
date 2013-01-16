@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.53.4.1 2012/10/30 17:22:53 yamt Exp $	*/
+/*	$NetBSD: rump.h,v 1.53.4.2 2013/01/16 05:33:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -56,6 +56,11 @@ struct prop_dictionary;
 typedef struct prop_dictionary *prop_dictionary_t;
 #endif
 #endif /* __NetBSD__ */
+
+#if defined(__sun__) && !defined(RUMP_REGISTER_T)
+#define RUMP_REGISTER_T long
+typedef RUMP_REGISTER_T register_t;
+#endif
 
 #include <rump/rumpvnode_if.h>
 #include <rump/rumpdefs.h>

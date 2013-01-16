@@ -1,5 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.2.2 2012/10/30 17:20:31 yamt Exp $	*/
-/*	Id: conf.c,v 1.7 2011/04/10 09:20:27 isaki Exp 	*/
+/*	$NetBSD: conf.c,v 1.1.2.3 2013/01/16 05:33:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
