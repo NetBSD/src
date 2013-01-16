@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_syspuffs.8,v 1.3 2009/06/09 14:27:17 pooka Exp $
+.\"	$NetBSD: rump_syspuffs.8,v 1.3.6.1 2013/01/16 05:34:11 yamt Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee. All rights reserved.
 .\"
@@ -46,8 +46,8 @@ puffs code in userspace as well.
 Therefore the approximate callgraph looks a little like the following,
 where k and u denote code running in the kernel space and userspace,
 respectively:
-puffs vfs (k) \(-\*[Gt] libpuffs (u) \(-\*[Gt] p2k (u) \(-\*[Gt] puffs vfs (u) \(-\*[Gt]
-libpuffs (u) \(-\*[Gt] file server (u).
+puffs vfs (k) \(-> libpuffs (u) \(-> p2k (u) \(-> puffs vfs (u) \(->
+libpuffs (u) \(-> file server (u).
 The response path is the same, but in reverse.
 .Pp
 In its current state,

@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.22.12.1 2012/04/17 00:06:04 yamt Exp $	*/
+/*	$NetBSD: stubs.c,v 1.22.12.2 2013/01/16 05:32:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.22.12.1 2012/04/17 00:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.22.12.2 2013/01/16 05:32:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ u_long	cpu_dump_mempagecnt(void);
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.6.2.3 2012/10/30 19:00:45 yamt Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.6.2.4 2013/01/16 05:34:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.6.2.3 2012/10/30 19:00:45 yamt Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.6.2.4 2013/01/16 05:34:10 yamt Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -43,8 +43,6 @@ __RCSID("$NetBSD: npfctl.c,v 1.6.2.3 2012/10/30 19:00:45 yamt Exp $");
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-
-#include <util.h>
 
 #include "npfctl.h"
 
@@ -59,6 +57,7 @@ enum {
 	NPFCTL_RELOAD,
 	NPFCTL_SHOWCONF,
 	NPFCTL_FLUSH,
+	NPFCTL_VALIDATE,
 	NPFCTL_TABLE,
 	NPFCTL_STATS,
 	NPFCTL_SESSIONS_SAVE,
@@ -75,6 +74,7 @@ static const struct operations_s {
 	{	"reload",		NPFCTL_RELOAD		},
 	{	"show",			NPFCTL_SHOWCONF,	},
 	{	"flush",		NPFCTL_FLUSH		},
+	{	"valid",		NPFCTL_VALIDATE		},
 	/* Table */
 	{	"table",		NPFCTL_TABLE		},
 	/* Stats */
@@ -85,52 +85,6 @@ static const struct operations_s {
 	/* --- */
 	{	NULL,			0			}
 };
-
-void *
-zalloc(size_t sz)
-{
-	void *p = malloc(sz);
-
-	if (p == NULL) {
-		err(EXIT_FAILURE, "zalloc");
-	}
-	memset(p, 0, sz);
-	return p;
-}
-
-void *
-xrealloc(void *ptr, size_t size)
-{
-	void *p = realloc(ptr, size);
-
-	if (p == NULL) {
-		err(EXIT_FAILURE, "xrealloc");
-	}
-	return p;
-}
-
-char *
-xstrdup(const char *s)
-{
-	char *p = strdup(s);
-
-	if (p == NULL) {
-		err(EXIT_FAILURE, "xstrdup");
-	}
-	return p;
-}
-
-char *
-xstrndup(const char *s, size_t len)
-{
-	char *p;
-
-	p = strndup(s, len);
-	if (p == NULL) {
-		err(EXIT_FAILURE, "xstrndup");
-	}
-	return p;
-}
 
 __dead static void
 usage(void)
@@ -211,7 +165,7 @@ npfctl_print_stats(int fd)
 		{ -1, "Other"						},
 		{ NPF_STAT_ERROR,		"unexpected errors"	},
 	};
-	uint64_t *st = zalloc(NPF_STATS_SIZE);
+	uint64_t *st = ecalloc(1, NPF_STATS_SIZE);
 
 	if (ioctl(fd, IOC_NPF_STATS, &st) != 0) {
 		err(EXIT_FAILURE, "ioctl(IOC_NPF_STATS)");
@@ -261,7 +215,7 @@ char *
 npfctl_print_addrmask(int alen, npf_addr_t *addr, npf_netmask_t mask)
 {
 	struct sockaddr_storage ss;
-	char *buf = zalloc(64);
+	char *buf = ecalloc(1, 64);
 	int len;
 
 	switch (alen) {
@@ -307,7 +261,7 @@ npfctl_table(int fd, int argc, char **argv)
 	npf_ioctl_table_t nct;
 	fam_addr_mask_t fam;
 	size_t buflen = 512;
-	char *cmd, *arg;
+	char *cmd, *arg = NULL; /* XXX gcc */
 	int n, alen;
 
 	/* Default action is list. */
@@ -333,7 +287,7 @@ npfctl_table(int fd, int argc, char **argv)
 	}
 again:
 	if (nct.nct_action == NPF_IOCTL_TBLENT_LIST) {
-		nct.nct_data.buf.buf = zalloc(buflen);
+		nct.nct_data.buf.buf = ecalloc(1, buflen);
 		nct.nct_data.buf.len = buflen;
 	} else {
 		if (!npfctl_parse_cidr(arg, &fam, &alen)) {
@@ -430,6 +384,11 @@ npfctl(int action, int argc, char **argv)
 	case NPFCTL_FLUSH:
 		ret = npf_config_flush(fd);
 		break;
+	case NPFCTL_VALIDATE:
+		npfctl_config_init(false);
+		npfctl_parsecfg(argc < 3 ? NPF_CONF_PATH : argv[2]);
+		ret = npfctl_config_show(0);
+		break;
 	case NPFCTL_TABLE:
 		if ((argc -= 2) < 2) {
 			usage();
@@ -481,7 +440,8 @@ main(int argc, char **argv)
 
 	/* Find and call the subroutine. */
 	for (int n = 0; operations[n].cmd != NULL; n++) {
-		if (strcmp(cmd, operations[n].cmd) != 0)
+		const char *opcmd = operations[n].cmd;
+		if (strncmp(cmd, opcmd, strlen(opcmd)) != 0)
 			continue;
 		npfctl(operations[n].action, argc, argv);
 		return EXIT_SUCCESS;

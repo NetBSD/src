@@ -1,4 +1,4 @@
-.\" $NetBSD: xsurf.4,v 1.2.2.2 2012/05/23 10:07:35 yamt Exp $
+.\" $NetBSD: xsurf.4,v 1.2.2.3 2013/01/16 05:32:36 yamt Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 15, 2012
+.Dd November 19, 2012
 .Dt XSURF 4 amiga
 .Os
 .Sh NAME
@@ -37,10 +37,12 @@
 .Cd "xsurf* at zbus0"
 .Cd "ne* at xsurfbus?"
 .Cd "gencp* at xsurfbus?"
+.Cd "wdc* at xsurfbus?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Individual Computers X-Surf ethernet card.
+driver provides support for ethernet, IDE controller and clockports present on
+the Individual Computers X-Surf card.
 .Sh HARDWARE
 The
 .Nm
@@ -52,7 +54,8 @@ driver supports the following hardware:
 .Sh SEE ALSO
 .Xr clockport 4 ,
 .\" .Xr gencp 4 ,
-.Xr ne 4
+.Xr ne 4 ,
+.Xr wdc 4
 .Sh HISTORY
 The
 .Nm
@@ -69,5 +72,10 @@ The
 .Xr ne 4
 attachment code was split from Ariadne II driver, written by Bernd Ernesti and
 extended by Ignatios Souvatzis.
+IDE controller support was added by Radoslaw Kujawa and Frank Wille.
 .Sh CAVEATS
 Support for clockports remains largely untested.
+.Sh BUGS
+The X-Surf IDE controller timings are not configurable and are known to be
+incompatible with many hard disks (especially on the early X-Surf revisions).
+This is purely a hardware problem.

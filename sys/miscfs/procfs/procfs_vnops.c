@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.182.2.2 2012/10/30 17:22:40 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.182.2.3 2013/01/16 05:33:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.182.2.2 2012/10/30 17:22:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.182.2.3 2013/01/16 05:33:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1700,6 +1700,10 @@ procfs_readlink(void *v)
 
 		case DTYPE_KQUEUE:
 			len = snprintf(bf, sizeof(bf), "%s", "[kqueue]");
+			break;
+
+		case DTYPE_SEM:
+			len = snprintf(bf, sizeof(bf), "%s", "[ksem]");
 			break;
 
 		default:

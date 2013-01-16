@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.35.6.2 2012/04/17 00:08:52 yamt Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.35.6.3 2013/01/16 05:33:53 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@ struct quotaobjtypestat {
 /*
  * Semi-opaque structure for cursors. This holds the cursor state in
  * userland; the size is exposed only to libquota, not to client code,
- * and is meant to be large enough to accomodate all likely future
+ * and is meant to be large enough to accommodate all likely future
  * expansion without being unduly bloated, as it will need to be
  * copied in and out for every call using it.
  */

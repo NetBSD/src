@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -21,3 +21,4 @@ rm -f zsk.key ksk.key parent.ksk.key parent.zsk.key
 rm -f pending.key rolling.key standby.key inact.key
 rm -f prerev.key postrev.key oldstyle.key
 rm -f keys sigs
+rm -f tmp.out

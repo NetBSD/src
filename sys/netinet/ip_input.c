@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.296.2.2 2012/10/30 17:22:46 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.296.2.3 2013/01/16 05:33:49 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.296.2.2 2012/10/30 17:22:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.296.2.3 2013/01/16 05:33:49 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1906,7 +1906,13 @@ sysctl_net_inet_ip_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "selected",
 		       SYSCTL_DESCR("selected algorithm"),
-		       sysctl_portalgo_selected, 0, NULL, PORTALGO_MAXLEN,
+		       sysctl_portalgo_selected4, 0, NULL, PORTALGO_MAXLEN,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &portalgo_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRUCT, "reserve",
+		       SYSCTL_DESCR("bitmap of reserved ports"),
+		       sysctl_portalgo_reserve4, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 }
 

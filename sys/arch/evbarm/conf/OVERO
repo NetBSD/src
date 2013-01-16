@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.9.2.2 2012/10/30 17:19:20 yamt Exp $
+#	$NetBSD: OVERO,v 1.9.2.3 2013/01/16 05:32:52 yamt Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo platforms kernel
 #
@@ -17,7 +17,7 @@ maxusers	32
 options 	CPU_CORTEXA8
 options 	OMAP_3530
 options 	PMAPCOUNTERS
-makeoptions	CPUFLAGS="-mcpu=cortex-a8"
+makeoptions	CPUFLAGS="-mcpu=cortex-a8 -mfpu=neon"
 
 # Architecture options
 

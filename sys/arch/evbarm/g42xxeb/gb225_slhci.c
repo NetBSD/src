@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225_slhci.c,v 1.6.2.1 2012/10/30 17:19:22 yamt Exp $ */
+/*	$NetBSD: gb225_slhci.c,v 1.6.2.2 2013/01/16 05:32:53 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ slhci_opio_enable_power(void *arg, int mode)
 #if 0
 	struct slhci_opio_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_sc.sc_iot;
-	u_int8_t r;
+	uint8_t r;
 
 	r = bus_space_read_1(iot, sc->sc_nch, NEREID_CTRL);
 	if (mode == POWER_ON)

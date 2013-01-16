@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_api.c,v 1.3.2.1 2012/10/30 18:52:46 yamt Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.3.2.2 2013/01/16 05:27:16 yamt Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -58,6 +58,9 @@
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
+#include <isc/file.h>
+
+#define DST_KEY_INTERNAL
 
 #include <dns/fixedname.h>
 #include <dns/keyvalues.h>
@@ -229,6 +232,10 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 #ifdef HAVE_OPENSSL_GOST
 	RETERR(dst__opensslgost_init(&dst_t_func[DST_ALG_ECCGOST]));
 #endif
+#ifdef HAVE_OPENSSL_ECDSA
+	RETERR(dst__opensslecdsa_init(&dst_t_func[DST_ALG_ECDSA256]));
+	RETERR(dst__opensslecdsa_init(&dst_t_func[DST_ALG_ECDSA384]));
+#endif
 #endif /* OPENSSL */
 #ifdef GSSAPI
 	RETERR(dst__gssapi_init(&dst_t_func[DST_ALG_GSSAPI]));
@@ -358,6 +365,25 @@ dst_context_verify(dst_context_t *dctx, isc_region_t *sig) {
 		return (DST_R_NOTPUBLICKEY);
 
 	return (dctx->key->func->verify(dctx, sig));
+}
+
+isc_result_t
+dst_context_verify2(dst_context_t *dctx, unsigned int maxbits,
+		    isc_region_t *sig)
+{
+	REQUIRE(VALID_CTX(dctx));
+	REQUIRE(sig != NULL);
+
+	CHECKALG(dctx->key->key_alg);
+	if (dctx->key->keydata.generic == NULL)
+		return (DST_R_NULLKEY);
+	if (dctx->key->func->verify == NULL &&
+	    dctx->key->func->verify2 == NULL)
+		return (DST_R_NOTPUBLICKEY);
+
+	return (dctx->key->func->verify2 != NULL ?
+		dctx->key->func->verify2(dctx, maxbits, sig) :
+		dctx->key->func->verify(dctx, sig));
 }
 
 isc_result_t
@@ -738,6 +764,40 @@ out:
 }
 
 isc_result_t
+dst_key_buildinternal(dns_name_t *name, unsigned int alg,
+		      unsigned int bits, unsigned int flags,
+		      unsigned int protocol, dns_rdataclass_t rdclass,
+		      void *data, isc_mem_t *mctx, dst_key_t **keyp)
+{
+	dst_key_t *key;
+	isc_result_t result;
+
+	REQUIRE(dst_initialized == ISC_TRUE);
+	REQUIRE(dns_name_isabsolute(name));
+	REQUIRE(mctx != NULL);
+	REQUIRE(keyp != NULL && *keyp == NULL);
+	REQUIRE(data != NULL);
+
+	CHECKALG(alg);
+
+	key = get_key_struct(name, alg, flags, protocol, bits, rdclass,
+			     0, mctx);
+	if (key == NULL)
+		return (ISC_R_NOMEMORY);
+
+	key->keydata.generic = data;
+
+	result = computeid(key);
+	if (result != ISC_R_SUCCESS) {
+		dst_key_free(&key);
+		return (result);
+	}
+
+	*keyp = key;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
 dst_key_fromlabel(dns_name_t *name, int alg, unsigned int flags,
 		  unsigned int protocol, dns_rdataclass_t rdclass,
 		  const char *engine, const char *label, const char *pin,
@@ -1114,6 +1174,12 @@ dst_key_sigsize(const dst_key_t *key, unsigned int *n) {
 	case DST_ALG_ECCGOST:
 		*n = DNS_SIG_GOSTSIGSIZE;
 		break;
+	case DST_ALG_ECDSA256:
+		*n = DNS_SIG_ECDSA256SIZE;
+		break;
+	case DST_ALG_ECDSA384:
+		*n = DNS_SIG_ECDSA384SIZE;
+		break;
 	case DST_ALG_HMACMD5:
 		*n = 16;
 		break;
@@ -1422,6 +1488,8 @@ issymmetric(const dst_key_t *key) {
 	case DST_ALG_NSEC3DSA:
 	case DST_ALG_DH:
 	case DST_ALG_ECCGOST:
+	case DST_ALG_ECDSA256:
+	case DST_ALG_ECDSA384:
 		return (ISC_FALSE);
 	case DST_ALG_HMACMD5:
 	case DST_ALG_GSSAPI:
@@ -1700,7 +1768,8 @@ algorithm_status(unsigned int alg) {
 	    alg == DST_ALG_HMACMD5 || alg == DST_ALG_NSEC3DSA ||
 	    alg == DST_ALG_NSEC3RSASHA1 ||
 	    alg == DST_ALG_RSASHA256 || alg == DST_ALG_RSASHA512 ||
-	    alg == DST_ALG_ECCGOST)
+	    alg == DST_ALG_ECCGOST ||
+	    alg == DST_ALG_ECDSA256 || alg == DST_ALG_ECDSA384)
 		return (DST_R_NOCRYPTO);
 #endif
 	return (DST_R_UNSUPPORTEDALG);

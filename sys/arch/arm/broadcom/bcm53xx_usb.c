@@ -26,12 +26,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#define USBH_PRIVATE
 
 #include "locators.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.2.2.2 2012/10/30 17:18:59 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.2.2.3 2013/01/16 05:32:46 yamt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -240,6 +241,14 @@ bcmusb_ccb_attach(device_t parent, device_t self, void *aux)
 	    0x1000, &usbsc->usbsc_ehci_bsh);
 	bus_space_subregion(usbsc->usbsc_bst, ccbaa->ccbaa_ccb_bsh, OHCI_BASE,
 	    0x1000, &usbsc->usbsc_ohci_bsh);
+
+	/*
+	 * Bring the PHYs out of reset.
+	 */
+	bus_space_write_4(usbsc->usbsc_bst, usbsc->usbsc_ehci_bsh,
+	    USBH_PHY_CTRL_P0, USBH_PHY_CTRL_INIT);
+	bus_space_write_4(usbsc->usbsc_bst, usbsc->usbsc_ehci_bsh,
+	    USBH_PHY_CTRL_P1, USBH_PHY_CTRL_INIT);
 
 	/*
 	 * Disable interrupts

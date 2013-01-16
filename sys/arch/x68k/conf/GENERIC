@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.155.4.3 2012/10/30 17:20:30 yamt Exp $
+# $NetBSD: GENERIC,v 1.155.4.4 2013/01/16 05:33:07 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.155.4.3 $"
+#ident 		"GENERIC-$Revision: 1.155.4.4 $"
 
 maxusers	8
 
@@ -525,7 +525,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-pseudo-device	fss			# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 # Veriexec
 #

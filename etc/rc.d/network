@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.61 2010/09/26 18:52:04 apb Exp $
+# $NetBSD: network,v 1.61.6.1 2013/01/16 05:26:13 yamt Exp $
 #
 
 # PROVIDE: network
@@ -380,6 +380,8 @@ network_start()
 		# wait till DAD is completed. always invoke it in case
 		# if are configured manually by ifconfig
 		#
+		echo 'Waiting for DAD completion for' \
+		    'statically configured addresses...'
 		dadcount=$(/sbin/sysctl -n net.inet6.ip6.dad_count 2>/dev/null)
 		sleep $dadcount
 		sleep 1
@@ -397,6 +399,8 @@ network_start()
 			# wait till DAD is completed, for global addresses
 			# configured by router advert message.
 			#
+			echo 'Waiting for DAD completion for' \
+			    'addresses configured by router advert message...'
 			sleep $dadcount
 			sleep 1
 		fi

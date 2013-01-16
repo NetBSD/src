@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.43.2.2 2012/10/30 17:20:25 yamt Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.43.2.3 2013/01/16 05:33:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.43.2.2 2012/10/30 17:20:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.43.2.3 2013/01/16 05:33:06 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -216,7 +216,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 	if (CPU_IS_USIIIi())
 		shift = (upaid & 0x3) * 2;
 
-	if (ldxa(0, ASR_IDSR) & (IDSR_BUSY << shift))
+	if (ldxa(0, ASI_IDSR) & (IDSR_BUSY << shift))
 		panic("recursive IPI?");
 
 	intr_func = (uint64_t)(u_long)func;
@@ -237,7 +237,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 		}
 
 		for (ik = 0; ik < 1000000; ik++) {
-			if (ldxa(0, ASR_IDSR) & (IDSR_BUSY << shift))
+			if (ldxa(0, ASI_IDSR) & (IDSR_BUSY << shift))
 				continue;
 			else
 				break;
@@ -247,7 +247,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 		if (ik == 1000000)
 			break;
 
-		if ((ldxa(0, ASR_IDSR) & (IDSR_NACK << shift)) == 0)
+		if ((ldxa(0, ASI_IDSR) & (IDSR_NACK << shift)) == 0)
 			return;
 		/*
 		 * Wait for a while with enabling interrupts to avoid

@@ -1,4 +1,4 @@
-.\"	$NetBSD: npfctl.8,v 1.6.4.1 2012/10/30 19:00:44 yamt Exp $
+.\"	$NetBSD: npfctl.8,v 1.6.4.2 2013/01/16 05:34:10 yamt Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 12, 2012
+.Dd December 10, 2012
 .Dt NPFCTL 8
 .Os
 .Sh NAME
@@ -79,13 +79,22 @@ Show the current state and configuration.
 Syntax of printed configuration is for the user and may not match the
 .Xr npf.conf 5
 syntax.
-.\".It Ic table Ar tid
-.\"List all entries in the currently loaded table specified by
-.\".Ar tid .
-.It Ic table Ar tid Ic [ add | rem ] Aq Ar addr/mask
+.It Ic validate Op Ar path
+Validate the configuration file and the processed form.
+The configuration file at
+.Pa /etc/npf.conf
+will be used unless a file is specified by
+.Ar path .
+.It Ic table Ar tid Ic add Aq Ar addr/mask
 In table
 .Ar tid ,
-add or remove the IP address and optionally netmask, specified by
+add the IP address and optionally netmask, specified by
+.Aq Ar addr/mask .
+Only tree-type tables support masks.
+.It Ic table Ar tid Ic rem Aq Ar addr/mask
+In table
+.Ar tid ,
+remove the IP address and optionally netmask, specified by
 .Aq Ar addr/mask .
 Only tree-type tables support masks.
 .It Ic table Ar tid Ic test Aq Ar addr
@@ -94,6 +103,10 @@ Query the table
 for a specific IP address, specified by
 .Ar addr .
 If no mask is specified, a single host is assumed.
+.It Ic table Ar tid Ic list
+List all entries in the currently loaded table specified by
+.Ar tid .
+This operation is expensive and should be used with caution.
 .It Ic sess-save
 Save all active sessions.
 The data will be stored in the
@@ -110,6 +123,10 @@ Any existing sessions during the load operation will be expired.
 Administrator may want to start packet inspection after the session loading.
 .It Ic stats
 Print various statistics.
+.It Ic debug
+Process the configuration file, print the n-code of each rule
+and dump the raw configuration.
+This is primarily for developer use.
 .El
 .Sh PERFORMANCE
 Reloading the configuration is a relatively expensive operation.

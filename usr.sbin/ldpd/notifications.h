@@ -1,4 +1,4 @@
-/* $NetBSD: notifications.h,v 1.1 2010/12/08 07:20:15 kefren Exp $ */
+/* $NetBSD: notifications.h,v 1.1.6.1 2013/01/16 05:34:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _NOTIFICATIONS_H_
 #define _NOTIFICATIONS_H_
 
-/* Notifications codes RFC3036 2.9 */
+/* Notifications codes from RFC5036 3.9 - Status code summary */
 #define	NOTIF_SUCCESS			0x00000000
 #define	NOTIF_BAD_LDP_ID		0x00000001
 #define	NOTIF_BAD_LDP_VER		0x00000002

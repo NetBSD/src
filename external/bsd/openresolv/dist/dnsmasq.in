@@ -46,6 +46,7 @@ newresolv="$newconf"
 # so we need to validate a few things first.
 # Check for DBus support in the binary
 dbus=false
+dbus_ex=false
 : ${dbus_pid:=/var/run/dbus/dbus.pid}
 [ -s "$dbus_pid" ] || dbus_pid=/var/run/dbus.pid
 [ -s "$dbus_pid" ] || dbus_pid=/var/run/dbus/pid
@@ -58,6 +59,10 @@ if [ -s "$dbus_pid" -a -s "$dnsmasq_pid" ]; then
 			kill -0 $(cat "$dnsmasq_pid") 2>/dev/null
 		then
 			dbus=true
+			if dbus-send --print-reply --system --dest=uk.org.thekelleys.dnsmasq /uk/org/thekelleys/dnsmasq org.freedesktop.DBus.Introspectable.Introspect | grep -q '<method name="SetDomainServers">'
+			then
+				dbus_ex=true
+			fi
 		fi
 	fi
 fi
@@ -67,51 +72,77 @@ for n in $NAMESERVERS; do
 done
 
 dbusdest=
+dbusdest_ex=
 conf=
 for d in $DOMAINS; do
 	dn="${d%%:*}"
 	ns="${d#*:}"
-	n="${ns%%,*}"
 	while [ -n "$ns" ]; do
-		case "$n" in
-		*.*.*.*)
-			SIFS=${IFS-y} OIFS=$IFS
-			IFS=.
-			set -- $n
-			num="0x$(printf %02x $1 $2 $3 $4)"
-			if [ "$SIFS" = y ]; then
-				unset IFS
-			else
-				IFS=$OIFS
-			fi
-			dbusdest="$dbusdest uint32:$(printf %u $num)"
-			dbusdest="$dbusdest string:$dn"
-			;;
-		*:*:*:*:*:*:*:*)
-			SIFS=${IFS-y} OIFS=$IFS bytes=
-			IFS=:
-			set -- $n
-			while [ -n "$1" ]; do
-				addr="$1"
-				shift
-				while [ ${#addr} -lt 4 ]; do
-					addr="0${addr}"
+		n="${ns%%,*}"
+		if $dbus && ! $dbus_ex; then
+			case "$n" in
+			*.*.*.*)
+				SIFS=${IFS-y} OIFS=$IFS
+				IFS=.
+				set -- $n
+				num="0x$(printf %02x $1 $2 $3 $4)"
+				if [ "$SIFS" = y ]; then
+					unset IFS
+				else
+					IFS=$OIFS
+				fi
+				dbusdest="$dbusdest uint32:$(printf %u $num)"
+				dbusdest="$dbusdest string:$dn"
+				;;
+			*:*%*)
+				# This version of dnsmasq won't accept
+				# scoped IPv6 addresses
+				dbus=false
+				;;
+			*:*)
+				SIFS=${IFS-y} OIFS=$IFS bytes= front= back=
+				empty=false i=0
+				IFS=:
+				set -- $n
+				while [ -n "$1" -o -n "$2" ]; do
+					addr="$1"
+					shift
+					if [ -z "$addr" ]; then
+						empty=true
+						continue
+					fi
+					i=$(($i + 1))
+					while [ ${#addr} -lt 4 ]; do
+						addr="0${addr}"
+					done
+					byte1="$(printf %d 0x${addr%??})"
+					byte2="$(printf %d 0x${addr#??})"
+					if $empty; then
+						back="$back byte:$byte1 byte:$byte2"
+					else
+						front="$front byte:$byte1 byte:$byte2"
+					fi
 				done
-				byte1="$(printf %d 0x${addr%??})"
-				byte2="$(printf %d 0x${addr#??})"
-				dbusdest="$dbusdest byte:$byte1 byte:$byte2"
-			done
-			if [ "$SIFS" = y ]; then
-				unset IFS
-			else
-				IFS=$OIFS
-			fi
-			dbusdest="$dbusdest string:$dn"
-			;;
-		*)
-			dbus=false
-			;;
-		esac
+				while [ $i != 8 ]; do
+				i=$(($i + 1))
+					front="$front byte:0 byte:0"
+				done
+				front="${front}$back"
+				if [ "$SIFS" = y ]; then
+					unset IFS
+				else
+					IFS=$OIFS
+				fi
+				dbusdest="${dbusdest}$front string:$dn"
+				;;
+			*)
+				if ! $dbus_ex; then
+					dbus=false
+				fi
+				;;
+			esac
+		fi
+		dbusdest_ex="$dbusdest_ex${dbusdest_ex:+,}/$dn/$n"
 		conf="${conf}server=/$dn/$n$NL"
 		[ "$ns" = "${ns#*,}" ] && break
 		ns="${ns#*,}"
@@ -142,14 +173,13 @@ if [ -n "$dnsmasq_conf" ]; then
 	fi
 fi
 if [ -n "$dnsmasq_resolv" ]; then
+	# dnsmasq polls this file so no need to set changed=true
 	if [ -f "$dnsmasq_resolv" ]; then
 		if [ "$(cat "$dnsmasq_resolv")" != "$(printf %s "$newresolv")" ]
 		then
-			changed=true
 			printf %s "$newresolv" >"$dnsmasq_resolv"
 		fi
 	else
-		# dnsmasq polls this file so no need to set changed=true
 		printf %s "$newresolv" >"$dnsmasq_resolv"
 	fi
 fi
@@ -160,7 +190,16 @@ fi
 if $dbus; then
 	$changed || kill -HUP $(cat "$dnsmasq_pid")
 	# Send even if empty so old servers are cleared
+	if $dbus_ex; then
+		method=SetDomainServers
+		if [ -n "$dbusdest_ex" ]; then
+			dbusdest_ex="array:string:$dbusdest_ex"
+		fi
+		dbusdest="$dbusdest_ex"
+	else
+		method=SetServers
+	fi
 	dbus-send --system --dest=uk.org.thekelleys.dnsmasq \
- 		/uk/org/thekelleys/dnsmasq uk.org.thekelleys.SetServers \
+ 		/uk/org/thekelleys/dnsmasq uk.org.thekelleys.$method \
   		$dbusdest
 fi

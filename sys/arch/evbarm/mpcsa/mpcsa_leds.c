@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_leds.c,v 1.3.8.1 2012/10/30 17:19:25 yamt Exp $	*/
-/*	$NetBSD: mpcsa_leds.c,v 1.3.8.1 2012/10/30 17:19:25 yamt Exp $	*/
+/*	$Id: mpcsa_leds.c,v 1.3.8.2 2013/01/16 05:32:55 yamt Exp $	*/
+/*	$NetBSD: mpcsa_leds.c,v 1.3.8.2 2013/01/16 05:32:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_leds.c,v 1.3.8.1 2012/10/30 17:19:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_leds.c,v 1.3.8.2 2013/01/16 05:32:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ static void mpcsa_leds_timer(void *aux)
 {
 	int n, s;
 	struct mpcsa_leds_softc *sc = aux;
-	u_int16_t pins;
+	uint16_t pins;
 
 	callout_schedule(&sc->sc_c, mstohz(LEDS_UPDATE_INTERVAL));
 

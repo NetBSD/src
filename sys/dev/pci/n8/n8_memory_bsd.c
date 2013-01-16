@@ -61,7 +61,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_memory_bsd.c,v 1.4.12.1 2012/10/30 17:21:56 yamt Exp $";
+static char const n8_id[] = "$Id: n8_memory_bsd.c,v 1.4.12.2 2013/01/16 05:33:32 yamt Exp $";
 /*****************************************************************************/
 /** @file n8_memory_bsd.c
  *  @brief NetOctaveMemory Services - FreeBSD-specific support routines.
@@ -280,8 +280,8 @@ n8_GetLargeAllocation(N8_MemoryType_t bankIndex,
 #if 0
 	/* Replacement for: */
 	m = contigmalloc(size, M_DEVBUF, M_WAITOK,
-		     0, 		/* lower acceptible phys addr	*/
-		     0xffffffff,	/* upper acceptible phys addr	*/
+		     0, 		/* lower acceptable phys addr	*/
+		     0xffffffff,	/* upper acceptable phys addr	*/
 		     PAGE_SIZE,		/* alignment			*/
 		     0);		/* boundary			*/
 #endif

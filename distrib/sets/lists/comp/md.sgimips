@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.17 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.sgimips,v 1.17.2.1 2013/01/16 05:26:06 yamt Exp $
 ./usr/include/dev/crmfbreg.h			comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sgimips				comp-c-include
@@ -53,6 +53,7 @@
 ./usr/include/sgimips/rwlock.h			comp-c-include
 ./usr/include/sgimips/setjmp.h			comp-c-include
 ./usr/include/sgimips/signal.h			comp-c-include
+./usr/include/sgimips/sljitarch.h		comp-c-include
 ./usr/include/sgimips/stdarg.h			comp-obsolete		obsolete
 ./usr/include/sgimips/trap.h			comp-c-include
 ./usr/include/sgimips/types.h			comp-c-include

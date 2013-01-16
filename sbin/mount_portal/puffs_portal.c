@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.4.2.1 2012/04/17 00:05:41 yamt Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.4.2.2 2013/01/16 05:32:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,11 +28,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.4.2.1 2012/04/17 00:05:41 yamt Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.4.2.2 2013/01/16 05:32:34 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
 
 #include <assert.h>
 #include <err.h>

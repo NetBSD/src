@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitarch.h,v 1.1.2.2 2012/10/30 17:19:50 yamt Exp $	*/
+/*	$NetBSD: sljitarch.h,v 1.1.2.3 2013/01/16 05:32:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,5 +30,8 @@
 #define I386_SLJITARCH_H
 
 #define SLJIT_CONFIG_X86_32 1
+
+#define SLJIT_CALL
+#define SLJIT_X86_32_FASTCALL 0
 
 #endif

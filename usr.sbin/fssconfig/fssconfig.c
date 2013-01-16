@@ -1,4 +1,4 @@
-/*	$NetBSD: fssconfig.c,v 1.8.2.1 2012/10/30 19:00:33 yamt Exp $	*/
+/*	$NetBSD: fssconfig.c,v 1.8.2.2 2013/01/16 05:34:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 
+#include <stdio.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>

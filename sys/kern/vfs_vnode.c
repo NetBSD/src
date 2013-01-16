@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.14.2.3 2012/10/30 17:22:39 yamt Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.14.2.4 2013/01/16 05:33:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.14.2.3 2012/10/30 17:22:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.14.2.4 2013/01/16 05:33:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -564,6 +564,22 @@ vget(vnode_t *vp, int flags)
 		return ENOENT;
 	}
 
+	if ((vp->v_iflag & VI_INACTNOW) != 0) {
+		/*
+		 * if it's being desactived, wait for it to complete.
+		 * Make sure to not return a clean vnode.
+		 */
+		 if ((flags & LK_NOWAIT) != 0) {
+			vrelel(vp, 0);
+			return EBUSY;
+		}
+		vwait(vp, VI_INACTNOW);
+		if ((vp->v_iflag & VI_CLEAN) != 0) {
+			vrelel(vp, 0);
+			return ENOENT;
+		}
+	}
+
 	/*
 	 * Ok, we got it in good shape.  Just locking left.
 	 */
@@ -674,8 +690,12 @@ retry:
 			/* The pagedaemon can't wait around; defer. */
 			defer = true;
 		} else if (curlwp == vrele_lwp) {
-			/* We have to try harder. */
-			vp->v_iflag &= ~VI_INACTREDO;
+			/*
+			 * We have to try harder. But we can't sleep
+			 * with VI_INACTNOW as vget() may be waiting on it.
+			 */
+			vp->v_iflag &= ~(VI_INACTREDO|VI_INACTNOW);
+			cv_broadcast(&vp->v_cv);
 			mutex_exit(vp->v_interlock);
 			error = vn_lock(vp, LK_EXCLUSIVE);
 			if (error != 0) {
@@ -683,6 +703,18 @@ retry:
 				vnpanic(vp, "%s: unable to lock %p",
 				    __func__, vp);
 			}
+			mutex_enter(vp->v_interlock);
+			/*
+			 * if we did get another reference while
+			 * sleeping, don't try to inactivate it yet.
+			 */
+			if (__predict_false(vtryrele(vp))) {
+				VOP_UNLOCK(vp);
+				mutex_exit(vp->v_interlock);
+				return;
+			}
+			vp->v_iflag |= VI_INACTNOW;
+			mutex_exit(vp->v_interlock);
 			defer = false;
 		} else if ((vp->v_iflag & VI_LAYER) != 0) {
 			/* 
@@ -718,6 +750,7 @@ retry:
 			if (++vrele_pending > (desiredvnodes >> 8))
 				cv_signal(&vrele_cv); 
 			mutex_exit(&vrele_lock);
+			cv_broadcast(&vp->v_cv);
 			mutex_exit(vp->v_interlock);
 			return;
 		}
@@ -735,6 +768,7 @@ retry:
 		VOP_INACTIVE(vp, &recycle);
 		mutex_enter(vp->v_interlock);
 		vp->v_iflag &= ~VI_INACTNOW;
+		cv_broadcast(&vp->v_cv);
 		if (!recycle) {
 			if (vtryrele(vp)) {
 				mutex_exit(vp->v_interlock);

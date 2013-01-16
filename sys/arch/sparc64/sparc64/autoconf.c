@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.183.2.2 2012/10/30 17:20:24 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.183.2.3 2013/01/16 05:33:06 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183.2.2 2012/10/30 17:20:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183.2.3 2013/01/16 05:33:06 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -912,6 +912,9 @@ device_register(device_t dev, void *aux)
 		ofnode = ea->ea_node;
 	} else if (device_is_a(busdev, "iic")) {
 		struct i2c_attach_args *ia = aux;
+
+		if (ia->ia_name == NULL)	/* indirect config */
+			return;
 
 		ofnode = (int)ia->ia_cookie;
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {

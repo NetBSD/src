@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sh7706lan.c,v 1.1.14.1 2012/04/17 00:06:19 yamt Exp $	*/
+/*	$NetBSD: t_sh7706lan.c,v 1.1.14.2 2013/01/16 05:32:58 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBS$");
+__KERNEL_RCSID(0, "$NetBSD: t_sh7706lan.c,v 1.1.14.2 2013/01/16 05:32:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

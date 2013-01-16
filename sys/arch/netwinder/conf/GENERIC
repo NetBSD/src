@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.108.2.2 2012/10/30 17:20:04 yamt Exp $
+# $NetBSD: GENERIC,v 1.108.2.3 2013/01/16 05:33:01 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -41,10 +41,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
 makeoptions	CPUFLAGS="-march=armv4 -mtune=strongarm"
-
-# FPA options
-
-#options 	ARMFPE		# ARM Ltd FPE
 
 # Default console is wscons, if igsfb(4) and pckbc(4) are configured,
 # or com(4) otherwise.  You can force a serial console with these options

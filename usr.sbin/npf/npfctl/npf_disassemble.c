@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.3.4.3 2012/10/30 19:00:43 yamt Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.3.4.4 2013/01/16 05:34:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * FIXME: config generation should be redesigned..
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.3.4.3 2012/10/30 19:00:43 yamt Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.3.4.4 2013/01/16 05:34:10 yamt Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,8 +47,6 @@ __RCSID("$NetBSD: npf_disassemble.c,v 1.3.4.3 2012/10/30 19:00:43 yamt Exp $");
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
-
-#include <util.h>
 
 #define NPF_OPCODES_STRINGS
 #include <net/npf_ncode.h>
@@ -108,7 +106,7 @@ npfctl_ncode_add_target(nc_inf_t *ni, const uint32_t *pc)
 	/* Grow array, if needed, and add a new target. */
 	if (ni->ni_targidx == ni->ni_targsize) {
 		ni->ni_targsize += 16;
-		ni->ni_targs = xrealloc(ni->ni_targs,
+		ni->ni_targs = erealloc(ni->ni_targs,
 		    ni->ni_targsize * sizeof(uint32_t));
 	}
 	assert(ni->ni_targidx < ni->ni_targsize);
@@ -372,7 +370,7 @@ npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 nc_inf_t *
 npfctl_ncode_disinf(FILE *fp)
 {
-	nc_inf_t *ni = zalloc(sizeof(nc_inf_t));
+	nc_inf_t *ni = ecalloc(1, sizeof(nc_inf_t));
 
 	memset(ni, 0, sizeof(nc_inf_t));
 	ni->ni_fp = fp;
@@ -704,13 +702,18 @@ npfctl_config_show(int fd)
 	bool active, loaded;
 	int error = 0;
 
-	ncf = npf_config_retrieve(fd, &active, &loaded);
-	if (ncf == NULL) {
-		return errno;
+	if (fd) {
+		ncf = npf_config_retrieve(fd, &active, &loaded);
+		if (ncf == NULL) {
+			return errno;
+		}
+		printf("Filtering:\t%s\nConfiguration:\t%s\n\n",
+		    active ? "active" : "inactive",
+		    loaded ? "loaded" : "empty");
+	} else {
+		ncf = npfctl_config_ref();
+		loaded = true;
 	}
-	printf("Filtering:\t%s\nConfiguration:\t%s\n\n",
-	    active ? "active" : "inactive",
-	    loaded ? "loaded" : "empty");
 
 	if (loaded) {
 		_npf_table_foreach(ncf, npfctl_show_table);

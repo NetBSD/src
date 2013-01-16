@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.179.2.3 2012/10/30 18:58:34 yamt Exp $
+#	$NetBSD: Makefile,v 1.179.2.4 2013/01/16 05:32:23 yamt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -48,6 +48,7 @@ SUBDIR+=	libskey
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/netpgp/libmj
+SUBDIR+=	../crypto/external/bsd/netpgp/lib/verify
 .endif
 
 .if (${MKMDNS} != "no")
@@ -191,6 +192,12 @@ SUBDIR+=	libpam		# depends on heimdal
 SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
 .endif
 
+.if ${MKSLJIT} != "no"
+SUBDIR+=	../external/bsd/sljit/lib
+SUBDIR+=	.WAIT
+SUBDIR+=	libbpfjit
+.endif
+
 SUBDIR+=	../external/bsd/mdocml/lib
 
 .if (${MKRUMP} != "no")
@@ -199,10 +206,18 @@ SUBDIR+=	.WAIT
 
 SUBDIR+=	libukfs		# depends on librumpvfs, librump
 
+.if (${MKTPM} != "no")
+SUBDIR+=	../crypto/external/cpl/trousers/lib
+.endif
+
 #==================== 5th library dependency barrier ====================
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
+
+.if (${MKTPM} != "no")
+SUBDIR+=	../crypto/external/cpl/tpm-tools/lib	# depends on trousers
+.endif
 
 .if !defined(BSD_MK_COMPAT_FILE)
 SUBDIR+=	../sys/rump/dev/lib
@@ -215,30 +230,5 @@ SUBDIR+=	../sys/rump/net/lib
 # Lua bindings come last, they might depend on anything
 SUBDIR+=	lua
 
-#
-# build_install logic for src/Makefile.
-# Compute a list of subdirectories delimited by .WAIT.
-# Run "make dependall && make install" for all subdirectories in a group
-# concurrently, but wait after each group.
-#
-SUBDIR_GROUPS=	1
-CUR_GROUP:=	1
-.for dir in ${SUBDIR}
-.  if ${dir} == ".WAIT"
-CUR_GROUP:=	${CUR_GROUP}1
-SUBDIR_GROUPS:=	${SUBDIR_GROUPS} ${CUR_GROUP}
-.  else
-SUBDIR_GROUP.${CUR_GROUP}+=	${dir}
-.endif
-
-.endfor
-
-build_install:
-.for group in ${SUBDIR_GROUPS}
-.  if !empty(SUBDIR_GROUP.${group})
-	${MAKEDIRTARGET} . ${SUBDIR_GROUP.${group}:C/^/dependall-/}
-	${MAKEDIRTARGET} . ${SUBDIR_GROUP.${group}:C/^/install-/}
-.  endif
-.endfor
-
+.include <bsd.buildinstall.mk>
 .include <bsd.subdir.mk>

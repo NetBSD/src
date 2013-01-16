@@ -1,4 +1,4 @@
-; Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,9 @@ $TTL 300	; 5 minutes
 				3600       ; minimum (1 hour)
 				)
 			NS	ns
+			MX	10 mx
 ns			A	10.53.0.3
+mx 		 	A 	10.0.0.30
 
 a			A	10.0.0.1
 b			A	10.0.0.2
@@ -43,3 +45,5 @@ ns.nosoa		A	10.53.0.7
 
 normalthenrrsig		A	10.0.0.28
 rrsigonly		A	10.0.0.29
+
+

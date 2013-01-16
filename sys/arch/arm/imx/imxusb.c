@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.1.10.1 2012/10/30 17:19:03 yamt Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.1.10.2 2013/01/16 05:32:48 yamt Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.1.10.1 2012/10/30 17:19:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.1.10.2 2013/01/16 05:32:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_unit = aa->aa_unit;
 	sc->sc_usbc = usbc;
 	hsc->sc_bus.hci_private = sc;
+	hsc->sc_flags |= EHCIF_ETTF;
 
 	aprint_normal("\n");
 
@@ -350,7 +351,7 @@ ulpi_reset(struct imxehci_softc *sc)
 void
 imxehci_reset(struct imxehci_softc *sc)
 {
-	u_int32_t reg;
+	uint32_t reg;
 	int i;
 	struct ehci_softc *hsc = &sc->sc_hsc;
 #define	RESET_TIMEOUT 100

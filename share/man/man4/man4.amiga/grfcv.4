@@ -1,4 +1,4 @@
-.\"	$NetBSD: grfcv.4,v 1.6 2008/04/30 13:10:55 martin Exp $
+.\"	$NetBSD: grfcv.4,v 1.6.22.1 2013/01/16 05:32:36 yamt Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 20, 1997
+.Dd November 9, 2012
 .Dt GRFCV 4 amiga
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 .Cd "grfcv0 at zbus0"
 .Cd "grf5 at grfcv0"
 .Cd "ite5 at grf5"
+.Cd "wsdisplay* at grf5"
 .Sh DESCRIPTION
 The
 .Nm
@@ -45,7 +46,8 @@ The
 interface supports the following ZorroIII expansion card:
 .Bl -tag -width "xxxxxxxxxxxxxx" -offset indent
 .It Em CyberVision 64
-A Zorro III only card. From phase5, manufacturer 8512, product 34.
+A Zorro III only card.
+From phase5, manufacturer 8512, product 34.
 .El
 .Sh FILES
 .Bl -tag -width "xxxxxxxxxx" -compact
@@ -64,7 +66,35 @@ The
 .Nm
 interface first appeared in
 .Nx 1.1 .
+It was modified for
+.Nx 6.0
+to support
+.Xr wsdisplay 4
+interface.
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Michael Teske
+and enhanced by
+.An Bernd Ernesti .
+The
+.Xr wsdisplay 4
+interface was added by
+.An Frank Wille
+and
+.An Radoslaw Kujawa .
 .Sh BUGS
 .Nm
 does not support the sync-on-green flag from
 .Xr grfconfig 8 .
+.Pp
+The
+.Xr wsdisplay 4
+interface does not support all functionality provided by the driver and it can
+not be used at the same time as
+.Xr ite 4 .
+X11 is not supported with
+.Xr wsdisplay 4 .
+It needs more testing.

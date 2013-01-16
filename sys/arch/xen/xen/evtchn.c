@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.55.2.1 2012/04/17 00:07:12 yamt Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.55.2.2 2013/01/16 05:33:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.55.2.1 2012/04/17 00:07:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.55.2.2 2013/01/16 05:33:11 yamt Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -282,8 +282,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		    printf("evtsource[%d]->ev_maxlevel %d <= ilevel %d\n",
 		    evtch, evtsource[evtch]->ev_maxlevel, ilevel);
 #endif
-		hypervisor_set_ipending(evtsource[evtch]->ev_cpu,
-					evtsource[evtch]->ev_imask,
+		hypervisor_set_ipending(evtsource[evtch]->ev_imask,
 					evtch >> LONG_SHIFT,
 					evtch & LONG_MASK);
 
@@ -298,21 +297,18 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	ih = evtsource[evtch]->ev_handlers;
 	while (ih != NULL) {
 		if (ih->ih_cpu != ci) {
-			hypervisor_set_ipending(ih->ih_cpu, 1 << ih->ih_level,
-			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
+			hypervisor_send_event(ih->ih_cpu, evtch);
 			iplmask &= ~IUNMASK(ci, ih->ih_level);
 			ih = ih->ih_evt_next;
 			continue;
 		}
 		if (ih->ih_level <= ilevel) {
-			hypervisor_set_ipending(ih->ih_cpu, iplmask,
-			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 #ifdef IRQ_DEBUG
 		if (evtch == IRQ_DEBUG)
 		    printf("ih->ih_level %d <= ilevel %d\n", ih->ih_level, ilevel);
 #endif
 			cli();
-			hypervisor_set_ipending(ih->ih_cpu, iplmask,
+			hypervisor_set_ipending(iplmask,
 			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 			/* leave masked */
 			mutex_spin_exit(&evtlock[evtch]);
@@ -698,7 +694,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 		 * is more explicitly implemented.
 		 */
 		evts->ev_cpu = ci;
-		mutex_init(&evtlock[evtch], MUTEX_DEFAULT, IPL_HIGH);
+		mutex_init(&evtlock[evtch], MUTEX_DEFAULT, IPL_NONE);
 		evtsource[evtch] = evts;
 		if (evname)
 			strncpy(evts->ev_evname, evname,

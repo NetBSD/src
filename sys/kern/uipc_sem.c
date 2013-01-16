@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.35.4.1 2012/04/17 00:08:30 yamt Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.35.4.2 2013/01/16 05:33:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.35.4.1 2012/04/17 00:08:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.35.4.2 2013/01/16 05:33:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -88,21 +88,6 @@ MODULE(MODULE_CLASS_MISC, ksem, NULL);
 
 #define	KS_UNLINKED		0x01
 
-typedef struct ksem {
-	LIST_ENTRY(ksem)	ks_entry;	/* global list entry */
-	kmutex_t		ks_lock;	/* lock on this ksem */
-	kcondvar_t		ks_cv;		/* condition variable */
-	u_int			ks_ref;		/* number of references */
-	u_int			ks_value;	/* current value */
-	u_int			ks_waiters;	/* number of waiters */
-	char *			ks_name;	/* name, if named */
-	size_t			ks_namelen;	/* length of name */
-	int			ks_flags;	/* for KS_UNLINKED */
-	mode_t			ks_mode;	/* protection bits */
-	uid_t			ks_uid;		/* creator uid */
-	gid_t			ks_gid;		/* creator gid */
-} ksem_t;
-
 static kmutex_t		ksem_lock	__cacheline_aligned;
 static LIST_HEAD(,ksem)	ksem_head	__cacheline_aligned;
 static u_int		nsems_total	__cacheline_aligned;
@@ -114,14 +99,17 @@ static int		ksem_sysinit(void);
 static int		ksem_sysfini(bool);
 static int		ksem_modcmd(modcmd_t, void *);
 static int		ksem_close_fop(file_t *);
+static int		ksem_stat_fop(file_t *, struct stat *);
+static int		ksem_read_fop(file_t *, off_t *, struct uio *,
+    kauth_cred_t, int);
 
 static const struct fileops semops = {
-	.fo_read = fbadop_read,
+	.fo_read = ksem_read_fop,
 	.fo_write = fbadop_write,
 	.fo_ioctl = fbadop_ioctl,
 	.fo_fcntl = fnullop_fcntl,
 	.fo_poll = fnullop_poll,
-	.fo_stat = fbadop_stat,
+	.fo_stat = ksem_stat_fop,
 	.fo_close = ksem_close_fop,
 	.fo_kqfilter = fnullop_kqfilter,
 	.fo_restart = fnullop_restart,
@@ -533,6 +521,53 @@ sys__ksem_close(struct lwp *l, const struct sys__ksem_close_args *uap,
 		return EBADF;
 	}
 	return fd_close(fd);
+}
+
+static int
+ksem_read_fop(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
+    int flags)
+{
+	size_t len;
+	char *name;
+	ksem_t *ks = fp->f_data;
+
+	mutex_enter(&ks->ks_lock);
+	len = ks->ks_namelen;
+	name = ks->ks_name;
+	mutex_exit(&ks->ks_lock);
+	if (name == NULL || len == 0)
+		return 0;
+	return uiomove(name, len, uio);
+}
+
+static int
+ksem_stat_fop(file_t *fp, struct stat *ub)
+{
+	ksem_t *ks = fp->f_data;
+
+	mutex_enter(&ks->ks_lock);
+
+	memset(ub, 0, sizeof(*ub));
+
+	ub->st_mode = ks->ks_mode | ((ks->ks_name && ks->ks_namelen)
+	    ? _S_IFLNK : _S_IFREG);
+	ub->st_uid = ks->ks_uid;
+	ub->st_gid = ks->ks_gid;
+	ub->st_size = ks->ks_value;
+	ub->st_blocks = (ub->st_size) ? 1 : 0;
+	ub->st_nlink = ks->ks_ref;
+	ub->st_blksize = 4096;
+
+	nanotime(&ub->st_atimespec);
+	ub->st_mtimespec = ub->st_ctimespec = ub->st_birthtimespec =
+	    ub->st_atimespec;
+
+	/*
+	 * Left as 0: st_dev, st_ino, st_rdev, st_flags, st_gen.
+	 * XXX (st_dev, st_ino) should be unique.
+	 */
+	mutex_exit(&ks->ks_lock);
+	return 0;
 }
 
 static int

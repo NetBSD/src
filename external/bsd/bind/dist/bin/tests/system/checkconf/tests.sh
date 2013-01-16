@@ -37,7 +37,13 @@ status=`expr $status + $ret`
 echo "I: checking that named-checkconf handles a known bad config"
 ret=0
 $CHECKCONF bad.conf > /dev/null 2>&1 && ret=1
-if [ $ret != 0 ]; then echo "I:failed"; fi
+if [ $? != 1 ]; then echo "I:failed"; ret=1; fi
+status=`expr $status + $ret`
+
+echo "I: checking that named-checkconf handles a known bad tsig secret"
+ret=0
+$CHECKCONF badtsig.conf > /dev/null 2>&1
+if [ $? != 1 ]; then echo "I:failed"; ret=1; fi
 status=`expr $status + $ret`
 
 echo "I: checking named-checkconf dnssec warnings"
@@ -48,6 +54,45 @@ $CHECKCONF dnssec.2 2>&1 | grep 'validation auto.*enable no' > /dev/null || ret=
 $CHECKCONF dnssec.2 2>&1 | grep 'validation yes.*enable no' > /dev/null || ret=1
 # this one should have no warnings
 $CHECKCONF dnssec.3 2>&1 | grep '.*' && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: range checking fields that do not allow zero"
+ret=0
+for field in max-retry-time min-retry-time max-refresh-time min-refresh-time; do
+    cat > badzero.conf << EOF
+options {
+    $field 0;
+};
+EOF
+    $CHECKCONF badzero.conf > /dev/null 2>&1
+    [ $? -eq 1 ] || { echo "I: options $field failed" ; ret=1; }
+    cat > badzero.conf << EOF
+view dummy {
+    $field 0;
+};
+EOF
+    $CHECKCONF badzero.conf > /dev/null 2>&1
+    [ $? -eq 1 ] || { echo "I: view $field failed" ; ret=1; }
+    cat > badzero.conf << EOF
+options {
+    $field 0;
+};
+view dummy {
+};
+EOF
+    $CHECKCONF badzero.conf > /dev/null 2>&1
+    [ $? -eq 1 ] || { echo "I: options + view $field failed" ; ret=1; }
+    cat > badzero.conf << EOF
+zone dummy {
+    type slave;
+    masters { 0.0.0.0; };
+    $field 0;
+};
+EOF
+    $CHECKCONF badzero.conf > /dev/null 2>&1
+    [ $? -eq 1 ] || { echo "I: zone $field failed" ; ret=1; }
+done
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

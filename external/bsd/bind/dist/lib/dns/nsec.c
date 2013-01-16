@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.c,v 1.3.2.1 2012/10/30 18:52:50 yamt Exp $	*/
+/*	$NetBSD: nsec.c,v 1.3.2.2 2013/01/16 05:27:17 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -43,28 +43,61 @@
 		goto failure; \
 	} while (/*CONSTCOND*/0)
 
-static void
-set_bit(unsigned char *array, unsigned int index, unsigned int bit) {
+void
+dns_nsec_setbit(unsigned char *array, unsigned int type, unsigned int bit) {
 	unsigned int shift, mask;
 
-	shift = 7 - (index % 8);
+	shift = 7 - (type % 8);
 	mask = 1 << shift;
 
 	if (bit != 0)
-		array[index / 8] |= mask;
+		array[type / 8] |= mask;
 	else
-		array[index / 8] &= (~mask & 0xFF);
+		array[type / 8] &= (~mask & 0xFF);
 }
 
-static unsigned int
-bit_isset(unsigned char *array, unsigned int index) {
+isc_boolean_t
+dns_nsec_isset(const unsigned char *array, unsigned int type) {
 	unsigned int byte, shift, mask;
 
-	byte = array[index / 8];
-	shift = 7 - (index % 8);
+	byte = array[type / 8];
+	shift = 7 - (type % 8);
 	mask = 1 << shift;
 
-	return ((byte & mask) != 0);
+	return (ISC_TF(byte & mask));
+}
+
+unsigned int
+dns_nsec_compressbitmap(unsigned char *map, const unsigned char *raw,
+			unsigned int max_type)
+{
+	unsigned char *start = map;
+	unsigned int window;
+	int octet;
+
+	if (raw == NULL)
+		return (0);
+
+	for (window = 0; window < 256; window++) {
+		if (window * 256 > max_type)
+			break;
+		for (octet = 31; octet >= 0; octet--)
+			if (*(raw + octet) != 0)
+				break;
+		if (octet < 0) {
+			raw += 32;
+			continue;
+		}
+		*map++ = window;
+		*map++ = octet + 1;
+		/*
+		 * Note: potential overlapping move.
+		 */
+		memmove(map, raw, octet + 1);
+		map += octet + 1;
+		raw += 32;
+	}
+	return (map - start);
 }
 
 isc_result_t
@@ -75,8 +108,7 @@ dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version,
 	isc_result_t result;
 	dns_rdataset_t rdataset;
 	isc_region_t r;
-	unsigned int i, window;
-	int octet;
+	unsigned int i;
 
 	unsigned char *nsec_bits, *bm;
 	unsigned int max_type;
@@ -92,8 +124,8 @@ dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version,
 	 */
 	bm = r.base + r.length + 512;
 	nsec_bits = r.base + r.length;
-	set_bit(bm, dns_rdatatype_rrsig, 1);
-	set_bit(bm, dns_rdatatype_nsec, 1);
+	dns_nsec_setbit(bm, dns_rdatatype_rrsig, 1);
+	dns_nsec_setbit(bm, dns_rdatatype_nsec, 1);
 	max_type = dns_rdatatype_nsec;
 	dns_rdataset_init(&rdataset);
 	rdsiter = NULL;
@@ -110,7 +142,7 @@ dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version,
 		    rdataset.type != dns_rdatatype_rrsig) {
 			if (rdataset.type > max_type)
 				max_type = rdataset.type;
-			set_bit(bm, rdataset.type, 1);
+			dns_nsec_setbit(bm, rdataset.type, 1);
 		}
 		dns_rdataset_disassociate(&rdataset);
 	}
@@ -118,12 +150,12 @@ dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version,
 	/*
 	 * At zone cuts, deny the existence of glue in the parent zone.
 	 */
-	if (bit_isset(bm, dns_rdatatype_ns) &&
-	    ! bit_isset(bm, dns_rdatatype_soa)) {
+	if (dns_nsec_isset(bm, dns_rdatatype_ns) &&
+	    ! dns_nsec_isset(bm, dns_rdatatype_soa)) {
 		for (i = 0; i <= max_type; i++) {
-			if (bit_isset(bm, i) &&
+			if (dns_nsec_isset(bm, i) &&
 			    ! dns_rdatatype_iszonecutauth((dns_rdatatype_t)i))
-				set_bit(bm, i, 0);
+				dns_nsec_setbit(bm, i, 0);
 		}
 	}
 
@@ -131,22 +163,8 @@ dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version,
 	if (result != ISC_R_NOMORE)
 		return (result);
 
-	for (window = 0; window < 256; window++) {
-		if (window * 256 > max_type)
-			break;
-		for (octet = 31; octet >= 0; octet--)
-			if (bm[window * 32 + octet] != 0)
-				break;
-		if (octet < 0)
-			continue;
-		nsec_bits[0] = window;
-		nsec_bits[1] = octet + 1;
-		/*
-		 * Note: potential overlapping move.
-		 */
-		memmove(&nsec_bits[2], &bm[window * 32], octet + 1);
-		nsec_bits += 3 + octet;
-	}
+	nsec_bits += dns_nsec_compressbitmap(nsec_bits, bm, max_type);
+
 	r.length = nsec_bits - r.base;
 	INSIST(r.length <= DNS_NSEC_BUFFERSIZE);
 	dns_rdata_fromregion(rdata,
@@ -156,7 +174,6 @@ dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version,
 
 	return (ISC_R_SUCCESS);
 }
-
 
 isc_result_t
 dns_nsec_build(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
@@ -218,7 +235,7 @@ dns_nsec_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type) {
 		if ((window + 1) * 256 <= type)
 			continue;
 		if (type < (window * 256) + len * 8)
-			present = ISC_TF(bit_isset(&nsecstruct.typebits[i],
+			present = ISC_TF(dns_nsec_isset(&nsecstruct.typebits[i],
 						   type % 256));
 		break;
 	}

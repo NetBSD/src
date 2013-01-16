@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_link.c,v 1.6.2.1 2012/10/30 18:52:50 yamt Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.6.2.2 2013/01/16 05:27:18 yamt Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -46,6 +46,8 @@
 #include <isc/string.h>
 #include <isc/thread.h>
 #include <isc/util.h>
+
+#include <dns/log.h>
 
 #include <dst/result.h>
 
@@ -181,6 +183,8 @@ dst__openssl_init(const char *engine) {
 	CRYPTO_set_locking_callback(lock_callback);
 	CRYPTO_set_id_callback(id_callback);
 
+	ERR_load_crypto_strings();
+
 	rm = mem_alloc(sizeof(RAND_METHOD));
 	if (rm == NULL) {
 		result = ISC_R_NOMEMORY;
@@ -294,7 +298,7 @@ dst__openssl_destroy() {
 isc_result_t
 dst__openssl_toresult(isc_result_t fallback) {
 	isc_result_t result = fallback;
-	int err = ERR_get_error();
+	unsigned long err = ERR_get_error();
 
 	switch (ERR_GET_REASON(err)) {
 	case ERR_R_MALLOC_FAILURE:
@@ -303,6 +307,40 @@ dst__openssl_toresult(isc_result_t fallback) {
 	default:
 		break;
 	}
+	ERR_clear_error();
+	return (result);
+}
+
+isc_result_t
+dst__openssl_toresult2(const char *funcname, isc_result_t fallback) {
+	isc_result_t result = fallback;
+	unsigned long err = ERR_peek_error();
+	const char *file, *data;
+	int line, flags;
+	char buf[256];
+
+	switch (ERR_GET_REASON(err)) {
+	case ERR_R_MALLOC_FAILURE:
+		result = ISC_R_NOMEMORY;
+		goto done;
+	default:
+		break;
+	}
+	isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
+		      DNS_LOGMODULE_CRYPTO, ISC_LOG_WARNING,
+		      "%s failed", funcname);
+	for (;;) {
+		err = ERR_get_error_line_data(&file, &line, &data, &flags);
+		if (err == 0U)
+			goto done;
+		ERR_error_string_n(err, buf, sizeof(buf));
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
+			      DNS_LOGMODULE_CRYPTO, ISC_LOG_INFO,
+			      "%s:%s:%d:%s", buf, file, line,
+			      (flags & ERR_TXT_STRING) ? data : "");
+	}
+
+    done:
 	ERR_clear_error();
 	return (result);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.53.2.4 2012/10/30 18:49:09 yamt Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.53.2.5 2013/01/16 05:26:13 yamt Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -50,7 +50,9 @@
 ./usr/libdata/debug/usr/tests/lib
 ./usr/libdata/debug/usr/tests/lib/csu
 ./usr/libdata/debug/usr/tests/lib/libbluetooth
+./usr/libdata/debug/usr/tests/lib/libbpfjit
 ./usr/libdata/debug/usr/tests/lib/libc
+./usr/libdata/debug/usr/tests/lib/libc/c063
 ./usr/libdata/debug/usr/tests/lib/libc/db
 ./usr/libdata/debug/usr/tests/lib/libc/gen
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn
@@ -91,6 +93,7 @@
 ./usr/libdata/debug/usr/tests/lib/librumpclient
 ./usr/libdata/debug/usr/tests/lib/librumphijack
 ./usr/libdata/debug/usr/tests/lib/libskey
+./usr/libdata/debug/usr/tests/lib/libsljit
 ./usr/libdata/debug/usr/tests/lib/libtre
 ./usr/libdata/debug/usr/tests/lib/libutil
 ./usr/libdata/debug/usr/tests/libexec
@@ -119,6 +122,7 @@
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs
 ./usr/libdata/debug/usr/tests/usr.bin
 ./usr/libdata/debug/usr/tests/usr.bin/id
+./usr/libdata/debug/usr/tests/usr.bin/netpgpverify
 ./usr/libdata/debug/usr/tests/usr.sbin
 ./usr/tests
 ./usr/tests/atf
@@ -188,6 +192,7 @@
 ./usr/tests/lib/csu
 ./usr/tests/lib/libbluetooth
 ./usr/tests/lib/libc
+./usr/tests/lib/libc/c063
 ./usr/tests/lib/libc/db
 ./usr/tests/lib/libc/gen
 ./usr/tests/lib/libc/gen/posix_spawn
@@ -218,6 +223,7 @@
 ./usr/tests/lib/libdes
 ./usr/tests/lib/semaphore
 ./usr/tests/lib/semaphore/pthread
+./usr/tests/lib/libbpfjit
 ./usr/tests/lib/libevent
 ./usr/tests/lib/libexecinfo
 ./usr/tests/lib/libm
@@ -233,6 +239,7 @@
 ./usr/tests/lib/librumpclient
 ./usr/tests/lib/librumphijack
 ./usr/tests/lib/libskey
+./usr/tests/lib/libsljit
 ./usr/tests/lib/libtre
 ./usr/tests/lib/libtre/data
 ./usr/tests/lib/libutil
@@ -293,6 +300,7 @@
 ./usr/tests/usr.bin/grep
 ./usr/tests/usr.bin/gzip
 ./usr/tests/usr.bin/id
+./usr/tests/usr.bin/netpgpverify
 ./usr/tests/usr.bin/infocmp
 ./usr/tests/usr.bin/jot
 ./usr/tests/usr.bin/m4

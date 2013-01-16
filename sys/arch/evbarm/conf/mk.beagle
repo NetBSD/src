@@ -1,8 +1,8 @@
-#	$NetBSD: mk.beagle,v 1.5.4.1 2012/10/30 17:19:21 yamt Exp $
+#	$NetBSD: mk.beagle,v 1.5.4.2 2013/01/16 05:32:52 yamt Exp $
 .if ${KERNEL_BUILD:T:MPANDA*} != ""
-CPPFLAGS+=		-mcpu=cortex-a9
+CPPFLAGS+=		-mcpu=cortex-a9 -mfpu=neon
 .else
-CPPFLAGS+=		-mcpu=cortex-a8
+CPPFLAGS+=		-mcpu=cortex-a8 -mfpu=neon
 .endif
 
 SYSTEM_FIRST_OBJ=	beagle_start.o

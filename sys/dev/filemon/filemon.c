@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.4 2011/10/15 00:23:08 sjg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.4.2.1 2013/01/16 05:33:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.4 2011/10/15 00:23:08 sjg Exp $");
 #include <sys/proc.h>
 #include <sys/kmem.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include "filemon.h"
 
@@ -137,16 +138,27 @@ static struct filemon *
 filemon_pid_check(struct proc * p)
 {
 	struct filemon *filemon;
+	struct proc * lp;
 
-	TAILQ_FOREACH(filemon, &filemons_inuse, fm_link) {
-		if (p->p_pid == filemon->fm_pid)
-			return (filemon);
+	if (!TAILQ_EMPTY(&filemons_inuse)) {
+		while (p) {
+			/*
+			 * make sure p cannot exit
+			 * until we have moved on to p_pptr
+			 */
+			rw_enter(&p->p_reflock, RW_READER);
+			TAILQ_FOREACH(filemon, &filemons_inuse, fm_link) {
+				if (p->p_pid == filemon->fm_pid) {
+					rw_exit(&p->p_reflock);
+					return (filemon);
+				}
+			}
+			lp = p;
+			p = p->p_pptr;
+			rw_exit(&lp->p_reflock);
+		}
 	}
-
-	if (p->p_pptr == NULL)
-		return (NULL);
-
-	return (filemon_pid_check(p->p_pptr));
+	return (NULL);
 }
 
 /*
@@ -254,7 +266,7 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 {
 	int error = 0;
 	struct filemon *filemon;
-
+	struct proc *tp;
 
 #ifdef DEBUG
 	log(logLevel, "filemon_ioctl(%lu)", cmd);;
@@ -280,8 +292,17 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 		break;
 
 	case FILEMON_SET_PID:
-		/* Set the monitored process ID. */
-		filemon->fm_pid = *((pid_t *) data);
+		/* Set the monitored process ID - if allowed. */
+		mutex_enter(proc_lock);
+		tp = proc_find(*((pid_t *) data));
+		mutex_exit(proc_lock);
+		error = kauth_authorize_process(curproc->p_cred,
+		    KAUTH_PROCESS_CANSEE, tp,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
+		if (!error) {
+			filemon->fm_pid = tp->p_pid;
+
+		}
 		break;
 
 	default:
@@ -325,7 +346,7 @@ filemon_unload(void)
 		error = EBUSY;
 	else {
 		/* Deinstall the syscall wrappers. */
-		filemon_wrapper_deinstall();
+		error = filemon_wrapper_deinstall();
 	}
 	rw_exit(&filemon_mtx);
 

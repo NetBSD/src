@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.15.30.1 2012/04/17 00:08:18 yamt Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.15.30.2 2013/01/16 05:33:39 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -74,7 +74,7 @@ struct msdosfs_args {
 #define	MSDOSFSMNT_SHORTNAME	1	/* Force old DOS short names only */
 #define	MSDOSFSMNT_LONGNAME	2	/* Force Win'95 long names */
 #define	MSDOSFSMNT_NOWIN95	4	/* Completely ignore Win95 entries */
-#define	MSDOSFSMNT_GEMDOSFS	8	/* This is a gemdos-flavour */
+#define	MSDOSFSMNT_GEMDOSFS	8	/* This is a GEMDOS-flavour */
 #define MSDOSFSMNT_VERSIONED	16	/* Struct is versioned */
 
 /* All flags above: */
@@ -98,7 +98,7 @@ MALLOC_DECLARE(M_MSDOSFSTMP);
 #endif
 
 /*
- * Layout of the mount control block for a msdos file system.
+ * Layout of the mount control block for a MSDOSFS file system.
  */
 struct msdosfsmount {
 	struct mount *pm_mountp;/* vfs mount struct for this fs */
@@ -112,7 +112,7 @@ struct msdosfsmount {
 	int pm_gmtoff;		/* offset from UTC in seconds */
 	struct vnode *pm_devvp;	/* vnode for block device mntd */
 	struct bpb50 pm_bpb;	/* BIOS parameter blk for this fs */
-	u_long pm_FATsecs;	/* actual number of fat sectors */
+	u_long pm_FATsecs;	/* actual number of FAT sectors */
 	u_long pm_fatblk;	/* sector # of first FAT */
 	u_long pm_rootdirblk;	/* sector # (cluster # for FAT32) of root directory number */
 	u_long pm_rootdirsize;	/* size in sectors (not clusters) */
@@ -125,15 +125,15 @@ struct msdosfsmount {
 	u_long pm_bnshift;	/* shift file offset right this amount to get a sector number */
 	u_long pm_bpcluster;	/* bytes per cluster */
 	u_long pm_fmod;		/* ~0 if fs is modified, this can rollover to 0	*/
-	u_long pm_fatblocksize;	/* size of fat blocks in bytes */
-	u_long pm_fatblocksec;	/* size of fat blocks in sectors */
-	u_long pm_fatsize;	/* size of fat in bytes */
-	u_long pm_fatmask;	/* mask to use for fat numbers */
+	u_long pm_fatblocksize;	/* size of FAT blocks in bytes */
+	u_long pm_fatblocksec;	/* size of FAT blocks in sectors */
+	u_long pm_fatsize;	/* size of FAT in bytes */
+	u_long pm_fatmask;	/* mask to use for FAT numbers */
 	u_long pm_fsinfo;	/* fsinfo block number */
 	u_long pm_nxtfree;	/* next free cluster in fsinfo block */
-	u_int pm_fatmult;	/* these 2 values are used in fat */
+	u_int pm_fatmult;	/* these 2 values are used in FAT */
 	u_int pm_fatdiv;	/*	offset computation */
-	u_int pm_curfat;	/* current fat for FAT32 (0 otherwise) */
+	u_int pm_curfat;	/* current FAT for FAT32 (0 otherwise) */
 	u_int *pm_inusemap;	/* ptr to bitmap of in-use clusters */
 	u_int pm_flags;		/* see below */
 };

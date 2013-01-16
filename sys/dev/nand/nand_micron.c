@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_micron.c,v 1.6 2011/07/15 19:19:57 cliff Exp $	*/
+/*	$NetBSD: nand_micron.c,v 1.6.4.1 2013/01/16 05:33:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_micron.c,v 1.6 2011/07/15 19:19:57 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_micron.c,v 1.6.4.1 2013/01/16 05:33:17 yamt Exp $");
 
 #include "nand.h"
 #include "onfi.h"
@@ -151,7 +151,6 @@ mt29fxgx_parameters(device_t self, struct nand_chip * const chip,
 	if (dp->width == 16)
 		chip->nc_flags |= NC_BUSWIDTH_16;
 	chip->nc_page_size = MT29FxG_PAGESIZE;
-	chip->nc_block_pages = MT29FxG_BLOCK_PAGES;
 	chip->nc_block_size = MT29FxG_BLOCK_PAGES * MT29FxG_PAGESIZE;
 	chip->nc_spare_size = MT29FxG_SPARESIZE;
 	chip->nc_lun_blocks = dp->lun_blocks;
@@ -159,7 +158,7 @@ mt29fxgx_parameters(device_t self, struct nand_chip * const chip,
 	chip->nc_size = MT29FxG_PAGESIZE * MT29FxG_BLOCK_PAGES *
 		dp->lun_blocks * dp->num_luns;
 
-	aprint_normal_dev(self, "%s %s, size %zuMB\n",
+	aprint_normal_dev(self, "%s %s, size %" PRIu64 "MB\n",
 		vendor, dp->name, chip->nc_size >> 20);
 
 	return 0;

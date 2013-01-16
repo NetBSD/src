@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.3 2012/10/30 17:19:26 yamt Exp $
+#	$NetBSD: Makefile,v 1.3.2.4 2013/01/16 05:32:56 yamt Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -9,11 +9,12 @@ SRCS+=		s3csdi.c vers.c
 .include <bsd.own.mk>
 
 CLEANFILES+=	vers.c ${PROG}.elf
-CFLAGS+=	-Wall -Wno-main -ffreestanding -march=armv4
+CFLAGS+=	-Wall -Wno-main -ffreestanding
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -DLIBSA_PRINTF_WIDTH_SUPPORT
 CPPFLAGS+=	-DDM9000MAC="0x08,0x08,0x11,0x18,0x12,0x27" 
 CPPFLAGS+=	-DDEFAULT_BOOTFILE="ld0a:netbsd;net:"
 CPPFLAGS+=	-nostdinc -I. -I${.OBJDIR} -I${S} -I${S}/arch
+CPUFLAGS=	-march=armv4
 DBG=		
 
 LIBCRT0=	# nothing

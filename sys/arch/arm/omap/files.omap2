@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.8.4.1 2012/10/30 17:19:07 yamt Exp $
+#	$NetBSD: files.omap2,v 1.8.4.2 2013/01/16 05:32:49 yamt Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -18,6 +18,7 @@ defflag opt_omap.h				OMAP3: OMAP2
 defflag opt_omap.h				OMAP4: OMAP3
 defflag	opt_omap.h				OMAP_2430: OMAP2
 defflag opt_omap.h				OMAP_2420: OMAP2
+defflag opt_omap.h				OMAP_3430: OMAP3
 defflag opt_omap.h				OMAP_3530: OMAP3
 defflag opt_omap.h				OMAP_4430: OMAP4
 defflag opt_omap.h				TI_AM335X: OMAP3
@@ -46,6 +47,14 @@ file	arch/arm/omap/omap2430_intr.c		omap2 & !omapicu & !omap4
 device	omapgpio: gpiobus
 attach	omapgpio at obio with omap2gpio
 file	arch/arm/omap/omap2_gpio.c		(omap2 | omap3) & omapgpio
+
+# OMAP dual-mode timer
+device	omapdmtimer
+file	arch/arm/omap/omap_dmtimer.c		omapdmtimer
+defparam opt_omap.h				OMAP_SYSTEM_CLOCK_FREQ
+
+attach	omapdmtimer at obio with omap_dmtimer_obio
+file	arch/arm/omap/am335x_dmtimer.c		ti_am335x & omapdmtimer
 
 # OMAP 2430 General Purpose Timer
 device	omapmputmr
@@ -97,13 +106,14 @@ file	arch/arm/omap/omap2_nand.c		omapnand
 device	prcm
 attach	prcm at obio
 file	arch/arm/omap/omap2_prcm.c		prcm needs-flag
+file	arch/arm/omap/am335x_prcm.c		ti_am335x
 
 # OHCI USB controller
 attach	ohci at obio with obioohci
 file	arch/arm/omap/obio_ohci.c		obioohci
 
-attach	ehci at obio with obioehci
-file	arch/arm/omap/omap3_ehci.c		obioehci
+attach	ehci at obio with omap3_ehci
+file	arch/arm/omap/omap3_ehci.c		omap3_ehci
 
 device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons
 attach	omapfb at obio

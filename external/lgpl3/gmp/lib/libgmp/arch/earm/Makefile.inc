@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.4.2 2012/10/30 18:58:07 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.1.4.3 2013/01/16 05:28:06 yamt Exp $
 
 SRCS+= \
 	random.c \
@@ -164,33 +164,5 @@ trialdivtab.h: gen-trialdivtab
 
 CLEANFILES+=	trialdivtab.h
 
-# XXX stuff looks for "../config.m4"
-dummy:
-	mkdir dummy
-${.OBJDIR}/config.m4: ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4
-	cp ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4 ${.TARGET}
-
-BUILD_S_INCS=	-I${.CURDIR} -I${.OBJDIR}/dummy -I${DIST}/ -I${DIST}/mpn
-
 M4FLAGS= -DPIC
 COPTS+= -fPIC
-.for _build _src in ${ASM_SRCS_LIST}
-${_build:R}.s: Makefile dummy ${.OBJDIR}/config.m4
-	${TOOL_M4} -DCONFIG_TOP_SRCDIR=${DIST} ${BUILD_S_INCS} \
-		${M4FLAGS} ${M4FLAGS.${.TARGET:R}} \
-		-DOPERATION_${.TARGET:R} ${DIST}/${_src} > ${.TARGET}
-
-SRCS+=		${_build:R}.s
-CLEANFILES+=	${_build:R}.s
-
-.endfor
-
-.for _build _src in ${C_SRCS_LIST}
-mpn_${_build}: Makefile
-	echo '#include "${_src}"' > ${.TARGET}
-
-CPPFLAGS.mpn_${_build}+= -DOPERATION_${_build:R}
-
-SRCS+=		mpn_${_build}
-CLEANFILES+=	mpn_${_build}
-.endfor

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_extmod.c,v 1.1.2.2 2012/10/30 19:00:43 yamt Exp $	*/
+/*	$NetBSD: npf_extmod.c,v 1.1.2.3 2013/01/16 05:34:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_extmod.c,v 1.1.2.2 2012/10/30 19:00:43 yamt Exp $");
+__RCSID("$NetBSD: npf_extmod.c,v 1.1.2.3 2013/01/16 05:34:10 yamt Exp $");
 
 #include <stdlib.h>
 #include <inttypes.h>
@@ -81,8 +81,8 @@ npf_extmod_load(const char *name)
 		errx(EXIT_FAILURE, "dlopen: %s", dlerror());
 	}
 
-	ext = zalloc(sizeof(npf_extmod_t));
-	ext->name = xstrdup(name);
+	ext = ecalloc(1, sizeof(npf_extmod_t));
+	ext->name = estrdup(name);
 	ext->init = npf_extmod_sym(handle, name, "init");
 	ext->cons = npf_extmod_sym(handle, name, "construct");
 	ext->param = npf_extmod_sym(handle, name, "param");

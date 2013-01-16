@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.9.4.2 2012/10/30 17:19:04 yamt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.9.4.3 2013/01/16 05:32:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _ARM_MCONTEXT_H_
 #define _ARM_MCONTEXT_H_
 
+#include <sys/stdint.h>
 /*
  * General register state
  */
@@ -76,9 +77,15 @@ typedef struct {
 } __fpregset_t;
 
 typedef struct {
+#ifdef __ARM_EABI__
+	unsigned int	__vfp_fpscr;
+	uint64_t	__vfp_fstmx[32];
+	unsigned int	__vfp_fpsid;
+#else
 	unsigned int	__vfp_fpscr;
 	unsigned int	__vfp_fstmx[33];
 	unsigned int	__vfp_fpsid;
+#endif
 } __vfpregset_t;
 
 typedef struct {
@@ -107,7 +114,11 @@ typedef struct {
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
+#ifdef __ARM_EABI__
+#define	__UCONTEXT_SIZE	(256 + 144)
+#else
 #define	__UCONTEXT_SIZE	256
+#endif
 
 static __inline void *
 __lwp_getprivate_fast(void)
@@ -125,5 +136,10 @@ __lwp_getprivate_fast(void)
 	 */
 	return _lwp_getprivate();
 }
+
+#if defined(_KERNEL)
+void vfp_getcontext(struct lwp *, mcontext_t *, int *);
+void vfp_setcontext(struct lwp *, const mcontext_t *); 
+#endif
 
 #endif	/* !_ARM_MCONTEXT_H_ */

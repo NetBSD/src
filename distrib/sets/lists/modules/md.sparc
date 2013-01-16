@@ -1,3 +1,7 @@
-# $NetBSD: md.sparc,v 1.1 2009/09/07 02:27:29 jnemeth Exp $
+# $NetBSD: md.sparc,v 1.1.6.1 2013/01/16 05:26:10 yamt Exp $
+./@MODULEDIR@/bpfjit				base-kernel-modules	kmod
+./@MODULEDIR@/bpfjit/bpfjit.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/exec_elf32			base-kernel-modules	kmod
 ./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/sljit				base-kernel-modules	kmod
+./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod

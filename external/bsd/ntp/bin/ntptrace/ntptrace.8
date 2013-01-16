@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntptrace.8,v 1.1 2010/08/28 15:42:45 kardel Exp $
+.\"	$NetBSD: ntptrace.8,v 1.1.6.1 2013/01/16 05:28:00 yamt Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -21,13 +21,12 @@ their master time source. If given no arguments, it starts with
 .Pa localhost .
 Here is an example of the output from
 .Nm :
-.Pp
-.nf
+.Bd -literal
 % ntptrace
 localhost: stratum 4, offset 0.0019529, synch distance 0.144135
 server2ozo.com: stratum 2, offset 0.0124263, synch distance 0.115784
 usndh.edu: stratum 1, offset 0.0019298, synch distance 0.011993, refid 'WWVB'
-.fi
+.Ed
 .Pp
 On each line, the fields are (left to right): the host name, the host stratum,
 the time offset between that host and the local host (as measured by

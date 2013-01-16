@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex.3,v 1.5 2010/07/09 10:55:11 wiz Exp $
+.\" $NetBSD: pthread_mutex.3,v 1.5.6.1 2013/01/16 05:32:27 yamt Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,6 +66,7 @@
 .Ft int
 .Fn pthread_mutex_init "pthread_mutex_t * restrict mutex" \
 "const pthread_mutexattr_t * restrict attr"
+.Vt pthread_mutex_t mutex No = Dv PTHREAD_MUTEX_INITIALIZER;
 .Ft int
 .Fn pthread_mutex_destroy "pthread_mutex_t *mutex"
 .Ft int
@@ -74,8 +75,6 @@
 .Fn pthread_mutex_trylock "pthread_mutex_t *mutex"
 .Ft int
 .Fn pthread_mutex_unlock "pthread_mutex_t *mutex"
-.Pp
-.Va pthread_mutex_t mutex = Dv PTHREAD_MUTEX_INITIALIZER;
 .\" ----------------------------------------------------------------------------
 .Sh DESCRIPTION
 The

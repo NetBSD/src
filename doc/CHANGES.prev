@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.100.2.2 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.100.2.3 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -11075,6 +11075,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		need to either add tre.h in /usr/include, or enhance
 		regex.h and provide more tre_ -> libc names aliases.
 		[christos 20111105]
+	sparc64: Add support for PCI-E based systems Ultra25/45, pyro(4)
+		ported from OpenBSD.  [mrg 20111108]
 	postfix(1): Import version 2.8.7 [tron 20111109]
 	asm: Add assembly language examples in share/examples/asm/.
 		These provide the end user with some ready-to-use sample

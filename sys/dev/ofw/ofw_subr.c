@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.18 2010/02/28 13:59:05 martin Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.18.10.1 2013/01/16 05:33:17 yamt Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.18 2010/02/28 13:59:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.18.10.1 2013/01/16 05:33:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,10 +340,8 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 	uint64_t reg64;
 	uint32_t reg32;
 	uint64_t addr;
-	prop_array_t array;
+	prop_array_t array = NULL;
 	prop_dictionary_t dev;
-
-	array = prop_array_create();
 
 	for (node = OF_child(ofnode); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
@@ -366,6 +364,9 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 		addr >>= 1;
 		if (addr == 0) continue;
 
+		if (array == NULL)
+			array = prop_array_create();
+
 		dev = prop_dictionary_create();
 		prop_dictionary_set_cstring(dev, "name", name);
 		prop_dictionary_set_uint32(dev, "addr", addr);
@@ -375,6 +376,8 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 		prop_object_release(dev);
 	}
 
-	prop_dictionary_set(props, "i2c-child-devices", array);
-	prop_object_release(array);
+	if (array != NULL) {
+		prop_dictionary_set(props, "i2c-child-devices", array);
+		prop_object_release(array);
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.49.4.3 2012/10/30 17:22:24 yamt Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.49.4.4 2013/01/16 05:33:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.49.4.3 2012/10/30 17:22:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.49.4.4 2013/01/16 05:33:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -682,8 +682,10 @@ ntfs_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(ap->a_dvp, ap->a_vpp, cnp)) >= 0)
-		return (error);
+	if (cache_lookup(ap->a_dvp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, NULL, ap->a_vpp)) {
+		return *ap->a_vpp == NULLVP ? ENOENT : 0;
+	}
 
 	if(cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		dprintf(("ntfs_lookup: faking . directory in %llu\n",
@@ -725,7 +727,8 @@ ntfs_lookup(void *v)
 		    (unsigned long long)VTONT(*ap->a_vpp)->i_number));
 	}
 
-	cache_enter(dvp, *ap->a_vpp, cnp);
+	cache_enter(dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
+		    cnp->cn_flags);
 
 	return error;
 }

@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.10.2.1 2012/10/30 17:18:58 yamt Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.10.2.1 2012/10/30 17:18:58 yamt Exp $	*/
+/*	$Id: at91emac.c,v 1.10.2.2 2013/01/16 05:32:45 yamt Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.10.2.2 2013/01/16 05:32:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.10.2.1 2012/10/30 17:18:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.10.2.2 2013/01/16 05:32:45 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -193,7 +193,7 @@ static int
 emac_gctx(struct emac_softc *sc)
 {
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
-	u_int32_t tsr;
+	uint32_t tsr;
 
 	tsr = EMAC_READ(ETH_TSR);
 	if (!(tsr & ETH_TSR_BNQ)) {
@@ -229,7 +229,7 @@ emac_intr(void *arg)
 {
 	struct emac_softc *sc = (struct emac_softc *)arg;
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
-	u_int32_t imr, isr, rsr, ctl;
+	uint32_t imr, isr, rsr, ctl;
 	int bi;
 
 	imr = ~EMAC_READ(ETH_IMR);
@@ -457,7 +457,7 @@ emac_init(struct emac_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->rbqpage_dmamap, 0, sc->rbqlen,
 			 BUS_DMASYNC_PREREAD);
 	addr = (void *)sc->rbqpage_dmamap->dm_segs[0].ds_addr;
-	EMAC_WRITE(ETH_RBQP, (u_int32_t)addr);
+	EMAC_WRITE(ETH_RBQP, (uint32_t)addr);
 
 	/* Divide HCLK by 32 for MDC clock */
 	sc->sc_mii.mii_ifp = ifp;
@@ -556,7 +556,7 @@ void
 emac_statchg(struct ifnet *ifp)
 {
         struct emac_softc *sc = ifp->if_softc;
-        u_int32_t reg;
+        uint32_t reg;
 
         /*
          * We must keep the MAC and the PHY in sync as
@@ -576,7 +576,7 @@ emac_tick(void *arg)
 	struct emac_softc* sc = (struct emac_softc *)arg;
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
 	int s;
-	u_int32_t misses;
+	uint32_t misses;
 
 	ifp->if_collisions += EMAC_READ(ETH_SCOL) + EMAC_READ(ETH_MCOL);
 	/* These misses are ok, they will happen if the RAM/CPU can't keep up */
@@ -749,7 +749,7 @@ emac_ifinit(struct ifnet *ifp)
 static void
 emac_ifstop(struct ifnet *ifp, int disable)
 {
-//	u_int32_t u;
+//	uint32_t u;
 	struct emac_softc *sc = ifp->if_softc;
 
 #if 0
@@ -783,10 +783,10 @@ emac_setaddr(struct ifnet *ifp)
 	struct ethercom *ac = &sc->sc_ec;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	u_int8_t ias[3][ETHER_ADDR_LEN];
-	u_int32_t h, nma = 0, hashes[2] = { 0, 0 };
-	u_int32_t ctl = EMAC_READ(ETH_CTL);
-	u_int32_t cfg = EMAC_READ(ETH_CFG);
+	uint8_t ias[3][ETHER_ADDR_LEN];
+	uint32_t h, nma = 0, hashes[2] = { 0, 0 };
+	uint32_t ctl = EMAC_READ(ETH_CTL);
+	uint32_t cfg = EMAC_READ(ETH_CFG);
 
 	/* disable receiver temporarily */
 	EMAC_WRITE(ETH_CTL, ctl & ~ETH_CTL_RE);

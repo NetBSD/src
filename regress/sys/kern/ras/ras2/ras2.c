@@ -1,4 +1,4 @@
-/* $NetBSD: ras2.c,v 1.10 2008/04/28 20:23:07 martin Exp $ */
+/* $NetBSD: ras2.c,v 1.10.4.1 2013/01/16 05:32:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -26,6 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -81,12 +82,11 @@ main(void)
 	RAS_START(main);
 	count++;
 	if (count > COUNT)
-		goto end;
+		exit(handled != 0);
 
 	while (!handled) {
 		continue;
 	}
-end:
 	RAS_END(main);
 
 	return (handled != 0);

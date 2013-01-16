@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/04/17 12:52:26 tron Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2013/01/16 05:34:04 yamt Exp $
 
 HOSTLIB=	elf
 
@@ -67,8 +67,8 @@ CPPFLAGS+=	-no-cpp-precomp
 
 CPPFLAGS+=	-DHAVE_NBTOOL_CONFIG_H=1 -D_FILE_OFFSET_BITS=64
 .ifndef NOCOMPATLIB
-COMPATOBJ!=     cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
-CPPFLAGS+=	-I${COMPATOBJ}
+COMPATLIB_NO_LIB= yes # only the include files, not the library
+.-include	"${TOOLDIR}/share/compat/defs.mk"
 .endif
 
 .PATH:		${LIBELF_DIR}

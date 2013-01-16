@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.91.4.2 2012/05/23 10:07:50 yamt Exp $
+#	$NetBSD: INSTALL,v 1.91.4.3 2013/01/16 05:33:07 yamt Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.91.4.2 $"
+#ident 		"INSTALL-$Revision: 1.91.4.3 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -18,7 +18,7 @@ maxusers	4
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on memory-disk
 options 	MEMORY_DISK_SERVER=0	# No user space hooks
-options 	MEMORY_DISK_ROOT_SIZE=2800
+options 	MEMORY_DISK_ROOT_SIZE=2880
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 ## System kernel configuration.  See options(4) for more detail.
@@ -277,5 +277,6 @@ ne*	at neptune? addr 0x300			# NE2000 or clone
 
 pseudo-device	md			# boot floppy image
 pseudo-device	loop
+pseudo-device	bpfilter
 pseudo-device	sl		
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)

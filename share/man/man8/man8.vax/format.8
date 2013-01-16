@@ -1,4 +1,4 @@
-.\"	$NetBSD: format.8,v 1.11 2008/09/24 18:19:13 reed Exp $
+.\"	$NetBSD: format.8,v 1.11.18.1 2013/01/16 05:32:36 yamt Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -187,10 +187,7 @@ As usual,
 and
 .Dq @
 may be used to edit input.
-.nf
-.in +0.5i
-.ta  1i
-.sp 1
+.Bd -literal -offset 0.5i
 \*[Gt]\*[Gt]\*[Gt]\fBL FORMAT\fP
 	LOAD DONE, 00004400 BYTES LOADED
 \*[Gt]\*[Gt]\*[Gt]\fBS 2\fP
@@ -206,12 +203,14 @@ Starting track (0):
 Ending cylinder (841):
 Ending track (19):
 Available test patterns are:
-.in +1.0i
+.Ed
+.Bd -literal -offset 1.5i -compact
 1 - (f00f) RH750 worst case
 2 - (ec6d) media worst case
 3 - (a5a5) alternating 1's and 0's
 4 - (ffff) Severe burnin (up to 48 passes)
-.in -1.0i
+.Ed
+.Bd -literal -offset 0.5i -compact
 Pattern (one of the above, other to restart)? \fB2\fP
 Maximum number of bit errors to allow for soft ECC (3):
 Start formatting...make sure the drive is online
@@ -233,8 +232,7 @@ Writing bad sector table at block 808272
 Done
 (\fI...program restarts to allow formatting other disks\fP)
 (\fI...to abort halt machine with ^P\fP)
-.fi
-.sp 1
+.Ed
 .Sh DIAGNOSTICS
 The diagnostics are intended to be self explanatory.
 .Sh USING DEC SOFTWARE TO FORMAT

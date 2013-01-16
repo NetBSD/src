@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.h,v 1.2 2011/06/14 11:28:51 kefren Exp $ */
+/* $NetBSD: socketops.h,v 1.2.2.1 2013/01/16 05:34:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -42,11 +42,7 @@
 #define	LDP_AF_INET6	2
 
 int	set_ttl(int);
-int	set_mcast_ttl(int);
-int	set_tos(int);
-int	socket_reuse_port(int);
-int	bind_socket(int, uint32_t);
-int	create_hello_socket(void);
+int	create_hello_sockets(void);
 int	create_listening_socket(void);
 void	send_hello(void);
 int	get_message_id(void);

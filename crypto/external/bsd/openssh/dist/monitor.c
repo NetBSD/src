@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.c,v 1.7.2.1 2012/05/23 10:07:05 yamt Exp $	*/
-/* $OpenBSD: monitor.c,v 1.116 2012/01/05 00:16:56 djm Exp $ */
+/*	$NetBSD: monitor.c,v 1.7.2.2 2013/01/16 05:25:59 yamt Exp $	*/
+/* $OpenBSD: monitor.c,v 1.117 2012/06/22 12:30:26 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.7.2.1 2012/05/23 10:07:05 yamt Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.7.2.2 2013/01/16 05:25:59 yamt Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -462,9 +462,6 @@ monitor_child_postauth(struct monitor *pmonitor)
 
 	for (;;)
 		monitor_read(pmonitor, mon_dispatch, NULL);
-
-	close(pmonitor->m_sendfd);
-	pmonitor->m_sendfd = -1;
 }
 
 void

@@ -97,6 +97,7 @@ static int ifc;
 static char *cffile;
 static char *pidfile;
 static int linkfd = -1, ipv6rsfd = -1, ipv6nsfd = -1;
+static uint8_t *packet;
 
 struct dhcp_op {
 	uint8_t value;
@@ -188,6 +189,7 @@ cleanup(void)
 	for (i = 0; i < ifdc; i++)
 		free(ifdv[i]);
 	free(ifdv);
+	free(packet);
 #endif
 
 	if (linkfd != -1)
@@ -530,9 +532,13 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp, const struct i
 		close_sockets(iface);
 		/* If we constantly get NAKS then we should slowly back off */
 		add_timeout_sec(state->nakoff, start_interface, iface);
-		state->nakoff *= 2;
-		if (state->nakoff > NAKOFF_MAX)
-			state->nakoff = NAKOFF_MAX;
+		if (state->nakoff == 0)
+			state->nakoff = 1;
+		else {
+			state->nakoff *= 2;
+			if (state->nakoff > NAKOFF_MAX)
+				state->nakoff = NAKOFF_MAX;
+		}
 		return;
 	}
 
@@ -561,7 +567,7 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp, const struct i
 	}
 
 	/* No NAK, so reset the backoff */
-	state->nakoff = 1;
+	state->nakoff = 0;
 
 	if ((type == 0 || type == DHCP_OFFER) &&
 	    state->state == DHS_DISCOVER)
@@ -656,7 +662,6 @@ static void
 handle_dhcp_packet(void *arg)
 {
 	struct interface *iface = arg;
-	uint8_t *packet;
 	struct dhcp_message *dhcp = NULL;
 	const uint8_t *pp;
 	ssize_t bytes;
@@ -666,7 +671,8 @@ handle_dhcp_packet(void *arg)
 	/* We loop through until our buffer is empty.
 	 * The benefit is that if we get >1 DHCP packet in our buffer and
 	 * the first one fails for any reason, we can use the next. */
-	packet = xmalloc(udp_dhcp_len);
+	if (packet == NULL)
+		packet = xmalloc(udp_dhcp_len);
 	for(;;) {
 		bytes = get_raw_packet(iface, ETHERTYPE_IP,
 		    packet, udp_dhcp_len, &partialcsum);
@@ -735,6 +741,7 @@ handle_dhcp_packet(void *arg)
 			break;
 	}
 	free(packet);
+	packet = NULL;
 	free(dhcp);
 }
 
@@ -771,7 +778,7 @@ configure_interface1(struct interface *iface)
 	struct if_state *ifs = iface->state;
 	struct if_options *ifo = ifs->options;
 	uint8_t *duid;
-	size_t len = 0, ifl;
+	size_t len, ifl;
 
 	/* Do any platform specific configuration */
 	if_conf(iface);
@@ -816,11 +823,13 @@ configure_interface1(struct interface *iface)
 		iface->clientid = xmalloc(ifo->clientid[0] + 1);
 		memcpy(iface->clientid, ifo->clientid, ifo->clientid[0] + 1);
 	} else if (ifo->options & DHCPCD_CLIENTID) {
+		len = 0;
 		if (ifo->options & DHCPCD_DUID) {
 			duid = xmalloc(DUID_LEN);
 			if ((len = get_duid(duid, iface)) == 0)
 				syslog(LOG_ERR, "get_duid: %m");
-		}
+		} else
+			duid = NULL;
 		if (len > 0) {
 			iface->clientid = xmalloc(len + 6);
 			iface->clientid[0] = len + 5;
@@ -835,6 +844,7 @@ configure_interface1(struct interface *iface)
 				ifl = htonl(iface->index);
 				memcpy(iface->clientid + 2, &ifl, 4);
 			}
+			memcpy(iface->clientid + 6, duid, len);
 		} else if (len == 0) {
 			len = iface->hwlen + 1;
 			iface->clientid = xmalloc(len + 1);
@@ -843,6 +853,7 @@ configure_interface1(struct interface *iface)
 			memcpy(iface->clientid + 2, iface->hwaddr,
 			    iface->hwlen);
 		}
+		free(duid);
 	}
 	if (ifo->options & DHCPCD_CLIENTID)
 		syslog(LOG_DEBUG, "%s: using ClientID %s", iface->name,
@@ -1002,9 +1013,13 @@ void
 start_renew(void *arg)
 {
 	struct interface *iface = arg;
+	struct dhcp_lease *lease = &iface->state->lease;
 
 	syslog(LOG_INFO, "%s: renewing lease of %s",
-	    iface->name, inet_ntoa(iface->state->lease.addr));
+	    iface->name, inet_ntoa(lease->addr));
+	syslog(LOG_DEBUG, "%s: rebind in %u seconds, expire in %u seconds",
+	    iface->name, lease->rebindtime - lease->renewaltime,
+	    lease->leasetime - lease->renewaltime);
 	iface->state->state = DHS_RENEW;
 	iface->state->xid = dhcp_xid(iface);
 	send_renew(iface);
@@ -1014,9 +1029,12 @@ void
 start_rebind(void *arg)
 {
 	struct interface *iface = arg;
+	struct dhcp_lease *lease = &iface->state->lease;
 
 	syslog(LOG_ERR, "%s: failed to renew, attempting to rebind",
 	    iface->name);
+	syslog(LOG_DEBUG, "%s: expire in %u seconds",
+	    iface->name, lease->leasetime - lease->rebindtime);
 	iface->state->state = DHS_REBIND;
 	delete_timeout(send_renew, iface);
 	iface->state->lease.server.s_addr = 0;
@@ -1257,7 +1275,7 @@ init_state(struct interface *iface, int argc, char **argv)
 
 	ifs->state = DHS_INIT;
 	ifs->reason = "PREINIT";
-	ifs->nakoff = 1;
+	ifs->nakoff = 0;
 	configure_interface(iface, argc, argv);
 	if (!(options & DHCPCD_TEST))
 		run_script(iface);
@@ -1365,7 +1383,7 @@ handle_hwaddr(const char *ifname, unsigned char *hwaddr, size_t hwlen)
 				    ifp->name,
 		    		    hwaddr_ntoa(ifp->hwaddr, ifp->hwlen));
 				ifp->state->interval = 0;
-				ifp->state->nakoff = 1;
+				ifp->state->nakoff = 0;
 				start_interface(ifp);
 			}
 		}
@@ -1980,6 +1998,10 @@ main(int argc, char **argv)
 	}
 
 	syslog(LOG_INFO, "version " VERSION " starting");
+
+#ifdef DEBUG_MEMORY
+	eloop_init();
+#endif
 
 	if ((signal_fd = signal_init()) == -1)
 		exit(EXIT_FAILURE);

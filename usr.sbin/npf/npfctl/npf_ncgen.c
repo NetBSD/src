@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.4.6.3 2012/10/30 19:00:44 yamt Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.4.6.4 2013/01/16 05:34:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_ncgen.c,v 1.4.6.3 2012/10/30 19:00:44 yamt Exp $");
+__RCSID("$NetBSD: npf_ncgen.c,v 1.4.6.4 2013/01/16 05:34:10 yamt Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -91,7 +91,7 @@ npfctl_ncgen_getptr(nc_ctx_t *ctx, size_t nwords)
 
 	/* Otherwise, re-allocate the buffer and update the pointers. */
 	ctx->nc_len = NC_ALLOC_ROUND(reqlen);
-	ctx->nc_buf = xrealloc(ctx->nc_buf, ctx->nc_len);
+	ctx->nc_buf = erealloc(ctx->nc_buf, ctx->nc_len);
 	ctx->nc_iptr = (uint8_t *)ctx->nc_buf + offset;
 	return ctx->nc_iptr;
 }
@@ -126,7 +126,7 @@ npfctl_ncgen_addjmp(nc_ctx_t *ctx, uint32_t **nc_ptr)
 	reqlen = NC_ALLOC_ROUND(ctx->nc_jmp_it * sizeof(ptrdiff_t));
 
 	if (reqlen > NC_ALLOC_ROUND(ctx->nc_jmp_len)) {
-		ctx->nc_jmp_list = xrealloc(ctx->nc_jmp_list, reqlen);
+		ctx->nc_jmp_list = erealloc(ctx->nc_jmp_list, reqlen);
 		ctx->nc_jmp_len = reqlen;
 	}
 
@@ -145,7 +145,7 @@ npfctl_ncgen_addjmp(nc_ctx_t *ctx, uint32_t **nc_ptr)
 nc_ctx_t *
 npfctl_ncgen_create(void)
 {
-	return zalloc(sizeof(nc_ctx_t));
+	return ecalloc(1, sizeof(nc_ctx_t));
 }
 
 /*

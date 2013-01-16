@@ -1,4 +1,4 @@
-# $NetBSD: t_bpf.sh,v 1.2 2010/10/19 16:36:36 jmmv Exp $
+# $NetBSD: t_bpf.sh,v 1.2.6.1 2013/01/16 05:33:57 yamt Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,7 +46,7 @@ itest()
 
 bpftest()
 {
-	h_copydata $(echo ${1} | tr _ .)
+	h_copydata $(echo ${1} | tr _ -)
 	cp "$(atf_get_srcdir)/input/$(echo ${1} | sed s,bpf_,,)" in
 
 	{ while read rule; do

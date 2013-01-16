@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.691.2.2 2012/10/30 18:59:46 yamt Exp $
+#	$NetBSD: bsd.own.mk,v 1.691.2.3 2013/01/16 05:32:38 yamt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -68,26 +68,16 @@ USE_COMPILERCRTSTUFF?=	no
 .endif
 USE_COMPILERCRTSTUFF?=	yes
 
-
-#
-# Platforms still using GDB 6
-#
-.if ${MACHINE_CPU}  == "mips"
-HAVE_GDB?= 6
-.else
-# Otherwise, default to GDB7
 HAVE_GDB?=	7
-.endif
 
-
-.if empty(.MAKEFLAGS:M-V*)
+.if empty(.MAKEFLAGS:tW:M*-V .OBJDIR*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
 PRINTOBJDIR=	${MAKE} -r -V .OBJDIR -f /dev/null xxx
 .else
 PRINTOBJDIR=	${MAKE} -V .OBJDIR
 .endif
 .else
-PRINTOBJDIR=	echo # prevent infinite recursion
+PRINTOBJDIR=	echo /error/bsd.own.mk/PRINTOBJDIR # avoid infinite recursion
 .endif
 
 #
@@ -107,8 +97,11 @@ _SRC_TOP_!= cd "${.CURDIR}"; while :; do \
 .endif					# }
 
 #
-# If _SRC_TOP_ != "", we're within the NetBSD source tree, so set
-# defaults for NETBSDSRCDIR and _SRC_TOP_OBJ_.
+# If _SRC_TOP_ != "", we're within the NetBSD source tree.
+# * Set defaults for NETBSDSRCDIR and _SRC_TOP_OBJ_.
+# * Define _NETBSD_VERSION_DEPENDS.  Targets that depend on the
+#   NetBSD version, or on variables defined at build time, can
+#   declare a dependency on ${_NETBSD_VERSION_DEPENDS}.
 #
 .if (${_SRC_TOP_} != "")		# {
 
@@ -118,6 +111,12 @@ NETBSDSRCDIR?=	${_SRC_TOP_}
 _SRC_TOP_OBJ_!=		cd "${_SRC_TOP_}" && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=	_SRC_TOP_OBJ_
 .endif
+
+_NETBSD_VERSION_DEPENDS=	${_SRC_TOP_OBJ_}/params
+_NETBSD_VERSION_DEPENDS+=	${NETBSDSRCDIR}/sys/sys/param.h
+_NETBSD_VERSION_DEPENDS+=	${NETBSDSRCDIR}/sys/conf/newvers.sh
+_NETBSD_VERSION_DEPENDS+=	${NETBSDSRCDIR}/sys/conf/osrelease.sh
+${_SRC_TOP_OBJ_}/params: .NOTMAIN .OPTIONAL # created by top level "make build"
 
 .endif	# _SRC_TOP_ != ""		# }
 
@@ -193,6 +192,11 @@ TOOL_CPP.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-cpp
 TOOL_CXX.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-c++
 TOOL_FC.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-g77
 TOOL_OBJC.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-gcc
+
+TOOL_CC.clang=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-clang
+TOOL_CPP.clang=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-clang-cpp
+TOOL_CXX.clang=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-clang++
+TOOL_OBJC.clang=	${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-clang
 .else									# } {
 # Define default locations for common tools.
 .if ${USETOOLS_BINUTILS:Uyes} == "yes"					#  {
@@ -307,6 +311,7 @@ TOOL_MKLOCALE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mklocale
 TOOL_MKMAGIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}file
 TOOL_MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
 TOOL_MKUBOOTIMAGE=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkubootimage
+TOOL_ELFTOSB=		${TOOLDIR}/bin/${_TOOL_PREFIX}elftosb
 TOOL_MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
 TOOL_MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
 TOOL_NBPERF=		${TOOLDIR}/bin/${_TOOL_PREFIX}perf
@@ -394,7 +399,7 @@ TOOL_MAKEFS=		makefs
 TOOL_MAKEINFO=		makeinfo
 TOOL_MAKEWHATIS=	/usr/libexec/makewhatis
 TOOL_MANDOC_ASCII=	mandoc -Tascii
-TOOL_MANDOC_HTML=	mandoc -Thtml -Oman=../html%S/%N.html -Ostyle=../style.css
+TOOL_MANDOC_HTML=	mandoc -Thtml
 TOOL_MANDOC_LINT=	mandoc -Tlint
 TOOL_MDSETIMAGE=	mdsetimage
 TOOL_MENUC=		menuc
@@ -406,6 +411,7 @@ TOOL_MKLOCALE=		mklocale
 TOOL_MKMAGIC=		file
 TOOL_MKTEMP=		mktemp
 TOOL_MKUBOOTIMAGE=	mkubootimage
+TOOL_ELFTOSB=		elftosb
 TOOL_MSGC=		msgc
 TOOL_MTREE=		mtree
 TOOL_NBPERF=		nbperf
@@ -793,6 +799,14 @@ MKSOFTFLOAT?=	yes
 SOFTFLOAT_BITS=	32
 .endif
 
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "sparc" 
+MKSLJIT?=	yes
+.else
+MKSLJIT?=	no
+.endif
+
 #
 # MK* backward compatibility.
 #
@@ -856,7 +870,7 @@ _MKVARS.no= \
 	MKLLVM MKPCC \
 	MKPIGZGZIP \
 	MKREPRO \
-	MKSOFTFLOAT MKSTRIPIDENT \
+	MKSOFTFLOAT MKSTRIPIDENT MKTPM \
 	MKUNPRIVED MKUPDATE MKX11 MKZFS
 .for var in ${_MKVARS.no}
 ${var}?=no

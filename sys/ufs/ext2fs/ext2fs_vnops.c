@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.100.2.2 2012/05/23 10:08:18 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.100.2.3 2013/01/16 05:33:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.100.2.2 2012/05/23 10:08:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.100.2.3 2013/01/16 05:33:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ ext2fs_getattr(void *v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = dbtob((u_quad_t)ip->i_e2fs_nblock);
+	vap->va_bytes = dbtob(ext2fs_nblock(ip));
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	return (0);
@@ -922,7 +922,7 @@ ext2fs_readlink(void *v)
 
 	isize = ext2fs_size(ip);
 	if (isize < ump->um_maxsymlinklen ||
-	    (ump->um_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
+	    (ump->um_maxsymlinklen == 0 && ext2fs_nblock(ip) == 0)) {
 		uiomove((char *)ip->i_din.e2fs_din->e2di_shortlink, isize, ap->a_uio);
 		return (0);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: toastersensors.c,v 1.9.2.1 2012/10/30 17:19:28 yamt Exp $ */
+/* $NetBSD: toastersensors.c,v 1.9.2.2 2013/01/16 05:32:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.9.2.1 2012/10/30 17:19:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.9.2.2 2013/01/16 05:32:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -63,19 +63,19 @@ struct toastersensors_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_gpioh;
 	bus_space_handle_t sc_adch;
-	u_int32_t toast_down;
-	u_int32_t burnlevel_knob;
-	u_int32_t cancel_key;
-	u_int32_t toast_key;
-	u_int32_t frozen_key;
-	u_int32_t warm_key;
-	u_int32_t bagel_key;
-	u_int32_t toast_down_ticks;
-	u_int32_t cancel_key_ticks;
-	u_int32_t toast_key_ticks;
-	u_int32_t frozen_key_ticks;
-	u_int32_t warm_key_ticks;
-	u_int32_t bagel_key_ticks;
+	uint32_t toast_down;
+	uint32_t burnlevel_knob;
+	uint32_t cancel_key;
+	uint32_t toast_key;
+	uint32_t frozen_key;
+	uint32_t warm_key;
+	uint32_t bagel_key;
+	uint32_t toast_down_ticks;
+	uint32_t cancel_key_ticks;
+	uint32_t toast_key_ticks;
+	uint32_t frozen_key_ticks;
+	uint32_t warm_key_ticks;
+	uint32_t bagel_key_ticks;
 	struct callout poll;
 };
 
@@ -104,7 +104,7 @@ struct wskbd_mapdata mxkp_keymapdata = {
 
 static int	toastersensors_match(device_t, cfdata_t, void *);
 static void	toastersensors_attach(device_t, device_t, void *);
-static void	toastersensors_scankeys(struct matrixkp_softc *, u_int32_t *);
+static void	toastersensors_scankeys(struct matrixkp_softc *, uint32_t *);
 static void	toastersensors_poll(void *);
 
 CFATTACH_DECL_NEW(toastersensors, sizeof(struct toastersensors_softc),
@@ -154,7 +154,7 @@ toastersensors_attach(device_t parent, device_t self, void *aux)
 	struct tspld_attach_args *taa = aux;
 	struct wskbddev_attach_args wa;
         const struct sysctlnode *node, *datnode;
-	u_int32_t i;
+	uint32_t i;
 
 	sc->sc_iot = taa->ta_iot;
 	if (bus_space_map(sc->sc_iot, EP93XX_APB_HWBASE + EP93XX_APB_GPIO,
@@ -267,10 +267,10 @@ toastersensors_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-toastersensors_scankeys(struct matrixkp_softc *mxkp_sc, u_int32_t *keys)
+toastersensors_scankeys(struct matrixkp_softc *mxkp_sc, uint32_t *keys)
 {
 	struct toastersensors_softc *sc = device_private(mxkp_sc->sc_dev);
-	u_int32_t val = GPIO_GET(PBDR) & 0x3f;
+	uint32_t val = GPIO_GET(PBDR) & 0x3f;
 
 	/*
 	 * toast_down isn't a key, but we update its state here since its 

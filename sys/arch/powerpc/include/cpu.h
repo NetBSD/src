@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.88.2.2 2012/10/30 17:20:11 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.88.2.3 2013/01/16 05:33:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -170,6 +170,7 @@ struct cpu_hatch_data {
 #endif
 #if defined(PPC_BOOKE)
 	vaddr_t hatch_sp;
+	u_int hatch_tlbidx;
 #endif
 };
 

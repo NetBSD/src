@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.2.2.2 2012/10/30 17:19:08 yamt Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.2.2.3 2013/01/16 05:32:49 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.2.2.2 2012/10/30 17:19:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.2.2.3 2013/01/16 05:32:49 yamt Exp $");
 
 #include "opt_omap.h"
 
@@ -43,7 +43,13 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.2.2.2 2012/10/30 17:19:08 yamt Exp 
 #include <sys/bus.h>
 
 #include <arm/omap/omap2_obiovar.h>
+#include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap3_sdmmcreg.h>
+
+#ifdef TI_AM335X
+#  include <arm/omap/am335x_prcm.h>
+#  include <arm/omap/omap2_prcm.h>
+#endif
 
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
@@ -59,6 +65,7 @@ static int obiosdhc_match(device_t, cfdata_t, void *);
 static void obiosdhc_attach(device_t, device_t, void *);
 static int obiosdhc_detach(device_t, int);
 
+static int obiosdhc_bus_clock(struct sdhc_softc *, int);
 static int obiosdhc_rod(struct sdhc_softc *, int);
 static int obiosdhc_write_protect(struct sdhc_softc *);
 static int obiosdhc_card_detect(struct sdhc_softc *);
@@ -72,21 +79,53 @@ struct obiosdhc_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
+#ifdef TI_AM335X
+struct am335x_sdhc {
+	const char *as_name;
+	bus_addr_t as_base_addr;
+	int as_intr;
+	struct omap_module as_module;
+};
+
+static const struct am335x_sdhc am335x_sdhc[] = {
+	/* XXX All offset by 0x100 because of the am335x's mmc registers.  */
+	{ "MMCHS0",	0x48060100, 64, { AM335X_PRCM_CM_PER, 0x3c } },
+	{ "MMC1",	0x481d8100, 28, { AM335X_PRCM_CM_PER, 0xf4 } },
+	{ "MMCHS2",	0x47810100, 29, { AM335X_PRCM_CM_WKUP, 0xf8 } },
+};
+#endif
+
 CFATTACH_DECL_NEW(obiosdhc, sizeof(struct obiosdhc_softc),
     obiosdhc_match, obiosdhc_attach, obiosdhc_detach, NULL);
 
 static int
 obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
-#ifdef OMAP_3530
+#if defined(OMAP_3430) || defined(OMAP_3530)
 	struct obio_attach_args * const oa = aux;
 #endif
+#ifdef TI_AM335X
+	struct obio_attach_args * const oa = aux;
+	size_t i;
+#endif
 
-#ifdef OMAP_3530
+#if defined(OMAP_3430)
+	if (oa->obio_addr == SDMMC1_BASE_3430
+	    || oa->obio_addr == SDMMC2_BASE_3430
+	    || oa->obio_addr == SDMMC3_BASE_3430)
+                return 1;
+#elif defined(OMAP_3530)
 	if (oa->obio_addr == SDMMC1_BASE_3530
 	    || oa->obio_addr == SDMMC2_BASE_3530
 	    || oa->obio_addr == SDMMC3_BASE_3530)
                 return 1;
+#endif
+
+#ifdef TI_AM335X
+	for (i = 0; i < __arraycount(am335x_sdhc); i++)
+		if ((oa->obio_addr == am335x_sdhc[i].as_base_addr) &&
+		    (oa->obio_intr == am335x_sdhc[i].as_intr))
+			return 1;
 #endif
 
         return 0;
@@ -97,8 +136,12 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 {
 	struct obiosdhc_softc * const sc = device_private(self);
 	struct obio_attach_args * const oa = aux;
+	prop_dictionary_t prop = device_properties(self);
 	uint32_t clkd, stat;
 	int error, timo, clksft, n;
+#ifdef TI_AM335X
+	size_t i;
+#endif
 
 	sc->sc.sc_dmat = oa->obio_dmat;
 	sc->sc.sc_dev = self;
@@ -107,12 +150,17 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags |= SDHC_FLAG_NO_LED_ON;
 	sc->sc.sc_flags |= SDHC_FLAG_RSP136_CRC;
 	sc->sc.sc_flags |= SDHC_FLAG_SINGLE_ONLY;
+#ifdef TI_AM335X
+	sc->sc.sc_flags |= SDHC_FLAG_WAIT_RESET;
+#endif
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = 96000;	/* 96MHZ */
-	sc->sc.sc_clkmsk = 0x0000ffc0;
+	if (!prop_dictionary_get_uint32(prop, "clkmask", &sc->sc.sc_clkmsk))
+		sc->sc.sc_clkmsk = 0x0000ffc0;
 	sc->sc.sc_vendor_rod = obiosdhc_rod;
 	sc->sc.sc_vendor_write_protect = obiosdhc_write_protect;
 	sc->sc.sc_vendor_card_detect = obiosdhc_card_detect;
+	sc->sc.sc_vendor_bus_clock = obiosdhc_bus_clock;
 	sc->sc_bst = oa->obio_iot;
 
 	clksft = ffs(sc->sc.sc_clkmsk) - 1;
@@ -131,6 +179,17 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": SDHC controller\n");
 	aprint_normal(": SDHC controller\n");
 
+#ifdef TI_AM335X
+	/* XXX Not really AM335X-specific.  */
+	for (i = 0; i < __arraycount(am335x_sdhc); i++)
+		if ((oa->obio_addr == am335x_sdhc[i].as_base_addr) &&
+		    (oa->obio_intr == am335x_sdhc[i].as_intr)) {
+			prcm_module_enable(&am335x_sdhc[i].as_module);
+			break;
+		}
+	KASSERT(i < __arraycount(am335x_sdhc));
+#endif
+
 	/* XXXXXX: Turn-on regurator via I2C. */
 	/* XXXXXX: And enable ICLOCK/FCLOCK. */
 
@@ -147,7 +206,8 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	if (timo == 0)
 		aprint_error_dev(self, "Soft reset timeout\n");
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MMCHS_SYSCONFIG,
-	    SYSCONFIG_ENAWAKEUP | SYSCONFIG_AUTOIDLE);
+	    SYSCONFIG_ENAWAKEUP | SYSCONFIG_AUTOIDLE | SYSCONFIG_SIDLEMODE_AUTO |
+	    SYSCONFIG_CLOCKACTIVITY_FCLK | SYSCONFIG_CLOCKACTIVITY_ICLK);
 
 	sc->sc_ih = intr_establish(oa->obio_intr, IPL_VM, IST_LEVEL,
 	    sdhc_intr, &sc->sc);
@@ -288,4 +348,21 @@ obiosdhc_card_detect(struct sdhc_softc *sc)
 
 	/* Maybe board dependent, using GPIO. Get GPIO-pin from prop? */
 	return 1;	/* XXXXXXXX */
+}
+
+static int
+obiosdhc_bus_clock(struct sdhc_softc *sc, int clk)
+{
+	struct obiosdhc_softc *osc = (struct obiosdhc_softc *)sc;
+	uint32_t ctl;
+
+	ctl = bus_space_read_4(osc->sc_bst, osc->sc_bsh, MMCHS_SYSCTL);
+	if (clk == 0) {
+		clk &= ~SYSCTL_CEN;
+	} else {
+		clk |= SYSCTL_CEN;
+	}
+	bus_space_write_4(osc->sc_bst, osc->sc_bsh, MMCHS_SYSCTL, ctl);
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.92.2.5 2012/10/30 17:22:25 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.92.2.6 2013/01/16 05:33:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.92.2.5 2012/10/30 17:22:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.92.2.6 2013/01/16 05:33:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -133,6 +133,7 @@ tmpfs_lookup(void *v)
 	const bool lastcn = (cnp->cn_flags & ISLASTCN) != 0;
 	tmpfs_node_t *dnode, *tnode;
 	tmpfs_dirent_t *de;
+	int cachefound, iswhiteout;
 	int error;
 
 	KASSERT(VOP_ISLOCKED(dvp));
@@ -160,9 +161,18 @@ tmpfs_lookup(void *v)
 	 * Avoid doing a linear scan of the directory if the requested
 	 * directory/name couple is already in the cache.
 	 */
-	error = cache_lookup(dvp, vpp, cnp);
-	if (error >= 0) {
-		/* Both cache-hit or an error case. */
+	cachefound = cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+				  cnp->cn_nameiop, cnp->cn_flags,
+				  &iswhiteout, vpp);
+	if (iswhiteout) {
+		cnp->cn_flags |= ISWHITEOUT;
+	}
+	if (cachefound && *vpp == NULLVP) {
+		/* Negative cache hit. */
+		error = ENOENT;
+		goto out;
+	} else if (cachefound) {
+		error = 0;
 		goto out;
 	}
 
@@ -278,7 +288,8 @@ done:
 	 * not improve the performance).
 	 */
 	if (cnp->cn_nameiop != CREATE) {
-		cache_enter(dvp, *vpp, cnp);
+		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 	}
 out:
 	KASSERT((*vpp && VOP_ISLOCKED(*vpp)) || error);

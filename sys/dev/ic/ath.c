@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.112.2.1 2012/04/17 00:07:31 yamt Exp $	*/
+/*	$NetBSD: ath.c,v 1.112.2.2 2013/01/16 05:33:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.112.2.1 2012/04/17 00:07:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.112.2.2 2013/01/16 05:33:14 yamt Exp $");
 #endif
 
 /*
@@ -878,8 +878,8 @@ ath_bmiss_proc(void *arg, int pending)
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: pending %u\n", __func__, pending);
-	KASSERT(ic->ic_opmode == IEEE80211_M_STA,
-		("unexpect operating mode %u", ic->ic_opmode));
+	KASSERTMSG(ic->ic_opmode == IEEE80211_M_STA,
+		"unexpect operating mode %u", ic->ic_opmode);
 	if (ic->ic_state == IEEE80211_S_RUN) {
 		u_int64_t lastrx = sc->sc_lastrx;
 		u_int64_t tsf = ath_hal_gettsf64(sc->sc_ah);
@@ -940,8 +940,8 @@ ath_chan2flags(struct ieee80211com *ic, struct ieee80211_channel *chan)
 	};
 	enum ieee80211_phymode mode = ieee80211_chan2mode(ic, chan);
 
-	KASSERT(mode < N(modeflags), ("unexpected phy mode %u", mode));
-	KASSERT(modeflags[mode] != 0, ("mode %u undefined", mode));
+	KASSERTMSG(mode < N(modeflags), "unexpected phy mode %u", mode);
+	KASSERTMSG(modeflags[mode] != 0, "mode %u undefined", mode);
 	return modeflags[mode];
 #undef N
 }
@@ -1432,7 +1432,7 @@ ath_start(struct ifnet *ifp)
 		if (next != NULL) {
 			m = next;
 			bf = STAILQ_FIRST(&frags);
-			KASSERT(bf != NULL, ("no buf for txfrag"));
+			KASSERTMSG(bf != NULL, "no buf for txfrag");
 			STAILQ_REMOVE_HEAD(&frags, bf_list);
 			goto nextfrag;
 		}
@@ -1499,8 +1499,8 @@ ath_keyset_tkip(struct ath_softc *sc, const struct ieee80211_key *k,
 	static const u_int8_t zerobssid[IEEE80211_ADDR_LEN];
 	struct ath_hal *ah = sc->sc_ah;
 
-	KASSERT(k->wk_cipher->ic_cipher == IEEE80211_CIPHER_TKIP,
-		("got a non-TKIP key, cipher %u", k->wk_cipher->ic_cipher));
+	KASSERTMSG(k->wk_cipher->ic_cipher == IEEE80211_CIPHER_TKIP,
+		"got a non-TKIP key, cipher %u", k->wk_cipher->ic_cipher);
 	if ((k->wk_flags & IEEE80211_KEY_XR) == IEEE80211_KEY_XR) {
 		if (sc->sc_splitmic) {
 			/*
@@ -1582,8 +1582,8 @@ ath_keyset(struct ath_softc *sc, const struct ieee80211_key *k,
 	 * so that rx frames have an entry to match.
 	 */
 	if ((k->wk_flags & IEEE80211_KEY_SWCRYPT) == 0) {
-		KASSERT(cip->ic_cipher < N(ciphermap),
-			("invalid cipher type %u", cip->ic_cipher));
+		KASSERTMSG(cip->ic_cipher < N(ciphermap),
+			"invalid cipher type %u", cip->ic_cipher);
 		hk.kv_type = ciphermap[cip->ic_cipher];
 		hk.kv_len = k->wk_keylen;
 		memcpy(hk.kv_val, k->wk_key, k->wk_keylen);
@@ -1623,7 +1623,7 @@ key_alloc_2pair(struct ath_softc *sc,
 #define	N(a)	(sizeof(a)/sizeof(a[0]))
 	u_int i, keyix;
 
-	KASSERT(sc->sc_splitmic, ("key cache !split"));
+	KASSERTMSG(sc->sc_splitmic, "key cache !split");
 	/* XXX could optimize */
 	for (i = 0; i < N(sc->sc_keymap)/4; i++) {
 		u_int8_t b = sc->sc_keymap[i];
@@ -1678,7 +1678,7 @@ key_alloc_pair(struct ath_softc *sc, ieee80211_keyix *txkeyix,
 #define N(a)	(sizeof(a)/sizeof(a[0]))
 	u_int i, keyix;
 
-	KASSERT(!sc->sc_splitmic, ("key cache split"));
+	KASSERTMSG(!sc->sc_splitmic, "key cache split");
 	/* XXX could optimize */
 	for (i = 0; i < N(sc->sc_keymap)/4; i++) {
 		uint8_t b = sc->sc_keymap[i];
@@ -2195,8 +2195,8 @@ ath_beacon_setup(struct ath_softc *sc, struct ath_buf *bf)
 			antenna = sc->sc_txantenna;
 	}
 
-	KASSERT(bf->bf_nseg == 1,
-		("multi-segment beacon frame; nseg %u", bf->bf_nseg));
+	KASSERTMSG(bf->bf_nseg == 1,
+		"multi-segment beacon frame; nseg %u", bf->bf_nseg);
 	ds->ds_data = bf->bf_segs[0].ds_addr;
 	/*
 	 * Calculate rate code.
@@ -2850,8 +2850,8 @@ ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 			sc->sc_stats.ast_rx_busdma++;
 			return error;
 		}
-		KASSERT(bf->bf_nseg == 1,
-			("multi-segment packet; nseg %u", bf->bf_nseg));
+		KASSERTMSG(bf->bf_nseg == 1,
+			"multi-segment packet; nseg %u", bf->bf_nseg);
 	}
 	bus_dmamap_sync(sc->sc_dmat, bf->bf_dmamap, 0,
 	    bf->bf_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -3484,8 +3484,8 @@ again:
 		} else
 			m = n;
 	}
-	KASSERT(maxfrags > 1,
-		("maxfrags %u, but normal collapse failed", maxfrags));
+	KASSERTMSG(maxfrags > 1,
+		"maxfrags %u, but normal collapse failed", maxfrags);
 	/*
 	 * Collapse consecutive mbufs to a cluster.
 	 */
@@ -3679,8 +3679,8 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			ath_freetx(m0);
 			return error;
 		}
-		KASSERT(bf->bf_nseg <= ATH_TXDESC,
-		    ("too many segments after defrag; nseg %u", bf->bf_nseg));
+		KASSERTMSG(bf->bf_nseg <= ATH_TXDESC,
+		    "too many segments after defrag; nseg %u", bf->bf_nseg);
 	} else if (bf->bf_nseg == 0) {		/* null packet, discard */
 		sc->sc_stats.ast_tx_nodata++;
 		ath_freetx(m0);
@@ -3695,7 +3695,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	/* setup descriptors */
 	ds = bf->bf_desc;
 	rt = sc->sc_currates;
-	KASSERT(rt != NULL, ("no rate table, mode %u", sc->sc_curmode));
+	KASSERTMSG(rt != NULL, "no rate table, mode %u", sc->sc_curmode);
 
 	/*
 	 * NB: the 802.11 layer marks whether or not we should
@@ -3862,7 +3862,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			dur = rt->info[rix].lpAckDuration;
 		if (wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG) {
 			dur += dur;             /* additional SIFS+ACK */
-			KASSERT(m0->m_nextpkt != NULL, ("no fragment"));
+			KASSERTMSG(m0->m_nextpkt != NULL, "no fragment");
 			/*
 			 * Include the size of next fragment so NAV is
 			 * updated properly.  The last fragment uses only
@@ -3896,7 +3896,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		 * in whether or not a short preamble is to be used.
 		 */
 		/* NB: cix is set above where RTS/CTS is enabled */
-		KASSERT(cix != 0xff, ("cix not setup"));
+		KASSERTMSG(cix != 0xff, "cix not setup");
 		ctsrate = rt->info[cix].rateCode;
 		/*
 		 * Compute the transmit duration based on the frame
@@ -4640,8 +4640,9 @@ ath_calibrate(void *arg)
 		if (sc->sc_calinterval > ath_calinterval)
 			sc->sc_calinterval = ath_calinterval;
 	}
-	KASSERT(0 < sc->sc_calinterval && sc->sc_calinterval <= ath_calinterval,
-		("bad calibration interval %u", sc->sc_calinterval));
+	KASSERTMSG(0 < sc->sc_calinterval &&
+	           sc->sc_calinterval <= ath_calinterval,
+		   "bad calibration interval %u", sc->sc_calinterval);
 
 	DPRINTF(sc, ATH_DEBUG_CALIBRATE,
 		"%s: next +%u (%siqCalDone tries %u)\n", __func__,
@@ -4864,9 +4865,9 @@ ath_newassoc(struct ieee80211_node *ni, int isnew)
 	ath_rate_newassoc(sc, ATH_NODE(ni), isnew);
 	if (isnew &&
 	    (ic->ic_flags & IEEE80211_F_PRIVACY) == 0 && sc->sc_hasclrkey) {
-		KASSERT(ni->ni_ucastkey.wk_keyix == IEEE80211_KEYIX_NONE,
-		    ("new assoc with a unicast key already setup (keyix %u)",
-		    ni->ni_ucastkey.wk_keyix));
+		KASSERTMSG(ni->ni_ucastkey.wk_keyix == IEEE80211_KEYIX_NONE,
+		    "new assoc with a unicast key already setup (keyix %u)",
+		    ni->ni_ucastkey.wk_keyix);
 		ath_setup_stationkey(ni);
 	}
 }
@@ -5107,7 +5108,7 @@ ath_setcurmode(struct ath_softc *sc, enum ieee80211_phymode mode)
 
 	memset(sc->sc_rixmap, 0xff, sizeof(sc->sc_rixmap));
 	rt = sc->sc_rates[mode];
-	KASSERT(rt != NULL, ("no h/w rate set for phy mode %u", mode));
+	KASSERTMSG(rt != NULL, "no h/w rate set for phy mode %u", mode);
 	for (i = 0; i < rt->rateCount; i++)
 		sc->sc_rixmap[rt->info[i].dot11Rate & IEEE80211_RATE_VAL] = i;
 	memset(sc->sc_hwmap, 0, sizeof(sc->sc_hwmap));

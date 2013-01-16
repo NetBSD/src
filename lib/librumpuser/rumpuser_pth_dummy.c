@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.2 2011/05/23 20:49:08 joerg Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.2.4.1 2013/01/16 05:32:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -25,9 +25,11 @@
  * SUCH DAMAGE.
  */
 
+#include "rumpuser_port.h"
+
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.2 2011/05/23 20:49:08 joerg Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.2.4.1 2013/01/16 05:32:28 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -43,10 +45,13 @@ __RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.2 2011/05/23 20:49:08 joerg Exp $");
 
 #include "rumpuser_int.h"
 
+static struct lwp *curlwp;
+
 struct rumpuser_cv {};
 
 struct rumpuser_mtx {
 	int v;
+	struct lwp *o;
 };
 
 struct rumpuser_rw {
@@ -58,20 +63,16 @@ struct rumpuser_cv rumpuser_aio_cv;
 int rumpuser_aio_head, rumpuser_aio_tail;
 struct rumpuser_aio rumpuser_aios[N_AIOS];
 
-void donada(int);
-/*ARGSUSED*/
-void donada(int arg) {}
-void dounnada(int, int *);
-/*ARGSUSED*/
-void dounnada(int arg, int *ap) {}
-kernel_lockfn   rumpuser__klock = donada;
-kernel_unlockfn rumpuser__kunlock = dounnada;
+kernel_lockfn	rumpuser__klock;
+kernel_unlockfn	rumpuser__kunlock;
 
 /*ARGSUSED*/
 void
 rumpuser_thrinit(kernel_lockfn lockfn, kernel_unlockfn unlockfn, int threads)
 {
 
+	rumpuser__klock = lockfn;
+	rumpuser__kunlock = unlockfn;
 }
 
 /*ARGSUSED*/
@@ -85,7 +86,8 @@ rumpuser_biothread(void *arg)
 
 /*ARGSUSED*/
 int
-rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname)
+rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
+	int joinable, void **tptr)
 {
 
 	fprintf(stderr, "rumpuser: threads not available\n");
@@ -109,10 +111,10 @@ rumpuser_mutex_init(struct rumpuser_mtx **mtx)
 }
 
 void
-rumpuser_mutex_recursive_init(struct rumpuser_mtx **mtx)
+rumpuser_mutex_init_kmutex(struct rumpuser_mtx **mtx)
 {
 
-	rumpuser_mutex_init(mtx);
+	*mtx = calloc(1, sizeof(struct rumpuser_mtx));
 }
 
 void
@@ -120,6 +122,14 @@ rumpuser_mutex_enter(struct rumpuser_mtx *mtx)
 {
 
 	mtx->v++;
+	mtx->o = curlwp;
+}
+
+void
+rumpuser_mutex_enter_nowrap(struct rumpuser_mtx *mtx)
+{
+
+	rumpuser_mutex_enter(mtx);
 }
 
 int
@@ -134,7 +144,9 @@ void
 rumpuser_mutex_exit(struct rumpuser_mtx *mtx)
 {
 
-	mtx->v--;
+	assert(mtx->v > 0);
+	if (--mtx->v == 0)
+		mtx->o = NULL;
 }
 
 void
@@ -144,11 +156,11 @@ rumpuser_mutex_destroy(struct rumpuser_mtx *mtx)
 	free(mtx);
 }
 
-int
-rumpuser_mutex_held(struct rumpuser_mtx *mtx)
+struct lwp *
+rumpuser_mutex_owner(struct rumpuser_mtx *mtx)
 {
 
-	return mtx->v;
+	return mtx->o;
 }
 
 void
@@ -282,7 +294,6 @@ rumpuser_cv_has_waiters(struct rumpuser_cv *cv)
  * curlwp
  */
 
-static struct lwp *curlwp;
 void
 rumpuser_set_curlwp(struct lwp *l)
 {

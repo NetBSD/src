@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.269.2.3 2012/10/30 17:23:00 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.269.2.4 2013/01/16 05:33:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.269.2.3 2012/10/30 17:23:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.269.2.4 2013/01/16 05:33:55 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -580,6 +580,10 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			}
 		}
 #endif
+
+		if ((mp->mnt_flag & MNT_DISCARD) && !(ump->um_discarddata))
+			ump->um_discarddata = ffs_discard_init(devvp, fs);
+
 		if (args->fspec == NULL)
 			return 0;
 	}

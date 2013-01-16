@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.15.2.1 2012/10/30 17:19:05 yamt Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.15.2.2 2013/01/16 05:32:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.15.2.1 2012/10/30 17:19:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.15.2.2 2013/01/16 05:32:49 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,9 +77,9 @@ struct ixpclk_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_space_handle_t	sc_pll_ioh;
 
-	u_int32_t		sc_clock_count;
-	u_int32_t		sc_count_per_usec;
-	u_int32_t		sc_coreclock_freq;
+	uint32_t		sc_clock_count;
+	uint32_t		sc_count_per_usec;
+	uint32_t		sc_coreclock_freq;
 };
 
 #define XTAL_FREQ		3686400		/* 3.6864MHz */
@@ -89,7 +89,7 @@ struct ixpclk_softc {
 #define	MAX_CCF			22
 
 #if defined(XTAL_FREQ3686400)
-static u_int32_t ccf_to_coreclock[MAX_CCF + 1] = {
+static uint32_t ccf_to_coreclock[MAX_CCF + 1] = {
 	29491000,
 	36865000,
 	44237000,
@@ -158,7 +158,7 @@ ixpclk_attach(device_t parent, device_t self, void *aux)
 {
 	struct ixpclk_softc		*sc;
 	struct ixpsip_attach_args	*sa;
-	u_int32_t			ccf;
+	uint32_t			ccf;
 	bool first_run = ixpclk_sc == NULL;
 
 	printf("\n");
@@ -308,10 +308,10 @@ ixpclk_get_timecount(struct timecounter *tc)
 void
 delay(unsigned int usecs)
 {
-	u_int32_t	count;
-	u_int32_t	ticks;
-	u_int32_t	otick;
-	u_int32_t	delta;
+	uint32_t	count;
+	uint32_t	ticks;
+	uint32_t	otick;
+	uint32_t	delta;
 	int		j;
 	int		csec;
 	int		usec;

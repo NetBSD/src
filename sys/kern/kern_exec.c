@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.329.2.2 2012/10/30 17:22:28 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.329.2.3 2013/01/16 05:33:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.329.2.2 2012/10/30 17:22:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.329.2.3 2013/01/16 05:33:43 yamt Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -1897,6 +1897,7 @@ spawn_return(void *arg)
 
 	/* handle posix_spawnattr */
 	if (spawn_data->sed_attrs != NULL) {
+		int ostat;
 		struct sigaction sigact;
 		sigact._sa_u._sa_handler = SIG_DFL;
 		sigact.sa_flags = 0;
@@ -1905,6 +1906,7 @@ spawn_return(void *arg)
 		 * set state to SSTOP so that this proc can be found by pid.
 		 * see proc_enterprp, do_sched_setparam below
 		 */
+		ostat = l->l_proc->p_stat;
 		l->l_proc->p_stat = SSTOP;
 
 		/* Set process group */
@@ -1966,6 +1968,7 @@ spawn_return(void *arg)
 					    0);
 			}
 		}
+		l->l_proc->p_stat = ostat;
 	}
 
 	/* now do the real exec */

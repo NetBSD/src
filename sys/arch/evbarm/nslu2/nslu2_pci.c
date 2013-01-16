@@ -1,4 +1,4 @@
-/*      $NetBSD: nslu2_pci.c,v 1.4 2011/04/04 20:37:49 dyoung Exp $	*/
+/*      $NetBSD: nslu2_pci.c,v 1.4.4.1 2013/01/16 05:32:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_pci.c,v 1.4 2011/04/04 20:37:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_pci.c,v 1.4.4.1 2013/01/16 05:32:55 yamt Exp $");
 
 /*
  * Linksys NSLU2 PCI support.
@@ -153,7 +153,7 @@ void
 ixp425_md_pci_init(struct ixp425_softc *sc)
 {
 	pci_chipset_tag_t pc = &sc->ia_pci_chipset;
-	u_int32_t reg;
+	uint32_t reg;
 
 	pc->pc_intr_v = sc;
 	pc->pc_intr_map = nslu2_pci_intr_map;

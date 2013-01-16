@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.149.2.3 2012/10/30 17:18:47 yamt Exp $
+#	$NetBSD: files.amiga,v 1.149.2.4 2013/01/16 05:32:41 yamt Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -76,7 +76,7 @@ attach	clock at mainbus
 file	arch/amiga/dev/clock.c
 
 # A2000 internal hwc
-device	a2kbbc
+device	a2kbbc: msm6242b
 attach	a2kbbc at mainbus
 file	arch/amiga/dev/a2kbbc.c		a2kbbc
 
@@ -231,6 +231,9 @@ file	arch/amiga/dev/xsurf.c		xsurf needs-flag
 
 attach	ne at xsurfbus with ne_xsurf: rtl80x9
 file	arch/amiga/dev/if_ne_xsurf.c	ne_xsurf needs-flag
+
+attach	wdc at xsurfbus with wdc_xsurf
+file	arch/amiga/dev/wdc_xsurf.c	wdc_xsurf & xsurf
 
 # Hydra ethernet card
 device	ed: ifnet, ether, arp
@@ -547,6 +550,10 @@ file	arch/amiga/pci/emmem.c		emmem
 
 include	"dev/i2o/files.i2o"
 include	"dev/pci/files.pci"
+
+device	z3rambd: altmemdev
+attach	z3rambd at zbus
+file	arch/amiga/dev/z3rambd.c	z3rambd needs-flag
 
 include "arch/amiga/clockport/files.clockport"
 

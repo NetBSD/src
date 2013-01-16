@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.13 2011/07/15 19:19:57 cliff Exp $	*/
+/*	$NetBSD: nand.h,v 1.13.4.1 2013/01/16 05:33:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -110,19 +110,18 @@ struct nand_chip {
 	struct nand_ecc *nc_ecc; 	/* ecc information */
 	uint8_t	*nc_oob_cache;		/* buffer for oob cache */
 	uint8_t *nc_page_cache;		/* buffer for page cache */
-	uint8_t *nc_ecc_cache;
-	size_t nc_size;			/* storage size in bytes */
-	size_t nc_page_size;		/* page size in bytes */
-	size_t nc_block_pages;		/* block size in pages */
-	size_t nc_block_size;		/* block size in bytes */
-	size_t nc_spare_size;		/* spare (oob) size in bytes */
+	uint8_t *nc_ecc_cache;		/* buffer for ecc */
+	uint64_t nc_size;		/* storage size in bytes */
+	uint32_t nc_page_size;		/* page size in bytes */
+	uint32_t nc_block_size;		/* block size in bytes */
 	uint32_t nc_lun_blocks;		/* LUN size in blocks */
 	uint32_t nc_flags;		/* bitfield flags */
 	uint32_t nc_quirks;		/* bitfield quirks */
-	unsigned int nc_page_shift;	/* page shift for page alignment */
-	unsigned int nc_page_mask;	/* page mask for page alignment */
-	unsigned int nc_block_shift;	/* write shift */
-	unsigned int nc_block_mask;	/* write mask */
+	uint32_t nc_page_shift;		/* page shift for page alignment */
+	uint32_t nc_page_mask;		/* page mask for page alignment */
+	uint32_t nc_block_shift;	/* write shift */
+	uint32_t nc_block_mask;		/* write mask */
+	uint16_t nc_spare_size;		/* spare (oob) size in bytes */
 	uint8_t nc_num_luns;		/* number of LUNs */
 	uint8_t nc_manf_id;		/* manufacturer id */
 	uint8_t nc_dev_id;		/* device id  */
@@ -428,6 +427,7 @@ extern const struct nand_manufacturer nand_mfrs[];
  * Manufacturer specific parameter functions
  */
 int nand_read_parameters_micron(device_t, struct nand_chip *);
+int nand_read_parameters_samsung(device_t, struct nand_chip *);
 
 /* debug inlines */
 

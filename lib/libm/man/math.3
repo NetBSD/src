@@ -1,4 +1,4 @@
-.\"	$NetBSD: math.3,v 1.25 2011/09/22 18:14:09 njoly Exp $
+.\"	$NetBSD: math.3,v 1.25.2.1 2013/01/16 05:32:25 yamt Exp $
 .\"
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
@@ -535,7 +535,7 @@ They signal no inappropriate exception except possibly ...
 .Bl -ohang -offset indent
 .It Over/Underflow
 when a result, if properly computed, might have lain barely within range, and
-.It Inexact in Fn cbrt , Fn hypot , Fn log10 and Fn pow
+.It Inexact in Fn cbrt , Fn hypot , Fn log10 No and Fn pow
 when it happens to be exact, thanks to fortuitous cancellation of errors.
 .El
 Otherwise, ...

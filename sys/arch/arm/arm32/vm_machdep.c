@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55.4.2 2012/10/30 17:18:57 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.55.4.3 2013/01/16 05:32:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55.4.2 2012/10/30 17:18:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55.4.3 2013/01/16 05:32:44 yamt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -68,10 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55.4.2 2012/10/30 17:18:57 yamt Exp
 #include <machine/pmap.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
-
-#ifdef ARMFPE
-#include <arm/fpe-arm/armfpe.h>
-#endif
 
 extern pv_addr_t systempage;
 
@@ -147,7 +143,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Note: this stack is not in use if we are forking from p1
 	 */
 	uv = uvm_lwp_getuarea(l2);
-	pcb2->pcb_sp = uv + USPACE_SVC_STACK_TOP;
+	pcb2->pcb_ksp = uv + USPACE_SVC_STACK_TOP;
 
 #ifdef STACKCHECKS
 	/* Fill the kernel stack with a known pattern */
@@ -164,13 +160,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	}
 #endif	/* PMAP_DEBUG */
 
-#ifdef ARMFPE
-	/* Initialise a new FP context for p2 and copy the context from p1 */
-	arm_fpe_core_initcontext(FP_CONTEXT(l2));
-	arm_fpe_copycontext(FP_CONTEXT(l1), FP_CONTEXT(l2));
-#endif	/* ARMFPE */
-
-	struct trapframe *tf = (struct trapframe *)pcb2->pcb_sp - 1;
+	struct trapframe *tf = (struct trapframe *)pcb2->pcb_ksp - 1;
 	lwp_settrapframe(l2, tf);
 	*tf = *lwp_trapframe(l1);
 
@@ -187,7 +177,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	sf->sf_r7 = PSR_USR32_MODE;		/* for returning to userspace */
 	sf->sf_sp = (u_int)tf;
 	sf->sf_pc = (u_int)lwp_trampoline;
-	pcb2->pcb_sp = (u_int)sf;
+	pcb2->pcb_ksp = (u_int)sf;
 }
 
 /*
@@ -201,23 +191,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-#ifdef ARMFPE
-	/* Abort any active FP operation and deactivate the context */
-	arm_fpe_core_abort(FP_CONTEXT(l), NULL, NULL);
-	arm_fpe_core_changecontext(0);
-#endif	/* ARMFPE */
-
 #ifdef STACKCHECKS
 	/* Report how much stack has been used - debugging */
-	if (l) {
-		u_char *ptr;
-		int loop;
+	struct pcb * const pcb = lwp_getpcb(l);
+	u_char *ptr;
+	u_int loop;
 
-		ptr = (u_char *)pcb + USPACE_SVC_STACK_BOTTOM;
-		for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM)
-		    && *ptr == 0xdd; ++loop, ++ptr) ;
-		log(LOG_INFO, "%d bytes of svc stack fill pattern\n", loop);
-	}
+	ptr = (u_char *)pcb + USPACE_SVC_STACK_BOTTOM;
+	for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM)
+	    && *ptr == 0xdd; ++loop, ++ptr) ;
+	log(LOG_INFO, "%u bytes of svc stack fill pattern\n", loop);
 #endif	/* STACKCHECKS */
 }
 

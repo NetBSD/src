@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.86.2.3 2012/10/30 17:18:46 yamt Exp $
+# $NetBSD: GENERIC.in,v 1.86.2.4 2013/01/16 05:32:41 yamt Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.86.2.3 $"
+#ident 		"GENERIC-$Revision: 1.86.2.4 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -330,6 +330,9 @@ m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 ')m4_dnl
 
 m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
+#z3rambd*	at zbus0		# Zorro III RAM block devices
+#altmem*	at z3rambd?
+
 p5bus0		at zbus0		# Phase5 CSPPC/BPPC internal bus
 
 grfcc0		at mainbus0		# custom chips
@@ -466,6 +469,7 @@ qn*		at zbus0		# Quicknet
 xsurf*		at zbus0		# X-Surf
 ne*		at xsurfbus?		# NE2000 chip on X-Surf
 gencp*		at xsurfbus?		# clockports on X-Surf
+wdc*		at xsurfbus?		# IDE on X-Surf
 clockport*	at gencp?
 
 # Arcnet

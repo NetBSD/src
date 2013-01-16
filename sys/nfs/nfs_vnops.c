@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.292.2.3 2012/10/30 17:22:51 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.292.2.4 2013/01/16 05:33:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.292.2.3 2012/10/30 17:22:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.292.2.4 2013/01/16 05:33:50 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -279,7 +279,7 @@ nfs_cache_enter(struct vnode *dvp, struct vnode *vp,
 	if (!timespecisset(&dnp->n_nctime))
 		dnp->n_nctime = dnp->n_vattr->va_mtime;
 
-	cache_enter(dvp, vp, cnp);
+	cache_enter(dvp, vp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 }
 
 /*
@@ -780,6 +780,7 @@ nfs_lookup(void *v)
 	long len;
 	nfsfh_t *fhp;
 	struct nfsnode *np;
+	int cachefound;
 	int error = 0, attrflag, fhsize;
 	const int v3 = NFS_ISV3(dvp);
 
@@ -817,39 +818,36 @@ nfs_lookup(void *v)
 	 * the time the cache entry has been created. If it has,
 	 * the cache entry has to be ignored.
 	 */
-	error = cache_lookup_raw(dvp, vpp, cnp);
+	cachefound = cache_lookup_raw(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+				      cnp->cn_flags, NULL, vpp);
 	KASSERT(dvp != *vpp);
 	KASSERT((cnp->cn_flags & ISWHITEOUT) == 0);
-	if (error >= 0) {
+	if (cachefound) {
 		struct vattr vattr;
-		int err2;
 
-		if (error && error != ENOENT) {
-			*vpp = NULLVP;
-			return error;
-		}
-
-		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
-		if (err2 != 0) {
-			if (error == 0)
+		error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
+		if (error != 0) {
+			if (*vpp != NULLVP)
 				vrele(*vpp);
 			*vpp = NULLVP;
-			return err2;
+			return error;
 		}
 
 		if (VOP_GETATTR(dvp, &vattr, cnp->cn_cred)
 		    || timespeccmp(&vattr.va_mtime,
 		    &VTONFS(dvp)->n_nctime, !=)) {
-			if (error == 0) {
+			if (*vpp != NULLVP) {
 				vrele(*vpp);
 				*vpp = NULLVP;
 			}
-			cache_purge1(dvp, NULL, PURGE_CHILDREN);
+			cache_purge1(dvp, NULL, 0, PURGE_CHILDREN);
 			timespecclear(&np->n_nctime);
 			goto dorpc;
 		}
 
-		if (error == ENOENT) {
+		if (*vpp == NULLVP) {
+			/* namecache gave us a negative result */
+			error = ENOENT;
 			goto noentry;
 		}
 
@@ -877,7 +875,7 @@ nfs_lookup(void *v)
 			KASSERT(newvp->v_type != VNON);
 			return (0);
 		}
-		cache_purge1(newvp, NULL, PURGE_PARENTS);
+		cache_purge1(newvp, NULL, 0, PURGE_PARENTS);
 		vput(newvp);
 		*vpp = NULLVP;
 	}
@@ -1581,7 +1579,7 @@ nfs_mknod(void *v)
 	error = nfs_mknodrpc(dvp, ap->a_vpp, cnp, ap->a_vap);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	if (error == 0 || error == EEXIST)
-		cache_purge1(dvp, cnp, 0);
+		cache_purge1(dvp, cnp->cn_nameptr, cnp->cn_namelen, 0);
 	return (error);
 }
 
@@ -1708,13 +1706,13 @@ again:
 		if (cnp->cn_flags & MAKEENTRY)
 			nfs_cache_enter(dvp, newvp, cnp);
 		else
-			cache_purge1(dvp, cnp, 0);
+			cache_purge1(dvp, cnp->cn_nameptr, cnp->cn_namelen, 0);
 		*ap->a_vpp = newvp;
 	} else {
 		if (newvp)
 			vput(newvp);
 		if (error == EEXIST)
-			cache_purge1(dvp, cnp, 0);
+			cache_purge1(dvp, cnp->cn_nameptr, cnp->cn_namelen, 0);
 	}
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
@@ -1904,11 +1902,13 @@ nfs_rename(void *v)
 		if (fvp->v_type == VDIR)
 			cache_purge(fvp);
 		else
-			cache_purge1(fdvp, fcnp, 0);
+			cache_purge1(fdvp, fcnp->cn_nameptr, fcnp->cn_namelen,
+				     0);
 		if (tvp != NULL && tvp->v_type == VDIR)
 			cache_purge(tvp);
 		else
-			cache_purge1(tdvp, tcnp, 0);
+			cache_purge1(tdvp, tcnp->cn_nameptr, tcnp->cn_namelen,
+				     0);
 	}
 out:
 	if (tdvp == tvp)
@@ -2069,7 +2069,7 @@ nfs_link(void *v)
 	    cnp->cn_cred, curlwp);
 
 	if (error == 0) {
-		cache_purge1(dvp, cnp, 0);
+		cache_purge1(dvp, cnp->cn_nameptr, cnp->cn_namelen, 0);
 	}
 	VOP_UNLOCK(vp);
 	VN_KNOTE(vp, NOTE_LINK);
@@ -2145,7 +2145,7 @@ nfs_symlink(void *v)
 	if (rexmit && error == EEXIST)
 		error = 0;
 	if (error == 0 || error == EEXIST)
-		cache_purge1(dvp, cnp, 0);
+		cache_purge1(dvp, cnp->cn_nameptr, cnp->cn_namelen, 0);
 	if (error == 0 && newvp == NULL) {
 		struct nfsnode *np = NULL;
 
@@ -2777,18 +2777,12 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 					newvp = NFSTOV(np);
 				}
 				if (!error) {
-				    const char *xcp;
-
 				    nfs_loadattrcache(&newvp, &fattr, 0, 0);
 				    if (bigenough) {
 					dp->d_type =
 					   IFTODT(VTTOIF(np->n_vattr->va_type));
 					if (cnp->cn_namelen <= NCHNAMLEN) {
 					    ndp->ni_vp = newvp;
-					    xcp = cnp->cn_nameptr +
-						cnp->cn_namelen;
-					    cnp->cn_hash =
-					       namei_hash(cnp->cn_nameptr, &xcp);
 					    nfs_cache_enter(ndp->ni_dvp,
 						ndp->ni_vp, cnp);
 					}

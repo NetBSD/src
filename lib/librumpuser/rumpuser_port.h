@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.3.4.2 2012/10/30 18:59:17 yamt Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.3.4.3 2013/01/16 05:32:28 yamt Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -49,7 +49,9 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#if defined(__linux__)
+/* maybe this should be !__NetBSD__ ? */
+#if defined(__linux__) || defined(__sun__) || defined(__FreeBSD__)	\
+    || defined(__DragonFly__)
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,6 +76,21 @@ getenv_r(const char *name, char *buf, size_t buflen)
 }
 #endif
 
+/* Solarisa 10 has memalign() but no posix_memalign() */
+#if defined(__sun__)
+#include <stdlib.h>
+
+static inline int
+posix_memalign(void **ptr, size_t align, size_t size)
+{
+
+	*ptr = memalign(align, size);
+	if (*ptr == NULL)
+		return ENOMEM;
+	return 0;
+}
+#endif /* __sun__ */
+
 #ifndef __RCSID
 #define __RCSID(a)
 #endif
@@ -86,10 +103,10 @@ getenv_r(const char *name, char *buf, size_t buflen)
 #define _DIAGASSERT(_p_)
 #endif
 
-#ifdef __linux__
-#define SA_SETLEN(a,b)
+#if defined(__linux__) || defined(__sun__)
+#define SIN_SETLEN(a,b)
 #else /* BSD */
-#define SA_SETLEN(_sa_, _len_) ((struct sockaddr *)_sa_)->sa_len = _len_
+#define SIN_SETLEN(_sin_, _len_) _sin_.sin_len = _len_
 #endif
 
 #ifndef __predict_true
@@ -98,7 +115,7 @@ getenv_r(const char *name, char *buf, size_t buflen)
 #endif
 
 #ifndef __dead
-#define __dead
+#define __dead __attribute__((__noreturn__))
 #endif
 
 #ifndef __printflike
@@ -121,7 +138,7 @@ getenv_r(const char *name, char *buf, size_t buflen)
 #define __UNCONST(_a_) ((void *)(unsigned long)(const void *)(_a_))
 #endif
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__sun__)
 #define arc4random() random()
 #endif
 
@@ -129,11 +146,29 @@ getenv_r(const char *name, char *buf, size_t buflen)
 #define __NetBSD_Prereq__(a,b,c) 0
 #endif
 
-#if !defined(__CMSG_ALIGN)
 #include <sys/socket.h>
+
+#if !defined(__CMSG_ALIGN)
 #ifdef CMSG_ALIGN
 #define __CMSG_ALIGN(a) CMSG_ALIGN(a)
 #endif
+#endif
+
+#ifndef PF_LOCAL
+#define PF_LOCAL PF_UNIX
+#endif
+#ifndef AF_LOCAL
+#define AF_LOCAL AF_UNIX
+#endif
+
+/* pfft, but what are you going to do? */
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
+
+#if defined(__sun__) && !defined(RUMP_REGISTER_T)
+#define RUMP_REGISTER_T long
+typedef RUMP_REGISTER_T register_t;
 #endif
 
 #endif /* _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.41.4.1 2012/04/17 00:09:54 yamt Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.41.4.2 2013/01/16 05:34:12 yamt Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.41.4.1 2012/04/17 00:09:54 yamt Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.41.4.2 2013/01/16 05:34:12 yamt Exp $");
 #endif
 #endif
 
@@ -724,10 +724,10 @@ main(int argc, char *argv[])
 		if (error0)
 			errx(1, "Cannot get address for `%s' (%s)", source,
 			    gai_strerror(error0));
-		if (res->ai_addrlen > sizeof(Src))
+		if (res0->ai_addrlen > sizeof(Src))
 			errx(1, "Bad incompatible address length");
-		memcpy(&Src, res->ai_addr, res->ai_addrlen);
-		freeaddrinfo(res);
+		memcpy(&Src, res0->ai_addr, res0->ai_addrlen);
+		freeaddrinfo(res0);
 	} else {
 		struct sockaddr_in6 Nxt;
 		int dummy;

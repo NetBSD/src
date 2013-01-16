@@ -1,4 +1,4 @@
-.\"	$NetBSD: voodoofb.4,v 1.2.4.2 2012/10/30 18:59:40 yamt Exp $
+.\"	$NetBSD: voodoofb.4,v 1.2.4.3 2013/01/16 05:32:36 yamt Exp $
 .\"
 .\" Copyright (c) 2012 Radoslaw Kujawa
 .\" All rights reserved.
@@ -24,20 +24,20 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 13, 2012
+.Dd November 9, 2012
 .Dt VOODOOFB 4
 .Os
 .Sh NAME
 .Nm voodoofb
-.Nd 3Dfx Voodoo 3 framebuffer driver
+.Nd 3Dfx Voodoo 3 / Voodoo Banshee framebuffer driver
 .Sh SYNOPSIS
 .Cd "voodoofb* at pci?"
 .Cd "wsdisplay* at voodoofb?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the 3Dfx Voodoo 3 series of graphics cards
-and provides an interface for machine independent
+driver provides support for the 3Dfx Voodoo 3 and 3Dfx Voodoo Banshee series of
+graphics cards and provides an interface for machine independent
 .Xr wscons 4
 driver.
 .Pp

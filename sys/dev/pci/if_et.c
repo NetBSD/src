@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.2.4.2 2012/10/30 17:21:28 yamt Exp $	*/
+/*	$NetBSD: if_et.c,v 1.2.4.3 2013/01/16 05:33:18 yamt Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.2.4.2 2012/10/30 17:21:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.2.4.3 2013/01/16 05:33:18 yamt Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -81,17 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.2.4.2 2012/10/30 17:21:28 yamt Exp $");
 
 #include <dev/pci/if_etreg.h>
 
-/* XXX temporary porting goop */
-#define KKASSERT(cond) if (!(cond)) panic("KKASSERT: %s in %s", #cond, __func__)
-#undef KASSERT
-#define KASSERT(cond, complaint) if (!(cond)) panic complaint
-
-/* these macros in particular need to die, so gross */
-#define __LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
-#define __SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
-#define __SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
-/* XXX end porting goop */
-
 int	et_match(device_t, cfdata_t, void *);
 void	et_attach(device_t, device_t, void *);
 int	et_detach(device_t, int flags);
@@ -120,7 +109,6 @@ int	et_dma_mem_create(struct et_softc *, bus_size_t,
 void	et_dma_mem_destroy(struct et_softc *, void *, bus_dmamap_t);
 int	et_dma_mbuf_create(struct et_softc *);
 void	et_dma_mbuf_destroy(struct et_softc *, int, const int[]);
-void	et_dma_ring_addr(void *, bus_dma_segment_t *, int, int);
 
 int	et_init_tx_ring(struct et_softc *);
 int	et_init_rx_ring(struct et_softc *);
@@ -183,7 +171,7 @@ et_match(device_t dev, cfdata_t match, void *aux)
 	const struct et_product *ep;
 	int i;
 
-	for (i = 0; i < sizeof(et_devices) / sizeof(et_devices[0]); i++) {
+	for (i = 0; i < __arraycount(et_devices); i++) {
 		ep = &et_devices[i];
 		if (PCI_VENDOR(pa->pa_id) == ep->vendor &&
 		    PCI_PRODUCT(pa->pa_id) == ep->product)
@@ -830,8 +818,8 @@ et_dma_mbuf_destroy(struct et_softc *sc, int tx_done, const int rx_done[])
 		for (j = 0; j < rx_done[i]; ++j) {
 			struct et_rxbuf *rb = &rbd->rbd_buf[j];
 
-			KASSERT(rb->rb_mbuf == NULL,
-			    ("RX mbuf in %d RX ring is not freed yet\n", i));
+			KASSERTMSG(rb->rb_mbuf == NULL,
+			    "RX mbuf in %d RX ring is not freed yet\n", i);
 			bus_dmamap_destroy(sc->sc_dmat, rb->rb_dmap); 
 		}
 	}
@@ -842,7 +830,7 @@ et_dma_mbuf_destroy(struct et_softc *sc, int tx_done, const int rx_done[])
 	for (i = 0; i < tx_done; ++i) {
 		struct et_txbuf *tb = &tbd->tbd_buf[i];
 
-		KASSERT(tb->tb_mbuf == NULL, ("TX mbuf is not freed yet\n"));
+		KASSERTMSG(tb->tb_mbuf == NULL, "TX mbuf is not freed yet\n");
 		bus_dmamap_destroy(sc->sc_dmat, tb->tb_dmap);
 	}
 
@@ -899,13 +887,6 @@ et_dma_mem_destroy(struct et_softc *sc, void *addr, bus_dmamap_t dmap)
 {
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 	bus_dmamem_free(sc->sc_dmat, (bus_dma_segment_t *)&addr, 1);
-}
-
-void
-et_dma_ring_addr(void *arg, bus_dma_segment_t *seg, int nseg, int error)
-{
-	KASSERT(nseg == 1, ("too many segments\n"));
-	*((bus_addr_t *)arg) = seg->ds_addr;
 }
 
 void
@@ -1729,7 +1710,7 @@ et_rxeof(struct et_softc *sc)
 		int buflen, buf_idx, ring_idx;
 		uint32_t rxstat_pos, rxring_pos;
 
-		KKASSERT(rxst_ring->rsr_index < ET_RX_NSTAT);
+		KASSERT(rxst_ring->rsr_index < ET_RX_NSTAT);
 		st = &rxst_ring->rsr_stat[rxst_ring->rsr_index];
 
 		buflen = __SHIFTOUT(st->rxst_info2, ET_RXST_INFO2_LEN);
@@ -1791,7 +1772,7 @@ et_rxeof(struct et_softc *sc)
 			    ring_idx, buf_idx, rx_ring->rr_index);
 		}
 
-		KKASSERT(rx_ring->rr_index < ET_RX_NDESC);
+		KASSERT(rx_ring->rr_index < ET_RX_NDESC);
 		if (++rx_ring->rr_index == ET_RX_NDESC) {
 			rx_ring->rr_index = 0;
 			rx_ring->rr_wrap ^= 1;
@@ -1817,10 +1798,10 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 	maxsegs = ET_TX_NDESC - tbd->tbd_used;
 	if (maxsegs > ET_NSEG_MAX)
 		maxsegs = ET_NSEG_MAX;
-	KASSERT(maxsegs >= ET_NSEG_SPARE,
-		("not enough spare TX desc (%d)\n", maxsegs));
+	KASSERTMSG(maxsegs >= ET_NSEG_SPARE,
+		"not enough spare TX desc (%d)\n", maxsegs);
 
-	KKASSERT(tx_ring->tr_ready_index < ET_TX_NDESC);
+	KASSERT(tx_ring->tr_ready_index < ET_TX_NDESC);
 	first_idx = tx_ring->tr_ready_index;
 	map = tbd->tbd_buf[first_idx].tb_dmap;
 
@@ -1905,7 +1886,7 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 			last_idx = idx;
 		}
 
-		KKASSERT(tx_ring->tr_ready_index < ET_TX_NDESC);
+		KASSERT(tx_ring->tr_ready_index < ET_TX_NDESC);
 		if (++tx_ring->tr_ready_index == ET_TX_NDESC) {
 			tx_ring->tr_ready_index = 0;
 			tx_ring->tr_ready_wrap ^= 1;
@@ -1914,13 +1895,13 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 	td = &tx_ring->tr_desc[first_idx];
 	td->td_ctrl2 |= ET_TDCTRL2_FIRST_FRAG;	/* First frag */
 
-	KKASSERT(last_idx >= 0);
+	KASSERT(last_idx >= 0);
 	tbd->tbd_buf[first_idx].tb_dmap = tbd->tbd_buf[last_idx].tb_dmap;
 	tbd->tbd_buf[last_idx].tb_dmap = map;
 	tbd->tbd_buf[last_idx].tb_mbuf = m;
 
 	tbd->tbd_used += map->dm_nsegs;
-	KKASSERT(tbd->tbd_used <= ET_TX_NDESC);
+	KASSERT(tbd->tbd_used <= ET_TX_NDESC);
 
 	bus_dmamap_sync(sc->sc_dmat, tx_ring->tr_dmap, 0,
 	    tx_ring->tr_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
@@ -1960,7 +1941,7 @@ et_txeof(struct et_softc *sc)
 	while (tbd->tbd_start_index != end || tbd->tbd_start_wrap != wrap) {
 		struct et_txbuf *tb;
 
-		KKASSERT(tbd->tbd_start_index < ET_TX_NDESC);
+		KASSERT(tbd->tbd_start_index < ET_TX_NDESC);
 		tb = &tbd->tbd_buf[tbd->tbd_start_index];
 
 		bzero(&tx_ring->tr_desc[tbd->tbd_start_index],
@@ -1980,7 +1961,7 @@ et_txeof(struct et_softc *sc)
 			tbd->tbd_start_wrap ^= 1;
 		}
 
-		KKASSERT(tbd->tbd_used > 0);
+		KASSERT(tbd->tbd_used > 0);
 		tbd->tbd_used--;
 	}
 
@@ -2040,7 +2021,7 @@ et_newbuf(struct et_rxbuf_data *rbd, int buf_idx, int init, int len0)
 	bus_dmamap_t dmap;
 	int error, len;
 
-	KKASSERT(buf_idx < ET_RX_NDESC);
+	KASSERT(buf_idx < ET_RX_NDESC);
 	rb = &rbd->rbd_buf[buf_idx];
 
 	if (len0 >= MINCLSIZE) {

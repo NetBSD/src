@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.26.2.1 2012/10/30 17:19:01 yamt Exp $	*/
+/*	$NetBSD: epe.c,v 1.26.2.2 2013/01/16 05:32:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.26.2.1 2012/10/30 17:19:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.26.2.2 2013/01/16 05:32:46 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,9 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.26.2.1 2012/10/30 17:19:01 yamt Exp $");
 #define CTRLPAGE_DMASYNC(x, y, z) \
 	bus_dmamap_sync(sc->sc_dmat, sc->ctrlpage_dmamap, (x), (y), (z))
 #else
-#define EPE_READ(x) *(volatile u_int32_t *) \
+#define EPE_READ(x) *(volatile uint32_t *) \
 	(EP93XX_AHB_VBASE + EP93XX_AHB_EPE + (EPE_ ## x))
-#define EPE_WRITE(x, y) *(volatile u_int32_t *) \
+#define EPE_WRITE(x, y) *(volatile uint32_t *) \
 	(EP93XX_AHB_VBASE + EP93XX_AHB_EPE + (EPE_ ## x)) = y
 #define CTRLPAGE_DMASYNC(x, y, z)
 #endif /* ! EPE_FAST */
@@ -162,21 +162,21 @@ static int
 epe_gctx(struct epe_softc *sc)
 {
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
-	u_int32_t *cur, ndq = 0;
+	uint32_t *cur, ndq = 0;
 
 	/* Handle transmit completions */
-	cur = (u_int32_t *)(EPE_READ(TXStsQCurAdd) -
+	cur = (uint32_t *)(EPE_READ(TXStsQCurAdd) -
 		sc->ctrlpage_dsaddr + (char*)sc->ctrlpage);
 
 	if (sc->TXStsQ_cur != cur) { 
-		CTRLPAGE_DMASYNC(TX_QLEN * 2 * sizeof(u_int32_t), 
-			TX_QLEN * sizeof(u_int32_t), BUS_DMASYNC_PREREAD);
+		CTRLPAGE_DMASYNC(TX_QLEN * 2 * sizeof(uint32_t), 
+			TX_QLEN * sizeof(uint32_t), BUS_DMASYNC_PREREAD);
 	} else {
 		return 0;
 	}
 
 	do {
-		u_int32_t tbi = *sc->TXStsQ_cur & 0x7fff;
+		uint32_t tbi = *sc->TXStsQ_cur & 0x7fff;
 		struct mbuf *m = sc->txq[tbi].m;
 
 		if ((*sc->TXStsQ_cur & TXStsQ_TxWE) == 0) {
@@ -211,20 +211,20 @@ epe_intr(void *arg)
 {
 	struct epe_softc *sc = (struct epe_softc *)arg;
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
-	u_int32_t ndq = 0, irq, *cur;
+	uint32_t ndq = 0, irq, *cur;
 
 	irq = EPE_READ(IntStsC);
 begin:
-	cur = (u_int32_t *)(EPE_READ(RXStsQCurAdd) -
+	cur = (uint32_t *)(EPE_READ(RXStsQCurAdd) -
 		sc->ctrlpage_dsaddr + (char*)sc->ctrlpage);
-	CTRLPAGE_DMASYNC(TX_QLEN * 3 * sizeof(u_int32_t),
-		RX_QLEN * 4 * sizeof(u_int32_t), 
+	CTRLPAGE_DMASYNC(TX_QLEN * 3 * sizeof(uint32_t),
+		RX_QLEN * 4 * sizeof(uint32_t), 
 		BUS_DMASYNC_PREREAD);
 	while (sc->RXStsQ_cur != cur) {
 		if ((sc->RXStsQ_cur[0] & (RXStsQ_RWE|RXStsQ_RFP|RXStsQ_EOB)) == 
 			(RXStsQ_RWE|RXStsQ_RFP|RXStsQ_EOB)) {
-			u_int32_t bi = (sc->RXStsQ_cur[1] >> 16) & 0x7fff;
-			u_int32_t fl = sc->RXStsQ_cur[1] & 0xffff;
+			uint32_t bi = (sc->RXStsQ_cur[1] >> 16) & 0x7fff;
+			uint32_t fl = sc->RXStsQ_cur[1] & 0xffff;
 			struct mbuf *m;
 
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -267,8 +267,8 @@ begin:
 
 	if (ndq > 0) {
 		ifp->if_ipackets += ndq;
-		CTRLPAGE_DMASYNC(TX_QLEN * 3 * sizeof(u_int32_t),
- 			RX_QLEN * 4 * sizeof(u_int32_t), 
+		CTRLPAGE_DMASYNC(TX_QLEN * 3 * sizeof(uint32_t),
+ 			RX_QLEN * 4 * sizeof(uint32_t), 
 			BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 		EPE_WRITE(RXStsEnq, ndq);
 		EPE_WRITE(RXDEnq, ndq);
@@ -342,7 +342,7 @@ epe_init(struct epe_softc *sc)
 	/* Set up pointers to start of each queue in kernel addr space.
 	 * Each descriptor queue or status queue entry uses 2 words
 	 */
-	sc->TXDQ = (u_int32_t *)sc->ctrlpage;
+	sc->TXDQ = (uint32_t *)sc->ctrlpage;
 	sc->TXDQ_cur = sc->TXDQ;
 	sc->TXDQ_avail = TX_QLEN - 1;
 	sc->TXStsQ = &sc->TXDQ[TX_QLEN * 2];
@@ -355,24 +355,24 @@ epe_init(struct epe_softc *sc)
 	 * with the physical addresses. 
 	 */
 	addr = (char *)sc->ctrlpage_dmamap->dm_segs[0].ds_addr;
-	EPE_WRITE(TXDQBAdd, (u_int32_t)addr);
-	EPE_WRITE(TXDQCurAdd, (u_int32_t)addr);
-	EPE_WRITE(TXDQBLen, TX_QLEN * 2 * sizeof(u_int32_t)); 
+	EPE_WRITE(TXDQBAdd, (uint32_t)addr);
+	EPE_WRITE(TXDQCurAdd, (uint32_t)addr);
+	EPE_WRITE(TXDQBLen, TX_QLEN * 2 * sizeof(uint32_t)); 
 
-	addr += (sc->TXStsQ - sc->TXDQ) * sizeof(u_int32_t);
-	EPE_WRITE(TXStsQBAdd, (u_int32_t)addr);
-	EPE_WRITE(TXStsQCurAdd, (u_int32_t)addr);
-	EPE_WRITE(TXStsQBLen, TX_QLEN * sizeof(u_int32_t));
+	addr += (sc->TXStsQ - sc->TXDQ) * sizeof(uint32_t);
+	EPE_WRITE(TXStsQBAdd, (uint32_t)addr);
+	EPE_WRITE(TXStsQCurAdd, (uint32_t)addr);
+	EPE_WRITE(TXStsQBLen, TX_QLEN * sizeof(uint32_t));
 
-	addr += (sc->RXDQ - sc->TXStsQ) * sizeof(u_int32_t);
-	EPE_WRITE(RXDQBAdd, (u_int32_t)addr);
-	EPE_WRITE(RXDCurAdd, (u_int32_t)addr);
-	EPE_WRITE(RXDQBLen, RX_QLEN * 2 * sizeof(u_int32_t));
+	addr += (sc->RXDQ - sc->TXStsQ) * sizeof(uint32_t);
+	EPE_WRITE(RXDQBAdd, (uint32_t)addr);
+	EPE_WRITE(RXDCurAdd, (uint32_t)addr);
+	EPE_WRITE(RXDQBLen, RX_QLEN * 2 * sizeof(uint32_t));
 	
-	addr += (sc->RXStsQ - sc->RXDQ) * sizeof(u_int32_t);
-	EPE_WRITE(RXStsQBAdd, (u_int32_t)addr);
-	EPE_WRITE(RXStsQCurAdd, (u_int32_t)addr);
-	EPE_WRITE(RXStsQBLen, RX_QLEN * 2 * sizeof(u_int32_t));
+	addr += (sc->RXStsQ - sc->RXDQ) * sizeof(uint32_t);
+	EPE_WRITE(RXStsQBAdd, (uint32_t)addr);
+	EPE_WRITE(RXStsQCurAdd, (uint32_t)addr);
+	EPE_WRITE(RXStsQBLen, RX_QLEN * 2 * sizeof(uint32_t));
 
 	/* Populate the RXDQ with mbufs */
 	for(i = 0; i < RX_QLEN; i++) {
@@ -460,7 +460,7 @@ int
 epe_mii_readreg(device_t self, int phy, int reg)
 {
 	struct epe_softc *sc;
-	u_int32_t d, v;
+	uint32_t d, v;
 
 	sc = device_private(self);
 
@@ -477,7 +477,7 @@ void
 epe_mii_writereg(device_t self, int phy, int reg, int val)
 {
 	struct epe_softc *sc;
-	u_int32_t d;
+	uint32_t d;
 
 	sc = device_private(self);
 
@@ -494,7 +494,7 @@ void
 epe_statchg(struct ifnet *ifp)
 {
         struct epe_softc *sc = ifp->if_softc;
-        u_int32_t reg;
+        uint32_t reg;
 
         /*
          * We must keep the MAC and the PHY in sync as
@@ -514,7 +514,7 @@ epe_tick(void *arg)
 	struct epe_softc* sc = (struct epe_softc *)arg;
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
 	int s;
-	u_int32_t misses;
+	uint32_t misses;
 
 	ifp->if_collisions += EPE_READ(TXCollCnt);
 	/* These misses are ok, they will happen if the RAM/CPU can't keep up */
@@ -598,7 +598,7 @@ more:
 				goto stop;
 			}
 		}
-		mn->m_data = (void *)(((u_int32_t)mn->m_data + 0x3) & (~0x3)); 
+		mn->m_data = (void *)(((uint32_t)mn->m_data + 0x3) & (~0x3)); 
 		m_copydata(m, 0, m->m_pkthdr.len, mtod(mn, void *));
 		mn->m_pkthdr.len = mn->m_len = m->m_pkthdr.len;
 		IFQ_DEQUEUE(&ifp->if_snd, m);
@@ -648,7 +648,7 @@ stop:
 	if (ndq > 0) {
 		sc->TXDQ_avail -= ndq;
 		sc->TXDQ_cur = &sc->TXDQ[bi];
-		CTRLPAGE_DMASYNC(0, TX_QLEN * 2 * sizeof(u_int32_t),
+		CTRLPAGE_DMASYNC(0, TX_QLEN * 2 * sizeof(uint32_t),
 			BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 		EPE_WRITE(TXDEnq, ndq);
 	}
@@ -720,9 +720,9 @@ epe_setaddr(struct ifnet *ifp)
 	struct ethercom *ac = &sc->sc_ec;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	u_int8_t ias[2][ETHER_ADDR_LEN];
-	u_int32_t h, nma = 0, hashes[2] = { 0, 0 };
-	u_int32_t rxctl = EPE_READ(RXCtl);
+	uint8_t ias[2][ETHER_ADDR_LEN];
+	uint32_t h, nma = 0, hashes[2] = { 0, 0 };
+	uint32_t rxctl = EPE_READ(RXCtl);
 
 	/* disable receiver temporarily */
 	EPE_WRITE(RXCtl, rxctl & ~RXCtl_SRxON);
