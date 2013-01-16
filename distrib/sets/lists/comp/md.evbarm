@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.17 2013/01/11 14:22:55 matt Exp $
+# $NetBSD: md.evbarm,v 1.18 2013/01/16 16:01:06 christos Exp $
 ./usr/include/evbarm				comp-c-include
 ./usr/include/evbarm/ansi.h			comp-c-include
 ./usr/include/evbarm/aout_machdep.h		comp-c-include
@@ -48,6 +48,3 @@
 ./usr/include/evbarm/varargs.h			comp-obsolete		obsolete
 ./usr/include/evbarm/vmparam.h			comp-c-include
 ./usr/include/evbarm/wchar_limits.h		comp-c-include
-./usr/libdata/debug/usr/sbin/elftosb.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/sbin/sbkeygen.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/sbin/sbtool.debug	comp-util-debug		debug
