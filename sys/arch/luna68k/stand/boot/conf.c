@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2013/01/13 14:10:55 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2013/01/16 15:46:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -92,11 +92,16 @@ int	n_netif_drivers = __arraycount(netif_drivers);
  * Filesystem configuration
  */
 #ifdef SUPPORT_DISK
-struct fs_ops file_system_ufs[] = { FS_OPS(ufs) };
+struct fs_ops file_system_disk[] = {
+	FS_OPS(ffsv1),
+	FS_OPS(ffsv2)
+};
+int	nfsys_disk = __arraycount(file_system_disk);
 #endif
 #ifdef SUPPORT_ETHERNET
 struct fs_ops file_system_nfs[] = { FS_OPS(nfs) };
 #endif
 
-struct fs_ops file_system[1];
+#define MAX_NFSYS	5
+struct fs_ops file_system[MAX_NFSYS];
 int	nfsys = 1;		/* we always know which one we want */
