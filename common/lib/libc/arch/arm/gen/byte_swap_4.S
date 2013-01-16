@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.5 2012/11/27 23:57:07 matt Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.6 2013/01/16 21:48:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,11 +42,11 @@ _ENTRY(_C_LABEL(htonl))
 #endif
 _PROF_PROLOGUE
 #ifdef _ARM_ARCH_6
-	rev		r0, r0
+	rev	r0, r0
 #else
-	eor		r1, r0, r0, ror #16
-	bic		r1, r1, #0x00FF0000
-	mov		r0, r0, ror #8
-	eor		r0, r0, r1, lsr #8
+	eor	r1, r0, r0, ror #16	/* 4.3.2.1 -> 42.31.42.31 */
+	bic	r1, r1, #0x00FF0000	/* 42.31.42.31 -> 42.0.42.31 */
+	mov	r0, r0, ror #8		/* 4.3.2.1 -> 1.4.3.2 */
+	eor	r0, r0, r1, lsr #8	/* 1.4.3.2 ^ 0.42.0.42 -> 1.2.3.4 */
 #endif
 	RET
