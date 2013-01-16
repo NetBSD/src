@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.62 2013/01/05 01:30:15 christos Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.63 2013/01/16 17:18:55 christos Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.62 2013/01/05 01:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.63 2013/01/16 17:18:55 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -930,7 +930,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 				goto done;
 			}
 
-			rxlen = le16toh(hdr.len & AXE_RH1M_RXLEN_MASK);
+			rxlen = le16toh(hdr.len) & AXE_RH1M_RXLEN_MASK;
 			if (total_len < rxlen) {
 				pktlen = total_len;
 				total_len = 0;
