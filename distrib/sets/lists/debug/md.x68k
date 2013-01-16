@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.1 2013/01/16 16:01:08 christos Exp $
+# $NetBSD: md.x68k,v 1.2 2013/01/16 21:11:10 christos Exp $
 ./usr/libdata/debug/usr/bin/bellctrl.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/loadfont.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/loadkmap.debug	comp-util-debug		debug
@@ -9,5 +9,3 @@
 ./usr/libdata/debug/usr/mdec/newdisk.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/memswitch.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/poffd.debug	comp-obsolete		obsolete
-./usr/libdata/debug/usr/X11R6/bin/X68k.debug	-unknown-	debug
-./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug	-unknown-	debug

@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.141 2013/01/16 16:01:05 christos Exp $
+#	$NetBSD: sets.subr,v 1.142 2013/01/16 21:11:05 christos Exp $
 #
 
 #
@@ -146,8 +146,10 @@ else
 fi
 if [ "${MKDEBUG}" = "no" ]; then
 	debugset=""
+	xdebugset=""
 else
 	debugset="debug"
+	xdebugset="xdebug"
 fi
 # Determine lib type. Do this first so stlib also gets set.
 if [ "${OBJECT_FMT}" = "ELF" ]; then
@@ -161,7 +163,7 @@ if [ "${MKPIC}" = "no" ]; then
 	shlib=no
 fi
 nlists="base comp $debugset etc games man misc $modset $testset text"
-xlists="xbase xcomp xetc xfont xserver"
+xlists="xbase xcomp $xdebugset xetc xfont xserver"
 extlists="extbase extcomp extetc"
 
 OSRELEASE=$(${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -k)
@@ -177,7 +179,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.141 2013/01/16 16:01:05 christos Exp $
+# 	# $NetBSD: sets.subr,v 1.142 2013/01/16 21:11:05 christos Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
