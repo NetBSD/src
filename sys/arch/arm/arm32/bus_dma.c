@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.66 2012/10/23 12:23:20 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.67 2013/01/16 22:32:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.66 2012/10/23 12:23:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.67 2013/01/16 22:32:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -758,6 +758,20 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool read
 		cpu_dcache_wb_range(va, len);
 		cpu_sdcache_wb_range(va, pa, len);
 		break;
+
+#ifdef CPU_CORTEX
+	/*
+	 * Cortex CPUs can do speculative loads so we need to clean the cache
+	 * after a DMA read to deal with any speculatively loaded cache lines.
+	 * Since these can't be dirty, we can just invalidate them and don't
+	 * have to worry about having to write back their contents.
+	 */
+	case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
+	case BUS_DMASYNC_POSTREAD:
+		cpu_dcache_inv_range(va, len);
+		cpu_sdcache_inv_range(va, pa, len);
+		break;
+#endif
 	}
 }
 
@@ -786,7 +800,7 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 		if ((ds->_ds_flags & _BUS_DMAMAP_COHERENT) == 0)
 			_bus_dmamap_sync_segment(va + offset, pa, seglen, ops,
-			     false);
+			    false);
 
 		offset += seglen;
 		len -= seglen;
@@ -935,7 +949,9 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *	we are doing a PREREAD|PREWRITE, we can collapse
 	 *	the whole thing into a single Wb-Inv.
 	 *
-	 *	POSTREAD -- Nothing.
+	 *	POSTREAD -- Re-invalidate the D-cache in case speculative
+	 *	memory accesses caused cachelines to become valid with now
+	 *	invalid data.
 	 *
 	 *	POSTWRITE -- Nothing.
 	 */
@@ -946,7 +962,12 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #endif
 
 	const int pre_ops = ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	if (!bouncing && pre_ops == 0) {
+#ifdef CPU_CORTEX
+	const int post_ops = ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+#else
+	const int post_ops = 0;
+#endif
+	if (!bouncing && pre_ops == 0 && post_ops == BUS_DMASYNC_POSTWRITE) {
 		return;
 	}
 
