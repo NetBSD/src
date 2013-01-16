@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcarm,v 1.18 2013/01/11 14:22:55 matt Exp $
+# $NetBSD: md.hpcarm,v 1.19 2013/01/16 16:01:06 christos Exp $
 ./usr/include/hpcarm				comp-c-include
 ./usr/include/hpcarm/ansi.h			comp-c-include
 ./usr/include/hpcarm/aout_machdep.h		comp-c-include
@@ -48,5 +48,3 @@
 ./usr/include/hpcarm/varargs.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/vmparam.h			comp-c-include
 ./usr/include/hpcarm/wchar_limits.h		comp-c-include
-./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug

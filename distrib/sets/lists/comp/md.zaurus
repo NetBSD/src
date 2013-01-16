@@ -1,4 +1,4 @@
-# $NetBSD: md.zaurus,v 1.10 2013/01/11 14:22:55 matt Exp $
+# $NetBSD: md.zaurus,v 1.11 2013/01/16 16:01:06 christos Exp $
 ./usr/include/zaurus				comp-c-include
 ./usr/include/zaurus/ansi.h			comp-c-include
 ./usr/include/zaurus/aout_machdep.h		comp-c-include
@@ -47,6 +47,3 @@
 ./usr/include/zaurus/varargs.h			comp-obsolete		obsolete
 ./usr/include/zaurus/vmparam.h			comp-c-include
 ./usr/include/zaurus/wchar_limits.h		comp-c-include
-./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug

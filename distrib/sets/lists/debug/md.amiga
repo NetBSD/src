@@ -1,0 +1,8 @@
+# $NetBSD: md.amiga,v 1.1 2013/01/16 16:01:07 christos Exp $
+./usr/libdata/debug/sbin/binpatch.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/grfconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/iteconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/loadkmap.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/videomode.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/X11R6/bin/Xamiga.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug
