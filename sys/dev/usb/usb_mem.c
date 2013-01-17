@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.55 2013/01/07 15:07:41 prlw1 Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.56 2013/01/17 06:24:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.55 2013/01/07 15:07:41 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.56 2013/01/17 06:24:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
-#define USB_MEM_SMALL 64
+#define USB_MEM_SMALL roundup(64, CACHE_LINE_SIZE)
 #define USB_MEM_CHUNKS 64
 #define USB_MEM_BLOCK (USB_MEM_SMALL * USB_MEM_CHUNKS)
 
