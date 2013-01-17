@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.278 2012/08/24 20:26:24 jmmv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.279 2013/01/17 15:42:59 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -49,6 +49,9 @@ LDFLAGS+=	${PIE_LDFLAGS}
 .endif
 
 CFLAGS+=	${COPTS}
+.if defined(MKDEBUG) && (${MKDEBUG} != "no")
+CFLAGS+=	-g
+.endif
 OBJCFLAGS+=	${OBJCOPTS}
 MKDEP_SUFFIXES?=	.o .ln
 
