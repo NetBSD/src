@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_dump.c,v 1.2 2010/02/22 11:01:29 darran Exp $	*/
+/*	$NetBSD: dwarf_dump.c,v 1.3 2013/01/17 22:06:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libdwarf/dwarf_dump.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/lib/libdwarf/dwarf_dump.c,v 1.3 2012/11/17 01:49:48 svnexp Exp $
  */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -246,6 +246,8 @@ get_form_desc(uint32_t form)
 		return "DW_FORM_data8";
 	case DW_FORM_flag:
 		return "DW_FORM_flag";
+	case DW_FORM_flag_present:
+		return "DW_FORM_flag_present";
 	case DW_FORM_indirect:
 		return "DW_FORM_indirect";
 	case DW_FORM_ref1:
@@ -654,6 +656,7 @@ dwarf_dump_av(Dwarf_Die die, Dwarf_AttrValue av)
 	case DW_FORM_data4:
 	case DW_FORM_data8:
 	case DW_FORM_flag:
+	case DW_FORM_flag_present:
 		printf("%llu", (unsigned long long) av->u[0].u64);
 		break;
 	case DW_FORM_ref1:

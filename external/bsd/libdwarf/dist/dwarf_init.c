@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_init.c,v 1.3 2010/02/22 11:01:29 darran Exp $	*/
+/*	$NetBSD: dwarf_init.c,v 1.4 2013/01/17 22:06:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libdwarf/dwarf_init.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/lib/libdwarf/dwarf_init.c,v 1.5 2012/11/17 01:49:48 svnexp Exp $
  */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -402,6 +402,10 @@ dwarf_init_attr(Dwarf_Debug dbg, Elf_Data **dp, uint64_t *offsetp,
 		avref.u[1].s = elf_strptr(dbg->dbg_elf,
 		    dbg->dbg_s[DWARF_debug_str].s_shnum, avref.u[0].u64);
 		break;
+	case DW_FORM_flag_present:
+		/* This form has no value encoded in the DIE. */
+		avref.u[0].u64 = 1;
+		break;
 	default:
 		DWARF_SET_ERROR(error, DWARF_E_NOT_IMPLEMENTED);
 		ret = DWARF_E_NOT_IMPLEMENTED;
@@ -553,7 +557,7 @@ dwarf_init_info(Dwarf_Debug dbg, Dwarf_Error *error)
 			Dwarf_Attribute at;
 			Dwarf_Die die;
 			uint64_t abnum;
-			uint64_t die_offset = offset;;
+			uint64_t die_offset = offset;
 
 			abnum = dwarf_read_uleb128(&d, &offset);
 
@@ -583,6 +587,9 @@ dwarf_init_info(Dwarf_Debug dbg, Dwarf_Error *error)
 
 		offset = next_offset;
 	}
+
+	/* Build the function table. */
+	dwarf_build_function_table(dbg);
 
 	return ret;
 }
@@ -692,6 +699,7 @@ dwarf_elf_init(Elf *elf, int mode, Dwarf_Debug *ret_dbg, Dwarf_Error *error)
 		dbg->dbg_mode		= mode;
 
 		STAILQ_INIT(&dbg->dbg_cu);
+		STAILQ_INIT(&dbg->dbg_func);
 
 		*ret_dbg = dbg;
 
