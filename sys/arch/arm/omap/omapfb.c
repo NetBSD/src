@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.12 2013/01/16 20:34:10 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.13 2013/01/17 01:10:52 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.12 2013/01/16 20:34:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.13 2013/01/17 01:10:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -801,6 +801,17 @@ omapfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct omapfb_softc *sc = scr->scr_cookie;
 
+	if (c == 0x20) {
+		uint32_t fg, bg, ul; 
+		rasops_unpack_attr(attr, &fg, &bg, &ul);
+		omapfb_rectfill(sc,
+		    ri->ri_xorigin + ri->ri_font->fontwidth * col,
+		    ri->ri_yorigin + ri->ri_font->fontheight * row,
+		    ri->ri_font->fontwidth,
+		    ri->ri_font->fontheight,
+		    ri->ri_devcmap[bg]);
+		return;
+	}
 	omapfb_wait_idle(sc);
 	sc->sc_putchar(cookie, row, col, c, attr);	
 }
