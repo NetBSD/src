@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.36 2013/01/15 23:52:48 christos Exp $	*/
+/*	$NetBSD: interact.c,v 1.37 2013/01/17 18:33:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.36 2013/01/15 23:52:48 christos Exp $");
+__RCSID("$NetBSD: interact.c,v 1.37 2013/01/17 18:33:58 christos Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -112,7 +112,7 @@ cmd_adjust(struct disklabel *lp, char *s, int fd)
 {
 	struct disklabel dl;
 
-	if (ioctl(fd, DIOCGDEFLABEL, &dl) == -1) {
+	if (dk_ioctl(fd, DIOCGDEFLABEL, &dl) == -1) {
 		warn("Cannot get default label");
 		return;
 	}
