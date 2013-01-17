@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.68 2012/11/18 00:06:57 chs Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.69 2013/01/17 14:36:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.68 2012/11/18 00:06:57 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.69 2013/01/17 14:36:36 matt Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -107,7 +107,8 @@ static uint32_t *ksyms_nmap = NULL;
 static int ksyms_maxlen;
 static bool ksyms_isopen;
 static bool ksyms_initted;
-static kmutex_t ksyms_lock;
+static bool ksyms_loaded;
+static kmutex_t ksyms_lock __cacheline_aligned;
 static struct ksyms_symtab kernel_symtab;
 
 void ksymsattach(int);
@@ -220,14 +221,17 @@ ksyms_init(void)
 {
 
 #ifdef SYMTAB_SPACE
-	if (!ksyms_initted &&
+	if (!ksyms_loaded &&
 	    strncmp(db_symtab, SYMTAB_FILLER, sizeof(SYMTAB_FILLER))) {
 		ksyms_addsyms_elf(db_symtabsize, db_symtab,
 		    db_symtab + db_symtabsize);
 	}
 #endif
 
-	mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
+	if (!ksyms_initted) {
+		mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
+		ksyms_initted = true;
+	}
 }
 
 /*
@@ -409,7 +413,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	membar_producer();
 	TAILQ_INSERT_TAIL(&ksyms_symtabs, tab, sd_queue);
 	ksyms_sizes_calc();
-	ksyms_initted = true;
+	ksyms_loaded = true;
 }
 
 /*
@@ -574,7 +578,7 @@ ksyms_getval(const char *mod, const char *sym, unsigned long *val, int type)
 {
 	int rc;
 
-	if (!ksyms_initted)
+	if (!ksyms_loaded)
 		return ENOENT;
 
 	mutex_enter(&ksyms_lock);
@@ -618,7 +622,7 @@ ksyms_mod_foreach(const char *mod, ksyms_callback_t callback, void *opaque)
 	char *str;
 	int symindx;
 
-	if (!ksyms_initted)
+	if (!ksyms_loaded)
 		return ENOENT;
 
 	mutex_enter(&ksyms_lock);
@@ -666,7 +670,7 @@ ksyms_getname(const char **mod, const char **sym, vaddr_t v, int f)
 	char *stable = NULL;
 	int type, i, sz;
 
-	if (!ksyms_initted)
+	if (!ksyms_loaded)
 		return ENOENT;
 
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
@@ -763,7 +767,7 @@ ksyms_sift(char *mod, char *sym, int mode)
 	char *sb;
 	int i, sz;
 
-	if (!ksyms_initted)
+	if (!ksyms_loaded)
 		return ENOENT;
 
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
@@ -919,7 +923,7 @@ static int
 ksymsopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
 
-	if (minor(dev) != 0 || !ksyms_initted)
+	if (minor(dev) != 0 || !ksyms_loaded)
 		return ENXIO;
 
 	/*
