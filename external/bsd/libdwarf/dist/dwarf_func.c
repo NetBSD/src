@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_func.c,v 1.2 2013/01/17 22:23:41 christos Exp $	*/
+/*	$NetBSD: dwarf_func.c,v 1.3 2013/01/17 22:24:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009, 2011, Juniper Networks, Inc.
@@ -33,7 +33,6 @@
 #endif
 
 /* __FBSDID("$FreeBSD: src/lib/libdwarf/dwarf_func.c,v 1.2 2012/11/17 01:49:48 svnexp Exp $"); */
-__RCSID("$NetBSD: dwarf_func.c,v 1.2 2013/01/17 22:23:41 christos Exp $");
 
 #include <stdlib.h>
 #include <string.h>
