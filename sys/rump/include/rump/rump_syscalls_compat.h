@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syscalls_compat.h,v 1.9 2013/01/17 21:12:39 pooka Exp $	*/
+/*	$NetBSD: rump_syscalls_compat.h,v 1.10 2013/01/17 23:21:20 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -54,7 +54,7 @@
 #else /* !__NetBSD__ */
 
 #ifndef __RENAME
-#ifdef __ELF
+#ifdef __ELF__
 #define __RUMPSTRINGIFY(x) #x
 #else
 #define __RUMPSTRINGIFY(x) "_"#x
