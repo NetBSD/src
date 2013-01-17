@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2012/12/16 06:47:39 apb Exp $
+#	$NetBSD: Makefile,v 1.6 2013/01/17 22:25:36 christos Exp $
 
 HOSTLIB=dwarf
 
@@ -15,6 +15,7 @@ SRCS=	dwarf_abbrev.c		\
 	dwarf_errno.c		\
 	dwarf_finish.c		\
 	dwarf_form.c		\
+	dwarf_func.c		\
 	dwarf_init.c		\
 	dwarf_loc.c
 
