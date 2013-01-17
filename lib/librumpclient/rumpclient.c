@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.52 2012/09/12 12:38:16 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.53 2013/01/17 16:29:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -49,7 +49,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.52 2012/09/12 12:38:16 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.53 2013/01/17 16:29:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -69,7 +69,6 @@ __RCSID("$NetBSD: rumpclient.c,v 1.52 2012/09/12 12:38:16 pooka Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <link.h>
 #include <poll.h>
 #include <pthread.h>
 #include <signal.h>
@@ -795,6 +794,7 @@ doinit(void)
 	return 0;
 }
 
+#ifdef RTLD_NEXT
 void *rumpclient__dlsym(void *, const char *);
 void *
 rumpclient__dlsym(void *handle, const char *symbol)
@@ -804,6 +804,7 @@ rumpclient__dlsym(void *handle, const char *symbol)
 }
 void *rumphijack_dlsym(void *, const char *)
     __attribute__((__weak__, alias("rumpclient__dlsym")));
+#endif
 
 static pid_t init_done = 0;
 
@@ -837,6 +838,7 @@ rumpclient_init(void)
 	 * sag mir, wo die symbols sind.  zogen fort, der krieg beginnt.
 	 * wann wird man je verstehen?  wann wird man je verstehen?
 	 */
+#ifdef RTLD_NEXT
 #define FINDSYM2(_name_,_syscall_)					\
 	if ((host_##_name_ = rumphijack_dlsym(RTLD_NEXT,		\
 	    #_syscall_)) == NULL) {					\
@@ -846,6 +848,10 @@ rumpclient_init(void)
 			errx(1, "cannot find %s: %s", #_syscall_,	\
 			    dlerror());					\
 	}
+#else
+#define FINDSYM2(_name_,_syscall)					\
+	host_##_name_ = _name_;
+#endif
 #define FINDSYM(_name_) FINDSYM2(_name_,_name_)
 #ifdef __NetBSD__
 	FINDSYM2(socket,__socket30)
