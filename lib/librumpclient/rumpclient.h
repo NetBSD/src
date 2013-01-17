@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpclient.h,v 1.13 2013/01/17 20:47:44 pooka Exp $	*/
+/*	$NetBSD: rumpclient.h,v 1.14 2013/01/17 22:16:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -44,7 +44,7 @@ struct rumpclient_fork;
 
 #ifdef __BEGIN_DECLS
 __BEGIN_DECLS
-#else
+#elif defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -108,7 +108,7 @@ rumpclient__dofork(pid_t (*forkfn)(void))
 
 #ifdef __END_DECLS
 __END_DECLS
-#else
+#elif defined(__cplusplus)
 }
 #endif
 
