@@ -1,5 +1,9 @@
-#	$NetBSD: sys.mk,v 1.110 2012/10/06 20:54:58 christos Exp $
+#	$NetBSD: sys.mk,v 1.111 2013/01/17 15:27:50 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
+#
+# This file contains the basic rules for make(1) and is read first
+# Do not put conditionals that are set on different files here and
+# expect them to work.
 
 unix?=		We run NetBSD.
 
@@ -41,16 +45,8 @@ LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 CTFFLAGS	?=	-L VERSION
 CTFMFLAGS	?=	-t -L VERSION
 
-.if defined(MKDTRACE) && ${MKDTRACE} != "no"
 CTFCONVERT	?=	${TOOL_CTFCONVERT}
 CTFMERGE	?=	${TOOL_CTFMERGE}
-.if defined(CFLAGS) && (${CFLAGS:M-g} != "")
-CTFFLAGS	+=	-g
-CTFMFLAGS	+=	-g
-.else
-CFLAGS		+=	-g
-.endif
-.endif
 
 CXX?=		c++
 CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu99:N-Wold-style-definition:N-Wno-format-zero-length}
