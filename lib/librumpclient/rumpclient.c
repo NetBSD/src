@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.53 2013/01/17 16:29:44 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.54 2013/01/17 20:47:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -48,8 +48,7 @@
 #define USE_KQUEUE
 #endif
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.53 2013/01/17 16:29:44 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.54 2013/01/17 20:47:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -66,7 +65,6 @@ __RCSID("$NetBSD: rumpclient.c,v 1.53 2013/01/17 16:29:44 pooka Exp $");
 
 #include <assert.h>
 #include <dlfcn.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -159,11 +157,13 @@ send_with_recon(struct spclient *spc, struct iovec *iov, size_t iovlen)
 
 			/* check that we aren't over the limit */
 			if (retrytimo > 0) {
-				struct timeval tmp;
+				time_t tdiff;
 
 				gettimeofday(&curtime, NULL);
-				timersub(&curtime, &starttime, &tmp);
-				if (tmp.tv_sec >= retrytimo) {
+				tdiff = curtime.tv_sec - starttime.tv_sec;
+				if (starttime.tv_usec > curtime.tv_usec)
+					tdiff--;
+				if (tdiff >= retrytimo) {
 					fprintf(stderr, "rump_sp: reconnect "
 					    "failed, %lld second timeout\n",
 					    (long long)retrytimo);
@@ -844,9 +844,11 @@ rumpclient_init(void)
 	    #_syscall_)) == NULL) {					\
 		if (rumphijack_dlsym == rumpclient__dlsym)		\
 			host_##_name_ = _name_; /* static fallback */	\
-		if (host_##_name_ == NULL)				\
-			errx(1, "cannot find %s: %s", #_syscall_,	\
+		if (host_##_name_ == NULL) {				\
+			fprintf(stderr,"cannot find %s: %s", #_syscall_,\
 			    dlerror());					\
+			exit(1);					\
+		}							\
 	}
 #else
 #define FINDSYM2(_name_,_syscall)					\
@@ -1150,6 +1152,10 @@ rumpclient_exec(const char *path, char *const argv[], char *const envp[])
 	return rv;
 }
 
+/*
+ * daemon() is handwritten for the benefit of platforms which
+ * do not support daemon().
+ */
 int
 rumpclient_daemon(int nochdir, int noclose)
 {
@@ -1159,15 +1165,37 @@ rumpclient_daemon(int nochdir, int noclose)
 	if ((rf = rumpclient_prefork()) == NULL)
 		return -1;
 
-	if (daemon(nochdir, noclose) == -1) {
-		sverrno = errno;
-		rumpclient_fork_cancel(rf);
-		errno = sverrno;
-		return -1;
+	switch (fork()) {
+	case 0:
+		break;
+	case -1:
+		goto daemonerr;
+	default:
+		_exit(0);
 	}
 
+	if (setsid() == -1)
+		goto daemonerr;
+	if (!nochdir && chdir("/") == -1)
+		goto daemonerr;
+	if (!noclose) {
+		int fd = open("/dev/null", O_RDWR);
+		dup2(fd, 0);
+		dup2(fd, 1);
+		dup2(fd, 2);
+		if (fd > 2)
+			close(fd);
+	}
+
+	/* note: fork is either completed or cancelled by the call */
 	if (rumpclient_fork_init(rf) == -1)
 		return -1;
 
 	return 0;
+
+ daemonerr:
+	sverrno = errno;
+	rumpclient_fork_cancel(rf);
+	errno = sverrno;
+	return -1;
 }
