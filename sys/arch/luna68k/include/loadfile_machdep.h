@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.2 2013/01/17 14:20:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
 #define DEALLOC(a, b)		dealloc(a, b)
-#define OKMAGIC(a)		((a) == NMAGIC)
+#define OKMAGIC(a)		((a) == NMAGIC || (a) == OMAGIC)
 
 #else
 
