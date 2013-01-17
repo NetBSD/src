@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_errmsg.c,v 1.1.1.1 2009/12/23 00:03:23 darran Exp $	*/
+/*	$NetBSD: dwarf_errmsg.c,v 1.1.1.2 2013/01/17 22:03:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -25,13 +25,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libdwarf/dwarf_errmsg.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/lib/libdwarf/dwarf_errmsg.c,v 1.3 2012/11/17 01:49:48 svnexp Exp $
  */
 
 #include <stdio.h>
 #include "_libdwarf.h"
 
-const char *_libdwarf_errors[] = {
+static const char *_libdwarf_errors[] = {
 #define	DEFINE_ERROR(N,S)		[DWARF_E_##N] = S
 	DEFINE_ERROR(NONE,		"No Error"),
 	DEFINE_ERROR(ERROR,		"An error"),
