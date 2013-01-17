@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.84 2012/10/02 01:46:21 christos Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.85 2013/01/17 21:31:11 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -7,11 +7,15 @@
  * created from	NetBSD: syscalls.master,v 1.261 2012/10/02 01:44:28 christos Exp
  */
 
+#ifdef RUMP_CLIENT
+#include "rumpuser_port.h"
+#endif /* RUMP_CLIENT */
+
 #include <sys/param.h>
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.84 2012/10/02 01:46:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.85 2013/01/17 21:31:11 pooka Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
