@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.1 2013/01/16 16:01:07 christos Exp $
+# $NetBSD: ad.mips64el,v 1.2 2013/01/17 23:04:30 christos Exp $
 ./usr/libdata/debug/usr/bin/elf2aout.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/elf2ecoff.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/lib/64/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug,compat
@@ -53,7 +53,7 @@
 ./usr/libdata/debug/usr/lib/64/libdns.so.5.8.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat
 ./usr/libdata/debug/usr/lib/64/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat
-./usr/libdata/debug/usr/lib/64/libdwarf.so.0.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libedit.so.3.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libelf.so.0.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libevent.so.3.2.debug	comp-sys-debug	debug,compat
@@ -213,7 +213,7 @@
 ./usr/libdata/debug/usr/lib/o32/libdns.so.5.8.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat
-./usr/libdata/debug/usr/lib/o32/libdwarf.so.0.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libedit.so.3.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libelf.so.0.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libevent.so.3.2.debug	comp-sys-debug	debug,compat
