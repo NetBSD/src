@@ -1,5 +1,5 @@
-# $NetBSD: mi,v 1.3 2013/01/17 16:15:41 christos Exp $
-./etc/mtree/set.debug                           comp-sys-root		debug
+# $NetBSD: mi,v 1.4 2013/01/17 21:42:18 christos Exp $
+./etc/mtree/set.debug                           comp-sys-root
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chmod.debug		comp-util-debug		debug
