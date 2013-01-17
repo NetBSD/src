@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.1.10.1 2012/11/28 22:40:28 matt Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.1.10.2 2013/01/17 01:33:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -63,6 +63,10 @@
 
 #ifndef _ARM32_BUS_FUNCS_H_
 #define _ARM32_BUS_FUNCS_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_cputypes.h"
+#endif
 
 /*
  * Utility macros; INTERNAL USE ONLY.
@@ -635,7 +639,7 @@ void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
 void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int);
 
-#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+#if defined(_ARM32_NEED_BUS_DMA_BOUNCE) || defined(CPU_CORTEX)
 #define	_BUS_DMAMAP_SYNC_FUNCS \
 	._dmamap_sync_pre = _bus_dmamap_sync,	\
 	._dmamap_sync_post = _bus_dmamap_sync
