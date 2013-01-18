@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.10 2013/01/18 01:41:07 jmcneill Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.11 2013/01/18 13:45:51 jmcneill Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.10 2013/01/18 01:41:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.11 2013/01/18 13:45:51 jmcneill Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -52,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.10 2013/01/18 01:41:07 jmcneill Exp $
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#include <netinet/if_inarp.h>
 
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
@@ -2354,7 +2359,7 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
+			arp_ifinit(ifp, ifa);
 #endif
 		/*FALLTHROUGH*/
 	case SIOCSIFFLAGS:
