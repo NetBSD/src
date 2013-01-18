@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.2 2012/08/20 07:32:49 christos Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.3 2013/01/18 01:41:07 jmcneill Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -117,6 +117,7 @@ struct urtwn_softc {
 #define URTWN_FLAG_CCK_HIPWR	__BIT(0)
 #define	URTWN_FLAG_ATTACHED	__BIT(1)
 #define	URTWN_FLAG_FWREADY	__BIT(2)
+#define URTWN_FLAG_INIT_ONCE	__BIT(3)
 	int				sc_dying;
 
 	struct usb_task			sc_task;
