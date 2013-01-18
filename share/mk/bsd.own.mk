@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.717 2013/01/11 12:55:29 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.718 2013/01/18 19:32:09 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -461,6 +461,11 @@ CPP=		${TOOL_CPP.${ACTIVE_CPP}}
 CXX=		${TOOL_CXX.${ACTIVE_CXX}}
 FC=		${TOOL_FC.${ACTIVE_FC}}
 OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
+
+.if exists(/usr/bin/${TOOL_CTFCONVERT}) || exists(${TOOL_CTFCONVERT})
+CTFCONVERT=	${TOOL_CTFCONVERT}
+CTFMERGE=	${TOOL_CTFMERGE}
+.endif
 
 # OBJCOPY flags to create a.out binaries for old firmware
 # shared among src/distrib and ${MACHINE}/conf/Makefile.${MACHINE}.inc
