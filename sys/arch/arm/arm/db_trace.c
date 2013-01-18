@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.27 2012/12/31 08:57:27 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.28 2013/01/18 07:34:39 skrll Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.27 2012/12/31 08:57:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.28 2013/01/18 07:34:39 skrll Exp $");
 
 #include <sys/proc.h>
 #include <arm/armreg.h>
@@ -91,6 +91,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 	char c;
 	bool		kernel_only = true;
 	bool		trace_thread = false;
+	bool		trace_full = false;
 	bool		lwpaddr = false;
 	db_addr_t	scp, pc;
 	int		scp_offset;
@@ -104,6 +105,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 			kernel_only = false;
 		if (c == 't')
 			trace_thread = true;
+		if (c == 'f')
+			trace_full = true;
 	}
 
 	if (!have_addr)
@@ -175,25 +178,29 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		scp = frame[FR_SCP];
 #endif
 		lastframe = frame;
+		(*pr)("%p: ", frame);
 #ifndef _KERNEL
 		uint32_t frameb[4];
 		db_read_bytes((db_addr_t)(frame - 3), sizeof(frameb),
 		    (char *)frameb);
 		frame = frameb + 3;
 #endif
-
 		db_printsym(pc, DB_STGY_PROC, pr);
-		(*pr)("\n\t");
+		if (trace_full) {
+			(*pr)("\n\t");
 #ifdef __PROG26
-		(*pr)("pc =0x%08x rlv=0x%08x (", pc, frame[FR_RLV] & R15_PC);
-		db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC, pr);
-		(*pr)(")\n");
+			(*pr)("pc =0x%08x rlv=0x%08x (", pc,
+			     frame[FR_RLV] & R15_PC);
+			db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC, pr);
+			(*pr)(")\n");
 #else
-		(*pr)("pc =0x%08x rlv=0x%08x (", pc, frame[FR_RLV]);
-		db_printsym(frame[FR_RLV], DB_STGY_PROC, pr);
-		(*pr)(")\n");
+			(*pr)("pc =0x%08x rlv=0x%08x (", pc, frame[FR_RLV]);
+			db_printsym(frame[FR_RLV], DB_STGY_PROC, pr);
+			(*pr)(")\n");
 #endif
-		(*pr)("\trsp=0x%08x rfp=0x%08x", frame[FR_RSP], frame[FR_RFP]);
+			(*pr)("\trsp=0x%08x rfp=0x%08x", frame[FR_RSP],
+			     frame[FR_RFP]);
+		}
 
 #ifndef _KERNEL
 		db_read_bytes((db_addr_t)((uint32_t *)scp + scp_offset),
@@ -205,7 +212,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 			savecode = 0;
 		}
 #endif
-		if ((savecode & 0x0e100000) == 0x08000000) {
+		if (trace_full &&
+		    (savecode & 0x0e100000) == 0x08000000) {
 			/* Looks like an STM */
 			rp = frame - 4;
 			sep = "\n\t";
@@ -220,7 +228,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		}
 
 		(*pr)("\n");
-
 		/*
 		 * Switch to next frame up
 		 */
