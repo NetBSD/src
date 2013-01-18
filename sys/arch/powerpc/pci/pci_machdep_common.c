@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.15 2012/02/01 09:54:03 matt Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.16 2013/01/18 06:21:12 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.15 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.16 2013/01/18 06:21:12 matt Exp $");
 
 #define _POWERPC_BUS_DMA_PRIVATE
 
@@ -63,20 +63,19 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.15 2012/02/01 09:54:03 matt
  * of these functions.
  */
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
-	0,			/* _bounce_thresh */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	NULL,			/* _dmamap_sync */
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
+	._dmamap_create = _bus_dmamap_create,
+	._dmamap_destroy = _bus_dmamap_destroy,
+	._dmamap_load = _bus_dmamap_load,
+	._dmamap_load_mbuf = _bus_dmamap_load_mbuf,
+	._dmamap_load_uio = _bus_dmamap_load_uio,
+	._dmamap_load_raw = _bus_dmamap_load_raw,
+	._dmamap_unload = _bus_dmamap_unload,
+
+	._dmamem_alloc = _bus_dmamem_alloc,
+	._dmamem_free = _bus_dmamem_free,
+	._dmamem_map = _bus_dmamem_map,
+	._dmamem_unmap = _bus_dmamem_unmap,
+	._dmamem_mmap = _bus_dmamem_mmap,
 };
 
 int
