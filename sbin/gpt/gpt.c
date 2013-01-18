@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.17 2012/07/30 00:53:59 matt Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.18 2013/01/18 17:58:15 jakllsch Exp $");
 #endif
 
 #include <sys/param.h>
@@ -328,7 +328,7 @@ parse_uuid(const char *s, uuid_t *uuid)
 			*uuid = lfs;
 			return (0);
 		} else if (strcmp(s, "linux") == 0) {
-			uuid_t lnx = GPT_ENT_TYPE_MS_BASIC_DATA;
+			uuid_t lnx = GPT_ENT_TYPE_LINUX_DATA;
 			*uuid = lnx;
 			return (0);
 		}
