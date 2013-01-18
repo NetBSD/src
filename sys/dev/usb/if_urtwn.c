@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.9 2013/01/05 23:34:18 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.10 2013/01/18 01:41:07 jmcneill Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.9 2013/01/05 23:34:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.10 2013/01/18 01:41:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.9 2013/01/05 23:34:18 christos Exp $"
 #define	DBG_RF		__BIT(5)
 #define	DBG_REG		__BIT(6)
 #define	DBG_ALL		0xffffffffU
-u_int urtwn_debug = DBG_TX|DBG_RX|DBG_STM;
+u_int urtwn_debug = 0;
 #define DPRINTFN(n, s)	\
 	do { if (urtwn_debug & (n)) printf s; } while (/*CONSTCOND*/0)
 #else
@@ -407,6 +407,10 @@ urtwn_detach(device_t self, int flags)
 		ieee80211_ifdetach(&sc->sc_ic);
 		if_detach(ifp);
 
+		/* Free Tx/Rx buffers. */
+		urtwn_free_tx_list(sc);
+		urtwn_free_rx_list(sc);
+	
 		/* Abort and close Tx/Rx pipes. */
 		urtwn_close_pipes(sc);
 	}
@@ -582,7 +586,6 @@ urtwn_alloc_tx_list(struct urtwn_softc *sc)
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
-	mutex_enter(&sc->sc_tx_mtx);
 	TAILQ_INIT(&sc->tx_free_list);
 	for (i = 0; i < URTWN_TX_LIST_COUNT; i++) {
 		data = &sc->tx_data[i];
@@ -608,12 +611,10 @@ urtwn_alloc_tx_list(struct urtwn_softc *sc)
 		/* Append this Tx buffer to our free list. */
 		TAILQ_INSERT_TAIL(&sc->tx_free_list, data, next);
 	}
-	mutex_exit(&sc->sc_tx_mtx);
 	return (0);
 
  fail:
 	urtwn_free_tx_list(sc);
-	mutex_exit(&sc->sc_tx_mtx);
 	return (error);
 }
 
@@ -3515,18 +3516,21 @@ urtwn_init(struct ifnet *ifp)
 	sc->fwcur = 0;
 	mutex_exit(&sc->sc_fwcmd_mtx);
 
-	/* Allocate Tx/Rx buffers. */
-	error = urtwn_alloc_rx_list(sc);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not allocate Rx buffers\n");
-		goto fail;
-	}
-	error = urtwn_alloc_tx_list(sc);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not allocate Tx buffers\n");
-		goto fail;
+	if (!(sc->sc_flags & URTWN_FLAG_INIT_ONCE)) {
+		/* Allocate Tx/Rx buffers. */
+		error = urtwn_alloc_rx_list(sc);
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "could not allocate Rx buffers\n");
+			goto fail;
+		}
+		error = urtwn_alloc_tx_list(sc);
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "could not allocate Tx buffers\n");
+			goto fail;
+		}
+		sc->sc_flags |= URTWN_FLAG_INIT_ONCE;
 	}
 
 	/* Power on adapter. */
@@ -3738,10 +3742,6 @@ urtwn_stop(struct ifnet *ifp, int disable)
 
 	/* Stop Rx pipe. */
 	usbd_abort_pipe(sc->rx_pipe);
-
-	/* Free Tx/Rx buffers. */
-	urtwn_free_tx_list(sc);
-	urtwn_free_rx_list(sc);
 
 	if (disable)
 		urtwn_chip_stop(sc);
