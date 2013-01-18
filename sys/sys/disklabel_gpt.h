@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_gpt.h,v 1.9 2011/08/16 14:04:26 jakllsch Exp $	*/
+/*	$NetBSD: disklabel_gpt.h,v 1.10 2013/01/18 17:43:35 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -143,7 +143,12 @@ struct gpt_ent {
 #define	GPT_ENT_TYPE_MS_LDM_DATA	\
 	{0xaf9b60a0,0x1431,0x4f62,0xbc,0x68,{0x33,0x11,0x71,0x4a,0x69,0xad}}
 
-#define	GPT_ENT_TYPE_LINUX_DATA		GPT_ENT_TYPE_MS_BASIC_DATA
+/*
+ * Linux originally used GPT_ENT_TYPE_MS_BASIC_DATA in place of
+ * GPT_ENT_TYPE_LINUX_DATA.
+ */
+#define	GPT_ENT_TYPE_LINUX_DATA		\
+	{0x0fc63daf,0x8483,0x4772,0x8e,0x79,{0x3d,0x69,0xd8,0x47,0x7d,0xe4}}
 #define	GPT_ENT_TYPE_LINUX_RAID		\
 	{0xa19d880f,0x05fc,0x4d3b,0xa0,0x06,{0x74,0x3f,0x0f,0x84,0x91,0x1e}}
 #define	GPT_ENT_TYPE_LINUX_SWAP		\
