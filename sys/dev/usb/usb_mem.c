@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.56 2013/01/17 06:24:44 matt Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.57 2013/01/19 20:49:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.56 2013/01/17 06:24:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.57 2013/01/19 20:49:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,7 +473,7 @@ usb_reserve_freem(struct usb_dma_reserve *rs, usb_dma_t *dma)
 	error = extent_free(rs->extent,
 	    (u_long)(rs->paddr + dma->offs), dma->block->size, 0);
 	/* XXXPW correct that segs[0] is not used? */
-	kmem_free(dma->block, dma->block->size);
+	kmem_free(dma->block, sizeof *dma->block);
 }
 
 int
