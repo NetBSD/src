@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.22 2013/01/10 22:07:19 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.23 2013/01/19 00:35:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -896,7 +896,6 @@ bcmeth_rx_buf_alloc(
 		bcmeth_mapcache_put(sc, sc->sc_rx_mapcache, map);
 		return NULL;
 	}
-	KASSERT(((map->_dm_flags ^ sc->sc_dmat->_ranges[0].dr_flags) & _BUS_DMAMAP_COHERENT) == 0);
 	KASSERT(map->dm_mapsize == MCLBYTES);
 #ifdef BCMETH_RCVMAGIC
 	*mtod(m, uint32_t *) = BCMETH_RCVMAGIC;
@@ -905,7 +904,7 @@ bcmeth_rx_buf_alloc(
 	bus_dmamap_sync(sc->sc_dmat, map, sizeof(uint32_t),
 	    map->dm_mapsize - sizeof(uint32_t), BUS_DMASYNC_PREREAD);
 #else
-	bus_dmamap_sync(sc->sc_dmat, map, 0, sizeof(uint32_t),
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 #endif
 
