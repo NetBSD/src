@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.6 2013/01/19 14:03:08 apb Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.7 2013/01/19 15:21:43 apb Exp $ */
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.6 2013/01/19 14:03:08 apb Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.7 2013/01/19 15:21:43 apb Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -121,9 +121,14 @@ ATF_TC_BODY(atsecs, tc)
 	tzoff = -3600;
 	ATF_CHECK(parsedate("@0", NULL, &tzoff) == (time_t)0);
 
-	/* -1 is not an error */
+	/* -1 or other negative numbers are not errors */
 	errno = 0;
 	ATF_CHECK(parsedate("@-1", NULL, &tzoff) == (time_t)-1 && errno == 0);
+	ATF_CHECK(parsedate("@-2", NULL, &tzoff) == (time_t)-2 && errno == 0);
+
+	/* junk is an error */
+	errno = 0;
+	ATF_CHECK(parsedate("@junk", NULL, NULL) == (time_t)-1 && errno != 0);
 }
 
 ATF_TP_ADD_TCS(tp)
