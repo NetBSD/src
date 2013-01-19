@@ -590,7 +590,8 @@ Convert(
     DSTMODE	DSTmode		/* DST on/off/maybe */
 )
 {
-    struct tm tm;
+    struct tm tm = {.tm_sec = 0};
+    time_t result;
 
     /* XXX Y2K */
     if (Year < 0)
@@ -611,9 +612,11 @@ Convert(
     case DSToff: tm.tm_isdst = 0; break;
     default:     tm.tm_isdst = -1; break;
     }
-    tm.tm_gmtoff = -Timezone;
 
-    return mktime(&tm);
+    /* We rely on mktime_z(NULL, ...) working in UTC, not in local time. */
+    result = mktime_z(NULL, &tm);
+    result -= Timezone;
+    return result;
 }
 
 
