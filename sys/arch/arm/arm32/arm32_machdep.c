@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.88 2012/12/31 21:34:31 jmcneill Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.89 2013/01/19 10:16:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.88 2012/12/31 21:34:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.89 2013/01/19 10:16:56 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -372,7 +372,8 @@ parse_mi_bootargs(char *args)
 		if (integer)
 			boothowto |= RB_SINGLE;
 	if (get_bootconf_option(args, "kdb", BOOTOPT_TYPE_BOOLEAN, &integer)
-	    || get_bootconf_option(args, "-k", BOOTOPT_TYPE_BOOLEAN, &integer))
+	    || get_bootconf_option(args, "-k", BOOTOPT_TYPE_BOOLEAN, &integer)
+	    || get_bootconf_option(args, "-d", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= RB_KDB;
 	if (get_bootconf_option(args, "ask", BOOTOPT_TYPE_BOOLEAN, &integer)
