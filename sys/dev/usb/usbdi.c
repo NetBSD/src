@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.145 2013/01/19 14:36:41 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.146 2013/01/19 15:10:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.145 2013/01/19 14:36:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.146 2013/01/19 15:10:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -326,7 +326,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 		err = 0;
 		if ((flags & USBD_SYNCHRONOUS_SIG) != 0) {
 			if (pipe->device->bus->lock)
-				cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
+				err = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
 			else
 				err = tsleep(xfer, PZERO|PCATCH, "usbsyn", 0);
 		} else {
