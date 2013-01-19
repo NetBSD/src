@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.144 2013/01/16 15:36:49 christos Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.145 2013/01/19 14:36:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.144 2013/01/16 15:36:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.145 2013/01/19 14:36:41 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -819,7 +819,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	    usbd_xfer_isread(xfer)) {
 #ifdef DIAGNOSTIC
 		if (xfer->actlen > xfer->length) {
-			printf("usb_transfer_complete: actlen > len %d > %d\n",
+			printf("%s: actlen (%d) > len (%d)\n", __func__,
 			       xfer->actlen, xfer->length);
 			xfer->actlen = xfer->length;
 		}
@@ -838,9 +838,13 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 	if (!repeat) {
 		/* Remove request from queue. */
+		
+		KASSERTMSG(!SIMPLEQ_EMPTY(&pipe->queue),
+		    "pipe %p is empty, but xfer %p wants to complete", pipe,
+		     xfer);
 #ifdef DIAGNOSTIC
 		if (xfer != SIMPLEQ_FIRST(&pipe->queue))
-			printf("usb_transfer_complete: bad dequeue %p != %p\n",
+			printf("%s: bad dequeue %p != %p\n", __func__,
 			       xfer, SIMPLEQ_FIRST(&pipe->queue));
 		xfer->busy_free = XFER_BUSY;
 #endif
