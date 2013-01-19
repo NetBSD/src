@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.35 2011/05/23 20:43:02 joerg Exp $	*/
+/*	$NetBSD: internals.c,v 1.36 2013/01/19 16:11:03 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.35 2011/05/23 20:43:02 joerg Exp $");
+__RCSID("$NetBSD: internals.c,v 1.36 2013/01/19 16:11:03 mbalmer Exp $");
 
 #include <limits.h>
 #include <ctype.h>
@@ -2995,7 +2995,7 @@ _formi_manipulate_field(FORM *form, int c)
 }
 
 /*
- * Validate the give character by passing it to any type character
+ * Validate the given character by passing it to any type character
  * checking routines, if they exist.
  */
 int
