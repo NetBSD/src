@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.57 2013/01/19 20:49:06 christos Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.58 2013/01/19 20:49:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.57 2013/01/19 20:49:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.58 2013/01/19 20:49:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,10 +167,11 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	b->size = size;
 	b->align = align;
 
-	b->nsegs = (size + (PAGE_SIZE-1)) / PAGE_SIZE;
 	if (!multiseg)
 		/* Caller wants one segment */
 		b->nsegs = 1;
+	else
+		b->nsegs = (size + (PAGE_SIZE-1)) / PAGE_SIZE;
 
 	b->segs = kmem_alloc(b->nsegs * sizeof(*b->segs), KM_SLEEP);
 	if (b->segs == NULL) {
