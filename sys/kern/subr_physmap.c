@@ -1,3 +1,5 @@
+/*	$NetBSD: subr_physmap.c,v 1.2 2013/01/19 01:04:51 rmind Exp $	*/
+
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,8 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-
-__KERNEL_RCSID(1, "$NetBSD: subr_physmap.c,v 1.1 2013/01/18 06:42:16 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: subr_physmap.c,v 1.2 2013/01/19 01:04:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/physmap.h>
@@ -82,7 +83,7 @@ physmap_fill(physmap_t *map, pmap_t pmap, vaddr_t va, vsize_t len)
 		if (!pmap_extract(pmap, va, &ps->ps_addr)) {
 			return EFAULT;
 		}
-		ps->ps_len = min(len, PAGE_SIZE - offset);
+		ps->ps_len = MIN(len, PAGE_SIZE - offset);
 		if (ps->ps_len == len) {
 			map->pm_nsegs = 1;
 			return 0;
@@ -266,9 +267,9 @@ physmap_map(void *cookie, vaddr_t *kvap)
 	 */
 	if (pc->pc_kva != 0 && !pc->pc_direct_mapped) {
 		pmap_kremove(pc->pc_kva, pc->pc_klen);
+		pmap_update(pmap_kernel());
 		uvm_km_free(kernel_map, pc->pc_kva, pc->pc_klen,
 		    UVM_KMF_VAONLY);
-		pmap_update(pmap_kernel());
 	}
 
 	/*
@@ -350,9 +351,9 @@ physmap_map_fini(void *cookie)
 	 */
 	if (pc->pc_kva != 0 && !pc->pc_direct_mapped) {
 		pmap_kremove(pc->pc_kva, pc->pc_klen);
+		pmap_update(pmap_kernel());
 		uvm_km_free(kernel_map, pc->pc_kva, pc->pc_klen,
 		    UVM_KMF_VAONLY);
-		pmap_update(pmap_kernel());
 	}
 
 	/*
