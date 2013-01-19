@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.46 2011/11/02 23:06:08 christos Exp $
+.\" $NetBSD: ctime.3,v 1.47 2013/01/19 11:56:17 apb Exp $
 .\"
 .\" XXX: License missing?
 .\"
-.Dd November 2, 2011
+.Dd January 19, 2013
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -125,7 +125,10 @@ function is similar to
 but it also takes a
 .Ft "const timezone_t"
 argument, as returned by a previous call to
-.Fn tzalloc .
+.Fn tzalloc ,
+or a null pointer denoting
+Coordinated Universal Time
+.Pq Tn UTC .
 .It Fn difftime "time1" "time2"
 The
 .Fn difftime
@@ -189,7 +192,10 @@ function is similar to
 but it also takes a
 .Ft "const timezone_t"
 argument, returned by a previous call to
-.Fn tzalloc .
+.Fn tzalloc ,
+or a null pointer denoting
+Coordinated Universal Time
+.Pq Tn UTC .
 .It Fn mktime "tm"
 The
 .Fn mktime
@@ -266,7 +272,10 @@ function is similar to
 but it also takes a
 .Ft "const timezone_t"
 argument, returned by a previous call to
-.Fn tzalloc .
+.Fn tzalloc ,
+or a null pointer denoting
+Coordinated Universal Time
+.Pq Tn UTC .
 .It Fn tzalloc "zone"
 The
 .Fn tzalloc
@@ -278,6 +287,12 @@ object suitable to be used in the
 and
 .Fn mktime_z
 functions.
+.Pp
+A null pointer may be passed to
+.Fn tzalloc
+instead of a timezone name, to refer to
+Coordinated Universal Time
+.Pq Tn UTC .
 .Pp
 Note that instead of setting the environment variable
 .Va TZ ,
@@ -376,6 +391,15 @@ object or
 on failure, setting
 .Va errno
 to indicate the error.
+It may also return
+.Dv NULL
+when the
+.Fa name
+argument is
+.Dv NULL ,
+and this is not an error, but a way of referring to
+Coordinated Universal Time
+.Pq Tn UTC .
 .It
 .Fn tzgetzone
 function returns string containing the name of the timezone given in
