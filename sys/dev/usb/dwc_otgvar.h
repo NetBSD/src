@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otgvar.h,v 1.5 2013/01/13 15:21:47 skrll Exp $ */
+/*	$NetBSD: dwc_otgvar.h,v 1.6 2013/01/19 14:07:37 skrll Exp $ */
 
 /* $FreeBSD: src/sys/dev/usb/controller/dwc_otg.h,v 1.12 2012/09/27 15:23:38 hselasky Exp $ */
 /*-
@@ -39,6 +39,16 @@
 #define	DWC_OTG_MAX_CHANNELS 16
 #define	DWC_OTG_MAX_ENDPOINTS 16
 #define	DWC_OTG_HOST_TIMER_RATE 10 /* ms */
+
+#define DOTG_COUNTERS
+#ifdef DOTG_COUNTERS
+/*
+ * curmode (bit 0)is a mode indication bit 0 = device, 1 = host
+ */
+#define	DWC_OTG_INTRBITF	1
+#define	DWC_OTG_INTRBITL	31
+#define	DWC_OTG_NINTRBITS	32
+#endif
 
 struct dwc_otg_td;
 struct dwc_otg_softc;
@@ -202,9 +212,8 @@ typedef struct dwc_otg_softc {
 	pool_cache_t sc_xferpool;
 	
 #ifdef DOTG_COUNTERS
-
 	struct evcnt sc_ev_intr;
-	struct evcnt sc_ev_intr_bit[32];
+	struct evcnt sc_ev_intr_bit[DWC_OTG_NINTRBITS];
 
 	struct evcnt sc_ev_soft_intr;
 	struct evcnt sc_ev_work;

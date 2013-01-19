@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.25 2013/01/19 07:41:51 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.26 2013/01/19 14:07:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.25 2013/01/19 07:41:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.26 2013/01/19 14:07:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3389,8 +3389,8 @@ dwc_otg_interrupt(struct dwc_otg_softc *sc)
 	status = DWC_OTG_READ_4(sc, DOTG_GINTSTS);
 	DWC_OTG_WRITE_4(sc, DOTG_GINTSTS, status);
 
-	for (size_t i = 0; i < 32; i++) {
-		if (status & (1<<i)) {
+	for (size_t i = DWC_OTG_INTRBITF; i < DWC_OTG_NINTRBITS; i++) {
+		if (status & (1 << i)) {
 			DOTG_EVCNT_INCR(sc->sc_ev_intr_bit[i]);
 		}
 	}
@@ -4119,8 +4119,11 @@ dwc_otg_device_done(usbd_xfer_handle xfer, usbd_status error)
 	usb_schedsoftintr(&sc->sc_bus);
 }
 
+/*
+ * curmode is a mode indication bit 0 = device, 1 = host
+ */
 static const char * const intnames[32] = {
-	"curmod",	"modemis",	"otgint",	"sof",
+	"curmode",	"modemis",	"otgint",	"sof",
 	"rxflvl",	"nptxfemp",	"ginnakeff",	"goutnakeff",
 	"ulpickint",	"i2cint",	"erlysusp",	"usbsusp",
 	"usbrst",	"enumdone",	"isooutdrop",	"eopf",
@@ -4185,7 +4188,7 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 	evcnt_attach_dynamic(&sc->sc_ev_xferpoolput, EVCNT_TYPE_MISC,
 	    NULL, xname, "xfer pool put");
 
-	for (size_t i = 0; i < 32; i++) {
+	for (size_t i = DWC_OTG_INTRBITF; i < DWC_OTG_NINTRBITS; i++) {
 		evcnt_attach_dynamic(&sc->sc_ev_intr_bit[i], EVCNT_TYPE_INTR,
 		    NULL, xname, intnames[i]);
 	}	
