@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.247 2013/01/11 12:04:00 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.248 2013/01/19 00:15:09 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.247 2013/01/11 12:04:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.248 2013/01/19 00:15:09 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -6929,11 +6929,13 @@ arm_pmap_alloc_poolpage(int flags)
 {
 	/*
 	 * On some systems, only some pages may be "coherent" for dma and we
-	 * want to use those for pool pages (think mbufs).
+	 * want to prefer those for pool pages (think mbufs) but fallback to
+	 * any page if none is available.
 	 */
-	if (arm_poolpage_vmfreelist != VM_FREELIST_DEFAULT)
+	if (arm_poolpage_vmfreelist != VM_FREELIST_DEFAULT) {
 		return uvm_pagealloc_strat(NULL, 0, NULL, flags,
-		    UVM_PGA_STRAT_ONLY, arm_poolpage_vmfreelist);
+		    UVM_PGA_STRAT_FALLBACK, arm_poolpage_vmfreelist);
+	}
 
 	return uvm_pagealloc(NULL, 0, NULL, flags);
 }
