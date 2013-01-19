@@ -1,3 +1,5 @@
+/*	$NetBSD: physmap.h,v 1.2 2013/01/19 01:04:52 rmind Exp $	*/
+
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +32,13 @@
 #ifndef _SYS_PHYSMAP_H_
 #define _SYS_PHYSMAP_H_
 
+#if !defined(_KERNEL)
+#error "not supposed to be exposed to userland"
+#endif
+
 #include <sys/types.h>
+#include <sys/uio.h>
+#include <uvm/uvm_extern.h>
 
 typedef struct {
 	paddr_t ps_addr;
@@ -43,10 +51,6 @@ struct physmap {
 	uint16_t pm_maxsegs;
 	physmap_segment_t pm_segs[0];
 };
-
-#ifdef _KERNEL
-#include <sys/uio.h>
-#include <uvm/uvm_extern.h>
 
 int	physmap_create_iov(physmap_t **, const struct vmspace *,
 	    struct iovec *, size_t);
@@ -62,6 +66,5 @@ size_t	physmap_map(void *, vaddr_t *);
 void	physmap_map_fini(void *);
 
 void	physmap_zero(physmap_t *, size_t, size_t);
-#endif /* _KERNEL */
 
 #endif /* _SYS_PHYSMAP_H_ */
