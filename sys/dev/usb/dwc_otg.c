@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.27 2013/01/19 14:26:51 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.28 2013/01/19 14:33:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.27 2013/01/19 14:26:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.28 2013/01/19 14:33:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1766,8 +1766,7 @@ dwc_otg_dump_global_regs(struct dwc_otg_softc *sc)
 	printf("GRSTCTL        0x%08x\n", DWC_OTG_READ_4(sc, DOTG_GRSTCTL));
 	printf("GINTSTS        0x%08x\n", DWC_OTG_READ_4(sc, DOTG_GINTSTS));
 	printf("GINTMSK        0x%08x\n", DWC_OTG_READ_4(sc, DOTG_GINTMSK));
-	printf("GRXSTSR        0x%08x\n", DWC_OTG_READ_4(sc, DOTG_GRXSTSRD));
-	printf("GRXSTSP        0x%08x\n", DWC_OTG_READ_4(sc, DOTG_GRXSTSPD));
+	printf("GRXSTSR        0x%08x\n", DWC_OTG_READ_4(sc, DOTG_GRXSTSR));
 	printf("GRXFSIZ        0x%08x\n", DWC_OTG_READ_4(sc, DOTG_GRXFSIZ));
 	printf("GNPTXFSIZ      0x%08x\n", DWC_OTG_READ_4(sc, DOTG_GNPTXFSIZ));
 	printf("GNPTXSTS       0x%08x\n", DWC_OTG_READ_4(sc, DOTG_GNPTXSTS));
@@ -3266,7 +3265,7 @@ repeat:
 		if (temp & GINTSTS_RXFLVL) {
 			/* pop current status */
 			sc->sc_last_rx_status =
-			    DWC_OTG_READ_4(sc, DOTG_GRXSTSPD);
+			    DWC_OTG_READ_4(sc, DOTG_GRXSTSP);
 		}
 
 		if (sc->sc_last_rx_status != 0) {
