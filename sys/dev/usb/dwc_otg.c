@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.26 2013/01/19 14:07:37 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.27 2013/01/19 14:26:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.26 2013/01/19 14:07:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.27 2013/01/19 14:26:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3389,11 +3389,13 @@ dwc_otg_interrupt(struct dwc_otg_softc *sc)
 	status = DWC_OTG_READ_4(sc, DOTG_GINTSTS);
 	DWC_OTG_WRITE_4(sc, DOTG_GINTSTS, status);
 
+#ifdef DOTG_COUNTERS
 	for (size_t i = DWC_OTG_INTRBITF; i < DWC_OTG_NINTRBITS; i++) {
 		if (status & (1 << i)) {
 			DOTG_EVCNT_INCR(sc->sc_ev_intr_bit[i]);
 		}
 	}
+#endif
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	if (status & GINTSTS_USBRST) {
