@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otgvar.h,v 1.6 2013/01/19 14:07:37 skrll Exp $ */
+/*	$NetBSD: dwc_otgvar.h,v 1.7 2013/01/19 14:08:30 skrll Exp $ */
 
 /* $FreeBSD: src/sys/dev/usb/controller/dwc_otg.h,v 1.12 2012/09/27 15:23:38 hselasky Exp $ */
 /*-
@@ -40,7 +40,6 @@
 #define	DWC_OTG_MAX_ENDPOINTS 16
 #define	DWC_OTG_HOST_TIMER_RATE 10 /* ms */
 
-#define DOTG_COUNTERS
 #ifdef DOTG_COUNTERS
 /*
  * curmode (bit 0)is a mode indication bit 0 = device, 1 = host
