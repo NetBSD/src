@@ -1,11 +1,10 @@
-# $NetBSD: pkgconfig.mk,v 1.2 2013/01/19 21:05:46 christos Exp $
+# $NetBSD: pkgconfig.mk,v 1.3 2013/01/19 21:57:55 apb Exp $
 
 FILESDIR=/usr/lib/pkgconfig
 .for pkg in ${PKGCONFIG}
 FILES+=${pkg}.pc
-CLEANFILES+=${pkg}.pc
+FILESBUILD_${pkg}.pc=yes
 
-realall: ${pkg}.pc
 ${pkg}.pc: ${.CURDIR}/../../mkpc
 	${.ALLSRC} ${.TARGET} > ${.TARGET}
 .endfor
