@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.24 2013/01/13 15:27:17 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.25 2013/01/19 07:41:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.24 2013/01/13 15:27:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.25 2013/01/19 07:41:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,7 +377,7 @@ dwc_otg_allocx(struct usbd_bus *bus)
 	DPRINTF("\n");
 
 	DOTG_EVCNT_INCR(sc->sc_ev_xferpoolget);
-	xfer = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
+	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct dwc_otg_xfer));
 #ifdef DIAGNOSTIC
