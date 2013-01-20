@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpclient.h,v 1.14 2013/01/17 22:16:59 pooka Exp $	*/
+/*	$NetBSD: rumpclient.h,v 1.15 2013/01/20 15:23:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -37,6 +37,11 @@
 #define __returns_twice
 #endif /* !__GNUC__ */
 #endif /* !__returns_twice */
+
+#if defined(__sun__) && !defined(RUMP_REGISTER_T)
+#define RUMP_REGISTER_T long
+typedef RUMP_REGISTER_T register_t;
+#endif
 
 struct rumpclient_fork;
 
