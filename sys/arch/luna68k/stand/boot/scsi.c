@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: scsi.c,v 1.2 2013/01/20 07:32:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -174,7 +174,7 @@ scsi(int argc, char *argv[])
 		while (i == 0) {
 			printf("Do you really want to format SCSI %d device ? [y/n]: ",
 			       scsi_device);
-			i = cngetc();
+			i = getchar();
 			printf("\n");
 			if ((i != 'y') && (i != 'Y') && (i != 'n') && (i != 'N'))
 				i = 0;
