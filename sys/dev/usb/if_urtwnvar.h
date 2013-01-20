@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.3 2013/01/18 01:41:07 jmcneill Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.4 2013/01/20 20:21:57 christos Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -16,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef _IF_URTWNVAR_H_
+#define _IF_URTWNVAR_H_
 
 /*
  * Driver definitions.
@@ -117,7 +119,6 @@ struct urtwn_softc {
 #define URTWN_FLAG_CCK_HIPWR	__BIT(0)
 #define	URTWN_FLAG_ATTACHED	__BIT(1)
 #define	URTWN_FLAG_FWREADY	__BIT(2)
-#define URTWN_FLAG_INIT_ONCE	__BIT(3)
 	int				sc_dying;
 
 	struct usb_task			sc_task;
@@ -127,6 +128,7 @@ struct urtwn_softc {
 	kmutex_t			sc_task_mtx;
 	kmutex_t			sc_fwcmd_mtx;
 	kmutex_t			sc_tx_mtx;
+	kmutex_t			sc_write_mtx;
 
 	usbd_pipe_handle		rx_pipe;
 	int				rx_npipe;
@@ -177,3 +179,6 @@ struct urtwn_softc {
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
 };
+
+#endif /* _IF_URTWNVAR_H_ */
+
