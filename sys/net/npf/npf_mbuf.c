@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.9 2012/12/24 19:05:44 rmind Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.10 2013/01/20 18:45:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.9 2012/12/24 19:05:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.10 2013/01/20 18:45:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -160,47 +160,53 @@ nbuf_advance(nbuf_t *nbuf, size_t len, size_t ensure)
 void *
 nbuf_ensure_contig(nbuf_t *nbuf, size_t len)
 {
-	struct mbuf *m = nbuf->nb_mbuf;
-	const u_int off = (uintptr_t)nbuf->nb_nptr - mtod(m, uintptr_t);
-	int tlen = off + len;
+	const struct mbuf * const n = nbuf->nb_mbuf;
+	const size_t off = (uintptr_t)nbuf->nb_nptr - mtod(n, uintptr_t);
 
-	KASSERT(off < m_length(nbuf->nb_mbuf0));
+	KASSERT(off < n->m_len);
 
-	if (__predict_false(m->m_len < tlen)) {
-		const bool head_buf = (nbuf->nb_mbuf0 == m);
-		const int target = NBUF_ENSURE_ROUNDUP(tlen);
-		const int pleft = m_length(m);
+	if (__predict_false(n->m_len < (off + len))) {
+		struct mbuf *m = nbuf->nb_mbuf0;
+		const size_t foff = nbuf_offset(nbuf);
+		const size_t plen = m_length(m);
+		const size_t mlen = m->m_len;
+		size_t target;
+		bool success;
 
 		npf_stats_inc(NPF_STAT_NBUF_NONCONTIG);
 
 		/* Attempt to round-up to NBUF_ENSURE_ALIGN bytes. */
-		if (target <= pleft) {
-			tlen = target;
+		if ((target = NBUF_ENSURE_ROUNDUP(foff + len)) > plen) {
+			target = foff + len;
 		}
 
 		/* Rearrange the chain to be contiguous. */
-		if ((m = m_pullup(m, tlen)) == NULL) {
-			npf_stats_inc(NPF_STAT_NBUF_CONTIG_FAIL);
-			memset(nbuf, 0, sizeof(nbuf_t));
-			return NULL;
+		KASSERT((m->m_flags & M_PKTHDR) != 0);
+		success = m_ensure_contig(&m, target);
+		KASSERT(m != NULL);
+
+		/* If no change in the chain: return what we have. */
+		if (m == nbuf->nb_mbuf0 && m->m_len == mlen) {
+			return success ? nbuf->nb_nptr : NULL;
 		}
 
 		/*
-		 * If the buffer was re-allocated, indicate that references
-		 * to the data would need reset.  Also, it was the head
-		 * buffer - update our record.
+		 * The mbuf chain was re-arranged.  Update the pointers
+		 * accordingly and indicate that the references to the data
+		 * might need a reset.
 		 */
-		if (nbuf->nb_mbuf != m) {
-			nbuf->nb_flags |= NBUF_DATAREF_RESET;
-		}
-		if (head_buf) {
-			KASSERT((m->m_flags & M_PKTHDR) != 0);
-			KASSERT(off < m_length(m));
-			nbuf->nb_mbuf0 = m;
-		}
-
+		KASSERT((m->m_flags & M_PKTHDR) != 0);
+		nbuf->nb_mbuf0 = m;
 		nbuf->nb_mbuf = m;
-		nbuf->nb_nptr = mtod(m, uint8_t *) + off;
+
+		KASSERT(foff < m->m_len && foff < m_length(m));
+		nbuf->nb_nptr = mtod(m, uint8_t *) + foff;
+		nbuf->nb_flags |= NBUF_DATAREF_RESET;
+
+		if (!success) {
+			npf_stats_inc(NPF_STAT_NBUF_CONTIG_FAIL);
+			return NULL;
+		}
 	}
 	return nbuf->nb_nptr;
 }
