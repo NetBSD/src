@@ -193,7 +193,6 @@ ASGLOBAL(Reset)
 	BADTRAP16		/* 64-255: user interrupt vectors */
 
 
-	START = 0x700000
 	STACK = 0x800000
 	DIPSW = 0x49000000
 
