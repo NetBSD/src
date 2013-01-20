@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.1 2013/01/03 21:13:26 jakllsch Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.2 2013/01/20 22:32:59 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.1 2013/01/03 21:13:26 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.2 2013/01/20 22:32:59 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -957,6 +957,13 @@ cpsw_stop(struct ifnet *ifp, int disable)
 	/* Reset CPDMA */
 	cpsw_write_4(sc, CPSW_CPDMA_SOFT_RESET, 1);
 	while(cpsw_read_4(sc, CPSW_CPDMA_SOFT_RESET) & 1);
+
+	/* Release any queued transmit buffers. */
+	for (i = 0; i < CPSW_NTXDESCS; i++) {
+		bus_dmamap_unload(sc->sc_bdt, rdp->tx_dm[i]);
+		m_freem(rdp->tx_mb[i]);
+		rdp->tx_mb[i] = NULL;
+	}
 
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
 	ifp->if_timer = 0;
