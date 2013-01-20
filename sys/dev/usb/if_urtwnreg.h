@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnreg.h,v 1.1 2012/03/25 00:11:16 nonaka Exp $	*/
+/*	$NetBSD: if_urtwnreg.h,v 1.2 2013/01/20 20:21:57 christos Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -1011,3 +1011,4 @@ struct r92c_tx_desc {
 	uint16_t	txdsum;
 	uint16_t	pad;
 } __packed __aligned(4);
+
