@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2013/01/20 03:01:13 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2013/01/20 03:40:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -85,17 +85,17 @@
 #define	T_FPERR		11
 #define	T_COPERR	12
 
-#define	PSL_LOWIPL	8192
-#define	PSL_HIGHIPL	9984
+#define	PSL_LOWIPL	0x2000		/* PSL_S | PSL_IPL0 */
+#define	PSL_HIGHIPL	0x2700		/* PSL_S | PSL_IPL7 */
 
-#define	SPL1		8448
-#define	SPL2		8704
-#define	SPL3		8960
-#define	SPL4		9216
-#define	SPL5		9472
-#define	SPL6		9728
+#define	SPL1		0x2100		/* PSL_S | PSL_IPL1 */
+#define	SPL2		0x2200		/* PSL_S | PSL_IPL2 */
+#define	SPL3		0x2300		/* PSL_S | PSL_IPL3 */
+#define	SPL4		0x2400		/* PSL_S | PSL_IPL4 */
+#define	SPL5		0x2500		/* PSL_S | PSL_IPL5 */
+#define	SPL6		0x2600		/* PSL_S | PSL_IPL6 */
 
-#define	CLOCK_REG	1660944384
+#define	CLOCK_REG	0x63000000
 #define	CLK_CLR		1
 
 #define	ILLGINST	16
