@@ -12,7 +12,7 @@ struct td_proc_st {
 	caddr_t idleqaddr;
 	caddr_t suspqaddr;
 	caddr_t maxlwpsaddr;
-	caddr_t tsdallocaddr;
+	caddr_t tsdlistaddr;
 	caddr_t tsddestaddr;
 
 	caddr_t stacksizeaddr;
