@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.54 2012/11/02 02:30:15 jakllsch Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.55 2013/01/20 13:43:24 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.54 2012/11/02 02:30:15 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.55 2013/01/20 13:43:24 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ static const struct usb_devno uftdi_devs[] = {
 	{ USB_VENDOR_BBELECTRONICS, USB_PRODUCT_BBELECTRONICS_USOTL4 },
 	{ USB_VENDOR_FALCOM, USB_PRODUCT_FALCOM_TWIST },
 	{ USB_VENDOR_FALCOM, USB_PRODUCT_FALCOM_SAMBA },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SERIAL_232H },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SERIAL_2232C },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SERIAL_4232H },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SERIAL_8U100AX },
