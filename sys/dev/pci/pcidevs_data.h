@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.16 2012/03/17 19:06:21 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.17 2013/01/20 12:20:38 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.16 2012/03/17 19:05:38 bouyer Exp
+ *	NetBSD: pcidevs,v 1.962.4.17 2013/01/20 12:19:06 bouyer Exp
  */
 
 /*
@@ -14492,6 +14492,10 @@ static const struct pci_product pci_products[] = {
 	    "VT3351 I/O APIC Interrupt Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237S_SATA,
+	    "VT8237S Integrated SATA Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
 	    "VT86C100A (Rhine-II) 10/100 Ethernet",
 	},
@@ -15080,4 +15084,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3169;
+const int pci_nproducts = 3170;
