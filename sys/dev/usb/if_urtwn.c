@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.12 2013/01/20 20:21:57 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.13 2013/01/20 23:13:43 jmcneill Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.12 2013/01/20 20:21:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.13 2013/01/20 23:13:43 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1687,7 +1687,7 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 
 		if (ic->ic_opmode == IEEE80211_M_MONITOR) {
 			/* Back to 20MHz mode */
-			urtwn_set_chan(sc, ic->ic_ibss_chan,
+			urtwn_set_chan(sc, ic->ic_curchan,
 			    IEEE80211_HTINFO_2NDCHAN_NONE);
 
 			/* Enable Rx of data frames. */
@@ -1991,8 +1991,8 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 			tap->wr_rate = 0x80 | (rate - 12);
 		}
 		tap->wr_dbm_antsignal = rssi;
-		tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
-		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wr_chan_freq = htole16(ic->ic_curchan->ic_freq);
+		tap->wr_chan_flags = htole16(ic->ic_curchan->ic_flags);
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
@@ -2464,7 +2464,7 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 			    (IFF_UP | IFF_RUNNING)) {
 				mutex_enter(&sc->sc_write_mtx);
-				urtwn_set_chan(sc, ic->ic_ibss_chan,
+				urtwn_set_chan(sc, ic->ic_curchan,
 				    IEEE80211_HTINFO_2NDCHAN_NONE);
 				mutex_exit(&sc->sc_write_mtx);
 			}
@@ -3787,8 +3787,8 @@ urtwn_init(struct ifnet *ifp)
 	urtwn_write_1(sc, 0x15, 0xe9);
 
 	/* Set default channel. */
-	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-	urtwn_set_chan(sc, ic->ic_ibss_chan, IEEE80211_HTINFO_2NDCHAN_NONE);
+	ic->ic_bss->ni_chan = ic->ic_curchan;
+	urtwn_set_chan(sc, ic->ic_curchan, IEEE80211_HTINFO_2NDCHAN_NONE);
 
 	/* Queue Rx xfers. */
 	for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
