@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.635 2013/01/14 18:24:05 christos Exp $
+$NetBSD: usbdevs,v 1.636 2013/01/20 14:06:24 pgoyette Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1747,7 +1747,7 @@ product INTEL TESTBOARD		0x9890	82930 test board
 product INTERSIL PRISM_GT	0x1000	PrismGT USB 2.0 WLAN
 product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
 
-/* Interpid Control Systems products */
+/* Intrepid Control Systems products */
 product INTREPIDCS VALUECAN	0x0601	ValueCAN
 product INTREPIDCS NEOVI	0x0701	NeoVI Blue
 
