@@ -1,4 +1,4 @@
-/*	$NetBSD: bmc.c,v 1.2 2013/01/20 13:35:43 tsutsui Exp $	*/
+/*	$NetBSD: bmc.c,v 1.3 2013/01/20 14:03:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -79,11 +79,6 @@
 #include <luna68k/stand/boot/samachdep.h>
 #include <luna68k/stand/boot/rcvbuf.h>
 #include <luna68k/stand/boot/preset.h>
-
-void
-bmcintr(void)
-{
-}
 
 /*
  * Following are all routines needed for SIO to act as console
