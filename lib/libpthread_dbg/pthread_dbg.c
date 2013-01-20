@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.40 2008/03/07 22:27:07 ad Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.41 2013/01/20 18:18:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.40 2008/03/07 22:27:07 ad Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.41 2013/01/20 18:18:07 christos Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -95,13 +95,13 @@ td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 	}
 	proc->allqaddr = addr;
 
-	val = LOOKUP(proc, "pthread__tsd_alloc", &addr);
+	val = LOOKUP(proc, "pthread__tsd_list", &addr);
 	if (val != 0) {
 		if (val == TD_ERR_NOSYM)
 			val = TD_ERR_NOLIB;
 		goto error;
 	}
-	proc->tsdallocaddr = addr;
+	proc->tsdlistaddr = addr;
 
 	val = LOOKUP(proc, "pthread__tsd_destructors", &addr);
 	if (val != 0) {
@@ -418,13 +418,14 @@ int
 td_tsd_iter(td_proc_t *proc,
     int (*call)(pthread_key_t, void (*)(void *), void *), void *arg)
 {
+#ifdef notyet
 	int val;
 	int i;
 	void *allocated;
 	void (*destructor)(void *);
 
 	for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
-		val = READ(proc, proc->tsdallocaddr + i * sizeof(allocated),
+		val = READ(proc, proc->tsdlistaddr + i * sizeof(allocated),
 		    &allocated, sizeof(allocated));
 		if (val != 0)
 			return val;
@@ -441,6 +442,9 @@ td_tsd_iter(td_proc_t *proc,
 				return val;
 		}
 	}
+#else
+	abort();
+#endif
 
 	return 0;
 }
