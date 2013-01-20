@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.32 2010/12/18 23:09:48 christos Exp $	*/
+/*	$NetBSD: fields.c,v 1.33 2013/01/20 10:12:58 apb Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include "sort.h"
 
-__RCSID("$NetBSD: fields.c,v 1.32 2010/12/18 23:09:48 christos Exp $");
+__RCSID("$NetBSD: fields.c,v 1.33 2013/01/20 10:12:58 apb Exp $");
 
 #define SKIP_BLANKS(ptr) {					\
 	if (BLANK & d_mask[*(ptr)])				\
@@ -275,7 +275,10 @@ number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 	if (*line == '-') {	/* set the sign */
 		negate ^= 0xff;
 		line++;
+	} else if (*line == '+') {
+		line++;
 	}
+
 	/* eat initial zeroes */
 	for (; *line == '0' && line < lineend; line++)
 		continue;
