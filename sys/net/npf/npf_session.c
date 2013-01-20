@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.19 2012/12/24 19:05:45 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.20 2013/01/20 18:45:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.19 2012/12/24 19:05:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.20 2013/01/20 18:45:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -570,6 +570,8 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 	npf_session_t *se;
 	bool forw;
 
+	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
+
 	/*
 	 * Check if session tracking is on.  Also, if layer 3 and 4 are not
 	 * cached - protocol is not supported or packet is invalid.
@@ -590,6 +592,7 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 		*error = ENOMEM;
 		return NULL;
 	}
+	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 
 	/* Main lookup of the session. */
 	if ((se = npf_session_lookup(npc, nbuf, di, &forw)) == NULL) {
@@ -624,6 +627,8 @@ npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	npf_session_t *se;
 	u_int proto, alen;
 	bool ok;
+
+	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 
 	/*
 	 * Check if session tracking is on.  Also, if layer 3 and 4 are not

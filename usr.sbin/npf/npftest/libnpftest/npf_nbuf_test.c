@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nbuf_test.c,v 1.3 2012/12/24 19:05:48 rmind Exp $	*/
+/*	$NetBSD: npf_nbuf_test.c,v 1.4 2013/01/20 18:45:57 rmind Exp $	*/
 
 /*
  * NPF nbuf interface test.
@@ -16,23 +16,41 @@
 
 CTASSERT((MBUF_CHAIN_LEN % sizeof(uint32_t)) == 0);
 
+static void
+mbuf_consistency_check(nbuf_t *nbuf)
+{
+	struct mbuf *m = nbuf_head_mbuf(nbuf);
+
+	while (m) {
+		assert(m->m_type != MT_FREE);
+		m = m->m_next;
+	}
+}
+
 static char *
 parse_nbuf_chain(struct mbuf *m)
 {
 	const void *dummy_ifp = (void *)0xdeadbeef;
 	char *s = kmem_zalloc(MBUF_CHAIN_LEN + 1, KM_SLEEP);
 	nbuf_t nbuf;
+	void *nptr;
 	int n;
 
 	nbuf_init(&nbuf, m, dummy_ifp);
+
+	nptr = nbuf_advance(&nbuf, (random() % 16) + 1, (random() % 16) + 1);
+	mbuf_consistency_check(&nbuf);
+	assert(nptr != NULL);
+	nbuf_reset(&nbuf);
+
 	for (n = 0; ; ) {
-		void *nptr;
 		char d[4 + 1];
 
 		nptr = nbuf_ensure_contig(&nbuf, sizeof(uint32_t));
 		if (nptr == NULL) {
 			break;
 		}
+		mbuf_consistency_check(&nbuf);
 		memcpy(&d, nptr, sizeof(uint32_t));
 
 		d[sizeof(d) - 1] = '\0';
@@ -48,6 +66,7 @@ parse_nbuf_chain(struct mbuf *m)
 		}
 		n += sizeof(uint32_t);
 	}
+	mbuf_consistency_check(&nbuf);
 	return s;
 }
 

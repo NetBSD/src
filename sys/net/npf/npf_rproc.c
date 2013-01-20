@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.4 2012/10/03 12:24:56 mlelstv Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.5 2013/01/20 18:45:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -263,6 +263,7 @@ npf_rproc_run(npf_cache_t *npc, nbuf_t *nbuf, npf_rproc_t *rp, int *decision)
 {
 	const unsigned extcount = rp->rp_ext_count;
 
+	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 	KASSERT(rp->rp_refcnt > 0);
 
 	for (unsigned i = 0; i < extcount; i++) {
@@ -271,5 +272,9 @@ npf_rproc_run(npf_cache_t *npc, nbuf_t *nbuf, npf_rproc_t *rp, int *decision)
 
 		KASSERT(ext->ext_refcnt > 0);
 		extops->proc(npc, nbuf, rp->rp_ext_meta[i], decision);
+
+		if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {
+			npf_recache(npc, nbuf);
+		}
 	}
 }

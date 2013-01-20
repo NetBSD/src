@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.13 2012/12/24 19:05:44 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.14 2013/01/20 18:45:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.13 2012/12/24 19:05:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.14 2013/01/20 18:45:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -182,11 +182,12 @@ process_next:
 		KASSERT(i < NPF_NREGS);
 		KASSERT(n >= sizeof(uint8_t) && n <= sizeof(uint32_t));
 
-		if ((n_ptr = nbuf_ensure_contig(nbuf, n)) == NULL) {
-			goto fail;
-		}
+		n_ptr = nbuf_ensure_contig(nbuf, n);
 		if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {
 			npf_recache(npc, nbuf);
+		}
+		if (n_ptr == NULL) {
+			goto fail;
 		}
 		memcpy(&regs[i], n_ptr, n);
 		break;

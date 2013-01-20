@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.24 2012/12/24 19:05:43 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.25 2013/01/20 18:45:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.24 2012/12/24 19:05:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.25 2013/01/20 18:45:56 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,6 +91,9 @@ npf_reassembly(npf_cache_t *npc, nbuf_t *nbuf, struct mbuf **mp)
 		 */
 		const u_int hlen = npf_cache_hlen(npc);
 		error = ip6_reass_packet(mp, hlen);
+		if (error && *mp == NULL) {
+			memset(nbuf, 0, sizeof(nbuf_t));
+		}
 #endif
 	}
 	if (error) {
@@ -249,7 +252,7 @@ out:
 
 	/* Reset mbuf pointer before returning to the caller. */
 	if ((*mp = nbuf_head_mbuf(&nbuf)) == NULL) {
-		return ENOMEM;
+		return error ? error : ENOMEM;
 	}
 
 	/* Pass the packet if decided and there is no error. */

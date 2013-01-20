@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.15 2012/12/24 19:05:44 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.16 2013/01/20 18:45:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.15 2012/12/24 19:05:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.16 2013/01/20 18:45:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -367,6 +367,7 @@ npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 	KASSERT(((di & PFIL_IN) != 0) ^ ((di & PFIL_OUT) != 0));
 again:
 	TAILQ_FOREACH(rl, &rlset->rs_queue, r_entry) {
+		KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 		KASSERT(!final_rl || rl->r_priority >= final_rl->r_priority);
 
 		/* Match the interface. */
@@ -401,6 +402,8 @@ again:
 		final_rl = NULL;
 		goto again;
 	}
+
+	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 	return final_rl;
 }
 
