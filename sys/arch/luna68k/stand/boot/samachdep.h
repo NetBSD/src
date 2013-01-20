@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.6 2013/01/16 15:46:20 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.7 2013/01/20 14:03:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -59,7 +59,6 @@ void configure(void);
 void find_devs(void);
 
 /* bmc.c */
-void bmcintr(void);
 void bmccnprobe(struct consdev *);
 void bmccninit(struct consdev *);
 int  bmccngetc(dev_t);
