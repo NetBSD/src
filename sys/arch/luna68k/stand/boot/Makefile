@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/01/16 15:15:01 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.7 2013/01/20 02:35:13 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 NOMAN= # defined
@@ -27,8 +27,9 @@ CFLAGS+=	-Wall -Werror
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 CFLAGS+=	-Wno-pointer-sign
 
+TEXTADDR=	700000
 LDSCRIPT=	${.CURDIR}/boot.ldscript
-LINKFORMAT=	-static -N -T ${LDSCRIPT}
+LINKFORMAT=	-static -N -Ttext ${TEXTADDR} -T ${LDSCRIPT}
 
 SRCS=	locore.S
 SRCS+=	init_main.c autoconf.c ioconf.c
