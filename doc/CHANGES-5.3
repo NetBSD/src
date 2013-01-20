@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.3 2013/01/13 17:58:06 bouyer Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.4 2013/01/20 12:22:22 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -139,4 +139,29 @@ lib/librefuse/refuse.c				1.96 via patch
 	Antti Kantee.
 	This fixes PR lib/45129 by myself.
 	[tron, ticket #1836]
+
+sys/dev/bluetooth/bthidev.c			1.23, 1.24 via patch
+sys/dev/bluetooth/btmagic.c			1.4, 1.5 via patch
+usr.sbin/btdevctl/btdevctl.8			1.8 via patch
+
+	when no link-mode is specified, explicitly set a mode of (int)0
+	otherwise l2cap_setmode() will fail during connection setup
+	for bthidev.c, this fixes a problem with Microsoft Wedge Touch
+	mouse (which may not be able to authenticate)
+	for btmagic.c, include this fix in case somebody tries that
+	related to PR/47286
+	[plunky, ticket #1835]
+
+sys/arch/arm/arm32/cpu.c			1.89
+
+	print cpu model string correctly
+	[msaitoh, ticket #1841]
+
+sys/dev/pci/pcidevs			1.969 via patch
+sys/dev/pci/pcidevs.h			regen
+sys/dev/pci/pcidevs_data.h		regen
+sys/dev/pci/viaide.c			1.58
+
+	Add VT8237S Integrated SATA Controller support (PR#47452).
+	[msaitoh, ticket #1842]
 
