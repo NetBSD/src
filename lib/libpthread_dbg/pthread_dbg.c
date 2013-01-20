@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.41 2013/01/20 18:18:07 christos Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.42 2013/01/20 18:45:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.41 2013/01/20 18:18:07 christos Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.42 2013/01/20 18:45:19 christos Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -88,27 +88,18 @@ td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 	proc->dbgaddr = addr;
 
 	val = LOOKUP(proc, "pthread__allqueue", &addr);
-	if (val != 0) {
-		if (val == TD_ERR_NOSYM)
-			val = TD_ERR_NOLIB;
+	if (val != 0)
 		goto error;
-	}
 	proc->allqaddr = addr;
 
 	val = LOOKUP(proc, "pthread__tsd_list", &addr);
-	if (val != 0) {
-		if (val == TD_ERR_NOSYM)
-			val = TD_ERR_NOLIB;
+	if (val != 0)
 		goto error;
-	}
 	proc->tsdlistaddr = addr;
 
 	val = LOOKUP(proc, "pthread__tsd_destructors", &addr);
-	if (val != 0) {
-		if (val == TD_ERR_NOSYM)
-			val = TD_ERR_NOLIB;
+	if (val != 0)
 		goto error;
-	}
 	proc->tsddestaddr = addr;
 
 	val = READ(proc, proc->dbgaddr, &dbg, sizeof(int));
