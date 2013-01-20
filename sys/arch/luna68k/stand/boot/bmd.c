@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: bmd.c,v 1.2 2013/01/20 13:35:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -78,7 +78,6 @@
 
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <luna68k/stand/boot/samachdep.h>
 
 #define isprint(c)	( c < 0x20 ? 0 : 1)
