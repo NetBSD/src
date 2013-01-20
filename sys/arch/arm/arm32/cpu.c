@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.71 2008/10/25 18:15:19 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.71.4.1 2013/01/20 12:13:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71 2008/10/25 18:15:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71.4.1 2013/01/20 12:13:28 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -486,7 +486,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 		if (cpuids[i].cpuid == (cpuid & CPU_ID_CPU_MASK)) {
 			cpu_class = cpuids[i].cpu_class;
 			steppingstr = cpuids[i].cpu_steppings[cpuid &
-			    CPU_ID_REVISION_MASK],
+			    CPU_ID_REVISION_MASK];
 			sprintf(cpu_model, "%s%s%s (%s core)",
 			    cpuids[i].cpu_name,
 			    steppingstr[0] == '*' ? "" : " ",
