@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkimage,v 1.14 2013/01/21 16:47:23 skrll Exp $
+# $NetBSD: mkimage,v 1.15 2013/01/21 16:49:49 skrll Exp $
 #
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -70,7 +70,7 @@ next_avail ()
 
 usage() {
 	cat << EOF 1>&2
-Usage: $PROG -h <host-arch> [-S <setsdir>] [-c <custom-files-dir>] [-s <size>]
+Usage: $PROG -h <host-arch> [-S <setsdir>] [-c <custom-files-dir>] [-s <size>] [<image>]
 EOF
 	exit 1
 }
