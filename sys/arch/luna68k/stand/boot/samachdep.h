@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.7 2013/01/20 14:03:40 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.8 2013/01/21 11:58:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -54,9 +54,11 @@ typedef struct label_t {
 } label_t;
 
 /* autoconf.c */
-extern int cpuspeed;
 void configure(void);
 void find_devs(void);
+
+/* awaitkey.c */
+char awaitkey(const char *, int, bool);
 
 /* bmc.c */
 void bmccnprobe(struct consdev *);
@@ -110,6 +112,8 @@ int getline(char *, char *);
 int leinit(void *);
 
 /* init_main.c */
+extern int cpuspeed;
+extern int hz;
 extern int nplane;
 extern int machtype;
 
@@ -130,6 +134,7 @@ int lance_intr(void);
 extern	u_int bootdev;
 extern int dipsw1, dipsw2;
 extern int cputype;
+extern volatile uint32_t tick;
 int setjmp(label_t *);
 int splhigh(void);
 void splx(int);
@@ -153,9 +158,7 @@ void regdump(int *, int);
 char *hexstr(int, int);
 
 /* prf.c */
-#if 0
 int tgetchar(void);
-#endif
 
 /* parse.c */
 int check_args(int, char **);

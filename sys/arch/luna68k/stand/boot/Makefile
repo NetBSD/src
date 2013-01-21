@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2013/01/20 02:35:13 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8 2013/01/21 11:58:12 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 NOMAN= # defined
@@ -39,7 +39,7 @@ SRCS+=	conf.c
 SRCS+=	machdep.c
 SRCS+=	getline.c parse.c 
 SRCS+=	boot.c
-SRCS+=	cons.c prf.c
+SRCS+=	cons.c prf.c awaitkey.c
 SRCS+=	romcons.c
 SRCS+=	sio.c
 SRCS+=	bmc.c bmd.c screen.c font.c kbd.c

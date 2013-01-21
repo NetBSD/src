@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2013/01/21 11:58:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -207,6 +207,7 @@ bootnetbsd(char *line)
 
 		(*entry)();
 	}
+	printf("Booting kernel failed. (%s)\n", strerror(errno));
 
 	return ST_ERROR;
 }

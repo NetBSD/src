@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2013/01/20 03:40:55 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2013/01/21 11:58:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -535,8 +535,12 @@ ENTRY_NOPROFILE(lev5intr)
 	moveml	%sp@+,#0x0303		| restore scratch regs
 	addql	#2,%sp			| pop pad word
 	jra	_ASM_LABEL(rei)		| all done
+
 ENTRY_NOPROFILE(hardclock)
+	addql	#1,_C_LABEL(tick)
 	rts
+
+BSS(tick,4)
 
 ENTRY_NOPROFILE(lev6intr)
 	clrw	%sp@-

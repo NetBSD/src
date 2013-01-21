@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.4 2013/01/20 13:35:43 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.5 2013/01/21 11:58:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -85,6 +85,7 @@ static int get_plane_numbers(void);
 static int reorder_dipsw(int);
 
 int cpuspeed;	/* for DELAY() macro */
+int hz = 60;
 int machtype;
 
 #define	VERS_LOCAL	"Phase-31"
@@ -106,6 +107,9 @@ char buffer[BUFFSIZE];
 int   argc;
 char *argv[MAXARGS];
 
+#define BOOT_TIMEOUT 10
+int boot_timeout = BOOT_TIMEOUT;
+
 char  prompt[16] = "boot> ";
 
 void
@@ -121,10 +125,12 @@ main(void)
 		machtype = LUNA_I;
 		machstr  = "LUNA-I";
 		cpuspeed = MHZ_25;
+		hz = 60;
 	} else {
 		machtype = LUNA_II;
 		machstr  = "LUNA-II";
 		cpuspeed = MHZ_25 * 2;	/* XXX */
+		hz = 100;
 	}
 
 	nplane   = get_plane_numbers();
@@ -162,13 +168,23 @@ main(void)
 	howto = reorder_dipsw(dipsw2);
 
 	if ((howto & 0xFE) == 0) {
-		printf("auto-boot %s\n", default_file);
-		bootnetbsd(default_file);
+		char c;
+
+		printf("Press return to boot now,"
+		    " any other key for boot menu\n");
+		printf("booting %s - starting in ", default_file);
+		c = awaitkey("%d seconds. ", boot_timeout, true);
+		if (c == '\r' || c == '\n' || c == 0) {
+			printf("auto-boot %s\n", default_file);
+			bootnetbsd(default_file);
+		}
 	}
 
 	/*
 	 * Main Loop
 	 */
+
+	printf("type \"help\" for help.\n");
 
 	do {
 		memset(buffer, 0, BUFFSIZE);

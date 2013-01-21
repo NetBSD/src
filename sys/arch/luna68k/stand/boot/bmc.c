@@ -1,4 +1,4 @@
-/*	$NetBSD: bmc.c,v 1.3 2013/01/20 14:03:40 tsutsui Exp $	*/
+/*	$NetBSD: bmc.c,v 1.4 2013/01/21 11:58:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -116,9 +116,8 @@ bmccngetc(dev_t dev)
 	int c;
 	int unit = 1;
 
-	while (RBUF_EMPTY(unit)) {
-		DELAY(10);
-	}
+	if (RBUF_EMPTY(unit))
+		return 0;
 
 	POP_RBUF(unit, c);
 

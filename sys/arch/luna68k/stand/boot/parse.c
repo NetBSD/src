@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.2 2013/01/16 15:15:01 tsutsui Exp $	*/
+/*	$NetBSD: parse.c,v 1.3 2013/01/21 11:58:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -79,6 +79,8 @@
 #include <luna68k/stand/boot/samachdep.h>
 #include <luna68k/stand/boot/status.h>
 
+static int cmd_help(int, char *[]);
+
 int
 check_args(int argc, char *argv[])
 {
@@ -96,6 +98,31 @@ exit_program(int argc, char *argv[])
 	return(ST_EXIT);
 }
 
+static const char helpmsg[] =
+	"commands are:\n"
+	"boot [device(unit,part)filename]\n"
+	" (ex. \"boot sd(0,0)netbsd\", \"boot le(0,0)netbsd.old\" etc.)\n"
+	"ls [device(unit, part)[path]]\n"
+	" (ex. \"ls sd(0,0)/bin\")\n"
+	"help\n"
+	"exit\n"
+#if 0 /* debug commands */
+	"checkargs\n"
+	"disklabel\n"
+	"howto\n"
+	"screen\n"
+	"scsi\n"
+#endif
+;
+
+static int
+cmd_help(int argc, char *argv[])
+{
+
+	printf(helpmsg);
+	return ST_NORMAL;
+}
+
 struct command_entry {
 	char *name;
 	int (*func)(int, char **);
@@ -111,6 +138,7 @@ struct command_entry entries[] = {
 	{ "fsdump",	fsdump       },
 	{ "fsrestore",	fsrestore    },
 #endif
+	{ "help",	cmd_help     },
 	{ "howto",	how_to_boot  },
 	{ "ls",		cmd_ls       },
 	{ "screen",	screen	     },
