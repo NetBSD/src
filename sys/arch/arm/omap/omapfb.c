@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.13 2013/01/17 01:10:52 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.14 2013/01/21 14:17:39 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.13 2013/01/17 01:10:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.14 2013/01/21 14:17:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -435,8 +435,17 @@ omapfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	switch (cmd) {
 
 		case WSDISPLAYIO_GTYPE:
-			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+			*(u_int *)data = WSDISPLAY_TYPE_OMAP3;
 			return 0;
+
+		case WSDISPLAYIO_GET_BUSID:
+			{
+				struct wsdisplayio_bus_id *busid;
+
+				busid = data;
+				busid->bus_type = WSDISPLAYIO_BUS_SOC;
+				return 0;
+			}
 
 		case WSDISPLAYIO_GINFO:
 			if (ms == NULL)
