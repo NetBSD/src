@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.51 2013/01/21 14:42:24 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.52 2013/01/21 15:21:30 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -833,7 +833,7 @@ ENTRY_NOPROFILE(lev5intr)
 	addql	#1,_C_LABEL(intrcnt)+20
 	INTERRUPT_RESTOREREG
 1:
-	addql	#1,_C_LABEL(idepth)
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		| all done
 #endif
 
