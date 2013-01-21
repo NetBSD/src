@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.14 2013/01/21 14:17:39 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.15 2013/01/21 16:08:30 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.14 2013/01/21 14:17:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.15 2013/01/21 16:08:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,8 @@ static int 	omapfb_getcmap(struct omapfb_softc *, struct wsdisplay_cmap *);
 static void	omapfb_restore_palette(struct omapfb_softc *);
 static void 	omapfb_putpalreg(struct omapfb_softc *, int, uint8_t,
 			    uint8_t, uint8_t);
+
+static int	omapfb_set_depth(struct omapfb_softc *, int);
 
 #if NOMAPDMA > 0
 static void	omapfb_init(struct omapfb_softc *);
@@ -453,7 +455,7 @@ omapfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			wdf = (void *)data;
 			wdf->height = ms->scr_ri.ri_height;
 			wdf->width = ms->scr_ri.ri_width;
-			wdf->depth = ms->scr_ri.ri_depth;
+			wdf->depth = 32;
 			wdf->cmsize = 256;
 			return 0;
 
@@ -466,19 +468,21 @@ omapfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			    (struct wsdisplay_cmap *)data);
 
 		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = sc->sc_stride;
+			*(u_int *)data = sc->sc_width * 4;
 			return 0;
 
 		case WSDISPLAYIO_SMODE:
 			{
 				int new_mode = *(int*)data;
 
-				/* notify the bus backend */
 				if (new_mode != sc->sc_mode) {
 					sc->sc_mode = new_mode;
-					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+					if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+						omapfb_set_depth(sc, 16);
 						vcons_redraw_screen(ms);
-					}
+					} else {
+						omapfb_set_depth(sc, 32);
+					}						
 				}
 			}
 			return 0;
@@ -628,6 +632,49 @@ omapfb_putpalreg(struct omapfb_softc *sc, int idx, uint8_t r, uint8_t g,
 	reg = (r << 16) | (g << 8) | b;
 	sc->sc_clut[idx] = reg;
 	
+}
+
+static int
+omapfb_set_depth(struct omapfb_softc *sc, int d)
+{
+	uint32_t reg;
+
+	reg = OMAP_DISPC_ATTR_ENABLE |
+	      OMAP_DISPC_ATTR_BURST_16x32 |
+	      OMAP_DISPC_ATTR_REPLICATION;
+	switch (d) {
+		case 16:
+			reg |= OMAP_DISPC_ATTR_RGB16;
+			break;
+		case 32:
+			reg |= OMAP_DISPC_ATTR_RGB24;
+			break;
+		default:
+			aprint_error_dev(sc->sc_dev, "unsupported depth (%d)\n", d);
+			return EINVAL;
+	}
+
+	bus_space_write_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_GFX_ATTRIBUTES, reg); 
+
+	/*
+	 * now tell the video controller that we're done mucking around and 
+	 * actually update its settings
+	 */
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL,
+	    reg | OMAP_DISPC_CTRL_GO_LCD | OMAP_DISPC_CTRL_GO_DIGITAL);
+
+	sc->sc_depth = d;
+	sc->sc_stride = sc->sc_width * (sc->sc_depth >> 3);
+
+	/* clear the screen here */
+#if NOMAPDMA > 0
+	omapfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height, 0);
+#else
+	memset(sc->sc_fbaddr, 0, sc->sc_stride * sc->sc_height);
+#endif
+	return 0;
 }
 
 #if NOMAPDMA > 0
