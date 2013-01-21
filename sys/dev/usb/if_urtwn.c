@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.15 2013/01/21 16:52:56 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.16 2013/01/21 23:42:45 jmcneill Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.15 2013/01/21 16:52:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.16 2013/01/21 23:42:45 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -243,6 +243,7 @@ static void	urtwn_lc_calib(struct urtwn_softc *);
 static void	urtwn_temp_calib(struct urtwn_softc *);
 static int	urtwn_init(struct ifnet *);
 static void	urtwn_stop(struct ifnet *, int);
+static int	urtwn_reset(struct ifnet *);
 static void	urtwn_chip_stop(struct urtwn_softc *);
 
 /* Aliases. */
@@ -378,7 +379,9 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 
 	if_attach(ifp);
 	ieee80211_ifattach(ic);
+
 	/* override default methods */
+	ic->ic_reset = urtwn_reset;
 	ic->ic_wme.wme_update = urtwn_wme_update;
 
 	/* Override state transition machine. */
@@ -685,8 +688,10 @@ urtwn_task(void *arg)
 		cmd = &ring->cmd[ring->next];
 		mutex_spin_exit(&sc->sc_task_mtx);
 		splx(s);
-		/* Invoke callback. */
+		/* Invoke callback with kernel lock held. */
+		KERNEL_LOCK(1, curlwp);
 		cmd->cb(sc, cmd->data);
+		KERNEL_UNLOCK_ONE(curlwp);
 		s = splusb();
 		mutex_spin_enter(&sc->sc_task_mtx);
 		ring->queued--;
@@ -1475,14 +1480,17 @@ static void
 urtwn_next_scan(void *arg)
 {
 	struct urtwn_softc *sc = arg;
+	int s;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
 		return;
 
+	s = splnet();
 	if (sc->sc_ic.ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(&sc->sc_ic);
+	splx(s);
 }
 
 static int
@@ -2072,7 +2080,9 @@ urtwn_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 
 		/* Process 802.11 frame. */
+		KERNEL_LOCK(1, curlwp);
 		urtwn_rx_frame(sc, buf, pktlen);
+		KERNEL_UNLOCK_ONE(curlwp);
 
 		/* Next chunk is 128-byte aligned. */
 		totlen = roundup2(totlen, 128);
@@ -2103,23 +2113,26 @@ urtwn_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	TAILQ_INSERT_TAIL(&sc->tx_free_list, data, next);
 	mutex_exit(&sc->sc_tx_mtx);
 
+	s = splnet();
+	sc->tx_timer = 0;
+	ifp->if_flags &= ~IFF_OACTIVE;
+	ifp->if_opackets++;
+
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		if (status != USBD_NOT_STARTED && status != USBD_CANCELLED) {
 			if (status == USBD_STALLED)
 				usbd_clear_endpoint_stall_async(data->pipe);
 			ifp->if_oerrors++;
 		}
+		splx(s);
 		return;
 	}
 
-	ifp->if_opackets++;
-
-	s = splnet();
-	sc->tx_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
-	splx(s);
-
+	KERNEL_LOCK(1, curlwp);
 	urtwn_start(ifp);
+	KERNEL_UNLOCK_ONE(curlwp);
+
+	splx(s);
 }
 
 static int
@@ -2415,7 +2428,6 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct urtwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	int s, error = 0;
 
 	DPRINTFN(DBG_FN, ("%s: %s: cmd=0x%08lx, data=%p\n",
@@ -2424,14 +2436,6 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
-		ifp->if_flags |= IFF_UP;
-#ifdef INET
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(ifp, ifa);
-#endif
-		/*FALLTHROUGH*/
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
@@ -2457,28 +2461,14 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 
-	case SIOCS80211CHANNEL:
-		error = ieee80211_ioctl(ic, cmd, data);
-		if (error == ENETRESET &&
-		    ic->ic_opmode == IEEE80211_M_MONITOR) {
-			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-			    (IFF_UP | IFF_RUNNING)) {
-				mutex_enter(&sc->sc_write_mtx);
-				urtwn_set_chan(sc, ic->ic_curchan,
-				    IEEE80211_HTINFO_2NDCHAN_NONE);
-				mutex_exit(&sc->sc_write_mtx);
-			}
-			error = 0;
-		}
-		break;
-
 	default:
 		error = ieee80211_ioctl(ic, cmd, data);
 		break;
 	}
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING)) {
+		    (IFF_UP | IFF_RUNNING) &&
+		    ic->ic_roaming != IEEE80211_ROAMING_MANUAL) {
 			urtwn_init(ifp);
 		}
 		error = 0;
@@ -3805,12 +3795,14 @@ urtwn_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
 
+	mutex_exit(&sc->sc_write_mtx);
+
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
-	else
+	else if (ic->ic_roaming != IEEE80211_ROAMING_MANUAL)
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+	urtwn_wait_async(sc);
 
-	mutex_exit(&sc->sc_write_mtx);
 	return (0);
 
  fail:
@@ -3829,14 +3821,14 @@ urtwn_stop(struct ifnet *ifp, int disable)
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
-	sc->tx_timer = 0;
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-
 	s = splusb();
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 	urtwn_wait_async(sc);
 	splx(s);
+
+	sc->tx_timer = 0;
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	callout_stop(&sc->sc_scan_to);
 	callout_stop(&sc->sc_calib_to);
@@ -3856,6 +3848,20 @@ urtwn_stop(struct ifnet *ifp, int disable)
 
 	if (disable)
 		urtwn_chip_stop(sc);
+}
+
+static int
+urtwn_reset(struct ifnet *ifp)
+{
+	struct urtwn_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+		return ENETRESET;
+
+	urtwn_set_chan(sc, ic->ic_curchan, IEEE80211_HTINFO_2NDCHAN_NONE);
+
+	return 0;
 }
 
 static void
