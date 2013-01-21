@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.31 2013/01/21 08:02:01 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.32 2013/01/21 13:25:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.31 2013/01/21 08:02:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.32 2013/01/21 13:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,9 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.31 2013/01/21 08:02:01 skrll Exp $");
 #include <dev/usb/dwc_otgvar.h>
 
 #include <dev/usb/usbroothub_subr.h>
-
-#include <arm/broadcom/bcm2835reg.h>
-#include <arm/broadcom/bcm2835_mbox.h>
 
 #ifdef DOTG_COUNTERS
 #define	DOTG_EVCNT_ADD(a,b)	((void)((a).ev_count += (b)))
