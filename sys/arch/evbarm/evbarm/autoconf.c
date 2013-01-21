@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2012/12/02 18:22:45 msaitoh Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 2013/01/21 20:20:32 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2012/12/02 18:22:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2013/01/21 20:20:32 jakllsch Exp $");
 
 #include "opt_md.h"
 
@@ -79,7 +79,7 @@ get_device(char *name)
 	if (cp == name)
 		return;
 
-	if (*cp >= 'a' && *cp <= ('a' + MAXPARTITIONS))
+	if (*cp >= 'a' && *cp < ('a' + MAXPARTITIONS))
 		part = *cp - 'a';
 	else if (*cp != '\0' && *cp != ' ')
 		return;
