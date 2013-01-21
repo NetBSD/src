@@ -97,12 +97,10 @@ public:
 		ROM_VERBOSE_PROGRESS = (1 << 1)			//!< Progress reports are verbose.
 	};
 	
-	enum {
-		ROM_IMAGE_HEADER_SIGNATURE = 'STMP',	//!< Signature in #elftosb::EncoreBootImage::boot_image_header_t::m_signature.
-		ROM_IMAGE_HEADER_SIGNATURE2 = 'sgtl',	//!< Value for #elftosb::EncoreBootImage::boot_image_header_t::m_signature2;
-		ROM_BOOT_IMAGE_MAJOR_VERSION = 1,		//!< Current boot image major version.
-		ROM_BOOT_IMAGE_MINOR_VERSION = 1		//!< Current boot image minor version.
-	};
+#define ROM_IMAGE_HEADER_SIGNATURE "STMP"	//!< Signature in #elftosb::EncoreBootImage::boot_image_header_t::m_signature.
+#define ROM_IMAGE_HEADER_SIGNATURE2 "sgtl"	//!< Value for #elftosb::EncoreBootImage::boot_image_header_t::m_signature2;
+#define	ROM_BOOT_IMAGE_MAJOR_VERSION 1		//!< Current boot image major version.
+#define	ROM_BOOT_IMAGE_MINOR_VERSION 1		//!< Current boot image minor version.
 	
 	enum {
 		//! Minimum alignment for a section is 16 bytes.
