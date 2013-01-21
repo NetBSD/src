@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: prf.c,v 1.2 2013/01/21 11:58:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -50,14 +50,13 @@ getchar(void)
 	return c;
 }
 
-#if 0
 int
 tgetchar(void)
 {
 	int c;
 
-	if ((c = cnscan()) == -1)
-        	return -1;
+	if ((c = cngetc()) == 0)
+        	return 0;
         
 	if (c == '\r')
 		c = '\n';
@@ -67,7 +66,6 @@ tgetchar(void)
 	}
 	return c;
 }
-#endif
 
 void
 putchar(int c)
