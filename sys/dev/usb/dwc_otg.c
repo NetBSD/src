@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.30 2013/01/21 07:39:59 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.31 2013/01/21 08:02:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.30 2013/01/21 07:39:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.31 2013/01/21 08:02:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3620,7 +3620,7 @@ dwc_otg_setup_standard_chain_sub(struct dwc_otg_std_temp *temp)
 	td->got_short = 0;
 	td->did_nak = 0;
 	td->channel = DWC_OTG_MAX_CHANNELS;
-	td->state = 0;
+	td->state = DWC_CHAN_ST_START;
 	td->errcnt = 0;
 	td->retrycnt = 0;
 	td->toggle = 0;
