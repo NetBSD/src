@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.1,v 1.1.2.2 2013/01/13 17:19:01 bouyer Exp $
+# $NetBSD: CHANGES-5.2.1,v 1.1.2.3 2013/01/21 20:23:36 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.2.1
 release:
@@ -57,4 +57,9 @@ gnu/dist/grep/src/search.c			1.4
 	variable.
 
 	[apb, ticket #1838]
+
+sys/external/bsd/ipf/netinet/ip_fil_netbsd.c	1.4 via patch
+
+	Fix off-by-one read error.
+	[msaitoh, ticket #1840]
 
