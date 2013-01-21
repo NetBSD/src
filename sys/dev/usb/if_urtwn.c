@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.13 2013/01/20 23:13:43 jmcneill Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.14 2013/01/21 00:02:11 jmcneill Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.13 2013/01/20 23:13:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.14 2013/01/21 00:02:11 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1570,7 +1570,7 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 		      R92C_BCN_CTRL_DIS_TSF_UDT0);
 
 		/* Back to 20MHz mode */
-		urtwn_set_chan(sc, ic->ic_bss->ni_chan,
+		urtwn_set_chan(sc, ic->ic_curchan,
 		    IEEE80211_HTINFO_2NDCHAN_NONE);
 
 		if (ic->ic_opmode == IEEE80211_M_IBSS ||
@@ -2153,8 +2153,8 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		struct urtwn_tx_radiotap_header *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
-		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+		tap->wt_chan_freq = htole16(ic->ic_curchan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
@@ -3787,7 +3787,6 @@ urtwn_init(struct ifnet *ifp)
 	urtwn_write_1(sc, 0x15, 0xe9);
 
 	/* Set default channel. */
-	ic->ic_bss->ni_chan = ic->ic_curchan;
 	urtwn_set_chan(sc, ic->ic_curchan, IEEE80211_HTINFO_2NDCHAN_NONE);
 
 	/* Queue Rx xfers. */
