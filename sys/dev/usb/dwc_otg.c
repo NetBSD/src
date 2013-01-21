@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.28 2013/01/19 14:33:51 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.29 2013/01/21 07:37:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.28 2013/01/19 14:33:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.29 2013/01/21 07:37:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1182,10 +1182,10 @@ dwc_otg_root_intr_transfer(usbd_xfer_handle xfer)
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 	if (err)
-		return (err);
+		return err;
 
 	/* Pipe isn't running, start first */
-	return (dwc_otg_root_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
+	return dwc_otg_root_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 }
 
 Static usbd_status
@@ -1197,14 +1197,14 @@ dwc_otg_root_intr_start(usbd_xfer_handle xfer)
 	DPRINTF("\n");
 
 	if (sc->sc_dying)
-		return (USBD_IOERROR);
+		return USBD_IOERROR;
 
 	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_intrxfer == NULL);
 	sc->sc_intrxfer = xfer;
 	mutex_exit(&sc->sc_lock);
 
-	return (USBD_IN_PROGRESS);
+	return USBD_IN_PROGRESS;
 }
 
 /* Abort a root interrupt request. */
@@ -1262,10 +1262,10 @@ dwc_otg_device_ctrl_transfer(usbd_xfer_handle xfer)
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 	if (err)
-		return (err);
+		return err;
 
 	/* Pipe isn't running, start first */
-	return (dwc_otg_device_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
+	return dwc_otg_device_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 }
 
 Static usbd_status
@@ -1346,7 +1346,7 @@ dwc_otg_device_bulk_transfer(usbd_xfer_handle xfer)
 		return err;
 
 	/* Pipe isn't running, start first */
-	return (dwc_otg_device_bulk_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
+	return dwc_otg_device_bulk_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 }
 
 Static usbd_status
@@ -1423,7 +1423,7 @@ dwc_otg_device_intr_transfer(usbd_xfer_handle xfer)
 		return err;
 
 	/* Pipe isn't running, start first */
-	return (dwc_otg_device_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
+	return dwc_otg_device_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 }
 
 Static usbd_status
@@ -1517,7 +1517,7 @@ dwc_otg_device_isoc_transfer(usbd_xfer_handle xfer)
 		return err;
 
 	/* Pipe isn't running, start first */
-	return (dwc_otg_device_isoc_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
+	return dwc_otg_device_isoc_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 }
 
 #if 0
@@ -2192,11 +2192,11 @@ dwc_otg_host_channel_wait(struct dwc_otg_td *td)
 
 	if (sc->sc_chan_state[x].wait_sof == 0) {
 		dwc_otg_clear_hcint(sc, x);
-		return (1);	/* done */
+		return 1;	/* done */
 	}
 
 	if (x == 0)
-		return (0);	/* wait */
+		return 0;	/* wait */
 
 	/* find new disabled channel */
 	for (x = 1; x != sc->sc_host_ch_max; x++) {
@@ -2234,9 +2234,9 @@ dwc_otg_host_channel_wait(struct dwc_otg_td *td)
 		/* set channel */
 		td->channel = x;
 
-		return (1);	/* new channel allocated */
+		return 1;	/* new channel allocated */
 	}
-	return (0);	/* wait */
+	return 0;	/* wait */
 }
 
 static uint8_t
@@ -2249,7 +2249,7 @@ dwc_otg_host_channel_alloc(struct dwc_otg_td *td)
 	DPRINTFN(9, "\n");
 
 	if (td->channel < DWC_OTG_MAX_CHANNELS) {
-		return (0);		/* already allocated */
+		return 0;		/* already allocated */
 	}
 
 	/* get pointer to softc */
@@ -2284,9 +2284,9 @@ dwc_otg_host_channel_alloc(struct dwc_otg_td *td)
 		/* set channel */
 		td->channel = x;
 
-		return (0);	/* allocated */
+		return 0;	/* allocated */
 	}
-	return (1);	/* busy */
+	return 1;	/* busy */
 }
 
 static void
@@ -2351,7 +2351,7 @@ dwc_otg_host_setup_tx(struct dwc_otg_td *td)
 	uint32_t hcchar;
 
 	if (dwc_otg_host_channel_alloc(td))
-		return (1);		/* busy */
+		return 1;		/* busy */
 
 	/* get pointer to softc */
 	sc = DWC_OTG_TD2SC(td);
@@ -2369,12 +2369,12 @@ dwc_otg_host_setup_tx(struct dwc_otg_td *td)
 		DPRINTF("CH=%d STALL\n", td->channel);
 		td->error_stall = 1;
 		td->error_any = 1;
-		return (0);		/* complete */
+		return 0;		/* complete */
 	} else if (hcint & HCINT_ERRORS) {
 		td->errcnt++;
 		if (td->hcsplt != 0 || td->errcnt >= 3) {
 			td->error_any = 1;
-			return (0);		/* complete */
+			return 0;		/* complete */
 		}
 	}
 
@@ -2405,7 +2405,7 @@ dwc_otg_host_setup_tx(struct dwc_otg_td *td)
 			td->offset += td->tx_bytes;
 			td->remainder -= td->tx_bytes;
 			td->toggle = 1;
-			return (0);	/* complete */
+			return 0;	/* complete */
 		}
 		break;
 	case DWC_CHAN_ST_WAIT_S_ANE:
@@ -2439,7 +2439,7 @@ dwc_otg_host_setup_tx(struct dwc_otg_td *td)
 			td->offset += td->tx_bytes;
 			td->remainder -= td->tx_bytes;
 			td->toggle = 1;
-			return (0);	/* complete */
+			return 0;	/* complete */
 		}
 		break;
 	case DWC_CHAN_ST_TX_PKT_SYNC:
@@ -2447,12 +2447,12 @@ dwc_otg_host_setup_tx(struct dwc_otg_td *td)
 	default:
 		break;
 	}
-	return (1);		/* busy */
+	return 1;		/* busy */
 
 send_pkt:
 	if (sizeof(req) != td->remainder) {
 		td->error_any = 1;
-		return (0);		/* complete */
+		return 0;		/* complete */
 	}
 
 send_pkt_sync:
@@ -2467,7 +2467,7 @@ send_pkt_sync:
 			/* set state */
 			td->state = DWC_CHAN_ST_TX_PKT_SYNC;
 			dwc_otg_host_channel_free(td);
-			return (1);	/* busy */
+			return 1;	/* busy */
 		}
 
 		td->hcsplt &= ~HCSPLT_COMPSPLT;
@@ -2500,7 +2500,7 @@ send_pkt_sync:
 	td->tx_bytes = sizeof(req);
 
 
-	return (1);	/* busy */
+	return 1;	/* busy */
 
 send_cpkt:
 
@@ -2518,7 +2518,7 @@ send_cpkt:
 	/* must enable channel before writing data to FIFO */
 	DWC_OTG_WRITE_4(sc, DOTG_HCCHAR(td->channel), hcchar);
 
-	return (1);	/* busy */
+	return 1;	/* busy */
 }
 
 static uint8_t
@@ -2559,9 +2559,9 @@ dwc_otg_host_rate_check(struct dwc_otg_td *td)
 		td->set_toggle = 0;
 		td->toggle = 1;
 	}
-	return (0);
+	return 0;
 busy:
-	return (1);
+	return 1;
 }
 
 static uint8_t
@@ -2574,7 +2574,7 @@ dwc_otg_host_data_rx(struct dwc_otg_td *td)
 	uint8_t ep_type;
 
 	if (dwc_otg_host_channel_alloc(td))
-		return (1);		/* busy */
+		return 1;		/* busy */
 
 	/* get pointer to softc */
 	sc = DWC_OTG_TD2SC(td);
@@ -2597,13 +2597,13 @@ dwc_otg_host_data_rx(struct dwc_otg_td *td)
 		DPRINTF("CH=%d STALL\n", td->channel);
 		td->error_stall = 1;
 		td->error_any = 1;
-		return (0);		/* complete */
+		return 0;		/* complete */
 	} else if (hcint & HCINT_ERRORS) {
 		DPRINTF("CH=%d ERROR\n", td->channel);
 		td->errcnt++;
 		if (td->hcsplt != 0 || td->errcnt >= 3) {
 			td->error_any = 1;
-			return (0);		/* complete */
+			return 0;		/* complete */
 		}
 	}
 
@@ -2656,7 +2656,7 @@ dwc_otg_host_data_rx(struct dwc_otg_td *td)
 
 				/* release FIFO */
 				dwc_otg_common_rx_ack(sc);
-				return (0);	/* we are complete */
+				return 0;	/* we are complete */
 			}
 		}
 
@@ -2667,7 +2667,7 @@ dwc_otg_host_data_rx(struct dwc_otg_td *td)
 
 			/* release FIFO */
 			dwc_otg_common_rx_ack(sc);
-			return (0);		/* we are complete */
+			return 0;		/* we are complete */
 		}
 
 		usbd_copy_in(td->buf, td->offset,
@@ -2722,7 +2722,7 @@ check_state:
 			/* check if we are complete */
 			if ((td->remainder == 0) || (td->got_short != 0)) {
 				if (td->short_pkt)
-					return (0);	/* complete */
+					return 0;	/* complete */
 
 				/*
 				 * Else need to receive a zero length
@@ -2866,7 +2866,7 @@ receive_spkt_sync:
 	DWC_OTG_WRITE_4(sc, DOTG_HCCHAR(td->channel), hcchar);
 
 busy:
-	return (1);	/* busy */
+	return 1;	/* busy */
 }
 
 
@@ -2880,7 +2880,7 @@ dwc_otg_host_data_tx(struct dwc_otg_td *td)
 	uint8_t ep_type;
 
 	if (dwc_otg_host_channel_alloc(td))
-		return (1);		/* busy */
+		return 1;		/* busy */
 
 	/* get pointer to softc */
 	sc = DWC_OTG_TD2SC(td);
@@ -2901,13 +2901,13 @@ dwc_otg_host_data_tx(struct dwc_otg_td *td)
 		DPRINTF("CH=%d STALL\n", td->channel);
 		td->error_stall = 1;
 		td->error_any = 1;
-		return (0);		/* complete */
+		return 0;		/* complete */
 	} else if (hcint & HCINT_ERRORS) {
 		DPRINTF("CH=%d ERROR\n", td->channel);
 		td->errcnt++;
 		if (td->hcsplt != 0 || td->errcnt >= 3) {
 			td->error_any = 1;
-			return (0);		/* complete */
+			return 0;		/* complete */
 		}
 	}
 
@@ -2944,7 +2944,7 @@ dwc_otg_host_data_tx(struct dwc_otg_td *td)
 			/* check remainder */
 			if (td->remainder == 0) {
 				if (td->short_pkt)
-					return (0);	/* complete */
+					return 0;	/* complete */
 
 				/*
 				 * Else we need to transmit a short
@@ -2990,7 +2990,7 @@ dwc_otg_host_data_tx(struct dwc_otg_td *td)
 			/* check remainder */
 			if (td->remainder == 0) {
 				if (td->short_pkt)
-					return (0);	/* complete */
+					return 0;	/* complete */
 
 				/* else we need to transmit a short packet */
 			}
@@ -3110,7 +3110,7 @@ send_cpkt:
 	DWC_OTG_WRITE_4(sc, DOTG_HCCHAR(td->channel), hcchar);
 
 busy:
-	return (1);	/* busy */
+	return 1;	/* busy */
 }
 
 uint32_t fifoenters;
@@ -3164,12 +3164,12 @@ dwc_otg_xfer_do_fifo(usbd_xfer_handle xfer)
 		td->tmr_res = tmr_res;
 		td->tmr_val = tmr_val;
 	}
-	return (1);			/* not complete */
+	return 1;			/* not complete */
 
 done:
 	/* compute all actual lengths */
 	dwc_otg_standard_done(xfer);
-	return (0);			/* complete */
+	return 0;			/* complete */
 }
 
 Static void
@@ -4054,7 +4054,7 @@ dwc_otg_standard_done_sub(usbd_xfer_handle xfer)
 
 	dxfer->td_transfer_cache = td;
 
-	return (error);
+	return error;
 }
 
 Static void
