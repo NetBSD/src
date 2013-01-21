@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.14 2013/01/21 00:02:11 jmcneill Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.15 2013/01/21 16:52:56 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.14 2013/01/21 00:02:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.15 2013/01/21 16:52:56 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4001,4 +4001,3 @@ if_urtwn_modcmd(modcmd_t cmd, void *aux)
 		return (ENOTTY);
 	}
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.20 2013/01/20 21:50:41 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.21 2013/01/21 16:52:56 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.20 2013/01/20 21:50:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.21 2013/01/21 16:52:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -3369,4 +3369,3 @@ otus_output(struct ifnet *ifp, struct mbuf *m,
 	return ieee80211_output(ifp, m, dst, ic);
 }
 #endif /* IEEE80211_INJECTION */
-
