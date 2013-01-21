@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.16 2012/05/06 22:32:05 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.17 2013/01/21 03:24:43 msaitoh Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/util.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: util.c,v 1.39 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.16 2012/05/06 22:32:05 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.17 2013/01/21 03:24:43 msaitoh Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -74,9 +74,10 @@ file_matching(const char *fname)
 	for (i = 0; i < fpatterns; ++i) {
 		if (fnmatch(fpattern[i].pat, fname, 0) == 0 ||
 		    fnmatch(fpattern[i].pat, fname_base, 0) == 0) {
-			if (fpattern[i].mode == EXCL_PAT)
+			if (fpattern[i].mode == EXCL_PAT) {
+				free(fname_copy);
 				return (false);
-			else
+			} else
 				ret = true;
 		}
 	}
