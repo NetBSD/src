@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.29 2013/01/19 17:45:28 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.30 2013/01/21 20:42:22 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.29 2013/01/19 17:45:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.30 2013/01/21 20:42:22 jakllsch Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -737,6 +737,12 @@ rpi_device_register(device_t dev, void *aux)
 	    vb.vbt_emmcclockrate.rate > 0) {
 		prop_dictionary_set_uint32(dict,
 		    "frequency", vb.vbt_emmcclockrate.rate);
+	}
+	if (booted_device == NULL &&
+	    device_is_a(dev, "ld") &&
+	    device_is_a(device_parent(dev), "sdmmc")) {
+		booted_partition = 0;
+		booted_device = dev;
 	}
 #endif
 	if (device_is_a(dev, "usmsc") &&
