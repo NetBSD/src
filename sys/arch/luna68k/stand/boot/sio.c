@@ -1,4 +1,4 @@
-/*	$NetBSD: sio.c,v 1.2 2013/01/12 07:04:57 tsutsui Exp $	*/
+/*	$NetBSD: sio.c,v 1.3 2013/01/21 11:58:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -167,9 +167,8 @@ siocngetc(dev_t dev)
 {
 	int c, unit = siounit(dev);
 
-	while (RBUF_EMPTY(unit)) {
-		DELAY(10);
-	}
+	if (RBUF_EMPTY(unit))
+		return 0;
 
 	POP_RBUF(unit, c);
 
