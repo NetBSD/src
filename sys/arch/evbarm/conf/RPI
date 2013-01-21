@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.21 2013/01/11 06:41:01 skrll Exp $
+#	$NetBSD: RPI,v 1.22 2013/01/21 16:25:09 jakllsch Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -165,7 +165,7 @@ options USB_DEBUG
 #  verbose		Show aprint_normal and aprint_verbose output
 #options		BOOT_ARGS="\"\""
 
-config		netbsd		root on ld0a type ?
+config		netbsd		root on ? type ?
 
 # The main bus device
 mainbus0	at root
