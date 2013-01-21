@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.29 2013/01/21 07:37:06 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.30 2013/01/21 07:39:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.29 2013/01/21 07:37:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.30 2013/01/21 07:39:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1507,12 +1507,13 @@ dwc_otg_device_isoc_transfer(usbd_xfer_handle xfer)
 	usbd_status err;
 
 	DPRINTF("\n");
-	panic("not yet\n");
 
 	/* Insert last in queue. */
 	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
+
+	err = USBD_IOERROR;
 	if (err)
 		return err;
 
