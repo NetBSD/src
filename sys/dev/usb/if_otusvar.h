@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusvar.h,v 1.4 2013/01/20 21:50:41 christos Exp $	*/
+/*	$NetBSD: if_otusvar.h,v 1.5 2013/01/21 16:48:23 christos Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -295,4 +295,3 @@ struct otus_softc {
 };
 
 #endif /* _IF_OTUSVAR_H_ */
-
