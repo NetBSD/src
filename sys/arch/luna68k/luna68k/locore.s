@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.50 2013/01/18 18:41:12 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.51 2013/01/21 14:42:24 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -819,6 +819,7 @@ ENTRY_NOPROFILE(intrhand_vectored)
 
 #if 1	/* XXX wild timer -- how can I disable/enable the interrupt? */
 ENTRY_NOPROFILE(lev5intr)
+	addql	#1,_C_LABEL(idepth)
 	btst	#7,0x63000000		| check whether system clock
 	beq	1f
 	movb	#1,0x63000000		| clear the interrupt
@@ -832,6 +833,7 @@ ENTRY_NOPROFILE(lev5intr)
 	addql	#1,_C_LABEL(intrcnt)+20
 	INTERRUPT_RESTOREREG
 1:
+	addql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		| all done
 #endif
 
