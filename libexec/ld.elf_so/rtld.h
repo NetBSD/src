@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.107 2011/12/02 09:06:49 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.107.4.1 2013/01/22 21:47:28 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -114,7 +114,6 @@ typedef struct Struct_Ver_Entry {
 /* Ver_Entry.flags */
 #define VER_INFO_HIDDEN	0x01
 
-
 #define RTLD_MAX_ENTRY 10
 #define RTLD_MAX_LIBRARY 4
 #define RTLD_MAX_CTL 2
@@ -140,6 +139,8 @@ typedef struct _rtld_library_xform_t {
 
 #define RTLD_MAGIC	0xd550b87a
 #define RTLD_VERSION	1
+
+typedef void (*fptr_t)(void);
 
 typedef struct Struct_Obj_Entry {
 	Elf32_Word      magic;		/* Magic number (sanity check) */
@@ -188,8 +189,8 @@ typedef struct Struct_Obj_Entry {
 	Search_Path    *rpaths;		/* Search path specified in object */
 	Needed_Entry   *needed;		/* Shared objects needed by this (%) */
 
-	void            (*init)(void); 	/* Initialization function to call */
-	void            (*fini)(void);	/* Termination function to call */
+	fptr_t		init;		/* Initialization function to call */
+	fptr_t		fini;		/* Termination function to call */
 
 	/*
 	 * BACKWARDS COMPAT Entry points for dlopen() and friends.
@@ -277,6 +278,12 @@ typedef struct Struct_Obj_Entry {
 	Ver_Entry	*vertab;	/* Versions required/defined by this
 					 * object */
 	int		vertabnum;	/* Number of entries in vertab */
+
+	/* init_array/fini_array */
+	fptr_t		*init_array;	/* start of init array */
+	size_t		init_arraysz;	/* # of entries in it */
+	fptr_t		*fini_array;	/* start of fini array */
+	size_t		fini_arraysz;	/* # of entries in it */
 } Obj_Entry;
 
 typedef struct Struct_DoneList {

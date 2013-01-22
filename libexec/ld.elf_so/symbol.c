@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.59 2011/11/25 14:39:02 joerg Exp $	 */
+/*	$NetBSD: symbol.c,v 1.59.4.1 2013/01/22 21:47:28 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.59 2011/11/25 14:39:02 joerg Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.59.4.1 2013/01/22 21:47:28 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -58,8 +58,6 @@ __RCSID("$NetBSD: symbol.c,v 1.59 2011/11/25 14:39:02 joerg Exp $");
 
 #include "debug.h"
 #include "rtld.h"
-
-typedef void (*fptr_t)(void);
 
 /*
  * If the given object is already in the donelist, return true.  Otherwise
