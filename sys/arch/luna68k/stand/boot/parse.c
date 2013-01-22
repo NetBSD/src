@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.3 2013/01/21 11:58:12 tsutsui Exp $	*/
+/*	$NetBSD: parse.c,v 1.4 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -152,7 +152,7 @@ struct command_entry entries[] = {
 };
 
 
-int 
+int
 parse(int argc, char *argv[])
 {
 	int i, status = ST_NOTFOUND;
