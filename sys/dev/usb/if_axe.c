@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.63 2013/01/16 17:18:55 christos Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.64 2013/01/22 12:40:42 jmcneill Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.63 2013/01/16 17:18:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.64 2013/01/22 12:40:42 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -611,7 +611,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	sc->axe_flags = axe_lookup(uaa->vendor, uaa->product)->axe_flags;
 
 	mutex_init(&sc->axe_mii_lock, MUTEX_DEFAULT, IPL_NONE);
-	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc);
+	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc, 0);
 
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);
 	if (err) {
