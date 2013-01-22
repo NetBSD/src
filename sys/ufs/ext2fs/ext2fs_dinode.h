@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.25 2012/11/21 20:45:36 jakllsch Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.26 2013/01/22 09:39:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,10 +92,15 @@
  * are defined by types with precise widths.
  */
 
-#define	NDADDR	12			/* Direct addresses in inode. */
-#define	NIADDR	3			/* Indirect addresses in inode. */
+/*
+ * XXX these are the same values as UFS_NDADDR/UFS_NIADDR and it is
+ * far from clear that there isn't code that relies on them being the
+ * same.
+ */
+#define	EXT2FS_NDADDR	12		/* Direct addresses in inode. */
+#define	EXT2FS_NIADDR	3		/* Indirect addresses in inode. */
 
-#define EXT2_MAXSYMLINKLEN ((NDADDR+NIADDR) * sizeof (uint32_t))
+#define EXT2_MAXSYMLINKLEN ((EXT2FS_NDADDR+EXT2FS_NIADDR) * sizeof (uint32_t))
 
 struct ext2fs_dinode {
 	uint16_t	e2di_mode;	/*   0: IFMT, permissions; see below. */
@@ -110,7 +115,8 @@ struct ext2fs_dinode {
 	uint32_t	e2di_nblock;	/*  28: Blocks count */
 	uint32_t	e2di_flags;	/*  32: Status flags (chflags) */
 	uint32_t	e2di_version;	/*  36: was reserved1 */
-	uint32_t	e2di_blocks[NDADDR+NIADDR]; /* 40: disk blocks */
+	uint32_t	e2di_blocks[EXT2FS_NDADDR+EXT2FS_NIADDR];
+					/* 40: disk blocks */
 	uint32_t	e2di_gen;	/* 100: generation number */
 	uint32_t	e2di_facl;	/* 104: file ACL (not implemented) */
 	uint32_t	e2di_dacl;	/* 108: dir ACL (not implemented) */
@@ -123,8 +129,8 @@ struct ext2fs_dinode {
 };
 
 
-
-#define	E2MAXSYMLINKLEN	((NDADDR + NIADDR) * sizeof(uint32_t))
+/* XXX how does this differ from EXT2_MAXSYMLINKLEN above? */
+#define	E2MAXSYMLINKLEN	((EXT2FS_NDADDR + EXT2FS_NIADDR) * sizeof(uint32_t))
 
 /* File permissions. */
 #define	EXT2_IEXEC		0000100		/* Executable. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.48 2008/08/12 13:28:35 simonb Exp $	*/
+/*	$NetBSD: traverse.c,v 1.49 2013/01/22 09:39:11 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.48 2008/08/12 13:28:35 simonb Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.49 2013/01/22 09:39:11 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,10 +98,10 @@ blockest(union dinode *dp)
 	sizeest = howmany(ufs_fragroundup(ufsib, DIP(dp, size)), TP_BSIZE);
 	if (blkest > sizeest)
 		blkest = sizeest;
-	if (DIP(dp, size) > ufsib->ufs_bsize * NDADDR) {
+	if (DIP(dp, size) > ufsib->ufs_bsize * UFS_NDADDR) {
 		/* calculate the number of indirect blocks on the dump tape */
 		blkest +=
-			howmany(sizeest - NDADDR * ufsib->ufs_bsize / TP_BSIZE,
+			howmany(sizeest - UFS_NDADDR * ufsib->ufs_bsize / TP_BSIZE,
 			TP_NINDIR);
 	}
 	return (blkest + 1);
@@ -246,7 +246,7 @@ mapfiles(ino_t maxino, u_int64_t *tape_size, char *diskname, char * const *dirv)
 		 * Ensure that the root inode actually appears in the
 		 * file list for a subdir
 		 */
-		mapfileino(ROOTINO, tape_size, &anydirskipped);
+		mapfileino(UFS_ROOTINO, tape_size, &anydirskipped);
 	} else {
 		fs_mapinodes(maxino, tape_size, &anydirskipped);
 	}
@@ -254,7 +254,7 @@ mapfiles(ino_t maxino, u_int64_t *tape_size, char *diskname, char * const *dirv)
 	 * Restore gets very upset if the root is not dumped,
 	 * so ensure that it always is dumped.
 	 */
-	SETINO(ROOTINO, dumpinomap);
+	SETINO(UFS_ROOTINO, dumpinomap);
 	return (anydirskipped);
 }
 
@@ -308,7 +308,7 @@ mapdirs(ino_t maxino, u_int64_t *tape_size)
 		else
 			di.dp1 = dp->dp1;
 		filesize = DIP(&di, size);
-		for (ret = 0, i = 0; filesize > 0 && i < NDADDR; i++) {
+		for (ret = 0, i = 0; filesize > 0 && i < UFS_NDADDR; i++) {
 			if (is_ufs2)
 				blk = iswap64(di.dp2.di_db[i]);
 			else
@@ -322,7 +322,7 @@ mapdirs(ino_t maxino, u_int64_t *tape_size)
 			else
 				filesize -= ufsib->ufs_bsize;
 		}
-		for (i = 0; filesize > 0 && i < NIADDR; i++) {
+		for (i = 0; filesize > 0 && i < UFS_NIADDR; i++) {
 			if (is_ufs2)
 				blk = iswap64(di.dp2.di_ib[i]);
 			else
@@ -570,8 +570,8 @@ dumpino(union dinode *dp, ino_t ino)
 		msg("Warning: undefined file type 0%o\n", DIP(dp, mode) & IFMT);
 		return;
 	}
-	if (DIP(dp, size) > NDADDR * ufsib->ufs_bsize)
-		cnt = NDADDR * ufsib->ufs_frag;
+	if (DIP(dp, size) > UFS_NDADDR * ufsib->ufs_bsize)
+		cnt = UFS_NDADDR * ufsib->ufs_frag;
 	else
 		cnt = howmany(DIP(dp, size), ufsib->ufs_fsize);
 	if (is_ufs2)
@@ -579,9 +579,9 @@ dumpino(union dinode *dp, ino_t ino)
 	else
 		blksout32(&dp->dp1.di_db[0], cnt, ino);
 
-	if ((size = DIP(dp, size) - NDADDR * ufsib->ufs_bsize) <= 0)
+	if ((size = DIP(dp, size) - UFS_NDADDR * ufsib->ufs_bsize) <= 0)
 		return;
-	for (ind_level = 0; ind_level < NIADDR; ind_level++) {
+	for (ind_level = 0; ind_level < UFS_NIADDR; ind_level++) {
 		if (is_ufs2)
 			blk = iswap64(dp->dp2.di_ib[ind_level]);
 		else

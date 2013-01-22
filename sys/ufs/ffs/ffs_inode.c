@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.111 2012/12/20 08:03:44 hannken Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.112 2013/01/22 09:39:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.111 2012/12/20 08:03:44 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.112 2013/01/22 09:39:16 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -208,8 +208,8 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 {
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
-	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	daddr_t blks[NDADDR + NIADDR];
+	daddr_t bn, lastiblock[UFS_NIADDR], indir_lbn[UFS_NIADDR];
+	daddr_t blks[UFS_NDADDR + UFS_NIADDR];
 	struct fs *fs;
 	int offset, pgoffset, level;
 	int64_t count, blocksreleased = 0;
@@ -261,7 +261,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 */
 
 	if (osize < length) {
-		if (lblkno(fs, osize) < NDADDR &&
+		if (lblkno(fs, osize) < UFS_NDADDR &&
 		    lblkno(fs, osize) != lblkno(fs, length) &&
 		    blkroundup(fs, osize) != osize) {
 			off_t eob;
@@ -349,7 +349,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 * the file is truncated to 0.
 	 */
 	lastblock = lblkno(fs, length + fs->fs_bsize - 1) - 1;
-	lastiblock[SINGLE] = lastblock - NDADDR;
+	lastiblock[SINGLE] = lastblock - UFS_NDADDR;
 	lastiblock[DOUBLE] = lastiblock[SINGLE] - NINDIR(fs);
 	lastiblock[TRIPLE] = lastiblock[DOUBLE] - NINDIR(fs) * NINDIR(fs);
 	nblocks = btodb(fs->fs_bsize);
@@ -361,14 +361,14 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 */
 	sync = 0;
 	for (level = TRIPLE; level >= SINGLE; level--) {
-		blks[NDADDR + level] = DIP(oip, ib[level]);
-		if (lastiblock[level] < 0 && blks[NDADDR + level] != 0) {
+		blks[UFS_NDADDR + level] = DIP(oip, ib[level]);
+		if (lastiblock[level] < 0 && blks[UFS_NDADDR + level] != 0) {
 			sync = 1;
 			DIP_ASSIGN(oip, ib[level], 0);
 			lastiblock[level] = -1;
 		}
 	}
-	for (i = 0; i < NDADDR; i++) {
+	for (i = 0; i < UFS_NDADDR; i++) {
 		blks[i] = DIP(oip, db[i]);
 		if (i > lastblock && blks[i] != 0) {
 			sync = 1;
@@ -388,15 +388,15 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 * Note that we save the new block configuration so we can check it
 	 * when we are done.
 	 */
-	for (i = 0; i < NDADDR; i++) {
+	for (i = 0; i < UFS_NDADDR; i++) {
 		bn = DIP(oip, db[i]);
 		DIP_ASSIGN(oip, db[i], blks[i]);
 		blks[i] = bn;
 	}
-	for (i = 0; i < NIADDR; i++) {
+	for (i = 0; i < UFS_NIADDR; i++) {
 		bn = DIP(oip, ib[i]);
-		DIP_ASSIGN(oip, ib[i], blks[NDADDR + i]);
-		blks[NDADDR + i] = bn;
+		DIP_ASSIGN(oip, ib[i], blks[UFS_NDADDR + i]);
+		blks[UFS_NDADDR + i] = bn;
 	}
 
 	oip->i_size = osize;
@@ -408,7 +408,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	/*
 	 * Indirect blocks first.
 	 */
-	indir_lbn[SINGLE] = -NDADDR;
+	indir_lbn[SINGLE] = -UFS_NDADDR;
 	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - NINDIR(fs) - 1;
 	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - NINDIR(fs) * NINDIR(fs) - 1;
 	for (level = TRIPLE; level >= SINGLE; level--) {
@@ -441,7 +441,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	/*
 	 * All whole direct blocks or frags.
 	 */
-	for (i = NDADDR - 1; i > lastblock; i--) {
+	for (i = UFS_NDADDR - 1; i > lastblock; i--) {
 		long bsize;
 
 		if (oip->i_ump->um_fstype == UFS1)
@@ -506,9 +506,9 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 done:
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if (blks[NDADDR + level] != DIP(oip, ib[level]))
+		if (blks[UFS_NDADDR + level] != DIP(oip, ib[level]))
 			panic("itrunc1");
-	for (i = 0; i < NDADDR; i++)
+	for (i = 0; i < UFS_NDADDR; i++)
 		if (blks[i] != DIP(oip, db[i]))
 			panic("itrunc2");
 	if (length == 0 &&

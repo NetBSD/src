@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.112 2012/02/13 12:59:56 wiz Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.113 2013/01/22 09:39:12 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.112 2012/02/13 12:59:56 wiz Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.113 2013/01/22 09:39:12 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,8 +206,8 @@ mkfs(const char *fsys, int fi, int fo,
 		sblock.fs_old_flags = 0;
 	} else {
 		sblock.fs_old_inodefmt = FS_44INODEFMT;
-		sblock.fs_maxsymlinklen = (Oflag == 1 ? MAXSYMLINKLEN_UFS1 :
-		    MAXSYMLINKLEN_UFS2);
+		sblock.fs_maxsymlinklen = (Oflag == 1 ? UFS1_MAXSYMLINKLEN :
+		    UFS2_MAXSYMLINKLEN);
 		sblock.fs_old_flags = FS_FLAGS_UPDATED;
 		if (isappleufs)
 			sblock.fs_old_flags = 0;
@@ -336,8 +336,8 @@ mkfs(const char *fsys, int fi, int fo,
 	sblock.fs_cblkno = (daddr_t)(sblock.fs_sblkno +
 	    roundup(howmany(SBLOCKSIZE, sblock.fs_fsize), sblock.fs_frag));
 	sblock.fs_iblkno = sblock.fs_cblkno + sblock.fs_frag;
-	sblock.fs_maxfilesize = sblock.fs_bsize * NDADDR - 1;
-	for (sizepb = sblock.fs_bsize, i = 0; i < NIADDR; i++) {
+	sblock.fs_maxfilesize = sblock.fs_bsize * UFS_NDADDR - 1;
+	for (sizepb = sblock.fs_bsize, i = 0; i < UFS_NIADDR; i++) {
 		sizepb *= NINDIR(&sblock);
 		sblock.fs_maxfilesize += sizepb;
 	}
@@ -518,7 +518,7 @@ mkfs(const char *fsys, int fi, int fo,
 	    fragnum(&sblock, sblock.fs_size) +
 	    (fragnum(&sblock, csfrags) > 0 ?
 	    sblock.fs_frag - fragnum(&sblock, csfrags) : 0);
-	sblock.fs_cstotal.cs_nifree = sblock.fs_ncg * sblock.fs_ipg - ROOTINO;
+	sblock.fs_cstotal.cs_nifree = sblock.fs_ncg * sblock.fs_ipg - UFS_ROOTINO;
 	sblock.fs_cstotal.cs_ndir = 0;
 	sblock.fs_dsize -= csfrags;
 	sblock.fs_time = tv.tv_sec;
@@ -840,7 +840,7 @@ initcg(int cylno, const struct timeval *tv)
 	}
 	acg.cg_cs.cs_nifree += sblock.fs_ipg;
 	if (cylno == 0)
-		for (u = 0; u < ROOTINO; u++) {
+		for (u = 0; u < UFS_ROOTINO; u++) {
 			setbit(cg_inosused(&acg, 0), u);
 			acg.cg_cs.cs_nifree--;
 		}
@@ -986,8 +986,8 @@ initcg(int cylno, const struct timeval *tv)
 #endif
 
 struct direct root_dir[] = {
-	{ ROOTINO, sizeof(struct direct), DT_DIR, 1, "." },
-	{ ROOTINO, sizeof(struct direct), DT_DIR, 2, ".." },
+	{ UFS_ROOTINO, sizeof(struct direct), DT_DIR, 1, "." },
+	{ UFS_ROOTINO, sizeof(struct direct), DT_DIR, 2, ".." },
 #ifdef LOSTDIR
 	{ LOSTFOUNDINO, sizeof(struct direct), DT_DIR, 10, "lost+found" },
 #endif
@@ -998,8 +998,8 @@ struct odirect {
 	u_int16_t d_namlen;
 	u_char	d_name[FFS_MAXNAMLEN + 1];
 } oroot_dir[] = {
-	{ ROOTINO, sizeof(struct direct), 1, "." },
-	{ ROOTINO, sizeof(struct direct), 2, ".." },
+	{ UFS_ROOTINO, sizeof(struct direct), 1, "." },
+	{ UFS_ROOTINO, sizeof(struct direct), 2, ".." },
 #ifdef LOSTDIR
 	{ LOSTFOUNDINO, sizeof(struct direct), 10, "lost+found" },
 #endif
@@ -1007,12 +1007,12 @@ struct odirect {
 #ifdef LOSTDIR
 struct direct lost_found_dir[] = {
 	{ LOSTFOUNDINO, sizeof(struct direct), DT_DIR, 1, "." },
-	{ ROOTINO, sizeof(struct direct), DT_DIR, 2, ".." },
+	{ UFS_ROOTINO, sizeof(struct direct), DT_DIR, 2, ".." },
 	{ 0, DIRBLKSIZ, 0, 0, 0 },
 };
 struct odirect olost_found_dir[] = {
 	{ LOSTFOUNDINO, sizeof(struct direct), 1, "." },
-	{ ROOTINO, sizeof(struct direct), 2, ".." },
+	{ UFS_ROOTINO, sizeof(struct direct), 2, ".." },
 	{ 0, DIRBLKSIZ, 0, 0 },
 };
 #endif
@@ -1034,7 +1034,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		dirblksiz = APPLEUFS_DIRBLKSIZ;
 	int nextino = LOSTFOUNDINO+1;
 #else
-	int nextino = ROOTINO+1;
+	int nextino = UFS_ROOTINO+1;
 #endif
 
 	/*
@@ -1158,7 +1158,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		wtfs(fsbtodb(&sblock, node.dp2.di_db[0]), sblock.fs_fsize, buf);
 	}
 	qinos++;
-	iput(&node, ROOTINO);
+	iput(&node, UFS_ROOTINO);
 	/*
 	 * compute the size of the hash table
 	 * We know the smallest block size is 4k, so we can use 2k
@@ -1376,7 +1376,7 @@ iput(union dinode *ip, ino_t ino)
 		if (needswap) {
 			ffs_dinode1_swap(&ip->dp1, dp1);
 			/* ffs_dinode1_swap() doesn't swap blocks addrs */
-			for (i=0; i<NDADDR + NIADDR; i++)
+			for (i=0; i<UFS_NDADDR + UFS_NIADDR; i++)
 			    dp1->di_db[i] = bswap32(ip->dp1.di_db[i]);
 		} else
 			*dp1 = ip->dp1;
@@ -1386,7 +1386,7 @@ iput(union dinode *ip, ino_t ino)
 		dp2 += ino_to_fsbo(&sblock, ino);
 		if (needswap) {
 			ffs_dinode2_swap(&ip->dp2, dp2);
-			for (i=0; i<NDADDR + NIADDR; i++)
+			for (i=0; i<UFS_NDADDR + UFS_NIADDR; i++)
 			    dp2->di_db[i] = bswap64(ip->dp2.di_db[i]);
 		} else
 			*dp2 = ip->dp2;

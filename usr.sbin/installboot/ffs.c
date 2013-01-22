@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.29 2010/01/14 16:27:49 tsutsui Exp $	*/
+/*	$NetBSD: ffs.c,v 1.30 2013/01/22 09:39:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.29 2010/01/14 16:27:49 tsutsui Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.30 2013/01/22 09:39:19 dholland Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -173,7 +173,7 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 	lblk = 0;
 	level_i = 0;
 	level[0].blknums = &inode->di_db[0];
-	level[0].blkcount = NDADDR;
+	level[0].blkcount = UFS_NDADDR;
 	level[1].blknums = &inode->di_ib[0];
 	level[1].blkcount = 1;
 	level[2].blknums = &inode->di_ib[1];
@@ -310,7 +310,7 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 	lblk = 0;
 	level_i = 0;
 	level[0].blknums = &inode->di_db[0];
-	level[0].blkcount = NDADDR;
+	level[0].blkcount = UFS_NDADDR;
 	level[1].blknums = &inode->di_ib[0];
 	level[1].blkcount = 1;
 	level[2].blknums = &inode->di_ib[1];
@@ -560,10 +560,10 @@ ffs_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 
 	/* Get the inode number of the secondary bootstrap. */
 	if (is_ufs2)
-		rv = ffs_find_disk_blocks_ufs2(params, ROOTINO,
+		rv = ffs_find_disk_blocks_ufs2(params, UFS_ROOTINO,
 		    ffs_findstage2_ino, &ino);
 	else
-		rv = ffs_find_disk_blocks_ufs1(params, ROOTINO,
+		rv = ffs_find_disk_blocks_ufs1(params, UFS_ROOTINO,
 		    ffs_findstage2_ino, &ino);
 	if (rv != 2) {
 		warnx("Could not find secondary bootstrap `%s' in `%s'",

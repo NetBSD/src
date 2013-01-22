@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.36 2012/12/20 08:03:44 hannken Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.37 2013/01/22 09:39:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.36 2012/12/20 08:03:44 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.37 2013/01/22 09:39:15 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -96,12 +96,12 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 	daddr_t nb;
 	struct buf *bp, *nbp;
 	struct vnode *vp = ITOV(ip);
-	struct indir indirs[NIADDR + 2];
+	struct indir indirs[EXT2FS_NIADDR + 2];
 	daddr_t newb, lbn, pref;
 	int32_t *bap;	/* XXX ondisk32 */
 	int num, i, error;
 	u_int deallocated;
-	daddr_t *blkp, *allocblk, allociblk[NIADDR + 1];
+	daddr_t *blkp, *allocblk, allociblk[EXT2FS_NIADDR + 1];
 	int32_t *allocib;	/* XXX ondisk32 */
 	int unwindidx = -1;
 	UVMHIST_FUNC("ext2fs_balloc"); UVMHIST_CALLED(ubchist);
@@ -117,9 +117,9 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 	lbn = bn;
 
 	/*
-	 * The first NDADDR blocks are direct blocks
+	 * The first EXT2FS_NDADDR blocks are direct blocks
 	 */
-	if (bn < NDADDR) {
+	if (bn < EXT2FS_NDADDR) {
 		/* XXX ondisk32 */
 		nb = fs2h32(ip->i_e2fs_blocks[bn]);
 		if (nb != 0) {
@@ -177,7 +177,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 	 */
 	--num;
 	/* XXX ondisk32 */
-	nb = fs2h32(ip->i_e2fs_blocks[NDADDR + indirs[0].in_off]);
+	nb = fs2h32(ip->i_e2fs_blocks[EXT2FS_NDADDR + indirs[0].in_off]);
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
@@ -198,7 +198,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		if ((error = bwrite(bp)) != 0)
 			goto fail;
 		unwindidx = 0;
-		allocib = &ip->i_e2fs_blocks[NDADDR + indirs[0].in_off];
+		allocib = &ip->i_e2fs_blocks[EXT2FS_NDADDR + indirs[0].in_off];
 		/* XXX ondisk32 */
 		*allocib = h2fs32((int32_t)newb);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;

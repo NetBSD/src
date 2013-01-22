@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.32 2012/11/25 19:42:14 jakllsch Exp $	*/
+/*	$NetBSD: inode.c,v 1.33 2013/01/22 09:39:11 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.32 2012/11/25 19:42:14 jakllsch Exp $");
+__RCSID("$NetBSD: inode.c,v 1.33 2013/01/22 09:39:11 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,7 @@ ckinode(struct ext2fs_dinode *dp, struct inodesc *idesc)
 		return (KEEPON);
 	dino = *dp;
 	ndb = howmany(inosize(&dino), sblock.e2fs_bsize);
-	for (ap = &dino.e2di_blocks[0]; ap < &dino.e2di_blocks[NDADDR];
+	for (ap = &dino.e2di_blocks[0]; ap < &dino.e2di_blocks[EXT2FS_NDADDR];
 	    ap++,ndb--) {
 		idesc->id_numfrags = 1;
 		if (*ap == 0) {
@@ -215,9 +215,9 @@ ckinode(struct ext2fs_dinode *dp, struct inodesc *idesc)
 			return (ret);
 	}
 	idesc->id_numfrags = 1;
-	remsize = inosize(&dino) - sblock.e2fs_bsize * NDADDR;
+	remsize = inosize(&dino) - sblock.e2fs_bsize * EXT2FS_NDADDR;
 	sizepb = sblock.e2fs_bsize;
-	for (ap = &dino.e2di_blocks[NDADDR], n = 1; n <= NIADDR; ap++, n++) {
+	for (ap = &dino.e2di_blocks[EXT2FS_NDADDR], n = 1; n <= EXT2FS_NIADDR; ap++, n++) {
 		if (*ap) {
 			idesc->id_blkno = fs2h32(*ap);
 			ret = iblock(idesc, n, remsize);
@@ -499,8 +499,8 @@ cacheino(struct ext2fs_dinode *dp, ino_t inumber)
 	unsigned int blks;
 
 	blks = howmany(inosize(dp), sblock.e2fs_bsize);
-	if (blks > NDADDR)
-		blks = NDADDR + NIADDR;
+	if (blks > EXT2FS_NDADDR)
+		blks = EXT2FS_NDADDR + EXT2FS_NIADDR;
 	/* XXX ondisk32 */
 	inp = malloc(sizeof(*inp) + (blks - 1) * sizeof(int32_t));
 	if (inp == NULL)

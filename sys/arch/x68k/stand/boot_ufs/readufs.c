@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.c,v 1.14 2011/02/21 02:31:58 itohy Exp $	*/
+/*	$NetBSD: readufs.c,v 1.15 2013/01/22 09:39:14 dholland Exp $	*/
 /*	from Id: readufs.c,v 1.8 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
@@ -108,7 +108,7 @@ ufs_read(union ufs_dinode *di, void *buf, unsigned off, size_t count)
 	RAW_READ_QUEUE_INIT();
 
 	/* Read direct blocks. */
-	for ( ; off < NDADDR && count > 0; off++) {
+	for ( ; off < UFS_NDADDR && count > 0; off++) {
 #if defined(USE_UFS1) && defined(USE_UFS2)
 		if (uver == UFSTYPE_UFS1)
 			pos = di->di1.di_db[off];
@@ -125,10 +125,10 @@ ufs_read(union ufs_dinode *di, void *buf, unsigned off, size_t count)
 		b += bsize;
 		count -= bsize;
 	}
-	off -= NDADDR;
+	off -= UFS_NDADDR;
 
 	/* Read indirect blocks. */
-	for (i = 0; i < NIADDR && count > 0; i++) {
+	for (i = 0; i < UFS_NIADDR && count > 0; i++) {
 #if defined(USE_UFS1) && defined(USE_UFS2)
 		if (uver == UFSTYPE_UFS1)
 			pos = di->di1.di_ib[i];
@@ -258,7 +258,7 @@ ufs_lookup_path(const char *path)
 {
 	char fn[FFS_MAXNAMLEN + 1];
 	char *p;
-	ino32_t ino = ROOTINO;
+	ino32_t ino = UFS_ROOTINO;
 
 	do {
 		while (*path == '/')
@@ -339,7 +339,7 @@ main(argc, argv)
 		errx(1, "%s: unknown fs", argv[1]);
 
 #if 1
-	ufs_list_dir(ROOTINO);
+	ufs_list_dir(UFS_ROOTINO);
 	{
 		void *p;
 		size_t cnt;

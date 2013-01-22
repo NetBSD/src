@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.210 2012/06/04 20:13:47 riastradh Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.211 2013/01/22 09:39:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.210 2012/06/04 20:13:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.211 2013/01/22 09:39:19 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -589,7 +589,7 @@ ufs_setattr(void *v)
 			if (vp->v_mount->mnt_wapbl) {
 				uint64_t incr = MNINDIR(ip->i_ump) <<
 				    vp->v_mount->mnt_fs_bshift; /* Power of 2 */
-				uint64_t base = NDADDR <<
+				uint64_t base = UFS_NDADDR <<
 				    vp->v_mount->mnt_fs_bshift;
 				while (!error && ip->i_size > base + incr &&
 				    ip->i_size > vap->va_size + incr) {
@@ -934,7 +934,7 @@ ufs_whiteout(void *v)
 #endif
 
 		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
-		newdir->d_ino = WINO;
+		newdir->d_ino = UFS_WINO;
 		newdir->d_namlen = cnp->cn_namelen;
 		memcpy(newdir->d_name, cnp->cn_nameptr,
 		    (size_t)cnp->cn_namelen);
@@ -1792,7 +1792,7 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	case VREG:
 		break;
 	}
-	if (ip->i_number == ROOTINO)
+	if (ip->i_number == UFS_ROOTINO)
                 vp->v_vflag |= VV_ROOT;
 	/*
 	 * Initialize modrev times

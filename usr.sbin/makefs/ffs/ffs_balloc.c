@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.13 2004/06/20 22:20:18 jmc Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.14 2013/01/22 09:39:19 dholland Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
 /*
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_balloc.c,v 1.13 2004/06/20 22:20:18 jmc Exp $");
+__RCSID("$NetBSD: ffs_balloc.c,v 1.14 2013/01/22 09:39:19 dholland Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -88,11 +88,11 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	int32_t nb;
 	struct buf *bp, *nbp;
 	struct fs *fs = ip->i_fs;
-	struct indir indirs[NIADDR + 2];
+	struct indir indirs[UFS_NIADDR + 2];
 	daddr_t newb, pref;
 	int32_t *bap;
 	int osize, nsize, num, i, error;
-	int32_t *allocblk, allociblk[NIADDR + 1];
+	int32_t *allocblk, allociblk[UFS_NIADDR + 1];
 	int32_t *allocib;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
@@ -113,7 +113,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	 */
 
 	lastlbn = lblkno(fs, ip->i_ffs1_size);
-	if (lastlbn < NDADDR && lastlbn < lbn) {
+	if (lastlbn < UFS_NDADDR && lastlbn < lbn) {
 		nb = lastlbn;
 		osize = blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
@@ -123,10 +123,10 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	}
 
 	/*
-	 * The first NDADDR blocks are direct blocks
+	 * The first UFS_NDADDR blocks are direct blocks
 	 */
 
-	if (lbn < NDADDR) {
+	if (lbn < UFS_NDADDR) {
 		nb = ufs_rw32(ip->i_ffs1_db[lbn], needswap);
 		if (nb != 0 && ip->i_ffs1_size >= lblktosize(fs, lbn + 1)) {
 
@@ -339,11 +339,11 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	int size;
 	struct buf *bp, *nbp;
 	struct fs *fs = ip->i_fs;
-	struct indir indirs[NIADDR + 2];
+	struct indir indirs[UFS_NIADDR + 2];
 	daddr_t newb, pref, nb;
 	int64_t *bap;
 	int osize, nsize, num, i, error;
-	int64_t *allocblk, allociblk[NIADDR + 1];
+	int64_t *allocblk, allociblk[UFS_NIADDR + 1];
 	int64_t *allocib;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
@@ -364,7 +364,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	 */
 
 	lastlbn = lblkno(fs, ip->i_ffs2_size);
-	if (lastlbn < NDADDR && lastlbn < lbn) {
+	if (lastlbn < UFS_NDADDR && lastlbn < lbn) {
 		nb = lastlbn;
 		osize = blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
@@ -374,10 +374,10 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	}
 
 	/*
-	 * The first NDADDR blocks are direct blocks
+	 * The first UFS_NDADDR blocks are direct blocks
 	 */
 
-	if (lbn < NDADDR) {
+	if (lbn < UFS_NDADDR) {
 		nb = ufs_rw64(ip->i_ffs2_db[lbn], needswap);
 		if (nb != 0 && ip->i_ffs2_size >= lblktosize(fs, lbn + 1)) {
 

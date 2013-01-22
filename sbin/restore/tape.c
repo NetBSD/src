@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.66 2011/08/29 14:35:03 joerg Exp $	*/
+/*	$NetBSD: tape.c,v 1.67 2013/01/22 09:39:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.66 2011/08/29 14:35:03 joerg Exp $");
+__RCSID("$NetBSD: tape.c,v 1.67 2013/01/22 09:39:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -360,7 +360,7 @@ setup(void)
 	 * extracted.
 	 */
 	if (oldinofmt == 0)
-		SETINO(WINO, dumpmap);
+		SETINO(UFS_WINO, dumpmap);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.143 2012/12/20 08:03:45 hannken Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.144 2013/01/22 09:39:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.143 2012/12/20 08:03:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.144 2013/01/22 09:39:18 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -413,7 +413,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 		else
 			obsize = fs->lfs_bsize;
 		/* Check for fragment size change */
-		if (blkp->bi_lbn >= 0 && blkp->bi_lbn < NDADDR) {
+		if (blkp->bi_lbn >= 0 && blkp->bi_lbn < UFS_NDADDR) {
 			obsize = ip->i_lfs_fragsize[blkp->bi_lbn];
 		}
 		if (obsize != blkp->bi_size) {

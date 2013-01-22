@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.121 2012/04/29 22:54:00 chs Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.122 2013/01/22 09:39:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.121 2012/04/29 22:54:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.122 2013/01/22 09:39:16 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -333,7 +333,7 @@ ffs_fsync(void *v)
 	} */ *ap = v;
 	struct buf *bp;
 	int num, error, i;
-	struct indir ia[NIADDR + 1];
+	struct indir ia[UFS_NIADDR + 1];
 	int bsize;
 	daddr_t blk_high;
 	struct vnode *vp;
@@ -405,7 +405,7 @@ ffs_fsync(void *v)
 	 * Then, flush indirect blocks.
 	 */
 
-	if (blk_high >= NDADDR) {
+	if (blk_high >= UFS_NDADDR) {
 		error = ufs_getlbns(vp, blk_high, ia, &num);
 		if (error)
 			goto out;
@@ -613,7 +613,7 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 
 	olbn = lblkno(fs, ip->i_size);
 	nlbn = lblkno(fs, size);
-	if (nlbn < NDADDR && olbn <= nlbn) {
+	if (nlbn < UFS_NDADDR && olbn <= nlbn) {
 		*eobp = fragroundup(fs, size);
 	} else {
 		*eobp = blkroundup(fs, size);

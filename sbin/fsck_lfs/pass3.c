@@ -1,4 +1,4 @@
-/* $NetBSD: pass3.c,v 1.9 2006/09/01 19:52:48 perseant Exp $	 */
+/* $NetBSD: pass3.c,v 1.10 2013/01/22 09:39:12 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -46,7 +46,7 @@ pass3(void)
 
 	for (inpp = &inpsort[inplast - 1]; inpp >= inpsort; inpp--) {
 		inp = *inpp;
-		if (inp->i_number == ROOTINO || inp->i_number == LFS_IFILE_INUM ||
+		if (inp->i_number == UFS_ROOTINO || inp->i_number == LFS_IFILE_INUM ||
 		    !(inp->i_parent == 0 || statemap[inp->i_number] == DSTATE))
 			continue;
 		if (statemap[inp->i_number] == DCLEAR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.c,v 1.20 2006/12/18 20:07:32 christos Exp $	*/
+/*	$NetBSD: restore.c,v 1.21 2013/01/22 09:39:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-__RCSID("$NetBSD: restore.c,v 1.20 2006/12/18 20:07:32 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.21 2013/01/22 09:39:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ addfile(const char *name, ino_t ino, int type)
 		dprintf(stdout, "%s: not on the tape\n", name);
 		return (descend);
 	}
-	if (ino == WINO && command == 'i' && !vflag)
+	if (ino == UFS_WINO && command == 'i' && !vflag)
 		return (descend);
 	if (!mflag) {
 		(void) snprintf(buf, sizeof(buf), "./%llu",
@@ -158,7 +158,7 @@ removeoldleaves(void)
 	ino_t i, mydirino;
 
 	vprintf(stdout, "Mark entries to be removed.\n");
-	if ((ep = lookupino(WINO)) != NULL) {
+	if ((ep = lookupino(UFS_WINO)) != NULL) {
 		vprintf(stdout, "Delete whiteouts\n");
 		for ( ; ep != NULL; ep = nextep) {
 			nextep = ep->e_links;
@@ -174,7 +174,7 @@ removeoldleaves(void)
 			freeentry(ep);
 		}
 	}
-	for (i = ROOTINO + 1; i < maxino; i++) {
+	for (i = UFS_ROOTINO + 1; i < maxino; i++) {
 		ep = lookupino(i);
 		if (ep == NULL)
 			continue;
@@ -519,7 +519,7 @@ findunreflinks(void)
 	ino_t i;
 
 	vprintf(stdout, "Find unreferenced names.\n");
-	for (i = ROOTINO; i < maxino; i++) {
+	for (i = UFS_ROOTINO; i < maxino; i++) {
 		ep = lookupino(i);
 		if (ep == NULL || ep->e_type == LEAF || TSTINO(i, dumpmap) == 0)
 			continue;
@@ -602,7 +602,7 @@ createleaves(const char *symtabfile)
 		vprintf(stdout, "Extract new leaves.\n");
 		dumpsymtable(symtabfile, volno);
 	}
-	first = lowerbnd(ROOTINO);
+	first = lowerbnd(UFS_ROOTINO);
 	curvol = volno;
 	while (curfile.ino < maxino) {
 		first = lowerbnd(first);
@@ -682,7 +682,7 @@ createfiles(void)
 	getvol((long)1);
 	skipmaps();
 	skipdirs();
-	first = lowerbnd(ROOTINO);
+	first = lowerbnd(UFS_ROOTINO);
 	last = upperbnd(maxino - 1);
 
 new_volume:
@@ -781,7 +781,7 @@ createlinks(void)
 	ino_t i;
 	char name[BUFSIZ];
 
-	if ((ep = lookupino(WINO)) != NULL) {
+	if ((ep = lookupino(UFS_WINO)) != NULL) {
 		vprintf(stdout, "Add whiteouts\n");
 		for ( ; ep != NULL; ep = ep->e_links) {
 			if ((ep->e_flags & NEW) == 0)
@@ -791,7 +791,7 @@ createlinks(void)
 		}
 	}
 	vprintf(stdout, "Add links\n");
-	for (i = ROOTINO; i < maxino; i++) {
+	for (i = UFS_ROOTINO; i < maxino; i++) {
 		ep = lookupino(i);
 		if (ep == NULL)
 			continue;
@@ -821,7 +821,7 @@ checkrestore(void)
 	ino_t i;
 
 	vprintf(stdout, "Check the symbol table.\n");
-	for (i = WINO; i < maxino; i++) {
+	for (i = UFS_WINO; i < maxino; i++) {
 		for (ep = lookupino(i); ep != NULL; ep = ep->e_links) {
 			ep->e_flags &= ~KEEP;
 			if (ep->e_type == NODE)

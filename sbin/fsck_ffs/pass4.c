@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.26 2011/03/06 17:08:16 bouyer Exp $	*/
+/*	$NetBSD: pass4.c,v 1.27 2013/01/22 09:39:12 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.26 2011/03/06 17:08:16 bouyer Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.27 2013/01/22 09:39:12 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ pass4(void)
 #endif /* PROGRESS */
 		inumber = cg * sblock->fs_ipg;
 		for (i = 0; i < inostathead[cg].il_numalloced; i++, inumber++) {
-			if (inumber < ROOTINO)
+			if (inumber < UFS_ROOTINO)
 				continue;
 			dp = ginode(inumber);
 			info = inoinfo(inumber);
