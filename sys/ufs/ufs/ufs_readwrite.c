@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.104 2012/04/29 22:54:01 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.104 2012/04/29 22:54:01 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -310,7 +310,7 @@ WRITE(void *v)
 	 * the fragment if there is one.
 	 */
 
-	if (nsize > osize && lblkno(fs, osize) < NDADDR &&
+	if (nsize > osize && lblkno(fs, osize) < UFS_NDADDR &&
 	    lblkno(fs, osize) != lblkno(fs, nsize) &&
 	    blkroundup(fs, osize) != osize) {
 		off_t eob;
@@ -447,7 +447,7 @@ WRITE(void *v)
 
 #ifdef LFS_READWRITE
 		error = lfs_reserve(fs, vp, NULL,
-		    btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
+		    btofsb(fs, (UFS_NIADDR + 1) << fs->lfs_bshift));
 		if (error)
 			break;
 		need_unreserve = true;
@@ -481,7 +481,7 @@ WRITE(void *v)
 #ifdef LFS_READWRITE
 		(void)VOP_BWRITE(bp->b_vp, bp);
 		lfs_reserve(fs, vp, NULL,
-		    -btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
+		    -btofsb(fs, (UFS_NIADDR + 1) << fs->lfs_bshift));
 		need_unreserve = false;
 #else
 		if (ioflag & IO_SYNC)
@@ -497,7 +497,7 @@ WRITE(void *v)
 #ifdef LFS_READWRITE
 	if (need_unreserve) {
 		lfs_reserve(fs, vp, NULL,
-		    -btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
+		    -btofsb(fs, (UFS_NIADDR + 1) << fs->lfs_bshift));
 	}
 #endif
 

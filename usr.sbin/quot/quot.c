@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.29 2011/03/06 23:41:47 christos Exp $	*/
+/*	$NetBSD: quot.c,v 1.30 2013/01/22 09:39:20 dholland Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.29 2011/03/06 23:41:47 christos Exp $");
+__RCSID("$NetBSD: quot.c,v 1.30 2013/01/22 09:39:20 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -150,7 +150,7 @@ virtualblocks(struct fs *super, union dinode *dp)
 	
 	sz = DIP(super, dp, size);
 #ifdef	COMPAT
-	if (lblkno(super, sz) >= NDADDR) {
+	if (lblkno(super, sz) >= UFS_NDADDR) {
 		nblk = blkroundup(super, sz);
 		if (sz == nblk)
 			nblk += super->fs_bsize;
@@ -159,10 +159,10 @@ virtualblocks(struct fs *super, union dinode *dp)
 	return sz / 1024;
 #else	/* COMPAT */
 	
-	if (lblkno(super, sz) >= NDADDR) {
+	if (lblkno(super, sz) >= UFS_NDADDR) {
 		nblk = blkroundup(super, sz);
 		sz = lblkno(super, nblk);
-		sz = howmany(sz - NDADDR, NINDIR(super));
+		sz = howmany(sz - UFS_NDADDR, NINDIR(super));
 		while (sz > 0) {
 			nblk += sz * super->fs_bsize;
 			/* One block on this level is in the inode itself */
@@ -520,8 +520,8 @@ ffs_oldfscompat(struct fs *fs)
 	if (fs->fs_old_inodefmt < FS_44INODEFMT) {
 		quad_t sizepb = fs->fs_bsize;
 
-		fs->fs_maxfilesize = fs->fs_bsize * NDADDR - 1;
-		for (i = 0; i < NIADDR; i++) {
+		fs->fs_maxfilesize = fs->fs_bsize * UFS_NDADDR - 1;
+		for (i = 0; i < UFS_NIADDR; i++) {
 			sizepb *= NINDIR(fs);
 			fs->fs_maxfilesize += sizepb;
 		}
