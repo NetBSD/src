@@ -1,4 +1,4 @@
-/* $NetBSD: init.c,v 1.10 2003/08/07 09:05:06 agc Exp $ */
+/* $NetBSD: init.c,v 1.11 2013/01/22 19:28:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.10 2003/08/07 09:05:06 agc Exp $");
+__RCSID("$NetBSD: init.c,v 1.11 2013/01/22 19:28:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,6 @@ struct biltins bfunc[] =
 {
     { "@", 		dolet, 		0, INF	},
     { "alias", 		doalias, 	0, INF	},
-    { "alloc", 		showall, 	0, 1	},
     { "bg", 		dobg, 		0, INF	},
     { "break", 		dobreak, 	0, 0	},
     { "breaksw", 	doswbrk, 	0, 0	},
