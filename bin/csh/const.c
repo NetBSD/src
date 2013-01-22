@@ -1,4 +1,4 @@
-/* $NetBSD: const.c,v 1.9 2003/08/07 09:05:03 agc Exp $ */
+/* $NetBSD: const.c,v 1.10 2013/01/22 20:35:29 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)const.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: const.c,v 1.9 2003/08/07 09:05:03 agc Exp $");
+__RCSID("$NetBSD: const.c,v 1.10 2013/01/22 20:35:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ Char STRdot[]           = { '.', '\0' };
 Char STRdotdotsl[]	= { '.', '.', '/', '\0' };
 Char STRdotsl[]		= { '.', '/', '\0' };
 Char STRecho[]          = { 'e', 'c', 'h', 'o', '\0' };
+Char STRedit[]          = { 'e', 'd', 'i', 't', '\0' };
 Char STRequal[]		= { '=', '\0' };
 Char STRfakecom[]	= { '{', ' ', '.', '.', '.', ' ', '}', '\0' };
 Char STRfakecom1[]	= { '`', ' ', '.', '.', '.', ' ', '`', '\0' };

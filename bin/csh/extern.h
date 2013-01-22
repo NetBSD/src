@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.26 2013/01/22 19:28:00 christos Exp $ */
+/* $NetBSD: extern.h,v 1.27 2013/01/22 20:35:29 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,6 +48,9 @@ void initdesc(void);
 __dead void pintr(int);
 __dead void pintr1(int);
 void printprompt(void);
+#ifdef EDIT
+char *printpromptstr(EditLine *);
+#endif
 void process(int);
 void rechist(void);
 void untty(void);
