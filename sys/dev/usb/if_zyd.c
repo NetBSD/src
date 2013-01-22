@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.35 2013/01/05 23:34:18 christos Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.36 2013/01/22 12:40:43 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.35 2013/01/05 23:34:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36 2013/01/22 12:40:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -352,7 +352,7 @@ zyd_complete_attach(struct zyd_softc *sc)
 	usbd_status error;
 	int i;
 
-	usb_init_task(&sc->sc_task, zyd_task, sc);
+	usb_init_task(&sc->sc_task, zyd_task, sc, 0);
 	callout_init(&(sc->sc_scan_ch), 0);
 
 	sc->amrr.amrr_min_success_threshold =  1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.129 2013/01/05 01:30:15 christos Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.130 2013/01/22 12:40:42 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.129 2013/01/05 01:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.130 2013/01/22 12:40:42 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -752,8 +752,8 @@ aue_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	usb_init_task(&sc->aue_tick_task, aue_tick_task, sc);
-	usb_init_task(&sc->aue_stop_task, (void (*)(void *))aue_stop, sc);
+	usb_init_task(&sc->aue_tick_task, aue_tick_task, sc, 0);
+	usb_init_task(&sc->aue_stop_task, (void (*)(void *))aue_stop, sc, 0);
 	mutex_init(&sc->aue_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	err = usbd_device2interface_handle(dev, AUE_IFACE_IDX, &iface);
