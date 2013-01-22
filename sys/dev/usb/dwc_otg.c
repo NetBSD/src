@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.34 2013/01/22 13:06:41 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.35 2013/01/22 15:19:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.34 2013/01/22 13:06:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.35 2013/01/22 15:19:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,7 +478,8 @@ dwc_otg_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&dxfer->abort_task, dwc_otg_timeout_task, addr);
+	usb_init_task(&dxfer->abort_task, dwc_otg_timeout_task, addr,
+	    USB_TASKQ_MPSAFE);
 	usb_add_task(dxfer->xfer.pipe->device, &dxfer->abort_task,
 	    USB_TASKQ_HC);
 }
