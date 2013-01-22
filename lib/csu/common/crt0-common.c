@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.9 2012/08/13 02:15:35 matt Exp $ */
+/* $NetBSD: crt0-common.c,v 1.10 2013/01/22 22:57:37 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.9 2012/08/13 02:15:35 matt Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.10 2013/01/22 22:57:37 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -95,10 +95,10 @@ do {						\
  * Since we don't need .init or .fini sections, just code them in C
  * to make life easier.
  */
-static const fptr_t init_array_start[] __weak_reference(__init_array_start);
-static const fptr_t init_array_end[] __weak_reference(__init_array_end);
-static const fptr_t fini_array_start[] __weak_reference(__fini_array_start);
-static const fptr_t fini_array_end[] __weak_reference(__fini_array_end);
+extern const fptr_t init_array_start[] __weak_reference(__init_array_start);
+extern const fptr_t init_array_end[] __weak_reference(__init_array_end);
+extern const fptr_t fini_array_start[] __weak_reference(__fini_array_start);
+extern const fptr_t fini_array_end[] __weak_reference(__fini_array_end);
 
 static inline void
 _init(void)
