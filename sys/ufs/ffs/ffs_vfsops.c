@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.281 2012/12/20 08:03:44 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.282 2013/01/22 09:39:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.281 2012/12/20 08:03:44 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.282 2013/01/22 09:39:16 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1609,7 +1609,7 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp)
 		sbp->f_bavail = sbp->f_bfree - sbp->f_bresvd;
 	else
 		sbp->f_bavail = 0;
-	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - ROOTINO;
+	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - UFS_ROOTINO;
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree + fs->fs_pendinginodes;
 	sbp->f_favail = sbp->f_ffree;
 	sbp->f_fresvd = 0;
@@ -1936,7 +1936,7 @@ ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 
 	memcpy(&ufh, fhp, sizeof(ufh));
 	fs = VFSTOUFS(mp)->um_fs;
-	if (ufh.ufid_ino < ROOTINO ||
+	if (ufh.ufid_ino < UFS_ROOTINO ||
 	    ufh.ufid_ino >= fs->fs_ncg * fs->fs_ipg)
 		return (ESTALE);
 	return (ufs_fhtovp(mp, &ufh, vpp));

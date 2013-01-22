@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.105 2012/11/21 23:11:23 jakllsch Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.106 2013/01/22 09:39:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.105 2012/11/21 23:11:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.106 2013/01/22 09:39:15 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1011,7 +1011,7 @@ ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
 	case VREG:
 		break;
 	}
-	if (ip->i_number == ROOTINO)
+	if (ip->i_number == UFS_ROOTINO)
                 vp->v_vflag |= VV_ROOT;
 	/*
 	 * Initialize modrev times

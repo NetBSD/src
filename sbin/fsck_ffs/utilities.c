@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.60 2011/06/09 19:57:52 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.61 2013/01/22 09:39:12 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.60 2011/06/09 19:57:52 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.61 2013/01/22 09:39:12 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -469,7 +469,7 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 	static int busy = 0;
 	struct inostat *info;
 
-	if (curdir == ino && ino == ROOTINO) {
+	if (curdir == ino && ino == UFS_ROOTINO) {
 		(void)strlcpy(namebuf, "/", namebuflen);
 		return;
 	}
@@ -488,7 +488,7 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 		idesc.id_parent = curdir;
 		goto namelookup;
 	}
-	while (ino != ROOTINO) {
+	while (ino != UFS_ROOTINO) {
 		idesc.id_number = ino;
 		idesc.id_func = findino;
 		idesc.id_name = "..";
@@ -510,7 +510,7 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 		ino = idesc.id_number;
 	}
 	busy = 0;
-	if (ino != ROOTINO)
+	if (ino != UFS_ROOTINO)
 		*--cp = '?';
 	memmove(namebuf, cp, (size_t)(&namebuf[MAXPATHLEN] - cp));
 }
@@ -733,7 +733,7 @@ update_uquot(ino_t inum, uid_t uid, gid_t gid, int64_t bchange, int64_t ichange)
 	static struct uquot *uq_u = NULL;
 	static struct uquot *uq_g = NULL;
 
-	if (inum < ROOTINO)
+	if (inum < UFS_ROOTINO)
 		return;
 	if (is_journal_inode(inum))
 		return;
