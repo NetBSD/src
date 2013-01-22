@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.5 2013/01/13 15:34:03 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.6 2013/01/22 12:40:43 jmcneill Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -996,8 +996,8 @@ smsc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	/* Setup the endpoints for the SMSC LAN95xx device(s) */
-	usb_init_task(&sc->sc_tick_task, smsc_tick_task, sc);
-	usb_init_task(&sc->sc_stop_task, (void (*)(void *))smsc_stop, sc);
+	usb_init_task(&sc->sc_tick_task, smsc_tick_task, sc, 0);
+	usb_init_task(&sc->sc_stop_task, (void (*)(void *))smsc_stop, sc, 0);
 	mutex_init(&sc->sc_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	err = usbd_device2interface_handle(dev, SMSC_IFACE_IDX, &sc->sc_iface);

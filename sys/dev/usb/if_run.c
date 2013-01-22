@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.7 2013/01/05 23:34:17 christos Exp $	*/
+/*	$NetBSD: if_run.c,v 1.8 2013/01/22 12:40:42 jmcneill Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.7 2013/01/05 23:34:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.8 2013/01/22 12:40:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -538,7 +538,7 @@ run_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	usb_init_task(&sc->sc_task, run_task, sc);
+	usb_init_task(&sc->sc_task, run_task, sc, 0);
 	callout_init(&sc->scan_to, 0);
 	callout_setfunc(&sc->scan_to, run_next_scan, sc);
 	callout_init(&sc->calib_to, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.43 2013/01/05 23:34:17 christos Exp $ */
+/*	$NetBSD: if_ural.c,v 1.44 2013/01/22 12:40:43 jmcneill Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.43 2013/01/05 23:34:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44 2013/01/22 12:40:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -424,7 +424,7 @@ ural_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	usb_init_task(&sc->sc_task, ural_task, sc);
+	usb_init_task(&sc->sc_task, ural_task, sc, 0);
 	callout_init(&sc->sc_scan_ch, 0);
 	sc->amrr.amrr_min_success_threshold = 1;
 	sc->amrr.amrr_max_success_threshold = 15;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.40 2013/01/05 01:30:16 christos Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.41 2013/01/22 12:40:43 jmcneill Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.40 2013/01/05 01:30:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.41 2013/01/22 12:40:43 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -212,9 +212,9 @@ udav_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
-	usb_init_task(&sc->sc_tick_task, udav_tick_task, sc);
+	usb_init_task(&sc->sc_tick_task, udav_tick_task, sc, 0);
 	mutex_init(&sc->sc_mii_lock, MUTEX_DEFAULT, IPL_NONE);
-	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) udav_stop_task, sc);
+	usb_init_task(&sc->sc_stop_task, (void (*)(void *))udav_stop_task, sc, 0);
 
 	/* get control interface */
 	err = usbd_device2interface_handle(dev, UDAV_IFACE_INDEX, &iface);

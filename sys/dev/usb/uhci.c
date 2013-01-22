@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.251 2013/01/05 23:34:18 christos Exp $	*/
+/*	$NetBSD: uhci.c,v 1.252 2013/01/22 12:40:43 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.251 2013/01/05 23:34:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.252 2013/01/22 12:40:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1649,7 +1649,8 @@ uhci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&uxfer->abort_task, uhci_timeout_task, ii->xfer);
+	usb_init_task(&uxfer->abort_task, uhci_timeout_task, ii->xfer,
+	    USB_TASKQ_MPSAFE);
 	usb_add_task(uxfer->xfer.pipe->device, &uxfer->abort_task,
 	    USB_TASKQ_HC);
 }
