@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.24 2012/07/20 07:55:44 mrg Exp $
+.\"	$NetBSD: usbdi.9,v 1.25 2013/01/22 15:35:08 jmcneill Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 20, 2012
+.Dd January 22, 2013
 .Dt USBDI 9
 .Os
 .Sh NAME
@@ -199,7 +199,7 @@
 .Fn usb_rem_task "usbd_device_handle iface" "struct usb_task *task"
 .Ft void
 .Fn usb_init_task "struct usb_task *task" "void (*func)(void *)" \
- "void *arg"
+ "void *arg" uint8_t flags
 .Ft const struct usb_devno *
 .Fn usb_lookup "const struct usb_devno *tbl" \
  "u_int16_t vendor" "u_int16_t product"
@@ -490,9 +490,12 @@ the
 .Fa address
 of this pipe and
 .Fa flags
-for this pipe which currently may be 0 or
+for this pipe which currently may be 0, or a combination of
 .Dv USBD_EXCLUSIVE_USE ,
-to enable exclusive access to this interface and address.
+to enable exclusive access to this interface and address, and
+.Dv USBD_MPSAFE ,
+to allow running transfer callbacks on this pipe without first acquiring
+.Dv kernel_lock .
 The
 .Fn usbd_open_pipe_intr
 takes additional arguments
@@ -923,9 +926,19 @@ function takes a pointer to a
 .Ft struct usb_task
 that will be initalised, a function to call for this task
 .Fa func ,
-and the argument to pass to
+the argument to pass to
 .Fa func ,
-.Fa arg .
+.Fa arg ,
+and the task flags
+.Fa flags .
+If the
+.Fa flags
+argument is
+.Dt USB_TASKQ_MPSAFE ,
+the
+.Fa func
+function will be called without first acquiring
+.Dt kernel_lock .
 .Pp
 To invoke the task callback the
 .Fn usb_add_task
