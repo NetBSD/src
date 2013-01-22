@@ -1,4 +1,4 @@
-/*	$NetBSD: omron_disklabel.h,v 1.2 2013/01/10 16:20:11 tsutsui Exp $	*/
+/*	$NetBSD: omron_disklabel.h,v 1.3 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -75,7 +75,7 @@
 
 
 #define DKL_MAGIC	0xDABE 			/* Disk label Magic number */
-#define NLPART		8			/* # of logical partition */ 
+#define NLPART		8			/* # of logical partition */
 
 struct scd_dk_label {
 	char	dkl_asciilabel[128];		/* for compatibility */

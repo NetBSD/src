@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2013/01/21 11:58:12 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -287,7 +287,7 @@ GLOBAL(_rtt)
 
 /*
  * Trap/interrupt vector routines
- */ 
+ */
 
 ENTRY_NOPROFILE(buserr)
 	tstl	_C_LABEL(nofault)	| device probe?

@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.3 2013/01/14 01:37:57 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.4 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -569,13 +569,13 @@ scintr(void)
 			}
 			hs->sc_target = i;
 			*(hs->sc_lock) = SC_IN_PROGRESS;
-		} else 
+		} else
 			goto abort;
 	} else if (ints & INTS_DISCON) {
 		if ((hs->sc_msg[0] == MSG_CMD_COMPLETE) || (hs->sc_msg[0] == MSG_DISCONNECT)) {
 			hs->sc_phase  = BUS_FREE_PHASE;
 			hs->sc_target = SCSI_ID;
-			if (hs->sc_msg[0] == MSG_CMD_COMPLETE) 
+			if (hs->sc_msg[0] == MSG_CMD_COMPLETE)
 				/* SCSI IO complete */
 				*(hs->sc_lock) = SC_IO_COMPLETE;
 			else

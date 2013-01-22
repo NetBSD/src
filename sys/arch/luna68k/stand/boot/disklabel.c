@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.2 2013/01/10 16:20:11 tsutsui Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.3 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -391,7 +391,7 @@ display(struct disklabel *lp)
 			else
 			    cnputc(' ');
 			printf("- %d",
-			    (pp->p_offset + 
+			    (pp->p_offset +
 			    pp->p_size + lp->d_secpercyl - 1) /
 			    lp->d_secpercyl - 1);
 			if (pp->p_size % lp->d_secpercyl)

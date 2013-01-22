@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2013/01/14 12:28:11 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -70,7 +70,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * autoconf.c -- Determine mass storage and memory configuration for a machine.
  *          by A.Fujita, NOV-30-1991
  *
