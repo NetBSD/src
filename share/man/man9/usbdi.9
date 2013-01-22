@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.25 2013/01/22 15:35:08 jmcneill Exp $
+.\"	$NetBSD: usbdi.9,v 1.26 2013/01/22 15:52:17 wiz Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -934,11 +934,11 @@ and the task flags
 If the
 .Fa flags
 argument is
-.Dt USB_TASKQ_MPSAFE ,
+.Dv USB_TASKQ_MPSAFE ,
 the
 .Fa func
 function will be called without first acquiring
-.Dt kernel_lock .
+.Dv kernel_lock .
 .Pp
 To invoke the task callback the
 .Fn usb_add_task
