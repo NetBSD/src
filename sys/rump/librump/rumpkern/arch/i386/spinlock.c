@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.c,v 1.1 2010/05/31 22:31:07 pooka Exp $	*/
+/*	$NetBSD: spinlock.c,v 1.2 2013/01/22 22:10:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -30,49 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spinlock.c,v 1.1 2010/05/31 22:31:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spinlock.c,v 1.2 2013/01/22 22:10:22 christos Exp $");
 
 #define _HARDKERNEL /* XXX: non-inline prototypes */
+#define SPINLOCK_BODY
 #include <x86/lock.h>
 #undef _HARDKERNEL
-
-/*
- * Spinlocks, from src/sys/arch/x86/include/lock.h
- */
-void
-__cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
-{
-
-	*lockp = __SIMPLELOCK_UNLOCKED;
-	__insn_barrier();
-}
-
-int
-__cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
-{
-	uint8_t val;
-
-	val = __SIMPLELOCK_LOCKED;
-	__asm volatile ("xchgb %0,(%2)" : 
-	    "=r" (val)
-	    :"0" (val), "r" (lockp));
-	__insn_barrier();
-	return val == __SIMPLELOCK_UNLOCKED;
-}
-
-void
-__cpu_simple_lock(__cpu_simple_lock_t *lockp)
-{
-
-	while (!__cpu_simple_lock_try(lockp))
-		/* nothing */;
-	__insn_barrier();
-}
-
-void
-__cpu_simple_unlock(__cpu_simple_lock_t *lockp)
-{
-
-	__insn_barrier();
-	*lockp = __SIMPLELOCK_UNLOCKED;
-}
+#undef SPINLOCK_BODY
