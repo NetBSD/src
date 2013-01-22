@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.121 2013/01/05 23:34:19 christos Exp $	*/
+/*	$NetBSD: uhub.c,v 1.122 2013/01/22 21:12:32 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.121 2013/01/05 23:34:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.122 2013/01/22 21:12:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,8 +259,9 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	sc->sc_explorepending = 1;
 
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
-		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_statusbuf,
-		  sc->sc_statuslen, uhub_intr, USBD_DEFAULT_INTERVAL);
+		  USBD_SHORT_XFER_OK|USBD_MPSAFE, &sc->sc_ipipe, sc,
+		  sc->sc_statusbuf, sc->sc_statuslen,
+		  uhub_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		aprint_error_dev(self, "cannot open interrupt pipe\n");
 		goto bad;
