@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.33 2013/01/22 13:03:25 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.34 2013/01/22 13:06:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.33 2013/01/22 13:03:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.34 2013/01/22 13:06:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,8 +245,6 @@ Static void		dwc_otg_worker(struct work *, void *);
 Static void		dwc_otg_rhc(void *);
 Static void		dwc_otg_vbus_interrupt(struct dwc_otg_softc *);
 Static void		dwc_otg_standard_done(usbd_xfer_handle);
-Static usbd_status	dwc_otg_standard_done_sub(usbd_xfer_handle);
-Static void		dwc_otg_device_done(usbd_xfer_handle, usbd_status);
 Static void		dwc_otg_setup_standard_chain(usbd_xfer_handle);
 Static void		dwc_otg_start_standard_chain(usbd_xfer_handle);
 
@@ -3994,72 +3992,11 @@ dwc_otg_rhc(void *addr)
 
 }
 
-Static usbd_status
-dwc_otg_standard_done_sub(usbd_xfer_handle xfer)
-{
-	struct dwc_otg_xfer *dxfer = (struct dwc_otg_xfer *)xfer;
-	usbd_pipe_handle pipe = xfer->pipe;
-	struct dwc_otg_td *td;
-	uint32_t len;
-	usbd_status error;
-
-	DPRINTFN(9, "td %p\n", dxfer->td_transfer_cache);
-
-	td = dxfer->td_transfer_cache;
-
-	do {
-		xfer->actlen += td->actlen;
-
-		len = td->remainder;
-
-		/* store last data toggle */
-		pipe->endpoint->datatoggle = td->toggle;
-
-		/* Check for transfer error */
-		if (td->error_any) {
-			/* the transfer is finished */
-			error = (td->error_stall ? USBD_STALLED : USBD_IOERROR);
-			td = NULL;
-			break;
-		}
-		/* Check for short transfer */
-		if (len > 0) {
-			//if (xfer->flags & USBD_SHORT_XFER_OK) {
-			if (0) {
-				/* follow alt next */
-				if (td->alt_next) {
-					td = td->obj_next;
-				} else {
-					td = NULL;
-				}
-			} else {
-				/* the transfer is finished */
-				td = NULL;
-			}
-			error = 0;
-			break;
-		}
-
-		td = td->obj_next;
-
-		/* this USB frame is complete */
-		error = 0;
-		break;
-
-	} while (0);
-
-	/* update transfer cache */
-
-	dxfer->td_transfer_cache = td;
-
-	return error;
-}
-
 Static void
 dwc_otg_standard_done(usbd_xfer_handle xfer)
 {
 	struct dwc_otg_xfer *dxfer = DWC_OTG_XFER2DXFER(xfer);
-
+	struct dwc_otg_softc *sc = xfer->pipe->device->bus->hci_private;
 	struct dwc_otg_td *td;
 	usbd_status err = 0;
 
@@ -4068,46 +4005,38 @@ dwc_otg_standard_done(usbd_xfer_handle xfer)
 
 	/* reset scanner */
 
-	dxfer->td_transfer_cache = dxfer->td_transfer_first;
-	td = dxfer->td_transfer_first;
+	for (td = dxfer->td_transfer_first; ; td = td->obj_next) {
 
-	while (td != NULL) {
-		err = dwc_otg_standard_done_sub(xfer);
-		if (dxfer->td_transfer_cache == NULL) {
-			goto done;
+		xfer->actlen += td->actlen;
+
+		/* store last data toggle */
+		xfer->pipe->endpoint->datatoggle = td->toggle;
+
+		/* Check for transfer error */
+		if (td->error_any) {
+			/* the transfer is finished */
+			err = (td->error_stall ? USBD_STALLED : USBD_IOERROR);
+			break;
 		}
+
+		/* Check for short transfer */
+		if (td->remainder > 0) {
+			/* the transfer is finished */
+			err = 0;
+			break;
+		}
+
+		/* this TD is complete - move onto next if more to do */
 		if (td == dxfer->td_transfer_last)
 			break;
-		td = td->obj_next;
 	}
-done:
-	dwc_otg_device_done(xfer, err);
-}
-
-
-/*------------------------------------------------------------------------*
- *	dwc_otg_device_done
- *
- * NOTE: this function can be called more than one time on the
- * same USB transfer!
- *------------------------------------------------------------------------*/
-Static void
-dwc_otg_device_done(usbd_xfer_handle xfer, usbd_status error)
-{
-	struct dwc_otg_xfer *dxfer = (struct dwc_otg_xfer *)xfer;
-	struct dwc_otg_softc *sc = DWC_OTG_XFER2SC(xfer);
-
-	DPRINTFN(9, "xfer=%p, endpoint=%p, error=%d\n",
-	    xfer, xfer->pipe->endpoint, error);
-	struct dwc_otg_td *td;
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
-	td = dxfer->td_transfer_first;
 
 	if (td != NULL)
 		dwc_otg_host_channel_free(td);
 
-	xfer->status = error;
+	xfer->status = err;
 	TAILQ_REMOVE(&sc->sc_active, dxfer, xnext);
 
 	callout_stop(&xfer->timeout_handle);
