@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.13 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.14 2013/01/22 11:58:39 isaki Exp $	*/
 
 /*
  *
@@ -126,6 +126,8 @@ int intio_intr(struct frame *);
 #define INTIO_SYSPORT_KBEXIST	0x08
 #define intio_get_sysport_waitctrl() \
 	(intio_sysport[sysport_waitctrl])
+#define intio_get_sysport_sramwp() \
+	(intio_sysport[sysport_sramwp])
 #define intio_get_sysport_mpustat() \
 	(intio_sysport[sysport_mpustat])
 
