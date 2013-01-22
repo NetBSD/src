@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.146 2013/01/19 15:10:05 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.147 2013/01/22 08:33:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.146 2013/01/19 15:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.147 2013/01/22 08:33:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -798,7 +798,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_ONQU) {
-		printf("usb_transfer_complete: xfer=%p not busy 0x%08x\n",
+		printf("usb_transfer_complete: xfer=%p not queued 0x%08x\n",
 		       xfer, xfer->busy_free);
 	}
 #endif
