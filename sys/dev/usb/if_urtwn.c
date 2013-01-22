@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.16 2013/01/21 23:42:45 jmcneill Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.17 2013/01/22 12:04:58 jmcneill Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.16 2013/01/21 23:42:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.17 2013/01/22 12:04:58 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2331,22 +2331,22 @@ urtwn_start(struct ifnet *ifp)
 	data = NULL;
 	for (;;) {
 		mutex_enter(&sc->sc_tx_mtx);
-		if (data == NULL) {
+		if (data == NULL && !TAILQ_EMPTY(&sc->tx_free_list)) {
 			data = TAILQ_FIRST(&sc->tx_free_list);
-			if (data == NULL) {
-				mutex_exit(&sc->sc_tx_mtx);
-				ifp->if_flags |= IFF_OACTIVE;
-				DPRINTFN(DBG_TX, ("%s: empty tx_free_list\n",
-					     device_xname(sc->sc_dev)));
-				return;
-			}
 			TAILQ_REMOVE(&sc->tx_free_list, data, next);
+		}
+		mutex_exit(&sc->sc_tx_mtx);
+
+		if (data == NULL) {
+			ifp->if_flags |= IFF_OACTIVE;
+			DPRINTFN(DBG_TX, ("%s: empty tx_free_list\n",
+				     device_xname(sc->sc_dev)));
+			return;
 		}
 
 		/* Send pending management frames first. */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			mutex_exit(&sc->sc_tx_mtx);
 			ni = (void *)m->m_pkthdr.rcvif;
 			m->m_pkthdr.rcvif = NULL;
 			goto sendit;
@@ -2358,8 +2358,6 @@ urtwn_start(struct ifnet *ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
-
-		mutex_exit(&sc->sc_tx_mtx);
 
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
@@ -2398,6 +2396,7 @@ urtwn_start(struct ifnet *ifp)
 	}
 
 	/* Return the Tx buffer to the free list */
+	mutex_enter(&sc->sc_tx_mtx);
 	TAILQ_INSERT_TAIL(&sc->tx_free_list, data, next);
 	mutex_exit(&sc->sc_tx_mtx);
 }
