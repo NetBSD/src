@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.147 2013/01/22 08:33:18 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.148 2013/01/22 12:40:43 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.147 2013/01/22 08:33:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.148 2013/01/22 12:40:43 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -869,7 +869,13 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		if (xfer->callback) {
 			if (pipe->device->bus->lock)
 				mutex_exit(pipe->device->bus->lock);
+
+			if (!(pipe->flags & USBD_MPSAFE))
+				KERNEL_LOCK(1, curlwp);
 			xfer->callback(xfer, xfer->priv, xfer->status);
+			if (!(pipe->flags & USBD_MPSAFE))
+				KERNEL_UNLOCK_ONE(curlwp);
+
 			if (pipe->device->bus->lock)
 				mutex_enter(pipe->device->bus->lock);
 		}
@@ -879,7 +885,13 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		if (xfer->callback) {
 			if (pipe->device->bus->lock)
 				mutex_exit(pipe->device->bus->lock);
+
+			if (!(pipe->flags & USBD_MPSAFE))
+				KERNEL_LOCK(1, curlwp);
 			xfer->callback(xfer, xfer->priv, xfer->status);
+			if (!(pipe->flags & USBD_MPSAFE))
+				KERNEL_UNLOCK_ONE(curlwp);
+
 			if (pipe->device->bus->lock)
 				mutex_enter(pipe->device->bus->lock);
 		}

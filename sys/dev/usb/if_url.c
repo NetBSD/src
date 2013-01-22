@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.46 2013/01/05 01:30:16 christos Exp $	*/
+/*	$NetBSD: if_url.c,v 1.47 2013/01/22 12:40:43 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.46 2013/01/05 01:30:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.47 2013/01/22 12:40:43 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -209,9 +209,9 @@ url_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
-	usb_init_task(&sc->sc_tick_task, url_tick_task, sc);
+	usb_init_task(&sc->sc_tick_task, url_tick_task, sc, 0);
 	rw_init(&sc->sc_mii_rwlock);
-	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) url_stop_task, sc);
+	usb_init_task(&sc->sc_stop_task, (void (*)(void *))url_stop_task, sc, 0);
 
 	/* get control interface */
 	err = usbd_device2interface_handle(dev, URL_IFACE_INDEX, &iface);
