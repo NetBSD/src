@@ -1,4 +1,4 @@
-/* $NetBSD: alloc.c,v 1.12 2003/08/07 09:05:03 agc Exp $ */
+/* $NetBSD: alloc.c,v 1.13 2013/01/22 19:28:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1983, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)alloc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: alloc.c,v 1.12 2003/08/07 09:05:03 agc Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.13 2013/01/22 19:28:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,16 +47,11 @@ __RCSID("$NetBSD: alloc.c,v 1.12 2003/08/07 09:05:03 agc Exp $");
 #include "csh.h"
 #include "extern.h"
 
-char *memtop = NULL;		/* PWP: top of current memory */
-char *membot = NULL;		/* PWP: bottom of allocatable memory */
-
 ptr_t
 Malloc(size_t n)
 {
     ptr_t ptr;
 
-    if (membot == NULL)
-	memtop = membot = sbrk(0);
     if ((ptr = malloc(n)) == (ptr_t) 0) {
 	child++;
 	stderror(ERR_NOMEM);
@@ -69,8 +64,6 @@ Realloc(ptr_t p, size_t n)
 {
     ptr_t ptr;
 
-    if (membot == NULL)
-	memtop = membot = sbrk(0);
     if ((ptr = realloc(p, n)) == (ptr_t) 0) {
 	child++;
 	stderror(ERR_NOMEM);
@@ -83,8 +76,6 @@ Calloc(size_t s, size_t n)
 {
     ptr_t ptr;
 
-    if (membot == NULL)
-	memtop = membot = sbrk(0);
     if ((ptr = calloc(s, n)) == (ptr_t) 0) {
 	child++;
 	stderror(ERR_NOMEM);
@@ -97,21 +88,4 @@ Free(ptr_t p)
 {
     if (p)
 	free(p);
-}
-
-/*
- * mstats - print out statistics about malloc
- *
- * Prints two lines of numbers, one showing the length of the free list
- * for each size category, the second showing the number of mallocs -
- * frees for each size category.
- */
-void
-/*ARGSUSED*/
-showall(Char **v, struct command *t)
-{
-    memtop = (char *)sbrk(0);
-    (void)fprintf(cshout, "Allocated memory from 0x%lx to 0x%lx (%ld).\n",
-	    (unsigned long)membot, (unsigned long)memtop, 
-	    (unsigned long)(memtop - membot));
 }
