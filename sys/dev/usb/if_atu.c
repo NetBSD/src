@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.47 2013/01/05 23:34:16 christos Exp $ */
+/*	$NetBSD: if_atu.c,v 1.48 2013/01/22 12:40:42 jmcneill Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.47 2013/01/05 23:34:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.48 2013/01/22 12:40:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1461,7 +1461,7 @@ atu_complete_attach(struct atu_softc *sc)
 	/* setup ifmedia interface */
 	ieee80211_media_init(ic, atu_media_change, atu_media_status);
 
-	usb_init_task(&sc->sc_task, atu_task, sc);
+	usb_init_task(&sc->sc_task, atu_task, sc, 0);
 
 	sc->sc_state = ATU_S_OK;
 }

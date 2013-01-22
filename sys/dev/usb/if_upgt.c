@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.7 2012/12/27 16:42:32 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.8 2013/01/22 12:40:43 jmcneill Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.7 2012/12/27 16:42:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.8 2013/01/22 12:40:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -295,8 +295,8 @@ upgt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* setup tasks and timeouts */
-	usb_init_task(&sc->sc_task_newstate, upgt_newstate_task, sc);
-	usb_init_task(&sc->sc_task_tx, upgt_tx_task, sc);
+	usb_init_task(&sc->sc_task_newstate, upgt_newstate_task, sc, 0);
+	usb_init_task(&sc->sc_task_tx, upgt_tx_task, sc, 0);
 	callout_init(&sc->scan_to, 0);
 	callout_setfunc(&sc->scan_to, upgt_next_scan, sc);
 	callout_init(&sc->led_to, 0);
