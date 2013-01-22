@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.86 2013/01/22 12:48:07 jmcneill Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.87 2013/01/22 13:27:59 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 
 /* Open flags */
 #define USBD_EXCLUSIVE_USE	0x01
-#define USBD_MPSAFE		0x02
+#define USBD_MPSAFE		0x80
 
 /* Use default (specified by ep. desc.) interval on interrupt pipe */
 #define USBD_DEFAULT_INTERVAL	(-1)
@@ -209,7 +209,7 @@ struct usb_task {
 #define	USB_TASKQ_DRIVER	1
 #define	USB_NUM_TASKQS		2
 #define	USB_TASKQ_NAMES		{"usbtask-hc", "usbtask-dr"}
-#define	USB_TASKQ_MPSAFE	0x02
+#define	USB_TASKQ_MPSAFE	0x80
 
 void usb_add_task(usbd_device_handle, struct usb_task *, int);
 void usb_rem_task(usbd_device_handle, struct usb_task *);
