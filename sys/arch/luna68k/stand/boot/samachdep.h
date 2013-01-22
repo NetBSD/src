@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.8 2013/01/21 11:58:12 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.9 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -127,7 +127,7 @@ uint8_t *lance_eaddr(void *);
 bool lance_init(void *);
 int lance_get(void *, void *, size_t);
 bool lance_put(void *, void *, size_t);
-bool lance_end(void *); 
+bool lance_end(void *);
 int lance_intr(void);
 
 /* locore.S */
