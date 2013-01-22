@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.188 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.189 2013/01/22 14:01:19 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.188 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.189 2013/01/22 14:01:19 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1171,8 +1171,8 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	dev->cookie.cookie = ++usb_cookie_no;
 
 	/* Establish the default pipe. */
-	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
-			      &dev->default_pipe);
+	err = usbd_setup_pipe_flags(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
+			      &dev->default_pipe, USBD_MPSAFE);
 	if (err) {
 		usbd_remove_device(dev, up);
 		return (err);
@@ -1259,8 +1259,8 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 
 	/* Re-establish the default pipe with the new address. */
 	usbd_kill_pipe(dev->default_pipe);
-	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
-	    &dev->default_pipe);
+	err = usbd_setup_pipe_flags(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
+	    &dev->default_pipe, USBD_MPSAFE);
 	if (err) {
 		DPRINTFN(-1, ("usbd_new_device: setup default pipe failed\n"));
 		usbd_remove_device(dev, up);
