@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/01/17 15:57:04 pooka Exp $
+#	$NetBSD: Makefile,v 1.7 2013/01/22 01:48:34 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -13,26 +13,12 @@ KMOD=	compat
 #
 .if (${MACHINE_ARCH} != "x86_64")
 CPPFLAGS+=	-DCOMPAT_09
-.endif
-.if (${MACHINE_ARCH} != "x86_64")
 CPPFLAGS+=	-DCOMPAT_10
-.endif
-.if (${MACHINE_ARCH} != "x86_64")
 CPPFLAGS+=	-DCOMPAT_11
-.endif
-.if (${MACHINE_ARCH} != "x86_64")
 CPPFLAGS+=	-DCOMPAT_12
-.endif
-.if (${MACHINE_ARCH} != "x86_64")
 CPPFLAGS+=	-DCOMPAT_13
-.endif
-.if (${MACHINE_ARCH} != "x86_64")
 CPPFLAGS+=	-DCOMPAT_14
-.endif
-.if (${MACHINE_ARCH} != "x86_64")
 CPPFLAGS+=	-DCOMPAT_15
-.endif
-.if (${MACHINE_ARCH} != "x86_64")
 CPPFLAGS+=	-DCOMPAT_16
 .endif
 
