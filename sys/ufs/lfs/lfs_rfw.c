@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.12 2009/02/22 20:28:07 ad Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.13 2013/01/22 09:39:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.12 2009/02/22 20:28:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.13 2013/01/22 09:39:17 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -216,7 +216,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 	struct inode *ip;
 #ifdef DEBUG
 	daddr_t odaddr;
-	struct indir a[NIADDR];
+	struct indir a[UFS_NIADDR];
 	int num;
 	int i;
 #endif /* DEBUG */
@@ -253,7 +253,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 	if (ip->i_size <= (lbn << fs->lfs_bshift)) {
 		u_int64_t newsize;
 
-		if (lbn < NDADDR)
+		if (lbn < UFS_NDADDR)
 			newsize = ip->i_ffs1_size = (lbn << fs->lfs_bshift) +
 				(size - fs->lfs_fsize) + 1;
 		else
@@ -276,7 +276,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 	LFS_WRITESEGENTRY(sup, fs, dtosn(fs, ndaddr), bp);
 
 	/* differences here should be due to UNWRITTEN indirect blocks. */
-	KASSERT((lblkno(fs, ip->i_size) > NDADDR &&
+	KASSERT((lblkno(fs, ip->i_size) > UFS_NDADDR &&
 	    ip->i_lfs_effnblks == ip->i_ffs1_blocks) ||
 	    ip->i_lfs_effnblks >= ip->i_ffs1_blocks);
 

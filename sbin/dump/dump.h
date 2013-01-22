@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.49 2013/01/13 23:45:35 dholland Exp $	*/
+/*	$NetBSD: dump.h,v 1.50 2013/01/22 09:39:11 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -72,7 +72,7 @@ struct ufsi {
 #define ufs_blkoff(u,loc)   /* calculates (loc % u->ufs_bsize) */ \
 	((loc) & (u)->ufs_qbmask)
 #define ufs_dblksize(u,d,b) \
-	((((b) >= NDADDR || DIP((d), size) >= ((b)+1) << (u)->ufs_bshift \
+	((((b) >= UFS_NDADDR || DIP((d), size) >= ((b)+1) << (u)->ufs_bshift \
 		? (u)->ufs_bsize \
 		: (ufs_fragroundup((u), ufs_blkoff(u, DIP((d), size)))))))
 struct ufsi *ufsib;

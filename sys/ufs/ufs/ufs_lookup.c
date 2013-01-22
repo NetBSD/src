@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.121 2012/12/20 08:03:45 hannken Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.121 2012/12/20 08:03:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -970,7 +970,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	 * copy in the new entry, and write out the block.
 	 */
 	if (ep->d_ino == 0 ||
-	    (ufs_rw32(ep->d_ino, needswap) == WINO &&
+	    (ufs_rw32(ep->d_ino, needswap) == UFS_WINO &&
 	     memcmp(ep->d_name, dirp->d_name, dirp->d_namlen) == 0)) {
 		if (spacefree + dsize < newentrysize)
 			panic("ufs_direnter: compact1");
@@ -1078,13 +1078,13 @@ ufs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 
 	if (flags & DOWHITEOUT) {
 		/*
-		 * Whiteout entry: set d_ino to WINO.
+		 * Whiteout entry: set d_ino to UFS_WINO.
 		 */
 		error = ufs_blkatoff(dvp, (off_t)ulr->ulr_offset, (void *)&ep,
 				     &bp, true);
 		if (error)
 			return (error);
-		ep->d_ino = ufs_rw32(WINO, needswap);
+		ep->d_ino = ufs_rw32(UFS_WINO, needswap);
 		ep->d_type = DT_WHT;
 		goto out;
 	}
@@ -1238,7 +1238,7 @@ ufs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 		if (dp->d_reclen == 0)
 			return (0);
 		/* skip empty entries */
-		if (dp->d_ino == 0 || ufs_rw32(dp->d_ino, needswap) == WINO)
+		if (dp->d_ino == 0 || ufs_rw32(dp->d_ino, needswap) == UFS_WINO)
 			continue;
 		/* accept only "." and ".." */
 #if (BYTE_ORDER == LITTLE_ENDIAN)
@@ -1290,7 +1290,7 @@ ufs_checkpath(struct inode *source, struct inode *target, kauth_cred_t cred)
 		error = EEXIST;
 		goto out;
 	}
-	rootino = ROOTINO;
+	rootino = UFS_ROOTINO;
 	error = 0;
 	if (target->i_number == rootino)
 		goto out;
@@ -1417,7 +1417,7 @@ ufs_parentcheck(struct vnode *upper, struct vnode *lower, kauth_cred_t cred,
 		*upperchild_ret = upper;
 		return 0;
 	}
-	if (VTOI(lower)->i_number == ROOTINO) {
+	if (VTOI(lower)->i_number == UFS_ROOTINO) {
 		*found_ret = 0;
 		*upperchild_ret = NULL;
 		return 0;
@@ -1441,7 +1441,7 @@ ufs_parentcheck(struct vnode *upper, struct vnode *lower, kauth_cred_t cred,
 			*upperchild_ret = current;
 			return 0;
 		}
-		if (found_ino == ROOTINO) {
+		if (found_ino == UFS_ROOTINO) {
 			vput(current);
 			*found_ret = 0;
 			*upperchild_ret = NULL;

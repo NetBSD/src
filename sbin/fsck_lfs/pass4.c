@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.17 2010/02/16 23:20:30 mlelstv Exp $	 */
+/* $NetBSD: pass4.c,v 1.18 2013/01/22 09:39:12 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -88,7 +88,7 @@ pass4(void)
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
 	idesc.id_func = pass4check;
-	for (inumber = ROOTINO; inumber <= lastino; inumber++) {
+	for (inumber = UFS_ROOTINO; inumber <= lastino; inumber++) {
 		idesc.id_number = inumber;
 		switch (statemap[inumber]) {
 
