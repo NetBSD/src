@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.32 2013/01/21 13:25:44 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.33 2013/01/22 13:03:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.32 2013/01/21 13:25:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.33 2013/01/22 13:03:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3696,7 +3696,7 @@ dwc_otg_setup_ctrl_chain(usbd_xfer_handle xfer)
 		done += temp.len;
 		if (temp.len)
 			temp.buf = (char *)KERNADDR(&xfer->dmabuf, 0) + done;
-	};
+	}
 
 	/* Status Stage */
 	temp.buf = &req;	/* XXXNH not needed */
@@ -3783,7 +3783,7 @@ dwc_otg_setup_data_chain(usbd_xfer_handle xfer)
 
 		len -= temp.len;
 		off += temp.len;
-	};
+	}
 
 	/* must have at least one frame! */
 	td = temp.td;
@@ -4079,7 +4079,7 @@ dwc_otg_standard_done(usbd_xfer_handle xfer)
 		if (td == dxfer->td_transfer_last)
 			break;
 		td = td->obj_next;
-	};
+	}
 done:
 	dwc_otg_device_done(xfer, err);
 }
