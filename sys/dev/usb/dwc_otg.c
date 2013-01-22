@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.36 2013/01/22 20:50:04 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.37 2013/01/22 21:59:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.36 2013/01/22 20:50:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.37 2013/01/22 21:59:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,7 +413,7 @@ dwc_otg_softintr(void *v)
 {
 	struct usbd_bus *bus = v;
 	struct dwc_otg_softc *sc = bus->hci_private;
-	struct dwc_otg_xfer *dxfer, *tmp;
+	struct dwc_otg_xfer *dxfer;
 
 	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
@@ -422,7 +422,7 @@ dwc_otg_softintr(void *v)
 	DPRINTF("\n");
 
 	mutex_spin_enter(&sc->sc_intr_lock);
-	TAILQ_FOREACH_SAFE(dxfer, &sc->sc_complete, xnext, tmp) {
+	while ((dxfer = TAILQ_FIRST(&sc->sc_complete)) != NULL) {
 		TAILQ_REMOVE(&sc->sc_complete, dxfer, xnext);
 		mutex_spin_exit(&sc->sc_intr_lock);
 		usb_transfer_complete(&dxfer->xfer);
