@@ -1,4 +1,4 @@
-/* $NetBSD: if_le.c,v 1.2 2013/01/20 13:35:43 tsutsui Exp $ */
+/* $NetBSD: if_le.c,v 1.3 2013/01/22 15:48:40 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2013 Izumi Tsutsui.  All rights reserved.
@@ -216,13 +216,13 @@ le_put(struct iodesc *desc, void *pkt, size_t len)
 	void *cookie = dif->dif_private;
 #ifdef DEBUG
  	struct ether_header *eh;
- 
+
  	eh = pkt;
  	printf("dst:  %s\n", ether_sprintf(eh->ether_dhost));
  	printf("src:  %s\n", ether_sprintf(eh->ether_shost));
  	printf("type: 0x%x\n", eh->ether_type & 0xffff);
 #endif
- 
+
 	return lance_put(cookie, pkt, len) ? len : -1;
 }
 
@@ -255,7 +255,7 @@ myetheraddr(uint8_t *ether)
 			u = (u < 'A') ? u & 0xf : u - 'A' + 10;
 			l = ea[1];
 			l = (l < 'A') ? l & 0xf : l - 'A' + 10;
-                
+
 			ether[i] = l | (u << 4);
 			ea += 2;
 		}
