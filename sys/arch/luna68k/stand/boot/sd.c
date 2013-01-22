@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.4 2013/01/21 13:21:04 tsutsui Exp $	*/
+/*	$NetBSD: sd.c,v 1.5 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -104,7 +104,7 @@ struct sd_devdata {
 	int	unit;		/* drive number */
 	int	part;		/* partition */
 };
- 
+
 static int sdinit(void *);
 static int sdident(struct sd_softc *, struct hp_device *);
 
