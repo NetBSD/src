@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2013/01/22 20:35:29 christos Exp $
+#	$NetBSD: Makefile,v 1.35 2013/01/22 22:40:31 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -61,11 +61,11 @@ COPTS.printf.c = -Wno-format-nonliteral
 COPTS.proc.c = -Wno-format-nonliteral
 
 .if 0
-LDADD+=-lutil
-DPADD+=${LIBUTIL}
-.elese
 LDADD+=-ledit -lutil
 DPADD+=${LIBEDIT} ${LIBUTIL}
+.else
+LDADD+=-lutil
+DPADD+=${LIBUTIL}
 .endif
 
 .include <bsd.prog.mk>
