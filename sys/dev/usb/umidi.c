@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.63 2012/06/10 06:15:54 mrg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.64 2013/01/22 21:13:39 jmcneill Exp $	*/
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.63 2012/06/10 06:15:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.64 2013/01/22 21:13:39 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -513,7 +513,7 @@ alloc_pipe(struct umidi_endpoint *ep)
 	    goto quit;
 	}
 	ep->next_slot = ep->buffer;
-	err = usbd_open_pipe(sc->sc_iface, ep->addr, 0, &ep->pipe);
+	err = usbd_open_pipe(sc->sc_iface, ep->addr, USBD_MPSAFE, &ep->pipe);
 	if (err)
 	    usbd_free_xfer(ep->xfer);
 	ep->solicit_cookie = softint_establish(SOFTINT_CLOCK, out_solicit, ep);
