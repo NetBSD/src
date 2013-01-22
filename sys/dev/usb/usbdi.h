@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.85 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.86 2013/01/22 12:48:07 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ struct usb_task {
 #define	USB_TASKQ_DRIVER	1
 #define	USB_NUM_TASKQS		2
 #define	USB_TASKQ_NAMES		{"usbtask-hc", "usbtask-dr"}
-#define	USB_TASKQ_MPSAFE	0x01
+#define	USB_TASKQ_MPSAFE	0x02
 
 void usb_add_task(usbd_device_handle, struct usb_task *, int);
 void usb_rem_task(usbd_device_handle, struct usb_task *);
