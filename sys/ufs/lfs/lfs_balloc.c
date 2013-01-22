@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.71 2012/12/20 08:03:45 hannken Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.72 2013/01/22 09:39:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.71 2012/12/20 08:03:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.72 2013/01/22 09:39:17 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -106,7 +106,7 @@ u_int64_t locked_fakequeue_count;
  * to disk are given the new special disk address UNWRITTEN == -2, so that
  * they can be differentiated from completely new blocks.
  */
-/* VOP_BWRITE NIADDR+2 times */
+/* VOP_BWRITE UFS_NIADDR+2 times */
 int
 lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
     int flags, struct buf **bpp)
@@ -116,7 +116,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 	struct buf *ibp, *bp;
 	struct inode *ip;
 	struct lfs *fs;
-	struct indir indirs[NIADDR+2], *idp;
+	struct indir indirs[UFS_NIADDR+2], *idp;
 	daddr_t	lbn, lastblock;
 	int bcount;
 	int error, frags, i, nsize, osize, num;
@@ -151,7 +151,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 
 	/* Check for block beyond end of file and fragment extension needed. */
 	lastblock = lblkno(fs, ip->i_size);
-	if (lastblock < NDADDR && lastblock < lbn) {
+	if (lastblock < UFS_NDADDR && lastblock < lbn) {
 		osize = blksize(fs, ip, lastblock);
 		if (osize < fs->lfs_bsize && osize > 0) {
 			if ((error = lfs_fragextend(vp, osize, fs->lfs_bsize,
@@ -175,7 +175,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 	 * size or it already exists and contains some fragments and
 	 * may need to extend it.
 	 */
-	if (lbn < NDADDR && lblkno(fs, ip->i_size) <= lbn) {
+	if (lbn < UFS_NDADDR && lblkno(fs, ip->i_size) <= lbn) {
 		osize = blksize(fs, ip, lbn);
 		nsize = fragroundup(fs, offset + iosize);
 		if (lblktosize(fs, lbn) >= ip->i_size) {

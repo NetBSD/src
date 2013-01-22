@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2011/08/29 14:35:03 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2013/01/22 09:39:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.34 2011/08/29 14:35:03 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.35 2013/01/22 09:39:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,7 +221,7 @@ main(int argc, char *argv[])
 			extractdirs(1);
 			removeoldleaves();
 			vprintf(stdout, "Calculate node updates.\n");
-			treescan(".", ROOTINO, nodeupdates);
+			treescan(".", UFS_ROOTINO, nodeupdates);
 			findunreflinks();
 			removeoldnodes();
 		} else {
@@ -232,7 +232,7 @@ main(int argc, char *argv[])
 			initsymtable((char *)0);
 			extractdirs(1);
 			vprintf(stdout, "Calculate extraction list.\n");
-			treescan(".", ROOTINO, nodeupdates);
+			treescan(".", UFS_ROOTINO, nodeupdates);
 		}
 		createleaves(symtbl);
 		createlinks();
@@ -240,7 +240,7 @@ main(int argc, char *argv[])
 		checkrestore();
 		if (dflag) {
 			vprintf(stdout, "Verify the directory structure\n");
-			treescan(".", ROOTINO, verifyfile);
+			treescan(".", UFS_ROOTINO, verifyfile);
 		}
 		dumpsymtable(symtbl, (long)1);
 		break;
@@ -284,7 +284,7 @@ main(int argc, char *argv[])
 			ino = dirlookup(name);
 			if (ino == 0)
 				continue;
-			if (ino == ROOTINO)
+			if (ino == UFS_ROOTINO)
 				dotflag = 1;
 			if (mflag)
 				pathcheck(name);

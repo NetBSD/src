@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.24 2012/01/05 16:18:00 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.25 2013/01/22 09:39:12 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 {
 	SEGUSE *sup;
 	struct ubuf *bp;
-	struct indir a[NIADDR + 2], *ap;
+	struct indir a[UFS_NIADDR + 2], *ap;
 	struct inode *ip;
 	daddr_t daddr, ooff;
 	int num, error;
@@ -138,7 +138,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	 */
 	if (daddr > 0) {
 		oldsn = dtosn(fs, daddr);
-		if (lbn >= 0 && lbn < NDADDR)
+		if (lbn >= 0 && lbn < UFS_NDADDR)
 			osize = ip->i_lfs_fragsize[lbn];
 		else
 			osize = fs->lfs_bsize;
@@ -158,7 +158,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	}
 
 	/* If block frag size is too large for old EOF, update size */
-	if (lbn < NDADDR) {
+	if (lbn < UFS_NDADDR) {
 		off_t minsize;
 
 		minsize = (lbn << fs->lfs_bshift);
@@ -197,7 +197,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	 * segment no longer owns it, we can forget about its
 	 * old size.
 	 */
-	if (lbn >= 0 && lbn < NDADDR)
+	if (lbn >= 0 && lbn < UFS_NDADDR)
 		ip->i_lfs_fragsize[lbn] = size;
 }
 
@@ -387,7 +387,7 @@ account_block_changes(struct ufs1_dinode *dp)
 	ip = (vp ? VTOI(vp) : NULL);
 
 	/* Check direct block holdings between existing and new */
-	for (i = 0; i < NDADDR; i++) {
+	for (i = 0; i < UFS_NDADDR; i++) {
 		odaddr = (ip ? ip->i_ffs1_db[i] : 0x0);
 		if (dp->di_db[i] > 0 && dp->di_db[i] != odaddr)
 			rfw_update_single(vp, i, dp->di_db[i],
@@ -396,10 +396,10 @@ account_block_changes(struct ufs1_dinode *dp)
 
 	/* Check indirect block holdings between existing and new */
 	off = 0;
-	for (i = 0; i < NIADDR; i++) {
+	for (i = 0; i < UFS_NIADDR; i++) {
 		odaddr = (ip ? ip->i_ffs1_ib[i] : 0x0);
 		if (dp->di_ib[i] > 0 && dp->di_ib[i] != odaddr) {
-			lbn = -(NDADDR + off + i);
+			lbn = -(UFS_NDADDR + off + i);
 			rfw_update_single(vp, i, dp->di_ib[i], fs->lfs_bsize);
 			account_indir(vp, dp, lbn, dp->di_ib[i], i);
 		}
@@ -759,7 +759,7 @@ pass6(void)
 				if (debug)
 					pwarn("alloc ino %d nlink %d\n",
 						(int)inums[j], VTOD(vp)->di_nlink);
-				memset(VTOD(vp)->di_db, 0, (NDADDR + NIADDR) *
+				memset(VTOD(vp)->di_db, 0, (UFS_NDADDR + UFS_NIADDR) *
 				       sizeof(ufs_daddr_t));
 				VTOD(vp)->di_blocks = 0;
 
