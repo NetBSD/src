@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.3 2013/01/17 23:04:30 christos Exp $
+# $NetBSD: shl.mi,v 1.4 2013/01/22 20:25:17 christos Exp $
 ./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libDECHanyu.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libEUC.so.5.0.debug	comp-i18n-debug	debug
@@ -52,7 +52,7 @@
 ./usr/libdata/debug/usr/lib/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug
 ./usr/libdata/debug/usr/lib/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug
 ./usr/libdata/debug/usr/lib/libdwarf.so.0.1.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libedit.so.3.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libedit.so.3.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libelf.so.0.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libevent.so.3.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libexecinfo.so.0.0.debug	comp-sys-debug	debug
