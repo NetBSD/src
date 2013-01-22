@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.7 2011/06/30 20:07:35 matt Exp $ */
+/* $NetBSD: crt0-common.c,v 1.7.6.1 2013/01/22 22:56:58 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.7 2011/06/30 20:07:35 matt Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.7.6.1 2013/01/22 22:56:58 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -49,8 +49,10 @@ __RCSID("$NetBSD: crt0-common.c,v 1.7 2011/06/30 20:07:35 matt Exp $");
 
 extern int main(int, char **, char **);
 
+#ifndef HAVE_INITFINI_ARRAY
 extern void	_init(void);
 extern void	_fini(void);
+#endif
 extern void	_libc_init(void);
 
 /*
@@ -84,6 +86,36 @@ do {						\
 	write(2, str, sizeof(str)-1);		\
 	_exit(1);				\
 } while (0)
+
+#ifdef HAVE_INITFINI_ARRAY
+/*
+ * If we are using INIT_ARRAY/FINI_ARRAY and we are linked statically,
+ * we have to process these instead of relying on RTLD to do it for us.
+ *
+ * Since we don't need .init or .fini sections, just code them in C
+ * to make life easier.
+ */
+extern const fptr_t init_array_start[] __weak_reference(__init_array_start);
+extern const fptr_t init_array_end[] __weak_reference(__init_array_end);
+extern const fptr_t fini_array_start[] __weak_reference(__fini_array_start);
+extern const fptr_t fini_array_end[] __weak_reference(__fini_array_end);
+
+static inline void
+_init(void)
+{
+	for (const fptr_t *f = init_array_start; f < init_array_end; f++) {
+		(*f)();
+	}
+}
+
+static void
+_fini(void)
+{
+	for (const fptr_t *f = fini_array_start; f < fini_array_end; f++) {
+		(*f)();
+	}
+}
+#endif /* HAVE_INITFINI_ARRAY */
 
 void
 ___start(void (*cleanup)(void),			/* from shared loader */
