@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.21 2013/01/21 16:52:56 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.22 2013/01/22 12:40:42 jmcneill Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.21 2013/01/21 16:52:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.22 2013/01/22 12:40:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -637,7 +637,7 @@ otus_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_tx_mtx,    MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_write_mtx, MUTEX_DEFAULT, IPL_NONE);
 
-	usb_init_task(&sc->sc_task, otus_task, sc);
+	usb_init_task(&sc->sc_task, otus_task, sc, 0);
 
 	callout_init(&sc->sc_scan_to, 0);
 	callout_setfunc(&sc->sc_scan_to, otus_next_scan, sc);

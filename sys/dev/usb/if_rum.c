@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.46 2013/01/05 23:34:17 christos Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.47 2013/01/22 12:40:42 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.46 2013/01/05 23:34:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.47 2013/01/22 12:40:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -366,7 +366,7 @@ rum_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	usb_init_task(&sc->sc_task, rum_task, sc);
+	usb_init_task(&sc->sc_task, rum_task, sc, 0);
 	callout_init(&sc->sc_scan_ch, 0);
 
 	sc->amrr.amrr_min_success_threshold =  1;

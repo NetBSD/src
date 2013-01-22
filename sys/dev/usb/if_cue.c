@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.65 2013/01/05 01:30:15 christos Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.66 2013/01/22 12:40:42 jmcneill Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.65 2013/01/05 01:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.66 2013/01/22 12:40:42 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -488,7 +488,7 @@ cue_attach(device_t parent, device_t self, void *aux)
 	sc->cue_product = uaa->product;
 	sc->cue_vendor = uaa->vendor;
 
-	usb_init_task(&sc->cue_tick_task, cue_tick_task, sc);
+	usb_init_task(&sc->cue_tick_task, cue_tick_task, sc, 0);
 	usb_init_task(&sc->cue_stop_task, (void (*)(void *))cue_stop, sc);
 
 	err = usbd_device2interface_handle(dev, CUE_IFACE_IDX, &iface);

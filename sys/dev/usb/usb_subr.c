@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.187 2013/01/05 23:34:20 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.188 2013/01/22 12:40:43 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.187 2013/01/05 23:34:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.188 2013/01/22 12:40:43 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -739,6 +739,13 @@ usbd_status
 usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 		struct usbd_endpoint *ep, int ival, usbd_pipe_handle *pipe)
 {
+	return usbd_setup_pipe_flags(dev, iface, ep, ival, pipe, 0);
+}
+
+usbd_status
+usbd_setup_pipe_flags(usbd_device_handle dev, usbd_interface_handle iface,
+    struct usbd_endpoint *ep, int ival, usbd_pipe_handle *pipe, uint8_t flags)
+{
 	usbd_pipe_handle p;
 	usbd_status err;
 
@@ -757,6 +764,7 @@ usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 	p->aborting = 0;
 	p->repeat = 0;
 	p->interval = ival;
+	p->flags = flags;
 	SIMPLEQ_INIT(&p->queue);
 	err = dev->bus->methods->open_pipe(p);
 	if (err) {
@@ -766,7 +774,8 @@ usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 		free(p, M_USB);
 		return (err);
 	}
-	usb_init_task(&p->async_task, usbd_clear_endpoint_stall_async_cb, p);
+	usb_init_task(&p->async_task, usbd_clear_endpoint_stall_async_cb, p,
+	    USB_TASKQ_MPSAFE);
 	*pipe = p;
 	return (USBD_NORMAL_COMPLETION);
 }

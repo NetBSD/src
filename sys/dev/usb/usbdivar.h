@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.100 2013/01/08 06:50:07 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.101 2013/01/22 12:40:44 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -217,6 +217,7 @@ struct usbd_pipe {
 	usbd_xfer_handle	intrxfer; /* used for repeating requests */
 	char			repeat;
 	int			interval;
+	uint8_t			flags;
 
 	/* Filled by HC driver. */
 	const struct usbd_pipe_methods *methods;
@@ -288,6 +289,11 @@ usbd_status	usbd_setup_pipe(usbd_device_handle dev,
 				usbd_interface_handle iface,
 				struct usbd_endpoint *, int,
 				usbd_pipe_handle *pipe);
+usbd_status	usbd_setup_pipe_flags(usbd_device_handle dev,
+				      usbd_interface_handle iface,
+				      struct usbd_endpoint *, int,
+				      usbd_pipe_handle *pipe,
+				      uint8_t flags);
 usbd_status	usbd_new_device(device_t, usbd_bus_handle, int, int, int,
                                 struct usbd_port *);
 usbd_status	usbd_reattach_device(device_t, usbd_device_handle,

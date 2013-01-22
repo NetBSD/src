@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.4 2013/01/05 23:34:17 christos Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.5 2013/01/22 12:40:43 jmcneill Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.4 2013/01/05 23:34:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.5 2013/01/22 12:40:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -681,8 +681,8 @@ urtw_attach(device_t parent, device_t self, void *aux)
 	/* XXX for what? */
 	sc->sc_preamble_mode = 2;
 
-	usb_init_task(&sc->sc_task, urtw_task, sc);
-	usb_init_task(&sc->sc_ledtask, urtw_ledusbtask, sc);
+	usb_init_task(&sc->sc_task, urtw_task, sc, 0);
+	usb_init_task(&sc->sc_ledtask, urtw_ledusbtask, sc, 0);
 	callout_init(&sc->scan_to, 0);
 	callout_setfunc(&sc->scan_to, urtw_next_scan, sc);
 	callout_init(&sc->sc_led_ch, 0);

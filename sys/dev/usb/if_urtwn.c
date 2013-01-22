@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.17 2013/01/22 12:04:58 jmcneill Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.18 2013/01/22 12:40:43 jmcneill Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.17 2013/01/22 12:04:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.18 2013/01/22 12:40:43 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -286,7 +286,7 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_fwcmd_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_write_mtx, MUTEX_DEFAULT, IPL_NONE);
 
-	usb_init_task(&sc->sc_task, urtwn_task, sc);
+	usb_init_task(&sc->sc_task, urtwn_task, sc, 0);
 
 	callout_init(&sc->sc_scan_to, 0);
 	callout_setfunc(&sc->sc_scan_to, urtwn_next_scan, sc);
@@ -689,9 +689,7 @@ urtwn_task(void *arg)
 		mutex_spin_exit(&sc->sc_task_mtx);
 		splx(s);
 		/* Invoke callback with kernel lock held. */
-		KERNEL_LOCK(1, curlwp);
 		cmd->cb(sc, cmd->data);
-		KERNEL_UNLOCK_ONE(curlwp);
 		s = splusb();
 		mutex_spin_enter(&sc->sc_task_mtx);
 		ring->queued--;
@@ -2080,9 +2078,7 @@ urtwn_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 
 		/* Process 802.11 frame. */
-		KERNEL_LOCK(1, curlwp);
 		urtwn_rx_frame(sc, buf, pktlen);
-		KERNEL_UNLOCK_ONE(curlwp);
 
 		/* Next chunk is 128-byte aligned. */
 		totlen = roundup2(totlen, 128);
@@ -2128,9 +2124,7 @@ urtwn_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		return;
 	}
 
-	KERNEL_LOCK(1, curlwp);
 	urtwn_start(ifp);
-	KERNEL_UNLOCK_ONE(curlwp);
 
 	splx(s);
 }

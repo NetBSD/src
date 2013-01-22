@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.139 2013/01/08 06:47:45 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.140 2013/01/22 12:40:43 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.139 2013/01/08 06:47:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.140 2013/01/22 12:40:43 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -453,7 +453,13 @@ usb_task_thread(void *arg)
 			TAILQ_REMOVE(&taskq->tasks, task, next);
 			task->queue = -1;
 			mutex_exit(&taskq->lock);
+
+			if (!(task->flags & USB_TASKQ_MPSAFE))
+				KERNEL_LOCK(1, curlwp);
 			task->fun(task->arg);
+			if (!(task->flags & USB_TASKQ_MPSAFE))
+				KERNEL_UNLOCK_ONE(curlwp);
+
 			mutex_enter(&taskq->lock);
 		}
 	}
