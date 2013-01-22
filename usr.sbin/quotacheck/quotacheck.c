@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.45 2012/04/07 05:07:32 christos Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.46 2013/01/22 09:39:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.45 2012/04/07 05:07:32 christos Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.46 2013/01/22 09:39:20 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -430,7 +430,7 @@ chkquota(const char *type, const char *fsname, const char *mntpt, void *v,
 				    cg * 100 / sblock.fs_ncg);
 				got_siginfo = 0;
 			}
-			if (ino < ROOTINO)
+			if (ino < UFS_ROOTINO)
 				continue;
 			if ((dp = getnextinode(ino)) == NULL)
 				continue;
@@ -793,7 +793,7 @@ setinodebuf(ino_t inum)
 	if (inodebuf == NULL &&
 	    (inodebuf = malloc((unsigned)inobufsize)) == NULL)
 		errx(1, "Cannot allocate space for inode buffer");
-	while (nextino < ROOTINO)
+	while (nextino < UFS_ROOTINO)
 		getnextinode(nextino);
 }
 

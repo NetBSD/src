@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_inode.h,v 1.6 2012/10/19 12:44:39 ttoth Exp $	*/
+/*	$NetBSD: chfs_inode.h,v 1.7 2013/01/22 09:39:15 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -142,10 +142,11 @@ struct chfs_inode
 /* struct chfs_inode to struct vnode */
 #define	ITOV(ip)	((ip)->vp)
 
-/* copied from ufs_dinode.h */
-#define	NDADDR	12			/* Direct addresses in inode. */
+/* XXX copied from ufs_dinode.h and should not be duplicated here */
+#define	UFS_NDADDR	12		/* Direct addresses in inode. */
 
-#define	ROOTINO	((ino_t)2)
+/* XXX this should not be duplicated here */
+#define	UFS_ROOTINO	((ino_t)2)
 
 /* File permissions. */
 #define	IEXEC		0000100		/* Executable. */
