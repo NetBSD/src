@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2011/08/28 07:49:16 christos Exp $
+#	$NetBSD: Makefile,v 1.34 2013/01/22 20:35:29 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -10,6 +10,10 @@
 
 PROG=	csh
 DFLAGS=-DBUILTIN -DFILEC -DNLS -DSHORT_STRINGS
+# - Not integrated with history
+# - Does not handle escaped prompts.
+# - Does not do completion
+# DFLAGS+=-DEDIT
 CPPFLAGS+=-I${.CURDIR} -I. ${DFLAGS}
 SRCS=	alloc.c char.c const.c csh.c dir.c dol.c err.c exec.c exp.c file.c \
 	func.c glob.c hist.c init.c lex.c misc.c parse.c printf.c proc.c \
@@ -56,8 +60,13 @@ COPTS.err.c = -Wno-format-nonliteral
 COPTS.printf.c = -Wno-format-nonliteral
 COPTS.proc.c = -Wno-format-nonliteral
 
+.if 0
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
+.elese
+LDADD+=-ledit -lutil
+DPADD+=${LIBEDIT} ${LIBUTIL}
+.endif
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

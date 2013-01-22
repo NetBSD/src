@@ -1,4 +1,4 @@
-/* $NetBSD: glob.c,v 1.25 2007/07/16 18:26:10 christos Exp $ */
+/* $NetBSD: glob.c,v 1.26 2013/01/22 20:35:29 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.25 2007/07/16 18:26:10 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.26 2013/01/22 20:35:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,13 +213,13 @@ globbrace(Char *s, Char *p, Char ***bl)
 static void
 expbrace(Char ***nvp, Char ***elp, int size)
 {
-    Char **el, **nv, *s, **vl;
+    Char **ex, **nv, *s, **vl;
 
     vl = nv = *nvp;
     if (elp != NULL)
-	el = *elp;
+	ex = *elp;
     else
-	for (el = vl; *el; el++)
+	for (ex = vl; *ex; ex++)
 	    continue;
 
     for (s = *vl; s; s = *++vl) {
@@ -243,24 +243,24 @@ expbrace(Char ***nvp, Char ***elp, int size)
 		continue;
 	    }
 	    len = blklen(bl);
-	    if (&el[len] >= &nv[size]) {
+	    if (&ex[len] >= &nv[size]) {
 		int e, l;
 
-		l = &el[len] - &nv[size];
+		l = &ex[len] - &nv[size];
 		size += GLOBSPACE > l ? GLOBSPACE : l;
 		l = vl - nv;
-		e = el - nv;
+		e = ex - nv;
 		nv = (Char **)xrealloc((ptr_t)nv,
 		    (size_t)size * sizeof(Char *));
 		vl = nv + l;
-		el = nv + e;
+		ex = nv + e;
 	    }
 	    vp = vl--;
 	    *vp = *bl;
 	    len--;
-	    for (bp = el; bp != vp; bp--)
+	    for (bp = ex; bp != vp; bp--)
 		bp[len] = *bp;
-	    el += len;
+	    ex += len;
 	    vp++;
 	    for (bp = bl + 1; *bp; *vp++ = *bp++)
 		continue;
@@ -269,14 +269,14 @@ expbrace(Char ***nvp, Char ***elp, int size)
 
     }
     if (elp != NULL)
-	*elp = el;
+	*elp = ex;
     *nvp = nv;
 }
 
 static Char **
 globexpand(Char **v)
 {
-    Char **el, **nv, *s, **vl;
+    Char **ex, **nv, *s, **vl;
     int size;
 
     size = GLOBSPACE;
@@ -321,8 +321,8 @@ globexpand(Char **v)
     /*
      * Step 2: expand braces
      */
-    el = vl;
-    expbrace(&nv, &el, size);
+    ex = vl;
+    expbrace(&nv, &ex, size);
 
     /*
      * Step 3: expand ~

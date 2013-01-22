@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.27 2010/01/17 12:15:36 wiz Exp $ */
+/* $NetBSD: lex.c,v 1.28 2013/01/22 20:35:29 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.27 2010/01/17 12:15:36 wiz Exp $");
+__RCSID("$NetBSD: lex.c,v 1.28 2013/01/22 20:35:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1440,9 +1440,21 @@ again:
 	roomleft = BUFSIZE - off;
 
 #ifdef FILEC
-	roomleft = BUFSIZE - off;
 	for (;;) {
-	    if (filec && intty) {
+	    if ((editing || filec) && intty) {
+#ifdef EDIT
+		if (editing) {
+			const char *p;
+			if ((p = el_gets(el, &c)) != NULL) {
+				size_t i;
+				/* XXX: Truncation */
+				numleft = c > BUFSIZE ? BUFSIZE : c;
+				for (i = 0; *p && i < BUFSIZE; i++, p++)
+					ttyline[i] = *p;
+				ttyline[i - (i == BUFSIZE)] = '\0';
+			}
+		}
+#endif
 		c = numleft ? numleft : tenex(ttyline, BUFSIZE);
 		if (c > roomleft) {
 		    /* start with fresh buffer */
