@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.148 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.149 2013/01/22 13:18:47 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.148 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.149 2013/01/22 13:18:47 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -177,7 +177,7 @@ usbd_open_pipe_ival(usbd_interface_handle iface, u_int8_t address,
  found:
 	if ((flags & USBD_EXCLUSIVE_USE) && ep->refcnt != 0)
 		return (USBD_IN_USE);
-	err = usbd_setup_pipe(iface->device, iface, ep, ival, &p);
+	err = usbd_setup_pipe_flags(iface->device, iface, ep, ival, &p, flags);
 	if (err)
 		return (err);
 	LIST_INSERT_HEAD(&iface->pipes, p, next);
@@ -198,7 +198,7 @@ usbd_open_pipe_intr(usbd_interface_handle iface, u_int8_t address,
 	DPRINTFN(3,("usbd_open_pipe_intr: address=0x%x flags=0x%x len=%d\n",
 		    address, flags, len));
 
-	err = usbd_open_pipe_ival(iface, address, USBD_EXCLUSIVE_USE,
+	err = usbd_open_pipe_ival(iface, address, USBD_EXCLUSIVE_USE | flags,
 				  &ipipe, ival);
 	if (err)
 		return (err);
