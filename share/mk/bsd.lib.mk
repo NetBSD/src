@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.325 2012/11/13 22:30:38 pooka Exp $
+#	$NetBSD: bsd.lib.mk,v 1.326 2013/01/22 20:43:17 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -45,6 +45,12 @@ realinstall:	checkver libinstall
 .if defined(MKPIE) && (${MKPIE} != "no")
 CFLAGS+=        ${PIE_CFLAGS}
 AFLAGS+=        ${PIE_AFLAGS}
+.endif
+
+.if defined(MKDEBUG) && (${MKDEBUG} != "no")
+# We only add -g to the shared library objects
+# because we don't currently split .a archives.
+CSHLIBFLAGS+=	-g
 .endif
 
 ##### Libraries that this may depend upon.
@@ -238,7 +244,7 @@ CTFFLAGS+=	-g
 .c.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
-.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
+.if !defined(CSHLIBFLAGS) || empty(CSHLIBFLAGS:M*-g*) 
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
@@ -263,7 +269,7 @@ CTFFLAGS+=	-g
 .cc.pico .cpp.pico .cxx.pico .C.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
-.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
+.if !defined(CSHLIBFLAGS) || empty(CSHLIBFLAGS:M*-g*)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
