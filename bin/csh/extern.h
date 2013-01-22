@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.25 2012/12/27 21:19:20 christos Exp $ */
+/* $NetBSD: extern.h,v 1.26 2013/01/22 19:28:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -301,7 +301,6 @@ void Free(ptr_t);
 ptr_t Malloc(size_t);
 ptr_t Realloc(ptr_t, size_t);
 ptr_t Calloc(size_t, size_t);
-void showall(Char **, struct command *);
 
 /*
  * str.c:
