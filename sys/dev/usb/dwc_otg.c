@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.35 2013/01/22 15:19:48 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.36 2013/01/22 20:50:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.35 2013/01/22 15:19:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.36 2013/01/22 20:50:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,11 +420,15 @@ dwc_otg_softintr(void *v)
 	DOTG_EVCNT_INCR(sc->sc_ev_soft_intr);
 
 	DPRINTF("\n");
+
+	mutex_spin_enter(&sc->sc_intr_lock);
 	TAILQ_FOREACH_SAFE(dxfer, &sc->sc_complete, xnext, tmp) {
 		TAILQ_REMOVE(&sc->sc_complete, dxfer, xnext);
-
+		mutex_spin_exit(&sc->sc_intr_lock);
 		usb_transfer_complete(&dxfer->xfer);
+		mutex_spin_enter(&sc->sc_intr_lock);
 	}
+	mutex_spin_exit(&sc->sc_intr_lock);
 }
 
 Static void
