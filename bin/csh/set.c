@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.30 2013/01/22 20:35:29 christos Exp $ */
+/* $NetBSD: set.c,v 1.31 2013/01/23 16:39:03 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.30 2013/01/22 20:35:29 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.31 2013/01/23 16:39:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,11 +176,16 @@ doset(Char **v, struct command *t)
 #endif
 #ifdef EDIT
 	else if (eq(vp, STRedit)) {
-		editing = 1;
-		el = el_init_fd(getprogname(), cshin, cshout, csherr,
-		    SHIN, SHOUT, SHERR);
-		el_set(el, EL_EDITOR, "emacs");
-		el_set(el, EL_PROMPT, printpromptstr);
+	    HistEvent ev;
+	    editing = 1;
+	    el = el_init_fd(getprogname(), cshin, cshout, csherr,
+		SHIN, SHOUT, SHERR);
+	    el_set(el, EL_EDITOR, "emacs");
+	    el_set(el, EL_PROMPT, printpromptstr);
+	    hi = history_init();
+	    history(hi, &ev, H_SETSIZE, getn(value(STRhistory)));
+	    loadhist(Histlist.Hnext);
+	    el_set(el, EL_HIST, history, hi);
 	}
 #endif
     } while ((p = *v++) != NULL);
@@ -516,7 +521,9 @@ unset(Char **v, struct command *t)
 #ifdef EDIT
     else if (adrof(STRedit) == 0) {
 	el_end(el);
+	history_end(hi);
 	el = NULL;
+	hi = NULL;
 	editing = 0;
     }
 #endif

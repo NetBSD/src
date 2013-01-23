@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.44 2013/01/22 20:35:29 christos Exp $ */
+/* $NetBSD: csh.c,v 1.45 2013/01/23 16:39:03 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.44 2013/01/22 20:35:29 christos Exp $");
+__RCSID("$NetBSD: csh.c,v 1.45 2013/01/23 16:39:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ __RCSID("$NetBSD: csh.c,v 1.44 2013/01/22 20:35:29 christos Exp $");
  */
 
 Char *dumphist[] = {STRhistory, STRmh, 0, 0};
-Char *loadhist[] = {STRsource, STRmh, STRtildothist, 0};
+Char *tildehist[] = {STRsource, STRmh, STRtildothist, 0};
 
 int nofile = 0;
 int batch = 0;
@@ -542,8 +542,8 @@ notty:
 	 * Source history before .login so that it is available in .login
 	 */
 	if ((cp = value(STRhistfile)) != STRNULL)
-	    loadhist[2] = cp;
-	dosource(loadhist, NULL);
+	    tildehist[2] = cp;
+	dosource(tildehist, NULL);
         if (loginsh)
 	      (void)srccat(value(STRhome), STRsldotlogin);
     }

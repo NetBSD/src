@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.28 2013/01/22 20:35:29 christos Exp $ */
+/* $NetBSD: lex.c,v 1.29 2013/01/23 16:39:03 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.28 2013/01/22 20:35:29 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.29 2013/01/23 16:39:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,6 +187,36 @@ prlex(FILE *fp, struct wordent *sp0)
 	    (void) fputc(' ', fp);
     }
 }
+
+#ifdef EDIT
+int
+sprlex(char **s, struct wordent *sp0)
+{
+    struct wordent *sp;
+
+    sp = sp0->next;
+    char *os = *s;
+    for (;;) {
+	char *w = vis_str(sp->word);
+	if (os == NULL) {
+	    if (asprintf(s, "%s", w) < 0)
+		return -1;
+	    os = *s;
+	} else if (*os != '\n') {
+	    if (asprintf(s, "%s %s", os, w) < 0) {
+		free(os);
+		return 1;
+	    }
+	    free(os);
+	    os = *s;
+	}
+	sp = sp->next;
+	if (sp == sp0)
+	    break;
+    }
+    return 0;
+}
+#endif
 
 void
 copylex(struct wordent *hp, struct wordent *fp)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2013/01/22 22:40:31 christos Exp $
+#	$NetBSD: Makefile,v 1.36 2013/01/23 16:39:03 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -10,10 +10,11 @@
 
 PROG=	csh
 DFLAGS=-DBUILTIN -DFILEC -DNLS -DSHORT_STRINGS
-# - Not integrated with history
+# - Editor history not always aligned with shell history,
+#   should implement internally
 # - Does not handle escaped prompts.
 # - Does not do completion
-# DFLAGS+=-DEDIT
+DFLAGS+=-DEDIT
 CPPFLAGS+=-I${.CURDIR} -I. ${DFLAGS}
 SRCS=	alloc.c char.c const.c csh.c dir.c dol.c err.c exec.c exp.c file.c \
 	func.c glob.c hist.c init.c lex.c misc.c parse.c printf.c proc.c \
@@ -60,7 +61,7 @@ COPTS.err.c = -Wno-format-nonliteral
 COPTS.printf.c = -Wno-format-nonliteral
 COPTS.proc.c = -Wno-format-nonliteral
 
-.if 0
+.if !empty(DFLAGS:M*EDIT)
 LDADD+=-ledit -lutil
 DPADD+=${LIBEDIT} ${LIBUTIL}
 .else
