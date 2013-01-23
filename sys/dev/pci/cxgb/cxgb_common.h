@@ -668,7 +668,7 @@ int t3_read_flash(adapter_t *adapter, unsigned int addr, unsigned int nwords,
 int t3_get_tp_version(adapter_t *adapter, u32 *vers);
 int t3_check_tpsram_version(adapter_t *adapter);
 int t3_check_tpsram(adapter_t *adapter, const u8 *tp_ram, unsigned int size);
-int t3_load_fw(adapter_t *adapter, const const u8 *fw_data, unsigned int size);
+int t3_load_fw(adapter_t *adapter, const u8 *fw_data, unsigned int size);
 int t3_get_fw_version(adapter_t *adapter, u32 *vers);
 int t3_check_fw_version(adapter_t *adapter);
 int t3_init_hw(adapter_t *adapter, u32 fw_params);
