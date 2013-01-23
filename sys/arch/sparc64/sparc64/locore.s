@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.346 2013/01/23 12:19:02 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.347 2013/01/23 21:03:25 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -6282,6 +6282,67 @@ ENTRY(OF_val2sym32)
 	 restore	%o0, 0, %o0
 #endif /* _LP64 */
 #endif /* DDB */
+
+
+#if defined(MULTIPROCESSOR)
+/*
+ * IPI target function to setup a C compatible environment and call a MI function.
+ *
+ * On entry:
+ *	We are on one of the alternate set of globals
+ *	%g2 = function to call
+ *	%g3 = single argument to called function
+ */
+ENTRY(sparc64_ipi_ccall)
+#ifdef TRAPS_USE_IG
+	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
+#endif
+	TRAP_SETUP(-CC64FSZ-TF_SIZE)
+
+#ifdef DEBUG
+	rdpr	%tt, %o1	! debug
+	sth	%o1, [%sp + CC64FSZ + STKB + TF_TT]! debug
+#endif
+	mov	%g3, %o0			! save argument of function to call
+	mov	%g2, %o5			! save function pointer
+
+	wrpr	%g0, PSTATE_KERN, %pstate	! Get back to normal globals
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
+	mov	%g1, %o1			! code
+	rdpr	%tpc, %o2			! (pc)
+	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + ( 2*8)]
+	rdpr	%tstate, %g1
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + ( 3*8)]
+	rdpr	%tnpc, %o3
+	stx	%g4, [%sp + CC64FSZ + STKB + TF_G + ( 4*8)]
+	rd	%y, %o4
+	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]
+	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
+	wrpr	%g0, 0, %tl			! return to tl=0
+	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
+
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
+	stx	%o2, [%sp + CC64FSZ + STKB + TF_PC]
+	stx	%o3, [%sp + CC64FSZ + STKB + TF_NPC]
+	st	%o4, [%sp + CC64FSZ + STKB + TF_Y]
+
+	rdpr	%pil, %g5
+	stb	%g5, [%sp + CC64FSZ + STKB + TF_PIL]
+	stb	%g5, [%sp + CC64FSZ + STKB + TF_OLDPIL]
+
+	!! In the EMBEDANY memory model %g4 points to the start of the data segment.
+	!! In our case we need to clear it before calling any C-code
+	clr	%g4
+	wr	%g0, ASI_NUCLEUS, %asi			! default kernel ASI
+
+	call %o5					! call function
+	 nop
+
+	ba,a	return_from_trap			! and return from IPI
+	 nop
+
+#endif
+
 
 	.data
 	_ALIGN
