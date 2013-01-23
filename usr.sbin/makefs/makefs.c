@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.37 2013/01/23 21:32:32 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.38 2013/01/23 21:42:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.37 2013/01/23 21:32:32 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.38 2013/01/23 21:42:22 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -367,7 +367,7 @@ set_option_var(const option_t *options, const char *var, const char *val)
 			    val);
 			return 0;
 		}
-		return 1;
+		return 1 << i;
 	}
 	warnx("Unknown option `%s'", var);
 	return (0);
