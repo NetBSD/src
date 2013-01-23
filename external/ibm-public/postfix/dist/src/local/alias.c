@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.1.1.2 2011/03/02 19:32:19 tron Exp $	*/
+/*	$NetBSD: alias.c,v 1.1.1.2.4.1 2013/01/23 00:05:04 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -65,6 +65,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #ifdef STRCASECMP_IN_STRINGS_H
 #include <strings.h>
@@ -102,27 +103,6 @@
 #define NO	0
 #define YES	1
 
-/* dict_owner - find out alias database owner */
-
-static uid_t dict_owner(char *table)
-{
-    const char *myname = "dict_owner";
-    DICT   *dict;
-    struct stat st;
-
-    /*
-     * This code sits here for now, but we may want to move it to the library
-     * some time.
-     */
-    if ((dict = dict_handle(table)) == 0)
-	msg_panic("%s: can't find dictionary: %s", myname, table);
-    if (dict->stat_fd < 0)
-	return (0);
-    if (fstat(dict->stat_fd, &st) < 0)
-	msg_fatal("%s: fstat dictionary %s: %m", myname, table);
-    return (st.st_uid);
-}
-
 /* deliver_alias - expand alias file entry */
 
 int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
@@ -133,7 +113,6 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
     char   *saved_alias_result;
     char   *owner;
     char  **cpp;
-    uid_t   alias_uid;
     struct mypasswd *alias_pwd;
     VSTRING *canon_owner;
     DICT   *dict;
@@ -229,12 +208,24 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	     * database is owned by root, otherwise it will use the rights of
 	     * the alias database owner.
 	     */
-	    if ((alias_uid = dict_owner(*cpp)) == 0) {
+	    if (dict->owner.status == DICT_OWNER_TRUSTED) {
 		alias_pwd = 0;
 		RESET_USER_ATTR(usr_attr, state.level);
 	    } else {
-		if ((alias_pwd = mypwuid(alias_uid)) == 0) {
-		    msg_warn("cannot find alias database owner for %s", *cpp);
+		if (dict->owner.status == DICT_OWNER_UNKNOWN) {
+		    msg_warn("%s: no owner UID for alias database %s",
+			     myname, *cpp);
+		    dsb_simple(state.msg_attr.why, "4.3.0",
+			       "mail system configuration error");
+		    *statusp = defer_append(BOUNCE_FLAGS(state.request),
+					    BOUNCE_ATTR(state.msg_attr));
+		    return (YES);
+		}
+		if ((errno = mypwuid_err(dict->owner.uid, &alias_pwd)) != 0
+		    || alias_pwd == 0) {
+		    msg_warn(errno ?
+			     "cannot find alias database owner for %s: %m" :
+			   "cannot find alias database owner for %s", *cpp);
 		    dsb_simple(state.msg_attr.why, "4.3.0",
 			       "cannot find alias database owner");
 		    *statusp = defer_append(BOUNCE_FLAGS(state.request),
@@ -284,7 +275,7 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	     * Deliver.
 	     */
 	    alias_count = 0;
-	    if (dict_errno != 0) {
+	    if (owner != 0 && alias_maps->error != 0) {
 		dsb_simple(state.msg_attr.why, "4.3.0",
 			   "alias database unavailable");
 		*statusp = defer_append(BOUNCE_FLAGS(state.request),
@@ -380,7 +371,9 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	 * If the alias database was inaccessible for some reason, defer
 	 * further delivery for the current top-level recipient.
 	 */
-	if (dict_errno != 0) {
+	if (alias_result == 0 && dict->error != 0) {
+	    msg_warn("%s:%s: lookup of '%s' failed",
+		     dict->type, dict->name, name);
 	    dsb_simple(state.msg_attr.why, "4.3.0",
 		       "alias database unavailable");
 	    *statusp = defer_append(BOUNCE_FLAGS(state.request),

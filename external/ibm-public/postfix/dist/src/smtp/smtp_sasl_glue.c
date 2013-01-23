@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl_glue.c,v 1.1.1.1 2009/06/23 10:08:54 tron Exp $	*/
+/*	$NetBSD: smtp_sasl_glue.c,v 1.1.1.1.10.1 2013/01/23 00:05:12 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -49,7 +49,7 @@
 /*
 /*	smtp_sasl_passwd_lookup() looks up the username/password
 /*	for the current SMTP server. The result is zero in case
-/*	of failure.
+/*	of failure, a long jump in case of error.
 /*
 /*	smtp_sasl_authenticate() implements the SASL authentication
 /*	dialog. The result is < 0 in case of protocol failure, zero in
@@ -115,6 +115,7 @@
 #include <string_list.h>
 #include <maps.h>
 #include <mail_addr_find.h>
+#include <smtp_stream.h>
 
  /*
   * XSASL library.
@@ -181,12 +182,17 @@ int     smtp_sasl_passwd_lookup(SMTP_SESSION *session)
      * but didn't canonicalize the TCP port, and did not append the port to
      * the MX hostname.
      */
+    smtp_sasl_passwd_map->error = 0;
     if (((state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) == 0
 	 && var_smtp_sender_auth && state->request->sender[0]
 	 && (value = mail_addr_find(smtp_sasl_passwd_map,
 				 state->request->sender, (char **) 0)) != 0)
-	|| (value = maps_find(smtp_sasl_passwd_map, session->host, 0)) != 0
-      || (value = maps_find(smtp_sasl_passwd_map, session->dest, 0)) != 0) {
+	|| (smtp_sasl_passwd_map->error == 0
+	    && (value = maps_find(smtp_sasl_passwd_map,
+				  session->host, 0)) != 0)
+	|| (smtp_sasl_passwd_map->error == 0
+	    && (value = maps_find(smtp_sasl_passwd_map,
+				  session->dest, 0)) != 0)) {
 	if (session->sasl_username)
 	    myfree(session->sasl_username);
 	session->sasl_username = mystrdup(value);
@@ -199,6 +205,10 @@ int     smtp_sasl_passwd_lookup(SMTP_SESSION *session)
 		     myname, session->host,
 		     session->sasl_username, session->sasl_passwd);
 	return (1);
+    } else if (smtp_sasl_passwd_map->error) {
+	msg_warn("%s: %s lookup error",
+		  state->request->queue_id, smtp_sasl_passwd_map->title);
+	vstream_longjmp(session->stream, SMTP_ERR_DATA);
     } else {
 	if (msg_verbose)
 	    msg_info("%s: no auth info found (sender=`%s', host=`%s')",

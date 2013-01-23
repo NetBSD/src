@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.22.2.1 2012/05/23 10:08:29 yamt Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.22.2.2 2013/01/23 00:06:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.22.2.1 2012/05/23 10:08:29 yamt Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.22.2.2 2013/01/23 00:06:42 yamt Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -157,8 +157,8 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		sblock.fs_old_flags = 0;
 	} else {
 		sblock.fs_old_inodefmt = FS_44INODEFMT;
-		sblock.fs_maxsymlinklen = (Oflag == 1 ? MAXSYMLINKLEN_UFS1 :
-		    MAXSYMLINKLEN_UFS2);
+		sblock.fs_maxsymlinklen = (Oflag == 1 ? UFS1_MAXSYMLINKLEN :
+		    UFS2_MAXSYMLINKLEN);
 		sblock.fs_old_flags = FS_FLAGS_UPDATED;
 		sblock.fs_flags = 0;
 	}
@@ -264,7 +264,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		sblock.fs_sblockloc = SBLOCK_UFS1;
 		sblock.fs_nindir = sblock.fs_bsize / sizeof(int32_t);
 		sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs1_dinode);
-		sblock.fs_maxsymlinklen = ((NDADDR + NIADDR) *
+		sblock.fs_maxsymlinklen = ((UFS_NDADDR + UFS_NIADDR) *
 		    sizeof (int32_t));
 		sblock.fs_old_inodefmt = FS_44INODEFMT;
 		sblock.fs_old_cgoffset = 0;
@@ -288,7 +288,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 #endif
 		sblock.fs_nindir = sblock.fs_bsize / sizeof(int64_t);
 		sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs2_dinode);
-		sblock.fs_maxsymlinklen = ((NDADDR + NIADDR) *
+		sblock.fs_maxsymlinklen = ((UFS_NDADDR + UFS_NIADDR) *
 		    sizeof (int64_t));
 	}
 
@@ -298,8 +298,8 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	sblock.fs_cblkno = (daddr_t)(sblock.fs_sblkno +
 	    roundup(howmany(SBLOCKSIZE, sblock.fs_fsize), sblock.fs_frag));
 	sblock.fs_iblkno = sblock.fs_cblkno + sblock.fs_frag;
-	sblock.fs_maxfilesize = sblock.fs_bsize * NDADDR - 1;
-	for (sizepb = sblock.fs_bsize, i = 0; i < NIADDR; i++) {
+	sblock.fs_maxfilesize = sblock.fs_bsize * UFS_NDADDR - 1;
+	for (sizepb = sblock.fs_bsize, i = 0; i < UFS_NIADDR; i++) {
 		sizepb *= NINDIR(&sblock);
 		sblock.fs_maxfilesize += sizepb;
 	}
@@ -459,7 +459,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	    fragnum(&sblock, sblock.fs_size) +
 	    (fragnum(&sblock, csfrags) > 0 ?
 	    sblock.fs_frag - fragnum(&sblock, csfrags) : 0);
-	sblock.fs_cstotal.cs_nifree = sblock.fs_ncg * sblock.fs_ipg - ROOTINO;
+	sblock.fs_cstotal.cs_nifree = sblock.fs_ncg * sblock.fs_ipg - UFS_ROOTINO;
 	sblock.fs_cstotal.cs_ndir = 0;
 	sblock.fs_dsize -= csfrags;
 	sblock.fs_time = start_time.tv_sec;
@@ -669,7 +669,7 @@ initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
 	if (cylno == 0) {
 		size_t r;
 
-		for (r = 0; r < ROOTINO; r++) {
+		for (r = 0; r < UFS_ROOTINO; r++) {
 			setbit(cg_inosused(&acg, 0), r);
 			acg.cg_cs.cs_nifree--;
 		}

@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 21, 2012
+.Dd October 11, 2012
 .Dt DHCPCD.CONF 5 SMM
 .Os
 .Sh NAME
@@ -133,6 +133,10 @@ is an empty string then the current system hostname is sent.
 If
 .Ar hostname
 is a FQDN (ie, contains a .) then it will be encoded as such.
+.It Ic ipv4only
+Only configure IPv4.
+.It Ic ipv6only
+Only configure IPv6.
 .It Ic fqdn Op none | ptr | both
 none disables FQDN encoding, ptr just asks the DHCP server to update the PTR
 record of the host in DNS whereas both also updates the A record.
@@ -154,15 +158,15 @@ RDNSS option.
 Set this option so to make
 .Nm dhcpcd
 always fork on an RA.
-.It ic ipv6ra_own
+.It Ic ipv6ra_own
 Disables kernel IPv6 Router Advertisment processing so dhcpcd can manage
 addresses and routes.
-.It ic ipv6ra_own_default
+.It Ic ipv6ra_own_default
 Each time dhcpcd receives an IPv6 Router Adveristment, dhcpcd will manage
 the default route only.
 This allows dhcpcd to prefer an interface for outbound traffic based on metric
 and/or user selection rather than the kernel.
-.It ic ipv6rs
+.It Ic ipv6rs
 Enables IPv6 Router Advertisment solicitation.
 This is on by default, but is documented here in the case where it is disabled
 globally but needs to be enabled for one interface.

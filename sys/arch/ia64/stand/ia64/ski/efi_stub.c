@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_stub.c,v 1.3 2009/07/20 04:59:04 kiyohara Exp $	*/
+/*	$NetBSD: efi_stub.c,v 1.3.12.1 2013/01/23 00:05:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -41,8 +41,8 @@
 
 #include "libski.h"
 
-extern void acpi_root;
-extern void sal_systab;
+extern char acpi_root[];
+extern char sal_systab[];
 
 extern void acpi_stub_init(void);
 extern void sal_stub_init(void);

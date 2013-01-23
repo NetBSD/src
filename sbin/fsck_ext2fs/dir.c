@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.23.6.1 2013/01/16 05:32:32 yamt Exp $	*/
+/*	$NetBSD: dir.c,v 1.23.6.2 2013/01/23 00:05:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.23.6.1 2013/01/16 05:32:32 yamt Exp $");
+__RCSID("$NetBSD: dir.c,v 1.23.6.2 2013/01/23 00:05:29 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -559,7 +559,7 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 	char *firstblk;
 
 	lastbn = lblkno(&sblock, inosize(dp));
-	if (lastbn >= NDADDR - 1 || fs2h32(dp->e2di_blocks[lastbn]) == 0 ||
+	if (lastbn >= EXT2FS_NDADDR - 1 || fs2h32(dp->e2di_blocks[lastbn]) == 0 ||
 		inosize(dp) == 0) {
 		return (0);
 	}

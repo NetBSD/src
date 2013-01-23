@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.50.2.3 2013/01/16 05:33:34 yamt Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.50.2.4 2013/01/23 00:06:11 yamt Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,9 +89,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.50.2.3 2013/01/16 05:33:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.50.2.4 2013/01/23 00:06:11 yamt Exp $");
 
-#if defined(_KERNEL_OPT)
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
 
@@ -603,14 +603,15 @@ axe_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_no(dev, AXE_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, "getting interface handle failed\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
 
 	sc->axe_flags = axe_lookup(uaa->vendor, uaa->product)->axe_flags;
 
 	mutex_init(&sc->axe_mii_lock, MUTEX_DEFAULT, IPL_NONE);
-	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc);
+	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc, 0);
 
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);
 	if (err) {
@@ -923,13 +924,13 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			buf += sizeof(hdr);
 
 			if (((le16toh(hdr.len) & AXE_RH1M_RXLEN_MASK) ^
-			    (le16toh(hdr.ilen) & AXE_RH1M_RXLEN_MASK)) != 
-			    AXE_RH1M_RXLEN_MASK) {		
+			    (le16toh(hdr.ilen) & AXE_RH1M_RXLEN_MASK)) !=
+			    AXE_RH1M_RXLEN_MASK) {
 				ifp->if_ierrors++;
 				goto done;
 			}
 
-			rxlen = le16toh(hdr.len & AXE_RH1M_RXLEN_MASK);
+			rxlen = le16toh(hdr.len) & AXE_RH1M_RXLEN_MASK;
 			if (total_len < rxlen) {
 				pktlen = total_len;
 				total_len = 0;

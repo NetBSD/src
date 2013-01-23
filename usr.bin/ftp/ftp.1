@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.131.6.1 2012/04/17 00:09:32 yamt Exp $
+.\" 	$NetBSD: ftp.1,v 1.131.6.2 2013/01/23 00:06:38 yamt Exp $
 .\"
 .\" Copyright (c) 1996-2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd March 5, 2010
+.Dd December 22, 2012
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1325,7 +1325,7 @@ and
 .Ar value
 are not given, display all of the options and their values.
 The currently supported options are:
-.Bl -tag -width "http_proxy" -offset indent
+.Bl -tag -width "https_proxy" -offset indent
 .It Cm anonpass
 Defaults to
 .Ev $FTPANONPASS
@@ -1335,6 +1335,9 @@ Defaults to
 .It Cm http_proxy
 Defaults to
 .Ev $http_proxy .
+.It Cm https_proxy
+Defaults to
+.Ev $https_proxy .
 .It Cm no_proxy
 Defaults to
 .Ev $no_proxy .
@@ -1742,6 +1745,29 @@ and
 (and optionally
 .Sq password )
 is in the URL, use them for the first attempt to authenticate.
+.\" https://[user[:password]@]host[:port]/path
+.It Li https:// Ns Oo Ar user Ns Oo Li \&: Ns Ar password Oc Ns Li \&@ Oc \
+Ns Ar host Ns Oo Li \&: Ns Ar port Oc Ns Li / Ns Ar path
+An
+.Tn HTTPS
+URL, retrieved using the
+.Tn HTTPS
+protocol.
+If
+.Ic "set https_proxy"
+is defined, it is used as a URL to an
+.Tn HTTPS
+proxy server.
+If
+.Tn HTTPS
+authorization is required to retrieve
+.Ar path ,
+and
+.Sq user
+(and optionally
+.Sq password )
+is in the URL, use them for the first attempt to authenticate.
+There is currently no certificate validation and verification.
 .\" file:///path
 .It Li file:/// Ns Ar path
 A local URL, copied from

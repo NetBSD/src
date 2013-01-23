@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_open.c,v 1.1.1.4 2011/05/11 09:11:23 tron Exp $	*/
+/*	$NetBSD: dict_open.c,v 1.1.1.4.4.1 2013/01/23 00:05:16 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -19,7 +19,7 @@
 /*	int	open_flags;
 /*	int	dict_flags;
 /*
-/*	void	dict_put(dict, key, value)
+/*	int	dict_put(dict, key, value)
 /*	DICT	*dict;
 /*	const char *key;
 /*	const char *value;
@@ -32,7 +32,7 @@
 /*	DICT	*dict;
 /*	const char *key;
 /*
-/*	void	dict_seq(dict, func, key, value)
+/*	int	dict_seq(dict, func, key, value)
 /*	DICT	*dict;
 /*	int	func;
 /*	const char **key;
@@ -101,7 +101,7 @@
 /*	With file-based maps, flush I/O buffers to file after each update.
 /*	Thus feature is not supported with some file-based dictionaries.
 /* .IP DICT_FLAG_NO_REGSUB
-/*      Disallow regular expression substitution from left-hand side data
+/*	Disallow regular expression substitution from left-hand side data
 /*	into the right-hand side.
 /* .IP DICT_FLAG_NO_PROXY
 /*	Disallow access through the \fBproxymap\fR service.
@@ -150,15 +150,16 @@
 /*	or if the result is to survive multiple table lookups.
 /*
 /*	dict_put() stores the specified key and value into the named
-/*	dictionary.
+/*	dictionary. A zero (DICT_STAT_SUCCESS) result means the
+/*	update was made.
 /*
-/*	dict_del() removes a dictionary entry, and returns zero
-/*	in case of success.
+/*	dict_del() removes a dictionary entry, and returns
+/*	DICT_STAT_SUCCESS in case of success.
 /*
 /*	dict_seq() iterates over all members in the named dictionary.
 /*	func is define DICT_SEQ_FUN_FIRST (select first member) or
-/*	DICT_SEQ_FUN_NEXT (select next member). A zero result means
-/*	that an entry was found.
+/*	DICT_SEQ_FUN_NEXT (select next member). A zero (DICT_STAT_SUCCESS)
+/*	result means that an entry was found.
 /*
 /*	dict_close() closes the specified dictionary and cleans up the
 /*	associated data structures.
@@ -170,6 +171,29 @@
 /* DIAGNOSTICS
 /*	Fatal error: open error, unsupported dictionary type, attempt to
 /*	update non-writable dictionary.
+/*
+/*	The lookup routine returns non-null when the request is
+/*	satisfied. The update, delete and sequence routines return
+/*	zero (DICT_STAT_SUCCESS) when the request is satisfied.
+/*	The dict->errno value is non-zero only when the last operation
+/*	was not satisfied due to a dictionary access error. This
+/*	can have the following values:
+/* .IP DICT_ERR_NONE(zero)
+/*	There was no dictionary access error. For example, the
+/*	request was satisfied, the requested information did not
+/*	exist in the dictionary, or the information already existed
+/*	when it should not exist (collision).
+/* .IP DICT_ERR_RETRY(<0)
+/*	The dictionary was temporarily unavailable. This can happen
+/*	with network-based services.
+/* .IP DICT_ERR_CONFIG(<0)
+/*	The dictionary was unavailable due to a configuration error.
+/* .PP
+/*	Generally, a program is expected to test the function result
+/*	value for "success" first. If the operation was not successful,
+/*	a program is expected to test for a non-zero dict->error
+/*	status to distinguish between a data notfound/collision
+/*	condition or a dictionary access error.
 /* LICENSE
 /* .ad
 /* .fi
@@ -213,6 +237,7 @@
 #include <dict_cidr.h>
 #include <dict_ht.h>
 #include <dict_thash.h>
+#include <dict_fail.h>
 #include <stringops.h>
 #include <split_at.h>
 #include <htable.h>
@@ -262,6 +287,7 @@ static const DICT_OPEN_INFO dict_open_info[] = {
     DICT_TYPE_STATIC, dict_static_open,
     DICT_TYPE_CIDR, dict_cidr_open,
     DICT_TYPE_THASH, dict_thash_open,
+    DICT_TYPE_FAIL, dict_fail_open,
     0,
 };
 
@@ -315,9 +341,11 @@ DICT   *dict_open3(const char *dict_type, const char *dict_name,
     if (dict_open_hash == 0)
 	dict_open_init();
     if ((dp = (DICT_OPEN_INFO *) htable_find(dict_open_hash, dict_type)) == 0)
-	msg_fatal("unsupported dictionary type: %s", dict_type);
+	return (dict_surrogate(dict_type, dict_name, open_flags, dict_flags,
+			     "unsupported dictionary type: %s", dict_type));
     if ((dict = dp->open(dict_name, open_flags, dict_flags)) == 0)
-	msg_fatal("opening %s:%s %m", dict_type, dict_name);
+	return (dict_surrogate(dict_type, dict_name, open_flags, dict_flags,
+			    "cannot open %s:%s: %m", dict_type, dict_name));
     if (msg_verbose)
 	msg_info("%s: %s:%s", myname, dict_type, dict_name);
     /* XXX the choice between wait-for-lock or no-wait is hard-coded. */
@@ -384,135 +412,11 @@ ARGV   *dict_mapnames()
 #ifdef TEST
 
  /*
-  * Proof-of-concept test program. Create, update or read a database. When
-  * the input is a name=value pair, the database is updated, otherwise the
-  * program assumes that the input specifies a lookup key and prints the
-  * corresponding value.
+  * Proof-of-concept test program.
   */
-
-/* System library. */
-
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <signal.h>
-
-/* Utility library. */
-
-#include "vstring.h"
-#include "vstream.h"
-#include "msg_vstream.h"
-#include "vstring_vstream.h"
-
-static NORETURN usage(char *myname)
-{
-    msg_fatal("usage: %s type:file read|write|create [fold] [sync]", myname);
-}
-
 int     main(int argc, char **argv)
 {
-    VSTRING *keybuf = vstring_alloc(1);
-    VSTRING *inbuf = vstring_alloc(1);
-    DICT   *dict;
-    char   *dict_name;
-    int     open_flags;
-    char   *bufp;
-    char   *cmd;
-    const char *key;
-    const char *value;
-    int     ch;
-    int     dict_flags = DICT_FLAG_LOCK | DICT_FLAG_DUP_REPLACE;
-    int     n;
-
-    signal(SIGPIPE, SIG_IGN);
-
-    msg_vstream_init(argv[0], VSTREAM_ERR);
-    while ((ch = GETOPT(argc, argv, "v")) > 0) {
-	switch (ch) {
-	default:
-	    usage(argv[0]);
-	case 'v':
-	    msg_verbose++;
-	    break;
-	}
-    }
-    optind = OPTIND;
-    if (argc - optind < 2)
-	usage(argv[0]);
-    if (strcasecmp(argv[optind + 1], "create") == 0)
-	open_flags = O_CREAT | O_RDWR | O_TRUNC;
-    else if (strcasecmp(argv[optind + 1], "write") == 0)
-	open_flags = O_RDWR;
-    else if (strcasecmp(argv[optind + 1], "read") == 0)
-	open_flags = O_RDONLY;
-    else
-	msg_fatal("unknown access mode: %s", argv[2]);
-    for (n = 2; argv[optind + n]; n++) {
-	if (strcasecmp(argv[optind + 2], "fold") == 0)
-	    dict_flags |= DICT_FLAG_FOLD_ANY;
-	else if (strcasecmp(argv[optind + 2], "sync") == 0)
-	    dict_flags |= DICT_FLAG_SYNC_UPDATE;
-	else
-	    usage(argv[0]);
-    }
-    dict_name = argv[optind];
-    dict = dict_open(dict_name, open_flags, dict_flags);
-    dict_register(dict_name, dict);
-    while (vstring_fgets_nonl(inbuf, VSTREAM_IN)) {
-	bufp = vstring_str(inbuf);
-	if (!isatty(0)) {
-	    vstream_printf("> %s\n", bufp);
-	    vstream_fflush(VSTREAM_OUT);
-	}
-	if (*bufp == '#')
-	    continue;
-	if ((cmd = mystrtok(&bufp, " ")) == 0) {
-	    vstream_printf("usage: del key|get key|put key=value|first|next\n");
-	    vstream_fflush(VSTREAM_OUT);
-	    continue;
-	}
-	if (dict_changed_name())
-	    msg_warn("dictionary has changed");
-	key = *bufp ? vstring_str(unescape(keybuf, mystrtok(&bufp, " ="))) : 0;
-	value = mystrtok(&bufp, " =");
-	if (strcmp(cmd, "del") == 0 && key && !value) {
-	    if (dict_del(dict, key))
-		vstream_printf("%s: not found\n", key);
-	    else
-		vstream_printf("%s: deleted\n", key);
-	} else if (strcmp(cmd, "get") == 0 && key && !value) {
-	    if ((value = dict_get(dict, key)) == 0) {
-		vstream_printf("%s: %s\n", key,
-			       dict_errno == DICT_ERR_RETRY ?
-			       "soft error" : "not found");
-	    } else {
-		vstream_printf("%s=%s\n", key, value);
-	    }
-	} else if (strcmp(cmd, "put") == 0 && key && value) {
-	    dict_put(dict, key, value);
-	    vstream_printf("%s=%s\n", key, value);
-	} else if (strcmp(cmd, "first") == 0 && !key && !value) {
-	    if (dict_seq(dict, DICT_SEQ_FUN_FIRST, &key, &value) == 0)
-		vstream_printf("%s=%s\n", key, value);
-	    else
-		vstream_printf("%s\n",
-			       dict_errno == DICT_ERR_RETRY ?
-			       "soft error" : "not found");
-	} else if (strcmp(cmd, "next") == 0 && !key && !value) {
-	    if (dict_seq(dict, DICT_SEQ_FUN_NEXT, &key, &value) == 0)
-		vstream_printf("%s=%s\n", key, value);
-	    else
-		vstream_printf("%s\n",
-			       dict_errno == DICT_ERR_RETRY ?
-			       "soft error" : "not found");
-	} else {
-	    vstream_printf("usage: del key|get key|put key=value|first|next\n");
-	}
-	vstream_fflush(VSTREAM_OUT);
-    }
-    vstring_free(keybuf);
-    vstring_free(inbuf);
-    dict_close(dict);
+    dict_test(argc, argv);
     return (0);
 }
 

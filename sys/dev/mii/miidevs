@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.102.2.3 2012/10/30 17:21:20 yamt Exp $
+$NetBSD: miidevs,v 1.102.2.4 2013/01/23 00:06:08 yamt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ oui REALTEK			0x00e04c	RealTek
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui SEEQ			0x00a07d	Seeq
 oui SIS				0x00e006	Silicon Integrated Systems
+oui SMSC			0x00800f	SMSC
 oui TI				0x080028	Texas Instruments
 oui TSC				0x00c039	TDK Semiconductor
 oui XAQTI			0x00e0ae	XaQti Corp.
@@ -284,6 +285,10 @@ model SEEQ 80225		0x0008 Seeq 80225 10/100 media interface
 
 /* Silicon Integrated Systems PHYs */
 model SIS 900			0x0000 SiS 900 10/100 media interface
+
+/* SMSC PHYs */
+model SMSC LAN8700		0x000c SMSC LAN8700 10/100 Ethernet Transceiver
+model SMSC LAN8710_LAN8720	0x000f SMSC LAN8710/LAN8720 10/100 Ethernet Transceiver
 
 /* Texas Instruments PHYs */
 model TI TLAN10T		0x0001 ThunderLAN 10BASE-T media interface

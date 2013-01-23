@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.22.4.1 2012/10/30 17:18:45 yamt Exp $	*/
+/*	$NetBSD: segments.h,v 1.22.4.2 2013/01/23 00:05:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -374,12 +374,15 @@ void cpu_fsgs_reload(struct lwp *, int, int);
  * Strange order because of syscall/sysret insns
  */
 #define	LSYS5CALLS_SEL	0	/* iBCS system call gate */
-#define LUCODE32_SEL	8	/* 32 bit user code descriptor */
-#define	LUDATA_SEL	16	/* User data descriptor */
-#define	LUCODE_SEL	24	/* User code descriptor */
+/*			8	   second half */
 #define	LSOL26CALLS_SEL	32	/* Solaris 2.6 system call gate */
-#define LUDATA32_SEL	56	/* 32 bit user data descriptor (needed?)*/
+/*			40	   second half */
+#define LUCODE32_SEL	48	/* 32 bit user code descriptor */
+#define	LUDATA_SEL	56	/* User data descriptor */
+#define	LUCODE_SEL	64	/* User code descriptor */
+#define LUDATA32_SEL	72	/* 32 bit user data descriptor (needed?)*/
 #define	LBSDICALLS_SEL	128	/* BSDI system call gate */
+/*			136	   second half */
 
 #define LDT_SIZE	144
 

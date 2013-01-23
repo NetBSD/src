@@ -1,0 +1,7 @@
+./postalias -q xx fail:aliases
+echo xx | ./postalias -q - fail:aliases
+./postalias -d xx fail:aliases
+echo xx | ./postalias -d - fail:aliases
+./postalias -s fail:aliases
+./postalias -i fail:aliases < aliases
+./postalias fail:aliases

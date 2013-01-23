@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.2.3 2013/01/16 05:33:34 yamt Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.2.4 2013/01/23 00:06:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,9 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.2.3 2013/01/16 05:33:34 yamt Exp $");
-
-#include "opt_usb.h"
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.2.4 2013/01/23 00:06:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1669,7 +1667,7 @@ ohci_waitintr(ohci_softc_t *sc, usbd_xfer_handle xfer)
 			ohci_intr1(sc);
 			mutex_spin_exit(&sc->sc_intr_lock);
 			if (xfer->status != USBD_IN_PROGRESS)
-				return;
+				goto done;
 		}
 	}
 
@@ -1680,6 +1678,7 @@ ohci_waitintr(ohci_softc_t *sc, usbd_xfer_handle xfer)
 
 	/* XXX should free TD */
 
+done:
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -2010,7 +2009,8 @@ ohci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&oxfer->abort_task, ohci_timeout_task, addr);
+	usb_init_task(&oxfer->abort_task, ohci_timeout_task, addr,
+	    USB_TASKQ_MPSAFE);
 	usb_add_task(oxfer->xfer.pipe->device, &oxfer->abort_task,
 	    USB_TASKQ_HC);
 }
@@ -2209,7 +2209,10 @@ ohci_open(usbd_pipe_handle pipe)
 			ival = pipe->interval;
 			if (ival == USBD_DEFAULT_INTERVAL)
 				ival = ed->bInterval;
-			return (ohci_device_setintr(sc, opipe, ival));
+			err = ohci_device_setintr(sc, opipe, ival);
+			if (err)
+				goto bad;
+			break;
 		case UE_ISOCHRONOUS:
 			pipe->methods = &ohci_device_isoc_methods;
 			return (ohci_setup_isoc(pipe));
@@ -2259,10 +2262,8 @@ ohci_close_pipe(usbd_pipe_handle pipe, ohci_soft_ed_t *head)
 		       (int)O32TOH(sed->ed.ed_headp),
 		       (int)O32TOH(sed->ed.ed_tailp),
 		       pipe, std);
-#ifdef USB_DEBUG
-		usbd_dump_pipe(&opipe->pipe);
-#endif
 #ifdef OHCI_DEBUG
+		usbd_dump_pipe(&opipe->pipe);
 		ohci_dump_ed(sc, sed);
 		if (std)
 			ohci_dump_td(sc, std);
@@ -3252,7 +3253,7 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 	return (USBD_IN_PROGRESS);
 }
 
-/* Abort a device control request. */
+/* Abort a device interrupt request. */
 Static void
 ohci_device_intr_abort(usbd_xfer_handle xfer)
 {

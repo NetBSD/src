@@ -20,9 +20,9 @@
 <h2>Purpose of Postfix SMTP access policy delegation</h2>
 
 <p> The Postfix SMTP server has a number of built-in mechanisms to
-block or accept mail at specific SMTP protocol stages. As of version
-2.1, Postfix can delegate policy decisions to an external server
-that runs outside Postfix. </p>
+block or accept mail at specific SMTP protocol stages. In addition,
+the Postfix SMTP server can delegate decisions to an external policy
+server (Postfix 2.1 and later). </p>
 
 <p> With this policy delegation mechanism, a simple <a href="#greylist">
 greylist </a> policy can be implemented with only a dozen lines of
@@ -102,6 +102,8 @@ encryption_keysize=256
 etrn_domain=
 <b>Postfix version 2.5 and later:</b>
 stress=
+<b>Postfix version 2.9 and later:</b>
+ccert_pubkey_fingerprint=68:B3:29:DA:98:93:E3:40:99:C7:D8:AD:5C:B9:C9:40
 [empty line]
 </pre>
 </blockquote>
@@ -261,7 +263,7 @@ daemon, you would use something like this: </p>
  8         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> 
  9         <a href="postconf.5.html#check_policy_service">check_policy_service</a> unix:private/policy 
 10         ...
-11     policy_time_limit = 3600
+11     <a href="postconf.5.html#transport_time_limit">policy_time_limit</a> = 3600
 </pre>
 </blockquote>
 
@@ -269,22 +271,33 @@ daemon, you would use something like this: </p>
 
 <ul>
 
-<li> <p> Lines 2, 11: the Postfix <a href="spawn.8.html">spawn(8)</a> daemon by default kills
-its child process after 1000 seconds.  This is too short for a
-policy daemon that may need to run for as long as the SMTP server
-process that talks to it. The default time limit is overruled in
-<a href="postconf.5.html">main.cf</a> with an explicit "policy_time_limit" setting.  The name of
-the parameter is the name of the <a href="master.5.html">master.cf</a> entry ("policy")
-concatenated with the "_time_limit" suffix. See <a href="spawn.8.html">spawn(8)</a> for
-more information about the time limit parameter.  </p>
+<li> <p> Lines 2-3: this creates the service called "policy" that
+listens on a UNIX-domain socket. The service is implemented by the
+Postfix <a href="spawn.8.html">spawn(8)</a> daemon, which executes the policy server program
+that is specified with the <b>argv</b> attribute, using the privileges
+specified with the <b>user</b> attribute. </p>
 
 <li> <p> Line 2: specify a "0" process limit instead of the default
-"-", to avoid "connection refused" and other problems when the smtpd
-process limit exceeds the <a href="postconf.5.html#default_process_limit">default_process_limit</a> setting. </p>
+"-", to avoid "connection refused" and other problems when you
+increase the smtpd process limit. </p>
 
 <li> <p> Lines 8, 9: always specify "<a href="postconf.5.html#check_policy_service">check_policy_service</a>" AFTER
 "<a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>" or else your system could become an
 open relay. </p>
+
+<li> <p> Line 11: this increases the time that a policy server
+process may run to 3600 seconds.  The default time limit of 1000
+seconds is too short; the policy daemon needs to run long as the
+SMTP server process that talks to it.
+See the <a href="spawn.8.html">spawn(8)</a> manpage for more information about the
+<a href="postconf.5.html#transport_time_limit"><i>transport</i>_time_limit</a> parameter.  </p>
+
+<blockquote> <p> Note: the "<a href="postconf.5.html#transport_time_limit">policy_time_limit</a>" parameter will not
+show up in "postconf" command output before Postfix version 2.9.
+This limitation applies to many parameters whose name is a combination
+of a <a href="master.5.html">master.cf</a> service name (in the above example, "policy") and a
+built-in suffix (in the above example: "_time_limit").  </p>
+</blockquote>
 
 <li> <p> Solaris UNIX-domain sockets do not work reliably. Use
 TCP sockets instead: </p>
@@ -385,12 +398,17 @@ processes only: </p>
 
 <blockquote>
 <pre>
-1 /etc/postfix/<a href="master.5.html">master.cf</a>:
-2     policy  unix  -       n       n       -       0       spawn
-3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
-4 
-5 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-6      policy_time_limit = 3600
+ 1 /etc/postfix/<a href="master.5.html">master.cf</a>:
+ 2     greylist  unix  -       n       n       -       0       spawn
+ 3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
+ 4 
+ 5 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+ 6     <a href="postconf.5.html#transport_time_limit">greylist_time_limit</a> = 3600
+ 7     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
+ 8         ... 
+ 9         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> 
+10         <a href="postconf.5.html#check_policy_service">check_policy_service</a> unix:private/greylist
+11         ...
 </pre>
 </blockquote>
 
@@ -398,20 +416,32 @@ processes only: </p>
 
 <ul>
 
+<li> <p> Lines 2-3: this creates the service called "greylist" that
+listens on a UNIX-domain socket. The service is implemented by the
+Postfix <a href="spawn.8.html">spawn(8)</a> daemon, which executes the greylist.pl script that
+is specified with the <b>argv</b> attribute, using the privileges
+specified with the <b>user</b> attribute. </p>
+
+<li> <p> Line 2: specify a "0" process limit instead of the default
+"-", to avoid "connection refused" and other problems when you
+increase the smtpd process limit. </p>
+
 <li> <p> Line 3: Specify "greylist.pl -v" for verbose logging of
 each request and reply. </p>
 
-<li> <p> Lines 2, 6: the Postfix <a href="spawn.8.html">spawn(8)</a> daemon by default kills
-its child process after 1000 seconds.  This is too short for a
-policy daemon that may run for as long as an SMTP client is connected
-to an SMTP server process. The default time limit is overruled in
-<a href="postconf.5.html">main.cf</a> with an explicit "policy_time_limit" setting.  The name of
-the parameter is the name of the <a href="master.5.html">master.cf</a> entry ("policy")
-concatenated with the "_time_limit" suffix.  </p>
+<li> <p> Line 6: this increases the time that a greylist server
+process may run to 3600 seconds.  The default time limit of 1000
+seconds is too short; the greylist daemon needs to run long as the
+SMTP server process that talks to it.
+See the <a href="spawn.8.html">spawn(8)</a> manpage for more information about the
+<a href="postconf.5.html#transport_time_limit"><i>transport</i>_time_limit</a> parameter.  </p>
 
-<li> <p> Line 2: specify a "0" process limit instead of the default
-"-", to avoid "connection refused" and other problems when the smtpd
-process limit exceeds the <a href="postconf.5.html#default_process_limit">default_process_limit</a> setting. </p>
+<blockquote> <p> Note: the "<a href="postconf.5.html#transport_time_limit">greylist_time_limit</a>" parameter will not
+show up in "postconf" command output before Postfix version 2.9.
+This limitation applies to many parameters whose name is a combination
+of a <a href="master.5.html">master.cf</a> service name (in the above example, "greylist") and
+a built-in suffix (in the above example: "_time_limit").  </p>
+</blockquote>
 
 </ul>
 
@@ -421,17 +451,19 @@ client/server configuration</a>" section above.  </p>
 
 <blockquote>
 <pre>
-1 /etc/postfix/<a href="master.5.html">master.cf</a>:
-2     127.0.0.1:9998  inet  n       n       n       -       0       spawn
-3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
-4 
-5 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-6      127.0.0.1:9998_time_limit = 3600
+ 1 /etc/postfix/<a href="master.5.html">master.cf</a>:
+ 2     127.0.0.1:9998  inet  n       n       n       -       0       spawn
+ 3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
+ 4 
+ 5 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+ 6     127.0.0.1:9998_time_limit = 3600
+ 7     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
+ 8         ... 
+ 9         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> 
+10         <a href="postconf.5.html#check_policy_service">check_policy_service</a> inet:127.0.0.1:9998
+11         ...
 </pre>
 </blockquote>
-
-<p> To invoke this service you would specify "<a href="postconf.5.html#check_policy_service">check_policy_service</a>
-inet:127.0.0.1:9998". </p>
 
 <h2><a name="frequent">Greylisting mail from frequently forged domains</a></h2>
 
@@ -451,7 +483,7 @@ forged MAIL FROM domains could be found at
  6         <a href="postconf.5.html#check_sender_access">check_sender_access</a> hash:/etc/postfix/sender_access
  7         ...
  8     <a href="postconf.5.html#smtpd_restriction_classes">smtpd_restriction_classes</a> = greylist
- 9     greylist = <a href="postconf.5.html#check_policy_service">check_policy_service</a> unix:private/policy
+ 9     greylist = <a href="postconf.5.html#check_policy_service">check_policy_service</a> unix:private/greylist
 10 
 11 /etc/postfix/sender_access:
 12     aol.com     greylist
@@ -486,10 +518,13 @@ other restrictions that reject unknown senders and/or recipients.
 
 <h2><a name="all_mail">Greylisting all your mail</a></h2>
 
-<p> If you turn on greylisting for all mail you will almost certainly
-want to make exceptions for mailing lists that use one-time sender
-addresses, because such mailing lists can pollute your greylist
-database relatively quickly. </p>
+<p> If you turn on greylisting for all mail you may want to make
+exceptions for mailing lists that use one-time sender addresses,
+because each message will be delayed due to greylisting, and the
+one-time sender addresses can pollute your greylist database
+relatively quickly. Instead of making exceptions, you can automatically
+whitelist clients that survive greylisting repeatedly; this avoids
+most of the delays and most of the database pollution problem. </p>
 
 <blockquote>
 <pre>

@@ -1,0 +1,78 @@
+.\"	$NetBSD: usmsc.4,v 1.1.2.2 2013/01/23 00:05:35 yamt Exp $
+.\"	$OpenBSD: smsc.4,v 1.3 2012/09/20 07:40:26 jsg Exp $
+.\"
+.\" Copyright (c) 2012 Jonathan Gray <jsg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd January 9, 2013
+.Dt USMSC 4
+.Os
+.Sh NAME
+.Nm usmsc
+.Nd SMSC LAN95xx 10/100 USB Ethernet device
+.Sh SYNOPSIS
+.Cd "usmsc* at uhub?"
+.Cd "ukphy* at mii?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports SMSC LAN9500/LAN9500A/LAN9530/LAN9730/LAN89530 USB 2.0 10/100
+Ethernet devices and LAN951x USB 2.0 hub and 10/100 Ethernet devices, including:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It RaspberryPI
+.It Gamber Johnson MAG Docking Station 7160-0204
+.It Gamber Johnson MAG Docking Station 7160-0205
+.It Gamber Johnson MAG Docking Station 7160-0227
+.It GWC Technology HE2440
+.It HP USB Media Port Replicator
+.It j5create Newport Station JUD200
+.It Kensington Universal Notebook Docking Station (K33926US)
+.It LevelOne USB-0501
+.It Samsung Central Station monitors
+.It StarTech USBVGADOCK2
+.It XPower XP2440
+.El
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr mii 4 ,
+.Xr netintro 4 ,
+.Xr uhub 4 ,
+.Xr ukphy 4 ,
+.Xr usb 4 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+driver was written by
+.An Ben Gray
+.Aq bgray@freebsd.org
+for
+.Fx
+and ported to
+.Nx
+from the
+.Ox version
+by
+.An Nick Hudson
+.Aq skrll@netbsd.org .
+.Pp
+The
+.Nm
+driver first appeared in
+.Nx 7.0 .

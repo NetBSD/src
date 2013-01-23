@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.1.12.1 2012/04/17 00:06:10 yamt Exp $	*/
+/*	$NetBSD: siop.c,v 1.1.12.2 2013/01/23 00:05:44 yamt Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -1039,7 +1039,7 @@ scsi_probe(struct siop_adapter *adp)
 
 			memset(product, 0, sizeof(product));
 			strncpy(product, inqbuf->product, sizeof(product) - 1);
-			printf("/dev/disk/scsi/0/%d/%d: <%s>\n", t, l, product);
+			printf("/dev/disk/scsi/0%d%d: <%s>\n", t, l, product);
 			found++;
 		}
 	}

@@ -1,0 +1,9 @@
+#	$NetBSD: Makefile.inc,v 1.1.2.2 2013/01/23 00:05:52 yamt Exp $
+
+BINDIR= /usr/mdec
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=

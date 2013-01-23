@@ -1,4 +1,4 @@
-# $NetBSD: md.mipsco,v 1.20.2.1 2013/01/16 05:26:06 yamt Exp $
+# $NetBSD: md.mipsco,v 1.20.2.2 2013/01/23 00:04:15 yamt Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mipsco				comp-c-include
 ./usr/include/mipsco/_G_config.h		comp-obsolete		obsolete
@@ -63,4 +63,3 @@
 ./usr/include/mipsco/vmparam.h			comp-c-include
 ./usr/include/mipsco/wchar_limits.h		comp-c-include
 ./usr/include/mipsco/z8530var.h			comp-c-include
-./usr/libdata/debug/usr/mdec/installboot.debug	-unknown-		debug

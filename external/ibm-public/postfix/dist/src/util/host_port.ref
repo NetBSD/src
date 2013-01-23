@@ -20,3 +20,11 @@ unknown: warning: valid hostname or network address required in [hh.]
 unknown: warning: valid hostname or network address required in hh.
 >> 999
 unknown: warning: valid hostname or network address required in 999
+>> [::1]
+host ::1 port default-service
+>> [ipv6:::1]
+host ::1 port default-service
+>> [ipv6:127.0.0.1]
+unknown: warning: malformed IPv6 address in [ipv6:127.0.0.1]
+>> [ipv6:example.com]
+unknown: warning: malformed IPv6 address in [ipv6:example.com]

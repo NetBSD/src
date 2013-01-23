@@ -737,9 +737,14 @@ those numbers were 92% and 95%, respectively.  While <a href="postscreen.8.html"
 keeps the zombies away, more <a href="smtpd.8.html">smtpd(8)</a> processes remain available
 for legitimate clients.  </p>
 
+<p> <a href="postscreen.8.html">postscreen(8)</a> maintains a temporary whitelist for clients that
+pass its tests; by allowing whitelisted clients to skip tests,
+<a href="postscreen.8.html">postscreen(8)</a> minimizes its impact on legitimate email traffic.
+</p>
+
 <p> The <a href="postscreen.8.html">postscreen(8)</a> server is available with Postfix 2.8 and
 later. To keep the implementation simple, <a href="postscreen.8.html">postscreen(8)</a> delegates
-DNS white/backlist lookups to <a href="dnsblog.8.html">dnsblog(8)</a> server processes, and
+DNS white/blacklist lookups to <a href="dnsblog.8.html">dnsblog(8)</a> server processes, and
 delegates TLS encryption/decryption to <a href="tlsproxy.8.html">tlsproxy(8)</a> server processes.
 This delegation is invisible to the remote SMTP client, and is not
 shown in the diagram below.  </p>

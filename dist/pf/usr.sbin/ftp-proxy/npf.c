@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.1 2011/02/02 02:20:26 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.1.6.1 2013/01/23 00:04:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -311,6 +311,7 @@ npf_server_lookup(struct sockaddr *c, struct sockaddr *proxy,
 static int
 npf_do_commit(void)
 {
+#if 0
 	nl_rule_t *group;
 	fp_ent_t *fpe;
 	pri_t pri;
@@ -327,6 +328,10 @@ npf_do_commit(void)
 	npf_update_rule(npf_fd, NPF_FP_RULE_TAG, group);
 	npf_rule_destroy(group);
 	return 0;
+#else
+	errno = ENOTSUP;
+	return -1;
+#endif
 }
 
 static int

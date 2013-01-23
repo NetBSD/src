@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.350.2.3 2012/10/30 17:21:25 yamt Exp $
+#	$NetBSD: files.pci,v 1.350.2.4 2013/01/23 00:06:08 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -856,6 +856,7 @@ defflag opt_radeonfb.h	RADEONFB_BIOS_INIT
 defflag opt_radeonfb.h	RADEONFB_BIOS_DEBUG
 defflag opt_radeonfb.h	RADEONFB_MMAP_BARS
 defflag opt_radeonfb.h	RADEONFB_DEPTH_32
+defflag opt_radeonfb.h	RADEONFB_ALWAYS_ACCEL_PUTCHAR
 
 # Chelsio Terminator 3 (T3) 10 gigabit ethernet
 device	cxgbc { }
@@ -1050,7 +1051,7 @@ defflag	opt_voyager.h	VOYAGER_DEBUG
 include "dev/pci/hdaudio/files.hdaudio"
 
 # Permedia 2 / Sun PGX32 / Raptor
-device	pm2fb: wsemuldisplaydev, rasops8, rasops32, vcons, videomode, i2cbus, i2c_bitbang, ddc_read_edid, edid
+device	pm2fb: wsemuldisplaydev, rasops8, rasops32, vcons, videomode, i2cbus, i2c_bitbang, ddc_read_edid, edid, glyphcache
 attach	pm2fb at pci
 file	dev/pci/pm2fb.c		pm2fb
 defflag	opt_pm2fb.h	PM2FB_DEBUG
@@ -1090,6 +1091,11 @@ file	dev/pci/coram.c		coram
 device	pwdog: sysmon_envsys
 attach	pwdog at pci
 file	dev/pci/pwdog.c		pwdog
+
+# IBM 4810 BSP cash drawer port
+device	ibmcd: gpiobus
+attach	ibmcd at pci
+file	dev/pci/ibmcd.c		ibmcd
 
 # SIS 315 Pro frame buffer
 device  sisfb: wsemuldisplaydev, rasops8, rasops15, rasops16, rasops32, vcons

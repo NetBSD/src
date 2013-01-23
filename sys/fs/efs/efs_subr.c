@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.c,v 1.7 2008/05/16 09:21:59 hannken Exp $	*/
+/*	$NetBSD: efs_subr.c,v 1.7.32.1 2013/01/23 00:06:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.7 2008/05/16 09:21:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.7.32.1 2013/01/23 00:06:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -165,7 +165,6 @@ efs_read_inode(struct efs_mount *emp, ino_t ino, struct lwp *l,
 
 	err = efs_bread(emp, bboff, l, &bp);
 	if (err) {
-		brelse(bp, 0);
 		return (err);
 	}
 	memcpy(di, ((struct efs_dinode *)bp->b_data) + index, sizeof(*di));
@@ -322,7 +321,6 @@ efs_extent_lookup(struct efs_mount *emp, struct efs_extent *ex,
 		err = efs_bread(emp, ex->ex_bn + i, NULL, &bp);
 		if (err) {
 			printf("efs: warning: invalid extent descriptor\n");
-			brelse(bp, 0);
 			return (err);
 		}
 
@@ -482,7 +480,6 @@ efs_extent_iterator_init(struct efs_extent_iterator *exi, struct efs_inode *eip,
 
 		err = efs_bread(emp, ex.ex_bn, NULL, &bp);
 		if (err) {
-			brelse(bp, 0);
 			return;
 		}
 
@@ -528,7 +525,6 @@ efs_extent_iterator_init(struct efs_extent_iterator *exi, struct efs_inode *eip,
 
 		err = efs_bread(emp, ex.ex_bn + bboff, NULL, &bp);
 		if (err) {
-			brelse(bp, 0);
 			EFS_DPRINTF(("efs_extent_iterator_init: bsrch read\n"));
 			return;
 		}
@@ -603,7 +599,6 @@ efs_extent_iterator_next(struct efs_extent_iterator *exi,
 		if (err) {
 			EFS_DPRINTF(("efs_extent_iterator_next: "
 			    "efs_bread failed: %d\n", err));
-			brelse(bp, 0);
 			return (err);
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.38.8.1 2012/04/17 00:08:06 yamt Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.38.8.2 2013/01/23 00:06:12 yamt Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,9 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.38.8.1 2012/04/17 00:08:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.38.8.2 2013/01/23 00:06:12 yamt Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +200,7 @@ Static void upl_input(struct ifnet *, struct mbuf *);
 /*
  * Probe for a Prolific chip.
  */
-int 
+int
 upl_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -211,7 +213,7 @@ upl_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_NONE);
 }
 
-void 
+void
 upl_attach(device_t parent, device_t self, void *aux)
 {
 	struct upl_softc *sc = device_private(self);
@@ -239,7 +241,8 @@ upl_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_no(dev, UPL_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, "setting config no failed\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
 
@@ -319,7 +322,7 @@ upl_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 upl_detach(device_t self, int flags)
 {
 	struct upl_softc *sc = device_private(self);

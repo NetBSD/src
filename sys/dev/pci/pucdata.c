@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.76.2.1 2012/10/30 17:21:52 yamt Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.76.2.2 2013/01/23 00:06:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.76.2.1 2012/10/30 17:21:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.76.2.2 2013/01/23 00:06:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2581,7 +2581,7 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
         {   "VScom PCI-200H",
-            {   PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI200H, 0, 0 },
+	    {   PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI200H, 0, 0 },
             {   0xffff, 0xffff, 0,      0       },
             {
                 { PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },

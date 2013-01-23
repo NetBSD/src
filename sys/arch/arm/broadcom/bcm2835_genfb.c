@@ -1,0 +1,151 @@
+/* $NetBSD: bcm2835_genfb.c,v 1.3.2.2 2013/01/23 00:05:41 yamt Exp $ */
+
+/*-
+ * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Generic framebuffer console driver
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.3.2.2 2013/01/23 00:05:41 yamt Exp $");
+
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/conf.h>
+#include <sys/bus.h>
+#include <sys/kmem.h>
+
+#include <arm/broadcom/bcm_amba.h>
+
+#include <dev/wsfb/genfbvar.h>
+
+struct bcmgenfb_softc {
+	struct genfb_softc	sc_gen;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+
+	uint32_t		sc_wstype;
+};
+
+static int	bcmgenfb_match(device_t, cfdata_t, void *);
+static void	bcmgenfb_attach(device_t, device_t, void *);
+
+static int	bcmgenfb_ioctl(void *, void *, u_long, void *, int, lwp_t *);
+static paddr_t	bcmgenfb_mmap(void *, void *, off_t, int);
+
+CFATTACH_DECL_NEW(bcmgenfb, sizeof(struct bcmgenfb_softc),
+    bcmgenfb_match, bcmgenfb_attach, NULL, NULL);
+
+static int
+bcmgenfb_match(device_t parent, cfdata_t match, void *aux)
+{
+	struct amba_attach_args *aaa = aux;
+
+	return !strcmp(aaa->aaa_name, "fb");
+}
+
+static void
+bcmgenfb_attach(device_t parent, device_t self, void *aux)
+{
+	struct bcmgenfb_softc *sc = device_private(self);
+	struct amba_attach_args *aaa = aux;
+	prop_dictionary_t dict = device_properties(self);
+	struct genfb_ops ops;
+	bool is_console = false;
+	int error;
+
+	sc->sc_gen.sc_dev = self;
+	sc->sc_iot = aaa->aaa_iot;
+
+	sc->sc_wstype = WSDISPLAY_TYPE_VC4;
+	prop_dictionary_get_uint32(dict, "wsdisplay_type", &sc->sc_wstype);
+	prop_dictionary_get_bool(dict, "is_console", &is_console);
+
+	genfb_init(&sc->sc_gen);
+
+	if (sc->sc_gen.sc_width == 0 ||
+	    sc->sc_gen.sc_fbsize == 0) {
+		aprint_normal(": disabled\n");
+		return;
+	}
+
+	error = bus_space_map(sc->sc_iot, sc->sc_gen.sc_fboffset,
+	    sc->sc_gen.sc_fbsize,
+	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE, &sc->sc_ioh);
+	if (error) {
+		aprint_error_dev(self, "couldn't map framebuffer (%d)\n",
+		    error);
+		return;
+	}
+	sc->sc_gen.sc_fbaddr = bus_space_vaddr(sc->sc_iot, sc->sc_ioh);
+
+	memset(&ops, 0, sizeof(ops));
+	ops.genfb_ioctl = bcmgenfb_ioctl;
+	ops.genfb_mmap = bcmgenfb_mmap;
+
+	aprint_naive("\n");
+
+	if (is_console)
+		aprint_normal(": switching to framebuffer console\n");
+	else
+		aprint_normal("\n");
+
+	genfb_attach(&sc->sc_gen, &ops);
+}
+
+static int
+bcmgenfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
+{
+	struct bcmgenfb_softc *sc = v;
+	struct wsdisplayio_bus_id *busid;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = sc->sc_wstype;
+		return 0;
+	case WSDISPLAYIO_GET_BUSID:
+		busid = data;
+		busid->bus_type = WSDISPLAYIO_BUS_SOC;
+		return 0;
+	default:
+		return EPASSTHROUGH;
+	}
+}
+
+static paddr_t
+bcmgenfb_mmap(void *v, void *vs, off_t offset, int prot)
+{
+	struct bcmgenfb_softc *sc = v;
+
+	if (offset < 0 || offset >= sc->sc_gen.sc_fbsize)
+		return -1;
+
+	return bus_space_mmap(sc->sc_iot, sc->sc_gen.sc_fboffset, offset,
+	    prot, BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE);
+}

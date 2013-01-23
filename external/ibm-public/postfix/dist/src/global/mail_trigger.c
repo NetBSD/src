@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_trigger.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mail_trigger.c,v 1.1.1.1.10.1 2013/01/23 00:05:03 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -60,6 +60,7 @@
 #include <mymalloc.h>
 #include <iostuff.h>
 #include <trigger.h>
+#include <warn_stat.h>
 
 /* Global library. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.269.2.4 2013/01/16 05:33:55 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.269.2.5 2013/01/23 00:06:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.269.2.4 2013/01/16 05:33:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.269.2.5 2013/01/23 00:06:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -676,7 +676,6 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	error = bread(devvp, fs->fs_sblockloc / DEV_BSIZE, fs->fs_sbsize,
 		      NOCRED, 0, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return (error);
 	}
 	newfs = kmem_alloc(fs->fs_sbsize, KM_SLEEP);
@@ -731,7 +730,6 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
 			APPLEUFS_LABEL_SIZE, cred, 0, &bp);
 		if (error && error != EINVAL) {
-			brelse(bp, 0);
 			return (error);
 		}
 		if (error == 0) {
@@ -739,8 +737,8 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 				(struct appleufslabel *)bp->b_data, NULL);
 			if (error == 0)
 				ump->um_flags |= UFS_ISAPPLEUFS;
+			brelse(bp, 0);
 		}
-		brelse(bp, 0);
 		bp = NULL;
 	}
 #else
@@ -793,7 +791,6 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), bsize,
 			      NOCRED, 0, &bp);
 		if (error) {
-			brelse(bp, 0);
 			return (error);
 		}
 #ifdef FFS_EI
@@ -855,7 +852,6 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		error = bread(devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
 			      (int)fs->fs_bsize, NOCRED, 0, &bp);
 		if (error) {
-			brelse(bp, 0);
 			vput(vp);
 			(void)vunmark(mvp);
 			break;
@@ -1613,7 +1609,7 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp)
 		sbp->f_bavail = sbp->f_bfree - sbp->f_bresvd;
 	else
 		sbp->f_bavail = 0;
-	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - ROOTINO;
+	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - UFS_ROOTINO;
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree + fs->fs_pendinginodes;
 	sbp->f_favail = sbp->f_ffree;
 	sbp->f_fresvd = 0;
@@ -1879,7 +1875,6 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		 */
 
 		vput(vp);
-		brelse(bp, 0);
 		*vpp = NULL;
 		return (error);
 	}
@@ -1941,7 +1936,7 @@ ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 
 	memcpy(&ufh, fhp, sizeof(ufh));
 	fs = VFSTOUFS(mp)->um_fs;
-	if (ufh.ufid_ino < ROOTINO ||
+	if (ufh.ufid_ino < UFS_ROOTINO ||
 	    ufh.ufid_ino >= fs->fs_ncg * fs->fs_ipg)
 		return (ESTALE);
 	return (ufs_fhtovp(mp, &ufh, vpp));

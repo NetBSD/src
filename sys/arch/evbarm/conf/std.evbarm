@@ -1,0 +1,8 @@
+#	$NetBSD: std.evbarm,v 1.3.2.2 2013/01/23 00:05:45 yamt Exp $
+
+include		"conf/std"
+include		"arch/arm/conf/std.arm"	# arch standard options
+
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+options 	ARM32

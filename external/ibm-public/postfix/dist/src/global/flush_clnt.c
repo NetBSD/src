@@ -1,4 +1,4 @@
-/*	$NetBSD: flush_clnt.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: flush_clnt.c,v 1.1.1.1.10.1 2013/01/23 00:05:02 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -105,7 +105,8 @@ static DOMAIN_LIST *flush_domains;
 
 void    flush_init(void)
 {
-    flush_domains = domain_list_init(match_parent_style(VAR_FFLUSH_DOMAINS),
+    flush_domains = domain_list_init(MATCH_FLAG_RETURN
+				   | match_parent_style(VAR_FFLUSH_DOMAINS),
 				     var_fflush_domains);
 }
 
@@ -177,13 +178,15 @@ int     flush_send_site(const char *site)
      */
     if (flush_domains == 0)
 	msg_panic("missing flush client initialization");
-    if (domain_list_match(flush_domains, site) == 0)
-	status = FLUSH_STAT_DENY;
-    else
+    if (domain_list_match(flush_domains, site) != 0)
 	status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,
 			  ATTR_TYPE_STR, MAIL_ATTR_REQ, FLUSH_REQ_SEND_SITE,
 				     ATTR_TYPE_STR, MAIL_ATTR_SITE, site,
 				     ATTR_TYPE_END);
+    else if (flush_domains->error == 0)
+	status = FLUSH_STAT_DENY;
+    else
+	status = FLUSH_STAT_FAIL;
 
     if (msg_verbose)
 	msg_info("%s: site %s status %d", myname, site, status);
@@ -231,14 +234,16 @@ int     flush_add(const char *site, const char *queue_id)
      */
     if (flush_domains == 0)
 	msg_panic("missing flush client initialization");
-    if (domain_list_match(flush_domains, site) == 0)
-	status = FLUSH_STAT_DENY;
-    else
+    if (domain_list_match(flush_domains, site) != 0)
 	status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,
 				ATTR_TYPE_STR, MAIL_ATTR_REQ, FLUSH_REQ_ADD,
 				     ATTR_TYPE_STR, MAIL_ATTR_SITE, site,
 				 ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, queue_id,
 				     ATTR_TYPE_END);
+    else if (flush_domains->error == 0)
+	status = FLUSH_STAT_DENY;
+    else
+	status = FLUSH_STAT_FAIL;
 
     if (msg_verbose)
 	msg_info("%s: site %s id %s status %d", myname, site, queue_id,

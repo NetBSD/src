@@ -88,7 +88,7 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
        <b>hosts</b>  The  hosts  that Postfix will try to connect to and
               query from.  Specify <i>unix:</i> for UNIX-domain sockets,
               <i>inet:</i> for TCP connections (default).  Example:
-                  hosts = host1.some.domain host2.some.domain
+                  hosts = host1.some.domain host2.some.domain:port
                   hosts = unix:/file/name
 
               The  hosts are tried in random order, with all con-

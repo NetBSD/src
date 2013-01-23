@@ -4,9 +4,9 @@ GGuuiiddeelliinneess ffoorr PPaacckkaaggee BBuuiilldde
 
 PPuurrppoossee ooff tthhiiss ddooccuummeenntt
 
-This document has hints and tips for those who manage their own Postfix
-distribution for internal use, and for those who maintain Postfix distributions
-for general use.
+This document has hints and tips for those who manage their own Postfix binary
+distribution for internal use, and for those who maintain Postfix binary
+distributions for general use.
 
 GGeenneerraall ddiissttrriibbuuttiioonnss:: pplleeaassee pprroovviiddee aa ssmmaallll ddeeffaauulltt mmaaiinn..ccff ffiillee
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmgen_space.c,v 1.1.4.2 2012/10/30 17:18:59 yamt Exp $	*/
+/*	$NetBSD: bcmgen_space.c,v 1.1.4.3 2013/01/23 00:05:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgen_space.c,v 1.1.4.2 2012/10/30 17:18:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgen_space.c,v 1.1.4.3 2013/01/23 00:05:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,13 +181,16 @@ bcmgen_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 	/* XXX use extent manager to check duplicate mapping */
 
 	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
-	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT | UVM_KMF_COLORMATCH);
 	if (!va)
 		return ENOMEM;
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
-	const int pmapflags = (flag & BUS_SPACE_MAP_CACHEABLE) ? 0 : PMAP_NOCACHE;
+	const int pmapflags =
+	    (flag & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
+		? 0
+		: PMAP_NOCACHE;
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	}

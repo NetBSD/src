@@ -63,6 +63,7 @@ qmqpd.o: ../../include/attr.h
 qmqpd.o: ../../include/cleanup_user.h
 qmqpd.o: ../../include/debug_peer.h
 qmqpd.o: ../../include/dict.h
+qmqpd.o: ../../include/inet_proto.h
 qmqpd.o: ../../include/input_transp.h
 qmqpd.o: ../../include/iostuff.h
 qmqpd.o: ../../include/lex_822.h
@@ -74,7 +75,6 @@ qmqpd.o: ../../include/mail_server.h
 qmqpd.o: ../../include/mail_stream.h
 qmqpd.o: ../../include/mail_version.h
 qmqpd.o: ../../include/match_list.h
-qmqpd.o: ../../include/match_ops.h
 qmqpd.o: ../../include/match_parent_style.h
 qmqpd.o: ../../include/msg.h
 qmqpd.o: ../../include/mymalloc.h

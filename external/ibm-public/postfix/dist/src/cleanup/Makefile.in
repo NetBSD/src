@@ -96,6 +96,7 @@ cleanup_masquerade_test: cleanup_masquerade cleanup_masq.ref
 	./cleanup_masquerade '' !a.b.c,b.c xxx@a.b.c      >>cleanup_masq.tmp
 	./cleanup_masquerade '' a.b.c,b.c xxx@aaa.b.c     >>cleanup_masq.tmp
 	./cleanup_masquerade '' a.b.c,b.c xxx@b.c         >>cleanup_masq.tmp
+	./cleanup_masquerade 'fail:whatever' xy xxx@b.c   >>cleanup_masq.tmp
 	diff cleanup_masq.ref cleanup_masq.tmp
 	rm -f cleanup_masq.tmp
 
@@ -528,7 +529,6 @@ cleanup.o: ../../include/mail_stream.h
 cleanup.o: ../../include/mail_version.h
 cleanup.o: ../../include/maps.h
 cleanup.o: ../../include/match_list.h
-cleanup.o: ../../include/match_ops.h
 cleanup.o: ../../include/milter.h
 cleanup.o: ../../include/mime_state.h
 cleanup.o: ../../include/msg.h
@@ -565,7 +565,6 @@ cleanup_addr.o: ../../include/mail_proto.h
 cleanup_addr.o: ../../include/mail_stream.h
 cleanup_addr.o: ../../include/maps.h
 cleanup_addr.o: ../../include/match_list.h
-cleanup_addr.o: ../../include/match_ops.h
 cleanup_addr.o: ../../include/milter.h
 cleanup_addr.o: ../../include/mime_state.h
 cleanup_addr.o: ../../include/msg.h
@@ -604,7 +603,6 @@ cleanup_api.o: ../../include/mail_queue.h
 cleanup_api.o: ../../include/mail_stream.h
 cleanup_api.o: ../../include/maps.h
 cleanup_api.o: ../../include/match_list.h
-cleanup_api.o: ../../include/match_ops.h
 cleanup_api.o: ../../include/milter.h
 cleanup_api.o: ../../include/mime_state.h
 cleanup_api.o: ../../include/msg.h
@@ -635,7 +633,6 @@ cleanup_body_edit.o: ../../include/mail_conf.h
 cleanup_body_edit.o: ../../include/mail_stream.h
 cleanup_body_edit.o: ../../include/maps.h
 cleanup_body_edit.o: ../../include/match_list.h
-cleanup_body_edit.o: ../../include/match_ops.h
 cleanup_body_edit.o: ../../include/milter.h
 cleanup_body_edit.o: ../../include/mime_state.h
 cleanup_body_edit.o: ../../include/msg.h
@@ -674,7 +671,6 @@ cleanup_bounce.o: ../../include/mail_queue.h
 cleanup_bounce.o: ../../include/mail_stream.h
 cleanup_bounce.o: ../../include/maps.h
 cleanup_bounce.o: ../../include/match_list.h
-cleanup_bounce.o: ../../include/match_ops.h
 cleanup_bounce.o: ../../include/milter.h
 cleanup_bounce.o: ../../include/mime_state.h
 cleanup_bounce.o: ../../include/msg.h
@@ -711,7 +707,6 @@ cleanup_envelope.o: ../../include/mail_proto.h
 cleanup_envelope.o: ../../include/mail_stream.h
 cleanup_envelope.o: ../../include/maps.h
 cleanup_envelope.o: ../../include/match_list.h
-cleanup_envelope.o: ../../include/match_ops.h
 cleanup_envelope.o: ../../include/milter.h
 cleanup_envelope.o: ../../include/mime_state.h
 cleanup_envelope.o: ../../include/msg.h
@@ -749,7 +744,6 @@ cleanup_extracted.o: ../../include/mail_proto.h
 cleanup_extracted.o: ../../include/mail_stream.h
 cleanup_extracted.o: ../../include/maps.h
 cleanup_extracted.o: ../../include/match_list.h
-cleanup_extracted.o: ../../include/match_ops.h
 cleanup_extracted.o: ../../include/milter.h
 cleanup_extracted.o: ../../include/mime_state.h
 cleanup_extracted.o: ../../include/msg.h
@@ -782,7 +776,6 @@ cleanup_final.o: ../../include/mail_conf.h
 cleanup_final.o: ../../include/mail_stream.h
 cleanup_final.o: ../../include/maps.h
 cleanup_final.o: ../../include/match_list.h
-cleanup_final.o: ../../include/match_ops.h
 cleanup_final.o: ../../include/milter.h
 cleanup_final.o: ../../include/mime_state.h
 cleanup_final.o: ../../include/msg.h
@@ -817,7 +810,6 @@ cleanup_init.o: ../../include/mail_stream.h
 cleanup_init.o: ../../include/mail_version.h
 cleanup_init.o: ../../include/maps.h
 cleanup_init.o: ../../include/match_list.h
-cleanup_init.o: ../../include/match_ops.h
 cleanup_init.o: ../../include/milter.h
 cleanup_init.o: ../../include/mime_state.h
 cleanup_init.o: ../../include/msg.h
@@ -848,7 +840,6 @@ cleanup_map11.o: ../../include/mail_conf.h
 cleanup_map11.o: ../../include/mail_stream.h
 cleanup_map11.o: ../../include/maps.h
 cleanup_map11.o: ../../include/match_list.h
-cleanup_map11.o: ../../include/match_ops.h
 cleanup_map11.o: ../../include/milter.h
 cleanup_map11.o: ../../include/mime_state.h
 cleanup_map11.o: ../../include/msg.h
@@ -880,7 +871,6 @@ cleanup_map1n.o: ../../include/mail_params.h
 cleanup_map1n.o: ../../include/mail_stream.h
 cleanup_map1n.o: ../../include/maps.h
 cleanup_map1n.o: ../../include/match_list.h
-cleanup_map1n.o: ../../include/match_ops.h
 cleanup_map1n.o: ../../include/milter.h
 cleanup_map1n.o: ../../include/mime_state.h
 cleanup_map1n.o: ../../include/msg.h
@@ -911,7 +901,6 @@ cleanup_masquerade.o: ../../include/mail_params.h
 cleanup_masquerade.o: ../../include/mail_stream.h
 cleanup_masquerade.o: ../../include/maps.h
 cleanup_masquerade.o: ../../include/match_list.h
-cleanup_masquerade.o: ../../include/match_ops.h
 cleanup_masquerade.o: ../../include/milter.h
 cleanup_masquerade.o: ../../include/mime_state.h
 cleanup_masquerade.o: ../../include/msg.h
@@ -952,7 +941,6 @@ cleanup_message.o: ../../include/mail_proto.h
 cleanup_message.o: ../../include/mail_stream.h
 cleanup_message.o: ../../include/maps.h
 cleanup_message.o: ../../include/match_list.h
-cleanup_message.o: ../../include/match_ops.h
 cleanup_message.o: ../../include/milter.h
 cleanup_message.o: ../../include/mime_state.h
 cleanup_message.o: ../../include/msg.h
@@ -992,7 +980,6 @@ cleanup_milter.o: ../../include/mail_proto.h
 cleanup_milter.o: ../../include/mail_stream.h
 cleanup_milter.o: ../../include/maps.h
 cleanup_milter.o: ../../include/match_list.h
-cleanup_milter.o: ../../include/match_ops.h
 cleanup_milter.o: ../../include/milter.h
 cleanup_milter.o: ../../include/mime_state.h
 cleanup_milter.o: ../../include/msg.h
@@ -1029,7 +1016,6 @@ cleanup_out.o: ../../include/mail_params.h
 cleanup_out.o: ../../include/mail_stream.h
 cleanup_out.o: ../../include/maps.h
 cleanup_out.o: ../../include/match_list.h
-cleanup_out.o: ../../include/match_ops.h
 cleanup_out.o: ../../include/milter.h
 cleanup_out.o: ../../include/mime_state.h
 cleanup_out.o: ../../include/msg.h
@@ -1069,7 +1055,6 @@ cleanup_out_recipient.o: ../../include/mail_queue.h
 cleanup_out_recipient.o: ../../include/mail_stream.h
 cleanup_out_recipient.o: ../../include/maps.h
 cleanup_out_recipient.o: ../../include/match_list.h
-cleanup_out_recipient.o: ../../include/match_ops.h
 cleanup_out_recipient.o: ../../include/milter.h
 cleanup_out_recipient.o: ../../include/mime_state.h
 cleanup_out_recipient.o: ../../include/msg.h
@@ -1101,7 +1086,6 @@ cleanup_region.o: ../../include/mail_conf.h
 cleanup_region.o: ../../include/mail_stream.h
 cleanup_region.o: ../../include/maps.h
 cleanup_region.o: ../../include/match_list.h
-cleanup_region.o: ../../include/match_ops.h
 cleanup_region.o: ../../include/milter.h
 cleanup_region.o: ../../include/mime_state.h
 cleanup_region.o: ../../include/msg.h
@@ -1114,6 +1098,7 @@ cleanup_region.o: ../../include/tok822.h
 cleanup_region.o: ../../include/vbuf.h
 cleanup_region.o: ../../include/vstream.h
 cleanup_region.o: ../../include/vstring.h
+cleanup_region.o: ../../include/warn_stat.h
 cleanup_region.o: cleanup.h
 cleanup_region.o: cleanup_region.c
 cleanup_rewrite.o: ../../include/argv.h
@@ -1131,7 +1116,6 @@ cleanup_rewrite.o: ../../include/mail_proto.h
 cleanup_rewrite.o: ../../include/mail_stream.h
 cleanup_rewrite.o: ../../include/maps.h
 cleanup_rewrite.o: ../../include/match_list.h
-cleanup_rewrite.o: ../../include/match_ops.h
 cleanup_rewrite.o: ../../include/milter.h
 cleanup_rewrite.o: ../../include/mime_state.h
 cleanup_rewrite.o: ../../include/msg.h
@@ -1165,7 +1149,6 @@ cleanup_state.o: ../../include/mail_proto.h
 cleanup_state.o: ../../include/mail_stream.h
 cleanup_state.o: ../../include/maps.h
 cleanup_state.o: ../../include/match_list.h
-cleanup_state.o: ../../include/match_ops.h
 cleanup_state.o: ../../include/milter.h
 cleanup_state.o: ../../include/mime_state.h
 cleanup_state.o: ../../include/mymalloc.h

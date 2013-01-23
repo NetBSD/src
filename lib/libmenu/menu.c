@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.16.54.1 2012/04/17 00:05:28 yamt Exp $	*/
+/*	$NetBSD: menu.c,v 1.16.54.2 2013/01/23 00:05:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: menu.c,v 1.16.54.1 2012/04/17 00:05:28 yamt Exp $");
+__RCSID("$NetBSD: menu.c,v 1.16.54.2 2013/01/23 00:05:25 yamt Exp $");
 
 #include <ctype.h>
 #include <menu.h>
@@ -445,7 +445,8 @@ MENU *
 new_menu(ITEM **items)
 {
         MENU *the_menu;
-        
+        char mark[2];
+
         if ((the_menu = (MENU *)malloc(sizeof(MENU))) == NULL)
                 return NULL;
 
@@ -482,6 +483,12 @@ new_menu(ITEM **items)
 			_menui_default_menu.unmark.string,
 			(unsigned) _menui_default_menu.unmark.length+ 1 );
 	}
+
+	/* default mark needs to be set */
+	mark[0] = '-';
+	mark[1] = '\0';
+
+	set_menu_mark(the_menu, mark);
 
           /* now attach the items, if any */
         if (items != NULL) {

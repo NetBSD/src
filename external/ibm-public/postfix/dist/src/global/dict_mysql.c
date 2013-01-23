@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_mysql.c,v 1.1.1.2 2011/03/02 19:32:14 tron Exp $	*/
+/*	$NetBSD: dict_mysql.c,v 1.1.1.2.4.1 2013/01/23 00:05:02 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -73,7 +73,7 @@
 /*	the lookup result unchanged.
 /* .IP expansion_limit
 /*	Limit (if any) on the total number of lookup result values. Lookups which
-/*	exceed the limit fail with dict_errno=DICT_ERR_RETRY. Note that each
+/*	exceed the limit fail with dict->error=DICT_ERR_RETRY. Note that each
 /*	non-empty (and non-NULL) column of a multi-column result row counts as
 /*	one result.
 /* .IP table
@@ -239,13 +239,13 @@ typedef struct {
 #define TYPEINET			(1<<1)
 
 #define RETRY_CONN_MAX			100
-#define RETRY_CONN_INTV			60		/* 1 minute */
-#define IDLE_CONN_INTV			60		/* 1 minute */
+#define RETRY_CONN_INTV			60	/* 1 minute */
+#define IDLE_CONN_INTV			60	/* 1 minute */
 
 /* internal function declarations */
 static PLMYSQL *plmysql_init(ARGV *);
 static MYSQL_RES *plmysql_query(DICT_MYSQL *, const char *, VSTRING *, char *,
-				char *, char *);
+				        char *, char *);
 static void plmysql_dealloc(PLMYSQL *);
 static void plmysql_close_host(HOST *);
 static void plmysql_down_host(HOST *);
@@ -261,12 +261,12 @@ static HOST *host_init(const char *);
 static void dict_mysql_quote(DICT *dict, const char *name, VSTRING *result)
 {
     DICT_MYSQL *dict_mysql = (DICT_MYSQL *) dict;
-    int len = strlen(name);
-    int buflen = 2*len + 1;
+    int     len = strlen(name);
+    int     buflen = 2 * len + 1;
 
     /*
-     * We won't get integer overflows in 2*len + 1, because Postfix
-     * input keys have reasonable size limits, better safe than sorry.
+     * We won't get integer overflows in 2*len + 1, because Postfix input
+     * keys have reasonable size limits, better safe than sorry.
      */
     if (buflen < len)
 	msg_panic("dict_mysql_quote: integer overflow in 2*%d+1", len);
@@ -288,8 +288,7 @@ static void dict_mysql_quote(DICT *dict, const char *name, VSTRING *result)
 static const char *dict_mysql_lookup(DICT *dict, const char *name)
 {
     const char *myname = "dict_mysql_lookup";
-    DICT_MYSQL *dict_mysql = (DICT_MYSQL *)dict;
-    PLMYSQL *pldb = dict_mysql->pldb;
+    DICT_MYSQL *dict_mysql = (DICT_MYSQL *) dict;
     MYSQL_RES *query_res;
     MYSQL_ROW row;
     static VSTRING *result;
@@ -300,8 +299,9 @@ static const char *dict_mysql_lookup(DICT *dict, const char *name)
     int     expansion;
     const char *r;
     db_quote_callback_t quote_func = dict_mysql_quote;
+    int     domain_rc;
 
-    dict_errno = 0;
+    dict->error = 0;
 
     /*
      * Optionally fold the key.
@@ -314,15 +314,17 @@ static const char *dict_mysql_lookup(DICT *dict, const char *name)
     }
 
     /*
-     * If there is a domain list for this map, then only search for
-     * addresses in domains on the list. This can significantly reduce
-     * the load on the server.
+     * If there is a domain list for this map, then only search for addresses
+     * in domains on the list. This can significantly reduce the load on the
+     * server.
      */
-    if (db_common_check_domain(dict_mysql->ctx, name) == 0) {
-        if (msg_verbose)
+    if ((domain_rc = db_common_check_domain(dict_mysql->ctx, name)) == 0) {
+	if (msg_verbose)
 	    msg_info("%s: Skipping lookup of '%s'", myname, name);
-        return (0);
+	return (0);
     }
+    if (domain_rc < 0)
+	DICT_ERR_VAL_RETURN(dict, domain_rc, (char *) 0);
 
 #define INIT_VSTR(buf, len) do { \
 	if (buf == 0) \
@@ -335,28 +337,27 @@ static const char *dict_mysql_lookup(DICT *dict, const char *name)
 
     /*
      * Suppress the lookup if the query expansion is empty
-     *
-     * This initial expansion is outside the context of any
-     * specific host connection, we just want to check the
-     * key pre-requisites, so when quoting happens separately
-     * for each connection, we don't bother with quoting...
+     * 
+     * This initial expansion is outside the context of any specific host
+     * connection, we just want to check the key pre-requisites, so when
+     * quoting happens separately for each connection, we don't bother with
+     * quoting...
      */
 #if defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
     quote_func = 0;
 #endif
     if (!db_common_expand(dict_mysql->ctx, dict_mysql->query,
-    			  name, 0, query, quote_func))
-        return (0);
-    
-    /* do the query - set dict_errno & cleanup if there's an error */
+			  name, 0, query, quote_func))
+	return (0);
+
+    /* do the query - set dict->error & cleanup if there's an error */
     if ((query_res = plmysql_query(dict_mysql, name, query,
 				   dict_mysql->dbname,
 				   dict_mysql->username,
 				   dict_mysql->password)) == 0) {
-	dict_errno = DICT_ERR_RETRY;
+	dict->error = DICT_ERR_RETRY;
 	return (0);
     }
-
     numrows = mysql_num_rows(query_res);
     if (msg_verbose)
 	msg_info("%s: retrieved %d rows", myname, numrows);
@@ -364,32 +365,31 @@ static const char *dict_mysql_lookup(DICT *dict, const char *name)
 	mysql_free_result(query_res);
 	return 0;
     }
-
     INIT_VSTR(result, 10);
 
-    for (expansion = i = 0; i < numrows && dict_errno == 0; i++) {
+    for (expansion = i = 0; i < numrows && dict->error == 0; i++) {
 	row = mysql_fetch_row(query_res);
 	for (j = 0; j < mysql_num_fields(query_res); j++) {
 	    if (db_common_expand(dict_mysql->ctx, dict_mysql->result_format,
-	    			 row[j], name, result, 0)
+				 row[j], name, result, 0)
 		&& dict_mysql->expansion_limit > 0
 		&& ++expansion > dict_mysql->expansion_limit) {
 		msg_warn("%s: %s: Expansion limit exceeded for key: '%s'",
 			 myname, dict_mysql->parser->name, name);
-		dict_errno = DICT_ERR_RETRY;
+		dict->error = DICT_ERR_RETRY;
 		break;
 	    }
 	}
     }
     mysql_free_result(query_res);
     r = vstring_str(result);
-    return ((dict_errno == 0 && *r) ? r : 0);
+    return ((dict->error == 0 && *r) ? r : 0);
 }
 
 /* dict_mysql_check_stat - check the status of a host */
 
 static int dict_mysql_check_stat(HOST *host, unsigned stat, unsigned type,
-				 time_t t)
+				         time_t t)
 {
     if ((host->stat & stat) && (!type || host->type & type)) {
 	/* try not to hammer the dead hosts too often */
@@ -431,7 +431,7 @@ static HOST *dict_mysql_find_host(PLMYSQL *PLDB, unsigned stat, unsigned type)
 /* dict_mysql_get_active - get an active connection */
 
 static HOST *dict_mysql_get_active(PLMYSQL *PLDB, char *dbname,
-				   char *username, char *password)
+				           char *username, char *password)
 {
     const char *myname = "dict_mysql_get_active";
     HOST   *host;
@@ -447,15 +447,15 @@ static HOST *dict_mysql_get_active(PLMYSQL *PLDB, char *dbname,
     }
 
     /*
-     * Try the remaining hosts.
-     * "count" is a safety net, in case the loop takes more than
-     * RETRY_CONN_INTV and the dead hosts are no longer skipped.
+     * Try the remaining hosts. "count" is a safety net, in case the loop
+     * takes more than RETRY_CONN_INTV and the dead hosts are no longer
+     * skipped.
      */
     while (--count > 0 &&
 	   ((host = dict_mysql_find_host(PLDB, STATUNTRIED | STATFAIL,
 					 TYPEUNIX)) != NULL ||
-	   (host = dict_mysql_find_host(PLDB, STATUNTRIED | STATFAIL,
-					TYPEINET)) != NULL)) {
+	    (host = dict_mysql_find_host(PLDB, STATUNTRIED | STATFAIL,
+					 TYPEINET)) != NULL)) {
 	if (msg_verbose)
 	    msg_info("%s: attempting to connect to host %s", myname,
 		     host->hostname);
@@ -487,7 +487,7 @@ static void dict_mysql_event(int unused_event, char *context)
 
 static MYSQL_RES *plmysql_query(DICT_MYSQL *dict_mysql,
 				        const char *name,
-					VSTRING *query,
+				        VSTRING *query,
 				        char *dbname,
 				        char *username,
 				        char *password)
@@ -499,9 +499,10 @@ static MYSQL_RES *plmysql_query(DICT_MYSQL *dict_mysql,
     while ((host = dict_mysql_get_active(PLDB, dbname, username, password)) != NULL) {
 
 #if defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
+
 	/*
-	 * The active host is used to escape strings in the
-	 * context of the active connection's character encoding.
+	 * The active host is used to escape strings in the context of the
+	 * active connection's character encoding.
 	 */
 	dict_mysql->active_host = host;
 	VSTRING_RESET(query);
@@ -584,16 +585,15 @@ static void plmysql_down_host(HOST *host)
 static void mysql_parse_config(DICT_MYSQL *dict_mysql, const char *mysqlcf)
 {
     const char *myname = "mysqlname_parse";
-    CFG_PARSER *p;
+    CFG_PARSER *p = dict_mysql->parser;
     VSTRING *buf;
-    int     i;
     char   *hosts;
-    
-    p = dict_mysql->parser = cfg_parser_alloc(mysqlcf);
+
     dict_mysql->username = cfg_get_str(p, "user", "", 0, 0);
     dict_mysql->password = cfg_get_str(p, "password", "", 0, 0);
     dict_mysql->dbname = cfg_get_str(p, "dbname", "", 1, 0);
     dict_mysql->result_format = cfg_get_str(p, "result_format", "%s", 1, 0);
+
     /*
      * XXX: The default should be non-zero for safety, but that is not
      * backwards compatible.
@@ -602,10 +602,11 @@ static void mysql_parse_config(DICT_MYSQL *dict_mysql, const char *mysqlcf)
 					      "expansion_limit", 0, 0, 0);
 
     if ((dict_mysql->query = cfg_get_str(p, "query", NULL, 0, 0)) == 0) {
-        /*
-         * No query specified -- fallback to building it from components
-         * (old style "select %s from %s where %s")
-         */                 
+
+	/*
+	 * No query specified -- fallback to building it from components (old
+	 * style "select %s from %s where %s")
+	 */
 	buf = vstring_alloc(64);
 	db_common_sql_build_query(buf, p);
 	dict_mysql->query = vstring_export(buf);
@@ -621,8 +622,8 @@ static void mysql_parse_config(DICT_MYSQL *dict_mysql, const char *mysqlcf)
     db_common_parse_domain(p, dict_mysql->ctx);
 
     /*
-     * Maps that use substring keys should only be used with the full
-     * input key.
+     * Maps that use substring keys should only be used with the full input
+     * key.
      */
     if (db_common_dict_partial(dict_mysql->ctx))
 	dict_mysql->dict.flags |= DICT_FLAG_PATTERN;
@@ -649,19 +650,29 @@ static void mysql_parse_config(DICT_MYSQL *dict_mysql, const char *mysqlcf)
 DICT   *dict_mysql_open(const char *name, int open_flags, int dict_flags)
 {
     DICT_MYSQL *dict_mysql;
+    CFG_PARSER *parser;
 
     /*
      * Sanity checks.
      */
     if (open_flags != O_RDONLY)
-	msg_fatal("%s:%s map requires O_RDONLY access mode",
-		  DICT_TYPE_MYSQL, name);
+	return (dict_surrogate(DICT_TYPE_MYSQL, name, open_flags, dict_flags,
+			       "%s:%s map requires O_RDONLY access mode",
+			       DICT_TYPE_MYSQL, name));
+
+    /*
+     * Open the configuration file.
+     */
+    if ((parser = cfg_parser_alloc(name)) == 0)
+	return (dict_surrogate(DICT_TYPE_MYSQL, name, open_flags, dict_flags,
+			       "open %s: %m", name));
 
     dict_mysql = (DICT_MYSQL *) dict_alloc(DICT_TYPE_MYSQL, name,
 					   sizeof(DICT_MYSQL));
     dict_mysql->dict.lookup = dict_mysql_lookup;
     dict_mysql->dict.close = dict_mysql_close;
     dict_mysql->dict.flags = dict_flags;
+    dict_mysql->parser = parser;
     mysql_parse_config(dict_mysql, name);
 #if defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
     dict_mysql->active_host = 0;
@@ -669,6 +680,7 @@ DICT   *dict_mysql_open(const char *name, int open_flags, int dict_flags)
     dict_mysql->pldb = plmysql_init(dict_mysql->hosts);
     if (dict_mysql->pldb == NULL)
 	msg_fatal("couldn't intialize pldb!\n");
+    dict_mysql->dict.owner = cfg_get_owner(dict_mysql->parser);
     return (DICT_DEBUG (&dict_mysql->dict));
 }
 
@@ -729,7 +741,6 @@ static HOST *host_init(const char *hostname)
 	host->name = 0;
 	host->type = TYPEUNIX;
     }
-
     if (msg_verbose > 1)
 	msg_info("%s: host=%s, port=%d, type=%s", myname,
 		 host->name ? host->name : "localhost",
@@ -741,7 +752,6 @@ static HOST *host_init(const char *hostname)
 
 static void dict_mysql_close(DICT *dict)
 {
-    int     i;
     DICT_MYSQL *dict_mysql = (DICT_MYSQL *) dict;
 
     plmysql_dealloc(dict_mysql->pldb);
@@ -752,7 +762,7 @@ static void dict_mysql_close(DICT *dict)
     myfree(dict_mysql->query);
     myfree(dict_mysql->result_format);
     if (dict_mysql->hosts)
-    	argv_free(dict_mysql->hosts);
+	argv_free(dict_mysql->hosts);
     if (dict_mysql->ctx)
 	db_common_free_ctx(dict_mysql->ctx);
     if (dict->fold_buf)

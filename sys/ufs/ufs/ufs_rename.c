@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.2.2.3 2012/10/30 17:23:01 yamt Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.2.2.4 2013/01/23 00:06:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.2.2.3 2012/10/30 17:23:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.2.2.4 2013/01/23 00:06:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -688,7 +688,7 @@ ufs_rename_recalculate_fulr(struct vnode *dvp,
 		if (ep->d_ino == 0)
 			goto next;	/* Entry is unused.  */
 
-		if (ufs_rw32(ep->d_ino, needswap) == WINO)
+		if (ufs_rw32(ep->d_ino, needswap) == UFS_WINO)
 			goto next;	/* Entry is whiteout.  */
 
 		if (fcnp->cn_namelen != ufs_direct_namlen(ep, dvp))
@@ -962,7 +962,7 @@ ufs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 		KASSERT(!ufs_rmdired_p(vp));
 
 		/* Did we hit the root without finding fdvp?  */
-		if (VTOI(vp)->i_number == ROOTINO) {
+		if (VTOI(vp)->i_number == UFS_ROOTINO) {
 			vput(vp);
 			*intermediate_node_ret = NULL;
 			return 0;

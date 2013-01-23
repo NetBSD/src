@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.40.2.1 2012/04/17 00:01:38 yamt Exp $	*/
+/*	$NetBSD: var.c,v 1.40.2.2 2013/01/23 00:04:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,13 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.40.2.1 2012/04/17 00:01:38 yamt Exp $");
+__RCSID("$NetBSD: var.c,v 1.40.2.2 2013/01/23 00:04:05 yamt Exp $");
 #endif
 #endif /* not lint */
 
 #include <unistd.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <paths.h>
 #include <limits.h>
 
@@ -486,7 +486,7 @@ print_quoted(const char *p)
 			p++;
 			continue;
 		}
-		q = index(p, '\'');
+		q = strchr(p, '\'');
 		if (!q) {
 			out1fmt("'%s'", p );
 			return;

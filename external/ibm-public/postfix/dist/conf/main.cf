@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.2 2009/06/23 11:41:06 tron Exp $
+#	$NetBSD: main.cf,v 1.2.10.1 2013/01/23 00:04:50 yamt Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
@@ -468,7 +468,12 @@ unknown_local_recipient_reject_code = 550
 # the main.cf file, otherwise the SMTP server will reject mail for    
 # non-UNIX accounts with "User unknown in local recipient table".
 #
-#mailbox_transport = lmtp:unix:/file/name
+# Cyrus IMAP over LMTP. Specify ``lmtpunix      cmd="lmtpd"
+# listen="/var/imap/socket/lmtp" prefork=0'' in cyrus.conf.
+#mailbox_transport = lmtp:unix:/var/imap/socket/lmtp
+#
+# Cyrus IMAP via command line. Uncomment the "cyrus...pipe" and
+# subsequent line in master.cf.
 #mailbox_transport = cyrus
 
 # The fallback_transport specifies the optional transport in master.cf
@@ -659,3 +664,4 @@ sample_directory = /usr/share/examples/postfix
 # readme_directory: The location of the Postfix README files.
 #
 readme_directory = /usr/share/examples/postfix
+#inet_protocols = ipv4

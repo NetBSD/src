@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.129.2.1 2012/04/17 00:06:56 yamt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.129.2.2 2013/01/23 00:05:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.129.2.1 2012/04/17 00:06:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.129.2.2 2013/01/23 00:05:58 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -358,10 +358,7 @@ db_read_bytes(db_addr_t addr, size_t size, char *data)
 
 	src = (char *)(uintptr_t)addr;
 	while (size-- > 0) {
-		if (src >= (char *)VM_MIN_KERNEL_ADDRESS)
-			*data++ = probeget((paddr_t)(u_long)src++, ASI_P, 1);
-		else
-			*data++ = fubyte(src++);
+		*data++ = probeget((paddr_t)(u_long)src++, ASI_P, 1);
 	}
 }
 
@@ -374,17 +371,16 @@ db_write_bytes(db_addr_t addr, size_t size, const char *data)
 {
 	char *dst;
 	extern paddr_t pmap_kextract(vaddr_t va);
+	extern vaddr_t ektext;
 
 	dst = (char *)(uintptr_t)addr;
 	while (size-- > 0) {
-		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS+0x400000))
-			*dst = *data;
-		else if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) &&
-			 (dst < (char *)VM_MIN_KERNEL_ADDRESS+0x400000))
+		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) &&
+			 (dst < (char *)ektext))
 			/* Read Only mapping -- need to do a bypass access */
 			stba(pmap_kextract((vaddr_t)dst), ASI_PHYS_CACHED, *data);
 		else
-			subyte(dst, *data);
+			*dst = *data;
 		dst++, data++;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.25 2011/01/22 19:19:16 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.25.4.1 2013/01/23 00:05:44 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,10 +44,10 @@
 #include "wdvar.h"
 
 char *names[] = {
-	"/dev/disk/scsi/0/0/0_0:/netbsd",
+	"/dev/disk/scsi/000/0_0:/netbsd",
 	"/dev/disk/ide/0/master/0_0:/netbsd",
 	"/dev/disk/floppy:netbsd",	"/dev/disk/floppy:netbsd.gz",
-	"/dev/disk/scsi/0/0/0_0:/onetbsd",
+	"/dev/disk/scsi/000/0_0:/onetbsd",
 	"/dev/disk/ide/0/master/0_0:/onetbsd",
 	"/dev/disk/floppy:onetbsd",	"/dev/disk/floppy:onetbsd.gz"
 	"in",

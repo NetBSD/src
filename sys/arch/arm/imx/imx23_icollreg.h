@@ -1,4 +1,4 @@
-/* $Id: imx23_icollreg.h,v 1.2.2.2 2013/01/16 05:32:47 yamt Exp $ */
+/* $Id: imx23_icollreg.h,v 1.2.2.3 2013/01/23 00:05:41 yamt Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #define HW_ICOLL_SIZE 0x2000
 
 /*
- * IRQ numbers known to i.MX233.
+ * IRQ numbers known to i.MX23.
  */
 #define IRQ_DEBUG_UART		0 /* Non DMA on the debug UART */
 #define IRQ_COMMS_RX		1 /* JTAG debug communications port */
@@ -125,7 +125,7 @@
 
 		/* IRQ's 66-127 are reserved. */
 
-#define IRQ_MAX			127 /* Number or IRQ registers on i.MX233. */
+#define IRQ_MAX			127 /* Number or IRQ registers on i.MX23. */
 
 
 /*

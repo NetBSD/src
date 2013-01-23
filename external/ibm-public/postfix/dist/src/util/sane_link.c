@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_link.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: sane_link.c,v 1.1.1.1.10.1 2013/01/23 00:05:17 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -36,6 +36,7 @@
 
 #include "msg.h"
 #include "sane_fsops.h"
+#include "warn_stat.h"
 
 /* sane_link - sanitize link() error returns */
 

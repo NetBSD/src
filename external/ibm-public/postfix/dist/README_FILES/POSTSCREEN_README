@@ -9,9 +9,16 @@ connections at the same time. While a single postscreen(8) process keeps
 zombies away from Postfix SMTP server processes, more Postfix SMTP server
 processes remain available for legitimate clients.
 
+postscreen(8) maintains a temporary whitelist for clients that pass its tests;
+by allowing whitelisted clients to skip tests, postscreen(8) minimizes its
+impact on legitimate email traffic.
+
 postscreen(8) should not be used on SMTP ports that receive mail from end-user
 clients (MUAs). In a typical deployment, postscreen(8) is used on the "port 25"
-service, while MUA clients submit mail via the submission service.
+service, while MUA clients submit mail via the submission service (port 587)
+which normally requires client authentication, or via a "port 25" server that
+provides no MX service (i.e. a dedicated server that provides submission
+service on port 25).
 
 postscreen(8) is part of a multi-layer defense.
 
@@ -32,8 +39,8 @@ postscreen(8) is part of a multi-layer defense.
     applications.
 
 Each layer reduces the spam volume. The general strategy is to use the less
-expensive defenses first, and to use the more expensive defenses for the spam
-that remains.
+expensive defenses first, and to use the more expensive defenses only for the
+spam that remains.
 
 Topics in this document:
 
@@ -57,8 +64,8 @@ that keeps the zombies away, Postfix would be spending most of its resources
 not receiving email.
 
 The main challenge for postscreen(8) is to make an is-it-a-zombie decision
-based on a single measurement. This is necessary because many zombies avoid
-spamming the same site repeatedly, in an attempt to fly under the radar. Once
+based on a single measurement. This is necessary because many zombies try to
+fly under the radar and avoid spamming the same site repeatedly. Once
 postscreen(8) decides that a client is not-a-zombie, it whitelists the client
 temporarily to avoid further delays for legitimate mail.
 
@@ -83,13 +90,13 @@ focused on.
 GGeenneerraall ooppeerraattiioonn
 
 The postscreen(8) triage process involves a number of tests, in the order as
-described below. Some tests introduce a delay of a few seconds. Once a client
-passes a test, its IP address is whitelisted from 24 hours for simple tests, to
-1 week for complex tests. Whitelisting minimizes the impact of postscreen(8)'s
-tests on legitimate mail clients.
+described below. Some tests introduce a delay of a few seconds. postscreen(8)
+maintains a temporary whitelist for clients that pass its tests; by allowing
+whitelisted clients to skip tests, postscreen(8) minimizes its impact on
+legitimate email traffic.
 
-After logging its findings, postscreen(8) by default hands off all connections
-to a Postfix SMTP server process. This mode is useful for non-destructive
+By default, postscreen(8) hands off all connections to a Postfix SMTP server
+process after logging its findings. This mode is useful for non-destructive
 testing.
 
 In a typical production setting, postscreen(8) is configured to reject mail
@@ -107,6 +114,7 @@ black and whitelists. These tests speed up the handling of known clients.
 
   * Permanent white/blacklist test
   * Temporary whitelist test
+  * MX Policy test
 
 PPeerrmmaanneenntt wwhhiittee//bbllaacckklliisstt tteesstt
 
@@ -151,7 +159,19 @@ The postscreen(8) daemon maintains a temporary whitelist for SMTP client IP
 addresses that have passed all the tests described below. The
 postscreen_cache_map parameter specifies the location of the temporary
 whitelist. The temporary whitelist is not used for SMTP client addresses that
-appear on the permanent blacklist or whitelist.
+appear on the permanent access list.
+
+    NOTE: To share a postscreen(8) cache between multiple postscreen(8)
+    instances, use "postscreen_cache_map = proxy:btree:$data_directory/
+    postscreen_cache", and disable cache cleanup
+    (postscreen_cache_cleanup_interval = 0) in all postscreen(8) instances
+    except one that is responsible for cache cleanup.
+
+    postscreen(8) cache sharing requires Postfix 2.9 or later; earlier proxymap
+    (8) implementations don't support cache cleanup.
+
+    For an alternative postscreen(8) cache sharing approach see the
+    memcache_table(5) manpage.
 
 When the SMTP client address appears on the temporary whitelist, postscreen(8)
 logs this with the client address and port number as:
@@ -162,6 +182,43 @@ The action is not configurable: immediately hand off the connection to a
 Postfix SMTP server process. The client is excluded from further tests until
 its temporary whitelist entry expires, as controlled with the postscreen_*_ttl
 parameters. Expired entries are silently renewed if possible.
+
+MMXX PPoolliiccyy tteesstt
+
+When the remote SMTP client is not on the static access list or temporary
+whitelist, postscreen(8) can implement a number of whitelist tests, before it
+grants the client a temporary whitelist status that allows it to talk to a
+Postfix SMTP server process.
+
+By listening on both primary and backup MX addresses, postscreen(8) can deny
+the temporary whitelist status to clients that connect only to backup MX hosts
+(an old spammer trick to take advantage of backup MX hosts with weaker anti-
+spam policies than primary MX hosts).
+
+  * First, configure the host to listen on both primary and backup MX
+    addresses. Use the appropriate ifconfig command for the local operating
+    system, or update the appropriate configuration files and "refresh" the
+    network protocol stack.
+
+  * Then, configure postscreen(8) to deny the temporary whitelist status on the
+    backup MX address(es). An example for Wietse's server is:
+
+    /etc/postfix/main.cf:
+        postscreen_whitelist_interfaces = !168.100.189.8 static:all
+
+    Translation: allow clients to obtain the temporary whitelist status on all
+    server IP addresses except 168.100.189.8, which is a backup MX address.
+
+When a non-whitelisted client connects the backup MX address, postscreen(8)
+logs this with the client address and port number as:
+
+    CCOONNNNEECCTT ffrroomm [address]:port ttoo [[116688..110000..118899..88]]::2255
+    WWHHIITTEELLIISSTT VVEETTOO [address]:port
+
+Translation: the client at [address]:port connected to the backup MX address
+168.100.189.8 while it was not whitelisted. The client will not be granted the
+temporary whitelist status, even if passes all the whitelist tests described
+below.
 
 TTeessttss bbeeffoorree tthhee 222200 SSMMTTPP sseerrvveerr ggrreeeettiinngg
 
@@ -318,12 +375,12 @@ in SMTP engine anyway. This is to make postscreen(8) logging more informative.
 
 When a client sends multiple commands, postscreen(8) logs this as:
 
-    CCOOMMMMAANNDD PPIIPPEELLIINNIINNGG ffrroomm [address]:port aafftteerr command
+    CCOOMMMMAANNDD PPIIPPEELLIINNIINNGG ffrroomm [address]:port aafftteerr command: text
 
 Translation: the SMTP client at [address]:port sent multiple SMTP commands,
 instead of sending one command and then waiting for the server to reply. This
-happened after the client sent command. Postfix 2.8 does not log the input that
-was sent too early.
+happened after the client sent command. The text shows part of the input that
+was sent too early; it is not logged with Postfix 2.8.
 
 The postscreen_pipelining_action parameter specifies the action that is taken
 next. See "When tests fail after the 220 SMTP server greeting" below.
@@ -402,13 +459,15 @@ ddrroopp (default for non-SMTP commands)
 
 OOtthheerr eerrrroorrss
 
-When an SMTP client hangs up unexpectedly during any tests, postscreen(8) logs
-this as:
+When an SMTP client hangs up unexpectedly, postscreen(8) logs this as:
 
     HHAANNGGUUPP aafftteerr time ffrroomm [address]:port iinn test name
 
 Translation: the SMTP client at [address]:port disconnected unexpectedly, time
 seconds after the start of the test named test name.
+
+There is no punishment for hanging up. A client that hangs up without sending
+the QUIT command can still pass all postscreen(8) tests.
 
 The following errors are reported by the built-in SMTP engine. This engine
 never accepts mail, therefore it has per-session limits on the number of
@@ -558,8 +617,9 @@ Notes:
 
   * Some postscreen(8) configuration parameters implement stress-dependent
     behavior. This is supported only when the default value is stress-dependent
-    (that is, it looks like ${stress?X}${stress:Y}). Other parameters always
-    evaluate as if the stress value is the empty string.
+    (that is, "postconf -d parametername" output shows "parametername = $
+    {stress?something}${stress:something}"). Other parameters always evaluate
+    as if the stress value is the empty string.
 
   * See "Tests before the 220 SMTP server greeting" for details about the
     logging from these postscreen(8) tests.

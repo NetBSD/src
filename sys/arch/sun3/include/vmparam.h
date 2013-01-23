@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.36 2010/11/06 15:42:49 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.36.8.1 2013/01/23 00:05:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
 
 #ifndef _SUN3_VMPARAM_H_
 #define _SUN3_VMPARAM_H_ 1
+
+#define __USE_TOPDOWN_VM
 
 /*
  * We use 8K pages on both the sun3 and sun3x.  Override PAGE_*

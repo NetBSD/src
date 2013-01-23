@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26.2.1 2012/04/17 00:05:38 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.26.2.2 2013/01/23 00:05:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.26.2.1 2012/04/17 00:05:38 yamt Exp $");
+__RCSID("$NetBSD: main.c,v 1.26.2.2 2013/01/23 00:05:28 yamt Exp $");
 #endif
 #endif	/* not lint */
 
@@ -214,16 +214,6 @@ opendisk(const char *path, int flags, char *buf, int buflen, int cooked)
 	strlcpy(buf, path, buflen);
 	return f;
 }
-
-static int
-dk_ioctl(int f, void *arg)
-{
-	errno = ENOTTY;
-	return -1;
-}
-#define dk_ioctl(f, cmd, arg) dk_ioctl(f, arg)
-#else
-#define dk_ioctl(f, cmd, arg) ioctl(f, cmd, arg)
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
 static daddr_t

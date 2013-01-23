@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24.2.1 2012/10/30 17:19:13 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24.2.2 2013/01/23 00:05:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24.2.1 2012/10/30 17:19:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24.2.2 2013/01/23 00:05:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,8 @@ findroot(void)
 	int part;
 	char *p;
 
+	target = lun = drive = -1;
+
 	rdev = (struct btinfo_rootdevice *)lookup_bootinfo(BTINFO_ROOTDEVICE);
 	if (rdev == NULL)
 		return;
@@ -127,32 +129,25 @@ findroot(void)
 		name = "sd";
 		p += 5;
 
-		bus = 0;
-		while (isdigit(*p))
-			bus = bus * 10 + (*p++) - '0';
-		if (*p++ != '/')
+		if (!isdigit(*(p + 0)) ||
+		    !isdigit(*(p + 1)) ||
+		    !isdigit(*(p + 2)) ||
+		    *(p + 3) != '/')
 			return;
-		target = 0;
-		while (isdigit(*p))
-			target = target * 10 + (*p++) - '0';
-		if (*p++ != '/')
-			return;
-		lun = 0;
-		while (isdigit(*p))
-			lun = lun * 10 + (*p++) - '0';
+		bus = (*p++) - '0';
+		target = (*p++) - '0';
+		lun = (*p++) - '0';
 	} else if (strncmp(p, "ide/", 4) == 0) {
 		name = "wd";
 		p += 4;
 
-		bus = 0;
-		while (isdigit(*p))
-			bus = bus * 10 + (*p++) - '0';
+		bus = (*p++) - '0';
 		if (*p++ != '/')
 			return;
-		if (strncmp(p, "master/0", 8) == 0) {
+		if (strncmp(p, "master/", 7) == 0) {
 			drive = 0;
 			p += 8;
-		} else if (strncmp(p, "slave/0", 7) == 0) {
+		} else if (strncmp(p, "slave/", 6) == 0) {
 			drive = 1;
 			p += 7;
 		} else
@@ -163,12 +158,10 @@ findroot(void)
 		/* unknwon disk... */
 		return;
 
-	if (*p != '_' || !isdigit(*(p + 1)))
+	if (*(p + 0) != '0' || *(p + 1) != '_' || !isdigit(*(p + 2)))
 		return;
-	p++;
-	part = 0;
-	while (isdigit(*p))
-		part = part * 10 + (*p++) - '0';
+	p += 2;
+	part = (*p++) - '0';
 	if (p != '\0')
 		return;
 

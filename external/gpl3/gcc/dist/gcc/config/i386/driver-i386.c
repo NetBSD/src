@@ -436,7 +436,8 @@ const char *host_detect_local_cpu (int argc, const char **argv)
   has_ssse3 = ecx & bit_SSSE3;
   has_sse4_1 = ecx & bit_SSE4_1;
   has_sse4_2 = ecx & bit_SSE4_2;
-  has_avx = ecx & bit_AVX;
+  /* Don't check XCR0[2] - I think that can be 'lazy enabled' by the OS */
+  has_avx = (ecx & bit_AVX) && (ecx & bit_OSXSAVE);
   has_cmpxchg16b = ecx & bit_CMPXCHG16B;
   has_movbe = ecx & bit_MOVBE;
   has_popcnt = ecx & bit_POPCNT;

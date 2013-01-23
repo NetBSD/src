@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.17.4.2 2012/10/30 17:22:02 yamt Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.17.4.3 2013/01/23 00:06:09 yamt Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.17.4.2 2012/10/30 17:22:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.17.4.3 2013/01/23 00:06:09 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.17.4.2 2012/10/30 17:22:02 yamt Exp 
 #define DPRINTF(s)	do {} while (/*CONSTCOND*/0)
 #endif
 
+typedef struct { uint32_t _bits[512/32]; } __packed __aligned(4) sdmmc_bitfield512_t;
+
 static int sdmmc_mem_sd_init(struct sdmmc_softc *, struct sdmmc_function *);
 static int sdmmc_mem_mmc_init(struct sdmmc_softc *, struct sdmmc_function *);
 static int sdmmc_mem_send_cid(struct sdmmc_softc *, sdmmc_response *);
@@ -77,7 +79,7 @@ static int sdmmc_mem_send_scr(struct sdmmc_softc *, struct sdmmc_function *,
 static int sdmmc_mem_decode_scr(struct sdmmc_softc *, struct sdmmc_function *);
 static int sdmmc_mem_send_cxd_data(struct sdmmc_softc *, int, void *, size_t);
 static int sdmmc_set_bus_width(struct sdmmc_function *, int);
-static int sdmmc_mem_sd_switch(struct sdmmc_function *, int, int, int, void *);
+static int sdmmc_mem_sd_switch(struct sdmmc_function *, int, int, int, sdmmc_bitfield512_t *);
 static int sdmmc_mem_mmc_switch(struct sdmmc_function *, uint8_t, uint8_t,
     uint8_t);
 static int sdmmc_mem_spi_read_ocr(struct sdmmc_softc *, uint32_t, uint32_t *);
@@ -321,7 +323,6 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 			SET(sf->flags, SFF_SDHC);
 			csd->capacity = SD_CSD_V2_CAPACITY(resp);
 			csd->read_bl_len = SD_CSD_V2_BL_LEN;
-			csd->ccc = SD_CSD_CCC(resp);
 			break;
 
 		case SD_CSD_CSDVER_1_0:
@@ -343,6 +344,7 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 		e = SD_CSD_SPEED_EXP(resp);
 		m = SD_CSD_SPEED_MANT(resp);
 		csd->tran_speed = speed_exponent[e] * speed_mantissa[m] / 10;
+		csd->ccc = SD_CSD_CCC(resp);
 	} else {
 		csd->csdver = MMC_CSD_CSDVER(resp);
 		if (csd->csdver == MMC_CSD_CSDVER_1_0) {
@@ -574,6 +576,20 @@ sdmmc_mem_set_blocklen(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	return error;
 }
 
+/* make 512-bit BE quantity __bitfield()-compatible */
+static void
+sdmmc_be512_to_bitfield512(sdmmc_bitfield512_t *buf) {
+	size_t i;
+	uint32_t tmp0, tmp1;
+	const size_t bitswords = __arraycount(buf->_bits);
+	for (i = 0; i < bitswords/2; i++) {
+		tmp0 = buf->_bits[i];
+		tmp1 = buf->_bits[bitswords - 1 - i];
+		buf->_bits[i] = be32toh(tmp1);
+		buf->_bits[bitswords - 1 - i] = be32toh(tmp0);
+	}
+}
+
 static int
 sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
@@ -599,7 +615,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V,	 50000 },
 	};
 	int host_ocr, support_func, best_func, error, g, i;
-	char status[64];
+	sdmmc_bitfield512_t status; /* Switch Function Status */
 
 	error = sdmmc_mem_send_scr(sc, sf, sf->raw_scr);
 	if (error) {
@@ -625,7 +641,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	if (sf->scr.sd_spec >= SCR_SD_SPEC_VER_1_10 &&
 	    ISSET(sf->csd.ccc, SD_CSD_CCC_SWITCH)) {
 		DPRINTF(("%s: switch func mode 0\n", SDMMCDEVNAME(sc)));
-		error = sdmmc_mem_sd_switch(sf, 0, 1, 0, status);
+		error = sdmmc_mem_sd_switch(sf, 0, 1, 0, &status);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
 			    "switch func mode 0 failed\n");
@@ -633,7 +649,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		}
 
 		host_ocr = sdmmc_chip_host_ocr(sc->sc_sct, sc->sc_sch);
-		support_func = SFUNC_STATUS_GROUP(status, 1);
+		support_func = SFUNC_STATUS_GROUP(&status, 1);
 		best_func = 0;
 		for (i = 0, g = 1;
 		    i < __arraycount(switch_group0_functions); i++, g <<= 1) {
@@ -647,7 +663,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			DPRINTF(("%s: switch func mode 1(func=%d)\n",
 			    SDMMCDEVNAME(sc), best_func));
 			error =
-			    sdmmc_mem_sd_switch(sf, 1, 1, best_func, status);
+			    sdmmc_mem_sd_switch(sf, 1, 1, best_func, &status);
 			if (error) {
 				aprint_error_dev(sc->sc_dev,
 				    "switch func mode 1 failed:"
@@ -1059,7 +1075,7 @@ sdmmc_set_bus_width(struct sdmmc_function *sf, int width)
 
 static int
 sdmmc_mem_sd_switch(struct sdmmc_function *sf, int mode, int group,
-    int function, void *status)
+    int function, sdmmc_bitfield512_t *status)
 {
 	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
@@ -1073,7 +1089,7 @@ sdmmc_mem_sd_switch(struct sdmmc_function *sf, int mode, int group,
 		return EINVAL;
 
 	if (group <= 0 || group > 6 ||
-	    function < 0 || function > 16)
+	    function < 0 || function > 15)
 		return EINVAL;
 
 	gsft = (group - 1) << 2;
@@ -1132,6 +1148,10 @@ dmamem_free:
 			free(ptr, M_DEVBUF);
 		}
 	}
+
+	if (error == 0)
+		sdmmc_be512_to_bitfield512(status);
+
 	return error;
 }
 

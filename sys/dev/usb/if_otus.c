@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.9.10.3 2013/01/16 05:33:34 yamt Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.9.10.4 2013/01/23 00:06:11 yamt Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -17,12 +17,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.9.10.3 2013/01/16 05:33:34 yamt Exp $");
 /*-
  * Driver for Atheros AR9001U chipset.
  * http://www.atheros.com/pt/bulletins/AR9001USBBulletin.pdf
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.9.10.4 2013/01/23 00:06:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -65,20 +66,37 @@ __KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.9.10.3 2013/01/16 05:33:34 yamt Exp $"
 #include <dev/usb/if_otusreg.h>
 #include <dev/usb/if_otusvar.h>
 
-#ifdef USB_DEBUG
-#define OTUS_DEBUG
-#endif
-
 #ifdef OTUS_DEBUG
-int otus_debug = 0;
-#define DPRINTFN(n, ...) \
-	do { if (otus_debug >= (n)) printf(__VA_ARGS__); } while (0)
-#else
+
+#define	DBG_INIT	__BIT(0)
+#define	DBG_FN		__BIT(1)
+#define	DBG_TX		__BIT(2)
+#define	DBG_RX		__BIT(3)
+#define	DBG_STM		__BIT(4)
+#define	DBG_CHAN	__BIT(5)
+#define	DBG_REG		__BIT(6)
+#define	DBG_CMD		__BIT(7)
+#define	DBG_ALL		0xffffffffU
+#define DBG_NO_SC	(struct otus_softc *)NULL
+
+unsigned int otus_debug = 0;
+#define DPRINTFN(n, s, ...) do { \
+	if (otus_debug & (n)) { \
+		if ((s) != NULL) \
+			printf("%s: ", device_xname((s)->sc_dev)); \
+		else \
+			printf("otus0: "); \
+		printf("%s: ", __func__); \
+		printf(__VA_ARGS__); \
+	} \
+} while (0)
+
+#else	/* ! OTUS_DEBUG */
+
 #define DPRINTFN(n, ...) \
 	do { } while (0)
-#endif
-#define DPRINTF(...) \
-	DPRINTFN(1, __VA_ARGS__)
+
+#endif	/* OTUS_DEBUG */
 
 Static int	otus_match(device_t, cfdata_t, void *);
 Static void	otus_attach(device_t, device_t, void *);
@@ -117,7 +135,7 @@ Static void	otus_sub_rxeof(struct otus_softc *, uint8_t *, int);
 Static void	otus_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void	otus_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static int	otus_tx(struct otus_softc *, struct mbuf *,
-		    struct ieee80211_node *);
+		    struct ieee80211_node *, struct otus_tx_data *);
 Static void	otus_start(struct ifnet *);
 Static void	otus_watchdog(struct ifnet *);
 Static int	otus_ioctl(struct ifnet *, u_long, void *);
@@ -149,7 +167,7 @@ Static void	otus_delete_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
 Static void	otus_delete_key_cb(struct otus_softc *, void *);
 #endif /* notyet */
-Static void	otus_calibrate_to(void *);
+Static void	otus_calib_to(void *);
 Static int	otus_set_bssid(struct otus_softc *, const uint8_t *);
 Static int	otus_set_macaddr(struct otus_softc *, const uint8_t *);
 #ifdef notyet
@@ -159,6 +177,14 @@ Static void	otus_led_newstate_type2(struct otus_softc *);
 Static void	otus_led_newstate_type3(struct otus_softc *);
 Static int	otus_init(struct ifnet *);
 Static void	otus_stop(struct ifnet *);
+Static void	otus_wait_async(struct otus_softc *);
+
+#if IEEE80211_INJECTION
+#define IS_INJECTED(m)	(((m)->m_flags & M_INJECT) != 0)
+
+static int	otus_output(struct ifnet *, struct mbuf *,
+    const struct sockaddr *, struct rtentry *);
+#endif /* IEEE80211_INJECTION */
 
 /* List of supported channels. */
 static const uint8_t ar_chans[] = {
@@ -571,9 +597,12 @@ CFATTACH_DECL_NEW(otus, sizeof(struct otus_softc), otus_match, otus_attach,
 Static int
 otus_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usb_attach_arg *uaa = aux;
+	struct usb_attach_arg *uaa;
 
-	DPRINTF("otus_match: vendor=0x%x product=0x%x revision=0x%x\n",
+	uaa = aux;
+
+	DPRINTFN(DBG_FN, DBG_NO_SC,
+	    "otus_match: vendor=0x%x product=0x%x revision=0x%x\n",
 		    uaa->vendor, uaa->product, uaa->release);
 
 	return usb_lookup(otus_devs, uaa->vendor, uaa->product) != NULL ?
@@ -583,30 +612,37 @@ otus_match(device_t parent, cfdata_t match, void *aux)
 Static void
 otus_attach(device_t parent, device_t self, void *aux)
 {
-	struct otus_softc *sc = device_private(self);
-	struct usb_attach_arg *uaa = aux;
+	struct otus_softc *sc;
+	struct usb_attach_arg *uaa;
 	char *devinfop;
 	int error;
 
-	DPRINTF("otus_attach\n");
+	sc = device_private(self);
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	sc->sc_dev = self;
+	uaa = aux;
 	sc->sc_udev = uaa->device;
 
-	mutex_init(&sc->sc_cmd_mtx,   MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_task_mtx,  MUTEX_DEFAULT, IPL_NET);
-	mutex_init(&sc->sc_write_mtx, MUTEX_DEFAULT, IPL_NONE);
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
 	aprint_normal_dev(sc->sc_dev, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	usb_init_task(&sc->sc_task, otus_task, sc);
+	mutex_init(&sc->sc_cmd_mtx,   MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_task_mtx,  MUTEX_DEFAULT, IPL_NET);
+	mutex_init(&sc->sc_tx_mtx,    MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_write_mtx, MUTEX_DEFAULT, IPL_NONE);
+
+	usb_init_task(&sc->sc_task, otus_task, sc, 0);
 
 	callout_init(&sc->sc_scan_to, 0);
 	callout_setfunc(&sc->sc_scan_to, otus_next_scan, sc);
 	callout_init(&sc->sc_calib_to, 0);
-	callout_setfunc(&sc->sc_calib_to, otus_calibrate_to, sc);
+	callout_setfunc(&sc->sc_calib_to, otus_calib_to, sc);
 
 	sc->sc_amrr.amrr_min_success_threshold =  1;
 	sc->sc_amrr.amrr_max_success_threshold = 10;
@@ -638,25 +674,34 @@ otus_attach(device_t parent, device_t self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 }
 
+Static void
+otus_wait_async(struct otus_softc *sc)
+{
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	while (sc->sc_cmdq.queued > 0)
+		tsleep(&sc->sc_cmdq, 0, "sc_cmdq", 0);
+}
+
 Static int
 otus_detach(device_t self, int flags)
 {
-	struct otus_softc *sc = device_private(self);
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	struct otus_softc *sc;
+	struct ifnet *ifp;
 	int s;
 
-	DPRINTF("otus_detach\n");
+	sc = device_private(self);
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	s = splusb();
+
+	sc->sc_dying = 1;
+
+	ifp = sc->sc_ic.ic_ifp;
 	if (ifp != NULL)	/* Failed to attach properly */
 		otus_stop(ifp);
-
-	s = splnet();
-
-	/* Wait for all queued asynchronous commands to complete. */
-	if (ifp != NULL) {
-		while (sc->sc_cmdq.queued > 0)
-			tsleep(&sc->sc_cmdq, 0, "sc_cmdq", 0);
-	}
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	callout_destroy(&sc->sc_scan_to);
@@ -674,6 +719,7 @@ otus_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	mutex_destroy(&sc->sc_write_mtx);
+	mutex_destroy(&sc->sc_tx_mtx);
 	mutex_destroy(&sc->sc_task_mtx);
 	mutex_destroy(&sc->sc_cmd_mtx);
 	return 0;
@@ -682,12 +728,15 @@ otus_detach(device_t self, int flags)
 Static int
 otus_activate(device_t self, devact_t act)
 {
-	struct otus_softc *sc = device_private(self);
+	struct otus_softc *sc;
 
-	DPRINTF("otus_activate: %d\n", act);
+	sc = device_private(self);
+
+	DPRINTFN(DBG_FN, sc, "%d\n", act);
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
 		if_deactivate(sc->sc_ic.ic_ifp);
 		return 0;
 	default:
@@ -698,14 +747,19 @@ otus_activate(device_t self, devact_t act)
 Static void
 otus_attachhook(device_t arg)
 {
-	struct otus_softc *sc = device_private(arg);
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &sc->sc_if;
+	struct otus_softc *sc;
+	struct ieee80211com *ic;
+	struct ifnet *ifp;
 	usb_device_request_t req;
 	uint32_t in, out;
 	int error;
 
-	DPRINTF("otus_attachhook\n");
+	sc = device_private(arg);
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	ic = &sc->sc_ic;
+	ifp = &sc->sc_if;
 
 	error = otus_load_firmware(sc, "otus-init", AR_FW_INIT_ADDR);
 	if (error != 0) {
@@ -776,8 +830,7 @@ otus_attachhook(device_t arg)
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
-	    IEEE80211_C_WEP |		/* WEP */
-	    IEEE80211_C_WPA;		/* WPA1+WPA2 */
+	    IEEE80211_C_WPA;		/* 802.11i */
 
 	if (sc->sc_eeprom.baseEepHeader.opCapFlags & AR5416_OPFLAGS_11G) {
 		/* Set supported .11b and .11g rates. */
@@ -818,6 +871,13 @@ otus_attachhook(device_t arg)
 	ic->ic_set_key = otus_set_key;
 	ic->ic_delete_key = otus_delete_key;
 #endif /* notyet */
+
+#if IEEE80211_INJECTION
+	/* hook our packet injection output routine */
+	sc->sc_if_output = ifp->if_output;
+	ifp->if_output = otus_output;
+#endif
+
 	/* Override state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = otus_newstate;
@@ -841,15 +901,17 @@ otus_attachhook(device_t arg)
 Static void
 otus_get_chanlist(struct otus_softc *sc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211com *ic;
 	uint16_t domain;
 	uint8_t chan;
 	int i;
 
 	/* XXX regulatory domain. */
 	domain = le16toh(sc->sc_eeprom.baseEepHeader.regDmn[0]);
-	DPRINTF("regdomain=0x%04x\n", domain);
 
+	DPRINTFN(DBG_FN|DBG_INIT, sc, "regdomain=0x%04x\n", domain);
+
+	ic = &sc->sc_ic;
 	if (sc->sc_eeprom.baseEepHeader.opCapFlags & AR5416_OPFLAGS_11G) {
 		for (i = 0; i < 14; i++) {
 			chan = ar_chans[i];
@@ -880,8 +942,11 @@ otus_load_firmware(struct otus_softc *sc, const char *name, uint32_t addr)
 	size_t size;
 	int mlen, error;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
 	if ((error = firmware_open("if_otus", name, &fh)) != 0)
 		return error;
+
 	size = firmware_get_size(fh);
 	if ((fw = firmware_malloc(size)) == NULL) {
 		firmware_close(fh);
@@ -921,6 +986,8 @@ otus_open_pipes(struct otus_softc *sc)
 {
 	usb_endpoint_descriptor_t *ed;
 	int i, isize, error;
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	error = usbd_open_pipe(sc->sc_iface, AR_EPT_BULK_RX_NO, 0,
 	    &sc->sc_data_rx_pipe);
@@ -986,8 +1053,9 @@ otus_open_pipes(struct otus_softc *sc)
 	}
 
 	for (i = 0; i < OTUS_RX_DATA_LIST_COUNT; i++) {
-		struct otus_rx_data *data = &sc->sc_rx_data[i];
+		struct otus_rx_data *data;
 
+		data = &sc->sc_rx_data[i];
 		usbd_setup_xfer(data->xfer, sc->sc_data_rx_pipe, data, data->buf,
 		    OTUS_RXBUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
 		    USBD_NO_TIMEOUT, otus_rxeof);
@@ -1007,6 +1075,8 @@ otus_open_pipes(struct otus_softc *sc)
 Static void
 otus_close_pipes(struct otus_softc *sc)
 {
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	otus_free_tx_cmd(sc);
 	otus_free_tx_data_list(sc);
@@ -1029,8 +1099,11 @@ otus_close_pipes(struct otus_softc *sc)
 Static int
 otus_alloc_tx_cmd(struct otus_softc *sc)
 {
-	struct otus_tx_cmd *cmd = &sc->sc_tx_cmd;
+	struct otus_tx_cmd *cmd;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	cmd = &sc->sc_tx_cmd;
 	cmd->xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (cmd->xfer == NULL) {
 		aprint_error_dev(sc->sc_dev,
@@ -1051,6 +1124,8 @@ Static void
 otus_free_tx_cmd(struct otus_softc *sc)
 {
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
 	/* Make sure no transfers are pending. */
 	usbd_abort_pipe(sc->sc_cmd_tx_pipe);
 
@@ -1068,6 +1143,11 @@ otus_alloc_tx_data_list(struct otus_softc *sc)
 	struct otus_tx_data *data;
 	int i, error;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	mutex_enter(&sc->sc_tx_mtx);
+	error = 0;
+	TAILQ_INIT(&sc->sc_tx_free_list);
 	for (i = 0; i < OTUS_TX_DATA_LIST_COUNT; i++) {
 		data = &sc->sc_tx_data[i];
 
@@ -1078,19 +1158,21 @@ otus_alloc_tx_data_list(struct otus_softc *sc)
 			aprint_error_dev(sc->sc_dev,
 			    "could not allocate xfer\n");
 			error = ENOMEM;
-			goto fail;
+			break;
 		}
 		data->buf = usbd_alloc_buffer(data->xfer, OTUS_TXBUFSZ);
 		if (data->buf == NULL) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not allocate xfer buffer\n");
 			error = ENOMEM;
-			goto fail;
+			break;
 		}
+		/* Append this Tx buffer to our free list. */
+		TAILQ_INSERT_TAIL(&sc->sc_tx_free_list, data, next);
 	}
-	return 0;
-
-fail:	otus_free_tx_data_list(sc);
+	if (error != 0)
+		otus_free_tx_data_list(sc);
+	mutex_exit(&sc->sc_tx_mtx);
 	return error;
 }
 
@@ -1099,12 +1181,15 @@ otus_free_tx_data_list(struct otus_softc *sc)
 {
 	int i;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
 	/* Make sure no transfers are pending. */
 	usbd_abort_pipe(sc->sc_data_tx_pipe);
 
-	for (i = 0; i < OTUS_TX_DATA_LIST_COUNT; i++)
+	for (i = 0; i < OTUS_TX_DATA_LIST_COUNT; i++) {
 		if (sc->sc_tx_data[i].xfer != NULL)
 			usbd_free_xfer(sc->sc_tx_data[i].xfer);
+	}
 }
 
 Static int
@@ -1112,6 +1197,8 @@ otus_alloc_rx_data_list(struct otus_softc *sc)
 {
 	struct otus_rx_data *data;
 	int i, error;
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	for (i = 0; i < OTUS_RX_DATA_LIST_COUNT; i++) {
 		data = &sc->sc_rx_data[i];
@@ -1144,6 +1231,8 @@ otus_free_rx_data_list(struct otus_softc *sc)
 {
 	int i;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
 	/* Make sure no transfers are pending. */
 	usbd_abort_pipe(sc->sc_data_rx_pipe);
 
@@ -1155,7 +1244,14 @@ otus_free_rx_data_list(struct otus_softc *sc)
 Static void
 otus_next_scan(void *arg)
 {
-	struct otus_softc *sc = arg;
+	struct otus_softc *sc;
+
+	sc = arg;
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	if (sc->sc_dying)
+		return;
 
 	if (sc->sc_ic.ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(&sc->sc_ic);
@@ -1164,22 +1260,29 @@ otus_next_scan(void *arg)
 Static void
 otus_task(void *arg)
 {
-	struct otus_softc *sc = arg;
-	struct otus_host_cmd_ring *ring = &sc->sc_cmdq;
+	struct otus_softc *sc;
+	struct otus_host_cmd_ring *ring;
 	struct otus_host_cmd *cmd;
 	int s;
+
+	sc = arg;
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	/* Process host commands. */
 	s = splusb();
 	mutex_spin_enter(&sc->sc_task_mtx);
+	ring = &sc->sc_cmdq;
 	while (ring->next != ring->cur) {
 		cmd = &ring->cmd[ring->next];
 		mutex_spin_exit(&sc->sc_task_mtx);
 		splx(s);
+
 		/* Callback. */
-		DPRINTFN(2, "otus_task: cb=%p queued=%d\n",
-		    cmd->cb, ring->queued);
+		DPRINTFN(DBG_CMD, sc, "cb=%p queued=%d\n", cmd->cb,
+		    ring->queued);
 		cmd->cb(sc, cmd->data);
+
 		s = splusb();
 		mutex_spin_enter(&sc->sc_task_mtx);
 		ring->queued--;
@@ -1194,14 +1297,16 @@ Static void
 otus_do_async(struct otus_softc *sc, void (*cb)(struct otus_softc *, void *),
     void *arg, int len)
 {
-	struct otus_host_cmd_ring *ring = &sc->sc_cmdq;
+	struct otus_host_cmd_ring *ring;
 	struct otus_host_cmd *cmd;
 	int s;
 
-	DPRINTF("otus_do_async: cb=%p\n", cb);
+	DPRINTFN(DBG_FN, sc, "cb=%p\n", cb);
+
 
 	s = splusb();
 	mutex_spin_enter(&sc->sc_task_mtx);
+	ring = &sc->sc_cmdq;
 	cmd = &ring->cmd[ring->cur];
 	cmd->cb = cb;
 	KASSERT(len <= sizeof(cmd->data));
@@ -1222,10 +1327,13 @@ otus_do_async(struct otus_softc *sc, void (*cb)(struct otus_softc *, void *),
 Static int
 otus_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
-	struct otus_softc *sc = ic->ic_ifp->if_softc;
+	struct otus_softc *sc;
 	struct otus_cmd_newstate cmd;
 
-	DPRINTF("otus_newstate\n");
+	sc = ic->ic_ifp->if_softc;
+
+	DPRINTFN(DBG_FN|DBG_STM, sc, "nstate=%s(%d), arg=%d\n",
+	    ieee80211_state_name[nstate], nstate, arg);
 
 	/* Do it in a process context. */
 	cmd.state = nstate;
@@ -1237,10 +1345,22 @@ otus_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 Static void
 otus_newstate_cb(struct otus_softc *sc, void *arg)
 {
-	struct otus_cmd_newstate *cmd = arg;
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct otus_cmd_newstate *cmd;
+	struct ieee80211com *ic;
 	struct ieee80211_node *ni;
+	enum ieee80211_state ostate;
+	enum ieee80211_state nstate;
 	int s;
+
+	cmd = arg;
+	ic = &sc->sc_ic;
+	ni = ic->ic_bss;
+	ostate = ic->ic_state;
+	nstate = cmd->state;
+
+	DPRINTFN(DBG_FN|DBG_STM, sc, "%s(%d)->%s(%d)\n",
+	    ieee80211_state_name[ostate], ostate,
+	    ieee80211_state_name[nstate], nstate);
 
 	s = splnet();
 
@@ -1249,26 +1369,26 @@ otus_newstate_cb(struct otus_softc *sc, void *arg)
 
 	mutex_enter(&sc->sc_write_mtx);
 
-	switch (cmd->state) {
+	switch (nstate) {
 	case IEEE80211_S_INIT:
 		break;
 
 	case IEEE80211_S_SCAN:
-		(void)otus_set_chan(sc, ic->ic_curchan, 0);
-		callout_schedule(&sc->sc_scan_to, hz / 5);
+		otus_set_chan(sc, ic->ic_curchan, 0);
+		if (!sc->sc_dying)
+			callout_schedule(&sc->sc_scan_to, hz / 5);
 		break;
 
 	case IEEE80211_S_AUTH:
 	case IEEE80211_S_ASSOC:
-		(void)otus_set_chan(sc, ic->ic_bss->ni_chan, 0);
+		otus_set_chan(sc, ni->ni_chan, 0);
 		break;
 
 	case IEEE80211_S_RUN:
-		(void)otus_set_chan(sc, ic->ic_bss->ni_chan, 1);
+		otus_set_chan(sc, ni->ni_chan, 1);
 
-		ni = ic->ic_bss;
-
-		if (ic->ic_opmode == IEEE80211_M_STA) {
+		switch (ic->ic_opmode) {
+		case IEEE80211_M_STA:
 			otus_updateslot_cb_locked(sc);
 			otus_set_bssid(sc, ni->ni_bssid);
 
@@ -1276,11 +1396,19 @@ otus_newstate_cb(struct otus_softc *sc, void *arg)
 			otus_newassoc(ni, 1);
 
 			/* Start calibration timer. */
-			callout_schedule(&sc->sc_calib_to, hz);
+			if (!sc->sc_dying)
+				callout_schedule(&sc->sc_calib_to, hz);
+			break;
+
+		case IEEE80211_M_IBSS:
+		case IEEE80211_M_AHDEMO:
+		case IEEE80211_M_HOSTAP:
+		case IEEE80211_M_MONITOR:
+			break;
 		}
 		break;
 	}
-	(void)sc->sc_newstate(ic, cmd->state, cmd->arg);
+	(void)sc->sc_newstate(ic, nstate, cmd->arg);
 	sc->sc_led_newstate(sc);
 	mutex_exit(&sc->sc_write_mtx);
 
@@ -1295,6 +1423,8 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 	struct ar_cmd_hdr *hdr;
 	int s, xferlen, error;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
 	cmd = &sc->sc_tx_cmd;
 
 	mutex_enter(&sc->sc_cmd_mtx);
@@ -1302,10 +1432,10 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 	/* Always bulk-out a multiple of 4 bytes. */
 	xferlen = roundup2(sizeof(*hdr) + ilen, 4);
 
-	hdr = (struct ar_cmd_hdr *)cmd->buf;
+	hdr = (void *)cmd->buf;
 	if (hdr == NULL) {	/* we may have been freed while detaching */
 		mutex_exit(&sc->sc_cmd_mtx);
-		DPRINTF("otus_cmd: tx_cmd freed with commands pending\n");
+		DPRINTFN(DBG_CMD, sc, "tx_cmd freed with commands pending\n");
 		return 0;
 	}
 	hdr->code  = code;
@@ -1314,7 +1444,7 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 	KASSERT(sizeof(hdr) + ilen <= OTUS_MAX_TXCMDSZ);
 	memcpy(cmd->buf + sizeof(hdr[0]), idata, ilen);
 
-	DPRINTFN(2, "sending command code=0x%02x len=%d token=%d\n",
+	DPRINTFN(DBG_CMD, sc, "sending command code=0x%02x len=%d token=%d\n",
 	    code, ilen, hdr->token);
 
 	s = splusb();
@@ -1326,9 +1456,11 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 	if (error != 0) {
 		splx(s);
 		mutex_exit(&sc->sc_cmd_mtx);
+#if defined(DIAGNOSTIC) || defined(OTUS_DEBUG)	/* XXX: kill some noise */
 		aprint_error_dev(sc->sc_dev,
 		    "could not send command 0x%x (error=%s)\n",
 		    code, usbd_errstr(error));
+#endif
 		return EIO;
 	}
 	if (!cmd->done)
@@ -1347,6 +1479,8 @@ Static void
 otus_write(struct otus_softc *sc, uint32_t reg, uint32_t val)
 {
 
+	DPRINTFN(DBG_FN|DBG_REG, sc, "reg=0x%x, val=0x%x\n", reg, val);
+
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 	KASSERT(sc->sc_write_idx < __arraycount(sc->sc_write_buf));
 
@@ -1362,6 +1496,8 @@ otus_write_barrier(struct otus_softc *sc)
 {
 	int error;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 	KASSERT(sc->sc_write_idx <= __arraycount(sc->sc_write_buf));
 
@@ -1373,7 +1509,7 @@ otus_write_barrier(struct otus_softc *sc)
 
 	sc->sc_write_idx = 0;
 	if (error)
-		DPRINTF("otus_write_barrier: error=%d\n", error);
+		DPRINTFN(DBG_REG, sc, "error=%d\n", error);
 	return error;
 }
 
@@ -1382,7 +1518,7 @@ otus_node_alloc(struct ieee80211_node_table *ntp)
 {
 	struct otus_node *on;
 
-	DPRINTF("otus_node_alloc\n");
+	DPRINTFN(DBG_FN, DBG_NO_SC, "\n");
 
 	on = malloc(sizeof(*on), M_DEVBUF, M_NOWAIT | M_ZERO);
 	return &on->ni;
@@ -1391,17 +1527,20 @@ otus_node_alloc(struct ieee80211_node_table *ntp)
 Static int
 otus_media_change(struct ifnet *ifp)
 {
-	struct otus_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct otus_softc *sc;
+	struct ieee80211com *ic;
 	uint8_t rate, ridx;
 	int error;
 
-	DPRINTF("otus_media_change\n");
+	sc = ifp->if_softc;
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	error = ieee80211_media_change(ifp);
 	if (error != ENETRESET)
 		return error;
 
+	ic = &sc->sc_ic;
 	if (ic->ic_fixed_rate != -1) {
 		rate = ic->ic_sup_rates[ic->ic_curmode].
 		    rs_rates[ic->ic_fixed_rate] & IEEE80211_RATE_VAL;
@@ -1424,6 +1563,8 @@ otus_read_eeprom(struct otus_softc *sc)
 	uint8_t *eep;
 	int i, j, error;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
 	KASSERT(sizeof(sc->sc_eeprom) % 32 == 0);
 
 	/* Read EEPROM by blocks of 32 bytes. */
@@ -1443,19 +1584,22 @@ otus_read_eeprom(struct otus_softc *sc)
 Static void
 otus_newassoc(struct ieee80211_node *ni, int isnew)
 {
-	struct otus_softc *sc = ni->ni_ic->ic_ifp->if_softc;
-	struct otus_node *on = (void *)ni;
-	struct ieee80211_rateset *rs = &ni->ni_rates;
+	struct ieee80211_rateset *rs;
+	struct otus_softc *sc;
+	struct otus_node *on;
 	uint8_t rate;
 	int ridx, i;
 
-	DPRINTF("new assoc isnew=%d addr=%s\n",
+	sc = ni->ni_ic->ic_ifp->if_softc;
+
+	DPRINTFN(DBG_FN, sc, "isnew=%d addr=%s\n",
 	    isnew, ether_sprintf(ni->ni_macaddr));
 
+	on = (void *)ni;
 	ieee80211_amrr_node_init(&sc->sc_amrr, &on->amn);
 	/* Start at lowest available bit-rate, AMRR will raise. */
 	ni->ni_txrate = 0;
-
+	rs = &ni->ni_rates;
 	for (i = 0; i < rs->rs_nrates; i++) {
 		rate = rs->rs_rates[i] & IEEE80211_RATE_VAL;
 		/* Convert 802.11 rate to hardware rate index. */
@@ -1463,7 +1607,7 @@ otus_newassoc(struct ieee80211_node *ni, int isnew)
 			if (otus_rates[ridx].rate == rate)
 				break;
 		on->ridx[i] = ridx;
-		DPRINTF("rate=0x%02x ridx=%d\n",
+		DPRINTFN(DBG_INIT, sc, "rate=0x%02x ridx=%d\n",
 		    rs->rs_rates[i], on->ridx[i]);
 	}
 }
@@ -1473,8 +1617,12 @@ Static void
 otus_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 #if 0
-	struct otus_softc *sc = priv;
+	struct otus_softc *sc;
 	int len;
+
+	sc = priv;
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	/*
 	 * The Rx intr pipe is unused with current firmware.  Notifications
@@ -1482,7 +1630,7 @@ otus_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	 * (with a magic PLCP header.)
 	 */
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
-		DPRINTF("intr status=%d\n", status);
+		DPRINTFN(DBG_INTR, sc, "status=%d\n", status);
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_cmd_rx_pipe);
 		return;
@@ -1496,24 +1644,28 @@ otus_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 Static void
 otus_cmd_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211com *ic;
 	struct otus_tx_cmd *cmd;
 	struct ar_cmd_hdr *hdr;
 	int s;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	ic = &sc->sc_ic;
+
 	if (__predict_false(len < sizeof(*hdr))) {
-		DPRINTF("cmd too small %d\n", len);
+		DPRINTFN(DBG_RX, sc, "cmd too small %d\n", len);
 		return;
 	}
-	hdr = (struct ar_cmd_hdr *)buf;
+	hdr = (void *)buf;
 	if (__predict_false(sizeof(*hdr) + hdr->len > len ||
 	    sizeof(*hdr) + hdr->len > 64)) {
-		DPRINTF("cmd too large %d\n", hdr->len);
+		DPRINTFN(DBG_RX, sc, "cmd too large %d\n", hdr->len);
 		return;
 	}
 
 	if ((hdr->code & 0xc0) != 0xc0) {
-		DPRINTFN(2, "received reply code=0x%02x len=%d token=%d\n",
+		DPRINTFN(DBG_RX, sc, "received reply code=0x%02x len=%d token=%d\n",
 		    hdr->code, hdr->len, hdr->token);
 		cmd = &sc->sc_tx_cmd;
 		if (__predict_false(hdr->token != cmd->token))
@@ -1527,18 +1679,20 @@ otus_cmd_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	}
 
 	/* Received unsolicited notification. */
-	DPRINTF("received notification code=0x%02x len=%d\n",
+	DPRINTFN(DBG_RX, sc, "received notification code=0x%02x len=%d\n",
 	    hdr->code, hdr->len);
 	switch (hdr->code & 0x3f) {
 	case AR_EVT_BEACON:
 		break;
 	case AR_EVT_TX_COMP:
 	{
-		struct ar_evt_tx_comp *tx = (struct ar_evt_tx_comp *)&hdr[1];
+		struct ar_evt_tx_comp *tx;
 		struct ieee80211_node *ni;
 		struct otus_node *on;
 
-		DPRINTF("tx completed %s status=%d phy=0x%x\n",
+		tx = (void *)&hdr[1];
+
+		DPRINTFN(DBG_RX, sc, "tx completed %s status=%d phy=0x%x\n",
 		    ether_sprintf(tx->macaddr), le16toh(tx->status),
 		    le32toh(tx->phy));
 		s = splnet();
@@ -1570,8 +1724,8 @@ otus_cmd_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 Static void
 otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = ic->ic_ifp;
+	struct ieee80211com *ic;
+	struct ifnet *ifp;
 	struct ieee80211_node *ni;
 	struct ar_rx_tail *tail;
 	struct ieee80211_frame *wh;
@@ -1579,8 +1733,13 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	uint8_t *plcp;
 	int s, mlen, align;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	ic = &sc->sc_ic;
+	ifp = ic->ic_ifp;
+
 	if (__predict_false(len < AR_PLCP_HDR_LEN)) {
-		DPRINTF("sub-xfer too short %d\n", len);
+		DPRINTFN(DBG_RX, sc, "sub-xfer too short %d\n", len);
 		return;
 	}
 	plcp = buf;
@@ -1594,18 +1753,18 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 
 	/* Received MPDU. */
 	if (__predict_false(len < AR_PLCP_HDR_LEN + sizeof(*tail))) {
-		DPRINTF("MPDU too short %d\n", len);
+		DPRINTFN(DBG_RX, sc, "MPDU too short %d\n", len);
 		ifp->if_ierrors++;
 		return;
 	}
-	tail = (struct ar_rx_tail *)(plcp + len - sizeof(*tail));
-	wh = (struct ieee80211_frame *)(plcp + AR_PLCP_HDR_LEN);
+	tail = (void *)(plcp + len - sizeof(*tail));
+	wh = (void *)(plcp + AR_PLCP_HDR_LEN);
 
 	/* Discard error frames. */
-	if (__predict_false(tail->error != 0)) {
-		DPRINTF("error frame 0x%02x\n", tail->error);
+	if (__predict_false((tail->error & sc->sc_rx_error_msk) != 0)) {
+		DPRINTFN(DBG_RX, sc, "error frame 0x%02x\n", tail->error);
 		if (tail->error & AR_RX_ERROR_FCS) {
-			DPRINTFN(3, "bad FCS\n");
+			DPRINTFN(DBG_RX, sc, "bad FCS\n");
 		} else if (tail->error & AR_RX_ERROR_MMIC) {
 			/* Report Michael MIC failures to net80211. */
 			ieee80211_notify_michael_failure(ic, wh, 0 /* XXX: keyix */);
@@ -1644,10 +1803,11 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	memcpy(mtod(m, void *), wh, mlen);
 	m->m_pkthdr.len = m->m_len = mlen;
 
+	s = splnet();
 	if (__predict_false(sc->sc_drvbpf != NULL)) {
-		struct otus_rx_radiotap_header *tap = &sc->sc_rxtap;
-		struct mbuf mb;
+		struct otus_rx_radiotap_header *tap;
 
+		tap = &sc->sc_rxtap;
 		tap->wr_flags = 0;
 		tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
@@ -1677,16 +1837,9 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 			}
 			break;
 		}
-		mb.m_data = (void *)tap;
-		mb.m_len = sc->sc_rxtap_len;
-		mb.m_next = m;
-		mb.m_nextpkt = NULL;
-		mb.m_type = 0;
-		mb.m_flags = 0;
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
 
-	s = splnet();
 	ni = ieee80211_find_rxnode(ic, (struct ieee80211_frame_min *)wh);
 
 	/* push the frame up to the 802.11 stack */
@@ -1700,20 +1853,27 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 Static void
 otus_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
-	struct otus_rx_data *data = priv;
-	struct otus_softc *sc = data->sc;
-	uint8_t *buf = data->buf;
+	struct otus_rx_data *data;
+	struct otus_softc *sc;
+	uint8_t *buf;
 	struct ar_rx_head *head;
 	uint16_t hlen;
 	int len;
 
+	data = priv;
+	sc = data->sc;
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	buf = data->buf;
+
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
-		DPRINTF("RX status=%d\n", status);
+		DPRINTFN(DBG_RX, sc, "RX status=%d\n", status);
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_data_rx_pipe);
-		if (status != USBD_CANCELLED) {
-			DPRINTFN(3, "otus_rxeof: goto resubmit: status=%d\n",
-				     status);
+		else if (status != USBD_CANCELLED) {
+			DPRINTFN(DBG_RX, sc,
+			    "otus_rxeof: goto resubmit: status=%d\n", status);
 			goto resubmit;
 		}
 		return;
@@ -1721,14 +1881,16 @@ otus_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
 	while (len >= sizeof(*head)) {
-		head = (struct ar_rx_head *)buf;
+		head = (void *)buf;
 		if (__predict_false(head->tag != htole16(AR_RX_HEAD_TAG))) {
-			DPRINTF("tag not valid 0x%x\n", le16toh(head->tag));
+			DPRINTFN(DBG_RX, sc, "tag not valid 0x%x\n",
+			    le16toh(head->tag));
 			break;
 		}
 		hlen = le16toh(head->len);
 		if (__predict_false(sizeof(*head) + hlen > len)) {
-			DPRINTF("xfer too short %d/%d\n", len, hlen);
+			DPRINTFN(DBG_RX, sc, "xfer too short %d/%d\n",
+			    len, hlen);
 			break;
 		}
 		/* Process sub-xfer. */
@@ -1742,40 +1904,56 @@ otus_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
  resubmit:
 	usbd_setup_xfer(xfer, sc->sc_data_rx_pipe, data, data->buf, OTUS_RXBUFSZ,
-	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, otus_rxeof);
+	    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT, otus_rxeof);
 	(void)usbd_transfer(data->xfer);
 }
 
 Static void
 otus_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
-	struct otus_tx_data *data = priv;
-	struct otus_softc *sc = data->sc;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = ic->ic_ifp;
+	struct otus_tx_data *data;
+	struct otus_softc *sc;
+	struct ieee80211com *ic;
+	struct ifnet *ifp;
 	int s;
 
+	data = priv;
+	sc = data->sc;
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	/* Put this Tx buffer back to the free list. */
+	mutex_enter(&sc->sc_tx_mtx);
+	TAILQ_INSERT_TAIL(&sc->sc_tx_free_list, data, next);
+	mutex_exit(&sc->sc_tx_mtx);
+
+	ic = &sc->sc_ic;
+	ifp = ic->ic_ifp;
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
-		DPRINTF("TX status=%d\n", status);
+		DPRINTFN(DBG_TX, sc, "TX status=%d\n", status);
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_data_tx_pipe);
 		ifp->if_oerrors++;
 		return;
 	}
+	ifp->if_opackets++;
+
 	s = splnet();
-	sc->sc_tx_queued--;
 	sc->sc_tx_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags &= ~IFF_OACTIVE;	/* XXX: do after freeing Tx buffer? */
 	otus_start(ifp);
 	splx(s);
 }
 
 Static int
-otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
+otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
+    struct otus_tx_data *data)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct otus_node *on = (void *)ni;
-	struct otus_tx_data *data;
+#if IEEE80211_INJECTION
+	struct ieee80211_bpf_params *params;
+#endif
+	struct ieee80211com *ic;
+	struct otus_node *on;
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k;
 	struct ar_tx_head *head;
@@ -1784,14 +1962,27 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	uint8_t qid;
 	int error, ridx, hasqos, xferlen;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	ic = &sc->sc_ic;
+	on = (void *)ni;
+
+#if IEEE80211_INJECTION
+	params = ieee80211_bpf_params(m);
+#endif
+
 	wh = mtod(m, struct ieee80211_frame *);
-	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
+	if ((wh->i_fc[1] & IEEE80211_FC1_PROTECTED)
+#if IEEE80211_INJECTION
+	    && !IS_INJECTED(m)
+#endif
+		) {
 		/* XXX: derived from upgt_tx_task() and ural_tx_data() */
 		k = ieee80211_crypto_encap(ic, ni, m);
-		if (k == NULL) {
-			m_freem(m);
+		if (k == NULL)
 			return ENOBUFS;
-		}
+
+		/* Packet header may have moved, reset our local pointer. */
 		wh = mtod(m, struct ieee80211_frame *);
 	}
 
@@ -1851,13 +2042,44 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		phyctl |= AR_TX_PHY_ANTMSK(sc->sc_txmask);
 	}
 
+#if IEEE80211_INJECTION
+	if (params) {
+		if (params->ibp_flags & IEEE80211_BPF_NOACK)
+			macctl |= AR_TX_MAC_NOACK;
+
+		if (params->ibp_flags & IEEE80211_BPF_CTS) {
+			macctl &= ~AR_TX_MAC_RTS;
+			macctl |= AR_TX_MAC_CTS;
+		}
+		else if (params->ibp_flags & IEEE80211_BPF_RTS) {
+			macctl &= ~AR_TX_MAC_CTS;
+			macctl |= AR_TX_MAC_RTS;
+		}
+		if (params->ibp_flags & IEEE80211_BPF_FCS) {
+//			otus_write(sc, AR_MAC_REG_FCS_SELECT, AR_MAC_FCS_SWFCS);
+		}
+#if 0	/* XXX: TODO */
+		if (params->ibp_flags & IEEE80211_BPF_SHORTPRE)
+		if (params->ibp_flags & IEEE80211_BPF_CRYPTO)
+		if (params->ibp_flags & IEEE80211_BPF_DATAPAD)
+
+#define	IEEE80211_BPF_SHORTPRE	0x01	/* tx with short preamble */
+#define	IEEE80211_BPF_NOACK	0x02	/* tx with no ack */
+#define	IEEE80211_BPF_CRYPTO	0x04	/* tx with h/w encryption */
+#define	IEEE80211_BPF_FCS	0x10	/* frame includes FCS */
+#define	IEEE80211_BPF_DATAPAD	0x20	/* frame includes data padding */
+#define	IEEE80211_BPF_RTS	0x40	/* tx with RTS/CTS */
+#define	IEEE80211_BPF_CTS	0x80	/* tx with CTS only */
+#endif	/* XXX: TODO */
+	}
+#endif	/* IEEE80211_INJECTION */
+
 	/* Update rate control stats for frames that are ACK'ed. */
 	if (!(macctl & AR_TX_MAC_NOACK))
-		((struct otus_node *)ni)->amn.amn_txcnt++;
+		on->amn.amn_txcnt++;
 
-	data = &sc->sc_tx_data[sc->sc_tx_cur];
 	/* Fill Tx descriptor. */
-	head = (struct ar_tx_head *)data->buf;
+	head = (void *)data->buf;
 	head->len = htole16(m->m_pkthdr.len + IEEE80211_CRC_LEN);
 	head->macctl = htole16(macctl);
 	head->phyctl = htole32(phyctl);
@@ -1875,29 +2097,28 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	xferlen = sizeof(*head) + m->m_pkthdr.len;
 	m_copydata(m, 0, m->m_pkthdr.len, (void *)&head[1]);
-	m_freem(m);
-	ieee80211_free_node(ni);
 
-	DPRINTFN(5, "tx queued=%d len=%d mac=0x%04x phy=0x%08x rate=%d\n",
-	    sc->sc_tx_queued, head->len, head->macctl, head->phyctl,
-	    otus_rates[ridx].rate);
+	DPRINTFN(DBG_TX, sc, "queued len=%d mac=0x%04x phy=0x%08x rate=%d\n",
+	    head->len, head->macctl, head->phyctl, otus_rates[ridx].rate);
+
 	usbd_setup_xfer(data->xfer, sc->sc_data_tx_pipe, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, OTUS_TX_TIMEOUT, otus_txeof);
 	error = usbd_transfer(data->xfer);
-	if (__predict_false(error != USBD_IN_PROGRESS && error != 0))
+	if (__predict_false(
+		    error != USBD_NORMAL_COMPLETION &&
+		    error != USBD_IN_PROGRESS)) {
+		DPRINTFN(DBG_TX, sc, "transfer failed %d\n", error);
 		return error;
-
-	sc->sc_tx_queued++;
-	sc->sc_tx_cur = (sc->sc_tx_cur + 1) % OTUS_TX_DATA_LIST_COUNT;
-
+	}
 	return 0;
 }
 
 Static void
 otus_start(struct ifnet *ifp)
 {
-	struct otus_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct otus_softc *sc;
+	struct ieee80211com *ic;
+	struct otus_tx_data *data;
 	struct ether_header *eh;
 	struct ieee80211_node *ni;
 	struct mbuf *m;
@@ -1905,20 +2126,48 @@ otus_start(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	DPRINTF(("otus_start\n"));
+	sc = ifp->if_softc;
+	ic = &sc->sc_ic;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	data = NULL;
 	for (;;) {
-		if (sc->sc_tx_queued >= OTUS_TX_DATA_LIST_COUNT) {
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
+		/*
+		 * Grab a Tx buffer if we don't already have one.  If
+		 * one isn't available, bail out.
+		 * NB: We must obtain this Tx buffer _before_
+		 * dequeueing anything as one may not be available
+		 * later.  Both must be done inside a single lock.
+		 */
+		mutex_enter(&sc->sc_tx_mtx);
+		if (data == NULL) {
+			data = TAILQ_FIRST(&sc->sc_tx_free_list);
+			if (data == NULL) {
+				mutex_exit(&sc->sc_tx_mtx);
+				/*
+				 * No data buffers are available.  Set
+				 * the IFF_OACTIVE bit and bail
+				 * immediately.  otus_txeof() will
+				 * release this bit when it releases a
+				 * buffer and restarts otus_start().
+				 */
+				ifp->if_flags |= IFF_OACTIVE;
+				DPRINTFN(DBG_TX, sc, "empty sc_tx_free_list\n");
+				return;
+			}
+			TAILQ_REMOVE(&sc->sc_tx_free_list, data, next);
 		}
+
 		/* Send pending management frames first. */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
+			mutex_exit(&sc->sc_tx_mtx);
 			ni = (void *)m->m_pkthdr.rcvif;
 			m->m_pkthdr.rcvif = NULL;
 			goto sendit;
 		}
+
 		if (ic->ic_state != IEEE80211_S_RUN)
 			break;
 
@@ -1927,43 +2176,63 @@ otus_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-		if (m->m_len < sizeof(struct ether_header) &&
-		    !(m = m_pullup(m, sizeof(struct ether_header))))
+		mutex_exit(&sc->sc_tx_mtx);
+
+		if (m->m_len < (int)sizeof(*eh) &&
+		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
+			ifp->if_oerrors++;
 			continue;
+		}
 
 		eh = mtod(m, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
 			m_freem(m);
+			ifp->if_oerrors++;
 			continue;
 		}
 
-		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m);
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
+			/* original m was freed by ieee80211_encap() */
 			ieee80211_free_node(ni);
+			ifp->if_oerrors++;
 			continue;
 		}
-sendit:
-		if (ic->ic_rawbpf != NULL)
-			bpf_mtap3(ic->ic_rawbpf, m);
+ sendit:
+		bpf_mtap3(ic->ic_rawbpf, m);
 
-		if (otus_tx(sc, m, ni) != 0) {
+		if (otus_tx(sc, m, ni, data) != 0) {
+			m_freem(m);
 			ieee80211_free_node(ni);
 			ifp->if_oerrors++;
 			continue;
 		}
 
+		data = NULL;	/* we're finished with this data buffer */
+		m_freem(m);
+		ieee80211_free_node(ni);
 		sc->sc_tx_timer = 5;
 		ifp->if_timer = 1;
 	}
+
+	/*
+	 * If here, we have a Tx buffer, but ran out of mbufs to
+	 * transmit.  Put the Tx buffer back to the free list.
+	 */
+	TAILQ_INSERT_TAIL(&sc->sc_tx_free_list, data, next);
+	mutex_exit(&sc->sc_tx_mtx);
 }
 
 Static void
 otus_watchdog(struct ifnet *ifp)
 {
-	struct otus_softc *sc = ifp->if_softc;
+	struct otus_softc *sc;
+
+	sc = ifp->if_softc;
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	ifp->if_timer = 0;
 
@@ -1977,23 +2246,46 @@ otus_watchdog(struct ifnet *ifp)
 		ifp->if_timer = 1;
 	}
 	ieee80211_watchdog(&sc->sc_ic);
+
+#if 0
+	/* XXX: should we be doing something like this? */
+	struct url_chain *c;
+	usbd_status stat;
+	int s;
+
+	ifp->if_oerrors++;
+	printf("%s: watchdog timeout\n", device_xname(sc->sc_dev));
+
+	s = splusb();
+	c = &sc->sc_cdata.url_tx_chain[0];
+	usbd_get_xfer_status(c->url_xfer, NULL, NULL, NULL, &stat);
+	url_txeof(c->url_xfer, c, stat);
+
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+		url_start(ifp);
+	splx(s);
+#endif
 }
 
 Static int
 otus_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct otus_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct otus_softc *sc;
+	struct ieee80211com *ic;
 	struct ifaddr *ifa;
 	int s, error = 0;
 
-	DPRINTF("otus_ioctl: 0x%lx\n", cmd);
+	sc = ifp->if_softc;
+
+	DPRINTFN(DBG_FN, sc, "0x%lx\n", cmd);
+
+	ic = &sc->sc_ic;
 
 	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
+		ifa = (void *)data;
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
@@ -2003,20 +2295,27 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
-		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_flags & IFF_RUNNING) &&
-			    ((ifp->if_flags ^ sc->sc_if_flags) &
-			     (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
+
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
+		case IFF_UP | IFF_RUNNING:
+			if (((ifp->if_flags ^ sc->sc_if_flags) &
+				(IFF_ALLMULTI | IFF_PROMISC)) != 0)
 				otus_set_multi(sc);
-			} else if (!(ifp->if_flags & IFF_RUNNING)) {
-				otus_init(ifp);
-			}
+			break;
+		case IFF_UP:
+			otus_init(ifp);
+			break;
 
-		} else if (ifp->if_flags & IFF_RUNNING)
+		case IFF_RUNNING:
 			otus_stop(ifp);
-
+			break;
+		case 0:
+		default:
+			break;
+		}
 		sc->sc_if_flags = ifp->if_flags;
 		break;
+
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
@@ -2025,8 +2324,23 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		}
 		break;
+
 	case SIOCS80211CHANNEL:
+		/*
+		 * This allows for fast channel switching in monitor mode
+		 * (used by kismet). In IBSS mode, we must explicitly reset
+		 * the interface to generate a new beacon frame.
+		 */
 		error = ieee80211_ioctl(ic, cmd, data);
+
+		DPRINTFN(DBG_CHAN, sc,
+		    "ic_curchan=%d ic_ibss_chan=%d ic_des_chan=%d ni_chan=%d error=%d\n",
+		    ieee80211_chan2ieee(ic, ic->ic_curchan),
+		    ieee80211_chan2ieee(ic, ic->ic_ibss_chan),
+		    ieee80211_chan2ieee(ic, ic->ic_des_chan),
+		    ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan),
+		    error);
+
 		if (error == ENETRESET &&
 		    ic->ic_opmode == IEEE80211_M_MONITOR) {
 			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
@@ -2038,14 +2352,14 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		}
 		break;
+
 	default:
 		error = ieee80211_ioctl(ic, cmd, data);
 	}
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING)) {
+		    (IFF_UP | IFF_RUNNING))
 			otus_init(ifp);
-		}
 		error = 0;
 	}
 	splx(s);
@@ -2055,13 +2369,16 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 Static int
 otus_set_multi(struct otus_softc *sc)
 {
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	struct ifnet *ifp;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	uint32_t lo, hi;
 	uint8_t bit;
 	int error;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	ifp = sc->sc_ic.ic_ifp;
 	if ((ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
 		lo = hi = 0xffffffff;
 		goto done;
@@ -2096,6 +2413,8 @@ Static void
 otus_updateedca(struct ieee80211com *ic)
 {
 
+	DPRINTFN(DBG_FN, DBG_NO_SC, "\n");
+
 	/* Do it in a process context. */
 	otus_do_async(ic->ic_ifp->if_softc, otus_updateedca_cb, NULL, 0);
 }
@@ -2103,6 +2422,8 @@ otus_updateedca(struct ieee80211com *ic)
 Static void
 otus_updateedca_cb(struct otus_softc *sc, void *arg __used)
 {
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	mutex_enter(&sc->sc_write_mtx);
 	otus_updateedca_cb_locked(sc);
@@ -2114,16 +2435,19 @@ Static void
 otus_updateedca_cb_locked(struct otus_softc *sc)
 {
 #ifdef HAVE_EDCA
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211com *ic;
 #endif
 	const struct ieee80211_edca_ac_params *edca;
 	int s;
 
-	KASSERT(&sc->sc_write_mtx);
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
 	s = splnet();
 
 #ifdef HAVE_EDCA
+	ic = &sc->sc_ic;
 	edca = (ic->ic_flags & IEEE80211_F_QOS) ?
 	    ic->ic_edca_ac : otus_edca_def;
 #else
@@ -2178,7 +2502,11 @@ otus_updateedca_cb_locked(struct otus_softc *sc)
 Static void
 otus_updateslot(struct ifnet *ifp)
 {
-	struct otus_softc *sc = ifp->if_softc;
+	struct otus_softc *sc;
+
+	sc = ifp->if_softc;
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	/* Do it in a process context. */
 	otus_do_async(sc, otus_updateslot_cb, NULL, 0);
@@ -2188,6 +2516,8 @@ otus_updateslot(struct ifnet *ifp)
 Static void
 otus_updateslot_cb(struct otus_softc *sc, void *arg)
 {
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	mutex_enter(&sc->sc_write_mtx);
 	otus_updateslot_cb_locked(sc);
@@ -2199,7 +2529,9 @@ otus_updateslot_cb_locked(struct otus_softc *sc)
 {
 	uint32_t slottime;
 
-	KASSERT(&sc->sc_write_mtx);
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
 	slottime = (sc->sc_ic.ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
 	otus_write(sc, AR_MAC_REG_SLOT_TIME, slottime << 10);
@@ -2211,61 +2543,88 @@ otus_init_mac(struct otus_softc *sc)
 {
 	int error;
 
-	DPRINTF("otus_init_mac\n");
+	DPRINTFN(DBG_FN|DBG_INIT, sc, "\n");
+
+	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
 	otus_write(sc, AR_MAC_REG_ACK_EXTENSION, 0x40);
 	otus_write(sc, AR_MAC_REG_RETRY_MAX, 0);
-	otus_write(sc, AR_MAC_REG_SNIFFER, 0x2000000);
+	otus_write(sc, AR_MAC_REG_SNIFFER, AR_MAC_REG_SNIFFER_DEFAULTS);
 	otus_write(sc, AR_MAC_REG_RX_THRESHOLD, 0xc1f80);
 	otus_write(sc, AR_MAC_REG_RX_PE_DELAY, 0x70);
 	otus_write(sc, AR_MAC_REG_EIFS_AND_SIFS, 0xa144000);
 	otus_write(sc, AR_MAC_REG_SLOT_TIME, 9 << 10);
+
+	/* CF-END mode */
 	otus_write(sc, 0x1c3b2c, 0x19000000);
 
 	/* NAV protects ACK only (in TXOP). */
 	otus_write(sc, 0x1c3b38, 0x201);
 
-	/* Set beacon Tx power to 0x7. */
+	/* Set beacon PHY CTRL's TPC to 0x7, TA1=1 */
+	/* OTUS set AM to 0x1 */
 	otus_write(sc, AR_MAC_REG_BCN_HT1, 0x8000170);
+
 	otus_write(sc, AR_MAC_REG_BACKOFF_PROTECT, 0x105);
-	otus_write(sc, 0x1c3b9c, 0x10000a);
+
+	/* AGG test code*/
+	/* Aggregation MAX number and timeout */
+	otus_write(sc, AR_MAC_REG_AMPDU_FACTOR, 0x10000a);
 
 	/* Filter any control frames, BAR is bit 24. */
-	otus_write(sc, 0x1c368c, 0x0500ffff);
-	otus_write(sc, 0x1c3c40, 0x1);
+	otus_write(sc, AR_MAC_REG_FRAMETYPE_FILTER, AR_MAC_REG_FTF_DEFAULTS);
+
+	/* Enable deaggregator, response in sniffer mode */
+	otus_write(sc, 0x1c3c40, 0x1 | 1 << 30);	/* XXX: was 0x1 */
+
+	/* rate sets */
 	otus_write(sc, AR_MAC_REG_BASIC_RATE, 0x150f);
 	otus_write(sc, AR_MAC_REG_MANDATORY_RATE, 0x150f);
 	otus_write(sc, AR_MAC_REG_RTS_CTS_RATE, 0x10b01bb);
-	otus_write(sc, 0x1c3694, 0x4003c1e);
 
-	/* Enable LED0 and LED1. */
-	otus_write(sc, 0x1d0100, AR_LED0_ON | AR_LED1_ON);
-	otus_write(sc, 0x1d0104, AR_LED0_ON | AR_LED1_ON);
+	/* MIMO response control */
+	otus_write(sc, 0x1c3694, 0x4003c1e);	/* bit 26~28  otus-AM */
 
 	/* Switch MAC to OTUS interface. */
 	otus_write(sc, 0x1c3600, 0x3);
-	otus_write(sc, 0x1c3c50, 0xffff);
-	otus_write(sc, 0x1c3680, 0xf00008);
 
-	/* Disable Rx timeout (workaround). */
-	otus_write(sc, 0x1c362c, 0);
+	otus_write(sc, AR_MAC_REG_AMPDU_RX_THRESH, 0xffff);
 
-	/* Set USB Rx stream mode maximum frame number to 2. */
-	otus_write(sc, 0x1e1110, 0x4);
+	/* set PHY register read timeout (??) */
+	otus_write(sc, AR_MAC_REG_MISC_680, 0xf00008);
 
-	/* Set USB Rx stream mode timeout to 10us. */
-	otus_write(sc, 0x1e1114, 0x80);
+	/* Disable Rx TimeOut, workaround for BB. */
+	otus_write(sc, AR_MAC_REG_RX_TIMEOUT, 0x0);
 
 	/* Set clock frequency to 88/80MHz. */
-	otus_write(sc, 0x1d4008, 0x73);
+	otus_write(sc, AR_PWR_REG_CLOCK_SEL,
+	    AR_PWR_CLK_AHB_80_88MHZ | AR_PWR_CLK_DAC_160_INV_DLY);
 
 	/* Set WLAN DMA interrupt mode: generate intr per packet. */
-	otus_write(sc, 0x1c3d7c, 0x110011);
-	otus_write(sc, 0x1c3bb0, 0x4);
+	otus_write(sc, AR_MAC_REG_TXRX_MPI, 0x110011);
+
+	otus_write(sc, AR_MAC_REG_FCS_SELECT, AR_MAC_FCS_FIFO_PROT);
+
+	/* Disables the CF_END frame, undocumented register */
 	otus_write(sc, AR_MAC_REG_TXOP_NOT_ENOUGH_INDICATION, 0x141e0f48);
 
 	/* Disable HW decryption for now. */
-	otus_write(sc, 0x1c3678, 0x78);
+	otus_write(sc, AR_MAC_REG_ENCRYPTION,
+	    AR_MAC_REG_ENCRYPTION_DEFAULTS | AR_MAC_REG_ENCRYPTION_RX_SOFTWARE);
+
+	/*
+	 * XXX: should these be elsewhere?
+	 */
+	/* Enable LED0 and LED1. */
+	otus_write(sc, AR_GPIO_REG_PORT_TYPE, 3);
+	otus_write(sc, AR_GPIO_REG_DATA,
+	    AR_GPIO_REG_DATA_LED0_ON | AR_GPIO_REG_DATA_LED1_ON);
+
+	/* Set USB Rx stream mode maximum frame number to 2. */
+	otus_write(sc, AR_USB_REG_MAX_AGG_UPLOAD, (1 << 2));
+
+	/* Set USB Rx stream mode timeout to 10us. */
+	otus_write(sc, AR_USB_REG_UPLOAD_TIME_CTL, 0x80);
 
 	if ((error = otus_write_barrier(sc)) != 0)
 		return error;
@@ -2283,6 +2642,8 @@ otus_phy_get_def(struct otus_softc *sc, uint32_t reg)
 {
 	int i;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
 	for (i = 0; i < __arraycount(ar5416_phy_regs); i++)
 		if (AR_PHY(ar5416_phy_regs[i]) == reg)
 			return sc->sc_phy_vals[i];
@@ -2298,6 +2659,8 @@ otus_set_board_values(struct otus_softc *sc, struct ieee80211_channel *c)
 {
 	const struct ModalEepHeader *eep;
 	uint32_t tmp, offset;
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	if (IEEE80211_IS_CHAN_5GHZ(c))
 		eep = &sc->sc_eeprom.modalHeader[0];
@@ -2390,6 +2753,8 @@ otus_program_phy(struct otus_softc *sc, struct ieee80211_channel *c)
 	const uint32_t *vals;
 	int error, i;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
 	/* Select PHY programming based on band and bandwidth. */
 	if (IEEE80211_IS_CHAN_2GHZ(c))
 		vals = ar5416_phy_vals_2ghz_20mhz;
@@ -2426,6 +2791,7 @@ otus_program_phy(struct otus_softc *sc, struct ieee80211_channel *c)
 static __inline uint8_t
 otus_reverse_bits(uint8_t v)
 {
+
 	v = ((v >> 1) & 0x55) | ((v & 0x55) << 1);
 	v = ((v >> 2) & 0x33) | ((v & 0x33) << 2);
 	v = ((v >> 4) & 0x0f) | ((v & 0x0f) << 4);
@@ -2438,6 +2804,8 @@ otus_set_rf_bank4(struct otus_softc *sc, struct ieee80211_channel *c)
 	uint8_t chansel, d0, d1;
 	uint16_t data;
 	int error;
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	d0 = 0;
 	if (IEEE80211_IS_CHAN_5GHZ(c)) {
@@ -2477,6 +2845,8 @@ otus_get_delta_slope(uint32_t coeff, uint32_t *exponent, uint32_t *mantissa)
 #define COEFF_SCALE_SHIFT	24
 	uint32_t exp, man;
 
+	DPRINTFN(DBG_FN, DBG_NO_SC, "\n");
+
 	/* exponent = 14 - floor(log2(coeff)) */
 	for (exp = 31; exp > 0; exp--)
 		if (coeff & (1 << exp))
@@ -2495,7 +2865,7 @@ otus_get_delta_slope(uint32_t coeff, uint32_t *exponent, uint32_t *mantissa)
 Static int
 otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c, int assoc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211com *ic;
 	struct ar_cmd_frequency cmd;
 	struct ar_rsp_frequency rsp;
 	const uint32_t *vals;
@@ -2503,8 +2873,13 @@ otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c, int assoc)
 	uint8_t code;
 	int error, chan, i;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	ic = &sc->sc_ic;
 	chan = ieee80211_chan2ieee(ic, c);
-	DPRINTF("setting channel %d (%dMHz)\n", chan, c->ic_freq);
+
+	DPRINTFN(DBG_CHAN, sc, "setting channel %d (%dMHz)\n",
+	    chan, c->ic_freq);
 
 	tmp = IEEE80211_IS_CHAN_2GHZ(c) ? 0x105 : 0x104;
 	otus_write(sc, AR_MAC_REG_DYNAMIC_SIFS_ACK, tmp);
@@ -2523,7 +2898,7 @@ otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c, int assoc)
 
 	/* Reprogram PHY and RF on channel band or bandwidth changes. */
 	if (sc->sc_bb_reset || c->ic_flags != sc->sc_curchan->ic_flags) {
-		DPRINTF("band switch\n");
+		DPRINTFN(DBG_CHAN, sc, "band switch\n");
 
 		/* Cold/Warm reset BB/ADDA. */
 		otus_write(sc, 0x1d4004, sc->sc_bb_reset ? 0x800 : 0x400);
@@ -2575,36 +2950,41 @@ otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c, int assoc)
 	otus_get_delta_slope(coeff, &exp, &man);
 	cmd.dsc_exp = htole32(exp);
 	cmd.dsc_man = htole32(man);
-	DPRINTF("ds coeff=%u exp=%u man=%u\n", coeff, exp, man);
+	DPRINTFN(DBG_CHAN, sc, "ds coeff=%u exp=%u man=%u\n",
+	    coeff, exp, man);
 
 	/* For Short GI, coeff is 9/10 that of normal coeff. */
 	coeff = (9 * coeff) / 10;
 	otus_get_delta_slope(coeff, &exp, &man);
 	cmd.dsc_shgi_exp = htole32(exp);
 	cmd.dsc_shgi_man = htole32(man);
-	DPRINTF("ds shgi coeff=%u exp=%u man=%u\n", coeff, exp, man);
+	DPRINTFN(DBG_CHAN, sc, "ds shgi coeff=%u exp=%u man=%u\n",
+	    coeff, exp, man);
 
 	/* Set wait time for AGC and noise calibration (100 or 200ms). */
 	cmd.check_loop_count = assoc ? htole32(2000) : htole32(1000);
-	DPRINTF("%s\n", code == AR_CMD_RF_INIT ? "RF_INIT" : "FREQUENCY");
+	DPRINTFN(DBG_CHAN, sc, "%s\n",
+	    code == AR_CMD_RF_INIT ? "RF_INIT" : "FREQUENCY");
 	error = otus_cmd(sc, code, &cmd, sizeof(cmd), &rsp);
 	if (error != 0)
 		return error;
 
 	if ((rsp.status & htole32(AR_CAL_ERR_AGC | AR_CAL_ERR_NF_VAL)) != 0) {
-		DPRINTF("status=0x%x\n", le32toh(rsp.status));
+		DPRINTFN(DBG_CHAN, sc, "status=0x%x\n", le32toh(rsp.status));
 		/* Force cold reset on next channel. */
 		sc->sc_bb_reset = 1;
 	}
+
 #ifdef OTUS_DEBUG
-	if (otus_debug) {
-		printf("calibration status=0x%x\n", le32toh(rsp.status));
+	if (otus_debug & DBG_CHAN) {
+		DPRINTFN(DBG_CHAN, sc, "calibration status=0x%x\n",
+		    le32toh(rsp.status));
 		for (i = 0; i < 2; i++) {	/* 2 Rx chains */
 			/* Sign-extend 9-bit NF values. */
-			printf("noisefloor chain %d=%d\n", i,
-			    (((int32_t)le32toh(rsp.nf[i])) << 4) >> 23);
-			printf("noisefloor ext chain %d=%d\n", i,
-			    ((int32_t)le32toh(rsp.nf_ext[i])) >> 23);
+			DPRINTFN(DBG_CHAN, sc, "noisefloor chain %d=%d\n",
+			    i, (((int32_t)le32toh(rsp.nf[i])) << 4) >> 23);
+			DPRINTFN(DBG_CHAN, sc, "noisefloor ext chain %d=%d\n",
+			    i, ((int32_t)le32toh(rsp.nf_ext[i])) >> 23);
 		}
 	}
 #endif
@@ -2617,8 +2997,12 @@ Static int
 otus_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
-	struct otus_softc *sc = ic->ic_ifp->if_softc;
+	struct otus_softc *sc;
 	struct otus_cmd_key cmd;
+
+	sc = ic->ic_ifp->if_softc;
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	/* Defer setting of WEP keys until interface is brought up. */
 	if ((ic->ic_ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
@@ -2635,11 +3019,16 @@ otus_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 Static void
 otus_set_key_cb(struct otus_softc *sc, void *arg)
 {
-	struct otus_cmd_key *cmd = arg;
-	struct ieee80211_key *k = &cmd->key;
+	struct otus_cmd_key *cmd;
+	struct ieee80211_key *k;
 	struct ar_cmd_ekey key;
 	uint16_t cipher;
 	int error;
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	cmd = arg;
+	k = &cmd->key;
 
 	memset(&key, 0, sizeof(key));
 	if (k->k_flags & IEEE80211_KEY_GROUP) {
@@ -2684,8 +3073,12 @@ Static void
 otus_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
-	struct otus_softc *sc = ic->ic_ifp->if_softc;
+	struct otus_softc *sc;
 	struct otus_cmd_key cmd;
+
+	sc = ic->ic_ifp->if_softc;
+
+	DPRINTFN(DBG_FN, sc, "\n");
 
 	if (!(ic->ic_ifp->if_flags & IFF_RUNNING) ||
 	    ic->ic_state != IEEE80211_S_RUN)
@@ -2700,10 +3093,14 @@ otus_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 Static void
 otus_delete_key_cb(struct otus_softc *sc, void *arg)
 {
-	struct otus_cmd_key *cmd = arg;
-	struct ieee80211_key *k = &cmd->key;
+	struct otus_cmd_key *cmd;
+	struct ieee80211_key *k;
 	uint32_t uid;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	cmd = arg;
+	k = &cmd->key;
 	if (k->k_flags & IEEE80211_KEY_GROUP)
 		uid = htole32(k->k_id);
 	else
@@ -2713,24 +3110,39 @@ otus_delete_key_cb(struct otus_softc *sc, void *arg)
 #endif /* notyet */
 
 Static void
-otus_calibrate_to(void *arg)
+otus_calib_to(void *arg)
 {
-	struct otus_softc *sc = arg;
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct otus_softc *sc;
+	struct ieee80211com *ic;
 	struct ieee80211_node *ni;
+	struct otus_node *on;
 	int s;
 
+	sc = arg;
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	if (sc->sc_dying)
+		return;
+
 	s = splnet();
+	ic = &sc->sc_ic;
 	ni = ic->ic_bss;
-	ieee80211_amrr_choose(&sc->sc_amrr, ni, &((struct otus_node *)ni)->amn);
+	on = (void *)ni;
+	ieee80211_amrr_choose(&sc->sc_amrr, ni, &on->amn);
 	splx(s);
 
-	callout_schedule(&sc->sc_calib_to, hz);
+	if (!sc->sc_dying)
+		callout_schedule(&sc->sc_calib_to, hz);
 }
 
 Static int
 otus_set_bssid(struct otus_softc *sc, const uint8_t *bssid)
 {
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
 	otus_write(sc, AR_MAC_REG_BSSID_L,
 	    bssid[0] | bssid[1] << 8 | bssid[2] << 16 | bssid[3] << 24);
@@ -2742,6 +3154,10 @@ otus_set_bssid(struct otus_softc *sc, const uint8_t *bssid)
 Static int
 otus_set_macaddr(struct otus_softc *sc, const uint8_t *addr)
 {
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
 	otus_write(sc, AR_MAC_REG_MAC_ADDR_L,
 	    addr[0] | addr[1] << 8 | addr[2] << 16 | addr[3] << 24);
@@ -2755,6 +3171,9 @@ otus_set_macaddr(struct otus_softc *sc, const uint8_t *addr)
 Static void
 otus_led_newstate_type1(struct otus_softc *sc)
 {
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
 	/* TBD */
 }
 
@@ -2762,103 +3181,127 @@ otus_led_newstate_type1(struct otus_softc *sc)
 Static void
 otus_led_newstate_type2(struct otus_softc *sc)
 {
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
 	/* TBD */
 }
 #endif /* notyet */
 
-/* NETGEAR, single-LED/3 colors (blue, red, purple.) */
+/*
+ * NETGEAR, single-LED/3 colors (blue, red, purple.)
+ */
 Static void
 otus_led_newstate_type3(struct otus_softc *sc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	uint32_t state = sc->sc_led_state;
+	struct ieee80211com *ic;
+	uint32_t led_state;
 
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	ic = &sc->sc_ic;
+	led_state = sc->sc_led_state;
 	switch(ic->ic_state) {
 	case IEEE80211_S_INIT:
-		state = 0;
+		led_state = 0;
 		break;
 	case IEEE80211_S_SCAN:
-		state ^= AR_LED0_ON | AR_LED1_ON;
-		state &= ~(IEEE80211_IS_CHAN_2GHZ(sc->sc_curchan) ?
-		    AR_LED1_ON : AR_LED0_ON);
+		led_state ^= AR_GPIO_REG_DATA_LED0_ON | AR_GPIO_REG_DATA_LED1_ON;
+		led_state &= ~(IEEE80211_IS_CHAN_2GHZ(sc->sc_curchan) ?
+		    AR_GPIO_REG_DATA_LED1_ON : AR_GPIO_REG_DATA_LED0_ON);
 		break;
 	case IEEE80211_S_AUTH:
 	case IEEE80211_S_ASSOC:
 		/* XXX: Turn both LEDs on for AUTH and ASSOC? */
-		state = AR_LED0_ON | AR_LED1_ON;
+		led_state = AR_GPIO_REG_DATA_LED0_ON | AR_GPIO_REG_DATA_LED1_ON;
 		break;
 	case IEEE80211_S_RUN:
-		state = IEEE80211_IS_CHAN_2GHZ(sc->sc_curchan) ?
-		    AR_LED0_ON : AR_LED1_ON;
+		led_state = IEEE80211_IS_CHAN_2GHZ(sc->sc_curchan) ?
+		    AR_GPIO_REG_DATA_LED0_ON : AR_GPIO_REG_DATA_LED1_ON;
 		break;
 	}
-	if (state != sc->sc_led_state) {
-		otus_write(sc, 0x1d0104, state);
+	if (led_state != sc->sc_led_state) {
+		otus_write(sc, AR_GPIO_REG_DATA, led_state);
 		if (otus_write_barrier(sc) == 0)
-			sc->sc_led_state = state;
+			sc->sc_led_state = led_state;
 	}
 }
 
 Static int
 otus_init(struct ifnet *ifp)
 {
-	struct otus_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct otus_softc *sc;
+	struct ieee80211com *ic;
+	uint32_t filter, pm_mode, sniffer;
 	int error;
 
-	DPRINTF("otus_init\n");
+	sc = ifp->if_softc;
+
+	DPRINTFN(DBG_FN|DBG_INIT, sc, "\n");
+
+	ic = &sc->sc_ic;
 
 	mutex_enter(&sc->sc_write_mtx);
 
 	/* Init host command ring. */
-	mutex_enter(&sc->sc_task_mtx);
+	mutex_spin_enter(&sc->sc_task_mtx);
 	sc->sc_cmdq.cur = sc->sc_cmdq.next = sc->sc_cmdq.queued = 0;
-	mutex_exit(&sc->sc_task_mtx);
+	mutex_spin_exit(&sc->sc_task_mtx);
 
 	if ((error = otus_init_mac(sc)) != 0) {
-		aprint_error_dev(sc->sc_dev, "could not initialize MAC\n");
 		mutex_exit(&sc->sc_write_mtx);
+		aprint_error_dev(sc->sc_dev, "could not initialize MAC\n");
 		return error;
 	}
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	(void)otus_set_macaddr(sc, ic->ic_myaddr);
 
+	pm_mode = AR_MAC_REG_POWERMGT_DEFAULTS;
+	sniffer = AR_MAC_REG_SNIFFER_DEFAULTS;
+	filter = AR_MAC_REG_FTF_DEFAULTS;
+	sc->sc_rx_error_msk = ~0;
+
 	switch (ic->ic_opmode) {
 #ifdef notyet
 #ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_HOSTAP:
-		otus_write(sc, 0x1c3700, 0x0f0000a1);
-		otus_write(sc, 0x1c3c40, 0x1);
+		pm_mode |= AR_MAC_REG_POWERMGT_AP;
 		break;
 	case IEEE80211_M_IBSS:
-		otus_write(sc, 0x1c3700, 0x0f000000);
-		otus_write(sc, 0x1c3c40, 0x1);
+		pm_mode |= AR_MAC_REG_POWERMGT_IBSS;	/* XXX: was 0x0 */
 		break;
 #endif
 #endif
 	case IEEE80211_M_STA:
-		otus_write(sc, 0x1c3700, 0x0f000002);
-		otus_write(sc, 0x1c3c40, 0x1);
+		pm_mode |= AR_MAC_REG_POWERMGT_STA;
+		break;
+	case IEEE80211_M_MONITOR:
+		sc->sc_rx_error_msk = ~AR_RX_ERROR_BAD_RA;
+		filter = AR_MAC_REG_FTF_MONITOR;
+		sniffer |= AR_MAC_REG_SNIFFER_ENABLE_PROMISC;
 		break;
 	default:
-		break;
+		aprint_error_dev(sc->sc_dev, "bad opmode: %d", ic->ic_opmode);
+		return EOPNOTSUPP;	/* XXX: ??? */
 	}
-	otus_write(sc, AR_MAC_REG_SNIFFER,
-	    ic->ic_opmode == IEEE80211_M_MONITOR ? 0x2000001 : 0x2000000);
+	otus_write(sc, AR_MAC_REG_POWERMANAGEMENT, pm_mode);
+	otus_write(sc, AR_MAC_REG_FRAMETYPE_FILTER, filter);
+	otus_write(sc, AR_MAC_REG_SNIFFER, sniffer);
 	(void)otus_write_barrier(sc);
 
 	sc->sc_bb_reset = 1;	/* Force cold reset. */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	if ((error = otus_set_chan(sc, ic->ic_ibss_chan, 0)) != 0) {
-		aprint_error_dev(sc->sc_dev, "could not set channel\n");
 		mutex_exit(&sc->sc_write_mtx);
+		aprint_error_dev(sc->sc_dev, "could not set channel\n");
 		return error;
 	}
 
 	/* Start Rx. */
-	otus_write(sc, 0x1c3d30, 0x100);
+	otus_write(sc, AR_MAC_REG_DMA, AR_MAC_REG_DMA_ENABLE);
 	(void)otus_write_barrier(sc);
+	mutex_exit(&sc->sc_write_mtx);
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
@@ -2868,18 +3311,21 @@ otus_init(struct ifnet *ifp)
 	else
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 
-	mutex_exit(&sc->sc_write_mtx);
 	return 0;
 }
 
 Static void
 otus_stop(struct ifnet *ifp)
 {
-	struct otus_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct otus_softc *sc;
+	struct ieee80211com *ic;
 	int s;
 
-	DPRINTF("otus_stop\n");
+	sc = ifp->if_softc;
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	ic = &sc->sc_ic;
 
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
@@ -2890,17 +3336,36 @@ otus_stop(struct ifnet *ifp)
 
 	s = splusb();
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
-
-	/* Wait for all queued asynchronous commands to complete. */
-	while (sc->sc_cmdq.queued > 0)
-		tsleep(&sc->sc_cmdq, 0, "sc_cmdq", 0);
+	otus_wait_async(sc);
 	splx(s);
 
 	/* Stop Rx. */
 	mutex_enter(&sc->sc_write_mtx);
-	otus_write(sc, 0x1c3d30, 0);
+	otus_write(sc, AR_MAC_REG_DMA, AR_MAC_REG_DMA_OFF);
 	(void)otus_write_barrier(sc);
 	mutex_exit(&sc->sc_write_mtx);
-
-	sc->sc_tx_queued = 0;
 }
+
+#if IEEE80211_INJECTION
+static int
+otus_output(struct ifnet *ifp, struct mbuf *m,
+    const struct sockaddr *dst, struct rtentry *rt)
+{
+	struct otus_softc *sc;
+	struct ieee80211com *ic;
+
+	sc = ifp->if_softc;
+
+	DPRINTFN(DBG_FN, sc, "\n");
+
+	ic = &sc->sc_ic;
+
+	/*
+	 * Hand to the 802.3 code if not tagged as a raw 802.11 frame.
+	 */
+	if (dst->sa_family != AF_IEEE80211)
+		return sc->sc_if_output(ifp, m, dst, rt);
+
+	return ieee80211_output(ifp, m, dst, ic);
+}
+#endif /* IEEE80211_INJECTION */

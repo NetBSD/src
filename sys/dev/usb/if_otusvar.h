@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusvar.h,v 1.1.12.1 2012/10/30 17:22:05 yamt Exp $	*/
+/*	$NetBSD: if_otusvar.h,v 1.1.12.2 2013/01/23 00:06:11 yamt Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -19,6 +19,10 @@
  */
 #ifndef _IF_OTUSVAR_H_
 #define _IF_OTUSVAR_H_
+
+#ifdef EDCA_NUM_AC
+#define HAVE_EDCA
+#endif
 
 #ifndef HAVE_EDCA
 /************************************************************
@@ -52,6 +56,10 @@ enum ieee80211_edca_ac {
 	EDCA_AC_VO  = 3		/* Voice */
 };
 #define EDCA_NUM_AC	4
+
+/* XXX: OpenBSD has more of these defined with the standard referenced */
+#define IEEE80211_QOS_ACK_POLICY_NOACK		0x0020
+#define IEEE80211_QOS_ACK_POLICY_MASK		0x0060
 
 static __inline int
 ieee80211_has_addr4(const struct ieee80211_frame *wh)
@@ -171,9 +179,10 @@ struct otus_rx_data {
 };
 
 struct otus_tx_data {
-	struct otus_softc	*sc;
-	usbd_xfer_handle	xfer;
-	uint8_t			*buf;
+	struct otus_softc		*sc;
+	usbd_xfer_handle		xfer;
+	uint8_t				*buf;
+	TAILQ_ENTRY(otus_tx_data)	next;
 };
 
 struct otus_host_cmd {
@@ -241,13 +250,12 @@ struct otus_softc {
 	struct ieee80211_amrr		sc_amrr;
 
 	unsigned int			sc_write_idx;
-	int				sc_tx_cur;
-	int				sc_tx_queued;
 	uint32_t			sc_led_state;
 
 	kmutex_t			sc_cmd_mtx;
 	kmutex_t			sc_task_mtx;
 	kmutex_t			sc_write_mtx;
+	kmutex_t			sc_tx_mtx;
 
 	const uint32_t			*sc_phy_vals;
 
@@ -259,6 +267,7 @@ struct otus_softc {
 	struct otus_host_cmd_ring	sc_cmdq;
 	struct otus_tx_cmd		sc_tx_cmd;
 	struct otus_tx_data		sc_tx_data[OTUS_TX_DATA_LIST_COUNT];
+	TAILQ_HEAD(, otus_tx_data)	sc_tx_free_list;
 	struct otus_rx_data		sc_rx_data[OTUS_RX_DATA_LIST_COUNT];
 
 	struct bpf_if *			sc_drvbpf;
@@ -274,6 +283,15 @@ struct otus_softc {
 	}				sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
+
+	uint8_t				sc_rx_error_msk;
+	int				sc_dying;
+
+#if IEEE80211_INJECTION	/* XXX: ljt */
+	int	(*sc_if_output)		/* ether output routine */
+		    (struct ifnet *, struct mbuf *, const struct sockaddr *,
+		    struct rtentry *);
+#endif
 };
 
 #endif /* _IF_OTUSVAR_H_ */

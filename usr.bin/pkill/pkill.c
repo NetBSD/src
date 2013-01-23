@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.27.6.1 2013/01/16 05:34:07 yamt Exp $	*/
+/*	$NetBSD: pkill.c,v 1.27.6.2 2013/01/23 00:06:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.27.6.1 2013/01/16 05:34:07 yamt Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.27.6.2 2013/01/23 00:06:40 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: pkill.c,v 1.27.6.1 2013/01/16 05:34:07 yamt Exp $");
 #include <sys/sysctl.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 
 #include <stdio.h>

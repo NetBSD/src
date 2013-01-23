@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.141.2.2 2012/10/30 17:22:09 yamt Exp $	*/
+/*	$NetBSD: umass.c,v 1.141.2.3 2013/01/23 00:06:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.141.2.2 2012/10/30 17:22:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.141.2.3 2013/01/23 00:06:14 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -1241,9 +1241,10 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		} else if (sc->transfer_actlen > sc->transfer_datalen) {
 			/* Buffer overrun! Don't let this go by unnoticed */
-			panic("%s: transferred %d bytes instead of %d bytes",
-				device_xname(sc->sc_dev),
-				sc->transfer_actlen, sc->transfer_datalen);
+			panic("%s: transferred %s %d bytes instead of %d bytes",
+			    device_xname(sc->sc_dev),
+			    sc->transfer_dir == DIR_IN ? "IN" : "OUT",
+			    sc->transfer_actlen, sc->transfer_datalen);
 #if 0
 		} else if (sc->transfer_datalen - sc->transfer_actlen
 			   != residue) {

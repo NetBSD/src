@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.49 2011/08/14 12:32:01 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.49.2.1 2013/01/23 00:05:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.49 2011/08/14 12:32:01 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.49.2.1 2013/01/23 00:05:30 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,8 @@ pass1(void)
 		else
 			inosused = sblock->fs_ipg;
 		if (got_siginfo) {
-			printf("%s: phase 1: cyl group %d of %d (%d%%)\n",
+			fprintf(stderr,
+			    "%s: phase 1: cyl group %d of %d (%d%%)\n",
 			    cdevname(), c, sblock->fs_ncg,
 			    c * 100 / sblock->fs_ncg);
 			got_siginfo = 0;
@@ -170,7 +171,7 @@ pass1(void)
 		 * Scan the allocated inodes.
 		 */
 		for (ii = 0; ii < inosused; ii++, inumber++) {
-			if (inumber < ROOTINO) {
+			if (inumber < UFS_ROOTINO) {
 				(void)getnextinode(inumber);
 				continue;
 			}
@@ -246,15 +247,15 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	if (mode == 0) {
 		if ((is_ufs2 && 
 		    (memcmp(dp->dp2.di_db, ufs2_zino.di_db,
-			NDADDR * sizeof(int64_t)) ||
+			UFS_NDADDR * sizeof(int64_t)) ||
 		    memcmp(dp->dp2.di_ib, ufs2_zino.di_ib,
-			NIADDR * sizeof(int64_t))))
+			UFS_NIADDR * sizeof(int64_t))))
 		    ||
 		    (!is_ufs2 && 
 		    (memcmp(dp->dp1.di_db, ufs1_zino.di_db,
-			NDADDR * sizeof(int32_t)) ||
+			UFS_NDADDR * sizeof(int32_t)) ||
 		    memcmp(dp->dp1.di_ib, ufs1_zino.di_ib,
-			NIADDR * sizeof(int32_t)))) ||
+			UFS_NIADDR * sizeof(int32_t)))) ||
 		    mode || size) {
 			pfatal("PARTIALLY ALLOCATED INODE I=%llu",
 			    (unsigned long long)inumber);
@@ -305,7 +306,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		 * conversion altogether.  - mycroft, 19MAY1994
 		 */
 		if (!is_ufs2 && doinglevel2 &&
-		    size > 0 && size < MAXSYMLINKLEN_UFS1 &&
+		    size > 0 && size < UFS1_MAXSYMLINKLEN &&
 		    DIP(dp, blocks) != 0) {
 			if (bread(fsreadfd, symbuf,
 			    fsbtodb(sblock, iswap32(DIP(dp, db[0]))),
@@ -335,16 +336,16 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 				ndb = howmany(size, sizeof(int64_t));
 			else	
 				ndb = howmany(size, sizeof(int32_t));
-			if (ndb > NDADDR) {
-				j = ndb - NDADDR;
+			if (ndb > UFS_NDADDR) {
+				j = ndb - UFS_NDADDR;
 				for (ndb = 1; j > 1; j--)
 					ndb *= NINDIR(sblock);
-				ndb += NDADDR;
+				ndb += UFS_NDADDR;
 			}
 		}
 	}
-	if (ndb < NDADDR) {
-	    for (j = ndb; j < NDADDR; j++)
+	if (ndb < UFS_NDADDR) {
+	    for (j = ndb; j < UFS_NDADDR; j++)
 		if (DIP(dp, db[j]) != 0) {
 		    if (debug) {
 			if (!is_ufs2)
@@ -360,10 +361,10 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		}
 	}
 
-	for (j = 0, ndb -= NDADDR; ndb > 0; j++)
+	for (j = 0, ndb -= UFS_NDADDR; ndb > 0; j++)
 		ndb /= NINDIR(sblock);
 
-	for (; j < NIADDR; j++)
+	for (; j < UFS_NIADDR; j++)
 		if (DIP(dp, ib[j]) != 0) {
 		    if (debug) {
 			if (!is_ufs2)
@@ -428,7 +429,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		int ret, offset;
 		idesc->id_type = ADDR;
 		ndb = howmany(iswap32(dp->dp2.di_extsize), sblock->fs_bsize);
-		for (j = 0; j < NXADDR; j++) {
+		for (j = 0; j < UFS_NXADDR; j++) {
 			if (--ndb == 0 &&
 			    (offset = blkoff(sblock, iswap32(dp->dp2.di_extsize))) != 0)
 				idesc->id_numfrags = numfrags(sblock,

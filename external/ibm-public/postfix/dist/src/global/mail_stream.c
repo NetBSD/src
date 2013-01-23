@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_stream.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mail_stream.c,v 1.1.1.1.10.1 2013/01/23 00:05:02 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -128,6 +128,7 @@
 #include <stringops.h>
 #include <argv.h>
 #include <sane_fsops.h>
+#include <warn_stat.h>
 
 /* Global library. */
 

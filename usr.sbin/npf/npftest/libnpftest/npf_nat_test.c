@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat_test.c,v 1.1.6.2 2012/10/30 19:00:47 yamt Exp $	*/
+/*	$NetBSD: npf_nat_test.c,v 1.1.6.3 2013/01/23 00:06:44 yamt Exp $	*/
 
 /*
  * NPF NAT test.
@@ -126,10 +126,11 @@ nmatch_addr(const char *saddr, const struct in_addr *addr2)
 }
 
 static bool
-checkresult(bool verbose, unsigned i, struct mbuf *m, int error)
+checkresult(bool verbose, unsigned i, struct mbuf *m, ifnet_t *ifp, int error)
 {
 	const struct test_case *t = &test_cases[i];
 	npf_cache_t npc = { .npc_info = 0 };
+	nbuf_t nbuf;
 
 	if (verbose) {
 		printf("packet %d (expected %d ret %d)\n", i+1, t->ret, error);
@@ -137,13 +138,15 @@ checkresult(bool verbose, unsigned i, struct mbuf *m, int error)
 	if (error) {
 		return error == t->ret;
 	}
-	if (!npf_cache_all(&npc, m)) {
+
+	nbuf_init(&nbuf, m, ifp);
+	if (!npf_cache_all(&npc, &nbuf)) {
 		printf("error: could not fetch the packet data");
 		return false;
 	}
 
-	const struct ip *ip = &npc.npc_ip.v4;
-	const struct udphdr *uh = &npc.npc_l4.udp;
+	const struct ip *ip = npc.npc_ip.v4;
+	const struct udphdr *uh = npc.npc_l4.udp;
 
 	if (verbose) {
 		printf("\tpost-translation: src %s (%d)",
@@ -198,7 +201,7 @@ npf_nat_test(bool verbose)
 			return false;
 		}
 		error = npf_packet_handler(NULL, &m, ifp, t->di);
-		ret = checkresult(verbose, i, m, error);
+		ret = checkresult(verbose, i, m, ifp, error);
 		if (m) {
 			m_freem(m);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_server.c,v 1.4.4.1 2012/10/30 18:58:06 yamt Exp $	*/
+/*	$NetBSD: tls_server.c,v 1.4.4.2 2013/01/23 00:05:14 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -36,7 +36,7 @@
 /*
 /*	tls_server_start() activates the TLS feature for the VSTREAM
 /*	passed as argument. We assume that network buffers are flushed
-/*	and the TLS handshake can begin	immediately. 
+/*	and the TLS handshake can begin	immediately.
 /*
 /*	tls_server_stop() sends the "close notify" alert via
 /*	SSL_shutdown() to the peer and resets all connection specific
@@ -84,7 +84,7 @@
 /*	programs cannot use the synchronous VSTREAM-over-TLS
 /*	implementation that the current TLS library provides,
 /*	including tls_server_stop() and the underlying tls_stream(3)
-/*	and tls_bio_ops(3) routines. 
+/*	and tls_bio_ops(3) routines.
 /*
 /*	With the current TLS library implementation, this means
 /*	that the application is responsible for calling and retrying
@@ -192,7 +192,7 @@ static SSL_SESSION *get_server_session_cb(SSL *ssl, unsigned char *session_id,
 
     GEN_CACHE_ID(cache_id, session_id, session_id_length, TLScontext->serverid);
 
-    if (TLScontext->log_level >= 2)
+    if (TLScontext->log_mask & TLS_LOG_CACHE)
 	msg_info("%s: looking up session %s in %s cache", TLScontext->namaddr,
 		 STR(cache_id), TLScontext->cache_type);
 
@@ -202,7 +202,7 @@ static SSL_SESSION *get_server_session_cb(SSL *ssl, unsigned char *session_id,
     if (tls_mgr_lookup(TLScontext->cache_type, STR(cache_id),
 		       session_data) == TLS_MGR_STAT_OK) {
 	session = tls_session_activate(STR(session_data), LEN(session_data));
-	if (session && (TLScontext->log_level >= 2))
+	if (session && (TLScontext->log_mask & TLS_LOG_CACHE))
 	    msg_info("%s: reloaded session %s from %s cache",
 		     TLScontext->namaddr, STR(cache_id),
 		     TLScontext->cache_type);
@@ -232,7 +232,7 @@ static void uncache_session(SSL_CTX *ctx, TLS_SESS_STATE *TLScontext)
     GEN_CACHE_ID(cache_id, session->session_id, session->session_id_length,
 		 TLScontext->serverid);
 
-    if (TLScontext->log_level >= 2)
+    if (TLScontext->log_mask & TLS_LOG_CACHE)
 	msg_info("%s: remove session %s from %s cache", TLScontext->namaddr,
 		 STR(cache_id), TLScontext->cache_type);
 
@@ -255,7 +255,7 @@ static int new_server_session_cb(SSL *ssl, SSL_SESSION *session)
     GEN_CACHE_ID(cache_id, session->session_id, session->session_id_length,
 		 TLScontext->serverid);
 
-    if (TLScontext->log_level >= 2)
+    if (TLScontext->log_mask & TLS_LOG_CACHE)
 	msg_info("%s: save session %s to %s cache", TLScontext->namaddr,
 		 STR(cache_id), TLScontext->cache_type);
 
@@ -290,8 +290,14 @@ TLS_APPL_STATE *tls_server_init(const TLS_SERVER_INIT_PROPS *props)
     TLS_APPL_STATE *app_ctx;
     const EVP_MD *md_alg;
     unsigned int md_len;
+    int     log_mask;
 
-    if (props->log_level >= 2)
+    /*
+     * Convert user loglevel to internal logmask.
+     */
+    log_mask = tls_log_mask(props->log_param, props->log_level);
+
+    if (log_mask & TLS_LOG_VERBOSE)
 	msg_info("initializing the server-side TLS engine");
 
     /*
@@ -423,7 +429,7 @@ TLS_APPL_STATE *tls_server_init(const TLS_SERVER_INIT_PROPS *props)
     /*
      * Set the call-back routine to debug handshake progress.
      */
-    if (props->log_level >= 2)
+    if (log_mask & TLS_LOG_DEBUG)
 	SSL_CTX_set_info_callback(server_ctx, tls_info_callback);
 
     /*
@@ -469,9 +475,9 @@ TLS_APPL_STATE *tls_server_init(const TLS_SERVER_INIT_PROPS *props)
     }
 
     /*
-     * According to the OpenSSL documentation, temporary RSA key is needed
-     * export ciphers are in use. We have to provide one, so well, we just do
-     * it.
+     * According to OpenSSL documentation, a temporary RSA key is needed when
+     * export ciphers are in use, because the certified key cannot be
+     * directly used.
      */
     SSL_CTX_set_tmp_rsa_callback(server_ctx, tls_tmp_rsa_cb);
 
@@ -527,7 +533,7 @@ TLS_APPL_STATE *tls_server_init(const TLS_SERVER_INIT_PROPS *props)
      * Initialize our own TLS server handle, before diving into the details
      * of TLS session cache management.
      */
-    app_ctx = tls_alloc_app_context(server_ctx);
+    app_ctx = tls_alloc_app_context(server_ctx, log_mask);
 
     /*
      * The session cache is implemented by the tlsmgr(8) server.
@@ -607,8 +613,16 @@ TLS_SESS_STATE *tls_server_start(const TLS_SERVER_START_PROPS *props)
     TLS_SESS_STATE *TLScontext;
     const char *cipher_list;
     TLS_APPL_STATE *app_ctx = props->ctx;
+    int     log_mask = app_ctx->log_mask;
 
-    if (props->log_level >= 1)
+    /*
+     * Implicitly enable logging of trust chain errors when verified certs
+     * are required.
+     */
+    if (props->requirecert)
+	log_mask |= TLS_LOG_UNTRUSTED;
+
+    if (log_mask & TLS_LOG_VERBOSE)
 	msg_info("setting up TLS connection from %s", props->namaddr);
 
     cipher_list = tls_set_ciphers(app_ctx, "TLS", props->cipher_grade,
@@ -618,7 +632,7 @@ TLS_SESS_STATE *tls_server_start(const TLS_SERVER_START_PROPS *props)
 		 vstring_str(app_ctx->why));
 	return (0);
     }
-    if (props->log_level >= 2)
+    if (log_mask & TLS_LOG_VERBOSE)
 	msg_info("%s: TLS cipher list \"%s\"", props->namaddr, cipher_list);
 
     /*
@@ -626,7 +640,7 @@ TLS_SESS_STATE *tls_server_start(const TLS_SERVER_START_PROPS *props)
      * structure. Add the location of TLScontext to the SSL to later retrieve
      * the information inside the tls_verify_certificate_callback().
      */
-    TLScontext = tls_alloc_sess_context(props->log_level, props->namaddr);
+    TLScontext = tls_alloc_sess_context(log_mask, props->namaddr);
     TLScontext->cache_type = app_ctx->cache_type;
 
     TLScontext->serverid = mystrdup(props->serverid);
@@ -677,13 +691,14 @@ TLS_SESS_STATE *tls_server_start(const TLS_SERVER_START_PROPS *props)
 
     /*
      * If the debug level selected is high enough, all of the data is dumped:
-     * 3 will dump the SSL negotiation, 4 will dump everything.
+     * TLS_LOG_TLSPKTS will dump the SSL negotiation, TLS_LOG_ALLPKTS will
+     * dump everything.
      * 
      * We do have an SSL_set_fd() and now suddenly a BIO_ routine is called?
      * Well there is a BIO below the SSL routines that is automatically
      * created for us, so we can use it for debugging purposes.
      */
-    if (props->log_level >= 3)
+    if (log_mask & TLS_LOG_TLSPKTS)
 	BIO_set_callback(SSL_get_rbio(TLScontext->con), tls_bio_dump_cb);
 
     /*
@@ -709,8 +724,15 @@ TLS_SESS_STATE *tls_server_start(const TLS_SERVER_START_PROPS *props)
     sts = tls_bio_accept(vstream_fileno(props->stream), props->timeout,
 			 TLScontext);
     if (sts <= 0) {
-	msg_info("SSL_accept error from %s: %d", props->namaddr, sts);
-	tls_print_errors();
+	if (ERR_peek_error() != 0) {
+	    msg_info("SSL_accept error from %s: %d", props->namaddr, sts);
+	    tls_print_errors();
+	} else if (errno != 0) {
+	    msg_info("SSL_accept error from %s: %m", props->namaddr);
+	} else {
+	    msg_info("SSL_accept error from %s: lost connection",
+		     props->namaddr);
+	}
 	tls_free_context(TLScontext);
 	return (0);
     }
@@ -725,8 +747,8 @@ TLS_SESS_STATE *tls_server_post_accept(TLS_SESS_STATE *TLScontext)
     X509   *peer;
     char    buf[CCERT_BUFSIZ];
 
-    /* Only loglevel==4 dumps everything */
-    if (TLScontext->log_level < 4)
+    /* Turn off packet dump if only dumping the handshake */
+    if ((TLScontext->log_mask & TLS_LOG_ALLPKTS) == 0)
 	BIO_set_callback(SSL_get_rbio(TLScontext->con), 0);
 
     /*
@@ -734,7 +756,7 @@ TLS_SESS_STATE *tls_server_post_accept(TLS_SESS_STATE *TLScontext)
      * session was negotiated.
      */
     TLScontext->session_reused = SSL_session_reused(TLScontext->con);
-    if (TLScontext->log_level >= 2 && TLScontext->session_reused)
+    if ((TLScontext->log_mask & TLS_LOG_CACHE) && TLScontext->session_reused)
 	msg_info("%s: Reusing old session", TLScontext->namaddr);
 
     /*
@@ -747,7 +769,7 @@ TLS_SESS_STATE *tls_server_post_accept(TLS_SESS_STATE *TLScontext)
 	if (SSL_get_verify_result(TLScontext->con) == X509_V_OK)
 	    TLScontext->peer_status |= TLS_CERT_FLAG_TRUSTED;
 
-	if (TLScontext->log_level >= 2) {
+	if (TLScontext->log_mask & TLS_LOG_VERBOSE) {
 	    X509_NAME_oneline(X509_get_subject_name(peer),
 			      buf, sizeof(buf));
 	    msg_info("subject=%s", buf);
@@ -759,13 +781,16 @@ TLS_SESS_STATE *tls_server_post_accept(TLS_SESS_STATE *TLScontext)
 	TLScontext->issuer_CN = tls_issuer_CN(peer, TLScontext);
 	TLScontext->peer_fingerprint =
 	    tls_fingerprint(peer, TLScontext->fpt_dgst);
+	TLScontext->peer_pkey_fprint =
+	    tls_pkey_fprint(peer, TLScontext->fpt_dgst);
 
-	if (TLScontext->log_level >= 1) {
-	    msg_info("%s: %s: subject_CN=%s, issuer=%s, fingerprint=%s",
+	if (TLScontext->log_mask & (TLS_LOG_VERBOSE | TLS_LOG_PEERCERT)) {
+	    msg_info("%s: subject_CN=%s, issuer=%s, fingerprint=%s"
+		     ", pkey_fingerprint=%s",
 		     TLScontext->namaddr,
-		  TLS_CERT_IS_TRUSTED(TLScontext) ? "Trusted" : "Untrusted",
 		     TLScontext->peer_CN, TLScontext->issuer_CN,
-		     TLScontext->peer_fingerprint);
+		     TLScontext->peer_fingerprint,
+		     TLScontext->peer_pkey_fprint);
 	}
 	X509_free(peer);
     } else {
@@ -795,7 +820,7 @@ TLS_SESS_STATE *tls_server_post_accept(TLS_SESS_STATE *TLScontext)
     /*
      * All the key facts in a single log entry.
      */
-    if (TLScontext->log_level >= 1)
+    if (TLScontext->log_mask & TLS_LOG_SUMMARY)
 	msg_info("%s TLS connection established from %s: %s with cipher %s "
 	      "(%d/%d bits)", !TLS_CERT_IS_PRESENT(TLScontext) ? "Anonymous"
 		 : TLS_CERT_IS_TRUSTED(TLScontext) ? "Trusted" : "Untrusted",

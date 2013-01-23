@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mkmap.h,v 1.1.1.1.10.1 2013/01/23 00:05:03 yamt Exp $	*/
 
 #ifndef _MKMAP_H_INCLUDED_
 #define _MKMAP_H_INCLUDED_
@@ -43,6 +43,7 @@ extern MKMAP *mkmap_hash_open(const char *);
 extern MKMAP *mkmap_btree_open(const char *);
 extern MKMAP *mkmap_sdbm_open(const char *);
 extern MKMAP *mkmap_proxy_open(const char *);
+extern MKMAP *mkmap_fail_open(const char *);
 
 /* LICENSE
 /* .ad

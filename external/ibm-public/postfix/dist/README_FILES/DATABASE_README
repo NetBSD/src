@@ -198,6 +198,9 @@ To find out what database types your Postfix system supports, use the "ppooss
     eennvviirroonn
         The UNIX process environment array. The lookup key is the variable
         name. The lookup table name in "environ:table" is ignored.
+    ffaaiill
+        A table that reliably fails all requests. The lookup table name is used
+        for logging only. This table exists to simplify Postfix error tests.
     hhaasshh
         An indexed file type based on hashing. This is available only on
         systems with support for Berkeley DB databases. Database files are
@@ -210,6 +213,9 @@ To find out what database types your Postfix system supports, use the "ppooss
     llddaapp (read-only)
         Perform lookups using the LDAP protocol. Configuration details are
         given in the ldap_table(5).
+    mmeemmccaacchhee
+        Perform memcache database lookups or updates. Configuration details are
+        given in memcache_table(5).
     mmyyssqqll (read-only)
         Perform MySQL database lookups. Configuration details are given in
         mysql_table(5).
@@ -227,7 +233,7 @@ To find out what database types your Postfix system supports, use the "ppooss
     ppggssqqll (read-only)
         Perform PostgreSQL database lookups. Configuration details are given in
         pgsql_table(5).
-    pprrooxxyy (read-only)
+    pprrooxxyy
         Access information via the Postfix proxymap(8) service. The lookup
         table name syntax is "proxy:type:table".
     rreeggeexxpp (read-only)

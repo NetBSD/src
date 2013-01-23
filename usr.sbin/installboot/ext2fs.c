@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.6 2010/01/14 16:27:49 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.6.6.1 2013/01/23 00:06:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: ext2fs.c,v 1.6 2010/01/14 16:27:49 tsutsui Exp $");
+__RCSID("$NetBSD: ext2fs.c,v 1.6.6.1 2013/01/23 00:06:42 yamt Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -248,12 +248,12 @@ ext2fs_find_disk_blocks(ib_params *params, ino_t ino,
 	lblk = 0;
 	level_i = 0;
 	level[0].blknums = &inode->e2di_blocks[0];
-	level[0].blkcount = NDADDR;
-	level[1].blknums = &inode->e2di_blocks[NDADDR + 0];
+	level[0].blkcount = UFS_NDADDR;
+	level[1].blknums = &inode->e2di_blocks[UFS_NDADDR + 0];
 	level[1].blkcount = 1;
-	level[2].blknums = &inode->e2di_blocks[NDADDR + 1];
+	level[2].blknums = &inode->e2di_blocks[UFS_NDADDR + 1];
 	level[2].blkcount = 1;
-	level[3].blknums = &inode->e2di_blocks[NDADDR + 2];
+	level[3].blknums = &inode->e2di_blocks[UFS_NDADDR + 2];
 	level[3].blkcount = 1;
 
 	/* Walk the data blocks. */

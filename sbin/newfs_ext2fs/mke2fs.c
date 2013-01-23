@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.14.6.1 2012/04/17 00:05:41 yamt Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.14.6.2 2013/01/23 00:05:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.14.6.1 2012/04/17 00:05:41 yamt Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.14.6.2 2013/01/23 00:05:32 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -932,8 +932,8 @@ fsinit(const struct timeval *tv)
 	/* prepare a bit large directory for preserved files */
 	nblks_lostfound = EXT2_LOSTFOUNDSIZE / sblock.e2fs_bsize;
 	/* ...but only with direct blocks */
-	if (nblks_lostfound > NDADDR)
-		nblks_lostfound = NDADDR;
+	if (nblks_lostfound > EXT2FS_NDADDR)
+		nblks_lostfound = EXT2FS_NDADDR;
 
 	memset(&node, 0, sizeof(node));
 	node.e2di_mode = EXT2_IFDIR | EXT2_LOSTFOUNDUMASK;
@@ -1119,7 +1119,7 @@ init_resizeino(const struct timeval *tv)
 	 */
 
 	/* set e2di_size which occupies whole blocks through DINDIR blocks */
-	isize = (uint64_t)sblock.e2fs_bsize * NDADDR +
+	isize = (uint64_t)sblock.e2fs_bsize * EXT2FS_NDADDR +
 	    (uint64_t)sblock.e2fs_bsize * NINDIR(&sblock) +
 	    (uint64_t)sblock.e2fs_bsize * NINDIR(&sblock) * NINDIR(&sblock);
 	if (isize > UINT32_MAX &&
@@ -1139,16 +1139,16 @@ init_resizeino(const struct timeval *tv)
 #define TRIPLE	2	/* index of triple indirect block */
 
 	/* zero out entries for direct references */
-	for (i = 0; i < NDADDR; i++)
+	for (i = 0; i < EXT2FS_NDADDR; i++)
 		node.e2di_blocks[i] = 0;
 	/* also zero out entries for single and triple indirect references */
-	node.e2di_blocks[NDADDR + SINGLE] = 0;
-	node.e2di_blocks[NDADDR + TRIPLE] = 0;
+	node.e2di_blocks[EXT2FS_NDADDR + SINGLE] = 0;
+	node.e2di_blocks[EXT2FS_NDADDR + TRIPLE] = 0;
 
 	/* allocate a block for the first level double indirect reference */
-	node.e2di_blocks[NDADDR + DOUBLE] =
+	node.e2di_blocks[EXT2FS_NDADDR + DOUBLE] =
 	    alloc(sblock.e2fs_bsize, node.e2di_mode);
-	if (node.e2di_blocks[NDADDR + DOUBLE] == 0)
+	if (node.e2di_blocks[EXT2FS_NDADDR + DOUBLE] == 0)
 		errx(EXIT_FAILURE, "%s: Can't allocate a dindirect block",
 		    __func__);
 
@@ -1231,7 +1231,7 @@ init_resizeino(const struct timeval *tv)
 	free(reserved_gdb);
 
 	/* finally write the first level dindirect block */
-	wtfs(fsbtodb(&sblock, node.e2di_blocks[NDADDR + DOUBLE]),
+	wtfs(fsbtodb(&sblock, node.e2di_blocks[EXT2FS_NDADDR + DOUBLE]),
 	    sblock.e2fs_bsize, dindir_block);
 	free(dindir_block);
 
@@ -1362,7 +1362,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 	e2fs_isave(ip, dp);
 	/* e2fs_i_bswap() doesn't swap e2di_blocks addrs */
 	if ((ip->e2di_mode & EXT2_IFMT) != EXT2_IFLNK) {
-		for (i = 0; i < NDADDR + NIADDR; i++)
+		for (i = 0; i < EXT2FS_NDADDR + EXT2FS_NIADDR; i++)
 			dp->e2di_blocks[i] = h2fs32(ip->e2di_blocks[i]);
 	}
 	/* h2fs32() just for consistency */

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PANDABOARD,v 1.4.2.2 2012/10/30 17:19:20 yamt Exp $
+#	$NetBSD: PANDABOARD,v 1.4.2.3 2013/01/23 00:05:45 yamt Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -298,3 +298,4 @@ pseudo-device	pty			# pseudo-terminals
 #options	RND_COM
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling

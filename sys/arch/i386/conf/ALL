@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.325.2.3 2012/10/30 17:19:47 yamt Exp $
+# $NetBSD: ALL,v 1.325.2.4 2013/01/23 00:05:48 yamt Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.325.2.3 $"
+#ident 		"ALL-$Revision: 1.325.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -516,6 +516,14 @@ isa0	at rdcpcib?
 isa0	at mainbus?
 isa0	at pceb?
 isa0	at pcib?
+
+# Protech PS3100 cash drawer port
+ptcd0	at isa?
+gpio*	at ptcd?
+
+# IBM 4810 BSP cash drawer port
+ibmcd*	at pci? dev ? function ?
+gpio*	at ibmcd?
 
 # PCMCIA bus support
 pcmcia* at pcic? controller ? socket ?
@@ -1202,6 +1210,10 @@ uhidev* at uhub? port ? configuration ? interface ?
 ums*	at uhidev? reportid ?
 wsmouse* at ums? mux 0
 
+# USB Touchscreens
+uts*	at uhidev? reportid ?
+wsmouse* at uts? mux 0
+
 # USB eGalax touch-panel
 uep*	at uhub? port ?
 wsmouse* at uep? mux 0
@@ -1227,6 +1239,7 @@ uhid*	at uhidev? reportid ?
 
 # USB LCDs and USB-VGA adaptors
 udl*	at uhub? port ?		# DisplayLink DL-1x0/1x5
+wsdisplay* at udl?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
@@ -1279,13 +1292,19 @@ atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 otus*	at uhub? port ?		# Atheros AR9001U
 ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+run*	at uhub? port ?		# Ralink Technology RT(2[78]|30)00 802.11a/b/g/n
 upgt*	at uhub? port ?		# Intersil PrismGT
+urtw*	at uhub? port ?		# Realtek RTL8187/RTL8187B 802.11b/g
+urtwn*	at uhub? port ?		# Realtek RTL8188CU/RTL8192CU 802.11b/g/n
 zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
 
 # Serial adapters
+uark*	at uhub? port ?		# ArkMicroChips 3116 serial adapter
+ucom*	at uark? portno?
+
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
 

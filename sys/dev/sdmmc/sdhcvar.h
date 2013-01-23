@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.5.2.3 2013/01/16 05:33:32 yamt Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.5.2.4 2013/01/23 00:06:09 yamt Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -48,6 +48,7 @@ struct sdhc_softc {
 #define	SDHC_FLAG_RSP136_CRC	0x0400	/* Resp 136 with CRC and end-bit */
 #define	SDHC_FLAG_SINGLE_ONLY	0x0800	/* Single transfer only */
 #define	SDHC_FLAG_WAIT_RESET	0x1000	/* Wait for soft resets to start */
+#define	SDHC_FLAG_NO_HS_BIT	0x2000	/* Don't set SDHC_HIGH_SPEED bit */
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */
@@ -63,7 +64,7 @@ struct sdhc_softc {
 int	sdhc_host_found(struct sdhc_softc *, bus_space_tag_t,
 	    bus_space_handle_t, bus_size_t);
 int	sdhc_intr(void *);
-int	sdhc_detach(device_t, int);
+int	sdhc_detach(struct sdhc_softc *, int);
 bool	sdhc_suspend(device_t, const pmf_qual_t *);
 bool	sdhc_resume(device_t, const pmf_qual_t *);
 bool	sdhc_shutdown(device_t, int);

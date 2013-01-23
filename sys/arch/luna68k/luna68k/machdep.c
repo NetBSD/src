@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.84.2.2 2012/10/30 17:19:54 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.84.2.3 2013/01/23 00:05:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84.2.2 2012/10/30 17:19:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84.2.3 2013/01/23 00:05:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84.2.2 2012/10/30 17:19:54 yamt Exp $"
 #include <sys/kgdb.h>
 #endif
 #include <sys/boot_flag.h>
+#define ELFSIZE 32
+#include <sys/exec_elf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -116,6 +118,12 @@ void nmihand(struct frame);
 int  cpu_dumpsize(void);
 int  cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
 void cpu_init_kcore_hdr(void);
+
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+vsize_t symtab_size(vaddr_t);
+#endif
+extern char end[];
+extern void *esym;
 
 /*
  * Machine-independent crash dump header info.
@@ -225,18 +233,60 @@ consinit(void)
 	}
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	{
-		extern char end[];
-		extern int *esym;
-
-		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
-	}
+	ksyms_addsyms_elf((esym != NULL) ? 1 : 0, (void *)&end, esym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		cpu_Debugger();
 #endif
 }
+
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+
+/*
+ * Check and compute size of DDB symbols and strings.
+ *
+ * Note this function could be called from locore.s before MMU is turned on
+ * so we should avoid global variables and function calls.
+ */
+vsize_t
+symtab_size(vaddr_t hdr)
+{
+	int i;
+	Elf_Ehdr *ehdr;
+	Elf_Shdr *shp;
+	vaddr_t maxsym;
+
+	/*
+	 * Check the ELF headers.
+	 */
+
+	ehdr = (void *)hdr;
+	if (ehdr->e_ident[EI_MAG0] != ELFMAG0 ||
+	    ehdr->e_ident[EI_MAG1] != ELFMAG1 ||
+	    ehdr->e_ident[EI_MAG2] != ELFMAG2 ||
+	    ehdr->e_ident[EI_MAG3] != ELFMAG3 ||
+	    ehdr->e_ident[EI_CLASS] != ELFCLASS32) {
+		return 0;
+	}
+
+	/*
+	 * Find the end of the symbols and strings.
+	 */
+
+	maxsym = 0;
+	shp = (Elf_Shdr *)(hdr + ehdr->e_shoff);
+	for (i = 0; i < ehdr->e_shnum; i++) {
+		if (shp[i].sh_type != SHT_SYMTAB &&
+		    shp[i].sh_type != SHT_STRTAB) {
+			continue;
+		}
+		maxsym = max(maxsym, shp[i].sh_offset + shp[i].sh_size);
+	}
+
+	return maxsym;
+}
+#endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 
 /*
  * cpu_startup: allocate memory for variable-sized tables.
@@ -426,7 +476,6 @@ cpu_init_kcore_hdr(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	extern char end[];
 
 	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr)); 
 

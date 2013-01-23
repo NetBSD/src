@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.301.4.2 2012/05/23 10:07:56 yamt Exp $ */
+/* $NetBSD: com.c,v 1.301.4.3 2013/01/23 00:06:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.301.4.2 2012/05/23 10:07:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.301.4.3 2013/01/23 00:06:06 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -379,8 +379,13 @@ com_attach_subr(struct com_softc *sc)
 	u_int8_t lcr;
 #endif
 	const char *fifo_msg = NULL;
+	prop_dictionary_t	dict;
+	bool is_console = true;
 
 	aprint_naive("\n");
+
+	dict = device_properties(sc->sc_dev);
+	prop_dictionary_get_bool(dict, "is_console", &is_console);
 
 	callout_init(&sc->sc_diag_callout, 0);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
@@ -402,9 +407,13 @@ com_attach_subr(struct com_softc *sc)
 			    (u_long)comcons_info.regs.cr_iobase);
 		}
 
+		
 		/* Make sure the console is always "hardwired". */
 		delay(10000);			/* wait for output to finish */
-		SET(sc->sc_hwflags, COM_HW_CONSOLE);
+		if (is_console) {
+			SET(sc->sc_hwflags, COM_HW_CONSOLE);
+		}
+
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
 	}
 

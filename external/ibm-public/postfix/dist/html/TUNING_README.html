@@ -509,6 +509,13 @@ this parameter limits the size of the short-term, in-memory list
 of "dead" destinations. Destinations that don't fit the list are
 not added. </dd>
 
+<dt> <a href="postconf.5.html#transport_destination_concurrency_failed_cohort_limit"><i>transport</i>_destination_concurrency_failed_cohort_limit</a>
+</dt> <dd> Controls when a destination is considered "dead". This
+parameter is critical with a non-zero
+<a href="postconf.5.html#transport_destination_rate_delay"><i>transport</i>_destination_rate_delay</a>, with a reduced
+<a href="postconf.5.html#transport_destination_concurrency_limit"><i>transport</i>_destination_concurrency_limit</a>, or with
+a reduced <a href="postconf.5.html#initial_destination_concurrency">initial_destination_concurrency</a>.  </dd>
+
 </dl>
 
 </blockquote>
@@ -544,13 +551,13 @@ mail deliveries.  </p>
 
 <p> The <a href="postconf.5.html#default_process_limit">default_process_limit</a> configuration parameter gives direct
 control over how many daemon processes Postfix will run.  As of
-Postfix 2.0 the default limit is 100 smtp client processes, 100
-smtp server processes, and so on.  This may overwhelm systems with
+Postfix 2.0 the default limit is 100 SMTP client processes, 100
+SMTP server processes, and so on.  This may overwhelm systems with
 little memory, as well as networks with low bandwidth.  </p>
 
 <p> You can change the global process limit by specifying a
 non-default <a href="postconf.5.html#default_process_limit">default_process_limit</a> in the <a href="postconf.5.html">main.cf</a> file. For example,
-to run up to 10 smtp client processes, 10 smtp server processes,
+to run up to 10 SMTP client processes, 10 SMTP server processes,
 and so on: </p>
 
 <blockquote>

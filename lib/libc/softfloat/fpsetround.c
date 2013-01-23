@@ -1,4 +1,4 @@
-/* $NetBSD: fpsetround.c,v 1.3 2008/04/28 20:23:00 martin Exp $ */
+/* $NetBSD: fpsetround.c,v 1.3.4.1 2013/01/23 00:05:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetround.c,v 1.3 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: fpsetround.c,v 1.3.4.1 2013/01/23 00:05:23 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,9 +50,11 @@ __weak_alias(fpsetround,_fpsetround)
 fp_rnd
 fpsetround(fp_rnd rnd_dir)
 {
-	fp_rnd old;
-
-	old = float_rounding_mode;
+#ifdef set_float_rounding_mode
+	return set_float_rounding_mode(rnd_dir);
+#else
+	const fp_rnd old = float_rounding_mode;
 	float_rounding_mode = rnd_dir;
 	return old;
+#endif
 }

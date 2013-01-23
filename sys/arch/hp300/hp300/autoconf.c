@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.98.4.2 2012/10/30 17:19:34 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.98.4.3 2013/01/23 00:05:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98.4.2 2012/10/30 17:19:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98.4.3 2013/01/23 00:05:47 yamt Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -827,7 +827,10 @@ hp300_cninit(void)
 		goto find_kbd;
 #endif
 
+#if (NDVBOX + NGBOX + NRBOX + NTOPCAT + NDVBOX + NGBOX + NHYPER + NRBOX + \
+     NTOPCAT + NTVRX + NGENDIOFB) > 0
 find_kbd:
+#endif
 
 #if NDNKBD > 0
 	dnkbdcnattach(bst, FRODO_BASE + FRODO_APCI_OFFSET(0))

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_test.c,v 1.3.4.2 2012/10/30 19:00:48 yamt Exp $	*/
+/*	$NetBSD: npf_state_test.c,v 1.3.4.3 2013/01/23 00:06:44 yamt Exp $	*/
 
 /*
  * NPF state tracking test.
@@ -135,7 +135,7 @@ process_packet(const int i, npf_state_t *nst, bool *snew)
 {
 	const tcp_meta_t *p = &packet_sequence[i];
 	npf_cache_t npc = { .npc_info = 0 };
-	nbuf_t *nbuf;
+	nbuf_t nbuf;
 	int ret;
 
 	if (p->flags == 0) {
@@ -144,17 +144,18 @@ process_packet(const int i, npf_state_t *nst, bool *snew)
 		return true;
 	}
 
-	nbuf = (nbuf_t *)construct_packet(p);
-	ret = npf_cache_all(&npc, nbuf);
+	const void *dummy_ifp = (void *)0xdeadbeef;
+	nbuf_init(&nbuf, construct_packet(p), dummy_ifp);
+	ret = npf_cache_all(&npc, &nbuf);
 	KASSERT((ret & NPC_IPFRAG) == 0);
 
 	if (*snew) {
-		ret = npf_state_init(&npc, nbuf, nst);
+		ret = npf_state_init(&npc, &nbuf, nst);
 		KASSERT(ret == true);
 		*snew = false;
 	}
-	ret = npf_state_inspect(&npc, nbuf, nst, p->flags == OUT);
-	m_freem(nbuf);
+	ret = npf_state_inspect(&npc, &nbuf, nst, p->flags == OUT);
+	m_freem(nbuf.nb_mbuf);
 
 	return ret ? true : (p->flags & ERR) != 0;
 }

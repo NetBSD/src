@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.120.8.3 2012/10/30 17:22:07 yamt Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.120.8.4 2013/01/23 00:06:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.120.8.3 2012/10/30 17:22:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.120.8.4 2013/01/23 00:06:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2692,13 +2692,14 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 	ch->pipe = 0;
 	ch->sync_pipe = 0;
 	DPRINTF("create pipe to 0x%02x\n", endpt);
-	err = usbd_open_pipe(as->ifaceh, endpt, 0, &ch->pipe);
+	err = usbd_open_pipe(as->ifaceh, endpt, USBD_MPSAFE, &ch->pipe);
 	if (err)
 		return err;
 	if (as->edesc1 != NULL) {
 		endpt = as->edesc1->bEndpointAddress;
 		DPRINTF("create sync-pipe to 0x%02x\n", endpt);
-		err = usbd_open_pipe(as->ifaceh, endpt, 0, &ch->sync_pipe);
+		err = usbd_open_pipe(as->ifaceh, endpt, USBD_MPSAFE,
+		    &ch->sync_pipe);
 	}
 	return err;
 }

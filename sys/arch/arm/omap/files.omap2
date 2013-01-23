@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.8.4.2 2013/01/16 05:32:49 yamt Exp $
+#	$NetBSD: files.omap2,v 1.8.4.3 2013/01/23 00:05:42 yamt Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -47,6 +47,16 @@ file	arch/arm/omap/omap2430_intr.c		omap2 & !omapicu & !omap4
 device	omapgpio: gpiobus
 attach	omapgpio at obio with omap2gpio
 file	arch/arm/omap/omap2_gpio.c		(omap2 | omap3) & omapgpio
+
+# OMAP3 I2C controllers
+device	omapiic: i2cbus, i2cexec
+attach	omapiic at obio with omap3_i2c
+file	arch/arm/omap/omap3_i2c.c		omap3_i2c
+
+# OMAP3 system control module
+device	omapscm: sysmon_envsys
+attach	omapscm at obio with omap3_scm
+file	arch/arm/omap/omap3_scm.c		omap3_scm
 
 # OMAP dual-mode timer
 device	omapdmtimer
@@ -115,9 +125,17 @@ file	arch/arm/omap/obio_ohci.c		obioohci
 attach	ehci at obio with omap3_ehci
 file	arch/arm/omap/omap3_ehci.c		omap3_ehci
 
-device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons
+device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons, edid
 attach	omapfb at obio
 file	arch/arm/omap/omapfb.c			omapfb
+
+device	cpsw: ether, ifnet, arp, mii, mii_phy
+attach	cpsw at obio
+file	arch/arm/omap/if_cpsw.c			cpsw
+
+device 	omapdma
+attach 	omapdma at obio
+file	arch/arm/omap/omap3_sdma.c		omapdma needs-flag
 
 # these bus space methods are not bus-specific ...
 #

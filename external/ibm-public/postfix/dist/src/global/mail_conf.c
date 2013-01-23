@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf.c,v 1.1.1.2 2011/03/02 19:32:15 tron Exp $	*/
+/*	$NetBSD: mail_conf.c,v 1.1.1.2.4.1 2013/01/23 00:05:02 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -173,7 +173,6 @@ void    mail_conf_suck(void)
      * other kinds of trouble. Enter the configuration directory into the
      * default dictionary.
      */
-    dict_unknown_allowed = 1;
     if (var_config_dir)
 	myfree(var_config_dir);
     if ((config_dir = getenv(CONF_ENV_PATH)) == 0)
@@ -190,7 +189,8 @@ void    mail_conf_suck(void)
 	&& geteuid() != 0)			/* untrusted */
 	mail_conf_checkdir(var_config_dir);
     path = concatenate(var_config_dir, "/", "main.cf", (char *) 0);
-    dict_load_file(CONFIG_DICT, path);
+    if (dict_load_file_xt(CONFIG_DICT, path) == 0)
+	msg_fatal("open %s: %m", path);
     myfree(path);
 }
 

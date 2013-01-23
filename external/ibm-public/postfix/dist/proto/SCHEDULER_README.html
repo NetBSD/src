@@ -18,6 +18,15 @@ Queue Scheduler</h1>
 
 <hr>
 
+<h2> Disclaimer </h2>
+
+<p> Many of the <i>transport</i>-specific configuration parameters
+discussed in this document will not show up in "postconf" command
+output before Postfix version 2.9. This limitation applies to many
+parameters whose name is a combination of a master.cf service name
+such as "relay" and a built-in suffix such as
+"_destination_concurrency_limit". </p>
+
 <h2> Overview </h2>
 
 <p> The queue manager is by far the most complex part of the Postfix

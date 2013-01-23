@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.12.12.2 2012/10/30 17:18:55 yamt Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.12.12.3 2013/01/23 00:05:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.12.12.2 2012/10/30 17:18:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.12.12.3 2013/01/23 00:05:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,7 @@ mbr_label_read(dev_t dev,
 		goto out;
 	} else {
 		struct mbr_partition *ourmbrp = NULL;
+		int nfound = 0;
 
 		/* XXX "there has to be a better check than this." */
 		if (memcmp((char *)bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig))) {
@@ -145,9 +146,14 @@ mbr_label_read(dev_t dev,
 		}
 #endif
 		for (i = 0; i < MBR_PART_COUNT; i++, mbrp++) {
-
-			strncpy(lp->d_packname, "fictitious-MBR",
-			    sizeof lp->d_packname);
+			if (mbrp->mbrp_type == MBR_PTYPE_UNUSED)
+				continue;
+			if (le32toh(mbrp->mbrp_start) +
+			    le32toh(mbrp->mbrp_size) > lp->d_secperunit) {
+				/* This mbr doesn't look good.... */
+				continue;
+			}
+			nfound++;
 
 			/* Install in partition e, f, g, or h. */
 			pp = &lp->d_partitions['e' - 'a' + i];
@@ -175,7 +181,11 @@ mbr_label_read(dev_t dev,
 #endif
 			}
 		}
-		lp->d_npartitions = 'e' - 'a' + i;
+		if (nfound > 0) {
+			lp->d_npartitions = 'e' - 'a' + i;
+			strncpy(lp->d_packname, "fictitious-MBR",
+			    sizeof lp->d_packname);
+		}
 	}
 
 	*cylp = cyl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.9.4.1 2012/10/30 17:19:22 yamt Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.9.4.2 2013/01/23 00:05:46 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -66,7 +66,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: gumstix_start.S,v 1.9.4.1 2012/10/30 17:19:22 yamt Exp $")
+RCSID("$NetBSD: gumstix_start.S,v 1.9.4.2 2013/01/23 00:05:46 yamt Exp $")
 
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
@@ -179,8 +179,8 @@ _C_LABEL(gumstix_start):
 	cmp	r1, #0
 	bne	4b
 
-	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
 	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
+	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
 
 	/*
 	 * Set the Domain Access register.  Very important!

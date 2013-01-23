@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd_peer.c,v 1.1.1.2 2011/03/02 19:32:30 tron Exp $	*/
+/*	$NetBSD: qmqpd_peer.c,v 1.1.1.2.4.1 2013/01/23 00:05:11 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -248,13 +248,13 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 	    aierr = hostname_to_sockaddr_pf(state->name, state->addr_family,
 					    (char *) 0, 0, &res0);
 	    if (aierr) {
-		msg_warn("%s: hostname %s verification failed: %s",
-			 state->addr, state->name, MAI_STRERROR(aierr));
+		msg_warn("hostname %s does not resolve to address %s: %s",
+			 state->name, state->addr, MAI_STRERROR(aierr));
 		REJECT_PEER_NAME(state);
 	    } else {
 		for (res = res0; /* void */ ; res = res->ai_next) {
 		    if (res == 0) {
-			msg_warn("%s: address not listed for hostname %s",
+			msg_warn("hostname %s does not resolve to address %s",
 				 state->addr, state->name);
 			REJECT_PEER_NAME(state);
 			break;

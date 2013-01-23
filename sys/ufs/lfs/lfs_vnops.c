@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.238.2.4 2012/05/23 10:08:19 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.238.2.5 2013/01/23 00:06:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.238.2.4 2012/05/23 10:08:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.238.2.5 2013/01/23 00:06:34 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1045,7 +1045,7 @@ lfs_close(void *v)
 	struct inode *ip = VTOI(vp);
 	struct lfs *fs = ip->i_lfs;
 
-	if ((ip->i_number == ROOTINO || ip->i_number == LFS_IFILE_INUM) &&
+	if ((ip->i_number == UFS_ROOTINO || ip->i_number == LFS_IFILE_INUM) &&
 	    fs->lfs_stoplwp == curlwp) {
 		mutex_enter(&lfs_lock);
 		log(LOG_NOTICE, "lfs_close: releasing log wrap control\n");
@@ -1540,7 +1540,7 @@ lfs_fcntl(void *v)
 	daddr_t off;
 
 	/* Only respect LFS fcntls on fs root or Ifile */
-	if (VTOI(ap->a_vp)->i_number != ROOTINO &&
+	if (VTOI(ap->a_vp)->i_number != UFS_ROOTINO &&
 	    VTOI(ap->a_vp)->i_number != LFS_IFILE_INUM) {
 		return ufs_fcntl(v);
 	}
@@ -2537,7 +2537,7 @@ lfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 
 	olbn = lblkno(fs, ip->i_size);
 	nlbn = lblkno(fs, size);
-	if (!(flags & GOP_SIZE_MEM) && nlbn < NDADDR && olbn <= nlbn) {
+	if (!(flags & GOP_SIZE_MEM) && nlbn < UFS_NDADDR && olbn <= nlbn) {
 		*eobp = fragroundup(fs, size);
 	} else {
 		*eobp = blkroundup(fs, size);

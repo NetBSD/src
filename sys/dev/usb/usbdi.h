@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.79.12.3 2012/10/30 17:22:11 yamt Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.79.12.4 2013/01/23 00:06:16 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -71,6 +71,7 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 
 /* Open flags */
 #define USBD_EXCLUSIVE_USE	0x01
+#define USBD_MPSAFE		0x80
 
 /* Use default (specified by ep. desc.) interval on interrupt pipe */
 #define USBD_DEFAULT_INTERVAL	(-1)
@@ -202,15 +203,17 @@ struct usb_task {
 	void (*fun)(void *);
 	void *arg;
 	int queue;
+	int flags;
 };
 #define	USB_TASKQ_HC		0
 #define	USB_TASKQ_DRIVER	1
 #define	USB_NUM_TASKQS		2
 #define	USB_TASKQ_NAMES		{"usbtask-hc", "usbtask-dr"}
+#define	USB_TASKQ_MPSAFE	0x80
 
 void usb_add_task(usbd_device_handle, struct usb_task *, int);
 void usb_rem_task(usbd_device_handle, struct usb_task *);
-#define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->queue = -1)
+#define usb_init_task(t, f, a, fl) ((t)->fun = (f), (t)->arg = (a), (t)->queue = -1, (t)->flags = (fl))
 
 struct usb_devno {
 	u_int16_t ud_vendor;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.2.4.2 2012/10/30 17:18:58 yamt Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.2.4.3 2013/01/23 00:05:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.2.4.2 2012/10/30 17:18:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.2.4.3 2013/01/23 00:05:41 yamt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -78,10 +78,10 @@ struct bcm2835icu_softc {
 };
 
 struct bcm2835icu_softc *bcmicu_sc;
-	
+
 #define read_bcm2835reg(o)	\
 	bus_space_read_4(bcmicu_sc->sc_iot, bcmicu_sc->sc_ioh, (o))
-	
+
 #define write_bcm2835reg(o, v)	\
 	bus_space_write_4(bcmicu_sc->sc_iot, bcmicu_sc->sc_ioh, (o), (v))
 
@@ -89,7 +89,7 @@ struct bcm2835icu_softc *bcmicu_sc;
 #define bcm2835_barrier() \
 	bus_space_barrier(bcmicu_sc->sc_iot, bcmicu_sc->sc_ioh, 0, \
 	    BCM2835_ARMICU_SIZE, BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE)
-	
+
 static const char * const bcm2835_sources[BCM2835_NIRQ] = {
 	"(unused  0)",	"(unused  1)",	"(unused  2)",	"timer3",
 	"(unused  4)",	"(unused  5)",	"(unused  6)",	"jpeg",
@@ -212,24 +212,24 @@ bcm2835_pic_find_pending_irqs(struct pic_softc *pic)
 	if (armirq) {
 		ipl |= pic_mark_pending_sources(pic, BCM2835_INT_BASICBASE,
 		    armirq);
-		
+
 	}
 
 	if (gpu0irq || (bpending & BCM2835_INTBIT_PENDING1)) {
 		uint32_t pending1;
-		
+
 		pending1 = read_bcm2835reg(BCM2835_INTC_IRQ1PENDING);
 		ipl |= pic_mark_pending_sources(pic, BCM2835_INT_GPU0BASE,
 		    pending1);
 	}
 	if (gpu1irq || (bpending & BCM2835_INTBIT_PENDING2)) {
 		uint32_t pending2;
-		
+
 		pending2 = read_bcm2835reg(BCM2835_INTC_IRQ2PENDING);
 		ipl |= pic_mark_pending_sources(pic, BCM2835_INT_GPU1BASE,
 		    pending2);
 	}
-		
+
 	return ipl;
 }
 

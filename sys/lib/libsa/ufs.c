@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.55.2.2 2012/05/23 10:08:13 yamt Exp $	*/
+/*	$NetBSD: ufs.c,v 1.55.2.3 2013/01/23 00:06:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -324,33 +324,33 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 	/*
 	 * Index structure of an inode:
 	 *
-	 * di_db[0..NDADDR-1]	hold block numbers for blocks
-	 *			0..NDADDR-1
+	 * di_db[0..UFS_NDADDR-1]	hold block numbers for blocks
+	 *			0..UFS_NDADDR-1
 	 *
 	 * di_ib[0]		index block 0 is the single indirect block
 	 *			holds block numbers for blocks
-	 *			NDADDR .. NDADDR + NINDIR(fs)-1
+	 *			UFS_NDADDR .. UFS_NDADDR + NINDIR(fs)-1
 	 *
 	 * di_ib[1]		index block 1 is the double indirect block
 	 *			holds block numbers for INDEX blocks for blocks
-	 *			NDADDR + NINDIR(fs) ..
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2 - 1
+	 *			UFS_NDADDR + NINDIR(fs) ..
+	 *			UFS_NDADDR + NINDIR(fs) + NINDIR(fs)**2 - 1
 	 *
 	 * di_ib[2]		index block 2 is the triple indirect block
 	 *			holds block numbers for double-indirect
 	 *			blocks for blocks
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2 ..
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2
+	 *			UFS_NDADDR + NINDIR(fs) + NINDIR(fs)**2 ..
+	 *			UFS_NDADDR + NINDIR(fs) + NINDIR(fs)**2
 	 *				+ NINDIR(fs)**3 - 1
 	 */
 
-	if (file_block < NDADDR) {
+	if (file_block < UFS_NDADDR) {
 		/* Direct block. */
 		*disk_block_p = fp->f_di.di_db[file_block];
 		return 0;
 	}
 
-	file_block -= NDADDR;
+	file_block -= UFS_NDADDR;
 
 	ind_cache = file_block >> LN2_IND_CACHE_SZ;
 	if (ind_cache == fp->f_ind_cache_block) {
@@ -362,7 +362,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 		level += fp->f_nishift;
 		if (file_block < (indp_t)1 << level)
 			break;
-		if (level > NIADDR * fp->f_nishift)
+		if (level > UFS_NIADDR * fp->f_nishift)
 			/* Block number too high */
 			return EFBIG;
 		file_block -= (indp_t)1 << level;
@@ -641,7 +641,7 @@ ufs_open(const char *path, struct open_file *f)
 
 	/* alloc a block sized buffer used for all fs transfers */
 	fp->f_buf = alloc(fs->fs_bsize);
-	inumber = ROOTINO;
+	inumber = UFS_ROOTINO;
 	if ((rc = read_inode(inumber, f)) != 0)
 		goto out;
 
@@ -740,7 +740,7 @@ ufs_open(const char *path, struct open_file *f)
 			if (*cp != '/')
 				inumber = parent_inumber;
 			else
-				inumber = (ino32_t)ROOTINO;
+				inumber = (ino32_t)UFS_ROOTINO;
 
 			if ((rc = read_inode(inumber, f)) != 0)
 				goto out;

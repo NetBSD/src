@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.884.2.5 2013/01/16 05:26:12 yamt Exp $
+#	$NetBSD: 3RDPARTY,v 1.884.2.6 2013/01/23 00:04:28 yamt Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -300,8 +300,8 @@ No changes for NetBSD integration - just import the new distribution on
 top of the current tree.
 
 Package:	dhcpcd
-Version:	5.6.4
-Current Vers:	5.6.4
+Version:	5.6.6
+Current Vers:	5.6.6
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -340,8 +340,8 @@ Notes:
 Please use "expat" as the vendor tag for CVS imports.
 
 Package:	file
-Version:	5.11
-Current Vers:	5.11
+Version:	5.12
+Current Vers:	5.12
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:	http://www.darwinsys.com/file/
@@ -742,8 +742,8 @@ Notes:
 Delete the otherOS directory before importing.
 
 Package:	nawk
-Version:	2010-05-23
-Current Vers:	2011-08-10
+Version:	2012-12-20
+Current Vers:	2012-12-20
 Maintainer:	Brian Kernighan <bwk@princeton.edu>
 Archive Site:	http://www.cs.princeton.edu/~bwk/btl.mirror/
 Home Page:	http://www.cs.princeton.edu/~bwk/btl.mirror/
@@ -977,9 +977,9 @@ The authoritative version is in pkgsrc/pkgtools/pkg_install.
 Package:	ping
 Version:	980911
 Current Vers:	980911
-Maintainer:	Vernon Schryver <vjs@rhyolite.com>
-Archive Site:	ftp://ftp.rhyolite.com/src/
-Home Page:	http://www.rhyolite.com/src/
+Maintainer:	Mike Muuss
+Archive Site:	
+Home Page:	http://ftp.arl.mil/mike/ping.html
 Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
@@ -987,11 +987,12 @@ Location:	sbin/ping
 Notes:
 We use err() and friends. We have changes for snprintf, extra
 formatting in man pages, disallowing flood pinging, alignment fixes,
-and more.
+and more. Vern's ping is gone. We are too different from everyone else
+now to do a new import.
 
 Package:	Postfix
-Version:	2.8.12
-Current Vers:	2.8.12/2.9.4
+Version:	2.9.5
+Current Vers:	2.9.5
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
@@ -1041,8 +1042,8 @@ Notes:
 Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
 
 Package:	root.cache
-Version:	2011060800 (Jun 8, 2011)
-Current Vers:	2011060800 (Jun 8, 2011)
+Version:	2013010300 (Jan 3, 2013)
+Current Vers:	2013010300 (Jan 3, 2013)
 Maintainer:	InterNIC
 Archive Site:	ftp://ftp.internic.net/domain/named.root
 Home Page:	ftp://ftp.internic.net/domain/named.root
@@ -1099,7 +1100,7 @@ original.
 
 Package:	sqlite
 Version:	pre-3.6.9 snapshot
-Current Vers:	3.7.13
+Current Vers:	3.7.15
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
 Responsible:	joerg
@@ -1388,3 +1389,17 @@ License:	CPL
 Location:	crypto/external/cpl/tpm-tools/dist
 Notes:
 		Need to feed back local changes
+
+Package:	libdwarf
+Version:	FreeBSD-2013-01-17
+Current Vers:	FreeBSD-XXXX-YY-ZZ
+Maintainer:	John Birrell <jb@freebsd.org>
+Archive Site:	none
+Home Page:	none
+Mailing List:	none
+Responsible:	christos
+License:	BSD-like (2-clause)
+Location:	sys/external/bsd/libdwarf/dist
+Notes:
+		Run prepare-import.sh; next time use svn id.
+		Ask jkoshy who the upstream will be.

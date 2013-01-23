@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdireg.h,v 1.6.146.1 2012/10/30 17:22:08 yamt Exp $ */
+/*	$NetBSD: uftdireg.h,v 1.6.146.2 2013/01/23 00:06:13 yamt Exp $ */
 
 /*
  * Definitions for the FTDI USB Single Port Serial Converter -
@@ -17,14 +17,15 @@
 /* Modified by Lennart Augustsson */
 
 /* Vendor Request Interface */
-#define FTDI_SIO_RESET 		0 /* Reset the port */
-#define FTDI_SIO_MODEM_CTRL 	1 /* Set the modem control register */
-#define FTDI_SIO_SET_FLOW_CTRL	2 /* Set flow control register */
-#define FTDI_SIO_SET_BAUD_RATE	3 /* Set baud rate */
-#define FTDI_SIO_SET_DATA	4 /* Set the data characteristics of the port */
-#define FTDI_SIO_GET_STATUS	5 /* Retrieve current value of status reg */
-#define FTDI_SIO_SET_EVENT_CHAR	6 /* Set the event character */
-#define FTDI_SIO_SET_ERROR_CHAR	7 /* Set the error character */
+#define FTDI_SIO_RESET 		0   /* Reset the port */
+#define FTDI_SIO_MODEM_CTRL 	1   /* Set the modem control register */
+#define FTDI_SIO_SET_FLOW_CTRL	2   /* Set flow control register */
+#define FTDI_SIO_SET_BAUD_RATE	3   /* Set baud rate */
+#define FTDI_SIO_SET_DATA	4   /* Set the data characteristics of the port */
+#define FTDI_SIO_GET_STATUS	5   /* Retrieve current value of status reg */
+#define FTDI_SIO_SET_EVENT_CHAR	6   /* Set the event character */
+#define FTDI_SIO_SET_ERROR_CHAR	7   /* Set the error character */
+#define FTDI_SIO_SET_BITMODE    11  /* Set FIFO/Serial mode */
 
 /* Port Identifier Table */
 #define FTDI_PIT_DEFAULT 	0 /* SIOA */
@@ -345,3 +346,24 @@ enum {
 #define FTDI_GET_LSR(p) ((p)[1])
 #define FTDI_LSR_MASK (~0x60) /* interesting bits */
 #define FTDI_OUT_TAG(len, port) (((len) << 2) | (port))
+
+/*
+ * BmRequestType:  0100 0000B
+ * bRequest:       FTDI_SIO_SET_BITMODE
+ * wValue:         Bitmode value - see below
+ * wIndex:         Port
+ * wLength:        0
+ * Data:           None
+ *
+ * Not all modes are available on all chips
+ */
+/* FTDI_SIO_SET_BITMODE */
+#define FTDI_BITMODE_RESET   0x00 /* UART mode */
+#define FTDI_BITMODE_BITBANG 0x01 /* asynchrounous bitbang mode */
+#define FTDI_BITMODE_MPSSE   0x02 /* MPSSE mode */
+#define FTDI_BITMODE_SYNCBB  0x04 /* synchronous bitbang mode */
+#define FTDI_BITMODE_MCU     0x08 /* MCU Host Bus Emulation mode */
+#define FTDI_BITMODE_OPTO    0x10 /* Fast Opto-Isolated Serial Interface Mode */
+#define FTDI_BITMODE_CBUS    0x20 /* Bitbang on CBUS pins */
+#define FTDI_BITMODE_SYNCFF  0x40 /* Synchronous FIFO mode */
+

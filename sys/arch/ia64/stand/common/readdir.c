@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.3 2009/07/20 04:59:03 kiyohara Exp $	*/
+/*	$NetBSD: readdir.c,v 1.3.12.1 2013/01/23 00:05:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@freebsd.org>
@@ -35,7 +35,10 @@
 #include <sys/param.h>
 #include <sys/dirent.h>
 
+#include <efi/libefi/efifsdev.h>
 #include <bootstrap.h>
+
+int skifs_readdir(struct open_file *f, struct dirent *d);
 
 struct dirent *
 readdirfd(int fd)

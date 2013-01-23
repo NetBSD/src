@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.224.2.3 2013/01/16 05:32:43 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.224.2.4 2013/01/23 00:05:40 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224.2.3 2013/01/16 05:32:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224.2.4 2013/01/23 00:05:40 yamt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -1087,8 +1087,11 @@ pmap_modify_pv(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va,
 		}
 	}
 #ifdef PMAP_CACHE_VIPT
-	if (md->urw_mappings + md->krw_mappings == 0)
+	if (md->urw_mappings + md->krw_mappings == 0) {
 		md->pvh_attrs &= ~PVF_WRITE;
+	} else {
+		md->pvh_attrs |= PVF_WRITE;
+	}
 	/*
 	 * We have two cases here: the first is from enter_pv (new exec
 	 * page), the second is a combined pmap_remove_pv/pmap_enter_pv.
@@ -2224,8 +2227,11 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 					md->uro_mappings++;
 				}
 #ifdef PMAP_CACHE_VIPT
-				if (md->urw_mappings + md->krw_mappings == 0)
+				if (md->urw_mappings + md->krw_mappings == 0) {
 					md->pvh_attrs &= ~PVF_WRITE;
+				} else {
+					KASSERT(md->pvh_attrs & PVF_WRITE);
+				}
 				if (want_syncicache)
 					need_syncicache = true;
 				need_vac_me_harder = true;
@@ -4043,6 +4049,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	 */
 	if (rv == 0 && pm->pm_l1->l1_domain_use_count == 1) {
 		extern int last_fault_code;
+		extern int kernel_debug;
 		printf("fixup: pm %p, va 0x%lx, ftype %d - nothing to do!\n",
 		    pm, va, ftype);
 		printf("fixup: l2 %p, l2b %p, ptep %p, pl1pd %p\n",
@@ -4050,7 +4057,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		printf("fixup: pte 0x%x, l1pd 0x%x, last code 0x%x\n",
 		    pte, l1pd, last_fault_code);
 #ifdef DDB
-		Debugger();
+		if (kernel_debug & 2)
+			Debugger();
 #endif
 	}
 #endif
@@ -6921,11 +6929,13 @@ arm_pmap_alloc_poolpage(int flags)
 {
 	/*
 	 * On some systems, only some pages may be "coherent" for dma and we
-	 * want to use those for pool pages (think mbufs).
+	 * want to prefer those for pool pages (think mbufs) but fallback to
+	 * any page if none is available.
 	 */
-	if (arm_poolpage_vmfreelist != VM_FREELIST_DEFAULT)
+	if (arm_poolpage_vmfreelist != VM_FREELIST_DEFAULT) {
 		return uvm_pagealloc_strat(NULL, 0, NULL, flags,
-		    UVM_PGA_STRAT_ONLY, arm_poolpage_vmfreelist);
+		    UVM_PGA_STRAT_FALLBACK, arm_poolpage_vmfreelist);
+	}
 
 	return uvm_pagealloc(NULL, 0, NULL, flags);
 }

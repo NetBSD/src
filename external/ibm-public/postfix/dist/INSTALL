@@ -223,7 +223,86 @@ Parameters whose defaults can be specified in this way are:
 Note: the data_directory parameter (for caches and pseudo-random numbers) was
 introduced with Postfix version 2.5.
 
-44..55 -- SSuuppppoorrtt ffoorr tthhoouussaannddss ooff pprroocceesssseess
+44..55 -- OOvveerrrriiddiinngg ootthheerr ccoommppiillee--ttiimmee ffeeaattuurreess
+
+The general method to override Postfix compile-time features is as follows:
+
+    % make makefiles name=value name=value...
+    % make
+
+The following is an extensive list of names and values.
+
+ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+|NNaammee//VVaalluuee                    |DDeessccrriippttiioonn                                   |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+|AUXLIBS="object_library..."   |Specifies one or more non-default object      |
+|                              |libraries.                                    |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+|CC=compiler_command           |Specifies a non-default compiler. On many     |
+|                              |systems, the default is gcc.                  |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+|                              |Specifies non-default compiler arguments, for |
+|CCARGS="compiler_arguments..."|example, a non-default include directory. The |
+|                              |following directives turn off Postfix features|
+|                              |at compile time:                              |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+||                             |Do not build with Berkeley DB support. By     |
+||-DNO_DB                      |default, Berkeley DB support is compiled in on|
+||                             |platforms that are known to support this      |
+||                             |feature.                                      |
+|_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+||                             |Do not build with Solaris /dev/poll support.  |
+||-DNO_DEVPOLL                 |By default, /dev/poll support is compiled in  |
+||                             |on Solaris versions that are known to support |
+||                             |this feature.                                 |
+|_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+||                             |Do not build with Linux EPOLL support. By     |
+||-DNO_EPOLL                   |default, EPOLL support is compiled in on      |
+||                             |platforms that are known to support this      |
+||                             |feature.                                      |
+|_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+||                             |Do not build with IPv6 support. By default,   |
+||                             |IPv6 support is compiled in on platforms that |
+||-DNO_IPV6                    |are known to have IPv6 support. Note: this    |
+||                             |directive is for debugging and testing only.  |
+||                             |It is not guaranteed to work on all platforms.|
+|_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+||                             |Do not build with FreeBSD / NetBSD / OpenBSD /|
+||-DNO_KQUEUE                  |MacOSX KQUEUE support. By default, KQUEUE     |
+||                             |support is compiled in on platforms that are  |
+||                             |known to support it.                          |
+|_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+||                             |Do not build with NIS or NISPLUS support. NIS |
+||-DNO_NIS                     |is not available on some recent Linux or      |
+||                             |Solaris distributions.                        |
+|_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+||                             |Do not build with PCRE support. By default,   |
+||-DNO_PCRE                    |PCRE support is compiled in when the pcre-    |
+||                             |config utility is installed.                  |
+|_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+||                             |Disable support for POSIX getpwnam_r/         |
+||-DNO_POSIX_GETPW_R           |getpwuid_r. By default Postfix uses these     |
+||                             |where they are known to be available.         |
+|_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+||                             |Use setjmp()/longjmp() instead of sigsetjmp()/|
+||-DNO_SIGSETJMP               |siglongjmp(). By default, Postfix uses        |
+||                             |sigsetjmp()/siglongjmp() when they are known  |
+||                             |to be available.                              |
+|_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+|                              |Specifies a non-default compiler debugging    |
+|DEBUG=debug_level             |level. The default is -g. Specify DEBUG= to   |
+|                              |turn off debugging.                           |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+|                              |Specifies a non-default optimization level.   |
+|OPT=optimization_level        |The default is -O. Specify OPT= to turn off   |
+|                              |optimization.                                 |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+|                              |Specifies non-default gcc compiler warning    |
+|WARN="warning_flags..."       |options for use when "make" is invoked in a   |
+|                              |source subdirectory only.                     |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+
+44..66 -- SSuuppppoorrtt ffoorr tthhoouussaannddss ooff pprroocceesssseess
 
 The number of connections that Postfix can manage simultaneously is limited by
 the number of processes that it can run. This number in turn is limited by the
@@ -255,7 +334,7 @@ But wait, there is more: none of this will work unless the operating system is
 configured to handle thousands of connections. See the TUNING_README guide for
 examples of how to increase the number of open sockets or files.
 
-44..66 -- CCoommppiilliinngg PPoossttffiixx,, aatt llaasstt
+44..77 -- CCoommppiilliinngg PPoossttffiixx,, aatt llaasstt
 
 If the command
 

@@ -28,6 +28,7 @@
 #define	_SYS_FS_ZFS_H
 
 #include <sys/time.h>
+#include <sys/ioctl.h>
 
 #ifdef	__cplusplus
 extern "C" {

@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.105.2.3 2012/10/30 17:21:20 yamt Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.105.2.4 2013/01/23 00:06:08 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.109 2012/09/17 11:42:38 tsutsui Exp
+ *	NetBSD: miidevs,v 1.111 2013/01/12 21:43:13 jakllsch Exp
  */
 
 /*-
@@ -81,6 +81,7 @@
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
+#define	MII_OUI_SMSC	0x00800f	/* SMSC */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
 #define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
 #define	MII_OUI_XAQTI	0x00e0ae	/* XaQti Corp. */
@@ -416,6 +417,12 @@
 /* Silicon Integrated Systems PHYs */
 #define	MII_MODEL_SIS_900	0x0000
 #define	MII_STR_SIS_900	"SiS 900 10/100 media interface"
+
+/* SMSC PHYs */
+#define	MII_MODEL_SMSC_LAN8700	0x000c
+#define	MII_STR_SMSC_LAN8700	"SMSC LAN8700 10/100 Ethernet Transceiver"
+#define	MII_MODEL_SMSC_LAN8710_LAN8720	0x000f
+#define	MII_STR_SMSC_LAN8710_LAN8720	"SMSC LAN8710/LAN8720 10/100 Ethernet Transceiver"
 
 /* Texas Instruments PHYs */
 #define	MII_MODEL_TI_TLAN10T	0x0001

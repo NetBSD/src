@@ -1,0 +1,2 @@
+# $NetBSD: md.acorn32,v 1.2.2.2 2013/01/23 00:04:19 yamt Exp $
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug

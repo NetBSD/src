@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1621.2.5 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1621.2.6 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -154,5 +154,27 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	arm: enable direct-mapped poolpage support.  [matt 20121211]
 	arm: enable VFP-based pmap page zero/copy ops.  [matt 20121211]
 	openssh: Import 6.1. [christos 20121212]
-
-
+	ptcd(4): Add a driver for the Protech PS3100 cash drawer port.
+		[mbalmer 20121216]
+	ibmcd(4): Add a driver for the IBM 4810 BSP cash drawer port.
+		[mbalmer 20121217]
+	postfix(1): Import version 2.8.13 [tron 20121218]
+	dhcpcd(8): Import dhcpcd-5.6.6 [roy 20121219]
+	arm: support NEON in userland [matt 20121226]
+	kernel: allow MD kernel code to use PCUs [matt 20121226]
+	units(1): add -l and -L options.  [apb 20130101]
+	postfix(1): Import version 2.9.5 [tron 20130102]
+	file(1): upgraded to 5.12 [christos 20130103]
+	luna68k: Add native bootloader. Based on 4.4BSD-Lite2/luna68k
+		"Stinger" loader. [tsutsui 20130105]
+	kernel: Add dotg(4), a driver for Synopsys DesignWare USB OTG,
+		ported from FreeBSD. [skrll 20130109]
+	kernel: Add usmsc(4), a driver for SMSC LAN95xx USB LAN devices, 
+		ported from OpenBSD. [skrll 20130109]
+	hp300: Add support for sti(4) framebuffer at sgc bus on some 425t.
+		Ported by kiyohara@ from OpenBSD. [tsutsui 20130111]
+	arm: kill userland FPA support, replace with VFP. [matt 20130111]
+	luna68k: Add netboot support. [tsutsui 20130113]
+	luna68k: Fix bootloader to make secondary SPC SCSI on LUNA-II work
+		properly.  [tsutsui 20130114]
+	libdwarf: Sync with FreeBSD [christos 20130117]

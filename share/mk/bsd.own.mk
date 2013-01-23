@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.691.2.3 2013/01/16 05:32:38 yamt Exp $
+#	$NetBSD: bsd.own.mk,v 1.691.2.4 2013/01/23 00:05:36 yamt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -462,6 +462,11 @@ CXX=		${TOOL_CXX.${ACTIVE_CXX}}
 FC=		${TOOL_FC.${ACTIVE_FC}}
 OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
 
+.if exists(/usr/bin/${TOOL_CTFCONVERT}) || exists(${TOOL_CTFCONVERT})
+CTFCONVERT=	${TOOL_CTFCONVERT}
+CTFMERGE=	${TOOL_CTFMERGE}
+.endif
+
 # OBJCOPY flags to create a.out binaries for old firmware
 # shared among src/distrib and ${MACHINE}/conf/Makefile.${MACHINE}.inc
 .if ${MACHINE_CPU} == "arm"
@@ -788,10 +793,11 @@ MKCOMPATMODULES:=	no
 
 #
 # Default mips64 to softfloat now.
+# arm is always softfloat
 # emips is always softfloat.
 #
 .if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" || \
-    ${MACHINE} == "emips"
+    ${MACHINE_CPU} == "arm" || ${MACHINE} == "emips"
 MKSOFTFLOAT?=	yes
 .endif
 

@@ -83,7 +83,7 @@
 #	Specify \fIunix:\fR for UNIX domain sockets, \fIinet:\fR for TCP
 #	connections (default).  Example:
 # .nf
-#	    hosts = host1.some.domain host2.some.domain
+#	    hosts = host1.some.domain host2.some.domain:port
 #	    hosts = unix:/file/name
 # .fi
 #

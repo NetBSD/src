@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2009/10/21 01:07:46 snj Exp $	*/
+/*	$NetBSD: extern.h,v 1.11.6.1 2013/01/23 00:05:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -34,3 +34,15 @@ int	list_fs_types(void);
 
 extern	char	specname[];
 extern	int	 Cflag;
+
+#ifdef HAVE_NBTOOL_CONFIG_H
+static int
+dk_ioctl(int f, void *arg)
+{
+	errno = ENOTTY;
+	return -1;
+}
+# define dk_ioctl(f, cmd, arg) dk_ioctl(f, arg)
+#else
+# define dk_ioctl(f, cmd, arg) ioctl(f, cmd, arg)
+#endif /* HAVE_NBTOOL_CONFIG_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.5.4.2 2012/10/30 17:18:59 yamt Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.5.4.3 2013/01/23 00:05:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.5.4.2 2012/10/30 17:18:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.5.4.3 2013/01/23 00:05:41 yamt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -60,7 +60,6 @@ static bool obio_attached;
 static int	obio_match(device_t, cfdata_t, void *);
 static void	obio_attach(device_t, device_t, void *);
 static int	obio_print(void *, const char *);
-static int	obio_search(device_t, cfdata_t, const int *, void *);
 
 /* attach structures */
 CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
@@ -77,7 +76,7 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_size = BCM2835_ARMICU_SIZE,
 		.ad_intr = -1,
 	},
-        {
+	{
 		/* Mailbox */
 		.ad_name = "bcmmbox",
 		.ad_addr = BCM2835_ARMMBOX_BASE,
@@ -106,11 +105,43 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_intr = BCM2835_INT_UART0,
 	},
 	{
+		/* Framebuffer */
+		.ad_name = "fb",
+		.ad_addr = 0,
+		.ad_size = 0,
+		.ad_intr = -1,
+	},
+	{
 		/* eMMC interface */
 		.ad_name = "emmc",
 		.ad_addr = BCM2835_EMMC_BASE,
 		.ad_size = BCM2835_EMMC_SIZE,
 		.ad_intr = BCM2835_INT_EMMC,
+	},
+	{
+		/* DesignWare_OTG USB controller */
+		.ad_name = "dotg",
+		.ad_addr = BCM2835_USB_BASE,
+		.ad_size = BCM2835_USB_SIZE,
+		.ad_intr = BCM2835_INT_USB,
+	},
+	{
+		.ad_name = "bcmspi",
+		.ad_addr = BCM2835_SPI0_BASE,
+		.ad_size = BCM2835_SPI0_SIZE,
+		.ad_intr = BCM2835_INT_SPI0,
+	},
+	{
+		.ad_name = "bcmbsc",
+		.ad_addr = BCM2835_BSC0_BASE,
+		.ad_size = BCM2835_BSC_SIZE,
+		.ad_intr = BCM2835_INT_BSC,
+	},
+	{
+		.ad_name = "bcmbsc",
+		.ad_addr = BCM2835_BSC1_BASE,
+		.ad_size = BCM2835_BSC_SIZE,
+		.ad_intr = BCM2835_INT_BSC,
 	},
 	{
 		/* Terminator */
@@ -132,6 +163,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	struct obio_softc *sc = device_private(self);
 	const struct ambadev_locators *ad = bcm2835_ambadev_locs;
 	struct amba_attach_args aaa;
+	int locs[OBIOCF_NLOCS];
 
 	if (obio_attached)
 		return;
@@ -162,8 +194,12 @@ obio_attach(device_t parent, device_t self, void *aux)
 		aaa.aaa_intr = ad->ad_intr;
 		/* ad->ad_instance; */
 
-		config_found_sm_loc(self, "obio", NULL, &aaa, obio_print, 
-		    obio_search);
+		locs[OBIOCF_ADDR] = ad->ad_addr;
+		locs[OBIOCF_SIZE] = ad->ad_size;
+		locs[OBIOCF_INTR] = ad->ad_intr;
+
+		config_found_sm_loc(self, "obio", locs, &aaa, obio_print,
+		    config_stdsubmatch);
 	}
 
 	return;
@@ -193,11 +229,4 @@ obio_print(void *aux, const char *name)
 	}
 
 	return UNCONF;
-}
-
-static int
-obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
-{
-
-	return config_match(parent, cf, aux);
 }

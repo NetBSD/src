@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_rb.h,v 1.2.4.3 2012/10/30 17:22:20 yamt Exp $	*/
+/*	$NetBSD: ipf_rb.h,v 1.2.4.4 2013/01/23 00:06:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -6,12 +6,69 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  */
+
+/*
+ * If the OS has a red-black tree implementation, use it.
+ */
+#ifdef HAVE_RBTREE
+
+#include <sys/rbtree.h>
+
+# define	RBI_LINK(_n, _t)
+# define	RBI_FIELD(_n)			rb_node_t
+# define	RBI_HEAD(_n, _t)		rb_tree_t
+
+/* Define adapter code between the ipf-specific and the system rb impls. */
+# define	RBI_CODE(_n, _t, _f, _cmp)				\
+signed int _n##_compare_nodes(void *ctx, const void *n1, const void *n2);\
+signed int _n##_compare_key(void *ctx, const void *n1, const void *key);\
+typedef	void	(*_n##_rb_walker_t)(_t *, void *);			\
+void	_n##_rb_walktree(rb_tree_t *, _n##_rb_walker_t, void *);	\
+									\
+static const rb_tree_ops_t _n##_tree_ops = {				\
+        .rbto_compare_nodes = _n##_compare_nodes,			\
+        .rbto_compare_key = _n##_compare_key,				\
+        .rbto_node_offset = offsetof(_t, _f),				\
+        .rbto_context = NULL						\
+};									\
+									\
+int									\
+_n##_compare_nodes(void *ctx, const void *n1, const void *n2) {		\
+	return _cmp(n1, n2);						\
+}									\
+									\
+int									\
+_n##_compare_key(void *ctx, const void *n1, const void *key) {		\
+	return _cmp(n1, key);						\
+}									\
+									\
+void									\
+_n##_rb_walktree(rb_tree_t *head, _n##_rb_walker_t func, void *arg)	\
+{									\
+	_t *rb;								\
+	/* Take advantage of the fact that the ipf code only uses this  \
+	   method to clear the tree, in order to do it more safely. */	\
+	while ((rb = rb_tree_iterate(head, NULL, RB_DIR_RIGHT)) != NULL) {\
+		rb_tree_remove_node(head, rb);				\
+		func(rb, arg);						\
+	}								\
+}
+  
+# define	RBI_DELETE(_n, _h, _v)		rb_tree_remove_node(_h, _v)
+# define	RBI_INIT(_n, _h)		rb_tree_init(_h, &_n##_tree_ops)
+# define	RBI_INSERT(_n, _h, _v)		rb_tree_insert_node(_h, _v)
+# define	RBI_ISEMPTY(_h)			(rb_tree_iterate(_h, NULL, RB_DIR_RIGHT) == NULL)
+# define	RBI_SEARCH(_n, _h, _k)		rb_tree_find_node(_h, _k)
+# define	RBI_WALK(_n, _h, _w, _a)	_n##_rb_walktree(_h, _w, _a)
+
+#else
+
 typedef enum rbcolour_e {
 	C_BLACK = 0,
 	C_RED = 1
 } rbcolour_t;
 
-#define	RBI_LINK(_n, _t)							\
+#define	RBI_LINK(_n, _t)						\
 	struct _n##_rb_link {						\
 		struct _t	*left;					\
 		struct _t	*right;					\
@@ -26,7 +83,11 @@ struct _n##_rb_head {							\
 	int		(* compare)(struct _t *, struct _t *);		\
 }
 
+#define	RBI_FIELD(_n)			struct _n##_rb_link
+
 #define	RBI_CODE(_n, _t, _f, _cmp)					\
+									\
+_t RBI_ZERO(_n);							\
 									\
 typedef	void	(*_n##_rb_walker_t)(_t *, void *);			\
 									\
@@ -291,7 +352,6 @@ colour:									\
 void									\
 _n##_rb_init(struct _n##_rb_head *head)					\
 {									\
-	memset(head, 0, sizeof(*head));					\
 	memset(&_n##_rb_zero, 0, sizeof(_n##_rb_zero));			\
 	head->top._f.left = &_n##_rb_zero;				\
 	head->top._f.right = &_n##_rb_zero;				\
@@ -357,10 +417,11 @@ _n##_rb_search(struct _n##_rb_head *head, void *key)			\
 }
 
 #define	RBI_DELETE(_n, _h, _v)		_n##_rb_delete(_h, _v)
-#define	RBI_FIELD(_n)			struct _n##_rb_link
 #define	RBI_INIT(_n, _h)		_n##_rb_init(_h)
 #define	RBI_INSERT(_n, _h, _v)		_n##_rb_insert(_h, _v)
 #define	RBI_ISEMPTY(_h)			((_h)->count == 0)
 #define	RBI_SEARCH(_n, _h, _k)		_n##_rb_search(_h, _k)
 #define	RBI_WALK(_n, _h, _w, _a)	_n##_rb_walktree(_h, _w, _a)
 #define	RBI_ZERO(_n)			_n##_rb_zero
+
+#endif

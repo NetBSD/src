@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.607.2.5 2013/01/16 05:26:04 yamt Exp $
+# $NetBSD: shl.mi,v 1.607.2.6 2013/01/23 00:04:12 yamt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -227,7 +227,7 @@
 ./usr/lib/libdtrace.so.2.0			base-sys-shlib		dtrace
 ./usr/lib/libdwarf.so				base-sys-shlib
 ./usr/lib/libdwarf.so.0				base-sys-shlib
-./usr/lib/libdwarf.so.0.0			base-sys-shlib
+./usr/lib/libdwarf.so.0.1			base-sys-shlib
 ./usr/lib/libedit.so				base-sys-shlib
 ./usr/lib/libedit.so.3				base-sys-shlib
 ./usr/lib/libedit.so.3.0			base-sys-shlib
@@ -344,8 +344,8 @@
 ./usr/lib/libm.so.0				base-sys-shlib
 ./usr/lib/libm.so.0.10				base-sys-shlib
 ./usr/lib/libmagic.so				base-sys-shlib
-./usr/lib/libmagic.so.3				base-sys-shlib
-./usr/lib/libmagic.so.3.1			base-sys-shlib
+./usr/lib/libmagic.so.4				base-sys-shlib
+./usr/lib/libmagic.so.4.0			base-sys-shlib
 ./usr/lib/libmenu.so				base-sys-shlib
 ./usr/lib/libmenu.so.6				base-sys-shlib
 ./usr/lib/libmenu.so.6.0			base-sys-shlib

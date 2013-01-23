@@ -322,6 +322,8 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 		xfree(vp->sval); /* free any previous string */
 	vp->tval &= ~STR;	/* mark string invalid */
 	vp->tval |= NUM;	/* mark number ok */
+	if (f == -0)  /* who would have thought this possible? */
+		f = 0;
 	   dprintf( ("setfval %p: %s = %g, t=%o\n", vp, NN(vp->nval), f, vp->tval) );
 	return vp->fval = f;
 }
@@ -389,7 +391,8 @@ Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 		if (is_number(vp->sval) && !(vp->tval&CON))
 			vp->tval |= NUM;	/* make NUM only sparingly */
 	}
-	   dprintf( ("getfval %p: %s = %g, t=%o\n", vp, NN(vp->nval), vp->fval, vp->tval) );
+	   dprintf( ("getfval %p: %s = %g, t=%o\n",
+		vp, NN(vp->nval), vp->fval, vp->tval) );
 	return(vp->fval);
 }
 
@@ -415,7 +418,8 @@ static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cel
 		vp->tval |= STR;
 		setfree(vp);
 	}
-	   dprintf( ("getsval %p: %s = \"%s (%p)\", t=%o\n", vp, NN(vp->nval), vp->sval, vp->sval, vp->tval) );
+	   dprintf( ("getsval %p: %s = \"%s (%p)\", t=%o\n",
+		vp, NN(vp->nval), vp->sval, vp->sval, vp->tval) );
 	return(vp->sval);
 }
 

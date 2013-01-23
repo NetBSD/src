@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.39.2.1 2012/04/17 00:05:59 yamt Exp $
+#	$NetBSD: Makefile.amd64,v 1.39.2.2 2013/01/23 00:05:38 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -41,7 +41,12 @@ CFLAGS+=	-mno-red-zone -mno-sse -mno-sse2 -mno-sse3
 ##
 ## (3) libkern and compat
 ##
+OPT_MODULAR=	%MODULAR%
+.if !empty(OPT_MODULAR)
 KERN_AS=	obj
+.else
+KERN_AS=	library
+.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies

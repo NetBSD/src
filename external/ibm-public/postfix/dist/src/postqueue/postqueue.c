@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.1.1.2.6.1 2012/10/30 18:58:05 yamt Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.1.1.2.6.2 2013/01/23 00:05:09 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -188,6 +188,7 @@
 #include <safe.h>
 #include <connect.h>
 #include <valid_hostname.h>
+#include <warn_stat.h>
 #include <events.h>
 
 /* Global library. */
@@ -480,6 +481,11 @@ int     main(int argc, char **argv)
     msg_cleanup(unavailable);
     msg_syslog_init(mail_task("postqueue"), LOG_PID, LOG_FACILITY);
     set_mail_conf_str(VAR_PROCNAME, var_procname = mystrdup(argv[0]));
+
+    /*
+     * Check the Postfix library version as soon as we enable logging.
+     */
+    MAIL_VERSION_CHECK;
 
     /*
      * Parse JCL. This program is set-gid and must sanitize all command-line

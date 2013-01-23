@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.22.2.3 2013/01/16 05:32:52 yamt Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.22.2.4 2013/01/23 00:05:44 yamt Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -35,9 +35,9 @@ file-system	NFS		# Network file system
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
-#file-system	KERNFS		# /kern
+file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
-#file-system	PROCFS		# /proc
+file-system	PROCFS		# /proc
 #file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -219,14 +219,20 @@ omapgpio4	at obio2 addr 0x49056000 size 0x0400 intrbase 224 intr 33
 
 gpio*		at omapgpio?
 
-# # I2C Controller
-# omapi2c0	at tipb? addr 0xfffb3800 intr 36 mult 4
-# iic*		at omapi2c?
-# # omap's own i2c address
-# options		OMAP_I2C_ADDRESS=0xe
-# # i2c bus clock low and high times in ns
-# options		I2C_LOW_TIME_nSEC=1500
-# options		I2C_HIGH_TIME_nSEC=1000
+# System Control Module
+omapscm0 	at obio0 addr 0x48002000 size 0x1000
+
+# I2C Controller
+omapiic0	at obio0 addr 0x48070000 size 0x80
+omapiic1	at obio0 addr 0x48072000 size 0x80
+omapiic2	at obio0 addr 0x48060000 size 0x80
+iic*		at omapiic?
+
+# Power Managent and System Companion Device
+tps65950pm0	at iic0 addr 0x48
+tps65950pm1	at iic0 addr 0x49
+tps65950pm2	at iic0 addr 0x4a
+tps65950pm3	at iic0 addr 0x4b
 
 # On-board 16550 UARTs
 com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
@@ -242,16 +248,18 @@ omapmputmr2	at obio2 addr 0x49036000 intr 40	# GP Timer 4
 options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 
 # Watchdog timers
-omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
-#omapwdt32k*	at obio1 addr 0x4830c000 size 2048	# WDT1
-#omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
+#omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
+omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
+
+# onboard DMA
+omapdma0	at obio0 addr 0x48056000 size 0x1000
 
 # onboard video
-#omapfb* 	at obio0 addr 0x48050000 size 0x10000
+omapfb* 	at obio0 addr 0x48050000 size 0x10000
 
 # make sure the console display is always wsdisplay0
-#wsdisplay0	at wsemuldisplaydev? console 1
-#wsdisplay*	at wsemuldisplaydev?
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
@@ -273,23 +281,11 @@ pseudo-device	wsfont
 prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
 
 # On-board USB
-#ohci*		at obio0 addr 0x48064400 size 0x0400 intr 76
 ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
-#usb*		at ohci?
 usb*		at ehci?
-uhub*		at usb?
-uhub*		at uhub? port ?
-umass*		at uhub? port ? configuration ? interface ?
-scsibus*	at scsi?
-sd*		at scsibus? target ? lun ?
-wd*		at umass?
-uhidev*		at uhub?
-ukbd*		at uhidev?
-ums*		at uhidev?
-wskbd*		at ukbd?
-wsmouse*	at ums?
 
-axe*		at uhub? port ? configuration ? interface ?
+include "dev/usb/usbdevices.config"
+
 ukphy*		at mii? phy ?
 
 # Hardware clocking and power management
@@ -316,3 +312,6 @@ pseudo-device	pty			# pseudo-terminals
 #options	RND_COM
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling
+
+cinclude "arch/evbarm/conf/BEAGLEBOARD.local"

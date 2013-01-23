@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.4.2.5 2013/01/16 05:33:54 yamt Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.4.2.6 2013/01/23 00:06:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -595,7 +595,7 @@ chfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred)
 	(((size) + (chmp)->chm_fs_qfmask) & (chmp)->chm_fs_fmask)
 
 #define	blksize(chmp, ip, lbn)						      \
-	(((lbn) >= NDADDR || (ip)->size >= lblktosize(chmp, (lbn) + 1))	      \
+	(((lbn) >= UFS_NDADDR || (ip)->size >= lblktosize(chmp, (lbn) + 1))	      \
 	    ? (chmp)->chm_fs_bsize					      \
 	    : (fragroundup(chmp, blkoff(chmp, (ip)->size))))
 
@@ -853,7 +853,7 @@ chfs_write(void *v)
 	 * the fragment if there is one.
 	 */
 
-	if (nsize > osize && lblkno(chmp, osize) < NDADDR &&
+	if (nsize > osize && lblkno(chmp, osize) < UFS_NDADDR &&
 	    lblkno(chmp, osize) != lblkno(chmp, nsize) &&
 	    blkroundup(chmp, osize) != osize) {
 		off_t eob;

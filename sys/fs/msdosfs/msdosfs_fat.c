@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.19.12.2 2013/01/16 05:33:39 yamt Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.19.12.3 2013/01/23 00:06:19 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.19.12.2 2013/01/16 05:33:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.19.12.3 2013/01/23 00:06:19 yamt Exp $");
 
 /*
  * kernel include files.
@@ -254,26 +254,10 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 		if (bn != bp_bn) {
 			if (bp)
 				brelse(bp, 0);
-			bp = getblk(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
-			    0, 0);
-			if (bp == NULL) {
-				/*
-				 * getblk() above returns NULL only iff we are
-				 * pagedaemon.  See the implementation of getblk
-				 * for detail.
-				 */
-				return ENOMEM;
-			}
-			if (!ISSET(bp->b_oflags, (BO_DONE | BO_DELWRI))) {
-				SET(bp->b_flags, B_READ);
-				BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-				VOP_STRATEGY(pmp->pm_devvp, bp);
-				curlwp->l_ru.ru_inblock++;
-				error = biowait(bp);
-				if (error) {
-					brelse(bp, 0);
-					return error;
-				}
+			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
+			    NOCRED, 0, &bp);
+			if (error) {
+				return (error);
 			}
 			bp_bn = bn;
 		}
@@ -406,7 +390,6 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, u_long fatbn)
 			 * Ignore the error, but turn off FSInfo update for the future.
 			 */
 			pmp->pm_fsinfo = 0;
-			brelse(bpn, 0);
 		} else {
 			struct fsinfo *fp = (struct fsinfo *)bpn->b_data;
 
@@ -573,7 +556,6 @@ fatentry(int function, struct msdosfsmount *pmp, u_long cn, u_long *oldcontents,
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
 	    0, &bp)) != 0) {
-		brelse(bp, 0);
 		return (error);
 	}
 
@@ -654,7 +636,6 @@ fatchain(struct msdosfsmount *pmp, u_long start, u_long count, u_long fillwith)
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
 		    B_MODIFY, &bp);
 		if (error) {
-			brelse(bp, 0);
 			return (error);
 		}
 		while (count > 0) {
@@ -880,7 +861,6 @@ freeclusterchain(struct msdosfsmount *pmp, u_long cluster)
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
 			    NOCRED, B_MODIFY, &bp);
 			if (error) {
-				brelse(bp, 0);
 				return (error);
 			}
 			lbn = bn;
@@ -954,7 +934,6 @@ fillinusemap(struct msdosfsmount *pmp)
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
 			    NOCRED, 0, &bp);
 			if (error) {
-				brelse(bp, 0);
 				return (error);
 			}
 		}

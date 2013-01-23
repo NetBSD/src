@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.38 2011/08/29 18:43:20 bouyer Exp $ */
+/* $NetBSD: setup.c,v 1.38.2.1 2013/01/23 00:05:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ calcmaxfilesize(int bshift)
 	uint64_t maxblock;
 
 	nptr = (1 << bshift) / sizeof(uint32_t);
-	maxblock = NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
+	maxblock = UFS_NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
 
 	return maxblock << bshift;
 }
@@ -388,10 +388,10 @@ setup(const char *dev)
 			sbdirty();
 		}
 	}
-	if (fs->lfs_maxsymlinklen != MAXSYMLINKLEN_UFS1) {
+	if (fs->lfs_maxsymlinklen != UFS1_MAXSYMLINKLEN) {
 		pwarn("INCORRECT MAXSYMLINKLEN=%d IN SUPERBLOCK",
 		    fs->lfs_maxsymlinklen);
-		fs->lfs_maxsymlinklen = MAXSYMLINKLEN_UFS1;
+		fs->lfs_maxsymlinklen = UFS1_MAXSYMLINKLEN;
 		if (preen)
 			printf(" (FIXED)\n");
 		if (preen || reply("FIX") == 1) {

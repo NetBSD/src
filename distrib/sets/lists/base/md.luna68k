@@ -1,0 +1,2 @@
+# $NetBSD: md.luna68k,v 1.4.6.1 2013/01/23 00:04:10 yamt Exp $
+./usr/mdec/boot			base-sysutil-bin

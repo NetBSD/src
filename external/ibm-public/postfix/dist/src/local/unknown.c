@@ -1,4 +1,4 @@
-/*	$NetBSD: unknown.c,v 1.1.1.2.2.1 2012/04/17 00:04:34 yamt Exp $	*/
+/*	$NetBSD: unknown.c,v 1.1.1.2.2.2 2013/01/23 00:05:04 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -113,14 +113,13 @@ int     deliver_unknown(LOCAL_STATE state, USER_ATTR usr_attr)
 	transp_maps = maps_create(VAR_FBCK_TRANSP_MAPS, var_fbck_transp_maps,
 				  DICT_FLAG_LOCK | DICT_FLAG_NO_REGSUB);
     /* The -1 is a hint for the down-stream deliver_completed() function. */
-    dict_errno = 0;
-    if (*var_fbck_transp_maps
+    if (transp_maps
 	&& (map_transport = maps_find(transp_maps, state.msg_attr.user,
 				      DICT_FLAG_NONE)) != 0) {
 	state.msg_attr.rcpt.offset = -1L;
 	return (deliver_pass(MAIL_CLASS_PRIVATE, map_transport,
 			     state.request, &state.msg_attr.rcpt));
-    } else if (dict_errno != 0) {
+    } else if (transp_maps && transp_maps->error != 0) {
 	/* Details in the logfile. */
 	dsb_simple(state.msg_attr.why, "4.3.0", "table lookup failure");
 	return (defer_append(BOUNCE_FLAGS(state.request),

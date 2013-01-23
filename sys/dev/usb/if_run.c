@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.4.4.2 2012/10/30 17:22:05 yamt Exp $	*/
+/*	$NetBSD: if_run.c,v 1.4.4.3 2013/01/23 00:06:11 yamt Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.4.4.2 2012/10/30 17:22:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.4.4.3 2013/01/23 00:06:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -64,10 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.4.4.2 2012/10/30 17:22:05 yamt Exp $");
 
 #include <dev/ic/rt2860reg.h>		/* shared with ral(4) */
 #include <dev/usb/if_runvar.h>
-
-#ifdef USB_DEBUG
-#define RUN_DEBUG
-#endif
 
 #ifdef RUN_DEBUG
 #define DPRINTF(x)	do { if (run_debug) printf x; } while (0)
@@ -500,9 +496,10 @@ run_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(sc->sc_dev, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	if (usbd_set_config_no(sc->sc_udev, 1, 0) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not set configuration no\n");
+	error = usbd_set_config_no(sc->sc_udev, 1, 0);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		return;
 	}
 
@@ -541,7 +538,7 @@ run_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	usb_init_task(&sc->sc_task, run_task, sc);
+	usb_init_task(&sc->sc_task, run_task, sc, 0);
 	callout_init(&sc->scan_to, 0);
 	callout_setfunc(&sc->scan_to, run_next_scan, sc);
 	callout_init(&sc->calib_to, 0);

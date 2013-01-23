@@ -1,4 +1,4 @@
-/*	$NetBSD: match_parent_style.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: match_parent_style.h,v 1.1.1.1.10.1 2013/01/23 00:05:03 yamt Exp $	*/
 
 #ifndef _MATCH_PARENT_STYLE_H_INCLUDED_
 #define _MATCH_PARENT_STYLE_H_INCLUDED_
@@ -16,7 +16,7 @@
  /*
   * Utility library.
   */
-#include <match_ops.h>
+#include <match_list.h>
 
  /*
   * External interface.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.88.2.2 2012/02/17 08:18:56 yamt Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.88.2.3 2013/01/23 00:06:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.88.2.2 2012/02/17 08:18:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.88.2.3 2013/01/23 00:06:35 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -114,7 +114,7 @@ ufs_inactive(void *v)
 			if (vp->v_mount->mnt_wapbl) {
 				uint64_t incr = MNINDIR(ip->i_ump) <<
 				    vp->v_mount->mnt_fs_bshift; /* Power of 2 */
-				uint64_t base = NDADDR <<
+				uint64_t base = UFS_NDADDR <<
 				    vp->v_mount->mnt_fs_bshift;
 				while (!error && ip->i_size > base + incr) {
 					/*

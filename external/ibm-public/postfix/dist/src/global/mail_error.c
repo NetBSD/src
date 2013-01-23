@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_error.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_error.c,v 1.1.1.1.10.1 2013/01/23 00:05:02 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -23,6 +23,9 @@
 /*	does not exist, and so on.
 /* .IP "2bounce (MAIL_ERROR_2BOUNCE)"
 /*	A bounce message could not be delivered.
+/* .IP "dat (MAIL_ERROR_DATA)"
+/*	A message could not be delivered because a critical data
+/*	file was unavailable.
 /* .IP "policy (MAIL_ERROR_POLICY)"
 /*	Policy violation. This depends on what restrictions have
 /*	been configured locally.
@@ -69,6 +72,7 @@
 const NAME_MASK mail_error_masks[] = {
     "bounce", MAIL_ERROR_BOUNCE,
     "2bounce", MAIL_ERROR_2BOUNCE,
+    "data", MAIL_ERROR_DATA,
     "delay", MAIL_ERROR_DELAY,
     "policy", MAIL_ERROR_POLICY,
     "protocol", MAIL_ERROR_PROTOCOL,

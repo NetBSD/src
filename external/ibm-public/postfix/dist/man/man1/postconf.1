@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.1,v 1.1.1.4 2011/05/11 09:10:32 tron Exp $
+.\"	$NetBSD: postconf.1,v 1.1.1.4.4.1 2013/01/23 00:04:55 yamt Exp $
 .\"
 .TH POSTCONF 1 
 .ad
@@ -11,10 +11,10 @@ Postfix configuration utility
 .na
 .nf
 .fi
-\fBpostconf\fR [\fB-dhnv\fR] [\fB-c \fIconfig_dir\fR]
-[\fIparameter ...\fR]
+\fBManaging main.cf:\fR
 
-\fBpostconf\fR [\fB-aAmlv\fR] [\fB-c \fIconfig_dir\fR]
+\fBpostconf\fR [\fB-dfhnv\fR] [\fB-c \fIconfig_dir\fR]
+[\fB-C \fIclass,...\fR] [\fIparameter ...\fR]
 
 \fBpostconf\fR [\fB-ev\fR] [\fB-c \fIconfig_dir\fR]
 [\fIparameter=value ...\fR]
@@ -22,14 +22,27 @@ Postfix configuration utility
 \fBpostconf\fR [\fB-#v\fR] [\fB-c \fIconfig_dir\fR]
 [\fIparameter ...\fR]
 
+\fBManaging master.cf:\fR
+
+\fBpostconf\fR [\fB-fMv\fR] [\fB-c \fIconfig_dir\fR]
+[\fIservice ...\fR]
+
+\fBManaging bounce message templates:\fR
+
 \fBpostconf\fR [\fB-btv\fR] [\fB-c \fIconfig_dir\fR] [\fItemplate_file\fR]
+
+\fBManaging other configuration:\fR
+
+\fBpostconf\fR [\fB-aAlmv\fR] [\fB-c \fIconfig_dir\fR]
 .SH DESCRIPTION
 .ad
 .fi
-The \fBpostconf\fR(1) command displays the actual values
-of configuration parameters, changes configuration parameter
-values, or displays other configuration information about
-the Postfix mail system.
+By default, the \fBpostconf\fR(1) command displays the
+values of \fBmain.cf\fR configuration parameters, and warns
+about possible mis-typed parameter names (Postfix 2.9 and later).
+It can also change \fBmain.cf\fR configuration
+parameter values, or display other configuration information
+about the Postfix mail system.
 
 Options:
 .IP \fB-a\fR
@@ -62,31 +75,63 @@ Cyrus SASL support.
 This feature is available with Postfix 2.3 and later.
 .IP "\fB-b\fR [\fItemplate_file\fR]"
 Display the message text that appears at the beginning of
-delivery status notification (DSN) messages, with $\fBname\fR
-expressions replaced by actual values.  To override the
-built-in message text, specify a template file at the end
-of the command line, or specify a template file in main.cf
-with the \fBbounce_template_file\fR parameter.
-To force selection of the built-in message text templates,
-specify an empty template file name (in shell language: "").
+delivery status notification (DSN) messages, replacing
+$\fBname\fR expressions with actual values as described in
+\fBbounce\fR(5).
+
+To override the built-in templates, specify a template file
+name at the end of the \fBpostconf\fR(1) command line, or
+specify a file name in \fBmain.cf\fR with the
+\fBbounce_template_file\fR parameter.
+
+To force selection of the built-in templates, specify an
+empty template file name on the \fBpostconf\fR(1) command
+line (in shell language: "").
 
 This feature is available with Postfix 2.3 and later.
 .IP "\fB-c \fIconfig_dir\fR"
 The \fBmain.cf\fR configuration file is in the named directory
 instead of the default configuration directory.
+.IP "\fB-C \fIclass,...\fR"
+When displaying \fBmain.cf\fR parameters, select only
+parameters from the specified class(es):
+.RS
+.IP \fBbuiltin\fR
+Parameters with built-in names.
+.IP \fBservice\fR
+Parameters with service-defined names (the first field of
+a \fBmaster.cf\fR entry plus a Postfix-defined suffix).
+.IP \fBuser\fR
+Parameters with user-defined names.
+.IP \fBall\fR
+All the above classes.
+.RE
+.IP
+The default is as if "\fB-C all\fR" is
+specified.
 .IP \fB-d\fR
-Print default parameter settings instead of actual settings.
+Print \fBmain.cf\fR default parameter settings instead of
+actual settings.
+Specify \fB-df\fR to fold long lines for human readability
+(Postfix 2.9 and later).
 .IP \fB-e\fR
-Edit the \fBmain.cf\fR configuration file. The file is copied
-to a temporary file then renamed into place. Parameters and
-values are specified on the command line. Use quotes in order
-to protect shell metacharacters and whitespace.
+Edit the \fBmain.cf\fR configuration file, and update
+parameter settings with the "\fIname\fR=\fIvalue\fR" pairs
+on the \fBpostconf\fR(1) command line. The file is copied
+to a temporary file then renamed into place.
+Specify quotes to protect special characters and whitespace
+on the \fBpostconf\fR(1) command line.
 
-With Postfix version 2.8 and later, the \fB-e\fR is no
-longer needed.
+The \fB-e\fR is no longer needed with Postfix version 2.8
+and later.
+.IP \fB-f\fR
+Fold long lines when printing \fBmain.cf\fR or \fBmaster.cf\fR
+configuration file entries, for human readability.
+
+This feature is available with Postfix 2.9 and later.
 .IP \fB-h\fR
-Show parameter values only, not the "\fIname = \fR" label
-that normally precedes the value.
+Show \fBmain.cf\fR parameter values without the "\fIname\fR
+= " label that normally precedes the value.
 .IP \fB-l\fR
 List the names of all supported mailbox locking methods.
 Postfix supports the following methods:
@@ -128,6 +173,10 @@ This is available on systems with support for DBM databases.
 The UNIX process environment array. The lookup key is the variable
 name. Originally implemented for testing, someone may find this
 useful someday.
+.IP \fBfail\fR
+A table that reliably fails all requests. The lookup table
+name is used for logging. This table exists to simplify
+Postfix error tests.
 .IP \fBhash\fR
 An indexed file type based on hashing.
 This is available on systems with support for Berkeley DB
@@ -138,6 +187,9 @@ when a process terminates.
 .IP "\fBldap\fR (read-only)"
 Perform lookups using the LDAP protocol. This is described
 in \fBldap_table\fR(5).
+.IP "\fBmemcache\fR"
+Perform lookups using the memcache protocol. This is described
+in \fBmemcache_table\fR(5).
 .IP "\fBmysql\fR (read-only)"
 Perform lookups using the MYSQL protocol. This is described
 in \fBmysql_table\fR(5).
@@ -147,7 +199,7 @@ file format is described in \fBpcre_table\fR(5).
 .IP "\fBpgsql\fR (read-only)"
 Perform lookups using the PostgreSQL protocol. This is described
 in \fBpgsql_table\fR(5).
-.IP "\fBproxy\fR (read-only)"
+.IP "\fBproxy\fR"
 A lookup table that is implemented via the Postfix
 \fBproxymap\fR(8) service. The table name syntax is
 \fItype\fB:\fIname\fR.
@@ -169,7 +221,7 @@ Perform lookups using a simple request-reply protocol that is
 described in \fBtcp_table\fR(5).
 .IP "\fBtexthash\fR (read-only)"
 Produces similar results as hash: files, except that you don't
-need to run the postmap(1) command before you can use the file,
+need to run the \fBpostmap\fR(1) command before you can use the file,
 and that it does not detect changes after the file is read.
 .IP "\fBunix\fR (read-only)"
 A limited way to query the UNIX authentication database. The
@@ -185,29 +237,53 @@ The result is a group file entry in \fBgroup\fR(5) format.
 .RE
 .IP
 Other table types may exist depending on how Postfix was built.
+.IP \fB-M\fR
+Show \fBmaster.cf\fR file contents instead of \fBmain.cf\fR
+file contents.
+Specify \fB-Mf\fR to fold long lines for human readability.
+
+If \fIservice ...\fR is specified, only the matching services
+will be output. For example, "\fBpostconf -Mf inet\fR"
+will output all services that listen on the network.
+
+Specify zero or more arguments, each with a \fIservice-type\fR
+name (\fBinet\fR, \fBunix\fR, \fBfifo\fR, or \fBpass\fR)
+or with a \fIservice-name.service-type\fR pair, where
+\fIservice-name\fR is the first field of a master.cf entry.
+
+This feature is available with Postfix 2.9 and later.
 .IP \fB-n\fR
-Print parameter settings that are not left at their built-in
-default value, because they are explicitly specified in main.cf.
+Print \fBmain.cf\fR parameter settings that are explicitly
+specified in \fBmain.cf\fR.
+Specify \fB-nf\fR to fold long lines for human readability
+(Postfix 2.9 and later).
 .IP "\fB-t\fR [\fItemplate_file\fR]"
-Display the templates for delivery status notification (DSN)
-messages. To override the built-in templates, specify a
-template file at the end of the command line, or specify a
-template file in main.cf with the \fBbounce_template_file\fR
-parameter.  To force selection of the built-in templates,
-specify an empty template file name (in shell language:
-"").
+Display the templates for text that appears at the beginning
+of delivery status notification (DSN) messages, without
+expanding $\fBname\fR expressions.
+
+To override the built-in templates, specify a template file
+name at the end of the \fBpostconf\fR(1) command line, or
+specify a file name in \fBmain.cf\fR with the
+\fBbounce_template_file\fR parameter.
+
+To force selection of the built-in templates, specify an
+empty template file name on the \fBpostconf\fR(1) command
+line (in shell language: "").
 
 This feature is available with Postfix 2.3 and later.
 .IP \fB-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 options make the software increasingly verbose.
 .IP \fB-#\fR
-Edit the \fBmain.cf\fR configuration file. The file is copied
-to a temporary file then renamed into place. The parameters
-specified on the command line are commented-out, so that they
-revert to their default values. Specify a list of parameter
-names, not name=value pairs.  There is no \fBpostconf\fR command
-to perform the reverse operation.
+Edit the \fBmain.cf\fR configuration file, and comment out
+the parameters given on the \fBpostconf\fR(1) command line,
+so that those parameters revert to their default values.
+The file is copied to a temporary file then renamed into
+place.
+Specify a list of parameter names, not \fIname\fR=\fIvalue\fR
+pairs.  There is no \fBpostconf\fR(1) command to perform
+the reverse operation.
 
 This feature is available with Postfix 2.6 and later.
 .SH DIAGNOSTICS
@@ -240,11 +316,13 @@ Pathname of a configuration file with bounce message templates.
 .na
 .nf
 /etc/postfix/main.cf, Postfix configuration parameters
+/etc/postfix/master.cf, Postfix master daemon configuraton
 .SH "SEE ALSO"
 .na
 .nf
 bounce(5), bounce template file format
-postconf(5), configuration parameters
+master(5), master.cf configuration file syntax
+postconf(5), main.cf configuration file syntax
 .SH "README FILES"
 .na
 .nf

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.63 2009/01/03 03:43:23 yamt Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.63.14.1 2013/01/23 00:06:26 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.63 2009/01/03 03:43:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.63.14.1 2013/01/23 00:06:26 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -526,7 +526,7 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 		if (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY)
 			fail |= 0x04;
 	}
-	rate = ieee80211_fix_rate(ni, IEEE80211_F_DONEGO | IEEE80211_F_DOFRATE);
+	rate = ieee80211_fix_rate(ni, IEEE80211_R_DONEGO | IEEE80211_R_DOFRATE);
 	if (rate & IEEE80211_RATE_BASIC)
 		fail |= 0x08;
 	if (ic->ic_des_esslen != 0 &&
@@ -820,7 +820,7 @@ ieee80211_sta_join(struct ieee80211com *ic, struct ieee80211_node *selbs)
 		 * Delete unusable rates; we've already checked
 		 * that the negotiated rate set is acceptable.
 		 */
-		ieee80211_fix_rate(selbs, IEEE80211_F_DODEL);
+		ieee80211_fix_rate(selbs, IEEE80211_R_DODEL);
 		/*
 		 * Fillin the neighbor table; it will already
 		 * exist if we are simply switching mastership.
@@ -1306,7 +1306,7 @@ ieee80211_add_scan(struct ieee80211com *ic,
 	saveie(&ni->ni_wpa_ie, sp->wpa);
 
 	/* NB: must be after ni_chan is setup */
-	ieee80211_setup_rates(ni, sp->rates, sp->xrates, IEEE80211_F_DOSORT);
+	ieee80211_setup_rates(ni, sp->rates, sp->xrates, IEEE80211_R_DOSORT);
 
 	if (!newnode)
 		ieee80211_free_node(ni);
@@ -1336,7 +1336,7 @@ ieee80211_init_neighbor(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	/* NB: must be after ni_chan is setup */
 	ieee80211_setup_rates(ni, sp->rates, sp->xrates,
-	    IEEE80211_F_DODEL | IEEE80211_F_DONEGO | IEEE80211_F_DOSORT);
+	    IEEE80211_R_DODEL | IEEE80211_R_DONEGO | IEEE80211_R_DOSORT);
 
 	if (ic->ic_newassoc != NULL)
 		ic->ic_newassoc(ni, isnew);

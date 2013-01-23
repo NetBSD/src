@@ -193,6 +193,8 @@ omapwdt32k_setmode(struct sysmon_wdog *smw)
 			sc->sc_smw.smw_period = smw->smw_period;
 		omapwdt32k_set_timeout(sc->sc_smw.smw_period);
 		omapwdt32k_enable(1);
+		if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_KTICKLE)
+			omapwdt32k_tickle(smw);
 	}
 	return error;
 }

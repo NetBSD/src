@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cdb.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: dict_cdb.c,v 1.1.1.1.10.1 2013/01/23 00:05:15 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -62,6 +62,7 @@
 #include "stringops.h"
 #include "dict.h"
 #include "dict_cdb.h"
+#include "warn_stat.h"
 
 #ifdef HAS_CDB
 
@@ -105,7 +106,7 @@ static const char *dict_cdbq_lookup(DICT *dict, const char *name)
     static unsigned len;
     const char *result = 0;
 
-    dict_errno = 0;
+    dict->error = 0;
 
     /* CDB is constant, so do not try to acquire a lock. */
 
@@ -186,7 +187,8 @@ static DICT *dict_cdbq_open(const char *path, int dict_flags)
     cdb_path = concatenate(path, CDB_SUFFIX, (char *) 0);
 
     if ((fd = open(cdb_path, O_RDONLY)) < 0)
-	msg_fatal("open database %s: %m", cdb_path);
+	return (dict_surrogate(DICT_TYPE_CDB, path, O_RDONLY, dict_flags,
+			       "open database %s: %m", cdb_path));
 
     dict_cdbq = (DICT_CDBQ *) dict_alloc(DICT_TYPE_CDB,
 					 cdb_path, sizeof(*dict_cdbq));
@@ -202,6 +204,8 @@ static DICT *dict_cdbq_open(const char *path, int dict_flags)
     if (fstat(fd, &st) < 0)
 	msg_fatal("dict_dbq_open: fstat: %m");
     dict_cdbq->dict.mtime = st.st_mtime;
+    dict_cdbq->dict.owner.uid = st.st_uid;
+    dict_cdbq->dict.owner.status = (st.st_uid != 0);
     close_on_exec(fd, CLOSE_ON_EXEC);
 
     /*
@@ -229,11 +233,13 @@ static DICT *dict_cdbq_open(const char *path, int dict_flags)
 
 /* dict_cdbm_update - add database entry, create mode */
 
-static void dict_cdbm_update(DICT *dict, const char *name, const char *value)
+static int dict_cdbm_update(DICT *dict, const char *name, const char *value)
 {
     DICT_CDBM *dict_cdbm = (DICT_CDBM *) dict;
     unsigned ksize, vsize;
     int     r;
+
+    dict->error = 0;
 
     /*
      * Optionally fold the key.
@@ -281,9 +287,11 @@ static void dict_cdbm_update(DICT *dict, const char *name, const char *value)
 	    msg_fatal("%s: duplicate entry: \"%s\"",
 		      dict_cdbm->dict.name, name);
     }
+    return (r);
 #else
     if (cdb_make_add(&dict_cdbm->cdbm, name, ksize, value, vsize) < 0)
 	msg_fatal("error writing %s: %m", dict_cdbm->tmp_path);
+    return (0);
 #endif
 }
 
@@ -335,9 +343,11 @@ static DICT *dict_cdbm_open(const char *path, int dict_flags)
      * isn't creating it at the same time.
      */
     for (;;) {
-	if ((fd = open(tmp_path, O_RDWR | O_CREAT, 0644)) < 0
-	    || fstat(fd, &st0) < 0)
-	    msg_fatal("open database %s: %m", tmp_path);
+	if ((fd = open(tmp_path, O_RDWR | O_CREAT, 0644)) < 0)
+	    return (dict_surrogate(DICT_TYPE_CDB, path, O_RDWR, dict_flags,
+				   "open database %s: %m", tmp_path));
+	if (fstat(fd, &st0) < 0)
+	    msg_fatal("fstat(%s): %m", tmp_path);
 
 	/*
 	 * Get an exclusive lock - we're going to change the database so we
@@ -375,6 +385,8 @@ static DICT *dict_cdbm_open(const char *path, int dict_flags)
     dict_cdbm->dict.update = dict_cdbm_update;
     dict_cdbm->cdb_path = cdb_path;
     dict_cdbm->tmp_path = tmp_path;
+    dict_cdbm->dict.owner.uid = st1.st_uid;
+    dict_cdbm->dict.owner.status = (st1.st_uid != 0);
     close_on_exec(fd, CLOSE_ON_EXEC);
 
     /*

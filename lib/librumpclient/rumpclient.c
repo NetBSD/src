@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.45.4.2 2012/10/30 18:59:16 yamt Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.45.4.3 2013/01/23 00:05:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -48,8 +48,7 @@
 #define USE_KQUEUE
 #endif
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.45.4.2 2012/10/30 18:59:16 yamt Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.45.4.3 2013/01/23 00:05:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -66,10 +65,8 @@ __RCSID("$NetBSD: rumpclient.c,v 1.45.4.2 2012/10/30 18:59:16 yamt Exp $");
 
 #include <assert.h>
 #include <dlfcn.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <link.h>
 #include <poll.h>
 #include <pthread.h>
 #include <signal.h>
@@ -160,11 +157,13 @@ send_with_recon(struct spclient *spc, struct iovec *iov, size_t iovlen)
 
 			/* check that we aren't over the limit */
 			if (retrytimo > 0) {
-				struct timeval tmp;
+				time_t tdiff;
 
 				gettimeofday(&curtime, NULL);
-				timersub(&curtime, &starttime, &tmp);
-				if (tmp.tv_sec >= retrytimo) {
+				tdiff = curtime.tv_sec - starttime.tv_sec;
+				if (starttime.tv_usec > curtime.tv_usec)
+					tdiff--;
+				if (tdiff >= retrytimo) {
 					fprintf(stderr, "rump_sp: reconnect "
 					    "failed, %lld second timeout\n",
 					    (long long)retrytimo);
@@ -795,6 +794,7 @@ doinit(void)
 	return 0;
 }
 
+#ifdef RTLD_NEXT
 void *rumpclient__dlsym(void *, const char *);
 void *
 rumpclient__dlsym(void *handle, const char *symbol)
@@ -804,6 +804,7 @@ rumpclient__dlsym(void *handle, const char *symbol)
 }
 void *rumphijack_dlsym(void *, const char *)
     __attribute__((__weak__, alias("rumpclient__dlsym")));
+#endif
 
 static pid_t init_done = 0;
 
@@ -837,15 +838,22 @@ rumpclient_init(void)
 	 * sag mir, wo die symbols sind.  zogen fort, der krieg beginnt.
 	 * wann wird man je verstehen?  wann wird man je verstehen?
 	 */
+#ifdef RTLD_NEXT
 #define FINDSYM2(_name_,_syscall_)					\
 	if ((host_##_name_ = rumphijack_dlsym(RTLD_NEXT,		\
 	    #_syscall_)) == NULL) {					\
 		if (rumphijack_dlsym == rumpclient__dlsym)		\
 			host_##_name_ = _name_; /* static fallback */	\
-		if (host_##_name_ == NULL)				\
-			errx(1, "cannot find %s: %s", #_syscall_,	\
+		if (host_##_name_ == NULL) {				\
+			fprintf(stderr,"cannot find %s: %s", #_syscall_,\
 			    dlerror());					\
+			exit(1);					\
+		}							\
 	}
+#else
+#define FINDSYM2(_name_,_syscall)					\
+	host_##_name_ = _name_;
+#endif
 #define FINDSYM(_name_) FINDSYM2(_name_,_name_)
 #ifdef __NetBSD__
 	FINDSYM2(socket,__socket30)
@@ -1144,6 +1152,10 @@ rumpclient_exec(const char *path, char *const argv[], char *const envp[])
 	return rv;
 }
 
+/*
+ * daemon() is handwritten for the benefit of platforms which
+ * do not support daemon().
+ */
 int
 rumpclient_daemon(int nochdir, int noclose)
 {
@@ -1153,15 +1165,37 @@ rumpclient_daemon(int nochdir, int noclose)
 	if ((rf = rumpclient_prefork()) == NULL)
 		return -1;
 
-	if (daemon(nochdir, noclose) == -1) {
-		sverrno = errno;
-		rumpclient_fork_cancel(rf);
-		errno = sverrno;
-		return -1;
+	switch (fork()) {
+	case 0:
+		break;
+	case -1:
+		goto daemonerr;
+	default:
+		_exit(0);
 	}
 
+	if (setsid() == -1)
+		goto daemonerr;
+	if (!nochdir && chdir("/") == -1)
+		goto daemonerr;
+	if (!noclose) {
+		int fd = open("/dev/null", O_RDWR);
+		dup2(fd, 0);
+		dup2(fd, 1);
+		dup2(fd, 2);
+		if (fd > 2)
+			close(fd);
+	}
+
+	/* note: fork is either completed or cancelled by the call */
 	if (rumpclient_fork_init(rf) == -1)
 		return -1;
 
 	return 0;
+
+ daemonerr:
+	sverrno = errno;
+	rumpclient_fork_cancel(rf);
+	errno = sverrno;
+	return -1;
 }

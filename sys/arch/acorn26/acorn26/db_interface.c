@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.18 2010/06/09 02:48:52 mrg Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.18.8.1 2013/01/23 00:05:36 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18 2010/06/09 02:48:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18.8.1 2013/01/23 00:05:36 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -253,9 +253,6 @@ const struct db_command db_machine_command_table[] = {
 			"   address:\taddress of trapfame to display")},
 	{ DDB_ADD_CMD("irqstat", db_irqstat_cmd,		0,
 			"Displays the IRQ statistics",
-		     	NULL,NULL) },
-	{ DDB_ADD_CMD("panic", db_show_panic_cmd,	0,
-			"Displays the last panic string",
 		     	NULL,NULL) },
 	{ DDB_ADD_CMD( NULL,     NULL,              0, NULL, NULL,NULL) }
 };

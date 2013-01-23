@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.18 2008/07/20 01:20:22 lukem Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.18.18.1 2013/01/23 00:05:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.18 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.18.18.1 2013/01/23 00:05:29 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,10 +60,9 @@ __RCSID("$NetBSD: ffs_inode.c,v 1.18 2008/07/20 01:20:22 lukem Exp $");
 
 #include "dump.h"
 
-struct fs *sblock;
+static struct fs *sblock;
 
 static off_t sblock_try[] = SBLOCKSEARCH;
-off_t sblockloc;
 
 int is_ufs2;
 
@@ -207,7 +206,7 @@ fs_mapinodes(ino_t maxino __unused, u_int64_t *tape_size, int *anydirskipped)
 				continue;
 		}
 		for (i = 0; i < inosused; i++, ino++) {
-			if (ino < ROOTINO)
+			if (ino < UFS_ROOTINO)
 				continue;
 			mapfileino(ino, tape_size, anydirskipped);
 		}

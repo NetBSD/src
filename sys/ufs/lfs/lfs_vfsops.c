@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.290.2.3 2012/05/23 10:08:19 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.290.2.4 2013/01/23 00:06:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.290.2.3 2012/05/23 10:08:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.290.2.4 2013/01/23 00:06:34 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1443,7 +1443,6 @@ retry:
 		 * list by vput().
 		 */
 		vput(vp);
-		brelse(bp, 0);
 		*vpp = NULL;
 		return (error);
 	}
@@ -1969,11 +1968,11 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 	ip = VTOI(vp);
 
-	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
+	memset(ip->i_lfs_fragsize, 0, UFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
 	if (vp->v_type != VLNK || ip->i_size >= ip->i_ump->um_maxsymlinklen) {
 #ifdef DEBUG
 		for (i = (ip->i_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
-		    i < NDADDR; i++) {
+		    i < UFS_NDADDR; i++) {
 			if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
 			    i == 0)
 				continue;
@@ -1982,14 +1981,14 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 				panic("inconsistent inode (direct)");
 			}
 		}
-		for ( ; i < NDADDR + NIADDR; i++) {
-			if (ip->i_ffs1_ib[i - NDADDR] != 0) {
+		for ( ; i < UFS_NDADDR + UFS_NIADDR; i++) {
+			if (ip->i_ffs1_ib[i - UFS_NDADDR] != 0) {
 				lfs_dump_dinode(ip->i_din.ffs1_din);
 				panic("inconsistent inode (indirect)");
 			}
 		}
 #endif /* DEBUG */
-		for (i = 0; i < NDADDR; i++)
+		for (i = 0; i < UFS_NDADDR; i++)
 			if (ip->i_ffs1_db[i] != 0)
 				ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
 	}
@@ -2094,6 +2093,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	 */
 	rw_enter(&fs->lfs_iflock, RW_WRITER);
 	for (i = 0; i < ilast; i++) {
+		/* XXX what to do if bread fails? */
 		bread(ivp, i, fs->lfs_bsize, NOCRED, 0, &bp);
 		brelse(bp, 0);
 	}
@@ -2202,6 +2202,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 		    NOCRED);
 
 	/* Update cleaner info so the cleaner can die */
+	/* XXX what to do if bread fails? */
 	bread(ivp, 0, fs->lfs_bsize, NOCRED, B_MODIFY, &bp);
 	((CLEANERINFO *)bp->b_data)->clean = fs->lfs_nclean;
 	((CLEANERINFO *)bp->b_data)->dirty = fs->lfs_nseg - fs->lfs_nclean;

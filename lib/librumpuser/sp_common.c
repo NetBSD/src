@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.31.4.2 2013/01/16 05:32:28 yamt Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.31.4.3 2013/01/23 00:05:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -665,7 +665,7 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 		}
 	}
 	strcat(s_un.sun_path, addr);
-#if defined(__linux__) || defined(__sun__)
+#if defined(__linux__) || defined(__sun__) || defined(__CYGWIN__)
 	slen = sizeof(s_un);
 #else
 	s_un.sun_len = SUN_LEN(&s_un);

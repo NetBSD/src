@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.19.2.1 2012/04/17 00:07:01 yamt Exp $     */
+/*	$NetBSD: syscall.c,v 1.19.2.2 2013/01/23 00:05:59 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19.2.1 2012/04/17 00:07:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19.2.2 2013/01/23 00:05:59 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -77,7 +77,7 @@ syscall(struct trapframe *tf)
 
 	TDB(("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n",
 	    syscallnames[tf->tf_code], tf->tf_pc, tf->tf_psl,tf->tf_sp,
-	    p->p_pid,frame));
+	    p->p_pid,tf));
 
 	curcpu()->ci_data.cpu_nsyscall++;
  
@@ -111,7 +111,7 @@ syscall(struct trapframe *tf)
 
 	TDB(("return %s pc %lx, psl %lx, sp %lx, pid %d, err %d r0 %d, r1 %d, "
 	    "tf %p\n", syscallnames[tf->tf_code], tf->tf_pc, tf->tf_psl,
-	    tf->tf_sp, p->p_pid, error, rval[0], rval[1], exptr));
+	    tf->tf_sp, p->p_pid, error, rval[0], rval[1], tf));
 bad:
 	switch (error) {
 	case 0:

@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.7 2008/10/07 10:00:02 abs Exp $
+#	$NetBSD: ttys,v 1.7.18.1 2013/01/23 00:04:30 yamt Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -11,6 +11,11 @@
 #
 console "/usr/libexec/getty Pc"		vt100	on secure
 constty "/usr/libexec/getty Pc"		vt100	off secure
+
+#
+# Workstation console.
+#
+ttyE0	"/usr/libexec/getty Pc"		wsvt25	off secure
 
 #
 # Hardwired lines are marked off, by default, so getty(8)

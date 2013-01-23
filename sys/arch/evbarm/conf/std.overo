@@ -1,18 +1,12 @@
-#	$NetBSD: std.overo,v 1.2.14.1 2012/10/30 17:19:21 yamt Exp $
+#	$NetBSD: std.overo,v 1.2.14.2 2013/01/23 00:05:45 yamt Exp $
 #
 # standard NetBSD/evbarm for OVERO options
 
 machine	evbarm arm
-include		"conf/std"		# MI standard options
-include		"arch/arm/conf/std.arm"	# arch standard options
+include 	"arch/evbarm/conf/std.evbarm"
 
 include		"arch/evbarm/conf/files.overo"
 
-options 	EXEC_ELF32
-options 	EXEC_SCRIPT
-
-# To support easy transit to ../arch/arm/arm32
-options 	ARM32
 options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 #options 	TPIDRPRW_IS_CURLWP

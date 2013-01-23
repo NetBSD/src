@@ -10,7 +10,7 @@ POSTSUPER(1)                                                      POSTSUPER(1)
        postsuper - Postfix superintendent
 
 <b>SYNOPSIS</b>
-       <b>postsuper</b> [<b>-psv</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-d</b> <i>queue</i><b>_</b><i>id</i>]
+       <b>postsuper</b> [<b>-psSv</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-d</b> <i>queue</i><b>_</b><i>id</i>]
                [<b>-h</b> <i>queue</i><b>_</b><i>id</i>] [<b>-H</b> <i>queue</i><b>_</b><i>id</i>]
                [<b>-r</b> <i>queue</i><b>_</b><i>id</i>] [<i>directory ...</i>]
 
@@ -56,10 +56,12 @@ POSTSUPER(1)                                                      POSTSUPER(1)
               in  the  <b>deferred</b>  queue.  As a safety measure, the
               word <b>ALL</b> must be specified in upper case.
 
-              Warning: Postfix queue IDs are reused.  There is  a
-              very  small  possibility that postsuper deletes the
-              wrong message file when it is  executed  while  the
-              Postfix mail system is delivering mail.
+              Warning: Postfix queue IDs are reused (always  with
+              Postfix  &lt;=  2.8;  and  with  Postfix  &gt;=  2.9 when
+              <a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a>=no).  There is a  very  small
+              possibility  that  postsuper deletes the wrong mes-
+              sage file when it is  executed  while  the  Postfix
+              mail system is delivering mail.
 
               The scenario is as follows:
 
@@ -166,11 +168,12 @@ POSTSUPER(1)                                                      POSTSUPER(1)
                      new local mail submissions.  This is  useful
                      when <a href="postconf.5.html#content_filter">content_filter</a> settings have changed.
 
-              Warning:  Postfix queue IDs are reused.  There is a
-              very small possibility that  <a href="postsuper.1.html"><b>postsuper</b>(1)</a>  requeues
-              the  wrong  message  file when it is executed while
-              the Postfix mail system is  running,  but  no  harm
-              should be done.
+              Warning:  Postfix queue IDs are reused (always with
+              Postfix &lt;=  2.8;  and  with  Postfix  &gt;=  2.9  when
+              <a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a>=no).   There  is a very small
+              possibility that <a href="postsuper.1.html"><b>postsuper</b>(1)</a>  requeues  the  wrong
+              message  file when it is executed while the Postfix
+              mail system is running, but no harm should be done.
 
               This feature is available in Postfix 1.1 and later.
 
@@ -180,7 +183,9 @@ POSTSUPER(1)                                                      POSTSUPER(1)
               <b>o</b>      Rename  files  whose name does not match the
                      message file inode number. This operation is
                      necessary  after restoring a mail queue from
-                     a different machine, or from backup media.
+                     a different machine  or  from  backup,  when
+                     queue files were created with Postfix &lt;= 2.8
+                     or with "<a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a> = no".
 
               <b>o</b>      Move queue files that are in the wrong place
                      in the file system hierarchy and remove sub-
@@ -189,18 +194,35 @@ POSTSUPER(1)                                                      POSTSUPER(1)
                      a  change  in  the  <b><a href="postconf.5.html#hash_queue_names">hash_queue_names</a></b>  and/or
                      <b><a href="postconf.5.html#hash_queue_depth">hash_queue_depth</a></b> configuration parameters.
 
+              <b>o</b>      Rename     queue    files    created    with
+                     "<a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a>  =  yes"   to   short
+                     names, for migration to Postfix &lt;= 2.8.  The
+                     procedure is as follows:
+
+                     # postfix stop
+                     # postconf <a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a>=no
+                     # postsuper
+
+                     Run <a href="postsuper.1.html"><b>postsuper</b>(1)</a> repeatedly until  it  stops
+                     reporting file name changes.
+
+       <b>-S</b>     A  redundant  version of <b>-s</b> that requires that long
+              file names also match the message file  inode  num-
+              ber.  This  option exists for testing purposes, and
+              is available with Postfix 2.9 and later.
+
        <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
-              tiple <b>-v</b> options  make  the  software  increasingly
+              tiple  <b>-v</b>  options  make  the software increasingly
               verbose.
 
 <b>DIAGNOSTICS</b>
-       Problems  are reported to the standard error stream and to
+       Problems are reported to the standard error stream and  to
        <b>syslogd</b>(8).
 
-       <a href="postsuper.1.html"><b>postsuper</b>(1)</a> reports the number of messages  deleted  with
-       <b>-d</b>,  the number of messages requeued with <b>-r</b>, and the num-
-       ber of messages whose queue file name was fixed  with  <b>-s</b>.
-       The  report is written to the standard error stream and to
+       <a href="postsuper.1.html"><b>postsuper</b>(1)</a>  reports  the number of messages deleted with
+       <b>-d</b>, the number of messages requeued with <b>-r</b>, and the  num-
+       ber  of  messages whose queue file name was fixed with <b>-s</b>.
+       The report is written to the standard error stream and  to
        <b>syslogd</b>(8).
 
 <b>ENVIRONMENT</b>
@@ -208,38 +230,44 @@ POSTSUPER(1)                                                      POSTSUPER(1)
               Directory with the <a href="postconf.5.html"><b>main.cf</b></a> file.
 
 <b>BUGS</b>
-       Mail that is not sanitized by Postfix (i.e.  mail  in  the
+       Mail  that  is  not sanitized by Postfix (i.e. mail in the
        <b>maildrop</b> queue) cannot be placed "on hold".
 
 <b>CONFIGURATION PARAMETERS</b>
-       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant
+       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are  especially  relevant
        to this program.  The text below provides only a parameter
-       summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
+       summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including  exam-
        ples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
               <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#hash_queue_depth">hash_queue_depth</a> (1)</b>
-              The  number of subdirectory levels for queue direc-
-              tories listed with the <a href="postconf.5.html#hash_queue_names">hash_queue_names</a>  parameter.
+              The number of subdirectory levels for queue  direc-
+              tories  listed with the <a href="postconf.5.html#hash_queue_names">hash_queue_names</a> parameter.
 
        <b><a href="postconf.5.html#hash_queue_names">hash_queue_names</a> (deferred, defer)</b>
-              The  names  of  queue  directories  that  are split
+              The names  of  queue  directories  that  are  split
               across multiple subdirectory levels.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
+              The  location of the Postfix top-level queue direc-
               tory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name  that  is  prepended to the
-              process name in syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
+
+       Available in Postfix version 2.9 and later:
+
+       <b><a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a> (no)</b>
+              Enable long, non-repeating, queue IDs  (queue  file
+              names).
 
 <b>SEE ALSO</b>
        <a href="sendmail.1.html">sendmail(1)</a>, Sendmail-compatible user interface

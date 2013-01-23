@@ -22,7 +22,7 @@ Makefile: Makefile.in
 
 update: ../../bin/$(PROG)
 
-tests:	test1 test2
+tests:	test1 test2 fail_test
 
 root_tests:
 
@@ -51,6 +51,11 @@ test2:	$(PROG) map.in map-abc2.ref map-ghi2.ref map-uABC2.ref
 	    echo $${key} | ./$(PROG) -fq - map.in | diff map-u$${key}2.ref -; \
 	done
 	rm -f map.in.db
+
+fail_test: $(PROG) aliases fail_test.in fail_test.ref
+	-sh fail_test.in > fail_test.tmp 2>&1 || exit 0
+	diff fail_test.ref fail_test.tmp
+	rm -f fail_test.tmp
 
 ../../bin/$(PROG): $(PROG)
 	cp $(PROG) ../../bin
@@ -105,4 +110,5 @@ postalias.o: ../../include/vbuf.h
 postalias.o: ../../include/vstream.h
 postalias.o: ../../include/vstring.h
 postalias.o: ../../include/vstring_vstream.h
+postalias.o: ../../include/warn_stat.h
 postalias.o: postalias.c

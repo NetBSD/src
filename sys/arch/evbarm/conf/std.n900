@@ -1,19 +1,15 @@
-#	$NetBSD: std.n900,v 1.2.2.2 2013/01/16 05:32:52 yamt Exp $
+#	$NetBSD: std.n900,v 1.2.2.3 2013/01/23 00:05:45 yamt Exp $
 #
 # standard NetBSD/evbarm for N900 options
 
 machine	evbarm arm
-include		"conf/std"	# MI standard options
+include 	"arch/evbarm/conf/std.evbarm"
 
 # Pull in BEAGLEBOARD config definitions.
-include "arch/evbarm/conf/files.beagle"
-
-options 	EXEC_ELF32
-options 	EXEC_SCRIPT
+include		"arch/evbarm/conf/files.beagle"
 
 # To support easy transit to ../arch/arm/arm32
 options 	__HAVE_CPU_COUNTER
-options 	ARM32
 options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	TPIDRPRW_IS_CURCPU

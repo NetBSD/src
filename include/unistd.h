@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.127.2.4 2013/01/16 05:32:23 yamt Exp $	*/
+/*	$NetBSD: unistd.h,v 1.127.2.5 2013/01/23 00:05:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -308,7 +308,7 @@ int	readlinkat(int, const char *, char *, size_t);
 int	symlinkat(const char *, int, const char *);
 int	unlinkat(int, const char *, int);
 #endif
-#if defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL)
+#if defined(_INCOMPLETE_XOPEN_C063)
 int	fexecve(int, char * const *, char * const *);
 #endif
 

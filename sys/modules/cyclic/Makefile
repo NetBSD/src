@@ -1,6 +1,6 @@
 # $FreeBSD: src/sys/modules/dtrace/sdt/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
 
-.include "../../Makefile.inc"
+.include "../Makefile.inc"
 
 .PATH: ${NETBSDSRCDIR}/external/cddl/osnet/dev/cyclic
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkdir.2,v 1.24.6.1 2013/01/16 05:32:25 yamt Exp $
+.\"	$NetBSD: mkdir.2,v 1.24.6.2 2013/01/23 00:05:24 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,11 +62,18 @@ is relative.
 In that case, it is looked up from a directory whose file
 descriptor was passed as
 .Fa fd .
-Search permission is required on
-.Fa fd
-except if that file descriptor was opened with the
-.Dv O_SEARCH
-flag.
+Search permission is required this directory.
+.\"    (These alternatives await a decision about the semantics of O_SEARCH)
+.\" Search permission is required on this directory
+.\" except if
+.\" .Fa fd
+.\" was opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.\"    - or -
+.\" This file descriptor must have been opened with the
+.\" .Dv O_SEARCH
+.\" flag.
 .Fa fd
 can be set to
 .Dv AT_FDCWD

@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.66.2.1 2012/10/30 18:59:24 yamt Exp $	*/
+/*	$NetBSD: atactl.c,v 1.66.2.2 2013/01/23 00:05:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.66.2.1 2012/10/30 18:59:24 yamt Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.66.2.2 2013/01/23 00:05:28 yamt Exp $");
 #endif
 
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: atactl.c,v 1.66.2.1 2012/10/30 18:59:24 yamt Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -144,7 +145,9 @@ static const struct command device_commands[] = {
 	{ "smart",
 		"enable|disable|status|offline #|error-log|selftest-log",
 						device_smart },
-	{ "security",	"freeze|status",	device_security },
+	{ "security",
+		"status|freeze|[setpass|unlock|disable|erase] [user|master]",
+						device_security },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -851,6 +854,49 @@ extract_string(char *buf, size_t bufmax,
 	buf[j] = '\0';
 }
 
+static void
+compute_capacity(const struct ataparams *inqbuf, uint64_t *capacityp,
+    uint64_t *sectorsp, uint32_t *secsizep)
+{
+	uint64_t capacity;
+	uint64_t sectors;
+	uint32_t secsize;
+
+	if (inqbuf->atap_cmd2_en != 0 && inqbuf->atap_cmd2_en != 0xffff &&
+	    inqbuf->atap_cmd2_en & ATA_CMD2_LBA48) {
+		sectors =
+		    ((uint64_t)inqbuf->atap_max_lba[3] << 48) |
+		    ((uint64_t)inqbuf->atap_max_lba[2] << 32) |
+		    ((uint64_t)inqbuf->atap_max_lba[1] << 16) |
+		    ((uint64_t)inqbuf->atap_max_lba[0] <<  0);
+	} else if (inqbuf->atap_capabilities1 & WDC_CAP_LBA) {
+		sectors = (inqbuf->atap_capacity[1] << 16) |
+		    inqbuf->atap_capacity[0];
+	} else {
+		sectors = inqbuf->atap_cylinders *
+		    inqbuf->atap_heads * inqbuf->atap_sectors;
+	}
+
+	secsize = 512;
+
+	if ((inqbuf->atap_secsz & ATA_SECSZ_VALID_MASK) == ATA_SECSZ_VALID) {
+		if (inqbuf->atap_secsz & ATA_SECSZ_LLS) {
+			secsize = 2 *		/* words to bytes */
+			    (inqbuf->atap_lls_secsz[1] << 16 |
+			    inqbuf->atap_lls_secsz[0] <<  0);
+		}
+	}
+
+	capacity = sectors * secsize;
+
+	if (capacityp)
+		*capacityp = capacity;
+	if (sectorsp)
+		*sectorsp = sectors;
+	if (secsizep)
+		*secsizep = secsize;
+}
+
 /*
  * DEVICE COMMANDS
  */
@@ -934,32 +980,7 @@ device_identify(int argc, char *argv[])
 	       "ATAPI" : "ATA", inqbuf->atap_config & ATA_CFG_FIXED ? "fixed" :
 	       "removable");
 
-	if (inqbuf->atap_cmd2_en != 0 && inqbuf->atap_cmd2_en != 0xffff &&
-	    inqbuf->atap_cmd2_en & ATA_CMD2_LBA48) {
-		sectors =
-		    ((uint64_t)inqbuf->atap_max_lba[3] << 48) |
-		    ((uint64_t)inqbuf->atap_max_lba[2] << 32) |
-		    ((uint64_t)inqbuf->atap_max_lba[1] << 16) |
-		    ((uint64_t)inqbuf->atap_max_lba[0] <<  0);
-	} else if (inqbuf->atap_capabilities1 & WDC_CAP_LBA) {
-		sectors = (inqbuf->atap_capacity[1] << 16) |
-		    inqbuf->atap_capacity[0];
-	} else {
-		sectors = inqbuf->atap_cylinders *
-		    inqbuf->atap_heads * inqbuf->atap_sectors;
-	}
-
-	secsize = 512;
-
-	if ((inqbuf->atap_secsz & ATA_SECSZ_VALID_MASK) == ATA_SECSZ_VALID) {
-		if (inqbuf->atap_secsz & ATA_SECSZ_LLS) {
-			secsize = 2 *		/* words to bytes */
-			    (inqbuf->atap_lls_secsz[1] << 16 |
-			    inqbuf->atap_lls_secsz[0] <<  0);
-		}
-	}
-
-	capacity = sectors * secsize;
+	compute_capacity(inqbuf, &capacity, &sectors, &secsize);
 
 	humanize_number(hnum, sizeof(hnum), capacity, "bytes",
 		HN_AUTOSCALE, HN_DIVISOR_1000);
@@ -1368,23 +1389,124 @@ device_security(int argc, char *argv[])
 {
 	struct atareq req;
 	const struct ataparams *inqbuf;
+	unsigned char data[DEV_BSIZE];
+	char *pass;
 
 	/* need subcommand */
 	if (argc < 1)
 		usage();
 
-	if (strcmp(argv[0], "freeze") == 0) {
-		memset(&req, 0, sizeof(req));
+	memset(&req, 0, sizeof(req));
+	if (strcmp(argv[0], "status") == 0) {
+		inqbuf = getataparams();
+		print_bitinfo("\t", "\n", inqbuf->atap_sec_st, ata_sec_st);
+	} else if (strcmp(argv[0], "freeze") == 0) {
 		req.command = WDCC_SECURITY_FREEZE;
 		req.timeout = 1000;
 		ata_command(&req);
-	} else if (strcmp(argv[0], "status") == 0) {
-		inqbuf = getataparams();
-		print_bitinfo("\t", "\n", inqbuf->atap_sec_st, ata_sec_st);
-	} else
-		usage();
+	} else if ((strcmp(argv[0], "setpass") == 0) ||
+	    (strcmp(argv[0], "unlock") == 0) ||
+	    (strcmp(argv[0], "disable") == 0) ||
+	    (strcmp(argv[0], "erase") == 0)) {
+		if (argc != 2)
+			usage();
+		if (strcmp(argv[1], "user") != 0) {
+			if (strcmp(argv[1], "master") == 0) {
+				fprintf(stderr,
+				    "Master passwords not supported\n");
+				exit(1);
+			} else {
+				usage();
+			}
+		}
 
-	return;
+		pass = getpass("Password:");
+		if (strlen(pass) > 32) {
+			fprintf(stderr, "Password must be <=32 characters\n");
+			exit(1);
+		}
+
+		req.flags |= ATACMD_WRITE;
+		req.timeout = 1000;
+		req.databuf = data;
+		req.datalen = sizeof(data);
+		memset(data, 0, sizeof(data));
+		strlcpy((void *)&data[2], pass, 32 + 1);
+
+		if (strcmp(argv[0], "setpass") == 0) {
+			char orig[32 + 1];
+			strlcpy(orig, pass, 32 + 1);
+			pass = getpass("Confirm password:");
+			if (0 != strcmp(orig, pass)) {
+				fprintf(stderr, "Passwords do not match\n");
+				exit(1);
+			}
+			req.command = WDCC_SECURITY_SET_PASSWORD;
+		} else if (strcmp(argv[0], "unlock") == 0) {
+			req.command = WDCC_SECURITY_UNLOCK;
+		} else if (strcmp(argv[0], "disable") == 0) {
+			req.command = WDCC_SECURITY_DISABLE_PASSWORD;
+		} else if (strcmp(argv[0], "erase") == 0) {
+			struct atareq prepare;
+
+			inqbuf = getataparams();
+
+			/*
+			 * XXX Any way to lock the device to make sure
+			 * this really is the command preceding the
+			 * SECURITY ERASE UNIT command?  This would
+			 * probably have to be moved into the kernel to
+			 * do that.
+			 */
+			memset(&prepare, 0, sizeof(prepare));
+			prepare.command = WDCC_SECURITY_ERASE_PREPARE;
+			prepare.timeout = 1000;
+			ata_command(&prepare);
+
+			req.command = WDCC_SECURITY_ERASE_UNIT;
+
+			/*
+			 * Enable enhanced erase if it's supported.
+			 *
+			 * XXX should be a command-line option
+			 */
+			if (inqbuf->atap_sec_st & WDC_SEC_ESE_SUPP) {
+				data[0] |= 0x2;
+				req.timeout = (inqbuf->atap_eseu_time & 0xff)
+				    * 2 * 60 * 1000;
+			} else {
+				req.timeout = (inqbuf->atap_seu_time & 0xff)
+				    * 2 * 60 * 1000;
+			}
+
+			/*
+			 * If the estimated time was 0xff (* 2 * 60 *
+			 * 1000 = 30600000), that means `>508 minutes'.
+			 * Estimate that we can handle 16 MB/sec, a
+			 * rate I just pulled out of my arse.
+			 */
+			if (req.timeout == 30600000) {
+				uint64_t bytes, timeout;
+				compute_capacity(inqbuf, &bytes, NULL, NULL);
+				timeout = (bytes / (16 * 1024 * 1024)) * 1000;
+				if (timeout > (uint64_t)INT_MAX)
+					req.timeout = INT_MAX;
+				else
+					req.timeout = timeout;
+			}
+
+			printf("Erasing may take up to %dh %dm %ds...\n",
+			    (req.timeout / 1000 / 60) / 60,
+			    (req.timeout / 1000 / 60) % 60,
+			    req.timeout % 60);
+		} else {
+			abort();
+		}
+
+		ata_command(&req);
+	} else {
+		usage();
+	}
 }
 
 /*

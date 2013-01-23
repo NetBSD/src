@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.12.2.2 2013/01/16 05:32:49 yamt Exp $	*/
+/*	$Id: omap2_obio.c,v 1.12.2.3 2013/01/23 00:05:42 yamt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.12.2.2 2013/01/16 05:32:49 yamt Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.12.2.3 2013/01/23 00:05:42 yamt Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.12.2.2 2013/01/16 05:32:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.12.2.3 2013/01/23 00:05:42 yamt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -364,7 +364,7 @@ static const struct {
 	{ .name = "avic", .addr = INTC_BASE_3430, .required = true },
 #endif
 #if defined(OMAP_3530)
-	{ .name = "avic", .addr = INTC_BASE_3530, .required = true },
+	{ .name = "avic",    .addr = INTC_BASE_3530, .required = true },
 #endif
 	{ .name = "gpio1", .addr = GPIO1_BASE, .required = false },
 	{ .name = "gpio2", .addr = GPIO2_BASE, .required = false },
@@ -375,12 +375,18 @@ static const struct {
 #if defined(GPIO5_BASE)
 	{ .name = "gpio5", .addr = GPIO5_BASE, .required = false },
 #endif
+#if defined(GPIO6_BASE)
+	{ .name = "gpio6", .addr = GPIO6_BASE, .required = false },
+#endif
 #if 0
 	{ .name = "dmac", .addr = DMAC_BASE, .required = true },
 #endif
 #if defined(TI_AM335X)
 	{ .name = "omapicu", .addr = 0x48200000, .required = true },
 	{ .name = "prcm", .addr = 0x44e00000, .required = true },
+#endif
+#if defined(OMAP_3530)
+	{ .name = "omapdma", .addr = OMAP3530_SDMA_BASE, .required = true },
 #endif
 };
 

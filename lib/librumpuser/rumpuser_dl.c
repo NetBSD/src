@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.7.4.2 2013/01/16 05:32:28 yamt Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.7.4.3 2013/01/23 00:05:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.7.4.2 2013/01/16 05:32:28 yamt Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.7.4.3 2013/01/23 00:05:27 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -44,7 +44,6 @@ __RCSID("$NetBSD: rumpuser_dl.c,v 1.7.4.2 2013/01/16 05:32:28 yamt Exp $");
 #include <elf.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <link.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,6 +54,8 @@ __RCSID("$NetBSD: rumpuser_dl.c,v 1.7.4.2 2013/01/16 05:32:28 yamt Exp $");
 #if defined(__ELF__) && (defined(__NetBSD__) || defined(__FreeBSD__)	\
     || (defined(__sun__) && defined(__svr4__))) || defined(__linux__)	\
     || defined(__DragonFly__)
+#include <link.h>
+
 static size_t symtabsize = 0, strtabsize = 0;
 static size_t symtaboff = 0, strtaboff = 0;
 static uint8_t *symtab = NULL;
@@ -485,11 +486,23 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	fprintf(stderr, "Warning, dlinfo() unsupported on host?\n");
 }
 
+/*
+ * "default" implementation for platforms where we don't support
+ * dynamic linking.  Assumes that all rump kernel components are
+ * statically linked with the local client.
+ */
+
+extern void *__start_link_set_rump_components;
+extern void *__stop_link_set_rump_components;
 void
 rumpuser_dl_component_init(int type, rump_component_init_fn compinit)
 {
+	void **rc = &__start_link_set_rump_components;
+	void **rc_end = &__stop_link_set_rump_components;
 
-	fprintf(stderr, "Warning, dlinfo() unsupported on host?\n");
+	for (; rc < rc_end; rc++)
+		compinit(*rc, type);
+
 }
 #endif
 

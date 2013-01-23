@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.220 2011/10/24 11:43:30 hannken Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.220.2.1 2013/01/23 00:06:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.220 2011/10/24 11:43:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.220.2.1 2013/01/23 00:06:27 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -814,7 +814,7 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam, const char *
 	 * traversals of the mount point (i.e. "..") will not work if
 	 * the nfsnode gets flushed out of the cache. Ufs does not have
 	 * this problem, because one can identify root inodes by their
-	 * number == ROOTINO (2). So, just unlock, but no rele.
+	 * number == UFS_ROOTINO (2). So, just unlock, but no rele.
 	 */
 
 	nmp->nm_vnode = vp;

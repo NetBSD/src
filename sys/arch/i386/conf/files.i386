@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.361.2.3 2012/10/30 17:19:48 yamt Exp $
+#	$NetBSD: files.i386,v 1.361.2.4 2013/01/23 00:05:49 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -249,6 +249,11 @@ include	"dev/isa/files.isa"
 file	arch/x86/isa/clock.c		isa
 file	arch/x86/isa/rtc.c		isa
 
+# Protech PS3100 cash drawer
+device	ptcd: gpiobus
+attach	ptcd at isa
+file	dev/isa/ptcd.c			ptcd
+
 # TSC support
 file	arch/x86/x86/tsc.c
 
@@ -457,7 +462,7 @@ obsolete	defflag	opt_vesafb.h	VESAFB_PM
 
 # AMD Geode LX Security Block
 device	glxsb: opencrypto
-attach	glxsb at pci    
+attach	glxsb at pci
 file	arch/i386/pci/glxsb.c		glxsb
 
 include "arch/i386/conf/majors.i386"

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.9.4.2 2012/10/30 17:22:02 yamt Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.9.4.3 2013/01/23 00:06:09 yamt Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.9.4.2 2012/10/30 17:22:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.9.4.3 2013/01/23 00:06:09 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -271,8 +271,15 @@ sdmmc_task_thread(void *arg)
 	}
 	/* time to die. */
 	sc->sc_dying = 0;
-	if (ISSET(sc->sc_flags, SMF_CARD_PRESENT))
+	if (ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
+		/*
+		 * sdmmc_card_detach() may issue commands,
+		 * so temporarily drop the interrupt-blocking lock.
+		 */
+		mutex_exit(&sc->sc_tskq_mtx);
 		sdmmc_card_detach(sc, DETACH_FORCE);
+		mutex_enter(&sc->sc_tskq_mtx);
+	}
 	sc->sc_tskq_lwp = NULL;
 	cv_broadcast(&sc->sc_tskq_cv);
 	mutex_exit(&sc->sc_tskq_mtx);
@@ -518,14 +525,21 @@ sdmmc_enable(struct sdmmc_softc *sc)
 	if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
 		/* Initialize SD I/O card function(s). */
 		error = sdmmc_io_enable(sc);
-		if (error)
+		if (error) {
+			DPRINTF(1, ("%s: sdmmc_io_enable failed %d\n", DEVNAME(sc), error));
 			goto out;
+		}
 	}
 
 	/* Initialize SD/MMC memory card(s). */
 	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE) ||
-	    ISSET(sc->sc_flags, SMF_MEM_MODE))
+	    ISSET(sc->sc_flags, SMF_MEM_MODE)) {
 		error = sdmmc_mem_enable(sc);
+		if (error) {
+			DPRINTF(1, ("%s: sdmmc_mem_enable failed %d\n", DEVNAME(sc), error));
+			goto out;
+		}
+	}
 
 out:
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: addr_match_list.c,v 1.1.1.2 2011/03/02 19:32:12 tron Exp $	*/
+/*	$NetBSD: addr_match_list.c,v 1.1.1.2.4.1 2013/01/23 00:05:01 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -37,7 +37,13 @@
 /*	The matching process is case insensitive.
 /*
 /*	addr_match_list_init() performs initializations. The first
-/*	argument is MATCH_FLAG_NONE for future extension.
+/*	argument is the bit-wise OR of zero or more of the following:
+/* .IP MATCH_FLAG_RETURN
+/*	Request that addr_match_list_match() logs a warning and
+/*	returns zero with list->error set to a non-zero dictionary
+/*	error code, instead of raising a fatal error.
+/* .PP
+/*	Specify MATCH_FLAG_NONE to request none of the above.
 /*	The second argument is a list of patterns, or the absolute
 /*	pathname of a file with patterns.
 /*
@@ -109,7 +115,7 @@ int     main(int argc, char **argv)
     }
     if (argc != optind + 2)
 	usage(argv[0]);
-    list = addr_match_list_init(MATCH_FLAG_PARENT, argv[optind]);
+    list = addr_match_list_init(MATCH_FLAG_PARENT | MATCH_FLAG_RETURN, argv[optind]);
     addr = argv[optind + 1];
     if (strcmp(addr, "-") == 0) {
 	VSTRING *buf = vstring_alloc(100);
@@ -117,12 +123,12 @@ int     main(int argc, char **argv)
 	while (vstring_get_nonl(buf, VSTREAM_IN) != VSTREAM_EOF)
 	    vstream_printf("%s: %s\n", vstring_str(buf),
 			   addr_match_list_match(list, vstring_str(buf)) ?
-			   "YES" : "NO");
+			   "YES" : list->error == 0 ? "NO" : "ERROR");
 	vstring_free(buf);
     } else {
 	vstream_printf("%s: %s\n", addr,
-		       addr_match_list_match(list, addr) ?
-		       "YES" : "NO");
+		       addr_match_list_match(list, addr) > 0 ?
+		       "YES" : list->error == 0 ? "NO" : "ERROR");
     }
     vstream_fflush(VSTREAM_OUT);
     addr_match_list_free(list);

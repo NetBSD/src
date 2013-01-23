@@ -40,6 +40,7 @@
 #include <sys/mnttab.h>
 #include <sys/mntent.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 
 #include <libzfs.h>
 

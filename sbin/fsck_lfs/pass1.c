@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.30 2010/02/16 23:20:30 mlelstv Exp $	 */
+/* $NetBSD: pass1.c,v 1.30.6.1 2013/01/23 00:05:30 yamt Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -184,8 +184,8 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 
 	/* XXX - LFS doesn't have this particular problem (?) */
 	if (mode == 0) {
-		if (memcmp(dp->di_db, zino.di_db, NDADDR * sizeof(ufs_daddr_t)) ||
-		    memcmp(dp->di_ib, zino.di_ib, NIADDR * sizeof(ufs_daddr_t)) ||
+		if (memcmp(dp->di_db, zino.di_db, UFS_NDADDR * sizeof(ufs_daddr_t)) ||
+		    memcmp(dp->di_ib, zino.di_ib, UFS_NIADDR * sizeof(ufs_daddr_t)) ||
 		    dp->di_mode || dp->di_size) {
 			pwarn("mode=o%o, ifmt=o%o\n", dp->di_mode, mode);
 			pfatal("PARTIALLY ALLOCATED INODE I=%llu",
@@ -231,24 +231,24 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		if (dp->di_size < fs->lfs_maxsymlinklen ||
 		    (fs->lfs_maxsymlinklen == 0 && dp->di_blocks == 0)) {
 			ndb = howmany(dp->di_size, sizeof(ufs_daddr_t));
-			if (ndb > NDADDR) {
-				j = ndb - NDADDR;
+			if (ndb > UFS_NDADDR) {
+				j = ndb - UFS_NDADDR;
 				for (ndb = 1; j > 1; j--)
 					ndb *= NINDIR(fs);
-				ndb += NDADDR;
+				ndb += UFS_NDADDR;
 			}
 		}
 	}
-	for (j = ndb; j < NDADDR; j++)
+	for (j = ndb; j < UFS_NDADDR; j++)
 		if (dp->di_db[j] != 0) {
 			if (debug)
 				printf("bad direct addr for size %lld lbn %d: 0x%x\n",
 					(long long)dp->di_size, j, (unsigned)dp->di_db[j]);
 			goto unknown;
 		}
-	for (j = 0, ndb -= NDADDR; ndb > 0; j++)
+	for (j = 0, ndb -= UFS_NDADDR; ndb > 0; j++)
 		ndb /= NINDIR(fs);
-	for (; j < NIADDR; j++)
+	for (; j < UFS_NIADDR; j++)
 		if (dp->di_ib[j] != 0) {
 			if (debug)
 				printf("bad indirect addr for size %lld # %d: 0x%x\n",

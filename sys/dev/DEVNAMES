@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.270.2.3 2012/10/30 17:20:49 yamt Exp $
+#	$NetBSD: DEVNAMES,v 1.270.2.4 2013/01/23 00:06:04 yamt Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -288,6 +288,7 @@ cpcbus			MI		Attribute
 cpciic			MI
 cpctim			MI
 cprofb			MI
+cpsw			evbarm
 cpu			acorn26
 cpu			acorn32
 cpu			algor
@@ -619,6 +620,7 @@ i2c_eeprom		MI		Attribute
 i8042			shark		Attribute
 i82586			MI		Attribute
 iavc			MI
+ibmcd			MI
 ibus			pmax
 ibus			vax
 ichlpcib		i386
@@ -1116,6 +1118,8 @@ psh3lcd			hpcsh
 psh3tp			hpcsh
 psm			sparc64
 psycho			sparc64
+ptcd			amd64
+ptcd			i386
 ptsc			acorn32
 puc			MI
 pvr			dreamcast

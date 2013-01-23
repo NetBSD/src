@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.80 2011/08/29 14:34:59 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.80.2.1 2013/01/23 00:05:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.80 2011/08/29 14:34:59 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.80.2.1 2013/01/23 00:05:30 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -412,7 +412,7 @@ checkfilesys(const char *filesys, const char *origfs, int child)
 	    (long long)(((n_ffree * 1000 + (daddr_t)sblock->fs_dsize / 2)
 		/ (daddr_t)sblock->fs_dsize) % 10));
 	if (debug &&
-	    (n_files -= maxino - ROOTINO - sblock->fs_cstotal.cs_nifree))
+	    (n_files -= maxino - UFS_ROOTINO - sblock->fs_cstotal.cs_nifree))
 		printf("%llu files missing\n", (unsigned long long)n_files);
 	if (debug) {
 		n_blks += sblock->fs_ncg *

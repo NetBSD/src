@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.33.2.1 2012/04/17 00:08:06 yamt Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.33.2.2 2013/01/23 00:06:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,9 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.33.2.1 2012/04/17 00:08:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.33.2.2 2013/01/23 00:06:11 yamt Exp $");
 
-#if defined(_KERNEL_OPT)
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
 

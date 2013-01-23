@@ -1,0 +1,7 @@
+config_directory = .
+p1 = xx
+p2 = xx
+p3 = xx
+p4 = xx
+./postconf: warning: ./master.cf: unused parameter: bodyx_checks=$p2
+./postconf: warning: ./master.cf: unused parameter: headerx_checks=$p4

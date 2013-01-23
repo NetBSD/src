@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.18.4.1 2012/05/23 10:08:29 yamt Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.18.4.2 2013/01/23 00:06:42 yamt Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.18.4.1 2012/05/23 10:08:29 yamt Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.18.4.2 2013/01/23 00:06:42 yamt Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -164,7 +164,7 @@ ffs_blkpref_ufs1(struct inode *ip, daddr_t lbn, int indx, int32_t *bap)
 
 	fs = ip->i_fs;
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
-		if (lbn < NDADDR + NINDIR(fs)) {
+		if (lbn < UFS_NDADDR + NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
 			return (fs->fs_fpg * cg + fs->fs_frag);
 		}
@@ -203,7 +203,7 @@ ffs_blkpref_ufs2(struct inode *ip, daddr_t lbn, int indx, int64_t *bap)
 
 	fs = ip->i_fs;
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
-		if (lbn < NDADDR + NINDIR(fs)) {
+		if (lbn < UFS_NDADDR + NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
 			return (fs->fs_fpg * cg + fs->fs_frag);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.42 2010/11/14 13:33:23 uebayasi Exp $ */
+/*	$NetBSD: vmparam.h,v 1.42.8.1 2013/01/23 00:05:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,8 @@
 
 #ifndef _SPARC_VMPARAM_H_
 #define _SPARC_VMPARAM_H_
+
+#define __USE_TOPDOWN_VM
 
 /*
  * Machine dependent constants for SPARC

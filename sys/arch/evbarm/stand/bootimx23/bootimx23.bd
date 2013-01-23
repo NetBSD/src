@@ -1,4 +1,4 @@
-/* $Id: bootimx23.bd,v 1.3.2.2 2013/01/16 05:32:56 yamt Exp $ */
+/* $Id: bootimx23.bd,v 1.3.2.3 2013/01/23 00:05:46 yamt Exp $ */
 
 /*
  * elftosb command file.
@@ -25,7 +25,7 @@ section (0) {
 	load boot_prep;
 	call boot_prep;
 
-	// Load and start NetBSD kernel.
+	// Load kernel to DRAM.
 	load netbsd;
 	jump netbsd;
 }

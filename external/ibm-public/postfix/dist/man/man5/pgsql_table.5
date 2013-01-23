@@ -1,4 +1,4 @@
-.\"	$NetBSD: pgsql_table.5,v 1.1.1.2 2011/03/02 19:31:51 tron Exp $
+.\"	$NetBSD: pgsql_table.5,v 1.1.1.2.4.1 2013/01/23 00:04:56 yamt Exp $
 .\"
 .TH PGSQL_TABLE 5 
 .ad
@@ -105,7 +105,7 @@ The hosts that Postfix will try to connect to and query from.
 Specify \fIunix:\fR for UNIX-domain sockets, \fIinet:\fR for TCP
 connections (default).  Example:
 .nf
-    hosts = host1.some.domain host2.some.domain
+    hosts = host1.some.domain host2.some.domain:port
     hosts = unix:/file/name
 .fi
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.64.2.1 2012/04/17 00:07:24 yamt Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.64.2.2 2013/01/23 00:06:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.64.2.1 2012/04/17 00:07:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.64.2.2 2013/01/23 00:06:03 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -304,5 +304,19 @@ db_show_sched_qs(db_expr_t addr, bool haddr,
 
 #ifdef _KERNEL	/* XXX CRASH(8) */
 	sched_print_runqueue(db_printf);
+#endif
+}
+
+void
+db_show_panic(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
+{
+#ifdef _KERNEL	/* XXX CRASH(8) */
+        int s;
+
+	s = splhigh();
+
+	db_printf("Panic string: %s\n", panicstr);
+
+	(void)splx(s);
 #endif
 }

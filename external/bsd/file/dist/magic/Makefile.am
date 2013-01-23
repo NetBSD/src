@@ -1,5 +1,5 @@
 #
-# $File: Makefile.am,v 1.78 2012/01/27 01:41:26 christos Exp $
+# $File: Makefile.am,v 1.85 2013/01/03 16:00:42 christos Exp $
 #
 MAGIC_FRAGMENT_BASE = magdir
 MAGIC_DIR = $(top_srcdir)/magic
@@ -53,6 +53,7 @@ $(MAGIC_FRAGMENT_DIR)/console \
 $(MAGIC_FRAGMENT_DIR)/convex \
 $(MAGIC_FRAGMENT_DIR)/cracklib \
 $(MAGIC_FRAGMENT_DIR)/ctags \
+$(MAGIC_FRAGMENT_DIR)/cubemap \
 $(MAGIC_FRAGMENT_DIR)/cups \
 $(MAGIC_FRAGMENT_DIR)/dact \
 $(MAGIC_FRAGMENT_DIR)/database \
@@ -105,9 +106,11 @@ $(MAGIC_FRAGMENT_DIR)/island \
 $(MAGIC_FRAGMENT_DIR)/ispell \
 $(MAGIC_FRAGMENT_DIR)/isz \
 $(MAGIC_FRAGMENT_DIR)/java \
+$(MAGIC_FRAGMENT_DIR)/javascript \
 $(MAGIC_FRAGMENT_DIR)/jpeg \
 $(MAGIC_FRAGMENT_DIR)/karma \
 $(MAGIC_FRAGMENT_DIR)/kde \
+$(MAGIC_FRAGMENT_DIR)/keepass \
 $(MAGIC_FRAGMENT_DIR)/kml \
 $(MAGIC_FRAGMENT_DIR)/lecter \
 $(MAGIC_FRAGMENT_DIR)/lex \
@@ -119,6 +122,7 @@ $(MAGIC_FRAGMENT_DIR)/lua \
 $(MAGIC_FRAGMENT_DIR)/luks \
 $(MAGIC_FRAGMENT_DIR)/m4 \
 $(MAGIC_FRAGMENT_DIR)/mach \
+$(MAGIC_FRAGMENT_DIR)/macos \
 $(MAGIC_FRAGMENT_DIR)/macintosh \
 $(MAGIC_FRAGMENT_DIR)/magic \
 $(MAGIC_FRAGMENT_DIR)/mail.news \
@@ -178,6 +182,7 @@ $(MAGIC_FRAGMENT_DIR)/printer \
 $(MAGIC_FRAGMENT_DIR)/project \
 $(MAGIC_FRAGMENT_DIR)/psdbms \
 $(MAGIC_FRAGMENT_DIR)/pulsar \
+$(MAGIC_FRAGMENT_DIR)/pwsafe \
 $(MAGIC_FRAGMENT_DIR)/pyramid \
 $(MAGIC_FRAGMENT_DIR)/python \
 $(MAGIC_FRAGMENT_DIR)/revision \
@@ -222,6 +227,7 @@ $(MAGIC_FRAGMENT_DIR)/tuxedo \
 $(MAGIC_FRAGMENT_DIR)/typeset \
 $(MAGIC_FRAGMENT_DIR)/unicode \
 $(MAGIC_FRAGMENT_DIR)/unknown \
+$(MAGIC_FRAGMENT_DIR)/uterus \
 $(MAGIC_FRAGMENT_DIR)/uuencode \
 $(MAGIC_FRAGMENT_DIR)/varied.out \
 $(MAGIC_FRAGMENT_DIR)/varied.script \

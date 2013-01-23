@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.80 2011/10/28 16:42:52 dyoung Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.80.2.1 2013/01/23 00:06:25 yamt Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.80 2011/10/28 16:42:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.80.2.1 2013/01/23 00:06:25 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -494,9 +494,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EAFNOSUPPORT;
 			break;
 		}
-		break;
-
-	case SIOCGIFMTU:
 		break;
 
 	case SIOCSIFMTU:

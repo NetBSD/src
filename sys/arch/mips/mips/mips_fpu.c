@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.7.2.1 2012/04/17 00:06:40 yamt Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.7.2.2 2013/01/23 00:05:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.7.2.1 2012/04/17 00:06:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.7.2.2 2013/01/23 00:05:55 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.7.2.1 2012/04/17 00:06:40 yamt Exp $"
 #include <mips/regnum.h>
 #include <mips/pcb.h>
 
-static void mips_fpu_state_save(lwp_t *);
-static void mips_fpu_state_load(lwp_t *, bool);
-static void mips_fpu_state_release(lwp_t *);
+static void mips_fpu_state_save(lwp_t *, u_int);
+static void mips_fpu_state_load(lwp_t *, u_int);
+static void mips_fpu_state_release(lwp_t *, u_int);
 
 const pcu_ops_t mips_fpu_ops = {
 	.pcu_id = PCU_FPU,
@@ -82,7 +82,7 @@ fpu_used_p(void)
 }
 
 void
-mips_fpu_state_save(lwp_t *l)
+mips_fpu_state_save(lwp_t *l, u_int flags)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct pcb * const pcb = lwp_getpcb(l);
@@ -205,7 +205,7 @@ mips_fpu_state_save(lwp_t *l)
 }
 
 void
-mips_fpu_state_load(lwp_t *l, bool used)
+mips_fpu_state_load(lwp_t *l, u_int flags)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct pcb * const pcb = lwp_getpcb(l);
@@ -218,7 +218,7 @@ mips_fpu_state_load(lwp_t *l, bool used)
 	/*
 	 * If this is the first time the state is being loaded, zero it first.
 	 */
-	if (__predict_false(!used)) {
+	if (__predict_false((flags & PCU_LOADED) == 0)) {
 		memset(&pcb->pcb_fpregs, 0, sizeof(pcb->pcb_fpregs));
 	}
 
@@ -343,7 +343,7 @@ mips_fpu_state_load(lwp_t *l, bool used)
 }
 
 void
-mips_fpu_state_release(lwp_t *l)
+mips_fpu_state_release(lwp_t *l, u_int flags)
 {
 
 	l->l_md.md_utf->tf_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;

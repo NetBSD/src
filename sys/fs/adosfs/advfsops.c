@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.62.2.2 2012/10/30 17:22:22 yamt Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.62.2.3 2013/01/23 00:06:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.62.2.2 2012/10/30 17:22:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.62.2.3 2013/01/23 00:06:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -233,7 +233,6 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	bp = NULL;
 	if ((error = bread(devvp, (daddr_t)BBOFF,
 			   amp->bsize, NOCRED, 0, &bp)) != 0) {
-		brelse(bp, 0);
 		goto fail;
 	}
 	amp->dostype = adoswordn(bp, 0);
@@ -411,7 +410,6 @@ adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
 
 	if ((error = bread(amp->devvp, an * amp->bsize / DEV_BSIZE,
 			   amp->bsize, NOCRED, 0, &bp)) != 0) {
-		brelse(bp, 0);
 		vput(vp);
 		return (error);
 	}
@@ -532,7 +530,6 @@ adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
 		error = bread(amp->devvp, ap->linkto * amp->bsize / DEV_BSIZE,
 		    amp->bsize, NOCRED, 0, &bp);
 		if (error) {
-			brelse(bp, 0);
 			vput(vp);
 			return (error);
 		}
@@ -612,7 +609,6 @@ adosfs_loadbitmap(struct adosfsmount *amp)
 	bn = amp->rootb;
 	if ((error = bread(amp->devvp, bn * amp->bsize / DEV_BSIZE, amp->bsize,
 	    NOCRED, 0, &bp)) != 0) {
-		brelse(bp, 0);
 		return (error);
 	}
 	blkix = amp->nwords - 49;

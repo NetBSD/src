@@ -1,4 +1,4 @@
-/*	$NetBSD: devicename.c,v 1.3 2009/07/20 04:59:04 kiyohara Exp $	*/
+/*	$NetBSD: devicename.c,v 1.3.12.1 2013/01/23 00:05:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -31,6 +31,7 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
+#include <lib/libkern/libkern.h>
 #include <sys/disklabel.h>
 
 #include <bootstrap.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_tests.c,v 1.1.1.1 2011/03/02 19:32:27 tron Exp $	*/
+/*	$NetBSD: postscreen_tests.c,v 1.1.1.1.6.1 2013/01/23 00:05:10 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -177,8 +177,8 @@ void    psc_parse_tests(PSC_STATE *state,
 
     /*
      * Parse the cache entry, and allow for older postscreen versions that
-     * implemented fewer tests. We pretend that these tests were disabled
-     * when the cache entry was written.
+     * implemented fewer tests. We pretend that the newer tests were disabled
+     * at the time that the cache entry was written.
      * 
      * Flag the cache entry as "new" when the cache entry has fields for all
      * enabled tests, but the remote SMTP client has not yet passed all those
@@ -217,37 +217,44 @@ void    psc_parse_tests(PSC_STATE *state,
 	state->flags |= PSC_STATE_FLAG_NEW;
 
     /*
-     * Don't flag a cache entry as expired just because some test was never
-     * passed.
-     * 
      * Don't flag disabled tests as "todo", because there would be no way to
      * make those bits go away.
      */
-    if (PSC_PREGR_TEST_ENABLE() && time_value > state->pregr_stamp) {
+    if (PSC_PREGR_TEST_ENABLE() && time_value > state->pregr_stamp)
 	state->flags |= PSC_STATE_FLAG_PREGR_TODO;
-	if (state->pregr_stamp > PSC_TIME_STAMP_DISABLED)
-	    state->flags |= PSC_STATE_FLAG_CACHE_EXPIRED;
-    }
-    if (PSC_DNSBL_TEST_ENABLE() && time_value > state->dnsbl_stamp) {
+    if (PSC_DNSBL_TEST_ENABLE() && time_value > state->dnsbl_stamp)
 	state->flags |= PSC_STATE_FLAG_DNSBL_TODO;
-	if (state->dnsbl_stamp > PSC_TIME_STAMP_DISABLED)
-	    state->flags |= PSC_STATE_FLAG_CACHE_EXPIRED;
-    }
-    if (var_psc_pipel_enable && time_value > state->pipel_stamp) {
+    if (var_psc_pipel_enable && time_value > state->pipel_stamp)
 	state->flags |= PSC_STATE_FLAG_PIPEL_TODO;
-	if (state->pipel_stamp > PSC_TIME_STAMP_DISABLED)
-	    state->flags |= PSC_STATE_FLAG_CACHE_EXPIRED;
-    }
-    if (var_psc_nsmtp_enable && time_value > state->nsmtp_stamp) {
+    if (var_psc_nsmtp_enable && time_value > state->nsmtp_stamp)
 	state->flags |= PSC_STATE_FLAG_NSMTP_TODO;
-	if (state->nsmtp_stamp > PSC_TIME_STAMP_DISABLED)
-	    state->flags |= PSC_STATE_FLAG_CACHE_EXPIRED;
-    }
-    if (var_psc_barlf_enable && time_value > state->barlf_stamp) {
+    if (var_psc_barlf_enable && time_value > state->barlf_stamp)
 	state->flags |= PSC_STATE_FLAG_BARLF_TODO;
-	if (state->barlf_stamp > PSC_TIME_STAMP_DISABLED)
-	    state->flags |= PSC_STATE_FLAG_CACHE_EXPIRED;
+
+    /*
+     * If any test has expired, proactively refresh tests that will expire
+     * soon. This can increase the occurrence of client-visible delays, but
+     * avoids questions about why a client can pass some test and then fail
+     * within seconds. The proactive refresh time is really a surrogate for
+     * the user's curiosity level, and therefore hard to choose optimally.
+     */
+#ifdef VAR_PSC_REFRESH_TIME
+    if ((state->flags & PSC_STATE_MASK_ANY_TODO) != 0
+	&& var_psc_refresh_time > 0) {
+	time_t  refresh_time = time_value + var_psc_refresh_time;
+
+	if (PSC_PREGR_TEST_ENABLE() && refresh_time > state->pregr_stamp)
+	    state->flags |= PSC_STATE_FLAG_PREGR_TODO;
+	if (PSC_DNSBL_TEST_ENABLE() && refresh_time > state->dnsbl_stamp)
+	    state->flags |= PSC_STATE_FLAG_DNSBL_TODO;
+	if (var_psc_pipel_enable && refresh_time > state->pipel_stamp)
+	    state->flags |= PSC_STATE_FLAG_PIPEL_TODO;
+	if (var_psc_nsmtp_enable && refresh_time > state->nsmtp_stamp)
+	    state->flags |= PSC_STATE_FLAG_NSMTP_TODO;
+	if (var_psc_barlf_enable && refresh_time > state->barlf_stamp)
+	    state->flags |= PSC_STATE_FLAG_BARLF_TODO;
     }
+#endif
 
     /*
      * Gratuitously make postscreen logging more useful by turning on all

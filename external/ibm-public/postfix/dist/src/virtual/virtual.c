@@ -1,4 +1,4 @@
-/*	$NetBSD: virtual.c,v 1.1.1.2 2010/06/17 18:07:17 tron Exp $	*/
+/*	$NetBSD: virtual.c,v 1.1.1.2.6.1 2013/01/23 00:05:17 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -333,7 +333,7 @@ char   *var_virt_gid_maps;
 int     var_virt_minimum_uid;
 char   *var_virt_mailbox_base;
 char   *var_virt_mailbox_lock;
-int     var_virt_mailbox_limit;
+long    var_virt_mailbox_limit;
 char   *var_mail_spool_dir;		/* XXX dependency fix */
 bool    var_strict_mbox_owner;
 
@@ -499,6 +499,9 @@ int     main(int argc, char **argv)
 {
     static const CONFIG_INT_TABLE int_table[] = {
 	VAR_VIRT_MINUID, DEF_VIRT_MINUID, &var_virt_minimum_uid, 1, 0,
+	0,
+    };
+    static const CONFIG_LONG_TABLE long_table[] = {
 	VAR_VIRT_MAILBOX_LIMIT, DEF_VIRT_MAILBOX_LIMIT, &var_virt_mailbox_limit, 0, 0,
 	0,
     };
@@ -523,6 +526,7 @@ int     main(int argc, char **argv)
 
     single_server_main(argc, argv, local_service,
 		       MAIL_SERVER_INT_TABLE, int_table,
+		       MAIL_SERVER_LONG_TABLE, long_table,
 		       MAIL_SERVER_STR_TABLE, str_table,
 		       MAIL_SERVER_BOOL_TABLE, bool_table,
 		       MAIL_SERVER_PRE_INIT, pre_init,

@@ -1,7 +1,7 @@
 #! /bin/sh
 
-# $NetBSD: mkimage,v 1.3.2.2 2012/04/17 00:02:49 yamt Exp $
-
+# $NetBSD: mkimage,v 1.3.2.3 2013/01/23 00:04:28 yamt Exp $
+#
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
 #
@@ -68,14 +68,46 @@ next_avail ()
 	echo "${dev}${N}"
 }
 
+usage() {
+	cat << EOF 1>&2
+Usage: $PROG -h <host-arch> [-S <setsdir>] [-c <custom-files-dir>] [-s <size>] [<image>]
+EOF
+	exit 1
+}
+
+# Return the filesystem size for an ls -l or tar -xvf list
+# Directories and symlinks in tar are 0 size, we assume one block
+# (which is too much), we round up by the fragment size the rest.
+getfssize() {
+	local bsize="$1"
+	local fsize="$2"
+
+	awk -v fsize=${fsize} -v bsize=${bsize} '
+	NF >= 9 && $1 != "tar:" {
+		if ($5 == 0)
+			tot += bsize;
+		else
+			tot += ((int)(($5 + fsize - 1) / fsize)) * fsize;
+	}
+	END {
+		printf("%d\n", tot);
+	}'
+}
+
 # find the size of the gzipped files in a .tgz archive
+# Directories appear as 0, so count them as one block
+# and round up files to a fragment.
 sizeone() {
+	if [ ! -f "$1" ]
+	then
+		echo "$PROG: Missing set $1" 1>&2
+		echo 0
+		return;
+	fi
+
         case "$1" in 
-        *.tgz|*.tar.gz)
-                tar tvzf "$1" | awk '{ tot += $5 } END { print tot }'
-                ;;
-        *.tbz|*.tar.bz2)
-                tar tvjf "$1" | awk '{ tot += $5 } END { print tot }' 
+        *.tgz|*.tar.gz|*.tbz|*.tar.bz2|*.txz|*.tar.xz)
+                tar tvzf "$1" | getfssize ${bsize} ${fsize}
                 ;;
         *)
                 echo 0
@@ -83,101 +115,203 @@ sizeone() {
         esac
 }
 
-bar="==="
-custom=custom
-h=usermode1.$(uname -n)
-image=usermode.img
-overhead=8 # in MB
-sets="base etc modules"
-setsdir=/usr/build/release/$(uname -m)/binary/sets
-size=0	# in MB
-specialdirs="/kern /proc"
-usermodedirs="/var.cow /etc.cow /root.cow /pkgs"
-sudo="sudo"
 
-while [ $# -gt 0 ]; do
-	case "$1" in
-	-S)	setsdir=$2; shift ;;
-	-c)	custom=$2; shift ;;
-	-h)	h=$2; shift ;;
-	-s)	size=$2; shift ;;
-	-x)	set -x ;;
-	*)	break ;;
+# Return the usable filesystem size in bytes, given the total size in bytes,
+# and optionally block and fragment sizes
+getffssize() {
+	local bytes="$1"
+	local barg
+	local farg
+	local overhead
+
+	if [ -n "$2" ]
+	then
+		barg="-b $2"
+		if [ -n "$3" ]
+		then
+			farg="-f $3"
+		fi
+	fi
+
+	overhead=$(newfs -N ${farg} ${barg} -s "${bytes}b" -F /dev/null |
+	    awk '/using/ {
+		printf("%d\n", substr($6, 1, length($6) - 3) * 1024 * 1024);
+	    }'
+	)
+	echo $(( ${bytes} - ${overhead} ))
+}
+
+# Compute the size of an ffs filesystem that can fit x bytes.
+# Instead of duplicating the newfs calculations here we let
+# it do the job, using binary search.
+makeffssize() {
+	local bytes=$1
+	local bsize=$2
+	local fsize=$3
+	local max=$(( 2 * ${bytes} ))
+	local min="${bytes}"
+	local cur
+	local res
+	while true; do
+		cur="$(( ( ${max} + ${min} ) / 2 ))"
+		res="$(getffssize "${cur}" ${bsize} ${fsize})"
+#		echo ${min} ${cur} ${max} ${res} ${bytes} 1>&2
+		if [ "${res}" -eq "${bytes}" ]
+		then
+		    break
+		elif [ "$(( ${min} + 1 ))" -ge "${max}" ]
+		then
+		    break
+		elif [ "${res}" -lt "${bytes}" ]
+		then
+		    min="${cur}"
+		elif [ "${res}" -gt "${bytes}" ]
+		then
+		    max="${cur}"
+		fi
+	done
+	echo "${cur}"
+}
+
+finish() {
+	cleanup
+	${sudo} umount ${mnt}
+	${sudo} vnconfig -u ${vnddev}
+	rm -fr ${mnt}
+}
+
+
+DIR="$(dirname "$0")"
+PROG="$(basename "$0")"
+bar="==="
+sudo=
+mnt="${TMPDIR:-/tmp}/image.$$"
+src="/usr/src"
+obj="/usr/obj"
+
+sets="base comp etc games man misc modules text"
+xsets="xbase xcomp xetc xfont xserver"
+
+# Presumable block and fragment size.
+bsize=16384
+fsize=2048
+mtob=$(( 1024 * 1024 ))
+
+# First pass for options to get the host
+OPTS="S:c:h:s:x"
+while getopts "$OPTS" f
+do
+	case $f in
+	h)	h="$OPTARG";;
+	*)	;;
 	esac
-	shift
 done
 
-if [ $# -gt 0 ]; then
+if [ -z "$h" ]
+then
+	usage
+fi
+
+if [ ! -f "${DIR}/conf/${h}.conf" ]
+then
+	echo $PROG: ${DIR}/conf/${h}.conf is not present 1>&2
+	exit 1
+fi
+
+. "${DIR}/conf/${h}.conf"
+
+OPTIND=1
+while getopts "$OPTS" f
+do
+	case $f in
+	S)	setsdir="$OPTARG";;
+	c)	custom="$OPTARG";;
+	h)	;;
+	s)	size="$OPTARG";;
+	x)	sets="$sets $xsets";;
+	*)	usage;;
+	esac
+done
+
+trap finish 0 1 2 3 15
+
+shift $(( "$OPTIND" - 1 ))
+if [ -n "$1" ]; then
 	# take the next argument as being the image name
 	image="$1"
 	shift
 fi
 
-total=0
+# calculate the set bytes
+setbytes=0
+echo -n "${bar} computing set sizes ("
+b=
 for s in ${sets}; do
-	total=$(expr ${total} + $(sizeone ${setsdir}/${s}.tgz))
+	one="$(sizeone ${setsdir}/${s}.tgz)"
+	echo -n "$b$s=$(( ${one} / ${mtob} ))MB"
+	setbytes=$(( ${setbytes} +  ${one} ))
+	b=" "
 done
+echo "): $(( ${setbytes} / ${mtob} ))MB ${bar}"
+
 # calculate size of custom files
-custsize=0
+custbytes=0
 if [ -d "${custom}" ]; then
-	custsize=$(ls -lR "${custom}" | awk 'NF == 9 { tot += $5 } END { print tot }')
+	custbytes=$(ls -lR "${custom}" | getfssize ${bsize} ${fsize})
 fi
-total=$(expr \( \( ${total} + ${custsize} \) / 1000000 \) + ${overhead})
+echo "${bar} computing custom sizes: $(( ${custbytes} / ${mtob} ))MB ${bar}"
+
+# how many bytes
+rawbytes="$(( ${setbytes} + ${custbytes} ))"
+echo -n "${bar} computing ffs filesystem size for $(( ${rawbytes} / ${mtob} ))MB: "
+ffsbytes="$(makeffssize "${rawbytes}")"
+ffsmb=$(( ${ffsbytes} / ${mtob} ))
+echo " ${ffsmb}MB ${bar}"
+
+# total in MB
+total=$(( ${ffsmb} + ${overhead} ))
+echo "${bar} overhead: ${overhead}MB ${bar}"
+
 if [ $size -eq 0 ]; then
         # auto-size the pkgs fs
-        size=${total}
+        newsize=${total}
 else
         # check that we've been given enough space
         if [ ${total} -gt ${size} ]; then
-                echo "File system size given as ${size} MB, but it needs ${total} MB" >&2
+                echo "$PROG: Given size is ${size} MB, but we need ${total} MB" >&2
                 exit 1
         fi
+	newsize=${size}
 fi
 
-echo "${bar} making a new ${size} MB image in ${image} ${bar}"
-dd if=/dev/zero of=${image} bs=1m count=${size}
+echo "${bar} making a new ${newsize} MB image in ${image} ${bar}"
+dd if=/dev/zero of=${image} bs=1m count=${newsize} conv=sparse
 
 vnddev=$(next_avail vnd)
 echo "${bar} mounting image via vnd ${vnddev} ${bar}"
 ${sudo} vnconfig ${vnddev} ${image}
-${sudo} newfs /dev/r${vnddev}a
-${sudo} mount /dev/${vnddev}a /mnt
+${sudo} mkdir -p ${mnt}
+make_filesystems
 
-echo "${bar} installing sets ${bar}"
-(cd /mnt &&
+${sudo} mkdir -p ${mnt}/etc ${mnt}/dev
+
+echo -n "${bar} installing sets:"
+(cd ${mnt} &&
 	for s in ${sets}; do
-		echo ${s}
-		${sudo} tar xpzf ${setsdir}/${s}.tgz
+		ss="${setsdir}/${s}.tgz"
+		if [ -f "${ss}" ]; then
+			echo -n " ${s}"
+			${sudo} tar xpzf "${ss}"
+		fi
 	done
 )
+echo " ${bar}"
 
 echo "${bar} performing customisations ${bar}"
-${sudo} rm -f /mnt/etc/motd
 
-tmp=/tmp/usermode.$$
-cat > ${tmp} << EOF
-# NetBSD/usermode /etc/fstab
-/dev/ld0a       /               ffs     ro              1 1
-/dev/ld1a	/pkgs		ffs	ro		1 2
-kernfs          /kern           kernfs  rw
-ptyfs           /dev/pts        ptyfs   rw
-procfs          /proc           procfs  rw
-# mount /root as tmpfs on top of existing dir
-tmpfs           /root.cow       tmpfs   rw,-s2M         0 0
-/root.cow       /root           union   rw,hidden       0 0
-# mount /etc as tmpfs on top of existing dir
-tmpfs           /etc.cow        tmpfs   rw,-s12M        0 0
-/etc.cow        /etc            union   rw,hidden       0 0
-# mount /var as tmpfs on top of existing dir
-tmpfs           /var.cow        tmpfs   rw,-s32M         0 0
-/var.cow        /var            union   rw,hidden       - -
-tmpfs           /tmp            tmpfs   rw,-s32M        0 0
-/dev/cd0a       /cdrom          cd9660  ro,noauto
-EOF
-${sudo} mv ${tmp} /mnt/etc/fstab
+make_fstab
 
-cat > ${tmp} << EOF
-#       $NetBSD: mkimage,v 1.3.2.2 2012/04/17 00:02:49 yamt Exp $
+${sudo} cat > ${mnt}/etc/rc.conf << EOF
 #
 # see rc.conf(5) for more information.
 #
@@ -196,48 +330,19 @@ fi
 #
 rc_configured=YES
 
-# make sure we have the right rw filesystem at boot
-critical_filesystems_local="/var.cow /var /etc.cow /etc /root.cow /root"
-
-# Add local overrides below
-#
-dhcpcd=YES
-sshd=YES
-
 hostname=${h}
+
 EOF
-${sudo} mv ${tmp} /mnt/etc/rc.conf
 
-echo "${bar} making extra directories ${bar}"
-for d in ${usermodedirs}; do
-	${sudo} mkdir -p /mnt/${d}
-done
+customize
+
 for d in ${specialdirs}; do
-	${sudo} mkdir -p /mnt/${d}
+	${sudo} mkdir -p ${mnt}/${d}
 done
 
-echo "${bar} customising /var/tmp ${bar}"
-${sudo} rm -rf /mnt/var/tmp
-(cd /mnt/var && ${sudo} ln -s /tmp tmp)
-
-# package-related stuff
-(cat /mnt/etc/csh.cshrc;echo "setenv PKG_DBDIR /usr/pkg/.dbdir") > ${tmp}
-${sudo} mv ${tmp} /mnt/etc/csh.cshrc
-(cat /mnt/etc/profile;echo "export PKG_DBDIR=/usr/pkg/.dbdir") > ${tmp}
-${sudo} mv ${tmp} /mnt/etc/profile
-(echo "PKG_DBDIR=/usr/pkg/.dbdir") > ${tmp}
-${sudo} mv ${tmp} /mnt/etc/mk.conf
-(cd /mnt/usr && ${sudo} ln -s /pkgs/usr/pkg pkg)
-
-# last, customisation stage
-if [ -d ${custom} ]; then
+if [ \( -n "${custom}" \) -a \( -d "${custom}" \) ]; then
 	echo "${bar} user customisations from files in ${custom} ${bar}"
-	(cd ${custom} && ${sudo} pax -rwpe . /mnt)
+	(cd ${custom} && ${sudo} pax -rwpe . ${mnt})
 fi
-
-df /mnt
-
-${sudo} umount /mnt
-${sudo} vnconfig -u ${vnddev}
 
 exit 0

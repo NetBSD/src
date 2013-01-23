@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.20.2.3 2012/05/23 10:07:48 yamt Exp $ */
+/* $NetBSD: brdsetup.c,v 1.20.2.4 2013/01/23 00:05:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -1254,6 +1254,41 @@ read_mac_string(uint8_t *mac, char *p)
 }
 
 /*
+ * Scan through the Flash memory and look for a string starting at 512 bytes
+ * block boundaries, matching the format: xx:xx:xx:xx:xx:xx<NUL>, where "x"
+ * are hexadecimal digits.
+ * Read the first match as our MAC address.
+ * The start address of the search, p, *must* be dividable by 512!
+ * Return false when no suitable MAC string was found.
+ */
+static int
+find_mac_string(uint8_t *mac, char *p)
+{
+	int i;
+
+	for (;;) {
+		for (i = 0; i < 3 * 6; i += 3) {
+			if (!isxdigit((unsigned)p[i]) ||
+			    !isxdigit((unsigned)p[i + 1]))
+				break;
+			if ((i < 5 && p[i + 2] != ':') ||
+			    (i >= 5 && p[i + 2] != '\0'))
+				break;
+		}
+		if (i >= 6) {
+			/* found a valid MAC address */
+			read_mac_string(mac, p);
+			return 1;
+		}
+		if (p >= (char *)0xfffffe00)
+			break;
+		p += 0x200;
+	}
+	return 0;
+}
+
+
+/*
  * For cost saving reasons some NAS boxes lack SEEPROM for NIC's
  * ethernet address and keep it in their Flash memory instead.
  */
@@ -1272,6 +1307,10 @@ read_mac_from_flash(uint8_t *mac)
 	case BRD_DLINKDSM:
 		read_mac_string(mac, (char *)0xfff0ff80);
 		return;
+	case BRD_QNAPTS:
+		if (find_mac_string(mac, (char *)0xfff00000))
+			return;
+		break;
 	default:
 		printf("Warning: This board has no known method defined "
 		    "to determine its MAC address!\n");

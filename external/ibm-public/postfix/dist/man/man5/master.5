@@ -1,4 +1,4 @@
-.\"	$NetBSD: master.5,v 1.1.1.2 2011/03/02 19:31:51 tron Exp $
+.\"	$NetBSD: master.5,v 1.1.1.2.4.1 2013/01/23 00:04:55 yamt Exp $
 .\"
 .TH MASTER 5 
 .ad
@@ -111,6 +111,9 @@ descriptor passing) per connection request.
 The service name is a pathname relative to the Postfix
 queue directory (pathname controlled with the \fBqueue_directory\fR
 configuration parameter in main.cf).
+.sp
+On Solaris systems the \fBpass\fR type is implemented with
+streams sockets.
 
 This feature is available as of Postfix version 2.5.
 .RE

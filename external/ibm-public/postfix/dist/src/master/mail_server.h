@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_server.h,v 1.1.1.3 2011/03/02 19:32:20 tron Exp $	*/
+/*	$NetBSD: mail_server.h,v 1.1.1.3.4.1 2013/01/23 00:05:04 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -25,6 +25,7 @@
 #define MAIL_SERVER_RAW_TABLE	5
 #define MAIL_SERVER_NINT_TABLE	6
 #define MAIL_SERVER_NBOOL_TABLE	7
+#define MAIL_SERVER_LONG_TABLE	8
 
 #define	MAIL_SERVER_PRE_INIT	10
 #define MAIL_SERVER_POST_INIT	11
@@ -51,7 +52,7 @@ typedef void (*MAIL_SERVER_SLOW_EXIT_FN) (char *, char **);
   * single_server.c
   */
 typedef void (*SINGLE_SERVER_FN) (VSTREAM *, char *, char **);
-extern NORETURN single_server_main(int, char **, SINGLE_SERVER_FN, ...);
+extern NORETURN single_server_main(int, char **, SINGLE_SERVER_FN,...);
 
  /*
   * multi_server.c
@@ -73,7 +74,7 @@ extern int event_server_drain(void);
   * trigger_server.c
   */
 typedef void (*TRIGGER_SERVER_FN) (char *, int, char *, char **);
-extern NORETURN trigger_server_main(int, char **, TRIGGER_SERVER_FN, ...);
+extern NORETURN trigger_server_main(int, char **, TRIGGER_SERVER_FN,...);
 
 #define TRIGGER_BUF_SIZE	1024
 

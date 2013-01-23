@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi2knr.c,v 1.1.1.1 2003/01/26 23:15:29 wiz Exp $	*/
+/*	$NetBSD: ansi2knr.c,v 1.1.1.1.54.1 2013/01/23 00:05:20 yamt Exp $	*/
 
 /* Copyright (C) 1989, 1997, 1998, 1999 Aladdin Enterprises.  All rights reserved. */
 
@@ -461,7 +461,7 @@ test1(buf)
 	   }
 	   {
 	       char *id = p;
-	       int len;
+	       ptrdiff_t len;
 	       /*
 		* Check for identifier1(identifier2) and not
 		* identifier1(void), or identifier1(identifier2, xxxx).

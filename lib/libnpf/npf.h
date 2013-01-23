@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.1.6.3 2012/10/30 18:59:13 yamt Exp $	*/
+/*	$NetBSD: npf.h,v 1.1.6.4 2013/01/23 00:05:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -103,19 +103,19 @@ nl_nat_t *	npf_nat_create(int, u_int, u_int, npf_addr_t *, int, in_port_t);
 int		npf_nat_insert(nl_config_t *, nl_nat_t *, pri_t);
 
 nl_table_t *	npf_table_create(u_int, int);
-int		npf_table_add_entry(nl_table_t *, const int,
+int		npf_table_add_entry(nl_table_t *, int,
 		    const npf_addr_t *, const npf_netmask_t);
 bool		npf_table_exists_p(nl_config_t *, u_int);
 int		npf_table_insert(nl_config_t *, nl_table_t *);
 void		npf_table_destroy(nl_table_t *);
 
-int		npf_update_rule(int, const char *, nl_rule_t *);
-int		npf_sessions_send(int, const char *);
-int		npf_sessions_recv(int, const char *);
-
 #ifdef _NPF_PRIVATE
 
 #include <ifaddrs.h>
+
+int		npf_update_rule(int, const char *, nl_rule_t *);
+int		npf_sessions_send(int, const char *);
+int		npf_sessions_recv(int, const char *);
 
 void		_npf_config_error(nl_config_t *, nl_error_t *);
 void		_npf_config_setsubmit(nl_config_t *, const char *);

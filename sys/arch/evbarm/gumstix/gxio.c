@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.18.8.1 2013/01/16 05:32:53 yamt Exp $ */
+/*	$NetBSD: gxio.c,v 1.18.8.2 2013/01/23 00:05:46 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.18.8.1 2013/01/16 05:32:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.18.8.2 2013/01/23 00:05:46 yamt Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_gumstix.h"
@@ -597,6 +597,10 @@ eth0_config(void)
 
 	/*
 	 * ETH0 connects via CS5.  It use GPIO 176 for IRQ.
+	 * Also GPIO 64 is NRESET.
+	 *
+	 * Basically use current settings by U-Boot.
+	 * However remap physical address to configured address.
 	 */
 
 	while (cf->cf_name != NULL) {
@@ -627,6 +631,9 @@ eth1_config(void)
 
 	/*
 	 * ETH1 connects via CS4.  It use GPIO 65 for IRQ.
+	 *
+	 * Basically use current settings by U-Boot.
+	 * However remap physical address to configured address.
 	 */
 
 	while (cf->cf_name != NULL) {

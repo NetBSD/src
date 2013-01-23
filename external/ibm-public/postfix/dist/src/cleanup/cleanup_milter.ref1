@@ -24,28 +24,26 @@
       747 original_recipient: alias@hades.porcupine.org
       774 canceled_recipient: root@porcupine.org
       794 pointer_record:            1258
-     1258 named_attribute: notify_flags=1
-     1274 original_recipient: xxxx
-     1280 recipient: xxxx
-     1286 pointer_record:            1303
-     1303 named_attribute: notify_flags=1
-     1319 original_recipient: yyyy
-     1325 canceled_recipient: yyyy
-     1331 pointer_record:             811
+     1258 original_recipient: xxxx
+     1264 recipient: xxxx
+     1270 pointer_record:            1287
+     1287 original_recipient: yyyy
+     1293 canceled_recipient: yyyy
+     1299 pointer_record:             811
       811 *** MESSAGE CONTENTS test-queue-file.tmp ***
       813 regular_text: Received: from hades.porcupine.org (hades.porcupine.org [168.100.189.10])
       888 regular_text: 	by hades.porcupine.org (Postfix) with SMTP id 38132290405;
       949 regular_text: 	Sat, 20 Jan 2007 19:52:41 -0500 (EST)
-      989 pointer_record:            1348
-     1348 pointer_record:            1399
-     1399 pointer_record:            1365
-     1365 pointer_record:            1492
-     1492 regular_text: X: X-replaced-header replacement header text
-     1538 pointer_record:            1433
-     1433 regular_text: X2: test header value 3
-     1458 regular_text: Y: 1234567
-     1470 padding:   0
-     1475 pointer_record:            1047
+      989 pointer_record:            1316
+     1316 pointer_record:            1367
+     1367 pointer_record:            1333
+     1333 pointer_record:            1460
+     1460 regular_text: X: X-replaced-header replacement header text
+     1506 pointer_record:            1401
+     1401 regular_text: X2: test header value 3
+     1426 regular_text: Y: 1234567
+     1438 padding:   0
+     1443 pointer_record:            1047
      1047 regular_text: Message-Id: <20070121005247.38132290405@hades.porcupine.org>
      1109 regular_text: Date: Sat, 20 Jan 2007 19:52:41 -0500 (EST)
      1154 regular_text: From: wietse@porcupine.org

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_map1n.c,v 1.1.1.2 2011/03/02 19:32:09 tron Exp $	*/
+/*	$NetBSD: cleanup_map1n.c,v 1.1.1.2.4.1 2013/01/23 00:05:00 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -157,7 +157,7 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, const char *addr,
 		}
 		myfree(saved_lhs);
 		argv_free(lookup);
-	    } else if (dict_errno != 0) {
+	    } else if (maps->error != 0) {
 		msg_warn("%s: %s map lookup problem for %s -- "
 			 "deferring delivery",
 			 state->queue_id, maps->title, addr);

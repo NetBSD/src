@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_driverif.c,v 1.2.2.2 2012/10/30 18:59:28 yamt Exp $	*/
+/*	$NetBSD: iscsid_driverif.c,v 1.2.2.3 2013/01/23 00:05:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -559,7 +559,7 @@ event_recover_connection(uint32_t sid, uint32_t cid)
 
 	serverAddress.sin_family = host->h_addrtype;
 	serverAddress.sin_port = htons((addr->port)
-									? addr->port : ISCSI_DEFAULT_PORT);
+		? addr->port : ISCSI_DEFAULT_PORT);
 	serverAddress.sin_len = host->h_length;
 	memcpy(&serverAddress.sin_addr, host->h_addr_list[0], host->h_length);
 
@@ -927,12 +927,18 @@ event_handler(void *par)
 			rc = ioctl(driver, ISCSI_POLL_EVENT, &evtp);
 		else
 			rc = ioctl(driver, ISCSI_WAIT_EVENT, &evtp);
-		if (rc || evtp.status)
+
+		if (rc != 0) {
+			perror("ioctl");
 			break;
+		}
 
 		DEB(1, ("Got Event: kind %d, status %d, sid %d, cid %d, reason %d\n",
 				evtp.event_kind, evtp.status, evtp.session_id,
 				evtp.connection_id, evtp.reason));
+
+		if (evtp.status)
+			break;
 
 		switch (evtp.event_kind) {
 		case ISCSI_SESSION_TERMINATED:

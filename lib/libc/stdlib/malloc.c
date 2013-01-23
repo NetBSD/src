@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.54 2011/05/18 01:59:39 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.54.4.1 2013/01/23 00:05:23 yamt Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -90,7 +90,7 @@ void utrace(struct ut *, int);
 #include <sys/cdefs.h>
 #include "extern.h"
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.54 2011/05/18 01:59:39 christos Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.54.4.1 2013/01/23 00:05:23 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 int utrace(const char *, void *, size_t);
 
@@ -1128,7 +1128,7 @@ ifree(void *ptr)
     return;
 }
 
-static int malloc_active; /* Recusion flag for public interface. */
+static int malloc_active; /* Recursion flag for public interface. */
 static unsigned malloc_started; /* Set when initialization has been done */
 
 static void *

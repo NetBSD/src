@@ -1503,6 +1503,9 @@ ia64*-*-netbsd*)
 	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h ia64/sysv4.h ia64/netbsd.h"
 	target_cpu_default="MASK_GNU_AS|MASK_GNU_LD"
 	tmake_file="${tmake_file} ia64/t-ia64"
+	if test x$with_system_libunwind != xyes ; then
+		tmake_file="${tmake_file} t-libunwind-elf ia64/t-glibc-libunwind"
+	fi
 	extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o crtfastmath.o"
 	;;
 ia64*-*-freebsd*)

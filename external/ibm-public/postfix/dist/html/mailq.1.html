@@ -321,6 +321,14 @@ SENDMAIL(1)                                                        SENDMAIL(1)
        summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
        ples.
 
+<b>COMPATIBILITY CONTROLS</b>
+       Available with Postfix 2.9 and later:
+
+       <b><a href="postconf.5.html#sendmail_fix_line_endings">sendmail_fix_line_endings</a> (always)</b>
+              Controls how the Postfix sendmail command  converts
+              email  message line endings from &lt;CR&gt;&lt;LF&gt; into UNIX
+              format (&lt;LF&gt;).
+
 <b>TROUBLE SHOOTING CONTROLS</b>
        The <a href="DEBUG_README.html">DEBUG_README</a> file gives examples  of  how  to  trouble
        shoot a Postfix system.
@@ -343,14 +351,14 @@ SENDMAIL(1)                                                        SENDMAIL(1)
 <b>ACCESS CONTROLS</b>
        Available in Postfix version 2.2 and later:
 
-       <b><a href="postconf.5.html#authorized_flush_users">authorized_flush_users</a> (static:anyone)</b>
+       <b><a href="postconf.5.html#authorized_flush_users">authorized_flush_users</a> (<a href="DATABASE_README.html#types">static</a>:anyone)</b>
               List  of  users  who  are  authorized  to flush the
               queue.
 
-       <b><a href="postconf.5.html#authorized_mailq_users">authorized_mailq_users</a> (static:anyone)</b>
+       <b><a href="postconf.5.html#authorized_mailq_users">authorized_mailq_users</a> (<a href="DATABASE_README.html#types">static</a>:anyone)</b>
               List of users who are authorized to view the queue.
 
-       <b><a href="postconf.5.html#authorized_submit_users">authorized_submit_users</a> (static:anyone)</b>
+       <b><a href="postconf.5.html#authorized_submit_users">authorized_submit_users</a> (<a href="DATABASE_README.html#types">static</a>:anyone)</b>
               List  of  users  who  are authorized to submit mail
               with the <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command (and with  the  privi-
               leged <a href="postdrop.1.html"><b>postdrop</b>(1)</a> helper command).

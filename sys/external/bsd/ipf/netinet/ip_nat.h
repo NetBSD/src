@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.2.4.3 2012/10/30 17:22:19 yamt Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.2.4.4 2013/01/23 00:06:17 yamt Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -94,6 +94,21 @@ struct ap_session;
 /*
  * This structure is used in the active NAT table and represents an
  * active NAT session.
+ *
+ * Generally nat_t structures have references from at least two places.
+ * The first place gives them a position in a linked list of NAT sessions
+ * per instace of IPFilter. In this linked list, nat_next always points to
+ * the next entry in the list and nat_pnext points to the pointer that
+ * introduces the structure. That may be either the top of the list pointer
+ * or simply the nat_next of the previous link in the list. The second place
+ * that a nat_t structure is generally referenced from is the NAT hash table.
+ * Two references from this table are required, one for supporting the of
+ * matching packets being transmitted and one for supporting the matching of
+ * packets being received. The hash table is comprised of buckets, each one
+ * having its own chain of nat_t structures. To support these chains,
+ * nat_hnext is used to point to the next member of the chain and nat_phnext
+ * points back to the pointer that is pointing to the nat_t in the chain,
+ * be it the bucket at the top or simply the previous nat_t chain entry.
  */
 typedef	struct	nat	{
 	ipfmutex_t	nat_lock;

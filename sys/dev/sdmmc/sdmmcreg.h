@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.7.4.2 2012/10/30 17:22:02 yamt Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.7.4.3 2013/01/23 00:06:10 yamt Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -318,14 +318,14 @@
 
 /* Status of Switch Function */
 #define SFUNC_STATUS_GROUP(status, group) \
-	be16toh(__bitfield((uint32_t *)(status), (7 - (group)) << 4, 16))
+	(__bitfield((uint32_t *)(status), 400 + (group - 1) * 16, 16))
 
 /* This assumes the response fields are in host byte order in 32-bit units.  */
 #define MMC_RSP_BITS(resp, start, len)	__bitfield((resp), (start)-8, (len))
 static inline uint32_t
 __bitfield(const uint32_t *src, size_t start, size_t len)
 {
-	if (start + len > 128 || len == 0 || len > 32)
+	if (start + len > 512 || len == 0 || len > 32)
 		return 0;
 
 	src += start / 32;

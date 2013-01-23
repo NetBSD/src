@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_glue.h,v 1.1.1.1 2009/06/23 10:08:56 tron Exp $	*/
+/*	$NetBSD: smtpd_sasl_glue.h,v 1.1.1.1.10.1 2013/01/23 00:05:13 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -13,10 +13,12 @@
  /*
   * SASL protocol interface
   */
+extern void smtpd_sasl_state_init(SMTPD_STATE *);
 extern void smtpd_sasl_initialize(void);
 extern void smtpd_sasl_activate(SMTPD_STATE *, const char *, const char *);
 extern void smtpd_sasl_deactivate(SMTPD_STATE *);
 extern int smtpd_sasl_authenticate(SMTPD_STATE *, const char *, const char *);
+extern void smtpd_sasl_login(SMTPD_STATE *, const char *, const char *);
 extern void smtpd_sasl_logout(SMTPD_STATE *);
 extern int permit_sasl_auth(SMTPD_STATE *, int, int);
 

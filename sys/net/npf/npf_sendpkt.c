@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.4.8.4 2012/10/30 17:22:44 yamt Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.4.8.5 2013/01/23 00:06:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.4.8.4 2012/10/30 17:22:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.4.8.5 2013/01/23 00:06:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -78,7 +78,7 @@ npf_return_tcp(npf_cache_t *npc)
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	KASSERT(npf_iscached(npc, NPC_LAYER4));
 	tcpdlen = npf_tcpsaw(npc, &seq, &ack, &win);
-	oth = &npc->npc_l4.tcp;
+	oth = npc->npc_l4.tcp;
 
 	if (oth->th_flags & TH_RST) {
 		return 0;
@@ -102,7 +102,7 @@ npf_return_tcp(npf_cache_t *npc)
 	m->m_pkthdr.len = len;
 
 	if (npf_iscached(npc, NPC_IP4)) {
-		struct ip *oip = &npc->npc_ip.v4;
+		struct ip *oip = npc->npc_ip.v4;
 
 		ip = mtod(m, struct ip *);
 		memset(ip, 0, len);
@@ -118,7 +118,7 @@ npf_return_tcp(npf_cache_t *npc)
 
 		th = (struct tcphdr *)(ip + 1);
 	} else {
-		struct ip6_hdr *oip = &npc->npc_ip.v6;
+		struct ip6_hdr *oip = npc->npc_ip.v6;
 
 		KASSERT(npf_iscached(npc, NPC_IP6));
 		ip6 = mtod(m, struct ip6_hdr *);
@@ -175,9 +175,9 @@ npf_return_tcp(npf_cache_t *npc)
  * npf_return_icmp: return an ICMP error.
  */
 static int
-npf_return_icmp(npf_cache_t *npc, nbuf_t *nbuf)
+npf_return_icmp(const npf_cache_t *npc, nbuf_t *nbuf)
 {
-	struct mbuf *m = nbuf;
+	struct mbuf *m = nbuf_head_mbuf(nbuf);
 
 	if (npf_iscached(npc, NPC_IP4)) {
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT, 0, 0);
@@ -197,17 +197,12 @@ npf_return_icmp(npf_cache_t *npc, nbuf_t *nbuf)
 bool
 npf_return_block(npf_cache_t *npc, nbuf_t *nbuf, const int retfl)
 {
-	void *n_ptr = nbuf_dataptr(nbuf);
-
 	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
 		return false;
 	}
 	switch (npf_cache_ipproto(npc)) {
 	case IPPROTO_TCP:
 		if (retfl & NPF_RULE_RETRST) {
-			if (!npf_fetch_tcp(npc, nbuf, n_ptr)) {
-				return false;
-			}
 			(void)npf_return_tcp(npc);
 		}
 		break;

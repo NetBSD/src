@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfbreg.h,v 1.3.80.1 2012/04/17 00:07:57 yamt Exp $	*/
+/*	$NetBSD: radeonfbreg.h,v 1.3.80.2 2013/01/23 00:06:09 yamt Exp $	*/
 
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_reg.h,v 1.31 2003/11/10 18:41:23 tsi Exp $ */
 /*
@@ -684,6 +684,7 @@
 #       define R200_FP_SOURCE_SEL_TRANS        (3 <<  10)
 #       define RADEON_FP_SEL_CRTC1             (0 << 13)
 #       define RADEON_FP_SEL_CRTC2             (1 << 13)
+#       define RADEON_FP_SEL_MASK              (1 << 13)
 #       define RADEON_FP_CRTC_DONT_SHADOW_HPAR (1 << 15)
 #       define RADEON_FP_CRTC_DONT_SHADOW_VPAR (1 << 16)
 #       define RADEON_FP_CRTC_DONT_SHADOW_HEND (1 << 17)

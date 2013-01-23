@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.14.2.3 2013/01/16 05:32:43 yamt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.14.2.4 2013/01/23 00:05:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.14.2.3 2013/01/16 05:32:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.14.2.4 2013/01/23 00:05:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -390,7 +390,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    + UND_STACK_SIZE + UPAGES) * PAGE_SIZE;
 	kernel_size += round_page(MSGBUFSIZE);
 	kernel_size += 0x10000;	/* slop */
-	kernel_size += (kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
+	kernel_size += PAGE_SIZE * (kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
 	kernel_size = round_page(kernel_size);
 
 	/*

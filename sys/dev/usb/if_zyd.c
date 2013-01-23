@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.29.2.2 2012/10/30 17:22:06 yamt Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.29.2.3 2013/01/23 00:06:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -18,12 +18,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
+/*-
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.29.2.2 2012/10/30 17:22:06 yamt Exp $");
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.29.2.3 2013/01/23 00:06:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -65,10 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.29.2.2 2012/10/30 17:22:06 yamt Exp $")
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_zydreg.h>
-
-#ifdef USB_DEBUG
-#define ZYD_DEBUG
-#endif
 
 #ifdef ZYD_DEBUG
 #define DPRINTF(x)	do { if (zyddebug > 0) printf x; } while (0)
@@ -356,7 +352,7 @@ zyd_complete_attach(struct zyd_softc *sc)
 	usbd_status error;
 	int i;
 
-	usb_init_task(&sc->sc_task, zyd_task, sc);
+	usb_init_task(&sc->sc_task, zyd_task, sc, 0);
 	callout_init(&(sc->sc_scan_ch), 0);
 
 	sc->amrr.amrr_min_success_threshold =  1;
@@ -365,7 +361,8 @@ zyd_complete_attach(struct zyd_softc *sc)
 
 	error = usbd_set_config_no(sc->sc_udev, ZYD_CONFIG_NO, 1);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "setting config no failed\n");
+		aprint_error_dev(sc->sc_dev, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		goto fail;
 	}
 

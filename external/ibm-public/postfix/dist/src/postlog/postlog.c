@@ -1,4 +1,4 @@
-/*	$NetBSD: postlog.c,v 1.1.1.1.10.1 2012/10/30 18:58:04 yamt Exp $	*/
+/*	$NetBSD: postlog.c,v 1.1.1.1.10.2 2013/01/23 00:05:09 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -96,6 +96,7 @@
 #include <msg_output.h>
 #include <msg_vstream.h>
 #include <msg_syslog.h>
+#include <warn_stat.h>
 
 /* Global library. */
 
@@ -208,6 +209,11 @@ int     main(int argc, char **argv)
     if (isatty(STDERR_FILENO))
 	msg_vstream_init(tag, VSTREAM_ERR);
     msg_syslog_init(tag, LOG_PID, LOG_FACILITY);
+
+    /*
+     * Check the Postfix library version as soon as we enable logging.
+     */
+    MAIL_VERSION_CHECK;
 
     /*
      * Parse switches.

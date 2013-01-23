@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_as.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: stat_as.c,v 1.1.1.1.10.1 2013/01/23 00:05:17 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -46,6 +46,7 @@
 #include "msg.h"
 #include "set_eugid.h"
 #include "stat_as.h"
+#include "warn_stat.h"
 
 /* stat_as - stat file as user */
 

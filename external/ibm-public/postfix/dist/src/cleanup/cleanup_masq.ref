@@ -3,38 +3,52 @@ exceptions:
 masq_list:  a.b.c,b.c
 address:    xxx@aa.a.b.c
 result:     xxx@a.b.c
+errs:       0
 ----------
 exceptions: xxx
 masq_list:  a.b.c,b.c
 address:    xxx@aa.a.b.c
 result:     xxx@aa.a.b.c
+errs:       0
 ----------
 exceptions: yyy
 masq_list:  a.b.c,b.c
 address:    xxx@aa.a.b.c
 result:     xxx@a.b.c
+errs:       0
 ----------
 exceptions: 
 masq_list:  !a.b.c,b.c
 address:    xxx@aa.a.b.c
 result:     xxx@aa.a.b.c
+errs:       0
 ----------
 exceptions: 
 masq_list:  a.b.c,b.c
 address:    xxx@a.b.c
 result:     xxx@a.b.c
+errs:       0
 ----------
 exceptions: 
 masq_list:  !a.b.c,b.c
 address:    xxx@a.b.c
 result:     xxx@a.b.c
+errs:       0
 ----------
 exceptions: 
 masq_list:  a.b.c,b.c
 address:    xxx@aaa.b.c
 result:     xxx@b.c
+errs:       0
 ----------
 exceptions: 
 masq_list:  a.b.c,b.c
 address:    xxx@b.c
 result:     xxx@b.c
+errs:       0
+----------
+exceptions: fail:whatever
+masq_list:  xy
+address:    xxx@b.c
+result:     xxx@b.c
+errs:       2

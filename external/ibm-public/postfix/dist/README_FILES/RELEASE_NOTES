@@ -1,18 +1,21 @@
-The stable Postfix release is called postfix-2.8.x where 2=major
-release number, 8=minor release number, x=patchlevel.  The stable
+The stable Postfix release is called postfix-2.9.x where 2=major
+release number, 9=minor release number, x=patchlevel.  The stable
 release never changes except for patches that address bugs or
 emergencies. Patches change the patchlevel and the release date.
 
 New features are developed in snapshot releases. These are called
-postfix-2.9-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+postfix-2.10-yyyymmdd where yyyymmdd is the release date (yyyy=year,
 mm=month, dd=day).  Patches are never issued for snapshot releases;
 instead, a new snapshot is released.
 
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
-Major changes with Postfix 2.8.10
----------------------------------
+If you upgrade from Postfix 2.7 or earlier, read RELEASE_NOTES-2.8
+before proceeding.
+
+Major changes with Postfix 2.9.2
+--------------------------------
 
 This release adds support to turn off the TLSv1.1 and TLSv1.2
 protocols.  Introduced with OpenSSL version 1.0.1, these are known
@@ -43,388 +46,344 @@ Important:
   there is NO space around the "=" in "protocols=".
 
 - The smtp_tls_policy_maps lookup key must match the "next-hop"
-  destination that is given to the Postfix SMTP client. If you 
+  destination that is given to the Postfix SMTP client. If you
   override the next-hop destination with transport_maps, relayhost,
   sender_dependent_relayhost_maps, or otherwise, you need to specify
   the same destination for the smtp_tls_policy_maps lookup key.
 
-Incompatible changes with Postfix 2.8.2
----------------------------------------
+Major changes - critical
+------------------------
 
-Use "postfix reload" after "make upgrade" on a running Postfix
-system. This is needed because the protocol between postscreen(8)
-and dnsblog(8) has changed.
+[Incompat 20110321] You need to "postfix reload" after upgrade from
+snapshot 20110320 or earlier.  The hash_queue_names algorithm was
+changed to provide better performance with long queue IDs.
 
-Postfix 2.8.0 release notes
+[Incompat 20110313] Use "postfix reload" after "make upgrade" on a
+running Postfix system. This is needed because the protocol between
+postscreen(8) and dnsblog(8) has changed.
+
+Major changes - library API
 ---------------------------
 
-If you upgrade from Postfix 2.6 or earlier, read RELEASE_NOTES-2.7
-before proceeding.
+[Incompat 20110130] The VSTREAM error flags are now split into
+separate read and write error flags. As a result of this change,
+all programs that use Postfix VSTREAMs MUST be recompiled.
 
-Major changes - restart Postfix
--------------------------------
+Major changes - compatibility
+-----------------------------
 
-If you upgrade from Postfix 2.6 or earlier, you must execute "postfix
-stop" and "postfix start" before you can use the postscreen(8)
-daemon.  This is needed because the Postfix 2.6 "pass" master service
-type did not work reliably on some systems.
+[Incompat 20111012] For consistency with the SMTP standard, the
+(client-side) smtp_line_length_limit default value was increased
+from 990 characters to 999 (i.e. 1000 characters including <CR><LF>).
+Specify "smtp_line_length_limit = 990" to restore historical Postfix
+behavior.
 
-If you upgrade from Postfix 2.7, or from Postfix 2.8 before July
-25, 2010, you must execute "postfix reload" (or "postfix stop"
-followed by "postfix start"). This is needed because the queue
-manager to delivery agent protocol has changed. Failure to do this
-results in repeated logging of warnings with:
+[Incompat 20111012] To simplify integration with third-party
+applications, the Postfix sendmail command now always transforms
+all input lines ending in <CR><LF> into UNIX format (lines ending
+in <LF>). Specify "sendmail_fix_line_endings = strict" to restore
+historical Postfix behavior (i.e. convert all input lines ending
+in <CR><LF> only if the first line ends in <CR><LF>).
 
-    warning: unexpected attribute rewrite_context ...
+[Incompat 20111106] To work around broken remote SMTP servers, the
+Postfix SMTP client by default no longer appends the "AUTH=<>"
+option to the MAIL FROM command.  Specify "smtp_send_dummy_mail_auth
+= yes" to restore the old behavior.
 
-If the warning does not go away after restarting Postfix, examine
-the output from this command:
-
-    strings -af /usr/libexec/postfix/* | grep mail_version=
-
-(where /usr/libexec/postfix is the value of main.cf:daemon_directory)
-and update the executables that have a version string that differs
-from the other programs.
-
-Major changes - DNSBL/DNSWL support
+Major changes - gradual degradation
 -----------------------------------
 
-[Feature 20101126] Support for address patterns in DNS blacklist
-and whitelist lookup results.
+[Incompat 20120114] Logfile-based alerting systems may need to be
+updated to look for "error" messages in addition to "fatal" messages.
+Specify "daemon_table_open_error_is_fatal = yes" to get the historical
+behavior (immediate termination with "fatal" message).
 
-For example, "reject_rbl_client example.com=127.0.0.[2;4;6..8]"
-will reject clients when the lookup result is 127.0.0.2, 127.0.0.4,
-127.0.0.6, 127.0.0.7, or 127.0.0.8.
+[Feature 20120114] Instead of terminating immediately with a "fatal"
+message when a database file can't be opened, a Postfix daemon
+program now logs an "error" message, and continues execution with
+reduced functionality.  For the sake of sanity, the number of
+"errors" over the life of a process is limited to 13.
 
-The setting "postscreen_dnsbl_sites = example.com=127.0.0.[2;4;6..8]"
-rejects the same clients.
+Features that don't depend on the unavailable table will continue
+to work; attempts to use features that depend on the table will
+fail, and will be logged with a "warning" message.
 
-An IPv4 address pattern has four fields separated by ".".  Each
-field is either a decimal number, or a sequence inside "[]" that
-contains one or more ";"-separated decimal numbers or number..number
-ranges.
+[Feature 20120108] Instead of terminating with a fatal error, the
+LDAP, *SQL and memcache clients now handle table lookup errors in
+the "domain" feature, instead of terminating with a fatal error.
 
-Thus, any pattern field can be a sequence inside "[]", but a "[]"
-sequence cannot span multiple address fields, and a pattern field
-cannot contain both a number and a "[]" sequence at the same time.
+[Feature 20120102] Degrade gradually when some or all network
+protocols specified with inet_protocols are unavailable, instead
+of terminating with a fatal error. This eliminates build errors on
+non-standard systems where opening an IPv4 socket results in an
+error, and on non-standard systems where opening an IPv6 socket
+results in an error. In the worst case, the master daemon will log
+a message that it disables all type "inet" services. This will still
+allow local submission and local delivery.
 
-This means that the pattern 1.2.[3.4] is not valid (the sequence
-[3.4] cannot span two address fields) and the pattern 1.2.3.3[6..9]
-is also not valid (the last field cannot be both number 3 and
-sequence [6..9] at the same time).
+[Feature 20111222] Instead of terminating with a fatal error, the
+Postfix SMTP server now handles errors with database lookups in
+mynetworks, TLS client certificate tables, debug_peer_list,
+smtpd_client_event_limit_exceptions, permit_mx_backup_networks and
+local_header_rewrite_clients, and reports "server local data error"
+or "temporary lookup error".
 
-The syntax for IPv4 patterns is as follows:
+[Feature 20111229] Instead of terminating with a fatal error, the
+trivial-rewrite server now handles errors with database lookups in
+virtual_alias_domains, relay_domains, virtual_mailbox_domains.  This
+means fewer occasions where trivial-rewrite clients (such as the
+SMTP server) will appear to hang.
 
-v4pattern = v4field "." v4field "." v4field "." v4field
-v4field = v4octet | "[" v4sequence "]"
-v4octet = any decimal number in the range 0 through 255
-v4sequence = v4seq_member | v4sequence ";" v4seq_member
-v4seq_member = v4octet | v4octet ".." v4octet
-
-[Feature 20101105] The Postfix SMTP server now supports DNS-based
-whitelisting with several safety features: permit_dnswl_client
-whitelists a client by IP address, and permit_rhswl_client whitelists
-a client by its hostname.  These features use the same syntax as
-reject_rbl_client and reject_rhsbl_client, respectively. The main
-difference is that they return PERMIT instead of REJECT.
-
-Whitelisting is primarily a tool to reduce the false positive rate
-of DNS blocklist lookups.  Client name whitelisting should not be
-used to make exceptions to access rules. The reason is that client
-name lookup can fail unpredictably due to some temporary outage.
-
-For safety reasons, permit_dnswl_client and permit_rhswl_client are
-silently ignored when they would override reject_unauth_destination.
-Also for safety reasons, the result is DEFER_IF_REJECT when DNS
-whitelist lookup fails (this result will be made configurable).
-
-Major changes - sqlite support
+Major changes - long queue IDs
 ------------------------------
 
-[Feature 20100617] Support for read-only sqlite database access,
-with code by Axel Steiner and documentation by Jesus Garcia Crespo.
-See SQLITE_README and sqlite_table(5) for details.
+Postfix 2.9 introduces support for non-repeating queue IDs (also
+used as queue file names). These names are encoded in a mix of upper
+case, lower case and decimal digit characters.  Long queue IDs are
+disabled by default to avoid breaking tools that parse logfiles and
+that expect queue IDs with the smaller [A-F0-9] character set.
 
-Major changes - Milter support
+[Incompat 20110320] If you enable support for long queue file names,
+you need to be aware that these file names are not compatible with
+Postfix <= 2.8.  If you must migrate back to Postfix <= 2.8, you
+must first convert all long queue file names into short names,
+otherwise the old Postfix version will complain.
+
+The conversion procedure before migration to Postfix <= 2.8 is:
+
+    # postfix stop
+    # postconf enable_long_queue_ids=no
+    # postsuper
+
+Run the postsuper command repeatedly until it no longer reports
+queue file name changes.
+
+[Feature 20110320] Support for long, non-repeating, queue IDs (queue
+file names).  The benefit of non-repeating names is simpler logfile
+analysis, and easier queue migration (if you don't merge different
+queues, there is no need to run "postsuper" to change queue file
+names that don't match their message file inode number).
+
+Specify "enable_long_queue_ids = yes" to enable the feature. This
+does not change the names of existing queue files. See postconf(5)
+or postconf.5.html#enable_long_queue_ids for a detailed description
+of the differences with the old short queue IDs.
+
+This changes new Postfix queue IDs from the short form 0FCEE9247A9
+into the longer form 3Ps0FS1Zhtz1PFjb, and changes new Message-ID
+header values from YYMMDDHHMMSS.queueid@myhostname into the shorter
+form queueid@myhostname.
+
+Major changes - memcache
+------------------------
+
+[Feature 20111209] memcache lookup and update support. This provides
+a way to share postscreen(8) or verify(8) caches between Postfix
+instances.  See MEMCACHE_README and memcache_table(5) for details
+and limitations.
+
+[Feature 20111213] Support for a persistent backup database in the
+memcache client.  The memcache client updates the memcache whenever
+it looks up or modifies information in the persistent database.
+
+Major changes - postconf
+------------------------
+
+The postconf command was restructured - it now warns about unused
+parameter name=value settings in main.cf or master.cf (likely to
+be mistakes), it now understands "dynamic" parameter names such as
+parameters whose name depends on the name of a master.cf entry, and
+it can display main.cf and master.cf in a more user-friendly format.
+
+[Feature 20120117] support for legacy database parameter names
+(main.cf parameter names that are generated by prepending a suffix
+to the database name).
+
+[Feature 20111118] The "postconf -M" (display master.cf) command
+now supports filtering.  For example, specify "postconf -M inet"
+to display only services that listen on the network.
+
+[Feature 20111113] postconf support to warn about unused "name=value"
+entries in main.cf, and about unused "-o name=value" entries in
+master.cf.  This should help to eliminate common errors with mis-typed
+names.
+
+[Feature 20111108] postconf support for parameter names that are
+generated automatically from master.cf entries (delivery agents,
+spawn services), and for parameter names that are defined with
+main.cf smtpd_restriction_classes.
+
+[Feature 20111106] "postconf -M" support to print master.cf entries,
+and "postconf -f" support to fold long main.cf or master.cf lines
+for human readability.
+
+Major changes - trickle defense
 -------------------------------
 
-[Incompat 20101103] Postfix now requests default delivery status
-notifications when adding a recipient with the Milter smfi_addrcpt
-action, instead of "never notify" as with Postfix automatically-added
-recipients (always_bcc and sender/recipient_bcc_maps).
+[Feature 20110212] Support for per-record deadlines.  These change
+the behavior of Postfix timeout parameters, from a time limit per
+read or write system call, to a time limit to send or receive a
+complete record (an SMTP command line, SMTP response line, SMTP
+message content line, or TLS protocol message).  This limits the
+impact from hostile peers that trickle data one byte at a time.
 
-Major changes - alias expansion
--------------------------------
+The new configuration parameters and their default settings are:
+smtpd_per_record_deadline (normal: no, overload: yes),
+smtp_per_record_deadline (no), and lmtp_per_record_deadline (no).
 
-[Incompat 20101202] Postfix now reports a temporary delivery error
-when the result of virtual alias expansion would exceed the
-virtual_alias_recursion_limit or virtual_alias_expansion_limit.
-Previously, Postfix would silently drop the excess recipients and
-deliver the message.
+Note: when per-record deadlines are enabled, a short time limit may
+cause problems with TLS over very slow network connections.  The
+reason is that a TLS protocol message can be up to 16 kbytes long
+(with TLSv1), and that an entire TLS protocol message must be sent
+or received within the per-record deadline.
 
-[Incompat 20101006] To avoid repeated delivery to mailing lists
-with pathological nested alias configurations, the local(8) delivery
-agent now keeps the owner-alias attribute of a parent alias, when
-delivering mail to a child alias that does not have its own owner
-alias.
-
-With this change, local addresses from that child alias will be
-written to a new queue file, and a temporary error with one local
-address will no longer result in repeated delivery to other mailing
-list members.  Specify "reset_owner_alias = yes" for the older,
-more fragile, behavior.
-
-The postconf(5) manpage entry for "reset_owner_alias" has more
-background information on this issue.
-
-Major changes - dns lookup
---------------------------
-
-[Incompat 20100827] The Postfix SMTP client no longer appends the
-local domain when looking up a DNS name without ".".  Specify
-"smtp_dns_resolver_options = res_defnames" to get the old behavior,
-which may produce unexpected results.
-
-Major changes - logging
------------------------
-
-[Incompat 20100728] The format of the "postfix/smtpd[pid]: queueid:
-client=host[addr]" logfile record has changed. When available, the
-before-filter client information and the before-filter queue ID are
-now appended to the end of the record.
-
-[Feature 20100728] Improved message tracking across SMTP-based
-content filters.  The logging example below is from an after-filter
-SMTP server. Here, 951F692462F is a before-filter queue ID,
-hades.porcupine.org is a before-filter SMTP client, while 6B4A9924782
-is the after-filter queue ID, and localhost[127.0.0.1] is the
-SMTP-based content filter that sends mail into the after-filter
-SMTP server.
-
-    postfix/smtpd[4074]: 6B4A9924782: 
-	client=localhost[127.0.0.1],
-	orig_queue_id=951F692462F
-	orig_client=hades.porcupine.org[168.100.189.10]
-
-Major changes - reply footer
-----------------------------
-
-[Feature 20110105] The SMTP server now supports contact information
-that is appended to "reject" responses. This includes SMTP server
-responses that aren't logged to the maillog file, such as responses
-to syntax errors, or unsupported commands.
-
-Example:
-   smtpd_reject_footer = For assistance, call 800-555-0101.
-
-Server response:
-   550-5.5.1 <user@example> Recipient address rejected: User unknown
-   550 5.5.1 For assistance, call 800-555-0101.
-
-This feature supports macro expansion ($client_address, $localtime,
-etc.), as documented in the postconf(5) manpage.
-
-This feature is also supported as postscreen_reject_footer using
-the same setting as smtpd_reject_footer by default.
-
-Major changes - rfc compliance
-------------------------------
-
-[Incompat 20101206] Postfix by default no longer adds a "To:
-undisclosed-recipients:;" header when no recipient specified in the
-message header.  The Internet mail RFCs have supported messages
-without recipient header for almost 10 years now.
-
-For backwards compatibility, specify:
-
-/etc/postfix/main.cf
-   undisclosed_recipients_header = To: undisclosed-recipients:;
-
-Note: both the ":" and ";" are required.
-
-Major changes - tls support
----------------------------
-
-[Incompat 20110102] The Postfix SMTP server now always re-computes
-the SASL mechanism list after successful completion of the STARTTLS
-command. Earlier versions only re-computed the mechanism list when
-the values of smtp_sasl_tls_security_options and smtp_sasl_security_options
-differ.  This could produce incorrect results, because the Dovecot
-authentication server may change responses when the SMTP session
-is encrypted.
-
-[Incompat 20110102] The smtpd_starttls_timeout default value is now
-stress-dependent.  By default, TLS negotiations must now complete
-under overload in 10s instead of 300s.
-
-[Feature 20101223] The new tls_disable_workarounds parameter specifies
-a list or bit-mask of OpenSSL bug work-arounds to disable. This may
-be necessary if one of the work-arounds enabled by default in OpenSSL
-proves to pose a security risk, or introduces an unexpected
-interoperability issue. Some bug work-arounds known to be problematic
-are disabled in the default value of the parameter when linked with
-an OpenSSL library that could be vulnerable. See postconf(5) and
-TLS_README for details.
-
-With "tls_preempt_cipherlist = yes" the Postfix SMTP server will
-choose its most preferred cipher that is supported (offered) by the
-client. This can lead to a more secure or performant cipher choice,
-but may also introduce interoperability problems when a client
-announces support for a cipher that does not work.  See postconf(5)
-and TLS_README for details.
-
-[Feature 20101217] The lower-level code in the TLS engine was
-simplified by removing an unnecessary layer of data copying. OpenSSL
-now writes directly to the network. The difference in performance
-should be hardly noticeable.
-
-[Incompat 20100610] Postfix no longer appends the system-supplied
-default CA certificates to the lists specified with *_tls_CAfile
-or with *_tls_CApath. This prevents third-party certificates from
-getting mail relay permission with the permit_tls_all_clientcerts
-feature.
-
-Unfortunately this change may cause compatibility problems when
-configurations rely on certificate verification for other purposes.
-Specify "tls_append_default_CA = yes" for backwards compatibility.
+Per-record deadlines were introduced with postscreen(8) in Postfix
+2.8. This program does not receive mail, and therefore it has no
+problems with TLS over slow connections.
 
 Major changes - postscreen
 --------------------------
 
-See html/POSTSCREEN_README.html for an introduction to postscreen
-(or the text version, README_FILES/POSTSCREEN_README). The text
-below summarizes milestones in reverse chronological order.
+[Feature 20111211] The proxymap(8) server can now be used to share
+postscreen(8) or verify(8) caches between Postfix instances.  Support
+for proxymap-over-TCP, to share a Postfix database between hosts,
+is expected to be completed in the Postfix 2.10 development cycle.
 
-[Incompat 20110111] The postscreen_access_list feature replaces the
-postscreen_whitelist_networks and postscreen_blacklist_networks
-features. Reason: CIDR-style access maps are some 100x faster than
-the code that implemented the postscreen_white/blacklist_networks
-support.  CIDR maps can match about 100 million CIDR patterns/second
-on a modern CPU, which is not blindingly fast but adequate for the
-near future.
+[Feature 20111209] memcache lookup and update support. This provides
+a way to share postscreen(8) or verify(8) caches between Postfix
+instances.  
 
-[Feature 20110102] STARTTLS support for the postscreen(8) daemon.
-This is implemented by a new tlsproxy(8) daemon that you will need
-to enable in master.cf (see POSTSCREEN_README for instructions).
-tlsproxy(8) implements its own tlsproxy_mumble versions of TLS-related
-smtpd_mumble parameters. This leaves no confusion about which
-parameters will affect tlsproxy(8) behavior, but it adds another
-25 parameters to the documentation.
+[Feature 20110228] postscreen(8) support to force remote SMTP clients
+to implement proper MX lookup policy.  By listening on both primary
+and backup MX addresses, postscreen(8) can deny the temporary
+whitelist status to clients that connect only to backup MX hosts,
+and prevent them from talking to a Postfix SMTP server process.
 
-[Incompat 20100912] If your DNSBL queries have a "secret" in the
-domain name, you must now censor this information from the postscreen(8)
-SMTP replies.  For example:
+Example: when 1.2.3.4 is a local backup IP address, specify
+"postscreen_whitelist_interfaces = !1.2.3.4 static:all".
 
-  /etc/postfix/main.cf:
-      postscreen_dnsbl_reply_map = texthash:/etc/postfix/dnsbl_reply
+Major changes - tls
+-------------------
 
-  /etc/postfix/dnsbl_reply:
-      # Secret DNSBL name        Name in postscreen(8) replies
-      secret.zen.spamhaus.org    zen.spamhaus.org
+[Incompat 20111205] Postfix now logs the result of successful TLS
+negotiation with TLS logging levels of 0. See the smtp_tls_loglevel
+and smtpd_tls_loglevel descriptions in the postconf(5) manpage for
+other minor differences.
 
-The texthash: format is similar to hash: except that there is no need to
-run postmap(1) before the file can be used, and that it does not detect
-changes after the file is read. It is new with Postfix version 2.8.
+[Feature 20111205] Support for TLS public key fingerprint matching
+in the Postfix SMTP client (in smtp_tls_policy_maps) and server (in
+check_ccert access maps).  Public key fingerprints are inherently
+more specific than fingerprints over the entire certificate.
 
-[Incompat 20100912] The postscreen "continue" action is now called
-"ignore".  The old name is still supported but no longer documented.
+[Feature 20111205] Revision of Postfix TLS logging. The main
+difference is that Postfix now logs the result of successful TLS
+negotiation with TLS logging levels of 0.  See the smtp_tls_loglevel
+and smtpd_tls_loglevel descriptions in the postconf(5) manpage for
+other minor differences.
 
-[Incompat 20100912] The postscreen_hangup_action parameter was
-removed. Postscreen now always behaves as if "postscreen_hangup_action
-= drop".
+Major changes - sasl authentication
+-----------------------------------
 
-[Incompat 20100912] The postscreen_cache_retention_time default was
-increased from 1d to 7d, to avoid deleting results from expensive
-deep SMTP protocol tests too quickly.
+[Incompat 20111218] To support external SASL authentication, e.g.,
+in an NGINX proxy daemon, the Postfix SMTP server now always checks
+the smtpd_sender_login_maps table, even without having
+"smtpd_sasl_auth_enable = yes" in main.cf.
 
-[Feature 20100912] SMTP protocol engine for deep protocol tests,
-and for logging the helo/sender/recipient information when postscreen
-rejects an attempt to deliver mail.
+[Feature 20111218] Support for external SASL authentication via the
+XCLIENT command.  This is used to accept SASL authentication from
+an SMTP proxy such as NGINX. This support works even without having
+to specify "smtpd_sasl_auth_enable = yes" in main.cf.
 
-The postscreen SMTP protocol engine implements a number of deep
-protocol tests and defers or rejects all attempts to deliver mail.
-The first test detects unauthorized SMTP command pipelining (an
-SMTP client sends multiple commands, instead of sending one command
-and waiting for the server response); a second deep protocol test
-implements the Postfix SMTP server's smtpd_forbidden_commands feature
-(a client sends commands such as CONNECT, GET, POST); and a third
-deep protocol test detects spambots that send SMTP commands that
-end in newline instead of carriage-return/newline.  Real spambots
-rarely make this mistake, but poorly-written software often does.
+[Incompat 20111106] To work around broken remote SMTP servers, the
+Postfix SMTP client by default no longer appends the "AUTH=<>"
+option to the MAIL FROM command.  Specify "smtp_send_dummy_mail_auth
+= yes" to restore the old behavior.
 
-Deep protocol tests are disabled by default, because the built-in
-SMTP engine cannot not hand off the "live" connection from a good
-SMTP client to a Postfix SMTP server process. To work around this,
-postscreen(8) defers attempts to deliver mail with a 4XX status,
-and waits for the client to disconnect. The next time a good client
-connects, it will be allowed to talk to a Postfix SMTP server process
-to deliver mail.
+Major changes - large file support
+----------------------------------
 
-[Feature 20100830] Postscreen DNSBL support is extended with optional
-fixed-string filters, with optional integral weight factors, and
-with an adjustable threshold to block SMTP clients with DNSBL score
->= that threshold. Reply filters will be implemented later.
+[Feature 20110219] Postfix now uses long integers for message_size_limit,
+mailbox_size_limit and virtual_mailbox_limit. On LP64 systems (64-bit
+long and pointer, but 32-bit integer), these limits can now exceed
+2GB.
 
-The updated postscreen configuration syntax is:
+Major changes - ipv6
+--------------------
 
-    postscreen_dnsbl_sites = domain[=ipaddr][*weight] ...
-    postscreen_dnsbl_threshold = score
+[Incompat 20110918] The following changes were made in default
+settings, in preparation for general availability of IPv6:
 
-Elements inside [] are optional, ipaddr is an IPv4 address, and
-weight and score are integral numbers. The [] are not part of the
-postscreen_dnsbl_sites input.  By default, weight and score are
-equal to 1, and entries without filter will match any non-error
-DNSBL reply.  Use a negative weight value for whitelisting.
+- The default inet_protocols value is now "all" instead of "ipv4",
+  meaning use both IPv4 and IPv6.  
 
-Examples:
+  To avoid an unexpected loss of performance for sites without
+  global IPv6 connectivity, the commands "make upgrade" and "postfix
+  upgrade-configuration" now append "inet_protocols = ipv4" to
+  main.cf when no explicit inet_protocols setting is already present.
+  This workaround will be removed in a future release.
 
-To use example.com as a high-confidence blocklist, and to block
-mail with example.net and example.org only when both agree, use:
+- The default smtp_address_preference value is now "any" instead
+  of "ipv6", meaning choose randomly between IPv6 and IPv4. With
+  this the Postfix SMTP client will have more success delivering
+  mail to sites that have problematic IPv6 configurations.
 
-    postscreen_dnsbl_threshold = 2
-    postscreen_dnsbl_sites = example.com*2, example.net, example.org
+Major changes - address verification
+------------------------------------
 
-To filter only DNSBL replies containing 127.0.0.4, use:
+[Feature 20111211] The proxymap(8) server can now be used to share
+postscreen(8) or verify(8) caches between Postfix instances.  Support
+for proxymap-over-TCP, to share a Postfix database between hosts,
+is expected to be completed in the Postfix 2.10 development cycle.
 
-    postscreen_dnsbl_sites = example.com=127.0.0.4
+[Feature 20111209] memcache lookup and update support. This provides
+a way to share postscreen(8) or verify(8) caches between Postfix
+instances.  
 
-See also postconf(5) for the fine details.
+[Feature 20111203] Support for time-dependent sender addresses
+of address verification probes. The default address, double-bounce,
+may end up on spammer blacklists. Although Postfix discards mail
+for this address, such mail still uses up network bandwidth and
+server resources. Specify an address_verify_sender_ttl value of
+several hours or more to frustrate address harvesting.
 
-[Incompat 20100101] When periodic cache cleanup is enabled (the
-default), the postscreen(8) server now requires that the cache
-database supports the "delete" and "sequence" operations.  To disable
-periodic cache cleanup specify a zero postscreen_cache_cleanup_interval
-value.
+Major changes - session transcript notification
+-----------------------------------------------
 
-[Feature 20100101] Periodic cache cleanup for the postscreen(8)
-cache database. The time between cache cleanup runs is controlled
-with the postscreen_cache_cleanup_interval (default: 12h) parameter.
-Cache cleanup increases the database access latency, so this should
-not be run more often than necessary.
+[Incompat 20120114] By default the Postfix SMTP server no longer
+reports transcripts of sessions where a client command is rejected
+because a lookup table is unavailable. Postfix now implements gradual
+degradation, for example, the SMTP server keeps running instead of
+terminating with a fatal error. This change in error handling would
+result in a very large number of "transcript of session" email
+notifications when an LDAP or *SQL server goes down).
 
-In addition, the postscreen_cache_retention_time (default: 1d)
-parameter specifies how long to keep an expired entry in the cache.
-This prevents a client from being logged as "NEW" after its record
-expired only a little while ago.
+To receive such reports, add the new "data" class to the notify_classes
+parameter value. The reports will be sent to the error_notice_recipient
+address as before.  This class is also used by the Postfix SMTP
+client to report about sessions that fail because a table is
+unavailable.
 
-[Feature 20091008] Prototype postscreen(8) server that runs a number
-of time-consuming checks in parallel for all incoming SMTP connections,
-before clients are allowed to talk to a real Postfix SMTP server.
-It detects clients that start talking too soon, or clients that
-appear on DNS blocklists, or clients that hang up without sending
-any command.
+Major changes - logging
+----------------------------------------
 
-By doing these checks in a single postscreen(8) process, Postfix
-can avoid wasting one SMTP server process per connection. A side
-benefit of postscreen(8)'s DNSBL lookups is that DNS records are
-already cached before the Postfix SMTP server looks them up later.
+[Incompat 20120114] Logfile-based alerting systems may need to be
+updated to look for "error" messages in addition to "fatal" messages.
+Specify "daemon_table_open_error_is_fatal = yes" to get the historical
+behavior (immediate termination with "fatal" message).
 
-postscreen(8) maintains a temporary whitelist of positive decisions.
-Once an SMTP client is whitelisted, it is immediately forwarded to
-a real Postfix SMTP server process without further checking.
+[Incompat 20111214] Logfile-based analysis tools may need to be
+updated. The submission and smtps examples in the sample master.cf
+file were updated to make their logging easier to distinguish.
 
-By default, the program logs only statistics, and it does not run
-any checks on clients in mynetworks (primarily, to avoid problems
-with buggy SMTP implementations in network appliances).  The logging
-function alone is already useful for research.
+See the source file pflogsumm_quickfix.txt for a "quick fix".
 
+[Incompat 20111205] Postfix now logs the result of successful TLS
+negotiation with TLS logging levels of 0. See the smtp_tls_loglevel
+and smtpd_tls_loglevel descriptions in the postconf(5) manpage for
+other minor differences.
+
+[Incompat 20110219] The Postfix SMTP and QMQP servers now log
+"hostname X does not resolve to address Y", when a "reverse hostname"
+lookup result does not resolve to the client IP address. Until now
+these servers logged "Y: hostname X verification failed" or "Y:
+address not listed for hostname X" which people found confusing.

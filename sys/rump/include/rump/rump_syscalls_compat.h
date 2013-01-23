@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syscalls_compat.h,v 1.7.8.1 2012/10/30 17:22:53 yamt Exp $	*/
+/*	$NetBSD: rump_syscalls_compat.h,v 1.7.8.2 2013/01/23 00:06:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -54,7 +54,11 @@
 #else /* !__NetBSD__ */
 
 #ifndef __RENAME
+#ifdef __ELF__
 #define __RUMPSTRINGIFY(x) #x
+#else
+#define __RUMPSTRINGIFY(x) "_"#x
+#endif /* __ELF__ */
 #define __RENAME(x) __asm(__RUMPSTRINGIFY(x))
 #endif /* __RENAME */
 

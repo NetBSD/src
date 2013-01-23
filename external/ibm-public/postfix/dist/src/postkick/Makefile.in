@@ -71,4 +71,5 @@ postkick.o: ../../include/safe.h
 postkick.o: ../../include/sys_defs.h
 postkick.o: ../../include/vbuf.h
 postkick.o: ../../include/vstream.h
+postkick.o: ../../include/warn_stat.h
 postkick.o: postkick.c

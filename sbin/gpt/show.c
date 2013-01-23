@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.7 2011/08/27 17:38:16 joerg Exp $");
+__RCSID("$NetBSD: show.c,v 1.7.2.1 2013/01/23 00:05:31 yamt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -63,9 +63,10 @@ friendly(uuid_t *t)
 {
 	static uuid_t efi_slice = GPT_ENT_TYPE_EFI;
 	static uuid_t bios_boot = GPT_ENT_TYPE_BIOS;
-	static uuid_t mslinux = GPT_ENT_TYPE_MS_BASIC_DATA;
+	static uuid_t msdata = GPT_ENT_TYPE_MS_BASIC_DATA;
 	static uuid_t freebsd = GPT_ENT_TYPE_FREEBSD;
 	static uuid_t hfs = GPT_ENT_TYPE_APPLE_HFS;
+	static uuid_t linuxdata = GPT_ENT_TYPE_LINUX_DATA;
 	static uuid_t linuxswap = GPT_ENT_TYPE_LINUX_SWAP;
 	static uuid_t msr = GPT_ENT_TYPE_MS_RESERVED;
 	static uuid_t swap = GPT_ENT_TYPE_FREEBSD_SWAP;
@@ -108,12 +109,14 @@ friendly(uuid_t *t)
 
 	if (uuid_equal(t, &freebsd, NULL))
 		return ("FreeBSD legacy");
-	if (uuid_equal(t, &mslinux, NULL))
-		return ("Linux/Windows");
-	if (uuid_equal(t, &linuxswap, NULL))
-		return ("Linux swap");
+	if (uuid_equal(t, &msdata, NULL))
+		return ("Windows basic data");
 	if (uuid_equal(t, &msr, NULL))
 		return ("Windows reserved");
+	if (uuid_equal(t, &linuxdata, NULL))
+		return ("Linux data");
+	if (uuid_equal(t, &linuxswap, NULL))
+		return ("Linux swap");
 	if (uuid_equal(t, &hfs, NULL))
 		return ("Apple HFS");
 
