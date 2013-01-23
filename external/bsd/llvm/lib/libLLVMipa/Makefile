@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/01/23 15:03:00 joerg Exp $
 
 LIB=	LLVMipa
 
@@ -6,7 +6,8 @@ LIB=	LLVMipa
 
 .PATH: ${LLVM_SRCDIR}/lib/Analysis/IPA
 
-SRCS+=	CallGraph.cpp \
+SRCS+=	CallPrinter.cpp \
+	CallGraph.cpp \
 	CallGraphSCCPass.cpp \
 	FindUsedTypes.cpp \
 	GlobalsModRef.cpp \

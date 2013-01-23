@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/11/17 04:57:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2013/01/23 15:02:54 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,7 @@ SUBDIR+= \
 	llvm-link \
 	llvm-mc \
 	llvm-nm \
+	llvm-objdump \
 	llvm-prof \
 	llvm-ranlib \
 	llvm-readobj \

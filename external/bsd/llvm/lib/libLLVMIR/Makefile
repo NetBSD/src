@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2012/10/28 17:07:45 joerg Exp $
+#	$NetBSD: Makefile,v 1.1 2013/01/23 15:02:59 joerg Exp $
 
-LIB=	LLVMCore
+LIB=	LLVMIR
 
 .include <bsd.init.mk>
 
-.PATH: ${LLVM_SRCDIR}/lib/VMCore
+.PATH: ${LLVM_SRCDIR}/lib/IR
 
 SRCS+=	AsmWriter.cpp \
 	Attributes.cpp \
@@ -36,7 +36,6 @@ SRCS+=	AsmWriter.cpp \
 	PassManager.cpp \
 	PassRegistry.cpp \
 	PrintModulePass.cpp \
-	TargetTransformInfo.cpp \
 	Type.cpp \
 	TypeFinder.cpp \
 	Use.cpp \

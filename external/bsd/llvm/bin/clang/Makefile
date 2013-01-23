@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2012/09/23 17:22:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.22 2013/01/23 15:02:54 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -20,7 +20,6 @@ CLANG_LIBS+= \
 	clangFrontendTool \
 	clangFrontend \
 	clangARCMigrate \
-	clangEdit \
 	clangStaticAnalyzerFrontend \
 	clangStaticAnalyzerCheckers \
 	clangStaticAnalyzerCore \
@@ -29,6 +28,7 @@ CLANG_LIBS+= \
 	clangCodeGen \
 	clangParse \
 	clangSema \
+	clangEdit \
 	clangAnalysis \
 	clangRewriteFrontend \
 	clangRewriteCore \
@@ -79,7 +79,7 @@ LLVM_LIBS+= \
 	Linker \
 	TransformsUtils \
 	ipa \
-	Core \
+	IR \
 	Support
 
 .include "${.PARSEDIR}/../../link.mk"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2012/11/17 04:57:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2013/01/23 15:02:57 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -46,7 +46,7 @@ HEADER=	\
   stdint.h \
   tgmath.h
 
-.PATH:	${LLVM_SRCDIR}/include/llvm \
+.PATH:	${LLVM_SRCDIR}/include/llvm/IR \
 	${CLANG_SRCDIR}/include/clang/AST \
 	${CLANG_SRCDIR}/include/clang/Basic \
 	${CLANG_SRCDIR}/include/clang/Driver
@@ -54,7 +54,7 @@ HEADER=	\
 TABLEGEN_SRC=	Intrinsics.td
 
 TABLEGEN_OUTPUT.Intrinsics.td= \
-	llvm/Intrinsics.gen|-gen-intrinsic
+	llvm/IR/Intrinsics.gen|-gen-intrinsic
 
 CLANG_TABLEGEN_SRC=	Attr.td CommentCommands.td CommentHTMLTags.td \
 	CommentNodes.td DeclNodes.td StmtNodes.td \
@@ -64,7 +64,8 @@ CLANG_TABLEGEN_SRC=	Attr.td CommentCommands.td CommentHTMLTags.td \
 CLANG_TABLEGEN_INCLUDES.Attr.td=	-I${CLANG_SRCDIR}/include
 CLANG_TABLEGEN_OUTPUT.Attr.td= \
 	clang/AST/Attrs.inc|-gen-clang-attr-classes \
-        clang/AST/AttrImpl.inc|-gen-clang-attr-impl \
+	clang/AST/AttrDump.inc|-gen-clang-attr-dump \
+	clang/AST/AttrImpl.inc|-gen-clang-attr-impl \
 	clang/Basic/AttrList.inc|-gen-clang-attr-list \
 	clang/Lex/AttrSpellings.inc|-gen-clang-attr-spelling-list \
 	clang/Parse/AttrLateParsed.inc|-gen-clang-attr-late-parsed-list \

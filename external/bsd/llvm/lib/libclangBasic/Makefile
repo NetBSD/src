@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/08/09 14:37:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2013/01/23 15:03:01 joerg Exp $
 
 LIB=	clangBasic
 
@@ -17,6 +17,7 @@ SRCS+=	Builtins.cpp \
 	LangOptions.cpp \
 	Module.cpp \
 	ObjCRuntime.cpp \
+	OperatorPrecedence.cpp \
 	SourceLocation.cpp \
 	SourceManager.cpp \
 	TargetInfo.cpp \
