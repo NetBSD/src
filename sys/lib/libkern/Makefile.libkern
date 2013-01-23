@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.18 2012/08/30 12:16:49 drochner Exp $
+#	$NetBSD: Makefile.libkern,v 1.19 2013/01/23 22:34:37 matt Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -84,7 +84,7 @@ SRCS+=	random.c
 SRCS+=	rngtest.c
 
 SRCS+=	memchr.c
-SRCS+=	strcat.c strcmp.c strcpy.c strlen.c
+SRCS+=	strcat.c strcmp.c strcpy.c strlen.c strnlen.c
 SRCS+=	strncmp.c strncpy.c
 SRCS+=	strcasecmp.c strncasecmp.c
 
