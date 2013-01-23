@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.345 2012/11/10 01:47:25 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.346 2013/01/23 12:19:02 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1743,9 +1743,10 @@ winfixfill:
  *
  * The following is duplicated from datafault:
  */
-	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	! We need to save volatile stuff to AG regs
 #ifdef TRAPS_USE_IG
-	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! We need to save volatile stuff to AG regs
+	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! We need to save volatile stuff to interrupt globals
+#else
+	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	! We need to save volatile stuff to alternate globals
 #endif
 	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
 	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
@@ -2106,9 +2107,10 @@ winfixsave:
 	wrpr	%g1, %cwp
 	andn	%g2, CWP, %g2
 	wrpr	%g1, %g2, %tstate
-	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
+#else
+	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate
 #endif
 	mov	%g6, %sp
 	done
@@ -2129,9 +2131,10 @@ winfixsave:
  *
  */
 datafault:
-	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	! We need to save volatile stuff to AG regs
 #ifdef TRAPS_USE_IG
-	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! We need to save volatile stuff to AG regs
+	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! We need to save volatile stuff to interrupt globals
+#else
+	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	! We need to save volatile stuff to alternate globals
 #endif
 	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
 	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
@@ -2374,9 +2377,10 @@ instr_miss:
  */
 
 textfault:
-	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	! We need to save volatile stuff to AG regs
 #ifdef TRAPS_USE_IG
-	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! We need to save volatile stuff to AG regs
+	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! We need to save volatile stuff to interrupt globals
+#else
+	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	! We need to save volatile stuff to alternate globals
 #endif
 	wr	%g0, ASI_IMMU, %asi
 	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
@@ -3588,9 +3592,10 @@ return_from_trap:
 	ldx	[%sp + CC64FSZ + STKB + TF_G + (6*8)], %g6
 	ldx	[%sp + CC64FSZ + STKB + TF_G + (7*8)], %g7
 	/* Switch to alternate globals and load outs */
-	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
+#else
+	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate
 #endif
 	ldx	[%sp + CC64FSZ + STKB + TF_O + (0*8)], %i0
 	ldx	[%sp + CC64FSZ + STKB + TF_O + (1*8)], %i1
