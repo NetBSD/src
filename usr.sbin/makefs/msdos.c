@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.3 2013/01/23 21:42:22 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.4 2013/01/23 22:47:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.3 2013/01/23 21:42:22 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.4 2013/01/23 22:47:18 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -132,6 +132,16 @@ ALLOPTS
 void
 msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 {
+	struct msdos_options *msdos_opt = fsopts->fs_specific;
+
+	/*
+	 * XXX: pick up other options from the msdos specific ones?
+	 * Is minsize right here?
+	 */
+	msdos_opt->create_size = MAX(msdos_opt->create_size, fsopts->minsize);
+
+	if (mkfs_msdos(image, NULL, msdos_opt) == -1)
+		return;
 #ifdef notyet
 	struct fs	*superblock;
 	struct timeval	start;
