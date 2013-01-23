@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.23 2008/01/29 14:54:08 pooka Exp $	*/
+/*	$NetBSD: requests.c,v 1.24 2013/01/23 20:22:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.23 2008/01/29 14:54:08 pooka Exp $");
+__RCSID("$NetBSD: requests.c,v 1.24 2013/01/23 20:22:34 riastradh Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -209,7 +209,7 @@ puffs__fsframe_cmp(struct puffs_usermount *pu,
 	winlen = sizeof(struct puffs_req);
 	rv = puffs_framebuf_getwindow(pb1, 0, (void *)&preq1, &winlen);
 	assert(rv == 0); /* frames are always at least puffs_req in size */
-	assert(winlen = sizeof(struct puffs_req));
+	assert(winlen == sizeof(struct puffs_req));
 
 	/*
 	 * Check if this is not a response in this slot.  That's the
@@ -224,7 +224,7 @@ puffs__fsframe_cmp(struct puffs_usermount *pu,
 	winlen = sizeof(struct puffs_req);
 	rv = puffs_framebuf_getwindow(pb2, 0, (void *)&preq2, &winlen);
 	assert(rv == 0); /* frames are always at least puffs_req in size */
-	assert(winlen = sizeof(struct puffs_req));
+	assert(winlen == sizeof(struct puffs_req));
 
 	/* then compare: resid equal? */
 	return preq1->preq_id != preq2->preq_id;
