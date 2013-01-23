@@ -74,10 +74,12 @@ int
 chfs_parse_opts(const char *option, fsinfo_t *fsopts)
 {
 	static const option_t chfs_options[] = {
-		{ "pagesize", &chfs_opts.pagesize,	1,	INT_MAX, "page size" },
-		{ "eraseblock", &chfs_opts.eraseblock, 1, INT_MAX, "eraseblock size" },
-		{ "mediatype", &chfs_opts.mediatype, 0, 1, 
-		    "type of the media, 0 (nor) or 1 (nand)" },
+		{ 'p', "pagesize", &chfs_opts.pagesize,	OPT_INT32,
+		  1, INT_MAX, "page size" },
+		{ 'e', "eraseblock", &chfs_opts.eraseblock, OPT_INT32,
+		  1, INT_MAX, "eraseblock size" },
+		{ 'm', "mediatype", &chfs_opts.mediatype, OPT_INT32,
+		  0, 1, "type of the media, 0 (nor) or 1 (nand)" },
 		{ .name = NULL }
 	};
 
