@@ -1,4 +1,8 @@
-/* $NetBSD: strrchr.S,v 1.1 2013/01/23 05:46:17 matt Exp $ */
+/* $NetBSD: strrchr.S,v 1.2 2013/01/23 07:45:46 matt Exp $ */
+
+#include <machine/asm.h>
+
+STRONG_ALIAS(rindex, strrchr)  
 
 #if defined(_STANDALONE)
 #include "strrchr_naive.S"
