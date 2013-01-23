@@ -83,28 +83,10 @@ chfs_parse_opts(const char *option, fsinfo_t *fsopts)
 		{ .name = NULL }
 	};
 
-	char *var, *val;
-	int retval;
-
 	assert(option != NULL);
 	assert(fsopts != NULL);
 
-	if ((var = strdup(option)) == NULL) {
-		err(EXIT_FAILURE, "Allocating memory for copy of option string");
-	}
-	retval = 0;
-
-	if ((val = strchr(var, '=')) == NULL) {
-		warnx("Option `%s' doesn't contain a value", var);
-		goto leave_chfs_parse_opts;
-	}
-	*val++ = '\0';
-
-	retval = set_option(chfs_options, var, val);
-	
-leave_chfs_parse_opts:
-	free(var);
-	return retval;
+	return set_option(chfs_options, option);
 }
 
 void
