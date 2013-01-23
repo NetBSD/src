@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.27 2013/01/22 20:35:29 christos Exp $ */
+/* $NetBSD: extern.h,v 1.28 2013/01/23 16:39:03 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -175,6 +175,9 @@ int sortscmp(const ptr_t, const ptr_t);
  */
 void dohist(Char **, struct command *);
 struct Hist *enthist(int, struct wordent *, int);
+#ifdef EDIT
+void loadhist(struct Hist *);
+#endif
 void savehist(struct wordent *);
 
 /*
@@ -189,6 +192,9 @@ Char *domod(Char *, int);
 void freelex(struct wordent *);
 int lex(struct wordent *);
 void prlex(FILE *, struct wordent *);
+#ifdef EDIT
+int sprlex(char **, struct wordent *);
+#endif
 int readc(int);
 void settell(void);
 void unreadc(int);
