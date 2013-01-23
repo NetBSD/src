@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.50 2013/01/23 20:46:39 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.51 2013/01/23 21:32:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.50 2013/01/23 20:46:39 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.51 2013/01/23 21:32:32 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -186,6 +186,7 @@ int
 ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 {
 	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
+	char optimization[24];
 
 	option_t ffs_options[] = {
 	    { '\0', "bsize", &ffs_opts->bsize, OPT_INT32,
@@ -208,11 +209,14 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 	      1, INT_MAX, "max # of blocks per group" },
 	    { '\0', "version", &ffs_opts->version, OPT_INT32,
 	      1, 2, "UFS version" },
+	    { '\0', "optimization", optimization, OPT_STRARRAY,
+	      1, sizeof(optimization), "Optimization (time|space)" },
+	    { '\0', "label", ffs_opts->label, OPT_STRARRAY,
+	      1, sizeof(ffs_opts->label), "UFS label" },
 	    { .name = NULL }
 	};
 
-	char	*var, *val;
-	int	rv;
+	int	rv, i;
 
 	assert(option != NULL);
 	assert(fsopts != NULL);
@@ -221,36 +225,24 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 	if (debug & DEBUG_FS_PARSE_OPTS)
 		printf("ffs_parse_opts: got `%s'\n", option);
 
-	if ((var = strdup(option)) == NULL)
-		err(1, "Allocating memory for copy of option string");
-	rv = 0;
+	rv = set_option(ffs_options, option);
+	if (rv == 0)
+		return 0;
 
-	if ((val = strchr(var, '=')) == NULL) {
-		warnx("Option `%s' doesn't contain a value", var);
-		goto leave_ffs_parse_opts;
-	}
-	*val++ = '\0';
+	for (i = 0; ffs_options[i].name && (1 << i) != rv; i++)
+		continue;
 
-	if (strcmp(var, "optimization") == 0) {
-		if (strcmp(val, "time") == 0) {
+	if (strcmp(ffs_options[i].name, "optimization") == 0) {
+		if (strcmp(optimization, "time") == 0) {
 			ffs_opts->optimization = FS_OPTTIME;
-		} else if (strcmp(val, "space") == 0) {
+		} else if (strcmp(optimization, "space") == 0) {
 			ffs_opts->optimization = FS_OPTSPACE;
 		} else {
-			warnx("Invalid optimization `%s'", val);
-			goto leave_ffs_parse_opts;
+			warnx("Invalid optimization `%s'", optimization);
+			return 0;
 		}
-		rv = 1;
-	} else if (strcmp(var, "label") == 0) {
-		strlcpy(ffs_opts->label, val, sizeof(ffs_opts->label));
-		rv = 1;
-	} else
-		rv = set_option(ffs_options, var, val);
-
- leave_ffs_parse_opts:
-	if (var)
-		free(var);
-	return (rv);
+	}
+	return rv;
 }
 
 
