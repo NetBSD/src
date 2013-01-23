@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.108 2012/12/14 15:33:19 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.109 2013/01/23 18:04:33 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.108 2012/12/14 15:33:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.109 2013/01/23 18:04:33 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -409,8 +409,8 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 	}
 
 	/*
-	 * Wait for the event to finish its work, remove from the list
-	 * and release resouces.
+	 * Wait for the event to finish its work, remove it from the list
+	 * and release resources.
 	 */
 	while (see->see_flags & SEE_EVENT_WORKING)
 		cv_wait(&sme->sme_condvar, &sme->sme_mtx);
@@ -447,8 +447,8 @@ sme_event_unregister_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
 		return EINVAL;
 
 	/*
-	 * Wait for the event to finish its work, remove from the list
-	 * and release resouces.
+	 * Wait for the event to finish its work, remove it from the list
+	 * and release resources.
 	 */
 	while (see->see_flags & SEE_EVENT_WORKING)
 		cv_wait(&sme->sme_condvar, &sme->sme_mtx);
