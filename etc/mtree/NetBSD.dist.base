@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.107 2012/11/20 15:02:44 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.108 2013/01/23 15:02:53 joerg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -94,7 +94,7 @@
 ./usr/include/arpa
 ./usr/include/atf-c
 ./usr/include/atf-c++
-./usr/include/clang-3.2
+./usr/include/clang-3.3
 ./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/apm

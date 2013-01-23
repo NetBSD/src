@@ -1,9 +1,10 @@
-# $NetBSD: ad.powerpc,v 1.60 2013/01/16 16:01:05 christos Exp $
+# $NetBSD: ad.powerpc,v 1.61 2013/01/23 15:02:53 joerg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
 ./usr/include/clang-3.0/altivec.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/altivec.h		comp-c-include		llvm
+./usr/include/clang-3.2/altivec.h		comp-obsolete		obsolete
+./usr/include/clang-3.3/altivec.h		comp-c-include		llvm
 ./usr/include/gcc-4.1/altivec.h			comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/altivec.h			comp-obsolete		gcc=45,obsolete
 ./usr/include/gcc-4.5/altivec.h			comp-c-include		gcccmds,gcc=45

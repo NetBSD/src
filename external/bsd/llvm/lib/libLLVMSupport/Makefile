@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2012/08/09 14:37:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2013/01/23 15:03:00 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -60,6 +60,7 @@ SRCS+=	APFloat.cpp \
 	Triple.cpp \
 	Twine.cpp \
 	YAMLParser.cpp \
+	YAMLTraits.cpp \
 	raw_os_ostream.cpp \
 	raw_ostream.cpp \
 	regcomp.c \
