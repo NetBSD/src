@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2012/09/23 17:22:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2013/01/23 15:03:01 joerg Exp $
 
 LIB=	clangAST
 
@@ -10,6 +10,7 @@ SRCS+=	APValue.cpp \
 	ASTConsumer.cpp \
 	ASTContext.cpp \
 	ASTDiagnostic.cpp \
+	ASTDumper.cpp \
 	ASTImporter.cpp \
 	AttrImpl.cpp \
 	CXXInheritance.cpp \
@@ -50,7 +51,6 @@ SRCS+=	APValue.cpp \
 	RecordLayoutBuilder.cpp \
 	SelectorLocationsKind.cpp \
 	Stmt.cpp \
-	StmtDumper.cpp \
 	StmtIterator.cpp \
 	StmtPrinter.cpp \
 	StmtProfile.cpp \

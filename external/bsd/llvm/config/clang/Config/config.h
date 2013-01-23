@@ -11,7 +11,7 @@
 #define CLANG_RESOURCE_DIR ""
 
 /* Directories clang will search for headers */
-#define C_INCLUDE_DIRS "/usr/include/clang-3.2:/usr/include"
+#define C_INCLUDE_DIRS "/usr/include/clang-3.3:/usr/include"
 
 /* Linker version detected at compile time. */
 #define HOST_LINK_VERSION "2.22"
