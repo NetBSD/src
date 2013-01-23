@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2013/01/22 22:49:09 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2013/01/23 02:18:50 matt Exp $
 
 SRCS+=		rtld_start.S mdreloc.c
 
@@ -6,8 +6,8 @@ SRCS+=		rtld_start.S mdreloc.c
 CPPFLAGS+=	-fpic
 
 CPPFLAGS+=	-DELFSIZE=32
-.if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmeb" || \
-  ${CFLAGS:Mabi=aapcs} != ""
+.if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmeb" \
+    || (!empty(CFLAGS) && ${CFLAGS:Mabi=aapcs} != "")
 CPPFLAGS+=	-DHAVE_INITFINI_ARRAY
 .endif
 
