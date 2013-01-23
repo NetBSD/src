@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.41 2013/01/21 20:28:38 christos Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.42 2013/01/23 15:29:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.41 2013/01/21 20:28:38 christos Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.42 2013/01/23 15:29:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,7 +243,7 @@ static struct {
 	char o;
 	const char *h;
 } opts[] = {
-#define AOPT(a, b, c, d) { a, d },
+#define AOPT(_opt, _type, _name, _min, _desc) { _opt, _desc },
 ALLOPTS
 #undef AOPT
 };
