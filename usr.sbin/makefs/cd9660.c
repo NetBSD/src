@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.35 2012/01/28 02:35:46 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.36 2013/01/23 20:46:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.35 2012/01/28 02:35:46 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.36 2013/01/23 20:46:39 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -304,28 +304,19 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 	int	rv;
 	/* Set up allowed options - integer options ONLY */
 	option_t cd9660_options[] = {
-		{ "l", &diskStructure.isoLevel, 1, 3, "ISO Level" },
-		{ "isolevel", &diskStructure.isoLevel, 1, 3, "ISO Level" },
-		{ "verbose",  &diskStructure.verbose_level, 0, 2,
-		  "Turns on verbose output" },
-		{ "v", &diskStructure.verbose_level, 0 , 2,
-		  "Turns on verbose output"},
+		{ 'l', "isolevel", &diskStructure.isoLevel,
+		  OPT_INT32, 1, 3, "ISO Level" },
+		{ 'v', "verbose",  &diskStructure.verbose_level,
+		  OPT_INT32, 0, 2, "Turns on verbose output" },
+		{ 'L', "Label", diskStructure.primaryDescriptor.volume_id, 
+		  OPT_STRARRAY, 1,
+		  sizeof(diskStructure.primaryDescriptor.volume_id),
+		  "Disk Label" },
 		{ .name = NULL }
 	};
 
 	if (cd9660_defaults_set == 0)
 		cd9660_set_defaults();
-
-	/*
-	 * Todo : finish implementing this, and make a function that
-	 * parses them
-	 */
-	/*
-	string_option_t cd9660_string_options[] = {
-		{ "L", "Label", &diskStructure.primaryDescriptor.volume_id, 1, 32, "Disk Label", ISO_STRING_FILTER_DCHARS },
-		{ NULL }
-	}
-	*/
 
 	assert(option != NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.27 2012/06/22 06:15:18 sjg Exp $	*/
+/*	$NetBSD: makefs.h,v 1.28 2013/01/23 20:46:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -147,11 +147,23 @@ typedef struct {
  * result, and range checks for the result. Used to simplify fs specific
  * option setting
  */
+typedef enum {
+	OPT_STRARRAY,
+	OPT_STRPTR,
+	OPT_BOOL,
+	OPT_INT8,
+	OPT_INT16,
+	OPT_INT32,
+	OPT_INT64
+} opttype_t;
+
 typedef struct {
+	char		letter;		/* option letter NUL for none */
 	const char	*name;		/* option name */
-	int		*value;		/* where to stuff the value */
-	int		minimum;	/* minimum for value */
-	int		maximum;	/* maximum for value */
+	void		*value;		/* where to stuff the value */
+	opttype_t	type;		/* type of entry */
+	long long	minimum;	/* minimum for value */
+	long long	maximum;	/* maximum for value */
 	const char	*desc;		/* option description */
 } option_t;
 
@@ -163,25 +175,17 @@ int		set_option(const option_t *, const char *, const char *);
 fsnode *	walk_dir(const char *, const char *, fsnode *, fsnode *);
 void		free_fsnodes(fsnode *);
 
-void		ffs_prep_opts(fsinfo_t *);
-int		ffs_parse_opts(const char *, fsinfo_t *);
-void		ffs_cleanup_opts(fsinfo_t *);
-void		ffs_makefs(const char *, const char *, fsnode *, fsinfo_t *);
+#define DECLARE_FUN(fs)							\
+void		fs ## _prep_opts(fsinfo_t *);				\
+int		fs ## _parse_opts(const char *, fsinfo_t *);		\
+void		fs ## _cleanup_opts(fsinfo_t *);			\
+void		fs ## _makefs(const char *, const char *, fsnode *, fsinfo_t *)
 
-void		cd9660_prep_opts(fsinfo_t *);
-int		cd9660_parse_opts(const char *, fsinfo_t *);
-void		cd9660_cleanup_opts(fsinfo_t *);
-void		cd9660_makefs(const char *, const char *, fsnode *, fsinfo_t *);
-
-void		chfs_prep_opts(fsinfo_t *);
-int		chfs_parse_opts(const char *, fsinfo_t *);
-void		chfs_cleanup_opts(fsinfo_t *);
-void		chfs_makefs(const char *, const char *, fsnode *, fsinfo_t *);
-
-void		v7fs_prep_opts(fsinfo_t *);
-int		v7fs_parse_opts(const char *, fsinfo_t *);
-void		v7fs_cleanup_opts(fsinfo_t *);
-void		v7fs_makefs(const char *, const char *, fsnode *, fsinfo_t *);
+DECLARE_FUN(ffs);
+DECLARE_FUN(cd9660);
+DECLARE_FUN(chfs);
+DECLARE_FUN(v7fs);
+DECLARE_FUN(msdos);
 
 extern	u_int		debug;
 extern	struct timespec	start_time;

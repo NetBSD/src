@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs.c,v 1.3 2011/08/10 11:31:49 uch Exp $	*/
+/*	$NetBSD: v7fs.c,v 1.4 2013/01/23 20:46:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: v7fs.c,v 1.3 2011/08/10 11:31:49 uch Exp $");
+__RCSID("$NetBSD: v7fs.c,v 1.4 2013/01/23 20:46:39 christos Exp $");
 #endif	/* !__lint */
 
 #include <stdio.h>
@@ -75,8 +75,9 @@ int
 v7fs_parse_opts(const char *option, fsinfo_t *fsopts)
 {
 	static option_t v7fs_options[] = {
-		{ "pdp", &v7fs_opts.pdp_endian, false, true,  "PDP endian" },
-		{ "progress", &v7fs_opts.progress, false, true,
+		{ '\0', "pdp", &v7fs_opts.pdp_endian, OPT_INT32, false, true,
+		    "PDP endian" },
+		{ '\0', "progress", &v7fs_opts.progress, OPT_INT32, false, true,
 		  "Progress bar" },
 		{ .name = NULL }
 	};
