@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.37 2013/01/22 21:59:52 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.38 2013/01/23 03:32:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.37 2013/01/22 21:59:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.38 2013/01/23 03:32:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3192,14 +3192,13 @@ dwc_otg_timer(struct dwc_otg_softc *sc)
 	/* increment timer value */
 	sc->sc_tmr_val++;
 
+	mutex_spin_enter(&sc->sc_intr_lock);
 	TAILQ_FOREACH(xfer, &sc->sc_active, xnext) {
 		td = xfer->td_transfer_cache;
 		if (td != NULL)
 			td->did_nak = 0;
 	}
-
 	/* poll jobs */
-	mutex_spin_enter(&sc->sc_intr_lock);
 	dwc_otg_interrupt_poll(sc);
 	mutex_spin_exit(&sc->sc_intr_lock);
 
