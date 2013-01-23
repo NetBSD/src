@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.36 2013/01/23 20:46:39 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.37 2013/01/23 21:32:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.36 2013/01/23 20:46:39 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.37 2013/01/23 21:32:32 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -300,9 +300,33 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
+int
+set_option(const option_t *options, const char *option)
+{
+	char *var, *val;
+	int retval;
+
+	assert(option != NULL);
+
+	if ((var = strdup(option)) == NULL) {
+		err(EXIT_FAILURE, "Allocating memory for copy of option string");
+	}
+	retval = 0;
+	if ((val = strchr(var, '=')) == NULL) {
+		warnx("Option `%s' doesn't contain a value", var);
+		goto out;
+	}
+	*val++ = '\0';
+
+	retval = set_option_var(options, var, val);
+	
+out:
+	free(var);
+	return retval;
+}
 
 int
-set_option(const option_t *options, const char *var, const char *val)
+set_option_var(const option_t *options, const char *var, const char *val)
 {
 	char *s;
 	size_t i;
