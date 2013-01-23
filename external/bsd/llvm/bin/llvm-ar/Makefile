@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:45 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/01/23 15:02:54 joerg Exp $
 
 PROG_CXX=	llvm-ar
 NOMAN=		yes
@@ -12,7 +12,7 @@ SRCS=	llvm-ar.cpp
 LLVM_LIBS+= \
 	Archive \
 	BitReader \
-	Core \
+	IR \
 	Support
 
 .include "${.PARSEDIR}/../../link.mk"

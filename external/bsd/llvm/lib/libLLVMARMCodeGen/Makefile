@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2012/11/17 04:57:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2013/01/23 15:02:58 joerg Exp $
 
 LIB=	LLVMARMCodeGen
 
@@ -28,6 +28,7 @@ SRCS+=	ARMAsmPrinter.cpp \
 	ARMSubtarget.cpp \
 	ARMTargetMachine.cpp \
 	ARMTargetObjectFile.cpp \
+	ARMTargetTransformInfo.cpp \
 	MLxExpansionPass.cpp \
 	Thumb1InstrInfo.cpp \
 	Thumb1FrameLowering.cpp \
@@ -51,7 +52,6 @@ TABLEGEN_OUTPUT= \
 	ARMGenFastISel.inc|-gen-fast-isel \
 	ARMGenCallingConv.inc|-gen-callingconv \
 	ARMGenSubtargetInfo.inc|-gen-subtarget \
-	ARMGenEDInfo.inc|-gen-enhanced-disassembly-info \
 	ARMGenDisassemblerTables.inc|-gen-disassembler
 
 .include "${.PARSEDIR}/../../tablegen.mk"
