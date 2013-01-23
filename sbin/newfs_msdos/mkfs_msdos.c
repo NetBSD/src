@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.1 2013/01/21 20:28:38 christos Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.2 2013/01/23 15:29:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.1 2013/01/21 20:28:38 christos Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.2 2013/01/23 15:29:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -258,7 +258,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	warnx("Cannot specify both block size and sectors per cluster");
 	return -1;
     }
-    if (strlen(o.OEM_string) > 8) {
+    if (o.OEM_string && strlen(o.OEM_string) > 8) {
 	warnx("%s: bad OEM string", o.OEM_string);
 	return -1;
     }
@@ -280,9 +280,10 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	}
 	pos = lseek(fd, 0, SEEK_SET);
     } else if ((fd = open(fname, o.no_create ? O_RDONLY : O_RDWR)) == -1 ||
-	fstat(fd, &sb))
+	fstat(fd, &sb)) {
 	warn("%s", fname);
 	return -1;
+    }
     if (!o.no_create)
 	if (check_mounted(fname, sb.st_mode) == -1)
 	    return -1;
@@ -333,7 +334,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	}
     }
 
-    if (!oklabel(o.volume_label)) {
+    if (o.volume_label && !oklabel(o.volume_label)) {
 	warnx("%s: bad volume label", o.volume_label);
 	return -1;
     }
@@ -385,12 +386,12 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	}
 	if (o.block_size < bpb.bps) {
 	    warnx("block size (%u) is too small; minimum is %u",
-		 o.block_size, bpb.bps);
+		o.block_size, bpb.bps);
 	    return -1;
 	}
 	if (o.block_size > bpb.bps * MAXSPC) {
 	    warnx("block size (%u) is too large; maximum is %u",
-		 o.block_size, bpb.bps * MAXSPC);
+		o.block_size, bpb.bps * MAXSPC);
 	    return -1;
 	}
 	bpb.spc = o.block_size / bpb.bps;
@@ -435,8 +436,10 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	bname = o.bootstrap;
 	if (!strchr(bname, '/')) {
 	    snprintf(buf, sizeof(buf), "/boot/%s", bname);
-	    if (!(bname = strdup(buf)))
-		err(1, NULL);
+	    if (!(bname = strdup(buf))) {
+		warn(NULL);
+		return -1;
+	    }
 	}
 	if ((fd1 = open(bname, O_RDONLY)) == -1 || fstat(fd1, &sb)) {
 	    warn("%s", bname);
