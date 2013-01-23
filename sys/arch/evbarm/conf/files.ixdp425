@@ -1,4 +1,4 @@
-#	$NetBSD: files.ixdp425,v 1.8 2008/03/17 09:30:02 kiyohara Exp $
+#	$NetBSD: files.ixdp425,v 1.9 2013/01/23 14:24:14 skrll Exp $
 #
 # Intel IXP425 networkproccesor board configuration info
 #
@@ -6,9 +6,6 @@
 # IXP425 Network Processor CPU support
 include "arch/arm/xscale/files.ixp425"
 
-# Use the shared initarm_common() code.
-# XXX: Not yet ready for prime-time
-#file	arch/evbarm/evbarm/initarm_common.c
 file	arch/evbarm/ixdp425/ixdp425_machdep.c
 
 file	arch/evbarm/ixdp425/ixdp425_pci.c
