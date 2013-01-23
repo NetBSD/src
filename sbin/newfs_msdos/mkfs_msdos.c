@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.2 2013/01/23 15:29:15 christos Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.3 2013/01/23 22:48:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.2 2013/01/23 15:29:15 christos Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.3 2013/01/23 22:48:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -804,12 +804,17 @@ getbpbinfo(int fd, const char *fname, const char *dtype, int iflag,
 
     maxpartitions = getmaxpartitions();
 
+    // XXX: Does not work with wedges
     if (s2 && *s2 >= 'a' && *s2 <= 'a' + maxpartitions - 1) {
 	part = *s2++ - 'a';
     }
     if (((part != -1) && ((!iflag && part != -1) || !bpb->bsec)) ||
 	!bpb->bps || !bpb->spt || !bpb->hds) {
-	if (create || getdiskinfo(fname, fd, NULL, &geo, &dkw) == -1) {
+	if (create
+#ifndef MAKEFS
+	|| getdiskinfo(fname, fd, NULL, &geo, &dkw) == -1
+#endif
+	) {
 	    struct stat st;
 
 	    if (fstat(fd, &st) == -1) {
