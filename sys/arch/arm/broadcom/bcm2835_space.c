@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.3 2013/01/13 06:10:25 skrll Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.4 2013/01/23 16:51:14 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.3 2013/01/13 06:10:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.4 2013/01/23 16:51:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,8 +370,12 @@ bcm2835_bs_vaddr(void *t, bus_space_handle_t bsh)
 paddr_t
 bcm2835_bs_mmap(void *t, bus_addr_t paddr, off_t offset, int prot, int flags)
 {
+	paddr_t bus_flags = 0;
 
-	return (arm_btop((paddr + offset)));
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		bus_flags |= ARM32_MMAP_WRITECOMBINE;
+
+	return (arm_btop(paddr + offset) | bus_flags);
 }
 
 int
