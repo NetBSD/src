@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.58 2013/01/19 20:49:33 christos Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.59 2013/01/23 23:44:30 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.58 2013/01/19 20:49:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.59 2013/01/23 23:44:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,6 +178,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 		kmem_free(b, sizeof *b);
 		return USBD_NOMEM;
 	}
+	b->nsegs_alloc = b->nsegs;
 
 	error = bus_dmamem_alloc(tag, b->size, align, 0,
 				 b->segs, b->nsegs,
@@ -214,7 +215,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
  free1:
 	bus_dmamem_free(tag, b->segs, b->nsegs);
  free0:
-	kmem_free(b->segs, b->nsegs * sizeof(*b->segs));
+	kmem_free(b->segs, b->nsegs_alloc * sizeof(*b->segs));
 	kmem_free(b, sizeof *b);
 	return (USBD_NOMEM);
 }
@@ -233,7 +234,7 @@ usb_block_real_freemem(usb_dma_block_t *b)
 	bus_dmamap_destroy(b->tag, b->map);
 	bus_dmamem_unmap(b->tag, b->kaddr, b->size);
 	bus_dmamem_free(b->tag, b->segs, b->nsegs);
-	kmem_free(b->segs, b->nsegs * sizeof(*b->segs));
+	kmem_free(b->segs, b->nsegs_alloc * sizeof(*b->segs));
 	kmem_free(b, sizeof *b);
 }
 #endif
