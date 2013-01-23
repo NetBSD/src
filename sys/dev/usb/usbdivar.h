@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.101 2013/01/22 12:40:44 jmcneill Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.102 2013/01/23 06:53:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -264,7 +264,7 @@ struct usbd_xfer {
 #define UXFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
 	kcondvar_t		hccv; /* private use by the HC driver */
 
-        struct callout timeout_handle;
+	struct callout timeout_handle;
 };
 
 void usbd_init(void);
@@ -295,9 +295,9 @@ usbd_status	usbd_setup_pipe_flags(usbd_device_handle dev,
 				      usbd_pipe_handle *pipe,
 				      uint8_t flags);
 usbd_status	usbd_new_device(device_t, usbd_bus_handle, int, int, int,
-                                struct usbd_port *);
+				struct usbd_port *);
 usbd_status	usbd_reattach_device(device_t, usbd_device_handle,
-                                     int, const int *);
+				     int, const int *);
 
 void		usbd_remove_device(usbd_device_handle, struct usbd_port *);
 int		usbd_printBCD(char *, size_t, int);
