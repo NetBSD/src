@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_arm.S,v 1.2 2013/01/09 00:01:07 matt Exp $")
+RCSID("$NetBSD: strlen_arm.S,v 1.3 2013/01/23 06:59:55 matt Exp $")
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
@@ -43,16 +43,34 @@ RCSID("$NetBSD: strlen_arm.S,v 1.2 2013/01/09 00:01:07 matt Exp $")
 #define	BYTE3	0x000000ff
 #endif
 
+#ifdef STRNLEN
+#define	FUNCNAME	strnlen
+#else
+#define	FUNCNAME	strlen
+#endif
+
 	.text
-ENTRY(strlen)
+ENTRY(FUNCNAME)
+#ifdef STRNLEN
+	push	{r4,r5}			/* save some registers */
+	add	r5, r0, r1		/* get ptr to end of string */
+	mov	r4, r1			/* save maxlen */
+#endif
 	add	ip, r0, #4		/* for the final post-inc */
 1:	tst	r0, #3			/* test for word alignment */
 	beq	.Lpre_main_loop		/*   finally word aligned */
+#ifdef STRNLEN
+	cmp	r0, r5			/* have we gone too far? */
+	beq	.Lmaxed_out		/*   yes, return maxlen */
+#endif
 	ldrb	r3, [r0], #1		/* load a byte */
 	teq	r3, #0			/* is it 0? */
 	bne	1b			/*   no, try next byte */
 	sub	ip, ip, #3		/* subtract (4 - the NUL) */
 	sub	r0, r0, ip		/* subtract start */
+#ifdef STRNLEN
+	pop	{r4, r5}		/* restore registers */
+#endif
 	RET				/* return */
 .Lpre_main_loop:
 #if defined(_ARM_ARCH_7)
@@ -64,6 +82,10 @@ ENTRY(strlen)
 	orr	r1, r1, r1, lsl #16	/* move to next halfword */
 #endif /* _ARM_ARCH_6 */
 .Lmain_loop:
+#ifdef STRNLEN
+	cmp	r0, r5			/* gone too far? */
+	bge	.Lmaxed_out		/*   yes, return maxlen */
+#endif
 	ldr	r3, [r0], #4		/* load next word */
 #if defined(_ARM_ARCH_6)
 	/*
@@ -116,5 +138,17 @@ ENTRY(strlen)
 	 * the post-inc.
 	 */
 	sub	r0, r0, ip		/* subtract start to get length */
-	RET
-END(strlen)
+#ifdef STRNLEN
+	cmp	r0, r4			/* is it larger than maxlen? */
+	movgt	r0, r4			/*   yes, return maxlen */
+	pop	{r4, r5}		/* restore registers */
+#endif
+	RET				/* return */
+
+#ifdef STRNLEN
+.Lmaxed_out:
+	mov	r0, r4			/* return maxlen */
+	pop	{r4, r5}		/* restore registers */
+	RET				/* return */
+#endif
+END(FUNCNAME)
