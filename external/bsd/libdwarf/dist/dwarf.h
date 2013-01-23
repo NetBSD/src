@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf.h,v 1.1.1.1 2009/12/23 00:03:27 darran Exp $	*/
+/*	$NetBSD: dwarf.h,v 1.1.1.1.6.1 2013/01/23 00:04:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libdwarf/dwarf.h,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/lib/libdwarf/dwarf.h,v 1.3 2012/11/17 01:49:48 svnexp Exp $
  */
 
 #ifndef	_DWARF_H_
@@ -186,6 +186,7 @@
 #define DW_FORM_ref8			0x14
 #define DW_FORM_ref_udata		0x15
 #define DW_FORM_indirect		0x16
+#define DW_FORM_flag_present		0x19
 
 #define DW_OP_addr			0x03
 #define DW_OP_deref			0x06

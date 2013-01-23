@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.10 2011/07/17 20:54:33 joerg Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.10.2.1 2013/01/23 00:04:40 yamt Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -146,7 +146,7 @@ extern void vcmn_err(int, const char *, va_list); */
 	const TYPE __left = (TYPE)(LEFT); \
 	const TYPE __right = (TYPE)(RIGHT); \
 	if (!(__left OP __right)) { \
-		char *__buf = alloca(256); \
+		char __buf[256]; \
 		(void) snprintf(__buf, 256, "%s %s %s (0x%llx %s 0x%llx)", \
 			#LEFT, #OP, #RIGHT, \
 			(u_longlong_t)__left, #OP, (u_longlong_t)__right); \
@@ -212,11 +212,13 @@ typedef pthread_t kthread_t;
 	
 extern kthread_t *zk_thread_create(void (*func)(), void *arg);
 
-/* In NetBSD struct proc is visible in userspace therefore we use it's original
+/* In NetBSD struct proc may be visible in userspace therefore we use it's original
    definition. */
-/* struct proc {
+#if !defined(p_startzero)
+struct proc {
 	uintptr_t   this_is_never_used_dont_dereference_it;
-	}; */
+	};
+#endif
 
 extern struct proc p0;
 	

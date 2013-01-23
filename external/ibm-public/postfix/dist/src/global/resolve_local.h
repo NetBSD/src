@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_local.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: resolve_local.h,v 1.1.1.1.10.1 2013/01/23 00:05:03 yamt Exp $	*/
 
 #ifndef _RESOLVE_LOCAL_H_INCLUDED_
 #define _RESOLVE_LOCAL_H_INCLUDED_
@@ -12,6 +12,11 @@
 /*	#include <resolve_local.h>
 /* DESCRIPTION
 /* .nf
+
+ /*
+  * Utility library.
+  */
+#include <dict.h>
 
  /*
   * External interface.

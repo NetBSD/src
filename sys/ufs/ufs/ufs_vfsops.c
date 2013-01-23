@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.42.4.1 2012/04/17 00:08:57 yamt Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.42.4.2 2013/01/23 00:06:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.42.4.1 2012/04/17 00:08:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.42.4.2 2013/01/23 00:06:35 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -90,7 +90,7 @@ ufs_root(struct mount *mp, struct vnode **vpp)
 	struct vnode *nvp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)ROOTINO, &nvp)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)UFS_ROOTINO, &nvp)) != 0)
 		return (error);
 	*vpp = nvp;
 	return (0);

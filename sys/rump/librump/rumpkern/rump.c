@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.234.4.3 2012/10/30 17:22:53 yamt Exp $	*/
+/*	$NetBSD: rump.c,v 1.234.4.4 2013/01/23 00:06:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.234.4.3 2012/10/30 17:22:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.234.4.4 2013/01/23 00:06:28 yamt Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -126,30 +126,14 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 
 static int rump_inited;
 
-/*
- * Make sure pnbuf_cache is available even without vfs
- */
-int rump_initpnbufpool(void);
-int rump_initpnbufpool(void)
-{
-
-        pnbuf_cache = pool_cache_init(MAXPATHLEN, 0, 0, 0, "pnbufpl",
-	    NULL, IPL_NONE, NULL, NULL, NULL);
-	return EOPNOTSUPP;
-}
+void (*rump_vfs_drainbufs)(int);
+void (*rump_vfs_fini)(void);
 
 int rump__unavailable(void);
 int rump__unavailable() {return EOPNOTSUPP;}
-__weak_alias(rump_net_init,rump__unavailable);
-__weak_alias(rump_vfs_init,rump_initpnbufpool);
-__weak_alias(rump_dev_init,rump__unavailable);
-
-__weak_alias(rump_vfs_fini,rump__unavailable);
 
 __weak_alias(biodone,rump__unavailable);
 __weak_alias(sopoll,rump__unavailable);
-
-__weak_alias(rump_vfs_drainbufs,rump__unavailable);
 
 void rump__unavailable_vfs_panic(void);
 void rump__unavailable_vfs_panic() {panic("vfs component not available");}
@@ -405,10 +389,18 @@ rump__init(int rump_version)
 
 	rump_component_init(RUMP_COMPONENT_KERN);
 
-	/* these do nothing if not present */
-	rump_vfs_init();
-	rump_net_init();
-	rump_dev_init();
+	/* initialize factions, if present */
+	rump_component_init(RUMP__FACTION_VFS);
+	/* pnbuf_cache is used even without vfs */
+	if (rump_component_count(RUMP__FACTION_VFS) == 0) {
+		pnbuf_cache = pool_cache_init(MAXPATHLEN, 0, 0, 0, "pnbufpl",
+		    NULL, IPL_NONE, NULL, NULL, NULL);
+	}
+	rump_component_init(RUMP__FACTION_NET);
+	rump_component_init(RUMP__FACTION_DEV);
+	KASSERT(rump_component_count(RUMP__FACTION_VFS) <= 1
+	    && rump_component_count(RUMP__FACTION_NET) <= 1
+	    && rump_component_count(RUMP__FACTION_DEV) <= 1);
 
 	rump_component_init(RUMP_COMPONENT_KERN_VFS);
 
@@ -510,6 +502,8 @@ rump__init(int rump_version)
 		}
 	}
 
+	rump_component_init(RUMP_COMPONENT_POSTINIT);
+
 	/* release cpu */
 	rump_unschedule();
 
@@ -544,7 +538,8 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* try to sync */
 	if (!((howto & RB_NOSYNC) || panicstr)) {
-		rump_vfs_fini();
+		if (rump_vfs_fini)
+			rump_vfs_fini();
 	}
 
 	/* your wish is my command */
@@ -653,12 +648,14 @@ rump_cred_put(kauth_cred_t cred)
 }
 
 static int compcounter[RUMP_COMPONENT_MAX];
+static int compinited[RUMP_COMPONENT_MAX];
 
 static void
 rump_component_init_cb(struct rump_component *rc, int type)
 {
 
 	KASSERT(type < RUMP_COMPONENT_MAX);
+
 	if (rc->rc_type == type) {
 		rc->rc_init();
 		compcounter[type]++;
@@ -670,6 +667,7 @@ rump_component_count(enum rump_component_type type)
 {
 
 	KASSERT(type <= RUMP_COMPONENT_MAX);
+	KASSERT(compinited[type]);
 	return compcounter[type];
 }
 
@@ -677,7 +675,9 @@ void
 rump_component_init(enum rump_component_type type)
 {
 
+	KASSERT(!compinited[type]);
 	rumpuser_dl_component_init(type, rump_component_init_cb);
+	compinited[type] = 1;
 }
 
 /*

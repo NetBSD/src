@@ -1,4 +1,4 @@
-/*	$NetBSD: data_redirect.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: data_redirect.c,v 1.1.1.1.10.1 2013/01/23 00:05:01 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -74,6 +74,7 @@
 #include <dict_db.h>
 #include <dict_dbm.h>
 #include <dict_cdb.h>
+#include <warn_stat.h>
 
 /* Global directory. */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/04/03 18:50:43 christos Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2013/01/23 00:04:40 yamt Exp $
 
 # $FreeBSD: src/cddl/usr.bin/ctfdump/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -27,7 +27,5 @@ LDADD+=		-lelf -lz
 
 .PATH:		${.CURDIR}/../../dist/tools/ctf/common
 .PATH:		${.CURDIR}/../../dist/tools/ctf/dump
-
-MKMAN=		no
 
 .include <bsd.prog.mk>

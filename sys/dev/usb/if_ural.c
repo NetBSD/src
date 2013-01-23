@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.37.4.1 2012/10/30 17:22:05 yamt Exp $ */
+/*	$NetBSD: if_ural.c,v 1.37.4.2 2013/01/23 00:06:12 yamt Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,8 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.37.4.1 2012/10/30 17:22:05 yamt Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.37.4.2 2013/01/23 00:06:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -67,10 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.37.4.1 2012/10/30 17:22:05 yamt Exp $"
 
 #include <dev/usb/if_uralreg.h>
 #include <dev/usb/if_uralvar.h>
-
-#ifdef USB_DEBUG
-#define URAL_DEBUG
-#endif
 
 #ifdef URAL_DEBUG
 #define DPRINTF(x)	do { if (ural_debug) printf x; } while (0)
@@ -356,7 +351,7 @@ int             ural_activate(device_t, enum devact);
 extern struct cfdriver ural_cd;
 CFATTACH_DECL_NEW(ural, sizeof(struct ural_softc), ural_match, ural_attach, ural_detach, ural_activate);
 
-int 
+int
 ural_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -365,7 +360,7 @@ ural_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void 
+void
 ural_attach(device_t parent, device_t self, void *aux)
 {
 	struct ural_softc *sc = device_private(self);
@@ -388,8 +383,10 @@ ural_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	if (usbd_set_config_no(sc->sc_udev, RAL_CONFIG_NO, 0) != 0) {
-		aprint_error_dev(self, "could not set configuration no\n");
+	error = usbd_set_config_no(sc->sc_udev, RAL_CONFIG_NO, 0);
+	if (error != 0) {
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		return;
 	}
 
@@ -427,7 +424,7 @@ ural_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	usb_init_task(&sc->sc_task, ural_task, sc);
+	usb_init_task(&sc->sc_task, ural_task, sc, 0);
 	callout_init(&sc->sc_scan_ch, 0);
 	sc->amrr.amrr_min_success_threshold = 1;
 	sc->amrr.amrr_max_success_threshold = 15;
@@ -530,7 +527,7 @@ ural_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 ural_detach(device_t self, int flags)
 {
 	struct ural_softc *sc = device_private(self);

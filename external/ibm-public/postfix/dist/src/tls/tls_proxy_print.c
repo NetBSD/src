@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_print.c,v 1.1.1.1 2011/03/02 19:32:27 tron Exp $	*/
+/*	$NetBSD: tls_proxy_print.c,v 1.1.1.1.6.1 2013/01/23 00:05:14 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -55,7 +55,7 @@
 /* tls_proxy_context_print - send TLS session state over stream */
 
 int     tls_proxy_context_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
-			              int flags, void *ptr)
+				        int flags, void *ptr)
 {
     TLS_SESS_STATE *tp = (TLS_SESS_STATE *) ptr;
     int     ret;
@@ -69,6 +69,8 @@ int     tls_proxy_context_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
 		   STRING_OR_EMPTY(tp->issuer_CN),
 		   ATTR_TYPE_STR, MAIL_ATTR_PEER_FPT,
 		   STRING_OR_EMPTY(tp->peer_fingerprint),
+		   ATTR_TYPE_STR, MAIL_ATTR_PEER_PKEY_FPT,
+		   STRING_OR_EMPTY(tp->peer_pkey_fprint),
 		   ATTR_TYPE_INT, MAIL_ATTR_PEER_STATUS,
 		   tp->peer_status,
 		   ATTR_TYPE_STR, MAIL_ATTR_CIPHER_PROTOCOL,

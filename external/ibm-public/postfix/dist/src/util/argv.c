@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.c,v 1.1.1.1 2009/06/23 10:08:58 tron Exp $	*/
+/*	$NetBSD: argv.c,v 1.1.1.1.10.1 2013/01/23 00:05:15 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -29,6 +29,21 @@
 /*	void	argv_truncate(argvp, len);
 /*	ARGV	*argvp;
 /*	ssize_t	len;
+/*
+/*	void	argv_insert_one(argvp, pos, arg)
+/*	ARGV	*argvp;
+/*	ssize_t	pos;
+/*	const char *arg;
+/*
+/*	void	argv_replace_one(argvp, pos, arg)
+/*	ARGV	*argvp;
+/*	ssize_t	pos;
+/*	const char *arg;
+/*
+/*	void	ARGV_FAKE_BEGIN(argv, arg)
+/*	const char *arg;
+/*
+/*	void	ARGV_FAKE_END
 /* DESCRIPTION
 /*	The functions in this module manipulate arrays of string
 /*	pointers. An ARGV structure contains the following members:
@@ -59,6 +74,21 @@
 /*	argv_truncate() trucates its argument to the specified
 /*	number of entries, but does not reallocate memory. The
 /*	result is null-terminated.
+/*
+/*	argv_insert_one() inserts one string at the specified array
+/*	position.
+/*
+/*	argv_replace_one() replaces one string at the specified
+/*	position.
+/*
+/*	ARGV_FAKE_BEGIN/END are an optimization for the case where
+/*	a single string needs to be passed into an ARGV-based
+/*	interface.  ARGV_FAKE_BEGIN() opens a statement block and
+/*	allocates a stack-based ARGV structure named after the first
+/*	argument, that encapsulates the second argument.  This
+/*	implementation allocates no heap memory and creates no copy
+/*	of the second argument.  ARGV_FAKE_END closes the statement
+/*	block and thereby releases storage.
 /* SEE ALSO
 /*	msg(3) diagnostics interface
 /* DIAGNOSTICS
@@ -206,4 +236,39 @@ void    argv_truncate(ARGV *argvp, ssize_t len)
 	argvp->argc = len;
 	argvp->argv[argvp->argc] = 0;
     }
+}
+
+/* argv_insert_one - insert one string into array */
+
+void    argv_insert_one(ARGV *argvp, ssize_t where, const char *arg)
+{
+    ssize_t pos;
+
+    /*
+     * Sanity check.
+     */
+    if (where < 0 || where > argvp->argc)
+	msg_panic("argv_insert_one bad position: %ld", (long) where);
+
+    if (ARGV_SPACE_LEFT(argvp) <= 0)
+	argv_extend(argvp);
+    for (pos = argvp->argc; pos >= where; pos--)
+	argvp->argv[pos + 1] = argvp->argv[pos];
+    argvp->argv[where] = mystrdup(arg);
+    argvp->argc += 1;
+}
+
+/* argv_replace_one - insert one string into array */
+
+void    argv_replace_one(ARGV *argvp, ssize_t where, const char *arg)
+{
+
+    /*
+     * Sanity check.
+     */
+    if (where < 0 || where >= argvp->argc)
+	msg_panic("argv_replace_one bad position: %ld", (long) where);
+
+    myfree(argvp->argv[where]);
+    argvp->argv[where] = mystrdup(arg);
 }

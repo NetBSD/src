@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.14.4.1 2012/04/17 00:05:40 yamt Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.14.4.2 2013/01/23 00:05:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.14.4.1 2012/04/17 00:05:40 yamt Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.14.4.2 2013/01/23 00:05:31 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -80,8 +80,8 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 	if ((s = getsock(af)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	if ((ifname = getifinfo(env, oenv, &flags)) == NULL)
-		err(EXIT_FAILURE, "%s: getifinfo", __func__);
+	if ((ifname = getifname(env)) == NULL)
+		err(EXIT_FAILURE, "%s: getifname", __func__);
 
 	strlcpy(param->name[0].buf, ifname, param->name[0].buflen);
 	strlcpy(param->name[1].buf, ifname, param->name[1].buflen);
@@ -126,6 +126,9 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 	/* TBD: read matching ifaddr from kernel, use the netmask as default
 	 * TBD: handle preference
 	 */
+	if (getifflags(env, oenv, &flags) == -1)
+		err(EXIT_FAILURE, "%s: getifflags", __func__);
+
 	switch (flags & (IFF_BROADCAST|IFF_POINTOPOINT)) {
 	case IFF_BROADCAST:
 		if (brd != NULL)

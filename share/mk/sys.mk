@@ -1,5 +1,9 @@
-#	$NetBSD: sys.mk,v 1.107.2.2 2012/10/30 18:59:47 yamt Exp $
+#	$NetBSD: sys.mk,v 1.107.2.3 2013/01/23 00:05:36 yamt Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
+#
+# This file contains the basic rules for make(1) and is read first
+# Do not put conditionals that are set on different files here and
+# expect them to work.
 
 unix?=		We run NetBSD.
 
@@ -37,20 +41,12 @@ COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 # C Type Format data is required for DTrace
-# XXX TBD VERSION is not defined
 CTFFLAGS	?=	-L VERSION
 CTFMFLAGS	?=	-t -L VERSION
 
-.if defined(MKDTRACE) && ${MKDTRACE} != "no"
-CTFCONVERT	?=	${TOOL_CTFCONVERT}
-CTFMERGE	?=	${TOOL_CTFMERGE}
-.if defined(CFLAGS) && (${CFLAGS:M-g} != "")
-CTFFLAGS	+=	-g
-CTFMFLAGS	+=	-g
-.else
-CFLAGS		+=	-g
-.endif
-.endif
+# We don't define these here, we let the bsd.own.mk to do it
+#CTFCONVERT	?=	ctfconvert
+#CTFMERGE	?=	ctfmerge
 
 CXX?=		c++
 CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu99:N-Wold-style-definition:N-Wno-format-zero-length}

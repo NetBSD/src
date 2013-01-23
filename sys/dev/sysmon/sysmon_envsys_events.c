@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.98.2.2 2013/01/16 05:33:33 yamt Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.98.2.3 2013/01/23 00:06:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.98.2.2 2013/01/16 05:33:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.98.2.3 2013/01/23 00:06:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -65,7 +65,7 @@ static const struct sme_sensor_event sme_sensor_event[] = {
 	{ -1, 					-1 }
 };
 
-struct op_t {
+static const struct op_t {
 	const char *name;
 	enum envsys_lims idx;
 	uint32_t prop;
@@ -84,7 +84,7 @@ struct op_t {
 	{ NULL, 0, 0 }
 };
 
-struct ev_reg_t {
+static const struct ev_reg_t {
 	uint32_t crittype;
 	uint32_t powertype;
 	const char *name;
@@ -122,7 +122,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	prop_object_t obj;
 	int error = 0;
 	const char *objkey;
-	struct op_t *op;
+	const struct op_t *op;
 
 	KASSERT(sdict != NULL);
 	KASSERT(edata != NULL);
@@ -495,7 +495,7 @@ sme_event_drvadd(void *arg)
 	sysmon_envsys_lim_t lims;
 	uint32_t props;
 	int error = 0;
-	struct ev_reg_t *reg;
+	const struct ev_reg_t *reg;
 
 	KASSERT(sed_t != NULL);
 

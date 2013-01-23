@@ -1,4 +1,4 @@
-/*	$NetBSD: pass3.c,v 1.20 2011/03/06 17:08:16 bouyer Exp $	*/
+/*	$NetBSD: pass3.c,v 1.20.4.1 2013/01/23 00:05:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass3.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: pass3.c,v 1.20 2011/03/06 17:08:16 bouyer Exp $");
+__RCSID("$NetBSD: pass3.c,v 1.20.4.1 2013/01/23 00:05:30 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ pass3(void)
 #endif /* PROGRESS */
 		inp = *inpp;
 		state = inoinfo(inp->i_number)->ino_state;
-		if (inp->i_number == ROOTINO ||
+		if (inp->i_number == UFS_ROOTINO ||
 		    (inp->i_parent != 0 && state != DSTATE))
 			continue;
 		if (state == DCLEAR)
@@ -89,7 +89,7 @@ pass3(void)
 		 */
 		if (preen &&
 		    resolved && usedsoftdep && state == DSTATE) {
-			if (inp->i_dotdot >= ROOTINO)
+			if (inp->i_dotdot >= UFS_ROOTINO)
 				inoinfo(inp->i_dotdot)->ino_linkcnt++;
 			continue;
 		}

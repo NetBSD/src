@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.29 2008/01/13 13:01:12 degroote Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.29.44.1 2013/01/23 00:06:26 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.29 2008/01/13 13:01:12 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.29.44.1 2013/01/23 00:06:26 yamt Exp $");
 #endif
 
 /*
@@ -356,16 +356,16 @@ ieee80211_fix_rate(struct ieee80211_node *ni, int flags)
 	 * If the fixed rate check was requested but no
 	 * fixed has been defined then just remove it.
 	 */
-	if ((flags & IEEE80211_F_DOFRATE) &&
+	if ((flags & IEEE80211_R_DOFRATE) &&
 	    ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE)
-		flags &= ~IEEE80211_F_DOFRATE;
+		flags &= ~IEEE80211_R_DOFRATE;
 	error = 0;
 	okrate = badrate = fixedrate = 0;
 	srs = &ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
 	nrs = &ni->ni_rates;
 	for (i = 0; i < nrs->rs_nrates; ) {
 		ignore = 0;
-		if (flags & IEEE80211_F_DOSORT) {
+		if (flags & IEEE80211_R_DOSORT) {
 			/*
 			 * Sort rates.
 			 */
@@ -379,14 +379,14 @@ ieee80211_fix_rate(struct ieee80211_node *ni, int flags)
 		}
 		r = nrs->rs_rates[i] & IEEE80211_RATE_VAL;
 		badrate = r;
-		if (flags & IEEE80211_F_DOFRATE) {
+		if (flags & IEEE80211_R_DOFRATE) {
 			/*
 			 * Check any fixed rate is included. 
 			 */
 			if (r == RV(srs->rs_rates[ic->ic_fixed_rate]))
 				fixedrate = r;
 		}
-		if (flags & IEEE80211_F_DONEGO) {
+		if (flags & IEEE80211_R_DONEGO) {
 			/*
 			 * Check against supported rates.
 			 */
@@ -420,7 +420,7 @@ ieee80211_fix_rate(struct ieee80211_node *ni, int flags)
 				ignore++;
 			}
 		}
-		if (flags & IEEE80211_F_DODEL) {
+		if (flags & IEEE80211_R_DODEL) {
 			/*
 			 * Delete unacceptable rates.
 			 */
@@ -439,7 +439,7 @@ ieee80211_fix_rate(struct ieee80211_node *ni, int flags)
 		i++;
 	}
 	if (okrate == 0 || error != 0 ||
-	    ((flags & IEEE80211_F_DOFRATE) && fixedrate == 0))
+	    ((flags & IEEE80211_R_DOFRATE) && fixedrate == 0))
 		return badrate | IEEE80211_RATE_BASIC;
 	else
 		return RV(okrate);

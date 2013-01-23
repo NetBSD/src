@@ -1,4 +1,4 @@
-/*	$NetBSD: recipient.c,v 1.1.1.3 2011/03/02 19:32:20 tron Exp $	*/
+/*	$NetBSD: recipient.c,v 1.1.1.3.4.1 2013/01/23 00:05:04 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -65,6 +65,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 #ifdef STRCASECMP_IN_STRINGS_H
 #include <strings.h>
@@ -181,13 +182,24 @@ static int deliver_switch(LOCAL_STATE state, USER_ATTR usr_attr)
      * $HOME/.forward file, then mailbox delivery. Back off when the user's
      * home directory does not exist.
      */
+    mypwd = 0;
     if (var_stat_home_dir
-	&& (mypwd = mypwnam(state.msg_attr.user)) != 0
-	&& stat_as(mypwd->pw_dir, &st, mypwd->pw_uid, mypwd->pw_gid) < 0) {
-	dsb_simple(state.msg_attr.why, "4.3.0",
-		   "cannot access home directory %s: %m", mypwd->pw_dir);
+	&& (errno = mypwnam_err(state.msg_attr.user, &mypwd)) != 0) {
+	msg_warn("error looking up passwd info for %s: %m",
+		 state.msg_attr.user);
+	dsb_simple(state.msg_attr.why, "4.0.0", "user lookup error");
 	return (defer_append(BOUNCE_FLAGS(state.request),
 			     BOUNCE_ATTR(state.msg_attr)));
+    }
+    if (mypwd != 0) {
+	if (stat_as(mypwd->pw_dir, &st, mypwd->pw_uid, mypwd->pw_gid) < 0) {
+	    dsb_simple(state.msg_attr.why, "4.3.0",
+		       "cannot access home directory %s: %m", mypwd->pw_dir);
+	    mypwfree(mypwd);
+	    return (defer_append(BOUNCE_FLAGS(state.request),
+				 BOUNCE_ATTR(state.msg_attr)));
+	}
+	mypwfree(mypwd);
     }
     if (deliver_dotforward(state, usr_attr, &status) == 0
 	&& deliver_mailbox(state, usr_attr, &status) == 0)

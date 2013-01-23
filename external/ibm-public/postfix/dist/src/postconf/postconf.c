@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.1.1.4 2011/05/11 09:11:06 tron Exp $	*/
+/*	$NetBSD: postconf.c,v 1.1.1.4.4.1 2013/01/23 00:05:06 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -7,10 +7,10 @@
 /*	Postfix configuration utility
 /* SYNOPSIS
 /* .fi
-/*	\fBpostconf\fR [\fB-dhnv\fR] [\fB-c \fIconfig_dir\fR]
-/*	[\fIparameter ...\fR]
+/*	\fBManaging main.cf:\fR
 /*
-/*	\fBpostconf\fR [\fB-aAmlv\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostconf\fR [\fB-dfhnv\fR] [\fB-c \fIconfig_dir\fR]
+/*	[\fB-C \fIclass,...\fR] [\fIparameter ...\fR]
 /*
 /*	\fBpostconf\fR [\fB-ev\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fIparameter=value ...\fR]
@@ -18,12 +18,25 @@
 /*	\fBpostconf\fR [\fB-#v\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fIparameter ...\fR]
 /*
+/*	\fBManaging master.cf:\fR
+/*
+/*	\fBpostconf\fR [\fB-fMv\fR] [\fB-c \fIconfig_dir\fR]
+/*	[\fIservice ...\fR]
+/*
+/*	\fBManaging bounce message templates:\fR
+/*
 /*	\fBpostconf\fR [\fB-btv\fR] [\fB-c \fIconfig_dir\fR] [\fItemplate_file\fR]
+/*
+/*	\fBManaging other configuration:\fR
+/*
+/*	\fBpostconf\fR [\fB-aAlmv\fR] [\fB-c \fIconfig_dir\fR]
 /* DESCRIPTION
-/*	The \fBpostconf\fR(1) command displays the actual values
-/*	of configuration parameters, changes configuration parameter
-/*	values, or displays other configuration information about
-/*	the Postfix mail system.
+/*	By default, the \fBpostconf\fR(1) command displays the
+/*	values of \fBmain.cf\fR configuration parameters, and warns
+/*	about possible mis-typed parameter names (Postfix 2.9 and later).
+/*	It can also change \fBmain.cf\fR configuration
+/*	parameter values, or display other configuration information
+/*	about the Postfix mail system.
 /*
 /*	Options:
 /* .IP \fB-a\fR
@@ -56,31 +69,63 @@
 /*	This feature is available with Postfix 2.3 and later.
 /* .IP "\fB-b\fR [\fItemplate_file\fR]"
 /*	Display the message text that appears at the beginning of
-/*	delivery status notification (DSN) messages, with $\fBname\fR
-/*	expressions replaced by actual values.  To override the
-/*	built-in message text, specify a template file at the end
-/*	of the command line, or specify a template file in main.cf
-/*	with the \fBbounce_template_file\fR parameter.
-/*	To force selection of the built-in message text templates,
-/*	specify an empty template file name (in shell language: "").
+/*	delivery status notification (DSN) messages, replacing
+/*	$\fBname\fR expressions with actual values as described in
+/*	\fBbounce\fR(5).
+/*
+/*	To override the built-in templates, specify a template file
+/*	name at the end of the \fBpostconf\fR(1) command line, or
+/*	specify a file name in \fBmain.cf\fR with the
+/*	\fBbounce_template_file\fR parameter.
+/*
+/*	To force selection of the built-in templates, specify an
+/*	empty template file name on the \fBpostconf\fR(1) command
+/*	line (in shell language: "").
 /*
 /*	This feature is available with Postfix 2.3 and later.
 /* .IP "\fB-c \fIconfig_dir\fR"
 /*	The \fBmain.cf\fR configuration file is in the named directory
 /*	instead of the default configuration directory.
+/* .IP "\fB-C \fIclass,...\fR"
+/*	When displaying \fBmain.cf\fR parameters, select only
+/*	parameters from the specified class(es):
+/* .RS
+/* .IP \fBbuiltin\fR
+/*	Parameters with built-in names.
+/* .IP \fBservice\fR
+/*	Parameters with service-defined names (the first field of
+/*	a \fBmaster.cf\fR entry plus a Postfix-defined suffix).
+/* .IP \fBuser\fR
+/*	Parameters with user-defined names.
+/* .IP \fBall\fR
+/*	All the above classes.
+/* .RE
+/* .IP
+/*	The default is as if "\fB-C all\fR" is
+/*	specified.
 /* .IP \fB-d\fR
-/*	Print default parameter settings instead of actual settings.
+/*	Print \fBmain.cf\fR default parameter settings instead of
+/*	actual settings.
+/*	Specify \fB-df\fR to fold long lines for human readability
+/*	(Postfix 2.9 and later).
 /* .IP \fB-e\fR
-/*	Edit the \fBmain.cf\fR configuration file. The file is copied
-/*	to a temporary file then renamed into place. Parameters and
-/*	values are specified on the command line. Use quotes in order
-/*	to protect shell metacharacters and whitespace.
+/*	Edit the \fBmain.cf\fR configuration file, and update
+/*	parameter settings with the "\fIname\fR=\fIvalue\fR" pairs
+/*	on the \fBpostconf\fR(1) command line. The file is copied
+/*	to a temporary file then renamed into place.
+/*	Specify quotes to protect special characters and whitespace
+/*	on the \fBpostconf\fR(1) command line.
 /*
-/*	With Postfix version 2.8 and later, the \fB-e\fR is no
-/*	longer needed.
+/*	The \fB-e\fR is no longer needed with Postfix version 2.8
+/*	and later.
+/* .IP \fB-f\fR
+/*	Fold long lines when printing \fBmain.cf\fR or \fBmaster.cf\fR
+/*	configuration file entries, for human readability.
+/*
+/*	This feature is available with Postfix 2.9 and later.
 /* .IP \fB-h\fR
-/*	Show parameter values only, not the "\fIname = \fR" label
-/*	that normally precedes the value.
+/*	Show \fBmain.cf\fR parameter values without the "\fIname\fR
+/*	= " label that normally precedes the value.
 /* .IP \fB-l\fR
 /*	List the names of all supported mailbox locking methods.
 /*	Postfix supports the following methods:
@@ -122,6 +167,10 @@
 /*	The UNIX process environment array. The lookup key is the variable
 /*	name. Originally implemented for testing, someone may find this
 /*	useful someday.
+/* .IP \fBfail\fR
+/*	A table that reliably fails all requests. The lookup table
+/*	name is used for logging. This table exists to simplify
+/*	Postfix error tests.
 /* .IP \fBhash\fR
 /*	An indexed file type based on hashing.
 /*	This is available on systems with support for Berkeley DB
@@ -132,6 +181,9 @@
 /* .IP "\fBldap\fR (read-only)"
 /*	Perform lookups using the LDAP protocol. This is described
 /*	in \fBldap_table\fR(5).
+/* .IP "\fBmemcache\fR"
+/*	Perform lookups using the memcache protocol. This is described
+/*	in \fBmemcache_table\fR(5).
 /* .IP "\fBmysql\fR (read-only)"
 /*	Perform lookups using the MYSQL protocol. This is described
 /*	in \fBmysql_table\fR(5).
@@ -141,7 +193,7 @@
 /* .IP "\fBpgsql\fR (read-only)"
 /*	Perform lookups using the PostgreSQL protocol. This is described
 /*	in \fBpgsql_table\fR(5).
-/* .IP "\fBproxy\fR (read-only)"
+/* .IP "\fBproxy\fR"
 /*	A lookup table that is implemented via the Postfix
 /*	\fBproxymap\fR(8) service. The table name syntax is
 /*	\fItype\fB:\fIname\fR.
@@ -163,7 +215,7 @@
 /*	described in \fBtcp_table\fR(5).
 /* .IP "\fBtexthash\fR (read-only)"
 /*	Produces similar results as hash: files, except that you don't
-/*	need to run the postmap(1) command before you can use the file,
+/*	need to run the \fBpostmap\fR(1) command before you can use the file,
 /*	and that it does not detect changes after the file is read.
 /* .IP "\fBunix\fR (read-only)"
 /*	A limited way to query the UNIX authentication database. The
@@ -179,29 +231,53 @@
 /* .RE
 /* .IP
 /*	Other table types may exist depending on how Postfix was built.
+/* .IP \fB-M\fR
+/*	Show \fBmaster.cf\fR file contents instead of \fBmain.cf\fR
+/*	file contents.
+/*	Specify \fB-Mf\fR to fold long lines for human readability.
+/*
+/*	If \fIservice ...\fR is specified, only the matching services
+/*	will be output. For example, "\fBpostconf -Mf inet\fR"
+/*	will output all services that listen on the network.
+/*
+/*	Specify zero or more arguments, each with a \fIservice-type\fR
+/*	name (\fBinet\fR, \fBunix\fR, \fBfifo\fR, or \fBpass\fR)
+/*	or with a \fIservice-name.service-type\fR pair, where
+/*	\fIservice-name\fR is the first field of a master.cf entry.
+/*
+/*	This feature is available with Postfix 2.9 and later.
 /* .IP \fB-n\fR
-/*	Print parameter settings that are not left at their built-in
-/*	default value, because they are explicitly specified in main.cf.
+/*	Print \fBmain.cf\fR parameter settings that are explicitly
+/*	specified in \fBmain.cf\fR.
+/*	Specify \fB-nf\fR to fold long lines for human readability
+/*	(Postfix 2.9 and later).
 /* .IP "\fB-t\fR [\fItemplate_file\fR]"
-/*	Display the templates for delivery status notification (DSN)
-/*	messages. To override the built-in templates, specify a
-/*	template file at the end of the command line, or specify a
-/*	template file in main.cf with the \fBbounce_template_file\fR
-/*	parameter.  To force selection of the built-in templates,
-/*	specify an empty template file name (in shell language:
-/*	"").
+/*	Display the templates for text that appears at the beginning
+/*	of delivery status notification (DSN) messages, without
+/*	expanding $\fBname\fR expressions.
+/*
+/*	To override the built-in templates, specify a template file
+/*	name at the end of the \fBpostconf\fR(1) command line, or
+/*	specify a file name in \fBmain.cf\fR with the
+/*	\fBbounce_template_file\fR parameter.
+/*
+/*	To force selection of the built-in templates, specify an
+/*	empty template file name on the \fBpostconf\fR(1) command
+/*	line (in shell language: "").
 /*
 /*	This feature is available with Postfix 2.3 and later.
 /* .IP \fB-v\fR
 /*	Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 /*	options make the software increasingly verbose.
 /* .IP \fB-#\fR
-/*	Edit the \fBmain.cf\fR configuration file. The file is copied
-/*	to a temporary file then renamed into place. The parameters
-/*	specified on the command line are commented-out, so that they
-/*	revert to their default values. Specify a list of parameter
-/*	names, not name=value pairs.  There is no \fBpostconf\fR command
-/*	to perform the reverse operation.
+/*	Edit the \fBmain.cf\fR configuration file, and comment out
+/*	the parameters given on the \fBpostconf\fR(1) command line,
+/*	so that those parameters revert to their default values.
+/*	The file is copied to a temporary file then renamed into
+/*	place.
+/*	Specify a list of parameter names, not \fIname\fR=\fIvalue\fR
+/*	pairs.  There is no \fBpostconf\fR(1) command to perform
+/*	the reverse operation.
 /*
 /*	This feature is available with Postfix 2.6 and later.
 /* DIAGNOSTICS
@@ -226,9 +302,11 @@
 /*	Pathname of a configuration file with bounce message templates.
 /* FILES
 /*	/etc/postfix/main.cf, Postfix configuration parameters
+/*	/etc/postfix/master.cf, Postfix master daemon configuraton
 /* SEE ALSO
 /*	bounce(5), bounce template file format
-/*	postconf(5), configuration parameters
+/*	master(5), master.cf configuration file syntax
+/*	postconf(5), main.cf configuration file syntax
 /* README FILES
 /* .ad
 /* .fi
@@ -252,836 +330,42 @@
 
 #include <sys_defs.h>
 #include <sys/stat.h>
-#include <stdio.h>			/* rename() */
-#include <pwd.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <ctype.h>
-
-#ifdef USE_PATHS_H
-#include <paths.h>
-#endif
 
 /* Utility library. */
 
 #include <msg.h>
-#include <vstream.h>
 #include <msg_vstream.h>
-#include <get_hostname.h>
-#include <stringops.h>
-#include <htable.h>
 #include <dict.h>
-#include <safe.h>
-#include <mymalloc.h>
-#include <argv.h>
-#include <split_at.h>
-#include <vstring_vstream.h>
-#include <myflock.h>
-#include <inet_proto.h>
-#include <argv.h>
-#include <edit_file.h>
+#include <htable.h>
+#include <vstring.h>
+#include <vstream.h>
+#include <stringops.h>
+#include <name_mask.h>
+#include <warn_stat.h>
 
 /* Global library. */
 
-#include <mynetworks.h>
-#include <mail_conf.h>
-#include <mail_dict.h>
-#include <mail_proto.h>
-#include <mail_version.h>
 #include <mail_params.h>
-#include <mail_addr.h>
-#include <mbox_conf.h>
+#include <mail_conf.h>
+#include <mail_version.h>
 #include <mail_run.h>
+#include <mail_dict.h>
 
-/* XSASL library. */
+/* Application-specific. */
 
-#include <xsasl.h>
-
- /*
-  * What we're supposed to be doing.
-  */
-#define SHOW_NONDEF	(1<<0)		/* show non-default settings */
-#define SHOW_DEFS	(1<<1)		/* show default setting */
-#define SHOW_NAME	(1<<2)		/* show parameter name */
-#define SHOW_MAPS	(1<<3)		/* show map types */
-#define EDIT_MAIN	(1<<4)		/* edit main.cf */
-#define SHOW_LOCKS	(1<<5)		/* show mailbox lock methods */
-#define SHOW_EVAL	(1<<6)		/* expand right-hand sides */
-#define SHOW_SASL_SERV	(1<<7)		/* show server auth plugin types */
-#define SHOW_SASL_CLNT	(1<<8)		/* show client auth plugin types */
-#define COMMENT_OUT	(1<<9)		/* #-out selected main.cf entries */
+#include <postconf.h>
 
  /*
-  * Lookup table for in-core parameter info.
+  * Global storage. See postconf.h for description.
   */
-HTABLE *param_table;
+PC_PARAM_TABLE *param_table;
+PC_MASTER_ENT *master_table;
+int     cmd_mode = DEF_MODE;
 
  /*
-  * Lookup table for external parameter info.
+  * Application fingerprinting.
   */
-DICT   *text_table;
-
- /*
-  * Declarations generated by scanning actual C source files.
-  */
-#include "time_vars.h"
-#include "bool_vars.h"
-#include "int_vars.h"
-#include "str_vars.h"
-#include "raw_vars.h"
-#include "nint_vars.h"
-#include "nbool_vars.h"
-
- /*
-  * Manually extracted.
-  */
-#include "auto_vars.h"
-#include "install_vars.h"
-
- /*
-  * Lookup tables generated by scanning actual C source files.
-  */
-static const CONFIG_TIME_TABLE time_table[] = {
-#include "time_table.h"
-    0,
-};
-
-static const CONFIG_BOOL_TABLE bool_table[] = {
-#include "bool_table.h"
-    0,
-};
-
-static const CONFIG_INT_TABLE int_table[] = {
-#include "int_table.h"
-    0,
-};
-
-static const CONFIG_STR_TABLE str_table[] = {
-#include "str_table.h"
-#include "auto_table.h"			/* XXX */
-#include "install_table.h"
-    0,
-};
-
-static const CONFIG_RAW_TABLE raw_table[] = {
-#include "raw_table.h"
-    0,
-};
-
-static const CONFIG_NINT_TABLE nint_table[] = {
-#include "nint_table.h"
-    0,
-};
-
-static const CONFIG_NBOOL_TABLE nbool_table[] = {
-#include "nbool_table.h"
-    0,
-};
-
- /*
-  * Parameters with default values obtained via function calls.
-  */
-char   *var_myhostname;
-char   *var_mydomain;
-char   *var_mynetworks;
-
-static const char *check_myhostname(void);
-static const char *check_mydomainname(void);
-static const char *check_mynetworks(void);
-
-static const CONFIG_STR_FN_TABLE str_fn_table[] = {
-    VAR_MYHOSTNAME, check_myhostname, &var_myhostname, 1, 0,
-    VAR_MYDOMAIN, check_mydomainname, &var_mydomain, 1, 0,
-    0,
-};
-static const CONFIG_STR_FN_TABLE str_fn_table_2[] = {
-    VAR_MYNETWORKS, check_mynetworks, &var_mynetworks, 1, 0,
-    0,
-};
-
- /*
-  * XXX Global so that call-backs can see it.
-  */
-#define DEF_MODE	SHOW_NAME
-static int cmd_mode = DEF_MODE;
-
-/* check_myhostname - lookup hostname and validate */
-
-static const char *check_myhostname(void)
-{
-    static const char *name;
-    const char *dot;
-    const char *domain;
-
-    /*
-     * Use cached result.
-     */
-    if (name)
-	return (name);
-
-    /*
-     * If the local machine name is not in FQDN form, try to append the
-     * contents of $mydomain.
-     */
-    name = get_hostname();
-    if ((dot = strchr(name, '.')) == 0) {
-	if ((domain = mail_conf_lookup_eval(VAR_MYDOMAIN)) == 0)
-	    domain = DEF_MYDOMAIN;
-	name = concatenate(name, ".", domain, (char *) 0);
-    }
-    return (name);
-}
-
-/* get_myhostname - look up and store my hostname */
-
-static void get_myhostname(void)
-{
-    const char *name;
-
-    if ((name = mail_conf_lookup_eval(VAR_MYHOSTNAME)) == 0)
-	name = check_myhostname();
-    var_myhostname = mystrdup(name);
-}
-
-/* check_mydomainname - lookup domain name and validate */
-
-static const char *check_mydomainname(void)
-{
-    char   *dot;
-
-    /*
-     * Use the hostname when it is not a FQDN ("foo"), or when the hostname
-     * actually is a domain name ("foo.com").
-     */
-    if (var_myhostname == 0)
-	get_myhostname();
-    if ((dot = strchr(var_myhostname, '.')) == 0 || strchr(dot + 1, '.') == 0)
-	return (DEF_MYDOMAIN);
-    return (dot + 1);
-}
-
-/* check_mynetworks - lookup network address list */
-
-static const char *check_mynetworks(void)
-{
-    INET_PROTO_INFO *proto_info;
-    const char *junk;
-
-    if (var_inet_interfaces == 0) {
-	if ((cmd_mode & SHOW_DEFS)
-	    || (junk = mail_conf_lookup_eval(VAR_INET_INTERFACES)) == 0)
-	    junk = DEF_INET_INTERFACES;
-	var_inet_interfaces = mystrdup(junk);
-    }
-    if (var_mynetworks_style == 0) {
-	if ((cmd_mode & SHOW_DEFS)
-	    || (junk = mail_conf_lookup_eval(VAR_MYNETWORKS_STYLE)) == 0)
-	    junk = DEF_MYNETWORKS_STYLE;
-	var_mynetworks_style = mystrdup(junk);
-    }
-    if (var_inet_protocols == 0) {
-	if ((cmd_mode & SHOW_DEFS)
-	    || (junk = mail_conf_lookup_eval(VAR_INET_PROTOCOLS)) == 0)
-	    junk = DEF_INET_PROTOCOLS;
-	var_inet_protocols = mystrdup(junk);
-	proto_info = inet_proto_init(VAR_INET_PROTOCOLS, var_inet_protocols);
-    }
-    return (mynetworks());
-}
-
-/* edit_parameters - edit parameter file */
-
-static void edit_parameters(int cmd_mode, int argc, char **argv)
-{
-    char   *config_dir;
-    char   *path;
-    EDIT_FILE *ep;
-    VSTREAM *src;
-    VSTREAM *dst;
-    VSTRING *buf = vstring_alloc(100);
-    VSTRING *key = vstring_alloc(10);
-    char   *cp;
-    char   *edit_key;
-    char   *edit_val;
-    HTABLE *table;
-    struct cvalue {
-	char   *value;
-	int     found;
-    };
-    struct cvalue *cvalue;
-    HTABLE_INFO **ht_info;
-    HTABLE_INFO **ht;
-    int     interesting;
-    const char *err;
-
-    /*
-     * Store command-line parameters for quick lookup.
-     */
-    table = htable_create(argc);
-    while ((cp = *argv++) != 0) {
-	if (strchr(cp, '\n') != 0)
-	    msg_fatal("-e or -# accepts no multi-line input");
-	while (ISSPACE(*cp))
-	    cp++;
-	if (*cp == '#')
-	    msg_fatal("-e or -# accepts no comment input");
-	if (cmd_mode & EDIT_MAIN) {
-	    if ((err = split_nameval(cp, &edit_key, &edit_val)) != 0)
-		msg_fatal("%s: \"%s\"", err, cp);
-	} else if (cmd_mode & COMMENT_OUT) {
-	    if (*cp == 0)
-		msg_fatal("-# requires non-blank parameter names");
-	    if (strchr(cp, '=') != 0)
-		msg_fatal("-# requires parameter names only");
-	    edit_key = mystrdup(cp);
-	    trimblanks(edit_key, 0);
-	    edit_val = 0;
-	} else {
-	    msg_panic("edit_parameters: unknown mode %d", cmd_mode);
-	}
-	cvalue = (struct cvalue *) mymalloc(sizeof(*cvalue));
-	cvalue->value = edit_val;
-	cvalue->found = 0;
-	htable_enter(table, edit_key, (char *) cvalue);
-    }
-
-    /*
-     * XXX Avoid code duplication by better code decomposition.
-     */
-    if (var_config_dir)
-	myfree(var_config_dir);
-    var_config_dir = mystrdup((config_dir = safe_getenv(CONF_ENV_PATH)) != 0 ?
-			      config_dir : DEF_CONFIG_DIR);	/* XXX */
-    set_mail_conf_str(VAR_CONFIG_DIR, var_config_dir);
-
-    /*
-     * Open a temp file for the result. This uses a deterministic name so we
-     * don't leave behind thrash with random names.
-     */
-    path = concatenate(var_config_dir, "/", "main.cf", (char *) 0);
-    if ((ep = edit_file_open(path, O_CREAT | O_WRONLY, 0644)) == 0)
-	msg_fatal("open %s%s: %m", path, EDIT_FILE_SUFFIX);
-    dst = ep->tmp_fp;
-
-    /*
-     * Open the original file for input.
-     */
-    if ((src = vstream_fopen(path, O_RDONLY, 0)) == 0) {
-	/* OK to delete, since we control the temp file name exclusively. */
-	(void) unlink(ep->tmp_path);
-	msg_fatal("open %s for reading: %m", path);
-    }
-
-    /*
-     * Copy original file to temp file, while replacing parameters on the
-     * fly. Issue warnings for names found multiple times.
-     */
-#define STR(x) vstring_str(x)
-
-    interesting = 0;
-    while (vstring_get(buf, src) != VSTREAM_EOF) {
-	for (cp = STR(buf); ISSPACE(*cp) /* including newline */ ; cp++)
-	     /* void */ ;
-	/* Copy comment, all-whitespace, or empty line. */
-	if (*cp == '#' || *cp == 0) {
-	    vstream_fputs(STR(buf), dst);
-	}
-	/* Copy, skip or replace continued text. */
-	else if (cp > STR(buf)) {
-	    if (interesting == 0)
-		vstream_fputs(STR(buf), dst);
-	    else if (cmd_mode & COMMENT_OUT)
-		vstream_fprintf(dst, "#%s", STR(buf));
-	}
-	/* Copy or replace start of logical line. */
-	else {
-	    vstring_strncpy(key, cp, strcspn(cp, " \t\r\n="));
-	    cvalue = (struct cvalue *) htable_find(table, STR(key));
-	    if ((interesting = !!cvalue) != 0) {
-		if (cvalue->found++ == 1)
-		    msg_warn("%s: multiple entries for \"%s\"", path, STR(key));
-		if (cmd_mode & EDIT_MAIN)
-		    vstream_fprintf(dst, "%s = %s\n", STR(key), cvalue->value);
-		else if (cmd_mode & COMMENT_OUT)
-		    vstream_fprintf(dst, "#%s", cp);
-		else
-		    msg_panic("edit_parameters: unknown mode %d", cmd_mode);
-	    } else {
-		vstream_fputs(STR(buf), dst);
-	    }
-	}
-    }
-
-    /*
-     * Generate new entries for parameters that were not found.
-     */
-    if (cmd_mode & EDIT_MAIN) {
-	for (ht_info = ht = htable_list(table); *ht; ht++) {
-	    cvalue = (struct cvalue *) ht[0]->value;
-	    if (cvalue->found == 0)
-		vstream_fprintf(dst, "%s = %s\n", ht[0]->key, cvalue->value);
-	}
-	myfree((char *) ht_info);
-    }
-
-    /*
-     * When all is well, rename the temp file to the original one.
-     */
-    if (vstream_fclose(src))
-	msg_fatal("read %s: %m", path);
-    if (edit_file_close(ep) != 0)
-	msg_fatal("close %s%s: %m", path, EDIT_FILE_SUFFIX);
-
-    /*
-     * Cleanup.
-     */
-    myfree(path);
-    vstring_free(buf);
-    vstring_free(key);
-    htable_free(table, myfree);
-}
-
-/* read_parameters - read parameter info from file */
-
-static void read_parameters(void)
-{
-    char   *config_dir;
-    char   *path;
-
-    /*
-     * A direct rip-off of mail_conf_read(). XXX Avoid code duplication by
-     * better code decomposition.
-     */
-    dict_unknown_allowed = 1;
-    if (var_config_dir)
-	myfree(var_config_dir);
-    var_config_dir = mystrdup((config_dir = safe_getenv(CONF_ENV_PATH)) != 0 ?
-			      config_dir : DEF_CONFIG_DIR);	/* XXX */
-    set_mail_conf_str(VAR_CONFIG_DIR, var_config_dir);
-    path = concatenate(var_config_dir, "/", "main.cf", (char *) 0);
-    dict_load_file(CONFIG_DICT, path);
-    myfree(path);
-}
-
-/* set_parameters - set parameter values from default or explicit setting */
-
-static void set_parameters(void)
-{
-
-    /*
-     * Populate the configuration parameter dictionary with default settings
-     * or with actual settings.
-     * 
-     * Iterate over each entry in str_fn_table, str_fn_table_2, time_table,
-     * bool_table, int_table, str_table, and raw_table. Look up each
-     * parameter name in the configuration parameter dictionary. If the
-     * parameter is not set, take the default value, or take the value from
-     * main.cf, without doing $name expansions. This includes converting
-     * default values from numeric/boolean internal forms to external string
-     * form.
-     * 
-     * Once the configuration parameter dictionary is populated, printing a
-     * parameter setting is a matter of querying the configuration parameter
-     * dictionary, optionally expanding of $name values, and printing the
-     * result.
-     */
-}
-
-/* hash_parameters - hash all parameter names so we can find and sort them */
-
-static void hash_parameters(void)
-{
-    const CONFIG_TIME_TABLE *ctt;
-    const CONFIG_BOOL_TABLE *cbt;
-    const CONFIG_INT_TABLE *cit;
-    const CONFIG_STR_TABLE *cst;
-    const CONFIG_STR_FN_TABLE *csft;
-    const CONFIG_RAW_TABLE *rst;
-    const CONFIG_NINT_TABLE *nst;
-    const CONFIG_NBOOL_TABLE *bst;
-
-    param_table = htable_create(100);
-
-    for (ctt = time_table; ctt->name; ctt++)
-	htable_enter(param_table, ctt->name, (char *) ctt);
-    for (cbt = bool_table; cbt->name; cbt++)
-	htable_enter(param_table, cbt->name, (char *) cbt);
-    for (cit = int_table; cit->name; cit++)
-	htable_enter(param_table, cit->name, (char *) cit);
-    for (cst = str_table; cst->name; cst++)
-	htable_enter(param_table, cst->name, (char *) cst);
-    for (csft = str_fn_table; csft->name; csft++)
-	htable_enter(param_table, csft->name, (char *) csft);
-    for (csft = str_fn_table_2; csft->name; csft++)
-	htable_enter(param_table, csft->name, (char *) csft);
-    for (rst = raw_table; rst->name; rst++)
-	htable_enter(param_table, rst->name, (char *) rst);
-    for (nst = nint_table; nst->name; nst++)
-	htable_enter(param_table, nst->name, (char *) nst);
-    for (bst = nbool_table; bst->name; bst++)
-	htable_enter(param_table, bst->name, (char *) bst);
-}
-
-/* show_strval - show string-valued parameter */
-
-static void show_strval(int mode, const char *name, const char *value)
-{
-    if (mode & SHOW_EVAL)
-	value = mail_conf_eval(value);
-
-    if (mode & SHOW_NAME) {
-	vstream_printf("%s = %s\n", name, value);
-    } else {
-	vstream_printf("%s\n", value);
-    }
-}
-
-/* show_intval - show integer-valued parameter */
-
-static void show_intval(int mode, const char *name, int value)
-{
-    if (mode & SHOW_NAME) {
-	vstream_printf("%s = %d\n", name, value);
-    } else {
-	vstream_printf("%d\n", value);
-    }
-}
-
-/* print_bool - print boolean parameter */
-
-static void print_bool(int mode, CONFIG_BOOL_TABLE *cbt)
-{
-    const char *value;
-
-    if (mode & SHOW_DEFS) {
-	show_strval(mode, cbt->name, cbt->defval ? "yes" : "no");
-    } else {
-	value = dict_lookup(CONFIG_DICT, cbt->name);
-	if ((mode & SHOW_NONDEF) == 0) {
-	    if (value == 0) {
-		show_strval(mode, cbt->name, cbt->defval ? "yes" : "no");
-	    } else {
-		show_strval(mode, cbt->name, value);
-	    }
-	} else {
-	    if (value != 0)
-		show_strval(mode, cbt->name, value);
-	}
-    }
-}
-
-/* print_time - print relative time parameter */
-
-static void print_time(int mode, CONFIG_TIME_TABLE *ctt)
-{
-    const char *value;
-
-    if (mode & SHOW_DEFS) {
-	show_strval(mode, ctt->name, ctt->defval);
-    } else {
-	value = dict_lookup(CONFIG_DICT, ctt->name);
-	if ((mode & SHOW_NONDEF) == 0) {
-	    if (value == 0) {
-		show_strval(mode, ctt->name, ctt->defval);
-	    } else {
-		show_strval(mode, ctt->name, value);
-	    }
-	} else {
-	    if (value != 0)
-		show_strval(mode, ctt->name, value);
-	}
-    }
-}
-
-/* print_int - print integer parameter */
-
-static void print_int(int mode, CONFIG_INT_TABLE *cit)
-{
-    const char *value;
-
-    if (mode & SHOW_DEFS) {
-	show_intval(mode, cit->name, cit->defval);
-    } else {
-	value = dict_lookup(CONFIG_DICT, cit->name);
-	if ((mode & SHOW_NONDEF) == 0) {
-	    if (value == 0) {
-		show_intval(mode, cit->name, cit->defval);
-	    } else {
-		show_strval(mode, cit->name, value);
-	    }
-	} else {
-	    if (value != 0)
-		show_strval(mode, cit->name, value);
-	}
-    }
-}
-
-/* print_str - print string parameter */
-
-static void print_str(int mode, CONFIG_STR_TABLE *cst)
-{
-    const char *value;
-
-    if (mode & SHOW_DEFS) {
-	show_strval(mode, cst->name, cst->defval);
-    } else {
-	value = dict_lookup(CONFIG_DICT, cst->name);
-	if ((mode & SHOW_NONDEF) == 0) {
-	    if (value == 0) {
-		show_strval(mode, cst->name, cst->defval);
-	    } else {
-		show_strval(mode, cst->name, value);
-	    }
-	} else {
-	    if (value != 0)
-		show_strval(mode, cst->name, value);
-	}
-    }
-}
-
-/* print_str_fn - print string-function parameter */
-
-static void print_str_fn(int mode, CONFIG_STR_FN_TABLE *csft)
-{
-    const char *value;
-
-    if (mode & SHOW_DEFS) {
-	show_strval(mode, csft->name, csft->defval());
-    } else {
-	value = dict_lookup(CONFIG_DICT, csft->name);
-	if ((mode & SHOW_NONDEF) == 0) {
-	    if (value == 0) {
-		show_strval(mode, csft->name, csft->defval());
-	    } else {
-		show_strval(mode, csft->name, value);
-	    }
-	} else {
-	    if (value != 0)
-		show_strval(mode, csft->name, value);
-	}
-    }
-}
-
-/* print_str_fn_2 - print string-function parameter */
-
-static void print_str_fn_2(int mode, CONFIG_STR_FN_TABLE *csft)
-{
-    const char *value;
-
-    if (mode & SHOW_DEFS) {
-	show_strval(mode, csft->name, csft->defval());
-    } else {
-	value = dict_lookup(CONFIG_DICT, csft->name);
-	if ((mode & SHOW_NONDEF) == 0) {
-	    if (value == 0) {
-		show_strval(mode, csft->name, csft->defval());
-	    } else {
-		show_strval(mode, csft->name, value);
-	    }
-	} else {
-	    if (value != 0)
-		show_strval(mode, csft->name, value);
-	}
-    }
-}
-
-/* print_raw - print raw string parameter */
-
-static void print_raw(int mode, CONFIG_RAW_TABLE * rst)
-{
-    const char *value;
-
-    if (mode & SHOW_EVAL)
-	msg_warn("parameter %s expands at run-time", rst->name);
-    mode &= ~SHOW_EVAL;
-
-    if (mode & SHOW_DEFS) {
-	show_strval(mode, rst->name, rst->defval);
-    } else {
-	value = dict_lookup(CONFIG_DICT, rst->name);
-	if ((mode & SHOW_NONDEF) == 0) {
-	    if (value == 0) {
-		show_strval(mode, rst->name, rst->defval);
-	    } else {
-		show_strval(mode, rst->name, value);
-	    }
-	} else {
-	    if (value != 0)
-		show_strval(mode, rst->name, value);
-	}
-    }
-}
-
-/* print_nint - print new integer parameter */
-
-static void print_nint(int mode, CONFIG_NINT_TABLE * rst)
-{
-    const char *value;
-
-    if (mode & SHOW_EVAL)
-	msg_warn("parameter %s expands at run-time", rst->name);
-    mode &= ~SHOW_EVAL;
-
-    if (mode & SHOW_DEFS) {
-	show_strval(mode, rst->name, rst->defval);
-    } else {
-	value = dict_lookup(CONFIG_DICT, rst->name);
-	if ((mode & SHOW_NONDEF) == 0) {
-	    if (value == 0) {
-		show_strval(mode, rst->name, rst->defval);
-	    } else {
-		show_strval(mode, rst->name, value);
-	    }
-	} else {
-	    if (value != 0)
-		show_strval(mode, rst->name, value);
-	}
-    }
-}
-
-/* print_nbool - print new boolean parameter */
-
-static void print_nbool(int mode, CONFIG_NBOOL_TABLE * bst)
-{
-    const char *value;
-
-    if (mode & SHOW_EVAL)
-	msg_warn("parameter %s expands at run-time", bst->name);
-    mode &= ~SHOW_EVAL;
-
-    if (mode & SHOW_DEFS) {
-	show_strval(mode, bst->name, bst->defval);
-    } else {
-	value = dict_lookup(CONFIG_DICT, bst->name);
-	if ((mode & SHOW_NONDEF) == 0) {
-	    if (value == 0) {
-		show_strval(mode, bst->name, bst->defval);
-	    } else {
-		show_strval(mode, bst->name, value);
-	    }
-	} else {
-	    if (value != 0)
-		show_strval(mode, bst->name, value);
-	}
-    }
-}
-
-/* print_parameter - show specific parameter */
-
-static void print_parameter(int mode, char *ptr)
-{
-
-#define INSIDE(p,t) (ptr >= (char *) t && ptr < ((char *) t) + sizeof(t))
-
-    /*
-     * This is gross, but the best we can do on short notice.
-     */
-    if (INSIDE(ptr, time_table))
-	print_time(mode, (CONFIG_TIME_TABLE *) ptr);
-    if (INSIDE(ptr, bool_table))
-	print_bool(mode, (CONFIG_BOOL_TABLE *) ptr);
-    if (INSIDE(ptr, int_table))
-	print_int(mode, (CONFIG_INT_TABLE *) ptr);
-    if (INSIDE(ptr, str_table))
-	print_str(mode, (CONFIG_STR_TABLE *) ptr);
-    if (INSIDE(ptr, str_fn_table))
-	print_str_fn(mode, (CONFIG_STR_FN_TABLE *) ptr);
-    if (INSIDE(ptr, str_fn_table_2))
-	print_str_fn_2(mode, (CONFIG_STR_FN_TABLE *) ptr);
-    if (INSIDE(ptr, raw_table))
-	print_raw(mode, (CONFIG_RAW_TABLE *) ptr);
-    if (INSIDE(ptr, nint_table))
-	print_nint(mode, (CONFIG_NINT_TABLE *) ptr);
-    if (INSIDE(ptr, nbool_table))
-	print_nbool(mode, (CONFIG_NBOOL_TABLE *) ptr);
-    if (msg_verbose)
-	vstream_fflush(VSTREAM_OUT);
-}
-
-/* comp_names - qsort helper */
-
-static int comp_names(const void *a, const void *b)
-{
-    HTABLE_INFO **ap = (HTABLE_INFO **) a;
-    HTABLE_INFO **bp = (HTABLE_INFO **) b;
-
-    return (strcmp(ap[0]->key, bp[0]->key));
-}
-
-/* show_maps - show available maps */
-
-static void show_maps(void)
-{
-    ARGV   *maps_argv;
-    int     i;
-
-    maps_argv = dict_mapnames();
-    for (i = 0; i < maps_argv->argc; i++)
-	vstream_printf("%s\n", maps_argv->argv[i]);
-    argv_free(maps_argv);
-}
-
-/* show_locks - show available mailbox locking methods */
-
-static void show_locks(void)
-{
-    ARGV   *locks_argv;
-    int     i;
-
-    locks_argv = mbox_lock_names();
-    for (i = 0; i < locks_argv->argc; i++)
-	vstream_printf("%s\n", locks_argv->argv[i]);
-    argv_free(locks_argv);
-}
-
-/* show_sasl - show SASL plug-in types */
-
-static void show_sasl(int what)
-{
-    ARGV   *sasl_argv;
-    int     i;
-
-    sasl_argv = (what & SHOW_SASL_SERV) ? xsasl_server_types() :
-	xsasl_client_types();
-    for (i = 0; i < sasl_argv->argc; i++)
-	vstream_printf("%s\n", sasl_argv->argv[i]);
-    argv_free(sasl_argv);
-}
-
-/* show_parameters - show parameter info */
-
-static void show_parameters(int mode, char **names)
-{
-    HTABLE_INFO **list;
-    HTABLE_INFO **ht;
-    char  **namep;
-    char   *value;
-
-    /*
-     * Show all parameters.
-     */
-    if (*names == 0) {
-	list = htable_list(param_table);
-	qsort((char *) list, param_table->used, sizeof(*list), comp_names);
-	for (ht = list; *ht; ht++)
-	    print_parameter(mode, ht[0]->value);
-	myfree((char *) list);
-	return;
-    }
-
-    /*
-     * Show named parameters.
-     */
-    for (namep = names; *namep; namep++) {
-	if ((value = htable_find(param_table, *namep)) == 0) {
-	    msg_warn("%s: unknown parameter", *namep);
-	} else {
-	    print_parameter(mode, value);
-	}
-    }
-}
-
 MAIL_VERSION_STAMP_DECLARE;
 
 /* main */
@@ -1093,6 +377,14 @@ int     main(int argc, char **argv)
     struct stat st;
     int     junk;
     ARGV   *ext_argv = 0;
+    int     param_class = PC_PARAM_MASK_CLASS;
+    static const NAME_MASK param_class_table[] = {
+	"builtin", PC_PARAM_FLAG_BUILTIN,
+	"service", PC_PARAM_FLAG_SERVICE,
+	"user", PC_PARAM_FLAG_USER,
+	"all", PC_PARAM_MASK_CLASS,
+	0,
+    };
 
     /*
      * Fingerprint executables and core dumps.
@@ -1122,7 +414,7 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "aAbc:deE#hmlntv")) > 0) {
+    while ((ch = GETOPT(argc, argv, "aAbc:C:deEf#hlmMntv")) > 0) {
 	switch (ch) {
 	case 'a':
 	    cmd_mode |= SHOW_SASL_SERV;
@@ -1140,11 +432,18 @@ int     main(int argc, char **argv)
 	    if (setenv(CONF_ENV_PATH, optarg, 1) < 0)
 		msg_fatal("out of memory");
 	    break;
+	case 'C':
+	    param_class = name_mask_opt("-C option", param_class_table,
+				    optarg, NAME_MASK_ANY_CASE | NAME_MASK_FATAL);
+	    break;
 	case 'd':
 	    cmd_mode |= SHOW_DEFS;
 	    break;
 	case 'e':
 	    cmd_mode |= EDIT_MAIN;
+	    break;
+	case 'f':
+	    cmd_mode |= FOLD_LINE;
 	    break;
 
 	    /*
@@ -1171,6 +470,9 @@ int     main(int argc, char **argv)
 	case 'm':
 	    cmd_mode |= SHOW_MAPS;
 	    break;
+	case 'M':
+	    cmd_mode |= SHOW_MASTER;
+	    break;
 	case 'n':
 	    cmd_mode |= SHOW_NONDEF;
 	    break;
@@ -1184,20 +486,20 @@ int     main(int argc, char **argv)
 	    msg_verbose++;
 	    break;
 	default:
-	    msg_fatal("usage: %s [-a (server SASL types)] [-A (client SASL types)] [-b (bounce templates)] [-c config_dir] [-d (defaults)] [-e (edit)] [-# (comment-out)] [-h (no names)] [-l (lock types)] [-m (map types)] [-n (non-defaults)] [-v] [name...]", argv[0]);
+	    msg_fatal("usage: %s [-a (server SASL types)] [-A (client SASL types)] [-b (bounce templates)] [-c config_dir] [-C param_class] [-d (defaults)] [-e (edit)] [-f (fold lines)] [-# (comment-out)] [-h (no names)] [-l (lock types)] [-m (map types)] [-M (master.cf)] [-n (non-defaults)] [-v] [name...]", argv[0]);
 	}
     }
 
     /*
      * Sanity check.
      */
-    junk = (cmd_mode & (SHOW_DEFS | SHOW_NONDEF | SHOW_MAPS | SHOW_LOCKS | EDIT_MAIN | SHOW_SASL_SERV | SHOW_SASL_CLNT | COMMENT_OUT));
+    junk = (cmd_mode & (SHOW_DEFS | SHOW_NONDEF | SHOW_MAPS | SHOW_LOCKS | EDIT_MAIN | SHOW_SASL_SERV | SHOW_SASL_CLNT | COMMENT_OUT | SHOW_MASTER));
     if (junk != 0 && ((junk != SHOW_DEFS && junk != SHOW_NONDEF
 	     && junk != SHOW_MAPS && junk != SHOW_LOCKS && junk != EDIT_MAIN
 		       && junk != SHOW_SASL_SERV && junk != SHOW_SASL_CLNT
-		       && junk != COMMENT_OUT)
+		       && junk != COMMENT_OUT && junk != SHOW_MASTER)
 		      || ext_argv != 0))
-	msg_fatal("specify one of -a, -A, -b, -d, -e, -#, -m, -l and -n");
+	msg_fatal("specify one of -a, -A, -b, -d, -e, -#, -l, -m, -M and -n");
 
     /*
      * Display bounce template information and exit.
@@ -1236,6 +538,14 @@ int     main(int argc, char **argv)
     }
 
     /*
+     * If showing master.cf entries, show them and exit
+     */
+    else if (cmd_mode & SHOW_MASTER) {
+	read_master(FAIL_ON_OPEN_ERROR);
+	show_master(cmd_mode, argv + optind);
+    }
+
+    /*
      * If showing SASL plug-in types, show them and exit
      */
     else if (cmd_mode & SHOW_SASL_SERV) {
@@ -1262,12 +572,33 @@ int     main(int argc, char **argv)
 	    read_parameters();
 	    set_parameters();
 	}
+	register_builtin_parameters();
 
 	/*
-	 * Throw together all parameters and show the asked values.
+	 * Add service-dependent parameters (service names from master.cf)
+	 * and user-defined parameters ($name macros in parameter values in
+	 * main.cf and master.cf, but only if those names have a name=value
+	 * in main.cf or master.cf).
 	 */
-	hash_parameters();
-	show_parameters(cmd_mode, argv + optind);
+	read_master(WARN_ON_OPEN_ERROR);
+	register_service_parameters();
+	if ((cmd_mode & SHOW_DEFS) == 0)
+	    register_user_parameters();
+
+	/*
+	 * Show the requested values.
+	 */
+	show_parameters(cmd_mode, param_class, argv + optind);
+
+	/*
+	 * Flag unused parameters. This makes no sense with "postconf -d",
+	 * because that ignores all the user-specified parameters and
+	 * user-specified macro expansions in main.cf.
+	 */
+	if ((cmd_mode & SHOW_DEFS) == 0) {
+	    flag_unused_main_parameters();
+	    flag_unused_master_parameters();
+	}
     }
     vstream_fflush(VSTREAM_OUT);
     exit(0);

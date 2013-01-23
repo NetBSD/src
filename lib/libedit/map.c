@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.30.2.1 2012/04/17 00:05:27 yamt Exp $	*/
+/*	$NetBSD: map.c,v 1.30.2.2 2013/01/23 00:05:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.30.2.1 2012/04/17 00:05:27 yamt Exp $");
+__RCSID("$NetBSD: map.c,v 1.30.2.2 2013/01/23 00:05:24 yamt Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1249,7 +1249,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 	Char inbuf[EL_BUFSIZ];
 	Char outbuf[EL_BUFSIZ];
 	const Char *in = NULL;
-	Char *out = NULL;
+	Char *out;
 	el_bindings_t *bp, *ep;
 	int cmd;
 	int key;
@@ -1368,7 +1368,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 			return -1;
 		}
 		if (key)
-			terminal_set_arrow(el, in, keymacro_map_str(el, out), ntype);
+			terminal_set_arrow(el, in, keymacro_map_cmd(el, cmd), ntype);
 		else {
 			if (in[1]) {
 				keymacro_add(el, in, keymacro_map_cmd(el, cmd), ntype);

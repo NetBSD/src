@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.2.3 2013/01/16 05:32:59 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.4 2013/01/23 00:05:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -221,7 +221,6 @@ cpu_startup(void)
 	 * information.
 	 */
 	ia64_probe_sapics();
-	/*XXX: ia64_mca_init();*/
 }
 
 void
@@ -664,11 +663,6 @@ ia64_init(void)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-
-	extern void main(void);
-	main();
-
-	panic("Wheeee!!! main() returned!!! \n");
 }
 
 uint64_t

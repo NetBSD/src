@@ -1,0 +1,383 @@
+The stable Postfix release is called postfix-2.8.x where 2=major
+release number, 8=minor release number, x=patchlevel.  The stable
+release never changes except for patches that address bugs or
+emergencies. Patches change the patchlevel and the release date.
+
+New features are developed in snapshot releases. These are called
+postfix-2.9-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+mm=month, dd=day).  Patches are never issued for snapshot releases;
+instead, a new snapshot is released.
+
+The mail_release_date configuration parameter (format: yyyymmdd)
+specifies the release date of a stable release or snapshot release.
+
+If you upgrade from Postfix 2.6 or earlier, read RELEASE_NOTES-2.7
+before proceeding.
+
+Major changes - restart Postfix
+-------------------------------
+
+If you upgrade from Postfix 2.6 or earlier, you must execute "postfix
+stop" and "postfix start" before you can use the postscreen(8)
+daemon.  This is needed because the Postfix 2.6 "pass" master service
+type did not work reliably on some systems.
+
+If you upgrade from Postfix 2.7, or from Postfix 2.8 before July
+25, 2010, you must execute "postfix reload" (or "postfix stop"
+followed by "postfix start"). This is needed because the queue
+manager to delivery agent protocol has changed. Failure to do this
+results in repeated logging of warnings with:
+
+    warning: unexpected attribute rewrite_context ...
+
+If the warning does not go away after restarting Postfix, examine
+the output from this command:
+
+    strings -af /usr/libexec/postfix/* | grep mail_version=
+
+(where /usr/libexec/postfix is the value of main.cf:daemon_directory)
+and update the executables that have a version string that differs
+from the other programs.
+
+Major changes - DNSBL/DNSWL support
+-----------------------------------
+
+[Feature 20101126] Support for address patterns in DNS blacklist
+and whitelist lookup results.
+
+For example, "reject_rbl_client example.com=127.0.0.[2;4;6..8]"
+will reject clients when the lookup result is 127.0.0.2, 127.0.0.4,
+127.0.0.6, 127.0.0.7, or 127.0.0.8.
+
+The setting "postscreen_dnsbl_sites = example.com=127.0.0.[2;4;6..8]"
+rejects the same clients.
+
+An IPv4 address pattern has four fields separated by ".".  Each
+field is either a decimal number, or a sequence inside "[]" that
+contains one or more ";"-separated decimal numbers or number..number
+ranges.
+
+Thus, any pattern field can be a sequence inside "[]", but a "[]"
+sequence cannot span multiple address fields, and a pattern field
+cannot contain both a number and a "[]" sequence at the same time.
+
+This means that the pattern 1.2.[3.4] is not valid (the sequence
+[3.4] cannot span two address fields) and the pattern 1.2.3.3[6..9]
+is also not valid (the last field cannot be both number 3 and
+sequence [6..9] at the same time).
+
+The syntax for IPv4 patterns is as follows:
+
+v4pattern = v4field "." v4field "." v4field "." v4field
+v4field = v4octet | "[" v4sequence "]"
+v4octet = any decimal number in the range 0 through 255
+v4sequence = v4seq_member | v4sequence ";" v4seq_member
+v4seq_member = v4octet | v4octet ".." v4octet
+
+[Feature 20101105] The Postfix SMTP server now supports DNS-based
+whitelisting with several safety features: permit_dnswl_client
+whitelists a client by IP address, and permit_rhswl_client whitelists
+a client by its hostname.  These features use the same syntax as
+reject_rbl_client and reject_rhsbl_client, respectively. The main
+difference is that they return PERMIT instead of REJECT.
+
+Whitelisting is primarily a tool to reduce the false positive rate
+of DNS blocklist lookups.  Client name whitelisting should not be
+used to make exceptions to access rules. The reason is that client
+name lookup can fail unpredictably due to some temporary outage.
+
+For safety reasons, permit_dnswl_client and permit_rhswl_client are
+silently ignored when they would override reject_unauth_destination.
+Also for safety reasons, the result is DEFER_IF_REJECT when DNS
+whitelist lookup fails (this result will be made configurable).
+
+Major changes - sqlite support
+------------------------------
+
+[Feature 20100617] Support for read-only sqlite database access,
+with code by Axel Steiner and documentation by Jesus Garcia Crespo.
+See SQLITE_README and sqlite_table(5) for details.
+
+Major changes - Milter support
+-------------------------------
+
+[Incompat 20101103] Postfix now requests default delivery status
+notifications when adding a recipient with the Milter smfi_addrcpt
+action, instead of "never notify" as with Postfix automatically-added
+recipients (always_bcc and sender/recipient_bcc_maps).
+
+Major changes - alias expansion
+-------------------------------
+
+[Incompat 20101202] Postfix now reports a temporary delivery error
+when the result of virtual alias expansion would exceed the
+virtual_alias_recursion_limit or virtual_alias_expansion_limit.
+Previously, Postfix would silently drop the excess recipients and
+deliver the message.
+
+[Incompat 20101006] To avoid repeated delivery to mailing lists
+with pathological nested alias configurations, the local(8) delivery
+agent now keeps the owner-alias attribute of a parent alias, when
+delivering mail to a child alias that does not have its own owner
+alias.
+
+With this change, local addresses from that child alias will be
+written to a new queue file, and a temporary error with one local
+address will no longer result in repeated delivery to other mailing
+list members.  Specify "reset_owner_alias = yes" for the older,
+more fragile, behavior.
+
+The postconf(5) manpage entry for "reset_owner_alias" has more
+background information on this issue.
+
+Major changes - dns lookup
+--------------------------
+
+[Incompat 20100827] The Postfix SMTP client no longer appends the
+local domain when looking up a DNS name without ".".  Specify
+"smtp_dns_resolver_options = res_defnames" to get the old behavior,
+which may produce unexpected results.
+
+Major changes - logging
+-----------------------
+
+[Incompat 20100728] The format of the "postfix/smtpd[pid]: queueid:
+client=host[addr]" logfile record has changed. When available, the
+before-filter client information and the before-filter queue ID are
+now appended to the end of the record.
+
+[Feature 20100728] Improved message tracking across SMTP-based
+content filters.  The logging example below is from an after-filter
+SMTP server. Here, 951F692462F is a before-filter queue ID,
+hades.porcupine.org is a before-filter SMTP client, while 6B4A9924782
+is the after-filter queue ID, and localhost[127.0.0.1] is the
+SMTP-based content filter that sends mail into the after-filter
+SMTP server.
+
+    postfix/smtpd[4074]: 6B4A9924782: 
+	client=localhost[127.0.0.1],
+	orig_queue_id=951F692462F
+	orig_client=hades.porcupine.org[168.100.189.10]
+
+Major changes - reply footer
+----------------------------
+
+[Feature 20110105] The SMTP server now supports contact information
+that is appended to "reject" responses. This includes SMTP server
+responses that aren't logged to the maillog file, such as responses
+to syntax errors, or unsupported commands.
+
+Example:
+   smtpd_reject_footer = For assistance, call 800-555-0101.
+
+Server response:
+   550-5.5.1 <user@example> Recipient address rejected: User unknown
+   550 5.5.1 For assistance, call 800-555-0101.
+
+This feature supports macro expansion ($client_address, $localtime,
+etc.), as documented in the postconf(5) manpage.
+
+This feature is also supported as postscreen_reject_footer using
+the same setting as smtpd_reject_footer by default.
+
+Major changes - rfc compliance
+------------------------------
+
+[Incompat 20101206] Postfix by default no longer adds a "To:
+undisclosed-recipients:;" header when no recipient specified in the
+message header.  The Internet mail RFCs have supported messages
+without recipient header for almost 10 years now.
+
+For backwards compatibility, specify:
+
+/etc/postfix/main.cf
+   undisclosed_recipients_header = To: undisclosed-recipients:;
+
+Note: both the ":" and ";" are required.
+
+Major changes - tls support
+---------------------------
+
+[Incompat 20110102] The Postfix SMTP server now always re-computes
+the SASL mechanism list after successful completion of the STARTTLS
+command. Earlier versions only re-computed the mechanism list when
+the values of smtp_sasl_tls_security_options and smtp_sasl_security_options
+differ.  This could produce incorrect results, because the Dovecot
+authentication server may change responses when the SMTP session
+is encrypted.
+
+[Incompat 20110102] The smtpd_starttls_timeout default value is now
+stress-dependent.  By default, TLS negotiations must now complete
+under overload in 10s instead of 300s.
+
+[Feature 20101223] The new tls_disable_workarounds parameter specifies
+a list or bit-mask of OpenSSL bug work-arounds to disable. This may
+be necessary if one of the work-arounds enabled by default in OpenSSL
+proves to pose a security risk, or introduces an unexpected
+interoperability issue. Some bug work-arounds known to be problematic
+are disabled in the default value of the parameter when linked with
+an OpenSSL library that could be vulnerable. See postconf(5) and
+TLS_README for details.
+
+With "tls_preempt_cipherlist = yes" the Postfix SMTP server will
+choose its most preferred cipher that is supported (offered) by the
+client. This can lead to a more secure or performant cipher choice,
+but may also introduce interoperability problems when a client
+announces support for a cipher that does not work.  See postconf(5)
+and TLS_README for details.
+
+[Feature 20101217] The lower-level code in the TLS engine was
+simplified by removing an unnecessary layer of data copying. OpenSSL
+now writes directly to the network. The difference in performance
+should be hardly noticeable.
+
+[Incompat 20100610] Postfix no longer appends the system-supplied
+default CA certificates to the lists specified with *_tls_CAfile
+or with *_tls_CApath. This prevents third-party certificates from
+getting mail relay permission with the permit_tls_all_clientcerts
+feature.
+
+Unfortunately this change may cause compatibility problems when
+configurations rely on certificate verification for other purposes.
+Specify "tls_append_default_CA = yes" for backwards compatibility.
+
+Major changes - postscreen
+--------------------------
+
+See html/POSTSCREEN_README.html for an introduction to postscreen
+(or the text version, README_FILES/POSTSCREEN_README). The text
+below summarizes milestones in reverse chronological order.
+
+[Incompat 20110111] The postscreen_access_list feature replaces the
+postscreen_whitelist_networks and postscreen_blacklist_networks
+features. Reason: CIDR-style access maps are some 100x faster than
+the code that implemented the postscreen_white/blacklist_networks
+support.  CIDR maps can match about 100 million CIDR patterns/second
+on a modern CPU, which is not blindingly fast but adequate for the
+near future.
+
+[Feature 20110102] STARTTLS support for the postscreen(8) daemon.
+This is implemented by a new tlsproxy(8) daemon that you will need
+to enable in master.cf (see POSTSCREEN_README for instructions).
+tlsproxy(8) implements its own tlsproxy_mumble versions of TLS-related
+smtpd_mumble parameters. This leaves no confusion about which
+parameters will affect tlsproxy(8) behavior, but it adds another
+25 parameters to the documentation.
+
+[Incompat 20100912] If your DNSBL queries have a "secret" in the
+domain name, you must now censor this information from the postscreen(8)
+SMTP replies.  For example:
+
+  /etc/postfix/main.cf:
+      postscreen_dnsbl_reply_map = texthash:/etc/postfix/dnsbl_reply
+
+  /etc/postfix/dnsbl_reply:
+      # Secret DNSBL name        Name in postscreen(8) replies
+      secret.zen.spamhaus.org    zen.spamhaus.org
+
+The texthash: format is similar to hash: except that there is no need to
+run postmap(1) before the file can be used, and that it does not detect
+changes after the file is read. It is new with Postfix version 2.8.
+
+[Incompat 20100912] The postscreen "continue" action is now called
+"ignore".  The old name is still supported but no longer documented.
+
+[Incompat 20100912] The postscreen_hangup_action parameter was
+removed. Postscreen now always behaves as if "postscreen_hangup_action
+= drop".
+
+[Incompat 20100912] The postscreen_cache_retention_time default was
+increased from 1d to 7d, to avoid deleting results from expensive
+deep SMTP protocol tests too quickly.
+
+[Feature 20100912] SMTP protocol engine for deep protocol tests,
+and for logging the helo/sender/recipient information when postscreen
+rejects an attempt to deliver mail.
+
+The postscreen SMTP protocol engine implements a number of deep
+protocol tests and defers or rejects all attempts to deliver mail.
+The first test detects unauthorized SMTP command pipelining (an
+SMTP client sends multiple commands, instead of sending one command
+and waiting for the server response); a second deep protocol test
+implements the Postfix SMTP server's smtpd_forbidden_commands feature
+(a client sends commands such as CONNECT, GET, POST); and a third
+deep protocol test detects spambots that send SMTP commands that
+end in newline instead of carriage-return/newline.  Real spambots
+rarely make this mistake, but poorly-written software often does.
+
+Deep protocol tests are disabled by default, because the built-in
+SMTP engine cannot not hand off the "live" connection from a good
+SMTP client to a Postfix SMTP server process. To work around this,
+postscreen(8) defers attempts to deliver mail with a 4XX status,
+and waits for the client to disconnect. The next time a good client
+connects, it will be allowed to talk to a Postfix SMTP server process
+to deliver mail.
+
+[Feature 20100830] Postscreen DNSBL support is extended with optional
+fixed-string filters, with optional integral weight factors, and
+with an adjustable threshold to block SMTP clients with DNSBL score
+>= that threshold. Reply filters will be implemented later.
+
+The updated postscreen configuration syntax is:
+
+    postscreen_dnsbl_sites = domain[=ipaddr][*weight] ...
+    postscreen_dnsbl_threshold = score
+
+Elements inside [] are optional, ipaddr is an IPv4 address, and
+weight and score are integral numbers. The [] are not part of the
+postscreen_dnsbl_sites input.  By default, weight and score are
+equal to 1, and entries without filter will match any non-error
+DNSBL reply.  Use a negative weight value for whitelisting.
+
+Examples:
+
+To use example.com as a high-confidence blocklist, and to block
+mail with example.net and example.org only when both agree, use:
+
+    postscreen_dnsbl_threshold = 2
+    postscreen_dnsbl_sites = example.com*2, example.net, example.org
+
+To filter only DNSBL replies containing 127.0.0.4, use:
+
+    postscreen_dnsbl_sites = example.com=127.0.0.4
+
+See also postconf(5) for the fine details.
+
+[Incompat 20100101] When periodic cache cleanup is enabled (the
+default), the postscreen(8) server now requires that the cache
+database supports the "delete" and "sequence" operations.  To disable
+periodic cache cleanup specify a zero postscreen_cache_cleanup_interval
+value.
+
+[Feature 20100101] Periodic cache cleanup for the postscreen(8)
+cache database. The time between cache cleanup runs is controlled
+with the postscreen_cache_cleanup_interval (default: 12h) parameter.
+Cache cleanup increases the database access latency, so this should
+not be run more often than necessary.
+
+In addition, the postscreen_cache_retention_time (default: 1d)
+parameter specifies how long to keep an expired entry in the cache.
+This prevents a client from being logged as "NEW" after its record
+expired only a little while ago.
+
+[Feature 20091008] Prototype postscreen(8) server that runs a number
+of time-consuming checks in parallel for all incoming SMTP connections,
+before clients are allowed to talk to a real Postfix SMTP server.
+It detects clients that start talking too soon, or clients that
+appear on DNS blocklists, or clients that hang up without sending
+any command.
+
+By doing these checks in a single postscreen(8) process, Postfix
+can avoid wasting one SMTP server process per connection. A side
+benefit of postscreen(8)'s DNSBL lookups is that DNS records are
+already cached before the Postfix SMTP server looks them up later.
+
+postscreen(8) maintains a temporary whitelist of positive decisions.
+Once an SMTP client is whitelisted, it is immediately forwarded to
+a real Postfix SMTP server process without further checking.
+
+By default, the program logs only statistics, and it does not run
+any checks on clients in mynetworks (primarily, to avoid problems
+with buggy SMTP implementations in network appliances).  The logging
+function alone is already useful for research.
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.48.2.3 2013/01/16 05:32:48 yamt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.48.2.4 2013/01/23 00:05:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -446,6 +446,19 @@
 #define	CPU_CSSR_L1		0x00000000
 #define	CPU_CSSR_InD		0x00000001
 
+/* ARMv7A CP15 Global Timer definitions */
+#define	CNTKCTL_PL0PTEN		0x00000200	/* PL0 Physical Timer Enable */
+#define	CNTKCTL_PL0VTEN		0x00000100	/* PL0 Virtual Timer Enable */
+#define	CNTKCTL_EVNTI		0x000000f0	/* CNTVCT Event Bit Select */
+#define	CNTKCTL_EVNTDIR		0x00000008	/* CNTVCT Event Dir (1->0) */
+#define	CNTKCTL_EVNTEN		0x00000004	/* CNTVCT Event Enable */
+#define	CNTKCTL_PL0PCTEN	0x00000200	/* PL0 Physical Counter Enable */
+#define	CNTKCTL_PL0VCTEN	0x00000100	/* PL0 Virtual Counter Enable */
+
+#define	CNT_CTL_ISTATUS		0x00000004	/* Timer is asserted */
+#define	CNT_CTL_IMASK		0x00000002	/* Timer output is masked */
+#define	CNT_CTL_ENABLE		0x00000001	/* Timer is enabled */
+
 /* Fault status register definitions */
 
 #define FAULT_TYPE_MASK 0x0f
@@ -559,6 +572,20 @@ static inline void armreg_##name##_write(uint32_t __val)	\
 	__asm __volatile("mcr " __insnstring :: "r"(__val));	\
 }
 
+#define	ARMREG_READ64_INLINE(name, __insnstring)		\
+static inline uint64_t armreg_##name##_read(void)		\
+{								\
+	uint64_t __rv;						\
+	__asm __volatile("mrrc " __insnstring : "=r"(__rv));	\
+	return __rv;						\
+}
+
+#define	ARMREG_WRITE64_INLINE(name, __insnstring)		\
+static inline void armreg_##name##_write(uint64_t __val)	\
+{								\
+	__asm __volatile("mcrr " __insnstring :: "r"(__val));	\
+}
+
 /* c0 registers */
 ARMREG_READ_INLINE(midr, "p15,0,%0,c0,c0,0") /* Main ID Register */
 ARMREG_READ_INLINE(ctr, "p15,0,%0,c0,c0,1") /* Cache Type Register */
@@ -628,11 +655,37 @@ ARMREG_READ_INLINE(pmovsr, "p15,0,%0,c9,c12,3") /* PMC Overflow Flag Status */
 ARMREG_WRITE_INLINE(pmovsr, "p15,0,%0,c9,c12,3") /* PMC Overflow Flag Status */
 ARMREG_READ_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
 ARMREG_WRITE_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
+ARMREG_READ_INLINE(pmuserenr, "p15,0,%0,c9,c14,0") /* PMC User Enable */
+ARMREG_WRITE_INLINE(pmuserenr, "p15,0,%0,c9,c14,0") /* PMC User Enable */
 /* c13 registers */
+ARMREG_READ_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
+ARMREG_WRITE_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
 ARMREG_READ_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
 ARMREG_WRITE_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
 ARMREG_READ_INLINE(cbar, "p15,4,%0,c15,c0,0")	/* Configuration Base Address Register */
-/* c13 registers */
+/* c14 registers */
+/* Global Timer Registers */
+ARMREG_READ_INLINE(cntfrq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
+ARMREG_WRITE_INLINE(cntfrq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
+ARMREG_READ_INLINE(cntkctl, "p15,0,%0,c14,c1,0") /* Timer PL1 Control Register */
+ARMREG_WRITE_INLINE(cntkctl, "p15,0,%0,c14,c1,0") /* Timer PL1 Control Register */
+ARMREG_READ_INLINE(cntp_tval, "p15,0,%0,c14,c2,0") /* PL1 Physical TimerValue Register */
+ARMREG_WRITE_INLINE(cntp_tval, "p15,0,%0,c14,c2,0") /* PL1 Physical TimerValue Register */
+ARMREG_READ_INLINE(cntp_ctl, "p15,0,%0,c14,c2,1") /* PL1 Physical Timer Control Register */
+ARMREG_WRITE_INLINE(cntp_ctl, "p15,0,%0,c14,c2,1") /* PL1 Physical Timer Control Register */
+ARMREG_READ_INLINE(cntv_tval, "p15,0,%0,c14,c3,0") /* Virtual TimerValue Register */
+ARMREG_WRITE_INLINE(cntv_tval, "p15,0,%0,c14,c3,0") /* Virtual TimerValue Register */
+ARMREG_READ_INLINE(cntv_ctl, "p15,0,%0,c14,c3,1") /* Virtual Timer Control Register */
+ARMREG_WRITE_INLINE(cntv_ctl, "p15,0,%0,c14,c3,1") /* Virtual Timer Control Register */
+ARMREG_READ64_INLINE(cntpct, "p15,0,%Q0,%R0,c14") /* Physical Count Register */
+ARMREG_WRITE64_INLINE(cntpct, "p15,0,%Q0,%R0,c14") /* Physical Count Register */
+ARMREG_READ64_INLINE(cntvct, "p15,1,%Q0,%R0,c14") /* Virtual Count Register */
+ARMREG_WRITE64_INLINE(cntvct, "p15,1,%Q0,%R0,c14") /* Virtual Count Register */
+ARMREG_READ64_INLINE(cntp_cval, "p15,2,%Q0,%R0,c14") /* PL1 Physical Timer CompareValue Register */
+ARMREG_WRITE64_INLINE(cntp_cval, "p15,2,%Q0,%R0,c14") /* PL1 Physical Timer CompareValue Register */
+ARMREG_READ64_INLINE(cntv_cval, "p15,3,%Q0,%R0,c14") /* PL1 Virtual Timer CompareValue Register */
+ARMREG_WRITE64_INLINE(cntv_cval, "p15,3,%Q0,%R0,c14") /* PL1 Virtual Timer CompareValue Register */
+/* c15 registers */
 ARMREG_READ_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
 ARMREG_WRITE_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
 ARMREG_READ_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6) */

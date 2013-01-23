@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.107.2.2 2012/10/30 17:21:11 yamt Exp $ */
+/* $NetBSD: vga.c,v 1.107.2.3 2013/01/23 00:06:06 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.107.2.2 2012/10/30 17:21:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.107.2.3 2013/01/23 00:06:06 yamt Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -111,23 +111,23 @@ static int vgaconsole, vga_console_type, vga_console_attached;
 static struct vgascreen vga_console_screen;
 static struct vga_config vga_console_vc;
 
-struct egavga_font *egavga_getfont(struct vga_config *, struct vgascreen *,
+static struct egavga_font *egavga_getfont(struct vga_config *, struct vgascreen *,
 				   const char *, int);
-void egavga_unreffont(struct vga_config *, struct egavga_font *);
+static void egavga_unreffont(struct vga_config *, struct egavga_font *);
 
-int vga_selectfont(struct vga_config *, struct vgascreen *, const char *,
+static int vga_selectfont(struct vga_config *, struct vgascreen *, const char *,
 				   const char *);
-void vga_init_screen(struct vga_config *, struct vgascreen *,
+static void vga_init_screen(struct vga_config *, struct vgascreen *,
 		     const struct wsscreen_descr *, int, long *);
-void vga_init(struct vga_config *, bus_space_tag_t, bus_space_tag_t);
+static void vga_init(struct vga_config *, bus_space_tag_t, bus_space_tag_t);
 static void vga_setfont(struct vga_config *, struct vgascreen *);
 
 static int vga_mapchar(void *, int, unsigned int *);
-void vga_putchar(void *, int, int, u_int, long);
+static void vga_putchar(void *, int, int, u_int, long);
 static int vga_allocattr(void *, int, int, int, long *);
 static void vga_copyrows(void *, int, int, int);
 #ifdef WSDISPLAY_SCROLLSUPPORT
-void vga_scroll (void *, void *, int);
+static void vga_scroll (void *, void *, int);
 #endif
 
 const struct wsdisplay_emulops vga_emulops = {
@@ -287,7 +287,10 @@ static int	vga_getborder(struct vga_config *, u_int *);
 static int	vga_setborder(struct vga_config *, u_int);
 #endif /* WSDISPLAY_CUSTOM_BORDER */
 
-void vga_doswitch(struct vga_config *);
+static void vga_doswitch(struct vga_config *);
+static void    vga_save_palette(struct vga_config *);
+static void    vga_restore_palette(struct vga_config *);
+
 
 const struct wsdisplay_accessops vga_accessops = {
 	vga_ioctl,
@@ -315,7 +318,7 @@ const struct wsdisplay_accessops vga_accessops = {
 	f->wsfont->encoding == WSDISPLAY_FONTENC_ISO7 || \
 	f->wsfont->encoding == WSDISPLAY_FONTENC_KOI8_R)
 
-struct egavga_font *
+static struct egavga_font *
 egavga_getfont(struct vga_config *vc, struct vgascreen *scr, const char *name,
 	       int primary)
 {
@@ -376,7 +379,7 @@ found:
 	return (f);
 }
 
-void
+static void
 egavga_unreffont(struct vga_config *vc, struct egavga_font *f)
 {
 
@@ -398,7 +401,7 @@ egavga_unreffont(struct vga_config *vc, struct egavga_font *f)
 	}
 }
 
-int
+static int
 vga_selectfont(struct vga_config *vc, struct vgascreen *scr, const char *name1,
 	       const char *name2)
 {
@@ -437,7 +440,7 @@ vga_selectfont(struct vga_config *vc, struct vgascreen *scr, const char *name1,
 	return (0);
 }
 
-void
+static void
 vga_init_screen(struct vga_config *vc, struct vgascreen *scr,
 		const struct wsscreen_descr *type, int existing, long *attrp)
 {
@@ -523,7 +526,7 @@ vga_init_screen(struct vga_config *vc, struct vgascreen *scr,
 	LIST_INSERT_HEAD(&vc->screens, scr, next);
 }
 
-void
+static void
 vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	struct vga_handle *vh = &vc->hdl;
@@ -775,7 +778,7 @@ vga_set_video(struct vga_config *vc, int state)
 	vga_ts_write(&vc->hdl, syncreset, 0x03);
 }
 
-int
+static int
 vga_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct vga_config *vc = v;
@@ -858,7 +861,7 @@ vga_mmap(void *v, void *vs, off_t offset, int prot)
 	return ((*vf->vf_mmap)(v, offset, prot));
 }
 
-int
+static int
 vga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		 int *curxp, int *curyp, long *defattrp)
 {
@@ -893,7 +896,7 @@ vga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	return (0);
 }
 
-void
+static void
 vga_free_screen(void *v, void *cookie)
 {
 	struct vgascreen *vs = cookie;
@@ -973,7 +976,7 @@ vga_setfont(struct vga_config *vc, struct vgascreen *scr)
 	}
 }
 
-int
+static int
 vga_show_screen(void *v, void *cookie, int waitok,
 		void (*cb)(void *, int, int), void *cbarg)
 {
@@ -998,7 +1001,7 @@ vga_show_screen(void *v, void *cookie, int waitok,
 	return (0);
 }
 
-void
+static void
 vga_doswitch(struct vga_config *vc)
 {
 	struct vgascreen *scr, *oldscr;
@@ -1452,7 +1455,7 @@ vga_mapchar(void *id, int uni, u_int *index)
 }
 
 #ifdef WSDISPLAY_SCROLLSUPPORT
-void
+static void
 vga_scroll(void *v, void *cookie, int lines)
 {
 	struct vga_config *vc = v;
@@ -1494,7 +1497,7 @@ vga_scroll(void *v, void *cookie, int lines)
 }
 #endif
 
-void
+static void
 vga_putchar(void *c, int row, int col, u_int uc, long attr)
 {
 
@@ -1550,7 +1553,7 @@ vga_resume(struct vga_softc *sc)
 #endif
 }
 
-void
+static void
 vga_save_palette(struct vga_config *vc)
 {
 	struct vga_handle *vh = &vc->hdl;
@@ -1568,7 +1571,7 @@ vga_save_palette(struct vga_config *vc)
 	vga_reset_state(vh);			/* reset flip/flop */
 }
 
-void
+static void
 vga_restore_palette(struct vga_config *vc)
 {
 	struct vga_handle *vh = &vc->hdl;

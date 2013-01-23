@@ -86,4 +86,5 @@ postqueue.o: ../../include/valid_mailhost_addr.h
 postqueue.o: ../../include/vbuf.h
 postqueue.o: ../../include/vstream.h
 postqueue.o: ../../include/vstring.h
+postqueue.o: ../../include/warn_stat.h
 postqueue.o: postqueue.c

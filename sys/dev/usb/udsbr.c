@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.18.8.1 2012/04/17 00:08:07 yamt Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.18.8.2 2013/01/23 00:06:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.18.8.1 2012/04/17 00:08:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.18.8.2 2013/01/23 00:06:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,8 @@ udsbr_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_no(dev, UDSBR_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, "setting config no failed\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
 

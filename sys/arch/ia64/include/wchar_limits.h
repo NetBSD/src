@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar_limits.h,v 1.2 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: wchar_limits.h,v 1.2.34.1 2013/01/23 00:05:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,5 +31,17 @@
 
 #ifndef _IA64_WCHAR_LIMITS_H_
 #define _IA64_WCHAR_LIMITS_H_
+
+/*
+ * 7.18.3 Limits of other integer types
+ */
+
+/* limits of wchar_t */
+#define	WCHAR_MIN	(-0x7fffffff-1)			/* wchar_t	  */
+#define	WCHAR_MAX	0x7fffffff			/* wchar_t	  */
+
+/* limits of wint_t */
+#define	WINT_MIN	(-0x7fffffff-1)			/* wint_t	  */
+#define	WINT_MAX	0x7fffffff			/* wint_t	  */
 
 #endif /* !_IA64_WCHAR_LIMITS_H_ */

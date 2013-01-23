@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.7.2.3 2013/01/16 05:32:46 yamt Exp $	*/
+/*	$NetBSD: pl310.c,v 1.7.2.4 2013/01/23 00:05:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.7.2.3 2013/01/16 05:32:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.7.2.4 2013/01/23 00:05:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -195,11 +195,14 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 }
 
 static inline void
-arml2cc_cache_op(struct arml2cc_softc *sc, bus_size_t off, uint32_t val)
+arml2cc_cache_op(struct arml2cc_softc *sc, bus_size_t off, uint32_t val,
+    bool wait)
 {
 	arml2cc_write_4(sc, off, val);
-	while (arml2cc_read_4(sc, off) & 1) {
-		/* spin */
+	if (wait) {
+		while (arml2cc_read_4(sc, off) & 1) {
+			/* spin */
+		}
 	}
 }
 
@@ -215,7 +218,7 @@ arml2cc_cache_way_op(struct arml2cc_softc *sc, bus_size_t off, uint32_t way_mask
 static inline void
 arml2cc_cache_sync(struct arml2cc_softc *sc)
 {
-	arml2cc_cache_op(sc, L2C_CACHE_SYNC, 0);
+	arml2cc_cache_op(sc, L2C_CACHE_SYNC, 0, true);
 }
 
 static inline void
@@ -294,7 +297,7 @@ arml2cc_cache_range_op(paddr_t pa, psize_t len, bus_size_t cache_op)
 			return;
 		}
 		for (paddr_t segend = pa + seglen; pa < segend; pa += line_size) {
-			arml2cc_cache_op(sc, cache_op, pa);
+			arml2cc_cache_op(sc, cache_op, pa, false);
 		}
 		mutex_spin_exit(&sc->sc_lock);
 	}
@@ -305,6 +308,7 @@ arml2cc_sdcache_inv_range(vaddr_t va, paddr_t pa, psize_t len)
 {
 	atomic_inc_64(&arml2cc_sc->sc_ev_inv.ev_count);
 	arml2cc_cache_range_op(pa, len, L2C_INV_PA);
+	arml2cc_cache_sync(arml2cc_sc);
 }
 
 static void
@@ -312,6 +316,7 @@ arml2cc_sdcache_wb_range(vaddr_t va, paddr_t pa, psize_t len)
 {
 	atomic_inc_64(&arml2cc_sc->sc_ev_wb.ev_count);
 	arml2cc_cache_range_op(pa, len, L2C_CLEAN_PA);
+	arml2cc_cache_sync(arml2cc_sc);
 }
 
 static void
@@ -319,4 +324,5 @@ arml2cc_sdcache_wbinv_range(vaddr_t va, paddr_t pa, psize_t len)
 {
 	atomic_inc_64(&arml2cc_sc->sc_ev_wbinv.ev_count);
 	arml2cc_cache_range_op(pa, len, L2C_CLEAN_INV_PA);
+	arml2cc_cache_sync(arml2cc_sc);
 }

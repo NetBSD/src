@@ -1,20 +1,14 @@
-# $NetBSD: std.cp3100,v 1.3 2009/01/05 05:53:06 briggs Exp $
+# $NetBSD: std.cp3100,v 1.3.14.1 2013/01/23 00:05:45 yamt Exp $
 #
 # Standard NetBSD/evbarm options for CP3100
 
 machine	evbarm arm
-include		"conf/std"      # MI standard options
-include		"arch/arm/conf/std.arm"	# arch standard options
+include 	"arch/evbarm/conf/std.evbarm"
 
 # Pull in CP3100 config definitions.
-include "arch/evbarm/conf/files.cp3100"
+include		"arch/evbarm/conf/files.cp3100"
 
-options 	EXEC_ELF32
 options 	EXEC_AOUT
-options 	EXEC_SCRIPT
-
-# To support easy transit to ../arch/arm/arm32
-options 	ARM32
 
 options         KERNEL_BASE_EXT=0xc0000000
 makeoptions	BOARDTYPE="cp3100"

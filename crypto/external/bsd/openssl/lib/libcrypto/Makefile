@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2012/10/30 18:47:26 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2013/01/23 00:04:08 yamt Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -115,5 +115,8 @@ SRCS+=rc5_skey.c i_skey.c mdc2dgst.c
 COPTS.eng_padlock.c = -Wno-stack-protector
 
 INCSDIR=/usr/include/openssl
+
+PKGCONFIG=libcrypto
+.include "${.CURDIR}/../../pkgconfig.mk"
 
 .include <bsd.lib.mk>

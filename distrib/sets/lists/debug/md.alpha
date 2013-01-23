@@ -1,0 +1,6 @@
+# $NetBSD: md.alpha,v 1.2.2.2 2013/01/23 00:04:19 yamt Exp $
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/lib/libalpha.so.0.0.debug	comp-sys-debug		debug
+./usr/libdata/debug/usr/mdec/mkbootimage.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/mdec/setnetbootinfo.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/bad144.debug	comp-sysutil-debug	debug

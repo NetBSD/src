@@ -82,7 +82,7 @@ OK
 >>> helo_restrictions permit_naked_ip_address,reject_invalid_hostname,reject_unknown_hostname
 OK
 >>> helo 123.123.123.123
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 OK
 >>> #
 >>> # Test the sender restrictions
@@ -317,73 +317,73 @@ OK
 >>> helo_restrictions permit_naked_ip_address,reject_non_fqdn_hostname
 OK
 >>> helo [1.2.3.4]
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 OK
 >>> helo [321.255.255.255]
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <[321.255.255.255]>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<[321.255.255.255]>
 501 5.5.2 <[321.255.255.255]>: Helo command rejected: invalid ip address
 >>> helo [0.255.255.255]
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <[0.255.255.255]>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<[0.255.255.255]>
 501 5.5.2 <[0.255.255.255]>: Helo command rejected: invalid ip address
 >>> helo [1.2.3.321]
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <[1.2.3.321]>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<[1.2.3.321]>
 501 5.5.2 <[1.2.3.321]>: Helo command rejected: invalid ip address
 >>> helo [1.2.3]
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <[1.2.3]>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<[1.2.3]>
 501 5.5.2 <[1.2.3]>: Helo command rejected: invalid ip address
 >>> helo [1.2.3.4.5]
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <[1.2.3.4.5]>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<[1.2.3.4.5]>
 501 5.5.2 <[1.2.3.4.5]>: Helo command rejected: invalid ip address
 >>> helo [1..2.3.4]
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <[1..2.3.4]>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<[1..2.3.4]>
 501 5.5.2 <[1..2.3.4]>: Helo command rejected: invalid ip address
 >>> helo [.1.2.3.4]
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <[.1.2.3.4]>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<[.1.2.3.4]>
 501 5.5.2 <[.1.2.3.4]>: Helo command rejected: invalid ip address
 >>> helo [1.2.3.4.5.]
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <[1.2.3.4.5.]>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<[1.2.3.4.5.]>
 501 5.5.2 <[1.2.3.4.5.]>: Helo command rejected: invalid ip address
 >>> helo 1.2.3.4
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 OK
 >>> helo 321.255.255.255
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <321.255.255.255>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<321.255.255.255>
 501 5.5.2 <321.255.255.255>: Helo command rejected: invalid ip address
 >>> helo 0.255.255.255
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <0.255.255.255>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<0.255.255.255>
 501 5.5.2 <0.255.255.255>: Helo command rejected: invalid ip address
 >>> helo 1.2.3.321
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <1.2.3.321>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<1.2.3.321>
 501 5.5.2 <1.2.3.321>: Helo command rejected: invalid ip address
 >>> helo 1.2.3
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <1.2.3>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<1.2.3>
 501 5.5.2 <1.2.3>: Helo command rejected: invalid ip address
 >>> helo 1.2.3.4.5
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <1.2.3.4.5>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<1.2.3.4.5>
 501 5.5.2 <1.2.3.4.5>: Helo command rejected: invalid ip address
 >>> helo 1..2.3.4
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <1..2.3.4>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<1..2.3.4>
 501 5.5.2 <1..2.3.4>: Helo command rejected: invalid ip address
 >>> helo .1.2.3.4
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <.1.2.3.4>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<.1.2.3.4>
 501 5.5.2 <.1.2.3.4>: Helo command rejected: invalid ip address
 >>> helo 1.2.3.4.5.
-./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks instead
+./smtpd_check: warning: restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or permit_sasl_authenticated instead
 ./smtpd_check: <queue id>: reject: HELO from foo[131.155.210.17]: 501 5.5.2 <1.2.3.4.5.>: Helo command rejected: invalid ip address; from=<foo> proto=SMTP helo=<1.2.3.4.5.>
 501 5.5.2 <1.2.3.4.5.>: Helo command rejected: invalid ip address
 >>> #

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.14.6.3 2012/05/23 10:07:48 yamt Exp $ */
+/* $NetBSD: main.c,v 1.14.6.4 2013/01/23 00:05:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ static int parse_cmdline(char **, int, char *, char *);
 static int is_space(char);
 #ifdef DEBUG
 static void sat_test(void);
+static void findflash(void);
 #endif
 
 #define	BNAME_DEFAULT "wd0:"
@@ -236,9 +237,18 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 			    n / 100);
 		if (tstchar()) {
 #ifdef DEBUG
-			if (toupper(getchar()) == 'C') {
+			unsigned c;
+
+			c = toupper(getchar());
+			if (c == 'C') {
 				/* controller test terminal */
 				sat_test();
+				n = 200;
+				continue;
+			}
+			else if (c == 'F') {
+				/* find strings in Flash ROM */
+				findflash();
 				n = 200;
 				continue;
 			}
@@ -664,6 +674,40 @@ is_space(char c)
 }
 
 #ifdef DEBUG
+static void
+findflash(void)
+{
+	char buf[256];
+	int i, n;
+	unsigned char c, *p;
+
+	for (;;) {
+		printf("\nfind> ");
+		gets(buf);
+		if (tolower((unsigned)buf[0]) == 'x')
+			break;
+		for (i = 0, n = 0, c = 0; buf[i]; i++) {
+			c <<= 4;
+			c |= hex2nibble(buf[i]);
+			if (i & 1)
+				buf[n++] = c;
+		}
+		printf("Searching for:");
+		for (i = 0; i < n; i++)
+			printf(" %02x", buf[i]);
+		printf("\n");
+		for (p = (unsigned char *)0xff000000;
+		     p <= (unsigned char *)(0xffffffff-n); p++) {
+			for (i = 0; i < n; i++) {
+				if (p[i] != buf[i])
+					break;
+			}
+			if (i >= n)
+				printf("Found at %08x\n", (unsigned)p);
+		}
+	}
+}
+
 static void
 sat_test(void)
 {

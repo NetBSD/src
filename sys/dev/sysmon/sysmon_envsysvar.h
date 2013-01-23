@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.40.2.2 2012/10/30 17:22:03 yamt Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.40.2.3 2013/01/23 00:06:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -78,7 +78,6 @@ typedef struct sme_event {
 	struct sysmon_envsys	*see_sme;	/* device associated */
 	struct penvsys_state	see_pes;	/* our power envsys */
 	envsys_data_t		*see_edata;	/* our sensor data */
-	sysmon_envsys_lim_t	see_lims;	/* limit values */
 	int			see_type;	/* type of the event */
 	int			see_evstate;	/* state of prev event */
 	int			see_evvalue;	/* value of prev event */

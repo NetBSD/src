@@ -1,4 +1,4 @@
-/* $NetBSD: obio_mputmr.c,v 1.5.2.1 2012/10/30 17:19:07 yamt Exp $ */
+/* $NetBSD: obio_mputmr.c,v 1.5.2.2 2013/01/23 00:05:42 yamt Exp $ */
 
 /*
  * Based on omap_mputmr.c
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.5.2.1 2012/10/30 17:19:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.5.2.2 2013/01/23 00:05:42 yamt Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -121,8 +121,10 @@ __KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.5.2.1 2012/10/30 17:19:07 yamt Exp
 #include <arm/omap/omap2_obiovar.h>
 
 #include <arm/omap/omap2_mputmrvar.h>
-#include <arm/omap/omap2_mputmrreg.h>
 
+#if defined(OMAP_2430) || defined(OMAP_2420)
+#include <arm/omap/omap2_mputmrreg.h>
+#endif
 
 #include <arm/omap/omap2_reg.h>
 
@@ -233,9 +235,11 @@ obiomputmr_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
+#if defined(OMAP_2430) || defined(OMAP_2420)
 	/* Stop the timer from counting, but keep the timer module working. */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MPU_CNTL_TIMER,
 			  MPU_CLOCK_ENABLE);
+#endif
 
 	timer_factors tf;
 	calc_timer_factors(ints_per_sec, &tf);
@@ -261,6 +265,7 @@ obiomputmr_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
+#if defined(OMAP_2430) || defined(OMAP_2420)
 	/* Set the reload value. */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MPU_LOAD_TIMER, tf.reload);
 	/* Set the PTV and the other required bits and pieces. */
@@ -270,6 +275,7 @@ obiomputmr_attach(device_t parent, device_t self, void *aux)
 			    | MPU_AR
 			    | MPU_ST));
 	/* The clock is now running, but is not generating interrupts. */
+#endif
 }
 
 static const gptimer_instance_t *

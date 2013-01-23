@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.6 2010/11/03 22:34:24 dyoung Exp $   */
+/*	$NetBSD: uthum.c,v 1.6.8.1 2013/01/23 00:06:16 yamt Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -17,7 +17,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Driver for TEMPer and TEMPerHUM HID */
+/*
+ * Driver for TEMPer and TEMPerHUM HID
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.6.8.1 2013/01/23 00:06:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -36,10 +41,6 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 #include <dev/usb/hid.h>
-
-#ifdef USB_DEBUG
-#define UTHUM_DEBUG
-#endif
 
 #ifdef UTHUM_DEBUG
 int	uthumdebug = 0;
@@ -114,7 +115,7 @@ extern struct cfdriver uthum_cd;
 CFATTACH_DECL_NEW(uthum, sizeof(struct uthum_softc), uthum_match, uthum_attach,
     uthum_detach, uthum_activate);
 
-int 
+int
 uthum_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -124,7 +125,7 @@ uthum_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 uthum_attach(device_t parent, device_t self, void *aux)
 {
 	struct uthum_softc *sc = device_private(self);
@@ -214,7 +215,7 @@ uthum_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("uthum_attach: complete\n"));
 }
 
-int 
+int
 uthum_detach(device_t self, int flags)
 {
 	struct uthum_softc *sc = device_private(self);

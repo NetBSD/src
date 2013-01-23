@@ -46,7 +46,8 @@ struct ipv6_addr {
 	uint32_t prefix_vltime;
 	uint32_t prefix_pltime;
 	struct in6_addr addr;
-	int new;
+	uint8_t onlink;
+	uint8_t new;
 	char saddr[INET6_ADDRSTRLEN];
 };
 

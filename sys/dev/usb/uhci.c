@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.2.2 2012/10/30 17:22:08 yamt Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.2.3 2013/01/23 00:06:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,9 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.2.2 2012/10/30 17:22:08 yamt Exp $");
-
-#include "opt_usb.h"
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.2.3 2013/01/23 00:06:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -816,7 +814,7 @@ uhci_dump_td(uhci_soft_td_t *p)
 {
 	char sbuf[128], sbuf2[128];
 
-	
+
 	usb_syncmem(&p->dma, p->offs, sizeof(p->td),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	DPRINTFN(-1,("TD(%p) at %08lx = link=0x%08lx status=0x%08lx "
@@ -1651,7 +1649,8 @@ uhci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&uxfer->abort_task, uhci_timeout_task, ii->xfer);
+	usb_init_task(&uxfer->abort_task, uhci_timeout_task, ii->xfer,
+	    USB_TASKQ_MPSAFE);
 	usb_add_task(uxfer->xfer.pipe->device, &uxfer->abort_task,
 	    USB_TASKQ_HC);
 }
@@ -2675,7 +2674,7 @@ uhci_device_isoc_enter(usbd_xfer_handle xfer)
 			next = 0;
 		len = xfer->frlengths[i];
 		std->td.td_buffer = htole32(buf);
-		usb_syncmem(&xfer->dmabuf, offs, len, 
+		usb_syncmem(&xfer->dmabuf, offs, len,
 		    rd ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 		if (i == nframes - 1)
 			status |= UHCI_TD_IOC;
@@ -3024,7 +3023,7 @@ uhci_device_intr_done(usbd_xfer_handle xfer)
 	uhci_free_std_chain(sc, ii->stdstart, NULL);
 
 	isread = UE_GET_DIR(upipe->pipe.endpoint->edesc->bEndpointAddress) == UE_DIR_IN;
-	usb_syncmem(&xfer->dmabuf, 0, xfer->length, 
+	usb_syncmem(&xfer->dmabuf, 0, xfer->length,
 	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
 	/* XXX Wasteful. */
@@ -3108,7 +3107,7 @@ uhci_device_ctrl_done(usbd_xfer_handle xfer)
 		uhci_free_std_chain(sc, ii->stdstart->link.std, ii->stdend);
 
 	if (len) {
-		usb_syncmem(&xfer->dmabuf, 0, len, 
+		usb_syncmem(&xfer->dmabuf, 0, len,
 		    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	}
 	usb_syncmem(&upipe->u.ctl.reqdma, 0,

@@ -1,4 +1,4 @@
-# $NetBSD: md.acorn32,v 1.26 2011/07/19 15:59:51 dyoung Exp $
+# $NetBSD: md.acorn32,v 1.26.2.1 2013/01/23 00:04:13 yamt Exp $
 #./usr/include/acorn32/devmap.h		comp-c-include
 ./usr/include/acorn32				comp-c-include
 ./usr/include/acorn32/ansi.h			comp-c-include
@@ -16,7 +16,7 @@
 ./usr/include/acorn32/endian.h			comp-c-include
 ./usr/include/acorn32/endian_machdep.h		comp-c-include
 ./usr/include/acorn32/float.h			comp-c-include
-./usr/include/acorn32/fp.h			comp-c-include
+./usr/include/acorn32/fp.h			comp-obsolete		obsolete
 ./usr/include/acorn32/frame.h			comp-c-include
 ./usr/include/acorn32/ieee.h			comp-c-include
 ./usr/include/acorn32/ieeefp.h			comp-c-include
@@ -55,4 +55,3 @@
 ./usr/include/acorn32/vmparam.h			comp-c-include
 ./usr/include/acorn32/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
-./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug

@@ -1,4 +1,4 @@
-/*	$NetBSD: match_service.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: match_service.h,v 1.1.1.1.10.1 2013/01/23 00:05:03 yamt Exp $	*/
 
 #ifndef _MATCH_SERVICE_H_INCLUDED_
 #define _MATCH_SERVICE_H_INCLUDED_
@@ -16,6 +16,7 @@
  /* External interface. */
 
 extern ARGV *match_service_init(const char *);
+extern ARGV *match_service_init_argv(char **);
 extern int match_service_match(ARGV *, const char *);
 extern void match_service_free(ARGV *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: master.h,v 1.1.1.2 2011/03/02 19:32:20 tron Exp $	*/
+/*	$NetBSD: master.h,v 1.1.1.2.4.1 2013/01/23 00:05:04 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -66,9 +66,11 @@ typedef struct MASTER_SERV {
 #define MASTER_FLAG_CONDWAKE	(1<<2)	/* wake up if actually used */
 #define MASTER_FLAG_INETHOST	(1<<3)	/* endpoint name specifies host */
 #define MASTER_FLAG_LOCAL_ONLY	(1<<4)	/* no remote clients */
+#define MASTER_FLAG_LISTEN	(1<<5)	/* monitor this port */
 
 #define MASTER_THROTTLED(f)	((f)->flags & MASTER_FLAG_THROTTLE)
 #define MASTER_MARKED_FOR_DELETION(f) ((f)->flags & MASTER_FLAG_MARK)
+#define MASTER_LISTENING(f)	((f)->flags & MASTER_FLAG_LISTEN)
 
 #define MASTER_LIMIT_OK(limit, count) ((limit) == 0 || ((count) < (limit)))
 
@@ -137,7 +139,10 @@ extern void master_vars_init(void);
 extern MASTER_SERV *master_head;
 extern void master_start_service(MASTER_SERV *);
 extern void master_stop_service(MASTER_SERV *);
-extern void master_restart_service(MASTER_SERV *);
+extern void master_restart_service(MASTER_SERV *, int);
+
+#define DO_CONF_RELOAD	1	/* config files were reloaded */
+#define NO_CONF_RELOAD	0	/* no config file was reloaded */
 
  /*
   * master_events.c

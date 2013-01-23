@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.35.2.1 2012/04/17 00:02:39 yamt Exp $
+# $NetBSD: md.macppc,v 1.35.2.2 2013/01/23 00:04:15 yamt Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/macppc				comp-c-include
 ./usr/include/macppc/_G_config.h		comp-obsolete		obsolete
@@ -64,7 +64,3 @@
 ./usr/include/macppc/vmparam.h			comp-c-include
 ./usr/include/macppc/wchar_limits.h		comp-c-include
 ./usr/include/macppc/z8530var.h			comp-obsolete		obsolete
-./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug

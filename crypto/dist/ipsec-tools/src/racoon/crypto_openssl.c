@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.20.8.2 2013/01/16 05:25:55 yamt Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.20.8.3 2013/01/23 00:04:07 yamt Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -44,8 +44,8 @@
 /* get openssl/ssleay version number */
 #include <openssl/opensslv.h>
 
-#if !defined(OPENSSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x0090602fL)
-#error OpenSSL version 0.9.6 or later required.
+#if !defined(OPENSSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x0090813fL)
+#error OpenSSL version 0.9.8s or later required.
 #endif
 
 #include <openssl/pem.h>
@@ -91,12 +91,7 @@
 #endif
 #include "plog.h"
 
-/* 0.9.7 stuff? */
-#if OPENSSL_VERSION_NUMBER < 0x0090700fL
-typedef STACK_OF(GENERAL_NAME) GENERAL_NAMES;
-#else
 #define USE_NEW_DES_API
-#endif
 
 #define OpenSSL_BUG()	do { plog(LLV_ERROR, LOCATION, NULL, "OpenSSL function failed\n"); } while(0)
 
@@ -285,145 +280,6 @@ out:
 }
 
 /*
- * The following are derived from code in crypto/x509/x509_cmp.c
- * in OpenSSL0.9.7c:
- * X509_NAME_wildcmp() adds wildcard matching to the original
- * X509_NAME_cmp(), nocase_cmp() and nocase_spacenorm_cmp() are as is.
- */
-#include <ctype.h>
-/* Case insensitive string comparision */
-static int nocase_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
-{
-	int i;
-
-	if (a->length != b->length)
-		return (a->length - b->length);
-
-	for (i=0; i<a->length; i++)
-	{
-		int ca, cb;
-
-		ca = tolower(a->data[i]);
-		cb = tolower(b->data[i]);
-
-		if (ca != cb)
-			return(ca-cb);
-	}
-	return 0;
-}
-
-/* Case insensitive string comparision with space normalization 
- * Space normalization - ignore leading, trailing spaces, 
- *       multiple spaces between characters are replaced by single space  
- */
-static int nocase_spacenorm_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
-{
-	unsigned char *pa = NULL, *pb = NULL;
-	int la, lb;
-	
-	la = a->length;
-	lb = b->length;
-	pa = a->data;
-	pb = b->data;
-
-	/* skip leading spaces */
-	while (la > 0 && isspace(*pa))
-	{
-		la--;
-		pa++;
-	}
-	while (lb > 0 && isspace(*pb))
-	{
-		lb--;
-		pb++;
-	}
-
-	/* skip trailing spaces */
-	while (la > 0 && isspace(pa[la-1]))
-		la--;
-	while (lb > 0 && isspace(pb[lb-1]))
-		lb--;
-
-	/* compare strings with space normalization */
-	while (la > 0 && lb > 0)
-	{
-		int ca, cb;
-
-		/* compare character */
-		ca = tolower(*pa);
-		cb = tolower(*pb);
-		if (ca != cb)
-			return (ca - cb);
-
-		pa++; pb++;
-		la--; lb--;
-
-		if (la <= 0 || lb <= 0)
-			break;
-
-		/* is white space next character ? */
-		if (isspace(*pa) && isspace(*pb))
-		{
-			/* skip remaining white spaces */
-			while (la > 0 && isspace(*pa))
-			{
-				la--;
-				pa++;
-			}
-			while (lb > 0 && isspace(*pb))
-			{
-				lb--;
-				pb++;
-			}
-		}
-	}
-	if (la > 0 || lb > 0)
-		return la - lb;
-
-	return 0;
-}
-
-static int X509_NAME_wildcmp(const X509_NAME *a, const X509_NAME *b)
-{
-    int i,j;
-    X509_NAME_ENTRY *na,*nb;
-
-    if (sk_X509_NAME_ENTRY_num(a->entries)
-	!= sk_X509_NAME_ENTRY_num(b->entries))
-	    return sk_X509_NAME_ENTRY_num(a->entries)
-	      -sk_X509_NAME_ENTRY_num(b->entries);
-    for (i=sk_X509_NAME_ENTRY_num(a->entries)-1; i>=0; i--)
-    {
-	    na=sk_X509_NAME_ENTRY_value(a->entries,i);
-	    nb=sk_X509_NAME_ENTRY_value(b->entries,i);
-	    j=OBJ_cmp(na->object,nb->object);
-	    if (j) return(j);
-	    if ((na->value->length == 1 && na->value->data[0] == '*')
-	     || (nb->value->length == 1 && nb->value->data[0] == '*'))
-		    continue;
-	    j=na->value->type-nb->value->type;
-	    if (j) return(j);
-	    if (na->value->type == V_ASN1_PRINTABLESTRING)
-		    j=nocase_spacenorm_cmp(na->value, nb->value);
-	    else if (na->value->type == V_ASN1_IA5STRING
-		    && OBJ_obj2nid(na->object) == NID_pkcs9_emailAddress)
-		    j=nocase_cmp(na->value, nb->value);
-	    else
-		    {
-		    j=na->value->length-nb->value->length;
-		    if (j) return(j);
-		    j=memcmp(na->value->data,nb->value->data,
-			    na->value->length);
-		    }
-	    if (j) return(j);
-	    j=na->set-nb->set;
-	    if (j) return(j);
-    }
-
-    return(0);
-}
-
-/*
  * compare two subjectNames.
  * OUT:        0: equal
  *	positive:
@@ -435,16 +291,49 @@ eay_cmp_asn1dn(n1, n2)
 {
 	X509_NAME *a = NULL, *b = NULL;
 	caddr_t p;
+	char oneLine[512];
 	int i = -1;
+	int idx;
 
 	p = n1->v;
-	if (!d2i_X509_NAME(&a, (void *)&p, n1->l))
+	if (!d2i_X509_NAME(&a, (void *)&p, n1->l)) {
+		plog(LLV_ERROR, LOCATION, NULL, "eay_cmp_asn1dn: first dn not a dn");
 		goto end;
+	}
+	plog(LLV_DEBUG, LOCATION, NULL, "1st name: %s\n", X509_NAME_oneline(a, oneLine, sizeof(oneLine)));
 	p = n2->v;
-	if (!d2i_X509_NAME(&b, (void *)&p, n2->l))
+	if (!d2i_X509_NAME(&b, (void *)&p, n2->l)) {
+		plog(LLV_ERROR, LOCATION, NULL, "eay_cmp_asn1dn: second dn not a dn");
 		goto end;
+	}
+	plog(LLV_DEBUG, LOCATION, NULL, "2nd name: %s\n", X509_NAME_oneline(b, oneLine, sizeof(oneLine)));
 
-	i = X509_NAME_wildcmp(a, b);
+	/* handle wildcard: do not compare entry content but only entry object type */
+	for(idx = 0; idx < X509_NAME_entry_count(a); idx++) {
+		X509_NAME_ENTRY *ea = X509_NAME_get_entry(a, idx);
+		X509_NAME_ENTRY *eb = X509_NAME_get_entry(b, idx);
+		if (!eb) {	/* reached end of eb while still entries in ea, can not be equal... */
+			i = idx+1;
+			goto end;
+		}
+		if ((ea->value->length == 1 && ea->value->data[0] == '*') ||
+		    (eb->value->length == 1 && eb->value->data[0] == '*')) {
+	    		if (OBJ_cmp(ea->object,eb->object)) {
+				i = idx+1;
+				goto end;
+	    		}
+			/* OK: object type equals, we don't care for this entry anymore, so let's forget it... */
+			X509_NAME_delete_entry(a, idx);
+			X509_NAME_delete_entry(b, idx);
+			X509_NAME_ENTRY_free(ea);
+			X509_NAME_ENTRY_free(eb);
+			idx--;
+		}
+	}
+	if (X509_NAME_entry_count(a) == 0 && X509_NAME_entry_count(b) == 0)
+		i = 0;
+	else
+		i = X509_NAME_cmp(a, b);
 
     end:
 	if (a)
@@ -505,10 +394,8 @@ eay_check_x509cert(cert, CApath, CAfile, local)
 	if (csc == NULL)
 		goto end;
 	X509_STORE_CTX_init(csc, cert_ctx, x509, NULL);
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L
 	X509_STORE_CTX_set_flags (csc, X509_V_FLAG_CRL_CHECK);
 	X509_STORE_CTX_set_flags (csc, X509_V_FLAG_CRL_CHECK_ALL);
-#endif
 	error = X509_verify_cert(csc);
 	X509_STORE_CTX_free(csc);
 

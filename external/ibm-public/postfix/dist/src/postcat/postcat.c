@@ -1,4 +1,4 @@
-/*	$NetBSD: postcat.c,v 1.1.1.2 2010/06/17 18:06:58 tron Exp $	*/
+/*	$NetBSD: postcat.c,v 1.1.1.2.6.1 2013/01/23 00:05:06 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -106,6 +106,7 @@
 #include <msg_vstream.h>
 #include <vstring_vstream.h>
 #include <stringops.h>
+#include <warn_stat.h>
 
 /* Global library. */
 

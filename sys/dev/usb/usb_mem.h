@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.27.30.1 2012/04/17 00:08:09 yamt Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.27.30.2 2013/01/23 00:06:14 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -35,7 +35,7 @@ typedef struct usb_dma_block {
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;
         void *kaddr;
-        bus_dma_segment_t segs[1];
+        bus_dma_segment_t *segs;
         int nsegs;
         size_t size;
         size_t align;
@@ -45,13 +45,19 @@ typedef struct usb_dma_block {
 	LIST_ENTRY(usb_dma_block) next;
 } usb_dma_block_t;
 
-#define DMAADDR(dma, o) ((dma)->block->map->dm_segs[0].ds_addr + (dma)->offs + (o))
-#define KERNADDR(dma, o) \
-	((void *)((char *)(dma)->block->kaddr + (dma)->offs + (o)))
+#define USBMALLOC_MULTISEG	1
 
-usbd_status	usb_allocmem(usbd_bus_handle,size_t,size_t, usb_dma_t *);
+usbd_status	usb_allocmem(usbd_bus_handle, size_t, size_t, usb_dma_t *);
+usbd_status	usb_allocmem_flags(usbd_bus_handle, size_t, size_t, usb_dma_t *,
+			int);
 void		usb_freemem(usbd_bus_handle, usb_dma_t *);
 void		usb_syncmem(usb_dma_t *, bus_addr_t, bus_size_t, int ops);
+
+bus_addr_t	usb_dmaaddr(usb_dma_t *, unsigned int);
+
+#define DMAADDR(dma, o) usb_dmaaddr((dma), (o))
+#define KERNADDR(dma, o) \
+	((void *)((char *)(dma)->block->kaddr + (dma)->offs + (o)))
 
 struct extent;
 

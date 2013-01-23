@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2011/01/22 19:19:19 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.3.4.1 2013/01/23 00:05:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -39,6 +39,7 @@ static int command_quit(int argc, char *argv[]);
 
 extern char bootprog_name[];
 extern char bootprog_rev[];
+int skifs_dev_init(void);
 
 struct bootblk_command commands[] = {
 	COMMON_COMMANDS,

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.969.2.5 2013/01/16 05:26:03 yamt Exp $
+# $NetBSD: mi,v 1.969.2.6 2013/01/23 00:04:10 yamt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -201,6 +201,7 @@
 ./libexec					base-sys-root
 ./libexec/devpubd-hooks				base-sysutil-root
 ./libexec/devpubd-hooks/01-makedev		base-sysutil-root
+./libexec/devpubd-hooks/02-wedgenames		base-sysutil-root
 ./libexec/devpubd-run-hooks			base-sysutil-root
 ./libexec/dhcpcd-hooks				base-dhcpcd-root
 ./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root

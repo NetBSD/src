@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.73.2.1 2012/04/17 00:08:18 yamt Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.73.2.2 2013/01/23 00:06:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.73.2.1 2012/04/17 00:08:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.73.2.2 2013/01/23 00:06:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -779,7 +779,6 @@ cd9660_vget_internal(struct mount *mp, ino_t ino, struct vnode **vpp,
 			      imp->logical_block_size, NOCRED, 0, &bp);
 		if (error) {
 			vput(vp);
-			brelse(bp, 0);
 			printf("fhtovp: bread error %d\n",error);
 			return (error);
 		}

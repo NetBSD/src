@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.15.2.1 2012/04/17 00:07:26 yamt Exp $	*/
+/*	$NetBSD: mm.c,v 1.15.2.2 2013/01/23 00:06:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.15.2.1 2012/04/17 00:07:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.15.2.2 2013/01/23 00:06:04 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -113,11 +113,9 @@ static inline vaddr_t
 dev_mem_getva(paddr_t pa)
 {
 #ifdef __HAVE_MM_MD_CACHE_ALIASING
-	const vsize_t coloroff = trunc_page(pa) & ptoa(uvmexp.colormask);
-	const vaddr_t kva = uvm_km_alloc(kernel_map, PAGE_SIZE + coloroff,
-	    ptoa(uvmexp.ncolors), UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-
-	return kva + coloroff;
+	return uvm_km_alloc(kernel_map, PAGE_SIZE,
+	    atop(pa) & uvmexp.colormask,
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA | UVM_KMF_COLORMATCH);
 #else
 	return dev_mem_addr;
 #endif
@@ -127,10 +125,7 @@ static inline void
 dev_mem_relva(paddr_t pa, vaddr_t va)
 {
 #ifdef __HAVE_MM_MD_CACHE_ALIASING
-	const vsize_t coloroff = trunc_page(pa) & ptoa(uvmexp.colormask);
-	const vaddr_t origva = va - coloroff;
-
-	uvm_km_free(kernel_map, origva, PAGE_SIZE + coloroff, UVM_KMF_VAONLY);
+	uvm_km_free(kernel_map, va, PAGE_SIZE, UVM_KMF_VAONLY);
 #else
 	KASSERT(dev_mem_addr == va);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mypwd.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mypwd.h,v 1.1.1.1.10.1 2013/01/23 00:05:03 yamt Exp $	*/
 
 #ifndef _MYPWNAM_H_INCLUDED_
 #define _MYPWNAM_H_INCLUDED_
@@ -7,7 +7,7 @@
 /* NAME
 /*	mypwnam 3h
 /* SUMMARY
-/*	caching getpwnam()/getpwuid()
+/*	caching getpwnam_r()/getpwuid_r()
 /* SYNOPSIS
 /*	#include <mypwd.h>
 /* DESCRIPTION
@@ -27,6 +27,8 @@ struct mypasswd {
     char   *pw_shell;
 };
 
+extern int mypwnam_err(const char *, struct mypasswd **);
+extern int mypwuid_err(uid_t, struct mypasswd **);
 extern struct mypasswd *mypwnam(const char *);
 extern struct mypasswd *mypwuid(uid_t);
 extern void mypwfree(struct mypasswd *);

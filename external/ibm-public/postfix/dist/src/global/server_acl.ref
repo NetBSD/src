@@ -1,0 +1,18 @@
+> mynetworks=168.100.189.0/27
+> server_acl=permit_mynetworks,reject
+> address=168.100.189.2
+168.100.189.2: permit
+> mynetworks=!168.100.189.2,168.100.189.0/27
+> address=168.100.189.2
+168.100.189.2: reject
+> address=168.100.189.3
+168.100.189.3: permit
+> mynetworks=fail:1
+> address=168.100.189.4
+unknown: warning: fail:1: table lookup problem
+unknown: warning: server_acl: permit_mynetworks: mynetworks lookup error -- ignoring the remainder of this access list
+168.100.189.4: error
+> server_acl=fail:1,reject
+> address=168.100.189.2
+unknown: warning: server_acl: fail:1: table lookup error -- ignoring the remainder of this access list
+168.100.189.2: error

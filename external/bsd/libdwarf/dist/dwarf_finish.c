@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_finish.c,v 1.2 2010/02/22 11:01:29 darran Exp $	*/
+/*	$NetBSD: dwarf_finish.c,v 1.2.6.1 2013/01/23 00:04:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libdwarf/dwarf_finish.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/lib/libdwarf/dwarf_finish.c,v 1.2 2012/11/17 01:49:48 svnexp Exp $
  */
 
 #if HAVE_NBTOOL_CONFIG_H

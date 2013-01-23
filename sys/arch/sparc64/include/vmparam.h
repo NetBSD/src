@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.32 2010/11/14 13:33:23 uebayasi Exp $ */
+/*	$NetBSD: vmparam.h,v 1.32.8.1 2013/01/23 00:05:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -161,7 +161,12 @@
 #define VM_MAXUSER_ADDRESS32	((vaddr_t)(0x00000000ffffffffL&~PGOFSET))
 
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
+#ifdef __arch64__
+#define	VM_KERNEL_MEM_VA_START	((vaddr_t)0x100000000UL)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0x000007ffffffffffUL)
+#else
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERNEND)
+#endif
 
 #define VM_PHYSSEG_MAX          32       /* up to 32 segments */
 #define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH

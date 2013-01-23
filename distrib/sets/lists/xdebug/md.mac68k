@@ -1,0 +1,3 @@
+# $NetBSD: md.mac68k,v 1.1.2.2 2013/01/23 00:04:26 yamt Exp $
+./usr/libdata/debug/usr/X11R6/bin/Xmac68k.debug		-unknown-	x11,debug
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	x11,debug

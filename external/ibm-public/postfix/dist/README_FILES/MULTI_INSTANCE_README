@@ -492,8 +492,8 @@ Shared among all instances:
     $readme_directory.
 
   * Entries in /etc/passwd and /etc/group for the $mail_owner user and
-    $setgid_group group. The the $mail_owner user provides the mail system with
-    a protected (non-root) execution context. The $setgid_group group is used
+    $setgid_group group. The $mail_owner user provides the mail system with a
+    protected (non-root) execution context. The $setgid_group group is used
     exclusively to support the setgid postdrop(1) and postqueue(1) utilities
     (it mmuusstt nnoott be the primary group or secondary group of any users,
     including the $mail_owner user).

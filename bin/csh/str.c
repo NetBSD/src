@@ -1,4 +1,4 @@
-/* $NetBSD: str.c,v 1.13 2003/08/07 09:05:07 agc Exp $ */
+/* $NetBSD: str.c,v 1.13.54.1 2013/01/23 00:04:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: str.c,v 1.13 2003/08/07 09:05:07 agc Exp $");
+__RCSID("$NetBSD: str.c,v 1.13.54.1 2013/01/23 00:04:05 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ blk2short(char **src)
 }
 
 char **
-short2blk(Char **src)
+short2blk(Char *const *src)
 {
     char **dst, **sdst;
     size_t n;
@@ -125,7 +125,7 @@ str2short(const char *src)
 }
 
 char *
-short2str(Char *src)
+short2str(const Char *src)
 {
     static char *sdst = NULL;
     static size_t dstsize = 0;
@@ -155,7 +155,7 @@ short2str(Char *src)
 }
 
 Char *
-s_strcpy(Char *dst, Char *src)
+s_strcpy(Char *dst, const Char *src)
 {
     Char *sdst;
 
@@ -166,7 +166,7 @@ s_strcpy(Char *dst, Char *src)
 }
 
 Char *
-s_strncpy(Char *dst, Char *src, size_t n)
+s_strncpy(Char *dst, const Char *src, size_t n)
 {
     Char *sdst;
 
@@ -185,7 +185,7 @@ s_strncpy(Char *dst, Char *src, size_t n)
 }
 
 Char *
-s_strcat(Char *dst, Char *src)
+s_strcat(Char *dst, const Char *src)
 {
     short *sdst;
 
@@ -226,30 +226,30 @@ s_strncat(Char *dst, Char *src, size_t n)
 #endif
 
 Char *
-s_strchr(Char *str, int ch)
+s_strchr(const Char *str, int ch)
 {
     do
 	if (*str == ch)
-	    return (str);
+	    return __UNCONST(str);
     while (*str++);
     return (NULL);
 }
 
 Char *
-s_strrchr(Char *str, int ch)
+s_strrchr(const Char *str, int ch)
 {
-    Char *rstr;
+    const Char *rstr;
 
     rstr = NULL;
     do
 	if (*str == ch)
 	    rstr = str;
     while (*str++);
-    return (rstr);
+    return __UNCONST(rstr);
 }
 
 size_t
-s_strlen(Char *str)
+s_strlen(const Char *str)
 {
     size_t n;
 
@@ -259,7 +259,7 @@ s_strlen(Char *str)
 }
 
 int
-s_strcmp(Char *str1, Char *str2)
+s_strcmp(const Char *str1, const Char *str2)
 {
     for (; *str1 && *str1 == *str2; str1++, str2++)
 	continue;
@@ -279,7 +279,7 @@ s_strcmp(Char *str1, Char *str2)
 }
 
 int
-s_strncmp(Char *str1, Char *str2, size_t n)
+s_strncmp(const Char *str1, const Char *str2, size_t n)
 {
     if (n == 0)
 	return (0);
@@ -305,24 +305,26 @@ s_strncmp(Char *str1, Char *str2, size_t n)
 }
 
 Char *
-s_strsave(Char *s)
+s_strsave(const Char *s)
 {
-    Char *n, *p;
+    const Char *p;
+    Char *n;
 
     if (s == 0)
 	s = STRNULL;
     for (p = s; *p++;)
 	continue;
-    n = p = (Char *)xmalloc((size_t)((p - s) * sizeof(Char)));
-    while ((*p++ = *s++) != '\0')
+    p = n = xmalloc((size_t)((p - s) * sizeof(Char)));
+    while ((*n++ = *s++) != '\0')
 	continue;
-    return (n);
+    return __UNCONST(p);
 }
 
 Char *
-s_strspl(Char *cp, Char *dp)
+s_strspl(const Char *cp, const Char *dp)
 {
-    Char *ep, *p, *q;
+    Char *ep, *d;
+    const Char *p, *q;
 
     if (!cp)
 	cp = STRNULL;
@@ -332,34 +334,34 @@ s_strspl(Char *cp, Char *dp)
 	continue;
     for (q = dp; *q++;)
 	continue;
-    ep = (Char *)xmalloc((size_t)(((p - cp) + (q - dp) - 1) * sizeof(Char)));
-    for (p = ep, q = cp; (*p++ = *q++) != '\0';)
+    ep = xmalloc((size_t)(((p - cp) + (q - dp) - 1) * sizeof(Char)));
+    for (d = ep, q = cp; (*d++ = *q++) != '\0';)
 	continue;
-    for (p--, q = dp; (*p++ = *q++) != '\0';)
+    for (d--, q = dp; (*d++ = *q++) != '\0';)
 	continue;
     return (ep);
 }
 
 Char *
-s_strend(Char *cp)
+s_strend(const Char *cp)
 {
     if (!cp)
-	return (cp);
+	return __UNCONST(cp);
     while (*cp)
 	cp++;
-    return (cp);
+    return __UNCONST(cp);
 }
 
 Char *
-s_strstr(Char *s, Char *t)
+s_strstr(const Char *s, const Char *t)
 {
     do {
-	Char *ss = s;
-	Char *tt = t;
+	const Char *ss = s;
+	const Char *tt = t;
 
 	do
 	    if (*tt == '\0')
-		return (s);
+		return __UNCONST(s);
 	while (*ss++ == *tt++);
     } while (*s++ != '\0');
     return (NULL);
@@ -367,7 +369,7 @@ s_strstr(Char *s, Char *t)
 #endif				/* SHORT_STRINGS */
 
 char *
-short2qstr(Char *src)
+short2qstr(const Char *src)
 {
     static char *sdst = NULL;
     static size_t dstsize = 0;
@@ -383,6 +385,7 @@ short2qstr(Char *src)
     dst = sdst;
     edst = &dst[dstsize];
     while (*src) {
+
 	if (*src & QUOTE) {
 	    *dst++ = '\\';
 	    if (dst == edst) {
@@ -410,11 +413,11 @@ short2qstr(Char *src)
  * XXX: Should we worry about QUOTE'd chars?
  */
 char *
-vis_str(Char *cp)
+vis_str(const Char *cp)
 {
     static char *sdst = NULL;
     static size_t dstsize = 0;
-    Char *dp;
+    const Char *dp;
     size_t n;
 
     if (cp == NULL)

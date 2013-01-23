@@ -1,4 +1,4 @@
-/*	$NetBSD: get_addrs.c,v 1.10 2011/09/06 18:32:03 joerg Exp $	*/
+/*	$NetBSD: get_addrs.c,v 1.10.2.1 2013/01/23 00:06:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)get_addrs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_addrs.c,v 1.10 2011/09/06 18:32:03 joerg Exp $");
+__RCSID("$NetBSD: get_addrs.c,v 1.10.2.1 2013/01/23 00:06:40 yamt Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: get_addrs.c,v 1.10 2011/09/06 18:32:03 joerg Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <err.h>
 #include "talk_ctl.h"
 
 void
@@ -51,34 +52,30 @@ get_addrs(const char *my_machine_name, const char *his_machine_name)
 	struct servent *sp;
 
 	msg.pid = htonl(getpid());
-	/* look up the address of the local host */
-	hp = gethostbyname(my_machine_name);
-	if (hp == NULL) {
-		fprintf(stderr, "talk: %s: ", my_machine_name);
-		herror(NULL);
-		exit(1);
-	}
-	memmove((char *)&my_machine_addr, hp->h_addr, hp->h_length);
 	/*
-	 * If the callee is on-machine, just copy the
-	 * network address, otherwise do a lookup...
+	 * If the callee is on-machine, just use loopback
+	 * otherwise do a lookup...
 	 */
-	if (strcmp(his_machine_name, my_machine_name)) {
+	if (strcmp(his_machine_name, my_machine_name) != 0) {
+		/* look up the address of the local host */
+		hp = gethostbyname(my_machine_name);
+		if (hp == NULL)
+			errx(EXIT_FAILURE, "%s: %s", my_machine_name,
+			    hstrerror(h_errno));
+		memcpy(&my_machine_addr, hp->h_addr, sizeof(my_machine_addr));
 		hp = gethostbyname(his_machine_name);
-		if (hp == NULL) {
-			fprintf(stderr, "talk: %s: ", his_machine_name);
-			herror(NULL);
-			exit(1);
-		}
-		memmove((char *) &his_machine_addr, hp->h_addr, hp->h_length);
+		if (hp == NULL)
+			errx(EXIT_FAILURE, "%s: %s", his_machine_name,
+			    hstrerror(h_errno));
+		memcpy(&his_machine_addr, hp->h_addr, sizeof(his_machine_addr));
 	} else
-		his_machine_addr = my_machine_addr;
+		his_machine_addr.s_addr = my_machine_addr.s_addr =
+		    htonl(INADDR_LOOPBACK);
+
 	/* find the server's port */
 	sp = getservbyname("ntalk", "udp");
-	if (sp == 0) {
-		fprintf(stderr, "talk: %s/%s: service is not registered.\n",
+	if (sp == 0)
+		errx(EXIT_FAILURE, "%s/%s: service is not registered.\n",
 		     "ntalk", "udp");
-		exit(1);
-	}
 	daemon_port = sp->s_port;
 }

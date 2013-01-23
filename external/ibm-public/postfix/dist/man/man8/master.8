@@ -1,4 +1,4 @@
-.\"	$NetBSD: master.8,v 1.1.1.1 2009/06/23 10:08:34 tron Exp $
+.\"	$NetBSD: master.8,v 1.1.1.1.10.1 2013/01/23 00:04:57 yamt Exp $
 .\"
 .TH MASTER 8 
 .ad
@@ -132,7 +132,7 @@ invoked with the -D option.
 .IP "\fBinet_interfaces (all)\fR"
 The network interface addresses that this mail system receives
 mail on.
-.IP "\fBinet_protocols (ipv4)\fR"
+.IP "\fBinet_protocols (all)\fR"
 The Internet protocols Postfix will attempt to use when making
 or accepting connections.
 .IP "\fBimport_environment (see 'postconf -d' output)\fR"
@@ -172,7 +172,7 @@ $data_directory/master.lock, master lock file.
 qmgr(8), queue manager
 verify(8), address verification
 master(5), master.cf configuration file syntax
-postconf(5), main.cf configuration parameter syntax
+postconf(5), main.cf configuration file syntax
 syslogd(8), system logging
 .SH "LICENSE"
 .na

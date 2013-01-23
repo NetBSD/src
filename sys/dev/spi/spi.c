@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.6 2011/07/08 03:29:15 mrg Exp $ */
+/* $NetBSD: spi.c,v 1.6.2.1 2013/01/23 00:06:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.6 2011/07/08 03:29:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.6.2.1 2013/01/23 00:06:10 yamt Exp $");
 
 #include "locators.h"
 
@@ -276,6 +276,8 @@ spi_wait(struct spi_transfer *st)
 		cv_wait(&st->st_cv, &st->st_lock);
 	}
 	mutex_exit(&st->st_lock);
+	cv_destroy(&st->st_cv);
+	mutex_destroy(&st->st_lock);
 }
 
 void

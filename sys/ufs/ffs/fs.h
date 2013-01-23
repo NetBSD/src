@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.56.4.1 2012/05/23 10:08:18 yamt Exp $	*/
+/*	$NetBSD: fs.h,v 1.56.4.2 2013/01/23 00:06:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -703,12 +703,12 @@ struct ocg {
  * Determining the size of a file block in the file system.
  */
 #define	blksize(fs, ip, lbn) \
-	(((lbn) >= NDADDR || (ip)->i_size >= lblktosize(fs, (lbn) + 1)) \
+	(((lbn) >= UFS_NDADDR || (ip)->i_size >= lblktosize(fs, (lbn) + 1)) \
 	    ? (fs)->fs_bsize \
 	    : ((int32_t)fragroundup(fs, blkoff(fs, (ip)->i_size))))
 
 #define	sblksize(fs, size, lbn) \
-	(((lbn) >= NDADDR || (size) >= ((lbn) + 1) << (fs)->fs_bshift) \
+	(((lbn) >= UFS_NDADDR || (size) >= ((lbn) + 1) << (fs)->fs_bshift) \
 	  ? (fs)->fs_bsize \
 	  : ((int32_t)fragroundup(fs, blkoff(fs, (uint64_t)(size)))))
 

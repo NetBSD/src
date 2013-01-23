@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.69.2.1 2012/04/17 00:01:38 yamt Exp $	*/
+/*	$NetBSD: jobs.c,v 1.69.2.2 2013/01/23 00:04:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.69.2.1 2012/04/17 00:01:38 yamt Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.69.2.2 2013/01/23 00:04:05 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -249,15 +249,14 @@ SHELLPROC {
 
 
 #if JOBS
-int
-fgcmd(int argc, char **argv)
+static int
+do_fgcmd(const char *arg_ptr)
 {
 	struct job *jp;
 	int i;
 	int status;
 
-	nextopt("");
-	jp = getjob(*argptr, 0);
+	jp = getjob(arg_ptr, 0);
 	if (jp->jobctl == 0)
 		error("job not created under job control");
 	out1fmt("%s", jp->ps[0].cmd);
@@ -279,6 +278,20 @@ fgcmd(int argc, char **argv)
 	status = waitforjob(jp);
 	INTON;
 	return status;
+}
+
+int
+fgcmd(int argc, char **argv)
+{
+	nextopt("");
+	return do_fgcmd(*argptr);
+}
+
+int
+fgcmd_percent(int argc, char **argv)
+{
+	nextopt("");
+	return do_fgcmd(*argv);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: master_vars.c,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
+/*	$NetBSD: master_vars.c,v 1.1.1.1.10.1 2013/01/23 00:05:04 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -59,7 +59,6 @@ void    master_vars_init(void)
 {
     char   *path;
     static const CONFIG_STR_TABLE str_table[] = {
-	VAR_INET_PROTOCOLS, DEF_INET_PROTOCOLS, &var_inet_protocols, 1, 0,
 	VAR_MASTER_DISABLE, DEF_MASTER_DISABLE, &var_master_disable, 0, 0,
 	0,
     };

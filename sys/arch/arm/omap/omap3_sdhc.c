@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.2.2.3 2013/01/16 05:32:49 yamt Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.2.2.4 2013/01/23 00:05:43 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.2.2.3 2013/01/16 05:32:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.2.2.4 2013/01/23 00:05:43 yamt Exp $");
 
 #include "opt_omap.h"
 
@@ -139,9 +139,12 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t prop = device_properties(self);
 	uint32_t clkd, stat;
 	int error, timo, clksft, n;
+	bool support8bit = false;
 #ifdef TI_AM335X
 	size_t i;
 #endif
+
+	prop_dictionary_get_bool(prop, "8bit", &support8bit);
 
 	sc->sc.sc_dmat = oa->obio_dmat;
 	sc->sc.sc_dev = self;
@@ -150,8 +153,14 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags |= SDHC_FLAG_NO_LED_ON;
 	sc->sc.sc_flags |= SDHC_FLAG_RSP136_CRC;
 	sc->sc.sc_flags |= SDHC_FLAG_SINGLE_ONLY;
+	if (support8bit)
+		sc->sc.sc_flags |= SDHC_FLAG_8BIT_MODE;
 #ifdef TI_AM335X
 	sc->sc.sc_flags |= SDHC_FLAG_WAIT_RESET;
+	sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
+#endif
+#ifdef OMAP_3530
+	sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
 #endif
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = 96000;	/* 96MHZ */
@@ -216,8 +225,6 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 		     oa->obio_intr);
 		goto fail;
 	}
-	aprint_normal_dev(self, "interrupting on irq %d\n",
-	     oa->obio_intr);
 
 	error = sdhc_host_found(&sc->sc, sc->sc_bst, sc->sc_sdhc_bsh,
 	    oa->obio_size - OMAP3_SDMMC_SDHC_OFFSET);

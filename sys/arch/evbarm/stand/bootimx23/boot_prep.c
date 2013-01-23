@@ -1,4 +1,4 @@
-/* $Id: boot_prep.c,v 1.2.2.2 2013/01/16 05:32:56 yamt Exp $ */
+/* $Id: boot_prep.c,v 1.2.2.3 2013/01/23 00:05:46 yamt Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -39,15 +39,15 @@
 #include "common.h"
 
 /*
- * Initialize i.MX23 power, clock and DRAM.
+ * Initialize i.MX23 power, clocks and DRAM.
  */
 int
 _start(void)
 {
 
-	/* Make sure timer is running */
-	REG_WRITE(HW_DIGCTL_BASE + HW_DIGCTL_CTRL_CLR,
-		HW_DIGCTL_CTRL_XTAL24M_GATE);
+	/* Make sure timer is running. */
+	REG_WR(HW_DIGCTL_BASE + HW_DIGCTL_CTRL_CLR,
+	    HW_DIGCTL_CTRL_XTAL24M_GATE);
 
 	printf("\n\rBooting");
 
@@ -58,7 +58,6 @@ _start(void)
 	putchar('.');
 
 	pinctrl_prep();
-	delay_us(1000);
 	putchar('.');
 	
 	emi_prep();

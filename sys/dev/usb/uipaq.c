@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.16 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.16.8.1 2013/01/23 00:06:13 yamt Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.16 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.16.8.1 2013/01/23 00:06:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,8 +177,8 @@ uipaq_attach(device_t parent, device_t self, void *aux)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, UIPAQ_CONFIG_NO, 1);
 	if (err) {
-		aprint_error("\n%s: failed to set configuration, err=%s\n",
-		    devname, usbd_errstr(err));
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		goto bad;
 	}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21.6.1 2012/04/17 00:02:33 yamt Exp $
+#	$NetBSD: Makefile,v 1.21.6.2 2013/01/23 00:04:09 yamt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -62,7 +62,10 @@ TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 		0x00140000	netbsd-wd0
 .endif
 
+ALL_KERNELS?= "+"
 .for K G I R W in ${TARGETS}				# {
+.for configsel in ${ALL_KERNELS}			# {
+.if ${configsel} == "+" || ${configsel} == ${K}
 
 GZB${G}=	${DESTDIR}/usr/mdec/gzboot_${G}_${R}.bin
 
@@ -86,6 +89,8 @@ GZKERNELS+=	$K
 .endif
 KZ${K}+=	gzimg_${I}_flash_${R}.gz
 
+.endif
+.endfor							# }
 .endfor							# }
 
 .for K in ${GZKERNELS}

@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.36.4.2 2012/04/17 00:05:19 yamt Exp $	*/
+/*	$NetBSD: unvis.c,v 1.36.4.3 2013/01/23 00:05:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.36.4.2 2012/04/17 00:05:19 yamt Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.36.4.3 2013/01/23 00:05:22 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,7 +81,7 @@ __weak_alias(strnunvisx,_strnunvisx)
  * RFC 1866
  */
 static const struct nv {
-	const char *name;
+	char name[7];
 	uint8_t value;
 } nv[] = {
 	{ "AElig",	198 }, /* capital AE diphthong (ligature)  */
