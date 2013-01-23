@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.35 2012/06/22 06:15:18 sjg Exp $	*/
+/*	$NetBSD: makefs.c,v 1.36 2013/01/23 20:46:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.35 2012/06/22 06:15:18 sjg Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.36 2013/01/23 20:46:39 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: makefs.c,v 1.35 2012/06/22 06:15:18 sjg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "makefs.h"
 #include "mtree.h"
@@ -70,13 +71,15 @@ typedef struct {
 } fstype_t;
 
 static fstype_t fstypes[] = {
-	{ "ffs", ffs_prep_opts,	ffs_parse_opts,	ffs_cleanup_opts, ffs_makefs },
-	{ "cd9660", cd9660_prep_opts, cd9660_parse_opts, cd9660_cleanup_opts,
-	  cd9660_makefs},
-	{ "chfs", chfs_prep_opts, chfs_parse_opts, chfs_cleanup_opts,
-	  chfs_makefs },
-	{ "v7fs", v7fs_prep_opts, v7fs_parse_opts, v7fs_cleanup_opts,
-	  v7fs_makefs },
+#define ENTRY(name) { \
+	# name, name ## _prep_opts, name ## _parse_opts, \
+	name ## _cleanup_opts, name ## _makefs  \
+}
+	ENTRY(ffs),
+	ENTRY(cd9660),
+	ENTRY(chfs),
+	ENTRY(v7fs),
+	ENTRY(msdos),
 	{ .type = NULL	},
 };
 
@@ -301,14 +304,46 @@ main(int argc, char *argv[])
 int
 set_option(const option_t *options, const char *var, const char *val)
 {
-	int	i;
+	char *s;
+	size_t i;
+
+#define NUM(width) *(uint ## width ## _t *)options[i].value = \
+    (uint ## width ## _t)strsuftoll(options[i].desc, val, \
+    options[i].minimum, options[i].maximum); break
 
 	for (i = 0; options[i].name != NULL; i++) {
-		if (strcmp(options[i].name, var) != 0)
+		if (options[i].letter != var[0] || var[1] != '\0')
 			continue;
-		*options[i].value = (int)strsuftoll(options[i].desc, val,
-		    options[i].minimum, options[i].maximum);
-		return (1);
+		else if (strcmp(options[i].name, var) != 0)
+			continue;
+		switch (options[i].type) {
+		case OPT_BOOL:
+			*(bool *)options[i].value = 1;
+			break;
+		case OPT_STRARRAY:
+			strlcpy((void *)options[i].value, val, (size_t)
+			    options[i].maximum);
+			break;
+		case OPT_STRPTR:
+			if ((s = strdup(val)) == NULL)
+				err(1, NULL);
+			*(char **)options[i].value = s;
+			break;
+
+		case OPT_INT64:
+			NUM(64);
+		case OPT_INT32:
+			NUM(32);
+		case OPT_INT16:
+			NUM(16);
+		case OPT_INT8:
+			NUM(8);
+		default:
+			warnx("Unknown type %d in option %s", options[i].type,
+			    val);
+			return 0;
+		}
+		return 1;
 	}
 	warnx("Unknown option `%s'", var);
 	return (0);
