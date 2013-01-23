@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.2.6.1 2012/04/17 00:09:14 yamt Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.2.6.2 2013/01/23 00:06:36 yamt Exp $ */
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,9 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.2.6.1 2012/04/17 00:09:14 yamt Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.2.6.2 2013/01/23 00:06:36 yamt Exp $");
 
 #include <atf-c.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <time.h>
 #include <util.h>
 
 ATF_TC(dates);
@@ -92,11 +95,48 @@ ATF_TC_BODY(relative, tc)
 	ATF_CHECK(parsedate("+2 years", NULL, NULL) != -1);
 }
 
+ATF_TC(atsecs);
+
+ATF_TC_HEAD(atsecs, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test seconds past the epoch");
+}
+
+ATF_TC_BODY(atsecs, tc)
+{
+	int tzoff;
+
+	/* "@0" -> (time_t)0, regardless of timezone */
+	ATF_CHECK(parsedate("@0", NULL, NULL) == (time_t)0);
+	putenv(__UNCONST("TZ=Europe/Berlin"));
+	tzset();
+	ATF_CHECK(parsedate("@0", NULL, NULL) == (time_t)0);
+	putenv(__UNCONST("TZ=America/New_York"));
+	tzset();
+	ATF_CHECK(parsedate("@0", NULL, NULL) == (time_t)0);
+	tzoff = 0;
+	ATF_CHECK(parsedate("@0", NULL, &tzoff) == (time_t)0);
+	tzoff = 3600;
+	ATF_CHECK(parsedate("@0", NULL, &tzoff) == (time_t)0);
+	tzoff = -3600;
+	ATF_CHECK(parsedate("@0", NULL, &tzoff) == (time_t)0);
+
+	/* -1 or other negative numbers are not errors */
+	errno = 0;
+	ATF_CHECK(parsedate("@-1", NULL, &tzoff) == (time_t)-1 && errno == 0);
+	ATF_CHECK(parsedate("@-2", NULL, &tzoff) == (time_t)-2 && errno == 0);
+
+	/* junk is an error */
+	errno = 0;
+	ATF_CHECK(parsedate("@junk", NULL, NULL) == (time_t)-1 && errno != 0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, dates);
 	ATF_TP_ADD_TC(tp, times);
 	ATF_TP_ADD_TC(tp, relative);
+	ATF_TP_ADD_TC(tp, atsecs);
 
 	return atf_no_error();
 }

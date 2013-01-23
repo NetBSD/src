@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.14 2011/08/08 23:44:06 jakllsch Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.14.2.1 2013/01/23 00:06:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14 2011/08/08 23:44:06 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14.2.1 2013/01/23 00:06:01 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -63,7 +63,8 @@ MODULE(MODULE_CLASS_MISC, compat, NULL);
 int	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
 
 #ifdef COMPAT_16
-#if !(defined(__amd64__) && !defined(COMPAT_NETBSD32))
+#if !defined(__amd64__) || defined(COMPAT_NETBSD32)
+#define COMPAT_SIGCONTEXT
 extern char sigcode[], esigcode[];
 struct uvm_object *emul_netbsd_object;
 #endif
@@ -159,7 +160,7 @@ static const struct syscall_package compat_syscalls[] = {
 #endif
 
 #if defined(COMPAT_16)
-#if !(defined(__amd64__) && !defined(COMPAT_NETBSD32))
+#if defined(COMPAT_SIGCONTEXT)
 	{ SYS_compat_16___sigaction14, 0, (sy_call_t *)compat_16_sys___sigaction14 },
 	{ SYS_compat_16___sigreturn14, 0, (sy_call_t *)compat_16_sys___sigreturn14 },
 #endif
@@ -258,7 +259,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		ttcompatvec = ttcompat;
 #endif
 #ifdef COMPAT_16
-#if !(defined(__amd64__) && !defined(COMPAT_NETBSD32))
+#if defined(COMPAT_SIGCONTEXT)
 		KASSERT(emul_netbsd.e_sigobject == NULL);
 		rw_enter(&exec_lock, RW_WRITER);
 		emul_netbsd.e_sigcode = sigcode;
@@ -311,7 +312,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		}
 #endif
 #ifdef COMPAT_16
-#if !(defined(__amd64__) && !defined(COMPAT_NETBSD32))
+#if defined(COMPAT_SIGCONTEXT)
 		/*
 		 * The sigobject may persist if still in use, but
 		 * is reference counted so will die eventually.

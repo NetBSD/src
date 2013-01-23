@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusreg.h,v 1.2.12.1 2012/10/30 17:22:05 yamt Exp $	*/
+/*	$NetBSD: if_otusreg.h,v 1.2.12.2 2013/01/23 00:06:11 yamt Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
 
 #define AR_FW_INIT_ADDR			0x102800
 #define AR_FW_MAIN_ADDR			0x200000
-#define AR_USB_MODE_CTRL		0x1e1108
 
 /*
  * AR9170 MAC registers.
@@ -47,6 +46,7 @@
 #define AR_MAC_REG_BSSID_H		(AR_MAC_REG_BASE + 0x61c)
 #define AR_MAC_REG_GROUP_HASH_TBL_L	(AR_MAC_REG_BASE + 0x624)
 #define AR_MAC_REG_GROUP_HASH_TBL_H	(AR_MAC_REG_BASE + 0x628)
+#define AR_MAC_REG_RX_TIMEOUT		(AR_MAC_REG_BASE + 0x62c)
 #define AR_MAC_REG_BASIC_RATE		(AR_MAC_REG_BASE + 0x630)
 #define AR_MAC_REG_MANDATORY_RATE	(AR_MAC_REG_BASE + 0x634)
 #define AR_MAC_REG_RTS_CTS_RATE		(AR_MAC_REG_BASE + 0x638)
@@ -55,11 +55,57 @@
 #define AR_MAC_REG_RX_PE_DELAY		(AR_MAC_REG_BASE + 0x64c)
 #define AR_MAC_REG_DYNAMIC_SIFS_ACK	(AR_MAC_REG_BASE + 0x658)
 #define AR_MAC_REG_SNIFFER		(AR_MAC_REG_BASE + 0x674)
+#define	  AR_MAC_REG_SNIFFER_ENABLE_PROMISC	(1 << 0)
+#define   AR_MAC_REG_SNIFFER_HW_MIC_CHECK	0x02000000
+#define	  AR_MAC_REG_SNIFFER_DEFAULTS		0x02000000
+#define AR_MAC_REG_ENCRYPTION		(AR_MAC_REG_BASE + 0x678)
+#define   AR_MAC_REG_ENCRYPTION_RX_SOFTWARE	(1 << 3)
+#define   AR_MAC_REG_ENCRYPTION_DEFAULTS	0x00000070
+
+#define AR_MAC_REG_MISC_680		(AR_MAC_REG_BASE + 0x680)
+#define AR_MAC_REG_TX_UNDERRUN		(AR_MAC_REG_BASE + 0x688)
+
+#define AR_MAC_REG_FRAMETYPE_FILTER	(AR_MAC_REG_BASE + 0x68c)
+#define	  AR_MAC_REG_FTF_ASSOC_REQ		(1 << 0)
+#define	  AR_MAC_REG_FTF_ASSOC_RESP		(1 << 1)
+#define	  AR_MAC_REG_FTF_REASSOC_REQ		(1 << 2)
+#define	  AR_MAC_REG_FTF_REASSOC_RESP		(1 << 3)
+#define	  AR_MAC_REG_FTF_PRB_REQ		(1 << 4)
+#define	  AR_MAC_REG_FTF_PRB_RESP		(1 << 5)
+#define	  AR_MAC_REG_FTF_BIT6			(1 << 6)
+#define	  AR_MAC_REG_FTF_BIT7			(1 << 7)
+#define	  AR_MAC_REG_FTF_BEACON			(1 << 8)
+#define	  AR_MAC_REG_FTF_ATIM			(1 << 9)
+#define	  AR_MAC_REG_FTF_DEASSOC		(1 << 10)
+#define	  AR_MAC_REG_FTF_AUTH			(1 << 11)
+#define	  AR_MAC_REG_FTF_DEAUTH			(1 << 12)
+#define	  AR_MAC_REG_FTF_BIT13			(1 << 13)
+#define	  AR_MAC_REG_FTF_BIT14			(1 << 14)
+#define	  AR_MAC_REG_FTF_BIT15			(1 << 15)
+#define	  AR_MAC_REG_FTF_BAR			(1 << 24)
+#define	  AR_MAC_REG_FTF_BA			(1 << 25)
+#define	  AR_MAC_REG_FTF_PSPOLL			(1 << 26)
+#define	  AR_MAC_REG_FTF_RTS			(1 << 27)
+#define	  AR_MAC_REG_FTF_CTS			(1 << 28)
+#define	  AR_MAC_REG_FTF_ACK			(1 << 29)
+#define	  AR_MAC_REG_FTF_CFE			(1 << 30)
+#define	  AR_MAC_REG_FTF_CFE_ACK		(1 << 31)
+#define	  AR_MAC_REG_FTF_DEFAULTS		0x0700ffff
+#define	  AR_MAC_REG_FTF_MONITOR		0xfd00ffff
+//#define	  AR_MAC_REG_FTF_MONITOR		0xff00ffff
+
 #define AR_MAC_REG_ACK_EXTENSION	(AR_MAC_REG_BASE + 0x690)
 #define AR_MAC_REG_EIFS_AND_SIFS	(AR_MAC_REG_BASE + 0x698)
 #define AR_MAC_REG_BUSY			(AR_MAC_REG_BASE + 0x6e8)
 #define AR_MAC_REG_BUSY_EXT		(AR_MAC_REG_BASE + 0x6ec)
 #define AR_MAC_REG_SLOT_TIME		(AR_MAC_REG_BASE + 0x6f0)
+#define AR_MAC_REG_POWERMANAGEMENT	(AR_MAC_REG_BASE + 0x700)
+#define   AR_MAC_REG_POWERMGT_IBSS		0xe0
+#define	  AR_MAC_REG_POWERMGT_AP		0xa1
+#define	  AR_MAC_REG_POWERMGT_STA		0x02
+#define	  AR_MAC_REG_POWERMGT_AP_WDS		0x03
+#define	  AR_MAC_REG_POWERMGT_DEFAULTS		0x0f000000
+
 #define AR_MAC_REG_AC0_CW		(AR_MAC_REG_BASE + 0xb00)
 #define AR_MAC_REG_AC1_CW		(AR_MAC_REG_BASE + 0xb04)
 #define AR_MAC_REG_AC2_CW		(AR_MAC_REG_BASE + 0xb08)
@@ -68,26 +114,86 @@
 #define AR_MAC_REG_AC1_AC0_AIFS		(AR_MAC_REG_BASE + 0xb14)
 #define AR_MAC_REG_AC3_AC2_AIFS		(AR_MAC_REG_BASE + 0xb18)
 #define AR_MAC_REG_RETRY_MAX		(AR_MAC_REG_BASE + 0xb28)
+#define AR_MAC_REG_FCS_SELECT		(AR_MAC_REG_BASE + 0xbb0)
+#define	  AR_MAC_FCS_SWFCS			(1 << 0)
+#define	  AR_MAC_FCS_FIFO_PROT			(1 << 2)
+
 #define AR_MAC_REG_TXOP_NOT_ENOUGH_INDICATION	\
 					(AR_MAC_REG_BASE + 0xb30)
 #define AR_MAC_REG_AC1_AC0_TXOP		(AR_MAC_REG_BASE + 0xb44)
 #define AR_MAC_REG_AC3_AC2_TXOP		(AR_MAC_REG_BASE + 0xb48)
+
+#define AR_MAC_REG_AMPDU_FACTOR		(AR_MAC_REG_BASE + 0xb9c)
+#define AR_MAC_REG_AMPDU_DENSITY	(AR_MAC_REG_BASE + 0xba0)
+
+#define AR_MAC_REG_ACK_TABLE		(AR_MAC_REG_BASE + 0xc00)
+#define AR_MAC_REG_AMPDU_RX_THRESH	(AR_MAC_REG_BASE + 0xc50)
+
 #define AR_MAC_REG_OFDM_PHY_ERRORS	(AR_MAC_REG_BASE + 0xcb4)
 #define AR_MAC_REG_CCK_PHY_ERRORS	(AR_MAC_REG_BASE + 0xcb8)
+
+#define AR_MAC_REG_DMA			(AR_MAC_REG_BASE + 0xd30)
+#define   AR_MAC_REG_DMA_OFF			0
+#define   AR_MAC_REG_DMA_ENABLE			(1 << 8)
+
+#define AR_MAC_REG_TXRX_MPI		(AR_MAC_REG_BASE + 0xd7c)
+#define	  AR_MAC_TXRX_MPI_TX_MPI_MASK		0x0000000f
+#define	  AR_MAC_TXRX_MPI_TX_TO_MASK		0x0000fff0
+#define	  AR_MAC_TXRX_MPI_RX_MPI_MASK		0x000f0000
+#define	  AR_MAC_TXRX_MPI_RX_TO_MASK		0xfff00000
+
+#define AR_MAC_REG_BCN_ADDR		(AR_MAC_REG_BASE + 0xd84)
+#define AR_MAC_REG_BCN_LENGTH		(AR_MAC_REG_BASE + 0xd88)
+#define AR_MAC_REG_BCN_PLCP		(AR_MAC_REG_BASE + 0xd90)
+#define AR_MAC_REG_BCN_CTRL		(AR_MAC_REG_BASE + 0xd94)
 #define AR_MAC_REG_BCN_HT1		(AR_MAC_REG_BASE + 0xda0)
+#define AR_MAC_REG_BCN_HT2		(AR_MAC_REG_BASE + 0xda4)
+
+/*
+ * GPIO register
+ */
+#define AR_GPIO_REG_BASE		0x1d0100
+#define AR_GPIO_REG_PORT_TYPE		(AR_GPIO_REG_BASE + 0)
+#define AR_GPIO_REG_DATA		(AR_GPIO_REG_BASE + 4)
+#define   AR_GPIO_REG_DATA_LED0_ON		(1 << 0)
+#define   AR_GPIO_REG_DATA_LED0_OFF		(0 << 0)
+#define   AR_GPIO_REG_DATA_LED1_ON		(1 << 1)
+#define   AR_GPIO_REG_DATA_LED1_OFF		(0 << 1)
+#define AR_NUM_LEDS				2
+
+/*
+ * Power register
+ */
+#define AR_PWR_REG_BASE			0x1d4000
+#define AR_PWR_REG_CLOCK_SEL		(AR_PWR_REG_BASE + 0x008)
+#define	  AR_PWR_CLK_AHB_40MHZ			0
+#define	  AR_PWR_CLK_AHB_20_22MHZ		1
+#define	  AR_PWR_CLK_AHB_40_44MHZ		2
+#define	  AR_PWR_CLK_AHB_80_88MHZ		3
+#define	  AR_PWR_CLK_DAC_160_INV_DLY		0x70
+
+/*
+ * USB register
+ */
+#define AR_USB_REG_BASE			0x1e1000
+#define AR_USB_REG_DMA_CTL		(AR_USB_REG_BASE + 0x108)
+#define   AR_USB_REG_DMA_CTL_ENABLE_TO_DEVICE		(1 << 0)
+#define	  AR_USB_REG_DMA_CTL_ENABLE_FROM_DEVICE		(1 << 1)
+#define	  AR_USB_REG_DMA_CTL_HIGH_SPEED			(1 << 2)
+#define	  AR_USB_REG_DMA_CTL_PACKET_MODE		(1 << 3)
+#define   AR_USB_REG_DMA_CTL_RX_STREAM_4K		(0 << 4)
+#define   AR_USB_REG_DMA_CTL_RX_STREAM_8K		(1 << 4)
+#define   AR_USB_REG_DMA_CTL_RX_STREAM_16K		(2 << 4)
+#define   AR_USB_REG_DMA_CTL_RX_STREAM_32K		(3 << 4)
+#define   AR_USB_REG_DMA_CTL_TX_STREAM_MODE		(1 << 6)
+
+#define AR_USB_REG_MAX_AGG_UPLOAD	(AR_USB_REG_BASE + 0x110)
+#define AR_USB_REG_UPLOAD_TIME_CTL	(AR_USB_REG_BASE + 0x114)
 
 /* Possible values for register AR_USB_MODE_CTRL. */
 #define AR_USB_DS_ENA		(1 << 0)
 #define AR_USB_US_ENA		(1 << 1)
 #define AR_USB_US_PACKET_MODE	(1 << 3)
-#define AR_USB_RX_STREAM_4K	(0 << 4)
-#define AR_USB_RX_STREAM_8K	(1 << 4)
-#define AR_USB_RX_STREAM_16K	(2 << 4)
-#define AR_USB_RX_STREAM_32K	(3 << 4)
-#define AR_USB_TX_STREAM_MODE	(1 << 6)
-
-#define AR_LED0_ON	(1 << 0)
-#define AR_LED1_ON	(1 << 1)
 
 /*
  * PHY registers.
@@ -418,4 +524,6 @@ typedef struct ar5416eeprom {
 	CAL_CTL_DATA		ctlData[AR5416_NUM_CTLS];
 	uint8_t			padding[3];
 } __packed AR5416_EEPROM;
+
 #endif /* _IF_OTUSREG_H_ */
+

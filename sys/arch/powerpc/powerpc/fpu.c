@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.31 2011/06/07 01:01:43 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.31.2.1 2013/01/23 00:05:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.31 2011/06/07 01:01:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.31.2.1 2013/01/23 00:05:56 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.31 2011/06/07 01:01:43 matt Exp $");
 #include <machine/psl.h>
 
 #ifdef PPC_HAVE_FPU
-static void fpu_state_load(lwp_t *, bool);
-static void fpu_state_save(lwp_t *);
-static void fpu_state_release(lwp_t *);
+static void fpu_state_load(lwp_t *, u_int);
+static void fpu_state_save(lwp_t *, u_int);
+static void fpu_state_release(lwp_t *, u_int);
 #endif
 
 const pcu_ops_t fpu_ops = {
@@ -76,7 +76,7 @@ fpu_mark_used(lwp_t *l)
 
 #ifdef PPC_HAVE_FPU
 void
-fpu_state_load(lwp_t *l, bool used)
+fpu_state_load(lwp_t *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
@@ -104,7 +104,7 @@ fpu_state_load(lwp_t *l, bool used)
  * Save the contents of the current CPU's FPU to its PCB.
  */
 void
-fpu_state_save(lwp_t *l)
+fpu_state_save(lwp_t *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
@@ -120,7 +120,7 @@ fpu_state_save(lwp_t *l)
 }
 
 void
-fpu_state_release(lwp_t *l)
+fpu_state_release(lwp_t *l, u_int flags)
 {
 	l->l_md.md_utf->tf_srr1 &= ~PSL_FP;
 }

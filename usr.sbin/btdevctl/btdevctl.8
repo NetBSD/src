@@ -1,4 +1,4 @@
-.\" $NetBSD: btdevctl.8,v 1.7 2010/10/12 21:49:08 wiz Exp $
+.\" $NetBSD: btdevctl.8,v 1.7.6.1 2013/01/23 00:06:41 yamt Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 11, 2010
+.Dd December 26, 2012
 .Dt BTDEVCTL 8
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@ The
 utility is used to configure bluetooth devices in the system.
 Normally,
 .Nm
-will perform  an SDP query to the remote device as needed, and
+will perform an SDP query to the remote device as needed, and
 cache the results in the
 .Pa /var/db/btdevctl.plist
 file for later use.
@@ -101,7 +101,7 @@ May be given as BDADDR or device name.
 Connection link mode.
 The following modes are supported:
 .Pp
-.Bl -tag -compact
+.Bl -tag -width encrypt -compact
 .It none
 clear previously set mode.
 .It auth
@@ -120,6 +120,8 @@ will set
 by default, or
 .Sq encrypt
 for keyboard devices.
+If the device cannot handle authentication, then the mode will need
+to be cleared manually.
 .It Fl q
 Ignore any cached data and perform a SDP query for the given
 .Ar service .

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.3.4.3 2013/01/16 05:32:28 yamt Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.3.4.4 2013/01/23 00:05:27 yamt Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -51,7 +51,7 @@
 
 /* maybe this should be !__NetBSD__ ? */
 #if defined(__linux__) || defined(__sun__) || defined(__FreeBSD__)	\
-    || defined(__DragonFly__)
+    || defined(__DragonFly__) || defined(__CYGWIN__)
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,8 +76,10 @@ getenv_r(const char *name, char *buf, size_t buflen)
 }
 #endif
 
-/* Solarisa 10 has memalign() but no posix_memalign() */
 #if defined(__sun__)
+#include <sys/sysmacros.h>
+
+/* Solarisa 10 has memalign() but no posix_memalign() */
 #include <stdlib.h>
 
 static inline int
@@ -103,7 +105,7 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #define _DIAGASSERT(_p_)
 #endif
 
-#if defined(__linux__) || defined(__sun__)
+#if defined(__linux__) || defined(__sun__) || defined(__CYGWIN__)
 #define SIN_SETLEN(a,b)
 #else /* BSD */
 #define SIN_SETLEN(_sin_, _len_) _sin_.sin_len = _len_
@@ -138,8 +140,9 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #define __UNCONST(_a_) ((void *)(unsigned long)(const void *)(_a_))
 #endif
 
-#if defined(__linux__) || defined(__sun__)
+#if defined(__linux__) || defined(__sun__) || defined (__CYGWIN__)
 #define arc4random() random()
+#define RUMPUSER_USE_RANDOM
 #endif
 
 #ifndef __NetBSD_Prereq__

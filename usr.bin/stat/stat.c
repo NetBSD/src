@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.36.2.1 2013/01/16 05:34:07 yamt Exp $ */
+/*	$NetBSD: stat.c,v 1.36.2.2 2013/01/23 00:06:40 yamt Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -31,11 +31,13 @@
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
+/* config checked libc, we need the prototype as well */
+#undef HAVE_DEVNAME
 #endif
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.36.2.1 2013/01/16 05:34:07 yamt Exp $");
+__RCSID("$NetBSD: stat.c,v 1.36.2.2 2013/01/23 00:06:40 yamt Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -607,9 +609,9 @@ format1(const struct stat *st,
 		sdata = (what == SHOW_st_dev) ?
 		    devname(st->st_dev, S_IFBLK) :
 		    devname(st->st_rdev, 
-		    S_ISCHR(st->st_mode) ? S_IFCHR :
-		    S_ISBLK(st->st_mode) ? S_IFBLK :
-		    0U);
+			S_ISCHR(st->st_mode) ? S_IFCHR :
+			S_ISBLK(st->st_mode) ? S_IFBLK :
+			0U);
 		if (sdata == NULL)
 			sdata = "???";
 #endif /* HAVE_DEVNAME */

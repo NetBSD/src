@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_masquerade.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: cleanup_masquerade.c,v 1.1.1.1.10.1 2013/01/23 00:05:00 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -80,7 +80,8 @@
 
 /* cleanup_masquerade_external - masquerade address external form */
 
-int     cleanup_masquerade_external(VSTRING *addr, ARGV *masq_domains)
+int     cleanup_masquerade_external(CLEANUP_STATE *state, VSTRING *addr,
+				            ARGV *masq_domains)
 {
     char   *domain;
     ssize_t domain_len;
@@ -110,6 +111,11 @@ int     cleanup_masquerade_external(VSTRING *addr, ARGV *masq_domains)
 	name = mystrndup(STR(addr), domain - 1 - STR(addr));
 	excluded = (string_list_match(cleanup_masq_exceptions, lowercase(name)) != 0);
 	myfree(name);
+	if (cleanup_masq_exceptions->error) {
+	    msg_info("%s: %s lookup error -- deferring delivery",
+		     state->queue_id, VAR_MASQ_EXCEPTIONS);
+	    state->errs |= CLEANUP_STAT_WRITE;
+	}
 	if (excluded)
 	    return (0);
     }
@@ -147,13 +153,14 @@ int     cleanup_masquerade_external(VSTRING *addr, ARGV *masq_domains)
 
 /* cleanup_masquerade_tree - masquerade address node */
 
-int     cleanup_masquerade_tree(TOK822 *tree, ARGV *masq_domains)
+int     cleanup_masquerade_tree(CLEANUP_STATE *state, TOK822 *tree,
+				        ARGV *masq_domains)
 {
     VSTRING *temp = vstring_alloc(100);
     int     did_rewrite;
 
     tok822_externalize(temp, tree->head, TOK822_STR_DEFL);
-    did_rewrite = cleanup_masquerade_external(temp, masq_domains);
+    did_rewrite = cleanup_masquerade_external(state, temp, masq_domains);
     tok822_free_tree(tree->head);
     tree->head = tok822_scan(STR(temp), &tree->tail);
 
@@ -163,13 +170,14 @@ int     cleanup_masquerade_tree(TOK822 *tree, ARGV *masq_domains)
 
 /* cleanup_masquerade_internal - masquerade address internal form */
 
-int     cleanup_masquerade_internal(VSTRING *addr, ARGV *masq_domains)
+int     cleanup_masquerade_internal(CLEANUP_STATE *state, VSTRING *addr,
+				            ARGV *masq_domains)
 {
     VSTRING *temp = vstring_alloc(100);
     int     did_rewrite;
 
     quote_822_local(temp, STR(addr));
-    did_rewrite = cleanup_masquerade_external(temp, masq_domains);
+    did_rewrite = cleanup_masquerade_external(state, temp, masq_domains);
     unquote_822_local(addr, STR(temp));
 
     vstring_free(temp);
@@ -192,13 +200,14 @@ int     main(int argc, char **argv)
 {
     VSTRING *addr;
     ARGV   *masq_domains;
+    CLEANUP_STATE state;
 
     if (argc != 4)
 	msg_fatal("usage: %s exceptions masquerade_list address", argv[0]);
 
     var_masq_exceptions = argv[1];
     cleanup_masq_exceptions =
-	string_list_init(MATCH_FLAG_NONE, var_masq_exceptions);
+	string_list_init(MATCH_FLAG_RETURN, var_masq_exceptions);
     masq_domains = argv_split(argv[2], " ,\t\r\n");
     addr = vstring_alloc(1);
     if (strchr(argv[3], '@') == 0)
@@ -210,9 +219,11 @@ int     main(int argc, char **argv)
     vstream_printf("masq_list:  %s\n", argv[2]);
     vstream_printf("address:    %s\n", argv[3]);
 
-    cleanup_masquerade_external(addr, masq_domains);
+    state.errs = 0;
+    cleanup_masquerade_external(&state, addr, masq_domains);
 
     vstream_printf("result:     %s\n", STR(addr));
+    vstream_printf("errs:       %d\n", state.errs);
     vstream_fflush(VSTREAM_OUT);
 
     vstring_free(addr);

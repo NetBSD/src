@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.22 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.22.44.1 2013/01/23 00:05:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.22 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.22.44.1 2013/01/23 00:05:33 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -288,7 +288,7 @@ upperbnd(ino_t start)
 {
 	struct entry *ep;
 
-	for ( ; start > ROOTINO; start--) {
+	for ( ; start > UFS_ROOTINO; start--) {
 		ep = lookupino(start);
 		if (ep == NULL || ep->e_type == NODE)
 			continue;

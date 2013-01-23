@@ -819,6 +819,9 @@ configure_interface1(struct interface *iface)
 
 	free(iface->clientid);
 	iface->clientid = NULL;
+	if (!(ifo->options & DHCPCD_IPV4))
+		return;
+
 	if (*ifo->clientid) {
 		iface->clientid = xmalloc(ifo->clientid[0] + 1);
 		memcpy(iface->clientid, ifo->clientid, ifo->clientid[0] + 1);
@@ -1206,6 +1209,8 @@ start_interface(void *arg)
 		start_static(iface);
 		return;
 	}
+	if (!(ifo->options & DHCPCD_IPV4))
+		return;
 	if (ifo->options & DHCPCD_INFORM) {
 		start_inform(iface);
 		return;

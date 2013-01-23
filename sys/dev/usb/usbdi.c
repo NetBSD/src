@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.133.2.3 2013/01/16 05:33:37 yamt Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.133.2.4 2013/01/23 00:06:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.133.2.3 2013/01/16 05:33:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.133.2.4 2013/01/23 00:06:16 yamt Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
-#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +177,7 @@ usbd_open_pipe_ival(usbd_interface_handle iface, u_int8_t address,
  found:
 	if ((flags & USBD_EXCLUSIVE_USE) && ep->refcnt != 0)
 		return (USBD_IN_USE);
-	err = usbd_setup_pipe(iface->device, iface, ep, ival, &p);
+	err = usbd_setup_pipe_flags(iface->device, iface, ep, ival, &p, flags);
 	if (err)
 		return (err);
 	LIST_INSERT_HEAD(&iface->pipes, p, next);
@@ -197,7 +198,8 @@ usbd_open_pipe_intr(usbd_interface_handle iface, u_int8_t address,
 	DPRINTFN(3,("usbd_open_pipe_intr: address=0x%x flags=0x%x len=%d\n",
 		    address, flags, len));
 
-	err = usbd_open_pipe_ival(iface, address, USBD_EXCLUSIVE_USE,
+	err = usbd_open_pipe_ival(iface, address,
+				  USBD_EXCLUSIVE_USE | (flags & USBD_MPSAFE),
 				  &ipipe, ival);
 	if (err)
 		return (err);
@@ -318,21 +320,24 @@ usbd_transfer(usbd_xfer_handle xfer)
 	if (err != USBD_IN_PROGRESS)
 		return (err);
 	usbd_lock_pipe(pipe);
-	if (!xfer->done) {
+	while (!xfer->done) {
 		if (pipe->device->bus->use_polling)
 			panic("usbd_transfer: not done");
 
+		err = 0;
 		if ((flags & USBD_SYNCHRONOUS_SIG) != 0) {
 			if (pipe->device->bus->lock)
-				cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
+				err = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
 			else
-				tsleep(xfer, PZERO|PCATCH, "usbsyn", 0);
+				err = tsleep(xfer, PZERO|PCATCH, "usbsyn", 0);
 		} else {
 			if (pipe->device->bus->lock)
 				cv_wait(&xfer->cv, pipe->device->bus->lock);
 			else
-				tsleep(xfer, PRIBIO, "usbsyn", 0);
+				err = tsleep(xfer, PRIBIO, "usbsyn", 0);
 		}
+		if (err)
+			break;
 	}
 	usbd_unlock_pipe(pipe);
 	return (xfer->status);
@@ -794,7 +799,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_ONQU) {
-		printf("usb_transfer_complete: xfer=%p not busy 0x%08x\n",
+		printf("usb_transfer_complete: xfer=%p not queued 0x%08x\n",
 		       xfer, xfer->busy_free);
 	}
 #endif
@@ -815,7 +820,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	    usbd_xfer_isread(xfer)) {
 #ifdef DIAGNOSTIC
 		if (xfer->actlen > xfer->length) {
-			printf("usb_transfer_complete: actlen > len %d > %d\n",
+			printf("%s: actlen (%d) > len (%d)\n", __func__,
 			       xfer->actlen, xfer->length);
 			xfer->actlen = xfer->length;
 		}
@@ -834,9 +839,13 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 	if (!repeat) {
 		/* Remove request from queue. */
+		
+		KASSERTMSG(!SIMPLEQ_EMPTY(&pipe->queue),
+		    "pipe %p is empty, but xfer %p wants to complete", pipe,
+		     xfer);
 #ifdef DIAGNOSTIC
 		if (xfer != SIMPLEQ_FIRST(&pipe->queue))
-			printf("usb_transfer_complete: bad dequeue %p != %p\n",
+			printf("%s: bad dequeue %p != %p\n", __func__,
 			       xfer, SIMPLEQ_FIRST(&pipe->queue));
 		xfer->busy_free = XFER_BUSY;
 #endif
@@ -861,7 +870,13 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		if (xfer->callback) {
 			if (pipe->device->bus->lock)
 				mutex_exit(pipe->device->bus->lock);
+
+			if (!(pipe->flags & USBD_MPSAFE))
+				KERNEL_LOCK(1, curlwp);
 			xfer->callback(xfer, xfer->priv, xfer->status);
+			if (!(pipe->flags & USBD_MPSAFE))
+				KERNEL_UNLOCK_ONE(curlwp);
+
 			if (pipe->device->bus->lock)
 				mutex_enter(pipe->device->bus->lock);
 		}
@@ -871,7 +886,13 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		if (xfer->callback) {
 			if (pipe->device->bus->lock)
 				mutex_exit(pipe->device->bus->lock);
+
+			if (!(pipe->flags & USBD_MPSAFE))
+				KERNEL_LOCK(1, curlwp);
 			xfer->callback(xfer, xfer->priv, xfer->status);
+			if (!(pipe->flags & USBD_MPSAFE))
+				KERNEL_UNLOCK_ONE(curlwp);
+
 			if (pipe->device->bus->lock)
 				mutex_enter(pipe->device->bus->lock);
 		}

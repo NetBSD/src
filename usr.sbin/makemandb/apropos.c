@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.6.2.3 2012/10/30 19:00:38 yamt Exp $	*/
+/*	$NetBSD: apropos.c,v 1.6.2.4 2013/01/23 00:06:43 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.6.2.3 2012/10/30 19:00:38 yamt Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.6.2.4 2013/01/23 00:06:43 yamt Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -68,9 +68,6 @@ __dead static void usage(void);
 int
 main(int argc, char *argv[])
 {
-#ifdef NOTYET
-	static const char *snippet_args[] = {"\033[1m", "\033[0m", "..."};
-#endif
 	query_args args;
 	char *query = NULL;	// the user query
 	char *errmsg = NULL;
@@ -175,12 +172,12 @@ main(int argc, char *argv[])
 	args.callback_data = &cbdata;
 	args.errmsg = &errmsg;
 
-#ifdef NOTYET
-	rc = run_query(db, snippet_args, &args);
-#else
-	rc = run_query_pager(db, &args);
-#endif
 
+	if (isatty(STDOUT_FILENO))
+		rc = run_query_term(db, &args);
+	else
+		rc = run_query_pager(db, &args);
+		
 	free(query);
 	close_db(db);
 	if (errmsg) {

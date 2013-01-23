@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.4.2.2 2013/01/16 05:32:52 yamt Exp $
+#	$NetBSD: N900,v 1.4.2.3 2013/01/23 00:05:44 yamt Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -168,7 +168,7 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # Specify the memory size in megabytes.
-options		MEMSIZE=256
+#options	MEMSIZE=256
 
 # L3 Interconnect
 L3i0		at mainbus?
@@ -309,3 +309,4 @@ pseudo-device	pty			# pseudo-terminals
 #options	RND_COM
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling

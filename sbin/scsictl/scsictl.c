@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.33.2.1 2013/01/16 05:32:34 yamt Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.33.2.2 2013/01/23 00:05:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.33.2.1 2013/01/16 05:32:34 yamt Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.33.2.2 2013/01/23 00:05:34 yamt Exp $");
 #endif
 
 
@@ -575,7 +575,7 @@ device_format(int argc, char *argv[])
 	}
 
 	scsi_command(fd, &cmd, sizeof(cmd), &dfl, sizeof(dfl),
-	    8 * 60 * 60 * 1000, 0);
+	    8 * 60 * 60 * 1000, SCCMD_WRITE);
 
 	/*
 	 * Poll device for completion of Format
@@ -588,7 +588,7 @@ device_format(int argc, char *argv[])
 			scsireq_t req;
 			struct scsi_test_unit_ready tcmd;
 
-			memset(&tcmd, 0, sizeof(cmd));
+			memset(&tcmd, 0, sizeof(tcmd));
 			tcmd.opcode = SCSI_TEST_UNIT_READY;
 
 			memset(&req, 0, sizeof(req));

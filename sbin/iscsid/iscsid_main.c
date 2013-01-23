@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_main.c,v 1.2.2.2 2012/10/30 18:59:28 yamt Exp $	*/
+/*	$NetBSD: iscsid_main.c,v 1.2.2.3 2013/01/23 00:05:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -621,13 +621,19 @@ main(int argc, char **argv)
 		/* no return path? then we can't send a reply, */
 		/* so don't process the command */
 		if (!from.sun_path[0]) {
+			if (req_temp)
+				free(req);
 			DEBOUT(("No Return Address!\n"));
 			continue;
 		}
 		/* process the request */
 		process_message(req, &rsp, &rsp_temp);
-		if (rsp == NULL)
-			break;
+		if (rsp == NULL) {
+			if (req_temp)
+				free(req);
+			DEBOUT(("Invalid message!\n"));
+			continue;
+		}
 
 		DEB(98, ("Sending reply: status %d, len %d\n",
 				rsp->status, rsp->parameter_length));

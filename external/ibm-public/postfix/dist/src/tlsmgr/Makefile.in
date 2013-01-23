@@ -87,4 +87,5 @@ tlsmgr.o: ../../include/vbuf.h
 tlsmgr.o: ../../include/vstream.h
 tlsmgr.o: ../../include/vstring.h
 tlsmgr.o: ../../include/vstring_vstream.h
+tlsmgr.o: ../../include/warn_stat.h
 tlsmgr.o: tlsmgr.c

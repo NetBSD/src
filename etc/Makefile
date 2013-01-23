@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.392.2.4 2013/01/16 05:26:13 yamt Exp $
+#	$NetBSD: Makefile,v 1.392.2.5 2013/01/23 00:04:29 yamt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -534,6 +534,7 @@ snap_post: .PHONY .MAKE build_kernelsets build_releasekernels
 # external sources (such as make(1)'s environment or command line)
 #
 ALL_KERNELS?=	${KERNEL_SETS} ${EXTRA_KERNELS} ${BUILD_KERNELS}
+.export ALL_KERNELS
 
 GETKERNELAWK=	${TOOL_AWK} '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
@@ -564,6 +565,8 @@ build_kernelsets: .PHONY
 #	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
 #
 .for configfile in ${KERNEL_SETS}					# {
+.for configsel in ${ALL_KERNELS}
+.if ${configfile} == ${configsel}
 build_kernelsets: kernset-${configfile}
 kernset-${configfile}: .PHONY build_kernels snap_pre
 	@ kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile}); \
@@ -591,6 +594,8 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 			done ) | eval $${pax_cmd}; \
 		} \
 	}
+.endif
+.endfor
 .endfor	# KERNEL_SETS							# }
 
 build_releasekernels: .PHONY
@@ -598,6 +603,8 @@ build_releasekernels: .PHONY
 #	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel
 #
 .for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}			# {
+.for configsel in ${ALL_KERNELS}
+.if ${configfile} == ${configsel}
 build_releasekernels: releasekern-${configfile}
 releasekern-${configfile}: .PHONY build_kernels snap_pre
 	@ kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}); \
@@ -616,6 +623,8 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 			done; \
 		done; \
 	}
+.endif
+.endfor
 .endfor	# KERNEL_SETS EXTRA_KERNELS					# }
 
 # snap_md_post --

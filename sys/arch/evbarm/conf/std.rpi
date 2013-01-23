@@ -1,18 +1,14 @@
-#	$NetBSD: std.rpi,v 1.2.4.2 2012/10/30 17:19:21 yamt Exp $
+#	$NetBSD: std.rpi,v 1.2.4.3 2013/01/23 00:05:45 yamt Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
 machine		evbarm arm
-include		"conf/std"	# MI standard options
+include 	"arch/evbarm/conf/std.evbarm"
 
 # Pull in Raspberry Pi config definitions.
-include "arch/evbarm/conf/files.rpi"
+include		"arch/evbarm/conf/files.rpi"
 
-options 	EXEC_ELF32
-options 	EXEC_SCRIPT
-
-# To support easy transit to ../arch/arm/arm32
-options 	ARM32
+options 	__HAVE_CPU_COUNTER
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	TPIDRPRW_IS_CURCPU

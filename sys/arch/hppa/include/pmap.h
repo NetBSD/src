@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30.2.1 2012/04/17 00:06:26 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.30.2.2 2013/01/23 00:05:48 yamt Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -118,13 +118,23 @@ static inline paddr_t hppa_unmap_poolpage(vaddr_t va)
  * according to the parisc manual aliased va's should be
  * different by high 12 bits only.
  */
-#define	PMAP_PREFER(o,h,s,td)	do {					\
-	vaddr_t pmap_prefer_hint;					\
-	pmap_prefer_hint = (*(h) & HPPA_PGAMASK) | ((o) & HPPA_PGAOFF);	\
-	if (pmap_prefer_hint < *(h))					\
-		pmap_prefer_hint += HPPA_PGALIAS;			\
-	*(h) = pmap_prefer_hint;					\
-} while(0)
+#define	PMAP_PREFER(o,h,s,td)	pmap_prefer((o), (h), (td))
+
+static inline void
+pmap_prefer(vaddr_t fo, vaddr_t *va, int td)
+{
+	vaddr_t newva;
+
+	newva = (*va & HPPA_PGAMASK) | (fo & HPPA_PGAOFF);
+	if (td) {
+		if (newva > *va)
+			newva -= HPPA_PGALIAS;
+	} else {
+		if (newva < *va)
+			newva += HPPA_PGALIAS;
+	}
+	*va = newva;
+}
 
 #define	pmap_sid2pid(s)			(((s) + 1) << 1)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)

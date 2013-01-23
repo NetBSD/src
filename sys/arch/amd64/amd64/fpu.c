@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.38.2.1 2012/10/30 17:18:43 yamt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.38.2.2 2013/01/23 00:05:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.38.2.1 2012/10/30 17:18:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.38.2.2 2013/01/23 00:05:37 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -194,6 +194,9 @@ fputrap(struct trapframe *frame)
 	 */
 	KASSERT(l == curlwp);
 	fxsave(sfp);
+	pcb->pcb_savefpu_i387.fp_ex_tw = sfp->fp_fxsave.fx_ftw;
+	pcb->pcb_savefpu_i387.fp_ex_sw = sfp->fp_fxsave.fx_fsw;
+
 	if (frame->tf_trapno == T_XMM) {
 		mxcsr = sfp->fp_fxsave.fx_mxcsr;
 		statbits = mxcsr;
@@ -209,8 +212,6 @@ fputrap(struct trapframe *frame)
 	}
 	KPREEMPT_ENABLE(l);
 
-	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
-	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGFPE;
 	ksi.ksi_addr = (void *)frame->tf_rip;

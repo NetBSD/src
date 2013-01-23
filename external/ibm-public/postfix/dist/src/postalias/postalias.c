@@ -1,4 +1,4 @@
-/*	$NetBSD: postalias.c,v 1.1.1.1 2009/06/23 10:08:51 tron Exp $	*/
+/*	$NetBSD: postalias.c,v 1.1.1.1.10.1 2013/01/23 00:05:05 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -123,6 +123,10 @@
 /* .IP \fBhash\fR
 /*	The output is a hashed file, named \fIfile_name\fB.db\fR.
 /*	This is available on systems with support for \fBdb\fR databases.
+/* .IP \fBfail\fR
+/*	A table that reliably fails all requests. The lookup table
+/*	name is used for logging only. This table exists to simplify
+/*	Postfix error tests.
 /* .IP \fBsdbm\fR
 /*	The output consists of two files, named \fIfile_name\fB.pag\fR and
 /*	\fIfile_name\fB.dir\fR.
@@ -231,6 +235,7 @@
 #include <split_at.h>
 #include <vstring_vstream.h>
 #include <set_eugid.h>
+#include <warn_stat.h>
 
 /* Global library. */
 
@@ -378,6 +383,9 @@ static void postalias(char *map_type, char *path_name, int postalias_flags,
 	 * Store the value under a case-insensitive key.
 	 */
 	mkmap_append(mkmap, STR(key_buffer), STR(value_buffer));
+	if (mkmap->dict->error)
+	    msg_fatal("table %s:%s: write error: %m",
+		      mkmap->dict->type, mkmap->dict->name);
     }
 
     /*
@@ -392,6 +400,9 @@ static void postalias(char *map_type, char *path_name, int postalias_flags,
      * sendmail.
      */
     mkmap_append(mkmap, "@", "@");
+    if (mkmap->dict->error)
+	msg_fatal("table %s:%s: write error: %m",
+		  mkmap->dict->type, mkmap->dict->name);
 
     /*
      * NIS compatibility: add time and master info. Unlike other information,
@@ -468,6 +479,9 @@ static int postalias_queries(VSTREAM *in, char **maps, const int map_count,
 		found = 1;
 		break;
 	    }
+	    if (dicts[n]->error)
+		msg_fatal("table %s:%s: query error: %m",
+			  dicts[n]->type, dicts[n]->name);
 	}
     }
     if (found)
@@ -503,6 +517,8 @@ static int postalias_query(const char *map_type, const char *map_name,
 	}
 	vstream_printf("%s\n", value);
     }
+    if (dict->error)
+	msg_fatal("table %s:%s: query error: %m", dict->type, dict->name);
     vstream_fflush(VSTREAM_OUT);
     dict_close(dict);
     return (value != 0);
@@ -544,9 +560,14 @@ static int postalias_deletes(VSTREAM *in, char **maps, const int map_count,
     /*
      * Perform all requests.
      */
-    while (vstring_get_nonl(keybuf, in) != VSTREAM_EOF)
-	for (n = 0; n < map_count; n++)
+    while (vstring_get_nonl(keybuf, in) != VSTREAM_EOF) {
+	for (n = 0; n < map_count; n++) {
 	    found |= (dict_del(dicts[n], STR(keybuf)) == 0);
+	    if (dicts[n]->error)
+		msg_fatal("table %s:%s: delete error: %m",
+			  dicts[n]->type, dicts[n]->name);
+	}
+    }
 
     /*
      * Cleanup.
@@ -575,6 +596,8 @@ static int postalias_delete(const char *map_type, const char *map_name,
 	open_flags = O_RDWR;
     dict = dict_open3(map_type, map_name, open_flags, dict_flags);
     status = dict_del(dict, key);
+    if (dict->error)
+	msg_fatal("table %s:%s: delete error: %m", dict->type, dict->name);
     dict_close(dict);
     return (status == 0);
 }
@@ -606,6 +629,8 @@ static void postalias_seq(const char *map_type, const char *map_name,
 	}
 	vstream_printf("%s:	%s\n", key, value);
     }
+    if (dict->error)
+	msg_fatal("table %s:%s: sequence error: %m", dict->type, dict->name);
     vstream_fflush(VSTREAM_OUT);
     dict_close(dict);
 }
@@ -670,6 +695,11 @@ int     main(int argc, char **argv)
 	argv[0] = slash + 1;
     msg_vstream_init(argv[0], VSTREAM_ERR);
     msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
+
+    /*
+     * Check the Postfix library version as soon as we enable logging.
+     */
+    MAIL_VERSION_CHECK;
 
     /*
      * Parse JCL.

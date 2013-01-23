@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.9.2.2 2012/10/30 17:19:19 yamt Exp $
+#	$NetBSD: BCM5301X,v 1.9.2.3 2013/01/23 00:05:44 yamt Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -283,3 +283,4 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	drvctl			# device control
+pseudo-device	lockstat		# lock profiling

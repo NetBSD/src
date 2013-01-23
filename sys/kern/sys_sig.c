@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.35.4.2 2012/10/30 17:22:35 yamt Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.35.4.3 2013/01/23 00:06:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.35.4.2 2012/10/30 17:22:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.35.4.3 2013/01/23 00:06:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -399,30 +399,33 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	 * again for this process.
 	 */
 	if (nsa != NULL) {
-		if (__predict_false(vers < 2) &&
-		    (p->p_lflag & PL_SIGCOMPAT) == 0) {
-			kernconfig_lock();
-			if (sendsig_sigcontext_vec == NULL) {
-				(void)module_autoload("compat",
-				    MODULE_CLASS_ANY);
-			}
-			if (sendsig_sigcontext_vec != NULL) {
-				/*
-				 * We need to remember if the
-				 * sigcontext method may be useable,
-				 * because libc may use it even
-				 * if siginfo is available.
-				 */
+		if (__predict_false(vers < 2)) {
+			if (p->p_flag & PK_32)
 				v0v1valid = true;
+			else if ((p->p_lflag & PL_SIGCOMPAT) == 0) {
+				kernconfig_lock();
+				if (sendsig_sigcontext_vec == NULL) {
+					(void)module_autoload("compat",
+					    MODULE_CLASS_ANY);
+				}
+				if (sendsig_sigcontext_vec != NULL) {
+					/*
+					 * We need to remember if the
+					 * sigcontext method may be useable,
+					 * because libc may use it even
+					 * if siginfo is available.
+					 */
+					v0v1valid = true;
+				}
+				mutex_enter(proc_lock);
+				/*
+				 * Prevent unload of compat module while
+				 * this process remains.
+				 */
+				p->p_lflag |= PL_SIGCOMPAT;
+				mutex_exit(proc_lock);
+				kernconfig_unlock();
 			}
-			mutex_enter(proc_lock);
-			/*
-			 * Prevent unload of compat module while
-			 * this process remains.
-			 */
-			p->p_lflag |= PL_SIGCOMPAT;
-			mutex_exit(proc_lock);
-			kernconfig_unlock();
 		}
 
 		switch (vers) {

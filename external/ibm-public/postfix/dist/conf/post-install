@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: post-install,v 1.1.1.2 2011/03/02 19:31:33 tron Exp $
+#	$NetBSD: post-install,v 1.1.1.2.4.1 2013/01/23 00:04:50 yamt Exp $
 #
 
 # To view the formatted manual page of this file, type:
@@ -792,6 +792,21 @@ EOF
 EOF
     }
 
+    # Postfix 2.9.
+    # Safety net for incompatible changes in IPv6 defaults.
+    # PLEASE DO NOT REMOVE THIS CODE. ITS PURPOSE IS TO AVOID AN
+    # UNEXPECTED DROP IN PERFORMANCE AFTER UPGRADING FROM POSTFIX
+    # BEFORE 2.9.
+    # This code assumes that the default is "inet_protocols = ipv4"
+    # when IPv6 support is not compiled in. See util/sys_defs.h.
+
+    test "`$POSTCONF -dh inet_protocols`" = "ipv4" ||
+	test -n "`$POSTCONF -c $config_directory -nh inet_protocols`" || {
+	echo COMPATIBILITY: editing main.cf, setting inet_protocols=ipv4.
+	echo Specify inet_protocols explicitly if you want to enable IPv6.
+	echo In a future release IPv6 will be enabled by default.
+	$POSTCONF -c $config_directory inet_protocols=ipv4 || exit 1
+    }
 }
 
 # A reminder if this is the first time Postfix is being installed.

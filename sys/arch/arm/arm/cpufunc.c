@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.103.4.4 2013/01/16 05:32:42 yamt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.103.4.5 2013/01/23 00:05:39 yamt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.103.4.4 2013/01/16 05:32:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.103.4.5 2013/01/23 00:05:39 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -3352,6 +3352,7 @@ void
 sheeva_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
+	uint32_t sheeva_ext;
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
@@ -3368,6 +3369,15 @@ sheeva_setup(char *args)
 #endif
 
 	cpuctrl = parse_cpu_options(args, sheeva_options, cpuctrl);
+
+	/* Enable DCache Streaming Switch and Write Allocate */
+	__asm volatile("mrc p15, 1, %0, c15, c1, 0"
+	    : "=r" (sheeva_ext));
+
+	sheeva_ext |= FC_DCACHE_STREAM_EN | FC_WR_ALLOC_EN;
+
+	__asm volatile("mcr p15, 1, %0, c15, c1, 0"
+	    :: "r" (sheeva_ext));
 
 	/*
 	 * Sheeva has L2 Cache.  Enable/Disable it here.

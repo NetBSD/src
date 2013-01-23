@@ -1,4 +1,4 @@
-/*	$NetBSD: efifsdev.h,v 1.1 2006/04/07 14:21:32 cherry Exp $	*/
+/*	$NetBSD: efifsdev.h,v 1.1.112.1 2013/01/23 00:05:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005
@@ -36,4 +36,5 @@ int efifs_read(struct open_file *, void *, size_t, size_t *);
 int efifs_write(struct open_file *, void *, size_t, size_t *);
 off_t efifs_seek(struct open_file *, off_t, int );
 int efifs_stat(struct open_file *, struct stat *);
+int efifs_readdir(struct open_file *f, struct dirent *d);
 

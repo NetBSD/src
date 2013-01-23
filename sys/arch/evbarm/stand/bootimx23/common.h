@@ -1,4 +1,4 @@
-/* $Id: common.h,v 1.2.2.2 2013/01/16 05:32:56 yamt Exp $ */
+/* $Id: common.h,v 1.2.2.3 2013/01/23 00:05:47 yamt Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,12 +32,12 @@
 #ifndef _BOOTIMX23_COMMON_
 #define _BOOTIMX23_COMMON_
 
-#define REG_READ(reg) *(volatile uint32_t *)(reg)
-#define REG_WRITE(reg, val)						\
+#define REG_RD(reg) *(volatile uint32_t *)(reg)
+#define REG_WR(reg, val)						\
 do {									\
 	*(volatile uint32_t *)((reg)) = val;				\
 } while (0)
-#define REG_WRITE_BYTE(reg, val)					\
+#define REG_WR_BYTE(reg, val)						\
 do {									\
 	*(volatile uint8_t *)((reg)) = val;				\
 } while (0)
@@ -46,7 +46,7 @@ int clock_prep(void);
 int emi_prep(void);
 int pinctrl_prep(void);
 int power_prep(void);
-void delay_us(unsigned int);
+void delay(unsigned int);
 void putchar(int);
 
 #endif /* !_BOOTIMX23_COMMON_ */

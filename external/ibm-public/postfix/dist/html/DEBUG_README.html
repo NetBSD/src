@@ -315,7 +315,7 @@ so that it invokes the call tracer of your choice, for example:
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#debugger_command">debugger_command</a> =
          PATH=/bin:/usr/bin:/usr/local/bin;
-         (truss -p $<a href="postconf.5.html#process_id">process_id</a> 2&gt&amp;1 | logger -p mail.info) &amp; sleep 5
+         (truss -p $<a href="postconf.5.html#process_id">process_id</a> 2&gt;&amp;1 | logger -p mail.info) &amp; sleep 5
 </pre>
 </blockquote>
 

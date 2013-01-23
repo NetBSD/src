@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.3.4.1 2012/04/17 00:03:09 yamt Exp $	*/
+/*	$NetBSD: funcs.c,v 1.3.4.2 2013/01/23 00:04:36 yamt Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: funcs.c,v 1.60 2011/12/08 12:38:24 rrt Exp $")
+FILE_RCSID("@(#)$File: funcs.c,v 1.61 2012/10/30 23:11:51 christos Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.3.4.1 2012/04/17 00:03:09 yamt Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.3.4.2 2013/01/23 00:04:36 yamt Exp $");
 #endif
 #endif	/* lint */
 
@@ -308,7 +308,7 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 protected int
 file_reset(struct magic_set *ms)
 {
-	if (ms->mlist == NULL) {
+	if (ms->mlist[0] == NULL) {
 		file_error(ms, 0, "no magic files loaded");
 		return -1;
 	}

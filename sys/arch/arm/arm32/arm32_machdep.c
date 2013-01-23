@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.76.2.2 2013/01/16 05:32:43 yamt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.76.2.3 2013/01/23 00:05:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.76.2.2 2013/01/16 05:32:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.76.2.3 2013/01/23 00:05:39 yamt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -177,7 +177,7 @@ halt(void)
 }
 
 
-/* Sync the discs and unmount the filesystems */
+/* Sync the discs, unmount the filesystems, and adjust the todr */
 
 void
 bootsync(void)
@@ -201,6 +201,8 @@ bootsync(void)
 	}
 
 	vfs_shutdown();
+
+	resettodr();
 }
 
 /*
@@ -370,7 +372,8 @@ parse_mi_bootargs(char *args)
 		if (integer)
 			boothowto |= RB_SINGLE;
 	if (get_bootconf_option(args, "kdb", BOOTOPT_TYPE_BOOLEAN, &integer)
-	    || get_bootconf_option(args, "-k", BOOTOPT_TYPE_BOOLEAN, &integer))
+	    || get_bootconf_option(args, "-k", BOOTOPT_TYPE_BOOLEAN, &integer)
+	    || get_bootconf_option(args, "-d", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= RB_KDB;
 	if (get_bootconf_option(args, "ask", BOOTOPT_TYPE_BOOLEAN, &integer)

@@ -1,0 +1,3 @@
+always_bcc = yes
+config_directory = .
+name = value

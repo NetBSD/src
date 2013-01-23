@@ -1,4 +1,4 @@
-/*	$NetBSD: postlock.c,v 1.1.1.1 2009/06/23 10:08:51 tron Exp $	*/
+/*	$NetBSD: postlock.c,v 1.1.1.1.10.1 2013/01/23 00:05:08 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -110,6 +110,7 @@
 #include <vstream.h>
 #include <msg_vstream.h>
 #include <iostuff.h>
+#include <warn_stat.h>
 
 /* Global library. */
 

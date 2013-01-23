@@ -1,10 +1,7 @@
-# $NetBSD: module.mi,v 1.5.6.3 2012/10/30 18:48:47 yamt Exp $
+# $NetBSD: module.mi,v 1.5.6.4 2013/01/23 00:04:23 yamt Exp $
 #
 # These are only made for ports doing modules.
 #
-./usr/libdata/debug/usr/tests/modules/k_helper3.debug	tests-sys-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/modules/t_builtin.debug	tests-sys-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/modules/t_modctl.debug	tests-sys-debug		debug,atf,rump
 ./usr/tests/modules/Atffile			tests-sys-tests		atf,rump
 ./usr/tests/modules/k_helper			tests-sys-tests		atf,rump
 ./usr/tests/modules/k_helper/k_helper.kmod	tests-sys-tests		atf,rump

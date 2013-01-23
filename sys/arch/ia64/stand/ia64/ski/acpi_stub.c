@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_stub.c,v 1.6 2009/11/11 05:19:34 kiyohara Exp $	*/
+/*	$NetBSD: acpi_stub.c,v 1.6.12.1 2013/01/23 00:05:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Marcel Moolenaar
@@ -34,6 +34,9 @@
 
 #include <sys/types.h>
 #include <sys/lock.h>
+#include <lib/libkern/libkern.h>
+#include <lib/libsa/loadfile.h>
+#include <bootstrap.h>
 #include <dev/acpi/acpica.h>
 
 #define APIC_IO_SAPIC                   6
@@ -186,6 +189,6 @@ acpi_stub_init(void)
 	cksum(&acpi_root, 20, &acpi_root.Checksum);
 	cksum(&acpi_root, sizeof(acpi_root), &acpi_root.ExtendedChecksum);
 
-	xsdt.apic_tbl = (UINT32)&apic;
+	xsdt.apic_tbl = (UINT32)(uintptr_t)&apic;
 	cksum(&xsdt, sizeof(xsdt), &xsdt.Header.Checksum);
 }

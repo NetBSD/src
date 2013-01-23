@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.123.2.3 2013/01/16 05:26:06 yamt Exp $
+# $NetBSD: md.i386,v 1.123.2.4 2013/01/23 00:04:14 yamt Exp $
 ./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
@@ -197,30 +197,13 @@
 ./usr/include/xen/xenio3.h			comp-c-include
 ./usr/include/xmmintrin.h			comp-obsolete		obsolete
 ./usr/lib/libi386.a				comp-c-lib
-./usr/lib/libi386_g.a				-unknown-		debuglib
 ./usr/lib/libi386_p.a				comp-c-proflib		profile
 ./usr/lib/libi386_pic.a				comp-c-piclib		pic
 ./usr/lib/libm387.a				comp-c-lib
-./usr/lib/libm387_g.a				-unknown-		debuglib
 ./usr/lib/libm387_p.a				comp-c-proflib		profile
 ./usr/lib/libm387_pic.a				comp-c-piclib		pic
 ./usr/lib/libpmc.a				comp-c-lib
-./usr/lib/libpmc_g.a				-unknown-		debuglib
 ./usr/lib/libpmc_p.a				comp-c-proflib		profile
 ./usr/lib/libpmc_pic.a				comp-c-piclib		pic
-./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
-./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/pmc.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/lib/libi386.so.1.0.debug	comp-sys-debug	pic,debug
-./usr/libdata/debug/usr/lib/libm387.so.0.1.debug	comp-sys-debug	pic,debug
-./usr/libdata/debug/usr/lib/libpmc.so.1.0.debug		comp-sys-debug	pic,debug
-./usr/libdata/debug/usr/sbin/acpidump.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/amldb.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/bad144.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/ipwctl.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/ndiscvt.debug	comp-sysutil-debug	debug
 ./usr/libdata/lint/llib-li386.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib		lint

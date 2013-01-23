@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.3.2.4 2012/10/30 17:22:58 yamt Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.3.2.5 2013/01/23 00:06:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -435,7 +435,7 @@ chfs_root(struct mount *mp, struct vnode **vpp)
 	struct vnode *vp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)ROOTINO, &vp)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)UFS_ROOTINO, &vp)) != 0)
 		return error;
 	*vpp = vp;
 	return 0;

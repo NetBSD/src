@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.74.8.1 2012/04/17 00:08:06 yamt Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.74.8.2 2013/01/23 00:06:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,9 +71,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.74.8.1 2012/04/17 00:08:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.74.8.2 2013/01/23 00:06:11 yamt Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,7 +419,8 @@ kue_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_no(dev, KUE_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, " setting config no failed\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.18.6.1 2012/04/17 00:05:36 yamt Exp $  */
+/*      $NetBSD: coalesce.c,v 1.18.6.2 2013/01/23 00:05:27 yamt Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	onb = nb = lblkno(fs, dip->di_size);
 
 	/* XXX for now, don't do any file small enough to have fragments */
-	if (nb < NDADDR) {
+	if (nb < UFS_NDADDR) {
 		free(dip);
 		return COALESCE_TOOSMALL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.35.6.2 2013/01/16 05:34:12 yamt Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.35.6.3 2013/01/23 00:06:45 yamt Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ struct sockaddr_in6 sin6_sitelocal_allrouters = {
 };
 
 static void set_die(int);
-static void die(void); // XXX __dead;
+static void die(void);
 static void set_reconf(int);
 static void sock_open(void);
 static void rtsock_open(void);
@@ -260,6 +260,7 @@ main(int argc, char *argv[])
 	} else
 		set[1].fd = -1;
 
+	signal(SIGINT, set_die);
 	signal(SIGTERM, set_die);
 	signal(SIGHUP, set_reconf);
 	signal(SIGUSR1, rtadvd_set_dump_file);
@@ -342,44 +343,53 @@ set_die(__unused int sig)
 static void
 die(void)
 {
-	struct rainfo *rai;
+	static int waiting;
+	struct rainfo *rai, *ran;
 	struct rdnss *rdnss;
 	struct dnssl *dnssl;
-	int i;
-	const int retrans = MAX_FINAL_RTR_ADVERTISEMENTS;
 
-	if (dflag > 1) {
-		syslog(LOG_DEBUG, "<%s> cease to be an advertising router\n",
-		    __func__);
+	if (waiting) {
+		if (TAILQ_FIRST(&ralist)) {
+			syslog(LOG_INFO,
+			       "<%s> waiting for expiration of all RA timers",
+			       __func__);
+			return;
+		}
+		syslog(LOG_NOTICE, "<%s> gracefully terminated", __func__);
+		free(rcvcmsgbuf);
+		free(sndcmsgbuf);
+		exit(0);
+		/* NOT REACHED */
 	}
 
-	TAILQ_FOREACH(rai, &ralist, next) {
+	waiting = 1;
+	syslog(LOG_NOTICE, "<%s> final RA transmission started", __func__);
+
+	TAILQ_FOREACH_SAFE(rai, &ralist, next, ran) {
+		if (rai->leaving) {
+			TAILQ_REMOVE(&ralist, rai, next);
+			TAILQ_INSERT_HEAD(&ralist, rai->leaving, next);
+			rai->leaving->leaving = rai->leaving;
+			rai->leaving->leaving_for = rai->leaving;
+			free_rainfo(rai);
+			continue;
+		}
 		rai->lifetime = 0;
 		TAILQ_FOREACH(rdnss, &rai->rdnss, next)
 			rdnss->lifetime = 0;
 		TAILQ_FOREACH(dnssl, &rai->dnssl, next)
 			dnssl->lifetime = 0;
 		make_packet(rai);
+		rai->leaving = rai;
+		rai->leaving_for = rai;
+		rai->initcounter = MAX_INITIAL_RTR_ADVERTISEMENTS;
+		rai->mininterval = MIN_DELAY_BETWEEN_RAS;
+		rai->maxinterval = MIN_DELAY_BETWEEN_RAS;
+		rai->leaving_adv = MAX_FINAL_RTR_ADVERTISEMENTS;
+		ra_output(rai);
+		ra_timer_update((void *)rai, &rai->timer->tm);
+		rtadvd_set_timer(&rai->timer->tm, rai->timer);
 	}
-	for (i = 0; i < retrans; i++) {
-		TAILQ_FOREACH(rai, &ralist, next)
-			ra_output(rai);
-		sleep(MIN_DELAY_BETWEEN_RAS);
-	}
-
-#ifdef __VALGRIND__
-	while ((rai = TAILQ_FIRST(&ralist))) {
-		TAILQ_REMOVE(&ralist, rai, next);
-		if (rai->leaving)
-			free_rainfo(rai->leaving);
-		free_rainfo(rai);
-	}
-	free(rcvcmsgbuf);
-	free(sndcmsgbuf);
-#endif
-
-	exit(0);
-	/*NOTREACHED*/
 }
 
 static void
@@ -401,6 +411,11 @@ rtmsg_input(void)
 
 	memset(&buffer, 0, sizeof(buffer));
 	n = read(rtsock, &buffer, sizeof(buffer));
+
+	/* We read the buffer first to clear the FD */
+	if (do_die)
+		return;
+
 	msg = buffer.data;
 	if (dflag > 1) {
 		syslog(LOG_DEBUG, "<%s> received a routing message "
@@ -666,6 +681,10 @@ rtadvd_input(void)
 	 */
 	rcvmhdr.msg_controllen = rcvcmsgbuflen;
 	if ((i = recvmsg(sock, &rcvmhdr, 0)) < 0)
+		return;
+
+	/* We read the buffer first to clear the FD */
+	if (do_die)
 		return;
 
 	/* extract optional information via Advanced API */
@@ -1678,6 +1697,12 @@ ra_output(struct rainfo *rai)
 
 	if (rai->leaving_adv > 0) {
 		if (--(rai->leaving_adv) == 0) {
+			/* leaving for ourself means we're shutting down */
+			if (rai->leaving_for == rai) {
+				TAILQ_REMOVE(&ralist, rai, next);
+				free_rainfo(rai);
+				return NULL;
+			}
 			syslog(LOG_DEBUG,
 			       "<%s> expired RA,"
 			       " new config active for interface (%s)",

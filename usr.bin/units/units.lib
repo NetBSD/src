@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.15 2011/03/28 00:08:47 dholland Exp $
+/	$NetBSD: units.lib,v 1.15.4.1 2013/01/23 00:06:40 yamt Exp $
 
 / primitive units
 
@@ -220,7 +220,7 @@ sovereign		34 bottle
 
 pony			split
 fillette		half
-tappit-hen		3 imperial
+tappithen		3 bottle
 rheoboam		rehoboam
 shalmaneser		salmanazar
 
@@ -290,7 +290,7 @@ polandzloty		.000059 $
 saudiarabiariyal	.26702 $
 singaporedollar		.6157 $
 slovakkoruna		.034 $
-southamericarand	.21 $
+southafricarand	        .21 $
 southkoreawon		.001 $
 swedenkrona		.13 $
 switzerlandfranc	.66 $
@@ -322,7 +322,7 @@ bolivar			venezuelabolivar
 peseta			spainpeseta
 rand			southafricarand
 escudo			portugalescudo
-sol			perusol
+newsol			perunewsol
 guilder			netherlandsguilder
 hollandguilder		netherlandsguilder
 peso			mexicopeso
@@ -623,7 +623,7 @@ kilohm			kiloohm
 megohm			megaohm
 siderealyear		365.256360417 day
 siderealday		23.934469444 hour
-siderealhour		1|24 sidereal day
+siderealhour		1|24 siderealday
 lunarmonth		29.5305555 day
 synodicmonth		lunarmonth
 siderealmonth		27.32152777 day

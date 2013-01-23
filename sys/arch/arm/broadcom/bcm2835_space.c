@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.1.6.2 2012/10/30 17:18:59 yamt Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.1.6.3 2013/01/23 00:05:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.1.6.2 2012/10/30 17:18:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.1.6.3 2013/01/23 00:05:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ struct bus_space bcm2835_bs_tag = {
 	bcm2835_bs_vaddr,
 
 	/* mmap */
-	bs_notimpl_bs_mmap,
+	bcm2835_bs_mmap,
 
 	/* barrier */
 	bcm2835_bs_barrier,
@@ -285,8 +285,8 @@ bcm2835_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 {
 	u_long startpa, endpa, pa;
 	vaddr_t va;
-	pt_entry_t *pte;
 	const struct pmap_devmap *pd;
+	int pmap_flags;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
 		/* Device was statically mapped. */
@@ -306,16 +306,10 @@ bcm2835_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
+	pmap_flags = (flag & BUS_SPACE_MAP_CACHEABLE) ? 0 : PMAP_NOCACHE;
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0) {
-			pte = vtopte(va);
-			*pte &= ~L2_S_CACHE_MASK;
-			PTE_SYNC(pte);
-			/* XXX: pmap_kenter_pa() also does PTE_SYNC(). a bit of
-			 *      waste.
-			 */
-		}
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
+		    pmap_flags);
 	}
 	pmap_update(pmap_kernel());
 
@@ -373,6 +367,12 @@ bcm2835_bs_vaddr(void *t, bus_space_handle_t bsh)
 	return (void *)bsh;
 }
 
+paddr_t
+bcm2835_bs_mmap(void *t, bus_addr_t paddr, off_t offset, int prot, int flags)
+{
+
+	return (arm_btop((paddr + offset)));
+}
 
 int
 bcm2835_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,

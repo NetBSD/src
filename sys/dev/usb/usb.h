@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.93.2.2 2012/10/30 17:22:10 yamt Exp $	*/
+/*	$NetBSD: usb.h,v 1.93.2.3 2013/01/23 00:06:14 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -40,6 +40,10 @@
 
 #include <sys/ioctl.h>
 
+#if defined(_KERNEL_OPT)
+#include "opt_usb.h"	/* for USB_DEBUG */
+#endif
+
 #if defined(_KERNEL)
 #include <sys/mallocvar.h>
 
@@ -52,40 +56,76 @@ MALLOC_DECLARE(M_USBHC);
 #endif
 
 #ifdef USB_DEBUG
-#define UKBD_DEBUG 1
-#define UHIDEV_DEBUG 1
-#define UHID_DEBUG 1
+#define ATU_DEBUG 1
+#define AUE_DEBUG 1
+#define AUVITEK_I2C_DEBUG 1
+#define AXE_DEBUG 1
+#define CUE_DEBUG 1
+#define DWC_OTG_DEBUG 1
+#define EHCI_DEBUG 1
+#define EZLOAD_DEBUG 1
+#define KUE_DEBUG 1
 #define OHCI_DEBUG 1
+#define OTUS_DEBUG 1
+#define RUM_DEBUG 1
+#define RUN_DEBUG 1
+#define UARK_DEBUG 1
+#define UATP_DEBUG 1
+#define UAUDIO_DEBUG 1
+#define UBERRY_DEBUG 1
+#define UBSA_DEBUG 1
+#define UBT_DEBUG 1
+#define UCHCOM_DEBUG 1
+#define UCOM_DEBUG 1
+#define UCYCOM_DEBUG 1
+#define UDAV_DEBUG 1
+#define UDL_DEBUG 1
+#define UDSBR_DEBUG 1
+#define UFTDI_DEBUG 1
+#define UGENSA_DEBUG 1
 #define UGEN_DEBUG 1
 #define UHCI_DEBUG 1
-#define UHUB_DEBUG 1
-#define ULPT_DEBUG 1
-#define UCOM_DEBUG 1
-#define UPLCOM_DEBUG 1
-#define UMCT_DEBUG 1
-#define UMODEM_DEBUG 1
-#define UAUDIO_DEBUG 1
-#define AUE_DEBUG 1
-#define CUE_DEBUG 1
-#define KUE_DEBUG 1
-#define URL_DEBUG 1
-#define UVISOR_DEBUG 1
-#define UPL_DEBUG 1
-#define UZCOM_DEBUG 1
-#define URIO_DEBUG 1
-#define UFTDI_DEBUG 1
-#define USCANNER_DEBUG 1
-#define USSCANNER_DEBUG 1
-#define EHCI_DEBUG 1
-#define UIRDA_DEBUG 1
-#define USTIR_DEBUG 1
-#define UISDATA_DEBUG 1
-#define UDSBR_DEBUG 1
-#define UBT_DEBUG 1
-#define AXE_DEBUG 1
-#define UIPAQ_DEBUG 1
-#define UCYCOM_DEBUG 1
+#define UHIDEV_DEBUG 1
+#define UHID_DEBUG 1
+#define UHMODEM_DEBUG 1
 #define UHSO_DEBUG 1
+#define UHUB_DEBUG 1
+#define UIPAD_DEBUG 1
+#define UIPAQ_DEBUG 1
+#define UIRDA_DEBUG 1
+#define UISDATA_DEBUG 1
+#define UKBD_DEBUG 1
+#define UKYOPON_DEBUG 1
+#define ULPT_DEBUG 1
+#define UMASS_DEBUG 1
+#define UMCT_DEBUG 1
+#define UMIDIQUIRK_DEBUG 1
+#define UMIDI_DEBUG 1
+#define UMODEM_DEBUG 1
+#define UMS_DEBUG 1
+#define UPGT_DEBUG 1
+#define UPLCOM_DEBUG 1
+#define UPL_DEBUG 1
+#define URAL_DEBUG 1
+#define URIO_DEBUG 1
+#define URL_DEBUG 1
+#define URNDIS_DEBUG 1
+#define URTWN_DEBUG 1
+#define URTW_DEBUG 1
+#define USB_DEBUG 1
+#define USCANNER_DEBUG 1
+#define USLSA_DEBUG 1
+#define USSCANNER_DEBUG 1
+#define USTIR_DEBUG 1
+#define UTHUM_DEBUG 1
+#define UTOPPY_DEBUG 1
+#define UTS_DEBUG 1
+#define UVIDEO_DEBUG 1
+#define UVISOR_DEBUG 1
+#define UVSCOM_DEBUG 1
+#define UYUREX_DEBUG 1
+#define UZCOM_DEBUG 1
+#define ZYD_DEBUG 1
 #define Static
 #else
 #define Static static

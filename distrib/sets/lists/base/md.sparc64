@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.138.2.5 2013/01/16 05:26:03 yamt Exp $
+# $NetBSD: md.sparc64,v 1.138.2.6 2013/01/23 00:04:10 yamt Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -97,7 +97,7 @@
 ./usr/lib/sparc/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/sparc/libdns_sd.so.0.0		base-compat-shlib	compat,pic,mdns
 ./usr/lib/sparc/libdwarf.so.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdwarf.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdwarf.so.0.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libedit.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libedit.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libelf.so.0			base-compat-shlib	compat,pic
@@ -171,8 +171,8 @@
 ./usr/lib/sparc/liblzma.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libm.so.0.10			base-compat-shlib	compat,pic
-./usr/lib/sparc/libmagic.so.3			base-compat-shlib	compat,pic
-./usr/lib/sparc/libmagic.so.3.1			base-compat-shlib	compat,pic
+./usr/lib/sparc/libmagic.so.4			base-compat-shlib	compat,pic
+./usr/lib/sparc/libmagic.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmenu.so.6			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmenu.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmj.so.1			base-compat-shlib	compat,pic,crypto
@@ -326,6 +326,7 @@
 ./usr/lib/sparc/security/pam_unix.so.3		base-compat-shlib	compat,pic
 ./usr/libdata/debug/usr/lib/sparc		base-compat-lib		compat
 ./usr/libdata/debug/usr/lib/sparc/i18n		base-compat-lib		compat
+./usr/libdata/debug/usr/lib/sparc/npf		base-compat-lib		compat
 ./usr/libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./usr/lkm/compat_netbsd32.o			base-obsolete		obsolete
 ./usr/lkm/compat_sunos32.o			base-obsolete		obsolete

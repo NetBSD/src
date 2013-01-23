@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.197.2.3 2013/01/16 05:33:54 yamt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.197.2.4 2013/01/23 00:06:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,16 +37,20 @@
 #ifndef _SYS_SYSCTL_H_
 #define	_SYS_SYSCTL_H_
 
+#include <sys/param.h> /* precautionary upon removal from ucred.h */
+#include <sys/proc.h>  /* Needed for things like P_ZOMBIE() and LW_SINTR */
+#include <uvm/uvm_param.h>
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
 /*
  * These are for the eproc structure defined below.
  */
-#include <sys/param.h> /* precautionary upon removal from ucred.h */
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/ucontext.h>
-#include <sys/proc.h>
 #include <sys/mallocvar.h>
 #include <uvm/uvm_extern.h>
+#endif
 
 
 /* For offsetof() */
@@ -69,6 +73,8 @@
  * identifiers are defined here, and other identifiers are defined in the
  * respective subsystem header files.
  */
+
+struct sysctlnode;
 
 #define	CTL_MAXNAME	12	/* largest number of components supported */
 #define SYSCTL_NAMELEN	32	/* longest name allowed for a node */
@@ -411,6 +417,8 @@ struct ki_ucred {
 	gid_t		cr_groups[NGROUPS];	/* groups */
 };
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
  */
@@ -434,14 +442,13 @@ struct kinfo_proc {
 		short	e_xrssize;		/* text rss */
 		short	e_xccount;		/* text references */
 		short	e_xswrss;
-		long	e_flag;
-#define	EPROC_CTTY	0x01	/* controlling tty vnode active */
-#define	EPROC_SLEADER	0x02	/* session leader */
+		long	e_flag;			/* see p_eflag  below */
 		char	e_login[MAXLOGNAME];	/* setlogin() name */
 		pid_t	e_sid;			/* session id */
 		long	e_spare[3];
 	} kp_eproc;
 };
+#endif /* defined(_KERNEL) || defined(_KMEMUSER) */
 
 /*
  * Convert pointer to 64 bit unsigned integer for struct
@@ -486,6 +493,8 @@ struct kinfo_proc2 {
 	uint64_t p_ru;			/* PTR: Exit information. XXX */
 
 	int32_t	p_eflag;		/* LONG: extra kinfo_proc2 flags */
+#define	EPROC_CTTY	0x01	/* controlling tty vnode active */
+#define	EPROC_SLEADER	0x02	/* session leader */
 	int32_t	p_exitsig;		/* INT: signal to sent to parent on exit */
 	int32_t	p_flag;			/* INT: P_* flags. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: master_conf.c,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
+/*	$NetBSD: master_conf.c,v 1.1.1.1.10.1 2013/01/23 00:05:04 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -137,7 +137,7 @@ void    master_config(void)
 	    SWAP(char *, serv->path, entry->path);
 	    SWAP(ARGV *, serv->args, entry->args);
 	    SWAP(char *, serv->stress_param_val, entry->stress_param_val);
-	    master_restart_service(serv);
+	    master_restart_service(serv, DO_CONF_RELOAD);
 	    free_master_ent(entry);
 	}
     }

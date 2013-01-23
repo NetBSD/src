@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_attrval.c,v 1.2 2010/02/22 11:01:29 darran Exp $	*/
+/*	$NetBSD: dwarf_attrval.c,v 1.2.6.1 2013/01/23 00:04:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libdwarf/dwarf_attrval.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/lib/libdwarf/dwarf_attrval.c,v 1.3 2012/11/17 01:49:48 svnexp Exp $
  */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -107,6 +107,7 @@ dwarf_attrval_flag(Dwarf_Die die, uint64_t attr, Dwarf_Bool *valp, Dwarf_Error *
 	} else {
 		switch (av->av_form) {
 		case DW_FORM_flag:
+		case DW_FORM_flag_present:
 			*valp = (Dwarf_Bool) av->u[0].u64;
 			break;
 		default:

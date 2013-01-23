@@ -37,7 +37,6 @@
 #define	_ARM_PCB_H_
 
 #include <machine/frame.h>
-#include <machine/fp.h>
 
 #include <arm/arm32/pte.h>
 #include <arm/reg.h>
@@ -92,10 +91,9 @@ struct pcb {
 		struct	pcb_arm26 un_26;
 	} pcb_un;
 	void *	pcb_onfault;			/* On fault handler */
-	struct	fpe_sp_state pcb_fpstate;	/* FPA Floating Point state */
 	struct	vfpreg pcb_vfp;			/* VFP registers */
+	struct	vfpreg pcb_kernel_vfp;		/* kernel VFP state */
 };
-#define	pcb_ff	pcb_fpstate			/* for arm26 */
 
 /*
  * No additional data for core dumps.

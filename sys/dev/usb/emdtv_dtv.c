@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.5.2.1 2012/04/17 00:08:05 yamt Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.5.2.2 2013/01/23 00:06:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.5.2.1 2012/04/17 00:08:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.5.2.2 2013/01/23 00:06:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ emdtv_dtv_attach(struct emdtv_softc *sc)
 	aprint_debug_dev(sc->sc_dev, "calling usbd_open_pipe, ep 0x%02x\n",
 	    ed->bEndpointAddress);
 	status = usbd_open_pipe(sc->sc_iface, 
-	    ed->bEndpointAddress, USBD_EXCLUSIVE_USE,
+	    ed->bEndpointAddress, USBD_EXCLUSIVE_USE|USBD_MPSAFE,
 	    &sc->sc_isoc_pipe);
 	if (status != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(sc->sc_dev, "couldn't open isoc pipe\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: i386-asm.S,v 1.1 2008/05/05 17:54:14 ad Exp $	*/
+/*	$NetBSD: i386-asm.S,v 1.1.6.1 2013/01/23 00:06:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,15 +30,6 @@
 #include <machine/cputypes.h>
 #include <machine/psl.h>
 
-	.data
-
-_C_LABEL(cpu):
-	.long	0
-	.globl	_C_LABEL(cpu)
-_C_LABEL(cpu_info_level):
-	.long	-1
-	.globl	_C_LABEL(cpu_info_level)
-
 	.text
 
 ENTRY(x86_cpuid2)
@@ -57,8 +48,12 @@ ENTRY(x86_cpuid2)
 	ret
 END(x86_cpuid2)
 
+ENTRY(x86_xgetbv)
+	xgetbv
+	ret
+END(x86_xgetbv)
+
 ENTRY(x86_identify)
-	pushl	%ebx
 	/* Try to toggle alignment check flag; does not exist on 386. */
 	pushfl
 	popl	%eax
@@ -91,11 +86,11 @@ isnx586:
 	 * Don't try cpuid, as Nx586s reportedly don't support the
 	 * PSL_ID bit.
 	 */
-	movl	$CPU_NX586,_C_LABEL(cpu)
-	jmp	2f
+	movl	$CPU_NX586,%eax
+	ret
 is386:
-	movl	$CPU_386,_C_LABEL(cpu)
-	jmp	2f
+	movl	$CPU_386,%eax
+	ret
 
 try486:	/* Try to toggle identification flag; does not exist on early 486s. */
 	pushfl
@@ -112,8 +107,13 @@ try486:	/* Try to toggle identification flag; does not exist on early 486s. */
 	popfl
 
 	testl	%eax,%eax
-	jnz	try586
-is486:	movl	$CPU_486,_C_LABEL(cpu)
+	jz	is486
+
+	/* Later cpu, caller will use cpuid instruction */
+	movl	$-1,%eax
+	ret
+
+is486:
 	/*
 	 * Check Cyrix CPU
 	 * Cyrix CPUs do not change the undefined flags following
@@ -129,9 +129,11 @@ is486:	movl	$CPU_486,_C_LABEL(cpu)
 	divl	%ecx
 	jnc	trycyrix486
 	popfl
-	jmp 2f
+	movl	$CPU_486,%eax
+	ret
+
 trycyrix486:
-	movl	$CPU_6x86,_C_LABEL(cpu)	# set CPU type
+	popfl
 	/*
 	 * Check for Cyrix 486 CPU by seeing if the flags change during a
 	 * divide. This is documented in the Cx486SLC/e SMM Programmer's
@@ -139,6 +141,7 @@ trycyrix486:
 	 */
 	xorl	%edx,%edx
 	cmpl	%edx,%edx		# set flags to known state
+	pushl	%ebx
 	pushfl
 	popl	%ecx			# store flags in ecx
 	movl	$-1,%eax
@@ -146,15 +149,13 @@ trycyrix486:
 	divl	%ebx			# do a long division
 	pushfl
 	popl	%eax
+	popl	%ebx
 	xorl	%ecx,%eax		# are the flags different?
 	testl	$0x8d5,%eax		# only check C|PF|AF|Z|N|V
-	jne	2f			# yes; must be Cyrix 6x86 CPU
-	movl	$CPU_486DLC,_C_LABEL(cpu)# set CPU type
-	jmp	2f
-try586:	/* Use the `cpuid' instruction. */
-	xorl	%eax,%eax
-	cpuid
-	movl	%eax,_C_LABEL(cpu_info_level)
-2:
-	popl	%ebx
+	je	is486dlc		# yes => must be Cyrix 6x86 CPU
+	movl	$CPU_6x86,%eax
+	ret
+
+is486dlc:
+	movl	$CPU_486DLC,%eax
 	ret

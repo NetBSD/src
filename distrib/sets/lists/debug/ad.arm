@@ -1,0 +1,7 @@
+# $NetBSD: ad.arm,v 1.1.2.2 2013/01/23 00:04:19 yamt Exp $
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/lib/libarm.so.0.0.debug	comp-sys-debug		debug,pic
+./usr/libdata/debug/usr/lib/libpmc.so.1.0.debug	comp-sys-debug		debug,pic
+./usr/lib/libarm_g.a				-unknown-		debuglib
+./usr/lib/libpmc_g.a				-unknown-		debuglib

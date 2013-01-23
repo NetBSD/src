@@ -1,4 +1,4 @@
-/*	$NetBSD: getfsspecname.c,v 1.3.2.2 2012/04/17 00:05:34 yamt Exp $	*/
+/*	$NetBSD: getfsspecname.c,v 1.3.2.3 2013/01/23 00:05:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,9 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getfsspecname.c,v 1.3.2.2 2012/04/17 00:05:34 yamt Exp $");
+__RCSID("$NetBSD: getfsspecname.c,v 1.3.2.3 2013/01/23 00:05:27 yamt Exp $");
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/disk.h>
 

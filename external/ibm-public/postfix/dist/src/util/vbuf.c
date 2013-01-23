@@ -1,4 +1,4 @@
-/*	$NetBSD: vbuf.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: vbuf.c,v 1.1.1.1.10.1 2013/01/23 00:05:17 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -44,6 +44,18 @@
 /*
 /*	int	vbuf_clearerr(bp)
 /*	VBUF	*bp;
+/*
+/*	int	vbuf_rd_err(bp)
+/*	VBUF	*bp;
+/*
+/*	int	vbuf_wr_err(bp)
+/*	VBUF	*bp;
+/*
+/*	int	vbuf_rd_timeout(bp)
+/*	VBUF	*bp;
+/*
+/*	int	vbuf_wr_timeout(bp)
+/*	VBUF	*bp;
 /* DESCRIPTION
 /*	This module implements a buffer with read/write primitives that
 /*	automatically handle buffer-empty or buffer-full conditions.
@@ -85,11 +97,14 @@
 /*
 /*	vbuf_timeout() is a macro that returns non-zero if a timeout error
 /*	condition was detected while reading or writing the buffer. The
-/*	error status can be reset by calling vbuf_clearerr().
+/*	error status can be reset by calling vbuf_clearerr(). 
 /*
 /*	vbuf_err() is a macro that returns non-zero if a non-EOF error
 /*	(including timeout) condition was detected while reading or writing
 /*	the buffer. The error status can be reset by calling vbuf_clearerr().
+/*
+/*	The vbuf_rd_mumble() and vbuf_wr_mumble() macros report on
+/*	read and write error conditions, respectively.
 /*
 /*	vbuf_eof() is a macro that returns non-zero if an end-of-file
 /*	condition was detected while reading or writing the buffer. The error
@@ -143,7 +158,7 @@
 int     vbuf_unget(VBUF *bp, int ch)
 {
     if ((ch & 0xff) != ch || -bp->cnt >= bp->len) {
-	bp->flags |= VBUF_FLAG_ERR;
+	bp->flags |= VBUF_FLAG_RD_ERR;		/* This error affects reads! */
 	return (VBUF_EOF);
     } else {
 	bp->cnt--;

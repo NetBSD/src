@@ -1,4 +1,4 @@
-.\"	$NetBSD: rename.2,v 1.23.6.1 2013/01/16 05:32:25 yamt Exp $
+.\"	$NetBSD: rename.2,v 1.23.6.2 2013/01/23 00:05:24 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -93,11 +93,26 @@ descriptor was passed as
 .Fa fromfd
 (resp.
 .Fa tofd ).
-Search permission is required on
-passed directory file descriptors
-except if they were opened with the
-.Dv O_SEARCH
-option.
+Search permission is required on the directories named by
+.Fa fromfd
+and
+.Fa tofd.
+.\"    (These alternatives await a decision about the semantics of O_SEARCH)
+.\" Search permission is required on the directories named by
+.\" .Fa fromfd
+.\" and
+.\" .Fa tofd
+.\" unless they were opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.\"    - or -
+.\" The directories named by
+.\" .Fa fromfd
+.\" and
+.\" .Fa tofd
+.\" must have been opened with the
+.\" .Dv O_SEARCH
+.\" flag.
 .Fa fromfd
 or
 .Fa tofd

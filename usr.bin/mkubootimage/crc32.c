@@ -1,4 +1,4 @@
-/* $NetBSD: crc32.c,v 1.2 2010/06/22 14:54:11 dogcow Exp $ */
+/* $NetBSD: crc32.c,v 1.2.10.1 2013/01/23 00:06:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -33,12 +33,14 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crc32.c,v 1.2 2010/06/22 14:54:11 dogcow Exp $");
+__RCSID("$NetBSD: crc32.c,v 1.2.10.1 2013/01/23 00:06:39 yamt Exp $");
 
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <stdint.h>
 
 uint32_t	crc32(const void *, size_t);
+uint32_t	crc32v(const struct iovec *, int);
 
 static uint32_t crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -87,16 +89,31 @@ static uint32_t crc32_tab[] = {
 };
 
 uint32_t
-crc32(const void *buf, size_t size)
+crc32v(const struct iovec *iov, int cnt)
 {
 	const uint8_t *p;
 	uint32_t crc;
+	int i, len;
 
-	p = buf;
 	crc = ~0U;
 
-	while (size--)
-		crc = crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
+	for (i = 0; i < cnt; i++) {
+		p = iov[i].iov_base;
+		len = iov[i].iov_len;
+		while (len--)
+			crc = crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
+	}
 
 	return crc ^ ~0U;
+}
+
+uint32_t
+crc32(const void *buf, size_t size)
+{
+	struct iovec iov[1];
+
+	iov[0].iov_base = __UNCONST(buf);
+	iov[0].iov_len = size;
+
+	return crc32v(iov, 1);
 }

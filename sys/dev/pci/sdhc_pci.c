@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.4.4.2 2012/10/30 17:21:53 yamt Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.4.4.3 2013/01/23 00:06:09 yamt Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.4.4.2 2012/10/30 17:21:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.4.4.3 2013/01/23 00:06:09 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -56,14 +56,16 @@ __KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.4.4.2 2012/10/30 17:21:53 yamt Exp $"
 
 struct sdhc_pci_softc {
 	struct sdhc_softc sc;
+	pci_chipset_tag_t sc_pc;
 	void *sc_ih;
 };
 
 static int sdhc_pci_match(device_t, cfdata_t, void *);
 static void sdhc_pci_attach(device_t, device_t, void *);
+static int sdhc_pci_detach(device_t, int);
 
 CFATTACH_DECL_NEW(sdhc_pci, sizeof(struct sdhc_pci_softc),
-    sdhc_pci_match, sdhc_pci_attach, NULL, NULL);
+    sdhc_pci_match, sdhc_pci_attach, sdhc_pci_detach, NULL);
 
 #ifdef SDHC_DEBUG
 #define	DPRINTF(s)	printf s
@@ -224,6 +226,8 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_dmat = pa->pa_dmat;
 	sc->sc.sc_host = NULL;
 
+	sc->sc_pc = pc;
+
 	pci_aprint_devinfo(pa, NULL);
 
 	/* Some controllers needs special treatment. */
@@ -305,8 +309,33 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 	return;
 
 err:
-	if (sc->sc.sc_host != NULL)
+	if (sc->sc.sc_host != NULL) {
 		free(sc->sc.sc_host, M_DEVBUF);
+		sc->sc.sc_host = NULL;
+	}
+}
+
+static int
+sdhc_pci_detach(device_t self, int flags)
+{
+	struct sdhc_pci_softc * const sc = device_private(self);
+	int rv;
+
+	rv = sdhc_detach(&sc->sc, flags);
+	if (rv)
+		return rv;
+
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+
+	if (sc->sc.sc_host != NULL) {
+		free(sc->sc.sc_host, M_DEVBUF);
+		sc->sc.sc_host = NULL;
+	}
+	
+	return rv;
 }
 
 static void

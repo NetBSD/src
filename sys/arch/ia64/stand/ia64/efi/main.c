@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2011/01/22 19:19:19 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.7.4.1 2013/01/23 00:05:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -32,7 +32,6 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 
-
 #include <machine/sal.h>
 #include <machine/pal.h>
 #include <machine/pte.h>
@@ -40,6 +39,7 @@
 
 #include <efi.h>
 #include <efilib.h>
+#include <efifsdev.h>
 
 #include "bootstrap.h"
 #include "efiboot.h"

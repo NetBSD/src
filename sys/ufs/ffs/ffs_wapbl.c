@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.17 2010/12/24 13:38:57 mlelstv Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.17.8.1 2013/01/23 00:06:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.17 2010/12/24 13:38:57 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.17.8.1 2013/01/23 00:06:33 yamt Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -753,8 +753,8 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 
 	/* add in number of indirect blocks needed */
 	indir_blks = 0;
-	if (desired_blks >= NDADDR) {
-		struct indir indirs[NIADDR + 2];
+	if (desired_blks >= UFS_NDADDR) {
+		struct indir indirs[UFS_NIADDR + 2];
 		int num;
 
 		error = ufs_getlbns(vp, desired_blks, indirs, &num);
@@ -821,8 +821,11 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 		DPRINTF("check cg %d of %d\n", cg, fs->fs_ncg);
 		error = bread(devvp, fsbtodb(fs, cgtod(fs, cg)),
 		    fs->fs_cgsize, FSCRED, 0, &bp);
+		if (error) {
+			continue;
+		}
 		cgp = (struct cg *)bp->b_data;
-		if (error || !cg_chkmagic(cgp, UFS_FSNEEDSWAP(fs))) {
+		if (!cg_chkmagic(cgp, UFS_FSNEEDSWAP(fs))) {
 			brelse(bp, 0);
 			continue;
 		}

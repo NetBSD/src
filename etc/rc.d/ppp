@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ppp,v 1.8.50.1 2013/01/16 05:26:13 yamt Exp $
+# $NetBSD: ppp,v 1.8.50.2 2013/01/23 00:04:30 yamt Exp $
 #
 
 # PROVIDE: ppp
@@ -41,8 +41,6 @@ ppp_start()
 			fi
 		done
 		echo "."
-	else
-		warn "\${ppp_peers} is not set - pppd was not started."
 	fi
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_bio_ops.c,v 1.1.1.3 2011/03/02 19:32:27 tron Exp $	*/
+/*	$NetBSD: tls_bio_ops.c,v 1.1.1.3.4.1 2013/01/23 00:05:14 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -38,8 +38,8 @@
 /*	int	timeout;
 /*	TLS_SESS_STATE *context;
 /* DESCRIPTION
-/*	This module enforces timeouts on non-blocking I/O while
-/*	performing TLS handshake or input/output operations.
+/*	This module enforces VSTREAM-style timeouts on non-blocking
+/*	I/O while performing TLS handshake or input/output operations.
 /*
 /*	The Postfix VSTREAM read/write routines invoke the
 /*	tls_bio_read/write routines to send and receive plain-text
@@ -76,8 +76,26 @@
 /* .IP TLScontext
 /*	TLS session state.
 /* DIAGNOSTICS
-/*	The result value is -1 in case of a network read/write
-/*	error, otherwise it is the result value of the TLS operation.
+/*	A result value > 0 means successful completion.
+/*
+/*	A result value < 0 means that the requested operation did
+/*	not complete due to TLS protocol failure, system call
+/*	failure, or for any reason described under "in addition"
+/*	below.
+/*
+/*	A result value of 0 from tls_bio_shutdown() means that the
+/*	operation is in progress. A result value of 0 from other
+/*	tls_bio_ops(3) operations means that the remote party either
+/*	closed the network connection or that it sent a TLS shutdown
+/*	request.
+/*
+/*	Upon return from the tls_bio_ops(3) routines the global
+/*	errno value is non-zero when the requested operation did not
+/*	complete due to system call failure.
+/*
+/*	In addition, the result value is set to -1, and the global
+/*	errno value is set to ETIMEDOUT, when some network read/write
+/*	operation did not complete within the time limit.
 /* LICENSE
 /* .ad
 /* .fi
@@ -105,6 +123,19 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <sys/time.h>
+
+#ifndef timersub
+/* res = a - b */
+#define timersub(a, b, res) do { \
+	(res)->tv_sec = (a)->tv_sec - (b)->tv_sec; \
+	(res)->tv_usec = (a)->tv_usec - (b)->tv_usec; \
+	if ((res)->tv_usec < 0) { \
+		(res)->tv_sec--; \
+		(res)->tv_usec += 1000000; \
+	} \
+    } while (0)
+#endif
 
 #ifdef USE_TLS
 
@@ -129,14 +160,42 @@ int     tls_bio(int fd, int timeout, TLS_SESS_STATE *TLScontext,
     const char *myname = "tls_bio";
     int     status;
     int     err;
-    int     retval = 0;
-    int     done;
+    int     enable_deadline;
+    struct timeval time_left;		/* amount of time left */
+    struct timeval time_deadline;	/* time of deadline */
+    struct timeval time_now;		/* time after SSL_mumble() call */
+
+    /*
+     * Compensation for interface mis-match: With VSTREAMs, timeout <= 0
+     * means wait forever; with the read/write_wait() calls below, we need to
+     * specify timeout < 0 instead.
+     * 
+     * Safety: no time limit means no deadline.
+     */
+    if (timeout <= 0) {
+	timeout = -1;
+	enable_deadline = 0;
+    }
+
+    /*
+     * Deadline management is simpler than with VSTREAMs, because we don't
+     * need to decrement a per-stream time limit. We just work within the
+     * budget that is available for this tls_bio() call.
+     */
+    else {
+	enable_deadline =
+	    vstream_fstat(TLScontext->stream, VSTREAM_FLAG_DEADLINE);
+	if (enable_deadline) {
+	    GETTIMEOFDAY(&time_deadline);
+	    time_deadline.tv_sec += timeout;
+	}
+    }
 
     /*
      * If necessary, retry the SSL handshake or read/write operation after
      * handling any pending network I/O.
      */
-    for (done = 0; done == 0; /* void */ ) {
+    for (;;) {
 	if (hsfunc)
 	    status = hsfunc(TLScontext->con);
 	else if (rfunc)
@@ -183,6 +242,27 @@ int     tls_bio(int fd, int timeout, TLS_SESS_STATE *TLScontext,
 #endif
 
 	/*
+	 * Correspondence between SSL_ERROR_* error codes and tls_bio_(read,
+	 * write, accept, connect, shutdown) return values (for brevity:
+	 * retval).
+	 * 
+	 * SSL_ERROR_NONE corresponds with retval > 0. With SSL_(read, write)
+	 * this is the number of plaintext bytes sent or received. With
+	 * SSL_(accept, connect, shutdown) this means that the operation was
+	 * completed successfully.
+	 * 
+	 * SSL_ERROR_WANT_(WRITE, READ) start a new loop iteration, or force
+	 * (retval = -1, errno = ETIMEDOUT) when the time limit is exceeded.
+	 * 
+	 * All other SSL_ERROR_* cases correspond with retval <= 0. With
+	 * SSL_(read, write, accept, connect) retval == 0 means that the
+	 * remote party either closed the network connection or that it
+	 * requested TLS shutdown; with SSL_shutdown() retval == 0 means that
+	 * our own shutdown request is in progress. With all operations
+	 * retval < 0 means that there was an error. In the latter case,
+	 * SSL_ERROR_SYSCALL means that error details are returned via the
+	 * errno value.
+	 * 
 	 * Find out if we must retry the operation and/or if there is pending
 	 * network I/O.
 	 * 
@@ -191,18 +271,35 @@ int     tls_bio(int fd, int timeout, TLS_SESS_STATE *TLScontext,
 	 * anomaly here and repeat the call.
 	 */
 	switch (err) {
-	case SSL_ERROR_NONE:			/* success */
-	    retval = status;
-	    done = 1;
-	    break;
 	case SSL_ERROR_WANT_WRITE:
-	    if (write_wait(fd, timeout) < 0)
-		return (-1);			/* timeout error */
-	    break;
 	case SSL_ERROR_WANT_READ:
-	    if (read_wait(fd, timeout) < 0)
-		return (-1);			/* timeout error */
+	    if (enable_deadline) {
+		GETTIMEOFDAY(&time_now);
+		timersub(&time_deadline, &time_now, &time_left);
+		timeout = time_left.tv_sec + (time_left.tv_usec > 0);
+		if (timeout <= 0) {
+		    errno = ETIMEDOUT;
+		    return (-1);
+		}
+	    }
+	    if (err == SSL_ERROR_WANT_WRITE) {
+		if (write_wait(fd, timeout) < 0)
+		    return (-1);		/* timeout error */
+	    } else {
+		if (read_wait(fd, timeout) < 0)
+		    return (-1);		/* timeout error */
+	    }
 	    break;
+
+	    /*
+	     * Unhandled cases: SSL_ERROR_WANT_(ACCEPT, CONNECT, X509_LOOKUP)
+	     * etc. Historically, Postfix silently treated these as ordinary
+	     * I/O errors so we don't really know how common they are. For
+	     * now, we just log a warning.
+	     */
+	default:
+	    msg_warn("%s: unexpected SSL_ERROR code %d", myname, err);
+	    /* FALLTHROUGH */
 
 	    /*
 	     * With tls_timed_read() and tls_timed_write() the caller is the
@@ -216,13 +313,14 @@ int     tls_bio(int fd, int timeout, TLS_SESS_STATE *TLScontext,
 	    if (rfunc || wfunc)
 		tls_print_errors();
 	    /* FALLTHROUGH */
-	default:
-	    retval = status;
-	    done = 1;
-	    break;
+	case SSL_ERROR_ZERO_RETURN:
+	case SSL_ERROR_NONE:
+	    errno = 0;				/* avoid bogus warnings */
+	    /* FALLTHROUGH */
+	case SSL_ERROR_SYSCALL:
+	    return (status);
 	}
     }
-    return (retval);
 }
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.25.4.3 2012/10/30 19:00:31 yamt Exp $	*/
+/*	$NetBSD: i386.c,v 1.25.4.4 2013/01/23 00:06:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,15 +57,17 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.25.4.3 2012/10/30 19:00:31 yamt Exp $");
+__RCSID("$NetBSD: i386.c,v 1.25.4.4 2013/01/23 00:06:41 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/bitops.h>
 #include <sys/sysctl.h>
+#include <sys/ioctl.h>
 #include <sys/cpuio.h>
 
+#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,25 +85,26 @@ __RCSID("$NetBSD: i386.c,v 1.25.4.3 2012/10/30 19:00:31 yamt Exp $");
 #include <x86/cpu_ucode.h>
 
 #include "../cpuctl.h"
+#include "cpuctl_i386.h"
 
 /* Size of buffer for printing humanized numbers */
 #define HUMAN_BUFSIZE sizeof("999KB")
 
-#define       x86_cpuid(a,b)  x86_cpuid2((a),0,(b))
-
-void	x86_cpuid2(uint32_t, uint32_t, uint32_t *);
-void	x86_identify(void);
-
 struct cpu_info {
 	const char	*ci_dev;
-	int32_t		ci_cpuid_level;
+	int32_t		ci_cpu_type;     /* for cpu's without cpuid */
+	int32_t		ci_cpuid_level;	 /* highest cpuid supported */
 	uint32_t	ci_signature;	 /* X86 cpuid type */
-	uint32_t	ci_feat_val[5];	 /* X86 CPUID feature bits
+	uint32_t	ci_family;	 /* from ci_signature */
+	uint32_t	ci_model;	 /* from ci_signature */
+	uint32_t	ci_feat_val[8];	 /* X86 CPUID feature bits
 					  *	[0] basic features %edx
 					  *	[1] basic features %ecx
 					  *	[2] extended features %edx
 					  *	[3] extended features %ecx
 					  *	[4] VIA padlock features
+					  *	[5] XCR0 bits (d:0 %eax)
+					  *	[6] xsave flags (d:1 %eax)
 					  */
 	uint32_t	ci_cpu_class;	 /* CPU class */
 	uint32_t	ci_brand_id;	 /* Intel brand id */
@@ -112,6 +115,10 @@ struct cpu_info {
 	uint8_t		ci_coreid;
 	uint8_t		ci_smtid;
 	uint32_t	ci_initapicid;
+
+	uint32_t	ci_cur_xsave;
+	uint32_t	ci_max_xsave;
+
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
 	void		(*ci_info)(struct cpu_info *);
 };
@@ -126,22 +133,17 @@ struct cpu_nocpuid_nameclass {
 	void (*cpu_info)(struct cpu_info *);
 };
 
-struct cpu_extend_nameclass {
-	int ext_model;
-	const char *cpu_models[CPU_MAXMODEL+1];
-};
-
 struct cpu_cpuid_nameclass {
 	const char *cpu_id;
 	int cpu_vendor;
 	const char *cpu_vendorname;
 	struct cpu_cpuid_family {
 		int cpu_class;
-		const char *cpu_models[CPU_MAXMODEL+2];
+		const char *cpu_models[256];
+		const char *cpu_model_default;
 		void (*cpu_setup)(struct cpu_info *);
 		void (*cpu_probe)(struct cpu_info *);
 		void (*cpu_info)(struct cpu_info *);
-		struct cpu_extend_nameclass *cpu_extended_names;
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
@@ -208,11 +210,6 @@ static void amd_family5_setup(struct cpu_info *);
 static void powernow_probe(struct cpu_info *);
 
 /*
- * Info for CTL_HW
- */
-static char	cpu_model[120];
-
-/*
  * Note: these are just the ones that may not have a cpuid instruction.
  * We deal with the rest in a different way.
  */
@@ -247,21 +244,6 @@ const char *modifiers[] = {
 	""
 };
 
-struct cpu_extend_nameclass intel_family6_ext_models[] = {
-	{ /* Extended models 1x */
-	  0x01, { NULL,			NULL,
-		  NULL,			NULL,
-		  NULL,			"EP80579 Integrated Processor",
-		  "Celeron (45nm)",	"Core 2 Extreme",
-		  NULL,			NULL,
-		  "Core i7 (Nehalem)",	NULL,
-		  "Atom",		"XeonMP (Nehalem)",
-		   NULL,		NULL} },
-	{ /* End of list */
-	  0x00, { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-		  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL} }
-};
-
 const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 	{
 		"GenuineIntel",
@@ -274,9 +256,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"486DX", "486DX", "486SX", "486DX2", "486SL",
 				"486SX2", 0, "486DX2 W/B Enhanced",
 				"486DX4", 0, 0, 0, 0, 0, 0, 0,
-				"486"		/* Default */
 			},
-			NULL,
+			"486",		/* Default */
 			NULL,
 			NULL,
 			NULL,
@@ -290,9 +271,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium/MMX", "Pentium", 0,
 				"Pentium (P54C)", "Pentium/MMX (Tillamook)",
 				0, 0, 0, 0, 0, 0, 0,
-				"Pentium"	/* Default */
 			},
-			NULL,
+			"Pentium",	/* Default */
 			NULL,
 			NULL,
 			NULL,
@@ -301,24 +281,46 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				"Pentium Pro (A-step)", "Pentium Pro", 0,
-				"Pentium II (Klamath)", "Pentium Pro",
-				"Pentium II/Celeron (Deschutes)",
-				"Celeron (Mendocino)",
-				"Pentium III (Katmai)",
-				"Pentium III (Coppermine)",
-				"Pentium M (Banias)", 
-				"Pentium III Xeon (Cascades)",
-				"Pentium III (Tualatin)", 0,
-				"Pentium M (Dothan)", 
-				"Pentium M (Yonah)",
-				"Core 2",
-				"Pentium Pro, II or III"	/* Default */
+				/* Updated from intel_x86_325486.pdf Aug 2012 */
+				[0x00] = "Pentium Pro (A-step)",
+				[0x01] = "Pentium Pro",
+				[0x03] = "Pentium II (Klamath)",
+				[0x04] = "Pentium Pro",
+				[0x05] = "Pentium II/Celeron (Deschutes)",
+				[0x06] = "Celeron (Mendocino)",
+				[0x07] = "Pentium III (Katmai)",
+				[0x08] = "Pentium III (Coppermine)",
+				[0x09] = "Pentium M (Banias)", 
+				[0x0a] = "Pentium III Xeon (Cascades)",
+				[0x0b] = "Pentium III (Tualatin)",
+				[0x0d] = "Pentium M (Dothan)", 
+				[0x0e] = "Pentium Core Duo", // "M (Yonah)",
+				[0x0f] = "Core 2",
+				[0x15] = "EP80579 Integrated Processor",
+				[0x16] = "Celeron (45nm)",
+				[0x17] = "Core 2 Extreme",
+				[0x1a] = "Core i7 (Nehalem)",
+				[0x1c] = "Atom Family",
+				[0x1d] = "XeonMP 74xx (Nehalem)",
+				[0x1e] = "Core i7 and i5",
+				[0x1f] = "Core i7 and i5",
+				[0x25] = "Xeon 36xx & 56xx, i7, i5 and i3",
+				[0x26] = "Atom Family",
+				[0x27] = "Atom Family",
+				[0x2a] = "Xeon E3-12xx, 2nd gen i7, i5, i3 2xxx",
+				[0x2c] = "Xeon 36xx & 56xx, i7, i5 and i3",
+				[0x2e] = "Xeon 75xx & 65xx",
+				[0x2d] = "Xeon E5 Sandy bridy family",
+				[0x2f] = "Xeon E7 family",
+				[0x3a] = "Xeon E3-1200v2 and 3rd gen core, Ivy bridge",
+				[0x3c] = "Next Intel Core",
+				[0x3e] = "Next gen Xeon E5, Ivy bridge",
+				[0x45] = "Next Intel Core",
 			},
+			"Pentium Pro, II or III",	/* Default */
 			NULL,
 			intel_family_new_probe,
 			NULL,
-			&intel_family6_ext_models[0],
 		},
 		/* Family > 6 */
 		{
@@ -326,11 +328,10 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"Pentium 4"	/* Default */
 			},
+			"Pentium 4",	/* Default */
 			NULL,
 			intel_family_new_probe,
-			NULL,
 			NULL,
 		} }
 	},
@@ -348,9 +349,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Am486DX4 W/B or Am5x86 W/B 150", 0, 0,
 				0, 0, "Am5x86 W/T 133/160",
 				"Am5x86 W/B 133/160",
-				"Am486 or Am5x86"	/* Default */
 			},
-			NULL,
+			"Am486 or Am5x86",	/* Default */
 			NULL,
 			NULL,
 			NULL,
@@ -362,12 +362,11 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"K5", "K5", "K5", "K5", 0, 0, "K6",
 				"K6", "K6-2", "K6-III", "Geode LX", 0, 0,
 				"K6-2+/III+", 0, 0,
-				"K5 or K6"		/* Default */
 			},
+			"K5 or K6",		/* Default */
 			amd_family5_setup,
 			NULL,
 			amd_cpu_cacheinfo,
-			NULL,
 		},
 		/* Family 6 */
 		{
@@ -377,12 +376,11 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Duron", "Athlon Model 4 (Thunderbird)",
 				0, "Athlon", "Duron", "Athlon", 0,
 				"Athlon", 0, 0, 0, 0, 0,
-				"K7 (Athlon)"	/* Default */
 			},
+			"K7 (Athlon)",	/* Default */
 			NULL,
 			amd_family6_probe,
 			amd_cpu_cacheinfo,
-			NULL,
 		},
 		/* Family > 6 */
 		{
@@ -390,12 +388,11 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"Unknown K8 (Athlon)"	/* Default */
 			},
+			"Unknown K8 (Athlon)",	/* Default */
 			NULL,
 			amd_family6_probe,
 			amd_cpu_cacheinfo,
-			NULL,
 		} }
 	},
 	{
@@ -409,10 +406,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0,
 				"MediaGX",
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				"486"		/* Default */
 			},
+			"486",		/* Default */
 			cyrix6x86_cpu_setup, /* XXX ?? */
-			NULL,
 			NULL,
 			NULL,
 		},
@@ -423,10 +419,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, "6x86", 0,
 				"MMX-enhanced MediaGX (GXm)", /* or Geode? */
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				"6x86"		/* Default */
 			},
+			"6x86",		/* Default */
 			cyrix6x86_cpu_setup,
-			NULL,
 			NULL,
 			NULL,
 		},
@@ -436,10 +431,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				"6x86MX", 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"6x86MX"		/* Default */
 			},
+			"6x86MX",		/* Default */
 			cyrix6x86_cpu_setup,
-			NULL,
 			NULL,
 			NULL,
 		},
@@ -449,9 +443,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"Unknown 6x86MX"		/* Default */
 			},
-			NULL,
+			"Unknown 6x86MX",		/* Default */
 			NULL,
 			NULL,
 			NULL,
@@ -467,9 +460,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"486 compatible"	/* Default */
 			},
-			NULL,
+			"486 compatible",	/* Default */
 			NULL,
 			NULL,
 			NULL,
@@ -481,12 +473,11 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0,
 				"Geode GX1",
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				"Geode"		/* Default */
 			},
+			"Geode",		/* Default */
 			cyrix6x86_cpu_setup,
 			NULL,
 			amd_cpu_cacheinfo,
-			NULL,
 		},
 		/* Family 6, not yet available from NSC */
 		{
@@ -494,9 +485,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"Pentium Pro compatible" /* Default */
 			},
-			NULL,
+			"Pentium Pro compatible", /* Default */
 			NULL,
 			NULL,
 			NULL,
@@ -507,9 +497,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"Pentium Pro compatible"	/* Default */
 			},
-			NULL,
+			"Pentium Pro compatible",	/* Default */
 			NULL,
 			NULL,
 			NULL,
@@ -525,9 +514,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"486 compatible"	/* Default */
 			},
-			NULL,
+			"486 compatible",	/* Default */
 			NULL,
 			NULL,
 			NULL,
@@ -538,10 +526,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, "WinChip C6", 0, 0, 0,
 				"WinChip 2", "WinChip 3", 0, 0, 0, 0, 0, 0,
-				"WinChip"		/* Default */
 			},
+			"WinChip",		/* Default */
 			winchip_cpu_setup,
-			NULL,
 			NULL,
 			NULL,
 		},
@@ -553,12 +540,11 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"C3 Samuel 2/Ezra", "C3 Ezra-T",
 				"C3 Nehemiah", "C7 Esther", 0, 0, "C7 Esther",
 				0, "VIA Nano",
-				"Unknown VIA/IDT"	/* Default */
 			},
+			"Unknown VIA/IDT",	/* Default */
 			NULL,
 			via_cpu_probe,
 			via_cpu_cacheinfo,
-			NULL,
 		},
 		/* Family > 6, not yet available from VIA */
 		{
@@ -566,9 +552,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"Pentium Pro compatible"	/* Default */
 			},
-			NULL,
+			"Pentium Pro compatible",	/* Default */
 			NULL,
 			NULL,
 			NULL,
@@ -584,9 +569,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"486 compatible"	/* Default */
 			},
-			NULL,
+			"486 compatible",	/* Default */
 			NULL,
 			NULL,
 			NULL,
@@ -597,12 +581,11 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"Crusoe"		/* Default */
 			},
+			"Crusoe",		/* Default */
 			NULL,
 			NULL,
 			transmeta_cpu_info,
-			NULL,
 		},
 		/* Family 6, not yet available from Transmeta */
 		{
@@ -610,9 +593,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"Pentium Pro compatible"	/* Default */
 			},
-			NULL,
+			"Pentium Pro compatible",	/* Default */
 			NULL,
 			NULL,
 			NULL,
@@ -623,9 +605,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"Pentium Pro compatible"	/* Default */
 			},
-			NULL,
+			"Pentium Pro compatible",	/* Default */
 			NULL,
 			NULL,
 			NULL,
@@ -661,7 +642,7 @@ cyrix6x86_cpu_setup(struct cpu_info *ci)
 void
 winchip_cpu_setup(struct cpu_info *ci)
 {
-	switch (CPUID2MODEL(ci->ci_signature)) { /* model */
+	switch (ci->ci_model) {
 	case 4:	/* WinChip C6 */
 		disable_tsc(ci);
 	}
@@ -726,7 +707,6 @@ identifycpu_cpuids(struct cpu_info *ci)
 static void
 via_cpu_probe(struct cpu_info *ci)
 {
-	u_int model = CPUID2MODEL(ci->ci_signature);
 	u_int stepping = CPUID2STEPPING(ci->ci_signature);
 	u_int descs[4];
 	u_int lfunc;
@@ -745,7 +725,7 @@ via_cpu_probe(struct cpu_info *ci)
 		ci->ci_feat_val[2] |= descs[3];
 	}
 
-	if (model < 0x9 || (model == 0x9 && stepping < 3))
+	if (ci->ci_model < 0x9 || (ci->ci_model == 0x9 && stepping < 3))
 		return;
 
 	/* Nehemiah or Esther */
@@ -762,11 +742,10 @@ via_cpu_probe(struct cpu_info *ci)
 static const char *
 intel_family6_name(struct cpu_info *ci)
 {
-	int model = CPUID2MODEL(ci->ci_signature);
 	const char *ret = NULL;
 	u_int l2cache = ci->ci_cinfo[CAI_L2CACHE].cai_totalsize;
 
-	if (model == 5) {
+	if (ci->ci_model == 5) {
 		switch (l2cache) {
 		case 0:
 		case 128 * 1024:
@@ -783,14 +762,14 @@ intel_family6_name(struct cpu_info *ci)
 			ret = "Pentium II Xeon";
 			break;
 		}
-	} else if (model == 6) {
+	} else if (ci->ci_model == 6) {
 		switch (l2cache) {
 		case 256 * 1024:
 		case 512 * 1024:
 			ret = "Mobile Pentium II";
 			break;
 		}
-	} else if (model == 7) {
+	} else if (ci->ci_model == 7) {
 		switch (l2cache) {
 		case 512 * 1024:
 			ret = "Pentium III";
@@ -800,7 +779,7 @@ intel_family6_name(struct cpu_info *ci)
 			ret = "Pentium III Xeon";
 			break;
 		}
-	} else if (model >= 8) {
+	} else if (ci->ci_model >= 8) {
 		if (ci->ci_brand_id && ci->ci_brand_id < 0x10) {
 			switch (ci->ci_brand_id) {
 			case 0x3:
@@ -837,164 +816,107 @@ intel_family6_name(struct cpu_info *ci)
  * "Revision Guide for AMD NPT Family 0Fh Processors"
  * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/33610.pdf
  * and other miscellaneous reports.
+ *
+ * This is all rather pointless, these are cross 'brand' since the raw
+ * silicon is shared.
  */
 static const char *
 amd_amd64_name(struct cpu_info *ci)
 {
-	int extfamily, extmodel, model;
-	const char *ret = NULL;
+	static char family_str[32];
 
-	model = CPUID2MODEL(ci->ci_signature);
-	extfamily = CPUID2EXTFAMILY(ci->ci_signature);
-	extmodel  = CPUID2EXTMODEL(ci->ci_signature);
+	/* Only called if family >= 15 */
 
-	switch (extfamily) {
-	case 0x00:
-		switch (model) {
-		case 0x1:
-			switch (extmodel) {
-			case 0x2:	/* rev JH-E1/E6 */
-			case 0x4:	/* rev JH-F2 */
-				ret = "Dual-Core Opteron";
-				break;
-			}
-			break;
-		case 0x3:
-			switch (extmodel) {
-			case 0x2:	/* rev JH-E6 (Toledo) */
-				ret = "Dual-Core Opteron or Athlon 64 X2";
-				break;
-			case 0x4:	/* rev JH-F2 (Windsor) */
-				ret = "Athlon 64 FX or Athlon 64 X2";
-				break;
-			}
-			break;
-		case 0x4:
-			switch (extmodel) {
-			case 0x0:	/* rev SH-B0/C0/CG (ClawHammer) */
-			case 0x1:	/* rev SH-D0 */
-				ret = "Athlon 64";
-				break;
-			case 0x2:	/* rev SH-E5 (Lancaster?) */
-				ret = "Mobile Athlon 64 or Turion 64";
-				break;
-			}
-			break;
-		case 0x5:
-			switch (extmodel) {
-			case 0x0:	/* rev SH-B0/B3/C0/CG (SledgeHammer?) */
-				ret = "Opteron or Athlon 64 FX";
-				break;
-			case 0x1:	/* rev SH-D0 */
-			case 0x2:	/* rev SH-E4 */
-				ret = "Opteron";
-				break;
-			}
-			break;
-		case 0x7:
-			switch (extmodel) {
-			case 0x0:	/* rev SH-CG (ClawHammer) */
-			case 0x1:	/* rev SH-D0 */
-				ret = "Athlon 64";
-				break;
-			case 0x2:	/* rev DH-E4, SH-E4 */
-				ret = "Athlon 64 or Athlon 64 FX or Opteron";
-				break;
-			}
-			break;
-		case 0x8:
-			switch (extmodel) {
-			case 0x0:	/* rev CH-CG */
-			case 0x1:	/* rev CH-D0 */
-				ret = "Athlon 64 or Sempron";
-				break;
-			case 0x4:	/* rev BH-F2 */
-				ret = "Turion 64 X2";
-				break;
-			}
-			break;
-		case 0xb:
-			switch (extmodel) {
-			case 0x0:	/* rev CH-CG */
-			case 0x1:	/* rev CH-D0 */
-				ret = "Athlon 64";
-				break;
-			case 0x2:	/* rev BH-E4 (Manchester) */
-			case 0x4:	/* rev BH-F2 (Windsor) */
-				ret = "Athlon 64 X2";
-				break;
-			case 0x6:	/* rev BH-G1 (Brisbane) */
-				ret = "Athlon X2 or Athlon 64 X2";
-				break;
-			}
-			break;
-		case 0xc:
-			switch (extmodel) {
-			case 0x0:	/* rev DH-CG (Newcastle) */
-			case 0x1:	/* rev DH-D0 (Winchester) */
-			case 0x2:	/* rev DH-E3/E6 */
-				ret = "Athlon 64 or Sempron";
-				break;
-			}
-			break;
-		case 0xe:
-			switch (extmodel) {
-			case 0x0:	/* rev DH-CG (Newcastle?) */
-				ret = "Athlon 64 or Sempron";
-				break;
-			}
-			break;
-		case 0xf:
-			switch (extmodel) {
-			case 0x0:	/* rev DH-CG (Newcastle/Paris) */
-			case 0x1:	/* rev DH-D0 (Winchester/Victoria) */
-			case 0x2:	/* rev DH-E3/E6 (Venice/Palermo) */
-			case 0x4:	/* rev DH-F2 (Orleans/Manila) */
-			case 0x5:	/* rev DH-F2 (Orleans/Manila) */
-			case 0x6:	/* rev DH-G1 */
-				ret = "Athlon 64 or Sempron";
-				break;
-			}
-			break;
+	switch (ci->ci_family) {
+	case 15:
+		switch (ci->ci_model) {
+		case 0x21:	/* rev JH-E1/E6 */
+		case 0x41:	/* rev JH-F2 */
+			return "Dual-Core Opteron";
+		case 0x23:	/* rev JH-E6 (Toledo) */
+			return "Dual-Core Opteron or Athlon 64 X2";
+		case 0x43:	/* rev JH-F2 (Windsor) */
+			return "Athlon 64 FX or Athlon 64 X2";
+		case 0x24:	/* rev SH-E5 (Lancaster?) */
+			return "Mobile Athlon 64 or Turion 64";
+		case 0x05:	/* rev SH-B0/B3/C0/CG (SledgeHammer?) */
+			return "Opteron or Athlon 64 FX";
+		case 0x15:	/* rev SH-D0 */
+		case 0x25:	/* rev SH-E4 */
+			return "Opteron";
+		case 0x27:	/* rev DH-E4, SH-E4 */
+			return "Athlon 64 or Athlon 64 FX or Opteron";
+		case 0x48:	/* rev BH-F2 */
+			return "Turion 64 X2";
+		case 0x04:	/* rev SH-B0/C0/CG (ClawHammer) */
+		case 0x07:	/* rev SH-CG (ClawHammer) */
+		case 0x0b:	/* rev CH-CG */
+		case 0x14:	/* rev SH-D0 */
+		case 0x17:	/* rev SH-D0 */
+		case 0x1b:	/* rev CH-D0 */
+			return "Athlon 64";
+		case 0x2b:	/* rev BH-E4 (Manchester) */
+		case 0x4b:	/* rev BH-F2 (Windsor) */
+			return "Athlon 64 X2";
+		case 0x6b:	/* rev BH-G1 (Brisbane) */
+			return "Athlon X2 or Athlon 64 X2";
+		case 0x08:	/* rev CH-CG */
+		case 0x0c:	/* rev DH-CG (Newcastle) */
+		case 0x0e:	/* rev DH-CG (Newcastle?) */
+		case 0x0f:	/* rev DH-CG (Newcastle/Paris) */
+		case 0x18:	/* rev CH-D0 */
+		case 0x1c:	/* rev DH-D0 (Winchester) */
+		case 0x1f:	/* rev DH-D0 (Winchester/Victoria) */
+		case 0x2c:	/* rev DH-E3/E6 */
+		case 0x2f:	/* rev DH-E3/E6 (Venice/Palermo) */
+		case 0x4f:	/* rev DH-F2 (Orleans/Manila) */
+		case 0x5f:	/* rev DH-F2 (Orleans/Manila) */
+		case 0x6f:	/* rev DH-G1 */
+			return "Athlon 64 or Sempron";
 		default:
-			ret = "Unknown AMD64 CPU";
+			break;
 		}
-		break;
-	case 0x01:
-		ret = "Family 10h";
-		break;
-	case 0x02:
-		ret = "Family 11h";
-		break;
-	case 0x03:
-		ret = "Family 12h";
-		break;
-	case 0x05:
-		ret = "Family 14h";
-		break;
-	case 0x06:
-		ret = "Family 15h";
-		break;
+		return "Unknown AMD64 CPU";
+
+#if 0
+	case 16:
+		return "Family 10h";
+	case 17:
+		return "Family 11h";
+	case 18:
+		return "Family 12h";
+	case 19:
+		return "Family 14h";
+	case 20:
+		return "Family 15h";
+#endif
+
 	default:
-		ret = "Unknown AMD64 CPU";
 		break;
 	}
 
-	return ret;
+	snprintf(family_str, sizeof family_str, "Family %xh", ci->ci_family);
+	return family_str;
 }
 
 static void
-cpu_probe_base_features(struct cpu_info *ci)
+cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 {
 	const struct x86_cache_info *cai;
 	u_int descs[4];
 	int iterations, i, j;
 	uint8_t desc;
-	uint32_t miscbytes;
 	uint32_t brand[12];
 
-	if (ci->ci_cpuid_level < 0)
+	memset(ci, 0, sizeof(*ci));
+	ci->ci_dev = cpuname;
+
+	ci->ci_cpu_type = x86_identify();
+	if (ci->ci_cpu_type >= 0) {
+		/* Old pre-cpuid instruction cpu */
+		ci->ci_cpuid_level = -1;
 		return;
+	}
 
 	x86_cpuid(0, descs);
 	ci->ci_cpuid_level = descs[0];
@@ -1019,13 +941,22 @@ cpu_probe_base_features(struct cpu_info *ci)
 
 	x86_cpuid(1, descs);
 	ci->ci_signature = descs[0];
-	miscbytes = descs[1];
+
+	/* Extract full family/model values */
+	ci->ci_family = CPUID2FAMILY(ci->ci_signature);
+	ci->ci_model = CPUID2MODEL(ci->ci_signature);
+	if (ci->ci_family == 15)
+		ci->ci_family += CPUID2EXTFAMILY(ci->ci_signature);
+	if (ci->ci_family == 6 || ci->ci_family == 15)
+		ci->ci_model += CPUID2EXTMODEL(ci->ci_signature) << 4;
+
+	/* Brand is low order 8 bits of ebx */
+	ci->ci_brand_id = descs[1] & 0xff;
+	ci->ci_initapicid = (descs[1] >> 24) & 0xff;
+
 	ci->ci_feat_val[1] = descs[2];
 	ci->ci_feat_val[0] = descs[3];
 
-	/* Brand is low order 8 bits of ebx */
-	ci->ci_brand_id = miscbytes & 0xff;
-	ci->ci_initapicid = (miscbytes >> 24) & 0xff;
 	if (ci->ci_cpuid_level < 2)
 		return;
 
@@ -1069,21 +1000,31 @@ cpu_probe_base_features(struct cpu_info *ci)
 		ci->ci_cpu_serial[2] = descs[2];
 		ci->ci_cpu_serial[1] = descs[3];
 	}
+
+	if (ci->ci_cpuid_level < 0xd)
+		return;
+
+	/* Get support XRC0 bits */
+	x86_cpuid2(0xd, 0, descs);
+	ci->ci_feat_val[5] = descs[0];	/* Actually 64 bits */
+	ci->ci_cur_xsave = descs[1];
+	ci->ci_max_xsave = descs[2];
+
+	/* Additional flags (eg xsaveopt support) */
+	x86_cpuid2(0xd, 1, descs);
+	ci->ci_feat_val[6] = descs[0];   /* Actually 64 bits */
 }
 
 static void
 cpu_probe_features(struct cpu_info *ci)
 {
 	const struct cpu_cpuid_nameclass *cpup = NULL;
-	int i, xmax, family;
-
-	cpu_probe_base_features(ci);
+	unsigned int i;
 
 	if (ci->ci_cpuid_level < 1)
 		return;
 
-	xmax = __arraycount(i386_cpuid_cpus);
-	for (i = 0; i < xmax; i++) {
+	for (i = 0; i < __arraycount(i386_cpuid_cpus); i++) {
 		if (!strncmp((char *)ci->ci_vendor,
 		    i386_cpuid_cpus[i].cpu_id, 12)) {
 			cpup = &i386_cpuid_cpus[i];
@@ -1094,12 +1035,10 @@ cpu_probe_features(struct cpu_info *ci)
 	if (cpup == NULL)
 		return;
 
-	family = (ci->ci_signature >> 8) & 0xf;
+	i = ci->ci_family - CPU_MINFAMILY;
 
-	if (family > CPU_MAXFAMILY) {
-		family = CPU_MAXFAMILY;
-	}
-	i = family - CPU_MINFAMILY;
+	if (i >= __arraycount(cpup->cpu_family))
+		i = __arraycount(cpup->cpu_family) - 1;
 
 	if (cpup->cpu_family[i].cpu_probe == NULL)
 		return;
@@ -1157,7 +1096,7 @@ static void
 amd_family5_setup(struct cpu_info *ci)
 {
 
-	switch (CPUID2MODEL(ci->ci_signature)) {
+	switch (ci->ci_model) {
 	case 0:		/* AMD-K5 Model 0 */
 		/*
 		 * According to the AMD Processor Recognition App Note,
@@ -1234,22 +1173,37 @@ transmeta_cpu_info(struct cpu_info *ci)
 	}
 }
 
+static void
+print_bits(const char *cpuname, const char *hdr, const char *fmt, uint32_t val)
+{
+	char buf[32 * 16];
+	char *bp;
+
+#define	MAX_LINE_LEN	79	/* get from command arg or 'stty cols' ? */
+
+	if (val == 0 || fmt == NULL)
+		return;
+
+	snprintb_m(buf, sizeof(buf), fmt, val,
+	    MAX_LINE_LEN - strlen(cpuname) - 2 - strlen(hdr) - 1);
+	bp = buf;
+	while (*bp != '\0') {
+		aprint_verbose("%s: %s %s\n", cpuname, hdr, bp);
+		bp += strlen(bp) + 1;
+	}
+}
+
 void
 identifycpu(int fd, const char *cpuname)
 {
 	const char *name = "", *modifier, *vendorname, *brand = "";
-	int class = CPUCLASS_386, i, xmax;
-	int modif, family, model, ext_model;
-	const struct cpu_extend_nameclass *modlist;
+	int class = CPUCLASS_386;
+	unsigned int i;
+	int modif, family;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
-	const char *feature_str[5];
 	struct cpu_info *ci, cistore;
-	extern int cpu;
-	extern int cpu_info_level;
 	size_t sz;
-	char buf[512];
-	char *bp;
 	struct cpu_ucode_version ucode;
 	union {
 		struct cpu_ucode_version_amd amd;
@@ -1257,32 +1211,27 @@ identifycpu(int fd, const char *cpuname)
 	} ucvers;
 
 	ci = &cistore;
-	memset(ci, 0, sizeof(*ci));
-	ci->ci_dev = cpuname;
-
-	x86_identify();
-	ci->ci_cpuid_level = cpu_info_level;
+	cpu_probe_base_features(ci, cpuname);
 	cpu_probe_features(ci);
 
-	if (ci->ci_cpuid_level == -1) {
-		if ((size_t)cpu >= __arraycount(i386_nocpuid_cpus))
-			errx(1, "unknown cpu type %d", cpu);
-		name = i386_nocpuid_cpus[cpu].cpu_name;
-		cpu_vendor = i386_nocpuid_cpus[cpu].cpu_vendor;
-		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
-		class = i386_nocpuid_cpus[cpu].cpu_class;
-		ci->ci_info = i386_nocpuid_cpus[cpu].cpu_info;
+	if (ci->ci_cpu_type >= 0) {
+		if (ci->ci_cpu_type >= (int)__arraycount(i386_nocpuid_cpus))
+			errx(1, "unknown cpu type %d", ci->ci_cpu_type);
+		name = i386_nocpuid_cpus[ci->ci_cpu_type].cpu_name;
+		cpu_vendor = i386_nocpuid_cpus[ci->ci_cpu_type].cpu_vendor;
+		vendorname = i386_nocpuid_cpus[ci->ci_cpu_type].cpu_vendorname;
+		class = i386_nocpuid_cpus[ci->ci_cpu_type].cpu_class;
+		ci->ci_info = i386_nocpuid_cpus[ci->ci_cpu_type].cpu_info;
 		modifier = "";
 	} else {
-		xmax = __arraycount(i386_cpuid_cpus);
 		modif = (ci->ci_signature >> 12) & 0x3;
-		family = CPUID2FAMILY(ci->ci_signature);
+		family = ci->ci_family;
 		if (family < CPU_MINFAMILY)
 			errx(1, "identifycpu: strange family value");
-		model = CPUID2MODEL(ci->ci_signature);
-		ext_model = CPUID2EXTMODEL(ci->ci_signature);
+		if (family > CPU_MAXFAMILY)
+			family = CPU_MAXFAMILY;
 
-		for (i = 0; i < xmax; i++) {
+		for (i = 0; i < __arraycount(i386_cpuid_cpus); i++) {
 			if (!strncmp((char *)ci->ci_vendor,
 			    i386_cpuid_cpus[i].cpu_id, 12)) {
 				cpup = &i386_cpuid_cpus[i];
@@ -1296,8 +1245,6 @@ identifycpu(int fd, const char *cpuname)
 				vendorname = (char *)&ci->ci_vendor[0];
 			else
 				vendorname = "Unknown";
-			if (family >= CPU_MAXFAMILY)
-				family = CPU_MINFAMILY;
 			class = family - 3;
 			modifier = "";
 			name = "";
@@ -1306,44 +1253,21 @@ identifycpu(int fd, const char *cpuname)
 			cpu_vendor = cpup->cpu_vendor;
 			vendorname = cpup->cpu_vendorname;
 			modifier = modifiers[modif];
-			if (family > CPU_MAXFAMILY) {
-				family = CPU_MAXFAMILY;
-				model = CPU_DEFMODEL;
-			} else if (model > CPU_MAXMODEL) {
-				model = CPU_DEFMODEL;
-				ext_model = 0;
-			}
 			cpufam = &cpup->cpu_family[family - CPU_MINFAMILY];
-			if (cpufam->cpu_extended_names == NULL ||
-			    ext_model == 0)
-				name = cpufam->cpu_models[model];
-			else {
-				/*
-				 * Scan list(s) of extended model names
-				 */
-				modlist = cpufam->cpu_extended_names;
-				while (modlist->ext_model != 0) {
-					if (modlist->ext_model == ext_model) {
-						name =
-						     modlist->cpu_models[model];
-						break;
-					}
-					modlist++;
-				}
-			}
+			name = cpufam->cpu_models[ci->ci_model];
 			if (name == NULL || *name == '\0')
-			    name = cpufam->cpu_models[CPU_DEFMODEL];
+			    name = cpufam->cpu_model_default;
 			class = cpufam->cpu_class;
 			ci->ci_info = cpufam->cpu_info;
 
 			if (cpu_vendor == CPUVENDOR_INTEL) {
-				if (family == 6 && model >= 5) {
+				if (ci->ci_family == 6 && ci->ci_model >= 5) {
 					const char *tmp;
 					tmp = intel_family6_name(ci);
 					if (tmp != NULL)
 						name = tmp;
 				}
-				if (family == CPU_MAXFAMILY &&
+				if (ci->ci_family == 15 &&
 				    ci->ci_brand_id <
 				    __arraycount(i386_intel_brand) &&
 				    i386_intel_brand[ci->ci_brand_id])
@@ -1352,7 +1276,7 @@ identifycpu(int fd, const char *cpuname)
 			}
 
 			if (cpu_vendor == CPUVENDOR_AMD) {
-				if (family == 6 && model >= 6) {
+				if (ci->ci_family == 6 && ci->ci_model >= 6) {
 					if (ci->ci_brand_id == 1)
 						/* 
 						 * It's Duron. We override the 
@@ -1365,11 +1289,7 @@ identifycpu(int fd, const char *cpuname)
 						brand = amd_brand_name;
 				}
 				if (CPUID2FAMILY(ci->ci_signature) == 0xf) {
-					/*
-					 * Identify AMD64 CPU names.
-					 * Note family value is clipped by
-					 * CPU_MAXFAMILY.
-					 */
+					/* Identify AMD64 CPU names.  */
 					const char *tmp;
 					tmp = amd_amd64_name(ci);
 					if (tmp != NULL)
@@ -1377,7 +1297,7 @@ identifycpu(int fd, const char *cpuname)
 				}
 			}
 			
-			if (cpu_vendor == CPUVENDOR_IDT && family >= 6)
+			if (cpu_vendor == CPUVENDOR_IDT && ci->ci_family >= 6)
 				vendorname = "VIA";
 		}
 	}
@@ -1390,20 +1310,31 @@ identifycpu(int fd, const char *cpuname)
 	(void)sysctlbyname("machdep.pae", &use_pae, &sz, NULL, 0);
 	largepagesize = (use_pae ? 2 * 1024 * 1024 : 4 * 1024 * 1024);
 
-	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
-	    vendorname,
-	    *modifier ? " " : "", modifier,
-	    *name ? " " : "", name,
-	    *brand ? " " : "", brand,
-	    classnames[class]);
-	aprint_normal("%s: %s", cpuname, cpu_model);
+	/*
+	 * The 'cpu_brand_string' is much more useful than the 'cpu_model'
+	 * we try to determine from the family/model values.
+	 */
+	if (*cpu_brand_string != '\0')
+		aprint_normal("%s: \"%s\"\n", cpuname, cpu_brand_string);
+
+	aprint_normal("%s: %s", cpuname, vendorname);
+	if (*modifier)
+		aprint_normal(" %s", modifier);
+	if (*name)
+		aprint_normal(" %s", name);
+	if (*brand)
+		aprint_normal(" %s", brand);
+	aprint_normal(" (%s-class)", classnames[class]);
 
 	if (ci->ci_tsc_freq != 0)
-		aprint_normal(", %ju.%02ju MHz",
+		aprint_normal(", %ju.%02ju MHz\n",
 		    ((uintmax_t)ci->ci_tsc_freq + 4999) / 1000000,
 		    (((uintmax_t)ci->ci_tsc_freq + 4999) / 10000) % 100);
+
+	aprint_normal_dev(ci->ci_dev, "family %#x model %#x stepping %#x",
+	    ci->ci_family, ci->ci_model, CPUID2STEPPING(ci->ci_signature));
 	if (ci->ci_signature != 0)
-		aprint_normal(", id 0x%x", ci->ci_signature);
+		aprint_normal(" (id %#x)", ci->ci_signature);
 	aprint_normal("\n");
 
 	if (ci->ci_info)
@@ -1413,45 +1344,33 @@ identifycpu(int fd, const char *cpuname)
 	 * display CPU feature flags
 	 */
 
-#define	MAX_FEATURE_LEN	60	/* XXX Need to find a better way to set this */
+	print_bits(cpuname, "features", CPUID_FLAGS1, ci->ci_feat_val[0]);
+	print_bits(cpuname, "features1", CPUID2_FLAGS1, ci->ci_feat_val[1]);
 
-	feature_str[0] = CPUID_FLAGS1;
-	feature_str[1] = CPUID2_FLAGS1;
-	feature_str[2] = CPUID_EXT_FLAGS;
-	feature_str[3] = NULL;
-	feature_str[4] = NULL;
+	/* These next two are actually common definitions! */
+	print_bits(cpuname, "features2",
+	    cpu_vendor == CPUVENDOR_INTEL ? CPUID_INTEL_EXT_FLAGS
+		: CPUID_EXT_FLAGS, ci->ci_feat_val[2]);
+	print_bits(cpuname, "features3",
+	    cpu_vendor == CPUVENDOR_INTEL ? CPUID_INTEL_FLAGS4
+		: CPUID_AMD_FLAGS4, ci->ci_feat_val[3]);
 
-	switch (cpu_vendor) {
-	case CPUVENDOR_AMD:
-		feature_str[3] = CPUID_AMD_FLAGS4;
-		break;
-	case CPUVENDOR_INTEL:
-		feature_str[2] = CPUID_INTEL_EXT_FLAGS;
-		feature_str[3] = CPUID_INTEL_FLAGS4;
-		break;
-	case CPUVENDOR_IDT:
-		feature_str[4] = CPUID_FLAGS_PADLOCK;
-		break;
-	default:
-		break;
+	print_bits(cpuname, "padloack features", CPUID_FLAGS_PADLOCK,
+	    ci->ci_feat_val[4]);
+
+	print_bits(cpuname, "xsave features", XCR0_FLAGS1, ci->ci_feat_val[5]);
+	print_bits(cpuname, "xsave instructions", CPUID_PES1_FLAGS,
+	    ci->ci_feat_val[6]);
+
+	if (ci->ci_max_xsave != 0) {
+		aprint_normal("%s: xsave area size: current %d, maximum %d",
+			cpuname, ci->ci_cur_xsave, ci->ci_max_xsave);
+		aprint_normal(", xgetbv %sabled\n",
+		    ci->ci_feat_val[1] & CPUID2_OSXSAVE ? "en" : "dis");
+		if (ci->ci_feat_val[1] & CPUID2_OSXSAVE)
+			print_bits(cpuname, "enabled xsave", XCR0_FLAGS1,
+			    x86_xgetbv());
 	}
-	
-	for (i = 0; i <= 4; i++) {
-		if (ci->ci_feat_val[i] && feature_str[i] != NULL) {
-			snprintb_m(buf, sizeof(buf), feature_str[i],
-				   ci->ci_feat_val[i], MAX_FEATURE_LEN);
-			bp = buf;
-			while (*bp != '\0') {
-				aprint_verbose("%s: %sfeatures%c %s\n",
-				    cpuname, (i == 4)?"padlock ":"", 
-				    (i == 4 || i == 0)?' ':'1' + i, bp);
-				bp += strlen(bp) + 1;
-			}
-		}
-	}
-
-	if (*cpu_brand_string != '\0')
-		aprint_normal("%s: \"%s\"\n", cpuname, cpu_brand_string);
 
 	x86_print_cacheinfo(ci);
 
@@ -1467,7 +1386,7 @@ identifycpu(int fd, const char *cpuname)
 		errx(1, "NetBSD requires an 80486 or later processor");
 	}
 
-	if (cpu == CPU_486DLC) {
+	if (ci->ci_cpu_type == CPU_486DLC) {
 #ifndef CYRIX_CACHE_WORKS
 		aprint_error("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
 #else
@@ -1501,19 +1420,12 @@ identifycpu(int fd, const char *cpuname)
 
 		if ((data[0] >= 0x8000000a)
 		   && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
-
 			x86_cpuid(0x8000000a, data);
 			aprint_verbose("%s: SVM Rev. %d\n", cpuname,
 			    data[0] & 0xf);
 			aprint_verbose("%s: SVM NASID %d\n", cpuname, data[1]);
-			snprintb_m(buf, sizeof(buf), CPUID_AMD_SVM_FLAGS,
-				   data[3], MAX_FEATURE_LEN);
-			bp = buf;
-			while (*bp != '\0') {
-				aprint_verbose("%s: SVM features %s\n",
-				    cpuname, bp);
-				bp += strlen(bp) + 1;
-			}
+			print_bits(cpuname, "SVM features", CPUID_AMD_SVM_FLAGS,
+				   data[3]);
 		}
 	}
 
@@ -1521,21 +1433,28 @@ identifycpu(int fd, const char *cpuname)
 	clockmod_init();
 #endif
 
-	aprint_normal_dev(ci->ci_dev, "family %02x model %02x "
-	    "extfamily %02x extmodel %02x stepping %02x\n",
-	    CPUID2FAMILY(ci->ci_signature), CPUID2MODEL(ci->ci_signature),
-	    CPUID2EXTFAMILY(ci->ci_signature), CPUID2EXTMODEL(ci->ci_signature),
-	    CPUID2STEPPING(ci->ci_signature));
-
 	if (cpu_vendor == CPUVENDOR_AMD)
 		ucode.loader_version = CPU_UCODE_LOADER_AMD;
 	else if (cpu_vendor == CPUVENDOR_INTEL)
 		ucode.loader_version = CPU_UCODE_LOADER_INTEL1;
 	else
 		return;
+
 	ucode.data = &ucvers;
-	if (ioctl(fd, IOC_CPU_UCODE_GET_VERSION, &ucode) < 0)
-		return;
+	if (ioctl(fd, IOC_CPU_UCODE_GET_VERSION, &ucode) < 0) {
+#ifdef __i386__
+		struct cpu_ucode_version_64 ucode_64;
+		if (errno != ENOTTY)
+			return;
+		/* Try the 64 bit ioctl */
+		memset(&ucode_64, 0, sizeof ucode_64);
+		ucode_64.data = &ucvers;
+		ucode_64.loader_version = ucode.loader_version;
+		if (ioctl(fd, IOC_CPU_UCODE_GET_VERSION_64, &ucode_64) < 0)
+			return;
+#endif
+	}
+
 	if (cpu_vendor == CPUVENDOR_AMD)
 		printf("%s: UCode version: 0x%"PRIx64"\n", cpuname, ucvers.amd.version);
 	else if (cpu_vendor == CPUVENDOR_INTEL)
@@ -1650,26 +1569,14 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 {
 	const struct x86_cache_info *cp;
 	struct x86_cache_info *cai;
-	int family, model;
 	u_int descs[4];
 	u_int lfunc;
-
-	family = (ci->ci_signature >> 8) & 15;
-	model = CPUID2MODEL(ci->ci_signature);
 
 	/*
 	 * K5 model 0 has none of this info.
 	 */
-	if (family == 5 && model == 0)
+	if (ci->ci_family == 5 && ci->ci_model == 0)
 		return;
-
-	/*
-	 * Get extended values for K8 and up.
-	 */
-	if (family == 0xf) {
-		family += CPUID2EXTFAMILY(ci->ci_signature);
-		model += CPUID2EXTMODEL(ci->ci_signature);
-	}
 
 	/*
 	 * Determine the largest extended function value.
@@ -1690,7 +1597,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	/*
 	 * K6-III and higher have large page TLBs.
 	 */
-	if ((family == 5 && model >= 9) || family >= 6) {
+	if ((ci->ci_family == 5 && ci->ci_model >= 9) || ci->ci_family >= 6) {
 		cai = &ci->ci_cinfo[CAI_ITLB2];
 		cai->cai_totalsize = AMD_L1_EAX_ITLB_ENTRIES(descs[0]);
 		cai->cai_associativity = AMD_L1_EAX_ITLB_ASSOC(descs[0]);
@@ -1791,7 +1698,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	/*
 	 * Determine L3 cache info on AMD Family 10h and newer processors
 	 */
-	if (family >= 0x10) {
+	if (ci->ci_family >= 0x10) {
 		cai = &ci->ci_cinfo[CAI_L3CACHE];
 		cai->cai_totalsize = AMD_L3_EDX_C_SIZE(descs[3]);
 		cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
@@ -1864,12 +1771,10 @@ static void
 via_cpu_cacheinfo(struct cpu_info *ci)
 {
 	struct x86_cache_info *cai;
-	int family, model, stepping;
+	int stepping;
 	u_int descs[4];
 	u_int lfunc;
 
-	family = (ci->ci_signature >> 8) & 15;
-	model = CPUID2MODEL(ci->ci_signature);
 	stepping = CPUID2STEPPING(ci->ci_signature);
 
 	/*
@@ -1902,7 +1807,7 @@ via_cpu_cacheinfo(struct cpu_info *ci)
 	cai->cai_totalsize = VIA_L1_ECX_DC_SIZE(descs[2]);
 	cai->cai_associativity = VIA_L1_ECX_DC_ASSOC(descs[2]);
 	cai->cai_linesize = VIA_L1_EDX_IC_LS(descs[2]);
-	if (model == 9 && stepping == 8) {
+	if (ci->ci_model == 9 && stepping == 8) {
 		/* Erratum: stepping 8 reports 4 when it should be 2 */
 		cai->cai_associativity = 2;
 	}
@@ -1911,7 +1816,7 @@ via_cpu_cacheinfo(struct cpu_info *ci)
 	cai->cai_totalsize = VIA_L1_EDX_IC_SIZE(descs[3]);
 	cai->cai_associativity = VIA_L1_EDX_IC_ASSOC(descs[3]);
 	cai->cai_linesize = VIA_L1_EDX_IC_LS(descs[3]);
-	if (model == 9 && stepping == 8) {
+	if (ci->ci_model == 9 && stepping == 8) {
 		/* Erratum: stepping 8 reports 4 when it should be 2 */
 		cai->cai_associativity = 2;
 	}
@@ -1927,7 +1832,7 @@ via_cpu_cacheinfo(struct cpu_info *ci)
 	x86_cpuid(0x80000006, descs);
 
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
-	if (model >= 9) {
+	if (ci->ci_model >= 9) {
 		cai->cai_totalsize = VIA_L2N_ECX_C_SIZE(descs[2]);
 		cai->cai_associativity = VIA_L2N_ECX_C_ASSOC(descs[2]);
 		cai->cai_linesize = VIA_L2N_ECX_C_LS(descs[2]);
@@ -2025,11 +1930,9 @@ ucodeupdate_check(int fd, struct cpu_ucode *uc)
 	struct cpu_info ci;
 	int loader_version, res;
 	struct cpu_ucode_version versreq;
-	extern int cpu_info_level;
 
-	x86_identify();
-	ci.ci_cpuid_level = cpu_info_level;
-	cpu_probe_base_features(&ci);
+	cpu_probe_base_features(&ci, "unknown");
+
 	if (!strcmp((char *)ci.ci_vendor, "AuthenticAMD"))
 		loader_version = CPU_UCODE_LOADER_AMD;
 	else if (!strcmp((char *)ci.ci_vendor, "GenuineIntel"))

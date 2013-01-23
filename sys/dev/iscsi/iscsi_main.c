@@ -55,7 +55,9 @@ iscsi_softc_t *sc = NULL;
 session_list_t iscsi_sessions = TAILQ_HEAD_INITIALIZER(iscsi_sessions);
 
 /* connections to clean up */
-connection_list_t iscsi_cleanup_list = TAILQ_HEAD_INITIALIZER(iscsi_cleanup_list);
+connection_list_t iscsi_cleanupc_list = TAILQ_HEAD_INITIALIZER(iscsi_cleanupc_list);
+session_list_t iscsi_cleanups_list = TAILQ_HEAD_INITIALIZER(iscsi_cleanups_list);
+
 bool iscsi_detaching = FALSE;
 struct lwp *iscsi_cleanproc = NULL;
 
@@ -207,8 +209,8 @@ iscsi_detach(device_t self, int flags)
 	kill_all_sessions();
 	iscsi_detaching = TRUE;
 	while (iscsi_cleanproc != NULL) {
-		wakeup(&iscsi_cleanup_list);
-		tsleep(&iscsi_cleanup_list, PWAIT, "detach_wait", 20);
+		wakeup(&iscsi_cleanupc_list);
+		tsleep(&iscsi_cleanupc_list, PWAIT, "detach_wait", 20 * hz);
 	}
 	return 0;
 }
@@ -329,17 +331,23 @@ map_session(session_t *session)
  *    telling the config system that the adapter has detached.
  *
  *    Parameter:  the session pointer
+ *
+ *    Returns:    1 on success, 0 on failure
  */
 
-void
+int
 unmap_session(session_t *session)
 {
 	device_t dev;
+	int rv = 1;
 
 	if ((dev = session->child_dev) != NULL) {
 		session->child_dev = NULL;
-		config_detach(dev, DETACH_FORCE);
+		if (config_detach(dev, 0))
+			rv = 0;
 	}
+
+	return rv;
 }
 
 /******************************************************************************/
@@ -361,6 +369,7 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	struct scsipi_xfer *xs;
 	session_t *session;
 	int flags;
+	struct scsipi_xfer_mode *xm;
 
 	session = (session_t *) adapt;	/* adapter is first field in session */
 
@@ -400,6 +409,9 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 	case ADAPTER_REQ_SET_XFER_MODE:
 		DEB(5, ("ISCSI: scsipi_request SET_XFER_MODE\n"));
+		xm = (struct scsipi_xfer_mode *)arg;
+		xm->xm_mode = PERIPH_CAP_TQING;
+		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
 		return;
 
 	default:
@@ -478,8 +490,6 @@ iscsi_done(ccb_t *ccb)
 		scsipi_done(xs);
 		DEB(99, ("scsipi_done returned\n"));
 	}
-
-	free_ccb(ccb);
 }
 
 /* Kernel Module support */

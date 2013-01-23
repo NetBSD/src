@@ -1,4 +1,4 @@
-/*	$NetBSD: master_service.c,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
+/*	$NetBSD: master_service.c,v 1.1.1.1.10.1 2013/01/23 00:05:04 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -14,15 +14,18 @@
 /*	void	master_stop_service(serv)
 /*	MASTER_SERV *serv;
 /*
-/*	void	master_restart_service(serv)
+/*	void	master_restart_service(serv, conf_reload)
 /*	MASTER_SERV *serv;
+/*	int	conf_reload;
 /* DESCRIPTION
 /*	master_start_service() enables the named service.
 /*
 /*	master_stop_service() disables named service.
 /*
 /*	master_restart_service() requests all running child processes to
-/*	commit suicide. This is typically used after a configuration reload.
+/*	commit suicide.  The conf_reload argument is either DO_CONF_RELOAD
+/*	(configuration files were reloaded, re-evaluate the child process
+/*	creation policy) or NO_CONF_RELOAD. 
 /* DIAGNOSTICS
 /* BUGS
 /* SEE ALSO
@@ -89,7 +92,7 @@ void    master_stop_service(MASTER_SERV *serv)
 
 /* master_restart_service - restart service after configuration reload */
 
-void    master_restart_service(MASTER_SERV *serv)
+void    master_restart_service(MASTER_SERV *serv, int conf_reload)
 {
 
     /*
@@ -103,4 +106,10 @@ void    master_restart_service(MASTER_SERV *serv)
      */
     master_status_init(serv);
     master_wakeup_init(serv);
+
+    /*
+     * Respond to configuration change.
+     */
+    if (conf_reload)
+	master_avail_listen(serv);
 }

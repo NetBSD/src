@@ -24,6 +24,13 @@
 
 /* arm.h defaults to ARM6 CPU.  */
 
+/* Default EABI to armv5t so that thumb shared libraries work.
+   The ARM926EH-S core is the default for armv5te, so set
+   SUBTARGET_CPU_DEFAULT to achieve this.  */
+
+#define SUBTARGET_CPU_DEFAULT \
+	(TARGET_AAPCS_BASED ? TARGET_CPU_arm926ejs : TARGET_CPU_arm6)
+
 /* This defaults us to little-endian.  */
 #ifndef TARGET_ENDIAN_DEFAULT
 #define TARGET_ENDIAN_DEFAULT 0
@@ -58,8 +65,8 @@
 /* Default to full VFP if -mhard-float is specified.  */
 #undef SUBTARGET_ASM_FLOAT_SPEC
 #define SUBTARGET_ASM_FLOAT_SPEC	\
-  "%{mhard-float:{!mfpu=*:-mfpu=vfp}}   \
-   %{mfloat-abi=hard:{!mfpu=*:-mfpu=vfp}}"
+  "%{mhard-float:%{!mfpu=*:-mfpu=vfp}}   \
+   %{mfloat-abi=hard:%{!mfpu=*:-mfpu=vfp}}"
 
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS				\
@@ -72,7 +79,9 @@
 
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "-X %{mbig-endian:-EB} %{mlittle-endian:-EL} \
+  "-X \
+   %{mbig-endian:-EB %{-mabi=aapcs*:-m armelfb_nbsd_eabi}} \
+   %{mlittle-endian:-EL %{-mabi=aapcs*:-m armelf_nbsd_eabi}} \
    %(netbsd_link_spec)"
 
 /* Make GCC agree with <machine/ansi.h>.  */

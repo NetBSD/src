@@ -1,4 +1,4 @@
-/*	$NetBSD: invite.c,v 1.9 2011/09/06 18:32:03 joerg Exp $	*/
+/*	$NetBSD: invite.c,v 1.9.2.1 2013/01/23 00:06:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: invite.c,v 1.9 2011/09/06 18:32:03 joerg Exp $");
+__RCSID("$NetBSD: invite.c,v 1.9.2.1 2013/01/23 00:06:40 yamt Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: invite.c,v 1.9 2011/09/06 18:32:03 joerg Exp $");
 #include <errno.h>
 #include <setjmp.h>
 #include <unistd.h>
+#include <err.h>
 #include "talk_ctl.h"
 
 /*
@@ -179,11 +180,11 @@ send_delete(void)
 	if (sendto(ctl_sockt, &msg, sizeof (msg), 0,
 	    (struct sockaddr *)&daemon_addr,
 	    sizeof (daemon_addr)) != sizeof(msg))
-		perror("send_delete (remote)");
+		warn("send_delete (remote)");
 	msg.id_num = htonl(local_id);
 	daemon_addr.sin_addr = my_machine_addr;
 	if (sendto(ctl_sockt, &msg, sizeof (msg), 0,
 	    (struct sockaddr *)&daemon_addr,
 	    sizeof (daemon_addr)) != sizeof (msg))
-		perror("send_delete (local)");
+		warn("send_delete (local)");
 }

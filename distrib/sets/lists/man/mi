@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1351.2.5 2013/01/16 05:26:09 yamt Exp $
+# $NetBSD: mi,v 1.1351.2.6 2013/01/23 00:04:21 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -120,6 +120,9 @@
 ./usr/share/man/cat1/csh.0			man-util-catman		.cat
 ./usr/share/man/cat1/csplit.0			man-util-catman		.cat
 ./usr/share/man/cat1/ctags.0			man-c-catman		.cat
+./usr/share/man/cat1/ctfconvert.0		man-util-catman		.cat,dtrace
+./usr/share/man/cat1/ctfdump.0			man-util-catman		.cat,dtrace
+./usr/share/man/cat1/ctfmerge.0			man-util-catman		.cat,dtrace
 ./usr/share/man/cat1/cu.0			man-util-catman		.cat
 ./usr/share/man/cat1/cut.0			man-util-catman		.cat
 ./usr/share/man/cat1/daicctl.0			man-sysutil-catman	.cat
@@ -496,6 +499,7 @@
 ./usr/share/man/cat1/source.0			man-util-catman		.cat
 ./usr/share/man/cat1/spell.0			man-util-catman		.cat
 ./usr/share/man/cat1/split.0			man-util-catman		.cat
+./usr/share/man/cat1/sqlite3.0			man-util-catman		.cat
 ./usr/share/man/cat1/srtconfig.0		man-netutil-catman	.cat
 ./usr/share/man/cat1/ssh-add.0			man-secsh-catman	crypto,.cat
 ./usr/share/man/cat1/ssh-agent.0		man-secsh-catman	crypto,.cat
@@ -990,6 +994,7 @@
 ./usr/share/man/cat4/et.0			man-sys-catman		.cat
 ./usr/share/man/cat4/etherip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/etphy.0			man-sys-catman		.cat
+./usr/share/man/cat4/evbarm/cpsw.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/epgpio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/iopaau.0		man-sys-catman		.cat
@@ -1179,6 +1184,7 @@
 ./usr/share/man/cat4/i4btrc.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i915drm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iavc.0			man-sys-catman		.cat
+./usr/share/man/cat4/ibmcd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ibmhawk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ichlpcib.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ichsmb.0			man-sys-catman		.cat
@@ -1454,6 +1460,7 @@
 ./usr/share/man/cat4/prep/nvram.0		man-sys-catman		.cat
 ./usr/share/man/cat4/pseye.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pss.0			man-obsolete		obsolete
+./usr/share/man/cat4/ptcd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ptm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pty.0			man-sys-catman		.cat
 ./usr/share/man/cat4/puc.0			man-sys-catman		.cat
@@ -1741,6 +1748,7 @@
 ./usr/share/man/cat4/uscanner.0			man-sys-catman		.cat
 ./usr/share/man/cat4/userconf.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uslsa.0			man-sys-catman		.cat
+./usr/share/man/cat4/usmsc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/usscanner.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ustir.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uthum.0			man-sys-catman		.cat
@@ -2006,6 +2014,7 @@
 ./usr/share/man/cat5/map3270.0			man-obsolete		obsolete
 ./usr/share/man/cat5/master.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/master.passwd.0		man-sys-catman		.cat
+./usr/share/man/cat5/memcache_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/mixerctl.conf.0		man-audio-catman	.cat
 ./usr/share/man/cat5/moduli.0			man-secsh-catman	crypto,.cat
 ./usr/share/man/cat5/monthly.0			man-sys-catman		.cat
@@ -3123,6 +3132,9 @@
 ./usr/share/man/html1/csh.html			man-util-htmlman	html
 ./usr/share/man/html1/csplit.html		man-util-htmlman	html
 ./usr/share/man/html1/ctags.html		man-c-htmlman		html
+./usr/share/man/html1/ctfconvert.html		man-util-htmlman	html,dtrace
+./usr/share/man/html1/ctfdump.html		man-util-htmlman	html,dtrace
+./usr/share/man/html1/ctfmerge.html		man-util-htmlman	html,dtrace
 ./usr/share/man/html1/cu.html			man-util-htmlman	html
 ./usr/share/man/html1/cut.html			man-util-htmlman	html
 ./usr/share/man/html1/daicctl.html		man-sysutil-htmlman	html
@@ -3478,6 +3490,7 @@
 ./usr/share/man/html1/source.html		man-util-htmlman	html
 ./usr/share/man/html1/spell.html		man-util-htmlman	html
 ./usr/share/man/html1/split.html		man-util-htmlman	html
+./usr/share/man/html1/sqlite3.html		man-util-htmlman	html
 ./usr/share/man/html1/srtconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html1/ssh-add.html		man-secsh-htmlman	crypto,html
 ./usr/share/man/html1/ssh-agent.html		man-secsh-htmlman	crypto,html
@@ -3912,6 +3925,7 @@
 ./usr/share/man/html4/et.html			man-sys-htmlman		html
 ./usr/share/man/html4/etherip.html		man-sys-htmlman		html
 ./usr/share/man/html4/etphy.html		man-sys-htmlman		html
+./usr/share/man/html4/evbarm/cpsw.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/epgpio.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/iopaau.html	man-sys-htmlman		html
@@ -4071,6 +4085,7 @@
 ./usr/share/man/html4/i386/viac7temp.html	man-sys-htmlman		html
 ./usr/share/man/html4/i915drm.html		man-sys-htmlman		html
 ./usr/share/man/html4/iavc.html			man-sys-htmlman		html
+./usr/share/man/html4/ibmcd.html		man-sys-htmlman		html
 ./usr/share/man/html4/ibmhawk.html		man-sys-htmlman		html
 ./usr/share/man/html4/ichlpcib.html		man-obsolete		obsolete
 ./usr/share/man/html4/ichsmb.html		man-sys-htmlman		html
@@ -4311,6 +4326,7 @@
 ./usr/share/man/html4/prep/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/prep/nvram.html		man-sys-htmlman		html
 ./usr/share/man/html4/pseye.html		man-sys-htmlman		html
+./usr/share/man/html4/ptcd.html			man-sys-htmlman		html
 ./usr/share/man/html4/ptm.html			man-sys-htmlman		html
 ./usr/share/man/html4/pty.html			man-sys-htmlman		html
 ./usr/share/man/html4/puc.html			man-sys-htmlman		html
@@ -4587,6 +4603,7 @@
 ./usr/share/man/html4/uscanner.html		man-sys-htmlman		html
 ./usr/share/man/html4/userconf.html		man-sys-htmlman		html
 ./usr/share/man/html4/uslsa.html		man-sys-htmlman		html
+./usr/share/man/html4/usmsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/usscanner.html		man-sys-htmlman		html
 ./usr/share/man/html4/ustir.html		man-sys-htmlman		html
 ./usr/share/man/html4/uthum.html		man-sys-htmlman		html
@@ -4840,6 +4857,7 @@
 ./usr/share/man/html5/map3270.html		man-obsolete		obsolete
 ./usr/share/man/html5/master.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/master.passwd.html	man-sys-htmlman		html
+./usr/share/man/html5/memcache_table.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/mixerctl.conf.html	man-audio-htmlman	html
 ./usr/share/man/html5/moduli.html		man-secsh-htmlman	crypto,html
 ./usr/share/man/html5/monthly.conf.html		man-sys-htmlman		html
@@ -5734,6 +5752,9 @@
 ./usr/share/man/man1/csh.1			man-util-man		.man
 ./usr/share/man/man1/csplit.1			man-util-man		.man
 ./usr/share/man/man1/ctags.1			man-c-man		.man
+./usr/share/man/man1/ctfconvert.1		man-util-man		.man,dtrace
+./usr/share/man/man1/ctfdump.1			man-util-man		.man,dtrace
+./usr/share/man/man1/ctfmerge.1			man-util-man		.man,dtrace
 ./usr/share/man/man1/cu.1			man-util-man		.man
 ./usr/share/man/man1/cut.1			man-util-man		.man
 ./usr/share/man/man1/daicctl.1			man-sysutil-man		.man
@@ -6110,6 +6131,7 @@
 ./usr/share/man/man1/source.1			man-util-man		.man
 ./usr/share/man/man1/spell.1			man-util-man		.man
 ./usr/share/man/man1/split.1			man-util-man		.man
+./usr/share/man/man1/sqlite3.1			man-util-man		.man
 ./usr/share/man/man1/srtconfig.1		man-netutil-man		.man
 ./usr/share/man/man1/ssh-add.1			man-secsh-man		crypto,.man
 ./usr/share/man/man1/ssh-agent.1		man-secsh-man		crypto,.man
@@ -6604,6 +6626,7 @@
 ./usr/share/man/man4/et.4			man-sys-man		.man
 ./usr/share/man/man4/etherip.4			man-sys-man		.man
 ./usr/share/man/man4/etphy.4			man-sys-man		.man
+./usr/share/man/man4/evbarm/cpsw.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/epgpio.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/intro.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/iopaau.4		man-sys-man		.man
@@ -6793,6 +6816,7 @@
 ./usr/share/man/man4/i4btrc.4			man-obsolete		obsolete
 ./usr/share/man/man4/i915drm.4			man-sys-man		.man
 ./usr/share/man/man4/iavc.4			man-sys-man		.man
+./usr/share/man/man4/ibmcd.4			man-sys-man		.man
 ./usr/share/man/man4/ibmhawk.4			man-sys-man		.man
 ./usr/share/man/man4/ichlpcib.4			man-obsolete		obsolete
 ./usr/share/man/man4/ichsmb.4			man-sys-man		.man
@@ -7068,6 +7092,7 @@
 ./usr/share/man/man4/prep/nvram.4		man-sys-man		.man
 ./usr/share/man/man4/pseye.4			man-sys-man		.man
 ./usr/share/man/man4/pss.4			man-obsolete		obsolete
+./usr/share/man/man4/ptcd.4			man-sys-man		.man
 ./usr/share/man/man4/ptm.4			man-sys-man		.man
 ./usr/share/man/man4/pty.4			man-sys-man		.man
 ./usr/share/man/man4/puc.4			man-sys-man		.man
@@ -7355,6 +7380,7 @@
 ./usr/share/man/man4/uscanner.4			man-sys-man		.man
 ./usr/share/man/man4/userconf.4			man-sys-man		.man
 ./usr/share/man/man4/uslsa.4			man-sys-man		.man
+./usr/share/man/man4/usmsc.4			man-sys-man		.man
 ./usr/share/man/man4/usscanner.4		man-sys-man		.man
 ./usr/share/man/man4/ustir.4			man-sys-man		.man
 ./usr/share/man/man4/uthum.4			man-sys-man		.man
@@ -7620,6 +7646,7 @@
 ./usr/share/man/man5/map3270.5			man-obsolete		obsolete
 ./usr/share/man/man5/master.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/master.passwd.5		man-sys-man		.man
+./usr/share/man/man5/memcache_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/mixerctl.conf.5		man-audio-man		.man
 ./usr/share/man/man5/moduli.5			man-secsh-man		crypto,.man
 ./usr/share/man/man5/monthly.5			man-sys-man		.man

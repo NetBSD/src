@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.h,v 1.1.1.1 2009/06/23 10:08:56 tron Exp $	*/
+/*	$NetBSD: smtpd_check.h,v 1.1.1.1.10.1 2013/01/23 00:05:13 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -16,7 +16,7 @@
   */
 extern void smtpd_check_init(void);
 extern int smtpd_check_addr(const char *);
-extern void smtpd_check_rewrite(SMTPD_STATE *);
+extern char *smtpd_check_rewrite(SMTPD_STATE *);
 extern char *smtpd_check_client(SMTPD_STATE *);
 extern char *smtpd_check_helo(SMTPD_STATE *, char *);
 extern char *smtpd_check_mail(SMTPD_STATE *, char *);

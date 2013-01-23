@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.13.2.2 2013/01/16 05:32:52 yamt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.13.2.3 2013/01/23 00:05:44 yamt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.13.2.2 2013/01/16 05:32:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.13.2.3 2013/01/23 00:05:44 yamt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -181,19 +181,20 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.13.2.2 2013/01/16 05:32:52 yamt
 #include <evbarm/include/autoconf.h>
 #include <evbarm/beagle/beagle.h>
 
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/ddcreg.h>
+
 #include "prcm.h"
 #include "omapwdt32k.h"
-
-#ifdef BOOT_ARGS
-#define DEFAULT_BOOT_ARGS BOOT_ARGS
-#else
-#define DEFAULT_BOOT_ARGS "-a"
-#endif
+#include "ukbd.h"
+#include <dev/usb/ukbdvar.h>
 
 BootConfig bootconfig;		/* Boot config storage */
-static char beagle_default_boot_args[] = DEFAULT_BOOT_ARGS;
-char *boot_args = beagle_default_boot_args;
+static char bootargs[MAX_BOOT_STRING];
+char *boot_args = NULL;
 char *boot_file = NULL;
+
+static uint8_t beagle_edid[128];	/* EDID storage */
 
 u_int uboot_args[4] = { 0 };	/* filled in by beagle_start.S (not in bss) */
 
@@ -201,6 +202,8 @@ u_int uboot_args[4] = { 0 };	/* filled in by beagle_start.S (not in bss) */
 
 extern char KERNEL_BASE_phys[];
 extern char _end[];
+
+int use_fb_console = false;
 
 /*
  * Macros to translate between physical and virtual for a subset of the
@@ -391,6 +394,7 @@ u_int
 initarm(void *arg)
 {
 	psize_t ram_size = 0;
+	char *ptr;
 #if 1
 	beagle_putchar('d');
 #endif
@@ -435,7 +439,7 @@ initarm(void *arg)
 	printf("\nNetBSD/evbarm (beagle) booting ...\n");
 #endif
 
-#ifdef BOOT_ARGS
+#ifdef BOOT_ARGSt
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
@@ -473,8 +477,9 @@ initarm(void *arg)
 
 	/* "bootargs" env variable is passed as 4th argument to kernel */
 	if ((uboot_args[3] & 0xf0000000) == 0x80000000) {
-		boot_args = (char *)uboot_args[3];
+		strlcpy(bootargs, (char *)uboot_args[3], sizeof(bootargs));
 	}
+	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
 
 	/* we've a specific device_register routine */
@@ -482,7 +487,13 @@ initarm(void *arg)
 
 	db_trap_callback = beagle_db_trap;
 
+	if (get_bootconf_option(boot_args, "console",
+		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
+		use_fb_console = true;
+	}
+	
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+
 }
 
 static void
@@ -538,6 +549,10 @@ consinit(void)
 		panic("Serial console can not be initialized.");
 
 	bus_space_unmap(&omap_a4x_bs_tag, bh, OMAP_COM_SIZE);
+
+#if NUKBD > 0
+	ukbd_cnattach();	/* allow USB keyboard to become console */
+#endif
 
 	beagle_putchar('f');
 	beagle_putchar('g');
@@ -681,6 +696,40 @@ omap3530_memprobe(void)
 }
 #endif
 
+/*
+ * EDID can be read from DVI-D (HDMI) port on BeagleBoard from
+ * If EDID data is present, this function fills in the supplied edid_buf
+ * and returns true. Otherwise, it returns false and the contents of the
+ * buffer are undefined.
+ */
+static bool
+beagle_read_edid(uint8_t *edid_buf, size_t edid_buflen)
+{
+	i2c_tag_t ic = NULL;
+	uint8_t reg;
+	int error;
+
+#if defined(OMAP_3530)
+	/* On Beagleboard, EDID is accessed using I2C2 ("omapiic2"). */
+	extern i2c_tag_t omap3_i2c_get_tag(device_t);
+	ic = omap3_i2c_get_tag(device_find_by_xname("omapiic2"));
+#endif
+
+	if (ic == NULL)
+		return false;
+
+	iic_acquire_bus(ic, 0);
+	for (reg = DDC_EDID_START; reg < edid_buflen; reg++) {
+		error = iic_exec(ic, I2C_OP_READ_WITH_STOP, DDC_ADDR,
+		    &reg, sizeof(reg), &edid_buf[reg], 1, 0);
+		if (error)
+			break;
+	}
+	iic_release_bus(ic, 0);
+
+	return error == 0 ? true : false;
+}
+
 void
 beagle_device_register(device_t self, void *aux)
 {
@@ -733,7 +782,23 @@ beagle_device_register(device_t self, void *aux)
 	if (device_is_a(self, "sdhc")) {
 #if defined(OMAP_3530)
 		prop_dictionary_set_uint32(dict, "clkmask", 0);
+		prop_dictionary_set_bool(dict, "8bit", true);
 #endif
 		return;
+	}
+
+	if (device_is_a(self, "omapfb")) {
+		if (beagle_read_edid(beagle_edid, sizeof(beagle_edid))) {
+			prop_dictionary_set(dict, "EDID",
+			    prop_data_create_data(beagle_edid,
+						  sizeof(beagle_edid)));
+		}
+		if (use_fb_console)
+			prop_dictionary_set_bool(dict, "is_console", true);
+		return;
+	}
+	if (device_is_a(self, "com")) {
+		if (use_fb_console)
+			prop_dictionary_set_bool(dict, "is_console", false);
 	}
 }

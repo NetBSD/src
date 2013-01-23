@@ -1,4 +1,4 @@
-/*	$NetBSD: lprint.c,v 1.22 2009/04/12 06:18:54 lukem Exp $	*/
+/*	$NetBSD: lprint.c,v 1.22.6.1 2013/01/23 00:06:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID( "$NetBSD: lprint.c,v 1.22 2009/04/12 06:18:54 lukem Exp $");
+__RCSID( "$NetBSD: lprint.c,v 1.22.6.1 2013/01/23 00:06:37 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,16 +111,71 @@ lflag_print(void)
 	}
 }
 
+static size_t
+visify(char *buf, size_t blen, const char *str)
+{
+	int len = strnvisx(buf, blen, str, strlen(str), VIS_WHITE|VIS_CSTYLE);
+	if (len == -1) {
+		buf[0] = '\0';
+		return 0;
+	}
+	return len;
+}
+
+static void
+fmt_time(char *buf, size_t blen, time_t ti, time_t n)
+{
+	struct tm *tp = localtime(&ti);
+	if (tp != NULL) {
+		char *t = asctime(tp);
+		char *tzn = TIMEZONE(tp);
+		if (n == (time_t)-1 ||
+		    n - ti > SECSPERDAY * DAYSPERNYEAR / 2)
+			snprintf(buf, blen, "%.16s %.4s (%s)", t, t + 20, tzn);
+		else
+			snprintf(buf, blen, "%.16s (%s)", t, tzn);
+	} else
+		snprintf(buf, blen, "[*bad time 0x%llx*]", (long long)ti);
+}
+
+/*
+ * idle time is tough; if have one, print a comma,
+ * then spaces to pad out the device name, then the
+ * idle time.  Follow with a comma if a remote login.
+ */
+static int
+print_idle(time_t t, int maxlen, size_t hostlen, size_t ttylen) {
+
+	int cpr;
+	struct tm *delta = gmtime(&t);
+
+	if (delta == NULL)
+		return printf("Bad idle 0x%llx", (long long)t);
+
+	if (delta->tm_yday == 0 && delta->tm_hour == 0 && delta->tm_min == 0)
+		return 0;
+
+	cpr = printf("%-*s idle ", (int)(maxlen - ttylen + 1), ",");
+	if (delta->tm_yday > 0) {
+		cpr += printf("%d day%s ", delta->tm_yday,
+		   delta->tm_yday == 1 ? "" : "s");
+	}
+	cpr += printf("%d:%02d", delta->tm_hour, delta->tm_min);
+	if (hostlen) {
+		putchar(',');
+		++cpr;
+	}
+	return cpr;
+}
+
 static void
 lprint(PERSON *pn)
 {
-	struct tm *delta;
 	WHERE *w;
 	int cpr, len, maxlen;
-	struct tm *tp;
 	int oddfield;
-	char *t;
-	const char *tzn;
+	char timebuf[128], ttybuf[64], hostbuf[512];
+	size_t ttylen, hostlen;
 
 	cpr = 0;
 	/*
@@ -148,25 +203,25 @@ lprint(PERSON *pn)
 	if (pn->office && pn->officephone &&
 	    strlen(pn->office) + strlen(pn->officephone) +
 	    sizeof(OFFICE_TAG) + 2 <= 5 * TAB_LEN) {
-		(void)snprintf(tbuf, sizeof(tbuf), "%s: %s, %s",
+		(void)snprintf(timebuf, sizeof(timebuf), "%s: %s, %s",
 		    OFFICE_TAG, pn->office, prphone(pn->officephone));
-		oddfield = demi_print(tbuf, oddfield);
+		oddfield = demi_print(timebuf, oddfield);
 	} else {
 		if (pn->office) {
-			(void)snprintf(tbuf, sizeof(tbuf), "%s: %s",
+			(void)snprintf(timebuf, sizeof(timebuf), "%s: %s",
 			    OFFICE_TAG, pn->office);
-			oddfield = demi_print(tbuf, oddfield);
+			oddfield = demi_print(timebuf, oddfield);
 		}
 		if (pn->officephone) {
-			(void)snprintf(tbuf, sizeof(tbuf), "%s: %s",
+			(void)snprintf(timebuf, sizeof(timebuf), "%s: %s",
 			    OFFICE_PHONE_TAG, prphone(pn->officephone));
-			oddfield = demi_print(tbuf, oddfield);
+			oddfield = demi_print(timebuf, oddfield);
 		}
 	}
 	if (pn->homephone) {
-		(void)snprintf(tbuf, sizeof(tbuf), "%s: %s", "Home Phone",
+		(void)snprintf(timebuf, sizeof(timebuf), "%s: %s", "Home Phone",
 		    prphone(pn->homephone));
-		oddfield = demi_print(tbuf, oddfield);
+		oddfield = demi_print(timebuf, oddfield);
 	}
 	if (oddfield)
 		putchar('\n');
@@ -183,39 +238,23 @@ no_gecos:
 	 *	when last logged in
 	 */
 	/* find out longest device name for this user for formatting */
-	for (w = pn->whead, maxlen = -1; w != NULL; w = w->next)
-		if ((len = strlen(w->tty)) > maxlen)
+	for (w = pn->whead, maxlen = -1; w != NULL; w = w->next) {
+		visify(ttybuf, sizeof(ttybuf), w->tty);
+		if ((len = strlen(ttybuf)) > maxlen)
 			maxlen = len;
+	}
 	/* find rest of entries for user */
 	for (w = pn->whead; w != NULL; w = w->next) {
+		ttylen = visify(ttybuf, sizeof(ttybuf), w->tty);
+		hostlen = visify(hostbuf, sizeof(hostbuf), w->host);
 		switch (w->info) {
 		case LOGGEDIN:
-			tp = localtime(&w->loginat);
-			t = asctime(tp);
-			tzn = TIMEZONE(tp);
-			cpr = printf("On since %.16s (%s) on %s",
-			    t, tzn, w->tty);
-			/*
-			 * idle time is tough; if have one, print a comma,
-			 * then spaces to pad out the device name, then the
-			 * idle time.  Follow with a comma if a remote login.
-			 */
-			delta = gmtime(&w->idletime);
-			if (delta->tm_yday || delta->tm_hour || delta->tm_min) {
-				cpr += printf("%-*s idle ",
-				    (int)(maxlen - strlen(w->tty) + 1), ",");
-				if (delta->tm_yday > 0) {
-					cpr += printf("%d day%s ",
-					   delta->tm_yday,
-					   delta->tm_yday == 1 ? "" : "s");
-				}
-				cpr += printf("%d:%02d",
-				    delta->tm_hour, delta->tm_min);
-				if (*w->host) {
-					putchar(',');
-					++cpr;
-				}
-			}
+			fmt_time(timebuf, sizeof(timebuf), w->loginat, -1);
+			cpr = printf("On since %s on %s", timebuf, ttybuf);
+
+			cpr += print_idle(w->idletime, maxlen, hostlen,
+			    ttylen);
+
 			if (!w->writable)
 				cpr += printf(" (messages off)");
 			break;
@@ -224,41 +263,27 @@ no_gecos:
 				(void)printf("Never logged in.");
 				break;
 			}
-			tp = localtime(&w->loginat);
-			t = asctime(tp);
-			tzn = TIMEZONE(tp);
-			if (now - w->loginat > SECSPERDAY * DAYSPERNYEAR / 2)
-				cpr =
-				    printf("Last login %.16s %.4s (%s) on %s",
-				    t, t + 20, tzn, w->tty);
-			else
-				cpr = printf("Last login %.16s (%s) on %s",
-				    t, tzn, w->tty);
+			fmt_time(timebuf, sizeof(timebuf), w->loginat, now);
+			cpr = printf("Last login %s on %s", timebuf, ttybuf);
 			break;
 		}
-		if (*w->host) {
-			if (LINE_LEN < (cpr + 6 + strlen(w->host)))
+		if (hostlen) {
+			if (LINE_LEN < (cpr + 6 + hostlen))
 				(void)printf("\n   ");
-			(void)printf(" from %s", w->host);
+			(void)printf(" from %s", hostbuf);
 		}
 		putchar('\n');
 	}
 	if (pn->mailrecv == -1)
 		printf("No Mail.\n");
 	else if (pn->mailrecv > pn->mailread) {
-		tp = localtime(&pn->mailrecv);
-		t = asctime(tp);
-		tzn = TIMEZONE(tp);
-		printf("New mail received %.16s %.4s (%s)\n", t, t + 20, tzn);
-		tp = localtime(&pn->mailread);
-		t = asctime(tp);
-		tzn = TIMEZONE(tp);
-		printf("     Unread since %.16s %.4s (%s)\n", t, t + 20, tzn);
+		fmt_time(timebuf, sizeof(timebuf), pn->mailrecv, -1);
+		printf("New mail received %s\n", timebuf);
+		fmt_time(timebuf, sizeof(timebuf), pn->mailread, -1);
+		printf("     Unread since %s\n", timebuf);
 	} else {
-		tp = localtime(&pn->mailread);
-		t = asctime(tp);
-		tzn = TIMEZONE(tp);
-		printf("Mail last read %.16s %.4s (%s)\n", t, t + 20, tzn);
+		fmt_time(timebuf, sizeof(timebuf), pn->mailread, -1);
+		printf("Mail last read %s\n", timebuf);
 	}
 }
 

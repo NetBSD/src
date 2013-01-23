@@ -20222,7 +20222,7 @@ ix86_local_alignment (tree exp, enum machine_mode mode,
 	   && TYPE_FIELDS (type))
     {
       if (DECL_MODE (TYPE_FIELDS (type)) == DFmode && align < 64
-          && (TARGET_64BIT || ix86_preferred_stack_boundary >= 64))
+          && ix86_preferred_stack_boundary >= 64)
 	return 64;
       if (ALIGN_MODE_128 (DECL_MODE (TYPE_FIELDS (type))) && align < 128)
 	return 128;
@@ -20232,7 +20232,7 @@ ix86_local_alignment (tree exp, enum machine_mode mode,
     {
 
       if (TYPE_MODE (type) == DFmode && align < 64
-          && (TARGET_64BIT || ix86_preferred_stack_boundary >= 64))
+          && ix86_preferred_stack_boundary >= 64)
 	return 64;
       if (ALIGN_MODE_128 (TYPE_MODE (type)) && align < 128)
 	return 128;

@@ -4,14 +4,13 @@ dnl Id: configure.ac,v 1.77 2006/07/20 19:19:27 manubsd Exp
 AC_PREREQ(2.52)
 AC_INIT(ipsec-tools, CVS)
 AC_CONFIG_SRCDIR([configure.ac])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 
 AM_INIT_AUTOMAKE(dist-bzip2)
 
 AC_ENABLE_SHARED(no)
 
 AC_PROG_CC
-AM_PROG_CC_STDC
 AC_HEADER_STDC
 AC_PROG_LIBTOOL
 AC_PROG_YACC
@@ -207,12 +206,12 @@ AC_MSG_CHECKING(openssl version)
 AC_TRY_COMPILE(
 [#include <openssl/opensslv.h>
 ],
-[#if OPENSSL_VERSION_NUMBER < 0x0090602fL
+[#if OPENSSL_VERSION_NUMBER < 0x0090813fL
 #error OpenSSL version is too old ...
 #endif],
 [AC_MSG_RESULT([ok])],
 [AC_MSG_RESULT(too old)
-AC_MSG_ERROR([OpenSSL version must be 0.9.6 or higher. Aborting.])
+AC_MSG_ERROR([OpenSSL version must be 0.9.8s or higher. Aborting.])
 ])
 
 AC_CHECK_HEADERS(openssl/engine.h)

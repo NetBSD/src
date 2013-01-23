@@ -1,20 +1,14 @@
-#	$NetBSD: std.ixm1200,v 1.12 2008/06/22 08:27:18 kiyohara Exp $
+#	$NetBSD: std.ixm1200,v 1.12.30.1 2013/01/23 00:05:45 yamt Exp $
 #
 # standard NetBSD/evbarm for IXM1200 options
 
 machine	evbarm arm
-include		"conf/std"	# MI standard options
-include		"arch/arm/conf/std.arm"	# arch standard options
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in IXM1200 config definitions.
-include "arch/evbarm/conf/files.ixm1200"
+include		"arch/evbarm/conf/files.ixm1200"
 
-options 	EXEC_ELF32
 options 	EXEC_AOUT
-options 	EXEC_SCRIPT
-
-# To support easy transit to ../arch/arm/arm32
-options 	ARM32
 
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 

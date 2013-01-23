@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.70.4.1 2012/10/30 17:22:54 yamt Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.70.4.2 2013/01/23 00:06:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -61,6 +61,12 @@ enum rump_component_type {
 	RUMP_COMPONENT_VFS,
 	RUMP_COMPONENT_KERN,
 		RUMP_COMPONENT_KERN_VFS,
+	RUMP_COMPONENT_POSTINIT,
+
+	RUMP__FACTION_DEV,
+	RUMP__FACTION_VFS,
+	RUMP__FACTION_NET,
+
 	RUMP_COMPONENT_MAX,
 };
 struct rump_component {

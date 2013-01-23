@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.14.4.1 2012/05/23 10:07:39 yamt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.14.4.2 2013/01/23 00:05:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,13 +52,11 @@ typedef	__greg_t	__gregset_t[_NGREG];
 
 /*
  * Floating point register state
+ * The format of __fpregset_t is that of the fxsave instruction
+ * which requires 16 byte alignment. However the mcontext version
+ * is never directly accessed.
  */
-typedef char __fpregset_t[512];
-
-/*
- * The padding below is to make __fpregs have a 16-byte aligned offset
- * within ucontext_t.
- */
+typedef char __fpregset_t[512] __aligned(8);
 
 typedef struct {
 	__gregset_t	__gregs;

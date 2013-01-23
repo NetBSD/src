@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.3.2.3 2013/01/16 05:32:52 yamt Exp $
+#	$NetBSD: BEAGLEBONE,v 1.3.2.4 2013/01/23 00:05:44 yamt Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -245,7 +245,7 @@ omapdmtimer2	at obio0 addr 0x48044000 size 0x1000 intr 92	# DM Timer 4
 options OMAP_SYSTEM_CLOCK_FREQ=24000000
 
 # Watchdog timers
-#omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1
+omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1
 
 # onboard video
 #omapfb* 	at obio0 addr 0x48050000 size 0x10000
@@ -287,6 +287,10 @@ pseudo-device	wsfont
 
 #axe*		at uhub? port ? configuration ? interface ?
 
+# Ethernet
+cpsw*		at obio0 addr 0x4a100000 size 0x8000 intrbase 40
+ukphy*		at mii?
+
 # Hardware clocking and power management
 
 options		HWCLOCK
@@ -311,3 +315,4 @@ pseudo-device	pty			# pseudo-terminals
 #options	RND_COM
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling

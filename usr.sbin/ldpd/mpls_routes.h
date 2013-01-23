@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.h,v 1.1 2010/12/08 07:20:15 kefren Exp $ */
+/* $NetBSD: mpls_routes.h,v 1.1.6.1 2013/01/23 00:06:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 union sockunion {
 	struct sockaddr sa;
 	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
 	struct sockaddr_mpls smpls;
 	struct sockaddr_dl sdl;
 };

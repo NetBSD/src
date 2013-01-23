@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.21.28.1 2013/01/16 05:34:06 yamt Exp $	*/
+/*	$NetBSD: head.c,v 1.21.28.2 2013/01/23 00:06:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.21.28.1 2013/01/16 05:34:06 yamt Exp $");
+__RCSID("$NetBSD: head.c,v 1.21.28.2 2013/01/23 00:06:39 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: head.c,v 1.21.28.1 2013/01/16 05:34:06 yamt Exp $");
  * Return 1 if they match, 0 if they don't
  */
 static int
-cmatch(const char *cp, char *tp)
+cmatch(const char *cp, const char *tp)
 {
 
 	while (*cp && *tp)
@@ -86,6 +86,11 @@ cmatch(const char *cp, char *tp)
 			if (*cp++ != '\n')
 				return 0;
 			break;
+		case '+':
+			if (*cp != '+' && *cp != '-')
+				return 0;
+			cp++;
+			break;
 		}
 	if (*cp || *tp)
 		return 0;
@@ -108,19 +113,55 @@ cmatch(const char *cp, char *tp)
  * 'O'	An optional digit or space
  * ':'	A colon
  * 'N'	A new line
+ * '+'	A plus or minus sign
  */
-static char ctype[] = "Aaa Aaa O0 00:00:00 0000";
-static char SysV_ctype[] = "Aaa Aaa O0 00:00 0000";
-static char tmztype[] = "Aaa Aaa O0 00:00:00 AAA 0000";
-static char SysV_tmztype[] = "Aaa Aaa O0 00:00 AAA 0000";
+static struct cmatch_data {
+	size_t		tlen;
+	char const	*tdata;
+} const	cmatch_data[] = {
+#define TSZ(a)	(sizeof(a) - 1), a
+	{ TSZ("Aaa Aaa O0 00:00:00 0000") },		/* BSD ctype */
+	{ TSZ("Aaa Aaa O0 00:00 0000") },		/* SysV ctype */
+	{ TSZ("Aaa Aaa O0 00:00:00 AAA 0000") },	/* BSD tmztype */
+	{ TSZ("Aaa Aaa O0 00:00 AAA 0000") },		/* SysV tmztype */
+	/*
+	 * RFC 822-alike From_ lines do not conform to RFC 4155, but seem to
+	 * be used in the wild by UW-imap (MBX format plus)
+	 */
+	{ TSZ("Aaa Aaa O0 00:00:00 0000 +0000") },	/* RFC822, UT offset */
+	/*
+	 * RFC 822 with zone spec:
+	 *    1. military,
+	 *    2. UT,
+	 *    3. north america time zone strings
+	 * note that 1. is strictly speaking not correct as some letters are
+	 * not used
+	 */
+	{ TSZ("Aaa Aaa O0 00:00:00 0000 A") },
+	{ TSZ("Aaa Aaa O0 00:00:00 0000 AA") },
+        { TSZ("Aaa Aaa O0 00:00:00 0000 AAA") },
+	{ 0, NULL },
+};
 
 static int
 isdate(const char date[])
 {
+	static size_t cmatch_minlen = 0;
+	struct cmatch_data const *cmdp;
+	size_t dl = strlen(date);
 
-	return cmatch(date, ctype) ||
-	       cmatch(date, tmztype) ||
-	       cmatch(date, SysV_tmztype) || cmatch(date, SysV_ctype);
+	if (cmatch_minlen == 0)
+		for (cmdp = cmatch_data; cmdp->tdata != NULL; ++cmdp)
+			cmatch_minlen = MIN(cmatch_minlen, cmdp->tlen);
+
+	if (dl < cmatch_minlen)
+		return 0;
+
+	for (cmdp = cmatch_data; cmdp->tdata != NULL; ++cmdp)
+		if (dl == cmdp->tlen && cmatch(date, cmdp->tdata))
+			return 1;
+
+	return 0;
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_ehci.c,v 1.4.2.3 2013/01/16 05:32:49 yamt Exp $ */
+/* $NetBSD: omap3_ehci.c,v 1.4.2.4 2013/01/23 00:05:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010-2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.4.2.3 2013/01/16 05:32:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.4.2.4 2013/01/23 00:05:42 yamt Exp $");
 
 #include "locators.h"
 
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.4.2.3 2013/01/16 05:32:49 yamt Exp 
 /*  USBHOST_CM registers */
 #define CM_FCLKEN_USBHOST	0x00
 #define  EN_USBHOST1		 1	/* USB HOST 48 MHz clock enable */
-#define  EN_USBHOST2		 2	/* USB HOST 1280 MHz clock enable */
+#define  EN_USBHOST2		 2	/* USB HOST 120 MHz clock enable */
 #define CM_ICLKEN_USBHOST	0x10
 #define  EN_USBHOST		 1	/* USB HOST clock enable */
 #define CM_IDLEST_USBHOST	0x20
@@ -429,8 +429,8 @@ dpll5_init(struct omap3_ehci_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc.iot;
 	bus_space_handle_t ioh;
-	uint32_t m, n, m2, v;
-	int retry = 1000, err;
+	uint32_t m, n, m2;
+	int err;
 
 	if (sc->sc_dpll5.m == 0 || sc->sc_dpll5.n == 0 || sc->sc_dpll5.m2 == 0)
 		return;
@@ -462,13 +462,6 @@ dpll5_init(struct omap3_ehci_softc *sc)
 	/* Put DPLL5 into low power stop mode when the 120MHz clock is not required (restarted automatically) */
 	bus_space_write_4(iot, ioh, CM_AUTOIDLE2_PLL, AUTO_PERIPH2_DPLL);
 
-	/* Wait for DPLL5 lock */
-	while (((v = bus_space_read_4(iot, ioh, CM_IDLEST2_CKGEN)) & ST_PERIPH2_CLK) == 0 && --retry > 0) {
-		delay(100);
-	}
-	if (retry == 0)
-		printf("%s: timeout\n", __func__);
-
 	bus_space_unmap(iot, ioh, CCR_CM_SIZE);
 }
 
@@ -490,9 +483,9 @@ usbhost_init(struct omap3_ehci_softc *sc, int enable)
 
         r = bus_space_read_4(iot, ioh, CM_FCLKEN_USBHOST);
         if (enable)
-                r |= EN_USBHOST1;
+                r |= (EN_USBHOST1 | EN_USBHOST2);
         else
-                r &= ~EN_USBHOST1;
+                r &= ~(EN_USBHOST1 | EN_USBHOST2);
         bus_space_write_4(iot, ioh, CM_FCLKEN_USBHOST, r);
 
         r = bus_space_read_4(iot, ioh, CM_ICLKEN_USBHOST);
