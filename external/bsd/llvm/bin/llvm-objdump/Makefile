@@ -1,47 +1,42 @@
-#	$NetBSD: Makefile,v 1.12 2013/01/23 15:02:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.1 2013/01/23 15:02:56 joerg Exp $
 
-PROG_CXX=	llc
+PROG_CXX=	llvm-objdump
 NOMAN=		yes
 
 .include <bsd.init.mk>
 
-.PATH: ${LLVM_SRCDIR}/tools/llc
+.PATH: ${LLVM_SRCDIR}/tools/llvm-objdump
 
-SRCS=	llc.cpp
+SRCS=	llvm-objdump.cpp \
+	COFFDump.cpp \
+	ELFDump.cpp \
+	MachODump.cpp \
+	MCFunction.cpp \
 
 LLVM_LIBS+= \
-	AsmPrinter \
-	AsmParser \
-	BitReader \
-	ARMCodeGen \
+	Object \
+	ARMDisassembler \
 	ARMTargetInfo \
 	ARMMCTargetDesc \
 	ARMAsmParser \
 	ARMAsmPrinter \
-	MipsCodeGen \
+	MipsDisassembler \
 	MipsTargetInfo \
-	MipsAsmParser \
 	MipsMCTargetDesc \
 	MipsAsmPrinter \
-	PowerPCCodeGen \
+	MipsAsmParser \
 	PowerPCTargetInfo \
 	PowerPCMCTargetDesc \
 	PowerPCAsmPrinter \
-	SparcCodeGen \
 	SparcTargetInfo \
 	SparcMCTargetDesc \
-	X86CodeGen \
-	X86TargetInfo \
+	X86Disassembler \
 	X86MCTargetDesc \
+	X86TargetInfo \
 	X86AsmParser \
 	X86AsmPrinter \
 	X86Utils \
-	SelectionDAG \
-	CodeGen \
-	ScalarOpts \
-	TransformsUtils \
-	Analysis \
-	Target \
+	DebugInfo \
 	MCParser \
 	MC \
 	IR \
