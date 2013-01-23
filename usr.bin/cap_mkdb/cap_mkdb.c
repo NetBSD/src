@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.27 2011/08/29 13:56:17 joerg Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.28 2013/01/23 20:27:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.27 2011/08/29 13:56:17 joerg Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.28 2013/01/23 20:27:01 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -141,7 +141,8 @@ main(int argc, char *argv[])
 
 	if (capdbp->close(capdbp) < 0)
 		err(1, "%s", capname);
-	assert((p = strrchr(buf, '.')) != NULL);
+	p = strrchr(buf, '.');
+	assert(p != NULL);
 	*p = '\0';
 	if (rename(capname, buf) == -1)
 		err(1, "rename");
