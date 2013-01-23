@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.49 2013/01/22 09:39:19 dholland Exp $	*/
+/*	$NetBSD: ffs.c,v 1.50 2013/01/23 20:46:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.49 2013/01/22 09:39:19 dholland Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.50 2013/01/23 20:46:39 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -188,27 +188,27 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
 
 	option_t ffs_options[] = {
-		{ "bsize",	&ffs_opts->bsize,	1,	INT_MAX,
-					"block size" },
-		{ "fsize",	&ffs_opts->fsize,	1,	INT_MAX,
-					"fragment size" },
-		{ "density",	&ffs_opts->density,	1,	INT_MAX,
-					"bytes per inode" },
-		{ "minfree",	&ffs_opts->minfree,	0,	99,
-					"minfree" },
-		{ "maxbpf",	&ffs_opts->maxbpg,	1,	INT_MAX,
-					"max blocks per file in a cg" },
-		{ "avgfilesize", &ffs_opts->avgfilesize,1,	INT_MAX,
-					"expected average file size" },
-		{ "avgfpdir",	&ffs_opts->avgfpdir,	1,	INT_MAX,
-					"expected # of files per directory" },
-		{ "extent",	&ffs_opts->maxbsize,	1,	INT_MAX,
-					"maximum # extent size" },
-		{ "maxbpcg",	&ffs_opts->maxblkspercg,1,	INT_MAX,
-					"max # of blocks per group" },
-		{ "version",	&ffs_opts->version,	1,	2,
-					"UFS version" },
-		{ .name = NULL }
+	    { '\0', "bsize", &ffs_opts->bsize, OPT_INT32,
+	      1, INT_MAX, "block size" },
+	    { '\0', "fsize", &ffs_opts->fsize, OPT_INT32,
+	      1, INT_MAX, "fragment size" },
+	    { '\0', "density", &ffs_opts->density, OPT_INT32,
+	      1, INT_MAX, "bytes per inode" },
+	    { '\0', "minfree", &ffs_opts->minfree, OPT_INT32,
+	      0, 99, "minfree" },
+	    { '\0', "maxbpf", &ffs_opts->maxbpg, OPT_INT32,
+	      1, INT_MAX, "max blocks per file in a cg" },
+	    { '\0', "avgfilesize", &ffs_opts->avgfilesize, OPT_INT32,
+	      1, INT_MAX, "expected average file size" },
+	    { '\0', "avgfpdir", &ffs_opts->avgfpdir, OPT_INT32,
+	      1, INT_MAX, "expected # of files per directory" },
+	    { '\0', "extent", &ffs_opts->maxbsize, OPT_INT32,
+	      1, INT_MAX, "maximum # extent size" },
+	    { '\0', "maxbpcg", &ffs_opts->maxblkspercg, OPT_INT32,
+	      1, INT_MAX, "max # of blocks per group" },
+	    { '\0', "version", &ffs_opts->version, OPT_INT32,
+	      1, 2, "UFS version" },
+	    { .name = NULL }
 	};
 
 	char	*var, *val;
