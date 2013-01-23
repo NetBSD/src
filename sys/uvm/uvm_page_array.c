@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.c,v 1.1.2.6 2012/08/01 22:34:14 yamt Exp $	*/
+/*	$NetBSD: uvm_page_array.c,v 1.1.2.7 2013/01/23 00:38:01 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.1.2.6 2012/08/01 22:34:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.1.2.7 2013/01/23 00:38:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,15 +171,15 @@ uvm_page_array_fill(struct uvm_page_array *ar, struct uvm_object *uobj,
 	for (i = 0; i < ar->ar_npages; i++) {
 		struct vm_page * const pg = ar->ar_pages[i];
 
-		KASSERT(pg != NULL);
-		KASSERT(pg->uobject == uobj);
+		KDASSERT(pg != NULL);
+		KDASSERT(pg->uobject == uobj);
 		if (backward) {
-			KASSERT(pg->offset <= off);
-			KASSERT(i == 0 ||
+			KDASSERT(pg->offset <= off);
+			KDASSERT(i == 0 ||
 			    pg->offset < ar->ar_pages[i - 1]->offset);
 		} else {
-			KASSERT(pg->offset >= off);
-			KASSERT(i == 0 ||
+			KDASSERT(pg->offset >= off);
+			KDASSERT(i == 0 ||
 			    pg->offset > ar->ar_pages[i - 1]->offset);
 		}
 	}
