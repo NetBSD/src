@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.71 2012/12/25 22:33:39 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.72 2013/01/24 10:14:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -557,7 +557,7 @@
 #define CORTEX_CNTENC_C __BIT(31)	/* Disables the cycle counter */
 #define CORTEX_CNTOFL_C __BIT(31)	/* Cycle counter overflow flag */
 
-#if !defined(__ASSEMBLER__)
+#if !defined(__ASSEMBLER__) && !defined(_RUMPKERNEL)
 #define	ARMREG_READ_INLINE(name, __insnstring)			\
 static inline uint32_t armreg_##name##_read(void)		\
 {								\
