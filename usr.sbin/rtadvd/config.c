@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.31 2012/12/14 09:48:31 roy Exp $	*/
+/*	$NetBSD: config.c,v 1.32 2013/01/24 17:44:59 christos Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1308,7 +1308,7 @@ make_packet(struct rainfo *rainfo)
 static int
 getinet6sysctl(int code)
 {
-	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, 0 };
+	static const int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, 0 };
 	int value;
 	size_t size;
 
