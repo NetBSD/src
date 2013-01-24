@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.24 2009/01/18 07:14:03 lukem Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.25 2013/01/24 17:46:00 christos Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.24 2009/01/18 07:14:03 lukem Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.25 2013/01/24 17:46:00 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -143,13 +143,9 @@ main(int argc, char **argv)
 	if (demon && conf[0] != '/')
 		errx(1, "config file must have an absolute path, %s", conf);
 
-	fd = open(dev, O_RDWR);
+	fd = open(dev, O_RDWR | O_CLOEXEC);
 	if (fd < 0)
 		err(1, "%s", dev);
-
-	/* Avoid passing the device file descriptor to executed commands */
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
-		err(1, "fcntl(F_SETFD, FD_CLOEXEC)");
 
 	if (ioctl(fd, USB_GET_REPORT_ID, &reportid) < 0)
 		reportid = -1;
