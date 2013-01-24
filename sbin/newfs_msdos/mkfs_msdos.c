@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.3 2013/01/23 22:48:18 christos Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.4 2013/01/24 00:10:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.3 2013/01/23 22:48:18 christos Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.4 2013/01/24 00:10:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -789,7 +789,6 @@ getbpbinfo(int fd, const char *fname, const char *dtype, int iflag,
     struct dkwedge_info dkw;
     const char *s1, *s2;
     int part;
-    int maxpartitions;
 
     part = -1;
     s1 = fname;
@@ -802,12 +801,14 @@ getbpbinfo(int fd, const char *fname, const char *dtype, int iflag,
 	while (isdigit((unsigned char)*++s2));
     s1 = s2;
 
-    maxpartitions = getmaxpartitions();
+#ifndef MAKEFS
+    int maxpartitions = getmaxpartitions();
 
     // XXX: Does not work with wedges
     if (s2 && *s2 >= 'a' && *s2 <= 'a' + maxpartitions - 1) {
 	part = *s2++ - 'a';
     }
+#endif
     if (((part != -1) && ((!iflag && part != -1) || !bpb->bsec)) ||
 	!bpb->bps || !bpb->spt || !bpb->hds) {
 	if (create
