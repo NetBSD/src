@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.47 2013/01/19 16:19:55 jakllsch Exp $
+# $NetBSD: XEN3_DOMU,v 1.48 2013/01/24 13:58:41 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -167,6 +167,7 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
 
 #options 	__XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
+options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on wd0a type ffs
