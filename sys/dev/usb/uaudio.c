@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.134 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.135 2013/01/24 08:22:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.134 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.135 2013/01/24 08:22:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.134 2013/01/22 12:40:43 jmcneill Exp $"
 			printf("%s[%d:%d]: "x, __func__, l->l_proc->p_pid, l->l_lid, y); \
 		} \
 	} while (0)
-int	uaudiodebug = 6;
+int	uaudiodebug = 0;
 #else
 #define DPRINTF(x,y...)
 #define DPRINTFN_CLEAN(n,x...)
