@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.48 2012/08/29 12:01:30 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.49 2013/01/24 06:47:50 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -492,7 +492,7 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 		"delete payload for protocol %s\n",
 		s_ipsecdoi_proto(delete->proto_id));
 
-	if(!iph1->rmconf->weak_phase1_check && !encrypted) {
+	if((iph1 == NULL || !iph1->rmconf->weak_phase1_check) && !encrypted) {
 		plog(LLV_WARNING, LOCATION, iph1->remote,
 			"Ignoring unencrypted delete payload "
 			"(check the weak_phase1_check option)\n");
