@@ -1,7 +1,7 @@
-/* $NetBSD: tparm.c,v 1.11 2013/01/24 10:28:28 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.12 2013/01/24 10:41:28 roy Exp $ */
 
 /*
- * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2011, 2013 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.11 2013/01/24 10:28:28 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.12 2013/01/24 10:41:28 roy Exp $");
 #include <sys/param.h>
 
 #include <assert.h>
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: tparm.c,v 1.11 2013/01/24 10:28:28 roy Exp $");
 #include <term.h>
 
 #define LONG_STR_MAX ((CHAR_BIT * sizeof(long)) / 3)
-#define BUFINC 128 /* Size to increament the terminal buffer by */
+#define BUFINC 128	/* Size to increament the terminal buffer by */
 
 static TERMINAL *dumbterm; /* For non thread safe functions */
 
@@ -131,18 +131,63 @@ onum(TERMINAL *term, const char *fmt, int num, unsigned int len)
 	return l;
 }
 
+/*
+  Make a pass through the string so we can work out
+  which parameters are ints and which are char *.
+  Basically we only use char * if %p[1-9] is followed by %l or %s.
+*/
+int
+_ti_parm_analyse(const char *str, int *piss, int piss_len)
+{
+	int nparm, lpop;
+	char c;
+
+	nparm = 0;
+	lpop = -1;
+	while ((c = *str++) != '\0') {
+		if (c != '%')
+			continue;
+		c = *str++;
+		switch (c) {
+			case 'l': /* FALLTHROUGH */
+			case 's':
+				if (lpop > 0) {
+					if (lpop <= piss_len)
+						piss[lpop - 1] = 1;
+					else if (piss)
+						errno = E2BIG;
+				}
+				break;
+			case 'p':
+				c = *str++;
+				if (c < '1' || c > '9') {
+					errno = EINVAL;
+					continue;
+				} else {
+					lpop = c - '0';
+					if (lpop > nparm)
+						nparm = lpop;
+				}
+				break;
+			default:
+				lpop = -1;
+		}
+	}
+
+	return nparm;
+}
+
 static char *
 _ti_tiparm(TERMINAL *term, const char *str, int va_long, va_list parms)
 {
-	const char *sp;
 	char c, fmt[64], *fp, *ostr;
 	long val, val2;
 	long dnums[26]; /* dynamic variables a-z, not preserved */
 	size_t l, max;
 	TPSTACK stack;
-	TPVAR params[9];
+	TPVAR params[TPARM_MAX];
 	unsigned int done, dot, minus, width, precision, olen;
-	int piss[9]; /* Parameter IS String - piss ;) */
+	int piss[TPARM_MAX]; /* Parameter IS String - piss ;) */
 
 	if (str == NULL)
 		return NULL;
@@ -172,40 +217,8 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_long, va_list parms)
 		term->_buflen = BUFINC;
 	}
 
-	/*
-	  Make a first pass through the string so we can work out
-	  which parameters are ints and which are char *.
-	  Basically we only use char * if %p[1-9] is followed by %l or %s.
-	*/
 	memset(&piss, 0, sizeof(piss));
-	max = 0;
-	sp = str;
-	while ((c = *sp++) != '\0') {
-		if (c != '%')
-			continue;
-		c = *sp++;
-		if (c == '\0')
-			break;
-		if (c != 'p')
-			continue;
-		c = *sp++;
-		if (c < '1' || c > '9') {
-			errno = EINVAL;
-			continue;
-		}
-		l = c - '0';
-		if (l > max)
-			max = l;
-		if (*sp != '%')
-			continue;
-		/* Skip formatting */
-		sp++;
-		while (*sp == '.' || *sp == '#' || *sp == ' ' || *sp == ':' ||
-		    *sp == '-' || isdigit((unsigned char)*sp))
-			sp++;
-		if (*sp == 'l' || *sp == 's')
-			piss[l - 1] = 1;
-	}
+	max = _ti_parm_analyse(str, piss, TPARM_MAX);
 
 	/* Put our parameters into variables */
 	memset(&params, 0, sizeof(params));
