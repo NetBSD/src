@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2011/09/16 15:39:25 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2013/01/24 17:50:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -39,7 +39,7 @@ static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
 __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.30 2011/09/16 15:39:25 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2013/01/24 17:50:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,8 +148,7 @@ main(int argc, char *argv[])
 
 	*p = NULL;
 
-	if ((dotfd = open(".", O_RDONLY, 0)) == -1 ||
-	    fcntl(dotfd, F_SETFD, FD_CLOEXEC) == -1)
+	if ((dotfd = open(".", O_RDONLY | O_CLOEXEC, 0)) == -1)
 		err(1, ".");
 
 	exit(find_execute(find_formplan(argv), start));
@@ -159,7 +158,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr,
-"usage: find [-H | -L | -P] [-dEhsXx] [-f file] file [file ...] [expression]\n");
+	(void)fprintf(stderr, "Usage: %s [-H | -L | -P] [-dEhsXx] [-f file] "
+	    "file [file ...] [expression]\n", getprogname());
 	exit(1);
 }
