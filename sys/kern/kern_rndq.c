@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.7 2013/01/16 06:45:24 msaitoh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.8 2013/01/24 14:23:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.7 2013/01/16 06:45:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.8 2013/01/24 14:23:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -759,7 +759,7 @@ rnd_hwrng_test(rnd_sample_t *sample)
 	uint8_t *v1, *v2;
 	size_t resid, totest;
 
-	KASSERT(source->type = RND_TYPE_RNG);
+	KASSERT(source->type == RND_TYPE_RNG);
 
 	/*
 	 * Continuous-output test: compare two halves of the
