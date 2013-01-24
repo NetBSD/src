@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.97 2012/06/14 00:39:33 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.98 2013/01/24 17:53:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.97 2012/06/14 00:39:33 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.98 2013/01/24 17:53:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,8 +204,7 @@ main(int argc, char *argv[])
 				prmount(&mntbuf[i]);
 			}
 		}
-		exit(rval);
-		/* NOTREACHED */
+		return rval;
 	case 1:
 		if (vfslist != NULL) {
 			usage();
@@ -325,8 +324,7 @@ out:
 	}
 #endif
 
-	exit(rval);
-	/* NOTREACHED */
+	return rval;
 }
 
 int
