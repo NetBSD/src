@@ -86,7 +86,7 @@ chfs_parse_opts(const char *option, fsinfo_t *fsopts)
 	assert(option != NULL);
 	assert(fsopts != NULL);
 
-	return set_option(chfs_options, option);
+	return set_option(chfs_options, option) != -1;
 }
 
 void
