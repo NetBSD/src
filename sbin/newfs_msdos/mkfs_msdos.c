@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.4 2013/01/24 00:10:09 christos Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.5 2013/01/24 19:24:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -27,13 +27,17 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.4 2013/01/24 00:10:09 christos Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.5 2013/01/24 19:24:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,7 +46,9 @@ __RCSID("$NetBSD: mkfs_msdos.c,v 1.4 2013/01/24 00:10:09 christos Exp $");
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#ifndef MAKEFS
 #include <sys/disk.h>
+#endif
 
 #include <ctype.h>
 #include <err.h>
@@ -59,7 +65,9 @@ __RCSID("$NetBSD: mkfs_msdos.c,v 1.4 2013/01/24 00:10:09 christos Exp $");
 #include <util.h>
 #include <disktab.h>
 
+#ifndef MAKEFS
 #include "partutil.h"
+#endif
 #include "mkfs_msdos.h"
 
 #define MAXU16	  0xffff	/* maximum unsigned 16-bit quantity */
@@ -223,7 +231,9 @@ static u_int8_t bootcode[] = {
 
 static int got_siginfo = 0; /* received a SIGINFO */
 
+#ifndef MAKEFS
 static int check_mounted(const char *, mode_t);
+#endif
 static int getstdfmt(const char *, struct bpb *);
 static int getbpbinfo(int, const char *, const char *, int, struct bpb *, int);
 static void print_bpb(struct bpb *);
@@ -284,9 +294,11 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	warn("%s", fname);
 	return -1;
     }
+#ifndef MAKEFS
     if (!o.no_create)
 	if (check_mounted(fname, sb.st_mode) == -1)
 	    return -1;
+#endif
     if (!S_ISCHR(sb.st_mode) && !o.create_size) {
 	warnx("warning, %s is not a character device", fname);
 	return -1;
@@ -603,7 +615,9 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	if (!(img = malloc(bpb.bps)))
 	    err(1, NULL);
 	dir = bpb.res + (bpb.spf ? bpb.spf : bpb.bspf) * bpb.nft;
+#ifdef SIGINFO
 	signal(SIGINFO, infohandler);
+#endif
 	for (lsn = 0; lsn < dir + (o.fat_type == 32 ? bpb.spc : rds); lsn++) {
 	    if (got_siginfo) {
 		fprintf(stderr,"%s: writing sector %u of %u (%u%%)\n",
@@ -727,6 +741,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
     return 0;
 }
 
+#ifndef MAKEFS
 /*
  * return -1 with error if file system is mounted.
  */
@@ -759,6 +774,7 @@ check_mounted(const char *fname, mode_t mode)
     }
     return 0;
 }
+#endif
 
 /*
  * Get a standard format.
@@ -785,8 +801,6 @@ static int
 getbpbinfo(int fd, const char *fname, const char *dtype, int iflag,
     struct bpb *bpb, int create)
 {
-    struct disk_geom geo;
-    struct dkwedge_info dkw;
     const char *s1, *s2;
     int part;
 
@@ -811,11 +825,22 @@ getbpbinfo(int fd, const char *fname, const char *dtype, int iflag,
 #endif
     if (((part != -1) && ((!iflag && part != -1) || !bpb->bsec)) ||
 	!bpb->bps || !bpb->spt || !bpb->hds) {
-	if (create
+	u_int sector_size;
+	u_int nsectors;
+	u_int ntracks;
+	u_int size;
 #ifndef MAKEFS
-	|| getdiskinfo(fname, fd, NULL, &geo, &dkw) == -1
+	struct disk_geom geo;
+	struct dkwedge_info dkw;
+
+	if (!create && getdiskinfo(fname, fd, NULL, &geo, &dkw) != -1) {
+	    sector_size = geo.dg_secsize = 512;
+	    nsectors = geo.dg_nsectors = 63;
+	    ntracks = geo.dg_ntracks = 255;
+	    size = dkw.dkw_size;
+	} else
 #endif
-	) {
+	{
 	    struct stat st;
 
 	    if (fstat(fd, &st) == -1) {
@@ -823,37 +848,37 @@ getbpbinfo(int fd, const char *fname, const char *dtype, int iflag,
 		return -1;
 	    }
 	    /* create a fake geometry for a file image */
-	    geo.dg_secsize = 512;
-	    geo.dg_nsectors = 63;
-	    geo.dg_ntracks = 255;
-	    dkw.dkw_size = st.st_size / geo.dg_secsize;
+	    sector_size = 512;
+	    nsectors = 63;
+	    ntracks = 255;
+	    size = st.st_size / sector_size;
 	}
 	if (!bpb->bps) {
-	    if (ckgeom(fname, geo.dg_secsize, "bytes/sector") == -1)
+	    if (ckgeom(fname, sector_size, "bytes/sector") == -1)
 		return -1;
-	    bpb->bps = geo.dg_secsize;
+	    bpb->bps = sector_size;
 	}
 
-	if (geo.dg_nsectors > 63) {
+	if (nsectors > 63) {
 		/*
 		 * The kernel doesn't accept BPB with spt > 63.
 		 * (see sys/fs/msdosfs/msdosfs_vfsops.c:msdosfs_mountfs())
 		 * If values taken from disklabel don't match these
 		 * restrictions, use popular BIOS default values instead.
 		 */
-		geo.dg_nsectors = 63;
+		nsectors = 63;
 	}
 	if (!bpb->spt) {
-	    if (ckgeom(fname, geo.dg_nsectors, "sectors/track") == -1)
+	    if (ckgeom(fname, nsectors, "sectors/track") == -1)
 		return -1;
-	    bpb->spt = geo.dg_nsectors;
+	    bpb->spt = nsectors;
 	}
 	if (!bpb->hds)
-	    if (ckgeom(fname, geo.dg_ntracks, "drive heads") == -1)
+	    if (ckgeom(fname, ntracks, "drive heads") == -1)
 		return -1;
-	    bpb->hds = geo.dg_ntracks;
+	    bpb->hds = ntracks;
 	if (!bpb->bsec)
-	    bpb->bsec = dkw.dkw_size;
+	    bpb->bsec = size;
     }
     return 0;
 }
