@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.42 2013/01/19 16:19:56 jakllsch Exp $
+# $NetBSD: XEN3_DOMU,v 1.43 2013/01/24 13:58:40 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -13,6 +13,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 maxusers	32		# estimated number of users
 
 #
+options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 #options 	DOM0OPS
 
 #options 	USER_LDT	# user-settable LDT; used by WINE
