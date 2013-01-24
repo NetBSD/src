@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.4 2013/01/23 22:47:18 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.5 2013/01/24 01:10:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.4 2013/01/23 22:47:18 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.5 2013/01/24 01:10:47 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -101,7 +101,7 @@ ALLOPTS
 #undef AOPT	
 		{ .name = NULL }
 	};
-	int i, rv;
+	int rv;
 
 	assert(option != NULL);
 	assert(fsopts != NULL);
@@ -111,21 +111,16 @@ ALLOPTS
 		printf("msdos_parse_opts: got `%s'\n", option);
 
 	rv = set_option(msdos_options, option);
-	if (rv == 0)
+	if (rv == -1)
 		return rv;
 
-	for (i = 0; msdos_options[i].name != NULL && (1 << i) != rv; i++)
-		break;
-	if (msdos_options[i].name == NULL)
-		abort();
-
-	if (strcmp(msdos_options[i].name, "volume_id") == 0)
+	if (strcmp(msdos_options[rv].name, "volume_id") == 0)
 		msdos_opt->volume_id_set = 1;
-	else if (strcmp(msdos_options[i].name, "media_descriptor") == 0)
+	else if (strcmp(msdos_options[rv].name, "media_descriptor") == 0)
 		msdos_opt->media_descriptor_set = 1;
-	else if (strcmp(msdos_options[i].name, "hidden_sectors") == 0)
+	else if (strcmp(msdos_options[rv].name, "hidden_sectors") == 0)
 		msdos_opt->hidden_sectors_set = 1;
-	return rv;
+	return 1;
 }
 
 
