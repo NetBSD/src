@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.52 2013/01/23 21:42:22 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.53 2013/01/24 01:10:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.52 2013/01/23 21:42:22 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.53 2013/01/24 01:10:47 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -216,7 +216,7 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 	    { .name = NULL }
 	};
 
-	int	rv, i;
+	int	rv;
 
 	assert(option != NULL);
 	assert(fsopts != NULL);
@@ -226,16 +226,13 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 		printf("ffs_parse_opts: got `%s'\n", option);
 
 	rv = set_option(ffs_options, option);
-	if (rv == 0)
+	if (rv == -1)
 		return 0;
 
-	for (i = 0; ffs_options[i].name && (1 << i) != rv; i++)
-		continue;
-
-	if (ffs_options[i].name == NULL)
+	if (ffs_options[rv].name == NULL)
 		abort();
 
-	if (strcmp(ffs_options[i].name, "optimization") == 0) {
+	if (strcmp(ffs_options[rv].name, "optimization") == 0) {
 		if (strcmp(optimization, "time") == 0) {
 			ffs_opts->optimization = FS_OPTTIME;
 		} else if (strcmp(optimization, "space") == 0) {
@@ -245,7 +242,7 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 			return 0;
 		}
 	}
-	return rv;
+	return 1;
 }
 
 

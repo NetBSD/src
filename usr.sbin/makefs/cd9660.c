@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.37 2013/01/23 21:32:32 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.38 2013/01/24 01:10:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.37 2013/01/23 21:32:32 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.38 2013/01/24 01:10:47 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -424,7 +424,7 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 			warnx("Option `%s' doesn't contain a value", var);
 			rv = 0;
 		} else
-			rv = set_option_var(cd9660_options, var, val);
+			rv = set_option_var(cd9660_options, var, val) != -1;
 	}
 
 	if (var)

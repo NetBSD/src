@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.38 2013/01/23 21:42:22 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.39 2013/01/24 01:10:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.38 2013/01/23 21:42:22 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.39 2013/01/24 01:10:47 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -311,7 +311,7 @@ set_option(const option_t *options, const char *option)
 	if ((var = strdup(option)) == NULL) {
 		err(EXIT_FAILURE, "Allocating memory for copy of option string");
 	}
-	retval = 0;
+	retval = -1;
 	if ((val = strchr(var, '=')) == NULL) {
 		warnx("Option `%s' doesn't contain a value", var);
 		goto out;
@@ -336,7 +336,7 @@ set_option_var(const option_t *options, const char *var, const char *val)
     options[i].minimum, options[i].maximum); break
 
 	for (i = 0; options[i].name != NULL; i++) {
-		if (options[i].letter != var[0] || var[1] != '\0')
+		if (options[i].letter != var[0] && var[1] == '\0')
 			continue;
 		else if (strcmp(options[i].name, var) != 0)
 			continue;
@@ -367,10 +367,10 @@ set_option_var(const option_t *options, const char *var, const char *val)
 			    val);
 			return 0;
 		}
-		return 1 << i;
+		return i;
 	}
 	warnx("Unknown option `%s'", var);
-	return (0);
+	return -1;
 }
 
 
