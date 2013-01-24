@@ -1,4 +1,4 @@
-/*	$NetBSD: lom.c,v 1.10 2012/06/02 21:36:42 dsl Exp $	*/
+/*	$NetBSD: lom.c,v 1.11 2013/01/24 11:06:20 nakayama Exp $	*/
 /*	$OpenBSD: lom.c,v 1.21 2010/02/28 20:44:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.10 2012/06/02 21:36:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.11 2013/01/24 11:06:20 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -857,7 +857,7 @@ lom2_intr(void *arg)
 		return (1);
 	}
 
-	KASSERT(sc->sc_state = LOM_STATE_DATA);
+	KASSERT(sc->sc_state == LOM_STATE_DATA);
 	lc->lc_data = obr;
 
 	TAILQ_REMOVE(&sc->sc_queue, lc, lc_next);
