@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.10 2013/01/23 13:06:18 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.11 2013/01/24 10:28:28 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.10 2013/01/23 13:06:18 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.11 2013/01/24 10:28:28 roy Exp $");
 #include <sys/param.h>
 
 #include <assert.h>
@@ -41,21 +41,24 @@ __RCSID("$NetBSD: tparm.c,v 1.10 2013/01/23 13:06:18 roy Exp $");
 #include <term_private.h>
 #include <term.h>
 
+#define LONG_STR_MAX ((CHAR_BIT * sizeof(long)) / 3)
+#define BUFINC 128 /* Size to increament the terminal buffer by */
+
 static TERMINAL *dumbterm; /* For non thread safe functions */
 
 typedef struct {
-	int nums[20];
+	long nums[20];
 	char *strings[20];
 	size_t offset;
 } TPSTACK;
 
 typedef struct {
-	int num;
+	long num;
 	char *string;
 } TPVAR;
 
 static int
-push(int num, char *string, TPSTACK *stack)
+push(long num, char *string, TPSTACK *stack)
 {
 	if (stack->offset >= sizeof(stack->nums)) {
 		errno = E2BIG;
@@ -68,7 +71,7 @@ push(int num, char *string, TPSTACK *stack)
 }
 
 static int
-pop(int *num, char **string, TPSTACK *stack)
+pop(long *num, char **string, TPSTACK *stack)
 {
 	if (stack->offset == 0) {
 		if (num)
@@ -92,7 +95,7 @@ checkbuf(TERMINAL *term, size_t len)
 	char *buf;
 	
 	if (term->_bufpos + len >= term->_buflen) {
-		len = term->_buflen + MAX(len, BUFSIZ);
+		len = term->_buflen + MAX(len, BUFINC);
 		buf = realloc(term->_buf, len);
 		if (buf == NULL)
 			return NULL;
@@ -115,14 +118,13 @@ ochar(TERMINAL *term, int c)
 }
 
 static size_t
-onum(TERMINAL *term, const char *fmt, int num, int len)
+onum(TERMINAL *term, const char *fmt, int num, unsigned int len)
 {
 	size_t l;
 
-	/* Assume we never have natural number longer than 64 chars */
-	if (len < 64)
-		len = 64;
-	if (checkbuf(term, (size_t)len + 1) == NULL)
+	if (len < LONG_STR_MAX)
+		len = LONG_STR_MAX;
+	if (checkbuf(term, len + 2) == NULL)
 		return 0;
 	l = sprintf(term->_buf + term->_bufpos, fmt, num);
 	term->_bufpos += l;
@@ -130,16 +132,16 @@ onum(TERMINAL *term, const char *fmt, int num, int len)
 }
 
 static char *
-_ti_tiparm(TERMINAL *term, const char *str, va_list parms)
+_ti_tiparm(TERMINAL *term, const char *str, int va_long, va_list parms)
 {
 	const char *sp;
 	char c, fmt[64], *fp, *ostr;
-	int val, val2;
-	int dnums[26]; /* dynamic variables a-z, not preserved */
+	long val, val2;
+	long dnums[26]; /* dynamic variables a-z, not preserved */
 	size_t l, max;
 	TPSTACK stack;
 	TPVAR params[9];
-	int done, dot, minus, width, precision, olen;
+	unsigned int done, dot, minus, width, precision, olen;
 	int piss[9]; /* Parameter IS String - piss ;) */
 
 	if (str == NULL)
@@ -151,7 +153,6 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 	  still work with non thread safe functions (which sadly are still the
 	  norm and standard).
 	*/
-
 	if (term == NULL) {
 		if (dumbterm == NULL) {
 			dumbterm = malloc(sizeof(*dumbterm));
@@ -165,10 +166,10 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 	term->_bufpos = 0;
 	/* Ensure we have an initial buffer */
 	if (term->_buflen == 0) {
-		term->_buf = malloc(BUFSIZ);
+		term->_buf = malloc(BUFINC);
 		if (term->_buf == NULL)
 			return NULL;
-		term->_buflen = BUFSIZ;
+		term->_buflen = BUFINC;
 	}
 
 	/*
@@ -209,13 +210,14 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 	/* Put our parameters into variables */
 	memset(&params, 0, sizeof(params));
 	for (l = 0; l < max; l++) {
-		if (piss[l] == 0)
-			params[l].num = va_arg(parms, int);
-		else
+		if (piss[l])
 			params[l].string = va_arg(parms, char *);
+		else if (va_long)
+			params[l].num = va_arg(parms, long);
+		else
+			params[l].num = (long)va_arg(parms, int);
 	}
 
-	term->_bufpos = 0;
 	memset(&stack, 0, sizeof(stack));
 	while ((c = *str++) != '\0') {
 		if (c != '%' || (c = *str++) == '%') {
@@ -234,11 +236,15 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 		while (done == 0 && (size_t)(fp - fmt) < sizeof(fmt)) {
 			switch (c) {
 			case 'c': /* FALLTHROUGH */
+			case 's':
+				*fp++ = c;
+				done = 1;
+				break;
 			case 'd': /* FALLTHROUGH */
 			case 'o': /* FALLTHROUGH */
 			case 'x': /* FALLTHROUGH */
 			case 'X': /* FALLTHROUGH */
-			case 's':
+				*fp++ = 'l';
 				*fp++ = c;
 				done = 1;
 				break;
@@ -287,7 +293,7 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 				width = val;
 			else
 				precision = val;
-			olen = (width > precision) ? width : precision;
+			olen = MAX(width, precision);
 		}
 		*fp++ = '\0';
 
@@ -317,15 +323,19 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 				l = 0;
 			else
 				l = strlen(ostr);
-			if (onum(term, "%d", (int)l, 0) == 0)
+#ifdef NCURSES_COMPAT_57
+			if (onum(term, "%ld", (long)l, 0) == 0)
 				return NULL;
+#else
+			push((long)l, NULL, &stack);
+#endif
 			break;
 		case 'd': /* FALLTHROUGH */
 		case 'o': /* FALLTHROUGH */
 		case 'x': /* FALLTHROUGH */
 		case 'X':
 			pop(&val, NULL, &stack);
-			if (onum(term, fmt, val, olen) == 0)
+			if (onum(term, fmt, (int)val, olen) == 0)
 				return NULL;
 			break;
 		case 'p':
@@ -359,7 +369,7 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 				params[1].num++;
 			break;
 		case '\'':
-			if (push((int)(unsigned char)*str++, NULL, &stack))
+			if (push((long)(unsigned char)*str++, NULL, &stack))
 				return NULL;
 			while (*str != '\0' && *str != '\'')
 				str++;
@@ -439,7 +449,7 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 		case '!':
 		case '~':
 			pop(&val, NULL, &stack);
-			switch (*str) {
+			switch (c) {
 			case '!':
 				val = !val;
 				break;
@@ -512,7 +522,7 @@ ti_tiparm(TERMINAL *term, const char *str, ...)
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
-	ret = _ti_tiparm(term, str, va);
+	ret = _ti_tiparm(term, str, 0, va);
 	va_end(va);
 	return ret;
 }
@@ -526,18 +536,34 @@ tiparm(const char *str, ...)
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
-        ret = _ti_tiparm(NULL, str, va);
+	ret = _ti_tiparm(NULL, str, 0, va);
+	va_end(va);
+	return ret;
+}
+
+/* Same as tiparm, but accepts long instead of int for the numeric params.
+ * Currently there is no need for this to be a public interface and is only
+ * consumed by tparm. If we need this to be public, and I really cannot
+ * imagine why, then we would need ti_tlparm() as well. */
+static char *
+tlparm(const char *str, ...)
+{
+	va_list va;
+	char *ret;
+	
+	_DIAGASSERT(str != NULL);
+
+	va_start(va, str);
+	ret = _ti_tiparm(NULL, str, 1, va);
 	va_end(va);
 	return ret;
 }
 
 char *
 tparm(const char *str,
-    long lp1, long lp2, long lp3, long lp4, long lp5,
-    long lp6, long lp7, long lp8, long lp9)
+    long p1, long p2, long p3, long p4, long p5,
+    long p6, long p7, long p8, long p9)
 {
-	int p1 = lp1, p2 = lp2, p3 = lp3, p4 = lp4, p5 = lp5;
-	int p6 = lp6, p7 = lp7, p8 = lp8, p9 = lp9;
 
-	return tiparm(str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+	return tlparm(str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
 }
