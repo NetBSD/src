@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.279 2013/01/03 09:40:55 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.280 2013/01/25 17:12:33 hannken Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.279 2013/01/03 09:40:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.280 2013/01/25 17:12:33 hannken Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2577,17 +2577,13 @@ pmap_clear_modify(struct vm_page *pg)
 	pv_check();
 	mutex_exit(&pmap_lock);
 #ifdef DEBUG
-	if (pmap_is_modified(pg)) {
-		printf("pmap_clear_modify(): %p still modified!\n", pg);
-		Debugger();
-	}
 	DPRINTF(PDB_CHANGEPROT|PDB_REF, ("pmap_clear_modify: pg %p %s\n", pg,
 	    (changed ? "was modified" : "was not modified")));
-	if (modified != changed) {
+	if (modified && modified != changed) {
 		printf("pmap_clear_modify: modified %d changed %d\n",
 		       modified, changed);
 		Debugger();
-	} else return (modified);
+	}
 #endif
 	return (changed);
 }
