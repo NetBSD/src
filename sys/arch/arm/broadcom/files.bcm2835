@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.13 2013/01/10 02:23:26 jmcneill Exp $
+#	$NetBSD: files.bcm2835,v 1.14 2013/01/25 00:04:06 jmcneill Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -41,6 +41,11 @@ file	arch/arm/broadcom/bcm2835_tmr.c		bcmtmr
 device	bcmpm: sysmon_wdog
 attach	bcmpm at obio with bcmpm_amba
 file	arch/arm/broadcom/bcm2835_pm.c		bcmpm
+
+# Random number generator (BCM2835_RNG_BASE)
+device	bcmrng
+attach	bcmrng at obio with bcmrng_amba
+file	arch/arm/broadcom/bcm2835_rng.c		bcmrng
 
 # UART Interface (BCM2835_UART0_BASE)
 attach	plcom at obio with bcmplcom
