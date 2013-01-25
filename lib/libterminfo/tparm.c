@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.12 2013/01/24 10:41:28 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.13 2013/01/25 12:30:05 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011, 2013 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.12 2013/01/24 10:41:28 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.13 2013/01/25 12:30:05 roy Exp $");
 #include <sys/param.h>
 
 #include <assert.h>
@@ -223,12 +223,25 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_long, va_list parms)
 	/* Put our parameters into variables */
 	memset(&params, 0, sizeof(params));
 	for (l = 0; l < max; l++) {
-		if (piss[l])
-			params[l].string = va_arg(parms, char *);
-		else if (va_long)
-			params[l].num = va_arg(parms, long);
-		else
-			params[l].num = (long)va_arg(parms, int);
+		if (piss[l]) {
+			if (va_long) {
+				/* This only works if char * fits into a long
+				 * on this platform. */
+				if (sizeof(char *) <= sizeof(long)/*CONSTCOND*/)
+					params[l].string =
+					    (char *)va_arg(parms, long);
+				else {
+					errno = ENOTSUP;
+					return NULL;
+				}
+			} else
+				params[l].string = va_arg(parms, char *);
+		} else {
+			if (va_long)
+				params[l].num = va_arg(parms, long);
+			else
+				params[l].num = (long)va_arg(parms, int);
+		}
 	}
 
 	memset(&stack, 0, sizeof(stack));
