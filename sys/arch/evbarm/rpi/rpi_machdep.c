@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.30 2013/01/21 20:42:22 jakllsch Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.31 2013/01/25 13:32:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.30 2013/01/21 20:42:22 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.31 2013/01/25 13:32:21 jmcneill Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -609,7 +609,8 @@ rpi_fb_get_edid_mode(uint32_t *pwidth, uint32_t *pheight)
 	}
 
 	if (!vcprop_buffer_success_p(&vb_edid.vb_hdr) ||
-	    !vcprop_tag_success_p(&vb_edid.vbt_edid.tag))
+	    !vcprop_tag_success_p(&vb_edid.vbt_edid.tag) ||
+	    vb_edid.vbt_edid.status != 0)
 		return false;
 
 	memset(edid_data, 0, sizeof(edid_data));
@@ -620,8 +621,10 @@ rpi_fb_get_edid_mode(uint32_t *pwidth, uint32_t *pheight)
 	edid_print(&ei);
 #endif
 
-	*pwidth = ei.edid_preferred_mode->hdisplay;
-	*pheight = ei.edid_preferred_mode->vdisplay;
+	if (ei.edid_preferred_mode) {
+		*pwidth = ei.edid_preferred_mode->hdisplay;
+		*pheight = ei.edid_preferred_mode->vdisplay;
+	}
 
 	return true;
 }
