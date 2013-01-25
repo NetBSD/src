@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.23 2013/01/24 10:41:29 roy Exp $	*/
+/*	$NetBSD: tput.c,v 1.24 2013/01/25 12:12:30 roy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.23 2013/01/24 10:41:29 roy Exp $");
+__RCSID("$NetBSD: tput.c,v 1.24 2013/01/25 12:12:30 roy Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -172,10 +172,6 @@ process(const char *cap, const char *str, char **argv)
 			    *tmp != '\0')
 				errx(2, errnum, i + 1, *argv, cap);
 		}
-		if (piss[i])
-			printf ("str %d %s\n", i, strs[i]);
-		else
-			printf ("num %d %ld\n", i, nums[i]);
 	}
 
 	/* And output */
