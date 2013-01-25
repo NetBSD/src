@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.163 2012/07/03 21:03:40 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.164 2013/01/25 02:01:10 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.163 2012/07/03 21:03:40 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.164 2013/01/25 02:01:10 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.163 2012/07/03 21:03:40 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.164 2013/01/25 02:01:10 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -675,7 +675,6 @@ JobPrintCommand(void *cmdp, void *jobp)
     char	  *escCmd = NULL;    /* Command with quotes/backticks escaped */
     char     	  *cmd = (char *)cmdp;
     Job           *job = (Job *)jobp;
-    char	  *cp, *tmp;
     int           i, j;
 
     noSpecials = NoExecute(job->node);
@@ -847,11 +846,6 @@ JobPrintCommand(void *cmdp, void *jobp)
 	    job->flags |= JOB_TRACED;
     }
     
-    if ((cp = Check_Cwd_Cmd(cmd)) != NULL) {
-	    DBPRINTF("test -d %s && ", cp);
-	    DBPRINTF("cd %s\n", cp);
-    }
-
     DBPRINTF(cmdTemplate, cmd);
     free(cmdStart);
     if (escCmd)
@@ -870,10 +864,6 @@ JobPrintCommand(void *cmdp, void *jobp)
     }
     if (shutUp && commandShell->hasEchoCtl) {
 	DBPRINTF("%s\n", commandShell->echoOn);
-    }
-    if (cp != NULL) {
-	    DBPRINTF("test -d %s && ", cp);
-	    DBPRINTF("cd %s\n", Var_Value(".OBJDIR", VAR_GLOBAL, &tmp));
     }
     return 0;
 }
