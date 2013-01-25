@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.11 2013/01/09 22:23:44 skrll Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.12 2013/01/25 00:04:06 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.11 2013/01/09 22:23:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.12 2013/01/25 00:04:06 jmcneill Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -95,6 +95,13 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_name = "bcmpm",
 		.ad_addr = BCM2835_PM_BASE,
 		.ad_size = BCM2835_PM_SIZE,
+		.ad_intr = -1,
+	},
+	{
+		/* Random number generator */
+		.ad_name = "bcmrng",
+		.ad_addr = BCM2835_RNG_BASE,
+		.ad_size = BCM2835_RNG_SIZE,
 		.ad_intr = -1,
 	},
 	{
