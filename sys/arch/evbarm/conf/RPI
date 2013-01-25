@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.22 2013/01/21 16:25:09 jakllsch Exp $
+#	$NetBSD: RPI,v 1.23 2013/01/25 00:06:05 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -195,6 +195,9 @@ bcmtmr0		at obio?
 
 # Power management, Reset controller and Watchdog registers
 bcmpm0		at obio?
+
+# Random number generator
+bcmrng0 	at obio?
 
 # Arasan SD/MMC Interface
 sdhc* at obio?
