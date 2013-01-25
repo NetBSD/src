@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.10 2013/01/11 13:55:25 matt Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.11 2013/01/25 08:52:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(__SOFTFP__) && !defined(__VFP_FP__)
+#if !defined(__SOFTFP__) && !defined(__VFP_FP__) && !defined(__ARM_PCS)
 #error FPA is not supported anymore
 #endif
 
@@ -61,12 +61,12 @@ ENTRY(__setjmp14)
 	ldr	r1, .Lsetjmp_magic
 	str	r1, [r0]
 
-#ifndef __SOFTFP__
+#ifdef __ARM_PCS_VFP
 	add	r1, r0, #(_JB_REG_D8 * 4)
 	vstmia	r1, {d8-d15}
 	vmrs	r1, fpscr
 	str	r1, [r0, #(_JB_REG_FPSCR * 4)]
-#endif /* !__SOFTFP__ */
+#endif /* __ARM_PCS_VFP */
 
 	/* Store integer registers */
 	add	r0, r0, #(_JB_REG_R4 * 4)
@@ -75,10 +75,10 @@ ENTRY(__setjmp14)
         RET
 
 .Lsetjmp_magic:
-#ifdef __SOFTFP__
-	.word	_JB_MAGIC_SETJMP
-#else
+#ifdef __ARM_PCS_VFP
 	.word	_JB_MAGIC_SETJMP_VFP
+#else
+	.word	_JB_MAGIC_SETJMP
 #endif
 
 
@@ -96,12 +96,12 @@ ENTRY(__longjmp14)
 	bl	PIC_SYM(_C_LABEL(__sigprocmask14), PLT)
 	ldmfd	sp!, {r0-r2, r14}
 
-#ifndef __SOFTFP__
+#ifdef __ARM_PCS_VFP
 	add	r1, r0, #(_JB_REG_D8 * 4)
 	vldmia	r1, {d8-d15}
 	ldr	r1, [r0, #(_JB_REG_FPSCR * 4)]
 	vmsr	fpscr, r1
-#endif /* !__SOFTFP__ */
+#endif /* __ARM_PCS_VFP */
 
 	add	r0, r0, #(_JB_REG_R4 * 4)
 	/* Restore integer registers */
