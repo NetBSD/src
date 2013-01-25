@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.64 2012/12/18 06:30:18 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.65 2013/01/25 13:17:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64 2012/12/18 06:30:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65 2013/01/25 13:17:39 skrll Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -118,7 +118,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct pcb * const pcb2 = lwp_getpcb(l2);
 
 #ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
+	if (pmap_debug_level > 0)
 		printf("cpu_lwp_fork: %p %p %p %p\n", l1, l2, curlwp, &lwp0);
 #endif	/* PMAP_DEBUG */
 
@@ -148,7 +148,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 #endif	/* STACKCHECKS */
 
 #ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0) {
+	if (pmap_debug_level > 0) {
 		printf("l1: pcb=%p pid=%d pmap=%p\n",
 		    pcb1, l1->l_lid, l1->l_proc->p_vmspace->vm_map.pmap);
 		printf("l2: pcb=%p pid=%d pmap=%p\n",
@@ -218,7 +218,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 
 
 #ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
+	if (pmap_debug_level > 0)
 		printf("vmapbuf: bp=%08x buf=%08x len=%08x\n", (u_int)bp,
 		    (u_int)bp->b_data, (u_int)len);
 #endif	/* PMAP_DEBUG */
@@ -261,7 +261,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	vaddr_t addr, off;
 
 #ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
+	if (pmap_debug_level > 0)
 		printf("vunmapbuf: bp=%08x buf=%08x len=%08x\n",
 		    (u_int)bp, (u_int)bp->b_data, (u_int)len);
 #endif	/* PMAP_DEBUG */
