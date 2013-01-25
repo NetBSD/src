@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.13 2013/01/25 12:52:45 roy Exp $ */
+/* $NetBSD: term.h,v 1.14 2013/01/25 17:28:50 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
@@ -1974,11 +1974,19 @@ int		ti_puts(const TERMINAL *, const char *, int,
     int (*)(int, void *), void *);
 int		ti_putp(const TERMINAL *, const char *);
 
-/* Using tparm can be kunkly, so provide a variadic function */
+/* Using tparm can be kunkly, so provide a variadic function
+ * Numbers have to be passed as int */
 /* This is not standard, but ncurses also provides this */
 char *		tiparm(const char *, ...);
 /* And a thread safe version */
 char *		ti_tiparm(TERMINAL *, const char *, ...);
+
+#ifdef TPARM_TLPARM
+/* Same as the above, but numbers have to be passed as long */
+char *		tlparm(const char *, ...);
+/* And a thread safe version */
+char *		ti_tlparm(TERMINAL *, const char *, ...);
+#endif
 
 /* Default to X/Open tparm, but allow it to be variadic also */
 #ifdef TPARM_VARARGS
