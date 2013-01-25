@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.13 2013/01/25 12:30:05 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.14 2013/01/25 17:28:50 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011, 2013 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.13 2013/01/25 12:30:05 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.14 2013/01/25 17:28:50 roy Exp $");
 #include <sys/param.h>
 
 #include <assert.h>
@@ -43,6 +43,10 @@ __RCSID("$NetBSD: tparm.c,v 1.13 2013/01/25 12:30:05 roy Exp $");
 
 #define LONG_STR_MAX ((CHAR_BIT * sizeof(long)) / 3)
 #define BUFINC 128	/* Size to increament the terminal buffer by */
+
+#define VA_LONG_LONG	1 
+#define VA_CHAR_INT	2
+//#define VA_CHAR_LONG	3
 
 static TERMINAL *dumbterm; /* For non thread safe functions */
 
@@ -178,7 +182,7 @@ _ti_parm_analyse(const char *str, int *piss, int piss_len)
 }
 
 static char *
-_ti_tiparm(TERMINAL *term, const char *str, int va_long, va_list parms)
+_ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 {
 	char c, fmt[64], *fp, *ostr;
 	long val, val2;
@@ -224,7 +228,7 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_long, va_list parms)
 	memset(&params, 0, sizeof(params));
 	for (l = 0; l < max; l++) {
 		if (piss[l]) {
-			if (va_long) {
+			if (va_type == VA_LONG_LONG) {
 				/* This only works if char * fits into a long
 				 * on this platform. */
 				if (sizeof(char *) <= sizeof(long)/*CONSTCOND*/)
@@ -237,10 +241,10 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_long, va_list parms)
 			} else
 				params[l].string = va_arg(parms, char *);
 		} else {
-			if (va_long)
-				params[l].num = va_arg(parms, long);
-			else
+			if (va_type == VA_CHAR_INT)
 				params[l].num = (long)va_arg(parms, int);
+			else
+				params[l].num = va_arg(parms, long);
 		}
 	}
 
@@ -548,7 +552,7 @@ ti_tiparm(TERMINAL *term, const char *str, ...)
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
-	ret = _ti_tiparm(term, str, 0, va);
+	ret = _ti_tiparm(term, str, VA_CHAR_INT, va);
 	va_end(va);
 	return ret;
 }
@@ -562,16 +566,28 @@ tiparm(const char *str, ...)
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
-	ret = _ti_tiparm(NULL, str, 0, va);
+	ret = _ti_tiparm(NULL, str, VA_CHAR_INT, va);
 	va_end(va);
 	return ret;
 }
 
-/* Same as tiparm, but accepts long instead of int for the numeric params.
- * Currently there is no need for this to be a public interface and is only
- * consumed by tparm. If we need this to be public, and I really cannot
- * imagine why, then we would need ti_tlparm() as well. */
-static char *
+#ifdef VA_CHAR_LONG
+char *
+ti_tlparm(TERMINAL *term, const char *str, ...)
+{
+	va_list va;
+	char *ret;
+
+	_DIAGASSERT(term != NULL);
+	_DIAGASSERT(str != NULL);
+
+	va_start(va, str);
+	ret = _ti_tiparm(term, str, VA_CHAR_LONG, va);
+	va_end(va);
+	return ret;
+}
+
+char *
 tlparm(const char *str, ...)
 {
 	va_list va;
@@ -580,7 +596,22 @@ tlparm(const char *str, ...)
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
-	ret = _ti_tiparm(NULL, str, 1, va);
+	ret = _ti_tiparm(NULL, str, VA_CHAR_LONG, va);
+	va_end(va);
+	return ret;
+}
+#endif
+
+static char *
+_tparm(const char *str, ...)
+{
+	va_list va;
+	char *ret;
+	
+	_DIAGASSERT(str != NULL);
+
+	va_start(va, str);
+	ret = _ti_tiparm(NULL, str, VA_LONG_LONG, va);
 	va_end(va);
 	return ret;
 }
@@ -591,5 +622,5 @@ tparm(const char *str,
     long p6, long p7, long p8, long p9)
 {
 
-	return tlparm(str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+	return _tparm(str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
 }
