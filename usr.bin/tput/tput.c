@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.24 2013/01/25 12:12:30 roy Exp $	*/
+/*	$NetBSD: tput.c,v 1.25 2013/01/25 12:27:13 roy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.24 2013/01/25 12:12:30 roy Exp $");
+__RCSID("$NetBSD: tput.c,v 1.25 2013/01/25 12:27:13 roy Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -145,6 +145,8 @@ process(const char *cap, const char *str, char **argv)
 	    "Unknown %% escape (%s) for capability `%s'";
 	static const char errnum[] =
 	    "Expected a numeric argument [%d] (%s) for capability `%s'";
+	static const char errcharlong[] = 
+	    "Platform does not fit a string into a long for capability '%s'";
 	int i, nparams, piss[TPARM_MAX];
 	long nums[TPARM_MAX];
 	char *strs[TPARM_MAX], *tmp;
@@ -160,9 +162,11 @@ process(const char *cap, const char *str, char **argv)
 	for (i = 0; i < nparams; i++) {
 		if (*++argv == NULL || *argv[0] == '\0')
 			errx(2, errfew, nparams, cap);
-		if (piss[i]) 
+		if (piss[i]) {
+			if (sizeof(char *) > sizeof(long) /* CONSTCOND */)
+				errx(2, errcharlong, cap);
 			strs[i] = *argv;
-		else {
+		} else {
 			errno = 0;
 			nums[i] = strtol(*argv, &tmp, 0);
 			if ((errno == ERANGE && 
