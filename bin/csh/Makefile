@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2013/01/23 16:39:03 christos Exp $
+#	$NetBSD: Makefile,v 1.37 2013/01/25 14:20:57 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -14,7 +14,9 @@ DFLAGS=-DBUILTIN -DFILEC -DNLS -DSHORT_STRINGS
 #   should implement internally
 # - Does not handle escaped prompts.
 # - Does not do completion
+.ifndef SMALLPROG
 DFLAGS+=-DEDIT
+.endif
 CPPFLAGS+=-I${.CURDIR} -I. ${DFLAGS}
 SRCS=	alloc.c char.c const.c csh.c dir.c dol.c err.c exec.c exp.c file.c \
 	func.c glob.c hist.c init.c lex.c misc.c parse.c printf.c proc.c \
