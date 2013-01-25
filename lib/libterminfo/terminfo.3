@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.3,v 1.9 2013/01/25 12:30:05 roy Exp $
+.\"	$NetBSD: terminfo.3,v 1.10 2013/01/25 17:28:50 roy Exp $
 .\"
 .\" Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -219,11 +219,12 @@ always goes to stdout.
 The
 .Fn tiparm
 function allows variadic parameters instead of 9 fixed longs.
-Numeric parameters must be integers (int) instead of longs.
-String parameters can be used even if the platform cannot fit a
+Numeric parameters must be passed as
+.Vt int .
+String parameters must be passed as
 .Vt char *
-into a
-.Vt long .
+and works on all platforms, unlike
+.Fn tparm .
 .Pp
 The
 .Fn ti_*
