@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.1 2013/01/26 00:20:40 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.2 2013/01/26 00:31:50 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.1 2013/01/26 00:20:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.2 2013/01/26 00:31:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -115,7 +115,8 @@ msdosfs_mkfile(const char *path, struct denode *pdep, fsnode *node)
 	cn.cn_namelen = strlen(node->name);
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_create(cn %s, vap 0%o\n", node->name, st->st_mode);
+	printf("msdosfs_create(name %s, mode 0%o size %zu\n", node->name,
+	    st->st_mode, (size_t)st->st_size);
 #endif
 
 	/*
@@ -197,7 +198,8 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	if ((fd = open(path, O_RDONLY)) == -1)
 		err(1, "open %s", path);
 
-	if ((dat = mmap(0, nsize, PROT_READ, MAP_FILE, fd, 0)) == MAP_FAILED)
+	if ((dat = mmap(0, nsize, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0))
+	    == MAP_FAILED)
 		err(1, "mmap %s", node->name);
 	close(fd);
 
