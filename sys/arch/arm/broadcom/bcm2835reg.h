@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835reg.h,v 1.9 2013/01/26 08:01:49 skrll Exp $	*/
+/*	$NetBSD: bcm2835reg.h,v 1.10 2013/01/26 11:58:43 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -92,6 +92,9 @@
 
 #define	BCM2835_ARMICU_BASE	(BCM2835_ARM_BASE + 0x0200)
 #define	BCM2835_ARMICU_SIZE	0x200
+
+#define	BCM2835_VCHIQ_BASE	(BCM2835_ARM_BASE + 0x0800)
+#define	BCM2835_VCHIQ_SIZE	0x50
 
 #define	BCM2835_ARMMBOX_BASE	(BCM2835_ARM_BASE + 0x0880)
 #define	BCM2835_ARMMBOX_SIZE	0x40
