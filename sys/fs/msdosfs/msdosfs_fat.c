@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.23 2012/12/20 11:44:39 hannken Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.24 2013/01/26 00:21:49 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -47,22 +47,30 @@
  * October 1992
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.23 2012/12/20 11:44:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.24 2013/01/26 00:21:49 christos Exp $");
 
 /*
  * kernel include files.
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
 #include <sys/file.h>
-#include <sys/namei.h>
 #include <sys/mount.h>		/* to define statvfs structure */
-#include <sys/vnode.h>		/* to define vattr structure */
 #include <sys/errno.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
+#ifdef _KERNEL
+#include <sys/namei.h>
+#include <sys/buf.h>
+#include <sys/vnode.h>		/* to define vattr structure */
+#else
+#include <ffs/buf.h>
+#endif
 
 /*
  * msdosfs include files.
