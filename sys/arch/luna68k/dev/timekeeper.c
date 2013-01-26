@@ -1,4 +1,4 @@
-/* $NetBSD: timekeeper.c,v 1.11 2013/01/22 15:44:25 tsutsui Exp $ */
+/* $NetBSD: timekeeper.c,v 1.12 2013/01/26 15:44:14 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.11 2013/01/22 15:44:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.12 2013/01/26 15:44:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ clock_attach(device_t parent, device_t self, void *aux)
 		break;
 	case LUNA_II: /* Dallas DS1287A */
 		sc->sc_clock = (void *)ma->ma_addr;
-		sc->sc_nvram = (void *)(ma->ma_addr + 50);
+		sc->sc_nvram = (void *)(ma->ma_addr + MC_NREGS);
 		sc->sc_nvramsize = 50;
 		sc->sc_todr.todr_gettime_ymdhms = dsclock_get;
 		sc->sc_todr.todr_settime_ymdhms = dsclock_set;
