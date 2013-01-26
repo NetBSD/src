@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.94 2013/01/18 18:41:12 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.95 2013/01/26 15:46:24 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2013/01/18 18:41:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2013/01/26 15:46:24 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2013/01/18 18:41:12 tsutsui Exp $")
 char	machine[] = MACHINE;
 char	cpu_model[120];
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
@@ -477,7 +477,7 @@ cpu_init_kcore_hdr(void)
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 
-	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr)); 
+	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
 	/*
 	 * Initialize the `dispatcher' portion of the header.
@@ -552,7 +552,7 @@ cpu_dumpsize(void)
 int
 cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
 {
-	int buf[MDHDRSIZE / sizeof(int)]; 
+	int buf[MDHDRSIZE / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
 	kcore_seg_t *kseg;
 	int error;
@@ -801,7 +801,7 @@ luna68k_abort(const char *cp)
 /*
  * cpu_exec_aout_makecmds():
  *	CPU-dependent a.out format hook for execve().
- * 
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */
