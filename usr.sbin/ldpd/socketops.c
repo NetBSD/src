@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.18 2013/01/26 17:46:50 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.19 2013/01/26 19:44:52 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ create_hello_sockets()
 	 * RFC5036 specifies we should listen to all subnet routers multicast
 	 * group
 	 */
-	assert(inet_pton(AF_INET, ALL_ROUTERS, &mcast_addr.imr_multiaddr) == 1);
+	mcast_addr.imr_multiaddr.s_addr = htonl(INADDR_ALLRTRS_GROUP);
 
 	if (socket_reuse_port(s) < 0)
 		goto chs_error;
@@ -206,8 +206,7 @@ create_hello_sockets()
 	}
 
 	lastifindex = UINT_MAX;
-	assert(inet_pton(AF_INET6, ALL_ROUTERS6,
-	    &mcast_addr6.ipv6mr_multiaddr) == 1);
+	mcast_addr6.ipv6mr_multiaddr = in6addr_linklocal_allrouters;
 	for (ifb = ifa; ifb; ifb = ifb->ifa_next) {
 		if_sa6 = (struct sockaddr_in6 *) ifb->ifa_addr;
 		if (if_sa6->sin6_family != AF_INET6 ||
@@ -452,7 +451,7 @@ send_hello(void)
 	sadest.sin_len = sizeof(sadest);
 	sadest.sin_family = AF_INET;
 	sadest.sin_port = htons(LDP_PORT);
-	inet_aton(ALL_ROUTERS, &sadest.sin_addr);
+	sadest.sin_addr.s_addr = htonl(INADDR_ALLRTRS_GROUP);
 
 	/* Find our socket */
 	SLIST_FOREACH(hs, &hello_socket_head, listentry)
@@ -516,7 +515,7 @@ send_hello(void)
 	sadest6.sin6_len = sizeof(sadest6);
 	sadest6.sin6_family = AF_INET6;
 	sadest6.sin6_port = htons(LDP_PORT);
-	assert(inet_pton(AF_INET6, ALL_ROUTERS6, &sadest6.sin6_addr) == 1);
+	sadest6.sin6_addr = in6addr_linklocal_allrouters;
 
 	SLIST_FOREACH(hs, &hello_socket_head, listentry)
 		if (hs->type == AF_INET6) {
