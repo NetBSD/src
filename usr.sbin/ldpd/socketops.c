@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.17 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.18 2013/01/26 17:46:50 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -89,10 +89,10 @@ create_hello_sockets()
 {
 	struct ip_mreq  mcast_addr;
 	int s, joined_groups;
-#ifdef INET6
-	struct ipv6_mreq mcast_addr6;
 	struct ifaddrs *ifa, *ifb;
 	uint lastifindex;
+#ifdef INET6
+	struct ipv6_mreq mcast_addr6;
 	struct sockaddr_in6 *if_sa6;
 #endif
 	struct hello_socket *hs;
