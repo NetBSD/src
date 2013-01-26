@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.8 2013/01/26 00:21:49 christos Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.9 2013/01/26 16:51:51 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -52,19 +52,22 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.8 2013/01/26 00:21:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.9 2013/01/26 16:51:51 christos Exp $");
 
 /*
  * System include files.
  */
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
+#ifdef _KERNEL
 #include <sys/dirent.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/vnode.h>
-#ifndef _KERNEL
+#else
 #include <stdio.h>
+#include <dirent.h>
+#include <sys/queue.h>
 #endif
 
 /*
@@ -722,7 +725,9 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 		/*
 		 * This works even though d_namlen is one byte!
 		 */
+#ifdef __NetBSD__
 		dp->d_namlen = (wep->weCnt&WIN_CNT) * WIN_CHARS;
+#endif
 	} else if (chksum != wep->weChksum)
 		chksum = -1;
 	if (chksum == -1)
@@ -740,8 +745,10 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 	for (cp = wep->wePart1, i = sizeof(wep->wePart1)/2; --i >= 0;) {
 		switch (*np++ = *cp++) {
 		case 0:
+#ifdef __NetBSD__
 			dp->d_namlen -= sizeof(wep->wePart2)/2
 			    + sizeof(wep->wePart3)/2 + i + 1;
+#endif
 			return chksum;
 		case '/':
 			np[-1] = 0;
@@ -762,7 +769,9 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 	for (cp = wep->wePart2, i = sizeof(wep->wePart2)/2; --i >= 0;) {
 		switch (*np++ = *cp++) {
 		case 0:
+#ifdef __NetBSD__
 			dp->d_namlen -= sizeof(wep->wePart3)/2 + i + 1;
+#endif
 			return chksum;
 		case '/':
 			np[-1] = 0;
@@ -783,7 +792,9 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 	for (cp = wep->wePart3, i = sizeof(wep->wePart3)/2; --i >= 0;) {
 		switch (*np++ = *cp++) {
 		case 0:
+#ifdef __NetBSD__
 			dp->d_namlen -= i + 1;
+#endif
 			return chksum;
 		case '/':
 			np[-1] = 0;
