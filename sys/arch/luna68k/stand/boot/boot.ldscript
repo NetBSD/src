@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.ldscript,v 1.4 2013/01/20 02:35:13 tsutsui Exp $	*/
+/*	$NetBSD: boot.ldscript,v 1.5 2013/01/26 16:00:04 tsutsui Exp $	*/
 
 OUTPUT_FORMAT("elf32-m68k")
 OUTPUT_ARCH(m68k)
@@ -11,7 +11,11 @@ SECTIONS
     *(.text)
     *(.text.*)
     *(.rodata) *(.rodata.*)
-    . = ALIGN(4);
+    /* The data and bss sections are 8 byte aligned on ELF format,
+       but a.out header doesn't have section addresses and only
+       contains size values, so we have to pad size of text section
+       to make data section get aligned even after elf2aout. */
+    . = ALIGN(8);
   } =0
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
