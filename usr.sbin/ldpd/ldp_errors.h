@@ -1,6 +1,6 @@
-/* $NetBSD: ldp_errors.h,v 1.3 2012/03/15 02:02:24 joerg Exp $ */
+/* $NetBSD: ldp_errors.h,v 1.4 2013/01/26 17:29:55 kefren Exp $ */
 
-/*-
+/*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -55,5 +55,6 @@ void	printtime(void);
 void	debugp(const char *, ...) __printflike(1, 2);
 void	fatalp(const char *, ...) __printflike(1, 2);
 void	warnp(const char *, ...) __printflike(1, 2);
+const char *	satos(const struct sockaddr *);
 
 #endif	/* !_LDP_ERRORS_H_ */
