@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.220 2012/09/23 19:20:44 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.221 2013/01/26 21:49:20 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -212,6 +212,9 @@ STRIP?=		strip
 .cc.o .cpp.o .cxx.o .C.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 
 # Objective C
 # (Defined here rather than in <sys.mk> because `.m' is not just
