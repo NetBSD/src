@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.113 2013/01/18 19:32:09 christos Exp $
+#	$NetBSD: sys.mk,v 1.114 2013/01/26 21:49:20 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -135,6 +135,9 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${LINK.cc} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .cc.o .cpp.o .cxx.o .C.o:
 	${COMPILE.cc} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .cc.a .cpp.a .cxx.a .C.a:
 	${COMPILE.cc} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
@@ -145,6 +148,9 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${LINK.f} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .f.o:
 	${COMPILE.f} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .f.a:
 	${COMPILE.f} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
@@ -169,6 +175,9 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${LINK.r} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .r.o:
 	${COMPILE.r} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .r.a:
 	${COMPILE.r} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
@@ -231,6 +240,9 @@ YACC.y?=	${YACC} ${YFLAGS}
 .l.o:
 	${LEX.l} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} lex.yy.c
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	rm -f lex.yy.c
 
 # Yacc
@@ -244,6 +256,9 @@ YACC.y?=	${YACC} ${YFLAGS}
 .y.o:
 	${YACC.y} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} y.tab.c
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	rm -f y.tab.c
 
 # Shell
