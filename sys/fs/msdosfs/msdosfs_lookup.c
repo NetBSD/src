@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.27 2012/12/20 08:03:42 hannken Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.28 2013/01/26 00:21:49 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -47,17 +47,26 @@
  * October 1992
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.27 2012/12/20 08:03:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.28 2013/01/26 00:21:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/mount.h>
+#include <sys/kauth.h>
 #include <sys/namei.h>
+#include <sys/dirent.h>
+
+#ifdef _KERNEL
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/dirent.h>
-#include <sys/kauth.h>
+#else
+#include <ffs/buf.h>
+#endif /* _KERNEL */
 
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/direntry.h>
@@ -65,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.27 2012/12/20 08:03:42 hannken 
 #include <fs/msdosfs/msdosfsmount.h>
 #include <fs/msdosfs/fat.h>
 
+
+#ifdef _KERNEL
 /*
  * When we search a directory the blocks containing directory entries are
  * read and examined.  The directory entries contain information that would
@@ -559,6 +570,7 @@ foundroot:
 
 	return 0;
 }
+#endif /* _KERNEL */
 
 /*
  * dep  - directory entry to copy into the directory
@@ -572,13 +584,17 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 {
 	int error, rberror;
 	u_long dirclust, clusoffset;
-	u_long fndoffset, havecnt=0, wcnt=1;
+	u_long fndoffset, havecnt = 0, wcnt = 1, i;
 	struct direntry *ndep;
 	struct msdosfsmount *pmp = ddep->de_pmp;
 	struct buf *bp;
 	daddr_t bn;
-	int blsize, i;
+	int blsize;
+#ifdef _KERNEL
 	int async = ddep->de_pmp->pm_mountp->mnt_flag & MNT_ASYNC;
+#else
+#define async 0
+#endif
 
 #ifdef MSDOSFS_DEBUG
 	printf("createde(dep %p, ddep %p, depp %p, cnp %p)\n",
@@ -716,7 +732,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	ndep = bptoep(pmp, bp, clusoffset);
 
 	havecnt = ddep->de_fndcnt + 1;
-	for(i=wcnt; i <= havecnt; i++) {
+	for(i = wcnt; i <= havecnt; i++) {
 		/* mark entry as deleted */
 		ndep->deName[0] = SLOT_DELETED;
 
@@ -980,7 +996,11 @@ removede(struct denode *pdep, struct denode *dep)
 	int blsize;
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	u_long offset = pdep->de_fndoffset;
+#ifdef _KERNEL
 	int async = pdep->de_pmp->pm_mountp->mnt_flag & MNT_ASYNC;
+#else
+#define async 0
+#endif
 
 #ifdef MSDOSFS_DEBUG
 	printf("removede(): filename %s, dep %p, offset %08lx\n",
