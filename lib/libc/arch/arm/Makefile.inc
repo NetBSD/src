@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.17 2013/01/11 13:55:25 matt Exp $
+# $NetBSD: Makefile.inc,v 1.18 2013/01/26 07:09:41 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,6 @@ CPPFLAGS += -I.
 .if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmeb"
 SRCS+=	__aeabi_ldivmod.S __aeabi_uldivmod.S
 SRCS+=	__aeabi_lcmp.c __aeabi_ulcmp.c
-#SRCS+=	__aeabi_idiv0.c __aeabi_ldiv0.c
 SRCS+=	fixunsgen_ieee754.c fixunssfsi_ieee754.c
 SRCS+=	fixunsgen64_ieee754.c fixunsdfsi_ieee754.c
 .endif
