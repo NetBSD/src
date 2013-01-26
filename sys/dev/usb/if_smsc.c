@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.6 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.7 2013/01/26 07:52:16 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1295,11 +1295,7 @@ smsc_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 
 		buf += sizeof(rxhdr);
-
-		if ((total_len - pktlen) < 0)
-			total_len = 0;
-		else
-			total_len -= pktlen;
+		total_len -= pktlen;
 
 		m = smsc_newbuf();
 		if (m == NULL) {
