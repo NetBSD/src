@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.204 2013/01/25 02:01:10 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.205 2013/01/26 15:53:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.204 2013/01/25 02:01:10 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.205 2013/01/26 15:53:00 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.204 2013/01/25 02:01:10 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.205 2013/01/26 15:53:00 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1708,7 +1708,8 @@ execError(const char *af, const char *av)
 	IOADD(")\n");
 
 #ifdef USE_IOVEC
-	(void)writev(2, iov, 8);
+	while (writev(2, iov, 8) == -1 && errno == EAGAIN)
+	    continue;
 #endif
 }
 
