@@ -1,4 +1,4 @@
-/* $NetBSD: ldp.h,v 1.5 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: ldp.h,v 1.6 2013/01/26 19:44:52 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,10 +35,6 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
-/* RFC5036 */
-#define	ALL_ROUTERS		"224.0.0.2"
-/* draft-ietf-mpls-ldp-ipv6 */
-#define	ALL_ROUTERS6		"FF02::2"
 /* RFC5036 */
 #define	LDP_PORT		646
 
