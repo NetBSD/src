@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.5 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: direntry.h,v 1.6 2013/01/26 00:21:49 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -120,7 +120,8 @@ struct winentry {
 #define DD_YEAR_MASK		0xFE00	/* year - 1980 */
 #define DD_YEAR_SHIFT		9
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(MAKEFS)
+struct dirent;
 void	unix2dostime(const struct timespec *tsp, int gmtoff, u_int16_t *ddp,
 	    u_int16_t *dtp, u_int8_t *dhp);
 void	dos2unixtime(u_int dd, u_int dt, u_int dh, int gmtoff,
@@ -135,5 +136,5 @@ int	winChkName(const u_char *un, int unlen, struct winentry *wep,
 int	win2unixfn(struct winentry *wep, struct dirent *dp, int chksum);
 u_int8_t winChksum(u_int8_t *name);
 int	winSlotCnt(const u_char *un, int unlen);
-#endif	/* _KERNEL */
+#endif /* _KERNEL || MAKEFS */
 #endif /* _MSDOSFS_DIRENTRY_H_ */

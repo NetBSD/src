@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.20 2012/11/04 17:57:59 jakllsch Exp $	*/
+/*	$NetBSD: denode.h,v 1.21 2013/01/26 00:21:49 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -231,7 +231,7 @@ struct denode {
 #define	de_forw		de_chain[0]
 #define	de_back		de_chain[1]
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(MAKEFS)
 
 #define	VTODE(vp)	((struct denode *)(vp)->v_data)
 #define	DETOV(de)	((de)->de_vnode)
@@ -287,6 +287,8 @@ int	msdosfs_pathconf	(void *);
 /*
  * Internal service routine prototypes.
  */
+struct componentname;
+struct direntry;
 int msdosfs_update(struct vnode *, const struct timespec *,
 	    const struct timespec *, int);
 int createde(struct denode *, struct denode *,
@@ -312,5 +314,5 @@ int msdosfs_fh_enter(struct msdosfsmount *, uint32_t, uint32_t, uint32_t *);
 int msdosfs_fh_remove(struct msdosfsmount *, uint32_t, uint32_t);
 int msdosfs_fh_lookup(struct msdosfsmount *, uint32_t, uint32_t, uint32_t *);
 void msdosfs_fh_destroy(struct msdosfsmount *);
-#endif	/* _KERNEL */
+#endif	/* _KERNEL || MAKEFS */
 #endif /* _MSDOSFS_DENODE_H_ */
