@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.7 2009/03/15 17:15:57 cegger Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.8 2013/01/26 00:21:49 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -47,8 +47,12 @@
  * October 1992
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.7 2009/03/15 17:15:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.8 2013/01/26 00:21:49 christos Exp $");
 
 /*
  * System include files.
@@ -59,6 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.7 2009/03/15 17:15:57 cegger Exp 
 #include <sys/kernel.h>
 #include <sys/dirent.h>
 #include <sys/vnode.h>
+#ifndef _KERNEL
+#include <stdio.h>
+#endif
 
 /*
  * MSDOSFS include files.
@@ -209,8 +216,8 @@ dos2unixtime(u_int dd, u_int dt, u_int dh, int gmtoff, struct timespec *tsp)
 		 */
 		month = (dd & DD_MONTH_MASK) >> DD_MONTH_SHIFT;
 		if (month == 0) {
-			printf("dos2unixtime(): month value out of range (%ld)\n",
-			    month);
+			printf("%s: month value out of range (%ld)\n",
+			    __func__, month);
 			month = 1;
 		}
 		for (m = 0; m < month - 1; m++)
@@ -700,7 +707,7 @@ int
 win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 {
 	u_int8_t *cp;
-	u_int8_t *np, *ep = dp->d_name + WIN_MAXLEN;
+	u_int8_t *np, *ep = (u_int8_t *)dp->d_name + WIN_MAXLEN;
 	int i;
 
 	if ((wep->weCnt&WIN_CNT) > howmany(WIN_MAXLEN, WIN_CHARS)
