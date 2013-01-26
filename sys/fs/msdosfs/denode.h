@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.21 2013/01/26 00:21:49 christos Exp $	*/
+/*	$NetBSD: denode.h,v 1.22 2013/01/26 16:51:51 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -49,7 +49,15 @@
 #ifndef _MSDOSFS_DENODE_H_
 #define _MSDOSFS_DENODE_H_
 
+#ifdef _KERNEL
 #include <miscfs/genfs/genfs_node.h>
+#else
+struct genfs_node {
+};
+struct vnode;
+struct msdosfsmount;
+struct buf;
+#endif
 
 /*
  * This is the pc filesystem specific portion of the vnode structure.
@@ -289,13 +297,14 @@ int	msdosfs_pathconf	(void *);
  */
 struct componentname;
 struct direntry;
+struct kauth_cred;
 int msdosfs_update(struct vnode *, const struct timespec *,
 	    const struct timespec *, int);
 int createde(struct denode *, struct denode *,
 		struct denode **, struct componentname *);
-int deextend(struct denode *, u_long, kauth_cred_t);
+int deextend(struct denode *, u_long, struct kauth_cred *);
 int deget(struct msdosfsmount *, u_long, u_long, struct denode **);
-int detrunc(struct denode *, u_long, int, kauth_cred_t);
+int detrunc(struct denode *, u_long, int, struct kauth_cred *);
 int deupdat(struct denode *, int);
 int doscheckpath(struct denode *, struct denode *);
 int dosdirempty(struct denode *);
@@ -306,7 +315,7 @@ void reinsert(struct denode *);
 int removede(struct denode *, struct denode *);
 int uniqdosname(struct denode *, struct componentname *, u_char *);
 int findwin95(struct denode *);
-int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
+int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, struct kauth_cred *);
 void msdosfs_gop_markupdate(struct vnode *, int);
 void msdosfs_detimes(struct denode *, const struct timespec *,
     const struct timespec *, const struct timespec *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.18 2013/01/26 00:21:49 christos Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.19 2013/01/26 16:51:51 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -50,6 +50,7 @@
 #ifndef _MSDOSFS_MSDOSFSMOUNT_H_
 #define _MSDOSFS_MSDOSFSMOUNT_H_
 
+#ifndef MAKEFS
 /*
  *  Arguments to mount MSDOS filesystems.
  */
@@ -67,6 +68,7 @@ struct msdosfs_args {
 	mode_t  dirmask;	/* v2: mask to be applied for msdosfs perms */
 	int	gmtoff;		/* v3: offset from UTC in seconds */
 };
+#endif
 
 /*
  * Msdosfs mount options:
