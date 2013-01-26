@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_rndq.c,v 1.8 2013/01/24 14:23:45 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.9 2013/01/26 19:05:12 tls Exp $	*/
 
 /*-
- * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.8 2013/01/24 14:23:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.9 2013/01/26 19:05:12 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -78,12 +78,6 @@ int	rnd_debug = 0;
 #if 0
 #define	RND_VERBOSE
 #endif
-
-/*
- * The size of a temporary buffer, kmem_alloc()ed when needed, and used for
- * reading and writing data.
- */
-#define	RND_TEMP_BUFFER_SIZE	128
 
 /*
  * This is a little bit of state information attached to each device that we
@@ -665,6 +659,7 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
 	rnd_sample_t *state = NULL;
 	const uint32_t *dint = data;
 	int todo, done, filled = 0;
+	int sample_count;
 	SIMPLEQ_HEAD(, _rnd_sample_t) tmp_samples =
 	    		SIMPLEQ_HEAD_INITIALIZER(tmp_samples);
 
@@ -672,11 +667,40 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
 		return;
 	}
 
+	todo = len / sizeof(*dint);
+	/*
+	 * Let's try to be efficient: if we are warm, and a source
+	 * is adding entropy at a rate of at least 1 bit every 10 seconds,
+	 * mark it as "fast" and add its samples in bulk.
+	 */
+	if (__predict_true(rs->flags & RND_FLAG_FAST)) {
+		sample_count = RND_SAMPLE_COUNT;
+	} else {
+		if (!cold && rnd_initial_entropy) {
+			struct timeval upt;
+
+			getmicrouptime(&upt);
+			if ((todo >= RND_SAMPLE_COUNT) ||
+			    (rs->total > upt.tv_sec) ||
+			     (upt.tv_sec > 10 &&
+			      rs->total > upt.tv_sec / 10)) {
+#ifdef RND_VERBOSE
+				printf("rnd: source %s is fast (%d samples "
+				       "at once, %d bits in %lld seconds), "
+				       "processing samples in bulk.\n",
+				       rs->name, todo, rs->total,
+				       (long long int)upt.tv_sec);
+#endif
+				rs->flags |= RND_FLAG_FAST;
+			}
+		}
+		sample_count = 2;
+	}
+
 	/*
 	 * Loop over data packaging it into sample buffers.
 	 * If a sample buffer allocation fails, drop all data.
 	 */
-	todo = len / sizeof(*dint);
 	for (done = 0; done < todo ; done++) {
 		state = rs->state;
 		if (state == NULL) {
@@ -691,7 +715,7 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
 		state->values[state->cursor] = dint[done];
 		state->cursor++;
 
-		if (state->cursor == RND_SAMPLE_COUNT) {
+		if (state->cursor == sample_count) {
 			SIMPLEQ_INSERT_HEAD(&tmp_samples, state, next);
 			filled++;
 			rs->state = NULL;
