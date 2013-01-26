@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.9 2013/01/26 19:05:12 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.10 2013/01/26 22:22:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.9 2013/01/26 19:05:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.10 2013/01/26 22:22:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -522,21 +522,24 @@ rnd_attach_source(krndsource_t *rs, const char *name, u_int32_t type,
 	rs->total = 0;
 
 	/*
-	 * Force network devices to not collect any entropy by
-	 * default.
+	 * Some source setup, by type
 	 */
-	if (type == RND_TYPE_NET)
-		flags |= (RND_FLAG_NO_COLLECT | RND_FLAG_NO_ESTIMATE);
+	rs->test = NULL;
+	rs->test_cnt = -1;
 
-	/*
- 	 * Hardware RNGs get extra space for statistical testing.
-	 */
-	if (type == RND_TYPE_RNG) {
+	switch (type) {
+	    case RND_TYPE_NET:		/* Don't collect by default */
+		flags |= (RND_FLAG_NO_COLLECT | RND_FLAG_NO_ESTIMATE);
+		break;
+	    case RND_TYPE_RNG:		/* Space for statistical testing */
 		rs->test = kmem_alloc(sizeof(rngtest_t), KM_NOSLEEP);
 		rs->test_cnt = 0;
-	} else {
-		rs->test = NULL;
-		rs->test_cnt = -1;
+		/* FALLTHRU */
+	    case RND_TYPE_VM:		/* Process samples in bulk always */
+		flags |= RND_FLAG_FAST;
+		break;
+	    default:
+		break;
 	}
 
 	rs->type = type;
@@ -681,8 +684,9 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
 
 			getmicrouptime(&upt);
 			if ((todo >= RND_SAMPLE_COUNT) ||
-			    (rs->total > upt.tv_sec) ||
-			     (upt.tv_sec > 10 &&
+			    (rs->total > upt.tv_sec * 10) ||
+			    (upt.tv_sec > 10 && rs->total > upt.tv_sec) ||
+			    (upt.tv_sec > 100 &&
 			      rs->total > upt.tv_sec / 10)) {
 #ifdef RND_VERBOSE
 				printf("rnd: source %s is fast (%d samples "
