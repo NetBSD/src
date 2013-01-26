@@ -1,7 +1,6 @@
-# $NetBSD: Makefile,v 1.44 2012/11/18 17:41:54 manu Exp $
+# $NetBSD: Makefile,v 1.45 2013/01/26 21:58:41 christos Exp $
 
 .include "Makefile.inc"
-.include <bsd.sys.mk>
 .include <bsd.own.mk>
 
 SUBDIR+=	tls_dso .WAIT
