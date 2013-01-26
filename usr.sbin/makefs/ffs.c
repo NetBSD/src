@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.53 2013/01/24 01:10:47 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.54 2013/01/26 00:19:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.53 2013/01/24 01:10:47 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.54 2013/01/26 00:19:39 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -945,7 +945,7 @@ ffs_write_file(union dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 		errno = bwrite(bp);
 		if (errno != 0)
 			goto bad_ffs_write_file;
-		brelse(bp);
+		brelse(bp, 0);
 		if (!isfile)
 			p += chunk;
 	}
