@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.2 2001/11/02 03:12:49 lukem Exp $	*/
+/*	$NetBSD: buf.h,v 1.3 2013/01/26 00:19:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,6 +41,28 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <err.h>
+
+struct componentname {
+	char *cn_nameptr;
+	size_t cn_namelen;
+};
+
+struct vnode {
+	int fd;
+	void *fs;
+	void *v_data;
+	int offset;
+};
+
+#define vput(a) ((void)(a))
+
 struct buf {
 	void *		b_data;
 	long		b_bufsize;
@@ -54,12 +76,41 @@ struct buf {
 };
 
 void		bcleanup(void);
-int		bread(int, struct fs *, daddr_t, int, struct buf **);
-void		brelse(struct buf *);
+int		bread(struct vnode *, daddr_t, int, struct kauth_cred *,
+    int, struct buf **);
+void		brelse(struct buf *, int);
 int		bwrite(struct buf *);
-struct buf *	getblk(int, struct fs *, daddr_t, int);
+struct buf *	getblk(struct vnode *, daddr_t, int, int, int);
 
 #define	bdwrite(bp)	bwrite(bp)
 #define	clrbuf(bp)	memset((bp)->b_data, 0, (u_int)(bp)->b_bcount)
+
+#define	B_MODIFY	0
+#define	BC_AGE		0
+
+#define min(a, b) MIN((a), (b))
+#define microtime(tv) gettimeofday((tv), NULL)
+#define KASSERT(a)
+#define IO_SYNC	1
+
+struct pool {
+	size_t size;
+};
+
+#define pool_init(p, s, a1, a2, a3, a4, a5, a6)	(p)->size = (s)
+#define pool_get(p, f)	malloc((p)->size)
+#define pool_put(p, a)	free(a)
+#define pool_destroy(p)
+
+#define MALLOC_DECLARE(a)
+#define malloc_type_attach(a)
+#define malloc_type_detach(a)
+
+#define mutex_enter(m)
+#define mutex_exit(m)
+#define mutex_init(m, t, i)
+#define mutex_destroy(m)
+
+#define desiredvnodes 10000
 
 #endif	/* _FFS_BUF_H */
