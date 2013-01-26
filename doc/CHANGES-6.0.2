@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.6 2013/01/13 19:09:32 bouyer Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.7 2013/01/26 21:36:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -47,4 +47,12 @@ gnu/dist/grep/src/search.c			1.4
 	variable.
 
 	[apb, ticket #780]
+
+sys/kern/subr_cprng.c				1.15
+
+	Fix a security issue: when we are reseeding a PRNG seeded early in
+	boot before we had ever had any entropy, if something else has
+	consumed the entropy that triggered the immediate reseed, we can
+	reseed with as little as sizeof(int) bytes of entropy.
+	[tls, ticket #800]
 
