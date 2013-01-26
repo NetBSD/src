@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.135 2012/09/07 06:45:04 para Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.136 2013/01/26 13:50:33 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.135 2012/09/07 06:45:04 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.136 2013/01/26 13:50:33 para Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -180,6 +180,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.135 2012/09/07 06:45:04 para Exp $");
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/vmem.h>
+#include <sys/vmem_impl.h>
 #include <sys/kmem.h>
 
 #include <uvm/uvm.h>
@@ -202,6 +203,7 @@ int nkmempages = 0;
 vaddr_t kmembase;
 vsize_t kmemsize;
 
+static struct vmem kmem_arena_store;
 vmem_t *kmem_arena = NULL;
 vmem_t *kmem_va_arena;
 
@@ -324,10 +326,9 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 	kernel_map = &kernel_map_store;
 
 	pool_subsystem_init();
-	vmem_bootstrap();
 
-	kmem_arena = vmem_create("kmem", kmembase, kmemsize, PAGE_SIZE,
-	    NULL, NULL, NULL,
+	kmem_arena = vmem_init(&kmem_arena_store, "kmem",
+	    kmembase, kmemsize, PAGE_SIZE, NULL, NULL, NULL,
 	    0, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
 #ifdef PMAP_GROWKERNEL
 	/*
@@ -342,7 +343,7 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 	}
 #endif
 
-	vmem_init(kmem_arena);
+	vmem_create_arenas(kmem_arena);
 
 	UVMHIST_LOG(maphist, "kmem vmem created (base=%#"PRIxVADDR
 	    ", size=%#"PRIxVSIZE, kmembase, kmemsize, 0,0);
@@ -350,7 +351,7 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 	kmem_va_arena = vmem_create("kva", 0, 0, PAGE_SIZE,
 	    vmem_alloc, vmem_free, kmem_arena,
 	    (kmem_arena_small ? 4 : 8) * PAGE_SIZE,
-	    VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
+	    VM_NOSLEEP, IPL_VM);
 
 	UVMHIST_LOG(maphist, "<- done", 0,0,0,0);
 }

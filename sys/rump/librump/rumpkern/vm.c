@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.132 2013/01/14 16:45:47 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.133 2013/01/26 13:50:33 para Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.132 2013/01/14 16:45:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.133 2013/01/26 13:50:33 para Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -338,12 +338,11 @@ uvm_init(void)
 	pool_subsystem_init();
 
 #ifndef RUMP_UNREAL_ALLOCATORS
-	vmem_bootstrap();
 	kmem_arena = vmem_create("kmem", 0, 1024*1024, PAGE_SIZE,
 	    NULL, NULL, NULL,
 	    0, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
 
-	vmem_init(kmem_arena);
+	vmem_create_arenas(kmem_arena);
 
 	kmem_va_arena = vmem_create("kva", 0, 0, PAGE_SIZE,
 	    vmem_alloc, vmem_free, kmem_arena,

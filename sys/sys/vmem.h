@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.17 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: vmem.h,v 1.18 2013/01/26 13:50:33 para Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -54,14 +54,16 @@ extern vmem_t *kmem_arena;
 extern vmem_t *kmem_meta_arena;
 extern vmem_t *kmem_va_arena;
 
-void vmem_bootstrap(void);
-void vmem_init(vmem_t *vm);
+void vmem_create_arenas(vmem_t *vm);
 
 vmem_t *vmem_create(const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
     vmem_import_t *, vmem_release_t *, vmem_t *, vmem_size_t,
     vm_flag_t, int);
 vmem_t *vmem_xcreate(const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
     vmem_ximport_t *, vmem_release_t *, vmem_t *, vmem_size_t,
+    vm_flag_t, int);
+vmem_t *vmem_init(vmem_t *, const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
+    vmem_import_t *, vmem_release_t *, vmem_t *, vmem_size_t,
     vm_flag_t, int);
 void vmem_destroy(vmem_t *);
 int vmem_alloc(vmem_t *, vmem_size_t, vm_flag_t, vmem_addr_t *);
