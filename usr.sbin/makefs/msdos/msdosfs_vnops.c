@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.3 2013/01/26 16:50:46 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.4 2013/01/26 16:58:14 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.3 2013/01/26 16:50:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.4 2013/01/26 16:58:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -94,7 +94,7 @@ static void
 msdosfs_times(struct msdosfsmount *pmp, struct denode *dep,
     const struct stat *st)
 {
-#ifdef __NetBSD__
+#ifndef HAVE_NBTOOL_CONFIG_H
 	struct timespec at = st->st_atimespec;
 	struct timespec mt = st->st_mtimespec;
 #else
