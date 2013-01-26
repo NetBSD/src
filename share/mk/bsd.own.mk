@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.718 2013/01/18 19:32:09 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.719 2013/01/26 21:48:58 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1237,5 +1237,7 @@ TARGETS+=	lintmanpages
 .endif
 
 TESTSBASE=	/usr/tests
+
+.include <bsd.sys.mk>
 
 .endif	# !defined(_BSD_OWN_MK_)
