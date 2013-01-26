@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.22 2013/01/26 16:51:51 christos Exp $	*/
+/*	$NetBSD: denode.h,v 1.23 2013/01/26 19:45:02 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -49,7 +49,7 @@
 #ifndef _MSDOSFS_DENODE_H_
 #define _MSDOSFS_DENODE_H_
 
-#ifdef _KERNEL
+#ifndef MAKEFS
 #include <miscfs/genfs/genfs_node.h>
 #else
 struct genfs_node {
