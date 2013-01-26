@@ -50,7 +50,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.1 2013/01/26 00:20:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.2 2013/01/26 00:31:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.1 2013/01/26 00:20:40 christos 
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "makefs.h"
 #include "msdos.h"
 #include "mkfs_msdos.h"
-#define NOCRED NULL
 
 #ifdef MSDOSFS_DEBUG
 #define DPRINTF(a) printf a
@@ -97,7 +98,7 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	uint64_t psize = m->create_size;
 	unsigned secsize = 512;
 
-	if ((error = bread(devvp, 1, secsize, NOCRED, 0, &bp)) != 0)
+	if ((error = bread(devvp, 1, secsize, NULL, 0, &bp)) != 0)
 		goto error_exit;
 
 	bsp = (union bootsector *)bp->b_data;
@@ -327,7 +328,7 @@ msdosfs_mount(struct vnode *devvp, int flags)
 		 *	padded at the end or in the middle?
 		 */
 		if ((error = bread(devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
-		    pmp->pm_BytesPerSec, NOCRED, 0, &bp)) != 0)
+		    pmp->pm_BytesPerSec, NULL, 0, &bp)) != 0)
 			goto error_exit;
 		fp = (struct fsinfo *)bp->b_data;
 		if (!memcmp(fp->fsisig1, "RRaA", 4)
