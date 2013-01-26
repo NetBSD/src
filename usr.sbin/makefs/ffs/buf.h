@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.3 2013/01/26 00:19:39 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.4 2013/01/26 16:50:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -75,6 +75,7 @@ struct buf {
 	TAILQ_ENTRY(buf)	b_tailq;
 };
 
+struct kauth_cred;
 void		bcleanup(void);
 int		bread(struct vnode *, daddr_t, int, struct kauth_cred *,
     int, struct buf **);
@@ -112,5 +113,7 @@ struct pool {
 #define mutex_destroy(m)
 
 #define desiredvnodes 10000
+#define NOCRED NULL
+#define DEV_BSHIFT 9
 
 #endif	/* _FFS_BUF_H */
