@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.19 2013/01/26 19:44:52 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.20 2013/01/26 21:07:49 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <strings.h>
 #include <unistd.h>
 
+#include "conffile.h"
 #include "fsm.h"
 #include "ldp.h"
 #include "ldp_command.h"
@@ -83,6 +84,7 @@ static int set_tos(int);
 static int socket_reuse_port(int);
 static int get_local_addr(struct sockaddr_dl *, struct in_addr *);
 static int is_hello_socket(int);
+static int is_passive_if(char *if_name);
 
 int 
 create_hello_sockets()
@@ -134,7 +136,9 @@ create_hello_sockets()
 		struct sockaddr_in *if_sa = (struct sockaddr_in *) ifb->ifa_addr;
 		if (if_sa->sin_family != AF_INET || (!(ifb->ifa_flags & IFF_UP)) ||
 		    (ifb->ifa_flags & IFF_LOOPBACK) ||
+		    (!(ifb->ifa_flags & IFF_MULTICAST)) ||
 		    (ntohl(if_sa->sin_addr.s_addr) >> 24 == IN_LOOPBACKNET) ||
+		    is_passive_if(ifb->ifa_name) ||
 		    lastifindex == if_nametoindex(ifb->ifa_name))
 			continue;
 		lastifindex = if_nametoindex(ifb->ifa_name);
@@ -211,7 +215,9 @@ create_hello_sockets()
 		if_sa6 = (struct sockaddr_in6 *) ifb->ifa_addr;
 		if (if_sa6->sin6_family != AF_INET6 ||
 		    (!(ifb->ifa_flags & IFF_UP)) ||
+		    (!(ifb->ifa_flags & IFF_MULTICAST)) ||
 		    (ifb->ifa_flags & IFF_LOOPBACK) ||
+		    is_passive_if(ifb->ifa_name) ||
 		    IN6_IS_ADDR_LOOPBACK(&if_sa6->sin6_addr))
 			continue;
 		/*
@@ -271,6 +277,18 @@ is_hello_socket(int s)
 
 	SLIST_FOREACH(hs, &hello_socket_head, listentry)
 		if (hs->socket == s)
+			return 1;
+	return 0;
+}
+
+/* Check if interface is passive */
+static int
+is_passive_if(char *if_name)
+{
+	struct passive_if *pif;
+
+	SLIST_FOREACH(pif, &passifs_head, listentry)
+		if (strncasecmp(if_name, pif->if_name, IF_NAMESIZE) == 0)
 			return 1;
 	return 0;
 }
@@ -471,10 +489,13 @@ send_hello(void)
 	/* Loop all interfaces in order to send IPv4 hellos */
 	for (ifb = ifa; ifb; ifb = ifb->ifa_next) {
 		if_sa = (struct sockaddr_in *) ifb->ifa_addr;
-		if (if_sa->sin_family != AF_INET)
-			continue;
-		if (ntohl(if_sa->sin_addr.s_addr) >> 24 == IN_LOOPBACKNET ||
-		    ntohl(if_sa->sin_addr.s_addr) >> 24 == 0)
+		if (if_sa->sin_family != AF_INET ||
+		    (!(ifb->ifa_flags & IFF_UP)) ||
+		    (ifb->ifa_flags & IFF_LOOPBACK) ||
+		    (!(ifb->ifa_flags & IFF_MULTICAST)) ||
+		    is_passive_if(ifb->ifa_name) ||
+		    (ntohl(if_sa->sin_addr.s_addr) >> 24 == IN_LOOPBACKNET) ||
+		    lastifindex == if_nametoindex(ifb->ifa_name))
 			continue;
 
 		/* Send only once per interface, using primary address */
@@ -529,7 +550,9 @@ send_hello(void)
 		    (struct sockaddr_in6 *) ifb->ifa_addr;
 		if (if_sa6->sin6_family != AF_INET6 ||
 		    (!(ifb->ifa_flags & IFF_UP)) ||
+		    (!(ifb->ifa_flags & IFF_MULTICAST)) ||
 		    (ifb->ifa_flags & IFF_LOOPBACK) ||
+		    is_passive_if(ifb->ifa_name) ||
 		    IN6_IS_ADDR_LOOPBACK(&if_sa6->sin6_addr))
 			continue;
 		/*
