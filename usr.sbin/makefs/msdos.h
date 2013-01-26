@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.h,v 1.1 2013/01/26 00:20:40 christos Exp $	*/
+/*	$NetBSD: msdos.h,v 1.2 2013/01/26 00:31:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,9 +33,10 @@
  */
 
 struct vnode;
+struct denode;
 
 struct msdosfsmount *msdosfs_mount(struct vnode *, int);
 int msdosfs_root(struct msdosfsmount *, struct vnode *);
 
-struct denode * msdosfs_mkfile(const char *, struct denode *, fsnode *);
+struct denode *msdosfs_mkfile(const char *, struct denode *, fsnode *);
 struct denode *msdosfs_mkdire(const char *, struct denode *, fsnode *);

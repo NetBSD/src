@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2013/01/23 22:47:18 christos Exp $
+#	$NetBSD: Makefile,v 1.34 2013/01/26 00:31:49 christos Exp $
 #
 
 WARNS?=	5
@@ -18,6 +18,7 @@ MKNODSRC=	${NETBSDSRCDIR}/sbin/mknod
 MTREESRC=	${NETBSDSRCDIR}/usr.sbin/mtree
 
 CPPFLAGS+=	-I${.CURDIR} -I${MKNODSRC} -I${MTREESRC} -DMAKEFS
+CPPFLAGS+=	-DMSDOSFS_DEBUG
 .PATH:		${MKNODSRC} ${MTREESRC}
 
 .include "${.CURDIR}/cd9660/Makefile.inc"
