@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.4 2013/01/23 16:51:14 macallan Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.5 2013/01/26 08:01:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.4 2013/01/23 16:51:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.5 2013/01/26 08:01:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.4 2013/01/23 16:51:14 macallan E
 #include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
+
+#include <arm/broadcom/bcm2835reg.h>
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(bcm2835);
@@ -280,7 +282,7 @@ struct bus_space bcm2835_a4x_bs_tag = {
 
 
 int
-bcm2835_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
+bcm2835_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
 	u_long startpa, endpa, pa;
@@ -288,14 +290,17 @@ bcm2835_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 	const struct pmap_devmap *pd;
 	int pmap_flags;
 
-	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
+	pa = ba & ~BCM2835_BUSADDR_CACHE_MASK;
+
+	/* this does device addresses */
+	if ((pd = pmap_devmap_find_pa(pa, size)) != NULL) {
 		/* Device was statically mapped. */
-		*bshp = pd->pd_va + (bpa - pd->pd_pa);
+		*bshp = pd->pd_va + (pa - pd->pd_pa);
 		return 0;
 	}
 
-	startpa = trunc_page(bpa);
-	endpa = round_page(bpa + size);
+	startpa = trunc_page(pa);
+	endpa = round_page(pa + size);
 
 	/* XXX use extent manager to check duplicate mapping */
 
@@ -304,7 +309,7 @@ bcm2835_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 	if (!va)
 		return ENOMEM;
 
-	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
+	*bshp = (bus_space_handle_t)(va + (pa - startpa));
 
 	pmap_flags = (flag & BUS_SPACE_MAP_CACHEABLE) ? 0 : PMAP_NOCACHE;
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
@@ -368,14 +373,15 @@ bcm2835_bs_vaddr(void *t, bus_space_handle_t bsh)
 }
 
 paddr_t
-bcm2835_bs_mmap(void *t, bus_addr_t paddr, off_t offset, int prot, int flags)
+bcm2835_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
 {
+	paddr_t pa = ba & ~BCM2835_BUSADDR_CACHE_MASK;
 	paddr_t bus_flags = 0;
 
 	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
 		bus_flags |= ARM32_MMAP_WRITECOMBINE;
 
-	return (arm_btop(paddr + offset) | bus_flags);
+	return (arm_btop(pa + offset) | bus_flags);
 }
 
 int
