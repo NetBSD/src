@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.5.2.6 2012/11/24 20:58:00 jdc Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.5.2.7 2013/01/26 21:35:23 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.5.2.6 2012/11/24 20:58:00 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.5.2.7 2013/01/26 21:35:23 bouyer Exp $");
 
 void
 cprng_init(void)
@@ -84,6 +84,8 @@ cprng_strong_doreseed(cprng_strong_t *const c)
 				 &cc, sizeof(cc))) {
 		panic("cprng %s: nist_ctr_drbg_reseed failed.", c->name);
 	}
+	memset(c->reseed.data, 0, c->reseed.len);
+
 #ifdef RND_VERBOSE
 	printf("cprng %s: reseeded with rnd_filled = %d\n", c->name,
 							    rnd_filled);
@@ -154,6 +156,17 @@ cprng_strong_reseed(void *const arg)
 	mutex_exit(&c->mtx);
 }
 
+static size_t
+cprng_entropy_try(uint8_t *key, size_t keylen, int hard)
+{
+	int r;
+	r = rnd_extract_data(key, keylen, RND_EXTRACT_GOOD);
+	if (r != keylen && !hard) {
+		rnd_extract_data(key + r, keylen - r, RND_EXTRACT_ANY);
+	}
+	return r;
+}
+
 cprng_strong_t *
 cprng_strong_create(const char *const name, int ipl, int flags)
 {
@@ -183,15 +196,13 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 
 	selinit(&c->selq);
 
-	r = rnd_extract_data(key, sizeof(key), RND_EXTRACT_GOOD);
+	r = cprng_entropy_try(key, sizeof(key), c->flags & CPRNG_INIT_ANY);
 	if (r != sizeof(key)) {
 		if (c->flags & CPRNG_INIT_ANY) {
 #ifdef DEBUG
 			printf("cprng %s: WARNING insufficient "
 			       "entropy at creation.\n", name);
 #endif
-			rnd_extract_data(key + r, sizeof(key - r),
-					 RND_EXTRACT_ANY);
 		} else {
 			hard++;
 		}
@@ -240,15 +251,18 @@ rekeyany:
 		if (c->flags & CPRNG_REKEY_ANY) {
 			uint8_t key[NIST_BLOCK_KEYLEN_BYTES];
 
- 			printf("cprng %s: WARNING pseudorandom rekeying.\n",
-			       c->name);
-                        rnd_extract_data(key, sizeof(key), RND_EXTRACT_ANY);
+			if (cprng_entropy_try(key, sizeof(key), 0) !=
+			    sizeof(key)) {
+ 				printf("cprng %s: WARNING "
+				       "pseudorandom rekeying.\n", c->name);
+			}
 			cc = cprng_counter();
 			if (nist_ctr_drbg_reseed(&c->drbg, key, sizeof(key),
 			    &cc, sizeof(cc))) {
 				panic("cprng %s: nist_ctr_drbg_reseed "
 				      "failed.", c->name);
 			}
+			memset(key, 0, sizeof(key));
 		} else {
 			int wr;
 
