@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.2 2013/01/26 00:31:50 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.3 2013/01/26 16:50:46 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -46,9 +46,12 @@
  *
  * October 1992
  */
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.2 2013/01/26 00:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.3 2013/01/26 16:50:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -91,10 +94,15 @@ static void
 msdosfs_times(struct msdosfsmount *pmp, struct denode *dep,
     const struct stat *st)
 {
-	unix2dostime(&st->st_atimespec, pmp->pm_gmtoff, &dep->de_ADate,
-	    NULL, NULL);
-	unix2dostime(&st->st_mtimespec, pmp->pm_gmtoff, &dep->de_MDate,
-	    &dep->de_MTime, NULL);
+#ifdef __NetBSD__
+	struct timespec at = st->st_atimespec;
+	struct timespec mt = st->st_mtimespec;
+#else
+	struct timespec at = { st->st_atime, 0 };
+	struct timespec mt = { st->st_mtime, 0 };
+#endif
+	unix2dostime(&at, pmp->pm_gmtoff, &dep->de_ADate, NULL, NULL);
+	unix2dostime(&mt, pmp->pm_gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
 }
 
 /*
@@ -174,6 +182,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct buf *bp;
 	char *dat;
+	u_long cn;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_write(): diroff %lu, dirclust %lu, startcluster %lu\n",
@@ -203,7 +212,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 		err(1, "mmap %s", node->name);
 	close(fd);
 
-        for (u_long cn = 0;; cn++) {
+        for (cn = 0;; cn++) {
 		int blsize, cpsize;
 		daddr_t bn;
                 if (pcbmap(dep, cn, &bn, 0, &blsize)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.1 2013/01/26 00:20:40 christos Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.2 2013/01/26 16:50:46 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,28 +52,11 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.1 2013/01/26 00:20:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.2 2013/01/26 16:50:46 christos Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/mount.h>
-#include <sys/malloc.h>
-#include <sys/pool.h>
-#include <sys/proc.h>
-#include <sys/kernel.h>		/* defines "time" */
-#include <sys/dirent.h>
-#include <sys/namei.h>
-#include <sys/kauth.h>
-#include <sys/rbtree.h>
 
-#ifdef _KERNEL
-#include <sys/fstrans.h>
-#include <uvm/uvm_extern.h>
-#include <sys/buf.h>
-#include <sys/vnode.h>
-#else
 #include <ffs/buf.h>
-#endif
 
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/msdosfsmount.h>
@@ -208,7 +191,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct denode
  * Truncate the file described by dep to the length specified by length.
  */
 int
-detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
+detrunc(struct denode *dep, u_long length, int flags, struct kauth_cred *cred)
 {
 	int error;
 	int allerror = 0;
@@ -331,7 +314,7 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
  * Extend the file described by dep to length specified by length.
  */
 int
-deextend(struct denode *dep, u_long length, kauth_cred_t cred)
+deextend(struct denode *dep, u_long length, struct kauth_cred *cred)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	u_long count, osize;
@@ -341,16 +324,16 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 	 * The root of a DOS filesystem cannot be extended.
 	 */
 	if ((DETOV(dep) == (struct vnode *)-1) && !FAT32(pmp))
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * Directories cannot be extended.
 	 */
 	if (dep->de_Attributes & ATTR_DIRECTORY)
-		return (EISDIR);
+		return EISDIR;
 
 	if (length <= dep->de_FileSize)
-		panic("deextend: file too large");
+		return E2BIG;
 
 	/*
 	 * Compute the number of clusters to allocate.
