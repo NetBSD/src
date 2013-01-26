@@ -50,13 +50,9 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.2 2013/01/26 00:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.3 2013/01/26 16:50:46 christos Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/dirent.h>
-#include <sys/mount.h>
-#include <sys/file.h>
 
 #include <ffs/buf.h>
 
@@ -375,15 +371,6 @@ msdosfs_mount(struct vnode *devvp, int flags)
 		DPRINTF(("fillinusemap %d\n", error));
 		goto error_exit;
 	}
-
-	/*
-	 * If they want FAT updates to be synchronous then let them suffer
-	 * the performance degradation in exchange for the on disk copy of
-	 * the FAT being correct just about all the time.  I suppose this
-	 * would be a good thing to turn on if the kernel is still flakey.
-	 */
-	if (flags & MNT_SYNCHRONOUS)
-		pmp->pm_flags |= MSDOSFSMNT_WAITONFAT;
 
 	/*
 	 * Finish up.
