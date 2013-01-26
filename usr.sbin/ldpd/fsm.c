@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.6 2012/11/12 18:39:00 kefren Exp $ */
+/* $NetBSD: fsm.c,v 1.7 2013/01/26 17:29:55 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -52,11 +52,10 @@ struct sockaddr	mplssockaddr;
 /* Processing a hello */
 void
 run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
-    struct in_addr * padd, struct in_addr * ladd, int mysock)
+    struct sockaddr * padd, struct in_addr * ladd, int mysock)
 {
 	struct ldp_peer *peer = NULL;
-	struct in_addr  peer_addr;
-	struct in6_addr	peer_addr6;
+	union sockunion peer_addr;
 	struct transport_address_tlv *trtlv;
 	struct hello_info *hi;
 
@@ -90,7 +89,7 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 	ht->ch.holdtime = ntohs(ht->ch.holdtime);
 	ht->ch.res = ntohs(ht->ch.res);
 	debugp("Common hello Type: 0x%.4X Length: %.2d R:%d T:%d"
-	    "Hold time: %d\n", ht->ch.type, ht->ch.length,
+	    " Hold time: %d\n", ht->ch.type, ht->ch.length,
 	    ht->ch.tr / 2, ht->ch.tr % 2, ht->ch.holdtime);
 	if (ht->ch.holdtime != 0)
 		hi->keepalive = ht->ch.holdtime;
@@ -100,34 +99,41 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 		else
 			hi->keepalive = LDP_THELLO_KEEP;
 	}
-	if (!get_ldp_peer(&pduid->ldp_id)) {
-		/* First of all set peer_addr to announced LDP_ID */
-		memcpy(&peer_addr, &pduid->ldp_id,
-		    sizeof(struct in_addr));
-		/*
-		 * Now let's see if there is any transport TLV in
-		 * there
-		 */
+	if (!get_ldp_peer_by_id(&pduid->ldp_id)) {
+		/* Check transport TLV */
 		if (pduid->length - PDU_PAYLOAD_LENGTH -
 		    sizeof(struct hello_tlv) > 3) {
 			trtlv = (struct transport_address_tlv *) &ht[1];
-			if (trtlv->type == TLV_IPV4_TRANSPORT)
-				memcpy(&peer_addr, &trtlv->address,
+			if (trtlv->type == TLV_IPV4_TRANSPORT) {
+				peer_addr.sin.sin_family = AF_INET;
+				peer_addr.sin.sin_len =
+				    sizeof(struct sockaddr_in);
+				memcpy(&peer_addr.sin.sin_addr, &trtlv->address,
 				    sizeof(struct in_addr));
-			else if (trtlv->type == TLV_IPV6_TRANSPORT)
-				memcpy(&peer_addr6, &trtlv->address,
-				    sizeof(struct in6_addr));
-		} else
+			} else if (trtlv->type == TLV_IPV6_TRANSPORT) {
+				peer_addr.sin6.sin6_family = AF_INET6;
+				peer_addr.sin6.sin6_len =
+				    sizeof(struct sockaddr_in6);
+				memcpy(&peer_addr.sin6.sin6_addr,
+				    &trtlv->address, sizeof(struct in6_addr));
+			}
+		} else {
 			trtlv = NULL;
+			peer_addr.sin.sin_family = AF_INET;
+			peer_addr.sin.sin_len = sizeof(struct sockaddr_in);
+			memcpy(&peer_addr.sin.sin_addr, &pduid->ldp_id,
+			    sizeof(struct in_addr));
+		}
 		/*
 		 * RFC 5036 2.5.2: If A1 > A2, LSR1 plays the active role;
 		 * otherwise it is passive.
 		 */
-		if (ntohl(peer_addr.s_addr) < ntohl(ladd->s_addr)) {
-#define	TR_INET4_ADDR (trtlv && trtlv->type == TLV_IPV4_TRANSPORT) ? &peer_addr : NULL
-#define TR_INET6_ADDR NULL
+		/* XXX: check for IPv6 too */
+		if (peer_addr.sa.sa_family == AF_INET &&
+		    ntohl(peer_addr.sin.sin_addr.s_addr)< ntohl(ladd->s_addr)) {
 			peer = ldp_peer_new(&pduid->ldp_id, padd,
-				TR_INET4_ADDR, TR_INET6_ADDR, ht->ch.holdtime, 0);
+				trtlv != NULL ? &peer_addr.sa : NULL,
+				ht->ch.holdtime, 0);
 			if (!peer)
 				return;
 			if (peer && peer->state == LDP_PEER_CONNECTED)
