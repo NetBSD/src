@@ -1,4 +1,4 @@
-/* $NetBSD: label.h,v 1.1 2010/12/08 07:20:14 kefren Exp $ */
+/* $NetBSD: label.h,v 1.2 2013/01/26 17:29:55 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -44,14 +44,13 @@
 /*
  * MPLS label descriptor
  *
- * so_dest and so_pref are obvious
- * so_gate is the IPV4 gate
+ * so_dest, so_pref and so_gate are the prefix identification and its GW
  * binding is the local label
  * label is the peer associated label
  */
 struct label {
 	union sockunion so_dest, so_pref, so_gate;
-	int             binding, label;
+	int binding, label;
 	struct ldp_peer *p;
 	SLIST_ENTRY(label) labels;
 };
@@ -65,7 +64,7 @@ void            del_all_peer_labels(struct ldp_peer*, int);
 void		label_reattach_all_peer_labels(struct ldp_peer*, int);
 void            label_del_by_binding(uint32_t, int);
 struct label *	label_get(union sockunion *sodest, union sockunion *sopref);
-struct label *	label_get_by_prefix(struct in_addr*, int);
+struct label *	label_get_by_prefix(const struct sockaddr *, int);
 uint32_t	get_free_local_label(void);
 void		change_local_label(struct label*, uint32_t);
 void		label_reattach_route(struct label*, int);

@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.h,v 1.2 2013/01/16 08:28:44 kefren Exp $ */
+/* $NetBSD: mpls_routes.h,v 1.3 2013/01/26 17:29:55 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ struct rt_msg {
 	char            m_space[512];
 }               __packed;
 
-union sockunion *	make_inet_union(char *);
+union sockunion *	make_inet_union(const char *);
 union sockunion *	make_mpls_union(uint32_t);
 union sockunion	*	make_mplsinet_union(uint16_t peer, uint32_t label,
 						struct in_addr *addr);
