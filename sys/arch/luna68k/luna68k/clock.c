@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.8 2011/02/08 20:20:16 rmind Exp $ */
+/* $NetBSD: clock.c,v 1.9 2013/01/26 15:46:24 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2011/02/08 20:20:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2013/01/26 15:46:24 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,8 @@ cpu_initclocks(void)
 	 */
 	s = splhigh();
 	/*
-	 * XXX 
-	 * I guess it's necessary to program clock source with 
+	 * XXX
+	 * I guess it's necessary to program clock source with
 	 * approprivate mode/value.
 	 * XXX
 	 */

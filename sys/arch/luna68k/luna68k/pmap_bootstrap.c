@@ -1,6 +1,6 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.35 2012/02/10 06:28:39 mhitch Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.36 2013/01/26 15:46:24 tsutsui Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.35 2012/02/10 06:28:39 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.36 2013/01/26 15:46:24 tsutsui Exp $");
 
 #include "opt_m68k_arch.h"
 
