@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strchr_arm.S,v 1.2 2013/01/15 16:52:35 matt Exp $")
+RCSID("$NetBSD: strchr_arm.S,v 1.3 2013/01/26 07:49:11 matt Exp $")
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
@@ -92,6 +92,8 @@ ENTRY(strchr)
 	 */
 	mvns	ip, ip			/* did we encounter a NUL? */
 	beq	.Lfind_match		/*   no, find the match */
+	bics	r3, r3, ip		/* clear match for the NUL(s) */
+	beq	.Lnomatch		/*   any left set? if not, no match */
 	movs	ip, ip, lshi #8		/* replicate NUL bit to other bytes */
 	orrne	ip, ip, lshi #8		/* replicate NUL bit to other bytes */
 	orrne	ip, ip, lshi #8		/* replicate NUL bit to other bytes */
