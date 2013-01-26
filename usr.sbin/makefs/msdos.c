@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.5 2013/01/24 01:10:47 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.6 2013/01/26 00:20:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.5 2013/01/24 01:10:47 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.6 2013/01/26 00:20:40 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -54,9 +54,16 @@ __RCSID("$NetBSD: msdos.c,v 1.5 2013/01/24 01:10:47 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <dirent.h>
 
+#include <ffs/buf.h>
+#include <fs/msdosfs/denode.h>
 #include "makefs.h"
+#include "msdos.h"
 #include "mkfs_msdos.h"
+
+static int msdos_populate_dir(const char *, struct denode *, fsnode *,
+    fsnode *, fsinfo_t *);
 
 void
 msdos_prep_opts(fsinfo_t *fsopts)
@@ -128,6 +135,14 @@ void
 msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 {
 	struct msdos_options *msdos_opt = fsopts->fs_specific;
+	struct vnode vp, rootvp;
+	struct timeval	start;
+	struct msdosfsmount *pmp;
+
+	assert(image != NULL);
+	assert(dir != NULL);
+	assert(root != NULL);
+	assert(fsopts != NULL);
 
 	/*
 	 * XXX: pick up other options from the msdos specific ones?
@@ -135,51 +150,94 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	 */
 	msdos_opt->create_size = MAX(msdos_opt->create_size, fsopts->minsize);
 
+		/* create image */
+	printf("Creating `%s'\n", image);
+	TIMER_START(start);
 	if (mkfs_msdos(image, NULL, msdos_opt) == -1)
 		return;
-#ifdef notyet
-	struct fs	*superblock;
-	struct timeval	start;
+	TIMER_RESULTS(start, "mkfs_msdos");
 
-	assert(image != NULL);
-	assert(dir != NULL);
-	assert(root != NULL);
-	assert(fsopts != NULL);
+	vp.fd = open(image, O_RDWR);
+	vp.fs = msdos_opt;
+	vp.offset = 1;
+
+	if ((pmp = msdosfs_mount(&vp, 0)) == NULL)
+		err(1, "msdosfs_mount");
+
+	if (msdosfs_root(pmp, &rootvp) != 0)
+		err(1, "msdosfs_root");
 
 	if (debug & DEBUG_FS_MAKEFS)
 		printf("msdos_makefs: image %s directory %s root %p\n",
 		    image, dir, root);
 
-		/* validate tree and options */
-	TIMER_START(start);
-	msdos_validate(dir, root, fsopts);
-	TIMER_RESULTS(start, "msdos_validate");
-
 	printf("Calculated size of `%s': %lld bytes, %lld inodes\n",
 	    image, (long long)fsopts->size, (long long)fsopts->inodes);
-
-		/* create image */
-	TIMER_START(start);
-	if (msdos_create_image(image, fsopts) == -1)
-		errx(1, "Image file `%s' not created.", image);
-	TIMER_RESULTS(start, "msdos_create_image");
-
-	fsopts->curinode = ROOTINO;
-
-	if (debug & DEBUG_FS_MAKEFS)
-		putchar('\n');
 
 		/* populate image */
 	printf("Populating `%s'\n", image);
 	TIMER_START(start);
-	if (! msdos_populate_dir(dir, root, fsopts))
-		errx(1, "Image file `%s' not populated.", image);
+	if (msdos_populate_dir(dir, VTODE(&rootvp), root, root, fsopts) == -1)
+		errx(1, "Image file `%s' not created.", image);
 	TIMER_RESULTS(start, "msdos_populate_dir");
+
+	if (debug & DEBUG_FS_MAKEFS)
+		putchar('\n');
 
 		/* ensure no outstanding buffers remain */
 	if (debug & DEBUG_FS_MAKEFS)
 		bcleanup();
 
 	printf("Image `%s' complete\n", image);
-#endif
+}
+
+static int
+msdos_populate_dir(const char *path, struct denode *dir, fsnode *root,
+    fsnode *parent, fsinfo_t *fsopts)
+{
+	fsnode *cur;
+	char pbuf[MAXPATHLEN];
+
+	assert(dir != NULL);
+	assert(root != NULL);
+	assert(fsopts != NULL);	
+	
+	for (cur = root->next; cur != NULL; cur = cur->next) {
+		if ((size_t)snprintf(pbuf, sizeof(pbuf), "%s/%s", path,
+		    cur->name) >= sizeof(pbuf)) {
+			warnx("path %s too long", pbuf);
+			return -1;
+		}
+
+		if ((cur->inode->flags & FI_ALLOCATED) == 0) {
+			cur->inode->flags |= FI_ALLOCATED;
+			if (cur != root) {
+				fsopts->curinode++;
+				cur->inode->ino = fsopts->curinode;
+				cur->parent = parent;
+			}
+		}
+
+		if (cur->inode->flags & FI_WRITTEN) {
+			continue;	// hard link
+		}
+		cur->inode->flags |= FI_WRITTEN;
+
+		if (cur->child) {
+			struct denode *de;
+			if ((de = msdosfs_mkdire(pbuf, dir, cur)) == NULL)
+				err(1, "msdosfs_mkdire");
+			if (!msdos_populate_dir(pbuf, de, cur->child, cur,
+			    fsopts))
+				err(1, "populate_dir");
+			continue;
+		} else if (!S_ISREG(cur->type)) {
+			warnx("skipping non-regular file %s/%s", cur->path,
+			    cur->name);
+			continue;
+		}
+		if (msdosfs_mkfile(pbuf, dir, cur) == NULL)
+			err(1, "msdosfs_mkfile");
+	}
+	return 0;
 }
