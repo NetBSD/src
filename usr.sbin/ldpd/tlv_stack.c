@@ -1,4 +1,4 @@
-/* $NetBSD: tlv_stack.c,v 1.5 2012/11/12 18:39:00 kefren Exp $ */
+/* $NetBSD: tlv_stack.c,v 1.6 2013/01/26 17:29:55 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ map_label(struct ldp_peer * p, struct fec_tlv * f, struct label_tlv * l)
 {
 	int             n;
 	struct prefix_tlv *pref;
-	struct in_addr  inatmp;
+	union sockunion socktmp;
 
 	if (ntohs(f->type) != TLV_FEC) {
 		debugp("Invalid FEC TLV !\n");
@@ -83,7 +83,8 @@ map_label(struct ldp_peer * p, struct fec_tlv * f, struct label_tlv * l)
 
 	debugp("Label %u for:\n", ntohl(l->label));
 
-	pref = (struct prefix_tlv *) & f[1];
+	pref = (struct prefix_tlv *) (f + 1);
+	memset (&socktmp, 0, sizeof(socktmp));
 
 	/*
 	 * Section 3.4.1
@@ -96,8 +97,14 @@ map_label(struct ldp_peer * p, struct fec_tlv * f, struct label_tlv * l)
 	for (; n > 0; pref = (struct prefix_tlv *) ((unsigned char *) pref +
 			ldp_ceil8(pref->prelen) + TLV_TYPE_LENGTH)) {
 		n -= ldp_ceil8(pref->prelen) + TLV_TYPE_LENGTH;
-		if (ntohs(pref->af) != LDP_AF_INET) {
-			debugp("BAD ADDRESS FAMILY (%d) ! (prefix type %d, "
+		if (ntohs(pref->af) == LDP_AF_INET) {
+			socktmp.sa.sa_family = AF_INET;
+			socktmp.sa.sa_len = sizeof(socktmp.sin);
+		} else if (ntohs(pref->af) == LDP_AF_INET6) {
+			socktmp.sa.sa_family = AF_INET6;
+			socktmp.sa.sa_len = sizeof(socktmp.sin6);
+		} else {
+			warnp("BAD ADDRESS FAMILY (%d) ! (prefix type %d, "
 			    "length %d)\n", ntohs(pref->af), pref->type,
 			    pref->prelen);
 			return LDP_E_BAD_AF;
@@ -105,22 +112,26 @@ map_label(struct ldp_peer * p, struct fec_tlv * f, struct label_tlv * l)
 		switch(pref->type) {
 		    case FEC_PREFIX:
 		    case FEC_HOST:
-			memset(&inatmp, 0, sizeof(struct in_addr));
-			memcpy(&inatmp, &pref->prefix, ldp_ceil8(pref->prelen));
-			debugp("Prefix/Host add: %s/%d\n", inet_ntoa(inatmp),
+			if (socktmp.sa.sa_family == AF_INET)
+				memcpy(&socktmp.sin.sin_addr, &pref->prefix,
+				    ldp_ceil8(pref->prelen));
+			else
+				memcpy(&socktmp.sin6.sin6_addr, &pref->prefix,
+				    ldp_ceil8(pref->prelen));
+			debugp("Prefix/Host add: %s/%d\n", satos(&socktmp.sa),
 			    pref->prelen);
 
-			ldp_peer_add_mapping(p, &inatmp, pref->prelen,
+			ldp_peer_add_mapping(p, &socktmp.sa, pref->prelen,
 			    ntohl(l->label));
 
 			/* Try to change RIB only if label is installed */
-			if (label_get_by_prefix(&inatmp, pref->prelen) != NULL)
-				mpls_add_label(p, NULL, &inatmp, pref->prelen,
+			if (label_get_by_prefix(&socktmp.sa, pref->prelen) != NULL)
+				mpls_add_label(p, NULL, &socktmp.sa, pref->prelen,
 				    ntohl(l->label), 1);
 			break;
 		    case FEC_WILDCARD:
 			fatalp("LDP: Wildcard add from peer %s\n",
-			    inet_ntoa(p->address));
+			    satos(p->address));
 			return LDP_E_BAD_FEC;
 		    default:
 			fatalp("Unknown FEC type %d\n", pref->type);
@@ -136,7 +147,7 @@ withdraw_label(struct ldp_peer * p, struct fec_tlv * f)
 {
 	int             n;
 	struct prefix_tlv *pref;
-	struct in_addr  inatmp;
+	union sockunion socktmp;
 	struct label *lab;
 
 	if (ntohs(f->type) != TLV_FEC) {
@@ -148,27 +159,39 @@ withdraw_label(struct ldp_peer * p, struct fec_tlv * f)
 		return LDP_E_BAD_FEC;
 
 	pref = (struct prefix_tlv *) & f[1];
-	if (ntohs(pref->af) != LDP_AF_INET) {
-		debugp("BAD ADDRESS FAMILY (%d)! (prefix type %d, length %d)\n",
+
+	memset(&socktmp, 0, sizeof(socktmp));
+	if (ntohs(pref->af) == LDP_AF_INET) {
+		socktmp.sa.sa_family = AF_INET;
+		socktmp.sa.sa_len = sizeof(socktmp.sin);
+	} else if (ntohs(pref->af) != LDP_AF_INET6) {
+		socktmp.sa.sa_family = AF_INET6;
+		socktmp.sa.sa_len = sizeof(socktmp.sin6);
+	} else {
+		warnp("WITHDRAW: Bad AF (%d)! (prefix type %d, length %d)\n",
 		    ntohs(pref->af), pref->type, pref->prelen);
 		return LDP_E_BAD_AF;
 	}
 	switch(pref->type) {
 	    case FEC_PREFIX:
 	    case FEC_HOST:
-		memset(&inatmp, 0, sizeof(struct in_addr));
-		memcpy(&inatmp, &pref->prefix, ldp_ceil8(pref->prelen));
-		debugp("Prefix/Host withdraw: %s/%d\n", inet_ntoa(inatmp),
+		if (socktmp.sa.sa_family == AF_INET)
+			memcpy(&socktmp.sin.sin_addr, &pref->prefix,
+			    ldp_ceil8(pref->prelen));
+		else
+			memcpy(&socktmp.sin6.sin6_addr, &pref->prefix,
+			    ldp_ceil8(pref->prelen));
+		debugp("Prefix/Host withdraw: %s/%d\n", satos(&socktmp.sa),
 		    pref->prelen);
 
 		/* Delete mapping */
-		ldp_peer_delete_mapping(p, &inatmp, pref->prelen);
+		ldp_peer_delete_mapping(p, &socktmp.sa, pref->prelen);
 
 		/* Get label, see if we're pointing to this peer
 		 * if so, send withdraw, reattach IP route and announce
 		 * POP Label
 		 */
-		lab = label_get_by_prefix(&inatmp, pref->prelen);
+		lab = label_get_by_prefix(&socktmp.sa, pref->prelen);
 		if ((lab) && (lab->p == p)) {
 			change_local_label(lab, MPLS_LABEL_IMPLNULL);
 			label_reattach_route(lab, LDP_READD_CHANGE);
@@ -176,7 +199,7 @@ withdraw_label(struct ldp_peer * p, struct fec_tlv * f)
 		break;
 	    case FEC_WILDCARD:
 		fatalp("LDP neighbour %s: Wildcard withdraw !!!\n",
-		    inet_ntoa(p->address));
+		    satos(p->address));
 		ldp_peer_delete_mapping(p, NULL, 0);
 		label_reattach_all_peer_labels(p, LDP_READD_CHANGE);
 		break;
@@ -206,7 +229,7 @@ prepare_release(struct tlv * v)
 
 /* Sends a label mapping */
 void 
-send_label_tlv(struct ldp_peer * peer, struct in_addr * addr,
+send_label_tlv(struct ldp_peer * peer, struct sockaddr * addr,
     uint8_t prefixlen, uint32_t label, struct label_request_tlv *lrt)
 {
 	struct label_map_tlv *lmt;
@@ -282,7 +305,7 @@ send_label_tlv(struct ldp_peer * peer, struct in_addr * addr,
 }
 
 void 
-send_label_tlv_to_all(struct in_addr * addr, uint8_t prefixlen, uint32_t label)
+send_label_tlv_to_all(struct sockaddr * addr, uint8_t prefixlen, uint32_t label)
 {
 	struct ldp_peer *p;
 	SLIST_FOREACH(p, &ldp_peer_head, peers)
@@ -298,14 +321,14 @@ send_all_bindings(struct ldp_peer * peer)
 	struct label *l;
 
 	SLIST_FOREACH(l, &label_head, labels)
-	   send_label_tlv(peer, &((struct sockaddr_in*)(&l->so_dest))->sin_addr,
+	   send_label_tlv(peer, &l->so_dest.sa,
 		from_union_to_cidr(&l->so_pref), l->binding, NULL);
 
 }
 
 /* Sends a label WITHDRAW */
 void 
-send_withdraw_tlv(struct ldp_peer * peer, struct in_addr * addr,
+send_withdraw_tlv(struct ldp_peer * peer, struct sockaddr * addr,
     uint8_t prefixlen)
 {
 	struct label_map_tlv *lmt;
@@ -360,7 +383,7 @@ send_withdraw_tlv(struct ldp_peer * peer, struct in_addr * addr,
 }
 
 void 
-send_withdraw_tlv_to_all(struct in_addr * addr, uint8_t prefixlen)
+send_withdraw_tlv_to_all(struct sockaddr * addr, uint8_t prefixlen)
 {
 	struct ldp_peer *p;
 	SLIST_FOREACH(p, &ldp_peer_head, peers)
@@ -372,7 +395,7 @@ request_respond(struct ldp_peer *p, struct label_map_tlv *lmt,
     struct fec_tlv *fec)
 {
 	struct prefix_tlv *pref;
-	struct in_addr inatmp;
+	union sockunion socktmp;
 	struct label *lab;
 	struct label_request_tlv lrm;
 
@@ -382,7 +405,14 @@ request_respond(struct ldp_peer *p, struct label_map_tlv *lmt,
 	}
 	pref = (struct prefix_tlv *) (fec + 1);
 
-	if (ntohs(pref->af) != LDP_AF_INET) {
+	memset(&socktmp, 0, sizeof(socktmp));
+	if (ntohs(pref->af) == LDP_AF_INET) {
+		socktmp.sa.sa_family = AF_INET;
+		socktmp.sa.sa_len = sizeof(socktmp.sin);
+	} else if (ntohs(pref->af) == LDP_AF_INET6) {
+		socktmp.sa.sa_family = AF_INET6;
+		socktmp.sa.sa_len = sizeof(socktmp.sin6);
+	} else {
 		debugp("request_respond: Bad address family\n");
 		return LDP_E_BAD_AF;
 	}
@@ -391,18 +421,23 @@ request_respond(struct ldp_peer *p, struct label_map_tlv *lmt,
 		case FEC_PREFIX:
 		case FEC_HOST:
 
-		memset(&inatmp, 0, sizeof(struct in_addr));
-		memcpy(&inatmp, &pref->prefix, ldp_ceil8(pref->prelen));
-		debugp("Prefix/Host request: %s/%d\n", inet_ntoa(inatmp),
+		if (socktmp.sa.sa_family == AF_INET)
+			memcpy(&socktmp.sin.sin_addr, &pref->prefix,
+			    ldp_ceil8(pref->prelen));
+		else /* AF_INET6 */
+			memcpy(&socktmp.sin6.sin6_addr, &pref->prefix,
+			    ldp_ceil8(pref->prelen));
+		debugp("Prefix/Host request: %s/%d\n", satos(&socktmp.sa),
 			pref->prelen);
 
-		lab = label_get_by_prefix(&inatmp, pref->prelen);
+		lab = label_get_by_prefix(&socktmp.sa, pref->prelen);
 		if (!lab)
 			return LDP_E_NO_SUCH_ROUTE;
 		lrm.type = htons(TLV_LABEL_REQUEST);
-		lrm.length = htons(sizeof(uint32_t));
+		/* XXX - use sizeof */
+		lrm.length = htons(socktmp.sa.sa_family == AF_INET ? 4 : 16);
 		lrm.messageid = lmt->messageid;
-		send_label_tlv(p, &inatmp, pref->prelen, lab->binding, &lrm);
+		send_label_tlv(p, &socktmp.sa, pref->prelen, lab->binding, &lrm);
 		break;
 
 		case FEC_WILDCARD:

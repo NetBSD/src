@@ -1,6 +1,6 @@
-/* $NetBSD: socketops.c,v 1.16 2013/01/16 08:28:45 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.17 2013/01/26 17:29:55 kefren Exp $ */
 
-/*-
+/*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -62,10 +62,6 @@
 
 int ls;				/* TCP listening socket on port 646 */
 int route_socket;		/* used to see when a route is added/deleted */
-int hello_socket;		/* hello RX/TX multicast sockets */
-#ifdef INET6
-int hello6_socket;		/* same as above */
-#endif
 int command_socket;		/* Listening socket for interface command */
 int current_msg_id = 0x233;
 int command_port = LDP_COMMAND_PORT;
@@ -82,69 +78,44 @@ int	loop_detection = 0;
 void	recv_pdu(int);
 void	send_hello_alarm(int);
 __dead static void bail_out(int);
-static	int bind_socket(int s, uint8_t stype);
-static int set_mcast_ttl(int, int);
+static int bind_socket(int s, int stype);
 static int set_tos(int); 
 static int socket_reuse_port(int);
 static int get_local_addr(struct sockaddr_dl *, struct in_addr *);
+static int is_hello_socket(int);
 
 int 
 create_hello_sockets()
 {
 	struct ip_mreq  mcast_addr;
-	int s;
+	int s, joined_groups;
 #ifdef INET6
 	struct ipv6_mreq mcast_addr6;
-	int s6;
+	struct ifaddrs *ifa, *ifb;
+	uint lastifindex;
+	struct sockaddr_in6 *if_sa6;
 #endif
+	struct hello_socket *hs;
+
+	SLIST_INIT(&hello_socket_head);
 
 	s = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (s < 0)
 		return s;
-#ifdef INET6
-	s6 = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-	if (s6 < 0) {
-		close(s);
-		return s6;
-	}
-#endif
-
+	debugp("INET4 socket created (%d)\n", s);
 	/*
 	 * RFC5036 specifies we should listen to all subnet routers multicast
 	 * group
 	 */
 	assert(inet_pton(AF_INET, ALL_ROUTERS, &mcast_addr.imr_multiaddr) == 1);
-	mcast_addr.imr_interface.s_addr = htonl(INADDR_ANY);
-
-#ifdef INET6
-	assert(inet_pton(AF_INET6, ALL_ROUTERS6,
-	    &mcast_addr6.ipv6mr_multiaddr) == 1);
-	/*
-	 * XXXXX: kefren. This should be 0, else I should create a socket
-	 * for every interface. Need to investigate why is not working
-	 * as documented in ip6(4)
-	 */
-	mcast_addr6.ipv6mr_interface = 1;
-#endif
 
 	if (socket_reuse_port(s) < 0)
 		goto chs_error;
-#ifdef INET6
-	if (socket_reuse_port(s6) < 0)
-		goto chs_error;
-#endif
-
-	/* Bind it to port 646 on specific address */
-	if (bind_socket(s, 4) == -1) {
+	/* Bind it to port 646 */
+	if (bind_socket(s, AF_INET) == -1) {
 		warnp("Cannot bind INET hello socket\n");
 		goto chs_error;
 	}
-#ifdef INET6
-	if (bind_socket(s6, 6) == -1) {
-		fatalp("Cannot bind INET6 hello socket\n");
-		goto chs_error;
-	}
-#endif
 
 	/* We don't need to receive back our messages */
 	if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, &(u_char){0},
@@ -152,62 +123,157 @@ create_hello_sockets()
 		fatalp("INET setsockopt IP_MCAST_LOOP: %s\n", strerror(errno));
 		goto chs_error;
 	}
-#ifdef INET6
-	if (setsockopt(s6, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &(uint32_t){0},
-	    sizeof(uint32_t)) == -1) {
-		fatalp("INET6 setsocketopt IP_MCAST_LOOP: %s\n",
-		    strerror(errno));
-		goto chs_error;
+	/* Finally join the group on all interfaces */
+	if (getifaddrs(&ifa) == -1) {
+		fatalp("Cannot iterate interfaces\n");
+		return -1;
 	}
-#endif
+	lastifindex = UINT_MAX;
+	joined_groups = 0;
+	for (ifb = ifa; ifb; ifb = ifb->ifa_next) {
+		struct sockaddr_in *if_sa = (struct sockaddr_in *) ifb->ifa_addr;
+		if (if_sa->sin_family != AF_INET || (!(ifb->ifa_flags & IFF_UP)) ||
+		    (ifb->ifa_flags & IFF_LOOPBACK) ||
+		    (ntohl(if_sa->sin_addr.s_addr) >> 24 == IN_LOOPBACKNET) ||
+		    lastifindex == if_nametoindex(ifb->ifa_name))
+			continue;
+		lastifindex = if_nametoindex(ifb->ifa_name);
 
-	/* Finally join the group */
-        if (setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *) &mcast_addr,
-	    sizeof(mcast_addr)) == -1) {
-                fatalp("setsockopt ADD_MEMBER: %s\n", strerror(errno));
-		goto chs_error;
-        }
-#ifdef INET6
-	if (setsockopt(s6, IPPROTO_IPV6, IPV6_JOIN_GROUP, (char *)&mcast_addr6,
-	    sizeof(mcast_addr6)) == -1) {
-		fatalp("INET6 setsockopt JOIN: %s\n", strerror(errno));
+		mcast_addr.imr_interface.s_addr = if_sa->sin_addr.s_addr;
+		debugp("Join IPv4 mcast on %s\n", ifb->ifa_name);
+        	if (setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *) &mcast_addr,
+		    sizeof(mcast_addr)) == -1) {
+        	        fatalp("setsockopt ADD_MEMBER: %s\n", strerror(errno));
+			goto chs_error;
+        	}
+		joined_groups++;
+		if (joined_groups == IP_MAX_MEMBERSHIPS) {
+			warnp("Maximum group memberships reached for INET socket\n");
+			break;
+		}
+	}
+	/* TTL:1 for IPv4 */
+	if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, &(int){1},
+	    sizeof(int)) == -1) {
+		fatalp("set mcast ttl: %s\n", strerror(errno));
 		goto chs_error;
 	}
-#endif
-	/* TTL:1, TOS: 0xc0 */
-	if (set_mcast_ttl(s, 4) == -1)
-		goto chs_error;
-#ifdef INET6
-	if (set_mcast_ttl(s6, 6) == -1)
-		goto chs_error;
-#endif
+	/* TOS :0xc0 for IPv4 */
 	if (set_tos(s) == -1) {
 		fatalp("set_tos: %s", strerror(errno));
 		goto chs_error;
 	}
-
 	/* we need to get the input interface for message processing */
-	if (setsockopt(s, IPPROTO_IP, IP_RECVIF, &(uint32_t){1}, sizeof(uint32_t)) == -1) {
+	if (setsockopt(s, IPPROTO_IP, IP_RECVIF, &(uint32_t){1},
+	    sizeof(uint32_t)) == -1) {
 		fatalp("Cannot set IP_RECVIF\n");
 		goto chs_error;
 	}
-#ifdef INET6
-	if (setsockopt(s6, IPPROTO_IPV6, IPV6_RECVPKTINFO, &(uint32_t){1}, sizeof(uint32_t)) == -1)
-		goto chs_error;
-#endif
-	
-	hello_socket = s;
-#ifdef INET6
-	hello6_socket = s6;
-#endif
 
+	hs = (struct hello_socket *)malloc(sizeof(*hs));
+	if (hs == NULL) {
+		fatalp("Cannot alloc hello_socket structure\n");
+		goto chs_error;
+	}
+	hs->type = AF_INET;
+	hs->socket = s;
+	SLIST_INSERT_HEAD(&hello_socket_head, hs, listentry);
+
+#ifdef INET6
+	/*
+	 * Now we do the same for IPv6
+	 */
+	s = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	if (s < 0) {
+		fatalp("Cannot create INET6 socket\n");
+		return -1;
+	}
+	debugp("INET6 socket created (%d)\n", s);
+
+	if (socket_reuse_port(s) < 0)
+		goto chs_error;
+
+	if (bind_socket(s, AF_INET6) == -1) {
+		fatalp("Cannot bind INET6 hello socket\n");
+		goto chs_error;
+	}
+
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
+	    &(uint){0}, sizeof(uint)) == -1) {
+		fatalp("INET6 setsocketopt IP_MCAST_LOOP: %s\n",
+		    strerror(errno));
+		goto chs_error;
+	}
+
+	lastifindex = UINT_MAX;
+	assert(inet_pton(AF_INET6, ALL_ROUTERS6,
+	    &mcast_addr6.ipv6mr_multiaddr) == 1);
+	for (ifb = ifa; ifb; ifb = ifb->ifa_next) {
+		if_sa6 = (struct sockaddr_in6 *) ifb->ifa_addr;
+		if (if_sa6->sin6_family != AF_INET6 ||
+		    (!(ifb->ifa_flags & IFF_UP)) ||
+		    (ifb->ifa_flags & IFF_LOOPBACK) ||
+		    IN6_IS_ADDR_LOOPBACK(&if_sa6->sin6_addr))
+			continue;
+		/*
+		 * draft-ietf-mpls-ldp-ipv6-07 Section 5.1:
+		 * Additionally, the link-local
+		 * IPv6 address MUST be used as the source IP address in IPv6
+		 * LDP Link Hellos.
+		 */
+		if (IN6_IS_ADDR_LINKLOCAL(&if_sa6->sin6_addr) == 0)
+			continue;
+		/* We should have only one LLADDR per interface, but... */
+		if (lastifindex == if_nametoindex(ifb->ifa_name))
+			continue;
+		mcast_addr6.ipv6mr_interface = lastifindex =
+		    if_nametoindex(ifb->ifa_name);
+
+		debugp("Join IPv6 mcast on %s\n", ifb->ifa_name);
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_JOIN_GROUP,
+		    (char *)&mcast_addr6, sizeof(mcast_addr6)) == -1) {
+			fatalp("INET6 setsockopt JOIN: %s\n", strerror(errno));
+			goto chs_error;
+		}
+	}
+	freeifaddrs(ifa);
+
+	/* TTL: 255 for IPv6 - draft-ietf-mpls-ldp-ipv6-07 Section 9 */
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
+	    &(int){255}, sizeof(int)) == -1) {
+		fatalp("set mcast hops: %s\n", strerror(errno));
+		goto chs_error;
+	}
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO,
+	    &(uint32_t){1}, sizeof(uint32_t)) == -1)
+		goto chs_error;
+
+	hs = (struct hello_socket *)malloc(sizeof(*hs));
+	if (hs == NULL) {
+		fatalp("Memory alloc problem: hs\n");
+		goto chs_error;
+	}
+
+	hs->type = AF_INET6;
+	hs->socket = s;
+	SLIST_INSERT_HEAD(&hello_socket_head, hs, listentry);
+#endif
 	return 0;
 chs_error:
 	close(s);
-#ifdef INET6
-	close(s6);
-#endif
 	return -1;
+}
+
+/* Check if parameter is a hello socket */
+int
+is_hello_socket(int s)
+{
+	struct hello_socket *hs;
+
+	SLIST_FOREACH(hs, &hello_socket_head, listentry)
+		if (hs->socket == s)
+			return 1;
+	return 0;
 }
 
 /* Sets the TTL to 1 as we don't want to transmit outside this subnet */
@@ -218,20 +284,6 @@ set_ttl(int s)
 	if ((ret = setsockopt(s, IPPROTO_IP, IP_TTL, &(int){1}, sizeof(int)))
 	    == -1)
 		fatalp("set_ttl: %s", strerror(errno));
-	return ret;
-}
-
-/* Sets multicast TTL to 1 */
-static int
-set_mcast_ttl(int s, int stype)
-{
-	int	ret;
-
-	assert(stype == 4 || stype == 6);
-	if ((ret = setsockopt(s, stype == 4 ? IPPROTO_IP : IPPROTO_IPV6,
-	    stype == 4 ? IP_MULTICAST_TTL : IPV6_MULTICAST_HOPS, &(int){1},
-	    sizeof(int))) == -1)
-		fatalp("set_mcast_ttl: %s", strerror(errno));
 	return ret;
 }
 
@@ -258,20 +310,20 @@ socket_reuse_port(int s)
 
 /* binds an UDP socket */
 static int
-bind_socket(int s, uint8_t stype)
+bind_socket(int s, int stype)
 {
 	union sockunion su;
 
-	assert (stype == 4 || stype == 6);
+	assert (stype == AF_INET || stype == AF_INET6);
 
-	if (stype == 4) {
+	if (stype == AF_INET) {
 		su.sin.sin_len = sizeof(su.sin);
 		su.sin.sin_family = AF_INET;
-		su.sin.sin_addr.s_addr = INADDR_ANY;
+		su.sin.sin_addr.s_addr = htonl(INADDR_ANY);
 		su.sin.sin_port = htons(LDP_PORT);
 	}
 #ifdef INET6
-	else if (stype == 6) {
+	else if (stype == AF_INET6) {
 		su.sin6.sin6_len = sizeof(su.sin6);
 		su.sin6.sin6_family = AF_INET6;
 		su.sin6.sin6_addr = in6addr_any;
@@ -334,11 +386,13 @@ send_hello(void)
 	ssize_t sb = 0;			/* sent bytes */
 	struct ifaddrs *ifa, *ifb;
 	struct sockaddr_in *if_sa;
+	int ip4socket = -1;
+	uint lastifindex;
+	struct hello_socket *hs;
 #ifdef INET6
 	struct sockaddr_in6 sadest6;
-	struct sockaddr_in6 *if_sa6;
+	int ip6socket = -1;
 #endif
-	char lastifname[20];
 
 #define BASIC_HELLO_MSG_SIZE (sizeof(struct ldp_pdu) + 	/* PDU */	\
 			TLV_TYPE_LENGTH + MSGID_SIZE +	/* Hello TLV */	\
@@ -400,12 +454,21 @@ send_hello(void)
 	sadest.sin_port = htons(LDP_PORT);
 	inet_aton(ALL_ROUTERS, &sadest.sin_addr);
 
+	/* Find our socket */
+	SLIST_FOREACH(hs, &hello_socket_head, listentry)
+		if (hs->type == AF_INET) {
+			ip4socket = hs->socket;
+			break;
+		}
+	assert(ip4socket >= 0);
+
 	if (getifaddrs(&ifa) == -1) {
 		free(v);
+		fatalp("Cannot enumerate interfaces\n");
 		return;
 	}
 	
-	lastifname[0] = '\0';
+	lastifindex = UINT_MAX;
 	/* Loop all interfaces in order to send IPv4 hellos */
 	for (ifb = ifa; ifb; ifb = ifb->ifa_next) {
 		if_sa = (struct sockaddr_in *) ifb->ifa_addr;
@@ -416,34 +479,30 @@ send_hello(void)
 			continue;
 
 		/* Send only once per interface, using primary address */
-		if (strcmp(ifb->ifa_name, lastifname) == 0)
+		if (lastifindex == if_nametoindex(ifb->ifa_name))
 			continue;
-		debugp("Sending hello on %s\n", ifb->ifa_name);
-		if (setsockopt(hello_socket, IPPROTO_IP, IP_MULTICAST_IF,
+		lastifindex = if_nametoindex(ifb->ifa_name);
+
+		if (setsockopt(ip4socket, IPPROTO_IP, IP_MULTICAST_IF,
 		    &if_sa->sin_addr, sizeof(struct in_addr)) == -1) {
 			warnp("setsockopt failed: %s\n", strerror(errno));
 			continue;
 		}
 		trtlv->address.ip4addr.s_addr = if_sa->sin_addr.s_addr;
 
-		strlcpy(lastifname, ifb->ifa_name, sizeof(lastifname));
-
-		/* Send to the wire */
-		sb = sendto(hello_socket, v, IPV4_HELLO_MSG_SIZE,
-			    0, (struct sockaddr *) & sadest, sizeof(sadest));
+		/* Put it on the wire */
+		sb = sendto(ip4socket, v, IPV4_HELLO_MSG_SIZE, 0,
+			    (struct sockaddr *) & sadest, sizeof(sadest));
 		if (sb < (ssize_t)(IPV4_HELLO_MSG_SIZE))
 		    fatalp("send: %s", strerror(errno));
 		else
-		    debugp("Sent (IP4) %zd bytes on %s"
-			"(PDU: %d, Hello TLV: %d, CH: %d, TR: %d)\n",
+		    debugp("Sent (IPv4) %zd bytes on %s"
+			" (PDU: %d, Hello TLV: %d, CH: %d, TR: %d)\n",
 			sb, ifb->ifa_name,
 			ntohs(spdu->length), ntohs(t->length),
 			ntohs(cht->length), ntohs(trtlv->length));
 	}
 #ifdef INET6
-	/* Let's do the same thing for IPv6 */
-	lastifname[0]='\0';
-
 	/* Adjust lengths */
 	spdu->length = htons(IPV6_HELLO_MSG_SIZE - PDU_VER_LENGTH);
 	t->length = htons(MSGID_SIZE +
@@ -459,12 +518,20 @@ send_hello(void)
 	sadest6.sin6_port = htons(LDP_PORT);
 	assert(inet_pton(AF_INET6, ALL_ROUTERS6, &sadest6.sin6_addr) == 1);
 
+	SLIST_FOREACH(hs, &hello_socket_head, listentry)
+		if (hs->type == AF_INET6) {
+			ip6socket = hs->socket;
+			break;
+		}
+
+	lastifindex = UINT_MAX;
 	for (ifb = ifa; ifb; ifb = ifb->ifa_next) {
-		unsigned int if_index;
-		if_sa6 = (struct sockaddr_in6 *) ifb->ifa_addr;
-		if (if_sa6->sin6_family != AF_INET6)
-			continue;
-		if (IN6_IS_ADDR_LOOPBACK(&if_sa6->sin6_addr))
+		struct sockaddr_in6 * if_sa6 =
+		    (struct sockaddr_in6 *) ifb->ifa_addr;
+		if (if_sa6->sin6_family != AF_INET6 ||
+		    (!(ifb->ifa_flags & IFF_UP)) ||
+		    (ifb->ifa_flags & IFF_LOOPBACK) ||
+		    IN6_IS_ADDR_LOOPBACK(&if_sa6->sin6_addr))
 			continue;
 		/*
 		 * draft-ietf-mpls-ldp-ipv6-07 Section 5.1:
@@ -474,36 +541,32 @@ send_hello(void)
 		 */
 		if (IN6_IS_ADDR_LINKLOCAL(&if_sa6->sin6_addr) == 0)
 			continue;
+		/* We should have only one LLADDR per interface, but... */
+		if (lastifindex == if_nametoindex(ifb->ifa_name))
+			continue;
+		lastifindex = if_nametoindex(ifb->ifa_name);
 
-		/* Send only once per interface, using primary address */
-		if (strcmp(ifb->ifa_name, lastifname) == 0)
-			continue;
-		if_index = if_nametoindex(ifb->ifa_name);
-		if (if_index == 0)
-			continue;
-		if (setsockopt(hello6_socket, IPPROTO_IPV6, IPV6_MULTICAST_IF,
-		    &if_index, sizeof(int)) == -1) {
-			warnp("setsockopt6 failed in sendhello(): %s\n",
-			    strerror(errno));
+		if (setsockopt(ip6socket, IPPROTO_IPV6, IPV6_MULTICAST_IF,
+		    &lastifindex, sizeof(int)) == -1) {
+			fatalp("ssopt6 IPV6_MULTICAST_IF failed: %s for %s\n",
+			    strerror(errno), ifb->ifa_name);
 			continue;
 		}
+
 		memcpy(&trtlv->address.ip6addr, &if_sa6->sin6_addr,
 		    sizeof(struct in6_addr));
 
-		strlcpy(lastifname, ifb->ifa_name, sizeof(lastifname));
-
 		/* Put it on the wire */
-		sb = sendto(hello6_socket, v, IPV6_HELLO_MSG_SIZE,
+		sb = sendto(ip6socket, v, IPV6_HELLO_MSG_SIZE,
 			    0, (struct sockaddr *)&sadest6, sizeof(sadest6));
 		if (sb < (ssize_t)(IPV6_HELLO_MSG_SIZE))
-		    fatalp("send6 on %s: %s", ifb->ifa_name, strerror(errno));
+		    fatalp("send6: %s", strerror(errno));
 		else
-		    debugp("Sent (IPv6) %zd bytes on %s"
+		    debugp("Sent (IPv6) %zd bytes on %s "
 			"(PDU: %d, Hello TLV: %d, CH: %d TR: %d)\n",
-			sb, ifb->ifa_name,
-			htons(spdu->length), htons(t->length),
-			htons(cht->length), htons(trtlv->length));
-
+			sb, ifb->ifa_name, htons(spdu->length),
+			htons(t->length), htons(cht->length),
+			htons(trtlv->length));
 	}
 #endif
 	freeifaddrs(ifa);
@@ -551,7 +614,7 @@ recv_pdu(int sock)
 	struct iovec iov[1];
 	unsigned char recvspace[MAX_PDU_SIZE];
 	struct hello_tlv *t;
-	struct sockaddr_in fromsa;
+	union sockunion sender;
 	struct sockaddr_dl *sdl = NULL;
 	struct in_addr my_ldp_addr, local_addr;
 	struct cmsghdr *cmptr;
@@ -560,23 +623,18 @@ recv_pdu(int sock)
 		char control[1024];
 	} control_un;
 
-	debugp("Entering RECV_PDU\n");
-
 	memset(&msg, 0, sizeof(msg));
 	msg.msg_control = control_un.control;
 	msg.msg_controllen = sizeof(control_un.control);
 	msg.msg_flags = 0;
-	msg.msg_name = &fromsa;
-	msg.msg_namelen = sizeof(fromsa);
+	msg.msg_name = &sender;
+	msg.msg_namelen = sizeof(sender);
 	iov[0].iov_base = recvspace;
 	iov[0].iov_len = sizeof(recvspace);
 	msg.msg_iov = iov;
 	msg.msg_iovlen = 1;
 
 	c = recvmsg(sock, &msg, MSG_WAITALL);
-	debugp("Incoming PDU size: %d\n", c);
-
-	debugp("PDU from: %s\n", inet_ntoa(fromsa.sin_addr));
 
 	/* Check to see if this is larger than MIN_PDU_SIZE */
 	if (c < MIN_PDU_SIZE)
@@ -585,16 +643,20 @@ recv_pdu(int sock)
 	/* Read the PDU */
 	i = get_pdu(recvspace, &rpdu);
 
+	debugp("recv_pdu(%d): PDU(size: %d) from: %s\n", sock,
+	    c, satos(&sender.sa));
+
 	/* We currently understand Version 1 */
 	if (rpdu.version != LDP_VERSION) {
-		fatalp("recv_pdu: Version mismatch\n");
+		warnp("recv_pdu: Version mismatch\n");
 		return;
 	}
 
-	/* Maybe it's our hello */
+	/* Check if it's our hello */
 	inet_aton(LDP_ID, &my_ldp_addr);
 	if (rpdu.ldp_id.s_addr == my_ldp_addr.s_addr) {
-		fatalp("Received our PDU..\n");	/* it should be not looped */
+		/* It should not be looped. We set MULTICAST_LOOP 0 */
+		fatalp("Received our PDU. Ignoring it\n");
 		return;
 	}
 
@@ -619,7 +681,7 @@ recv_pdu(int sock)
 
 	/* Fill the TLV messages */
 	t = get_hello_tlv(recvspace + i, c - i);
-	run_ldp_hello(&rpdu, t, &fromsa.sin_addr, &local_addr, sock);
+	run_ldp_hello(&rpdu, t, &sender.sa, &local_addr, sock);
 }
 
 void 
@@ -703,8 +765,10 @@ the_big_loop(void)
 	struct ldp_peer *p;
 	struct com_sock	*cs;
 	struct pollfd	pfd[MAX_POLL_FDS];
+	struct hello_socket *hs;
+	nfds_t pollsum;
 
-	assert(MAX_POLL_FDS > 3);
+	assert(MAX_POLL_FDS > 5);
 
 	SLIST_INIT(&hello_info_head);
 
@@ -712,7 +776,9 @@ the_big_loop(void)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGINT, bail_out);
 	signal(SIGTERM, bail_out);
-	send_hello_alarm(1);
+
+	/* Send first hellos in 5 seconds. Avoid No hello notifications */
+	alarm(5);
 
 	route_socket = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
 
@@ -723,8 +789,6 @@ the_big_loop(void)
 	}
 
 	for (;;) {
-		nfds_t pollsum = 4;
-
 		pfd[0].fd = ls;
 		pfd[0].events = POLLRDNORM;
 		pfd[0].revents = 0;
@@ -737,10 +801,14 @@ the_big_loop(void)
 		pfd[2].events = POLLRDNORM;
 		pfd[2].revents = 0;
 
-		/* Hello socket */
-		pfd[3].fd = hello_socket;
-		pfd[3].events = POLLIN;
-		pfd[3].revents = 0;
+		/* Hello sockets */
+		pollsum = 3;
+		SLIST_FOREACH(hs, &hello_socket_head, listentry) {
+			pfd[pollsum].fd = hs->socket;
+			pfd[pollsum].events = POLLIN;
+			pfd[pollsum].revents = 0;
+			pollsum++;
+		}
 
 		/* Command sockets */
 		for (i=0; i < MAX_COMMAND_SOCKETS; i++)
@@ -806,7 +874,7 @@ the_big_loop(void)
 
 					check_route(&xbuf, l);
 
-				} else if (pfd[i].fd == hello_socket) {
+				} else if (is_hello_socket(pfd[i].fd) == 1) {
 					/* Receiving hello socket */
 					recv_pdu(pfd[i].fd);
 				} else if (pfd[i].fd == command_socket) {
@@ -859,7 +927,7 @@ new_peer_connection()
 		return;
 	}
 
-	if (get_ldp_peer(&sa.sin_addr) != NULL) {
+	if (get_ldp_peer((const struct sockaddr *)&sa) != NULL) {
 		close(s);
 		return;
 	}
@@ -880,7 +948,7 @@ new_peer_connection()
 		return;
 	}
 	/* XXX: sa.sin_addr is not peer LDP ID ... */
-	ldp_peer_new(&sa.sin_addr, &sa.sin_addr, NULL, NULL, ldp_holddown_time, s);
+	ldp_peer_new(&sa.sin_addr, (struct sockaddr *)&sa, NULL, ldp_holddown_time, s);
 
 }
 
@@ -993,6 +1061,7 @@ recv_session_pdu(struct ldp_peer * p)
 			/* Check size */
 			if (ntohs(itlv->length) <
 			    sizeof(struct init_tlv) - TLV_TYPE_LENGTH) {
+				debugp("Bad size\n");
 				send_notification(p, 0,
 				    NOTIF_BAD_PDU_LEN | NOTIF_FATAL);
 				ldp_peer_holddown(p);
@@ -1000,6 +1069,7 @@ recv_session_pdu(struct ldp_peer * p)
 			}
 			/* Check version */
 			if (ntohs(itlv->cs_version) != LDP_VERSION) {
+				debugp("Bad version");
 				send_notification(p, ntohl(itlv->messageid),
 					NOTIF_BAD_LDP_VER | NOTIF_FATAL);
 				ldp_peer_holddown(p);
@@ -1010,6 +1080,7 @@ recv_session_pdu(struct ldp_peer * p)
 				if (hi->ldp_id.s_addr == rpdu->ldp_id.s_addr)
 					break;
 			if (hi == NULL) {
+			    debugp("No hello. Moving peer to holddown\n");
 			    send_notification(p, ntohl(itlv->messageid),
 				NOTIF_SESSION_REJECTED_NO_HELLO | NOTIF_FATAL);
 			    ldp_peer_holddown(p);
