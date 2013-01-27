@@ -50,7 +50,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.4 2013/01/27 15:35:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.5 2013/01/27 20:05:46 christos Exp $");
 
 #include <sys/param.h>
 
@@ -301,6 +301,12 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	pmp->pm_crbomask = pmp->pm_bpcluster - 1;
 	pmp->pm_cnshift = ffs(pmp->pm_bpcluster) - 1;
 
+	DPRINTF(("%s(fatmask=%lu, fatmult=%u, fatdiv=%u, fatblocksize=%lu, "
+	    "fatblocksec=%lu, bnshift=%lu, pbcluster=%lu, crbomask=%lu, "
+	    "cnshift=%lu)\n",
+	    __func__, pmp->pm_fatmask, pmp->pm_fatmult, pmp->pm_fatdiv,
+	    pmp->pm_fatblocksize, pmp->pm_fatblocksec, pmp->pm_bnshift,
+	    pmp->pm_bpcluster, pmp->pm_crbomask, pmp->pm_cnshift));
 	/*
 	 * Check for valid cluster size
 	 * must be a power of 2

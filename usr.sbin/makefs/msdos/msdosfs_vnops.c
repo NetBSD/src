@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.8 2013/01/27 16:03:15 christos Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.9 2013/01/27 20:05:46 christos Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.8 2013/01/27 16:03:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.9 2013/01/27 20:05:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -70,6 +70,11 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.8 2013/01/27 16:03:15 christos E
 #include "makefs.h"
 #include "msdos.h"
 
+#ifdef MSDOSFS_DEBUG
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
+#endif
 /*
  * Some general notes:
  *
@@ -169,9 +174,7 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 	 * case it doesn't already exist.
 	 */
 	slotcount = 0;
-#ifdef MSDOSFS_DEBUG
-	printf("%s(): dos filename: %s\n", __func__, dosfilename);
-#endif
+	DPRINTF(("%s(): dos filename: %s\n", __func__, dosfilename));
 	/*
 	 * Search the directory pointed at by vdp for the name pointed at
 	 * by cnp->cn_nameptr.
@@ -264,10 +267,8 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 					chksum = -1;
 					continue;
 				}
-#ifdef MSDOSFS_DEBUG
-				printf("%s(): match blkoff %d, diroff %d\n",
-				    __func__, blkoff, diroff);
-#endif
+				DPRINTF(("%s(): match blkoff %d, diroff %d\n",
+				    __func__, blkoff, diroff));
 				/*
 				 * Remember where this directory
 				 * entry came from for whoever did
@@ -296,10 +297,8 @@ notfound:
 	 * that's ok if we are creating or renaming and are at the end of
 	 * the pathname and the directory hasn't been removed.
 	 */
-#ifdef MSDOSFS_DEBUG
-	printf("%s(): refcnt %ld, slotcount %d, slotoffset %d\n",
-	    __func__, dp->de_refcnt, slotcount, slotoffset);
-#endif
+	DPRINTF(("%s(): refcnt %ld, slotcount %d, slotoffset %d\n",
+	    __func__, dp->de_refcnt, slotcount, slotoffset));
 	/*
 	 * Fixup the slot description to point to the place where
 	 * we might put the new DOS direntry (putting the Win95
@@ -351,10 +350,8 @@ msdosfs_mkfile(const char *path, struct denode *pdep, fsnode *node)
 	cn.cn_nameptr = node->name;
 	cn.cn_namelen = strlen(node->name);
 
-#ifdef MSDOSFS_DEBUG
-	printf("msdosfs_create(name %s, mode 0%o size %zu\n", node->name,
-	    st->st_mode, (size_t)st->st_size);
-#endif
+	DPRINTF(("%s(name %s, mode 0%o size %zu)\n", __func__, node->name,
+	    st->st_mode, (size_t)st->st_size));
 
 	/*
 	 * If this is the root directory and there is no space left we
@@ -398,6 +395,21 @@ bad:
 	errno = error;
 	return NULL;
 }
+static int
+msdosfs_updatede(struct denode *dep)
+{
+	struct buf *bp;
+	struct direntry *dirp;
+	int error;
+
+	dep->de_flag &= ~DE_MODIFIED;
+	error = readde(dep, &bp, &dirp);
+	if (error)
+		return error;
+	DE_EXTERNALIZE(dirp, dep);
+	error = bwrite(bp);
+	return error;
+}
 
 /*
  * Write data to a file or directory.
@@ -409,16 +421,12 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	size_t osize = dep->de_FileSize;
 	struct stat *st = &node->inode->st;
 	size_t nsize;
-	size_t offs = 0;
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct buf *bp;
 	char *dat;
-	u_long cn;
 
-#ifdef MSDOSFS_DEBUG
-	printf("%s(diroff %lu, dirclust %lu, startcluster %lu)\n", __func__,
-	    dep->de_diroffset, dep->de_dirclust, dep->de_StartCluster);
-#endif
+	DPRINTF(("%s(diroff %lu, dirclust %lu, startcluster %lu)\n", __func__,
+	    dep->de_diroffset, dep->de_dirclust, dep->de_StartCluster));
 	if (st->st_size == 0)
 		return 0;
 
@@ -429,8 +437,13 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	}
 
 	nsize = st->st_size;
+	DPRINTF(("%s(nsize=%zu, osize=%zu)\n", __func__, nsize, osize));
 	if (nsize > osize) {
 		if ((error = deextend(dep, nsize, NULL)) != 0) {
+			errno = error;
+			return -1;
+		}
+		if ((error = msdosfs_updatede(dep)) != 0) {
 			errno = error;
 			return -1;
 		}
@@ -441,35 +454,37 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 
 	if ((dat = mmap(0, nsize, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0))
 	    == MAP_FAILED) {
-		fprintf(stderr, "mmap %s", node->name);
+		DPRINTF(("%s: mmap %s %s", __func__, node->name,
+		    strerror(errno)));
+		close(fd);
 		goto out;
 	}
 	close(fd);
 
-	for (cn = 0;; cn++) {
+	for (size_t offs = 0; offs < nsize;) {
 		int blsize, cpsize;
 		daddr_t bn;
-		if ((error = pcbmap(dep, cn, &bn, 0, &blsize)) != 0) {
-			fprintf(stderr, "pcbmap %ld\n", cn);
+		u_long lbn = dep->de_StartCluster;
+		u_long on = offs & pmp->pm_crbomask;
+
+		if (lbn == MSDOSFSROOT) {
+			DPRINTF(("%s: bad lbn %lu", __func__, lbn));
 			goto out;
 		}
-#ifdef MSDOSFS_DEBUG
-		printf("%s(cn=%lu, bn=%llu/%llu, blsize=%d)\n", __func__, cn,
-		    (unsigned long long)bn,
-		    (unsigned long long)de_bn2kb(pmp, bn), blsize);
-#endif
+		bn = cntobn(pmp, lbn);
+		blsize = pmp->pm_bpcluster;
+		DPRINTF(("%s(lbn=%lu, bn=%llu/%llu, blsize=%d)\n", __func__,
+		    lbn, (unsigned long long)bn,
+		    (unsigned long long)de_bn2kb(pmp, bn), blsize));
 		if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    NULL, 0, &bp)) != 0) {
-			fprintf(stderr, "bread %d\n", error);
+			DPRINTF(("bread %d\n", error));
 			goto out;
 		} 
-		cpsize = MIN((int)(nsize - offs), blsize);
-		memcpy(bp->b_data, dat + offs, cpsize);
+		cpsize = MIN((nsize - offs), blsize - on);
+		memcpy((char *)bp->b_data + on, dat + offs, cpsize);
 		bwrite(bp);
-		brelse(bp, 0);
-		offs += blsize;
-		if (offs >= nsize)
-			break;
+		offs += cpsize;
 	}
 
 	munmap(dat, nsize);

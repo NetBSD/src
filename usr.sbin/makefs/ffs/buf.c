@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.14 2013/01/27 14:10:03 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.15 2013/01/27 20:05:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.14 2013/01/27 14:10:03 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.15 2013/01/27 20:05:46 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -148,6 +148,7 @@ bwrite(struct buf *bp)
 	if (debug & DEBUG_BUF_BWRITE)
 		printf("bwrite: write %ld (offset %lld) returned %lld\n",
 		    bp->b_bcount, (long long)offset, (long long)rv);
+	brelse(bp, 0);
 	if (rv == bp->b_bcount)
 		return (0);
 	else if (rv == -1)		/* write error */
@@ -189,7 +190,6 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int u1 __unused,
 	int fd = vp->fd;
 	struct fs *fs = vp->fs;
 
-	// blkno += vp->offset;
 	assert (fs != NULL);
 	if (debug & DEBUG_BUF_GETBLK)
 		printf("getblk: blkno %lld size %d\n", (long long)blkno, size);
