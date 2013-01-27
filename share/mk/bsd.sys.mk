@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.222 2013/01/26 22:04:18 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.223 2013/01/27 02:31:44 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -89,29 +89,13 @@ _NOWERROR=	${defined(NOGCCERROR) || (${ACTIVE_CC} == "clang" && defined(NOCLANGE
 CFLAGS+=	${${_NOWERROR} == "no" :?-Werror:} ${CWARNFLAGS}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
-.if (${MACHINE_ARCH} == "alpha") || \
-    (${MACHINE_ARCH} == "hppa") || \
-    (${MACHINE_ARCH} == "ia64") || \
-    (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") || \
-    (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
-HAS_SSP=	no
-.else
-HAS_SSP=	yes
-.endif
-
-.if ${USE_FORT:Uno} != "no"
-USE_SSP?=	yes
+.if (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 .if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
 CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 .endif
-.endif
-
-.if (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
-.if ${HAS_SSP} == "yes"
 COPTS+=	-fstack-protector -Wstack-protector 
 COPTS+=	${${ACTIVE_CC} == "clang":? --param ssp-buffer-size=1 :}
 COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
-.endif
 .endif
 
 .if ${MKSOFTFLOAT:Uno} != "no"
