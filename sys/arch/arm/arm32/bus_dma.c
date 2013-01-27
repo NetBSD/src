@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.68 2013/01/27 17:38:55 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.69 2013/01/27 17:48:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.68 2013/01/27 17:38:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.69 2013/01/27 17:48:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1231,7 +1231,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				if (dr->dr_flags & _BUS_DMAMAP_COHERENT) {
 					direct_mapable = true;
 				}
-				if (dr->dr_flags & _BUS_DMAMAP_MEM_XLATE) {
+				if (flags & _BUS_DMAMAP_MEM_XLATE) {
 					pa = (pa - dr->dr_sysbase)
 					    + dr->dr_busbase;
 				}
@@ -1293,7 +1293,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				if (dr->dr_flags & _BUS_DMAMAP_COHERENT) {
 					uncached = false;
 				}
-				if (dr->dr_flags & _BUS_DMAMAP_MEM_XLATE) {
+				if (flags & _BUS_DMAMAP_MEM_XLATE) {
 					pa = (pa - dr->dr_sysbase)
 					     + dr->dr_busbase;
 				}
