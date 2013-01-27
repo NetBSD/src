@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.46 2011/05/05 16:20:55 matt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.47 2013/01/27 14:47:37 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.46 2011/05/05 16:20:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.47 2013/01/27 14:47:37 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (onstack)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 #ifdef DEBUG_LINUX
-	printf("linux_sendsig: exitting. fp=0x%lx\n",(long)fp);
+	printf("linux_sendsig: exiting. fp=0x%lx\n",(long)fp);
 #endif
 }
 
