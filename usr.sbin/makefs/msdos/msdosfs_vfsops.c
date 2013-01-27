@@ -50,7 +50,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.3 2013/01/26 16:50:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.4 2013/01/27 15:35:45 christos Exp $");
 
 #include <sys/param.h>
 
@@ -94,7 +94,8 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	uint64_t psize = m->create_size;
 	unsigned secsize = 512;
 
-	if ((error = bread(devvp, 1, secsize, NULL, 0, &bp)) != 0)
+	DPRINTF(("%s(bread 0)\n", __func__));
+	if ((error = bread(devvp, 0, secsize, NULL, 0, &bp)) != 0)
 		goto error_exit;
 
 	bsp = (union bootsector *)bp->b_data;
@@ -135,6 +136,11 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	pmp->pm_Heads = getushort(b50->bpbHeads);
 	pmp->pm_Media = b50->bpbMedia;
 
+	DPRINTF(("%s(BytesPerSec=%u, ResSectors=%u, FATs=%d, RootDirEnts=%u, "
+	    "Sectors=%u, FATsecs=%lu, SecPerTrack=%u, Heads=%u, Media=%u)\n",
+	    __func__, pmp->pm_BytesPerSec, pmp->pm_ResSectors, pmp->pm_FATs,
+	    pmp->pm_RootDirEnts, pmp->pm_Sectors, pmp->pm_FATsecs,
+	    pmp->pm_SecPerTrack, pmp->pm_Heads, pmp->pm_Media));
 	if (!(flags & MSDOSFSMNT_GEMDOSFS)) {
 		/* XXX - We should probably check more values here */
     		if (!pmp->pm_BytesPerSec || !SecPerClust
@@ -323,6 +329,8 @@ msdosfs_mount(struct vnode *devvp, int flags)
 		 *	2KB or larger sectors, is the fsinfo structure
 		 *	padded at the end or in the middle?
 		 */
+		DPRINTF(("%s(bread %lu)\n", __func__,
+		    (unsigned long)de_bn2kb(pmp, pmp->pm_fsinfo)));
 		if ((error = bread(devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
 		    pmp->pm_BytesPerSec, NULL, 0, &bp)) != 0)
 			goto error_exit;
@@ -352,9 +360,8 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	 * Allocate memory for the bitmap of allocated clusters, and then
 	 * fill it in.
 	 */
-	pmp->pm_inusemap = malloc(((pmp->pm_maxcluster + N_INUSEBITS)
-				   / N_INUSEBITS)
-				  * sizeof(*pmp->pm_inusemap));
+	pmp->pm_inusemap = calloc(sizeof(*pmp->pm_inusemap),
+	    ((pmp->pm_maxcluster + N_INUSEBITS) / N_INUSEBITS));
 	if (pmp->pm_inusemap == NULL)
 		goto error_exit;
 
