@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.5 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.6 2013/01/27 05:53:21 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -81,9 +81,8 @@ ldp_peer_new(const struct in_addr * ldp_id, struct sockaddr * padd,
 	struct ldp_peer *p;
 	int s = soc;
 	struct sockaddr *connecting_sa = NULL;
-	/* disabled - see below
 	struct conf_neighbour *cn;
-	*/
+
 	if (tradd != NULL)
 		assert(tradd->sa_family == padd->sa_family);
 
@@ -112,17 +111,16 @@ ldp_peer_new(const struct in_addr * ldp_id, struct sockaddr * padd,
 	}
 
 	/* MD5 authentication needed ? */
-/* XXX: disabled for now - need to make sure NetBSD handles TCPSIG correctly
 	SLIST_FOREACH(cn, &conei_head, neilist)
-		if (cn->authenticate != 0 && (a->s_addr == cn->address.s_addr ||
-		    (tradd && tradd->s_addr == cn->address.s_addr))) {
+		if (cn->authenticate != 0 &&
+		    ldp_id->s_addr == cn->address.s_addr) {
 			if (setsockopt(s, IPPROTO_TCP, TCP_MD5SIG, &(int){1},
 			    sizeof(int)) != 0)
 				fatalp("setsockopt TCP_MD5SIG: %s\n",
 				    strerror(errno));
 			break;
 		}
-*/
+
 	/* Set the peer in CONNECTING/CONNECTED state */
 	p = calloc(1, sizeof(*p));
 
