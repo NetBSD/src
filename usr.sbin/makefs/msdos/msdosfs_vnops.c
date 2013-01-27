@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.7 2013/01/27 15:35:45 christos Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.8 2013/01/27 16:03:15 christos Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.7 2013/01/27 15:35:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.8 2013/01/27 16:03:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -423,7 +423,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 		return 0;
 
 	/* Don't bother to try to write files larger than the fs limit */
-	if (st->st_size > (off_t)min(MSDOSFS_FILESIZE_MAX,__SIZE_MAX__)) {
+	if (st->st_size > MSDOSFS_FILESIZE_MAX) {
 		errno = EFBIG;
 		return -1;
 	}
