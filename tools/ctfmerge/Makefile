@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2013/01/24 13:35:52 christos Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile,v 1.4 2013/01/27 19:21:12 riastradh Exp $
 
 NOMAN=	# defined
+
+.include <bsd.own.mk>
 
 HOSTPROGNAME=   ${_TOOL_PREFIX}ctfmerge
 HOST_SRCDIR=    external/cddl/osnet/usr.bin/ctfmerge
