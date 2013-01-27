@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.39 2013/01/24 01:10:47 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.40 2013/01/27 14:07:12 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.39 2013/01/24 01:10:47 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.40 2013/01/27 14:07:12 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -336,9 +336,10 @@ set_option_var(const option_t *options, const char *var, const char *val)
     options[i].minimum, options[i].maximum); break
 
 	for (i = 0; options[i].name != NULL; i++) {
-		if (options[i].letter != var[0] && var[1] == '\0')
-			continue;
-		else if (strcmp(options[i].name, var) != 0)
+		if (var[1] == '\0') {
+			if (options[i].letter != var[0])
+				continue;
+		} else if (strcmp(options[i].name, var) != 0)
 			continue;
 		switch (options[i].type) {
 		case OPT_BOOL:
