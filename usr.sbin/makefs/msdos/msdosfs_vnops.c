@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.11 2013/01/27 22:09:24 christos Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.12 2013/01/27 22:52:19 christos Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.11 2013/01/27 22:09:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.12 2013/01/27 22:52:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -146,6 +146,7 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 	int olddos = 1;
 
 	pmp = dp->de_pmp;
+
 	switch (unix2dosfn((const u_char *)cnp->cn_nameptr, dosfilename,
 	    cnp->cn_namelen, 0)) {
 	case 0:
@@ -498,7 +499,7 @@ static const struct {
 	struct direntry dot;
 	struct direntry dotdot;
 } dosdirtemplate = {
-	{	".	 ", "	",			/* the . entry */
+	{	".       ", "   ",			/* the . entry */
 		ATTR_DIRECTORY,				/* file attribute */
 		0,					/* reserved */
 		0, { 0, 0 }, { 0, 0 },			/* create time & date */
@@ -508,7 +509,7 @@ static const struct {
 		{ 0, 0 },				/* startcluster */
 		{ 0, 0, 0, 0 }				/* filesize */
 	},
-	{	"..	 ", "	",			/* the .. entry */
+	{	"..      ", "   ",			/* the .. entry */
 		ATTR_DIRECTORY,				/* file attribute */
 		0,					/* reserved */
 		0, { 0, 0 }, { 0, 0 },			/* create time & date */
@@ -553,7 +554,6 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	if (error)
 		goto bad2;
 
-	DPRINTF(("%s(newcluster %lu)\n", __func__, newcluster));
 	memset(&ndirent, 0, sizeof(ndirent));
 	ndirent.de_pmp = pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
@@ -581,6 +581,8 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	putushort(denp[0].deMDate, ndirent.de_MDate);
 	putushort(denp[0].deMTime, ndirent.de_MTime);
 	pcl = pdep->de_StartCluster;
+	DPRINTF(("%s(pcl %lu, rootdirblk=%lu)\n", __func__, pcl,
+	    pmp->pm_rootdirblk));
 	if (FAT32(pmp) && pcl == pmp->pm_rootdirblk)
 		pcl = 0;
 	putushort(denp[1].deStartCluster, pcl);
@@ -614,6 +616,7 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	ndirent.de_FileSize = 0;
 	ndirent.de_dev = pdep->de_dev;
 	ndirent.de_devvp = pdep->de_devvp;
+	ndirent.de_pmp = pdep->de_pmp;
 	if ((error = msdosfs_findslot(pdep, &cn)) != 0)
 		goto bad;
 	if ((error = createde(&ndirent, pdep, &dep, &cn)) != 0)
