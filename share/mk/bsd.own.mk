@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.720 2013/01/27 02:22:27 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.721 2013/01/27 02:31:44 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -69,6 +69,19 @@ USE_COMPILERCRTSTUFF?=	no
 USE_COMPILERCRTSTUFF?=	yes
 
 HAVE_GDB?=	7
+
+.if (${MACHINE_ARCH} == "alpha") || \
+    (${MACHINE_ARCH} == "hppa") || \
+    (${MACHINE_ARCH} == "ia64") || \
+    (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") || \
+    (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
+HAVE_SSP?=	no
+.else
+HAVE_SSP?=	yes
+.if ${USE_FORT:Uno} != "no"
+USE_SSP?=	yes
+.endif
+.endif
 
 .if empty(.MAKEFLAGS:tW:M*-V .OBJDIR*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
