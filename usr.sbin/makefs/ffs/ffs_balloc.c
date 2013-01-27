@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.15 2013/01/26 00:19:39 christos Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.16 2013/01/27 20:05:46 christos Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
 /*
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_balloc.c,v 1.15 2013/01/26 00:19:39 christos Exp $");
+__RCSID("$NetBSD: ffs_balloc.c,v 1.16 2013/01/27 20:05:46 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -95,7 +95,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	int32_t *allocblk, allociblk[UFS_NIADDR + 1];
 	int32_t *allocib;
 	const int needswap = UFS_FSNEEDSWAP(fs);
-	struct vnode vp = { ip->i_fd, ip->i_fs, NULL, 0 };
+	struct vnode vp = { ip->i_fd, ip->i_fs, NULL };
 
 	lbn = lblkno(fs, offset);
 	size = blkoff(fs, offset) + bufsize;
@@ -346,7 +346,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	int64_t *allocblk, allociblk[UFS_NIADDR + 1];
 	int64_t *allocib;
 	const int needswap = UFS_FSNEEDSWAP(fs);
-	struct vnode vp = { ip->i_fd, ip->i_fs, NULL, 0 };
+	struct vnode vp = { ip->i_fd, ip->i_fs, NULL };
 
 	lbn = lblkno(fs, offset);
 	size = blkoff(fs, offset) + bufsize;
