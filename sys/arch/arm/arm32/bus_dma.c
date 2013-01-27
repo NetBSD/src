@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.67 2013/01/16 22:32:45 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.68 2013/01/27 17:38:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.67 2013/01/16 22:32:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.68 2013/01/27 17:38:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -970,7 +970,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	if (!bouncing && pre_ops == 0 && post_ops == BUS_DMASYNC_POSTWRITE) {
 		return;
 	}
-
+	KASSERT(pre_ops != 0 || (post_ops & BUS_DMASYNC_POSTREAD));
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
 	if (bouncing && (ops & BUS_DMASYNC_PREWRITE)) {
 		struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
@@ -1213,34 +1213,37 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 * avoid having a separate mapping for it.
 	 */
 	if (nsegs == 1) {
-		paddr_t paddr = segs[0].ds_addr;
 		/*
 		 * If this is a non-COHERENT mapping, then the existing kernel
 		 * mapping is already compatible with it.
 		 */
-		if ((flags & BUS_DMA_COHERENT) == 0) {
-#ifdef DEBUG_DMA
-			printf("dmamem_map: =%p\n", *kvap);
-#endif	/* DEBUG_DMA */
-			*kvap = (void *)PMAP_MAP_POOLPAGE(paddr);
-			return 0;
-		}
+		bool direct_mapable = (flags & BUS_DMA_COHERENT) == 0;
+		pa = segs[0].ds_addr;
+
 		/*
-		 * This is a COHERENT mapping, which unless this address is in
+		 * This is a COHERENT mapping which, unless this address is in
 		 * a COHERENT dma range, will not be compatible.
 		 */
 		if (t->_ranges != NULL) {
 			const struct arm32_dma_range * const dr =
-			    _bus_dma_paddr_inrange(t->_ranges, t->_nranges,
-				paddr);
-			if (dr != NULL
-			    && (dr->dr_flags & _BUS_DMAMAP_COHERENT) != 0) {
-				*kvap = (void *)PMAP_MAP_POOLPAGE(paddr);
-#ifdef DEBUG_DMA
-				printf("dmamem_map: =%p\n", *kvap);
-#endif	/* DEBUG_DMA */
-				return 0;
+			    _bus_dma_paddr_inrange(t->_ranges, t->_nranges, pa);
+			if (dr != NULL) {
+				if (dr->dr_flags & _BUS_DMAMAP_COHERENT) {
+					direct_mapable = true;
+				}
+				if (dr->dr_flags & _BUS_DMAMAP_MEM_XLATE) {
+					pa = (pa - dr->dr_sysbase)
+					    + dr->dr_busbase;
+				}
 			}
+		}
+
+		if (direct_mapable) {
+			*kvap = (void *)PMAP_MAP_POOLPAGE(pa);
+#ifdef DEBUG_DMA
+			printf("dmamem_map: =%p\n", *kvap);
+#endif	/* DEBUG_DMA */
+			return 0;
 		}
 	}
 #endif
@@ -1273,11 +1276,28 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		for (pa = segs[curseg].ds_addr;
 		    pa < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    pa += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
+			bool uncached = (flags & BUS_DMA_COHERENT);
 #ifdef DEBUG_DMA
 			printf("wiring p%lx to v%lx", pa, va);
 #endif	/* DEBUG_DMA */
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
+
+			const struct arm32_dma_range * const dr =
+			    _bus_dma_paddr_inrange(t->_ranges, t->_nranges, pa);
+			/*
+			 * If this dma region is coherent then there is
+			 * no need for an uncached mapping.
+			 */
+			if (dr != NULL) {
+				if (dr->dr_flags & _BUS_DMAMAP_COHERENT) {
+					uncached = false;
+				}
+				if (dr->dr_flags & _BUS_DMAMAP_MEM_XLATE) {
+					pa = (pa - dr->dr_sysbase)
+					     + dr->dr_busbase;
+				}
+			}
 			pmap_kenter_pa(va, pa,
 			    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 
@@ -1289,21 +1309,6 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 * contain the virtal addresses we are making
 			 * uncacheable.
 			 */
-
-			bool uncached = (flags & BUS_DMA_COHERENT);
-			if (uncached) {
-				const struct arm32_dma_range * const dr =
-				    _bus_dma_paddr_inrange(t->_ranges,
-					t->_nranges, pa);
-				/*
-				 * If this dma region is coherent then there is
-				 * no need for an uncached mapping.
-				 */
-				if (dr != NULL
-				    && (dr->dr_flags & _BUS_DMAMAP_COHERENT)) {
-					uncached = false;
-				}
-			}
 			if (uncached) {
 				cpu_dcache_wbinv_range(va, PAGE_SIZE);
 				cpu_sdcache_wbinv_range(va, pa, PAGE_SIZE);
