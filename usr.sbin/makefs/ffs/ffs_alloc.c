@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.21 2013/01/26 00:19:39 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.22 2013/01/27 20:05:46 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.21 2013/01/26 00:19:39 christos Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.22 2013/01/27 20:05:46 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -304,14 +304,13 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 	int error, frags, allocsiz, i;
 	struct fs *fs = ip->i_fs;
 	const int needswap = UFS_FSNEEDSWAP(fs);
-	struct vnode vp = { ip->i_fd, ip->i_fs, NULL, 0 };
+	struct vnode vp = { ip->i_fd, ip->i_fs, NULL };
 
 	if (fs->fs_cs(fs, cg).cs_nbfree == 0 && size == fs->fs_bsize)
 		return (0);
 	error = bread(&vp, fsbtodb(fs, cgtod(fs, cg)), (int)fs->fs_cgsize,
 	    NULL, 0, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return (0);
 	}
 	cgp = (struct cg *)bp->b_data;
@@ -322,7 +321,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 	}
 	if (size == fs->fs_bsize) {
 		bno = ffs_alloccgblk(ip, bp, bpref);
-		bdwrite(bp);
+		bwrite(bp);
 		return (bno);
 	}
 	/*
@@ -440,7 +439,7 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 	int i, error, cg, blk, frags, bbase;
 	struct fs *fs = ip->i_fs;
 	const int needswap = UFS_FSNEEDSWAP(fs);
-	struct vnode vp = { ip->i_fd, ip->i_fs, NULL, 0 };
+	struct vnode vp = { ip->i_fd, ip->i_fs, NULL };
 
 	if (size > fs->fs_bsize || fragoff(fs, size) != 0 ||
 	    fragnum(fs, bno) + numfrags(fs, size) > fs->fs_frag) {
