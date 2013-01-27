@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.636 2013/01/20 14:06:24 pgoyette Exp $
+$NetBSD: usbdevs,v 1.637 2013/01/27 01:35:28 jakllsch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2563,7 +2563,6 @@ product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 product RAINBOW IKEY2000	0x1200	i-Key 2000
 
 /* Ralink Technology products */
-product QUANTA RT3070		0x0304	RT3070
 product RALINK RT2570		0x1706	RT2570
 product RALINK RT2070		0x2070	RT2070
 product RALINK RT2570_2		0x2570	RT2570
@@ -2576,6 +2575,7 @@ product RALINK RT3071		0x3071	RT3071
 product RALINK RT3072		0x3072	RT3072
 product RALINK RT3370		0x3370	RT3370
 product RALINK RT3572		0x3572	RT3572
+product RALINK RT5370		0x5370	RT5370
 product RALINK RT8070		0x8070	RT8070
 product RALINK RT2570_3		0x9020	RT2570
 
