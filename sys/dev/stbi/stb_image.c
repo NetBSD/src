@@ -430,7 +430,7 @@ extern int      stbi_gif_info_from_file   (FILE *f,                  int *x, int
 #endif
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.4 2012/06/02 14:37:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.5 2013/01/27 14:47:37 mbalmer Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -2800,7 +2800,7 @@ static int expand_palette(png *a, uint8 *palette, int len, int pal_img_n)
    p = (uint8 *) MALLOC(pixel_count * pal_img_n);
    if (p == NULL) return e("outofmem", "Out of memory");
 
-   // between here and FREE(out) below, exitting would leak
+   // between here and FREE(out) below, exiting would leak
    temp_out = p;
 
    if (pal_img_n == 3) {
