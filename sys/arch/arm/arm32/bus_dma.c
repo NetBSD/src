@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.69 2013/01/27 17:48:38 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.70 2013/01/27 18:31:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.69 2013/01/27 17:48:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.70 2013/01/27 18:31:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1132,7 +1132,8 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	if ((dr = t->_ranges) != NULL) {
 		error = ENOMEM;
 		for (i = 0; i < t->_nranges; i++, dr++) {
-			if (dr->dr_len == 0)
+			if (dr->dr_len == 0
+			    || (dr->dr_flags & _BUS_DMAMAP_NOALLOC))
 				continue;
 			error = _bus_dmamem_alloc_range(t, size, alignment,
 			    boundary, segs, nsegs, rsegs, flags,
