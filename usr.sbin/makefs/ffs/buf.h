@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.4 2013/01/26 16:50:46 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.5 2013/01/27 14:10:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -99,7 +99,7 @@ struct pool {
 };
 
 #define pool_init(p, s, a1, a2, a3, a4, a5, a6)	(p)->size = (s)
-#define pool_get(p, f)	malloc((p)->size)
+#define pool_get(p, f)	calloc(1, (p)->size)
 #define pool_put(p, a)	free(a)
 #define pool_destroy(p)
 
