@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.15 2013/01/27 17:44:39 matt Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.16 2013/01/27 18:31:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.15 2013/01/27 17:44:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.16 2013/01/27 18:31:32 matt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.15 2013/01/27 17:44:39 matt Exp $
 struct obio_softc {
 	device_t		sc_dev;
 	bus_dma_tag_t		sc_dmat;
-	struct arm32_dma_range	sc_dmarange;
+	struct arm32_dma_range	sc_dmarange[2];
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_base;
@@ -180,11 +180,14 @@ obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_dmat = &bcm2835_bus_dma_tag;
 
-	sc->sc_dmarange.dr_sysbase = 0;
-	sc->sc_dmarange.dr_busbase = BCM2835_BUSADDR_CACHE_COHERENT;
-	sc->sc_dmarange.dr_len = physmem * PAGE_SIZE;
-	bcm2835_bus_dma_tag._ranges = &sc->sc_dmarange;
-	bcm2835_bus_dma_tag._nranges = 1;
+	sc->sc_dmarange[0].dr_sysbase = 0;
+	sc->sc_dmarange[0].dr_busbase = BCM2835_BUSADDR_CACHE_COHERENT;
+	sc->sc_dmarange[0].dr_len = physmem * PAGE_SIZE;
+	sc->sc_dmarange[1] = sc->sc_dmarange[0];
+	sc->sc_dmarange[1].dr_sysbase = BCM2835_BUSADDR_CACHE_COHERENT;
+	sc->sc_dmarange[1].dr_flags = _BUS_DMAMAP_NOALLOC;
+	bcm2835_bus_dma_tag._ranges = sc->sc_dmarange;
+	bcm2835_bus_dma_tag._nranges = __arraycount(sc->sc_dmarange);
 
 	aprint_normal("\n");
 
