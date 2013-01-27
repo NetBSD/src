@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.70 2013/01/27 18:31:31 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.71 2013/01/27 19:00:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.70 2013/01/27 18:31:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.71 2013/01/27 19:00:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1228,14 +1228,9 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		if (t->_ranges != NULL) {
 			const struct arm32_dma_range * const dr =
 			    _bus_dma_paddr_inrange(t->_ranges, t->_nranges, pa);
-			if (dr != NULL) {
-				if (dr->dr_flags & _BUS_DMAMAP_COHERENT) {
-					direct_mapable = true;
-				}
-				if (flags & _BUS_DMAMAP_MEM_XLATE) {
-					pa = (pa - dr->dr_sysbase)
-					    + dr->dr_busbase;
-				}
+			if (dr != NULL
+			    && (dr->dr_flags & _BUS_DMAMAP_COHERENT)) {
+				direct_mapable = true;
 			}
 		}
 
@@ -1290,15 +1285,11 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 * If this dma region is coherent then there is
 			 * no need for an uncached mapping.
 			 */
-			if (dr != NULL) {
-				if (dr->dr_flags & _BUS_DMAMAP_COHERENT) {
-					uncached = false;
-				}
-				if (flags & _BUS_DMAMAP_MEM_XLATE) {
-					pa = (pa - dr->dr_sysbase)
-					     + dr->dr_busbase;
-				}
+			if (dr != NULL
+			    && (dr->dr_flags & _BUS_DMAMAP_COHERENT)) {
+				uncached = false;
 			}
+
 			pmap_kenter_pa(va, pa,
 			    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 
