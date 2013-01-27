@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.21 2012/01/04 08:25:03 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.22 2013/01/27 03:59:09 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -59,7 +59,7 @@ struct vcons_screen {
  * for example, Sun's Creator boards can't accelerate copycols()
  */
 #define VCONS_NO_COPYCOLS	0x10	/* use putchar() based copycols() */
-#define VCONS_NO_COPYROWS	0x20	/* use putchar() basec copyrows() */
+#define VCONS_NO_COPYROWS	0x20	/* use putchar() based copyrows() */
 #define VCONS_DONT_READ		0x30	/* avoid framebuffer reads */
 	/* status flags used by vcons */
 	uint32_t scr_status;
