@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.5 2013/01/27 10:07:23 mbalmer Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.6 2013/01/27 12:25:13 martin Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.5 2013/01/27 10:07:23 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.6 2013/01/27 12:25:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -177,7 +177,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	int error, fd;
 	size_t osize = dep->de_FileSize;
 	struct stat *st = &node->inode->st;
-	off_t nsize = st->st_size;
+	size_t nsize;
 	size_t offs = 0;
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct buf *bp;
@@ -188,15 +188,16 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	printf("msdosfs_write(): diroff %lu, dirclust %lu, startcluster %lu\n",
 	    dep->de_diroffset, dep->de_dirclust, dep->de_StartCluster);
 #endif
-	if (nsize == 0)
+	if (st->st_size == 0)
 		return 0;
 
 	/* Don't bother to try to write files larger than the fs limit */
-	if (nsize > MSDOSFS_FILESIZE_MAX) {
+	if (st->st_size > (off_t)min(MSDOSFS_FILESIZE_MAX,__SIZE_MAX__)) {
 		errno = EFBIG;
 		return -1;
 	}
 
+	nsize = st->st_size;
 	if (nsize > osize) {
 		if ((error = deextend(dep, nsize, NULL)) != 0) {
 			errno = error;
