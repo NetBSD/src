@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.7 2013/01/27 15:35:45 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.8 2013/01/27 20:05:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.7 2013/01/27 15:35:45 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.8 2013/01/27 20:05:46 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -162,7 +162,6 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 
 	vp.fd = open(image, O_RDWR);
 	vp.fs = msdos_opt;
-	vp.offset = 0;
 
 	if ((pmp = msdosfs_mount(&vp, 0)) == NULL)
 		err(1, "msdosfs_mount");
@@ -237,7 +236,7 @@ msdos_populate_dir(const char *path, struct denode *dir, fsnode *root,
 			continue;
 		}
 		if (msdosfs_mkfile(pbuf, dir, cur) == NULL)
-			err(1, "msdosfs_mkfile");
+			err(1, "msdosfs_mkfile %s", pbuf);
 	}
 	return 0;
 }

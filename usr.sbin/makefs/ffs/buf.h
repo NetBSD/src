@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.5 2013/01/27 14:10:22 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.6 2013/01/27 20:05:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -58,7 +58,6 @@ struct vnode {
 	int fd;
 	void *fs;
 	void *v_data;
-	int offset;
 };
 
 #define vput(a) ((void)(a))
