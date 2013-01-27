@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.6 2013/01/26 00:20:40 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.7 2013/01/27 15:35:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.6 2013/01/26 00:20:40 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.7 2013/01/27 15:35:45 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -61,6 +61,8 @@ __RCSID("$NetBSD: msdos.c,v 1.6 2013/01/26 00:20:40 christos Exp $");
 #include "makefs.h"
 #include "msdos.h"
 #include "mkfs_msdos.h"
+
+extern int sectorsize;	/* XXX: horrid */
 
 static int msdos_populate_dir(const char *, struct denode *, fsnode *,
     fsnode *, fsinfo_t *);
@@ -149,6 +151,7 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	 * Is minsize right here?
 	 */
 	msdos_opt->create_size = MAX(msdos_opt->create_size, fsopts->minsize);
+	msdos_opt->bytes_per_sector = sectorsize = 512;
 
 		/* create image */
 	printf("Creating `%s'\n", image);
@@ -159,7 +162,7 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 
 	vp.fd = open(image, O_RDWR);
 	vp.fs = msdos_opt;
-	vp.offset = 1;
+	vp.offset = 0;
 
 	if ((pmp = msdosfs_mount(&vp, 0)) == NULL)
 		err(1, "msdosfs_mount");
@@ -170,9 +173,6 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	if (debug & DEBUG_FS_MAKEFS)
 		printf("msdos_makefs: image %s directory %s root %p\n",
 		    image, dir, root);
-
-	printf("Calculated size of `%s': %lld bytes, %lld inodes\n",
-	    image, (long long)fsopts->size, (long long)fsopts->inodes);
 
 		/* populate image */
 	printf("Populating `%s'\n", image);
