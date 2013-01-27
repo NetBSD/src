@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.13 2013/01/26 00:19:39 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.14 2013/01/27 14:10:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.13 2013/01/26 00:19:39 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.14 2013/01/27 14:10:03 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -77,13 +77,12 @@ bread(struct vnode *vp, daddr_t blkno, int size, struct kauth_cred *u1 __unused,
 	assert (bpp != NULL);
 
 	if (debug & DEBUG_BUF_BREAD)
-		printf("bread: fs %p blkno %lld size %d\n",
-		    fs, (long long)blkno, size);
+		printf("bread: blkno %lld size %d\n", (long long)blkno, size);
 	*bpp = getblk(vp, blkno, size, 0, 0);
 	offset = (*bpp)->b_blkno * sectorsize;	/* XXX */
 	if (debug & DEBUG_BUF_BREAD)
-		printf("bread: bp %p blkno %lld offset %lld bcount %ld\n",
-		    (*bpp), (long long)(*bpp)->b_blkno, (long long) offset,
+		printf("bread: blkno %lld offset %lld bcount %ld\n",
+		    (long long)(*bpp)->b_blkno, (long long) offset,
 		    (*bpp)->b_bcount);
 	if (lseek((*bpp)->b_fd, offset, SEEK_SET) == -1)
 		err(1, "bread: lseek %lld (%lld)",
@@ -141,9 +140,8 @@ bwrite(struct buf *bp)
 	assert (bp != NULL);
 	offset = bp->b_blkno * sectorsize;	/* XXX */
 	if (debug & DEBUG_BUF_BWRITE)
-		printf("bwrite: bp %p blkno %lld offset %lld bcount %ld\n",
-		    bp, (long long)bp->b_blkno, (long long) offset,
-		    bp->b_bcount);
+		printf("bwrite: blkno %lld offset %lld bcount %ld\n",
+		    (long long)bp->b_blkno, (long long) offset, bp->b_bcount);
 	if (lseek(bp->b_fd, offset, SEEK_SET) == -1)
 		return (errno);
 	rv = write(bp->b_fd, bp->b_data, bp->b_bcount);
@@ -191,11 +189,10 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int u1 __unused,
 	int fd = vp->fd;
 	struct fs *fs = vp->fs;
 
-	blkno += vp->offset;
+	// blkno += vp->offset;
 	assert (fs != NULL);
 	if (debug & DEBUG_BUF_GETBLK)
-		printf("getblk: fs %p blkno %lld size %d\n", fs,
-		    (long long)blkno, size);
+		printf("getblk: blkno %lld size %d\n", (long long)blkno, size);
 
 	bp = NULL;
 	if (!buftailinitted) {
@@ -226,6 +223,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int u1 __unused,
 		n = realloc(bp->b_data, size);
 		if (n == NULL)
 			err(1, "getblk: realloc b_data %ld", bp->b_bcount);
+		memset(n, 0, size);
 		bp->b_data = n;
 		bp->b_bufsize = size;
 	}
