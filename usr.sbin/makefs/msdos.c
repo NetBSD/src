@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.8 2013/01/27 20:05:46 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.9 2013/01/27 22:53:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.8 2013/01/27 20:05:46 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.9 2013/01/27 22:53:03 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -224,19 +224,25 @@ msdos_populate_dir(const char *path, struct denode *dir, fsnode *root,
 
 		if (cur->child) {
 			struct denode *de;
-			if ((de = msdosfs_mkdire(pbuf, dir, cur)) == NULL)
-				err(1, "msdosfs_mkdire");
-			if (!msdos_populate_dir(pbuf, de, cur->child, cur,
-			    fsopts))
-				err(1, "populate_dir");
+			if ((de = msdosfs_mkdire(pbuf, dir, cur)) == NULL) {
+				warn("msdosfs_mkdire %s", pbuf);
+				return -1;
+			}
+			if (msdos_populate_dir(pbuf, de, cur->child, cur,
+			    fsopts) == -1) {
+				warn("msdos_populate_dir %s", pbuf);
+				return -1;
+			}
 			continue;
 		} else if (!S_ISREG(cur->type)) {
 			warnx("skipping non-regular file %s/%s", cur->path,
 			    cur->name);
 			continue;
 		}
-		if (msdosfs_mkfile(pbuf, dir, cur) == NULL)
-			err(1, "msdosfs_mkfile %s", pbuf);
+		if (msdosfs_mkfile(pbuf, dir, cur) == NULL) {
+			warn("msdosfs_mkfile %s", pbuf);
+			return -1;
+		}
 	}
 	return 0;
 }
