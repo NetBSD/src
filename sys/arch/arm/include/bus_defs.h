@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.7 2013/01/27 18:31:31 matt Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.8 2013/01/27 19:00:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -301,8 +301,7 @@ struct bus_space {
  */
 #define	_BUS_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
 #define	_BUS_DMAMAP_IS_BOUNCING	0x20000 /* is bouncing current xfer */
-#define	_BUS_DMAMAP_MEM_XLATE	0x40000	/* translate sys->bus for dmamam_map */
-#define	_BUS_DMAMAP_NOALLOC	0x80000	/* don't alloc memory from this range */
+#define	_BUS_DMAMAP_NOALLOC	0x40000	/* don't alloc memory from this range */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
