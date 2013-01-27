@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.2 2013/01/26 16:50:46 christos Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.3 2013/01/27 22:52:38 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.2 2013/01/26 16:50:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.3 2013/01/27 22:52:38 christos Exp $");
 
 #include <sys/param.h>
 
@@ -215,7 +215,7 @@ detrunc(struct denode *dep, u_long length, int flags, struct kauth_cred *cred)
 	 * recognize the root directory at this point in a file or
 	 * directory's life.
 	 */
-	if ((DETOV(dep) == (struct vnode *)-1) && !FAT32(pmp)) {
+	if (dep->de_vnode != NULL && !FAT32(pmp)) {
 		printf("detrunc(): can't truncate root directory, clust %ld, offset %ld\n",
 		    dep->de_dirclust, dep->de_diroffset);
 		return (EINVAL);
@@ -323,7 +323,7 @@ deextend(struct denode *dep, u_long length, struct kauth_cred *cred)
 	/*
 	 * The root of a DOS filesystem cannot be extended.
 	 */
-	if ((DETOV(dep) == (struct vnode *)-1) && !FAT32(pmp))
+	if (dep->de_vnode != NULL && !FAT32(pmp))
 		return EINVAL;
 
 	/*
