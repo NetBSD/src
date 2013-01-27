@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.9 2013/01/27 20:05:46 christos Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.10 2013/01/27 22:07:19 christos Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,11 +51,10 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.9 2013/01/27 20:05:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.10 2013/01/27 22:07:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
-#include <sys/mount.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -554,6 +553,7 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	if (error)
 		goto bad2;
 
+	DPRINTF(("%s(newcluster %lu)\n", __func__, newcluster));
 	memset(&ndirent, 0, sizeof(ndirent));
 	ndirent.de_pmp = pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
@@ -566,6 +566,8 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	 */
 	bn = cntobn(pmp, newcluster);
 	lbn = de_bn2kb(pmp, bn);
+	DPRINTF(("%s(newcluster %lu, bn=%lu, lbn=%lu)\n", __func__, newcluster,
+	    bn, lbn));
 	/* always succeeds */
 	bp = getblk(pmp->pm_devvp, lbn, pmp->pm_bpcluster, 0, 0);
 	memset(bp->b_data, 0, pmp->pm_bpcluster);
@@ -615,6 +617,8 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	if ((error = msdosfs_findslot(pdep, &cn)) != 0)
 		goto bad;
 	if ((error = createde(&ndirent, pdep, &dep, &cn)) != 0)
+		goto bad;
+	if ((error = msdosfs_updatede(dep)) != 0)
 		goto bad;
 	return dep;
 
