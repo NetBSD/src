@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.25 2013/01/26 16:51:51 christos Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.26 2013/01/27 20:15:58 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.25 2013/01/26 16:51:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.26 2013/01/27 20:15:58 christos Exp $");
 
 /*
  * kernel include files.
@@ -96,6 +96,11 @@ int fc_largedistance;		/* off by more than LMMAX		 */
 int fc_wherefrom, fc_whereto, fc_lastclust;
 int pm_fatblocksize;
 
+#ifdef MSDOSFS_DEBUG
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
+#endif
 #ifdef MSDOSFS_DEBUG
 void print_fat_stats(void);
 
@@ -199,6 +204,7 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 		return (0);
 
 	cn = dep->de_StartCluster;
+	DPRINTF(("%s(start cluster=%lu)\n", __func__, cn));
 	/*
 	 * The "file" that makes up the root directory is contiguous,
 	 * permanently allocated, of fixed size, and is not made up of
@@ -210,6 +216,8 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 			if (de_cn2off(pmp, findcn) >= dep->de_FileSize) {
 				if (cnp)
 					*cnp = de_bn2cn(pmp, pmp->pm_rootdirsize);
+				DPRINTF(("%s(root, %lu ETOOBIG)\n", __func__,
+				    de_cn2off(pmp, findcn)));
 				return (E2BIG);
 			}
 			if (bnp)
@@ -219,10 +227,14 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 			if (sp)
 				*sp = min(pmp->pm_bpcluster,
 				    dep->de_FileSize - de_cn2off(pmp, findcn));
+			DPRINTF(("%s(root, bn=%lu, cn=%u)\n", __func__,
+			    pmp->pm_rootdirblk + de_cn2bn(pmp, findcn),
+			    MSDOSFSROOT));
 			return (0);
 		} else {		/* just an empty file */
 			if (cnp)
 				*cnp = 0;
+			DPRINTF(("%s(root, empty ETOOBIG)\n", __func__));
 			return (E2BIG);
 		}
 	}
@@ -240,6 +252,8 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 	 */
 	i = 0;
 	fc_lookup(dep, findcn, &i, &cn);
+	DPRINTF(("%s(bpcluster=%lu i=%lu cn=%lu\n", __func__, pmp->pm_bpcluster,
+	    i, cn));
 	if ((bn = findcn - i) >= LMMAX) {
 		fc_largedistance++;
 		fc_wherefrom = i;
@@ -265,6 +279,7 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
 			    NOCRED, 0, &bp);
 			if (error) {
+				DPRINTF(("%s(bread, %d)\n", __func__, error));
 				return (error);
 			}
 			bp_bn = bn;
@@ -273,6 +288,8 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 		if (bo >= bsize) {
 			if (bp)
 				brelse(bp, 0);
+			DPRINTF(("%s(block, %lu >= %lu)\n", __func__, bo,
+			    bsize));
 			return (EIO);
 		}
 		KASSERT(bp != NULL);
@@ -292,6 +309,8 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 			*bnp = cntobn(pmp, cn);
 		if (cnp)
 			*cnp = cn;
+		DPRINTF(("%s(bn=%lu, cn=%lu)\n", __func__, cntobn(pmp, cn),
+		    cn));
 		fc_setcache(dep, FC_LASTMAP, i, cn);
 		return (0);
 	}
@@ -303,6 +322,7 @@ hiteof:;
 		brelse(bp, 0);
 	/* update last file cluster entry in the FAT cache */
 	fc_setcache(dep, FC_LASTFC, i - 1, prevcn);
+	DPRINTF(("%s(eof, %lu)\n", __func__, i));
 	return (E2BIG);
 }
 
@@ -362,10 +382,7 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, u_long fatbn)
 	int i;
 	struct buf *bpn;
 
-#ifdef MSDOSFS_DEBUG
-	printf("updatefats(pmp %p, bp %p, fatbn %lu)\n",
-	    pmp, bp, fatbn);
-#endif
+	DPRINTF(("%s(pmp %p, bp %p, fatbn %lu)\n", __func__, pmp, bp, fatbn));
 
 	/*
 	 * If we have an FSInfo block, update it.
@@ -530,17 +547,16 @@ fatentry(int function, struct msdosfsmount *pmp, u_long cn, u_long *oldcontents,
 	u_long bn, bo, bsize, byteoffset;
 	struct buf *bp;
 
-#ifdef	MSDOSFS_DEBUG
-	printf("fatentry(func %d, pmp %p, clust %lu, oldcon %p, newcon %lx)\n",
-	     function, pmp, cn, oldcontents, newcontents);
-#endif
+	DPRINTF(("%s(func %d, pmp %p, clust %lu, oldcon %p, newcon " "%lx)\n",
+	    __func__, function, pmp, cn, oldcontents, newcontents));
 
 #ifdef DIAGNOSTIC
 	/*
 	 * Be sure they asked us to do something.
 	 */
 	if ((function & (FAT_SET | FAT_GET)) == 0) {
-		printf("fatentry(): function code doesn't specify get or set\n");
+		DPRINTF(("%s(): function code doesn't specify get or set\n",
+		    __func__));
 		return (EINVAL);
 	}
 
@@ -549,7 +565,8 @@ fatentry(int function, struct msdosfsmount *pmp, u_long cn, u_long *oldcontents,
 	 * where to put it, give them an error.
 	 */
 	if ((function & FAT_GET) && oldcontents == NULL) {
-		printf("fatentry(): get function with no place to put result\n");
+		DPRINTF(("%s(): get function with no place to put result\n",
+			__func__));
 		return (EINVAL);
 	}
 #endif
@@ -628,10 +645,8 @@ fatchain(struct msdosfsmount *pmp, u_long start, u_long count, u_long fillwith)
 	u_long bn, bo, bsize, byteoffset, readcn, newc;
 	struct buf *bp;
 
-#ifdef MSDOSFS_DEBUG
-	printf("fatchain(pmp %p, start %lu, count %lu, fillwith %lx)\n",
-	    pmp, start, count, fillwith);
-#endif
+	DPRINTF(("%s(pmp %p, start %lu, count %lu, fillwith %lx)\n", __func__,
+	    pmp, start, count, fillwith));
 	/*
 	 * Be sure the clusters are in the filesystem.
 	 */
@@ -744,10 +759,9 @@ chainalloc(struct msdosfsmount *pmp, u_long start, u_long count, u_long fillwith
 		usemap_alloc(pmp, cl++);
 	if ((error = fatchain(pmp, start, count, fillwith)) != 0)
 		return (error);
-#ifdef MSDOSFS_DEBUG
-	printf("clusteralloc(): allocated cluster chain at %lu (%lu clusters)\n",
-	    start, count);
-#endif
+
+	DPRINTF(("%s(): allocated cluster chain at %lu (%lu clusters)\n",
+	    __func__, start, count));
 	if (retcluster)
 		*retcluster = start;
 	if (got)
@@ -775,9 +789,7 @@ clusteralloc(struct msdosfsmount *pmp, u_long start, u_long count, u_long *retcl
 	u_long fillwith = CLUST_EOFE;
 	u_int map;
 
-#ifdef MSDOSFS_DEBUG
-	printf("clusteralloc(): find %lu clusters\n",count);
-#endif
+	DPRINTF(("%s(): find %lu clusters\n", __func__, count));
 	if (start) {
 		if ((len = chainlength(pmp, start, count)) >= count)
 			return (chainalloc(pmp, start, count, fillwith, retcluster, got));
@@ -990,7 +1002,7 @@ extendfile(struct denode *dep, u_long count, struct buf **bpp, u_long *ncp, int 
 	 */
 	if (dep->de_StartCluster == MSDOSFSROOT
 	    && (dep->de_Attributes & ATTR_DIRECTORY)) {
-		printf("extendfile(): attempt to extend root directory\n");
+		DPRINTF(("%s(): attempt to extend root directory\n", __func__));
 		return (ENOSPC);
 	}
 
