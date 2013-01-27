@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.114 2012/11/08 20:43:55 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.115 2013/01/27 12:48:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.114 2012/11/08 20:43:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.115 2013/01/27 12:48:56 jmcneill Exp $");
 #endif
 
 /*
@@ -1278,6 +1278,10 @@ ath_start(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
 	    !device_is_active(sc->sc_dev))
 		return;
+
+	if (sc->sc_flags & ATH_KEY_UPDATING)
+		return;
+
 	for (;;) {
 		/*
 		 * Grab a TX buffer and associated resources.
@@ -1887,7 +1891,7 @@ ath_key_update_begin(struct ieee80211com *ic)
 #if 0
 	tasklet_disable(&sc->sc_rxtq);
 #endif
-	IF_LOCK(&ifp->if_snd);		/* NB: doesn't block mgmt frames */
+	sc->sc_flags |= ATH_KEY_UPDATING;
 }
 
 static void
@@ -1897,7 +1901,7 @@ ath_key_update_end(struct ieee80211com *ic)
 	struct ath_softc *sc = ifp->if_softc;
 
 	DPRINTF(sc, ATH_DEBUG_KEYCACHE, "%s:\n", __func__);
-	IF_UNLOCK(&ifp->if_snd);
+	sc->sc_flags &= ~ATH_KEY_UPDATING;
 #if 0
 	tasklet_enable(&sc->sc_rxtq);
 #endif

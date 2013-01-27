@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.35 2011/10/07 16:58:11 dyoung Exp $	*/
+/*	$NetBSD: athvar.h,v 1.36 2013/01/27 12:48:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -309,6 +309,7 @@ struct ath_softc {
 #define	sc_rx_th		u_rx_rt.th
 
 #define	ATH_ATTACHED		0x0001		/* attach has succeeded */
+#define	ATH_KEY_UPDATING	0x0002		/* key change in progress */
 
 #define	ATH_TXQ_SETUP(sc, i)	((sc)->sc_txqsetup & (1<<i))
 
