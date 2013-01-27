@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.14 2013/01/24 10:18:41 matt Exp $	*/
+/*	$NetBSD: ansi.h,v 1.15 2013/01/27 17:43:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -50,15 +50,16 @@
 #define	_BSD_CLOCK_T_		unsigned int	/* clock() */
 #ifdef __PTRDIFF_TYPE__
 #define	_BSD_PTRDIFF_T_		__PTRDIFF_TYPE__ /* ptr1 - ptr2 */
+#define	_BSD_SSIZE_T_		__PTRDIFF_TYPE__ /* byte count or error */
 #else
 #define	_BSD_PTRDIFF_T_		long int	/* ptr1 - ptr2 */
+#define	_BSD_SSIZE_T_		long int	/* byte count or error */
 #endif
 #ifdef __SIZE_TYPE__
 #define	_BSD_SIZE_T_		__SIZE_TYPE__	/* sizeof() */
 #else
 #define	_BSD_SIZE_T_		unsigned long int /* sizeof() */
 #endif
-#define	_BSD_SSIZE_T_		_BSD_PTRDIFF_T_	/* byte count or error */
 #define	_BSD_TIME_T_		__int64_t	/* time() */
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */
