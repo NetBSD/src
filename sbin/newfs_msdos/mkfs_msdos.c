@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.5 2013/01/24 19:24:56 christos Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.6 2013/01/27 21:56:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -37,16 +37,16 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.5 2013/01/24 19:24:56 christos Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.6 2013/01/27 21:56:26 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #ifndef MAKEFS
+#include <sys/mount.h>
 #include <sys/disk.h>
 #endif
 
