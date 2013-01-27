@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.4 2013/01/26 16:58:14 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.5 2013/01/27 10:07:23 mbalmer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.4 2013/01/26 16:58:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.5 2013/01/27 10:07:23 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -177,7 +177,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	int error, fd;
 	size_t osize = dep->de_FileSize;
 	struct stat *st = &node->inode->st;
-	size_t nsize = st->st_size;
+	off_t nsize = st->st_size;
 	size_t offs = 0;
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct buf *bp;
@@ -207,7 +207,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	if ((fd = open(path, O_RDONLY)) == -1)
 		err(1, "open %s", path);
 
-	if ((dat = mmap(0, nsize, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0))
+	if ((dat = mmap(0, (size_t)nsize, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0))
 	    == MAP_FAILED)
 		err(1, "mmap %s", node->name);
 	close(fd);
