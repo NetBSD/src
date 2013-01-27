@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.10 2013/01/27 22:07:19 christos Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.11 2013/01/27 22:09:24 christos Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.10 2013/01/27 22:07:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.11 2013/01/27 22:09:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -419,7 +419,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	int error, fd;
 	size_t osize = dep->de_FileSize;
 	struct stat *st = &node->inode->st;
-	size_t nsize;
+	size_t nsize, offs;
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct buf *bp;
 	char *dat;
@@ -460,7 +460,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	}
 	close(fd);
 
-	for (size_t offs = 0; offs < nsize;) {
+	for (offs = 0; offs < nsize;) {
 		int blsize, cpsize;
 		daddr_t bn;
 		u_long lbn = dep->de_StartCluster;
