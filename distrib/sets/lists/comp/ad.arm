@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.43 2013/01/16 16:01:05 christos Exp $
+# $NetBSD: ad.arm,v 1.44 2013/01/28 18:57:10 matt Exp $
 ./usr/include/gcc-4.5/arm_neon.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
@@ -88,12 +88,11 @@
 ./usr/lib/libarm.a				comp-c-lib
 ./usr/lib/libarm32.a				comp-obsolete		obsolete
 ./usr/lib/libarm32_p.a				comp-obsolete		obsolete
-./usr/lib/libarm32_pic.a			comp-obsolete		obsolete
 ./usr/lib/libarm_p.a				comp-c-lib		profile
-./usr/lib/libarm_pic.a				comp-c-piclib
+./usr/lib/libc_vfp.a				comp-c-lib
+./usr/lib/libc_vfp_p.a				comp-c-lib		profile
 ./usr/lib/libpmc.a				comp-c-lib
 ./usr/lib/libpmc_p.a				comp-c-proflib		profile
-./usr/lib/libpmc_pic.a				comp-c-piclib
 ./usr/libdata/lint/llib-larm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-larm32.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib		lint
