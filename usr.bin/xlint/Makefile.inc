@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2010/03/22 05:12:24 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2013/01/28 14:25:18 matt Exp $
 
 WARNS?=		3	# XXX: fails -Wsign-compare
 
@@ -8,10 +8,10 @@ WARNS?=		3	# XXX: fails -Wsign-compare
 
 # Special cases first, then check for a MACHINE_ARCH specific
 # subdir before looking for MACHINE_CPU.
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
-ARCHSUBDIR=	mips64
-.elif exists(${.CURDIR}/../arch/${MACHINE_ARCH})
+.if exists(${.CURDIR}/../arch/${MACHINE_ARCH})
 ARCHSUBDIR=	${MACHINE_ARCH}
+.elif exists(${.CURDIR}/../arch/${MACHINE_ARCH:C/e[lb]$//})
+ARCHSUBDIR=	${MACHINE_ARCH:C/e[lb]$//}
 .else
 ARCHSUBDIR=	${MACHINE_CPU}
 .endif
