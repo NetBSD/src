@@ -263,11 +263,17 @@
 /* Core Receive Status Queue Read Register (Host mode) */
 #define	GRXSTSRH_PKTSTS_MASK		0x001e0000
 #define	GRXSTSRH_PKTSTS_SHIFT		17
+#define	 GRXSTSRH_IN_DATA		(2<<17)
+#define	 GRXSTSRH_IN_COMPLETE		(3<<17)
+#define	 GRXSTSRH_DT_ERROR		(5<<17)
+#define	 GRXSTSRH_HALTED		(7<<17)
 #define	GRXSTSRH_DPID_MASK		0x00018000
 #define	GRXSTSRH_DPID_SHIFT		15
 #define	GRXSTSRH_BCNT_MASK		0x00007ff0
+#define	GRXSTSRH_BCNT_GET(x)		(((x) >> 4) & 0x7FF)
 #define	GRXSTSRH_BCNT_SHIFT		4
 #define	GRXSTSRH_CHNUM_MASK		0x0000000f
+#define	GRXSTSRH_CHNUM_GET(x)		((x) & 15)
 #define	GRXSTSRH_CHNUM_SHIFT		0
 
 /* Core Receive Status Queue Read Register (Device mode) */
@@ -276,27 +282,23 @@
 #define	GRXSTSRD_FN_SHIFT		21
 #define	GRXSTSRD_PKTSTS_MASK		0x001e0000
 #define	GRXSTSRD_PKTSTS_SHIFT		17
-#define	GRXSTSRH_IN_DATA		(2<<17)
-#define	GRXSTSRH_IN_COMPLETE		(3<<17)
-#define	GRXSTSRH_DT_ERROR		(5<<17)
-#define	GRXSTSRH_HALTED			(7<<17)
-#define	GRXSTSRD_GLOB_OUT_NAK		(1<<17)
-#define	GRXSTSRD_OUT_DATA		(2<<17)
-#define	GRXSTSRD_OUT_COMPLETE		(3<<17)
-#define	GRXSTSRD_STP_COMPLETE		(4<<17)
-#define	GRXSTSRD_STP_DATA		(6<<17)
+#define	 GRXSTSRD_GLOB_OUT_NAK		(1<<17)
+#define	 GRXSTSRD_OUT_DATA		(2<<17)
+#define	 GRXSTSRD_OUT_COMPLETE		(3<<17)
+#define	 GRXSTSRD_STP_COMPLETE		(4<<17)
+#define	 GRXSTSRD_STP_DATA		(6<<17)
 #define	GRXSTSRD_DPID_MASK		0x00018000
 #define	GRXSTSRD_DPID_SHIFT		15
-#define	GRXSTSRD_DPID_DATA0		(0<<15)
-#define	GRXSTSRD_DPID_DATA1		(2<<15)
-#define	GRXSTSRD_DPID_DATA2		(1<<15)
-#define	GRXSTSRD_DPID_MDATA		(3<<15)
+#define	 GRXSTSRD_DPID_DATA0		(0<<15)
+#define	 GRXSTSRD_DPID_DATA1		(2<<15)
+#define	 GRXSTSRD_DPID_DATA2		(1<<15)
+#define	 GRXSTSRD_DPID_MDATA		(3<<15)
 #define	GRXSTSRD_BCNT_MASK		0x00007ff0
 #define	GRXSTSRD_BCNT_GET(x)		(((x) >> 4) & 0x7FF)
 #define	GRXSTSRD_BCNT_SHIFT		4
-#define	GRXSTSRD_CHNUM_MASK		0x0000000f
-#define	GRXSTSRD_CHNUM_GET(x)		((x) & 15)
-#define	GRXSTSRD_CHNUM_SHIFT		0
+#define	GRXSTSRD_EPNUM_MASK		0x0000000f
+#define	GRXSTSRD_EPNUM_GET(x)		((x) & 15)
+#define	GRXSTSRD_EPNUM_SHIFT		0
 
 /* Core Receive FIFO Size Register */
 #define	GRXFSIZ_RXFDEP_MASK		0x0000ffff
