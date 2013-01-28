@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.22 2013/01/28 20:32:04 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.23 2013/01/28 21:35:35 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -734,7 +734,7 @@ send_hello_alarm(int unused)
 			case LDP_PEER_ESTABLISHED:
 			case LDP_PEER_CONNECTED:
 				send_notification(p, 0,
-				    NOTIF_KEEP_ALIVE_TIMER_EXPIRED);
+				    NOTIF_FATAL|NOTIF_KEEP_ALIVE_TIMER_EXPIRED);
 				warnp("Keepalive expired for %s\n",
 				    inet_ntoa(p->ldp_id));
 				ldp_peer_holddown(p);
