@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.11 2013/01/28 06:17:57 matt Exp $ */
+/* $NetBSD: crt0-common.c,v 1.12 2013/01/28 16:56:39 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.11 2013/01/28 06:17:57 matt Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.12 2013/01/28 16:56:39 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -95,17 +95,14 @@ do {						\
  * Since we don't need .init or .fini sections, just code them in C
  * to make life easier.
  */
-#if __GNUC_PREREQ__(4,5) || defined(__clang__)
-static const fptr_t init_array_start[1] __weak_reference(__init_array_start);
-static const fptr_t init_array_end[1] __weak_reference(__init_array_end);
-static const fptr_t fini_array_start[1] __weak_reference(__fini_array_start);
-static const fptr_t fini_array_end[1] __weak_reference(__fini_array_end);
-#else
-extern const fptr_t init_array_start[] __weak_reference(__init_array_start);
-extern const fptr_t init_array_end[] __weak_reference(__init_array_end);
-extern const fptr_t fini_array_start[] __weak_reference(__fini_array_start);
-extern const fptr_t fini_array_end[] __weak_reference(__fini_array_end);
-#endif
+__weakref_visible const fptr_t init_array_start[1]
+    __weak_reference(__init_array_start);
+__weakref_visible const fptr_t init_array_end[1]
+    __weak_reference(__init_array_end);
+__weakref_visible const fptr_t fini_array_start[1]
+    __weak_reference(__fini_array_start);
+__weakref_visible const fptr_t fini_array_end[1]
+    __weak_reference(__fini_array_end);
 
 static inline void
 _init(void)
