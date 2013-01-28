@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.27 2013/01/28 16:06:42 apb Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.28 2013/01/28 19:50:30 apb Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.27 2013/01/28 16:06:42 apb Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.28 2013/01/28 19:50:30 apb Exp $");
 #endif /* not lint */
 
 /*
@@ -200,10 +200,24 @@ decode(char *outputname)
 		fn = buf;
 	}
 
-	if (strcmp(fn, "/dev/stdout") == 0) {
-		/* use stdout */
+	if (strcmp(fn, "/dev/stdout") == 0 || strcmp(fn, "-") == 0) {
+		/*
+		 * POSIX.1-2008 says that both "-" and "/dev/stdout"
+		 * refer to standard output when they appear in the file
+		 * header, but only "/dev/stdout" refers to standard
+		 * output when it appears as the argument to the "-o"
+		 * command line option.
+		 *
+		 * We handle both special names, regardless of whether
+		 * they came from the "-o" option or from the header of
+		 * the input stream.
+		 */
 	} else {
-		/* create output file, set mode */
+		/*
+		 * Create output file, and set its mode.  POSIX.1-2008
+		 * requires the mode to be used exactly, ignoring the
+		 * umask and anything else, but we mask it with 0666.
+		 */
 		if (freopen(fn, "w", stdout) == NULL ||
 		    fchmod(fileno(stdout), mode & 0666) != 0) { 
 			warn("%s: %s", fn, inputname);
