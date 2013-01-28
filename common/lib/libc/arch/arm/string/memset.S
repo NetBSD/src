@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.2 2012/12/12 15:46:05 matt Exp $	*/
+/*	$NetBSD: memset.S,v 1.3 2013/01/28 06:23:44 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -67,6 +67,10 @@
  */
 
 #include <machine/asm.h>
+
+#if defined(__ARM_EABI__) && !defined(BZER0)
+STRONG_ALIAS(__aeabi_memset, memset)
+#endif
 
 /*
  * memset: Sets a block of memory to the specified value
