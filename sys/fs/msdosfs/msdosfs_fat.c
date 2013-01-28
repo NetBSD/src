@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.27 2013/01/27 22:04:19 christos Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.28 2013/01/28 00:17:18 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.27 2013/01/27 22:04:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.28 2013/01/28 00:17:18 christos Exp $");
 
 /*
  * kernel include files.
@@ -147,6 +147,8 @@ fatblock(struct msdosfsmount *pmp, u_long ofs, u_long *bnp, u_long *sizep, u_lon
 	    * pmp->pm_BytesPerSec;
 	bn += pmp->pm_fatblk + pmp->pm_curfat * pmp->pm_FATsecs;
 
+	DPRINTF(("%s(ofs=%lu bn=%lu, size=%lu, bo=%lu)\n", __func__, ofs, bn,
+	    size, ofs % pmp->pm_fatblocksize));
 	if (bnp)
 		*bnp = bn;
 	if (sizep)
@@ -154,7 +156,7 @@ fatblock(struct msdosfsmount *pmp, u_long ofs, u_long *bnp, u_long *sizep, u_lon
 	if (bop)
 		*bop = ofs % pmp->pm_fatblocksize;
 
-	pm_fatblocksize =  pmp->pm_fatblocksize;
+	pm_fatblocksize = pmp->pm_fatblocksize;
 }
 
 /*
@@ -299,6 +301,8 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 			cn = getushort((char *)bp->b_data + bo);
 		if (FAT12(pmp) && (prevcn & 1))
 			cn >>= 4;
+		DPRINTF(("%s(cn=%lu masked=%lu)\n", __func__, cn,
+		    cn & pmp->pm_fatmask));
 		cn &= pmp->pm_fatmask;
 	}
 
