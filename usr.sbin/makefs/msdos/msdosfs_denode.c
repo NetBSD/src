@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.4 2013/01/28 00:16:24 christos Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.5 2013/01/28 21:03:29 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.4 2013/01/28 00:16:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.5 2013/01/28 21:03:29 christos Exp $");
 
 #include <sys/param.h>
 
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.4 2013/01/28 00:16:24 christos 
 #include <fs/msdosfs/direntry.h>
 #include <fs/msdosfs/denode.h>
 #include <fs/msdosfs/fat.h>
+
+#include <util.h>
 
 /*
  * If deget() succeeds it returns with the gotten denode locked().
@@ -77,7 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.4 2013/01/28 00:16:24 christos 
  * depp	     - returns the address of the gotten denode.
  */
 int
-deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct denode **depp)
+deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
+    struct denode **depp)
 	/* pmp:	 so we know the maj/min number */
 	/* dirclust:		 cluster this dir entry came from */
 	/* diroffset:		 index of entry within the cluster */
@@ -100,9 +103,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct denode
 	if (FAT32(pmp) && dirclust == MSDOSFSROOT)
 		dirclust = pmp->pm_rootdirblk;
 
-	ldep = calloc(1, sizeof(*ldep));
-	if (ldep == NULL)
-		err(1, "calloc");
+	ldep = ecalloc(1, sizeof(*ldep));
 	ldep->de_vnode = NULL;
 	ldep->de_flag = 0;
 	ldep->de_devvp = 0;
