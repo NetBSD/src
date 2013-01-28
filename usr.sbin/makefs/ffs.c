@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.55 2013/01/27 20:05:46 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.56 2013/01/28 21:03:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.55 2013/01/27 20:05:46 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.56 2013/01/28 21:03:27 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -88,6 +88,7 @@ __RCSID("$NetBSD: ffs.c,v 1.55 2013/01/27 20:05:46 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "makefs.h"
 #include "ffs.h"
@@ -150,17 +151,42 @@ static  void	*ffs_build_dinode2(struct ufs2_dinode *, dirbuf_t *, fsnode *,
 
 int	sectorsize;		/* XXX: for buf.c::getblk() */
 
-	/* publically visible functions */
 
+static char optimization[24];	/* XXX: allocate */
+
+	/* publically visible functions */
 void
 ffs_prep_opts(fsinfo_t *fsopts)
 {
-	ffs_opt_t *ffs_opts;
+	ffs_opt_t *ffs_opts = ecalloc(1, sizeof(*ffs_opts));
 
-	if ((ffs_opts = calloc(1, sizeof(ffs_opt_t))) == NULL)
-		err(1, "Allocating memory for ffs_options");
-
-	fsopts->fs_specific = ffs_opts;
+	const option_t ffs_options[] = {
+	    { 'b', "bsize", &ffs_opts->bsize, OPT_INT32,
+	      1, INT_MAX, "block size" },
+	    { 'f', "fsize", &ffs_opts->fsize, OPT_INT32,
+	      1, INT_MAX, "fragment size" },
+	    { 'd', "density", &ffs_opts->density, OPT_INT32,
+	      1, INT_MAX, "bytes per inode" },
+	    { 'm', "minfree", &ffs_opts->minfree, OPT_INT32,
+	      0, 99, "minfree" },
+	    { 'M', "maxbpf", &ffs_opts->maxbpg, OPT_INT32,
+	      1, INT_MAX, "max blocks per file in a cg" },
+	    { 'a', "avgfilesize", &ffs_opts->avgfilesize, OPT_INT32,
+	      1, INT_MAX, "expected average file size" },
+	    { 'n', "avgfpdir", &ffs_opts->avgfpdir, OPT_INT32,
+	      1, INT_MAX, "expected # of files per directory" },
+	    { 'x', "extent", &ffs_opts->maxbsize, OPT_INT32,
+	      1, INT_MAX, "maximum # extent size" },
+	    { 'g', "maxbpcg", &ffs_opts->maxblkspercg, OPT_INT32,
+	      1, INT_MAX, "max # of blocks per group" },
+	    { 'v', "version", &ffs_opts->version, OPT_INT32,
+	      1, 2, "UFS version" },
+	    { 'o', "optimization", optimization, OPT_STRARRAY,
+	      1, sizeof(optimization), "Optimization (time|space)" },
+	    { 'l', "label", ffs_opts->label, OPT_STRARRAY,
+	      1, sizeof(ffs_opts->label), "UFS label" },
+	    { .name = NULL }
+	};
 
 	ffs_opts->bsize= -1;
 	ffs_opts->fsize= -1;
@@ -173,48 +199,23 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	ffs_opts->avgfilesize= -1;
 	ffs_opts->avgfpdir= -1;
 	ffs_opts->version = 1;
+
+	fsopts->fs_specific = ffs_opts;
+	fsopts->fs_options = copy_opts(ffs_options);
 }
 
 void
 ffs_cleanup_opts(fsinfo_t *fsopts)
 {
-	if (fsopts->fs_specific)
-		free(fsopts->fs_specific);
+	free(fsopts->fs_specific);
+	free(fsopts->fs_options);
 }
 
 int
 ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 {
 	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
-	char optimization[24];
-
-	option_t ffs_options[] = {
-	    { '\0', "bsize", &ffs_opts->bsize, OPT_INT32,
-	      1, INT_MAX, "block size" },
-	    { '\0', "fsize", &ffs_opts->fsize, OPT_INT32,
-	      1, INT_MAX, "fragment size" },
-	    { '\0', "density", &ffs_opts->density, OPT_INT32,
-	      1, INT_MAX, "bytes per inode" },
-	    { '\0', "minfree", &ffs_opts->minfree, OPT_INT32,
-	      0, 99, "minfree" },
-	    { '\0', "maxbpf", &ffs_opts->maxbpg, OPT_INT32,
-	      1, INT_MAX, "max blocks per file in a cg" },
-	    { '\0', "avgfilesize", &ffs_opts->avgfilesize, OPT_INT32,
-	      1, INT_MAX, "expected average file size" },
-	    { '\0', "avgfpdir", &ffs_opts->avgfpdir, OPT_INT32,
-	      1, INT_MAX, "expected # of files per directory" },
-	    { '\0', "extent", &ffs_opts->maxbsize, OPT_INT32,
-	      1, INT_MAX, "maximum # extent size" },
-	    { '\0', "maxbpcg", &ffs_opts->maxblkspercg, OPT_INT32,
-	      1, INT_MAX, "max # of blocks per group" },
-	    { '\0', "version", &ffs_opts->version, OPT_INT32,
-	      1, 2, "UFS version" },
-	    { '\0', "optimization", optimization, OPT_STRARRAY,
-	      1, sizeof(optimization), "Optimization (time|space)" },
-	    { '\0', "label", ffs_opts->label, OPT_STRARRAY,
-	      1, sizeof(ffs_opts->label), "UFS label" },
-	    { .name = NULL }
-	};
+	option_t *ffs_options = fsopts->fs_options;
 
 	int	rv;
 
@@ -505,10 +506,8 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 		printf(
 		    "zero-ing image `%s', %lld sectors, using %d byte chunks\n",
 		    image, (long long)bufrem, bufsize);
-	if ((bufrem > 0) && ((buf = calloc(1, bufsize)) == NULL)) {
-		warn("Can't create buffer for sector");
-		return (-1);
-	}
+	if (bufrem > 0)
+		buf = ecalloc(1, bufsize);
 	while (bufrem > 0) {
 		i = write(fsopts->fd, buf, MIN(bufsize, bufrem));
 		if (i == -1) {
@@ -894,8 +893,7 @@ ffs_write_file(union dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 		goto write_inode_and_leave;		/* mmm, cheating */
 
 	if (isfile) {
-		if ((fbuf = malloc(ffs_opts->bsize)) == NULL)
-			err(1, "Allocating memory for write buffer");
+		fbuf = emalloc(ffs_opts->bsize);
 		if ((ffd = open((char *)buf, O_RDONLY, 0444)) == -1) {
 			warn("Can't open `%s' for reading", (char *)buf);
 			goto leave_ffs_write_file;
@@ -1021,8 +1019,7 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 		if (debug & DEBUG_FS_MAKE_DIRBUF)
 			printf("ffs_make_dirbuf: growing buf to %d\n",
 			    dbuf->size + DIRBLKSIZ);
-		if ((newbuf = realloc(dbuf->buf, dbuf->size + DIRBLKSIZ)) == NULL)
-			err(1, "Allocating memory for directory buffer");
+		newbuf = erealloc(dbuf->buf, dbuf->size + DIRBLKSIZ);
 		dbuf->buf = newbuf;
 		dbuf->size += DIRBLKSIZ;
 		memset(dbuf->buf + dbuf->size - DIRBLKSIZ, 0, DIRBLKSIZ);
@@ -1073,10 +1070,7 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 
 	assert (isclr(cg_inosused(cgp, fsopts->needswap), cgino));
 
-	buf = malloc(fs->fs_bsize);
-	if (buf == NULL)
-		errx(1, "ffs_write_inode: cg %d: can't alloc inode block", cg);
-
+	buf = emalloc(fs->fs_bsize);
 	dp1 = (struct ufs1_dinode *)buf;
 	dp2 = (struct ufs2_dinode *)buf;
 

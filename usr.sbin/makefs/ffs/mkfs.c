@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.25 2013/01/22 09:39:19 dholland Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.26 2013/01/28 21:03:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.25 2013/01/22 09:39:19 dholland Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.26 2013/01/28 21:03:29 christos Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: mkfs.c,v 1.25 2013/01/22 09:39:19 dholland Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <util.h>
 
 #include "makefs.h"
 #include "ffs.h"
@@ -415,8 +416,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	blks = howmany(size, sblock.fs_fsize);
 	if (sblock.fs_contigsumsize > 0)
 		size += sblock.fs_ncg * sizeof(int32_t);
-	if ((space = (char *)calloc(1, size)) == NULL)
-		err(1, "memory allocation error for cg summaries");
+	space = ecalloc(1, size);
 	sblock.fs_csp = space;
 	space = (char *)space + sblock.fs_cssize;
 	if (sblock.fs_contigsumsize > 0) {
@@ -504,11 +504,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		iobufsize = SBLOCKSIZE + 3 * sblock.fs_bsize;
 	else
 		iobufsize = 4 * sblock.fs_bsize;
-	if ((iobuf = malloc(iobufsize)) == 0) {
-		printf("Cannot allocate I/O buffer\n");
-		exit(38);
-	}
-	memset(iobuf, 0, iobufsize);
+	iobuf = ecalloc(1, iobufsize);
 	/*
 	 * Make a copy of the superblock into the buffer that we will be
 	 * writing out in each cylinder group.
@@ -574,8 +570,7 @@ ffs_write_superblock(struct fs *fs, const fsinfo_t *fsopts)
 	size = fs->fs_cssize;
 	blks = howmany(size, fs->fs_fsize);
 	space = (void *)fs->fs_csp;
-	if ((wrbuf = malloc(size)) == NULL)
-		err(1, "ffs_write_superblock: malloc %d", size);
+	wrbuf = emalloc(size);
 	for (i = 0; i < blks; i+= fs->fs_frag) {
 		size = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)

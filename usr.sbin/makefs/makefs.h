@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.29 2013/01/23 21:32:32 christos Exp $	*/
+/*	$NetBSD: makefs.h,v 1.30 2013/01/28 21:03:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -111,6 +111,31 @@ typedef struct _fsnode {
 #define	FSNODE_F_HASSPEC	0x01	/* fsnode has a spec entry */
 
 /*
+ * option_t - contains option name, description, pointer to location to store
+ * result, and range checks for the result. Used to simplify fs specific
+ * option setting
+ */
+typedef enum {
+	OPT_STRARRAY,
+	OPT_STRPTR,
+	OPT_BOOL,
+	OPT_INT8,
+	OPT_INT16,
+	OPT_INT32,
+	OPT_INT64
+} opttype_t;
+
+typedef struct {
+	char		letter;		/* option letter NUL for none */
+	const char	*name;		/* option name */
+	void		*value;		/* where to stuff the value */
+	opttype_t	type;		/* type of entry */
+	long long	minimum;	/* minimum for value */
+	long long	maximum;	/* maximum for value */
+	const char	*desc;		/* option description */
+} option_t;
+
+/*
  * fsinfo_t - contains various settings and parameters pertaining to
  * the image, including current settings, global options, and fs
  * specific options
@@ -139,33 +164,10 @@ typedef struct {
 	int	sparse;		/* sparse image, don't fill it with zeros */
 
 	void	*fs_specific;	/* File system specific additions. */
+	option_t *fs_options;	/* File system specific options */
 } fsinfo_t;
 
 
-/*
- * option_t - contains option name, description, pointer to location to store
- * result, and range checks for the result. Used to simplify fs specific
- * option setting
- */
-typedef enum {
-	OPT_STRARRAY,
-	OPT_STRPTR,
-	OPT_BOOL,
-	OPT_INT8,
-	OPT_INT16,
-	OPT_INT32,
-	OPT_INT64
-} opttype_t;
-
-typedef struct {
-	char		letter;		/* option letter NUL for none */
-	const char	*name;		/* option name */
-	void		*value;		/* where to stuff the value */
-	opttype_t	type;		/* type of entry */
-	long long	minimum;	/* minimum for value */
-	long long	maximum;	/* maximum for value */
-	const char	*desc;		/* option description */
-} option_t;
 
 
 void		apply_specfile(const char *, const char *, fsnode *, int);
@@ -175,6 +177,7 @@ int		set_option(const option_t *, const char *);
 int		set_option_var(const option_t *, const char *, const char *);
 fsnode *	walk_dir(const char *, const char *, fsnode *, fsnode *);
 void		free_fsnodes(fsnode *);
+option_t *	copy_opts(const option_t *);
 
 #define DECLARE_FUN(fs)							\
 void		fs ## _prep_opts(fsinfo_t *);				\
