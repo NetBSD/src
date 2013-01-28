@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.16 2012/09/01 14:46:25 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.17 2013/01/28 23:47:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -170,9 +170,11 @@
   
 #if defined (_ARM_ARCH_4T)
 # define RET		bx		lr
+# define RETr(r)	bx		r
 # define RETc(c)	__CONCAT(bx,c)	lr
 #else
 # define RET		mov		pc, lr
+# define RETr(r)	mov		pc, r
 # define RETc(c)	__CONCAT(mov,c)	pc, lr
 #endif
 
