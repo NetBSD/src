@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.84 2012/06/25 17:25:29 abs Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.85 2013/01/28 17:57:34 joerg Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.84 2012/06/25 17:25:29 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.85 2013/01/28 17:57:34 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1674,6 +1674,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	 * ifa->ifa_rtrequest = nd6_rtrequest;
 	 */
 	memset(&mask6, 0, sizeof(mask6));
+	mask6.sin6_family = AF_INET6;
 	mask6.sin6_len = sizeof(mask6);
 	mask6.sin6_addr = pr->ndpr_mask;
 	/* rtrequest() will probably set RTF_UP, but we're not sure. */
