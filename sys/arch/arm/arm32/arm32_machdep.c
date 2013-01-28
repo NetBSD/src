@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.89 2013/01/19 10:16:56 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.90 2013/01/28 23:49:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.89 2013/01/19 10:16:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.90 2013/01/28 23:49:12 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -97,6 +97,7 @@ void *	msgbufaddr;
 extern paddr_t msgbufphys;
 
 int kernel_debug = 0;
+int cpu_fpu_present;
 
 /* exported variable to be filled in by the bootloaders */
 char *booted_kernel;
@@ -360,6 +361,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "powersave", NULL,
 		       sysctl_machdep_powersave, 0, &cpu_do_powersave, 0,
 		       CTL_MACHDEP, CPU_POWERSAVE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "fpu_present", NULL,
+		       NULL, 0, &cpu_fpu_present, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 void

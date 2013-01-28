@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.16 2013/01/28 06:14:45 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.17 2013/01/28 23:49:13 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -382,6 +382,7 @@ vfp_attach(void)
 		return;
 	}
 
+	cpu_fpu_present = 1;
 	if (fpsid != 0) {
 		aprint_normal("vfp%d at %s: %s\n",
 		    device_unit(curcpu()->ci_dev), device_xname(curcpu()->ci_dev),
