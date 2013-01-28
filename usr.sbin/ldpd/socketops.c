@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.21 2013/01/28 20:06:52 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.22 2013/01/28 20:32:04 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -1072,7 +1072,8 @@ recv_session_pdu(struct ldp_peer * p)
 		/* Should we get the message ? */
 		if (p->state != LDP_PEER_ESTABLISHED &&
 		    ntohs(ttmp->type) != LDP_INITIALIZE &&
-		    ntohs(ttmp->type) != LDP_KEEPALIVE)
+		    ntohs(ttmp->type) != LDP_KEEPALIVE &&
+		    ntohs(ttmp->type) != LDP_NOTIFICATION)
 			break;
 		/* The big switch */
 		switch (ntohs(ttmp->type)) {
