@@ -1,0 +1,7 @@
+# $NetBSD: ad.arm.shl,v 1.3 2013/01/28 18:57:10 matt Exp $
+./lib/libc_vfp.so				base-sys-shlib		dynamicroot
+./lib/libc_vfp.so.0				base-sys-shlib		dynamicroot
+./lib/libc_vfp.so.0.0				base-sys-shlib		dynamicroot
+./usr/lib/libc_vfp.so				base-sys-shlib
+./usr/lib/libc_vfp.so.0				base-sys-shlib
+./usr/lib/libc_vfp.so.0.0			base-sys-shlib
