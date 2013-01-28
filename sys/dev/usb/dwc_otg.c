@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.38 2013/01/23 03:32:39 jmcneill Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.39 2013/01/28 08:19:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.38 2013/01/23 03:32:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.39 2013/01/28 08:19:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2223,7 +2223,7 @@ dwc_otg_host_channel_wait(struct dwc_otg_td *td)
 
 		/* ack any pending messages */
 		if (sc->sc_last_rx_status != 0 &&
-		    GRXSTSRD_CHNUM_GET(sc->sc_last_rx_status) == td->channel) {
+		    GRXSTSRH_CHNUM_GET(sc->sc_last_rx_status) == td->channel) {
 			/* get rid of message */
 			dwc_otg_common_rx_ack(sc);
 		}
@@ -2335,7 +2335,7 @@ dwc_otg_host_channel_free(struct dwc_otg_td *td)
 
 	/* ack any pending messages */
 	if (sc->sc_last_rx_status != 0 &&
-	    GRXSTSRD_CHNUM_GET(sc->sc_last_rx_status) == x) {
+	    GRXSTSRH_CHNUM_GET(sc->sc_last_rx_status) == x) {
 		dwc_otg_common_rx_ack(sc);
 	}
 
@@ -2622,10 +2622,10 @@ dwc_otg_host_data_rx(struct dwc_otg_td *td)
 	if (sc->sc_last_rx_status == 0)
 		goto check_state;
 
-	if (GRXSTSRD_CHNUM_GET(sc->sc_last_rx_status) != td->channel)
+	if (GRXSTSRH_CHNUM_GET(sc->sc_last_rx_status) != td->channel)
 		goto check_state;
 
-	switch (sc->sc_last_rx_status & GRXSTSRD_PKTSTS_MASK) {
+	switch (sc->sc_last_rx_status & GRXSTSRH_PKTSTS_MASK) {
 	case GRXSTSRH_IN_DATA:
 
 		DPRINTF("DATA ST=%d STATUS=0x%08x\n",
@@ -2643,7 +2643,7 @@ dwc_otg_host_data_rx(struct dwc_otg_td *td)
 		td->toggle ^= 1;
 
 		/* get the packet byte count */
-		count = GRXSTSRD_BCNT_GET(sc->sc_last_rx_status);
+		count = GRXSTSRH_BCNT_GET(sc->sc_last_rx_status);
 
 		/* verify the packet byte count */
 		if (count != td->max_packet_size) {
@@ -3277,13 +3277,13 @@ repeat:
 
 			/* non-data messages we simply skip */
 			if (temp != GRXSTSRD_STP_DATA &&
-			    temp != GRXSTSRD_OUT_DATA) {
+			    temp != GRXSTSRH_IN_DATA) {
 				dwc_otg_common_rx_ack(sc);
 				goto repeat;
 			}
 
-			bcnt = GRXSTSRD_BCNT_GET(sc->sc_last_rx_status);
-			ep_no = GRXSTSRD_CHNUM_GET(sc->sc_last_rx_status);
+			bcnt = GRXSTSRH_BCNT_GET(sc->sc_last_rx_status);
+			ep_no = GRXSTSRH_CHNUM_GET(sc->sc_last_rx_status);
 
 			/* receive data, if any */
 			if (bcnt != 0) {
@@ -3317,7 +3317,7 @@ repeat:
 	} else {
 		uint8_t ep_no;
 
-		ep_no = GRXSTSRD_CHNUM_GET(sc->sc_last_rx_status);
+		ep_no = GRXSTSRH_CHNUM_GET(sc->sc_last_rx_status);
 		DPRINTF("%s: ep_no %d\n", __func__, ep_no);
 
 		/* check if we should dump the data */
