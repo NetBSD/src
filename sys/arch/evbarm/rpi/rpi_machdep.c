@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.31 2013/01/25 13:32:21 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.32 2013/01/28 19:47:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.31 2013/01/25 13:32:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.32 2013/01/28 19:47:02 jmcneill Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.31 2013/01/25 13:32:21 jmcneill Ex
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/sysctl.h>
 #include <sys/bus.h>
 
 #include <net/if_ether.h>
@@ -786,4 +787,16 @@ rpi_device_register(device_t dev, void *aux)
 		}
 	}
 #endif
+}
+
+SYSCTL_SETUP(sysctl_machdep_rpi, "sysctl machdep subtree setup (rpi)")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_HEX|CTLFLAG_PRIVATE,
+	    CTLTYPE_QUAD, "serial", NULL, NULL, 0,
+	    &vb.vbt_serial.sn, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
