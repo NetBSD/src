@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
+#include <util.h>
 
 #include "makefs.h"
 #include "chfs_makefs.h"
@@ -83,9 +84,10 @@ buf_write(fsinfo_t *fsopts, const void *buf, size_t len)
 void
 padblock(fsinfo_t *fsopts)
 {
-	while (img_ofs % chfs_opts.eraseblock) {
+	chfs_opt_t *chfs_opts = fsopts->fs_specific;
+	while (img_ofs % chfs_opts->eraseblock) {
 		buf_write(fsopts, ffbuf, MIN(sizeof(ffbuf),
-		    chfs_opts.eraseblock - (img_ofs % chfs_opts.eraseblock)));
+		    chfs_opts->eraseblock - (img_ofs % chfs_opts->eraseblock)));
 	}
 }
 
@@ -100,8 +102,9 @@ padword(fsinfo_t *fsopts)
 static void
 pad_block_if_less_than(fsinfo_t *fsopts, int req)
 {
-	if ((img_ofs % chfs_opts.eraseblock) + req >
-	    (uint32_t)chfs_opts.eraseblock) {
+	chfs_opt_t *chfs_opts = fsopts->fs_specific;
+	if ((img_ofs % chfs_opts->eraseblock) + req >
+	    (uint32_t)chfs_opts->eraseblock) {
 		padblock(fsopts);
 		write_eb_header(fsopts);
 	}
@@ -120,9 +123,7 @@ write_eb_header(fsinfo_t *fsopts)
     CHFS_EB_HDR_NAND_SIZE)
 	if ((uint32_t)opts->pagesize < MINSIZE)
 		errx(EXIT_FAILURE, "pagesize cannot be less than %zu", MINSIZE);
-	if ((buf = malloc(opts->pagesize)) == NULL)
-		err(EXIT_FAILURE, "Memory allocation failed");
-
+	buf = emalloc(opts->pagesize);
 	memset(buf, 0xFF, opts->pagesize);
 
 	ebhdr.ec_hdr.magic = htole32(CHFS_MAGIC_BITMASK);
@@ -187,15 +188,12 @@ void
 write_dirent(fsinfo_t *fsopts, fsnode *node)
 {
 	struct chfs_flash_dirent_node fdirent;
-	char *name = malloc(sizeof(char) * strlen(node->name));
+	char *name;
 
-	if (name == NULL) {
-		err(EXIT_FAILURE, "ERROR memory allocation failed");
-	}
-	
-	memset(&fdirent, 0, sizeof(fdirent));
+	name = emalloc(strlen(node->name));
 	memcpy(name, node->name, strlen(node->name));
 
+	memset(&fdirent, 0, sizeof(fdirent));
 	fdirent.magic = htole16(CHFS_FS_MAGIC_BITMASK);
 	fdirent.type = htole16(CHFS_NODETYPE_DIRENT);
 	fdirent.length = htole32(CHFS_PAD(sizeof(fdirent) + strlen(name)));
@@ -233,11 +231,7 @@ write_file(fsinfo_t *fsopts, fsnode *node, const char *dir)
 	uint32_t fileofs = 0;
 
 	opts = fsopts->fs_specific;
-	buf = malloc(opts->pagesize);
-
-	if (buf == NULL)
-		goto out;
-	
+	buf = emalloc(opts->pagesize);
 	if (node->type == S_IFREG || node->type == S_IFSOCK) {
 		char *longname;
 		if (asprintf(&longname, "%s/%s", dir, name) == 1)

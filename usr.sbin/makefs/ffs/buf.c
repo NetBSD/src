@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.16 2013/01/28 10:16:35 mlelstv Exp $	*/
+/*	$NetBSD: buf.c,v 1.17 2013/01/28 21:03:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.16 2013/01/28 10:16:35 mlelstv Exp $");
+__RCSID("$NetBSD: buf.c,v 1.17 2013/01/28 21:03:29 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: buf.c,v 1.16 2013/01/28 10:16:35 mlelstv Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "makefs.h"
 
@@ -210,9 +211,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int u1 __unused,
 		}
 	}
 	if (bp == NULL) {
-		if ((bp = calloc(1, sizeof(struct buf))) == NULL)
-			err(1, "getblk: calloc");
-			
+		bp = ecalloc(1, sizeof(*bp));
 		bp->b_bufsize = 0;
 		bp->b_blkno = bp->b_lblkno = blkno;
 		bp->b_fd = fd;
@@ -222,9 +221,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int u1 __unused,
 	}
 	bp->b_bcount = size;
 	if (bp->b_data == NULL || bp->b_bcount > bp->b_bufsize) {
-		n = realloc(bp->b_data, size);
-		if (n == NULL)
-			err(1, "getblk: realloc b_data %ld", bp->b_bcount);
+		n = erealloc(bp->b_data, size);
 		memset(n, 0, size);
 		bp->b_data = n;
 		bp->b_bufsize = size;

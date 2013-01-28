@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.40 2013/01/27 14:07:12 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.41 2013/01/28 21:03:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.40 2013/01/27 14:07:12 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.41 2013/01/28 21:03:27 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: makefs.c,v 1.40 2013/01/27 14:07:12 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <util.h>
 
 #include "makefs.h"
 #include "mtree.h"
@@ -87,7 +88,7 @@ u_int		debug;
 struct timespec	start_time;
 
 static	fstype_t *get_fstype(const char *);
-static	void	usage(void) __dead;
+static	void	usage(fstype_t *, fsinfo_t *) __dead;
 
 int
 main(int argc, char *argv[])
@@ -138,7 +139,7 @@ main(int argc, char *argv[])
 #endif
 			} else {
 				warnx("Invalid endian `%s'.", optarg);
-				usage();
+				usage(fstype, &fsoptions);
 			}
 			break;
 
@@ -203,7 +204,7 @@ main(int argc, char *argv[])
 				if (*p == '\0')
 					errx(1, "Empty option");
 				if (! fstype->parse_options(p, &fsoptions))
-					usage();
+					usage(fstype, &fsoptions);
 			}
 			break;
 		}
@@ -239,7 +240,7 @@ main(int argc, char *argv[])
 
 		case '?':
 		default:
-			usage();
+			usage(fstype, &fsoptions);
 			/* NOTREACHED */
 
 		}
@@ -254,7 +255,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc < 2)
-		usage();
+		usage(fstype, &fsoptions);
 
 	/* -x must be accompanied by -F */
 	if (fsoptions.onlyspec != 0 && specfile == NULL)
@@ -308,9 +309,7 @@ set_option(const option_t *options, const char *option)
 
 	assert(option != NULL);
 
-	if ((var = strdup(option)) == NULL) {
-		err(EXIT_FAILURE, "Allocating memory for copy of option string");
-	}
+	var = estrdup(option);
 	retval = -1;
 	if ((val = strchr(var, '=')) == NULL) {
 		warnx("Option `%s' doesn't contain a value", var);
@@ -350,7 +349,7 @@ set_option_var(const option_t *options, const char *var, const char *val)
 			    options[i].maximum);
 			break;
 		case OPT_STRPTR:
-			if ((s = strdup(val)) == NULL)
+			s = estrdup(val);
 				err(1, NULL);
 			*(char **)options[i].value = s;
 			break;
@@ -386,17 +385,37 @@ get_fstype(const char *type)
 	return (NULL);
 }
 
+option_t *
+copy_opts(const option_t *o)
+{
+	size_t i;
+	for (i = 0; o[i].name; i++)
+		continue;
+	i++;
+	return memcpy(ecalloc(i, sizeof(*o)), o, i * sizeof(*o));
+}
+
 static void
-usage(void)
+usage(fstype_t *fstype, fsinfo_t *fsoptions)
 {
 	const char *prog;
 
 	prog = getprogname();
 	fprintf(stderr,
-"usage: %s [-xZ] [-B endian] [-b free-blocks] [-d debug-mask]\n"
+"Usage: %s [-xZ] [-B endian] [-b free-blocks] [-d debug-mask]\n"
 "\t[-F mtree-specfile] [-f free-files] [-M minimum-size]\n"
 "\t[-m maximum-size] [-N userdb-dir] [-o fs-options] [-S sector-size]\n"
 "\t[-s image-size] [-t fs-type] image-file directory [extra-directory ...]\n",
 	    prog);
+
+	if (fstype) {
+		size_t i;
+		option_t *o = fsoptions->fs_options;
+
+		fprintf(stderr, "\n%s specific options:\n", fstype->type);
+		for (i = 0; o[i].name != NULL; i++)
+			fprintf(stderr, "\t%c,%20.20s\t%s\n", o[i].letter,
+			    o[i].name, o[i].desc);
+	}
 	exit(1);
 }
