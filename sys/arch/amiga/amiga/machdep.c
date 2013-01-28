@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.239 2012/08/03 13:14:20 rkujawa Exp $	*/
+/*	$NetBSD: machdep.c,v 1.240 2013/01/28 14:53:33 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,8 +47,10 @@
 #include "opt_panicbutton.h"
 #include "opt_m68k_arch.h"
 
+#include "empm.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2012/08/03 13:14:20 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2013/01/28 14:53:33 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +110,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2012/08/03 13:14:20 rkujawa Exp $"
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
 #include <amiga/amiga/device.h>
+#if NEMPM > 0
+#include <amiga/pci/empmvar.h>
+#endif /* NEMPM > 0 */
 
 #include "fd.h"
 #include "ser.h"
@@ -406,6 +411,9 @@ void
 cpu_reboot(register int howto, char *bootstr)
 {
 	struct pcb *pcb = lwp_getpcb(curlwp);
+#if NEMPM > 0
+	device_t empmdev;
+#endif /* NEMPM > 0 */
 
 	/* take a snap shot before clobbering any registers */
 	if (pcb != NULL)
@@ -423,6 +431,13 @@ cpu_reboot(register int howto, char *bootstr)
 		dumpsys();
 
 	if (howto & RB_HALT) {
+#if NEMPM > 0
+		empmdev = device_find_by_xname("empm0");
+		if (empmdev != NULL) {
+			empm_power_off(device_private(empmdev));
+		}	
+#endif /* NEMPM > 0 */
+
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
