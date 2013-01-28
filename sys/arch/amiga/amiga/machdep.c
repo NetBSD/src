@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.240 2013/01/28 14:53:33 rkujawa Exp $	*/
+/*	$NetBSD: machdep.c,v 1.241 2013/01/28 16:36:10 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2013/01/28 14:53:33 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.241 2013/01/28 16:36:10 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,14 +430,16 @@ cpu_reboot(register int howto, char *bootstr)
 	if (howto & RB_DUMP)
 		dumpsys();
 
-	if (howto & RB_HALT) {
 #if NEMPM > 0
+	if (howto & RB_POWERDOWN) {
 		empmdev = device_find_by_xname("empm0");
 		if (empmdev != NULL) {
 			empm_power_off(device_private(empmdev));
 		}	
+	}
 #endif /* NEMPM > 0 */
 
+	if (howto & RB_HALT) {
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
