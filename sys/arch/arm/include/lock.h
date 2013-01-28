@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.23 2013/01/24 10:15:30 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.24 2013/01/28 06:17:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,8 +78,7 @@ static __inline unsigned char
 __swp(__cpu_simple_lock_t __val, volatile __cpu_simple_lock_t *__ptr)
 {
 #ifdef _ARM_ARCH_6
-	uint32_t __rv;
-	__cpu_simple_lock_t __tmp;
+	uint32_t __rv, __tmp;
 	if (sizeof(*__ptr) == 1) {
 		__asm volatile(
 			"1:\t"
