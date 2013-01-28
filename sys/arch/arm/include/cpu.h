@@ -85,6 +85,7 @@
 #ifndef _LOCORE
 /* 1 == use cpu_sleep(), 0 == don't */
 extern int cpu_do_powersave;
+extern int cpu_fpu_present;
 #endif
 
 #ifdef _LOCORE
