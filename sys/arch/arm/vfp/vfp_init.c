@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.15 2012/12/31 03:23:53 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.16 2013/01/28 06:14:45 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -280,6 +280,7 @@ vfp_attach(void)
 }
 
 #else
+#if 0
 static bool
 vfp_patch_branch(uintptr_t code, uintptr_t func, uintptr_t newfunc)
 {
@@ -306,6 +307,7 @@ vfp_patch_branch(uintptr_t code, uintptr_t func, uintptr_t newfunc)
 		}
 	}
 }
+#endif
 
 void
 vfp_attach(void)
@@ -395,10 +397,12 @@ vfp_attach(void)
 	install_coproc_handler(CORE_UNKNOWN_HANDLER, neon_handler);
 #endif
 
+#if 0
 	vfp_patch_branch((uintptr_t)pmap_copy_page_generic,
 	   (uintptr_t)bcopy_page, (uintptr_t)bcopy_page_vfp);
 	vfp_patch_branch((uintptr_t)pmap_zero_page_generic,
 	   (uintptr_t)bzero_page, (uintptr_t)bzero_page_vfp);
+#endif
 }
 
 /* The real handler for VFP bounces.  */
