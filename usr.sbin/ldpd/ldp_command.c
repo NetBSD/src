@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.c,v 1.9 2013/01/28 20:06:52 kefren Exp $ */
+/* $NetBSD: ldp_command.c,v 1.10 2013/01/28 21:08:14 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -411,21 +411,16 @@ show_neighbours(int s, char *recvspace)
 	socklen_t sin_len = sizeof(struct sockaddr_in);
 	int enc;
 	socklen_t enclen = sizeof(enc);
-	char traddress[39], nhaddress[39];
 
 	SLIST_FOREACH(p, &ldp_peer_head, peers) {
 		snprintf(sendspace, MAXSEND, "LDP peer: %s\n",
 		    inet_ntoa(p->ldp_id));
 		writestr(s, sendspace);
-		inet_ntop(p->transport_address->sa_family,
-		    p->transport_address->sa_data, traddress, 39);
 		snprintf(sendspace, MAXSEND, "Transport address: %s\n",
-		    traddress);
+		    satos(p->transport_address));
 		writestr(s, sendspace);
-		inet_ntop(p->address->sa_family, p->address->sa_data,
-		    nhaddress, 39);
 		snprintf(sendspace, MAXSEND, "Next-hop address: %s\n",
-		    nhaddress);
+		    satos(p->address));
 		writestr(s, sendspace);
 		snprintf(sendspace, MAXSEND, "State: %s\n",
 		    ldp_state_to_name(p->state));
@@ -513,7 +508,6 @@ static int
 show_bindings(int s, char *recvspace)
 {
 	struct label *l;
-	char labelgw[39];
 
 	snprintf(sendspace, MAXSEND, "Local label\tNetwork\t\t\t\tNexthop\n");
 	writestr(s, sendspace);
@@ -523,12 +517,10 @@ show_bindings(int s, char *recvspace)
 		writestr(s, sendspace);
 		snprintf(sendspace, MAXSEND, "%s", union_ntoa(&l->so_pref));
 		writestr(s, sendspace);
-		if (l->p) {
-			inet_ntop(l->p->address->sa_family,
-			    l->p->address->sa_data, labelgw, 39);
+		if (l->p)
 			snprintf(sendspace, MAXSEND, "\t%s:%d\n",
-			    labelgw, l->label);
-		} else
+			    satos(l->p->address), l->label);
+		else
 			snprintf(sendspace, MAXSEND, "\n");
 		writestr(s, sendspace);
 	}
