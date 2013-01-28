@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.113 2012/11/25 23:37:28 rkujawa Exp $
+# $NetBSD: INSTALL,v 1.114 2013/01/28 14:56:03 rkujawa Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.107 2012/11/25 23:37:10 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.108 2013/01/28 14:54:51 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.114 $"
 
 makeoptions	COPTS="-Os"
 
@@ -437,6 +437,7 @@ pci*            at mppb?
 
 empb0		at zbus0		# ELBOX Mediator PCI 1200
 emmem0		at zbus0		# ELBOX Mediator PCI memory space
+empm0		at empb0		# ELBOX Mediator PCI Power Management
 pci*		at empb0
 
 #cv3dpb*	at zbus0		# CyberVision 64/3D PCI bridge
