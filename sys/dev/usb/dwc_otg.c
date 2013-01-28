@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.39 2013/01/28 08:19:33 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.40 2013/01/28 08:22:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.39 2013/01/28 08:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.40 2013/01/28 08:22:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3255,7 +3255,8 @@ repeat:
 // 			DPRINTF("ch %d intrs %08x\n", ch, intrs);
 
 			DWC_OTG_WRITE_4(sc, DOTG_HCINT(ch), intrs);
-			intrs &= ~HCINT_SOFTWARE_ONLY;
+
+			KASSERT((intrs & HCINT_SOFTWARE_ONLY) == 0);
 			sc->sc_chan_state[ch].hcint |= intrs;
 		}
 	}
