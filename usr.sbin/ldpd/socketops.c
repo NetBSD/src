@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.20 2013/01/26 21:07:49 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.21 2013/01/28 20:06:52 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -751,15 +751,13 @@ send_hello_alarm(int unused)
 		    }
 	}
 
-	/* Decrement hello info keepalives */
-	SLIST_FOREACH(hi, &hello_info_head, infos)
+	/* Decrement and Check hello keepalives */
+	SLIST_FOREACH_SAFE(hi, &hello_info_head, infos, hinext) {
 		if (hi->keepalive != 0xFFFF)
 			hi->keepalive--;
-
-	/* Check hello keepalives */
-	SLIST_FOREACH_SAFE(hi, &hello_info_head, infos, hinext)
 		if (hi->keepalive < 1)
 			SLIST_REMOVE(&hello_info_head, hi, hello_info, infos);
+	}
 
 	/* Set the alarm again and bail out */
 	alarm(1);

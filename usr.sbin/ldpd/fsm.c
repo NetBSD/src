@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.7 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: fsm.c,v 1.8 2013/01/28 20:06:52 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
     struct sockaddr * padd, struct in_addr * ladd, int mysock)
 {
 	struct ldp_peer *peer = NULL;
-	union sockunion peer_addr;
 	struct transport_address_tlv *trtlv;
 	struct hello_info *hi;
 
@@ -77,6 +76,7 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 			return;
 		}
 		hi->ldp_id.s_addr = pduid->ldp_id.s_addr;
+		hi->transport_address.sa.sa_family = 0;
 		SLIST_INSERT_HEAD(&hello_info_head, hi, infos);
 	} else
 		/* Just update timer */
@@ -102,41 +102,46 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 	if (!get_ldp_peer_by_id(&pduid->ldp_id)) {
 		/* Check transport TLV */
 		if (pduid->length - PDU_PAYLOAD_LENGTH -
-		    sizeof(struct hello_tlv) > 3) {
-			trtlv = (struct transport_address_tlv *) &ht[1];
-			if (trtlv->type == TLV_IPV4_TRANSPORT) {
-				peer_addr.sin.sin_family = AF_INET;
-				peer_addr.sin.sin_len =
+		    sizeof(struct hello_tlv) >= 8) {
+			trtlv = (struct transport_address_tlv *)(ht + 1);
+			if (trtlv->type == htons(TLV_IPV4_TRANSPORT)) {
+				hi->transport_address.sin.sin_family = AF_INET;
+				hi->transport_address.sin.sin_len =
 				    sizeof(struct sockaddr_in);
-				memcpy(&peer_addr.sin.sin_addr, &trtlv->address,
-				    sizeof(struct in_addr));
-			} else if (trtlv->type == TLV_IPV6_TRANSPORT) {
-				peer_addr.sin6.sin6_family = AF_INET6;
-				peer_addr.sin6.sin6_len =
+				memcpy(&hi->transport_address.sin.sin_addr,
+				    &trtlv->address, sizeof(struct in_addr));
+			} else if (trtlv->type == htons(TLV_IPV6_TRANSPORT)) {
+				hi->transport_address.sin6.sin6_family =
+				    AF_INET6;
+				hi->transport_address.sin6.sin6_len =
 				    sizeof(struct sockaddr_in6);
-				memcpy(&peer_addr.sin6.sin6_addr,
+				memcpy(&hi->transport_address.sin6.sin6_addr,
 				    &trtlv->address, sizeof(struct in6_addr));
-			}
+			} else
+				warnp("Unknown AF %x for transport address\n",
+				    ntohs(trtlv->type));
 		} else {
 			trtlv = NULL;
-			peer_addr.sin.sin_family = AF_INET;
-			peer_addr.sin.sin_len = sizeof(struct sockaddr_in);
-			memcpy(&peer_addr.sin.sin_addr, &pduid->ldp_id,
-			    sizeof(struct in_addr));
+			hi->transport_address.sin.sin_family = AF_INET;
+			hi->transport_address.sin.sin_len =
+			    sizeof(struct sockaddr_in);
+			memcpy(&hi->transport_address.sin.sin_addr,
+			    &pduid->ldp_id, sizeof(struct in_addr));
 		}
 		/*
 		 * RFC 5036 2.5.2: If A1 > A2, LSR1 plays the active role;
 		 * otherwise it is passive.
 		 */
-		/* XXX: check for IPv6 too */
-		if (peer_addr.sa.sa_family == AF_INET &&
-		    ntohl(peer_addr.sin.sin_addr.s_addr)< ntohl(ladd->s_addr)) {
+		/* XXX TODO: check for IPv6 too */
+		if (hi->transport_address.sa.sa_family == AF_INET &&
+		    ntohl(hi->transport_address.sin.sin_addr.s_addr) <
+		    ntohl(ladd->s_addr)) {
 			peer = ldp_peer_new(&pduid->ldp_id, padd,
-				trtlv != NULL ? &peer_addr.sa : NULL,
+				&hi->transport_address.sa,
 				ht->ch.holdtime, 0);
-			if (!peer)
+			if (peer == NULL)
 				return;
-			if (peer && peer->state == LDP_PEER_CONNECTED)
+			if (peer->state == LDP_PEER_CONNECTED)
 				send_initialize(peer);
 		}
 	}
