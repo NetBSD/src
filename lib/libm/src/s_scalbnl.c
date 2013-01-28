@@ -1,4 +1,4 @@
-/*	$NetBSD: s_scalbnl.c,v 1.2 2013/01/28 06:34:09 matt Exp $	*/
+/*	$NetBSD: s_scalbnl.c,v 1.3 2013/01/28 14:09:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_scalbnl.c,v 1.2 2013/01/28 06:34:09 matt Exp $");
+__RCSID("$NetBSD: s_scalbnl.c,v 1.3 2013/01/28 14:09:43 pgoyette Exp $");
 
 #include "namespace.h"
 
@@ -61,7 +61,7 @@ __weak_alias(scalblnl, _scalblnl)
 long double
 scalbnl(long double x, int n)
 {
-	return scalblnl(x, n)
+	return scalblnl(x, n);
 }
 #endif
 
