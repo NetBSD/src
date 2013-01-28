@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.44 2012/03/22 20:34:43 drochner Exp $	*/
+/*	$NetBSD: netstat.h,v 1.45 2013/01/28 13:49:08 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,7 +118,6 @@ void	pr_rthdr __P((int, int));
 void	pr_family __P((int));
 void	rt_stats __P((u_long));
 char	*ns_phost __P((struct sockaddr *));
-void	upHex __P((char *));
 
 void	p_rttables(int);
 void	p_flags(int, const char *);
@@ -139,7 +138,6 @@ const char *atalk_print __P((const struct sockaddr *, int));
 const char *atalk_print2 __P((const struct sockaddr *, const struct sockaddr *,
     int));
 char	*ns_print __P((struct sockaddr *));
-void	routepr __P((u_long));
 
 void	nsprotopr __P((u_long, const char *));
 void	spp_stats __P((u_long, const char *));
