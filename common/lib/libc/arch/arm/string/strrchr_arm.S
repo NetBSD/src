@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strrchr_arm.S,v 1.1 2013/01/15 08:52:27 matt Exp $")
+RCSID("$NetBSD: strrchr_arm.S,v 1.2 2013/01/28 06:23:14 matt Exp $")
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
@@ -94,6 +94,8 @@ ENTRY(strrchr)
 	 * Copy the NUL bit to the following byte lanes.  Then clear any match
 	 * bits in those byte lanes to prevent false positives in those bytes.
 	 */
+	bics	r5, r5, r4		/* clear any NUL match bits */
+	beq	.Ldone			/*   no remaining matches, we're done */
 	movs	r3, r4, lshi #8		/* shift up a byte */
 	orrnes	r3, r3, r3, lshi #8	/* if non 0, copy up to next byte */
 	orrnes	r3, r3, r3, lshi #8	/* if non 0, copy up to last byte */
