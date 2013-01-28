@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.71 2013/01/27 19:00:08 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.72 2013/01/28 08:03:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.71 2013/01/27 19:00:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.72 2013/01/28 08:03:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,16 +169,17 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		 * If this region is coherent, mark the segment as coherent.
 		 */
 		_ds_flags |= dr->dr_flags & _BUS_DMAMAP_COHERENT;
-#if 0
-		printf("%p: %#lx: range %#lx/%#lx/%#lx/%#x: %#x\n",
-		    t, paddr, dr->dr_sysbase, dr->dr_busbase,
-		    dr->dr_len, dr->dr_flags, _ds_flags);
-#endif
+
 		/*
 		 * In a valid DMA range.  Translate the physical
 		 * memory address to an address in the DMA window.
 		 */
 		curaddr = (paddr - dr->dr_sysbase) + dr->dr_busbase;
+#if 0
+		printf("%p: %#lx: range %#lx/%#lx/%#lx/%#x: %#x <-- %#lx\n",
+		    t, paddr, dr->dr_sysbase, dr->dr_busbase,
+		    dr->dr_len, dr->dr_flags, _ds_flags, curaddr);
+#endif
 	} else
 		curaddr = paddr;
 
