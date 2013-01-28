@@ -186,8 +186,7 @@ int get_option_uint8(uint8_t *, const struct dhcp_message *, uint8_t);
 #define is_bootp(m) (m &&						\
 	    !IN_LINKLOCAL(htonl((m)->yiaddr)) &&			\
 	    get_option_uint8(NULL, m, DHO_MESSAGETYPE) == -1)
-struct rt *get_option_routes(const struct dhcp_message *, const char *,
-    unsigned long long *);
+struct rt *get_option_routes(struct interface *, const struct dhcp_message *);
 ssize_t decode_rfc3397(char *, ssize_t, int, const uint8_t *);
 ssize_t print_string(char *, ssize_t, int, const uint8_t *);
 ssize_t configure_env(char **, const char *, const struct dhcp_message *,

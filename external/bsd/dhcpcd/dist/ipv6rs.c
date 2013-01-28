@@ -463,7 +463,8 @@ ipv6rs_handledata(_unused void *arg)
 		return;
 	}
 	TAILQ_FOREACH(rap, &ipv6_routers, next) {
-		if (memcmp(rap->from.s6_addr, from.sin6_addr.s6_addr,
+		if (ifp == rap->iface &&
+		    memcmp(rap->from.s6_addr, from.sin6_addr.s6_addr,
 		    sizeof(rap->from.s6_addr)) == 0)
 			break;
 	}

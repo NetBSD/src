@@ -341,7 +341,7 @@ static int
 parse_option(struct if_options *ifo, int opt, const char *arg)
 {
 	int i;
-	char *p = NULL, *np;
+	char *p = NULL, *fp, *np;
 	ssize_t s;
 	struct in_addr addr, addr2;
 	struct rt *rt;
@@ -654,7 +654,7 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		    strncmp(arg, "classless_static_routes=", strlen("classless_static_routes=")) == 0 ||
 		    strncmp(arg, "ms_classless_static_routes=", strlen("ms_classless_static_routes=")) == 0)
 		{
-			np = strchr(p, ' ');
+			fp = np = strchr(p, ' ');
 			if (np == NULL) {
 				syslog(LOG_ERR, "all routes need a gateway");
 				return -1;
@@ -674,7 +674,11 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 			rt->next = NULL;
 			if (parse_addr(&rt->dest, &rt->net, p) == -1 ||
 			    parse_addr(&rt->gate, NULL, np) == -1)
+			{
+				*fp = ' ';
 				return -1;
+			}
+			*fp = ' ';
 		} else if (strncmp(arg, "routers=", strlen("routers=")) == 0) {
 			if (ifo->routes == NULL) {
 				rt = ifo->routes = xzalloc(sizeof(*rt));
