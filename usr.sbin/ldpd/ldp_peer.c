@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.6 2013/01/27 05:53:21 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.7 2013/01/28 21:08:14 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -131,13 +131,15 @@ ldp_peer_new(const struct in_addr * ldp_id, struct sockaddr * padd,
 
 	SLIST_INSERT_HEAD(&ldp_peer_head, p, peers);
 	p->address = (struct sockaddr *)malloc(padd->sa_len);
-	p->transport_address = (struct sockaddr *)malloc(padd->sa_len);
 	memcpy(p->address, padd, padd->sa_len);
 	memcpy(&p->ldp_id, ldp_id, sizeof(struct in_addr));
-	if (tradd != NULL)
+	if (tradd != NULL) {
+		p->transport_address = (struct sockaddr *)malloc(tradd->sa_len);
 		memcpy(p->transport_address, tradd, tradd->sa_len);
-	else
+	} else {
+		p->transport_address = (struct sockaddr *)malloc(padd->sa_len);
 		memcpy(p->transport_address, padd, padd->sa_len);
+	}
 	p->holdtime=holdtime > ldp_holddown_time ? holdtime : ldp_holddown_time;
 	p->socket = s;
 	if (soc < 1) {
@@ -401,11 +403,10 @@ void
 print_bounded_addresses(struct ldp_peer * p)
 {
 	struct ldp_peer_address *wp;
-	char abuf[512], peername[39];
+	char abuf[512];
 
-	inet_ntop(p->address->sa_family, p->address->sa_data, peername, 39);
 	snprintf(abuf, sizeof(abuf), "Addresses bounded to peer %s: ",
-	    peername);
+	    satos(p->address));
 	SLIST_FOREACH(wp, &p->ldp_peer_address_head, addresses) {
 		strncat(abuf, satos(&wp->address.sa),
 			sizeof(abuf) -1);
