@@ -50,7 +50,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.5 2013/01/27 20:05:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.6 2013/01/28 21:03:29 christos Exp $");
 
 #include <sys/param.h>
 
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.5 2013/01/27 20:05:46 christos 
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
 #include "makefs.h"
 #include "msdos.h"
@@ -116,10 +117,7 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	} else
 		bsize = 512;
 
-	pmp = calloc(1, sizeof *pmp);
-	if (pmp == NULL)
-		goto error_exit;
-
+	pmp = ecalloc(1, sizeof *pmp);
 	/*
 	 * Compute several useful quantities from the bpb in the
 	 * bootsector.  Copy in the dos 5 variant of the bpb then fix up
@@ -366,11 +364,8 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	 * Allocate memory for the bitmap of allocated clusters, and then
 	 * fill it in.
 	 */
-	pmp->pm_inusemap = calloc(sizeof(*pmp->pm_inusemap),
+	pmp->pm_inusemap = ecalloc(sizeof(*pmp->pm_inusemap),
 	    ((pmp->pm_maxcluster + N_INUSEBITS) / N_INUSEBITS));
-	if (pmp->pm_inusemap == NULL)
-		goto error_exit;
-
 	/*
 	 * fillinusemap() needs pm_devvp.
 	 */

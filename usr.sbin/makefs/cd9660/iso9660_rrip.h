@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.h,v 1.5 2009/01/10 22:06:29 bjh21 Exp $	*/
+/*	$NetBSD: iso9660_rrip.h,v 1.6 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -215,11 +215,11 @@ struct ISO_SUSP_ATTRIBUTES {
 	((int) ((entry)->attr.su_entry.SP.h.length[0]))
 
 /* Recursive function - move later to func pointer code*/
-int cd9660_susp_finalize(cd9660node *);
+int cd9660_susp_finalize(iso9660_disk *, cd9660node *);
 
 /* These two operate on single nodes */
-int cd9660_susp_finalize_node(cd9660node *);
-int cd9660_rrip_finalize_node(cd9660node *);
+int cd9660_susp_finalize_node(iso9660_disk *, cd9660node *);
+int cd9660_rrip_finalize_node(iso9660_disk *, cd9660node *);
 
 /* POSIX File attribute */
 int cd9660node_rrip_px(struct ISO_SUSP_ATTRIBUTES *, fsnode *);
@@ -270,15 +270,17 @@ struct ISO_SUSP_ATTRIBUTES *cd9660_susp_ES(struct ISO_SUSP_ATTRIBUTES*,
 /* Helper functions */
 
 /* Common SUSP/RRIP functions */
-int cd9660_susp_initialize(cd9660node *, cd9660node *, cd9660node *);
-int cd9660_susp_initialize_node(cd9660node *);
+int cd9660_susp_initialize(iso9660_disk *, cd9660node *, cd9660node *,
+    cd9660node *);
+int cd9660_susp_initialize_node(iso9660_disk *, cd9660node *);
 struct ISO_SUSP_ATTRIBUTES *cd9660node_susp_create_node(int, int, const char *,
     int);
 struct ISO_SUSP_ATTRIBUTES *cd9660node_susp_add_entry(cd9660node *,
     struct ISO_SUSP_ATTRIBUTES *, struct ISO_SUSP_ATTRIBUTES *, int);
 
 /* RRIP specific functions */
-int cd9660_rrip_initialize_node(cd9660node *, cd9660node *, cd9660node *);
+int cd9660_rrip_initialize_node(iso9660_disk *, cd9660node *, cd9660node *,
+    cd9660node *);
 void cd9660_createSL(cd9660node *);
 
 /* Functions that probably can be removed */
