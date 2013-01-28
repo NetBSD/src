@@ -1,4 +1,4 @@
-/*	$NetBSD: empbreg.h,v 1.4 2012/06/04 12:56:49 rkujawa Exp $ */
+/*	$NetBSD: empbreg.h,v 1.5 2013/01/28 14:44:37 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  * RAM space (its size depends on a WINDOW jumper setting).
  */
 #define EMPB_SETUP_OFF		0x00000000
-#define EMPB_SETUP_SIZE		0xFFFF
+#define EMPB_SETUP_SIZE		0x30
 
 #define EMPB_SETUP_WINDOW_OFF	0x2	/* set memory window position */
 #define EMPB_SETUP_BRIDGE_OFF	0x7	/* select between conf or I/O */
@@ -88,7 +88,17 @@
 #define EMPB_MEM_BASE		0x80000000
 #define EMPB_MEM_END		0xA0000000
 
+#define EMPB_PM_OFF		0x40	/* power management register */
+#define EMPB_PM_PSU_SHUTDOWN	0x0
+
 /* All PCI interrupt lines are wired to INT2? */
-#define EMPB_INT		2	// XXX: wild guess
+#define EMPB_INT		2
+
+/*
+ * Elbox Mediator 4000.
+ */
+#define EM4K_CONF_OFF		0x00C00000
+#define EM4K_IO_OFF		0x00800000
+#define EM4K_SETUP_WINDOW_OFF	0x0
 
 #endif /* _AMIGA_EMPBREG_H_ */
