@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.12 2013/01/27 22:52:19 christos Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.13 2013/01/28 00:16:48 christos Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.12 2013/01/27 22:52:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.13 2013/01/28 00:16:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -424,6 +424,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct buf *bp;
 	char *dat;
+	u_long cn = 0;
 
 	DPRINTF(("%s(diroff %lu, dirclust %lu, startcluster %lu)\n", __func__,
 	    dep->de_diroffset, dep->de_dirclust, dep->de_StartCluster));
@@ -464,17 +465,23 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	for (offs = 0; offs < nsize;) {
 		int blsize, cpsize;
 		daddr_t bn;
-		u_long lbn = dep->de_StartCluster;
 		u_long on = offs & pmp->pm_crbomask;
-
-		if (lbn == MSDOSFSROOT) {
-			DPRINTF(("%s: bad lbn %lu", __func__, lbn));
+#ifdef HACK
+		cn = dep->de_StartCluster;
+		if (cn == MSDOSFSROOT) {
+			DPRINTF(("%s: bad lbn %lu", __func__, cn));
 			goto out;
 		}
-		bn = cntobn(pmp, lbn);
+		bn = cntobn(pmp, cn);
 		blsize = pmp->pm_bpcluster;
-		DPRINTF(("%s(lbn=%lu, bn=%llu/%llu, blsize=%d)\n", __func__,
-		    lbn, (unsigned long long)bn,
+#else
+		if ((error = pcbmap(dep, cn++, &bn, NULL, &blsize)) != 0) {
+			DPRINTF(("%s: pcbmap %lu", __func__, bn));
+			goto out;
+		}
+#endif
+		DPRINTF(("%s(cn=%lu, bn=%llu/%llu, blsize=%d)\n", __func__,
+		    cn, (unsigned long long)bn,
 		    (unsigned long long)de_bn2kb(pmp, bn), blsize));
 		if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    NULL, 0, &bp)) != 0) {
