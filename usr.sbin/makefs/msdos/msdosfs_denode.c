@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.3 2013/01/27 22:52:38 christos Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.4 2013/01/28 00:16:24 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.3 2013/01/27 22:52:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.4 2013/01/28 00:16:24 christos Exp $");
 
 #include <sys/param.h>
 
@@ -113,6 +113,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct denode
 	ldep->de_pmp = pmp;
 	ldep->de_devvp = pmp->pm_devvp;
 	ldep->de_refcnt = 1;
+	fc_purge(ldep, 0);
 	/*
 	 * Copy the directory entry into the denode area of the vnode.
 	 */
