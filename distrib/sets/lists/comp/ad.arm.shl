@@ -1,0 +1,5 @@
+# $NetBSD: ad.arm.shl,v 1.3 2013/01/28 18:57:10 matt Exp $
+./usr/lib/libarm32_pic.a			comp-obsolete		obsolete
+./usr/lib/libarm_pic.a				comp-c-piclib
+./usr/lib/libc_vfp_pic.a			comp-c-piclib
+./usr/lib/libpmc_pic.a				comp-c-piclib
