@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.15 2013/01/27 20:05:46 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.16 2013/01/28 10:16:35 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.15 2013/01/27 20:05:46 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.16 2013/01/28 10:16:35 mlelstv Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -136,20 +136,22 @@ bwrite(struct buf *bp)
 {
 	off_t	offset;
 	ssize_t	rv;
+	int	bytes;
 
 	assert (bp != NULL);
 	offset = bp->b_blkno * sectorsize;	/* XXX */
+	bytes  = bp->b_bcount;
 	if (debug & DEBUG_BUF_BWRITE)
-		printf("bwrite: blkno %lld offset %lld bcount %ld\n",
-		    (long long)bp->b_blkno, (long long) offset, bp->b_bcount);
+		printf("bwrite: blkno %lld offset %lld bcount %d\n",
+		    (long long)bp->b_blkno, (long long) offset, bytes);
 	if (lseek(bp->b_fd, offset, SEEK_SET) == -1)
 		return (errno);
-	rv = write(bp->b_fd, bp->b_data, bp->b_bcount);
+	rv = write(bp->b_fd, bp->b_data, bytes);
 	if (debug & DEBUG_BUF_BWRITE)
 		printf("bwrite: write %ld (offset %lld) returned %lld\n",
 		    bp->b_bcount, (long long)offset, (long long)rv);
 	brelse(bp, 0);
-	if (rv == bp->b_bcount)
+	if (rv == bytes)
 		return (0);
 	else if (rv == -1)		/* write error */
 		return (errno);
