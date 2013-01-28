@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.167 2013/01/11 11:00:33 he Exp $
+#	$NetBSD: files.amiga,v 1.168 2013/01/28 14:54:51 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -543,9 +543,14 @@ device	cv3dpb: pcibus
 attach	cv3dpb at zbus
 file	arch/amiga/pci/cv3dpb.c		cv3dpb & pci
 
-device	empb: pcibus, amibus_empb
+define	empmdev { }
+device	empm
+attach	empm at empmdev
+file	arch/amiga/pci/empm.c		empm needs-flag
+
+device	empb: pcibus, amibus_empb, empmdev
 attach	empb at zbus
-file	arch/amiga/pci/empb.c		empb & pci
+file	arch/amiga/pci/empb.c		empb & pci & empm
 
 device	emmem {}
 attach	emmem at zbus
