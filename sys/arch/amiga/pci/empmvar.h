@@ -1,7 +1,7 @@
-/*	$NetBSD: empbvar.h,v 1.3 2013/01/28 14:44:37 rkujawa Exp $ */
+/*	$NetBSD: empmvar.h,v 1.1 2013/01/28 14:44:37 rkujawa Exp $ */
 
 /*-
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,51 +33,15 @@
 #include <sys/device.h>
 #include <sys/bus.h>
 
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
+struct empm_softc {
+	device_t	sc_dev;
 
-#include <machine/pci_machdep.h>
-
-/*
- * Structure used to describe PCI devices with memory that can be used as
- * bounce buffers. XXX: not used yet.
- */
-struct empb_dmamemdev_entry {
-	/* location of the device on bus */
-	int	bus;
-	int	dev;
-	int	function;
-	/* how to find memory on device */
-	uint8_t	bar;	/* which BAR will be used to access the mem */
-	uint32_t off;	/* offset from BAR address */
-	uint32_t size;	/* how much memory will we steal */
+	bus_space_tag_t		setup_area_t;
+	bus_space_handle_t	powermgr_h;
 };
 
-struct empb_softc {
-	device_t			sc_dev;
-
-	uint16_t			model;
-
-	struct bus_space_tag		setup_area;
-	bus_space_tag_t			setup_area_t;
-	bus_space_handle_t		setup_area_h;
-
-	struct bus_space_tag		pci_confio_area;
-	bus_space_tag_t			pci_confio_t;
-	bus_space_handle_t		pci_confio_h;
-	uint8_t				pci_confio_mode;
-
-	struct bus_space_tag		pci_mem_win;
-	bus_space_tag_t			pci_mem_win_t;
-	uint32_t			pci_mem_win_size;
-	bus_addr_t			pci_mem_win_pos;
-	uint16_t			pci_mem_win_mask;
-
-	struct amiga_pci_chipset	apc;
-
+struct empm_attach_args {
+	bus_space_tag_t		setup_area_t;
 };
 
-
-bus_addr_t	empb_switch_window(struct empb_softc *sc, bus_addr_t address);
-
+void empm_power_off(struct empm_softc *);
