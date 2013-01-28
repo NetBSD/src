@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.9 2013/01/27 22:53:03 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.10 2013/01/28 21:03:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.9 2013/01/27 22:53:03 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.10 2013/01/28 21:03:27 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: msdos.c,v 1.9 2013/01/27 22:53:03 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <util.h>
 
 #include <ffs/buf.h>
 #include <fs/msdosfs/denode.h>
@@ -70,27 +71,8 @@ static int msdos_populate_dir(const char *, struct denode *, fsnode *,
 void
 msdos_prep_opts(fsinfo_t *fsopts)
 {
-	struct msdos_options *msdos_opts;
-
-	if ((msdos_opts = calloc(1, sizeof(*msdos_opts))) == NULL)
-		err(1, "Allocating memory for msdos_options");
-
-	fsopts->fs_specific = msdos_opts;
-}
-
-void
-msdos_cleanup_opts(fsinfo_t *fsopts)
-{
-	if (fsopts->fs_specific)
-		free(fsopts->fs_specific);
-}
-
-int
-msdos_parse_opts(const char *option, fsinfo_t *fsopts)
-{
-	struct msdos_options *msdos_opt = fsopts->fs_specific;
-
-	option_t msdos_options[] = {
+	struct msdos_options *msdos_opt = ecalloc(1, sizeof(*msdos_opt));
+	const option_t msdos_options[] = {
 #define AOPT(_opt, _type, _name, _min, _desc) { 			\
 	.letter = _opt,							\
 	.name = # _name,						\
@@ -110,6 +92,24 @@ ALLOPTS
 #undef AOPT	
 		{ .name = NULL }
 	};
+
+	fsopts->fs_specific = msdos_opt;
+	fsopts->fs_options = copy_opts(msdos_options);
+}
+
+void
+msdos_cleanup_opts(fsinfo_t *fsopts)
+{
+	free(fsopts->fs_specific);
+	free(fsopts->fs_options);
+}
+
+int
+msdos_parse_opts(const char *option, fsinfo_t *fsopts)
+{
+	struct msdos_options *msdos_opt = fsopts->fs_specific;
+	option_t *msdos_options = fsopts->fs_options;
+
 	int rv;
 
 	assert(option != NULL);
