@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.c,v 1.8 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: ldp_command.c,v 1.9 2013/01/28 20:06:52 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -555,8 +555,12 @@ show_hellos(int s, char *recvspace)
 	struct hello_info *hi;
 
 	SLIST_FOREACH(hi, &hello_info_head, infos) {
-		snprintf(sendspace, MAXSEND, "%s: %ds\n", inet_ntoa(hi->ldp_id),
-		    hi->keepalive);
+		snprintf(sendspace, MAXSEND,
+		    "ID: %s\nKeepalive: %ds\nTransport address: %s\n\n",
+		    inet_ntoa(hi->ldp_id),
+		    hi->keepalive,
+		    hi->transport_address.sa.sa_family != 0 ?
+		    satos(&hi->transport_address.sa) : "None");
 		writestr(s, sendspace);
 	}
 	return 1;

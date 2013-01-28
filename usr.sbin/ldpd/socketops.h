@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.h,v 1.4 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: socketops.h,v 1.5 2013/01/28 20:06:52 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,8 @@ int	send_tlv(struct ldp_peer *, struct tlv *);
 int	send_addresses(struct ldp_peer *);
 
 struct	hello_info {
-	struct in_addr address, transport_address, ldp_id;
+	union sockunion transport_address;
+	struct in_addr ldp_id;
 	int keepalive;
 	SLIST_ENTRY(hello_info) infos;
 };
