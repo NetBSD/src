@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_errors.h,v 1.4 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: ldp_errors.h,v 1.5 2013/01/28 21:35:34 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #define	LDP_E_TOO_MANY_LABELS	13
 #define	LDP_E_INVAL		14
 #define	LDP_E_TOO_MANY_FDS	15
+#define	LDP_E_BAD_ID		16
 #define	LDP_E_GENERIC		255
 
 void	printtime(void);
