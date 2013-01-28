@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.83 2012/03/22 20:34:43 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.84 2013/01/28 13:49:08 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.83 2012/03/22 20:34:43 drochner Exp $");
+__RCSID("$NetBSD: main.c,v 1.84 2013/01/28 13:49:08 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -393,7 +393,6 @@ prepare(const char *nf, const char *mf, struct protox *tp)
 		/* If we have -M and -N, we're not dealing with live memory. */
 		use_sysctl = 0;
 	} else if (qflag ||
-		   rflag ||
 		   iflag ||
 #ifndef SMALL
 		   gflag ||
@@ -661,10 +660,10 @@ main(int argc, char *argv[])
 		if (sflag)
 			rt_stats(use_sysctl ? 0 : nl[N_RTSTAT].n_value);
 		else {
-			if (use_sysctl)
-				p_rttables(af);
-			else
-				routepr(nl[N_RTREE].n_value);
+			if (!use_sysctl)
+				err(1, "-r is not supported "
+				    "for post-mortem analysis.");
+			p_rttables(af);
 		}
 		exit(0);
 	}
