@@ -789,9 +789,9 @@ route_netmask(uint32_t ip_in)
  * If we have a CSR then we only use that.
  * Otherwise we add static routes and then routers. */
 struct rt *
-get_option_routes(const struct dhcp_message *dhcp,
-    const char *ifname, unsigned long long *opts)
+get_option_routes(struct interface *ifp, const struct dhcp_message *dhcp)
 {
+	struct if_options *ifo = ifp->state->options;
 	const uint8_t *p;
 	const uint8_t *e;
 	struct rt *routes = NULL;
@@ -799,25 +799,31 @@ get_option_routes(const struct dhcp_message *dhcp,
 	int len;
 
 	/* If we have CSR's then we MUST use these only */
-	p = get_option(dhcp, DHO_CSR, &len, NULL);
+	if (!has_option_mask(ifo->nomask, DHO_CSR))
+		p = get_option(dhcp, DHO_CSR, &len, NULL);
+	else
+		p = NULL;
 	/* Check for crappy MS option */
-	if (!p)
+	if (!p && !has_option_mask(ifo->nomask, DHO_MSCSR))
 		p = get_option(dhcp, DHO_MSCSR, &len, NULL);
 	if (p) {
 		routes = decode_rfc3442_rt(len, p);
 		if (routes) {
-			if (!(*opts & DHCPCD_CSR_WARNED)) {
+			if (!(ifo->options & DHCPCD_CSR_WARNED)) {
 				syslog(LOG_DEBUG,
 				    "%s: using Classless Static Routes",
-				    ifname);
-				*opts |= DHCPCD_CSR_WARNED;
+				    ifp->name);
+				ifo->options |= DHCPCD_CSR_WARNED;
 			}
 			return routes;
 		}
 	}
 
 	/* OK, get our static routes first. */
-	p = get_option(dhcp, DHO_STATICROUTE, &len, NULL);
+	if (!has_option_mask(ifo->nomask, DHO_STATICROUTE))
+		p = get_option(dhcp, DHO_STATICROUTE, &len, NULL);
+	else
+		p = NULL;
 	if (p) {
 		e = p + len;
 		while (p < e) {
@@ -836,7 +842,10 @@ get_option_routes(const struct dhcp_message *dhcp,
 	}
 
 	/* Now grab our routers */
-	p = get_option(dhcp, DHO_ROUTER, &len, NULL);
+	if (!has_option_mask(ifo->nomask, DHO_ROUTER))
+		p = get_option(dhcp, DHO_ROUTER, &len, NULL);
+	else
+		p = NULL;
 	if (p) {
 		e = p + len;
 		while (p < e) {
