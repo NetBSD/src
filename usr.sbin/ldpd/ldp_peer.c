@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.7 2013/01/28 21:08:14 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.8 2013/01/28 21:35:34 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -193,7 +193,8 @@ ldp_peer_holddown_all()
 	SLIST_FOREACH(p, &ldp_peer_head, peers) {
 		if ((p->state == LDP_PEER_ESTABLISHED) ||
 		    (p->state == LDP_PEER_CONNECTED))
-			send_notification(p, get_message_id(), NOTIF_SHUTDOWN);
+			send_notification(p, get_message_id(),
+			    NOTIF_FATAL | NOTIF_SHUTDOWN);
 		ldp_peer_holddown(p);
 	}
 }

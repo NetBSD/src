@@ -1,4 +1,4 @@
-/* $NetBSD: pdu.c,v 1.2 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: pdu.c,v 1.3 2013/01/28 21:35:35 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,12 +66,22 @@ check_recv_pdu(struct ldp_peer * p, struct ldp_pdu * rpdu, int c)
 	if (c < MIN_PDU_SIZE)
 		return LDP_E_BAD_LENGTH;
 
+	if (p->ldp_id.s_addr != rpdu->ldp_id.s_addr) {
+		fatalp("Invalid LDP ID received from %s\n",
+		    inet_ntoa(p->ldp_id));
+		notiftlv = build_notification(0,
+		    NOTIF_FATAL | NOTIF_BAD_LDP_ID);
+		send_tlv(p, (struct tlv *) notiftlv);
+		free(notiftlv);
+		return LDP_E_BAD_ID;
+	}
 
 	/* Check PDU for right LDP version */
 	if (ntohs(rpdu->version) != LDP_VERSION) {
 		fatalp("Invalid PDU version received from %s (%d)\n",
 		       satos(p->address), ntohs(rpdu->version));
-		notiftlv = build_notification(0, NOTIF_BAD_LDP_VER);
+		notiftlv = build_notification(0,
+		    NOTIF_FATAL | NOTIF_BAD_LDP_VER);
 		send_tlv(p, (struct tlv *) notiftlv);
 		free(notiftlv);
 		return LDP_E_BAD_VERSION;
@@ -81,7 +91,8 @@ check_recv_pdu(struct ldp_peer * p, struct ldp_pdu * rpdu, int c)
 		fatalp("Invalid PDU length received from %s (announced %d, "
 		    "received %d)\n", satos(p->address),
 		    ntohs(rpdu->length), (int) (c - PDU_VER_LENGTH));
-		notiftlv = build_notification(0, NOTIF_BAD_PDU_LEN);
+		notiftlv = build_notification(0,
+		    NOTIF_FATAL | NOTIF_BAD_PDU_LEN);
 		send_tlv(p, (struct tlv *) notiftlv);
 		free(notiftlv);
 		return LDP_E_BAD_LENGTH;
