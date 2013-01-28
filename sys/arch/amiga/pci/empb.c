@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.8 2012/10/27 17:17:34 chs Exp $ */
+/*	$NetBSD: empb.c,v 1.9 2013/01/28 14:44:37 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #include <amiga/pci/empbreg.h>
 #include <amiga/pci/empbvar.h>
 #include <amiga/pci/emmemvar.h>
+#include <amiga/pci/empmvar.h>
 
 #include <dev/pci/pciconf.h>
 
@@ -65,8 +66,10 @@
 
 static int	empb_match(device_t, cfdata_t, void *);
 static void	empb_attach(device_t, device_t, void *);
-
 static void	empb_callback(device_t);
+
+static void	empb_empm_attach(struct empb_softc *sc);
+static int	empb_empm_print(void *aux, const char *pnp);
 
 static void	empb_find_mem(struct empb_softc *);
 static void	empb_switch_bridge(struct empb_softc *, uint8_t);
@@ -125,7 +128,9 @@ empb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	ba = zap->va;
 
-	switch (zap->prodid) {
+	sc->model = zap->prodid;
+
+	switch (sc->model) {
 	case ZORRO_PRODID_MED1K2:
 		aprint_normal(": ELBOX Mediator PCI 1200\n"); 
 		break;
@@ -255,9 +260,36 @@ empb_callback(device_t self) {
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
+	/* Attach power management on SX and TX models. */
+	switch (sc->model) {
+	case ZORRO_PRODID_MED1K2SX:
+	case ZORRO_PRODID_MED1K2TX:
+		empb_empm_attach(sc);
+	default:
+		break;
+	}	
+
 	empb_intr_enable(sc);
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
+}
+
+static void
+empb_empm_attach(struct empb_softc *sc)
+{
+	struct empm_attach_args aa;
+	aa.setup_area_t = sc->setup_area_t;
+
+	config_found_ia(sc->sc_dev, "empmdev", &aa, empb_empm_print);
+}
+
+static int 
+empb_empm_print(void *aux, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("empm at %s", pnp);
+
+	return UNCONF;
 }
 
 static void 
