@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.18 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.19 2013/01/28 23:46:33 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.18 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.19 2013/01/28 23:46:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1696,8 +1696,21 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 			urtwn_set_chan(sc, ic->ic_curchan,
 			    IEEE80211_HTINFO_2NDCHAN_NONE);
 
+			/* Set media status to 'No Link'. */
+			urtwn_set_nettype0_msr(sc, R92C_CR_NETTYPE_NOLINK);
+
 			/* Enable Rx of data frames. */
 			urtwn_write_2(sc, R92C_RXFLTMAP2, 0xffff);
+
+			/* Allow Rx from any BSSID. */
+			urtwn_write_4(sc, R92C_RCR,
+			    urtwn_read_4(sc, R92C_RCR) &
+			    ~(R92C_RCR_CBSSID_DATA | R92C_RCR_CBSSID_BCN));
+
+			/* Accept Rx data/control/management frames */
+			urtwn_write_4(sc, R92C_RCR,
+			    urtwn_read_4(sc, R92C_RCR) |
+			    R92C_RCR_ADF | R92C_RCR_ACF | R92C_RCR_AMF);
 
 			/* Turn link LED on. */
 			urtwn_set_led(sc, URTWN_LED_LINK, 1);
@@ -1918,6 +1931,10 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 		ifp->if_ierrors++;
 		return;
 	}
+	/*
+	 * XXX: This will drop most control packets.  Do we really
+	 * want this in IEEE80211_M_MONITOR mode?
+	 */
 	if (__predict_false(pktlen < (int)sizeof(*wh))) {
 		DPRINTFN(DBG_RX, ("%s: %s: packet too short %d\n",
 		    device_xname(sc->sc_dev), __func__, pktlen));
@@ -1974,7 +1991,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 	if (__predict_false(sc->sc_drvbpf != NULL)) {
 		struct urtwn_rx_radiotap_header *tap = &sc->sc_rxtap;
 
-		tap->wr_flags = IEEE80211_RADIOTAP_F_FCS;
+		tap->wr_flags = 0;
 		if (!(rxdw3 & R92C_RXDW3_HT)) {
 			switch (rate) {
 			/* CCK. */
@@ -2064,6 +2081,7 @@ urtwn_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		if (__predict_false(pktlen == 0)) {
 			DPRINTFN(DBG_RX, ("%s: %s: pktlen is 0 byte\n",
 			    device_xname(sc->sc_dev), __func__));
+			break;
 		}
 
 		infosz = MS(rxdw0, R92C_RXDW0_INFOSZ) * 8;
@@ -2164,6 +2182,8 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
+
+		/* XXX: set tap->wt_rate? */
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
 	}
@@ -3655,8 +3675,6 @@ urtwn_init(struct ifnet *ifp)
 	}
 	urtwn_write_4(sc, R92C_CR, reg);
 
-	urtwn_rxfilter_init(sc);
-
 	/* Set response rate */
 	reg = urtwn_read_4(sc, R92C_RRSR);
 	reg = RW(reg, R92C_RRSR_RATE_BITMAP, R92C_RRSR_RATE_CCK_ONLY_1M);
@@ -3721,9 +3739,13 @@ urtwn_init(struct ifnet *ifp)
 	SET(sc->sc_flags, URTWN_FLAG_FWREADY);
 
 	/* Initialize MAC/BB/RF blocks. */
-	urtwn_mac_init(sc);
-	urtwn_write_4(sc, R92C_RCR,
-	    urtwn_read_4(sc, R92C_RCR) & ~R92C_RCR_ADF);
+	/*
+	 * XXX: urtwn_mac_init() sets R92C_RCR[0:15] = R92C_RCR_APM |
+	 * R92C_RCR_AM | R92C_RCR_AB | R92C_RCR_AICV | R92C_RCR_AMF.
+	 * XXX: This setting should be removed from rtl8192cu_mac[].
+	 */
+	urtwn_mac_init(sc);		// sets R92C_RCR[0:15]
+	urtwn_rxfilter_init(sc);	// reset R92C_RCR
 	urtwn_bb_init(sc);
 	urtwn_rf_init(sc);
 
