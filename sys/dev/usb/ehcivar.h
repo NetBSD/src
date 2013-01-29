@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.40 2012/06/10 06:15:53 mrg Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.41 2013/01/29 00:00:15 christos Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,6 +28,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _EHCIVAR_H_
+#define _EHCIVAR_H_
+
+#include <sys/pool.h>
 
 typedef struct ehci_soft_qtd {
 	ehci_qtd_t qtd;
@@ -162,7 +167,7 @@ typedef struct ehci_softc {
 	u_int32_t sc_eintrs;
 	ehci_soft_qh_t *sc_async_head;
 
-	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
+	pool_cache_t sc_xferpool;	/* free xfer pool */
 
 	struct callout sc_tmo_intrlist;
 
@@ -195,3 +200,5 @@ void		ehci_childdet(device_t, device_t);
 bool		ehci_suspend(device_t, const pmf_qual_t *);
 bool		ehci_resume(device_t, const pmf_qual_t *);
 bool		ehci_shutdown(device_t, int);
+
+#endif /* _EHCIVAR_H_ */
