@@ -1,6 +1,6 @@
-.\" $NetBSD: empb.4,v 1.9 2013/01/29 21:31:19 rkujawa Exp $
+.\" $NetBSD: em4k.4,v 1.1 2013/01/29 21:31:18 rkujawa Exp $
 .\"
-.\" Copyright (c) 2012 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,54 +27,36 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd 29 Jaunary, 2012
-.Dt EMPB 4 amiga
+.Dd 29 January, 2013
+.Dt EM4K 4 amiga
 .Os
 .Sh NAME
-.Nm empb
-.Nd ELBOX Mediator 1200 PCI bridge driver
+.Nm em4k
+.Nd ELBOX Mediator 4000 PCI bridge driver
 .Sh SYNOPSIS
-.Cd "empb0 at zbus0"
+.Cd "em4k0 at zbus0"
 .Cd "emmem0 at zbus0"
-.Cd "empm0 at zbus0"
 .Cd "pci* at empb0"
 .Cd "options PCI_NETBSD_CONFIGURE"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the PCI bus present on Mediator 1200 bridge for
-Amiga 1200.
+driver provides support for the PCI bus present on Mediator 4000 bridge and associated
+PCI/Zorro daughterboards.
 .Sh HARDWARE
 The
 .Nm
 driver supports the following hardware:
 .Bl -tag -offset indent
-.It ELBOX Mediator PCI 1200
-.It ELBOX Mediator PCI 1200 LT2
-.It ELBOX Mediator PCI 1200 LT4
-.It ELBOX Mediator PCI 1200 SX
-.It ELBOX Mediator PCI 1200 TX
+.It ELBOX Mediator PCI 4000D
+.It ELBOX Mediator PCI 4000Di
+.It ELBOX Mediator PCI 4000T 
+.It ELBOX Mediator PCI 3000D 
+.It ELBOX Mediator PCI 3000T 
 .El
-.Sh DIAGNOSTICS
-.Bl -diag
-.It empb: linear space mapping might not work
-The PCI card driver is trying map memory space with the
-.Dv BUS_SPACE_MAP_LINEAR
-flag.
-Due to the windowed design of Mediator, it is expected to fail miserably if
-normal memory space access methods (e.g., pointer dereference) are used
-instead of
-.Xr bus_space 9
-methods.
-.It empb%d: couldn't find memory space, check your WINDOW jumper
-PCI memory space access is disabled on a hardware level.
-The
-.Nm
-driver will work anyway, but only PCI I/O space will be accessible.
-To enable memory space set the WINDOW jumper to 4MB or 8MB.
-.El
+MK-II editions are also supported.
 .Sh SEE ALSO
-.Xr em4k 4 ,
+.Xr empb 4 ,
 .Xr mppb 4 ,
 .Xr p5pb 4 ,
 .Xr pci 4
@@ -96,10 +78,8 @@ and
 .An Radoslaw Kujawa .
 The authors have no access to official
 documentation (which is only available under NDA).
-.Sh CAVEATS
-Mediator ZIV might work but is untested.
 .Sh BUGS
 DMA to host memory is not supported.
-This is a hardware limitation.
+It is unclear if the hardware supports DMA to host memory at all.
 It is possible to implement DMA through bounce buffers in graphics card memory,
 but this needs further research.
