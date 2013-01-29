@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.109 2013/01/29 00:52:50 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.110 2013/01/29 21:04:55 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.109 $"
+#ident 		"GENERIC-$Revision: 1.110 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -529,6 +529,7 @@ wdc*		at zbus0		# Buddha / Catweasel
 
 atabus* 	at wdc? channel ?	# ATA bus
 #atabus*	at efa? channel ?	# ATA bus 
+atabus*		at ata? channel ?	# ATA bus 
 wd*		at atabus? drive ?	#  + drives
 atapibus*	at atabus?		# ATAPI bus
 cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
