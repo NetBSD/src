@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1417 2013/01/18 20:01:47 christos Exp $
+# $NetBSD: mi,v 1.1418 2013/01/29 21:34:16 rkujawa Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -747,6 +747,7 @@
 ./usr/share/man/cat4/amiga/cv3dpb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/ed.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/efa.0		man-sys-catman		.cat
+./usr/share/man/cat4/amiga/em4k.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/empb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/es.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/fdc.0		man-sys-catman		.cat
@@ -3717,6 +3718,7 @@
 ./usr/share/man/html4/amiga/cv3dpb.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/ed.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/efa.html		man-sys-htmlman		html
+./usr/share/man/html4/amiga/em4k.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/empb.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/es.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/fdc.html		man-sys-htmlman		html
@@ -6379,6 +6381,7 @@
 ./usr/share/man/man4/amiga/cv3dpb.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/ed.4			man-sys-man		.man
 ./usr/share/man/man4/amiga/efa.4		man-sys-man		.man
+./usr/share/man/man4/amiga/em4k.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/empb.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/es.4			man-sys-man		.man
 ./usr/share/man/man4/amiga/fdc.4		man-sys-man		.man
