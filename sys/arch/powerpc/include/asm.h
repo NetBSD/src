@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40 2012/11/25 01:10:37 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.41 2013/01/29 15:45:43 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -192,7 +192,8 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 
 # ifdef CI_INTSTK
 #  define INIT_CPUINFO_INTSTK(er,tmp1)					\
-	addi	er,er,INTSTK;						\
+	addis	er,er,INTSTK@ha;					\
+	addi	er,er,INTSTK@l;						\
 	stptr	er,CI_INTSTK(tmp1)
 # else
 #  define INIT_CPUINFO_INTSTK(er,tmp1)	/* nothing */
@@ -219,7 +220,8 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	ori	%r13,%r13,_C_LABEL(lwp0)@l;				\
 	stptr	er,L_PCB(%r13);		/* XXXuvm_lwp_getuarea */	\
 	stptr	tmp1,L_CPU(%r13);	 				\
-	addi	er,er,USPACE;		/* stackpointer for lwp0 */	\
+	addis	er,er,USPACE@ha;	/* stackpointer for lwp0 */	\
+	addi	er,er,USPACE@l;		/* stackpointer for lwp0 */	\
 	addi	sp,er,-FRAMELEN-CALLFRAMELEN;	/* stackpointer for lwp0 */ \
 	stptr	sp,L_MD_UTF(%r13);	/* save in lwp0.l_md.md_utf */	\
 		/* er = end of mem reserved for kernel */		\
