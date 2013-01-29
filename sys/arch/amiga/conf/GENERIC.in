@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.108 2013/01/28 14:54:51 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.109 2013/01/29 00:52:50 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.108 $"
+#ident 		"GENERIC-$Revision: 1.109 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -584,9 +584,11 @@ mppb*           at zbus0		# Matay Prometheus Zorro-PCI bridge
 pci*            at mppb?
 
 empb0		at zbus0		# ELBOX Mediator PCI 1200
+em4k0		at zbus0		# ELBOX Mediator PCI 4000
 emmem0		at zbus0		# ELBOX Mediator PCI memory space
 empm0		at empb0		# ELBOX Mediator PCI Power Management
 pci*		at empb0
+pci*		at em4k0
 
 #cv3dpb*	at zbus0		# CyberVision 64/3D PCI bridge
 
