@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.30 2013/01/28 21:03:27 christos Exp $	*/
+/*	$NetBSD: makefs.h,v 1.31 2013/01/29 15:52:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -118,6 +118,7 @@ typedef struct _fsnode {
 typedef enum {
 	OPT_STRARRAY,
 	OPT_STRPTR,
+	OPT_STRBUF,
 	OPT_BOOL,
 	OPT_INT8,
 	OPT_INT16,
@@ -173,8 +174,9 @@ typedef struct {
 void		apply_specfile(const char *, const char *, fsnode *, int);
 void		dump_fsnodes(fsnode *);
 const char *	inode_type(mode_t);
-int		set_option(const option_t *, const char *);
-int		set_option_var(const option_t *, const char *, const char *);
+int		set_option(const option_t *, const char *, char *, size_t);
+int		set_option_var(const option_t *, const char *, const char *,
+    char *, size_t);
 fsnode *	walk_dir(const char *, const char *, fsnode *, fsnode *);
 void		free_fsnodes(fsnode *);
 option_t *	copy_opts(const option_t *);
