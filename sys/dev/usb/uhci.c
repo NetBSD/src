@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.252 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: uhci.c,v 1.253 2013/01/29 00:00:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.252 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.253 2013/01/29 00:00:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -521,7 +521,8 @@ uhci_init(uhci_softc_t *sc)
 
 	LIST_INIT(&sc->sc_intrhead);
 
-	SIMPLEQ_INIT(&sc->sc_free_xfers);
+	sc->sc_xferpool = pool_cache_init(sizeof(struct uhci_xfer), 0, 0, 0,
+	    "uhcixfer", NULL, IPL_USB, NULL, NULL, NULL);
 
 	callout_init(&sc->sc_poll_handle, CALLOUT_MPSAFE);
 
@@ -569,7 +570,6 @@ uhci_childdet(device_t self, device_t child)
 int
 uhci_detach(struct uhci_softc *sc, int flags)
 {
-	usbd_xfer_handle xfer;
 	int rv = 0;
 
 	if (sc->sc_child != NULL)
@@ -578,14 +578,7 @@ uhci_detach(struct uhci_softc *sc, int flags)
 	if (rv != 0)
 		return (rv);
 
-	/* Free all xfers associated with this HC. */
-	for (;;) {
-		xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
-		if (xfer == NULL)
-			break;
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
-		kmem_free(xfer, sizeof(struct uhci_xfer));
-	}
+	pool_cache_destroy(sc->sc_xferpool);
 
 	callout_halt(&sc->sc_poll_handle, NULL);
 	callout_destroy(&sc->sc_poll_handle);
@@ -654,21 +647,9 @@ uhci_allocx(struct usbd_bus *bus)
 	struct uhci_softc *sc = bus->hci_private;
 	usbd_xfer_handle xfer;
 
-	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
+	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
 	if (xfer != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
-#ifdef DIAGNOSTIC
-		if (xfer->busy_free != XFER_FREE) {
-			printf("uhci_allocx: xfer=%p not free, 0x%08x\n", xfer,
-			       xfer->busy_free);
-		}
-#endif
-	} else {
-		xfer = kmem_alloc(sizeof(struct uhci_xfer), KM_SLEEP);
-	}
-	if (xfer != NULL) {
-		memset(xfer, 0, sizeof (struct uhci_xfer));
-		UXFER(xfer)->iinfo.sc = sc;
+		memset(xfer, 0, sizeof(struct uhci_xfer));
 #ifdef DIAGNOSTIC
 		UXFER(xfer)->iinfo.isdone = 1;
 		xfer->busy_free = XFER_BUSY;
@@ -692,7 +673,7 @@ uhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 		printf("uhci_freex: !isdone\n");
 	}
 #endif
-	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
+	pool_cache_put(sc->sc_xferpool, xfer);
 }
 
 Static void

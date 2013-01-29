@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.231 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: ohci.c,v 1.232 2013/01/29 00:00:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.231 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.232 2013/01/29 00:00:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,7 +359,6 @@ int
 ohci_detach(struct ohci_softc *sc, int flags)
 {
 	int rv = 0;
-	usbd_xfer_handle xfer;
 
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
@@ -381,10 +380,7 @@ ohci_detach(struct ohci_softc *sc, int flags)
 
 	if (sc->sc_hcca != NULL)
 		usb_freemem(&sc->sc_bus, &sc->sc_hccadma);
-	while((xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
-		kmem_free(xfer, sizeof(struct ohci_xfer));
-	}
+	pool_cache_destroy(sc->sc_xferpool);
 
 	return (rv);
 }
@@ -672,7 +668,8 @@ ohci_init(ohci_softc_t *sc)
 	for (i = 0; i < OHCI_HASH_SIZE; i++)
 		LIST_INIT(&sc->sc_hash_itds[i]);
 
-	SIMPLEQ_INIT(&sc->sc_free_xfers);
+	sc->sc_xferpool = pool_cache_init(sizeof(struct ohci_xfer), 0, 0, 0,
+	    "ohcixfer", NULL, IPL_USB, NULL, NULL, NULL);
 
 	rev = OREAD4(sc, OHCI_REVISION);
 	aprint_normal("OHCI version %d.%d%s\n",
@@ -951,20 +948,9 @@ ohci_allocx(struct usbd_bus *bus)
 	struct ohci_softc *sc = bus->hci_private;
 	usbd_xfer_handle xfer;
 
-	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
+	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
 	if (xfer != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
-#ifdef DIAGNOSTIC
-		if (xfer->busy_free != XFER_FREE) {
-			printf("ohci_allocx: xfer=%p not free, 0x%08x\n", xfer,
-			       xfer->busy_free);
-		}
-#endif
-	} else {
-		xfer = kmem_alloc(sizeof(struct ohci_xfer), KM_SLEEP);
-	}
-	if (xfer != NULL) {
-		memset(xfer, 0, sizeof (struct ohci_xfer));
+		memset(xfer, 0, sizeof(struct ohci_xfer));
 #ifdef DIAGNOSTIC
 		xfer->busy_free = XFER_BUSY;
 #endif
@@ -984,7 +970,7 @@ ohci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	}
 	xfer->busy_free = XFER_FREE;
 #endif
-	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
+	pool_cache_put(sc->sc_xferpool, xfer);
 }
 
 Static void
