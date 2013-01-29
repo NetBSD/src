@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.236 2012/06/06 05:10:54 matt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.237 2013/01/29 19:56:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.236 2012/06/06 05:10:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.237 2013/01/29 19:56:43 christos Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -223,7 +223,7 @@ sysctl_copyinstr(struct lwp *l, const void *uaddr, void *kaddr,
 void
 sysctl_init(void)
 {
-	sysctl_setup_func * const *sysctl_setup, f;
+	sysctl_setup_func *const *sysctl_setup;
 
 	rw_init(&sysctl_treelock);
 
@@ -233,11 +233,7 @@ sysctl_init(void)
 	sysctl_root.sysctl_num = CREATE_BASE;
 
         __link_set_foreach(sysctl_setup, sysctl_funcs) {
-		/*
-		 * XXX - why do i have to coerce the pointers like this?
-		 */
-		f = (void*)*sysctl_setup;
-		(*f)(NULL);
+		(**sysctl_setup)(NULL);
 	}
 
 	mutex_init(&sysctl_file_marker_lock, MUTEX_DEFAULT, IPL_NONE);
