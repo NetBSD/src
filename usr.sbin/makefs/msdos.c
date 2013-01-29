@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.10 2013/01/28 21:03:27 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.11 2013/01/29 21:54:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.10 2013/01/28 21:03:27 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.11 2013/01/29 21:54:19 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -119,7 +119,7 @@ msdos_parse_opts(const char *option, fsinfo_t *fsopts)
 	if (debug & DEBUG_FS_PARSE_OPTS)
 		printf("msdos_parse_opts: got `%s'\n", option);
 
-	rv = set_option(msdos_options, option);
+	rv = set_option(msdos_options, option, NULL, 0);
 	if (rv == -1)
 		return rv;
 
