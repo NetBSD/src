@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.253 2013/01/29 00:00:15 christos Exp $	*/
+/*	$NetBSD: uhci.c,v 1.254 2013/01/29 19:27:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.253 2013/01/29 00:00:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.254 2013/01/29 19:27:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,8 +578,6 @@ uhci_detach(struct uhci_softc *sc, int flags)
 	if (rv != 0)
 		return (rv);
 
-	pool_cache_destroy(sc->sc_xferpool);
-
 	callout_halt(&sc->sc_poll_handle, NULL);
 	callout_destroy(&sc->sc_poll_handle);
 
@@ -587,6 +585,8 @@ uhci_detach(struct uhci_softc *sc, int flags)
 
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
+
+	pool_cache_destroy(sc->sc_xferpool);
 
 	/* XXX free other data structures XXX */
 
@@ -650,6 +650,7 @@ uhci_allocx(struct usbd_bus *bus)
 	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct uhci_xfer));
+		UXFER(xfer)->iinfo.sc = sc;
 #ifdef DIAGNOSTIC
 		UXFER(xfer)->iinfo.isdone = 1;
 		xfer->busy_free = XFER_BUSY;
