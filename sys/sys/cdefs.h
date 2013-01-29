@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.104 2013/01/02 17:02:13 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.105 2013/01/29 01:23:12 gdt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -468,7 +468,7 @@
  *
  *	__link_set_decl(set, ptype)
  *		Provide an extern declaration of the set `set', which
- *		contains an array of the pointer type `ptype'.  This
+ *		contains an array of pointers to type `ptype'.  This
  *		macro must be used by any code which wishes to reference
  *		the elements of a link set.
  *
