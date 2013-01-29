@@ -1,4 +1,4 @@
-/*	$NetBSD: em4k.c,v 1.1 2013/01/29 00:49:42 rkujawa Exp $ */
+/*	$NetBSD: em4k.c,v 1.2 2013/01/29 21:02:50 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -76,6 +76,10 @@ const struct evcnt * em4k_pci_intr_evcnt(pci_chipset_tag_t,
 		    pci_intr_handle_t);
 int		em4k_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 
+#ifdef PCI_NETBSD_CONFIGURE
+static void	em4k_pci_configure(struct em4k_softc *sc);
+#endif /* PCI_NETBSD_CONFIGURE */
+
 CFATTACH_DECL_NEW(em4k, sizeof(struct em4k_softc),
     em4k_match, em4k_attach, NULL, NULL);
 
@@ -150,9 +154,6 @@ em4k_callback(device_t self) {
 	struct em4k_softc *sc;
 	pci_chipset_tag_t pc;
 	struct pcibus_attach_args pba;  
-#ifdef PCI_NETBSD_CONFIGURE
-	/* struct extent *ioext, *memext; */
-#endif /* PCI_NETBSD_CONFIGURE */
 
 	sc = device_private(self);
 	pc = &sc->apc;
@@ -210,19 +211,7 @@ em4k_callback(device_t self) {
 	sc->apc.cookie = sc;
 
 #ifdef PCI_NETBSD_CONFIGURE
-	/* XXX: not yet
-	ioext = extent_create("em4kio", 0, EMPB_BRIDGE_SIZE, 
-	    NULL, 0, EX_NOWAIT);
-
-	memext = extent_create("em4kmem", EMPB_MEM_BASE, EMPB_MEM_END,
-	    NULL, 0, EX_NOWAIT);
-
-	pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINE_SIZE);
-
-	extent_destroy(ioext);
-	extent_destroy(memext);
-	*/
-
+	em4k_pci_configure(sc);
 #endif /* PCI_NETBSD_CONFIGURE */
 
 	pba.pba_iot = &(sc->pci_io_area);
@@ -240,14 +229,40 @@ em4k_callback(device_t self) {
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
-	/* XXX: set correct window pos */
-	/*bus_space_write_2(sc->setup_area_t, sc->setup_area_h,
-	    EMPB_SETUP_WINDOW_OFF, XXX);*/
+	/* Set correct window position. */
+	bus_space_write_1(sc->setup_area_t, sc->setup_area_h,
+	    EM4K_SETUP_WINDOW_OFF, kvtop((void*) sc->pci_mem_win.base) >> 
+	    EM4K_WINDOW_SHIFT);
 
 	em4k_intr_enable(sc);
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
+
+#ifdef PCI_NETBSD_CONFIGURE
+static void
+em4k_pci_configure(struct em4k_softc *sc)
+{
+	struct extent *ioext, *memext;
+
+	/* I/O addresses are relative to I/O space address. */
+	ioext = extent_create("em4kio", 0, EM4K_IO_SIZE, 
+	    NULL, 0, EX_NOWAIT);
+
+	/*
+	 * Memory space addresses are absolute (and keep in mind that
+	 * they are in a separate address space.
+	 */
+	memext = extent_create("em4kmem", kvtop((void*) sc->pci_mem_win.base),
+	    kvtop((void*) sc->pci_mem_win.base) + sc->pci_mem_win_size,
+	    NULL, 0, EX_NOWAIT);
+
+	pci_configure_bus(&sc->apc, ioext, memext, NULL, 0, CACHELINE_SIZE);
+
+	extent_destroy(ioext);
+	extent_destroy(memext);
+}
+#endif /* PCI_NETBSD_CONFIGURE */
 
 static void 
 em4k_intr_enable(struct em4k_softc *sc) 
