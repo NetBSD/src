@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem_impl.h,v 1.1 2013/01/26 13:50:33 para Exp $	*/
+/*	$NetBSD: vmem_impl.h,v 1.2 2013/01/29 21:26:24 para Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -36,6 +36,7 @@
 #include <sys/types.h>
 
 #if defined(_KERNEL)
+#define	QCACHE
 #include <sys/vmem.h>
 
 #define	LOCK_DECL(name)		\
@@ -66,7 +67,7 @@ LIST_HEAD(vmem_freelist, vmem_btag);
 LIST_HEAD(vmem_hashlist, vmem_btag);
 
 #if defined(QCACHE)
-#define	VMEM_QCACHE_IDX_MAX	32
+#define	VMEM_QCACHE_IDX_MAX	16
 
 #define	QC_NAME_MAX	16
 
