@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.40 2013/01/29 01:05:57 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.41 2013/01/29 15:52:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.40 2013/01/29 01:05:57 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.41 2013/01/29 15:52:25 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -264,36 +264,65 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 	iso9660_disk *diskStructure = ecalloc(1, sizeof(*diskStructure));
 
 	const option_t cd9660_options[] = {
+		{ 'h', "help", &diskStructure->displayHelp,
+		  OPT_INT32, 0, 1, "Show help message" },
 		{ 'l', "isolevel", &diskStructure->isoLevel,
 		  OPT_INT32, 1, 3, "ISO Level" },
+		{ 'S', "follow-symlinks", &diskStructure->follow_sym_links,
+		  OPT_INT32, 0, 1, "Resolve symlinks in pathnames" },
 		{ 'v', "verbose",  &diskStructure->verbose_level,
 		  OPT_INT32, 0, 2, "Turns on verbose output" },
-		{ 'L', "Label", diskStructure->primaryDescriptor.volume_id, 
-		  OPT_STRARRAY, 1,
-		  sizeof(diskStructure->primaryDescriptor.volume_id),
-		  "Disk Label" },
 	        { 'R', "rockridge", &diskStructure->rock_ridge_enabled,
 		  OPT_INT32, 0, 1, "Enable Rock-Ridge extensions" },
-	        { 'A', "archimedes", &diskStructure->archimedes_enabled,
-		  OPT_INT32, 0, 1, "Enable Archimedes structure" },
-	        { '\0', "chrp-boot", &diskStructure->chrp_boot,
+	        { 'C', "chrp-boot", &diskStructure->chrp_boot,
 		  OPT_INT32, 0, 1, "Enable CHRP boot" },
 	        { 'K', "keep-bad-images", &diskStructure->keep_bad_images,
 		  OPT_INT32, 0, 1, "Keep bad images" },
-	        { '\0', "allow-deep-trees", &diskStructure->allow_deep_trees,
+	        { 'D', "allow-deep-trees", &diskStructure->allow_deep_trees,
 		  OPT_INT32, 0, 1, "Allow trees more than 8 levels" },
-	        { '\0', "allow-max-name", &diskStructure->allow_max_name,
+	        { 'a', "allow-max-name", &diskStructure->allow_max_name,
 		  OPT_INT32, 0, 1, "Allow 37 char filenames (unimplemented)" },
-	        { '\0', "allow-illegal-chars", 
+	        { 'i', "allow-illegal-chars", 
 		  &diskStructure->allow_illegal_chars,
 		  OPT_INT32, 0, 1, "Allow illegal characters in filenames" },
-	        { '\0', "allow-lowercase", &diskStructure->allow_lowercase,
-		  OPT_INT32, 0, 1, "Allow lowercase characters in filenames" },
-	        { '\0', "allow-multidot", &diskStructure->allow_multidot,
+	        { 'D', "allow-multidot", &diskStructure->allow_multidot,
 		  OPT_INT32, 0, 1, "Allow multiple periods in filenames" },
-	        { '\0', "omit-trailing-period",
+	        { 'o', "omit-trailing-period",
 		  &diskStructure->omit_trailing_period,
 		  OPT_INT32, 0, 1, "Omit trailing periods in filenames" },
+	        { '\0', "allow-lowercase", &diskStructure->allow_lowercase,
+		  OPT_INT32, 0, 1, "Allow lowercase characters in filenames" },
+	        { '\0', "archimedes", &diskStructure->archimedes_enabled,
+		  OPT_INT32, 0, 1, "Enable Archimedes structure" },
+		{ '\0', "no-trailing-padding",
+		  &diskStructure->include_padding_areas,
+		  OPT_INT32, 0, 1, "Include padding areas" },
+
+
+		{ 'A', "applicationid", NULL, OPT_STRBUF, 0, 0,
+		  "Application Identifier" },
+		{ 'P', "publisher", NULL, OPT_STRBUF, 0, 0, 
+		  "Publisher Identifier" },
+		{ 'p', "preparer", NULL, OPT_STRBUF, 0, 0,
+		  "Preparer Identifier" },
+		{ 'L', "label", NULL, OPT_STRBUF, 0, 0,
+		  "Disk Label" },
+		{ 'V', "volumeid", NULL, OPT_STRBUF, 0, 0,
+		  "Volume Set Identifier" },
+		{ 'B', "bootimage", NULL, OPT_STRBUF, 0, 0,
+		  "Boot image parameter" },
+		{ 'G', "generic-bootimage", NULL, OPT_STRBUF, 0, 0,
+		  "Generic boot image parameter" },
+		{ '\0', "bootimagedir", NULL, OPT_STRBUF, 0, 0,
+		  "Boot image directory" },
+		{ '\0', "no-emul-boot", NULL, OPT_STRBUF, 0, 0,
+		  "No boot emulation" },
+		{ '\0', "no-boot", NULL, OPT_STRBUF, 0, 0,
+		  "No boot support" },
+		{ '\0', "hard-disk-boot", NULL, OPT_STRBUF, 0, 0,
+		  "Boot from hard disk" },
+		{ '\0', "boot-load-segment", NULL, OPT_STRBUF, 0, 0,
+		  "Boot load segment" },
 		{ .name = NULL }
 	};
 
@@ -344,101 +373,105 @@ cd9660_arguments_set_string(const char *val, const char *fieldtitle, int length,
 int
 cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 {
-	char *var, *val;
-	int	rv;
+	int	rv, i;
 	iso9660_disk *diskStructure = fsopts->fs_specific;
-
-	if (cd9660_defaults_set == 0)
-		cd9660_set_defaults(diskStructure);
+	option_t *cd9660_options = fsopts->fs_options;
+	char buf[1024];
+	const char *name, *desc;
 
 	assert(option != NULL);
 
 	if (debug & DEBUG_FS_PARSE_OPTS)
 		printf("cd9660_parse_opts: got `%s'\n", option);
 
-	var = estrdup(option);
-	rv = 1;
+	i = set_option(cd9660_options, option, buf, sizeof(buf));
+	if (i == -1)
+		return 0;
 
-	val = strchr(var, '=');
-	if (val != NULL)
-		*val++ = '\0';
+	if (cd9660_options[i].name == NULL)
+		abort();
 
-	/* First handle options with no parameters */
-	if (strcmp(var, "h") == 0) {
-		diskStructure->displayHelp = 1;
-		rv = 1;
-	} else if (CD9660_IS_COMMAND_ARG_DUAL(var, "S", "follow-symlinks")) {
-		/* this is not handled yet */
-		diskStructure->follow_sym_links = 1;
-		rv = 1;
-	} else if (CD9660_IS_COMMAND_ARG_DUAL(var, "L", "label")) {
-		rv = cd9660_arguments_set_string(val, "Disk Label", 32, 'd',
-			diskStructure->primaryDescriptor.volume_id);
-	} else if (CD9660_IS_COMMAND_ARG_DUAL(var, "A", "applicationid")) {
-		rv = cd9660_arguments_set_string(val, "Application Identifier", 128, 'a',
-			diskStructure->primaryDescriptor.application_id);
-	} else if(CD9660_IS_COMMAND_ARG_DUAL(var, "P", "publisher")) {
-		rv = cd9660_arguments_set_string(val, "Publisher Identifier",
-			128, 'a', diskStructure->primaryDescriptor.publisher_id);
-	} else if (CD9660_IS_COMMAND_ARG_DUAL(var, "p", "preparer")) {
-		rv = cd9660_arguments_set_string(val, "Preparer Identifier",
-		    128, 'a', diskStructure->primaryDescriptor.preparer_id);
-	} else if (CD9660_IS_COMMAND_ARG_DUAL(var, "V", "volumeid")) {
-		rv = cd9660_arguments_set_string(val, "Volume Set Identifier",
-		    128, 'a', diskStructure->primaryDescriptor.volume_set_id);
+
+	name = cd9660_options[i].name;
+	desc = cd9660_options[i].desc;
+	switch (cd9660_options[i].letter) {
+	case 'h':
+	case 'S':
+		rv = 0;	/* this is not handled yet */
+		break;
+	case 'L':
+		rv = cd9660_arguments_set_string(buf, desc, 32, 'd',
+		    diskStructure->primaryDescriptor.volume_id);
+		break;
+	case 'A':
+		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
+		    diskStructure->primaryDescriptor.application_id);
+		break;
+	case 'P':
+		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
+		    diskStructure->primaryDescriptor.publisher_id);
+		break;
+	case 'p':
+		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
+		    diskStructure->primaryDescriptor.preparer_id);
+		break;
+	case 'V':
+		rv = cd9660_arguments_set_string(buf, desc, 128, 'a',
+		    diskStructure->primaryDescriptor.volume_set_id);
+		break;
 	/* Boot options */
-	} else if (CD9660_IS_COMMAND_ARG_DUAL(var, "B", "bootimage")) {
-		if (val == NULL)
-			warnx("error: The Boot Image parameter requires a valid boot information string");
-		else
-			rv = cd9660_add_boot_disk(diskStructure, val);
-	} else if (CD9660_IS_COMMAND_ARG(var, "bootimagedir")) {
-		/*
-		 * XXXfvdl this is unused.
-		 */
-		if (val == NULL)
-			errx(1, "error: The Boot Image Directory parameter"
-			     " requires a directory name\n");
-		else {
-			diskStructure->boot_image_directory =
-			     emalloc(strlen(val) + 1);
-			/* BIG TODO: Add the max length function here */
-			cd9660_arguments_set_string(val, "Boot Image Directory",
-			    12 , 'd', diskStructure->boot_image_directory);
-		}
-	} else if (CD9660_IS_COMMAND_ARG_DUAL(var, "G", "generic-bootimage")) {
-		if (val == NULL)
-			warnx("error: The Boot Image parameter requires a valid boot information string");
-		else
-			rv = cd9660_add_generic_bootimage(diskStructure, val);
-	} else if (CD9660_IS_COMMAND_ARG(var, "no-trailing-padding"))
-		diskStructure->include_padding_areas = 0;
-	/* RRIP */
-	else if (CD9660_IS_COMMAND_ARG(var, "no-emul-boot") ||
-		 CD9660_IS_COMMAND_ARG(var, "no-boot") ||
-		 CD9660_IS_COMMAND_ARG(var, "hard-disk-boot")) {
-		cd9660_eltorito_add_boot_option(diskStructure, var, 0);
-		
-		/* End of flag variables */
-        } else if (CD9660_IS_COMMAND_ARG(var, "boot-load-segment")) {
-		if (val == NULL) {
-			warnx("Option `%s' doesn't contain a value", var);
-			rv = 0;
-		} else {
-			cd9660_eltorito_add_boot_option(diskStructure, var,
-			    val);
-		}
-	} else {
-		if (val == NULL) {
-			warnx("Option `%s' doesn't contain a value", var);
+	case 'B':
+		if (buf[0] == '\0') {
+			warnx("The Boot Image parameter requires a valid boot"
+			" information string");
 			rv = 0;
 		} else
-			rv = set_option_var(fsopts->fs_options, var, val) != -1;
+			rv = cd9660_add_boot_disk(diskStructure, buf);
+		break;
+	case 'G':
+		if (buf[0] == '\0') {
+			warnx("The Generic Boot Image parameter requires a"
+			    " valid boot information string");
+			rv = 0;
+		} else
+			rv = cd9660_add_generic_bootimage(diskStructure, buf);
+		break;
+	default:
+		if (strcmp(name, "bootimagedir") == 0) {
+			/*
+			 * XXXfvdl this is unused.
+			 */
+			if (buf[0] == '\0') {
+				warnx("The Boot Image Directory parameter"
+				 " requires a directory name\n");
+				rv = 0;
+			} else {
+				diskStructure->boot_image_directory =
+				     emalloc(strlen(buf) + 1);
+				/* BIG TODO: Add the max length function here */
+				rv = cd9660_arguments_set_string(buf, desc, 12,
+				    'd', diskStructure->boot_image_directory);
+			}
+		} else if (strcmp(name, "no-emul-boot") == 0 ||
+		    strcmp(name, "no-boot") == 0 ||
+		    strcmp(name, "hard-disk-boot") == 0) {
+			/* RRIP */
+			cd9660_eltorito_add_boot_option(diskStructure, name, 0);
+			rv = 1;
+		} else if (strcmp(name, "boot-load-segment") == 0) {
+			if (buf[0] == '\0') {
+				warnx("Option `%s' doesn't contain a value",
+				    name);
+				rv = 0;
+			} else {
+				cd9660_eltorito_add_boot_option(diskStructure,
+				    name, buf);
+				rv = 1;
+			}
+		} else
+			rv = 1;
 	}
-
-	if (var)
-		free(var);
-	return (rv);
+	return rv;
 }
 
 /*
