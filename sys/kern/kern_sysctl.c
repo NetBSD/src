@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.237 2013/01/29 19:56:43 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.238 2013/01/29 23:00:31 para Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.237 2013/01/29 19:56:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.238 2013/01/29 23:00:31 para Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -102,7 +102,7 @@ static int sysctl_cvt_out(struct lwp *, int, const struct sysctlnode *,
 static int sysctl_log_add(struct sysctllog **, const struct sysctlnode *);
 static int sysctl_log_realloc(struct sysctllog *);
 
-typedef void (*sysctl_setup_func)(struct sysctllog **);
+typedef void sysctl_setup_func(struct sysctllog **);
 
 struct sysctllog {
 	const struct sysctlnode *log_root;
