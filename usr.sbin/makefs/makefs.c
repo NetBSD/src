@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.43 2013/01/29 14:09:48 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.44 2013/01/29 15:52:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.43 2013/01/29 14:09:48 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.44 2013/01/29 15:52:25 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -302,7 +302,7 @@ main(int argc, char *argv[])
 }
 
 int
-set_option(const option_t *options, const char *option)
+set_option(const option_t *options, const char *option, char *buf, size_t len)
 {
 	char *var, *val;
 	int retval;
@@ -315,13 +315,14 @@ set_option(const option_t *options, const char *option)
 			*val++ = '\0';
 			break;
 		}
-	retval = set_option_var(options, var, val);
+	retval = set_option_var(options, var, val, buf, len);
 	free(var);
 	return retval;
 }
 
 int
-set_option_var(const option_t *options, const char *var, const char *val)
+set_option_var(const option_t *options, const char *var, const char *val,
+    char *buf, size_t len)
 {
 	char *s;
 	size_t i;
@@ -354,7 +355,11 @@ set_option_var(const option_t *options, const char *var, const char *val)
 				err(1, NULL);
 			*(char **)options[i].value = s;
 			break;
-
+		case OPT_STRBUF:
+			if (buf == NULL)
+				abort();
+			strlcpy(buf, val, len);
+			break;
 		case OPT_INT64:
 			NUM(64);
 		case OPT_INT32:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.56 2013/01/28 21:03:27 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.57 2013/01/29 15:52:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.56 2013/01/28 21:03:27 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.57 2013/01/29 15:52:25 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -152,8 +152,6 @@ static  void	*ffs_build_dinode2(struct ufs2_dinode *, dirbuf_t *, fsnode *,
 int	sectorsize;		/* XXX: for buf.c::getblk() */
 
 
-static char optimization[24];	/* XXX: allocate */
-
 	/* publically visible functions */
 void
 ffs_prep_opts(fsinfo_t *fsopts)
@@ -181,8 +179,8 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	      1, INT_MAX, "max # of blocks per group" },
 	    { 'v', "version", &ffs_opts->version, OPT_INT32,
 	      1, 2, "UFS version" },
-	    { 'o', "optimization", optimization, OPT_STRARRAY,
-	      1, sizeof(optimization), "Optimization (time|space)" },
+	    { 'o', "optimization", NULL, OPT_STRBUF,
+	      0, 0, "Optimization (time|space)" },
 	    { 'l', "label", ffs_opts->label, OPT_STRARRAY,
 	      1, sizeof(ffs_opts->label), "UFS label" },
 	    { .name = NULL }
@@ -216,6 +214,7 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 {
 	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
 	option_t *ffs_options = fsopts->fs_options;
+	char buf[1024];
 
 	int	rv;
 
@@ -226,22 +225,26 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 	if (debug & DEBUG_FS_PARSE_OPTS)
 		printf("ffs_parse_opts: got `%s'\n", option);
 
-	rv = set_option(ffs_options, option);
+	rv = set_option(ffs_options, option, buf, sizeof(buf));
 	if (rv == -1)
 		return 0;
 
 	if (ffs_options[rv].name == NULL)
 		abort();
 
-	if (strcmp(ffs_options[rv].name, "optimization") == 0) {
-		if (strcmp(optimization, "time") == 0) {
+	switch (ffs_options[rv].letter) {
+	case 'o':
+		if (strcmp(buf, "time") == 0) {
 			ffs_opts->optimization = FS_OPTTIME;
-		} else if (strcmp(optimization, "space") == 0) {
+		} else if (strcmp(buf, "space") == 0) {
 			ffs_opts->optimization = FS_OPTSPACE;
 		} else {
-			warnx("Invalid optimization `%s'", optimization);
+			warnx("Invalid optimization `%s'", buf);
 			return 0;
 		}
+		break;
+	default:
+		break;
 	}
 	return 1;
 }

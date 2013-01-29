@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs.c,v 1.7 2013/01/28 21:03:27 christos Exp $	*/
+/*	$NetBSD: v7fs.c,v 1.8 2013/01/29 15:52:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: v7fs.c,v 1.7 2013/01/28 21:03:27 christos Exp $");
+__RCSID("$NetBSD: v7fs.c,v 1.8 2013/01/29 15:52:25 christos Exp $");
 #endif	/* !__lint */
 
 #include <stdio.h>
@@ -85,7 +85,7 @@ int
 v7fs_parse_opts(const char *option, fsinfo_t *fsopts)
 {
 
-	return set_option_var(fsopts->fs_options, option, "1") != -1;
+	return set_option_var(fsopts->fs_options, option, "1", NULL, 0) != -1;
 }
 
 void
