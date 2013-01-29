@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.39 2013/01/28 21:03:26 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.40 2013/01/29 01:05:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.39 2013/01/28 21:03:26 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.40 2013/01/29 01:05:57 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -272,6 +272,28 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 		  OPT_STRARRAY, 1,
 		  sizeof(diskStructure->primaryDescriptor.volume_id),
 		  "Disk Label" },
+	        { 'R', "rockridge", &diskStructure->rock_ridge_enabled,
+		  OPT_INT32, 0, 1, "Enable Rock-Ridge extensions" },
+	        { 'A', "archimedes", &diskStructure->archimedes_enabled,
+		  OPT_INT32, 0, 1, "Enable Archimedes structure" },
+	        { '\0', "chrp-boot", &diskStructure->chrp_boot,
+		  OPT_INT32, 0, 1, "Enable CHRP boot" },
+	        { 'K', "keep-bad-images", &diskStructure->keep_bad_images,
+		  OPT_INT32, 0, 1, "Keep bad images" },
+	        { '\0', "allow-deep-trees", &diskStructure->allow_deep_trees,
+		  OPT_INT32, 0, 1, "Allow trees more than 8 levels" },
+	        { '\0', "allow-max-name", &diskStructure->allow_max_name,
+		  OPT_INT32, 0, 1, "Allow 37 char filenames (unimplemented)" },
+	        { '\0', "allow-illegal-chars", 
+		  &diskStructure->allow_illegal_chars,
+		  OPT_INT32, 0, 1, "Allow illegal characters in filenames" },
+	        { '\0', "allow-lowercase", &diskStructure->allow_lowercase,
+		  OPT_INT32, 0, 1, "Allow lowercase characters in filenames" },
+	        { '\0', "allow-multidot", &diskStructure->allow_multidot,
+		  OPT_INT32, 0, 1, "Allow multiple periods in filenames" },
+	        { '\0', "omit-trailing-period",
+		  &diskStructure->omit_trailing_period,
+		  OPT_INT32, 0, 1, "Omit trailing periods in filenames" },
 		{ .name = NULL }
 	};
 
@@ -392,26 +414,6 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 	} else if (CD9660_IS_COMMAND_ARG(var, "no-trailing-padding"))
 		diskStructure->include_padding_areas = 0;
 	/* RRIP */
-	else if (CD9660_IS_COMMAND_ARG_DUAL(var, "R", "rockridge"))
-		diskStructure->rock_ridge_enabled = 1;
-	else if (CD9660_IS_COMMAND_ARG_DUAL(var, "A", "archimedes"))
-		diskStructure->archimedes_enabled = 1;
-	else if (CD9660_IS_COMMAND_ARG(var, "chrp-boot"))
-		diskStructure->chrp_boot = 1;
-	else if (CD9660_IS_COMMAND_ARG_DUAL(var, "K", "keep-bad-images"))
-		diskStructure->keep_bad_images = 1;
-	else if (CD9660_IS_COMMAND_ARG(var, "allow-deep-trees"))
-		diskStructure->allow_deep_trees = 1;
-	else if (CD9660_IS_COMMAND_ARG(var, "allow-max-name"))
-		diskStructure->allow_max_name = 1;
-	else if (CD9660_IS_COMMAND_ARG(var, "allow-illegal-chars"))
-		diskStructure->allow_illegal_chars = 1;
-	else if (CD9660_IS_COMMAND_ARG(var, "allow-lowercase"))
-		diskStructure->allow_lowercase = 1;
-	else if (CD9660_IS_COMMAND_ARG(var,"allow-multidot"))
-		diskStructure->allow_multidot = 1;
-	else if (CD9660_IS_COMMAND_ARG(var, "omit-trailing-period"))
-		diskStructure->omit_trailing_period = 1;
 	else if (CD9660_IS_COMMAND_ARG(var, "no-emul-boot") ||
 		 CD9660_IS_COMMAND_ARG(var, "no-boot") ||
 		 CD9660_IS_COMMAND_ARG(var, "hard-disk-boot")) {
