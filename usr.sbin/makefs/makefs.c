@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.41 2013/01/28 21:03:27 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.42 2013/01/29 01:06:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.41 2013/01/28 21:03:27 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.42 2013/01/29 01:06:15 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -414,7 +414,9 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 
 		fprintf(stderr, "\n%s specific options:\n", fstype->type);
 		for (i = 0; o[i].name != NULL; i++)
-			fprintf(stderr, "\t%c,%20.20s\t%s\n", o[i].letter,
+			fprintf(stderr, "\t%c%c%20.20s\t%s\n",
+			    o[i].letter ? o[i].letter : ' ',
+			    o[i].letter ? ',' : ' ',
 			    o[i].name, o[i].desc);
 	}
 	exit(1);
