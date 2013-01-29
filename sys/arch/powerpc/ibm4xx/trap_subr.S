@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.22 2011/12/22 11:33:54 kiyohara Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.23 2013/01/29 15:33:44 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -485,7 +485,6 @@ intr_exit:
 /* Disable interrupts */
 	wrteei	0
 	isync
-	GET_CPUINFO(%r5)
 
 	lwz	%r4,FRAME_SRR1(%r1)
 /* Returning to user mode? */
@@ -499,7 +498,7 @@ intr_exit:
 	FRAME_SAVE_CALLEE		/* save rest of callee registers */
 	li	%r6,EXC_AST
 	stw	%r6,FRAME_EXC(%r1)
-	mr	%r31,%r5		/* move SRR1 to R31 */
+	lwz	%r31,FRAME_SRR1(%r1)	/* move SRR1 to R31 */
 	b	trapagain
 
 /*
