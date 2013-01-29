@@ -1,11 +1,12 @@
-.\" $NetBSD: casin.3,v 1.2 2012/12/27 21:34:10 wiz Exp $
+.\" $NetBSD: casin.3,v 1.3 2013/01/29 02:05:09 matt Exp $
 .\" Copyright (c) 2001-2003 The Open Group, All Rights Reserved
-.Dd December 27, 2012
+.Dd January 29, 2013
 .Dt CASIN 3
 .Os
 .Sh NAME
 .Nm casin ,
-.Nm casinf
+.Nm casinf ,
+.Nm casinl
 .Nd complex arc sine functions
 .Sh SYNOPSIS
 .In complex.h
@@ -13,6 +14,8 @@
 .Fn casin "double complex z"
 .Ft float complex
 .Fn casinf "float complex z"
+.Ft long double complex
+.Fn casinl "long double complex z"
 .Sh DESCRIPTION
 These functions compute the complex arc sine of
 .Ar z ,
