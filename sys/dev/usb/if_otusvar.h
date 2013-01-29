@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusvar.h,v 1.5 2013/01/21 16:48:23 christos Exp $	*/
+/*	$NetBSD: if_otusvar.h,v 1.6 2013/01/29 13:54:26 christos Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -286,12 +286,6 @@ struct otus_softc {
 
 	uint8_t				sc_rx_error_msk;
 	int				sc_dying;
-
-#if IEEE80211_INJECTION	/* XXX: ljt */
-	int	(*sc_if_output)		/* ether output routine */
-		    (struct ifnet *, struct mbuf *, const struct sockaddr *,
-		    struct rtentry *);
-#endif
 };
 
 #endif /* _IF_OTUSVAR_H_ */
