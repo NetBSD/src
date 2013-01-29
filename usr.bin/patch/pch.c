@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: pch.c,v 1.37 2007/09/02 15:19:33 deraadt Exp $
  * $DragonFly: src/usr.bin/patch/pch.c,v 1.6 2008/08/10 23:35:40 joerg Exp $
- * $NetBSD: pch.c,v 1.24 2011/09/06 18:25:14 joerg Exp $
+ * $NetBSD: pch.c,v 1.25 2013/01/29 09:30:11 wiz Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pch.c,v 1.24 2011/09/06 18:25:14 joerg Exp $");
+__RCSID("$NetBSD: pch.c,v 1.25 2013/01/29 09:30:11 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -456,7 +456,7 @@ malformed(void)
 }
 
 /*
- * True if the line has been discarded (i.e. it is a line saying
+ * True if the line has been discarded (i.e., it is a line saying
  *  "\ No newline at end of file".)
  */
 static bool
