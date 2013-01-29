@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.18 2013/01/26 07:09:41 matt Exp $
+# $NetBSD: Makefile.inc,v 1.19 2013/01/29 19:15:52 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ SRCS+=	__aeabi_ldivmod.S __aeabi_uldivmod.S
 SRCS+=	__aeabi_lcmp.c __aeabi_ulcmp.c
 SRCS+=	fixunsgen_ieee754.c fixunssfsi_ieee754.c
 SRCS+=	fixunsgen64_ieee754.c fixunsdfsi_ieee754.c
+SRCS+=	arm_initfini.c
 .endif
 
 .if ${MKSOFTFLOAT} != "no"
