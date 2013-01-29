@@ -1,11 +1,12 @@
-.\" $NetBSD: ccos.3,v 1.2 2012/12/27 21:34:10 wiz Exp $
+.\" $NetBSD: ccos.3,v 1.3 2013/01/29 02:05:09 matt Exp $
 .\" Copyright (c) 2001-2003 The Open Group, All Rights Reserved
-.Dd December 27, 2012
+.Dd January 29, 2013
 .Dt CCOS 3
 .Os
 .Sh NAME
 .Nm ccos ,
-.Nm ccosf
+.Nm ccosf ,
+.Nm ccosl
 .Nd complex cosine functions
 .Sh SYNOPSIS
 .In complex.h
@@ -13,6 +14,8 @@
 .Fn ccos "double complex z"
 .Ft float complex
 .Fn ccosf "float complex z"
+.Ft long double complex
+.Fn ccosl "long double complex z"
 .Sh DESCRIPTION
 These functions compute the complex cosine of
 .Ar z .
