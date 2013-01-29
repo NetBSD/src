@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.79 2013/01/26 15:18:00 para Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.80 2013/01/29 21:26:24 para Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,11 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.79 2013/01/26 15:18:00 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.80 2013/01/29 21:26:24 para Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
-#define	QCACHE
 #endif /* defined(_KERNEL) */
 
 #include <sys/param.h>
@@ -53,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.79 2013/01/26 15:18:00 para Exp $");
 #include <sys/kmem.h>
 #include <sys/pool.h>
 #include <sys/vmem.h>
+#include <sys/vmem_impl.h>
 #include <sys/workqueue.h>
 #include <sys/atomic.h>
 #include <uvm/uvm.h>
@@ -61,7 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.79 2013/01/26 15:18:00 para Exp $");
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_pdaemon.h>
 #else /* defined(_KERNEL) */
+#include <stdio.h>
+#include <errno.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 #include "../sys/vmem.h"
+#include "../sys/vmem_impl.h"
 #endif /* defined(_KERNEL) */
 
 
@@ -78,28 +84,23 @@ VMEM_EVCNT_DEFINE(bt_pages)
 VMEM_EVCNT_DEFINE(bt_count)
 VMEM_EVCNT_DEFINE(bt_inuse)
 
-#define	LOCK_DECL(name)		\
-    kmutex_t name; char lockpad[COHERENCY_UNIT - sizeof(kmutex_t)]
-
-#define CONDVAR_DECL(name)	\
-    kcondvar_t name
+#define	VMEM_CONDVAR_INIT(vm, wchan)	cv_init(&vm->vm_cv, wchan)
+#define	VMEM_CONDVAR_DESTROY(vm)	cv_destroy(&vm->vm_cv)
+#define	VMEM_CONDVAR_WAIT(vm)		cv_wait(&vm->vm_cv, &vm->vm_lock)
+#define	VMEM_CONDVAR_BROADCAST(vm)	cv_broadcast(&vm->vm_cv)
 
 #else /* defined(_KERNEL) */
-#include <stdio.h>
-#include <errno.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define VMEM_EVCNT_INCR(ev)	/* nothing */
 #define VMEM_EVCNT_DECR(ev)	/* nothing */
 
+#define	VMEM_CONDVAR_INIT(vm, wchan)	/* nothing */
+#define	VMEM_CONDVAR_DESTROY(vm)	/* nothing */
+#define	VMEM_CONDVAR_WAIT(vm)		/* nothing */
+#define	VMEM_CONDVAR_BROADCAST(vm)	/* nothing */
+
 #define	UNITTEST
 #define	KASSERT(a)		assert(a)
-#define	LOCK_DECL(name)		/* nothing */
-#define	CONDVAR_DECL(name)	/* nothing */
-#define	VMEM_CONDVAR_INIT(vm, wchan)	/* nothing */
-#define	VMEM_CONDVAR_BROADCAST(vm)	/* nothing */
 #define	mutex_init(a, b, c)	/* nothing */
 #define	mutex_destroy(a)	/* nothing */
 #define	mutex_enter(a)		/* nothing */
@@ -110,16 +111,11 @@ VMEM_EVCNT_DEFINE(bt_inuse)
 #define	panic(...)		printf(__VA_ARGS__); abort()
 #endif /* defined(_KERNEL) */
 
-struct vmem;
-struct vmem_btag;
-
 #if defined(VMEM_SANITY)
 static void vmem_check(vmem_t *);
 #else /* defined(VMEM_SANITY) */
 #define vmem_check(vm)	/* nothing */
 #endif /* defined(VMEM_SANITY) */
-
-#define	VMEM_MAXORDER		(sizeof(vmem_size_t) * CHAR_BIT)
 
 #define	VMEM_HASHSIZE_MIN	1	/* XXX */
 #define	VMEM_HASHSIZE_MAX	65536	/* XXX */
@@ -127,57 +123,13 @@ static void vmem_check(vmem_t *);
 
 #define	VM_FITMASK	(VM_BESTFIT | VM_INSTANTFIT)
 
-CIRCLEQ_HEAD(vmem_seglist, vmem_btag);
-LIST_HEAD(vmem_freelist, vmem_btag);
-LIST_HEAD(vmem_hashlist, vmem_btag);
+#if defined(_KERNEL)
+static bool vmem_bootstrapped = false;
+static kmutex_t vmem_list_lock;
+static LIST_HEAD(, vmem) vmem_list = LIST_HEAD_INITIALIZER(vmem_list);
+#endif /* defined(_KERNEL) */
 
-#if defined(QCACHE)
-#define	VMEM_QCACHE_IDX_MAX	32
-
-#define	QC_NAME_MAX	16
-
-struct qcache {
-	pool_cache_t qc_cache;
-	vmem_t *qc_vmem;
-	char qc_name[QC_NAME_MAX];
-};
-typedef struct qcache qcache_t;
-#define	QC_POOL_TO_QCACHE(pool)	((qcache_t *)(pool->pr_qcache))
-#endif /* defined(QCACHE) */
-
-#define	VMEM_NAME_MAX	16
-
-/* vmem arena */
-struct vmem {
-	CONDVAR_DECL(vm_cv);
-	LOCK_DECL(vm_lock);
-	vm_flag_t vm_flags;
-	vmem_import_t *vm_importfn;
-	vmem_release_t *vm_releasefn;
-	size_t vm_nfreetags;
-	LIST_HEAD(, vmem_btag) vm_freetags;
-	void *vm_arg;
-	struct vmem_seglist vm_seglist;
-	struct vmem_freelist vm_freelist[VMEM_MAXORDER];
-	size_t vm_hashsize;
-	size_t vm_nbusytag;
-	struct vmem_hashlist *vm_hashlist;
-	struct vmem_hashlist vm_hash0;
-	size_t vm_quantum_mask;
-	int vm_quantum_shift;
-	size_t vm_size;
-	size_t vm_inuse;
-	char vm_name[VMEM_NAME_MAX+1];
-	LIST_ENTRY(vmem) vm_alllist;
-
-#if defined(QCACHE)
-	/* quantum cache */
-	size_t vm_qcache_max;
-	struct pool_allocator vm_qcache_allocator;
-	qcache_t vm_qcache_store[VMEM_QCACHE_IDX_MAX];
-	qcache_t *vm_qcache[VMEM_QCACHE_IDX_MAX];
-#endif /* defined(QCACHE) */
-};
+/* ---- misc */
 
 #define	VMEM_LOCK(vm)		mutex_enter(&vm->vm_lock)
 #define	VMEM_TRYLOCK(vm)	mutex_tryenter(&vm->vm_lock)
@@ -185,44 +137,6 @@ struct vmem {
 #define	VMEM_LOCK_INIT(vm, ipl)	mutex_init(&vm->vm_lock, MUTEX_DEFAULT, ipl)
 #define	VMEM_LOCK_DESTROY(vm)	mutex_destroy(&vm->vm_lock)
 #define	VMEM_ASSERT_LOCKED(vm)	KASSERT(mutex_owned(&vm->vm_lock))
-
-#if defined(_KERNEL)
-#define	VMEM_CONDVAR_INIT(vm, wchan)	cv_init(&vm->vm_cv, wchan)
-#define	VMEM_CONDVAR_DESTROY(vm)	cv_destroy(&vm->vm_cv)
-#define	VMEM_CONDVAR_WAIT(vm)		cv_wait(&vm->vm_cv, &vm->vm_lock)
-#define	VMEM_CONDVAR_BROADCAST(vm)	cv_broadcast(&vm->vm_cv)
-#endif /* defined(_KERNEL) */
-
-/* boundary tag */
-struct vmem_btag {
-	CIRCLEQ_ENTRY(vmem_btag) bt_seglist;
-	union {
-		LIST_ENTRY(vmem_btag) u_freelist; /* BT_TYPE_FREE */
-		LIST_ENTRY(vmem_btag) u_hashlist; /* BT_TYPE_BUSY */
-	} bt_u;
-#define	bt_hashlist	bt_u.u_hashlist
-#define	bt_freelist	bt_u.u_freelist
-	vmem_addr_t bt_start;
-	vmem_size_t bt_size;
-	int bt_type;
-};
-
-#define	BT_TYPE_SPAN		1
-#define	BT_TYPE_SPAN_STATIC	2
-#define	BT_TYPE_FREE		3
-#define	BT_TYPE_BUSY		4
-#define	BT_ISSPAN_P(bt)	((bt)->bt_type <= BT_TYPE_SPAN_STATIC)
-
-#define	BT_END(bt)	((bt)->bt_start + (bt)->bt_size - 1)
-
-typedef struct vmem_btag bt_t;
-
-#if defined(_KERNEL)
-static kmutex_t vmem_list_lock;
-static LIST_HEAD(, vmem) vmem_list = LIST_HEAD_INITIALIZER(vmem_list);
-#endif /* defined(_KERNEL) */
-
-/* ---- misc */
 
 #define	VMEM_ALIGNUP(addr, align) \
 	(-(-(addr) & -(align)))
@@ -241,36 +155,26 @@ static LIST_HEAD(, vmem) vmem_list = LIST_HEAD_INITIALIZER(vmem_list);
 #else /* defined(_KERNEL) */
 
 #define	xmalloc(sz, flags) \
-    kmem_intr_alloc(sz, ((flags) & VM_SLEEP) ? KM_SLEEP : KM_NOSLEEP);
-#define	xfree(p, sz)		kmem_intr_free(p, sz);
+    kmem_alloc(sz, ((flags) & VM_SLEEP) ? KM_SLEEP : KM_NOSLEEP);
+#define	xfree(p, sz)		kmem_free(p, sz);
 
 /*
- * Memory for arenas initialized during bootstrap.
- * There is memory for STATIC_VMEM_COUNT bootstrap arenas.
- *
  * BT_RESERVE calculation:
  * we allocate memory for boundry tags with vmem, therefor we have
  * to keep a reserve of bts used to allocated memory for bts. 
  * This reserve is 4 for each arena involved in allocating vmems memory.
  * BT_MAXFREE: don't cache excessive counts of bts in arenas
  */
-#define STATIC_VMEM_COUNT 4
 #define STATIC_BT_COUNT 200
 #define BT_MINRESERVE 4
 #define BT_MAXFREE 64
-/* must be equal or greater then qcache multiplier for kmem_va_arena */
-#define STATIC_QC_POOL_COUNT 8
-
-static struct vmem static_vmems[STATIC_VMEM_COUNT];
-static int static_vmem_count = STATIC_VMEM_COUNT;
 
 static struct vmem_btag static_bts[STATIC_BT_COUNT];
 static int static_bt_count = STATIC_BT_COUNT;
 
-static struct pool_cache static_qc_pools[STATIC_QC_POOL_COUNT];
-static int static_qc_pool_count = STATIC_QC_POOL_COUNT;
-
+static struct vmem kmem_va_meta_arena_store;
 vmem_t *kmem_va_meta_arena;
+static struct vmem kmem_meta_arena_store;
 vmem_t *kmem_meta_arena;
 
 static kmutex_t vmem_refill_lock;
@@ -652,30 +556,19 @@ qc_init(vmem_t *vm, size_t qcache_max, int ipl)
 		snprintf(qc->qc_name, sizeof(qc->qc_name), "%s-%zu",
 		    vm->vm_name, size);
 
-		if (vm->vm_flags & VM_BOOTSTRAP) {
-			KASSERT(static_qc_pool_count > 0);
-			pc = &static_qc_pools[--static_qc_pool_count];
-			pool_cache_bootstrap(pc, size,
-			    ORDER2SIZE(vm->vm_quantum_shift), 0,
-			    PR_NOALIGN | PR_NOTOUCH | PR_RECURSIVE /* XXX */,
-			    qc->qc_name, pa, ipl, NULL, NULL, NULL);
-		} else {
-			pc = pool_cache_init(size,
-			    ORDER2SIZE(vm->vm_quantum_shift), 0,
-			    PR_NOALIGN | PR_NOTOUCH /* XXX */,
-			    qc->qc_name, pa, ipl, NULL, NULL, NULL);
-		}
+		pc = pool_cache_init(size,
+		    ORDER2SIZE(vm->vm_quantum_shift), 0,
+		    PR_NOALIGN | PR_NOTOUCH | PR_RECURSIVE /* XXX */,
+		    qc->qc_name, pa, ipl, NULL, NULL, NULL);
+
+		KASSERT(pc);
+
 		qc->qc_cache = pc;
 		KASSERT(qc->qc_cache != NULL);	/* XXX */
 		if (prevqc != NULL &&
 		    qc->qc_cache->pc_pool.pr_itemsperpage ==
 		    prevqc->qc_cache->pc_pool.pr_itemsperpage) {
-			if (vm->vm_flags & VM_BOOTSTRAP) {
-				pool_cache_bootstrap_destroy(pc);
-				//static_qc_pool_count++;
-			} else {
-				pool_cache_destroy(qc->qc_cache);
-			}
+			pool_cache_destroy(qc->qc_cache);
 			vm->vm_qcache[i - 1] = prevqc;
 			continue;
 		}
@@ -700,18 +593,14 @@ qc_destroy(vmem_t *vm)
 		if (prevqc == qc) {
 			continue;
 		}
-		if (vm->vm_flags & VM_BOOTSTRAP) {
-			pool_cache_bootstrap_destroy(qc->qc_cache);
-		} else {
-			pool_cache_destroy(qc->qc_cache);
-		}
+		pool_cache_destroy(qc->qc_cache);
 		prevqc = qc;
 	}
 }
 #endif
 
 #if defined(_KERNEL)
-void
+static void
 vmem_bootstrap(void)
 {
 
@@ -725,18 +614,20 @@ vmem_bootstrap(void)
 		VMEM_EVCNT_INCR(bt_count);
 		vmem_btag_freelist_count++;
 	}
+	vmem_bootstrapped = TRUE;
 }
 
 void
-vmem_init(vmem_t *vm)
+vmem_subsystem_init(vmem_t *vm)
 {
 
-	kmem_va_meta_arena = vmem_create("vmem-va", 0, 0, PAGE_SIZE,
-	    vmem_alloc, vmem_free, vm,
+	kmem_va_meta_arena = vmem_init(&kmem_va_meta_arena_store, "vmem-va",
+	    0, 0, PAGE_SIZE, vmem_alloc, vmem_free, vm,
 	    0, VM_NOSLEEP | VM_BOOTSTRAP | VM_LARGEIMPORT,
 	    IPL_VM);
 
-	kmem_meta_arena = vmem_create("vmem-meta", 0, 0, PAGE_SIZE,
+	kmem_meta_arena = vmem_init(&kmem_meta_arena_store, "vmem-meta",
+	    0, 0, PAGE_SIZE,
 	    uvm_km_kmem_alloc, uvm_km_kmem_free, kmem_va_meta_arena,
 	    0, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
 }
@@ -818,6 +709,7 @@ vmem_destroy1(vmem_t *vm)
 		mutex_exit(&vmem_btag_lock);
 	}
 
+	VMEM_CONDVAR_DESTROY(vm);
 	VMEM_LOCK_DESTROY(vm);
 	xfree(vm, sizeof(*vm));
 }
@@ -833,7 +725,7 @@ vmem_import(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 	}
 
 	if (vm->vm_flags & VM_LARGEIMPORT) {
-		size *= 8;
+		size *= 16;
 	}
 
 	if (vm->vm_flags & VM_XIMPORT) {
@@ -959,29 +851,32 @@ vmem_fit(const bt_t *bt, vmem_size_t size, vmem_size_t align,
 	return ENOMEM;
 }
 
+/* ---- vmem API */
 
 /*
  * vmem_create_internal: creates a vmem arena.
  */
 
-static vmem_t *
-vmem_create_internal(const char *name, vmem_addr_t base, vmem_size_t size,
-    vmem_size_t quantum, vmem_import_t *importfn, vmem_release_t *releasefn,
-    void *arg, vmem_size_t qcache_max, vm_flag_t flags, int ipl)
+vmem_t *
+vmem_init(vmem_t *vm, const char *name,
+    vmem_addr_t base, vmem_size_t size, vmem_size_t quantum,
+    vmem_import_t *importfn, vmem_release_t *releasefn,
+    vmem_t *arg, vmem_size_t qcache_max, vm_flag_t flags, int ipl)
 {
-	vmem_t *vm = NULL;
 	int i;
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT(quantum > 0);
 
-	if (flags & VM_BOOTSTRAP) {
 #if defined(_KERNEL)
-		KASSERT(static_vmem_count > 0);
-		vm = &static_vmems[--static_vmem_count];
+	/* XXX: SMP, we get called early... */
+	if (!vmem_bootstrapped) {
+		vmem_bootstrap();
+	}
 #endif /* defined(_KERNEL) */
-	} else {
+
+	if (vm == NULL) {
 		vm = xmalloc(sizeof(*vm), flags);
 	}
 	if (vm == NULL) {
@@ -1011,14 +906,9 @@ vmem_create_internal(const char *name, vmem_addr_t base, vmem_size_t size,
 	for (i = 0; i < VMEM_MAXORDER; i++) {
 		LIST_INIT(&vm->vm_freelist[i]);
 	}
-	vm->vm_hashlist = NULL;
-	if (flags & VM_BOOTSTRAP) {
-		vm->vm_hashsize = 1;
-		vm->vm_hashlist = &vm->vm_hash0;
-	} else if (vmem_rehash(vm, VMEM_HASHSIZE_INIT, flags)) {
-		vmem_destroy1(vm);
-		return NULL;
-	}
+	memset(&vm->vm_hash0, 0, sizeof(struct vmem_hashlist));
+	vm->vm_hashsize = 1;
+	vm->vm_hashlist = &vm->vm_hash0;
 
 	if (size != 0) {
 		if (vmem_add(vm, base, size, flags) != 0) {
@@ -1041,7 +931,6 @@ vmem_create_internal(const char *name, vmem_addr_t base, vmem_size_t size,
 }
 
 
-/* ---- vmem API */
 
 /*
  * vmem_create: create an arena.
@@ -1055,11 +944,9 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
     vmem_t *source, vmem_size_t qcache_max, vm_flag_t flags, int ipl)
 {
 
-	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
-	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((flags & (VM_XIMPORT)) == 0);
 
-	return vmem_create_internal(name, base, size, quantum,
+	return vmem_init(NULL, name, base, size, quantum,
 	    importfn, releasefn, source, qcache_max, flags, ipl);
 }
 
@@ -1075,11 +962,9 @@ vmem_xcreate(const char *name, vmem_addr_t base, vmem_size_t size,
     vmem_t *source, vmem_size_t qcache_max, vm_flag_t flags, int ipl)
 {
 
-	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
-	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((flags & (VM_XIMPORT)) == 0);
 
-	return vmem_create_internal(name, base, size, quantum,
+	return vmem_init(NULL, name, base, size, quantum,
 	    (vmem_import_t *)importfn, releasefn, source,
 	    qcache_max, flags | VM_XIMPORT, ipl);
 }
