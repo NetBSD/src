@@ -1,7 +1,7 @@
-/*	$NetBSD: empbreg.h,v 1.5 2013/01/28 14:44:37 rkujawa Exp $ */
+/*	$NetBSD: empbreg.h,v 1.6 2013/01/29 00:49:43 rkujawa Exp $ */
 
 /*-
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012, 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -91,14 +91,32 @@
 #define EMPB_PM_OFF		0x40	/* power management register */
 #define EMPB_PM_PSU_SHUTDOWN	0x0
 
-/* All PCI interrupt lines are wired to INT2? */
+/* All PCI interrupt lines are wired to INT2. */
 #define EMPB_INT		2
 
 /*
  * Elbox Mediator 4000.
+ *
+ * Similar design to Mediator 1200, consists of two Zorro III boards.
+ * First (with lower ID, 16MB) is used to access bridge setup, configuration 
+ * and I/O spaces. The second board (256MB or 512MB) is a window into PCI 
+ * memory space.
  */
-#define EM4K_CONF_OFF		0x00C00000
-#define EM4K_IO_OFF		0x00800000
-#define EM4K_SETUP_WINDOW_OFF	0x0
+#define EM4K_SETUP_OFF		0x0
+#define EM4K_SETUP_SIZE		0x1F
+
+#define EM4K_CONF_OFF		0x00800000
+#define EM4K_CONF_SIZE		0x003FFFFF
+
+#define EM4K_IO_OFF		0x00C00000
+#define EM4K_IO_SIZE		0x000FFFFF
+
+#define EM4K_SETUP_WINDOW_OFF	0x0	/* window position register */
+#define EM4K_SETUP_INTR_OFF	0x4	/* interrupt setup */
+
+#define EM4K_WINDOW_SHIFT	0x18
+#define EM4K_WINDOW_MASK_512M	0xE0
+#define EM4K_WINDOW_MASK_256M	0xF0
 
 #endif /* _AMIGA_EMPBREG_H_ */
+

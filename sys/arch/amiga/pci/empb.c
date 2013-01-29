@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.9 2013/01/28 14:44:37 rkujawa Exp $ */
+/*	$NetBSD: empb.c,v 1.10 2013/01/29 00:49:43 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -108,6 +108,7 @@ empb_match(device_t parent, cfdata_t cf, void *aux)
 	case ZORRO_PRODID_MED1K2LT2:
 	case ZORRO_PRODID_MED1K2LT4:
 	case ZORRO_PRODID_MED1K2TX:
+	case ZORRO_PRODID_MEDZIV:	/* ZIV untested! */
 		return 1;
 	}
 
