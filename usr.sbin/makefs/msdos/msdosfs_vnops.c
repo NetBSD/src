@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.13 2013/01/28 00:16:48 christos Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.14 2013/01/29 19:45:47 christos Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.13 2013/01/28 00:16:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.14 2013/01/29 19:45:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -426,6 +426,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 	char *dat;
 	u_long cn = 0;
 
+	error = 0;	/* XXX: gcc/vax */
 	DPRINTF(("%s(diroff %lu, dirclust %lu, startcluster %lu)\n", __func__,
 	    dep->de_diroffset, dep->de_dirclust, dep->de_StartCluster));
 	if (st->st_size == 0)
