@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.203 2013/01/22 12:40:42 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.204 2013/01/29 00:00:15 christos Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.203 2013/01/22 12:40:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.204 2013/01/29 00:00:15 christos Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -352,6 +352,9 @@ ehci_init(ehci_softc_t *sc)
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 	cv_init(&sc->sc_softwake_cv, "ehciab");
 	cv_init(&sc->sc_doorbell, "ehcidi");
+
+	sc->sc_xferpool = pool_cache_init(sizeof(struct ehci_xfer), 0, 0, 0,
+	    "ehcixfer", NULL, IPL_USB, NULL, NULL, NULL);
 
 	sc->sc_doorbell_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    ehci_doorbell, sc);
@@ -1143,7 +1146,6 @@ ehci_childdet(device_t self, device_t child)
 int
 ehci_detach(struct ehci_softc *sc, int flags)
 {
-	usbd_xfer_handle xfer;
 	int rv = 0;
 
 	if (sc->sc_child != NULL)
@@ -1172,10 +1174,7 @@ ehci_detach(struct ehci_softc *sc, int flags)
 	mutex_destroy(&sc->sc_intr_lock);
 #endif
 
-	while ((xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
-		kmem_free(xfer, sizeof(struct ehci_xfer));
-	}
+	pool_cache_destroy(sc->sc_xferpool);
 
 	EOWRITE4(sc, EHCI_CONFIGFLAG, 0);
 
@@ -1369,18 +1368,7 @@ ehci_allocx(struct usbd_bus *bus)
 	struct ehci_softc *sc = bus->hci_private;
 	usbd_xfer_handle xfer;
 
-	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
-	if (xfer != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
-#ifdef DIAGNOSTIC
-		if (xfer->busy_free != XFER_FREE) {
-			printf("ehci_allocx: xfer=%p not free, 0x%08x\n", xfer,
-			       xfer->busy_free);
-		}
-#endif
-	} else {
-		xfer = kmem_alloc(sizeof(struct ehci_xfer), KM_SLEEP);
-	}
+	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct ehci_xfer));
 #ifdef DIAGNOSTIC
@@ -1406,7 +1394,7 @@ ehci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 		printf("ehci_freex: !isdone\n");
 	}
 #endif
-	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
+	pool_cache_put(sc->sc_xferpool, xfer);
 }
 
 Static void
