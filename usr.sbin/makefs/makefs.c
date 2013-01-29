@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.42 2013/01/29 01:06:15 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.43 2013/01/29 14:09:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.42 2013/01/29 01:06:15 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.43 2013/01/29 14:09:48 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -310,16 +310,12 @@ set_option(const option_t *options, const char *option)
 	assert(option != NULL);
 
 	var = estrdup(option);
-	retval = -1;
-	if ((val = strchr(var, '=')) == NULL) {
-		warnx("Option `%s' doesn't contain a value", var);
-		goto out;
-	}
-	*val++ = '\0';
-
+	for (val = var; *val; val++)
+		if (*val == '=') {
+			*val++ = '\0';
+			break;
+		}
 	retval = set_option_var(options, var, val);
-	
-out:
 	free(var);
 	return retval;
 }
@@ -330,9 +326,14 @@ set_option_var(const option_t *options, const char *var, const char *val)
 	char *s;
 	size_t i;
 
-#define NUM(width) *(uint ## width ## _t *)options[i].value = \
-    (uint ## width ## _t)strsuftoll(options[i].desc, val, \
-    options[i].minimum, options[i].maximum); break
+#define NUM(width) \
+	if (!*var) { \
+		*(uint ## width ## _t *)options[i].value = 1; \
+		break; \
+	} \
+	*(uint ## width ## _t *)options[i].value = \
+	    (uint ## width ## _t)strsuftoll(options[i].desc, val, \
+	    options[i].minimum, options[i].maximum); break
 
 	for (i = 0; options[i].name != NULL; i++) {
 		if (var[1] == '\0') {
