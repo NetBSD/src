@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.21 2013/01/29 18:17:29 he Exp $
+#	$NetBSD: Makefile.bootcd,v 1.22 2013/01/29 19:48:41 christos Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -64,9 +64,9 @@ DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
 ISO_VOLID!=	echo NETBSD_${DISTRIBREV} | tr a-z A-Z
 PUBLISHER?= The_NetBSD_Project
 .if defined(CDMAKEFSOPTIONS)
-_CDMAKEFSOPTIONS=	rockridge=1,label=${ISO_VOLID},publisher=${PUBLISHER},${CDMAKEFSOPTIONS}
+_CDMAKEFSOPTIONS=	rockridge,label=${ISO_VOLID},publisher=${PUBLISHER},${CDMAKEFSOPTIONS}
 .else
-_CDMAKEFSOPTIONS=	rockridge=1,label=${ISO_VOLID},publisher=${PUBLISHER}
+_CDMAKEFSOPTIONS=	rockridge,label=${ISO_VOLID},publisher=${PUBLISHER}
 .endif
 
 # Stuff that should come from elsewhere - XXX where? - HF
