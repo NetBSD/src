@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.254 2013/01/29 19:27:36 christos Exp $	*/
+/*	$NetBSD: uhci.c,v 1.255 2013/01/30 16:01:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.254 2013/01/29 19:27:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.255 2013/01/30 16:01:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1865,8 +1865,8 @@ uhci_free_std_chain(uhci_softc_t *sc, uhci_soft_td_t *std,
 		    p->offs + offsetof(uhci_td_t, td_link),
 		    sizeof(p->td.td_link),
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-		if ((p->td.td_link & UHCI_PTR_T) == 0) {
-			p->td.td_link = UHCI_PTR_T;
+		if ((le32toh(p->td.td_link) & UHCI_PTR_T) == 0) {
+			p->td.td_link = htole32(UHCI_PTR_T);
 			usb_syncmem(&p->dma,
 			    p->offs + offsetof(uhci_td_t, td_link),
 			    sizeof(p->td.td_link),
