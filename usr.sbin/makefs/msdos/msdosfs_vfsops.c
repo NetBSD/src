@@ -50,7 +50,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.6 2013/01/28 21:03:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.7 2013/01/30 19:19:19 christos Exp $");
 
 #include <sys/param.h>
 
@@ -91,7 +91,7 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	uint8_t SecPerClust;
 	int	ronly = 0, error, tmp;
 	int	bsize;
-	struct msdos_options *m = devvp->fs;
+	struct msdos_options *m = devvp->fs->fs_specific;
 	uint64_t psize = m->create_size;
 	unsigned secsize = 512;
 

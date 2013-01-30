@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.31 2013/01/29 15:52:25 christos Exp $	*/
+/*	$NetBSD: makefs.h,v 1.32 2013/01/30 19:19:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -141,7 +141,7 @@ typedef struct {
  * the image, including current settings, global options, and fs
  * specific options
  */
-typedef struct {
+typedef struct makefs_fsinfo {
 		/* current settings */
 	off_t	size;		/* total size */
 	off_t	inodes;		/* number of inodes */
