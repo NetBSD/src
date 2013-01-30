@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.7 2013/01/28 21:03:29 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.8 2013/01/30 17:29:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@ struct buf {
 	daddr_t		b_blkno;
 	daddr_t		b_lblkno;
 	int		b_fd;
-	struct fs *	b_fs;
+	void *		b_fs;
 
 	TAILQ_ENTRY(buf)	b_tailq;
 };
