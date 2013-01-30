@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.53 2012/11/19 23:04:15 rkujawa Exp $
+.\"	$NetBSD: hardware,v 1.54 2013/01/30 20:48:27 rkujawa Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -67,6 +67,8 @@ Blizzard 2060, CyberSCSI Mk I and II
 PCI bridges
 .(bullet -compact
 ELBOX Mediator PCI 1200 series (original model, LT2, LT4, SX, TX)
+.It
+ELBOX Mediator PCI 4000 series (4000D, 4000Di, 3000D, 3/4000T, also Mk-II models)
 .It
 Prometheus PCI bridge
 .It
