@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.239 2012/12/12 09:20:35 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.240 2013/01/30 14:20:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.239 2012/12/12 09:20:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.240 2013/01/30 14:20:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +132,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.239 2012/12/12 09:20:35 msaitoh Exp $");
 #define	WM_DEBUG_RX		0x04
 #define	WM_DEBUG_GMII		0x08
 #define	WM_DEBUG_MANAGE		0x10
+#define	WM_DEBUG_NVM		0x20
 int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
-    | WM_DEBUG_MANAGE;
+    | WM_DEBUG_MANAGE | WM_DEBUG_NVM;
 
 #define	DPRINTF(x, y)	if (wm_debug & (x)) printf y
 #else
@@ -5259,6 +5260,32 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 	int i;
 
 	checksum = 0;
+
+#ifdef WM_DEBUG
+	/* Dump EEPROM image for debug */
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
+	    || (sc->sc_type == WM_T_PCH2)) {
+		wm_read_eeprom(sc, 0x19, 1, &eeprom_data);
+		if ((eeprom_data & 0x40) == 0) {
+			DPRINTF(WM_DEBUG_NVM,("%s: NVM need to be updated\n",
+				device_xname(sc->sc_dev)));
+		}
+	}
+
+	if ((wm_debug & WM_DEBUG_NVM) != 0) {
+		printf("%s: NVM dump:\n", device_xname(sc->sc_dev));
+		for (i = 0; i < EEPROM_SIZE; i++) {
+			if (wm_read_eeprom(sc, i, 1, &eeprom_data))
+				printf("XX ");
+			else
+				printf("%04x ", eeprom_data);
+			if (i % 8 == 7)
+				printf("\n");
+		}
+	}
+
+#endif /* WM_DEBUG */
 
 	for (i = 0; i < EEPROM_SIZE; i++) {
 		if (wm_read_eeprom(sc, i, 1, &eeprom_data))
