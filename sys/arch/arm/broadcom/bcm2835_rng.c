@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_rng.c,v 1.1 2013/01/25 00:04:06 jmcneill Exp $ */
+/*	$NetBSD: bcm2835_rng.c,v 1.2 2013/01/30 11:52:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.1 2013/01/25 00:04:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.2 2013/01/30 11:52:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,9 @@ bcmrng_attach(device_t parent, device_t self, void *aux)
 
 	callout_init(&sc->sc_tick, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_tick, bcmrng_tick, sc);
+
+	/* discard initial numbers, broadcom says they are "less random" */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, RNG_STATUS, 0x40000);
 
 	/* enable rng */
 	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RNG_CTRL);
