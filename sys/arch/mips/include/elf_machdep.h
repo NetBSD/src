@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.15 2011/03/15 07:39:22 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.16 2013/01/30 01:11:12 matt Exp $	*/
 
 #ifndef _MIPS_ELF_MACHDEP_H_
 #define  _MIPS_ELF_MACHDEP_H_
@@ -102,6 +102,8 @@
 #define	R_MIPS16_LO16		105
 #define	R_MIPS16_max		106
 
+#define	R_MIPS_COPY		126
+#define	R_MIPS_JUMP_SLOT	127
 
 /* mips dynamic tags */
 
@@ -121,6 +123,8 @@
 #define	DT_MIPS_GOTSYM		0x70000013	/* first dynamic sym in got */
 #define DT_MIPS_HIPAGENO	0x70000014
 #define	DT_MIPS_RLD_MAP		0x70000016	/* address of loader map */
+#define	DT_MIPS_PLTGOT		0x70000032
+#define	DT_MIPS_RWPLT		0x70000034
 
 /*
  * ELF Flags
