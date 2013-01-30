@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.362 2013/01/01 12:13:28 macallan Exp $
+#	$NetBSD: files.pci,v 1.363 2013/01/30 19:08:53 rkujawa Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1125,6 +1125,6 @@ file	dev/pci/lynxfb.c	lynxfb needs-flag
 
 # 3Dfx Voodoo Graphics
 defflag	opt_tdvfb.h		TDVFB_CONSOLE
-device	tdvfb: wsemuldisplaydev, rasops8, vcons, videomode
+device	tdvfb: wsemuldisplaydev, rasops16, rasops32, vcons, videomode
 attach	tdvfb at pci
 file	dev/pci/tdvfb.c		tdvfb	
