@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.17 2013/01/28 21:03:29 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.18 2013/01/30 17:29:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.17 2013/01/28 21:03:29 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.18 2013/01/30 17:29:05 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -55,14 +55,7 @@ __RCSID("$NetBSD: buf.c,v 1.17 2013/01/28 21:03:29 christos Exp $");
 #include <util.h>
 
 #include "makefs.h"
-
-#include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
-
-#include "ffs/buf.h"
-#include "ffs/ufs_inode.h"
-
-extern int sectorsize;		/* XXX: from ffs.c & mkfs.c */
+#include "buf.h"
 
 TAILQ_HEAD(buftailhead,buf) buftail;
 
@@ -72,15 +65,14 @@ bread(struct vnode *vp, daddr_t blkno, int size, struct kauth_cred *u1 __unused,
 {
 	off_t	offset;
 	ssize_t	rv;
-	struct fs *fs = vp->fs;
+	fsinfo_t *fs = vp->fs;
 
-	assert (fs != NULL);
 	assert (bpp != NULL);
 
 	if (debug & DEBUG_BUF_BREAD)
 		printf("bread: blkno %lld size %d\n", (long long)blkno, size);
 	*bpp = getblk(vp, blkno, size, 0, 0);
-	offset = (*bpp)->b_blkno * sectorsize;	/* XXX */
+	offset = (*bpp)->b_blkno * fs->sectorsize;
 	if (debug & DEBUG_BUF_BREAD)
 		printf("bread: blkno %lld offset %lld bcount %ld\n",
 		    (long long)(*bpp)->b_blkno, (long long) offset,
@@ -138,9 +130,10 @@ bwrite(struct buf *bp)
 	off_t	offset;
 	ssize_t	rv;
 	int	bytes;
+	fsinfo_t *fs = bp->b_fs;
 
 	assert (bp != NULL);
-	offset = bp->b_blkno * sectorsize;	/* XXX */
+	offset = bp->b_blkno * fs->sectorsize;
 	bytes  = bp->b_bcount;
 	if (debug & DEBUG_BUF_BWRITE)
 		printf("bwrite: blkno %lld offset %lld bcount %d\n",
@@ -190,10 +183,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int u1 __unused,
 	static int buftailinitted;
 	struct buf *bp;
 	void *n;
-	int fd = vp->fd;
-	struct fs *fs = vp->fs;
 
-	assert (fs != NULL);
 	if (debug & DEBUG_BUF_GETBLK)
 		printf("getblk: blkno %lld size %d\n", (long long)blkno, size);
 
@@ -214,8 +204,8 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int u1 __unused,
 		bp = ecalloc(1, sizeof(*bp));
 		bp->b_bufsize = 0;
 		bp->b_blkno = bp->b_lblkno = blkno;
-		bp->b_fd = fd;
-		bp->b_fs = fs;
+		bp->b_fd = vp->fd;
+		bp->b_fs = vp->fs;
 		bp->b_data = NULL;
 		TAILQ_INSERT_HEAD(&buftail, bp, b_tailq);
 	}
