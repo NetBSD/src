@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.8 2013/01/30 17:29:05 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.9 2013/01/30 19:19:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -54,9 +54,9 @@ struct componentname {
 	size_t cn_namelen;
 };
 
+struct makefs_fsinfo;
 struct vnode {
-	int fd;
-	void *fs;
+	struct makefs_fsinfo *fs;
 	void *v_data;
 };
 
@@ -68,8 +68,7 @@ struct buf {
 	long		b_bcount;
 	daddr_t		b_blkno;
 	daddr_t		b_lblkno;
-	int		b_fd;
-	void *		b_fs;
+	struct makefs_fsinfo * b_fs;
 
 	TAILQ_ENTRY(buf)	b_tailq;
 };
