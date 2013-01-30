@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.11 2013/01/29 21:54:19 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.12 2013/01/30 17:29:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.11 2013/01/29 21:54:19 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.12 2013/01/30 17:29:25 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -62,8 +62,6 @@ __RCSID("$NetBSD: msdos.c,v 1.11 2013/01/29 21:54:19 christos Exp $");
 #include "makefs.h"
 #include "msdos.h"
 #include "mkfs_msdos.h"
-
-extern int sectorsize;	/* XXX: horrid */
 
 static int msdos_populate_dir(const char *, struct denode *, fsnode *,
     fsnode *, fsinfo_t *);
@@ -151,7 +149,17 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	 * Is minsize right here?
 	 */
 	msdos_opt->create_size = MAX(msdos_opt->create_size, fsopts->minsize);
-	msdos_opt->bytes_per_sector = sectorsize = 512;
+	if (msdos_opt->bytes_per_sector == 0) {
+		if (fsopts->sectorsize == 0)
+			fsopts->sectorsize = 512;
+		msdos_opt->bytes_per_sector = fsopts->sectorsize;
+	} else if (fsopts->sectorsize == 0) {
+		fsopts->sectorsize = msdos_opt->bytes_per_sector;
+	} else if (fsopts->sectorsize != msdos_opt->bytes_per_sector) {
+		err(1, "inconsistent sectorsize -S %u"
+		    "!= -o bytes_per_sector %u", 
+		    fsopts->sectorsize, msdos_opt->bytes_per_sector);
+	}
 
 		/* create image */
 	printf("Creating `%s'\n", image);

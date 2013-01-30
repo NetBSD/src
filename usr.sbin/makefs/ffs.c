@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.57 2013/01/29 15:52:25 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.58 2013/01/30 17:29:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.57 2013/01/29 15:52:25 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.58 2013/01/30 17:29:25 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -147,9 +147,6 @@ static  void	*ffs_build_dinode1(struct ufs1_dinode *, dirbuf_t *, fsnode *,
 static  void	*ffs_build_dinode2(struct ufs2_dinode *, dirbuf_t *, fsnode *,
 				 fsnode *, fsinfo_t *);
 
-
-
-int	sectorsize;		/* XXX: for buf.c::getblk() */
 
 
 	/* publically visible functions */
@@ -421,8 +418,6 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		printf("ffs_validate: dir %s; %lld bytes, %lld inodes\n",
 		    dir, (long long)fsopts->size, (long long)fsopts->inodes);
 	}
-	sectorsize = fsopts->sectorsize;	/* XXX - see earlier */
-
 		/* now check calculated sizes vs requested sizes */
 	if (fsopts->maxsize > 0 && fsopts->size > fsopts->maxsize) {
 		errx(1, "`%s' size of %lld is larger than the maxsize of %lld.",
