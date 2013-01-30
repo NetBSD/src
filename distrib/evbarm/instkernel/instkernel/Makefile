@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2012/10/26 19:13:56 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.18 2013/01/30 13:53:54 he Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,7 +19,8 @@ MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-	\
 			MINI2440_INSTALL	${RAMDISK}	-	\
 			OPENRD_INSTALL		${RAMDISK}	-	\
 			TS7200_INSTALL		${RAMDISK}	- 	\
-			TEAMASA_NPWR_INSTALL	${RAMDISK}	-
+			TEAMASA_NPWR_INSTALL	${RAMDISK}	-	\
+			KUROBOX_PRO_INSTALL	${RAMDISK}	-
 .else
 # Big endian platforms.
 MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-
