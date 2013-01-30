@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2013/01/13 14:43:23 mlelstv Exp $
+#	$NetBSD: Makefile,v 1.24 2013/01/30 13:47:36 he Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -62,7 +62,9 @@ TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 		0x00140000	netbsd-wd0
 .endif
 
-ALL_KERNELS?= "+"
+# Default is to build for all TARGETS
+ALL_KERNELS?= +
+
 .for K G I R W in ${TARGETS}				# {
 .for configsel in ${ALL_KERNELS}			# {
 .if ${configsel} == "+" || ${configsel} == ${K}
