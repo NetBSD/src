@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.12 2013/01/30 17:29:25 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.13 2013/01/30 19:19:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.12 2013/01/30 17:29:25 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.13 2013/01/30 19:19:19 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -150,10 +150,10 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	 */
 	msdos_opt->create_size = MAX(msdos_opt->create_size, fsopts->minsize);
 	if (msdos_opt->bytes_per_sector == 0) {
-		if (fsopts->sectorsize == 0)
+		if (fsopts->sectorsize == -1)
 			fsopts->sectorsize = 512;
 		msdos_opt->bytes_per_sector = fsopts->sectorsize;
-	} else if (fsopts->sectorsize == 0) {
+	} else if (fsopts->sectorsize == -1) {
 		fsopts->sectorsize = msdos_opt->bytes_per_sector;
 	} else if (fsopts->sectorsize != msdos_opt->bytes_per_sector) {
 		err(1, "inconsistent sectorsize -S %u"
@@ -168,8 +168,8 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		return;
 	TIMER_RESULTS(start, "mkfs_msdos");
 
-	vp.fd = open(image, O_RDWR);
-	vp.fs = msdos_opt;
+	fsopts->fd = open(image, O_RDWR);
+	vp.fs = fsopts;
 
 	if ((pmp = msdosfs_mount(&vp, 0)) == NULL)
 		err(1, "msdosfs_mount");
