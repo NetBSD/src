@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkimage,v 1.15 2013/01/21 16:49:49 skrll Exp $
+# $NetBSD: mkimage,v 1.16 2013/01/30 07:40:34 skrll Exp $
 #
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -70,7 +70,7 @@ next_avail ()
 
 usage() {
 	cat << EOF 1>&2
-Usage: $PROG -h <host-arch> [-S <setsdir>] [-c <custom-files-dir>] [-s <size>] [<image>]
+Usage: $PROG -h <host-arch> [-S <setsdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
 EOF
 	exit 1
 }
@@ -189,7 +189,7 @@ mnt="${TMPDIR:-/tmp}/image.$$"
 src="/usr/src"
 obj="/usr/obj"
 
-sets="base comp etc games man misc modules text"
+sets="base comp etc games man misc modules tests text"
 xsets="xbase xcomp xetc xfont xserver"
 
 # Presumable block and fragment size.
