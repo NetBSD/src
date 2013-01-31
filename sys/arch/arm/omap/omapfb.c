@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.15 2013/01/21 16:08:30 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.16 2013/01/31 11:00:07 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.15 2013/01/21 16:08:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.16 2013/01/31 11:00:07 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DSS_SYSCONFIG, 
 	    OMAP_SYSCONF_AUTOIDLE);
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONFIG);
-	reg = 0x8;
+	reg = OMAP_DISPC_CTRL_ACTIVE_MTRX;
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONFIG, reg);
 	
 	sc->sc_fbhwaddr = sc->sc_dmamem->ds_addr + 0x1000;
@@ -486,6 +486,30 @@ omapfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
+		case WSDISPLAYIO_GET_FBINFO:
+			{
+				struct wsdisplayio_fbinfo *fbi = data;
+
+				fbi->fbi_width = sc->sc_width;
+				fbi->fbi_height = sc->sc_height;
+				fbi->fbi_stride = sc->sc_width << 2;
+				fbi->fbi_bitsperpixel = 32;
+				fbi->fbi_pixeltype = WSFB_RGB;
+				fbi->fbi_subtype.fbi_rgbmasks.red_offset = 16;
+				fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
+				fbi->fbi_subtype.fbi_rgbmasks.green_offset = 8;
+				fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
+				fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 0;
+				fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
+				fbi->fbi_subtype.fbi_rgbmasks.alpha_offset = 0;
+				fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
+				fbi->fbi_flags = 0;
+				fbi->fbi_fbsize = sc->sc_vramsize;
+				fbi->fbi_fboffset = 0;
+				fbi->fbi_flags = WSFB_VRAM_IS_RAM;
+
+			}
+			return 0;
 	}
 	return EPASSTHROUGH;
 }
@@ -498,9 +522,9 @@ omapfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct omapfb_softc *sc = vd->cookie;
 
 	/* 'regular' framebuffer mmap()ing */
-	if (offset < (12 << 20)) {
+	if (offset < sc->sc_vramsize) {
 		pa = bus_dmamem_mmap(sc->sc_dmat, sc->sc_dmamem, 1,
-		    offset + 0x1000, prot, BUS_DMA_COHERENT);
+		    offset + 0x1000, prot, BUS_DMA_PREFETCHABLE);
 		return pa;
 	}
 	return pa;
