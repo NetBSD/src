@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.40 2013/01/28 08:22:01 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.41 2013/01/31 12:41:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.40 2013/01/28 08:22:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.41 2013/01/31 12:41:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,19 +367,20 @@ usbd_xfer_handle
 dwc_otg_allocx(struct usbd_bus *bus)
 {
 	struct dwc_otg_softc *sc = bus->hci_private;
-	usbd_xfer_handle xfer;
+	struct dwc_otg_xfer *dxfer;
 
 	DPRINTF("\n");
 
 	DOTG_EVCNT_INCR(sc->sc_ev_xferpoolget);
-	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
-	if (xfer != NULL) {
-		memset(xfer, 0, sizeof(struct dwc_otg_xfer));
+	dxfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
+	if (dxfer != NULL) {
+		memset(dxfer, 0, sizeof(*dxfer));
+		dxfer->work.xfer = &dxfer->xfer;
 #ifdef DIAGNOSTIC
-		xfer->busy_free = XFER_BUSY;
+		dxfer->xfer.busy_free = XFER_BUSY;
 #endif
 	}
-	return xfer;
+	return (usbd_xfer_handle)dxfer;
 }
 
 void
@@ -1650,8 +1651,8 @@ Static void
 dwc_otg_worker(struct work *wk, void *priv)
 {
 	struct dwc_otg_work *dwork = (struct dwc_otg_work *)wk;
+	struct dwc_otg_softc *sc = priv;
 	usbd_xfer_handle xfer = dwork->xfer;
-	struct dwc_otg_softc *sc = dwork->sc;
 
 	DOTG_EVCNT_INCR(sc->sc_ev_work);
 
@@ -4098,7 +4099,6 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 
 	workqueue_create(&sc->sc_wq, xname, dwc_otg_worker, sc, PRI_NONE,
 	    IPL_USB, WQ_MPSAFE);
-	sc->sc_timer_work.sc = sc;
 
 	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
@@ -4337,9 +4337,6 @@ dwc_otg_xfer_setup(usbd_xfer_handle xfer)
 	uint8_t ep_no = UE_GET_ADDR(ed->bEndpointAddress);
 	void *last_obj;
 	int ntd, n;
-
-	dxfer->work.sc = sc;
-	dxfer->work.xfer = xfer;
 
 	/*
 	 * compute maximum number of TDs
