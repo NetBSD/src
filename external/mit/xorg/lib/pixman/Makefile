@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2013/01/31 10:58:22 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.16 2013/01/31 12:21:12 jmcneill Exp $
 
 NOLINT=	1	# defined
 
@@ -85,8 +85,9 @@ CPPFLAGS+=	-DHAVE_CONFIG_H \
 		-I${X11SRCDIR.pixman}/../combine \
 		-I${X11SRCDIR.pixman}/pixman
 
-# XXX!  wants __thread
-CPPFLAGS+=	-DPIXMAN_NO_TLS
+# With pixman 0.28.3, HAVE_PTHREAD_SETSPECIFIC is much faster than TLS
+CPPFLAGS+=	-DHAVE_PTHREAD_SETSPECIFIC
+#CPPFLAGS+=	-DTLS=__thread
 
 LIBDPLIBS=	m	${.CURDIR}/../../../../../lib/libm
 
