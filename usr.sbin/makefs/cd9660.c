@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.41 2013/01/29 15:52:25 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.42 2013/01/31 14:56:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.41 2013/01/29 15:52:25 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.42 2013/01/31 14:56:32 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -279,19 +279,19 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 	        { 'K', "keep-bad-images", &diskStructure->keep_bad_images,
 		  OPT_INT32, 0, 1, "Keep bad images" },
 	        { 'D', "allow-deep-trees", &diskStructure->allow_deep_trees,
-		  OPT_INT32, 0, 1, "Allow trees more than 8 levels" },
+		  OPT_INT8, 0, 1, "Allow trees more than 8 levels" },
 	        { 'a', "allow-max-name", &diskStructure->allow_max_name,
-		  OPT_INT32, 0, 1, "Allow 37 char filenames (unimplemented)" },
+		  OPT_INT8, 0, 1, "Allow 37 char filenames (unimplemented)" },
 	        { 'i', "allow-illegal-chars", 
 		  &diskStructure->allow_illegal_chars,
-		  OPT_INT32, 0, 1, "Allow illegal characters in filenames" },
+		  OPT_INT8, 0, 1, "Allow illegal characters in filenames" },
 	        { 'D', "allow-multidot", &diskStructure->allow_multidot,
-		  OPT_INT32, 0, 1, "Allow multiple periods in filenames" },
+		  OPT_INT8, 0, 1, "Allow multiple periods in filenames" },
 	        { 'o', "omit-trailing-period",
 		  &diskStructure->omit_trailing_period,
-		  OPT_INT32, 0, 1, "Omit trailing periods in filenames" },
+		  OPT_INT8, 0, 1, "Omit trailing periods in filenames" },
 	        { '\0', "allow-lowercase", &diskStructure->allow_lowercase,
-		  OPT_INT32, 0, 1, "Allow lowercase characters in filenames" },
+		  OPT_INT8, 0, 1, "Allow lowercase characters in filenames" },
 	        { '\0', "archimedes", &diskStructure->archimedes_enabled,
 		  OPT_INT32, 0, 1, "Enable Archimedes structure" },
 		{ '\0', "no-trailing-padding",
