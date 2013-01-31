@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.90 2013/01/28 23:49:12 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.91 2013/01/31 22:34:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.90 2013/01/28 23:49:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.91 2013/01/31 22:34:26 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -98,6 +98,14 @@ extern paddr_t msgbufphys;
 
 int kernel_debug = 0;
 int cpu_fpu_present;
+int cpu_neon_present;
+int cpu_simd_present;
+int cpu_simdex_present;
+
+int cpu_instruction_set_attributes[6];
+int cpu_memory_model_features[4];
+int cpu_processor_features[2];
+int cpu_media_and_vfp_features[2];
 
 /* exported variable to be filled in by the bootloaders */
 char *booted_kernel;
@@ -362,9 +370,64 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       sysctl_machdep_powersave, 0, &cpu_do_powersave, 0,
 		       CTL_MACHDEP, CPU_POWERSAVE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "cpu_id", NULL,
+		       NULL, curcpu()->ci_arm_cpuid, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+#ifdef FPU_VFP
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "fpu_id", NULL,
+		       NULL, 0, &cpu_info_store.ci_vfp_id, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+#endif
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "fpu_present", NULL,
 		       NULL, 0, &cpu_fpu_present, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "neon_present", NULL,
+		       NULL, 0, &cpu_neon_present, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRUCT, "id_isar", NULL,
+		       NULL, 0,
+		       cpu_instruction_set_attributes,
+		       sizeof(cpu_instruction_set_attributes),
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRUCT, "id_mmfr", NULL,
+		       NULL, 0,
+		       cpu_memory_model_features,
+		       sizeof(cpu_memory_model_features),
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRUCT, "id_pfr", NULL,
+		       NULL, 0,
+		       cpu_processor_features,
+		       sizeof(cpu_processor_features),
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRUCT, "id_mvfr", NULL,
+		       NULL, 0,
+		       cpu_media_and_vfp_features,
+		       sizeof(cpu_media_and_vfp_features),
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "simd_present", NULL,
+		       NULL, 0, &cpu_simd_present, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "simdex_present", NULL,
+		       NULL, 0, &cpu_simdex_present, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
