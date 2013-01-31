@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.249 2013/01/31 21:57:39 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.250 2013/01/31 22:01:49 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.249 2013/01/31 21:57:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250 2013/01/31 22:01:49 skrll Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -826,7 +826,7 @@ do {					\
  *   pmap_remove_pv: remove a mapping from a vm_page list
  *
  * NOTE: pmap_enter_pv expects to lock the pvh itself
- *       pmap_remove_pv expects te caller to lock the pvh before calling
+ *       pmap_remove_pv expects the caller to lock the pvh before calling
  */
 
 /*
