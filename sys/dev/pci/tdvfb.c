@@ -1,4 +1,4 @@
-/*	$NetBSD: tdvfb.c,v 1.4 2012/07/29 20:31:53 rkujawa Exp $	*/
+/*	$NetBSD: tdvfb.c,v 1.5 2013/01/31 11:57:07 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.   
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.4 2012/07/29 20:31:53 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.5 2013/01/31 11:57:07 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.4 2012/07/29 20:31:53 rkujawa Exp $");
 #include "opt_tdvfb.h"
 
 #define MAXLOOP 4096 
+/* #define TDVFB_DEBUG 1 */
 
 static int	tdvfb_match(device_t, cfdata_t, void *);
 static void	tdvfb_attach(device_t, device_t, void *);
@@ -182,8 +183,9 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 	pci_aprint_devinfo(pa, NULL);
 
 	/* map the BAR */
-	if (pci_mapreg_map(pa, TDV_MM_BAR, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_cvgt, &sc->sc_cvgh, &sc->sc_cvg_pa, 0) != 0 ) {
+	if (pci_mapreg_map(pa, TDV_MM_BAR, PCI_MAPREG_TYPE_MEM, 
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_cvgt, &sc->sc_cvgh, 
+	    &sc->sc_cvg_pa, 0) != 0 ) {
 		aprint_error_dev(sc->sc_dev, "unable to map CVG BAR");
 		return;
 	}
@@ -313,7 +315,10 @@ tdvfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 #endif 
 #endif
 
-	ri->ri_bits = (char *) bus_space_vaddr(sc->sc_cvgt, sc->sc_fbh);	
+	ri->ri_bits = (char *) bus_space_vaddr(sc->sc_cvgt, sc->sc_fbh);
+#ifdef TDVFB_DEBUG
+	aprint_normal_dev(sc->sc_dev, "fb handle: %lx, ri_bits: %p\n", sc->sc_fbh, ri->ri_bits);
+#endif /* TDVFB_DEBUG */
 
 	scr->scr_flags |= VCONS_DONT_READ;
 
@@ -776,18 +781,18 @@ tdvfb_cvg_read(struct tdvfb_softc *sc, uint32_t reg)
 {
 	uint32_t rv;
 	rv = bus_space_read_4(sc->sc_cvgt, sc->sc_cvgh, reg);
-#ifdef TDVFB_DEBUG
+#ifdef TDVFB_DEBUG_REGS
 	aprint_normal("cvg_read val %x from reg %x\n", rv, reg);
-#endif /* TDVFB_DEBUG */
+#endif /* TDVFB_DEBUG_REGS */
 	return rv;
 }
 
 static void
 tdvfb_cvg_write(struct tdvfb_softc *sc, uint32_t reg, uint32_t val)
 {
-#ifdef TDVFB_DEBUG
+#ifdef TDVFB_DEBUG_REGS
 	aprint_normal("cvg_write val %x to reg %x\n", val, reg);
-#endif /* TDVFB_DEBUG */
+#endif /* TDVFB_DEBUG_REGS */
 	bus_space_write_4(sc->sc_cvgt, sc->sc_cvgh, reg, val);
 }
 
@@ -815,9 +820,9 @@ tdvfb_cvg_dac_read(struct tdvfb_softc *sc, uint32_t reg)
 	tdvfb_cvg_dac_write(sc, reg, TDV_DAC_DATA_READ);
 
 	rv = tdvfb_cvg_read(sc, TDV_OFF_DAC_READ);
-#ifdef TDVFB_DEBUG
+#ifdef TDVFB_DEBUG_REGS
 	aprint_normal("cvg_dac_read val %x from reg %x\n", rv, reg);
-#endif /* TDVFB_DEBUG */
+#endif /* TDVFB_DEBUG_REGS */
 	return rv & 0xFF;
 }
 
@@ -828,10 +833,10 @@ tdvfb_cvg_dac_write(struct tdvfb_softc *sc, uint32_t reg, uint32_t val)
 
 	wreg = ((reg & TDV_GENDAC_ADDRMASK) << 8) | val;
 
-#ifdef TDVFB_DEBUG
+#ifdef TDVFB_DEBUG_REGS
 	aprint_normal("cvg_dac_write val %x to reg %x (%x)\n", val, reg,
 	    wreg);
-#endif /* TDVFB_DEBUG */
+#endif /* TDVFB_DEBUG_REGS */
 
 	tdvfb_cvg_write(sc, TDV_OFF_DAC_DATA, wreg);
 	tdvfb_wait(sc);
@@ -972,6 +977,16 @@ tdvfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 					vcons_redraw_screen(ms);
 			}		
 			return 0;
+		}
+	case WSDISPLAYIO_GET_FBINFO:
+		{
+			struct wsdisplayio_fbinfo *fbi = data;
+			struct rasops_info *ri;
+			int ret;
+
+			ri = &sc->vd.active->scr_ri;
+			ret = wsdisplayio_get_fbinfo(ri, fbi);
+			return ret;
 		}
 	}	
 	return EPASSTHROUGH;	
