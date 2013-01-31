@@ -20,13 +20,7 @@
 
 /* Run-time Target Specification.  */
 #undef TARGET_VERSION
-#define TARGET_VERSION fputs (" (NetBSD/arm ELF EABI)", stderr);
-
-/* Default to armv5t so that thumb shared libraries work.
-   The ARM10TDMI core is the default for armv5t, so set
-   SUBTARGET_CPU_DEFAULT to achieve this.  */
-#undef  SUBTARGET_CPU_DEFAULT
-#define SUBTARGET_CPU_DEFAULT TARGET_CPU_arm10tdmi
+#define TARGET_VERSION fputs (" (NetBSD/earm ELF)", stderr);
 
 /* This defaults us to little-endian.  */
 #ifndef TARGET_ENDIAN_DEFAULT
@@ -44,12 +38,6 @@
 
 #undef MULTILIB_DEFAULTS
 
-/* Default it to use ATPCS with soft-VFP.  */
-#undef TARGET_DEFAULT
-#define TARGET_DEFAULT			\
-  (MASK_APCS_FRAME			\
-   | TARGET_ENDIAN_DEFAULT)
-
 #undef ARM_DEFAULT_ABI
 #define ARM_DEFAULT_ABI ARM_ABI_AAPCS_LINUX
 
@@ -57,13 +45,26 @@
 #define TARGET_OS_CPP_BUILTINS()	\
   do					\
     {					\
-      TARGET_BPABI_CPP_BUILTINS();	\
+      if (TARGET_AAPCS_BASED)		\
+	TARGET_BPABI_CPP_BUILTINS();	\
       NETBSD_OS_CPP_BUILTINS_ELF();	\
     }					\
   while (0)
 
 #undef SUBTARGET_CPP_SPEC
 #define SUBTARGET_CPP_SPEC NETBSD_CPP_SPEC
+
+/*
+ * Override AAPCS types to remain compatible the existing NetBSD types.
+ */
+#undef WCHAR_TYPE
+#define WCHAR_TYPE "int"
+
+#undef SIZE_TYPE
+#define SIZE_TYPE "long unsigned int"
+ 
+#undef PTRDIFF_TYPE
+#define PTRDIFF_TYPE "long int"
 
 #undef SUBTARGET_EXTRA_ASM_SPEC
 #define SUBTARGET_EXTRA_ASM_SPEC	\
