@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.106 2013/01/21 14:15:03 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.107 2013/01/31 10:57:30 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -602,5 +602,52 @@ struct wsdisplayio_edid_info {
  */
 #define WSDISPLAYIO_SET_POLLING	_IOW('W', 103, int)
 #define WSDISPLAYIOMGWEHITANDKILLEDASKUNK WSDISPLAYIO_SET_POLLING
+
+/*
+ * this is supposed to replace WSDISPLAYIO_GINFO, WSDISPLAYIO_GTYPE,
+ * WSDISPLAYIO_LINEBYTES etc.
+ */
+
+/* format type - colour index, 'true' colour etc. */
+#define WSFB_RGB	0
+#define WSFB_CI		1	/* colour indexed, see subtype */
+#define WSFB_GREYSCALE	2
+#define WSFB_YUV	3
+
+struct wsdisplayio_fbinfo {
+	uint64_t fbi_fbsize;		/* framebuffer size in bytes */
+	uint64_t fbi_fboffset;		/* start of visible fb, in bytes */ 
+	uint32_t fbi_width;		/* in pixels */
+	uint32_t fbi_height;		/* in lines */
+	uint32_t fbi_stride;		/* in bytes */
+	uint32_t fbi_bitsperpixel;
+	uint32_t fbi_pixeltype;		/* see above */
+	union _fbi_subtype {
+		struct _fbi_rgbmasks {
+			/* offsets from the right, size in bits */
+			uint32_t red_offset;
+			uint32_t red_size;
+			uint32_t green_offset;
+			uint32_t green_size;
+			uint32_t blue_offset;
+			uint32_t blue_size;
+			uint32_t alpha_offset;
+			uint32_t alpha_size;
+		} fbi_rgbmasks;
+		struct _fbi_cmapinfo {
+			uint32_t cmap_entries;
+		} fbi_cmapinfo;
+		/* 
+		 * TODO:
+		 * add parameter blocks for greyscale, yuv etc.
+		 */
+	} fbi_subtype;
+	uint32_t fbi_flags;
+};
+
+/* fbi_flags */
+#define WSFB_VRAM_IS_RAM	1	/* hint for wsfb - don't shadow */
+
+#define WSDISPLAYIO_GET_FBINFO	_IOWR('W', 104, struct wsdisplayio_fbinfo)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */
