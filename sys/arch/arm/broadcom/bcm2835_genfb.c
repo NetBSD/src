@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_genfb.c,v 1.3 2013/01/10 14:12:16 jmcneill Exp $ */
+/* $NetBSD: bcm2835_genfb.c,v 1.4 2013/01/31 11:00:44 macallan Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.3 2013/01/10 14:12:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.4 2013/01/31 11:00:44 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -133,6 +133,16 @@ bcmgenfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		busid = data;
 		busid->bus_type = WSDISPLAYIO_BUS_SOC;
 		return 0;
+	case WSDISPLAYIO_GET_FBINFO:
+		{
+			struct wsdisplayio_fbinfo *fbi = data;
+			struct rasops_info *ri = &sc->sc_gen.vd.active->scr_ri;
+			int ret;
+
+			ret = wsdisplayio_get_fbinfo(ri, fbi);
+			fbi->fbi_flags |= WSFB_VRAM_IS_RAM;
+			return ret;
+		}
 	default:
 		return EPASSTHROUGH;
 	}
