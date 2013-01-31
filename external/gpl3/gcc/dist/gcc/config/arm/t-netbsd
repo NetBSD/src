@@ -23,6 +23,9 @@ TARGET_LIBGCC2_CFLAGS = -fomit-frame-pointer -fpic
 LIBGCC2_DEBUG_CFLAGS = -g0
 LIB2FUNCS_EXTRA = $(srcdir)/config/floatunsidf.c $(srcdir)/config/floatunsisf.c
 
+# to make compat easier.
+UNWIND_H = $(srcdir)/config/arm/unwind-netbsd.h
+
 # This list is from t-arm-elf, but with some things removed.
 LIB1ASMFUNCS += _udivsi3 _divsi3 _umodsi3 _modsi3 _dvmd_tls _bb_init_func \
 	_call_via_rX _interwork_call_via_rX \
