@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otgvar.h,v 1.8 2013/01/19 14:10:14 skrll Exp $ */
+/*	$NetBSD: dwc_otgvar.h,v 1.9 2013/01/31 12:41:41 skrll Exp $ */
 
 /* $FreeBSD: src/sys/dev/usb/controller/dwc_otg.h,v 1.12 2012/09/27 15:23:38 hselasky Exp $ */
 /*-
@@ -151,7 +151,6 @@ typedef struct dwc_otg_soft_td {
 
 struct dwc_otg_work {
 	struct work wk;
-	struct dwc_otg_softc *sc;
 	usbd_xfer_handle xfer;
 };
 
