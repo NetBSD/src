@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.16 2013/01/31 11:00:07 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.17 2013/01/31 21:10:37 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.16 2013/01/31 11:00:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.17 2013/01/31 21:10:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,10 +194,12 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	 */
 	sz = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_SIZE);
 	if (sz == 0) {
-		sz = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_SIZE_LCD);
+		sz = bus_space_read_4(sc->sc_iot, sc->sc_regh,
+		    OMAPFB_DISPC_SIZE_LCD);
 	}
 	if (sz == 0) {
-		sz = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_SIZE_DIG);
+		sz = bus_space_read_4(sc->sc_iot, sc->sc_regh,
+		    OMAPFB_DISPC_SIZE_DIG);
 	}
 	
 	/* ... and make sure it ends up where we need it */
@@ -299,7 +301,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONFIG);
 	reg = OMAP_DISPC_CTRL_ACTIVE_MTRX;
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONFIG, reg);
-	
+
 	sc->sc_fbhwaddr = sc->sc_dmamem->ds_addr + 0x1000;
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_BASE_0, 
 	    sc->sc_fbhwaddr);
@@ -314,7 +316,8 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	    /*OMAP_DISPC_ATTR_8BIT*/OMAP_DISPC_ATTR_RGB16
 	    | OMAP_DISPC_ATTR_REPLICATION);
 #if 0
-	printf("dss_control: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DSS_CONTROL));
+	printf("dss_control: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DSS_CONTROL));
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DSS_CONTROL,
 	    /*OMAP_DSSCTRL_DISPC_CLK_SWITCH |*/
 	    OMAP_DSSCTRL_CLOCK_MODE |
@@ -345,15 +348,24 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	    reg | OMAP_DISPC_CTRL_GO_LCD | OMAP_DISPC_CTRL_GO_DIGITAL);
 
 #ifdef OMAPFB_DEBUG
-	printf("attr: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_ATTRIBUTES));
-	printf("preload: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_PRELOAD));
-	printf("config: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONFIG));
-	printf("control: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL));
-	printf("dss_control: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DSS_CONTROL));
-	printf("threshold: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_FIFO_THRESH));
-	printf("GFX size: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_SIZE));
-	printf("row inc: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_ROW_INC));
-	printf("pixel inc: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_PIXEL_INC));
+	printf("attr: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_GFX_ATTRIBUTES));
+	printf("preload: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_GFX_PRELOAD));
+	printf("config: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_CONFIG));
+	printf("control: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_CONTROL));
+	printf("dss_control: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DSS_CONTROL));
+	printf("threshold: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_GFX_FIFO_THRESH));
+	printf("GFX size: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_GFX_SIZE));
+	printf("row inc: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_GFX_ROW_INC));
+	printf("pixel inc: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_GFX_PIXEL_INC));
 #endif
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
@@ -731,8 +743,8 @@ omapfb_rectfill(struct omapfb_softc *sc, int x, int y, int wi, int he,
 
 	/*
 	 * stupid hardware
-	 * in 32bit mode the DMA controller always writes 0 into the upper byte, so we
-	 * can use this mode only if we actually want that
+	 * in 32bit mode the DMA controller always writes 0 into the upper
+	 * byte, so we can use this mode only if we actually want that
 	 */
 	if (((colour & 0xff00) == 0) &&
 	   (((daddr | width_in_bytes) & 3) == 0)) {
@@ -763,7 +775,8 @@ omapfb_rectfill(struct omapfb_softc *sc, int x, int y, int wi, int he,
 	    CCR_CONST_FILL_ENABLE | CCR_DST_AMODE_DOUBLE_INDEX |
 	    CCR_SRC_AMODE_CONST_ADDR);
 	omapdma_write_ch_reg(0, OMAPDMAC_CDEI, 1);
-	omapdma_write_ch_reg(0, OMAPDMAC_CDFI, (sc->sc_stride - width_in_bytes) + 1);
+	omapdma_write_ch_reg(0, OMAPDMAC_CDFI,
+	    (sc->sc_stride - width_in_bytes) + 1);
 	omapdma_write_ch_reg(0, OMAPDMAC_COLOR, colour);
 	omapdma_write_ch_reg(0, OMAPDMAC_CCR,
 	    CCR_CONST_FILL_ENABLE | CCR_DST_AMODE_DOUBLE_INDEX |
