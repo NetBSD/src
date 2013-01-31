@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.17 2013/01/28 23:49:13 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.18 2013/01/31 22:35:25 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -42,6 +42,9 @@
 #include <arm/mcontext.h>
 
 #include <uvm/uvm_extern.h>		/* for pmap.h */
+
+extern int cpu_media_and_vfp_features[];
+extern int cpu_neon_present;
 
 /* 
  * Use generic co-processor instructions to avoid assembly problems.
@@ -374,6 +377,7 @@ vfp_attach(void)
 	case FPU_VFP_CORTEXA8:
 	case FPU_VFP_CORTEXA9:
 		model = "NEON MPE (VFP 3.0+)";
+		cpu_neon_present = 1;
 		break;
 	default:
 		aprint_normal_dev(ci->ci_dev, "unrecognized VFP version %x\n",
@@ -383,6 +387,8 @@ vfp_attach(void)
 	}
 
 	cpu_fpu_present = 1;
+	__asm("fmrx %0, mvfr0" : "=r"(cpu_media_and_vfp_features[0]));
+	__asm("fmrx %0, mvfr1" : "=r"(cpu_media_and_vfp_features[1]));
 	if (fpsid != 0) {
 		aprint_normal("vfp%d at %s: %s\n",
 		    device_unit(curcpu()->ci_dev), device_xname(curcpu()->ci_dev),
