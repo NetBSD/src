@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: arm_initfini.c,v 1.1 2013/01/29 19:14:54 matt Exp $");
+__RCSID("$NetBSD: arm_initfini.c,v 1.2 2013/01/31 06:47:55 matt Exp $");
 
 /*
  * To properly implement setjmp/longjmp for the ARM AAPCS ABI, it has to be
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: arm_initfini.c,v 1.1 2013/01/29 19:14:54 matt Exp $");
 #include <sys/sysctl.h>
 
 #include <stdbool.h>
+#include <stddef.h>
 
 int _libc_arm_fpu_present;
 static bool _libc_aapcs_initialized;
@@ -51,11 +52,10 @@ void	_libc_aapcs_init(void) __attribute__((__constructor__, __used__));
 void
 _libc_aapcs_init(void)
 {
-	if (_libc_aapcs_initialized)
-		return;
-
-	_libc_aapcs_initialized = true;
-	size_t len = sizeof(_libc_arm_fpu_present);
-	(void)sysctlbyname("machdep.fpu_present", &_libc_arm_fpu_present, &len,
-	    NULL, 0);
+	if (!_libc_aapcs_initialized) {
+		size_t len = sizeof(_libc_arm_fpu_present);
+		_libc_aapcs_initialized = true;
+		(void)sysctlbyname("machdep.fpu_present",
+		    &_libc_arm_fpu_present, &len, NULL, 0);
+	}
 }
