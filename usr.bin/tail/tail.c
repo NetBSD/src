@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.16 2011/09/03 10:59:11 christos Exp $");
+__RCSID("$NetBSD: tail.c,v 1.17 2013/01/31 23:09:06 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 	 * get displayed, not the starting point in the file.  The one major
 	 * incompatibility in this version as compared to historical versions
 	 * is that the 'r' option couldn't be modified by the -lbc options,
-	 * i.e. it was always done in lines.  This version treats -rc as a
+	 * i.e., it was always done in lines.  This version treats -rc as a
 	 * number of characters in reverse order.  Finally, the default for
 	 * -r is the entire file, not 10 lines.
 	 */
