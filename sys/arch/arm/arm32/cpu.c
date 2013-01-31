@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.91 2012/12/05 19:05:45 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.92 2013/01/31 22:34:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.91 2012/12/05 19:05:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.92 2013/01/31 22:34:26 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -648,11 +648,10 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 
 	aprint_normal("\n");
 
-#if defined(CPU_CORTEX)
-	if (CPU_ID_CORTEX_P(cpuid)) {
+	if (CPU_ID_CORTEX_P(cpuid) || CPU_ID_ARM11_P(cpuid)) {
 		identify_features(dv);
 	}
-#endif
+
 	/* Print cache info. */
 	if (arm_pcache.icache_line_size != 0 || arm_pcache.dcache_line_size != 0) {
 		print_cache_info(dv, &arm_pcache, 0);
@@ -727,42 +726,57 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 	}
 }
 
-#if defined(CPU_CORTEX)
+extern int cpu_instruction_set_attributes[6];
+extern int cpu_memory_model_features[4];
+extern int cpu_processor_features[2];
+extern int cpu_simd_present;
+extern int cpu_simdex_present;
+
 void
 identify_features(device_t dv)
 {
-	uint32_t isar0 = armreg_isar0_read();
-	uint32_t isar1 = armreg_isar1_read();
-	uint32_t isar2 = armreg_isar2_read();
-	uint32_t isar3 = armreg_isar3_read();
-	uint32_t isar4 = armreg_isar4_read();
-	uint32_t isar5 = armreg_isar5_read();
+	cpu_instruction_set_attributes[0] = armreg_isar0_read();
+	cpu_instruction_set_attributes[1] = armreg_isar1_read();
+	cpu_instruction_set_attributes[2] = armreg_isar2_read();
+	cpu_instruction_set_attributes[3] = armreg_isar3_read();
+	cpu_instruction_set_attributes[4] = armreg_isar4_read();
+	cpu_instruction_set_attributes[5] = armreg_isar5_read();
 
-	uint32_t mmfr0 = armreg_mmfr0_read();
-	uint32_t mmfr1 = armreg_mmfr1_read();
-	uint32_t mmfr2 = armreg_mmfr2_read();
-	uint32_t mmfr3 = armreg_mmfr3_read();
+	cpu_simd_present =
+	    ((cpu_instruction_set_attributes[3] >> 4) & 0x0f) >= 3;
+	cpu_simdex_present = cpu_simd_present
+	    && ((cpu_instruction_set_attributes[1] >> 12) & 0x0f) >= 2;
 
-	if (__SHIFTOUT(mmfr3, __BITS(23,20))) {
+	cpu_memory_model_features[0] = armreg_mmfr0_read();
+	cpu_memory_model_features[1] = armreg_mmfr1_read();
+	cpu_memory_model_features[2] = armreg_mmfr2_read();
+	cpu_memory_model_features[3] = armreg_mmfr3_read();
+
+	if (__SHIFTOUT(cpu_memory_model_features[3], __BITS(23,20))) {
 		/*
 		 * Updates to the translation tables do not require a clean
-		 * to the point of unification to ensure visibility by subsequent
-		 * translation table walks.
+		 * to the point of unification to ensure visibility by
+		 * subsequent translation table walks.
 		 */
 		pmap_needs_pte_sync = 0;
 	}
 
-	uint32_t pfr0 = armreg_pfr0_read();
-	uint32_t pfr1 = armreg_pfr1_read();
+	cpu_processor_features[0] = armreg_pfr0_read();
+	cpu_processor_features[1] = armreg_pfr1_read();
 
 	aprint_verbose_dev(dv,
 	    "isar: [0]=%#x [1]=%#x [2]=%#x [3]=%#x, [4]=%#x, [5]=%#x\n",
-	    isar0, isar1, isar2, isar3, isar4, isar5);
+	    cpu_instruction_set_attributes[0],
+	    cpu_instruction_set_attributes[1],
+	    cpu_instruction_set_attributes[2],
+	    cpu_instruction_set_attributes[3],
+	    cpu_instruction_set_attributes[4],
+	    cpu_instruction_set_attributes[5]);
 	aprint_verbose_dev(dv,
 	    "mmfr: [0]=%#x [1]=%#x [2]=%#x [3]=%#x\n",
-	    mmfr0, mmfr1, mmfr2, mmfr3);
+	    cpu_memory_model_features[0], cpu_memory_model_features[1],
+	    cpu_memory_model_features[2], cpu_memory_model_features[3]);
 	aprint_verbose_dev(dv,
 	    "pfr: [0]=%#x [1]=%#x\n",
-	    pfr0, pfr1);
+	    cpu_processor_features[0], cpu_processor_features[1]);
 }
-#endif /* CPU_CORTEX */
