@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.49 2011/06/29 03:11:59 macallan Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.50 2013/01/31 10:57:30 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -206,6 +206,10 @@ int wsdisplay_cfg_ioctl(struct wsdisplay_softc *, u_long, void *,
 
 struct wsdisplayio_edid_info;
 int wsdisplayio_get_edid(device_t, struct wsdisplayio_edid_info *);
+
+struct wsdisplayio_fbinfo;
+struct rasops_info;
+int wsdisplayio_get_fbinfo(struct rasops_info *, struct wsdisplayio_fbinfo *);
 
 #ifdef WSDISPLAY_SCROLLSUPPORT
 void wsdisplay_scroll(void *, int);
