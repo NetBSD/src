@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/04/23 01:37:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2013/01/31 23:40:48 matt Exp $
 
 .PATH:	${.CURDIR}/arch
 
@@ -8,11 +8,13 @@ SRCS=	cpuctl.c
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.c)
 SRCS+=	${MACHINE_ARCH}.c
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH}-asm.S)
-SRCS+=	${MACHINE_ARCH}-asm.S
-.endif
+.elif exists(${.CURDIR}/arch/${MACHINE_CPU}.c)
+SRCS+=	${MACHINE_CPU}.c
 .else
 SRCS+=	noarch.c
+.endif
+.if exists(${.CURDIR}/arch/${MACHINE_ARCH}-asm.S)
+SRCS+=	${MACHINE_ARCH}-asm.S
 .endif
 
 LDADD+=-lutil
