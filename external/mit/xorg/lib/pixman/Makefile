@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2011/08/03 18:22:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2013/01/31 10:58:22 jmcneill Exp $
 
 NOLINT=	1	# defined
 
@@ -9,32 +9,36 @@ LIB=		pixman-1
 DIST=	${X11SRCDIR.pixman}/pixman
 .PATH:	${DIST}
 
-SRCS=	\
-	pixman-access.c				\
-	pixman-access-accessors.c		\
-	pixman-cpu.c				\
-	pixman-gradient-walker.c		\
-	pixman-region16.c			\
-	pixman-region32.c			\
-	pixman-image.c				\
-	pixman-implementation.c			\
-	pixman-combine32.c			\
-	pixman-combine64.c			\
-	pixman-general.c			\
-	pixman.c				\
-	pixman-fast-path.c			\
-	pixman-solid-fill.c			\
-	pixman-conical-gradient.c		\
-	pixman-linear-gradient.c		\
-	pixman-radial-gradient.c		\
-	pixman-bits-image.c			\
-	pixman-utils.c				\
-	pixman-edge.c				\
-	pixman-edge-accessors.c			\
-	pixman-noop.c				\
-	pixman-trap.c				\
-	pixman-timer.c				\
-	pixman-matrix.c
+SRCS=					\
+	pixman.c			\
+	pixman-access.c			\
+	pixman-access-accessors.c	\
+	pixman-bits-image.c		\
+	pixman-combine32.c		\
+	pixman-combine-float.c		\
+	pixman-conical-gradient.c	\
+	pixman-x86.c			\
+	pixman-mips.c			\
+	pixman-arm.c			\
+	pixman-ppc.c			\
+	pixman-edge.c			\
+	pixman-edge-accessors.c		\
+	pixman-fast-path.c		\
+	pixman-glyph.c			\
+	pixman-general.c		\
+	pixman-gradient-walker.c	\
+	pixman-image.c			\
+	pixman-implementation.c		\
+	pixman-linear-gradient.c	\
+	pixman-matrix.c			\
+	pixman-noop.c			\
+	pixman-radial-gradient.c	\
+	pixman-region16.c		\
+	pixman-region32.c		\
+	pixman-solid-fill.c		\
+	pixman-timer.c			\
+	pixman-trap.c			\
+	pixman-utils.c
 
 # XXX
 
@@ -49,6 +53,24 @@ SRCS+=	pixman-mmx.c
 #SRCS+=	pixman-sse2.c
 COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
 #COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
+.endif
+
+.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm"
+# ARM SIMD
+SRCS+=		pixman-arm-simd.c 		\
+		pixman-arm-simd-asm.S
+CPPFLAGS+=	-DUSE_ARM_SIMD
+# ARM NEON
+SRCS+=		pixman-arm-neon.c		\
+		pixman-arm-neon-asm.S		\
+		pixman-arm-neon-asm-bilinear.S
+CPPFLAGS+=	-DUSE_ARM_NEON
+.endif
+.if ${MACHINE_ARCH} == "earm"
+# ARM iwMMX
+SRCS+=		pixman-mmx.c
+COPTS.pixman-mmx.c=	-mcpu=iwmmxt
+CPPFLAGS+=	-DUSE_ARM_IWMMXT
 .endif
 
 # .if VMX
