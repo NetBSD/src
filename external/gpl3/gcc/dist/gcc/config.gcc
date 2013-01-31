@@ -724,11 +724,11 @@ arm*-*-freebsd*)
 arm*-*-netbsdelf*)
 	tm_file="dbxelf.h elfos.h netbsd.h netbsd-elf.h arm/elf.h arm/aout.h arm/arm.h"
 	case ${target} in
-	armeb*) tm_defines="${tm_defines} TARGET_ENDIAN_DEFAULT=MASK_BIG_END" ;;
+	armeb*) tm_defines="${tm_defines} TARGET_BIG_ENDIAN_DEFAULT=1" ;;
 	esac
 	tmake_file="${tmake_file} arm/t-arm"
 	case ${target} in
-	arm*-*-netbsdelf-*eabi)
+	arm*-*-netbsdelf-*eabi*)
 	    tm_file="$tm_file arm/bpabi.h arm/netbsd-elf.h arm/netbsd-eabi.h"
 	    tmake_file="$tmake_file arm/t-arm-elf arm/t-bpabi"
 	    tmake_file="$tmake_file arm/t-netbsd-eabi"
@@ -742,6 +742,11 @@ arm*-*-netbsdelf*)
 	*)
 	    tm_file="$tm_file arm/netbsd-elf.h"
 	    tmake_file="$tmake_file arm/t-netbsd"
+	    ;;
+	esac
+	case ${target} in
+	arm*-*-netbsdelf-*eabihf*)
+	    tm_defines="${tm_defines} TARGET_DEFAULT_FLOAT_ABI=ARM_FLOAT_ABI_HARD"
 	    ;;
 	esac
 	;;
