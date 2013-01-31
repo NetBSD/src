@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.42 2013/01/31 14:56:32 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.43 2013/01/31 15:15:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.42 2013/01/31 14:56:32 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.43 2013/01/31 15:15:15 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -263,66 +263,65 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 {
 	iso9660_disk *diskStructure = ecalloc(1, sizeof(*diskStructure));
 
+#define OPT_STR(letter, name, desc)  \
+	{ letter, name, NULL, OPT_STRBUF, 0, 0, desc }
+
+#define OPT_NUM(letter, name, field, min, max, desc) \
+	{ letter, name, &diskStructure->field, \
+	  sizeof(diskStructure->field) == 8 ? OPT_INT64 : \
+	  (sizeof(diskStructure->field) == 4 ? OPT_INT32 : \
+	  (sizeof(diskStructure->field) == 2 ? OPT_INT16 : OPT_INT8)), \
+	  min, max, desc }
+
+#define OPT_BOOL(letter, name, field, desc) \
+	OPT_NUM(letter, name, field, 0, 1, desc)
+
 	const option_t cd9660_options[] = {
-		{ 'h', "help", &diskStructure->displayHelp,
-		  OPT_INT32, 0, 1, "Show help message" },
-		{ 'l', "isolevel", &diskStructure->isoLevel,
-		  OPT_INT32, 1, 3, "ISO Level" },
-		{ 'S', "follow-symlinks", &diskStructure->follow_sym_links,
-		  OPT_INT32, 0, 1, "Resolve symlinks in pathnames" },
-		{ 'v', "verbose",  &diskStructure->verbose_level,
-		  OPT_INT32, 0, 2, "Turns on verbose output" },
-	        { 'R', "rockridge", &diskStructure->rock_ridge_enabled,
-		  OPT_INT32, 0, 1, "Enable Rock-Ridge extensions" },
-	        { 'C', "chrp-boot", &diskStructure->chrp_boot,
-		  OPT_INT32, 0, 1, "Enable CHRP boot" },
-	        { 'K', "keep-bad-images", &diskStructure->keep_bad_images,
-		  OPT_INT32, 0, 1, "Keep bad images" },
-	        { 'D', "allow-deep-trees", &diskStructure->allow_deep_trees,
-		  OPT_INT8, 0, 1, "Allow trees more than 8 levels" },
-	        { 'a', "allow-max-name", &diskStructure->allow_max_name,
-		  OPT_INT8, 0, 1, "Allow 37 char filenames (unimplemented)" },
-	        { 'i', "allow-illegal-chars", 
-		  &diskStructure->allow_illegal_chars,
-		  OPT_INT8, 0, 1, "Allow illegal characters in filenames" },
-	        { 'D', "allow-multidot", &diskStructure->allow_multidot,
-		  OPT_INT8, 0, 1, "Allow multiple periods in filenames" },
-	        { 'o', "omit-trailing-period",
-		  &diskStructure->omit_trailing_period,
-		  OPT_INT8, 0, 1, "Omit trailing periods in filenames" },
-	        { '\0', "allow-lowercase", &diskStructure->allow_lowercase,
-		  OPT_INT8, 0, 1, "Allow lowercase characters in filenames" },
-	        { '\0', "archimedes", &diskStructure->archimedes_enabled,
-		  OPT_INT32, 0, 1, "Enable Archimedes structure" },
-		{ '\0', "no-trailing-padding",
-		  &diskStructure->include_padding_areas,
-		  OPT_INT32, 0, 1, "Include padding areas" },
+		OPT_NUM('l', "isolevel", isoLevel,
+		    1, 3, "ISO Level"),
+		OPT_NUM('v', "verbose",  verbose_level,
+		    0, 2, "Turns on verbose output"),
 
+		OPT_BOOL('h', "help", displayHelp,
+		    "Show help message"),
+		OPT_BOOL('S', "follow-symlinks", follow_sym_links,
+		    "Resolve symlinks in pathnames"),
+	        OPT_BOOL('R', "rockridge", rock_ridge_enabled,
+		    "Enable Rock-Ridge extensions"),
+	        OPT_BOOL('C', "chrp-boot", chrp_boot,
+		    "Enable CHRP boot"),
+	        OPT_BOOL('K', "keep-bad-images", keep_bad_images,
+		    "Keep bad images"),
+	        OPT_BOOL('D', "allow-deep-trees", allow_deep_trees,
+		    "Allow trees more than 8 levels"),
+	        OPT_BOOL('a', "allow-max-name", allow_max_name,
+		    "Allow 37 char filenames (unimplemented)"),
+	        OPT_BOOL('i', "allow-illegal-chars", allow_illegal_chars,
+		    "Allow illegal characters in filenames"),
+	        OPT_BOOL('D', "allow-multidot", allow_multidot,
+		    "Allow multiple periods in filenames"),
+	        OPT_BOOL('o', "omit-trailing-period", omit_trailing_period,
+		    "Omit trailing periods in filenames"),
+	        OPT_BOOL('\0', "allow-lowercase", allow_lowercase,
+		    "Allow lowercase characters in filenames"),
+	        OPT_BOOL('\0', "archimedes", archimedes_enabled,
+		    "Enable Archimedes structure"),
+		OPT_BOOL('\0', "no-trailing-padding", include_padding_areas,
+		    "Include padding areas"),
 
-		{ 'A', "applicationid", NULL, OPT_STRBUF, 0, 0,
-		  "Application Identifier" },
-		{ 'P', "publisher", NULL, OPT_STRBUF, 0, 0, 
-		  "Publisher Identifier" },
-		{ 'p', "preparer", NULL, OPT_STRBUF, 0, 0,
-		  "Preparer Identifier" },
-		{ 'L', "label", NULL, OPT_STRBUF, 0, 0,
-		  "Disk Label" },
-		{ 'V', "volumeid", NULL, OPT_STRBUF, 0, 0,
-		  "Volume Set Identifier" },
-		{ 'B', "bootimage", NULL, OPT_STRBUF, 0, 0,
-		  "Boot image parameter" },
-		{ 'G', "generic-bootimage", NULL, OPT_STRBUF, 0, 0,
-		  "Generic boot image parameter" },
-		{ '\0', "bootimagedir", NULL, OPT_STRBUF, 0, 0,
-		  "Boot image directory" },
-		{ '\0', "no-emul-boot", NULL, OPT_STRBUF, 0, 0,
-		  "No boot emulation" },
-		{ '\0', "no-boot", NULL, OPT_STRBUF, 0, 0,
-		  "No boot support" },
-		{ '\0', "hard-disk-boot", NULL, OPT_STRBUF, 0, 0,
-		  "Boot from hard disk" },
-		{ '\0', "boot-load-segment", NULL, OPT_STRBUF, 0, 0,
-		  "Boot load segment" },
+		OPT_STR('A', "applicationid", "Application Identifier"),
+		OPT_STR('P', "publisher", "Publisher Identifier"),
+		OPT_STR('p', "preparer", "Preparer Identifier"),
+		OPT_STR('L', "label", "Disk Label"),
+		OPT_STR('V', "volumeid", "Volume Set Identifier"),
+		OPT_STR('B', "bootimage", "Boot image parameter"),
+		OPT_STR('G', "generic-bootimage", "Generic boot image param"),
+		OPT_STR('\0', "bootimagedir", "Boot image directory"),
+		OPT_STR('\0', "no-emul-boot", "No boot emulation"),
+		OPT_STR('\0', "no-boot", "No boot support"),
+		OPT_STR('\0', "hard-disk-boot", "Boot from hard disk"),
+		OPT_STR('\0', "boot-load-segment", "Boot load segment"),
+
 		{ .name = NULL }
 	};
 
