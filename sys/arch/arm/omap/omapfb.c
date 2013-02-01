@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.17 2013/01/31 21:10:37 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.18 2013/02/01 02:53:47 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.17 2013/01/31 21:10:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.18 2013/02/01 02:53:47 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,8 @@ struct omapfb_softc {
 	void *sc_fbaddr, *sc_vramaddr;
 	bus_addr_t sc_fbhwaddr;
 	uint32_t *sc_clut;
+	uint32_t sc_dispc_config;
+	int sc_video_is_on;
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
@@ -108,6 +110,7 @@ static void 	omapfb_putpalreg(struct omapfb_softc *, int, uint8_t,
 			    uint8_t, uint8_t);
 
 static int	omapfb_set_depth(struct omapfb_softc *, int);
+static void	omapfb_set_video(struct omapfb_softc *, int);
 
 #if NOMAPDMA > 0
 static void	omapfb_init(struct omapfb_softc *);
@@ -185,6 +188,8 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map register space\n");
 		return;
 	}
+
+	sc->sc_video_is_on = 1;
 
 	/*
 	 * XXX
@@ -301,6 +306,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONFIG);
 	reg = OMAP_DISPC_CTRL_ACTIVE_MTRX;
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONFIG, reg);
+	sc->sc_dispc_config = reg;
 
 	sc->sc_fbhwaddr = sc->sc_dmamem->ds_addr + 0x1000;
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_BASE_0, 
@@ -498,6 +504,7 @@ omapfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
+
 		case WSDISPLAYIO_GET_FBINFO:
 			{
 				struct wsdisplayio_fbinfo *fbi = data;
@@ -520,6 +527,20 @@ omapfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				fbi->fbi_fboffset = 0;
 				fbi->fbi_flags = WSFB_VRAM_IS_RAM;
 
+			}
+			return 0;
+
+		case WSDISPLAYIO_GVIDEO:
+			{
+				int *on = data;
+				*on = sc->sc_video_is_on;
+			}
+			return 0;
+
+		case WSDISPLAYIO_SVIDEO:
+			{
+				int *on = data;
+				omapfb_set_video(sc, *on);
 			}
 			return 0;
 	}
@@ -711,6 +732,38 @@ omapfb_set_depth(struct omapfb_softc *sc, int d)
 	memset(sc->sc_fbaddr, 0, sc->sc_stride * sc->sc_height);
 #endif
 	return 0;
+}
+
+static void
+omapfb_set_video(struct omapfb_softc *sc, int on)
+{
+	uint32_t reg;
+
+	if (on == sc->sc_video_is_on)
+		return;
+	if (on) {
+		bus_space_write_4(sc->sc_iot, sc->sc_regh,
+		    OMAPFB_DISPC_CONFIG, sc->sc_dispc_config);
+		on = 1;
+	} else {
+		bus_space_write_4(sc->sc_iot, sc->sc_regh,
+		    OMAPFB_DISPC_CONFIG, sc->sc_dispc_config |
+		    OMAP_DISPC_CFG_VSYNC_GATED | OMAP_DISPC_CFG_HSYNC_GATED |
+		    OMAP_DISPC_CFG_PIXELCLK_GATED |
+		    OMAP_DISPC_CFG_PIXELDATA_GATED);
+	}
+
+	/*
+	 * now tell the video controller that we're done mucking around and 
+	 * actually update its settings
+	 */
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL,
+	    reg | OMAP_DISPC_CTRL_GO_LCD | OMAP_DISPC_CTRL_GO_DIGITAL);
+
+	aprint_debug_dev(sc->sc_dev, "%s %08x\n", __func__,
+	    bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONFIG));
+	sc->sc_video_is_on = on;
 }
 
 #if NOMAPDMA > 0
