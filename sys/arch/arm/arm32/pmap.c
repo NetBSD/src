@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.250 2013/01/31 22:01:49 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.251 2013/02/01 15:02:31 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250 2013/01/31 22:01:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.251 2013/02/01 15:02:31 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -693,6 +693,12 @@ pmap_debug(int level)
 }
 #endif	/* PMAP_DEBUG */
 
+#ifdef PMAP_CACHE_VIPT
+#define PMAP_VALIDATE_MD_PAGE(md)	\
+	KASSERTMSG(arm_cache_prefer_mask == 0 || (((md)->pvh_attrs & PVF_WRITE) == 0) == ((md)->urw_mappings + (md)->krw_mappings == 0), \
+	    "(md) %p: attrs=%#x urw=%u krw=%u", (md), \
+	    (md)->pvh_attrs, (md)->urw_mappings, (md)->krw_mappings);
+#endif /* PMAP_CACHE_VIPT */
 /*
  * A bunch of routines to conditionally flush the caches/TLB depending
  * on whether the specified pmap actually needs to be flushed at any
@@ -890,6 +896,13 @@ pmap_enter_pv(struct vm_page_md *md, paddr_t pa, struct pv_entry *pv, pmap_t pm,
 
 #ifdef PMAP_CACHE_VIPT
 	/*
+	 * Even though pmap_vac_me_harder will set PVF_WRITE for us,
+	 * do it here as well to keep the mappings & KVF_WRITE consistent.
+	 */
+	if (arm_cache_prefer_mask != 0 && (flags & PVF_WRITE) != 0) {
+		md->pvh_attrs |= PVF_WRITE;
+	}
+	/*
 	 * If this is an exec mapping and its the first exec mapping
 	 * for this page, make sure to sync the I-cache.
 	 */
@@ -1008,8 +1021,11 @@ pmap_remove_pv(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 	 * mappings (ignoring KMPAGE), clear the WRITE flag and writeback
 	 * the contents to memory.
 	 */
-	if (md->krw_mappings + md->urw_mappings == 0)
-		md->pvh_attrs &= ~PVF_WRITE;
+	if (arm_cache_prefer_mask != 0) {
+		if (md->krw_mappings + md->urw_mappings == 0)
+			md->pvh_attrs &= ~PVF_WRITE;
+		PMAP_VALIDATE_MD_PAGE(md);
+	}
 	KASSERT((md->pvh_attrs & PVF_DMOD) == 0 || (md->pvh_attrs & (PVF_DIRTY|PVF_NC)));
 #endif /* PMAP_CACHE_VIPT */
 
@@ -1087,10 +1103,12 @@ pmap_modify_pv(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va,
 		}
 	}
 #ifdef PMAP_CACHE_VIPT
-	if (md->urw_mappings + md->krw_mappings == 0) {
-		md->pvh_attrs &= ~PVF_WRITE;
-	} else {
-		md->pvh_attrs |= PVF_WRITE;
+	if (arm_cache_prefer_mask != 0) {
+		if (md->urw_mappings + md->krw_mappings == 0) {
+			md->pvh_attrs &= ~PVF_WRITE;
+		} else {
+			md->pvh_attrs |= PVF_WRITE;
+		}
 	}
 	/*
 	 * We have two cases here: the first is from enter_pv (new exec
@@ -1847,7 +1865,7 @@ pmap_vac_me_harder(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 		 * Only check for a bad alias if we have writable mappings.
 		 */
 		tst_mask &= arm_cache_prefer_mask;
-		if (rw_mappings > 0 && arm_cache_prefer_mask) {
+		if (rw_mappings > 0) {
 			for (; pv && !bad_alias; pv = SLIST_NEXT(pv, pv_link)) {
 				/* if there's a bad alias, stop checking. */
 				if (tst_mask != (pv->pv_va & arm_cache_prefer_mask))
@@ -1903,7 +1921,7 @@ pmap_vac_me_harder(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 		KASSERT((md->pvh_attrs & PVF_DMOD) == 0 || (md->pvh_attrs & (PVF_DIRTY|PVF_NC)));
 		KASSERT((rw_mappings == 0) == !(md->pvh_attrs & PVF_WRITE));
 	} else if (!va) {
-		KASSERT(arm_cache_prefer_mask == 0 || pmap_is_page_colored_p(md));
+		KASSERT(pmap_is_page_colored_p(md));
 		KASSERT(!(md->pvh_attrs & PVF_WRITE)
 		    || (md->pvh_attrs & PVF_DIRTY));
 		if (rw_mappings == 0) {
@@ -2227,10 +2245,12 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 					md->uro_mappings++;
 				}
 #ifdef PMAP_CACHE_VIPT
-				if (md->urw_mappings + md->krw_mappings == 0) {
-					md->pvh_attrs &= ~PVF_WRITE;
-				} else {
-					KASSERT(md->pvh_attrs & PVF_WRITE);
+				if (arm_cache_prefer_mask != 0) {
+					if (md->urw_mappings + md->krw_mappings == 0) {
+						md->pvh_attrs &= ~PVF_WRITE;
+					} else {
+						PMAP_VALIDATE_MD_PAGE(md);
+					}
 				}
 				if (want_syncicache)
 					need_syncicache = true;
@@ -2564,7 +2584,7 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 		if (PV_IS_EXEC_P(md->pvh_attrs))
 			PMAPCOUNT(exec_discarded_page_protect);
 		md->pvh_attrs &= ~PVF_EXEC;
-		KASSERT((md->urw_mappings + md->krw_mappings == 0) == !(md->pvh_attrs & PVF_WRITE));
+		PMAP_VALIDATE_MD_PAGE(md);
 #endif
 		return;
 	}
@@ -2663,9 +2683,11 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 	md->pvh_attrs &= ~PVF_EXEC;
 	KASSERT(md->urw_mappings == 0);
 	KASSERT(md->uro_mappings == 0);
-	if (md->krw_mappings == 0)
-		md->pvh_attrs &= ~PVF_WRITE;
-	KASSERT((md->urw_mappings + md->krw_mappings == 0) == !(md->pvh_attrs & PVF_WRITE));
+	if (arm_cache_prefer_mask != 0) {
+		if (md->krw_mappings == 0)
+			md->pvh_attrs &= ~PVF_WRITE;
+		PMAP_VALIDATE_MD_PAGE(md);
+	}
 #endif
 
 	if (flush) {
@@ -2809,8 +2831,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		/*
 		 * This is to be a managed mapping.
 		 */
-		if ((flags & VM_PROT_ALL) ||
-		    (md->pvh_attrs & PVF_REF)) {
+		if ((flags & VM_PROT_ALL) || (md->pvh_attrs & PVF_REF)) {
 			/*
 			 * - The access type indicates that we don't need
 			 *   to do referenced emulation.
@@ -3050,9 +3071,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		KASSERT(uvm_page_locked_p(pg));
 #endif
 		KASSERT((md->pvh_attrs & PVF_DMOD) == 0 || (md->pvh_attrs & (PVF_DIRTY|PVF_NC)));
-		KASSERTMSG(arm_cache_prefer_mask == 0 || ((md->pvh_attrs & PVF_WRITE) == 0) == (md->urw_mappings + md->krw_mappings == 0),
-		    "pg %p: attrs=%#x urw=%u krw=%u", pg,
-		    md->pvh_attrs, md->urw_mappings, md->krw_mappings);
+		PMAP_VALIDATE_MD_PAGE(md);
 	}
 #endif
 
@@ -3470,7 +3489,9 @@ pmap_kremove(vaddr_t va, vsize_t len)
 					KASSERT(omd->kro_mappings == 0);
 					omd->pvh_attrs &= ~PVF_KMPAGE;
 #ifdef PMAP_CACHE_VIPT
-					omd->pvh_attrs &= ~PVF_WRITE;
+					if (arm_cache_prefer_mask != 0) {
+						omd->pvh_attrs &= ~PVF_WRITE;
+					}
 #endif
 					pmap_kmpages--;
 #ifdef PMAP_CACHE_VIPT
