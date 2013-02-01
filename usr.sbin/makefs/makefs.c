@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.45 2013/01/30 02:53:54 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.46 2013/02/01 14:00:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.45 2013/01/30 02:53:54 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.46 2013/02/01 14:00:33 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -327,13 +327,12 @@ set_option_var(const option_t *options, const char *var, const char *val,
 	char *s;
 	size_t i;
 
-#define NUM(width) \
+#define NUM(type) \
 	if (!*val) { \
-		*(uint ## width ## _t *)options[i].value = 1; \
+		*(type *)options[i].value = 1; \
 		break; \
 	} \
-	*(uint ## width ## _t *)options[i].value = \
-	    (uint ## width ## _t)strsuftoll(options[i].desc, val, \
+	*(type *)options[i].value = (type)strsuftoll(options[i].desc, val, \
 	    options[i].minimum, options[i].maximum); break
 
 	for (i = 0; options[i].name != NULL; i++) {
@@ -361,13 +360,13 @@ set_option_var(const option_t *options, const char *var, const char *val,
 			strlcpy(buf, val, len);
 			break;
 		case OPT_INT64:
-			NUM(64);
+			NUM(uint64_t);
 		case OPT_INT32:
-			NUM(32);
+			NUM(uint32_t);
 		case OPT_INT16:
-			NUM(16);
+			NUM(uint16_t);
 		case OPT_INT8:
-			NUM(8);
+			NUM(uint8_t);
 		default:
 			warnx("Unknown type %d in option %s", options[i].type,
 			    val);
