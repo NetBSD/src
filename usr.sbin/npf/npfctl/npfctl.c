@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.27 2012/12/24 19:05:46 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.28 2013/02/01 05:40:07 spz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.27 2012/12/24 19:05:46 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.28 2013/02/01 05:40:07 spz Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -236,6 +236,7 @@ npfctl_print_addrmask(int alen, npf_addr_t *addr, npf_netmask_t mask)
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = 0;
+		sin6->sin6_scope_id = 0;
 		memcpy(&sin6->sin6_addr, addr, sizeof(sin6->sin6_addr));
 		break;
 	}
