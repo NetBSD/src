@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2013/01/31 12:21:12 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.17 2013/02/01 00:17:24 jmcneill Exp $
 
 NOLINT=	1	# defined
 
@@ -55,7 +55,7 @@ COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
 #COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
 .endif
 
-.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm"
+.if ${MACHINE_ARCH} == "earm"
 # ARM SIMD
 SRCS+=		pixman-arm-simd.c 		\
 		pixman-arm-simd-asm.S
@@ -65,8 +65,6 @@ SRCS+=		pixman-arm-neon.c		\
 		pixman-arm-neon-asm.S		\
 		pixman-arm-neon-asm-bilinear.S
 CPPFLAGS+=	-DUSE_ARM_NEON
-.endif
-.if ${MACHINE_ARCH} == "earm"
 # ARM iwMMX
 SRCS+=		pixman-mmx.c
 COPTS.pixman-mmx.c=	-mcpu=iwmmxt
