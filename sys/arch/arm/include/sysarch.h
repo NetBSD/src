@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.9 2013/01/31 14:58:51 matt Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.10 2013/02/01 15:23:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -41,6 +41,9 @@
  * Pickup definition of uintptr_t
  */
 #include <sys/stdint.h>
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
 
 /*
  * Architecture specific syscalls (arm)
