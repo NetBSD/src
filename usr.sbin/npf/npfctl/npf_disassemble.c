@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.13 2012/12/10 02:26:04 rmind Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.14 2013/02/01 05:40:07 spz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * FIXME: config generation should be redesigned..
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.13 2012/12/10 02:26:04 rmind Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.14 2013/02/01 05:40:07 spz Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -213,6 +213,7 @@ npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = 0;
+		sin6->sin6_scope_id = 0;
 		memcpy(&sin6->sin6_addr, ni->ni_pc, sizeof(sin6->sin6_addr));
 		sockaddr_snprintf(buf, bufsiz, "%a", (struct sockaddr *)sin6);
 		if (ni) {
