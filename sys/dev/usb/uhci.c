@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.255 2013/01/30 16:01:45 tsutsui Exp $	*/
+/*	$NetBSD: uhci.c,v 1.256 2013/02/01 12:53:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.255 2013/01/30 16:01:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.256 2013/02/01 12:53:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1099,6 +1099,7 @@ void
 uhci_remove_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *pqh;
+	uint32_t elink;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -1122,7 +1123,10 @@ uhci_remove_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	usb_syncmem(&sqh->dma, sqh->offs + offsetof(uhci_qh_t, qh_elink),
 	    sizeof(sqh->qh.qh_elink),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-	if (!(sqh->qh.qh_elink & htole32(UHCI_PTR_T))) {
+	elink = le32toh(sqh->qh.qh_elink);
+	usb_syncmem(&sqh->dma, sqh->offs + offsetof(uhci_qh_t, qh_elink),
+	    sizeof(sqh->qh.qh_elink), BUS_DMASYNC_PREREAD);
+	if (!(elink & UHCI_PTR_T)) {
 		sqh->qh.qh_elink = htole32(UHCI_PTR_T);
 		usb_syncmem(&sqh->dma,
 		    sqh->offs + offsetof(uhci_qh_t, qh_elink),
@@ -1172,6 +1176,7 @@ void
 uhci_remove_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *pqh;
+	uint32_t elink;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -1180,7 +1185,10 @@ uhci_remove_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	usb_syncmem(&sqh->dma, sqh->offs + offsetof(uhci_qh_t, qh_elink),
 	    sizeof(sqh->qh.qh_elink),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-	if (!(sqh->qh.qh_elink & htole32(UHCI_PTR_T))) {
+	elink = le32toh(sqh->qh.qh_elink);
+	usb_syncmem(&sqh->dma, sqh->offs + offsetof(uhci_qh_t, qh_elink),
+	    sizeof(sqh->qh.qh_elink), BUS_DMASYNC_PREREAD);
+	if (!(elink & UHCI_PTR_T)) {
 		sqh->qh.qh_elink = htole32(UHCI_PTR_T);
 		usb_syncmem(&sqh->dma,
 		    sqh->offs + offsetof(uhci_qh_t, qh_elink),
@@ -1431,7 +1439,12 @@ uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
 	    lstd->offs + offsetof(uhci_td_t, td_status),
 	    sizeof(lstd->td.td_status),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-	if (le32toh(lstd->td.td_status) & UHCI_TD_ACTIVE) {
+	status = le32toh(lstd->td.td_status);
+	usb_syncmem(&lstd->dma,
+	    lstd->offs + offsetof(uhci_td_t, td_status),
+	    sizeof(lstd->td.td_status),
+	    BUS_DMASYNC_PREREAD);
+	if (status & UHCI_TD_ACTIVE) {
 		DPRINTFN(12, ("uhci_check_intr: active ii=%p\n", ii));
 		for (std = ii->stdstart; std != lstd; std = std->link.std) {
 			usb_syncmem(&std->dma,
@@ -1460,10 +1473,6 @@ uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
 		}
 		DPRINTFN(12, ("uhci_check_intr: ii=%p std=%p still active\n",
 			      ii, ii->stdstart));
-		usb_syncmem(&lstd->dma,
-		    lstd->offs + offsetof(uhci_td_t, td_status),
-		    sizeof(lstd->td.td_status),
-		    BUS_DMASYNC_PREREAD);
 		return;
 	}
  done:
@@ -1854,6 +1863,7 @@ uhci_free_std_chain(uhci_softc_t *sc, uhci_soft_td_t *std,
 		    uhci_soft_td_t *stdend)
 {
 	uhci_soft_td_t *p;
+	uint32_t td_link;
 
 	/*
 	 * to avoid race condition with the controller which may be looking
@@ -1865,7 +1875,12 @@ uhci_free_std_chain(uhci_softc_t *sc, uhci_soft_td_t *std,
 		    p->offs + offsetof(uhci_td_t, td_link),
 		    sizeof(p->td.td_link),
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-		if ((le32toh(p->td.td_link) & UHCI_PTR_T) == 0) {
+		td_link = le32toh(p->td.td_link);
+		usb_syncmem(&p->dma,
+		    p->offs + offsetof(uhci_td_t, td_link),
+		    sizeof(p->td.td_link),
+		    BUS_DMASYNC_PREREAD);
+		if ((td_link & UHCI_PTR_T) == 0) {
 			p->td.td_link = htole32(UHCI_PTR_T);
 			usb_syncmem(&p->dma,
 			    p->offs + offsetof(uhci_td_t, td_link),
