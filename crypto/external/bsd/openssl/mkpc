@@ -1,15 +1,15 @@
 #!/bin/sh
-#	$NetBSD: mkpc,v 1.2 2013/01/22 13:51:45 christos Exp $
+#	$NetBSD: mkpc,v 1.3 2013/02/01 21:02:48 christos Exp $
 
 getversion() {
-	(echo '#include <openssl/opensslv.h>'; echo OPENSSL_VERSION_TEXT) |
-	    cpp | grep OpenSSL | cut -d ' ' -f 2
+	(echo '#include "opensslv.h"'; echo OPENSSL_VERSION_TEXT) |
+	    cpp -I$1 | grep OpenSSL | cut -d ' ' -f 2
 }
-VERSION="$(getversion)"
+VERSION="$(getversion $1)"
 
-sed -e "s/@VERSION@/${VERSION}/g" < "$1"
+sed -e "s/@VERSION@/${VERSION}/g" < "$2"
 
-case "$1" in
+case "$2" in
 libcrypto.pc)
 	NAME="OpenSSL-libcrypto"
 	LIBS="-lcrypto"
@@ -26,13 +26,13 @@ openssl.pc)
 	DESCRIPTION="Sockets Layer and cryptography libraries and tools"
 	;;
 *)
-	echo "$0: I don't know about $1" 1>&2
+	echo "$0: I don't know about $2" 1>&2
 	exit 1
 	;;
 esac
 
-cat << EOF > "$1"
-# \$NetBSD: mkpc,v 1.2 2013/01/22 13:51:45 christos Exp $
+cat << EOF > "$2"
+# \$NetBSD: mkpc,v 1.3 2013/02/01 21:02:48 christos Exp $
 prefix=/usr
 exec_prefix=/usr
 libdir=/usr/lib
