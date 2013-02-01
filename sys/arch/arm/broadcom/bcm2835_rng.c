@@ -1,7 +1,7 @@
-/*	$NetBSD: bcm2835_rng.c,v 1.2 2013/01/30 11:52:54 jmcneill Exp $ */
+/*	$NetBSD: bcm2835_rng.c,v 1.3 2013/02/01 16:10:16 skrll Exp $ */
 
 /*-
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.2 2013/01/30 11:52:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.3 2013/02/01 16:10:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,15 +126,13 @@ bcmrng_tick(void *priv)
 {
 	struct bcm2835rng_softc *sc = priv;
 	uint32_t status;
-	int cnt, i;
+	int cnt;
 
 	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RNG_STATUS);
 	cnt = (status & RNG_STATUS_CNT_MASK) >> RNG_STATUS_CNT_SHIFT;
-	for (i = 0; i < cnt; i++) {
-		sc->sc_data[i] = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    RNG_DATA);
-	}
 	if (cnt > 0) {
+		bus_space_read_multi_4(sc->sc_iot, sc->sc_ioh, RNG_DATA,
+		    sc->sc_data, cnt);
 		rnd_add_data(&sc->sc_rnd, sc->sc_data,
 		    cnt * 4, cnt * 4 * NBBY);
 	}
