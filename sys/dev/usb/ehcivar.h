@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.41 2013/01/29 00:00:15 christos Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42 2013/02/02 14:15:55 matt Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,8 @@ typedef struct ehci_soft_qtd {
 	LIST_ENTRY(ehci_soft_qtd) hnext;
 	u_int16_t len;
 } ehci_soft_qtd_t;
-#define EHCI_SQTD_SIZE ((sizeof (struct ehci_soft_qtd) + EHCI_QTD_ALIGN - 1) / EHCI_QTD_ALIGN * EHCI_QTD_ALIGN)
+#define EHCI_SQTD_ALIGN	MAX(EHCI_QTD_ALIGN, CACHE_LINE_SIZE)
+#define EHCI_SQTD_SIZE ((sizeof (struct ehci_soft_qtd) + EHCI_SQTD_ALIGN - 1) & -EHCI_SQTD_ALIGN)
 #define EHCI_SQTD_CHUNK (EHCI_PAGE_SIZE / EHCI_SQTD_SIZE)
 
 typedef struct ehci_soft_qh {
