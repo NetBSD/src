@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.45 2012/10/26 09:59:11 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.46 2013/02/02 14:11:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.45 2012/10/26 09:59:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.46 2013/02/02 14:11:37 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -716,10 +716,9 @@ again:
 	 * This should not be needed, but some controllers clear the
 	 * command slot before receiving the D2H FIS ...
 	 */
-	for (i = 0; i <AHCI_RST_WAIT; i++) {
+	for (i = 0; i < AHCI_RST_WAIT; i++) {
 		sig = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
-		if ((((sig & AHCI_P_TFD_ST) >> AHCI_P_TFD_ST_SHIFT)
-		    & WDCS_BSY) == 0)
+		if ((__SHIFTOUT(sig, AHCI_P_TFD_ST) & WDCS_BSY) == 0)
 			break;
 		if (flags & AT_WAIT)
 			tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
