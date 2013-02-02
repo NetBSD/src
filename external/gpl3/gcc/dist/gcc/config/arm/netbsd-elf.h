@@ -29,7 +29,8 @@
    SUBTARGET_CPU_DEFAULT to achieve this.  */
 
 #define SUBTARGET_CPU_DEFAULT \
-	(TARGET_AAPCS_BASED ? TARGET_CPU_arm926ejs : TARGET_CPU_arm6)
+	(ARM_DEFAULT_ABI != ARM_ABI_APCS && ARM_DEFAULT_ABI != ARM_ABI_ATPCS \
+	    ? TARGET_CPU_arm926ejs : TARGET_CPU_arm6)
 
 /* This defaults us to little-endian.  */
 #ifndef TARGET_ENDIAN_DEFAULT
