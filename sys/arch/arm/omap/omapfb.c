@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.18 2013/02/01 02:53:47 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.19 2013/02/02 21:02:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.18 2013/02/01 02:53:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.19 2013/02/02 21:02:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,7 +557,7 @@ omapfb_mmap(void *v, void *vs, off_t offset, int prot)
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->sc_vramsize) {
 		pa = bus_dmamem_mmap(sc->sc_dmat, sc->sc_dmamem, 1,
-		    offset + 0x1000, prot, BUS_DMA_PREFETCHABLE);
+		    offset + 0x1000, prot, BUS_DMA_COHERENT);
 		return pa;
 	}
 	return pa;
