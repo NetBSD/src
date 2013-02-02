@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.206 2013/01/03 13:19:32 dsl Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.207 2013/02/02 14:02:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,7 +61,7 @@
 #include <stdbool.h>
 #endif
 
-#ifdef _KERNEL
+#ifdef SYSCTL_PRIVATE
 #include <sys/cprng.h>
 #endif
 
@@ -1251,7 +1251,9 @@ MALLOC_DECLARE(M_SYSCTLDATA);
 
 extern const u_int sysctl_lwpflagmap[];
 
+#ifdef SYSCTL_PRIVATE
 extern cprng_strong_t *sysctl_prng;
+#endif
 
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>
