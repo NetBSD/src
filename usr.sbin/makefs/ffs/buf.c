@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.19 2013/01/30 19:19:19 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.20 2013/02/02 20:42:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.19 2013/01/30 19:19:19 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.20 2013/02/02 20:42:02 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -72,7 +72,7 @@ bread(struct vnode *vp, daddr_t blkno, int size, struct kauth_cred *u1 __unused,
 	if (debug & DEBUG_BUF_BREAD)
 		printf("bread: blkno %lld size %d\n", (long long)blkno, size);
 	*bpp = getblk(vp, blkno, size, 0, 0);
-	offset = (*bpp)->b_blkno * fs->sectorsize;
+	offset = (*bpp)->b_blkno * fs->sectorsize + fs->offset;
 	if (debug & DEBUG_BUF_BREAD)
 		printf("bread: blkno %lld offset %lld bcount %ld\n",
 		    (long long)(*bpp)->b_blkno, (long long) offset,
@@ -133,7 +133,7 @@ bwrite(struct buf *bp)
 	fsinfo_t *fs = bp->b_fs;
 
 	assert (bp != NULL);
-	offset = bp->b_blkno * fs->sectorsize;
+	offset = bp->b_blkno * fs->sectorsize + fs->offset;
 	bytes  = bp->b_bcount;
 	if (debug & DEBUG_BUF_BWRITE)
 		printf("bwrite: blkno %lld offset %lld bcount %d\n",
