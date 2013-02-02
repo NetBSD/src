@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.76 2013/01/26 21:36:05 bouyer Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.77 2013/02/02 15:44:21 sborrill Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8054,4 +8054,11 @@ sys/kern/subr_cprng.c				1.15
 	consumed the entropy that triggered the immediate reseed, we can
 	reseed with as little as sizeof(int) bytes of entropy.
 	[tls, ticket #800]
+
+bin/sh/expand.c					1.88
+bin/sh/expand.h					1.19
+
+	Fix the expansion of "$(foo-$bar}" so that IFS isn't applied when
+	expanding $bar. Should fix PR bin/47361
+	[dsl, ticket #773]
 
