@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.261 2013/01/14 13:02:59 pooka Exp $
+#	$NetBSD: build.sh,v 1.262 2013/02/02 02:08:37 hubertf Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1455,7 +1455,8 @@ rebuildmake()
 		${runcmd} env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" \
 			CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
 			${HOST_SH} "${TOP}/tools/make/configure" ||
-		    bomb "Configure of ${toolprefix}make failed"
+		    ( cp ${tmpdir}/config.log ${tmpdir}-config.log
+		      bomb "Configure of ${toolprefix}make failed, see ${tmpdir}-config.log for details" )
 		${runcmd} ${HOST_SH} buildmake.sh ||
 		    bomb "Build of ${toolprefix}make failed"
 		make="${tmpdir}/${toolprefix}make"
@@ -1716,7 +1717,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.261 2013/01/14 13:02:59 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.262 2013/02/02 02:08:37 hubertf Exp $
 # with these arguments: ${_args}
 #
 
