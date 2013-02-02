@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.217 2012/06/25 15:28:39 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.218 2013/02/02 07:00:40 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.217 2012/06/25 15:28:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.218 2013/02/02 07:00:40 kefren Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -187,7 +187,6 @@ ip_output(struct mbuf *m0, ...)
 	struct secpolicy *sp = NULL;
 	int s;
 #endif
-	u_int16_t ip_len;
 	union {
 		struct sockaddr		dst;
 		struct sockaddr_in	dst4;
@@ -492,9 +491,6 @@ sendit:
 	    (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 		ip->ip_off |= htons(IP_DF);
 
-	/* Remember the current ip_len */
-	ip_len = ntohs(ip->ip_len);
-
 #ifdef FAST_IPSEC
 	/*
 	 * Check the security policy (SP) for the packet and, if
@@ -598,7 +594,6 @@ spd_done:
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
-	ip_len = ntohs(ip->ip_len);
 #endif /* PFIL_HOOKS */
 
 	m->m_pkthdr.csum_data |= hlen << 16;
@@ -620,11 +615,11 @@ spd_done:
 	 * If small enough for mtu of path, or if using TCP segmentation
 	 * offload, can just send directly.
 	 */
-	if (ip_len <= mtu ||
+	if (ntohs(ip->ip_len) <= mtu ||
 	    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
 #if IFA_STATS
 		if (ia)
-			ia->ia_ifa.ifa_data.ifad_outbytes += ip_len;
+			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
 #endif
 		/*
 		 * Always initialize the sum to 0!  Some HW assisted
