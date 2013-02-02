@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.47 2013/02/01 14:02:17 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.48 2013/02/02 20:42:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.47 2013/02/01 14:02:17 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.48 2013/02/02 20:42:02 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 	start_time.tv_sec = start.tv_sec;
 	start_time.tv_nsec = start.tv_usec * 1000;
 
-	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:o:s:S:t:xZ")) != -1) {
+	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:O:o:s:S:t:xZ")) != -1) {
 		switch (ch) {
 
 		case 'B':
@@ -194,6 +194,11 @@ main(int argc, char *argv[])
 		case 'm':
 			fsoptions.maxsize =
 			    strsuftoll("maximum size", optarg, 1LL, LLONG_MAX);
+			break;
+
+		case 'O':
+			fsoptions.offset = 
+			    strsuftoll("offset", optarg, 0LL, LLONG_MAX);
 			break;
 			
 		case 'o':
@@ -407,8 +412,8 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 	prog = getprogname();
 	fprintf(stderr,
 "Usage: %s [-xZ] [-B endian] [-b free-blocks] [-d debug-mask]\n"
-"\t[-F mtree-specfile] [-f free-files] [-M minimum-size]\n"
-"\t[-m maximum-size] [-N userdb-dir] [-o fs-options] [-S sector-size]\n"
+"\t[-F mtree-specfile] [-f free-files] [-M minimum-size] [-m maximum-size]\n"
+"\t[-N userdb-dir] [-O offset] [-o fs-options] [-S sector-size]\n"
 "\t[-s image-size] [-t fs-type] image-file directory [extra-directory ...]\n",
 	    prog);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.32 2013/01/30 19:19:19 christos Exp $	*/
+/*	$NetBSD: makefs.h,v 1.33 2013/02/02 20:42:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -157,8 +157,9 @@ typedef struct makefs_fsinfo {
 	off_t	minsize;	/* minimum size image should be */
 	off_t	maxsize;	/* maximum size image can be */
 	off_t	freefiles;	/* free file entries to leave */
-	int	freefilepc;	/* free file % */
 	off_t	freeblocks;	/* free blocks to leave */
+	off_t	offset;		/* offset from start of file */
+	int	freefilepc;	/* free file % */
 	int	freeblockpc;	/* free block % */
 	int	needswap;	/* non-zero if byte swapping needed */
 	int	sectorsize;	/* sector size */
