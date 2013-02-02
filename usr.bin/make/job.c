@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.165 2013/01/26 15:52:59 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.166 2013/02/02 15:11:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.165 2013/01/26 15:52:59 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.166 2013/02/02 15:11:48 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.165 2013/01/26 15:52:59 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.166 2013/02/02 15:11:48 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2050,7 +2050,8 @@ Job_CatchOutput(void)
     if (nready < 0 || readyfd(&childExitJob)) {
 	char token = 0;
 	nready -= 1;
-	while (read(childExitJob.inPipe, &token, 1) == -1 && errno == EAGAIN)
+	for (size_t i = 0; i < 5 &&
+	    read(childExitJob.inPipe, &token, 1) == -1 && errno == EAGAIN; i++)
 		continue;
 	if (token == DO_JOB_RESUME[0])
 	    /* Complete relay requested from our SIGCONT handler */
