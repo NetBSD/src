@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.238 2013/01/29 23:00:31 para Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.239 2013/02/02 14:02:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,10 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.238 2013/01/29 23:00:31 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.239 2013/02/02 14:02:09 matt Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
+
+#define SYSCTL_PRIVATE
 
 #include <sys/param.h>
 #define __COMPAT_SYSCTL
