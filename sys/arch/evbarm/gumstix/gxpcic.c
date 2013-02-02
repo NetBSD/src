@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.12 2011/07/01 20:39:34 dyoung Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.13 2013/02/02 20:06:48 christos Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -106,8 +106,8 @@ static	void	gxpcic_clear_intr(struct pxapcic_socket *);
 static	void	*gxpcic_intr_establish(struct pxapcic_socket *, int,
 				       int (*)(void *), void *);
 static	void	gxpcic_intr_disestablish(struct pxapcic_socket *, void *);
-__inline void gxpcic_cpld_clk(void);
-__inline u_char gxpcic_cpld_read_bits(int bits);
+static __inline void gxpcic_cpld_clk(void);
+static __inline u_char gxpcic_cpld_read_bits(int bits);
 static	int	gxpcic_count_slot(struct pxapcic_softc *);
 
 CFATTACH_DECL_NEW(gxpcic, sizeof(struct pxapcic_softc),
@@ -276,7 +276,7 @@ gxpcic_intr_disestablish(struct pxapcic_socket *so, void *ih)
 /*
  * XXXXX: slot count functions from Linux
  */
-__inline void
+static __inline void
 gxpcic_cpld_clk(void)
 {
 
@@ -284,7 +284,7 @@ gxpcic_cpld_clk(void)
 	pxa2x0_gpio_set_function(48, GPIO_OUT | GPIO_SET);
 }
 
-__inline u_char
+static inline u_char
 gxpcic_cpld_read_bits(int bits)
 {
 	u_int shift = 0, gpio;
