@@ -1,9 +1,11 @@
-#! /bin/sh
-
-# $NetBSD: mkimage,v 1.16 2013/01/30 07:40:34 skrll Exp $
+#!/bin/sh
+# $NetBSD: mkimage,v 1.17 2013/02/03 09:16:24 christos Exp $
 #
-# Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
+# Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Christos Zoulas.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -13,192 +15,58 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of The NetBSD Foundation nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 #
 
-# find next available vnd, from kre
-next_avail ()
-{
-	local dev="$1"
-	local N=$(( ${#dev} + 1 ))
-	local unit units
+DIR="$(cd "$(dirname "$0")" && pwd)"
+PROG="$(basename "$0")"
 
-	units=$(
-		sysctl -n hw.disknames		|
-			tr ' ' '\012'		|
-			grep '^'"${dev}"'[0-9]'	|
-			sort -n -k 1.$N			)
+src="/usr/src"
+release="/usr/obj/evbarm/release"
+sets="base comp etc games man misc modules text"
+xsets="xbase xcomp xetc xfont xserver" 
+minfree="10%"
+bar="==="
 
-	test -z "${units}" && {
-		test -e "/dev/${dev}0a" || {
-			echo >&2 "No ${dev}s available!"
-			return 1
-		}
-		echo "${dev}0"
-		return
-	}
+tmp="$(mktemp -d "/tmp/$PROG.XXXXXX")"
+mnt="${tmp}/mnt"
+mkdir -p "${mnt}/etc" "${mnt}/dev" "${mnt}/boot"
+trap "cleanup" 0 1 2 3 15
 
-	N=0
-	for unit in ${units}
-	do
-		if [ "${unit}" = "${dev}${N}" ]
-		then
-			N=$(( N + 1 ))
-		else
-			echo "${dev}${N}"
-			return
-		fi
-	done
+cleanup() {
+	case "$tmp" in
+	/tmp/$PROG.*)	rm -fr "$tmp";;
+	esac
+}
 
-	test -e /dev/"${dev}${N}a" || {
-		echo >&2 "All ${dev}s in use"
-		return 1
-	}
-
-	echo "${dev}${N}"
+getsize() {
+	set -- $(ls -l $1)
+	echo $5
 }
 
 usage() {
 	cat << EOF 1>&2
-Usage: $PROG -h <host-arch> [-S <setsdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
+Usage: $PROG -h <host-arch> [-K <kerneldir>] [-S <srcdir>] [-R <releasedir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
 EOF
 	exit 1
 }
 
-# Return the filesystem size for an ls -l or tar -xvf list
-# Directories and symlinks in tar are 0 size, we assume one block
-# (which is too much), we round up by the fragment size the rest.
-getfssize() {
-	local bsize="$1"
-	local fsize="$2"
-
-	awk -v fsize=${fsize} -v bsize=${bsize} '
-	NF >= 9 && $1 != "tar:" {
-		if ($5 == 0)
-			tot += bsize;
-		else
-			tot += ((int)(($5 + fsize - 1) / fsize)) * fsize;
-	}
-	END {
-		printf("%d\n", tot);
-	}'
-}
-
-# find the size of the gzipped files in a .tgz archive
-# Directories appear as 0, so count them as one block
-# and round up files to a fragment.
-sizeone() {
-	if [ ! -f "$1" ]
-	then
-		echo "$PROG: Missing set $1" 1>&2
-		echo 0
-		return;
-	fi
-
-        case "$1" in 
-        *.tgz|*.tar.gz|*.tbz|*.tar.bz2|*.txz|*.tar.xz)
-                tar tvzf "$1" | getfssize ${bsize} ${fsize}
-                ;;
-        *)
-                echo 0
-                ;; 
-        esac
-}
-
-
-# Return the usable filesystem size in bytes, given the total size in bytes,
-# and optionally block and fragment sizes
-getffssize() {
-	local bytes="$1"
-	local barg
-	local farg
-	local overhead
-
-	if [ -n "$2" ]
-	then
-		barg="-b $2"
-		if [ -n "$3" ]
-		then
-			farg="-f $3"
-		fi
-	fi
-
-	overhead=$(newfs -N ${farg} ${barg} -s "${bytes}b" -F /dev/null |
-	    awk '/using/ {
-		printf("%d\n", substr($6, 1, length($6) - 3) * 1024 * 1024);
-	    }'
-	)
-	echo $(( ${bytes} - ${overhead} ))
-}
-
-# Compute the size of an ffs filesystem that can fit x bytes.
-# Instead of duplicating the newfs calculations here we let
-# it do the job, using binary search.
-makeffssize() {
-	local bytes=$1
-	local bsize=$2
-	local fsize=$3
-	local max=$(( 2 * ${bytes} ))
-	local min="${bytes}"
-	local cur
-	local res
-	while true; do
-		cur="$(( ( ${max} + ${min} ) / 2 ))"
-		res="$(getffssize "${cur}" ${bsize} ${fsize})"
-#		echo ${min} ${cur} ${max} ${res} ${bytes} 1>&2
-		if [ "${res}" -eq "${bytes}" ]
-		then
-		    break
-		elif [ "$(( ${min} + 1 ))" -ge "${max}" ]
-		then
-		    break
-		elif [ "${res}" -lt "${bytes}" ]
-		then
-		    min="${cur}"
-		elif [ "${res}" -gt "${bytes}" ]
-		then
-		    max="${cur}"
-		fi
-	done
-	echo "${cur}"
-}
-
-finish() {
-	cleanup
-	${sudo} umount ${mnt}
-	${sudo} vnconfig -u ${vnddev}
-	rm -fr ${mnt}
-}
-
-
-DIR="$(dirname "$0")"
-PROG="$(basename "$0")"
-bar="==="
-sudo=
-mnt="${TMPDIR:-/tmp}/image.$$"
-src="/usr/src"
-obj="/usr/obj"
-
-sets="base comp etc games man misc modules tests text"
-xsets="xbase xcomp xetc xfont xserver"
-
-# Presumable block and fragment size.
-bsize=16384
-fsize=2048
-mtob=$(( 1024 * 1024 ))
-
 # First pass for options to get the host
-OPTS="S:c:h:s:x"
+OPTS="K:R:S:c:h:s:x"
 while getopts "$OPTS" f
 do
 	case $f in
@@ -220,20 +88,24 @@ fi
 
 . "${DIR}/conf/${h}.conf"
 
+selected_sets="$sets"
+
 OPTIND=1
 while getopts "$OPTS" f
 do
 	case $f in
-	S)	setsdir="$OPTARG";;
+	K)	release="$OPTARG";;
+	R)	kerneldir="$OPTARG";;
+	S)	src="$OPTARG";;
 	c)	custom="$OPTARG";;
 	h)	;;
 	s)	size="$OPTARG";;
-	x)	sets="$sets $xsets";;
+	x)	selected_sets="$sets $xsets";;
 	*)	usage;;
 	esac
 done
 
-trap finish 0 1 2 3 15
+trap cleanup 0 1 2 3 15
 
 shift $(( "$OPTIND" - 1 ))
 if [ -n "$1" ]; then
@@ -242,107 +114,40 @@ if [ -n "$1" ]; then
 	shift
 fi
 
-# calculate the set bytes
-setbytes=0
-echo -n "${bar} computing set sizes ("
-b=
-for s in ${sets}; do
-	one="$(sizeone ${setsdir}/${s}.tgz)"
-	echo -n "$b$s=$(( ${one} / ${mtob} ))MB"
-	setbytes=$(( ${setbytes} +  ${one} ))
-	b=" "
-done
-echo "): $(( ${setbytes} / ${mtob} ))MB ${bar}"
+. "$DIR/conf/rpi.conf"
 
-# calculate size of custom files
-custbytes=0
-if [ -d "${custom}" ]; then
-	custbytes=$(ls -lR "${custom}" | getfssize ${bsize} ${fsize})
-fi
-echo "${bar} computing custom sizes: $(( ${custbytes} / ${mtob} ))MB ${bar}"
-
-# how many bytes
-rawbytes="$(( ${setbytes} + ${custbytes} ))"
-echo -n "${bar} computing ffs filesystem size for $(( ${rawbytes} / ${mtob} ))MB: "
-ffsbytes="$(makeffssize "${rawbytes}")"
-ffsmb=$(( ${ffsbytes} / ${mtob} ))
-echo " ${ffsmb}MB ${bar}"
-
-# total in MB
-total=$(( ${ffsmb} + ${overhead} ))
-echo "${bar} overhead: ${overhead}MB ${bar}"
-
-if [ $size -eq 0 ]; then
-        # auto-size the pkgs fs
-        newsize=${total}
-else
-        # check that we've been given enough space
-        if [ ${total} -gt ${size} ]; then
-                echo "$PROG: Given size is ${size} MB, but we need ${total} MB" >&2
-                exit 1
-        fi
-	newsize=${size}
-fi
-
-echo "${bar} making a new ${newsize} MB image in ${image} ${bar}"
-dd if=/dev/zero of=${image} bs=1m count=${newsize} conv=sparse
-
-vnddev=$(next_avail vnd)
-echo "${bar} mounting image via vnd ${vnddev} ${bar}"
-${sudo} vnconfig ${vnddev} ${image}
-${sudo} mkdir -p ${mnt}
-make_filesystems
-
-${sudo} mkdir -p ${mnt}/etc ${mnt}/dev
-
-echo -n "${bar} installing sets:"
-(cd ${mnt} &&
-	for s in ${sets}; do
-		ss="${setsdir}/${s}.tgz"
-		if [ -f "${ss}" ]; then
-			echo -n " ${s}"
-			${sudo} tar xpzf "${ss}"
-		fi
-	done
-)
-echo " ${bar}"
-
-echo "${bar} performing customisations ${bar}"
+echo ${bar} configuring sets ${bar}
+(echo '/set type=dir uname=root gname=wheel mode=0755'
+for i in $selected_sets; do
+	s="${release}/etc/mtree/set.$i"
+	[ -f "$s" ] && cat "$s"
+done) > "$tmp/selected_sets"
 
 make_fstab
-
-${sudo} cat > ${mnt}/etc/rc.conf << EOF
-#
-# see rc.conf(5) for more information.
-#
-# Use program=YES to enable program, NO to disable it. program_flags are
-# passed to the program on the command line.
-#
-
-# Load the defaults in from /etc/defaults/rc.conf (if it's readable).
-# These can be overridden below.
-#
-if [ -r /etc/defaults/rc.conf ]; then
-        . /etc/defaults/rc.conf
-fi
-
-# If this is not set to YES, the system will drop into single-user mode.
-#
-rc_configured=YES
-
-hostname=${h}
-
-EOF
-
 customize
+populate
 
-for d in ${specialdirs}; do
-	${sudo} mkdir -p ${mnt}/${d}
-done
-
-if [ \( -n "${custom}" \) -a \( -d "${custom}" \) ]; then
-	echo "${bar} user customisations from files in ${custom} ${bar}"
-	(cd ${custom} && ${sudo} pax -rwpe . ${mnt})
+(cd ${mnt}; mtree -c -k all | mtree -C -k all) >> "$tmp/selected_sets"
+if [ -n ${msdosid} ]; then
+	echo ${bar} Populating msdos filesystem ${bar}
+	makefs -t msdos -O $((${init} / 2))m -s $((${boot} / 2))m \
+	    ${image} ${mnt}/boot
 fi
 
-exit 0
+echo ${bar} Populating ffs filesystem ${bar}
+makefs -t ffs -rx -O $(((${init} + ${boot} + ${swap}) / 2))m \
+    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
+
+if [ -z "$size" ]; then
+	size=$(getsize ${image})
+fi
+newsize=$((size / 2 / 1024))
+
+echo ${bar} Adding label ${bar}
+make_label > ${tmp}/label
+disklabel -R -F ${image} ${tmp}/label
+if [ -n ${msdosid} ]; then
+	echo ${bar} Running fdisk ${bar}
+	fdisk -f -u -0 -s ${msdosid}/${init}/${boot} -F ${image}
+fi
+echo ${bar} Image is ${image} ${bar}
