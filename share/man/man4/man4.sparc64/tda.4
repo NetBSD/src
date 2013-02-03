@@ -1,4 +1,4 @@
-.\"	$NetBSD: tda.4,v 1.1 2013/02/02 21:55:28 jdc Exp $
+.\"	$NetBSD: tda.4,v 1.2 2013/02/03 08:22:21 jdc Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@ The
 driver provides support for the TDA8444 DAC used to control the fan speeds
 in Sun Blade 1000 and Blade 2000 systems.
 The speed of the CPU fan and of the system fan are automatically adjusted
-every 20 seconds, based on the currently reported CPU and system
+every 60 seconds, based on the currently reported CPU and system
 temperatures, respectively.
 .Pp
 The speed-related values are made available through the
