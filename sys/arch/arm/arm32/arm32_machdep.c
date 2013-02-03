@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.91 2013/01/31 22:34:26 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.92 2013/02/03 15:57:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.91 2013/01/31 22:34:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.92 2013/02/03 15:57:09 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -101,6 +101,8 @@ int cpu_fpu_present;
 int cpu_neon_present;
 int cpu_simd_present;
 int cpu_simdex_present;
+int cpu_umull_present;
+const char *cpu_arch = "";
 
 int cpu_instruction_set_attributes[6];
 int cpu_memory_model_features[4];
@@ -315,6 +317,15 @@ sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
 }
 
 static int
+sysctl_machdep_cpu_arch(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	node.sysctl_data = __UNCONST(cpu_arch);
+	node.sysctl_size = strlen(cpu_arch) + 1;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+static int
 sysctl_machdep_powersave(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
@@ -364,6 +375,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "cpu_arch", NULL,
+		       sysctl_machdep_cpu_arch, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "powersave", NULL,
