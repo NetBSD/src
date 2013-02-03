@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.23 2013/01/28 21:35:35 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.24 2013/02/03 19:41:59 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@ int	ldp_keepalive_time = LDP_KEEPALIVE_TIME;
 int	ldp_holddown_time = LDP_HOLDTIME;
 int	no_default_route = 1;
 int	loop_detection = 0;
+bool	may_connect;
 
 void	recv_pdu(int);
 void	send_hello_alarm(int);
@@ -703,7 +704,7 @@ recv_pdu(int sock)
 
 	/* Fill the TLV messages */
 	t = get_hello_tlv(recvspace + i, c - i);
-	run_ldp_hello(&rpdu, t, &sender.sa, &local_addr, sock);
+	run_ldp_hello(&rpdu, t, &sender.sa, &local_addr, sock, may_connect);
 }
 
 void 
@@ -714,6 +715,8 @@ send_hello_alarm(int unused)
 	time_t          t = time(NULL);
 	int             olderrno = errno;
 
+	if (may_connect == false)
+		may_connect = true;
 	/* Send hellos */
 	if (!(t % ldp_hello_time))
 		send_hello();
@@ -798,6 +801,7 @@ the_big_loop(void)
 	signal(SIGTERM, bail_out);
 
 	/* Send first hellos in 5 seconds. Avoid No hello notifications */
+	may_connect = false;
 	alarm(5);
 
 	route_socket = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
