@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.26 2013/01/28 21:03:29 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.27 2013/02/03 03:21:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.26 2013/01/28 21:03:29 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.27 2013/02/03 03:21:21 christos Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -786,20 +786,18 @@ ffs_rdfs(daddr_t bno, int size, void *bf, const fsinfo_t *fsopts)
 	int n;
 	off_t offset;
 
-	offset = bno;
-	offset *= fsopts->sectorsize;
+	offset = bno * fsopts->sectorsize + fsopts->offset;
 	if (lseek(fsopts->fd, offset, SEEK_SET) < 0)
-		err(1, "ffs_rdfs: seek error for sector %lld: %s\n",
-		    (long long)bno, strerror(errno));
+		err(1, "%s: seek error for sector %lld", __func__,
+		    (long long)bno);
 	n = read(fsopts->fd, bf, size);
 	if (n == -1) {
-		abort();
-		err(1, "ffs_rdfs: read error bno %lld size %d", (long long)bno,
-		    size);
+		err(1, "%s: read error bno %lld size %d", __func__,
+		    (long long)bno, size);
 	}
 	else if (n != size)
-		errx(1, "ffs_rdfs: read error for sector %lld: %s\n",
-		    (long long)bno, strerror(errno));
+		errx(1, "%s: short read error for sector %lld", __func__,
+		    (long long)bno);
 }
 
 /*
@@ -811,18 +809,17 @@ ffs_wtfs(daddr_t bno, int size, void *bf, const fsinfo_t *fsopts)
 	int n;
 	off_t offset;
 
-	offset = bno;
-	offset *= fsopts->sectorsize;
-	if (lseek(fsopts->fd, offset, SEEK_SET) < 0)
-		err(1, "wtfs: seek error for sector %lld: %s\n",
-		    (long long)bno, strerror(errno));
+	offset = bno * fsopts->sectorsize + fsopts->offset;
+	if (lseek(fsopts->fd, offset, SEEK_SET) == -1)
+		err(1, "%s: seek error for sector %lld", __func__,
+		    (long long)bno);
 	n = write(fsopts->fd, bf, size);
 	if (n == -1)
-		err(1, "wtfs: write error for sector %lld: %s\n",
-		    (long long)bno, strerror(errno));
+		err(1, "%s: write error for sector %lld", __func__,
+		    (long long)bno);
 	else if (n != size)
-		errx(1, "wtfs: write error for sector %lld: %s\n",
-		    (long long)bno, strerror(errno));
+		errx(1, "%s: short write error for sector %lld", __func__,
+		    (long long)bno);
 }
 
 
@@ -845,5 +842,5 @@ ilog2(int val)
 	for (n = 0; n < sizeof(n) * CHAR_BIT; n++)
 		if (1 << n == val)
 			return (n);
-	errx(1, "ilog2: %d is not a power of 2\n", val);
+	errx(1, "%s: %d is not a power of 2", __func__, val);
 }
