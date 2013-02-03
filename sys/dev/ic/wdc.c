@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.276 2012/12/19 14:05:29 kiyohara Exp $ */
+/*	$NetBSD: wdc.c,v 1.277 2013/02/03 20:13:28 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.276 2012/12/19 14:05:29 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.277 2013/02/03 20:13:28 jakllsch Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1472,7 +1472,8 @@ __wdccommand_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 	if ((ata_c->flags & AT_LBA48) != 0) {
 		wdccommandext(chp, drive, ata_c->r_command,
-		   ata_c->r_lba, ata_c->r_count, ata_c->r_features);
+		    ata_c->r_lba, ata_c->r_count, ata_c->r_features,
+		    ata_c->r_device & ~0x10);
 	} else {
 		wdccommand(chp, drive, ata_c->r_command,
 		    (ata_c->r_lba >> 8) & 0xffff,
@@ -1776,22 +1777,25 @@ wdccommand(struct ata_channel *chp, u_int8_t drive, u_int8_t command,
  */
 void
 wdccommandext(struct ata_channel *chp, u_int8_t drive, u_int8_t command,
-    u_int64_t blkno, u_int16_t count, u_int16_t features)
+    u_int64_t blkno, u_int16_t count, u_int16_t features, u_int8_t device)
 {
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 
-	ATADEBUG_PRINT(("wdccommandext %s:%d:%d: command=0x%x blkno=%d "
-	    "count=%d\n", device_xname(chp->ch_atac->atac_dev),
-	    chp->ch_channel, drive, command, (u_int32_t) blkno, count),
+	ATADEBUG_PRINT(("wdccommandext %s:%d:%d: command=0x%02x "
+	    "blkno=0x%012"PRIx64" count=0x%04x features=0x%04x "
+	    "device=0x%02x\n", device_xname(chp->ch_atac->atac_dev),
+	    chp->ch_channel, drive, command, blkno, count, features, device),
 	    DEBUG_FUNCS);
+
+	KASSERT(drive < wdc->wdc_maxdrives);
 
 	if (wdc->select)
 		wdc->select(chp,drive);
 
 	/* Select drive, head, and addressing mode. */
 	bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
-	    (drive << 4) | WDSD_LBA);
+	    (drive << 4) | device);
 
 	if (wdc->cap & WDC_CAPABILITY_WIDEREGS) {
 		bus_space_write_2(wdr->cmd_iot, wdr->cmd_iohs[wd_features],
