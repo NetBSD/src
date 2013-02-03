@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.24 2012/07/31 15:50:34 bouyer Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.25 2013/02/03 20:13:28 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.24 2012/07/31 15:50:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.25 2013/02/03 20:13:28 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1174,7 +1174,7 @@ do_pio:
 		}
 		if (ata_bio->flags & ATA_LBA48)
 			wdccommandext(chp, xfer->c_drive, atacmd_to48(cmd),
-			    (uint64_t)ata_bio->blkno, nblks, 0);
+			    ata_bio->blkno, nblks, 0, WDSD_LBA);
 		else
 			wdccommand(chp, xfer->c_drive, cmd, cyl,
 			    head, sect, nblks,
@@ -1553,7 +1553,8 @@ mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT | WDCTL_IDS);
 	if ((ata_c->flags & AT_LBA48) != 0) {
 		wdccommandext(chp, drive, ata_c->r_command,
-		    ata_c->r_lba, ata_c->r_count, ata_c->r_features);
+		    ata_c->r_lba, ata_c->r_count, ata_c->r_features,
+		    ata_c->r_device & ~0x10);
 	} else {
 		wdccommand(chp, drive, ata_c->r_command,
 		    (ata_c->r_lba >> 8) & 0xffff,
