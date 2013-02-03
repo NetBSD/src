@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.6 2013/01/27 21:56:26 christos Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.7 2013/02/03 03:21:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -37,7 +37,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.6 2013/01/27 21:56:26 christos Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.7 2013/02/03 03:21:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -263,6 +263,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
     u_int bss, rds, cls, dir, lsn, x, x1, x2;
     int ch, fd, fd1;
     struct msdos_options o = *op;
+    int oflags = O_RDWR | O_CREAT;
 
     if (o.block_size && o.sectors_per_cluster) {
 	warnx("Cannot specify both block size and sectors per cluster");
@@ -278,7 +279,9 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	    warnx("create (-C) is incompatible with -N");
 	    return -1;
 	}
-	fd = open(fname, O_RDWR | O_CREAT | O_TRUNC, 0644);
+	if (o.offset == 0)
+		oflags |= O_TRUNC;
+	fd = open(fname, oflags, 0644);
 	if (fd == -1) {
 	    warnx("failed to create %s", fname);
 	    return -1;
