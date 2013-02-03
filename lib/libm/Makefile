@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.125 2012/08/04 15:16:16 matt Exp $
+#  $NetBSD: Makefile,v 1.126 2013/02/03 07:13:07 matt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -50,6 +50,9 @@ USE_SHLIBDIR=	yes
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
+.elif (${MACHINE_ARCH} == "earmhf" || ${MACHINE_ARCH} == "earmhfeb")
+.PATH: ${.CURDIR}/arch/arm
+ARCH_SRCS = e_sqrt.S e_sqrtf.S s_fabsf.S
 .elif (${MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
 COMMON_SRCS+= fenv.c
