@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.48 2013/02/02 20:42:02 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.49 2013/02/03 06:16:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.48 2013/02/02 20:42:02 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.49 2013/02/03 06:16:53 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 	start_time.tv_sec = start.tv_sec;
 	start_time.tv_nsec = start.tv_usec * 1000;
 
-	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:O:o:s:S:t:xZ")) != -1) {
+	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:O:o:rs:S:t:xZ")) != -1) {
 		switch (ch) {
 
 		case 'B':
@@ -214,6 +214,10 @@ main(int argc, char *argv[])
 			break;
 		}
 
+		case 'r':
+			fsoptions.replace = 1;
+			break;
+
 		case 's':
 			fsoptions.minsize = fsoptions.maxsize =
 			    strsuftoll("size", optarg, 1LL, LLONG_MAX);
@@ -268,7 +272,7 @@ main(int argc, char *argv[])
 
 				/* walk the tree */
 	TIMER_START(start);
-	root = walk_dir(argv[1], ".", NULL, NULL);
+	root = walk_dir(argv[1], ".", NULL, NULL, fsoptions.replace);
 	TIMER_RESULTS(start, "walk_dir");
 
 	/* append extra directory */
@@ -279,7 +283,7 @@ main(int argc, char *argv[])
 		if (!S_ISDIR(sb.st_mode))
 			errx(1, "%s: not a directory", argv[i]);
 		TIMER_START(start);
-		root = walk_dir(argv[i], ".", NULL, root);
+		root = walk_dir(argv[i], ".", NULL, root, fsoptions.replace);
 		TIMER_RESULTS(start, "walk_dir2");
 	}
 
@@ -411,7 +415,7 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 
 	prog = getprogname();
 	fprintf(stderr,
-"Usage: %s [-xZ] [-B endian] [-b free-blocks] [-d debug-mask]\n"
+"Usage: %s [-rxZ] [-B endian] [-b free-blocks] [-d debug-mask]\n"
 "\t[-F mtree-specfile] [-f free-files] [-M minimum-size] [-m maximum-size]\n"
 "\t[-N userdb-dir] [-O offset] [-o fs-options] [-S sector-size]\n"
 "\t[-s image-size] [-t fs-type] image-file directory [extra-directory ...]\n",
