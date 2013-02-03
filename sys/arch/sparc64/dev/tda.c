@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.7 2013/02/02 21:54:51 jdc Exp $	*/
+/*	$NetBSD: tda.c,v 1.8 2013/02/03 10:58:28 jdc Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.7 2013/02/02 21:54:51 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.8 2013/02/03 10:58:28 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ struct tda_softc {
 
 int	tda_match(device_t, cfdata_t, void *);
 void	tda_attach(device_t, device_t, void *);
+static int	tda_detach(device_t, int);
 void	tda_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 void	tda_setspeed(struct tda_softc *);
@@ -80,8 +81,9 @@ static void	tda_adjust(void *);
 static void	tda_timeout(void *);
 
 
-CFATTACH_DECL_NEW(tda, sizeof(struct tda_softc),
-	tda_match, tda_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(tda, sizeof(struct tda_softc),
+	tda_match, tda_attach, tda_detach, NULL, NULL, NULL,
+	DVF_DETACH_SHUTDOWN);
 
 int
 tda_match(device_t parent, cfdata_t match, void *aux)
@@ -162,6 +164,22 @@ tda_attach(device_t parent, device_t self, void *aux)
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}
+}
+
+int
+tda_detach(device_t self, int flags)
+{
+	struct tda_softc *sc = device_private(self);
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_destroy(sc->sc_sme);
+
+	callout_halt(&sc->sc_timer, NULL);
+	callout_destroy(&sc->sc_timer);
+
+	sc->sc_cfan_speed = sc->sc_sfan_speed = TDA_FANSPEED_MAX;
+	tda_setspeed(sc);
+	return 0;
 }
 
 static void
