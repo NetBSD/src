@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.8 2013/01/28 20:06:52 kefren Exp $ */
+/* $NetBSD: fsm.c,v 1.9 2013/02/03 19:41:59 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ struct sockaddr	mplssockaddr;
 /* Processing a hello */
 void
 run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
-    struct sockaddr * padd, struct in_addr * ladd, int mysock)
+    struct sockaddr * padd, struct in_addr * ladd, int mysock, bool may_connect)
 {
 	struct ldp_peer *peer = NULL;
 	struct transport_address_tlv *trtlv;
@@ -133,7 +133,8 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 		 * otherwise it is passive.
 		 */
 		/* XXX TODO: check for IPv6 too */
-		if (hi->transport_address.sa.sa_family == AF_INET &&
+		if (may_connect == true &&
+		    hi->transport_address.sa.sa_family == AF_INET &&
 		    ntohl(hi->transport_address.sin.sin_addr.s_addr) <
 		    ntohl(ladd->s_addr)) {
 			peer = ldp_peer_new(&pduid->ldp_id, padd,
