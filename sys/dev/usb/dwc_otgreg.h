@@ -1,3 +1,4 @@
+/*	$NetBSD: dwc_otgreg.h,v 1.5 2013/02/03 22:23:48 skrll Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/controller/dwc_otgreg.h,v 1.6 2012/09/27 15:23:38 hselasky Exp $ */
 
 /*-
