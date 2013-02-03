@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1418 2013/01/29 21:34:16 rkujawa Exp $
+# $NetBSD: mi,v 1.1419 2013/02/03 14:51:57 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1609,6 +1609,7 @@
 ./usr/share/man/cat4/sparc64/lom.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/sab.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/sabtty.0		man-sys-catman		.cat
+./usr/share/man/cat4/sparc64/tda.0		man-sys-catman		.cat
 ./usr/share/man/cat4/spc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/spdmem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/speaker.0			man-sys-catman		.cat
@@ -4472,6 +4473,7 @@
 ./usr/share/man/html4/sparc64/lom.html		man-sys-htmlman		html
 ./usr/share/man/html4/sparc64/sab.html		man-sys-htmlman		html
 ./usr/share/man/html4/sparc64/sabtty.html	man-sys-htmlman		html
+./usr/share/man/html4/sparc64/tda.html		man-sys-htmlman		html
 ./usr/share/man/html4/spc.html			man-sys-htmlman		html
 ./usr/share/man/html4/spdmem.html		man-sys-htmlman		html
 ./usr/share/man/html4/speaker.html		man-sys-htmlman		html
@@ -7243,6 +7245,7 @@
 ./usr/share/man/man4/sparc64/lom.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/sab.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/sabtty.4		man-sys-man		.man
+./usr/share/man/man4/sparc64/tda.4		man-sys-man		.man
 ./usr/share/man/man4/spc.4			man-sys-man		.man
 ./usr/share/man/man4/spdmem.4			man-sys-man		.man
 ./usr/share/man/man4/speaker.4			man-sys-man		.man
