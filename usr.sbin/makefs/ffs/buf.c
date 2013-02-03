@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.20 2013/02/02 20:42:02 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.21 2013/02/03 03:21:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.20 2013/02/02 20:42:02 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.21 2013/02/03 03:21:21 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -78,18 +78,18 @@ bread(struct vnode *vp, daddr_t blkno, int size, struct kauth_cred *u1 __unused,
 		    (long long)(*bpp)->b_blkno, (long long) offset,
 		    (*bpp)->b_bcount);
 	if (lseek((*bpp)->b_fs->fd, offset, SEEK_SET) == -1)
-		err(1, "bread: lseek %lld (%lld)",
+		err(1, "%s: lseek %lld (%lld)", __func__,
 		    (long long)(*bpp)->b_blkno, (long long)offset);
 	rv = read((*bpp)->b_fs->fd, (*bpp)->b_data, (*bpp)->b_bcount);
 	if (debug & DEBUG_BUF_BREAD)
-		printf("bread: read %ld (%lld) returned %d\n",
-		    (*bpp)->b_bcount, (long long)offset, (int)rv);
+		printf("bread: read %ld (%lld) returned %zd\n",
+		    (*bpp)->b_bcount, (long long)offset, rv);
 	if (rv == -1)				/* read error */
-		err(1, "bread: read %ld (%lld) returned %d",
-		    (*bpp)->b_bcount, (long long)offset, (int)rv);
+		err(1, "%s: read %ld (%lld) returned %zd", __func__,
+		    (*bpp)->b_bcount, (long long)offset, rv);
 	else if (rv != (*bpp)->b_bcount)	/* short read */
-		err(1, "bread: read %ld (%lld) returned %d",
-		    (*bpp)->b_bcount, (long long)offset, (int)rv);
+		err(1, "%s: read %ld (%lld) returned %zd", __func__,
+		    (*bpp)->b_bcount, (long long)offset, rv);
 	else
 		return (0);
 }
