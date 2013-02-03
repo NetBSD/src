@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.41 2013/01/31 12:41:41 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.42 2013/02/03 22:25:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.41 2013/01/31 12:41:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.42 2013/02/03 22:25:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ static dwc_otg_cmd_t	dwc_otg_host_setup_tx;
 static dwc_otg_cmd_t	dwc_otg_host_data_tx;
 static dwc_otg_cmd_t	dwc_otg_host_data_rx;
 
-static int		dwc_otg_init_fifo(struct dwc_otg_softc *, uint8_t);
+Static int		dwc_otg_init_fifo(struct dwc_otg_softc *, uint8_t);
 Static void 		dwc_otg_clocks_on(struct dwc_otg_softc*);
 Static void	 	dwc_otg_clocks_off(struct dwc_otg_softc*);
 Static void		dwc_otg_pull_up(struct dwc_otg_softc *);
@@ -1831,7 +1831,7 @@ dwc_otg_dump_host_regs(struct dwc_otg_softc *sc)
 
 /* FreeBSD direct (mostly) copy functions */
 
-static int
+Static int
 dwc_otg_init_fifo(struct dwc_otg_softc *sc, uint8_t mode)
 {
 // 	struct dwc_otg_profile *pf;
