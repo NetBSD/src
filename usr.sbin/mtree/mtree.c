@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.46 2012/12/20 19:09:25 christos Exp $	*/
+/*	$NetBSD: mtree.c,v 1.47 2013/02/03 19:15:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.46 2012/12/20 19:09:25 christos Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.47 2013/02/03 19:15:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ main(int argc, char **argv)
 	spec2 = NULL;
 
 	while ((ch = getopt(argc, argv,
-	    "bcCdDeE:f:F:I:ijk:K:lLmMnN:p:PqrR:s:StuUwWxX:"))
+	    "bcCdDeE:f:F:I:ijk:K:lLmMnN:O:p:PqrR:s:StuUwWxX:"))
 	    != -1) {
 		switch((char)ch) {
 		case 'b':
@@ -178,6 +178,9 @@ main(int argc, char **argv)
 				mtree_err(
 			    "Unable to use user and group databases in `%s'",
 				    optarg);
+			break;
+		case 'O':
+			load_only(optarg);
 			break;
 		case 'p':
 			dir = optarg;
