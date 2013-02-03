@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.13 2013/01/30 19:19:19 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.14 2013/02/03 03:21:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.13 2013/01/30 19:19:19 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.14 2013/02/03 03:21:21 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -149,6 +149,7 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	 * Is minsize right here?
 	 */
 	msdos_opt->create_size = MAX(msdos_opt->create_size, fsopts->minsize);
+	msdos_opt->offset = fsopts->offset;
 	if (msdos_opt->bytes_per_sector == 0) {
 		if (fsopts->sectorsize == -1)
 			fsopts->sectorsize = 512;
