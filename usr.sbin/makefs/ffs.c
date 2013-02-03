@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.59 2013/01/30 19:19:19 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.60 2013/02/03 03:21:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.59 2013/01/30 19:19:19 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.60 2013/02/03 03:21:21 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -466,13 +466,15 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 	char	*buf;
 	int	i, bufsize;
 	off_t	bufrem;
+	int	oflags = O_RDWR | O_CREAT;
 
 	assert (image != NULL);
 	assert (fsopts != NULL);
 
 		/* create image */
-	if ((fsopts->fd = open(image, O_RDWR | O_CREAT | O_TRUNC, 0666))
-	    == -1) {
+	if (fsopts->offset == 0)
+		oflags |= O_TRUNC;
+	if ((fsopts->fd = open(image, oflags, 0666)) == -1) {
 		warn("Can't open `%s' for writing", image);
 		return (-1);
 	}
@@ -499,6 +501,12 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 			buf = NULL;
 		}
 	}
+
+	if (fsopts->offset != 0)
+		if (lseek(fsopts->fd, fsopts->offset, SEEK_SET) == -1) {
+			warn("can't seek");
+			return -1;
+		}
 
 	if ((debug & DEBUG_FS_CREATE_IMAGE) && fsopts->sparse == 0)
 		printf(
