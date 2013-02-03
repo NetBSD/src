@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2013/02/01 00:17:24 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.18 2013/02/03 12:41:40 jmcneill Exp $
 
 NOLINT=	1	# defined
 
@@ -55,7 +55,7 @@ COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
 #COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
 .endif
 
-.if ${MACHINE_ARCH} == "earm"
+.if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmhf"
 # ARM SIMD
 SRCS+=		pixman-arm-simd.c 		\
 		pixman-arm-simd-asm.S
