@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.27 2013/01/28 21:03:27 christos Exp $	*/
+/*	$NetBSD: walk.c,v 1.28 2013/02/03 06:16:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.27 2013/01/28 21:03:27 christos Exp $");
+__RCSID("$NetBSD: walk.c,v 1.28 2013/02/03 06:16:53 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -76,7 +76,8 @@ static	fsinode	*link_check(fsinode *);
  *	at the start of the list, and without ".." entries.
  */
 fsnode *
-walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join)
+walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
+    int replace)
 {
 	fsnode		*first, *cur, *prev, *last;
 	DIR		*dirp;
@@ -154,12 +155,30 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join)
 						printf("merging %s with %p\n",
 						    path, cur->child);
 					cur->child = walk_dir(root, rp, cur,
-					    cur->child);
+					    cur->child, replace);
 					continue;
 				}
-				errx(1, "Can't merge %s `%s' with existing %s",
-				    inode_type(stbuf.st_mode), path,
-				    inode_type(cur->type));
+				if (!replace)
+					errx(1, "Can't merge %s `%s' with "
+					    "existing %s",
+					    inode_type(stbuf.st_mode), path,
+					    inode_type(cur->type));
+				else {
+					if (debug & DEBUG_WALK_DIR_NODE)
+						printf("replacing %s %s\n",
+						    inode_type(stbuf.st_mode),
+						    path);
+					if (cur == join->next)
+						join->next = cur->next;
+					else {
+						fsnode *p;
+						for (p = join->next;
+						    p->next != cur; p = p->next)
+							continue;
+						p->next = cur->next;
+					}
+					free(cur);
+				}
 			}
 		}
 
@@ -180,7 +199,8 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join)
 				first = cur;
 			cur->first = first;
 			if (S_ISDIR(cur->type)) {
-				cur->child = walk_dir(root, rp, cur, NULL);
+				cur->child = walk_dir(root, rp, cur, NULL,
+				    replace);
 				continue;
 			}
 		}
