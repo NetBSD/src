@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2012/12/16 15:32:38 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2013/02/03 01:59:55 matt Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -158,7 +158,7 @@ DPSRCS+=	${FAKEHEADERS}
 CLEANFILES+=	${FAKEHEADERS}
 
 # XXX arm hack
-.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb"
+.if ${MACHINE_CPU} == "arm"
 ${SRCS}: insn-modes.h
 # XXX XXX
 ${__DPSRCS.d}: insn-modes.h
