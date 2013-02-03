@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.h,v 1.2 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: fsm.h,v 1.3 2013/02/03 19:41:59 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "pdu.h"
 
 void	run_ldp_hello(struct ldp_pdu *, struct hello_tlv *,
-		struct sockaddr *, struct in_addr *, int);
+		struct sockaddr *, struct in_addr *, int, bool);
 struct address_list_tlv *	build_address_list_tlv(void);
 int	set_my_ldp_id(void);
 
