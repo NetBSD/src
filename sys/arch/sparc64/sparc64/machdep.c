@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.271 2012/12/08 11:43:27 kiyohara Exp $ */
+/*	$NetBSD: machdep.c,v 1.272 2013/02/04 22:19:43 macallan Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.271 2012/12/08 11:43:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.272 2013/02/04 22:19:43 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -395,6 +395,32 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
+/*
+ * figure out which VIS version the CPU supports
+ * this assumes all CPUs in the system are the same
+ */
+static int
+get_vis(void)
+{
+	int vis = 0;
+
+	if (GETVER_CPU_MANUF() == MANUF_FUJITSU) {
+		/* as far as I can tell SPARC64-III and up have VIS 1.0 */
+		if (GETVER_CPU_IMPL() >= IMPL_SPARC64_III) {
+			vis = 1;
+		}
+		/* XXX - which, if any, SPARC64 support VIS 2.0? */
+	} else { 
+		/* this better be Sun */
+		vis = 1;	/* all UltraSPARCs support at least VIS 1.0 */
+		if (CPU_IS_USIII_UP()) {
+			vis = 2;
+		}
+		/* UltraSPARC T4 supports VIS 3.0 */
+	}
+	return vis;
+}
+
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
@@ -424,6 +450,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "cpu_arch", NULL,
 		       NULL, 9, NULL, 0,
 		       CTL_MACHDEP, CPU_ARCH, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "vis", NULL,
+		       NULL, get_vis(), NULL, 0,
+		       CTL_MACHDEP, CPU_VIS, CTL_EOL);
 }
 
 void *
