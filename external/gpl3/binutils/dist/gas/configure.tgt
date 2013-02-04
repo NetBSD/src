@@ -109,6 +109,8 @@ case ${generic_target} in
   arm-*-coff | thumb-*-coff)		fmt=coff ;;
   arm-*-rtems* | thumb-*-rtems*)	fmt=elf ;;
   arm-*-elf | thumb-*-elf)		fmt=elf ;;
+  arm-*-netbsdelf*-*eabihf*)		fmt=elf em=armnbsdeabihf ;;
+  arm-*-netbsdelf*-*eabi*)		fmt=elf em=armnbsdeabi ;;
   arm-*-eabi*)				fmt=elf em=armeabi ;;
   arm-*-symbianelf*)			fmt=elf em=symbian ;;
   arm-*-kaos*)				fmt=elf ;;
@@ -118,7 +120,6 @@ case ${generic_target} in
   arm-*-linux-*)			fmt=elf  em=linux ;;
   arm-*-uclinux*eabi*)			fmt=elf  em=armlinuxeabi ;;
   arm-*-uclinux*)			fmt=elf  em=linux ;;
-  arm-*-netbsdelf-*eabi*)		fmt=elf  em=armnetbsdeabi ;;
   arm-*-netbsdelf*)			fmt=elf  em=nbsd ;;
   arm-*-*n*bsd*)			fmt=aout em=nbsd ;;
   arm-*-nto*)				fmt=elf ;;
