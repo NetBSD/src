@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otgvar.h,v 1.10 2013/02/04 21:24:07 skrll Exp $ */
+/*	$NetBSD: dwc_otgvar.h,v 1.11 2013/02/04 21:29:14 skrll Exp $ */
 
 /* $FreeBSD: src/sys/dev/usb/controller/dwc_otg.h,v 1.12 2012/09/27 15:23:38 hselasky Exp $ */
 /*-
@@ -209,7 +209,7 @@ typedef struct dwc_otg_softc {
 
 	pool_cache_t sc_tdpool;
 	pool_cache_t sc_xferpool;
-	
+
 #ifdef DOTG_COUNTERS
 	struct evcnt sc_ev_intr;
 	struct evcnt sc_ev_intr_bit[DWC_OTG_NINTRBITS];
