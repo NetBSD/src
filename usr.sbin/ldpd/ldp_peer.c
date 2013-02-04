@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.8 2013/01/28 21:35:34 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.9 2013/02/04 09:52:43 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,9 +66,9 @@ ldp_peer_init(void)
 static int
 sockaddr_cmp(const struct sockaddr *a, const struct sockaddr *b)
 {
-	if (a->sa_len != b->sa_len || a->sa_family == b->sa_family)
+	if (a->sa_len != b->sa_len || a->sa_family != b->sa_family)
 		return -1;
-	return memcmp(&a->sa_data, &b->sa_data, a->sa_len);
+	return memcmp(a, b, a->sa_len);
 }
 /*
  * soc should be > 1 if there is already a TCP socket for this else we'll
@@ -521,13 +521,14 @@ ldp_test_mapping(struct sockaddr * a, int prefix, struct sockaddr * gate)
 		return NULL;
 	}
 	if (lpeer->state != LDP_PEER_ESTABLISHED) {
-		warnp("ldp_test_mapping: peer is down ?!\n");
+		fatalp("ldp_test_mapping: peer is down ?!\n");
 		return NULL;
 	}
 	lm = ldp_peer_get_lm(lpeer, a, prefix);
 
 	if (!lm) {
-		debugp("Cannot match that prefix to the specified peer\n");
+		debugp("Cannot match prefix %s/%d to the specified peer\n",
+		    satos(a), prefix);
 		return NULL;
 	}
 	rv = malloc(sizeof(*rv));
