@@ -1,4 +1,4 @@
-.\"	$NetBSD: posix_fadvise.2,v 1.3 2009/06/09 11:21:33 yamt Exp $
+.\"	$NetBSD: posix_fadvise.2,v 1.4 2013/02/04 19:29:38 njoly Exp $
 .\"
 .\" Copyright (c)2006,2009 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Lb libc
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
-.In sys/fcntl.h
+.In fcntl.h
 .Ft int
 .Fn posix_fadvise "int fd" "off_t offset" "off_t size" "int hint"
 .\" ------------------------------------------------------------
