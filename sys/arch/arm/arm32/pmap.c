@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.251 2013/02/01 15:02:31 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.252 2013/02/04 13:37:30 macallan Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.251 2013/02/01 15:02:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.252 2013/02/04 13:37:30 macallan Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2862,7 +2862,10 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			npte |= L2_TYPE_INV;
 		}
 
-		npte |= pte_l2_s_cache_mode;
+		if (flags & ARM32_MMAP_WRITECOMBINE) {
+			npte |= pte_l2_s_wc_mode;
+		} else
+			npte |= pte_l2_s_cache_mode;
 
 		if (pg == opg) {
 			/*
