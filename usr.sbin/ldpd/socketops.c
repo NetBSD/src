@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.24 2013/02/03 19:41:59 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.25 2013/02/04 17:14:31 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -941,38 +941,67 @@ the_big_loop(void)
 void 
 new_peer_connection()
 {
-	struct sockaddr_in sa, sin_me;
+	union sockunion peer_address, my_address;
+	struct in_addr *peer_ldp_id = NULL;
+	struct hello_info *hi;
 	int             s;
 
-	s = accept(ls, (struct sockaddr *) & sa,
-		& (socklen_t) { sizeof(struct sockaddr_in) } );
+	s = accept(ls, &peer_address.sa,
+		& (socklen_t) { sizeof(union sockunion) } );
 	if (s < 0) {
 		fatalp("accept: %s", strerror(errno));
 		return;
 	}
 
-	if (get_ldp_peer((const struct sockaddr *)&sa) != NULL) {
+	if (get_ldp_peer(&peer_address.sa) != NULL) {
 		close(s);
 		return;
 	}
 
-	warnp("Accepted a connection from %s\n", inet_ntoa(sa.sin_addr));
+	warnp("Accepted a connection from %s\n", satos(&peer_address.sa));
 
-	if (getsockname(s, (struct sockaddr *)&sin_me,
-	    & (socklen_t) { sizeof(struct sockaddr_in) } )) {
+	if (getsockname(s, &my_address.sa,
+	    & (socklen_t) { sizeof(union sockunion) } )) {
 		fatalp("new_peer_connection(): cannot getsockname\n");
 		close(s);
 		return;
 	}
-
-	if (ntohl(sa.sin_addr.s_addr) < ntohl(sin_me.sin_addr.s_addr)) {
-		fatalp("Peer %s: connect from lower ID\n",
-		    inet_ntoa(sa.sin_addr));
+	if (peer_address.sa.sa_family == AF_INET)
+		peer_address.sin.sin_port = 0;
+	else if (peer_address.sa.sa_family == AF_INET6)
+		peer_address.sin6.sin6_port = 0;
+	else {
+		fatalp("Unknown peer address family\n");
 		close(s);
 		return;
 	}
-	/* XXX: sa.sin_addr is not peer LDP ID ... */
-	ldp_peer_new(&sa.sin_addr, (struct sockaddr *)&sa, NULL, ldp_holddown_time, s);
+
+	/* Verify if it should connect - XXX: no check for INET6 */
+	if (peer_address.sa.sa_family == AF_INET &&
+	    ntohl(peer_address.sin.sin_addr.s_addr) <
+	    ntohl(my_address.sin.sin_addr.s_addr)) {
+		fatalp("Peer %s: connect from lower ID\n",
+		    satos(&peer_address.sa));
+		close(s);
+		return;
+	}
+
+	/* Match hello info in order to get ldp_id */
+	SLIST_FOREACH(hi, &hello_info_head, infos) {
+		if (sockaddr_cmp(&peer_address.sa,
+		    &hi->transport_address.sa) == 0) {
+			peer_ldp_id = &hi->ldp_id;
+			break;
+		}
+	}
+	if (peer_ldp_id == NULL) {
+		fatalp("Got connection from %s, but no hello info exists\n",
+		    satos(&peer_address.sa));
+		close(s);
+		return;
+	} else
+		ldp_peer_new(peer_ldp_id, &peer_address.sa, NULL,
+		    ldp_holddown_time, s);
 
 }
 
