@@ -1,4 +1,4 @@
-.\" $NetBSD: ldpd.8,v 1.7 2012/11/12 22:46:59 wiz Exp $
+.\" $NetBSD: ldpd.8,v 1.8 2013/02/04 10:53:14 kefren Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 12, 2012
+.Dd February 4, 2013
 .Dt LDPD 8
 .Os
 .Sh NAME
@@ -38,16 +38,13 @@
 .Sh DESCRIPTION
 .Nm
 is a utility used to automatically distribute labels between two MPLS LSRs
-almost conforming to RFC5036.
-Right now some features requested by RFC5036 are not fully implemented.
-For more information please consult the
+conforming to RFC5036.
+Currently some features described by RFC5036 are not fully implemented (see
 .Sx BUGS
-section.
-As a security measure you SHOULD filter the LDP well-known (646)
-TCP and UDP ports using your favourite packet filter before starting
-.Nm .
-This is the current way used to filter neighbours and to protect the
-system of external attacks like route injections.
+section).
+.Nm
+supports peering with IPv6 LDP speakers and IPv6 labels exchange, conforming
+to specifications in RFC5036 and draft-ietf-mpls-ldp-ipv6.
 .Pp
 .Nm
 logs information using the
@@ -73,6 +70,9 @@ This means that usual IP
 routes will be changed into tagged routes, and MPLS routing table
 will be populated.
 Any change in MPLS topology will also be announced to LDP neighbors.
+.Nm
+uses currently Independent Control Mapping and Downstream Unsolicited mode
+for Label Advertisment.
 .Nm
 will listen on a route socket and compute the necessary changes in
 order to change untagged routes into tagged routes.
@@ -104,6 +104,12 @@ Changes the TCP control port (default: 2626).
 .It Fl W
 Enable output of warning messages.
 .El
+.Sh SECURITY CONSIDERATIONS
+As a security measure you SHOULD filter the LDP well-known (646)
+TCP and UDP ports using your favourite packet filter before starting
+.Nm .
+This is the current way used to filter neighbours and to protect the
+system of possible external attacks like route injections.
 .Sh SEE ALSO
 .Rs
 .%R RFC
@@ -117,6 +123,12 @@ Enable output of warning messages.
 .%D January 2001
 .%T LDP Applicability
 .Re
+.Rs
+.%R DRAFT
+.%N draft-ietf-mpls-ldp-ipv6-07
+.%D June 2012
+.%T Updates to LDP for IPv6
+.Re
 .Sh HISTORY
 The
 .Nm
@@ -124,4 +136,4 @@ command appeared in
 .Nx 6.0 .
 .Sh BUGS
 .Nm
-supports only IPv4 and doesn't implement Path Vector and Hop Count TLVs.
+doesn't implement Path Vector and Hop Count TLVs.
