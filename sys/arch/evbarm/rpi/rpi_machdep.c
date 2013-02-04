@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.33 2013/02/04 21:43:17 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.34 2013/02/04 21:46:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.33 2013/02/04 21:43:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.34 2013/02/04 21:46:14 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -501,13 +501,15 @@ initarm(void *arg)
 
 	rpi_bootparams();
 
-#ifdef VERBOSE_INIT_ARM
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag)) {
 		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
+#ifdef VERBOSE_INIT_ARM
 		printf("%s: arm clock   %d\n", __func__,
 		    vb.vbt_armclockrate.rate);
+#endif
 	}
 
+#ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
 #endif
 	arm32_bootmem_init(bootconfig.dram[0].address,
