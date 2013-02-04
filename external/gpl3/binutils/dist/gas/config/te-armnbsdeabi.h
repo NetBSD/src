@@ -17,7 +17,7 @@
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
-#include "te-netbsd.h"
+#include "te-nbsd.h"
 
 /* The EABI requires the use of VFP.  */
 #define CPU_DEFAULT ARM_ARCH_V5TEJ
