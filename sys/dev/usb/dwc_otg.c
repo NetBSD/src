@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.44 2013/02/04 21:29:14 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.45 2013/02/04 21:37:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.44 2013/02/04 21:29:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.45 2013/02/04 21:37:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4097,7 +4097,6 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 	sc->sc_bus.pipe_size = sizeof(struct dwc_otg_pipe);
 
 	sc->sc_noport = 1;
-	dotg_sc = sc;
 
 	callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
 
