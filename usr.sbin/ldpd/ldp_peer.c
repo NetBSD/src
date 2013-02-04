@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.10 2013/02/04 17:14:31 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.11 2013/02/04 20:28:24 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,8 @@ ldp_peer_init(void)
 int
 sockaddr_cmp(const struct sockaddr *a, const struct sockaddr *b)
 {
-	if (a->sa_len != b->sa_len || a->sa_family != b->sa_family)
+	if (a == NULL || b == NULL || a->sa_len != b->sa_len ||
+	    a->sa_family != b->sa_family)
 		return -1;
 	return memcmp(a, b, a->sa_len);
 }
@@ -226,9 +227,9 @@ get_ldp_peer(const struct sockaddr * a)
 		      (const void *) &p->ldp_id,
 		      sizeof(struct in_addr)) == 0)
 			return p;
-		if (sockaddr_cmp(a, p->address) == 0)
-			return p;
-		if (a->sa_family == AF_INET && check_ifaddr(p,a))
+		if (sockaddr_cmp(a, p->address) == 0 ||
+		    sockaddr_cmp(a, p->transport_address) == 0 ||
+		    check_ifaddr(p, a))
 			return p;
 	}
 	return NULL;
