@@ -2,7 +2,7 @@
 # Generated from: 	NetBSD: mknative-gcc,v 1.68 2012/09/25 06:55:10 skrll Exp 
 # Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp 
 #
-G_INCLUDES=-I. -I. -I${GNUHOSTDIST}/gcc -I${GNUHOSTDIST}/gcc/. -I${GNUHOSTDIST}/gcc/../include -I${GNUHOSTDIST}/gcc/../libcpp/include -I/u1/netbsd-HEAD/tools/include -I/u1/netbsd-HEAD/tools/include -I/u1/netbsd-HEAD/tools/include  -I${GNUHOSTDIST}/gcc/../libdecnumber -I${GNUHOSTDIST}/gcc/../libdecnumber/dpd -I../libdecnumber   -I/usr/include/libelf
+G_INCLUDES=-I. -I. -I${GNUHOSTDIST}/gcc -I${GNUHOSTDIST}/gcc/. -I${GNUHOSTDIST}/gcc/../include -I./../intl -I${GNUHOSTDIST}/gcc/../libcpp/include     -I${GNUHOSTDIST}/gcc/../libdecnumber -I${GNUHOSTDIST}/gcc/../libdecnumber/dpd -I../libdecnumber   
 G_LIB2ADD=${GNUHOSTDIST}/gcc/config/arm/bpabi-netbsd.c ${GNUHOSTDIST}/gcc/config/arm/unaligned-funcs.c
 G_LIB2ADDEH=${GNUHOSTDIST}/gcc/config/arm/unwind-arm.c ${GNUHOSTDIST}/gcc/config/arm/libunwind.S ${GNUHOSTDIST}/gcc/config/arm/pr-support.c ${GNUHOSTDIST}/gcc/unwind-c.c
 G_LIB2ADD_ST=
@@ -11,7 +11,7 @@ G_LIB1ASMSRC=arm/lib1funcs.asm
 G_LIB2_DIVMOD_FUNCS=_divdi3 _moddi3 _udivdi3 _umoddi3 _udiv_w_sdiv _udivmoddi4
 G_LIB2FUNCS_ST=_eprintf __gcc_bcmp
 G_LIB2FUNCS_EXTRA=${GNUHOSTDIST}/gcc/config/arm/bpabi-netbsd.c ${GNUHOSTDIST}/gcc/config/arm/unaligned-funcs.c
-G_LIBGCC2_CFLAGS=-O2   -DIN_GCC -DCROSS_DIRECTORY_STRUCTURE  -W -Wall -Wwrite-strings -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition  -isystem ./include  -fPIC -g -DHAVE_GTHR_DEFAULT -DIN_LIBGCC2 -D__GCC_FLOAT_NOT_NEEDED -Dinhibit_libc
+G_LIBGCC2_CFLAGS=-O2   -DIN_GCC   -W -Wall -Wwrite-strings -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition  -isystem ./include  -fPIC -g -DHAVE_GTHR_DEFAULT -DIN_LIBGCC2 -D__GCC_FLOAT_NOT_NEEDED 
 G_SHLIB_MKMAP=${GNUHOSTDIST}/gcc/mkmap-symver.awk
 G_SHLIB_MKMAP_OPTS=
 G_SHLIB_MAPFILES=${GNUHOSTDIST}/gcc/libgcc-std.ver ${GNUHOSTDIST}/gcc/config/arm/libgcc-bpabi.ver
