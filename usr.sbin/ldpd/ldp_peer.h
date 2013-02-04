@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.h,v 1.3 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: ldp_peer.h,v 1.4 2013/02/04 17:14:31 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ struct peer_map {
 #define	LDP_PEER_ESTABLISHED	2
 #define	LDP_PEER_HOLDDOWN	3
 
+int	sockaddr_cmp(const struct sockaddr *, const struct sockaddr *);
 void            ldp_peer_init(void);
 struct ldp_peer *	ldp_peer_new(const struct in_addr *, struct sockaddr *,
 				struct sockaddr *, uint16_t, int);

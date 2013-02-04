@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.9 2013/02/04 09:52:43 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.10 2013/02/04 17:14:31 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ ldp_peer_init(void)
 	myaddresses = NULL;
 }
 
-static int
+int
 sockaddr_cmp(const struct sockaddr *a, const struct sockaddr *b)
 {
 	if (a->sa_len != b->sa_len || a->sa_family != b->sa_family)
