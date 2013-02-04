@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.25 2013/02/04 17:14:31 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.26 2013/02/04 20:28:24 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -953,19 +953,13 @@ new_peer_connection()
 		return;
 	}
 
-	if (get_ldp_peer(&peer_address.sa) != NULL) {
-		close(s);
-		return;
-	}
-
-	warnp("Accepted a connection from %s\n", satos(&peer_address.sa));
-
 	if (getsockname(s, &my_address.sa,
 	    & (socklen_t) { sizeof(union sockunion) } )) {
 		fatalp("new_peer_connection(): cannot getsockname\n");
 		close(s);
 		return;
 	}
+
 	if (peer_address.sa.sa_family == AF_INET)
 		peer_address.sin.sin_port = 0;
 	else if (peer_address.sa.sa_family == AF_INET6)
@@ -975,6 +969,14 @@ new_peer_connection()
 		close(s);
 		return;
 	}
+
+	/* Already peered or in holddown ? */
+	if (get_ldp_peer(&peer_address.sa) != NULL) {
+		close(s);
+		return;
+	}
+
+	warnp("Accepted a connection from %s\n", satos(&peer_address.sa));
 
 	/* Verify if it should connect - XXX: no check for INET6 */
 	if (peer_address.sa.sa_family == AF_INET &&
