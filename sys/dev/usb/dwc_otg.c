@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.43 2013/02/04 21:24:07 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.44 2013/02/04 21:29:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.43 2013/02/04 21:24:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.44 2013/02/04 21:29:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,15 +351,15 @@ dwc_otg_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
 Static void
 dwc_otg_freem(struct usbd_bus *bus, usb_dma_t *dma)
 {
-        struct dwc_otg_softc *sc = bus->hci_private;
+	struct dwc_otg_softc *sc = bus->hci_private;
 
 	DPRINTF("\n");
 
-        if (dma->block->flags & USB_DMA_RESERVE) {
-                usb_reserve_freem(&sc->sc_dma_reserve, dma);
-                return;
-        }
-        usb_freemem(&sc->sc_bus, dma);
+	if (dma->block->flags & USB_DMA_RESERVE) {
+		usb_reserve_freem(&sc->sc_dma_reserve, dma);
+	return;
+	}
+	usb_freemem(&sc->sc_bus, dma);
 }
 
 usbd_xfer_handle
@@ -678,7 +678,7 @@ dwc_otg_noop(usbd_pipe_handle pipe)
 Static void
 dwc_otg_device_clear_toggle(usbd_pipe_handle pipe)
 {
-	
+
 	DPRINTF("toggle %d -> 0", pipe->endpoint->datatoggle);
 
 	pipe->endpoint->datatoggle = 0;
@@ -853,7 +853,7 @@ dwc_otg_root_ctrl_start(usbd_xfer_handle xfer)
 			*buf = 0;
 			totlen = 1;
 		}
-                break;
+		break;
 	case C(UR_GET_STATUS, UT_READ_DEVICE):
 		if (len > 1) {
 			USETW(((usb_status_t *)buf)->wStatus,UDS_SELF_POWERED);
@@ -871,13 +871,13 @@ dwc_otg_root_ctrl_start(usbd_xfer_handle xfer)
 		DPRINTF("UR_SET_ADDRESS, UT_WRITE_DEVICE: addr %d\n",
 		    value);
 		if (value >= USB_MAX_DEVICES)
-                        goto fail;
+			goto fail;
 
 		sc->sc_addr = value;
 		break;
 	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
 		if (value != 0 && value != 1)
-                        goto fail;
+			goto fail;
 
 		sc->sc_conf = value;
 		break;
@@ -913,7 +913,7 @@ dwc_otg_root_ctrl_start(usbd_xfer_handle xfer)
 		DPRINTFN(9, "UR_CLEAR_FEATURE port=%d feature=%d\n",
 		    index, value);
 		if (index < 1 || index > sc->sc_noport)
-                        goto fail;
+			goto fail;
 
 		switch (value) {
 		case UHF_PORT_ENABLE:
@@ -1137,12 +1137,12 @@ dwc_otg_root_ctrl_start(usbd_xfer_handle xfer)
 	err = USBD_NORMAL_COMPLETION;
 
 fail:
-        mutex_enter(&sc->sc_lock);
+	mutex_enter(&sc->sc_lock);
 	xfer->status = err;
-        usb_transfer_complete(xfer);
-        mutex_exit(&sc->sc_lock);
+	usb_transfer_complete(xfer);
+	mutex_exit(&sc->sc_lock);
 
-        return USBD_IN_PROGRESS;
+	return USBD_IN_PROGRESS;
 }
 
 Static void
@@ -3854,7 +3854,7 @@ dwc_otg_setup_standard_chain(usbd_xfer_handle xfer)
 // 	DPRINTF(("%s: xfer->length %d\n", __func__, xfer->length));
 
 	dxfer->queued = false;
-	
+
 	/* get first again */
 	td = dxfer->td_transfer_first;
 	td->toggle = dpipe->pipe.endpoint->datatoggle;
@@ -3872,7 +3872,7 @@ dwc_otg_setup_standard_chain(usbd_xfer_handle xfer)
 			hcchar |= HCCHAR_EPDIR_IN;
 		}
 		break;
-		
+
 	case UE_INTERRUPT:
 	case UE_BULK:
 	case UE_ISOCHRONOUS:
@@ -4097,6 +4097,7 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 	sc->sc_bus.pipe_size = sizeof(struct dwc_otg_pipe);
 
 	sc->sc_noport = 1;
+	dotg_sc = sc;
 
 	callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
 
@@ -4119,7 +4120,7 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 
 	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
-	
+
 #ifdef DOTG_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, xname, "intr");
@@ -4141,7 +4142,7 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 	for (size_t i = DWC_OTG_INTRBITF; i < DWC_OTG_NINTRBITS; i++) {
 		evcnt_attach_dynamic(&sc->sc_ev_intr_bit[i], EVCNT_TYPE_INTR,
 		    NULL, xname, intnames[i]);
-	}	
+	}
 
 #endif
 
