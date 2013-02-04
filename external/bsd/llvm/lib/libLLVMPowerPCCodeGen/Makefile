@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2012/06/16 17:01:04 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2013/02/04 15:00:35 joerg Exp $
 
 LIB=	LLVMPowerPCCodeGen
 
@@ -19,9 +19,10 @@ SRCS+=	PPCAsmPrinter.cpp \
 	PPCMachineFunctionInfo.cpp \
 	PPCMCInstLower.cpp \
 	PPCRegisterInfo.cpp \
+	PPCSelectionDAGInfo.cpp \
 	PPCSubtarget.cpp \
 	PPCTargetMachine.cpp \
-	PPCSelectionDAGInfo.cpp
+	PPCTargetTransformInfo.cpp
 
 TABLEGEN_SRC=		PPC.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/PowerPC
