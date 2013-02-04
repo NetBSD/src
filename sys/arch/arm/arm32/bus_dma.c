@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.72 2013/01/28 08:03:13 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.73 2013/02/04 13:26:19 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.72 2013/01/28 08:03:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.73 2013/02/04 13:26:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1354,6 +1354,7 @@ paddr_t
 _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
     off_t off, int prot, int flags)
 {
+	paddr_t map_flags;
 	int i;
 
 	for (i = 0; i < nsegs; i++) {
@@ -1371,7 +1372,12 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			continue;
 		}
 
-		return (arm_btop((u_long)segs[i].ds_addr + off));
+		map_flags = 0;
+		if (flags & BUS_DMA_PREFETCHABLE)
+			map_flags |= ARM32_MMAP_WRITECOMBINE;
+
+		return (arm_btop((u_long)segs[i].ds_addr + off) | map_flags);
+		
 	}
 
 	/* Page not found. */
