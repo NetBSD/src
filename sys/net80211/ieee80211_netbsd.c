@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.22 2012/11/14 18:34:05 matt Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.23 2013/02/04 15:44:45 christos Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.22 2012/11/14 18:34:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.23 2013/02/04 15:44:45 christos Exp $");
 #endif
 
 /*
@@ -655,8 +655,8 @@ ieee80211_notify_node_join(struct ieee80211com *ic, struct ieee80211_node *ni, i
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ieee80211_join_event iev;
 
-	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE, "%s: %snode %s join\n",
-	    ifp->if_xname, (ni == ic->ic_bss) ? "bss " : "",
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE, "%snode %s join\n",
+	    (ni == ic->ic_bss) ? "bss " : "",
 	    ether_sprintf(ni->ni_macaddr));
 
 	memset(&iev, 0, sizeof(iev));
@@ -680,8 +680,8 @@ ieee80211_notify_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ieee80211_leave_event iev;
 
-	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE, "%s: %snode %s leave\n",
-	    ifp->if_xname, (ni == ic->ic_bss) ? "bss " : "",
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE, "%snode %s leave\n",
+	    (ni == ic->ic_bss) ? "bss " : "",
 	    ether_sprintf(ni->ni_macaddr));
 
 	if (ni == ic->ic_bss) {
@@ -701,7 +701,7 @@ ieee80211_notify_scan_done(struct ieee80211com *ic)
 	struct ifnet *ifp = ic->ic_ifp;
 
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_SCAN,
-		"%s: notify scan done\n", ic->ic_ifp->if_xname);
+		"%s", "notify scan done\n");
 
 	/* dispatch wireless event indicating scan completed */
 	rt_ieee80211msg(ifp, RTM_IEEE80211_SCAN, NULL, 0);
