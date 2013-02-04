@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.32 2013/01/28 19:47:02 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.33 2013/02/04 21:43:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.32 2013/01/28 19:47:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.33 2013/02/04 21:43:17 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -409,11 +409,6 @@ rpi_bootparams(void)
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag))
 		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
 
-	if (vcprop_tag_success_p(&vb.vbt_macaddr.tag))
-		printf("%s: mac-address  %llx\n", __func__,
-		    vb.vbt_macaddr.addr);
-
-
 #ifdef VERBOSE_INIT_ARM
 	if (vcprop_tag_success_p(&vb.vbt_fwrev.tag))
 		printf("%s: firmware rev %x\n", __func__,
@@ -506,13 +501,13 @@ initarm(void *arg)
 
 	rpi_bootparams();
 
+#ifdef VERBOSE_INIT_ARM
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag)) {
 		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
 		printf("%s: arm clock   %d\n", __func__,
 		    vb.vbt_armclockrate.rate);
 	}
 
-#ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
 #endif
 	arm32_bootmem_init(bootconfig.dram[0].address,
