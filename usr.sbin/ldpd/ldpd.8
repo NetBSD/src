@@ -1,4 +1,4 @@
-.\" $NetBSD: ldpd.8,v 1.8 2013/02/04 10:53:14 kefren Exp $
+.\" $NetBSD: ldpd.8,v 1.9 2013/02/04 11:02:32 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,12 +104,6 @@ Changes the TCP control port (default: 2626).
 .It Fl W
 Enable output of warning messages.
 .El
-.Sh SECURITY CONSIDERATIONS
-As a security measure you SHOULD filter the LDP well-known (646)
-TCP and UDP ports using your favourite packet filter before starting
-.Nm .
-This is the current way used to filter neighbours and to protect the
-system of possible external attacks like route injections.
 .Sh SEE ALSO
 .Rs
 .%R RFC
@@ -137,3 +131,9 @@ command appeared in
 .Sh BUGS
 .Nm
 doesn't implement Path Vector and Hop Count TLVs.
+.Sh SECURITY CONSIDERATIONS
+As a security measure you SHOULD filter the LDP well-known (646)
+TCP and UDP ports using your favourite packet filter before starting
+.Nm .
+This is the current way used to filter neighbours and to protect the
+system from possible external attacks like route injections.
