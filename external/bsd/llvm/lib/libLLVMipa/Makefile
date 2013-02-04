@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/01/23 15:03:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/02/04 15:00:35 joerg Exp $
 
 LIB=	LLVMipa
 
@@ -11,7 +11,8 @@ SRCS+=	CallPrinter.cpp \
 	CallGraphSCCPass.cpp \
 	FindUsedTypes.cpp \
 	GlobalsModRef.cpp \
-	IPA.cpp
+	IPA.cpp \
+	InlineCost.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

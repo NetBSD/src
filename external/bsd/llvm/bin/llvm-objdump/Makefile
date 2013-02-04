@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/01/23 15:02:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/02/04 15:00:32 joerg Exp $
 
 PROG_CXX=	llvm-objdump
 NOMAN=		yes
@@ -15,6 +15,11 @@ SRCS=	llvm-objdump.cpp \
 
 LLVM_LIBS+= \
 	Object \
+	AArch64Disassembler \
+	AArch64TargetInfo \
+	AArch64MCTargetDesc \
+	AArch64AsmParser \
+	AArch64AsmPrinter \
 	ARMDisassembler \
 	ARMTargetInfo \
 	ARMMCTargetDesc \
