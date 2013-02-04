@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.100 2012/07/22 14:32:57 matt Exp $ */
+/*	$NetBSD: gem.c,v 1.101 2013/02/04 18:29:55 jdc Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.100 2012/07/22 14:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.101 2013/02/04 18:29:55 jdc Exp $");
 
 #include "opt_inet.h"
 
@@ -713,6 +713,7 @@ gem_stop(struct ifnet *ifp, int disable)
 	DPRINTF(sc, ("%s: gem_stop\n", device_xname(sc->sc_dev)));
 
 	callout_halt(&sc->sc_tick_ch, NULL);
+	callout_halt(&sc->sc_rx_watchdog, NULL);
 	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) != 0)
 		gem_pcs_stop(sc, disable);
 	else
