@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otgvar.h,v 1.9 2013/01/31 12:41:41 skrll Exp $ */
+/*	$NetBSD: dwc_otgvar.h,v 1.10 2013/02/04 21:24:07 skrll Exp $ */
 
 /* $FreeBSD: src/sys/dev/usb/controller/dwc_otg.h,v 1.12 2012/09/27 15:23:38 hselasky Exp $ */
 /*-
@@ -158,7 +158,8 @@ struct dwc_otg_xfer {
 	struct usbd_xfer xfer;			/* Needs to be first */
 	struct usb_task	abort_task;
 	TAILQ_ENTRY(dwc_otg_xfer) xnext;	/* list of active/complete xfers */
-	bool		queued;
+ 	bool		queued;			/* pending workqueue */
+	bool		active;			/* still active */
 
 	void		*td_start[1];
 	dwc_otg_td_t	*td_transfer_first;
@@ -253,7 +254,6 @@ typedef struct dwc_otg_softc {
 #define	DWC_MODE_HOST	2	/* host only */
 
 	struct dwc_otg_flags sc_flags;
-
 } dwc_otg_softc_t;
 
 usbd_status	dwc_otg_init(dwc_otg_softc_t *);

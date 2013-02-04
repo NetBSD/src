@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.42 2013/02/03 22:25:39 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.43 2013/02/04 21:24:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.42 2013/02/03 22:25:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.43 2013/02/04 21:24:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,9 +190,7 @@ Static void		dwc_otg_device_isoc_abort(usbd_xfer_handle);
 Static void		dwc_otg_device_isoc_close(usbd_pipe_handle);
 Static void		dwc_otg_device_isoc_done(usbd_xfer_handle);
 
-#if 0
-Static void		dwc_otg_close_pipe(usbd_pipe_handle, dwc_otg_soft_ed_t *);
-#endif
+Static void		dwc_otg_close_pipe(usbd_pipe_handle);
 Static void		dwc_otg_abort_xfer(usbd_xfer_handle, usbd_status);
 
 Static void		dwc_otg_device_clear_toggle(usbd_pipe_handle pipe);
@@ -247,6 +245,7 @@ Static void		dwc_otg_vbus_interrupt(struct dwc_otg_softc *);
 Static void		dwc_otg_standard_done(usbd_xfer_handle);
 Static void		dwc_otg_setup_standard_chain(usbd_xfer_handle);
 Static void		dwc_otg_start_standard_chain(usbd_xfer_handle);
+Static void		dwc_otg_host_channel_free(struct dwc_otg_td *);
 
 Static void dwc_otg_core_reset(struct dwc_otg_softc *sc);
 
@@ -425,6 +424,12 @@ dwc_otg_softintr(void *v)
 	mutex_spin_enter(&sc->sc_intr_lock);
 	while ((dxfer = TAILQ_FIRST(&sc->sc_complete)) != NULL) {
 		TAILQ_REMOVE(&sc->sc_complete, dxfer, xnext);
+
+		if (dxfer->xfer.hcflags & UXFER_ABORTING) {
+			cv_broadcast(&dxfer->xfer.hccv);
+			continue;
+		}
+
 		mutex_spin_exit(&sc->sc_intr_lock);
 		usb_transfer_complete(&dxfer->xfer);
 		mutex_spin_enter(&sc->sc_intr_lock);
@@ -577,21 +582,20 @@ dwc_otg_poll(struct usbd_bus *bus)
 	mutex_spin_exit(&sc->sc_intr_lock);
 }
 
-#if 0
 /*
  * Close a reqular pipe.
  * Assumes that there are no pending transactions.
  */
 Static void
-dwc_otg_close_pipe(usbd_pipe_handle pipe, dwc_otg_soft_ed_t *head)
+dwc_otg_close_pipe(usbd_pipe_handle pipe)
 {
 	struct dwc_otg_pipe *dpipe = (struct dwc_otg_pipe *)pipe;
 	struct dwc_otg_softc *sc = pipe->device->bus->hci_private;
 
 	dpipe = dpipe;
-	usb_delay_ms(&sc->sc_bus, 1);
+
+	KASSERT(mutex_owned(&sc->sc_lock));
 }
-#endif
 
 /*
  * Abort a device request.
@@ -616,6 +620,10 @@ dwc_otg_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		return;
 	}
 
+	/*
+	 * If an abort is already in progress then just wait for it to
+	 * complete and return.
+	 */
 	if (xfer->hcflags & UXFER_ABORTING) {
 		xfer->status = status;
 		xfer->hcflags |= UXFER_ABORTWAIT;
@@ -623,39 +631,32 @@ dwc_otg_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 			cv_wait(&xfer->hccv, &sc->sc_lock);
 		return;
 	}
-	xfer->hcflags |= UXFER_ABORTING;
 
 	/*
 	 * Step 1: Make interrupt routine and hardware ignore xfer.
 	 */
+	mutex_spin_enter(&sc->sc_intr_lock);
+	xfer->hcflags |= UXFER_ABORTING;
+
 	xfer->status = status;	/* make software ignore it */
 	callout_stop(&xfer->timeout_handle);
 
-	if (dxfer->td_transfer_cache) {
-		int ch = dxfer->td_transfer_cache->channel;
-		if (ch < DWC_OTG_MAX_CHANNELS) {
-
-			DPRINTF("Disabling channel %d\n", ch);
-			DWC_OTG_WRITE_4(sc, DOTG_HCINTMSK(ch),
-			    HCINTMSK_CHHLTDMSK);
-			DWC_OTG_WRITE_4(sc, DOTG_HCINT(ch),
-			    ~HCINTMSK_CHHLTDMSK);
-
-			if ((DWC_OTG_READ_4(sc, DOTG_HCCHAR(ch)) &
-			    HCCHAR_CHENA) != 0) {
-				DWC_OTG_MODIFY_4(sc, DOTG_HCCHAR(ch),
-				    HCCHAR_CHENA, HCCHAR_CHDIS);
-			}
-		}
+	if (dxfer->active) {
+		TAILQ_REMOVE(&sc->sc_active, dxfer, xnext);
+		dxfer->active = false;
 	}
-
-	mutex_spin_enter(&sc->sc_intr_lock);
-	dxfer->queued = false;
-	TAILQ_REMOVE(&sc->sc_active, dxfer, xnext);
 	mutex_spin_exit(&sc->sc_intr_lock);
 
+	if (dxfer->td_transfer_cache != NULL) {
+		dwc_otg_host_channel_free(dxfer->td_transfer_cache);
+	}
+
+	while (dxfer->queued) {
+		cv_wait(&xfer->hccv, &sc->sc_lock);
+	}
+
 	/*
-	 * Step 4: Execute callback.
+	 * Step 2: Execute callback.
 	 */
 	wake = xfer->hcflags & UXFER_ABORTWAIT;
 	xfer->hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
@@ -1136,9 +1137,8 @@ dwc_otg_root_ctrl_start(usbd_xfer_handle xfer)
 	err = USBD_NORMAL_COMPLETION;
 
 fail:
-        xfer->status = err;
-
         mutex_enter(&sc->sc_lock);
+	xfer->status = err;
         usb_transfer_complete(xfer);
         mutex_exit(&sc->sc_lock);
 
@@ -1307,7 +1307,10 @@ dwc_otg_device_ctrl_close(usbd_pipe_handle pipe)
 
 	dpipe = dpipe;
 	sc = sc;
+
 	DPRINTF("\n");
+
+	dwc_otg_close_pipe(pipe);
 }
 
 Static void
@@ -1390,6 +1393,8 @@ dwc_otg_device_bulk_close(usbd_pipe_handle pipe)
 
 	dpipe = dpipe;
 	sc = sc;
+
+	dwc_otg_close_pipe(pipe);
 }
 
 Static void
@@ -1475,6 +1480,8 @@ dwc_otg_device_intr_close(usbd_pipe_handle pipe)
 	dpipe = dpipe;
 	sc = sc;
 	DPRINTF("\n");
+
+	dwc_otg_close_pipe(pipe);
 }
 
 Static void
@@ -1583,6 +1590,8 @@ dwc_otg_device_isoc_close(usbd_pipe_handle pipe)
 	dpipe = dpipe;
 	sc = sc;
 	DPRINTF("\n");
+
+	dwc_otg_close_pipe(pipe);
 }
 
 void
@@ -1653,6 +1662,7 @@ dwc_otg_worker(struct work *wk, void *priv)
 	struct dwc_otg_work *dwork = (struct dwc_otg_work *)wk;
 	struct dwc_otg_softc *sc = priv;
 	usbd_xfer_handle xfer = dwork->xfer;
+	struct dwc_otg_xfer *dxfer = DWC_OTG_XFER2DXFER(xfer);
 
 	DOTG_EVCNT_INCR(sc->sc_ev_work);
 
@@ -1661,7 +1671,13 @@ dwc_otg_worker(struct work *wk, void *priv)
 		dwc_otg_timer(sc);
 	} else {
 		KASSERT(dwork->xfer != NULL);
-		dwc_otg_start_standard_chain(xfer);
+		KASSERT(dxfer->queued == true);
+
+		if (!(xfer->hcflags & UXFER_ABORTING)) {
+			dwc_otg_start_standard_chain(xfer);
+		}
+		dxfer->queued = false;
+		cv_broadcast(&xfer->hccv);
 	}
 	mutex_exit(&sc->sc_lock);
 }
@@ -2311,7 +2327,7 @@ dwc_otg_host_channel_disable(struct dwc_otg_softc *sc, uint8_t x)
 	}
 }
 
-static void
+Static void
 dwc_otg_host_channel_free(struct dwc_otg_td *td)
 {
 	struct dwc_otg_softc *sc;
@@ -3332,6 +3348,9 @@ repeat:
 	}
 
 	TAILQ_FOREACH(dxfer, &sc->sc_active, xnext) {
+		if (dxfer->xfer.hcflags & UXFER_ABORTING)
+			continue;
+
 		if (!dwc_otg_xfer_do_fifo(&dxfer->xfer)) {
 			/* queue has been modified */
 			goto repeat;
@@ -3834,6 +3853,8 @@ dwc_otg_setup_standard_chain(usbd_xfer_handle xfer)
 
 // 	DPRINTF(("%s: xfer->length %d\n", __func__, xfer->length));
 
+	dxfer->queued = false;
+	
 	/* get first again */
 	td = dxfer->td_transfer_first;
 	td->toggle = dpipe->pipe.endpoint->datatoggle;
@@ -3946,13 +3967,8 @@ dwc_otg_start_standard_chain(usbd_xfer_handle xfer)
 		KASSERT(mutex_owned(&sc->sc_lock));
 		/* put transfer on interrupt queue */
 
-		if (!dxfer->queued) {
-			dxfer->queued = true;
-			TAILQ_INSERT_TAIL(&sc->sc_active, dxfer, xnext);
-		} else {
-			printf("%s: xfer %p already queued\n", __func__,
-			    xfer);
-		}
+		dxfer->active = true;
+		TAILQ_INSERT_TAIL(&sc->sc_active, dxfer, xnext);
 
 		/* start timeout, if any */
 		if (xfer->timeout != 0) {
@@ -4043,11 +4059,12 @@ dwc_otg_standard_done(usbd_xfer_handle xfer)
 		dwc_otg_host_channel_free(td);
 
 	xfer->status = err;
-	TAILQ_REMOVE(&sc->sc_active, dxfer, xnext);
-
+	if (dxfer->active) {
+		TAILQ_REMOVE(&sc->sc_active, dxfer, xnext);
+		dxfer->active = false;
+	}
 	callout_stop(&xfer->timeout_handle);
 
-	dxfer->queued = false;
 	TAILQ_INSERT_TAIL(&sc->sc_complete, dxfer, xnext);
 
 	usb_schedsoftintr(&sc->sc_bus);
@@ -4097,7 +4114,7 @@ dwc_otg_init(struct dwc_otg_softc *sc)
 	sc->sc_rhc_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    dwc_otg_rhc, sc);
 
-	workqueue_create(&sc->sc_wq, xname, dwc_otg_worker, sc, PRI_NONE,
+	workqueue_create(&sc->sc_wq, xname, dwc_otg_worker, sc, PRI_BIO,
 	    IPL_USB, WQ_MPSAFE);
 
 	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
@@ -4389,8 +4406,9 @@ dwc_otg_xfer_start(usbd_xfer_handle xfer)
 	if (sc->sc_bus.use_polling) {
 		dwc_otg_start_standard_chain(xfer);
 	} else {
-		workqueue_enqueue(sc->sc_wq,
-		    (struct work *)&dxfer->work, NULL);
+		KASSERT(dxfer->queued == false);
+		dxfer->queued = true;
+		workqueue_enqueue(sc->sc_wq, (struct work *)&dxfer->work, NULL);
 	}
 }
 
