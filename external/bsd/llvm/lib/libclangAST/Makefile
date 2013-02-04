@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/01/23 15:03:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2013/02/04 15:00:35 joerg Exp $
 
 LIB=	clangAST
 
@@ -17,7 +17,6 @@ SRCS+=	APValue.cpp \
 	Comment.cpp \
 	CommentBriefParser.cpp \
 	CommentCommandTraits.cpp \
-	CommentDumper.cpp \
 	CommentLexer.cpp \
 	CommentParser.cpp \
 	CommentSema.cpp \

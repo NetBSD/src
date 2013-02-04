@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/01/23 15:02:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/02/04 15:00:31 joerg Exp $
 
 PROG_CXX=	bugpoint
 NOMAN=		yes
@@ -18,6 +18,7 @@ SRCS=	BugDriver.cpp \
 	bugpoint.cpp
 
 LLVM_LIBS+= \
+	ObjCARC \
 	AsmParser \
 	BitReader \
 	BitWriter \
