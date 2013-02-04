@@ -1,4 +1,4 @@
-/* $NetBSD: pdu.c,v 1.3 2013/01/28 21:35:35 kefren Exp $ */
+/* $NetBSD: pdu.c,v 1.4 2013/02/04 17:14:31 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -67,8 +67,9 @@ check_recv_pdu(struct ldp_peer * p, struct ldp_pdu * rpdu, int c)
 		return LDP_E_BAD_LENGTH;
 
 	if (p->ldp_id.s_addr != rpdu->ldp_id.s_addr) {
-		fatalp("Invalid LDP ID received from %s\n",
-		    inet_ntoa(p->ldp_id));
+		fatalp("Invalid LDP ID %s received from ",
+		    inet_ntoa(rpdu->ldp_id));
+		fatalp("%s\n", inet_ntoa(p->ldp_id));
 		notiftlv = build_notification(0,
 		    NOTIF_FATAL | NOTIF_BAD_LDP_ID);
 		send_tlv(p, (struct tlv *) notiftlv);
