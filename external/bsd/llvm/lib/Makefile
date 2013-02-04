@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2013/01/23 15:02:57 joerg Exp $
+# $NetBSD: Makefile,v 1.27 2013/02/04 15:00:33 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ SUBDIR=	\
 	libLLVMMC \
 	libLLVMMCDisassembler \
 	libLLVMMCParser \
+	libLLVMObjCARC \
 	libLLVMScalarOpts \
 	libLLVMSelectionDAG \
 	libLLVMSupport \
@@ -25,6 +26,7 @@ SUBDIR=	\
 	libLLVMTarget \
 	libLLVMTransformsUtils \
 	libLLVMVectorize \
+	libLLVMAArch64CodeGen \
 	libLLVMARMCodeGen \
 	libLLVMMipsCodeGen \
 	libLLVMPowerPCCodeGen \
@@ -32,6 +34,13 @@ SUBDIR=	\
 	libLLVMX86CodeGen
 
 SUBDIR+= .WAIT
+
+SUBDIR+= \
+	libLLVMAArch64AsmParser \
+	libLLVMAArch64AsmPrinter \
+	libLLVMAArch64Disassembler \
+	libLLVMAArch64MCTargetDesc \
+	libLLVMAArch64TargetInfo
 
 SUBDIR+= \
 	libLLVMARMAsmParser \

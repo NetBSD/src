@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2013/01/23 15:02:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.17 2013/02/04 15:00:33 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -57,8 +57,8 @@ TABLEGEN_OUTPUT.Intrinsics.td= \
 	llvm/IR/Intrinsics.gen|-gen-intrinsic
 
 CLANG_TABLEGEN_SRC=	Attr.td CommentCommands.td CommentHTMLTags.td \
-	CommentNodes.td DeclNodes.td StmtNodes.td \
-	Diagnostic.td arm_neon.td Options.td \
+	CommentNodes.td CommentHTMLNamedCharacterReferences.td DeclNodes.td \
+	StmtNodes.td Diagnostic.td arm_neon.td Options.td \
 	CC1AsOptions.td CC1Options.td
 
 CLANG_TABLEGEN_INCLUDES.Attr.td=	-I${CLANG_SRCDIR}/include
@@ -72,6 +72,7 @@ CLANG_TABLEGEN_OUTPUT.Attr.td= \
 	clang/Sema/AttrTemplateInstantiate.inc|-gen-clang-attr-template-instantiate \
 	clang/Sema/AttrParsedAttrKinds.inc|-gen-clang-attr-parsed-attr-kinds \
 	clang/Sema/AttrParsedAttrList.inc|-gen-clang-attr-parsed-attr-list \
+	clang/Sema/AttrSpellingListIndex.inc|-gen-clang-attr-spelling-index \
 	clang/Serialization/AttrPCHRead.inc|-gen-clang-attr-pch-read \
 	clang/Serialization/AttrPCHWrite.inc|-gen-clang-attr-pch-write
 
@@ -85,11 +86,15 @@ CLANG_TABLEGEN_OUTPUT.CommentNodes.td= \
 	clang/AST/CommentNodes.inc|-gen-clang-comment-nodes
 
 CLANG_TABLEGEN_OUTPUT.CommentCommands.td= \
-	clang/AST/CommentCommandInfo.inc|-gen-clang-comment-command-info
+	clang/AST/CommentCommandInfo.inc|-gen-clang-comment-command-info \
+	clang/AST/CommentCommandList.inc|-gen-clang-comment-command-list
 
 CLANG_TABLEGEN_OUTPUT.CommentHTMLTags.td= \
 	clang/AST/CommentHTMLTags.inc|-gen-clang-comment-html-tags \
 	clang/AST/CommentHTMLTagsProperties.inc|-gen-clang-comment-html-tags-properties
+
+CLANG_TABLEGEN_OUTPUT.CommentHTMLNamedCharacterReferences.td= \
+	clang/AST/CommentHTMLNamedCharacterReferences.inc|-gen-clang-comment-html-named-character-references
 
 CLANG_TABLEGEN_INCLUDES.Diagnostic.td=	-I${CLANG_SRCDIR}/include/clang/Basic
 CLANG_TABLEGEN_OUTPUT.Diagnostic.td= \
