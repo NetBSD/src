@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/01/23 15:03:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/02/04 15:00:36 joerg Exp $
 
 LIB=	clangFormat
 
@@ -7,6 +7,7 @@ LIB=	clangFormat
 .PATH: ${CLANG_SRCDIR}/lib/Format
 
 SRCS+=	Format.cpp \
+	TokenAnnotator.cpp \
 	UnwrappedLineParser.cpp
 
 .if defined(HOSTLIB)

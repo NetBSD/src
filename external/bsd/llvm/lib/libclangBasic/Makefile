@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2013/01/23 15:03:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2013/02/04 15:00:36 joerg Exp $
 
 LIB=	clangBasic
 
@@ -7,8 +7,6 @@ LIB=	clangBasic
 .PATH: ${CLANG_SRCDIR}/lib/Basic
 
 SRCS+=	Builtins.cpp \
-	ConvertUTF.c \
-	ConvertUTFWrapper.cpp \
 	Diagnostic.cpp \
 	DiagnosticIDs.cpp \
 	FileManager.cpp \

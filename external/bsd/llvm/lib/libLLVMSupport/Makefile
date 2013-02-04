@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2013/01/23 15:03:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2013/02/04 15:00:35 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -17,6 +17,8 @@ SRCS+=	APFloat.cpp \
 	circular_raw_ostream.cpp \
 	CommandLine.cpp \
 	ConstantRange.cpp \
+	ConvertUTF.c \
+	ConvertUTFWrapper.cpp \
 	CrashRecoveryContext.cpp \
 	DataExtractor.cpp \
 	DataStream.cpp \
