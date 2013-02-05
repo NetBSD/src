@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2013/02/05 07:22:59 matt Exp $
+#	$NetBSD: Makefile,v 1.49 2013/02/05 15:19:18 martin Exp $
 
 .include <bsd.own.mk>			# for MKPIC definition
 .include <bsd.endian.mk>		# for TARGET_ENDIANNESS
@@ -20,6 +20,8 @@ all dependall: ${FILES}
 
 ld.so:	${UUDECODE_FILES}
 
+.else
+UUDECODE_FILES=
 .endif
 .endif
 
