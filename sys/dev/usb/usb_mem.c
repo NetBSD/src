@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.61 2013/02/05 00:41:51 christos Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.62 2013/02/05 13:39:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.61 2013/02/05 00:41:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.62 2013/02/05 13:39:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,25 +439,28 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 		return USBD_NOMEM;
 
 	dma->block = kmem_zalloc(sizeof *dma->block, KM_SLEEP);
-	if (dma->block == NULL)
-		return USBD_NOMEM;
+	if (dma->block == NULL) {
+		aprint_error_dev(rs->dv, "%s: failed allocating dma block",
+		    __func__);
+		goto out0;
+	}
 
 	dma->block->nsegs = 1;
 	dma->block->segs = kmem_alloc(dma->block->nsegs *
 	    sizeof(*dma->block->segs), KM_SLEEP);
 	if (dma->block->segs == NULL) {
-		kmem_free(dma->block, sizeof *dma->block);
-		return USBD_NOMEM;
+		aprint_error_dev(rs->dv, "%s: failed allocating 1 dma segment",
+		    __func__);
+		goto out1;
 	}
 
 	error = extent_alloc(rs->extent, size, PAGE_SIZE, 0,
 	    EX_NOWAIT, &start);
 
 	if (error != 0) {
-		aprint_error_dev(rs->dv,
-		    "usb_reserve_allocm of size %u failed (error %d)\n",
-		    size, error);
-		return USBD_NOMEM;
+		aprint_error_dev(rs->dv, "%s: extent_alloc size %u failed "
+		    "(error %d)", __func__, size, error);
+		goto out2;
 	}
 
 	baddr = start;
@@ -471,6 +474,13 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	dma->block->tag = rs->dtag;
 
 	return USBD_NORMAL_COMPLETION;
+out2:
+	kmem_free(dma->block->segs, dma->block->nsegs *
+	    sizeof(*dma->block->segs));
+out1:
+	kmem_free(dma->block, sizeof *dma->block);
+out0:
+	return USBD_NOMEM;
 }
 
 void
