@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.20 2013/02/05 18:15:04 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.21 2013/02/05 18:17:05 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.20 2013/02/05 18:15:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.21 2013/02/05 18:17:05 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2131,7 +2131,6 @@ urtwn_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	s = splnet();
 	sc->tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	ifp->if_opackets++;
 
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		if (status != USBD_NOT_STARTED && status != USBD_CANCELLED) {
@@ -2143,6 +2142,7 @@ urtwn_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		return;
 	}
 
+	ifp->if_opackets++;
 	urtwn_start(ifp);
 
 	splx(s);
