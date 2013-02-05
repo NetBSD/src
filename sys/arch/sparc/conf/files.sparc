@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.152 2012/11/06 07:59:09 alnsn Exp $
+#	$NetBSD: files.sparc,v 1.153 2013/02/05 21:52:48 macallan Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -117,6 +117,10 @@ file	arch/sparc/sparc/memreg.c
 device eccmemctl
 attach eccmemctl at mainbus
 file	arch/sparc/sparc/memecc.c		eccmemctl
+
+device sx {}
+attach sx at mainbus
+file	arch/sparc/dev/sx.c			sx needs-flag
 
 device tctrl: sysmon_envsys, sysmon_power, sysmon_taskq
 attach tctrl at obio
@@ -251,7 +255,7 @@ device cgeight: bt_dac, fb, rasops24, pfour
 attach cgeight at obio
 file	arch/sparc/dev/cgeight.c	cgeight needs-flag
 
-device cgfourteen: fb, rasops32, rasops8, wsemuldisplaydev
+device cgfourteen: fb, rasops8, wsemuldisplaydev
 attach cgfourteen at obio
 file	arch/sparc/dev/cgfourteen.c	cgfourteen needs-flag
 
