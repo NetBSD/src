@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2013/02/05 03:17:51 matt Exp $
+# $Id: Makefile,v 1.3 2013/02/05 07:28:48 matt Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
@@ -39,6 +39,7 @@ SA_AS=		library
 LIBSA=		${SALIB}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}
+	${MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${.TARGET} \
 	    ${OBJS} ${LIBSA} ${LIBKERN}
 
