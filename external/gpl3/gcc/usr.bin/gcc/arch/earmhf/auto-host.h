@@ -120,7 +120,7 @@
 
 /* Define to enable LTO support. */
 #ifndef USED_FOR_TARGET
-/* #undef ENABLE_LTO */
+#define ENABLE_LTO 1
 #endif
 
 
@@ -1526,7 +1526,7 @@
 
 /* Define if libelf is in use. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_libelf */
+#define HAVE_libelf 1
 #endif
 
 
