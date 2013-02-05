@@ -1,7 +1,7 @@
-# $NetBSD: ad.arm.shl,v 1.3 2013/01/28 18:57:10 matt Exp $
-./lib/libc_vfp.so				base-sys-shlib		dynamicroot
-./lib/libc_vfp.so.0				base-sys-shlib		dynamicroot
-./lib/libc_vfp.so.0.0				base-sys-shlib		dynamicroot
-./usr/lib/libc_vfp.so				base-sys-shlib
-./usr/lib/libc_vfp.so.0				base-sys-shlib
-./usr/lib/libc_vfp.so.0.0			base-sys-shlib
+# $NetBSD: ad.arm.shl,v 1.4 2013/02/05 07:31:50 matt Exp $
+./lib/libc_vfp.so				base-sys-shlib		dynamicroot,softfloat
+./lib/libc_vfp.so.0				base-sys-shlib		dynamicroot,softfloat
+./lib/libc_vfp.so.0.0				base-sys-shlib		dynamicroot,softfloat
+./usr/lib/libc_vfp.so				base-sys-shlib		softfloat
+./usr/lib/libc_vfp.so.0				base-sys-shlib		softfloat
+./usr/lib/libc_vfp.so.0.0			base-sys-shlib		softfloat
