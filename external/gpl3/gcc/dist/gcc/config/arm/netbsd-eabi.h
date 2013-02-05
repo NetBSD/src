@@ -68,7 +68,7 @@
 
 #undef SUBTARGET_EXTRA_ASM_SPEC
 #define SUBTARGET_EXTRA_ASM_SPEC	\
-  "-matpcs %{fpic|fpie:-k} %{fPIC|fPIE:-k}"
+  "-matpcs %{mabi=apcs-gnu|mabi=atpcs:-meabi=gnu} %{fpic|fpie:-k} %{fPIC|fPIE:-k}"
 
 /* Default to full VFP if -mhard-float is specified.  */
 #undef SUBTARGET_ASM_FLOAT_SPEC
