@@ -31,4 +31,4 @@ G_parallel_headers=algo.h algobase.h algorithm algorithmfwd.h balanced_quicksort
 G_decimal_headers=decimal decimal.h
 G_thread_host_headers=gthr.h gthr-single.h gthr-posix.h gthr-tpf.h gthr-default.h
 G_host_headers_extra=basic_file.h c++config.h c++allocator.h c++io.h c++locale.h messages_members.h time_members.h
-G_UNWIND_H=${GNUHOSTDIST}/gcc/config/arm/unwind-netbsd.h 
+G_UNWIND_H=${GNUHOSTDIST}/gcc/config/arm/unwind-arm.h 

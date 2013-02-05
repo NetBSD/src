@@ -484,7 +484,7 @@ _GLIBCXX_END_NAMESPACE
 #define _GLIBCXX_HAVE_ETXTBSY 1
 
 /* Define to 1 if you have the <execinfo.h> header file. */
-/* #undef _GLIBCXX_HAVE_EXECINFO_H */
+#define _GLIBCXX_HAVE_EXECINFO_H 1
 
 /* Define to 1 if you have the `expf' function. */
 /* #undef _GLIBCXX_HAVE_EXPF */
@@ -662,7 +662,7 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_HAVE_NAN_H */
 
 /* Define if poll is available in <poll.h>. */
-/* #undef _GLIBCXX_HAVE_POLL */
+#define _GLIBCXX_HAVE_POLL 1
 
 /* Define to 1 if you have the `powf' function. */
 /* #undef _GLIBCXX_HAVE_POWF */
@@ -773,7 +773,7 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_HAVE_S_IFREG */
 
 /* Define if S_IFREG is available in <sys/stat.h>. */
-/* #undef _GLIBCXX_HAVE_S_ISREG */
+#define _GLIBCXX_HAVE_S_ISREG 1
 
 /* Define to 1 if you have the `tanf' function. */
 /* #undef _GLIBCXX_HAVE_TANF */
@@ -788,7 +788,7 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_HAVE_TANL */
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-/* #undef _GLIBCXX_HAVE_TGMATH_H */
+#define _GLIBCXX_HAVE_TGMATH_H 1
 
 /* Define to 1 if the target supports thread-local storage. */
 /* #undef _GLIBCXX_HAVE_TLS */
@@ -815,7 +815,7 @@ _GLIBCXX_END_NAMESPACE
 #define _GLIBCXX_HAVE_WCTYPE_H 1
 
 /* Define if writev is available in <sys/uio.h>. */
-/* #undef _GLIBCXX_HAVE_WRITEV */
+#define _GLIBCXX_HAVE_WRITEV 1
 
 /* Define to 1 if you have the `_acosf' function. */
 /* #undef _GLIBCXX_HAVE__ACOSF */
@@ -1109,12 +1109,12 @@ _GLIBCXX_END_NAMESPACE
 
 /* Define if C99 functions or macros from <wchar.h>, <math.h>, <complex.h>,
    <stdio.h>, and <stdlib.h> can be used or exposed. */
-#define _GLIBCXX_USE_C99 1
+/* #undef _GLIBCXX_USE_C99 */
 
 /* Define if C99 functions in <complex.h> should be used in <complex>. Using
    compiler builtins for these functions requires corresponding C99 library
    functions to be present. */
-#define _GLIBCXX_USE_C99_COMPLEX 1
+/* #undef _GLIBCXX_USE_C99_COMPLEX */
 
 /* Define if C99 functions in <complex.h> should be used in <tr1/complex>.
    Using compiler builtins for these functions requires corresponding C99
@@ -1160,7 +1160,7 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_USE_DECIMAL_FLOAT */
 
 /* Defined if gettimeofday is available. */
-/* #undef _GLIBCXX_USE_GETTIMEOFDAY */
+#define _GLIBCXX_USE_GETTIMEOFDAY 1
 
 /* Define if LFS support is available. */
 /* #undef _GLIBCXX_USE_LFS */
