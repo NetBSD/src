@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.166 2013/01/31 15:22:50 pooka Exp $
+#	$NetBSD: Makefile,v 1.167 2013/02/05 07:27:02 matt Exp $
 
 .include <bsd.own.mk>
+.include <bsd.endian.mk>
 
 # Make sure that the ordered build/install processing applies when using
 # plain make.
@@ -196,7 +197,9 @@ SUBDIR+=	amiga-txlt
 SUBDIR+=	hp300-mkboot
 .endif
 
-.if ${MACHINE} == "evbarm" && ${MACHINE_ARCH} == "arm"
+.if ${MACHINE} == "evbarm" \
+    && ${MACHINE_CPU} == "arm" \
+    && ${TARGET_ENDIANNESS} == "1234"
 SUBDIR+=	elftosb
 .endif
 
