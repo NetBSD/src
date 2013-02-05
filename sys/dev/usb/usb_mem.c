@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.60 2013/02/05 00:39:58 christos Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.61 2013/02/05 00:41:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.60 2013/02/05 00:39:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.61 2013/02/05 00:41:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,6 +442,7 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	if (dma->block == NULL)
 		return USBD_NOMEM;
 
+	dma->block->nsegs = 1;
 	dma->block->segs = kmem_alloc(dma->block->nsegs *
 	    sizeof(*dma->block->segs), KM_SLEEP);
 	if (dma->block->segs == NULL) {
@@ -464,7 +465,6 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	dma->block->flags = USB_DMA_RESERVE;
 	dma->block->align = PAGE_SIZE;
 	dma->block->size = size;
-	dma->block->nsegs = 1;
 	dma->block->segs[0] = rs->map->dm_segs[0];
 	dma->block->map = rs->map;
 	dma->block->kaddr = rs->vaddr;
