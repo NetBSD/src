@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2012/11/20 19:08:46 jkunz Exp $
+# $Id: Makefile,v 1.2 2013/02/05 03:17:51 matt Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
@@ -11,6 +11,7 @@ CLEANFILES+=	${PROG}
 CFLAGS+=	-Wall -Wno-main -ffreestanding -march=armv5te -mtune=arm926ej-s
 CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S} -I${S}/arch
+CPPFLAGS+=	-mabi=atpcs -mfloat-abi=soft -Wa,-meabi=gnu
 #CPPFLAGS+=	-DDEBUG
 #DBG=		-g
 
