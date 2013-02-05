@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.246 2012/10/27 17:18:12 chs Exp $ */
+/*	$NetBSD: autoconf.c,v 1.247 2013/02/05 21:53:45 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.246 2012/10/27 17:18:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.247 2013/02/05 21:53:45 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1136,7 +1136,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		 * These are _root_ devices to ignore. Others must be handled
 		 * elsewhere.
 		 */
-		"SUNW,sx",		/* XXX: no driver for SX yet */
 		"virtual-memory",
 		"aliases",
 		"chosen",		/* OpenFirmware */
