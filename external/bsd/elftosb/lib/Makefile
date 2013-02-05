@@ -1,10 +1,6 @@
-# $NetBSD: Makefile,v 1.5 2013/02/05 07:27:02 matt Exp $
+# $NetBSD: Makefile,v 1.6 2013/02/05 16:57:07 matt Exp $
 
-.include <bsd.endian.mk>
-
-.if ${MACHINE} == "evbarm" \
-    && ${MACHINE_CPU} == "arm" \
-    && ${TARGET_ENDIANNESS} == "1234"
+.if ${MACHINE} == "evbarm" && ${MACHINE_ARCH:M*eb} == ""
 
 LIBISPRIVATE=	yes
 LIB=		elftosb
