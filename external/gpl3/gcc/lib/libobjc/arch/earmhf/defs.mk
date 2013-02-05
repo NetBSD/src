@@ -7,4 +7,4 @@ G_ALL_CFLAGS=-I. -I${GNUHOSTDIST}/libobjc   -g  -W -Wall -Wwrite-strings -Wstric
 G_INCLUDES=-I${GNUHOSTDIST}/libobjc/objc  -I${GNUHOSTDIST}/libobjc/../gcc -I${GNUHOSTDIST}/libobjc/../gcc/config -I../.././gcc -I${GNUHOSTDIST}/libobjc/../include 
 G_OBJS=archive.lo class.lo encoding.lo gc.lo hash.lo init.lo linking.lo misc.lo nil_method.lo NXConstStr.lo Object.lo objects.lo Protocol.lo sarray.lo selector.lo sendmsg.lo thr.lo thr-objc.lo exception.lo
 G_OBJC_H=hash.h objc-list.h sarray.h objc.h objc-api.h NXConstStr.h Object.h Protocol.h encoding.h typedstream.h thr.h objc-decls.h
-G_UNWIND_H=${GNUHOSTDIST}/gcc/config/arm/unwind-netbsd.h 
+G_UNWIND_H=${GNUHOSTDIST}/gcc/config/arm/unwind-arm.h 

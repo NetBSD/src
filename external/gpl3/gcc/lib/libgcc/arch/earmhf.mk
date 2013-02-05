@@ -2,7 +2,7 @@
 # Generated from: 	NetBSD: mknative-gcc,v 1.68 2012/09/25 06:55:10 skrll Exp 
 # Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp 
 #
-G_INCLUDES=-I. -I. -I${GNUHOSTDIST}/gcc -I${GNUHOSTDIST}/gcc/. -I${GNUHOSTDIST}/gcc/../include -I./../intl -I${GNUHOSTDIST}/gcc/../libcpp/include     -I${GNUHOSTDIST}/gcc/../libdecnumber -I${GNUHOSTDIST}/gcc/../libdecnumber/dpd -I../libdecnumber   
+G_INCLUDES=-I. -I. -I${GNUHOSTDIST}/gcc -I${GNUHOSTDIST}/gcc/. -I${GNUHOSTDIST}/gcc/../include -I./../intl -I${GNUHOSTDIST}/gcc/../libcpp/include     -I${GNUHOSTDIST}/gcc/../libdecnumber -I${GNUHOSTDIST}/gcc/../libdecnumber/dpd -I../libdecnumber   -I/usr/include/libelf
 G_LIB2ADD=${GNUHOSTDIST}/gcc/config/arm/bpabi-netbsd.c ${GNUHOSTDIST}/gcc/config/arm/unaligned-funcs.c
 G_LIB2ADDEH=${GNUHOSTDIST}/gcc/config/arm/unwind-arm.c ${GNUHOSTDIST}/gcc/config/arm/libunwind.S ${GNUHOSTDIST}/gcc/config/arm/pr-support.c ${GNUHOSTDIST}/gcc/unwind-c.c
 G_LIB2ADD_ST=
@@ -20,5 +20,5 @@ G_EXTRA_HEADERS=${GNUHOSTDIST}/gcc/config/arm/mmintrin.h ${GNUHOSTDIST}/gcc/conf
 G_xm_defines=
 G_tm_defines=NETBSD_ENABLE_PTHREADS TARGET_DEFAULT_FLOAT_ABI=ARM_FLOAT_ABI_HARD
 G_COLLECT2=collect2
-G_UNWIND_H=${GNUHOSTDIST}/gcc/config/arm/unwind-netbsd.h 
+G_UNWIND_H=${GNUHOSTDIST}/gcc/config/arm/unwind-arm.h 
 G_xm_include_list=auto-host.h ansidecl.h
