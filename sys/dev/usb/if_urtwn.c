@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.19 2013/01/28 23:46:33 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.20 2013/02/05 18:15:04 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.19 2013/01/28 23:46:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.20 2013/02/05 18:15:04 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2117,6 +2117,7 @@ urtwn_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct urtwn_tx_data *data = priv;
 	struct urtwn_softc *sc = data->sc;
 	struct ifnet *ifp = &sc->sc_if;
+	usbd_pipe_handle pipe = data->pipe;
 	int s;
 
 	DPRINTFN(DBG_FN|DBG_TX, ("%s: %s: status=%d\n",
@@ -2135,7 +2136,7 @@ urtwn_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		if (status != USBD_NOT_STARTED && status != USBD_CANCELLED) {
 			if (status == USBD_STALLED)
-				usbd_clear_endpoint_stall_async(data->pipe);
+				usbd_clear_endpoint_stall_async(pipe);
 			ifp->if_oerrors++;
 		}
 		splx(s);
