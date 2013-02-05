@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_dynamic.c,v 1.4 2012/08/15 06:16:41 christos Exp $	*/
+/*	$NetBSD: openpam_dynamic.c,v 1.5 2013/02/05 23:47:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -63,12 +63,14 @@
  */
 
 static void *
-try_dlopen(const char *modfn)
+try_dlopen(const char *modfn, int *error)
 {
-
-	if (openpam_check_path_owner_perms(modfn) != 0)
-		return (NULL);
-	return (dlopen(modfn, RTLD_NOW));
+	if (openpam_check_path_owner_perms(modfn) != 0) {
+		*error = errno;
+		return NULL;
+	}
+	*error = 0;
+	return dlopen(modfn, RTLD_NOW);
 }
     
 /*
@@ -82,12 +84,13 @@ openpam_dynamic(const char *path)
 {
 	const pam_module_t *dlmodule;
 	pam_module_t *module;
-	const char *prefix, *epath = path;
+	const char *prefix;
 	char *vpath;
 	void *dlh;
 	int i, serrno;
 
 	dlh = NULL;
+	module = NULL;
 
 	/* Prepend the standard prefix if not an absolute pathname. */
 	if (path[0] != '/')
@@ -98,16 +101,18 @@ openpam_dynamic(const char *path)
 	/* try versioned module first, then unversioned module */
 	if (asprintf(&vpath, "%s/%s.%d", prefix, path, LIB_MAJ) < 0)
 		goto err;
-	epath = vpath;
-	if ((dlh = try_dlopen(vpath)) == NULL && errno == ENOENT) {
+	if ((dlh = try_dlopen(vpath, &serrno)) == NULL && errno == ENOENT) {
 		*strrchr(vpath, '.') = '\0';
-		dlh = try_dlopen(vpath);
+		dlh = try_dlopen(vpath, &serrno);
 	}
-	serrno = errno;
-	FREE(vpath);
-	errno = serrno;
-	if (dlh == NULL)
-		goto err;
+	if (dlh == NULL) {
+		if (serrno == 0)
+			goto dl_err;
+		else {
+			errno = serrno;
+			goto err;
+		}
+	}
 	if ((module = calloc((size_t)1, sizeof *module)) == NULL)
 		goto buf_err;
 	if ((module->path = strdup(path)) == NULL)
@@ -119,9 +124,10 @@ openpam_dynamic(const char *path)
 		    (pam_func_t)dlsym(dlh, pam_sm_func_name[i]);
 		if (module->func[i] == NULL)
 			openpam_log(PAM_LOG_DEBUG, "%s: %s(): %s",
-			    path, pam_sm_func_name[i], dlerror());
+			    vpath, pam_sm_func_name[i], dlerror());
 	}
-	return (module);
+	free(vpath);
+	return module;
 buf_err:
 	serrno = errno;
 	if (dlh != NULL)
@@ -130,8 +136,13 @@ buf_err:
 	errno = serrno;
 err:
 	openpam_log(errno == ENOENT ? PAM_LOG_DEBUG : PAM_LOG_ERROR, "%s: %s",
-	    epath, strerror(errno));
-	return (NULL);
+	    vpath, strerror(errno));
+	free(vpath);
+	return NULL;
+dl_err:
+	openpam_log(PAM_LOG_ERROR, "%s: %s", vpath, dlerror());
+	free(vpath);
+	return NULL;
 }
 
 /*
