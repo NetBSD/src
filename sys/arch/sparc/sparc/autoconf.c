@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.247 2013/02/05 21:53:45 macallan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.248 2013/02/05 22:03:16 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.247 2013/02/05 21:53:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.248 2013/02/05 22:03:16 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1125,6 +1125,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	static const char *const openboot_special4m[] = {
 		/* find these first */
 #if !defined(MSIIEP)
+		"SUNW,sx",
 		"obio",		/* smart enough to get eeprom/etc mapped */
 #else
 		"pci",		/* ms-IIep */
