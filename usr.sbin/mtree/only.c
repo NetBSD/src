@@ -1,4 +1,4 @@
-/*	$NetBSD: only.c,v 1.1 2013/02/03 19:15:17 christos Exp $	*/
+/*	$NetBSD: only.c,v 1.2 2013/02/05 00:59:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: only.c,v 1.1 2013/02/03 19:15:17 christos Exp $");
+__RCSID("$NetBSD: only.c,v 1.2 2013/02/05 00:59:03 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -86,13 +86,9 @@ hash_find(const char *str, uint32_t *h)
 }
 
 static void
-hash_insert(char *str)
+hash_insert(char *str, uint32_t h)
 {
-	uint32_t h;
 	struct hentry *e;
-
-	if (hash_find(str, &h))
-		err(1, "Duplicate entry %s", str);
 
 	if ((e = malloc(sizeof(*e))) == NULL)
 		mtree_err("memory allocation error");
@@ -101,6 +97,26 @@ hash_insert(char *str)
 	e->hash = h;
 	e->next = table[h];
 	table[h] = e;
+}
+
+static void
+fill(char *str)
+{
+	uint32_t h;
+	char *ptr = strrchr(str, '/');
+
+	if (ptr == NULL)
+		return;
+
+	*ptr = '\0';
+	if (!hash_find(str, &h)) {
+		char *x = strdup(str);
+		if (x == NULL)
+			mtree_err("memory allocation error");
+		hash_insert(x, h);
+		fill(str);
+	}
+	*ptr = '/';
 }
 
 void
@@ -113,8 +129,13 @@ load_only(const char *fname)
 	if ((fp = fopen(fname, "r")) == NULL)
 		err(1, "Cannot open `%s'", fname);
 
-	while ((line = fparseln(fp, &len, &lineno, NULL, FPARSELN_UNESCALL)))
-		hash_insert(line);
+	while ((line = fparseln(fp, &len, &lineno, NULL, FPARSELN_UNESCALL))) {
+		uint32_t h;
+		if (hash_find(line, &h))
+			err(1, "Duplicate entry %s", line);
+		hash_insert(line, h);
+		fill(line);
+	}
 
 	fclose(fp);
 	loaded = true;
