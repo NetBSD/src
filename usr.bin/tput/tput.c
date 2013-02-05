@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.25 2013/01/25 12:27:13 roy Exp $	*/
+/*	$NetBSD: tput.c,v 1.26 2013/02/05 11:31:56 roy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.25 2013/01/25 12:27:13 roy Exp $");
+__RCSID("$NetBSD: tput.c,v 1.26 2013/02/05 11:31:56 roy Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -54,7 +54,6 @@ __RCSID("$NetBSD: tput.c,v 1.25 2013/01/25 12:27:13 roy Exp $");
 #include <term.h>
 #include <unistd.h>
 
-static int    outc(int);
 static void   usage(void) __dead;
 static char **process(const char *, const char *, char **);
 
@@ -93,7 +92,7 @@ main(int argc, char **argv)
 			if (!strcmp(p, "init")) {
 				s = tigetstr("is1");
 				if (s != NULL)
-					tputs(s, 0, outc);
+					putp(s);
 				p = "is2";
 			}
 			break;
@@ -107,7 +106,7 @@ main(int argc, char **argv)
 			if (!strcmp(p, "reset")) {
 				s = tigetstr("rs1");
 				if (s != NULL)
-					tputs(s, 0, outc);
+					putp(s);
 				p = "rs2";
 			}
 			break;
@@ -181,15 +180,9 @@ process(const char *cap, const char *str, char **argv)
 	/* And output */
 #define p(i)	(i <= nparams ? \
 		    (piss[i - 1] ? (long)strs[i - 1] : nums[i - 1]) : 0)
-	puts(tparm(str, p(1), p(2), p(3), p(4), p(5), p(6), p(7), p(8), p(9)));
+	putp(tparm(str, p(1), p(2), p(3), p(4), p(5), p(6), p(7), p(8), p(9)));
 
 	return argv;
-}
-
-static int
-outc(int c)
-{
-	return putchar(c);
 }
 
 static void
