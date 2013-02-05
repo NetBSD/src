@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.18 2013/01/31 22:35:25 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.19 2013/02/05 23:23:34 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -387,8 +387,8 @@ vfp_attach(void)
 	}
 
 	cpu_fpu_present = 1;
-	__asm("fmrx %0, mvfr0" : "=r"(cpu_media_and_vfp_features[0]));
-	__asm("fmrx %0, mvfr1" : "=r"(cpu_media_and_vfp_features[1]));
+	__asm("mrc p10,7,%0,c7,c0,0" : "=r"(cpu_media_and_vfp_features[0]));
+	__asm("mrc p10,7,%0,c6,c0,0" : "=r"(cpu_media_and_vfp_features[1]));
 	if (fpsid != 0) {
 		aprint_normal("vfp%d at %s: %s\n",
 		    device_unit(curcpu()->ci_dev), device_xname(curcpu()->ci_dev),
