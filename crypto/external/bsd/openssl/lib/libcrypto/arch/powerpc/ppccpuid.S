@@ -72,11 +72,11 @@ OPENSSL_atomic_add:
 .align	4
 OPENSSL_rdtsc:
 .Lrdtsc:
+	mftb	5
 	mftbu	4
 	mftb	3
-	mftbu	5
-	cmplw	4,5
-	bne-	.Lrdtsc
+	.long	0x7c032840
+	bne	.Lrdtsc
 	blr	
 .long	0
 .byte	0,12,0x14,0,0,0,0,0
@@ -89,13 +89,12 @@ OPENSSL_cleanse:
 	li	0,0
 	bge	.Lot
 	cmplwi	4,0
-	beqlr-
-.Little:
-	mtctr	4
+	bclr	14,2
+.Little:	mtctr	4
 	stb	0,0(3)
 	addi	3,3,1
-	bdnz	$-8
-	blr
+	bc	16,0,$-8
+	blr	
 .Lot:	andi.	5,3,3
 	beq	.Laligned
 	stb	0,0(3)
@@ -105,10 +104,9 @@ OPENSSL_cleanse:
 .Laligned:
 	srwi	5,4,2
 	mtctr	5
-.Lstore4:
 	stw	0,0(3)
 	addi	3,3,4
-	bdnz	.Lstore4
+	bc	16,0,$-8
 	andi.	4,4,3
 	bne	.Little
 	blr	
