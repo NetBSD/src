@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.59 2013/01/23 23:44:30 jmcneill Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.60 2013/02/05 00:39:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.59 2013/01/23 23:44:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.60 2013/02/05 00:39:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,6 +442,13 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	if (dma->block == NULL)
 		return USBD_NOMEM;
 
+	dma->block->segs = kmem_alloc(dma->block->nsegs *
+	    sizeof(*dma->block->segs), KM_SLEEP);
+	if (dma->block->segs == NULL) {
+		kmem_free(dma->block, sizeof *dma->block);
+		return USBD_NOMEM;
+	}
+
 	error = extent_alloc(rs->extent, size, PAGE_SIZE, 0,
 	    EX_NOWAIT, &start);
 
@@ -458,7 +465,6 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	dma->block->align = PAGE_SIZE;
 	dma->block->size = size;
 	dma->block->nsegs = 1;
-	/* XXX segs appears to be unused */
 	dma->block->segs[0] = rs->map->dm_segs[0];
 	dma->block->map = rs->map;
 	dma->block->kaddr = rs->vaddr;
@@ -470,11 +476,12 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 void
 usb_reserve_freem(struct usb_dma_reserve *rs, usb_dma_t *dma)
 {
-	int error;
+	int error;	/* XXX: why? */
 
 	error = extent_free(rs->extent,
 	    (u_long)(rs->paddr + dma->offs), dma->block->size, 0);
-	/* XXXPW correct that segs[0] is not used? */
+	kmem_free(dma->block->segs, dma->block->nsegs *
+	    sizeof(*dma->block->segs));
 	kmem_free(dma->block, sizeof *dma->block);
 }
 
