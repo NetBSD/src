@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.68 2012/10/27 17:18:11 chs Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.69 2013/02/05 21:45:39 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -128,8 +128,6 @@ static struct fbdriver cgfourteenfbdriver = {
 	cgfourteenpoll, cgfourteenmmap, nokqfilter
 };
 
-extern struct tty *fbconstty;
-
 static void cg14_set_video(struct cgfourteen_softc *, int);
 static int  cg14_get_video(struct cgfourteen_softc *);
 static int  cg14_get_cmap(struct fbcmap *, union cg14cmap *, int);
@@ -147,10 +145,6 @@ static void cg14_set_depth(struct cgfourteen_softc *, int);
 static void cg14_move_cursor(struct cgfourteen_softc *, int, int);
 static int  cg14_do_cursor(struct cgfourteen_softc *,
                            struct wsdisplay_cursor *);
-#endif
-
-#if defined(RASTERCONSOLE) && (NWSDISPLAY > 0)
-#error "You can't have it both ways - either RASTERCONSOLE or wsdisplay"
 #endif
 
 /*
@@ -183,18 +177,6 @@ cgfourteenmatch(device_t parent, struct cfdata *cf, void *aux)
  * As it happens, this value is correct for both cg3 and cg8 emulation!
  */
 #define COLOUR_OFFSET (256*1024)
-
-#ifdef RASTERCONSOLE
-static void cg14_set_rcons_luts(struct cgfourteen_softc *sc)
-{
-	int i;
-
-	for (i=0;i<CG14_CLUT_SIZE;i++) sc->sc_xlut->xlut_lut[i] = 0x22;
-	for (i=0;i<CG14_CLUT_SIZE;i++) sc->sc_clut2->clut_lut[i] = 0x00ffffff;
-	sc->sc_clut2->clut_lut[0] = 0x00ffffff;
-	sc->sc_clut2->clut_lut[255] = 0;
-}
-#endif /* RASTERCONSOLE */
 
 #if NWSDISPLAY > 0
 static int	cg14_ioctl(void *, void *, u_long, void *, int, struct lwp *);
@@ -314,40 +296,6 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 
 	/* See if we're the console */
         isconsole = fb_is_console(node);
-
-#if defined(RASTERCONSOLE)
-	if (isconsole) {
-		printf(" (console)\n");
-		/* *sbus*_bus_map?  but that's how we map the regs... */
-		if (sbus_bus_map( sc->sc_bustag,
-				  sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
-				  sc->sc_physadr[CG14_PXL_IDX].sbr_offset +
-				    0x03800000,
-				  1152 * 900, BUS_SPACE_MAP_LINEAR,
-				  &bh) != 0) {
-			printf("%s: cannot map pixels\n",
-			    device_xname(sc->sc_dev));
-			return;
-		}
-		sc->sc_rcfb = sc->sc_fb;
-		sc->sc_rcfb.fb_type.fb_type = FBTYPE_SUN3COLOR;
-		sc->sc_rcfb.fb_type.fb_depth = 8;
-		sc->sc_rcfb.fb_linebytes = 1152;
-		sc->sc_rcfb.fb_type.fb_size = roundup(1152*900,NBPG);
-		sc->sc_rcfb.fb_pixels = (void *)bh;
-
-		printf("vram at %p\n",(void *)bh);
-		/* XXX should use actual screen size */
-
-		for (i = 0; i < ramsize; i++)
-		    ((unsigned char *)bh)[i] = 0;
-		fbrcons_init(&sc->sc_rcfb);
-		cg14_set_rcons_luts(sc);
-		sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID | 
-		    CG14_MCTL_PIXMODE_32 | CG14_MCTL_POWERCTL;
-	} else
-		printf("\n");
-#endif
 
 #if NWSDISPLAY > 0
 	prom_getprop(sa->sa_node, "address", 4, &items, &ptr);
