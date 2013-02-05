@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.28 2011/03/14 17:18:12 tteras Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.28.2.1 2013/02/05 11:36:41 tteras Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -274,13 +274,24 @@ myaddr_getsport(addr)
 	struct sockaddr *addr;
 {
 	struct myaddr *my;
+	int port = 0, wport;
 
 	LIST_FOREACH(my, &opened, chain) {
-		if (cmpsaddr((struct sockaddr *) &my->addr, addr) <= CMPSADDR_WILDPORT_MATCH)
+		switch (cmpsaddr((struct sockaddr *) &my->addr, addr)) {
+		case CMPSADDR_MATCH:
 			return extract_port((struct sockaddr *) &my->addr);
+		case CMPSADDR_WILDPORT_MATCH:
+			wport = extract_port((struct sockaddr *) &my->addr);
+			if (port == 0 || wport < port)
+				port = wport;
+			break;
+		}
 	}
+	
+	if (port == 0)
+		port = PORT_ISAKMP;
 
-	return PORT_ISAKMP;
+	return port;
 }
 
 void
