@@ -1,4 +1,4 @@
-/*	$NetBSD: snapshot.c,v 1.6 2011/02/12 18:13:46 bouyer Exp $	*/
+/*	$NetBSD: snapshot.c,v 1.7 2013/02/06 09:05:01 hannken Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -8,6 +8,7 @@
 
 #include <atf-c.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -114,8 +115,114 @@ ATF_TC_CLEANUP(snapshot, tc)
 	unlink(IMGNAME);
 }
 
+ATF_TC_WITH_CLEANUP(snapshotstress);
+ATF_TC_HEAD(snapshotstress, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "snapshot on active file system");
+}
+
+#define NACTIVITY 4
+
+static bool activity_stop = false;
+static pid_t wrkpid;
+
+static void *
+fs_activity(void *arg)
+{
+	int di, fi;
+	char *prefix = arg, path[128];
+
+	rump_pub_lwproc_newlwp(wrkpid);
+
+	RL(rump_sys_mkdir(prefix, 0777));
+	while (! activity_stop) {
+		for (di = 0; di < 5; di++) {
+			snprintf(path, sizeof(path), "%s/d%d", prefix, di);
+			RL(rump_sys_mkdir(path, 0777));
+			for (fi = 0; fi < 5; fi++) {
+				snprintf(path, sizeof(path), "%s/d%d/f%d",
+				    prefix, di, fi);
+				makefile(path);
+			}
+		}
+		for (di = 0; di < 5; di++) {
+			for (fi = 0; fi < 5; fi++) {
+				snprintf(path, sizeof(path), "%s/d%d/f%d",
+				    prefix, di, fi);
+				RL(rump_sys_unlink(path));
+			}
+			snprintf(path, sizeof(path), "%s/d%d", prefix, di);
+			RL(rump_sys_rmdir(path));
+		}
+	}
+	RL(rump_sys_rmdir(prefix));
+
+	rump_pub_lwproc_releaselwp();
+
+	return NULL;
+}
+
+ATF_TC_BODY(snapshotstress, tc)
+{
+	pthread_t at[NACTIVITY];
+	struct fss_set fss;
+	char prefix[NACTIVITY][128];
+	int i, fssfd;
+
+	if (system(NEWFS) == -1)
+		atf_tc_fail_errno("cannot create file system");
+	/* Force SMP so the stress makes sense. */
+	RL(setenv("RUMP_NCPU", "4", 1));
+	RZ(rump_init());
+	/* Prepare for fsck to use the RUMP /dev/fss0. */
+	RL(rump_init_server("unix://commsock"));
+	RL(setenv("LD_PRELOAD", "/usr/lib/librumphijack.so", 1));
+	RL(setenv("RUMP_SERVER", "unix://commsock", 1));
+	RL(setenv("RUMPHIJACK", "blanket=/dev/rfss0", 1));
+	begin();
+
+	RL(rump_sys_mkdir("/mnt", 0777));
+
+	rump_pub_etfs_register("/diskdev", IMGNAME, RUMP_ETFS_BLK);
+
+	mount_diskfs("/diskdev", "/mnt");
+
+	/* Start file system activity. */
+	RL(wrkpid = rump_sys_getpid());
+	for (i = 0; i < NACTIVITY; i++) {
+		snprintf(prefix[i], sizeof(prefix[i]),  "/mnt/a%d", i);
+		RL(pthread_create(&at[i], NULL, fs_activity, prefix[i]));
+		sleep(1);
+	}
+
+	fssfd = rump_sys_open("/dev/rfss0", O_RDWR);
+	if (fssfd == -1)
+		atf_tc_fail_errno("cannot open fss");
+	makefile(BAKNAME);
+	memset(&fss, 0, sizeof(fss));
+	fss.fss_mount = __UNCONST("/mnt");
+	fss.fss_bstore = __UNCONST(BAKNAME);
+	fss.fss_csize = 0;
+	if (rump_sys_ioctl(fssfd, FSSIOCSET, &fss) == -1)
+		atf_tc_fail_errno("create snapshot");
+
+	activity_stop = true;
+	for (i = 0; i < NACTIVITY; i++)
+		RL(pthread_join(at[i], NULL));
+
+	RL(system(FSCK " /dev/rfss0"));
+}
+
+ATF_TC_CLEANUP(snapshotstress, tc)
+{
+
+	unlink(IMGNAME);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, snapshot);
+	ATF_TP_ADD_TC(tp, snapshotstress);
 	return 0;
 }
