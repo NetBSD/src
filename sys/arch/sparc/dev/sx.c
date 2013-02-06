@@ -1,4 +1,4 @@
-/*	$NetBSD: sx.c,v 1.1 2013/02/05 21:52:48 macallan Exp $	*/
+/*	$NetBSD: sx.c,v 1.2 2013/02/06 04:06:29 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.1 2013/02/05 21:52:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.2 2013/02/06 04:06:29 macallan Exp $");
 
 #include "locators.h"
 
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.1 2013/02/05 21:52:48 macallan Exp $");
 #include <sparc/sparc/asm.h>
 #include <sparc/dev/sxvar.h>
 #include <sparc/dev/sxreg.h>
-
-
 
 /* autoconfiguration driver */
 static	int sx_match(device_t, struct cfdata *, void *);
@@ -111,11 +109,11 @@ sx_attach(device_t parent, device_t self, void *aux)
 	sx_write(sc, SX_CONTROL_STATUS, SX_PB | SX_GO);
 
 #ifdef SX_DEBUG
-	sta(0xfc000000, ASI_SX, SX_LD(8, 31));
+	sta(0xfc000000, ASI_SX, SX_LD(8, 31, 0));
 	for (i = 1; i < 60; i++)
-		sta(0xfc000000 + (i * 1280), ASI_SX, SX_ST(8, 31));
+		sta(0xfc000000 + (i * 1280), ASI_SX, SX_ST(8, 31, 0));
 	for (i = 900; i < 1000; i++)
-		sta(0xfc000000 + (i * 1280) + 600, ASI_SX, SX_ST(0, 31));
+		sta(0xfc000000 + (i * 1280) + 600, ASI_SX, SX_ST(0, 31, 0));
 
     	for (i = 0; i < 0x30; i+= 16) {
     		printf("%08x:", i);
