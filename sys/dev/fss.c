@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.83 2012/07/28 16:14:17 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.84 2013/02/06 09:29:46 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.83 2012/07/28 16:14:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.84 2013/02/06 09:29:46 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,11 +223,13 @@ fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 	error = 0;
 
+	mutex_enter(&fss_device_lock);
 restart:
 	mutex_enter(&sc->sc_slock);
 	if ((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) != mflag) {
 		sc->sc_flags &= ~mflag;
 		mutex_exit(&sc->sc_slock);
+		mutex_exit(&fss_device_lock);
 		return 0;
 	}
 	if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
@@ -239,11 +241,8 @@ restart:
 	}
 	if ((sc->sc_flags & FSS_ACTIVE) != 0) {
 		mutex_exit(&sc->sc_slock);
+		mutex_exit(&fss_device_lock);
 		return error;
-	}
-	if (! mutex_tryenter(&fss_device_lock)) {
-		mutex_exit(&sc->sc_slock);
-		goto restart;
 	}
 
 	KASSERT((sc->sc_flags & FSS_ACTIVE) == 0);
