@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.1 2013/02/05 21:52:48 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.2 2013/02/06 04:06:29 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -53,6 +53,12 @@
 /* write registers via pseudo instructions */
 #define SX_QUEUED_R0		0x00000300
 #define SX_QUEUED_R1		0x00000304	/* and so on until R127 */
+#define SX_QUEUED(r)		(0x300 + (r << 2))
+
+/* special purpose registers */
+#define R_ZERO	0
+#define R_SCAM	1
+#define R_MASK	2	/* bitmask for SX_STORE_SELECT */
 
 /*
  * registers are repeated at 0x1000 with certain parts read only
@@ -99,7 +105,7 @@
 #define SX_STORE_COND	(0x4 << 19)	/* conditional write with mask */
 #define SX_STORE_CLAMP	(0x2 << 19)
 #define SX_STORE_MASK	(0x1 << 19)	/* apply plane mask */
-#define SX_STORE_SELECT	(0x9 << 19)	/* expand with plane reg dest[0]/dest[1] */
+#define SX_STORE_SELECT	(0x8 << 19)	/* expand with plane reg dest[0]/dest[1] */
 #define SX_LOAD		(0xa << 19)
 #define SX_STORE	(0x0 << 19)
 
@@ -138,13 +144,21 @@
 #define SX_PACKED	(0x1f << 14)
 
 
-#define SX_LD(dreg, cnt)  (0x80000000 | (cnt << 23) | SX_STORE | SX_LONG | (dreg << 7))
-#define SX_LDB(dreg, cnt) (0x80000000 | (cnt << 23) | SX_STORE | SX_UBYTE_0 | (dreg << 7))
-#define SX_LDP(dreg, cnt) (0x80000000 | (cnt << 23) | SX_STORE | SX_PACKED | (dreg << 7))
-#define SX_ST(sreg, cnt)  (0x80000000 | (cnt << 23) | SX_LOAD  | SX_LONG | (sreg << 7))
-#define SX_STB(sreg, cnt) (0x80000000 | (cnt << 23) | SX_LOAD  | SX_UBYTE_0 | (sreg << 7))
-#define SX_STP(sreg, cnt) (0x80000000 | (cnt << 23) | SX_LOAD  | SX_PACKED | (sreg << 7))
-#define SX_STS(sreg, cnt) (0x80000000 | (cnt << 23) | SX_STORE_SELECT | SX_LONG | (sreg << 7))
-#define SX_STBS(reg, cnt) (0x80000000 | (cnt << 23) | SX_STORE_SELECT | SX_UBYTE_0 | (reg << 7))
+#define SX_LD(dreg, cnt, o)  (0x80000000 | ((cnt) << 23) | SX_LOAD | \
+				SX_LONG | (dreg << 7) | (o))
+#define SX_LDB(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
+				SX_UBYTE_0 | (dreg << 7) | (o))
+#define SX_LDP(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
+				SX_PACKED | (dreg << 7) | (o))
+#define SX_ST(sreg, cnt, o)  (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_LONG | (sreg << 7) | (o))
+#define SX_STB(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_UBYTE_0 | (sreg << 7) | (o))
+#define SX_STP(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_PACKED | (sreg << 7) | (o))
+#define SX_STS(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_SELECT \
+				| SX_LONG | (sreg << 7) | (o))
+#define SX_STBS(reg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_SELECT \
+				| SX_UBYTE_0 | (reg << 7) | (o))
 
 #endif /* SXREG_H */
