@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.14 2013/02/05 21:45:39 macallan Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.15 2013/02/06 04:10:54 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -92,6 +92,10 @@ struct cgfourteen_softc {
 	const struct wsscreen_descr *sc_screens[1];
 	struct 	wsscreen_list sc_screenlist;
 	int 	sc_mode;	/* wsdisplay mode - EMUL, DUMB etc. */
+#if NSX > 0
+	struct sx_softc *sc_sx;
+	uint32_t sc_fb_paddr;
+#endif /* NSX > 0 */
 #endif
 
 	uint8_t	sc_savexlut[256];
