@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.168 2013/02/02 15:24:08 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.169 2013/02/06 16:36:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.168 2013/02/02 15:24:08 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.169 2013/02/06 16:36:01 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.168 2013/02/02 15:24:08 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.169 2013/02/06 16:36:01 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -139,6 +139,7 @@ __RCSID("$NetBSD: job.c,v 1.168 2013/02/02 15:24:08 christos Exp $");
 #include <sys/time.h>
 #include <sys/wait.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #ifndef USE_SELECT
@@ -2040,38 +2041,50 @@ Job_CatchOutput(void)
 {
     int nready;
     Job *job;
-    int i, n;
+    int i;
 
     (void)fflush(stdout);
 
     /* The first fd in the list is the job token pipe */
-    nready = poll(fds + 1 - wantToken, nfds - 1 + wantToken, POLL_MSEC);
+    do {
+	nready = poll(fds + 1 - wantToken, nfds - 1 + wantToken, POLL_MSEC);
+    } while (nready < 0 && errno == EINTR);
 
-    if (nready < 0 || readyfd(&childExitJob)) {
+    if (nready < 0)
+	Punt("poll: %s", strerror(errno));
+
+    if (nready > 0 && readyfd(&childExitJob)) {
 	char token = 0;
-	nready -= 1;
-	for (n = 0; n < 5 &&
-	    read(childExitJob.inPipe, &token, 1) == -1 && errno == EAGAIN; n++)
-		continue;
-	if (token == DO_JOB_RESUME[0])
-	    /* Complete relay requested from our SIGCONT handler */
-	    JobRestartJobs();
-	Job_CatchChildren();
+	ssize_t count;
+	count = read(childExitJob.inPipe, &token, 1);
+	switch (count) {
+	case 0:
+	    Punt("unexpected eof on token pipe");
+	case -1:
+	    Punt("token pipe read: %s", strerror(errno));
+	case 1:
+	    if (token == DO_JOB_RESUME[0])
+		/* Complete relay requested from our SIGCONT handler */
+		JobRestartJobs();
+	    break;
+	default:
+	    abort();
+	}
+	--nready;
     }
 
-    if (nready <= 0)
-	return;
-
-    if (wantToken && readyfd(&tokenWaitJob))
-	nready--;
+    Job_CatchChildren();
+    if (nready == 0)
+	    return;
 
     for (i = 2; i < nfds; i++) {
 	if (!fds[i].revents)
 	    continue;
 	job = jobfds[i];
-	if (job->job_state != JOB_ST_RUNNING)
-	    continue;
-	JobDoOutput(job, FALSE);
+	if (job->job_state == JOB_ST_RUNNING)
+	    JobDoOutput(job, FALSE);
+	if (--nready == 0)
+		return;
     }
 }
 
