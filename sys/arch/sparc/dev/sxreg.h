@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.2 2013/02/06 04:06:29 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.3 2013/02/06 20:39:03 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -161,4 +161,14 @@
 #define SX_STBS(reg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_SELECT \
 				| SX_UBYTE_0 | (reg << 7) | (o))
 
+/* ROP instruction */
+#define SX_ROPB	(0x0 << 21)	/* mask bits apply to bytes */
+#define SX_ROPM	(0x1 << 21)	/* mask bits apply to each bit */
+#define SX_ROPL	(0x2 << 21)	/* mask bits apply per register */
+#define SX_SELB	(0x4 << 21)	/* byte select scalar */
+#define SX_SELV (0x6 << 21)	/* register select vector */
+#define SX_SELS (0x7 << 21)	/* register select scalar */
+
+#define SX_ROP(sa, sb, d, cnt) (0x90000000 | ((cnt) << 24) | SX_ROPL | \
+		((sa) << 14) | (sb) | ((d) << 7))
 #endif /* SXREG_H */
