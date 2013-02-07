@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1788 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1789 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -186,3 +186,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	makefs(8): Add support for msdos, creating filesystems at an offset,
 	    merging directories with common files.  [christos 20130202]
 	openssl: update to 1.0.1d [christos 20130205]
+	sparc: Add hardware acceleration for cgfourteen(4) using SX
+		[macallan 20130207]
