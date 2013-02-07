@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.7 2010/12/13 17:35:08 pooka Exp $	*/
+/*	$NetBSD: env.c,v 1.8 2013/02/07 11:24:15 apb Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: env.c,v 1.7 2010/12/13 17:35:08 pooka Exp $");
+__RCSID("$NetBSD: env.c,v 1.8 2013/02/07 11:24:15 apb Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -67,7 +67,8 @@ prop_dictionary_augment(prop_dictionary_t bottom, prop_dictionary_t top)
 		}
 	}
 	prop_object_iterator_release(i);
-	prop_dictionary_make_immutable(d);
+	if (d !== NULL)
+		prop_dictionary_make_immutable(d);
 	return d;
 }
 
