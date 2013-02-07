@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.6 2013/01/07 23:21:32 rmind Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.7 2013/02/07 23:37:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.6 2013/01/07 23:21:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.7 2013/02/07 23:37:58 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -48,13 +48,13 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.6 2013/01/07 23:21:32 rmind Ex
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/pserialize.h>
+#include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/xcall.h>
 
 struct pserialize {
 	TAILQ_ENTRY(pserialize)	psz_chain;
 	lwp_t *			psz_owner;
-	kcondvar_t		psz_notifier;
 	kcpuset_t *		psz_target;
 	kcpuset_t *		psz_pass;
 };
@@ -102,7 +102,6 @@ pserialize_create(void)
 	pserialize_t psz;
 
 	psz = kmem_zalloc(sizeof(struct pserialize), KM_SLEEP);
-	cv_init(&psz->psz_notifier, "psrlz");
 	kcpuset_create(&psz->psz_target, true);
 	kcpuset_create(&psz->psz_pass, true);
 	psz->psz_owner = NULL;
@@ -121,7 +120,6 @@ pserialize_destroy(pserialize_t psz)
 
 	KASSERT(psz->psz_owner == NULL);
 
-	cv_destroy(&psz->psz_notifier);
 	kcpuset_destroy(psz->psz_target);
 	kcpuset_destroy(psz->psz_pass);
 	kmem_free(psz, sizeof(struct pserialize));
@@ -163,27 +161,21 @@ pserialize_perform(pserialize_t psz)
 	mutex_spin_enter(&psz_lock);
 	TAILQ_INSERT_TAIL(&psz_queue0, psz, psz_chain);
 	psz_work_todo++;
-	mutex_spin_exit(&psz_lock);
 
-	/*
-	 * Force some context switch activity on every CPU, as the system
-	 * may not be busy.  Note: should pass the point twice.
-	 */
-	xc = xc_broadcast(XC_HIGHPRI, (xcfunc_t)nullop, NULL, NULL);
-	xc_wait(xc);
+	do {
+		mutex_spin_exit(&psz_lock);
 
-	/* No need to xc_wait() as we implement our own condvar. */
-	xc_broadcast(XC_HIGHPRI, (xcfunc_t)nullop, NULL, NULL);
+		/*
+		 * Force some context switch activity on every CPU, as
+		 * the system may not be busy.  Pause to not flood.
+		 */
+		xc = xc_broadcast(XC_HIGHPRI, (xcfunc_t)nullop, NULL, NULL);
+		xc_wait(xc);
+		kpause("psrlz", false, 1, NULL);
 
-	/*
-	 * Wait for all CPUs to cycle through mi_switch() twice.
-	 * The last one through will remove our update from the
-	 * queue and awaken us.
-	 */
-	mutex_spin_enter(&psz_lock);
-	while (!kcpuset_iszero(psz->psz_target)) {
-		cv_wait(&psz->psz_notifier, &psz_lock);
-	}
+		mutex_spin_enter(&psz_lock);
+	} while (!kcpuset_iszero(psz->psz_target));
+
 	psz_ev_excl.ev_count++;
 	mutex_spin_exit(&psz_lock);
 
@@ -236,8 +228,8 @@ pserialize_switchpoint(void)
 	 */
 	for (psz = TAILQ_FIRST(&psz_queue1); psz != NULL; psz = next) {
 		next = TAILQ_NEXT(psz, psz_chain);
+		kcpuset_set(psz->psz_pass, cid);
 		if (!kcpuset_match(psz->psz_pass, psz->psz_target)) {
-			kcpuset_set(psz->psz_pass, cid);
 			continue;
 		}
 		kcpuset_zero(psz->psz_pass);
@@ -250,8 +242,8 @@ pserialize_switchpoint(void)
 	 */
 	for (psz = TAILQ_FIRST(&psz_queue0); psz != NULL; psz = next) {
 		next = TAILQ_NEXT(psz, psz_chain);
+		kcpuset_set(psz->psz_pass, cid);
 		if (!kcpuset_match(psz->psz_pass, psz->psz_target)) {
-			kcpuset_set(psz->psz_pass, cid);
 			continue;
 		}
 		kcpuset_zero(psz->psz_pass);
@@ -265,7 +257,6 @@ pserialize_switchpoint(void)
 	while ((psz = TAILQ_FIRST(&psz_queue2)) != NULL) {
 		TAILQ_REMOVE(&psz_queue2, psz, psz_chain);
 		kcpuset_zero(psz->psz_target);
-		cv_signal(&psz->psz_notifier);
 		psz_work_todo--;
 	}
 	mutex_spin_exit(&psz_lock);
