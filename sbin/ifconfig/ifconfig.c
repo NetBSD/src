@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.228 2012/11/01 13:43:23 pgoyette Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.229 2013/02/07 13:21:34 apb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.228 2012/11/01 13:43:23 pgoyette Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.229 2013/02/07 13:21:34 apb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -681,8 +681,12 @@ main(int argc, char **argv)
 	env = (nmatch > 0) ? match[(int)nmatch - 1].m_env : NULL;
 	if (env == NULL)
 		env = oenv;
-	else
+	else {
 		env = prop_dictionary_augment(env, oenv);
+		if (env == NULL)
+			err(EXIT_FAILURE, "%s: prop_dictionary_augment",
+			    __func__);
+	}
 
 	/* Process any media commands that may have been issued. */
 	process_media_commands(env);
