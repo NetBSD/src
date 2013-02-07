@@ -1,6 +1,6 @@
-/*	$NetBSD: memcpy.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.1.54.1 2013/02/07 07:05:59 matt Exp $	*/
 
-#if !defined(__XSCALE__) || defined(_STANDALONE)
+#if !defined(_ARM_ARCH_DWORK_OK) || defined(_STANDALONE)
 #include "memcpy_arm.S"
 #else
 #include "memcpy_xscale.S"
