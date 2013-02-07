@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.89.6.2 2012/06/24 15:44:07 jdc Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.89.6.2.2.1 2013/02/07 06:58:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -499,6 +499,7 @@
  */
 #define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
 
+#ifndef __ASSEMBLER__
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
 #define	__BIT(__n)	\
     (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (uintmax_t)(__n)))
@@ -506,6 +507,7 @@
 /* __BITS(m, n): bits m through n, m < n. */
 #define	__BITS(__m, __n)	\
 	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
+#endif /* !__ASSEMBLER__ */
 
 /* find least significant bit that is set */
 #define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
