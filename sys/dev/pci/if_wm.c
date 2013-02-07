@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.240 2013/01/30 14:20:53 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.241 2013/02/07 02:10:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.240 2013/01/30 14:20:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.241 2013/02/07 02:10:18 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1217,11 +1217,14 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_type >= WM_T_82544) {
 		/* First we have to find the I/O BAR. */
 		for (i = PCI_MAPREG_START; i < PCI_MAPREG_END; i += 4) {
-			if (pci_mapreg_type(pa->pa_pc, pa->pa_tag, i) ==
-			    PCI_MAPREG_TYPE_IO)
+			memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, i);
+			if (memtype == PCI_MAPREG_TYPE_IO)
 				break;
+			if (PCI_MAPREG_MEM_TYPE(memtype) ==
+			    PCI_MAPREG_MEM_TYPE_64BIT)
+				i += 4;	/* skip high bits, too */
 		}
-		if (i != PCI_MAPREG_END) {
+		if (i < PCI_MAPREG_END) {
 			/*
 			 * We found PCI_MAPREG_TYPE_IO. Note that 82580
 			 * (and newer?) chip has no PCI_MAPREG_TYPE_IO.
