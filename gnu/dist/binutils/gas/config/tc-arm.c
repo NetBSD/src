@@ -6757,7 +6757,7 @@ do_dsb (char * str)
 }
 
 static void
-do_movw (char * str)
+do_movwt (char * str)
 {
   expressionS expr;
   int reg;
@@ -6791,7 +6791,7 @@ do_movw (char * str)
       return;
     }
 
-  if ((expr.X_add_number >> 16) != 0)
+  if ((expr.X_add_number & 0xffff0000) != 0)
     {
       inst.error = _("invalid unsigned 16-bit value");
       return;
@@ -10245,7 +10245,8 @@ static const struct asm_opcode insns[] =
   { "dmb",       0xf57ff05f, 0,  ARM_EXT_V7A,      do_dsb},
   { "dsb",       0xf57ff04f, 0,  ARM_EXT_V7A,      do_dsb},
   { "isb",       0xf57ff06f, 0,  ARM_EXT_V7A,      do_dsb},
-  { "movw",	 0xe3000000, 2,  ARM_EXT_V7A,      do_movw},
+  { "movw",	 0xe3000000, 2,  ARM_EXT_V7A,      do_movwt},
+  { "movt",	 0xe3400000, 2,  ARM_EXT_V7A,      do_movwt},
   { "sbfx",      0xe7a00050, 4,  ARM_EXT_V7A,      do_bfx},
   { "ubfx",      0xe7e00050, 4,  ARM_EXT_V7A,      do_bfx},
 
