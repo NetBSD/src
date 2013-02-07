@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1799 2013/01/31 20:57:58 riastradh Exp $
+#	$NetBSD: mi,v 1.1800 2013/02/07 16:54:53 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3885,6 +3885,7 @@
 ./usr/share/man/cat3/EVP_OpenInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_PKEY_new.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_PKEY_set1_RSA.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_verify_recover.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_SealInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_SignInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_VerifyInit.0		comp-c-catman		crypto,.cat
@@ -10423,6 +10424,7 @@
 ./usr/share/man/html3/EVP_OpenInit.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_PKEY_new.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_PKEY_set1_RSA.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/EVP_PKEY_verify_recover.html	comp-c-htmlman	crypto,html
 ./usr/share/man/html3/EVP_SealInit.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_SignInit.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_VerifyInit.html	comp-c-htmlman		crypto,html
@@ -16759,6 +16761,7 @@
 ./usr/share/man/man3/EVP_OpenInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_PKEY_new.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_PKEY_set1_RSA.3	comp-c-man		crypto,.man
+./usr/share/man/man3/EVP_PKEY_verify_recover.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_SealInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_SignInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_VerifyInit.3		comp-c-man		crypto,.man
