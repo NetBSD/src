@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.235 2012/10/17 14:48:17 apb Exp $
+# $NetBSD: GENERIC,v 1.236 2013/02/07 16:19:15 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.235 $"
+#ident 		"GENERIC-$Revision: 1.236 $"
 
 maxusers	32
 
@@ -260,6 +260,9 @@ cpu0	at mainbus0
 cpuunit0	at mainbus0			# sun4d
 cpuunit*	at mainbus0			# sun4d
 cpu0	at cpuunit0				# sun4d
+
+#### SX rendering engine found in SS20 and SS10SX
+sx0	at mainbus0
 
 #### Bus types found on SPARC systems.
 
