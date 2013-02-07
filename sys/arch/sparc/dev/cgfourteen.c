@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.70 2013/02/06 04:10:54 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.71 2013/02/07 16:14:30 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -151,12 +151,13 @@ static int  cg14_do_cursor(struct cgfourteen_softc *,
 #if NSX > 0
 static void cg14_wait_idle(struct cgfourteen_softc *);
 static void cg14_rectfill(struct cgfourteen_softc *, int, int, int, int, uint32_t);
+static void cg14_invert(struct cgfourteen_softc *, int, int, int, int);
 static void cg14_bitblt(void *, int, int, int, int, int, int, int);
 
 #if 0
-static void cg14_cursor(void *, int, int, int);
 static void cg14_putchar_aa(void *, int, int, u_int, long);
 #endif
+static void cg14_cursor(void *, int, int, int);
 static void cg14_putchar(void *, int, int, u_int, long);
 static void cg14_copycols(void *, int, int, int, int);
 static void cg14_erasecols(void *, int, int, int, long);
@@ -360,14 +361,13 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 		    sc->sc_fbaddr, 0, 0, 0) & 0xfffff000;
 		aprint_normal_dev(sc->sc_dev, "using %s\n", 
 		    device_xname(sc->sc_sx->sc_dev));
-		aprint_normal_dev(sc->sc_dev, "fb paddr: %08x\n",
+		aprint_debug_dev(sc->sc_dev, "fb paddr: %08x\n",
 		    sc->sc_fb_paddr);
-#if 0
 		sx_write(sc->sc_sx, SX_PAGE_BOUND_LOWER, sc->sc_fb_paddr);
 		sx_write(sc->sc_sx, SX_PAGE_BOUND_UPPER,
 		    sc->sc_fb_paddr + 0x03ffffff);
-#endif
 	}
+	cg14_wait_idle(sc);
 #endif
 	cg14_setup_wsdisplay(sc, isconsole);
 #endif
@@ -1012,7 +1012,13 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_bits = (char *)sc->sc_fb.fb_pixels;
 #if NSX > 0
-	if (sc->sc_sx == NULL)
+	/*
+	 * unaligned copies with horizontal overlap are slow, so don't bother
+	 * handling them in cg14_bitblt() and use putchar() instead
+	 */
+	if (sc->sc_sx != NULL) {
+		scr->scr_flags |= VCONS_NO_COPYCOLS;
+	} else
 #endif
 	scr->scr_flags |= VCONS_DONT_READ;
 
@@ -1034,8 +1040,8 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_ops.copycols = cg14_copycols;
 		ri->ri_ops.eraserows = cg14_eraserows;
 		ri->ri_ops.erasecols = cg14_erasecols;
-#if 0
 		ri->ri_ops.cursor = cg14_cursor;
+#if 0
 		if (FONT_IS_ALPHA(ri->ri_font)) {
 			ri->ri_ops.putchar = cg14_putchar_aa;
 		} else
@@ -1184,25 +1190,112 @@ cg14_rectfill(struct cgfourteen_softc *sc, int x, int y, int wi, int he,
      uint32_t colour)
 {
 	uint32_t addr, pptr;
-	int line, cnt;
+	int line, cnt, pre, words;
 	int stride = sc->sc_fb.fb_type.fb_width;
 
 	addr = sc->sc_fb_paddr + x + stride * y;
 	sx_write(sc->sc_sx, SX_QUEUED(8), colour);
 	sx_write(sc->sc_sx, SX_QUEUED(9), colour);
+	/*
+	 * Calculate the number of pixels we need to do one by one
+	 * until we're 32bit aligned, then do the rest in 32bit
+	 * mode. Assumes that stride is always a multiple of 4. 
+	 */ 
+	pre = addr & 3;
+	if (pre != 0) pre = 4 - pre;
 	for (line = 0; line < he; line++) {
 		pptr = addr;
 		cnt = wi;
-		while(cnt > 32) {
-			sta(pptr, ASI_SX, SX_STBS(8, 31, pptr & 7));
-			pptr += 32;
-			cnt -= 32;
+		if (pre) {
+			sta(pptr, ASI_SX, SX_STBS(8, pre - 1, pptr & 7));
+			pptr += pre;
+			cnt -= pre;
 		}
+		/* now do the aligned pixels in 32bit chunks */
+		while(cnt > 31) {
+			words = min(32, cnt >> 2);
+			sta(pptr, ASI_SX, SX_STS(8, words - 1, pptr & 7));
+			pptr += words << 2;
+			cnt -= words << 2;
+		}
+		/* do any remaining pixels byte-wise again */
 		if (cnt > 0)
 			sta(pptr, ASI_SX, SX_STBS(8, cnt - 1, pptr & 7));
 		addr += stride;
 	}
-	cg14_wait_idle(sc);
+}
+
+static void
+cg14_invert(struct cgfourteen_softc *sc, int x, int y, int wi, int he)
+{
+	uint32_t addr, pptr;
+	int line, cnt, pre, words;
+	int stride = sc->sc_fb.fb_type.fb_width;
+
+	addr = sc->sc_fb_paddr + x + stride * y;
+	sx_write(sc->sc_sx, SX_ROP_CONTROL, 0x33); /* ~src a */
+	/*
+	 * Calculate the number of pixels we need to do one by one
+	 * until we're 32bit aligned, then do the rest in 32bit
+	 * mode. Assumes that stride is always a multiple of 4. 
+	 */ 
+	pre = addr & 3;
+	if (pre != 0) pre = 4 - pre;
+	for (line = 0; line < he; line++) {
+		pptr = addr;
+		cnt = wi;
+		if (pre) {
+			sta(pptr, ASI_SX, SX_LDB(8, pre - 1, pptr & 7));
+			sx_write(sc->sc_sx, SX_INSTRUCTIONS,
+			    SX_ROP(8, 8, 32, pre - 1));
+			sta(pptr, ASI_SX, SX_STB(32, pre - 1, pptr & 7));
+			pptr += pre;
+			cnt -= pre;
+		}
+		/* now do the aligned pixels in 32bit chunks */
+		while(cnt > 15) {
+			words = min(16, cnt >> 2);
+			sta(pptr, ASI_SX, SX_LD(8, words - 1, pptr & 7));
+			sx_write(sc->sc_sx, SX_INSTRUCTIONS,
+			    SX_ROP(8, 8, 32, words - 1));
+			sta(pptr, ASI_SX, SX_ST(32, words - 1, pptr & 7));
+			pptr += words << 2;
+			cnt -= words << 2;
+		}
+		/* do any remaining pixels byte-wise again */
+		if (cnt > 0)
+			sta(pptr, ASI_SX, SX_LDB(8, cnt - 1, pptr & 7));
+			sx_write(sc->sc_sx, SX_INSTRUCTIONS,
+			    SX_ROP(8, 8, 32, cnt - 1));
+			sta(pptr, ASI_SX, SX_STB(32, cnt - 1, pptr & 7));
+		addr += stride;
+	}
+}
+
+static inline void
+cg14_slurp(int reg, uint32_t addr, int cnt)
+{
+	int num;
+	while (cnt > 0) {
+		num = min(32, cnt);
+		sta(addr, ASI_SX, SX_LD(reg, num - 1, addr & 7));
+		cnt -= num;
+		reg += num;
+		addr += (num << 2);
+	}
+}
+
+static inline void
+cg14_spit(int reg, uint32_t addr, int cnt)
+{
+	int num;
+	while (cnt > 0) {
+		num = min(32, cnt);
+		sta(addr, ASI_SX, SX_ST(reg, num - 1, addr & 7));
+		cnt -= num;
+		reg += num;
+		addr += (num << 2);
+	}
 }
 
 static void
@@ -1212,9 +1305,19 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 	struct cgfourteen_softc *sc = cookie;
 	uint32_t saddr, daddr, sptr, dptr;
 	int line, cnt, stride = sc->sc_fb.fb_type.fb_width;
+	int num, words, skip;
 
-	saddr = sc->sc_fb_paddr + xs + stride * ys;
-	daddr = sc->sc_fb_paddr + xd + stride * yd;
+	if (ys < yd) {
+		/* need to go bottom-up */
+		saddr = sc->sc_fb_paddr + xs + stride * (ys + he - 1);
+		daddr = sc->sc_fb_paddr + xd + stride * (yd + he - 1);
+		skip = -stride;
+	} else {
+		saddr = sc->sc_fb_paddr + xs + stride * ys;
+		daddr = sc->sc_fb_paddr + xd + stride * yd;
+		skip = stride;
+	}
+
 	if ((saddr & 3) == (daddr & 3)) {
 		int pre = saddr & 3;	/* pixels to copy byte-wise */
 		if (pre != 0) pre = 4 - pre;
@@ -1229,27 +1332,21 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 				sptr += pre;
 				dptr += pre;
 			}
-			while(cnt > 128) {
-				sta(sptr, ASI_SX, SX_LD(32, 31, sptr & 7));
-				sta(dptr, ASI_SX, SX_ST(32, 31, dptr & 7));
-				sptr += 128;
-				dptr += 128;
-				cnt -= 128;
-			}
-			if (cnt > 3) {
-				int words = cnt >> 2;
-				sta(sptr, ASI_SX, SX_LD(32, words - 1, sptr & 7));
-				sta(dptr, ASI_SX, SX_ST(32, words - 1, dptr & 7));
-				sptr += words << 2;
-				dptr += words << 2;
-				cnt -= words << 2;
+			words = cnt >> 2;
+			while(cnt > 3) {
+				num = min(120, words);
+				cg14_slurp(8, sptr, num);
+				cg14_spit(8, dptr, num);
+				sptr += num << 2;
+				dptr += num << 2;
+				cnt -= num << 2;
 			}
 			if (cnt > 0) {
 				sta(sptr, ASI_SX, SX_LDB(32, cnt - 1, sptr & 7));
 				sta(dptr, ASI_SX, SX_STB(32, cnt - 1, dptr & 7));
 			}
-			saddr += stride;
-			daddr += stride;
+			saddr += skip;
+			daddr += skip;
 		}
 	} else {
 		/* unaligned, have to use byte mode */
@@ -1257,7 +1354,7 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 			sptr = saddr;
 			dptr = daddr;
 			cnt = wi;
-			while(cnt > 32) {
+			while(cnt > 31) {
 				sta(sptr, ASI_SX, SX_LDB(32, 31, sptr & 7));
 				sta(dptr, ASI_SX, SX_STB(32, 31, dptr & 7));
 				sptr += 32;
@@ -1268,11 +1365,10 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 				sta(sptr, ASI_SX, SX_LDB(32, cnt - 1, sptr & 7));
 				sta(dptr, ASI_SX, SX_STB(32, cnt - 1, dptr & 7));
 			}
-			saddr += stride;
-			daddr += stride;
+			saddr += skip;
+			daddr += skip;
 		}
 	}
-	cg14_wait_idle(sc);
 }
 
 
@@ -1342,13 +1438,12 @@ cg14_putchar(void *cookie, int row, int col, u_int c, long attr)
 	}
 }
 
-#if 0
 static void
-r128fb_cursor(void *cookie, int on, int row, int col)
+cg14_cursor(void *cookie, int on, int row, int col)
 {
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
-	struct r128fb_softc *sc = scr->scr_cookie;
+	struct cgfourteen_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
 	
 	wi = ri->ri_font->fontwidth;
@@ -1358,7 +1453,7 @@ r128fb_cursor(void *cookie, int on, int row, int col)
 		x = ri->ri_ccol * wi + ri->ri_xorigin;
 		y = ri->ri_crow * he + ri->ri_yorigin;
 		if (ri->ri_flg & RI_CURSOR) {
-			r128fb_bitblt(sc, x, y, x, y, wi, he, R128_ROP3_Dn);
+			cg14_invert(sc, x, y, wi, he);
 			ri->ri_flg &= ~RI_CURSOR;
 		}
 		ri->ri_crow = row;
@@ -1366,7 +1461,7 @@ r128fb_cursor(void *cookie, int on, int row, int col)
 		if (on) {
 			x = ri->ri_ccol * wi + ri->ri_xorigin;
 			y = ri->ri_crow * he + ri->ri_yorigin;
-			r128fb_bitblt(sc, x, y, x, y, wi, he, R128_ROP3_Dn);
+			cg14_invert(sc, x, y, wi, he);
 			ri->ri_flg |= RI_CURSOR;
 		}
 	} else {
@@ -1377,6 +1472,7 @@ r128fb_cursor(void *cookie, int on, int row, int col)
 
 }
 
+#if 0
 static void
 r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 {
