@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.42 2013/02/02 17:58:11 matt Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.43 2013/02/07 18:53:34 gdt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -154,7 +154,7 @@
 
 #define	__link_set_decl(set, ptype)					\
 	extern ptype * const __start_link_set_##set[] __dso_hidden;	\
-	extern ptype * const __stop_link_set_##set[] __dso_hidden	\
+	extern ptype * const __stop_link_set_##set[] __dso_hidden
 
 #define	__link_set_start(set)	(__start_link_set_##set)
 #define	__link_set_end(set)	(__stop_link_set_##set)
