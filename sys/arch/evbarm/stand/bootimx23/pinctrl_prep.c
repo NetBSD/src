@@ -1,4 +1,4 @@
-/* $Id: pinctrl_prep.c,v 1.2 2012/12/16 19:08:44 jkunz Exp $ */
+/* $Id: pinctrl_prep.c,v 1.3 2013/02/07 21:56:36 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -42,9 +42,10 @@
 static void configure_emi_mux(void);
 static void configure_emi_drive(int);
 static void disable_emi_padkeepers(void);
-static void configure_ssp_mux();
+static void configure_ssp_mux(void);
 static void configure_ssp_drive(int);
 static void configure_ssp_pullups(void);
+static void configure_dbuart_mux(void);
 
 /* EMI pins output drive strengths */
 #define DRIVE_04_MA	0x0	/* 4 mA */
@@ -71,6 +72,9 @@ pinctrl_prep(void)
 	configure_ssp_mux();
 	configure_ssp_drive(DRIVE_16_MA);
 	configure_ssp_pullups();
+
+	/* Debug UART. */
+	configure_dbuart_mux();
 
 	return 0;
 }
@@ -481,6 +485,22 @@ configure_ssp_pullups(void)
 	    HW_PINCTRL_PULL2_BANK2_PIN02 |	/* Pin 122, SSP1_DATA0 */
 	    HW_PINCTRL_PULL2_BANK2_PIN00	/* Pin 121, SSP1_CMD */
 	));
+
+	return;
+}
+
+/*
+ * Configure Debug UART MUX.
+ */
+static
+void configure_dbuart_mux(void)
+{
+	REG_WR(HW_PINCTRL_BASE + HW_PINCTRL_MUXSEL3_CLR,
+	    __SHIFTIN(0x3, HW_PINCTRL_MUXSEL3_BANK1_PIN27) |
+	    __SHIFTIN(0x3, HW_PINCTRL_MUXSEL3_BANK1_PIN26));
+	REG_WR(HW_PINCTRL_BASE + HW_PINCTRL_MUXSEL3_SET,
+	    __SHIFTIN(0x2, HW_PINCTRL_MUXSEL3_BANK1_PIN27) |
+	    __SHIFTIN(0x2, HW_PINCTRL_MUXSEL3_BANK1_PIN26));
 
 	return;
 }
