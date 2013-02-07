@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.21 2011/07/25 03:04:23 christos Exp $
+# $NetBSD: sshd,v 1.22 2013/02/07 19:32:19 christos Exp $
 #
 
 # PROVIDE: sshd
@@ -33,7 +33,7 @@ sshd_keygen()
 		    "in /etc/ssh/ssh_host_dsa_key"
 		echo "Skipping protocol version 2 DSA Key Generation"
 	else
-		/usr/bin/ssh-keygen -t dsa ${ssh_keygen_flags} \
+		/usr/bin/ssh-keygen -t dsa -b 1024 \
 		    -f /etc/ssh/ssh_host_dsa_key -N ''
 	fi
 
