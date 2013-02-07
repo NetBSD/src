@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2013/02/03 12:41:40 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.19 2013/02/07 13:33:50 macallan Exp $
 
 NOLINT=	1	# defined
 
@@ -55,6 +55,13 @@ COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
 #COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
 .endif
 
+.if ${MACHINE_ARCH} == "powerpc"
+SRCS+=	pixman-vmx.c
+COPTS.pixman-vmx.c=	-maltivec
+CPPFLAGS+=		-DUSE_VMX
+MKDEPFLAGS+=		-maltivec
+.endif
+
 .if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmhf"
 # ARM SIMD
 SRCS+=		pixman-arm-simd.c 		\
@@ -70,10 +77,6 @@ SRCS+=		pixman-mmx.c
 COPTS.pixman-mmx.c=	-mcpu=iwmmxt
 CPPFLAGS+=	-DUSE_ARM_IWMMXT
 .endif
-
-# .if VMX
-# SRCS+=	pixman-vmx.c
-# .endif
 
 INCS=	pixman.h pixman-version.h
 INCSDIR=${X11INCDIR}/pixman-1
