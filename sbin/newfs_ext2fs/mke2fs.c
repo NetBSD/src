@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.17 2013/01/22 09:39:13 dholland Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.18 2013/02/07 11:00:59 apb Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.17 2013/01/22 09:39:13 dholland Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.18 2013/02/07 11:00:59 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1276,8 +1276,10 @@ alloc(uint32_t size, uint16_t mode)
 #endif
 
 	loc = skpc(~0U, len, bbp);
-	if (loc == 0)
+	if (loc == 0) {
+		free(bbp);
 		return 0;
+	}
 	loc = len - loc;
 	map = bbp[loc];
 	bno = loc * NBBY;
@@ -1285,6 +1287,7 @@ alloc(uint32_t size, uint16_t mode)
 		if ((map & (1 << i)) == 0)
 			goto gotit;
 	}
+	free(bbp);
 	return 0;
 	
  gotit:
