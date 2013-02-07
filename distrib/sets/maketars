@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.79 2013/02/07 01:24:04 christos Exp $
+# $NetBSD: maketars,v 1.80 2013/02/07 16:27:41 christos Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -195,8 +195,8 @@ fi
 runpax() {
 	local s="$1"
 	shift
-	(cd "${dest}" && cut -d " " -f 1 "${setlistdir}/set.${s}" | 
-	    ${PAX} -dOw -N"${etcdir}" ${metalog:+-M} "$@")
+	(cd "${dest}" && 
+	    ${PAX} -dOw -N"${etcdir}" -M "$@" < "${setlistdir}/set.${s}")
 }
 
 #
