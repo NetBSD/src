@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.48 2012/08/29 20:39:24 bouyer Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.49 2013/02/07 15:38:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -420,8 +420,11 @@ struct livengood_tcpip_ctxdesc {
 #define	RAL_RDR1	(1U << 30)	/* put packet in alt. rx ring */
 #define	RAL_AV		(1U << 31)	/* entry is valid */
 
-#define	WM_RAL_TABSIZE	16
-#define	WM_ICH8_RAL_TABSIZE 7
+#define	WM_RAL_TABSIZE		15	/* RAL size for old devices */
+#define	WM_RAL_TABSIZE_ICH8	7	/* RAL size for ICH* and PCH* */
+#define	WM_RAL_TABSIZE_82575	16	/* RAL size for 82575 */
+#define	WM_RAL_TABSIZE_82576	24	/* RAL size for 82576 and 82580 */
+#define	WM_RAL_TABSIZE_I350	32	/* RAL size for I350 */
 
 #define	WMREG_ICR	0x00c0	/* Interrupt Cause Register */
 #define	ICR_TXDW	(1U << 0)	/* Tx desc written back */
