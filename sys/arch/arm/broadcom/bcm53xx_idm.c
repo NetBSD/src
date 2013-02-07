@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_idm.c,v 1.2.4.2 2012/11/28 22:40:22 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_idm.c,v 1.2.4.3 2013/02/07 06:51:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,12 +78,28 @@ bcmeth_unreset(bus_space_tag_t bst, bus_space_handle_t bsh,
 			    off + IDM_IO_CONTROL_DIRECT);
 			/*
 			 * Clear read-allocate and write-allocate bits from
-			 * ACP cache access so we don't pollute the caches.
+			 * ACP cache access so we don't pollute the caches with
+			 * DMA traffic.
 			 */
 			v &= ~IO_CONTROL_DIRECT_ARCACHE;
 			v &= ~IO_CONTROL_DIRECT_AWCACHE;
+#if 0
+			v |= __SHIFTIN(AXCACHE_WA, IO_CONTROL_DIRECT_ARCACHE);
+			v |= __SHIFTIN(AXCACHE_RA, IO_CONTROL_DIRECT_AWCACHE);
+#endif
 			v |= __SHIFTIN(AXCACHE_C|AXCACHE_B, IO_CONTROL_DIRECT_ARCACHE);
 			v |= __SHIFTIN(AXCACHE_C|AXCACHE_B, IO_CONTROL_DIRECT_AWCACHE);
+			/*
+			 * These are the default but make sure they are
+			 * properly set.
+			 */
+			v |= __SHIFTIN(0x1F, IO_CONTROL_DIRECT_ARUSER);
+			v |= __SHIFTIN(0x1F, IO_CONTROL_DIRECT_AWUSER);
+			v |= IO_CONTROL_DIRECT_CLK_250_SEL;
+			v |= IO_CONTROL_DIRECT_DIRECT_GMII_MODE;
+			v |= IO_CONTROL_DIRECT_SOURCE_SYNC_MODE_EN;
+			v |= IO_CONTROL_DIRECT_CLK_GATING_EN;
+
 			bus_space_write_4(bst, bsh, off + IDM_IO_CONTROL_DIRECT,
 			    v);
 		}
