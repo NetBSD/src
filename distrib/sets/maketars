@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.77 2013/02/06 01:01:12 christos Exp $
+# $NetBSD: maketars,v 1.78 2013/02/07 01:07:41 christos Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -183,7 +183,7 @@ for setname in ${lists}; do
 		# We deliberately do not add set.${setname} to ${metalog},
 		# because we depend on it as an input.
 	else
-		${MTREE} -c -p "${DESTDIR}" -k all -R "${skipkeys}" \
+		${MTREE} -c -p "${dest}" -k all -R "${skipkeys}" \
 		    -O "${SDIR}/flist.${setname}" | ${MTREE} -C -k all > \
 		    "${setlistdir}/set.${setname}"
 	fi
@@ -191,6 +191,13 @@ done
 if ${setfilesonly}; then		# exit after creating the set lists
 	exit 0
 fi
+
+runpax() {
+	local s="$1"
+	shift
+	(cd "${dest}" && cut -d " " -f 1 "${setlistdir}/set.${s}" | 
+	    ${PAX} -Ow -N"${etcdir}" ${metalog:+-M} "$@")
+}
 
 #
 # now build the tarfiles
@@ -203,9 +210,7 @@ for setname in ${lists:-${nlists}}; do
 	out="${setname}.tgz"
 	if [ -n "${installdir}" ]; then
 		msg "Copying set ${setname}"
-		( cd "${dest}"; \
-		    ${PAX} -O -rwpe -d -N"${etcdir}" ${metalog:+-M} \
-			"${installdir}" < "${setlistdir}/set.${setname}" )
+		runpax "${setname}" -rpe "${installdir}"
 	else
 		if [ -n "${metalog}" -a "${tars}/${out}" -nt "${metalog}" ]
 		then
@@ -215,11 +220,8 @@ for setname in ${lists:-${nlists}}; do
 		msg "Creating ${out}"
 		rm -f "${tars}/${out}"
 		TMPFILES="${TMPFILES} ${tars}/${out}.tmp"
-		( cd "${dest}"; \
-		    ${PAX} -O -w -d -z -N"${etcdir}" ${metalog:+-M} \
-			--use-compress-program ${COMPRESS_PROGRAM} \
-			< "${setlistdir}/set.${setname}" ) \
-			> "${tars}/${out}.tmp" &&
+		runpax "${setname}" -dz --use-compress-program \
+		    ${COMPRESS_PROGRAM} > "${tars}/${out}.tmp" &&
 		mv "${tars}/${out}.tmp" "${tars}/${out}"
 	fi
 	es=$((${es} + $?))
