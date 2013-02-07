@@ -6651,25 +6651,35 @@ do_ldmstm (char * str)
 
   skip_whitespace (str);
 
-  if ((base_reg = reg_required_here (&str, 16)) == FAIL)
-    return;
-
-  if (base_reg == REG_PC)
+  base_reg = (inst.instruction >> 16) & 0xf;
+  if (base_reg == 0)
     {
-      inst.error = _("r15 not allowed as base register");
-      return;
+      if ((base_reg = reg_required_here (&str, 16)) == FAIL)
+	return;
+
+      if (base_reg == REG_PC)
+	{
+	  inst.error = _("r15 not allowed as base register");
+	  return;
+	}
+
+      skip_whitespace (str);
+
+      if (*str == '!')
+	{
+	  inst.instruction |= WRITE_BACK;
+	  str++;
+	}
+
+      if (skip_past_comma (&str) == FAIL)
+	{
+	  if (! inst.error)
+	    inst.error = BAD_ARGS;
+	  return;
+	}
     }
 
-  skip_whitespace (str);
-
-  if (*str == '!')
-    {
-      inst.instruction |= WRITE_BACK;
-      str++;
-    }
-
-  if (skip_past_comma (&str) == FAIL
-      || (range = reg_list (&str)) == FAIL)
+  if ((range = reg_list (&str)) == FAIL)
     {
       if (! inst.error)
 	inst.error = BAD_ARGS;
@@ -9995,11 +10005,13 @@ static const struct asm_opcode insns[] =
   {"stmda",      0xe8000000, 3,  ARM_EXT_V1,       do_ldmstm},
   {"stmdb",      0xe9000000, 3,  ARM_EXT_V1,       do_ldmstm},
   {"stmfd",      0xe9000000, 3,  ARM_EXT_V1,       do_ldmstm},
+  {"push",	 0xe92d0000, 4,  ARM_EXT_V1,       do_ldmstm},
   {"stmfa",      0xe9800000, 3,  ARM_EXT_V1,       do_ldmstm},
   {"stmea",      0xe8800000, 3,  ARM_EXT_V1,       do_ldmstm},
   {"stmed",      0xe8000000, 3,  ARM_EXT_V1,       do_ldmstm},
 
   {"ldmia",      0xe8900000, 3,  ARM_EXT_V1,       do_ldmstm},
+  {"pop",	 0xe8bd0000, 3,  ARM_EXT_V1,       do_ldmstm},
   {"ldmib",      0xe9900000, 3,  ARM_EXT_V1,       do_ldmstm},
   {"ldmda",      0xe8100000, 3,  ARM_EXT_V1,       do_ldmstm},
   {"ldmdb",      0xe9100000, 3,  ARM_EXT_V1,       do_ldmstm},
