@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2010/12/13 20:48:44 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2013/02/07 12:04:01 apb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.14 2010/12/13 20:48:44 pooka Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2013/02/07 12:04:01 apb Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -185,6 +185,7 @@ parse_bool_param(prop_dictionary_t props, const char *name,
 		 const char *value)
 {
 	bool boolvalue;
+	prop_object_t po;
 
 	assert(name != NULL);
 	assert(value != NULL);
@@ -200,7 +201,10 @@ parse_bool_param(prop_dictionary_t props, const char *name,
 	else
 		errx(EXIT_FAILURE, "Invalid boolean value `%s'", value);
 
-	prop_dictionary_set(props, name, prop_bool_create(boolvalue));
+	po = prop_bool_create(boolvalue);
+	if (po == NULL)
+		err(EXIT_FAILURE, "prop_bool_create");
+	prop_dictionary_set(props, name, po);
 }
 
 static void
@@ -208,6 +212,7 @@ parse_int_param(prop_dictionary_t props, const char *name,
 		const char *value)
 {
 	int64_t intvalue;
+	prop_object_t po;
 
 	assert(name != NULL);
 	assert(value != NULL);
@@ -215,8 +220,10 @@ parse_int_param(prop_dictionary_t props, const char *name,
 	if (dehumanize_number(value, &intvalue) != 0)
 		err(EXIT_FAILURE, "Invalid integer value `%s'", value);
 
-	prop_dictionary_set(props, name,
-	    prop_number_create_integer(intvalue));
+	po = prop_number_create_integer(intvalue);
+	if (po == NULL)
+		err(EXIT_FAILURE, "prop_number_create_integer");
+	prop_dictionary_set(props, name, po);
 }
 
 static void
@@ -243,11 +250,15 @@ static void
 parse_string_param(prop_dictionary_t props, const char *name,
 		   const char *value)
 {
+	prop_object_t po;
 
 	assert(name != NULL);
 	assert(value != NULL);
 
-	prop_dictionary_set(props, name, prop_string_create_cstring(value));
+	po = prop_string_create_cstring(value);
+	if (po == NULL)
+		err(EXIT_FAILURE, "prop_string_create_cstring");
+	prop_dictionary_set(props, name, po);
 }
 
 static void
