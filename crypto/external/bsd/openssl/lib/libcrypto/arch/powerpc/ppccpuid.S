@@ -89,7 +89,7 @@ OPENSSL_cleanse:
 	li	0,0
 	bge	.Lot
 	cmplwi	4,0
-	bclr	14,2
+	beqlr
 .Little:	mtctr	4
 	stb	0,0(3)
 	addi	3,3,1
