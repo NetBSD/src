@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.11 2013/02/08 20:28:36 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.12 2013/02/08 20:30:54 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -78,4 +78,11 @@ sys/kern/kern_rndq.c				1.7
 	Set resource limits to prevent potential consumption of all
 	kernel memory.
 	[msaitoh, ticket #790]
+
+lib/libutil/parsedate.y				1.13
+
+	Fix a bug in parsedate(3) where it would treat all input
+	as if it were in the local time zone, even if the input should have
+	been treated as a time in UTC or some other time zone.
+	[apb, ticket #791]
 
