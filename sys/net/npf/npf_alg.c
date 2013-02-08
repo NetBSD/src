@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.2.16.3 2012/07/16 22:13:26 riz Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.2.16.4 2013/02/08 19:18:11 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.2.16.3 2012/07/16 22:13:26 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.2.16.4 2013/02/08 19:18:11 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,17 +48,16 @@ __KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.2.16.3 2012/07/16 22:13:26 riz Exp $")
 
 /* NAT ALG structure for registration. */
 struct npf_alg {
-	LIST_ENTRY(npf_alg)		na_entry;
-	npf_alg_t *			na_bptr;
-	npf_algfunc_t			na_match_func;
-	npf_algfunc_t			na_out_func;
-	npf_algfunc_t			na_in_func;
-	npf_algfunc_t			na_seid_func;
+	LIST_ENTRY(npf_alg)	na_entry;
+	npf_alg_t *		na_bptr;
+	npf_alg_func_t		na_match_func;
+	npf_alg_func_t		na_tr_func;
+	npf_alg_sfunc_t		na_se_func;
 };
 
-static LIST_HEAD(, npf_alg)		nat_alg_list	__cacheline_aligned;
-static kmutex_t				nat_alg_lock	__cacheline_aligned;
-static pserialize_t			nat_alg_psz	__cacheline_aligned;
+static LIST_HEAD(, npf_alg)	nat_alg_list	__cacheline_aligned;
+static kmutex_t			nat_alg_lock	__cacheline_aligned;
+static pserialize_t		nat_alg_psz	__cacheline_aligned;
 
 void
 npf_alg_sysinit(void)
@@ -84,17 +83,16 @@ npf_alg_sysfini(void)
  * XXX: Protected by module lock, but unify serialisation later.
  */
 npf_alg_t *
-npf_alg_register(npf_algfunc_t match, npf_algfunc_t out, npf_algfunc_t in,
-    npf_algfunc_t seid)
+npf_alg_register(npf_alg_func_t mfunc, npf_alg_func_t tfunc,
+    npf_alg_sfunc_t sfunc)
 {
 	npf_alg_t *alg;
 
 	alg = kmem_zalloc(sizeof(npf_alg_t), KM_SLEEP);
 	alg->na_bptr = alg;
-	alg->na_match_func = match;
-	alg->na_out_func = out;
-	alg->na_in_func = in;
-	alg->na_seid_func = seid;
+	alg->na_match_func = mfunc;
+	alg->na_tr_func = tfunc;
+	alg->na_se_func = sfunc;
 
 	mutex_enter(&nat_alg_lock);
 	LIST_INSERT_HEAD(&nat_alg_list, alg, na_entry);
@@ -127,7 +125,7 @@ npf_alg_unregister(npf_alg_t *alg)
  * npf_alg_match: call ALG matching inspectors, determine if any ALG matches.
  */
 bool
-npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt)
+npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 {
 	npf_alg_t *alg;
 	bool match = false;
@@ -135,9 +133,9 @@ npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt)
 
 	s = pserialize_read_enter();
 	LIST_FOREACH(alg, &nat_alg_list, na_entry) {
-		npf_algfunc_t func = alg->na_match_func;
+		npf_alg_func_t func = alg->na_match_func;
 
-		if (func && func(npc, nbuf, nt)) {
+		if (func && func(npc, nbuf, nt, di)) {
 			match = true;
 			break;
 		}
@@ -150,41 +148,37 @@ npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt)
  * npf_alg_exec: execute ALG hooks for translation.
  */
 void
-npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, const int di)
+npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 {
 	npf_alg_t *alg;
 	int s;
 
 	s = pserialize_read_enter();
 	LIST_FOREACH(alg, &nat_alg_list, na_entry) {
-		if ((di & PFIL_OUT) != 0 && alg->na_out_func != NULL) {
-			(alg->na_out_func)(npc, nbuf, nt);
-			continue;
-		}
-		if ((di & PFIL_IN) != 0 && alg->na_in_func != NULL) {
-			(alg->na_in_func)(npc, nbuf, nt);
-			continue;
+		npf_alg_func_t func;
+
+		if ((func = alg->na_tr_func) != NULL) {
+			(func)(npc, nbuf, nt, di);
 		}
 	}
 	pserialize_read_exit(s);
 }
 
-bool
-npf_alg_sessionid(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *key)
+npf_session_t *
+npf_alg_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 {
+	npf_session_t *se = NULL;
 	npf_alg_t *alg;
-	bool nkey = false;
 	int s;
 
 	s = pserialize_read_enter();
 	LIST_FOREACH(alg, &nat_alg_list, na_entry) {
-		npf_algfunc_t func = alg->na_seid_func;
+		npf_alg_sfunc_t func = alg->na_se_func;
 
-		if (func && func(npc, nbuf, (npf_nat_t *)key)) {
-			nkey = true;
+		if (func && (se = func(npc, nbuf, di)) != NULL) {
 			break;
 		}
 	}
 	pserialize_read_exit(s);
-	return nkey;
+	return se;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.14.2.10 2013/01/07 16:51:08 riz Exp $	*/
+/*	$NetBSD: npf.h,v 1.14.2.11 2013/02/08 19:18:11 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ typedef uint8_t			npf_netmask_t;
 /*
  * Packet information cache.
  */
+#include <net/if.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/tcp.h>
@@ -86,6 +87,8 @@ typedef uint8_t			npf_netmask_t;
 #define	NPC_ICMP	0x40	/* ICMP header. */
 #define	NPC_ICMP_ID	0x80	/* ICMP with query ID. */
 
+#define	NPC_ALG_EXEC	0x100	/* ALG execution. */
+
 #define	NPC_IP46	(NPC_IP4|NPC_IP6)
 
 typedef struct {
@@ -95,20 +98,21 @@ typedef struct {
 	npf_addr_t *		npc_srcip;
 	npf_addr_t *		npc_dstip;
 	/* Size (v4 or v6) of IP addresses. */
-	int			npc_alen;
-	u_int			npc_hlen;
-	int			npc_next_proto;
+	uint8_t			npc_alen;
+	uint8_t			npc_hlen;
+	uint16_t		npc_proto;
 	/* IPv4, IPv6. */
 	union {
-		struct ip	v4;
-		struct ip6_hdr	v6;
+		struct ip *		v4;
+		struct ip6_hdr *	v6;
 	} npc_ip;
 	/* TCP, UDP, ICMP. */
 	union {
-		struct tcphdr		tcp;
-		struct udphdr		udp;
-		struct icmp		icmp;
-		struct icmp6_hdr	icmp6;
+		struct tcphdr *		tcp;
+		struct udphdr *		udp;
+		struct icmp *		icmp;
+		struct icmp6_hdr *	icmp6;
+		void *			hdr;
 	} npc_l4;
 } npf_cache_t;
 
@@ -123,7 +127,7 @@ static inline int
 npf_cache_ipproto(const npf_cache_t *npc)
 {
 	KASSERT(npf_iscached(npc, NPC_IP46));
-	return npc->npc_next_proto;
+	return npc->npc_proto;
 }
 
 static inline u_int
@@ -137,16 +141,31 @@ npf_cache_hlen(const npf_cache_t *npc)
  * Network buffer interface.
  */
 
-typedef void	nbuf_t;
+#define	NBUF_DATAREF_RESET	0x01
 
-void *		nbuf_dataptr(void *);
-void *		nbuf_advance(nbuf_t **, void *, u_int);
-int		nbuf_advfetch(nbuf_t **, void **, u_int, size_t, void *);
-int		nbuf_advstore(nbuf_t **, void **, u_int, size_t, void *);
-int		nbuf_fetch_datum(nbuf_t *, void *, size_t, void *);
-int		nbuf_store_datum(nbuf_t *, void *, size_t, void *);
+typedef struct {
+	struct mbuf *	nb_mbuf0;
+	struct mbuf *	nb_mbuf;
+	void *		nb_nptr;
+	const ifnet_t *	nb_ifp;
+	int		nb_flags;
+} nbuf_t;
 
-void		nbuf_cksum_barrier(nbuf_t *);
+void		nbuf_init(nbuf_t *, struct mbuf *, const ifnet_t *);
+void		nbuf_reset(nbuf_t *);
+struct mbuf *	nbuf_head_mbuf(nbuf_t *);
+
+bool		nbuf_flag_p(const nbuf_t *, int);
+void		nbuf_unset_flag(nbuf_t *, int);
+
+void *		nbuf_dataptr(nbuf_t *);
+size_t		nbuf_offset(const nbuf_t *);
+void *		nbuf_advance(nbuf_t *, size_t, size_t);
+
+void *		nbuf_ensure_contig(nbuf_t *, size_t);
+void *		nbuf_ensure_writable(nbuf_t *, size_t);
+
+bool		nbuf_cksum_barrier(nbuf_t *, int);
 int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
 
@@ -264,6 +283,9 @@ typedef enum {
 	NPF_STAT_REASSFAIL,
 	/* Other errors. */
 	NPF_STAT_ERROR,
+	/* nbuf non-contiguous cases. */
+	NPF_STAT_NBUF_NONCONTIG,
+	NPF_STAT_NBUF_CONTIG_FAIL,
 	/* Count (last). */
 	NPF_STATS_COUNT
 } npf_stats_t;

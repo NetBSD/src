@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.9.2.3 2012/07/25 20:45:23 jdc Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.9.2.4 2013/02/08 19:18:10 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.9.2.3 2012/07/25 20:45:23 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.9.2.4 2013/02/08 19:18:10 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -129,14 +129,10 @@ npf_ncode_free(void *nc, size_t sz)
  */
 int
 npf_ncode_process(npf_cache_t *npc, const void *ncode,
-    nbuf_t *nbuf0, const int layer)
+    nbuf_t *nbuf, const int layer)
 {
 	/* N-code instruction pointer. */
 	const void *	i_ptr;
-	/* Pointer of current nbuf in the chain. */
-	nbuf_t *	nbuf;
-	/* Data pointer in the current nbuf. */
-	void *		n_ptr;
 	/* Virtual registers. */
 	uint32_t	regs[NPF_NREGS];
 	/* Local, state variables. */
@@ -145,15 +141,12 @@ npf_ncode_process(npf_cache_t *npc, const void *ncode,
 	u_int lcount;
 	int cmpval;
 
+	nbuf_reset(nbuf);
 	i_ptr = ncode;
 	regs[0] = layer;
 
 	lcount = NPF_LOOP_LIMIT;
 	cmpval = 0;
-
-	/* Note: offset = n_ptr - nbuf_dataptr(nbuf); */
-	nbuf = nbuf0;
-	n_ptr = nbuf_dataptr(nbuf);
 
 process_next:
 	/*
@@ -178,19 +171,27 @@ process_next:
 	case NPF_OPCODE_ADVR:
 		i_ptr = nc_fetch_word(i_ptr, &i);	/* Register */
 		KASSERT(i < NPF_NREGS);
-		n_ptr = nbuf_advance(&nbuf, n_ptr, regs[i]);
-		if (__predict_false(n_ptr == NULL)) {
+		if (!nbuf_advance(nbuf, regs[i], 0)) {
 			goto fail;
 		}
 		break;
-	case NPF_OPCODE_LW:
+	case NPF_OPCODE_LW: {
+		void *n_ptr;
+
 		i_ptr = nc_fetch_double(i_ptr, &n, &i);	/* Size, register */
 		KASSERT(i < NPF_NREGS);
 		KASSERT(n >= sizeof(uint8_t) && n <= sizeof(uint32_t));
-		if (nbuf_fetch_datum(nbuf, n_ptr, n, (uint32_t *)regs + i)) {
+
+		n_ptr = nbuf_ensure_contig(nbuf, n);
+		if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {
+			npf_recache(npc, nbuf);
+		}
+		if (n_ptr == NULL) {
 			goto fail;
 		}
+		memcpy(&regs[i], n_ptr, n);
 		break;
+	}
 	case NPF_OPCODE_CMP:
 		i_ptr = nc_fetch_double(i_ptr, &n, &i);	/* Value, register */
 		KASSERT(i < NPF_NREGS);
@@ -234,7 +235,7 @@ process_next:
 		return n;
 	case NPF_OPCODE_TAG:
 		i_ptr = nc_fetch_double(i_ptr, &n, &i);	/* Key, value */
-		if (nbuf_add_tag(n_ptr, n, i)) {
+		if (nbuf_add_tag(nbuf, n, i)) {
 			goto fail;
 		}
 		break;
@@ -275,9 +276,9 @@ cisc_like:
 		/* Source/destination, network address, subnet. */
 		i_ptr = nc_fetch_word(i_ptr, &d);
 		i_ptr = nc_fetch_double(i_ptr, &addr.s6_addr32[0], &n);
-		cmpval = npf_match_ipmask(npc, nbuf, n_ptr,
+		cmpval = npf_iscached(npc, NPC_IP46) ? npf_match_ipmask(npc,
 		    (sizeof(struct in_addr) << 1) | (d & 0x1),
-		    &addr, (npf_netmask_t)n);
+		    &addr, (npf_netmask_t)n) : -1;
 		break;
 	case NPF_OPCODE_IP6MASK:
 		/* Source/destination, network address, subnet. */
@@ -287,49 +288,56 @@ cisc_like:
 		i_ptr = nc_fetch_double(i_ptr,
 		    &addr.s6_addr32[2], &addr.s6_addr32[3]);
 		i_ptr = nc_fetch_word(i_ptr, &n);
-		cmpval = npf_match_ipmask(npc, nbuf, n_ptr,
+		cmpval = npf_iscached(npc, NPC_IP46) ? npf_match_ipmask(npc,
 		    (sizeof(struct in6_addr) << 1) | (d & 0x1),
-		    &addr, (npf_netmask_t)n);
+		    &addr, (npf_netmask_t)n) : -1;
 		break;
 	case NPF_OPCODE_TABLE:
 		/* Source/destination, NPF table ID. */
 		i_ptr = nc_fetch_double(i_ptr, &n, &i);
-		cmpval = npf_match_table(npc, nbuf, n_ptr, n, i);
+		cmpval = npf_iscached(npc, NPC_IP46) ?
+		    npf_match_table(npc, n, i) : -1;
 		break;
 	case NPF_OPCODE_TCP_PORTS:
 		/* Source/destination, port range. */
 		i_ptr = nc_fetch_double(i_ptr, &n, &i);
-		cmpval = npf_match_tcp_ports(npc, nbuf, n_ptr, n, i);
+		cmpval = npf_iscached(npc, NPC_TCP) ?
+		    npf_match_tcp_ports(npc, n, i) : -1;
 		break;
 	case NPF_OPCODE_UDP_PORTS:
 		/* Source/destination, port range. */
 		i_ptr = nc_fetch_double(i_ptr, &n, &i);
-		cmpval = npf_match_udp_ports(npc, nbuf, n_ptr, n, i);
+		cmpval = npf_iscached(npc, NPC_UDP) ?
+		    npf_match_udp_ports(npc, n, i) : -1;
 		break;
 	case NPF_OPCODE_TCP_FLAGS:
 		/* TCP flags/mask. */
 		i_ptr = nc_fetch_word(i_ptr, &n);
-		cmpval = npf_match_tcpfl(npc, nbuf, n_ptr, n);
+		cmpval = npf_iscached(npc, NPC_TCP) ?
+		    npf_match_tcpfl(npc, n) : -1;
 		break;
 	case NPF_OPCODE_ICMP4:
 		/* ICMP type/code. */
 		i_ptr = nc_fetch_word(i_ptr, &n);
-		cmpval = npf_match_icmp4(npc, nbuf, n_ptr, n);
+		cmpval = npf_iscached(npc, NPC_ICMP) ?
+		    npf_match_icmp4(npc, n) : -1;
 		break;
 	case NPF_OPCODE_ICMP6:
 		/* ICMP type/code. */
 		i_ptr = nc_fetch_word(i_ptr, &n);
-		cmpval = npf_match_icmp6(npc, nbuf, n_ptr, n);
+		cmpval = npf_iscached(npc, NPC_ICMP) ?
+		    npf_match_icmp6(npc, n) : -1;
 		break;
 	case NPF_OPCODE_PROTO:
 		i_ptr = nc_fetch_word(i_ptr, &n);
-		cmpval = npf_match_proto(npc, nbuf, n_ptr, n);
+		cmpval = npf_iscached(npc, NPC_IP46) ?
+		    npf_match_proto(npc, n) : -1;
 		break;
 	case NPF_OPCODE_ETHER:
 		/* Source/destination, reserved, ethernet type. */
 		i_ptr = nc_fetch_word(i_ptr, &d);
 		i_ptr = nc_fetch_double(i_ptr, &n, &i);
-		cmpval = npf_match_ether(nbuf, d, n, i, &regs[NPF_NREGS - 1]);
+		cmpval = npf_match_ether(nbuf, d, i, &regs[NPF_NREGS - 1]);
 		break;
 	default:
 		/* Invalid instruction. */
