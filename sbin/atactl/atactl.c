@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.68 2013/01/09 21:58:23 riastradh Exp $	*/
+/*	$NetBSD: atactl.c,v 1.69 2013/02/08 03:58:36 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.68 2013/01/09 21:58:23 riastradh Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.69 2013/02/08 03:58:36 jakllsch Exp $");
 #endif
 
 
@@ -239,6 +239,7 @@ static const struct bitinfo ata_cmd_ext[] = {
 static const struct bitinfo ata_sata_caps[] = {
 	{ SATA_SIGNAL_GEN1, "1.5Gb/s signaling" },
 	{ SATA_SIGNAL_GEN2, "3.0Gb/s signaling" },
+	{ SATA_SIGNAL_GEN3, "6.0Gb/s signaling" },
 	{ SATA_NATIVE_CMDQ, "Native Command Queuing" },
 	{ SATA_HOST_PWR_MGMT, "Host-Initiated Interface Power Management" },
 	{ SATA_PHY_EVNT_CNT, "PHY Event Counters" },
