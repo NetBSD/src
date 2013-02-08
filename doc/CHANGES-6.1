@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.79 2013/02/08 20:31:51 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.80 2013/02/08 20:51:55 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8151,4 +8151,31 @@ lib/libutil/parsedate.y				1.13
 	as if it were in the local time zone, even if the input should have
 	been treated as a time in UTC or some other time zone.
 	[apb, ticket #791]
+
+sys/net/if_gif.c				1.81
+
+	Pass SIOCGITMTU through to ifioctl_common() so ifconfig(8)
+	will display the MTU on a gif(4). PR#47419.
+	[degroote, ticket #792]
+
+sys/compat/netbsd32/netbsd32_execve.c		1.37
+
+	Fix memory pool corruption when freeing kmem with wrong size.
+	[hannken, ticket #793]
+
+sys/rump/librump/rumpkern/emul.c		1.152
+
+	Provide xc_send_ipi() routine in RUMP.
+	[rmind, ticket #794]
+
+usr.bin/grep/util.c				1.17
+
+	Fix memory leak in  file_matching().
+	[msaitoh, ticket #795]
+
+sys/rump/net/lib/libshmif/if_shmem.c		1.46
+
+	Pass up all multicast addresses, not just broadcast.  Among other
+	things, makes IPv6 work over this interface.
+	[gdt, ticket #796]
 
