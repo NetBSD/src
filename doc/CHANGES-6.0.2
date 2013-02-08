@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.8 2013/02/08 19:32:00 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.9 2013/02/08 19:55:24 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -62,4 +62,9 @@ sys/rump/include/machine/intr.h			1.19
 
 	Fixes for pserialize(9).
 	[rmind, ticket #782]
+
+sys/dist/ipf/netinet/ip_fil_netbsd.c		1.4 via patch
+
+	Fix off-by-one read error.
+	[msaitoh, ticket #787]
 
