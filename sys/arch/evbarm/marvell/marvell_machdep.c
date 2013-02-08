@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.6.2.1 2012/06/28 04:50:38 riz Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.6.2.2 2013/02/08 19:43:01 riz Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.6.2.1 2012/06/28 04:50:38 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.6.2.2 2013/02/08 19:43:01 riz Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -552,7 +552,7 @@ initarm(void *arg)
 	 * shared by all processes.
 	 */
 	valloc_pages(systempage, 1);
-	systempage.pv_va = 0x00000000;
+	systempage.pv_va = ARM_VECTORS_HIGH;
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -596,7 +596,7 @@ initarm(void *arg)
 	l1pagetable = kernel_l1pt.pv_va;
 
 	/* Map the L2 pages tables in the L1 page table */
-	pmap_link_l2pt(l1pagetable, 0x00000000,
+	pmap_link_l2pt(l1pagetable, ARM_VECTORS_HIGH & -L2_S_SEGSIZE,
 	    &kernel_pt_table[KERNEL_PT_SYS]);
 	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++)
 		pmap_link_l2pt(l1pagetable, KERNEL_BASE + loop * 0x00400000,
@@ -656,7 +656,7 @@ initarm(void *arg)
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
 
 	/* Map the vector page. */
-	pmap_map_entry(l1pagetable, ARM_VECTORS_LOW, systempage.pv_pa,
+	pmap_map_entry(l1pagetable, ARM_VECTORS_HIGH, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/*
@@ -690,7 +690,7 @@ initarm(void *arg)
 	printf("bootstrap done.\n");
 #endif
 
-	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL);
+	arm32_vector_init(ARM_VECTORS_HIGH, ARM_VEC_ALL);
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.10 2011/03/10 07:47:15 bsh Exp $	*/
+/*	$NetBSD: pte.h,v 1.10.10.1 2013/02/08 19:43:01 riz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -107,6 +107,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_L_FRAME	(~L2_L_OFFSET)
 #define	L2_L_SHIFT	16
 
+#define	L2_S_SEGSIZE	(PAGE_SIZE * L2_S_SIZE / 4)
 #define	L2_S_SIZE	0x00001000	/* 4K */
 #define	L2_S_OFFSET	(L2_S_SIZE - 1)
 #define	L2_S_FRAME	(~L2_S_OFFSET)
