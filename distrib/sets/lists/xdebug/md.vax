@@ -1,11 +1,11 @@
-# $NetBSD: md.vax,v 1.1 2013/01/16 21:11:19 christos Exp $
+# $NetBSD: md.vax,v 1.2 2013/02/08 02:32:35 christos Exp $
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/cvt.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libkbd_drv.so.1.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmouse_drv.so.1.debug	-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libws_drv.so.1.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libwsfb_drv.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri.so.0.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri2.so.0.debug		-unknown-	debug,xorg
