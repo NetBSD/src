@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.10.4.7 2012/12/16 18:19:52 riz Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.10.4.8 2013/02/08 19:18:09 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.10.4.7 2012/12/16 18:19:52 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.10.4.8 2013/02/08 19:18:09 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,9 +93,11 @@ npf_fixup32_cksum(uint16_t cksum, uint32_t odatum, uint32_t ndatum)
  * npf_addr_cksum: calculate checksum of the address, either IPv4 or IPv6.
  */
 uint16_t
-npf_addr_cksum(uint16_t cksum, int sz, npf_addr_t *oaddr, npf_addr_t *naddr)
+npf_addr_cksum(uint16_t cksum, int sz, const npf_addr_t *oaddr,
+    const npf_addr_t *naddr)
 {
-	uint32_t *oip32 = (uint32_t *)oaddr, *nip32 = (uint32_t *)naddr;
+	const uint32_t *oip32 = (const uint32_t *)oaddr;
+	const uint32_t *nip32 = (const uint32_t *)naddr;
 
 	KASSERT(sz % sizeof(uint32_t) == 0);
 	do {
@@ -185,7 +187,7 @@ npf_addr_cmp(const npf_addr_t *addr1, const npf_netmask_t mask1,
 int
 npf_tcpsaw(const npf_cache_t *npc, tcp_seq *seq, tcp_seq *ack, uint32_t *win)
 {
-	const struct tcphdr *th = &npc->npc_l4.tcp;
+	const struct tcphdr *th = npc->npc_l4.tcp;
 	u_int thlen;
 
 	KASSERT(npf_iscached(npc, NPC_TCP));
@@ -196,10 +198,10 @@ npf_tcpsaw(const npf_cache_t *npc, tcp_seq *seq, tcp_seq *ack, uint32_t *win)
 	thlen = th->th_off << 2;
 
 	if (npf_iscached(npc, NPC_IP4)) {
-		const struct ip *ip = &npc->npc_ip.v4;
+		const struct ip *ip = npc->npc_ip.v4;
 		return ntohs(ip->ip_len) - npf_cache_hlen(npc) - thlen;
 	} else if (npf_iscached(npc, NPC_IP6)) {
-		const struct ip6_hdr *ip6 = &npc->npc_ip.v6;
+		const struct ip6_hdr *ip6 = npc->npc_ip.v6;
 		return ntohs(ip6->ip6_plen) - thlen;
 	}
 	return 0;
@@ -209,14 +211,13 @@ npf_tcpsaw(const npf_cache_t *npc, tcp_seq *seq, tcp_seq *ack, uint32_t *win)
  * npf_fetch_tcpopts: parse and return TCP options.
  */
 bool
-npf_fetch_tcpopts(const npf_cache_t *npc, nbuf_t *nbuf,
-    uint16_t *mss, int *wscale)
+npf_fetch_tcpopts(npf_cache_t *npc, nbuf_t *nbuf, uint16_t *mss, int *wscale)
 {
-	void *n_ptr = nbuf_dataptr(nbuf);
-	const struct tcphdr *th = &npc->npc_l4.tcp;
+	const struct tcphdr *th = npc->npc_l4.tcp;
 	int topts_len, step;
-	uint16_t val16;
+	void *nptr;
 	uint8_t val;
+	bool ok;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	KASSERT(npf_iscached(npc, NPC_TCP));
@@ -231,53 +232,58 @@ npf_fetch_tcpopts(const npf_cache_t *npc, nbuf_t *nbuf,
 
 	/* First step: IP and TCP header up to options. */
 	step = npf_cache_hlen(npc) + sizeof(struct tcphdr);
+	nbuf_reset(nbuf);
 next:
-	if (nbuf_advfetch(&nbuf, &n_ptr, step, sizeof(val), &val)) {
-		return false;
+	if ((nptr = nbuf_advance(nbuf, step, 1)) == NULL) {
+		ok = false;
+		goto done;
 	}
+	val = *(uint8_t *)nptr;
 
 	switch (val) {
 	case TCPOPT_EOL:
 		/* Done. */
-		return true;
+		ok = true;
+		goto done;
 	case TCPOPT_NOP:
 		topts_len--;
 		step = 1;
 		break;
 	case TCPOPT_MAXSEG:
-		/*
-		 * XXX: clean this mess.
-		 */
-		if (mss && *mss) {
-			val16 = *mss;
-			if (nbuf_advstore(&nbuf, &n_ptr, 2,
-			    sizeof(val16), &val16))
-				return false;
-		} else if (nbuf_advfetch(&nbuf, &n_ptr, 2,
-		    sizeof(val16), &val16)) {
-			return false;
+		if ((nptr = nbuf_advance(nbuf, 2, 2)) == NULL) {
+			ok = false;
+			goto done;
 		}
 		if (mss) {
-			*mss = val16;
+			if (*mss) {
+				memcpy(nptr, mss, sizeof(uint16_t));
+			} else {
+				memcpy(mss, nptr, sizeof(uint16_t));
+			}
 		}
 		topts_len -= TCPOLEN_MAXSEG;
-		step = sizeof(val16);
+		step = 2;
 		break;
 	case TCPOPT_WINDOW:
 		/* TCP Window Scaling (RFC 1323). */
-		if (nbuf_advfetch(&nbuf, &n_ptr, 2, sizeof(val), &val)) {
-			return false;
+		if ((nptr = nbuf_advance(nbuf, 2, 1)) == NULL) {
+			ok = false;
+			goto done;
 		}
+		val = *(uint8_t *)nptr;
 		*wscale = (val > TCP_MAX_WINSHIFT) ? TCP_MAX_WINSHIFT : val;
 		topts_len -= TCPOLEN_WINDOW;
-		step = sizeof(val);
+		step = 1;
 		break;
 	default:
-		if (nbuf_advfetch(&nbuf, &n_ptr, 1, sizeof(val), &val)) {
-			return false;
+		if ((nptr = nbuf_advance(nbuf, 1, 1)) == NULL) {
+			ok = false;
+			goto done;
 		}
+		val = *(uint8_t *)nptr;
 		if (val < 2 || val > topts_len) {
-			return false;
+			ok = false;
+			goto done;
 		}
 		topts_len -= val;
 		step = val - 1;
@@ -287,82 +293,91 @@ next:
 	if (__predict_true(topts_len > 0)) {
 		goto next;
 	}
-	return true;
+	ok = true;
+done:
+	if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {
+		npf_recache(npc, nbuf);
+	}
+	return ok;
 }
 
-/*
- * npf_fetch_ip: fetch, check and cache IP header.
- */
-bool
-npf_fetch_ip(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
+static int
+npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 {
-	uint8_t ver;
-
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint8_t), &ver)) {
-		return false;
-	}
+	const void *nptr = nbuf_dataptr(nbuf);
+	const uint8_t ver = *(const uint8_t *)nptr;
+	int flags = 0;
 
 	switch (ver >> 4) {
 	case IPVERSION: {
-		struct ip *ip = &npc->npc_ip.v4;
+		struct ip *ip;
 
-		/* Fetch IPv4 header. */
-		if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(struct ip), ip)) {
-			return false;
+		ip = nbuf_ensure_contig(nbuf, sizeof(struct ip));
+		if (ip == NULL) {
+			return 0;
 		}
 
 		/* Check header length and fragment offset. */
 		if ((u_int)(ip->ip_hl << 2) < sizeof(struct ip)) {
-			return false;
+			return 0;
 		}
 		if (ip->ip_off & ~htons(IP_DF | IP_RF)) {
 			/* Note fragmentation. */
-			npc->npc_info |= NPC_IPFRAG;
+			flags |= NPC_IPFRAG;
 		}
 
 		/* Cache: layer 3 - IPv4. */
 		npc->npc_alen = sizeof(struct in_addr);
 		npc->npc_srcip = (npf_addr_t *)&ip->ip_src;
 		npc->npc_dstip = (npf_addr_t *)&ip->ip_dst;
-		npc->npc_info |= NPC_IP4;
 		npc->npc_hlen = ip->ip_hl << 2;
-		npc->npc_next_proto = npc->npc_ip.v4.ip_p;
+		npc->npc_proto = ip->ip_p;
+
+		npc->npc_ip.v4 = ip;
+		flags |= NPC_IP4;
 		break;
 	}
 
 	case (IPV6_VERSION >> 4): {
-		struct ip6_hdr *ip6 = &npc->npc_ip.v6;
-		size_t hlen = sizeof(struct ip6_hdr);
-		struct ip6_ext ip6e;
+		struct ip6_hdr *ip6;
+		struct ip6_ext *ip6e;
+		size_t off, hlen;
 
-		/* Fetch IPv6 header and set initial next-protocol value. */
-		if (nbuf_fetch_datum(nbuf, n_ptr, hlen, ip6)) {
-			return false;
+		ip6 = nbuf_ensure_contig(nbuf, sizeof(struct ip6_hdr));
+		if (ip6 == NULL) {
+			return 0;
 		}
-		npc->npc_next_proto = ip6->ip6_nxt;
+
+		/* Set initial next-protocol value. */
+		hlen = sizeof(struct ip6_hdr);
+		npc->npc_proto = ip6->ip6_nxt;
 		npc->npc_hlen = hlen;
 
 		/*
-		 * Advance by the length of the current header and
-		 * prefetch the extension header.
+		 * Advance by the length of the current header.
 		 */
-		while (nbuf_advfetch(&nbuf, &n_ptr, hlen,
-		    sizeof(struct ip6_ext), &ip6e) == 0) {
+		off = nbuf_offset(nbuf);
+		while (nbuf_advance(nbuf, hlen, 0) != NULL) {
+			ip6e = nbuf_ensure_contig(nbuf, sizeof(*ip6e));
+			if (ip6e == NULL) {
+				return 0;
+			}
+
 			/*
 			 * Determine whether we are going to continue.
 			 */
-			switch (npc->npc_next_proto) {
+			switch (npc->npc_proto) {
 			case IPPROTO_HOPOPTS:
 			case IPPROTO_DSTOPTS:
 			case IPPROTO_ROUTING:
-				hlen = (ip6e.ip6e_len + 1) << 3;
+				hlen = (ip6e->ip6e_len + 1) << 3;
 				break;
 			case IPPROTO_FRAGMENT:
-				npc->npc_info |= NPC_IPFRAG;
 				hlen = sizeof(struct ip6_frag);
+				flags |= NPC_IPFRAG;
 				break;
 			case IPPROTO_AH:
-				hlen = (ip6e.ip6e_len + 2) << 2;
+				hlen = (ip6e->ip6e_len + 2) << 2;
 				break;
 			default:
 				hlen = 0;
@@ -372,260 +387,183 @@ npf_fetch_ip(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 			if (!hlen) {
 				break;
 			}
-			npc->npc_next_proto = ip6e.ip6e_nxt;
+			npc->npc_proto = ip6e->ip6e_nxt;
 			npc->npc_hlen += hlen;
+		}
+
+		/* Restore the offset. */
+		nbuf_reset(nbuf);
+		if (off) {
+			nbuf_advance(nbuf, off, 0);
 		}
 
 		/* Cache: layer 3 - IPv6. */
 		npc->npc_alen = sizeof(struct in6_addr);
 		npc->npc_srcip = (npf_addr_t *)&ip6->ip6_src;
 		npc->npc_dstip = (npf_addr_t *)&ip6->ip6_dst;
-		npc->npc_info |= NPC_IP6;
+
+		npc->npc_ip.v6 = ip6;
+		flags |= NPC_IP6;
 		break;
 	}
 	default:
-		return false;
+		break;
 	}
-
-	return true;
-}
-
-/*
- * npf_fetch_tcp: fetch, check and cache TCP header.  If necessary,
- * fetch and cache layer 3 as well.
- */
-bool
-npf_fetch_tcp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
-{
-	struct tcphdr *th;
-
-	/* Must have IP header processed for its length and protocol. */
-	if (!npf_iscached(npc, NPC_IP46) && !npf_fetch_ip(npc, nbuf, n_ptr)) {
-		return false;
-	}
-	if (npf_cache_ipproto(npc) != IPPROTO_TCP) {
-		return false;
-	}
-	th = &npc->npc_l4.tcp;
-
-	/* Fetch TCP header. */
-	if (nbuf_advfetch(&nbuf, &n_ptr, npf_cache_hlen(npc),
-	    sizeof(struct tcphdr), th)) {
-		return false;
-	}
-
-	/* Cache: layer 4 - TCP. */
-	npc->npc_info |= (NPC_LAYER4 | NPC_TCP);
-	return true;
-}
-
-/*
- * npf_fetch_udp: fetch, check and cache UDP header.  If necessary,
- * fetch and cache layer 3 as well.
- */
-bool
-npf_fetch_udp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
-{
-	struct udphdr *uh;
-	u_int hlen;
-
-	/* Must have IP header processed for its length and protocol. */
-	if (!npf_iscached(npc, NPC_IP46) && !npf_fetch_ip(npc, nbuf, n_ptr)) {
-		return false;
-	}
-	if (npf_cache_ipproto(npc) != IPPROTO_UDP) {
-		return false;
-	}
-	uh = &npc->npc_l4.udp;
-	hlen = npf_cache_hlen(npc);
-
-	/* Fetch UDP header. */
-	if (nbuf_advfetch(&nbuf, &n_ptr, hlen, sizeof(struct udphdr), uh)) {
-		return false;
-	}
-
-	/* Cache: layer 4 - UDP. */
-	npc->npc_info |= (NPC_LAYER4 | NPC_UDP);
-	return true;
-}
-
-/*
- * npf_fetch_icmp: fetch ICMP code, type and possible query ID.
- */
-bool
-npf_fetch_icmp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
-{
-	struct icmp *ic;
-	u_int hlen, iclen;
-
-	/* Must have IP header processed for its length and protocol. */
-	if (!npf_iscached(npc, NPC_IP46) && !npf_fetch_ip(npc, nbuf, n_ptr)) {
-		return false;
-	}
-	if (npf_cache_ipproto(npc) != IPPROTO_ICMP &&
-	    npf_cache_ipproto(npc) != IPPROTO_ICMPV6) {
-		return false;
-	}
-	ic = &npc->npc_l4.icmp;
-	hlen = npf_cache_hlen(npc);
-
-	/* Fetch basic ICMP header, up to the "data" point. */
-	CTASSERT(offsetof(struct icmp, icmp_void) ==
-	         offsetof(struct icmp6_hdr, icmp6_data32));
-
-	iclen = offsetof(struct icmp, icmp_void);
-	if (nbuf_advfetch(&nbuf, &n_ptr, hlen, iclen, ic)) {
-		return false;
-	}
-
-	/* Cache: layer 4 - ICMP. */
-	npc->npc_info |= (NPC_LAYER4 | NPC_ICMP);
-	return true;
+	return flags;
 }
 
 /*
  * npf_cache_all: general routine to cache all relevant IP (v4 or v6)
  * and TCP, UDP or ICMP headers.
+ *
+ * => nbuf offset shall be set accordingly.
  */
 int
 npf_cache_all(npf_cache_t *npc, nbuf_t *nbuf)
 {
-	void *n_ptr = nbuf_dataptr(nbuf);
+	int flags, l4flags;
+	u_int hlen;
 
-	if (!npf_iscached(npc, NPC_IP46) && !npf_fetch_ip(npc, nbuf, n_ptr)) {
-		return npc->npc_info;
+	/*
+	 * This routine is a main point where the references are cached,
+	 * therefore clear the flag as we reset.
+	 */
+again:
+	nbuf_unset_flag(nbuf, NBUF_DATAREF_RESET);
+
+	/*
+	 * First, cache the L3 header (IPv4 or IPv6).  If IP packet is
+	 * fragmented, then we cannot look into L4.
+	 */
+	flags = npf_cache_ip(npc, nbuf);
+	if ((flags & NPC_IP46) == 0 || (flags & NPC_IPFRAG) != 0) {
+		npc->npc_info |= flags;
+		return flags;
 	}
-	if (npf_iscached(npc, NPC_IPFRAG)) {
-		return npc->npc_info;
-	}
-	switch (npf_cache_ipproto(npc)) {
+	hlen = npc->npc_hlen;
+
+	switch (npc->npc_proto) {
 	case IPPROTO_TCP:
-		(void)npf_fetch_tcp(npc, nbuf, n_ptr);
+		/* Cache: layer 4 - TCP. */
+		npc->npc_l4.tcp = nbuf_advance(nbuf, hlen,
+		    sizeof(struct tcphdr));
+		l4flags = NPC_LAYER4 | NPC_TCP;
 		break;
 	case IPPROTO_UDP:
-		(void)npf_fetch_udp(npc, nbuf, n_ptr);
+		/* Cache: layer 4 - UDP. */
+		npc->npc_l4.udp = nbuf_advance(nbuf, hlen,
+		    sizeof(struct udphdr));
+		l4flags = NPC_LAYER4 | NPC_UDP;
 		break;
 	case IPPROTO_ICMP:
+		/* Cache: layer 4 - ICMPv4. */
+		npc->npc_l4.icmp = nbuf_advance(nbuf, hlen,
+		    offsetof(struct icmp, icmp_void));
+		l4flags = NPC_LAYER4 | NPC_ICMP;
+		break;
 	case IPPROTO_ICMPV6:
-		(void)npf_fetch_icmp(npc, nbuf, n_ptr);
+		/* Cache: layer 4 - ICMPv6. */
+		npc->npc_l4.icmp6 = nbuf_advance(nbuf, hlen,
+		    offsetof(struct icmp6_hdr, icmp6_data32));
+		l4flags = NPC_LAYER4 | NPC_ICMP;
+		break;
+	default:
+		l4flags = 0;
 		break;
 	}
-	return npc->npc_info;
+
+	if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {
+		goto again;
+	}
+
+	/* Add the L4 flags if nbuf_advance() succeeded. */
+	if (l4flags && npc->npc_l4.hdr) {
+		flags |= l4flags;
+	}
+	npc->npc_info |= flags;
+	return flags;
+}
+
+void
+npf_recache(npf_cache_t *npc, nbuf_t *nbuf)
+{
+	const int mflags __unused = npc->npc_info & (NPC_IP46 | NPC_LAYER4);
+	int flags;
+
+	nbuf_reset(nbuf);
+	npc->npc_info = 0;
+	flags = npf_cache_all(npc, nbuf);
+	KASSERT((flags & mflags) == mflags);
+	KASSERT(nbuf_flag_p(nbuf, NBUF_DATAREF_RESET) == 0);
 }
 
 /*
- * npf_rwrip: rewrite required IP address, update the cache.
+ * npf_rwrip: rewrite required IP address.
  */
 bool
-npf_rwrip(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
-    npf_addr_t *addr)
+npf_rwrip(const npf_cache_t *npc, int di, const npf_addr_t *addr)
 {
 	npf_addr_t *oaddr;
-	u_int offby;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
 
-	if (di == PFIL_OUT) {
-		/* Rewrite source address, if outgoing. */
-		offby = offsetof(struct ip, ip_src);
-		oaddr = npc->npc_srcip;
-	} else {
-		/* Rewrite destination, if incoming. */
-		offby = offsetof(struct ip, ip_dst);
-		oaddr = npc->npc_dstip;
-	}
-
-	/* Advance to the address and rewrite it. */
-	if (nbuf_advstore(&nbuf, &n_ptr, offby, npc->npc_alen, addr))
-		return false;
-
-	/* Cache: IP address. */
+	/*
+	 * Rewrite source address if outgoing and destination if incoming.
+	 */
+	oaddr = (di == PFIL_OUT) ? npc->npc_srcip : npc->npc_dstip;
 	memcpy(oaddr, addr, npc->npc_alen);
 	return true;
 }
 
 /*
- * npf_rwrport: rewrite required TCP/UDP port, update the cache.
+ * npf_rwrport: rewrite required TCP/UDP port.
  */
 bool
-npf_rwrport(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
-    in_port_t port)
+npf_rwrport(const npf_cache_t *npc, int di, const in_port_t port)
 {
 	const int proto = npf_cache_ipproto(npc);
-	u_int offby = npf_cache_hlen(npc);
 	in_port_t *oport;
 
 	KASSERT(npf_iscached(npc, NPC_TCP) || npf_iscached(npc, NPC_UDP));
 	KASSERT(proto == IPPROTO_TCP || proto == IPPROTO_UDP);
 
-	/* Offset to the port and pointer in the cache. */
+	/* Get the offset and store the port in it. */
 	if (proto == IPPROTO_TCP) {
-		struct tcphdr *th = &npc->npc_l4.tcp;
-		if (di == PFIL_OUT) {
-			CTASSERT(offsetof(struct tcphdr, th_sport) == 0);
-			oport = &th->th_sport;
-		} else {
-			offby += offsetof(struct tcphdr, th_dport);
-			oport = &th->th_dport;
-		}
+		struct tcphdr *th = npc->npc_l4.tcp;
+		oport = (di == PFIL_OUT) ? &th->th_sport : &th->th_dport;
 	} else {
-		struct udphdr *uh = &npc->npc_l4.udp;
-		if (di == PFIL_OUT) {
-			CTASSERT(offsetof(struct udphdr, uh_sport) == 0);
-			oport = &uh->uh_sport;
-		} else {
-			offby += offsetof(struct udphdr, uh_dport);
-			oport = &uh->uh_dport;
-		}
+		struct udphdr *uh = npc->npc_l4.udp;
+		oport = (di == PFIL_OUT) ? &uh->uh_sport : &uh->uh_dport;
 	}
-
-	/* Advance and rewrite the port. */
-	if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(in_port_t), &port))
-		return false;
-
-	/* Cache: TCP/UDP port. */
-	*oport = port;
+	memcpy(oport, &port, sizeof(in_port_t));
 	return true;
 }
 
 /*
- * npf_rwrcksum: rewrite IPv4 and/or TCP/UDP checksum, update the cache.
+ * npf_rwrcksum: rewrite IPv4 and/or TCP/UDP checksum.
  */
 bool
-npf_rwrcksum(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
-    npf_addr_t *addr, in_port_t port)
+npf_rwrcksum(const npf_cache_t *npc, const int di,
+    const npf_addr_t *addr, const in_port_t port)
 {
 	const int proto = npf_cache_ipproto(npc);
+	const int alen = npc->npc_alen;
 	npf_addr_t *oaddr;
 	uint16_t *ocksum;
 	in_port_t oport;
-	u_int offby;
 
-	/* XXX: NetBSD - process delayed checksums. */
-	if (di == PFIL_OUT && proto != IPPROTO_ICMP) {
-		nbuf_cksum_barrier(nbuf);
-		npc->npc_info &= ~(NPC_LAYER4 | NPC_TCP | NPC_UDP);
-		if (!npf_cache_all(npc, nbuf)) {
-			return false;
-		}
-	}
-
+	KASSERT(npf_iscached(npc, NPC_LAYER4));
 	oaddr = (di == PFIL_OUT) ? npc->npc_srcip : npc->npc_dstip;
 
 	if (npf_iscached(npc, NPC_IP4)) {
-		struct ip *ip = &npc->npc_ip.v4;
-		uint16_t ipsum;
+		struct ip *ip = npc->npc_ip.v4;
+		uint16_t ipsum = ip->ip_sum;
 
-		/* Recalculate IPv4 checksum, advance to it and rewrite. */
-		ipsum = npf_addr_cksum(ip->ip_sum, npc->npc_alen, oaddr, addr);
-		offby = offsetof(struct ip, ip_sum);
-		if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(ipsum), &ipsum))
-			return false;
-		ip->ip_sum = ipsum;
+		/* Recalculate IPv4 checksum and rewrite. */
+		ip->ip_sum = npf_addr_cksum(ipsum, alen, oaddr, addr);
 	} else {
 		/* No checksum for IPv6. */
 		KASSERT(npf_iscached(npc, NPC_IP6));
-		offby = 0;
 	}
 
 	/* Nothing else to do for ICMP. */
@@ -633,7 +571,6 @@ npf_rwrcksum(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
 		return true;
 	}
 	KASSERT(npf_iscached(npc, NPC_TCP) || npf_iscached(npc, NPC_UDP));
-	offby = npf_cache_hlen(npc) - offby;
 
 	/*
 	 * Calculate TCP/UDP checksum:
@@ -642,13 +579,12 @@ npf_rwrcksum(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
 	 * - Fixup the port change, if required (non-zero).
 	 */
 	if (proto == IPPROTO_TCP) {
-		struct tcphdr *th = &npc->npc_l4.tcp;
+		struct tcphdr *th = npc->npc_l4.tcp;
 
 		ocksum = &th->th_sum;
-		offby += offsetof(struct tcphdr, th_sum);
 		oport = (di == PFIL_OUT) ? th->th_sport : th->th_dport;
 	} else {
-		struct udphdr *uh = &npc->npc_l4.udp;
+		struct udphdr *uh = npc->npc_l4.udp;
 
 		KASSERT(proto == IPPROTO_UDP);
 		ocksum = &uh->uh_sum;
@@ -656,21 +592,16 @@ npf_rwrcksum(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
 			/* No need to update. */
 			return true;
 		}
-		offby += offsetof(struct udphdr, uh_sum);
 		oport = (di == PFIL_OUT) ? uh->uh_sport : uh->uh_dport;
 	}
 
-	uint16_t cksum = *ocksum;
-	cksum = npf_addr_cksum(cksum, npc->npc_alen, oaddr, addr);
+	uint16_t cksum = npf_addr_cksum(*ocksum, alen, oaddr, addr);
 	if (port) {
 		cksum = npf_fixup16_cksum(cksum, oport, port);
 	}
 
-	/* Advance to TCP/UDP checksum and rewrite it. */
-	if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(cksum), &cksum)) {
-		return false;
-	}
-	*ocksum = cksum;
+	/* Rewrite TCP/UDP checksum. */
+	memcpy(ocksum, &cksum, sizeof(uint16_t));
 	return true;
 }
 

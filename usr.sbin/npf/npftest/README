@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1.2.3 2012/11/18 21:45:08 riz Exp $
+$NetBSD: README,v 1.1.2.4 2013/02/08 19:18:12 riz Exp $
 
 npftest - a tool for regression testing and debugging NPF.
 It uses RUMP framework to run NPF kernel module in the userspace.
@@ -25,5 +25,5 @@ sudo make includes
 
 cd src/sys/rump/net/lib/libnpf
 make distclean
-MKDEBUG=yes MKDEBUGLIB=yes DBG=-g make -j8
-sudo MKDEBUG=yes MKDEBUGLIB=yes DBG=-g make install
+MKDEBUG=yes MKDEBUGLIB=yes DBG="-g -O2" make -j8
+sudo MKDEBUG=yes MKDEBUGLIB=yes DBG="-g -O2" make install
