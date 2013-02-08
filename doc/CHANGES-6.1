@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.77 2013/02/02 15:44:21 sborrill Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.78 2013/02/08 19:47:41 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8061,4 +8061,66 @@ bin/sh/expand.h					1.19
 	Fix the expansion of "$(foo-$bar}" so that IFS isn't applied when
 	expanding $bar. Should fix PR bin/47361
 	[dsl, ticket #773]
+
+sys/kern/uipc_mbuf.c				1.148
+sys/net/npf/npf.h				1.25
+sys/net/npf/npf_alg.c				1.6
+sys/net/npf/npf_alg_icmp.c			1.14
+sys/net/npf/npf_ext_log.c			1.2
+sys/net/npf/npf_ext_normalise.c			1.2
+sys/net/npf/npf_handler.c			1.24-1.25
+sys/net/npf/npf_impl.h				1.25
+sys/net/npf/npf_inet.c				1.19-1.20
+sys/net/npf/npf_instr.c				1.15
+sys/net/npf/npf_mbuf.c				1.9-1.10
+sys/net/npf/npf_nat.c				1.18
+sys/net/npf/npf_processor.c			1.13-1.14
+sys/net/npf/npf_rproc.c				1.5
+sys/net/npf/npf_ruleset.c			1.15-1.16
+sys/net/npf/npf_sendpkt.c			1.13
+sys/net/npf/npf_session.c			1.19-1.20
+sys/net/npf/npf_state.c				1.13
+sys/net/npf/npf_state_tcp.c			1.12
+sys/sys/mbuf.h					1.151
+usr.sbin/npf/npfctl/npfctl.c			1.27
+usr.sbin/npf/npftest/README			1.3
+usr.sbin/npf/npftest/libnpftest/npf_mbuf_subr.c	1.4
+usr.sbin/npf/npftest/libnpftest/npf_nat_test.c	1.2
+usr.sbin/npf/npftest/libnpftest/npf_nbuf_test.c	1.3-1.4
+usr.sbin/npf/npftest/libnpftest/npf_processor_test.c 1.4
+usr.sbin/npf/npftest/libnpftest/npf_rule_test.c	1.3
+usr.sbin/npf/npftest/libnpftest/npf_state_test.c 1.4
+
+	NPF: rework nbuf interface, simplify ICMP ALG, handle ICMP ECHO
+	for traceroute.  Misc. other fixes.
+	[rmind, ticket #777]
+
+sys/kern/kern_softint.c				1.39
+sys/kern/subr_pserialize.c			1.6
+sys/rump/include/machine/intr.h			1.19
+
+	Fixes for pserialize(9).
+	[rmind, ticket #782]
+
+sys/dev/pci/if_vr.c				1.112 via patch
+
+	Reset the vr(4) chip if the tx engine gets stuck.  No need to
+	do a full reset when enabling/disabling promiscuous mode.
+	[taca, ticket #783]
+
+sys/dev/pci/if_wpi.c				1.54
+
+	Fix various bugs in firmware reference counting.  PR#44144.
+	[riastradh, ticket #784]
+
+sys/arch/arm/include/arm32/pte.h		1.11
+sys/arch/evbarm/marvell/marvell_machdep.c	1.19 via patch
+
+	Switch to ARM_VECTORS_HIGH for Sheeva CPU.
+	[msaitoh, ticket #785]
+
+usr.sbin/makemandb/makemandb.c			1.16
+
+	Don't coredump upon error parsing .SH.
+	[christos, ticket #786]
 
