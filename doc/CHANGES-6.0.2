@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.10 2013/02/08 20:22:44 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.11 2013/02/08 20:28:36 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -72,4 +72,10 @@ sys/kern/subr_vmem.c				1.77 via patch,1.81
 
 	Fix a lock order reversal, and a lock release.
 	[para, ticket #789]
+
+sys/kern/kern_rndq.c				1.7
+
+	Set resource limits to prevent potential consumption of all
+	kernel memory.
+	[msaitoh, ticket #790]
 
