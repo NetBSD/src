@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.6 2013/02/08 02:32:35 christos Exp $
+# $NetBSD: shl.mi,v 1.7 2013/02/08 04:36:35 matt Exp $
 ./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libDECHanyu.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libEUC.so.5.0.debug	comp-i18n-debug	debug
@@ -224,8 +224,13 @@
 ./usr/libdata/debug/usr/lib/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/usr/lib/npf/ext_normalise.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/usr/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
+./usr/libdata/debug/usr/lib/npf/libext_log.so.0.0.debug	comp-obsolete	debug,npf,obsolete
+./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-obsolete	debug,npf,obsolete
+./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-obsolete	debug,npf,obsolete
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3_dso.so.1.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-obsolete		debug,atf,obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/tls/h_tls_dlopen.so.1.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/tls/libh_tls_dlopen.so.1.debug	tests-obsolete		debug,atf,obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/tls/libh_tls_dynamic.so.1.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dlopen.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dynamic.debug		tests-lib-debug		debug,atf
