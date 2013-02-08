@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.9 2013/02/08 19:55:24 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.10 2013/02/08 20:22:44 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -67,4 +67,9 @@ sys/dist/ipf/netinet/ip_fil_netbsd.c		1.4 via patch
 
 	Fix off-by-one read error.
 	[msaitoh, ticket #787]
+
+sys/kern/subr_vmem.c				1.77 via patch,1.81
+
+	Fix a lock order reversal, and a lock release.
+	[para, ticket #789]
 
