@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.80 2013/01/29 21:26:24 para Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.81 2013/02/08 09:30:01 skrll Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.80 2013/01/29 21:26:24 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.81 2013/02/08 09:30:01 skrll Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -204,13 +204,11 @@ bt_refillglobal(vm_flag_t flags)
 		mutex_exit(&vmem_btag_lock);
 		mutex_exit(&vmem_refill_lock);
 		return 0;
-	} else {
-		mutex_exit(&vmem_btag_lock);
 	}
+	mutex_exit(&vmem_btag_lock);
 
 	if (vmem_alloc(kmem_meta_arena, PAGE_SIZE,
 	    (flags & ~VM_FITMASK) | VM_INSTANTFIT | VM_POPULATING, &va) != 0) {
-		mutex_exit(&vmem_btag_lock);
 		mutex_exit(&vmem_refill_lock);
 		return ENOMEM;
 	}
