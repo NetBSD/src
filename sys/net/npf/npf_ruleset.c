@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.10.2.4 2012/08/13 17:49:52 riz Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.10.2.5 2013/02/08 19:18:09 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.10.2.4 2012/08/13 17:49:52 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.10.2.5 2013/02/08 19:18:09 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -353,18 +353,21 @@ npf_ruleset_replace(const char *name, npf_ruleset_t *rlset)
  * => Caller is responsible for nbuf chain protection.
  */
 npf_rule_t *
-npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_ruleset_t *mainrlset,
-    const ifnet_t *ifp, const int di, const int layer)
+npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
+    const npf_ruleset_t *mainrlset, const int di, const int layer)
 {
+	const ifnet_t *ifp = nbuf->nb_ifp;
 	const int di_mask = (di & PFIL_IN) ? NPF_RULE_IN : NPF_RULE_OUT;
-	npf_ruleset_t *rlset = mainrlset;
+	const npf_ruleset_t *rlset = mainrlset;
 	npf_rule_t *final_rl = NULL, *rl;
 	bool defed = false;
 
+	KASSERT(ifp != NULL);
 	KASSERT(npf_core_locked());
 	KASSERT(((di & PFIL_IN) != 0) ^ ((di & PFIL_OUT) != 0));
 again:
 	TAILQ_FOREACH(rl, &rlset->rs_queue, r_entry) {
+		KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 		KASSERT(!final_rl || rl->r_priority >= final_rl->r_priority);
 
 		/* Match the interface. */
@@ -399,6 +402,8 @@ again:
 		final_rl = NULL;
 		goto again;
 	}
+
+	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 	return final_rl;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rule_test.c,v 1.1.2.3 2012/11/18 21:48:56 riz Exp $	*/
+/*	$NetBSD: npf_rule_test.c,v 1.1.2.4 2013/02/08 19:18:12 riz Exp $	*/
 
 /*
  * NPF ruleset test.
@@ -78,17 +78,21 @@ static int
 npf_rule_raw_test(bool verbose, struct mbuf *m, ifnet_t *ifp, int di)
 {
 	npf_cache_t npc = { .npc_info = 0 };
+	nbuf_t nbuf;
 	npf_rule_t *rl;
 	int retfl, error;
 
+	nbuf_init(&nbuf, m, ifp);
+	npf_cache_all(&npc, &nbuf);
+
 	npf_core_enter();
-	rl = npf_ruleset_inspect(&npc, m, npf_core_ruleset(),
-	    ifp, di, NPF_LAYER_3);
+	rl = npf_ruleset_inspect(&npc, &nbuf, npf_core_ruleset(),
+	    di, NPF_LAYER_3);
 	if (rl) {
 		if (verbose) {
 			npf_rulenc_dump(rl);
 		}
-		error = npf_rule_apply(&npc, m, rl, &retfl);
+		error = npf_rule_apply(&npc, &nbuf, rl, &retfl);
 	} else {
 		npf_core_exit();
 		error = ENOENT;
