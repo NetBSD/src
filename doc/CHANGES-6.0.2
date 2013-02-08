@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.13 2013/02/08 20:46:14 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.14 2013/02/08 23:01:40 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -90,4 +90,9 @@ sys/compat/netbsd32/netbsd32_execve.c		1.37
 
 	Fix memory pool corruption when freeing kmem with wrong size.
 	[hannken, ticket #793]
+
+etc/MAKEDEV.tmpl				1.161
+
+	The console major number is not always 0.
+	[apb, ticket #801]
 
