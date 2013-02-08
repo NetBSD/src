@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.2.2.6 2012/11/20 23:11:47 riz Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.2.2.7 2013/02/08 19:45:43 riz Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.2.2.6 2012/11/20 23:11:47 riz Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.2.2.7 2013/02/08 19:45:43 riz Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1273,6 +1273,8 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
 		pman_parse_name(n, rec);
 
 		name_desc = rec->name_desc;
+		if (name_desc == NULL)
+			return;
 
 		/* Remove any leading spaces. */
 		while (name_desc[0] == ' ')
