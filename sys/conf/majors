@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.62 2012/09/19 21:24:29 bouyer Exp $
+# $NetBSD: majors,v 1.63 2013/02/08 15:00:26 jdc Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -51,3 +51,4 @@ device-major filemon   char 202            filemon
 device-major iscsi     char 203            iscsi
 device-major tpm       char 204		   tpm
 device-major mfi       char 205		   mfi
+device-major seeprom   char 206		   seeprom
