@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.5 2012/01/29 22:55:40 rmind Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.5.2.1 2013/02/08 19:32:07 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.5 2012/01/29 22:55:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.5.2.1 2013/02/08 19:32:07 riz Exp $");
 
 #include <sys/param.h>
 
@@ -139,6 +139,7 @@ pserialize_destroy(pserialize_t psz)
 void
 pserialize_perform(pserialize_t psz)
 {
+	uint64_t xc;
 
 	KASSERT(!cpu_intr_p());
 	KASSERT(!cpu_softintr_p());
@@ -168,7 +169,10 @@ pserialize_perform(pserialize_t psz)
 	 * Force some context switch activity on every CPU, as the system
 	 * may not be busy.  Note: should pass the point twice.
 	 */
-	xc_broadcast(XC_HIGHPRI, (xcfunc_t)nullop, NULL, NULL);
+	xc = xc_broadcast(XC_HIGHPRI, (xcfunc_t)nullop, NULL, NULL);
+	xc_wait(xc);
+
+	/* No need to xc_wait() as we implement our own condvar. */
 	xc_broadcast(XC_HIGHPRI, (xcfunc_t)nullop, NULL, NULL);
 
 	/*
@@ -191,7 +195,7 @@ pserialize_read_enter(void)
 {
 
 	KASSERT(!cpu_intr_p());
-	return splsoftclock();
+	return splsoftserial();
 }
 
 void
