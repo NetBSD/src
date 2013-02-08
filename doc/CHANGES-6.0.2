@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.14 2013/02/08 23:01:40 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.15 2013/02/08 23:04:14 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -95,4 +95,11 @@ etc/MAKEDEV.tmpl				1.161
 
 	The console major number is not always 0.
 	[apb, ticket #801]
+
+sys/secmodel/extensions/secmodel_extensions.c	1.4
+sys/secmodel/securelevel/secmodel_securelevel.c	1.29
+
+	Re-instate backwards compatible
+	security.models.bsd44.{curtain,securelevel}.
+	[jym, ticket #802]
 
