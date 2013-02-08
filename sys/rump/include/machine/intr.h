@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2011/03/21 16:41:08 pooka Exp $	*/
+/*	$NetBSD: intr.h,v 1.18.16.1 2013/02/08 19:31:18 riz Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -47,6 +47,7 @@ makeiplcookie(ipl_t ipl)
 
 #define spllower(x) ((void)x)
 #define splraise(x) 0
+#define splsoftserial() 0
 #define splsoftnet() 0
 #define splsoftclock() 0
 #define splhigh() 0
