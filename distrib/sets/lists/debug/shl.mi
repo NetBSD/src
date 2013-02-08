@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.5 2013/02/05 23:42:21 christos Exp $
+# $NetBSD: shl.mi,v 1.6 2013/02/08 02:32:35 christos Exp $
 ./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libDECHanyu.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libEUC.so.5.0.debug	comp-i18n-debug	debug
@@ -22,9 +22,9 @@
 ./usr/libdata/debug/usr/lib/i18n/libmapper_serial.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug		debug
 ./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug
-./usr/libdata/debug/usr/lib/npf/libext_log.so.0.0.debug	comp-npf-debug		debug
-./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-npf-debug		debug
-./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-npf-debug		debug
+./usr/libdata/debug/usr/lib/npf/ext_log.so.0.0.debug	comp-npf-debug		debug
+./usr/libdata/debug/usr/lib/npf/ext_normalise.so.0.0.debug	comp-npf-debug		debug
+./usr/libdata/debug/usr/lib/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug
 ./usr/libdata/debug/usr/lib/libamu.so.4.0.debug		comp-amd-debug	debug
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug	comp-krb5-debug	kerberos,debug
@@ -221,11 +221,11 @@
 ./usr/libdata/debug/usr/lib/libz.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libzfs.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libzpool.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
-./usr/libdata/debug/usr/lib/npf/libext_log.so.0.0.debug	comp-sys-debug	debug,npf
-./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-sys-debug	debug,npf
-./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
-./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/tls/libh_tls_dlopen.so.1.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/lib/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,npf
+./usr/libdata/debug/usr/lib/npf/ext_normalise.so.0.0.debug	comp-sys-debug	debug,npf
+./usr/libdata/debug/usr/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
+./usr/libdata/debug/usr/tests/lib/csu/h_initfini3_dso.so.1.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/tls/h_tls_dlopen.so.1.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/libh_tls_dynamic.so.1.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dlopen.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dynamic.debug		tests-lib-debug		debug,atf

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.649 2013/02/05 23:42:21 christos Exp $
+# $NetBSD: shl.mi,v 1.650 2013/02/08 02:32:32 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -697,10 +697,14 @@
 ./usr/lib/libtermlib.so				base-sys-shlib
 ./usr/lib/libtermlib.so.0			base-sys-shlib
 ./usr/lib/libtermlib.so.0.6			base-sys-shlib
-./usr/lib/libtpm_unseal.so.1.0			base-tmp-shlib		tpm
+./usr/lib/libtpm_unseal.so			base-sys-shlib		tpm
+./usr/lib/libtpm_unseal.so.1			base-sys-shlib		tpm
+./usr/lib/libtpm_unseal.so.1.0			base-sys-shlib		tpm
 ./usr/lib/libtre.so				base-sys-shlib
 ./usr/lib/libtre.so.0				base-sys-shlib
 ./usr/lib/libtre.so.0.8				base-sys-shlib
+./usr/lib/libtspi.so				base-sys-shlib		tpm
+./usr/lib/libtspi.so.3				base-sys-shlib		tpm
 ./usr/lib/libtspi.so.3.0			base-sys-shlib		tpm
 ./usr/lib/libukfs.so				base-sys-shlib		rump
 ./usr/lib/libukfs.so.1				base-sys-shlib		rump
