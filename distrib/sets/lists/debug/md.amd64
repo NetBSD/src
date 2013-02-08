@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.5 2013/02/05 23:42:21 christos Exp $
+# $NetBSD: md.amd64,v 1.6 2013/02/08 02:32:35 christos Exp $
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/lib/i386/i18n/libBIG5.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
@@ -24,9 +24,9 @@
 ./usr/libdata/debug/usr/lib/i386/i18n/libmapper_serial.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/i18n/libmapper_std.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/i18n/libmapper_zone.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/npf/libext_log.so.0.0.debug	comp-npf-debug		debug,compat
-./usr/libdata/debug/usr/lib/i386/npf/libext_normalise.so.0.0.debug	comp-npf-debug		debug,compat
-./usr/libdata/debug/usr/lib/i386/npf/libext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/i386/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/i386/npf/ext_normalise.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/i386/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/usr/lib/i386/libamu.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libarchive.so.3.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libasn1.so.8.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
@@ -145,6 +145,8 @@
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libterminfo.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libtpm_unseal.so.1.0.debug	comp-compat-shlib	compat,pic,debug,tpm
+./usr/libdata/debug/usr/lib/i386/libtspi.so.3.0.debug	comp-compat-shlib	compat,pic,debug,tpm
 ./usr/libdata/debug/usr/lib/i386/libtre.so.0.8.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libukfs.so.1.0.debug	comp-compat-shlib	compat,pic,debug,rump
 ./usr/libdata/debug/usr/lib/i386/libusbhid.so.1.0.debug	comp-compat-shlib	compat,pic,debug
@@ -294,8 +296,11 @@
 ./usr/lib/i386/libssl_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libstdc++_g.a			comp-c-proflib		compat,debuglib,cxx,gcccmds
 ./usr/lib/i386/libsupc++_g.a			comp-c-proflib		compat,debuglib,cxx,gcccmds
+./usr/lib/i386/libtddl_g.a			comp-c-proflib		compat,debug,tpm
 ./usr/lib/i386/libterminfo_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libtpm_unseal_g.a		comp-c-proflib		compat,debug,tpm
 ./usr/lib/i386/libtre_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libtspi_g.a			comp-c-proflib		compat,debug,tpm
 ./usr/lib/i386/libukfs_g.a			comp-c-proflib		compat,debuglib,rump
 ./usr/lib/i386/libusbhid_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libutil_g.a			comp-c-proflib		compat,debuglib

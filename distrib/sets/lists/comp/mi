@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1800 2013/02/07 16:54:53 christos Exp $
+#	$NetBSD: mi,v 1.1801 2013/02/08 02:32:32 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2579,6 +2579,29 @@
 ./usr/include/syslog.h				comp-c-include
 ./usr/include/trousers/trousers.h		comp-c-include		tpm
 ./usr/include/trousers/tss.h			comp-c-include		tpm
+./usr/include/tss/compat11b.h			comp-c-include		tpm
+./usr/include/tss/platform.h			comp-c-include		tpm
+./usr/include/tss/tcpa_defines.h		comp-c-include		tpm
+./usr/include/tss/tcpa_error.h			comp-c-include		tpm
+./usr/include/tss/tcpa_struct.h			comp-c-include		tpm
+./usr/include/tss/tcpa_typedef.h		comp-c-include		tpm
+./usr/include/tss/tcs.h				comp-c-include		tpm
+./usr/include/tss/tcs_defines.h			comp-c-include		tpm
+./usr/include/tss/tcs_error.h			comp-c-include		tpm
+./usr/include/tss/tcs_structs.h			comp-c-include		tpm
+./usr/include/tss/tcs_typedef.h			comp-c-include		tpm
+./usr/include/tss/tddl_error.h			comp-c-include		tpm
+./usr/include/tss/tddlapi_error.h		comp-c-include		tpm
+./usr/include/tss/tddli.h			comp-c-include		tpm
+./usr/include/tss/tpm.h				comp-c-include		tpm
+./usr/include/tss/tpm_error.h			comp-c-include		tpm
+./usr/include/tss/tpm_ordinal.h			comp-c-include		tpm
+./usr/include/tss/tspi.h			comp-c-include		tpm
+./usr/include/tss/tss_defines.h			comp-c-include		tpm
+./usr/include/tss/tss_error.h			comp-c-include		tpm
+./usr/include/tss/tss_error_basics.h		comp-c-include		tpm
+./usr/include/tss/tss_structs.h			comp-c-include		tpm
+./usr/include/tss/tss_typedef.h			comp-c-include		tpm
 ./usr/include/tar.h				comp-c-include
 ./usr/include/tcpd.h				comp-c-include
 ./usr/include/term.h				comp-c-include
@@ -4238,8 +4261,24 @@
 ./usr/share/man/cat3/TAILQ_NEXT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_PREV.0		comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_REMOVE.0		comp-c-catman		.cat
-./usr/share/man/cat3/TIMESPEC_TO_TIMEVAL.0		comp-c-catman		.cat
-./usr/share/man/cat3/TIMEVAL_TO_TIMESPEC.0		comp-c-catman		.cat
+./usr/share/man/cat3/TIMESPEC_TO_TIMEVAL.0		comp-c-catman	.cat
+./usr/share/man/cat3/TIMEVAL_TO_TIMESPEC.0		comp-c-catman	.cat
+./usr/share/man/cat3/Tspi_ChangeAuth.0			comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_ChangeAuthAsym.0		comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_Close.0		comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_CloseObject.0		comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_Connect.0		comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_Create.0		comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_CreateObject.0	comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_FreeMemory.0		comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_GetCapability.0	comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_GetDefaultPolicy.0	comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_GetKeyByPublicInfo.0	comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_GetKeyByUUID.0	comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_GetRegisteredKeysByUUID.0	comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_GetRegisteredKeysByUUID2.0	comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_GetTpmObject.0	comp-c-catman	tpm,.cat
+./usr/share/man/cat3/Tspi_Context_LoadKeyByBlob.0	comp-c-catman	tpm,.cat
 ./usr/share/man/cat3/Tspi_Context_LoadKeyByUUID.0	comp-c-catman	tpm,.cat
 ./usr/share/man/cat3/Tspi_Context_RegisterKey.0	comp-c-catman	tpm,.cat
 ./usr/share/man/cat3/Tspi_Context_UnregisterKey.0	comp-c-catman	tpm,.cat
@@ -10777,6 +10816,22 @@
 ./usr/share/man/html3/TAILQ_REMOVE.html		comp-c-htmlman		html
 ./usr/share/man/html3/TIMESPEC_TO_TIMEVAL.html	comp-c-htmlman		html
 ./usr/share/man/html3/TIMEVAL_TO_TIMESPEC.html	comp-c-htmlman		html
+./usr/share/man/html3/Tspi_ChangeAuth.html	comp-c-htmlman		tpm,html
+./usr/share/man/html3/Tspi_ChangeAuthAsym.html	comp-c-htmlman		tpm,html
+./usr/share/man/html3/Tspi_Context_Close.html	comp-c-htmlman		tpm,html
+./usr/share/man/html3/Tspi_Context_CloseObject.html	comp-c-htmlman	tpm,html
+./usr/share/man/html3/Tspi_Context_Connect.html	comp-c-htmlman	tpm,html
+./usr/share/man/html3/Tspi_Context_Create.html	comp-c-htmlman	tpm,html
+./usr/share/man/html3/Tspi_Context_CreateObject.html	comp-c-htmlman	tpm,html
+./usr/share/man/html3/Tspi_Context_FreeMemory.html	comp-c-htmlman	tpm,html
+./usr/share/man/html3/Tspi_Context_GetCapability.html	comp-c-htmlman	tpm,html
+./usr/share/man/html3/Tspi_Context_GetDefaultPolicy.html	comp-c-htmlman	tpm,html
+./usr/share/man/html3/Tspi_Context_GetKeyByPublicInfo.html	comp-c-htmlman	tpm,html
+./usr/share/man/html3/Tspi_Context_GetKeyByUUID.html	comp-c-htmlman	tpm,html
+./usr/share/man/html3/Tspi_Context_GetRegisteredKeysByUUID.html	comp-c-htmlman	tpm,html
+./usr/share/man/html3/Tspi_Context_GetRegisteredKeysByUUID2.html	comp-c-htmlman		tpm,html
+./usr/share/man/html3/Tspi_Context_GetTpmObject.html	comp-c-htmlman	tpm,html
+./usr/share/man/html3/Tspi_Context_LoadKeyByBlob.html	comp-c-htmlman	tpm,html
 ./usr/share/man/html3/Tspi_Context_LoadKeyByUUID.html	comp-c-htmlman	tpm,html
 ./usr/share/man/html3/Tspi_Context_RegisterKey.html	comp-c-htmlman	tpm,html
 ./usr/share/man/html3/Tspi_Context_UnregisterKey.html	comp-c-htmlman	tpm,html
@@ -17116,6 +17171,22 @@
 ./usr/share/man/man3/TAILQ_REMOVE.3		comp-c-man		.man
 ./usr/share/man/man3/TIMESPEC_TO_TIMEVAL.3	comp-c-man		.man
 ./usr/share/man/man3/TIMEVAL_TO_TIMESPEC.3	comp-c-man		.man
+./usr/share/man/man3/Tspi_ChangeAuth.3		comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_ChangeAuthAsym.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_Close.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_CloseObject.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_Connect.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_Create.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_CreateObject.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_FreeMemory.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_GetCapability.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_GetDefaultPolicy.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_GetKeyByPublicInfo.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_GetKeyByUUID.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_GetRegisteredKeysByUUID.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_GetRegisteredKeysByUUID2.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_GetTpmObject.3	comp-c-man	tpm,.man
+./usr/share/man/man3/Tspi_Context_LoadKeyByBlob.3	comp-c-man	tpm,.man
 ./usr/share/man/man3/Tspi_Context_LoadKeyByUUID.3	comp-c-man	tpm,.man
 ./usr/share/man/man3/Tspi_Context_RegisterKey.3	comp-c-man	tpm,.man
 ./usr/share/man/man3/Tspi_Context_UnregisterKey.3	comp-c-man	tpm,.man

@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.5 2013/02/05 23:42:21 christos Exp $
+# $NetBSD: md.sparc64,v 1.6 2013/02/08 02:32:35 christos Exp $
 ./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/lib/sparc/i18n/libBIG5.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
@@ -24,9 +24,9 @@
 ./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_serial.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_std.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_zone.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/npf/libext_log.so.0.0.debug	comp-npf-debug		debug,compat
-./usr/libdata/debug/usr/lib/sparc/npf/libext_normalise.so.0.0.debug	comp-npf-debug		debug,compat
-./usr/libdata/debug/usr/lib/sparc/npf/libext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/sparc/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/sparc/npf/ext_normalise.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/sparc/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/usr/lib/sparc/libamu.so.4.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libarchive.so.3.1.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
