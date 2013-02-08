@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.78 2013/02/08 19:47:41 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.79 2013/02/08 20:31:51 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8123,4 +8123,32 @@ usr.sbin/makemandb/makemandb.c			1.16
 
 	Don't coredump upon error parsing .SH.
 	[christos, ticket #786]
+
+sys/dist/ipf/netinet/ip_fil_netbsd.c		1.4 via patch
+
+	Fix off-by-one read error.
+	[msaitoh, ticket #787]
+
+sys/arch/arm/arm32/cpu.c			1.89
+
+	Print CPU model string correctly.
+	[msaitoh, ticket #788]
+
+sys/kern/subr_vmem.c				1.77 via patch,1.81
+
+	Fix a lock order reversal, and a lock release.
+	[para, ticket #789]
+
+sys/kern/kern_rndq.c				1.7
+
+	Set resource limits to prevent potential consumption of all
+	kernel memory.
+	[msaitoh, ticket #790]
+
+lib/libutil/parsedate.y				1.13
+
+	Fix a bug in parsedate(3) where it would treat all input
+	as if it were in the local time zone, even if the input should have
+	been treated as a time in UTC or some other time zone.
+	[apb, ticket #791]
 
