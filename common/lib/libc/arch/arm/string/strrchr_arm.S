@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strrchr_arm.S,v 1.2 2013/01/28 06:23:14 matt Exp $")
+RCSID("$NetBSD: strrchr_arm.S,v 1.3 2013/02/08 02:19:36 matt Exp $")
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
@@ -47,16 +47,24 @@ RCSID("$NetBSD: strrchr_arm.S,v 1.2 2013/01/28 06:23:14 matt Exp $")
 
 	.text
 ENTRY(strrchr)
-	mov	ip, r0			/* we use r0 at the return value */
+	teq	r1, #0			/* searching for NUL? */
+	bne	1f			/*   no, do it the hard way */
+	push	{r0, lr}		/* save pointer and return addr */
+	bl	PLT_SYM(strlen)		/* get length */
+	pop	{r1, lr}		/* restore pointer and returna addr */
+	add	r0, r0, r1		/* add pointer to length */
+	RET				/* return */
+
+1:	mov	ip, r0			/* we use r0 at the return value */
 	mov	r0, #0			/* return NULL by default */
 	and	r2, r1, #0xff		/* restrict to byte value */
-1:	tst	ip, #3			/* test for word alignment */
+2:	tst	ip, #3			/* test for word alignment */
 	beq	.Lpre_main_loop		/*   finally word aligned */
 	ldrb	r3, [ip], #1		/* load a byte */
 	cmp	r3, r2			/* did it match? */
 	subeq	r0, ip, #1		/*   yes, remember that it did */
 	teq	r3, #0			/* was it NUL? */
-	bne	1b			/*   no, try next byte */
+	bne	2b			/*   no, try next byte */
 	RET				/* return */
 .Lpre_main_loop:
 	push	{r4, r5}		/* save some registers */
