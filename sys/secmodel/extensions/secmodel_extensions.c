@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.2 2011/12/04 21:04:51 jym Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.2.8.1 2013/02/08 23:04:01 riz Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.2 2011/12/04 21:04:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.2.8.1 2013/02/08 23:04:01 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,7 +73,7 @@ static int secmodel_extensions_network_cb(kauth_cred_t, kauth_action_t,
 static void
 sysctl_security_extensions_setup(struct sysctllog **clog)
 {
-	const struct sysctlnode *rnode;
+	const struct sysctlnode *rnode, *rnode2;
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
@@ -85,6 +85,23 @@ sysctl_security_extensions_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "models", NULL,
 		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	/* Compatibility: security.models.bsd44 */
+	rnode2 = rnode;
+	sysctl_createv(clog, 0, &rnode2, &rnode2,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "bsd44", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+        /* Compatibility: security.models.bsd44.curtain */
+	sysctl_createv(clog, 0, &rnode2, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "curtain",
+		       SYSCTL_DESCR("Curtain information about objects to "\
+		       		    "users not owning them."),
+		       sysctl_extensions_curtain_handler, 0, &curtain, 0,
 		       CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &rnode,
