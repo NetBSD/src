@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.82 2013/02/08 22:42:54 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.83 2013/02/08 23:05:34 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8196,4 +8196,16 @@ sbin/ifconfig/af_inetany.c			1.16 via patch
 	ifconfig clone destroy should not print useless diagnostic
 	and exit with an error code. PR#46579.
 	[christos, ticket #799]
+
+etc/MAKEDEV.tmpl				1.161
+
+	The console major number is not always 0.
+	[apb, ticket #801]
+
+sys/secmodel/extensions/secmodel_extensions.c	1.4
+sys/secmodel/securelevel/secmodel_securelevel.c	1.29
+
+	Re-instate backwards compatible
+	security.models.bsd44.{curtain,securelevel}.
+	[jym, ticket #802]
 
