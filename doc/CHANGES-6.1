@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.80 2013/02/08 20:51:55 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.81 2013/02/08 20:59:07 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8178,4 +8178,10 @@ sys/rump/net/lib/libshmif/if_shmem.c		1.46
 	Pass up all multicast addresses, not just broadcast.  Among other
 	things, makes IPv6 work over this interface.
 	[gdt, ticket #796]
+
+sys/arch/sparc64/sparc64/locore.s		1.347
+sys/arch/sparc64/sparc64/mp_subr.S		1.4
+
+	Fix sparc64_ipi_ccall by adding proper trap setup.
+	[martin, ticket #797]
 
