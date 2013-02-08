@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.72.2.1 2012/04/03 16:14:02 riz Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.72.2.1.4.1 2013/02/08 20:22:18 riz Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.72.2.1 2012/04/03 16:14:02 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.72.2.1.4.1 2013/02/08 20:22:18 riz Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -263,6 +263,7 @@ static int static_qc_pool_count = STATIC_QC_POOL_COUNT;
 vmem_t *kmem_va_meta_arena;
 vmem_t *kmem_meta_arena;
 
+static kmutex_t vmem_refill_lock;
 static kmutex_t vmem_btag_lock;
 static LIST_HEAD(, vmem_btag) vmem_btag_freelist;
 static size_t vmem_btag_freelist_count = 0;
@@ -282,19 +283,24 @@ bt_refillglobal(vm_flag_t flags)
 	bt_t *bt;
 	int i;
 
+	mutex_enter(&vmem_refill_lock);
+
 	mutex_enter(&vmem_btag_lock);
 	if (vmem_btag_freelist_count > (BT_MINRESERVE * 16)) {
 		mutex_exit(&vmem_btag_lock);
+		mutex_exit(&vmem_refill_lock);
 		return 0;
 	}
+	mutex_exit(&vmem_btag_lock);
 
 	if (vmem_alloc(kmem_meta_arena, PAGE_SIZE,
 	    (flags & ~VM_FITMASK) | VM_INSTANTFIT | VM_POPULATING, &va) != 0) {
-		mutex_exit(&vmem_btag_lock);
+		mutex_exit(&vmem_refill_lock);
 		return ENOMEM;
 	}
 	VMEM_EVCNT_INCR(bt_pages);
 
+	mutex_enter(&vmem_btag_lock);
 	btp = (void *) va;
 	for (i = 0; i < (BT_PER_PAGE); i++) {
 		bt = btp;
@@ -308,9 +314,14 @@ bt_refillglobal(vm_flag_t flags)
 	}
 	mutex_exit(&vmem_btag_lock);
 
-	bt_refill(kmem_arena, (flags & ~VM_FITMASK) | VM_INSTANTFIT);
-	bt_refill(kmem_va_meta_arena, (flags & ~VM_FITMASK) | VM_INSTANTFIT);
-	bt_refill(kmem_meta_arena, (flags & ~VM_FITMASK) | VM_INSTANTFIT);
+	bt_refill(kmem_arena, (flags & ~VM_FITMASK)
+	    | VM_INSTANTFIT | VM_POPULATING);
+	bt_refill(kmem_va_meta_arena, (flags & ~VM_FITMASK)
+	    | VM_INSTANTFIT | VM_POPULATING);
+	bt_refill(kmem_meta_arena, (flags & ~VM_FITMASK)
+	    | VM_INSTANTFIT | VM_POPULATING);
+
+	mutex_exit(&vmem_refill_lock);
 
 	return 0;
 }
@@ -320,7 +331,9 @@ bt_refill(vmem_t *vm, vm_flag_t flags)
 {
 	bt_t *bt;
 
-	bt_refillglobal(flags);
+	if (!(flags & VM_POPULATING)) {
+		bt_refillglobal(flags);
+	}
 
 	VMEM_LOCK(vm);
 	mutex_enter(&vmem_btag_lock);
@@ -691,6 +704,7 @@ vmem_bootstrap(void)
 {
 
 	mutex_init(&vmem_list_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&vmem_refill_lock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&vmem_btag_lock, MUTEX_DEFAULT, IPL_VM);
 
 	while (static_bt_count-- > 0) {
