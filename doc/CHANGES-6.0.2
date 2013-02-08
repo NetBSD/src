@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.7 2013/01/26 21:36:27 bouyer Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.8 2013/02/08 19:32:00 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -55,4 +55,11 @@ sys/kern/subr_cprng.c				1.15
 	consumed the entropy that triggered the immediate reseed, we can
 	reseed with as little as sizeof(int) bytes of entropy.
 	[tls, ticket #800]
+
+sys/kern/kern_softint.c				1.39
+sys/kern/subr_pserialize.c			1.6
+sys/rump/include/machine/intr.h			1.19
+
+	Fixes for pserialize(9).
+	[rmind, ticket #782]
 
