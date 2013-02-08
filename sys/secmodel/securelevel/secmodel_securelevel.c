@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.26 2012/01/17 10:47:27 cegger Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.26.6.1 2013/02/08 23:04:01 riz Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.26 2012/01/17 10:47:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.26.6.1 2013/02/08 23:04:01 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -95,7 +95,7 @@ secmodel_securelevel_sysctl(SYSCTLFN_ARGS)
 void
 sysctl_security_securelevel_setup(struct sysctllog **clog)
 {
-	const struct sysctlnode *rnode;
+	const struct sysctlnode *rnode, *rnode2;
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
@@ -107,6 +107,22 @@ sysctl_security_securelevel_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "models", NULL,
 		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	/* Compatibility: security.models.bsd44 */
+	rnode2 = rnode;
+	sysctl_createv(clog, 0, &rnode2, &rnode2,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "bsd44", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+        /* Compatibility: security.models.bsd44.securelevel */
+	sysctl_createv(clog, 0, &rnode2, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "securelevel",
+		       SYSCTL_DESCR("System security level"),
+		       secmodel_securelevel_sysctl, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &rnode,
