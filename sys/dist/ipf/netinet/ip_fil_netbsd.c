@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.61 2012/02/15 17:55:22 riz Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.61.2.1 2013/02/08 19:54:45 riz Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.61 2012/02/15 17:55:22 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.61.2.1 2013/02/08 19:54:45 riz Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.67 2009/12/19 05:41:08 darrenr Exp";
@@ -1040,7 +1040,7 @@ fr_send_icmp_err(int type, fr_info_t *fin, int dst)
 
 	code = fin->fin_icode;
 #ifdef USE_INET6
-	if ((code < 0) || (code > sizeof(icmptoicmp6unreach)/sizeof(int)))
+	if ((code < 0) || (code >= sizeof(icmptoicmp6unreach)/sizeof(int)))
 		return -1;
 #endif
 
