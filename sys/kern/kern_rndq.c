@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.1.2.2 2012/04/20 23:35:20 riz Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.1.2.2.4.1 2013/02/08 20:28:22 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.1.2.2 2012/04/20 23:35:20 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.1.2.2.4.1 2013/02/08 20:28:22 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -405,7 +405,17 @@ rnd_init(void)
 	rnd_mempc = pool_cache_init(sizeof(rnd_sample_t), 0, 0, 0,
 				    "rndsample", NULL, IPL_VM,
 				    NULL, NULL, NULL);
-	/* Mix *something*, *anything* into the pool to help it get started.
+
+	/*
+	 * Set resource limit. The rnd_process_events() function
+	 * is called every tick and process the sample queue.
+	 * Without limitation, if a lot of rnd_add_*() are called,
+	 * all kernel memory may be eaten up.
+	 */
+	pool_cache_sethardlimit(rnd_mempc, RND_POOLBITS, NULL, 0);
+
+	/*
+	 * Mix *something*, *anything* into the pool to help it get started.
 	 * However, it's not safe for rnd_counter() to call microtime() yet,
 	 * so on some platforms we might just end up with zeros anyway.
 	 * XXX more things to add would be nice.
