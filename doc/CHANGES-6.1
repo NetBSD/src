@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.81 2013/02/08 20:59:07 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.82 2013/02/08 22:42:54 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8184,4 +8184,16 @@ sys/arch/sparc64/sparc64/mp_subr.S		1.4
 
 	Fix sparc64_ipi_ccall by adding proper trap setup.
 	[martin, ticket #797]
+
+dist/nvi/common/conv.c				1.7
+
+	Don't truncate files on character conversions without warning
+	and a chance for recovery.
+	[christos, ticket #798]
+
+sbin/ifconfig/af_inetany.c			1.16 via patch
+
+	ifconfig clone destroy should not print useless diagnostic
+	and exit with an error code. PR#46579.
+	[christos, ticket #799]
 
