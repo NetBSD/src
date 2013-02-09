@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.35 2013/01/14 11:23:48 jmcneill Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.36 2013/02/09 22:11:29 christos Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.35 2013/01/14 11:23:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.36 2013/02/09 22:11:29 christos Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -705,15 +705,14 @@ omap3530_memprobe(void)
 static bool
 beagle_read_edid(uint8_t *edid_buf, size_t edid_buflen)
 {
+#if defined(OMAP_3530)
 	i2c_tag_t ic = NULL;
 	uint8_t reg;
 	int error;
 
-#if defined(OMAP_3530)
 	/* On Beagleboard, EDID is accessed using I2C2 ("omapiic2"). */
 	extern i2c_tag_t omap3_i2c_get_tag(device_t);
 	ic = omap3_i2c_get_tag(device_find_by_xname("omapiic2"));
-#endif
 
 	if (ic == NULL)
 		return false;
@@ -728,6 +727,9 @@ beagle_read_edid(uint8_t *edid_buf, size_t edid_buflen)
 	iic_release_bus(ic, 0);
 
 	return error == 0 ? true : false;
+#else
+	return false;
+#endif
 }
 
 void
