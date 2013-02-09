@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.20 2013/02/04 21:35:44 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.21 2013/02/09 13:28:59 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.20 2013/02/04 21:35:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.21 2013/02/09 13:28:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,9 +242,6 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 		edid_print(&ei);
 	}
 
-	if (!is_console)
-		return;
-
 	/* setup video DMA */
 	sc->sc_vramsize = (12 << 20) + 0x1000; /* 12MB + CLUT */
 
@@ -397,30 +394,22 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	ri = &sc->sc_console_screen.scr_ri;
-
-	if (is_console) {
-		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
-		    &defattr);
-		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
-
+	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
+	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 #if NOMAPDMA > 0
-		omapfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
-		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
+	omapfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
+	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
 #endif
-		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
-		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
-		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
-		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+	sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
+	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
+	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
+	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+
+	if (is_console)
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
-		vcons_replay_msgbuf(&sc->sc_console_screen);
-	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
-		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
-	}
+
+	vcons_replay_msgbuf(&sc->sc_console_screen);
 
 	aa.console = is_console;
 	aa.scrdata = &sc->sc_screenlist;
