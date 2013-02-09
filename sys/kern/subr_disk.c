@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.100 2010/10/14 00:47:16 mrg Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.101 2013/02/09 00:31:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.100 2010/10/14 00:47:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.101 2013/02/09 00:31:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -124,7 +124,7 @@ diskerr(const struct buf *bp, const char *dname, const char *what, int pri,
     int blkdone, const struct disklabel *lp)
 {
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
-	void (*pr)(const char *, ...);
+	void (*pr)(const char *, ...) __printflike(1, 2);
 	char partname = 'a' + part;
 	daddr_t sn;
 
