@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.20 2013/02/09 11:20:56 jmcneill Exp $
+# $NetBSD: mkimage,v 1.21 2013/02/09 18:50:11 christos Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,6 +34,10 @@
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
 PROG="$(basename "$0")"
+
+DISKLABEL=${TOOL_DISKLABEL:-disklabel}
+FDISK=${TOOL_DISKLABEL:-fdisk}
+MAKEFS=${TOOL_MAKEFS:-makefs}
 
 src="/usr/src"
 release="/usr/obj/evbarm/release"
@@ -114,8 +118,6 @@ if [ -n "$1" ]; then
 	shift
 fi
 
-. "${DIR}/conf/${h}.conf"
-
 echo ${bar} configuring sets ${bar}
 (echo '/set type=dir uname=root gname=wheel mode=0755'
 for i in $selected_sets; do
@@ -130,12 +132,12 @@ populate
 (cd ${mnt}; mtree -c -k all | mtree -C -k all) >> "$tmp/selected_sets"
 if [ -n ${msdosid} ]; then
 	echo ${bar} Populating msdos filesystem ${bar}
-	makefs -t msdos -O $((${init} / 2))m -s $((${boot} / 2))m \
+	${MAKEFS} -t msdos -O $((${init} / 2))m -s $((${boot} / 2))m \
 	    ${image} ${mnt}/boot
 fi
 
 echo ${bar} Populating ffs filesystem ${bar}
-makefs -t ffs -rx -O $(((${init} + ${boot} + ${swap}) / 2))m \
+${MAKEFS} -t ffs -rx -O $(((${init} + ${boot} + ${swap}) / 2))m \
     -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
 
 if [ -z "$size" ]; then
@@ -145,9 +147,9 @@ newsize=$((size / 2 / 1024))
 
 echo ${bar} Adding label ${bar}
 make_label > ${tmp}/label
-disklabel -R -F ${image} ${tmp}/label
+${DISKLABEL} -R -F ${image} ${tmp}/label
 if [ -n ${msdosid} ]; then
 	echo ${bar} Running fdisk ${bar}
-	fdisk -f -u -0 -s ${msdosid}/${init}/${boot} -F ${image}
+	${FDISK} -f -u -0 -s ${msdosid}/${init}/${boot} -F ${image}
 fi
 echo ${bar} Image is ${image} ${bar}
