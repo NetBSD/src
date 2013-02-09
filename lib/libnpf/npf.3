@@ -1,6 +1,6 @@
-.\"	$NetBSD: npf.3,v 1.7 2012/12/24 00:35:56 wiz Exp $
+.\"	$NetBSD: npf.3,v 1.8 2013/02/09 03:35:33 rmind Exp $
 .\"
-.\" Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 23, 2012
+.Dd January 5, 2013
 .Dt NPF 3
 .Os
 .Sh NAME
@@ -50,12 +50,15 @@
 .Ft nl_rule_t *
 .Fn npf_rule_create "char *name" "uint32_t attr" "u_int if_idx"
 .Ft int
-.Fn npf_rule_setcode "nl_rule_t *rl" "int type" "const void *code" "size_t sz"
+.Fn npf_rule_setcode "nl_rule_t *rl" "int type" "const void *code" "size_t len"
+.Ft int
+.Fn npf_rule_setkey "nl_rule_t *rl" "int type" "const void *code" "size_t len"
 .Ft bool
 .Fn npf_rule_exists_p "nl_config_t *ncf" "const char *name"
 .Ft int
-.Fn npf_rule_insert "nl_config_t *ncf" " nl_rule_t *parent" \
-"nl_rule_t *rl" "pri_t pri"
+.Fn npf_rule_insert "nl_config_t *ncf" " nl_rule_t *parent" "nl_rule_t *rl"
+.Ft int
+.Fn npf_rule_setprio "nl_rule_t *rl" "pri_t pri"
 .Ft int
 .Fn npf_rule_setproc "nl_config_t *ncf" "nl_rule_t *rl" "const char *name"
 .Ft void
@@ -123,10 +126,6 @@ The following attributes, which can be ORed, are available:
 Decision of this rule is "pass".
 If this attribute is not
 specified, then packet "block" (drop) is the default.
-.It Dv NPF_RULE_DEFAULT
-This a default rule in the ruleset.
-There can only be a
-single rule having this attribute set in the ruleset.
 .It Dv NPF_RULE_FINAL
 Indicates that on rule match, further processing of the
 ruleset should be stopped and this rule applied instantly.
@@ -150,21 +149,31 @@ interface, given by
 .Xr if_nametoindex 3 .
 Zero indicates any interface.
 .\" ---
-.It Fn npf_rule_setcode "rl" "type" "code" "sz"
+.It Fn npf_rule_setcode "rl" "type" "code" "len"
 Assign compiled code for the rule specified by
 .Fa rl ,
 used for filter criteria.
 Pointer to the binary code is specified by
 .Fa code ,
 and size of the memory area by
-.Fa sz .
+.Fa len .
 Type of the code is specified by
 .Fa type .
 Currently, only n-code is supported and
-.Dv NPF_CODE_NCODE
+.Dv NPF_CODE_NC
 should be passed.
 .\" ---
-.It Fn npf_rule_insert "ncf" "parent" "rl" "pri"
+.It Fn npf_rule_setkey "rl" "type" "key" "len"
+Assign a key for the rule specified by
+.Fa rl .
+Binary key is specified by
+.Fa key ,
+and its size by
+.Fa len .
+The size shall not exceed
+.Dv NPF_RULE_MAXKEYLEN .
+.\" ---
+.It Fn npf_rule_insert "ncf" "parent" "rl"
 Insert the rule into the set of parent rule specified by
 .Fa parent .
 If value of
@@ -172,15 +181,26 @@ If value of
 is
 .Dv NULL ,
 then insert into the main ruleset.
+.\" ---
+.It Fn npf_rule_setprio "rl" "pri"
+Set priority to the rule.
+Negative priorities are invalid.
 .Pp
 Priority is the order of the rule in the ruleset.
 Lower value means first to process, higher value - last to process.
-If multiple rules have the same priority - order is unspecified.
-A special constant
-.Dv NPF_PRI_NEXT
-may be passed to use the value of last used priority incremented by 1.
+If multiple rules are inserted with the same priority,
+the order is unspecified.
+.Pp
+The special constants
+.Dv NPF_PRI_FIRST
+and
+.Dv NPF_PRI_LAST
+can be passed to indicate that the rule should be inserted into the
+beginning or the end of the priority level 0 in the ruleset.
+All rules inserted using these constants will have the priority 0
+assigned and will share this level in the ordered way.
 .It Fn npf_rule_setproc "ncf" "rl" "name"
-Set procedure for the specified rule.
+Set a procedure for the specified rule.
 .It Fn npf_rule_destroy "rl"
 Destroy the given rule.
 .El
