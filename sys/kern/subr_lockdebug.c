@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.47 2013/02/09 00:31:21 christos Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.48 2013/02/09 11:04:32 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.47 2013/02/09 00:31:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.48 2013/02/09 11:04:32 njoly Exp $");
 
 #include "opt_ddb.h"
 
@@ -726,7 +726,7 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...)
 	    (long)ld->ld_initaddr);
 
 	if (ld->ld_lockops->lo_type == LOCKOPS_CV) {
-		(*pr)(" interlock: %#018lx\n", ld->ld_locked);
+		(*pr)(" interlock: %#018lx\n", (long)ld->ld_locked);
 	} else {
 		(*pr)("\n"
 		    "shared holds : %18u exclusive: %18u\n"
