@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.239 2013/02/02 14:02:09 matt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.240 2013/02/09 01:20:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.239 2013/02/02 14:02:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.240 2013/02/09 01:20:08 christos Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -2170,8 +2170,10 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 	namelen = 0;
 	ni = 0;
 	do {
-		if (ni == CTL_MAXNAME)
+		if (ni == CTL_MAXNAME) {
+			va_end(ap);
 			return (ENAMETOOLONG);
+		}
 		name[ni] = va_arg(ap, int);
 	} while (name[ni++] != CTL_EOL);
 	namelen = ni - 1;
