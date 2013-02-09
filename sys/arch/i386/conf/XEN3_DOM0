@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.71 2012/10/17 14:48:13 apb Exp $
+#	$NetBSD: XEN3_DOM0,v 1.72 2013/02/09 17:42:35 khorben Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -350,6 +350,7 @@ vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
+wpi*	at pci? dev ? function ?	# Intel PRO/Wireless 3945ABG
 xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 
 # MII/PHY support
