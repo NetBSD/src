@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.19 2013/02/09 11:15:14 jmcneill Exp $
+# $NetBSD: mkimage,v 1.20 2013/02/09 11:20:56 jmcneill Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,7 +60,7 @@ getsize() {
 
 usage() {
 	cat << EOF 1>&2
-Usage: $PROG -h <host-arch> [-K <kerneldir>] [-S <srcdir>] [-D <releasedir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
+Usage: $PROG -h <host-arch> [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
 EOF
 	exit 1
 }
@@ -107,14 +107,14 @@ done
 
 trap cleanup 0 1 2 3 15
 
-shift $(( "$OPTIND" - 1 ))
+shift $(( $OPTIND - 1 ))
 if [ -n "$1" ]; then
 	# take the next argument as being the image name
 	image="$1"
 	shift
 fi
 
-. "$DIR/conf/rpi.conf"
+. "${DIR}/conf/${h}.conf"
 
 echo ${bar} configuring sets ${bar}
 (echo '/set type=dir uname=root gname=wheel mode=0755'
