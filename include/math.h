@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.59 2013/01/28 23:19:28 matt Exp $	*/
+/*	$NetBSD: math.h,v 1.60 2013/02/09 22:56:20 matt Exp $	*/
 
 /*
  * ====================================================
@@ -38,6 +38,7 @@ union __long_double_u {
 
 #include <machine/math.h>		/* may use __float_u, __double_u,
 					   or __long_double_u */
+#include <limits.h>			/* for INT_{MIN,MAX} */
 
 #ifdef __HAVE_LONG_DOUBLE
 #define	__fpmacro_unary_floating(__name, __arg0)			\
@@ -115,6 +116,9 @@ extern const union __float_u __nanf;
 /* NetBSD extensions */
 #define	_FP_LOMD	0x80		/* range for machine-specific classes */
 #define	_FP_HIMD	0xff
+
+#define	FP_ILOGB0	INT_MIN
+#define	FP_ILOGBNAN	INT_MIN
 
 #endif /* !_ANSI_SOURCE && ... */
 
