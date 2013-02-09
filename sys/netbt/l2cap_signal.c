@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.15 2011/11/29 13:16:27 plunky Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.16 2013/02/09 01:19:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.15 2011/11/29 13:16:27 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.16 2013/02/09 01:19:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1078,6 +1078,7 @@ l2cap_send_command_rej(struct hci_link *link, uint8_t ident,
 
 	default:
 		UNKNOWN(reason);
+		va_end(ap);
 		return EINVAL;
 	}
 
