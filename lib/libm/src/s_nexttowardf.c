@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nexttowardf.c,v 1.1 2013/02/09 19:39:01 christos Exp $	*/
+/*	$NetBSD: s_nexttowardf.c,v 1.2 2013/02/09 20:19:13 christos Exp $	*/
 
 /*
  * ====================================================
@@ -15,35 +15,38 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_nexttowardf.c,v 1.3 2011/02/10 07:38:38 das Exp $");
 #else
-__RCSID("$NetBSD: s_nexttowardf.c,v 1.1 2013/02/09 19:39:01 christos Exp $");
+__RCSID("$NetBSD: s_nexttowardf.c,v 1.2 2013/02/09 20:19:13 christos Exp $");
 #endif
 
 #include <float.h>
 
-#include "fpmath.h"
 #include "math.h"
 #include "math_private.h"
 
-#define	LDBL_INFNAN_EXP	(LDBL_MAX_EXP * 2 - 1)
-
+#ifdef EXT_EXP_INFNAN
 float
 nexttowardf(float x, long double y)
 {
-	union IEEEl2bits uy;
 	volatile float t;
 	int32_t hx,ix;
+	union ieee_ext_u uy;
 
 	GET_FLOAT_WORD(hx,x);
 	ix = hx&0x7fffffff;		/* |x| */
-	uy.e = y;
+
+	memset(&u, 0, sizeof u);
+	uy.extu_ld = y;
+	uy.extu_ext.ext_frach &= ~0x80000000;
+
+        union ieee_single_u u[2];
 
 	if((ix>0x7f800000) ||
-	   (uy.bits.exp == LDBL_INFNAN_EXP &&
-	    ((uy.bits.manh&~LDBL_NBIT)|uy.bits.manl) != 0))
+	   (uy.extu_ext.ext_exp == EXT_EXP_INFNAN &&
+	    (uy.extu_ext.ext_frach | uy.extu_ext.ext_fracl) != 0)
 	   return x+y;	/* x or y is nan */
 	if(x==y) return (float)y;		/* x=y, return y */
 	if(ix==0) {				/* x == 0 */
-	    SET_FLOAT_WORD(x,(uy.bits.sign<<31)|1);/* return +-minsubnormal */
+	    SET_FLOAT_WORD(x,(uy.extu_ext.ext_sign<<31)|1);/* return +-minsubnormal */
 	    t = x*x;
 	    if(t==x) return t; else return x;	/* raise underflow flag */
 	}
@@ -63,3 +66,4 @@ nexttowardf(float x, long double y)
 	SET_FLOAT_WORD(x,hx);
 	return x;
 }
+#endif
