@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.225 2013/01/10 10:15:59 mlelstv Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.226 2013/02/09 00:31:21 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.225 2013/01/10 10:15:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.226 2013/02/09 00:31:21 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -239,7 +239,8 @@ frob_cfdrivervec(struct cfdriver * const *cfdriverv,
 	cfdriver_fn drv_do, cfdriver_fn drv_undo,
 	const char *style, bool dopanic)
 {
-	void (*pr)(const char *, ...) = dopanic ? panic : printf;
+	void (*pr)(const char *, ...) __printflike(1, 2) =
+	    dopanic ? panic : printf;
 	int i = 0, error = 0, e2;
 
 	for (i = 0; cfdriverv[i] != NULL; i++) {
@@ -270,7 +271,8 @@ frob_cfattachvec(const struct cfattachinit *cfattachv,
 	const char *style, bool dopanic)
 {
 	const struct cfattachinit *cfai = NULL;
-	void (*pr)(const char *, ...) = dopanic ? panic : printf;
+	void (*pr)(const char *, ...) __printflike(1, 2) =
+	    dopanic ? panic : printf;
 	int j = 0, error = 0, e2;
 
 	for (cfai = &cfattachv[0]; cfai->cfai_name != NULL; cfai++) {

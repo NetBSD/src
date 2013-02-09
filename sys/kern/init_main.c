@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.445 2012/07/29 18:05:48 mlelstv Exp $	*/
+/*	$NetBSD: init_main.c,v 1.446 2013/02/09 00:31:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.445 2012/07/29 18:05:48 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.446 2013/02/09 00:31:21 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -1125,7 +1125,7 @@ banner(void)
 	static char notice[] = " Notice: this software is "
 	    "protected by copyright";
 	char pbuf[81];
-	void (*pr)(const char *, ...);
+	void (*pr)(const char *, ...) __printflike(1, 2);
 	int i;
 
 	if ((boothowto & AB_SILENT) != 0) {

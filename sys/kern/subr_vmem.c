@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.81 2013/02/08 09:30:01 skrll Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.82 2013/02/09 00:31:21 christos Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.81 2013/02/08 09:30:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.82 2013/02/09 00:31:21 christos Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -1423,7 +1423,8 @@ vmem_rehash_start(void)
 
 #if defined(DDB) || defined(UNITTEST) || defined(VMEM_SANITY)
 
-static void bt_dump(const bt_t *, void (*)(const char *, ...));
+static void bt_dump(const bt_t *, void (*)(const char *, ...)
+    __printflike(1, 2));
 
 static const char *
 bt_type_string(int type)
@@ -1451,7 +1452,7 @@ bt_dump(const bt_t *bt, void (*pr)(const char *, ...))
 }
 
 static void
-vmem_dump(const vmem_t *vm , void (*pr)(const char *, ...))
+vmem_dump(const vmem_t *vm , void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	const bt_t *bt;
 	int i;
