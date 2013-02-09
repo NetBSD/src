@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.15 2012/12/24 19:05:43 rmind Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.16 2013/02/09 03:35:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.15 2012/12/24 19:05:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.16 2013/02/09 03:35:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -105,7 +105,7 @@ npf_match_proto(const npf_cache_t *npc, uint32_t ap)
 	if (alen && npc->npc_alen != alen) {
 		return -1;
 	}
-	return (proto != 0xff && npf_cache_ipproto(npc) != proto) ? -1 : 0;
+	return (proto != 0xff && npc->npc_proto != proto) ? -1 : 0;
 }
 
 /*
@@ -114,11 +114,10 @@ npf_match_proto(const npf_cache_t *npc, uint32_t ap)
 int
 npf_match_table(const npf_cache_t *npc, int sd, u_int tid)
 {
-	npf_tableset_t *tblset = npf_core_tableset();
+	npf_tableset_t *tblset = npf_config_tableset();
 	const npf_addr_t *addr = sd ? npc->npc_srcip : npc->npc_dstip;
 	const int alen = npc->npc_alen;
 
-	KASSERT(npf_core_locked());
 	KASSERT(npf_iscached(npc, NPC_IP46));
 
 	/* Match address against NPF table. */

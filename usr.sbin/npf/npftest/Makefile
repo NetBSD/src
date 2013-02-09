@@ -13,6 +13,7 @@ DPADD+=		${LIBNPFTEST}/libnpftest.a
 LDADD+=		-L${LIBNPFTEST} -lnpftest
 
 LDADD+=		-lrump -lrumpvfs -lrumpnet -lrumpnet_net -lrumpnet_npf
+LDADD+=		-lrumpdev_bpf
 
 LDADD+=		-lpcap -lprop -lpthread
 
