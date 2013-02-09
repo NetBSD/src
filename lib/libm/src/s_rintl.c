@@ -1,3 +1,5 @@
+/*	$NetBSD: s_rintl.c,v 1.2 2013/02/09 22:33:13 christos Exp $	*/
+
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -25,25 +27,21 @@
  */
 
 #include <sys/cdefs.h>
+#if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_rintl.c,v 1.5 2008/02/22 11:59:05 bde Exp $");
+#else
+__RCSID("$NetBSD: s_rintl.c,v 1.2 2013/02/09 22:33:13 christos Exp $");
+#endif
 
 #include <float.h>
 #include <math.h>
 
-#include "fpmath.h"
-
-#if LDBL_MAX_EXP != 0x4000
-/* We also require the usual bias, min exp and expsign packing. */
-#error "Unsupported long double format"
-#endif
-
-#define	BIAS	(LDBL_MAX_EXP - 1)
-
+#ifdef EXT_EXP_BIAS
 static const float
 shift[2] = {
-#if LDBL_MANT_DIG == 64
+#if EXT_FRACBITS == 64
 	0x1.0p63, -0x1.0p63
-#elif LDBL_MANT_DIG == 113
+#elif EXT_FRACBITS == 113
 	0x1.0p112, -0x1.0p112
 #else
 #error "Unsupported long double format"
@@ -54,16 +52,17 @@ static const float zero[2] = { 0.0, -0.0 };
 long double
 rintl(long double x)
 {
-	union IEEEl2bits u;
+	union ieee_ext_u u;
 	uint32_t expsign;
 	int ex, sign;
 
-	u.e = x;
-	expsign = u.xbits.expsign;
+	u.extu_ld = x;
+	u.extu_ext.ext_frach &= ~0x80000000;
+	expsign = u.extu_ext.ext_sign;
 	ex = expsign & 0x7fff;
 
-	if (ex >= BIAS + LDBL_MANT_DIG - 1) {
-		if (ex == BIAS + LDBL_MAX_EXP)
+	if (ex >= EXT_EXP_BIAS + EXT_FRACBITS - 1) {
+		if (ex == EXT_EXP_BIAS + EXT_FRACBITS)
 			return (x + x);	/* Inf, NaN, or unsupported format */
 		return (x);		/* finite and already an integer */
 	}
@@ -83,8 +82,9 @@ rintl(long double x)
 	 * If the result is +-0, then it must have the same sign as x, but
 	 * the above calculation doesn't always give this.  Fix up the sign.
 	 */
-	if (ex < BIAS && x == 0.0L)
+	if (ex < EXT_EXP_BIAS && x == 0.0L)
 		return (zero[sign]);
 
 	return (x);
 }
+#endif
