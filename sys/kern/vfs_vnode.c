@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.17 2012/11/12 11:00:07 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.18 2013/02/09 00:31:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.17 2012/11/12 11:00:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.18 2013/02/09 00:31:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -173,7 +173,7 @@ static int		cleanvnode(void);
 static void		vdrain_thread(void *);
 static void		vrele_thread(void *);
 static void		vnpanic(vnode_t *, const char *, ...)
-    __attribute__((__format__(__printf__, 2, 3)));
+    __printflike(2, 3);
 
 /* Routines having to do with the management of the vnode table. */
 extern int		(**dead_vnodeop_p)(void *);

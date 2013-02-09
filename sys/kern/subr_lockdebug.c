@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.46 2012/08/04 12:38:20 christos Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.47 2013/02/09 00:31:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.46 2012/08/04 12:38:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.47 2013/02/09 00:31:21 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -714,7 +714,8 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
  *	Dump information about a lock on panic, or for DDB.
  */
 static void
-lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...))
+lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...)
+    __printflike(1, 2))
 {
 	int sleeper = (ld->ld_flags & LD_SLEEPER);
 
