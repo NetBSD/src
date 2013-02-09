@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.4.3 2012/11/18 22:38:38 riz Exp $
+#	$NetBSD: Makefile,v 1.2.4.4 2013/02/09 04:13:28 riz Exp $
 #
 # Public Domain.
 #
@@ -18,8 +18,6 @@ SRCS+=	npf_alg_icmp.c
 SRCS+=	npf_ext_log.c npf_ext_normalise.c
 
 SRCS+=	component.c
-
-WARNS=	5
 
 CPPFLAGS+=	-D_NPF_TESTING
 CPPFLAGS+=	-I${.CURDIR}/../../../librump/rumpvfs
