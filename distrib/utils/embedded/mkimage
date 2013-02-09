@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.18 2013/02/08 19:14:14 christos Exp $
+# $NetBSD: mkimage,v 1.19 2013/02/09 11:15:14 jmcneill Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,7 +60,7 @@ getsize() {
 
 usage() {
 	cat << EOF 1>&2
-Usage: $PROG -h <host-arch> [-K <kerneldir>] [-S <srcdir>] [-R <releasedir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
+Usage: $PROG -h <host-arch> [-K <kerneldir>] [-S <srcdir>] [-D <releasedir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
 EOF
 	exit 1
 }
