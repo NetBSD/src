@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.54 2012/12/08 07:24:42 hannken Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.55 2013/02/09 00:32:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.54 2012/12/08 07:24:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.55 2013/02/09 00:32:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1819,7 +1819,7 @@ wapbl_print(struct wapbl *wl,
 				LIST_FOREACH(wi, wih, wi_hash) {
 					if (wi->wi_ino == 0)
 						continue;
-					(*pr)(" %"PRId32"/0%06"PRIo32",",
+					(*pr)(" %"PRIu64"/0%06"PRIo32",",
 					    wi->wi_ino, wi->wi_mode);
 					if ((++cnt % 4) == 0) {
 						(*pr)("\n\t");
