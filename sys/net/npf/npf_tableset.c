@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.16 2012/12/04 19:28:16 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.17 2013/02/09 03:35:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.16 2012/12/04 19:28:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.17 2013/02/09 03:35:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -132,7 +132,7 @@ npf_tableset_destroy(npf_tableset_t *tblset)
 	 */
 	for (tid = 0; tid < NPF_TABLE_SLOTS; tid++) {
 		t = tblset[tid];
-		if (t && --t->t_refcnt == 0) {
+		if (t && atomic_dec_uint_nv(&t->t_refcnt) == 0) {
 			npf_table_destroy(t);
 		}
 	}
@@ -153,8 +153,8 @@ npf_tableset_insert(npf_tableset_t *tblset, npf_table_t *t)
 	KASSERT((u_int)tid < NPF_TABLE_SLOTS);
 
 	if (tblset[tid] == NULL) {
+		atomic_inc_uint(&t->t_refcnt);
 		tblset[tid] = t;
-		t->t_refcnt++;
 		error = 0;
 	} else {
 		error = EEXIST;
@@ -180,8 +180,16 @@ npf_tableset_reload(npf_tableset_t *ntset, npf_tableset_t *otset)
 		if (t->t_nitems || t->t_type != ot->t_type) {
 			continue;
 		}
+
+		/*
+		 * Acquire a reference since the table has to be kept
+		 * in the old tableset.
+		 */
+		atomic_inc_uint(&ot->t_refcnt);
 		ntset[i] = ot;
-		ot->t_refcnt++;
+
+		/* Only reference, never been visible. */
+		t->t_refcnt--;
 		npf_table_destroy(t);
 	}
 }
@@ -270,6 +278,7 @@ npf_table_create(u_int tid, int type, size_t hsize)
 void
 npf_table_destroy(npf_table_t *t)
 {
+	KASSERT(t->t_refcnt == 0);
 
 	switch (t->t_type) {
 	case NPF_TABLE_HASH:

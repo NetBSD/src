@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_ruleset.c,v 1.16 2013/01/20 18:45:56 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.17 2013/02/09 03:35:32 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,95 +34,267 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.16 2013/01/20 18:45:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.17 2013/02/09 03:35:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
+#include <sys/mbuf.h>
 #include <sys/types.h>
 
+#include <net/bpf.h>
 #include <net/pfil.h>
 #include <net/if.h>
 
 #include "npf_ncode.h"
 #include "npf_impl.h"
 
-/* Ruleset structure (queue and default rule). */
 struct npf_ruleset {
-	TAILQ_HEAD(, npf_rule)	rs_queue;
-	npf_rule_t *		rs_default;
+	/* List of all rules and dynamic (i.e. named) rules. */
+	LIST_HEAD(, npf_rule)	rs_all;
+	LIST_HEAD(, npf_rule)	rs_dynamic;
+
+	/* Number of array slots and active rules. */
+	u_int			rs_slots;
+	u_int			rs_nitems;
+
+	/* Array of ordered rules. */
+	npf_rule_t *		rs_rules[];
 };
 
-#define	NPF_RNAME_LEN		16
-
-/* Rule structure. */
 struct npf_rule {
-	/* Rule name (optional) and list entry. */
-	char			r_name[NPF_RNAME_LEN];
-	TAILQ_ENTRY(npf_rule)	r_entry;
-	/* Optional: sub-ruleset, NAT policy. */
-	npf_ruleset_t		r_subset;
-	npf_natpolicy_t *	r_natp;
-	/* Rule priority: (highest) 0, 1, 2 ... n (lowest). */
-	pri_t			r_priority;
-	/* N-code to process. */
-	void *			r_ncode;
-	size_t			r_nc_size;
-	/* Attributes of this rule. */
+	/* Attributes, interface and skip slot. */
 	uint32_t		r_attr;
-	/* Interface. */
 	u_int			r_ifid;
-	/* Rule procedure data. */
+	u_int			r_skip_to;
+
+	/* Code to process, if any. */
+	int			r_type;
+	void *			r_code;
+	size_t			r_clen;
+
+	/* NAT policy (optional), rule procedure and subset. */
+	npf_natpolicy_t *	r_natp;
 	npf_rproc_t *		r_rproc;
+
+	/* Rule priority: (highest) 1, 2 ... n (lowest). */
+	pri_t			r_priority;
+
+	/*
+	 * Dynamic group: subset queue and a dynamic group list entry.
+	 * Dynamic rule: entry and the parent rule (the group).
+	 */
+	union {
+		TAILQ_HEAD(npf_ruleq, npf_rule) r_subset;
+		TAILQ_ENTRY(npf_rule)	r_entry;
+	} /* C11 */;
+	union {
+		LIST_ENTRY(npf_rule)	r_dentry;
+		npf_rule_t *		r_parent;
+	} /* C11 */;
+
+	/* Rule name and all-list entry. */
+	char			r_name[NPF_RULE_MAXNAMELEN];
+	LIST_ENTRY(npf_rule)	r_aentry;
+
+	/* Key (optional). */
+	uint8_t			r_key[NPF_RULE_MAXKEYLEN];
 };
+
+#define	NPF_DYNAMIC_GROUP_P(attr) \
+    (((attr) & NPF_DYNAMIC_GROUP) == NPF_DYNAMIC_GROUP)
 
 npf_ruleset_t *
-npf_ruleset_create(void)
+npf_ruleset_create(size_t slots)
 {
+	size_t len = offsetof(npf_ruleset_t, rs_rules[slots]);
 	npf_ruleset_t *rlset;
 
-	rlset = kmem_zalloc(sizeof(npf_ruleset_t), KM_SLEEP);
-	TAILQ_INIT(&rlset->rs_queue);
+	rlset = kmem_zalloc(len, KM_SLEEP);
+	rlset->rs_slots = slots;
+	LIST_INIT(&rlset->rs_dynamic);
+	LIST_INIT(&rlset->rs_all);
 	return rlset;
+}
+
+static void
+npf_ruleset_unlink(npf_ruleset_t *rlset, npf_rule_t *rl)
+{
+	if (NPF_DYNAMIC_GROUP_P(rl->r_attr)) {
+		LIST_REMOVE(rl, r_dentry);
+	}
+	if ((rl->r_attr & NPF_DYNAMIC_GROUP) == NPF_RULE_DYNAMIC) {
+		npf_rule_t *rg = rl->r_parent;
+		TAILQ_REMOVE(&rg->r_subset, rl, r_entry);
+	}
+	LIST_REMOVE(rl, r_aentry);
 }
 
 void
 npf_ruleset_destroy(npf_ruleset_t *rlset)
 {
+	size_t len = offsetof(npf_ruleset_t, rs_rules[rlset->rs_slots]);
 	npf_rule_t *rl;
 
-	while ((rl = TAILQ_FIRST(&rlset->rs_queue)) != NULL) {
-		TAILQ_REMOVE(&rlset->rs_queue, rl, r_entry);
+	while ((rl = LIST_FIRST(&rlset->rs_all)) != NULL) {
+		npf_ruleset_unlink(rlset, rl);
 		npf_rule_free(rl);
 	}
-	kmem_free(rlset, sizeof(npf_ruleset_t));
+	KASSERT(LIST_EMPTY(&rlset->rs_dynamic));
+	kmem_free(rlset, len);
 }
 
 /*
  * npf_ruleset_insert: insert the rule into the specified ruleset.
- *
- * Note: multiple rules at the same priority are allowed.
  */
 void
 npf_ruleset_insert(npf_ruleset_t *rlset, npf_rule_t *rl)
 {
-	npf_rule_t *it;
+	u_int n = rlset->rs_nitems;
 
-	if (rl->r_attr & NPF_RULE_DEFAULT) {
-		rlset->rs_default = rl;
-		return;
+	KASSERT(n < rlset->rs_slots);
+
+	LIST_INSERT_HEAD(&rlset->rs_all, rl, r_aentry);
+	if (NPF_DYNAMIC_GROUP_P(rl->r_attr)) {
+		LIST_INSERT_HEAD(&rlset->rs_dynamic, rl, r_dentry);
 	}
-	TAILQ_FOREACH(it, &rlset->rs_queue, r_entry) {
-		/* Rule priority: (highest) 0, 1, 2, 4 ... n (lowest). */
-		if (it->r_priority > rl->r_priority)
+
+	rlset->rs_rules[n] = rl;
+	rlset->rs_nitems++;
+
+	if (rl->r_skip_to < ++n) {
+		rl->r_skip_to = n;
+	}
+}
+
+static npf_rule_t *
+npf_ruleset_lookup(npf_ruleset_t *rlset, const char *name)
+{
+	npf_rule_t *rl;
+
+	KASSERT(npf_config_locked_p());
+
+	LIST_FOREACH(rl, &rlset->rs_dynamic, r_dentry) {
+		KASSERT(NPF_DYNAMIC_GROUP_P(rl->r_attr));
+		if (strncmp(rl->r_name, name, NPF_RULE_MAXNAMELEN) == 0)
 			break;
 	}
-	if (it == NULL) {
-		TAILQ_INSERT_TAIL(&rlset->rs_queue, rl, r_entry);
-	} else {
-		TAILQ_INSERT_BEFORE(it, rl, r_entry);
+	return rl;
+}
+
+int
+npf_ruleset_add(npf_ruleset_t *rlset, const char *rname, npf_rule_t *rl)
+{
+	npf_rule_t *rg, *it;
+	pri_t priocmd;
+
+	rg = npf_ruleset_lookup(rlset, rname);
+	if (rg == NULL) {
+		return ENOENT;
+	}
+
+	/* Dynamic rule. */
+	rl->r_attr |= NPF_RULE_DYNAMIC;
+	rl->r_parent = rg;
+
+	/*
+	 * Rule priority: (highest) 1, 2 ... n (lowest).
+	 * Negative priority indicates an operation and is reset to zero.
+	 */
+	if ((priocmd = rl->r_priority) < 0) {
+		rl->r_priority = 0;
+	}
+
+	switch (priocmd) {
+	case NPF_PRI_FIRST:
+		TAILQ_FOREACH(it, &rg->r_subset, r_entry) {
+			if (rl->r_priority <= it->r_priority)
+				break;
+		}
+		if (it) {
+			TAILQ_INSERT_BEFORE(it, rl, r_entry);
+		} else {
+			TAILQ_INSERT_HEAD(&rg->r_subset, rl, r_entry);
+		}
+		break;
+	case NPF_PRI_LAST:
+	default:
+		TAILQ_FOREACH(it, &rg->r_subset, r_entry) {
+			if (rl->r_priority < it->r_priority)
+				break;
+		}
+		if (it) {
+			TAILQ_INSERT_BEFORE(it, rl, r_entry);
+		} else {
+			TAILQ_INSERT_TAIL(&rg->r_subset, rl, r_entry);
+		}
+		break;
+	}
+
+	/* Finally, add into the all-list. */
+	LIST_INSERT_HEAD(&rlset->rs_all, rl, r_aentry);
+	return 0;
+}
+
+npf_rule_t *
+npf_ruleset_remove(npf_ruleset_t *rlset, const char *rname, uintptr_t id)
+{
+	npf_rule_t *rg, *rl;
+
+	if ((rg = npf_ruleset_lookup(rlset, rname)) == NULL) {
+		return NULL;
+	}
+	TAILQ_FOREACH(rl, &rg->r_subset, r_entry) {
+		/* Compare ID.  On match, remove and return. */
+		if ((uintptr_t)rl == id) {
+			npf_ruleset_unlink(rlset, rl);
+			break;
+		}
+	}
+	return rl;
+}
+
+npf_rule_t *
+npf_ruleset_remkey(npf_ruleset_t *rlset, const char *rname,
+    const void *key, size_t len)
+{
+	npf_rule_t *rg, *rl;
+
+	KASSERT(len && len <= NPF_RULE_MAXKEYLEN);
+
+	if ((rg = npf_ruleset_lookup(rlset, rname)) == NULL) {
+		return NULL;
+	}
+	/* Find the last in the list. */
+	TAILQ_FOREACH_REVERSE(rl, &rg->r_subset, npf_ruleq, r_entry) {
+		/* Compare the key.  On match, remove and return. */
+		if (memcmp(rl->r_key, key, len) == 0) {
+			npf_ruleset_unlink(rlset, rl);
+			break;
+		}
+	}
+	return rl;
+}
+
+/*
+ * npf_ruleset_reload: share the dynamic rules.
+ *
+ * => Active ruleset should be exclusively locked.
+ */
+void
+npf_ruleset_reload(npf_ruleset_t *nrlset, npf_ruleset_t *arlset)
+{
+	npf_rule_t *rl, *arl;
+
+	KASSERT(npf_config_locked_p());
+
+	LIST_FOREACH(rl, &nrlset->rs_dynamic, r_dentry) {
+		if ((arl = npf_ruleset_lookup(arlset, rl->r_name)) == NULL) {
+			continue;
+		}
+		memcpy(&rl->r_subset, &arl->r_subset, sizeof(rl->r_subset));
 	}
 }
 
@@ -135,7 +307,7 @@ npf_ruleset_matchnat(npf_ruleset_t *rlset, npf_natpolicy_t *mnp)
 	npf_rule_t *rl;
 
 	/* Find a matching NAT policy in the old ruleset. */
-	TAILQ_FOREACH(rl, &rlset->rs_queue, r_entry) {
+	LIST_FOREACH(rl, &rlset->rs_all, r_aentry) {
 		if (npf_nat_matchpolicy(rl->r_natp, mnp))
 			break;
 	}
@@ -149,7 +321,7 @@ npf_ruleset_sharepm(npf_ruleset_t *rlset, npf_natpolicy_t *mnp)
 	npf_rule_t *rl;
 
 	/* Find a matching NAT policy in the old ruleset. */
-	TAILQ_FOREACH(rl, &rlset->rs_queue, r_entry) {
+	LIST_FOREACH(rl, &rlset->rs_all, r_aentry) {
 		/*
 		 * NAT policy might not yet be set during the creation of
 		 * the ruleset (in such case, rule is for our policy), or
@@ -172,13 +344,10 @@ void
 npf_ruleset_freealg(npf_ruleset_t *rlset, npf_alg_t *alg)
 {
 	npf_rule_t *rl;
+	npf_natpolicy_t *np;
 
-	KASSERT(npf_core_locked());
-
-	TAILQ_FOREACH(rl, &rlset->rs_queue, r_entry) {
-		npf_natpolicy_t *np = rl->r_natp;
-
-		if (np != NULL) {
+	LIST_FOREACH(rl, &rlset->rs_all, r_aentry) {
+		if ((np = rl->r_natp) != NULL) {
 			npf_nat_freealg(np, alg);
 		}
 	}
@@ -196,10 +365,8 @@ npf_ruleset_natreload(npf_ruleset_t *nrlset, npf_ruleset_t *arlset)
 	npf_natpolicy_t *np, *anp;
 	npf_rule_t *rl, *arl;
 
-	KASSERT(npf_core_locked());
-
 	/* Scan a new NAT ruleset against NAT policies in old ruleset. */
-	TAILQ_FOREACH(rl, &nrlset->rs_queue, r_entry) {
+	LIST_FOREACH(rl, &nrlset->rs_all, r_aentry) {
 		np = rl->r_natp;
 		arl = npf_ruleset_matchnat(arlset, np);
 		if (arl == NULL) {
@@ -216,30 +383,21 @@ npf_ruleset_natreload(npf_ruleset_t *nrlset, npf_ruleset_t *arlset)
 
 /*
  * npf_rule_alloc: allocate a rule and copy n-code from user-space.
- *
- * => N-code should be validated by the caller.
  */
 npf_rule_t *
-npf_rule_alloc(prop_dictionary_t rldict, npf_rproc_t *rp,
-   void *nc, size_t nc_size)
+npf_rule_alloc(prop_dictionary_t rldict)
 {
 	npf_rule_t *rl;
 	const char *rname;
-	int errat __unused;
 
 	/* Allocate a rule structure. */
 	rl = kmem_zalloc(sizeof(npf_rule_t), KM_SLEEP);
-	TAILQ_INIT(&rl->r_subset.rs_queue);
+	TAILQ_INIT(&rl->r_subset);
 	rl->r_natp = NULL;
-
-	/* N-code. */
-	KASSERT(nc == NULL || npf_ncode_validate(nc, nc_size, &errat) == 0);
-	rl->r_ncode = nc;
-	rl->r_nc_size = nc_size;
 
 	/* Name (optional) */
 	if (prop_dictionary_get_cstring_nocopy(rldict, "name", &rname)) {
-		strlcpy(rl->r_name, rname, NPF_RNAME_LEN);
+		strlcpy(rl->r_name, rname, NPF_RULE_MAXNAMELEN);
 	} else {
 		rl->r_name[0] = '\0';
 	}
@@ -249,13 +407,45 @@ npf_rule_alloc(prop_dictionary_t rldict, npf_rproc_t *rp,
 	prop_dictionary_get_int32(rldict, "priority", &rl->r_priority);
 	prop_dictionary_get_uint32(rldict, "interface", &rl->r_ifid);
 
-	/* Rule procedure. */
-	if (rp) {
-		npf_rproc_acquire(rp);
-	}
-	rl->r_rproc = rp;
+	/* Get the skip-to index.  No need to validate it. */
+	prop_dictionary_get_uint32(rldict, "skip-to", &rl->r_skip_to);
 
+	/* Key (optional). */
+	prop_object_t obj = prop_dictionary_get(rldict, "key");
+	const void *key = prop_data_data_nocopy(obj);
+
+	if (key) {
+		size_t len = prop_data_size(obj);
+		if (len > NPF_RULE_MAXKEYLEN) {
+			kmem_free(rl, sizeof(npf_rule_t));
+			return NULL;
+		}
+		memcpy(rl->r_key, key, len);
+	}
 	return rl;
+}
+
+/*
+ * npf_rule_setcode: assign filter code to the rule.
+ *
+ * => The code should be validated by the caller.
+ */
+void
+npf_rule_setcode(npf_rule_t *rl, const int type, void *code, size_t size)
+{
+	rl->r_type = type;
+	rl->r_code = code;
+	rl->r_clen = size;
+}
+
+/*
+ * npf_rule_setrproc: assign a rule procedure and hold a reference on it.
+ */
+void
+npf_rule_setrproc(npf_rule_t *rl, npf_rproc_t *rp)
+{
+	npf_rproc_acquire(rp);
+	rl->r_rproc = rp;
 }
 
 /*
@@ -275,31 +465,23 @@ npf_rule_free(npf_rule_t *rl)
 		/* Release rule procedure. */
 		npf_rproc_release(rp);
 	}
-	if (rl->r_ncode) {
+	if (rl->r_code) {
 		/* Free n-code. */
-		npf_ncode_free(rl->r_ncode, rl->r_nc_size);
+		kmem_free(rl->r_code, rl->r_clen);
 	}
 	kmem_free(rl, sizeof(npf_rule_t));
 }
 
 /*
- * npf_rule_subset: return sub-ruleset, if any.
  * npf_rule_getrproc: acquire a reference and return rule procedure, if any.
  * npf_rule_getnat: get NAT policy assigned to the rule.
  */
-
-npf_ruleset_t *
-npf_rule_subset(npf_rule_t *rl)
-{
-	return &rl->r_subset;
-}
 
 npf_rproc_t *
 npf_rule_getrproc(npf_rule_t *rl)
 {
 	npf_rproc_t *rp = rl->r_rproc;
 
-	KASSERT(npf_core_locked());
 	if (rp) {
 		npf_rproc_acquire(rp);
 	}
@@ -324,24 +506,69 @@ npf_rule_setnat(npf_rule_t *rl, npf_natpolicy_t *np)
 	rl->r_natp = np;
 }
 
-npf_rule_t *
-npf_ruleset_replace(const char *name, npf_ruleset_t *rlset)
+/*
+ * npf_rule_inspect: match the interface, direction and run the filter code.
+ * Returns true if rule matches, false otherise.
+ */
+static inline bool
+npf_rule_inspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *rl,
+    const int di_mask, const int layer)
 {
-	npf_ruleset_t orlset;
-	npf_rule_t *rl;
+	const ifnet_t *ifp = nbuf->nb_ifp;
+	const void *code;
 
-	npf_core_enter(); /* XXX */
-	rlset = npf_core_ruleset();
-	TAILQ_FOREACH(rl, &rlset->rs_queue, r_entry) {
-		if (rl->r_name[0] == '\0')
-			continue;
-		if (strncmp(rl->r_name, name, NPF_RNAME_LEN))
-			continue;
-		memcpy(&orlset, &rl->r_subset, sizeof(npf_ruleset_t));
-		break;
+	/* Match the interface. */
+	if (rl->r_ifid && rl->r_ifid != ifp->if_index) {
+		return false;
 	}
-	npf_core_exit();
-	return rl;
+
+	/* Match the direction. */
+	if ((rl->r_attr & NPF_RULE_DIMASK) != NPF_RULE_DIMASK) {
+		if ((rl->r_attr & di_mask) == 0)
+			return false;
+	}
+
+	/* Execute the code, if any. */
+	if ((code = rl->r_code) == NULL) {
+		return true;
+	}
+
+	switch (rl->r_type) {
+	case NPF_CODE_NC:
+		return npf_ncode_process(npc, code, nbuf, layer) == 0;
+	case NPF_CODE_BPF: {
+		struct mbuf *m = nbuf_head_mbuf(nbuf);
+		size_t pktlen = m_length(m);
+		return bpf_filter(code, (unsigned char *)m, pktlen, 0) != 0;
+	}
+	default:
+		KASSERT(false);
+	}
+	return false;
+}
+
+/*
+ * npf_rule_reinspect: re-inspect the dynamic rule by iterating its list.
+ * This is only for the dynamic rules.  Subrules cannot have nested rules.
+ */
+static npf_rule_t *
+npf_rule_reinspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *drl,
+    const int di_mask, const int layer)
+{
+	npf_rule_t *final_rl = NULL, *rl;
+
+	KASSERT(NPF_DYNAMIC_GROUP_P(drl->r_attr));
+
+	TAILQ_FOREACH(rl, &drl->r_subset, r_entry) {
+		if (!npf_rule_inspect(npc, nbuf, rl, di_mask, layer)) {
+			continue;
+		}
+		if (rl->r_attr & NPF_RULE_FINAL) {
+			return rl;
+		}
+		final_rl = rl;
+	}
+	return final_rl;
 }
 
 /*
@@ -354,53 +581,57 @@ npf_ruleset_replace(const char *name, npf_ruleset_t *rlset)
  */
 npf_rule_t *
 npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
-    const npf_ruleset_t *mainrlset, const int di, const int layer)
+    const npf_ruleset_t *rlset, const int di, const int layer)
 {
-	const ifnet_t *ifp = nbuf->nb_ifp;
 	const int di_mask = (di & PFIL_IN) ? NPF_RULE_IN : NPF_RULE_OUT;
-	const npf_ruleset_t *rlset = mainrlset;
-	npf_rule_t *final_rl = NULL, *rl;
-	bool defed = false;
+	const u_int nitems = rlset->rs_nitems;
+	npf_rule_t *final_rl = NULL;
+	u_int n = 0;
 
-	KASSERT(ifp != NULL);
-	KASSERT(npf_core_locked());
 	KASSERT(((di & PFIL_IN) != 0) ^ ((di & PFIL_OUT) != 0));
-again:
-	TAILQ_FOREACH(rl, &rlset->rs_queue, r_entry) {
+
+	while (n < nitems) {
+		npf_rule_t *rl = rlset->rs_rules[n];
+		const u_int skip_to = rl->r_skip_to;
+		const uint32_t attr = rl->r_attr;
+
 		KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 		KASSERT(!final_rl || rl->r_priority >= final_rl->r_priority);
+		KASSERT(n < skip_to);
 
-		/* Match the interface. */
-		if (rl->r_ifid && rl->r_ifid != ifp->if_index) {
-			continue;
-		}
-		/* Match the direction. */
-		if ((rl->r_attr & NPF_RULE_DIMASK) != NPF_RULE_DIMASK) {
-			if ((rl->r_attr & di_mask) == 0)
-				continue;
-		}
-		/* Process the n-code, if any. */
-		const void *nc = rl->r_ncode;
-		if (nc && npf_ncode_process(npc, nc, nbuf, layer)) {
-			continue;
-		}
-		/* Set the matching rule and check for "final". */
-		final_rl = rl;
-		if (rl->r_attr & NPF_RULE_FINAL) {
+		/* Group is a barrier: return a matching if found any. */
+		if ((attr & NPF_RULE_GROUP) != 0 && final_rl) {
 			break;
 		}
-	}
 
-	/* If no final rule, then - default. */
-	if (final_rl == NULL && !defed) {
-		final_rl = mainrlset->rs_default;
-		defed = true;
-	}
-	/* Inspect the sub-ruleset, if any. */
-	if (final_rl && !TAILQ_EMPTY(&final_rl->r_subset.rs_queue)) {
-		rlset = &final_rl->r_subset;
-		final_rl = NULL;
-		goto again;
+		/* Main inspection of the rule. */
+		if (!npf_rule_inspect(npc, nbuf, rl, di_mask, layer)) {
+			n = skip_to;
+			continue;
+		}
+
+		if (NPF_DYNAMIC_GROUP_P(attr)) {
+			/*
+			 * If this is a dynamic rule, re-inspect the subrules.
+			 * If it has any matching rule, then it is final.
+			 */
+			rl = npf_rule_reinspect(npc, nbuf, rl, di_mask, layer);
+			if (rl != NULL) {
+				final_rl = rl;
+				break;
+			}
+		} else if ((attr & NPF_RULE_GROUP) == 0) {
+			/*
+			 * Groups themselves are not matching.
+			 */
+			final_rl = rl;
+		}
+
+		/* Set the matching rule and check for "final". */
+		if (attr & NPF_RULE_FINAL) {
+			break;
+		}
+		n++;
 	}
 
 	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
@@ -408,25 +639,16 @@ again:
 }
 
 /*
- * npf_rule_apply: apply the rule and return appropriate value.
+ * npf_rule_conclude: return decision and the flags for conclusion.
  *
  * => Returns ENETUNREACH if "block" and 0 if "pass".
- * => Releases the ruleset lock.
  */
 int
-npf_rule_apply(npf_cache_t *npc, nbuf_t *nbuf, npf_rule_t *rl, int *retfl)
+npf_rule_conclude(const npf_rule_t *rl, int *retfl)
 {
-	int error;
-
-	KASSERT(npf_core_locked());
-
 	/* If not passing - drop the packet. */
-	error = (rl->r_attr & NPF_RULE_PASS) ? 0 : ENETUNREACH;
-
 	*retfl = rl->r_attr;
-	npf_core_exit();
-
-	return error;
+	return (rl->r_attr & NPF_RULE_PASS) ? 0 : ENETUNREACH;
 }
 
 #if defined(DDB) || defined(_NPF_TESTING)
@@ -434,8 +656,8 @@ npf_rule_apply(npf_cache_t *npc, nbuf_t *nbuf, npf_rule_t *rl, int *retfl)
 void
 npf_rulenc_dump(const npf_rule_t *rl)
 {
-	const uint32_t *op = rl->r_ncode;
-	size_t n = rl->r_nc_size;
+	const uint32_t *op = rl->r_code;
+	size_t n = rl->r_clen;
 
 	while (n) {
 		printf("\t> |0x%02x|\n", (uint32_t)*op);
