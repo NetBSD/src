@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_build.c,v 1.17 2012/12/23 21:01:04 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.18 2013/02/09 03:35:32 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.17 2012/12/23 21:01:04 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.18 2013/02/09 03:35:32 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -47,20 +47,25 @@ __RCSID("$NetBSD: npf_build.c,v 1.17 2012/12/23 21:01:04 rmind Exp $");
 
 #include "npfctl.h"
 
+#define	MAX_RULE_NESTING	16
+
 static nl_config_t *		npf_conf = NULL;
-static nl_rule_t *		current_group = NULL;
 static bool			npf_debug = false;
-static bool			defgroup_set = false;
+static nl_rule_t *		the_rule = NULL;
+
+static nl_rule_t *		current_group[MAX_RULE_NESTING];
+static unsigned			rule_nesting_level = 0;
+static nl_rule_t *		defgroup = NULL;
 
 void
 npfctl_config_init(bool debug)
 {
-
 	npf_conf = npf_config_create();
 	if (npf_conf == NULL) {
 		errx(EXIT_FAILURE, "npf_config_create failed");
 	}
 	npf_debug = debug;
+	memset(current_group, 0, sizeof(current_group));
 }
 
 int
@@ -72,9 +77,10 @@ npfctl_config_send(int fd, const char *out)
 		_npf_config_setsubmit(npf_conf, out);
 		printf("\nSaving to %s\n", out);
 	}
-	if (!defgroup_set) {
+	if (!defgroup) {
 		errx(EXIT_FAILURE, "default group was not defined");
 	}
+	npf_rule_insert(npf_conf, NULL, defgroup);
 	error = npf_config_submit(npf_conf, fd);
 	if (error) {
 		nl_error_t ne;
@@ -89,6 +95,12 @@ nl_config_t *
 npfctl_config_ref(void)
 {
 	return npf_conf;
+}
+
+nl_rule_t *
+npfctl_rule_ref(void)
+{
+	return the_rule;
 }
 
 unsigned long
@@ -374,7 +386,7 @@ npfctl_build_ncode(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	}
 	assert(code && len > 0);
 
-	if (npf_rule_setcode(rl, NPF_CODE_NCODE, code, len) == -1) {
+	if (npf_rule_setcode(rl, NPF_CODE_NC, code, len) == -1) {
 		errx(EXIT_FAILURE, "npf_rule_setcode failed");
 	}
 	free(code);
@@ -438,34 +450,51 @@ npfctl_build_rproc(const char *name, npfvar_t *procs)
 }
 
 /*
- * npfctl_build_group: create a group, insert into the global ruleset
- * and update the current group pointer.
+ * npfctl_build_group: create a group, insert into the global ruleset,
+ * update the current group pointer and increase the nesting level.
  */
 void
-npfctl_build_group(const char *name, int attr, u_int if_idx)
+npfctl_build_group(const char *name, int attr, u_int if_idx, bool def)
 {
 	const int attr_di = (NPF_RULE_IN | NPF_RULE_OUT);
 	nl_rule_t *rl;
 
-	if (attr & NPF_RULE_DEFAULT) {
-		if (defgroup_set) {
-			yyerror("multiple default groups are not valid");
-		}
-		defgroup_set = true;
-		attr |= attr_di;
-
-	} else if ((attr & attr_di) == 0) {
+	if (def || (attr & attr_di) == 0) {
 		attr |= attr_di;
 	}
 
-	rl = npf_rule_create(name, attr | NPF_RULE_FINAL, if_idx);
-	npf_rule_insert(npf_conf, NULL, rl, NPF_PRI_NEXT);
-	current_group = rl;
+	rl = npf_rule_create(name, attr | NPF_RULE_GROUP, if_idx);
+	npf_rule_setprio(rl, NPF_PRI_LAST);
+	if (def) {
+		if (defgroup) {
+			yyerror("multiple default groups are not valid");
+		}
+		if (rule_nesting_level) {
+			yyerror("default group can only be at the top level");
+		}
+		defgroup = rl;
+	} else {
+		nl_rule_t *cg = current_group[rule_nesting_level];
+		npf_rule_insert(npf_conf, cg, rl);
+	}
+
+	/* Set the current group and increase the nesting level. */
+	if (rule_nesting_level >= MAX_RULE_NESTING) {
+		yyerror("rule nesting limit reached");
+	}
+	current_group[++rule_nesting_level] = rl;
+}
+
+void
+npfctl_build_group_end(void)
+{
+	assert(rule_nesting_level > 0);
+	current_group[rule_nesting_level--] = NULL;
 }
 
 /*
  * npfctl_build_rule: create a rule, build n-code from filter options,
- * if any, and insert into the ruleset of current group.
+ * if any, and insert into the ruleset of current group, or set the rule.
  */
 void
 npfctl_build_rule(int attr, u_int if_idx, sa_family_t family,
@@ -475,11 +504,23 @@ npfctl_build_rule(int attr, u_int if_idx, sa_family_t family,
 
 	rl = npf_rule_create(NULL, attr, if_idx);
 	npfctl_build_ncode(rl, family, op, fopts, false);
-	if (rproc && npf_rule_setproc(npf_conf, rl, rproc) != 0) {
-		yyerror("rule procedure '%s' is not defined", rproc);
+	if (rproc) {
+		npf_rule_setproc(rl, rproc);
 	}
-	assert(current_group != NULL);
-	npf_rule_insert(npf_conf, current_group, rl, NPF_PRI_NEXT);
+
+	if (npf_conf) {
+		nl_rule_t *cg = current_group[rule_nesting_level];
+
+		if (rproc && !npf_rproc_exists_p(npf_conf, rproc)) {
+			yyerror("rule procedure '%s' is not defined", rproc);
+		}
+		assert(cg != NULL);
+		npf_rule_setprio(rl, NPF_PRI_LAST);
+		npf_rule_insert(npf_conf, cg, rl);
+	} else {
+		/* We have parsed a single rule - set it. */
+		the_rule = rl;
+	}
 }
 
 /*
@@ -535,7 +576,7 @@ npfctl_build_nat(int type, u_int if_idx, sa_family_t family,
 	}
 
 	npfctl_build_ncode(nat, family, &op, fopts, false);
-	npf_nat_insert(npf_conf, nat, NPF_PRI_NEXT);
+	npf_nat_insert(npf_conf, nat, NPF_PRI_LAST);
 }
 
 /*

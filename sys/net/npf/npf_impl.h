@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_impl.h,v 1.25 2012/12/24 19:05:43 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.26 2013/02/09 03:35:32 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -70,12 +70,14 @@
 
 struct npf_ruleset;
 struct npf_rule;
+struct npf_rprocset;
 struct npf_nat;
 struct npf_session;
 
 typedef struct npf_ruleset	npf_ruleset_t;
 typedef struct npf_rule		npf_rule_t;
 typedef struct npf_nat		npf_nat_t;
+typedef struct npf_rprocset	npf_rprocset_t;
 typedef struct npf_alg		npf_alg_t;
 typedef struct npf_natpolicy	npf_natpolicy_t;
 typedef struct npf_session	npf_session_t;
@@ -122,18 +124,23 @@ typedef struct {
  * INTERFACES.
  */
 
-/* NPF control, statistics, etc. */
-void		npf_core_enter(void);
-npf_ruleset_t *	npf_core_ruleset(void);
-npf_ruleset_t *	npf_core_natset(void);
-npf_tableset_t *npf_core_tableset(void);
-void		npf_core_exit(void);
-bool		npf_core_locked(void);
-bool		npf_default_pass(void);
-prop_dictionary_t npf_core_dict(void);
+/* NPF config, statistics, etc. */
+void		npf_config_init(void);
+void		npf_config_fini(void);
 
-void		npf_reload(prop_dictionary_t, npf_ruleset_t *,
-		    npf_tableset_t *, npf_ruleset_t *, bool);
+void		npf_config_enter(void);
+void		npf_config_exit(void);
+bool		npf_config_locked_p(void);
+int		npf_config_read_enter(void);
+void		npf_config_read_exit(int);
+
+void		npf_config_reload(prop_dictionary_t, npf_ruleset_t *,
+		    npf_tableset_t *, npf_ruleset_t *, npf_rprocset_t *, bool);
+npf_ruleset_t *	npf_config_ruleset(void);
+npf_ruleset_t *	npf_config_natset(void);
+npf_tableset_t *npf_config_tableset(void);
+prop_dictionary_t npf_config_dict(void);
+bool		npf_default_pass(void);
 
 void		npflogattach(int);
 void		npflogdetach(void);
@@ -142,7 +149,7 @@ int		npfctl_reload(u_long, void *);
 int		npfctl_getconf(u_long, void *);
 int		npfctl_sessions_save(u_long, void *);
 int		npfctl_sessions_load(u_long, void *);
-int		npfctl_update_rule(u_long, void *);
+int		npfctl_rule(u_long, void *);
 int		npfctl_table(void *);
 
 void		npf_stats_inc(npf_stats_t);
@@ -214,23 +221,29 @@ int		npf_table_lookup(npf_tableset_t *, u_int,
 int		npf_table_list(npf_tableset_t *, u_int, void *, size_t);
 
 /* Ruleset interface. */
-npf_ruleset_t *	npf_ruleset_create(void);
+npf_ruleset_t *	npf_ruleset_create(size_t);
 void		npf_ruleset_destroy(npf_ruleset_t *);
 void		npf_ruleset_insert(npf_ruleset_t *, npf_rule_t *);
+void		npf_ruleset_reload(npf_ruleset_t *, npf_ruleset_t *);
 void		npf_ruleset_natreload(npf_ruleset_t *, npf_ruleset_t *);
 npf_rule_t *	npf_ruleset_matchnat(npf_ruleset_t *, npf_natpolicy_t *);
 npf_rule_t *	npf_ruleset_sharepm(npf_ruleset_t *, npf_natpolicy_t *);
-npf_rule_t *	npf_ruleset_replace(const char *, npf_ruleset_t *);
 void		npf_ruleset_freealg(npf_ruleset_t *, npf_alg_t *);
+
+int		npf_ruleset_add(npf_ruleset_t *, const char *, npf_rule_t *);
+npf_rule_t *	npf_ruleset_remove(npf_ruleset_t *, const char *, uintptr_t);
+npf_rule_t *	npf_ruleset_remkey(npf_ruleset_t *, const char *,
+		    const void *, size_t);
 
 npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, nbuf_t *,
 		    const npf_ruleset_t *, const int, const int);
-int		npf_rule_apply(npf_cache_t *, nbuf_t *, npf_rule_t *, int *);
+int		npf_rule_conclude(const npf_rule_t *, int *);
 
 /* Rule interface. */
-npf_rule_t *	npf_rule_alloc(prop_dictionary_t, npf_rproc_t *, void *, size_t);
+npf_rule_t *	npf_rule_alloc(prop_dictionary_t);
+void		npf_rule_setcode(npf_rule_t *, int, void *, size_t);
+void		npf_rule_setrproc(npf_rule_t *, npf_rproc_t *);
 void		npf_rule_free(npf_rule_t *);
-npf_ruleset_t *	npf_rule_subset(npf_rule_t *);
 npf_natpolicy_t *npf_rule_getnat(const npf_rule_t *);
 void		npf_rule_setnat(npf_rule_t *, npf_natpolicy_t *);
 npf_rproc_t *	npf_rule_getrproc(npf_rule_t *);
@@ -239,6 +252,11 @@ void		npf_ext_sysinit(void);
 void		npf_ext_sysfini(void);
 int		npf_ext_construct(const char *,
 		    npf_rproc_t *, prop_dictionary_t);
+
+npf_rprocset_t *npf_rprocset_create(void);
+void		npf_rprocset_destroy(npf_rprocset_t *);
+npf_rproc_t *	npf_rprocset_lookup(npf_rprocset_t *, const char *);
+void		npf_rprocset_insert(npf_rprocset_t *, npf_rproc_t *);
 
 npf_rproc_t *	npf_rproc_create(prop_dictionary_t);
 void		npf_rproc_acquire(npf_rproc_t *);

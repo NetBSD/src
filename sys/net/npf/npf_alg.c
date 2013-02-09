@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.6 2012/12/24 19:05:42 rmind Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.7 2013/02/09 03:35:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.6 2012/12/24 19:05:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.7 2013/02/09 03:35:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -79,8 +79,6 @@ npf_alg_sysfini(void)
 
 /*
  * npf_alg_register: register application-level gateway.
- *
- * XXX: Protected by module lock, but unify serialisation later.
  */
 npf_alg_t *
 npf_alg_register(npf_alg_func_t mfunc, npf_alg_func_t tfunc,
@@ -107,15 +105,14 @@ npf_alg_register(npf_alg_func_t mfunc, npf_alg_func_t tfunc,
 int
 npf_alg_unregister(npf_alg_t *alg)
 {
-
 	mutex_enter(&nat_alg_lock);
 	LIST_REMOVE(alg, na_entry);
 	pserialize_perform(nat_alg_psz);
 	mutex_exit(&nat_alg_lock);
 
-	npf_core_enter();
-	npf_ruleset_freealg(npf_core_natset(), alg);
-	npf_core_exit();
+	npf_config_enter();
+	npf_ruleset_freealg(npf_config_natset(), alg);
+	npf_config_exit();
 
 	kmem_free(alg, sizeof(npf_alg_t));
 	return 0;

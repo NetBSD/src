@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state.c,v 1.13 2012/12/24 19:05:45 rmind Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.14 2013/02/09 03:35:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.13 2012/12/24 19:05:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.14 2013/02/09 03:35:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ static void (*npf_state_sample)(npf_state_t *, bool) = NULL;
 bool
 npf_state_init(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
 {
-	const int proto = npf_cache_ipproto(npc);
+	const int proto = npc->npc_proto;
 	bool ret;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
@@ -139,7 +139,7 @@ bool
 npf_state_inspect(npf_cache_t *npc, nbuf_t *nbuf,
     npf_state_t *nst, const bool forw)
 {
-	const int proto = npf_cache_ipproto(npc);
+	const int proto = npc->npc_proto;
 	const int di = forw ? NPF_FLOW_FORW : NPF_FLOW_BACK;
 	bool ret;
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.h,v 1.12 2012/12/23 21:01:05 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.13 2013/02/09 03:35:33 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -41,6 +41,7 @@ struct nl_config;
 struct nl_rule;
 struct nl_rproc;
 struct nl_table;
+struct nl_ext;
 
 typedef struct nl_config	nl_config_t;
 typedef struct nl_rule		nl_rule_t;
@@ -70,11 +71,6 @@ typedef void (*nl_table_callback_t)(unsigned, int);
 
 #endif
 
-#define	NPF_CODE_NCODE		1
-#define	NPF_CODE_BPF		2
-
-#define	NPF_PRI_NEXT		(-1)
-
 #define	NPF_MAX_TABLE_ID	(16)
 
 nl_config_t *	npf_config_create(void);
@@ -83,15 +79,22 @@ void		npf_config_destroy(nl_config_t *);
 nl_config_t *	npf_config_retrieve(int, bool *, bool *);
 int		npf_config_flush(int);
 
+int		npf_ruleset_add(int, const char *, nl_rule_t *, uintptr_t *);
+int		npf_ruleset_remove(int, const char *, uintptr_t);
+int		npf_ruleset_remkey(int, const char *, const void *, size_t);
+
 nl_ext_t *	npf_ext_construct(const char *name);
 void		npf_ext_param_u32(nl_ext_t *, const char *, uint32_t);
 void		npf_ext_param_bool(nl_ext_t *, const char *, bool);
 
 nl_rule_t *	npf_rule_create(const char *, uint32_t, u_int);
 int		npf_rule_setcode(nl_rule_t *, int, const void *, size_t);
-int		npf_rule_setproc(nl_config_t *, nl_rule_t *, const char *);
+int		npf_rule_setprio(nl_rule_t *, pri_t);
+int		npf_rule_setproc(nl_rule_t *, const char *);
+int		npf_rule_setkey(nl_rule_t *, const void *, size_t);
 bool		npf_rule_exists_p(nl_config_t *, const char *);
-int		npf_rule_insert(nl_config_t *, nl_rule_t *, nl_rule_t *, pri_t);
+int		npf_rule_insert(nl_config_t *, nl_rule_t *, nl_rule_t *);
+void *		npf_rule_export(nl_rule_t *, size_t *);
 void		npf_rule_destroy(nl_rule_t *);
 
 nl_rproc_t *	npf_rproc_create(const char *);
@@ -113,7 +116,6 @@ void		npf_table_destroy(nl_table_t *);
 
 #include <ifaddrs.h>
 
-int		npf_update_rule(int, const char *, nl_rule_t *);
 int		npf_sessions_send(int, const char *);
 int		npf_sessions_recv(int, const char *);
 
