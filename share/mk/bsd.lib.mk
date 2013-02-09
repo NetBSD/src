@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.329 2013/02/09 12:17:20 spz Exp $
+#	$NetBSD: bsd.lib.mk,v 1.330 2013/02/09 17:18:17 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -11,15 +11,15 @@ LIBISMODULE?=	no
 LIBISPRIVATE?=	no
 LIBISCXX?=	no
 
-_LIB_PREFIX=	lib
-
 .if ${LIBISMODULE} != "no"
-_LIB_PREFIX=	# empty
+_LIB_PREFIX?=	# empty
 MKDEBUGLIB:=	no
 MKLINT:=	no
 MKPICINSTALL:=	no
 MKPROFILE:=	no
 MKSTATICLIB:=	no
+.else
+_LIB_PREFIX?=	lib
 .endif
 
 .if ${LIBISPRIVATE} != "no"
