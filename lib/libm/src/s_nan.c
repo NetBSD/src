@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nan.c,v 1.1 2013/02/09 19:37:48 christos Exp $	*/
+/*	$NetBSD: s_nan.c,v 1.2 2013/02/09 20:19:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 David Schultz
@@ -28,16 +28,26 @@
  * $FreeBSD: src/lib/msun/src/s_nan.c,v 1.2 2007/12/18 23:46:32 das Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_nan.c,v 1.1 2013/02/09 19:37:48 christos Exp $");
+__RCSID("$NetBSD: s_nan.c,v 1.2 2013/02/09 20:19:13 christos Exp $");
 
 #include <sys/endian.h>
 #include <ctype.h>
 #include <float.h>
 #include <math.h>
 #include <stdint.h>
-#include <strings.h>
+#include <string.h>
 
 #include "math_private.h"
+
+/* XXX: Locale? not here? in <ctype.h>? */
+static int
+digittoint(char s) {
+	if (isdigit((unsigned char)s))
+		return s - '0';
+	if (islower((unsigned char)s))
+		return s - 'a' + 10;
+	return s - 'A' + 10;
+}
 
 /*
  * Scan a string of hexadecimal digits (the format nan(3) expects) and
@@ -51,21 +61,21 @@ __RCSID("$NetBSD: s_nan.c,v 1.1 2013/02/09 19:37:48 christos Exp $");
  * consider valid, so we might be violating the C standard. But it's
  * impossible to use nan(3) portably anyway, so this seems good enough.
  */
-void
+static void
 _scan_nan(uint32_t *words, int num_words, const char *s)
 {
 	int si;		/* index into s */
 	int bitpos;	/* index into words (in bits) */
 
-	bzero(words, num_words * sizeof(uint32_t));
+	memset(words, 0, num_words * sizeof(*words));
 
 	/* Allow a leading '0x'. (It's expected, but redundant.) */
 	if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
 		s += 2;
 
 	/* Scan forwards in the string, looking for the end of the sequence. */
-	for (si = 0; isxdigit(s[si]); si++)
-		;
+	for (si = 0; isxdigit((unsigned char)s[si]); si++)
+		continue;
 
 	/* Scan backwards, filling in the bits in words[] as we go. */
 #if _BYTE_ORDER == _LITTLE_ENDIAN
