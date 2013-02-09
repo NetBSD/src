@@ -1,4 +1,4 @@
-/*	$NetBSD: s_rintl.c,v 1.2 2013/02/09 22:33:13 christos Exp $	*/
+/*	$NetBSD: s_rintl.c,v 1.3 2013/02/09 23:14:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.ORG>
@@ -30,11 +30,14 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_rintl.c,v 1.5 2008/02/22 11:59:05 bde Exp $");
 #else
-__RCSID("$NetBSD: s_rintl.c,v 1.2 2013/02/09 22:33:13 christos Exp $");
+__RCSID("$NetBSD: s_rintl.c,v 1.3 2013/02/09 23:14:44 christos Exp $");
 #endif
 
 #include <float.h>
-#include <math.h>
+#include <machine/ieee.h>
+
+#include "math.h"
+#include "math_private.h"
 
 #ifdef EXT_EXP_BIAS
 static const float
