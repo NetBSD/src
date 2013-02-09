@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.13 2012/12/24 19:05:44 rmind Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.14 2013/02/09 03:35:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.13 2012/12/24 19:05:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.14 2013/02/09 03:35:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -200,7 +200,7 @@ npf_return_block(npf_cache_t *npc, nbuf_t *nbuf, const int retfl)
 	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
 		return false;
 	}
-	switch (npf_cache_ipproto(npc)) {
+	switch (npc->npc_proto) {
 	case IPPROTO_TCP:
 		if (retfl & NPF_RULE_RETRST) {
 			(void)npf_return_tcp(npc);

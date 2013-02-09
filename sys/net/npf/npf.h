@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.h,v 1.25 2012/12/24 19:05:42 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.26 2013/02/09 03:35:31 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#define	NPF_VERSION		8
+#define	NPF_VERSION		9
 
 /*
  * Public declarations and definitions.
@@ -119,22 +119,7 @@ typedef struct {
 static inline bool
 npf_iscached(const npf_cache_t *npc, const int inf)
 {
-
 	return __predict_true((npc->npc_info & inf) != 0);
-}
-
-static inline int
-npf_cache_ipproto(const npf_cache_t *npc)
-{
-	KASSERT(npf_iscached(npc, NPC_IP46));
-	return npc->npc_proto;
-}
-
-static inline u_int
-npf_cache_hlen(const npf_cache_t *npc)
-{
-	KASSERT(npf_iscached(npc, NPC_IP46));
-	return npc->npc_hlen;
 }
 
 /*
@@ -199,15 +184,30 @@ bool		npf_autounload_p(void);
 
 /* Rule attributes. */
 #define	NPF_RULE_PASS			0x0001
-#define	NPF_RULE_DEFAULT		0x0002
+#define	NPF_RULE_GROUP			0x0002
 #define	NPF_RULE_FINAL			0x0004
 #define	NPF_RULE_STATEFUL		0x0008
 #define	NPF_RULE_RETRST			0x0010
 #define	NPF_RULE_RETICMP		0x0020
+#define	NPF_RULE_DYNAMIC		0x0040
+
+#define	NPF_DYNAMIC_GROUP		(NPF_RULE_GROUP | NPF_RULE_DYNAMIC)
 
 #define	NPF_RULE_IN			0x10000000
 #define	NPF_RULE_OUT			0x20000000
 #define	NPF_RULE_DIMASK			(NPF_RULE_IN | NPF_RULE_OUT)
+#define	NPF_RULE_FORW			0x40000000
+
+#define	NPF_RULE_MAXNAMELEN		64
+#define	NPF_RULE_MAXKEYLEN		32
+
+/* Priority values. */
+#define	NPF_PRI_FIRST			(-2)
+#define	NPF_PRI_LAST			(-1)
+
+/* Types of code. */
+#define	NPF_CODE_NC			1
+#define	NPF_CODE_BPF			2
 
 /* Address translation types and flags. */
 #define	NPF_NATIN			1
@@ -228,13 +228,24 @@ bool		npf_autounload_p(void);
 #define	PACKET_TAG_NPF			10
 
 /*
- * IOCTL structures.
+ * Rule commands (non-ioctl).
  */
 
-#define	NPF_IOCTL_TBLENT_LOOKUP		0
-#define	NPF_IOCTL_TBLENT_ADD		1
-#define	NPF_IOCTL_TBLENT_REM		2
-#define	NPF_IOCTL_TBLENT_LIST		3
+#define	NPF_CMD_RULE_ADD		1
+#define	NPF_CMD_RULE_INSERT		2
+#define	NPF_CMD_RULE_REMOVE		3
+#define	NPF_CMD_RULE_REMKEY		4
+#define	NPF_CMD_RULE_FLUSH		5
+
+/*
+ * NPF ioctl(2): table commands and structures.
+ */
+
+#define	NPF_CMD_TABLE_LOOKUP		1
+#define	NPF_CMD_TABLE_ADD		2
+#define	NPF_CMD_TABLE_REMOVE		3
+#define	NPF_CMD_TABLE_LIST		4
+#define	NPF_CMD_TABLE_FLUSH		5
 
 typedef struct npf_ioctl_ent {
 	int			alen;
@@ -248,13 +259,31 @@ typedef struct npf_ioctl_buf {
 } npf_ioctl_buf_t;
 
 typedef struct npf_ioctl_table {
-	int			nct_action;
+	int			nct_cmd;
 	u_int			nct_tid;
 	union {
 		npf_ioctl_ent_t	ent;
 		npf_ioctl_buf_t	buf;
 	} nct_data;
 } npf_ioctl_table_t;
+
+/*
+ * IOCTL operations.
+ */
+
+#define	IOC_NPF_VERSION		_IOR('N', 100, int)
+#define	IOC_NPF_SWITCH		_IOW('N', 101, int)
+#define	IOC_NPF_RELOAD		_IOWR('N', 102, struct plistref)
+#define	IOC_NPF_TABLE		_IOW('N', 103, struct npf_ioctl_table)
+#define	IOC_NPF_STATS		_IOW('N', 104, void *)
+#define	IOC_NPF_SESSIONS_SAVE	_IOR('N', 105, struct plistref)
+#define	IOC_NPF_SESSIONS_LOAD	_IOW('N', 106, struct plistref)
+#define	IOC_NPF_RULE		_IOWR('N', 107, struct plistref)
+#define	IOC_NPF_GETCONF		_IOR('N', 108, struct plistref)
+
+/*
+ * Statistics counters.
+ */
 
 typedef enum {
 	/* Packets passed. */
@@ -291,19 +320,5 @@ typedef enum {
 } npf_stats_t;
 
 #define	NPF_STATS_SIZE		(sizeof(uint64_t) * NPF_STATS_COUNT)
-
-/*
- * IOCTL operations.
- */
-
-#define	IOC_NPF_VERSION		_IOR('N', 100, int)
-#define	IOC_NPF_SWITCH		_IOW('N', 101, int)
-#define	IOC_NPF_RELOAD		_IOWR('N', 102, struct plistref)
-#define	IOC_NPF_TABLE		_IOW('N', 103, struct npf_ioctl_table)
-#define	IOC_NPF_STATS		_IOW('N', 104, void *)
-#define	IOC_NPF_SESSIONS_SAVE	_IOR('N', 105, struct plistref)
-#define	IOC_NPF_SESSIONS_LOAD	_IOW('N', 106, struct plistref)
-#define	IOC_NPF_UPDATE_RULE	_IOWR('N', 107, struct plistref)
-#define	IOC_NPF_GETCONF		_IOR('N', 108, struct plistref)
 
 #endif	/* _NPF_NET_H_ */

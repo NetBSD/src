@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_handler.c,v 1.25 2013/01/20 18:45:56 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.26 2013/02/09 03:35:31 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.25 2013/01/20 18:45:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.26 2013/02/09 03:35:31 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,10 @@ static struct pfil_head *	npf_ph_if = NULL;
 static struct pfil_head *	npf_ph_inet = NULL;
 static struct pfil_head *	npf_ph_inet6 = NULL;
 
+#ifndef INET6
+#define ip6_reass_packet(x, y)	ENOTSUP
+#endif
+
 /*
  * npf_ifhook: hook handling interface changes.
  */
@@ -84,17 +88,14 @@ npf_reassembly(npf_cache_t *npc, nbuf_t *nbuf, struct mbuf **mp)
 		struct ip *ip = nbuf_dataptr(nbuf);
 		error = ip_reass_packet(mp, ip);
 	} else if (npf_iscached(npc, NPC_IP6)) {
-#ifdef INET6
 		/*
 		 * Note: ip6_reass_packet() offset is the start of
 		 * the fragment header.
 		 */
-		const u_int hlen = npf_cache_hlen(npc);
-		error = ip6_reass_packet(mp, hlen);
+		error = ip6_reass_packet(mp, npc->npc_hlen);
 		if (error && *mp == NULL) {
 			memset(nbuf, 0, sizeof(nbuf_t));
 		}
-#endif
 	}
 	if (error) {
 		npf_stats_inc(NPF_STAT_REASSFAIL);
@@ -131,7 +132,6 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	nbuf_t nbuf;
 	npf_cache_t npc;
 	npf_session_t *se;
-	npf_ruleset_t *rlset;
 	npf_rule_t *rl;
 	npf_rproc_t *rp;
 	int error, retfl;
@@ -165,7 +165,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		}
 	}
 
-	/* Inspect the list of sessions. */
+	/* Inspect the list of sessions (if found, acquires a reference). */
 	se = npf_session_inspect(&npc, &nbuf, di, &error);
 
 	/* If "passing" session found - skip the ruleset inspection. */
@@ -181,14 +181,15 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	}
 
 	/* Acquire the lock, inspect the ruleset using this packet. */
-	npf_core_enter();
-	rlset = npf_core_ruleset();
+	int slock = npf_config_read_enter();
+	npf_ruleset_t *rlset = npf_config_ruleset();
+
 	rl = npf_ruleset_inspect(&npc, &nbuf, rlset, di, NPF_LAYER_3);
 	if (rl == NULL) {
-		bool default_pass = npf_default_pass();
-		npf_core_exit();
+		const bool pass = npf_default_pass();
+		npf_config_read_exit(slock);
 
-		if (default_pass) {
+		if (pass) {
 			npf_stats_inc(NPF_STAT_PASS_DEFAULT);
 			goto pass;
 		}
@@ -203,8 +204,10 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	KASSERT(rp == NULL);
 	rp = npf_rule_getrproc(rl);
 
-	/* Apply the rule, release the lock. */
-	error = npf_rule_apply(&npc, &nbuf, rl, &retfl);
+	/* Conclude with the rule and release the lock. */
+	error = npf_rule_conclude(rl, &retfl);
+	npf_config_read_exit(slock);
+
 	if (error) {
 		npf_stats_inc(NPF_STAT_BLOCK_RULESET);
 		goto block;
@@ -212,15 +215,17 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	npf_stats_inc(NPF_STAT_PASS_RULESET);
 
 	/*
-	 * Establish a "pass" session, if required.  Just proceed, if session
-	 * creation fails (e.g. due to unsupported protocol).
-	 *
-	 * Note: the reference on the rule procedure is transfered to the
-	 * session.  It will be released on session destruction.
+	 * Establish a "pass" session, if required.  Just proceed,
+	 * if session creation fails (e.g. due to unsupported protocol).
 	 */
 	if ((retfl & NPF_RULE_STATEFUL) != 0 && !se) {
 		se = npf_session_establish(&npc, &nbuf, di);
 		if (se) {
+			/*
+			 * Note: the reference on the rule procedure is
+			 * transfered to the session.  It will be released
+			 * on session destruction.
+			 */
 			npf_session_setpass(se, rp);
 		}
 	}
