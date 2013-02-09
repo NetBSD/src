@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.36 2013/02/09 18:59:19 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.37 2013/02/09 20:47:06 christos Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -44,8 +44,9 @@ KERNEL_SETS+=		IXM1200 HDL_G
 .if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm" \
     || ${MACHINE_ARCH} == "earmhf"
 KERNEL_SETS+=		RPI
-RPI.kernel=		${KERNSRCDIR}/arch/evbarm/compile/RPI/kernel.img
-RPI.img=		${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/gzimg/rpi.img
+RPI.rel=		${RELEASEDIR}/${RELEASEMACHINEDIR}
+RPI.kernel=		${RPI.rel}/installation/instkernel/netbsd-RPI.bin.gz
+RPI.img=		${RPI.rel}/binary/gzimg/rpi.img
 snap_md_post:
 	TOOL_MAKEFS=${TOOL_MAKEFS} \
 	TOOL_DISKLABEL=${TOOL_DISKLABEL} \
