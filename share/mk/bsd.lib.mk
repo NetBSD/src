@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.328 2013/02/08 04:06:25 matt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.329 2013/02/09 12:17:20 spz Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -723,7 +723,7 @@ libinstall:: ${_DEST.LIB}/${_LIB_g.a}
 .PRECIOUS: ${_DEST.LIB}/${_LIB_g.a}
 
 .if ${MKUPDATE} == "no"
-.if !defined(BUILD) && !make(all) && !make(${_LIB_g.a)
+.if !defined(BUILD) && !make(all) && !make(${_LIB_g.a})
 ${_DEST.LIB}/${_LIB_g.a}! .MADE
 .endif
 ${_DEST.LIB}/${_LIB_g.a}! ${_LIB_g.a} __archiveinstall
