@@ -1,4 +1,4 @@
-/*	$NetBSD: s_ilogbl.c,v 1.1 2011/07/28 22:32:29 joerg Exp $	*/
+/*	$NetBSD: s_ilogbl.c,v 1.2 2013/02/09 22:56:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_ilogbl.c,v 1.1 2011/07/28 22:32:29 joerg Exp $");
+__RCSID("$NetBSD: s_ilogbl.c,v 1.2 2013/02/09 22:56:00 matt Exp $");
 
 #include "namespace.h"
 
@@ -54,12 +54,12 @@ ilogbl(long double x)
 	union ieee_ext_u u;
 
 	if (x == 0.0L)
-		return 0x80000001;	/* ilogbl(0) = 0x80000001 */
+		return FP_ILOGB0;	/* ilogbl(0) = 0x80000001 */
 
 	u.extu_ld = x;
 
 	if (u.extu_ext.ext_exp == EXT_EXP_INFNAN)
-		return 0x7fffffff;
+		return FP_ILOGBNAN;	/* inf too */
 
 	if (u.extu_ext.ext_exp == 0) {
 		/*
