@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.84 2013/02/09 04:13:50 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.85 2013/02/09 18:32:10 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8209,4 +8209,11 @@ sys/secmodel/securelevel/secmodel_securelevel.c	1.29
 	Re-instate backwards compatible
 	security.models.bsd44.{curtain,securelevel}.
 	[jym, ticket #802]
+
+sys/arch/arm/arm32/pmap.c			1.232,1.233,1.243,1.247,
+						1.249-1.251 via patch
+
+	Fix a bug in pmap_modify_pv() where PVF_WRITE wasn't set
+	after changing its mapping to writeable.
+	[msaitoh, ticket #803]
 
