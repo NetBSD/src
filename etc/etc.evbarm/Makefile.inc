@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.35 2013/02/09 18:49:55 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.36 2013/02/09 18:59:19 christos Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -11,14 +11,19 @@ EVBARM_BOARDS=
 
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms (armv4 or pre-armv5t)
-EVBARM_BOARDS+=		ADI_BRH BCM5301X CP3100 GEMINI GUMSTIX INTEGRATOR \
+EVBARM_BOARDS+=		ADI_BRH CP3100 GEMINI GUMSTIX INTEGRATOR \
 			IQ80310 IQ80321 MINI2440 MV2120 SMDK2410 \
 			SMDK2800 TEAMASA_NPWR TS7200 TWINTAIL
 .endif
 
+.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm" \
+    || ${MACHINE_ARCH} == "earmhf"
+# Little endian platforms with VFP
+EVBARM_BOARDS+=		BCM5301X BEAGLEBOARD BEAGLEBOARDXM BEAGLEBONE TISDP2420
+.endif
 .if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm"
 # Little endian platforms (armv5t+)
-EVBARM_BOARDS+=		BEAGLEBOARD OPENRD SHEEVAPLUG TISDP2420
+EVBARM_BOARDS+=		OPENRD SHEEVAPLUG 
 .endif
 
 .if ${MACHINE_ARCH} == "armeb"
@@ -36,7 +41,8 @@ BUILD_KERNELS+=		${board}_INSTALL
 KERNEL_SETS+=		IXM1200 HDL_G
 .endif
 
-.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm"
+.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm" \
+    || ${MACHINE_ARCH} == "earmhf"
 KERNEL_SETS+=		RPI
 RPI.kernel=		${KERNSRCDIR}/arch/evbarm/compile/RPI/kernel.img
 RPI.img=		${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/gzimg/rpi.img
@@ -57,4 +63,3 @@ KERNEL_SUFFIXES=	bin srec ub
 
 INSTALLATION_DIRS+=	binary/gzimg		\
 			installation/instkernel
-
