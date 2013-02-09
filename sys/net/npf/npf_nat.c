@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_nat.c,v 1.18 2012/12/24 19:05:44 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.19 2013/02/09 03:35:32 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,8 +30,8 @@
  */
 
 /*
- * NPF network address port translation (NAPT).
- * Described in RFC 2663, RFC 3022.  Commonly just "NAT".
+ * NPF network address port translation (NAPT) and other forms of NAT.
+ * Described in RFC 2663, RFC 3022, etc.
  *
  * Overview
  *
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.18 2012/12/24 19:05:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.19 2013/02/09 03:35:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.18 2012/12/24 19:05:44 rmind Exp $");
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/cprng.h>
 
 #include <net/pfil.h>
@@ -117,6 +118,7 @@ typedef struct {
  */
 struct npf_natpolicy {
 	LIST_HEAD(, npf_nat)	n_nat_list;
+	volatile u_int		n_refcnt;
 	kmutex_t		n_lock;
 	kcondvar_t		n_cv;
 	npf_portmap_t *		n_portmap;
@@ -257,6 +259,11 @@ npf_nat_freepolicy(npf_natpolicy_t *np)
 		cv_wait(&np->n_cv, &np->n_lock);
 	}
 	mutex_exit(&np->n_lock);
+
+	/* All references should be going away. */
+	while (np->n_refcnt) {
+		kpause("npfgcnat", false, 1, NULL);
+	}
 
 	/* Destroy the port map, on last reference. */
 	if (pm && --pm->p_refcnt == 0) {
@@ -415,26 +422,25 @@ npf_nat_putport(npf_natpolicy_t *np, in_port_t port)
 
 /*
  * npf_nat_inspect: inspect packet against NAT ruleset and return a policy.
+ *
+ * => Acquire a reference on the policy, if found.
  */
 static npf_natpolicy_t *
 npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 {
-	npf_ruleset_t *rlset;
+	int slock = npf_config_read_enter();
+	npf_ruleset_t *rlset = npf_config_natset();
 	npf_natpolicy_t *np;
 	npf_rule_t *rl;
 
-	npf_core_enter();
-	rlset = npf_core_natset();
 	rl = npf_ruleset_inspect(npc, nbuf, rlset, di, NPF_LAYER_3);
 	if (rl == NULL) {
-		npf_core_exit();
+		npf_config_read_exit(slock);
 		return NULL;
 	}
 	np = npf_rule_getnat(rl);
-	if (np == NULL) {
-		npf_core_exit();
-		return NULL;
-	}
+	atomic_inc_uint(&np->n_refcnt);
+	npf_config_read_exit(slock);
 	return np;
 }
 
@@ -444,7 +450,7 @@ npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 static npf_nat_t *
 npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np)
 {
-	const int proto = npf_cache_ipproto(npc);
+	const int proto = npc->npc_proto;
 	npf_nat_t *nt;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
@@ -511,7 +517,7 @@ int
 npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
     const bool forw, const int di)
 {
-	const int proto = npf_cache_ipproto(npc);
+	const int proto = npc->npc_proto;
 	const npf_natpolicy_t *np = nt->nt_natpolicy;
 	const npf_addr_t *addr;
 	in_port_t port;
@@ -618,7 +624,7 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf, const int di)
 
 	/*
 	 * Inspect the packet for a NAT policy, if there is no session.
-	 * Note: acquires the lock (releases, if not found).
+	 * Note: acquires a reference if found.
 	 */
 	np = npf_nat_inspect(npc, nbuf, di);
 	if (np == NULL) {
@@ -628,17 +634,14 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf, const int di)
 	forw = true;
 
 	/*
-	 * Create a new NAT entry.  Note: it is safe to unlock, since the
-	 * NAT policy wont be desotroyed while there are list entries, which
-	 * are removed only on session expiration.  Currently, NAT entry is
-	 * not yet associated with any session.
+	 * Create a new NAT entry (not yet associated with any session).
+	 * We will consume the reference on success (release on error).
 	 */
 	nt = npf_nat_create(npc, np);
 	if (nt == NULL) {
-		npf_core_exit();
+		atomic_dec_uint(&np->n_refcnt);
 		return ENOMEM;
 	}
-	npf_core_exit();
 	new = true;
 
 	/* Determine whether any ALG matches. */
@@ -743,6 +746,7 @@ npf_nat_expire(npf_nat_t *nt)
 	if (LIST_EMPTY(&np->n_nat_list)) {
 		cv_broadcast(&np->n_cv);
 	}
+	atomic_dec_uint(&np->n_refcnt);
 	mutex_exit(&np->n_lock);
 
 	/* Free structure, increase the counter. */
@@ -824,7 +828,8 @@ npf_nat_restore(prop_dictionary_t sedict, npf_session_t *se)
 	}
 
 	/* Match if there is an existing NAT policy. */
-	rl = npf_ruleset_matchnat(npf_core_natset(), __UNCONST(onp));
+	KASSERT(npf_config_locked_p());
+	rl = npf_ruleset_matchnat(npf_config_natset(), __UNCONST(onp));
 	if (rl == NULL) {
 		return NULL;
 	}

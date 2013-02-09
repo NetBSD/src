@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.14 2013/02/01 05:40:07 spz Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.15 2013/02/09 03:35:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * FIXME: config generation should be redesigned..
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.14 2013/02/01 05:40:07 spz Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.15 2013/02/09 03:35:32 rmind Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -561,15 +561,25 @@ static const struct attr_keyword_mapent {
 	{ NPF_RULE_FINAL,	NPF_RULE_FINAL,	"final",	NULL	},
 };
 
+static int rules_seen = 0;
+
+/*
+ * FIXME: This mess needs a complete rewrite..
+ */
+
 static void
 npfctl_show_rule(nl_rule_t *nrl, unsigned nlevel)
 {
+	static int grouplvl = -1;
 	rule_group_t rg;
 	const char *rproc;
 	const void *nc;
 	size_t nclen;
+	u_int n;
 
+	memset(&rg, 0, sizeof(rg));
 	_npf_rule_getinfo(nrl, &rg.rg_name, &rg.rg_attr, &rg.rg_ifnum);
+	rules_seen++;
 
 	/* Get the interface, if any. */
 	char ifnamebuf[IFNAMSIZ], *ifname = NULL;
@@ -577,18 +587,23 @@ npfctl_show_rule(nl_rule_t *nrl, unsigned nlevel)
 		ifname = if_indextoname(rg.rg_ifnum, ifnamebuf);
 	}
 
-	/*
-	 * If zero level, then it is a group.
-	 */
-	if (nlevel == 0) {
-		static bool ingroup = false;
+	if (grouplvl >= 0 && (unsigned)grouplvl >= nlevel) {
+		for (n = 0; n < nlevel; n++) {
+			printf("\t");
+		}
+		printf("}\n\n");
+		grouplvl--;
+	}
+	for (n = 0; n < nlevel; n++) {
+		printf("\t");
+	}
+
+	if (rg.rg_attr & NPF_RULE_GROUP) {
 		const char *rname = rg.rg_name;
 
-		if (ingroup) {
-			printf("}\n\n");
-		}
-		ingroup = true;
-		if (rg.rg_attr & NPF_RULE_DEFAULT) {
+		grouplvl = nlevel;
+		if (rg.rg_attr == (NPF_RULE_GROUP| NPF_RULE_IN | NPF_RULE_OUT)
+		    && rname == NULL && rg.rg_ifnum == 0) {
 			puts("group (default) {");
 			return;
 		}
@@ -603,9 +618,6 @@ npfctl_show_rule(nl_rule_t *nrl, unsigned nlevel)
 	/*
 	 * Rule case.  First, unparse the attributes.
 	 */
-	while (nlevel--) {
-		printf("\t");
-	}
 	for (unsigned i = 0; i < __arraycount(attr_keyword_map); i++) {
 		const struct attr_keyword_mapent *ak = &attr_keyword_map[i];
 
@@ -723,7 +735,8 @@ npfctl_config_show(int fd)
 		puts("");
 		if (!error) {
 			error = _npf_rule_foreach(ncf, npfctl_show_rule);
-			puts("}");
+			if (rules_seen)
+				puts("}");
 		}
 	}
 	npf_config_destroy(ncf);

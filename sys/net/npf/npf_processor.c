@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.14 2013/01/20 18:45:56 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.15 2013/02/09 03:35:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.14 2013/01/20 18:45:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.15 2013/02/09 03:35:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -102,20 +102,6 @@ nc_jump(const void *iptr, int n, u_int *lcount)
 	}
 	*lcount = *lcount - 1;
 	return (const uint32_t *)iptr + n;
-}
-
-void *
-npf_ncode_alloc(size_t sz)
-{
-
-	return kmem_alloc(sz, KM_SLEEP);
-}
-
-void
-npf_ncode_free(void *nc, size_t sz)
-{
-
-	kmem_free(nc, sz);
 }
 
 /*
