@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.142 2012/06/05 13:41:23 tsutsui Exp $ */
+/*	$NetBSD: fdisk.c,v 1.143 2013/02/09 01:50:04 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.142 2012/06/05 13:41:23 tsutsui Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.143 2013/02/09 01:50:04 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -2769,8 +2769,8 @@ yesno(const char *str, ...)
 	va_list ap;
 
 	va_start(ap, str);
-
 	vprintf(str, ap);
+	va_end(ap);
 	printf(" [n] ");
 
 	first = ch = getchar();
