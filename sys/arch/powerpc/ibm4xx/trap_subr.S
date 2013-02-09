@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.23 2013/01/29 15:33:44 kiyohara Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.24 2013/02/09 11:22:51 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -166,9 +166,10 @@ _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 	mfxer	%r30;			/* save XER */		\
 	mfsrr1	%r31;						\
 	mtcr	%r31;						\
-	lwz	%r1,CI_INTSTK(%r1);	/* get intstk */	\
-	bt	MSR_PR,1f;		/* branch if PSL_PR is true */ \
-	mfsprg1	%r1;			/* yes, get old SP */	\
+	mfsprg1	%r1;			/* restore SP */ 	\
+	bf	MSR_PR,1f;		/* branch if PSL_PR is false */ \
+	GET_PCB(%r1);						\
+	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
 1:
 
 /*
