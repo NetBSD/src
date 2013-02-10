@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.25 2013/02/10 15:35:34 jmcneill Exp $
+# $NetBSD: mkimage,v 1.26 2013/02/10 15:45:33 christos Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -134,7 +134,8 @@ make_fstab
 customize
 populate
 
-(cd ${mnt}; ${MTREE} -c -k all | ${MTREE} -C -k all) >> "$tmp/selected_sets"
+(cd ${mnt}; ${MTREE} -N ${release}/etc -c -k all | 
+    ${MTREE} -N ${release}/etc -C -k all) >> "$tmp/selected_sets"
 if [ -n ${msdosid} ]; then
 	echo ${bar} Populating msdos filesystem ${bar}
 	${MAKEFS} -t msdos -O $((${init} / 2))m -s $((${boot} / 2))m \
