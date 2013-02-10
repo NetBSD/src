@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.42 2013/02/10 21:36:31 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.43 2013/02/10 22:03:49 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -30,7 +30,7 @@ __mkimage: .USE
 	TOOL_MTREE=${TOOL_MTREE} \
 	${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
 	    -K ${.ALLSRC} -S ${NETBSDSRCDIR} \
-	    ${IMAGE.dir}/${.TARGET:/smp_//}.img.gz
+	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
 
 .if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm" \
     || ${MACHINE_ARCH} == "earmhf"
