@@ -25,8 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.1 2013/02/10 11:04:20 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.2 2013/02/10 14:44:14 christos Exp $");
 
+#include <sys/types.h>
 #include <sys/cpu.h>
 
 #include <ddb/ddbvar.h>
