@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.18 2013/02/09 03:35:32 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.19 2013/02/10 23:47:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.18 2013/02/09 03:35:32 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.19 2013/02/10 23:47:37 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -502,6 +502,7 @@ npfctl_build_rule(int attr, u_int if_idx, sa_family_t family,
 {
 	nl_rule_t *rl;
 
+	attr |= (npf_conf ? 0 : NPF_RULE_DYNAMIC);
 	rl = npf_rule_create(NULL, attr, if_idx);
 	npfctl_build_ncode(rl, family, op, fopts, false);
 	if (rproc) {
