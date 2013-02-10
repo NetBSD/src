@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.26 2013/02/10 19:20:19 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.27 2013/02/10 19:22:23 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.26 2013/02/10 19:20:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.27 2013/02/10 19:22:23 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -3626,7 +3626,7 @@ mvsata_edma_setup_crqb_gen2e(struct mvsata_port *mvport, int erqqip, int quetag,
 	eprd_addr = mvport->port_eprd_dmamap->dm_segs[0].ds_addr +
 	    mvport->port_reqtbl[quetag].eprd_offset;
 	rw = (ata_bio->flags & ATA_READ) ? CRQB_CDIR_READ : CRQB_CDIR_WRITE;
-	ctrlflg = (rw | CRQB_CDEVICEQUETAG(quetag) | CRQB_CPMPORT(drive) |
+	ctrlflg = (rw | CRQB_CDEVICEQUETAG(0) | CRQB_CPMPORT(drive) |
 	    CRQB_CPRDMODE_EPRD | CRQB_CHOSTQUETAG_GEN2(quetag));
 	cmd = (ata_bio->flags & ATA_READ) ? WDCC_READDMA : WDCC_WRITEDMA;
 	if (ata_bio->flags & (ATA_LBA|ATA_LBA48)) {
