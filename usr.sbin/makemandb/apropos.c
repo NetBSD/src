@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.10 2013/01/14 21:26:25 christos Exp $	*/
+/*	$NetBSD: apropos.c,v 1.11 2013/02/10 23:24:18 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.10 2013/01/14 21:26:25 christos Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.11 2013/02/10 23:24:18 christos Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -85,9 +85,9 @@ main(int argc, char *argv[])
 		usage();
 
 	memset(&aflags, 0, sizeof(aflags));
-	
-	/*If the user specifies a section number as an option, the corresponding 
-	 * index element in sec_nums is set to the string representing that 
+
+	/*If the user specifies a section number as an option, the corresponding
+	 * index element in sec_nums is set to the string representing that
 	 * section number.
 	 */
 	while ((ch = getopt(argc, argv, "123456789Ccn:pS:s:")) != -1) {
@@ -130,10 +130,10 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
-	
+
 	argc -= optind;
 	argv += optind;
-	
+
 	if (!argc)
 		usage();
 
@@ -177,7 +177,7 @@ main(int argc, char *argv[])
 		rc = run_query_term(db, &args);
 	else
 		rc = run_query_pager(db, &args);
-		
+
 	free(query);
 	close_db(db);
 	if (errmsg) {
@@ -190,7 +190,7 @@ main(int argc, char *argv[])
 		/* Something wrong with the database. Exit */
 		exit(EXIT_FAILURE);
 	}
-	
+
 	if (cbdata.count == 0) {
 		warnx("No relevant results obtained.\n"
 			  "Please make sure that you spelled all the terms correctly "
