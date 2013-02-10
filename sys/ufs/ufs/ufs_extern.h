@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.72.2.1 2013/02/10 16:26:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -35,6 +35,7 @@
 #define _UFS_UFS_EXTERN_H_
 
 #include <sys/mutex.h>
+#include <sys/disk.h>
 
 struct buf;
 struct componentname;
@@ -188,8 +189,19 @@ void	ufs_reinit(void);
 void	ufs_done(void);
 int	ufs_start(struct mount *, int);
 int	ufs_root(struct mount *, struct vnode **);
+void	ufs_update_maxphys(struct mount *);
 int	ufs_quotactl(struct mount *, struct quotactl_args *);
 int	ufs_fhtovp(struct mount *, struct ufid *, struct vnode **);
+
+static inline uint32_t
+ufs_maxphys(struct mount *mp)
+{
+	while (__predict_false(mp->mnt_dev_serial != disk_serial)) {
+		ufs_update_maxphys(mp);
+	}
+
+	return mp->mnt_maxphys;
+}
 
 /* ufs_vnops.c */
 void	ufs_vinit(struct mount *, int (**)(void *),

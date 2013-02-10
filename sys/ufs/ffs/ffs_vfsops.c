@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.278.2.2 2012/11/20 03:02:53 tls Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.278.2.3 2013/02/10 16:26:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.278.2.2 2012/11/20 03:02:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.278.2.3 2013/02/10 16:26:34 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -881,7 +881,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct buf *bp;
 	struct fs *fs;
 	dev_t dev;
-	struct disk *diskp;
 	struct dkwedge_info dkw;
 	void *space;
 	daddr_t sblockloc, fsblockloc;
@@ -897,9 +896,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	int32_t fsbsize;
 
 	dev = devvp->v_rdev;
-	if ((diskp = disk_find_blk(dev)) == NULL) {
-		panic("no disk for device %d %d", major(dev), DISKUNIT(dev));
-	}
 
 	cred = l ? l->l_cred : NOCRED;
 
@@ -921,13 +917,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	error = fstrans_mount(mp);
 	if (error)
 		return error;
-
-	/*
-	 * Get the maximum I/O size for the underlying device.
-	 */
-	mp->mnt_maxphys = disk_maxphys(diskp);
-	aprint_debug("ffs_mount: disk %s maxphys %d\n",
-		     diskp->dk_name, mp->mnt_maxphys);
 
 	ump = kmem_zalloc(sizeof(*ump), KM_SLEEP);
 	mutex_init(&ump->um_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -1270,8 +1259,13 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
 	devvp->v_specmountpoint = mp;
+
+	/* Before we start WAPBL or touch any snapshots, adjust maxphys */
+	ufs_update_maxphys(mp);
+
 	if (ronly == 0 && fs->fs_snapinum[0] != 0)
 		ffs_snapshot_mount(mp);
+
 #ifdef WAPBL
 	if (!ronly) {
 		KDASSERT(fs->fs_ronly == 0);

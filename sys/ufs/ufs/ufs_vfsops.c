@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.51 2012/04/04 19:52:48 tron Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.51.2.1 2013/02/10 16:26:34 tls Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.51 2012/04/04 19:52:48 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.51.2.1 2013/02/10 16:26:34 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.51 2012/04/04 19:52:48 tron Exp $")
 #include <sys/vnode.h>
 #include <sys/kmem.h>
 #include <sys/kauth.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -94,6 +96,36 @@ ufs_root(struct mount *mp, struct vnode **vpp)
 		return (error);
 	*vpp = nvp;
 	return (0);
+}
+
+/*
+ * Get (from disk) and set (to mount structure) maximum I/O size
+ */
+
+void
+ufs_update_maxphys(struct mount *mp)
+{
+	struct ufsmount *ump;
+	dev_t dev;
+	struct disk *diskp;
+
+	ump = VFSTOUFS(mp);
+	dev = ump->um_dev;
+
+	mutex_enter(&mp->mnt_updating);
+
+	if ((diskp = disk_find_blk(dev)) == NULL) {
+		panic("no disk for device %d %d", major(dev), DISKUNIT(dev));
+	}
+
+	/*
+	 * Get the maximum I/O size for the underlying device.
+	 */
+	mp->mnt_dev_serial = disk_serial;
+	mp->mnt_maxphys = disk_maxphys(diskp);
+	aprint_debug("ufs_update_maxphys: disk %s maxphys %d\n",
+		     diskp->dk_name, mp->mnt_maxphys);
+	mutex_exit(&mp->mnt_updating);
 }
 
 /*

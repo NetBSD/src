@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.57.2.1 2012/09/12 06:15:35 tls Exp $	*/
+/*	$NetBSD: disk.h,v 1.57.2.2 2013/02/10 16:26:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -509,7 +509,7 @@ struct disk_strategy {
 
 #ifdef _KERNEL
 extern	int disk_count;			/* number of disks in global disklist */
-
+extern	unsigned int disk_serial;	/* some disk's properties changed */
 struct proc;
 
 void	disk_attach(struct disk *);
