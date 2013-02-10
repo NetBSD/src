@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.25 2013/02/03 20:13:28 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.26 2013/02/10 19:20:19 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.25 2013/02/03 20:13:28 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.26 2013/02/10 19:20:19 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -3379,7 +3379,11 @@ mvsata_edma_setup_crqb(struct mvsata_port *mvport, int erqqip, int quetag,
 	    mvport->port_reqtbl[quetag].eprd_offset;
 	rw = (ata_bio->flags & ATA_READ) ? CRQB_CDIR_READ : CRQB_CDIR_WRITE;
 	cmd = (ata_bio->flags & ATA_READ) ? WDCC_READDMA : WDCC_WRITEDMA;
-	head = WDSD_LBA;
+	if (ata_bio->flags & (ATA_LBA|ATA_LBA48)) {
+		head = WDSD_LBA;
+	} else {
+		head = 0;
+	}
 	blkno = ata_bio->blkno;
 	if (ata_bio->flags & ATA_LBA48)
 		cmd = atacmd_to48(cmd);
@@ -3625,7 +3629,11 @@ mvsata_edma_setup_crqb_gen2e(struct mvsata_port *mvport, int erqqip, int quetag,
 	ctrlflg = (rw | CRQB_CDEVICEQUETAG(quetag) | CRQB_CPMPORT(drive) |
 	    CRQB_CPRDMODE_EPRD | CRQB_CHOSTQUETAG_GEN2(quetag));
 	cmd = (ata_bio->flags & ATA_READ) ? WDCC_READDMA : WDCC_WRITEDMA;
-	head = WDSD_LBA;
+	if (ata_bio->flags & (ATA_LBA|ATA_LBA48)) {
+		head = WDSD_LBA;
+	} else {
+		head = 0;
+	}
 	blkno = ata_bio->blkno;
 	if (ata_bio->flags & ATA_LBA48)
 		cmd = atacmd_to48(cmd);
