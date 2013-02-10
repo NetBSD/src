@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.83 2012/07/19 22:47:52 pooka Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.83.2.1 2013/02/10 16:26:33 tls Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.83 2012/07/19 22:47:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.83.2.1 2013/02/10 16:26:33 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -80,6 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.83 2012/07/19 22:47:52 pooka Exp $");
 #include <sys/vnode.h>
 #include <sys/namei.h> /* for pathbuf */
 #include <sys/kauth.h>
+#include <sys/atomic.h>
+#include <sys/disk.h>
 
 static int rf_AllocDiskStructures(RF_Raid_t *, RF_Config_t *);
 static void rf_print_label_status( RF_Raid_t *, int, char *,
@@ -649,6 +651,15 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		diskPtr->numBlocks = diskPtr->numBlocks *
 			rf_sizePercentage / 100;
 	}
+
+	/*
+	 * Tell the rest of the kernel to check whether anything's
+	 * maximum transfer size has changed -- like, for example,
+	 * a filesystem that might be mounted on a set where we're
+	 * adding a spare with a smaller maximum transfer size than
+	 * the original set members.
+	 */
+	atomic_inc_uint(&disk_serial);
 	return (0);
 }
 

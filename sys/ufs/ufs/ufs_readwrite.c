@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.104.2.1 2012/10/14 14:33:32 tls Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.104.2.2 2013/02/10 16:26:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.104.2.1 2012/10/14 14:33:32 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.104.2.2 2013/02/10 16:26:34 tls Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -415,7 +415,7 @@ WRITE(void *v)
 
 #ifndef LFS_READWRITE
 		{
-			int maximum = vp->v_mount->mnt_maxphys;
+			int maximum = ufs_maxphys(vp->v_mount);
 			off_t oldchunk, newchunk;
 
 			oldchunk = (oldoff / maximum) * maximum;

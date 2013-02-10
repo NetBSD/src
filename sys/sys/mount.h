@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.207.6.2 2012/11/20 03:02:51 tls Exp $	*/
+/*	$NetBSD: mount.h,v 1.207.6.3 2013/02/10 16:26:34 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -122,6 +122,7 @@ struct mount {
 	int		mnt_iflag;		/* internal flags */
 	int		mnt_fs_bshift;		/* offset shift for lblkno */
 	int		mnt_dev_bshift;		/* shift for device sectors */
+	unsigned int	mnt_dev_serial;		/* when maxphys etc. updated */
 	uint32_t	mnt_maxphys;		/* largest xfer allowed */
 	struct statvfs	mnt_stat;		/* cache of filesystem stats */
 	specificdata_reference
