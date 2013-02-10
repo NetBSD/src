@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.27 2013/02/10 19:22:23 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.28 2013/02/10 20:13:53 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.27 2013/02/10 19:22:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.28 2013/02/10 20:13:53 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1260,14 +1260,6 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 
 	chp->ch_flags &= ~(ATACH_IRQ_WAIT|ATACH_DMA_WAIT);
 
-	/* Is it not a transfer, but a control operation? */
-	if (!(xfer->c_flags & C_DMA) && drvp->state < READY) {
-		aprint_error_dev(atac->atac_dev,
-		    "channel %d: drive %d bad state %d in mvsata_bio_intr\n",
-		    chp->ch_channel, xfer->c_drive, drvp->state);
-		panic("mvsata_bio_intr: bad state");
-	}
-
 	/*
 	 * If we missed an interrupt transfer, reset and restart.
 	 * Don't try to continue transfer, we may have missed cycles.
@@ -1276,6 +1268,14 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		ata_bio->error = TIMEOUT;
 		mvsata_bio_done(chp, xfer);
 		return 1;
+	}
+
+	/* Is it not a transfer, but a control operation? */
+	if (!(xfer->c_flags & C_DMA) && drvp->state < READY) {
+		aprint_error_dev(atac->atac_dev,
+		    "channel %d: drive %d bad state %d in mvsata_bio_intr\n",
+		    chp->ch_channel, xfer->c_drive, drvp->state);
+		panic("mvsata_bio_intr: bad state");
 	}
 
 	/* Ack interrupt done by wdc_wait_for_unbusy */
