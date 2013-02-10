@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.13 2013/02/09 03:35:33 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.14 2013/02/10 23:47:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ int		npf_config_flush(int);
 int		npf_ruleset_add(int, const char *, nl_rule_t *, uintptr_t *);
 int		npf_ruleset_remove(int, const char *, uintptr_t);
 int		npf_ruleset_remkey(int, const char *, const void *, size_t);
+int		npf_ruleset_flush(int, const char *);
 
 nl_ext_t *	npf_ext_construct(const char *name);
 void		npf_ext_param_u32(nl_ext_t *, const char *, uint32_t);
@@ -121,6 +122,7 @@ int		npf_sessions_recv(int, const char *);
 
 void		_npf_config_error(nl_config_t *, nl_error_t *);
 void		_npf_config_setsubmit(nl_config_t *, const char *);
+int		_npf_ruleset_list(int, const char *, nl_config_t *);
 int		_npf_rule_foreach(nl_config_t *, nl_rule_callback_t);
 pri_t		_npf_rule_getinfo(nl_rule_t *, const char **, uint32_t *,
 		    u_int *);

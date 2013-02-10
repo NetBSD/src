@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.16 2013/02/09 03:35:33 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.17 2013/02/10 23:47:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.16 2013/02/09 03:35:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.17 2013/02/10 23:47:37 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -320,6 +320,20 @@ npf_ruleset_remkey(int fd, const char *rname, const void *key, size_t len)
 	return prop_dictionary_send_ioctl(rldict, fd, IOC_NPF_RULE);
 }
 
+int
+npf_ruleset_flush(int fd, const char *rname)
+{
+	prop_dictionary_t rldict;
+
+	rldict = prop_dictionary_create();
+	if (rldict == NULL) {
+		return ENOMEM;
+	}
+	prop_dictionary_set_cstring(rldict, "ruleset-name", rname);
+	prop_dictionary_set_uint32(rldict, "command", NPF_CMD_RULE_FLUSH);
+	return prop_dictionary_send_ioctl(rldict, fd, IOC_NPF_RULE);
+}
+
 /*
  * _npf_ruleset_transform: transform the ruleset representing nested
  * rules with lists into an array.
@@ -567,6 +581,32 @@ int
 _npf_rule_foreach(nl_config_t *ncf, nl_rule_callback_t func)
 {
 	return _npf_rule_foreach1(ncf->ncf_rules_list, func);
+}
+
+int
+_npf_ruleset_list(int fd, const char *rname, nl_config_t *ncf)
+{
+	prop_dictionary_t rldict, ret;
+	int error;
+
+	rldict = prop_dictionary_create();
+	if (rldict == NULL) {
+		return ENOMEM;
+	}
+	prop_dictionary_set_cstring(rldict, "ruleset-name", rname);
+	prop_dictionary_set_uint32(rldict, "command", NPF_CMD_RULE_LIST);
+	error = prop_dictionary_sendrecv_ioctl(rldict, fd, IOC_NPF_RULE, &ret);
+	if (!error) {
+		prop_array_t rules;
+
+		rules = prop_dictionary_get(ret, "rules");
+		if (rules == NULL) {
+			return EINVAL;
+		}
+		prop_object_release(ncf->ncf_rules_list);
+		ncf->ncf_rules_list = rules;
+	}
+	return error;
 }
 
 pri_t

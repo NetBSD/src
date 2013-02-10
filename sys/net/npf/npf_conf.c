@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conf.c,v 1.1 2013/02/09 03:35:31 rmind Exp $	*/
+/*	$NetBSD: npf_conf.c,v 1.2 2013/02/10 23:47:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.1 2013/02/09 03:35:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.2 2013/02/10 23:47:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -183,6 +183,13 @@ bool
 npf_config_locked_p(void)
 {
 	return mutex_owned(&npf_config_lock);
+}
+
+void
+npf_config_sync(void)
+{
+	KASSERT(npf_config_locked_p());
+	pserialize_perform(npf_config_psz);
 }
 
 /*

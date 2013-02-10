@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.26 2013/02/09 03:35:32 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.27 2013/02/10 23:47:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@ void		npf_config_fini(void);
 
 void		npf_config_enter(void);
 void		npf_config_exit(void);
+void		npf_config_sync(void);
 bool		npf_config_locked_p(void);
 int		npf_config_read_enter(void);
 void		npf_config_read_exit(int);
@@ -231,9 +232,12 @@ npf_rule_t *	npf_ruleset_sharepm(npf_ruleset_t *, npf_natpolicy_t *);
 void		npf_ruleset_freealg(npf_ruleset_t *, npf_alg_t *);
 
 int		npf_ruleset_add(npf_ruleset_t *, const char *, npf_rule_t *);
-npf_rule_t *	npf_ruleset_remove(npf_ruleset_t *, const char *, uintptr_t);
-npf_rule_t *	npf_ruleset_remkey(npf_ruleset_t *, const char *,
+int		npf_ruleset_remove(npf_ruleset_t *, const char *, uintptr_t);
+int		npf_ruleset_remkey(npf_ruleset_t *, const char *,
 		    const void *, size_t);
+prop_dictionary_t npf_ruleset_list(npf_ruleset_t *, const char *);
+int		npf_ruleset_flush(npf_ruleset_t *, const char *);
+void		npf_ruleset_gc(npf_ruleset_t *);
 
 npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, nbuf_t *,
 		    const npf_ruleset_t *, const int, const int);
