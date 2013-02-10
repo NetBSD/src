@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.40 2013/02/10 16:40:21 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.41 2013/02/10 20:25:56 christos Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -36,7 +36,7 @@ __mkimage: .USE
     || ${MACHINE_ARCH} == "earmhf"
 # Little endian platforms with VFP
 EVBARM_BOARDS+=		BCM5301X BEAGLEBOARD BEAGLEBOARDXM BEAGLEBONE TISDP2420
-smp_beagleboard: ${IMAGE.kern}/kernel/netbsd-BEAGLEBOARD.ub.gz __mkimage
+smp_beagleboard: ${IMAGE.kern}/netbsd-BEAGLEBOARD.ub.gz __mkimage
 SNAP_MD_POST_DEPS+=	smp_beagleboard
 .endif
 .if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm"
