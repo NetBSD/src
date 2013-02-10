@@ -1,5 +1,5 @@
-#!/bin/sh
-# $NetBSD: mkimage,v 1.27 2013/02/10 15:51:59 christos Exp $
+#!/bin/sh -x
+# $NetBSD: mkimage,v 1.28 2013/02/10 16:12:37 christos Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -157,7 +157,7 @@ make_label > ${tmp}/label
 ${DISKLABEL} -R -F ${image} ${tmp}/label
 if [ -n ${msdosid} ]; then
 	echo ${bar} Running fdisk ${bar}
-	${FDISK} -f -u -0 -s ${msdosid}/${init}/${boot} -F ${image}
+	${FDISK} -F -f -u -0 -s ${msdosid}/${init}/${boot} -F ${image}
 fi
 
 if $compress; then
