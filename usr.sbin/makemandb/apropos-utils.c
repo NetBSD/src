@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.10 2013/02/10 23:24:18 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.11 2013/02/10 23:58:27 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.10 2013/02/10 23:24:18 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.11 2013/02/10 23:58:27 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -921,7 +921,12 @@ run_query_term(sqlite3 *db, query_args *args)
 	orig_data.callback = args->callback;
 	orig_data.data = args->callback_data;
 	const char *snippet_args[5];
-	term_init(STDOUT_FILENO, snippet_args);
+	if (args->flags & APROPOS_NOFORMAT) {
+		snippet_args[0] = snippet_args[1] = snippet_args[3] =
+		    snippet_args[4] = "";
+		snippet_args[2] = "...";
+	} else
+		term_init(STDOUT_FILENO, snippet_args);
 	ta.smul = snippet_args[3];
 	ta.rmul = snippet_args[4];
 	ta.orig_data = (void *) &orig_data;
