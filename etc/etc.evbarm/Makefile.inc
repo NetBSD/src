@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.38 2013/02/10 01:24:40 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.39 2013/02/10 14:26:32 christos Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -47,10 +47,14 @@ EXTRA_KERNELS+=		RPI
 RPI.rel=		${RELEASEDIR}/${RELEASEMACHINEDIR}
 RPI.kernel=		${RPI.rel}/binary/kernel/netbsd-RPI.bin.gz
 RPI.img=		${RPI.rel}/binary/gzimg/rpi.img.gz
+# The first 3 tools are for mkimage, the last 3 for MAKEDEV
 snap_md_post:
 	TOOL_MAKEFS=${TOOL_MAKEFS} \
 	TOOL_DISKLABEL=${TOOL_DISKLABEL} \
 	TOOL_FDISK=${TOOL_FDISK} \
+	TOOL_MKNOD=${TOOL_MKNOD} \
+	TOOL_PAX=${TOOL_PAX} \
+	TOOL_MTREE=${TOOL_MTREE} \
 	${MKIMAGE} -x -h rpi -D ${DESTDIR} -K ${RPI.kernel} \
 	    -S ${NETBSDSRCDIR} ${RPI.img}
 .endif
