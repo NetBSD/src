@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.6.4.2 2012/11/28 21:34:36 riz Exp $	*/
+/*	$NetBSD: flock.c,v 1.6.4.3 2013/02/10 23:42:19 riz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.6.4.2 2012/11/28 21:34:36 riz Exp $");
+__RCSID("$NetBSD: flock.c,v 1.6.4.3 2013/02/10 23:42:19 riz Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -212,9 +212,12 @@ main(int argc, char *argv[])
 		if (cls)
 			usage("Close is valid only for descriptors");
 		fd = strtol(argv[0], NULL, 0);	// XXX: error checking
-		if (debug)
+		if (debug) {
 			fprintf(stderr, "descriptor %s lock %s\n",
 			    argv[0], lock2name(lock));
+		}
+		break;
+
 	default:
 		if ((lock & LOCK_NB) == LOCK_UN)
 			usage("Unlock is only valid for descriptors");
