@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1062 2013/01/09 22:23:45 skrll Exp $
+#	$NetBSD: files,v 1.1063 2013/02/10 21:21:29 jakllsch Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -994,7 +994,7 @@ device	siisata: ata, ata_dma, ata_udma, sata, sata_fis, sata_pmp, siisata
 # Marvell Serial-ATA Host Controller
 define mvsata
 file dev/ic/mvsata.c			mvsata
-device mvsata: ata, ata_dma, ata_udma, wdc_common, sata, mvsata
+device mvsata: ata, ata_dma, ata_udma, wdc_common, sata, sata_pmp, mvsata
 defflag opt_mvsata.h		MVSATA_WITHOUTDMA
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
