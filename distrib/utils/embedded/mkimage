@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.26 2013/02/10 15:45:33 christos Exp $
+# $NetBSD: mkimage,v 1.27 2013/02/10 15:51:59 christos Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -138,12 +138,13 @@ populate
     ${MTREE} -N ${release}/etc -C -k all) >> "$tmp/selected_sets"
 if [ -n ${msdosid} ]; then
 	echo ${bar} Populating msdos filesystem ${bar}
-	${MAKEFS} -t msdos -O $((${init} / 2))m -s $((${boot} / 2))m \
-	    ${image} ${mnt}/boot
+	${MAKEFS} -N ${release}/etc -t msdos \
+	    -O $((${init} / 2))m -s $((${boot} / 2))m ${image} ${mnt}/boot
 fi
 
 echo ${bar} Populating ffs filesystem ${bar}
-${MAKEFS} -t ffs -rx -O $(((${init} + ${boot} + ${swap}) / 2))m \
+${MAKEFS} -N ${release}/etc -t ffs -rx \
+    -O $(((${init} + ${boot} + ${swap}) / 2))m \
     -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
 
 if [ "${size}" = 0 ]; then
