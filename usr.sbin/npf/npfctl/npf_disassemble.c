@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.15 2013/02/09 03:35:32 rmind Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.16 2013/02/10 23:47:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * FIXME: config generation should be redesigned..
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.15 2013/02/09 03:35:32 rmind Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.16 2013/02/10 23:47:37 rmind Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -739,6 +739,21 @@ npfctl_config_show(int fd)
 				puts("}");
 		}
 	}
+	npf_config_destroy(ncf);
+	return error;
+}
+
+int
+npfctl_ruleset_show(int fd, const char *ruleset_name)
+{
+	nl_config_t *ncf;
+	int error;
+
+	ncf = npf_config_create();
+	if ((error = _npf_ruleset_list(fd, ruleset_name, ncf)) != 0) {
+		return error;
+	}
+	error = _npf_rule_foreach(ncf, npfctl_show_rule);
 	npf_config_destroy(ncf);
 	return error;
 }

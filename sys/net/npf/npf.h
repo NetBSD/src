@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.26 2013/02/09 03:35:31 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.27 2013/02/10 23:47:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -235,7 +235,8 @@ bool		npf_autounload_p(void);
 #define	NPF_CMD_RULE_INSERT		2
 #define	NPF_CMD_RULE_REMOVE		3
 #define	NPF_CMD_RULE_REMKEY		4
-#define	NPF_CMD_RULE_FLUSH		5
+#define	NPF_CMD_RULE_LIST		5
+#define	NPF_CMD_RULE_FLUSH		6
 
 /*
  * NPF ioctl(2): table commands and structures.

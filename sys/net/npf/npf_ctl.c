@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.21 2013/02/09 03:35:31 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.22 2013/02/10 23:47:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.21 2013/02/09 03:35:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.22 2013/02/10 23:47:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -581,10 +581,7 @@ npfctl_rule(u_long cmd, void *data)
 			error = EINVAL;
 			break;
 		}
-		rl = npf_ruleset_remove(rlset, ruleset_name, (uintptr_t)id64);
-		if (rl == NULL) {
-			error = ENOENT;
-		}
+		error = npf_ruleset_remove(rlset, ruleset_name, (uintptr_t)id64);
 		break;
 	}
 	case NPF_CMD_RULE_REMKEY: {
@@ -596,15 +593,26 @@ npfctl_rule(u_long cmd, void *data)
 			error = EINVAL;
 			break;
 		}
-		rl = npf_ruleset_remkey(rlset, ruleset_name, key, len);
-		if (rl == NULL) {
-			error = ENOENT;
-		}
+		error = npf_ruleset_remkey(rlset, ruleset_name, key, len);
+		break;
+	}
+	case NPF_CMD_RULE_LIST: {
+		retdict = npf_ruleset_list(rlset, ruleset_name);
+		break;
+	}
+	case NPF_CMD_RULE_FLUSH: {
+		error = npf_ruleset_flush(rlset, ruleset_name);
 		break;
 	}
 	default:
 		error = EINVAL;
 		break;
+	}
+
+	/* Destroy any removed rules. */
+	if (!error && rcmd != NPF_CMD_RULE_ADD && rcmd != NPF_CMD_RULE_LIST) {
+		npf_config_sync();
+		npf_ruleset_gc(rlset);
 	}
 	npf_config_exit();
 

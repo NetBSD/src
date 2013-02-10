@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.29 2013/02/09 03:35:33 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.30 2013/02/10 23:47:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.29 2013/02/09 03:35:33 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.30 2013/02/10 23:47:37 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -403,6 +403,8 @@ npfctl_rule(int fd, int argc, char **argv)
 		{ "rem",	NPF_CMD_RULE_REMKEY		},
 		{ "del",	NPF_CMD_RULE_REMKEY		},
 		{ "rem-id",	NPF_CMD_RULE_REMOVE		},
+		{ "list",	NPF_CMD_RULE_LIST		},
+		{ "flush",	NPF_CMD_RULE_FLUSH		},
 		{ NULL,		0				}
 	};
 	uint8_t key[NPF_RULE_MAXKEYLEN];
@@ -419,7 +421,8 @@ npfctl_rule(int fd, int argc, char **argv)
 		}
 	}
 
-	if (!action || argc < 3) {
+	bool narg = action == NPF_CMD_RULE_LIST || action == NPF_CMD_RULE_FLUSH;
+	if (!action || (argc < 3 && !narg)) {
 		usage();
 	}
 	argc -= 2;
@@ -440,6 +443,12 @@ npfctl_rule(int fd, int argc, char **argv)
 	case NPF_CMD_RULE_REMOVE:
 		rule_id = (uintptr_t)strtoull(argv[0], NULL, 16);
 		error = npf_ruleset_remove(fd, ruleset_name, rule_id);
+		break;
+	case NPF_CMD_RULE_LIST:
+		error = npfctl_ruleset_show(fd, ruleset_name);
+		break;
+	case NPF_CMD_RULE_FLUSH:
+		error = npf_ruleset_flush(fd, ruleset_name);
 		break;
 	default:
 		assert(false);
