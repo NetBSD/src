@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.15 2013/02/08 23:04:14 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.16 2013/02/10 20:21:06 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -102,4 +102,9 @@ sys/secmodel/securelevel/secmodel_securelevel.c	1.29
 	Re-instate backwards compatible
 	security.models.bsd44.{curtain,securelevel}.
 	[jym, ticket #802]
+
+crypto/external/bsd/openssl/dist/engines/ccgost/gost_eng.c 1.2
+
+	Fix a multiple-free bug.
+	[manu, ticket #806]
 
