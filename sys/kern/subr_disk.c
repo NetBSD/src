@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.100.18.2 2012/12/02 05:46:40 tls Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.100.18.3 2013/02/10 16:26:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.100.18.2 2012/12/02 05:46:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.100.18.3 2013/02/10 16:26:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.100.18.2 2012/12/02 05:46:40 tls Exp
 #include <sys/disk.h>
 #include <sys/sysctl.h>
 #include <lib/libkern/libkern.h>
+
+unsigned int	disk_serial;
 
 /*
  * Compute checksum for disk label.
