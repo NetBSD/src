@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.85 2013/02/09 18:32:10 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.86 2013/02/10 20:21:58 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8216,4 +8216,19 @@ sys/arch/arm/arm32/pmap.c			1.232,1.233,1.243,1.247,
 	Fix a bug in pmap_modify_pv() where PVF_WRITE wasn't set
 	after changing its mapping to writeable.
 	[msaitoh, ticket #803]
+
+sys/arch/arm/arm/disksubr_mbr.c			1.15
+
+	Fix for non-MBR disks on arm. PR#47463.
+	[msaitoh, ticket #804]
+
+etc/rc.d/wpa_supplicant				1.4
+
+	Make custom "reload" target work.
+	[tron, ticket #805]
+
+crypto/external/bsd/openssl/dist/engines/ccgost/gost_eng.c 1.2
+
+	Fix a multiple-free bug.
+	[manu, ticket #806]
 
