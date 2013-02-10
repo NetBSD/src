@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.22 2013/02/10 01:28:42 christos Exp $
+# $NetBSD: mkimage,v 1.23 2013/02/10 02:09:47 christos Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,7 @@ bar="==="
 tmp="$(mktemp -d "/tmp/$PROG.XXXXXX")"
 mnt="${tmp}/mnt"
 mkdir -p "${mnt}/etc" "${mnt}/dev" "${mnt}/boot"
+
 trap "cleanup" 0 1 2 3 15
 
 cleanup() {
@@ -109,8 +110,6 @@ do
 	esac
 done
 
-trap cleanup 0 1 2 3 15
-
 shift $(( $OPTIND - 1 ))
 if [ -n "$1" ]; then
 	# take the next argument as being the image name
@@ -145,10 +144,10 @@ echo ${bar} Populating ffs filesystem ${bar}
 ${MAKEFS} -t ffs -rx -O $(((${init} + ${boot} + ${swap}) / 2))m \
     -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
 
-if [ -z "$size" ]; then
-	size=$(getsize ${image})
+if [ "${size}" = 0 ]; then
+	size="$(getsize "${image}")"
 fi
-newsize=$((size / 2 / 1024))
+newsize=$((${size} / 2 / 1024))
 
 echo ${bar} Adding label ${bar}
 make_label > ${tmp}/label
@@ -160,6 +159,7 @@ fi
 
 if $compress; then
 	echo ${bar} Compressing image ${bar}
+	rm -f "${image}.gz"
 	gzip -9 ${image}
 	image="${image}.gz"
 fi
