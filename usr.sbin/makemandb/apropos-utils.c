@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.9 2013/01/14 21:26:25 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.10 2013/02/10 23:24:18 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.9 2013/01/14 21:26:25 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.10 2013/02/10 23:24:18 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -99,8 +99,8 @@ lower(char *str)
 
 /*
 * concat--
-*  Utility function. Concatenates together: dst, a space character and src. 
-* dst + " " + src 
+*  Utility function. Concatenates together: dst, a space character and src.
+* dst + " " + src
 */
 void
 concat(char **dst, const char *src)
@@ -131,7 +131,7 @@ concat2(char **dst, const char *src, size_t srclen)
 	/* Append a space at the end of dst */
 	(*dst)[dst_len++] = ' ';
 
-	/* Now, copy src at the end of dst */	
+	/* Now, copy src at the end of dst */
 	memcpy(*dst + dst_len, src, srclen + 1);
 }
 
@@ -152,7 +152,7 @@ create_db(sqlite3 *db)
 	const char *sqlstr = NULL;
 	char *schemasql;
 	char *errmsg = NULL;
-	
+
 /*------------------------ Create the tables------------------------------*/
 
 #if NOTYET
@@ -207,7 +207,7 @@ out:
  */
 static void
 zip(sqlite3_context *pctx, int nval, sqlite3_value **apval)
-{	
+{
 	int nin;
 	long int nout;
 	const unsigned char * inbuf;
@@ -278,7 +278,7 @@ get_dbpath(const char *manconf)
 	tp = gettag("_mandb", 1);
 	if (!tp)
 		return NULL;
-	
+
 	if (TAILQ_EMPTY(&tp->entrylist))
 		return NULL;
 
@@ -289,15 +289,15 @@ get_dbpath(const char *manconf)
 /* init_db --
  *   Prepare the database. Register the compress/uncompress functions and the
  *   stopword tokenizer.
- *	 db_flag specifies the mode in which to open the database. 3 options are 
+ *	 db_flag specifies the mode in which to open the database. 3 options are
  *   available:
  *   	1. DB_READONLY: Open in READONLY mode. An error if db does not exist.
  *  	2. DB_READWRITE: Open in read-write mode. An error if db does not exist.
  *  	3. DB_CREATE: Open in read-write mode. It will try to create the db if
  *			it does not exist already.
  *  RETURN VALUES:
- *		The function will return NULL in case the db does not exist and DB_CREATE 
- *  	was not specified. And in case DB_CREATE was specified and yet NULL is 
+ *		The function will return NULL in case the db does not exist and DB_CREATE
+ *  	was not specified. And in case DB_CREATE was specified and yet NULL is
  *  	returned, then there was some other error.
  *  	In normal cases the function should return a handle to the db.
  */
@@ -329,7 +329,7 @@ init_db(int db_flag, const char *manconf)
 	/* Now initialize the database connection */
 	sqlite3_initialize();
 	rc = sqlite3_open_v2(dbpath, &db, db_flag, NULL);
-	
+
 	if (rc != SQLITE_OK) {
 		warnx("%s", sqlite3_errmsg(db));
 		sqlite3_shutdown();
@@ -362,7 +362,7 @@ init_db(int db_flag, const char *manconf)
 	sqlite3_finalize(stmt);
 
 	sqlite3_extended_result_codes(db, 1);
-	
+
 	/* Register the zip and unzip functions for FTS compression */
 	rc = sqlite3_create_function(db, "zip", 1, SQLITE_ANY, NULL, zip, NULL, NULL);
 	if (rc != SQLITE_OK) {
@@ -371,7 +371,7 @@ init_db(int db_flag, const char *manconf)
 		goto error;
 	}
 
-	rc = sqlite3_create_function(db, "unzip", 1, SQLITE_ANY, NULL, 
+	rc = sqlite3_create_function(db, "unzip", 1, SQLITE_ANY, NULL,
                                  unzip, NULL, NULL);
 	if (rc != SQLITE_OK) {
 		warnx("Unable to register function: uncompress: %s",
@@ -391,14 +391,14 @@ error:
  *  Sqlite user defined function for ranking the documents.
  *  For each phrase of the query, it computes the tf and idf and adds them over.
  *  It computes the final rank, by multiplying tf and idf together.
- *  Weight of term t for document d = (term frequency of t in d * 
- *                                      inverse document frequency of t) 
+ *  Weight of term t for document d = (term frequency of t in d *
+ *                                      inverse document frequency of t)
  *
- *  Term Frequency of term t in document d = Number of times t occurs in d / 
- *	                                        Number of times t appears in all 
+ *  Term Frequency of term t in document d = Number of times t occurs in d /
+ *	                                        Number of times t appears in all
  *											documents
  *
- *  Inverse document frequency of t = log(Total number of documents / 
+ *  Inverse document frequency of t = log(Total number of documents /
  *										Number of documents in which t occurs)
  */
 static void
@@ -424,12 +424,12 @@ rank_func(sqlite3_context *pctx, int nval, sqlite3_value **apval)
 		int icol;
 		const unsigned int *phraseinfo = &matchinfo[2 + ncol+ iphrase * ncol * 3];
 		for(icol = 1; icol < ncol; icol++) {
-			
+
 			/* nhitcount: number of times the current phrase occurs in the current
 			 *            column in the current document.
 			 * nglobalhitcount: number of times current phrase occurs in the current
 			 *                  column in all documents.
-			 * ndocshitcount:   number of documents in which the current phrase 
+			 * ndocshitcount:   number of documents in which the current phrase
 			 *                  occurs in the current column at least once.
 			 */
   			int nhitcount = phraseinfo[3 * icol];
@@ -440,7 +440,7 @@ rank_func(sqlite3_context *pctx, int nval, sqlite3_value **apval)
 			if (idf->status == 0 && ndocshitcount)
 				idf->value += log(((double)ndoc / ndocshitcount))* weight;
 
-			/* Dividing the tf by document length to normalize the effect of 
+			/* Dividing the tf by document length to normalize the effect of
 			 * longer documents.
 			 */
 			if (nglobalhitcount > 0 && nhitcount)
@@ -448,9 +448,9 @@ rank_func(sqlite3_context *pctx, int nval, sqlite3_value **apval)
 		}
 	}
 	idf->status = 1;
-	
+
 	/* Final score = (tf * idf)/ ( k + tf)
-	 *	Dividing by k+ tf further normalizes the weight leading to better 
+	 *	Dividing by k+ tf further normalizes the weight leading to better
 	 *  results.
 	 *  The value of k is experimental
 	 */
@@ -464,9 +464,9 @@ rank_func(sqlite3_context *pctx, int nval, sqlite3_value **apval)
  *  Performs the searches for the keywords entered by the user.
  *  The 2nd param: snippet_args is an array of strings providing values for the
  *  last three parameters to the snippet function of sqlite. (Look at the docs).
- *  The 3rd param: args contains rest of the search parameters. Look at 
+ *  The 3rd param: args contains rest of the search parameters. Look at
  *  arpopos-utils.h for the description of individual fields.
- *  
+ *
  */
 int
 run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
@@ -492,7 +492,7 @@ run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
 		easprintf(&machine_clause, "AND machine = \'%s\' ", args->machine);
 
 	/* Register the rank function */
-	rc = sqlite3_create_function(db, "rank_func", 1, SQLITE_ANY, (void *)&idf, 
+	rc = sqlite3_create_function(db, "rank_func", 1, SQLITE_ANY, (void *)&idf,
 	                             rank_func, NULL, NULL);
 	if (rc != SQLITE_OK) {
 		warnx("Unable to register the ranking function: %s",
@@ -501,12 +501,12 @@ run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
 		sqlite3_shutdown();
 		exit(EXIT_FAILURE);
 	}
-	
+
 	/* We want to build a query of the form: "select x,y,z from mandb where
 	 * mandb match :query [AND (section LIKE '1' OR section LIKE '2' OR...)]
 	 * ORDER BY rank DESC..."
-	 * NOTES: 1. The portion in square brackets is optional, it will be there 
-	 * only if the user has specified an option on the command line to search in 
+	 * NOTES: 1. The portion in square brackets is optional, it will be there
+	 * only if the user has specified an option on the command line to search in
 	 * one or more specific sections.
 	 * 2. I am using LIKE operator because '=' or IN operators do not seem to be
 	 * working with the compression option enabled.
@@ -623,7 +623,7 @@ callback_html(void *data, const char *section, const char *name,
 	size_t sz = 0;
 	int count = 0;
 	struct orig_callback_data *orig_data = (struct orig_callback_data *) data;
-	int (*callback) (void *, const char *, const char *, const char *, 
+	int (*callback) (void *, const char *, const char *, const char *,
 		const char *, size_t) = orig_data->callback;
 
 	/* First scan the snippet to find out the number of occurrences of {'>', '<'
@@ -696,7 +696,7 @@ callback_html(void *data, const char *section, const char *name,
 /*
  * run_query_html --
  *  Utility function to output query result in HTML format.
- *  It internally calls run_query only, but it first passes the output to it's 
+ *  It internally calls run_query only, but it first passes the output to it's
  *  own custom callback function, which preprocess the snippet for quoting
  *  inline HTML fragments.
  *  After that it delegates the call the actual user supplied callback function.
@@ -742,7 +742,7 @@ ul_pager(const char *s)
  *  more or less.
  */
 static int
-callback_pager(void *data, const char *section, const char *name, 
+callback_pager(void *data, const char *section, const char *name,
 	const char *name_desc, const char *snippet, size_t snippet_length)
 {
 	struct orig_callback_data *orig_data = (struct orig_callback_data *) data;
@@ -832,7 +832,7 @@ ul_term(const char *s, const struct term_args *ta)
  *  more or less.
  */
 static int
-callback_term(void *data, const char *section, const char *name, 
+callback_term(void *data, const char *section, const char *name,
 	const char *name_desc, const char *snippet, size_t snippet_length)
 {
 	struct term_args *ta = data;
