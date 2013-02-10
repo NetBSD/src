@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.310 2012/12/02 20:19:46 apb Exp $
+#	$NetBSD: bsd.README,v 1.311 2013/02/10 22:05:51 jmcneill Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -796,6 +796,8 @@ TOOL_MKESDB		Make encoding scheme database.  [mkesdb]
 TOOL_MKLOCALE		Make LC_CTYPE locale files.  [mklocale]
 
 TOOL_MKMAGIC		Create database for file(1).  [file]
+
+TOOL_MKNOD		Make device special file.  [mknod]
 
 TOOL_MKTEMP		Make (unique) temporary file name.  [mktemp]
 

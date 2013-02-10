@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.722 2013/02/03 05:36:36 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.723 2013/02/10 22:05:51 jmcneill Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -322,6 +322,7 @@ TOOL_MKCSMAPPER=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkcsmapper
 TOOL_MKESDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkesdb
 TOOL_MKLOCALE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mklocale
 TOOL_MKMAGIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}file
+TOOL_MKNOD=		${TOOLDIR}/bin/${_TOOL_PREFIX}mknod
 TOOL_MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
 TOOL_MKUBOOTIMAGE=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkubootimage
 TOOL_ELFTOSB=		${TOOLDIR}/bin/${_TOOL_PREFIX}elftosb
@@ -422,6 +423,7 @@ TOOL_MKCSMAPPER=	mkcsmapper
 TOOL_MKESDB=		mkesdb
 TOOL_MKLOCALE=		mklocale
 TOOL_MKMAGIC=		file
+TOOL_MKNOD=		mknod
 TOOL_MKTEMP=		mktemp
 TOOL_MKUBOOTIMAGE=	mkubootimage
 TOOL_ELFTOSB=		elftosb
