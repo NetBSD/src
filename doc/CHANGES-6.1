@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.86 2013/02/10 20:21:58 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.87 2013/02/10 23:42:32 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8231,4 +8231,9 @@ crypto/external/bsd/openssl/dist/engines/ccgost/gost_eng.c 1.2
 
 	Fix a multiple-free bug.
 	[manu, ticket #806]
+
+usr.bin/flock/flock.c				1.7
+
+	Keep flock(1) from crashing when locking a file descriptor.
+	[tron, ticket #807]
 
