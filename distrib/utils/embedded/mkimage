@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.21 2013/02/09 18:50:11 christos Exp $
+# $NetBSD: mkimage,v 1.22 2013/02/10 01:28:42 christos Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -118,6 +118,11 @@ if [ -n "$1" ]; then
 	shift
 fi
 
+case "$image" in
+*.gz)	compress=true; image="${image%.gz}";;
+*)	compress=false;;
+esac
+
 echo ${bar} configuring sets ${bar}
 (echo '/set type=dir uname=root gname=wheel mode=0755'
 for i in $selected_sets; do
@@ -152,4 +157,11 @@ if [ -n ${msdosid} ]; then
 	echo ${bar} Running fdisk ${bar}
 	${FDISK} -f -u -0 -s ${msdosid}/${init}/${boot} -F ${image}
 fi
+
+if $compress; then
+	echo ${bar} Compressing image ${bar}
+	gzip -9 ${image}
+	image="${image}.gz"
+fi
+
 echo ${bar} Image is ${image} ${bar}
