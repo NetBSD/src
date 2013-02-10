@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.11 2013/02/10 23:24:18 christos Exp $	*/
+/*	$NetBSD: apropos.c,v 1.12 2013/02/10 23:58:28 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.11 2013/02/10 23:24:18 christos Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.12 2013/02/10 23:58:28 christos Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -49,6 +49,7 @@ typedef struct apropos_flags {
 	int nresults;
 	int pager;
 	int no_context;
+	int no_format;
 	const char *machine;
 } apropos_flags;
 
@@ -90,7 +91,7 @@ main(int argc, char *argv[])
 	 * index element in sec_nums is set to the string representing that
 	 * section number.
 	 */
-	while ((ch = getopt(argc, argv, "123456789Ccn:pS:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "123456789Ccn:prS:s:")) != -1) {
 		switch (ch) {
 		case '1':
 		case '2':
@@ -115,6 +116,9 @@ main(int argc, char *argv[])
 		case 'p':	//user wants to view more than 10 results and page them
 			aflags.pager = 1;
 			aflags.nresults = -1;	// Fetch all records
+			break;
+		case 'r':
+			aflags.no_format = 1;
 			break;
 		case 'S':
 			aflags.machine = optarg;
@@ -171,7 +175,7 @@ main(int argc, char *argv[])
 	args.callback = &query_callback;
 	args.callback_data = &cbdata;
 	args.errmsg = &errmsg;
-
+	args.flags = aflags.no_format ? APROPOS_NOFORMAT : 0;
 
 	if (isatty(STDOUT_FILENO))
 		rc = run_query_term(db, &args);

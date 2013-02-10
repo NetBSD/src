@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.h,v 1.6 2013/02/10 23:24:18 christos Exp $	*/
+/*	$NetBSD: apropos-utils.h,v 1.7 2013/02/10 23:58:27 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -79,6 +79,8 @@ typedef struct query_args {
 		const char *, size_t);	// The callback function
 	void *callback_data;	// data to pass to the callback function
 	char **errmsg;		// buffer for storing the error msg
+	int  flags;
+#define APROPOS_NOFORMAT 1
 } query_args;
 
 char *lower(char *);
