@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.149 2012/03/12 19:21:07 dholland Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.150 2013/02/10 11:04:19 apb Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.149 2012/03/12 19:21:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.150 2013/02/10 11:04:19 apb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -68,13 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.149 2012/03/12 19:21:07 dholland Exp 
 
 #include <net/if.h>
 
-#ifdef DDB
-#include <ddb/ddbvar.h>
-#include <machine/db_machdep.h>
-#include <ddb/db_command.h>
-#include <ddb/db_interface.h>
-#endif
-
 #ifdef IPKDB
 #include <ipkdb/ipkdb.h>
 #endif
@@ -85,7 +78,9 @@ static bool kprintf_inited = false;
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+
 #ifdef DDB
+#include <ddb/ddbvar.h>		/* db_panic */
 #include <ddb/db_output.h>	/* db_printf, db_putchar prototypes */
 #endif
 
@@ -284,26 +279,7 @@ vpanic(const char *fmt, va_list ap)
 		kdbpanic();
 #endif
 #ifdef DDB
-	if (db_onpanic == 1)
-		Debugger();
-	else if (db_onpanic >= 0) {
-		static int intrace = 0;
-
-		if (intrace == 0) {
-			intrace = 1;
-			printf("cpu%u: Begin traceback...\n",
-			    cpu_index(curcpu()));
-			db_stack_trace_print(
-			    (db_expr_t)(intptr_t)__builtin_frame_address(0),
-			    true, 65535, "", printf);
-			printf("cpu%u: End traceback...\n",
-			    cpu_index(curcpu()));
-			intrace = 0;
-		} else
-			printf("Faulted in mid-traceback; aborting...");
-		if (db_onpanic == 2)
-			Debugger();
-	}
+	db_panic();
 #endif
 	cpu_reboot(bootopt, NULL);
 }

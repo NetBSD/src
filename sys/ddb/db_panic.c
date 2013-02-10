@@ -1,11 +1,6 @@
-/*	$NetBSD: ddbvar.h,v 1.11 2013/02/10 11:04:20 apb Exp $	*/
-
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2002, 2006, 2007, 2009, 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jonathan Stone.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,17 +24,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DDBVAR_H_
-#define _DDBVAR_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.1 2013/02/10 11:04:20 apb Exp $");
+
+#include <sys/cpu.h>
+
+#include <ddb/ddbvar.h>
+#include <ddb/ddb.h>
 
 /*
- * Externally-visible  debugger state and entrypoints
+ * db_panic: Called by panic().  May print a stack trace; may enter the
+ * kernel debugger; may just return so that panic() will continue to
+ * halt or reboot the system.
  */
+void db_panic(void)
+{
 
-extern	int db_onpanic;
-extern	int db_fromconsole;
-extern	int db_tee_msgbuf;
+	if (db_onpanic == 1)
+		Debugger();
+	else if (db_onpanic >= 0) {
+		static int intrace = 0;
 
-extern	void db_panic(void);
-
-#endif	/* !_DDBVAR_H_ */
+		if (intrace == 0) {
+			intrace = 1;
+			printf("cpu%u: Begin traceback...\n",
+			    cpu_index(curcpu()));
+			db_stack_trace_print(
+			    (db_expr_t)(intptr_t)__builtin_frame_address(0),
+			    true, 65535, "", printf);
+			printf("cpu%u: End traceback...\n",
+			    cpu_index(curcpu()));
+			intrace = 0;
+		} else
+			printf("Faulted in mid-traceback; aborting...");
+		if (db_onpanic == 2)
+			Debugger();
+	}
+	return;
+}
