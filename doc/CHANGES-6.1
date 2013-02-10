@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.87 2013/02/10 23:42:32 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.88 2013/02/10 23:59:29 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8236,4 +8236,9 @@ usr.bin/flock/flock.c				1.7
 
 	Keep flock(1) from crashing when locking a file descriptor.
 	[tron, ticket #807]
+
+sys/dev/fss.c					1.84
+
+	Don't crash when running multiple dump -X. PR#47514.
+	[hannken, ticket #808]
 
