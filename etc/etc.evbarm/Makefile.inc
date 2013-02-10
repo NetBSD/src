@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.41 2013/02/10 20:25:56 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.42 2013/02/10 21:36:31 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -62,7 +62,7 @@ KERNEL_SETS+=		IXM1200 HDL_G
 .if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm" \
     || ${MACHINE_ARCH} == "earmhf"
 EXTRA_KERNELS+=		RPI
-smp_rpi: ${IMAGE.kern}/kernel/netbsd-RPI.bin.gz __mkimage
+smp_rpi: ${IMAGE.kern}/netbsd-RPI.bin.gz __mkimage
 SNAP_MD_POST_DEPS+=	smp_rpi
 .endif
 
@@ -71,7 +71,7 @@ SNAP_MD_POST_DEPS+=	smp_rpi
 KERNEL_SETS+=		IXM1200 NSLU2
 .endif
 
-snap_md_post: ${SNAP_MD_POST_DEPS}
+snap_md_post: check_DESTDIR check_RELEASEDIR snap_post .WAIT ${SNAP_MD_POST_DEPS}
 
 KERNEL_SUFFIXES=	bin srec ub
 
