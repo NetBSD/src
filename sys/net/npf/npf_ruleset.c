@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.17 2013/02/09 03:35:32 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.18 2013/02/10 23:47:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.17 2013/02/09 03:35:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.18 2013/02/10 23:47:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,9 +52,14 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.17 2013/02/09 03:35:32 rmind Exp $
 #include "npf_impl.h"
 
 struct npf_ruleset {
-	/* List of all rules and dynamic (i.e. named) rules. */
+	/*
+	 * - List of all rules.
+	 * - Dynamic (i.e. named) rules.
+	 * - G/C list for convenience.
+	 */
 	LIST_HEAD(, npf_rule)	rs_all;
 	LIST_HEAD(, npf_rule)	rs_dynamic;
+	LIST_HEAD(, npf_rule)	rs_gc;
 
 	/* Number of array slots and active rules. */
 	u_int			rs_slots;
@@ -94,6 +99,9 @@ struct npf_rule {
 		LIST_ENTRY(npf_rule)	r_dentry;
 		npf_rule_t *		r_parent;
 	} /* C11 */;
+
+	/* Dictionary. */
+	prop_dictionary_t	r_dict;
 
 	/* Rule name and all-list entry. */
 	char			r_name[NPF_RULE_MAXNAMELEN];
@@ -143,6 +151,7 @@ npf_ruleset_destroy(npf_ruleset_t *rlset)
 		npf_rule_free(rl);
 	}
 	KASSERT(LIST_EMPTY(&rlset->rs_dynamic));
+	KASSERT(LIST_EMPTY(&rlset->rs_gc));
 	kmem_free(rlset, len);
 }
 
@@ -238,25 +247,26 @@ npf_ruleset_add(npf_ruleset_t *rlset, const char *rname, npf_rule_t *rl)
 	return 0;
 }
 
-npf_rule_t *
+int
 npf_ruleset_remove(npf_ruleset_t *rlset, const char *rname, uintptr_t id)
 {
 	npf_rule_t *rg, *rl;
 
 	if ((rg = npf_ruleset_lookup(rlset, rname)) == NULL) {
-		return NULL;
+		return ENOENT;
 	}
 	TAILQ_FOREACH(rl, &rg->r_subset, r_entry) {
 		/* Compare ID.  On match, remove and return. */
 		if ((uintptr_t)rl == id) {
 			npf_ruleset_unlink(rlset, rl);
+			LIST_INSERT_HEAD(&rlset->rs_gc, rl, r_aentry);
 			break;
 		}
 	}
-	return rl;
+	return 0;
 }
 
-npf_rule_t *
+int
 npf_ruleset_remkey(npf_ruleset_t *rlset, const char *rname,
     const void *key, size_t len)
 {
@@ -265,17 +275,77 @@ npf_ruleset_remkey(npf_ruleset_t *rlset, const char *rname,
 	KASSERT(len && len <= NPF_RULE_MAXKEYLEN);
 
 	if ((rg = npf_ruleset_lookup(rlset, rname)) == NULL) {
-		return NULL;
+		return ENOENT;
 	}
+
 	/* Find the last in the list. */
 	TAILQ_FOREACH_REVERSE(rl, &rg->r_subset, npf_ruleq, r_entry) {
 		/* Compare the key.  On match, remove and return. */
 		if (memcmp(rl->r_key, key, len) == 0) {
 			npf_ruleset_unlink(rlset, rl);
+			LIST_INSERT_HEAD(&rlset->rs_gc, rl, r_aentry);
 			break;
 		}
 	}
-	return rl;
+	return 0;
+}
+
+prop_dictionary_t
+npf_ruleset_list(npf_ruleset_t *rlset, const char *rname)
+{
+	prop_dictionary_t rldict;
+	prop_array_t rules;
+	npf_rule_t *rg, *rl;
+
+	if ((rg = npf_ruleset_lookup(rlset, rname)) == NULL) {
+		return NULL;
+	}
+	if ((rldict = prop_dictionary_create()) == NULL) {
+		return NULL;
+	}
+	if ((rules = prop_array_create()) == NULL) {
+		prop_object_release(rldict);
+		return NULL;
+	}
+
+	TAILQ_FOREACH(rl, &rg->r_subset, r_entry) {
+		if (rl->r_dict && !prop_array_add(rules, rl->r_dict)) {
+			prop_object_release(rldict);
+			return NULL;
+		}
+	}
+	if (!prop_dictionary_set(rldict, "rules", rules)) {
+		prop_object_release(rldict);
+		rldict = NULL;
+	}
+	prop_object_release(rules);
+	return rldict;
+}
+
+int
+npf_ruleset_flush(npf_ruleset_t *rlset, const char *rname)
+{
+	npf_rule_t *rg, *rl;
+
+	if ((rg = npf_ruleset_lookup(rlset, rname)) == NULL) {
+		return ENOENT;
+	}
+	while ((rl = TAILQ_FIRST(&rg->r_subset)) != NULL) {
+		npf_ruleset_unlink(rlset, rl);
+		LIST_INSERT_HEAD(&rlset->rs_gc, rl, r_aentry);
+	}
+	return 0;
+}
+
+void
+npf_ruleset_gc(npf_ruleset_t *rlset)
+{
+	npf_rule_t *rl;
+
+	while ((rl = LIST_FIRST(&rlset->rs_gc)) != NULL) {
+		LIST_REMOVE(rl, r_aentry);
+		npf_rule_free(rl);
+	}
 }
 
 /*
@@ -284,17 +354,30 @@ npf_ruleset_remkey(npf_ruleset_t *rlset, const char *rname,
  * => Active ruleset should be exclusively locked.
  */
 void
-npf_ruleset_reload(npf_ruleset_t *nrlset, npf_ruleset_t *arlset)
+npf_ruleset_reload(npf_ruleset_t *rlset, npf_ruleset_t *arlset)
 {
-	npf_rule_t *rl, *arl;
+	npf_rule_t *rl;
 
 	KASSERT(npf_config_locked_p());
 
-	LIST_FOREACH(rl, &nrlset->rs_dynamic, r_dentry) {
+	LIST_FOREACH(rl, &rlset->rs_dynamic, r_dentry) {
+		npf_rule_t *arl, *it;
+
 		if ((arl = npf_ruleset_lookup(arlset, rl->r_name)) == NULL) {
 			continue;
 		}
+
+		/*
+		 * Copy the list-head structure and move the rules from the
+		 * old ruleset to the new by reinserting to a new all-rules
+		 * list.  Note that the rules are still active and therefore
+		 * accessible for inspection via the old ruleset.
+		 */
 		memcpy(&rl->r_subset, &arl->r_subset, sizeof(rl->r_subset));
+		TAILQ_FOREACH(it, &rl->r_subset, r_entry) {
+			LIST_REMOVE(rl, r_aentry);
+			LIST_INSERT_HEAD(&rlset->rs_all, rl, r_aentry);
+		}
 	}
 }
 
@@ -422,6 +505,11 @@ npf_rule_alloc(prop_dictionary_t rldict)
 		}
 		memcpy(rl->r_key, key, len);
 	}
+
+	if ((rl->r_attr & NPF_DYNAMIC_GROUP) == NPF_RULE_DYNAMIC) {
+		rl->r_dict = prop_dictionary_copy(rldict);
+	}
+
 	return rl;
 }
 
@@ -468,6 +556,10 @@ npf_rule_free(npf_rule_t *rl)
 	if (rl->r_code) {
 		/* Free n-code. */
 		kmem_free(rl->r_code, rl->r_clen);
+	}
+	if (rl->r_dict) {
+		/* Destroy the dictionary. */
+		prop_object_release(rl->r_dict);
 	}
 	kmem_free(rl, sizeof(npf_rule_t));
 }
