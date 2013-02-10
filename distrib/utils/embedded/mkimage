@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.31 2013/02/10 16:56:38 jmcneill Exp $
+# $NetBSD: mkimage,v 1.32 2013/02/10 21:51:05 jmcneill Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,12 +71,13 @@ EOF
 	exit 1
 }
 
-# First pass for options to get the host
+# First pass for options to get the host and src directories
 OPTS="K:D:S:c:h:s:x"
 while getopts "$OPTS" f
 do
 	case $f in
 	h)	h="$OPTARG";;
+	S)	src="$OPTARG";;
 	*)	;;
 	esac
 done
@@ -102,7 +103,7 @@ do
 	case $f in
 	D)	release="$OPTARG";;
 	K)	kernel="$OPTARG";;
-	S)	src="$OPTARG";;
+	S)	;;
 	c)	custom="$OPTARG";;
 	h)	;;
 	s)	size="$OPTARG";;
