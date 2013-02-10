@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.161 2013/01/26 18:44:21 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.162 2013/02/10 14:54:33 christos Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2292,7 +2292,7 @@ create_mfs_dev()
 
 	if $do_redirect; then
 		# Redirect stdout and stderr to console
-		mknod -m 600 -g 0 -u 0 temp_console c %CONSOLE_CMAJOR% 0
+		${MKNOD} -m 600 -g 0 -u 0 temp_console c %CONSOLE_CMAJOR% 0
 		exec >temp_console 2>&1
 		rm temp_console
 	fi
