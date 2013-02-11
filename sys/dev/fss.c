@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.81.4.2 2013/02/10 23:57:25 riz Exp $	*/
+/*	$NetBSD: fss.c,v 1.81.4.3 2013/02/11 20:39:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.81.4.2 2013/02/10 23:57:25 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.81.4.3 2013/02/11 20:39:28 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,7 +620,7 @@ static int
 fss_create_files(struct fss_softc *sc, struct fss_set *fss,
     off_t *bsize, struct lwp *l)
 {
-	int error, bits, fsbsize;
+	int i, error, bits, fsbsize;
 	uint64_t numsec;
 	unsigned int secsize;
 	struct timespec ts;
@@ -691,24 +691,30 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	vrele(vp);
 
 	/*
-	 * Get the block device it is mounted on.
+	 * Get the block device it is mounted on and its size.
 	 */
 
-	error = namei_simple_kernel(sc->sc_mount->mnt_stat.f_mntfromname,
-				NSM_FOLLOW_NOEMULROOT, &vp);
-	if (error != 0)
-		return error;
-
-	if (vp->v_type != VBLK) {
-		vrele(vp);
+	mutex_enter(&device_lock);
+	for (i = 0; i < SPECHSZ; i++) {
+		for (vp = specfs_hash[i]; vp; vp = vp->v_specnext) {
+			if (vp->v_type == VBLK &&
+			    vp == vp->v_specnode->sn_dev->sd_bdevvp &&
+			    vp->v_specmountpoint == sc->sc_mount)
+				break;
+		}
+		if (vp != NULL)
+			break;
+	}
+	if (vp == NULL) {
+		mutex_exit(&device_lock);
 		return EINVAL;
 	}
-
+	mutex_enter(vp->v_interlock);
+	mutex_exit(&device_lock);
+	error = vget(vp, 0);
+	if (error)
+		return error;
 	sc->sc_bdev = vp->v_rdev;
-
-	/*
-	 * Get the block device size.
-	 */
 
 	error = getdisksize(vp, &numsec, &secsize);
 	vrele(vp);
