@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.60 2013/02/09 22:56:20 matt Exp $	*/
+/*	$NetBSD: math.h,v 1.61 2013/02/11 07:29:21 matt Exp $	*/
 
 /*
  * ====================================================
@@ -118,7 +118,7 @@ extern const union __float_u __nanf;
 #define	_FP_HIMD	0xff
 
 #define	FP_ILOGB0	INT_MIN
-#define	FP_ILOGBNAN	INT_MIN
+#define	FP_ILOGBNAN	INT_MAX
 
 #endif /* !_ANSI_SOURCE && ... */
 
