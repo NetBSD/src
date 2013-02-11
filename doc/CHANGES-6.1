@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.90 2013/02/11 20:44:39 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.91 2013/02/11 21:07:54 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8256,4 +8256,85 @@ sys/kern/subr_pserialize.c			1.7
 
 	Avoid possible race with softint handler.
 	[rmind, ticket #811]
+
+external/mit/xorg/server/drivers/xf86-video-radeon/Makefile		patch
+xsrc/external/mit/xf86-video-ati/dist/ChangeLog				patch
+xsrc/external/mit/xf86-video-ati/dist/INSTALL				patch
+xsrc/external/mit/xf86-video-ati/dist/Makefile.in			patch
+xsrc/external/mit/xf86-video-ati/dist/aclocal.m4			patch
+xsrc/external/mit/xf86-video-ati/dist/config.h.in			patch
+xsrc/external/mit/xf86-video-ati/dist/configure				patch
+xsrc/external/mit/xf86-video-ati/dist/configure.ac			patch
+xsrc/external/mit/xf86-video-ati/dist/ltmain.sh				patch
+xsrc/external/mit/xf86-video-ati/dist/man/Makefile.in			patch
+xsrc/external/mit/xf86-video-ati/dist/man/radeon.man			patch
+xsrc/external/mit/xf86-video-ati/dist/src/Makefile.am			patch
+xsrc/external/mit/xf86-video-ati/dist/src/Makefile.in			patch
+xsrc/external/mit/xf86-video-ati/dist/src/ati.c				patch
+xsrc/external/mit/xf86-video-ati/dist/src/ati.h				patch
+xsrc/external/mit/xf86-video-ati/dist/src/ati_pciids_gen.h		patch
+xsrc/external/mit/xf86-video-ati/dist/src/atipciids.h			patch
+xsrc/external/mit/xf86-video-ati/dist/src/atombios_crtc.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/atombios_output.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/cayman_reg.h			patch
+xsrc/external/mit/xf86-video-ati/dist/src/cayman_shader.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/compat-api.h			patch
+xsrc/external/mit/xf86-video-ati/dist/src/drmmode_display.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/drmmode_display.h		patch
+xsrc/external/mit/xf86-video-ati/dist/src/evergreen_accel.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/evergreen_exa.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/evergreen_reg.h		patch
+xsrc/external/mit/xf86-video-ati/dist/src/evergreen_shader.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/evergreen_state.h		patch
+xsrc/external/mit/xf86-video-ati/dist/src/evergreen_textured_videofuncs.c patch
+xsrc/external/mit/xf86-video-ati/dist/src/generic_bus.h			patch
+xsrc/external/mit/xf86-video-ati/dist/src/legacy_crtc.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/r600_exa.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/r600_reg.h			patch
+xsrc/external/mit/xf86-video-ati/dist/src/r600_shader.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/r600_state.h			patch
+xsrc/external/mit/xf86-video-ati/dist/src/r600_textured_videofuncs.c	patch
+xsrc/external/mit/xf86-video-ati/dist/src/r6xx_accel.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon.h			patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_accel.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_accelfuncs.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_atombios.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_atombios.h		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_bios.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_chipinfo_gen.h		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_chipset_gen.h		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_commonfuncs.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_crtc.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_cursor.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_dri.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_dri2.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_driver.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_drm.h			patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_exa.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_exa_funcs.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_exa_render.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_exa_shared.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_exa_shared.h		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_kms.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_legacy_memory.c	patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_modes.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_output.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_pci_chipset_gen.h	patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_pci_device_match_gen.h	patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_probe.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_probe.h		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_textured_video.c	patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_textured_videofuncs.c	patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_video.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_video.h		patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_vip.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_xvmc.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/theatre.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/theatre200.c			patch
+xsrc/external/mit/xf86-video-ati/dist/src/theatre_detect.c		patch
+xsrc/external/mit/xf86-video-ati/dist/src/pcidb/ati_pciids.csv		patch
+xsrc/external/mit/xf86-video-ati/include/config.h			patch
+
+	Update Xorg ATI driver to version 6.14.6.
+	[veego, ticket #812]
 
