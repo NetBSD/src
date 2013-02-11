@@ -1,6 +1,6 @@
-.\"    $NetBSD: npf.conf.5,v 1.9.2.7 2013/01/07 16:51:07 riz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.9.2.8 2013/02/11 21:49:47 riz Exp $
 .\"
-.\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 23, 2012
+.Dd January 11, 2013
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -203,7 +203,7 @@ The definition is simplified and is intended to be human readable,
 therefore it does not strictly represent the full syntax, which
 is more flexible.
 .Bd -literal
-; Syntax of a single line.  Lines can be separated by LF (\n) or
+; Syntax of a single line.  Lines can be separated by LF (\\n) or
 ; a semicolon.  Comments start with a hash (#) character.
 
 syntax		= var-def | table-def | map | group | rproc | comment

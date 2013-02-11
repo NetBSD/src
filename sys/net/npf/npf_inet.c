@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.10.4.8 2013/02/08 19:18:09 riz Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.10.4.9 2013/02/11 21:49:49 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.10.4.8 2013/02/08 19:18:09 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.10.4.9 2013/02/11 21:49:49 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -199,7 +199,7 @@ npf_tcpsaw(const npf_cache_t *npc, tcp_seq *seq, tcp_seq *ack, uint32_t *win)
 
 	if (npf_iscached(npc, NPC_IP4)) {
 		const struct ip *ip = npc->npc_ip.v4;
-		return ntohs(ip->ip_len) - npf_cache_hlen(npc) - thlen;
+		return ntohs(ip->ip_len) - npc->npc_hlen - thlen;
 	} else if (npf_iscached(npc, NPC_IP6)) {
 		const struct ip6_hdr *ip6 = npc->npc_ip.v6;
 		return ntohs(ip6->ip6_plen) - thlen;
@@ -231,7 +231,7 @@ npf_fetch_tcpopts(npf_cache_t *npc, nbuf_t *nbuf, uint16_t *mss, int *wscale)
 	KASSERT(topts_len <= MAX_TCPOPTLEN);
 
 	/* First step: IP and TCP header up to options. */
-	step = npf_cache_hlen(npc) + sizeof(struct tcphdr);
+	step = npc->npc_hlen + sizeof(struct tcphdr);
 	nbuf_reset(nbuf);
 next:
 	if ((nptr = nbuf_advance(nbuf, step, 1)) == NULL) {
@@ -521,7 +521,7 @@ npf_rwrip(const npf_cache_t *npc, int di, const npf_addr_t *addr)
 bool
 npf_rwrport(const npf_cache_t *npc, int di, const in_port_t port)
 {
-	const int proto = npf_cache_ipproto(npc);
+	const int proto = npc->npc_proto;
 	in_port_t *oport;
 
 	KASSERT(npf_iscached(npc, NPC_TCP) || npf_iscached(npc, NPC_UDP));
@@ -546,7 +546,7 @@ bool
 npf_rwrcksum(const npf_cache_t *npc, const int di,
     const npf_addr_t *addr, const in_port_t port)
 {
-	const int proto = npf_cache_ipproto(npc);
+	const int proto = npc->npc_proto;
 	const int alen = npc->npc_alen;
 	npf_addr_t *oaddr;
 	uint16_t *ocksum;
