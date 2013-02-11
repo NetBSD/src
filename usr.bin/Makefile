@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.212 2013/02/11 17:14:23 christos Exp $
+#	$NetBSD: Makefile,v 1.213 2013/02/11 17:24:21 christos Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -34,6 +34,10 @@ SUBDIR= apply asa at audio audiocfg \
 	write xargs xinstall xlint xstr yes
 
 SUBDIR+= ../external/zlib/pigz/bin/pigz
+
+.if (${MKGROFF} == "no")
+SUBDIR+= soelim
+.endif
 
 .if (${MKMAKEMANDB} == "no")
 SUBDIR+= apropos whatis
