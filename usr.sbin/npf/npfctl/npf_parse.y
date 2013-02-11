@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.3.2.10 2012/12/11 04:31:52 riz Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.3.2.11 2013/02/11 21:49:47 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 
 #define	YYSTACKSIZE	4096
 
+int			yyparsetarget;
 const char *		yyfilename;
 
 extern int		yylineno, yycolumn;
@@ -74,6 +75,14 @@ yyerror(const char *fmt, ...)
 	fprintf(stderr, "\n");
 	exit(EXIT_FAILURE);
 }
+
+#define	CHECK_PARSER_FILE				\
+	if (yyparsetarget != NPFCTL_PARSE_FILE)		\
+		yyerror("rule must be in the group");
+
+#define	CHECK_PARSER_STRING				\
+	if (yyparsetarget != NPFCTL_PARSE_STRING)	\
+		yyerror("invalid rule syntax");
 
 %}
 
@@ -118,6 +127,7 @@ yyerror(const char *fmt, ...)
 %token			PROTO
 %token			FAMILY
 %token			FINAL
+%token			FORW
 %token			RETURN
 %token			RETURNICMP
 %token			RETURNRST
@@ -170,7 +180,8 @@ yyerror(const char *fmt, ...)
 %%
 
 input
-	: lines
+	: { CHECK_PARSER_FILE	} lines
+	| { CHECK_PARSER_STRING	} rule
 	;
 
 lines
@@ -361,9 +372,15 @@ proc_param_val
 group
 	: GROUP PAR_OPEN group_attr PAR_CLOSE
 	{
-		npfctl_build_group($3.rg_name, $3.rg_attr, $3.rg_ifnum);
+		/* Build a group.  Increases the nesting level. */
+		npfctl_build_group($3.rg_name, $3.rg_attr,
+		    $3.rg_ifnum, $3.rg_default);
 	}
-	  ruleset
+	  ruleset_block
+	{
+		/* Decrease the nesting level. */
+		npfctl_build_group_end();
+	}
 	;
 
 group_attr
@@ -385,6 +402,9 @@ group_attr
 		if ($1.rg_ifnum) {
 			$$.rg_ifnum = $1.rg_ifnum;
 		}
+		if ($1.rg_default) {
+			$$.rg_default = $1.rg_default;
+		}
 	}
 	| group_opt		{ $$ = $1; }
 	;
@@ -392,51 +412,58 @@ group_attr
 group_opt
 	: DEFAULT
 	{
-		$$.rg_name = NULL;
-		$$.rg_ifnum = 0;
-		$$.rg_attr = NPF_RULE_DEFAULT;
+		memset(&$$, 0, sizeof(rule_group_t));
+		$$.rg_default = true;
 	}
 	| NAME STRING
 	{
+		memset(&$$, 0, sizeof(rule_group_t));
 		$$.rg_name = $2;
-		$$.rg_ifnum = 0;
-		$$.rg_attr = 0;
 	}
 	| INTERFACE ifindex
 	{
-		$$.rg_name = NULL;
+		memset(&$$, 0, sizeof(rule_group_t));
 		$$.rg_ifnum = $2;
-		$$.rg_attr = 0;
+	}
+	| TDYNAMIC
+	{
+		memset(&$$, 0, sizeof(rule_group_t));
+		$$.rg_attr = NPF_RULE_DYNAMIC;
+	}
+	| FORW
+	{
+		memset(&$$, 0, sizeof(rule_group_t));
+		$$.rg_attr = NPF_RULE_FORW;
 	}
 	| rule_dir
 	{
-		$$.rg_name = NULL;
-		$$.rg_ifnum = 0;
+		memset(&$$, 0, sizeof(rule_group_t));
 		$$.rg_attr = $1;
 	}
 	;
 
-ruleset
-	: CURLY_OPEN rules CURLY_CLOSE
+ruleset_block
+	: CURLY_OPEN ruleset CURLY_CLOSE
+	| /* Empty (for a dynamic ruleset). */
 	;
 
-rules
-	: rule SEPLINE rules
-	| rule
+ruleset
+	: rule_group SEPLINE ruleset
+	| rule_group
 	;
+
+rule_group
+	: rule
+	| group
+	|
 
 rule
 	: block_or_pass opt_stateful rule_dir opt_final on_ifindex
 	  opt_family opt_proto all_or_filt_opts opt_apply
 	{
-		/*
-		 * Arguments: attributes, interface index, address
-		 * family, protocol options, filter options.
-		 */
 		npfctl_build_rule($1 | $2 | $3 | $4, $5,
 		    $6, &$7, &$8, $9);
 	}
-	|
 	;
 
 block_or_pass

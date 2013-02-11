@@ -1,6 +1,6 @@
-.\"	$NetBSD: npfctl.8,v 1.6.6.4 2012/12/16 19:41:37 riz Exp $
+.\"	$NetBSD: npfctl.8,v 1.6.6.5 2013/02/11 21:49:47 riz Exp $
 .\"
-.\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 10, 2012
+.Dd January 11, 2013
 .Dt NPFCTL 8
 .Os
 .Sh NAME
@@ -85,6 +85,28 @@ The configuration file at
 .Pa /etc/npf.conf
 will be used unless a file is specified by
 .Ar path .
+.\" ---
+.It Ic rule Ar name Ic add Aq rule-syntax
+Add a rule to a dynamic ruleset specified by
+.Ar name .
+On success, returns a unique identifier which can be used to remove
+the rule with
+.Ic rem-id
+command.
+.It Ic rule Ar name Ic rem Aq rule-syntax
+Remove a rule from a dynamic ruleset specified by
+.Ar name .
+This method uses SHA1 hash computed on a rule to identify it.
+Although very unlikely, it is subject to hash collisions.
+For a fully reliable and more efficient method, it is recommended to use 
+.Ic rem-id
+command.
+.It Ic rule Ar name Ic rem-id Aq id
+Remove a rule specified by unique
+.Ar id
+from a dynamic ruleset specified by
+.Ar name .
+.\" ---
 .It Ic table Ar tid Ic add Aq Ar addr/mask
 In table
 .Ar tid ,
@@ -107,6 +129,7 @@ If no mask is specified, a single host is assumed.
 List all entries in the currently loaded table specified by
 .Ar tid .
 This operation is expensive and should be used with caution.
+.\" ---
 .It Ic sess-save
 Save all active sessions.
 The data will be stored in the
