@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncode.h,v 1.5.6.4 2012/07/25 20:45:23 jdc Exp $	*/
+/*	$NetBSD: npf_ncode.h,v 1.5.6.5 2013/02/11 21:49:49 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -45,12 +45,8 @@
 /*
  * N-code processing, validation & building.
  */
-void *	npf_ncode_alloc(size_t);
-void	npf_ncode_free(void *, size_t);
-
 int	npf_ncode_process(npf_cache_t *, const void *, nbuf_t *, const int);
 int	npf_ncode_validate(const void *, size_t, int *);
-
 #endif
 
 /* Error codes. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.8.4.6 2013/02/08 19:18:11 riz Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.8.4.7 2013/02/11 21:49:49 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.8.4.6 2013/02/08 19:18:11 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.8.4.7 2013/02/11 21:49:49 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -117,7 +117,7 @@ npf_alg_icmp_modcmd(modcmd_t cmd, void *arg)
 static bool
 npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 {
-	const int proto = npf_cache_ipproto(npc);
+	const int proto = npc->npc_proto;
 	const struct ip *ip = npc->npc_ip.v4;
 	in_port_t dport;
 
@@ -254,7 +254,7 @@ npfa_icmp_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *enpc)
 
 	/* Advance to ICMP header. */
 	nbuf_reset(nbuf);
-	if (!nbuf_advance(nbuf, npf_cache_hlen(npc), 0)) {
+	if (!nbuf_advance(nbuf, npc->npc_hlen, 0)) {
 		return false;
 	}
 	enpc->npc_info = 0;
@@ -310,7 +310,7 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 	#define	SWAP(type, x, y) { type tmp = x; x = y; y = tmp; }
 	SWAP(npf_addr_t *, enpc.npc_srcip, enpc.npc_dstip);
 
-	switch (npf_cache_ipproto(&enpc)) {
+	switch (enpc.npc_proto) {
 	case IPPROTO_TCP:
 		l4.th.th_sport = enpc.npc_l4.tcp->th_dport;
 		l4.th.th_dport = enpc.npc_l4.tcp->th_sport;
@@ -371,7 +371,7 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 	 * checksum for these changes in the embedded packet.  While data
 	 * is not rewritten in the cache, save IP and TCP/UDP checksums.
 	 */
-	const int proto = npf_cache_ipproto(&enpc);
+	const int proto = enpc.npc_proto;
 	uint16_t ipcksum = 0, l4cksum = 0;
 	npf_addr_t *addr;
 	in_port_t port;

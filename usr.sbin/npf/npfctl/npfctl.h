@@ -1,8 +1,11 @@
-/*	$NetBSD: npfctl.h,v 1.11.2.11 2012/12/16 19:41:37 riz Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.11.2.12 2013/02/11 21:49:48 riz Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This material is based upon work partially supported by The
+ * NetBSD Foundation under a contract with Mindaugas Rasiukevicius.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,6 +89,7 @@ typedef struct rule_group {
 	const char *	rg_name;
 	uint32_t	rg_attr;
 	u_int		rg_ifnum;
+	bool		rg_default;
 } rule_group_t;
 
 typedef struct proc_call {
@@ -98,7 +102,11 @@ typedef struct proc_param {
 	const char *	pp_value;
 } proc_param_t;
 
+enum { NPFCTL_PARSE_FILE, NPFCTL_PARSE_STRING };
+
 void		yyerror(const char *, ...) __printflike(1, 2) __dead;
+void		npfctl_parse_file(const char *);
+void		npfctl_parse_string(const char *);
 
 void		npfctl_print_error(const nl_error_t *);
 char *		npfctl_print_addrmask(int, npf_addr_t *, npf_netmask_t);
@@ -180,10 +188,14 @@ void		npfctl_config_init(bool);
 int		npfctl_config_send(int, const char *);
 nl_config_t *	npfctl_config_ref(void);
 int		npfctl_config_show(int);
+int		npfctl_ruleset_show(int, const char *);
+
+nl_rule_t *	npfctl_rule_ref(void);
 unsigned long	npfctl_debug_addif(const char *);
 
 void		npfctl_build_rproc(const char *, npfvar_t *);
-void		npfctl_build_group(const char *, int, u_int);
+void		npfctl_build_group(const char *, int, u_int, bool);
+void		npfctl_build_group_end(void);
 void		npfctl_build_rule(int, u_int, sa_family_t,
 		    const opt_proto_t *, const filt_opts_t *, const char *);
 void		npfctl_build_natseg(int, int, u_int, const addr_port_t *,

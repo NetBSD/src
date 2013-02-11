@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/02/04 00:19:52 rmind Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2013/02/11 21:49:50 riz Exp $
 #	$OpenBSD: Makefile,v 1.3 2006/11/26 11:31:13 deraadt Exp $
 
 PROG=	ftp-proxy
@@ -15,9 +15,9 @@ CPPFLAGS+=-I${NETBSDSRCDIR}/sys
 
 # NPF support
 .if (${MKNPF} != "no")
-SRCS+=		npf.c
-CPPFLAGS+=	-DWITH_NPF
-LDADD+=		-lnpf -lprop
+#SRCS+=		npf.c
+#CPPFLAGS+=	-DWITH_NPF
+#LDADD+=		-lnpf -lprop
 .endif
 
 # IP Filter support

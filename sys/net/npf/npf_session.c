@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.10.4.8 2013/02/08 19:18:09 riz Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.10.4.9 2013/02/11 21:49:49 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10.4.8 2013/02/08 19:18:09 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10.4.9 2013/02/11 21:49:49 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -461,7 +461,7 @@ npf_session_t *
 npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
     const int di, bool *forw)
 {
-	const u_int proto = npf_cache_ipproto(npc);
+	const u_int proto = npc->npc_proto;
 	const ifnet_t *ifp = nbuf->nb_ifp;
 	npf_sentry_t senkey, *sen;
 	npf_session_t *se;
@@ -669,7 +669,7 @@ npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	memcpy(&fw->se_dst_addr, npc->npc_dstip, alen);
 
 	/* Protocol and interface. */
-	proto = npf_cache_ipproto(npc);
+	proto = npc->npc_proto;
 	memset(&se->s_common_id, 0, sizeof(npf_secomid_t));
 	se->s_common_id.proto = proto;
 	se->s_common_id.if_idx = ifp->if_index;
@@ -886,12 +886,15 @@ npf_session_pass(const npf_session_t *se, npf_rproc_t **rp)
 void
 npf_session_setpass(npf_session_t *se, npf_rproc_t *rp)
 {
-
 	KASSERT((se->s_flags & SE_ACTIVE) == 0);
 	KASSERT(se->s_refcnt > 0);
 	KASSERT(se->s_rproc == NULL);
 
-	/* No need for atomic since the session is not yet active. */
+	/*
+	 * No need for atomic since the session is not yet active.
+	 * If rproc is set, the caller transfers its reference to us,
+	 * which will be released on npf_session_destroy().
+	 */
 	se->s_flags |= SE_PASS;
 	se->s_rproc = rp;
 }

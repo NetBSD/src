@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5.2.4 2012/11/29 00:09:46 riz Exp $
+# $NetBSD: Makefile,v 1.5.2.5 2013/02/11 21:49:48 riz Exp $
 
 BINDIR=/sbin
 PROG=		npfctl
@@ -11,7 +11,7 @@ CPPFLAGS+=	-I${.CURDIR}
 SRCS+=		npf_scan.l npf_parse.y
 YHEADER=	1
 
-LDADD+=		-lnpf -lprop -lutil -ly
+LDADD+=		-lnpf -lprop -lcrypto -lutil -ly
 DPADD+=		${LIBNPF} ${LIBPROP} ${LIBUTIL}
 
 WARNS=		5
