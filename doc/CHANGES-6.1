@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.88 2013/02/10 23:59:29 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.89 2013/02/11 04:22:15 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8241,4 +8241,9 @@ sys/dev/fss.c					1.84
 
 	Don't crash when running multiple dump -X. PR#47514.
 	[hannken, ticket #808]
+
+sys/dev/spi/spi.c				1.7
+
+	Stop condvar/mutex leaks.
+	[skrll, ticket #809]
 
