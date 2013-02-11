@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.89 2013/02/11 04:22:15 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.90 2013/02/11 20:44:39 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8246,4 +8246,14 @@ sys/dev/spi/spi.c				1.7
 
 	Stop condvar/mutex leaks.
 	[skrll, ticket #809]
+
+sys/dev/fss.c					1.85
+
+	Fix panic in fss(4).  PR#47020.
+	[hannken, ticket #810]
+
+sys/kern/subr_pserialize.c			1.7
+
+	Avoid possible race with softint handler.
+	[rmind, ticket #811]
 
