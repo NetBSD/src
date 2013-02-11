@@ -1,3 +1,5 @@
+/*	$NetBSD: s_frexpl.c,v 1.2 2013/02/11 01:47:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -26,11 +28,16 @@
  * $FreeBSD: src/lib/msun/src/s_frexpl.c,v 1.1 2005/03/07 04:54:51 das Exp $
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: s_frexpl.c,v 1.2 2013/02/11 01:47:04 christos Exp $");
+
+#include <machine/ieee.h>
 #include <float.h>
 #include <math.h>
 
-#include "fpmath.h"
+#include "math_private.h"
 
+#ifdef EXT_EXPBITS
 #if LDBL_MAX_EXP != 0x4000
 #error "Unsupported long double format"
 #endif
@@ -38,25 +45,26 @@
 long double
 frexpl(long double x, int *ex)
 {
-	union IEEEl2bits u;
+	union ieee_ext_u u;
 
-	u.e = x;
-	switch (u.bits.exp) {
+	u.extu_ld = x;
+	switch (u.extu_ext.ext_exp) {
 	case 0:		/* 0 or subnormal */
-		if ((u.bits.manl | u.bits.manh) == 0) {
+		if ((u.extu_ext.ext_fracl | u.extu_ext.ext_frach) == 0) {
 			*ex = 0;
 		} else {
-			u.e *= 0x1.0p514;
-			*ex = u.bits.exp - 0x4200;
-			u.bits.exp = 0x3ffe;
+			u.extu_ld *= 0x1.0p514;
+			*ex = u.extu_ext.ext_exp - 0x4200;
+			u.extu_ext.ext_exp = 0x3ffe;
 		}
 		break;
 	case 0x7fff:	/* infinity or NaN; value of *ex is unspecified */
 		break;
 	default:	/* normal */
-		*ex = u.bits.exp - 0x3ffe;
-		u.bits.exp = 0x3ffe;
+		*ex = u.extu_ext.ext_exp - 0x3ffe;
+		u.extu_ext.ext_exp = 0x3ffe;
 		break;
 	}
-	return (u.e);
+	return (u.extu_ld);
 }
+#endif
