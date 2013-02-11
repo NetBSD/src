@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2013/02/07 13:33:50 macallan Exp $
+#	$NetBSD: Makefile,v 1.20 2013/02/11 09:26:07 martin Exp $
 
 NOLINT=	1	# defined
 
@@ -43,16 +43,14 @@ SRCS=					\
 # XXX
 
 .if ${MACHINE_ARCH} == "i386"
-# SSE2 requires a gcc >= 4.2
+# SSE2 does not work, for unknown reasons
 SRCS+= pixman-mmx.c
 COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
 MKDEPFLAGS+=		-mmmx -fvisibility=hidden
 .elif ${MACHINE_ARCH} == "x86_64"
-SRCS+=	pixman-mmx.c
-# XXX sse2 is broken with pixman 0.21.2; GCC generates unaligned accesses
-#SRCS+=	pixman-sse2.c
-COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
-#COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
+SRCS+=	pixman-sse2.c
+COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
+CPPFLAGS+=	-DUSE_SSE2
 .endif
 
 .if ${MACHINE_ARCH} == "powerpc"
