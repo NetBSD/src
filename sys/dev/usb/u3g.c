@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.24 2011/12/23 00:51:44 jakllsch Exp $	*/
+/*	$NetBSD: u3g.c,v 1.24.2.1 2013/02/11 21:44:22 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.24 2011/12/23 00:51:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.24.2.1 2013/02/11 21:44:22 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,6 +185,7 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E1750 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E1820 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E220 },
+	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_EM770W },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_K3765 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_MOBILE },
 	/* OEM: Merlin */
