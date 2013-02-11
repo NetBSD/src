@@ -1,7 +1,7 @@
-/*	$NetBSD: mouse.c,v 1.8 2008/04/28 20:23:09 martin Exp $ */
+/*	$NetBSD: mouse.c,v 1.8.22.1 2013/02/11 21:36:30 riz Exp $ */
 
 /*-
- * Copyright (c) 1998, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2006, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,7 +45,12 @@
 static int mstype;
 static int resolution;
 static int samplerate;
+static struct wsmouse_calibcoords calibration;
+static char *calibration_samples;
 static struct wsmouse_repeat repeat;
+
+static void mouse_get_calibration(int);
+static void mouse_put_calibration(int);
 
 static void mouse_get_repeat(int);
 static void mouse_put_repeat(int);
@@ -54,6 +59,16 @@ struct field mouse_field_tab[] = {
     { "resolution",		&resolution,	FMT_UINT,	FLG_WRONLY },
     { "samplerate",		&samplerate,	FMT_UINT,	FLG_WRONLY },
     { "type",			&mstype,	FMT_MSTYPE,	FLG_RDONLY },
+    { "calibration.minx",	&calibration.minx,
+    						FMT_INT,	FLG_MODIFY },
+    { "calibration.miny",	&calibration.miny,
+    						FMT_INT,	FLG_MODIFY },
+    { "calibration.maxx",	&calibration.maxx,
+    						FMT_INT,	FLG_MODIFY },
+    { "calibration.maxy",	&calibration.maxy,
+    						FMT_INT,	FLG_MODIFY },
+    { "calibration.samples",	&calibration_samples,
+	    					FMT_STRING,	FLG_MODIFY },
     { "repeat.buttons",		&repeat.wr_buttons,
     						FMT_BITFIELD, FLG_MODIFY },
     { "repeat.delay.first",	&repeat.wr_delay_first,
@@ -75,6 +90,13 @@ mouse_get_values(int fd)
 		if (ioctl(fd, WSMOUSEIO_GTYPE, &mstype) < 0)
 			err(EXIT_FAILURE, "WSMOUSEIO_GTYPE");
 
+	if (field_by_value(&calibration.minx)->flags & FLG_GET ||
+	    field_by_value(&calibration.miny)->flags & FLG_GET ||
+	    field_by_value(&calibration.maxx)->flags & FLG_GET ||
+	    field_by_value(&calibration.maxy)->flags & FLG_GET ||
+	    field_by_value(&calibration_samples)->flags & FLG_GET)
+		mouse_get_calibration(fd);
+
 	if (field_by_value(&repeat.wr_buttons)->flags & FLG_GET ||
 	    field_by_value(&repeat.wr_delay_first)->flags & FLG_GET ||
 	    field_by_value(&repeat.wr_delay_decrement)->flags & FLG_GET ||
@@ -83,11 +105,63 @@ mouse_get_values(int fd)
 }
 
 static void
+mouse_get_calibration(int fd)
+{
+	struct wsmouse_calibcoords tmp;
+	char *samples;
+	char buf[48];
+	int i;
+
+	if (ioctl(fd, WSMOUSEIO_GCALIBCOORDS, &tmp) < 0) {
+		field_disable_by_value(&calibration.minx);
+		field_disable_by_value(&calibration.miny);
+		field_disable_by_value(&calibration.maxx);
+		field_disable_by_value(&calibration.maxy);
+		field_disable_by_value(&calibration_samples);
+		return;
+	}
+
+	if (field_by_value(&calibration.minx)->flags & FLG_GET)
+		calibration.minx = tmp.minx;
+	if (field_by_value(&calibration.miny)->flags & FLG_GET)
+		calibration.miny = tmp.miny;
+	if (field_by_value(&calibration.maxx)->flags & FLG_GET)
+		calibration.maxx = tmp.maxx;
+	if (field_by_value(&calibration.maxy)->flags & FLG_GET)
+		calibration.maxy = tmp.maxy;
+	if (field_by_value(&calibration_samples)->flags & FLG_GET) {
+		free(calibration_samples);
+		if (tmp.samplelen <= 0) {
+			calibration_samples = strdup("");
+			if (calibration_samples == NULL)
+				err(EXIT_FAILURE, "could not list calibration"
+						" samples");
+		} else {
+			samples = malloc(tmp.samplelen * sizeof(buf));
+			if (samples == NULL)
+				err(EXIT_FAILURE, "could not list calibration"
+						" samples");
+			samples[0] = '\0';
+			for (i = 0; i < tmp.samplelen; i++) {
+				snprintf(buf, sizeof(buf), "%s%d,%d,%d,%d",
+						(i == 0) ? "" : ":",
+						tmp.samples[i].rawx,
+						tmp.samples[i].rawy,
+						tmp.samples[i].x,
+						tmp.samples[i].y);
+				strcat(samples, buf);
+			}
+			calibration_samples = samples;
+		}
+	}
+}
+
+static void
 mouse_get_repeat(int fd)
 {
 	struct wsmouse_repeat tmp;
 
-	if (ioctl(fd, WSMOUSEIO_GETREPEAT, &tmp) == -1)
+	if (ioctl(fd, WSMOUSEIO_GETREPEAT, &tmp) < 0)
 		err(EXIT_FAILURE, "WSMOUSEIO_GETREPEAT");
 
 	if (field_by_value(&repeat.wr_buttons)->flags & FLG_GET)
@@ -119,6 +193,13 @@ mouse_put_values(int fd)
 		pr_field(field_by_value(&samplerate), " -> ");
 	}
 
+	if (field_by_value(&calibration.minx)->flags & FLG_SET ||
+	    field_by_value(&calibration.miny)->flags & FLG_SET ||
+	    field_by_value(&calibration.maxx)->flags & FLG_SET ||
+	    field_by_value(&calibration.maxy)->flags & FLG_SET ||
+	    field_by_value(&calibration_samples)->flags & FLG_SET)
+		mouse_put_calibration(fd);
+
 	if (field_by_value(&repeat.wr_buttons)->flags & FLG_SET ||
 	    field_by_value(&repeat.wr_delay_first)->flags & FLG_SET ||
 	    field_by_value(&repeat.wr_delay_decrement)->flags & FLG_SET ||
@@ -127,12 +208,76 @@ mouse_put_values(int fd)
 }
 
 static void
+mouse_put_calibration(int fd)
+{
+	struct wsmouse_calibcoords tmp;
+	int i;
+	const char *p;
+	char *q;
+
+	/* Fetch current values into the temporary structure. */
+	if (ioctl(fd, WSMOUSEIO_GCALIBCOORDS, &tmp) < 0)
+		err(EXIT_FAILURE, "WSMOUSEIO_GCALIBCOORDS");
+
+	/* Overwrite the desired values in the temporary structure. */
+	if (field_by_value(&calibration.minx)->flags & FLG_SET)
+		tmp.minx = calibration.minx;
+	if (field_by_value(&calibration.miny)->flags & FLG_SET)
+		tmp.miny = calibration.miny;
+	if (field_by_value(&calibration.maxx)->flags & FLG_SET)
+		tmp.maxx = calibration.maxx;
+	if (field_by_value(&calibration.maxy)->flags & FLG_SET)
+		tmp.maxy = calibration.maxy;
+	if (field_by_value(&calibration_samples)->flags & FLG_SET) {
+		p = calibration_samples;
+		for (i = 0; p[0] != '\0' && i < WSMOUSE_CALIBCOORDS_MAX; i++) {
+			tmp.samples[i].rawx = strtol(p, &q, 0);
+			if (*q != ',')
+				break;
+			p = q + 1;
+			tmp.samples[i].rawy = strtol(p, &q, 0);
+			if (*q != ',')
+				break;
+			p = q + 1;
+			tmp.samples[i].x = strtol(p, &q, 0);
+			if (*q != ',')
+				break;
+			p = q + 1;
+			tmp.samples[i].y = strtol(p, &q, 0);
+			p = q + 1;
+			if (*q != '\0' && *q != ':')
+				break;
+		}
+		if (p[0] != '\0')
+			errx(EXIT_FAILURE, "%s: invalid calibration data",
+					calibration_samples);
+		tmp.samplelen = i;
+	}
+
+	/* Set new values for calibrating events. */
+	if (ioctl(fd, WSMOUSEIO_SCALIBCOORDS, &tmp) < 0)
+		err(EXIT_FAILURE, "WSMOUSEIO_SCALIBCOORDS");
+
+	/* Now print what changed. */
+	if (field_by_value(&calibration.minx)->flags & FLG_SET)
+		pr_field(field_by_value(&calibration.minx), " -> ");
+	if (field_by_value(&calibration.miny)->flags & FLG_SET)
+		pr_field(field_by_value(&calibration.miny), " -> ");
+	if (field_by_value(&calibration.maxx)->flags & FLG_SET)
+		pr_field(field_by_value(&calibration.maxx), " -> ");
+	if (field_by_value(&calibration.maxy)->flags & FLG_SET)
+		pr_field(field_by_value(&calibration.maxy), " -> ");
+	if (field_by_value(&calibration_samples)->flags & FLG_SET)
+		pr_field(field_by_value(&calibration_samples), " -> ");
+}
+
+static void
 mouse_put_repeat(int fd)
 {
 	struct wsmouse_repeat tmp;
 
 	/* Fetch current values into the temporary structure. */
-	if (ioctl(fd, WSMOUSEIO_GETREPEAT, &tmp) == -1)
+	if (ioctl(fd, WSMOUSEIO_GETREPEAT, &tmp) < 0)
 		err(EXIT_FAILURE, "WSMOUSEIO_GETREPEAT");
 
 	/* Overwrite the desired values in the temporary structure. */
@@ -146,7 +291,7 @@ mouse_put_repeat(int fd)
 		tmp.wr_delay_minimum = repeat.wr_delay_minimum;
 
 	/* Set new values for repeating events. */
-	if (ioctl(fd, WSMOUSEIO_SETREPEAT, &tmp) == -1)
+	if (ioctl(fd, WSMOUSEIO_SETREPEAT, &tmp) < 0)
 		err(EXIT_FAILURE, "WSMOUSEIO_SETREPEAT");
 
 	/* Now print what changed. */
