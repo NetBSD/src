@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.11 2013/01/14 21:00:16 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.12 2013/02/11 16:02:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.11 2013/01/14 21:00:16 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.12 2013/02/11 16:02:31 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -242,8 +242,14 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
 	if (rv == 0 && thrname)
 		pthread_setname_np(ptid, thrname, NULL);
 #elif defined(__linux__)
+	/*
+	 * The pthread_setname_np() call varies from one Linux distro to
+	 * another.  Comment out the call pending autoconf support.
+	 */
+#if 0
 	if (rv == 0 && thrname)
 		pthread_setname_np(ptid, thrname);
+#endif
 #endif
 
 	if (joinable) {
