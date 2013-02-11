@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2011/07/23 12:13:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.13.4.1 2013/02/11 21:04:46 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -30,7 +30,7 @@ SRCS=	radeon_accel.c radeon_cursor.c \
 	radeon_mm_i2c.c radeon_vip.c radeon_misc.c radeon_probe.c \
 	legacy_crtc.c legacy_output.c radeon_textured_video.c \
 	radeon_crtc.c radeon_output.c radeon_modes.c radeon_tv.c \
-	radeon_legacy_memory.c radeon_pm.c \
+	radeon_legacy_memory.c radeon_pm.c radeon_xvmc.c \
 	$(SRCS.ATOMBIOS) radeon_atombios.c radeon_atomwrapper.c \
 	$(SRCS.DRI) $(SRCS.EXA) atombios_output.c atombios_crtc.c
 MAN=	radeon.4
