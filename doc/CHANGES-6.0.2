@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.17 2013/02/10 23:57:51 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.18 2013/02/11 20:39:18 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -112,4 +112,9 @@ sys/dev/fss.c					1.84
 
 	Don't crash when running multiple dump -X. PR#47514.
 	[hannken, ticket #808]
+
+sys/dev/fss.c					1.85
+
+	Fix panic in fss(4).  PR#47020.
+	[hannken, ticket #810]
 
