@@ -1,4 +1,4 @@
-/*	$NetBSD: s_scalbnl.c,v 1.3 2013/01/28 14:09:43 pgoyette Exp $	*/
+/*	$NetBSD: s_scalbnl.c,v 1.4 2013/02/11 02:45:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_scalbnl.c,v 1.3 2013/01/28 14:09:43 pgoyette Exp $");
+__RCSID("$NetBSD: s_scalbnl.c,v 1.4 2013/02/11 02:45:15 christos Exp $");
 
 #include "namespace.h"
 
@@ -46,6 +46,7 @@ __strong_alias(_scalbnl, _scalblnl)
 
 __weak_alias(scalbnl, _scalbnl)
 __weak_alias(scalblnl, _scalblnl)
+__weak_alias(ldexpl, _scalblnl); 
 
 #if LDBL_MANT_DIG == 64
 #define	FROM_UNDERFLOW	0x1p65L
