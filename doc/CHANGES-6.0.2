@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.18 2013/02/11 20:39:18 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.19 2013/02/11 20:43:01 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -117,4 +117,9 @@ sys/dev/fss.c					1.85
 
 	Fix panic in fss(4).  PR#47020.
 	[hannken, ticket #810]
+
+sys/kern/subr_pserialize.c			1.7
+
+	Avoid possible race with softint handler.
+	[rmind, ticket #811]
 
