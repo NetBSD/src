@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rule_test.c,v 1.4 2013/02/09 03:35:33 rmind Exp $	*/
+/*	$NetBSD: npf_rule_test.c,v 1.5 2013/02/11 02:52:32 rmind Exp $	*/
 
 /*
  * NPF ruleset test.
@@ -171,8 +171,8 @@ npf_rule_test(bool verbose)
 	error = npf_test_first(verbose);
 	fail |= (error != RESULT_BLOCK);
 
-	rl = npf_ruleset_remove(rlset, "test-rules", (uintptr_t)rl);
-	fail |= (rl == NULL);
+	error = npf_ruleset_remove(rlset, "test-rules", (uintptr_t)rl);
+	fail |= error != 0;
 
 	npf_config_exit();
 
