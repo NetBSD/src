@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.131 2013/02/11 12:43:04 matt Exp $
+#  $NetBSD: Makefile,v 1.132 2013/02/11 17:55:01 matt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -52,13 +52,15 @@ USE_SHLIBDIR=	yes
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 .elif (${MACHINE_ARCH} == "earmhf" || ${MACHINE_ARCH} == "earmhfeb")
 .PATH: ${.CURDIR}/arch/arm
-ARCH_SRCS = e_sqrt.S e_sqrtf.S s_fabsf.S lrint.S lrintf.S
+ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 .elif (${MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
 COMMON_SRCS+= fenv.c
+COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .elif (${MACHINE_ARCH} == "sparc64")
 .PATH: ${.CURDIR}/arch/sparc64
 COMMON_SRCS+= fenv.c
+COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .elif ((${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "x86_64"))
 
 .if (${MACHINE_ARCH} == "x86_64")
@@ -67,8 +69,9 @@ COMMON_SRCS+= fenv.c
 .PATH:	${.CURDIR}/arch/i387
 
 COMMON_SRCS+= fenv.c s_nextafterl.c s_nexttoward.c s_nexttowardf.c \
-	s_nearbyint.c s_rintl.c s_fma.c s_fmaf.c s_fmal.c \
+	s_nearbyint.c s_rintl.c \
 	s_scalbln.c s_frexpl.c # s_nan.c
+COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    e_logf.S e_log10.S e_log10f.S e_log2.S e_log2f.S e_remainder.S \
@@ -167,7 +170,8 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c \
 	lrint.c lrintf.c llrint.c llrintf.c lround.c lroundf.c llround.c \
 	llroundf.c s_frexp.c s_ldexp.c s_modf.c \
-	s_fmax.c s_fmaxf.c s_fmaxl.c s_fmin.c s_fminf.c s_fminl.c s_fdim.c
+	s_fmax.c s_fmaxf.c s_fmaxl.c \
+	s_fmin.c s_fminf.c s_fminl.c s_fdim.c
 
 .PATH:	${.CURDIR}/compat
 COMMON_SRCS+= compat_cabs.c compat_cabsf.c
