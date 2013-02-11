@@ -1,4 +1,4 @@
-/*	$NetBSD: s_rintl.c,v 1.3 2013/02/09 23:14:44 christos Exp $	*/
+/*	$NetBSD: s_rintl.c,v 1.4 2013/02/11 02:45:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_rintl.c,v 1.5 2008/02/22 11:59:05 bde Exp $");
 #else
-__RCSID("$NetBSD: s_rintl.c,v 1.3 2013/02/09 23:14:44 christos Exp $");
+__RCSID("$NetBSD: s_rintl.c,v 1.4 2013/02/11 02:45:27 christos Exp $");
 #endif
 
 #include <float.h>
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: s_rintl.c,v 1.3 2013/02/09 23:14:44 christos Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef EXT_EXP_BIAS
+#ifdef __HAVE_LONG_DOUBLE
 static const float
 shift[2] = {
 #if EXT_FRACBITS == 64
