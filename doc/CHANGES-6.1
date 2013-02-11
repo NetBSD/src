@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.91 2013/02/11 21:07:54 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.92 2013/02/11 21:50:30 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8337,4 +8337,66 @@ xsrc/external/mit/xf86-video-ati/include/config.h			patch
 
 	Update Xorg ATI driver to version 6.14.6.
 	[veego, ticket #812]
+
+sbin/wsconsctl/mouse.c				1.9-1.10
+sbin/wsconsctl/util.c				1.31
+sbin/wsconsctl/wsconsctl.h			1.12
+
+	Add support for touchscreen calibration to wsconsctl(8).  PR#45872.
+	[khorben, ticket #814]
+
+sys/arch/amd64/conf/XEN3_DOM0			1.92
+sys/arch/i386/conf/XEN3_DOM0			1.72
+
+	Add wpi(4) to XEN3_DOM0 kernel (i386 and amd64).
+	[khorben, ticket #815]
+
+sys/dev/usb/u3g.c				1.26
+
+	Add support for Huawei EM770W to u3g(4).
+	[khorben, ticket #816]
+
+lib/libnpf/npf.3				1.8
+lib/libnpf/npf.c				1.16-1.17
+lib/libnpf/npf.h				1.13-1.14
+sys/modules/npf/Makefile			1.12
+sys/net/npf/files.npf				1.10
+sys/net/npf/npf.c				1.15
+sys/net/npf/npf.h				1.26-1.27
+sys/net/npf/npf_alg.c				1.7
+sys/net/npf/npf_alg_icmp.c			1.15
+sys/net/npf/npf_conf.c				1.1-1.2
+sys/net/npf/npf_ctl.c				1.21-1.22
+sys/net/npf/npf_handler.c			1.26
+sys/net/npf/npf_impl.h				1.26-1.27
+sys/net/npf/npf_inet.c				1.21
+sys/net/npf/npf_instr.c				1.16
+sys/net/npf/npf_nat.c				1.19
+sys/net/npf/npf_ncode.h				1.11
+sys/net/npf/npf_processor.c			1.15
+sys/net/npf/npf_rproc.c				1.6
+sys/net/npf/npf_ruleset.c			1.17-1.18
+sys/net/npf/npf_sendpkt.c			1.14
+sys/net/npf/npf_session.c			1.21
+sys/net/npf/npf_state.c				1.14
+sys/net/npf/npf_tableset.c			1.17
+sys/rump/net/lib/libnpf/Makefile		1.4
+usr.sbin/npf/npfctl/Makefile			1.10
+usr.sbin/npf/npfctl/npf.conf.5			1.27
+usr.sbin/npf/npfctl/npf_build.c			1.18-1.20
+usr.sbin/npf/npfctl/npf_disassemble.c		1.14-1.16
+usr.sbin/npf/npfctl/npf_parse.y			1.18
+usr.sbin/npf/npfctl/npf_scan.l			1.10
+usr.sbin/npf/npfctl/npfctl.8			1.12
+usr.sbin/npf/npfctl/npfctl.c			1.28-1.30
+usr.sbin/npf/npfctl/npfctl.h			1.25-1.26
+usr.sbin/npf/npftest/Makefile			1.4
+usr.sbin/npf/npftest/README			1.4
+usr.sbin/npf/npftest/libnpftest/npf_rule_test.c	1.4-1.5
+usr.sbin/npf/npftest/npftest.conf		1.2
+usr.sbin/pf/ftp-proxy/Makefile			1.8
+
+	NPF: implement dynamic NPF ruless, add initial BPF support as
+	an alternative to n-code, and minor fixes.
+	[rmind, ticket #817]
 
