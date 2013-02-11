@@ -1,3 +1,5 @@
+/*	$NetBSD: s_scalbln.c,v 1.2 2013/02/11 01:47:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -25,7 +27,11 @@
  */
 
 #include <sys/cdefs.h>
+#if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_scalbln.c,v 1.2 2005/03/07 04:57:50 das Exp $");
+#else
+__RCSID("$NetBSD: s_scalbln.c,v 1.2 2013/02/11 01:47:04 christos Exp $");
+#endif
 
 #include <limits.h>
 #include <math.h>
