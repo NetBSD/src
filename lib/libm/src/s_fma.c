@@ -1,3 +1,5 @@
+/*	$NetBSD: s_fma.c,v 1.2 2013/02/11 01:29:58 christos Exp $	*/
+
 /*-
  * Copyright (c) 2005-2011 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -25,8 +27,13 @@
  */
 
 #include <sys/cdefs.h>
+#if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_fma.c,v 1.8 2011/10/21 06:30:43 das Exp $");
+#else
+__RCSID("$NetBSD: s_fma.c,v 1.2 2013/02/11 01:29:58 christos Exp $");
+#endif
 
+#include <machine/ieee.h>
 #include <fenv.h>
 #include <float.h>
 #include <math.h>
@@ -117,7 +124,7 @@ add_and_denormalize(double a, double b, int scale)
 	if (sum.lo != 0) {
 		EXTRACT_WORD64(hibits, sum.hi);
 		bits_lost = -((int)(hibits >> 52) & 0x7ff) - scale + 1;
-		if (bits_lost != 1 ^ (int)(hibits & 1)) {
+		if ((bits_lost != 1) ^ (int)(hibits & 1)) {
 			/* hibits += (int)copysign(1.0, sum.hi * sum.lo) */
 			EXTRACT_WORD64(lobits, sum.lo);
 			hibits += 1 - (((hibits ^ lobits) >> 62) & 2);
@@ -216,17 +223,17 @@ fma(double x, double y, double z)
 		case FE_TONEAREST:
 			return (z);
 		case FE_TOWARDZERO:
-			if (x > 0.0 ^ y < 0.0 ^ z < 0.0)
+			if ((x > 0.0) ^ (y < 0.0) ^ (z < 0.0))
 				return (z);
 			else
 				return (nextafter(z, 0));
 		case FE_DOWNWARD:
-			if (x > 0.0 ^ y < 0.0)
+			if ((x > 0.0) ^ (y < 0.0))
 				return (z);
 			else
 				return (nextafter(z, -INFINITY));
 		default:	/* FE_UPWARD */
-			if (x > 0.0 ^ y < 0.0)
+			if ((x > 0.0) ^ (y < 0.0))
 				return (nextafter(z, INFINITY));
 			else
 				return (z);
@@ -258,8 +265,10 @@ fma(double x, double y, double z)
 		 * the correct sign.
 		 */
 		fesetround(oround);
+		{
 		volatile double vzs = zs; /* XXX gcc CSE bug workaround */
 		return (xy.hi + vzs + ldexp(xy.lo, spread));
+		}
 	}
 
 	if (oround != FE_TONEAREST) {
@@ -279,6 +288,6 @@ fma(double x, double y, double z)
 		return (add_and_denormalize(r.hi, adj, spread));
 }
 
-#if (LDBL_MANT_DIG == 53)
+#ifndef EXT_FRACBITS
 __weak_reference(fma, fmal);
 #endif

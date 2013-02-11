@@ -1,3 +1,5 @@
+/*	$NetBSD: s_fmal.c,v 1.2 2013/02/11 01:29:58 christos Exp $	*/
+
 /*-
  * Copyright (c) 2005-2011 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -25,14 +27,20 @@
  */
 
 #include <sys/cdefs.h>
+#if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_fmal.c,v 1.7 2011/10/21 06:30:43 das Exp $");
+#else
+__RCSID("$NetBSD: s_fmal.c,v 1.2 2013/02/11 01:29:58 christos Exp $");
+#endif
 
+#include <machine/ieee.h>
 #include <fenv.h>
 #include <float.h>
 #include <math.h>
 
-#include "fpmath.h"
+#include "math_private.h"
 
+#ifdef EXT_EXPBITS
 /*
  * A struct dd represents a floating-point number with twice the precision
  * of a long double.  We maintain the invariant that "hi" stores the high-order
@@ -75,12 +83,12 @@ static inline long double
 add_adjusted(long double a, long double b)
 {
 	struct dd sum;
-	union IEEEl2bits u;
+	union ieee_ext_u u;
 
 	sum = dd_add(a, b);
 	if (sum.lo != 0) {
-		u.e = sum.hi;
-		if ((u.bits.manl & 1) == 0)
+		u.extu_ld = sum.hi;
+		if ((u.extu_ext.ext_fracl & 1) == 0)
 			sum.hi = nextafterl(sum.hi, INFINITY * sum.lo);
 	}
 	return (sum.hi);
@@ -96,7 +104,7 @@ add_and_denormalize(long double a, long double b, int scale)
 {
 	struct dd sum;
 	int bits_lost;
-	union IEEEl2bits u;
+	union ieee_ext_u u;
 
 	sum = dd_add(a, b);
 
@@ -111,12 +119,12 @@ add_and_denormalize(long double a, long double b, int scale)
 	 * break the ties manually.
 	 */
 	if (sum.lo != 0) {
-		u.e = sum.hi;
-		bits_lost = -u.bits.exp - scale + 1;
-		if (bits_lost != 1 ^ (int)(u.bits.manl & 1))
+		u.extu_ld = sum.hi;
+		bits_lost = -u.extu_ext.ext_exp - scale + 1;
+		if ((bits_lost != 1) ^ (int)(u.extu_ext.ext_fracl & 1))
 			sum.hi = nextafterl(sum.hi, INFINITY * sum.lo);
 	}
-	return (ldexp(sum.hi, scale));
+	return (ldexp((double)sum.hi, scale));
 }
 
 /*
@@ -204,18 +212,18 @@ fmal(long double x, long double y, long double z)
 		case FE_TONEAREST:
 			return (z);
 		case FE_TOWARDZERO:
-			if (x > 0.0 ^ y < 0.0 ^ z < 0.0)
+			if ((x > 0.0) ^ (y < 0.0) ^ (z < 0.0))
 				return (z);
 			else
 				return (nextafterl(z, 0));
 		case FE_DOWNWARD:
-			if (x > 0.0 ^ y < 0.0)
+			if ((x > 0.0) ^ (y < 0.0))
 				return (z);
 			else
-				return (nextafterl(z, -INFINITY));
+				return (nextafterl(z, (long double)-INFINITY));
 		default:	/* FE_UPWARD */
-			if (x > 0.0 ^ y < 0.0)
-				return (nextafterl(z, INFINITY));
+			if ((x > 0.0) ^ (y < 0.0))
+				return (nextafterl(z, (long double)INFINITY));
 			else
 				return (z);
 		}
@@ -246,8 +254,10 @@ fmal(long double x, long double y, long double z)
 		 * the correct sign.
 		 */
 		fesetround(oround);
+		{
 		volatile long double vzs = zs; /* XXX gcc CSE bug workaround */
 		return (xy.hi + vzs + ldexpl(xy.lo, spread));
+		}
 	}
 
 	if (oround != FE_TONEAREST) {
@@ -266,3 +276,4 @@ fmal(long double x, long double y, long double z)
 	else
 		return (add_and_denormalize(r.hi, adj, spread));
 }
+#endif
