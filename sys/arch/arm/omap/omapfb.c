@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.22 2013/02/12 21:17:37 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.23 2013/02/12 21:25:12 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.22 2013/02/12 21:17:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.23 2013/02/12 21:25:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,19 +319,24 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dispc_config = reg;
 
 	/* we use overlay 1 for the console and X */
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GLOBAL_ALPHA, 0x00ff00ff);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GLOBAL_ALPHA,
+	    0x00ff00ff);
 	sc->sc_fbhwaddr = sc->sc_dmamem->ds_addr + 0x1000;
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_BASE_0, 
 	    sc->sc_fbhwaddr);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_POSITION, 
-	    0);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_VID1_POSITION, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_SIZE, 
 	    ((sc->sc_height - 1) << 16) | (sc->sc_width - 1));
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_PICTURE_SIZE, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_VID1_PICTURE_SIZE, 
 	    ((sc->sc_height - 1) << 16) | (sc->sc_width - 1));
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_ROW_INC, 1);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_PIXEL_INC, 1);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_PRELOAD, 0x60);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_VID1_ROW_INC, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_VID1_PIXEL_INC, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_VID1_PRELOAD, 0x60);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_ATTRIBUTES, 
 	    OMAP_VID_ATTR_ENABLE |
 	    OMAP_VID_ATTR_BURST_16x32 |
@@ -339,12 +344,14 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	    OMAP_VID_ATTR_REPLICATION);
 
 	/* turn off overlay 2 */
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID2_ATTRIBUTES, 0); 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_VID2_ATTRIBUTES, 0); 
 
 	/* initialize the gfx layer for use as hardware cursor */
 	sc->sc_cursor_cmap[0] = 0;
 	sc->sc_cursor_offset = (12 << 20) - (64 * 64 * 4);
-	sc->sc_cursor_img = (uint32_t *)((uint8_t *)sc->sc_fbaddr + sc->sc_cursor_offset);
+	sc->sc_cursor_img = 
+	   (uint32_t *)((uint8_t *)sc->sc_fbaddr + sc->sc_cursor_offset);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_BASE_0, 
 	    sc->sc_fbhwaddr + sc->sc_cursor_offset);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_TABLE_BASE, 
@@ -353,7 +360,8 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	    0x003f003f);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_POSITION, 
 	    0x00100010);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_PRELOAD, 0x60);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh,
+	    OMAPFB_DISPC_GFX_PRELOAD, 0x60);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_ATTRIBUTES, 
 	    /*OMAP_DISPC_ATTR_ENABLE |*/
 	    OMAP_DISPC_ATTR_BURST_16x32 |
@@ -768,7 +776,8 @@ omapfb_set_depth(struct omapfb_softc *sc, int d)
 			reg |= OMAP_VID_ATTR_RGB24;
 			break;
 		default:
-			aprint_error_dev(sc->sc_dev, "unsupported depth (%d)\n", d);
+			aprint_error_dev(sc->sc_dev,
+			    "unsupported depth (%d)\n", d);
 			return EINVAL;
 	}
 
@@ -1205,8 +1214,9 @@ omapfb_do_cursor(struct omapfb_softc * sc,
 			mask = 0x01;
 			for (j = 0; j < 8; j++) {
 				idx = ((sc->sc_cursor_mask[i] & mask) ? 2 : 0) |
-				      ((sc->sc_cursor_bitmap[i] & mask) ? 1 : 0);
-				sc->sc_cursor_img[i * 8 + j] = sc->sc_cursor_cmap[idx];
+				    ((sc->sc_cursor_bitmap[i] & mask) ? 1 : 0);
+				sc->sc_cursor_img[i * 8 + j] =
+				    sc->sc_cursor_cmap[idx];
 				mask = mask << 1;
 			} 
 		}
@@ -1214,7 +1224,8 @@ omapfb_do_cursor(struct omapfb_softc * sc,
 	if (whack) {
 		uint32_t reg;
 
-		reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL);
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_regh,
+		    OMAPFB_DISPC_CONTROL);
 		bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL,
 		    reg | OMAP_DISPC_CTRL_GO_LCD | OMAP_DISPC_CTRL_GO_DIGITAL);
 	}		
