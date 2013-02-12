@@ -1,4 +1,4 @@
-/*	$NetBSD: s_fma.c,v 1.3 2013/02/11 02:45:27 christos Exp $	*/
+/*	$NetBSD: s_fma.c,v 1.4 2013/02/12 08:21:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005-2011 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_fma.c,v 1.8 2011/10/21 06:30:43 das Exp $");
 #else
-__RCSID("$NetBSD: s_fma.c,v 1.3 2013/02/11 02:45:27 christos Exp $");
+__RCSID("$NetBSD: s_fma.c,v 1.4 2013/02/12 08:21:48 martin Exp $");
 #endif
 
 #include <machine/ieee.h>
@@ -289,5 +289,5 @@ fma(double x, double y, double z)
 }
 
 #ifndef __HAVE_LONG_DOUBLE
-__weak_reference(fma, fmal);
+__weak_alias(fma, fmal)
 #endif
