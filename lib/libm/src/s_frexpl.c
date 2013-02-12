@@ -1,4 +1,4 @@
-/*	$NetBSD: s_frexpl.c,v 1.2 2013/02/11 01:47:04 christos Exp $	*/
+/*	$NetBSD: s_frexpl.c,v 1.3 2013/02/12 21:40:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_frexpl.c,v 1.2 2013/02/11 01:47:04 christos Exp $");
+__RCSID("$NetBSD: s_frexpl.c,v 1.3 2013/02/12 21:40:19 martin Exp $");
 
 #include <machine/ieee.h>
 #include <float.h>
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: s_frexpl.c,v 1.2 2013/02/11 01:47:04 christos Exp $");
 
 #include "math_private.h"
 
-#ifdef EXT_EXPBITS
+#ifdef __HAVE_LONG_DOUBLE
 #if LDBL_MAX_EXP != 0x4000
 #error "Unsupported long double format"
 #endif
