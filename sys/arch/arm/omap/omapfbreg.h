@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfbreg.h,v 1.2 2013/01/30 15:55:27 macallan Exp $ */
+/*	$NetBSD: omapfbreg.h,v 1.3 2013/02/12 21:17:17 macallan Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfbreg.h,v 1.2 2013/01/30 15:55:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfbreg.h,v 1.3 2013/02/12 21:17:17 macallan Exp $");
 
 #ifndef OMAPFB_REG_H
 #define OMAPFB_REG_H
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: omapfbreg.h,v 1.2 2013/01/30 15:55:27 macallan Exp $
 #define OMAPFB_DISPC_GFX_PRELOAD	0x062c
 
 /* VID1 */
-#define OMAPFB_DISPC_VID1_BASE0		0x04bc
-#define OMAPFB_DISPC_VID1_BASE1		0x04c0
+#define OMAPFB_DISPC_VID1_BASE_0	0x04bc
+#define OMAPFB_DISPC_VID1_BASE_1	0x04c0
 #define OMAPFB_DISPC_VID1_POSITION	0x04c4
 #define OMAPFB_DISPC_VID1_SIZE		0x04c8	/* displayed size */
 #define OMAPFB_DISPC_VID1_ATTRIBUTES	0x04cc
@@ -127,8 +127,8 @@ __KERNEL_RCSID(0, "$NetBSD: omapfbreg.h,v 1.2 2013/01/30 15:55:27 macallan Exp $
 #define OMAPFB_DISPC_VID1_PRELOAD	0x0630
 
 /* VID2 */
-#define OMAPFB_DISPC_VID2_BASE0		0x054c
-#define OMAPFB_DISPC_VID2_BASE1		0x0550
+#define OMAPFB_DISPC_VID2_BASE_0	0x054c
+#define OMAPFB_DISPC_VID2_BASE_1	0x0550
 #define OMAPFB_DISPC_VID2_POSITION	0x0554
 #define OMAPFB_DISPC_VID2_SIZE		0x0558
 #define OMAPFB_DISPC_VID2_ATTRIBUTES	0x055c
