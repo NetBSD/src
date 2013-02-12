@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2012/11/15 19:49:12 jkunz Exp $
+#	$NetBSD: Makefile,v 1.35 2013/02/12 20:32:11 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ SUBDIR=	acpica am-utils bind byacc cron dhcpcd elftosb fetch file flex less \
 SUBDIR+= atf
 .endif
 .if (${MKCRYPTO} != "no")
-SUBDIR+= pkg_install ../../crypto/external/bsd
+SUBDIR+= pkg_install
 .endif
 # IP Filter
 .if (${MKIPFILTER} != "no")
