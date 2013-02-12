@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.11 2013/02/08 23:24:02 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.12 2013/02/12 02:38:53 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.11 2013/02/08 23:24:02 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.12 2013/02/12 02:38:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -527,7 +527,7 @@ bcm53xx_dma_bootstrap(psize_t memsize)
 		bcm53xx_dma_ranges[0].dr_len = memsize;
 		bcm53xx_coherent_dma_ranges[0].dr_len = memsize;
 		bcm53xx_dma_tag._nranges = 1;
-#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+#ifndef _ARM32_NEED_BUS_DMA_BOUNCE
 		bcm53xx_coherent_dma_tag._nranges = 1;
 #endif
 	} else {
@@ -537,7 +537,7 @@ bcm53xx_dma_bootstrap(psize_t memsize)
 		 * below 256MB which for PCI and GMAC are coherent.
 		 */
 		bcm53xx_dma_ranges[1].dr_len = memsize - 0x10000000;
-#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+#ifndef _ARM32_NEED_BUS_DMA_BOUNCE
 		bcm53xx_coherent_dma_ranges[1].dr_len = memsize - 0x10000000;
 #endif
 	}
