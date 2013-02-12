@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.72 2013/01/24 10:14:55 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.73 2013/02/12 15:06:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -586,7 +586,20 @@ static inline void armreg_##name##_write(uint64_t __val)	\
 	__asm __volatile("mcrr " __insnstring :: "r"(__val));	\
 }
 
-/* c0 registers */
+/* cp10 registers */
+ARMREG_READ_INLINE(fpsid, "p10,7,%0,c0,c0,0") /* VFP System ID */
+ARMREG_READ_INLINE(fpscr, "p10,7,%0,c1,c0,0") /* VFP Status/Control Register */
+ARMREG_WRITE_INLINE(fpscr, "p10,7,%0,c1,c0,0") /* VFP Status/Control Register */
+ARMREG_READ_INLINE(mvfr1, "p10,7,%0,c6,c0,0") /* Media and VFP Feature Register 1 */
+ARMREG_READ_INLINE(mvfr0, "p10,7,%0,c7,c0,0") /* Media and VFP Feature Register 0 */
+ARMREG_READ_INLINE(fpexc, "p10,7,%0,c8,c0,0") /* VFP Exception Register */
+ARMREG_WRITE_INLINE(fpexc, "p10,7,%0,c8,c0,0") /* VFP Exception Register */
+ARMREG_READ_INLINE(fpinst, "p10,7,%0,c9,c0,0") /* VFP Exception Instruction */
+ARMREG_WRITE_INLINE(fpinst, "p10,7,%0,c9,c0,0") /* VFP Exception Instruction */
+ARMREG_READ_INLINE(fpinst2, "p10,7,%0,c10,c0,0") /* VFP Exception Instruction 2 */
+ARMREG_WRITE_INLINE(fpinst2, "p10,7,%0,c10,c0,0") /* VFP Exception Instruction 2 */
+
+/* cp15 c0 registers */
 ARMREG_READ_INLINE(midr, "p15,0,%0,c0,c0,0") /* Main ID Register */
 ARMREG_READ_INLINE(ctr, "p15,0,%0,c0,c0,1") /* Cache Type Register */
 ARMREG_READ_INLINE(mpidr, "p15,0,%0,c0,c0,5") /* Multiprocess Affinity Register */
@@ -606,27 +619,27 @@ ARMREG_READ_INLINE(ccsidr, "p15,1,%0,c0,c0,0") /* Cache Size ID Register */
 ARMREG_READ_INLINE(clidr, "p15,1,%0,c0,c0,1") /* Cache Level ID Register */
 ARMREG_READ_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
 ARMREG_WRITE_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
-/* c1 registers */
+/* cp15 c1 registers */
 ARMREG_READ_INLINE(sctrl, "p15,0,%0,c1,c0,0") /* System Control Register */
 ARMREG_WRITE_INLINE(sctrl, "p15,0,%0,c1,c0,0") /* System Control Register */
 ARMREG_READ_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
 ARMREG_WRITE_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
 ARMREG_READ_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
 ARMREG_WRITE_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
-/* c2 registers */
+/* cp15 c2 registers */
 ARMREG_READ_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 0 */
 ARMREG_WRITE_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 0 */
 ARMREG_READ_INLINE(ttbr1, "p15,0,%0,c2,c0,1") /* Translation Table Base Register 1 */
 ARMREG_WRITE_INLINE(ttbr1, "p15,0,%0,c2,c0,1") /* Translation Table Base Register 1 */
 ARMREG_READ_INLINE(ttbcr, "p15,0,%0,c2,c0,2") /* Translation Table Base Register */
 ARMREG_WRITE_INLINE(ttbcr, "p15,0,%0,c2,c0,2") /* Translation Table Base Register */
-/* c5 registers */
+/* cp15 c5 registers */
 ARMREG_READ_INLINE(dfsr, "p15,0,%0,c5,c0,0") /* Data Fault Status Register */
 ARMREG_READ_INLINE(ifsr, "p15,0,%0,c5,c0,1") /* Instruction Fault Status Register */
-/* c6 registers */
+/* cp15 c6 registers */
 ARMREG_READ_INLINE(dfar, "p15,0,%0,c6,c0,0") /* Data Fault Address Register */
 ARMREG_READ_INLINE(ifar, "p15,0,%0,c6,c0,2") /* Instruction Fault Address Register */
-/* c7 registers */
+/* cp15 c7 registers */
 ARMREG_WRITE_INLINE(icialluis, "p15,0,%0,c7,c1,0") /* Instruction Inv All (IS) */
 ARMREG_WRITE_INLINE(bpiallis, "p15,0,%0,c7,c1,6") /* Branch Invalidate All (IS) */
 ARMREG_READ_INLINE(par, "p15,0,%0,c7,c4,0") /* Physical Address Register */
@@ -644,7 +657,7 @@ ARMREG_WRITE_INLINE(dmb, "p15,0,%0,c7,c10,5") /* Data Memory Barrier */
 ARMREG_WRITE_INLINE(dccmvau, "p15,0,%0,c7,c14,1") /* Data Clean MVA to PoU */
 ARMREG_WRITE_INLINE(dccimvac, "p15,0,%0,c7,c14,1") /* Data Clean&Inv MVA to PoC */
 ARMREG_WRITE_INLINE(dccisw, "p15,0,%0,c7,c14,2") /* Data Clean&Inv Set/Way */
-/* c9 registers */
+/* cp15 c9 registers */
 ARMREG_READ_INLINE(pmcr, "p15,0,%0,c9,c12,0") /* PMC Control Register */
 ARMREG_WRITE_INLINE(pmcr, "p15,0,%0,c9,c12,0") /* PMC Control Register */
 ARMREG_READ_INLINE(pmcntenset, "p15,0,%0,c9,c12,1") /* PMC Count Enable Set */
@@ -657,14 +670,14 @@ ARMREG_READ_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
 ARMREG_WRITE_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
 ARMREG_READ_INLINE(pmuserenr, "p15,0,%0,c9,c14,0") /* PMC User Enable */
 ARMREG_WRITE_INLINE(pmuserenr, "p15,0,%0,c9,c14,0") /* PMC User Enable */
-/* c13 registers */
+/* cp15 c13 registers */
 ARMREG_READ_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
 ARMREG_WRITE_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
 ARMREG_READ_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
 ARMREG_WRITE_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
 ARMREG_READ_INLINE(cbar, "p15,4,%0,c15,c0,0")	/* Configuration Base Address Register */
-/* c14 registers */
-/* Global Timer Registers */
+/* cp15 c14 registers */
+/* cp15 Global Timer Registers */
 ARMREG_READ_INLINE(cntfrq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
 ARMREG_WRITE_INLINE(cntfrq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
 ARMREG_READ_INLINE(cntkctl, "p15,0,%0,c14,c1,0") /* Timer PL1 Control Register */
@@ -685,7 +698,7 @@ ARMREG_READ64_INLINE(cntp_cval, "p15,2,%Q0,%R0,c14") /* PL1 Physical Timer Compa
 ARMREG_WRITE64_INLINE(cntp_cval, "p15,2,%Q0,%R0,c14") /* PL1 Physical Timer CompareValue Register */
 ARMREG_READ64_INLINE(cntv_cval, "p15,3,%Q0,%R0,c14") /* PL1 Virtual Timer CompareValue Register */
 ARMREG_WRITE64_INLINE(cntv_cval, "p15,3,%Q0,%R0,c14") /* PL1 Virtual Timer CompareValue Register */
-/* c15 registers */
+/* cp15 c15 registers */
 ARMREG_READ_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
 ARMREG_WRITE_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
 ARMREG_READ_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6) */
