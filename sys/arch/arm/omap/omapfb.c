@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.21 2013/02/09 13:28:59 jmcneill Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.22 2013/02/12 21:17:37 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.21 2013/02/09 13:28:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.22 2013/02/12 21:17:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,15 @@ struct omapfb_softc {
 	int sc_width, sc_height, sc_depth, sc_stride;
 	int sc_locked;
 	void *sc_fbaddr, *sc_vramaddr;
+
+	int sc_cursor_offset;
+	uint32_t *sc_cursor_img;
+	int sc_cursor_x, sc_cursor_y;
+	int sc_hot_x, sc_hot_y;
+	uint8_t sc_cursor_bitmap[8 * 64];
+	uint8_t sc_cursor_mask[8 * 64];
+	uint32_t sc_cursor_cmap[4];
+
 	bus_addr_t sc_fbhwaddr;
 	uint32_t *sc_clut;
 	uint32_t sc_dispc_config;
@@ -111,6 +120,10 @@ static void 	omapfb_putpalreg(struct omapfb_softc *, int, uint8_t,
 
 static int	omapfb_set_depth(struct omapfb_softc *, int);
 static void	omapfb_set_video(struct omapfb_softc *, int);
+
+static void 	omapfb_move_cursor(struct omapfb_softc *, int, int);
+static int	omapfb_do_cursor(struct omapfb_softc *,
+		    struct wsdisplay_cursor *);
 
 #if NOMAPDMA > 0
 static void	omapfb_init(struct omapfb_softc *);
@@ -300,24 +313,53 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DSS_SYSCONFIG, 
 	    OMAP_SYSCONF_AUTOIDLE);
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONFIG);
-	reg = OMAP_DISPC_CTRL_ACTIVE_MTRX;
+
+	reg = OMAP_DISPC_CFG_TV_ALPHA_EN | OMAP_DISPC_CFG_LCD_ALPHA_EN;
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONFIG, reg);
 	sc->sc_dispc_config = reg;
 
+	/* we use overlay 1 for the console and X */
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GLOBAL_ALPHA, 0x00ff00ff);
 	sc->sc_fbhwaddr = sc->sc_dmamem->ds_addr + 0x1000;
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_BASE_0, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_BASE_0, 
 	    sc->sc_fbhwaddr);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_POSITION, 
+	    0);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_SIZE, 
+	    ((sc->sc_height - 1) << 16) | (sc->sc_width - 1));
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_PICTURE_SIZE, 
+	    ((sc->sc_height - 1) << 16) | (sc->sc_width - 1));
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_ROW_INC, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_PIXEL_INC, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_PRELOAD, 0x60);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_ATTRIBUTES, 
+	    OMAP_VID_ATTR_ENABLE |
+	    OMAP_VID_ATTR_BURST_16x32 |
+	    OMAP_VID_ATTR_RGB16 |
+	    OMAP_VID_ATTR_REPLICATION);
+
+	/* turn off overlay 2 */
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID2_ATTRIBUTES, 0); 
+
+	/* initialize the gfx layer for use as hardware cursor */
+	sc->sc_cursor_cmap[0] = 0;
+	sc->sc_cursor_offset = (12 << 20) - (64 * 64 * 4);
+	sc->sc_cursor_img = (uint32_t *)((uint8_t *)sc->sc_fbaddr + sc->sc_cursor_offset);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_BASE_0, 
+	    sc->sc_fbhwaddr + sc->sc_cursor_offset);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_TABLE_BASE, 
 	    sc->sc_dmamem->ds_addr);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_SIZE, 
+	    0x003f003f);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_POSITION, 
-	    0);
+	    0x00100010);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_PRELOAD, 0x60);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_ATTRIBUTES, 
-	    OMAP_DISPC_ATTR_ENABLE |
+	    /*OMAP_DISPC_ATTR_ENABLE |*/
 	    OMAP_DISPC_ATTR_BURST_16x32 |
-	    /*OMAP_DISPC_ATTR_8BIT*/OMAP_DISPC_ATTR_RGB16
-	    | OMAP_DISPC_ATTR_REPLICATION);
+	    OMAP_DISPC_ATTR_ARGB32 |
+	    OMAP_DISPC_ATTR_REPLICATION);
+
 #if 0
 	printf("dss_control: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_regh,
 	    OMAPFB_DSS_CONTROL));
@@ -532,6 +574,36 @@ omapfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				omapfb_set_video(sc, *on);
 			}
 			return 0;
+
+		case WSDISPLAYIO_GCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = sc->sc_cursor_x;
+				cp->y = sc->sc_cursor_y;
+			}
+			return 0;
+		case WSDISPLAYIO_SCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				omapfb_move_cursor(sc, cp->x, cp->y);
+			}
+			return 0;
+		case WSDISPLAYIO_GCURMAX:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = 64;
+				cp->y = 64;
+			}
+			return 0;
+		case WSDISPLAYIO_SCURSOR:
+			{
+				struct wsdisplay_cursor *cursor = (void *)data;
+
+				return omapfb_do_cursor(sc, cursor);
+			}
 	}
 	return EPASSTHROUGH;
 }
@@ -685,15 +757,15 @@ omapfb_set_depth(struct omapfb_softc *sc, int d)
 {
 	uint32_t reg;
 
-	reg = OMAP_DISPC_ATTR_ENABLE |
-	      OMAP_DISPC_ATTR_BURST_16x32 |
-	      OMAP_DISPC_ATTR_REPLICATION;
+	reg = OMAP_VID_ATTR_ENABLE |
+	      OMAP_VID_ATTR_BURST_16x32 |
+	      OMAP_VID_ATTR_REPLICATION;
 	switch (d) {
 		case 16:
-			reg |= OMAP_DISPC_ATTR_RGB16;
+			reg |= OMAP_VID_ATTR_RGB16;
 			break;
 		case 32:
-			reg |= OMAP_DISPC_ATTR_RGB24;
+			reg |= OMAP_VID_ATTR_RGB24;
 			break;
 		default:
 			aprint_error_dev(sc->sc_dev, "unsupported depth (%d)\n", d);
@@ -701,7 +773,7 @@ omapfb_set_depth(struct omapfb_softc *sc, int d)
 	}
 
 	bus_space_write_4(sc->sc_iot, sc->sc_regh,
-	    OMAPFB_DISPC_GFX_ATTRIBUTES, reg); 
+	    OMAPFB_DISPC_VID1_ATTRIBUTES, reg); 
 
 	/*
 	 * now tell the video controller that we're done mucking around and 
@@ -1025,3 +1097,127 @@ omapfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	}
 }
 #endif /* NOMAPDMA > 0 */
+
+static void
+omapfb_move_cursor(struct omapfb_softc *sc, int x, int y)
+{
+	uint32_t pos, reg, addr;
+	int xx, yy, wi = 64, he = 64;
+
+	/*
+	 * we need to special case anything and everything where the cursor
+	 * may be partially off screen
+	 */
+
+	addr = sc->sc_fbhwaddr + sc->sc_cursor_offset;
+	xx = x - sc->sc_hot_x;
+	yy = y - sc->sc_hot_y;
+
+	/*
+	 * if we're off to the top or left we need to shif the start address
+	 * and shrink the gfx layer size
+	 */
+	if (xx < 0) {
+		wi += xx;
+		addr -= xx * 4;
+		xx = 0;
+	}
+	if (yy < 0) {
+		he += yy;
+		addr -= yy * 64 * 4;
+		yy = 0;
+	}
+	if (xx > (sc->sc_width - 64)) {
+		wi -= (xx + 64 - sc->sc_width);
+	}
+	if (yy > (sc->sc_height - 64)) {
+		he -= (yy + 64 - sc->sc_height);
+	}
+	pos = (yy << 16) | xx;
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_BASE_0,
+	    addr);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_POSITION, 
+	    pos);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_SIZE,
+	    ((he - 1) << 16) | (wi - 1));
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_ROW_INC,
+	    (64 - wi) * 4 + 1);
+	/*
+	 * now tell the video controller that we're done mucking around and 
+	 * actually update its settings
+	 */
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL);
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL,
+	    reg | OMAP_DISPC_CTRL_GO_LCD | OMAP_DISPC_CTRL_GO_DIGITAL);
+}
+
+static int
+omapfb_do_cursor(struct omapfb_softc * sc,
+                           struct wsdisplay_cursor *cur)
+{
+	int whack = 0;
+	int shape = 0;
+
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+		uint32_t attr = OMAP_DISPC_ATTR_BURST_16x32 |
+				OMAP_DISPC_ATTR_ARGB32 |
+				OMAP_DISPC_ATTR_REPLICATION;
+
+		if (cur->enable) attr |= OMAP_DISPC_ATTR_ENABLE;
+		bus_space_write_4(sc->sc_iot, sc->sc_regh,
+		    OMAPFB_DISPC_GFX_ATTRIBUTES, attr);
+		whack = 1;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		sc->sc_hot_x = cur->hot.x;
+		sc->sc_hot_y = cur->hot.y;
+		cur->which |= WSDISPLAY_CURSOR_DOPOS;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		omapfb_move_cursor(sc, cur->pos.x, cur->pos.y);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		int i;
+		uint32_t val;
+	
+		for (i = 0; i < min(cur->cmap.count, 3); i++) {
+			val = (cur->cmap.red[i] << 16 ) |
+			      (cur->cmap.green[i] << 8) |
+			      (cur->cmap.blue[i] ) |
+			      0xff000000;
+			sc->sc_cursor_cmap[i + cur->cmap.index + 2] = val;
+		}
+		shape = 1;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+
+		copyin(cur->mask, sc->sc_cursor_mask, 64 * 8);
+		copyin(cur->image, sc->sc_cursor_bitmap, 64 * 8);
+		shape = 1;
+	}
+	if (shape) {
+		int i, j, idx;
+		uint8_t mask;
+
+		for (i = 0; i < 64 * 8; i++) {
+			mask = 0x01;
+			for (j = 0; j < 8; j++) {
+				idx = ((sc->sc_cursor_mask[i] & mask) ? 2 : 0) |
+				      ((sc->sc_cursor_bitmap[i] & mask) ? 1 : 0);
+				sc->sc_cursor_img[i * 8 + j] = sc->sc_cursor_cmap[idx];
+				mask = mask << 1;
+			} 
+		}
+	}
+	if (whack) {
+		uint32_t reg;
+
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL);
+		bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL,
+		    reg | OMAP_DISPC_CTRL_GO_LCD | OMAP_DISPC_CTRL_GO_DIGITAL);
+	}		
+	return 0;
+
+}
