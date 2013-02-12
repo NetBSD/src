@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.242 2013/02/07 15:38:42 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.243 2013/02/12 03:11:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.242 2013/02/07 15:38:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.243 2013/02/12 03:11:43 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,6 +543,8 @@ static int	wm_gmii_bm_readreg(device_t, int, int);
 static void	wm_gmii_bm_writereg(device_t, int, int, int);
 static int	wm_gmii_hv_readreg(device_t, int, int);
 static void	wm_gmii_hv_writereg(device_t, int, int, int);
+static int	wm_gmii_82580_readreg(device_t, int, int);
+static void	wm_gmii_82580_writereg(device_t, int, int, int);
 static int	wm_sgmii_readreg(device_t, int, int);
 static void	wm_sgmii_writereg(device_t, int, int, int);
 
@@ -6315,6 +6317,10 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		} else if (sc->sc_type >= WM_T_80003) {
 			sc->sc_mii.mii_readreg = wm_gmii_i80003_readreg;
 			sc->sc_mii.mii_writereg = wm_gmii_i80003_writereg;
+		} else if (sc->sc_type >= WM_T_82580) {
+			sc->sc_phytype = WMPHY_82580;
+			sc->sc_mii.mii_readreg = wm_gmii_82580_readreg;
+			sc->sc_mii.mii_writereg = wm_gmii_82580_writereg;
 		} else if (sc->sc_type >= WM_T_82544) {
 			sc->sc_mii.mii_readreg = wm_gmii_i82544_readreg;
 			sc->sc_mii.mii_writereg = wm_gmii_i82544_writereg;
@@ -7015,6 +7021,58 @@ wm_sgmii_writereg(device_t self, int phy, int reg, int val)
 		aprint_error_dev(sc->sc_dev, "I2CCMD Error bit set\n");
 
 	wm_put_swfw_semaphore(sc, SWFW_PHY0_SM);
+}
+
+/*
+ * wm_gmii_82580_readreg:	[mii interface function]
+ *
+ *	Read a PHY register on the 82580 and I350.
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static int
+wm_gmii_82580_readreg(device_t self, int phy, int reg)
+{
+	struct wm_softc *sc = device_private(self);
+	int sem;
+	int rv;
+
+	sem = swfwphysem[sc->sc_funcid];
+	if (wm_get_swfw_semaphore(sc, sem)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return 0;
+	}
+
+	rv = wm_gmii_i82544_readreg(self, phy, reg);
+
+	wm_put_swfw_semaphore(sc, sem);
+	return rv;
+}
+
+/*
+ * wm_gmii_82580_writereg:	[mii interface function]
+ *
+ *	Write a PHY register on the 82580 and I350.
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static void
+wm_gmii_82580_writereg(device_t self, int phy, int reg, int val)
+{
+	struct wm_softc *sc = device_private(self);
+	int sem;
+
+	sem = swfwphysem[sc->sc_funcid];
+	if (wm_get_swfw_semaphore(sc, sem)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return;
+	}
+
+	wm_gmii_i82544_writereg(self, phy, reg, val);
+
+	wm_put_swfw_semaphore(sc, sem);
 }
 
 /*
