@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.86 2011/12/04 19:24:59 jym Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.87 2013/02/12 19:14:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.86 2011/12/04 19:24:59 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.87 2013/02/12 19:14:50 christos Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -937,8 +937,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		goto fail;
 	}
 	if (!module_compatible(mi->mi_version, __NetBSD_Version__)) {
-		module_error("module built for `%d', system `%d'",
-		    mi->mi_version, __NetBSD_Version__);
+		module_error("module `%s' built for `%d', system `%d'",
+		    mi->mi_name, mi->mi_version, __NetBSD_Version__);
 		if ((flags & MODCTL_LOAD_FORCE) != 0) {
 			module_error("forced load, system may be unstable");
 		} else {
