@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.71 2013/02/07 16:14:30 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.72 2013/02/12 22:24:47 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -150,7 +150,8 @@ static int  cg14_do_cursor(struct cgfourteen_softc *,
 
 #if NSX > 0
 static void cg14_wait_idle(struct cgfourteen_softc *);
-static void cg14_rectfill(struct cgfourteen_softc *, int, int, int, int, uint32_t);
+static void cg14_rectfill(struct cgfourteen_softc *, int, int, int, int,
+    uint32_t);
 static void cg14_invert(struct cgfourteen_softc *, int, int, int, int);
 static void cg14_bitblt(void *, int, int, int, int, int, int, int);
 
@@ -283,7 +284,8 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 			 sa->sa_size,
 			 0 /*BUS_SPACE_MAP_LINEAR*/,
 			 &bh) != 0) {
-		printf("%s: cannot map control registers\n", device_xname(self));
+		printf("%s: cannot map control registers\n",
+		    device_xname(self));
 		return;
 	}
 	sc->sc_regh = bh;
@@ -1326,8 +1328,10 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 			dptr = daddr;
 			cnt = wi;
 			if (pre > 0) {
-				sta(sptr, ASI_SX, SX_LDB(32, pre - 1, sptr & 7));
-				sta(dptr, ASI_SX, SX_STB(32, pre - 1, dptr & 7));
+				sta(sptr, ASI_SX,
+				    SX_LDB(32, pre - 1, sptr & 7));
+				sta(dptr, ASI_SX,
+				    SX_STB(32, pre - 1, dptr & 7));
 				cnt -= pre;
 				sptr += pre;
 				dptr += pre;
@@ -1342,8 +1346,10 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 				cnt -= num << 2;
 			}
 			if (cnt > 0) {
-				sta(sptr, ASI_SX, SX_LDB(32, cnt - 1, sptr & 7));
-				sta(dptr, ASI_SX, SX_STB(32, cnt - 1, dptr & 7));
+				sta(sptr, ASI_SX,
+				    SX_LDB(32, cnt - 1, sptr & 7));
+				sta(dptr, ASI_SX,
+				    SX_STB(32, cnt - 1, dptr & 7));
 			}
 			saddr += skip;
 			daddr += skip;
@@ -1362,8 +1368,10 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 				cnt -= 32;
 			}
 			if (cnt > 0) {
-				sta(sptr, ASI_SX, SX_LDB(32, cnt - 1, sptr & 7));
-				sta(dptr, ASI_SX, SX_STB(32, cnt - 1, dptr & 7));
+				sta(sptr, ASI_SX,
+				    SX_LDB(32, cnt - 1, sptr & 7));
+				sta(dptr, ASI_SX,
+				    SX_STB(32, cnt - 1, dptr & 7));
 			}
 			saddr += skip;
 			daddr += skip;
@@ -1416,7 +1424,8 @@ cg14_putchar(void *cookie, int row, int col, u_int c, long attr)
 			uint32_t reg;
 			for (i = 0; i < he; i++) {
 				reg = *data8;
-				sx_write(sc->sc_sx, SX_QUEUED(R_MASK), reg << 24);
+				sx_write(sc->sc_sx, SX_QUEUED(R_MASK),
+				    reg << 24);
 				sta(addr, ASI_SX, SX_STBS(8, wi - 1, addr & 7));
 				data8++;
 				addr += stride;
@@ -1428,7 +1437,8 @@ cg14_putchar(void *cookie, int row, int col, u_int c, long attr)
 			uint32_t reg;
 			for (i = 0; i < he; i++) {
 				reg = *data16;
-				sx_write(sc->sc_sx, SX_QUEUED(R_MASK), reg << 16);
+				sx_write(sc->sc_sx, SX_QUEUED(R_MASK),
+				    reg << 16);
 				sta(addr, ASI_SX, SX_STBS(8, wi - 1, addr & 7));
 				data16++;
 				addr += stride;
