@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.33 2013/02/11 18:11:20 jmcneill Exp $
+# $NetBSD: mkimage,v 1.34 2013/02/12 12:45:12 jmcneill Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -148,6 +148,7 @@ fi
 echo ${bar} Populating ffs filesystem ${bar}
 ${MAKEFS} -N ${release}/etc -t ffs -rx \
     -O $(((${init} + ${boot} + ${swap}) / 2))m \
+    -b $((${extra} / 2))m \
     -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
 
 if [ "${size}" = 0 ]; then
