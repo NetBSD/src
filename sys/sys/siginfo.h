@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.22 2011/04/10 14:37:20 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.23 2013/02/12 02:24:42 matt Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@ struct _ksiginfo {
 		struct {
 			void   *_addr;
 			int	_trap;
+			int	_trap2;
+			int	_trap3;
 		} _fault;
 
 		struct {
@@ -146,6 +148,8 @@ typedef union siginfo {
 
 #define	si_addr		_info._reason._fault._addr
 #define	si_trap		_info._reason._fault._trap
+#define	si_trap2	_info._reason._fault._trap2
+#define	si_trap3	_info._reason._fault._trap3
 
 #define	si_band		_info._reason._poll._band
 #define	si_fd		_info._reason._poll._fd
@@ -165,6 +169,8 @@ typedef union siginfo {
 
 #define	ksi_addr	ksi_info._reason._fault._addr
 #define	ksi_trap	ksi_info._reason._fault._trap
+#define	ksi_trap2	ksi_info._reason._fault._trap2
+#define	ksi_trap3	ksi_info._reason._fault._trap3
 
 #define	ksi_band	ksi_info._reason._poll._band
 #define	ksi_fd		ksi_info._reason._poll._fd
