@@ -1,4 +1,4 @@
-/*      $NetBSD: vfpreg.h,v 1.6 2012/09/22 19:45:53 matt Exp $ */
+/*      $NetBSD: vfpreg.h,v 1.7 2013/02/12 00:32:15 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -69,9 +69,9 @@
 #define VFP_FPEXC_FP2V		0x10000000	/* FPINST2 instruction valid */
 #define VFP_FPEXC_VECITR	0x00000700	/* Vector iteration count */
 #define VFP_FPEXC_INV		0x00000080	/* Input exception flag */
-#define VFP_FPEXC_UFC		0x00000080	/* Potential underflow flag */
-#define VFP_FPEXC_OFC		0x00000080	/* Potential overflow flag */
-#define VFP_FPEXC_IOC		0x00000080	/* Potential inv. op. flag */
+#define VFP_FPEXC_UFC		0x00000008	/* Potential underflow flag */
+#define VFP_FPEXC_OFC		0x00000004	/* Potential overflow flag */
+#define VFP_FPEXC_IOC		0x00000001	/* Potential inv. op. flag */
 
 #define VFP_FPSCR_N	0x80000000	/* set if compare <= result */
 #define VFP_FPSCR_Z	0x40000000	/* set if compare = result */
