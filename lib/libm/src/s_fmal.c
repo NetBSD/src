@@ -1,4 +1,4 @@
-/*	$NetBSD: s_fmal.c,v 1.2 2013/02/11 01:29:58 christos Exp $	*/
+/*	$NetBSD: s_fmal.c,v 1.3 2013/02/12 21:40:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005-2011 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_fmal.c,v 1.7 2011/10/21 06:30:43 das Exp $");
 #else
-__RCSID("$NetBSD: s_fmal.c,v 1.2 2013/02/11 01:29:58 christos Exp $");
+__RCSID("$NetBSD: s_fmal.c,v 1.3 2013/02/12 21:40:19 martin Exp $");
 #endif
 
 #include <machine/ieee.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: s_fmal.c,v 1.2 2013/02/11 01:29:58 christos Exp $");
 
 #include "math_private.h"
 
-#ifdef EXT_EXPBITS
+#ifdef __HAVE_LONG_DOUBLE
 /*
  * A struct dd represents a floating-point number with twice the precision
  * of a long double.  We maintain the invariant that "hi" stores the high-order

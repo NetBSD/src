@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.132 2013/02/11 17:55:01 matt Exp $
+#  $NetBSD: Makefile,v 1.133 2013/02/12 21:40:18 martin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -68,9 +68,9 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .endif
 .PATH:	${.CURDIR}/arch/i387
 
-COMMON_SRCS+= fenv.c s_nextafterl.c s_nexttoward.c s_nexttowardf.c \
+COMMON_SRCS+= fenv.c s_nexttoward.c s_nexttowardf.c \
 	s_nearbyint.c s_rintl.c \
-	s_scalbln.c s_frexpl.c # s_nan.c
+	s_scalbln.c # s_nan.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
@@ -155,7 +155,7 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c s_ilogbl.c \
 	s_isinff.c s_isnanf.c s_ldexpf.c s_lib_version.c s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_logbl.c \
-	s_matherr.c s_modff.c s_nextafter.c \
+	s_matherr.c s_modff.c s_nextafter.c s_nextafterl.c \
 	s_nextafterf.c s_remquo.c s_remquof.c s_rint.c s_rintf.c s_round.c s_roundf.c s_scalbn.c \
 	s_scalbnf.c s_scalbnl.c s_signgam.c s_significand.c s_significandf.c s_sin.c \
 	s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_tgammaf.c s_trunc.c s_truncf.c \
@@ -169,7 +169,7 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	w_pow.c w_powf.c w_remainder.c w_remainderf.c w_scalb.c w_scalbf.c \
 	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c \
 	lrint.c lrintf.c llrint.c llrintf.c lround.c lroundf.c llround.c \
-	llroundf.c s_frexp.c s_ldexp.c s_modf.c \
+	llroundf.c s_frexp.c s_frexpl.c s_ldexp.c s_modf.c \
 	s_fmax.c s_fmaxf.c s_fmaxl.c \
 	s_fmin.c s_fminf.c s_fminl.c s_fdim.c
 
