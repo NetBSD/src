@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.15 2009/02/11 06:42:31 wiz Exp $	*/
+/*	$NetBSD: vis.c,v 1.16 2013/02/13 04:52:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,12 +39,13 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.15 2009/02/11 06:42:31 wiz Exp $");
+__RCSID("$NetBSD: vis.c,v 1.16 2013/02/13 04:52:31 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <wchar.h>
 #include <unistd.h>
 #include <err.h>
 #include <vis.h>
@@ -157,12 +158,12 @@ process(FILE *fp)
 	static int col = 0;
 	static char nul[] = "\0";
 	char *cp = nul + 1;	/* so *(cp-1) starts out != '\n' */
-	int c, rachar; 
+	wint_t c, rachar; 
 	char buff[5];
 	
-	c = getc(fp);
+	c = getwc(fp);
 	while (c != EOF) {
-		rachar = getc(fp);
+		rachar = getwc(fp);
 		if (none) {
 			cp = buff;
 			*cp++ = c;
@@ -177,9 +178,9 @@ process(FILE *fp)
 			*cp++ = '\n';
 			*cp = '\0';
 		} else if (extra)
-			(void)svis(buff, (char)c, eflags, (char)rachar, extra);
+			(void)svis(buff, c, eflags, rachar, extra);
 		else
-			(void)vis(buff, (char)c, eflags, (char)rachar);
+			(void)vis(buff, c, eflags, rachar);
 
 		cp = buff;
 		if (fold) {
