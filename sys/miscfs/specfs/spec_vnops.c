@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.136 2012/12/20 08:03:43 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.137 2013/02/13 14:03:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.136 2012/12/20 08:03:43 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.137 2013/02/13 14:03:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -93,7 +93,14 @@ const char	devout[] = "devout";
 const char	devioc[] = "devioc";
 const char	devcls[] = "devcls";
 
-vnode_t		*specfs_hash[SPECHSZ];
+#define	SPECHSZ	64
+#if	((SPECHSZ&(SPECHSZ-1)) == 0)
+#define	SPECHASH(rdev)	(((rdev>>5)+(rdev))&(SPECHSZ-1))
+#else
+#define	SPECHASH(rdev)	(((unsigned)((rdev>>5)+(rdev)))%SPECHSZ)
+#endif
+
+static vnode_t	*specfs_hash[SPECHSZ];
 
 /*
  * This vnode operations vector is used for special device nodes
@@ -265,6 +272,82 @@ spec_node_init(vnode_t *vp, dev_t rdev)
 	if (sd != NULL) {
 		kmem_free(sd, sizeof(*sd));
 	}
+}
+
+/*
+ * Lookup a vnode by device number and return it referenced.
+ */
+int
+spec_node_lookup_by_dev(enum vtype type, dev_t dev, vnode_t **vpp)
+{
+	int error;
+	vnode_t *vp;
+
+	mutex_enter(&device_lock);
+	for (vp = specfs_hash[SPECHASH(dev)]; vp; vp = vp->v_specnext) {
+		if (type == vp->v_type && dev == vp->v_rdev) {
+			mutex_enter(vp->v_interlock);
+			/* If clean or being cleaned, then ignore it. */
+			if ((vp->v_iflag & (VI_CLEAN | VI_XLOCK)) == 0)
+				break;
+			mutex_exit(vp->v_interlock);
+		}
+	}
+	KASSERT(vp == NULL || mutex_owned(vp->v_interlock));
+	if (vp == NULL) {
+		mutex_exit(&device_lock);
+		return ENOENT;
+	}
+	/*
+	 * If it is an opened block device return the opened vnode.
+	 */
+	if (type == VBLK && vp->v_specnode->sn_dev->sd_bdevvp != NULL) {
+		mutex_exit(vp->v_interlock);
+		vp = vp->v_specnode->sn_dev->sd_bdevvp;
+		mutex_enter(vp->v_interlock);
+	}
+	mutex_exit(&device_lock);
+	error = vget(vp, 0);
+	if (error != 0)
+		return error;
+	*vpp = vp;
+
+	return 0;
+}
+
+/*
+ * Lookup a vnode by file system mounted on and return it referenced.
+ */
+int
+spec_node_lookup_by_mount(struct mount *mp, vnode_t **vpp)
+{
+	int i, error;
+	vnode_t *vp, *vq;
+
+	mutex_enter(&device_lock);
+	for (i = 0, vq = NULL; i < SPECHSZ && vq == NULL; i++) {
+		for (vp = specfs_hash[i]; vp; vp = vp->v_specnext) {
+			if (vp->v_type != VBLK)
+				continue;
+			vq = vp->v_specnode->sn_dev->sd_bdevvp;
+			if (vq != NULL && vq->v_specmountpoint == mp)
+				break;
+			vq = NULL;
+		}
+	}
+	if (vq == NULL) {
+		mutex_exit(&device_lock);
+		return ENOENT;
+	}
+	mutex_enter(vq->v_interlock);
+	mutex_exit(&device_lock);
+	error = vget(vq, 0);
+	if (error != 0)
+		return error;
+	*vpp = vq;
+
+	return 0;
+
 }
 
 /*
