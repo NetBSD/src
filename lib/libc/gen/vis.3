@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.35 2013/02/13 22:17:12 christos Exp $
+.\"	$NetBSD: vis.3,v 1.36 2013/02/13 22:19:48 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -397,11 +397,13 @@ ambiguous and non-invertible.
 .Sh MULTIBYTE CHARACTER SUPPORT
 These functions support multibyte character input.
 The encoding conversion is influenced by the setting of the
-LC_CTYPE environment variable which defines the set of characters
+.Ev LC_CTYPE
+environment variable which defines the set of characters
 that can be copied without encoding.
 .Pp
-When 8-bit data is present in the input, LC_CTYPE must be set to
-the correct locale or to the C locale.
+When 8-bit data is present in the input,
+.Ev LC_CTYPE
+must be set to the correct locale or to the C locale.
 If the locales of the data and the conversion are mismatched,
 multibyte character recognition may fail and encoding will be performed
 byte-by-byte instead.
