@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.23.4.1 2012/06/11 20:53:40 riz Exp $
+#	$NetBSD: Makefile.common,v 1.23.4.2 2013/02/13 20:52:07 riz Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -13,6 +13,7 @@
     ${MACHINE} == "cats"	|| \
     ${MACHINE} == "dreamcast"	|| \
     ${MACHINE} == "ews4800mips"	|| \
+    ${MACHINE} == "evbarm"	|| \
     ${MACHINE} == "evbmips"	|| \
     ${MACHINE} == "hp300"	|| \
     ${MACHINE} == "hpcarm"	|| \

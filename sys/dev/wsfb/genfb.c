@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.47 2012/02/07 18:48:19 phx Exp $ */
+/*	$NetBSD: genfb.c,v 1.47.2.1 2013/02/13 20:52:06 riz Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.47 2012/02/07 18:48:19 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.47.2.1 2013/02/13 20:52:06 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.47 2012/02/07 18:48:19 phx Exp $");
 #ifdef GENFB_DEBUG
 #define GPRINTF panic
 #else
-#define GPRINTF aprint_verbose
+#define GPRINTF aprint_debug
 #endif
 
 #define GENFB_BRIGHTNESS_STEP 15
@@ -380,7 +380,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			if (sc->sc_ops.genfb_ioctl)
 				error = sc->sc_ops.genfb_ioctl(sc, vs,
 					    cmd, data, flag, l);
-			if (error)
+			if (error && error != EPASSTHROUGH)
 				return error;
 
 			if (new_mode != sc->sc_mode) {
