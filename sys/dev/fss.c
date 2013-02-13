@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.85 2013/02/06 09:33:16 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.86 2013/02/13 14:03:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.85 2013/02/06 09:33:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.86 2013/02/13 14:03:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,7 +620,7 @@ static int
 fss_create_files(struct fss_softc *sc, struct fss_set *fss,
     off_t *bsize, struct lwp *l)
 {
-	int i, error, bits, fsbsize;
+	int error, bits, fsbsize;
 	uint64_t numsec;
 	unsigned int secsize;
 	struct timespec ts;
@@ -694,24 +694,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the block device it is mounted on and its size.
 	 */
 
-	mutex_enter(&device_lock);
-	for (i = 0; i < SPECHSZ; i++) {
-		for (vp = specfs_hash[i]; vp; vp = vp->v_specnext) {
-			if (vp->v_type == VBLK &&
-			    vp == vp->v_specnode->sn_dev->sd_bdevvp &&
-			    vp->v_specmountpoint == sc->sc_mount)
-				break;
-		}
-		if (vp != NULL)
-			break;
-	}
-	if (vp == NULL) {
-		mutex_exit(&device_lock);
-		return EINVAL;
-	}
-	mutex_enter(vp->v_interlock);
-	mutex_exit(&device_lock);
-	error = vget(vp, 0);
+	error = spec_node_lookup_by_mount(sc->sc_mount, &vp);
 	if (error)
 		return error;
 	sc->sc_bdev = vp->v_rdev;

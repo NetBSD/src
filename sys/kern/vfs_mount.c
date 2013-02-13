@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.16 2012/12/14 18:39:48 pooka Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.17 2013/02/13 14:03:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.16 2012/12/14 18:39:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.17 2013/02/13 14:03:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1252,19 +1252,14 @@ vfs_mountedon(vnode_t *vp)
 	if (vp->v_type != VBLK)
 		return ENOTBLK;
 	if (vp->v_specmountpoint != NULL)
-		return (EBUSY);
-	mutex_enter(&device_lock);
-	for (vq = specfs_hash[SPECHASH(vp->v_rdev)]; vq != NULL;
-	    vq = vq->v_specnext) {
-		if (vq->v_type != vp->v_type || vq->v_rdev != vp->v_rdev)
-			continue;
-		if (vq->v_specmountpoint != NULL) {
+		return EBUSY;
+	if (spec_node_lookup_by_dev(vp->v_type, vp->v_rdev, &vq) == 0) {
+		if (vq->v_specmountpoint != NULL)
 			error = EBUSY;
-			break;
-		}
+		vrele(vq);
 	}
-	mutex_exit(&device_lock);
-	return (error);
+
+	return error;
 }
 
 /*
