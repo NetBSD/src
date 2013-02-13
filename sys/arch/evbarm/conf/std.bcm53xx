@@ -1,4 +1,4 @@
-#	$NetBSD: std.bcm53xx,v 1.7.4.2 2012/11/28 22:50:09 matt Exp $
+#	$NetBSD: std.bcm53xx,v 1.7.4.3 2013/02/13 23:54:04 matt Exp $
 #
 # standard NetBSD/evbarm for BEAGLEBAORD options
 
@@ -16,7 +16,7 @@ options 	COM_TOLERANCE=40
 options 	ARM32
 options 	FPU_VFP
 options 	CORTEX_PMC
-#options 	_ARM32_NEED_BUS_DMA_BOUNCE
+options 	_ARM32_NEED_BUS_DMA_BOUNCE
 options 	PMAP_NEED_ALLOC_POOLPAGE
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
