@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.18 2013/02/13 22:24:48 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.19 2013/02/13 22:28:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.18 2013/02/13 22:24:48 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.19 2013/02/13 22:28:41 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -58,7 +58,7 @@ static int eflags, fold, foldwidth = 80, none, markeol;
 #ifdef DEBUG
 int debug;
 #endif
-static char *extra;
+static const char *extra = "";
 
 static void process(FILE *);
 
