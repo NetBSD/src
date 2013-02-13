@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.92 2013/02/11 21:50:30 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.93 2013/02/13 03:29:46 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8399,4 +8399,69 @@ usr.sbin/pf/ftp-proxy/Makefile			1.8
 	NPF: implement dynamic NPF ruless, add initial BPF support as
 	an alternative to n-code, and minor fixes.
 	[rmind, ticket #817]
+
+etc/MAKEDEV.tmpl					1.160
+etc/etc.evbarm/MAKEDEV.conf				1.9
+external/broadcom/rpi-firmware/dist/LICENCE.broadcom	1.1
+external/broadcom/rpi-firmware/dist/bootcode.bin	1.1
+external/broadcom/rpi-firmware/dist/bootcode.bin	1.2
+external/broadcom/rpi-firmware/dist/fixup.dat		1.1
+external/broadcom/rpi-firmware/dist/fixup.dat		1.2
+external/broadcom/rpi-firmware/dist/fixup_cd.dat	1.1
+external/broadcom/rpi-firmware/dist/fixup_cd.dat	1.2
+external/broadcom/rpi-firmware/dist/start.elf		1.1
+external/broadcom/rpi-firmware/dist/start.elf		1.2
+external/broadcom/rpi-firmware/dist/start_cd.elf	1.1
+external/broadcom/rpi-firmware/dist/start_cd.elf	1.2
+sys/arch/arm/broadcom/bcm2835_bsc.c			1.1 via patch
+sys/arch/arm/broadcom/bcm2835_bscreg.h			1.1 via patch
+sys/arch/arm/broadcom/bcm2835_dotg.c			1.1 via patch
+sys/arch/arm/broadcom/bcm2835_emmc.c			1.7 via patch
+sys/arch/arm/broadcom/bcm2835_genfb.c			1.4 via patch
+sys/arch/arm/broadcom/bcm2835_gpio_subr.c		1.2 via patch
+sys/arch/arm/broadcom/bcm2835_gpio_subr.h		1.1 via patch
+sys/arch/arm/broadcom/bcm2835_gpioreg.h			1.1 via patch
+sys/arch/arm/broadcom/bcm2835_intr.c			1.3 via patch
+sys/arch/arm/broadcom/bcm2835_mbox.c			1.5 via patch
+sys/arch/arm/broadcom/bcm2835_mbox.h			1.4 via patch
+sys/arch/arm/broadcom/bcm2835_obio.c			1.17 via patch
+sys/arch/arm/broadcom/bcm2835_pm.c			1.2 via patch
+sys/arch/arm/broadcom/bcm2835_rng.c			1.3 via patch
+sys/arch/arm/broadcom/bcm2835_space.c			1.5 via patch
+sys/arch/arm/broadcom/bcm2835_spi.c			1.1 via patch
+sys/arch/arm/broadcom/bcm2835_spireg.h			1.1 via patch
+sys/arch/arm/broadcom/bcm2835_tmr.c			1.3 via patch
+sys/arch/arm/broadcom/bcm2835reg.h			1.10 via patch
+sys/arch/arm/broadcom/files.bcm2835			1.14 via patch
+sys/arch/evbarm/conf/RPI				1.23 via patch
+sys/arch/evbarm/conf/files.rpi				1.3 via patch
+sys/arch/evbarm/conf/mk.rpi				1.2 via patch
+sys/arch/evbarm/conf/std.rpi				1.4 via patch
+sys/arch/evbarm/rpi/rpi_machdep.c			1.34 via patch
+sys/arch/evbarm/rpi/rpi_start.S				1.7 via patch
+sys/arch/evbarm/rpi/rpi_vcmbox.c			1.2 via patch
+sys/arch/evbarm/rpi/vcio.h				1.1 via patch
+sys/arch/evbarm/rpi/vcprop.h				1.7 via patch
+sys/conf/files						patch
+sys/dev/sdmmc/sdhc.c					1.43
+sys/dev/sdmmc/sdhcvar.h					1.13
+sys/dev/usb/dwc_otg.c					1.45 via patch
+sys/dev/usb/dwc_otgreg.h				1.5 via patch
+sys/dev/usb/dwc_otgvar.h				1.11 via patch
+sys/dev/usb/files.usb					1.126 via patch
+sys/dev/usb/if_smsc.c					1.7 via patch
+sys/dev/usb/if_smscreg.h				1.1 via patch
+sys/dev/usb/if_smscvar.h				1.1 via patch
+sys/dev/usb/usbdevices.config				patch
+sys/dev/usb/usbdevs					1.633 via patch
+sys/dev/usb/usbdevs.h					regen
+sys/dev/usb/usbdevs_data.h				regen
+sys/dev/wscons/wsconsio.h				1.105,1.107 via patch
+sys/dev/wscons/wsdisplayvar.h				1.50
+sys/dev/wscons/wsdisplay_util.c				1.2
+sys/dev/videomode/edid.c				1.12 via patch
+
+	Greatly improved Raspberry Pi support.  USB and onboard
+	Ethernet should work.
+	[skrll, ticket #813]
 
