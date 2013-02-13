@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.228.2.1.2.2 2013/02/07 06:52:53 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.228.2.1.2.3 2013/02/13 23:52:02 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.228.2.1.2.2 2013/02/07 06:52:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.228.2.1.2.3 2013/02/13 23:52:02 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -605,14 +605,32 @@ struct pv_entry {
  * Macro to determine if a mapping might be resident in the
  * instruction cache and/or TLB
  */
+#if ARM_MMU_V7 > 0
+/*
+ * Speculative loads by Cortex cores can cause TLB entries to be filled even if
+ * there are no explicit accesses, so there may be always be TLB entries to
+ * flush.  If we used ASIDs then this would not be a problem.
+ */
+#define	PV_BEEN_EXECD(f)  (((f) & PVF_EXEC) == PVF_EXEC)
+#else
 #define	PV_BEEN_EXECD(f)  (((f) & (PVF_REF | PVF_EXEC)) == (PVF_REF | PVF_EXEC))
+#endif
 #define	PV_IS_EXEC_P(f)   (((f) & PVF_EXEC) != 0)
 
 /*
  * Macro to determine if a mapping might be resident in the
  * data cache and/or TLB
  */
+#if ARM_MMU_V7 > 0
+/*
+ * Speculative loads by Cortex cores can cause TLB entries to be filled even if
+ * there are no explicit accesses, so there may be always be TLB entries to
+ * flush.  If we used ASIDs then this would not be a problem.
+ */
+#define	PV_BEEN_REFD(f)   (1)
+#else
 #define	PV_BEEN_REFD(f)   (((f) & PVF_REF) != 0)
+#endif
 
 /*
  * Local prototypes
@@ -726,7 +744,16 @@ pmap_tlb_flushID(pmap_t pm)
 
 	if (pm->pm_cstate.cs_tlb_id) {
 		cpu_tlb_flushID();
+#if ARM_MMU_V7 == 0
+		/*
+		 * Speculative loads by Cortex cores can cause TLB entries to
+		 * be filled even if there are no explicit accesses, so there
+		 * may be always be TLB entries to flush.  If we used ASIDs
+		 * then it would not be a problem.
+		 * This is not true for other CPUs.
+		 */
 		pm->pm_cstate.cs_tlb = 0;
+#endif
 	}
 }
 
@@ -736,7 +763,16 @@ pmap_tlb_flushD(pmap_t pm)
 
 	if (pm->pm_cstate.cs_tlb_d) {
 		cpu_tlb_flushD();
+#if ARM_MMU_V7 == 0
+		/*
+		 * Speculative loads by Cortex cores can cause TLB entries to
+		 * be filled even if there are no explicit accesses, so there
+		 * may be always be TLB entries to flush.  If we used ASIDs
+		 * then it would not be a problem.
+		 * This is not true for other CPUs.
+		 */
 		pm->pm_cstate.cs_tlb_d = 0;
+#endif
 	}
 }
 
