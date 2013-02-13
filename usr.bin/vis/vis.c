@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.17 2013/02/13 13:58:44 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.18 2013/02/13 22:24:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.17 2013/02/13 13:58:44 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.18 2013/02/13 22:24:48 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: vis.c,v 1.17 2013/02/13 13:58:44 christos Exp $");
 #include <stdlib.h>
 #include <errno.h>
 #include <wchar.h>
+#include <limits.h>
 #include <unistd.h>
 #include <err.h>
 #include <vis.h>
@@ -159,8 +160,10 @@ process(FILE *fp)
 	static int col = 0;
 	static char nul[] = "\0";
 	char *cp = nul + 1;	/* so *(cp-1) starts out != '\n' */
-	wint_t c, rachar; 
-	char buff[5];
+	wint_t c, c1, rachar; 
+	wchar_t ibuff[3]; /* room for c + rachar + NUL */
+	char mbibuff[13]; /* ((sizeof(ibuff) - 1) * MB_LEN_MAX) + NUL */
+	char buff[5]; /* max vis-encoding length for one char + NUL */
 	
 	c = getwc(fp);
 	if (c == WEOF && errno == EILSEQ)
@@ -182,10 +185,15 @@ process(FILE *fp)
 			*cp++ = '$';
 			*cp++ = '\n';
 			*cp = '\0';
-		} else if (extra)
-			(void)svis(buff, c, eflags, rachar, extra);
-		else
-			(void)vis(buff, c, eflags, rachar);
+		} else {
+			c1 = rachar;
+			if (c1 == WEOF)
+				c1 = L'\0';
+			swprintf(ibuff, 3, L"%lc%lc", c, c1);
+			wcstombs(mbibuff, ibuff,
+			    (wcslen(ibuff) * MB_LEN_MAX) + 1);
+			(void) strsvisx(buff, mbibuff, 1, eflags, extra);
+		}
 
 		cp = buff;
 		if (fold) {

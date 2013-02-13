@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.1,v 1.14 2009/02/10 23:06:31 christos Exp $
+.\"	$NetBSD: vis.1,v 1.15 2013/02/13 22:24:48 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)vis.1	8.4 (Berkeley) 4/19/94
 .\"
-.Dd February 10, 2009
+.Dd February 13, 2013
 .Dt VIS 1
 .Os
 .Sh NAME
@@ -135,6 +135,28 @@ Tabs are also encoded.
 White space (space-tab-newline) is also encoded.
 .Pq Dv VIS_WHITE
 .El
+.Sh MULTIBYTE CHARACTER SUPPORT
+.Nm
+supports multibyte character input.
+The encoding conversion is influenced by the setting of the LC_CTYPE
+environment variable which defines the set of characters that can be
+copied without encoding.
+.Pp
+When 8-bit data is present in the input, LC_CTYPE must be set to
+the correct locale or to the C locale.
+If the locales of the data and the conversion are mismatched, multibyte
+character recognition may fail and encoding will be performed byte-by-byte
+instead.
+The result of encoding using
+.Nm
+followed by decoding using
+.Xr unvis 3
+is unlikely to return the same input data in this case.
+.Sh ENVIRONMENT
+.Bl -tag -width ".Ev LC_CTYPE"
+.It Ev LC_CTYPE
+Specify the locale of the input data.
+Set to C if the input data locale is unknown.
 .Sh SEE ALSO
 .Xr unvis 1 ,
 .Xr svis 3 ,
@@ -144,3 +166,7 @@ The
 .Nm
 command appears in
 .Bx 4.4 .
+Myltibyte character support was added in
+.Nx 6.1
+and
+.Fx 9.2 .
