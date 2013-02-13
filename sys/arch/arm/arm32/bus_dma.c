@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.73 2013/02/04 13:26:19 macallan Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.74 2013/02/13 23:08:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.73 2013/02/04 13:26:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.74 2013/02/13 23:08:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,7 +451,9 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	map->_dm_buftype = _BUS_DMA_BUFTYPE_INVALID;
-	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+	KASSERTMSG(map->dm_maxsegsz <= map->_dm_maxmaxsegsz,
+	    "dm_maxsegsz %lu _dm_maxmaxsegsz %lu",
+	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
@@ -518,7 +520,9 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	map->_dm_buftype = _BUS_DMA_BUFTYPE_INVALID;
-	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+	KASSERTMSG(map->dm_maxsegsz <= map->_dm_maxmaxsegsz,
+	    "dm_maxsegsz %lu _dm_maxmaxsegsz %lu",
+	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -640,7 +644,9 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
-	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+	KASSERTMSG(map->dm_maxsegsz <= map->_dm_maxmaxsegsz,
+	    "dm_maxsegsz %lu _dm_maxmaxsegsz %lu",
+	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -957,7 +963,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *	POSTWRITE -- Nothing.
 	 */
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
-	const bool bouncing = (map->_dm_flags & _BUS_DMA_IS_BOUNCING);
+	const bool bouncing = (map->_dm_flags & _BUS_DMAMAP_IS_BOUNCING);
 #else
 	const bool bouncing = false;
 #endif
@@ -971,7 +977,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	if (!bouncing && pre_ops == 0 && post_ops == BUS_DMASYNC_POSTWRITE) {
 		return;
 	}
-	KASSERT(pre_ops != 0 || (post_ops & BUS_DMASYNC_POSTREAD));
+	KASSERTMSG(bouncing || pre_ops != 0 || (post_ops & BUS_DMASYNC_POSTREAD),
+	    "pre_ops %#x post_ops %#x", pre_ops, post_ops);
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
 	if (bouncing && (ops & BUS_DMASYNC_PREWRITE)) {
 		struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
@@ -1009,7 +1016,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
 
 	/* Skip cache frobbing if mapping was COHERENT. */
-	if (!bouncing && (map->_dm_flags & _BUS_DMAMAP_COHERENT)) {
+	if (!bouncing && pre_ops == 0
+	    && (map->_dm_flags & _BUS_DMAMAP_COHERENT)) {
 		/* Drain the write buffer. */
 		cpu_drain_writebuf();
 		return;
