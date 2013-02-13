@@ -1,0 +1,24 @@
+#	$NetBSD: listsrcdirs,v 1.1 2013/02/13 18:45:20 pooka Exp $
+#
+
+#
+# Run this script with a shell which supports brace expansion (bash, csh, etc.)
+# It will echo all of the NetBSD source directories required to build rump
+# kernels with TOOLS_BUILDRUMP=yes (used for example by buildrump.sh).
+# Feed the output to whichever method you use to obtain NetBSD sources, e.g.
+#
+# bash listsrcdirs | xargs cvs -d anoncvs@anoncvs.netbsd.org:/cvsroot -z3 co -P
+#
+
+echo src/{build.sh,Makefile,Makefile.inc} \
+    src/{sys,tools,common,include} \
+    src/share/mk \
+    src/etc/{Makefile.params,master.passwd,group} \
+    src/lib/lib{c,util} \
+    src/lib/librump{user,client,,dev,net,vfs} \
+    src/external/bsd/{flex,mdocml,byacc} \
+    src/external/historical/nawk \
+    src/external/cddl/osnet \
+    src/usr.bin/{make,xinstall,config,mktemp,sed,tsort,cksum,m4,mkdep,lorder} \
+    src/usr.bin/join \
+    src/usr.sbin/mtree
