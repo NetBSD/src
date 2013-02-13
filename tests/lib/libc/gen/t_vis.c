@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vis.c,v 1.5 2013/02/11 04:12:48 christos Exp $	*/
+/*	$NetBSD: t_vis.c,v 1.6 2013/02/13 04:51:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,9 @@ ATF_TC_BODY(strvis_basic, tc)
 
 	for (i = 0; i < __arraycount(styles); i++) {
 		ATF_REQUIRE(strsvisx(visbuf, srcbuf, SIZE, styles[i], "") > 0);
-		ATF_REQUIRE(strunvisx(dstbuf, visbuf, styles[i]) > 0);
+		memset(dstbuf, 0, SIZE);
+		ATF_REQUIRE(strunvisx(dstbuf, visbuf, 
+		    styles[i] & (VIS_HTTP1808|VIS_MIMESTYLE)) > 0);
 		for (j = 0; j < SIZE; j++)
 			if (dstbuf[j] != (char)j)
 				atf_tc_fail_nonfatal("Failed for style %x, "
