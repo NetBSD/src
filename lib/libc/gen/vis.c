@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.48 2013/02/13 12:15:09 pooka Exp $	*/
+/*	$NetBSD: vis.c,v 1.49 2013/02/13 15:22:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.48 2013/02/13 12:15:09 pooka Exp $");
+__RCSID("$NetBSD: vis.c,v 1.49 2013/02/13 15:22:09 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -315,8 +315,10 @@ istrsnvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 		mbslength = mblength;
 		while (mbslength) {
 			clen = mbtowc(src, mbsrc, mbslength);
-			if (clen < 0)
-				break;
+			if (clen < 0) {
+				*src = (wint_t)(u_char)*mbsrc;
+				clen = 1;
+			}
 			if (clen == 0)
 				clen = 1;
 			src++;
