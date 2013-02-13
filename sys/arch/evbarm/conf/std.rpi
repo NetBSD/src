@@ -1,4 +1,4 @@
-#	$NetBSD: std.rpi,v 1.1.2.2 2012/08/09 06:36:44 jdc Exp $
+#	$NetBSD: std.rpi,v 1.1.2.3 2013/02/13 01:36:14 riz Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
@@ -14,8 +14,11 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 #options 	ARM11_CACHE_WRITE_THROUGH
+
+#options 	__HAVE_CPU_COUNTER
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	KERNEL_BASE_EXT=0xc0000000
+options 	TPIDRPRW_IS_CURCPU
 
 options 	EVBARM_BOARDTYPE="rpi"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.rpi"

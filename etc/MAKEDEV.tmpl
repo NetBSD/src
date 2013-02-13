@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.151.2.8 2013/02/08 23:01:49 riz Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.151.2.9 2013/02/13 01:36:06 riz Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -123,6 +123,7 @@
 #	ttyB0	UART on first 68901 (formerly mdm01) (atari)
 #	ixpcom	IXP12x0 COM ports
 #	epcom	EP93xx COM ports
+#	plcom	ARM PL01[01] serial ports
 #	ttyM?	HP200/300 4 port serial mux interface (hp300)
 #	ttya	"ttya" system console (luna68k)
 #	ttyb	second system serial port (luna68k)
@@ -1907,6 +1908,11 @@ ixpcom[0-9]*)
 epcom[0-9]*)
 	unit=${i#epcom}
 	mkdev epcom$unit c %epcom_chr% $unit "" "" $u_uucp
+	;;
+
+plcom[0-9]*)
+	unit=${i#plcom}
+	mkdev plcom$unit c %plcom_chr% $unit "" "" $u_uucp
 	;;
 
 ucbsnd)
