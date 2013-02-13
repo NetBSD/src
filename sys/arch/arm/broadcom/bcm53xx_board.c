@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.12 2013/02/12 02:38:53 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.13 2013/02/13 23:09:39 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.12 2013/02/12 02:38:53 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.13 2013/02/13 23:09:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,7 +66,7 @@ bus_space_handle_t bcm53xx_armcore_bsh;
 
 static struct cpu_softc cpu_softc;
 
-struct arm32_dma_range bcm53xx_dma_ranges[2] = {
+struct arm32_dma_range bcm53xx_dma_ranges[] = {
 	[0] = {
 		.dr_sysbase = 0x80000000,
 		.dr_busbase = 0x80000000,
@@ -85,7 +85,7 @@ struct arm32_bus_dma_tag bcm53xx_dma_tag = {
 	_BUS_DMATAG_FUNCS,
 };
 
-struct arm32_dma_range bcm53xx_coherent_dma_ranges[2] = {
+struct arm32_dma_range bcm53xx_coherent_dma_ranges[] = {
 	[0] = {
 		.dr_sysbase = 0x80000000,
 		.dr_busbase = 0x80000000,
@@ -523,7 +523,7 @@ bcm53xx_bootstrap(vaddr_t iobase)
 void
 bcm53xx_dma_bootstrap(psize_t memsize)
 {
-	if (memsize < 256*1024*1024) {
+	if (memsize <= 256*1024*1024) {
 		bcm53xx_dma_ranges[0].dr_len = memsize;
 		bcm53xx_coherent_dma_ranges[0].dr_len = memsize;
 		bcm53xx_dma_tag._nranges = 1;
