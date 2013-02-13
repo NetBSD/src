@@ -1,4 +1,4 @@
-/*	$NetBSD: vcio.h,v 1.1.4.2 2012/11/19 19:13:01 riz Exp $	*/
+/*	$NetBSD: vcio.h,v 1.1.4.3 2013/02/13 01:36:15 riz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
