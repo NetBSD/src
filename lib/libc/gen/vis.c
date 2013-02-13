@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.49 2013/02/13 15:22:09 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.50 2013/02/13 22:15:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.49 2013/02/13 15:22:09 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.50 2013/02/13 22:15:43 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -288,10 +288,11 @@ istrsnvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
     int flag, const char *mbextra)
 {
 	wchar_t *dst, *src, *pdst, *psrc, *start, *extra, *nextra;
-	size_t len, olen, mbslength;
+	size_t len, olen;
 	wint_t c;
 	visfun_t f;
 	int clen, error = -1;
+	ssize_t mbslength;
 
 	_DIAGASSERT(mbdst != NULL);
 	_DIAGASSERT(mbsrc != NULL);
@@ -311,29 +312,24 @@ istrsnvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 	dst = pdst;
 	src = psrc;
 
-	if (mblength > 1) {
-		mbslength = mblength;
-		while (mbslength) {
-			clen = mbtowc(src, mbsrc, mbslength);
-			if (clen < 0) {
-				*src = (wint_t)(u_char)*mbsrc;
-				clen = 1;
-			}
-			if (clen == 0)
-				clen = 1;
-			src++;
-			mbsrc += clen;
-			mbslength -= clen;
-		}
-		len = src - psrc;	
-		src = psrc;
-	} else {
-		len = mblength;
-		src[0] = (wint_t)(u_char)mbsrc[0];
-		src[1] = (wint_t)(u_char)mbsrc[1];
-	}
 	if (mblength < len)
 		len = mblength;
+
+	mbslength = (ssize_t)mblength;
+	while (mbslength > 0) {
+		clen = mbtowc(src, mbsrc, MB_LEN_MAX);
+		if (clen < 0) {
+			*src = (wint_t)(u_char)*mbsrc;
+			clen = 1;
+		}`
+		if (clen == 0)
+			clen = 1;
+		src++;
+		mbsrc += clen;
+		mbslength -= clen;
+	}
+	len = src - psrc;	
+	src = psrc;
 
 	mbstowcs(extra, mbextra, strlen(mbextra));
 	MAKEEXTRALIST(flag, nextra, extra);
