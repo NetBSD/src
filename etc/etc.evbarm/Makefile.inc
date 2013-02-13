@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.43 2013/02/10 22:03:49 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.44 2013/02/13 04:22:36 christos Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -18,7 +18,7 @@ EVBARM_BOARDS+=		ADI_BRH CP3100 GEMINI GUMSTIX INTEGRATOR \
 
 
 IMAGE.rel=	${RELEASEDIR}/${RELEASEMACHINEDIR}
-IMAGE.dir=	${IMAGE.rel}/binary/gzimg/
+IMAGE.dir=	${IMAGE.rel}/binary/gzimg
 IMAGE.kern=	${IMAGE.rel}/binary/kernel
 
 __mkimage: .USE
