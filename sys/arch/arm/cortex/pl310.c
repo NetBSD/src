@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.10 2013/01/22 09:04:12 matt Exp $	*/
+/*	$NetBSD: pl310.c,v 1.11 2013/02/13 23:10:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.10 2013/01/22 09:04:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.11 2013/02/13 23:10:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -287,20 +287,16 @@ arml2cc_cache_range_op(paddr_t pa, psize_t len, bus_size_t cache_op)
 		pa -= off;
 	}
 	len = roundup2(len, line_size);
-	off = pa & PAGE_MASK;
-	for (const paddr_t endpa = pa + len; pa < endpa; off = 0) {
-		psize_t seglen = min(len, PAGE_SIZE - off);
-
-		mutex_spin_enter(&sc->sc_lock);
-		if (!sc->sc_enabled) {
-			mutex_spin_exit(&sc->sc_lock);
-			return;
-		}
-		for (paddr_t segend = pa + seglen; pa < segend; pa += line_size) {
-			arml2cc_cache_op(sc, cache_op, pa, false);
-		}
+	mutex_spin_enter(&sc->sc_lock);
+	if (__predict_false(!sc->sc_enabled)) {
 		mutex_spin_exit(&sc->sc_lock);
+		return;
 	}
+	for (const paddr_t endpa = pa + len; pa < endpa; pa += line_size) {
+		arml2cc_cache_op(sc, cache_op, pa, false);
+	}
+	arml2cc_cache_sync(sc);
+	mutex_spin_exit(&sc->sc_lock);
 }
 
 static void
@@ -308,7 +304,6 @@ arml2cc_sdcache_inv_range(vaddr_t va, paddr_t pa, psize_t len)
 {
 	atomic_inc_64(&arml2cc_sc->sc_ev_inv.ev_count);
 	arml2cc_cache_range_op(pa, len, L2C_INV_PA);
-	arml2cc_cache_sync(arml2cc_sc);
 }
 
 static void
@@ -316,7 +311,6 @@ arml2cc_sdcache_wb_range(vaddr_t va, paddr_t pa, psize_t len)
 {
 	atomic_inc_64(&arml2cc_sc->sc_ev_wb.ev_count);
 	arml2cc_cache_range_op(pa, len, L2C_CLEAN_PA);
-	arml2cc_cache_sync(arml2cc_sc);
 }
 
 static void
@@ -324,5 +318,4 @@ arml2cc_sdcache_wbinv_range(vaddr_t va, paddr_t pa, psize_t len)
 {
 	atomic_inc_64(&arml2cc_sc->sc_ev_wbinv.ev_count);
 	arml2cc_cache_range_op(pa, len, L2C_CLEAN_INV_PA);
-	arml2cc_cache_sync(arml2cc_sc);
 }
