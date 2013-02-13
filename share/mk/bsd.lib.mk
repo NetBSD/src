@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.330 2013/02/09 17:18:17 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.331 2013/02/13 08:00:47 nakayama Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -744,7 +744,7 @@ libinstall:: ${_DEST.LIB}/${_LIB_pic.a}
 ${_DEST.LIB}/${_LIB_pic.a}! .MADE
 .endif
 .if ${MKPICLIB} == "no"
-${_DEST.LIB}/${_LIB_pic.a}! ${_LIB_pic.a} __archivesymlinkpic
+${_DEST.LIB}/${_LIB_pic.a}! ${_LIB.a} __archivesymlinkpic
 .else
 ${_DEST.LIB}/${_LIB_pic.a}! ${_LIB_pic.a} __archiveinstall
 .endif
@@ -753,7 +753,7 @@ ${_DEST.LIB}/${_LIB_pic.a}! ${_LIB_pic.a} __archiveinstall
 ${_DEST.LIB}/${_LIB_pic.a}: .MADE
 .endif
 .if ${MKPICLIB} == "no"
-${_DEST.LIB}/${_LIB_pic.a}: ${_LIB_pic.a} __archivesymlinkpic
+${_DEST.LIB}/${_LIB_pic.a}: ${_LIB.a} __archivesymlinkpic
 .else
 ${_DEST.LIB}/${_LIB_pic.a}: ${_LIB_pic.a} __archiveinstall
 .endif
