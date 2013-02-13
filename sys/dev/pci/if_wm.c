@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.244 2013/02/13 12:28:23 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.245 2013/02/13 16:58:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.244 2013/02/13 12:28:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.245 2013/02/13 16:58:04 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6306,7 +6306,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		break;
 	case PCI_PRODUCT_INTEL_PCH2_LV_LM:
 	case PCI_PRODUCT_INTEL_PCH2_LV_V:
-		/* 82578 */
+		/* 82579 */
 		sc->sc_phytype = WMPHY_82579;
 		mii->mii_readreg = wm_gmii_hv_readreg;
 		mii->mii_writereg = wm_gmii_hv_writereg;
@@ -6771,7 +6771,7 @@ wm_gmii_bm_readreg(device_t self, int phy, int reg)
 
 	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 		if (phy == 1)
-			wm_gmii_i82544_writereg(self, phy, 0x1f,
+			wm_gmii_i82544_writereg(self, phy, MII_IGPHY_PAGE_SELECT,
 			    reg);
 		else
 			wm_gmii_i82544_writereg(self, phy,
@@ -6806,7 +6806,7 @@ wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
 
 	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 		if (phy == 1)
-			wm_gmii_i82544_writereg(self, phy, 0x1f,
+			wm_gmii_i82544_writereg(self, phy, MII_IGPHY_PAGE_SELECT,
 			    reg);
 		else
 			wm_gmii_i82544_writereg(self, phy,
@@ -7385,14 +7385,15 @@ wm_valid_nvm_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 		/* Value of bit 22 corresponds to the flash bank we're on. */
 		*bank = (CSR_READ(sc, WMREG_EECD) & EECD_SEC1VAL) ? 1 : 0;
 	} else {
-		uint8_t bank_high_byte;
-		wm_read_ich8_byte(sc, act_offset, &bank_high_byte);
-		if ((bank_high_byte & 0xc0) == 0x80)
+		uint8_t sig_byte;
+		wm_read_ich8_byte(sc, act_offset, &sig_byte);
+		if ((sig_byte & ICH_NVM_VALID_SIG_MASK) == ICH_NVM_SIG_VALUE)
 			*bank = 0;
 		else {
 			wm_read_ich8_byte(sc, act_offset + bank1_offset,
-			    &bank_high_byte);
-			if ((bank_high_byte & 0xc0) == 0x80)
+			    &sig_byte);
+			if ((sig_byte & ICH_NVM_VALID_SIG_MASK)
+			    == ICH_NVM_SIG_VALUE)
 				*bank = 1;
 			else {
 				aprint_error_dev(sc->sc_dev,
