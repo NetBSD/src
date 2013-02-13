@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.1.2.2 2012/08/09 06:36:43 jdc Exp $
+#	$NetBSD: RPI,v 1.1.2.3 2013/02/13 01:36:14 riz Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -135,13 +135,13 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	DIAGNOSTIC	# internally consistency checks
 options 	DEBUG
 #options 	IPKDB		# remote kernel debugging
-options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=500000
+options 	SYMTAB_SPACE=750000
 options 	PLCONSOLE
 #options 	PLCONSOLE,PLCOMCNUNIT=0,PLCONSPEED=115200,PLCONMODE=0xB00
 
@@ -162,7 +162,7 @@ options USB_DEBUG
 #  verbose		Show aprint_normal and aprint_verbose output
 #options		BOOT_ARGS="\"\""
 
-config		netbsd		root on ld0a type ?
+config		netbsd		root on ? type ?
 
 # The main bus device
 mainbus0	at root
@@ -170,17 +170,22 @@ mainbus0	at root
 # The cpu
 cpu0		at mainbus?
 
-# Specify the memory size in megabytes - default start.elf file
-options		MEMSIZE=192
-
 # OBIO
 obio0		at mainbus?
 
 # Interrupt Controller
 bcmicu0		at obio?
 
+# VC Mailbox
+bcmmbox0	at obio?
+vcmbox0 	at bcmmbox0
+
 # PL011 uart
 plcom0		at obio?
+
+# Framebuffer console
+genfb0		at obio?
+wsdisplay*	at genfb?
 
 # System timer
 bcmtmr0		at obio?
@@ -188,55 +193,93 @@ bcmtmr0		at obio?
 # Power management, Reset controller and Watchdog registers
 bcmpm0		at obio?
 
+# Random number generator
+bcmrng0 	at obio?
+
 # Arasan SD/MMC Interface
 sdhc* at obio?
 sdmmc*  at sdhc?
 
 ld*     at sdmmc?
 
+# On-board USB
+dotg*          at obio?
+usb*           at dotg?
+
+# USB device drivers, just as soon as we have something to attach them to
+include "dev/usb/usbdevices.config"
+
+ukphy*		at mii? phy ?
+
+# Broadcom Serial Control (I2C)
+bsciic* at obio?
+iic* at i2cbus?
+
+# SPI controller
+bcmspi* at obio?
+spi* at spibus?
+
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
 options 	WSEMUL_VT100		# sun terminal emulation
-options 	WS_DEFAULT_FG=WSCOL_BLACK
-options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
-options		WS_KERNEL_FG=WSCOL_GREEN
-options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
-options		FONT_QVSS8x15
+#options 	FONT_QVSS8x15
 #options 	FONT_GALLANT12x22	# the console font
-
-pseudo-device	wsmux			# mouse & keyboard multiplexor
-pseudo-device	wsfont
-
-# On-board USB - some day soon(tm)
-#uhub*		at usb?
-#uhub*		at uhub? port ?
-#umass*		at uhub? port ? configuration ? interface ?
-#wd*		at umass?
-#uhidev*		at uhub?
-#ukbd*		at uhidev?
-#ums*		at uhidev?
-#wskbd*		at ukbd?
-#wsmouse*	at ums?
-
-#axe*		at uhub? port ? configuration ? interface ?
 
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
+#pseudo-device	fss			# file system snapshot device
+
 pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	fss			# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+#pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	kttcp			# network loopback
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#options 	PPPOE_SERVER		# Enable PPPoE server via link0
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+#pseudo-device	irframetty		# IrDA frame line discipline
+#pseudo-device	tap			# virtual Ethernet
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
+#pseudo-device	faith			# IPv[46] TCP relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #options	RND_COM
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	lockstat		# lock profiling
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+
+# data mover pseudo-devices
+#pseudo-device	swdmover		# software dmover(9) back-end
+#pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+# local configuration
+cinclude "arch/evbarm/conf/RPI.local"

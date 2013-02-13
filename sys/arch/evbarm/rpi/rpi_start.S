@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.2.2.3 2012/11/19 19:13:01 riz Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.2.2.4 2013/02/13 01:36:14 riz Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -81,14 +81,13 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_broadcom.h"
 #include "opt_cputypes.h"
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.2.2.3 2012/11/19 19:13:01 riz Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.2.2.4 2013/02/13 01:36:14 riz Exp $")
 
 /*
  * Workaround Erratum 411920 
@@ -122,6 +121,9 @@ RCSID("$NetBSD: rpi_start.S,v 1.2.2.3 2012/11/19 19:13:01 riz Exp $")
 
 	.global	_C_LABEL(rpi_start)
 _C_LABEL(rpi_start):
+	adr	r8, rpi_boot_regs
+	stmia	r8!, {r0-r3}
+
 	mrs	r0, cpsr
 	bic	r0, r0, #PSR_MODE
 	orr	r0, r0, #(I32_bit | F32_bit | PSR_SVC32_MODE)
@@ -305,7 +307,7 @@ Lctl_ID_dis:
 
 mmu_init_table:
 	/* Add 1MB of VA==PA at 0x00000000 so we can keep the kernel going */
-	MMU_INIT(0x00000000, 0x00000000,
+	MMU_INIT(0x0, 0x0,
 	    (_end - KERNEL_BASE + 2 * L1_S_SIZE - 1),
 	    L1_S_PROTO | L1_S_AP_KRW)
 
@@ -320,3 +322,7 @@ mmu_init_table:
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
+
+	.globl	_C_LABEL(rpi_boot_regs)
+rpi_boot_regs:
+	.space 4 * 4

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.1.2.2 2012/08/09 06:36:49 jdc Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.1.2.3 2013/02/13 01:36:14 riz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.1.2.2 2012/08/09 06:36:49 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.1.2.3 2013/02/13 01:36:14 riz Exp $");
 
-#include "opt_broadcom.h"
 #include "locators.h"
 #include "obio.h"
 
@@ -48,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.1.2.2 2012/08/09 06:36:49 jdc Exp
 struct obio_softc {
 	device_t		sc_dev;
 	bus_dma_tag_t		sc_dmat;
-	struct arm32_dma_range	sc_dmarange;
+	struct arm32_dma_range	sc_dmarange[1];
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_base;
@@ -61,7 +60,6 @@ static bool obio_attached;
 static int	obio_match(device_t, cfdata_t, void *);
 static void	obio_attach(device_t, device_t, void *);
 static int	obio_print(void *, const char *);
-static int	obio_search(device_t, cfdata_t, const int *, void *);
 
 /* attach structures */
 CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
@@ -79,6 +77,13 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_intr = -1,
 	},
 	{
+		/* Mailbox */
+		.ad_name = "bcmmbox",
+		.ad_addr = BCM2835_ARMMBOX_BASE,
+		.ad_size = BCM2835_ARMMBOX_SIZE,
+		.ad_intr = -1, /* BCM2835_INT_ARMMAILBOX */
+	},
+	{
 		/* System Timer */
 		.ad_name = "bcmtmr",
 		.ad_addr = BCM2835_STIMER_BASE,
@@ -93,6 +98,13 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_intr = -1,
 	},
 	{
+		/* Random number generator */
+		.ad_name = "bcmrng",
+		.ad_addr = BCM2835_RNG_BASE,
+		.ad_size = BCM2835_RNG_SIZE,
+		.ad_intr = -1,
+	},
+	{
 		/* Uart 0 */
 		.ad_name = "plcom",
 		.ad_addr = BCM2835_UART0_BASE,
@@ -100,11 +112,43 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_intr = BCM2835_INT_UART0,
 	},
 	{
+		/* Framebuffer */
+		.ad_name = "fb",
+		.ad_addr = 0,
+		.ad_size = 0,
+		.ad_intr = -1,
+	},
+	{
 		/* eMMC interface */
 		.ad_name = "emmc",
 		.ad_addr = BCM2835_EMMC_BASE,
 		.ad_size = BCM2835_EMMC_SIZE,
 		.ad_intr = BCM2835_INT_EMMC,
+	},
+	{
+		/* DesignWare_OTG USB controller */
+		.ad_name = "dotg",
+		.ad_addr = BCM2835_USB_BASE,
+		.ad_size = BCM2835_USB_SIZE,
+		.ad_intr = BCM2835_INT_USB,
+	},
+	{
+		.ad_name = "bcmspi",
+		.ad_addr = BCM2835_SPI0_BASE,
+		.ad_size = BCM2835_SPI0_SIZE,
+		.ad_intr = BCM2835_INT_SPI0,
+	},
+	{
+		.ad_name = "bcmbsc",
+		.ad_addr = BCM2835_BSC0_BASE,
+		.ad_size = BCM2835_BSC_SIZE,
+		.ad_intr = BCM2835_INT_BSC,
+	},
+	{
+		.ad_name = "bcmbsc",
+		.ad_addr = BCM2835_BSC1_BASE,
+		.ad_size = BCM2835_BSC_SIZE,
+		.ad_intr = BCM2835_INT_BSC,
 	},
 	{
 		/* Terminator */
@@ -126,6 +170,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	struct obio_softc *sc = device_private(self);
 	const struct ambadev_locators *ad = bcm2835_ambadev_locs;
 	struct amba_attach_args aaa;
+	int locs[OBIOCF_NLOCS];
 
 	if (obio_attached)
 		return;
@@ -135,11 +180,11 @@ obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_dmat = &bcm2835_bus_dma_tag;
 
-	sc->sc_dmarange.dr_sysbase = 0;
-	sc->sc_dmarange.dr_busbase = 0xc0000000;	/* 0x40000000 if L2 */
-	sc->sc_dmarange.dr_len = MEMSIZE * 1024 * 1024;
-	bcm2835_bus_dma_tag._ranges = &sc->sc_dmarange;
-	bcm2835_bus_dma_tag._nranges = 1;
+	sc->sc_dmarange[0].dr_sysbase = 0;
+	sc->sc_dmarange[0].dr_busbase = BCM2835_BUSADDR_CACHE_COHERENT;
+	sc->sc_dmarange[0].dr_len = physmem * PAGE_SIZE;
+	bcm2835_bus_dma_tag._ranges = sc->sc_dmarange;
+	bcm2835_bus_dma_tag._nranges = __arraycount(sc->sc_dmarange);
 
 	aprint_normal("\n");
 
@@ -156,8 +201,12 @@ obio_attach(device_t parent, device_t self, void *aux)
 		aaa.aaa_intr = ad->ad_intr;
 		/* ad->ad_instance; */
 
-		config_found_sm_loc(self, "obio", NULL, &aaa, obio_print, 
-		    obio_search);
+		locs[OBIOCF_ADDR] = ad->ad_addr;
+		locs[OBIOCF_SIZE] = ad->ad_size;
+		locs[OBIOCF_INTR] = ad->ad_intr;
+
+		config_found_sm_loc(self, "obio", locs, &aaa, obio_print,
+		    config_stdsubmatch);
 	}
 
 	return;
@@ -187,11 +236,4 @@ obio_print(void *aux, const char *name)
 	}
 
 	return UNCONF;
-}
-
-static int
-obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
-{
-
-	return config_match(parent, cf, aux);
 }

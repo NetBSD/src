@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.6.2.1 2012/08/09 06:36:48 jdc Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.6.2.2 2013/02/13 01:36:15 riz Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -45,6 +45,7 @@ struct sdhc_softc {
 #define	SDHC_FLAG_HAVE_CGM	0x0080	/* Netlogic XLP */
 #define	SDHC_FLAG_NO_LED_ON	0x0100	/* LED_ON unsupported in HOST_CTL */
 #define	SDHC_FLAG_HOSTCAPS	0x0200	/* No device provided capabilities */
+#define	SDHC_FLAG_NO_HS_BIT	0x2000	/* Don't set SDHC_HIGH_SPEED bit */
 
 	uint32_t		sc_clkbase;
 	uint32_t		sc_caps;/* attachment provided capabilities */

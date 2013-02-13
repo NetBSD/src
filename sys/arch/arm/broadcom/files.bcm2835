@@ -1,16 +1,15 @@
-#	$NetBSD: files.bcm2835,v 1.1.2.3 2012/11/19 19:12:59 riz Exp $
+#	$NetBSD: files.bcm2835,v 1.1.2.4 2013/02/13 01:36:14 riz Exp $  
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
 
 include "arch/arm/pic/files.pic"
 
+define bcmmboxbus { }
+
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/broadcom/bcm2835_dma.c
 file	arch/arm/broadcom/bcm2835_mbox_subr.c
-
-# Memory size in megabytes
-defparam opt_broadcom.h				MEMSIZE
 
 # OBIO just an attach point
 #, [mult=1], [intrbase=-1], [nobyteacc=0]
@@ -28,15 +27,25 @@ device	bcmicu: pic, pic_splfuncs
 attach	bcmicu at obio with bcmicu
 file	arch/arm/broadcom/bcm2835_intr.c	bcmicu
 
+# VC Mailbox (BCM2835_ARMMBOX_BASE)
+device	bcmmbox: bcmmboxbus
+attach	bcmmbox at obio with bcmmbox
+file	arch/arm/broadcom/bcm2835_mbox.c	bcmmbox
+
 # System Timer (BCM2835_TIMER_BASE)
 device	bcmtmr
 attach	bcmtmr at obio with bcmtmr_amba
 file	arch/arm/broadcom/bcm2835_tmr.c		bcmtmr
 
 # Power Management, Reset Controller, and Watchdog (BCM2835_PM_BASE)
-device	bcmpm
+device	bcmpm: sysmon_wdog
 attach	bcmpm at obio with bcmpm_amba
 file	arch/arm/broadcom/bcm2835_pm.c		bcmpm
+
+# Random number generator (BCM2835_RNG_BASE)
+device	bcmrng
+attach	bcmrng at obio with bcmrng_amba
+file	arch/arm/broadcom/bcm2835_rng.c		bcmrng
 
 # UART Interface (BCM2835_UART0_BASE)
 attach	plcom at obio with bcmplcom
@@ -45,3 +54,25 @@ file	arch/arm/broadcom/bcm2835_plcom.c	bcmplcom
 # External Mass Media Controller (BCM2835_EMMC_BASE)
 attach	sdhc at obio with bcmemmc
 file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
+
+# USB (BCM2835_USB_BASE)
+attach dotg at obio with dotg_amba
+file	arch/arm/broadcom/bcm2835_dotg.c	dotg	needs-flag
+
+# GPIO misc. functions
+define	bcm2835_gpio_subr
+file	arch/arm/broadcom/bcm2835_gpio_subr.c	bcm2835_gpio_subr
+
+# SPI controller (BCM2835_SPI0_BASE)
+device	bcmspi: spibus, bcm2835_gpio_subr
+attach	bcmspi at obio
+file	arch/arm/broadcom/bcm2835_spi.c		bcmspi	needs-flag
+
+# BSC (I2C) controller (BCM2835_BSC[01]_BASE)
+device	bsciic: i2cbus, bcm2835_gpio_subr
+attach	bsciic at obio
+file	arch/arm/broadcom/bcm2835_bsc.c		bsciic	needs-flag
+
+# Generic framebuffer console driver
+attach	genfb at obio with bcmgenfb: edid
+file	arch/arm/broadcom/bcm2835_genfb.c	bcmgenfb	needs-flag
