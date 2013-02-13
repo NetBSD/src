@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.46 2013/02/13 04:49:59 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.47 2013/02/13 04:58:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.46 2013/02/13 04:49:59 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.47 2013/02/13 04:58:17 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -83,6 +83,14 @@ __weak_alias(strvisx,_strvisx)
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+
+/*
+ * The reason for going through the trouble to deal with character encodings
+ * in vis(3), is that we use this to safe encode output of commands. This
+ * safe encoding varies depending on the character set. For example if we
+ * display ps output in French, we don't want to display French characters
+ * as M-foo.
+ */
 
 static wchar_t *do_svis(wchar_t *, int, int, int, const wchar_t *);
 
