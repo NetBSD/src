@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.8.4.3 2013/02/07 06:51:48 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.8.4.4 2013/02/13 23:52:18 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.8.4.3 2013/02/07 06:51:48 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.8.4.4 2013/02/13 23:52:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,7 +66,7 @@ bus_space_handle_t bcm53xx_armcore_bsh;
 
 static struct cpu_softc cpu_softc;
 
-struct arm32_dma_range bcm53xx_dma_ranges[2] = {
+struct arm32_dma_range bcm53xx_dma_ranges[] = {
 	[0] = {
 		.dr_sysbase = 0x80000000,
 		.dr_busbase = 0x80000000,
@@ -85,15 +85,17 @@ struct arm32_bus_dma_tag bcm53xx_dma_tag = {
 	_BUS_DMATAG_FUNCS,
 };
 
-struct arm32_dma_range bcm53xx_coherent_dma_ranges[2] = {
+struct arm32_dma_range bcm53xx_coherent_dma_ranges[] = {
 	[0] = {
 		.dr_sysbase = 0x80000000,
 		.dr_busbase = 0x80000000,
 		.dr_len = 0x10000000,
 		.dr_flags = _BUS_DMAMAP_COHERENT,
+#ifndef _ARM32_NEED_BUS_DMA_BOUNCE
 	}, [1] = {
 		.dr_sysbase = 0x90000000,
 		.dr_busbase = 0x90000000,
+#endif
 	},
 };
 
@@ -521,19 +523,23 @@ bcm53xx_bootstrap(vaddr_t iobase)
 void
 bcm53xx_dma_bootstrap(psize_t memsize)
 {
-	if (memsize > 256*1024*1024) {
+	if (memsize <= 256*1024*1024) {
+		bcm53xx_dma_ranges[0].dr_len = memsize;
+		bcm53xx_coherent_dma_ranges[0].dr_len = memsize;
+		bcm53xx_dma_tag._nranges = 1;
+#ifndef _ARM32_NEED_BUS_DMA_BOUNCE
+		bcm53xx_coherent_dma_tag._nranges = 1;
+#endif
+	} else {
 		/*
 		 * By setting up two ranges, bus_dmamem_alloc will always
 		 * try to allocate from range 0 first resulting in allocations
 		 * below 256MB which for PCI and GMAC are coherent.
 		 */
 		bcm53xx_dma_ranges[1].dr_len = memsize - 0x10000000;
+#ifndef _ARM32_NEED_BUS_DMA_BOUNCE
 		bcm53xx_coherent_dma_ranges[1].dr_len = memsize - 0x10000000;
-	} else {
-		bcm53xx_dma_ranges[0].dr_len = memsize;
-		bcm53xx_coherent_dma_ranges[0].dr_len = memsize;
-		bcm53xx_dma_tag._nranges = 1;
-		bcm53xx_coherent_dma_tag._nranges = 1;
+#endif
 	}
 	KASSERT(bcm53xx_dma_tag._ranges[0].dr_flags == 0);
 	KASSERT(bcm53xx_coherent_dma_tag._ranges[0].dr_flags == _BUS_DMAMAP_COHERENT);
