@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.47 2013/02/13 04:58:17 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.48 2013/02/13 12:15:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.47 2013/02/13 04:58:17 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.48 2013/02/13 12:15:09 pooka Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -92,7 +92,7 @@ __weak_alias(strvisx,_strvisx)
  * as M-foo.
  */
 
-static wchar_t *do_svis(wchar_t *, int, int, int, const wchar_t *);
+static wchar_t *do_svis(wchar_t *, wint_t, int, wint_t, const wchar_t *);
 
 #undef BELL
 #define BELL L'\a'
