@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.4 2013/02/14 01:06:04 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2013/02/14 01:57:42 christos Exp $
 
+.ifndef AMU_MAKEFILE_INC
+AMU_MAKEFILE_INC=
 WARNS?=	1
 
 .include <bsd.own.mk>
@@ -8,10 +10,14 @@ BINDIR?= /usr/sbin
 
 USE_FORT?=yes
 
-IDIST=	${NETBSDSRCDIR}/external/bsd/am-utils/dist
+AMUTILS=	${NETBSDSRCDIR}/external/bsd/am-utils
+IDIST=		${AMUTILS}/dist
 
 CPPFLAGS+= -DHAVE_CONFIG_H -I${.CURDIR}/../../include -I${IDIST}/libamu \
-	-I${IDIST}/include -I${LIBAMUOBJDIR}
+    -I${IDIST}/include
+
+LIBAMUOBJDIR!=	cd ${AMUTILS}/lib/libamu && ${PRINTOBJDIR}
+CPPFLAGS+=	-I${LIBAMUOBJDIR}
 
 .if (${USE_HESIOD} != "no")
 CPPFLAGS+=-DHAVE_MAP_HESIOD=1
@@ -27,13 +33,6 @@ CPPFLAGS+=-DHAVE_MAP_NIS=1
 .endif
 
 .if !defined(LIB) || empty(LIB)
-LDADD+=	-L${LIBAMUOBJDIR} -lamu
-LIBDPLIBS+= -llibamu ${LIBAMUOBJDIR}
-#.if ${MKPICLIB} != "no"
-#DPADD+=	${LIBAMUOBJDIR}/libamu_pic.a
-#.elif ${MKPIC} != "no"
-#DPADD+=	${LIBAMUOBJDIR}/libamu.so
-#.else
-#DPADD+=	${LIBAMUOBJDIR}/libamu.a
-#.endif
+PROGDPLIBS+=	amu	${AMUTILS}/lib/libamu
+.endif
 .endif
