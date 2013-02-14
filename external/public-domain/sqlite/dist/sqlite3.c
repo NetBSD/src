@@ -19422,14 +19422,11 @@ static const et_info fmtinfo[] = {
 ** 16 (the number of significant digits in a 64-bit float) '0' is
 ** always returned.
 */
-#ifdef SQLITE_HAVE_ISNAN
-# include <math.h>
-#endif
 static char et_getdigit(LONGDOUBLE_TYPE *val, int *cnt){
   int digit;
   LONGDOUBLE_TYPE d;
   if( (*cnt)++ >= 16 ) return '0';
-  digit = (int)floor(*val);
+  digit = (int)*val;
   d = digit;
   digit += '0';
   *val = (*val - d)*10.0;
@@ -21001,6 +20998,9 @@ SQLITE_PRIVATE void sqlite3UtfSelfTest(void){
 **
 */
 /* #include <stdarg.h> */
+#ifdef SQLITE_HAVE_ISNAN
+# include <math.h>
+#endif
 
 /*
 ** Routine needed to support the testcase() macro.
@@ -132872,7 +132872,7 @@ SQLITE_API int sqlite3_extension_init(
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: sqlite3.c,v 1.7 2013/02/14 17:12:23 martin Exp $
+** $Id: sqlite3.c,v 1.8 2013/02/14 21:07:25 martin Exp $
 **
 ** This file implements an integration between the ICU library 
 ** ("International Components for Unicode", an open-source library 
