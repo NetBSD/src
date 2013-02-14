@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/02/14 03:36:44 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2013/02/14 21:29:36 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -15,8 +15,8 @@ MAN=		dbsym.8
 CPPFLAGS+=	-I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include
 
 .if !defined(HOSTPROG)
-PROGDPLIBS+=	bfd ${TOP}/${BFDSUBDIR}/libbfd
-PROGDPLIBS+=	iberty ${TOP}/${BFDSUBDIR}/libiberty
+PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
+PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty
 .else
 CPPFLAGS+=	-I${BFDDIR}
 DPADD+=		${BFDDIR}/libbfd.a
@@ -24,6 +24,8 @@ LDADD+=		-L${BFDDIR} -lbfd
 DPADD+=		${IBERTYDIR}/libiberty.a
 LDADD+=		-L${IBERTYDIR} -liberty
 .endif
+
+.include <bsd.prog.mk>
 
 .ifndef HOSTPROG
 .include	"${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH}/defs.mk"
@@ -33,4 +35,6 @@ DPADD+=		${LIBINTL}
 .endif # HOSTPROG
 .endif # MKBINUTILS != no
 
-.include <bsd.prog.mk>
+
+LDADD+=		-lz
+DPADD+=		${LIBZ}

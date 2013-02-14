@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2011/05/30 14:41:26 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2013/02/14 21:29:35 christos Exp $
 
 BINDIR?=	/usr/bin
 
@@ -13,9 +13,6 @@ CPPFLAGS+=	${GNUCPPFLAGS:M-D*:N-DLOCALEDIR*} ${GNUCPPFLAGS:M-I*:N-I.*} \
 		-I${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH} \
 		-I${DIST}/include -I${DIST}/bfd -I${DIST}/binutils \
 		-DLOCALEDIR=\"${LOCALEDIR}\"
-LDADD+=-lz
-DPADD+=${LIBZ}
-
 NOGCCERROR=	# defined
 
 .endif # __MAKEFILE_INC_INCLUDED__

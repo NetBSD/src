@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prog,v 1.5 2013/02/14 03:36:44 christos Exp $
+#	$NetBSD: Makefile.prog,v 1.6 2013/02/14 21:29:35 christos Exp $
 #
 # Common Makefile fragment for a binutils program.
 #
@@ -20,24 +20,24 @@ MAN=		${G_man_MANS:M${PROG}.1}
 
 CPPFLAGS+=	-I${.CURDIR}/../common/arch/${MACHINE_ARCH}
 
-LDADD+=		-lintl
-DPADD+=		${LIBINTL}
-
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libopcodes*)
-PROGDPLIBS+=	opcodes ${TOP}/${BFDSUBDIR}/libopcodes
+PROGDPLIBS+=	opcodes	${TOP}/${BFDSUBDIR}/libopcodes
 .endif
 
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libbfd*)
-PROGDPLIBS+=	bfd ${TOP}/${BFDSUBDIR}/libbfd
+PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
 .endif
 
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libiberty*)
-PROGDPLIBS+=	iberty ${TOP}/${BFDSUBDIR}/libiberty
+PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty
 .endif
 
 .PATH: ${DIST}/binutils ${DIST}/binutils/doc
 
 .include <bsd.prog.mk>
+
+LDADD+=		-lintl -lz
+DPADD+=		${LIBINTL} ${LIBZ}
 
 # Override the .y.c and .y.l rules *after* <bsd.prog.mk>
 .y.c .l.c:
