@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.14 2011/07/10 04:49:37 matt Exp $	*/
+/*	$NetBSD: ieee.h,v 1.15 2013/02/14 09:34:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,6 +118,6 @@ union ieee_ext_u {
 #define extu_frachm	extu_ext.ext_frachm
 #define extu_frach	extu_ext.ext_frach
 
-#define LDBL_NBIT	0x80000000
-#define mask_nbit_l(u)	((u).extu_frach &= ~LDBL_NBIT)
+#define	LDBL_IMPLICIT_NBIT	1
+
 #endif /* __arch64__ || _KERNEL */
