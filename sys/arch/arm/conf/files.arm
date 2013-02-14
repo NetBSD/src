@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.103.2.1.2.1 2012/11/28 22:40:25 matt Exp $
+#	$NetBSD: files.arm,v 1.103.2.1.2.2 2013/02/14 08:09:00 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -45,7 +45,9 @@ defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
 defflag	opt_arm_debug.h		ARM_LOCK_CAS_DEBUG
 
 # Board-specific bus_space(9)/bus_dma(9) definitions
-defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS _ARM32_NEED_BUS_DMA_BOUNCE
+defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
+				_ARM32_NEED_BUS_DMA_BOUNCE
+				BUSDMA_COUNTERS
 
 # Floating point emulator
 defflag				ARMFPE
