@@ -1,4 +1,4 @@
-/*	$NetBSD: s_fma.c,v 1.4 2013/02/12 08:21:48 martin Exp $	*/
+/*	$NetBSD: s_fma.c,v 1.5 2013/02/14 09:23:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005-2011 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_fma.c,v 1.8 2011/10/21 06:30:43 das Exp $");
 #else
-__RCSID("$NetBSD: s_fma.c,v 1.4 2013/02/12 08:21:48 martin Exp $");
+__RCSID("$NetBSD: s_fma.c,v 1.5 2013/02/14 09:23:40 matt Exp $");
 #endif
 
 #include <machine/ieee.h>
@@ -39,6 +39,10 @@ __RCSID("$NetBSD: s_fma.c,v 1.4 2013/02/12 08:21:48 martin Exp $");
 #include <math.h>
 
 #include "math_private.h"
+
+#ifndef __HAVE_LONG_DOUBLE
+STRONG_ALIAS(fmal, fma)
+#endif
 
 /*
  * A struct dd represents a floating-point number with twice the precision
@@ -287,7 +291,3 @@ fma(double x, double y, double z)
 	else
 		return (add_and_denormalize(r.hi, adj, spread));
 }
-
-#ifndef __HAVE_LONG_DOUBLE
-__weak_alias(fma, fmal)
-#endif
