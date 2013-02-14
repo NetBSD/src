@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.76 2013/02/14 08:07:35 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.77 2013/02/14 08:24:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.76 2013/02/14 08:07:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.77 2013/02/14 08:24:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -763,11 +763,11 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool read
 		const size_t line_size = arm_dcache_align;
 		const size_t line_mask = arm_dcache_align_mask;
 		vsize_t misalignment = va & line_mask;
-		STAT_INCR(sync_preread);
 		if (misalignment) {
 			va -= misalignment;
 			pa -= misalignment;
 			len += misalignment;
+			STAT_INCR(sync_preread_begin);
 			cpu_dcache_wbinv_range(va, line_size);
 			cpu_sdcache_wbinv_range(va, pa, line_size);
 			if (len <= line_size)
@@ -779,12 +779,14 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool read
 		misalignment = len & line_mask;
 		len -= misalignment;
 		if (len > 0) {
+			STAT_INCR(sync_preread);
 			cpu_dcache_inv_range(va, len);
 			cpu_sdcache_inv_range(va, pa, len);
 		}
 		if (misalignment) {
 			va += len;
 			pa += len;
+			STAT_INCR(sync_preread_tail);
 			cpu_dcache_wbinv_range(va, line_size);
 			cpu_sdcache_wbinv_range(va, pa, line_size);
 		}
