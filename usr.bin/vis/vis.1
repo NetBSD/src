@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.1,v 1.16 2013/02/14 08:56:59 wiz Exp $
+.\"	$NetBSD: vis.1,v 1.17 2013/02/14 14:00:00 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -149,11 +149,6 @@ must be set to the correct locale or to the C locale.
 If the locales of the data and the conversion are mismatched, multibyte
 character recognition may fail and encoding will be performed byte-by-byte
 instead.
-The result of encoding using
-.Nm
-followed by decoding using
-.Xr unvis 3
-is unlikely to return the same input data in this case.
 .Sh ENVIRONMENT
 .Bl -tag -width ".Ev LC_CTYPE"
 .It Ev LC_CTYPE
