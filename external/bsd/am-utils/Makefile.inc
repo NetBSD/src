@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2008/09/20 10:45:48 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2013/02/14 00:54:12 matt Exp $
 
 WARNS?=	1
 
@@ -28,9 +28,11 @@ CPPFLAGS+=-DHAVE_MAP_NIS=1
 
 .if !defined(LIB) || empty(LIB)
 LDADD+=	-L${LIBAMUOBJDIR} -lamu
-.if ${MKPICLIB} == "no"
-DPADD+=	${LIBAMUOBJDIR}/libamu.a
-.else
+.if ${MKPICLIB} != "no"
 DPADD+=	${LIBAMUOBJDIR}/libamu_pic.a
+.elif ${MKPIC} != "no"
+DPADD+=	${LIBAMUOBJDIR}/libamu.so
+.else
+DPADD+=	${LIBAMUOBJDIR}/libamu.a
 .endif
 .endif

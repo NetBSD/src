@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/11/10 10:24:50 skrll Exp $
+#	$NetBSD: Makefile,v 1.5 2013/02/14 00:53:30 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -31,6 +31,8 @@ OPCODESOBJ!=	cd ${TOP}/${BFDSUBDIR}/libopcodes && ${PRINTOBJDIR}
 LDADD+=		-L${OPCODESOBJ} -lopcodes
 .if ${MKPICLIB} != "no"
 DPADD+=		${OPCODESOBJ}/libopcodes_pic.a
+.elif ${MKPIC} != "no"
+DPADD+=		${OPCODESOBJ}/libopcodes.so
 .else
 DPADD+=		${OPCODESOBJ}/libopcodes.a
 .endif
@@ -39,6 +41,8 @@ BFDOBJ!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
 LDADD+=		-L${BFDOBJ} -lbfd
 .if ${MKPICLIB} != "no"
 DPADD+=		${BFDOBJ}/libbfd_pic.a
+.elif ${MKPIC} != "no"
+DPADD+=		${BFDOBJ}/libbfd.so
 .else
 DPADD+=		${BFDOBJ}/libbfd.a
 .endif
