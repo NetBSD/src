@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.281 2013/02/14 01:58:00 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.282 2013/02/14 03:02:47 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -381,16 +381,16 @@ PROGS=		${PROG}
 .if defined(PROGDPLIBS) 						# {
 .for _lib _dir in ${PROGDPLIBS}
 .if !defined(BINDO.${_lib})
-BINDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
-.MAKEOVERRIDES+=BINDO.${_lib}
+PROGDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=PROGDO.${_lib}
 .endif
-LDADD+=		-L${BINDO.${_lib}} -l${_lib}
-.if ${MKPICLIB} != "no"
-DPADD+=		${BINDO.${_lib}}/libamu_pic.a
-.elif ${MKPIC} != "no"
-DPADD+=		${BINDO.${_lib}}/libamu.so
+LDADD+=		-L${PROGDO.${_lib}} -l${_lib}
+.if exists(${PROGDO.${_lib}}/lib${_lib}_pic.a)
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}_pic.a
+.elif exists(${PROGDO.${_lib}}/lib${_lib}.so)
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}.so
 .else
-DPADD+=		${BINDO.${_lib}}/libamu.a
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}.a
 .endif
 .endfor
 .endif									# }
