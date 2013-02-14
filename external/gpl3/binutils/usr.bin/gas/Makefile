@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/02/14 01:21:25 matt Exp $
+#	$NetBSD: Makefile,v 1.7 2013/02/14 02:52:59 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -29,11 +29,11 @@ DPADD=		${LIBINTL}
 
 OPCODESOBJ!=	cd ${TOP}/${BFDSUBDIR}/libopcodes && ${PRINTOBJDIR}
 LDADD+=		-L${OPCODESOBJ} -lopcodes
-LIBDPLIBS+=	-lopcodes ${OPCODESOBJ}
+PROGDPLIBS+=	-lopcodes ${OPCODESOBJ}
 
 BFDOBJ!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
 LDADD+=		-L${BFDOBJ} -lbfd
-LIBDPLIBS+=	-lbfd ${BFDOBJ}
+PROGDPLIBS+=	-lbfd ${BFDOBJ}
 
 IBERTYOBJ!=	cd ${TOP}/${BFDSUBDIR}/libiberty && ${PRINTOBJDIR}
 LDADD+=		-L${IBERTYOBJ} -liberty
