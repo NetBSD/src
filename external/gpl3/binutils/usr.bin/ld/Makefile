@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/02/14 01:21:25 matt Exp $
+#	$NetBSD: Makefile,v 1.14 2013/02/14 02:52:59 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -27,7 +27,7 @@ COPTS.ldgram.c = -Wno-stack-protector
 
 BFDOBJ!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
 LDADD+=		-L${BFDOBJ} -lbfd
-LIBDPLIBS+=	-lbfd ${BFDOBJ}
+PROGDPLIBS+=	-lbfd ${BFDOBJ}
 
 IBERTYOBJ!=	cd ${TOP}/${BFDSUBDIR}/libiberty && ${PRINTOBJDIR}
 LDADD+=		-L${IBERTYOBJ} -liberty
