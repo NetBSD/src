@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.75 2013/02/14 01:12:39 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.76 2013/02/14 08:07:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.75 2013/02/14 01:12:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.76 2013/02/14 08:07:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.75 2013/02/14 01:12:39 matt Exp $");
 
 #include <arm/cpufunc.h>
 
+#ifdef BUSDMA_COUNTERS
 static struct evcnt bus_dma_creates =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "creates");
 static struct evcnt bus_dma_bounced_creates =
@@ -75,6 +76,22 @@ static struct evcnt bus_dma_bounced_destroys =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "bounced destroys");
 static struct evcnt bus_dma_destroys =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "destroys");
+static struct evcnt bus_dma_sync_prereadwrite = 
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync prereadwrite");
+static struct evcnt bus_dma_sync_preread_begin =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync preread begin");
+static struct evcnt bus_dma_sync_preread =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync preread");
+static struct evcnt bus_dma_sync_preread_tail =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync preread tail");
+static struct evcnt bus_dma_sync_prewrite = 
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync prewrite");
+static struct evcnt bus_dma_sync_postread = 
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postread");
+static struct evcnt bus_dma_sync_postreadwrite = 
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postreadwrite");
+static struct evcnt bus_dma_sync_postwrite = 
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postwrite");
 
 EVCNT_ATTACH_STATIC(bus_dma_creates);
 EVCNT_ATTACH_STATIC(bus_dma_bounced_creates);
@@ -86,8 +103,19 @@ EVCNT_ATTACH_STATIC(bus_dma_unloads);
 EVCNT_ATTACH_STATIC(bus_dma_bounced_unloads);
 EVCNT_ATTACH_STATIC(bus_dma_destroys);
 EVCNT_ATTACH_STATIC(bus_dma_bounced_destroys);
+EVCNT_ATTACH_STATIC(bus_dma_sync_prereadwrite);
+EVCNT_ATTACH_STATIC(bus_dma_sync_preread_begin);
+EVCNT_ATTACH_STATIC(bus_dma_sync_preread);
+EVCNT_ATTACH_STATIC(bus_dma_sync_preread_tail);
+EVCNT_ATTACH_STATIC(bus_dma_sync_prewrite);
+EVCNT_ATTACH_STATIC(bus_dma_sync_postread);
+EVCNT_ATTACH_STATIC(bus_dma_sync_postreadwrite);
+EVCNT_ATTACH_STATIC(bus_dma_sync_postwrite);
 
 #define	STAT_INCR(x)	(bus_dma_ ## x.ev_count++)
+#else
+#define	STAT_INCR(x)	/*(bus_dma_ ## x.ev_count++)*/
+#endif
 
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct vmspace *, int);
@@ -724,6 +752,7 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool read
 	switch (ops) {
 	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
 		if (!readonly_p) {
+			STAT_INCR(sync_prereadwrite);
 			cpu_dcache_wbinv_range(va, len);
 			cpu_sdcache_wbinv_range(va, pa, len);
 			break;
@@ -734,6 +763,7 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool read
 		const size_t line_size = arm_dcache_align;
 		const size_t line_mask = arm_dcache_align_mask;
 		vsize_t misalignment = va & line_mask;
+		STAT_INCR(sync_preread);
 		if (misalignment) {
 			va -= misalignment;
 			pa -= misalignment;
@@ -762,6 +792,7 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool read
 	}
 
 	case BUS_DMASYNC_PREWRITE:
+		STAT_INCR(sync_prewrite);
 		cpu_dcache_wb_range(va, len);
 		cpu_sdcache_wb_range(va, pa, len);
 		break;
@@ -774,7 +805,12 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool read
 	 * have to worry about having to write back their contents.
 	 */
 	case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
+		STAT_INCR(sync_postreadwrite);
+		cpu_dcache_inv_range(va, len);
+		cpu_sdcache_inv_range(va, pa, len);
+		break;
 	case BUS_DMASYNC_POSTREAD:
+		STAT_INCR(sync_postread);
 		cpu_dcache_inv_range(va, len);
 		cpu_sdcache_inv_range(va, pa, len);
 		break;
@@ -975,6 +1011,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	const int post_ops = 0;
 #endif
 	if (!bouncing && pre_ops == 0 && post_ops == BUS_DMASYNC_POSTWRITE) {
+		STAT_INCR(sync_postwrite);
 		return;
 	}
 	KASSERTMSG(bouncing || pre_ops != 0 || (post_ops & BUS_DMASYNC_POSTREAD),
@@ -1076,8 +1113,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
   bounce_it:
-	if ((ops & BUS_DMASYNC_POSTREAD) == 0
-	    || (map->_dm_flags & _BUS_DMAMAP_IS_BOUNCING) == 0)
+	if (!bouncing || (ops & BUS_DMASYNC_POSTREAD) == 0)
 		return;
 
 	struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
@@ -1496,6 +1532,9 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	struct pglist mlist;
 	int curseg, error;
 
+	KASSERTMSG(boundary == 0 || (boundary & (boundary-1)) == 0,
+	    "invalid boundary %#lx", boundary);
+
 #ifdef DEBUG_DMA
 	printf("alloc_range: t=%p size=%lx align=%lx boundary=%lx segs=%p nsegs=%x rsegs=%p flags=%x lo=%lx hi=%lx\n",
 	    t, size, alignment, boundary, segs, nsegs, rsegs, flags, low, high);
@@ -1503,6 +1542,20 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	/* Always round the size. */
 	size = round_page(size);
+
+	/*
+	 * We accept boundaries < size, splitting in multiple segments
+	 * if needed. uvm_pglistalloc does not, so compute an appropriate
+	 * boundary: next power of 2 >= size
+	 */
+	bus_size_t uboundary = boundary;
+	if (uboundary <= PAGE_SIZE) {
+		uboundary = 0;
+	} else {
+		while (uboundary < size) {
+			uboundary <<= 1;
+		}
+	}
 
 	/*
 	 * Allocate pages from the VM system.
@@ -1527,20 +1580,21 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	for (; m != NULL; m = TAILQ_NEXT(m, pageq.queue)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
-#ifdef DIAGNOSTIC
-		if (curaddr < low || curaddr >= high) {
-			printf("uvm_pglistalloc returned non-sensical"
-			    " address 0x%lx\n", curaddr);
-			panic("_bus_dmamem_alloc_range");
-		}
-#endif	/* DIAGNOSTIC */
+		KASSERTMSG(low <= curaddr && curaddr < high,
+		    "uvm_pglistalloc returned non-sensicaladdress %#lx "
+		    "(low=%#lx, high=%#lx\n", curaddr, low, high);
 #ifdef DEBUG_DMA
 		printf("alloc: page %lx\n", curaddr);
 #endif	/* DEBUG_DMA */
-		if (curaddr == (lastaddr + PAGE_SIZE))
+		if (curaddr == lastaddr + PAGE_SIZE
+		    && (lastaddr & boundary) == (curaddr & boundary))
 			segs[curseg].ds_len += PAGE_SIZE;
 		else {
 			curseg++;
+			if (curseg >= nsegs) {
+				uvm_pglistfree(&mlist);
+				return EFBIG;
+			}
 			segs[curseg].ds_addr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
 		}
@@ -1609,20 +1663,21 @@ _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	error = _bus_dmamem_alloc(t, cookie->id_bouncebuflen,
 	    PAGE_SIZE, map->_dm_boundary, cookie->id_bouncesegs,
 	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags);
-	if (error)
-		goto out;
-	error = _bus_dmamem_map(t, cookie->id_bouncesegs,
-	    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
-	    (void **)&cookie->id_bouncebuf, flags);
-
- out:
-	if (error) {
-		_bus_dmamem_free(t, cookie->id_bouncesegs,
-		    cookie->id_nbouncesegs);
+	if (error == 0) {
+		error = _bus_dmamem_map(t, cookie->id_bouncesegs,
+		    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
+		    (void **)&cookie->id_bouncebuf, flags);
+		if (error) {
+			_bus_dmamem_free(t, cookie->id_bouncesegs,
+			    cookie->id_nbouncesegs);
+			cookie->id_bouncebuflen = 0;
+			cookie->id_nbouncesegs = 0;
+		} else {
+			cookie->id_flags |= _BUS_DMA_HAS_BOUNCE;
+		}
+	} else {
 		cookie->id_bouncebuflen = 0;
 		cookie->id_nbouncesegs = 0;
-	} else {
-		cookie->id_flags |= _BUS_DMA_HAS_BOUNCE;
 	}
 
 	return (error);
