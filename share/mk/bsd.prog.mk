@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.280 2013/01/26 21:49:20 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.281 2013/02/14 01:58:00 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -377,6 +377,23 @@ PROGS=		${PROG}
 .  endif
 .endif
 
+##### Libraries that this may depend upon.
+.if defined(PROGDPLIBS) 						# {
+.for _lib _dir in ${PROGDPLIBS}
+.if !defined(BINDO.${_lib})
+BINDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=BINDO.${_lib}
+.endif
+LDADD+=		-L${BINDO.${_lib}} -l${_lib}
+.if ${MKPICLIB} != "no"
+DPADD+=		${BINDO.${_lib}}/libamu_pic.a
+.elif ${MKPIC} != "no"
+DPADD+=		${BINDO.${_lib}}/libamu.so
+.else
+DPADD+=		${BINDO.${_lib}}/libamu.a
+.endif
+.endfor
+.endif									# }
 #
 # Per-program definitions and targets.
 #
