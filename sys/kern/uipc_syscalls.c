@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.154.2.2 2013/01/07 16:53:18 riz Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.154.2.3 2013/02/14 22:13:59 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.154.2.2 2013/01/07 16:53:18 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.154.2.3 2013/02/14 22:13:59 jdc Exp $");
 
 #include "opt_pipe.h"
 
@@ -234,6 +234,8 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock,
 	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	fp2->f_ops = &socketops;
 	fp2->f_data = so2;
+	if (flags & SOCK_NONBLOCK)
+		so2->so_state |= SS_NBIO;
 	error = soaccept(so2, nam);
 	so2->so_cred = kauth_cred_dup(so->so_cred);
 	sounlock(so);
@@ -424,6 +426,8 @@ makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
 	(*fp)->f_type = DTYPE_SOCKET;
 	(*fp)->f_ops = &socketops;
 	(*fp)->f_data = so;
+	if (flags & SOCK_NONBLOCK)
+		so->so_state |= SS_NBIO;
 	return 0;
 }
 

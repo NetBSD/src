@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.209.2.1 2012/07/12 17:11:17 riz Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.209.2.2 2013/02/14 22:13:59 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.209.2.1 2012/07/12 17:11:17 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.209.2.2 2013/02/14 22:13:59 jdc Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -585,6 +585,8 @@ fsocreate(int domain, struct socket **sop, int type, int protocol,
 		fp->f_data = so;
 		fd_affix(curproc, fp, fd);
 		*fdout = fd;
+		if (flags & SOCK_NONBLOCK)
+			so->so_state |= SS_NBIO;
 	}
 	return error;
 }
