@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.74 2013/02/13 23:08:45 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.75 2013/02/14 01:12:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.74 2013/02/13 23:08:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.75 2013/02/14 01:12:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1016,10 +1016,10 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
 
 	/* Skip cache frobbing if mapping was COHERENT. */
-	if (!bouncing && pre_ops == 0
-	    && (map->_dm_flags & _BUS_DMAMAP_COHERENT)) {
+	if (!bouncing && (map->_dm_flags & _BUS_DMAMAP_COHERENT)) {
 		/* Drain the write buffer. */
-		cpu_drain_writebuf();
+		if (pre_ops & BUS_DMASYNC_PREWRITE)
+			cpu_drain_writebuf();
 		return;
 	}
 
