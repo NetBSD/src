@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.95 2013/02/14 21:46:40 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.96 2013/02/14 22:21:09 jdc Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8478,4 +8478,28 @@ xsrc/external/mit/xf86-video-wsfb/dist/src/wsfb_driver.c 1.14-1.15
 	Enable and fix Xserver build for evbarm.  X should now work
 	on Raspberry Pi.
 	[skrll, ticket #818]
+
+usr.bin/nbperf/nbperf-bdz.c			1.7
+usr.bin/nbperf/nbperf.1				1.6
+usr.bin/nbperf/nbperf.c				1.5
+usr.bin/nbperf/nbperf.h				1.4
+	bdz -> bpz to match the initials of the authors.
+	[joerg, ticket #819]
+
+sys/dev/pci/if_wm.c				1.243
+sys/dev/pci/if_wmvar.h				1.14
+	Use 82580 (and I350) specific PHY read/write functions.
+	Fixes PR#47542.
+	[msaitoh, ticket #820]
+
+sys/arch/sparc/include/ieee.h			1.15
+	We have an implicit 1 MSB bit in the mantissa.  Pointed out by
+	Matt Thomas.  Fixes PR#47536.
+	[martin, ticket #821]
+
+sys/kern/uipc_socket.c				1.213
+sys/kern/uipc_syscalls.c			1.160
+	PR#47569: Valery Ushakov: SOCK_NONBLOCK does not work because it does
+	not set SS_NBIO.
+	[christos, ticket #822]
 
