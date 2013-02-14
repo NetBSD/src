@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otgvar.h,v 1.11.2.2 2013/02/13 01:36:16 riz Exp $ */
+/*	$NetBSD: dwc_otgvar.h,v 1.11.2.3 2013/02/14 21:50:41 riz Exp $ */
 
 /* $FreeBSD: src/sys/dev/usb/controller/dwc_otg.h,v 1.12 2012/09/27 15:23:38 hselasky Exp $ */
 /*-
