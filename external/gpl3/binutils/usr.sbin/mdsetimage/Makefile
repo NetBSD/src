@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/02/14 02:52:59 matt Exp $
+#	$NetBSD: Makefile,v 1.6 2013/02/14 03:36:44 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,23 +12,22 @@ BFDSUBDIR=	lib
 PROG=		mdsetimage
 MAN=		mdsetimage.8
 
-CPPFLAGS+=	-I${BFDDIR} -I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include
+CPPFLAGS+=	-I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include
 
 .if !defined(HOSTPROG)
-PROGDPLIBS+=	-lbfd ${BFDDIR}
+PROGDPLIBS+=	bfd ${TOP}/${BFDSUBDIR}/libbfd
+PROGDPLIBS+=	iberty ${TOP}/${BFDSUBDIR}/libiberty
 .else
 DPADD+=		${BFDDIR}/libbfd.a
-.endif
 LDADD+=		-L${BFDDIR} -lbfd
-
 DPADD+=		${IBERTYDIR}/libiberty.a
 LDADD+=		-L${IBERTYDIR} -liberty
+CPPFLAGS+=	-I${BFDDIR}
+.endif
+
 
 .ifndef HOSTPROG
 .include	"${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH}/defs.mk"
-
-BFDDIR!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
-IBERTYDIR!=	cd ${TOP}/${BFDSUBDIR}/libiberty && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH} ${G_INCLUDES}
 LDADD+=		-lintl
