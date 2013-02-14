@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.5 2013/02/08 02:32:35 christos Exp $
+# $NetBSD: ad.mips64el,v 1.6 2013/02/14 00:52:03 matt Exp $
 ./usr/libdata/debug/usr/bin/elf2aout.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/elf2ecoff.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/lib/64/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug,compat
@@ -105,6 +105,7 @@
 ./usr/libdata/debug/usr/lib/64/libmpc.so.2.0.debug	comp-sys-debug	obsolete
 ./usr/libdata/debug/usr/lib/64/libmpfr.so.4.1.debug	comp-sys-debug	obsolete
 ./usr/libdata/debug/usr/lib/64/libnetpgp.so.3.0.debug	comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/64/libnetpgpverify.so.4.0.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libnpf.so.0.0.debug		comp-npf-debug	npf,debug,compat
 ./usr/libdata/debug/usr/lib/64/libnvpair.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/64/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug,compat
@@ -265,6 +266,7 @@
 ./usr/libdata/debug/usr/lib/o32/libmpc.so.2.0.debug		comp-sys-debug	obsolete
 ./usr/libdata/debug/usr/lib/o32/libmpfr.so.4.1.debug		comp-sys-debug	obsolete
 ./usr/libdata/debug/usr/lib/o32/libnetpgp.so.3.0.debug	comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/o32/libnetpgpverify.so.4.0.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libnpf.so.0.0.debug		comp-npf-debug	npf,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libnvpair.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug,compat
