@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.18 2013/02/03 01:59:55 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2013/02/14 09:19:28 matt Exp $
 
 .if ${MKGCC} != "no"
-.if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}.mk"
+LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH}
+#.info LIBGCC_MACHINE_ARCH=${LIBGCC_MACHINE_ARCH}
+.if exists(${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}.mk)
+.include "${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}.mk"
 .endif
 .endif
 
@@ -10,9 +12,9 @@ UNSUPPORTED_COMPILER.clang=	# defined
 
 DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 GNUHOSTDIST=	${DIST}
-GCCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/usr.bin/gcc/arch/${MACHINE_ARCH}
-GCCARCHLIBGCC=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libgcc/arch/${MACHINE_ARCH}
-GCCARCHXX=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libstdc++-v3/arch/${MACHINE_ARCH}
+GCCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/usr.bin/gcc/arch/${LIBGCC_MACHINE_ARCH}
+GCCARCHLIBGCC=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libgcc/arch/${LIBGCC_MACHINE_ARCH}
+GCCARCHXX=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libstdc++-v3/arch/${LIBGCC_MACHINE_ARCH}
 
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${.CURDIR} -I${GCCARCHLIBGCC}
@@ -21,10 +23,10 @@ CPPFLAGS+=	${GCPPFLAGS:M-m*} ${GCPPFLAGS:M-f*}
 CPPFLAGS+=	${G_EXTRA_HEADERS:M/*:H:u:S/^/-I/g}
 CPPFLAGS+=	-I${DIST} -I${DIST}/gcc/cp -I${DIST}/gcc/config -I${GCCARCHXX} -I.
 
-.if ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sh3el" || \
-    ${MACHINE_ARCH} == "sh3eb" || \
-    ${MACHINE_ARCH} == "m68000"
+.if ${LIBGCC_MACHINE_ARCH} == "powerpc" || \
+    ${LIBGCC_MACHINE_ARCH} == "sh3el" || \
+    ${LIBGCC_MACHINE_ARCH} == "sh3eb" || \
+    ${LIBGCC_MACHINE_ARCH} == "m68000"
 _TRADITIONAL_CPP=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 .endif
@@ -77,7 +79,7 @@ LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T}
 LIB1ASMFUNCS=	${G_LIB1ASMFUNCS:=.S}
 .endif
 
-DPSRCS+=	${.CURDIR}/../arch/${MACHINE_ARCH}.mk
+DPSRCS+=	${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}.mk
 CLEANFILES+=	${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} cs-tconfig.h
 .if !empty(G_LIB1ASMFUNCS)
 CLEANFILES+=	${LIB1ASMFUNCS}
@@ -88,14 +90,14 @@ BUILDSYMLINKS+=	${file} ${file:T:S/.asm$/.S/}
 .endfor
 
 # XXX
-.if (${MACHINE_ARCH} == "m68000" || ${MACHINE_ARCH} == "m68k")
+.if (${LIBGCC_MACHINE_ARCH} == "m68000" || ${LIBGCC_MACHINE_ARCH} == "m68k")
 CPICFLAGS:=
 BUILDSYMLINKS+=	${DIST}/gcc/config/m68k/fpgnulib.c fpgnulib.c
 BUILDSYMLINKS+=	${DIST}/gcc/config/m68k/fpgnulib.c xfgnulib.c
 CPPFLAGS.xfgnulib.c+=-DEXTFLOAT=1
 .endif
 
-.if ${MACHINE_ARCH} == "powerpc64"
+.if ${LIBGCC_MACHINE_ARCH} == "powerpc64"
 COPTS+=	-mlong-double-128
 .endif
 
@@ -170,6 +172,6 @@ CLEANFILES+=	insn-modes.h
 .endif
 
 # XXX
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 45 && ${MACHINE_ARCH} == "m68k"
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 45 && ${LIBGCC_MACHINE_ARCH} == "m68k"
 COPTS._fixunsxfdi.c+=	-O0
 .endif
