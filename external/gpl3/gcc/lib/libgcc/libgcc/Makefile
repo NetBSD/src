@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/02/14 09:19:28 matt Exp $
+#	$NetBSD: Makefile,v 1.12 2013/02/14 15:42:31 matt Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -23,6 +23,7 @@ SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} \
 		${G_LIB2ADD_HACK:T:S/.asm/.S/} ${G_LIB2ADD:T:S/.asm/.S/} \
 		${G_LIB2ADD_ST} ${LIB1ASMFUNCS}
 .if ${MKPIC} == "no"
+LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH}
 .if ${LIBGCC_MACHINE_ARCH:Mearm*} == ""
 SRCS+=		${LIB2_EH} ${LIB2_EHASM}
 .endif
