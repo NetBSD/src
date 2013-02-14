@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.19 2013/02/13 22:28:41 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.20 2013/02/14 14:00:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.19 2013/02/13 22:28:41 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.20 2013/02/14 14:00:01 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -161,17 +161,21 @@ process(FILE *fp)
 	static char nul[] = "\0";
 	char *cp = nul + 1;	/* so *(cp-1) starts out != '\n' */
 	wint_t c, c1, rachar; 
-	wchar_t ibuff[3]; /* room for c + rachar + NUL */
 	char mbibuff[13]; /* ((sizeof(ibuff) - 1) * MB_LEN_MAX) + NUL */
 	char buff[5]; /* max vis-encoding length for one char + NUL */
+	int mbilen, cerr = 0, raerr = 0;
 	
 	c = getwc(fp);
-	if (c == WEOF && errno == EILSEQ)
+	if (c == WEOF && errno == EILSEQ) {
 		c = (wint_t)getc(fp);
+		cerr = 1;
+	}
 	while (c != WEOF) {
 		rachar = getwc(fp);
-		if (rachar == WEOF && errno == EILSEQ)
+		if (rachar == WEOF && errno == EILSEQ) {
 			rachar = (wint_t)getc(fp);
+			raerr = 1;
+		}
 		if (none) {
 			cp = buff;
 			*cp++ = c;
@@ -189,10 +193,16 @@ process(FILE *fp)
 			c1 = rachar;
 			if (c1 == WEOF)
 				c1 = L'\0';
-			swprintf(ibuff, 3, L"%lc%lc", c, c1);
-			wcstombs(mbibuff, ibuff,
-			    (wcslen(ibuff) * MB_LEN_MAX) + 1);
-			(void) strsvisx(buff, mbibuff, 1, eflags, extra);
+			if (cerr) {
+				*mbibuff = c;
+				mbilen = 1;
+			} else
+				mbilen = wctomb(mbibuff, c);
+			if (raerr)
+				mbibuff[mbilen] = c1;
+			else
+				wctomb(mbibuff + mbilen, c1);
+			(void)strsvisx(buff, mbibuff, mbilen, eflags, extra);
 		}
 
 		cp = buff;
@@ -211,6 +221,8 @@ process(FILE *fp)
 			(void)putchar(*cp);
 		} while (*++cp);
 		c = rachar;
+		cerr = raerr;
+		raerr = 0;
 	}
 	/*
 	 * terminate partial line with a hidden newline
