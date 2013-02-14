@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.249 2013/02/14 12:14:13 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.250 2013/02/14 12:44:16 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.249 2013/02/14 12:14:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.250 2013/02/14 12:44:16 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1340,12 +1340,14 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		cp = prom_getpropstringA(node, "name", namebuf, sizeof namebuf);
 		DPRINTF(ACDB_PROBE, (" name %s\n", namebuf));
 		for (ssp = openboot_special; (sp = ssp->dev) != NULL; ssp++) {
-			if (!(ssp->flags & BS_EARLY)) continue;
+			if (!(ssp->flags & (BS_EARLY|BS_IGNORE))) continue;
 			if (strcmp(cp, sp) == 0)
 				break;
 		}
 		if (sp != NULL)
-			continue; /* an "early" device already configured */
+			continue;
+			/* an "early" device already configured, or an
+			   ignored device */
 
 		memset(&ma, 0, sizeof ma);
 		ma.ma_bustag = &mainbus_space_tag;
