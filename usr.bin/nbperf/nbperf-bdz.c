@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-bdz.c,v 1.4.4.1 2012/10/17 21:37:11 riz Exp $	*/
+/*	$NetBSD: nbperf-bdz.c,v 1.4.4.2 2013/02/14 22:06:18 jdc Exp $	*/
 /*-
  * Copyright (c) 2009, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-bdz.c,v 1.4.4.1 2012/10/17 21:37:11 riz Exp $");
+__RCSID("$NetBSD: nbperf-bdz.c,v 1.4.4.2 2013/02/14 22:06:18 jdc Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -253,7 +253,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 }
 
 int
-bdz_compute(struct nbperf *nbperf)
+bpz_compute(struct nbperf *nbperf)
 {
 	struct state state;
 	int retval = -1;

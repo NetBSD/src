@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.h,v 1.3 2010/03/03 01:55:04 joerg Exp $	*/
+/*	$NetBSD: nbperf.h,v 1.3.8.1 2013/02/14 22:06:18 jdc Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,4 +56,4 @@ struct nbperf {
 
 int	chm_compute(struct nbperf *);
 int	chm3_compute(struct nbperf *);
-int	bdz_compute(struct nbperf *);
+int	bpz_compute(struct nbperf *);
