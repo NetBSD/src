@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2011/09/25 04:32:47 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2013/02/14 00:53:30 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -29,6 +29,8 @@ BFDOBJ!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
 LDADD+=		-L${BFDOBJ} -lbfd
 .if ${MKPICLIB} != "no"
 DPADD+=		${BFDOBJ}/libbfd_pic.a
+.elif ${MKPIC} != "no"
+DPADD+=		${BFDOBJ}/libbfd.so
 .else
 DPADD+=		${BFDOBJ}/libbfd.a
 .endif
