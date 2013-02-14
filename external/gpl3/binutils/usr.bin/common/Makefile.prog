@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prog,v 1.4 2013/02/14 02:52:59 matt Exp $
+#	$NetBSD: Makefile.prog,v 1.5 2013/02/14 03:36:44 christos Exp $
 #
 # Common Makefile fragment for a binutils program.
 #
@@ -24,21 +24,15 @@ LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libopcodes*)
-OPCODESOBJ!=	cd ${TOP}/${BFDSUBDIR}/libopcodes && ${PRINTOBJDIR}
-LDADD+=		-L${OPCODESOBJ} -lopcodes
-PROGDPLIBS+=	-lopcodes ${OPCODEOBJ}
+PROGDPLIBS+=	opcodes ${TOP}/${BFDSUBDIR}/libopcodes
 .endif
 
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libbfd*)
-BFDOBJ!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
-LDADD+=		-L${BFDOBJ} -lbfd
-PROGDPLIBS+=	-lbfd ${BFDOBJ}
+PROGDPLIBS+=	bfd ${TOP}/${BFDSUBDIR}/libbfd
 .endif
 
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libiberty*)
-IBERTYOBJ!=	cd ${TOP}/${BFDSUBDIR}/libiberty && ${PRINTOBJDIR}
-LDADD+=		-L${IBERTYOBJ} -liberty
-DPADD+=		${IBERTYOBJ}/libiberty.a
+PROGDPLIBS+=	iberty ${TOP}/${BFDSUBDIR}/libiberty
 .endif
 
 .PATH: ${DIST}/binutils ${DIST}/binutils/doc
