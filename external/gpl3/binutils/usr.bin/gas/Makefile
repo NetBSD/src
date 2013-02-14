@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/02/14 03:36:44 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2013/02/14 21:29:35 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -24,12 +24,9 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 CPPFLAGS+=	-I${DIST}/gas -I${DIST}/gas/config
 CPPFLAGS+=	-I${DIST}
 
-PROGDPLIBS+=	opcodes ${TOP}/${BFDSUBDIR}/libopcodes
-PROGDPLIBS+=	bfd ${TOP}/${BFDSUBDIR}/libbfd
-PROGDPLIBS+=	iberty ${TOP}/${BFDSUBDIR}/libiberty
-
-LDADD=		-lintl
-DPADD=		${LIBINTL}
+PROGDPLIBS+=	opcodes	${TOP}/${BFDSUBDIR}/libopcodes
+PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
+PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty
 
 TEXINFO=	as.texinfo
 COMMONOBJDIR!=	cd ${TOP}/usr.bin/common && ${PRINTOBJDIR}
@@ -41,3 +38,6 @@ as.info:	bfdver.texi
 
 .include <bsd.prog.mk>
 .include <bsd.info.mk>
+
+LDADD+=		-lintl -lz
+DPADD+=		${LIBINTL} ${LIBZ}
