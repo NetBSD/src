@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.45.2.2 2013/02/13 01:36:16 riz Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.45.2.3 2013/02/15 08:21:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.45.2.2 2013/02/13 01:36:16 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.45.2.3 2013/02/15 08:21:21 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -607,6 +607,7 @@ dwc_otg_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 			tsleep(&xfer->hcflags, PZERO, "dotgaw", 0);
 		return;
 	}
+	mutex_spin_enter(&sc->sc_intr_lock);
 	xfer->hcflags |= UXFER_ABORTING;
 
 	/*
