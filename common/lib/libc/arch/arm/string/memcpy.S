@@ -1,4 +1,6 @@
-/*	$NetBSD: memcpy.S,v 1.3 2013/02/08 01:41:35 matt Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.4 2013/02/15 22:35:39 matt Exp $	*/
+
+#include <arm/cdefs.h>
 
 #if !defined(_ARM_ARCH_DWORD_OK) || defined(_STANDALONE)
 #include "memcpy_arm.S"
