@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2012/08/10 17:12:11 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2013/02/15 17:08:35 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,6 @@ TESTS_C=
 		map_test \
 		process_test \
 		sanity_test \
-		test_helpers_test \
 		text_test \
 		user_test
 TESTS_C+=	${test}
