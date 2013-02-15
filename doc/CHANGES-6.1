@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.97 2013/02/15 03:36:32 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.98 2013/02/15 08:23:17 msaitoh Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8504,3 +8504,6 @@ sys/kern/uipc_syscalls.c			1.160
 	not set SS_NBIO.
 	[christos, ticket #822]
 
+sys/dev/usb/dwc_otg.c				patch
+	Fix a locking error in the last commit
+	[skrll, ticket #813]
