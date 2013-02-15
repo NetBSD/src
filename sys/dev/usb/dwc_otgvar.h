@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otgvar.h,v 1.11 2013/02/04 21:29:14 skrll Exp $ */
+/*	$NetBSD: dwc_otgvar.h,v 1.12 2013/02/15 17:07:09 skrll Exp $ */
 
 /* $FreeBSD: src/sys/dev/usb/controller/dwc_otg.h,v 1.12 2012/09/27 15:23:38 hselasky Exp $ */
 /*-
@@ -158,8 +158,14 @@ struct dwc_otg_xfer {
 	struct usbd_xfer xfer;			/* Needs to be first */
 	struct usb_task	abort_task;
 	TAILQ_ENTRY(dwc_otg_xfer) xnext;	/* list of active/complete xfers */
- 	bool		queued;			/* pending workqueue */
-	bool		active;			/* still active */
+	int	state;
+#define DXFER_INIT		0
+#define DXFER_WORKQ		1
+#define DXFER_STARTED		2
+#define DXFER_ACTIVE		3
+#define DXFER_COMPLETING	4
+#define DXFER_ABORTING		5
+#define DXFER_DONE		6
 
 	void		*td_start[1];
 	dwc_otg_td_t	*td_transfer_first;
