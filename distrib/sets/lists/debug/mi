@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.4 2013/01/17 21:42:18 christos Exp $
+# $NetBSD: mi,v 1.5 2013/02/15 22:14:21 jmmv Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -1031,7 +1031,7 @@
 ./usr/libdata/debug/usr/tests/atf/atf-c/detail/process_helpers.debug	tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-c/detail/process_test.debug	tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-c/detail/sanity_test.debug	tests-atf-debug		debug,atf
-./usr/libdata/debug/usr/tests/atf/atf-c/detail/test_helpers_test.debug	tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/detail/test_helpers_test.debug	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/atf/atf-c/detail/text_test.debug		tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-c/detail/user_test.debug		tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-c/dynstr_test.debug		tests-obsolete		obsolete
@@ -1081,6 +1081,7 @@
 ./usr/libdata/debug/usr/tests/atf/atf-c++/check_test.debug		tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-c++/config_test.debug		tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-c++/detail/application_test.debug	tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/detail/auto_array_test.debug	tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-c++/detail/env_test.debug		tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-c++/detail/exceptions_test.debug	tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-c++/detail/expand_test.debug	tests-atf-debug		debug,atf
