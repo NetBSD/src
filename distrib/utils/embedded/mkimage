@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.34 2013/02/12 12:45:12 jmcneill Exp $
+# $NetBSD: mkimage,v 1.35 2013/02/15 00:13:06 christos Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -130,7 +130,9 @@ echo ${bar} configuring sets ${bar}
 (echo '/set type=dir uname=root gname=wheel mode=0755'
 for i in $selected_sets; do
 	s="${release}/etc/mtree/set.$i"
-	[ -f "$s" ] && cat "$s"
+	if [ -f "$s" ]; then
+		cat "$s"
+	fi
 done) > "$tmp/selected_sets"
 
 make_fstab
