@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.20 2013/02/14 14:00:01 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.21 2013/02/15 00:29:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,12 +39,13 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.20 2013/02/14 14:00:01 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.21 2013/02/15 00:29:44 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <wchar.h>
 #include <limits.h>
@@ -160,29 +161,49 @@ process(FILE *fp)
 	static int col = 0;
 	static char nul[] = "\0";
 	char *cp = nul + 1;	/* so *(cp-1) starts out != '\n' */
-	wint_t c, c1, rachar; 
-	char mbibuff[13]; /* ((sizeof(ibuff) - 1) * MB_LEN_MAX) + NUL */
+	wint_t c, c1, rachar;
+	char mbibuff[13]; /* (2 wchars (i.e., c + c1)) * MB_LEN_MAX) */
 	char buff[5]; /* max vis-encoding length for one char + NUL */
 	int mbilen, cerr = 0, raerr = 0;
 	
+        /*
+         * The input stream is considered to be multibyte characters.
+         * The input loop will read this data inputing one character,
+	 * possibly multiple bytes, at a time and converting each to
+	 * a wide character wchar_t.
+         *
+	 * The vis(3) functions, however, require single either bytes
+	 * or a multibyte string as their arguments.  So we convert
+	 * our input wchar_t and the following look-ahead wchar_t to
+	 * a multibyte string for processing by vis(3).
+         */
+
+	/* Read one multibyte character, store as wchar_t */
 	c = getwc(fp);
 	if (c == WEOF && errno == EILSEQ) {
+		/* Error in multibyte data.  Read one byte. */
 		c = (wint_t)getc(fp);
 		cerr = 1;
 	}
 	while (c != WEOF) {
+		/* Clear multibyte input buffer. */
+		memset(mbibuff, 0, sizeof(mbibuff));
+		/* Read-ahead next multibyte character. */
 		rachar = getwc(fp);
 		if (rachar == WEOF && errno == EILSEQ) {
+			/* Error in multibyte data.  Read one byte. */
 			rachar = (wint_t)getc(fp);
 			raerr = 1;
 		}
 		if (none) {
+			/* Handle -n flag. */
 			cp = buff;
 			*cp++ = c;
 			if (c == '\\')
 				*cp++ = '\\';
 			*cp = '\0';
 		} else if (markeol && c == '\n') {
+			/* Handle -l flag. */
 			cp = buff;
 			if ((eflags & VIS_NOSLASH) == 0)
 				*cp++ = '\\';
@@ -190,19 +211,41 @@ process(FILE *fp)
 			*cp++ = '\n';
 			*cp = '\0';
 		} else {
+			/*
+			 * Convert character using vis(3) library.
+			 * At this point we will process one character.
+			 * But we must pass the vis(3) library this
+			 * character plus the next one because the next
+			 * one is used as a look-ahead to decide how to
+			 * encode this one under certain circumstances.
+			 *
+			 * Since our characters may be multibyte, e.g.,
+			 * in the UTF-8 locale, we cannot use vis() and
+			 * svis() which require byte input, so we must
+			 * create a multibyte string and use strvisx().
+			 */
+			/* Treat EOF as a NUL char. */
 			c1 = rachar;
 			if (c1 == WEOF)
 				c1 = L'\0';
+			/*
+			 * If we hit a multibyte conversion error above,
+			 * insert byte directly into string buff because
+			 * wctomb() will fail.  Else convert wchar_t to
+			 * multibyte using wctomb().
+			 */
 			if (cerr) {
-				*mbibuff = c;
+				*mbibuff = (char)c;
 				mbilen = 1;
 			} else
 				mbilen = wctomb(mbibuff, c);
+			/* Same for look-ahead character. */
 			if (raerr)
-				mbibuff[mbilen] = c1;
+				mbibuff[mbilen] = (char)c1;
 			else
 				wctomb(mbibuff + mbilen, c1);
-			(void)strsvisx(buff, mbibuff, mbilen, eflags, extra);
+			/* Perform encoding on just first character. */
+			(void)strsvisx(buff, mbibuff, 1, eflags, extra);
 		}
 
 		cp = buff;
