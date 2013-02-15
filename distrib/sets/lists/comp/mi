@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1802 2013/02/15 17:09:07 jmmv Exp $
+#	$NetBSD: mi,v 1.1803 2013/02/15 20:07:00 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1743,6 +1743,7 @@
 ./usr/include/locale.h				comp-c-include
 ./usr/include/login_cap.h			comp-c-include
 ./usr/include/lua.h				comp-c-include
+./usr/include/lua.hpp				comp-c-include
 ./usr/include/luaconf.h				comp-c-include
 ./usr/include/lualib.h				comp-c-include
 ./usr/include/lwp.h				comp-c-include
