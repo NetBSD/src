@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.515 2013/01/16 16:01:08 christos Exp $
+# $NetBSD: mi,v 1.516 2013/02/15 17:09:09 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -187,7 +187,7 @@
 ./usr/tests/atf/atf-c/detail/process_helpers	tests-atf-tests		atf
 ./usr/tests/atf/atf-c/detail/process_test	tests-atf-tests		atf
 ./usr/tests/atf/atf-c/detail/sanity_test	tests-atf-tests		atf
-./usr/tests/atf/atf-c/detail/test_helpers_test	tests-atf-tests		atf
+./usr/tests/atf/atf-c/detail/test_helpers_test	tests-obsolete		obsolete
 ./usr/tests/atf/atf-c/detail/text_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-c/detail/user_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-c/dynstr_test		tests-obsolete		obsolete
@@ -268,6 +268,7 @@
 ./usr/tests/atf/atf-c++/detail			tests-atf-tests
 ./usr/tests/atf/atf-c++/detail/Atffile		tests-atf-tests		atf
 ./usr/tests/atf/atf-c++/detail/application_test	tests-atf-tests		atf
+./usr/tests/atf/atf-c++/detail/auto_array_test	tests-atf-tests		atf
 ./usr/tests/atf/atf-c++/detail/env_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-c++/detail/exceptions_test	tests-atf-tests		atf
 ./usr/tests/atf/atf-c++/detail/expand_test	tests-atf-tests		atf
@@ -649,7 +650,7 @@
 ./usr/tests/atf/test-programs/config_test	tests-atf-tests		atf
 ./usr/tests/atf/test-programs/cpp_helpers	tests-atf-tests		atf
 ./usr/tests/atf/test-programs/expect_test	tests-atf-tests		atf
-./usr/tests/atf/test-programs/fork_test		tests-atf-tests		atf
+./usr/tests/atf/test-programs/fork_test		tests-obsolete		obsolete
 ./usr/tests/atf/test-programs/meta_data_test	tests-atf-tests		atf
 ./usr/tests/atf/test-programs/result_test	tests-atf-tests		atf
 ./usr/tests/atf/test-programs/sh_helpers	tests-atf-tests		atf
