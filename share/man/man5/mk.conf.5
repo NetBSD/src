@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.64 2012/09/30 06:00:26 jkoshy Exp $
+.\"	$NetBSD: mk.conf.5,v 1.65 2013/02/15 19:49:48 jmmv Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 30, 2012
+.Dd Feburary 15, 2013
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -222,6 +222,8 @@ flag.
 .It Sy MKATF
 .YorN
 Indicates whether the Automated Testing Framework is built and installed.
+This also controls whether the NetBSD test suite is built and installed,
+as the tests rely on ATF and cannot be built without it.
 .DFLTy
 .
 .It Sy MKBINUTILS
@@ -503,6 +505,19 @@ Otherwise all logins will fail.
 .YorN
 Indicates whether kernel modules are built and installed.
 .DFLTy
+.
+.It Sy MKKYUA
+.YorN
+Indicates whether Kyua (the testing infrastructure used by NetBSD) is built
+and installed.
+Note that
+.Em this does not control the installation of the tests themselves .
+The tests rely on the ATF libraries and therefore their build is controlled
+by the
+.Sy MKATF
+knob.
+.DFLTn
+until the import of Kyua is done and validated.
 .
 .It Sy MKLDAP
 .YorN

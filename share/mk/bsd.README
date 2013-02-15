@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.311 2013/02/10 22:05:51 jmcneill Exp $
+#	$NetBSD: bsd.README,v 1.312 2013/02/15 19:49:48 jmmv Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -113,8 +113,11 @@ MAKEVERBOSE	Control how "verbose" the standard make(1) rules are.
 		    3	Ignore the effect of the "@" prefix in make commands
 		    4	Trace shell commands using the shell's -x flag
 
-MKATF		If "no", don't build libatf-c, libatf-c++ libraries associated
-		with the Automated Testing Framework (ATF).
+MKATF		If "no", don't build the Automated Testing Framework (ATF),
+		which includes the libatf-c, libatf-c++ and libatf-sh libraries
+		and the various command line tools.  Also, because the build of
+		the libraries is disabled, don't build the NetBSD test suite
+		either.
 		Default: yes
 
 MKBFD		Obsolete, use MKBINUTILS
@@ -225,6 +228,12 @@ MKKERBEROS	If "no", disables building of Kerberos v5
 
 MKKMOD		If "no", disables building of kernel modules.
 		Default: yes
+
+MKKYUA		If "no", don't build Kyua nor its dependent library Lutok.
+		Note that setting this to "no" does not disable the build of
+		the NetBSD test suite itself; the build of the tests is
+		controlled by the MKATF knob.
+		Default: no (until the import is done and validated)
 
 MKLDAP		If "no", disables building of LDAP infrastructure
 		(libraries and support programs).

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.723 2013/02/10 22:05:51 jmcneill Exp $
+#	$NetBSD: bsd.own.mk,v 1.724 2013/02/15 19:49:49 jmmv Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -890,6 +890,7 @@ _MKVARS.no= \
 	MKBSDGREP MKBSDTAR \
 	MKCATPAGES MKCRYPTO_RC5 MKDEBUG \
 	MKDEBUGLIB MKDTRACE MKEXTSRC \
+	MKKYUA \
 	MKMANZ MKOBJDIRS \
 	MKLLVM MKPCC \
 	MKPIGZGZIP \
@@ -925,6 +926,7 @@ X11FLAVOUR?=	Xorg
 .if ${MKCXX} == "no"
 MKATF:=		no
 MKGROFF:=	no
+MKKYUA:=	no
 .endif
 
 .if ${MKCRYPTO} == "no"
