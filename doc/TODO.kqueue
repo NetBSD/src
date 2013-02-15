@@ -1,4 +1,4 @@
-#	$NetBSD: TODO.kqueue,v 1.8 2008/11/12 12:35:52 ad Exp $
+#	$NetBSD: TODO.kqueue,v 1.9 2013/02/15 15:01:18 christos Exp $
 
 items todo:
 	- dir watched - what happens if something is mounted over it?
@@ -17,7 +17,8 @@ items todo:
 
 merge in from FreeBSD:
 	pkgsrc/net/bsdproxy
-	lib/libc/net/res_send.c
+	lib/libc/net/res_send.c, this has been merged but not turned on
+	   I don't think it gains anything performance-wise
 	sys/netinet/tcp_subr.c	1.93 (?)
 	libc/libc_r/uthread (?)
 	pkgsrc/security/l0pht-watch (?)
