@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.52 2013/02/14 13:57:53 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.53 2013/02/15 00:28:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.52 2013/02/14 13:57:53 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.53 2013/02/15 00:28:10 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -298,6 +298,20 @@ istrsnvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 	_DIAGASSERT(mbsrc != NULL);
 	_DIAGASSERT(mbextra != NULL);
 
+	/*
+	 * Input (mbsrc) is a char string considered to be multibyte
+	 * characters.  The input loop will read this string pulling
+	 * one character, possibly multiple bytes, from mbsrc and
+	 * converting each to wchar_t in src.
+	 *
+	 * The vis conversion will be done using the wide char
+	 * wchar_t string.
+	 *
+	 * This will then be converted back to a multibyte string to
+	 * return to the caller.
+	 */
+
+	/* Allocate space for the wide char strings */
 	psrc = pdst = extra = nextra = NULL;
 	if (!mblength)
 		mblength = strlen(mbsrc);
@@ -312,22 +326,53 @@ istrsnvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 	dst = pdst;
 	src = psrc;
 
+	/*
+	 * Input loop.
+	 * Handle up to mblength characters (not bytes).  We do not
+	 * stop at NULs because we may be processing a block of data
+	 * that includes NULs.  We process one more than the character
+	 * count so that we also get the next character of input which
+	 * is needed under some circumstances as a look-ahead character.
+	 */
 	mbslength = (ssize_t)mblength;
-	while (mbslength >= 0) {
+	/*
+	 * When inputing a single character, must also read in the
+	 * next character for nextc, the look-ahead character.
+	 */
+	if (mbslength == 1)
+		mbslength++;
+	while (mbslength > 0) {
+		/* Convert one multibyte character to wchar_t. */
 		clen = mbtowc(src, mbsrc, MB_LEN_MAX);
 		if (clen < 0) {
-			*src = (wint_t)(u_char)*mbsrc;
+			/* Conversion error, process as a byte instead. */
+			*src = (wint_t)*mbsrc;
 			clen = 1;
 		}
 		if (clen == 0)
+			/*
+			 * NUL in input gives 0 return value. process
+			 * as single NUL byte.
+			 */
 			clen = 1;
+		/* Advance output pointer if we still have input left. */
 		src++;
+		/* Advance input pointer by number of bytes read. */
 		mbsrc += clen;
+		/* Decrement input count */
 		mbslength -= clen;
 	}
 	len = src - psrc;	
 	src = psrc;
+	/*
+	 * In the single character input case, we will have actually
+	 * processed two characters, c and nextc.  Reset len back to
+	 * just a single character.
+	 */
+	if (mblength < len)
+		len = mblength;
 
+	/* Convert extra argument to list of characters for this mode. */
 	mbstowcs(extra, mbextra, strlen(mbextra));
 	MAKEEXTRALIST(flag, nextra, extra);
 	if (!nextra) {
@@ -340,8 +385,14 @@ istrsnvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 		goto out;
 	}
 
+	/* Look up which processing function to call. */
 	f = getvisfun(flag);
 
+	/*
+	 * Main processing loop.
+	 * Call do_Xvis processing function one character at a time
+	 * with next character available for look-ahead.
+	 */
 	for (start = dst; len > 0; len--) {
 		c = *src++;
 		dst = (*f)(dst, c, flag, len >= 1 ? *src : L'\0', nextra);
@@ -351,8 +402,10 @@ istrsnvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 		}
 	}
 
+	/* Terminate the output string. */
 	*dst = L'\0';
 
+	/* Convert wchar_t string back to multibyte output string. */
 	len = dlen ? *dlen : ((wcslen(start) + 1) * MB_LEN_MAX);
 	olen = wcstombs(mbdst, start, len * sizeof(*mbdst));
 
