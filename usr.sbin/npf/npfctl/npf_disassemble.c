@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.16 2013/02/10 23:47:37 rmind Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.17 2013/02/16 21:11:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * FIXME: config generation should be redesigned..
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.16 2013/02/10 23:47:37 rmind Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.17 2013/02/16 21:11:14 rmind Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -610,6 +610,9 @@ npfctl_show_rule(nl_rule_t *nrl, unsigned nlevel)
 		printf("group (name \"%s\"", rname == NULL ? "" : rname);
 		if (ifname) {
 			printf(", interface %s", ifname);
+		}
+		if (rg.rg_attr & NPF_RULE_DYNAMIC) {
+			printf(", dynamic");
 		}
 		puts(") {");
 		return;
