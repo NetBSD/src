@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.39 2012/08/26 23:03:20 jmmv Exp $
+# $NetBSD: Makefile,v 1.40 2013/02/16 12:44:26 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@
 TESTSDIR=	${TESTSBASE}
 ATFFILE=	yes
 
-SUBDIR=		bin dev examples games include kernel lib libexec net
+SUBDIR=		bin dev games include kernel lib libexec net
 SUBDIR+=	sbin sys usr.bin usr.sbin
 
 . if (${MKRUMP} != "no")
