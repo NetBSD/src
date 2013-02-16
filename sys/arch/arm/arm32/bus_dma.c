@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.78 2013/02/15 01:03:43 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.79 2013/02/16 06:49:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.78 2013/02/15 01:03:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.79 2013/02/16 06:49:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -552,10 +552,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	    "dm_maxsegsz %lu _dm_maxmaxsegsz %lu",
 	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
-#ifdef DIAGNOSTIC
-	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("_bus_dmamap_load_mbuf: no packet header");
-#endif	/* DIAGNOSTIC */
+	KASSERT(m0->m_flags & M_PKTHDR);
 
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
@@ -975,13 +972,12 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
 		panic("_bus_dmamap_sync: mix PRE and POST");
 
-#ifdef DIAGNOSTIC
-	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
-		    offset, map->dm_mapsize);
-	if (len == 0 || (offset + len) > map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad length");
-#endif
+	KASSERTMSG(offset < map->dm_mapsize,
+	    "offset %lu mapsize %lu",
+	    offset, map->dm_mapsize);
+	KASSERTMSG(len > 0 && offset + len <= map->dm_mapsize,
+	    "len %lu offset %lu mapsize %lu",
+	    len, offset, map->dm_mapsize);
 
 	/*
 	 * For a virtually-indexed write-back cache, we need
@@ -1381,10 +1377,8 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 #ifdef DEBUG_DMA
 	printf("dmamem_unmap: t=%p kva=%p size=%zx\n", t, kva, size);
 #endif	/* DEBUG_DMA */
-#ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
-		panic("_bus_dmamem_unmap");
-#endif	/* DIAGNOSTIC */
+	KASSERTMSG(((uintptr_t)kva & PAGE_MASK) == 0,
+	    "kva %p (%#"PRIxPTR")", kva, (uintptr_t)kva & PAGE_MASK);
 
 	size = round_page(size);
 	pmap_kremove((vaddr_t)kva, size);
@@ -1404,15 +1398,14 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	int i;
 
 	for (i = 0; i < nsegs; i++) {
-#ifdef DIAGNOSTIC
-		if (off & PGOFSET)
-			panic("_bus_dmamem_mmap: offset unaligned");
-		if (segs[i].ds_addr & PGOFSET)
-			panic("_bus_dmamem_mmap: segment unaligned");
-		if (segs[i].ds_len & PGOFSET)
-			panic("_bus_dmamem_mmap: segment size not multiple"
-			    " of page size");
-#endif	/* DIAGNOSTIC */
+		KASSERTMSG((off & PAGE_MASK) == 0,
+		    "off %#qx (%#x)", off, (int)off & PAGE_MASK);
+		KASSERTMSG((segs[i].ds_addr & PAGE_MASK) == 0,
+		    "ds_addr %#lx (%#x)", segs[i].ds_addr,
+		    (int)segs[i].ds_addr & PAGE_MASK);
+		KASSERTMSG((segs[i].ds_len & PAGE_MASK) == 0,
+		    "ds_len %#lx (%#x)", segs[i].ds_addr,
+		    (int)segs[i].ds_addr & PAGE_MASK);
 		if (off >= segs[i].ds_len) {
 			off -= segs[i].ds_len;
 			continue;
@@ -1656,10 +1649,7 @@ _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	struct arm32_bus_dma_cookie *cookie = map->_dm_cookie;
 	int error = 0;
 
-#ifdef DIAGNOSTIC
-	if (cookie == NULL)
-		panic("_bus_dma_alloc_bouncebuf: no cookie");
-#endif
+	KASSERT(cookie != NULL);
 
 	cookie->id_bouncebuflen = round_page(size);
 	error = _bus_dmamem_alloc(t, cookie->id_bouncebuflen,
@@ -1690,14 +1680,10 @@ _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct arm32_bus_dma_cookie *cookie = map->_dm_cookie;
 
-#ifdef DIAGNOSTIC
-	if (cookie == NULL)
-		panic("_bus_dma_alloc_bouncebuf: no cookie");
-#endif
+	KASSERT(cookie != NULL);
 
 	_bus_dmamem_unmap(t, cookie->id_bouncebuf, cookie->id_bouncebuflen);
-	_bus_dmamem_free(t, cookie->id_bouncesegs,
-	    cookie->id_nbouncesegs);
+	_bus_dmamem_free(t, cookie->id_bouncesegs, cookie->id_nbouncesegs);
 	cookie->id_bouncebuflen = 0;
 	cookie->id_nbouncesegs = 0;
 	cookie->id_flags &= ~_BUS_DMA_HAS_BOUNCE;
