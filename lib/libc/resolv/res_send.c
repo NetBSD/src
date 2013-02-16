@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.26 2013/02/15 14:08:25 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.27 2013/02/16 13:29:34 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -93,7 +93,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.22 2009/01/22 23:49:23 tbox Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.26 2013/02/15 14:08:25 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.27 2013/02/16 13:29:34 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -174,7 +174,7 @@ static const int highestFD = FD_SETSIZE - 1;
 
 /* Forward. */
 
-static int		get_salen(const struct sockaddr *);
+static socklen_t	get_salen(const struct sockaddr *);
 static struct sockaddr * get_nsaddr(res_state, size_t);
 static int		send_vc(res_state, const u_char *, int,
 				u_char *, int, int *, int);
@@ -182,11 +182,11 @@ static int		send_dg(res_state,
 #ifdef USE_KQUEUE
 				int,
 #endif
-				const u_char *, int,
+				const void *, size_t,
 				u_char *, int, int *, int, int,
 				int *, int *);
 static void		Aerror(const res_state, FILE *, const char *, int,
-			       const struct sockaddr *, int);
+			       const struct sockaddr *, socklen_t);
 static void		Perror(const res_state, FILE *, const char *, int);
 static int		sock_eq(struct sockaddr *, struct sockaddr *);
 #if defined(NEED_PSELECT) && !defined(USE_POLL) && !defined(USE_KQUEUE)
@@ -467,7 +467,7 @@ res_nsend(res_state statp,
 	for (tries = 0; tries < statp->retry; tries++) {
 	    for (ns = 0; ns < statp->nscount; ns++) {
 		struct sockaddr *nsap;
-		int nsaplen;
+		socklen_t nsaplen;
 		nsap = get_nsaddr(statp, (size_t)ns);
 		nsaplen = get_salen(nsap);
 		statp->_flags &= ~RES_F_LASTMASK;
@@ -507,7 +507,7 @@ res_nsend(res_state statp,
 		}
 
 		Dprint(((statp->options & RES_DEBUG) &&
-			getnameinfo(nsap, (socklen_t)nsaplen, abuf,
+			getnameinfo(nsap, nsaplen, abuf,
 			    (socklen_t)sizeof(abuf), NULL, 0, niflags) == 0),
 		       (stdout, ";; Querying server (# %d) address = %s\n",
 			ns + 1, abuf));
@@ -529,7 +529,7 @@ res_nsend(res_state statp,
 #ifdef USE_KQUEUE
 			    kq,
 #endif
-			    buf, buflen, ans, anssiz, &terrno,
+			    buf, (size_t)buflen, ans, anssiz, &terrno,
 			    ns, tries, &v_circuit, &gotsomewhere);
 			if (n < 0)
 				goto fail;
@@ -617,22 +617,22 @@ res_nsend(res_state statp,
 
 /* Private */
 
-static int
+static socklen_t
 get_salen(const struct sockaddr *sa)
 {
 
 #ifdef HAVE_SA_LEN
 	/* There are people do not set sa_len.  Be forgiving to them. */
 	if (sa->sa_len)
-		return (sa->sa_len);
+		return (socklen_t)sa->sa_len;
 #endif
 
 	if (sa->sa_family == AF_INET)
-		return (sizeof(struct sockaddr_in));
+		return (socklen_t)sizeof(struct sockaddr_in);
 	else if (sa->sa_family == AF_INET6)
-		return (sizeof(struct sockaddr_in6));
+		return (socklen_t)sizeof(struct sockaddr_in6);
 	else
-		return (0);	/*%< unknown, die on connect */
+		return 0;	/*%< unknown, die on connect */
 }
 
 /*%
@@ -667,7 +667,7 @@ send_vc(res_state statp,
 	const HEADER *hp = (const HEADER *)(const void *)buf;
 	HEADER *anhp = (HEADER *)(void *)ans;
 	struct sockaddr *nsap;
-	int nsaplen;
+	socklen_t nsaplen;
 	int truncating, connreset, resplen;
 	ssize_t n;
 	struct iovec iov[2];
@@ -740,7 +740,7 @@ send_vc(res_state statp,
 				 (socklen_t)sizeof(on));
 #endif
 		errno = 0;
-		if (connect(statp->_vcsock, nsap, (socklen_t)nsaplen) < 0) {
+		if (connect(statp->_vcsock, nsap, nsaplen) < 0) {
 			*terrno = errno;
 			Aerror(statp, stderr, "connect/vc", errno, nsap,
 			    nsaplen);
@@ -756,8 +756,8 @@ send_vc(res_state statp,
 	ns_put16((u_short)buflen, (u_char*)(void *)&len);
 	iov[0] = evConsIovec(&len, INT16SZ);
 	DE_CONST(buf, tmp);
-	iov[1] = evConsIovec(tmp, (size_t)buflen);
-	if (writev(statp->_vcsock, iov, 2) != (INT16SZ + buflen)) {
+	iov[1] = evConsIovec(tmp, buflen);
+	if (writev(statp->_vcsock, iov, 2) != (ssize_t)(INT16SZ + buflen)) {
 		*terrno = errno;
 		Perror(statp, stderr, "write failed", errno);
 		res_nclose(statp);
@@ -869,14 +869,14 @@ send_dg(res_state statp,
 #ifdef USE_KQUEUE
 	int kq,
 #endif
-	const u_char *buf, int buflen, u_char *ans,
+	const void *buf, size_t buflen, u_char *ans,
 	int anssiz, int *terrno, int ns, int tries, int *v_circuit,
 	int *gotsomewhere)
 {
 	const HEADER *hp = (const HEADER *)(const void *)buf;
 	HEADER *anhp = (HEADER *)(void *)ans;
 	const struct sockaddr *nsap;
-	int nsaplen;
+	socklen_t nsaplen;
 	struct timespec now, timeout, finish;
 	struct sockaddr_storage from;
 	ISC_SOCKLEN_T fromlen;
@@ -942,7 +942,7 @@ send_dg(res_state statp,
 		 * connecting?
  		 */
 		if (!(statp->options & RES_INSECURE1) &&
-		    connect(EXT(statp).nssocks[ns], nsap, (socklen_t)nsaplen) < 0) {
+		    connect(EXT(statp).nssocks[ns], nsap, nsaplen) < 0) {
 			Aerror(statp, stderr, "connect(dg)", errno, nsap,
 			    nsaplen);
 			res_nclose(statp);
@@ -955,19 +955,19 @@ send_dg(res_state statp,
 	s = EXT(statp).nssocks[ns];
 #ifndef CANNOT_CONNECT_DGRAM
 	if (statp->options & RES_INSECURE1) {
-		if (sendto(s,
-		    (const char*)buf, buflen, 0, nsap, (socklen_t)nsaplen) != buflen) {
+		if (sendto(s, buf, buflen, 0, nsap, nsaplen) !=
+		    (ssize_t)buflen) {
 			Aerror(statp, stderr, "sendto", errno, nsap, nsaplen);
 			res_nclose(statp);
 			return (0);
 		}
-	} else if (send(s, (const char*)buf, (size_t)buflen, 0) != buflen) {
+	} else if (send(s, buf, buflen, 0) != (ssize_t)buflen) {
 		Perror(statp, stderr, "send", errno);
 		res_nclose(statp);
 		return (0);
 	}
 #else /* !CANNOT_CONNECT_DGRAM */
-	if (sendto(s, (const char*)buf, buflen, 0, nsap, (socklen_t)nsaplen) != buflen)
+	if (sendto(s, buf, buflen, 0, nsap, nsaplen) != (ssize_t)buflen)
 	{
 		Aerror(statp, stderr, "sendto", errno, nsap, nsaplen);
 		res_nclose(statp);
@@ -1100,7 +1100,7 @@ send_dg(res_state statp,
 	}
 #endif
 	if (!(statp->options & RES_INSECURE2) &&
-	    !res_queriesmatch(buf, buf + buflen,
+	    !res_queriesmatch(buf, (const u_char *)buf + buflen,
 			      ans, ans + anssiz)) {
 		/*
 		 * response contains wrong query? ignore it.
@@ -1145,14 +1145,14 @@ send_dg(res_state statp,
 
 static void
 Aerror(const res_state statp, FILE *file, const char *string, int error,
-       const struct sockaddr *address, int alen)
+       const struct sockaddr *address, socklen_t alen)
 {
 	int save = errno;
 	char hbuf[NI_MAXHOST];
 	char sbuf[NI_MAXSERV];
 
 	if ((statp->options & RES_DEBUG) != 0U) {
-		if (getnameinfo(address, (socklen_t)alen, hbuf,
+		if (getnameinfo(address, alen, hbuf,
 		    (socklen_t)sizeof(hbuf), sbuf, (socklen_t)sizeof(sbuf),
 		    niflags)) {
 			strncpy(hbuf, "?", sizeof(hbuf) - 1);
