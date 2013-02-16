@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.6 2013/02/08 02:32:35 christos Exp $
+# $NetBSD: md.amd64,v 1.7 2013/02/16 21:40:38 jmmv Exp $
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/lib/i386/i18n/libBIG5.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
@@ -92,6 +92,7 @@
 ./usr/libdata/debug/usr/lib/i386/libldap.so.4.2.debug	comp-compat-shlib	compat,pic,ldap,debug
 ./usr/libdata/debug/usr/lib/i386/libldap_r.so.4.2.debug	comp-compat-shlib	compat,pic,ldap,debug
 ./usr/libdata/debug/usr/lib/i386/liblua.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/liblutok.so.1.0.debug	comp-compat-shlib	compat,pic,debug,kyua
 ./usr/libdata/debug/usr/lib/i386/liblwres.so.5.8.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblzf.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblzma.so.1.1.debug	comp-compat-shlib	compat,pic,debug
@@ -245,6 +246,7 @@
 ./usr/lib/i386/libldap_g.a			comp-c-proflib		compat,debuglib,ldap
 ./usr/lib/i386/libldap_r_g.a			comp-c-proflib		compat,debuglib,ldap
 ./usr/lib/i386/liblua_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/liblutok_g.a			comp-c-proflib		compat,debuglib,kyua
 ./usr/lib/i386/liblwres_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/liblzf_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/liblzma_g.a			comp-c-proflib		compat,debuglib
