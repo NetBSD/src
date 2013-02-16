@@ -1,4 +1,4 @@
-# $NetBSD: t_asm.sh,v 1.1 2011/11/12 01:19:25 jmmv Exp $
+# $NetBSD: t_asm.sh,v 1.1 2013/02/16 12:44:26 jmmv Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
