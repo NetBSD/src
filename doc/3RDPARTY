@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1002 2013/02/15 17:09:38 jmmv Exp $
+#	$NetBSD: 3RDPARTY,v 1.1003 2013/02/16 21:40:57 jmmv Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -677,6 +677,20 @@ Location:	external/mit/lua/dist
 Notes:
 The default module paths have been changed to not include the current
 working directory '.' to avoid potential security problems.
+
+Package:	Lutok
+Version:	0.2
+Current Vers:	0.2
+Maintainer:	Julio Merino <jmmv@NetBSD.org>
+Archive site:	http://code.google.com/p/lutok/downloads/list?can=1
+Home page:	http://code.google.com/p/lutok/
+Mailing List:	lutok-discuss@googlegroups.com
+Responsible:	jmmv
+License:	BSD 3-clause
+Location:	external/bsd/lutok/dist
+Notes:
+The source files are in external/bsd/lutok/dist.
+Use external/bsd/lutok/prepare-import.sh to regenerate the dist/ directory.
 
 Package:	m4
 Version:	20091026
