@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.27 2013/02/16 13:29:34 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.28 2013/02/16 13:37:01 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -93,7 +93,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.22 2009/01/22 23:49:23 tbox Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.27 2013/02/16 13:29:34 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.28 2013/02/16 13:37:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -176,7 +176,7 @@ static const int highestFD = FD_SETSIZE - 1;
 
 static socklen_t	get_salen(const struct sockaddr *);
 static struct sockaddr * get_nsaddr(res_state, size_t);
-static int		send_vc(res_state, const u_char *, int,
+static int		send_vc(res_state, const void *, size_t,
 				u_char *, int, int *, int);
 static int		send_dg(res_state,
 #ifdef USE_KQUEUE
@@ -661,7 +661,7 @@ get_nsaddr(res_state statp, size_t n)
 
 static int
 send_vc(res_state statp,
-	const u_char *buf, int buflen, u_char *ans, int anssiz,
+	const void *buf, size_t buflen, u_char *ans, int anssiz,
 	int *terrno, int ns)
 {
 	const HEADER *hp = (const HEADER *)(const void *)buf;
@@ -756,7 +756,7 @@ send_vc(res_state statp,
 	ns_put16((u_short)buflen, (u_char*)(void *)&len);
 	iov[0] = evConsIovec(&len, INT16SZ);
 	DE_CONST(buf, tmp);
-	iov[1] = evConsIovec(tmp, buflen);
+	iov[1] = evConsIovec(tmp, (int)buflen);
 	if (writev(statp->_vcsock, iov, 2) != (ssize_t)(INT16SZ + buflen)) {
 		*terrno = errno;
 		Perror(statp, stderr, "write failed", errno);
