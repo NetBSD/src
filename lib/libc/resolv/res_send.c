@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.28 2013/02/16 13:37:01 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.29 2013/02/16 13:45:45 para Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -93,7 +93,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.22 2009/01/22 23:49:23 tbox Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.28 2013/02/16 13:37:01 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.29 2013/02/16 13:45:45 para Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -516,7 +516,7 @@ res_nsend(res_state statp,
 		if (v_circuit) {
 			/* Use VC; at most one attempt per server. */
 			tries = statp->retry;
-			n = send_vc(statp, buf, buflen, ans, anssiz, &terrno,
+			n = send_vc(statp, buf, (size_t)buflen, ans, anssiz, &terrno,
 				    ns);
 			if (n < 0)
 				goto fail;
@@ -756,7 +756,7 @@ send_vc(res_state statp,
 	ns_put16((u_short)buflen, (u_char*)(void *)&len);
 	iov[0] = evConsIovec(&len, INT16SZ);
 	DE_CONST(buf, tmp);
-	iov[1] = evConsIovec(tmp, (int)buflen);
+	iov[1] = evConsIovec(tmp, (size_t)buflen);
 	if (writev(statp->_vcsock, iov, 2) != (ssize_t)(INT16SZ + buflen)) {
 		*terrno = errno;
 		Perror(statp, stderr, "write failed", errno);
