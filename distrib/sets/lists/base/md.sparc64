@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.178 2013/02/05 23:42:21 christos Exp $
+# $NetBSD: md.sparc64,v 1.179 2013/02/16 21:40:11 jmmv Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -163,6 +163,9 @@
 ./usr/lib/sparc/liblua.so			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblua.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/liblutok.so			base-compat-shlib	compat,pic,kyua
+./usr/lib/sparc/liblutok.so.1			base-compat-shlib	compat,pic,kyua
+./usr/lib/sparc/liblutok.so.1.0			base-compat-shlib	compat,pic,kyua
 ./usr/lib/sparc/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblwres.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzf.so.1			base-compat-shlib	compat,pic

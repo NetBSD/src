@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2013/02/12 20:32:11 christos Exp $
+#	$NetBSD: Makefile,v 1.36 2013/02/16 21:40:05 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,9 @@ SUBDIR+=ipf
 .endif
 .if (${MKISCSI} != "no")
 SUBDIR+= iscsi 
+.endif
+.if (${MKKYUA} != "no")
+SUBDIR+= lutok
 .endif
 .if (${MKLDAP} != "no")
 SUBDIR+= openldap
