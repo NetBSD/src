@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.516 2013/02/15 17:09:09 jmmv Exp $
+# $NetBSD: mi,v 1.517 2013/02/16 12:44:25 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -815,9 +815,9 @@
 ./usr/tests/dev/sysmon/Atffile			tests-fs-tests		atf,rump
 ./usr/tests/dev/sysmon/t_swsensor		tests-fs-tests		atf,rump
 ./usr/tests/dev/sysmon/t_swwdog			tests-fs-tests		atf,rump
-./usr/tests/examples				tests-asm-tests
-./usr/tests/examples/Atffile			tests-asm-tests		atf
-./usr/tests/examples/t_asm			tests-asm-tests		atf
+./usr/tests/examples				tests-obsolete
+./usr/tests/examples/Atffile			tests-obsolete
+./usr/tests/examples/t_asm			tests-obsolete
 ./usr/tests/fs					tests-fs-tests
 ./usr/tests/fs/Atffile				tests-fs-tests		atf,rump
 ./usr/tests/fs/h_funcs.subr			tests-fs-tests		atf,rump
@@ -2300,6 +2300,9 @@
 ./usr/tests/sbin/sysctl/t_perm			tests-sbin-tests	atf
 ./usr/tests/sbin/sysctl/t_sysctl		tests-sbin-tests	atf
 ./usr/tests/share				tests-sys-tests
+./usr/tests/share/examples			tests-asm-tests
+./usr/tests/share/examples/Atffile		tests-asm-tests		atf,share
+./usr/tests/share/examples/t_asm		tests-asm-tests		atf,share
 ./usr/tests/share/Atffile			tests-sys-tests		atf
 ./usr/tests/share/mk				tests-mk-tests
 ./usr/tests/share/mk/Atffile			tests-mk-tests		atf
