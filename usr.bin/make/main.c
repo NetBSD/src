@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.206 2013/02/16 02:11:11 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.207 2013/02/16 02:39:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.206 2013/02/16 02:11:11 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.207 2013/02/16 02:39:27 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.206 2013/02/16 02:11:11 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.207 2013/02/16 02:39:27 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -119,9 +119,7 @@ __RCSID("$NetBSD: main.c,v 1.206 2013/02/16 02:11:11 christos Exp $");
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/stat.h>
-#ifdef MAKE_NATIVE
 #include <sys/utsname.h>
-#endif
 #include <sys/wait.h>
 
 #include <errno.h>
@@ -782,9 +780,7 @@ main(int argc, char **argv)
 	static char defsyspath[] = _PATH_DEFSYSPATH;
 	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 	struct timeval rightnow;		/* to initialize random seed */
-#ifdef MAKE_NATIVE
 	struct utsname utsname;
-#endif
 
 	/* default to writing debug to stderr */
 	debug_file = stderr;
