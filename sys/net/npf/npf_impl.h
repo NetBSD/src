@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.27 2013/02/10 23:47:37 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.28 2013/02/16 21:11:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -232,7 +232,7 @@ npf_rule_t *	npf_ruleset_sharepm(npf_ruleset_t *, npf_natpolicy_t *);
 void		npf_ruleset_freealg(npf_ruleset_t *, npf_alg_t *);
 
 int		npf_ruleset_add(npf_ruleset_t *, const char *, npf_rule_t *);
-int		npf_ruleset_remove(npf_ruleset_t *, const char *, uintptr_t);
+int		npf_ruleset_remove(npf_ruleset_t *, const char *, uint64_t);
 int		npf_ruleset_remkey(npf_ruleset_t *, const char *,
 		    const void *, size_t);
 prop_dictionary_t npf_ruleset_list(npf_ruleset_t *, const char *);
@@ -248,6 +248,7 @@ npf_rule_t *	npf_rule_alloc(prop_dictionary_t);
 void		npf_rule_setcode(npf_rule_t *, int, void *, size_t);
 void		npf_rule_setrproc(npf_rule_t *, npf_rproc_t *);
 void		npf_rule_free(npf_rule_t *);
+uint64_t	npf_rule_getid(const npf_rule_t *);
 npf_natpolicy_t *npf_rule_getnat(const npf_rule_t *);
 void		npf_rule_setnat(npf_rule_t *, npf_natpolicy_t *);
 npf_rproc_t *	npf_rule_getrproc(npf_rule_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.20 2013/02/11 00:00:20 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.21 2013/02/16 21:11:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.20 2013/02/11 00:00:20 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.21 2013/02/16 21:11:14 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -501,12 +501,13 @@ npfctl_build_group_end(void)
  * if any, and insert into the ruleset of current group, or set the rule.
  */
 void
-npfctl_build_rule(int attr, u_int if_idx, sa_family_t family,
+npfctl_build_rule(uint32_t attr, u_int if_idx, sa_family_t family,
     const opt_proto_t *op, const filt_opts_t *fopts, const char *rproc)
 {
 	nl_rule_t *rl;
 
 	attr |= (npf_conf ? 0 : NPF_RULE_DYNAMIC);
+
 	rl = npf_rule_create(NULL, attr, if_idx);
 	npfctl_build_ncode(rl, family, op, fopts, false);
 	if (rproc) {
