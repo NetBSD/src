@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.180 2013/01/16 21:11:10 christos Exp $
+# $NetBSD: mi,v 1.181 2013/02/16 21:40:40 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -757,6 +757,11 @@
 ./usr/share/examples/libsaslc/mech/GSSAPI.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/LOGIN.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/PLAIN.conf	misc-libsaslc-examples	share
+./usr/share/examples/lutok			misc-lutok-examples
+./usr/share/examples/lutok/bindings.cpp		misc-lutok-examples	share,kyua
+./usr/share/examples/lutok/hello.cpp		misc-lutok-examples	share,kyua
+./usr/share/examples/lutok/interpreter.cpp	misc-lutok-examples	share,kyua
+./usr/share/examples/lutok/raii.cpp		misc-lutok-examples	share,kyua
 ./usr/share/examples/mount_portal/advanced.1	misc-sys-examples	share
 ./usr/share/examples/mount_portal/advanced.1.conf	misc-sys-examples	share
 ./usr/share/examples/mount_portal/cvs.1		misc-sys-examples	share
