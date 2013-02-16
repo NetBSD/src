@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.18 2013/02/10 23:47:37 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.19 2013/02/16 21:11:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.18 2013/02/10 23:47:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.19 2013/02/16 21:11:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,6 +60,9 @@ struct npf_ruleset {
 	LIST_HEAD(, npf_rule)	rs_all;
 	LIST_HEAD(, npf_rule)	rs_dynamic;
 	LIST_HEAD(, npf_rule)	rs_gc;
+
+	/* Unique ID counter. */
+	uint64_t		rs_idcnt;
 
 	/* Number of array slots and active rules. */
 	u_int			rs_slots;
@@ -100,7 +103,8 @@ struct npf_rule {
 		npf_rule_t *		r_parent;
 	} /* C11 */;
 
-	/* Dictionary. */
+	/* Rule ID and the original dictionary. */
+	uint64_t		r_id;
 	prop_dictionary_t	r_dict;
 
 	/* Rule name and all-list entry. */
@@ -114,6 +118,9 @@ struct npf_rule {
 #define	NPF_DYNAMIC_GROUP_P(attr) \
     (((attr) & NPF_DYNAMIC_GROUP) == NPF_DYNAMIC_GROUP)
 
+#define	NPF_DYNAMIC_RULE_P(attr) \
+    (((attr) & NPF_DYNAMIC_GROUP) == NPF_RULE_DYNAMIC)
+
 npf_ruleset_t *
 npf_ruleset_create(size_t slots)
 {
@@ -121,9 +128,11 @@ npf_ruleset_create(size_t slots)
 	npf_ruleset_t *rlset;
 
 	rlset = kmem_zalloc(len, KM_SLEEP);
-	rlset->rs_slots = slots;
 	LIST_INIT(&rlset->rs_dynamic);
 	LIST_INIT(&rlset->rs_all);
+	LIST_INIT(&rlset->rs_gc);
+	rlset->rs_slots = slots;
+
 	return rlset;
 }
 
@@ -133,7 +142,7 @@ npf_ruleset_unlink(npf_ruleset_t *rlset, npf_rule_t *rl)
 	if (NPF_DYNAMIC_GROUP_P(rl->r_attr)) {
 		LIST_REMOVE(rl, r_dentry);
 	}
-	if ((rl->r_attr & NPF_DYNAMIC_GROUP) == NPF_RULE_DYNAMIC) {
+	if (NPF_DYNAMIC_RULE_P(rl->r_attr)) {
 		npf_rule_t *rg = rl->r_parent;
 		TAILQ_REMOVE(&rg->r_subset, rl, r_entry);
 	}
@@ -201,11 +210,14 @@ npf_ruleset_add(npf_ruleset_t *rlset, const char *rname, npf_rule_t *rl)
 
 	rg = npf_ruleset_lookup(rlset, rname);
 	if (rg == NULL) {
-		return ENOENT;
+		return ESRCH;
+	}
+	if (!NPF_DYNAMIC_RULE_P(rl->r_attr)) {
+		return EINVAL;
 	}
 
-	/* Dynamic rule. */
-	rl->r_attr |= NPF_RULE_DYNAMIC;
+	/* Dynamic rule - assign a unique ID and save the parent. */
+	rl->r_id = ++rlset->rs_idcnt;
 	rl->r_parent = rg;
 
 	/*
@@ -248,22 +260,22 @@ npf_ruleset_add(npf_ruleset_t *rlset, const char *rname, npf_rule_t *rl)
 }
 
 int
-npf_ruleset_remove(npf_ruleset_t *rlset, const char *rname, uintptr_t id)
+npf_ruleset_remove(npf_ruleset_t *rlset, const char *rname, uint64_t id)
 {
 	npf_rule_t *rg, *rl;
 
 	if ((rg = npf_ruleset_lookup(rlset, rname)) == NULL) {
-		return ENOENT;
+		return ESRCH;
 	}
 	TAILQ_FOREACH(rl, &rg->r_subset, r_entry) {
 		/* Compare ID.  On match, remove and return. */
-		if ((uintptr_t)rl == id) {
+		if (rl->r_id == id) {
 			npf_ruleset_unlink(rlset, rl);
 			LIST_INSERT_HEAD(&rlset->rs_gc, rl, r_aentry);
-			break;
+			return 0;
 		}
 	}
-	return 0;
+	return ENOENT;
 }
 
 int
@@ -275,7 +287,7 @@ npf_ruleset_remkey(npf_ruleset_t *rlset, const char *rname,
 	KASSERT(len && len <= NPF_RULE_MAXKEYLEN);
 
 	if ((rg = npf_ruleset_lookup(rlset, rname)) == NULL) {
-		return ENOENT;
+		return ESRCH;
 	}
 
 	/* Find the last in the list. */
@@ -284,10 +296,10 @@ npf_ruleset_remkey(npf_ruleset_t *rlset, const char *rname,
 		if (memcmp(rl->r_key, key, len) == 0) {
 			npf_ruleset_unlink(rlset, rl);
 			LIST_INSERT_HEAD(&rlset->rs_gc, rl, r_aentry);
-			break;
+			return 0;
 		}
 	}
-	return 0;
+	return ENOENT;
 }
 
 prop_dictionary_t
@@ -311,9 +323,11 @@ npf_ruleset_list(npf_ruleset_t *rlset, const char *rname)
 	TAILQ_FOREACH(rl, &rg->r_subset, r_entry) {
 		if (rl->r_dict && !prop_array_add(rules, rl->r_dict)) {
 			prop_object_release(rldict);
+			prop_object_release(rules);
 			return NULL;
 		}
 	}
+
 	if (!prop_dictionary_set(rldict, "rules", rules)) {
 		prop_object_release(rldict);
 		rldict = NULL;
@@ -328,7 +342,7 @@ npf_ruleset_flush(npf_ruleset_t *rlset, const char *rname)
 	npf_rule_t *rg, *rl;
 
 	if ((rg = npf_ruleset_lookup(rlset, rname)) == NULL) {
-		return ENOENT;
+		return ESRCH;
 	}
 	while ((rl = TAILQ_FIRST(&rg->r_subset)) != NULL) {
 		npf_ruleset_unlink(rlset, rl);
@@ -356,29 +370,34 @@ npf_ruleset_gc(npf_ruleset_t *rlset)
 void
 npf_ruleset_reload(npf_ruleset_t *rlset, npf_ruleset_t *arlset)
 {
-	npf_rule_t *rl;
+	npf_rule_t *rg;
 
 	KASSERT(npf_config_locked_p());
 
-	LIST_FOREACH(rl, &rlset->rs_dynamic, r_dentry) {
-		npf_rule_t *arl, *it;
+	LIST_FOREACH(rg, &rlset->rs_dynamic, r_dentry) {
+		npf_rule_t *arg, *rl;
 
-		if ((arl = npf_ruleset_lookup(arlset, rl->r_name)) == NULL) {
+		if ((arg = npf_ruleset_lookup(arlset, rg->r_name)) == NULL) {
 			continue;
 		}
 
 		/*
 		 * Copy the list-head structure and move the rules from the
 		 * old ruleset to the new by reinserting to a new all-rules
-		 * list.  Note that the rules are still active and therefore
-		 * accessible for inspection via the old ruleset.
+		 * list and resetting the parent rule.  Note that the rules
+		 * are still active and therefore accessible for inspection
+		 * via the old ruleset.
 		 */
-		memcpy(&rl->r_subset, &arl->r_subset, sizeof(rl->r_subset));
-		TAILQ_FOREACH(it, &rl->r_subset, r_entry) {
+		memcpy(&rg->r_subset, &arg->r_subset, sizeof(rg->r_subset));
+		TAILQ_FOREACH(rl, &rg->r_subset, r_entry) {
 			LIST_REMOVE(rl, r_aentry);
 			LIST_INSERT_HEAD(&rlset->rs_all, rl, r_aentry);
+			rl->r_parent = rg;
 		}
 	}
+
+	/* Inherit the ID counter. */
+	rlset->rs_idcnt = arlset->rs_idcnt;
 }
 
 /*
@@ -506,7 +525,7 @@ npf_rule_alloc(prop_dictionary_t rldict)
 		memcpy(rl->r_key, key, len);
 	}
 
-	if ((rl->r_attr & NPF_DYNAMIC_GROUP) == NPF_RULE_DYNAMIC) {
+	if (NPF_DYNAMIC_RULE_P(rl->r_attr)) {
 		rl->r_dict = prop_dictionary_copy(rldict);
 	}
 
@@ -565,9 +584,17 @@ npf_rule_free(npf_rule_t *rl)
 }
 
 /*
+ * npf_rule_getid: return the unique ID of a rule.
  * npf_rule_getrproc: acquire a reference and return rule procedure, if any.
  * npf_rule_getnat: get NAT policy assigned to the rule.
  */
+
+uint64_t
+npf_rule_getid(const npf_rule_t *rl)
+{
+	KASSERT(NPF_DYNAMIC_RULE_P(rl->r_attr));
+	return rl->r_id;
+}
 
 npf_rproc_t *
 npf_rule_getrproc(npf_rule_t *rl)
