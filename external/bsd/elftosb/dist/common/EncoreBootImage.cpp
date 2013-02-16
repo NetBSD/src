@@ -391,7 +391,7 @@ void EncoreBootImage::prepareImageHeader(boot_image_header_t & header)
 //! \bug The timestamp might be off an hour.
 uint64_t EncoreBootImage::getTimestamp()
 {
-#if WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 	struct tm epoch = { 0, 0, 0, 1, 0, 100, 0, 0 }; // 00:00 1-1-2000
 #else
 	struct tm epoch = { 0, 0, 0, 1, 0, 100, 0, 0, 1, 0, NULL }; // 00:00 1-1-2000
