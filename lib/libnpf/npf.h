@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.14 2013/02/10 23:47:38 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.15 2013/02/16 21:11:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -79,8 +79,8 @@ void		npf_config_destroy(nl_config_t *);
 nl_config_t *	npf_config_retrieve(int, bool *, bool *);
 int		npf_config_flush(int);
 
-int		npf_ruleset_add(int, const char *, nl_rule_t *, uintptr_t *);
-int		npf_ruleset_remove(int, const char *, uintptr_t);
+int		npf_ruleset_add(int, const char *, nl_rule_t *, uint64_t *);
+int		npf_ruleset_remove(int, const char *, uint64_t);
 int		npf_ruleset_remkey(int, const char *, const void *, size_t);
 int		npf_ruleset_flush(int, const char *);
 
