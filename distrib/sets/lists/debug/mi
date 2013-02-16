@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.5 2013/02/15 22:14:21 jmmv Exp $
+# $NetBSD: mi,v 1.6 2013/02/16 21:40:38 jmmv Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -1568,6 +1568,12 @@
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread/t_sem_pth.debug	tests-lib-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/lib/libevent/h_event.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libexecinfo/t_backtrace.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/liblutok/c_gate_test.debug		tests-lutok-debug	debug,atf,kyua
+./usr/libdata/debug/usr/tests/lib/liblutok/debug_test.debug		tests-lutok-debug	debug,atf,kyua
+./usr/libdata/debug/usr/tests/lib/liblutok/exceptions_test.debug	tests-lutok-debug	debug,atf,kyua
+./usr/libdata/debug/usr/tests/lib/liblutok/operations_test.debug	tests-lutok-debug	debug,atf,kyua
+./usr/libdata/debug/usr/tests/lib/liblutok/stack_cleaner_test.debug	tests-lutok-debug	debug,atf,kyua
+./usr/libdata/debug/usr/tests/lib/liblutok/state_test.debug		tests-lutok-debug	debug,atf,kyua
 ./usr/libdata/debug/usr/tests/lib/libm/t_acos.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_asin.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_atan.debug			tests-lib-debug		debug,atf

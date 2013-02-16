@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.67 2012/02/29 20:07:57 tron Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.68 2013/02/16 21:40:45 jmmv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -30,6 +30,7 @@ LIBINTL?=	/usr/lib/libintl.a
 LIBIPSEC?=	/usr/lib/libipsec.a
 LIBKVM?=	/usr/lib/libkvm.a
 LIBL?=		/usr/lib/libl.a
+LIBLUTOK?=	/usr/lib/liblutok.a
 LIBLZMA?=	/usr/lib/liblzma.a
 LIBM?=		/usr/lib/libm.a
 LIBMAGIC?=	/usr/lib/libmagic.a

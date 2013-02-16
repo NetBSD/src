@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1803 2013/02/15 20:07:00 jmmv Exp $
+#	$NetBSD: mi,v 1.1804 2013/02/16 21:40:20 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1746,6 +1746,14 @@
 ./usr/include/lua.hpp				comp-c-include
 ./usr/include/luaconf.h				comp-c-include
 ./usr/include/lualib.h				comp-c-include
+./usr/include/lutok				comp-c-include
+./usr/include/lutok/c_gate.hpp			comp-c-include		kyua
+./usr/include/lutok/debug.hpp			comp-c-include		kyua
+./usr/include/lutok/exceptions.hpp		comp-c-include		kyua
+./usr/include/lutok/operations.hpp		comp-c-include		kyua
+./usr/include/lutok/stack_cleaner.hpp		comp-c-include		kyua
+./usr/include/lutok/state.hpp			comp-c-include		kyua
+./usr/include/lutok/state.ipp			comp-c-include		kyua
 ./usr/include/lwp.h				comp-c-include
 ./usr/include/lzf.h				comp-c-include
 ./usr/include/lzfP.h				comp-c-include
@@ -2875,6 +2883,8 @@
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	profile,ldap
 ./usr/lib/liblua.a				comp-c-lib
 ./usr/lib/liblua_p.a				comp-c-proflib		profile
+./usr/lib/liblutok.a				comp-c-lib		kyua
+./usr/lib/liblutok_p.a				comp-c-proflib		profile,kyua
 ./usr/lib/liblwres.a				comp-bind-lib
 ./usr/lib/liblwres_p.a				comp-bind-proflib	profile
 ./usr/lib/liblzf.a				comp-c-lib
@@ -3177,6 +3187,7 @@
 ./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
 ./usr/lib/pkgconfig/libcrypto.pc		comp-crypto-lib		crypto,share
 ./usr/lib/pkgconfig/libssl.pc			comp-crypto-lib		crypto,share
+./usr/lib/pkgconfig/lutok.pc			comp-crypto-lib		kyua,share
 ./usr/lib/pkgconfig/openssl.pc			comp-crypto-lib		crypto,share
 ./usr/lib/pkgconfig/sqlite3.pc			comp-c-lib
 ./usr/libdata/ldscripts/kmodule			comp-util-share		binutils,kmod

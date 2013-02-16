@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.113 2013/02/05 23:42:21 christos Exp $
+# $NetBSD: ad.mips64el,v 1.114 2013/02/16 21:40:09 jmmv Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -161,6 +161,8 @@
 ./usr/lib/64/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/64/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/liblua.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/64/liblutok.so.1			base-compat-shlib	compat,pic,kyua
+./usr/lib/64/liblutok.so.1.0			base-compat-shlib	compat,pic,kyua
 ./usr/lib/64/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/64/liblzf.so.1			base-compat-shlib	compat,pic
@@ -477,6 +479,8 @@
 ./usr/lib/o32/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/o32/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblua.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/o32/liblutok.so.1			base-compat-shlib	compat,pic,kyua
+./usr/lib/o32/liblutok.so.1.0			base-compat-shlib	compat,pic,kyua
 ./usr/lib/o32/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblzf.so.1			base-compat-shlib	compat,pic

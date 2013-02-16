@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.6 2013/02/08 02:32:35 christos Exp $
+# $NetBSD: md.sparc64,v 1.7 2013/02/16 21:40:38 jmmv Exp $
 ./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/lib/sparc/i18n/libBIG5.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
@@ -90,6 +90,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libldap.so.4.2.debug			comp-compat-shlib	compat,pic,debug,ldap
 ./usr/libdata/debug/usr/lib/sparc/libldap_r.so.4.2.debug		comp-compat-shlib	compat,pic,debug,ldap
 ./usr/libdata/debug/usr/lib/sparc/liblua.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/liblutok.so.1.0.debug			comp-compat-shlib	compat,pic,debug,kyua
 ./usr/libdata/debug/usr/lib/sparc/liblwres.so.5.8.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/liblzf.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/liblzma.so.1.1.debug			comp-compat-shlib	compat,pic,debug
@@ -236,6 +237,7 @@
 ./usr/lib/sparc/libldap_g.a			-unknown-		compat,debuglib,ldap
 ./usr/lib/sparc/libldap_r_g.a			-unknown-		compat,debuglib,ldap
 ./usr/lib/sparc/liblua_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/liblutok_g.a			-unknown-		compat,debuglib,kyua
 ./usr/lib/sparc/liblwres_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/liblzf_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/liblzma_g.a			-unknown-		compat,debuglib

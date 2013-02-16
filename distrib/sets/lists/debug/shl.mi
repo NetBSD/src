@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.7 2013/02/08 04:36:35 matt Exp $
+# $NetBSD: shl.mi,v 1.8 2013/02/16 21:40:39 jmmv Exp $
 ./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libDECHanyu.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libEUC.so.5.0.debug	comp-i18n-debug	debug
@@ -86,6 +86,7 @@
 ./usr/libdata/debug/usr/lib/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug
 ./usr/libdata/debug/usr/lib/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug
 ./usr/libdata/debug/usr/lib/liblua.so.1.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/liblutok.so.1.0.debug	comp-kyua-debug	kyua,debug
 ./usr/libdata/debug/usr/lib/liblwres.so.5.8.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/liblzf.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblzma.so.1.1.debug	comp-sys-debug	debug

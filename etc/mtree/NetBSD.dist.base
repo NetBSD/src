@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.108 2013/01/23 15:02:53 joerg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.109 2013/02/16 21:40:44 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -141,6 +141,7 @@
 ./usr/include/isofs/cd9660
 ./usr/include/kadm5
 ./usr/include/krb5
+./usr/include/lutok
 ./usr/include/lzma
 ./usr/include/miscfs
 ./usr/include/miscfs/fdesc
@@ -346,6 +347,7 @@
 ./usr/share/examples/libsaslc
 ./usr/share/examples/libsaslc/mech
 ./usr/share/examples/lua
+./usr/share/examples/lutok
 ./usr/share/examples/mount_portal
 ./usr/share/examples/npf
 ./usr/share/examples/openssl

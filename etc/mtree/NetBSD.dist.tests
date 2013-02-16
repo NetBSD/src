@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.91 2013/02/16 12:44:26 jmmv Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.92 2013/02/16 21:40:44 jmmv Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -80,6 +80,7 @@
 ./usr/libdata/debug/usr/tests/lib/libexecinfo
 ./usr/libdata/debug/usr/tests/lib/semaphore
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread
+./usr/libdata/debug/usr/tests/lib/liblutok
 ./usr/libdata/debug/usr/tests/lib/libm
 ./usr/libdata/debug/usr/tests/lib/libobjc
 ./usr/libdata/debug/usr/tests/lib/libposix
@@ -225,6 +226,7 @@
 ./usr/tests/lib/libbpfjit
 ./usr/tests/lib/libevent
 ./usr/tests/lib/libexecinfo
+./usr/tests/lib/liblutok
 ./usr/tests/lib/libm
 ./usr/tests/lib/libobjc
 ./usr/tests/lib/libposix
@@ -278,6 +280,7 @@
 ./usr/tests/sbin/sysctl
 ./usr/tests/share
 ./usr/tests/share/examples
+./usr/tests/share/examples/lutok
 ./usr/tests/share/mk
 ./usr/tests/sys
 ./usr/tests/sys/rc

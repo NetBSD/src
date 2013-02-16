@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.312 2013/02/15 19:49:48 jmmv Exp $
+#	$NetBSD: bsd.README,v 1.313 2013/02/16 21:40:45 jmmv Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1505,6 +1505,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBLDAP?=	${DESTDIR}/usr/lib/libldap.a
 		LIBLDAP_R?=	${DESTDIR}/usr/lib/libldap_r.a
 		LIBLUA?=	${DESTDIR}/usr/lib/liblua.a
+		LIBLUTOK?=	${DESTDIR}/usr/lib/liblutok.a
 		LIBLWRES?=	${DESTDIR}/usr/lib/liblwres.a
 		LIBM?=		${DESTDIR}/usr/lib/libm.a
 		LIBMAGIC?=	${DESTDIR}/usr/lib/libmagic.a

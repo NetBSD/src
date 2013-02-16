@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.245 2013/01/16 16:01:07 christos Exp $
+# $NetBSD: shl.mi,v 1.246 2013/02/16 21:40:36 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -78,6 +78,7 @@
 ./usr/lib/libldap_pic.a				comp-ldap-piclib	ldap
 ./usr/lib/libldap_r_pic.a			comp-ldap-piclib	ldap
 ./usr/lib/liblua_pic.a				comp-c-piclib
+./usr/lib/liblutok_pic.a			comp-c-piclib		kyua
 ./usr/lib/liblwres_pic.a			comp-bind-piclib
 ./usr/lib/liblzf_pic.a				comp-c-piclib
 ./usr/lib/liblzma_pic.a				comp-c-piclib

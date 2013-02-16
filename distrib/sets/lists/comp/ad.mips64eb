@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.98 2013/01/16 16:01:05 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.99 2013/02/16 21:40:15 jmmv Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -407,6 +407,10 @@
 ./usr/lib/64/liblua.so				base-sys-shlib		compat,pic
 ./usr/lib/64/liblua_p.a				comp-c-proflib		compat,profile
 ./usr/lib/64/liblua_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/liblutok.a				comp-c-lib		compat,kyua
+./usr/lib/64/liblutok.so			base-sys-shlib		compat,pic,kyua
+./usr/lib/64/liblutok_p.a			comp-c-proflib		compat,profile,kyua
+./usr/lib/64/liblutok_pic.a			comp-c-piclib		compat,pic,kyua
 ./usr/lib/64/liblwres.a				comp-c-lib		compat
 ./usr/lib/64/liblwres.so			base-sys-shlib		compat,pic
 ./usr/lib/64/liblwres_p.a			comp-c-proflib		compat,profile
@@ -996,6 +1000,10 @@
 ./usr/lib/o32/liblua.so				base-sys-shlib		compat,pic
 ./usr/lib/o32/liblua_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/liblua_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/liblutok.a			comp-c-lib		compat,kyua
+./usr/lib/o32/liblutok.so			base-sys-shlib		compat,pic,kyua
+./usr/lib/o32/liblutok_p.a			comp-c-proflib		compat,profile,kyua
+./usr/lib/o32/liblutok_pic.a			comp-c-piclib		compat,pic,kyua
 ./usr/lib/o32/liblwres.a			comp-c-lib		compat
 ./usr/lib/o32/liblwres.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/liblwres_p.a			comp-c-proflib		compat,profile
