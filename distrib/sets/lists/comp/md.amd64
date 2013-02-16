@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.190 2013/02/08 02:32:32 christos Exp $
+# $NetBSD: md.amd64,v 1.191 2013/02/16 21:40:18 jmmv Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -692,6 +692,10 @@
 ./usr/lib/i386/liblua.a				comp-c-lib		compat
 ./usr/lib/i386/liblua_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/liblua_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/liblutok.a			comp-c-lib		compat,kyua
+./usr/lib/i386/liblutok_g.a			comp-c-proflib		compat,debuglib,kyua
+./usr/lib/i386/liblutok_p.a			comp-c-proflib		compat,profile,kyua
+./usr/lib/i386/liblutok_pic.a			comp-c-piclib		compat,pic,kyua
 ./usr/lib/i386/liblwres.a			comp-c-lib		compat
 ./usr/lib/i386/liblwres.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/liblwres_p.a			comp-c-proflib		compat,profile

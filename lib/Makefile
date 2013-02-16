@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.197 2013/01/28 18:57:09 matt Exp $
+#	$NetBSD: Makefile,v 1.198 2013/02/16 21:40:06 jmmv Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -152,6 +152,10 @@ SUBDIR+=	.WAIT
 
 .if (${MKATF} != "no")
 SUBDIR+=	../external/bsd/atf/lib		# depends on libstdc++
+.endif
+
+.if (${MKKYUA} != "no")
+SUBDIR+=	../external/bsd/lutok/lib	# depends on lua and libstdc++
 .endif
 
 SUBDIR+=	libform		# depends on libcurses
