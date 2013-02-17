@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2011/08/09 15:02:30 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.85 2013/02/17 23:56:52 christos Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -124,8 +124,9 @@ clean_METALOG: .PHONY
 METALOG.unpriv= -M ${METALOG}.sanitised
 sanitise_METALOG: .PHONY ${METALOG}.sanitised
 ${METALOG}.sanitised: ${METALOG}
-	sort ${METALOG} | \
-	    ${TOOL_MTREE} -CSM -k all -N ${NETBSDSRCDIR}/etc \
+	${TOOL_AWK} \
+	    '{ a[$$1] = $$0; } END { for (f in a) print a[f]; }' ${METALOG} | \
+	    sort | ${TOOL_MTREE} -CSM -k all -N ${NETBSDSRCDIR}/etc \
 	    >${METALOG}.new
 	mv ${METALOG}.new ${METALOG}.sanitised
 .if defined(RCSMETALOG)
