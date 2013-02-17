@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.86 2012/06/04 10:18:01 joerg Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.87 2013/02/17 00:34:11 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -60,6 +60,10 @@
 #endif
 #if HAVE_STDDEF_H
 #include <stddef.h>
+#endif
+
+#if HAVE_RPC_TYPES_H
+#include <rpc/types.h>
 #endif
 
 #ifdef _NETBSD_SOURCE
