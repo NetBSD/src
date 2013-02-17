@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: checkver,v 1.15 2013/02/17 01:26:47 christos Exp $
+#	$NetBSD: checkver,v 1.16 2013/02/17 02:36:21 christos Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -143,8 +143,8 @@ while getopts df:shqv: f; do
 		if [ $usedir -eq 1 -o $usefile -eq 1 ]; then
 			Usage
 		fi;;
-	-v)	shlib_version=$OPTARG;;
-	-q)	quiet=1;;
+	v)	shlib_version=$OPTARG;;
+	q)	quiet=1;;
 	*)	Usage;;
 	esac
 done
