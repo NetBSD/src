@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.518 2013/02/16 21:40:42 jmmv Exp $
+# $NetBSD: mi,v 1.519 2013/02/17 04:36:07 htodd Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -816,9 +816,9 @@
 ./usr/tests/dev/sysmon/Atffile			tests-fs-tests		atf,rump
 ./usr/tests/dev/sysmon/t_swsensor		tests-fs-tests		atf,rump
 ./usr/tests/dev/sysmon/t_swwdog			tests-fs-tests		atf,rump
-./usr/tests/examples				tests-obsolete
-./usr/tests/examples/Atffile			tests-obsolete
-./usr/tests/examples/t_asm			tests-obsolete
+./usr/tests/examples				tests-obsolete	obsolete
+./usr/tests/examples/Atffile			tests-obsolete	obsolete
+./usr/tests/examples/t_asm			tests-obsolete	obsolete
 ./usr/tests/fs					tests-fs-tests
 ./usr/tests/fs/Atffile				tests-fs-tests		atf,rump
 ./usr/tests/fs/h_funcs.subr			tests-fs-tests		atf,rump
