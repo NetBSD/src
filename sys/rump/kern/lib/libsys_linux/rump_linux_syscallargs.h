@@ -1,4 +1,4 @@
-/* $NetBSD: rump_linux_syscallargs.h,v 1.1 2012/09/19 21:46:46 pooka Exp $ */
+/* $NetBSD: rump_linux_syscallargs.h,v 1.2 2013/02/17 15:17:40 stacktic Exp $ */
 
 /*
  * System call argument lists.
@@ -316,6 +316,12 @@ struct linux_sys_fstat64_args {
 };
 check_syscall_args(linux_sys_fstat64)
 
+struct linux_sys_lstat64_args {
+	syscallarg(const char *) path;
+	syscallarg(struct linux_stat64 *) sp;
+};
+check_syscall_args(linux_sys_lstat64)
+
 struct linux_sys_mknod_args {
 	syscallarg(const char *) path;
 	syscallarg(mode_t) mode;
@@ -484,6 +490,8 @@ int	linux_sys_ppoll(struct lwp *, const struct linux_sys_ppoll_args *, register_
 int	linux_sys_stat64(struct lwp *, const struct linux_sys_stat64_args *, register_t *);
 
 int	linux_sys_fstat64(struct lwp *, const struct linux_sys_fstat64_args *, register_t *);
+
+int	linux_sys_lstat64(struct lwp *, const struct linux_sys_lstat64_args *, register_t *);
 
 int	linux_sys_mknod(struct lwp *, const struct linux_sys_mknod_args *, register_t *);
 
