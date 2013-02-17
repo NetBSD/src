@@ -1,4 +1,4 @@
-/* $NetBSD: rump_linux_sysent.c,v 1.1 2012/09/19 21:46:46 pooka Exp $ */
+/* $NetBSD: rump_linux_sysent.c,v 1.2 2013/02/17 15:17:40 stacktic Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_linux_sysent.c,v 1.1 2012/09/19 21:46:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_linux_sysent.c,v 1.2 2013/02/17 15:17:40 stacktic Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -908,8 +908,8 @@ struct sysent rump_linux_sysent[] = {
 	    (sy_call_t *)linux_sys_stat64 },	/* 439 = stat64 */
 	{ ns(struct linux_sys_fstat64_args), SYCALL_ARG_PTR,
 	    (sy_call_t *)linux_sys_fstat64 },	/* 440 = fstat64 */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 441 = unimplemented lstat */
+	{ ns(struct linux_sys_lstat64_args), SYCALL_ARG_PTR,
+	    (sy_call_t *)linux_sys_lstat64 },	/* 441 = lstat64 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 442 = unimplemented __semctl */
 	{ 0, 0, 0,
