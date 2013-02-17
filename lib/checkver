@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: checkver,v 1.14 2013/02/17 01:20:57 christos Exp $
+#	$NetBSD: checkver,v 1.15 2013/02/17 01:26:47 christos Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,7 +67,7 @@
 #
 
 TMP=/tmp/checkver.$$
-PROG="$(basename "$PROG")"
+PROG="$(basename "$0")"
 # Can't trap 11 (SEGV) in the Real Bourne Shell, since it uses it for
 # internal malloc!
 trap "exit 2" 1 2 3 4 5 6 7 8 10 12 13 14 15
