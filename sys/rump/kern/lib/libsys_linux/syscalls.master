@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 2012/09/19 21:45:40 pooka Exp $
+	$NetBSD: syscalls.master,v 1.2 2013/02/17 15:17:40 stacktic Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -563,7 +563,8 @@
 			    struct linux_stat64 *sp); }
 440	NODEF  		{ int|linux_sys||fstat64(int fd, \
 			    struct linux_stat64 *sp); }
-441	UNIMPL		lstat
+441	NODEF  		{ int|linux_sys||lstat64(const char *path, \
+			    struct linux_stat64 *sp); }
 442	UNIMPL		__semctl
 443	UNIMPL		shmctl
 444	UNIMPL		msgctl

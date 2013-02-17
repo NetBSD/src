@@ -1,4 +1,4 @@
-/* $NetBSD: rump_linux_syscalls.c,v 1.1 2012/09/19 21:46:46 pooka Exp $ */
+/* $NetBSD: rump_linux_syscalls.c,v 1.2 2013/02/17 15:17:40 stacktic Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_linux_syscalls.c,v 1.1 2012/09/19 21:46:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_linux_syscalls.c,v 1.2 2013/02/17 15:17:40 stacktic Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <sys/param.h>
@@ -465,7 +465,7 @@ const char *const rump_linux_syscallnames[] = {
 	/* 438 */	"#438 (unimplemented aio_suspend)",
 	/* 439 */	"stat64",
 	/* 440 */	"fstat64",
-	/* 441 */	"#441 (unimplemented lstat)",
+	/* 441 */	"lstat64",
 	/* 442 */	"#442 (unimplemented __semctl)",
 	/* 443 */	"#443 (unimplemented shmctl)",
 	/* 444 */	"#444 (unimplemented msgctl)",
