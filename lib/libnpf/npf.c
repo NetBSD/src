@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.7.2.9 2013/02/11 21:49:48 riz Exp $	*/
+/*	$NetBSD: npf.c,v 1.7.2.10 2013/02/18 18:26:14 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7.2.9 2013/02/11 21:49:48 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7.2.10 2013/02/18 18:26:14 riz Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -263,25 +263,23 @@ _npf_prop_array_lookup(prop_array_t array, const char *key, const char *name)
  */
 
 int
-npf_ruleset_add(int fd, const char *rname, nl_rule_t *rl, uintptr_t *id)
+npf_ruleset_add(int fd, const char *rname, nl_rule_t *rl, uint64_t *id)
 {
 	prop_dictionary_t rldict = rl->nrl_dict;
 	prop_dictionary_t ret;
-	uint64_t id64;
 	int error;
 
 	prop_dictionary_set_cstring(rldict, "ruleset-name", rname);
 	prop_dictionary_set_uint32(rldict, "command", NPF_CMD_RULE_ADD);
 	error = prop_dictionary_sendrecv_ioctl(rldict, fd, IOC_NPF_RULE, &ret);
 	if (!error) {
-		prop_dictionary_get_uint64(ret, "id", &id64);
-		*id = (uintptr_t)id64;
+		prop_dictionary_get_uint64(ret, "id", id);
 	}
 	return error;
 }
 
 int
-npf_ruleset_remove(int fd, const char *rname, uintptr_t id)
+npf_ruleset_remove(int fd, const char *rname, uint64_t id)
 {
 	prop_dictionary_t rldict;
 
@@ -291,8 +289,7 @@ npf_ruleset_remove(int fd, const char *rname, uintptr_t id)
 	}
 	prop_dictionary_set_cstring(rldict, "ruleset-name", rname);
 	prop_dictionary_set_uint32(rldict, "command", NPF_CMD_RULE_REMOVE);
-	__CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-	prop_dictionary_set_uint64(rldict, "id", (uint64_t)id);
+	prop_dictionary_set_uint64(rldict, "id", id);
 	return prop_dictionary_send_ioctl(rldict, fd, IOC_NPF_RULE);
 }
 

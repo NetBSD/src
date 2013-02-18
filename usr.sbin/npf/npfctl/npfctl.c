@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.10.2.14 2013/02/11 21:49:48 riz Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.10.2.15 2013/02/18 18:26:14 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.10.2.14 2013/02/11 21:49:48 riz Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.10.2.15 2013/02/18 18:26:14 riz Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -122,6 +122,9 @@ usage(void)
 	    progname);
 	fprintf(stderr,
 	    "\t%s rule \"rule-name\" rem-id <rule-id>\n",
+	    progname);
+	fprintf(stderr,
+	    "\t%s rule \"rule-name\" { list | flush }\n",
 	    progname);
 	fprintf(stderr,
 	    "\t%s table <tid> { add | rem | test } <address/mask>\n",
@@ -411,7 +414,7 @@ npfctl_rule(int fd, int argc, char **argv)
 	const char *ruleset_name = argv[0];
 	const char *cmd = argv[1];
 	int error, action = 0;
-	uintptr_t rule_id;
+	uint64_t rule_id;
 	nl_rule_t *rl;
 
 	for (int n = 0; ruleops[n].cmd != NULL; n++) {
@@ -441,7 +444,7 @@ npfctl_rule(int fd, int argc, char **argv)
 		error = npf_ruleset_remkey(fd, ruleset_name, key, sizeof(key));
 		break;
 	case NPF_CMD_RULE_REMOVE:
-		rule_id = (uintptr_t)strtoull(argv[0], NULL, 16);
+		rule_id = strtoull(argv[0], NULL, 16);
 		error = npf_ruleset_remove(fd, ruleset_name, rule_id);
 		break;
 	case NPF_CMD_RULE_LIST:
@@ -458,15 +461,15 @@ npfctl_rule(int fd, int argc, char **argv)
 	case 0:
 		/* Success. */
 		break;
+	case ESRCH:
+		errx(EXIT_FAILURE, "ruleset \"%s\" not found", ruleset_name);
 	case ENOENT:
-		errx(EXIT_FAILURE, "ruleset \"%s\" or the specified rule in "
-		    "it not found", ruleset_name);
-		break;
+		errx(EXIT_FAILURE, "rule was not found");
 	default:
 		errx(EXIT_FAILURE, "rule operation: %s", strerror(error));
 	}
 	if (action == NPF_CMD_RULE_ADD) {
-		printf("OK %" PRIXPTR "\n", rule_id);
+		printf("OK %" PRIx64 "\n", rule_id);
 	}
 	exit(EXIT_SUCCESS);
 }
