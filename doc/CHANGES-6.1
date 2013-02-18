@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.99 2013/02/18 17:54:41 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.100 2013/02/18 17:59:33 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8505,6 +8505,9 @@ sys/kern/uipc_syscalls.c			1.160
 	not set SS_NBIO.
 	[christos, ticket #822]
 
-sys/dev/usb/dwc_otg.c				patch
-	Fix a locking error in the last commit
-	[skrll, ticket #813]
+sys/dev/pci/if_wm.c				1.235-1.236 via patch
+
+	Fix a problem that if_wm.c can't compile with WM_DEBUG on
+	non-64bit platforms.
+	[msaitoh, ticket #823]
+
