@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.101 2013/02/18 18:13:39 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.102 2013/02/18 18:26:51 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8535,4 +8535,25 @@ sys/dev/usb/dwc_otgvar.h			1.12 via patch
 
 	Avoid races between the workqueue and aborting.
 	[skrll, ticket #827]
+
+external/gpl3/gdb/dist/gdb/nbsd-thread.c	1.17
+
+	Fix "gdb -p N" when N is a threaded process.
+	[martin, ticket #828]
+
+lib/libnpf/npf.c				1.18
+lib/libnpf/npf.h				1.15
+sys/net/npf/npf_ctl.c				1.23
+sys/net/npf/npf_impl.h				1.28
+sys/net/npf/npf_ruleset.c			1.19
+usr.sbin/npf/npfctl/npf_build.c			1.21
+usr.sbin/npf/npfctl/npf_disassemble.c		1.17
+usr.sbin/npf/npfctl/npfctl.8			1.13
+usr.sbin/npf/npfctl/npfctl.c			1.31
+usr.sbin/npf/npfctl/npfctl.h			1.27
+usr.sbin/npf/npftest/libnpftest/npf_rule_test.c	1.6
+
+	Fix some NPF bugs, and convert dynamic rule ID to an
+	incremented 64-bit counter.
+	[rmind, ticket #829]
 
