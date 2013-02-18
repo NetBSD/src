@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.100 2013/02/18 17:59:33 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.101 2013/02/18 18:13:39 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8510,4 +8510,29 @@ sys/dev/pci/if_wm.c				1.235-1.236 via patch
 	Fix a problem that if_wm.c can't compile with WM_DEBUG on
 	non-64bit platforms.
 	[msaitoh, ticket #823]
+
+sys/dev/pci/if_wm.c				1.240-1.242
+sys/dev/pci/if_wmreg.h				1.49
+
+	Skip 64-bit BAR correctly, add some debugging and fix
+	RAL_TABSIZE for ICH8, 82576, 82580 and I350.
+	[msaitoh, ticket #824]
+
+lib/libc/arch/sparc64/softfloat/qp.c		1.10
+
+	Fix conversions from long double floats to integral types.
+	PR#47535.
+	[martin, ticket #825]
+
+lib/libc/arch/sparc64/gen/fpsetround.c		1.6
+
+	Make fpsetround update the softfloat rounding mode when
+	using softfloat for 128 bit long double values.
+	[martin, ticket #826]
+
+sys/dev/usb/dwc_otg.c				1.46 via patch
+sys/dev/usb/dwc_otgvar.h			1.12 via patch
+
+	Avoid races between the workqueue and aborting.
+	[skrll, ticket #827]
 
