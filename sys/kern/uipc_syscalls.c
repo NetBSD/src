@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.154.2.3 2013/02/14 22:13:59 jdc Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.154.2.4 2013/02/18 22:00:49 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.154.2.3 2013/02/14 22:13:59 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.154.2.4 2013/02/18 22:00:49 riz Exp $");
 
 #include "opt_pipe.h"
 
@@ -742,17 +742,21 @@ sys_recvmsg(struct lwp *l, const struct sys_recvmsg_args *uap, register_t *retva
 static void
 free_rights(struct mbuf *m)
 {
-	int nfd;
-	int i;
+	struct cmsghdr *cm;
 	int *fdv;
+	unsigned int nfds, i;
 
-	nfd = m->m_len < CMSG_SPACE(sizeof(int)) ? 0
-	    : (m->m_len - CMSG_SPACE(sizeof(int))) / sizeof(int) + 1;
-	fdv = (int *) CMSG_DATA(mtod(m,struct cmsghdr *));
-	for (i = 0; i < nfd; i++) {
+	KASSERT(sizeof(*cm) <= m->m_len);
+	cm = mtod(m, struct cmsghdr *);
+
+	KASSERT(CMSG_ALIGN(sizeof(*cm)) <= cm->cmsg_len);
+	KASSERT(cm->cmsg_len <= m->m_len);
+	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) / sizeof(int);
+	fdv = (int *)CMSG_DATA(cm);
+
+	for (i = 0; i < nfds; i++)
 		if (fd_getfile(fdv[i]) != NULL)
 			(void)fd_close(fdv[i]);
-	}
 }
 
 void
