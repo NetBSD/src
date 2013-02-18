@@ -48,6 +48,13 @@
  *
  */
 
+/*
+ * [This comment is a kludge to force e_aes.o to be rebuilt after
+ * changes to the makefiles to fix AES-NI support.  You may safely
+ * remove this comment to reduce the diffs from upstream OpenSSL.
+ * --riastradh, 2013-02-18]
+ */
+
 #include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_AES
 #include <openssl/evp.h>
