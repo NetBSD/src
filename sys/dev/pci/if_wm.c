@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.227.2.7 2013/02/18 17:57:57 riz Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.227.2.8 2013/02/18 18:05:29 riz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.7 2013/02/18 17:57:57 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.8 2013/02/18 18:05:29 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +132,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.7 2013/02/18 17:57:57 riz Exp $");
 #define	WM_DEBUG_RX		0x04
 #define	WM_DEBUG_GMII		0x08
 #define	WM_DEBUG_MANAGE		0x10
+#define	WM_DEBUG_NVM		0x20
 int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
-    | WM_DEBUG_MANAGE;
+    | WM_DEBUG_MANAGE | WM_DEBUG_NVM;
 
 #define	DPRINTF(x, y)	if (wm_debug & (x)) printf y
 #else
@@ -1218,11 +1219,14 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_type >= WM_T_82544) {
 		/* First we have to find the I/O BAR. */
 		for (i = PCI_MAPREG_START; i < PCI_MAPREG_END; i += 4) {
-			if (pci_mapreg_type(pa->pa_pc, pa->pa_tag, i) ==
-			    PCI_MAPREG_TYPE_IO)
+			memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, i);
+			if (memtype == PCI_MAPREG_TYPE_IO)
 				break;
+			if (PCI_MAPREG_MEM_TYPE(memtype) ==
+			    PCI_MAPREG_MEM_TYPE_64BIT)
+				i += 4;	/* skip high bits, too */
 		}
-		if (i != PCI_MAPREG_END) {
+		if (i < PCI_MAPREG_END) {
 			/*
 			 * We found PCI_MAPREG_TYPE_IO. Note that 82580
 			 * (and newer?) chip has no PCI_MAPREG_TYPE_IO.
@@ -5261,6 +5265,32 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 
 	checksum = 0;
 
+#ifdef WM_DEBUG
+	/* Dump EEPROM image for debug */
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
+	    || (sc->sc_type == WM_T_PCH2)) {
+		wm_read_eeprom(sc, 0x19, 1, &eeprom_data);
+		if ((eeprom_data & 0x40) == 0) {
+			DPRINTF(WM_DEBUG_NVM,("%s: NVM need to be updated\n",
+				device_xname(sc->sc_dev)));
+		}
+	}
+
+	if ((wm_debug & WM_DEBUG_NVM) != 0) {
+		printf("%s: NVM dump:\n", device_xname(sc->sc_dev));
+		for (i = 0; i < EEPROM_SIZE; i++) {
+			if (wm_read_eeprom(sc, i, 1, &eeprom_data))
+				printf("XX ");
+			else
+				printf("%04x ", eeprom_data);
+			if (i % 8 == 7)
+				printf("\n");
+		}
+	}
+
+#endif /* WM_DEBUG */
+
 	for (i = 0; i < EEPROM_SIZE; i++) {
 		if (wm_read_eeprom(sc, i, 1, &eeprom_data))
 			return 1;
@@ -5614,10 +5644,17 @@ wm_set_filter(struct wm_softc *sc)
 	 * Set the station address in the first RAL slot, and
 	 * clear the remaining slots.
 	 */
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
-	    || (sc->sc_type == WM_T_PCH2))
-		size = WM_ICH8_RAL_TABSIZE;
+	if (sc->sc_type == WM_T_ICH8)
+		size = WM_RAL_TABSIZE_ICH8 -1;
+	else if ((sc->sc_type == WM_T_ICH9) || (sc->sc_type == WM_T_ICH10)
+	    || (sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2))
+		size = WM_RAL_TABSIZE_ICH8;
+	else if (sc->sc_type == WM_T_82575)
+		size = WM_RAL_TABSIZE_82575;
+	else if ((sc->sc_type == WM_T_82576) || (sc->sc_type == WM_T_82580))
+		size = WM_RAL_TABSIZE_82576;
+	else if (sc->sc_type == WM_T_I350)
+		size = WM_RAL_TABSIZE_I350;
 	else
 		size = WM_RAL_TABSIZE;
 	wm_set_ral(sc, CLLADDR(ifp->if_sadl), 0);
