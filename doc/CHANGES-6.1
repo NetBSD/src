@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.103 2013/02/18 19:06:28 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.104 2013/02/18 22:01:29 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8561,4 +8561,10 @@ sbin/atactl/atactl.c				1.69
 
 	Decode 6Gbps signaling SATA capability in IDENTIFY DEVICE data.
 	[jakllsch, ticket #830]
+
+sys/kern/uipc_syscalls.c			1.159
+sys/kern/uipc_usrreq.c				1.141
+
+	Fix various problems in cmsg file descriptor handling.
+	[riastradh, ticket #831]
 
