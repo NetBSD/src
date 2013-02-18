@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.227.2.6 2013/02/14 22:08:28 jdc Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.227.2.7 2013/02/18 17:57:57 riz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.6 2013/02/14 22:08:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.7 2013/02/18 17:57:57 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2695,10 +2695,10 @@ wm_start(struct ifnet *ifp)
 				lasttx = nexttx;
 
 				DPRINTF(WM_DEBUG_TX,
-				    ("%s: TX: desc %d: low %#" PRIxPADDR ", "
+				    ("%s: TX: desc %d: low %#" PRIx64 ", "
 				     "len %#04zx\n",
 				    device_xname(sc->sc_dev), nexttx,
-				    curaddr & 0xffffffffUL, curlen));
+				    (uint64_t)curaddr, curlen));
 			}
 		}
 
@@ -3158,7 +3158,7 @@ wm_nq_start(struct ifnet *ifp)
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: adv data desc %d 0x%" PRIx64 "\n",
 			    device_xname(sc->sc_dev), nexttx, 
-			    dmamap->dm_segs[0].ds_addr));
+			    (uint64_t)dmamap->dm_segs[0].ds_addr));
 			DPRINTF(WM_DEBUG_TX,
 			    ("\t 0x%08x%08x\n", fields,
 			    (uint32_t)dmamap->dm_segs[0].ds_len | cmdlen));
@@ -3182,10 +3182,10 @@ wm_nq_start(struct ifnet *ifp)
 			lasttx = nexttx;
 
 			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: desc %d: %#" PRIxPADDR ", "
+			    ("%s: TX: desc %d: %#" PRIx64 ", "
 			     "len %#04zx\n",
 			    device_xname(sc->sc_dev), nexttx,
-			    dmamap->dm_segs[seg].ds_addr,
+			    (uint64_t)dmamap->dm_segs[seg].ds_addr,
 			    dmamap->dm_segs[seg].ds_len));
 		}
 
