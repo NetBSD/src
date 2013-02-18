@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.79 2013/02/16 06:49:43 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.80 2013/02/18 16:03:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.79 2013/02/16 06:49:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.80 2013/02/18 16:03:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1064,6 +1064,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	}
 #endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
 
+#ifndef ARM_MMU_EXTENDED
 	/*
 	 * If the mapping belongs to a non-kernel vmspace, and the
 	 * vmspace has not been active since the last time a full
@@ -1072,6 +1073,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	if (__predict_false(!VMSPACE_IS_KERNEL_P(map->_dm_vmspace) &&
 	    vm_map_pmap(&map->_dm_vmspace->vm_map)->pm_cstate.cs_cache_d == 0))
 		return;
+#endif
 
 	int buftype = map->_dm_buftype;
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
