@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.136.8.2 2012/10/09 23:45:21 riz Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.136.8.3 2013/02/18 22:00:49 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.136.8.2 2012/10/09 23:45:21 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.136.8.3 2013/02/18 22:00:49 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1336,13 +1336,23 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 	}
  out:
 	if (__predict_false(error != 0)) {
-		rp = (file_t **)CMSG_DATA(cm);
-		for (size_t i = 0; i < nfds; i++) {
-			file_t * const fp = *rp;
-			*rp++ = 0;
-			unp_discard_now(fp);
-		}
+		file_t **const fpp = (file_t **)CMSG_DATA(cm);
+		for (size_t i = 0; i < nfds; i++)
+			unp_discard_now(fpp[i]);
+		/*
+		 * Truncate the array so that nobody will try to interpret
+		 * what is now garbage in it.
+		 */
+		cm->cmsg_len = CMSG_LEN(0);
+		rights->m_len = CMSG_SPACE(0);
 	}
+
+	/*
+	 * Don't disclose kernel memory in the alignment space.
+	 */
+	KASSERT(cm->cmsg_len <= rights->m_len);
+	memset(&mtod(rights, char *)[cm->cmsg_len], 0, rights->m_len -
+	    cm->cmsg_len);
 
 	rw_exit(&p->p_cwdi->cwdi_lock);
 	kmem_free(fdp, nfds * sizeof(int));
