@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lockf.c,v 1.1 2012/11/07 14:00:38 pgoyette Exp $	*/
+/*	$NetBSD: t_lockf.c,v 1.2 2013/02/18 20:59:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ ATF_TC_BODY(deadlock, tc)
 	sleep(1);	/* give child time to grab its lock then block */
 
 	error = dolock(fd, F_LOCK, 1, 1);
-	ATF_CHECK_MSG(error != EDEADLK, "parent did not deadlock: %s",
+	ATF_REQUIRE_MSG(error == EDEADLK, "parent did not detect deadlock: %s",
 	    strerror(errno));
 	ret = kill(pid, SIGKILL);
 	ATF_REQUIRE_MSG(ret != -1, "failed to kill child: %s", strerror(errno));
