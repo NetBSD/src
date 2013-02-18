@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.87 2012/12/10 01:37:30 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.88 2013/02/18 05:14:13 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.87 2012/12/10 01:37:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.88 2013/02/18 05:14:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -832,7 +832,7 @@ prefetch_abort_handler(trapframe_t *tf)
 #ifdef DEBUG
 	last_fault_code = -1;
 #endif
-	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ, 1)) {
+	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ|VM_PROT_EXECUTE, 1)) {
 		UVMHIST_LOG (maphist, " <- emulated", 0, 0, 0, 0);
 		goto out;
 	}
