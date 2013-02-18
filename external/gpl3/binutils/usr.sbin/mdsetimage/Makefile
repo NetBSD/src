@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/02/17 20:36:02 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2013/02/18 15:32:02 gdt Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,8 @@ LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 DPADD+=		${LIBZ}
 .endif # HOSTPROG
-LDADD+=		-lz
-.endif # MKBINUTILS != no
 
+LDADD+=		-lz
+# No DPADD because we don't know the format and we didn't build it.
+
+.endif # MKBINUTILS != no
