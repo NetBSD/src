@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.12.2.8 2013/02/11 21:49:48 riz Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.12.2.9 2013/02/18 18:26:14 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.12.2.8 2013/02/11 21:49:48 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.12.2.9 2013/02/18 18:26:14 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -558,8 +558,6 @@ npfctl_rule(u_long cmd, void *data)
 			return EINVAL;
 		}
 		retdict = prop_dictionary_create();
-		prop_dictionary_set_uint64(retdict, "id",
-		    (uint64_t)(uintptr_t)rl);
 	}
 
 	npf_config_enter();
@@ -569,19 +567,20 @@ npfctl_rule(u_long cmd, void *data)
 	case NPF_CMD_RULE_ADD: {
 		if ((error = npf_ruleset_add(rlset, ruleset_name, rl)) == 0) {
 			/* Success. */
+			uint64_t id = npf_rule_getid(rl);
+			prop_dictionary_set_uint64(retdict, "id", id);
 			rl = NULL;
 		}
 		break;
 	}
 	case NPF_CMD_RULE_REMOVE: {
-		uint64_t id64;
+		uint64_t id;
 
-		CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-		if (!prop_dictionary_get_uint64(npf_rule, "id", &id64)) {
+		if (!prop_dictionary_get_uint64(npf_rule, "id", &id)) {
 			error = EINVAL;
 			break;
 		}
-		error = npf_ruleset_remove(rlset, ruleset_name, (uintptr_t)id64);
+		error = npf_ruleset_remove(rlset, ruleset_name, id);
 		break;
 	}
 	case NPF_CMD_RULE_REMKEY: {
