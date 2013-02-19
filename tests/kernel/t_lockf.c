@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lockf.c,v 1.3 2013/02/19 00:54:47 pgoyette Exp $	*/
+/*	$NetBSD: t_lockf.c,v 1.4 2013/02/19 03:22:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 
 int nlocks = 500;		/* number of locks per thread */
 int nprocs = 10;		/* number of processes to spawn */
+int npasses = 50;		/* number of passes to make over the children */
 int sleeptime = 150000;		/* sleep time between locks, usec */
 off_t size = 8192;		/* size of file to lock */
 
@@ -149,7 +150,7 @@ ATF_TC_BODY(randlock, tc)
 		}
 	}
 	usleep(sleeptime/10);
-	for (j=0; j<100; j++) {
+	for (j = 0; j < npasses; j++) {
 		printf("parent: run %i\n", j+1);
 		for (i=0; i<nprocs; i++) {
 			ATF_REQUIRE_MSG(ptrace(PT_ATTACH, pid[i], 0, 0) >= 0,
