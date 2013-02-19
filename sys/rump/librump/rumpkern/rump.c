@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.250 2013/01/14 16:52:35 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.251 2013/02/19 09:04:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.250 2013/01/14 16:52:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.251 2013/02/19 09:04:54 martin Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -891,4 +891,24 @@ rump_allbetsareoff_setid(pid_t pid, int lid)
 
 	l->l_lid = lid;
 	p->p_pid = pid;
+}
+
+#include <sys/pserialize.h>
+
+static void
+ipiemu(void *a1, void *a2)
+{
+
+	xc__highpri_intr(NULL);
+	pserialize_switchpoint();
+}
+
+void
+rump_xc_highpri(struct cpu_info *ci)
+{
+
+	if (ci)
+		xc_unicast(0, ipiemu, NULL, NULL, ci);
+	else
+		xc_broadcast(0, ipiemu, NULL, NULL);
 }
