@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/02/04 15:00:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2013/02/19 12:35:43 joerg Exp $
 
 LIB=	clangBasic
 
@@ -7,6 +7,7 @@ LIB=	clangBasic
 .PATH: ${CLANG_SRCDIR}/lib/Basic
 
 SRCS+=	Builtins.cpp \
+	CharInfo.cpp \
 	Diagnostic.cpp \
 	DiagnosticIDs.cpp \
 	FileManager.cpp \
