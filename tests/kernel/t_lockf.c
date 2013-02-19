@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lockf.c,v 1.2 2013/02/18 20:59:19 pgoyette Exp $	*/
+/*	$NetBSD: t_lockf.c,v 1.3 2013/02/19 00:54:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -148,6 +148,7 @@ ATF_TC_BODY(randlock, tc)
 			break;
 		}
 	}
+	usleep(sleeptime/10);
 	for (j=0; j<100; j++) {
 		printf("parent: run %i\n", j+1);
 		for (i=0; i<nprocs; i++) {
