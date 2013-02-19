@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.152 2013/01/20 17:09:47 rmind Exp $	*/
+/*	$NetBSD: emul.c,v 1.153 2013/02/19 09:04:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.152 2013/01/20 17:09:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.153 2013/02/19 09:04:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -280,37 +280,6 @@ syscall_intern(struct proc *p)
 	/* no you don't */
 }
 #endif
-
-void
-xc_send_ipi(struct cpu_info *ci)
-{
-	const struct cpu_info *curci = curcpu();
-	CPU_INFO_ITERATOR cii;
-
-	/*
-	 * IPI are considered asynchronous, therefore no need to wait for
-	 * unicast call delivery (nor the order of calls matters).  Our LWP
-	 * needs to be bound to the CPU, since xc_unicast(9) may block.
-	 *
-	 * WARNING: These must be low-priority calls, as this routine is
-	 * used to emulate high-priority (XC_HIGHPRI) mechanism.
-	 */
-
-	if (ci) {
-		KASSERT(curci != ci);
-		(void)xc_unicast(0, (xcfunc_t)xc_ipi_handler, NULL, NULL, ci);
-		return;
-	}
-
-	curlwp->l_pflag |= LP_BOUND;
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (curci == ci) {
-			continue;
-		}
-		(void)xc_unicast(0, (xcfunc_t)xc_ipi_handler, NULL, NULL, ci);
-	}
-	curlwp->l_pflag &= ~LP_BOUND;
-}
 
 int
 trace_enter(register_t code, const register_t *args, int narg)
