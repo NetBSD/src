@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.12 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: glob.h,v 1.13 2013/02/19 17:43:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)glob.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: glob.h,v 1.12 2009/04/10 13:08:25 christos Exp $
+ *	$NetBSD: glob.h,v 1.13 2013/02/19 17:43:32 christos Exp $
  */
 
 /*
@@ -59,6 +59,7 @@ EXTERN FILE	*otf;				/* Output temp file buffer */
 EXTERN int	image;				/* File descriptor for image of msg */
 EXTERN FILE	*input;				/* Current command input file */
 EXTERN char	mailname[PATHSIZE];		/* Name of current file */
+EXTERN char	displayname[80];		/* Prettyfied for display */
 EXTERN char	prevfile[PATHSIZE];		/* Name of previous file */
 EXTERN char	*tmpdir;			/* Path name of temp directory */
 EXTERN char	*homedir;			/* Path name of home directory */
