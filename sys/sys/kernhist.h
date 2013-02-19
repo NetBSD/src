@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.6 2013/02/19 00:56:25 matt Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.7 2013/02/19 22:54:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -143,7 +143,7 @@ extern int kernhist_print_enabled;
 do { \
 		if (kernhist_print_enabled) { \
 			kernhist_entry_print(E); \
-			if (KERNHISTDELAY != 0) \
+			if (KERNHIST_DELAY != 0) \
 				DELAY(KERNHIST_DELAY); \
 		} \
 } while (/*CONSTCOND*/ 0)
