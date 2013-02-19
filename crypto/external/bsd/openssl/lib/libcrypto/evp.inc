@@ -1,4 +1,4 @@
-#	$NetBSD: evp.inc,v 1.2.4.1 2012/08/14 07:57:03 riz Exp $
+#	$NetBSD: evp.inc,v 1.2.4.2 2013/02/19 04:47:13 riz Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -25,3 +25,14 @@ SRCS += ${EVP_SRCS}
 .for cryptosrc in ${EVP_SRCS}
 CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/evp
 .endfor
+
+EVP_AES_SRCS = e_aes.c
+
+# XXX Should do this too, but it requires some other asm changes.
+#EVP_AES_SRCS += e_aes_cbc_hmac_sha1.c
+
+.for cryptosrc in ${EVP_AES_SRCS}
+CPPFLAGS.${cryptosrc} += ${AESCPPFLAGS}
+.endfor
+
+CPPFLAGS.e_aes.c += -I${OPENSSLSRC}/crypto/modes
