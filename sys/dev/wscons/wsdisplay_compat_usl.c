@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.47 2010/07/01 02:38:29 rmind Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.48 2013/02/19 15:21:08 macallan Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.47 2010/07/01 02:38:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.48 2013/02/19 15:21:08 macallan Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -449,7 +449,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	     */
 	    case KDSETMODE:
 		req = WSDISPLAYIO_SMODE;
-#define d (*(int *)data)
+#define d (*(long *)data)
 		switch (d) {
 		    case KD_GRAPHICS:
 			intarg = WSDISPLAYIO_MODE_MAPPED;
@@ -465,7 +465,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		break;
 	    case KDMKTONE:
 		req = WSKBDIO_COMPLEXBELL;
-#define d (*(int *)data)
+#define d (*(long *)data)
 		if (d) {
 #define PCVT_SYSBEEPF	1193182
 			if (d >> 16) {
@@ -486,7 +486,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	    case KDSETLED:
 		req = WSKBDIO_SETLEDS;
 		intarg = 0;
-#define d (*(int *)data)
+#define d (*(long *)data)
 		if (d & LED_CAP)
 			intarg |= WSKBD_LED_CAPS;
 		if (d & LED_NUM)
@@ -503,7 +503,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	    case KDSKBMODE:
 		req = WSKBDIO_SETMODE;
-		switch (*(int *)data) {
+		switch (*(long *)data) {
 		    case K_RAW:
 			intarg = WSKBD_RAW;
 			break;
