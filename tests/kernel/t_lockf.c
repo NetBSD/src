@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lockf.c,v 1.6 2013/02/19 04:58:40 pgoyette Exp $	*/
+/*	$NetBSD: t_lockf.c,v 1.7 2013/02/19 22:44:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@ ATF_TC_BODY(randlock, tc)
 	pid_t *pid;
 	int status;
 	char pipe_in, pipe_out;
+	const char *pipe_errmsg = "child: pipe write failed\n";
 
 	(void)unlink(lockfile);
 
@@ -145,8 +146,8 @@ ATF_TC_BODY(randlock, tc)
 		switch (pid[i]) {
 		case 0:
 			if (write(pipe_fd[1], &pipe_out, 1) != 1)
-				printf("write_pipe(%i): %s", i,
-				strerror(errno));
+				write(STDERR_FILENO, pipe_errmsg,
+				    __arraycount(pipe_errmsg));
 			else
 				trylocks(i);
 			_exit(0);
