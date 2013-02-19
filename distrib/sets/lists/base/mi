@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1018 2013/02/05 17:52:22 matt Exp $
+# $NetBSD: mi,v 1.1019 2013/02/19 06:06:39 jmmv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1064,6 +1064,8 @@
 ./usr/libexec/kdc				base-obsolete		obsolete
 ./usr/libexec/kfd				base-obsolete		obsolete
 ./usr/libexec/kpasswdd				base-krb5-bin		kerberos
+./usr/libexec/kyua-atf-tester			base-kyua-bin		kyua
+./usr/libexec/kyua-plain-tester			base-kyua-bin		kyua
 ./usr/libexec/lfs_cleanerd			base-obsolete		obsolete
 ./usr/libexec/locate.bigram			base-sysutil-bin
 ./usr/libexec/locate.code			base-sysutil-bin
