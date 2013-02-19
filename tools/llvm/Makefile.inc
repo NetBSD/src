@@ -1,5 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.2 2013/02/18 20:30:16 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2013/02/19 18:02:41 joerg Exp $
 
-.include <bsd.own.mk>
-
-LLVM_TOPLEVEL=	${NETBSDSRCDIR}/external/bsd/llvm
+LLVM_TOPLEVEL:=	${.PARSEDIR}/../../external/bsd/llvm
