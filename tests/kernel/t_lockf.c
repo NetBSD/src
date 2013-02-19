@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lockf.c,v 1.5 2013/02/19 04:46:46 pgoyette Exp $	*/
+/*	$NetBSD: t_lockf.c,v 1.6 2013/02/19 04:58:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -119,8 +119,10 @@ ATF_TC_HEAD(randlock, tc)
 ATF_TC_BODY(randlock, tc)
 {
 	int i, j, fd;
+	int pipe_fd[2];
 	pid_t *pid;
 	int status;
+	char pipe_in, pipe_out;
 
 	(void)unlink(lockfile);
 
@@ -130,26 +132,36 @@ ATF_TC_BODY(randlock, tc)
 	ATF_REQUIRE_MSG(ftruncate(fd, filesize) >= 0,
 	    "ftruncate(%s): %s", lockfile, strerror(errno));
 
+	ATF_REQUIRE_MSG(pipe(pipe_fd) == 0, "pipe: %s", strerror(errno));
+
 	fsync(fd);
 	close(fd);
 
 	pid = malloc(nprocs * sizeof(pid_t));
 	
 	for (i = 0; i < nprocs; i++) {
+		pipe_out = (char)('A' + i);
 		pid[i] = fork();
 		switch (pid[i]) {
 		case 0:
-			trylocks(i);
+			if (write(pipe_fd[1], &pipe_out, 1) != 1)
+				printf("write_pipe(%i): %s", i,
+				strerror(errno));
+			else
+				trylocks(i);
 			_exit(0);
 			break;
 		case -1:
 			atf_tc_fail("fork %d failed", i);
 			break;
 		default:
+			ATF_REQUIRE_MSG(read(pipe_fd[0], &pipe_in, 1) == 1,
+			    "parent: read_pipe(%i): %s", i, strerror(errno));
+			ATF_REQUIRE_MSG(pipe_in == pipe_out,
+			    "parent: pipe does not match");
 			break;
 		}
 	}
-	usleep(sleeptime/10);
 	for (j = 0; j < npasses; j++) {
 		printf("parent: run %i\n", j+1);
 		for (i = 0; i < nprocs; i++) {
