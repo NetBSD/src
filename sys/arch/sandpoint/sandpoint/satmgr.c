@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.23 2012/05/15 02:14:13 nisimura Exp $ */
+/* $NetBSD: satmgr.c,v 1.24 2013/02/19 15:58:19 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -847,8 +847,11 @@ static void
 dpwroff(struct satmgr_softc *sc)
 {
 
+	send_sat(sc, "ZWC\n");
+
 	/*
-	 * The DSM-G600 has no hardware-shutdown, so we flash the power LED
+	 * When this line is reached, then this board revision doesn't
+	 * support hardware-shutdown, so we flash the power LED
 	 * to indicate that the device can be switched off.
 	 */
 	send_sat(sc, "SYN\nSYN\n");
