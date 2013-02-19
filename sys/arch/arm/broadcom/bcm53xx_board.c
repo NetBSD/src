@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.8.4.5 2013/02/19 02:22:02 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.8.4.6 2013/02/19 02:31:55 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.8.4.5 2013/02/19 02:22:02 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.8.4.6 2013/02/19 02:31:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -106,18 +106,9 @@ struct arm32_bus_dma_tag bcm53xx_coherent_dma_tag = {
 };
 
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
-struct arm32_dma_range bcm53xx_bounce_dma_ranges[] = {
-	[0] = {
-		.dr_sysbase = 0x80000000,
-		.dr_busbase = 0x80000000,
-		.dr_len = 0x10000000,
-		.dr_flags = _BUS_DMAMAP_COHERENT,
-	},
-};
-
 struct arm32_bus_dma_tag bcm53xx_bounce_dma_tag = {
-	._ranges = bcm53xx_bounce_dma_ranges,
-	._nranges = __arraycount(bcm53xx_bounce_dma_ranges),
+	._ranges = bcm53xx_coherent_dma_ranges,
+	._nranges = 1,
 	_BUS_DMAMAP_FUNCS,
 	_BUS_DMAMEM_FUNCS,
 	_BUS_DMATAG_FUNCS,
@@ -544,11 +535,7 @@ bcm53xx_dma_bootstrap(psize_t memsize)
 		bcm53xx_dma_ranges[0].dr_len = memsize;
 		bcm53xx_coherent_dma_ranges[0].dr_len = memsize;
 		bcm53xx_dma_tag._nranges = 1;
-#ifndef _ARM32_NEED_BUS_DMA_BOUNCE
 		bcm53xx_coherent_dma_tag._nranges = 1;
-#else
-		bcm53xx_bounce_dma_ranges[0].dr_len = memsize;
-#endif
 	} else {
 		/*
 		 * By setting up two ranges, bus_dmamem_alloc will always
@@ -557,9 +544,6 @@ bcm53xx_dma_bootstrap(psize_t memsize)
 		 */
 		bcm53xx_dma_ranges[1].dr_len = memsize - 0x10000000;
 		bcm53xx_coherent_dma_ranges[1].dr_len = memsize - 0x10000000;
-#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
-		bcm53xx_bounce_dma_ranges[1].dr_len = memsize - 0x10000000;
-#endif
 	}
 	KASSERT(bcm53xx_dma_tag._ranges[0].dr_flags == 0);
 	KASSERT(bcm53xx_coherent_dma_tag._ranges[0].dr_flags == _BUS_DMAMAP_COHERENT);
