@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.104 2013/02/18 22:01:29 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.105 2013/02/19 04:49:25 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8567,4 +8567,11 @@ sys/kern/uipc_usrreq.c				1.141
 
 	Fix various problems in cmsg file descriptor handling.
 	[riastradh, ticket #831]
+
+crypto/external/bsd/openssl/lib/libcrypto/arch/i386/aes.inc 1.3
+crypto/external/bsd/openssl/lib/libcrypto/evp.inc 1.5
+crypto/external/bsd/openssl/lib/libcrypto/modes.inc 1.3
+
+	Fix build for OpenSSL AES-NI support.
+	[riastradh, ticket #832]
 
