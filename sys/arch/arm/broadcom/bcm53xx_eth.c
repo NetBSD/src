@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.23 2013/01/19 00:35:24 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.24 2013/02/19 02:18:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -281,6 +281,11 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	 * We need to use the coherent dma tag for the GMAC.
 	 */
 	sc->sc_dmat = &bcm53xx_coherent_dma_tag;
+#if _ARM32_NEED_BUS_DMA_BOUNCE
+	if (device_cfdata(self)->cf_flags & 2) {
+		sc->sc_dmat = &bcm53xx_bounce_dma_tag;
+	}
+#endif
 
 	prop_data_t eaprop = prop_dictionary_get(dict, "mac-address");
         if (eaprop == NULL) {
