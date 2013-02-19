@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_io.c,v 1.11 2012/02/12 16:34:08 matt Exp $ */
+/*	$NetBSD: ifpga_io.c,v 1.12 2013/02/19 10:57:10 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.11 2012/02/12 16:34:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.12 2013/02/19 10:57:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.11 2012/02/12 16:34:08 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <evbarm/ifpga/ifpgavar.h>
+#include <evbarm/ifpga/ifpgamem.h>
 
 /* Proto types for all the bus_space structure functions */
 
@@ -68,6 +69,85 @@ struct bus_space ifpga_bs_tag = {
 	/* mapping/unmapping */
 	ifpga_bs_map,
 	ifpga_bs_unmap,
+	ifpga_bs_subregion,
+
+	/* allocation/deallocation */
+	ifpga_bs_alloc,
+	ifpga_bs_free,
+
+	/* get kernel virtual address */
+	ifpga_bs_vaddr,
+
+	/* mmap */
+	bs_notimpl_bs_mmap,
+
+	/* barrier */
+	ifpga_bs_barrier,
+
+	/* read (single) */
+	generic_bs_r_1,
+	generic_armv4_bs_r_2,
+	generic_bs_r_4,
+	bs_notimpl_bs_r_8,
+
+	/* read multiple */
+	generic_bs_rm_1,
+	generic_armv4_bs_rm_2,
+	generic_bs_rm_4,
+	bs_notimpl_bs_rm_8,
+
+	/* read region */
+	bs_notimpl_bs_rr_1,
+	generic_armv4_bs_rr_2,
+	generic_bs_rr_4,
+	bs_notimpl_bs_rr_8,
+
+	/* write (single) */
+	generic_bs_w_1,
+	generic_armv4_bs_w_2,
+	generic_bs_w_4,
+	bs_notimpl_bs_w_8,
+
+	/* write multiple */
+	generic_bs_wm_1,
+	generic_armv4_bs_wm_2,
+	generic_bs_wm_4,
+	bs_notimpl_bs_wm_8,
+
+	/* write region */
+	bs_notimpl_bs_wr_1,
+	generic_armv4_bs_wr_2,
+	generic_bs_wr_4,
+	bs_notimpl_bs_wr_8,
+
+	/* set multiple */
+	bs_notimpl_bs_sm_1,
+	bs_notimpl_bs_sm_2,
+	bs_notimpl_bs_sm_4,
+	bs_notimpl_bs_sm_8,
+
+	/* set region */
+	bs_notimpl_bs_sr_1,
+	generic_armv4_bs_sr_2,
+	bs_notimpl_bs_sr_4,
+	bs_notimpl_bs_sr_8,
+
+	/* copy */
+	bs_notimpl_bs_c_1,
+	generic_armv4_bs_c_2,
+	bs_notimpl_bs_c_4,
+	bs_notimpl_bs_c_8,
+};
+
+/* This is a preinitialized version of ifpga_bs_tag */
+
+struct bus_space ifpga_common_bs_tag = {
+	/* cookie */
+	(void *) IFPGA_IO_BASE,		/* Physical base address */
+
+	/* mapping/unmapping */
+	ifpga_mem_bs_map,
+	ifpga_mem_bs_unmap,
 	ifpga_bs_subregion,
 
 	/* allocation/deallocation */
@@ -159,8 +239,8 @@ ifpga_create_mem_bs_tag(struct bus_space *t, void *cookie)
 int
 ifpga_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_space_handle_t *bshp)
 {
-        /* The cookie is the base address for the I/O area */
-        *bshp = bpa + (bus_addr_t)t;
+	/* The cookie is the base address for the I/O area */
+	*bshp = bpa + (bus_addr_t)t;
 	return 0;
 }
 
@@ -169,6 +249,14 @@ ifpga_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_sp
 {
 	bus_addr_t startpa, endpa;
 	vaddr_t va;
+	const struct pmap_devmap *pd;
+	bus_addr_t pa = bpa + (bus_addr_t) t;
+
+	if ((pd = pmap_devmap_find_pa(pa, size)) != NULL) {
+		/* Device was statically mapped. */
+		*bshp = pd->pd_va + (pa - pd->pd_pa);
+		return 0;
+	}
 
 	/* Round the allocation to page boundries */
 	startpa = trunc_page(bpa);
@@ -217,6 +305,11 @@ void
 ifpga_mem_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	vaddr_t startva, endva;
+
+	if (pmap_devmap_find_va(bsh, size) != NULL) {
+		/* Device was statically mapped; nothing to do. */
+		return;
+	}
 
 	startva = trunc_page(bsh);
 	endva = round_page(bsh + size);
