@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.92 2013/02/16 21:40:44 jmmv Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.93 2013/02/19 06:06:44 jmmv Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -47,6 +47,7 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write
 ./usr/libdata/debug/usr/tests/kernel/tty
+./usr/libdata/debug/usr/tests/kyua-testers
 ./usr/libdata/debug/usr/tests/lib
 ./usr/libdata/debug/usr/tests/lib/csu
 ./usr/libdata/debug/usr/tests/lib/libbluetooth
@@ -188,6 +189,7 @@
 ./usr/tests/kernel/kqueue/read
 ./usr/tests/kernel/kqueue/write
 ./usr/tests/kernel/tty
+./usr/tests/kyua-testers
 ./usr/tests/lib
 ./usr/tests/lib/csu
 ./usr/tests/lib/libbluetooth

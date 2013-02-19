@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.6 2013/02/16 21:40:38 jmmv Exp $
+# $NetBSD: mi,v 1.7 2013/02/19 06:06:42 jmmv Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -643,6 +643,8 @@
 ./usr/libdata/debug/usr/libexec/ipropd-slave.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/kadmind.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/kpasswdd.debug	comp-krb5-debug		kerberos,debug
+./usr/libdata/debug/usr/libexec/kyua-atf-tester.debug	comp-kyua-debug		kyua,debug
+./usr/libdata/debug/usr/libexec/kyua-plain-tester.debug	comp-kyua-debug		kyua,debug
 ./usr/libdata/debug/usr/libexec/lfs_cleanerd.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/lint1.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/libexec/lint2.debug	comp-c-debug		debug
@@ -1320,6 +1322,21 @@
 ./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/tty/t_pr.debug			tests-kernel-tests	debug,atf,rump
+./usr/libdata/debug/usr/tests/kyua-testers/atf_helpers.debug		tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/atf_inttest.debug		tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/atf_list_test.debug		tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/atf_result_test.debug	tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/cli_test.debug		tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/env_test.debug		tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/error_test.debug		tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/fs_test.debug		tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/plain_helpers.debug		tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/plain_inttest.debug		tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/result_test.debug		tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/run_test.debug		tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/stacktrace_helper.debug	tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/stacktrace_test.debug	tests-kyua-tests	debug,atf,kyua
+./usr/libdata/debug/usr/tests/kyua-testers/text_test.debug		tests-kyua-tests	debug,atf,kyua
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini1.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini2.debug			tests-lib-debug		debug,atf

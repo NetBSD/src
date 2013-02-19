@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.519 2013/02/17 04:36:07 htodd Exp $
+# $NetBSD: mi,v 1.520 2013/02/19 06:06:44 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -56,6 +56,7 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write			tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/posix_spawn			tests-kernel-tests	obsolete
 ./usr/libdata/debug/usr/tests/kernel/tty				tests-kernel-tests
+./usr/libdata/debug/usr/tests/kyua-testers				tests-kyua-tests
 ./usr/libdata/debug/usr/tests/lib					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/csu					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libbluetooth				tests-lib-debug
@@ -1502,6 +1503,23 @@
 ./usr/tests/kernel/tty				tests-kernel-tests
 ./usr/tests/kernel/tty/Atffile			tests-kernel-tests		atf,rump
 ./usr/tests/kernel/tty/t_pr			tests-kernel-tests		atf,rump
+./usr/tests/kyua-testers			tests-kyua-tests
+./usr/tests/kyua-testers/Atffile		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/atf_helpers		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/atf_inttest		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/atf_list_test		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/atf_result_test	tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/cli_test		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/env_test		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/error_test		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/fs_test		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/plain_helpers		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/plain_inttest		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/result_test		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/run_test		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/stacktrace_helper	tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/stacktrace_test	tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/text_test		tests-kyua-tests		atf,kyua
 ./usr/tests/lib					tests-lib-tests
 ./usr/tests/lib/Atffile				tests-lib-tests		atf
 ./usr/tests/lib/csu				tests-lib-tests

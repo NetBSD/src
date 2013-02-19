@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1419 2013/02/03 14:51:57 jdc Exp $
+# $NetBSD: mi,v 1.1420 2013/02/19 06:06:43 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -237,6 +237,9 @@
 ./usr/share/man/cat1/ksh.0			man-util-catman		.cat
 ./usr/share/man/cat1/ktrace.0			man-debug-catman	.cat
 ./usr/share/man/cat1/ktruss.0			man-debug-catman	.cat
+./usr/share/man/cat1/kyua-atf-tester.0		man-kyua-catman		kyua,.cat
+./usr/share/man/cat1/kyua-plain-tester.0	man-kyua-catman		kyua,.cat
+./usr/share/man/cat1/kyua-tester.0		man-kyua-catman		kyua,.cat
 ./usr/share/man/cat1/lam.0			man-util-catman		.cat
 ./usr/share/man/cat1/last.0			man-util-catman		.cat
 ./usr/share/man/cat1/lastcomm.0			man-util-catman		.cat
@@ -1999,6 +2002,8 @@
 ./usr/share/man/cat5/krb.extra.0		man-obsolete		obsolete
 ./usr/share/man/cat5/krb.realms.0		man-obsolete		obsolete
 ./usr/share/man/cat5/krb5.conf.0		man-krb5-catman		kerberos,.cat
+./usr/share/man/cat5/kyua-tester-list.0		man-kyua-catman		kyua,.cat
+./usr/share/man/cat5/kyua-tester-result.0	man-kyua-catman		kyua,.cat
 ./usr/share/man/cat5/lastlog.0			man-sys-catman		.cat
 ./usr/share/man/cat5/lastlogx.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ld.so.conf.0		man-sys-catman		.cat
@@ -2120,6 +2125,8 @@
 ./usr/share/man/cat7/hier.0			man-reference-catman	.cat
 ./usr/share/man/cat7/hostname.0			man-reference-catman	.cat
 ./usr/share/man/cat7/intro.0			man-reference-catman	.cat
+./usr/share/man/cat7/kyua-atf-interface.0	man-kyua-catman		kyua,.cat
+./usr/share/man/cat7/kyua-plain-interface.0	man-kyua-catman		kyua,.cat
 ./usr/share/man/cat7/lint.0			man-reference-catman	.cat
 ./usr/share/man/cat7/mailaddr.0			man-reference-catman	.cat
 ./usr/share/man/cat7/mandoc.0			man-obsolete		obsolete
@@ -3236,6 +3243,9 @@
 ./usr/share/man/html1/ksh.html			man-util-htmlman	html
 ./usr/share/man/html1/ktrace.html		man-debug-htmlman	html
 ./usr/share/man/html1/ktruss.html		man-debug-htmlman	html
+./usr/share/man/html1/kyua-atf-tester.html	man-kyua-htmlman	kyua,html
+./usr/share/man/html1/kyua-plain-tester.html	man-kyua-htmlman	kyua,html
+./usr/share/man/html1/kyua-tester.html		man-kyua-htmlman	kyua,html
 ./usr/share/man/html1/lam.html			man-util-htmlman	html
 ./usr/share/man/html1/last.html			man-util-htmlman	html
 ./usr/share/man/html1/lastcomm.html		man-util-htmlman	html
@@ -4844,6 +4854,8 @@
 ./usr/share/man/html5/isdnd.rates.html		man-isdn-htmlman	html
 ./usr/share/man/html5/isdnd.rc.html		man-isdn-htmlman	html
 ./usr/share/man/html5/krb5.conf.html		man-krb5-htmlman	kerberos,html
+./usr/share/man/html5/kyua-tester-list.html	man-kyua-htmlman	kyua,html
+./usr/share/man/html5/kyua-tester-result.html	man-kyua-htmlman	kyua,html
 ./usr/share/man/html5/lastlog.html		man-sys-htmlman		html
 ./usr/share/man/html5/lastlogx.html		man-sys-htmlman		html
 ./usr/share/man/html5/ld.so.conf.html		man-sys-htmlman		html
@@ -4954,6 +4966,8 @@
 ./usr/share/man/html7/hier.html			man-reference-htmlman	html
 ./usr/share/man/html7/hostname.html		man-reference-htmlman	html
 ./usr/share/man/html7/intro.html		man-reference-htmlman	html
+./usr/share/man/html7/kyua-atf-interface.html	man-kyua-htmlman	kyua,html
+./usr/share/man/html7/kyua-plain-interface.html	man-kyua-htmlman	kyua,html
 ./usr/share/man/html7/lint.html			man-reference-htmlman	html
 ./usr/share/man/html7/mailaddr.html		man-reference-htmlman	html
 ./usr/share/man/html7/mdoc.html			man-groff-htmlman	html,groff
@@ -5873,6 +5887,9 @@
 ./usr/share/man/man1/ksh.1			man-util-man		.man
 ./usr/share/man/man1/ktrace.1			man-debug-man		.man
 ./usr/share/man/man1/ktruss.1			man-debug-man		.man
+./usr/share/man/man1/kyua-atf-tester.1		man-kyua-man		kyua,.man
+./usr/share/man/man1/kyua-plain-tester.1	man-kyua-man		kyua,.man
+./usr/share/man/man1/kyua-tester.1		man-kyua-man		kyua,.man
 ./usr/share/man/man1/lam.1			man-util-man		.man
 ./usr/share/man/man1/last.1			man-util-man		.man
 ./usr/share/man/man1/lastcomm.1			man-util-man		.man
@@ -7635,6 +7652,8 @@
 ./usr/share/man/man5/krb.extra.5		man-obsolete		obsolete
 ./usr/share/man/man5/krb.realms.5		man-obsolete		obsolete
 ./usr/share/man/man5/krb5.conf.5		man-krb5-man		kerberos,.man
+./usr/share/man/man5/kyua-tester-list.5		man-kyua-man		kyua,.man
+./usr/share/man/man5/kyua-tester-result.5	man-kyua-man		kyua,.man
 ./usr/share/man/man5/lastlog.5			man-sys-man		.man
 ./usr/share/man/man5/lastlogx.5			man-sys-man		.man
 ./usr/share/man/man5/ld.so.conf.5		man-sys-man		.man
@@ -7756,6 +7775,8 @@
 ./usr/share/man/man7/hier.7			man-reference-man	.man
 ./usr/share/man/man7/hostname.7			man-reference-man	.man
 ./usr/share/man/man7/intro.7			man-reference-man	.man
+./usr/share/man/man7/kyua-atf-interface.7	man-kyua-man		kyua,.man
+./usr/share/man/man7/kyua-plain-interface.7	man-kyua-man		kyua,.man
 ./usr/share/man/man7/lint.7			man-reference-man	.man
 ./usr/share/man/man7/mailaddr.7			man-reference-man	.man
 ./usr/share/man/man7/mandoc.7			man-obsolete		obsolete
