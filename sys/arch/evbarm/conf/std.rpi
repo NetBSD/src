@@ -1,4 +1,4 @@
-#	$NetBSD: std.rpi,v 1.4 2012/12/19 15:51:51 skrll Exp $
+#	$NetBSD: std.rpi,v 1.5 2013/02/19 10:57:10 skrll Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
@@ -8,13 +8,20 @@ include 	"arch/evbarm/conf/std.evbarm"
 # Pull in Raspberry Pi config definitions.
 include		"arch/evbarm/conf/files.rpi"
 
+#options 	FPU_VFP
+#options 	PMAP_NEED_ALLOC_POOLPAGE
+#options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	TPIDRPRW_IS_CURCPU
-options 	KERNEL_BASE_EXT=0xc0000000
 
+# Use the default of 0x8000000 for a test
+options 	KERNEL_BASE_EXT=0xc0000000
 options 	EVBARM_BOARDTYPE="rpi"
+
+#makeoptions	LOADADDRESS="0xc000c000"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.rpi"
 makeoptions	CPPFLAGS+="-I$S/../../../include"
 
