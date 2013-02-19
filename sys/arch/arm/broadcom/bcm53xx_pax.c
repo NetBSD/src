@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.8 2013/02/19 02:03:06 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.9 2013/02/19 02:15:18 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -202,11 +202,12 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	cfdata_t cf = device_cfdata(self);
 
 	sc->sc_dev = self;
+	sc->sc_dmat = &bcm53xx_coherent_dma_tag;
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
 	if (cf->cf_flags & 2) {
-		sc->sc_dmat = &bcm53xx_coherent_dma_tag;
-	} else {
-		sc->sc_dmat = ccbaa->ccbaa_dmat;
+		sc->sc_dmat = &bcm53xx_bounce_dma_tag;
 	}
+#endif
 
 	for (u_int i = 0; i < 4; i++) {
 		snprintf(sc->sc_intrstring[i], sizeof(sc->sc_intrstring[i]),
