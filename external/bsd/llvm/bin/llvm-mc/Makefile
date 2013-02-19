@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2013/02/04 15:00:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2013/02/19 12:35:42 joerg Exp $
 
 PROG_CXX=	llvm-mc
 NOMAN=		yes
@@ -18,6 +18,7 @@ LLVM_LIBS+= \
 	AArch64MCTargetDesc \
 	AArch64AsmPrinter \
 	AArch64Disassembler \
+	AArch64Utils \
 	ARMCodeGen \
 	ARMTargetInfo \
 	ARMAsmParser \
