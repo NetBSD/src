@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2013/02/04 15:00:33 joerg Exp $
+# $NetBSD: Makefile,v 1.28 2013/02/19 12:35:42 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -40,7 +40,8 @@ SUBDIR+= \
 	libLLVMAArch64AsmPrinter \
 	libLLVMAArch64Disassembler \
 	libLLVMAArch64MCTargetDesc \
-	libLLVMAArch64TargetInfo
+	libLLVMAArch64TargetInfo \
+	libLLVMAArch64Utils
 
 SUBDIR+= \
 	libLLVMARMAsmParser \
