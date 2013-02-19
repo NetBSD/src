@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lockf.c,v 1.4 2013/02/19 03:22:54 pgoyette Exp $	*/
+/*	$NetBSD: t_lockf.c,v 1.5 2013/02/19 04:46:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,11 +53,11 @@
  * When finished, reap all the children.
  */
 
-int nlocks = 500;		/* number of locks per thread */
-int nprocs = 10;		/* number of processes to spawn */
-int npasses = 50;		/* number of passes to make over the children */
-int sleeptime = 150000;		/* sleep time between locks, usec */
-off_t size = 8192;		/* size of file to lock */
+#define	nlocks		500	/* number of locks per thread */
+#define	nprocs		10	/* number of processes to spawn */
+#define	npasses		50	/* number of passes to make over the children */
+#define	sleeptime	150000	/* sleep time between locks, usec */
+#define	filesize 	8192	/* size of file to lock */
 
 const char *lockfile = "lockf_test";
 
@@ -81,11 +81,11 @@ trylocks(int id)
 
 	printf("%d: start\n", id);
 
-	for (i=0; i<nlocks; i++) {
+	for (i = 0; i < nlocks; i++) {
 		struct flock fl;
 
-		fl.l_start = random_uint32() % size;
-		fl.l_len = random_uint32() % size;
+		fl.l_start = random_uint32() % filesize;
+		fl.l_len = random_uint32() % filesize;
 		switch (random_uint32() % 3) {
 		case 0:
 			fl.l_type = F_RDLCK;
@@ -127,7 +127,7 @@ ATF_TC_BODY(randlock, tc)
 	fd = open (lockfile, O_RDWR|O_CREAT|O_EXCL|O_TRUNC, 0666);
 	ATF_REQUIRE_MSG(fd >= 0, "open(%s): %s", lockfile, strerror(errno));
 
-	ATF_REQUIRE_MSG(ftruncate(fd, size) >= 0,
+	ATF_REQUIRE_MSG(ftruncate(fd, filesize) >= 0,
 	    "ftruncate(%s): %s", lockfile, strerror(errno));
 
 	fsync(fd);
@@ -135,7 +135,7 @@ ATF_TC_BODY(randlock, tc)
 
 	pid = malloc(nprocs * sizeof(pid_t));
 	
-	for (i=0; i<nprocs; i++) {
+	for (i = 0; i < nprocs; i++) {
 		pid[i] = fork();
 		switch (pid[i]) {
 		case 0:
@@ -152,19 +152,19 @@ ATF_TC_BODY(randlock, tc)
 	usleep(sleeptime/10);
 	for (j = 0; j < npasses; j++) {
 		printf("parent: run %i\n", j+1);
-		for (i=0; i<nprocs; i++) {
+		for (i = 0; i < nprocs; i++) {
 			ATF_REQUIRE_MSG(ptrace(PT_ATTACH, pid[i], 0, 0) >= 0,
 			    "ptrace attach %d", pid[i]);
 			ATF_REQUIRE_MSG(waitpid(pid[i], &status, WUNTRACED) >= 0,
 			    "waitpid(ptrace)");
-			usleep(sleeptime/3);
+			usleep(sleeptime / 3);
 			ATF_REQUIRE_MSG(ptrace(PT_DETACH, pid[i], (caddr_t)1,
 					       0) >= 0,
 			    "ptrace detach %d", pid[i]);
-			usleep(sleeptime/3);
+			usleep(sleeptime / 3);
 		}
 	}
-	for (i=0; i<nprocs; i++) {
+	for (i = 0; i < nprocs; i++) {
 		printf("reap %d: ", i);
 		fflush(stdout);
 		kill(pid[i], SIGINT);
@@ -212,7 +212,7 @@ ATF_TC_BODY(deadlock, tc)
 	fd = open (lockfile, O_RDWR|O_CREAT|O_EXCL|O_TRUNC, 0666);
 	ATF_REQUIRE_MSG(fd >= 0, "open(%s): %s", lockfile, strerror(errno));
 
-	ATF_REQUIRE_MSG(ftruncate(fd, size) >= 0,
+	ATF_REQUIRE_MSG(ftruncate(fd, filesize) >= 0,
 	    "ftruncate(%s): %s", lockfile, strerror(errno));
 
 	fsync(fd);
