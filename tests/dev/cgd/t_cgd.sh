@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgd.sh,v 1.10 2011/05/19 20:37:50 riastradh Exp $
+#	$NetBSD: t_cgd.sh,v 1.11 2013/02/19 21:08:24 joerg Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +35,7 @@ basic_head()
 {
 
 	atf_set "descr" "Tests that encrypt/decrypt works"
+	atf_set "require.progs" "rump_server"
 }
 
 basic_body()
@@ -66,6 +67,7 @@ wrongpass_head()
 
 	atf_set "descr" "Tests that wrong password does not give original " \
 	    "plaintext"
+	atf_set "require.progs" "rump_server"
 }
 
 wrongpass_body()
@@ -103,6 +105,7 @@ unaligned_write_head()
 {
 
 	atf_set "descr" "Attempt unaligned writes to a raw cgd device"
+	atf_set "require.progs" "rump_server"
 }
 
 unaligned_write_body()
