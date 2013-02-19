@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.7 2012/10/17 20:18:55 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.8 2013/02/19 02:03:06 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -199,10 +199,14 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	struct bcmccb_attach_args * const ccbaa = aux;
 	const struct bcm_locators * const loc = &ccbaa->ccbaa_loc;
 	const char * const xname = device_xname(self);
+	cfdata_t cf = device_cfdata(self);
 
 	sc->sc_dev = self;
-	//sc->sc_dmat = ccbaa->ccbaa_dmat;
-	sc->sc_dmat = &bcm53xx_coherent_dma_tag;
+	if (cf->cf_flags & 2) {
+		sc->sc_dmat = &bcm53xx_coherent_dma_tag;
+	} else {
+		sc->sc_dmat = ccbaa->ccbaa_dmat;
+	}
 
 	for (u_int i = 0; i < 4; i++) {
 		snprintf(sc->sc_intrstring[i], sizeof(sc->sc_intrstring[i]),
@@ -293,7 +297,7 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * This will force the device to negotiate to a max of gen1.
 	 */
-	if (device_cfdata(self)->cf_flags & 1) {
+	if (cf->cf_flags & 1) {
 		bcmpax_conf_write(sc, 0, offset + PCI_PCIE_LCSR2, 1); 
 	}
 
