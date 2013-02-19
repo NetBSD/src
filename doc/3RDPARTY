@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1003 2013/02/16 21:40:57 jmmv Exp $
+#	$NetBSD: 3RDPARTY,v 1.1004 2013/02/19 06:06:53 jmmv Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -568,6 +568,21 @@ in sys/netinet6/in6.h.  No script is available for upgrades.
 "KAME" branch is used for kernel merge work purposes.
 http://www.kame.net/dev/cvsweb.cgi/kame/COVERAGE has functionality comparison
 among KAME/*BSD, *BSD-current and recent *BSD releases.
+
+Package:	kyua-testers
+Version:	0.1
+Current Vers:	0.1
+Maintainer:	Julio Merino <jmmv@NetBSD.org>
+Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
+Home page:	http://code.google.com/p/kyua/
+Mailing List:	kyua-discuss@googlegroups.com
+Responsible:	jmmv
+License:	BSD 3-clause
+Location:	external/bsd/kyua-testers/dist
+Notes:
+The source files are in external/bsd/kyua-testers/dist.
+Use external/bsd/kyua-testers/prepare-import.sh to regenerate the dist/
+directory.
 
 Package:	less
 Version:	less-444
