@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.10 2013/01/20 18:45:56 rmind Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.11 2013/02/19 23:57:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.10 2013/01/20 18:45:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.11 2013/02/19 23:57:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -163,7 +163,7 @@ nbuf_ensure_contig(nbuf_t *nbuf, size_t len)
 	const struct mbuf * const n = nbuf->nb_mbuf;
 	const size_t off = (uintptr_t)nbuf->nb_nptr - mtod(n, uintptr_t);
 
-	KASSERT(off < n->m_len);
+	KASSERT(off <= n->m_len);
 
 	if (__predict_false(n->m_len < (off + len))) {
 		struct mbuf *m = nbuf->nb_mbuf0;
