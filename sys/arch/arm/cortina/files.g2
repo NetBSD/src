@@ -1,0 +1,96 @@
+#	$NetBSD: files.g2,v 1.1 2013/02/19 16:07:23 matt Exp $
+#
+# Configuration info for Broadcom BCM5301X ARM Peripherals
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+
+file	arch/arm/cortina/g2_board.c
+file	arch/arm/broadcom/bcmgen_space.c
+
+# Console parameters
+defparam opt_cortina.h				CONADDR
+defparam opt_cortina.h				CONSPEED
+defparam opt_cortina.h				CONMODE
+defparam opt_cortina.h				MEMSIZE
+defflag opt_cortina.h				G2_CONSOLE_EARLY
+defflag opt_cortina.h				G2ETH_COUNTERS
+
+# G2 Peripherial attach point
+device	g2periph { [channel=-1] } : bus_space_generic
+attach	g2periph at mainbus
+file	arch/arm/cortina/g2_periph.c		g2periph	needs-flag
+
+device	g2com { } : tty
+attach	g2com at g2periph with g2com
+file	arch/arm/cortina/g2_com.c		g2com
+
+device	g2pcie : pcibus
+attach	g2pcie at g2periph
+file	arch/arm/cortina/g2_pcie.c		g2pcie
+
+device	g2i2c : i2cbus, i2cexec
+attach	g2i2c at g2periph with bcmi2c_ccb
+file	arch/arm/cortina/g2_i2c.c		g2i2c
+
+device	g2trng
+attach	g2trng at g2periph
+file	arch/arm/cortina/g2_trng.c		g2trng	needs-flag
+
+device	g2mdio : mii
+attach	g2mdio at g2periph
+file	arch/arm/cortina/g2_mdio.c		g2mdio
+
+device	g2eth { } : ether, ifnet, arp
+attach	g2eth at g2periph
+file	arch/arm/cortina/g2_eth.c		g2eth
+
+# USB2 Host Controller (EHCI)
+attach	ohci at g2periph with g2ohci
+attach	ehci at g2periph with g2ehci
+file	arch/arm/cortina/g2_ohci.c		g2ohci
+file	arch/arm/cortina/g2_ehci.c		g2ehci
+
+# External Mass Media Controller (SDHC)
+attach	sdhc at g2periph with g2sdhc
+file	arch/arm/cortina/g2_sdhc.c		g2sdhc
+
+# Advanced Host Controller Interface (SATA)
+attach	ahcisata at g2periph with g2ahci
+file	arch/arm/cortina/g2_ahci.c		g2ahci
+
+# Crypto Engine
+device	g2sec : opencrypto
+attach	g2sec at g2periph
+file	arch/arm/cortina/g2_sec.c		g2sec
+
+# Real Time Clock
+device	g2rtc
+attach	g2rtc at g2periph
+file	arch/arm/cortina/g2_rtc.c		g2rtc
+
+# General Purpose I/O
+device	g2gpio : gpiobus
+attach	g2gpio at g2periph
+file	arch/arm/cortina/g2_gpio.c		g2gpio
+
+# Serial Peripheral Interface
+device	g2spi : spibus
+attach	g2spi at g2periph
+file	arch/arm/cortina/g2_spi.c		g2spi
+
+# Flash (NAND)
+device	g2flash : nandbus
+attach	g2flash at g2periph
+file	arch/arm/cortina/g2_flash.c		g2flash
+
+# Sony/Philips Digital Interconnect Format
+device	g2spdif : audiobus
+attach	g2spdif at g2periph
+file	arch/arm/cortina/g2_spdif.c		g2spdif
