@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.45 2013/02/19 10:57:11 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.46 2013/02/20 09:03:41 skrll Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -12,8 +12,8 @@ EVBARM_BOARDS=
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms (armv4 or pre-armv5t)
 EVBARM_BOARDS+=		ADI_BRH CP3100 GEMINI GUMSTIX INTEGRATOR \
-			INTEGRATOR_CP IQ80310 IQ80321 MINI2440 MV2120 \
-			SMDK2410 SMDK2800 TEAMASA_NPWR TS7200 TWINTAIL
+			IQ80310 IQ80321 MINI2440 MV2120 SMDK2410 \
+			SMDK2800 TEAMASA_NPWR TS7200 TWINTAIL
 .endif
 
 
@@ -56,7 +56,7 @@ BUILD_KERNELS+=		${board}_INSTALL
 
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms.
-KERNEL_SETS+=		IXM1200 HDL_G
+KERNEL_SETS+=		HDL_G INTEGRATOR_CP IXM1200
 .endif
 
 .if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm" \
