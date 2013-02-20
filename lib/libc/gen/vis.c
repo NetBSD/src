@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.57 2013/02/20 18:40:49 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.58 2013/02/20 19:59:34 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.57 2013/02/20 18:40:49 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.58 2013/02/20 19:59:34 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -302,7 +302,8 @@ makeextralist(int flags, const char *src)
 		return NULL;
 
 	if (mbstowcs(dst, src, len) == (size_t)-1) {
-		for (size_t i = 0; i < len; i++)
+		size_t i;
+		for (i = 0; i < len; i++)
 			dst[i] = (wint_t)(u_char)src[i];
 		d = dst + len;
 	} else
