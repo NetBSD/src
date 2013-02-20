@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.54 2013/02/20 17:01:15 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.55 2013/02/20 17:15:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.54 2013/02/20 17:01:15 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.55 2013/02/20 17:15:08 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -139,7 +139,7 @@ do_mvis(wchar_t *dst, wint_t c, int flags, wint_t nextc, const wchar_t *extra)
 	    ((iswspace(c) && (nextc == L'\r' || nextc == L'\n')) ||
 	    /* Out of range */
 	    (!iswspace(c) && (c < 33 || (c > 60 && c < 62) || c > 126)) ||
-	    /* Specific char to be escaped */ 
+	    /* Specific char to be escaped */
 	    wcschr(L"#$@[\\]^`{|}~", c) != NULL)) {
 		*dst++ = L'=';
 		*dst++ = XTOA(((unsigned int)c >> 4) & 0xf);
@@ -204,12 +204,12 @@ do_mbyte(wchar_t *dst, wint_t c, int flags, wint_t nextc, int iswextra)
 	} else {
 		if ((flags & VIS_NOSLASH) == 0)
 			*dst++ = L'\\';
- 
+
 		if (c & 0200) {
 			c &= 0177;
 			*dst++ = L'M';
 		}
- 
+
 		if (iswcntrl(c)) {
 			*dst++ = L'^';
 			if (c == 0177)
@@ -304,8 +304,8 @@ makeextralist(int flags, const char *src)
 		*d++ = L'#';
 	}
 
-	if (flags & VIS_SP) *d++ = L' ';	
-	if (flags & VIS_TAB) *d++ = L'\t';	
+	if (flags & VIS_SP) *d++ = L' ';
+	if (flags & VIS_TAB) *d++ = L'\t';
 	if (flags & VIS_NL) *d++ = L'\n';
 	if ((flags & VIS_NOSLASH) == 0) *d++ = L'\\';
 	*d = L'\0';
@@ -397,7 +397,7 @@ istrsenvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 		/* Decrement input byte count. */
 		mbslength -= clen;
 	}
-	len = src - psrc;	
+	len = src - psrc;
 	src = psrc;
 	/*
 	 * In the single character input case, we will have actually
@@ -455,7 +455,7 @@ istrsenvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 			/*
 			 * Conversion error, process as a byte(s) instead.
 			 * Examine each byte and higher-order bytes for
-			 * data.  E.g., 
+			 * data.  E.g.,
 			 * 	0x0000a264 -> a2 64
 			 * 	0x1f00a264 -> 1f 00 a2 64
 			 */
