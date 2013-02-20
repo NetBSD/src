@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.56 2013/02/20 18:09:13 riz Exp $	*/
+/*	$NetBSD: vis.c,v 1.57 2013/02/20 18:40:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.56 2013/02/20 18:09:13 riz Exp $");
+__RCSID("$NetBSD: vis.c,v 1.57 2013/02/20 18:40:49 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -104,6 +104,17 @@ static wchar_t *do_svis(wchar_t *, wint_t, int, wint_t, const wchar_t *);
 #define XTOA(c)		L"0123456789ABCDEF"[c]
 
 #define MAXEXTRAS	10
+
+#ifdef notyet
+/*
+ * On NetBSD MB_LEN_MAX is currently 32 which does not fit on any integer
+ * integral type and it is probably wrong, since currently the maximum
+ * number of bytes and character needs is 6. Until this is fixed, the
+ * loops below are using sizeof(uint64_t) - 1 instead of MB_LEN_MAX, and
+ * the assertion is commented out.
+ */
+__CTASSERT(MB_LEN_MAX <= sizeof(uint64_t))
+#endif
 
 /*
  * This is do_hvis, for HTTP style (RFC 1808)
@@ -238,7 +249,7 @@ static wchar_t *
 do_svis(wchar_t *dst, wint_t c, int flags, wint_t nextc, const wchar_t *extra)
 {
 	int iswextra, i, shft;
-	wint_t bmsk, wmsk;
+	uint64_t bmsk, wmsk;
 
 	iswextra = wcschr(extra, c) != NULL;
 	if (!iswextra && (iswgraph(c) || iswwhite(c) ||
@@ -249,9 +260,9 @@ do_svis(wchar_t *dst, wint_t c, int flags, wint_t nextc, const wchar_t *extra)
 
 	/* See comment in istrsenvisx() output loop, below. */
 	wmsk = 0;
-	for (i = sizeof(wint_t) - 1; i >= 0; i--) {
+	for (i = sizeof(uint64_t) - 1; i >= 0; i--) {
 		shft = i * NBBY;
-		bmsk = (wint_t)(0xffL << shft);
+		bmsk = (uint64_t)(0xffL << shft);
 		wmsk |= bmsk;
 		if ((c & wmsk) || i == 0)
 			dst = do_mbyte(dst, (wint_t)(
@@ -324,7 +335,8 @@ istrsenvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 {
 	wchar_t *dst, *src, *pdst, *psrc, *start, *extra;
 	size_t len, olen;
-	wint_t c, bmsk, wmsk;
+	uint64_t bmsk, wmsk;
+	wint_t c;
 	visfun_t f;
 	int clen = 0, cerr = 0, error = -1, i, shft;
 	ssize_t mbslength, maxolen;
@@ -461,9 +473,9 @@ istrsenvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 			 */
 			clen = 0;
 			wmsk = 0;
-			for (i = sizeof(wint_t) - 1; i >= 0; i--) {
+			for (i = sizeof(uint64_t) - 1; i >= 0; i--) {
 				shft = i * NBBY;
-				bmsk = (wint_t)(0xffL << shft);
+				bmsk = (uint64_t)(0xffL << shft);
 				wmsk |= bmsk;
 				if ((*dst & wmsk) || i == 0)
 					mbdst[clen++] = (char)((unsigned int)
