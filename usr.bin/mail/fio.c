@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.37 2013/02/19 17:43:32 christos Exp $	*/
+/*	$NetBSD: fio.c,v 1.38 2013/02/20 14:38:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.37 2013/02/19 17:43:32 christos Exp $");
+__RCSID("$NetBSD: fio.c,v 1.38 2013/02/20 14:38:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -397,15 +397,15 @@ getfold(char *name, size_t namesize)
 
 	if ((folder = value(ENAME_FOLDER)) == NULL)
 		return -1;
-	if (*folder == '/')
-		(void)strlcpy(unres, folder, sizeof(unres));
-	else
+	if (*folder != '/') {
 		(void)snprintf(unres, sizeof(unres), "%s/%s", homedir, folder);
-	if (realpath(unres, res) == NULL) {
-		warn("Can't canonicalize folder `%s'", unres);
-		(void)strlcpy(name, unres, namesize);
-	} else
-		(void)strlcpy(name, res, namesize);
+		folder = unres;
+	}
+	if (realpath(folder, res) == NULL)
+		warn("Can't canonicalize folder `%s'", folder);
+	else
+		folder = res;
+	(void)strlcpy(name, folder, namesize);
 	return 0;
 }
 
