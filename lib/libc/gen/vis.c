@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.58 2013/02/20 19:59:34 tron Exp $	*/
+/*	$NetBSD: vis.c,v 1.59 2013/02/20 20:27:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.58 2013/02/20 19:59:34 tron Exp $");
+__RCSID("$NetBSD: vis.c,v 1.59 2013/02/20 20:27:42 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -66,6 +66,7 @@ __FBSDID("$FreeBSD$");
 
 #include "namespace.h"
 #include <sys/types.h>
+#include <sys/param.h>
 
 #include <assert.h>
 #include <vis.h>
@@ -105,7 +106,7 @@ static wchar_t *do_svis(wchar_t *, wint_t, int, wint_t, const wchar_t *);
 
 #define MAXEXTRAS	10
 
-#ifdef notyet
+#ifndef __NetBSD__
 /*
  * On NetBSD MB_LEN_MAX is currently 32 which does not fit on any integer
  * integral type and it is probably wrong, since currently the maximum
@@ -113,8 +114,19 @@ static wchar_t *do_svis(wchar_t *, wint_t, int, wint_t, const wchar_t *);
  * loops below are using sizeof(uint64_t) - 1 instead of MB_LEN_MAX, and
  * the assertion is commented out.
  */
-__CTASSERT(MB_LEN_MAX <= sizeof(uint64_t))
+#ifdef __FreeBSD__
+/*
+ * On FreeBSD including <sys/systm.h> for CTASSERT only works in kernel
+ * mode.
+ */
+#ifndef CTASSERT
+#define CTASSERT(x)             _CTASSERT(x, __LINE__)
+#define _CTASSERT(x, y)         __CTASSERT(x, y)
+#define __CTASSERT(x, y)        typedef char __assert ## y[(x) ? 1 : -1]
 #endif
+#endif /* __FreeBSD__ */
+CTASSERT(MB_LEN_MAX <= sizeof(uint64_t));
+#endif /* !__NetBSD__ */
 
 /*
  * This is do_hvis, for HTTP style (RFC 1808)
@@ -240,7 +252,7 @@ do_mbyte(wchar_t *dst, wint_t c, int flags, wint_t nextc, int iswextra)
  * This is do_vis, the central code of vis.
  * dst:	      Pointer to the destination buffer
  * c:	      Character to encode
- * flags:      Flag word
+ * flags:     Flags word
  * nextc:     The character following 'c'
  * extra:     Pointer to the list of extra characters to be
  *	      backslash-protected.
@@ -260,13 +272,13 @@ do_svis(wchar_t *dst, wint_t c, int flags, wint_t nextc, const wchar_t *extra)
 
 	/* See comment in istrsenvisx() output loop, below. */
 	wmsk = 0;
-	for (i = sizeof(uint64_t) - 1; i >= 0; i--) {
+	for (i = sizeof(wmsk) - 1; i >= 0; i--) {
 		shft = i * NBBY;
-		bmsk = (uint64_t)(0xffL << shft);
+		bmsk = (uint64_t)0xffLL << shft;
 		wmsk |= bmsk;
 		if ((c & wmsk) || i == 0)
 			dst = do_mbyte(dst, (wint_t)(
-			    (unsigned int)(c & bmsk) >> shft),
+			    (uint64_t)(c & bmsk) >> shft),
 			    flags, nextc, iswextra);
 	}
 
@@ -370,7 +382,7 @@ istrsenvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 	dst = pdst;
 	src = psrc;
 
-	/* Use caller's multibyte conversion error flags. */
+	/* Use caller's multibyte conversion error flag. */
 	if (cerr_ptr)
 		cerr = *cerr_ptr;
 
@@ -469,18 +481,19 @@ istrsenvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 			 * Conversion error, process as a byte(s) instead.
 			 * Examine each byte and higher-order bytes for
 			 * data.  E.g.,
-			 * 	0x0000a264 -> a2 64
-			 * 	0x1f00a264 -> 1f 00 a2 64
+			 *	0x000000000000a264 -> a2 64
+			 *	0x000000001f00a264 -> 1f 00 a2 64
 			 */
 			clen = 0;
 			wmsk = 0;
-			for (i = sizeof(uint64_t) - 1; i >= 0; i--) {
+			for (i = sizeof(wmsk) - 1; i >= 0; i--) {
 				shft = i * NBBY;
-				bmsk = (uint64_t)(0xffL << shft);
+				bmsk = (uint64_t)0xffLL << shft;
 				wmsk |= bmsk;
 				if ((*dst & wmsk) || i == 0)
-					mbdst[clen++] = (char)((unsigned int)
-					    (*dst & bmsk) >> shft);
+					mbdst[clen++] = (char)(
+					    (uint64_t)(*dst & bmsk) >>
+					    shft);
 			}
 			cerr = 1;
 		}
@@ -498,7 +511,7 @@ istrsenvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 	/* Terminate the output string. */
 	*mbdst = '\0';
 
-	/* Pass conversion error flags out. */
+	/* Pass conversion error flag out. */
 	if (cerr_ptr)
 		*cerr_ptr = cerr;
 
