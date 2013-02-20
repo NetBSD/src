@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.38 2013/02/20 19:49:26 wiz Exp $
+.\"	$NetBSD: vis.3,v 1.39 2013/02/20 20:05:26 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -430,8 +430,9 @@ must be four times the number of bytes processed from
 .Fa src .
 But note that each multibyte character can be up to
 .Dv MB_LEN_MAX
-bytes (see
-.Xr multibyte 3 )
+bytes
+.\" (see
+.\" .Xr multibyte 3 )
 so in terms of multibyte characters,
 .Fa dst
 must be four times
@@ -471,7 +472,7 @@ The destination buffer size is not large enough to perform the conversion.
 .Xr unvis 1 ,
 .Xr vis 1 ,
 .Xr glob 3 ,
-.Xr multibyte 3 ,
+.\" .Xr multibyte 3 ,
 .Xr unvis 3
 .Rs
 .%A T. Berners-Lee
