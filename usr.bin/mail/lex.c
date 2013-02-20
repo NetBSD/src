@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.42 2013/02/19 17:43:32 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.43 2013/02/20 14:38:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.42 2013/02/19 17:43:32 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.43 2013/02/20 14:38:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,8 @@ update_mailname(const char *name)
 	char tbuf[PATHSIZE];
 	size_t l;
 
-	if (realpath(name, mailname) == NULL) {
+	/* Don't realpath(3) if it's only an update request */
+	if (name != NULL && realpath(name, mailname) == NULL) {
 		warn("Can't canonicalize `%s'", name);
 		return;
 	}
@@ -272,8 +273,7 @@ setfile(const char *name)
 	shudclob = 1;
 	edit = isedit;
 	(void)strcpy(prevfile, mailname);
-	if (name != mailname)
-		update_mailname(name);
+	update_mailname(name != mailname ? name : NULL);
 	mailsize = fsize(ibuf);
 	(void)snprintf(tempname, sizeof(tempname),
 	    "%s/mail.RxXXXXXXXXXX", tmpdir);
@@ -1057,6 +1057,7 @@ newfileinfo(int omsgCount)
 	/*
 	 * Display the statistics.
 	 */
+	update_mailname(NULL);
 	(void)printf("\"%s\": ", displayname);
 	{
 		int cnt = get_abs_msgCount();
