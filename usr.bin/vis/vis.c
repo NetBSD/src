@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.21 2013/02/15 00:29:44 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.22 2013/02/20 17:04:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.21 2013/02/15 00:29:44 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.22 2013/02/20 17:04:45 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -162,8 +162,8 @@ process(FILE *fp)
 	static char nul[] = "\0";
 	char *cp = nul + 1;	/* so *(cp-1) starts out != '\n' */
 	wint_t c, c1, rachar;
-	char mbibuff[13]; /* (2 wchars (i.e., c + c1)) * MB_LEN_MAX) */
-	char buff[5]; /* max vis-encoding length for one char + NUL */
+	char mbibuff[2 * MB_LEN_MAX + 1]; /* max space for 2 wchars */
+	char buff[4 * MB_LEN_MAX + 1]; /* max encoding length for one char */
 	int mbilen, cerr = 0, raerr = 0;
 	
         /*
@@ -189,8 +189,9 @@ process(FILE *fp)
 		/* Clear multibyte input buffer. */
 		memset(mbibuff, 0, sizeof(mbibuff));
 		/* Read-ahead next multibyte character. */
-		rachar = getwc(fp);
-		if (rachar == WEOF && errno == EILSEQ) {
+		if (!cerr)
+			rachar = getwc(fp);
+		if (cerr || (rachar == WEOF && errno == EILSEQ)) {
 			/* Error in multibyte data.  Read one byte. */
 			rachar = (wint_t)getc(fp);
 			raerr = 1;
@@ -245,7 +246,8 @@ process(FILE *fp)
 			else
 				wctomb(mbibuff + mbilen, c1);
 			/* Perform encoding on just first character. */
-			(void)strsvisx(buff, mbibuff, 1, eflags, extra);
+			(void) strsenvisx(buff, 4 * MB_LEN_MAX, mbibuff,
+			    1, eflags, extra, &cerr);
 		}
 
 		cp = buff;
@@ -265,7 +267,6 @@ process(FILE *fp)
 		} while (*++cp);
 		c = rachar;
 		cerr = raerr;
-		raerr = 0;
 	}
 	/*
 	 * terminate partial line with a hidden newline
