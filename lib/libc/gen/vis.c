@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.53 2013/02/15 00:28:10 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.54 2013/02/20 17:01:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.53 2013/02/15 00:28:10 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.54 2013/02/20 17:01:15 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -103,38 +103,13 @@ static wchar_t *do_svis(wchar_t *, wint_t, int, wint_t, const wchar_t *);
 #define xtoa(c)		L"0123456789abcdef"[c]
 #define XTOA(c)		L"0123456789ABCDEF"[c]
 
-#define MAXEXTRAS	9
-
-#define MAKEEXTRALIST(flag, extra, orig_str)				      \
-do {									      \
-	const wchar_t *orig = orig_str;					      \
-	const wchar_t *o = orig;					      \
-	wchar_t *e;							      \
-	while (*o++)							      \
-		continue;						      \
-	extra = calloc((size_t)((o - orig) + MAXEXTRAS), sizeof(*extra));    \
-	if (!extra) break;						      \
-	for (o = orig, e = extra; (*e++ = *o++) != L'\0';)		      \
-		continue;						      \
-	e--;								      \
-	if (flag & VIS_GLOB) {						      \
-		*e++ = L'*';						      \
-		*e++ = L'?';						      \
-		*e++ = L'[';						      \
-		*e++ = L'#';						      \
-	}								      \
-	if (flag & VIS_SP) *e++ = L' ';					      \
-	if (flag & VIS_TAB) *e++ = L'\t';				      \
-	if (flag & VIS_NL) *e++ = L'\n';				      \
-	if ((flag & VIS_NOSLASH) == 0) *e++ = L'\\';			      \
-	*e = L'\0';							      \
-} while (/*CONSTCOND*/0)
+#define MAXEXTRAS	10
 
 /*
  * This is do_hvis, for HTTP style (RFC 1808)
  */
 static wchar_t *
-do_hvis(wchar_t *dst, wint_t c, int flag, wint_t nextc, const wchar_t *extra)
+do_hvis(wchar_t *dst, wint_t c, int flags, wint_t nextc, const wchar_t *extra)
 {
 	if (iswalnum(c)
 	    /* safe */
@@ -142,7 +117,7 @@ do_hvis(wchar_t *dst, wint_t c, int flag, wint_t nextc, const wchar_t *extra)
 	    /* extra */
 	    || c == L'!' || c == L'*' || c == L'\'' || c == L'(' || c == L')'
 	    || c == L',')
-		dst = do_svis(dst, c, flag, nextc, extra);
+		dst = do_svis(dst, c, flags, nextc, extra);
 	else {
 		*dst++ = L'%';
 		*dst++ = xtoa(((unsigned int)c >> 4) & 0xf);
@@ -157,7 +132,7 @@ do_hvis(wchar_t *dst, wint_t c, int flag, wint_t nextc, const wchar_t *extra)
  * NB: No handling of long lines or CRLF.
  */
 static wchar_t *
-do_mvis(wchar_t *dst, wint_t c, int flag, wint_t nextc, const wchar_t *extra)
+do_mvis(wchar_t *dst, wint_t c, int flags, wint_t nextc, const wchar_t *extra)
 {
 	if ((c != L'\n') &&
 	    /* Space at the end of the line */
@@ -170,31 +145,17 @@ do_mvis(wchar_t *dst, wint_t c, int flag, wint_t nextc, const wchar_t *extra)
 		*dst++ = XTOA(((unsigned int)c >> 4) & 0xf);
 		*dst++ = XTOA((unsigned int)c & 0xf);
 	} else
-		dst = do_svis(dst, c, flag, nextc, extra);
+		dst = do_svis(dst, c, flags, nextc, extra);
 	return dst;
 }
 
 /*
- * This is do_vis, the central code of vis.
- * dst:	      Pointer to the destination buffer
- * c:	      Character to encode
- * flag:      Flag word
- * nextc:     The character following 'c'
- * extra:     Pointer to the list of extra characters to be
- *	      backslash-protected.
+ * Output single byte of multibyte character.
  */
 static wchar_t *
-do_svis(wchar_t *dst, wint_t c, int flag, wint_t nextc, const wchar_t *extra)
+do_mbyte(wchar_t *dst, wint_t c, int flags, wint_t nextc, int iswextra)
 {
-	int iswextra;
-
-	iswextra = wcschr(extra, c) != NULL;
-	if (!iswextra && (iswgraph(c) || iswwhite(c) ||
-	    ((flag & VIS_SAFE) && iswsafe(c)))) {
-		*dst++ = c;
-		return dst;
-	}
-	if (flag & VIS_CSTYLE) {
+	if (flags & VIS_CSTYLE) {
 		switch (c) {
 		case L'\n':
 			*dst++ = L'\\'; *dst++ = L'n';
@@ -235,20 +196,20 @@ do_svis(wchar_t *dst, wint_t c, int flag, wint_t nextc, const wchar_t *extra)
 			}
 		}
 	}
-	if (iswextra || ((c & 0177) == L' ') || (flag & VIS_OCTAL)) {
+	if (iswextra || ((c & 0177) == L' ') || (flags & VIS_OCTAL)) {
 		*dst++ = L'\\';
 		*dst++ = (u_char)(((u_int32_t)(u_char)c >> 6) & 03) + L'0';
 		*dst++ = (u_char)(((u_int32_t)(u_char)c >> 3) & 07) + L'0';
 		*dst++ =			     (c	      & 07) + L'0';
 	} else {
-		if ((flag & VIS_NOSLASH) == 0)
+		if ((flags & VIS_NOSLASH) == 0)
 			*dst++ = L'\\';
-
+ 
 		if (c & 0200) {
 			c &= 0177;
 			*dst++ = L'M';
 		}
-
+ 
 		if (iswcntrl(c)) {
 			*dst++ = L'^';
 			if (c == 0177)
@@ -260,6 +221,44 @@ do_svis(wchar_t *dst, wint_t c, int flag, wint_t nextc, const wchar_t *extra)
 			*dst++ = c;
 		}
 	}
+
+	return dst;
+}
+
+/*
+ * This is do_vis, the central code of vis.
+ * dst:	      Pointer to the destination buffer
+ * c:	      Character to encode
+ * flags:      Flag word
+ * nextc:     The character following 'c'
+ * extra:     Pointer to the list of extra characters to be
+ *	      backslash-protected.
+ */
+static wchar_t *
+do_svis(wchar_t *dst, wint_t c, int flags, wint_t nextc, const wchar_t *extra)
+{
+	int iswextra, i, shft;
+	wint_t bmsk, wmsk;
+
+	iswextra = wcschr(extra, c) != NULL;
+	if (!iswextra && (iswgraph(c) || iswwhite(c) ||
+	    ((flags & VIS_SAFE) && iswsafe(c)))) {
+		*dst++ = c;
+		return dst;
+	}
+
+	/* See comment in istrsenvisx() output loop, below. */
+	wmsk = 0;
+	for (i = sizeof(wint_t) - 1; i >= 0; i--) {
+		shft = i * NBBY;
+		bmsk = (wint_t)(0xffL << shft);
+		wmsk |= bmsk;
+		if ((c & wmsk) || i == 0)
+			dst = do_mbyte(dst, (wint_t)(
+			    (unsigned int)(c & bmsk) >> shft),
+			    flags, nextc, iswextra);
+	}
+
 	return dst;
 }
 
@@ -269,30 +268,66 @@ typedef wchar_t *(*visfun_t)(wchar_t *, wint_t, int, wint_t, const wchar_t *);
  * Return the appropriate encoding function depending on the flags given.
  */
 static visfun_t
-getvisfun(int flag)
+getvisfun(int flags)
 {
-	if (flag & VIS_HTTPSTYLE)
+	if (flags & VIS_HTTPSTYLE)
 		return do_hvis;
-	if (flag & VIS_MIMESTYLE)
+	if (flags & VIS_MIMESTYLE)
 		return do_mvis;
 	return do_svis;
 }
 
 /*
- * istrsnvisx()
+ * Expand list of extra characters to not visually encode.
+ */
+static wchar_t *
+makeextralist(int flags, const char *src)
+{
+	wchar_t *dst, *d;
+	size_t len;
+
+	len = strlen(src);
+	if ((dst = calloc(len + MAXEXTRAS, sizeof(*dst))) == NULL)
+		return NULL;
+
+	if (mbstowcs(dst, src, len) == (size_t)-1) {
+		for (size_t i = 0; i < len; i++)
+			dst[i] = (wint_t)(u_char)src[i];
+		d = dst + len;
+	} else
+		d = dst + wcslen(dst);
+
+	if (flags & VIS_GLOB) {
+		*d++ = L'*';
+		*d++ = L'?';
+		*d++ = L'[';
+		*d++ = L'#';
+	}
+
+	if (flags & VIS_SP) *d++ = L' ';	
+	if (flags & VIS_TAB) *d++ = L'\t';	
+	if (flags & VIS_NL) *d++ = L'\n';
+	if ((flags & VIS_NOSLASH) == 0) *d++ = L'\\';
+	*d = L'\0';
+
+	return dst;
+}
+
+/*
+ * istrsenvisx()
  * 	The main internal function.
  *	All user-visible functions call this one.
  */
 static int
-istrsnvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
-    int flag, const char *mbextra)
+istrsenvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
+    int flags, const char *mbextra, int *cerr_ptr)
 {
-	wchar_t *dst, *src, *pdst, *psrc, *start, *extra, *nextra;
+	wchar_t *dst, *src, *pdst, *psrc, *start, *extra;
 	size_t len, olen;
-	wint_t c;
+	wint_t c, bmsk, wmsk;
 	visfun_t f;
-	int clen, error = -1;
-	ssize_t mbslength;
+	int clen, cerr = 0, error = -1, i, shft;
+	ssize_t mbslength, maxolen;
 
 	_DIAGASSERT(mbdst != NULL);
 	_DIAGASSERT(mbsrc != NULL);
@@ -312,27 +347,25 @@ istrsnvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 	 */
 
 	/* Allocate space for the wide char strings */
-	psrc = pdst = extra = nextra = NULL;
+	psrc = pdst = extra = NULL;
 	if (!mblength)
 		mblength = strlen(mbsrc);
-
 	if ((psrc = calloc(mblength + 1, sizeof(*psrc))) == NULL)
 		return -1;
 	if ((pdst = calloc((4 * mblength) + 1, sizeof(*pdst))) == NULL)
 		goto out;
-	if ((extra = calloc((strlen(mbextra) + 1), sizeof(*extra))) == NULL)
-		goto out;
-
 	dst = pdst;
 	src = psrc;
+
+	/* Use caller's multibyte conversion error flags. */
+	if (cerr_ptr)
+		cerr = *cerr_ptr;
 
 	/*
 	 * Input loop.
 	 * Handle up to mblength characters (not bytes).  We do not
 	 * stop at NULs because we may be processing a block of data
-	 * that includes NULs.  We process one more than the character
-	 * count so that we also get the next character of input which
-	 * is needed under some circumstances as a look-ahead character.
+	 * that includes NULs.
 	 */
 	mbslength = (ssize_t)mblength;
 	/*
@@ -343,23 +376,25 @@ istrsnvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 		mbslength++;
 	while (mbslength > 0) {
 		/* Convert one multibyte character to wchar_t. */
-		clen = mbtowc(src, mbsrc, MB_LEN_MAX);
-		if (clen < 0) {
+		if (!cerr)
+			clen = mbtowc(src, mbsrc, MB_LEN_MAX);
+		if (cerr || clen < 0) {
 			/* Conversion error, process as a byte instead. */
-			*src = (wint_t)*mbsrc;
+			*src = (wint_t)(u_char)*mbsrc;
 			clen = 1;
+			cerr = 1;
 		}
 		if (clen == 0)
 			/*
 			 * NUL in input gives 0 return value. process
-			 * as single NUL byte.
+			 * as single NUL byte and keep going.
 			 */
 			clen = 1;
-		/* Advance output pointer if we still have input left. */
+		/* Advance buffer character pointer. */
 		src++;
 		/* Advance input pointer by number of bytes read. */
 		mbsrc += clen;
-		/* Decrement input count */
+		/* Decrement input byte count. */
 		mbslength -= clen;
 	}
 	len = src - psrc;	
@@ -373,20 +408,19 @@ istrsnvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 		len = mblength;
 
 	/* Convert extra argument to list of characters for this mode. */
-	mbstowcs(extra, mbextra, strlen(mbextra));
-	MAKEEXTRALIST(flag, nextra, extra);
-	if (!nextra) {
+	extra = makeextralist(flags, mbextra);
+	if (!extra) {
 		if (dlen && *dlen == 0) {
 			errno = ENOSPC;
 			goto out;
 		}
-		*mbdst = '\0';		/* can't create nextra, return "" */
+		*mbdst = '\0';		/* can't create extra, return "" */
 		error = 0;
 		goto out;
 	}
 
 	/* Look up which processing function to call. */
-	f = getvisfun(flag);
+	f = getvisfun(flags);
 
 	/*
 	 * Main processing loop.
@@ -395,28 +429,72 @@ istrsnvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 	 */
 	for (start = dst; len > 0; len--) {
 		c = *src++;
-		dst = (*f)(dst, c, flag, len >= 1 ? *src : L'\0', nextra);
+		dst = (*f)(dst, c, flags, len >= 1 ? *src : L'\0', extra);
 		if (dst == NULL) {
 			errno = ENOSPC;
 			goto out;
 		}
 	}
 
-	/* Terminate the output string. */
+	/* Terminate the string in the buffer. */
 	*dst = L'\0';
 
-	/* Convert wchar_t string back to multibyte output string. */
-	len = dlen ? *dlen : ((wcslen(start) + 1) * MB_LEN_MAX);
-	olen = wcstombs(mbdst, start, len * sizeof(*mbdst));
+	/*
+	 * Output loop.
+	 * Convert wchar_t string back to multibyte output string.
+	 * If we have hit a multi-byte conversion error on input,
+	 * output byte-by-byte here.  Else use wctomb().
+	 */
+	len = wcslen(start);
+	maxolen = dlen ? *dlen : (wcslen(start) * MB_LEN_MAX + 1);
+	olen = 0;
+	for (dst = start; len > 0; len--) {
+		if (!cerr)
+			clen = wctomb(mbdst, *dst);
+		if (cerr || clen < 0) {
+			/*
+			 * Conversion error, process as a byte(s) instead.
+			 * Examine each byte and higher-order bytes for
+			 * data.  E.g., 
+			 * 	0x0000a264 -> a2 64
+			 * 	0x1f00a264 -> 1f 00 a2 64
+			 */
+			clen = 0;
+			wmsk = 0;
+			for (i = sizeof(wint_t) - 1; i >= 0; i--) {
+				shft = i * NBBY;
+				bmsk = (wint_t)(0xffL << shft);
+				wmsk |= bmsk;
+				if ((*dst & wmsk) || i == 0)
+					mbdst[clen++] = (char)((unsigned int)
+					    (*dst & bmsk) >> shft);
+			}
+			cerr = 1;
+		}
+		/* If this character would exceed our output limit, stop. */
+		if (olen + clen > (size_t)maxolen)
+			break;
+		/* Advance output pointer by number of bytes written. */
+		mbdst += clen;
+		/* Advance buffer character pointer. */
+		dst++;
+		/* Incrment output character count. */
+		olen += clen;
+	}
 
-	free(nextra);
+	/* Terminate the output string. */
+	*mbdst = '\0';
+
+	/* Pass conversion error flags out. */
+	if (cerr_ptr)
+		*cerr_ptr = cerr;
+
 	free(extra);
 	free(pdst);
 	free(psrc);
 
 	return (int)olen;
 out:
-	free(nextra);
 	free(extra);
 	free(pdst);
 	free(psrc);
@@ -433,7 +511,7 @@ out:
  */
 
 char *
-svis(char *mbdst, int c, int flag, int nextc, const char *mbextra)
+svis(char *mbdst, int c, int flags, int nextc, const char *mbextra)
 {
 	char cc[2];
 	int ret;
@@ -441,14 +519,14 @@ svis(char *mbdst, int c, int flag, int nextc, const char *mbextra)
 	cc[0] = c;
 	cc[1] = nextc;
 
-	ret = istrsnvisx(mbdst, NULL, cc, 1, flag, mbextra);
+	ret = istrsenvisx(mbdst, NULL, cc, 1, flags, mbextra, NULL);
 	if (ret < 0)
 		return NULL;
 	return mbdst + ret;
 }
 
 char *
-snvis(char *mbdst, size_t dlen, int c, int flag, int nextc, const char *mbextra)
+snvis(char *mbdst, size_t dlen, int c, int flags, int nextc, const char *mbextra)
 {
 	char cc[2];
 	int ret;
@@ -456,35 +534,42 @@ snvis(char *mbdst, size_t dlen, int c, int flag, int nextc, const char *mbextra)
 	cc[0] = c;
 	cc[1] = nextc;
 
-	ret = istrsnvisx(mbdst, &dlen, cc, 1, flag, mbextra);
+	ret = istrsenvisx(mbdst, &dlen, cc, 1, flags, mbextra, NULL);
 	if (ret < 0)
 		return NULL;
 	return mbdst + ret;
 }
 
 int
-strsvis(char *mbdst, const char *mbsrc, int flag, const char *mbextra)
+strsvis(char *mbdst, const char *mbsrc, int flags, const char *mbextra)
 {
-	return istrsnvisx(mbdst, NULL, mbsrc, 0, flag, mbextra);
+	return istrsenvisx(mbdst, NULL, mbsrc, 0, flags, mbextra, NULL);
 }
 
 int
-strsnvis(char *mbdst, size_t dlen, const char *mbsrc, int flag, const char *mbextra)
+strsnvis(char *mbdst, size_t dlen, const char *mbsrc, int flags, const char *mbextra)
 {
-	return istrsnvisx(mbdst, &dlen, mbsrc, 0, flag, mbextra);
+	return istrsenvisx(mbdst, &dlen, mbsrc, 0, flags, mbextra, NULL);
 }
 
 int
-strsvisx(char *mbdst, const char *mbsrc, size_t len, int flag, const char *mbextra)
+strsvisx(char *mbdst, const char *mbsrc, size_t len, int flags, const char *mbextra)
 {
-	return istrsnvisx(mbdst, NULL, mbsrc, len, flag, mbextra);
+	return istrsenvisx(mbdst, NULL, mbsrc, len, flags, mbextra, NULL);
 }
 
 int
-strsnvisx(char *mbdst, size_t dlen, const char *mbsrc, size_t len, int flag,
+strsnvisx(char *mbdst, size_t dlen, const char *mbsrc, size_t len, int flags,
     const char *mbextra)
 {
-	return istrsnvisx(mbdst, &dlen, mbsrc, len, flag, mbextra);
+	return istrsenvisx(mbdst, &dlen, mbsrc, len, flags, mbextra, NULL);
+}
+
+int
+strsenvisx(char *mbdst, size_t dlen, const char *mbsrc, size_t len, int flags,
+    const char *mbextra, int *cerr_ptr)
+{
+	return istrsenvisx(mbdst, &dlen, mbsrc, len, flags, mbextra, cerr_ptr);
 }
 #endif
 
@@ -493,7 +578,7 @@ strsnvisx(char *mbdst, size_t dlen, const char *mbsrc, size_t len, int flag,
  * vis - visually encode characters
  */
 char *
-vis(char *mbdst, int c, int flag, int nextc)
+vis(char *mbdst, int c, int flags, int nextc)
 {
 	char cc[2];
 	int ret;
@@ -501,14 +586,14 @@ vis(char *mbdst, int c, int flag, int nextc)
 	cc[0] = c;
 	cc[1] = nextc;
 
-	ret = istrsnvisx(mbdst, NULL, cc, 1, flag, "");
+	ret = istrsenvisx(mbdst, NULL, cc, 1, flags, "", NULL);
 	if (ret < 0)
 		return NULL;
 	return mbdst + ret;
 }
 
 char *
-nvis(char *mbdst, size_t dlen, int c, int flag, int nextc)
+nvis(char *mbdst, size_t dlen, int c, int flags, int nextc)
 {
 	char cc[2];
 	int ret;
@@ -516,7 +601,7 @@ nvis(char *mbdst, size_t dlen, int c, int flag, int nextc)
 	cc[0] = c;
 	cc[1] = nextc;
 
-	ret = istrsnvisx(mbdst, &dlen, cc, 1, flag, "");
+	ret = istrsenvisx(mbdst, &dlen, cc, 1, flags, "", NULL);
 	if (ret < 0)
 		return NULL;
 	return mbdst + ret;
@@ -531,15 +616,15 @@ nvis(char *mbdst, size_t dlen, int c, int flag, int nextc)
  */
 
 int
-strvis(char *mbdst, const char *mbsrc, int flag)
+strvis(char *mbdst, const char *mbsrc, int flags)
 {
-	return istrsnvisx(mbdst, NULL, mbsrc, 0, flag, "");
+	return istrsenvisx(mbdst, NULL, mbsrc, 0, flags, "", NULL);
 }
 
 int
-strnvis(char *mbdst, size_t dlen, const char *mbsrc, int flag)
+strnvis(char *mbdst, size_t dlen, const char *mbsrc, int flags)
 {
-	return istrsnvisx(mbdst, &dlen, mbsrc, 0, flag, "");
+	return istrsenvisx(mbdst, &dlen, mbsrc, 0, flags, "", NULL);
 }
 
 /*
@@ -554,14 +639,21 @@ strnvis(char *mbdst, size_t dlen, const char *mbsrc, int flag)
  */
 
 int
-strvisx(char *mbdst, const char *mbsrc, size_t len, int flag)
+strvisx(char *mbdst, const char *mbsrc, size_t len, int flags)
 {
-	return istrsnvisx(mbdst, NULL, mbsrc, len, flag, "");
+	return istrsenvisx(mbdst, NULL, mbsrc, len, flags, "", NULL);
 }
 
 int
-strnvisx(char *mbdst, size_t dlen, const char *mbsrc, size_t len, int flag)
+strnvisx(char *mbdst, size_t dlen, const char *mbsrc, size_t len, int flags)
 {
-	return istrsnvisx(mbdst, &dlen, mbsrc, len, flag, "");
+	return istrsenvisx(mbdst, &dlen, mbsrc, len, flags, "", NULL);
+}
+
+int
+strenvisx(char *mbdst, size_t dlen, const char *mbsrc, size_t len, int flags,
+    int *cerr_ptr)
+{
+	return istrsenvisx(mbdst, &dlen, mbsrc, len, flags, "", cerr_ptr);
 }
 #endif
