@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.36 2013/02/13 22:19:48 wiz Exp $
+.\"	$NetBSD: vis.3,v 1.37 2013/02/20 17:01:15 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)vis.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd February 13, 2013
+.Dd February 19, 2013
 .Dt VIS 3
 .Os
 .Sh NAME
@@ -39,12 +39,14 @@
 .Nm strnvis ,
 .Nm strvisx ,
 .Nm strnvisx ,
+.Nm strenvisx ,
 .Nm svis ,
 .Nm snvis ,
 .Nm strsvis ,
 .Nm strsnvis ,
-.Nm strsvisx
-.Nm strsnvisx
+.Nm strsvisx ,
+.Nm strsnvisx ,
+.Nm strsenvisx
 .Nd visually encode characters
 .Sh LIBRARY
 .Lb libc
@@ -62,6 +64,8 @@
 .Fn strvisx "char *dst" "const char *src" "size_t len" "int flag"
 .Ft int
 .Fn strnvisx "char *dst" "size_t dlen" "const char *src" "size_t len" "int flag"
+.Ft int
+.Fn strenvisx "char *dst" "size_t dlen" "const char *src" "size_t len" "int flag" "int *cerr_ptr"
 .Ft char *
 .Fn svis "char *dst" "int c" "int flag" "int nextc" "const char *extra"
 .Ft char *
@@ -74,6 +78,8 @@
 .Fn strsvisx "char *dst" "const char *src" "size_t len" "int flag" "const char *extra"
 .Ft int
 .Fn strsnvisx "char *dst" "size_t dlen" "const char *src" "size_t len" "int flag" "const char *extra"
+.Ft int
+.Fn strsenvisx "char *dst" "size_t dlen" "const char *src" "size_t len" "int flag" "const char *extra" "int *cerr_ptr"
 .Sh DESCRIPTION
 The
 .Fn vis
@@ -88,11 +94,11 @@ needs no encoding, it is copied in unaltered.
 The string is null terminated, and a pointer to the end of the string is
 returned.
 The maximum length of any encoding is four
-characters (not including the trailing
+bytes (not including the trailing
 .Dv NUL ) ;
 thus, when
 encoding a set of characters into a buffer, the size of the buffer should
-be four times the number of characters encoded, plus one for the trailing
+be four times the number of bytes encoded, plus one for the trailing
 .Dv NUL .
 The flag parameter is used for altering the default range of
 characters considered for encoding and for altering the visual
@@ -141,7 +147,7 @@ terminate
 The size of
 .Fa dst
 must be four times the number
-of characters encoded from
+of bytes encoded from
 .Fa src
 (plus one for the
 .Dv NUL ) .
@@ -167,6 +173,14 @@ functions return \-1 and set
 .Va errno
 to
 .Dv ENOSPC .
+The
+.Fn strenvisx
+function takes an additional argument,
+.Fa cerr_ptr ,
+that is used to pass in and out a multibyte conversion error flag.
+This is useful when processing single characters at a time when
+it is possible that the locale may be set to something other
+than the locale of the characters in the input data.
 .Pp
 The functions
 .Fn svis ,
@@ -174,16 +188,18 @@ The functions
 .Fn strsvis ,
 .Fn strsnvis ,
 .Fn strsvisx ,
+.Fn strsnvisx ,
 and
-.Fn strsnvisx
+.Fn strsenvisx
 correspond to
 .Fn vis ,
 .Fn nvis ,
 .Fn strvis ,
 .Fn strnvis ,
 .Fn strvisx ,
+.Fn strnvisx ,
 and
-.Fn strnvisx
+.Fn strenvisx
 but have an additional argument
 .Fa extra ,
 pointing to a
@@ -407,15 +423,27 @@ must be set to the correct locale or to the C locale.
 If the locales of the data and the conversion are mismatched,
 multibyte character recognition may fail and encoding will be performed
 byte-by-byte instead.
-The result of encoding using one of these functions followed by
-decoding using the corresponding
-.Xr unvis 3
-function is unlikely to return the same input data in this case.
+.Pp
+As noted above,
+.Fa dst
+must be four times the number of bytes processed from
+.Fa src .
+But note that each multibyte character can be up to
+.Dv MB_LEN_MAX
+bytes (see
+.Xr multibyte 3 )
+so in terms of multibyte characters,
+.Fa dst
+must be four times
+.Dv MB_LEN_MAX
+times the number of characters processed from
+.Fa src .
 .Sh ENVIRONMENT
 .Bl -tag -width ".Ev LC_CTYPE"
 .It Ev LC_CTYPE
 Specify the locale of the input data.
 Set to C if the input data locale is unknown.
+.El
 .Sh ERRORS
 The functions
 .Fn nvis
@@ -442,6 +470,7 @@ The destination buffer size is not large enough to perform the conversion.
 .Sh SEE ALSO
 .Xr unvis 1 ,
 .Xr vis 1 ,
+.Xr multibyte 3 ,
 .Xr glob 3 ,
 .Xr unvis 3
 .Rs
