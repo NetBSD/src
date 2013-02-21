@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.23 2013/01/25 00:06:05 jmcneill Exp $
+#	$NetBSD: RPI,v 1.24 2013/02/21 09:25:30 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -229,9 +229,12 @@ options 	WS_DEFAULT_FG=WSCOL_WHITE
 options 	WS_DEFAULT_BG=WSCOL_BLACK
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some more ioctls
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
+
 #options 	FONT_QVSS8x15
 #options 	FONT_GALLANT12x22	# the console font
 
