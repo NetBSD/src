@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.33 2012/12/27 21:17:47 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.34 2013/02/21 18:17:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.33 2012/12/27 21:17:47 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.34 2013/02/21 18:17:43 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -612,8 +612,6 @@ glob2(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
 	const Char *p;
 	Char *q;
 	int anymeta;
-	Char *pend;
-	ptrdiff_t diff;
 
 	_DIAGASSERT(pathbuf != NULL);
 	_DIAGASSERT(pathend != NULL);
@@ -665,26 +663,7 @@ glob2(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
 			*q++ = *p++;
 		}
 
-                /*
-		 * No expansion, or path ends in slash-dot shash-dot-dot,
-		 * do next segment.
-		 */
-		if (pglob->gl_flags & GLOB_PERIOD) {
-			for (pend = pathend; pend > pathbuf && pend[-1] == '/';
-			    pend--)
-				continue;
-			diff = pend - pathbuf;
-		} else {
-			/* XXX: GCC */
-			diff = 0;
-			pend = pathend;
-		}
-			
-                if ((!anymeta) ||
-		    ((pglob->gl_flags & GLOB_PERIOD) &&
-		     (diff >= 1 && pend[-1] == DOT) &&
-		     (diff >= 2 && (pend[-2] == SLASH || pend[-2] == DOT)) &&
-		     (diff < 3 || pend[-3] == SLASH))) {
+                if (!anymeta) {
 			pathend = q;
 			pattern = p;
 			while (*pattern == SEP) {
