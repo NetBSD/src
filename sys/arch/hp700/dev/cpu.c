@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.29 2012/10/10 15:46:34 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.30 2013/02/21 15:16:02 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 2012/10/10 15:46:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2013/02/21 15:16:02 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -74,9 +74,6 @@ cpumatch(device_t parent, cfdata_t cf, void *aux)
 	    ca->ca_type.iodc_sv_model != HPPA_NPROC_HPPA)
 		return 0;
 
-	if (cf->cf_unit >= MAXCPUS)
-		return 0;
-
 	return 1;
 }
 
@@ -104,10 +101,6 @@ cpuattach(device_t parent, device_t self, void *aux)
 #endif
 
 	sc->sc_dev = self;
-
-	ci = &cpus[cpuno];
-	ci->ci_cpuid = cpuno;
-	ci->ci_hpa = ca->ca_hpa;
 
 	/* Print the CPU chip name, nickname, and rev. */
 	aprint_normal(": %s", hppa_cpu_info->hci_chip_name);
@@ -161,6 +154,15 @@ cpuattach(device_t parent, device_t self, void *aux)
 	aprint_normal("%s: %s floating point, rev %d\n", device_xname(self),
 	    hppa_mod_info(HPPA_TYPE_FPU, (fpu_version >> 16) & 0x1f),
 	    (fpu_version >> 11) & 0x1f);
+
+	if (cpuno >= HPPA_MAXCPUS) {
+		aprint_normal_dev(self, "not started\n");
+		return;
+	}
+
+	ci = &cpus[cpuno];
+	ci->ci_cpuid = cpuno;
+	ci->ci_hpa = ca->ca_hpa;
 
 	hp700_intr_initialise(ci);
 
