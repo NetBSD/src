@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.17 2013/02/21 10:22:04 skrll Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.18 2013/02/21 14:13:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.17 2013/02/21 10:22:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.18 2013/02/21 14:13:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -245,9 +245,6 @@ static const struct syscall_package compat_syscalls[] = {
 #endif
 	{ 0, 0, NULL },
 };
-
-#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
-#endif
 
 static int
 compat_modcmd(modcmd_t cmd, void *arg)
