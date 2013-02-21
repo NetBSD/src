@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.15 2013/01/22 01:47:20 christos Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.16 2013/02/21 01:39:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.15 2013/01/22 01:47:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.16 2013/02/21 01:39:54 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -52,12 +52,18 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.15 2013/01/22 01:47:20 christos Exp
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
 
 #include <compat/common/compat_util.h>
+#include <compat/common/compat_mod.h>
 
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
+static struct sysctllog *compat_clog = NULL;
+#endif
+ 
 MODULE(MODULE_CLASS_MISC, compat, NULL);
 
 int	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
@@ -240,6 +246,9 @@ static const struct syscall_package compat_syscalls[] = {
 	{ 0, 0, NULL },
 };
 
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
+#endif
+
 static int
 compat_modcmd(modcmd_t cmd, void *arg)
 {
@@ -270,9 +279,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		sendsig_sigcontext_vec = sendsig_sigcontext;
 #endif
 #endif
-#if defined(COMPAT_09) || defined(COMPAT_43)
 		compat_sysctl_init();
-#endif
 		return 0;
 
 	case MODULE_CMD_FINI:
@@ -329,12 +336,29 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		rw_exit(&exec_lock);
 #endif
 #endif	/* COMPAT_16 */
-#if defined(COMPAT_09) || defined(COMPAT_43)
 		compat_sysctl_fini();
-#endif
 		return 0;
 
 	default:
 		return ENOTTY;
 	}
+}
+
+void
+compat_sysctl_init(void)
+{
+
+#if defined(COMPAT_09) || defined(COMPAT_43)
+	compat_sysctl_vfs(&compat_clog);
+#endif
+#if defined(COMPAT_50)
+	compat_sysctl_time(&compat_clog);
+#endif
+}
+
+void
+compat_sysctl_fini(void)
+{
+ 
+        sysctl_teardown(&compat_clog);
 }
