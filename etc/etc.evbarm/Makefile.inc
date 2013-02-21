@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.46 2013/02/20 09:03:41 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.47 2013/02/21 15:13:11 hans Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -28,7 +28,8 @@ __mkimage: .USE
 	TOOL_MKNOD=${TOOL_MKNOD} \
 	TOOL_PAX=${TOOL_PAX} \
 	TOOL_MTREE=${TOOL_MTREE} \
-	${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
+	HOST_SH=${HOST_SH} \
+	${HOST_SH} ${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
 	    -K ${.ALLSRC} -S ${NETBSDSRCDIR} \
 	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
 
