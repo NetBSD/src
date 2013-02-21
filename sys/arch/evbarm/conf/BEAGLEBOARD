@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.45 2013/02/09 13:29:36 jmcneill Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.46 2013/02/21 12:31:22 macallan Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -265,6 +265,8 @@ options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options		WS_KERNEL_FG=WSCOL_GREEN
 options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some more ioctls
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
