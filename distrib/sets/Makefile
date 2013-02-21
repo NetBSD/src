@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.87 2013/02/18 00:22:13 christos Exp $
+#	$NetBSD: Makefile,v 1.88 2013/02/21 14:08:50 christos Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -129,10 +129,10 @@ ${METALOG}.sanitised: ${METALOG}
 .if ${MKUPDATE} != "no"
 	${TOOL_AWK} \
 	    '{ a[$$1] = $$0; } END { for (f in a) print a[f]; }' ${METALOG} | \
-	    sort -s | ${TOOL_MTREE} -CSM -k all -N ${NETBSDSRCDIR}/etc \
+	    sort | ${TOOL_MTREE} -CSM -k all -N ${NETBSDSRCDIR}/etc \
 	    >${METALOG}.new
 .else
-	    sort -s ${METALOG} | ${TOOL_MTREE} -CSM -k all -N ${NETBSDSRCDIR}/etc \
+	    sort ${METALOG} | ${TOOL_MTREE} -CSM -k all -N ${NETBSDSRCDIR}/etc \
 	    >${METALOG}.new
 .endif
 	mv ${METALOG}.new ${METALOG}.sanitised
