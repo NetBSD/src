@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.16 2013/02/21 01:39:54 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.17 2013/02/21 10:22:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.16 2013/02/21 01:39:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.17 2013/02/21 10:22:04 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -360,5 +360,7 @@ void
 compat_sysctl_fini(void)
 {
  
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
         sysctl_teardown(&compat_clog);
+#endif
 }
