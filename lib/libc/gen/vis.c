@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.59 2013/02/20 20:27:42 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.60 2013/02/21 16:21:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.59 2013/02/20 20:27:42 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.60 2013/02/21 16:21:20 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -106,6 +106,7 @@ static wchar_t *do_svis(wchar_t *, wint_t, int, wint_t, const wchar_t *);
 
 #define MAXEXTRAS	10
 
+#if !HAVE_NBTOOL_CONFIG_H
 #ifndef __NetBSD__
 /*
  * On NetBSD MB_LEN_MAX is currently 32 which does not fit on any integer
@@ -127,6 +128,7 @@ static wchar_t *do_svis(wchar_t *, wint_t, int, wint_t, const wchar_t *);
 #endif /* __FreeBSD__ */
 CTASSERT(MB_LEN_MAX <= sizeof(uint64_t));
 #endif /* !__NetBSD__ */
+#endif
 
 /*
  * This is do_hvis, for HTTP style (RFC 1808)
