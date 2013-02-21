@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.159 2013/02/21 08:07:24 martin Exp $
+# $NetBSD: GENERIC,v 1.160 2013/02/21 09:04:22 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.159 $"
+#ident 		"GENERIC-$Revision: 1.160 $"
 
 maxusers	64
 
@@ -929,7 +929,6 @@ options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some more ioctls
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
-options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_GALLANT12x22		# PROM font look-alike
