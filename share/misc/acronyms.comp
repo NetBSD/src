@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.131 2013/01/23 12:35:06 wiz Exp $
+$NetBSD: acronyms.comp,v 1.132 2013/02/22 08:19:50 plunky Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -251,6 +251,7 @@ DAA	distributed application architecture
 DAB	digital audio broadcasting
 DAC	digital [to] analog converter
 DAC	discretionary access control
+DAD	duplicate address detection
 DAO	disk at once
 DAP	Directory Access Protocol
 DAT	digital audio tape
