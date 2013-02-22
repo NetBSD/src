@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1793 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1794 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -196,3 +196,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	kyua-testers(1): Import 0.1.  This is a new import that provides
 		scriptable utilities to invoke test programs that implement
 		different interfaces.  [jmmv 20130217]
+	services(5), protocols(5): Pull iana-generated services and protocols
+		[christos 20130221]
