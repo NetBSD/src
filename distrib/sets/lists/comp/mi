@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1805 2013/02/19 06:06:39 jmmv Exp $
+#	$NetBSD: mi,v 1.1806 2013/02/22 15:14:29 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1754,6 +1754,7 @@
 ./usr/include/lutok/stack_cleaner.hpp		comp-c-include		kyua
 ./usr/include/lutok/state.hpp			comp-c-include		kyua
 ./usr/include/lutok/state.ipp			comp-c-include		kyua
+./usr/include/lutok/test_utils.hpp		comp-c-include		kyua
 ./usr/include/lwp.h				comp-c-include
 ./usr/include/lzf.h				comp-c-include
 ./usr/include/lzfP.h				comp-c-include
