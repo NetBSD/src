@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2013/02/16 21:29:46 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2013/02/22 15:14:31 jmmv Exp $
 
 #NOLINT=		# defined
 
@@ -38,7 +38,8 @@ INCS=		c_gate.hpp \
 		operations.hpp \
 		stack_cleaner.hpp \
 		state.hpp \
-		state.ipp
+		state.ipp \
+		test_utils.hpp
 INCSDIR=	/usr/include/lutok
 
 .if ${MKSHARE} != "no"
