@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.202 2012/09/17 11:54:36 tsutsui Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.203 2013/02/22 06:11:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -51,7 +51,7 @@
 /*
  * The Broadcom BCM5700 is based on technology originally developed by
  * Alteon Networks as part of the Tigon I and Tigon II gigabit ethernet
- * MAC chips. The BCM5700, sometimes refered to as the Tigon III, has
+ * MAC chips. The BCM5700, sometimes referred to as the Tigon III, has
  * two on-board MIPS R4000 CPUs and can have as much as 16MB of external
  * SSRAM. The BCM5700 supports TCP, UDP and IP checksum offload, jumbo
  * frames, highly configurable RX filtering, and 16 RX and TX queues
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.202 2012/09/17 11:54:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.203 2013/02/22 06:11:17 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -868,20 +868,20 @@ bge_nvram_getbyte(struct bge_softc *sc, int addr, uint8_t *dest)
 static int
 bge_read_nvram(struct bge_softc *sc, uint8_t *dest, int off, int cnt)
 {
-	int err = 0, i;
+	int error = 0, i;
 	uint8_t byte = 0;
 
 	if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906)
 		return 1;
 
 	for (i = 0; i < cnt; i++) {
-		err = bge_nvram_getbyte(sc, off + i, &byte);
-		if (err)
+		error = bge_nvram_getbyte(sc, off + i, &byte);
+		if (error)
 			break;
 		*(dest + i) = byte;
 	}
 
-	return (err ? 1 : 0);
+	return (error ? 1 : 0);
 }
 
 /*
@@ -936,18 +936,18 @@ bge_eeprom_getbyte(struct bge_softc *sc, int addr, uint8_t *dest)
 static int
 bge_read_eeprom(struct bge_softc *sc, void *destv, int off, int cnt)
 {
-	int err = 0, i;
+	int error = 0, i;
 	uint8_t byte = 0;
 	char *dest = destv;
 
 	for (i = 0; i < cnt; i++) {
-		err = bge_eeprom_getbyte(sc, off + i, &byte);
-		if (err)
+		error = bge_eeprom_getbyte(sc, off + i, &byte);
+		if (error)
 			break;
 		*(dest + i) = byte;
 	}
 
-	return (err ? 1 : 0);
+	return (error ? 1 : 0);
 }
 
 static int
@@ -2306,39 +2306,31 @@ bge_blockinit(struct bge_softc *sc)
 	if (BGE_IS_5700_FAMILY(sc))
 		CSR_WRITE_4(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
 
+	val = BGE_WDMAMODE_ENABLE | BGE_WDMAMODE_ALL_ATTNS;
+
+	/* Enable host coalescing bug fix; see Linux tg3.c */
+	if (BGE_IS_5755_PLUS(sc))
+		val |= BGE_WDMAMODE_STATUS_TAG_FIX;
+
 	/* Turn on write DMA state machine */
-	{
-		uint32_t bge_wdma_mode =
-			BGE_WDMAMODE_ENABLE|BGE_WDMAMODE_ALL_ATTNS;
+	CSR_WRITE_4(sc, BGE_WDMA_MODE, val);
 
-		/* Enable host coalescing bug fix; see Linux tg3.c */
-		if (BGE_IS_5755_PLUS(sc))
-			bge_wdma_mode |= BGE_WDMAMODE_STATUS_TAG_FIX;
+	val = BGE_RDMAMODE_ENABLE | BGE_RDMAMODE_ALL_ATTNS;
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
+		val |= BGE_RDMAMODE_BD_SBD_CRPT_ATTN |
+		    BGE_RDMAMODE_MBUF_RBD_CRPT_ATTN |
+		    BGE_RDMAMODE_MBUF_SBD_CRPT_ATTN;
 
-		CSR_WRITE_4(sc, BGE_WDMA_MODE, bge_wdma_mode);
-	}
+	if (sc->bge_flags & BGE_PCIE)
+		val |= BGE_RDMA_MODE_FIFO_LONG_BURST;
+	if (sc->bge_flags & BGE_TSO)
+		val |= BGE_RDMAMODE_TSO4_ENABLE;
 
 	/* Turn on read DMA state machine */
-	{
-		uint32_t dma_read_modebits;
-
-		dma_read_modebits =
-		  BGE_RDMAMODE_ENABLE | BGE_RDMAMODE_ALL_ATTNS;
-
-		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
-		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
-		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
-			dma_read_modebits |= BGE_RDMAMODE_BD_SBD_CRPT_ATTN |
-			    BGE_RDMAMODE_MBUF_RBD_CRPT_ATTN |
-			    BGE_RDMAMODE_MBUF_SBD_CRPT_ATTN;
-
-		if (sc->bge_flags & BGE_PCIE)
-			dma_read_modebits |= BGE_RDMA_MODE_FIFO_LONG_BURST;
-		if (sc->bge_flags & BGE_TSO)
-			dma_read_modebits |= BGE_RDMAMODE_TSO4_ENABLE;
-		CSR_WRITE_4(sc, BGE_RDMA_MODE, dma_read_modebits);
-		delay(40);
-	}
+	CSR_WRITE_4(sc, BGE_RDMA_MODE, val);
+	delay(40);
 
 	/* Turn on RX data completion state machine */
 	CSR_WRITE_4(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
@@ -2620,23 +2612,28 @@ bge_attach(device_t parent, device_t self, void *aux)
 		>> BGE_PCIMISCCTL_ASICREV_SHIFT;
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_USE_PRODID_REG) {
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5717 ||
-		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5718 ||
-		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5724)
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_BROADCOM_BCM5717:
+		case PCI_PRODUCT_BROADCOM_BCM5718:
+		case PCI_PRODUCT_BROADCOM_BCM5724: /* ??? */
 			sc->bge_chipid = pci_conf_read(pc, pa->pa_tag,
 			    BGE_PCI_GEN2_PRODID_ASICREV);
-		else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57761 ||
-			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57762 ||
-			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57765 ||
-			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57781 ||
-			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57785 ||
-			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57791 ||
-			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57795)
+			break;
+		case PCI_PRODUCT_BROADCOM_BCM57761:
+		case PCI_PRODUCT_BROADCOM_BCM57762:
+		case PCI_PRODUCT_BROADCOM_BCM57765:
+		case PCI_PRODUCT_BROADCOM_BCM57781:
+		case PCI_PRODUCT_BROADCOM_BCM57785:
+		case PCI_PRODUCT_BROADCOM_BCM57791:
+		case PCI_PRODUCT_BROADCOM_BCM57795:
 			sc->bge_chipid = pci_conf_read(pc, pa->pa_tag,
 			    BGE_PCI_GEN15_PRODID_ASICREV);
-		else
+			break;
+		default:
 			sc->bge_chipid = pci_conf_read(pc, pa->pa_tag,
 			    BGE_PCI_PRODID_ASICREV);
+			break;
+		}
 	}
 
 	if ((pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PCIEXPRESS,
@@ -2836,7 +2833,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Get station address from the EEPROM
+	 * Get station address from the EEPROM.
 	 */
 	if (bge_get_eaddr(sc, eaddr)) {
 		aprint_error_dev(sc->bge_dev,
@@ -2977,12 +2974,12 @@ bge_attach(device_t parent, device_t self, void *aux)
 	sc->bge_mii.mii_statchg = bge_miibus_statchg;
 
 	/*
-	 * Figure out what sort of media we have by checking the
-	 * hardware config word in the first 32k of NIC internal memory,
-	 * or fall back to the config word in the EEPROM. Note: on some BCM5700
-	 * cards, this value appears to be unset. If that's the
-	 * case, we have to rely on identifying the NIC by its PCI
-	 * subsystem ID, as we do below for the SysKonnect SK-9D41.
+	 * Figure out what sort of media we have by checking the hardware
+	 * config word in the first 32k of NIC internal memory, or fall back to
+	 * the config word in the EEPROM. Note: on some BCM5700 cards,
+	 * this value appears to be unset. If that's the case, we have to rely
+	 * on identifying the NIC by its PCI subsystem ID, as we do below for
+	 * the SysKonnect SK-9D41.
 	 */
 	if (bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_SIG) == BGE_MAGIC_NUMBER) {
 		hwcfg = bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_NICCFG);
@@ -3838,9 +3835,8 @@ bge_compact_dma_runt(struct mbuf *pkt)
 		int shortfall = 8 - mlen ;
 
 		totlen += mlen;
-		if (mlen == 0) {
+		if (mlen == 0)
 			continue;
-		}
 		if (mlen >= 8)
 			continue;
 
@@ -4883,14 +4879,14 @@ sysctl_bge_init(struct bge_softc *sc)
 	if ((rc = sysctl_createv(&sc->bge_log, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
 	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
+		goto out;
 	}
 
 	if ((rc = sysctl_createv(&sc->bge_log, 0, NULL, &node,
 	    0, CTLTYPE_NODE, "bge",
 	    SYSCTL_DESCR("BGE interface controls"),
 	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0) {
-		goto err;
+		goto out;
 	}
 
 	bge_root_num = node->sysctl_num;
@@ -4904,14 +4900,14 @@ sysctl_bge_init(struct bge_softc *sc)
 	    &bge_rx_thresh_lvl,
 	    0, CTL_HW, bge_root_num, CTL_CREATE,
 	    CTL_EOL)) != 0) {
-		goto err;
+		goto out;
 	}
 
 	bge_rxthresh_nodenum = node->sysctl_num;
 
 	return;
 
-err:
+out:
 	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
 
