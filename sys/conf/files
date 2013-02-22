@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1063 2013/02/10 21:21:29 jakllsch Exp $
+#	$NetBSD: files,v 1.1064 2013/02/22 15:59:14 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1673,7 +1673,7 @@ file	net/if_ecosubr.c		eco
 file	net/if_etherip.c		etherip			needs-flag
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
 					    wlan
-file	net/if_faith.c			faith & inet & inet6	needs-flag
+file	net/if_faith.c			faith & (inet | inet6)	needs-flag
 file	net/if_fddisubr.c		fddi			needs-flag
 file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-flag
@@ -1684,7 +1684,7 @@ file	net/if_media.c
 file	net/if_mpls.c			ifmpls			needs-flag
 file	net/if_ppp.c			ppp			needs-flag
 file	net/if_srt.c			srt
-file	net/if_stf.c			stf & inet & inet6	needs-flag
+file	net/if_stf.c			stf & (inet | inet6)	needs-flag
 file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
 file	net/if_strip.c			strip			needs-flag
