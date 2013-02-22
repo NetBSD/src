@@ -1,8 +1,8 @@
-# $NetBSD: protocols,v 1.25 2012/08/28 07:53:45 christos Exp $
+# $NetBSD: protocols,v 1.26 2013/02/22 03:42:06 christos Exp $
 # See also: protocols(5), http://www.sethwklein.net/projects/iana-etc/
 #
 #    Last Updated
-#            2012-08-21
+#            2013-02-17
 # 
 #    This registry is also available in plain text.
 # 
@@ -12,7 +12,7 @@
 # 
 # Assigned Internet Protocol Numbers
 # 
-#    Registration Procedures
+#    Registration Procedure(s)
 # 
 #  IESG Approval or Standards Action
 # 
@@ -53,7 +53,7 @@ udp           17 UDP          # User Datagram                         [RFC768][J
 mux           18 MUX          # Multiplexing                          [Cohen, D. and J. Postel, "Multiplexing Protocol", IEN 90, USC/Information
 #                                                                  Sciences Institute, May 1979.][Jon_Postel]
 dcn-meas      19 DCN-MEAS     # DCN Measurement Subsystems            [David_Mills]
-hmp           20 HMP          # Host Monitoring                       [RFC869][Robert_Hinden]
+hmp           20 HMP          # Host Monitoring                       [RFC869][Bob_Hinden]
 prm           21 PRM          # Packet Radio Measurement              [Zaw_Sing_Su]
 #                                                                  ["The Ethernet, A Local Area Network: Data Link Layer and Physical Layer
 #                                                                  Specification", AA-K759B-TK, Digital Equipment Corporation, Maynard, MA. Also as:
@@ -67,7 +67,7 @@ trunk-1       23 TRUNK-1      # Trunk-1                               [Barry_Boe
 trunk-2       24 TRUNK-2      # Trunk-2                               [Barry_Boehm]
 leaf-1        25 LEAF-1       # Leaf-1                                [Barry_Boehm]
 leaf-2        26 LEAF-2       # Leaf-2                                [Barry_Boehm]
-rdp           27 RDP          # Reliable Data Protocol                [RFC908][Robert_Hinden]
+rdp           27 RDP          # Reliable Data Protocol                [RFC908][Bob_Hinden]
 irtp          28 IRTP         # Internet Reliable Transaction         [RFC938][Trudy_Miller]
 iso-tp4       29 ISO-TP4      # ISO Transport Protocol Class 4        [RFC905][<mystery contact>]
 netblt        30 NETBLT       # Bulk Data Transfer Protocol           [RFC969][David_Clark]
@@ -89,7 +89,7 @@ ipv6-route    43 IPv6-Route   # Routing Header for IPv6               [Steve_Dee
 ipv6-frag     44 IPv6-Frag    # Fragment Header for IPv6              [Steve_Deering]
 idrp          45 IDRP         # Inter-Domain Routing Protocol         [Sue_Hares]
 rsvp          46 RSVP         # Reservation Protocol                  [RFC2205][RFC3209][Bob_Braden]
-gre           47 GRE          # General Routing Encapsulation         [RFC1701][Tony_Li]
+gre           47 GRE          # Generic Routing Encapsulation         [RFC1701][Tony_Li]
 dsr           48 DSR          # Dynamic Source Routing Protocol       [RFC4728]
 bna           49 BNA          # BNA                                   [Gary Salamon]
 esp           50 ESP          # Encap Security Payload                [RFC4303]
@@ -208,7 +208,7 @@ reserved     255 Reserved     # [Internet_Assigned_Numbers_Authority]
 #    [Bernhard_Petri]                      Bernhard Petri                      mailto:bernhard.petri&siemens.com               2012-07-09
 #    [Bill_McIntosh]                       Bill McIntosh                       mailto:BMcIntosh&fortresstech.com
 #    [Bob_Braden]                          Bob Braden                          mailto:braden&isi.edu                           1997-07
-#    [Bob_Hinden]                          Bob Hinden                          mailto:hinden&ipsilon.com
+#    [Bob_Hinden]                          Bob Hinden                          mailto:bob.hinden&gmail.com                     2013-02-17
 #    [Brian_Kantor]                        Brian Kantor                        mailto:brian&ucsd.edu
 #    [CJ_Lee]                              CJ Lee                              mailto:cj_lee&novell.com                        1997-10
 #    [Charlie_Perkins]                     Charlie Perkins                     mailto:perk&watson.ibm.com                      1994-10
@@ -255,7 +255,6 @@ reserved     255 Reserved     # [Internet_Assigned_Numbers_Authority]
 #    [Peter_Lothberg]                      Peter Lothberg                      mailto:roll&stupi.se                            1999-03
 #    [Randall_R_Stewart]                   Randall R. Stewart                  mailto:rrs&lakerest.net                         2000-04
 #    [Robert_Durst]                        Robert Durst                        mailto:durst&mitre.org                          1997-03
-#    [Robert_Hinden]                       Robert Hinden                       mailto:Hinden&eng.sun.com
 #    [Robert_Sautter]                      Robert Sautter                      mailto:rsautter&acdnj.itt.com                   1999-08
 #    [Robert_W_Scheifler]                  Robert W. Scheifler                 mailto:RWS&xx.lcs.mit.edu
 #    [Robert_Woodburn]                     Robert Woodburn                     mailto:woody&cseic.saic.com
@@ -269,7 +268,7 @@ reserved     255 Reserved     # [Internet_Assigned_Numbers_Authority]
 #    [Susie_Armstrong]                     Susie Armstrong                     mailto:Armstrong.wbst128&xerox.com
 #    [Tom_Markson]                         Tom Markson                         mailto:markson&osmosys.ingog.com                1995-09
 #    [Tony_Ballardie]                      Tony Ballardie                      mailto:A.Ballardie&cs.ucl.ac.uk
-#    [Tony_Li]                             Tony Li                             mailto:tli&cisco.com
+#    [Tony_Li]                             Tony Li                             mailto:tony.li&tony.li                          2012-10-17
 #    [Tony_Przygienda]                     Tony Przygienda                     mailto:prz&siara.com                            1999-08
 #    [Tony_Speakman]                       Tony Speakman                       mailto:speakman&cisco.com                       1998-01
 #    [Trudy_Miller]                        Trudy Miller                        mailto:Trudy&acc.com
