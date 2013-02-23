@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.521 2013/02/23 14:18:39 jmmv Exp $
+# $NetBSD: mi,v 1.522 2013/02/23 22:01:51 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -165,10 +165,13 @@
 ./usr/libdata/debug/usr/tests/util/systrace				tests-obsolete		obsolete
 ./usr/tests					tests-base-tests
 ./usr/tests/Atffile				tests-base-tests
+./usr/tests/Kyuafile				tests-base-tests	kyua
 ./usr/tests/atf					tests-atf-tests
 ./usr/tests/atf/Atffile				tests-atf-tests		atf
+./usr/tests/atf/Kyuafile			tests-atf-tests		atf,kyua
 ./usr/tests/atf/atf-c				tests-atf-tests
 ./usr/tests/atf/atf-c/Atffile			tests-atf-tests		atf
+./usr/tests/atf/atf-c/Kyuafile			tests-atf-tests		atf,kyua
 ./usr/tests/atf/atf-c/atf_c_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-c/build_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-c/check_test		tests-atf-tests		atf
@@ -200,6 +203,7 @@
 ./usr/tests/atf/atf-c/d_use_macros_h.c		tests-obsolete		obsolete
 ./usr/tests/atf/atf-c/detail			tests-atf-tests
 ./usr/tests/atf/atf-c/detail/Atffile	tests-atf-tests		atf
+./usr/tests/atf/atf-c/detail/Kyuafile	tests-atf-tests		atf,kyua
 ./usr/tests/atf/atf-c/detail/dynstr_test	tests-atf-tests		atf
 ./usr/tests/atf/atf-c/detail/env_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-c/detail/fs_test		tests-atf-tests		atf
@@ -258,6 +262,7 @@
 ./usr/tests/atf/atf-c/utils_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-c++				tests-atf-tests
 ./usr/tests/atf/atf-c++/Atffile			tests-atf-tests		atf
+./usr/tests/atf/atf-c++/Kyuafile		tests-atf-tests		atf,kyua
 ./usr/tests/atf/atf-c++/application_test	tests-obsolete		obsolete
 ./usr/tests/atf/atf-c++/atf_c++_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-c++/build_test		tests-atf-tests		atf
@@ -288,6 +293,7 @@
 ./usr/tests/atf/atf-c++/d_use_macros_hpp.cpp		tests-obsolete	obsolete
 ./usr/tests/atf/atf-c++/detail			tests-atf-tests
 ./usr/tests/atf/atf-c++/detail/Atffile		tests-atf-tests		atf
+./usr/tests/atf/atf-c++/detail/Kyuafile		tests-atf-tests		atf,kyua
 ./usr/tests/atf/atf-c++/detail/application_test	tests-atf-tests		atf
 ./usr/tests/atf/atf-c++/detail/auto_array_test	tests-atf-tests		atf
 ./usr/tests/atf/atf-c++/detail/env_test		tests-atf-tests		atf
@@ -353,10 +359,12 @@
 ./usr/tests/atf/atf-compile/t_integration	tests-obsolete		obsolete
 ./usr/tests/atf/atf-config			tests-atf-tests
 ./usr/tests/atf/atf-config/Atffile		tests-atf-tests		atf
+./usr/tests/atf/atf-config/Kyuafile		tests-atf-tests		atf,kyua
 ./usr/tests/atf/atf-config/integration_test	tests-atf-tests		atf
 ./usr/tests/atf/atf-config/t_integration	tests-obsolete		obsolete
 ./usr/tests/atf/atf-report			tests-atf-tests
 ./usr/tests/atf/atf-report/Atffile		tests-atf-tests		atf
+./usr/tests/atf/atf-report/Kyuafile		tests-atf-tests		atf,kyua
 ./usr/tests/atf/atf-report/fail_helper		tests-atf-tests		atf
 ./usr/tests/atf/atf-report/h_fail		tests-obsolete		obsolete
 ./usr/tests/atf/atf-report/h_misc		tests-obsolete		obsolete
@@ -369,6 +377,7 @@
 ./usr/tests/atf/atf-report/t_integration	tests-obsolete		obsolete
 ./usr/tests/atf/atf-run				tests-atf-tests
 ./usr/tests/atf/atf-run/Atffile			tests-atf-tests		atf
+./usr/tests/atf/atf-run/Kyuafile		tests-atf-tests		atf,kyua
 ./usr/tests/atf/atf-run/atffile_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-run/bad_metadata_helper	tests-atf-tests		atf
 ./usr/tests/atf/atf-run/config_test		tests-atf-tests		atf
@@ -396,6 +405,7 @@
 ./usr/tests/atf/atf-run/zero_tcs_helper		tests-atf-tests		atf
 ./usr/tests/atf/atf-sh				tests-atf-tests
 ./usr/tests/atf/atf-sh/Atffile			tests-atf-tests		atf
+./usr/tests/atf/atf-sh/Kyuafile			tests-atf-tests		atf,kyua
 ./usr/tests/atf/atf-sh/atf-check_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-sh/atf_check_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-sh/config_test		tests-atf-tests		atf
@@ -667,6 +677,7 @@
 ./usr/tests/atf/sh_interface/t_tp		tests-obsolete		obsolete
 ./usr/tests/atf/test-programs			tests-atf-tests
 ./usr/tests/atf/test-programs/Atffile		tests-atf-tests		atf
+./usr/tests/atf/test-programs/Kyuafile		tests-atf-tests		atf,kyua
 ./usr/tests/atf/test-programs/c_helpers		tests-atf-tests		atf
 ./usr/tests/atf/test-programs/config_test	tests-atf-tests		atf
 ./usr/tests/atf/test-programs/cpp_helpers	tests-atf-tests		atf
@@ -719,36 +730,46 @@
 ./usr/tests/atf/units/t_utils			tests-obsolete		obsolete
 ./usr/tests/bin					tests-bin-tests
 ./usr/tests/bin/Atffile				tests-bin-tests		atf
+./usr/tests/bin/Kyuafile			tests-bin-tests		atf,kyua
 ./usr/tests/bin/cat				tests-bin-tests
 ./usr/tests/bin/cat/Atffile			tests-bin-tests		atf
+./usr/tests/bin/cat/Kyuafile			tests-bin-tests		atf,kyua
 ./usr/tests/bin/cat/d_align.in			tests-bin-tests		atf
 ./usr/tests/bin/cat/d_align.out			tests-bin-tests		atf
 ./usr/tests/bin/cat/t_cat			tests-bin-tests		atf
 ./usr/tests/bin/cp				tests-bin-tests
 ./usr/tests/bin/cp/Atffile			tests-bin-tests		atf
+./usr/tests/bin/cp/Kyuafile			tests-bin-tests		atf,kyua
 ./usr/tests/bin/cp/t_cp				tests-bin-tests		atf
 ./usr/tests/bin/dd				tests-bin-tests
 ./usr/tests/bin/dd/Atffile			tests-bin-tests		atf
+./usr/tests/bin/dd/Kyuafile			tests-bin-tests		atf,kyua
 ./usr/tests/bin/dd/t_dd				tests-bin-tests		atf
 ./usr/tests/bin/df				tests-bin-tests
 ./usr/tests/bin/df/Atffile			tests-bin-tests		atf
+./usr/tests/bin/df/Kyuafile			tests-bin-tests		atf,kyua
 ./usr/tests/bin/df/h_df				tests-bin-tests		atf
 ./usr/tests/bin/df/t_df				tests-bin-tests		atf
 ./usr/tests/bin/expr				tests-bin-tests
 ./usr/tests/bin/expr/Atffile			tests-bin-tests		atf
+./usr/tests/bin/expr/Kyuafile			tests-bin-tests		atf,kyua
 ./usr/tests/bin/expr/t_expr			tests-bin-tests		atf
 ./usr/tests/bin/pax				tests-bin-tests
 ./usr/tests/bin/pax/Atffile			tests-bin-tests		atf
+./usr/tests/bin/pax/Kyuafile			tests-bin-tests		atf,kyua
 ./usr/tests/bin/pax/t_pax			tests-bin-tests		atf
 ./usr/tests/bin/ps				tests-bin-tests
 ./usr/tests/bin/ps/Atffile			tests-bin-tests		atf
+./usr/tests/bin/ps/Kyuafile			tests-bin-tests		atf,kyua
 ./usr/tests/bin/ps/keywords			tests-bin-tests		atf
 ./usr/tests/bin/ps/t_ps				tests-bin-tests		atf
 ./usr/tests/bin/sleep				tests-bin-tests
 ./usr/tests/bin/sleep/Atffile			tests-bin-tests		atf
+./usr/tests/bin/sleep/Kyuafile			tests-bin-tests		atf,kyua
 ./usr/tests/bin/sleep/t_sleep			tests-bin-tests		atf
 ./usr/tests/bin/sh				tests-bin-tests
 ./usr/tests/bin/sh/Atffile			tests-bin-tests		atf
+./usr/tests/bin/sh/Kyuafile			tests-bin-tests		atf,kyua
 ./usr/tests/bin/sh/t_compexit			tests-bin-tests		atf
 ./usr/tests/bin/sh/t_evaltested			tests-bin-tests		atf
 ./usr/tests/bin/sh/t_exit			tests-bin-tests		atf
@@ -761,11 +782,14 @@
 ./usr/tests/bin/sh/t_wait			tests-bin-tests		atf
 ./usr/tests/bin/tar				tests-bin-tests
 ./usr/tests/bin/tar/Atffile			tests-bin-tests		atf
+./usr/tests/bin/tar/Kyuafile			tests-bin-tests		atf,kyua
 ./usr/tests/bin/tar/t_tar			tests-bin-tests		atf
 ./usr/tests/crypto				tests-crypto-tests
 ./usr/tests/crypto/Atffile			tests-crypto-tests
+./usr/tests/crypto/Kyuafile			tests-crypto-tests	kyua
 ./usr/tests/crypto/libcrypto			tests-crypto-tests
 ./usr/tests/crypto/libcrypto/Atffile		tests-crypto-tests	crypto
+./usr/tests/crypto/libcrypto/Kyuafile		tests-crypto-tests	crypto,kyua
 ./usr/tests/crypto/libcrypto/d_conf.out		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/d_conf_ssleay.cnf	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/d_client.pem	tests-crypto-tests	crypto
@@ -810,13 +834,16 @@
 ./usr/tests/crypto/libcrypto/t_pubkey		tests-crypto-tests	crypto
 ./usr/tests/dev					tests-fs-tests
 ./usr/tests/dev/Atffile				tests-fs-tests		atf
+./usr/tests/dev/Kyuafile			tests-fs-tests		atf,kyua
 ./usr/tests/dev/audio				tests-fs-tests
 ./usr/tests/dev/audio/Atffile			tests-fs-tests		atf,rump
+./usr/tests/dev/audio/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/dev/audio/h_pad			tests-fs-tests		atf,rump
 ./usr/tests/dev/audio/t_pad			tests-fs-tests		atf,rump
 ./usr/tests/dev/audio/t_pad_output.bz2.uue			tests-fs-tests		atf,rump
 ./usr/tests/dev/cgd				tests-fs-tests
 ./usr/tests/dev/cgd/Atffile			tests-fs-tests		atf
+./usr/tests/dev/cgd/Kyuafile			tests-fs-tests		atf,kyua
 ./usr/tests/dev/cgd/t_cgd			tests-fs-tests		atf
 ./usr/tests/dev/cgd/paramsfile			tests-fs-tests		atf
 ./usr/tests/dev/cgd/h_img2cgd			tests-obsolete	obsolete
@@ -824,16 +851,20 @@
 ./usr/tests/dev/cgd/h_img2cgd/cgd.conf		tests-obsolete	obsolete
 ./usr/tests/dev/md				tests-fs-tests
 ./usr/tests/dev/md/Atffile			tests-fs-tests		atf,rump
+./usr/tests/dev/md/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/dev/md/h_mdserv			tests-fs-tests		atf,rump
 ./usr/tests/dev/md/t_md				tests-fs-tests		atf,rump
 ./usr/tests/dev/raidframe			tests-fs-tests
 ./usr/tests/dev/raidframe/Atffile		tests-fs-tests		atf
+./usr/tests/dev/raidframe/Kyuafile		tests-fs-tests		atf,kyua
 ./usr/tests/dev/raidframe/t_raid		tests-fs-tests		atf
 ./usr/tests/dev/scsipi				tests-fs-tests
 ./usr/tests/dev/scsipi/Atffile			tests-fs-tests		atf,rump
+./usr/tests/dev/scsipi/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/dev/scsipi/t_cd			tests-fs-tests		atf,rump
 ./usr/tests/dev/sysmon				tests-fs-tests
 ./usr/tests/dev/sysmon/Atffile			tests-fs-tests		atf,rump
+./usr/tests/dev/sysmon/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/dev/sysmon/t_swsensor		tests-fs-tests		atf,rump
 ./usr/tests/dev/sysmon/t_swwdog			tests-fs-tests		atf,rump
 ./usr/tests/examples				tests-obsolete	obsolete
@@ -841,9 +872,11 @@
 ./usr/tests/examples/t_asm			tests-obsolete	obsolete
 ./usr/tests/fs					tests-fs-tests
 ./usr/tests/fs/Atffile				tests-fs-tests		atf,rump
+./usr/tests/fs/Kyuafile				tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/h_funcs.subr			tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs				tests-fs-tests
 ./usr/tests/fs/ffs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/ffs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/ffs/h_ffs_server			tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs/h_quota2_server		tests-obsolete		obsolete
 ./usr/tests/fs/ffs/h_quota2_tests		tests-fs-tests		atf,rump
@@ -866,22 +899,28 @@
 ./usr/tests/fs/ffs/t_snapshot_v2		tests-fs-tests		atf,rump
 ./usr/tests/fs/fifofs				tests-fs-tests
 ./usr/tests/fs/fifofs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/fifofs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/fifofs/t_fifo			tests-fs-tests		atf,rump
 ./usr/tests/fs/hfs				tests-fs-tests
 ./usr/tests/fs/hfs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/hfs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/hfs/colon.hfs.bz2.uue			tests-fs-tests		atf,rump
 ./usr/tests/fs/hfs/t_pathconvert			tests-fs-tests		atf,rump
 ./usr/tests/fs/kernfs				tests-fs-tests
 ./usr/tests/fs/kernfs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/kernfs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/kernfs/t_basic			tests-fs-tests		atf,rump
 ./usr/tests/fs/lfs				tests-fs-tests
 ./usr/tests/fs/lfs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/lfs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/lfs/t_pr				tests-fs-tests		atf,rump
 ./usr/tests/fs/msdosfs				tests-fs-tests
 ./usr/tests/fs/msdosfs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/msdosfs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/msdosfs/t_snapshot		tests-fs-tests		atf,rump
 ./usr/tests/fs/nfs				tests-fs-tests
 ./usr/tests/fs/nfs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/nfs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/nfs/t_mountd				tests-fs-tests	atf,rump
 ./usr/tests/fs/nfs/t_rquotad				tests-fs-tests	atf,rump
 ./usr/tests/fs/nfs/nfsservice				tests-fs-tests
@@ -889,9 +928,11 @@
 ./usr/tests/fs/nfs/nfsservice/rumpnfsd			tests-fs-tests		atf,rump
 ./usr/tests/fs/nullfs				tests-fs-tests
 ./usr/tests/fs/nullfs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/nullfs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/nullfs/t_basic			tests-fs-tests		atf,rump
 ./usr/tests/fs/psshfs				tests-fs-tests
 ./usr/tests/fs/psshfs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/psshfs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/psshfs/h_have_puffs		tests-fs-tests		atf,rump
 ./usr/tests/fs/psshfs/ssh_config.in		tests-fs-tests		atf,rump
 ./usr/tests/fs/psshfs/ssh_host_key		tests-fs-tests		atf,rump
@@ -900,10 +941,12 @@
 ./usr/tests/fs/psshfs/t_psshfs			tests-fs-tests		atf,rump
 ./usr/tests/fs/ptyfs				tests-fs-tests
 ./usr/tests/fs/ptyfs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/ptyfs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/ptyfs/t_ptyfs			tests-fs-tests		atf,rump
 ./usr/tests/fs/ptyfs/t_nullpts			tests-fs-tests		atf,rump
 ./usr/tests/fs/puffs				tests-fs-tests
 ./usr/tests/fs/puffs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/puffs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/puffs/t_basic			tests-fs-tests		atf,rump
 ./usr/tests/fs/puffs/t_fuzz			tests-fs-tests		atf,rump
 ./usr/tests/fs/puffs/t_io			tests-fs-tests		atf,rump
@@ -917,6 +960,7 @@
 ./usr/tests/fs/puffs/t_psshfs			tests-obsolete		obsolete
 ./usr/tests/fs/tmpfs				tests-fs-tests
 ./usr/tests/fs/tmpfs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/tmpfs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/tmpfs/h_funcs.subr		tests-fs-tests		atf,rump
 ./usr/tests/fs/tmpfs/h_tools			tests-fs-tests		atf,rump
 ./usr/tests/fs/tmpfs/t_create			tests-fs-tests		atf,rump
@@ -947,13 +991,16 @@
 ./usr/tests/fs/tmpfs/t_vnode_leak		tests-fs-tests		atf,rump
 ./usr/tests/fs/umapfs				tests-fs-tests
 ./usr/tests/fs/umapfs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/umapfs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/umapfs/t_basic			tests-fs-tests		atf,rump
 ./usr/tests/fs/union				tests-fs-tests
 ./usr/tests/fs/union/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/union/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/union/t_basic			tests-obsolete		obsolete,rump
 ./usr/tests/fs/union/t_pr			tests-fs-tests		atf,rump
 ./usr/tests/fs/vfs				tests-fs-tests
 ./usr/tests/fs/vfs/Atffile			tests-fs-tests		atf,rump
+./usr/tests/fs/vfs/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/vfs/t_full			tests-fs-tests		atf,rump
 ./usr/tests/fs/vfs/t_io			tests-fs-tests		atf,rump
 ./usr/tests/fs/vfs/t_renamerace			tests-fs-tests		atf,rump
@@ -965,12 +1012,15 @@
 ./usr/tests/fs/vfs/t_vnops			tests-fs-tests		atf,rump
 ./usr/tests/fs/zfs				tests-fs-tests
 ./usr/tests/fs/zfs/Atffile			tests-fs-tests		atf,zfs,rump
+./usr/tests/fs/zfs/Kyuafile			tests-fs-tests		atf,zfs,rump,kyua
 ./usr/tests/fs/zfs/t_zpool			tests-fs-tests		atf,zfs,rump
 ./usr/tests/games				tests-games-tests
 ./usr/tests/games/Atffile			tests-games-tests
+./usr/tests/games/Kyuafile			tests-games-tests	kyua
 ./usr/tests/games/t_factor			tests-games-tests
 ./usr/tests/include				tests-include-tests
 ./usr/tests/include/Atffile			tests-include-tests	atf
+./usr/tests/include/Kyuafile			tests-include-tests	atf,kyua
 ./usr/tests/include/d_bitstring_27.out		tests-include-tests	atf
 ./usr/tests/include/d_bitstring_32.out		tests-include-tests	atf
 ./usr/tests/include/d_bitstring_49.out		tests-include-tests	atf
@@ -979,9 +1029,11 @@
 ./usr/tests/include/d_bitstring_8.out		tests-include-tests	atf
 ./usr/tests/include/machine			tests-include-tests
 ./usr/tests/include/machine/Atffile		tests-include-tests	atf
+./usr/tests/include/machine/Kyuafile		tests-include-tests	atf,kyua
 ./usr/tests/include/machine/t_bswap		tests-include-tests	atf
 ./usr/tests/include/sys				tests-include-tests
 ./usr/tests/include/sys/Atffile			tests-include-tests	atf
+./usr/tests/include/sys/Kyuafile		tests-include-tests	atf,kyua
 ./usr/tests/include/sys/t_bitops		tests-include-tests	atf
 ./usr/tests/include/sys/t_bootblock		tests-include-tests	atf
 ./usr/tests/include/sys/t_cdefs			tests-include-tests	atf
@@ -1000,6 +1052,7 @@
 ./usr/tests/include/t_types			tests-obsolete		obsolete
 ./usr/tests/ipf					tests-ipf-tests
 ./usr/tests/ipf/Atffile				tests-ipf-tests		ipfilter
+./usr/tests/ipf/Kyuafile			tests-ipf-tests		ipfilter,kyua
 ./usr/tests/ipf/expected			tests-ipf-tests
 ./usr/tests/ipf/expected/bpf-f1			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/bpf1			tests-ipf-tests		ipfilter
@@ -1466,12 +1519,15 @@
 ./usr/tests/ipf/t_pools				tests-ipf-tests		atf,ipfilter
 ./usr/tests/kernel				tests-kernel-tests
 ./usr/tests/kernel/Atffile			tests-kernel-tests		atf
+./usr/tests/kernel/Kyuafile			tests-kernel-tests		atf,kyua
 ./usr/tests/kernel/h_ps_strings1		tests-kernel-tests		atf
 ./usr/tests/kernel/h_ps_strings2		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue			tests-kernel-tests
 ./usr/tests/kernel/kqueue/Atffile		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/Kyuafile		tests-kernel-tests		atf,kyua
 ./usr/tests/kernel/kqueue/read			tests-kernel-tests
 ./usr/tests/kernel/kqueue/read/Atffile		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/read/Kyuafile		tests-kernel-tests		atf,kyua
 ./usr/tests/kernel/kqueue/read/t_fifo		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/read/t_file		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/read/t_file2		tests-kernel-tests		atf
@@ -1484,6 +1540,7 @@
 ./usr/tests/kernel/kqueue/t_sig			tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/write			tests-kernel-tests
 ./usr/tests/kernel/kqueue/write/Atffile		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/write/Kyuafile	tests-kernel-tests		atf,kyua
 ./usr/tests/kernel/kqueue/write/t_fifo		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/write/t_pipe		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/write/t_ttypty	tests-kernel-tests		atf
@@ -1521,15 +1578,18 @@
 ./usr/tests/kernel/t_writev			tests-obsolete			obsolete
 ./usr/tests/kernel/tty				tests-kernel-tests
 ./usr/tests/kernel/tty/Atffile			tests-kernel-tests		atf,rump
+./usr/tests/kernel/tty/Kyuafile			tests-kernel-tests		atf,rump,kyua
 ./usr/tests/kernel/tty/t_pr			tests-kernel-tests		atf,rump
 ./usr/tests/kyua-cli						tests-kyua-tests
 ./usr/tests/kyua-cli/Atffile					tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/Kyuafile					tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/bootstrap					tests-kyua-tests
 ./usr/tests/kyua-cli/bootstrap/atf_helpers			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/bootstrap/plain_helpers			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/bootstrap/testsuite			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/cli					tests-kyua-tests
 ./usr/tests/kyua-cli/cli/Atffile				tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/cli/Kyuafile				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/cli/cmd_about_test				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/cli/cmd_config_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/cli/cmd_db_exec_test			tests-kyua-tests	atf,kyua
@@ -1545,11 +1605,13 @@
 ./usr/tests/kyua-cli/cli/main_test				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/engine					tests-kyua-tests
 ./usr/tests/kyua-cli/engine/Atffile				tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/engine/Kyuafile				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/engine/action_test				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/engine/config_test				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/engine/context_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/engine/drivers				tests-kyua-tests
 ./usr/tests/kyua-cli/engine/drivers/Atffile			tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/engine/drivers/Kyuafile			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/engine/drivers/debug_test_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/engine/drivers/list_tests_helpers		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/engine/drivers/list_tests_test		tests-kyua-tests	atf,kyua
@@ -1567,9 +1629,11 @@
 ./usr/tests/kyua-cli/engine/testers_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/examples					tests-kyua-tests
 ./usr/tests/kyua-cli/examples/Atffile				tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/examples/Kyuafile				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/examples/syntax_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/integration				tests-kyua-tests
 ./usr/tests/kyua-cli/integration/Atffile			tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/integration/Kyuafile			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/integration/cmd_about_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/integration/cmd_config_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/integration/cmd_db_exec_test		tests-kyua-tests	atf,kyua
@@ -1593,6 +1657,7 @@
 ./usr/tests/kyua-cli/integration/helpers/simple_some_fail	tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/store					tests-kyua-tests
 ./usr/tests/kyua-cli/store/Atffile				tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/store/Kyuafile				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/store/backend_test				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/store/dbtypes_test				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/store/exceptions_test			tests-kyua-tests	atf,kyua
@@ -1604,9 +1669,11 @@
 ./usr/tests/kyua-cli/store/transaction_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils					tests-kyua-tests
 ./usr/tests/kyua-cli/utils/Atffile				tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/utils/Kyuafile				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/auto_array_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/cmdline				tests-kyua-tests
 ./usr/tests/kyua-cli/utils/cmdline/Atffile			tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/utils/cmdline/Kyuafile			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/cmdline/base_command_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/cmdline/commands_map_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/cmdline/exceptions_test		tests-kyua-tests	atf,kyua
@@ -1616,6 +1683,7 @@
 ./usr/tests/kyua-cli/utils/cmdline/ui_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/config				tests-kyua-tests
 ./usr/tests/kyua-cli/utils/config/Atffile			tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/utils/config/Kyuafile			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/config/exceptions_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/config/keys_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/config/lua_module_test		tests-kyua-tests	atf,kyua
@@ -1626,10 +1694,12 @@
 ./usr/tests/kyua-cli/utils/env_test				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/format				tests-kyua-tests
 ./usr/tests/kyua-cli/utils/format/Atffile			tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/utils/format/Kyuafile			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/format/exceptions_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/format/formatter_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/fs					tests-kyua-tests
 ./usr/tests/kyua-cli/utils/fs/Atffile				tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/utils/fs/Kyuafile				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/fs/auto_cleaners_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/fs/exceptions_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/fs/lua_module_test			tests-kyua-tests	atf,kyua
@@ -1637,6 +1707,7 @@
 ./usr/tests/kyua-cli/utils/fs/path_test				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/logging				tests-kyua-tests
 ./usr/tests/kyua-cli/utils/logging/Atffile			tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/utils/logging/Kyuafile			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/logging/macros_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/logging/operations_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/memory_test				tests-kyua-tests	atf,kyua
@@ -1644,6 +1715,7 @@
 ./usr/tests/kyua-cli/utils/passwd_test				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/process				tests-kyua-tests
 ./usr/tests/kyua-cli/utils/process/Atffile			tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/utils/process/Kyuafile			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/process/child_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/process/exceptions_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/process/fdstream_test		tests-kyua-tests	atf,kyua
@@ -1653,12 +1725,14 @@
 ./usr/tests/kyua-cli/utils/sanity_test				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/signals				tests-kyua-tests
 ./usr/tests/kyua-cli/utils/signals/Atffile			tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/utils/signals/Kyuafile			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/signals/exceptions_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/signals/interrupts_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/signals/misc_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/signals/programmer_test		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/sqlite				tests-kyua-tests
 ./usr/tests/kyua-cli/utils/sqlite/Atffile			tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/utils/sqlite/Kyuafile			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/sqlite/c_gate_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/sqlite/database_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/sqlite/exceptions_test		tests-kyua-tests	atf,kyua
@@ -1667,6 +1741,7 @@
 ./usr/tests/kyua-cli/utils/stream_test				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/text					tests-kyua-tests
 ./usr/tests/kyua-cli/utils/text/Atffile				tests-kyua-tests	atf,kyua
+./usr/tests/kyua-cli/utils/text/Kyuafile			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/text/exceptions_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/text/operations_test			tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/utils/text/table_test			tests-kyua-tests	atf,kyua
@@ -1674,6 +1749,7 @@
 ./usr/tests/kyua-cli/utils/units_test				tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-testers			tests-kyua-tests
 ./usr/tests/kyua-testers/Atffile		tests-kyua-tests		atf,kyua
+./usr/tests/kyua-testers/Kyuafile		tests-kyua-tests		atf,kyua
 ./usr/tests/kyua-testers/atf_helpers		tests-kyua-tests		atf,kyua
 ./usr/tests/kyua-testers/atf_inttest		tests-kyua-tests		atf,kyua
 ./usr/tests/kyua-testers/atf_list_test		tests-kyua-tests		atf,kyua
@@ -1691,8 +1767,10 @@
 ./usr/tests/kyua-testers/text_test		tests-kyua-tests		atf,kyua
 ./usr/tests/lib					tests-lib-tests
 ./usr/tests/lib/Atffile				tests-lib-tests		atf
+./usr/tests/lib/Kyuafile			tests-lib-tests		atf,kyua
 ./usr/tests/lib/csu				tests-lib-tests
 ./usr/tests/lib/csu/Atffile			tests-lib-tests		atf
+./usr/tests/lib/csu/Kyuafile			tests-lib-tests		atf,kyua
 ./usr/tests/lib/csu/h_initfini			tests-obsolete		obsolete
 ./usr/tests/lib/csu/h_initfini1			tests-lib-tests		atf
 ./usr/tests/lib/csu/h_initfini2			tests-lib-tests		atf
@@ -1700,6 +1778,7 @@
 ./usr/tests/lib/csu/t_crt0			tests-lib-tests		atf
 ./usr/tests/lib/libbluetooth			tests-lib-tests
 ./usr/tests/lib/libbluetooth/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libbluetooth/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libbluetooth/t_bluetooth	tests-lib-tests		atf
 ./usr/tests/lib/libbluetooth/t_sdp_data		tests-lib-tests		atf
 ./usr/tests/lib/libbluetooth/t_sdp_get		tests-lib-tests		atf
@@ -1708,8 +1787,10 @@
 ./usr/tests/lib/libbluetooth/t_sdp_set		tests-lib-tests		atf
 ./usr/tests/lib/libc				tests-lib-tests
 ./usr/tests/lib/libc/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libc/Kyuafile			tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/c063			tests-lib-tests
 ./usr/tests/lib/libc/c063/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/c063/t_faccessat		tests-lib-tests		atf
 ./usr/tests/lib/libc/c063/t_fchmodat		tests-lib-tests		atf
 ./usr/tests/lib/libc/c063/t_fchownat		tests-lib-tests		atf
@@ -1728,13 +1809,16 @@
 ./usr/tests/lib/libc/c063/t_utimensat		tests-lib-tests		atf
 ./usr/tests/lib/libc/db				tests-lib-tests
 ./usr/tests/lib/libc/db/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libc/db/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/db/README			tests-lib-tests		atf
 ./usr/tests/lib/libc/db/h_db			tests-lib-tests		atf
 ./usr/tests/lib/libc/db/t_db			tests-lib-tests		atf
 ./usr/tests/lib/libc/gen			tests-lib-tests
 ./usr/tests/lib/libc/gen/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/gen/posix_spawn			tests-kernel-tests
 ./usr/tests/lib/libc/gen/posix_spawn/Atffile		tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/Kyuafile		tests-kernel-tests	atf,kyua
 ./usr/tests/lib/libc/gen/posix_spawn/t_spawn		tests-kernel-tests	atf
 ./usr/tests/lib/libc/gen/posix_spawn/t_spawnattr	tests-kernel-tests	atf
 ./usr/tests/lib/libc/gen/posix_spawn/t_fileactions	tests-kernel-tests	atf
@@ -1800,6 +1884,7 @@
 ./usr/tests/lib/libc/h_servent			tests-obsolete		obsolete
 ./usr/tests/lib/libc/hash			tests-lib-tests
 ./usr/tests/lib/libc/hash/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/hash/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/hash/data			tests-lib-tests
 ./usr/tests/lib/libc/hash/data/md5test-in	tests-lib-tests		atf
 ./usr/tests/lib/libc/hash/data/md5test-out	tests-lib-tests		atf
@@ -1817,6 +1902,7 @@
 ./usr/tests/lib/libc/ieeefp/t_subnormal		tests-obsolete		obsolete
 ./usr/tests/lib/libc/locale			tests-lib-tests
 ./usr/tests/lib/libc/locale/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/locale/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/locale/t_ctype1		tests-obsolete		obsolete
 ./usr/tests/lib/libc/locale/t_ctype2		tests-obsolete		obsolete
 ./usr/tests/lib/libc/locale/t_mbrtowc		tests-lib-tests		atf
@@ -1829,11 +1915,14 @@
 ./usr/tests/lib/libc/locale/t_wctomb		tests-lib-tests		atf
 ./usr/tests/lib/libc/inet			tests-lib-tests
 ./usr/tests/lib/libc/inet/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/inet/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/inet/t_inet_network	tests-lib-tests		atf
 ./usr/tests/lib/libc/net			tests-lib-tests
 ./usr/tests/lib/libc/net/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/net/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/net/getaddrinfo		tests-lib-tests
 ./usr/tests/lib/libc/net/getaddrinfo/Atffile	tests-lib-tests		atf
+./usr/tests/lib/libc/net/getaddrinfo/Kyuafile	tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/net/getaddrinfo/data	tests-lib-tests
 ./usr/tests/lib/libc/net/getaddrinfo/data/basics_v4.exp		tests-lib-tests	atf
 ./usr/tests/lib/libc/net/getaddrinfo/data/basics_v4v6.exp	tests-lib-tests	atf
@@ -1859,6 +1948,7 @@
 ./usr/tests/lib/libc/net/t_servent		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex			tests-lib-tests
 ./usr/tests/lib/libc/regex/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/regex/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/regex/data			tests-lib-tests
 ./usr/tests/lib/libc/regex/data/README		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/anchor.in	tests-lib-tests		atf
@@ -1895,13 +1985,16 @@
 ./usr/tests/lib/libc/regex/t_regex_att		tests-lib-tests		atf
 ./usr/tests/lib/libc/rpc			tests-lib-tests
 ./usr/tests/lib/libc/rpc/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/rpc/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/rpc/t_xdr			tests-lib-tests		atf
 ./usr/tests/lib/libc/setjmp			tests-lib-tests
 ./usr/tests/lib/libc/setjmp/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/setjmp/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/setjmp/t_threadjmp		tests-lib-tests		atf
 ./usr/tests/lib/libc/setjmp/t_setjmp		tests-lib-tests		atf
 ./usr/tests/lib/libc/ssp			tests-lib-tests
 ./usr/tests/lib/libc/ssp/Atffile		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/Kyuafile		tests-lib-tests		atf,ssp,kyua
 ./usr/tests/lib/libc/ssp/h_fgets		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_getcwd		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_gets			tests-lib-tests		atf,ssp
@@ -1922,6 +2015,7 @@
 ./usr/tests/lib/libc/ssp/t_ssp			tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/stdio			tests-lib-tests
 ./usr/tests/lib/libc/stdio/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/stdio/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/stdio/t_clearerr		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio/t_fflush		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio/t_fmemopen		tests-lib-tests		atf
@@ -1933,6 +2027,7 @@
 ./usr/tests/lib/libc/stdio/t_scanf		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib			tests-lib-tests
 ./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/stdlib/h_atexit		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/h_getopt		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/h_getopt_long	tests-lib-tests		atf
@@ -1956,6 +2051,7 @@
 ./usr/tests/lib/libc/stdlib/t_system		tests-lib-tests		atf
 ./usr/tests/lib/libc/string			tests-lib-tests
 ./usr/tests/lib/libc/string/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/string/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/string/t_memchr		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_memcpy		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_memmem		tests-lib-tests		atf
@@ -1976,6 +2072,7 @@
 ./usr/tests/lib/libc/string/t_swab		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys			tests-lib-tests
 ./usr/tests/lib/libc/sys/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/sys/t_access		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_bitops		tests-obsolete		obsolete
 ./usr/tests/lib/libc/sys/t_cerror		tests-obsolete		obsolete
@@ -2036,12 +2133,15 @@
 ./usr/tests/lib/libc/sys/t_write		tests-lib-tests		atf
 ./usr/tests/lib/libc/termios			tests-lib-tests
 ./usr/tests/lib/libc/termios/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/termios/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/termios/t_tcsetpgrp	tests-lib-tests		atf
 ./usr/tests/lib/libc/tls			tests-lib-tests
 ./usr/tests/lib/libc/tls/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/tls/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/tls/t_tls_static		tests-lib-tests		atf
 ./usr/tests/lib/libc/ttyio			tests-lib-tests
 ./usr/tests/lib/libc/ttyio/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/ttyio/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/ttyio/t_ptm		tests-lib-tests		atf
 ./usr/tests/lib/libc/ttyio/t_ttyio		tests-lib-tests		atf
 ./usr/tests/lib/libc/t_atexit			tests-obsolete		obsolete
@@ -2063,12 +2163,14 @@
 ./usr/tests/lib/libc/time			tests-lib-tests
 ./usr/tests/lib/libcrypt			tests-lib-tests
 ./usr/tests/lib/libcrypt/Atffile		tests-lib-tests
+./usr/tests/lib/libcrypt/Kyuafile		tests-lib-tests		kyua
 ./usr/tests/lib/libcrypt/t_crypt		tests-lib-tests
 ./usr/tests/lib/libcurses			tests-lib-tests
 ./usr/tests/lib/libcurses/.terminfo.db		tests-obsolete		obsolete
 ./usr/tests/lib/libcurses/terminfo.cdb		tests-lib-tests		atf
 ./usr/tests/lib/libcurses/terminfo.db		tests-obsolete		obsolete
 ./usr/tests/lib/libcurses/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libcurses/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libcurses/check_files			tests-lib-tests
 ./usr/tests/lib/libcurses/check_files/addch.chk		tests-lib-tests		atf
 ./usr/tests/lib/libcurses/check_files/addchstr.chk	tests-lib-tests		atf
@@ -2167,27 +2269,35 @@
 ./usr/tests/lib/libcurses/tests/wscrl		tests-lib-tests		atf
 ./usr/tests/lib/libdes				tests-lib-tests
 ./usr/tests/lib/libc/time/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/time/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/time/t_mktime		tests-lib-tests		atf
 ./usr/tests/lib/libc/time/t_strptime		tests-lib-tests		atf
 ./usr/tests/lib/libdes/Atffile			tests-lib-tests		atf,crypto
+./usr/tests/lib/libdes/Kyuafile			tests-lib-tests		atf,crypto,kyua
 ./usr/tests/lib/libdes/t_des			tests-lib-tests		atf,crypto
 ./usr/tests/lib/semaphore			tests-lib-tests
 ./usr/tests/lib/semaphore/Atffile		tests-lib-tests		atf
+./usr/tests/lib/semaphore/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/semaphore/pthread		tests-lib-tests
 ./usr/tests/lib/semaphore/pthread/Atffile	tests-lib-tests		atf,rump
+./usr/tests/lib/semaphore/pthread/Kyuafile	tests-lib-tests		atf,rump,kyua
 ./usr/tests/lib/semaphore/pthread/t_sem_pth	tests-lib-tests		atf,rump
 ./usr/tests/lib/libbpfjit			tests-lib-tests		atf
 ./usr/tests/lib/libbpfjit/Atffile		tests-lib-tests		atf,sljit
+./usr/tests/lib/libbpfjit/Kyuafile		tests-lib-tests		atf,sljit,kyua
 ./usr/tests/lib/libbpfjit/t_bpfjit		tests-lib-tests		atf,sljit
 ./usr/tests/lib/libevent			tests-lib-tests
 ./usr/tests/lib/libevent/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libevent/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libevent/h_event		tests-lib-tests		atf
 ./usr/tests/lib/libevent/t_event		tests-lib-tests		atf
 ./usr/tests/lib/libexecinfo			tests-lib-tests
 ./usr/tests/lib/libexecinfo/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libexecinfo/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libexecinfo/t_backtrace		tests-lib-tests		atf
 ./usr/tests/lib/liblutok			tests-lutok-tests
 ./usr/tests/lib/liblutok/Atffile		tests-lutok-tests	atf,kyua
+./usr/tests/lib/liblutok/Kyuafile		tests-lutok-tests	atf,kyua
 ./usr/tests/lib/liblutok/c_gate_test		tests-lutok-tests	atf,kyua
 ./usr/tests/lib/liblutok/debug_test		tests-lutok-tests	atf,kyua
 ./usr/tests/lib/liblutok/exceptions_test	tests-lutok-tests	atf,kyua
@@ -2196,6 +2306,7 @@
 ./usr/tests/lib/liblutok/state_test		tests-lutok-tests	atf,kyua
 ./usr/tests/lib/libm				tests-lib-tests		atf
 ./usr/tests/lib/libm/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libm/Kyuafile			tests-lib-tests		atf,kyua
 ./usr/tests/lib/libm/t_acos			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_asin			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_atan			tests-lib-tests		atf
@@ -2220,26 +2331,34 @@
 ./usr/tests/lib/libm/t_tanh			tests-lib-tests		atf
 ./usr/tests/lib/libobjc				tests-lib-tests		atf
 ./usr/tests/lib/libobjc/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libobjc/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libobjc/t_threads		tests-lib-tests		atf,gcccmds
 ./usr/tests/lib/libposix			tests-lib-tests		atf
 ./usr/tests/lib/libposix/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libposix/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libposix/bsd			tests-lib-tests		atf
 ./usr/tests/lib/libposix/bsd/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libposix/bsd/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libposix/bsd/t_rename		tests-lib-tests		atf
 ./usr/tests/lib/libposix/posix1			tests-lib-tests		atf
 ./usr/tests/lib/libposix/posix1/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libposix/posix1/Kyuafile	tests-lib-tests		atf,kyua
 ./usr/tests/lib/libposix/posix1/t_rename	tests-lib-tests		atf
 ./usr/tests/lib/libposix/posix2			tests-lib-tests		atf
 ./usr/tests/lib/libposix/posix2/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libposix/posix2/Kyuafile	tests-lib-tests		atf,kyua
 ./usr/tests/lib/libposix/posix2/t_rename	tests-lib-tests		atf
 ./usr/tests/lib/libppath			tests-lib-tests		atf
 ./usr/tests/lib/libppath/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libppath/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libppath/t_ppath		tests-lib-tests		atf
 ./usr/tests/lib/libprop				tests-lib-tests		atf
 ./usr/tests/lib/libprop/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libprop/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libprop/t_basic			tests-lib-tests		atf
 ./usr/tests/lib/libpthread			tests-lib-tests
 ./usr/tests/lib/libpthread/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libpthread/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libpthread/d_mach		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/h_atexit		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/h_cancel		tests-lib-tests		atf
@@ -2271,10 +2390,12 @@
 ./usr/tests/lib/libpthread/t_swapcontext	tests-lib-tests		atf
 ./usr/tests/lib/librt				tests-lib-tests		atf
 ./usr/tests/lib/librt/Atffile			tests-lib-tests		atf
+./usr/tests/lib/librt/Kyuafile			tests-lib-tests		atf,kyua
 ./usr/tests/lib/librt/t_sched			tests-lib-tests		atf
 ./usr/tests/lib/librt/t_sem			tests-lib-tests		atf
 ./usr/tests/lib/librumpclient				tests-lib-tests		atf
 ./usr/tests/lib/librumpclient/Atffile			tests-lib-tests		atf,rump
+./usr/tests/lib/librumpclient/Kyuafile			tests-lib-tests		atf,rump,kyua
 ./usr/tests/lib/librumpclient/h_exec			tests-lib-tests		atf,rump
 ./usr/tests/lib/librumpclient/h_execthr			tests-lib-tests		atf,rump
 ./usr/tests/lib/librumpclient/h_ution			tests-obsolete		obsolete
@@ -2282,6 +2403,7 @@
 ./usr/tests/lib/librumpclient/t_fd			tests-lib-tests		atf,rump
 ./usr/tests/lib/librumphijack			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/Atffile			tests-lib-tests		atf,rump
+./usr/tests/lib/librumphijack/Kyuafile			tests-lib-tests		atf,rump,kyua
 ./usr/tests/lib/librumphijack/h_client			tests-lib-tests		atf,rump
 ./usr/tests/lib/librumphijack/h_cwd			tests-lib-tests		atf,rump
 ./usr/tests/lib/librumphijack/h_netget			tests-lib-tests		atf,rump
@@ -2299,13 +2421,16 @@
 ./usr/tests/lib/librumphijack/sshd_config.in			tests-lib-tests		atf,rump
 ./usr/tests/lib/libskey				tests-lib-tests		atf
 ./usr/tests/lib/libskey/Atffile			tests-lib-tests		atf,skey
+./usr/tests/lib/libskey/Kyuafile		tests-lib-tests		atf,skey,kyua
 ./usr/tests/lib/libskey/t_algorithms		tests-lib-tests		atf,skey
 ./usr/tests/lib/libsljit			tests-lib-tests		atf
 ./usr/tests/lib/libsljit/Atffile		tests-lib-tests		atf,sljit
+./usr/tests/lib/libsljit/Kyuafile		tests-lib-tests		atf,sljit,kyua
 ./usr/tests/lib/libsljit/h_sljit		tests-lib-tests		atf,sljit
 ./usr/tests/lib/libsljit/t_sljit		tests-lib-tests		atf,sljit
 ./usr/tests/lib/libtre				tests-lib-tests		atf
 ./usr/tests/lib/libtre/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libtre/Kyuafile			tests-lib-tests		atf,kyua
 ./usr/tests/lib/libtre/h_regex_att		tests-obsolete		obsolete
 ./usr/tests/lib/libtre/t_exhaust		tests-lib-tests		atf
 ./usr/tests/lib/libtre/t_regex_att		tests-lib-tests		atf
@@ -2339,6 +2464,7 @@
 ./usr/tests/lib/libtre/data/zero.in		tests-lib-tests		atf
 ./usr/tests/lib/libutil				tests-lib-tests		atf
 ./usr/tests/lib/libutil/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libutil/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libutil/t_efun			tests-lib-tests		atf
 ./usr/tests/lib/libutil/t_parsedate		tests-lib-tests		atf
 ./usr/tests/lib/libutil/t_pidfile		tests-lib-tests		atf
@@ -2346,8 +2472,10 @@
 ./usr/tests/lib/libutil/t_sockaddr_snprintf	tests-lib-tests		atf
 ./usr/tests/libexec				tests-lib-tests
 ./usr/tests/libexec/Atffile			tests-lib-tests		atf
+./usr/tests/libexec/Kyuafile			tests-lib-tests		atf,kyua
 ./usr/tests/libexec/ld.elf_so			tests-libexec-tests
 ./usr/tests/libexec/ld.elf_so/Atffile		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/Kyuafile		tests-libexec-tests	atf,pic,kyua
 ./usr/tests/libexec/ld.elf_so/data		tests-libexec-tests	atf
 ./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v0-v0		tests-libexec-tests	atf,pic
 ./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v0-v1		tests-libexec-tests	atf,pic
@@ -2385,58 +2513,73 @@
 ./usr/tests/modules				tests-sys-tests
 ./usr/tests/net					tests-net-tests
 ./usr/tests/net/Atffile				tests-net-tests		atf
+./usr/tests/net/Kyuafile			tests-net-tests		atf,kyua
 ./usr/tests/net/bpf				tests-net-tests
 ./usr/tests/net/bpf/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/bpf/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/bpf/t_bpf		tests-net-tests		atf,rump
 ./usr/tests/net/bpf/t_div-by-zero		tests-net-tests		atf,rump
 ./usr/tests/net/bpfilter			tests-net-tests
 ./usr/tests/net/bpfilter/Atffile		tests-net-tests		atf,rump
+./usr/tests/net/bpfilter/Kyuafile		tests-net-tests		atf,rump,kyua
 ./usr/tests/net/bpfilter/t_bpfilter		tests-net-tests		atf,rump
 ./usr/tests/net/carp				tests-net-tests
 ./usr/tests/net/carp/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/carp/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/carp/t_basic		tests-net-tests		atf,rump
 ./usr/tests/net/fdpass				tests-net-tests
 ./usr/tests/net/fdpass/Atffile			tests-net-tests		atf
+./usr/tests/net/fdpass/Kyuafile			tests-net-tests		atf,kyua
 ./usr/tests/net/fdpass/fdpass32			tests-net-tests		atf
 ./usr/tests/net/fdpass/fdpass64			tests-net-tests		atf
 ./usr/tests/net/fdpass/t_fdpass			tests-net-tests		atf
 ./usr/tests/net/icmp/t_forward		tests-net-tests		atf,rump
 ./usr/tests/net/icmp				tests-net-tests
 ./usr/tests/net/icmp/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/icmp/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/icmp/t_forward		tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_ping		tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_ping2		tests-net-tests		atf,rump
 ./usr/tests/net/if			tests-net-tests
 ./usr/tests/net/if/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/if/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if/t_compat		tests-net-tests		atf,rump
 ./usr/tests/net/if_loop				tests-net-tests
 ./usr/tests/net/if_loop/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/if_loop/Kyuafile		tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_loop/t_pr		tests-net-tests		atf,rump
 ./usr/tests/net/net				tests-net-tests
 ./usr/tests/net/net/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/net/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/net/t_raw		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_udp		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_unix		tests-net-tests		atf,rump
 ./usr/tests/net/npf			tests-net-tests
 ./usr/tests/net/npf/Atffile		tests-net-tests		atf,rump
+./usr/tests/net/npf/Kyuafile		tests-net-tests		atf,rump,kyua
 ./usr/tests/net/npf/npftest.conf	tests-net-tests		atf,rump
 ./usr/tests/net/npf/t_npf		tests-net-tests		atf,rump
 ./usr/tests/net/route				tests-net-tests
 ./usr/tests/net/route/Atffile			tests-net-tests		atf
+./usr/tests/net/route/Kyuafile			tests-net-tests		atf,kyua
 ./usr/tests/net/route/t_change		tests-net-tests		atf
 ./usr/tests/net/sys				tests-net-tests
 ./usr/tests/net/sys/Atffile			tests-net-tests		atf
+./usr/tests/net/sys/Kyuafile			tests-net-tests		atf,kyua
 ./usr/tests/net/sys/t_connect			tests-obsolete		obsolete
 ./usr/tests/net/sys/t_listen			tests-obsolete		obsolete
 ./usr/tests/net/sys/t_rfc6056			tests-net-tests		atf
 ./usr/tests/net/sys/t_socketpair		tests-obsolete		obsolete
 ./usr/tests/rump				tests-rump-tests
 ./usr/tests/rump/Atffile			tests-rump-tests	atf,rump
+./usr/tests/rump/Kyuafile			tests-rump-tests	atf,rump,kyua
 ./usr/tests/rump/modautoload			tests-rump-tests
 ./usr/tests/rump/modautoload/Atffile		tests-rump-tests	atf,rump
+./usr/tests/rump/modautoload/Kyuafile		tests-rump-tests	atf,rump,kyua
 ./usr/tests/rump/modautoload/t_modautoload	tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern			tests-rump-tests
 ./usr/tests/rump/rumpkern/Atffile		tests-rump-tests	atf,rump
+./usr/tests/rump/rumpkern/Kyuafile		tests-rump-tests	atf,rump,kyua
 ./usr/tests/rump/rumpkern/t_copy		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_kern		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_lwproc		tests-rump-tests	atf,rump
@@ -2458,29 +2601,37 @@
 ./usr/tests/rump/rumpkern/h_server/h_simpleserver	tests-rump-tests atf,rump
 ./usr/tests/rump/rumpnet			tests-rump-tests
 ./usr/tests/rump/rumpnet/Atffile		tests-rump-tests	atf,rump
+./usr/tests/rump/rumpnet/Kyuafile		tests-rump-tests	atf,rump,kyua
 ./usr/tests/rump/rumpnet/t_shmif		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpvfs			tests-rump-tests
 ./usr/tests/rump/rumpvfs/Atffile		tests-rump-tests	atf,rump
+./usr/tests/rump/rumpvfs/Kyuafile		tests-rump-tests	atf,rump,kyua
 ./usr/tests/rump/rumpvfs/t_basic		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpvfs/t_etfs			tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpvfs/t_p2kifs		tests-rump-tests	atf,rump
 ./usr/tests/sbin				tests-sbin-tests
 ./usr/tests/sbin/Atffile			tests-sbin-tests	atf
+./usr/tests/sbin/Kyuafile			tests-sbin-tests	atf,kyua
 ./usr/tests/sbin/fsck_ffs			tests-sbin-tests
 ./usr/tests/sbin/fsck_ffs/Atffile		tests-sbin-tests	atf
+./usr/tests/sbin/fsck_ffs/Kyuafile		tests-sbin-tests	atf,kyua
 ./usr/tests/sbin/fsck_ffs/t_check_quotas	tests-sbin-tests	atf
 ./usr/tests/sbin/fsck_ffs/t_enable_quotas	tests-sbin-tests	atf
 ./usr/tests/sbin/ifconfig			tests-sbin-tests
 ./usr/tests/sbin/ifconfig/Atffile		tests-sbin-tests	atf
+./usr/tests/sbin/ifconfig/Kyuafile		tests-sbin-tests	atf,kyua
 ./usr/tests/sbin/ifconfig/t_nonexistent		tests-sbin-tests	atf
 ./usr/tests/sbin/newfs				tests-sbin-tests
 ./usr/tests/sbin/newfs/Atffile			tests-sbin-tests	atf
+./usr/tests/sbin/newfs/Kyuafile			tests-sbin-tests	atf,kyua
 ./usr/tests/sbin/newfs/t_enable_quotas		tests-sbin-tests	atf
 ./usr/tests/sbin/newfs_msdos			tests-sbin-tests
 ./usr/tests/sbin/newfs_msdos/Atffile		tests-sbin-tests	atf
+./usr/tests/sbin/newfs_msdos/Kyuafile		tests-sbin-tests	atf,kyua
 ./usr/tests/sbin/newfs_msdos/t_create		tests-sbin-tests	atf
 ./usr/tests/sbin/resize_ffs			tests-sbin-tests
 ./usr/tests/sbin/resize_ffs/Atffile		tests-sbin-tests	atf
+./usr/tests/sbin/resize_ffs/Kyuafile		tests-sbin-tests	atf,kyua
 ./usr/tests/sbin/resize_ffs/t_grow		tests-sbin-tests	atf
 ./usr/tests/sbin/resize_ffs/t_grow_swapped	tests-sbin-tests	atf
 ./usr/tests/sbin/resize_ffs/t_resize_ffs	tests-obsolete		obsolete
@@ -2490,29 +2641,37 @@
 ./usr/tests/sbin/resize_ffs/testdata.tar.gz.base64	tests-sbin-tests	atf
 ./usr/tests/sbin/route				tests-sbin-tests
 ./usr/tests/sbin/route/Atffile			tests-sbin-tests	atf
+./usr/tests/sbin/route/Kyuafile			tests-sbin-tests	atf,kyua
 ./usr/tests/sbin/route/t_missing		tests-sbin-tests	atf
 ./usr/tests/sbin/sysctl				tests-sbin-tests
 ./usr/tests/sbin/sysctl/Atffile			tests-sbin-tests	atf
+./usr/tests/sbin/sysctl/Kyuafile		tests-sbin-tests	atf,kyua
 ./usr/tests/sbin/sysctl/t_perm			tests-sbin-tests	atf
 ./usr/tests/sbin/sysctl/t_sysctl		tests-sbin-tests	atf
 ./usr/tests/share				tests-sys-tests
 ./usr/tests/share/examples			tests-asm-tests
 ./usr/tests/share/examples/Atffile		tests-asm-tests		atf,share
+./usr/tests/share/examples/Kyuafile		tests-asm-tests		atf,share,kyua
 ./usr/tests/share/examples/t_asm		tests-asm-tests		atf,share
 ./usr/tests/share/Atffile			tests-sys-tests		atf
+./usr/tests/share/Kyuafile			tests-sys-tests		atf,kyua
 ./usr/tests/share/examples/lutok		tests-lutok-tests
 ./usr/tests/share/examples/lutok/Atffile	tests-lutok-tests	atf,kyua,share
+./usr/tests/share/examples/lutok/Kyuafile	tests-lutok-tests	atf,kyua,share,kyua
 ./usr/tests/share/examples/lutok/examples_test	tests-lutok-tests	atf,kyua,share
 ./usr/tests/share/mk				tests-mk-tests
 ./usr/tests/share/mk/Atffile			tests-mk-tests		atf
+./usr/tests/share/mk/Kyuafile			tests-mk-tests		atf,kyua
 ./usr/tests/share/mk/t_lib			tests-mk-tests		atf
 ./usr/tests/share/mk/t_own			tests-mk-tests		atf
 ./usr/tests/share/mk/t_prog			tests-mk-tests		atf
 ./usr/tests/share/mk/t_test			tests-mk-tests		atf
 ./usr/tests/sys					tests-sys-tests
 ./usr/tests/sys/Atffile				tests-sys-tests	atf
+./usr/tests/sys/Kyuafile			tests-sys-tests	atf,kyua
 ./usr/tests/sys/rc				tests-sys-tests
 ./usr/tests/sys/rc/Atffile			tests-sys-tests	atf
+./usr/tests/sys/rc/Kyuafile			tests-sys-tests	atf,kyua
 ./usr/tests/sys/rc/h_args			tests-sys-tests	atf
 ./usr/tests/sys/rc/h_simple			tests-sys-tests	atf
 ./usr/tests/sys/rc/t_rc_d_cli			tests-sys-tests	atf
@@ -2559,8 +2718,10 @@
 ./usr/tests/toolchain/cc/t_hello		tests-obsolete		obsolete
 ./usr/tests/usr.bin				tests-usr.bin-tests
 ./usr/tests/usr.bin/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/Kyuafile			tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/awk				tests-usr.bin-tests
 ./usr/tests/usr.bin/awk/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/awk/t_awk			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/awk/d_assign_NF.awk		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/awk/d_assign_NF.in		tests-usr.bin-tests	atf
@@ -2587,9 +2748,11 @@
 ./usr/tests/usr.bin/awk/d_toupper.out		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/basename			tests-usr.bin-tests
 ./usr/tests/usr.bin/basename/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/basename/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/basename/t_basename		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/bzip2			tests-usr.bin-tests
 ./usr/tests/usr.bin/bzip2/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/bzip2/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/bzip2/t_bzip2		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/bzip2/d_sample1.bz2		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/bzip2/d_sample1.ref		tests-usr.bin-tests	atf
@@ -2599,12 +2762,15 @@
 ./usr/tests/usr.bin/bzip2/d_sample3.ref		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/cc				tests-usr.bin-tests
 ./usr/tests/usr.bin/cc/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cc/Kyuafile			tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/cc/t_hello			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/cmp				tests-usr.bin-tests
 ./usr/tests/usr.bin/cmp/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cmp/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/cmp/t_cmp			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config			tests-usr.bin-tests
 ./usr/tests/usr.bin/config/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/config/Makefile.regress	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/t_config		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/d_deffs_redef	tests-usr.bin-tests	atf
@@ -2628,6 +2794,7 @@
 ./usr/tests/usr.bin/config/support/conf/files	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/cut				tests-usr.bin-tests
 ./usr/tests/usr.bin/cut/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cut/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/cut/d_basic.out		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/cut/d_cut.in		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/cut/d_dflag.out		tests-usr.bin-tests	atf
@@ -2638,17 +2805,21 @@
 ./usr/tests/usr.bin/cut/t_cut			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/diff			tests-usr.bin-tests
 ./usr/tests/usr.bin/diff/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/diff/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/diff/d_mallocv1.in		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/diff/d_mallocv2.in		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/diff/t_diff			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/dirname			tests-usr.bin-tests
 ./usr/tests/usr.bin/dirname/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/dirname/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/dirname/t_dirname		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/find			tests-usr.bin-tests
 ./usr/tests/usr.bin/find/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/find/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/find/t_find			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/grep			tests-usr.bin-tests
 ./usr/tests/usr.bin/grep/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/grep/d_basic.out		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/grep/d_begin_end_a.out	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/grep/d_begin_end_b.out	tests-usr.bin-tests	atf
@@ -2678,22 +2849,27 @@
 ./usr/tests/usr.bin/grep/t_grep			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/gzip			tests-usr.bin-tests
 ./usr/tests/usr.bin/gzip/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/gzip/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/gzip/t_gzip			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/id				tests-usr.bin-tests
 ./usr/tests/usr.bin/id/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/id/Kyuafile			tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/id/h_id			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/id/t_groups			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/id/t_id			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/id/t_whoami			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/infocmp			tests-usr.bin-tests
 ./usr/tests/usr.bin/infocmp/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/infocmp/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/infocmp/t_terminfo		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/jot				tests-usr.bin-tests
 ./usr/tests/usr.bin/jot/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/jot/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/jot/d_basic.out		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/jot/t_jot			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/m4				tests-usr.bin-tests
 ./usr/tests/usr.bin/m4/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/m4/Kyuafile			tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/m4/d_ff_after_dnl.m4.uue	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/m4/d_ff_after_dnl.out	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/m4/d_m4wrap-P.m4		tests-usr.bin-tests	atf
@@ -2703,6 +2879,7 @@
 ./usr/tests/usr.bin/m4/t_m4			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make			tests-usr.bin-tests
 ./usr/tests/usr.bin/make/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/make/d_comment.mk		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/d_comment.out		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/d_cond1.mk		tests-usr.bin-tests	atf
@@ -2738,25 +2915,31 @@
 ./usr/tests/usr.bin/make/t_make			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/mkdep			tests-usr.bin-tests
 ./usr/tests/usr.bin/mkdep/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/mkdep/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/mkdep/t_mkdep		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/nbperf			tests-usr.bin-tests
 ./usr/tests/usr.bin/nbperf/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/nbperf/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/nbperf/h_nbperf		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/nbperf/hash_driver.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/nbperf/t_nbperf		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/netpgpverify			tests-usr.bin-tests
 ./usr/tests/usr.bin/netpgpverify/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/netpgpverify/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/netpgpverify/t_netpgpverify		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/pr				tests-usr.bin-tests
 ./usr/tests/usr.bin/pr/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/pr/Kyuafile			tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/pr/d_basic.in		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/pr/d_basic.out		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/pr/t_basic			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/rump_server			tests-usr.bin-tests
 ./usr/tests/usr.bin/rump_server/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/rump_server/Kyuafile	tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/rump_server/t_disk		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sdiff			tests-usr.bin-tests
 ./usr/tests/usr.bin/sdiff/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/sdiff/d_dot.in		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sdiff/d_flags_l.out		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sdiff/d_flags_s.out		tests-usr.bin-tests	atf
@@ -2786,16 +2969,19 @@
 ./usr/tests/usr.bin/sdiff/t_sdiff		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sed				tests-usr.bin-tests
 ./usr/tests/usr.bin/sed/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sed/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/sed/d_c2048.in		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sed/t_sed			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus				tests-usr.bin-tests
 ./usr/tests/usr.bin/shmif_dumpbus/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/shmif_dumpbus/Kyuafile			tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/shmif_dumpbus/d_pcap.out.bz2.uue		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus/d_pkthdrs.out.bz2.uue		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus/shmbus.bz2.uue		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus/t_basic			tests-usr.bin-tests	atf	atf
 ./usr/tests/usr.bin/sort				tests-usr.bin-tests
 ./usr/tests/usr.bin/sort/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sort/Kyuafile			tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/sort/d_any_char_dflag_out.txt	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sort/d_any_char_fflag_out.txt	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sort/d_any_char_iflag_out.txt	tests-usr.bin-tests	atf
@@ -2803,16 +2989,20 @@
 ./usr/tests/usr.bin/sort/t_sort				tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/tmux			tests-usr.bin-tests
 ./usr/tests/usr.bin/tmux/Atffile		tests-usr.bin-tests	atf	atf
+./usr/tests/usr.bin/tmux/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/tmux/t_tmux			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/unifdef			tests-usr.bin-tests
 ./usr/tests/usr.bin/unifdef/Atffile		tests-usr.bin-tests	atf	atf
+./usr/tests/usr.bin/unifdef/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/unifdef/d_basic.in		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/unifdef/d_basic.out		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/unifdef/t_basic		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint			tests-usr.bin-tests
 ./usr/tests/usr.bin/xlint/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/xlint/lint1			tests-usr.bin-tests
 ./usr/tests/usr.bin/xlint/lint1/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/Kyuafile	tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/xlint/lint1/d_alignof.c			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_complex_num.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt.c	tests-usr.bin-tests	atf
@@ -2854,8 +3044,10 @@
 ./usr/tests/usr.bin/xlint/lint1/t_integration			tests-usr.bin-tests	atf
 ./usr/tests/usr.sbin				tests-usr.sbin-tests
 ./usr/tests/usr.sbin/Atffile			tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/Kyuafile			tests-usr.sbin-tests	atf,kyua
 ./usr/tests/usr.sbin/mtree			tests-usr.sbin-tests
 ./usr/tests/usr.sbin/mtree/Atffile		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/Kyuafile		tests-usr.sbin-tests	atf,kyua
 ./usr/tests/usr.sbin/mtree/d_convert.in		tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/mtree/d_convert_C.out	tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/mtree/d_convert_C_S.out	tests-usr.sbin-tests	atf
@@ -2870,12 +3062,15 @@
 ./usr/tests/usr.sbin/mtree/t_mtree		tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/tcpdump			tests-usr.sbin-tests
 ./usr/tests/usr.sbin/tcpdump/Atffile		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/tcpdump/Kyuafile		tests-usr.sbin-tests	atf,kyua
 ./usr/tests/usr.sbin/tcpdump/t_tcpdump		tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/traceroute			tests-usr.sbin-tests
 ./usr/tests/usr.sbin/traceroute/Atffile		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/traceroute/Kyuafile	tests-usr.sbin-tests	atf,kyua
 ./usr/tests/usr.sbin/traceroute/t_traceroute	tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/useradd			tests-usr.sbin-tests
 ./usr/tests/usr.sbin/useradd/Atffile		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/useradd/Kyuafile		tests-usr.sbin-tests	atf,kyua
 ./usr/tests/usr.sbin/useradd/t_useradd		tests-usr.sbin-tests	atf
 ./usr/tests/util				tests-obsolete		obsolete
 ./usr/tests/util/Atffile			tests-obsolete		obsolete
