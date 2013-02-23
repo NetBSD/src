@@ -1,4 +1,4 @@
-/* $Id: common.h,v 1.2 2012/12/16 19:08:44 jkunz Exp $ */
+/* $Id: common.h,v 1.3 2013/02/23 16:22:39 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,6 +37,12 @@
 do {									\
 	*(volatile uint32_t *)((reg)) = val;				\
 } while (0)
+#define REG_RD_HW(reg) *(volatile uint16_t *)(reg)
+#define REG_WR_HW(reg, val)						\
+do {									\
+	*(volatile uint16_t *)((reg)) = val;				\
+} while (0)
+#define REG_RD_BYTE(reg) *(volatile uint8_t *)(reg)
 #define REG_WR_BYTE(reg, val)						\
 do {									\
 	*(volatile uint8_t *)((reg)) = val;				\
@@ -46,7 +52,9 @@ int clock_prep(void);
 int emi_prep(void);
 int pinctrl_prep(void);
 int power_prep(void);
+int args_prep(void);
 void delay(unsigned int);
 void putchar(int);
+int getchar(void);
 
 #endif /* !_BOOTIMX23_COMMON_ */

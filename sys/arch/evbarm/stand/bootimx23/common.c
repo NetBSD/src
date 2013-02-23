@@ -1,4 +1,4 @@
-/* $Id: common.c,v 1.2 2012/12/16 19:08:44 jkunz Exp $ */
+/* $Id: common.c,v 1.3 2013/02/23 16:22:39 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -78,14 +78,29 @@ putchar(int ch)
 {
 
 	/* Wait until transmit FIFO has space for the new character. */
-	while (REG_RD(HW_UARTDBG_BASE + HW_UARTDBGFR) & HW_UARTDBGFR_TXFF);
+	while (REG_RD_HW(HW_UARTDBG_BASE + HW_UARTDBGFR) & HW_UARTDBGFR_TXFF);
 
 	REG_WR_BYTE(HW_UARTDBG_BASE + HW_UARTDBGDR,
 	    __SHIFTIN(ch, HW_UARTDBGDR_DATA));
 #ifdef DEBUG
 	/* Flush: Wait until transmit FIFO contents are written to UART. */
-	while (!(REG_RD(HW_UARTDBG_BASE + HW_UARTDBGFR) & HW_UARTDBGFR_TXFE));
+	while (!(REG_RD_HW(HW_UARTDBG_BASE + HW_UARTDBGFR) &
+	    HW_UARTDBGFR_TXFE));
 #endif
 
 	return;
+}
+
+/*
+ * Read character from debug UART.
+ */
+int
+getchar(void)
+{
+
+	/* Wait until receive FIFO has character(s) */
+
+	while (REG_RD_HW(HW_UARTDBG_BASE + HW_UARTDBGFR) & HW_UARTDBGFR_RXFE);
+
+	return REG_RD_HW(HW_UARTDBG_BASE + HW_UARTDBGDR) & 0xFF;
 }
