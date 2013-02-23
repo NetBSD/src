@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.522 2013/02/23 22:01:51 jmmv Exp $
+# $NetBSD: mi,v 1.523 2013/02/23 22:56:46 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2978,7 +2978,7 @@
 ./usr/tests/usr.bin/shmif_dumpbus/d_pcap.out.bz2.uue		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus/d_pkthdrs.out.bz2.uue		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus/shmbus.bz2.uue		tests-usr.bin-tests	atf
-./usr/tests/usr.bin/shmif_dumpbus/t_basic			tests-usr.bin-tests	atf	atf
+./usr/tests/usr.bin/shmif_dumpbus/t_basic			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sort				tests-usr.bin-tests
 ./usr/tests/usr.bin/sort/Atffile			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sort/Kyuafile			tests-usr.bin-tests	atf,kyua
@@ -2988,11 +2988,11 @@
 ./usr/tests/usr.bin/sort/d_any_char_in.txt		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sort/t_sort				tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/tmux			tests-usr.bin-tests
-./usr/tests/usr.bin/tmux/Atffile		tests-usr.bin-tests	atf	atf
+./usr/tests/usr.bin/tmux/Atffile		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/tmux/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/tmux/t_tmux			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/unifdef			tests-usr.bin-tests
-./usr/tests/usr.bin/unifdef/Atffile		tests-usr.bin-tests	atf	atf
+./usr/tests/usr.bin/unifdef/Atffile		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/unifdef/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/unifdef/d_basic.in		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/unifdef/d_basic.out		tests-usr.bin-tests	atf
