@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.201 2012/12/22 16:58:51 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.202 2013/02/23 13:47:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.201 2012/12/22 16:58:51 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.202 2013/02/23 13:47:36 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -844,7 +844,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			fetch_printf(fin, "Connection: close\r\n");
 			if (restart_point) {
 				fputs(leading, ttyout);
-				fprintf(ttyout, "Range: bytes=" LLF "-\r\n",
+				fetch_printf(fin, "Range: bytes=" LLF "-\r\n",
 				    (LLT)restart_point);
 				fprintf(ttyout, "restarting at " LLF,
 				    (LLT)restart_point);
