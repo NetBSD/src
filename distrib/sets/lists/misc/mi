@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.182 2013/02/23 14:18:39 jmmv Exp $
+# $NetBSD: mi,v 1.183 2013/02/23 14:58:12 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -426,6 +426,11 @@
 ./usr/share/doc/kyua-cli/COPYING		misc-kyua-doc		doc,kyua
 ./usr/share/doc/kyua-cli/NEWS			misc-kyua-doc		doc,kyua
 ./usr/share/doc/kyua-cli/README			misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-testers			misc-kyua-doc
+./usr/share/doc/kyua-testers/AUTHORS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-testers/COPYING		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-testers/NEWS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-testers/README		misc-kyua-doc		doc,kyua
 ./usr/share/doc/psd/00.contents			misc-psd-doc		doc
 ./usr/share/doc/psd/05.sysman/0.t		misc-psd-doc		doc
 ./usr/share/doc/psd/05.sysman/1.0.t		misc-psd-doc		doc

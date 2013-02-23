@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1 2013/02/19 06:04:43 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2013/02/23 14:58:12 jmmv Exp $
 
-SUBDIR= man
+SUBDIR= doc man
 
 .include <bsd.subdir.mk>
