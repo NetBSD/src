@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.110 2013/02/23 14:18:36 jmmv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.111 2013/02/23 14:58:12 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -254,6 +254,7 @@
 ./usr/share/doc/html/ntp/icons
 ./usr/share/doc/html/ntp/scripts
 ./usr/share/doc/kyua-cli
+./usr/share/doc/kyua-testers
 ./usr/share/doc/psd
 ./usr/share/doc/psd/01.cacm
 ./usr/share/doc/psd/02.implement
