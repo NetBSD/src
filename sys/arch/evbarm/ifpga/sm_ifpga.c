@@ -1,4 +1,4 @@
-/*	$NetBSD: sm_ifpga.c,v 1.1 2013/02/19 10:57:10 skrll Exp $	*/
+/*	$NetBSD: sm_ifpga.c,v 1.2 2013/02/23 08:23:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 Sergio Lopez <slp@sinrega.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sm_ifpga.c,v 1.1 2013/02/19 10:57:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sm_ifpga.c,v 1.2 2013/02/23 08:23:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ sm_ifpga_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* fill in master sc */
 	sc->sc_dev = self;
