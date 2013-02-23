@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1420 2013/02/19 06:06:43 jmmv Exp $
+# $NetBSD: mi,v 1.1421 2013/02/23 14:18:38 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -237,9 +237,20 @@
 ./usr/share/man/cat1/ksh.0			man-util-catman		.cat
 ./usr/share/man/cat1/ktrace.0			man-debug-catman	.cat
 ./usr/share/man/cat1/ktruss.0			man-debug-catman	.cat
+./usr/share/man/cat1/kyua-about.0		man-kyua-catman		kyua,.cat
 ./usr/share/man/cat1/kyua-atf-tester.0		man-kyua-catman		kyua,.cat
+./usr/share/man/cat1/kyua-config.0		man-kyua-catman		kyua,.cat
+./usr/share/man/cat1/kyua-db-exec.0		man-kyua-catman		kyua,.cat
+./usr/share/man/cat1/kyua-db-migrate.0		man-kyua-catman		kyua,.cat
+./usr/share/man/cat1/kyua-debug.0		man-kyua-catman		kyua,.cat
+./usr/share/man/cat1/kyua-help.0		man-kyua-catman		kyua,.cat
+./usr/share/man/cat1/kyua-list.0		man-kyua-catman		kyua,.cat
 ./usr/share/man/cat1/kyua-plain-tester.0	man-kyua-catman		kyua,.cat
+./usr/share/man/cat1/kyua-report-html.0		man-kyua-catman		kyua,.cat
+./usr/share/man/cat1/kyua-report.0		man-kyua-catman		kyua,.cat
+./usr/share/man/cat1/kyua-test.0		man-kyua-catman		kyua,.cat
 ./usr/share/man/cat1/kyua-tester.0		man-kyua-catman		kyua,.cat
+./usr/share/man/cat1/kyua.0			man-kyua-catman		kyua,.cat
 ./usr/share/man/cat1/lam.0			man-util-catman		.cat
 ./usr/share/man/cat1/last.0			man-util-catman		.cat
 ./usr/share/man/cat1/lastcomm.0			man-util-catman		.cat
@@ -2004,6 +2015,8 @@
 ./usr/share/man/cat5/krb5.conf.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat5/kyua-tester-list.0		man-kyua-catman		kyua,.cat
 ./usr/share/man/cat5/kyua-tester-result.0	man-kyua-catman		kyua,.cat
+./usr/share/man/cat5/kyua.conf.0		man-kyua-catman		kyua,.cat
+./usr/share/man/cat5/kyuafile.0			man-kyua-catman		kyua,.cat
 ./usr/share/man/cat5/lastlog.0			man-sys-catman		.cat
 ./usr/share/man/cat5/lastlogx.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ld.so.conf.0		man-sys-catman		.cat
@@ -2126,7 +2139,9 @@
 ./usr/share/man/cat7/hostname.0			man-reference-catman	.cat
 ./usr/share/man/cat7/intro.0			man-reference-catman	.cat
 ./usr/share/man/cat7/kyua-atf-interface.0	man-kyua-catman		kyua,.cat
+./usr/share/man/cat7/kyua-build-root.0		man-kyua-catman		kyua,.cat
 ./usr/share/man/cat7/kyua-plain-interface.0	man-kyua-catman		kyua,.cat
+./usr/share/man/cat7/kyua-test-filters.0	man-kyua-catman		kyua,.cat
 ./usr/share/man/cat7/lint.0			man-reference-catman	.cat
 ./usr/share/man/cat7/mailaddr.0			man-reference-catman	.cat
 ./usr/share/man/cat7/mandoc.0			man-obsolete		obsolete
@@ -3243,9 +3258,20 @@
 ./usr/share/man/html1/ksh.html			man-util-htmlman	html
 ./usr/share/man/html1/ktrace.html		man-debug-htmlman	html
 ./usr/share/man/html1/ktruss.html		man-debug-htmlman	html
+./usr/share/man/html1/kyua-about.html		man-kyua-htmlman	kyua,html
 ./usr/share/man/html1/kyua-atf-tester.html	man-kyua-htmlman	kyua,html
+./usr/share/man/html1/kyua-config.html		man-kyua-htmlman	kyua,html
+./usr/share/man/html1/kyua-db-exec.html		man-kyua-htmlman	kyua,html
+./usr/share/man/html1/kyua-db-migrate.html	man-kyua-htmlman	kyua,html
+./usr/share/man/html1/kyua-debug.html		man-kyua-htmlman	kyua,html
+./usr/share/man/html1/kyua-help.html		man-kyua-htmlman	kyua,html
+./usr/share/man/html1/kyua-list.html		man-kyua-htmlman	kyua,html
 ./usr/share/man/html1/kyua-plain-tester.html	man-kyua-htmlman	kyua,html
+./usr/share/man/html1/kyua-report-html.html	man-kyua-htmlman	kyua,html
+./usr/share/man/html1/kyua-report.html		man-kyua-htmlman	kyua,html
+./usr/share/man/html1/kyua-test.html		man-kyua-htmlman	kyua,html
 ./usr/share/man/html1/kyua-tester.html		man-kyua-htmlman	kyua,html
+./usr/share/man/html1/kyua.html			man-kyua-htmlman	kyua,html
 ./usr/share/man/html1/lam.html			man-util-htmlman	html
 ./usr/share/man/html1/last.html			man-util-htmlman	html
 ./usr/share/man/html1/lastcomm.html		man-util-htmlman	html
@@ -4856,6 +4882,8 @@
 ./usr/share/man/html5/krb5.conf.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html5/kyua-tester-list.html	man-kyua-htmlman	kyua,html
 ./usr/share/man/html5/kyua-tester-result.html	man-kyua-htmlman	kyua,html
+./usr/share/man/html5/kyua.conf.html		man-kyua-htmlman	kyua,html
+./usr/share/man/html5/kyuafile.html		man-kyua-htmlman	kyua,html
 ./usr/share/man/html5/lastlog.html		man-sys-htmlman		html
 ./usr/share/man/html5/lastlogx.html		man-sys-htmlman		html
 ./usr/share/man/html5/ld.so.conf.html		man-sys-htmlman		html
@@ -4967,7 +4995,9 @@
 ./usr/share/man/html7/hostname.html		man-reference-htmlman	html
 ./usr/share/man/html7/intro.html		man-reference-htmlman	html
 ./usr/share/man/html7/kyua-atf-interface.html	man-kyua-htmlman	kyua,html
+./usr/share/man/html7/kyua-build-root.html	man-kyua-htmlman	kyua,html
 ./usr/share/man/html7/kyua-plain-interface.html	man-kyua-htmlman	kyua,html
+./usr/share/man/html7/kyua-test-filters.html	man-kyua-htmlman	kyua,html
 ./usr/share/man/html7/lint.html			man-reference-htmlman	html
 ./usr/share/man/html7/mailaddr.html		man-reference-htmlman	html
 ./usr/share/man/html7/mdoc.html			man-groff-htmlman	html,groff
@@ -5887,9 +5917,20 @@
 ./usr/share/man/man1/ksh.1			man-util-man		.man
 ./usr/share/man/man1/ktrace.1			man-debug-man		.man
 ./usr/share/man/man1/ktruss.1			man-debug-man		.man
+./usr/share/man/man1/kyua-about.1		man-kyua-man		kyua,.man
 ./usr/share/man/man1/kyua-atf-tester.1		man-kyua-man		kyua,.man
+./usr/share/man/man1/kyua-config.1		man-kyua-man		kyua,.man
+./usr/share/man/man1/kyua-db-exec.1		man-kyua-man		kyua,.man
+./usr/share/man/man1/kyua-db-migrate.1		man-kyua-man		kyua,.man
+./usr/share/man/man1/kyua-debug.1		man-kyua-man		kyua,.man
+./usr/share/man/man1/kyua-help.1		man-kyua-man		kyua,.man
+./usr/share/man/man1/kyua-list.1		man-kyua-man		kyua,.man
 ./usr/share/man/man1/kyua-plain-tester.1	man-kyua-man		kyua,.man
+./usr/share/man/man1/kyua-report-html.1		man-kyua-man		kyua,.man
+./usr/share/man/man1/kyua-report.1		man-kyua-man		kyua,.man
+./usr/share/man/man1/kyua-test.1		man-kyua-man		kyua,.man
 ./usr/share/man/man1/kyua-tester.1		man-kyua-man		kyua,.man
+./usr/share/man/man1/kyua.1			man-kyua-man		kyua,.man
 ./usr/share/man/man1/lam.1			man-util-man		.man
 ./usr/share/man/man1/last.1			man-util-man		.man
 ./usr/share/man/man1/lastcomm.1			man-util-man		.man
@@ -7654,6 +7695,8 @@
 ./usr/share/man/man5/krb5.conf.5		man-krb5-man		kerberos,.man
 ./usr/share/man/man5/kyua-tester-list.5		man-kyua-man		kyua,.man
 ./usr/share/man/man5/kyua-tester-result.5	man-kyua-man		kyua,.man
+./usr/share/man/man5/kyua.conf.5		man-kyua-man		kyua,.man
+./usr/share/man/man5/kyuafile.5			man-kyua-man		kyua,.man
 ./usr/share/man/man5/lastlog.5			man-sys-man		.man
 ./usr/share/man/man5/lastlogx.5			man-sys-man		.man
 ./usr/share/man/man5/ld.so.conf.5		man-sys-man		.man
@@ -7776,7 +7819,9 @@
 ./usr/share/man/man7/hostname.7			man-reference-man	.man
 ./usr/share/man/man7/intro.7			man-reference-man	.man
 ./usr/share/man/man7/kyua-atf-interface.7	man-kyua-man		kyua,.man
+./usr/share/man/man7/kyua-build-root.7		man-kyua-man		kyua,.man
 ./usr/share/man/man7/kyua-plain-interface.7	man-kyua-man		kyua,.man
+./usr/share/man/man7/kyua-test-filters.7	man-kyua-man		kyua,.man
 ./usr/share/man/man7/lint.7			man-reference-man	.man
 ./usr/share/man/man7/mailaddr.7			man-reference-man	.man
 ./usr/share/man/man7/mandoc.7			man-obsolete		obsolete
