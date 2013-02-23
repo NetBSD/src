@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.181 2013/02/16 21:40:40 jmmv Exp $
+# $NetBSD: mi,v 1.182 2013/02/23 14:18:39 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -421,6 +421,11 @@
 ./usr/share/doc/html/postfix/verify.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/virtual.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/virtual.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/kyua-cli			misc-kyua-doc
+./usr/share/doc/kyua-cli/AUTHORS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-cli/COPYING		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-cli/NEWS			misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-cli/README			misc-kyua-doc		doc,kyua
 ./usr/share/doc/psd/00.contents			misc-psd-doc		doc
 ./usr/share/doc/psd/05.sysman/0.t		misc-psd-doc		doc
 ./usr/share/doc/psd/05.sysman/1.0.t		misc-psd-doc		doc
@@ -746,6 +751,9 @@
 ./usr/share/examples/isdn/isdnd.rates.UK.BT	misc-isdn-examples	share
 ./usr/share/examples/isdn/isdnd.rc.sample	misc-isdn-examples	share
 ./usr/share/examples/kerberos/krb5.conf		misc-krb5-examples	kerberos,share
+./usr/share/examples/kyua-cli			misc-kyua-examples
+./usr/share/examples/kyua-cli/Kyuafile.top	misc-kyua-examples	share,kyua
+./usr/share/examples/kyua-cli/kyua.conf		misc-kyua-examples	share,kyua
 ./usr/share/examples/libsaslc			misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/README		misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech		misc-libsaslc-examples	share

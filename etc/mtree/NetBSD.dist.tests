@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.93 2013/02/19 06:06:44 jmmv Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.94 2013/02/23 14:18:36 jmmv Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -47,6 +47,25 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write
 ./usr/libdata/debug/usr/tests/kernel/tty
+./usr/libdata/debug/usr/tests/kyua-cli
+./usr/libdata/debug/usr/tests/kyua-cli/bootstrap
+./usr/libdata/debug/usr/tests/kyua-cli/cli
+./usr/libdata/debug/usr/tests/kyua-cli/engine
+./usr/libdata/debug/usr/tests/kyua-cli/engine/drivers
+./usr/libdata/debug/usr/tests/kyua-cli/examples
+./usr/libdata/debug/usr/tests/kyua-cli/integration
+./usr/libdata/debug/usr/tests/kyua-cli/integration/helpers
+./usr/libdata/debug/usr/tests/kyua-cli/store
+./usr/libdata/debug/usr/tests/kyua-cli/utils
+./usr/libdata/debug/usr/tests/kyua-cli/utils/cmdline
+./usr/libdata/debug/usr/tests/kyua-cli/utils/config
+./usr/libdata/debug/usr/tests/kyua-cli/utils/format
+./usr/libdata/debug/usr/tests/kyua-cli/utils/fs
+./usr/libdata/debug/usr/tests/kyua-cli/utils/logging
+./usr/libdata/debug/usr/tests/kyua-cli/utils/process
+./usr/libdata/debug/usr/tests/kyua-cli/utils/signals
+./usr/libdata/debug/usr/tests/kyua-cli/utils/sqlite
+./usr/libdata/debug/usr/tests/kyua-cli/utils/text
 ./usr/libdata/debug/usr/tests/kyua-testers
 ./usr/libdata/debug/usr/tests/lib
 ./usr/libdata/debug/usr/tests/lib/csu
@@ -189,6 +208,25 @@
 ./usr/tests/kernel/kqueue/read
 ./usr/tests/kernel/kqueue/write
 ./usr/tests/kernel/tty
+./usr/tests/kyua-cli
+./usr/tests/kyua-cli/bootstrap
+./usr/tests/kyua-cli/cli
+./usr/tests/kyua-cli/engine
+./usr/tests/kyua-cli/engine/drivers
+./usr/tests/kyua-cli/examples
+./usr/tests/kyua-cli/integration
+./usr/tests/kyua-cli/integration/helpers
+./usr/tests/kyua-cli/store
+./usr/tests/kyua-cli/utils
+./usr/tests/kyua-cli/utils/cmdline
+./usr/tests/kyua-cli/utils/config
+./usr/tests/kyua-cli/utils/format
+./usr/tests/kyua-cli/utils/fs
+./usr/tests/kyua-cli/utils/logging
+./usr/tests/kyua-cli/utils/process
+./usr/tests/kyua-cli/utils/signals
+./usr/tests/kyua-cli/utils/sqlite
+./usr/tests/kyua-cli/utils/text
 ./usr/tests/kyua-testers
 ./usr/tests/lib
 ./usr/tests/lib/csu

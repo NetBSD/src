@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.109 2013/02/16 21:40:44 jmmv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.110 2013/02/23 14:18:36 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -253,6 +253,7 @@
 ./usr/share/doc/html/ntp/drivers/scripts
 ./usr/share/doc/html/ntp/icons
 ./usr/share/doc/html/ntp/scripts
+./usr/share/doc/kyua-cli
 ./usr/share/doc/psd
 ./usr/share/doc/psd/01.cacm
 ./usr/share/doc/psd/02.implement
@@ -344,6 +345,7 @@
 ./usr/share/examples/ipf
 ./usr/share/examples/isdn
 ./usr/share/examples/kerberos
+./usr/share/examples/kyua-cli
 ./usr/share/examples/libsaslc
 ./usr/share/examples/libsaslc/mech
 ./usr/share/examples/lua
@@ -434,6 +436,9 @@
 ./usr/share/keymaps/amiga
 ./usr/share/keymaps/atari
 ./usr/share/keymaps/x68k
+./usr/share/kyua-cli
+./usr/share/kyua-cli/misc
+./usr/share/kyua-cli/store
 ./usr/share/legal
 ./usr/share/locale
 ./usr/share/locale/af_ZA.ISO8859-1
