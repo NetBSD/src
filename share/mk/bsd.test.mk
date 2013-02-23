@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.22 2013/02/16 15:00:44 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.23 2013/02/23 21:20:14 jmmv Exp $
 #
 
 .include <bsd.init.mk>
@@ -7,7 +7,6 @@ _TESTS:=	# empty
 
 .if defined(TESTS_SUBDIRS)
 SUBDIR+=	${TESTS_SUBDIRS}
-_TESTS:=	${TESTS_SUBDIRS:N.WAIT}
 .endif
 
 .include <bsd.subdir.mk>
@@ -57,10 +56,12 @@ ${_T}: ${TESTS_SH_SRC_${_T}}
 ATFFILE?=	auto
 
 # Additional list of 'tp' entries to add to the Atffile when ATFFILE=auto.
+# These entries must all correspond to subdirectories to descend into.
+#
 # This is useful in the cases where the tests in a single directory come
 # from various sources (e.g. src/tests and src/external/.../tests) and
 # the installation of some of those tests rely on MK* variables being set.
-ATFFILE_EXTRA_TPS?=
+ATFFILE_EXTRA_SUBDIRS?=
 
 .if ${ATFFILE:tl} != "no"
 FILES+=			Atffile
@@ -78,7 +79,8 @@ Atffile: Makefile
 	echo; \
 	echo 'prop: test-suite = "NetBSD"'; \
 	echo; \
-	for tp in ${_TESTS} ${ATFFILE_EXTRA_TPS}; do \
+	for tp in ${TESTS_SUBDIRS:N.WAIT} ${_TESTS} ${ATFFILE_EXTRA_SUBDIRS}; \
+	do \
 	    echo "tp: $${tp}"; \
 	done; } >Atffile.tmp
 	@mv Atffile.tmp Atffile
