@@ -111,6 +111,26 @@ parse_header(FILE* input)
 }
 
 
+/// Looks for the first occurrence of any of the specified delimiters.
+///
+/// \param container String in which to look for the delimiters.
+/// \param delimiters List of delimiters to look for.
+///
+/// \return A pointer to the first occurrence of the delimiter, or NULL if
+/// there is none.
+static char*
+find_first_of(char* container, const char* delimiters)
+{
+    char* ptr = container;
+    while (*ptr != '\0') {
+        if (strchr(delimiters, *ptr) != NULL)
+            return ptr;
+        ++ptr;
+    }
+    return NULL;
+}
+
+
 /// Prints a string within single quotes, with proper escaping.
 ///
 /// \param [in,out] line The line to be printed.  This is a non-const pointer
@@ -120,15 +140,17 @@ parse_header(FILE* input)
 static void
 print_quoted(char* line, FILE* output, const bool surrounding)
 {
-    char* quote;
-
     if (surrounding)
         fprintf(output, "'");
-    while ((quote = strchr(line, '\'')) != NULL) {
-        *quote = '\0';
-        fprintf(output, "%s\\'", line);
-        line = quote + 1;
+
+    char* quoteptr;
+    while ((quoteptr = find_first_of(line, "\'\\")) != NULL) {
+        const char quote = *quoteptr;
+        *quoteptr = '\0';
+        fprintf(output, "%s\\%c", line, quote);
+        line = quoteptr + 1;
     }
+
     if (surrounding)
         fprintf(output, "%s'", line);
     else

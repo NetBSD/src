@@ -127,7 +127,7 @@ ATF_TC_BODY(parse__ok__several, tc)
         "ident: second\n"
         "\n"
         "ident: third\n"
-        "descr: A string with an embedded ' in it\n"
+        "descr: A string with an embedded ' and \\' in it\n"
         "has.cleanup: true\n"
         "X-custom: foo\n"
         "X-a'b: bar\n");
@@ -135,8 +135,8 @@ ATF_TC_BODY(parse__ok__several, tc)
         "input.txt",
         "test_case{name='first', required_user='root'}\n"
         "test_case{name='second'}\n"
-        "test_case{name='third', description='A string with an embedded \\' in"
-        " it', has_cleanup='true', ['custom.X-custom']='foo', "
+        "test_case{name='third', description='A string with an embedded \\' "
+        "and \\\\\\' in it', has_cleanup='true', ['custom.X-custom']='foo', "
         "['custom.X-a\\'b']='bar'}\n");
 }
 
