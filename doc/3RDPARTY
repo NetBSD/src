@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1005 2013/02/22 03:43:55 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1006 2013/02/23 14:24:12 jmmv Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -568,6 +568,20 @@ in sys/netinet6/in6.h.  No script is available for upgrades.
 "KAME" branch is used for kernel merge work purposes.
 http://www.kame.net/dev/cvsweb.cgi/kame/COVERAGE has functionality comparison
 among KAME/*BSD, *BSD-current and recent *BSD releases.
+
+Package:	kyua-cli
+Version:	0.6
+Current Vers:	0.6
+Maintainer:	Julio Merino <jmmv@NetBSD.org>
+Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
+Home page:	http://code.google.com/p/kyua/
+Mailing List:	kyua-discuss@googlegroups.com
+Responsible:	jmmv
+License:	BSD 3-clause
+Location:	external/bsd/kyua-cli/dist
+Notes:
+The source files are in external/bsd/kyua-cli/dist.
+Use external/bsd/kyua-cli/prepare-import.sh to regenerate the dist/ directory.
 
 Package:	kyua-testers
 Version:	0.1
