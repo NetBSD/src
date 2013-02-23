@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.1 2012/11/20 19:08:45 jkunz Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.2 2013/02/23 16:22:38 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/rnd.h>
+#include <sys/systm.h>
 #include <sys/termios.h>
 #include <sys/types.h>
 
@@ -94,11 +95,11 @@ static const struct pmap_devmap imx23_devmap[] = {
 static vm_offset_t physical_freestart;
 static vm_offset_t physical_freeend;
 static u_int free_pages;
-//static rndsave_t imx23_boot_rsp;
 
 BootConfig bootconfig;
 vm_offset_t physical_start;
 vm_offset_t physical_end;
+static char kernel_boot_args[MAX_BOOT_STRING];
 char *boot_args;
 paddr_t msgbufphys;
 
@@ -142,6 +143,9 @@ pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 #define	KERNEL_VM_BASE	(KERNEL_BASE + 0x01000000)
 #define KERNEL_VM_SIZE 	(0xf0000000 - KERNEL_VM_BASE)
 
+#define L1_PAGE_TABLE (DRAM_BASE + MEMSIZE * 1024 * 1024 - L1_TABLE_SIZE)
+#define BOOTIMX23_ARGS (L1_PAGE_TABLE - MAX_BOOT_STRING - 1)
+
 #define REG_RD(reg) *(volatile uint32_t *)(reg)
 #define REG_WR(reg, val)						\
 do {									\
@@ -163,7 +167,6 @@ initarm(void *arg)
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
 	consinit();
-	//entropy_init();
 
 	/* Talk to the user. */
 #define BDSTR(s)	_BDSTR(s)
@@ -172,7 +175,14 @@ initarm(void *arg)
 #undef BDSTR
 #undef _BDSTR
 
-	boot_args[0] = '\0';
+	/* Copy boot arguments passed from bootimx23. */
+	boot_args = (char *)BOOTIMX23_ARGS;
+	memcpy(kernel_boot_args, boot_args, MAX_BOOT_STRING);
+	boot_args = kernel_boot_args;
+#ifdef VERBOSE_INIT_ARM
+	printf("boot_args: %s\n", boot_args);
+#endif
+	parse_mi_bootargs(boot_args);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
@@ -518,38 +528,6 @@ setup_real_page_tables(void)
 
 	return;
 }
-
-/*
- * Generate initial random bits for rnd_init().
- */
-#ifdef notyet
-static void
-entropy_init(void)
-{
-	uint32_t tmp;
-	int loop, index;
-
-	/* Test if HW_DIGCTL_ENTROPY is feeding random numbers. */
-	tmp = REG_RD(HW_DIGCTL_BASE + HW_DIGCTL_ENTROPY);
-	if (tmp == REG_RD(HW_DIGCTL_BASE + HW_DIGCTL_ENTROPY))
-		return;
-
-	index = 0;
-	for (loop = 0; loop < RND_SAVEWORDS; loop++) {
-		imx23_boot_rsp.data[index++] = (uint8_t)(tmp);
-		imx23_boot_rsp.data[index++] = (uint8_t)(tmp>>8);
-		imx23_boot_rsp.data[index++] = (uint8_t)(tmp>>16);
-		imx23_boot_rsp.data[index++] = (uint8_t)(tmp>>24);
-		imx23_boot_rsp.entropy += 32;
-		tmp = REG_RD(HW_DIGCTL_BASE + HW_DIGCTL_ENTROPY);
-	}
-
-	extern rndsave_t *boot_rsp;
-	boot_rsp = &imx23_boot_rsp;
-
-	return;
-}
-#endif
 
 /*
  * Initialize console.

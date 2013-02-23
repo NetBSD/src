@@ -1,4 +1,4 @@
-/* $Id: boot_prep.c,v 1.2 2012/12/16 19:08:44 jkunz Exp $ */
+/* $Id: boot_prep.c,v 1.3 2013/02/23 16:22:39 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -62,6 +62,8 @@ _start(void)
 	
 	emi_prep();
 	printf("done.\n\r");
+
+	args_prep();
 
 	return 0;
 }
