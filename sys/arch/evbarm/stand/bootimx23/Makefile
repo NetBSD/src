@@ -1,15 +1,16 @@
-# $Id: Makefile,v 1.4 2013/02/06 07:19:19 matt Exp $
+# $Id: Makefile,v 1.5 2013/02/23 16:22:39 jkunz Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
-SRCS=		boot_prep.c power_prep.c clock_prep.c emi_prep.c \
-		pinctrl_prep.c common.c
+SRCS=		args_prep.c boot_prep.c clock_prep.c common.c emi_prep.c \
+		pinctrl_prep.c power_prep.c
 
 .include <bsd.own.mk>
 
 CLEANFILES+=	${PROG}
 CFLAGS+=	-Wall -Wno-main -ffreestanding -march=armv5te -mtune=arm926ej-s
-CPPFLAGS+=	-D_STANDALONE
+CPPFLAGS+=	-D_STANDALONE -DMEMSIZE=64
+CPPFLAGS+=	-DKERNEL_BOOT_ARGS=\"root=ld0a\"
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft
 #CPPFLAGS+=	-DDEBUG
