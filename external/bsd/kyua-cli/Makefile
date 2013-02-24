@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2013/02/23 14:16:49 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2013/02/24 03:06:15 jmmv Exp $
 
-SUBDIR= lib .WAIT share tests usr.bin
+SUBDIR= etc lib .WAIT share tests usr.bin
 
 .for dir in share tests usr.bin
 includes-${dir}: .PHONY

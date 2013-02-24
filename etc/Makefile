@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.405 2013/02/05 16:39:26 matt Exp $
+#	$NetBSD: Makefile,v 1.406 2013/02/24 03:06:13 jmmv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -334,6 +334,9 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 .endif
 .if (${MKATF} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/atf/etc/atf configinstall
+.endif
+.if (${MKKYUA} != "no")
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/kyua-cli/etc/kyua configinstall
 .endif
 
 

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.111 2013/02/23 14:58:12 jmmv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.112 2013/02/24 03:06:13 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -36,6 +36,7 @@
 ./etc/fonts/conf.avail
 ./etc/iscsi
 ./etc/kerberosV
+./etc/kyua
 ./etc/mail
 ./etc/mtree
 ./etc/namedb

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.228 2012/02/07 19:13:28 joerg Exp $
+# $NetBSD: mi,v 1.229 2013/02/24 03:06:15 jmmv Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -73,6 +73,7 @@
 ./etc/inetd.conf				etc-netutil-etc
 ./etc/iscsi/auths				etc-iscsi-etc		iscsi
 ./etc/iscsi/targets				etc-iscsi-etc		iscsi
+./etc/kyua/kyua.conf				etc-kyua-etc		kyua
 ./etc/lkm.conf					etc-obsolete		obsolete
 ./etc/localtime					etc-sys-etc
 ./etc/locate.conf				etc-sys-etc

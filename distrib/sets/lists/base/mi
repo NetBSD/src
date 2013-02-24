@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1020 2013/02/23 14:18:37 jmmv Exp $
+# $NetBSD: mi,v 1.1021 2013/02/24 03:06:14 jmmv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -99,6 +99,7 @@
 ./etc/iscsi					base-sysutil-root
 ./etc/kerberosIV				base-obsolete		obsolete
 ./etc/kerberosV					base-krb5-root
+./etc/kyua					base-kyua-root
 ./etc/mail					base-postfix-bin
 ./etc/mtree					base-sys-root
 ./etc/mtree/set.base				base-sys-root
