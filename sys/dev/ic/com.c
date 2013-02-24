@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.307 2013/01/10 17:38:10 macallan Exp $ */
+/* $NetBSD: com.c,v 1.308 2013/02/24 06:21:36 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.307 2013/01/10 17:38:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.308 2013/02/24 06:21:36 matt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -515,6 +515,7 @@ fifodone:
 	tp->t_oproc = comstart;
 	tp->t_param = comparam;
 	tp->t_hwiflow = comhwiflow;
+	tp->t_softc = sc;
 
 	sc->sc_tty = tp;
 	sc->sc_rbuf = malloc(com_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
