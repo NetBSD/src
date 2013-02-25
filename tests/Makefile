@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.43 2013/02/23 21:20:14 jmmv Exp $
+# $NetBSD: Makefile,v 1.44 2013/02/25 00:33:19 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,7 @@ ATFFILE_EXTRA_SUBDIRS+=	atf
 . endif
 
 . if ${MKKYUA} != "no"
-ATFFILE_EXTRA_SUBDIRS+=	kyua-cli kyua-testers
+ATFFILE_EXTRA_SUBDIRS+=	kyua-atf-compat kyua-cli kyua-testers
 . endif
 
 .include <bsd.test.mk>
