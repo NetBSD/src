@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.42.2.1 2012/11/20 03:02:34 tls Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.42.2.2 2013/02/25 00:29:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,8 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.42.2.1 2012/11/20 03:02:34 tls Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.42.2.2 2013/02/25 00:29:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -70,10 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.42.2.1 2012/11/20 03:02:34 tls Exp $");
 
 #include <dev/usb/if_rumreg.h>
 #include <dev/usb/if_rumvar.h>
-
-#ifdef USB_DEBUG
-#define RUM_DEBUG
-#endif
 
 #ifdef RUM_DEBUG
 #define DPRINTF(x)	do { if (rum_debug) printf x; } while (0)
@@ -330,8 +325,10 @@ rum_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	if (usbd_set_config_no(sc->sc_udev, RT2573_CONFIG_NO, 0) != 0) {
-		aprint_error_dev(self, "could not set configuration no\n");
+	error = usbd_set_config_no(sc->sc_udev, RT2573_CONFIG_NO, 0);
+	if (error != 0) {
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		return;
 	}
 
@@ -369,7 +366,7 @@ rum_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	usb_init_task(&sc->sc_task, rum_task, sc);
+	usb_init_task(&sc->sc_task, rum_task, sc, 0);
 	callout_init(&sc->sc_scan_ch, 0);
 
 	sc->amrr.amrr_min_success_threshold =  1;

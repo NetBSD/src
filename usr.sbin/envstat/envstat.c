@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.91 2012/05/11 18:41:12 njoly Exp $ */
+/* $NetBSD: envstat.c,v 1.91.2.1 2013/02/25 00:30:42 tls Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.91 2012/05/11 18:41:12 njoly Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.91.2.1 2013/02/25 00:30:42 tls Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -112,7 +112,7 @@ static int 		parse_dictionary(int);
 static int 		send_dictionary(FILE *);
 static int 		find_sensors(prop_array_t, const char *, dvprops_t);
 static void 		print_sensors(void);
-static int 		check_sensors(char *);
+static int 		check_sensors(const char *);
 static int 		usage(void);
 
 static int		sysmonfd; /* fd of /dev/sysmon */
@@ -132,17 +132,13 @@ int main(int argc, char **argv)
 	while ((c = getopt(argc, argv, "c:Dd:fIi:klrSs:Tw:Wx")) != -1) {
 		switch (c) {
 		case 'c':	/* configuration file */
-			configfile = strdup(optarg);
-			if (configfile == NULL)
-				err(EXIT_FAILURE, "strdup");
+			configfile = optarg;
 			break;
 		case 'D':	/* list registered devices */
 			flags |= ENVSYS_DFLAG;
 			break;
 		case 'd':	/* show sensors of a specific device */
-			mydevname = strdup(optarg);
-			if (mydevname == NULL)
-				err(EXIT_FAILURE, "strdup");
+			mydevname = optarg;
 			break;
 		case 'f':	/* display temperature in Farenheit */
 			flags |= ENVSYS_FFLAG;
@@ -171,9 +167,7 @@ int main(int argc, char **argv)
 			flags |= ENVSYS_SFLAG;
 			break;
 		case 's':	/* only show specified sensors */
-			sensors = strdup(optarg);
-			if (sensors == NULL)
-				err(EXIT_FAILURE, "strdup");
+			sensors = optarg;
 			break;
 		case 'T':	/* make statistics */
 			flags |= ENVSYS_TFLAG;
@@ -280,10 +274,6 @@ int main(int argc, char **argv)
 		rval = parse_dictionary(sysmonfd);
 	}
 
-	if (sensors)
-		free(sensors);
-	if (mydevname)
-		free(mydevname);
 	(void)prog_close(sysmonfd);
 
 	return rval ? EXIT_FAILURE : EXIT_SUCCESS;
@@ -437,15 +427,8 @@ parse_dictionary(int fd)
 	}
 
 	/* print sensors now */
-	if (sensors) {
-		char *str = strdup(sensors);
-		if (!str) {
-			rval = ENOMEM;
-			goto out;
-		}
-		rval = check_sensors(str);
-		free(str);
-	}
+	if (sensors)
+		rval = check_sensors(sensors);
 	if ((flags & ENVSYS_LFLAG) == 0 && (flags & ENVSYS_DFLAG) == 0)
 		print_sensors();
 	if (interval)
@@ -658,30 +641,33 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 }
 
 static int
-check_sensors(char *str)
+check_sensors(const char *str)
 {
 	sensor_t sensor = NULL;
-	char *dvstring, *sstring, *p, *last;
+	char *dvstring, *sstring, *p, *last, *s;
 	bool sensor_found = false;
+
+	if ((s = strdup(str)) == NULL)
+		return errno;
 
 	/*
 	 * Parse device name and sensor description and find out
 	 * if the sensor is valid.
 	 */
-	for ((p = strtok_r(str, ",", &last)); p;
+	for ((p = strtok_r(s, ",", &last)); p;
 	     (p = strtok_r(NULL, ",", &last))) {
 		/* get device name */
 		dvstring = strtok(p, ":");
 		if (dvstring == NULL) {
 			warnx("missing device name");
-			return EINVAL;
+			goto out;
 		}
 
 		/* get sensor description */
 		sstring = strtok(NULL, ":");
 		if (sstring == NULL) {
 			warnx("missing sensor description");
-			return EINVAL;
+			goto out;
 		}
 
 		SIMPLEQ_FOREACH(sensor, &sensors_list, entries) {
@@ -697,17 +683,21 @@ check_sensors(char *str)
 		if (sensor_found == false) {
 			warnx("unknown sensor `%s' for device `%s'",
 		       	    sstring, dvstring);
-			return EINVAL;
+			goto out;
 		}
 		sensor_found = false;
 	}
 
 	/* check if all sensors were ok, and error out if not */
 	SIMPLEQ_FOREACH(sensor, &sensors_list, entries)
-		if (sensor->visible)
+		if (sensor->visible) {
+			free(s);
 			return 0;
+		}
 
 	warnx("no sensors selected to display");
+out:
+	free(s);
 	return EINVAL;
 }
 

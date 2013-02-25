@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.31 2012/04/16 10:48:27 joerg Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.31.2.1 2013/02/25 00:28:03 tls Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -342,9 +342,9 @@ lfs_ientry(IFILE **ifpp, struct clfs *fs, ino_t ino, struct ubuf **bpp)
 
 #ifdef TEST_PATTERN
 /*
- * Check ROOTINO for file data.	 The assumption is that we are running
+ * Check UFS_ROOTINO for file data.  The assumption is that we are running
  * the "twofiles" test with the rest of the filesystem empty.  Files
- * created by "twofiles" match the test pattern, but ROOTINO and the
+ * created by "twofiles" match the test pattern, but UFS_ROOTINO and the
  * executable itself (assumed to be inode 3) should not match.
  */
 static void
@@ -950,7 +950,7 @@ static off_t
 check_hidden_cost(struct clfs *fs, BLOCK_INFO *bip, int bic, off_t *ifc)
 {
 	int start;
-	struct indir in[NIADDR + 1];
+	struct indir in[UFS_NIADDR + 1];
 	int num;
 	int i, j, ebic;
 	BLOCK_INFO *ebip;
@@ -974,7 +974,7 @@ check_hidden_cost(struct clfs *fs, BLOCK_INFO *bip, int bic, off_t *ifc)
 		}
 		if (bip[i].bi_lbn == LFS_UNUSED_LBN)
 			continue;
-		if (bip[i].bi_lbn < NDADDR)
+		if (bip[i].bi_lbn < UFS_NDADDR)
 			continue;
 
 		ufs_getlbns((struct lfs *)fs, NULL, (daddr_t)bip[i].bi_lbn, in, &num);

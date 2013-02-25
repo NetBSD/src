@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.23 2012/08/10 20:17:09 matt Exp $
+#	$NetBSD: list,v 1.23.2.1 2013/02/25 00:24:28 tls Exp $
 
 SRCDIRS	bin sbin external/bsd/less/bin usr.bin usr.sbin
 
@@ -32,12 +32,14 @@ PROG	sbin/init
 PROG	sbin/mknod
 PROG	sbin/mount
 PROG	sbin/mount_cd9660
+PROG	sbin/mount_ext2fs
 PROG	sbin/mount_ffs
 PROG	sbin/mount_kernfs
 PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/mount_tmpfs
 PROG	sbin/newfs	sbin/mount_mfs
+PROG	sbin/newfs_ext2fs
 PROG	sbin/ping
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/restore	sbin/rrestore

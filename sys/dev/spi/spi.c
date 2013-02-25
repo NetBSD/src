@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.6 2011/07/08 03:29:15 mrg Exp $ */
+/* $NetBSD: spi.c,v 1.6.12.1 2013/02/25 00:29:32 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.6 2011/07/08 03:29:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.6.12.1 2013/02/25 00:29:32 tls Exp $");
 
 #include "locators.h"
 
@@ -143,6 +143,7 @@ spi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": SPI bus\n");
 
 	sc->sc_controller = *sba->sba_controller;
+	sc->sc_nslaves = sba->sba_controller->sct_nslaves;
 	/* allocate slave structures */
 	sc->sc_slaves = malloc(sizeof (struct spi_handle) * sc->sc_nslaves,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
@@ -153,7 +154,6 @@ spi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize slave handles
 	 */
-	sc->sc_nslaves = sba->sba_controller->sct_nslaves;
 	for (i = 0; i < sc->sc_nslaves; i++) {
 		sc->sc_slaves[i].sh_slave = i;
 		sc->sc_slaves[i].sh_sc = sc;
@@ -276,6 +276,8 @@ spi_wait(struct spi_transfer *st)
 		cv_wait(&st->st_cv, &st->st_lock);
 	}
 	mutex_exit(&st->st_lock);
+	cv_destroy(&st->st_cv);
+	mutex_destroy(&st->st_lock);
 }
 
 void

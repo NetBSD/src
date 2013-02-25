@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.35 2012/03/06 03:35:30 mrg Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.35.2.1 2013/02/25 00:29:42 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.35 2012/03/06 03:35:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.35.2.1 2013/02/25 00:29:42 tls Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -196,7 +196,8 @@ usscanner_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_no(dev, USSCANNER_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, "setting config no failed\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
 

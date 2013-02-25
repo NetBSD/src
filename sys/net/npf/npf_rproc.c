@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_rproc.c,v 1.2.4.1 2012/11/20 03:02:47 tls Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.2.4.2 2013/02/25 00:30:03 tls Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -54,18 +54,26 @@ typedef struct npf_ext {
 	unsigned		ext_refcnt;
 } npf_ext_t;
 
+struct npf_rprocset {
+	LIST_HEAD(, npf_rproc)	rps_list;
+};
+
 #define	RPROC_NAME_LEN		32
 #define	RPROC_EXT_COUNT		16
 
 struct npf_rproc {
-	/* Name, reference count and flags. */
-	char			rp_name[RPROC_NAME_LEN];
-	u_int			rp_refcnt;
+	/* Flags and reference count. */
 	uint32_t		rp_flags;
+	u_int			rp_refcnt;
+
 	/* Associated extensions and their metadata . */
 	unsigned		rp_ext_count;
 	npf_ext_t *		rp_ext[RPROC_EXT_COUNT];
 	void *			rp_ext_meta[RPROC_EXT_COUNT];
+
+	/* Name of the procedure and list entry. */
+	char			rp_name[RPROC_NAME_LEN];
+	LIST_ENTRY(npf_rproc)	rp_entry;
 };
 
 static LIST_HEAD(, npf_ext)	ext_list	__cacheline_aligned;
@@ -188,6 +196,52 @@ npf_ext_construct(const char *name, npf_rproc_t *rp, prop_dictionary_t params)
  * Rule procedure management.
  */
 
+npf_rprocset_t *
+npf_rprocset_create(void)
+{
+	npf_rprocset_t *rpset;
+
+	rpset = kmem_zalloc(sizeof(npf_rprocset_t), KM_SLEEP);
+	LIST_INIT(&rpset->rps_list);
+	return rpset;
+}
+
+void
+npf_rprocset_destroy(npf_rprocset_t *rpset)
+{
+	npf_rproc_t *rp;
+
+	while ((rp = LIST_FIRST(&rpset->rps_list)) != NULL) {
+		LIST_REMOVE(rp, rp_entry);
+		npf_rproc_release(rp);
+	}
+	kmem_free(rpset, sizeof(npf_rprocset_t));
+}
+
+/*
+ * npf_rproc_lookup: find a rule procedure by the name.
+ */
+npf_rproc_t *
+npf_rprocset_lookup(npf_rprocset_t *rpset, const char *name)
+{
+	npf_rproc_t *rp;
+
+	LIST_FOREACH(rp, &rpset->rps_list, rp_entry) {
+		if (strncmp(rp->rp_name, name, RPROC_NAME_LEN) == 0)
+			break;
+	}
+	return rp;
+}
+
+/*
+ * npf_rproc_insert: insert a new rule procedure into the set.
+ */
+void
+npf_rprocset_insert(npf_rprocset_t *rpset, npf_rproc_t *rp)
+{
+	LIST_INSERT_HEAD(&rpset->rps_list, rp, rp_entry);
+}
+
 /*
  * npf_rproc_create: construct a new rule procedure, lookup and associate
  * the extension calls with it.
@@ -216,7 +270,6 @@ npf_rproc_create(prop_dictionary_t rpdict)
 void
 npf_rproc_acquire(npf_rproc_t *rp)
 {
-
 	atomic_inc_uint(&rp->rp_refcnt);
 }
 
@@ -263,6 +316,7 @@ npf_rproc_run(npf_cache_t *npc, nbuf_t *nbuf, npf_rproc_t *rp, int *decision)
 {
 	const unsigned extcount = rp->rp_ext_count;
 
+	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 	KASSERT(rp->rp_refcnt > 0);
 
 	for (unsigned i = 0; i < extcount; i++) {
@@ -271,5 +325,9 @@ npf_rproc_run(npf_cache_t *npc, nbuf_t *nbuf, npf_rproc_t *rp, int *decision)
 
 		KASSERT(ext->ext_refcnt > 0);
 		extops->proc(npc, nbuf, rp->rp_ext_meta[i], decision);
+
+		if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {
+			npf_recache(npc, nbuf);
+		}
 	}
 }

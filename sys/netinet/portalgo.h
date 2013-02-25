@@ -1,4 +1,4 @@
-/*	$NetBSD: portalgo.h,v 1.1 2012/06/25 15:28:39 christos Exp $	*/
+/*	$NetBSD: portalgo.h,v 1.1.2.1 2013/02/25 00:30:05 tls Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -35,8 +35,10 @@
 
 struct inpcb_hdr;
 int portalgo_randport(uint16_t *, struct inpcb_hdr *, kauth_cred_t);
-int sysctl_portalgo_selected(SYSCTLFN_ARGS);
+int sysctl_portalgo_selected4(SYSCTLFN_ARGS);
 int sysctl_portalgo_selected6(SYSCTLFN_ARGS);
+int sysctl_portalgo_reserve4(SYSCTLFN_ARGS);
+int sysctl_portalgo_reserve6(SYSCTLFN_ARGS);
 int sysctl_portalgo_available(SYSCTLFN_ARGS);
 int portalgo_algo_index_select(struct inpcb_hdr *, int);
 

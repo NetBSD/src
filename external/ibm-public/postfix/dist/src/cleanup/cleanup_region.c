@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_region.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: cleanup_region.c,v 1.1.1.1.16.1 2013/02/25 00:27:16 tls Exp $	*/
 
 /*++
 /* NAME
@@ -85,6 +85,7 @@
 
 #include <msg.h>
 #include <mymalloc.h>
+#include <warn_stat.h>
 
 /* Application-specific. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10 2011/10/01 15:59:27 chs Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10.12.1 2013/02/25 00:28:44 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2011/10/01 15:59:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.12.1 2013/02/25 00:28:44 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -118,6 +118,7 @@ identifycpu(struct cpu_softc *sc)
 	const char *family_name, *model_name;
 	uint64_t features, tmp;
 	int number, revision, model, family, archrev;
+	char bitbuf[32];
 	extern uint64_t processor_frequency;
 
 	/*
@@ -179,5 +180,12 @@ identifycpu(struct cpu_softc *sc)
 	aprint_normal("%s)\n", family_name);
 	aprint_normal_dev(sc->sc_dev, "Origin \"%s\",  Revision %d\n",
 	    (char *)vendor, revision);
-	aprint_normal_dev(sc->sc_dev, "Features 0x%x\n", (uint32_t)features);
+
+#define IA64_FEATURES_BITMASK "\177\020"				\
+    "b\0LB\0"	/* 'brl' instruction is implemented */			\
+    "b\1SD\0"	/* Processor implements sportaneous deferral */		\
+    "b\2AO\0"	/* Processor implements 16-byte atomic operations */	\
+    "\0"
+	snprintb(bitbuf, sizeof(bitbuf), IA64_FEATURES_BITMASK, features);
+	aprint_normal_dev(sc->sc_dev, "Features %s\n", bitbuf);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_mputmr.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: omap2_mputmr.c,v 1.4.12.1 2013/02/25 00:28:31 tls Exp $	*/
 
 /*
  * OMAP 2430 GP timers
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.4.12.1 2013/02/25 00:28:31 tls Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -317,7 +317,7 @@ calc_timer_factors(int ints_per_sec, timer_factors *tf)
 	for (;;) {
 		ptv_power = 1 << tf->ptv;
 		count_freq = OMAP_MPU_TIMER_CLOCK_FREQ;
-		count_freq /= hz;
+		count_freq /= ints_per_sec;
 		count_freq /= ptv_power;
 		tf->reload = -count_freq;
 		tf->counts_per_usec = count_freq / us_per_sec;

@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.3.8.1 2012/11/20 03:03:01 tls Exp $ */
+/* $NetBSD: conffile.c,v 1.3.8.2 2013/02/25 00:30:43 tls Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ static int Fneighbour(char*);
 static int Gneighbour(struct conf_neighbour *, char *);
 static int Fnodefault(char*);
 static int Floopdetection(char*);
+static int Fpassiveif(char*);
 
 struct conf_func {
 	char com[64];
@@ -81,6 +82,7 @@ struct conf_func main_commands[] = {
 	{ "neighbour", Fneighbour },
 	{ "no-default-route", Fnodefault },
 	{ "loop-detection", Floopdetection },
+	{ "passive-if", Fpassiveif },
 	{ "", NULL },
 };
 
@@ -94,6 +96,7 @@ conf_parsefile(char *fname)
 	char buf[LINEMAXSIZE + 1];
 
 	SLIST_INIT(&conei_head);
+	SLIST_INIT(&passifs_head);
 	conf_ldp_id.s_addr = 0;
 
 	confh = open(fname, O_RDONLY, 0);
@@ -322,5 +325,18 @@ Floopdetection(char *line)
 	if (loopd < 0)
 		return E_CONF_PARAM;
 	loop_detection = loopd;
+	return 0;
+}
+
+int
+Fpassiveif(char *line)
+{
+	struct passive_if *pif;
+
+	if (strlen(line) > IF_NAMESIZE - 1)
+		return E_CONF_PARAM;
+	pif = calloc(1, sizeof(*pif));
+	strlcpy(pif->if_name, line, IF_NAMESIZE);
+	SLIST_INSERT_HEAD(&passifs_head, pif, listentry);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.30.14.1 2012/11/20 03:03:02 tls Exp $	*/
+/*	$NetBSD: misc.c,v 1.30.14.2 2013/02/25 00:30:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: misc.c,v 1.30.14.1 2012/11/20 03:03:02 tls Exp $");
+__RCSID("$NetBSD: misc.c,v 1.30.14.2 2013/02/25 00:30:46 tls Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,6 +49,8 @@ __RCSID("$NetBSD: misc.c,v 1.30.14.1 2012/11/20 03:03:02 tls Exp $");
 #include <string.h>
 
 #include "extern.h"
+
+enum flavor	flavor = F_MTREE;
 
 typedef struct _key {
 	const char	*name;		/* key name */
@@ -74,7 +76,6 @@ static KEY keylist[] = {
 	{"nochange",	F_NOCHANGE,	0},
 	{"optional",	F_OPT,		0},
 	{"ripemd160digest", F_RMD160,	NEEDVALUE},
-	{"rmd160digest",F_RMD160,	NEEDVALUE},
 	{"rmd160",	F_RMD160,	NEEDVALUE},
 	{"rmd160digest",F_RMD160,	NEEDVALUE},
 	{"sha1",	F_SHA1,		NEEDVALUE},

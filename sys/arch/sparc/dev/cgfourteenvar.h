@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.13 2010/08/31 21:14:57 macallan Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.13.18.1 2013/02/25 00:28:57 tls Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -74,9 +74,6 @@ struct cg14_cursor {		/* cg14 hardware cursor status */
 struct cgfourteen_softc {
 	device_t	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
-#ifdef RASTERCONSOLE
-	struct fbdevice	sc_rcfb;	/* sc_fb variant for rcons */
-#endif
 	bus_space_tag_t	sc_bustag;
 	struct sbus_reg	sc_physadr[2];	/* phys addrs of h/w */
 	bus_space_handle_t sc_regh;	/* register space */
@@ -95,6 +92,10 @@ struct cgfourteen_softc {
 	const struct wsscreen_descr *sc_screens[1];
 	struct 	wsscreen_list sc_screenlist;
 	int 	sc_mode;	/* wsdisplay mode - EMUL, DUMB etc. */
+#if NSX > 0
+	struct sx_softc *sc_sx;
+	uint32_t sc_fb_paddr;
+#endif /* NSX > 0 */
 #endif
 
 	uint8_t	sc_savexlut[256];

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.39 2011/10/26 01:46:11 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.39.12.1 2013/02/25 00:28:53 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -106,7 +106,7 @@
 # define SF_LR		16
 # define SF_PARAM	SF_HEADER_SZ
 
-# define ENTRY(y)			\
+# define _ENTRY(y)			\
 	.globl	y;			\
 	.section ".opd","aw";		\
 	.align	3;			\
@@ -117,6 +117,8 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	.globl	.y;			\
 	.align	3;			\
 .y:
+
+# define ENTRY(y) _ENTRY(y)
 
 # define END(y)
 
@@ -190,7 +192,8 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 
 # ifdef CI_INTSTK
 #  define INIT_CPUINFO_INTSTK(er,tmp1)					\
-	addi	er,er,INTSTK;						\
+	addis	er,er,INTSTK@ha;					\
+	addi	er,er,INTSTK@l;						\
 	stptr	er,CI_INTSTK(tmp1)
 # else
 #  define INIT_CPUINFO_INTSTK(er,tmp1)	/* nothing */
@@ -217,7 +220,8 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	ori	%r13,%r13,_C_LABEL(lwp0)@l;				\
 	stptr	er,L_PCB(%r13);		/* XXXuvm_lwp_getuarea */	\
 	stptr	tmp1,L_CPU(%r13);	 				\
-	addi	er,er,USPACE;		/* stackpointer for lwp0 */	\
+	addis	er,er,USPACE@ha;	/* stackpointer for lwp0 */	\
+	addi	er,er,USPACE@l;		/* stackpointer for lwp0 */	\
 	addi	sp,er,-FRAMELEN-CALLFRAMELEN;	/* stackpointer for lwp0 */ \
 	stptr	sp,L_MD_UTF(%r13);	/* save in lwp0.l_md.md_utf */	\
 		/* er = end of mem reserved for kernel */		\

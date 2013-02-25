@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.4.2.1 2012/11/20 03:01:13 tls Exp $
+#	$NetBSD: BCM5301X,v 1.4.2.2 2013/02/25 00:28:34 tls Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -21,10 +21,13 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	UVMHIST
 #options 	UVMHIST_PRINT,A9WDT_PERIOD_DEFAULT=30
 options 	BCM53XX_CONSOLE_EARLY
+options 	BCMETH_COUNTERS
 #options 	MULTIPROCESSOR
 options 	CPU_CORTEXA9
+#options 	MEMSIZE=256
 options 	BCM5301
 options 	PMAPCOUNTERS
+options 	BUSDMA_COUNTERS
 
 # Architecture options
 
@@ -198,7 +201,7 @@ com*		at bcmcca? channel 1
 
 # ChipCommonB Peripherals
 bcmccb0		at mainbus?		# ChipCommonB
-bcmpax*		at bcmccb? port ? flags 1
+bcmpax*		at bcmccb? port ? flags 2 # use bounce buffers
 pci*		at bcmpax?
 ppb*		at pci? dev ? function ?
 pci*		at ppb?
@@ -283,3 +286,4 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	drvctl			# device control
+pseudo-device	lockstat		# lock profiling

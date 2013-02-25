@@ -28,7 +28,7 @@ considering. </p>
 
 <p> SMTP servers need to decide whether an SMTP client is authorized
 to send mail to remote destinations, or only to destinations that
-the server itself is responsible for.  Usually, SMTP servers allow
+the server itself is responsible for.  Usually, SMTP servers accept
 mail to remote destinations when the client's IP address is in the
 "same network" as the server's IP address.  </p>
 
@@ -155,9 +155,9 @@ Dovecot SASL implementations. </p>
 
 <strong>Note</strong>
 
-<p> Before Postfix version 2.3, Postfix had support only for Cyrus
-SASL.  Current Postfix versions have a plug-in architecture that
-can support multiple SASL implementations.  </p>
+<p> Current Postfix versions have a plug-in architecture that can
+support multiple SASL implementations. Before Postfix version 2.3,
+Postfix had support only for Cyrus SASL.  </p>
 
 </blockquote>
 
@@ -184,8 +184,13 @@ to configure and operate the Dovecot authentication server.  </p>
 
 <h4><a name="server_dovecot_comm">Postfix to Dovecot SASL communication</a></h4>
 
-<p> Communication between the Postfix SMTP server
-and Dovecot SASL happens via a UNIX-domain socket.  The socket
+<p> Communication between the Postfix SMTP server and Dovecot SASL
+happens over a UNIX-domain socket or over a TCP socket.  Dovecot 1
+supports UNIX-domain socket communication only. </p>
+
+<h5>UNIX-domain socket communication</h5>
+
+<p> The socket
 pathname and the list of mechanisms offered to Postfix need to be
 specified on the Dovecot server side in <code>dovecot.conf</code>.
 </p>
@@ -219,6 +224,46 @@ mechanisms for the Postfix SMTP server, line 10 places the Dovecot
 SASL socket in <code>/var/spool/postfix/private/auth</code>, and
 lines 11-13 limit read+write permissions to user and group
 <code>postfix</code> only. </p>
+
+<p> Proceed with the section "<a href="#server_sasl_enable">Enabling
+SASL authentication and authorization in the Postfix SMTP server</a>"
+to turn on and use SASL in the Postfix SMTP server.  </p>
+
+<h5>TCP socket communication</h5>
+
+<p> The TCP port and the list of mechanisms offered to Postfix need
+to be specified on the Dovecot server side in <code>10-auth.conf</code>
+and <code>10-master.conf</code>. </p>
+
+<p> The following examples assume that Postfix should communicate
+with Dovecot on TCP port 12345. </p>
+
+<blockquote>
+<pre>
+1 /etc/dovecot/conf.d/10-auth.conf:
+2     auth_mechanisms = plain login
+</pre>
+</blockquote>
+
+<p> Line 2 provides plain and login as mechanisms for the Postfix
+SMTP server. </p>
+
+<blockquote>
+<pre>
+1 /etc/dovecot/conf.d/10-master.conf:
+2     service auth {
+3       unix_listener auth-userdb {
+4       }
+5       inet_listener {
+6         port = 12345
+7       }
+8     }
+</pre>
+</blockquote>
+
+<p> Line 5 creates a new TCP socket and line 6 specifies port 12345
+where Dovecot SASL should wait for Postfix authentication requests.
+</p>
 
 <p> Proceed with the section "<a href="#server_sasl_enable">Enabling
 SASL authentication and authorization in the Postfix SMTP server</a>"
@@ -1098,17 +1143,20 @@ instead of <code>cyrus</code>: </p>
 </pre>
 </blockquote>
 
-<p> Additionally set the path where the Postfix SMTP server can
-find the Dovecot SASL socket: </p>
+<p> Additionally specify how Postfix SMTP server can find the Dovecot
+authentication server. This depends on the settings that you have
+selected in the section "<a href="#server_dovecot_comm">Postfix to
+Dovecot SASL communication</a>". </p>
 
-<blockquote>
+<ul>
+
+<li> <p> If you configured Dovecot for UNIX-domain socket communication,
+configure Postfix as follows: </p>
+
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_sasl_path">smtpd_sasl_path</a> = private/auth
 </pre>
-</blockquote>
-
-<blockquote>
 
 <strong>Note</strong>
 
@@ -1116,7 +1164,21 @@ find the Dovecot SASL socket: </p>
 directory, so that it will work whether or not the Postfix SMTP
 server runs chrooted. </p>
 
-</blockquote>
+<li> <p> If you configured Dovecot for TCP socket communication,
+configure Postfix as follows. If Dovecot runs on a different machine,
+replace 127.0.0.1 by that machine's IP address. </p>
+
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtpd_sasl_path">smtpd_sasl_path</a> = inet:127.0.0.1:12345
+</pre>
+
+<strong>Note</strong>
+
+<p> If you specify a remote IP address, information
+will be sent as plaintext over the network. </p>
+
+</ul>
 
 <h4><a name="server_sasl_authc">Enabling SASL authentication
 in the Postfix SMTP server</a></h4>
@@ -1490,6 +1552,43 @@ to recover from the base64-encoded form. </p>
 <p> You can use one of the following commands to generate base64
 encoded authentication information: </p>
 
+<ul>
+
+<li> <p> Using a recent version of the <b>bash</b> shell: </p>
+
+<blockquote>
+<pre>
+% <strong>echo -ne '\000username\000password' | openssl base64</strong>
+</pre>
+</blockquote>
+
+<p> Some other shells support similar syntax. </p>
+
+<li> <p> Using the <b>printf</b> command: </p>
+
+<blockquote>
+<pre>
+% <strong>printf '\0%s\0%s' '<em>username</em>' '<em>password</em>' | openssl base64</strong>
+% <strong>printf '\0%s\0%s' '<em>username</em>' '<em>password</em>' | mmencode</strong>
+</pre>
+</blockquote>
+
+<p> The <strong>mmencode</strong> command is part of the metamail
+software. </p>
+
+<li> <p> Using Perl <b>MIME::Base64</b>: </p>
+
+<blockquote>
+<pre>
+% <strong>perl -MMIME::Base64 -e \
+    'print encode_base64("\0<em>username</em>\0<em>password</em>");'</strong>
+</pre>
+</blockquote>
+
+<p> MIME::Base64 is available from <a href="http://www.cpan.org/">http://www.cpan.org/</a>. </p>
+
+<li> <p> Using the <b>gen-auth</b> script: </p>
+
 <blockquote>
 <pre>
 % <strong>gen-auth plain</strong>
@@ -1501,23 +1600,7 @@ password:
 <p> The <strong>gen-auth</strong> Perl script was written by John
 Jetmore and can be found at <a href="http://jetmore.org/john/code/gen-auth">http://jetmore.org/john/code/gen-auth</a>. </p>
 
-<blockquote>
-<pre>
-% <strong>printf '\0<em>username</em>\0<em>password</em>' | mmencode</strong>
-</pre>
-</blockquote>
-
-<p> The <strong>mmencode</strong> command is part of the metamail
-software. </p>
-
-<blockquote>
-<pre>
-% <strong>perl -MMIME::Base64 -e \
-    'print encode_base64("\0<em>username</em>\0<em>password</em>");'</strong>
-</pre>
-</blockquote>
-
-<p> MIME::Base64 is available from <a href="http://www.cpan.org/">http://www.cpan.org/</a>. </p>
+</ul>
 
 <h2><a name="client_sasl">Configuring SASL authentication in the Postfix SMTP/LMTP client</a></h2>
 
@@ -1912,7 +1995,7 @@ except for <code>GSSAPI</code> and <code>LOGIN</code>: </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtp_sasl_mechanism_filter">smtp_sasl_mechanism_filter</a> = !gssapi, !login, static:all
+    <a href="postconf.5.html#smtp_sasl_mechanism_filter">smtp_sasl_mechanism_filter</a> = !gssapi, !login, <a href="DATABASE_README.html#types">static</a>:all
 </pre>
 </blockquote>
 

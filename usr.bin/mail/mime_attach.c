@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.14 2012/04/29 23:50:22 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.14.2.1 2013/02/25 00:30:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.14 2012/04/29 23:50:22 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.14.2.1 2013/02/25 00:30:36 tls Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -224,43 +224,48 @@ is_text(const char *ctype)
 static const char *
 content_encoding_core(void *fh, const char *ctype)
 {
-	int c, lastc;
+#define MAILMSG_CLEAN	0x0
+#define MAILMSG_ENDWS	0x1
+#define MAILMSG_CTRLC	0x2
+#define MAILMSG_8BIT	0x4
+#define MAILMSG_LONGL	0x8
+	int c, lastc, state;
 	int ctrlchar, endwhite;
 	size_t curlen, maxlen;
 
+	state = MAILMSG_CLEAN;
 	curlen = 0;
-	maxlen = 0;
+	maxlen = line_limit();
 	ctrlchar = 0;
 	endwhite = 0;
 	lastc = EOF;
 	while ((c = fgetc(fh)) != EOF) {
 		curlen++;
 
-		if (c == '\0' || (lastc == '\r' && c != '\n'))
+		if (c == '\0')
 			return MIME_TRANSFER_BASE64;
 
 		if (c > 0x7f) {
-			if (is_text(ctype))
-				return MIME_TRANSFER_QUOTED;
-			else
+			if (!is_text(ctype))
 				return MIME_TRANSFER_BASE64;
+			state |= MAILMSG_8BIT;
+			continue;
 		}
 		if (c == '\n') {
 			if (is_WSP(lastc))
-				endwhite = 1;
+				state |= MAILMSG_ENDWS;
 			if (curlen > maxlen)
-				maxlen = curlen;
+				state |= MAILMSG_LONGL;
 			curlen = 0;
 		}
-		else if ((c < 0x20 && c != '\t') || c == 0x7f)
-			ctrlchar = 1;
-
+		else if ((c < 0x20 && c != '\t') || c == 0x7f || lastc == '\r')
+			state |= MAILMSG_CTRLC;
 		lastc = c;
 	}
 	if (lastc == EOF) /* no characters read */
 		return MIME_TRANSFER_7BIT;
 
-	if (lastc != '\n' || ctrlchar || endwhite || maxlen > line_limit())
+	if (lastc != '\n' || state != MAILMSG_CLEAN)
 		return MIME_TRANSFER_QUOTED;
 
 	return MIME_TRANSFER_7BIT;

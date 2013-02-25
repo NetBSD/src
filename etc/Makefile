@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.398.2.1 2012/11/20 02:57:55 tls Exp $
+#	$NetBSD: Makefile,v 1.398.2.2 2013/02/25 00:24:48 tls Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -186,40 +186,7 @@ MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 	    ${TOOL_AWK} -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 	    > ${.TARGET}
 
-RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
-		DESTDIR DISTRIBVER EXTERNAL_TOOLCHAIN HAVE_GCC HAVE_GDB \
-		INSTALLWORLDDIR \
-		KERNARCHDIR KERNCONFDIR KERNOBJDIR KERNSRCDIR \
-		MACHINE MACHINE_ARCH MAKE MAKECONF MAKEFLAGS \
-		MAKEOBJDIR MAKEOBJDIRPREFIX MAKEVERBOSE \
-		MKBFD MKBINUTILS MKCATPAGES \
-		MKCRYPTO MKCRYPTO_RC5 MKCVS \
-		MKDEBUG MKDEBUGLIB MKDOC MKDTRACE MKDYNAMICROOT \
-		MKGCC MKGCCCMDS MKGDB \
-		MKHESIOD MKHTML MKIEEEFP MKINET6 MKINFO MKIPFILTER \
-		MKKERBEROS MKLDAP MKLINKLIB MKLINT \
-		MKMAN MKMANZ MKMDNS MKNLS MKNPF MKOBJ MKOBJDIRS \
-		MKPAM MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
-		MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
-		MKUNPRIVED MKUPDATE MKX11 MKYP \
-		NBUILDJOBS NETBSDSRCDIR \
-		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
-		OBJMACHINE \
-		RELEASEDIR RELEASEMACHINEDIR TOOLCHAIN_MISSING TOOLDIR \
-		USE_HESIOD USE_INET6 USE_JEMALLOC USE_KERBEROS USE_LDAP \
-		USE_PAM USE_SKEY USE_YP \
-		USETOOLS USR_OBJMACHINE \
-		X11SRCDIR X11FLAVOUR
-
-params: .PHONY
-.for var in ${RELEASEVARS}
-.if defined(${var})
-	@printf "%20s = '%-s'\n" ${var} ${${var}:Q}
-.else
-	@printf "%20s = (undefined)\n" ${var}
-.endif
-.endfor
-
+.include "${NETBSDSRCDIR}/etc/Makefile.params"
 CLEANFILES+=	etc-release
 etc-release: .EXEC .MAKE
 	${_MKTARGET_CREATE}
@@ -231,7 +198,7 @@ etc-release: .EXEC .MAKE
 		printf "%20s   %s\n"  "Build date" "$$(date -u)"; \
 		printf "%20s   %s\n"  "Built by" "$${USER-root}@$$(hostname)"; \
 		echo ; \
-		(cd ${.CURDIR}; ${MAKE} ${MFLAGS} -j1 params); \
+		${PRINT_PARAMS} ; \
 	) >${.OBJDIR}/${.TARGET}
 
 install-etc-release: .PHONY etc-release
@@ -293,8 +260,10 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	    ${DESTDIR}/etc/master.passwd
 .if ${MKUNPRIVED} != "no"
 	( \
-		for metaent in passwd pwd.db spwd.db; do \
-	    		echo "./etc/$${metaent} type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
+		mode=0600; \
+		for metaent in spwd.db passwd pwd.db; do \
+	    		echo "./etc/$${metaent} type=file mode=$${mode} uname=root gname=wheel tags=etc_pkg"; \
+			mode=0644; \
 		done; \
 	) | ${METALOG.add}
 .endif	# MKUNPRIVED != no
@@ -366,6 +335,9 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 .if (${MKATF} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/atf/etc/atf configinstall
 .endif
+.if (${MKKYUA} != "no")
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/kyua-cli/etc/kyua configinstall
+.endif
 
 
 # install-obsolete-lists --
@@ -373,6 +345,9 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 #
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 OBSOLETE.files=		base comp etc games man misc text
+.if ${MKDEBUG} != "no"
+OBSOLETE.files+=	debug
+.endif
 .if ${MKKMOD} != "no"
 OBSOLETE.files+=	modules
 .endif
@@ -567,6 +542,7 @@ snap_post: .PHONY .MAKE build_kernelsets build_releasekernels
 # external sources (such as make(1)'s environment or command line)
 #
 ALL_KERNELS?=	${KERNEL_SETS} ${EXTRA_KERNELS} ${BUILD_KERNELS}
+.export ALL_KERNELS
 
 GETKERNELAWK=	${TOOL_AWK} '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
@@ -597,6 +573,8 @@ build_kernelsets: .PHONY
 #	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
 #
 .for configfile in ${KERNEL_SETS}					# {
+.for configsel in ${ALL_KERNELS}
+.if ${configfile} == ${configsel}
 build_kernelsets: kernset-${configfile}
 kernset-${configfile}: .PHONY build_kernels snap_pre
 	@ kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile}); \
@@ -624,6 +602,8 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 			done ) | eval $${pax_cmd}; \
 		} \
 	}
+.endif
+.endfor
 .endfor	# KERNEL_SETS							# }
 
 build_releasekernels: .PHONY
@@ -631,6 +611,8 @@ build_releasekernels: .PHONY
 #	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel
 #
 .for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}			# {
+.for configsel in ${ALL_KERNELS}
+.if ${configfile} == ${configsel}
 build_releasekernels: releasekern-${configfile}
 releasekern-${configfile}: .PHONY build_kernels snap_pre
 	@ kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}); \
@@ -649,6 +631,8 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 			done; \
 		done; \
 	}
+.endif
+.endfor
 .endfor	# KERNEL_SETS EXTRA_KERNELS					# }
 
 # snap_md_post --

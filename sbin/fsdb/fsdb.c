@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.44 2012/03/20 18:50:31 matt Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.44.2.1 2013/02/25 00:28:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.44 2012/03/20 18:50:31 matt Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.44.2.1 2013/02/25 00:28:07 tls Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -251,8 +251,8 @@ cmdloop(void)
 	HistEvent he;
 	EditLine *elptr;
 
-	curinode = ginode(ROOTINO);
-	curinum = ROOTINO;
+	curinode = ginode(UFS_ROOTINO);
+	curinum = UFS_ROOTINO;
 	printactive();
 
 	hist = history_init();
@@ -313,9 +313,9 @@ cmdloop(void)
 static ino_t ocurrent;
 
 #define GETINUM(ac,inum)    inum = strtoull(argv[ac], &cp, 0); \
-    if (inum < ROOTINO || inum >= maxino || cp == argv[ac] || *cp != '\0' ) { \
+    if (inum < UFS_ROOTINO || inum >= maxino || cp == argv[ac] || *cp != '\0' ) { \
 	printf("inode %llu out of range; range is [%llu,%llu]\n", \
-	   (unsigned long long)inum, (unsigned long long)ROOTINO, \
+	   (unsigned long long)inum, (unsigned long long)UFS_ROOTINO, \
 	   (unsigned long long)maxino); \
 	return 1; \
     }
@@ -471,16 +471,16 @@ CMDFUNC(blks)
 	}
 	printf("Direct blocks:\n");
 	if (is_ufs2)
-		print_blks64(curinode->dp2.di_db, NDADDR, &blkno);
+		print_blks64(curinode->dp2.di_db, UFS_NDADDR, &blkno);
 	else
-		print_blks32(curinode->dp1.di_db, NDADDR, &blkno);
+		print_blks32(curinode->dp1.di_db, UFS_NDADDR, &blkno);
 
 	if (is_ufs2) {
-		for (i = 0; i < NIADDR; i++)
+		for (i = 0; i < UFS_NIADDR; i++)
 			print_indirblks64(iswap64(curinode->dp2.di_ib[i]), i,
 			    &blkno);
 	} else {
-		for (i = 0; i < NIADDR; i++)
+		for (i = 0; i < UFS_NIADDR; i++)
 			print_indirblks32(iswap32(curinode->dp1.di_ib[i]), i,
 			    &blkno);
 	}
@@ -532,7 +532,7 @@ CMDFUNC(findblk)
 		else
 			inosused = sblock->fs_ipg;
 		for (; inosused > 0; inum++, inosused--) {
-			if (inum < ROOTINO)
+			if (inum < UFS_ROOTINO)
 				continue;
 			if (is_ufs2 ? compare_blk64(wantedblk64,
 			        ino_to_fsba(sblock, inum)) :
@@ -571,12 +571,12 @@ CMDFUNC(findblk)
 				continue;
 			}
 			if (is_ufs2 ?
-			    find_blks64(curinode->dp2.di_db, NDADDR,
+			    find_blks64(curinode->dp2.di_db, UFS_NDADDR,
 				wantedblk64) : 
-			    find_blks32(curinode->dp1.di_db, NDADDR,
+			    find_blks32(curinode->dp1.di_db, UFS_NDADDR,
 				wantedblk32))
 				goto end;
-			for (i = 0; i < NIADDR; i++) {
+			for (i = 0; i < UFS_NIADDR; i++) {
 				if (is_ufs2 ?
 				    compare_blk64(wantedblk64,
 					iswap64(curinode->dp2.di_ib[i])) :
@@ -881,8 +881,8 @@ CMDFUNC(focusname)
 	ocurrent = curinum;
 
 	if (argv[1][0] == '/') {
-		curinum = ROOTINO;
-		curinode = ginode(ROOTINO);
+		curinum = UFS_ROOTINO;
+		curinode = ginode(UFS_ROOTINO);
 	} else {
 		if (!checkactivedir())
 			return 1;

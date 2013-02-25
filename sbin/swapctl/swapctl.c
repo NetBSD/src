@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.37 2012/04/07 04:52:20 christos Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.37.2.1 2013/02/25 00:28:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -64,11 +64,12 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swapctl.c,v 1.37 2012/04/07 04:52:20 christos Exp $");
+__RCSID("$NetBSD: swapctl.c,v 1.37.2.1 2013/02/25 00:28:11 tls Exp $");
 #endif
 
 
 #include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/swap.h>
 #include <sys/sysctl.h>
@@ -150,6 +151,7 @@ static int	pri;		/* uses 0 as default pri */
 static	void change_priority(char *);
 static	int  add_swap(char *, int);
 static	int  delete_swap(char *);
+static	void set_dumpdev1(char *);
 static	void set_dumpdev(char *);
 static	int get_dumpdev(void);
 __dead static	void do_fstab(int);
@@ -445,8 +447,14 @@ static int
 add_swap(char *path, int priority)
 {
 	struct stat sb;
+	char buf[MAXPATHLEN];
+	char *spec;
 
-	if (stat(path, &sb) < 0)
+	if (getfsspecname(buf, sizeof(buf), path) == NULL)
+		goto oops;
+	spec = buf;
+
+	if (stat(spec, &sb) < 0)
 		goto oops;
 
 	if (sb.st_mode & S_IROTH) 
@@ -455,7 +463,7 @@ add_swap(char *path, int priority)
 		warnx("WARNING: %s is writable by the world", path);
 
 	if (fflag || oflag) {
-		set_dumpdev(path);
+		set_dumpdev1(spec);
 		if (oflag)
 			exit(0);
 		else
@@ -465,7 +473,7 @@ add_swap(char *path, int priority)
 	if (nflag)
 		return 1;
 
-	if (swapctl(SWAP_ON, path, priority) < 0) {
+	if (swapctl(SWAP_ON, spec, priority) < 0) {
 oops:
 		err(1, "%s", path);
 	}
@@ -478,31 +486,50 @@ oops:
 static int
 delete_swap(char *path)
 {
+	char buf[MAXPATHLEN];
+	char *spec;
+
+	if (getfsspecname(buf, sizeof(buf), path) == NULL)
+		err(1, "%s", path);
+	spec = buf;
 
 	if (nflag)
 		return 1;
 
-	if (swapctl(SWAP_OFF, path, pri) < 0) 
+	if (swapctl(SWAP_OFF, spec, pri) < 0) 
 		err(1, "%s", path);
 	return (1);
 }
 
 static void
-set_dumpdev(char *path)
+set_dumpdev1(char *spec)
 {
 	int rv = 0;
 
 	if (!nflag) {
-		if (strcmp(path, "none") == 0) 
+		if (strcmp(spec, "none") == 0) 
 			rv = swapctl(SWAP_DUMPOFF, NULL, 0);
 		else
-			rv = swapctl(SWAP_DUMPDEV, path, 0);
+			rv = swapctl(SWAP_DUMPDEV, spec, 0);
 	}
 
 	if (rv == -1)
-		err(1, "could not set dump device to %s", path);
+		err(1, "could not set dump device to %s", spec);
 	else
-		printf("%s: setting dump device to %s\n", getprogname(), path);
+		printf("%s: setting dump device to %s\n", getprogname(), spec);
+}
+
+static void
+set_dumpdev(char *path)
+{
+	char buf[MAXPATHLEN];
+	char *spec;
+
+	if (getfsspecname(buf, sizeof(buf), path) == NULL)
+		err(1, "%s", path);
+	spec = buf;
+
+	return set_dumpdev1(spec);
 }
 
 static int
@@ -706,7 +733,7 @@ do_fstab(int add)
 		cmd[0] = '\0';
 
 		if (strcmp(fp->fs_type, "dp") == 0 && add) {
-			set_dumpdev(spec);
+			set_dumpdev1(spec);
 			continue;
 		}
 
@@ -715,7 +742,7 @@ do_fstab(int add)
 
 		/* handle dp as mnt option */
 		if (strstr(fp->fs_mntops, "dp") && add)
-			set_dumpdev(spec);
+			set_dumpdev1(spec);
 
 		isblk = 0;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: filemon.h,v 1.3 2011/09/24 18:08:15 sjg Exp $ */
+/* $NetBSD: filemon.h,v 1.3.12.1 2013/02/25 00:29:13 tls Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -48,7 +48,7 @@ struct filemon {
 struct filemon * filemon_lookup(struct proc *);
 void filemon_output(struct filemon *, char *, size_t);
 void filemon_wrapper_install(void);
-void filemon_wrapper_deinstall(void);
+int  filemon_wrapper_deinstall(void);
 #endif
 
 #endif

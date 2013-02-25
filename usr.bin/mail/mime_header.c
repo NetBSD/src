@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_header.c,v 1.8 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: mime_header.c,v 1.8.12.1 2013/02/25 00:30:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_header.c,v 1.8 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: mime_header.c,v 1.8.12.1 2013/02/25 00:30:36 tls Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -52,68 +52,6 @@ __RCSID("$NetBSD: mime_header.c,v 1.8 2009/04/10 13:08:25 christos Exp $");
 #include "mime.h"
 #include "mime_header.h"
 #include "mime_codecs.h"
-
-/*
- * Our interface to mime_b64tobin()
- *
- * XXX - This should move to mime_codecs.c.
- */
-static ssize_t
-mime_B64_decode(char *outbuf, size_t outlen, const char *inbuf, size_t inlen)
-{
-	if (outlen < 3 * roundup(inlen, 4) / 4)
-		return -1;
-
-	return mime_b64tobin(outbuf, inbuf, inlen);
-}
-
-
-/*
- * Header specific "quoted-printable" decode!
- * Differences with body QP decoding (see rfc 2047, sec 4.2):
- * 1) '=' occurs _only_ when followed by two hex digits (FWS is not allowed).
- * 2) Spaces can be encoded as '_' in headers for readability.
- *
- * XXX - This should move to mime_codecs.c.
- */
-static ssize_t
-mime_QPh_decode(char *outbuf, size_t outlen, const char *inbuf, size_t inlen)
-{
-	const char *p, *inend;
-	char *outend;
-	char *q;
-
-	outend = outbuf + outlen;
-	inend = inbuf + inlen;
-	q = outbuf;
-	for (p = inbuf; p < inend; p++) {
-		if (q >= outend)
-			return -1;
-		if (*p == '=') {
-			p++;
-			if (p + 1 < inend) {
-				size_t c;
-				char *bufend;
-				char buf[3];
-
-				buf[0] = *p++;
-				buf[1] = *p;
-				buf[2] = '\0';
-				c = strtol(buf, &bufend, 16);
-				if (bufend != &buf[2])
-					return -1;
-				*q++ = (char)c;
-			}
-			else
-				return -1;
-		}
-		else if (*p == '_')  /* header's may encode ' ' as '_' */
-			*q++ = ' ';
-		else
-			*q++ = *p;
-	}
-	return q - outbuf;
-}
 
 static const char *
 grab_charset(char *from_cs, size_t from_cs_len, const char *p)
@@ -190,13 +128,7 @@ decode_word(const char **ibuf, char **obuf, char *oend, const char *to_cs)
 	dstend = to_cs ? decword : *obuf;
 	dstlen = (to_cs ? sizeof(decword) : (size_t)(oend - *obuf)) - 1;
 
-	if (enctype == 'B' || enctype == 'b')
-		declen = mime_B64_decode(dstend, dstlen, encword, enclen);
-	else if (enctype == 'Q' || enctype == 'q')
-		declen = mime_QPh_decode(dstend, dstlen, encword, enclen);
-	else
-		return -1;
-
+	declen = mime_rfc2047_decode(enctype, dstend, dstlen, encword, enclen);
 	if (declen == -1)
 		return -1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.44 2012/02/17 23:41:02 matt Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.44.2.1 2013/02/25 00:30:19 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.44 2012/02/17 23:41:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.44.2.1 2013/02/25 00:30:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,8 @@ uvm_init(void)
 
 	/*
 	 * Setup the kernel's virtual memory data structures.  This includes
-	 * setting up the kernel_map/kernel_object.  Bootstrap all kernel
-	 * memory allocators.
+	 * setting up the kernel_map/kernel_object.
+	 * Bootstrap all kernel memory allocators.
 	 */
 
 	uao_init();
@@ -128,9 +128,8 @@ uvm_init(void)
 	pmap_init();
 
 	/*
-	 * Init the kernel maps virtual address caches.  Make kernel memory
-	 * allocator ready for use.  After this call the pool/kmem memory
-	 * allocators can be used.
+	 * Make kernel memory allocators ready for use.
+	 * After this call the pool/kmem memory allocators can be used.
 	 */
 
 	uvm_km_init();

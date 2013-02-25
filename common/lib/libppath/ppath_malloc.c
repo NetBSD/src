@@ -1,5 +1,5 @@
-/* $NetBSD: ppath_malloc.c,v 1.1 2011/08/25 14:55:36 dyoung Exp $ */
-/* $Id: ppath_malloc.c,v 1.1 2011/08/25 14:55:36 dyoung Exp $ */
+/* $NetBSD: ppath_malloc.c,v 1.1.8.1 2013/02/25 00:24:01 tls Exp $ */
+
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$Id: ppath_malloc.c,v 1.1 2011/08/25 14:55:36 dyoung Exp $");
+__RCSID("$NetBSD: ppath_malloc.c,v 1.1.8.1 2013/02/25 00:24:01 tls Exp $");
 
 #include <stdlib.h>
 

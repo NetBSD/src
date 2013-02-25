@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.130.8.1 2012/11/20 03:02:53 tls Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.130.8.2 2013/02/25 00:30:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.130.8.1 2012/11/20 03:02:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.130.8.2 2013/02/25 00:30:15 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -382,7 +382,6 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	 */
 	if (bpp != NULL &&
 	    (error = bread(ITOV(ip), lbprev, osize, NOCRED, 0, &bp)) != 0) {
-		brelse(bp, 0);
 		return (error);
 	}
 #if defined(QUOTA) || defined(QUOTA2)
@@ -836,7 +835,7 @@ ffs_blkpref_ufs1(struct inode *ip, daddr_t lbn, int indx, int flags,
 	}
 
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
-		if (lbn < NDADDR + NINDIR(fs)) {
+		if (lbn < UFS_NDADDR + NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
 			return (cgbase(fs, cg) + fs->fs_frag);
 		}
@@ -900,7 +899,7 @@ ffs_blkpref_ufs2(struct inode *ip, daddr_t lbn, int indx, int flags,
 	}
 
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
-		if (lbn < NDADDR + NINDIR(fs)) {
+		if (lbn < UFS_NDADDR + NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
 			return (cgbase(fs, cg) + fs->fs_frag);
 		}
@@ -1070,7 +1069,8 @@ ffs_fragextend(struct inode *ip, int cg, daddr_t bprev, int osize, int nsize)
 	return (bprev);
 
  fail:
- 	brelse(bp, 0);
+ 	if (bp != NULL)
+		brelse(bp, 0);
  	mutex_enter(&ump->um_lock);
  	return (0);
 }
@@ -1182,7 +1182,8 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size, int flags)
 	return blkno;
 
  fail:
- 	brelse(bp, 0);
+ 	if (bp != NULL)
+		brelse(bp, 0);
  	mutex_enter(&ump->um_lock);
  	return (0);
 }
@@ -1466,7 +1467,6 @@ ffs_blkalloc_ump(struct ufsmount *ump, daddr_t bno, long size)
 	error = bread(ump->um_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return error;
 	}
 	cgp = (struct cg *)bp->b_data;
@@ -1577,7 +1577,6 @@ ffs_blkfree_cg(struct fs *fs, struct vnode *devvp, daddr_t bno, long size)
 	error = bread(devvp, cgblkno, (int)fs->fs_cgsize,
 	    NOCRED, B_MODIFY, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return;
 	}
 	cgp = (struct cg *)bp->b_data;
@@ -1848,7 +1847,6 @@ ffs_blkfree_snap(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	error = bread(devvp, cgblkno, (int)fs->fs_cgsize,
 	    NOCRED, B_MODIFY, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return;
 	}
 	cgp = (struct cg *)bp->b_data;
@@ -2009,7 +2007,6 @@ ffs_freefile(struct mount *mp, ino_t ino, int mode)
 	error = bread(devvp, cgbno, (int)fs->fs_cgsize,
 	    NOCRED, B_MODIFY, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return (error);
 	}
 	cgp = (struct cg *)bp->b_data;
@@ -2051,7 +2048,6 @@ ffs_freefile_snap(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 	error = bread(devvp, cgbno, (int)fs->fs_cgsize,
 	    NOCRED, B_MODIFY, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return (error);
 	}
 	cgp = (struct cg *)bp->b_data;
@@ -2135,7 +2131,6 @@ ffs_checkfreefile(struct fs *fs, struct vnode *devvp, ino_t ino)
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
 		return 1;
 	if (bread(devvp, cgbno, (int)fs->fs_cgsize, NOCRED, 0, &bp)) {
-		brelse(bp, 0);
 		return 1;
 	}
 	cgp = (struct cg *)bp->b_data;

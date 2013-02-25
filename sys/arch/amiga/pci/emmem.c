@@ -1,4 +1,4 @@
-/*	$NetBSD: emmem.c,v 1.2.4.1 2012/11/20 03:01:00 tls Exp $ */
+/*	$NetBSD: emmem.c,v 1.2.4.2 2013/02/25 00:28:22 tls Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -47,7 +47,6 @@
 #include <machine/bus.h>
 #include <machine/cpu.h>
 
-//#include <m68k/bus_dma.h>
 #include <amiga/dev/zbusvar.h>
 #include <amiga/pci/empbreg.h>
 #include <amiga/pci/emmemvar.h>
@@ -69,11 +68,14 @@ emmem_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 	switch (zap->prodid) {
-	case ZORRO_PRODID_MED1K2_MEM:
+	case ZORRO_PRODID_MED1K2_MEM:	/* Mediator 1200 family */
 	case ZORRO_PRODID_MED1K2SX_MEM:
 	case ZORRO_PRODID_MED1K2LT2_MEM:
 	case ZORRO_PRODID_MED1K2LT4_MEM:
 	case ZORRO_PRODID_MED1K2TX_MEM:
+	case ZORRO_PRODID_MEDZIV_MEM:	/* Mediator ZIV, not really yet */
+	case ZORRO_PRODID_MED4K_MEM:	/* Mediator 4000 family */
+	case ZORRO_PRODID_MED4KMKII_MEM:
 		return 1;
 	}
 
@@ -97,7 +99,7 @@ emmem_attach(device_t parent, device_t self, void *aux)
 	    zap->size / 1024);
 
 	/*
-	 * Do nothing here, empb should find the emmem devices
+	 * Do nothing here, empb or em4k should find the emmem devices
 	 * and do the right(tm) thing. 
 	 */
 

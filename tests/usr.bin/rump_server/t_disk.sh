@@ -1,4 +1,4 @@
-#	$NetBSD: t_disk.sh,v 1.4 2011/05/14 17:42:28 jmmv Exp $
+#	$NetBSD: t_disk.sh,v 1.4.10.1 2013/02/25 00:30:26 tls Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,7 +39,9 @@ test_case()
 	local name="${1}"; shift
 
 	atf_test_case "${name}" cleanup
-	eval "${name}_head() {  }"
+	eval "${name}_head() {  \
+		atf_set "require.progs" "rump_server" ; \
+	}"
 	eval "${name}_body() { \
 		${name}_prefun ; \
 		startsrv $@ ; \

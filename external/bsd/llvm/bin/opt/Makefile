@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.1 2012/11/20 02:58:00 tls Exp $
+#	$NetBSD: Makefile,v 1.3.2.2 2013/02/25 00:26:35 tls Exp $
 
 PROG_CXX=	opt
 NOMAN=		yes
@@ -13,10 +13,16 @@ SRCS=	AnalysisWrappers.cpp \
 	opt.cpp
 
 LLVM_LIBS+= \
+	ObjCARC \
 	ipo \
 	AsmParser \
 	BitReader \
 	BitWriter \
+	AArch64CodeGen \
+	AArch64TargetInfo \
+	AArch64MCTargetDesc \
+	AArch64AsmPrinter \
+	AArch64Utils \
 	ARMCodeGen \
 	ARMTargetInfo \
 	ARMMCTargetDesc \
@@ -48,7 +54,7 @@ LLVM_LIBS+= \
 	MC \
 	TransformsUtils \
 	ipa \
-	Core \
+	IR \
 	Support
 
 .include "${.PARSEDIR}/../../link.mk"

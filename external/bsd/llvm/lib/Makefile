@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24.2.1 2012/11/20 02:58:01 tls Exp $
+# $NetBSD: Makefile,v 1.24.2.2 2013/02/25 00:26:36 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ SUBDIR=	\
 	libLLVMBitReader \
 	libLLVMBitWriter \
 	libLLVMCodeGen \
-	libLLVMCore \
+	libLLVMIR \
 	libLLVMInstCombine \
 	libLLVMInstrumentation \
 	libLLVMipa \
@@ -18,6 +18,7 @@ SUBDIR=	\
 	libLLVMMC \
 	libLLVMMCDisassembler \
 	libLLVMMCParser \
+	libLLVMObjCARC \
 	libLLVMScalarOpts \
 	libLLVMSelectionDAG \
 	libLLVMSupport \
@@ -25,6 +26,7 @@ SUBDIR=	\
 	libLLVMTarget \
 	libLLVMTransformsUtils \
 	libLLVMVectorize \
+	libLLVMAArch64CodeGen \
 	libLLVMARMCodeGen \
 	libLLVMMipsCodeGen \
 	libLLVMPowerPCCodeGen \
@@ -32,6 +34,14 @@ SUBDIR=	\
 	libLLVMX86CodeGen
 
 SUBDIR+= .WAIT
+
+SUBDIR+= \
+	libLLVMAArch64AsmParser \
+	libLLVMAArch64AsmPrinter \
+	libLLVMAArch64Disassembler \
+	libLLVMAArch64MCTargetDesc \
+	libLLVMAArch64TargetInfo \
+	libLLVMAArch64Utils
 
 SUBDIR+= \
 	libLLVMARMAsmParser \
@@ -76,6 +86,7 @@ SUBDIR+= \
 	libLLVMJIT \
 	libLLVMMCJIT \
 	libLLVMObject \
+	libLLVMOption \
 	libLLVMRuntimeDyld
 .endif
 
@@ -102,8 +113,9 @@ SUBDIR+= \
 
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
-	libclangTooling \
-	libclangASTMatchers
+	libclangASTMatchers \
+	libclangFormat \
+	libclangTooling
 .endif
 
 .include <bsd.subdir.mk>

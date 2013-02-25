@@ -1,6 +1,6 @@
-.\"    $NetBSD: npf.conf.5,v 1.15.2.1 2012/11/20 03:03:03 tls Exp $
+.\"    $NetBSD: npf.conf.5,v 1.15.2.2 2013/02/25 00:30:46 tls Exp $
 .\"
-.\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 30, 2012
+.Dd January 11, 2013
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -96,6 +96,20 @@ The file should contain a list of IP addresses and/or networks in the form of:
 .Ed
 .Pp
 Tables of type "hash" can only contain IP addresses.
+.Ss Interfaces
+Interfaces can be specified as the values of the variables:
+.Pp
+.Bd -literal
+$pub_if_list = { ifnet(wm0), ifnet(wm1) }
+.Ed
+.Pp
+In the context of filtering, an interface provides a list of its
+all IP addresses, including IPv4 and IPv6.
+Specific interface addresses can be selected by the family, e.g.:
+.Bd -literal
+$pub_if4 = inet4(wm0)
+$pub_if6 = { inet6(wm0) }
+.Ed
 .Ss Groups
 Groups may have the following options: name, interface, and direction.
 They are defined in the following form:
@@ -151,7 +165,7 @@ bi-directional NAT (combination of inbound and outbound NAT)
 The following would translate the source to the IP address specified
 by the $pub_ip for the packets on the interface $ext_if.
 .Bd -literal
-map $ext_if dynamic 10.1.1.0/24 -> $pub_if
+map $ext_if dynamic 10.1.1.0/24 -> $pub_ip
 .Ed
 .Pp
 Translations are implicitly filtered by limiting the operation to the
@@ -189,7 +203,7 @@ The definition is simplified and is intended to be human readable,
 therefore it does not strictly represent the full syntax, which
 is more flexible.
 .Bd -literal
-; Syntax of a single line.  Lines can be separated by LF (\n) or
+; Syntax of a single line.  Lines can be separated by LF (\\n) or
 ; a semicolon.  Comments start with a hash (#) character.
 
 syntax		= var-def | table-def | map | group | rproc | comment
@@ -256,8 +270,8 @@ directory containing further examples
 .\" -----
 .Sh EXAMPLES
 .Bd -literal
-$ext_if = "wm0"
-$int_if = "wm1"
+$ext_if = ifnet(wm0)
+$int_if = ifnet(wm1)
 
 table <1> type hash file "/etc/npf_blacklist"
 table <2> type tree dynamic
@@ -272,11 +286,13 @@ map $ext_if dynamic 10.1.1.0/24 -> $ext_if
 map $ext_if dynamic 10.1.1.2 port 22 <- $ext_if 9022
 
 procedure "log" {
+	# Note: npf_ext_log kernel module should be loaded, if not built-in.
+	# Also, the interface created, e.g.: ifconfig npflog0 create
 	log: npflog0
 }
 
 group (name "external", interface $ext_if) {
-	pass stateful out final from $ext_if
+	pass stateful out final all
 
 	block in final from \*[Lt]1\*[Gt]
 	pass stateful in final family inet proto tcp to $ext_if port ssh apply "log"

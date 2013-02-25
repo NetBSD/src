@@ -1,4 +1,4 @@
-/*	$NetBSD: master_avail.c,v 1.1.1.3 2011/10/28 07:09:53 tron Exp $	*/
+/*	$NetBSD: master_avail.c,v 1.1.1.3.8.1 2013/02/25 00:27:20 tls Exp $	*/
 
 /*++
 /* NAME
@@ -28,15 +28,17 @@
 /*	available process, or this module causes a new process to be
 /*	created to service the request.
 /*
-/*	When the service runs out of process slots, a warning is logged.
-/*	When the service is eligible for stress-mode operation, servers
-/*	are restarted and new servers are created with stress mode enabled.
+/*	When the service runs out of process slots, and the service
+/*	is eligible for stress-mode operation, a warning is logged,
+/*	servers are asked to restart at their convenience, and new
+/*	servers are created with stress mode enabled.
 /*
 /*	master_avail_listen() ensures that someone monitors the service's
 /*	listen socket for connection requests (as long as resources
 /*	to handle connection requests are available).  This function may
-/*	be called at random. When the maximum number of servers is running,
-/*	connection requests are left in the system queue.
+/*	be called at random times, but it must be called after each status
+/*	change of a service (throttled, process limit, etc.) or child
+/*	process (taken, available, dead, etc.).
 /*
 /*	master_avail_cleanup() should be called when the named service
 /*	is taken out of operation. It terminates child processes by
@@ -44,9 +46,13 @@
 /*
 /*	master_avail_more() should be called when the named process
 /*	has become available for servicing new connection requests.
+/*	This function updates the process availability status and
+/*	counter, and implicitly calls master_avail_listen().
 /*
 /*	master_avail_less() should be called when the named process
 /*	has become unavailable for servicing new connection requests.
+/*	This function updates the process availability status and
+/*	counter, and implicitly calls master_avail_listen().
 /* DIAGNOSTICS
 /*	Panic: internal inconsistencies.
 /* BUGS
@@ -83,16 +89,10 @@ static void master_avail_event(int event, char *context)
 {
     MASTER_SERV *serv = (MASTER_SERV *) context;
     time_t  now;
-    int     n;
 
     if (event == 0)				/* XXX Can this happen? */
-	return;
-    /* XXX Should check these when the process or service status is changed. */
-    if (!MASTER_LIMIT_OK(serv->max_proc, serv->total_proc)
-	|| MASTER_THROTTLED(serv)) {		/* XXX interface botch */
-	for (n = 0; n < serv->listen_fd_count; n++)
-	    event_disable_readwrite(serv->listen_fd[n]);
-    } else {
+	msg_panic("master_avail_event: null event");
+    else {
 
 	/*
 	 * When all servers for a public internet service are busy, we start
@@ -114,50 +114,69 @@ static void master_avail_event(int event, char *context)
 	    && !MASTER_LIMIT_OK(serv->max_proc, serv->total_proc + 1)) {
 	    now = event_time();
 	    if (serv->stress_expire_time < now)
-		master_restart_service(serv);
+		master_restart_service(serv, NO_CONF_RELOAD);
 	    serv->stress_expire_time = now + 1000;
 	}
 	master_spawn(serv);
     }
 }
 
-/* master_avail_listen - make sure that someone monitors the listen socket */
+/* master_avail_listen - enforce the socket monitoring policy */
 
 void    master_avail_listen(MASTER_SERV *serv)
 {
     const char *myname = "master_avail_listen";
+    int     listen_flag;
     time_t  now;
     int     n;
 
     /*
+     * Caution: several other master_XXX modules call master_avail_listen(),
+     * master_avail_more() or master_avail_less(). To avoid mutual dependency
+     * problems, the code below invokes no code in other master_XXX modules,
+     * and modifies no data that is maintained by other master_XXX modules.
+     * 
      * When no-one else is monitoring the service's listen socket, start
      * monitoring the socket for connection requests. All this under the
      * restriction that we have sufficient resources to service a connection
      * request.
      */
     if (msg_verbose)
-	msg_info("%s: avail %d total %d max %d", myname,
+	msg_info("%s: %s avail %d total %d max %d", myname, serv->name,
 		 serv->avail_proc, serv->total_proc, serv->max_proc);
-    if (serv->avail_proc < 1 && !MASTER_THROTTLED(serv)) {
-	if (MASTER_LIMIT_OK(serv->max_proc, serv->total_proc)) {
-	    if (msg_verbose)
-		msg_info("%s: enable events %s", myname, serv->name);
-	    for (n = 0; n < serv->listen_fd_count; n++)
-		event_enable_read(serv->listen_fd[n], master_avail_event,
-				  (char *) serv);
-	} else if ((serv->flags & MASTER_FLAG_LOCAL_ONLY) == 0
-		   && serv->max_proc != 1/* XXX postscreen(8) */
-		   && (now = event_time()) - serv->busy_warn_time > 1000) {
-	    serv->busy_warn_time = now;
-	    msg_warn("service \"%s\" (%s) has reached its process limit \"%d\": "
-		     "new clients may experience noticeable delays",
-		     serv->ext_name, serv->name, serv->max_proc);
-	    msg_warn("to avoid this condition, increase the process count "
-		     "in master.cf or reduce the service time per client");
-	    if (serv->stress_param_val)
+    if (MASTER_THROTTLED(serv) || serv->avail_proc > 0) {
+	listen_flag = 0;
+    } else if (MASTER_LIMIT_OK(serv->max_proc, serv->total_proc)) {
+	listen_flag = 1;
+    } else {
+	listen_flag = 0;
+	if (serv->stress_param_val != 0) {
+	    now = event_time();
+	    if (serv->busy_warn_time < now - 1000) {
+		serv->busy_warn_time = now;
+		msg_warn("service \"%s\" (%s) has reached its process limit \"%d\": "
+			 "new clients may experience noticeable delays",
+			 serv->ext_name, serv->name, serv->max_proc);
+		msg_warn("to avoid this condition, increase the process count "
+		      "in master.cf or reduce the service time per client");
 		msg_warn("see http://www.postfix.org/STRESS_README.html for "
 		      "examples of stress-adapting configuration settings");
+	    }
 	}
+    }
+    if (listen_flag && !MASTER_LISTENING(serv)) {
+	if (msg_verbose)
+	    msg_info("%s: enable events %s", myname, serv->name);
+	for (n = 0; n < serv->listen_fd_count; n++)
+	    event_enable_read(serv->listen_fd[n], master_avail_event,
+			      (char *) serv);
+	serv->flags |= MASTER_FLAG_LISTEN;
+    } else if (!listen_flag && MASTER_LISTENING(serv)) {
+	if (msg_verbose)
+	    msg_info("%s: disable events %s", myname, serv->name);
+	for (n = 0; n < serv->listen_fd_count; n++)
+	    event_disable_readwrite(serv->listen_fd[n]);
+	serv->flags &= ~MASTER_FLAG_LISTEN;
     }
 }
 
@@ -169,8 +188,18 @@ void    master_avail_cleanup(MASTER_SERV *serv)
 
     master_delete_children(serv);		/* XXX calls
 						 * master_avail_listen */
-    for (n = 0; n < serv->listen_fd_count; n++)
-	event_disable_readwrite(serv->listen_fd[n]);	/* XXX must be last */
+
+    /*
+     * This code is redundant because master_delete_children() throttles the
+     * service temporarily before calling master_avail_listen/less(), which
+     * then turn off read events. This temporary throttling is not documented
+     * (it is only an optimization), and therefore we must not depend on it.
+     */
+    if (MASTER_LISTENING(serv)) {
+	for (n = 0; n < serv->listen_fd_count; n++)
+	    event_disable_readwrite(serv->listen_fd[n]);
+	serv->flags &= ~MASTER_FLAG_LISTEN;
+    }
 }
 
 /* master_avail_more - one more available child process */
@@ -178,9 +207,13 @@ void    master_avail_cleanup(MASTER_SERV *serv)
 void    master_avail_more(MASTER_SERV *serv, MASTER_PROC *proc)
 {
     const char *myname = "master_avail_more";
-    int     n;
 
     /*
+     * Caution: several other master_XXX modules call master_avail_listen(),
+     * master_avail_more() or master_avail_less(). To avoid mutual dependency
+     * problems, the code below invokes no code in other master_XXX modules,
+     * and modifies no data that is maintained by other master_XXX modules.
+     * 
      * This child process has become available for servicing connection
      * requests, so we can stop monitoring the service's listen socket. The
      * child will do it for us.
@@ -191,10 +224,7 @@ void    master_avail_more(MASTER_SERV *serv, MASTER_PROC *proc)
 	msg_panic("%s: process already available", myname);
     serv->avail_proc++;
     proc->avail = MASTER_STAT_AVAIL;
-    if (msg_verbose)
-	msg_info("%s: disable events %s", myname, serv->name);
-    for (n = 0; n < serv->listen_fd_count; n++)
-	event_disable_readwrite(serv->listen_fd[n]);
+    master_avail_listen(serv);
 }
 
 /* master_avail_less - one less available child process */
@@ -204,6 +234,11 @@ void    master_avail_less(MASTER_SERV *serv, MASTER_PROC *proc)
     const char *myname = "master_avail_less";
 
     /*
+     * Caution: several other master_XXX modules call master_avail_listen(),
+     * master_avail_more() or master_avail_less(). To avoid mutual dependency
+     * problems, the code below invokes no code in other master_XXX modules,
+     * and modifies no data that is maintained by other master_XXX modules.
+     * 
      * This child is no longer available for servicing connection requests.
      * When no child processes are available, start monitoring the service's
      * listen socket for new connection requests.

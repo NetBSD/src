@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_file.c,v 1.4 2012/03/21 15:55:50 christos Exp $	*/
+/*	$NetBSD: v7fs_file.c,v 1.4.2.1 2013/02/25 00:29:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_file.c,v 1.4 2012/03/21 15:55:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_file.c,v 1.4.2.1 2013/02/25 00:29:49 tls Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -76,7 +76,7 @@ v7fs_file_lookup_by_name(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
 
 	if ((q = strchr(name, '/'))) {
 		/* Zap following path. */
-		len = MIN(V7FS_NAME_MAX + 1, q - name);
+		len = MIN(V7FS_NAME_MAX, q - name);
 		memcpy(filename, name, len);
 		filename[len] = '\0';	/* '/' -> '\0' */
 	} else {

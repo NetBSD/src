@@ -1,4 +1,4 @@
-/* $NetBSD: dkscan_util.c,v 1.2 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: dkscan_util.c,v 1.2.26.1 2013/02/25 00:28:04 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <stdarg.h>
 #include <err.h>
 #include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>

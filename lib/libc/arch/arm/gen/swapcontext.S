@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.6.2.1 2012/11/20 03:00:40 tls Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.6.2.2 2013/02/25 00:27:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,15 +33,15 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.6.2.1 2012/11/20 03:00:40 tls Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.6.2.2 2013/02/25 00:27:48 tls Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
 	stmfd	sp!, {r0-r1, lr}	/* Must save oucp, ucp, lr. */
-	sub	sp, #4
+	sub	sp, sp, #4
 	bl	PIC_SYM(_C_LABEL(_getcontext), PLT)  /* getcontext(oucp) */
 	cmp	r0, #0
-	add	sp, #4
+	add	sp, sp, #4
 	ldmfd	sp!, {r0-r1, lr}
 	RETc(ne)
 	str	sp, [r0, #_UC_REGS_SP]	/* Adjust saved SP. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.33 2012/04/20 13:20:39 christos Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.33.2.1 2013/02/25 00:28:10 tls Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.33 2012/04/20 13:20:39 christos Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.33.2.1 2013/02/25 00:28:10 tls Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -138,7 +138,7 @@ static unsigned char *iflags;
 
 /* resize_ffs works directly on dinodes, adapt blksize() */
 #define dblksize(fs, dip, lbn, filesize) \
-	(((lbn) >= NDADDR || (uint64_t)(filesize) >= lblktosize(fs, (lbn) + 1)) \
+	(((lbn) >= UFS_NDADDR || (uint64_t)(filesize) >= lblktosize(fs, (lbn) + 1)) \
 	    ? (fs)->fs_bsize						       \
 	    : (fragroundup(fs, blkoff(fs, (filesize)))))
 
@@ -1127,7 +1127,7 @@ map_inode_data_blocks(union dinode * di, mark_callback_t fn)
 
 	/* Scan the direct blocks... */
 	o = 0;
-	for (b = 0; b < NDADDR; b++) {
+	for (b = 0; b < UFS_NDADDR; b++) {
 		inc = markblk(fn, di, DIP(di,di_db[b]), o);
 		if (inc == 0)
 			break;
@@ -1135,7 +1135,7 @@ map_inode_data_blocks(union dinode * di, mark_callback_t fn)
 	}
 	/* ...and the indirect blocks. */
 	if (inc) {
-		for (b = 0; b < NIADDR; b++) {
+		for (b = 0; b < UFS_NIADDR; b++) {
 			inc = markiblk(fn, di, DIP(di,di_ib[b]), o, b);
 			if (inc == 0)
 				return;
@@ -1220,7 +1220,7 @@ loadinodes(void)
 			if (is_ufs2) {
 				if (needswap) {
 					ffs_dinode2_swap(&(dp2[i]), &(dp2[i]));
-					for (j = 0; j < NDADDR + NIADDR; j++)
+					for (j = 0; j < UFS_NDADDR + UFS_NIADDR; j++)
 						dp2[i].di_db[j] =
 						    bswap32(dp2[i].di_db[j]);
 				}
@@ -1229,7 +1229,7 @@ loadinodes(void)
 			} else {
 				if (needswap) {
 					ffs_dinode1_swap(&(dp1[i]), &(dp1[i]));
-					for (j = 0; j < NDADDR + NIADDR; j++)
+					for (j = 0; j < UFS_NDADDR + UFS_NIADDR; j++)
 						dp1[i].di_db[j] =
 						    bswap32(dp1[i].di_db[j]);
 				}
@@ -1449,10 +1449,10 @@ moveblocks_callback(union dinode * di, unsigned int inum, void *arg)
 		 * Don't || these two calls; we need their
 		 * side-effects.
 		 */
-		if (movemap_blocks(dblkptr, NDADDR)) {
+		if (movemap_blocks(dblkptr, UFS_NDADDR)) {
 			iflags[inum] |= IF_DIRTY;
 		}
-		if (movemap_blocks(iblkptr, NIADDR)) {
+		if (movemap_blocks(iblkptr, UFS_NIADDR)) {
 			iflags[inum] |= IF_DIRTY;
 		}
 		break;
@@ -1517,7 +1517,7 @@ flush_inodes(void)
 	struct ufs1_dinode *dp1 = NULL;
 	struct ufs2_dinode *dp2 = NULL;
 
-	na = NDADDR + NIADDR;
+	na = UFS_NDADDR + UFS_NIADDR;
 	ni = newsb->fs_ipg * newsb->fs_ncg;
 	m = INOPB(newsb) - 1;
 	for (i = 0; i < ni; i++) {

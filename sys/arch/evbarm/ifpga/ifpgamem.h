@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgamem.h,v 1.1 2001/10/27 16:19:09 rearnsha Exp $ */
+/*	$NetBSD: ifpgamem.h,v 1.1.170.1 2013/02/25 00:28:36 tls Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -62,8 +62,13 @@
 #define IFPGA_TIMER1_IRQ		6
 #define IFPGA_TIMER2_IRQ		7
 
+#if defined(INTEGRATOR_CP)
+#define IFPGA_TIMER1_FREQ		1000000		/* 1 MHz */
+#define IFPGA_TIMER2_FREQ		1000000		/* 1 MHz */
+#else
 #define IFPGA_TIMER1_FREQ		24000000	/* 24 MHz */
 #define IFPGA_TIMER2_FREQ		24000000	/* 24 MHz */
+#endif
 
 #define IFPGA_EBI_ROM_BASE		0x20000000
 #define IFPGA_EBI_ROM_SIZE		0x04000000	/* 64MB */

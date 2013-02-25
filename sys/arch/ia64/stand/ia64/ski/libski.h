@@ -74,7 +74,7 @@ extern int		ski_boot(void);
 
 struct bootinfo;
 struct preloaded_file;
-extern int		bi_load(struct bootinfo *, struct preloaded_file *);
+extern int		bi_load(struct bootinfo *, struct preloaded_file *, char *args);
 
 #define SSC_CONSOLE_INIT		20
 #define SSC_GETCHAR			21

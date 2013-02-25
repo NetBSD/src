@@ -1,4 +1,4 @@
-/*	$NetBSD: edit_file.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: edit_file.c,v 1.1.1.1.16.1 2013/02/25 00:27:31 tls Exp $	*/
 
 /*++
 /* NAME
@@ -156,6 +156,7 @@
 #include <stringops.h>
 #include <myflock.h>
 #include <edit_file.h>
+#include <warn_stat.h>
 
  /*
   * Do we reuse and truncate an output file that persists after a crash, or

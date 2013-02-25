@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.158.2.1 2012/11/20 03:00:57 tls Exp $
+# $NetBSD: DRACO,v 1.158.2.2 2013/02/25 00:28:21 tls Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.101 2012/06/07 23:30:52 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.110 2013/01/29 21:04:55 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.158.2.1 $"
+#ident 		"GENERIC-$Revision: 1.158.2.2 $"
 
 
 maxusers	8
@@ -306,6 +306,7 @@ qn*		at zbus0		# Quicknet
 xsurf*		at zbus0		# X-Surf
 ne*		at xsurfbus?		# NE2000 chip on X-Surf
 gencp*		at xsurfbus?		# clockports on X-Surf
+wdc*		at xsurfbus?		# IDE on X-Surf
 clockport*	at gencp?
 
 # Arcnet

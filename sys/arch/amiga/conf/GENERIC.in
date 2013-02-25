@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.103.2.1 2012/11/20 03:00:57 tls Exp $
+# $NetBSD: GENERIC.in,v 1.103.2.2 2013/02/25 00:28:21 tls Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.103.2.1 $"
+#ident 		"GENERIC-$Revision: 1.103.2.2 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -330,6 +330,9 @@ m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 ')m4_dnl
 
 m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
+#z3rambd*	at zbus0		# Zorro III RAM block devices
+#altmem*	at z3rambd?
+
 p5bus0		at zbus0		# Phase5 CSPPC/BPPC internal bus
 
 grfcc0		at mainbus0		# custom chips
@@ -466,6 +469,7 @@ qn*		at zbus0		# Quicknet
 xsurf*		at zbus0		# X-Surf
 ne*		at xsurfbus?		# NE2000 chip on X-Surf
 gencp*		at xsurfbus?		# clockports on X-Surf
+wdc*		at xsurfbus?		# IDE on X-Surf
 clockport*	at gencp?
 
 # Arcnet
@@ -525,6 +529,7 @@ wdc*		at zbus0		# Buddha / Catweasel
 
 atabus* 	at wdc? channel ?	# ATA bus
 #atabus*	at efa? channel ?	# ATA bus 
+atabus*		at ata? channel ?	# ATA bus 
 wd*		at atabus? drive ?	#  + drives
 atapibus*	at atabus?		# ATAPI bus
 cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
@@ -532,19 +537,21 @@ sd*		at atapibus? drive ?	# ATAPI disk drives
 
 pccard0		at mainbus0
 pcmcia*		at pccard0
-com*		at pcmcia? function ?		# Modems and serial cards
-pcmcom*		at pcmcia? function ?		# PCMCIA multi-port serial cards
-aic*		at pcmcia? function ?		# Adaptec APA-1460 SCSI
+com*		at pcmcia? function ?	# Modems and serial cards
+pcmcom*		at pcmcia? function ?	# PCMCIA multi-port serial cards
+aic*		at pcmcia? function ?	# Adaptec APA-1460 SCSI
 wdc*		at pcmcia? function ?
-awi*		at pcmcia? function ?		# BayStack 650 (802.11FH)
-ep*		at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
-mbe*		at pcmcia? function ?		# MB8696x based Ethernet
-ne*		at pcmcia? function ?		# NE2000-compatible Ethernet
-sm*		at pcmcia? function ?		# Megahertz Ethernet
+awi*		at pcmcia? function ?	# BayStack 650 (802.11FH)
+ep*		at pcmcia? function ?	# 3Com 3c589 and 3c562 Ethernet
+mbe*		at pcmcia? function ?	# MB8696x based Ethernet
+ne*		at pcmcia? function ?	# NE2000-compatible Ethernet
+sm*		at pcmcia? function ?	# Megahertz Ethernet
 mhzc*		at pcmcia? function ?	# Megahertz Ethernet/Modem combo cards
 com*		at mhzc?
 sm*		at mhzc?
 
+nsphyter*	at mii? phy ?		# NS83843 PHYs
+ukphy*		at mii? phy ?		# generic unknown PHYs
 ')m4_dnl
 
 m4_ifdef(`DRACO_CONFIGURATION', `m4_dnl
@@ -580,8 +587,11 @@ mppb*           at zbus0		# Matay Prometheus Zorro-PCI bridge
 pci*            at mppb?
 
 empb0		at zbus0		# ELBOX Mediator PCI 1200
+em4k0		at zbus0		# ELBOX Mediator PCI 4000
 emmem0		at zbus0		# ELBOX Mediator PCI memory space
+empm0		at empb0		# ELBOX Mediator PCI Power Management
 pci*		at empb0
+pci*		at em4k0
 
 #cv3dpb*	at zbus0		# CyberVision 64/3D PCI bridge
 

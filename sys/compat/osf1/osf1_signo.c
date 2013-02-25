@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signo.c,v 1.1 2002/03/31 22:22:48 christos Exp $	*/
+/*	$NetBSD: osf1_signo.c,v 1.1.162.1 2013/02/25 00:29:09 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signo.c,v 1.1 2002/03/31 22:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signo.c,v 1.1.162.1 2013/02/25 00:29:09 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
 
 #include <compat/osf1/osf1.h>
-#include <compat/osf1/osf1_cvt.h>
 
 /*
  * These tables are used to translate between NetBSD and OSF/1 signal

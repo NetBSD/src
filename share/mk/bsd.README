@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.300.2.1 2012/11/20 03:00:52 tls Exp $
+#	$NetBSD: bsd.README,v 1.300.2.2 2013/02/25 00:28:16 tls Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -113,8 +113,11 @@ MAKEVERBOSE	Control how "verbose" the standard make(1) rules are.
 		    3	Ignore the effect of the "@" prefix in make commands
 		    4	Trace shell commands using the shell's -x flag
 
-MKATF		If "no", don't build libatf-c, libatf-c++ libraries associated
-		with the Automated Testing Framework (ATF).
+MKATF		If "no", don't build the Automated Testing Framework (ATF),
+		which includes the libatf-c, libatf-c++ and libatf-sh libraries
+		and the various command line tools.  Also, because the build of
+		the libraries is disabled, don't build the NetBSD test suite
+		either.
 		Default: yes
 
 MKBFD		Obsolete, use MKBINUTILS
@@ -226,6 +229,12 @@ MKKERBEROS	If "no", disables building of Kerberos v5
 MKKMOD		If "no", disables building of kernel modules.
 		Default: yes
 
+MKKYUA		If "no", don't build Kyua nor its dependent library Lutok.
+		Note that setting this to "no" does not disable the build of
+		the NetBSD test suite itself; the build of the tests is
+		controlled by the MKATF knob.
+		Default: no (until the import is done and validated)
+
 MKLDAP		If "no", disables building of LDAP infrastructure
 		(libraries and support programs).
 		Default: yes
@@ -329,6 +338,10 @@ MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
 MKSKEY		If "no", disables building of S/key authentication
 		infrastructure (libraries and support programs).
 		Default: yes
+
+MKSLJIT		If "no", disables buildin of sljit (stack-less platform
+		independent JIT compiler) private library and tests.
+		Default: yes on amd64, i386 and sparc, no elsewhere.
 
 MKSOFTFLOAT	If not "no", build with options to enable the compiler to
 		generate output containing library calls for floating
@@ -624,6 +637,10 @@ COPY		The flag passed to the install program to cause the binary
 		can either be installed with copies, or with moves using
 		a single knob.  [-c]
 
+MAKEDIRTARGETENV
+		Environment variables passed to the child make process
+		invoked by MAKEDIRTARGET.
+
 MAKEDIRTARGET dir target [params]
 		Runs "cd $${dir} && ${MAKE} [params] $${target}",
 		displaying a "pretty" message whilst doing so.
@@ -789,6 +806,8 @@ TOOL_MKLOCALE		Make LC_CTYPE locale files.  [mklocale]
 
 TOOL_MKMAGIC		Create database for file(1).  [file]
 
+TOOL_MKNOD		Make device special file.  [mknod]
+
 TOOL_MKTEMP		Make (unique) temporary file name.  [mktemp]
 
 TOOL_MSGC		Simple message list compiler.  [msgc]
@@ -904,6 +923,11 @@ or CLEANDIRFILES variables.  For example:
 
 	    .include <bsd.clean.mk>
 
+The files listed in CLEANFILES and CLEANDIRFILES must not be
+directories, because the potential risk from running "rm -rf" commands
+in bsd.clean.mk is considered too great.  If you want to recursively
+delete a directory as part of "make clean" or "make cleandir" then you
+need to provide your own target.
 
 =-=-=-=-=   bsd.dep.mk   =-=-=-=-=
 
@@ -1481,6 +1505,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBLDAP?=	${DESTDIR}/usr/lib/libldap.a
 		LIBLDAP_R?=	${DESTDIR}/usr/lib/libldap_r.a
 		LIBLUA?=	${DESTDIR}/usr/lib/liblua.a
+		LIBLUTOK?=	${DESTDIR}/usr/lib/liblutok.a
 		LIBLWRES?=	${DESTDIR}/usr/lib/liblwres.a
 		LIBM?=		${DESTDIR}/usr/lib/libm.a
 		LIBMAGIC?=	${DESTDIR}/usr/lib/libmagic.a

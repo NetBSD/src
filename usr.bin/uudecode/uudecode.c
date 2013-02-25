@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.26 2011/09/06 18:44:26 joerg Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.26.8.1 2013/02/25 00:30:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.26 2011/09/06 18:44:26 joerg Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.26.8.1 2013/02/25 00:30:40 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -67,30 +67,33 @@ __RCSID("$NetBSD: uudecode.c,v 1.26 2011/09/06 18:44:26 joerg Exp $");
 #include <resolv.h>
 #endif
 
-static int decode(void);
+static int decode(char *);
 __dead static void usage(void);
 static int checkend(const char *, const char *, const char *);
 static int base64_decode(void);
 
-static int base64, pflag;
-static const char *filename;
+static int base64;
+static const char *inputname;
 
 int
 main(int argc, char *argv[])
 {
 	int ch, rval;
+	char *outputname = NULL;
 
 	setlocale(LC_ALL, "");
 	setprogname(argv[0]);
 
-	pflag = 0;
-	while ((ch = getopt(argc, argv, "mp")) != -1)
+	while ((ch = getopt(argc, argv, "mo:p")) != -1)
 		switch (ch) {
 		case 'm':
 			base64 = 1;
 			break;
+		case 'o':
+			outputname = optarg;
+			break;
 		case 'p':
-			pflag = 1;
+			outputname = __UNCONST("/dev/stdout");
 			break;
 		default:
 			usage();
@@ -101,22 +104,26 @@ main(int argc, char *argv[])
 	if (*argv) {
 		rval = 0;
 		do {
-			if (!freopen(filename = *argv, "r", stdin)) {
+			if (!freopen(inputname = *argv, "r", stdin)) {
 				warn("%s", *argv);
 				rval = 1;
 				continue;
 			}
-			rval |= decode();
+			rval |= decode(outputname);
 		} while (*++argv);
 	} else {
-		filename = "stdin";
-		rval = decode();
+		inputname = "stdin";
+		rval = decode(outputname);
 	}
 	exit(rval);
 }
 
+/*
+ * Decode one file from stdin.  If outputname is not NULL
+ * then it overrides the file name embedded in the input data.
+ */
 static int
-decode(void)
+decode(char *outputname)
 {
 	struct passwd *pw;
 	int n;
@@ -129,7 +136,7 @@ decode(void)
 	/* search for header line */
 	for (;;) {
 		if (!fgets(buf, sizeof(buf), stdin)) {
-			warnx("%s: no \"%s\" line", filename, base64 ? 
+			warnx("%s: no \"%s\" line", inputname, base64 ? 
 					"begin-base64" : "begin");
 			return(1);
 		}
@@ -149,14 +156,14 @@ decode(void)
 	mode = strtol(p, &fn, 8);
 	if (fn == (p) || !isspace((unsigned char)*fn) || mode==LONG_MIN || mode==LONG_MAX)
 	{
-	        warnx("%s: invalid mode on \"%s\" line", filename,
+	        warnx("%s: invalid mode on \"%s\" line", inputname,
 			base64 ? "begin-base64" : "begin");
 		return(1);
 	}
 	/* skip whitespace for file name */
 	while (*fn && isspace((unsigned char)*fn)) fn++;
 	if (*fn == 0) {
-                warnx("%s: no filename on \"%s\" line", filename,
+                warnx("%s: no filename on \"%s\" line", inputname,
 			base64 ? "begin-base64" : "begin");
 		return(1);
 	}
@@ -164,22 +171,26 @@ decode(void)
 	for (p = fn; *p && *p != '\n'; p++) 
 	        ;
 	if (*p) *p = 0;
+
+	/* outputname overrides fn */
+	if (outputname)
+		fn = outputname;
 	
 	/* handle ~user/file format */
 	if (*fn == '~') {
 		if (!(p = strchr(fn, '/'))) {
-			warnx("%s: illegal ~user.", filename);
+			warnx("%s: illegal ~user.", inputname);
 			return(1);
 		}
 		*p++ = '\0';
 		if (!(pw = getpwnam(fn + 1))) {
-			warnx("%s: no user %s.", filename, buf);
+			warnx("%s: no user %s.", inputname, buf);
 			return(1);
 		}
 		n = strlen(pw->pw_dir);
 		n1 = strlen(p);
 		if (n + n1 + 2 > MAXPATHLEN) {
-			warnx("%s: path too long.", filename);
+			warnx("%s: path too long.", inputname);
 			return(1);
 		}
 		/* make space at beginning of buf by moving end of pathname */
@@ -189,11 +200,29 @@ decode(void)
 		fn = buf;
 	}
 
-	/* create output file, set mode */
-	if (!pflag && (!freopen(fn, "w", stdout) ||
-	    fchmod(fileno(stdout), mode & 0666))) { 
-		warn("%s: %s", fn, filename);
-		return(1);
+	if (strcmp(fn, "/dev/stdout") == 0 || strcmp(fn, "-") == 0) {
+		/*
+		 * POSIX.1-2008 says that both "-" and "/dev/stdout"
+		 * refer to standard output when they appear in the file
+		 * header, but only "/dev/stdout" refers to standard
+		 * output when it appears as the argument to the "-o"
+		 * command line option.
+		 *
+		 * We handle both special names, regardless of whether
+		 * they came from the "-o" option or from the header of
+		 * the input stream.
+		 */
+	} else {
+		/*
+		 * Create output file, and set its mode.  POSIX.1-2008
+		 * requires the mode to be used exactly, ignoring the
+		 * umask and anything else, but we mask it with 0666.
+		 */
+		if (freopen(fn, "w", stdout) == NULL ||
+		    fchmod(fileno(stdout), mode & 0666) != 0) { 
+			warn("%s: %s", fn, inputname);
+			return(1);
+		}
 	}
 
 	if (base64)
@@ -202,7 +231,7 @@ decode(void)
 		/* for each input line */
 		for (;;) {
 			if (!fgets(p = buf, sizeof(buf), stdin)) {
-				warnx("%s: short file.", filename);
+				warnx("%s: short file.", inputname);
 				return(1);
 			}
 #define	DEC(c)	(((c) - ' ') & 077)		/* single character decode */
@@ -237,7 +266,7 @@ decode(void)
 				}
 		}
 		if (!fgets(buf, sizeof(buf), stdin) || strcmp(buf, "end\n")) {
-			warnx("%s: no \"end\" line.", filename);
+			warnx("%s: no \"end\" line.", inputname);
 			return(1);
 		}
 		return(0);
@@ -267,11 +296,11 @@ base64_decode(void)
 
 	for (;;) {
 		if (!fgets(inbuf, sizeof(inbuf), stdin)) {
-			warnx("%s: short file.", filename);
+			warnx("%s: short file.", inputname);
 			return (1);
 		}
 #ifdef NO_BASE64
-		warnx("%s: base64 decoding is not supported", filename);
+		warnx("%s: base64 decoding is not supported", inputname);
 		return (1);
 #else
 		n = b64_pton(inbuf, outbuf, sizeof(outbuf));
@@ -287,7 +316,8 @@ base64_decode(void)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-m | -p] [encoded-file ...]\n",
+	(void)fprintf(stderr,
+		      "usage: %s [-m] [-p | -o outfile] [encoded-file ...]\n",
 		      getprogname());
 	exit(1);
 }

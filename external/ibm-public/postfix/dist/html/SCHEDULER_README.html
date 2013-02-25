@@ -18,6 +18,15 @@ Queue Scheduler</h1>
 
 <hr>
 
+<h2> Disclaimer </h2>
+
+<p> Many of the <i>transport</i>-specific configuration parameters
+discussed in this document will not show up in "postconf" command
+output before Postfix version 2.9. This limitation applies to many
+parameters whose name is a combination of a <a href="master.5.html">master.cf</a> service name
+such as "relay" and a built-in suffix such as
+"_destination_concurrency_limit". </p>
+
 <h2> Overview </h2>
 
 <p> The queue manager is by far the most complex part of the Postfix
@@ -278,12 +287,12 @@ slow-downs by queue file I/O, logging I/O, and network I/O.
 
 <li> Concurrency was limited by the server process limit
 ("<a href="postconf.5.html#default_process_limit">default_process_limit</a> = 5" and "<a href="postconf.5.html#smtpd_client_event_limit_exceptions">smtpd_client_event_limit_exceptions</a>
-= static:all"). Postfix was stopped and started after changing the
+= <a href="DATABASE_README.html#types">static</a>:all"). Postfix was stopped and started after changing the
 process limit, because the same number is also used as the backlog
 argument to the listen(2) system call, and "postfix reload" does
 not re-issue this call.
 
-<li> Mail was discarded with "<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> = static:all" and
+<li> Mail was discarded with "<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> = <a href="DATABASE_README.html#types">static</a>:all" and
 "<a href="postconf.5.html#local_transport">local_transport</a> = discard". The discard action in access maps or
 header/body checks
 could not be used as it fails to update the <a href="postconf.5.html#in_flow_delay">in_flow_delay</a> counters.

@@ -1,4 +1,4 @@
-/*	$NetBSD: make_dirs.c,v 1.1.1.2 2011/03/02 19:32:44 tron Exp $	*/
+/*	$NetBSD: make_dirs.c,v 1.1.1.2.10.1 2013/02/25 00:27:32 tls Exp $	*/
 
 /*++
 /* NAME
@@ -47,6 +47,7 @@
 #include "mymalloc.h"
 #include "stringops.h"
 #include "make_dirs.h"
+#include "warn_stat.h"
 
 /* make_dirs - create directory hierarchy */
 

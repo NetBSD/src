@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.134 2012/01/15 20:43:24 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.134.6.1 2013/02/25 00:30:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.134 2012/01/15 20:43:24 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.134.6.1 2013/02/25 00:30:34 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -2675,7 +2675,7 @@ setoption(int argc, char *argv[])
 		return;
 	}
 
-#define	OPTIONINDENT ((int) sizeof("http_proxy"))
+#define	OPTIONINDENT ((int) sizeof("https_proxy"))
 	if (argc == 1) {
 		for (o = optiontab; o->name != NULL; o++) {
 			fprintf(ttyout, "%-*s\t%s\n", OPTIONINDENT,

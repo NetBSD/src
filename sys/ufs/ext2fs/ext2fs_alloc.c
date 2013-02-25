@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.42 2011/03/06 04:46:26 rmind Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.42.14.1 2013/02/25 00:30:13 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.42 2011/03/06 04:46:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.42.14.1 2013/02/25 00:30:13 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref,
 	bno = (daddr_t)ext2fs_hashalloc(ip, cg, bpref, fs->e2fs_bsize,
 	    ext2fs_alloccg);
 	if (bno > 0) {
-		ip->i_e2fs_nblock += btodb(fs->e2fs_bsize);
+		ext2fs_setnblock(ip, ext2fs_nblock(ip) + btodb(fs->e2fs_bsize));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bnp = bno;
 		return (0);
@@ -359,7 +359,6 @@ ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 		fs->e2fs_gd[cg].ext2bgd_b_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return (0);
 	}
 	bbp = (char *)bp->b_data;
@@ -446,7 +445,6 @@ ext2fs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 		fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return (0);
 	}
 	ibp = (char *)bp->b_data;
@@ -514,7 +512,6 @@ ext2fs_blkfree(struct inode *ip, daddr_t bno)
 		fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_b_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return;
 	}
 	bbp = (char *)bp->b_data;
@@ -558,7 +555,6 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 		fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return (0);
 	}
 	ibp = (char *)bp->b_data;

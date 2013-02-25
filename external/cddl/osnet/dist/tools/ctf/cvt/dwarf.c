@@ -767,7 +767,9 @@ die_enum_create(dwarf_t *dw, Dwarf_Die die, Dwarf_Off off, tdesc_t *tdp)
 
 	debug(3, "die %llu: creating enum\n", off);
 
-	tdp->t_type = ENUM;
+	tdp->t_type = (die_isdecl(dw, die) ? FORWARD : ENUM);
+	if (tdp->t_type != ENUM)
+		return;
 
 	(void) die_unsigned(dw, die, DW_AT_byte_size, &uval, DW_ATTR_REQ);
 	/* Check for bogus gcc DW_AT_byte_size attribute */

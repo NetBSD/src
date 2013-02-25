@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.22.6.1 2012/11/20 03:01:53 tls Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.22.6.2 2013/02/25 00:29:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.22.6.1 2012/11/20 03:01:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.22.6.2 2013/02/25 00:29:07 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -58,13 +58,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.22.6.1 2012/11/20 03:01:53 tls Ex
 #include <sys/aio.h>
 #include <sys/poll.h>
 #include <sys/syscallargs.h>
+#include <sys/sysctl.h>
 #include <sys/resource.h>
 
 #include <compat/common/compat_util.h>
+#include <compat/common/compat_mod.h>
 #include <compat/sys/time.h>
 #include <compat/sys/timex.h>
 #include <compat/sys/resource.h>
 #include <compat/sys/clockctl.h>
+
+struct timeval50 boottime50; 
 
 int
 compat_50_sys_clock_gettime(struct lwp *l,
@@ -705,4 +709,20 @@ compat_50_sys_wait4(struct lwp *l, const struct compat_50_sys_wait4_args *uap,
 		error = copyout(&status, SCARG(uap, status), sizeof(status));
 
 	return error;
+}
+
+void
+compat_sysctl_time(struct sysctllog **clog)
+{
+	struct timeval tv;
+
+	TIMESPEC_TO_TIMEVAL(&tv, &boottime);
+	timeval_to_timeval50(&tv, &boottime50);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT, 
+		CTLTYPE_STRUCT, "oboottime", 
+		SYSCTL_DESCR("System boot time"),
+		NULL, 0, &boottime50, sizeof(boottime50),
+		CTL_KERN, KERN_OBOOTTIME, CTL_EOL);
 }

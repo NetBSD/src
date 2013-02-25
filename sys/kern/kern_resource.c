@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.169.2.1 2012/11/20 03:02:42 tls Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.169.2.2 2013/02/25 00:29:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.169.2.1 2012/11/20 03:02:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.169.2.2 2013/02/25 00:29:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 	mutex_enter(proc_lock);
 	switch (SCARG(uap, which)) {
 	case PRIO_PROCESS:
-		p = who ? proc_find(who) : curp;;
+		p = who ? proc_find(who) : curp;
 		if (p != NULL)
 			low = p->p_nice;
 		break;
@@ -409,20 +409,21 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 			vaddr_t addr;
 			vsize_t size;
 			vm_prot_t prot;
+			char *base, *tmp;
 
+			base = p->p_vmspace->vm_minsaddr;
 			if (limp->rlim_cur > alimp->rlim_cur) {
 				prot = VM_PROT_READ | VM_PROT_WRITE;
 				size = limp->rlim_cur - alimp->rlim_cur;
-				addr = (vaddr_t)p->p_vmspace->vm_minsaddr -
-				    limp->rlim_cur;
+				tmp = STACK_GROW(base, alimp->rlim_cur);
 			} else {
 				prot = VM_PROT_NONE;
 				size = alimp->rlim_cur - limp->rlim_cur;
-				addr = (vaddr_t)p->p_vmspace->vm_minsaddr -
-				     alimp->rlim_cur;
+				tmp = STACK_GROW(base, limp->rlim_cur);
 			}
+			addr = (vaddr_t)STACK_ALLOC(tmp, size);
 			(void) uvm_map_protect(&p->p_vmspace->vm_map,
-			    addr, addr+size, prot, false);
+			    addr, addr + size, prot, false);
 		}
 		break;
 

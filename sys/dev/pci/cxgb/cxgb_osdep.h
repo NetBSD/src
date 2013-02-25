@@ -116,10 +116,6 @@ static inline void critical_exit(void)
 {
 }
 
-static inline void device_printf(device_t d, ...)
-{
-}
-
 int atomic_fetchadd_int(volatile int *p, int v);
 #if 0
 int atomic_add_int(volatile int *p, int v);
@@ -174,26 +170,6 @@ struct cxgb_attach_args
 
 #define INT3 __asm("int $3")
 
-static inline struct mbuf *
-m_defrag(struct mbuf *m0, int flags)
-{
-        struct mbuf *m;
-        MGETHDR(m, flags, MT_DATA);
-        if (m == NULL)
-                return NULL;
-
-        M_COPY_PKTHDR(m, m0);
-        MCLGET(m, flags);
-        if ((m->m_flags & M_EXT) == 0) {
-                m_free(m);
-                return NULL;
-        }
-        m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
-        m->m_len = m->m_pkthdr.len;
-        return m;
-}
-
-
 typedef struct adapter adapter_t;
 struct sge_rspq;
 
@@ -214,8 +190,6 @@ struct t3_mbuf_hdr {
 
 #define if_name(ifp) (ifp)->if_xname
 #define M_SANITY(m, n)
-
-#define __read_mostly __section(".data.read_mostly")
 
 /*
  * Workaround for weird Chelsio issue

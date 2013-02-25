@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.5.2.1 2012/11/20 03:02:52 tls Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.5.2.2 2013/02/25 00:30:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -435,7 +435,7 @@ chfs_root(struct mount *mp, struct vnode **vpp)
 	struct vnode *vp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)ROOTINO, &vp)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)UFS_ROOTINO, &vp)) != 0)
 		return error;
 	*vpp = vp;
 	return 0;

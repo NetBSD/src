@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.24.2.1 2012/11/20 03:02:40 tls Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.24.2.2 2013/02/25 00:29:47 tls Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -47,17 +47,26 @@
  * October 1992
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.24.2.1 2012/11/20 03:02:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.24.2.2 2013/02/25 00:29:47 tls Exp $");
 
 #include <sys/param.h>
+
+#ifdef _KERNEL
 #include <sys/systm.h>
+#include <sys/mount.h>
+#include <sys/kauth.h>
 #include <sys/namei.h>
+#include <sys/dirent.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/dirent.h>
-#include <sys/kauth.h>
+#else
+#include <ffs/buf.h>
+#endif /* _KERNEL */
 
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/direntry.h>
@@ -65,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.24.2.1 2012/11/20 03:02:40 tls 
 #include <fs/msdosfs/msdosfsmount.h>
 #include <fs/msdosfs/fat.h>
 
+
+#ifdef _KERNEL
 /*
  * When we search a directory the blocks containing directory entries are
  * read and examined.  The directory entries contain information that would
@@ -224,7 +235,6 @@ msdosfs_lookup(void *v)
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
 		    0, &bp);
 		if (error) {
-			brelse(bp, 0);
 			return (error);
 		}
 		for (blkoff = 0; blkoff < blsize;
@@ -560,6 +570,7 @@ foundroot:
 
 	return 0;
 }
+#endif /* _KERNEL */
 
 /*
  * dep  - directory entry to copy into the directory
@@ -573,13 +584,17 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 {
 	int error, rberror;
 	u_long dirclust, clusoffset;
-	u_long fndoffset, havecnt=0, wcnt=1;
+	u_long fndoffset, havecnt = 0, wcnt = 1, i;
 	struct direntry *ndep;
 	struct msdosfsmount *pmp = ddep->de_pmp;
 	struct buf *bp;
 	daddr_t bn;
-	int blsize, i;
+	int blsize;
+#ifdef _KERNEL
 	int async = ddep->de_pmp->pm_mountp->mnt_flag & MNT_ASYNC;
+#else
+#define async 0
+#endif
 
 #ifdef MSDOSFS_DEBUG
 	printf("createde(dep %p, ddep %p, depp %p, cnp %p)\n",
@@ -623,7 +638,6 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 		clusoffset &= pmp->pm_crbomask;
 	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
 	    B_MODIFY, &bp)) != 0) {
-		brelse(bp, 0);
 		goto err_norollback;
 	}
 	ndep = bptoep(pmp, bp, clusoffset);
@@ -662,7 +676,6 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 				error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
 				    blsize, NOCRED, B_MODIFY, &bp);
 				if (error) {
-					brelse(bp, 0);
 					goto rollback;
 				}
 				ndep = bptoep(pmp, bp,
@@ -714,13 +727,12 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 		goto err_norollback;
 	if ((rberror = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
 	    B_MODIFY, &bp)) != 0) {
-		brelse(bp, 0);
 		goto err_norollback;
 	}
 	ndep = bptoep(pmp, bp, clusoffset);
 
 	havecnt = ddep->de_fndcnt + 1;
-	for(i=wcnt; i <= havecnt; i++) {
+	for(i = wcnt; i <= havecnt; i++) {
 		/* mark entry as deleted */
 		ndep->deName[0] = SLOT_DELETED;
 
@@ -743,7 +755,6 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 			rberror = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
 			    blsize, NOCRED, B_MODIFY, &bp);
 			if (rberror) {
-				brelse(bp, 0);
 				goto err_norollback;
 			}
 			ndep = bptoep(pmp, bp, fndoffset);
@@ -792,7 +803,6 @@ dosdirempty(struct denode *dep)
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
 		    0, &bp);
 		if (error) {
-			brelse(bp, 0);
 			return (0);
 		}
 		for (dentp = (struct direntry *)bp->b_data;
@@ -946,7 +956,6 @@ readep(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct buf *
 	bn = detobn(pmp, dirclust, diroffset);
 	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
 	    0, bpp)) != 0) {
-		brelse(*bpp, 0);
 		*bpp = NULL;
 		return (error);
 	}
@@ -987,7 +996,11 @@ removede(struct denode *pdep, struct denode *dep)
 	int blsize;
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	u_long offset = pdep->de_fndoffset;
+#ifdef _KERNEL
 	int async = pdep->de_pmp->pm_mountp->mnt_flag & MNT_ASYNC;
+#else
+#define async 0
+#endif
 
 #ifdef MSDOSFS_DEBUG
 	printf("removede(): filename %s, dep %p, offset %08lx\n",
@@ -1004,7 +1017,6 @@ removede(struct denode *pdep, struct denode *dep)
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
 		    B_MODIFY, &bp);
 		if (error) {
-			brelse(bp, 0);
 			return error;
 		}
 		ep = bptoep(pmp, bp, offset);
@@ -1078,7 +1090,6 @@ uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 			    NOCRED, 0, &bp);
 			if (error) {
-				brelse(bp, 0);
 				return error;
 			}
 			for (dentp = (struct direntry *)bp->b_data;
@@ -1129,7 +1140,6 @@ findwin95(struct denode *dep)
 			return win95;
 		if (bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
 		    0, &bp)) {
-			brelse(bp, 0);
 			return win95;
 		}
 		for (dentp = (struct direntry *)bp->b_data;

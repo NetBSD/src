@@ -1,20 +1,15 @@
-#	$NetBSD: std.integrator,v 1.15.54.1 2012/11/20 03:01:13 tls Exp $
+#	$NetBSD: std.integrator,v 1.15.54.2 2013/02/25 00:28:35 tls Exp $
 #
 # standard NetBSD/integrator options
 
 machine	evbarm arm
-include		"conf/std"	# MI standard options
-include		"arch/arm/conf/std.arm"	# arch standard options
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in Integrator config definitions.
-include "arch/evbarm/conf/files.integrator"
+include		"arch/evbarm/conf/files.integrator"
 
 options 	EXEC_AOUT
-options 	EXEC_SCRIPT
-options 	EXEC_ELF32
 
-# To support easy transit to ../arch/arm/arm32
-options 	ARM32
 options 	_ARM32_NEED_BUS_DMA_BOUNCE
 
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.120 2011/12/10 05:53:58 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.120.6.1 2013/02/25 00:30:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.120 2011/12/10 05:53:58 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.120.6.1 2013/02/25 00:30:35 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,6 +126,7 @@ __RCSID("$NetBSD: main.c,v 1.120 2011/12/10 05:53:58 lukem Exp $");
 
 #define	FTP_PROXY	"ftp_proxy"	/* env var with FTP proxy location */
 #define	HTTP_PROXY	"http_proxy"	/* env var with HTTP proxy location */
+#define	HTTPS_PROXY	"https_proxy"	/* env var with HTTPS proxy location */
 #define	NO_PROXY	"no_proxy"	/* env var with list of non-proxied
 					 * hosts, comma or space separated */
 
@@ -150,6 +151,9 @@ main(int volatile argc, char **volatile argv)
 
 	ftpport = "ftp";
 	httpport = "http";
+#ifdef WITH_SSL
+	httpsport = "https";
+#endif
 	gateport = NULL;
 	cp = getenv("FTPSERVERPORT");
 	if (cp != NULL)
@@ -485,6 +489,7 @@ main(int volatile argc, char **volatile argv)
 	setupoption("anonpass",		getenv("FTPANONPASS"),	anonpass);
 	setupoption("ftp_proxy",	getenv(FTP_PROXY),	"");
 	setupoption("http_proxy",	getenv(HTTP_PROXY),	"");
+	setupoption("https_proxy",	getenv(HTTPS_PROXY),	"");
 	setupoption("no_proxy",		getenv(NO_PROXY),	"");
 	setupoption("pager",		getenv("PAGER"),	DEFAULTPAGER);
 	setupoption("prompt",		getenv("FTPPROMPT"),	DEFAULTPROMPT);
@@ -1044,6 +1049,9 @@ usage(void)
 "           [[user@]host [port]] [host:path[/]] [file:///file]\n"
 "           [ftp://[user[:pass]@]host[:port]/path[/]]\n"
 "           [http://[user[:pass]@]host[:port]/path] [...]\n"
+#ifdef WITH_SSL
+"           [https://[user[:pass]@]host[:port]/path] [...]\n"
+#endif
 "       %s -u URL file [...]\n", progname, progname);
 	exit(1);
 }

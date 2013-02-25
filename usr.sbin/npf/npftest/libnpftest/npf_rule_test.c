@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rule_test.c,v 1.2 2012/08/21 20:52:11 rmind Exp $	*/
+/*	$NetBSD: npf_rule_test.c,v 1.2.2.1 2013/02/25 00:30:47 tls Exp $	*/
 
 /*
  * NPF ruleset test.
@@ -78,33 +78,65 @@ static int
 npf_rule_raw_test(bool verbose, struct mbuf *m, ifnet_t *ifp, int di)
 {
 	npf_cache_t npc = { .npc_info = 0 };
+	nbuf_t nbuf;
 	npf_rule_t *rl;
 	int retfl, error;
 
-	npf_core_enter();
-	rl = npf_ruleset_inspect(&npc, m, npf_core_ruleset(),
-	    ifp, di, NPF_LAYER_3);
+	nbuf_init(&nbuf, m, ifp);
+	npf_cache_all(&npc, &nbuf);
+
+	int slock = npf_config_read_enter();
+	rl = npf_ruleset_inspect(&npc, &nbuf, npf_config_ruleset(),
+	    di, NPF_LAYER_3);
 	if (rl) {
 		if (verbose) {
 			npf_rulenc_dump(rl);
 		}
-		error = npf_rule_apply(&npc, m, rl, &retfl);
+		error = npf_rule_conclude(rl, &retfl);
 	} else {
-		npf_core_exit();
 		error = ENOENT;
 	}
+	npf_config_read_exit(slock);
 	return error;
+}
+
+static int
+npf_test_first(bool verbose)
+{
+	const struct test_case *t = &test_cases[0];
+	ifnet_t *ifp = ifunit(t->ifname);
+	int error;
+
+	struct mbuf *m = fill_packet(t);
+	error = npf_rule_raw_test(verbose, m, ifp, t->di);
+	m_freem(m);
+	return error;
+}
+
+static npf_rule_t *
+npf_blockall_rule(void)
+{
+	prop_dictionary_t rldict;
+
+	rldict = prop_dictionary_create();
+	prop_dictionary_set_uint32(rldict, "attributes",
+	    NPF_RULE_IN | NPF_RULE_OUT | NPF_RULE_DYNAMIC);
+	return npf_rule_alloc(rldict);
 }
 
 bool
 npf_rule_test(bool verbose)
 {
+	npf_ruleset_t *rlset;
+	npf_rule_t *rl;
 	bool fail = false;
+	uint64_t id;
+	int error;
 
 	for (unsigned i = 0; i < __arraycount(test_cases); i++) {
 		const struct test_case *t = &test_cases[i];
 		ifnet_t *ifp = ifunit(t->ifname);
-		int serror, error;
+		int serror;
 
 		if (ifp == NULL) {
 			printf("Interface %s is not configured.\n", t->ifname);
@@ -126,5 +158,28 @@ npf_rule_test(bool verbose)
 		}
 		fail |= (serror != t->stateful_ret || error != t->ret);
 	}
+
+	error = npf_test_first(verbose);
+	assert(error == RESULT_PASS);
+
+	npf_config_enter();
+	rlset = npf_config_ruleset();
+
+	rl = npf_blockall_rule();
+	error = npf_ruleset_add(rlset, "test-rules", rl);
+	fail |= error != 0;
+
+	error = npf_test_first(verbose);
+	fail |= (error != RESULT_BLOCK);
+
+	id = npf_rule_getid(rl);
+	error = npf_ruleset_remove(rlset, "test-rules", id);
+	fail |= error != 0;
+
+	npf_config_exit();
+
+	error = npf_test_first(verbose);
+	fail |= (error != RESULT_PASS);
+
 	return !fail;
 }

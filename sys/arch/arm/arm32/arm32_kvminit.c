@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.3.2.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.3.2.2 2013/02/25 00:28:23 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.3.2.1 2012/11/20 03:01:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.3.2.2 2013/02/25 00:28:23 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -372,6 +372,10 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	const size_t cpu_num = 1;
 #endif
 
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	KASSERT(mapallmem_p);
+#endif
+
 	/*
 	 * Calculate the number of L2 pages needed for mapping the
 	 * kernel + data + stuff.  Assume 2 L2 pages for kernel, 1 for vectors,
@@ -386,7 +390,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    + UND_STACK_SIZE + UPAGES) * PAGE_SIZE;
 	kernel_size += round_page(MSGBUFSIZE);
 	kernel_size += 0x10000;	/* slop */
-	kernel_size += (kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
+	kernel_size += PAGE_SIZE * (kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
 	kernel_size = round_page(kernel_size);
 
 	/*

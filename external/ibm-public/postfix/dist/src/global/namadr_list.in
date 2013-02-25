@@ -1,4 +1,6 @@
 ./namadr_list 168.100.189.0/28 dummy 168.100.189.2
+./namadr_list '!168.100.189.2 168.100.189.0/28' dummy 168.100.189.2
+./namadr_list '!168.100.189.2 168.100.189.0/28' dummy 168.100.189.3
 ./namadr_list 168.100.189.0/28 dummy 168.100.189.16
 ./namadr_list 168.100.189.0/98 dummy 168.100.189.16
 ./namadr_list 168.100.589.0/28 dummy 168.100.189.16
@@ -15,15 +17,15 @@
 ./namadr_list 168.100.189.2 dummy 168.100.189.3
 ./namadr_list '[168.100.189.2]' dummy 168.100.189.2
 ./namadr_list '[168.100.189.2]' dummy 168.100.189.3
-echo foo !bar baz >junk
-./namadr_list !`pwd`/junk dummy 168.100.189.3
-./namadr_list !`pwd`/junk foo 168.100.189.3
-./namadr_list !`pwd`/junk bar 168.100.189.3
-./namadr_list !`pwd`/junk baz 168.100.189.3
-./namadr_list `pwd`/junk dummy 168.100.189.3
-./namadr_list `pwd`/junk foo 168.100.189.3
-./namadr_list `pwd`/junk bar 168.100.189.3
-./namadr_list `pwd`/junk baz 168.100.189.3
+echo foo !bar baz >junk; mv junk /tmp
+./namadr_list !/tmp/junk dummy 168.100.189.3
+./namadr_list !/tmp/junk foo 168.100.189.3
+./namadr_list !/tmp/junk bar 168.100.189.3
+./namadr_list !/tmp/junk baz 168.100.189.3
+./namadr_list /tmp/junk dummy 168.100.189.3
+./namadr_list /tmp/junk foo 168.100.189.3
+./namadr_list /tmp/junk bar 168.100.189.3
+./namadr_list /tmp/junk baz 168.100.189.3
 rm -f junk
 ./namadr_list 'be.be' x.x.x 127.0.0.1
 ./namadr_list 'be/be' x.x.x 127.0.0.1
@@ -35,3 +37,6 @@ env foo=x ./namadr_list !environ:junk foo 168.100.189.3
 env foo=x ./namadr_list !environ:junk bar 168.100.189.3
 env foo=x ./namadr_list !!environ:junk foo 168.100.189.3
 env foo=x ./namadr_list !!environ:junk bar 168.100.189.3
+./namadr_list fail:1 bar 168.100.189.3
+./namadr_list !fail:1 bar 168.100.189.3
+./namadr_list /tmp/nosuchfile bar 168.100.189.3

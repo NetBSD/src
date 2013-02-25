@@ -80,4 +80,5 @@ postmulti.o: ../../include/vbuf.h
 postmulti.o: ../../include/vstream.h
 postmulti.o: ../../include/vstring.h
 postmulti.o: ../../include/vstring_vstream.h
+postmulti.o: ../../include/warn_stat.h
 postmulti.o: postmulti.c

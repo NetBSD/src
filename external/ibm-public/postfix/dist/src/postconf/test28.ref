@@ -1,0 +1,10 @@
+config_directory = .
+db = memcache
+foo_domain = bar
+header_checks = ldap:hh
+hh_domain = whatever
+yy = aap
+zz_domain = whatever
+./postconf: warning: ./main.cf: unused parameter: zz=$yy
+./postconf: warning: ./main.cf: unused parameter: aa_domain=whatever
+./postconf: warning: ./main.cf: unused parameter: xx=proxy:ldap:foo

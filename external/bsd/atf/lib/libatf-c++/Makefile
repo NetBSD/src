@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2012/07/15 00:05:51 abs Exp $
+# $NetBSD: Makefile,v 1.16.2.1 2013/02/25 00:24:56 tls Exp $
 
 NOLINT=		# defined
 
@@ -40,12 +40,14 @@ SRCS=		application.cpp \
 		process.cpp \
 		tests.cpp \
 		text.cpp \
-		ui.cpp
+		ui.cpp \
+		utils.cpp
 
 INCS=		build.hpp \
 		check.hpp \
 		config.hpp \
 		macros.hpp \
+		noncopyable.hpp \
 		tests.hpp \
 		utils.hpp
 INCSDIR=	/usr/include/atf-c++
@@ -61,7 +63,7 @@ FILESDIR=	/usr/lib/pkgconfig
 
 realall: atf-c++.pc
 atf-c++.pc: Makefile atf-c++.pc.in
-	${TOOL_SED} -e 's,__ATF_VERSION__,0.16,g' \
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.17,g' \
 	    -e 's,__CXX__,g++,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \

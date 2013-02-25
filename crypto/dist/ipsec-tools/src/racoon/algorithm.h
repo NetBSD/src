@@ -1,4 +1,4 @@
-/*	$NetBSD: algorithm.h,v 1.5 2006/10/06 12:02:27 manu Exp $	*/
+/*	$NetBSD: algorithm.h,v 1.5.50.1 2013/02/25 00:24:02 tls Exp $	*/
 
 /* Id: algorithm.h,v 1.10 2005/04/09 16:25:23 manubsd Exp */
 
@@ -69,6 +69,7 @@ enum algtype {
 	algtype_rc4,
 	algtype_null_enc,
 	algtype_aes,
+	algtype_aesgcm16,
 	algtype_twofish,
 	algtype_camellia,
 

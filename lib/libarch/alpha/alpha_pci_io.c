@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_pci_io.c,v 1.6 2012/03/22 08:54:48 he Exp $	*/
+/*	$NetBSD: alpha_pci_io.c,v 1.6.2.1 2013/02/25 00:27:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 
+#include <machine/alpha_cpu.h>
 #include <machine/bwx.h>
 #include <machine/sysarch.h>
 #include <machine/pio.h>

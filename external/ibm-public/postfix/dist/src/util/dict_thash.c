@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_thash.c,v 1.1.1.1 2011/03/02 19:32:42 tron Exp $	*/
+/*	$NetBSD: dict_thash.c,v 1.1.1.1.12.1 2013/02/25 00:27:31 tls Exp $	*/
 
 /*++
 /* NAME
@@ -51,6 +51,7 @@
 #include <readlline.h>
 #include <dict.h>
 #include <dict_thash.h>
+#include <warn_stat.h>
 
 /* Application-specific. */
 
@@ -59,7 +60,7 @@ typedef struct {
     HTABLE *table;			/* in-memory hash */
     HTABLE_INFO **info;			/* for iterator */
     HTABLE_INFO **cursor;		/* ditto */
-}       DICT_THASH;
+} DICT_THASH;
 
 #define STR	vstring_str
 
@@ -69,8 +70,6 @@ static const char *dict_thash_lookup(DICT *dict, const char *name)
 {
     DICT_THASH *dict_thash = (DICT_THASH *) dict;
     const char *result = 0;
-
-    dict_errno = 0;
 
     /*
      * Optionally fold the key.
@@ -87,7 +86,7 @@ static const char *dict_thash_lookup(DICT *dict, const char *name)
      */
     result = htable_find(dict_thash->table, name);
 
-    return (result);
+    DICT_ERR_VAL_RETURN(dict, DICT_ERR_NONE, result);
 }
 
 /* dict_thash_sequence - traverse the dictionary */
@@ -121,9 +120,11 @@ static int dict_thash_sequence(DICT *dict, int function,
     if (dict_thash->cursor[0]) {
 	*key = dict_thash->cursor[0]->key;
 	*value = dict_thash->cursor[0]->value;
-	return (0);
+	DICT_ERR_VAL_RETURN(dict, DICT_ERR_NONE, DICT_STAT_SUCCESS);
     } else {
-	return (1);
+	*key = 0;
+	*value = 0;
+	DICT_ERR_VAL_RETURN(dict, DICT_ERR_NONE, DICT_STAT_FAIL);
     }
 }
 
@@ -150,41 +151,34 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
     struct stat st;
     time_t  before;
     time_t  after;
-    VSTRING *line_buffer = vstring_alloc(100);
+    VSTRING *line_buffer = 0;
     int     lineno;
     char   *key;
     char   *value;
+    HTABLE *table;
     HTABLE_INFO *ht;
 
     /*
      * Sanity checks.
      */
     if (open_flags != O_RDONLY)
-	msg_fatal("%s:%s map requires O_RDONLY access mode",
-		  DICT_TYPE_THASH, path);
-
-    /*
-     * Create the in-memory table.
-     */
-    dict_thash = (DICT_THASH *)
-	dict_alloc(DICT_TYPE_THASH, path, sizeof(*dict_thash));
-    dict_thash->dict.lookup = dict_thash_lookup;
-    dict_thash->dict.sequence = dict_thash_sequence;
-    dict_thash->dict.close = dict_thash_close;
-    dict_thash->dict.flags = dict_flags | DICT_FLAG_DUP_WARN | DICT_FLAG_FIXED;
-    if (dict_flags & DICT_FLAG_FOLD_FIX)
-	dict_thash->dict.fold_buf = vstring_alloc(10);
-    dict_thash->info = 0;
+	return (dict_surrogate(DICT_TYPE_THASH, path, open_flags, dict_flags,
+			       "%s:%s map requires O_RDONLY access mode",
+			       DICT_TYPE_THASH, path));
 
     /*
      * Read the flat text file into in-memory hash. Read the file again if it
      * may have changed while we were reading.
      */
     for (before = time((time_t *) 0); /* see below */ ; before = after) {
-	if ((fp = vstream_fopen(path, open_flags, 0644)) == 0)
-	    msg_fatal("open database %s: %m", path);
+	if ((fp = vstream_fopen(path, open_flags, 0644)) == 0) {
+	    return (dict_surrogate(DICT_TYPE_THASH, path, open_flags, dict_flags,
+				   "open database %s: %m", path));
+	}
+	if (line_buffer == 0)
+	    line_buffer = vstring_alloc(100);
 	lineno = 0;
-	dict_thash->table = htable_create(13);
+	table = htable_create(13);
 	while (readlline(line_buffer, fp, &lineno)) {
 
 	    /*
@@ -216,20 +210,20 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 	    /*
 	     * Optionally fold the key.
 	     */
-	    if (dict_thash->dict.flags & DICT_FLAG_FOLD_FIX)
+	    if (dict_flags & DICT_FLAG_FOLD_FIX)
 		lowercase(key);
 
 	    /*
 	     * Store the value under the key. Handle duplicates
 	     * appropriately.
 	     */
-	    if ((ht = htable_locate(dict_thash->table, key)) != 0) {
-		if (dict_thash->dict.flags & DICT_FLAG_DUP_IGNORE) {
+	    if ((ht = htable_locate(table, key)) != 0) {
+		if (dict_flags & DICT_FLAG_DUP_IGNORE) {
 		     /* void */ ;
-		} else if (dict_thash->dict.flags & DICT_FLAG_DUP_REPLACE) {
+		} else if (dict_flags & DICT_FLAG_DUP_REPLACE) {
 		    myfree(ht->value);
 		    ht->value = mystrdup(value);
-		} else if (dict_thash->dict.flags & DICT_FLAG_DUP_WARN) {
+		} else if (dict_flags & DICT_FLAG_DUP_WARN) {
 		    msg_warn("%s, line %d: duplicate entry: \"%s\"",
 			     path, lineno, key);
 		} else {
@@ -237,7 +231,7 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 			      path, lineno, key);
 		}
 	    } else {
-		htable_enter(dict_thash->table, key, mystrdup(value));
+		htable_enter(table, key, mystrdup(value));
 	    }
 	}
 
@@ -255,12 +249,28 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 	/*
 	 * Yes, it is hot. Discard the result and read the file again.
 	 */
-	htable_free(dict_thash->table, myfree);
+	htable_free(table, myfree);
 	if (msg_verbose > 1)
 	    msg_info("pausing to let file %s cool down", path);
 	doze(300000);
     }
     vstring_free(line_buffer);
+
+    /*
+     * Create the in-memory table.
+     */
+    dict_thash = (DICT_THASH *)
+	dict_alloc(DICT_TYPE_THASH, path, sizeof(*dict_thash));
+    dict_thash->dict.lookup = dict_thash_lookup;
+    dict_thash->dict.sequence = dict_thash_sequence;
+    dict_thash->dict.close = dict_thash_close;
+    dict_thash->dict.flags = dict_flags | DICT_FLAG_DUP_WARN | DICT_FLAG_FIXED;
+    if (dict_flags & DICT_FLAG_FOLD_FIX)
+	dict_thash->dict.fold_buf = vstring_alloc(10);
+    dict_thash->info = 0;
+    dict_thash->table = table;
+    dict_thash->dict.owner.uid = st.st_uid;
+    dict_thash->dict.owner.status = (st.st_uid != 0);
 
     return (DICT_DEBUG (&dict_thash->dict));
 }

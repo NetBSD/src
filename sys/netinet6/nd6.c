@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.143 2012/06/23 03:14:04 christos Exp $	*/
+/*	$NetBSD: nd6.c,v 1.143.2.1 2013/02/25 00:30:05 tls Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.143 2012/06/23 03:14:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.143.2.1 2013/02/25 00:30:05 tls Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1144,7 +1144,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 	uint8_t namelen = strlen(ifp->if_xname), addrlen = ifp->if_addrlen;
 	struct ifaddr *ifa;
 
-	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+	RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 
 	if (req == RTM_LLINFO_UPD) {
 		int rc;
@@ -1179,7 +1179,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		return;
 
 	if (nd6_need_cache(ifp) == 0 && (rt->rt_flags & RTF_HOST) == 0) {
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		/*
 		 * This is probably an interface direct route for a link
 		 * which does not need neighbor caches (e.g. fe80::%lo0/64).
@@ -1193,7 +1193,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 	if (req == RTM_RESOLVE &&
 	    (nd6_need_cache(ifp) == 0 || /* stf case */
 	     !nd6_is_addr_neighbor(satocsin6(rt_getkey(rt)), ifp))) {
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		/*
 		 * FreeBSD and BSD/OS often make a cloned host route based
 		 * on a less-specific route (e.g. the default route).
@@ -1214,7 +1214,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 
 	switch (req) {
 	case RTM_ADD:
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		/*
 		 * There is no backward compatibility :)
 		 *
@@ -1244,14 +1244,14 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			}
 			rt_setgate(rt, &u.sa);
 			gate = rt->rt_gateway;
-			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+			RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 			if (ln != NULL)
 				nd6_llinfo_settimer(ln, 0);
-			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+			RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 			if ((rt->rt_flags & RTF_CLONING) != 0)
 				break;
 		}
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		/*
 		 * In IPv4 code, we try to annonuce new RTF_ANNOUNCE entry here.
 		 * We don't do that here since llinfo is not ready yet.
@@ -1282,7 +1282,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		/* FALLTHROUGH */
 	case RTM_RESOLVE:
 		if ((ifp->if_flags & (IFF_POINTOPOINT | IFF_LOOPBACK)) == 0) {
-			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+			RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 			/*
 			 * Address resolution isn't necessary for a point to
 			 * point link, so we can skip this test for a p2p link.
@@ -1297,23 +1297,23 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			}
 			satosdl(gate)->sdl_type = ifp->if_type;
 			satosdl(gate)->sdl_index = ifp->if_index;
-			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+			RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		}
 		if (ln != NULL)
 			break;	/* This happens on a route change */
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		/*
 		 * Case 2: This route may come from cloning, or a manual route
 		 * add with a LL address.
 		 */
 		R_Malloc(ln, struct llinfo_nd6 *, sizeof(*ln));
 		rt->rt_llinfo = ln;
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		if (ln == NULL) {
 			log(LOG_DEBUG, "nd6_rtrequest: malloc failed\n");
 			break;
 		}
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		nd6_inuse++;
 		nd6_allocated++;
 		memset(ln, 0, sizeof(*ln));
@@ -1336,7 +1336,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			ln->ln_state = ND6_LLINFO_NOSTATE;
 			nd6_llinfo_settimer(ln, 0);
 		}
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		rt->rt_flags |= RTF_LLINFO;
 		ln->ln_next = llinfo_nd6.ln_next;
 		llinfo_nd6.ln_next = ln;
@@ -1372,14 +1372,14 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			}
 		}
 
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		/*
 		 * check if rt_getkey(rt) is an address assigned
 		 * to the interface.
 		 */
 		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp,
 		    &satocsin6(rt_getkey(rt))->sin6_addr);
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		if (ifa != NULL) {
 			const void *mac;
 			nd6_llinfo_settimer(ln, -1);

@@ -1,4 +1,4 @@
-#	$NetBSD: list.crypto,v 1.8 2009/07/20 19:59:22 christos Exp $
+#	$NetBSD: list.crypto,v 1.8.12.1 2013/02/25 00:28:03 tls Exp $
 
 PROG	cgdconfig
 
@@ -7,4 +7,4 @@ PROG	ssh		slogin
 SPECIAL	scp	srcdir	crypto/external/bsd/openssh/bin/scp
 SPECIAL	ssh	srcdir	crypto/external/bsd/openssh/bin/ssh
 
-LIBS	-lssh -lcrypto
+LIBS	-lssh -lssl -lcrypto

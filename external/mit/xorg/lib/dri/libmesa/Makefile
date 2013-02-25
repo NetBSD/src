@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 2012/03/22 23:46:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2013/02/25 00:27:41 tls Exp $
 
 .include <bsd.own.mk>
 
+_LIB_PREFIX=	lib
 LIB=		mesa_dri
 LIBISMODULE=	yes
 

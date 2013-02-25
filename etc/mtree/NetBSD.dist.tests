@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.83.2.1 2012/11/20 02:57:56 tls Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.83.2.2 2013/02/25 00:24:52 tls Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -47,11 +47,32 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write
 ./usr/libdata/debug/usr/tests/kernel/tty
+./usr/libdata/debug/usr/tests/kyua-cli
+./usr/libdata/debug/usr/tests/kyua-cli/bootstrap
+./usr/libdata/debug/usr/tests/kyua-cli/cli
+./usr/libdata/debug/usr/tests/kyua-cli/engine
+./usr/libdata/debug/usr/tests/kyua-cli/engine/drivers
+./usr/libdata/debug/usr/tests/kyua-cli/examples
+./usr/libdata/debug/usr/tests/kyua-cli/integration
+./usr/libdata/debug/usr/tests/kyua-cli/integration/helpers
+./usr/libdata/debug/usr/tests/kyua-cli/store
+./usr/libdata/debug/usr/tests/kyua-cli/utils
+./usr/libdata/debug/usr/tests/kyua-cli/utils/cmdline
+./usr/libdata/debug/usr/tests/kyua-cli/utils/config
+./usr/libdata/debug/usr/tests/kyua-cli/utils/format
+./usr/libdata/debug/usr/tests/kyua-cli/utils/fs
+./usr/libdata/debug/usr/tests/kyua-cli/utils/logging
+./usr/libdata/debug/usr/tests/kyua-cli/utils/process
+./usr/libdata/debug/usr/tests/kyua-cli/utils/signals
+./usr/libdata/debug/usr/tests/kyua-cli/utils/sqlite
+./usr/libdata/debug/usr/tests/kyua-cli/utils/text
+./usr/libdata/debug/usr/tests/kyua-testers
 ./usr/libdata/debug/usr/tests/lib
 ./usr/libdata/debug/usr/tests/lib/csu
 ./usr/libdata/debug/usr/tests/lib/libbluetooth
 ./usr/libdata/debug/usr/tests/lib/libbpfjit
 ./usr/libdata/debug/usr/tests/lib/libc
+./usr/libdata/debug/usr/tests/lib/libc/c063
 ./usr/libdata/debug/usr/tests/lib/libc/db
 ./usr/libdata/debug/usr/tests/lib/libc/gen
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn
@@ -79,6 +100,7 @@
 ./usr/libdata/debug/usr/tests/lib/libexecinfo
 ./usr/libdata/debug/usr/tests/lib/semaphore
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread
+./usr/libdata/debug/usr/tests/lib/liblutok
 ./usr/libdata/debug/usr/tests/lib/libm
 ./usr/libdata/debug/usr/tests/lib/libobjc
 ./usr/libdata/debug/usr/tests/lib/libposix
@@ -121,6 +143,7 @@
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs
 ./usr/libdata/debug/usr/tests/usr.bin
 ./usr/libdata/debug/usr/tests/usr.bin/id
+./usr/libdata/debug/usr/tests/usr.bin/netpgpverify
 ./usr/libdata/debug/usr/tests/usr.sbin
 ./usr/tests
 ./usr/tests/atf
@@ -153,7 +176,6 @@
 ./usr/tests/dev/raidframe
 ./usr/tests/dev/scsipi
 ./usr/tests/dev/sysmon
-./usr/tests/examples
 ./usr/tests/fs
 ./usr/tests/fs/ffs
 ./usr/tests/fs/fifofs
@@ -186,6 +208,26 @@
 ./usr/tests/kernel/kqueue/read
 ./usr/tests/kernel/kqueue/write
 ./usr/tests/kernel/tty
+./usr/tests/kyua-cli
+./usr/tests/kyua-cli/bootstrap
+./usr/tests/kyua-cli/cli
+./usr/tests/kyua-cli/engine
+./usr/tests/kyua-cli/engine/drivers
+./usr/tests/kyua-cli/examples
+./usr/tests/kyua-cli/integration
+./usr/tests/kyua-cli/integration/helpers
+./usr/tests/kyua-cli/store
+./usr/tests/kyua-cli/utils
+./usr/tests/kyua-cli/utils/cmdline
+./usr/tests/kyua-cli/utils/config
+./usr/tests/kyua-cli/utils/format
+./usr/tests/kyua-cli/utils/fs
+./usr/tests/kyua-cli/utils/logging
+./usr/tests/kyua-cli/utils/process
+./usr/tests/kyua-cli/utils/signals
+./usr/tests/kyua-cli/utils/sqlite
+./usr/tests/kyua-cli/utils/text
+./usr/tests/kyua-testers
 ./usr/tests/lib
 ./usr/tests/lib/csu
 ./usr/tests/lib/libbluetooth
@@ -224,6 +266,7 @@
 ./usr/tests/lib/libbpfjit
 ./usr/tests/lib/libevent
 ./usr/tests/lib/libexecinfo
+./usr/tests/lib/liblutok
 ./usr/tests/lib/libm
 ./usr/tests/lib/libobjc
 ./usr/tests/lib/libposix
@@ -276,6 +319,8 @@
 ./usr/tests/sbin/route
 ./usr/tests/sbin/sysctl
 ./usr/tests/share
+./usr/tests/share/examples
+./usr/tests/share/examples/lutok
 ./usr/tests/share/mk
 ./usr/tests/sys
 ./usr/tests/sys/rc
@@ -298,6 +343,7 @@
 ./usr/tests/usr.bin/grep
 ./usr/tests/usr.bin/gzip
 ./usr/tests/usr.bin/id
+./usr/tests/usr.bin/netpgpverify
 ./usr/tests/usr.bin/infocmp
 ./usr/tests/usr.bin/jot
 ./usr/tests/usr.bin/m4

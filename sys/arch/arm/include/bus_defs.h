@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1.12.1 2012/11/20 03:01:05 tls Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.1.12.2 2013/02/25 00:28:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,11 +74,17 @@
 typedef u_long bus_addr_t;
 typedef u_long bus_size_t;
 
+#define	PRIxBUSADDR	"lx"
+#define	PRIxBUSSIZE	"lx"
+#define	PRIuBUSSIZE	"lu"
+
 /*
  * Access methods for bus space.
  */
 typedef struct bus_space *bus_space_tag_t;
 typedef u_long bus_space_handle_t;
+
+#define	PRIxBSH		"lx"
 
 /*
  *	int bus_space_map(bus_space_tag_t t, bus_addr_t addr,
@@ -300,7 +306,8 @@ struct bus_space {
  * Private flags stored in the DMA map.
  */
 #define	_BUS_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
-#define	_BUS_DMAMAP_IS_BOUNCING	0x20000	/* is bouncing current xfer */
+#define	_BUS_DMAMAP_IS_BOUNCING	0x20000 /* is bouncing current xfer */
+#define	_BUS_DMAMAP_NOALLOC	0x40000	/* don't alloc memory from this range */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

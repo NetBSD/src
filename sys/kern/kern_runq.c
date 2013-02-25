@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.35 2012/08/30 02:25:35 matt Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.35.2.1 2013/02/25 00:29:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.35 2012/08/30 02:25:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.35.2.1 2013/02/25 00:29:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -864,8 +864,7 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl sched setup")
 #ifdef DDB
 
 void
-sched_print_runqueue(void (*pr)(const char *, ...)
-    __attribute__((__format__(__printf__,1,2))))
+sched_print_runqueue(void (*pr)(const char *, ...))
 {
 	runqueue_t *ci_rq;
 	struct cpu_info *ci, *tci;

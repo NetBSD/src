@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.19 2012/04/19 17:28:26 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.19.2.1 2013/02/25 00:30:45 tls Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.19 2012/04/19 17:28:26 christos Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.19.2.1 2013/02/25 00:30:45 tls Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -164,7 +164,7 @@ ffs_blkpref_ufs1(struct inode *ip, daddr_t lbn, int indx, int32_t *bap)
 
 	fs = ip->i_fs;
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
-		if (lbn < NDADDR + NINDIR(fs)) {
+		if (lbn < UFS_NDADDR + NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
 			return (fs->fs_fpg * cg + fs->fs_frag);
 		}
@@ -203,7 +203,7 @@ ffs_blkpref_ufs2(struct inode *ip, daddr_t lbn, int indx, int64_t *bap)
 
 	fs = ip->i_fs;
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
-		if (lbn < NDADDR + NINDIR(fs)) {
+		if (lbn < UFS_NDADDR + NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
 			return (fs->fs_fpg * cg + fs->fs_frag);
 		}
@@ -307,21 +307,20 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 
 	if (fs->fs_cs(fs, cg).cs_nbfree == 0 && size == fs->fs_bsize)
 		return (0);
-	error = bread(ip->i_fd, ip->i_fs, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, &bp);
+	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
+	    (int)fs->fs_cgsize, NULL, 0, &bp);
 	if (error) {
-		brelse(bp);
 		return (0);
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, needswap) ||
 	    (cgp->cg_cs.cs_nbfree == 0 && size == fs->fs_bsize)) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (0);
 	}
 	if (size == fs->fs_bsize) {
 		bno = ffs_alloccgblk(ip, bp, bpref);
-		bdwrite(bp);
+		bwrite(bp);
 		return (bno);
 	}
 	/*
@@ -339,7 +338,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 		 * allocated, and hacked up
 		 */
 		if (cgp->cg_cs.cs_nbfree == 0) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (0);
 		}
 		bno = ffs_alloccgblk(ip, bp, bpref);
@@ -451,15 +450,15 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 		    (unsigned long long)ip->i_number);
 		return;
 	}
-	error = bread(ip->i_fd, ip->i_fs, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, &bp);
+	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
+	    (int)fs->fs_cgsize, NULL, 0, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return;
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, needswap)) {
-		brelse(bp);
+		brelse(bp, 0);
 		return;
 	}
 	cgbno = dtogd(fs, bno);

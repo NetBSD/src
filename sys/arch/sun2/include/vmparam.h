@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14 2010/11/06 15:42:49 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14.18.1 2013/02/25 00:29:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -25,6 +25,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define __USE_TOPDOWN_VM
 
 /*
  * Machine dependent constants for Sun2

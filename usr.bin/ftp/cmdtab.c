@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.51 2009/04/12 10:18:52 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.51.12.1 2013/02/25 00:30:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.51 2009/04/12 10:18:52 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.51.12.1 2013/02/25 00:30:34 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -298,6 +298,7 @@ struct option optiontab[] = {
 	{ "anonpass",	NULL },
 	{ "ftp_proxy",	NULL },
 	{ "http_proxy",	NULL },
+	{ "https_proxy",NULL },
 	{ "no_proxy",	NULL },
 	{ "pager",	NULL },
 	{ "prompt",	NULL },

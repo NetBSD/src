@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgavar.h,v 1.6 2011/07/01 20:39:34 dyoung Exp $ */
+/*	$NetBSD: ifpgavar.h,v 1.6.12.1 2013/02/25 00:28:36 tls Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -41,6 +41,9 @@
 
 #define IFPGA_UART0		0x06000000	/* Uart 0 */
 #define IFPGA_UART1		0x07000000	/* Uart 1 */
+
+/* SMC91C111 network module. */
+#define IFPGA_SMC911_BASE	0xb8000000
 
 typedef paddr_t ifpga_addr_t;
 

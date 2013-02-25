@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2009/03/13 19:16:46 abs Exp $
+#	$NetBSD: Makefile.inc,v 1.14.12.1 2013/02/25 00:24:00 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,8 @@ SRCS+=	atomic_cas.S
 .  endif
 
 .  if (${LIB} == "c" || ${LIB} == "pthread")
-SRCS+=	atomic_init_testset.c
+CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_UP
+SRCS+=	atomic_init_testset.c atomic_cas_up.S
 .  endif
 
 . endif

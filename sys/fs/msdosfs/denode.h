@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.19.14.1 2012/11/20 03:02:39 tls Exp $	*/
+/*	$NetBSD: denode.h,v 1.19.14.2 2013/02/25 00:29:47 tls Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -49,7 +49,15 @@
 #ifndef _MSDOSFS_DENODE_H_
 #define _MSDOSFS_DENODE_H_
 
+#ifndef MAKEFS
 #include <miscfs/genfs/genfs_node.h>
+#else
+struct genfs_node {
+};
+struct vnode;
+struct msdosfsmount;
+struct buf;
+#endif
 
 /*
  * This is the pc filesystem specific portion of the vnode structure.
@@ -231,7 +239,7 @@ struct denode {
 #define	de_forw		de_chain[0]
 #define	de_back		de_chain[1]
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(MAKEFS)
 
 #define	VTODE(vp)	((struct denode *)(vp)->v_data)
 #define	DETOV(de)	((de)->de_vnode)
@@ -287,13 +295,16 @@ int	msdosfs_pathconf	(void *);
 /*
  * Internal service routine prototypes.
  */
+struct componentname;
+struct direntry;
+struct kauth_cred;
 int msdosfs_update(struct vnode *, const struct timespec *,
 	    const struct timespec *, int);
 int createde(struct denode *, struct denode *,
 		struct denode **, struct componentname *);
-int deextend(struct denode *, u_long, kauth_cred_t);
+int deextend(struct denode *, u_long, struct kauth_cred *);
 int deget(struct msdosfsmount *, u_long, u_long, struct denode **);
-int detrunc(struct denode *, u_long, int, kauth_cred_t);
+int detrunc(struct denode *, u_long, int, struct kauth_cred *);
 int deupdat(struct denode *, int);
 int doscheckpath(struct denode *, struct denode *);
 int dosdirempty(struct denode *);
@@ -304,7 +315,7 @@ void reinsert(struct denode *);
 int removede(struct denode *, struct denode *);
 int uniqdosname(struct denode *, struct componentname *, u_char *);
 int findwin95(struct denode *);
-int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
+int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, struct kauth_cred *);
 void msdosfs_gop_markupdate(struct vnode *, int);
 void msdosfs_detimes(struct denode *, const struct timespec *,
     const struct timespec *, const struct timespec *, int);
@@ -312,5 +323,5 @@ int msdosfs_fh_enter(struct msdosfsmount *, uint32_t, uint32_t, uint32_t *);
 int msdosfs_fh_remove(struct msdosfsmount *, uint32_t, uint32_t);
 int msdosfs_fh_lookup(struct msdosfsmount *, uint32_t, uint32_t, uint32_t *);
 void msdosfs_fh_destroy(struct msdosfsmount *);
-#endif	/* _KERNEL */
+#endif	/* _KERNEL || MAKEFS */
 #endif /* _MSDOSFS_DENODE_H_ */

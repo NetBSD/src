@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.15 2008/04/28 20:23:29 martin Exp $ */
+/*	$NetBSD: installboot.c,v 1.15.44.1 2013/02/25 00:28:52 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -314,7 +314,7 @@ loadblocknums(char *boot, int devfd)
 	 * Get the block numbers; we don't handle fragments
 	 */
 	ap = ip->di_db;
-	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--) {
+	for (i = 0; i < UFS_NDADDR && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
 		if (verbose)
 			printf("%d: %d\n", i, blk);

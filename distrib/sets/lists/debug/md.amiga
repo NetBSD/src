@@ -1,0 +1,6 @@
+# $NetBSD: md.amiga,v 1.2.6.2 2013/02/25 00:24:37 tls Exp $
+./usr/libdata/debug/sbin/binpatch.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/grfconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/iteconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/loadkmap.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/videomode.debug	comp-sysutil-debug	debug

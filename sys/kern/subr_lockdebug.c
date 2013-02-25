@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.46 2012/08/04 12:38:20 christos Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.46.2.1 2013/02/25 00:29:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.46 2012/08/04 12:38:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.46.2.1 2013/02/25 00:29:53 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -714,7 +714,8 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
  *	Dump information about a lock on panic, or for DDB.
  */
 static void
-lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...))
+lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...)
+    __printflike(1, 2))
 {
 	int sleeper = (ld->ld_flags & LD_SLEEPER);
 
@@ -725,7 +726,7 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...))
 	    (long)ld->ld_initaddr);
 
 	if (ld->ld_lockops->lo_type == LOCKOPS_CV) {
-		(*pr)(" interlock: %#018lx\n", ld->ld_locked);
+		(*pr)(" interlock: %#018lx\n", (long)ld->ld_locked);
 	} else {
 		(*pr)("\n"
 		    "shared holds : %18u exclusive: %18u\n"

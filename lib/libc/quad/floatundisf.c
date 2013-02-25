@@ -1,4 +1,4 @@
-/*	$NetBSD: floatundisf.c,v 1.3 2012/08/05 04:28:58 matt Exp $	*/
+/*	$NetBSD: floatundisf.c,v 1.3.2.1 2013/02/25 00:27:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,11 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)floatdisf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: floatundisf.c,v 1.3 2012/08/05 04:28:58 matt Exp $");
+__RCSID("$NetBSD: floatundisf.c,v 1.3.2.1 2013/02/25 00:27:52 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef SOFTFLOAT
+#if defined(SOFTFLOAT) || defined(__ARM_EABI__)
 #include "softfloat/softfloat-for-gcc.h"
 #endif
 

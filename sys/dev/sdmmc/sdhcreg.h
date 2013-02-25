@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.9.2.1 2012/11/20 03:02:33 tls Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.9.2.2 2013/02/25 00:29:31 tls Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
 #define  SDHC_CMD_INHIBIT_CMD		(1<<0)
 #define  SDHC_CMD_INHIBIT_MASK		0x0003
 #define SDHC_HOST_CTL			0x28
+#define  SDHC_8BIT_MODE			(1<<5)
 #define  SDHC_HIGH_SPEED		(1<<2)
 #define  SDHC_ESDHC_8BIT_MODE		(1<<2)	/* eSDHC */
 #define  SDHC_4BIT_MODE			(1<<1)
@@ -101,7 +102,7 @@
 #define SDHC_TIMEOUT_CTL		0x2e
 #define  SDHC_TIMEOUT_MAX		0x0e
 #define SDHC_SOFTWARE_RESET		0x2f
-#define  SDHC_INIT_ACTIVE		(1<<3)
+#define  SDHC_INIT_ACTIVE		(1<<3)	/* ESDHC */
 #define  SDHC_RESET_MASK		0x5
 #define  SDHC_RESET_DAT			(1<<2)
 #define  SDHC_RESET_CMD			(1<<1)
@@ -138,11 +139,18 @@
 #define  SDHC_EINTR_SIGNAL_MASK		0x01ff	/* excluding vendor signals */
 #define SDHC_CMD12_ERROR_STATUS		0x3c
 #define SDHC_CAPABILITIES		0x40
+#define  SDHC_SHARED_BUS_SLOT		(1<<31)
+#define  SDHC_EMBEDDED_SLOT		(1<<30)
+#define  SDHC_ASYNC_INTR		(1<<29)
+#define  SDHC_64BIT_SYS_BUS		(1<<28)
 #define  SDHC_VOLTAGE_SUPP_1_8V		(1<<26)
 #define  SDHC_VOLTAGE_SUPP_3_0V		(1<<25)
 #define  SDHC_VOLTAGE_SUPP_3_3V		(1<<24)
 #define  SDHC_DMA_SUPPORT		(1<<22)
 #define  SDHC_HIGH_SPEED_SUPP		(1<<21)
+#define  SDHC_ADMA1_SUPP		(1<<20)
+#define  SDHC_ADMA2_SUPP		(1<<19)
+#define  SDHC_8BIT_SUPP			(1<<18)
 #define  SDHC_MAX_BLK_LEN_512		0
 #define  SDHC_MAX_BLK_LEN_1024		1
 #define  SDHC_MAX_BLK_LEN_2048		2

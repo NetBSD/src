@@ -85,6 +85,7 @@ while (<>) {
     s;\baddress_verify_relay[-</bB>]*\n*[ <bB>]*host\b;<a href="postconf.5.html#address_verify_relayhost">$&</a>;g;
     s;\baddress_verify_sender_dependent_relay[-</bB>]*\n*[ <bB>]*host_maps\b;<a href="postconf.5.html#address_verify_sender_dependent_relayhost_maps">$&</a>;g;
     s;\baddress_verify_sender\b;<a href="postconf.5.html#address_verify_sender">$&</a>;g;
+    s;\baddress_verify_sender_ttl\b;<a href="postconf.5.html#address_verify_sender_ttl">$&</a>;g;
     s;\baddress_verify_service_name\b;<a href="postconf.5.html#address_verify_service_name">$&</a>;g;
     s;\baddress_verify_transport_maps\b;<a href="postconf.5.html#address_verify_transport_maps">$&</a>;g;
     s;\baddress_verify_virtual_transport\b;<a href="postconf.5.html#address_verify_virtual_transport">$&</a>;g;
@@ -410,6 +411,7 @@ while (<>) {
     s;\bsender_de[-</bB>]*\n* *[<bB>]*pendent_relay[-</bB>]*\n*[ <bB>]*host_maps\b;<a href="postconf.5.html#sender_dependent_relayhost_maps">$&</a>;g;
     s;\bempty_address_relayhost_maps_lookup_key\b;<a href="postconf.5.html#empty_address_relayhost_maps_lookup_key">$&</a>;g;
     s;\bsendmail_path\b;<a href="postconf.5.html#sendmail_path">$&</a>;g;
+    s;\bsendmail_fix_line_endings\b;<a href="postconf.5.html#sendmail_fix_line_endings">$&</a>;g;
     s;\bservice_throttle_time\b;<a href="postconf.5.html#service_throttle_time">$&</a>;g;
     s;\bsetgid_group\b;<a href="postconf.5.html#setgid_group">$&</a>;g;
 
@@ -631,6 +633,8 @@ while (<>) {
     s;\bsmtp_body_checks\b;<a href="postconf.5.html#smtp_body_checks">$&</a>;g;
     s;\bsmtp_reply_filter\b;<a href="postconf.5.html#smtp_reply_filter">$&</a>;g;
     s;\bsmtp_address_preference\b;<a href="postconf.5.html#smtp_address_preference">$&</a>;g;
+    s;\bsmtp_per_record_deadline\b;<a href="postconf.5.html#smtp_per_record_deadline">$&</a>;g;
+    s;\bsmtp_send_dummy_mail_auth\b;<a href="postconf.5.html#smtp_send_dummy_mail_auth">$&</a>;g;
     s;\bsmtpd_enforce_tls\b;<a href="postconf.5.html#smtpd_enforce_tls">$&</a>;g;
     s;\bsmtpd_sasl_tls_security_options\b;<a href="postconf.5.html#smtpd_sasl_tls_security_options">$&</a>;g;
     s;\bsmtpd_sasl_type\b;<a href="postconf.5.html#smtpd_sasl_type">$&</a>;g;
@@ -667,6 +671,7 @@ while (<>) {
     s;\bsmtpd_tls_wrappermode\b;<a href="postconf.5.html#smtpd_tls_wrappermode">$&</a>;g;
     s;\bsmtpd_use_tls\b;<a href="postconf.5.html#smtpd_use_tls">$&</a>;g;
     s;\bsmtpd_reject_footer\b;<a href="postconf.5.html#smtpd_reject_footer">$&</a>;g;
+    s;\bsmtpd_per_record_deadline\b;<a href="postconf.5.html#smtpd_per_record_deadline">$&</a>;g;
     s;\btls_daemon_random_bytes\b;<a href="postconf.5.html#tls_daemon_random_bytes">$&</a>;g;
     s;\btls_daemon_random_source\b;<a href="postconf.5.html#tls_daemon_random_source">$&</a>;g;
     s;\btls_ran[-</Bb>]*\n* *[<Bb>]*dom_bytes\b;<a href="postconf.5.html#tls_random_bytes">$&</a>;g;
@@ -687,6 +692,7 @@ while (<>) {
  
     s;\bfrozen_delivered_to\b;<a href="postconf.5.html#frozen_delivered_to">$&</a>;g;
     s;\breset_owner_alias\b;<a href="postconf.5.html#reset_owner_alias">$&</a>;g;
+    s;\benable_long_queue_ids\b;<a href="postconf.5.html#enable_long_queue_ids">$&</a>;g;
 
     # Transport-dependent magical parameters.
 
@@ -770,6 +776,7 @@ while (<>) {
     s/[<bB>]*gener[-<\/bB>]*\n* *[<bB>]*ic[<\/bB>]*\(5\)/<a href="generic.5.html">$&<\/a>/g;
     s/[<bB>]*ldap[<\/bBiI>]*_[<\/iIbB>]*ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="ldap_table.5.html">$&<\/a>/g;
     s/[<bB>]*mas[-<\/bB>]*\n* *[<bB>]*ter[<\/bB>]*\(5\)/<a href="master.5.html">$&<\/a>/g;
+    s/[<bB>]*memcache[<\/bBiI>]*_[<\/iIbB>]*ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="memcache_table.5.html">$&<\/a>/g;
     s/[<bB>]*mysql[<\/bBiI>]*_[<\/iIbB>]*ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="mysql_table.5.html">$&<\/a>/g;
     s/[<bB>]*nisplus[<\/bBiI>]*_[<\/iIbB>]*ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="nisplus_table.5.html">$&<\/a>/g;
     s/[<bB>]*pcre[<\/bBiI>]*_[<\/iIbB>]*ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="pcre_table.5.html">$&<\/a>/g;
@@ -782,7 +789,7 @@ while (<>) {
     s/[<bB>]*scache[<\/bB>]*\(8\)/<a href="scache.8.html">$&<\/a>/g;
     s/[<bB>]*sqlite[<\/bBiI>]*_[<\/iIbB>]*ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="sqlite_table.5.html">$&<\/a>/g;
     s/[<bB>]*trans[-<\/bB>]*\n*[ <bB>]*port[<\/bB>]*\(5\)/<a href="transport.5.html">$&<\/a>/g;
-    s/[<bB>]*verify[<\/bB>]*\(8\)/<a href="verify.8.html">$&<\/a>/g;
+    s/[<bB>]*ver[-<\/bB>]*\n*[ <bB>]*ify[<\/bB>]*\(8\)/<a href="verify.8.html">$&<\/a>/g;
     s/[<bB>]*vir[-<\/bB>]*\n*[ <bB>]*tual[<\/bB>]*\(5\)/<a href="virtual.5.html">$&<\/a>/g;
     s/[<bB>]*vir[-<\/bB>]*\n*[ <bB>]*tual[<\/bB>]*\(8\)/<a href="virtual.8.html">$&<\/a>/g;
     s/[<bB>]*cidr_ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="cidr_table.5.html">$&<\/a>/g;
@@ -960,6 +967,7 @@ while (<>) {
     s;\bpostscreen_expansion_filter\b;<a href="postconf.5.html#postscreen_expansion_filter">$&</a>;g;
     s;\bpostscreen_reject_footer\b;<a href="postconf.5.html#postscreen_reject_footer">$&</a>;g;
     s;\bpostscreen_command_filter\b;<a href="postconf.5.html#postscreen_command_filter">$&</a>;g;
+    s;\bpostscreen_whitelist_interfaces\b;<a href="postconf.5.html#postscreen_whitelist_interfaces">$&</a>;g;
 
     s;\btlsproxy_watchdog_timeout\b;<a href="postconf.5.html#tlsproxy_watchdog_timeout">$&</a>;g;
     s;\btlsproxy_enforce_tls\b;<a href="postconf.5.html#tlsproxy_enforce_tls">$&</a>;g;
@@ -989,6 +997,11 @@ while (<>) {
     s;\btlsproxy_tls_security_level\b;<a href="postconf.5.html#tlsproxy_tls_security_level">$&</a>;g;
     s;\btlsproxy_tls_session_cache_timeout\b;<a href="postconf.5.html#tlsproxy_tls_session_cache_timeout">$&</a>;g;
     s;\btlsproxy_use_tls\b;<a href="postconf.5.html#tlsproxy_use_tls">$&</a>;g;
+
+    # Service-defined parameters...
+
+    s;\bpolicy_time_limit\b;<a href="postconf.5.html#transport_time_limit">$&</a>;g;
+    s;\bgreylist_time_limit\b;<a href="postconf.5.html#transport_time_limit">$&</a>;g;
 
     # Hyperlink URLs and RFC documents
 
@@ -1049,7 +1062,10 @@ while (<>) {
     s/\b(ldap):/<a href="ldap_table.5.html">$1<\/a>:/g;
     s/\b(regexp):/<a href="regexp_table.5.html">$1<\/a>:/g;
     s/\b(sqlite):/<a href="sqlite_table.5.html">$1<\/a>:/g;
+    s/\b(static):/<a href="DATABASE_README.html#types">$1<\/a>:/g;
     s/\b(tcp):/<a href="tcp_table.5.html">$1<\/a>:/g;
+    s/\b(texthash):/<a href="DATABASE_README.html#types">$1<\/a>:/g;
+    s/\b(memcache):/<a href="memcache_table.5.html">$1<\/a>:/g;
 
     # Do nice links for smtp:host:port etc.
 

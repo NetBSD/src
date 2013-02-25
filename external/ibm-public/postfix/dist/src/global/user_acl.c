@@ -1,4 +1,4 @@
-/*	$NetBSD: user_acl.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: user_acl.c,v 1.1.1.1.16.1 2013/02/25 00:27:20 tls Exp $	*/
 
 /*++
 /* NAME
@@ -48,12 +48,12 @@
 /* Utility library. */
 
 #include <vstring.h>
+#include <dict_static.h>
 
 /* Global library. */
 
 #include <string_list.h>
 #include <mypwd.h>
-#include <mail_params.h>		/* STATIC_ANYONE_ACL */
 
 /* Application-specific. */
 
@@ -71,9 +71,10 @@ const char *check_user_acl_byuid(char *acl, uid_t uid)
 
     /*
      * Optimize for the most common case. This also makes Postfix a little
-     * more robust in the face of local infrastructure failures.
+     * more robust in the face of local infrastructure failures. Note that we
+     * only need to match the "static:" substring, not the result value.
      */
-    if (strcmp(acl, STATIC_ANYONE_ACL) == 0)
+    if (strncmp(acl, DICT_TYPE_STATIC ":", sizeof(DICT_TYPE_STATIC)) == 0)
 	return (0);
 
     /*
@@ -91,6 +92,10 @@ const char *check_user_acl_byuid(char *acl, uid_t uid)
      * really suitable for mixing numerical and non-numerical user
      * information, because the numerical match is done in a separate pass
      * from the non-numerical match. This breaks when the ! operator is used.
+     * 
+     * XXX To avoid waiting until the lookup completes (e.g., LDAP or NIS down)
+     * invoke mypwuid_err(), and either change the user_acl() API to
+     * propagate the error to the caller, or treat lookup errors as fatal.
      */
     if ((mypwd = mypwuid(uid)) == 0) {
 	name = "unknown";

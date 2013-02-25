@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.95 2012/01/29 00:58:13 nonaka Exp $	*/
+/*	$NetBSD: setup.c,v 1.95.6.1 2013/02/25 00:28:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.95 2012/01/29 00:58:13 nonaka Exp $");
+__RCSID("$NetBSD: setup.c,v 1.95.6.1 2013/02/25 00:28:06 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,8 +227,8 @@ setup(const char *dev, const char *origdev)
 	maxfsblock = sblock->fs_size;
 	maxino = sblock->fs_ncg * sblock->fs_ipg;
 	sizepb = sblock->fs_bsize;
-	maxfilesize = sblock->fs_bsize * NDADDR - 1;
-	for (i = 0; i < NIADDR; i++) {
+	maxfilesize = sblock->fs_bsize * UFS_NDADDR - 1;
+	for (i = 0; i < UFS_NIADDR; i++) {
 		sizepb *= NINDIR(sblock);
 		maxfilesize += sizepb;
 	}
@@ -351,14 +351,14 @@ setup(const char *dev, const char *origdev)
 				dirty(&asblk);
 			}
 		}
-		if ((is_ufs2 && sblock->fs_maxsymlinklen != MAXSYMLINKLEN_UFS2)
+		if ((is_ufs2 && sblock->fs_maxsymlinklen != UFS2_MAXSYMLINKLEN)
 		    ||
-		   (!is_ufs2 && sblock->fs_maxsymlinklen != MAXSYMLINKLEN_UFS1))
+		   (!is_ufs2 && sblock->fs_maxsymlinklen != UFS1_MAXSYMLINKLEN))
 		    {
 			pwarn("INCORRECT MAXSYMLINKLEN=%d IN SUPERBLOCK",
 				sblock->fs_maxsymlinklen);
 			sblock->fs_maxsymlinklen = is_ufs2 ?
-			    MAXSYMLINKLEN_UFS2 : MAXSYMLINKLEN_UFS1;
+			    UFS2_MAXSYMLINKLEN : UFS1_MAXSYMLINKLEN;
 			if (preen)
 				printf(" (FIXED)\n");
 			if (preen || reply("FIX") == 1) {
@@ -406,7 +406,7 @@ setup(const char *dev, const char *origdev)
 		doinglevel2++;
 		sblock->fs_old_inodefmt = FS_44INODEFMT;
 		sblock->fs_maxfilesize = maxfilesize;
-		sblock->fs_maxsymlinklen = MAXSYMLINKLEN_UFS1;
+		sblock->fs_maxsymlinklen = UFS1_MAXSYMLINKLEN;
 		sblock->fs_qbmask = ~sblock->fs_bmask;
 		sblock->fs_qfmask = ~sblock->fs_fmask;
 		sbdirty();

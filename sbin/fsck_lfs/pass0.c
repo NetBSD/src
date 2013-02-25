@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.31 2008/04/28 20:23:08 martin Exp $	 */
+/* $NetBSD: pass0.c,v 1.31.26.1 2013/02/25 00:28:07 tls Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ pass0(void)
 	/*
 	 * Make sure all free inodes were found on the list
 	 */
-	for (ino = maxino - 1; ino > ROOTINO; --ino) {
+	for (ino = maxino - 1; ino > UFS_ROOTINO; --ino) {
 		if (visited[ino])
 			continue;
 

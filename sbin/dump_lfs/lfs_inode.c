@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.15 2011/08/14 12:13:24 christos Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.15.8.1 2013/02/25 00:28:05 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.15 2011/08/14 12:13:24 christos Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.15.8.1 2013/02/25 00:28:05 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,16 +187,16 @@ fs_mapinodes(ino_t maxino, u_int64_t *tapesz, int *anydirskipped)
 {
 	ino_t ino;
 
-	for (ino = ROOTINO; ino < maxino; ino++)
+	for (ino = UFS_ROOTINO; ino < maxino; ino++)
 		mapfileino(ino, tapesz, anydirskipped);
 }
 
 /*
  * XXX KS - I know there's a better way to do this.
  */
-#define BASE_SINDIR (NDADDR)
-#define BASE_DINDIR (NDADDR+NINDIR(fs))
-#define BASE_TINDIR (NDADDR+NINDIR(fs)+NINDIR(fs)*NINDIR(fs))
+#define BASE_SINDIR (UFS_NDADDR)
+#define BASE_DINDIR (UFS_NDADDR+NINDIR(fs))
+#define BASE_TINDIR (UFS_NDADDR+NINDIR(fs)+NINDIR(fs)*NINDIR(fs))
 
 #define D_UNITS (NINDIR(fs))
 #define T_UNITS (NINDIR(fs)*NINDIR(fs))
@@ -221,7 +221,7 @@ lfs_bmap(struct lfs *fs, struct ufs1_dinode *idinode, daddr_t lbn)
 	 */
 	if(lbn < 0) {
 		lbn *= -1;
-		if(lbn == NDADDR) {
+		if (lbn == UFS_NDADDR) {
 			/* printf("lbn %d: single indir base\n", -lbn); */
 			return idinode->di_ib[0]; /* single indirect */
 		} else if(lbn == BASE_DINDIR+1) {
@@ -236,7 +236,7 @@ lfs_bmap(struct lfs *fs, struct ufs1_dinode *idinode, daddr_t lbn)
 		 * Find the immediate parent. This is essentially finding the
 		 * residue of modulus, and then rounding accordingly.
 		 */
-		residue = (lbn-NDADDR) % NINDIR(fs);
+		residue = (lbn-UFS_NDADDR) % NINDIR(fs);
 		if(residue == 1) {
 			/* Double indirect.  Parent is the triple. */
 			up = idinode->di_ib[2];
@@ -265,12 +265,12 @@ lfs_bmap(struct lfs *fs, struct ufs1_dinode *idinode, daddr_t lbn)
 		}
 	} else {
 		/* Direct block.  Its parent must be a single indirect. */
-		if(lbn < NDADDR)
+		if (lbn < UFS_NDADDR)
 			return idinode->di_db[lbn];
 		else {
 			/* Parent is an indirect block. */
-			up = -(((lbn-NDADDR) / D_UNITS) * D_UNITS + NDADDR);
-			off = (lbn-NDADDR) % D_UNITS;
+			up = -(((lbn-UFS_NDADDR) / D_UNITS) * D_UNITS + UFS_NDADDR);
+			off = (lbn-UFS_NDADDR) % D_UNITS;
 			/* printf("lbn %d: parent is %d/%d\n", lbn,up,off); */
 		}
 	}

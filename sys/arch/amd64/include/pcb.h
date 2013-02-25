@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.17 2010/07/07 01:14:52 chs Exp $	*/
+/*	$NetBSD: pcb.h,v 1.17.18.1 2013/02/25 00:28:20 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,10 +81,6 @@
 
 #define	NIOPORTS	1024		/* # of ports we allow to be mapped */
 
-/*
- * Please note that the pcb_savefpu field in struct below must be
- * on a 16-byte boundary.
- */
 struct pcb {
 	int	  pcb_flags;
 #define	PCB_USER_LDT	0x01		/* has user-set LDT */
@@ -96,8 +92,10 @@ struct pcb {
 	uint64_t pcb_rsp;
 	uint64_t pcb_rbp;
 	uint64_t pcb_usersp;
-	uint64_t pcb_unused;		/* unused */
+	uint32_t pcb_unused;		/* unused */
+	struct	savefpu_i387 pcb_savefpu_i387; /* i387 status on last exception */
 	struct	savefpu pcb_savefpu __aligned(16); /* floating point state */
+	uint32_t pcb_unused_1[4];	/* unused */
 	void     *pcb_onfault;		/* copyin/out fault recovery */
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	uint64_t  pcb_fs;

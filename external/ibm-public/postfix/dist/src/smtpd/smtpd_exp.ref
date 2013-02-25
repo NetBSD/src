@@ -49,8 +49,8 @@ OK
 >>> client foo 127.0.0.2
 OK
 >>> rcpt rname@rdomain
-./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 554 5.7.1 Service unavailable; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org=127.0.0.2; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<foobar>
-554 5.7.1 Service unavailable; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org=127.0.0.2
+./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 554 5.7.1 Service unavailable; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<foobar>
+554 5.7.1 Service unavailable; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org
 >>> client foo 127.0.0.1
 OK
 >>> rcpt rname@rdomain

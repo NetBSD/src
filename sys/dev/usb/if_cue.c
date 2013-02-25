@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.63 2012/03/11 01:06:06 mrg Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.63.2.1 2013/02/25 00:29:34 tls Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,9 +56,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.63 2012/03/11 01:06:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.63.2.1 2013/02/25 00:29:34 tls Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,7 +479,8 @@ cue_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_no(dev, CUE_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, "setting config no failed\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
 
@@ -485,8 +488,8 @@ cue_attach(device_t parent, device_t self, void *aux)
 	sc->cue_product = uaa->product;
 	sc->cue_vendor = uaa->vendor;
 
-	usb_init_task(&sc->cue_tick_task, cue_tick_task, sc);
-	usb_init_task(&sc->cue_stop_task, (void (*)(void *))cue_stop, sc);
+	usb_init_task(&sc->cue_tick_task, cue_tick_task, sc, 0);
+	usb_init_task(&sc->cue_stop_task, (void (*)(void *))cue_stop, sc, 0);
 
 	err = usbd_device2interface_handle(dev, CUE_IFACE_IDX, &iface);
 	if (err) {

@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.17 2006/11/09 19:36:36 christos Exp $	 */
+/* $NetBSD: pass2.c,v 1.17.48.1 2013/02/25 00:28:07 tls Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -68,21 +68,21 @@ pass2(void)
 	struct ufs1_dinode dino;
 	char pathbuf[MAXPATHLEN + 1];
 
-	switch (statemap[ROOTINO]) {
+	switch (statemap[UFS_ROOTINO]) {
 
 	case USTATE:
 		pfatal("ROOT INODE UNALLOCATED");
 		if (reply("ALLOCATE") == 0)
 			err(EEXIT, "%s", "");
-		if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
+		if (allocdir(UFS_ROOTINO, UFS_ROOTINO, 0755) != UFS_ROOTINO)
 			err(EEXIT, "CANNOT ALLOCATE ROOT INODE\n");
 		break;
 
 	case DCLEAR:
 		pfatal("DUPS/BAD IN ROOT INODE");
 		if (reply("REALLOCATE")) {
-			freeino(ROOTINO);
-			if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
+			freeino(UFS_ROOTINO);
+			if (allocdir(UFS_ROOTINO, UFS_ROOTINO, 0755) != UFS_ROOTINO)
 				err(EEXIT, "CANNOT ALLOCATE ROOT INODE\n");
 			break;
 		}
@@ -94,14 +94,14 @@ pass2(void)
 	case FCLEAR:
 		pfatal("ROOT INODE NOT DIRECTORY");
 		if (reply("REALLOCATE")) {
-			freeino(ROOTINO);
-			if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
+			freeino(UFS_ROOTINO);
+			if (allocdir(UFS_ROOTINO, UFS_ROOTINO, 0755) != UFS_ROOTINO)
 				err(EEXIT, "CANNOT ALLOCATE ROOT INODE\n");
 			break;
 		}
 		if (reply("FIX") == 0)
 			errx(EEXIT, "%s", "");
-		vp = vget(fs, ROOTINO);
+		vp = vget(fs, UFS_ROOTINO);
 		dp = VTOD(vp);
 		dp->di_mode &= ~IFMT;
 		dp->di_mode |= IFDIR;
@@ -112,10 +112,10 @@ pass2(void)
 		break;
 
 	default:
-		errx(EEXIT, "BAD STATE %d FOR ROOT INODE\n", statemap[ROOTINO]);
+		errx(EEXIT, "BAD STATE %d FOR ROOT INODE\n", statemap[UFS_ROOTINO]);
 	}
-	statemap[WINO] = FSTATE;
-	typemap[WINO] = DT_WHT;
+	statemap[UFS_WINO] = FSTATE;
+	typemap[UFS_WINO] = DT_WHT;
 	/*
 	 * Sort the directory list into disk block order.
 	 */
@@ -340,7 +340,7 @@ chk2:
 		fileerror(idesc->id_number, dirp->d_ino, "I OUT OF RANGE");
 		n = reply("REMOVE");
 	} else if (dirp->d_ino == LFS_IFILE_INUM &&
-	    idesc->id_number == ROOTINO) {
+	    idesc->id_number == UFS_ROOTINO) {
 		if (dirp->d_type != DT_REG) {
 			fileerror(idesc->id_number, dirp->d_ino,
 			    "BAD TYPE FOR IFILE");
@@ -348,10 +348,10 @@ chk2:
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
 		}
-	} else if (((dirp->d_ino == WINO && (dirp->d_type != DT_WHT)) ||
-		(dirp->d_ino != WINO && dirp->d_type == DT_WHT))) {
+	} else if (((dirp->d_ino == UFS_WINO && (dirp->d_type != DT_WHT)) ||
+		(dirp->d_ino != UFS_WINO && dirp->d_type == DT_WHT))) {
 		fileerror(idesc->id_number, dirp->d_ino, "BAD WHITEOUT ENTRY");
-		dirp->d_ino = WINO;
+		dirp->d_ino = UFS_WINO;
 		dirp->d_type = DT_WHT;
 		if (reply("FIX") == 1)
 			ret |= ALTERED;

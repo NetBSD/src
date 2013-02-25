@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.166 2012/09/01 17:01:24 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.166.2.1 2013/02/25 00:30:14 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.166 2012/09/01 17:01:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.166.2.1 2013/02/25 00:30:14 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -547,7 +547,6 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	 */
 	error = bread(devvp, SBLOCK, SBSIZE, NOCRED, 0, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return (error);
 	}
 	newfs = (struct ext2fs *)bp->b_data;
@@ -586,7 +585,6 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		    1 /* superblock */ + i),
 		    fs->e2fs_bsize, NOCRED, 0, &bp);
 		if (error) {
-			brelse(bp, 0);
 			return (error);
 		}
 		e2fs_cgload((struct ext2_gd *)bp->b_data,
@@ -772,8 +770,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	return (0);
 
 out:
-	KASSERT(bp != NULL);
-	brelse(bp, 0);
+	if (bp != NULL)
+		brelse(bp, 0);
 	if (ump) {
 		kmem_free(ump->um_e2fs, sizeof(struct m_ext2fs));
 		kmem_free(ump, sizeof(*ump));
@@ -1063,7 +1061,6 @@ retry:
 		 */
 
 		vput(vp);
-		brelse(bp, 0);
 		*vpp = NULL;
 		return (error);
 	}
@@ -1075,8 +1072,9 @@ retry:
 
 	/* If the inode was deleted, reset all fields */
 	if (ip->i_e2fs_dtime != 0) {
-		ip->i_e2fs_mode = ip->i_e2fs_nblock = 0;
+		ip->i_e2fs_mode = 0;
 		(void)ext2fs_setsize(ip, 0);
+		(void)ext2fs_setnblock(ip, 0);
 		memset(ip->i_e2fs_blocks, 0, sizeof(ip->i_e2fs_blocks));
 	}
 

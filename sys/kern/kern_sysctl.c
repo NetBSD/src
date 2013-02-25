@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.236 2012/06/06 05:10:54 matt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.236.2.1 2013/02/25 00:29:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,10 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.236 2012/06/06 05:10:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.236.2.1 2013/02/25 00:29:52 tls Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
+
+#define SYSCTL_PRIVATE
 
 #include <sys/param.h>
 #define __COMPAT_SYSCTL
@@ -102,7 +104,7 @@ static int sysctl_cvt_out(struct lwp *, int, const struct sysctlnode *,
 static int sysctl_log_add(struct sysctllog **, const struct sysctlnode *);
 static int sysctl_log_realloc(struct sysctllog *);
 
-typedef void (*sysctl_setup_func)(struct sysctllog **);
+typedef void sysctl_setup_func(struct sysctllog **);
 
 struct sysctllog {
 	const struct sysctlnode *log_root;
@@ -223,7 +225,7 @@ sysctl_copyinstr(struct lwp *l, const void *uaddr, void *kaddr,
 void
 sysctl_init(void)
 {
-	sysctl_setup_func * const *sysctl_setup, f;
+	sysctl_setup_func *const *sysctl_setup;
 
 	rw_init(&sysctl_treelock);
 
@@ -233,11 +235,7 @@ sysctl_init(void)
 	sysctl_root.sysctl_num = CREATE_BASE;
 
         __link_set_foreach(sysctl_setup, sysctl_funcs) {
-		/*
-		 * XXX - why do i have to coerce the pointers like this?
-		 */
-		f = (void*)*sysctl_setup;
-		(*f)(NULL);
+		(**sysctl_setup)(NULL);
 	}
 
 	mutex_init(&sysctl_file_marker_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -2172,8 +2170,10 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 	namelen = 0;
 	ni = 0;
 	do {
-		if (ni == CTL_MAXNAME)
+		if (ni == CTL_MAXNAME) {
+			va_end(ap);
 			return (ENAMETOOLONG);
+		}
 		name[ni] = va_arg(ap, int);
 	} while (name[ni++] != CTL_EOL);
 	namelen = ni - 1;

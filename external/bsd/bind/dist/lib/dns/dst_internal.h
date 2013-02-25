@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_internal.h,v 1.4 2012/06/05 00:41:30 christos Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.4.2.1 2013/02/25 00:25:42 tls Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -172,6 +172,8 @@ struct dst_func {
 	 */
 	isc_result_t (*sign)(dst_context_t *dctx, isc_buffer_t *sig);
 	isc_result_t (*verify)(dst_context_t *dctx, const isc_region_t *sig);
+	isc_result_t (*verify2)(dst_context_t *dctx, int maxbits,
+				const isc_region_t *sig);
 	isc_result_t (*computesecret)(const dst_key_t *pub,
 				      const dst_key_t *priv,
 				      isc_buffer_t *secret);
@@ -219,6 +221,9 @@ isc_result_t dst__openssldh_init(struct dst_func **funcp);
 isc_result_t dst__gssapi_init(struct dst_func **funcp);
 #ifdef HAVE_OPENSSL_GOST
 isc_result_t dst__opensslgost_init(struct dst_func **funcp);
+#endif
+#ifdef HAVE_OPENSSL_ECDSA
+isc_result_t dst__opensslecdsa_init(struct dst_func **funcp);
 #endif
 
 /*%

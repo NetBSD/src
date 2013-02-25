@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_interface.c,v 1.6 2011/06/14 11:28:51 kefren Exp $ */
+/* $NetBSD: mpls_interface.c,v 1.6.8.1 2013/02/25 00:30:43 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -54,18 +54,18 @@ extern int no_default_route;
 
 int
 mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
-    struct in_addr * addr, int len, int label, int rlookup)
+    struct sockaddr * addr, int len, int label, int rlookup)
 {
 	char            padd[20];
 	int             kount = 0, rv;
-	union sockunion *so_dest, *so_pref = NULL, *so_gate, *so_nexthop, *so_tag,
-		*so_oldifa = NULL, *so_ifa;
+	union sockunion *so_dest, *so_pref = NULL, *so_gate, *so_nexthop,
+		*so_tag, *so_oldifa = NULL, *so_ifa;
 	struct rt_msg   rg;
 	struct rt_msg	*rgp = &rg;
 	struct label	*lab;
 
-	strlcpy(padd, inet_ntoa(p->address), 20);
-	debugp("Trying to add %s/%d as label %d to peer %s\n", inet_ntoa(*addr),
+	strlcpy(padd, satos(p->address), 20);
+	debugp("Trying to add %s/%d as label %d to peer %s\n", satos(addr),
 		len, label, padd);
 
 	/* Check if we should accept default route */
@@ -83,7 +83,7 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 		 * let's loop until we have it..
 		 */
 
-		if ((so_dest = make_inet_union(inet_ntoa(*addr))) == NULL)
+		if ((so_dest = make_inet_union(satos(addr))) == NULL) // XXX
 			return LDP_E_MEMORY;
 		if (len != 32 && (so_pref = from_cidr_to_union(len)) == NULL) {
 			free(so_dest);
@@ -139,15 +139,15 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 	}
 
 	/* Check if the address is bounded to the peer */
-	if (check_ifaddr(p, &so_gate->sin.sin_addr) == NULL) {
+	if (check_ifaddr(p, &so_gate->sa) == NULL) {
 		debugp("Failed at next-hop check\n");
 		return LDP_E_ROUTE_ERROR;
 	}
 
-	/* CHECK IF WE HAVE A BINDING FOR THAT */
+	/* Verify if we have a binding for this prefix */
 	lab = label_get_by_prefix(addr, len);
 
-	/* We should have a label because we have a route */
+	/* And we should have one because we have a route for it */
 	assert (lab);
 
 	if (lab->binding == MPLS_LABEL_IMPLNULL) {
@@ -160,7 +160,7 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 
 	warnp("[mpls_add_label] Adding %s/%d as local binding %d, label %d"
 	    " to peer %s\n",
-		inet_ntoa(*addr), len, lab->binding, label, padd);
+		satos(addr), len, lab->binding, label, padd);
 
 	/* Modify existing label */
 	lab->label = label;
@@ -185,7 +185,7 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 		return LDP_E_ROUTE_ERROR;
 
 	/* Now, let's add tag to IPv4 route and point it to mpls interface */
-	if ((so_dest = make_inet_union(inet_ntoa(*addr))) == NULL) {
+	if ((so_dest = make_inet_union(satos(addr))) == NULL) {	// XXX: grobian
 		fatalp("Out of memory\n");
 		return LDP_E_MEMORY;
 	}
@@ -230,7 +230,7 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 	if (add_route(so_dest, so_pref, so_nexthop, so_ifa, so_tag, FREESO, RTM_CHANGE) != LDP_E_OK)
 		return LDP_E_ROUTE_ERROR;
 
-	debugp("Added %s/%d as label %d to peer %s\n", inet_ntoa(*addr), len,
+	debugp("Added %s/%d as label %d to peer %s\n", satos(addr), len,
 	    label, padd);
 
 	return LDP_E_OK;

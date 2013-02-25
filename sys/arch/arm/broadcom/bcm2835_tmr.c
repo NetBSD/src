@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_tmr.c,v 1.1 2012/07/26 06:21:57 skrll Exp $	*/
+/*	$NetBSD: bcm2835_tmr.c,v 1.1.4.1 2013/02/25 00:28:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.1 2012/07/26 06:21:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.1.4.1 2013/02/25 00:28:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.1 2012/07/26 06:21:57 skrll Exp $"
 
 static const uint32_t counts_per_usec = (BCM2835_STIMER_HZ / 1000000);
 static uint32_t counts_per_hz = ~0;
-    
+
 struct bcm2835tmr_softc {
 	device_t		sc_dev;
 
@@ -113,7 +113,7 @@ bcmtmr_attach(device_t parent, device_t self, void *aux)
 
 	if (bcm2835tmr_sc == NULL)
 		bcm2835tmr_sc = sc;
-	
+
 	sc->sc_dev = self;
 	sc->sc_iot = aaa->aaa_iot;
 
@@ -122,7 +122,7 @@ bcmtmr_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "unable to map device\n");
 		return;
 	}
-	
+
 	bcm2835tmr_timecounter.tc_name = device_xname(self);
 }
 
@@ -132,7 +132,7 @@ cpu_initclocks(void)
 	struct bcm2835tmr_softc *sc = bcm2835tmr_sc;
 	void *clock_ih;
 	uint32_t stcl;
-	
+
 	KASSERT(sc != NULL);
 
 	bcm2835tmr_timecounter.tc_priv = sc;
@@ -159,22 +159,19 @@ delay(unsigned int n)
 	uint32_t delta, usecs;
 
 	KASSERT(sc != NULL);
-	int nhloops = 0;
 
 	last = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCM2835_STIMER_CLO);
 
 	delta = usecs = 0;
 	while (n > usecs) {
-		if (nhloops++ > 0x100000) Debugger();
 		curr = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		    BCM2835_STIMER_CLO);
 
-		/* XXXNH !?!?!?!?!?!?! - use CHI? */
 		/* Check to see if the timer has wrapped around. */
 		if (curr < last)
-			delta += (last + (counts_per_hz - curr));
+			delta += curr + (UINT32_MAX - last);
 		else
-			delta += (last - curr);
+			delta += curr - last;
 
 		last = curr;
 
@@ -182,7 +179,7 @@ delay(unsigned int n)
 			usecs += delta / counts_per_usec;
 			delta %= counts_per_usec;
 		}
-	}	
+	}
 
 }
 
@@ -197,7 +194,7 @@ clockhandler(void *arg)
 	struct bcm2835tmr_softc *sc = bcm2835tmr_sc;
 	struct clockframe *frame = arg;
 	uint32_t curr, status;
-	
+
 	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    BCM2835_STIMER_CS);
 

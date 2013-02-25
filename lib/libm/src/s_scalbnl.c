@@ -1,4 +1,4 @@
-/*	$NetBSD: s_scalbnl.c,v 1.1 2011/07/26 16:10:16 joerg Exp $	*/
+/*	$NetBSD: s_scalbnl.c,v 1.1.8.1 2013/02/25 00:27:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_scalbnl.c,v 1.1 2011/07/26 16:10:16 joerg Exp $");
+__RCSID("$NetBSD: s_scalbnl.c,v 1.1.8.1 2013/02/25 00:27:58 tls Exp $");
 
 #include "namespace.h"
 
@@ -40,9 +40,13 @@ __RCSID("$NetBSD: s_scalbnl.c,v 1.1 2011/07/26 16:10:16 joerg Exp $");
 
 #ifdef __HAVE_LONG_DOUBLE
 
-#ifdef __weak_alias
-__weak_alias(scalbnl, _scalbnl)
+#ifndef _LP64
+__strong_alias(_scalbnl, _scalblnl)
 #endif
+
+__weak_alias(scalbnl, _scalbnl)
+__weak_alias(scalblnl, _scalblnl)
+__weak_alias(ldexpl, _scalblnl); 
 
 #if LDBL_MANT_DIG == 64
 #define	FROM_UNDERFLOW	0x1p65L
@@ -54,8 +58,16 @@ __weak_alias(scalbnl, _scalbnl)
 #error Unsupported long double format
 #endif
 
+#ifdef _LP64
 long double
 scalbnl(long double x, int n)
+{
+	return scalblnl(x, n);
+}
+#endif
+
+long double
+scalblnl(long double x, long n)
 {
 	union ieee_ext_u u;
 

@@ -167,6 +167,10 @@ to any destination. Authorized networks are defined with the mynetworks
 configuration parameter. The default is to authorize all clients in the IP
 subnetworks that the local machine is attached to.
 
+Postfix can also be configured to relay mail from "mobile" clients that send
+mail from outside an authorized network block. This is explained in the
+SASL_README and TLS_README documents.
+
 IMPORTANT: If your machine is connected to a wide area network then your
 default mynetworks setting may be too friendly.
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.41 2012/06/22 06:15:18 sjg Exp $
+.\"	$NetBSD: makefs.8,v 1.41.2.1 2013/02/25 00:30:44 tls Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 12, 2012
+.Dd February 2, 2013
 .Dt MAKEFS 8
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd create a file system image from a directory tree
 .Sh SYNOPSIS
 .Nm
-.Op Fl xZ
+.Op Fl rxZ
 .Op Fl B Ar endian
 .Op Fl b Ar free-blocks
 .Op Fl d Ar debug-mask
@@ -50,6 +50,7 @@
 .Op Fl M Ar minimum-size
 .Op Fl m Ar maximum-size
 .Op Fl N Ar userdb-dir
+.Op Fl O Ar offset
 .Op Fl o Ar fs-options
 .Op Fl S Ar sector-size
 .Op Fl s Ar image-size
@@ -176,6 +177,13 @@ rather than using the results from the system's
 and
 .Xr getgrnam 3
 (and related) library calls.
+.It Fl O Ar offset
+Instead of creating the filesystem at the beginning of the file, start
+at offset.
+Valid only for
+.Sy ffs
+and
+.Sy msdos .
 .It Fl o Ar fs-options
 Set file system specific options.
 .Ar fs-options
@@ -186,6 +194,8 @@ Set the file system sector size to
 .Ar sector-size .
 .\" XXX: next line also true for cd9660?
 Defaults to 512.
+.It Fl r
+When merging multiple directories replace duplicate files with the last found.
 .It Fl s Ar image-size
 Set the size of the file system image to
 .Ar image-size .
@@ -201,6 +211,8 @@ BSD fast file system (default).
 ISO 9660 file system.
 .It Sy chfs
 Chip flash file system.
+.It Sy msdos
+FAT12, FAT16, or FAT32 file system.
 .It Sy v7fs
 7th Edition(V7) file system.
 .El
@@ -362,6 +374,10 @@ Erase block size of the media.
 Type of the media.
 NOR: 0 or NAND: 1.
 .El
+.Ss msdos-specific options
+See
+.Xr newfs_msdos 8
+for fs specific options.
 .Ss V7FS-specific options
 The following keywords are supported:
 .Pp
@@ -396,3 +412,5 @@ utility appeared in
 (v7fs support),
 .An Tamas Toth
 (chfs support).
+.An Christos Zoulas
+(msdos support).

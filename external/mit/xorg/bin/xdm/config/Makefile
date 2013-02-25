@@ -1,9 +1,21 @@
-#	$NetBSD: Makefile,v 1.12 2012/06/13 19:44:14 martin Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2013/02/25 00:27:40 tls Exp $
 
 .include <bsd.own.mk>
 
-# native only gives DEFAULTVT for i386 and amd64.
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "cats"
+# DEFAULTVT for all arches that are able to switch virtual consoles
+# while in X (currently this needs WSDISPLAY_COMPAT_USL and
+# WSDISPLAY_COMPAT_PCVT, this might change soon)
+.if	   ${MACHINE_ARCH} == "x86_64" \
+	|| ${MACHINE_ARCH} == "cats" \
+	|| ${MACHINE_ARCH} == "hp700" \
+	|| ${MACHINE_ARCH} == "hpcmips" \
+	|| ${MACHINE_ARCH} == "hpcsh" \
+	|| ${MACHINE_ARCH} == "i386" \
+	|| ${MACHINE_ARCH} == "netwinder" \
+	|| ${MACHINE_ARCH} == "shark" \
+	|| ${MACHINE_ARCH} == "sparc" \
+	|| ${MACHINE_ARCH} == "sparc64" \
+	|| ${MACHINE_ARCH} == "zaurus"
 DEFAULTVT=vt05
 .else
 DEFAULTVT=	# defined empty

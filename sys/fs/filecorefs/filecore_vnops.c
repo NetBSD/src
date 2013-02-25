@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.34 2012/03/13 18:40:37 elad Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.34.2.1 2013/02/25 00:29:47 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.34 2012/03/13 18:40:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.34.2.1 2013/02/25 00:29:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,14 +261,10 @@ filecore_read(void *v)
 			    vp, (long long)lbn, size, bp, error);
 #endif
 		}
-		n = MIN(n, size - bp->b_resid);
 		if (error) {
-#ifdef FILECORE_DEBUG_BR
-			printf("brelse(%p) vn1\n", bp);
-#endif
-			brelse(bp, 0);
 			return (error);
 		}
+		n = MIN(n, size - bp->b_resid);
 
 		error = uiomove((char *)(bp->b_data) + on, (int)n, uio);
 #ifdef FILECORE_DEBUG_BR
@@ -323,7 +319,6 @@ filecore_readdir(void *v)
 
 	error = filecore_dbread(dp, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return error;
 	}
 

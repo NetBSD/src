@@ -1,21 +1,12 @@
-#	$NetBSD: std.armadillo9,v 1.5 2008/06/22 08:27:18 kiyohara Exp $
+#	$NetBSD: std.armadillo9,v 1.5.40.1 2013/02/25 00:28:35 tls Exp $
 #
 # standard NetBSD/evbarm for Armadillo9 options
 
 machine	evbarm arm
-include		"conf/std"	# MI standard options
-include		"arch/arm/conf/std.arm"	# arch standard options
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in armadillo9 config definitions.
-include "arch/evbarm/conf/files.armadillo9"
-
-
-options 	EXEC_ELF32
-options 	EXEC_SCRIPT
-
-# To support easy transit to ../arch/arm/arm32
-options 	ARM32
-
+include		"arch/evbarm/conf/files.armadillo9"
 
 makeoptions	BOARDTYPE="armadillo9"
 options 	KERNEL_BASE_EXT=0xc0000000

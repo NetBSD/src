@@ -1,6 +1,6 @@
-/* $NetBSD: ldp_errors.c,v 1.2 2012/03/15 02:02:24 joerg Exp $ */
+/* $NetBSD: ldp_errors.c,v 1.2.2.1 2013/02/25 00:30:43 tls Exp $ */
 
-/*-
+/*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <arpa/inet.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -42,6 +43,8 @@
 int	debug_f = 0, warn_f = 0, syslog_f = 0;
 
 static void do_syslog(int, const char*, va_list) __printflike(2, 0);
+static char satos_str[INET6_ADDRSTRLEN > INET_ADDRSTRLEN ? INET6_ADDRSTRLEN :
+		INET_ADDRSTRLEN];
 
 void 
 debugp(const char *fmt, ...)
@@ -107,4 +110,32 @@ printtime()
 		if (buf[i] == '\n')
 			buf[i] = 0;
 	printf("%s ", buf);
+}
+
+const char *
+satos(const struct sockaddr *sa)
+{
+	switch (sa->sa_family) {
+		case AF_INET:
+		{
+			const struct sockaddr_in *sin =
+			    (const struct sockaddr_in *)sa;
+			if (inet_ntop(AF_INET, &(sin->sin_addr), satos_str,
+			    sizeof(satos_str)) == NULL)
+				return "INET ERROR";
+			break;
+		}
+		case AF_INET6:
+		{
+			const struct sockaddr_in6 *sin6 =
+			    (const struct sockaddr_in6 *)sa;
+			if (inet_ntop(AF_INET6, &(sin6->sin6_addr), satos_str,
+			    sizeof(satos_str)) == NULL)
+				return "INET6 ERROR";
+			break;
+		}
+		default:
+			return "UNKNOWN AF";
+	}
+	return satos_str;
 }

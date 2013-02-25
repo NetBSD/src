@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.1 2012/07/26 06:21:57 skrll Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.1.4.1 2013/02/25 00:28:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.1 2012/07/26 06:21:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.1.4.1 2013/02/25 00:28:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.1 2012/07/26 06:21:57 skrll Exp 
 #include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
+
+#include <arm/broadcom/bcm2835reg.h>
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(bcm2835);
@@ -65,7 +67,7 @@ struct bus_space bcm2835_bs_tag = {
 	bcm2835_bs_vaddr,
 
 	/* mmap */
-	bs_notimpl_bs_mmap,
+	bcm2835_bs_mmap,
 
 	/* barrier */
 	bcm2835_bs_barrier,
@@ -280,22 +282,25 @@ struct bus_space bcm2835_a4x_bs_tag = {
 
 
 int
-bcm2835_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
+bcm2835_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
 	u_long startpa, endpa, pa;
 	vaddr_t va;
-	pt_entry_t *pte;
 	const struct pmap_devmap *pd;
+	int pmap_flags;
 
-	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
+	pa = ba & ~BCM2835_BUSADDR_CACHE_MASK;
+
+	/* this does device addresses */
+	if ((pd = pmap_devmap_find_pa(pa, size)) != NULL) {
 		/* Device was statically mapped. */
-		*bshp = pd->pd_va + (bpa - pd->pd_pa);
+		*bshp = pd->pd_va + (pa - pd->pd_pa);
 		return 0;
 	}
 
-	startpa = trunc_page(bpa);
-	endpa = round_page(bpa + size);
+	startpa = trunc_page(pa);
+	endpa = round_page(pa + size);
 
 	/* XXX use extent manager to check duplicate mapping */
 
@@ -304,18 +309,12 @@ bcm2835_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 	if (!va)
 		return ENOMEM;
 
-	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
+	*bshp = (bus_space_handle_t)(va + (pa - startpa));
 
+	pmap_flags = (flag & BUS_SPACE_MAP_CACHEABLE) ? 0 : PMAP_NOCACHE;
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0) {
-			pte = vtopte(va);
-			*pte &= ~L2_S_CACHE_MASK;
-			PTE_SYNC(pte);
-			/* XXX: pmap_kenter_pa() also does PTE_SYNC(). a bit of
-			 *      waste.
-			 */
-		}
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
+		    pmap_flags);
 	}
 	pmap_update(pmap_kernel());
 
@@ -373,6 +372,17 @@ bcm2835_bs_vaddr(void *t, bus_space_handle_t bsh)
 	return (void *)bsh;
 }
 
+paddr_t
+bcm2835_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
+{
+	paddr_t pa = ba & ~BCM2835_BUSADDR_CACHE_MASK;
+	paddr_t bus_flags = 0;
+
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		bus_flags |= ARM32_MMAP_WRITECOMBINE;
+
+	return (arm_btop(pa + offset) | bus_flags);
+}
 
 int
 bcm2835_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,

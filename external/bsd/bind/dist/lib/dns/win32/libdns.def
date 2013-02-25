@@ -219,6 +219,7 @@ dns_dnssec_signs
 dns_dnssec_updatekeys
 dns_dnssec_verify
 dns_dnssec_verify2
+dns_dnssec_verify3
 dns_dnssec_verifymessage
 dns_dnsseckey_create
 dns_dnsseckey_destroy
@@ -431,7 +432,10 @@ dns_nsec3param_fromprivate
 dns_nsec3param_toprivate
 dns_nsec_build
 dns_nsec_buildrdata
+dns_nsec_compressbitmap
+dns_nsec_isset
 dns_nsec_nseconly
+dns_nsec_setbit
 dns_nsec_typepresent
 dns_opcode_totext
 dns_opcodestats_create
@@ -550,6 +554,7 @@ dns_rdataset_settrust
 dns_rdataset_totext
 dns_rdataset_towire
 dns_rdataset_towiresorted
+dns_rdataset_trimttl
 dns_rdatasetiter_current
 dns_rdatasetiter_destroy
 dns_rdatasetiter_first

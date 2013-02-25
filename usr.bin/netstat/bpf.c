@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.10 2010/12/13 21:15:30 pooka Exp $	*/
+/*	$NetBSD: bpf.c,v 1.10.12.1 2013/02/25 00:30:37 tls Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -167,6 +167,7 @@ bpf_dump(const char *bpfif)
 				printf("%s\n", p.p_comm);
 #undef BPFEXT
 		}
+		free(v);
 	} else {
                 /* XXX */
                 errx(1, "bpf_dump not implemented using kvm");

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbox_open.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mbox_open.c,v 1.1.1.1.16.1 2013/02/25 00:27:19 tls Exp $	*/
 
 /*++
 /* NAME
@@ -93,6 +93,7 @@
 #include <safe_open.h>
 #include <iostuff.h>
 #include <mymalloc.h>
+#include <warn_stat.h>
 
 /* Global library. */
 

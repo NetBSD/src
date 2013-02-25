@@ -1,6 +1,6 @@
-/* $NetBSD: ldp_errors.h,v 1.3 2012/03/15 02:02:24 joerg Exp $ */
+/* $NetBSD: ldp_errors.h,v 1.3.2.1 2013/02/25 00:30:43 tls Exp $ */
 
-/*-
+/*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -48,6 +48,7 @@
 #define	LDP_E_TOO_MANY_LABELS	13
 #define	LDP_E_INVAL		14
 #define	LDP_E_TOO_MANY_FDS	15
+#define	LDP_E_BAD_ID		16
 #define	LDP_E_GENERIC		255
 
 void	printtime(void);
@@ -55,5 +56,6 @@ void	printtime(void);
 void	debugp(const char *, ...) __printflike(1, 2);
 void	fatalp(const char *, ...) __printflike(1, 2);
 void	warnp(const char *, ...) __printflike(1, 2);
+const char *	satos(const struct sockaddr *);
 
 #endif	/* !_LDP_ERRORS_H_ */

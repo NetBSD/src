@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_map11.c,v 1.1.1.1 2009/06/23 10:08:54 tron Exp $	*/
+/*	$NetBSD: smtp_map11.c,v 1.1.1.1.16.1 2013/02/25 00:27:28 tls Exp $	*/
 
 /*++
 /* NAME
@@ -93,7 +93,7 @@ int     smtp_map11_external(VSTRING *addr, MAPS *maps, int propagate)
 	argv_free(new_addr);
 	return (1);
     } else {
-	if (dict_errno != 0)
+	if (maps->error != 0)
 	    msg_fatal("%s map lookup problem for %s", maps->title, STR(addr));
 	if (msg_verbose)
 	    msg_info("%s: %s not found", myname, STR(addr));

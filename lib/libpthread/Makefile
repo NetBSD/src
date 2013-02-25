@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77 2012/08/04 15:13:09 matt Exp $
+#	$NetBSD: Makefile,v 1.77.2.1 2013/02/25 00:27:59 tls Exp $
 #
 
 WARNS?=	5
@@ -161,6 +161,7 @@ MLINKS+=	pthread_cond.3 pthread_cond_timedwait.3
 
 MLINKS+=	pthread_condattr.3 pthread_condattr_init.3
 MLINKS+=	pthread_condattr.3 pthread_condattr_destroy.3
+MLINKS+=	pthread_condattr.3 pthread_condattr_setclock.3
 
 MLINKS+=	pthread_getname_np.3 pthread_setname_np.3
 MLINKS+=	pthread_getspecific.3 pthread_setspecific.3

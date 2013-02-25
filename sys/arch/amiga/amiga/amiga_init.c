@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.127 2012/07/09 19:23:45 rkujawa Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.127.2.1 2013/02/25 00:28:20 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,10 +35,11 @@
 #include "opt_p5ppc68kboard.h"
 #include "opt_devreload.h"
 #include "opt_m68k_arch.h"
+#include "z3rambd.h"
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.127 2012/07/09 19:23:45 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.127.2.1 2013/02/25 00:28:20 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.127 2012/07/09 19:23:45 rkujawa Exp
 #include <amiga/amiga/gayle.h>
 #include <amiga/amiga/memlist.h>
 #include <amiga/dev/zbusvar.h>
+#include <amiga/dev/z3rambdvar.h>
 
 #define RELOC(v, t)	*((t*)((u_int)&(v) + loadbase))
 
@@ -335,7 +337,12 @@ start_c(int id, u_int fphystart, u_int fphysize, u_int cphysize,
 		if (cd->rom.manid == 8512 && 
 		    (cd->rom.prodid == 100 || cd->rom.prodid == 110)) 
 			RELOC(ZBUSAVAIL, u_int) += m68k_round_page(0x1400000);
-
+#if NZ3RAMBD > 0
+		if (z3rambd_match_id(cd->rom.manid, cd->rom.prodid) > 0)
+		{
+			/* XXX: remove board from memlist */
+		} else
+#endif
 		if (bd_type != ERT_ZORROIII &&
 		    (bd_type != ERT_ZORROII || isztwopa(cd->addr)))
 			continue;	/* It's not Z2 or Z3 I/O board */

@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.1.2.1 2012/11/20 03:01:04 tls Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.1.2.2 2013/02/25 00:28:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.1.2.1 2012/11/20 03:01:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.1.2.2 2013/02/25 00:28:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -196,7 +196,7 @@ a9tmr_init_cpu_clock(struct cpu_info *ci)
 	 * Re-enable the comparator and now enable interrupts.
 	 */
 	a9tmr_global_write(sc, TMR_GBL_INT, 1);	/* clear interrupt pending */
-	ctl |= TMR_GBL_CTL_CMP_ENABLE | TMR_GBL_CTL_INT_ENABLE | TMR_GBL_CTL_AUTO_INC;
+	ctl |= TMR_GBL_CTL_CMP_ENABLE | TMR_GBL_CTL_INT_ENABLE | TMR_GBL_CTL_AUTO_INC | TMR_CTL_ENABLE;
 	a9tmr_global_write(sc, TMR_GBL_CTL, ctl);
 #if 0
 	printf("%s: %s: ctl %#x autoinc %u cmp %#x%08x now %#"PRIx64"\n",

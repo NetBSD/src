@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.7 2012/06/05 00:38:55 christos Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.7.2.1 2013/02/25 00:25:02 tls Exp $	*/
 
 /*
- * Copyright (C) 2007-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -57,7 +57,8 @@ int verbose;
 
 static const char *algs = "RSA | RSAMD5 | DH | DSA | RSASHA1 |"
 			  " NSEC3DSA | NSEC3RSASHA1 |"
-			  " RSASHA256 | RSASHA512 | ECCGOST";
+			  " RSASHA256 | RSASHA512 | ECCGOST |"
+			  " ECDSAP256SHA256 | ECDSAP384SHA384";
 
 ISC_PLATFORM_NORETURN_PRE static void
 usage(void) ISC_PLATFORM_NORETURN_POST;
@@ -380,7 +381,8 @@ main(int argc, char **argv) {
 	if (use_nsec3 &&
 	    alg != DST_ALG_NSEC3DSA && alg != DST_ALG_NSEC3RSASHA1 &&
 	    alg != DST_ALG_RSASHA256 && alg != DST_ALG_RSASHA512 &&
-	    alg != DST_ALG_ECCGOST) {
+	    alg != DST_ALG_ECCGOST &&
+	    alg != DST_ALG_ECDSA256 && alg != DST_ALG_ECDSA384) {
 		fatal("%s is incompatible with NSEC3; "
 		      "do not use the -3 option", algname);
 	}

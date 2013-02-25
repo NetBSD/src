@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.109 2011/09/10 16:57:35 apb Exp $
+#	$NetBSD: bsd.man.mk,v 1.109.8.1 2013/02/25 00:28:16 tls Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -17,12 +17,16 @@ TMACDEPDIR?=	/usr/share/tmac
 .endif
 
 HTMLDIR?=	${DESTDIR}${MANDIR}
+.if ${MKMANDOC} == yes && !defined(NOMANDOC)
+CATDEPS?=
+.else
 CATDEPS?=	${TMACDEPDIR}/andoc.tmac \
 		${TMACDEPDIR}/doc.tmac \
 		${TMACDEPDIR}/mdoc/doc-common \
 		${TMACDEPDIR}/mdoc/doc-ditroff \
 		${TMACDEPDIR}/mdoc/doc-nroff \
 		${TMACDEPDIR}/mdoc/doc-syms
+.endif
 MANTARGET?=	cat
 
 MAN?=

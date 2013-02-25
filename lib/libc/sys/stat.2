@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.2,v 1.50.6.1 2012/11/20 03:00:43 tls Exp $
+.\"	$NetBSD: stat.2,v 1.50.6.2 2013/02/25 00:27:54 tls Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)stat.2	8.4 (Berkeley) 5/1/95
 .\"
-.Dd September 14, 2011
+.Dd November 18, 2012
 .Dt STAT 2
 .Os
 .Sh NAME
@@ -75,30 +75,38 @@ The
 function obtains the same information about an open file
 known by the file descriptor
 .Fa fd .
-.Pp 
+.Pp
 .Fn fstatat
 works the same way as
 .Fn stat
-(or 
+(or
 .Fn lstat
-if  
+if
 .Dv AT_SYMLINK_NOFOLLOW
 is set in
 .Fa flag )
 except if
 .Fa path
-is relative. In that case, it is looked up from a directory whose file
+is relative.
+In that case, it is looked up from a directory whose file
 descriptor was passed as
 .Fa fd .
-Search permission is required on
-.Fa fd
-except if that file descriptor was open with
-.Dv O_SEARCH
-option.
+Search permission is required on this directory.
+.\"    (These alternatives await a decision about the semantics of O_SEARCH)
+.\" Search permission is required on this directory
+.\" except if
+.\" .Fa fd
+.\" was opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.\"    - or -
+.\" This file descriptor must have been opened with the
+.\" .Dv O_SEARCH
+.\" flag.
 .Fa fd
 can be set to
 .Dv AT_FDCWD
-in order to specify current directory.
+in order to specify the current directory.
 .Pp
 The
 .Fa sb
@@ -370,13 +378,12 @@ An I/O error occurred while reading from or writing to the file system.
 .Fn stat ,
 .Fn lstat ,
 and
-.Fn fstat 
+.Fn fstat
 conform to
 .St -p1003.1-2004 .
 .Fn fstatat
 conforms to
 .St -p1003.1-2008 .
-
 .Sh HISTORY
 A
 .Fn stat

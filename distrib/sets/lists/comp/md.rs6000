@@ -1,4 +1,4 @@
-# $NetBSD: md.rs6000,v 1.5 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.rs6000,v 1.5.8.1 2013/02/25 00:24:33 tls Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/rs6000				comp-c-include
 ./usr/include/rs6000/ansi.h			comp-c-include
@@ -51,4 +51,3 @@
 ./usr/include/rs6000/varargs.h			comp-obsolete		obsolete
 ./usr/include/rs6000/vmparam.h			comp-c-include
 ./usr/include/rs6000/wchar_limits.h		comp-c-include
-./usr/libdata/debug/usr/mdec/mkbootimage.debug	comp-sysutil-debug	debug

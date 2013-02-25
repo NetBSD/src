@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.100.2.1 2012/11/20 03:02:51 tls Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.100.2.2 2013/02/25 00:30:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -468,7 +468,7 @@
  *
  *	__link_set_decl(set, ptype)
  *		Provide an extern declaration of the set `set', which
- *		contains an array of the pointer type `ptype'.  This
+ *		contains an array of pointers to type `ptype'.  This
  *		macro must be used by any code which wishes to reference
  *		the elements of a link set.
  *
@@ -512,6 +512,7 @@
  */
 #define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
 
+#ifndef __ASSEMBLER__
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
 #define	__BIT(__n)	\
     (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (uintmax_t)(__n)))
@@ -519,6 +520,7 @@
 /* __BITS(m, n): bits m through n, m < n. */
 #define	__BITS(__m, __n)	\
 	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
+#endif /* !__ASSEMBLER__ */
 
 /* find least significant bit that is set */
 #define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))

@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.23.12.1 2012/11/20 03:00:57 tls Exp $ */
+/*	$NetBSD: a2kbbc.c,v 1.23.12.2 2013/02/25 00:28:22 tls Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.23.12.1 2012/11/20 03:00:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.23.12.2 2013/02/25 00:28:22 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,7 +74,6 @@ CFATTACH_DECL_NEW(a2kbbc, sizeof(struct a2kbbc_softc),
 static int
 a2kbbc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	//struct clock_ymdhms dt;
 	static int a2kbbc_matched = 0;
 
 	if (!matchname("a2kbbc", aux))

@@ -24,8 +24,8 @@
 #	_negdf2 _addsubdf3 _muldivdf3 _cmpdf2 _unorddf2 _fixdfsi _fixunsdfsi \
 #	_truncdfsf2 _negsf2 _addsubsf3 _muldivsf3 _cmpsf2 _unordsf2 \
 #	_fixsfsi _fixunssfsi
-LIB1ASMFUNCS += \
-	_floatundisf
+#LIB1ASMFUNCS += \
+#	_floatundisf
 
 # Add the BPABI C functions.
 LIB2FUNCS_EXTRA = $(srcdir)/config/arm/bpabi-netbsd.c \
@@ -33,3 +33,6 @@ LIB2FUNCS_EXTRA = $(srcdir)/config/arm/bpabi-netbsd.c \
 
 # we don't have this
 LIB2FUNCS_STATIC_EXTRA = 
+
+# to make compat easier.
+UNWIND_H = $(srcdir)/config/arm/unwind-arm.h 

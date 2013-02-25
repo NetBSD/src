@@ -12,10 +12,11 @@ is queued.
 
 The reason for adding Milter support to Postfix is that there exists a large
 collection of applications, not only to block unwanted mail, but also to verify
-authenticity (examples: DomainKeys Identified Mail (DKIM), SenderID+SPF and
-DomainKeys) or to digitally sign mail (examples: DomainKeys Identified Mail
-(DKIM), DomainKeys). Having yet another Postfix-specific version of all that
-software is a poor use of human and system resources.
+authenticity (examples: OpenDKIM, DomainKeys Identified Mail (DKIM),
+SenderID+SPF and DomainKeys) or to digitally sign mail (examples: OpenDKIM,
+DomainKeys Identified Mail (DKIM), DomainKeys). Having yet another Postfix-
+specific version of all that software is a poor use of human and system
+resources.
 
 The Milter protocol has evolved over time, and different Postfix versions
 implement different feature sets. See the workarounds and limitations sections
@@ -92,8 +93,15 @@ such a library, but Sendmail does.
     Sendmail libmilter library by default. With other systems, libmilter may be
     provided by a package (called "sendmail-devel" on some Linux systems).
 
-    Once libmilter is installed, applications such as dkim-milter and sid-
-    milter build out of the box without requiring any tinkering:
+    Once libmilter is installed, applications such as OpenDKIM, dkim-milter and
+    sid-milter build out of the box without requiring any tinkering:
+
+        $ ggzzccaatt ooppeennddkkiimm--xx..yy..zz..ttaarr..ggzz || ttaarr xxff --
+        $ ccdd ooppeennddkkiimm--xx..yy..zz
+        $ ..//ccoonnffiigguurree ......ooppttiioonnss......
+        $ mmaakkee
+        [...lots of output omitted...]
+        $ mmaakkee iinnssttaallll
 
         $ ggzzccaatt ddkkiimm--mmiilltteerr--xx..yy..zz..ttaarr..ggzz || ttaarr xxff --
         $ ccdd ddkkiimm--mmiilltteerr--xx..yy..zz

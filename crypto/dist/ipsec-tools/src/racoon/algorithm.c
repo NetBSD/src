@@ -1,4 +1,4 @@
-/*	$NetBSD: algorithm.c,v 1.8 2006/10/06 12:02:27 manu Exp $	*/
+/*	$NetBSD: algorithm.c,v 1.8.50.1 2013/02/25 00:24:02 tls Exp $	*/
 
 /* Id: algorithm.c,v 1.15 2006/05/23 20:23:09 manubsd Exp */
 
@@ -165,6 +165,9 @@ static struct enc_algorithm ipsec_encdef[] = {
 { "aes",	algtype_aes,		IPSECDOI_ESP_AES,		16,
 		NULL,			NULL,
 		NULL,			eay_aes_keylen, },
+{ "aes_gcm_16",	algtype_aesgcm16,		IPSECDOI_ESP_AESGCM16,		16,
+		NULL,			NULL,
+		NULL,			eay_aesgcm_keylen, },
 { "twofish",	algtype_twofish,	IPSECDOI_ESP_TWOFISH,		16,
 		NULL,			NULL,
 		NULL,			eay_twofish_keylen, },
@@ -798,6 +801,7 @@ default_keylen(class, type)
 	case algtype_rc5:
 	case algtype_cast128:
 	case algtype_aes:
+	case algtype_aesgcm16:
 	case algtype_twofish:
 	case algtype_camellia:
 		return 128;
@@ -834,6 +838,7 @@ check_keylen(class, type, len)
 	case algtype_rc5:
 	case algtype_cast128:
 	case algtype_aes:
+	case algtype_aesgcm16:
 	case algtype_twofish:
 	case algtype_camellia:
 		if (len % 8 != 0) {
@@ -860,6 +865,10 @@ check_keylen(class, type, len)
 			badrange++;
 		break;
 	case algtype_aes:
+		if (!(len == 128 || len == 192 || len == 256))
+			badrange++;
+		break;
+	case algtype_aesgcm16:
 		if (!(len == 128 || len == 192 || len == 256))
 			badrange++;
 		break;

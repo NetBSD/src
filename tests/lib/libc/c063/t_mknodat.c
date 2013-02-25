@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mknodat.c,v 1.1.2.2 2012/11/18 17:41:55 manu Exp $ */
+/*	$NetBSD: t_mknodat.c,v 1.1.2.3 2013/02/25 00:30:22 tls Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mknodat.c,v 1.1.2.2 2012/11/18 17:41:55 manu Exp $");
+__RCSID("$NetBSD: t_mknodat.c,v 1.1.2.3 2013/02/25 00:30:22 tls Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -65,6 +65,7 @@ ATF_TC_WITH_CLEANUP(mknodat_fd);
 ATF_TC_HEAD(mknodat_fd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that mknodat works with fd");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(mknodat_fd, tc)
@@ -95,6 +96,7 @@ ATF_TC_HEAD(mknodat_fdcwd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 			  "See that mknodat works with fd as AT_FDCWD");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(mknodat_fdcwd, tc)
@@ -122,6 +124,7 @@ ATF_TC_HEAD(mknodat_fdcwderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 		  "See that mknodat fails with fd as AT_FDCWD and bad path");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(mknodat_fdcwderr, tc)
@@ -145,6 +148,7 @@ ATF_TC_WITH_CLEANUP(mknodat_fderr);
 ATF_TC_HEAD(mknodat_fderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that mknodat fails with fd as -1");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(mknodat_fderr, tc)

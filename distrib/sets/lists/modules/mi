@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.47.2.1 2012/11/20 02:57:52 tls Exp $
+# $NetBSD: mi,v 1.47.2.2 2013/02/25 00:24:41 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -35,6 +35,8 @@
 ./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/coredump				base-kernel-modules	kmod
 ./@MODULEDIR@/coredump/coredump.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/cyclic				base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/cyclic/cyclic.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dbcool				base-kernel-modules	kmod
 ./@MODULEDIR@/dbcool/dbcool.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/dirhash				base-obsolete	obsolete
@@ -119,6 +121,8 @@
 ./@MODULEDIR@/npf_ext_log/npf_ext_log.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/npf_ext_normalise			base-kernel-modules	kmod
 ./@MODULEDIR@/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_rndblock			base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_rndblock/npf_ext_rndblock.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/ntfs				base-kernel-modules	kmod
 ./@MODULEDIR@/ntfs/ntfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/null				base-kernel-modules	kmod
@@ -139,6 +143,8 @@
 ./@MODULEDIR@/ppp_deflate/ppp_deflate.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/procfs				base-kernel-modules	kmod
 ./@MODULEDIR@/procfs/procfs.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/profile				base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/profile/profile.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/ptyfs				base-kernel-modules	kmod
 ./@MODULEDIR@/ptyfs/ptyfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/puffs				base-kernel-modules	kmod

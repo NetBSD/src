@@ -1,0 +1,3 @@
+config_directory = .
+default_rbl_reply = $bbbb
+forward_path = $aaaa

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.h,v 1.2.2.1 2012/11/20 03:01:03 tls Exp $	*/
+/*	$NetBSD: bcm2835_mbox.h,v 1.2.2.2 2013/02/25 00:28:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -41,5 +41,11 @@ void bcm2835_mbox_write(bus_space_tag_t, bus_space_handle_t, uint8_t,
 
 void bcmmbox_read(uint8_t, uint32_t *);
 void bcmmbox_write(uint8_t, uint32_t);
+
+int bcmmbox_request(uint8_t, void *, size_t, uint32_t *);
+
+struct bcmmbox_attach_args {
+	bus_dma_tag_t	baa_dmat;
+};
 
 #endif /* _BCM2835_MBOX_H_ */

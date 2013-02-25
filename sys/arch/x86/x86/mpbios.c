@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.58.18.1 2012/11/20 03:01:51 tls Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.58.18.2 2013/02/25 00:29:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.58.18.1 2012/11/20 03:01:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.58.18.2 2013/02/25 00:29:05 tls Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -1025,7 +1025,7 @@ mpbios_ioapic(const uint8_t *ent, device_t self)
 	aaa.apic_version = entry->apic_version;
 	aaa.apic_address = (paddr_t)entry->apic_address;
 	aaa.apic_vecbase = -1;
-	aaa.flags =  (mp_fps->mpfb2 & 0x80) ? IOAPIC_PICMODE : IOAPIC_VWIRE;
+	aaa.flags = (mp_fps->mpfb2 & 0x80) ? IOAPIC_PICMODE : IOAPIC_VWIRE;
 	locs[IOAPICBUSCF_APID] = aaa.apic_id;
 
 	config_found_sm_loc(self, "ioapicbus", locs, &aaa, mp_ioapicprint,

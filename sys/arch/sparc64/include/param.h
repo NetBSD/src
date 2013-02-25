@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.50 2012/03/10 07:54:17 nakayama Exp $ */
+/*	$NetBSD: param.h,v 1.50.2.1 2013/02/25 00:28:59 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,7 +123,7 @@ extern int nbpg, pgofset, pgshift;
  * 0x00000000f0100000.  It also uses some space around 0x00000000fff00000 to
  * map in device registers.  The rest is pretty much ours to play with.
  *
- * The kernel starts at KERNBASE.  Here's they layout.  We use macros to set
+ * The kernel starts at KERNBASE.  Here's the layout.  We use macros to set
  * the addresses so we can relocate everything easily.  We use 4MB locked TTEs
  * to map in the kernel text and data segments.  Any extra pages are recycled,
  * so they can potentially be double-mapped.  This shouldn't really be a
@@ -132,8 +132,8 @@ extern int nbpg, pgofset, pgshift;
  *
  * 0x0000000000000000:	64K NFO page zero
  * 0x0000000000010000:	Userland or PROM
- * KERNBASE:		4MB kernel text and read only data
- *				This is mapped in the ITLB and 
+ * KERNBASE:		4MB (or multiple thereof) kernel text and read only
+ *			        data. This is mapped in the ITLB and 
  *				Read-Only in the DTLB
  * KERNBASE+0x400000:	4MB kernel data and BSS -- not in ITLB
  *				Contains context table, kernel pmap,
@@ -141,8 +141,11 @@ extern int nbpg, pgofset, pgshift;
  * KERNBASE+0x800000:	Unmapped page -- redzone
  * KERNBASE+0x802000:	Process 0 stack and u-area
  * KERNBASE+0x806000:	2 pages for pmap_copy_page and /dev/mem
- * KERNBASE+0x80a000:	Start of kernel VA segment
- * KERNEND:		End of kernel VA segment
+ *
+ * For 32 bit kernels:
+ *  KERNBASE+0x80a000:	Start of kernel VA segment
+ *  KERNEND:		End of kernel VA segment
+ *
  * KERNEND+0x02000:	Auxreg_va (unused?)
  * KERNEND+0x04000:	TMPMAP_VA (unused?)
  * KERNEND+0x06000:	message buffer.
@@ -153,6 +156,10 @@ extern int nbpg, pgofset, pgshift;
  * KERNEND+0x020000:	unmapped space (top of panicstack)
  * KERNEND+0x022000:	IODEV_BASE -- begin mapping IO devices here.
  * 0x00000000f0000000:	IODEV_END -- end of device mapping space.
+ *
+ * For 64 bit kernels:
+ *  0x100000000:	Start of kernel VA segment (theoretically upto
+ *			the VA hole)
  *
  */
 #define	KERNBASE	0x001000000	/* start of kernel virtual space */
@@ -195,12 +202,20 @@ extern int nbpg, pgofset, pgshift;
 /*
  * Minimum size of the kernel kmem_arena in PAGE_SIZE-sized
  * logical pages.
+ * For 32bit kernels:
  * Maximum of 2.5GB on sparc64 (it must fit into KERNEND - KERNBASE, and also
  * leave space in the kernel_map for other allocations).
+ * For 64bit kernels:
+ * Unlimited. (Practically there is a limit, we use VA starting at 4GB upto
+ * the VA-hole, but let us call this unlimited for now.)
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
+#ifdef __arch64__
+#define	NKMEMPAGES_MAX_UNLIMITED
+#else
 #undef	NKMEMPAGES_MAX_UNLIMITED
 #define	NKMEMPAGES_MAX_DEFAULT	((2048UL * 1024 * 1024) >> PAGE_SHIFT)
+#endif
 
 #ifdef _KERNEL
 #ifndef _LOCORE

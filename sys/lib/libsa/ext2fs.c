@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.13 2012/05/21 21:34:16 dsl Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.13.2.1 2013/02/25 00:29:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -240,37 +240,37 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 	/*
 	 * Index structure of an inode:
 	 *
-	 * e2di_blocks[0..NDADDR-1]
+	 * e2di_blocks[0..EXT2FS_NDADDR-1]
 	 *			hold block numbers for blocks
-	 *			0..NDADDR-1
+	 *			0..EXT2FS_NDADDR-1
 	 *
-	 * e2di_blocks[NDADDR+0]
-	 *			block NDADDR+0 is the single indirect block
+	 * e2di_blocks[EXT2FS_NDADDR+0]
+	 *			block EXT2FS_NDADDR+0 is the single indirect block
 	 *			holds block numbers for blocks
-	 *			NDADDR .. NDADDR + NINDIR(fs)-1
+	 *			EXT2FS_NDADDR .. EXT2FS_NDADDR + NINDIR(fs)-1
 	 *
-	 * e2di_blocks[NDADDR+1]
-	 *			block NDADDR+1 is the double indirect block
+	 * e2di_blocks[EXT2FS_NDADDR+1]
+	 *			block EXT2FS_NDADDR+1 is the double indirect block
 	 *			holds block numbers for INDEX blocks for blocks
-	 *			NDADDR + NINDIR(fs) ..
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2 - 1
+	 *			EXT2FS_NDADDR + NINDIR(fs) ..
+	 *			EXT2FS_NDADDR + NINDIR(fs) + NINDIR(fs)**2 - 1
 	 *
-	 * e2di_blocks[NDADDR+2]
-	 *			block NDADDR+2 is the triple indirect block
+	 * e2di_blocks[EXT2FS_NDADDR+2]
+	 *			block EXT2FS_NDADDR+2 is the triple indirect block
 	 *			holds block numbers for	double-indirect
 	 *			blocks for blocks
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2 ..
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2
+	 *			EXT2FS_NDADDR + NINDIR(fs) + NINDIR(fs)**2 ..
+	 *			EXT2FS_NDADDR + NINDIR(fs) + NINDIR(fs)**2
 	 *				+ NINDIR(fs)**3 - 1
 	 */
 
-	if (file_block < NDADDR) {
+	if (file_block < EXT2FS_NDADDR) {
 		/* Direct block. */
 		*disk_block_p = fs2h32(fp->f_di.e2di_blocks[file_block]);
 		return 0;
 	}
 
-	file_block -= NDADDR;
+	file_block -= EXT2FS_NDADDR;
 
 	ind_cache = file_block >> LN2_IND_CACHE_SZ;
 	if (ind_cache == fp->f_ind_cache_block) {
@@ -283,14 +283,14 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 		level += fp->f_nishift;
 		if (file_block < (indp_t)1 << level)
 			break;
-		if (level > NIADDR * fp->f_nishift)
+		if (level > EXT2FS_NIADDR * fp->f_nishift)
 			/* Block number too high */
 			return EFBIG;
 		file_block -= (indp_t)1 << level;
 	}
 
 	ind_block_num =
-	    fs2h32(fp->f_di.e2di_blocks[NDADDR + (level / fp->f_nishift - 1)]);
+	    fs2h32(fp->f_di.e2di_blocks[EXT2FS_NDADDR + (level / fp->f_nishift - 1)]);
 
 	for (;;) {
 		level -= fp->f_nishift;
@@ -1000,7 +1000,7 @@ void e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new)
 	new->e2di_dacl		=	bswap32(old->e2di_dacl);
 	new->e2di_faddr		=	bswap32(old->e2di_faddr);
 	memcpy(&new->e2di_blocks[0], &old->e2di_blocks[0],
-	    (NDADDR + NIADDR) * sizeof(uint32_t));
+	    (EXT2FS_NDADDR + EXT2FS_NIADDR) * sizeof(uint32_t));
 }
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.41 2012/02/10 17:35:50 para Exp $ */
+/* $NetBSD: param.h,v 1.41.6.1 2013/02/25 00:28:19 tls Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,11 @@
 #define	MACHINE_ARCH	"alpha"
 #define	MID_MACHINE	MID_ALPHA
 
+#ifdef _KERNEL
 #include <machine/cpu.h>
+#else
+#define ALPHA_PGSHIFT	13
+#endif
 
 #define	NBPG		(1 << ALPHA_PGSHIFT)		/* bytes/page */
 #define	PGOFSET		(NBPG-1)			/* byte off. into pg */

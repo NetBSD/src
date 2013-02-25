@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.37.8.1 2012/11/20 03:03:02 tls Exp $	*/
+/*	$NetBSD: mtree.c,v 1.37.8.2 2013/02/25 00:30:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.37.8.1 2012/11/20 03:03:02 tls Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.37.8.2 2013/02/25 00:30:46 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,9 +59,18 @@ __RCSID("$NetBSD: mtree.c,v 1.37.8.1 2012/11/20 03:03:02 tls Exp $");
 #include "extern.h"
 
 int	ftsoptions = FTS_PHYSICAL;
-int	cflag, Cflag, dflag, Dflag, eflag, iflag, jflag, lflag, mflag,
-    	nflag, qflag, rflag, sflag, tflag, uflag, Uflag;
+int	bflag, cflag, Cflag, dflag, Dflag, eflag, iflag, jflag, lflag, mflag,
+    	nflag, qflag, rflag, sflag, tflag, uflag, Uflag, wflag;
 char	fullpath[MAXPATHLEN];
+
+static struct {
+	enum flavor flavor;
+	const char name[9];
+} flavors[] = {
+	{F_MTREE, "mtree"},
+	{F_FREEBSD9, "freebsd9"},
+	{F_NETBSD6, "netbsd6"},
+};
 
 __dead static	void	usage(void);
 
@@ -69,6 +78,7 @@ int
 main(int argc, char **argv)
 {
 	int	ch, status;
+	unsigned int	i;
 	char	*dir, *p;
 	FILE	*spec1, *spec2;
 
@@ -80,9 +90,12 @@ main(int argc, char **argv)
 	spec2 = NULL;
 
 	while ((ch = getopt(argc, argv,
-	    "cCdDeE:f:I:ik:K:lLmMnN:p:PqrR:s:StuUWxX:"))
+	    "bcCdDeE:f:F:I:ijk:K:lLmMnN:O:p:PqrR:s:StuUwWxX:"))
 	    != -1) {
 		switch((char)ch) {
+		case 'b':
+			bflag = 1;
+			break;
 		case 'c':
 			cflag = 1;
 			break;
@@ -113,6 +126,15 @@ main(int argc, char **argv)
 					mtree_err("%s: %s", optarg,
 					    strerror(errno));
 			} else
+				usage();
+			break;
+		case 'F':
+			for (i = 0; i < __arraycount(flavors); i++)
+				if (strcmp(optarg, flavors[i].name) == 0) {
+					flavor = flavors[i].flavor;
+					break;
+				}
+			if (i == __arraycount(flavors))
 				usage();
 			break;
 		case 'i':
@@ -157,6 +179,9 @@ main(int argc, char **argv)
 			    "Unable to use user and group databases in `%s'",
 				    optarg);
 			break;
+		case 'O':
+			load_only(optarg);
+			break;
 		case 'p':
 			dir = optarg;
 			break;
@@ -193,6 +218,9 @@ main(int argc, char **argv)
 		case 'U':
 			Uflag = uflag = 1;
 			break;
+		case 'w':
+			wflag = 1;
+			break;
 		case 'W':
 			mtree_Wflag = 1;
 			break;
@@ -212,6 +240,36 @@ main(int argc, char **argv)
 
 	if (argc)
 		usage();
+
+	switch (flavor) {
+	case F_FREEBSD9:
+		if (cflag && iflag) {
+			warnx("-c and -i passed, replacing -i with -j for "
+			    "FreeBSD compatibility");
+			iflag = 0;
+			jflag = 1;
+		}
+		if (dflag && !bflag) {
+			warnx("Adding -b to -d for FreeBSD compatibility");
+			bflag = 1;
+		}
+		if (uflag && !iflag) {
+			warnx("Adding -i to -%c for FreeBSD compatibility",
+			    Uflag ? 'U' : 'u');
+			iflag = 1;
+		}
+		if (uflag && !tflag) {
+			warnx("Adding -t to -%c for FreeBSD compatibility",
+			    Uflag ? 'U' : 'u');
+			tflag = 1;
+		}
+		if (wflag)
+			warnx("The -w flag is a no-op");
+		break;
+	default:
+		if (wflag)
+			usage();
+	}
 
 	if (spec2 && (cflag || Cflag || Dflag))
 		mtree_err("Double -f, -c, -C and -D flags are mutually "
@@ -255,12 +313,18 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
+	unsigned int i;
 
 	fprintf(stderr,
-	    "usage: %s [-CcDdejLlMnPqrSUuWx] [-i|-m] [-E tags]\n"
+	    "usage: %s [-bCcDdejLlMnPqrStUuWx] [-i|-m] [-E tags]\n"
 	    "\t\t[-f spec] [-f spec]\n"
 	    "\t\t[-I tags] [-K keywords] [-k keywords] [-N dbdir] [-p path]\n"
-	    "\t\t[-R keywords] [-s seed] [-X exclude-file]\n",
+	    "\t\t[-R keywords] [-s seed] [-X exclude-file]\n"
+	    "\t\t[-F flavor]\n",
 	    getprogname());
+	fprintf(stderr, "\nflavors:");
+	for (i = 0; i < __arraycount(flavors); i++)
+		fprintf(stderr, " %s", flavors[i].name);
+	fprintf(stderr, "\n");
 	exit(1);
 }

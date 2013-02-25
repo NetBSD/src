@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.224 2012/06/10 06:15:53 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.224.2.1 2013/02/25 00:29:37 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,9 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.224 2012/06/10 06:15:53 mrg Exp $");
-
-#include "opt_usb.h"
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.224.2.1 2013/02/25 00:29:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,7 +359,6 @@ int
 ohci_detach(struct ohci_softc *sc, int flags)
 {
 	int rv = 0;
-	usbd_xfer_handle xfer;
 
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
@@ -383,10 +380,7 @@ ohci_detach(struct ohci_softc *sc, int flags)
 
 	if (sc->sc_hcca != NULL)
 		usb_freemem(&sc->sc_bus, &sc->sc_hccadma);
-	while((xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
-		kmem_free(xfer, sizeof(struct ohci_xfer));
-	}
+	pool_cache_destroy(sc->sc_xferpool);
 
 	return (rv);
 }
@@ -405,7 +399,7 @@ ohci_alloc_sed(ohci_softc_t *sc)
 			  OHCI_ED_ALIGN, &dma);
 		if (err)
 			return (0);
-		for(i = 0; i < OHCI_SED_CHUNK; i++) {
+		for (i = 0; i < OHCI_SED_CHUNK; i++) {
 			offs = i * OHCI_SED_SIZE;
 			sed = KERNADDR(&dma, offs);
 			sed->physaddr = DMAADDR(&dma, offs);
@@ -674,7 +668,8 @@ ohci_init(ohci_softc_t *sc)
 	for (i = 0; i < OHCI_HASH_SIZE; i++)
 		LIST_INIT(&sc->sc_hash_itds[i]);
 
-	SIMPLEQ_INIT(&sc->sc_free_xfers);
+	sc->sc_xferpool = pool_cache_init(sizeof(struct ohci_xfer), 0, 0, 0,
+	    "ohcixfer", NULL, IPL_USB, NULL, NULL, NULL);
 
 	rev = OREAD4(sc, OHCI_REVISION);
 	aprint_normal("OHCI version %d.%d%s\n",
@@ -953,20 +948,9 @@ ohci_allocx(struct usbd_bus *bus)
 	struct ohci_softc *sc = bus->hci_private;
 	usbd_xfer_handle xfer;
 
-	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
+	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
 	if (xfer != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
-#ifdef DIAGNOSTIC
-		if (xfer->busy_free != XFER_FREE) {
-			printf("ohci_allocx: xfer=%p not free, 0x%08x\n", xfer,
-			       xfer->busy_free);
-		}
-#endif
-	} else {
-		xfer = kmem_alloc(sizeof(struct ohci_xfer), KM_SLEEP);
-	}
-	if (xfer != NULL) {
-		memset(xfer, 0, sizeof (struct ohci_xfer));
+		memset(xfer, 0, sizeof(struct ohci_xfer));
 #ifdef DIAGNOSTIC
 		xfer->busy_free = XFER_BUSY;
 #endif
@@ -986,7 +970,7 @@ ohci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	}
 	xfer->busy_free = XFER_FREE;
 #endif
-	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
+	pool_cache_put(sc->sc_xferpool, xfer);
 }
 
 Static void
@@ -1669,7 +1653,7 @@ ohci_waitintr(ohci_softc_t *sc, usbd_xfer_handle xfer)
 			ohci_intr1(sc);
 			mutex_spin_exit(&sc->sc_intr_lock);
 			if (xfer->status != USBD_IN_PROGRESS)
-				return;
+				goto done;
 		}
 	}
 
@@ -1680,6 +1664,7 @@ ohci_waitintr(ohci_softc_t *sc, usbd_xfer_handle xfer)
 
 	/* XXX should free TD */
 
+done:
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -2010,7 +1995,8 @@ ohci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&oxfer->abort_task, ohci_timeout_task, addr);
+	usb_init_task(&oxfer->abort_task, ohci_timeout_task, addr,
+	    USB_TASKQ_MPSAFE);
 	usb_add_task(oxfer->xfer.pipe->device, &oxfer->abort_task,
 	    USB_TASKQ_HC);
 }
@@ -2209,7 +2195,10 @@ ohci_open(usbd_pipe_handle pipe)
 			ival = pipe->interval;
 			if (ival == USBD_DEFAULT_INTERVAL)
 				ival = ed->bInterval;
-			return (ohci_device_setintr(sc, opipe, ival));
+			err = ohci_device_setintr(sc, opipe, ival);
+			if (err)
+				goto bad;
+			break;
 		case UE_ISOCHRONOUS:
 			pipe->methods = &ohci_device_isoc_methods;
 			return (ohci_setup_isoc(pipe));
@@ -2259,10 +2248,8 @@ ohci_close_pipe(usbd_pipe_handle pipe, ohci_soft_ed_t *head)
 		       (int)O32TOH(sed->ed.ed_headp),
 		       (int)O32TOH(sed->ed.ed_tailp),
 		       pipe, std);
-#ifdef USB_DEBUG
-		usbd_dump_pipe(&opipe->pipe);
-#endif
 #ifdef OHCI_DEBUG
+		usbd_dump_pipe(&opipe->pipe);
 		ohci_dump_ed(sc, sed);
 		if (std)
 			ohci_dump_td(sc, std);
@@ -3252,7 +3239,7 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 	return (USBD_IN_PROGRESS);
 }
 
-/* Abort a device control request. */
+/* Abort a device interrupt request. */
 Static void
 ohci_device_intr_abort(usbd_xfer_handle xfer)
 {

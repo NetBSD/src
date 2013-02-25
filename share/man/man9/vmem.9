@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem.9,v 1.13 2011/09/05 18:21:29 wiz Exp $
+.\"	$NetBSD: vmem.9,v 1.13.8.1 2013/02/25 00:28:15 tls Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd September 2, 2011
+.Dd January 29, 2013
 .Dt VMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -38,6 +38,13 @@
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft vmem_t *
 .Fn vmem_create \
+"const char *name" "vmem_addr_t base" "vmem_size_t size" "vmem_size_t quantum" \
+"int (*allocfn)(void *, vmem_size_t, vm_flag_t, vmem_addr_t *)" \
+"void (*freefn)(void *, vmem_addr_t, vmem_size_t)" \
+"void *arg" "vmem_size_t qcache_max" "vm_flag_t flags" "int ipl"
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Ft vmem_t *
+.Fn vmem_xcreate \
 "const char *name" "vmem_addr_t base" "vmem_size_t size" "vmem_size_t quantum" \
 "int (*allocfn)(void *, vmem_size_t, vmem_size_t *, vm_flag_t, vmem_addr_t *)" \
 "void (*freefn)(void *, vmem_addr_t, vmem_size_t)" \
@@ -74,6 +81,107 @@ other than virtual memory.
 .Pp
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Fn vmem_create
+creates a new vmem arena.
+.Pp
+.Bl -tag -width qcache_max
+.It Fa name
+The string to describe the vmem.
+.It Fa base
+The start address of the initial span.
+Pass
+.Dv 0
+if no initial span is required.
+.It Fa size
+The size of the initial span.
+Pass
+.Dv 0
+if no initial span is required.
+.It Fa quantum
+The smallest unit of allocation.
+.It Fa allocfn
+The callback function used to import spans from the backend arena.
+Set both
+.Fa allocfn
+and
+.Fa freefn
+to
+.Dv NULL
+to disable automatic imports.
+.Nm
+calls
+.Fo "(*allocfn)"
+.Fa arg
+.Fa size
+.Fa flags
+.Fa "\*[Am]addrp"
+.Fc
+to import a span of size at least
+.Fa size .
+.Fa allocfn
+should accept the same
+.Fa flags
+as
+.Fn vmem_alloc .
+.Fa allocfn
+must return
+.Dv ENOMEM
+to indicate failure, or 0 on success.
+If
+.Fa allocfn
+succeeds, it must write the starting address of the imported span to
+.Fa addrp .
+.It Fa freefn
+The callback function used to free spans to the backend arena.
+.Fa freefn
+may be
+.Dv NULL
+even if
+.Fa allocfn
+is not
+.Dv NULL .
+.Nm
+calls
+.Fn "(*freefn)" arg addr size
+to return to
+.Fa arg
+a span of size
+.Fa size ,
+starting at
+.Fa addr ,
+that was previously allocated by
+.Fa allocfn .
+.It Fa arg
+The backend arena.
+.Fa arg
+may be
+.Dv NULL .
+.Nm
+passes
+.Fa arg
+as the first argument of
+.Fa allocfn
+and
+.Fa freefn .
+.It Fa qcache_max
+The largest size of allocations which can be served by quantum cache.
+It is merely a hint and can be ignored.
+.It Fa flags
+Either of:
+.Bl -tag -width VM_NOSLEEP
+.It Dv VM_SLEEP
+Can sleep until enough resources are available.
+.It Dv VM_NOSLEEP
+Don't sleep.
+Immediately return
+.Dv NULL
+if there are not enough resources available.
+.El
+.It Fa ipl
+Interrupt level to be blocked for allocating from vmem.
+.El
+.Pp
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Fn vmem_xcreate
 creates a new vmem arena.
 .Pp
 .Bl -tag -width qcache_max

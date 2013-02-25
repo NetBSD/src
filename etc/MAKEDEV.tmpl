@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.158.2.1 2012/11/20 02:57:55 tls Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.158.2.2 2013/02/25 00:24:48 tls Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -123,6 +123,7 @@
 #	ttyB0	UART on first 68901 (formerly mdm01) (atari)
 #	ixpcom	IXP12x0 COM ports
 #	epcom	EP93xx COM ports
+#	plcom	ARM PL01[01] serial ports
 #	ttyM?	HP200/300 4 port serial mux interface (hp300)
 #	ttya	"ttya" system console (luna68k)
 #	ttyb	second system serial port (luna68k)
@@ -1899,6 +1900,11 @@ epcom[0-9]*)
 	mkdev epcom$unit c %epcom_chr% $unit "" "" $u_uucp
 	;;
 
+plcom[0-9]*)
+	unit=${i#plcom}
+	mkdev plcom$unit c %plcom_chr% $unit "" "" $u_uucp
+	;;
+
 ucbsnd)
 	mkdev ucbsnd c %ucbsnd_chr% 0 666
 	;;
@@ -2286,7 +2292,7 @@ create_mfs_dev()
 
 	if $do_redirect; then
 		# Redirect stdout and stderr to console
-		mknod -m 600 -g 0 -u 0 temp_console c 0 0
+		${MKNOD} -m 600 -g 0 -u 0 temp_console c %CONSOLE_CMAJOR% 0
 		exec >temp_console 2>&1
 		rm temp_console
 	fi

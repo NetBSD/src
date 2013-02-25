@@ -1,12 +1,17 @@
-# $NetBSD: Makefile,v 1.1.2.2 2012/11/15 19:49:18 jkunz Exp $
+# $NetBSD: Makefile,v 1.1.2.3 2013/02/25 00:26:03 tls Exp $
 
 .include <bsd.init.mk>
+.include <bsd.endian.mk>
 
 .PATH:		${DIST}/sbtool
 
-.if (${MACHINE} == "evbarm")
+.if ${MACHINE} == "evbarm" \
+    && ${MACHINE_CPU} == "arm" \
+    && ${TARGET_ENDIANNESS} == "1234"
+
 PROG_CXX=	sbtool
 SRCS=		EncoreBootImageReader.cpp sbtool.cpp
+
 .endif
 
 MAN=		sbtool.8

@@ -28,11 +28,13 @@ SMTP commands (HELO, MAIL FROM, etc.) as well as mail content
 <p> The reason for adding Milter support to Postfix is that there
 exists a large collection of applications, not only to block unwanted
 mail, but also to verify authenticity (examples: <a
+href="http://www.opendkim.org/">OpenDKIM</a>, <a
 href="http://sourceforge.net/projects/dkim-milter/">DomainKeys
 Identified Mail (DKIM)</a>, <a
 href="http://sourceforge.net/projects/sid-milter/">SenderID+SPF</a> and
 <a href="http://sourceforge.net/projects/dk-milter/">DomainKeys</a>)
 or to digitally sign mail (examples: <a
+href="http://www.opendkim.org/">OpenDKIM</a>, <a
 href="http://sourceforge.net/projects/dkim-milter/">DomainKeys
 Identified Mail (DKIM)</a>, <a
 href="http://sourceforge.net/projects/dk-milter/">DomainKeys</a>).
@@ -212,9 +214,21 @@ other systems, libmilter may be provided by a package (called
 "sendmail-devel" on some Linux systems).  </p>
 
 <p> Once libmilter is installed, applications such as <a
+href="http://www.opendkim.org/">OpenDKIM</a>, <a
 href="http://sourceforge.net/projects/dkim-milter/">dkim-milter</a> and
 <a href="http://sourceforge.net/projects/sid-milter/">sid-milter</a>
 build out of the box without requiring any tinkering:</p>
+
+<blockquote>
+<pre>
+$ <b>gzcat opendkim-<i>x.y.z</i>.tar.gz | tar xf -</b>
+$ <b>cd opendkim-<i>x.y.z</i></b>
+$ <b>./configure ...<i>options</i>...</b>
+$ <b>make</b>
+[...<i>lots of output omitted</i>...]
+$ <b>make install</b>
+</pre>
+</blockquote>
 
 <blockquote>
 <pre>

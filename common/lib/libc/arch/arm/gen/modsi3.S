@@ -1,4 +1,4 @@
-/*	$NetBSD: modsi3.S,v 1.1.6.2 2012/11/20 02:57:29 tls Exp $	*/
+/*	$NetBSD: modsi3.S,v 1.1.6.3 2013/02/25 00:23:55 tls Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -22,10 +22,9 @@
  */
 
 ENTRY(__modsi3)
-	stmfd	sp!, {lr}
-	sub	sp, sp, #4	/* align stack */
+	str	lr, [sp, #-8]!	/* push lr */
 	bl	PIC_SYM(__divsi3, PLT)
-	add	sp, sp, #4	/* unalign stack */
 	mov	r0, r1
-	ldmfd	sp!, {pc}
-
+	ldr	lr, [sp], #8	/* pop lr */
+	RET
+END(__modsi3)

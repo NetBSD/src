@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.135.2.1 2012/11/20 03:00:40 tls Exp $	*/
+/*	$NetBSD: unistd.h,v 1.135.2.2 2013/02/25 00:27:47 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@ ssize_t	 pwrite(int, const void *, size_t, off_t);
  * X/Open Extended API set 2 (a.k.a. C063)
  */
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
-    defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL)
+    defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
 int	linkat(int, const char *, int, const char *, int);
 int	renameat(int, const char *, int, const char *);
 int	mkfifoat(int, const char *, mode_t);
@@ -308,7 +308,7 @@ int	readlinkat(int, const char *, char *, size_t);
 int	symlinkat(const char *, int, const char *);
 int	unlinkat(int, const char *, int);
 #endif
-#if defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL)
+#if defined(_INCOMPLETE_XOPEN_C063)
 int	fexecve(int, char * const *, char * const *);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.38 2012/02/25 22:32:44 rmind Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.38.2.1 2013/02/25 00:29:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.38 2012/02/25 22:32:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.38.2.1 2013/02/25 00:29:51 tls Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -394,6 +394,8 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		 */
 		if (op == RW_READER || (rw->rw_owner & RW_THREAD) == curthread)
 			break;
+
+		owner = rw->rw_owner;
 	}
 	KPREEMPT_ENABLE(curlwp);
 

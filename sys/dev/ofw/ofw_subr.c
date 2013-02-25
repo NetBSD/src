@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.18.20.1 2012/11/20 03:02:13 tls Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.18.20.2 2013/02/25 00:29:17 tls Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.18.20.1 2012/11/20 03:02:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.18.20.2 2013/02/25 00:29:17 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ void
 of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 {
 	int node, len;
-	char name[32];
+	char name[32], compatible[32];
 	uint64_t reg64;
 	uint32_t reg32;
 	uint64_t addr;
@@ -353,6 +353,13 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 			    < sizeof(reg64))
 				continue;
 			addr = reg64;
+			/*
+			 * The i2c bus number (0 or 1) is encoded in bit 33
+			 * of the register, but we encode it in bit 8 of
+			 * i2c_addr_t.
+			 */
+			if (addr & 0x100000000)
+				addr = (addr & 0xff) | 0x100;
 		} else if (cell_size == 4 && len >= sizeof(reg32)) {
 			if (OF_getprop(node, "reg", &reg32, sizeof(reg32))
 			    < sizeof(reg32))
@@ -372,6 +379,12 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 		prop_dictionary_set_uint32(dev, "addr", addr);
 		prop_dictionary_set_uint64(dev, "cookie", node);
 		of_to_dataprop(dev, node, "compatible", "compatible");
+		if (OF_getprop(node, "compatible", compatible,
+		    sizeof(compatible)) > 0) {
+			/* Set size for EEPROM's that we know about */
+			if (strcmp(compatible, "i2c-at24c64") == 0)
+				prop_dictionary_set_uint32(dev, "size", 8192);
+		}
 		prop_array_add(array, dev);
 		prop_object_release(dev);
 	}

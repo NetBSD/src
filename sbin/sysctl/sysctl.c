@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.143 2012/06/02 21:38:09 dsl Exp $ */
+/*	$NetBSD: sysctl.c,v 1.143.2.1 2013/02/25 00:28:11 tls Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.143 2012/06/02 21:38:09 dsl Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.143.2.1 2013/02/25 00:28:11 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.143 2012/06/02 21:38:09 dsl Exp $");
 #include <sys/stat.h>
 #include <sys/sched.h>
 #include <sys/socket.h>
+#include <sys/bitops.h>
 #include <netinet/in.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
@@ -171,6 +172,7 @@ static void proc_limit(HANDLER_PROTO);
 static void machdep_diskinfo(HANDLER_PROTO);
 #endif /* CPU_DISKINFO */
 static void mode_bits(HANDLER_PROTO);
+static void reserve(HANDLER_PROTO);
 
 static const struct handlespec {
 	const char *ps_re;
@@ -212,6 +214,8 @@ static const struct handlespec {
 
 	{ "/net/inet.*/tcp.*/deb.*",		printother, NULL, "trpt" },
 
+	{ "/net/inet.*/ip.*/anonportalgo/reserve", reserve, reserve, NULL },
+
 	{ "/net/ns/spp/deb.*",			printother, NULL, "trsp" },
 
 	{ "/hw/diskstats",			printother, NULL, "iostat" },
@@ -248,6 +252,8 @@ size_t	nr;
 char	*fn;
 int	req, stale, errs;
 FILE	*warnfp = stderr;
+
+#define MAXPORTS	0x10000
 
 /*
  * vah-riables n stuff
@@ -2352,6 +2358,7 @@ kern_drivers(HANDLER_ARGS)
 	rc = prog_sysctl(name, namelen, kd, &sz, NULL, 0);
 	if (rc == -1) {
 		sysctlerror(1);
+		free(kd);
 		return;
 	}
 
@@ -2682,6 +2689,102 @@ mode_bits(HANDLER_ARGS)
 			strmode(mm, buf);
 			rc = snprintf(outbuf, sizeof(outbuf), "%04o (%s)", mm, buf + 1);
 			display_string(pnode, sname, outbuf, rc, DISPLAY_NEW);
+		}
+	}
+}
+
+typedef __BITMAP_TYPE(, uint32_t, 0x10000) bitmap;
+
+static char *
+bitmask_print(const bitmap *o)
+{
+	char *s, *os;
+
+	s = os = NULL;
+	for (size_t i = 0; i < MAXPORTS; i++)
+		if (__BITMAP_ISSET(i, o)) {
+			int rv;
+
+			if (os)
+			    	rv = asprintf(&s, "%s,%zu", os, i);
+			else
+			    	rv = asprintf(&s, "%zu", i);
+			if (rv == -1)
+				err(1, "");
+			free(os);
+			os = s;
+		}
+	if (s == NULL && (s = strdup("")) == NULL)
+		err(1, "");
+	return s;
+}
+
+static void
+bitmask_scan(const void *v, bitmap *o)
+{
+	char *s = strdup(v);
+	if (s == NULL)
+		err(1, "");
+
+	__BITMAP_ZERO(o);
+	for (s = strtok(s, ","); s; s = strtok(NULL, ",")) {
+		char *e;
+		errno = 0;
+		unsigned long l = strtoul(s, &e, 0);
+		if ((l == ULONG_MAX && errno == ERANGE) || s == e || *e)
+			errx(1, "Invalid port: %s", s);
+		if (l >= MAXPORTS)
+			errx(1, "Port out of range: %s", s);
+		__BITMAP_SET(l, o);
+	}
+}
+
+
+static void
+reserve(HANDLER_ARGS)
+{
+	int rc;
+	size_t osz, nsz;
+	bitmap o, n;
+
+	if (fn)
+		trim_whitespace(value, 3);
+
+	osz = sizeof(o);
+	if (value) {
+		bitmask_scan(value, &n);
+		value = (char *)&n;
+		nsz = sizeof(n);
+	} else
+		nsz = 0;
+
+	rc = prog_sysctl(name, namelen, &o, &osz, value, nsz);
+	if (rc == -1) {
+		sysctlerror(value == NULL);
+		return;
+	}
+
+	if (value && qflag)
+		return;
+
+	if (rflag || xflag)
+		display_struct(pnode, sname, &o, sizeof(o),
+		    value ? DISPLAY_OLD : DISPLAY_VALUE);
+	else {
+		char *s = bitmask_print(&o);
+		display_string(pnode, sname, s, strlen(s),
+		    value ? DISPLAY_OLD : DISPLAY_VALUE);
+		free(s);
+	}
+
+	if (value) {
+		if (rflag || xflag)
+			display_struct(pnode, sname, &n, sizeof(n),
+			    DISPLAY_NEW);
+		else {
+			char *s = bitmask_print(&n);
+			display_string(pnode, sname, s, strlen(s), DISPLAY_NEW);
+			free(s);
 		}
 	}
 }

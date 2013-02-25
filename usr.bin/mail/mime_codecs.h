@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_codecs.h,v 1.4 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: mime_codecs.h,v 1.4.26.1 2013/02/25 00:30:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@ mime_codec_t mime_fio_encoder(const char *);
 mime_codec_t mime_fio_decoder(const char *);
 
 void mime_fio_copy(FILE *, FILE *, void *);
+
+ssize_t mime_rfc2047_decode(char, char *, size_t, const char *, size_t);
 
 #include "mime.h"
 

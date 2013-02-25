@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.25.2.1 2012/11/20 03:00:43 tls Exp $	*/
+/*	$NetBSD: zdump.c,v 1.25.2.2 2013/02/25 00:27:55 tls Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.25.2.1 2012/11/20 03:00:43 tls Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.25.2.2 2013/02/25 00:27:55 tls Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -27,6 +27,8 @@ __RCSID("$NetBSD: zdump.c,v 1.25.2.1 2012/11/20 03:00:43 tls Exp $");
 #ifndef isascii
 #define isascii(x) 1
 #endif /* !defined isascii */
+
+#include "private.h"
 
 #ifndef ZDUMP_LO_YEAR
 #define ZDUMP_LO_YEAR	(-500)

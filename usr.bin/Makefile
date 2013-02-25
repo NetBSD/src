@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.210.2.1 2012/11/20 03:02:57 tls Exp $
+#	$NetBSD: Makefile,v 1.210.2.2 2013/02/25 00:30:33 tls Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -24,7 +24,7 @@ SUBDIR= apply asa at audio audiocfg \
 	renice rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh \
 	rup ruptime rusers rwall rwho \
 	script sdiff sdpquery sed seq shar shlock shmif_dumpbus \
-	showmount shuffle sockstat soelim sort spell split stat su systat \
+	showmount shuffle sockstat sort spell split stat su systat \
 	tabs tail talk tcopy tee telnet tftp tic time tip touch tpfmt tput \
 	tr true tset tsort tty ul uname unexpand unifdef \
 	uniq units unvis unzip usbhidaction usbhidctl users utoppya \
@@ -34,6 +34,10 @@ SUBDIR= apply asa at audio audiocfg \
 	write xargs xinstall xlint xstr yes
 
 SUBDIR+= ../external/zlib/pigz/bin/pigz
+
+.if (${MKGROFF} == "no")
+SUBDIR+= soelim
+.endif
 
 .if (${MKMAKEMANDB} == "no")
 SUBDIR+= apropos whatis

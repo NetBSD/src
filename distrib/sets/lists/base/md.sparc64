@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.165.2.1 2012/11/20 02:57:44 tls Exp $
+# $NetBSD: md.sparc64,v 1.165.2.2 2013/02/25 00:24:29 tls Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -63,7 +63,7 @@
 ./usr/lib/sparc/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libbind9.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libbind9.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/sparc/libbind9.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbsdmalloc.so.0		base-compat-shlib	compat,pic
@@ -77,7 +77,7 @@
 ./usr/lib/sparc/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypto.so.8			base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/libcrypto.so.8.0		base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libcrypto.so.8.1		base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libcrypto_idea.so.7		base-obsolete		obsolete
 ./usr/lib/sparc/libcrypto_idea.so.7.0		base-obsolete		obsolete
 ./usr/lib/sparc/libcrypto_mdc2.so.7		base-obsolete		obsolete
@@ -93,13 +93,13 @@
 ./usr/lib/sparc/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdns.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdns.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/sparc/libdns_sd.so.0.0		base-compat-shlib	compat,pic,mdns
 ./usr/lib/sparc/libdwarf.so.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdwarf.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdwarf.so.0.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libedit.so.3			base-compat-shlib	compat,pic
-./usr/lib/sparc/libedit.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libedit.so.3.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libelf.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libelf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libevent.so.3			base-compat-shlib	compat,pic
@@ -133,11 +133,11 @@
 ./usr/lib/sparc/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libipsec.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libisc.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisc.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisc.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libisccc.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisccc.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisccc.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libisccfg.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisccfg.so.5.7		base-compat-shlib	compat,pic
+./usr/lib/sparc/libisccfg.so.5.8		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/sparc/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/sparc/libisns.so.0			base-compat-shlib	compat,pic
@@ -163,16 +163,19 @@
 ./usr/lib/sparc/liblua.so			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblua.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/liblutok.so			base-compat-shlib	compat,pic,kyua
+./usr/lib/sparc/liblutok.so.1			base-compat-shlib	compat,pic,kyua
+./usr/lib/sparc/liblutok.so.1.0			base-compat-shlib	compat,pic,kyua
 ./usr/lib/sparc/liblwres.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/liblwres.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/sparc/liblwres.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzma.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzma.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libm.so.0.10			base-compat-shlib	compat,pic
-./usr/lib/sparc/libmagic.so.3			base-compat-shlib	compat,pic
-./usr/lib/sparc/libmagic.so.3.1			base-compat-shlib	compat,pic
+./usr/lib/sparc/libmagic.so.4			base-compat-shlib	compat,pic
+./usr/lib/sparc/libmagic.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmenu.so.6			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmenu.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmj.so.1			base-compat-shlib	compat,pic,crypto
@@ -183,6 +186,8 @@
 ./usr/lib/sparc/libmpfr.so.4.1			base-compat-shlib	obsolete
 ./usr/lib/sparc/libnetpgp.so.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libnetpgp.so.3.0		base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libnetpgpverify.so.4		base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libnetpgpverify.so.4.0		base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libnpf.so.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/sparc/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/sparc/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds
@@ -254,10 +259,10 @@
 ./usr/lib/sparc/libsqlite3.so.1.1		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libss.so.6			base-compat-shlib	obsolete
 ./usr/lib/sparc/libss.so.6.0			base-compat-shlib	obsolete
-./usr/lib/sparc/libssh.so.19			base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/libssh.so.19.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libssh.so.20			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libssh.so.20.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libssl.so.10			base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/libssl.so.10.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libssl.so.10.1			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds
 ./usr/lib/sparc/libstdc++.so.7.0		base-compat-shlib	gcc=4,compat,pic
 ./usr/lib/sparc/libstdc++.so.7.1		base-compat-shlib	gcc=45,compat,pic
@@ -289,6 +294,16 @@
 ./usr/lib/sparc/lua/5.1				base-compat-shlib	compat
 ./usr/lib/sparc/lua/5.1/gpio.so			base-compat-shlib	compat,pic
 ./usr/lib/sparc/lua/5.1/sqlite.so		base-compat-shlib	compat,pic
+./usr/lib/sparc/npf				base-npf-shlib		compat
+./usr/lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
+./usr/lib/sparc/npf/ext_log.so.0		base-npf-shlib		compat,pic
+./usr/lib/sparc/npf/ext_log.so.0.0		base-npf-shlib		compat,pic
+./usr/lib/sparc/npf/ext_normalise.so		base-npf-shlib		compat,pic
+./usr/lib/sparc/npf/ext_normalise.so.0		base-npf-shlib		compat,pic
+./usr/lib/sparc/npf/ext_normalise.so.0.0	base-npf-shlib		compat,pic
+./usr/lib/sparc/npf/ext_rndblock.so		base-npf-shlib		compat,pic
+./usr/lib/sparc/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
+./usr/lib/sparc/npf/ext_rndblock.so.0.0	base-npf-shlib		compat,pic
 ./usr/lib/sparc/security			base-compat-shlib	compat
 ./usr/lib/sparc/security/pam_afslog.so.3	base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/security/pam_chroot.so.3	base-compat-shlib	compat,pic
@@ -314,6 +329,7 @@
 ./usr/lib/sparc/security/pam_unix.so.3		base-compat-shlib	compat,pic
 ./usr/libdata/debug/usr/lib/sparc		base-compat-lib		compat
 ./usr/libdata/debug/usr/lib/sparc/i18n		base-compat-lib		compat
+./usr/libdata/debug/usr/lib/sparc/npf		base-compat-lib		compat
 ./usr/libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./usr/lkm/compat_netbsd32.o			base-obsolete		obsolete
 ./usr/lkm/compat_sunos32.o			base-obsolete		obsolete

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2012/03/21 10:08:30 matt Exp $
+#	$NetBSD: Makefile,v 1.31.2.1 2013/02/25 00:27:55 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -46,7 +46,7 @@ MAN+=	cuserid.3
 
 
 # regexp sources
-SRCS+=	regerror.c regexp.c regsub.c
+SRCS+=	regexp.c regsub.c
 MAN+=	regexp.3
 
 .include <bsd.lib.mk>

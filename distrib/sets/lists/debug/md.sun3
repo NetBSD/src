@@ -1,0 +1,3 @@
+# $NetBSD: md.sun3,v 1.2.6.2 2013/02/25 00:24:38 tls Exp $
+./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
+./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.253.2.1 2012/11/20 03:02:44 tls Exp $	*/
+/*	$NetBSD: tty.c,v 1.253.2.2 2013/02/25 00:29:55 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.253.2.1 2012/11/20 03:02:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.253.2.2 2013/02/25 00:29:55 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -104,7 +104,7 @@ static void	ttyblock(struct tty *);
 static void	ttyecho(int, struct tty *);
 static void	ttyrubo(struct tty *, int);
 static void	ttyprintf_nolock(struct tty *, const char *fmt, ...)
-    __attribute__((__format__(__printf__,2,3)));
+    __printflike(2, 3);
 static int	proc_compare_wrapper(struct proc *, struct proc *);
 static void	ttysigintr(void *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg_parser.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: cfg_parser.h,v 1.1.1.1.16.1 2013/02/25 00:27:17 tls Exp $	*/
 
 #ifndef _CFG_PARSER_H_INCLUDED_
 #define _CFG_PARSER_H_INCLUDED_
@@ -14,15 +14,20 @@
  .nf
 
  /*
+  * Utility library.
+  */
+#include <dict.h>
+
+ /*
   * External interface.
   */
-
 typedef struct CFG_PARSER {
     char   *name;
     char   *(*get_str) (const struct CFG_PARSER *, const char *, const char *,
 			        int, int);
     int     (*get_int) (const struct CFG_PARSER *, const char *, int, int, int);
     int     (*get_bool) (const struct CFG_PARSER *, const char *, int);
+    DICT_OWNER owner;
 } CFG_PARSER;
 
 extern CFG_PARSER *cfg_parser_alloc(const char *);
@@ -31,6 +36,8 @@ extern char *cfg_get_str(const CFG_PARSER *, const char *, const char *,
 extern int cfg_get_int(const CFG_PARSER *, const char *, int, int, int);
 extern int cfg_get_bool(const CFG_PARSER *, const char *, int);
 extern CFG_PARSER *cfg_parser_free(CFG_PARSER *);
+
+#define cfg_get_owner(cfg) ((cfg)->owner)
 
 /* LICENSE
 /* .ad

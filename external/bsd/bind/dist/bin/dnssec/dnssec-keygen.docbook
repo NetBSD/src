@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004, 2005, 2007-2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007-2012  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -44,6 +44,7 @@
       <year>2009</year>
       <year>2010</year>
       <year>2011</year>
+      <year>2012</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -67,7 +68,6 @@
       <arg><option>-c <replaceable class="parameter">class</replaceable></option></arg>
       <arg><option>-D <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg><option>-E <replaceable class="parameter">engine</replaceable></option></arg>
-      <arg><option>-e</option></arg>
       <arg><option>-f <replaceable class="parameter">flag</replaceable></option></arg>
       <arg><option>-G</option></arg>
       <arg><option>-g <replaceable class="parameter">generator</replaceable></option></arg>
@@ -116,7 +116,8 @@
           <para>
             Selects the cryptographic algorithm.  For DNSSEC keys, the value
             of <option>algorithm</option> must be one of RSAMD5, RSASHA1,
-	    DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256, RSASHA512 or ECCGOST.
+	    DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256, RSASHA512, ECCGOST,
+	    ECDSAP256SHA256 or ECDSAP384SHA384.
 	    For TSIG/TKEY, the value must
             be DH (Diffie Hellman), HMAC-MD5, HMAC-SHA1, HMAC-SHA224,
             HMAC-SHA256, HMAC-SHA384, or HMAC-SHA512.  These values are
@@ -150,7 +151,8 @@
             between 512 and 2048 bits.  Diffie Hellman keys must be between
             128 and 4096 bits.  DSA keys must be between 512 and 1024
             bits and an exact multiple of 64.  HMAC keys must be
-            between 1 and 512 bits.
+            between 1 and 512 bits. Elliptic curve algorithms don't need
+            this parameter.
           </para>
           <para>
             The key size does not need to be specified if using a default
@@ -186,7 +188,8 @@
 	    Use an NSEC3-capable algorithm to generate a DNSSEC key.
             If this option is used and no algorithm is explicitly
             set on the command line, NSEC3RSASHA1 will be used by
-            default. Note that RSASHA256, RSASHA512 and ECCGOST algorithms
+            default. Note that RSASHA256, RSASHA512, ECCGOST,
+	    ECDSAP256SHA256 and ECDSAP384SHA384 algorithms
 	    are NSEC3-capable.
           </para>
         </listitem>
@@ -225,15 +228,6 @@
             and, when supported, key generation. When compiled with PKCS#11
             support it defaults to pkcs11; the empty name resets it to
             no engine.
-          </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>-e</term>
-        <listitem>
-          <para>
-            If generating an RSAMD5/RSASHA1 key, use a large exponent.
           </para>
         </listitem>
       </varlistentry>

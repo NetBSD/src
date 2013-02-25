@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.136 2012/02/16 02:47:55 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.136.2.1 2013/02/25 00:30:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -303,7 +303,7 @@ struct lfid {
  */
 
 /* Address calculations for metadata located in the inode */
-#define	S_INDIR(fs)	-NDADDR
+#define	S_INDIR(fs)	-UFS_NDADDR
 #define	D_INDIR(fs)	(S_INDIR(fs) - NINDIR(fs) - 1)
 #define	T_INDIR(fs)	(D_INDIR(fs) - NINDIR(fs) * NINDIR(fs) - 1)
 
@@ -856,7 +856,7 @@ struct lfs {
 #define INOPF(fs)	((fs)->lfs_inopf)
 
 #define	blksize(fs, ip, lbn) \
-	(((lbn) >= NDADDR || (ip)->i_ffs1_size >= ((lbn) + 1) << (fs)->lfs_bshift) \
+	(((lbn) >= UFS_NDADDR || (ip)->i_ffs1_size >= ((lbn) + 1) << (fs)->lfs_bshift) \
 	    ? (fs)->lfs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (ip)->i_ffs1_size))))
 #define	blkoff(fs, loc)		((int)((loc) & (fs)->lfs_bmask))
@@ -892,7 +892,7 @@ struct lfs {
 #define blknum(fs, fsb)		/* calculates rounddown(fsb, fs->lfs_frag) */ \
 	((fsb) &~ ((fs)->lfs_frag - 1))
 #define dblksize(fs, dp, lbn) \
-	(((lbn) >= NDADDR || (dp)->di_size >= ((lbn) + 1) << (fs)->lfs_bshift)\
+	(((lbn) >= UFS_NDADDR || (dp)->di_size >= ((lbn) + 1) << (fs)->lfs_bshift)\
 	    ? (fs)->lfs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (dp)->di_size))))
 
@@ -991,7 +991,7 @@ struct lbnentry {
 struct lfs_inode_ext {
 	off_t	  lfs_osize;		/* size of file on disk */
 	u_int32_t lfs_effnblocks;  /* number of blocks when i/o completes */
-	size_t	  lfs_fragsize[NDADDR]; /* size of on-disk direct blocks */
+	size_t	  lfs_fragsize[UFS_NDADDR]; /* size of on-disk direct blocks */
 	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
 #define LFSI_NO_GOP_WRITE 0x01
@@ -1069,10 +1069,10 @@ struct lfs_inode_ext {
 
 /*
  * The minimum number of blocks to create a new inode.  This is:
- * directory direct block (1) + NIADDR indirect blocks + inode block (1) +
- * ifile direct block (1) + NIADDR indirect blocks = 3 + 2 * NIADDR blocks.
+ * directory direct block (1) + UFS_NIADDR indirect blocks + inode block (1) +
+ * ifile direct block (1) + UFS_NIADDR indirect blocks = 3 + 2 * UFS_NIADDR blocks.
  */
-#define LFS_NRESERVE(F) (btofsb((F), (2 * NIADDR + 3) << (F)->lfs_bshift))
+#define LFS_NRESERVE(F) (btofsb((F), (2 * UFS_NIADDR + 3) << (F)->lfs_bshift))
 
 /* Statistics Counters */
 struct lfs_stats {	/* Must match sysctl list in lfs_vfsops.h ! */

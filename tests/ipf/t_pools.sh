@@ -1,4 +1,4 @@
-# $NetBSD: t_pools.sh,v 1.5 2012/07/08 00:36:46 pgoyette Exp $
+# $NetBSD: t_pools.sh,v 1.5.2.1 2013/02/25 00:30:21 tls Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -73,9 +73,9 @@ test_case p5 ptest text text
 test_case p6 ptest text text
 test_case p7 ptest text text
 test_case p9 ptest text text
-broken_test_case p10 ptest text text
-broken_test_case p11 ptest text text
-broken_test_case p12 ptest text text
+test_case p10 ptest text text
+test_case p11 ptest text text
+test_case p12 ptest text text
 test_case p13 ptest text text
 test_case ip1 iptest text text
 test_case ip2 iptest text text
