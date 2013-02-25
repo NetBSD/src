@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78 2013/01/31 20:57:58 riastradh Exp $
+#	$NetBSD: Makefile,v 1.79 2013/02/25 17:04:46 apb Exp $
 #
 
 WARNS?=	5
@@ -60,6 +60,11 @@ SRCS+=	sem.c
 SRCS+= pthread_md.S
 .endif
 
+# The PTHREAD__COMPAT flag builds a libpthread that can be dropped
+# into a NetBSD 2/3/4 chroot with a NetBSD 5 or later kernel.
+# This makes threading work in the chroot, no other modifications
+# required.
+#
 .if defined(PTHREAD__COMPAT)
 SRCS+=		pthread_compat.c
 .PATH.c:	${.CURDIR}/../../common/lib/libc/arch/${ARCHSUBDIR}/atomic
