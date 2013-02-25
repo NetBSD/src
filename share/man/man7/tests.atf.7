@@ -1,0 +1,221 @@
+.\"	$NetBSD: tests.atf.7,v 1.1 2013/02/25 02:02:41 jmmv Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+.\" IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+.\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 5, 2011
+.Dt TESTS 7
+.Os
+.Sh NAME
+.Nm tests
+.Nd introduction to the NetBSD test suite
+.Sh DESCRIPTION
+The
+.Nx
+test suite provides a collection of automated tests for two major purposes.
+On the one hand, the test suite aids
+.Em developers
+in catching bugs and regressions in the code when they performing modifications
+to the source tree.
+On the other hand, the test suite allows
+.Em end users
+(and, in particular, system administrators) to verify that fresh installations
+of the
+.Nx
+operating system behave correctly in their hardware platform and also to ensure
+that the system does not suffer from regressions during regular system
+operation and maintenance.
+.Pp
+The
+.Nx
+tests are implemented using the
+.Em Automated Testing Framework (ATF) ,
+a third-party package shipped with
+.Nx ;
+see
+.Xr atf 7
+for details.
+The
+.Nx
+test suite is distributed as a separate installation set, named
+.Pa tests.tgz ,
+and the test programs are all installed under the
+.Pa /usr/tests
+hierarchy.
+.Pp
+This manual page describes how to execute the test suite and how to configure
+some of its optional features.
+.Ss When to run the tests?
+Before diving into the details of how to run the test suite, here are some
+scenarios in which you should be running them:
+.Bl -bullet -offset indent
+.It
+After a fresh installation of
+.Nx
+to ensure that the system works correctly on your hardware platform.
+.It
+After an upgrade of
+.Nx
+to a different version to ensure that the new code works well on your
+hardware platform and that the upgrade did not introduce regressions in your
+configuration.
+.It
+After performing changes to the source tree to catch any bugs and/or regressions
+introduced by the modifications.
+.It
+Periodically, maybe from a
+.Xr cron 8
+job, to ensure that any changes to the system (such as the installation of
+third-party packages or manual modifications to configuration files) do not
+introduce unexpected failures.
+.El
+.Ss Installing the tests
+If you chose to install the
+.Pa tests.tgz
+distribution set while setting up your
+.Nx
+system, the tests are already available in
+.Pa /usr/tests .
+Otherwise, install the set now by running:
+.Bd -literal -offset indent
+# cd /
+# tar xzpf /path/to/tests.tgz
+.Ed
+.Ss Running the tests
+Use the following commands to run the whole test suite:
+.Bd -literal -offset indent
+$ cd /usr/tests
+$ atf-run | atf-report
+.Ed
+.Pp
+The above will go through all test programs in
+.Pa /usr/tests
+recursively, execute them, and, at the very end, show a report of
+the results of the test suite.
+These results include the count of tests that succeeded (passed), the names of
+the tests that failed, and the count of the tests that were not executed
+(skipped) because the system configuration did not meet their requirements.
+.Pp
+If you are interested in saving the whole output of the test suite execution so
+that you can later investigate failures, use the following idiom instead:
+.Bd -literal -offset indent
+$ cd /usr/tests
+$ atf-run | tee ~/tests.log | atf-report
+.Ed
+.Pp
+The above command will save the raw output of the test suite in
+.Pa ~/tests.log ,
+which you can later inspect manually to look for failures.
+Note that the file contains a copy of the
+.Sq stdout
+and
+.Sq stderr
+of each test case, which becomes valuable during debugging.
+.Pp
+It is also possible to restrict which tests to execute so that only a small
+subsystem is tested; see
+.Xr atf-run 1
+for details.
+Additionally, it is also possible to run the test programs themselves by hand;
+see
+.Xr atf-test-program 1
+for more details, but be aware that you should only be doing this if you are
+debugging failing tests.
+.Ss Configuring the tests
+Some test cases in the
+.Nx
+test suite require the administrator to manually set up some configuration
+properties before they can run.
+Unless these properties are defined, the tests that require them will be marked
+as skipped and thus they will not be really executed.
+.Pp
+Each test suite is configured through a separate file that lives under
+.Pa /etc/atf/
+and that carries the name of the test suite.
+Henceforth, to configure the properties that affect the execution of the
+.Nx
+test suite, you need to edit
+.Pa /etc/atf/NetBSD.conf .
+The suite-specific configuration file implicitly depends on
+.Pa /etc/atf/common.conf ,
+which contains properties shared among all test suites.
+These files conform to the configuration file format described in
+.Xr atf-formats 5 .
+.Pp
+The following configuration variables are available in the
+.Nx
+test suite:
+.Bl -tag -width "unprivileged-user"
+.It fstype
+When set to a filesystem type, restrict tests programs from the
+.Pa /usr/tests/fs/vfs/
+tree to only run test cases for the given type.
+.It unprivileged-user
+This variable allows setting an unprivileged user login name to be used by
+tests.
+Defaults to
+.Sq _tests .
+.El
+.Ss What to do if something fails?
+If there is
+.Em any failure
+during the execution of the test suite, please considering reporting it to the
+.Nx
+developers so that the failure can be analyzed and fixed.
+To do so, either send a message to the appropriate mailing list or file a
+problem report.
+For more details please refer to:
+.Bl -bullet -offset indent -compact
+.It
+.Lk http://www.netbsd.org/mailinglists/ "NetBSD mailing lists"
+.It
+.Lk http://www.netbsd.org/support/send-pr.html "NetBSD Problem Reports"
+.El
+.Sh FILES
+.Bl -tag -compact -width etcXatfXNetBSDXconfXX
+.It Pa /etc/atf/NetBSD.conf
+Configuration file for the
+.Nx
+test suite.
+.It Pa /etc/atf/common.conf
+Configuration file for all test suites.
+.It Pa /usr/tests/
+Location of the test suites.
+.El
+.Sh SEE ALSO
+.Xr atf 7
+.Sh HISTORY
+The
+.Nm
+manual page first appeared in
+.Nx 6.0 .
+.Pp
+The ATF testing framework was first distributed with
+.Nx 5.0
+and the collection of test programs in
+.Pa /usr/tests
+has been growing since then.
+.Sh AUTHORS
+.An Julio Merino Aq jmmv@NetBSD.org
