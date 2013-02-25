@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.203 2013/02/22 06:11:17 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.204 2013/02/25 00:36:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.203 2013/02/22 06:11:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.204 2013/02/25 00:36:22 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -1532,17 +1532,14 @@ bge_free_rx_ring_jumbo(struct bge_softc *sc)
 static void
 bge_free_tx_ring(struct bge_softc *sc)
 {
-	int i, freed;
+	int i;
 	struct txdmamap_pool_entry *dma;
 
 	if (!(sc->bge_flags & BGE_TXRING_VALID))
 		return;
 
-	freed = 0;
-
 	for (i = 0; i < BGE_TX_RING_CNT; i++) {
 		if (sc->bge_cdata.bge_tx_chain[i] != NULL) {
-			freed++;
 			m_freem(sc->bge_cdata.bge_tx_chain[i]);
 			sc->bge_cdata.bge_tx_chain[i] = NULL;
 			SLIST_INSERT_HEAD(&sc->txdma_list, sc->txdma[i],
@@ -1814,15 +1811,15 @@ bge_chipinit(struct bge_softc *sc)
 		/* Read watermark not used, 128 bytes for write. */
 		DPRINTFN(4, ("(%s: PCI-Express DMA setting)\n",
 		    device_xname(sc->bge_dev)));
-		dma_rw_ctl |= (0x3 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
+		dma_rw_ctl |= BGE_PCIDMARWCTL_WR_WAT_SHIFT(3);
 	} else if (sc->bge_flags & BGE_PCIX) {
 	  	DPRINTFN(4, ("(:%s: PCI-X DMA setting)\n",
 		    device_xname(sc->bge_dev)));
 		/* PCI-X bus */
 		if (BGE_IS_5714_FAMILY(sc)) {
 			/* 256 bytes for read and write. */
-			dma_rw_ctl |= (0x02 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
-			    (0x02 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
+			dma_rw_ctl |= BGE_PCIDMARWCTL_RD_WAT_SHIFT(2) |
+			    BGE_PCIDMARWCTL_WR_WAT_SHIFT(2);
 
 			if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780)
 				dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE_GLOBAL;
@@ -1830,13 +1827,12 @@ bge_chipinit(struct bge_softc *sc)
 				dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE_LOCAL;
 		} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704) {
 			/* 1536 bytes for read, 384 bytes for write. */
-			dma_rw_ctl |=
-			  (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
-			  (0x3 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
+			dma_rw_ctl |= BGE_PCIDMARWCTL_RD_WAT_SHIFT(7) |
+			    BGE_PCIDMARWCTL_WR_WAT_SHIFT(3);
 		} else {
 			/* 384 bytes for read and write. */
-			dma_rw_ctl |= (0x03 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
-			    (0x03 << BGE_PCIDMARWCTL_WR_WAT_SHIFT) |
+			dma_rw_ctl |= BGE_PCIDMARWCTL_RD_WAT_SHIFT(3) |
+			    BGE_PCIDMARWCTL_WR_WAT_SHIFT(3) |
 			    (0x0F);
 		}
 
@@ -1857,8 +1853,9 @@ bge_chipinit(struct bge_softc *sc)
 		/* Conventional PCI bus: 256 bytes for read and write. */
 	  	DPRINTFN(4, ("(%s: PCI 2.2 DMA setting)\n",
 		    device_xname(sc->bge_dev)));
-		dma_rw_ctl |= (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
-		   (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
+		dma_rw_ctl |= BGE_PCIDMARWCTL_RD_WAT_SHIFT(7) |
+		    BGE_PCIDMARWCTL_WR_WAT_SHIFT(7);
+
 		if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5705 &&
 		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5750)
 			dma_rw_ctl |= 0x0F;
@@ -2324,7 +2321,7 @@ bge_blockinit(struct bge_softc *sc)
 		    BGE_RDMAMODE_MBUF_SBD_CRPT_ATTN;
 
 	if (sc->bge_flags & BGE_PCIE)
-		val |= BGE_RDMA_MODE_FIFO_LONG_BURST;
+		val |= BGE_RDMAMODE_FIFO_LONG_BURST;
 	if (sc->bge_flags & BGE_TSO)
 		val |= BGE_RDMAMODE_TSO4_ENABLE;
 
