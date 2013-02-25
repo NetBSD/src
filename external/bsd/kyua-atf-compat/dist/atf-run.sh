@@ -66,11 +66,11 @@ load_configs() {
         local ws='[ \t]*'
         local name='[a-zA-Z][-_a-zA-Z0-9]*'
         local repl="--variable='${prefix}\\1=\\2'"
-        local vars=$(grep "^${ws}${name}${ws}=" "${file}" | \
+        local vars="$(grep "^${ws}${name}${ws}=" "${file}" | \
             sed -e 's,#(.*)$,,;s,unprivileged-user,unprivileged_user,g' \
             -e "s,^${ws}\(${name}\)${ws}=${ws}'\([^']*\)'${ws}$,${repl}," \
             -e "s,^${ws}\(${name}\)${ws}=${ws}\"\([^\"]*\)\"${ws}$,${repl}," \
-            -e "s,^${ws}\(${name}\)${ws}=${ws}\(.*\)$,${repl},")
+            -e "s,^${ws}\(${name}\)${ws}=${ws}\(.*\)$,${repl},")"
 
         lib_info "Extracted arguments: ${vars}"
         all_vars="${all_vars} ${vars}"
