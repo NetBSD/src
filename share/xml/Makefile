@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2009/01/19 08:08:18 jmmv Exp $
+#	$NetBSD: Makefile,v 1.4 2013/02/25 00:23:01 jmmv Exp $
 
 .include <bsd.own.mk>
 
+.if !(${MKKYUA} != "no")
 FILESDIR=	/usr/share/xml
 FILESMODE=	444
 # XXX Huge hack for the lack of catalog management.  However, this will do
@@ -11,6 +12,7 @@ FILES=			catalog.atf
 FILESNAME_catalog.atf=	catalog
 .else
 FILES=			catalog
+.endif
 .endif
 
 .include <bsd.prog.mk> # XXX Bring in missing targets (e.g. includes)
