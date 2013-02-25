@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1796 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1797 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -201,3 +201,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	kyua(1): Import kyua-cli 0.6.  This is a new import that provides the
 		command-line interface to Kyua.  Its build depends on the
 		MKKYUA knob.  [jmmv 20130223]
+	kyua(1): Import kyua-atf-compat 0.1.  This is a new import that
+		provides the last piece of Kyua, namely a compatibility
+		version of atf-run and atf-report that use kyua(1) internally.
+		[jmmv 20130223]
