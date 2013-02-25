@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.183 2013/02/23 14:58:12 jmmv Exp $
+# $NetBSD: mi,v 1.184 2013/02/25 00:34:14 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -421,6 +421,11 @@
 ./usr/share/doc/html/postfix/verify.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/virtual.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/virtual.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/kyua-atf-compat			misc-kyua-doc
+./usr/share/doc/kyua-atf-compat/AUTHORS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-atf-compat/COPYING		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-atf-compat/NEWS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-atf-compat/README		misc-kyua-doc		doc,kyua
 ./usr/share/doc/kyua-cli			misc-kyua-doc
 ./usr/share/doc/kyua-cli/AUTHORS		misc-kyua-doc		doc,kyua
 ./usr/share/doc/kyua-cli/COPYING		misc-kyua-doc		doc,kyua
@@ -689,8 +694,10 @@
 ./usr/share/examples/asm/hello/Makefile		misc-asm-examples	share
 ./usr/share/examples/asm/hello/powerpc.s	misc-asm-examples	share
 ./usr/share/examples/atf			misc-atf-examples
-./usr/share/examples/atf/atf-run.hooks		misc-atf-examples	share,atf
-./usr/share/examples/atf/tests-results.css	misc-atf-examples	share,atf
+./usr/share/examples/atf/atf-run.hooks		misc-atf-examples	share,atf,!kyua
+./usr/share/examples/atf/atf-run.hooks		misc-obsolete		share,kyua,obsolete
+./usr/share/examples/atf/tests-results.css	misc-atf-examples	share,atf,!kyua
+./usr/share/examples/atf/tests-results.css	misc-obsolete		share,kyua,obsolete
 ./usr/share/examples/dhcp/dhcpd.conf		misc-dhcpd-examples	share
 ./usr/share/examples/disktab/disktab		misc-sys-examples	share
 ./usr/share/examples/emul/linux/etc/LINUX_MAKEDEV	misc-sys-examples	share
@@ -956,8 +963,11 @@
 ./usr/share/postfix				misc-obsolete		obsolete
 ./usr/share/xml					misc-xml-share
 ./usr/share/xml/atf				misc-atf-share
-./usr/share/xml/atf/tests-results.dtd		misc-atf-share		share,atf
-./usr/share/xml/catalog				misc-xml-share		share
+./usr/share/xml/atf/tests-results.dtd		misc-atf-share		share,atf,!kyua
+./usr/share/xml/atf/tests-results.dtd		misc-obsolete		share,kyua,obsolete
+./usr/share/xml/catalog				misc-xml-share		share,!kyua
+./usr/share/xml/catalog				misc-obsolete		share,kyua,obsolete
 ./usr/share/xsl					misc-xml-share
 ./usr/share/xsl/atf				misc-atf-share
-./usr/share/xsl/atf/tests-results.xsl		misc-atf-share		share,atf
+./usr/share/xsl/atf/tests-results.xsl		misc-atf-share		share,atf,!kyua
+./usr/share/xsl/atf/tests-results.xsl		misc-obsolete		share,kyua,obsolete

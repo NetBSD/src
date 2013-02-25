@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1421 2013/02/23 14:18:38 jmmv Exp $
+# $NetBSD: mi,v 1.1422 2013/02/25 00:34:14 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -54,15 +54,20 @@
 ./usr/share/man/cat1/atf-check.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-cleanup.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-compile.0		man-obsolete		obsolete
-./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat,atf,!kyua
+./usr/share/man/cat1/atf-config.0		man-obsolete		.cat,kyua,obsolete
 ./usr/share/man/cat1/atf-exec.0			man-atf-catman		obsolete
 ./usr/share/man/cat1/atf-format.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-killpg.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-report.0		man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-report.0		man-kyua-catman		.cat,kyua
 ./usr/share/man/cat1/atf-run.0			man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-run.0			man-kyua-catman		.cat,kyua
 ./usr/share/man/cat1/atf-sh.0			man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-test-program.0		man-atf-catman		.cat,atf
-./usr/share/man/cat1/atf-version.0		man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-version.0		man-atf-catman		.cat,atf,!kyua
+./usr/share/man/cat1/atf-version.0		man-obsolete		.cat,kyua,obsolete
+./usr/share/man/cat1/atf2kyua.0			man-kyua-catman		.cat,kyua
 ./usr/share/man/cat1/atq.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atrm.0			man-cron-catman		.cat
 ./usr/share/man/cat1/audiocfg.0			man-audio-catman	.cat
@@ -3090,15 +3095,20 @@
 ./usr/share/man/html1/atf-check.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atf-cleanup.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-compile.html		man-obsolete		obsolete
-./usr/share/man/html1/atf-config.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-config.html		man-atf-htmlman		html,atf,!kyua
+./usr/share/man/html1/atf-config.html		man-obsolete		html,kyua,obsolete
 ./usr/share/man/html1/atf-exec.html		man-atf-htmlman		obsolete
 ./usr/share/man/html1/atf-format.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-killpg.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-report.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-report.html		man-kyua-htmlman	html,kyua
 ./usr/share/man/html1/atf-run.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-run.html		man-kyua-htmlman	html,kyua
 ./usr/share/man/html1/atf-sh.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atf-test-program.html	man-atf-htmlman		html,atf
-./usr/share/man/html1/atf-version.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-version.html		man-atf-htmlman		html,atf,!kyua
+./usr/share/man/html1/atf-version.html		man-obsolete		html,kyua,obsolete
+./usr/share/man/html1/atf2kyua.html		man-kyua-htmlman	html,kyua
 ./usr/share/man/html1/atq.html			man-cron-htmlman	html
 ./usr/share/man/html1/atrm.html			man-cron-htmlman	html
 ./usr/share/man/html1/audiocfg.html		man-audio-htmlman	html
@@ -5734,15 +5744,20 @@
 ./usr/share/man/man1/atf-check.1		man-atf-man		.man,atf
 ./usr/share/man/man1/atf-cleanup.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-compile.1		man-obsolete		obsolete
-./usr/share/man/man1/atf-config.1		man-atf-man		.man,atf
+./usr/share/man/man1/atf-config.1		man-atf-man		.man,atf,!kyua
+./usr/share/man/man1/atf-config.1		man-obsolete		.man,kyua,obsolete
 ./usr/share/man/man1/atf-exec.1			man-atf-man		obsolete
 ./usr/share/man/man1/atf-format.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-killpg.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-report.1		man-atf-man		.man,atf
+./usr/share/man/man1/atf-report.1		man-kyua-man		.man,kyua
 ./usr/share/man/man1/atf-run.1			man-atf-man		.man,atf
+./usr/share/man/man1/atf-run.1			man-kyua-man		.man,kyua
 ./usr/share/man/man1/atf-sh.1			man-atf-man		.man,atf
 ./usr/share/man/man1/atf-test-program.1		man-atf-man		.man,atf
-./usr/share/man/man1/atf-version.1		man-atf-man		.man,atf
+./usr/share/man/man1/atf-version.1		man-atf-man		.man,atf,!kyua
+./usr/share/man/man1/atf-version.1		man-obsolete		.man,kyua,obsolete
+./usr/share/man/man1/atf2kyua.1			man-kyua-man		.man,kyua
 ./usr/share/man/man1/atq.1			man-cron-man		.man
 ./usr/share/man/man1/atrm.1			man-cron-man		.man
 ./usr/share/man/man1/audiocfg.1			man-audio-man		.man
