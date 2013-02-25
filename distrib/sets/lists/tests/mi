@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.523 2013/02/23 22:56:46 jmmv Exp $
+# $NetBSD: mi,v 1.524 2013/02/25 00:34:15 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -358,51 +358,75 @@
 ./usr/tests/atf/atf-compile/h_mode		tests-obsolete		obsolete
 ./usr/tests/atf/atf-compile/t_integration	tests-obsolete		obsolete
 ./usr/tests/atf/atf-config			tests-atf-tests
-./usr/tests/atf/atf-config/Atffile		tests-atf-tests		atf
-./usr/tests/atf/atf-config/Kyuafile		tests-atf-tests		atf,kyua
-./usr/tests/atf/atf-config/integration_test	tests-atf-tests		atf
+./usr/tests/atf/atf-config/Atffile		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-config/Atffile		tests-obsolete		kyua,obsolete
+./usr/tests/atf/atf-config/Kyuafile		tests-obsolete		obsolete
+./usr/tests/atf/atf-config/integration_test	tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-config/integration_test	tests-obsolete		kyua,obsolete
 ./usr/tests/atf/atf-config/t_integration	tests-obsolete		obsolete
 ./usr/tests/atf/atf-report			tests-atf-tests
-./usr/tests/atf/atf-report/Atffile		tests-atf-tests		atf
-./usr/tests/atf/atf-report/Kyuafile		tests-atf-tests		atf,kyua
-./usr/tests/atf/atf-report/fail_helper		tests-atf-tests		atf
+./usr/tests/atf/atf-report/Atffile		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-report/Atffile		tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-report/Kyuafile		tests-obsolete		obsolete
+./usr/tests/atf/atf-report/fail_helper		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-report/fail_helper		tests-obsolete		obsolete,kyua
 ./usr/tests/atf/atf-report/h_fail		tests-obsolete		obsolete
 ./usr/tests/atf/atf-report/h_misc		tests-obsolete		obsolete
 ./usr/tests/atf/atf-report/h_pass		tests-obsolete		obsolete
 ./usr/tests/atf/atf-report/h_xfail		tests-obsolete		obsolete
-./usr/tests/atf/atf-report/integration_test	tests-atf-tests		atf
-./usr/tests/atf/atf-report/misc_helpers		tests-atf-tests		atf
-./usr/tests/atf/atf-report/pass_helper		tests-atf-tests		atf
-./usr/tests/atf/atf-report/reader_test		tests-atf-tests		atf
+./usr/tests/atf/atf-report/integration_test	tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-report/integration_test	tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-report/misc_helpers		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-report/misc_helpers		tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-report/pass_helper		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-report/pass_helper		tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-report/reader_test		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-report/reader_test		tests-obsolete		obsolete,kyua
 ./usr/tests/atf/atf-report/t_integration	tests-obsolete		obsolete
 ./usr/tests/atf/atf-run				tests-atf-tests
-./usr/tests/atf/atf-run/Atffile			tests-atf-tests		atf
-./usr/tests/atf/atf-run/Kyuafile		tests-atf-tests		atf,kyua
-./usr/tests/atf/atf-run/atffile_test		tests-atf-tests		atf
-./usr/tests/atf/atf-run/bad_metadata_helper	tests-atf-tests		atf
-./usr/tests/atf/atf-run/config_test		tests-atf-tests		atf
-./usr/tests/atf/atf-run/expect_helpers		tests-atf-tests		atf
-./usr/tests/atf/atf-run/fs_test			tests-atf-tests		atf
-./usr/tests/atf/atf-run/io_test			tests-atf-tests		atf
+./usr/tests/atf/atf-run/Atffile			tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/Atffile			tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/Kyuafile		tests-obsolete		obsolete
+./usr/tests/atf/atf-run/atffile_test		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/atffile_test		tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/bad_metadata_helper	tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/bad_metadata_helper	tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/config_test		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/config_test		tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/expect_helpers		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/expect_helpers		tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/fs_test			tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/fs_test			tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/io_test			tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/io_test			tests-obsolete		obsolete,kyua
 ./usr/tests/atf/atf-run/h_bad_metadata		tests-obsolete		obsolete
 ./usr/tests/atf/atf-run/h_fail			tests-obsolete		obsolete
 ./usr/tests/atf/atf-run/h_misc			tests-obsolete		obsolete
 ./usr/tests/atf/atf-run/h_pass			tests-obsolete		obsolete
 ./usr/tests/atf/atf-run/h_several_tcs		tests-obsolete		obsolete
 ./usr/tests/atf/atf-run/h_zero_tcs		tests-obsolete		obsolete
-./usr/tests/atf/atf-run/integration_test	tests-atf-tests		atf
-./usr/tests/atf/atf-run/misc_helpers		tests-atf-tests		atf
-./usr/tests/atf/atf-run/pass_helper		tests-atf-tests		atf
-./usr/tests/atf/atf-run/requirements_test	tests-atf-tests		atf
-./usr/tests/atf/atf-run/several_tcs_helper	tests-atf-tests		atf
-./usr/tests/atf/atf-run/signals_test		tests-atf-tests		atf
+./usr/tests/atf/atf-run/integration_test	tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/integration_test	tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/misc_helpers		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/misc_helpers		tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/pass_helper		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/pass_helper		tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/requirements_test	tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/requirements_test	tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/several_tcs_helper	tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/several_tcs_helper	tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/signals_test		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/signals_test		tests-obsolete		obsolete,kyua
 ./usr/tests/atf/atf-run/t_config		tests-obsolete		obsolete
 ./usr/tests/atf/atf-run/t_integration		tests-obsolete		obsolete
 ./usr/tests/atf/atf-run/t_requirements		tests-obsolete		obsolete
 ./usr/tests/atf/atf-run/t_test_program		tests-obsolete		obsolete
-./usr/tests/atf/atf-run/test_program_test	tests-atf-tests		atf
-./usr/tests/atf/atf-run/user_test		tests-atf-tests		atf
-./usr/tests/atf/atf-run/zero_tcs_helper		tests-atf-tests		atf
+./usr/tests/atf/atf-run/test_program_test	tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/test_program_test	tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/user_test		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/user_test		tests-obsolete		obsolete,kyua
+./usr/tests/atf/atf-run/zero_tcs_helper		tests-atf-tests		atf,!kyua
+./usr/tests/atf/atf-run/zero_tcs_helper		tests-obsolete		obsolete,kyua
 ./usr/tests/atf/atf-sh				tests-atf-tests
 ./usr/tests/atf/atf-sh/Atffile			tests-atf-tests		atf
 ./usr/tests/atf/atf-sh/Kyuafile			tests-atf-tests		atf,kyua
@@ -1580,6 +1604,13 @@
 ./usr/tests/kernel/tty/Atffile			tests-kernel-tests		atf,rump
 ./usr/tests/kernel/tty/Kyuafile			tests-kernel-tests		atf,rump,kyua
 ./usr/tests/kernel/tty/t_pr			tests-kernel-tests		atf,rump
+./usr/tests/kyua-atf-compat			tests-kyua-tests
+./usr/tests/kyua-atf-compat/Atffile		tests-kyua-tests	atf,kyua
+./usr/tests/kyua-atf-compat/Kyuafile		tests-kyua-tests	atf,kyua
+./usr/tests/kyua-atf-compat/atf-report_test	tests-kyua-tests	atf,kyua
+./usr/tests/kyua-atf-compat/atf-run_test	tests-kyua-tests	atf,kyua
+./usr/tests/kyua-atf-compat/atf2kyua_test	tests-kyua-tests	atf,kyua
+./usr/tests/kyua-atf-compat/helpers		tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli						tests-kyua-tests
 ./usr/tests/kyua-cli/Atffile					tests-kyua-tests	atf,kyua
 ./usr/tests/kyua-cli/Kyuafile					tests-kyua-tests	atf,kyua
