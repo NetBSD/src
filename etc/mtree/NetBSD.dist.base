@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.112 2013/02/24 03:06:13 jmmv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.113 2013/02/25 00:31:51 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -254,6 +254,7 @@
 ./usr/share/doc/html/ntp/drivers/scripts
 ./usr/share/doc/html/ntp/icons
 ./usr/share/doc/html/ntp/scripts
+./usr/share/doc/kyua-atf-compat
 ./usr/share/doc/kyua-cli
 ./usr/share/doc/kyua-testers
 ./usr/share/doc/psd
@@ -438,6 +439,7 @@
 ./usr/share/keymaps/amiga
 ./usr/share/keymaps/atari
 ./usr/share/keymaps/x68k
+./usr/share/kyua-atf-compat
 ./usr/share/kyua-cli
 ./usr/share/kyua-cli/misc
 ./usr/share/kyua-cli/store
