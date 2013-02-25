@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.94 2013/02/23 14:18:36 jmmv Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.95 2013/02/25 00:31:51 jmmv Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -208,6 +208,7 @@
 ./usr/tests/kernel/kqueue/read
 ./usr/tests/kernel/kqueue/write
 ./usr/tests/kernel/tty
+./usr/tests/kyua-atf-compat
 ./usr/tests/kyua-cli
 ./usr/tests/kyua-cli/bootstrap
 ./usr/tests/kyua-cli/cli
