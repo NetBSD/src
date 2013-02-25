@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1021 2013/02/24 03:06:14 jmmv Exp $
+# $NetBSD: mi,v 1.1022 2013/02/25 00:34:13 jmmv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -389,11 +389,16 @@
 ./usr/bin/arpaname				base-bind-bin
 ./usr/bin/at					base-cron-bin
 ./usr/bin/atf-check				base-obsolete		obsolete
-./usr/bin/atf-config				base-atf-bin		atf
+./usr/bin/atf-config				base-atf-bin		atf,!kyua
+./usr/bin/atf-config				base-obsolete		kyua,obsolete
 ./usr/bin/atf-report				base-atf-bin		atf
+./usr/bin/atf-report				base-kyua-bin		kyua
 ./usr/bin/atf-run				base-atf-bin		atf
+./usr/bin/atf-run				base-kyua-bin		kyua
 ./usr/bin/atf-sh				base-atf-bin		atf
-./usr/bin/atf-version				base-atf-bin		atf
+./usr/bin/atf-version				base-atf-bin		atf,!kyua
+./usr/bin/atf-version				base-obsolete		kyua,obsolete
+./usr/bin/atf2kyua				base-kyua-bin		kyua
 ./usr/bin/atq					base-cron-bin
 ./usr/bin/atrm					base-cron-bin
 ./usr/bin/audioctl				base-audio-bin
@@ -1576,7 +1581,8 @@
 ./usr/sbin/zic					base-sysutil-bin
 ./usr/share					base-sys-share
 ./usr/share/atf					base-atf-share		
-./usr/share/atf/atf-run.hooks			base-atf-bin		share,atf
+./usr/share/atf/atf-run.hooks			base-atf-bin		share,atf,!kyua
+./usr/share/atf/atf-run.hooks			base-obsolete		share,kyua,obsolete
 ./usr/share/atf/atf.config.subr			base-obsolete		obsolete
 ./usr/share/atf/atf.footer.subr			base-obsolete		obsolete
 ./usr/share/atf/atf.header.subr			base-obsolete		obsolete
@@ -2523,6 +2529,9 @@
 ./usr/share/keymaps/amiga			base-sys-share
 ./usr/share/keymaps/atari			base-sys-share
 ./usr/share/keymaps/x68k			base-sys-share
+./usr/share/kyua-atf-compat			base-kyua-bin
+./usr/share/kyua-atf-compat/lib.subr		base-kyua-bin		kyua
+./usr/share/kyua-atf-compat/tests_lib.subr	base-kyua-bin		kyua
 ./usr/share/kyua-cli				base-kyua-bin
 ./usr/share/kyua-cli/misc			base-kyua-bin
 ./usr/share/kyua-cli/misc/context.html		base-kyua-bin		share,kyua
