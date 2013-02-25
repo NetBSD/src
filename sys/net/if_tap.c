@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.67.2.1 2012/11/20 03:02:47 tls Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.67.2.2 2013/02/25 00:30:01 tls Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.67.2.1 2012/11/20 03:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.67.2.2 2013/02/25 00:30:01 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.67.2.1 2012/11/20 03:02:47 tls Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/cprng.h>
 #include <sys/device.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -265,8 +266,6 @@ tap_attach(device_t parent, device_t self, void *aux)
 	uint8_t enaddr[ETHER_ADDR_LEN] =
 	    { 0xf2, 0x0b, 0xa4, 0xff, 0xff, 0xff };
 	char enaddrstr[3 * ETHER_ADDR_LEN];
-	struct timeval tv;
-	uint32_t ui;
 
 	sc->sc_dev = self;
 	sc->sc_sih = softint_establish(SOFTINT_CLOCK, tap_softintr, sc);
@@ -278,12 +277,10 @@ tap_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * In order to obtain unique initial Ethernet address on a host,
-	 * do some randomisation using the current uptime.  It's not meant
-	 * for anything but avoiding hard-coding an address.
+	 * do some randomisation.  It's not meant for anything but avoiding
+	 * hard-coding an address.
 	 */
-	getmicrouptime(&tv);
-	ui = (tv.tv_sec ^ tv.tv_usec) & 0xffffff;
-	memcpy(enaddr+3, (uint8_t *)&ui, 3);
+	cprng_fast(&enaddr[3], 3);
 
 	aprint_verbose_dev(self, "Ethernet address %s\n",
 	    ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr));
@@ -1055,7 +1052,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	m->m_pkthdr.rcvif = ifp;
 
 	bpf_mtap(ifp, m);
-	s =splnet();
+	s = splnet();
 	(*ifp->if_input)(ifp, m);
 	splx(s);
 

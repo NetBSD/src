@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.17.2.1 2012/11/20 02:58:48 tls Exp $
+#	$NetBSD: wtf,v 1.17.2.2 2013/02/25 00:27:45 tls Exp $
 #
 # Public domain
 #
@@ -8,7 +8,7 @@
 PROGNAME="$(basename "$0")"
 
 usage() {
-	echo "usage: $PROGNAME [-f dbfile] [is] <acronym> ..."
+	echo "usage: $PROGNAME [-f dbfile] [is] term ..."
 	exit 1
 }
 
@@ -76,10 +76,11 @@ for i; do
 		continue
 	fi
 
-	# Try querying pkgsrc's help facility next
+	# If called from pkgsrc package directory,
+	# try querying pkgsrc's help facility next
 	if [ -f ../../mk/bsd.pkg.mk ]; then
 		ans="$(make help topic="$i")"
-		if [ $? -eq 0 ]; then
+		if [ "$ans" != "No help found for $i." ]; then
 			echo "$i: $ans"
 			continue
 		fi

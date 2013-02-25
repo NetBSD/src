@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.30 2009/12/23 09:10:07 wiz Exp $
+.\" $NetBSD: ugen.4,v 1.30.14.1 2013/02/25 00:28:13 tls Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -189,7 +189,7 @@ This operation can only be performed when no endpoints for the interface
 are open.
 .It Dv USB_GET_NO_ALT (struct usb_alt_interface)
 Return the number of different alternate settings in the
-.Dv aui_alt_no
+.Dv uai_alt_no
 field.
 .It Dv USB_GET_DEVICE_DESC (usb_device_descriptor_t)
 Return the device descriptor.

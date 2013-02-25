@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.5 2008/04/16 21:51:03 cegger Exp $	*/
+/*	$NetBSD: fpu.h,v 1.5.48.1 2013/02/25 00:28:20 tls Exp $	*/
 
 #ifndef	_AMD64_FPU_H_
 #define	_AMD64_FPU_H_
@@ -7,51 +7,37 @@
  * NetBSD/amd64 only uses the extended save/restore format used
  * by fxsave/fsrestore, to always deal with the SSE registers,
  * which are part of the ABI to pass floating point values.
- * Must be stored in memory on a 16-byte boundary.
+ *
+ * The memory used for the 'fsave' instruction must be 16 byte aligned,
+ * but the definition here isn't aligned to avoid padding elsewhere.
  */
 
 struct fxsave64 {
-	uint16_t  fx_fcw;
-	uint16_t  fx_fsw;
-	uint8_t   fx_ftw;
-	uint8_t   fx_unused1;
-	uint16_t  fx_fop;
-	uint64_t  fx_rip;
-	uint64_t  fx_rdp;
-	uint32_t  fx_mxcsr;
-	uint32_t  fx_mxcsr_mask;
-	uint64_t  fx_st[8][2];   /* 8 normal FP regs */
-	uint64_t  fx_xmm[16][2]; /* 16 SSE2 registers */
-	uint8_t   fx_unused3[96];
-} __packed;
+	uint16_t  fx_fcw;           /* 0: FPU control word */
+	uint16_t  fx_fsw;           /* 2: FPU status word */
+	uint8_t   fx_ftw;           /* 4: Abridged FPU tag word */
+	uint8_t   fx_reserved1;     /* 5: */
+	uint16_t  fx_fop;           /* 6: Low 11 bits are FPU opcode */
+	uint64_t  fx_rip;           /* 8: Address of faulting instruction */
+	uint64_t  fx_rdp;           /* 16: Data address associated with fault */
+	uint32_t  fx_mxcsr;         /* 24: SIMD control & status */
+	uint32_t  fx_mxcsr_mask;    /* 28: */
+	uint64_t  fx_st[8][2];      /* 32: 8 normal FP regs (80 bit) */
+	uint64_t  fx_xmm[16][2];    /* 160: 16 SSE2 registers */
+	uint8_t   fx_reserved2[48]; /* 416: */
+	uint8_t   fx_available[48]; /* 464: could be used by kernel */
+};
+
+__CTASSERT(sizeof (struct fxsave64) == 512);
 
 struct savefpu {
 	struct fxsave64 fp_fxsave;	/* see above */
+};
+
+struct savefpu_i387 {
 	uint16_t fp_ex_sw;		/* saved status from last exception */
 	uint16_t fp_ex_tw;		/* saved tag from last exception */
-} __aligned(16);
-
-#ifdef _KERNEL
-
-/*
- * This one only used for backward compat coredumping.
- */
-struct oldfsave {
-	uint16_t	fs_control;
-	uint16_t	fs_unused0;
-	uint16_t	fs_status;
-	uint16_t	fs_unused1;
-	uint16_t	fs_tag;
-	uint16_t	fs_unused2;
-	uint32_t	fs_ipoff;
-	uint16_t	fs_ipsel;
-	uint16_t	fs_op;
-	uint32_t	fs_opoff;
-	uint16_t	fs_opsel;
-} __attribute__ ((packed));
-
-#endif
-
+};
 
 /*
  * The i387 defaults to Intel extended precision mode and round to nearest,

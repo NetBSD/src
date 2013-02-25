@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.2.2.1 2012/11/20 03:01:13 tls Exp $
+#	$NetBSD: BEAGLEBONE,v 1.2.2.2 2013/02/25 00:28:34 tls Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -20,6 +20,9 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	CPU_CORTEXA8
 options 	TI_AM335X
 options 	PMAPCOUNTERS
+
+# XXX The Cortex PMC delay() doesn't seem to work.
+#no options	CORTEX_PMC
 
 # Architecture options
 #makeoptions	CPUFLAGS+="-mthumb"
@@ -132,7 +135,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 #options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
-#options 	DEBUG
+options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -158,7 +161,7 @@ options UHUB_DEBUG
 #  memorydisk=<n>	Set memorydisk size to <n> KB
 #  quiet		Show aprint_naive output
 #  verbose		Show aprint_normal and aprint_verbose output
-options		BOOT_ARGS="\"\""
+options		BOOT_ARGS="\"-d -v\""
 
 config		netbsd		root on ? type ?
 
@@ -172,34 +175,45 @@ cpu0		at mainbus?
 options 	MEMSIZE=256
 
 # L3 Interconnect
-L3i0		at mainbus?
+#L3i0		at mainbus?
 
 # OBIO
-obio0		at mainbus? base 0x48000000 size 0x1000000	# L4 CORE
-obio1		at mainbus? base 0x48300000 size 0x0040000	# L4 WAKEUP
-obio2		at mainbus? base 0x49000000 size 0x0100000	# L4 PERIPHERAL
-#obio3		at mainbus? base 0x54000000 size 0x0800000	# L4 EMUL
+obio0		at mainbus? base 0x44000000 size 0x0c000000
+#obio0		at mainbus? base 0x44c00000 size 0x00400000	# L4_WKUP
+#obio1		at mainbus? base 0x48000000 size 0x01000000	# L4_PER
+#obio2		at mainbus? base 0x4a000000 size 0x01000000	# L4_FAST
+
+
 
 # General Purpose Memory Controller
-gpmc0		at mainbus? base 0x6e000000
-
-# SDHC controllers
-sdhc0		at obio0 addr 0x4809C000 size 0x0400 intr 83
-#sdhc1		at obio0 addr 0x480B4000 size 0x0400 intr 86
-#sdhc2		at obio0 addr 0x480AD000 size 0x0400 intr 94
-sdmmc*		at sdhc?		# SD/MMC bus
-ld*		at sdmmc?
+gpmc0		at mainbus? base 0x50000000
 
 # Interrupt Controller
 omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
-omapgpio0	at obio1 addr 0x48310000 size 0x0400 intrbase 96  intr 29
-#omapgpio1	at obio2 addr 0x49050000 size 0x0400 intrbase 128 intr 30
-#omapgpio2	at obio2 addr 0x49052000 size 0x0400 intrbase 160 intr 31
-#omapgpio3	at obio2 addr 0x49054000 size 0x0400 intrbase 192 intr 32
-omapgpio4	at obio2 addr 0x49056000 size 0x0400 intrbase 224 intr 33
-#omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
 
-gpio*		at omapgpio?
+# Power, Reset and Clock Management
+prcm0		at obio0 addr 0x44e00000 size 0x2000	# PRM Module
+
+# SDHC controllers
+# XXX Kludge -- the am335x's mmc registers start at an offset of #x100
+# from other omap3.  (What about omap4?)  Need to adapt the omap sdhc
+# driver to handle this.
+sdhc0		at obio0 addr 0x48060100 size 0x0f00 intr 64
+#sdhc1		at obio0 addr 0x481d8100 size 0x0f00 intr 28
+#sdhc2		at obio0 addr 0x47810100 size 0xff00 intr 29
+sdmmc*		at sdhc?		# SD/MMC bus
+ld*		at sdmmc?
+#options SDMMC_DEBUG
+#options SDHC_DEBUG
+
+# General-purpose I/O pins
+# XXX These are the GPIO v2 in the AM335x, not v1 as in the OMAP35xx.
+#omapgpio0	at obio0 addr 0x44e07000 size 0x1000 intrbase 128 intr 29
+#omapgpio1	at obio0 addr 0x4804c000 size 0x1000 intrbase 160 intr 30
+#omapgpio2	at obio0 addr 0x481ac000 size 0x1000 intrbase 192 intr 32
+#omapgpio3	at obio0 addr 0x481ae000 size 0x1000 intrbase 224 intr 32
+
+#gpio*		at omapgpio?
 
 # # I2C Controller
 # omapi2c0	at tipb? addr 0xfffb3800 intr 36 mult 4
@@ -211,21 +225,27 @@ gpio*		at omapgpio?
 # options		I2C_HIGH_TIME_nSEC=1000
 
 # On-board 16550 UARTs
-com0		at obio2 addr 0x44e09000 intr 74 mult 4	# UART3 (console)
+com0		at obio0 addr 0x44e09000 size 0x1000 intr 72 mult 4	# UART0
 options 	CONSADDR=0x44e09000, CONSPEED=115200
 
-# Operating System Timer
-omapmputmr0	at obio2 addr 0x49032000 intr 38	# GP Timer 2
-# Statistics Timer
-omapmputmr1	at obio2 addr 0x49034000 intr 39	# GP Timer 3
-# Microtime Reference Timer
-omapmputmr2	at obio2 addr 0x49036000 intr 40	# GP Timer 4
-options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
+# XXX Clock assignment is kinda random.  My DM timer 3 seems to be
+# unhappy and I don't know why.  DM timer 0 doesn't seem to deliver
+# interrupts for the hard clock, although it seems to be the obvious
+# choice.
+
+# Hardclock timer
+omapdmtimer0	at obio0 addr 0x48040000 size 0x1000 intr 68	# DM Timer 2
+
+# Time counter
+omapdmtimer1	at obio0 addr 0x44e31000 size 0x1000 intr 67	# DM Timer 1ms
+
+# Statclock timer
+omapdmtimer2	at obio0 addr 0x48044000 size 0x1000 intr 92	# DM Timer 4
+
+options OMAP_SYSTEM_CLOCK_FREQ=24000000
 
 # Watchdog timers
-omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
-#omapwdt32k*	at obio1 addr 0x4830c000 size 2048	# WDT1
-#omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
+omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1
 
 # onboard video
 #omapfb* 	at obio0 addr 0x48050000 size 0x10000
@@ -250,9 +270,6 @@ omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-# Power, Reset and Clock Management
-prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
-
 # On-board USB
 #ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
 #ohci*		at obio0 addr 0x48064400 size 0x0400 intr 76
@@ -270,6 +287,10 @@ prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
 
 #axe*		at uhub? port ? configuration ? interface ?
 
+# Ethernet
+cpsw*		at obio0 addr 0x4a100000 size 0x8000 intrbase 40
+ukphy*		at mii?
+
 # Hardware clocking and power management
 
 options		HWCLOCK
@@ -279,7 +300,7 @@ options		OMAP_CK_REF_SPEED=12000000
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md			# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	putter			# for puffs and pud
@@ -294,3 +315,4 @@ pseudo-device	pty			# pseudo-terminals
 #options	RND_COM
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling

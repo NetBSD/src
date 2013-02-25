@@ -1,4 +1,4 @@
-/*	$NetBSD: sal_stub.c,v 1.3 2009/07/20 04:59:04 kiyohara Exp $	*/
+/*	$NetBSD: sal_stub.c,v 1.3.22.1 2013/02/25 00:28:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 Marcel Moolenaar
@@ -37,6 +37,8 @@
 
 #include "bootstrap.h"
 #include "libski.h"
+
+void ski_cons_putchar(int c);
 
 extern void PalProc(void);
 static sal_entry_t SalProc;

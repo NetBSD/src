@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2011/09/25 04:32:47 christos Exp $
+#	$NetBSD: Makefile,v 1.11.8.1 2013/02/25 00:26:52 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -20,22 +20,10 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} \
 		-DTOOLBINDIR=\"/usr/bin\" \
 		-DENABLE_PLUGINS
 
-LDADD=		-lintl
-DPADD=		${LIBINTL}
-
 COPTS.ldgram.c = -Wno-stack-protector
 
-BFDOBJ!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
-LDADD+=		-L${BFDOBJ} -lbfd
-.if ${MKPICLIB} != "no"
-DPADD+=		${BFDOBJ}/libbfd_pic.a
-.else
-DPADD+=		${BFDOBJ}/libbfd.a
-.endif
-
-IBERTYOBJ!=	cd ${TOP}/${BFDSUBDIR}/libiberty && ${PRINTOBJDIR}
-LDADD+=		-L${IBERTYOBJ} -liberty
-DPADD+=		${IBERTYOBJ}/libiberty.a
+PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
+PROGDPLIBS+=	iberty 	${TOP}/${BFDSUBDIR}/libiberty
 
 TEXINFO=	${G_TEXINFOS}
 COMMONOBJDIR!=	cd ${TOP}/usr.bin/common && ${PRINTOBJDIR}
@@ -133,3 +121,6 @@ FILES+= ${f}.xc ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
 cleanprog: __cleanldscripts 
 __cleanldscripts:
 	-rm -rf ldscripts tmpdir
+
+LDADD+=		-lintl -lz
+DPADD+=		${LIBINTL} ${LIBZ}

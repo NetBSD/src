@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.7 2010/12/13 17:35:08 pooka Exp $	*/
+/*	$NetBSD: env.c,v 1.7.12.1 2013/02/25 00:28:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: env.c,v 1.7 2010/12/13 17:35:08 pooka Exp $");
+__RCSID("$NetBSD: env.c,v 1.7.12.1 2013/02/25 00:28:08 tls Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -53,10 +53,12 @@ prop_dictionary_augment(prop_dictionary_t bottom, prop_dictionary_t top)
 	const char *key;
 
 	d = prop_dictionary_copy_mutable(bottom);
+	if (d == NULL)
+		return NULL;
 
 	i = prop_dictionary_iterator(top);
 
-	while ((ko = prop_object_iterator_next(i)) != NULL) {
+	while (i != NULL && (ko = prop_object_iterator_next(i)) != NULL) {
 		k = (prop_dictionary_keysym_t)ko;
 		key = prop_dictionary_keysym_cstring_nocopy(k);
 		o = prop_dictionary_get_keysym(top, k);
@@ -66,8 +68,10 @@ prop_dictionary_augment(prop_dictionary_t bottom, prop_dictionary_t top)
 			break;
 		}
 	}
-	prop_object_iterator_release(i);
-	prop_dictionary_make_immutable(d);
+	if (i != NULL)
+		prop_object_iterator_release(i);
+	if (d != NULL)
+		prop_dictionary_make_immutable(d);
 	return d;
 }
 

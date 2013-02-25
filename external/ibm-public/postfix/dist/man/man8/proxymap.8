@@ -1,4 +1,4 @@
-.\"	$NetBSD: proxymap.8,v 1.1.1.1 2009/06/23 10:08:35 tron Exp $
+.\"	$NetBSD: proxymap.8,v 1.1.1.1.16.1 2013/02/25 00:27:12 tls Exp $
 .\"
 .TH PROXYMAP 8 
 .ad
@@ -77,6 +77,13 @@ The \fImaptype:mapname\fR and \fIflags\fR are the same
 as with the \fBopen\fR request.
 .sp
 This request is supported in Postfix 2.5 and later.
+.IP "\fBsequence\fR \fImaptype:mapname flags function\fR"
+Iterate over the specified database. The \fIfunction\fR
+is one of DICT_SEQ_FUN_FIRST or DICT_SEQ_FUN_NEXT.
+The reply is the request completion status code and
+a lookup key and result value, if found.
+.sp
+This request is supported in Postfix 2.9 and later.
 .PP
 The request completion status is one of OK, RETRY, NOKEY
 (lookup failed because the key was not found), BAD (malformed

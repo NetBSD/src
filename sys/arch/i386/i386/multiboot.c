@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.21 2011/01/11 12:24:37 gsutre Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.21.18.1 2013/02/25 00:28:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.21 2011/01/11 12:24:37 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.21.18.1 2013/02/25 00:28:44 tls Exp $");
 
 #include "opt_multiboot.h"
 
@@ -506,7 +506,7 @@ setup_bootpath(struct multiboot_info *mi)
 		*cl2 = '\0';
 		memcpy(bi.bootpath, cl, MIN(sizeof(bi.bootpath), len));
 		*cl2 = old;
-		bi.bootpath[MIN(sizeof(bi.bootpath), len)] = '\0';
+		bi.bootpath[MIN(sizeof(bi.bootpath) - 1, len)] = '\0';
 
 		bootinfo_add((struct btinfo_common *)&bi, BTINFO_BOOTPATH,
 		    sizeof(struct btinfo_bootpath));

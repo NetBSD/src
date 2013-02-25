@@ -60,5 +60,8 @@ rm -f signer/nsec3param.out
 rm -f ns3/ttlpatch.example.db ns3/ttlpatch.example.db.signed
 rm -f ns3/ttlpatch.example.db.patched
 rm -f ns3/split-smart.example.db
+rm -f ns3/inline.example.db.signed
+rm -f ns3/lower.example.db ns3/upper.example.db ns3/upper.example.db.lower
 rm -f nosign.before
 rm -f signing.out*
+

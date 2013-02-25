@@ -1,0 +1,544 @@
+/* $Id: imx23_emireg.h,v 1.1.6.2 2013/02/25 00:28:27 tls Exp $ */
+
+/*
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Petri Laakso.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef _ARM_IMX_IMX23_EMIREG_H_
+#define _ARM_IMX_IMX23_EMIREG_H_
+
+#include <sys/cdefs.h>
+
+#define HW_EMI_CTRL_BASE 0x80020000
+#define HW_DRAM_BASE 0x800E0000
+
+/*
+ * EMI Control Register.
+ */
+#define HW_EMI_CTRL	0x000
+#define HW_EMI_CTRL_SET	0x004
+#define HW_EMI_CTRL_CLR	0x008
+#define HW_EMI_CTRL_TOG	0x00C
+
+#define HW_EMI_CTRL_SFTRST		__BIT(31)
+#define HW_EMI_CTRL_RSVD6		__BIT(30)
+#define HW_EMI_CTRL_TRAP_SR		__BIT(29)
+#define HW_EMI_CTRL_TRAP_INIT		__BIT(28)
+#define HW_EMI_CTRL_AXI_DEPTH		__BITS(27, 26)
+#define HW_EMI_CTRL_DLL_SHIFT_RESET	__BIT(25)
+#define HW_EMI_CTRL_DLL_RESET		__BIT(24)
+#define HW_EMI_CTRL_ARB_MODE		__BITS(23, 22)
+#define HW_EMI_CTRL_RSVD5		__BIT(21)
+#define HW_EMI_CTRL_PORT_PRIORITY_ORDER	__BITS(20, 16)
+#define HW_EMI_CTRL_RSVD4		__BIT(15)
+#define HW_EMI_CTRL_PRIORITY_WRITE_ITER	__BITS(14, 12)
+#define HW_EMI_CTRL_RSVD3		__BIT(11)
+#define HW_EMI_CTRL_HIGH_PRIORITY_WRITE	__BITS(10, 8)
+#define HW_EMI_CTRL_RSVD2		__BIT(7)
+#define HW_EMI_CTRL_MEM_WIDTH		__BIT(6)
+#define HW_EMI_CTRL_RSVD1		__BIT(5)
+#define HW_EMI_CTRL_RESET_OUT		__BIT(4)
+#define HW_EMI_CTRL_RSVD0		__BITS(3, 0)
+
+/*
+ * EMI Version Register.
+ */
+#define HW_EMI_VERSION	0x0F0
+
+#define HW_EMI_VERSION_MAJOR	__BITS(31, 24)
+#define HW_EMI_VERSION_MINOR	__BITS(23, 16)
+#define HW_EMI_VERSION_STEP	__BITS(15, 0)
+
+/*
+ * DRAM Control Register 0.
+ */
+#define HW_DRAM_CTL00	0x000
+
+#define HW_DRAM_CTL00_RSVD4			__BITS(31, 25)
+#define HW_DRAM_CTL00_AHB0_W_PRIORITY		__BIT(24)
+#define HW_DRAM_CTL00_RSVD3			__BITS(23, 17)
+#define HW_DRAM_CTL00_AHB0_R_PRIORITY		__BIT(16)
+#define HW_DRAM_CTL00_RSVD2			__BITS(15, 9)
+#define HW_DRAM_CTL00_AHB0_FIFO_TYPE_REG	__BIT(8)
+#define HW_DRAM_CTL00_RSVD1			__BITS(7, 1)
+#define HW_DRAM_CTL00_ADDR_CMP_EN		__BIT(0)
+
+/*
+ * DRAM Control Register 1.
+ */
+#define HW_DRAM_CTL01	0x004
+
+#define HW_DRAM_CTL01_RSVD4			__BITS(31, 25)
+#define HW_DRAM_CTL01_AHB2_FIFO_TYPE_REG	__BIT(24)
+#define HW_DRAM_CTL01_RSVD3			__BITS(23, 17)
+#define HW_DRAM_CTL01_AHB1_W_PRIORITY		__BIT(16)
+#define HW_DRAM_CTL01_RSVD2			__BITS(15, 9)
+#define HW_DRAM_CTL01_AHB1_R_PRIORITY		__BIT(8)
+#define HW_DRAM_CTL01_RSVD1			__BITS(7, 1)
+#define HW_DRAM_CTL01_AHB1_FIFO_TYPE_REG	__BIT(0)
+
+/*
+ * DRAM Control Register 2.
+ */
+#define HW_DRAM_CTL02	0x008
+
+#define HW_DRAM_CTL02_RSVD4			__BITS(31, 25)
+#define HW_DRAM_CTL02_AHB3_R_PRIORITY		__BIT(24)
+#define HW_DRAM_CTL02_RSVD3			__BITS(23, 17)
+#define HW_DRAM_CTL02_AHB3_FIFO_TYPE_REG	__BIT(16)
+#define HW_DRAM_CTL02_RSVD2			__BIT(15, 9)
+#define HW_DRAM_CTL02_AHB2_W_PRIORITY		__BIT(8)
+#define HW_DRAM_CTL02_RSVD1			__BITS(7, 1)
+#define HW_DRAM_CTL02_AHB2_R_PRIORITY		__BIT(0)
+
+/*
+ * DRAM Control Register 3.
+ */
+#define HW_DRAM_CTL03	0x00c
+
+#define HW_DRAM_CTL03_RSVD4		__BITS(31, 25)
+#define HW_DRAM_CTL03_AUTO_REFRESH_MODE	__BIT(24)
+#define HW_DRAM_CTL03_RSVD3		__BITS(23, 17)
+#define HW_DRAM_CTL03_AREFRESH		__BIT(16)
+#define HW_DRAM_CTL03_RSVD2		__BITS(15, 9)
+#define HW_DRAM_CTL03_AP		__BIT(8)
+#define HW_DRAM_CTL03_RSVD1		__BITS(7, 1)
+#define HW_DRAM_CTL03_AHB3_W_PRIORITY	__BIT(0)
+
+/*
+ * DRAM Control Register 4.
+ */
+#define HW_DRAM_CTL04	0x010
+
+#define HW_DRAM_CTL04_RSVD4		__BITS(31, 25)
+#define HW_DRAM_CTL04_DLL_BYPASS_MODE	__BIT(24)
+#define HW_DRAM_CTL04_RSVD3		__BITS(23, 17)
+#define HW_DRAM_CTL04_DLLLOCKREG	__BIT(16)
+#define HW_DRAM_CTL04_RSVD2		__BITS(15, 9)
+#define HW_DRAM_CTL04_CONCURRENTAP	__BIT(8)
+#define HW_DRAM_CTL04_RSVD1		__BITS(7, 1)
+#define HW_DRAM_CTL04_BANK_SPLIT_EN	__BIT(0)
+
+/*
+ * DRAM Control Register 5.
+ */
+#define HW_DRAM_CTL05	0x014
+
+#define HW_DRAM_CTL05_RSVD4		__BITS(31, 25)
+#define HW_DRAM_CTL05_INTRPTREADA	__BIT(24)
+#define HW_DRAM_CTL05_RSVD3		__BITS(23, 17)
+#define HW_DRAM_CTL05_INTRPTAPBURST	__BIT(16)
+#define HW_DRAM_CTL05_RSVD2		__BITS(15, 9)
+#define HW_DRAM_CTL05_FAST_WRITE	__BIT(8)
+#define HW_DRAM_CTL05_RSVD1		__BITS(7, 1)
+#define HW_DRAM_CTL05_EN_LOWPOWER_MODE	__BIT(0)
+
+/*
+ * DRAM Control Register 6.
+ */
+#define HW_DRAM_CTL06	0x018
+
+#define HW_DRAM_CTL06_RSVD4		__BITS(31, 25)
+#define HW_DRAM_CTL06_POWER_DOWN	__BIT(24)
+#define HW_DRAM_CTL06_RSVD3		__BITS(23, 17)
+#define HW_DRAM_CTL06_PLACEMENT_EN	__BIT(16)
+#define HW_DRAM_CTL06_RSVD2		__BITS(15, 9)
+#define HW_DRAM_CTL06_NO_CMD_INIT	__BIT(8)
+#define HW_DRAM_CTL06_RSVD1		__BITS(7, 1)
+#define HW_DRAM_CTL06_INTRPTWRITEA	__BIT(0)
+
+/*
+ * DRAM Control Register 7.
+ */
+#define HW_DRAM_CTL07	0x01c
+
+#define HW_DRAM_CTL07_RSVD4		__BITS(31, 25)
+#define HW_DRAM_CTL07_RW_SAME_EN	__BIT(24)
+#define HW_DRAM_CTL07_RSVD3		__BITS(23, 17)
+#define HW_DRAM_CTL07_REG_DIMM_ENABLE	__BIT(16)
+#define HW_DRAM_CTL07_RSVD2		__BITS(15, 9)
+#define HW_DRAM_CTL07_RD2RD_TURN	__BIT(8)
+#define HW_DRAM_CTL07_RSVD1		__BITS(7, 1)
+#define HW_DRAM_CTL07_PRIORITY_EN	__BIT(0)
+
+/*
+ * DRAM Control Register 8.
+ */
+#define HW_DRAM_CTL08	0x020
+
+#define HW_DRAM_CTL08_RSVD4		__BITS(31, 25)
+#define HW_DRAM_CTL08_TRAS_LOCKOUT	__BIT(24)
+#define HW_DRAM_CTL08_RSVD3		__BITS(23, 17)
+#define HW_DRAM_CTL08_START		__BIT(16)
+#define HW_DRAM_CTL08_RSVD2		__BITS(15, 9)
+#define HW_DRAM_CTL08_SREFRESH		__BIT(8)
+#define HW_DRAM_CTL08_RSVD1		__BITS(7, 1)
+#define HW_DRAM_CTL08_SDR_MODE		__BIT(0)
+
+/*
+ * DRAM Control Register 9.
+ */
+#define HW_DRAM_CTL09	0x024
+
+#define HW_DRAM_CTL09_RSVD4			__BITS(31, 26)
+#define HW_DRAM_CTL09_OUT_OF_RANGE_TYPE		__BITS(25, 24)
+#define HW_DRAM_CTL09_RSVD3			__BITS(23, 18)
+#define HW_DRAM_CTL09_OUT_OF_RANGE_SOURCE_ID	__BITS(17, 16)
+#define HW_DRAM_CTL09_RSVD2			__BITS(15, 9)
+#define HW_DRAM_CTL09_WRITE_MODEREG		__BIT(8)
+#define HW_DRAM_CTL09_RSVD1			__BITS(7, 1)
+#define HW_DRAM_CTL09_WRITEINTERP		__BIT(0)
+
+/*
+ * DRAM Control Register 10.
+ */
+#define HW_DRAM_CTL10	0x028
+
+#define HW_DRAM_CTL10_RSVD4		__BITS(31, 27)
+#define HW_DRAM_CTL10_AGE_COUNT		__BITS(26, 24)
+#define HW_DRAM_CTL10_RSVD3		__BITS(23, 19)
+#define HW_DRAM_CTL10_ADDR_PINS		__BITS(18, 16)
+#define HW_DRAM_CTL10_RSVD2		__BITS(15, 10)
+#define HW_DRAM_CTL10_TEMRS		__BITS(9, 8)
+#define HW_DRAM_CTL10_RSVD1		__BITS(7, 2)
+#define HW_DRAM_CTL10_Q_FULLNESS	__BITS(1, 0)
+
+/*
+ * DRAM Control Register 11.
+ */
+#define HW_DRAM_CTL11	0x02c
+
+#define HW_DRAM_CTL11_RSVD4		__BITS(31, 27)
+#define HW_DRAM_CTL11_MAX_CS_REG	__BITS(26, 24)
+#define HW_DRAM_CTL11_RSVD3		__BITS(23, 19)
+#define HW_DRAM_CTL11_COMMAND_AGE_COUNT	__BITS(18, 16)
+#define HW_DRAM_CTL11_RSVD2		__BITS(15, 11)
+#define HW_DRAM_CTL11_COLUMN_SIZE	__BITS(10, 8)
+#define HW_DRAM_CTL11_RSVD1		__BITS(7, 3)
+#define HW_DRAM_CTL11_CASLAT		__BITS(2, 0)
+
+/*
+ * DRAM Control Register 12.
+ */
+#define HW_DRAM_CTL12	0x030
+
+#define HW_DRAM_CTL12_RSVD3	__BITS(31, 27)
+#define HW_DRAM_CTL12_TWR_INT	__BITS(26, 24)
+#define HW_DRAM_CTL12_RSVD2	__BITS(23, 19)
+#define HW_DRAM_CTL12_TRRD	__BITS(18 ,16)
+#define HW_DRAM_CTL12_OBSOLETE	__BITS(15, 8)
+#define HW_DRAM_CTL12_RSVD1	__BITS(7, 3)
+#define HW_DRAM_CTL12_TCKE	__BITS(2, 0)
+
+/*
+ * DRAM Control Register 13.
+ */
+#define HW_DRAM_CTL13	0x034
+
+#define HW_DRAM_CTL13_RSVD4		__BITS(31, 28)
+#define HW_DRAM_CTL13_CASLAT_LIN_GATE	__BITS(27, 24)
+#define HW_DRAM_CTL13_RSVD3		__BITS(23, 20)
+#define HW_DRAM_CTL13_CASLAT_LIN	__BITS(19, 16)
+#define HW_DRAM_CTL13_RSVD2		__BITS(15, 12)
+#define HW_DRAM_CTL13_APREBIT		__BITS(11, 8)
+#define HW_DRAM_CTL13_RSVD1		__BITS(7, 3)
+#define HW_DRAM_CTL13_TWTR		__BITS(2, 0)
+
+/*
+ * DRAM Control Register 14.
+ */
+#define HW_DRAM_CTL14	0x038
+
+#define HW_DRAM_CTL14_RSVD4			__BITS(31, 28)
+#define HW_DRAM_CTL14_MAX_COL_REG		__BITS(27, 24)
+#define HW_DRAM_CTL14_RSVD3			__BITS(23, 20)
+#define HW_DRAM_CTL14_LOWPOWER_REFRESH_ENABLE	__BITS(19, 16)
+#define HW_DRAM_CTL14_RSVD2			__BITS(15, 12)
+#define HW_DRAM_CTL14_INITAREF			__BITS(11, 8)
+#define HW_DRAM_CTL14_RSVD1			__BITS(7, 4)
+#define HW_DRAM_CTL14_CS_MAP			__BITS(3, 0)
+
+/*
+ * DRAM Control Register 15.
+ */
+#define HW_DRAM_CTL15	0x03c
+
+#define HW_DRAM_CTL15_RSVD4		__BITS(31, 28)
+#define HW_DRAM_CTL15_TRP		__BITS(27, 24)
+#define HW_DRAM_CTL15_RSVD3		__BITS(23, 20)
+#define HW_DRAM_CTL15_TDAL		__BITS(19, 16)
+#define HW_DRAM_CTL15_RSVD2		__BITS(15, 12)
+#define HW_DRAM_CTL15_PORT_BUSY		__BITS(11, 8)
+#define HW_DRAM_CTL15_RSVD1		__BITS(7, 4)
+#define HW_DRAM_CTL15_MAX_ROW_REG	__BITS(3, 0)
+
+/*
+ * DRAM Control Register 16.
+ */
+#define HW_DRAM_CTL16	0x040
+
+#define HW_DRAM_CTL16_RSVD4			__BITS(31, 29)
+#define HW_DRAM_CTL16_TMRD			__BITS(28, 24)
+#define HW_DRAM_CTL16_RSVD3			__BITS(23, 21)
+#define HW_DRAM_CTL16_LOWPOWER_CONTROL		__BITS(20, 16)
+#define HW_DRAM_CTL16_RSVD2			__BITS(15, 13)
+#define HW_DRAM_CTL16_LOWPOWER_AUTO_ENABLE	__BITS(12, 8)
+#define HW_DRAM_CTL16_RSVD1			__BITS(7, 4)
+#define HW_DRAM_CTL16_INT_ACK			__BITS(3, 0)
+
+/*
+ * DRAM Control Register 17.
+ */
+#define HW_DRAM_CTL17	0x044
+
+#define HW_DRAM_CTL17_DLL_START_POINT	__BITS(31, 24)
+#define HW_DRAM_CTL17_DLL_LOCK		__BITS(23, 16)
+#define HW_DRAM_CTL17_DLL_INCREMENT	__BITS(15, 8)
+#define HW_DRAM_CTL17_RSVD1		__BITS(7, 5)
+#define HW_DRAM_CTL17_TRC		__BITS(4, 0)
+
+/*
+ * DRAM Control Register 18.
+ */
+#define HW_DRAM_CTL18	0x048
+
+#define HW_DRAM_CTL18_RSVD4			__BIT(31)
+#define HW_DRAM_CTL18_DLL_DQS_DELAY_1		__BITS(30, 24)
+#define HW_DRAM_CTL18_RSVD3			__BIT(23)
+#define HW_DRAM_CTL18_DLL_DQS_DELAY_0		__BITS(22, 16)
+#define HW_DRAM_CTL18_RSVD2			__BITS(15, 13)
+#define HW_DRAM_CTL18_INT_STATUS		__BITS(12, 8)
+#define HW_DRAM_CTL18_RSVD1			__BITS(7, 5)
+#define HW_DRAM_CTL18_INT_MASK			__BITS(4, 0)
+
+/*
+ * DRAM Control Register 19.
+ */
+#define HW_DRAM_CTL19	0x04c
+
+#define HW_DRAM_CTL19_DQS_OUT_SHIFT_BYPASS	__BITS(31, 24)
+#define HW_DRAM_CTL19_RSVD1			__BIT(23)
+#define HW_DRAM_CTL19_DQS_OUT_SHIFT		__BITS(22, 16)
+#define HW_DRAM_CTL19_DLL_DQS_DELAY_BYPASS_1	__BITS(15, 8)
+#define HW_DRAM_CTL19_DLL_DQS_DELAY_BYPASS_0	__BITS(7, 0)
+
+/*
+ * DRAM Control Register 20.
+ */
+#define HW_DRAM_CTL20	0x050
+
+#define HW_DRAM_CTL20_TRCD_INT			__BITS(31, 24)
+#define HW_DRAM_CTL20_TRAS_MIN			__BITS(23, 16)
+#define HW_DRAM_CTL20_WR_DQS_SHIFT_BYPASS	__BITS(15, 8)
+#define HW_DRAM_CTL20_RSVD1			__BIT(7)
+#define HW_DRAM_CTL20_WR_DQS_SHIFT		__BITS(6, 0)
+
+/*
+ * DRAM Control Register 21.
+ */
+#define HW_DRAM_CTL21	0x054
+
+#define HW_DRAM_CTL21_OBSOLETE			__BITS(31, 24)
+#define HW_DRAM_CTL21_RSVD1			__BITS(23, 18)
+#define HW_DRAM_CTL21_OUT_OF_RANGE_LENGTH	__BITS(17, 8)
+#define HW_DRAM_CTL21_TRFC			__BITS(7, 0)
+
+/*
+ * DRAM Control Register 22.
+ */
+#define HW_DRAM_CTL22	0x058
+
+#define HW_DRAM_CTL22_RSVD2		__BITS(31, 27)
+#define HW_DRAM_CTL22_AHB0_WRCNT	__BITS(26, 16)
+#define HW_DRAM_CTL22_RSVD1		__BITS(15, 11)
+#define HW_DRAM_CTL22_AHB0_RDCNT	__BITS(10, 0)
+
+/*
+ * DRAM Control Register 23.
+ */
+#define HW_DRAM_CTL23	0x05c
+
+#define HW_DRAM_CTL23_RSVD2		__BITS(31, 27)
+#define HW_DRAM_CTL23_AHB1_WRCNT	__BITS(26, 16)
+#define HW_DRAM_CTL23_RSVD1		__BITS(15, 11)
+#define HW_DRAM_CTL23_AHB1_RDCNT	__BITS(10, 0)
+
+/*
+ * DRAM Control Register 24.
+ */
+#define HW_DRAM_CTL24	0x060
+
+#define HW_DRAM_CTL24_RSVD2		__BITS(31, 27)
+#define HW_DRAM_CTL24_AHB2_WRCNT	__BITS(26, 16)
+#define HW_DRAM_CTL24_RSVD1		__BITS(15, 11)
+#define HW_DRAM_CTL24_AHB2_RDCNT	__BITS(10, 0)
+
+/*
+ * DRAM Control Register 25.
+ */
+#define HW_DRAM_CTL25	0x064
+
+#define HW_DRAM_CTL25_RSVD2		__BITS(31, 27)
+#define HW_DRAM_CTL25_AHB3_WRCNT	__BITS(26, 16)
+#define HW_DRAM_CTL25_RSVD1		__BITS(15, 11)
+#define HW_DRAM_CTL25_AHB3_RDCNT	__BITS(10, 0)
+
+/*
+ * DRAM Control Register 26.
+ */
+#define HW_DRAM_CTL26	0x068
+
+#define HW_DRAM_CTL26_OBSOLETE		__BITS(31, 16)
+#define HW_DRAM_CTL26_RSVD1		__BITS(15, 12)
+#define HW_DRAM_CTL26_TREF		__BITS(11, 0)
+
+/*
+ * DRAM Control Register 27.
+ */
+#define HW_DRAM_CTL27	0x06c
+
+#define HW_DRAM_CTL27_OBSOLETE	__BITS(31, 0)
+
+/*
+ * DRAM Control Register 28.
+ */
+#define HW_DRAM_CTL28	0x070
+
+#define HW_DRAM_CTL28_OBSOLETE	__BITS(31, 0)
+
+/*
+ * DRAM Control Register 29.
+ */
+#define HW_DRAM_CTL29	0x074
+
+#define HW_DRAM_CTL29_LOWPOWER_INTERNAL_CNT	__BITS(31, 16)
+#define HW_DRAM_CTL29_LOWPOWER_EXTERNAL_CNT	__BITS(15, 0)
+
+/*
+ * DRAM Control Register 30.
+ */
+#define HW_DRAM_CTL30	0x078
+
+#define HW_DRAM_CTL30_LOWPOWER_REFRESH_HOLD	__BITS(31, 16)
+#define HW_DRAM_CTL30_LOWPOWER_POWER_DOWN_CNT	__BITS(15, 0)
+
+/*
+ * DRAM Control Register 31.
+ */
+#define HW_DRAM_CTL31	0x07c
+
+#define HW_DRAM_CTL31_TDLL			__BITS(31, 16)
+#define HW_DRAM_CTL31_LOWPOWER_SELF_REFRESH_CNT	__BITS(15, 0)
+
+/*
+ * DRAM Control Register 32.
+ */
+#define HW_DRAM_CTL32	0x080
+
+#define HW_DRAM_CTL32_TXSNR	__BITS(31, 16)
+#define HW_DRAM_CTL32_TRAS_MAX	__BITS(15, 0)
+
+/*
+ * DRAM Control Register 33.
+ */
+#define HW_DRAM_CTL33	0x084
+
+#define HW_DRAM_CTL33_VERSION	__BITS(31, 16)
+#define HW_DRAM_CTL33_TXSR	__BITS(15, 0)
+
+/*
+ * DRAM Control Register 34.
+ */
+#define HW_DRAM_CTL34	0x088
+
+#define HW_DRAM_CTL34_RSVD1	__BITS(31, 24)
+#define HW_DRAM_CTL34_TINIT	__BITS(23, 0)
+
+/*
+ * DRAM Control Register 35.
+ */
+#define HW_DRAM_CTL35	0x08c
+
+#define HW_DRAM_CTL35_RSVD1		__BIT(31)
+#define HW_DRAM_CTL35_OUT_OF_RANGE_ADDR	__BITS(30, 0)
+
+/*
+ * DRAM Control Register 36.
+ */
+#define HW_DRAM_CTL36	0x090
+
+#define HW_DRAM_CTL36_RSVD5			__BITS(31, 25)
+#define HW_DRAM_CTL36_PWRUP_SREFRESH_EXIT	__BIT(24)
+#define HW_DRAM_CTL36_RSVD4			__BITS(23, 17)
+#define HW_DRAM_CTL36_ENABLE_QUICK_SREFRESH	__BIT(16)
+#define HW_DRAM_CTL36_RSVD3			__BITS(15, 9)
+#define HW_DRAM_CTL36_RSVD2			__BIT(8)
+#define HW_DRAM_CTL36_RSVD1			__BITS(7, 1)
+#define HW_DRAM_CTL36_ACTIVE_AGING		__BIT(0)
+
+/*
+ * DRAM Control Register 37.
+ */
+#define HW_DRAM_CTL37	0x094
+
+#define HW_DRAM_CTL37_OBSOLETE		__BITS(31, 24)
+#define HW_DRAM_CTL37_RSVD2		__BITS(23, 18)
+#define HW_DRAM_CTL37_BUS_SHARE_TIMEOUT	__BITS(17, 8)
+#define HW_DRAM_CTL37_RSVD1		__BITS(7, 1)
+#define HW_DRAM_CTL37_TREF_ENABLE	__BIT(0)
+
+/*
+ * DRAM Control Register 38.
+ */
+#define HW_DRAM_CTL38	0x098
+
+#define HW_DRAM_CTL38_RSVD2		__BITS(31, 29)
+#define HW_DRAM_CTL38_EMRS2_DATA_0	__BITS(28, 16)
+#define HW_DRAM_CTL38_RSVD1		__BITS(15, 13)
+#define HW_DRAM_CTL38_EMRS1_DATA	__BITS(12, 0)
+
+/*
+ * DRAM Control Register 39.
+ */
+#define HW_DRAM_CTL39	0x09c
+
+#define HW_DRAM_CTL39_RSVD2		__BITS(31, 29)
+#define HW_DRAM_CTL39_EMRS2_DATA_2	__BITS(28, 16)
+#define HW_DRAM_CTL39_RSVD1		__BITS(15, 13)
+#define HW_DRAM_CTL39_EMRS2_DATA_1	__BITS(12, 0)
+
+/*
+ * DRAM Control Register 40.
+ */
+#define HW_DRAM_CTL40	0x0A0
+
+#define HW_DRAM_CTL40_TPDEX		__BITS(31, 16)
+#define HW_DRAM_CTL40_RSVD1		__BITS(15, 13)
+#define HW_DRAM_CTL40_EMRS2_DATA_3	__BITS(12, 0)
+
+#endif /* !_ARM_IMX_IMX23_EMIREG_H_ */

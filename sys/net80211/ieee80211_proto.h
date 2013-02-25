@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.18 2011/02/21 23:50:08 jmcneill Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.18.14.1 2013/02/25 00:30:04 tls Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -176,10 +176,10 @@ void	ieee80211_aclator_unregister(const struct ieee80211_aclator *);
 const struct ieee80211_aclator *ieee80211_aclator_get(const char *name);
 
 /* flags for ieee80211_fix_rate() */
-#define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */
-#define	IEEE80211_F_DOFRATE	0x00000002	/* use fixed rate */
-#define	IEEE80211_F_DONEGO	0x00000004	/* calc negotiated rate */
-#define	IEEE80211_F_DODEL	0x00000008	/* delete ignore rate */
+#define	IEEE80211_R_DOSORT	0x00000001	/* sort rate list */
+#define	IEEE80211_R_DOFRATE	0x00000002	/* use fixed rate */
+#define	IEEE80211_R_DONEGO	0x00000004	/* calc negotiated rate */
+#define	IEEE80211_R_DODEL	0x00000008	/* delete ignore rate */
 int	ieee80211_fix_rate(struct ieee80211_node *, int);
 
 /*

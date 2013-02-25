@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.36 2012/05/02 23:33:11 rmind Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.36.2.1 2013/02/25 00:29:08 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.36 2012/05/02 23:33:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.36.2.1 2013/02/25 00:29:08 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ netbsd32_posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 		    MAXPATHLEN, &slen);
 		if (error)
 			goto out;
-		fae->fae_path = kmem_alloc(fal, KM_SLEEP);
+		fae->fae_path = kmem_alloc(slen, KM_SLEEP);
 		memcpy(fae->fae_path, pbuf, slen);
 		fae->fae_oflag = f32->fae_oflag;
 		fae->fae_mode = f32->fae_mode;

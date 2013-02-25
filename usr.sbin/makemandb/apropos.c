@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.7.2.1 2012/11/20 03:03:02 tls Exp $	*/
+/*	$NetBSD: apropos.c,v 1.7.2.2 2013/02/25 00:30:45 tls Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.7.2.1 2012/11/20 03:03:02 tls Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.7.2.2 2013/02/25 00:30:45 tls Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -49,6 +49,7 @@ typedef struct apropos_flags {
 	int nresults;
 	int pager;
 	int no_context;
+	int no_format;
 	const char *machine;
 } apropos_flags;
 
@@ -68,9 +69,6 @@ __dead static void usage(void);
 int
 main(int argc, char *argv[])
 {
-#ifdef NOTYET
-	static const char *snippet_args[] = {"\033[1m", "\033[0m", "..."};
-#endif
 	query_args args;
 	char *query = NULL;	// the user query
 	char *errmsg = NULL;
@@ -88,12 +86,12 @@ main(int argc, char *argv[])
 		usage();
 
 	memset(&aflags, 0, sizeof(aflags));
-	
-	/*If the user specifies a section number as an option, the corresponding 
-	 * index element in sec_nums is set to the string representing that 
+
+	/*If the user specifies a section number as an option, the corresponding
+	 * index element in sec_nums is set to the string representing that
 	 * section number.
 	 */
-	while ((ch = getopt(argc, argv, "123456789Ccn:pS:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "123456789Ccn:prS:s:")) != -1) {
 		switch (ch) {
 		case '1':
 		case '2':
@@ -119,6 +117,9 @@ main(int argc, char *argv[])
 			aflags.pager = 1;
 			aflags.nresults = -1;	// Fetch all records
 			break;
+		case 'r':
+			aflags.no_format = 1;
+			break;
 		case 'S':
 			aflags.machine = optarg;
 			break;
@@ -133,10 +134,10 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
-	
+
 	argc -= optind;
 	argv += optind;
-	
+
 	if (!argc)
 		usage();
 
@@ -174,12 +175,12 @@ main(int argc, char *argv[])
 	args.callback = &query_callback;
 	args.callback_data = &cbdata;
 	args.errmsg = &errmsg;
+	args.flags = aflags.no_format ? APROPOS_NOFORMAT : 0;
 
-#ifdef NOTYET
-	rc = run_query(db, snippet_args, &args);
-#else
-	rc = run_query_pager(db, &args);
-#endif
+	if (isatty(STDOUT_FILENO))
+		rc = run_query_term(db, &args);
+	else
+		rc = run_query_pager(db, &args);
 
 	free(query);
 	close_db(db);
@@ -193,7 +194,7 @@ main(int argc, char *argv[])
 		/* Something wrong with the database. Exit */
 		exit(EXIT_FAILURE);
 	}
-	
+
 	if (cbdata.count == 0) {
 		warnx("No relevant results obtained.\n"
 			  "Please make sure that you spelled all the terms correctly "

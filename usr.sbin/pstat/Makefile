@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2007/05/28 12:06:39 tls Exp $
+#	$NetBSD: Makefile,v 1.15.40.1 2013/02/25 00:30:47 tls Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -14,6 +14,8 @@ DPADD=	${LIBKVM}
 LDADD=	-lkvm
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/sbin/swapctl
+
+CPPFLAGS+=-D_KMEMUSER
 
 .PATH: ${NETBSDSRCDIR}/sbin/swapctl
 

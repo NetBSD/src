@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.87 2011/10/27 21:10:55 seanb Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.87.12.1 2013/02/25 00:29:55 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.87 2011/10/27 21:10:55 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.87.12.1 2013/02/25 00:29:55 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.87 2011/10/27 21:10:55 seanb Exp $
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <netinet/in.h>
 
 MALLOC_DECLARE(M_SOCKADDR);
 
@@ -329,6 +330,66 @@ void
 sockaddr_free(struct sockaddr *sa)
 {
 	free(sa, M_SOCKADDR);
+}
+
+void
+sockaddr_format(const struct sockaddr *sa, char *buf, size_t len)
+{
+	const struct sockaddr_un *sun = (const struct sockaddr_un *)sa;
+	const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
+	const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
+	const uint8_t *data;
+	size_t data_len;
+
+	if (sa == NULL) {
+		strlcpy(buf, "(null)", len);
+		return;
+	}
+
+	switch (sa->sa_family) {
+	default:
+		snprintf(buf, len, "(unknown socket family %d)",
+		    (int)sa->sa_family);
+		return;
+	case AF_LOCAL:
+		strlcpy(buf, "unix:", len);
+		strlcat(buf, sun->sun_path, len);
+		return;
+	case AF_INET:
+		strlcpy(buf, "inet:", len);
+		if (len < 6)
+			return;
+		buf += 5;
+		len -= 5;
+		data = (const uint8_t *)&sin->sin_addr;
+		data_len = sizeof(sin->sin_addr);
+		break;
+	case AF_INET6:
+		strlcpy(buf, "inet6:", len);
+		if (len < 7)
+			return;
+		buf += 6;
+		len -= 6;
+		data = (const uint8_t *)&sin6->sin6_addr;
+		data_len = sizeof(sin6->sin6_addr);
+		break;
+	}
+	for (;;) {
+		if (--len == 0)
+			break;
+
+		uint8_t hi = *data >> 4;
+		uint8_t lo = *data & 15;
+		--data_len;
+		++data;
+		*buf++ = hi + (hi >= 10 ? 'a' - 10 : '0');
+		if (--len == 0)
+			break;
+		*buf++ = lo + (lo >= 10 ? 'a' - 10 : '0');
+		if (data_len == 0)
+			break;
+	}
+	*buf = 0;
 }
 
 /*

@@ -1,0 +1,10 @@
+#	$NetBSD: BEAGLEBONE_INSTALL,v 1.1.6.2 2013/02/25 00:28:34 tls Exp $
+#
+#	BEAGLEBONE_INSTALL -- BEAGLEBONE kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/BEAGLEBONE"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE

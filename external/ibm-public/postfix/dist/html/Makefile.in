@@ -20,6 +20,7 @@ CONFIG	= access.5.html aliases.5.html canonical.5.html relocated.5.html \
 	transport.5.html virtual.5.html pcre_table.5.html regexp_table.5.html \
 	cidr_table.5.html tcp_table.5.html header_checks.5.html \
 	ldap_table.5.html mysql_table.5.html pgsql_table.5.html \
+	memcache_table.5.html \
 	master.5.html nisplus_table.5.html generic.5.html bounce.5.html \
 	postfix-wrapper.5.html sqlite_table.5.html
 OTHER	= postfix-manuals.html
@@ -269,6 +270,10 @@ ldap_table.5.html: ../proto/ldap_table
 	srctoman - $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
 
 master.5.html: ../proto/master
+	PATH=../mantools:$$PATH; \
+	srctoman - $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
+
+memcache_table.5.html: ../proto/memcache_table
 	PATH=../mantools:$$PATH; \
 	srctoman - $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
 

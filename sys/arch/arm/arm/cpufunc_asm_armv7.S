@@ -48,8 +48,8 @@ ENTRY(armv7_context_switch)
 	dsb				@ data synchronization barrier
 	mrc	p15, 0, r2, c0, c0, 5	@ get MPIDR
 	cmp	r2, #0
-	orrlt	r0, #0x5b		@ MP, cachable (Normal WB)
-	orrge	r0, #0x1b		@ Non-MP, cacheable, normal WB
+	orrlt	r0, r0, #0x5b		@ MP, cachable (Normal WB)
+	orrge	r0, r0, #0x1b		@ Non-MP, cacheable, normal WB
 	mcr	p15, 0, r0, c2, c0, 0 	@ set the new TTB
 #ifdef MULTIPROCESSOR
 	mcr	p15, 0, r0, c8, c3, 0	@ flush the I+D
@@ -76,8 +76,8 @@ END(armv7_tlb_flushID_SE)
 ENTRY_NP(armv7_setttb)
 	mrc	p15, 0, r2, c0, c0, 5	@ get MPIDR
 	cmp	r2, #0
-	orrlt	r0, #0x5b		@ MP, cachable (Normal WB)
-	orrge	r0, #0x1b		@ Non-MP, cacheable, normal WB
+	orrlt	r0, r0, #0x5b		@ MP, cachable (Normal WB)
+	orrge	r0, r0, #0x1b		@ Non-MP, cacheable, normal WB
 	mcr	p15, 0, r0, c2, c0, 0   @ load new TTB
 	cmp	r1, #0
 #ifdef MULTIPROCESSOR

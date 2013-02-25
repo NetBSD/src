@@ -1,0 +1,166 @@
+.\"	$NetBSD: mkubootimage.1,v 1.5.6.2 2013/02/25 00:30:37 tls Exp $
+.\"
+.\" Copyright (c) 2012 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jeremy C. Reed
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 29, 2012
+.Dt MKUBOOTIMAGE 1
+.Os
+.Sh NAME
+.Nm mkubootimage
+.Nd create U-Boot loader image
+.Sh SYNOPSIS
+.Nm
+.Op Fl h
+.Fl A No ( arm Ns | Ns mips Ns | Ns mips64 Ns | Ns powerpc )
+.Fl a Ar address
+.Op Fl C No Po bz2 Ns | Ns gz Ns | Ns lzma Ns | Ns lzo Ns | Ns none Pc
+.Op Fl E Ar address
+.Op Fl e Ar address
+.Op Fl m Ar magic
+.Fl n Ar image
+.Op Fl O No Po freebsd Ns | Ns linux Ns | Ns netbsd Ns | Ns openbsd Pc
+.Fl T No ( fs Ns | Ns kernel Ns | Ns ramdisk Ns | Ns standalone )
+.Ar source destination
+.\"
+.Sh DESCRIPTION
+The
+.Nm
+utility is used to create an image for Das U-Boot, the
+.Qq Universal Boot Loader .
+.Pp
+The arguments are as follows:
+.Bl -tag -width indent
+.It Fl A No ( arm Ns | Ns mips Ns | Ns mips64 Ns | Ns powerpc )
+Defines the architecture.
+This is required.
+.It Fl a Ar address
+Sets the image load address.
+This is an integer between 0 and
+.Dv UINT32_MAX .
+This is required.
+.It Fl C No ( bz2 Ns | Ns gz Ns | Ns lzma Ns | Ns lzo Ns | Ns none )
+Defines the compression.
+The default is
+.Qq none .
+.It Fl E Ar address
+Define the entry point.
+This is an integer between 0 and
+.Dv UINT32_MAX .
+This option is the same as
+.Fl e
+but it inverts the bytes to convert the 32 bit integer
+from little to big endian (or vice versa).
+If
+.Fl E
+or
+.Fl e
+are not set, the entry point defaults to the
+image load address
+.Pq Fl a .
+.It Fl e Ar address
+Define the entry point.
+This is an integer between 0 and
+.Dv UINT32_MAX .
+If
+.Fl E
+or
+.Fl e
+are not set, the entry point defaults to the
+image load address
+.Pq Fl a .
+.It Fl h
+Display the usage and exit.
+.It Fl m Ar magic
+Set the magic.
+This is an integer between 0 and
+.Dv UINT32_MAX .
+The default is
+.Qq 0x27051956 .
+.It Fl n Ar image
+Defines the image name.
+This is required.
+.It Fl O No ( freebsd Ns | Ns linux Ns | Ns netbsd Ns | Ns openbsd )
+Defines the operating system type.
+The default OS name is
+.Qq netbsd .
+.It Fl T No ( fs Ns | Ns kernel Ns | Ns ramdisk Ns | Ns standalone Ns | Ns script )
+Defines the image type.
+This is required.
+.El
+.Pp
+The required
+.Ar source
+argument is the filename of the kernel that is read.
+The required
+.Ar destination
+argument is the filename of the image file that is created.
+.\"
+.Sh RETURN VALUES
+.Nm
+returns 1 on failure to read the kernel,
+generate a header, or create the image.
+.\"
+.Sh EXAMPLES
+Before the image is written, the header is displayed to standard out;
+for example:
+.Bd -literal -offset 0
+ magic:       0x27051956
+ time:        Tue Jun  7 15:58:41 2011
+ size:        2482203
+ load addr:   0x00020000
+ entry point: 0x00020000
+ data crc:    0x700fdf53
+ os:          2 (netbsd)
+ arch:        7 (powerpc)
+ type:        2 (kernel)
+ comp:        1 (gz)
+ name:        NetBSD/evbppc 5.99.52 (INSTALL_PMPPC)
+ header crc:  0x94ea96cf
+.Ed
+.\" TODO: check the name line above
+.\" .Sh FILES
+.Sh SEE ALSO
+.Qq Das U-Boot - the Universal Boot Loader
+.Pa http://www.denx.de/wiki/U-Boot/
+.\"
+.\" .Sh STANDARDS
+.\"
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 6.0 .
+.\"
+.Sh AUTHORS
+The
+.Nm
+utility was originally written by Jared D. McNeill.
+This manual page was written by Jeremy C. Reed.
+.\" .Sh CAVEATS
+.\" .Sh BUGS
+.\" .Sh SECURITY CONSIDERATIONS

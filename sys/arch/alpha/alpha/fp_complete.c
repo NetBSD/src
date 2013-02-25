@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.14 2012/02/06 02:14:11 matt Exp $ */
+/* $NetBSD: fp_complete.c,v 1.14.6.1 2013/02/25 00:28:18 tls Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.14 2012/02/06 02:14:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.14.6.1 2013/02/25 00:28:18 tls Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -719,7 +719,7 @@ done:
  * Load the float-point context for the current lwp.
  */
 void
-fpu_state_load(struct lwp *l, bool used)
+fpu_state_load(struct lwp *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
@@ -749,7 +749,7 @@ fpu_state_load(struct lwp *l, bool used)
  */
 
 void
-fpu_state_save(struct lwp *l)
+fpu_state_save(struct lwp *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
@@ -762,7 +762,7 @@ fpu_state_save(struct lwp *l)
  * Release the FPU.
  */
 void
-fpu_state_release(struct lwp *l)
+fpu_state_release(struct lwp *l, u_int flags)
 {
 	l->l_md.md_flags &= ~MDLWP_FPACTIVE;
 }

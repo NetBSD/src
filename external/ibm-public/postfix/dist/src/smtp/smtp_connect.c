@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.1.1.2 2010/06/17 18:07:02 tron Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.1.1.2.12.1 2013/02/25 00:27:28 tls Exp $	*/
 
 /*++
 /* NAME
@@ -89,6 +89,7 @@
 #include <sane_connect.h>
 #include <myaddrinfo.h>
 #include <sock_addr.h>
+#include <inet_proto.h>
 
 /* Global library. */
 
@@ -684,10 +685,10 @@ static int smtp_reuse_session(SMTP_STATE *state, int lookup_mx,
     return (session_count);
 }
 
-/* smtp_connect_remote - establish remote connection */
+/* smtp_connect_inet - establish network connection */
 
-static void smtp_connect_remote(SMTP_STATE *state, const char *nexthop,
-				        char *def_service)
+static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
+			              char *def_service)
 {
     DELIVER_REQUEST *request = state->request;
     ARGV   *sites;
@@ -696,6 +697,16 @@ static void smtp_connect_remote(SMTP_STATE *state, const char *nexthop,
     int     non_fallback_sites;
     int     retry_plain = 0;
     DSN_BUF *why = state->why;
+
+    /*
+     * For sanity, require that at least one of INET or INET6 is enabled.
+     * Otherwise, we can't look up interface information, and we can't
+     * convert names or addresses.
+     */
+    if (inet_proto_info()->ai_family_list[0] == 0) {
+	dsb_simple(why, "4.4.4", "all network protocols are disabled");
+	return;
+    }
 
     /*
      * First try to deliver to the indicated destination, then try to deliver
@@ -1038,7 +1049,7 @@ int     smtp_connect(SMTP_STATE *state)
 	} else {
 	    if (strncmp(destination, "inet:", 5) == 0)
 		destination += 5;
-	    smtp_connect_remote(state, destination, DEF_LMTP_SERVICE);
+	    smtp_connect_inet(state, destination, DEF_LMTP_SERVICE);
 	}
     }
 
@@ -1051,7 +1062,7 @@ int     smtp_connect(SMTP_STATE *state)
      * Postfix configurations that have a host with such a name.
      */
     else {
-	smtp_connect_remote(state, destination, DEF_SMTP_SERVICE);
+	smtp_connect_inet(state, destination, DEF_SMTP_SERVICE);
     }
 
     /*

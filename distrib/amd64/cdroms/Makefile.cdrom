@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.7 2012/06/03 23:19:09 joerg Exp $
+# $NetBSD: Makefile.cdrom,v 1.7.2.1 2013/02/25 00:24:26 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -47,6 +47,10 @@ CDRUNTIME+=	./usr/lib/liblzma.so*
 CDRUNTIME+=	./usr/lib/libterminfo.so*
 CDRUNTIME+=	./usr/lib/libutil.so*
 CDRUNTIME+=	./usr/lib/libz.so*
+.if (${MKCRYPTO} != "no")
+CDRUNTIME+=	./usr/lib/libcrypto.so*
+CDRUNTIME+=	./usr/lib/libssl.so*
+.endif
 CDRUNTIME+=	./usr/libexec/ld.elf_so
 CDRUNTIME+=	./usr/libexec/getty
 CDRUNTIME+=	./usr/mdec

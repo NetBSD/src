@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.18.2.1 2012/11/20 03:01:16 tls Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.18.2.2 2013/02/25 00:28:37 tls Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.18.2.1 2012/11/20 03:01:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.18.2.2 2013/02/25 00:28:37 tls Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -349,8 +349,8 @@ initarm(void *arg)
 #endif
 
 	bootconfig.dramblocks = 0;
-	paddr_t physical_end;
-	physical_end = physmem = 0;
+	paddr_t segment_end;
+	segment_end = physmem = 0;
 	for (cs = MARVELL_TAG_SDRAM_CS0; cs <= MARVELL_TAG_SDRAM_CS3; cs++) {
 		mvsoc_target(cs, &target, &attr, &base, &size);
 		if (size == 0)
@@ -359,21 +359,25 @@ initarm(void *arg)
 		bootconfig.dram[bootconfig.dramblocks].address = base;
 		bootconfig.dram[bootconfig.dramblocks].pages = size / PAGE_SIZE;
 
-		if (base != physical_end)
+		if (base != segment_end)
 			panic("memory hole not support");
 
-		physical_end += size;
+		segment_end += size;
 		physmem += size / PAGE_SIZE;
 
 		bootconfig.dramblocks++;
 	}
 
-	arm32_bootmem_init(0, physical_end, (uintptr_t) KERNEL_BASE_phys);
+	arm32_bootmem_init(0, segment_end, (uintptr_t) KERNEL_BASE_phys);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
 	    marvell_devmap, false);
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = marvell_device_register;
+
+	/* parse bootargs from U-Boot */
+	boot_args = bootargs;
+	parse_mi_bootargs(boot_args);
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 }

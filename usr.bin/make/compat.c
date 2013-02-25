@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.89.2.1 2012/11/20 03:02:57 tls Exp $	*/
+/*	$NetBSD: compat.c,v 1.89.2.2 2013/02/25 00:30:36 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.89.2.1 2012/11/20 03:02:57 tls Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.89.2.2 2013/02/25 00:30:36 tls Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.89.2.1 2012/11/20 03:02:57 tls Exp $");
+__RCSID("$NetBSD: compat.c,v 1.89.2.2 2013/02/25 00:30:36 tls Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -374,7 +374,6 @@ again:
 	Fatal("Could not fork");
     }
     if (cpid == 0) {
-	Check_Cwd(av);
 	Var_ExportVars();
 #ifdef USE_META
 	if (useMeta) {

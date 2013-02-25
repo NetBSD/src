@@ -79,6 +79,38 @@ ipv6_open(void)
 	return socket_afnet6;
 }
 
+ssize_t
+ipv6_printaddr(char *s, ssize_t sl, const uint8_t *d, const char *ifname)
+{
+	char buf[INET6_ADDRSTRLEN];
+	const char *p;
+	ssize_t l;
+
+	p = inet_ntop(AF_INET6, d, buf, sizeof(buf));
+	if (p == NULL)
+		return -1;
+
+	l = strlen(p);
+	if (d[0] == 0xfe && (d[1] & 0xc0) == 0x80)
+		l += 1 + strlen(ifname);
+
+	if (s == NULL)
+		return l;
+
+	if (sl < l) {
+		errno = ENOMEM;
+		return -1;
+	}
+		
+	s += strlcpy(s, p, sl);
+	if (d[0] == 0xfe && (d[1] & 0xc0) == 0x80) {
+		*s++ = '%';
+		s += strlcpy(s, ifname, sl);
+	}
+	*s = '\0';
+	return l;
+}
+
 struct in6_addr *
 ipv6_linklocal(const char *ifname)
 {
@@ -218,14 +250,14 @@ desc_route(const char *cmd, const struct rt6 *rt)
 	gate = inet_ntop(AF_INET6, &rt->gate.s6_addr,
 	    gatebuf, INET6_ADDRSTRLEN);
 	if (IN6_ARE_ADDR_EQUAL(&rt->gate, &in6addr_any))
-		syslog(LOG_DEBUG, "%s: %s route to %s/%d", ifname, cmd,
+		syslog(LOG_INFO, "%s: %s route to %s/%d", ifname, cmd,
 		    dest, ipv6_prefixlen(&rt->net));
 	else if (IN6_ARE_ADDR_EQUAL(&rt->dest, &in6addr_any) &&
 	    IN6_ARE_ADDR_EQUAL(&rt->net, &in6addr_any))
-		syslog(LOG_DEBUG, "%s: %s default route via %s", ifname, cmd,
+		syslog(LOG_INFO, "%s: %s default route via %s", ifname, cmd,
 		    gate);
 	else
-		syslog(LOG_DEBUG, "%s: %s route to %s/%d via %s", ifname, cmd,
+		syslog(LOG_INFO, "%s: %s route to %s/%d via %s", ifname, cmd,
 		    dest, ipv6_prefixlen(&rt->net), gate);
 }
 
@@ -352,7 +384,11 @@ ipv6_remove_subnet(struct ra *rap, struct ipv6_addr *addr)
 #else
 		if (!find_route6(routes, rt))
 #endif
+		{
 			r = del_route6(rt);
+			if (r == -1 && errno == ESRCH)
+				r = 0;
+		}
 		free(rt);
 	}
 	return r;
@@ -367,7 +403,7 @@ ipv6_build_routes(void)
 {
 	struct rt6head dnr, *nrs;
 	struct rt6 *rt, *rtn, *or;
-	struct ra *rap, *ran;
+	struct ra *rap;
 	struct ipv6_addr *addr;
 	int have_default;
 
@@ -376,18 +412,20 @@ ipv6_build_routes(void)
 
 	TAILQ_INIT(&dnr);
 	TAILQ_FOREACH(rap, &ipv6_routers, next) {
-		if (rap->expired)
-			continue;
 		if (options & DHCPCD_IPV6RA_OWN) {
 			TAILQ_FOREACH(addr, &rap->addrs, next) {
+				if (!addr->onlink)
+					continue;
 				rt = make_prefix(rap, addr);
 				if (rt)
 					TAILQ_INSERT_TAIL(&dnr, rt, next);
 			}
 		}
-		rt = make_router(rap);
-		if (rt)
-			TAILQ_INSERT_TAIL(&dnr, rt, next);
+		if (!rap->expired) {
+			rt = make_router(rap);
+			if (rt)
+				TAILQ_INSERT_TAIL(&dnr, rt, next);
+		}
 	}
 
 	nrs = xmalloc(sizeof(*nrs));
@@ -429,7 +467,8 @@ ipv6_build_routes(void)
 	/* Remove old routes we used to manage
 	 * If we own the default route, but not RA management itself
 	 * then we need to preserve the last best default route we had */
-	TAILQ_FOREACH_SAFE(rt, routes, next, rtn) {
+	while ((rt = TAILQ_LAST(routes, rt6head))) {
+		TAILQ_REMOVE(routes, rt, next);
 		if (find_route6(nrs, rt) == NULL) {
 			if (!have_default &&
 			    (options & DHCPCD_IPV6RA_OWN_DEFAULT) &&
@@ -444,12 +483,7 @@ ipv6_build_routes(void)
 		}
 		free(rt);
 	}
+
 	free(routes);
 	routes = nrs;
-
-	/* Now drop expired routers */
-	TAILQ_FOREACH_SAFE(rap, &ipv6_routers, next, ran) {
-		if (rap->expired)
-			ipv6rs_drop_ra(rap);
-	}
 }

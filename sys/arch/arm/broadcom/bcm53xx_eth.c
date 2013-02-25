@@ -31,10 +31,11 @@
 #define GMAC_PRIVATE
 
 #include "locators.h"
+#include "opt_broadcom.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.1.2.1 2012/11/20 03:01:03 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.1.2.2 2013/02/25 00:28:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -63,7 +64,13 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.1.2.1 2012/11/20 03:01:03 tls Exp 
 
 //#define BCMETH_MPSAFE
 
-#define	BCMETH_RCVOFFSET	10
+#ifdef BCMETH_COUNTERS
+#define	BCMETH_EVCNT_ADD(a,b)	((void)((a).ev_count += (b)))
+#else
+#define	BCMETH_EVCNT_ADD(a,b)	do { } while (/*CONSTCOND*/0)
+#endif
+#define	BCMETH_EVCNT_INCR(a)	BCMETH_EVCNT_ADD((a), 1)
+
 #define	BCMETH_MAXTXMBUFS	128
 #define	BCMETH_NTXSEGS		30
 #define	BCMETH_MAXRXMBUFS	255
@@ -71,7 +78,7 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.1.2.1 2012/11/20 03:01:03 tls Exp 
 #define	BCMETH_NRXSEGS		1
 #define	BCMETH_RINGSIZE		PAGE_SIZE
 
-#if 0
+#if 1
 #define	BCMETH_RCVMAGIC		0xfeedface
 #endif
 
@@ -140,6 +147,8 @@ struct bcmeth_softc {
 	struct bcmeth_rxqueue sc_rxq;
 	struct bcmeth_txqueue sc_txq;
 
+	size_t sc_rcvoffset;
+	uint32_t sc_macaddr[2];
 	uint32_t sc_maxfrm;
 	uint32_t sc_cmdcfg;
 	uint32_t sc_intmask;
@@ -148,12 +157,14 @@ struct bcmeth_softc {
 #define	SOFT_RXINTR		0x01
 #define	SOFT_TXINTR		0x02
 
+#ifdef BCMETH_COUNTERS
 	struct evcnt sc_ev_intr;
 	struct evcnt sc_ev_soft_intr;
 	struct evcnt sc_ev_work;
 	struct evcnt sc_ev_tx_stall;
 	struct evcnt sc_ev_rx_badmagic_lo;
 	struct evcnt sc_ev_rx_badmagic_hi;
+#endif
 
 	struct ifqueue sc_rx_bufcache;
 	struct bcmeth_mapcache *sc_rx_mapcache;     
@@ -270,6 +281,11 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	 * We need to use the coherent dma tag for the GMAC.
 	 */
 	sc->sc_dmat = &bcm53xx_coherent_dma_tag;
+#if _ARM32_NEED_BUS_DMA_BOUNCE
+	if (device_cfdata(self)->cf_flags & 2) {
+		sc->sc_dmat = &bcm53xx_bounce_dma_tag;
+	}
+#endif
 
 	prop_data_t eaprop = prop_dictionary_get(dict, "mac-address");
         if (eaprop == NULL) {
@@ -386,6 +402,7 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
+#ifdef BCMETH_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, xname, "intr");
 	evcnt_attach_dynamic(&sc->sc_ev_soft_intr, EVCNT_TYPE_INTR,
@@ -398,6 +415,7 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	    NULL, xname, "rx badmagic lo");
 	evcnt_attach_dynamic(&sc->sc_ev_rx_badmagic_hi, EVCNT_TYPE_MISC,
 	    NULL, xname, "rx badmagic hi");
+#endif
 }
 
 static int
@@ -422,7 +440,7 @@ bcmeth_macaddr_create(const uint8_t *enaddr)
 	return (enaddr[3] << 0)			// UNIMAC_MAC_0
 	    |  (enaddr[2] << 8)			// UNIMAC_MAC_0
 	    |  (enaddr[1] << 16)		// UNIMAC_MAC_0
-	    |  (enaddr[0] << 24)		// UNIMAC_MAC_0
+	    |  ((uint64_t)enaddr[0] << 24)	// UNIMAC_MAC_0
 	    |  ((uint64_t)enaddr[5] << 32)	// UNIMAC_MAC_1
 	    |  ((uint64_t)enaddr[4] << 40);	// UNIMAC_MAC_1
 }
@@ -443,6 +461,21 @@ bcmeth_ifinit(struct ifnet *ifp)
 	 * Stop the interface
 	 */
 	bcmeth_ifstop(ifp, 0);
+
+	/*
+	 * Reserve enough space at the front so that we can insert a maxsized
+	 * link header and a VLAN tag.  Also make sure we have enough room for
+	 * the rcvsts field as well.
+	 */
+	KASSERT(ALIGN(max_linkhdr) == max_linkhdr);
+	KASSERTMSG(max_linkhdr > sizeof(struct ether_header), "%u > %zu",
+	    max_linkhdr, sizeof(struct ether_header));
+	sc->sc_rcvoffset = max_linkhdr + 4 - sizeof(struct ether_header);
+	if (sc->sc_rcvoffset <= 4)
+		sc->sc_rcvoffset += 4;
+	KASSERT((sc->sc_rcvoffset & 3) == 2);
+	KASSERT(sc->sc_rcvoffset <= __SHIFTOUT(RCVCTL_RCVOFFSET, RCVCTL_RCVOFFSET));
+	KASSERT(sc->sc_rcvoffset >= 6);
 
 	/*
 	 * If our frame size has changed (or it's our first time through)
@@ -471,8 +504,24 @@ bcmeth_ifinit(struct ifnet *ifp)
 		sc->sc_cmdcfg &= ~PROMISC_EN;
 	}
 
-	const uint64_t macstnaddr =
-	    bcmeth_macaddr_create(CLLADDR(ifp->if_sadl));
+	const uint8_t * const lladdr = CLLADDR(ifp->if_sadl);
+	const uint64_t macstnaddr = bcmeth_macaddr_create(lladdr);
+
+	/*
+	 * We make sure that a received Ethernet packet start on a non-word
+	 * boundary so that the packet payload will be on a word boundary.
+	 * So to check the destination address we keep around two words to
+	 * quickly compare with.
+	 */
+#if __ARMEL__
+	sc->sc_macaddr[0] = lladdr[0] | (lladdr[1] << 8);
+	sc->sc_macaddr[1] = lladdr[2] | (lladdr[3] << 8)
+	    | (lladdr[4] << 16) | (lladdr[5] << 24);
+#else
+	sc->sc_macaddr[0] = lladdr[1] | (lladdr[0] << 8);
+	sc->sc_macaddr[1] = lladdr[5] | (lladdr[4] << 8)
+	    | (lladdr[1] << 16) | (lladdr[2] << 24);
+#endif
 
 	sc->sc_intmask = DESCPROTOERR|DATAERR|DESCERR;
 
@@ -480,7 +529,7 @@ bcmeth_ifinit(struct ifnet *ifp)
 	bcmeth_rxq_reset(sc, &sc->sc_rxq);
 
 	bcmeth_write_4(sc, sc->sc_rxq.rxq_reg_rcvctl,
-	    __SHIFTIN(BCMETH_RCVOFFSET, RCVCTL_RCVOFFSET)
+	    __SHIFTIN(sc->sc_rcvoffset, RCVCTL_RCVOFFSET)
 	    | RCVCTL_PARITY_DIS
 	    | RCVCTL_OFLOW_CONTINUE
 	    | __SHIFTIN(3, RCVCTL_BURSTLEN));
@@ -507,8 +556,9 @@ bcmeth_ifinit(struct ifnet *ifp)
 	bcmeth_write_4(sc, GMAC_DEVCONTROL, devctl);
 
 	/* Setup lazy receive (at most 1ms). */
+	const struct cpu_softc * const cpu = curcpu()->ci_softc;
 	sc->sc_rcvlazy =  __SHIFTIN(4, INTRCVLAZY_FRAMECOUNT)
-	     | __SHIFTIN(125000000 / 1000, INTRCVLAZY_TIMEOUT);
+	     | __SHIFTIN(cpu->cpu_clk.clk_apb / 1000, INTRCVLAZY_TIMEOUT);
 	bcmeth_write_4(sc, GMAC_INTRCVLAZY, sc->sc_rcvlazy);
 
 	/* 11. Enable transmit queues in TQUEUE, and ensure that the transmit scheduling mode is correctly set in TCTRL. */
@@ -851,7 +901,6 @@ bcmeth_rx_buf_alloc(
 		bcmeth_mapcache_put(sc, sc->sc_rx_mapcache, map);
 		return NULL;
 	}
-	KASSERT(((map->_dm_flags ^ sc->sc_dmat->_ranges[0].dr_flags) & _BUS_DMAMAP_COHERENT) == 0);
 	KASSERT(map->dm_mapsize == MCLBYTES);
 #ifdef BCMETH_RCVMAGIC
 	*mtod(m, uint32_t *) = BCMETH_RCVMAGIC;
@@ -860,7 +909,7 @@ bcmeth_rx_buf_alloc(
 	bus_dmamap_sync(sc->sc_dmat, map, sizeof(uint32_t),
 	    map->dm_mapsize - sizeof(uint32_t), BUS_DMASYNC_PREREAD);
 #else
-	bus_dmamap_sync(sc->sc_dmat, map, 0, sizeof(uint32_t),
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 #endif
 
@@ -946,21 +995,18 @@ bcmeth_rx_input(
 
 	bcmeth_rx_map_unload(sc, m);
 
-	m_adj(m, BCMETH_RCVOFFSET);
+	m_adj(m, sc->sc_rcvoffset);
 
-	switch (__SHIFTOUT(rxdb_flags, RXSTS_PKTTYPE)) {
-	case RXSTS_PKTTYPE_UC:
-		break;
-	case RXSTS_PKTTYPE_MC:
-		m->m_flags |= M_MCAST;
-		break;
-	case RXSTS_PKTTYPE_BC:
-		m->m_flags |= M_BCAST|M_MCAST;
-		break;
-	default:
-		if (sc->sc_cmdcfg & PROMISC_EN) 
-			m->m_flags |= M_PROMISC;
-		break;
+	/*
+	 * If we are in promiscuous mode and this isn't a multicast, check the
+	 * destination address to make sure it matches our own.  If it doesn't,
+	 * mark the packet as being received promiscuously.
+	 */
+	if ((sc->sc_cmdcfg & PROMISC_EN)
+	    && (m->m_data[0] & 1) == 0
+	    && (*(uint16_t *)&m->m_data[0] != sc->sc_macaddr[0]
+		|| *(uint32_t *)&m->m_data[2] != sc->sc_macaddr[1])) {
+		m->m_flags |= M_PROMISC;
 	}
 	m->m_pkthdr.rcvif = ifp;
 
@@ -982,29 +1028,27 @@ bcmeth_rx_input(
 #endif
 }
 
-static void
+static bool
 bcmeth_rxq_consume(
 	struct bcmeth_softc *sc,
-	struct bcmeth_rxqueue *rxq)
+	struct bcmeth_rxqueue *rxq,
+	size_t atmost)
 {
 	struct ifnet * const ifp = &sc->sc_if;
 	struct gmac_rxdb *consumer = rxq->rxq_consumer;
 	size_t rxconsumed = 0;
+	bool didconsume = false;
 
-	for (;;) {
+	while (atmost-- > 0) {
 		if (consumer == rxq->rxq_producer) {
-			rxq->rxq_consumer = consumer;
-			rxq->rxq_inuse -= rxconsumed;
 			KASSERT(rxq->rxq_inuse == 0);
-			return;
+			break;
 		}
 		
 		uint32_t rcvsts0 = bcmeth_read_4(sc, rxq->rxq_reg_rcvsts0);
 		uint32_t currdscr = __SHIFTOUT(rcvsts0, RCV_CURRDSCR);
 		if (consumer == rxq->rxq_first + currdscr) {
-			rxq->rxq_consumer = consumer;
-			rxq->rxq_inuse -= rxconsumed;
-			return;
+			break;
 		}
 		bcmeth_rxq_desc_postsync(sc, rxq, consumer, 1);
 
@@ -1012,6 +1056,7 @@ bcmeth_rxq_consume(
 		 * We own this packet again.  Copy the rxsts word from it.
 		 */
 		rxconsumed++;
+		didconsume = true;
 		uint32_t rxsts;
 		KASSERT(rxq->rxq_mhead != NULL);
 		bus_dmamap_t map = M_GETCTX(rxq->rxq_mhead, bus_dmamap_t);
@@ -1056,9 +1101,9 @@ bcmeth_rxq_consume(
 		if (rxsts == BCMETH_RCVMAGIC) {	
 			ifp->if_ierrors++;
 			if ((m->m_ext.ext_paddr >> 28) == 8) {
-				sc->sc_ev_rx_badmagic_lo.ev_count++;
+				BCMETH_EVCNT_INCR(sc->sc_ev_rx_badmagic_lo);
 			} else {
-				sc->sc_ev_rx_badmagic_hi.ev_count++;
+				BCMETH_EVCNT_INCR( sc->sc_ev_rx_badmagic_hi);
 			}
 			IF_ENQUEUE(&sc->sc_rx_bufcache, m);
 		} else
@@ -1079,7 +1124,7 @@ bcmeth_rxq_consume(
 			} while (m);
 		} else {
 			uint32_t framelen = __SHIFTOUT(rxsts, RXSTS_FRAMELEN);
-			framelen += BCMETH_RCVOFFSET;
+			framelen += sc->sc_rcvoffset;
 			m->m_pkthdr.len = framelen;
 			if (desc_count == 1) {
 				KASSERT(framelen <= MCLBYTES);
@@ -1125,6 +1170,17 @@ bcmeth_rxq_consume(
 			consumer = rxq->rxq_first;
 		}
 	}
+
+	/*
+	 * Update queue info.
+	 */
+	rxq->rxq_consumer = consumer;
+	rxq->rxq_inuse -= rxconsumed;
+
+	/*
+	 * Did we consume anything?
+	 */
+	return didconsume;
 }
 
 static void
@@ -1709,7 +1765,7 @@ bcmeth_intr(void *arg)
 	mutex_enter(sc->sc_hwlock);
 
 	uint32_t intmask = sc->sc_intmask;
-	sc->sc_ev_intr.ev_count++;
+	BCMETH_EVCNT_INCR(sc->sc_ev_intr);
 
 	for (;;) {
 		uint32_t intstatus = bcmeth_read_4(sc, GMAC_INTSTATUS);
@@ -1821,7 +1877,7 @@ bcmeth_soft_txintr(struct bcmeth_softc *sc)
 	 */
 	if (!bcmeth_txq_consume(sc, &sc->sc_txq)
 	    || !bcmeth_txq_enqueue(sc, &sc->sc_txq)) {
-		sc->sc_ev_tx_stall.ev_count++;
+		BCMETH_EVCNT_INCR(sc->sc_ev_tx_stall);
 		sc->sc_if.if_flags |= IFF_OACTIVE;
 	} else {
 		sc->sc_if.if_flags &= ~IFF_OACTIVE;
@@ -1847,7 +1903,7 @@ bcmeth_soft_intr(void *arg)
 
 	u_int soft_flags = atomic_swap_uint(&sc->sc_soft_flags, 0);
 
-	sc->sc_ev_soft_intr.ev_count++;
+	BCMETH_EVCNT_INCR(sc->sc_ev_soft_intr);
 
 	if ((soft_flags & SOFT_TXINTR)
 	    || bcmeth_txq_active_p(sc, &sc->sc_txq)) {
@@ -1857,7 +1913,7 @@ bcmeth_soft_intr(void *arg)
 		 */
 		if (!bcmeth_txq_consume(sc, &sc->sc_txq)
 		    || !bcmeth_txq_enqueue(sc, &sc->sc_txq)) {
-			sc->sc_ev_tx_stall.ev_count++;
+			BCMETH_EVCNT_INCR(sc->sc_ev_tx_stall);
 			ifp->if_flags |= IFF_OACTIVE;
 		} else {
 			ifp->if_flags &= ~IFF_OACTIVE;
@@ -1869,7 +1925,14 @@ bcmeth_soft_intr(void *arg)
 		/*
 		 * Let's consume 
 		 */
-		bcmeth_rxq_consume(sc, &sc->sc_rxq);
+		while (bcmeth_rxq_consume(sc, &sc->sc_rxq,
+		    sc->sc_rxq.rxq_threshold / 4)) {
+			/*
+			 * We've consumed a quarter of the ring and still have
+			 * more to do.  Refill the ring.
+			 */
+			bcmeth_rxq_produce(sc, &sc->sc_rxq);
+		}
 		intmask |= RCVINT;
 	}
 
@@ -1893,7 +1956,7 @@ bcmeth_worker(struct work *wk, void *arg)
 
 	mutex_enter(sc->sc_lock);
 
-	sc->sc_ev_work.ev_count++;
+	BCMETH_EVCNT_INCR(sc->sc_ev_work);
 
 	uint32_t work_flags = atomic_swap_32(&sc->sc_work_flags, 0);
 	if (work_flags & WORK_REINIT) {
@@ -1922,7 +1985,14 @@ bcmeth_worker(struct work *wk, void *arg)
 		/*
 		 * Let's consume 
 		 */
-		bcmeth_rxq_consume(sc, &sc->sc_rxq);
+		while (bcmeth_rxq_consume(sc, &sc->sc_rxq,
+		    sc->sc_rxq.rxq_threshold / 4)) {
+			/*
+			 * We've consumed a quarter of the ring and still have
+			 * more to do.  Refill the ring.
+			 */
+			bcmeth_rxq_produce(sc, &sc->sc_rxq);
+		}
 		intmask |= RCVINT;
 	}
 

@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.3.2.2 2012/11/16 05:39:26 christos Exp $
+# $NetBSD: Makefile,v 1.3.2.3 2013/02/25 00:26:03 tls Exp $
 
-.if (${MACHINE} == "evbarm")
+.if ${MACHINE} == "evbarm" && ${MACHINE_ARCH:M*eb} == ""
+
 LIBISPRIVATE=	yes
 LIB=		elftosb
 SRCS=		AESKey.cpp \

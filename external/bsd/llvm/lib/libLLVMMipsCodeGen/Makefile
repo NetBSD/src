@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.2.1 2012/11/20 02:58:02 tls Exp $
+#	$NetBSD: Makefile,v 1.11.2.2 2013/02/25 00:26:39 tls Exp $
 
 LIB=	LLVMMipsCodeGen
 
@@ -41,7 +41,6 @@ TABLEGEN_OUTPUT= \
 	MipsGenCodeEmitter.inc|-gen-emitter \
 	MipsGenDAGISel.inc|-gen-dag-isel \
 	MipsGenDisassemblerTables.inc|-gen-disassembler \
-	MipsGenEDInfo.inc|-gen-enhanced-disassembly-info \
 	MipsGenMCCodeEmitter.inc|-gen-emitter^-mc-emitter \
 	MipsGenMCPseudoLowering.inc|-gen-pseudo-lowering \
 	MipsGenSubtargetInfo.inc|-gen-subtarget

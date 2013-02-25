@@ -1,7 +1,7 @@
-/*	$NetBSD: db.h,v 1.4 2012/06/05 00:41:46 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.4.2.1 2013/02/25 00:25:45 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -175,7 +175,7 @@ typedef struct dns_dbmethods {
 	isc_boolean_t	(*isdnssec)(dns_db_t *db);
 	dns_stats_t	*(*getrrsetstats)(dns_db_t *db);
 	void		(*rpz_enabled)(dns_db_t *db, dns_rpz_st_t *st);
-	isc_result_t	(*rpz_findips)(dns_rpz_zone_t *rpz,
+	void		(*rpz_findips)(dns_rpz_zone_t *rpz,
 				       dns_rpz_type_t rpz_type,
 				       dns_zone_t *zone, dns_db_t *db,
 				       dns_dbversion_t *version,
@@ -771,6 +771,10 @@ dns_db_findext(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
  *	be found.  Note the returned NSEC needs to be checked to ensure
  *	that it is correct.  This only affects answers returned from the
  *	cache.
+ *
+ * \li	In the #DNS_DBFIND_FORCENSEC3 option is set, then we are looking
+ *	in the NSEC3 tree and not the main tree.  Without this option being
+ *	set NSEC3 records will not be found.
  *
  * \li	To respond to a query for SIG records, the caller should create a
  *	rdataset iterator and extract the signatures from each rdataset.
@@ -1547,7 +1551,7 @@ dns_db_rpz_enabled(dns_db_t *db, dns_rpz_st_t *st);
  * DNS_RPZ_TYPE_NSDNAME records.
  */
 
-isc_result_t
+void
 dns_db_rpz_findips(dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 		   dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *version,
 		   dns_rdataset_t *ardataset, dns_rpz_st_t *st,
@@ -1564,10 +1568,6 @@ dns_db_rpz_findips(dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
  * \li	'ardataset' is an A or AAAA rdataset of addresses to check
  * \li	'found' specifies the previous best match if any or
  *	    or NULL, an empty name, 0, DNS_RPZ_POLICY_MISS, and 0
- *
- * Returns:
- * \li	#ISC_R_SUCCESS
- * \li	#ISC_R_UNEXPECTED
  */
 
 ISC_LANG_ENDDECLS

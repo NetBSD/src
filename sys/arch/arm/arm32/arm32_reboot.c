@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_reboot.c,v 1.2 2012/09/05 06:29:09 skrll Exp $	*/
+/*	$NetBSD: arm32_reboot.c,v 1.2.2.1 2013/02/25 00:28:23 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.2 2012/09/05 06:29:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.2.2.1 2013/02/25 00:28:23 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -147,7 +147,9 @@ cpu_reboot(int howto, char *bootstr)
 		doshutdownhooks();
 		printf("The operating system has halted.\r\n");
 		printf("Please press any key to reboot.\r\n");
+		cnpollc(true);	/* for proper keyboard command handling */
 		cngetc();
+		cnpollc(false);		
 		printf("rebooting...\r\n");
 		if (cpu_reset_address)
 			(*cpu_reset_address)();

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.54 2009/11/23 00:11:44 rmind Exp $	*/
+/*	$NetBSD: sbc.c,v 1.54.22.1 2013/02/25 00:28:50 tls Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.54 2009/11/23 00:11:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.54.22.1 2013/02/25 00:28:50 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -274,7 +274,6 @@ sbc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 	}
 
 #define R4	*(u_int32_t *)data = *long_data, data += 4;
-#define R1	*(u_int8_t *)data = *byte_data, data += 1;
 	for (; resid >= 128; resid -= 128) {
 		if (sbc_ready(ncr_sc))
 			goto interrupt;
@@ -286,11 +285,10 @@ sbc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 	while (resid) {
 		if (sbc_ready(ncr_sc))
 			goto interrupt;
-		R1;
+		*(u_int8_t *)data = *byte_data, data += 1;
 		resid--;
 	}
 #undef R4
-#undef R1
 
 interrupt:
 	nofault = NULL;
@@ -546,12 +544,10 @@ sbc_drq_intr(void *p)
 		if (count && count < 4) {
 			data = (u_int8_t *)dh->dh_addr;
 			drq = (volatile u_int8_t *)sc->sc_drq_addr;
-
-#define R1		*data++ = *drq++
 			while (count) {
-				R1; count--;
+				*data++ = *drq++;
+				count--;
 			}
-#undef R1
 			dh->dh_addr += resid;
 			dh->dh_len -= resid;
 		}
@@ -576,12 +572,10 @@ sbc_drq_intr(void *p)
 #undef R4
 			data = (u_int8_t *)long_data;
 			drq = (volatile u_int8_t *)long_drq;
-
-#define R1		*data++ = *drq++
 			while (count) {
-				R1; count--;
+				*data++ = *drq++;
+				count--;
 			}
-#undef R1
 			dh->dh_len -= dcount;
 			dh->dh_addr += dcount;
 		}

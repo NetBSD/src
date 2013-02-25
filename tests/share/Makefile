@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2012/08/26 23:03:21 jmmv Exp $
+# $NetBSD: Makefile,v 1.1.2.1 2013/02/25 00:30:24 tls Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/share
 
-TESTS_SUBDIRS=	mk
+TESTS_SUBDIRS=	examples mk
 
 .include <bsd.test.mk>

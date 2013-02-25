@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -134,13 +134,25 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-echo "I:checking update of an old-style key"
+echo "I:checking update of an old-style key ($n)"
 ret=0
 # printing metadata should not work with an old-style key
 $SETTIME -pall `cat oldstyle.key` > /dev/null 2>&1 && ret=1
 $SETTIME -f `cat oldstyle.key` > /dev/null 2>&1 || ret=1
 # but now it should
 $SETTIME -pall `cat oldstyle.key` > /dev/null 2>&1 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking warning about permissions change on key with dnssec-settime ($n)"
+ret=0
+# settime should print a warning about changing the permissions
+chmod 644 `cat oldstyle.key`.private
+$SETTIME -P none `cat oldstyle.key` > tmp.out 2>&1 || ret=1
+grep "warning" tmp.out > /dev/null 2>&1 || ret=1
+$SETTIME -P none `cat oldstyle.key` > tmp.out 2>&1 || ret=1
+grep "warning" tmp.out > /dev/null 2>&1 && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.19 2011/09/27 02:05:10 christos Exp $	*/
+/*	$NetBSD: smb.h,v 1.19.12.1 2013/02/25 00:30:06 tls Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -374,6 +374,7 @@ enum smb_dialects {
  */
 #define	SMB_SET_FILE_BASIC_INFO		0x101
 #define	SMB_SET_FILE_END_OF_FILE_INFO	0x104
+#define	SMB_SET_FILE_BASIC_INFORMATION	1004
 
 /*
  * LOCKING_ANDX LockType flags

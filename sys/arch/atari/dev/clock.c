@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54 2012/06/30 12:42:37 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.54.2.1 2013/02/25 00:28:32 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54 2012/06/30 12:42:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.2.1 2013/02/25 00:28:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -552,7 +552,7 @@ rtcwrite(dev_t dev, struct uio *uio, int flags)
 	 */
 	length = uio->uio_resid;
 	if (uio->uio_offset || (length != sizeof(buffer)
-	  && length != sizeof(buffer - 1)))
+	  && length != sizeof(buffer) - 1))
 		return EINVAL;
 	
 	if ((error = uiomove((void *)buffer, sizeof(buffer), uio)))

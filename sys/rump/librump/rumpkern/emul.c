@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.150.14.1 2012/11/20 03:02:50 tls Exp $	*/
+/*	$NetBSD: emul.c,v 1.150.14.2 2013/02/25 00:30:08 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.14.1 2012/11/20 03:02:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.14.2 2013/02/25 00:30:08 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -280,14 +280,6 @@ syscall_intern(struct proc *p)
 	/* no you don't */
 }
 #endif
-
-void
-xc_send_ipi(struct cpu_info *ci)
-{
-
-	/* I'll think about the implementation if this is ever used */
-	panic("not implemented");
-}
 
 int
 trace_enter(register_t code, const register_t *args, int narg)

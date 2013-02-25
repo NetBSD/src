@@ -191,7 +191,8 @@ static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
 		{
 		if(s->srp_ctx.login == NULL)
 			{
-			/* There isn't any srp login extension !!! */
+			/* RFC 5054 says SHOULD reject, 
+			   we do so if There is no srp login name */
 			ret = SSL3_AL_FATAL;
 			*al = SSL_AD_UNKNOWN_PSK_IDENTITY;
 			}
@@ -378,6 +379,7 @@ int ssl3_accept(SSL *s)
 				}
 			}
 #endif		
+			
 			s->renegotiate = 2;
 			s->state=SSL3_ST_SW_SRVR_HELLO_A;
 			s->init_num=0;
@@ -1191,7 +1193,7 @@ int ssl3_get_client_hello(SSL *s)
 			goto f_err;
 			}
 		}
-		if (ssl_check_clienthello_tlsext(s) <= 0) {
+		if (ssl_check_clienthello_tlsext_early(s) <= 0) {
 			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
 			goto err;
 		}
@@ -1399,7 +1401,10 @@ int ssl3_get_client_hello(SSL *s)
 	if (TLS1_get_version(s) < TLS1_2_VERSION || !(s->verify_mode & SSL_VERIFY_PEER))
 		{
 		if (!ssl3_digest_cached_records(s))
+			{
+			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
+			}
 		}
 	
 	/* we now have the following setup. 
@@ -1412,6 +1417,16 @@ int ssl3_get_client_hello(SSL *s)
 	 * s->hit		- session reuse flag
 	 * s->tmp.new_cipher	- the new cipher to use.
 	 */
+
+	/* Handles TLS extensions that we couldn't check earlier */
+	if (s->version >= SSL3_VERSION)
+		{
+		if (ssl_check_clienthello_tlsext_late(s) <= 0)
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
+			goto err;
+			}
+		}
 
 	if (ret < 0) ret=1;
 	if (0)

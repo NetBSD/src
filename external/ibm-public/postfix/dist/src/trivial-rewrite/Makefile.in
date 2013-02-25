@@ -74,7 +74,6 @@ resolve.o: ../../include/mail_params.h
 resolve.o: ../../include/mail_proto.h
 resolve.o: ../../include/maps.h
 resolve.o: ../../include/match_list.h
-resolve.o: ../../include/match_ops.h
 resolve.o: ../../include/match_parent_style.h
 resolve.o: ../../include/msg.h
 resolve.o: ../../include/mymalloc.h
@@ -124,7 +123,7 @@ transport.o: ../../include/iostuff.h
 transport.o: ../../include/mail_params.h
 transport.o: ../../include/mail_proto.h
 transport.o: ../../include/maps.h
-transport.o: ../../include/match_ops.h
+transport.o: ../../include/match_list.h
 transport.o: ../../include/match_parent_style.h
 transport.o: ../../include/msg.h
 transport.o: ../../include/mymalloc.h

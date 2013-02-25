@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2012/03/24 02:08:34 christos Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2013/02/25 00:26:07 tls Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -13,6 +13,10 @@ LDADD+=		-ll
 CPPFLAGS+=	-I${UDIST}/ipsend
 CPPFLAGS+=	-I${UDIST}/iplang
 CPPFLAGS+=	-I${.CURDIR} -I.
+
+# There is some very dubious code to locate the values of
+# tcb.rcv_adv, tcb.snd_nxt and tcb.rcv_nxt for a socket.
+CPPFLAGS+=	-D_KMEMUSER
 
 CLEANFILES+=	iplang_y.c iplang_y.h
 

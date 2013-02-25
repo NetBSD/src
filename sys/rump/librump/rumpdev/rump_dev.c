@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.19.14.1 2012/11/20 03:02:50 tls Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.19.14.2 2013/02/25 00:30:08 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.19.14.1 2012/11/20 03:02:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.19.14.2 2013/02/25 00:30:08 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -36,13 +36,11 @@ __KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.19.14.1 2012/11/20 03:02:50 tls Exp $
 
 int nocomponent(void);
 int nocomponent() {return 0;}
-__weak_alias(rump_device_components,nocomponent);
 __weak_alias(buf_syncwait,nocomponent);
 
 const char *rootspec = "rump0a"; /* usually comes from config */
 
-void
-rump_dev_init(void)
+RUMP_COMPONENT(RUMP__FACTION_DEV)
 {
 	extern int cold;
 
@@ -53,7 +51,6 @@ rump_dev_init(void)
 	config_init_mi();
 
 	rump_component_init(RUMP_COMPONENT_DEV);
-	rump_device_components();
 
 	rump_pdev_finalize();
 

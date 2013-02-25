@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.8.2.1 2012/11/20 03:01:13 tls Exp $
+#	$NetBSD: RPI,v 1.8.2.2 2013/02/25 00:28:34 tls Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -89,7 +89,7 @@ options		NFS_BOOT_RWSIZE=1024
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -144,7 +144,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=510000
+options 	SYMTAB_SPACE=800000
 options 	PLCONSOLE
 #options 	PLCONSOLE,PLCOMCNUNIT=0,PLCONSPEED=115200,PLCONMODE=0xB00
 
@@ -165,7 +165,7 @@ options USB_DEBUG
 #  verbose		Show aprint_normal and aprint_verbose output
 #options		BOOT_ARGS="\"\""
 
-config		netbsd		root on ld0a type ?
+config		netbsd		root on ? type ?
 
 # The main bus device
 mainbus0	at root
@@ -181,9 +181,14 @@ bcmicu0		at obio?
 
 # VC Mailbox
 bcmmbox0	at obio?
+vcmbox0 	at bcmmbox0
 
 # PL011 uart
 plcom0		at obio?
+
+# Framebuffer console
+genfb0		at obio?
+wsdisplay*	at genfb?
 
 # System timer
 bcmtmr0		at obio?
@@ -191,18 +196,31 @@ bcmtmr0		at obio?
 # Power management, Reset controller and Watchdog registers
 bcmpm0		at obio?
 
+# Random number generator
+bcmrng0 	at obio?
+
 # Arasan SD/MMC Interface
 sdhc* at obio?
 sdmmc*  at sdhc?
 
 ld*     at sdmmc?
 
-# On-SoC USB 2.0 OTG Controller (as USB host) - some day soon(tm)
-#unimplementedusbhcd* at obio?
-#usb* at unimplementedusbhcd?
+# On-board USB
+dotg*          at obio?
+usb*           at dotg?
 
 # USB device drivers, just as soon as we have something to attach them to
-#include "dev/usb/usbdevices.config"
+include "dev/usb/usbdevices.config"
+
+ukphy*		at mii? phy ?
+
+# Broadcom Serial Control (I2C)
+bsciic* at obio?
+iic* at i2cbus?
+
+# SPI controller
+bcmspi* at obio?
+spi* at spibus?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
@@ -211,10 +229,13 @@ options 	WS_DEFAULT_FG=WSCOL_WHITE
 options 	WS_DEFAULT_BG=WSCOL_BLACK
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some more ioctls
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
-options		FONT_QVSS8x15
+
+#options 	FONT_QVSS8x15
 #options 	FONT_GALLANT12x22	# the console font
 
 # Pseudo-Devices
@@ -256,6 +277,7 @@ pseudo-device	pty			# pseudo-terminals
 #options	RND_COM
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
@@ -264,3 +286,6 @@ pseudo-device	wsfont
 # data mover pseudo-devices
 #pseudo-device	swdmover		# software dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+# local configuration
+cinclude "arch/evbarm/conf/RPI.local"

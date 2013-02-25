@@ -1,4 +1,4 @@
-/*	$NetBSD: postmap.c,v 1.1.1.1 2009/06/23 10:08:51 tron Exp $	*/
+/*	$NetBSD: postmap.c,v 1.1.1.1.16.1 2013/02/25 00:27:25 tls Exp $	*/
 
 /*++
 /* NAME
@@ -181,6 +181,10 @@
 /* .IP \fBhash\fR
 /*	The output file is a hashed file, named \fIfile_name\fB.db\fR.
 /*	This is available on systems with support for \fBdb\fR databases.
+/* .IP \fBfail\fR
+/*	A table that reliably fails all requests. The lookup table
+/*	name is used for logging only. This table exists to simplify
+/*	Postfix error tests.
 /* .IP \fBsdbm\fR
 /*	The output consists of two files, named \fIfile_name\fB.pag\fR and
 /*	\fIfile_name\fB.dir\fR.
@@ -279,6 +283,7 @@
 #include <split_at.h>
 #include <vstring_vstream.h>
 #include <set_eugid.h>
+#include <warn_stat.h>
 
 /* Global library. */
 
@@ -413,6 +418,9 @@ static void postmap(char *map_type, char *path_name, int postmap_flags,
 	 * Store the value under a case-insensitive key.
 	 */
 	mkmap_append(mkmap, key, value);
+	if (mkmap->dict->error)
+	    msg_fatal("table %s:%s: write error: %m",
+		      mkmap->dict->type, mkmap->dict->name);
     }
 
     /*
@@ -460,6 +468,9 @@ static void postmap_body(void *ptr, int unused_rec_type,
 	    state->found = 1;
 	    break;
 	}
+	if (dicts[n]->error)
+	    msg_fatal("table %s:%s: query error: %m",
+		      dicts[n]->type, dicts[n]->name);
     }
 }
 
@@ -537,6 +548,9 @@ static int postmap_queries(VSTREAM *in, char **maps, const int map_count,
 		    found = 1;
 		    break;
 		}
+		if (dicts[n]->error)
+		    msg_fatal("table %s:%s: query error: %m",
+			      dicts[n]->type, dicts[n]->name);
 	    }
 	}
     } else {
@@ -618,6 +632,8 @@ static int postmap_query(const char *map_type, const char *map_name,
 	}
 	vstream_printf("%s\n", value);
     }
+    if (dict->error)
+	msg_fatal("table %s:%s: query error: %m", dict->type, dict->name);
     vstream_fflush(VSTREAM_OUT);
     dict_close(dict);
     return (value != 0);
@@ -659,9 +675,14 @@ static int postmap_deletes(VSTREAM *in, char **maps, const int map_count,
     /*
      * Perform all requests.
      */
-    while (vstring_get_nonl(keybuf, in) != VSTREAM_EOF)
-	for (n = 0; n < map_count; n++)
+    while (vstring_get_nonl(keybuf, in) != VSTREAM_EOF) {
+	for (n = 0; n < map_count; n++) {
 	    found |= (dict_del(dicts[n], STR(keybuf)) == 0);
+	    if (dicts[n]->error)
+		msg_fatal("table %s:%s: delete error: %m",
+			  dicts[n]->type, dicts[n]->name);
+	}
+    }
 
     /*
      * Cleanup.
@@ -690,6 +711,8 @@ static int postmap_delete(const char *map_type, const char *map_name,
 	open_flags = O_RDWR;
     dict = dict_open3(map_type, map_name, open_flags, dict_flags);
     status = dict_del(dict, key);
+    if (dict->error)
+	msg_fatal("table %s:%s: delete error: %m", dict->type, dict->name);
     dict_close(dict);
     return (status == 0);
 }
@@ -721,6 +744,8 @@ static void postmap_seq(const char *map_type, const char *map_name,
 	}
 	vstream_printf("%s	%s\n", key, value);
     }
+    if (dict->error)
+	msg_fatal("table %s:%s: sequence error: %m", dict->type, dict->name);
     vstream_fflush(VSTREAM_OUT);
     dict_close(dict);
 }
@@ -785,6 +810,11 @@ int     main(int argc, char **argv)
 	argv[0] = slash + 1;
     msg_vstream_init(argv[0], VSTREAM_ERR);
     msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
+
+    /*
+     * Check the Postfix library version as soon as we enable logging.
+     */
+    MAIL_VERSION_CHECK;
 
     /*
      * Parse JCL.
@@ -859,7 +889,7 @@ int     main(int argc, char **argv)
     if (strcmp(var_syslog_name, DEF_SYSLOG_NAME) != 0)
 	msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
     mail_dict_init();
-    if ((query == 0 || strcmp(query, "-") != 0) 
+    if ((query == 0 || strcmp(query, "-") != 0)
 	&& (postmap_flags & POSTMAP_FLAG_ANY_KEY))
 	msg_fatal("specify -b -h or -m only with \"-q -\"");
 

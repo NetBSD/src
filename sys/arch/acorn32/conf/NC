@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.56 2012/08/17 20:11:37 abs Exp $
+#	$NetBSD: NC,v 1.56.2.1 2013/02/25 00:28:18 tls Exp $
 #
 #	NC - with wscons
 #
@@ -22,10 +22,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	CPU_ARM7	# Support the ARM7 core
 #options 	CPU_ARM8	# Support the ARM8 core
 #options 	ARM6_LATE_ABORT	# ARM6XX late abort support
-
-# FPA options
-
-#options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
 

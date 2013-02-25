@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.25 2010/02/16 23:20:30 mlelstv Exp $	 */
+/* $NetBSD: dir.c,v 1.25.12.1 2013/02/25 00:28:06 tls Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -105,14 +105,14 @@ propagate(void)
 	for (inpp = inpsort; inpp < inpend; inpp++) {
 		inp = *inpp;
 		if (inp->i_parent == 0 ||
-		    inp->i_number == ROOTINO)
+		    inp->i_number == UFS_ROOTINO)
 			continue;
 		pinp = getinoinfo(inp->i_parent);
 		inp->i_parentp = pinp;
 		inp->i_sibling = pinp->i_child;
 		pinp->i_child = inp;
 	}
-	inp = getinoinfo(ROOTINO);
+	inp = getinoinfo(UFS_ROOTINO);
 	while (inp) {
 		statemap[inp->i_number] = DFOUND;
 		if (inp->i_child &&
@@ -307,7 +307,7 @@ fileerror(ino_t cwd, ino_t ino, const char *errmesg)
 	printf("\n");
 	pwarn("PARENT=%lld\n", (long long)cwd);
 	getpathname(pathbuf, sizeof(pathbuf), cwd, ino);
-	if (ino < ROOTINO || ino >= maxino) {
+	if (ino < UFS_ROOTINO || ino >= maxino) {
 		pfatal("NAME=%s\n", pathbuf);
 		return;
 	}
@@ -416,23 +416,23 @@ linkup(ino_t orphan, ino_t parentdir)
 	else if (reply("RECONNECT") == 0)
 		return (0);
 	if (lfdir == 0) {
-		dp = ginode(ROOTINO);
+		dp = ginode(UFS_ROOTINO);
 		idesc.id_name = lfname;
 		idesc.id_type = DATA;
 		idesc.id_func = findino;
-		idesc.id_number = ROOTINO;
+		idesc.id_number = UFS_ROOTINO;
 		if ((ckinode(dp, &idesc) & FOUND) != 0) {
 			lfdir = idesc.id_parent;
 		} else {
 			pwarn("NO lost+found DIRECTORY");
 			if (preen || reply("CREATE")) {
-				lfdir = allocdir(ROOTINO, (ino_t) 0, lfmode);
+				lfdir = allocdir(UFS_ROOTINO, (ino_t) 0, lfmode);
 				if (lfdir != 0) {
-					if (makeentry(ROOTINO, lfdir, lfname) != 0) {
+					if (makeentry(UFS_ROOTINO, lfdir, lfname) != 0) {
 						if (preen)
 							printf(" (CREATED)\n");
 					} else {
-						freedir(lfdir, ROOTINO);
+						freedir(lfdir, UFS_ROOTINO);
 						lfdir = 0;
 						if (preen)
 							printf("\n");
@@ -453,11 +453,11 @@ linkup(ino_t orphan, ino_t parentdir)
 		if (reply("REALLOCATE") == 0)
 			return (0);
 		oldlfdir = lfdir;
-		if ((lfdir = allocdir(ROOTINO, (ino_t) 0, lfmode)) == 0) {
+		if ((lfdir = allocdir(UFS_ROOTINO, (ino_t) 0, lfmode)) == 0) {
 			pfatal("SORRY. CANNOT CREATE lost+found DIRECTORY\n\n");
 			return (0);
 		}
-		if ((changeino(ROOTINO, lfname, lfdir) & ALTERED) == 0) {
+		if ((changeino(UFS_ROOTINO, lfname, lfdir) & ALTERED) == 0) {
 			pfatal("SORRY. CANNOT CREATE lost+found DIRECTORY\n\n");
 			return (0);
 		}
@@ -529,8 +529,8 @@ makeentry(ino_t parent, ino_t ino, const char *name)
 	char pathbuf[MAXPATHLEN + 1];
 	struct uvnode *vp;
 
-	if (parent < ROOTINO || parent >= maxino ||
-	    ino < ROOTINO || ino >= maxino)
+	if (parent < UFS_ROOTINO || parent >= maxino ||
+	    ino < UFS_ROOTINO || ino >= maxino)
 		return (0);
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = DATA;
@@ -566,7 +566,7 @@ expanddir(struct uvnode *vp, struct ufs1_dinode *dp, char *name)
 	char *cp, firstblk[DIRBLKSIZ];
 
 	lastbn = lblkno(fs, dp->di_size);
-	if (lastbn >= NDADDR - 1 || dp->di_db[lastbn] == 0 || dp->di_size == 0)
+	if (lastbn >= UFS_NDADDR - 1 || dp->di_db[lastbn] == 0 || dp->di_size == 0)
 		return (0);
 	dp->di_db[lastbn + 1] = dp->di_db[lastbn];
 	dp->di_db[lastbn] = 0;
@@ -642,7 +642,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 	VOP_BWRITE(bp);
 	dp->di_nlink = 2;
 	inodirty(VTOI(vp));
-	if (ino == ROOTINO) {
+	if (ino == UFS_ROOTINO) {
 		lncntp[ino] = dp->di_nlink;
 		cacheino(dp, ino);
 		return (ino);

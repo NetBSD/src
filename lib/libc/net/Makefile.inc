@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.81 2012/01/20 14:08:05 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.81.6.1 2013/02/25 00:27:51 tls Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -17,6 +17,9 @@ SRCS+=	base64.c ethers.c gethnamaddr.c getifaddrs.c \
 
 .if (${MKHESIOD} != "no")
 SRCS+=	hesiod.c
+.if ${HAVE_GCC:U} == "45" && ${MACHINE_CPU} == "ia64"
+COPTS.hesiod.c+=	${${ACTIVE_CC} == "gcc" :? -O1 :}
+.endif
 .endif
 
 SRCS+=	getaddrinfo.c getnameinfo.c

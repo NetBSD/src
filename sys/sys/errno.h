@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.39 2006/10/31 00:38:07 cbiere Exp $	*/
+/*	$NetBSD: errno.h,v 1.39.98.1 2013/02/25 00:30:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -174,7 +174,7 @@
 
 #define	ELAST		96		/* Must equal largest errno */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 /* pseudo-errors returned inside kernel to modify return to process */
 #define	EJUSTRETURN	-2		/* don't modify regs, just return */
 #define	ERESTART	-3		/* restart syscall */

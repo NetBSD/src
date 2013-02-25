@@ -1,0 +1,16 @@
+config_directory = .
+ldapfoo_domain = bar
+memcachefoo_domain = bar
+mysqlfoo_domain = bar
+pgsqlfoo_domain = bar
+sqlitefoo_domain = bar
+./postconf: warning: ./main.cf: unused parameter: sqlitexx=proxy:sqlite:sqlitefoo
+./postconf: warning: ./main.cf: unused parameter: pgsqlxx=proxy:pgsql:pgsqlfoo
+./postconf: warning: ./main.cf: unused parameter: memcachefoo_domainx=bar
+./postconf: warning: ./main.cf: unused parameter: sqlitefoo_domainx=bar
+./postconf: warning: ./main.cf: unused parameter: memcachexx=proxy:memcache:memcachefoo
+./postconf: warning: ./main.cf: unused parameter: mysqlxx=proxy:mysql:mysqlfoo
+./postconf: warning: ./main.cf: unused parameter: ldapxx=proxy:ldap:ldapfoo
+./postconf: warning: ./main.cf: unused parameter: ldapfoo_domainx=bar
+./postconf: warning: ./main.cf: unused parameter: pgsqlfoo_domainx=bar
+./postconf: warning: ./main.cf: unused parameter: mysqlfoo_domainx=bar

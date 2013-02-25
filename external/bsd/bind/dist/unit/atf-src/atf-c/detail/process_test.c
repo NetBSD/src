@@ -1,4 +1,4 @@
-/*	$NetBSD: process_test.c,v 1.1.1.1 2011/09/11 17:20:32 christos Exp $	*/
+/*	$NetBSD: process_test.c,v 1.1.1.1.8.1 2013/02/25 00:26:01 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
@@ -759,7 +759,7 @@ child_spawn_loop_and_wait_eintr(void *v)
             atf_error_free(_aux_err); \
             abort(); \
         } \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
     {
         atf_process_stream_t outsb, errsb;

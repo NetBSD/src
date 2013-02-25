@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic_impl.h,v 1.2 2010/02/21 01:46:35 darran Exp $	*/
+/*	$NetBSD: cyclic_impl.h,v 1.2.12.1 2013/02/25 00:26:47 tls Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -21,7 +21,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/cyclic_impl.h,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD$
  *
  */
 /*
@@ -269,7 +269,7 @@ typedef struct cyc_cpu {
 	cyc_index_t cyp_nelems;
 	cyc_index_t cyp_size;
 	cyc_backend_t *cyp_backend;
-	struct mtx cyp_mtx;
+	kmutex_t cyp_mtx;
 } cyc_cpu_t;
 
 typedef struct cyc_omni_cpu {
@@ -290,7 +290,14 @@ typedef struct cyc_id {
 
 typedef struct cyc_xcallarg {
 	cyc_cpu_t *cyx_cpu;
-	hrtime_t cyx_exp;
+	cyc_handler_t *cyx_hdlr;
+	cyc_time_t *cyx_when;
+	cyc_index_t cyx_ndx;
+	cyc_index_t *cyx_heap;
+	cyclic_t *cyx_cyclics;
+	cyc_index_t cyx_size;
+	uint16_t cyx_flags;
+	int cyx_wait;
 } cyc_xcallarg_t;
 
 #define	CY_DEFAULT_PERCPU	1

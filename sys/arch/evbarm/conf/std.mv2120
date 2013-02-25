@@ -1,17 +1,12 @@
-#	$NetBSD: std.mv2120,v 1.1 2011/07/20 22:53:38 jakllsch Exp $
+#	$NetBSD: std.mv2120,v 1.1.12.1 2013/02/25 00:28:35 tls Exp $
 #
-# standard NetBSD/evbarm for MAEVELL options
+# standard NetBSD/evbarm for MARVELL options
 
 machine	evbarm arm
-include 	"conf/std"	# MI standard options
+include 	"arch/evbarm/conf/std.evbarm"
 
 include 	"arch/evbarm/conf/files.marvell"
 
-options 	EXEC_ELF32
-options 	EXEC_SCRIPT
-
-# To support easy transit to ../arch/arm/arm32
-options 	ARM32
 options 	__HAVE_PCI_CONF_HOOK		# should be in types.h
 
 options 	COM_REGMAP

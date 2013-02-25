@@ -1,20 +1,14 @@
-#	$NetBSD: std.npwr_fc,v 1.4 2009/01/05 05:53:06 briggs Exp $
+#	$NetBSD: std.npwr_fc,v 1.4.24.1 2013/02/25 00:28:35 tls Exp $
 #
 # standard NetBSD/evbarm for IQ80321 options
 
 machine	evbarm arm
-include		"conf/std"	# MI standard options
-include		"arch/arm/conf/std.arm"	# arch standard options
+include 	"arch/evbarm/conf/std.evbarm"
 
 # Pull in IQ80321 config definitions.
-include "arch/evbarm/conf/files.npwr_fc"
+include		"arch/evbarm/conf/files.npwr_fc"
 
-options 	EXEC_ELF32
 options 	EXEC_AOUT
-options 	EXEC_SCRIPT
-
-# To support easy transit to ../arch/arm/arm32
-options 	ARM32
 
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 

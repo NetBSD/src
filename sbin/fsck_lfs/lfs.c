@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.35 2011/07/12 02:46:03 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.35.8.1 2013/02/25 00:28:07 tls Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -163,14 +163,14 @@ ufs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, st
 {
 	struct inode *ip;
 	struct ubuf *bp;
-	struct indir a[NIADDR + 1], *xap;
+	struct indir a[UFS_NIADDR + 1], *xap;
 	daddr_t daddr;
 	daddr_t metalbn;
 	int error, num;
 
 	ip = VTOI(vp);
 
-	if (bn >= 0 && bn < NDADDR) {
+	if (bn >= 0 && bn < UFS_NDADDR) {
 		if (nump != NULL)
 			*nump = 0;
 		*bnp = fsbtodb(fs, ip->i_ffs1_db[bn]);
@@ -255,11 +255,11 @@ ufs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap, 
 
 	/* Determine the number of levels of indirection.  After this loop is
 	 * done, blockcnt indicates the number of data blocks possible at the
-	 * given level of indirection, and NIADDR - i is the number of levels
+	 * given level of indirection, and UFS_NIADDR - i is the number of levels
 	 * of indirection needed to locate the requested block. */
 
-	bn -= NDADDR;
-	for (lbc = 0, i = NIADDR;; i--, bn -= blockcnt) {
+	bn -= UFS_NDADDR;
+	for (lbc = 0, i = UFS_NIADDR;; i--, bn -= blockcnt) {
 		if (i == 0)
 			return (EFBIG);
 
@@ -271,17 +271,17 @@ ufs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap, 
 	}
 
 	/* Calculate the address of the first meta-block. */
-	metalbn = -((realbn >= 0 ? realbn : -realbn) - bn + NIADDR - i);
+	metalbn = -((realbn >= 0 ? realbn : -realbn) - bn + UFS_NIADDR - i);
 
 	/* At each iteration, off is the offset into the bap array which is an
 	 * array of disk addresses at the current level of indirection. The
 	 * logical block number and the offset in that block are stored into
 	 * the argument array. */
 	ap->in_lbn = metalbn;
-	ap->in_off = off = NIADDR - i;
+	ap->in_off = off = UFS_NIADDR - i;
 	ap->in_exists = 0;
 	ap++;
-	for (++numlevels; i <= NIADDR; i++) {
+	for (++numlevels; i <= UFS_NIADDR; i++) {
 		/* If searching for a meta-data block, quit when found. */
 		if (metalbn == realbn)
 			break;
@@ -393,8 +393,8 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	}
 #endif
 
-	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
-	for (i = 0; i < NDADDR; i++)
+	memset(ip->i_lfs_fragsize, 0, UFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
+	for (i = 0; i < UFS_NDADDR; i++)
 		if (ip->i_ffs1_db[i] != 0)
 			ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
 
@@ -981,7 +981,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 	struct ubuf *ibp, *bp;
 	struct inode *ip;
 	struct lfs *fs;
-	struct indir indirs[NIADDR+2], *idp;
+	struct indir indirs[UFS_NIADDR+2], *idp;
 	daddr_t	lbn, lastblock;
 	int bcount;
 	int error, frags, i, nsize, osize, num;
@@ -1012,7 +1012,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 
 	/* Check for block beyond end of file and fragment extension needed. */
 	lastblock = lblkno(fs, ip->i_ffs1_size);
-	if (lastblock < NDADDR && lastblock < lbn) {
+	if (lastblock < UFS_NDADDR && lastblock < lbn) {
 		osize = blksize(fs, ip, lastblock);
 		if (osize < fs->lfs_bsize && osize > 0) {
 			if ((error = lfs_fragextend(vp, osize, fs->lfs_bsize,
@@ -1034,7 +1034,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 	 * size or it already exists and contains some fragments and
 	 * may need to extend it.
 	 */
-	if (lbn < NDADDR && lblkno(fs, ip->i_ffs1_size) <= lbn) {
+	if (lbn < UFS_NDADDR && lblkno(fs, ip->i_ffs1_size) <= lbn) {
 		osize = blksize(fs, ip, lbn);
 		nsize = fragroundup(fs, offset + iosize);
 		if (lblktosize(fs, lbn) >= ip->i_ffs1_size) {

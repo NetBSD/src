@@ -1,7 +1,7 @@
-/*	$NetBSD: wsdisplay_util.c,v 1.1 2011/06/29 03:09:37 macallan Exp $ */
+/*	$NetBSD: wsdisplay_util.c,v 1.1.12.1 2013/02/25 00:29:43 tls Exp $ */
 
 /*-
- * Copyright (c) 2009 Michael Lorenz
+ * Copyright (c) 2011 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
  */
 
 /* some utility functions for use with wsdisplay */
+
 #include <sys/param.h>
 #include <sys/stdint.h>
 #include <sys/systm.h>
@@ -35,6 +36,7 @@
 #include <dev/cons.h>
 
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 #include <dev/wscons/wsconsio.h>
 
 int
@@ -56,4 +58,32 @@ wsdisplayio_get_edid(device_t dev, struct wsdisplayio_edid_info *d)
 			       d->edid_data, edid_size);
 	}
 	return ENODEV;
+}
+
+/* convenience function to fill in stuff from rasops_info */
+int
+wsdisplayio_get_fbinfo(struct rasops_info *ri, struct wsdisplayio_fbinfo *fbi)
+{
+	fbi->fbi_width = ri->ri_width;
+	fbi->fbi_height = ri->ri_height;
+	fbi->fbi_stride = ri->ri_stride;
+	fbi->fbi_bitsperpixel = ri->ri_depth;
+	if (ri->ri_depth > 8) {
+		fbi->fbi_pixeltype = WSFB_RGB;
+		fbi->fbi_subtype.fbi_rgbmasks.red_offset = ri->ri_rpos;
+		fbi->fbi_subtype.fbi_rgbmasks.red_size = ri->ri_rnum;
+		fbi->fbi_subtype.fbi_rgbmasks.green_offset = ri->ri_gpos;
+		fbi->fbi_subtype.fbi_rgbmasks.green_size = ri->ri_gnum;
+		fbi->fbi_subtype.fbi_rgbmasks.blue_offset = ri->ri_bpos;
+		fbi->fbi_subtype.fbi_rgbmasks.blue_size = ri->ri_bnum;
+		fbi->fbi_subtype.fbi_rgbmasks.alpha_offset = 0;
+		fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
+	} else {
+		fbi->fbi_pixeltype = WSFB_CI;
+		fbi->fbi_subtype.fbi_cmapinfo.cmap_entries = 1 << ri->ri_depth;
+	}
+	fbi->fbi_flags = 0;
+	fbi->fbi_fbsize = ri->ri_stride * ri->ri_height;
+	fbi->fbi_fboffset = 0;
+	return 0;
 }

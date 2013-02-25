@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs.c,v 1.3 2011/08/10 11:31:49 uch Exp $	*/
+/*	$NetBSD: v7fs.c,v 1.3.8.1 2013/02/25 00:30:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: v7fs.c,v 1.3 2011/08/10 11:31:49 uch Exp $");
+__RCSID("$NetBSD: v7fs.c,v 1.3.8.1 2013/02/25 00:30:44 tls Exp $");
 #endif	/* !__lint */
 
 #include <stdio.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: v7fs.c,v 1.3 2011/08/10 11:31:49 uch Exp $");
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <util.h>
 
 #include "makefs.h"
 #include "v7fs.h"
@@ -50,7 +51,6 @@ __RCSID("$NetBSD: v7fs.c,v 1.3 2011/08/10 11:31:49 uch Exp $");
 #include "v7fs_makefs.h"
 #include "newfs_v7fs.h"
 
-static v7fs_opt_t v7fs_opts;
 
 #ifndef HAVE_NBTOOL_CONFIG_H
 #include "progress.h"
@@ -61,29 +61,31 @@ int v7fs_newfs_verbose;
 void
 v7fs_prep_opts(fsinfo_t *fsopts)
 {
+	v7fs_opt_t *v7fs_opts = ecalloc(1, sizeof(*v7fs_opts));
+	const option_t v7fs_options[] = {
+		{ 'p', "pdp", &v7fs_opts->pdp_endian, OPT_INT32, false, true,
+		    "PDP endian" },
+		{ 'P', "progress", &v7fs_opts->progress, OPT_INT32, false, true,
+		  "Progress bar" },
+		{ .name = NULL }
+	};
 
-	fsopts->fs_specific = &v7fs_opts;
+	fsopts->fs_specific = v7fs_opts;
+	fsopts->fs_options = copy_opts(v7fs_options);
 }
 
 void
 v7fs_cleanup_opts(fsinfo_t *fsopts)
 {
-	/*NO-OP*/
+	free(fsopts->fs_specific);
+	free(fsopts->fs_options);
 }
 
 int
 v7fs_parse_opts(const char *option, fsinfo_t *fsopts)
 {
-	static option_t v7fs_options[] = {
-		{ "pdp", &v7fs_opts.pdp_endian, false, true,  "PDP endian" },
-		{ "progress", &v7fs_opts.progress, false, true,
-		  "Progress bar" },
-		{ .name = NULL }
-	};
 
-	set_option(v7fs_options, option, "1");
-
-	return 1;
+	return set_option_var(fsopts->fs_options, option, "1", NULL, 0) != -1;
 }
 
 void
@@ -91,10 +93,11 @@ v7fs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 {
 	struct v7fs_mount_device v7fs_mount;
 	int fd, endian, error = 1;
+	v7fs_opt_t *v7fs_opts = fsopts->fs_specific;
 
 	v7fs_newfs_verbose = debug;
 #ifndef HAVE_NBTOOL_CONFIG_H
-	if ((progress_bar_enable = v7fs_opts.progress)) {
+	if ((progress_bar_enable = v7fs_opts->progress)) {
 		progress_switch(progress_bar_enable);
 		progress_init();
 		progress(&(struct progress_arg){ .cdev = image });
@@ -135,7 +138,7 @@ v7fs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	else
 		endian = BIG_ENDIAN;
 #endif
-	if (v7fs_opts.pdp_endian) {
+	if (v7fs_opts->pdp_endian) {
 		endian = PDP_ENDIAN;
 	}
 

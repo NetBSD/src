@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.111.2.1 2012/11/20 03:01:06 tls Exp $	*/
+/*	$NetBSD: pmap.h,v 1.111.2.2 2013/02/25 00:28:30 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -463,6 +463,14 @@ pmap_ptesync(pt_entry_t *ptep, size_t cnt)
 #define KERNEL_PD_SIZE	\
 	(L1_TABLE_SIZE - (KERNEL_BASE >> L1_S_SHIFT) * sizeof(pd_entry_t))
 
+void	bzero_page(vaddr_t);
+void	bcopy_page(vaddr_t, vaddr_t);
+
+#ifdef FPU_VFP
+void	bzero_page_vfp(vaddr_t);
+void	bcopy_page_vfp(vaddr_t, vaddr_t);
+#endif
+
 /************************* ARM MMU configuration *****************************/
 
 #if (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V6 + ARM_MMU_V7) != 0
@@ -882,21 +890,22 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_MAPPABLE_P(va, pa, size)					\
 	((((va) | (pa)) & L2_L_OFFSET) == 0 && (size) >= L2_L_SIZE)
 
+#ifndef _LOCORE
 /*
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
+extern paddr_t physical_start, physical_end;
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
-extern paddr_t physical_start;
 struct vm_page *arm_pmap_alloc_poolpage(int);
 #define	PMAP_ALLOC_POOLPAGE	arm_pmap_alloc_poolpage
+#endif
+#if defined(PMAP_NEED_ALLOC_POOLPAGE) || defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
 #define	PMAP_MAP_POOLPAGE(pa) \
         ((vaddr_t)((paddr_t)(pa) - physical_start + KERNEL_BASE))
 #define PMAP_UNMAP_POOLPAGE(va) \
         ((paddr_t)((vaddr_t)(va) - KERNEL_BASE + physical_start))
 #endif
-
-#ifndef _LOCORE
 
 /*
  * pmap-specific data store in the vm_page structure.

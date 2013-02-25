@@ -1,5 +1,5 @@
-/*	$NetBSD: key.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: key.h,v 1.33 2010/10/28 11:22:09 djm Exp $ */
+/*	$NetBSD: key.h,v 1.4.8.1 2013/02/25 00:24:07 tls Exp $	*/
+/* $OpenBSD: key.h,v 1.34 2012/05/23 03:28:28 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -47,7 +47,8 @@ enum types {
 };
 enum fp_type {
 	SSH_FP_SHA1,
-	SSH_FP_MD5
+	SSH_FP_MD5,
+	SSH_FP_SHA256
 };
 enum fp_rep {
 	SSH_FP_HEX,

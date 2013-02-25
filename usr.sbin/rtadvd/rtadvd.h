@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.h,v 1.11 2011/12/10 19:14:29 roy Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.11.6.1 2013/02/25 00:30:48 tls Exp $	*/
 /*	$KAME: rtadvd.h,v 1.30 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -137,9 +137,13 @@ struct	rainfo {
 	int initcounter; /* counter for the first few advertisements */
 	struct timeval lastsent; /* timestamp when the latest RA was sent */
 	int waiting;		/* number of RS waiting for RA */
+	struct rainfo *leaving;		/* the config which is leaving */
+	struct rainfo *leaving_for;	/* the new config to activate */
+	int leaving_adv;		/* number of RA left to send */
 
 	/* interface information */
 	uint16_t	ifindex;
+	int		ifflags;
 	int	advlinkopt;	/* bool: whether include link-layer addr opt */
 	struct sockaddr_dl *sdl;
 	char	ifname[16];
@@ -183,6 +187,7 @@ extern TAILQ_HEAD(ralist_head_t, rainfo) ralist;
 
 struct rtadvd_timer *ra_timeout(void *);
 void ra_timer_update(void *, struct timeval *);
+void ra_timer_set_short_delay(struct rainfo *);
 
 int prefix_match(struct in6_addr *, int, struct in6_addr *, int);
 struct rainfo *if_indextorainfo(unsigned int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.14.2.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.14.2.2 2013/02/25 00:28:24 tls Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.14.2.1 2012/11/20 03:01:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.14.2.2 2013/02/25 00:28:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -88,9 +88,6 @@ const struct db_command db_machine_command_table[] = {
 			"[address]",
 			"   address:\taddress of trapfame to display")},
 #ifdef _KERNEL
-	{ DDB_ADD_CMD("panic",	db_show_panic_cmd,	0,
-			"Displays the last panic string",
-		     	NULL,NULL) },
 	{ DDB_ADD_CMD("fault",	db_show_fault_cmd,	0,
 			"Displays the fault registers",
 		     	NULL,NULL) },
@@ -127,16 +124,6 @@ db_access_irq_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
 	if (rw == DB_VAR_GET)
 		*valp = get_stackptr(PSR_IRQ32_MODE);
 	return(0);
-}
-
-void
-db_show_panic_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
-{
-	int s;
-	s = splhigh();
-
-	db_printf("Panic string: %s\n", panicstr);
-	(void)splx(s);
 }
 
 void

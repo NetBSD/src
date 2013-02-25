@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.22 2012/09/05 00:06:21 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.22.2.1 2013/02/25 00:28:34 tls Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.22 2012/09/05 00:06:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.22.2.1 2013/02/25 00:28:34 tls Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -173,16 +173,28 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.22 2012/09/05 00:06:21 matt Exp
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_wdtvar.h>
 #include <arm/omap/omap2_prcm.h>
+#include <arm/omap/omap2_gpio.h>
+#ifdef TI_AM335X
+#  include <arm/omap/am335x_prcm.h>
+#endif
 
 #include <evbarm/include/autoconf.h>
 #include <evbarm/beagle/beagle.h>
 
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/ddcreg.h>
+
 #include "prcm.h"
 #include "omapwdt32k.h"
+#include "ukbd.h"
+#include <dev/usb/ukbdvar.h>
 
 BootConfig bootconfig;		/* Boot config storage */
+static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 char *boot_file = NULL;
+
+static uint8_t beagle_edid[128];	/* EDID storage */
 
 u_int uboot_args[4] = { 0 };	/* filled in by beagle_start.S (not in bss) */
 
@@ -190,6 +202,8 @@ u_int uboot_args[4] = { 0 };	/* filled in by beagle_start.S (not in bss) */
 
 extern char KERNEL_BASE_phys[];
 extern char _end[];
+
+int use_fb_console = false;
 
 /*
  * Macros to translate between physical and virtual for a subset of the
@@ -207,11 +221,18 @@ static void kgdb_port_init(void);
 static void init_clocks(void);
 static void beagle_device_register(device_t, void *);
 static void beagle_reset(void);
-#if defined(OMAP_3530) || defined(TI_DM37XX)
+#if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
 static void omap3_cpu_clk(void);
 #endif
 #if defined(OMAP_4430)
 static void omap4_cpu_clk(void);
+#endif
+#if defined(TI_AM335X)
+static void am335x_cpu_clk(void);
+#endif
+
+#if defined(OMAP_3530) || defined(OMAP_3430)
+static psize_t omap3530_memprobe(void);
 #endif
 
 bs_protos(bs_notimpl);
@@ -304,6 +325,18 @@ static const struct pmap_devmap devmap[] = {
 		.pd_cache = PTE_NOCACHE
 	},
 #endif
+#ifdef OMAP_SDRC_BASE
+	{
+		/*
+		 * Map SDRAM Controller (SDRC) registers
+		 */
+		.pd_va = _A(OMAP_SDRC_VBASE),
+		.pd_pa = _A(OMAP_SDRC_BASE),
+		.pd_size = _S(OMAP_SDRC_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE,
+	},
+#endif
 	{0}
 };
 
@@ -360,6 +393,8 @@ beagle_putchar(char c)
 u_int
 initarm(void *arg)
 {
+	psize_t ram_size = 0;
+	char *ptr;
 #if 1
 	beagle_putchar('d');
 #endif
@@ -369,11 +404,14 @@ initarm(void *arg)
 	 * peripherals and SDRAM.  The temporary first level translation table
 	 * is at the end of SDRAM.
 	 */
-#if defined(OMAP_3530) || defined(TI_DM37XX)
+#if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
 	omap3_cpu_clk();		// find our CPU speed.
 #endif
 #if defined(OMAP_4430)
 	omap4_cpu_clk();		// find our CPU speed.
+#endif
+#if defined(TI_AM335X)
+	am335x_cpu_clk();
 #endif
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	if (set_cpufuncs())
@@ -389,6 +427,7 @@ initarm(void *arg)
 #endif
 	printf("uboot arg = %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
+
 #ifdef KGDB
 	kgdb_port_init();
 #endif
@@ -400,7 +439,7 @@ initarm(void *arg)
 	printf("\nNetBSD/evbarm (beagle) booting ...\n");
 #endif
 
-#ifdef BOOT_ARGS
+#ifdef BOOT_ARGSt
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
@@ -413,23 +452,48 @@ initarm(void *arg)
 	 * Set up the variables that define the availability of physical
 	 * memory.
 	 */
-#define	MEMSIZE_BYTES 	(MEMSIZE * 1024 * 1024)
+#if defined(OMAP_3530) || defined(OMAP_3430)
+	ram_size = omap3530_memprobe();
+#endif
+	/*
+	 * If MEMSIZE specified less than what we really have, limit ourselves
+	 * to that.
+	 */
+#ifdef MEMSIZE
+	if (ram_size == 0 || ram_size > MEMSIZE * 1024 * 1024)
+		ram_size = MEMSIZE * 1024 * 1024;
+#else
+	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
+#endif
 
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = KERNEL_BASE_PHYS & -0x400000;
-	bootconfig.dram[0].pages = MEMSIZE_BYTES;
+	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
 
-	arm32_bootmem_init(bootconfig.dram[0].address, MEMSIZE_BYTES,
+	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
 	    KERNEL_BASE_PHYS);
-	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap, false);
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap, true);
+
+	/* "bootargs" env variable is passed as 4th argument to kernel */
+	if ((uboot_args[3] & 0xf0000000) == 0x80000000) {
+		strlcpy(bootargs, (char *)uboot_args[3], sizeof(bootargs));
+	}
+	boot_args = bootargs;
+	parse_mi_bootargs(boot_args);
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = beagle_device_register;
 
 	db_trap_callback = beagle_db_trap;
 
+	if (get_bootconf_option(boot_args, "console",
+		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
+		use_fb_console = true;
+	}
+	
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+
 }
 
 static void
@@ -486,6 +550,10 @@ consinit(void)
 
 	bus_space_unmap(&omap_a4x_bs_tag, bh, OMAP_COM_SIZE);
 
+#if NUKBD > 0
+	ukbd_cnattach();	/* allow USB keyboard to become console */
+#endif
+
 	beagle_putchar('f');
 	beagle_putchar('g');
 }
@@ -495,6 +563,8 @@ beagle_reset(void)
 {
 #if defined(OMAP_4430)
 	*(volatile uint32_t *)(OMAP_L4_CORE_VBASE + (OMAP_L4_WAKEUP_BASE - OMAP_L4_CORE_BASE) + OMAP4_PRM_RSTCTRL) = OMAP4_PRM_RSTCTRL_WARM;
+#elif defined(TI_AM335X)
+	*(volatile uint32_t *)(OMAP_L4_CORE_VBASE + (OMAP2_CM_BASE - OMAP_L4_CORE_BASE) + AM335X_PRCM_PRM_DEVICE + PRM_RSTCTRL) = RST_GLOBAL_WARM_SW;
 #else
 #if NPRCM > 0
 	prcm_cold_reset();
@@ -542,7 +612,7 @@ static kgdb_port_init(void)
 }
 #endif
 
-#if defined(OMAP_3530) || defined(TI_DM37XX)
+#if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
 void
 omap3_cpu_clk(void)
 {
@@ -562,7 +632,7 @@ omap3_cpu_clk(void)
 	 */
 	curcpu()->ci_data.cpu_cc_freq = ((sys_clk * m) / ((n + 1) * m2 * 2)) * OMAP3_PRM_CLKSEL_MULT;
 }
-#endif /* OMAP_3530 || TI_DM37XX */
+#endif /* OMAP_3430 || OMAP_3530 || TI_DM37XX */
 
 #if defined(OMAP_4430)
 void
@@ -588,6 +658,79 @@ omap4_cpu_clk(void)
 	    sys_clk, m, n, n+1, m2, OMAP4_CM_CLKSEL_MULT);
 }
 #endif /* OMAP_4400 */
+
+#if defined(TI_AM335X)
+void
+am335x_cpu_clk(void)
+{
+	const vaddr_t cm_base = OMAP2_CM_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
+	const vaddr_t cm_wkup_base = cm_base + AM335X_PRCM_CM_WKUP;
+	const uint32_t sys_clk = 24000000;
+	const uint32_t clksel_dpll_mpu = *(volatile uint32_t *)(cm_wkup_base + TI_AM335X_CM_CLKSEL_DPLL_MPU);
+	const uint32_t div_m2_dpll_mpu = *(volatile uint32_t *)(cm_wkup_base + TI_AM335X_CM_DIV_M2_DPLL_MPU);
+	const uint32_t m = __SHIFTOUT(clksel_dpll_mpu, TI_AM335X_CM_CLKSEL_DPLL_MPU_DPLL_MULT);
+	const uint32_t n = __SHIFTOUT(clksel_dpll_mpu, TI_AM335X_CM_CLKSEL_DPLL_MPU_DPLL_DIV);
+	const uint32_t m2 = __SHIFTOUT(div_m2_dpll_mpu, TI_AM335X_CM_DIV_M2_DPLL_MPU_DPLL_CLKOUT_DIV);
+	/* XXX This ignores CM_CLKSEL_DPLL_MPU[DPLL_REGM4XEN].  */
+	curcpu()->ci_data.cpu_cc_freq = ((m * (sys_clk / (n + 1))) / m2);
+	printf("%s: %"PRIu64": sys_clk=%u m=%u n=%u (%u) m2=%u\n",
+	    __func__, curcpu()->ci_data.cpu_cc_freq,
+	    sys_clk, m, n, n+1, m2);
+}
+#endif
+
+#if defined(OMAP_3530) || defined(OMAP_3430)
+#define SDRC_MCFG(p)		(0x80 + (0x30 * (p)))
+#define SDRC_MCFG_MEMSIZE(m)	((((m) & __BITS(8,17)) >> 8) * 2)
+static psize_t 
+omap3530_memprobe(void)
+{
+	const vaddr_t gpmc_base = OMAP_SDRC_VBASE;
+	const uint32_t mcfg0 = *(volatile uint32_t *)(gpmc_base + SDRC_MCFG(0));
+	const uint32_t mcfg1 = *(volatile uint32_t *)(gpmc_base + SDRC_MCFG(1));
+
+	printf("mcfg0 = %#x, size %lld\n", mcfg0, SDRC_MCFG_MEMSIZE(mcfg0));
+	printf("mcfg1 = %#x, size %lld\n", mcfg1, SDRC_MCFG_MEMSIZE(mcfg1));
+
+	return (SDRC_MCFG_MEMSIZE(mcfg0) + SDRC_MCFG_MEMSIZE(mcfg1)) * 1024 * 1024;
+}
+#endif
+
+/*
+ * EDID can be read from DVI-D (HDMI) port on BeagleBoard from
+ * If EDID data is present, this function fills in the supplied edid_buf
+ * and returns true. Otherwise, it returns false and the contents of the
+ * buffer are undefined.
+ */
+static bool
+beagle_read_edid(uint8_t *edid_buf, size_t edid_buflen)
+{
+#if defined(OMAP_3530)
+	i2c_tag_t ic = NULL;
+	uint8_t reg;
+	int error;
+
+	/* On Beagleboard, EDID is accessed using I2C2 ("omapiic2"). */
+	extern i2c_tag_t omap3_i2c_get_tag(device_t);
+	ic = omap3_i2c_get_tag(device_find_by_xname("omapiic2"));
+
+	if (ic == NULL)
+		return false;
+
+	iic_acquire_bus(ic, 0);
+	for (reg = DDC_EDID_START; reg < edid_buflen; reg++) {
+		error = iic_exec(ic, I2C_OP_READ_WITH_STOP, DDC_ADDR,
+		    &reg, sizeof(reg), &edid_buf[reg], 1, 0);
+		if (error)
+			break;
+	}
+	iic_release_bus(ic, 0);
+
+	return error == 0 ? true : false;
+#else
+	return false;
+#endif
+}
 
 void
 beagle_device_register(device_t self, void *aux)
@@ -620,4 +763,44 @@ beagle_device_register(device_t self, void *aux)
 		    curcpu()->ci_data.cpu_cc_freq / 2);
 		return;
 	}	
+
+	if (device_is_a(self, "ehci")) {
+#if defined(OMAP_3530)
+		/* XXX Beagleboard specific port configuration */
+		prop_dictionary_set_cstring(dict, "port0-mode", "none");
+		prop_dictionary_set_cstring(dict, "port1-mode", "phy");
+		prop_dictionary_set_cstring(dict, "port2-mode", "none");
+		prop_dictionary_set_bool(dict, "phy-reset", true);
+		prop_dictionary_set_int16(dict, "port0-gpio", -1);
+		prop_dictionary_set_int16(dict, "port1-gpio", 147);
+		prop_dictionary_set_int16(dict, "port2-gpio", -1);
+		prop_dictionary_set_uint16(dict, "dpll5-m", 443);
+		prop_dictionary_set_uint16(dict, "dpll5-n", 11);
+		prop_dictionary_set_uint16(dict, "dpll5-m2", 4);
+#endif
+		return;
+	}
+
+	if (device_is_a(self, "sdhc")) {
+#if defined(OMAP_3530)
+		prop_dictionary_set_uint32(dict, "clkmask", 0);
+		prop_dictionary_set_bool(dict, "8bit", true);
+#endif
+		return;
+	}
+
+	if (device_is_a(self, "omapfb")) {
+		if (beagle_read_edid(beagle_edid, sizeof(beagle_edid))) {
+			prop_dictionary_set(dict, "EDID",
+			    prop_data_create_data(beagle_edid,
+						  sizeof(beagle_edid)));
+		}
+		if (use_fb_console)
+			prop_dictionary_set_bool(dict, "is_console", true);
+		return;
+	}
+	if (device_is_a(self, "com")) {
+		if (use_fb_console)
+			prop_dictionary_set_bool(dict, "is_console", false);
+	}
 }

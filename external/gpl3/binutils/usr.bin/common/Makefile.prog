@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prog,v 1.1 2009/08/18 20:22:08 skrll Exp $
+#	$NetBSD: Makefile.prog,v 1.1.12.1 2013/02/25 00:26:50 tls Exp $
 #
 # Common Makefile fragment for a binutils program.
 #
@@ -20,38 +20,24 @@ MAN=		${G_man_MANS:M${PROG}.1}
 
 CPPFLAGS+=	-I${.CURDIR}/../common/arch/${MACHINE_ARCH}
 
-LDADD+=		-lintl
-DPADD+=		${LIBINTL}
-
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libopcodes*)
-OPCODESOBJ!=	cd ${TOP}/${BFDSUBDIR}/libopcodes && ${PRINTOBJDIR}
-LDADD+=		-L${OPCODESOBJ} -lopcodes
-.if ${MKPICLIB} != "no"
-DPADD+=		${OPCODESOBJ}/libopcodes_pic.a
-.else
-DPADD+=		${OPCODESOBJ}/libopcodes.a
-.endif
+PROGDPLIBS+=	opcodes	${TOP}/${BFDSUBDIR}/libopcodes
 .endif
 
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libbfd*)
-BFDOBJ!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
-LDADD+=		-L${BFDOBJ} -lbfd
-.if ${MKPICLIB} != "no"
-DPADD+=		${BFDOBJ}/libbfd_pic.a
-.else
-DPADD+=		${BFDOBJ}/libbfd.a
-.endif
+PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
 .endif
 
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libiberty*)
-IBERTYOBJ!=	cd ${TOP}/${BFDSUBDIR}/libiberty && ${PRINTOBJDIR}
-LDADD+=		-L${IBERTYOBJ} -liberty
-DPADD+=		${IBERTYOBJ}/libiberty.a
+PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty
 .endif
 
 .PATH: ${DIST}/binutils ${DIST}/binutils/doc
 
 .include <bsd.prog.mk>
+
+LDADD+=		-lintl -lz
+DPADD+=		${LIBINTL} ${LIBZ}
 
 # Override the .y.c and .y.l rules *after* <bsd.prog.mk>
 .y.c .l.c:

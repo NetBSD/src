@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.3 2012/07/24 20:00:45 spz Exp $	*/
+/*	$NetBSD: queue.h,v 1.3.2.1 2013/02/25 00:25:52 tls Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -37,12 +37,12 @@
 #define ISC_QLINK_INSIST(x) (void)0
 #endif
 
-#define ISC_QLINK(type) struct { void *prev, *next; }
+#define ISC_QLINK(type) struct { type *prev, *next; }
 
 #define ISC_QLINK_INIT(elt, link) \
 	do { \
 		(elt)->link.next = (elt)->link.prev = (void *)(-1); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define ISC_QLINK_LINKED(elt, link) ((void*)(elt)->link.next != (void*)(-1))
 
@@ -56,7 +56,7 @@
 		isc_mutex_init(&(queue).taillock); \
 		isc_mutex_init(&(queue).headlock); \
 		(queue).tail = (queue).head = NULL; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define ISC_QUEUE_EMPTY(queue) ISC_TF((queue).head == NULL)
 
@@ -65,7 +65,7 @@
 		ISC_QLINK_INSIST(ISC_QUEUE_EMPTY(queue)); \
 		isc_mutex_destroy(&(queue).taillock); \
 		isc_mutex_destroy(&(queue).headlock); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*
  * queues are meant to separate the locks at either end.  For best effect, that
@@ -119,7 +119,7 @@
 				(queue).head = (elt); \
 			UNLOCK(&(queue).headlock); \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define ISC_QUEUE_POP(queue, link, ret) \
 	do { \
@@ -142,6 +142,24 @@
 		UNLOCK(&(queue).headlock); \
 		if (ret != NULL) \
 			(ret)->link.next = (ret)->link.prev = (void *)(-1); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
+
+#define ISC_QUEUE_UNLINK(queue, elt, link) \
+	do { \
+		ISC_QLINK_INSIST(ISC_QLINK_LINKED(elt, link)); \
+		LOCK(&(queue).headlock); \
+		LOCK(&(queue).taillock); \
+		if ((elt)->link.prev == NULL) \
+			(queue).head = (elt)->link.next; \
+		else \
+			(elt)->link.prev->link.next = (elt)->link.next; \
+		if ((elt)->link.next == NULL) \
+			(queue).tail = (elt)->link.prev; \
+		else \
+			(elt)->link.next->link.prev = (elt)->link.prev; \
+		UNLOCK(&(queue).taillock); \
+		UNLOCK(&(queue).headlock); \
+		(elt)->link.next = (elt)->link.prev = (void *)(-1); \
+	} while(0)
 
 #endif /* ISC_QUEUE_H */

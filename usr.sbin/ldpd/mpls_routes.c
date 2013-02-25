@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.9 2012/03/15 02:02:24 joerg Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.9.2.1 2013/02/25 00:30:43 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ su->sa.sa_len = 4 + from_union_to_cidr(su) / 8 +
 
 /* creates a sockunion from an IP address */
 union sockunion *
-make_inet_union(char *s)
+make_inet_union(const char *s)
 {
 	union sockunion *so_inet;
 
@@ -620,7 +620,7 @@ check_route(struct rt_msg * rg, uint rlen)
 	case RTM_CHANGE:
 		lab = label_get(so_dest, so_pref);
 		if (lab) {
-			send_withdraw_tlv_to_all(&so_dest->sin.sin_addr,
+			send_withdraw_tlv_to_all(&so_dest->sa,
 			    prefixlen);
 			label_reattach_route(lab, LDP_READD_NODEL);
 			label_del(lab);
@@ -639,13 +639,13 @@ check_route(struct rt_msg * rg, uint rlen)
 				label_add(so_dest, so_pref, NULL,
 					MPLS_LABEL_IMPLNULL, NULL, 0);
 			else {
-				pm = ldp_test_mapping(&so_dest->sin.sin_addr,
-					 prefixlen, &so_gate->sin.sin_addr);
+				pm = ldp_test_mapping(&so_dest->sa,
+					 prefixlen, &so_gate->sa);
 				if (pm) {
 					label_add(so_dest, so_pref,
 						so_gate, 0, NULL, 0);
 					mpls_add_label(pm->peer, rg,
-					  &so_dest->sin.sin_addr, prefixlen,
+					  &so_dest->sa, prefixlen,
 					  pm->lm->label, ROUTE_LOOKUP_LOOP);
 					free(pm);
 				} else
@@ -666,7 +666,7 @@ check_route(struct rt_msg * rg, uint rlen)
 		lab = label_get(so_dest, so_pref);
 		if (!lab)
 			break;
-		send_withdraw_tlv_to_all(&so_dest->sin.sin_addr, prefixlen);
+		send_withdraw_tlv_to_all(&so_dest->sa, prefixlen);
 		/* No readd or delete IP route. Just delete the MPLS route */
 		label_reattach_route(lab, LDP_READD_NODEL);
 		label_del(lab);
@@ -765,8 +765,8 @@ bind_current_routes()
 		so_dst = (union sockunion *) & rtmes[1];
 
 		/*
-		 * As this function is call only at startup use this ocassion
-		 * to delete all MPLS routes
+		 * This function is called only at startup, so use
+		 * this ocassion to delete all MPLS routes
 		 */
 		if (so_dst->sa.sa_family == AF_MPLS) {
 			delete_route(so_dst, NULL, NO_FREESO);
@@ -775,7 +775,7 @@ bind_current_routes()
 		}
 
 		if (so_dst->sa.sa_family != AF_INET) {
-			debugp("sa_dst is not AF_INET\n");
+			/*debugp("sa_dst is not AF_INET\n");*/
 			continue;
 		}
 

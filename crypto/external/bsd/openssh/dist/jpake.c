@@ -1,5 +1,5 @@
-/*	$NetBSD: jpake.c,v 1.6 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: jpake.c,v 1.6 2010/09/20 04:54:07 djm Exp $ */
+/*	$NetBSD: jpake.c,v 1.6.8.1 2013/02/25 00:24:06 tls Exp $	*/
+/* $OpenBSD: jpake.c,v 1.7 2012/06/18 11:43:53 dtucker Exp $ */
 /*
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
  *
@@ -26,7 +26,7 @@
  * http://grouper.ieee.org/groups/1363/Research/contributions/hao-ryan-2008.pdf
  */
 #include "includes.h"
-__RCSID("$NetBSD: jpake.c,v 1.6 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: jpake.c,v 1.6.8.1 2013/02/25 00:24:06 tls Exp $");
 
 #include <sys/types.h>
 
@@ -134,7 +134,7 @@ jpake_free(struct jpake_ctx *pctx)
 #undef JPAKE_BN_CLEAR_FREE
 #undef JPAKE_BUF_CLEAR_FREE
 
-	bzero(pctx, sizeof(pctx));
+	bzero(pctx, sizeof(*pctx));
 	xfree(pctx);
 }
 

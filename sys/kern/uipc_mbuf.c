@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.146.2.1 2012/11/20 03:02:44 tls Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.146.2.2 2013/02/25 00:29:55 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.146.2.1 2012/11/20 03:02:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.146.2.2 2013/02/25 00:29:55 tls Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -906,21 +906,18 @@ m_adj(struct mbuf *mp, int req_len)
 }
 
 /*
- * Rearrange an mbuf chain so that len bytes are contiguous
- * and in the data area of an mbuf (so that mtod and dtom
- * will work for a structure of size len).  Returns the resulting
- * mbuf chain on success, frees it and returns null on failure.
- * If there is room, it will add up to max_protohdr-len extra bytes to the
- * contiguous region in an attempt to avoid being called next time.
+ * m_ensure_contig: rearrange an mbuf chain that given length of bytes
+ * would be contiguous and in the data area of an mbuf (therefore, mtod()
+ * would work for a structure of given length).
+ *
+ * => On success, returns true and the resulting mbuf chain; false otherwise.
+ * => The mbuf chain may change, but is always preserved valid.
  */
-int MPFail;
-
-struct mbuf *
-m_pullup(struct mbuf *n, int len)
+bool
+m_ensure_contig(struct mbuf **m0, int len)
 {
-	struct mbuf *m;
-	int count;
-	int space;
+	struct mbuf *n = *m0, *m;
+	size_t count, space;
 
 	/*
 	 * If first mbuf has no cluster, and has room for len bytes
@@ -929,17 +926,20 @@ m_pullup(struct mbuf *n, int len)
 	 */
 	if ((n->m_flags & M_EXT) == 0 &&
 	    n->m_data + len < &n->m_dat[MLEN] && n->m_next) {
-		if (n->m_len >= len)
-			return (n);
+		if (n->m_len >= len) {
+			return true;
+		}
 		m = n;
 		n = n->m_next;
 		len -= m->m_len;
 	} else {
-		if (len > MHLEN)
-			goto bad;
+		if (len > MHLEN) {
+			return false;
+		}
 		MGET(m, M_DONTWAIT, n->m_type);
-		if (m == 0)
-			goto bad;
+		if (m == NULL) {
+			return false;
+		}
 		MCLAIM(m, n->m_owner);
 		m->m_len = 0;
 		if (n->m_flags & M_PKTHDR) {
@@ -948,7 +948,7 @@ m_pullup(struct mbuf *n, int len)
 	}
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
 	do {
-		count = min(min(max(len, max_protohdr), space), n->m_len);
+		count = MIN(MIN(MAX(len, max_protohdr), space), n->m_len);
 		memcpy(mtod(m, char *) + m->m_len, mtod(n, void *),
 		  (unsigned)count);
 		len -= count;
@@ -960,16 +960,30 @@ m_pullup(struct mbuf *n, int len)
 		else
 			n = m_free(n);
 	} while (len > 0 && n);
-	if (len > 0) {
-		(void) m_free(m);
-		goto bad;
-	}
+
 	m->m_next = n;
-	return (m);
-bad:
-	m_freem(n);
-	MPFail++;
-	return (NULL);
+	*m0 = m;
+
+	return len <= 0;
+}
+
+/*
+ * m_pullup: same as m_ensure_contig(), but destroys mbuf chain on error.
+ */
+int MPFail;
+
+struct mbuf *
+m_pullup(struct mbuf *n, int len)
+{
+	struct mbuf *m = n;
+
+	if (!m_ensure_contig(&m, len)) {
+		KASSERT(m != NULL);
+		m_freem(m);
+		MPFail++;
+		m = NULL;
+	}
+	return m;
 }
 
 /*

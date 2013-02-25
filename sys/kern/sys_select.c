@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.36 2011/08/29 00:39:16 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.36.12.1 2013/02/25 00:29:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.36 2011/08/29 00:39:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.36.12.1 2013/02/25 00:29:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -596,7 +596,7 @@ selrecord(lwp_t *selector, struct selinfo *sip)
 
 	if (other == selector) {
 		/* 1. We (selector) already claimed to be the first LWP. */
-		KASSERT(sip->sel_cluster = sc);
+		KASSERT(sip->sel_cluster == sc);
 	} else if (other == NULL) {
 		/*
 		 * 2. No first LWP, therefore we (selector) are the first.

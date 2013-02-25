@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reply_footer.c,v 1.1.1.1 2011/03/02 19:32:18 tron Exp $	*/
+/*	$NetBSD: smtp_reply_footer.c,v 1.1.1.1.12.1 2013/02/25 00:27:19 tls Exp $	*/
 
 /*++
 /* NAME
@@ -17,8 +17,8 @@
 /*	const char *(*lookup) (const char *name, char *context);
 /*	char	*context;
 /* DESCRIPTION
-/*	smtp_reply_footer() expands a reply template to an existing
-/*	reply text.
+/*	smtp_reply_footer() expands a reply template, and appends
+/*	the result to an existing reply text.
 /*
 /*	Arguments:
 /* .IP buffer

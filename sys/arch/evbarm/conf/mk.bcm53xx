@@ -1,5 +1,6 @@
-#	$NetBSD: mk.bcm53xx,v 1.1 2012/09/01 00:15:11 matt Exp $
-CPPFLAGS+= -mcpu=cortex-a9
+#	$NetBSD: mk.bcm53xx,v 1.1.2.1 2013/02/25 00:28:35 tls Exp $
+CPPFLAGS+= -mcpu=cortex-a9 -mfpu=neon
+#CPPFLAGS+= -mabi=aapcs-linux -Wa,-meabi=4
 
 SYSTEM_FIRST_OBJ=	bcm53xx_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/bcm53xx/bcm53xx_start.S

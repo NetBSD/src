@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.104 2012/05/09 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.104.2.1 2013/02/25 00:30:14 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.104 2012/05/09 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.104.2.1 2013/02/25 00:30:14 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ ext2fs_getattr(void *v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = dbtob((u_quad_t)ip->i_e2fs_nblock);
+	vap->va_bytes = dbtob(ext2fs_nblock(ip));
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	return (0);
@@ -922,7 +922,7 @@ ext2fs_readlink(void *v)
 
 	isize = ext2fs_size(ip);
 	if (isize < ump->um_maxsymlinklen ||
-	    (ump->um_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
+	    (ump->um_maxsymlinklen == 0 && ext2fs_nblock(ip) == 0)) {
 		uiomove((char *)ip->i_din.e2fs_din->e2di_shortlink, isize, ap->a_uio);
 		return (0);
 	}
@@ -1011,7 +1011,7 @@ ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
 	case VREG:
 		break;
 	}
-	if (ip->i_number == ROOTINO)
+	if (ip->i_number == UFS_ROOTINO)
                 vp->v_vflag |= VV_ROOT;
 	/*
 	 * Initialize modrev times

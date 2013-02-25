@@ -342,7 +342,93 @@ default</th> </tr>
 <p> Note: the <a href="postconf.5.html#data_directory">data_directory</a> parameter (for caches and pseudo-random
 numbers) was introduced with Postfix version 2.5. </p>
 
-<h3>4.5 - Support for thousands of processes</h3>
+<h3>4.5 - Overriding other compile-time features</h3>
+
+<p> The general method to override Postfix compile-time features
+is as follows: </p>
+
+<blockquote>
+<pre>
+% make makefiles name=value name=value...
+% make
+</pre>
+</blockquote>
+
+<p> The following is an extensive list of names and values. </p>
+
+<table border="1">
+
+<tr> <th colspan="2"> Name/Value </th> <th> Description </th> </tr>
+
+<tr> <td colspan="2"> AUXLIBS="object_library..."</td> <td> Specifies
+one or more non-default object libraries. </td> </tr>
+
+<tr> <td colspan="2"> CC=compiler_command</td> <td> Specifies a
+non-default compiler. On many systems, the default is <tt>gcc</tt>.
+</td> </tr>
+
+<tr> <td colspan="2"> CCARGS="compiler_arguments..."</td> <td>
+Specifies non-default compiler arguments, for example, a non-default
+<tt>include</tt> directory.  The following directives turn
+off Postfix features at compile time:</td> </tr>
+
+<tr> <td> </td> <td> -DNO_DB </td> <td> Do not build with Berkeley
+DB support. By default, Berkeley DB support is compiled in on
+platforms that are known to support this feature.  </td> </tr>
+
+<tr> <td> </td> <td> -DNO_DEVPOLL </td> <td> Do not build with
+Solaris <tt>/dev/poll</tt> support. By default, <tt>/dev/poll</tt>
+support is compiled in on Solaris versions that are known to support
+this feature.  </td> </tr>
+
+<tr> <td> </td> <td> -DNO_EPOLL </td> <td> Do not build with Linux
+EPOLL support.  By default, EPOLL support is compiled in on platforms
+that are known to support this feature. </td> </tr>
+
+<tr> <td> </td> <td> -DNO_IPV6 </td> <td> Do not build with IPv6
+support. By default, IPv6 support is compiled in on platforms that
+are known to have IPv6 support. Note: this directive is for debugging
+and testing only. It is not guaranteed to work on all platforms.
+</td> </tr>
+
+<tr> <td> </td> <td> -DNO_KQUEUE </td> <td> Do not build with FreeBSD
+/ NetBSD / OpenBSD / MacOSX KQUEUE support. By default, KQUEUE
+support is compiled in on platforms that are known to support it.
+</td> </tr>
+
+<tr> <td> </td> <td> -DNO_NIS </td> <td> Do not build with NIS or
+NISPLUS support. NIS is not available on some recent Linux or Solaris
+distributions. </td> </tr>
+
+<tr> <td> </td> <td> -DNO_PCRE </td> <td> Do not build with PCRE
+support. By default, PCRE support is compiled in when the
+<tt>pcre-config</tt> utility is installed. </td> </tr>
+
+<tr> <td> </td> <td> -DNO_POSIX_GETPW_R </td> <td> Disable support
+for POSIX <tt>getpwnam_r/getpwuid_r</tt>. By default Postfix uses
+these where they are known to be available. </td> </tr>
+
+<tr> <td> </td> <td> -DNO_SIGSETJMP </td> <td> Use
+<tt>setjmp()/longjmp()</tt> instead of <tt>sigsetjmp()/siglongjmp()</tt>.
+By default, Postfix uses <tt>sigsetjmp()/siglongjmp()</tt> when
+they are known to be available. </td> </tr>
+
+<tr> <td colspan="2"> DEBUG=debug_level </td> <td> Specifies a
+non-default compiler debugging level. The default is <tt>-g</tt>.
+Specify DEBUG= to turn off debugging. </td> </tr>
+
+<tr> <td colspan="2"> OPT=optimization_level </td> <td> Specifies
+a non-default optimization level. The default is -O.  Specify OPT=
+to turn off optimization. </td> </tr>
+
+<tr> <td colspan="2"> WARN="warning_flags..." </td> <td> Specifies
+non-default <tt>gcc</tt> compiler warning options for use when
+"<tt>make</tt>" is invoked in a source subdirectory only. </td>
+</tr>
+
+</table>
+
+<h3>4.6 - Support for thousands of processes</h3>
 
 <p> The number of connections that Postfix can manage simultaneously
 is limited by the number of processes that it can run.  This number
@@ -390,7 +476,7 @@ operating system is configured to handle thousands of connections.
 See the <a href="TUNING_README.html">TUNING_README</a> guide for examples of how to increase the
 number of open sockets or files. </p>
 
-<h3>4.6 - Compiling Postfix, at last</h3>
+<h3>4.7 - Compiling Postfix, at last</h3>
 
 <p> If the command </p>
 

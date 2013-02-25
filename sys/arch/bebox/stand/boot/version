@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.11 2010/10/18 17:56:40 kiyohara Exp $
+$NetBSD: version,v 1.11.18.1 2013/02/25 00:28:33 tls Exp $
 
 1.1:		Boot program for BeBox; initial revision
 1.2:		check BUS FREQ, add clock information
@@ -12,3 +12,4 @@ $NetBSD: version,v 1.11 2010/10/18 17:56:40 kiyohara Exp $
 1.8:		Support kernel load from SCSI HDD with onboard siop.
 		(EXPERIMENTAL)
 1.9:		Support ustarfs for floppy.
+1.10:		Change path-format for scsi. s,scsi/B/T/L_n,scsi/BTL/0_n,.

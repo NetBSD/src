@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2012/06/03 23:19:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 2013/02/25 00:24:47 tls Exp $
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 
@@ -48,6 +48,10 @@ CDRUNTIME+=	./usr/lib/liblzma.so*
 CDRUNTIME+=	./usr/lib/libterminfo.so*
 CDRUNTIME+=	./usr/lib/libutil.so*
 CDRUNTIME+=	./usr/lib/libz.so*
+.if (${MKCRYPTO} != "no")
+CDRUNTIME+=	./usr/lib/libcrypto.so*
+CDRUNTIME+=	./usr/lib/libssl.so*
+.endif
 CDRUNTIME+=	./usr/libexec/ld.elf_so
 CDRUNTIME+=	./usr/libexec/getty
 CDRUNTIME+=	./usr/mdec

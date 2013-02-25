@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/04/04 10:42:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2013/02/25 00:26:32 tls Exp $
 
 PROG_CXX=	bugpoint
 NOMAN=		yes
@@ -18,6 +18,7 @@ SRCS=	BugDriver.cpp \
 	bugpoint.cpp
 
 LLVM_LIBS+= \
+	ObjCARC \
 	AsmParser \
 	BitReader \
 	BitWriter \
@@ -31,7 +32,7 @@ LLVM_LIBS+= \
 	TransformsUtils \
 	Analysis \
 	ipa \
-	Core \
+	IR \
 	Support
 
 .include "${.PARSEDIR}/../../link.mk"

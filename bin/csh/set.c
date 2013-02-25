@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.29 2007/07/16 18:26:11 christos Exp $ */
+/* $NetBSD: set.c,v 1.29.40.1 2013/02/25 00:23:51 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.29 2007/07/16 18:26:11 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.29.40.1 2013/02/25 00:23:51 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,6 +173,20 @@ doset(Char **v, struct command *t)
 #ifdef FILEC
 	else if (eq(vp, STRfilec))
 	    filec = 1;
+#endif
+#ifdef EDIT
+	else if (eq(vp, STRedit)) {
+	    HistEvent ev;
+	    editing = 1;
+	    el = el_init_fd(getprogname(), cshin, cshout, csherr,
+		SHIN, SHOUT, SHERR);
+	    el_set(el, EL_EDITOR, "emacs");
+	    el_set(el, EL_PROMPT, printpromptstr);
+	    hi = history_init();
+	    history(hi, &ev, H_SETSIZE, getn(value(STRhistory)));
+	    loadhist(Histlist.Hnext);
+	    el_set(el, EL_HIST, history, hi);
+	}
 #endif
     } while ((p = *v++) != NULL);
 }
@@ -494,16 +508,25 @@ void
 unset(Char **v, struct command *t)
 {
     unset1(v, &shvhed);
-#ifdef FILEC
-    if (adrof(STRfilec) == 0)
-	filec = 0;
-#endif
     if (adrof(STRhistchars) == 0) {
 	HIST = '!';
 	HISTSUB = '^';
     }
-    if (adrof(STRwordchars) == 0)
+    else if (adrof(STRwordchars) == 0)
 	word_chars = STR_WORD_CHARS;
+#ifdef FILEC
+    else if (adrof(STRfilec) == 0)
+	filec = 0;
+#endif
+#ifdef EDIT
+    else if (adrof(STRedit) == 0) {
+	el_end(el);
+	history_end(hi);
+	el = NULL;
+	hi = NULL;
+	editing = 0;
+    }
+#endif
 }
 
 void

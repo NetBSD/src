@@ -1,5 +1,5 @@
-/* $NetBSD: ppath_kmem_alloc.c,v 1.1 2011/08/25 14:55:36 dyoung Exp $ */
-/* $Id: ppath_kmem_alloc.c,v 1.1 2011/08/25 14:55:36 dyoung Exp $ */
+/* $NetBSD: ppath_kmem_alloc.c,v 1.1.8.1 2013/02/25 00:24:01 tls Exp $ */
+
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/kmem.h>
-__RCSID("$Id: ppath_kmem_alloc.c,v 1.1 2011/08/25 14:55:36 dyoung Exp $");
+__RCSID("$NetBSD: ppath_kmem_alloc.c,v 1.1.8.1 2013/02/25 00:24:01 tls Exp $");
 
 #include <ppath/ppath_impl.h>
 

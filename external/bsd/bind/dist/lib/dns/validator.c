@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.7 2012/06/05 00:41:42 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.7.2.1 2013/02/25 00:25:44 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -1892,8 +1892,10 @@ isselfsigned(dns_validator_t *val) {
 			if (result != ISC_R_SUCCESS)
 				continue;
 
-			result = dns_dnssec_verify2(name, rdataset, dstkey,
-						    ISC_TRUE, mctx, &sigrdata,
+			result = dns_dnssec_verify3(name, rdataset, dstkey,
+						    ISC_TRUE,
+						    val->view->maxbits,
+						    mctx, &sigrdata,
 						    dns_fixedname_name(&fixed));
 			dst_key_free(&dstkey);
 			if (result != ISC_R_SUCCESS)
@@ -1930,8 +1932,9 @@ verify(dns_validator_t *val, dst_key_t *key, dns_rdata_t *rdata,
 	dns_fixedname_init(&fixed);
 	wild = dns_fixedname_name(&fixed);
  again:
-	result = dns_dnssec_verify2(val->event->name, val->event->rdataset,
-				    key, ignore, val->view->mctx, rdata, wild);
+	result = dns_dnssec_verify3(val->event->name, val->event->rdataset,
+				    key, ignore, val->view->maxbits,
+				    val->view->mctx, rdata, wild);
 	if ((result == DNS_R_SIGEXPIRED || result == DNS_R_SIGFUTURE) &&
 	    val->view->acceptexpired)
 	{
@@ -2077,15 +2080,13 @@ validate(dns_validator_t *val, isc_boolean_t resume) {
 			validator_log(val, ISC_LOG_DEBUG(3),
 				      "failed to verify rdataset");
 		else {
-			isc_uint32_t ttl;
 			isc_stdtime_t now;
 
 			isc_stdtime_get(&now);
-			ttl = ISC_MIN(event->rdataset->ttl,
-				      ISC_MIN(val->siginfo->originalttl,
-					      val->siginfo->timeexpire - now));
-			event->rdataset->ttl = ttl;
-			event->sigrdataset->ttl = ttl;
+			dns_rdataset_trimttl(event->rdataset,
+					     event->sigrdataset,
+					     val->siginfo, now,
+					     val->view->acceptexpired);
 		}
 
 		if (val->keynode != NULL)

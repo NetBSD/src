@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.71 2012/02/11 22:09:47 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.71.6.1 2013/02/25 00:29:04 tls Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.71 2012/02/11 22:09:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.71.6.1 2013/02/25 00:29:04 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -253,6 +253,12 @@ acpicpu_md_flags(void)
 		case 0x0f:
 
 			/*
+			 * Disable C1E if present.
+			 */
+			if (rdmsr_safe(MSR_CMPHALT, &msr) != EFAULT)
+				val |= ACPICPU_FLAG_C_C1E;
+
+			/*
 			 * Evaluate support for the "FID/VID
 			 * algorithm" also used by powernow(4).
 			 */
@@ -268,6 +274,9 @@ acpicpu_md_flags(void)
 		case 0x10:
 		case 0x11:
 
+			/*
+			 * Disable C1E if present.
+			 */
 			if (rdmsr_safe(MSR_CMPHALT, &msr) != EFAULT)
 				val |= ACPICPU_FLAG_C_C1E;
 

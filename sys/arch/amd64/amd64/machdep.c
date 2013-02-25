@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.190.2.1 2012/11/20 03:00:55 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.190.2.2 2013/02/25 00:28:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190.2.1 2012/11/20 03:00:55 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190.2.2 2013/02/25 00:28:19 tls Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -238,7 +238,7 @@ int	cpu_class;
 int	use_pae;
 
 #ifndef NO_SPARSE_DUMP
-int sparse_dump = 0;
+int sparse_dump = 1;
 
 paddr_t max_paddr = 0;
 unsigned char *sparse_dump_physmap;

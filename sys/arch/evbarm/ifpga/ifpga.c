@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.25 2012/01/27 18:52:53 para Exp $ */
+/*	$NetBSD: ifpga.c,v 1.25.6.1 2013/02/25 00:28:36 tls Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.25 2012/01/27 18:52:53 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.25.6.1 2013/02/25 00:28:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -88,7 +88,7 @@ static struct bus_space ifpga_pci_io_tag;
 static struct bus_space ifpga_pci_mem_tag;
 #endif /* NPCI > 0 */
 
-static struct bus_space ifpga_bs_tag;
+extern struct bus_space ifpga_common_bs_tag;
 
 struct ifpga_softc *ifpga_sc;
 device_t ifpga_dev;
@@ -156,16 +156,16 @@ ifpga_attach(device_t parent, device_t self, void *aux)
 {
 	struct ifpga_softc *sc = device_private(self);
 	u_int id, sysclk;
+	extern struct bus_space ifpga_common_bs_tag;
 #if defined(PCI_NETBSD_CONFIGURE) && NPCI > 0
 	struct extent *ioext, *memext, *pmemext;
 	struct ifpga_pci_softc *pci_sc;
 	struct pcibus_attach_args pci_pba;
 #endif
 
-	ifpga_found = 1;
+	ifpga_intr_init();
 
-	/* We want a memory-mapped bus space, since the I/O space is sparse. */
-	ifpga_create_mem_bs_tag(&ifpga_bs_tag, (void *)IFPGA_IO_BASE);
+	ifpga_found = 1;
 
 #if NPCI > 0
 	/* But the PCI config space is quite large, so we have a linear region
@@ -175,7 +175,7 @@ ifpga_attach(device_t parent, device_t self, void *aux)
 	ifpga_create_mem_bs_tag(&ifpga_pci_mem_tag, (void *)0);
 #endif
 
-	sc->sc_iot = &ifpga_bs_tag;
+	sc->sc_iot = &ifpga_common_bs_tag;
 
 	ifpga_dev = self;
 	ifpga_sc = sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.19.2.1 2012/11/20 03:02:11 tls Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.19.2.2 2013/02/25 00:29:16 tls Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.19.2.1 2012/11/20 03:02:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.19.2.2 2013/02/25 00:29:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -429,7 +429,9 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 			if (child) {
 				port = device_private(child);
 				mii  = LIST_FIRST(&port->sc_mii.mii_phys);
-				phyaddr |= MVGBE_PHYADDR_PHYAD(j, mii->mii_phy);
+				if (mii != NULL)
+					phyaddr |= MVGBE_PHYADDR_PHYAD(j,
+					    mii->mii_phy);
 			}
 		}
 		break;
@@ -2057,11 +2059,11 @@ mvgbe_filter_setup(struct mvgbe_softc *sc)
 		/* chip handles some IPv4 multicast specially */
 		if (memcmp(enm->enm_addrlo, special, 5) == 0) {
 			i = enm->enm_addrlo[5];
-			dfsmt[i>>2] =
+			dfsmt[i>>2] |=
 			    MVGBE_DF(i&3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
 		} else {
 			i = mvgbe_crc8(enm->enm_addrlo, ETHER_ADDR_LEN);
-			dfomt[i>>2] =
+			dfomt[i>>2] |=
 			    MVGBE_DF(i&3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
 		}
 

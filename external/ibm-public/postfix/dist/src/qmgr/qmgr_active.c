@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_active.c,v 1.1.1.2 2011/07/31 10:02:49 tron Exp $	*/
+/*	$NetBSD: qmgr_active.c,v 1.1.1.2.8.1 2013/02/25 00:27:27 tls Exp $	*/
 
 /*++
 /* NAME
@@ -95,6 +95,7 @@
 #include <events.h>
 #include <mymalloc.h>
 #include <vstream.h>
+#include <warn_stat.h>
 
 /* Global library. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.400.2.2 2012/11/20 03:01:59 tls Exp $ */
+/*	$NetBSD: wd.c,v 1.400.2.3 2013/02/25 00:29:12 tls Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.400.2.2 2012/11/20 03:01:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.400.2.3 2013/02/25 00:29:12 tls Exp $");
 
 #include "opt_ata.h"
 
@@ -2205,5 +2205,6 @@ wdioctlstrategy(struct buf *bp)
 	return;
 bad:
 	bp->b_error = error;
+	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 }

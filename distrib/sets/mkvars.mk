@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.6.8.1 2012/11/20 02:57:44 tls Exp $
+# $NetBSD: mkvars.mk,v 1.6.8.2 2013/02/25 00:24:29 tls Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -6,7 +6,7 @@ MKEXTRAVARS= \
 	MACHINE_CPU \
 	HAVE_GCC \
 	HAVE_GDB \
-	HAS_SSP \
+	HAVE_SSP \
 	OBJECT_FMT \
 	TOOLCHAIN_MISSING \
 	EXTSRCS \

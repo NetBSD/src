@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.3.2.1 2012/11/20 03:02:39 tls Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.3.2.2 2013/02/25 00:29:44 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -898,6 +898,10 @@ typedef unsigned int    u_32_t;
 #  endif
 # endif
 
+#if (__NetBSD_Version__ >= 699000000)
+#  define HAVE_RBTREE	1
+#endif
+
 # ifdef _KERNEL
 #  include <sys/cprng.h>
 #  if (__NetBSD_Version__ >= 399001400)
@@ -924,6 +928,7 @@ typedef unsigned int    u_32_t;
 #  if (defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 499004900))
 #   define	POLLWAKEUP(x)	selnotify(softc->ipf_selwait+x, 0, 0)
 #  endif
+#  define	ASSERT(x)	KASSERT(x)
 typedef struct mbuf mb_t;
 # endif /* _KERNEL */
 # if (NetBSD <= 1991011) && (NetBSD >= 199606)

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.9.2.1 2012/11/20 03:03:03 tls Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.9.2.2 2013/02/25 00:30:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * FIXME: config generation should be redesigned..
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.9.2.1 2012/11/20 03:03:03 tls Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.9.2.2 2013/02/25 00:30:46 tls Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -213,6 +213,7 @@ npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = 0;
+		sin6->sin6_scope_id = 0;
 		memcpy(&sin6->sin6_addr, ni->ni_pc, sizeof(sin6->sin6_addr));
 		sockaddr_snprintf(buf, bufsiz, "%a", (struct sockaddr *)sin6);
 		if (ni) {
@@ -560,15 +561,25 @@ static const struct attr_keyword_mapent {
 	{ NPF_RULE_FINAL,	NPF_RULE_FINAL,	"final",	NULL	},
 };
 
+static int rules_seen = 0;
+
+/*
+ * FIXME: This mess needs a complete rewrite..
+ */
+
 static void
 npfctl_show_rule(nl_rule_t *nrl, unsigned nlevel)
 {
+	static int grouplvl = -1;
 	rule_group_t rg;
 	const char *rproc;
 	const void *nc;
 	size_t nclen;
+	u_int n;
 
+	memset(&rg, 0, sizeof(rg));
 	_npf_rule_getinfo(nrl, &rg.rg_name, &rg.rg_attr, &rg.rg_ifnum);
+	rules_seen++;
 
 	/* Get the interface, if any. */
 	char ifnamebuf[IFNAMSIZ], *ifname = NULL;
@@ -576,24 +587,32 @@ npfctl_show_rule(nl_rule_t *nrl, unsigned nlevel)
 		ifname = if_indextoname(rg.rg_ifnum, ifnamebuf);
 	}
 
-	/*
-	 * If zero level, then it is a group.
-	 */
-	if (nlevel == 0) {
-		static bool ingroup = false;
+	if (grouplvl >= 0 && (unsigned)grouplvl >= nlevel) {
+		for (n = 0; n < nlevel; n++) {
+			printf("\t");
+		}
+		printf("}\n\n");
+		grouplvl--;
+	}
+	for (n = 0; n < nlevel; n++) {
+		printf("\t");
+	}
+
+	if (rg.rg_attr & NPF_RULE_GROUP) {
 		const char *rname = rg.rg_name;
 
-		if (ingroup) {
-			printf("}\n\n");
-		}
-		ingroup = true;
-		if (rg.rg_attr & NPF_RULE_DEFAULT) {
+		grouplvl = nlevel;
+		if (rg.rg_attr == (NPF_RULE_GROUP| NPF_RULE_IN | NPF_RULE_OUT)
+		    && rname == NULL && rg.rg_ifnum == 0) {
 			puts("group (default) {");
 			return;
 		}
 		printf("group (name \"%s\"", rname == NULL ? "" : rname);
 		if (ifname) {
 			printf(", interface %s", ifname);
+		}
+		if (rg.rg_attr & NPF_RULE_DYNAMIC) {
+			printf(", dynamic");
 		}
 		puts(") {");
 		return;
@@ -602,9 +621,6 @@ npfctl_show_rule(nl_rule_t *nrl, unsigned nlevel)
 	/*
 	 * Rule case.  First, unparse the attributes.
 	 */
-	while (nlevel--) {
-		printf("\t");
-	}
 	for (unsigned i = 0; i < __arraycount(attr_keyword_map); i++) {
 		const struct attr_keyword_mapent *ak = &attr_keyword_map[i];
 
@@ -702,13 +718,18 @@ npfctl_config_show(int fd)
 	bool active, loaded;
 	int error = 0;
 
-	ncf = npf_config_retrieve(fd, &active, &loaded);
-	if (ncf == NULL) {
-		return errno;
+	if (fd) {
+		ncf = npf_config_retrieve(fd, &active, &loaded);
+		if (ncf == NULL) {
+			return errno;
+		}
+		printf("Filtering:\t%s\nConfiguration:\t%s\n\n",
+		    active ? "active" : "inactive",
+		    loaded ? "loaded" : "empty");
+	} else {
+		ncf = npfctl_config_ref();
+		loaded = true;
 	}
-	printf("Filtering:\t%s\nConfiguration:\t%s\n\n",
-	    active ? "active" : "inactive",
-	    loaded ? "loaded" : "empty");
 
 	if (loaded) {
 		_npf_table_foreach(ncf, npfctl_show_table);
@@ -717,9 +738,25 @@ npfctl_config_show(int fd)
 		puts("");
 		if (!error) {
 			error = _npf_rule_foreach(ncf, npfctl_show_rule);
-			puts("}");
+			if (rules_seen)
+				puts("}");
 		}
 	}
+	npf_config_destroy(ncf);
+	return error;
+}
+
+int
+npfctl_ruleset_show(int fd, const char *ruleset_name)
+{
+	nl_config_t *ncf;
+	int error;
+
+	ncf = npf_config_create();
+	if ((error = _npf_ruleset_list(fd, ruleset_name, ncf)) != 0) {
+		return error;
+	}
+	error = _npf_rule_foreach(ncf, npfctl_show_rule);
 	npf_config_destroy(ncf);
 	return error;
 }

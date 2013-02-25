@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.9 2012/03/13 18:40:38 elad Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.9.2.1 2013/02/25 00:29:48 tls Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.9 2012/03/13 18:40:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.9.2.1 2013/02/25 00:29:48 tls Exp $");
 #endif /* not lint */
 
 
@@ -349,7 +349,6 @@ nilfs_read_superblock(struct nilfs_device *nilfsdev)
 	dev_blks  = (sb1off + dev_bsize -1)/dev_bsize;
 	error = bread(nilfsdev->devvp, dev_blk, dev_blks * dev_bsize, NOCRED, 0, &bp);
 	if (error) {
-		brelse(bp, BC_AGE);
 		return error;
 	}
 
@@ -364,7 +363,6 @@ nilfs_read_superblock(struct nilfs_device *nilfsdev)
 	dev_blks  = 2;		/* assumption max one dev_bsize */
 	error = bread(nilfsdev->devvp, dev_blk, dev_blks * dev_bsize, NOCRED, 0, &bp);
 	if (error) {
-		brelse(bp, BC_AGE);
 		return error;
 	}
 

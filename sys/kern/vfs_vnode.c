@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.15.6.1 2012/11/20 03:02:45 tls Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.15.6.2 2013/02/25 00:29:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.15.6.1 2012/11/20 03:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.15.6.2 2013/02/25 00:29:57 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -173,7 +173,7 @@ static int		cleanvnode(void);
 static void		vdrain_thread(void *);
 static void		vrele_thread(void *);
 static void		vnpanic(vnode_t *, const char *, ...)
-    __attribute__((__format__(__printf__, 2, 3)));
+    __printflike(2, 3);
 
 /* Routines having to do with the management of the vnode table. */
 extern int		(**dead_vnodeop_p)(void *);
@@ -1110,7 +1110,7 @@ vrecycle(vnode_t *vp, kmutex_t *inter_lkp, struct lwp *l)
 void
 vrevoke(vnode_t *vp)
 {
-	vnode_t *vq, **vpp;
+	vnode_t *vq;
 	enum vtype type;
 	dev_t dev;
 
@@ -1131,30 +1131,11 @@ vrevoke(vnode_t *vp)
 		mutex_exit(vp->v_interlock);
 	}
 
-	vpp = &specfs_hash[SPECHASH(dev)];
-	mutex_enter(&device_lock);
-	for (vq = *vpp; vq != NULL;) {
-		/* If clean or being cleaned, then ignore it. */
+	while (spec_node_lookup_by_dev(type, dev, &vq) == 0) {
 		mutex_enter(vq->v_interlock);
-		if ((vq->v_iflag & (VI_CLEAN | VI_XLOCK)) != 0 ||
-		    vq->v_type != type || vq->v_rdev != dev) {
-			mutex_exit(vq->v_interlock);
-			vq = vq->v_specnext;
-			continue;
-		}
-		mutex_exit(&device_lock);
-		if (vq->v_usecount == 0) {
-			vremfree(vq);
-			vq->v_usecount = 1;
-		} else {
-			atomic_inc_uint(&vq->v_usecount);
-		}
 		vclean(vq, DOCLOSE);
 		vrelel(vq, 0);
-		mutex_enter(&device_lock);
-		vq = *vpp;
 	}
-	mutex_exit(&device_lock);
 }
 
 /*

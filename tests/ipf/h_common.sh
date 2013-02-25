@@ -1,4 +1,4 @@
-# $NetBSD: h_common.sh,v 1.3 2010/11/07 17:51:19 jmmv Exp $
+# $NetBSD: h_common.sh,v 1.3.12.1 2013/02/25 00:30:21 tls Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -59,6 +59,19 @@ broken_test_case()
 	atf_test_case "${name}"
 	eval "${name}_body() { \
 		atf_skip 'This test case is probably broken'; \
+		${check_function} '${name}' " "${@}" "; \
+	}"
+}
+
+failing_test_case()
+{
+	local name="${1}"; shift
+	local check_function="${1}"; shift
+	local reason="${1}"; shift
+
+	atf_test_case "${name}"
+	eval "${name}_body() { \
+		atf_expect_fail '${reason}'; \
 		${check_function} '${name}' " "${@}" "; \
 	}"
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_open_ok.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_open_ok.c,v 1.1.1.1.16.1 2013/02/25 00:27:18 tls Exp $	*/
 
 /*++
 /* NAME
@@ -67,6 +67,7 @@
 /* Utility library. */
 
 #include <msg.h>
+#include <warn_stat.h>
 
 /* Global library. */
 

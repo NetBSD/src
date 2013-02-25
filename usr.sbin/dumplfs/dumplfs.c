@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.38 2010/02/16 18:57:53 mlelstv Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.38.12.1 2013/02/25 00:30:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.38 2010/02/16 18:57:53 mlelstv Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.38.12.1 2013/02/25 00:30:42 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -294,7 +294,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 
 	(void)printf("\nIFILE contents\n");
 	nblocks = dip->di_size >> lfsp->lfs_bshift;
-	block_limit = MIN(nblocks, NDADDR);
+	block_limit = MIN(nblocks, UFS_NDADDR);
 
 	/* Get the direct block */
 	if ((ipage = malloc(psize)) == NULL)
@@ -325,7 +325,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 			inum = dump_ipage_ifile(lfsp, inum, ipage, lfsp->lfs_ifpb);
 	}
 
-	if (nblocks <= NDADDR)
+	if (nblocks <= UFS_NDADDR)
 		goto e0;
 
 	/* Dump out blocks off of single indirect block */
@@ -472,12 +472,12 @@ dump_dinode(struct ufs1_dinode *dip)
 		"ctime ", ctime(&ct));
 	(void)printf("    inum  %d\n", dip->di_inumber);
 	(void)printf("    Direct Addresses\n");
-	for (i = 0; i < NDADDR; i++) {
+	for (i = 0; i < UFS_NDADDR; i++) {
 		(void)printf("\t0x%x", dip->di_db[i]);
 		if ((i % 6) == 5)
 			(void)printf("\n");
 	}
-	for (i = 0; i < NIADDR; i++)
+	for (i = 0; i < UFS_NIADDR; i++)
 		(void)printf("\t0x%x", dip->di_ib[i]);
 	(void)printf("\n");
 }

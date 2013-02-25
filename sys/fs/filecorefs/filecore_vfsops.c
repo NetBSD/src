@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.69 2012/03/13 18:40:36 elad Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.69.2.1 2013/02/25 00:29:47 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.69 2012/03/13 18:40:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.69.2.1 2013/02/25 00:29:47 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -615,10 +615,6 @@ filecore_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		if ((error = filecore_bread(fcmp, ino & FILECORE_INO_MASK,
 		    FILECORE_DIR_SIZE, NOCRED, &bp)) != 0) {
 			vput(vp);
-#ifdef FILECORE_DEBUG_BR
-			printf("brelse(%p) vf4\n", bp);
-#endif
-			brelse(bp, 0);
 			*vpp = NULL;
 			return (error);
 		}

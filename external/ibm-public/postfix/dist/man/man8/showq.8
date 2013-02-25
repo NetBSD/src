@@ -1,4 +1,4 @@
-.\"	$NetBSD: showq.8,v 1.1.1.1 2009/06/23 10:08:35 tron Exp $
+.\"	$NetBSD: showq.8,v 1.1.1.1.16.1 2013/02/25 00:27:12 tls Exp $
 .\"
 .TH SHOWQ 8 
 .ad
@@ -83,6 +83,10 @@ The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
 The mail system name that is prepended to the process name in syslog
 records, so that "smtpd" becomes, for example, "postfix/smtpd".
+.PP
+Available in Postfix version 2.9 and later:
+.IP "\fBenable_long_queue_ids (no)\fR"
+Enable long, non-repeating, queue IDs (queue file names).
 .SH "FILES"
 .na
 .nf

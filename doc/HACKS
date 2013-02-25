@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.123.2.1 2012/11/20 02:57:55 tls Exp $
+# $NetBSD: HACKS,v 1.123.2.2 2013/02/25 00:24:48 tls Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -739,3 +739,43 @@ port	emips
 		    Assertion failure in append_insn at /usr/src/external/gpl3/\
 		    binutils/dist/gas/config/tc-mips.c line 2910.
 	kcah
+
+port	ia64
+
+	hack	libc hesiod.c file does not compile with -O2 (internal
+		compiler error in gcc 4.5.3)
+	cdate	Thu Dec 27 08:05:43 CET 2012
+	who	martin
+	file	src/lib/libc/net/Makefile.inc: 1.82
+	descr
+		workaround for:
+		{standard input}: Assembler messages:
+		{standard input}:1507: Warning: Use of 'mov' may violate WAW dependency 'GR%, % in 1 - 127' (impliedf), specific resource number is 15
+		{standard input}:1506: Warning: This is the location of the conflicting usage
+		{standard input}: Error: 2 warnings, treating warnings as errors
+	kcah
+
+	hack	libelf libelf_extended.c compiler error in gcc 4.5.3
+	cdate	Thu Dec 27 09:05:51 CET 2012
+	who	martin
+	file	src/external/bsd/libelf/lib/Makefile: 1.3
+	descr
+		workaround for:
+		{standard input}: Assembler messages:
+		{standard input}:87: Warning: Use of 'adds' may violate RAW dependency 'GR%, % in 1 - 127' (impliedf), specific resource number is 33
+		{standard input}:87: Warning: Only the first path encountering the conflict is reported
+		{standard input}:85: Warning: This is the location of the conflicting usage
+	kcah
+
+	hack	compiler error with gcc 4.5.x
+	cdate	Thu Dec 27 15:15:25 CET 2012
+	who	martin
+	file	src/crypto/external/bsd/netpgp/lib/verify/Makefile: 1.5
+	descr
+		workaround for:
+		{standard input}: Assembler messages:
+		{standard input}:22979: Warning: Use of 'mov' may violate WAW dependency 'GR%, % in 1 - 127' (impliedf), specific resource number is 8
+		{standard input}:22978: Warning: This is the location of the conflicting usage
+	kcah
+
+

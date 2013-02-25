@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.2.1 2012/11/20 02:58:01 tls Exp $
+#	$NetBSD: Makefile,v 1.7.2.2 2013/02/25 00:26:37 tls Exp $
 
 LIB=	LLVMAnalysis
 
@@ -25,7 +25,6 @@ SRCS+=	AliasAnalysis.cpp \
 	DomPrinter.cpp \
 	DominanceFrontier.cpp \
 	IVUsers.cpp \
-	InlineCost.cpp \
 	InstCount.cpp \
 	InstructionSimplify.cpp \
 	Interval.cpp \
@@ -54,6 +53,7 @@ SRCS+=	AliasAnalysis.cpp \
 	ProfileInfoLoader.cpp \
 	ProfileInfoLoaderPass.cpp \
 	ProfileVerifierPass.cpp \
+	PtrUseVisitor.cpp \
 	RegionInfo.cpp \
 	RegionPass.cpp \
 	RegionPrinter.cpp \
@@ -62,6 +62,7 @@ SRCS+=	AliasAnalysis.cpp \
 	ScalarEvolutionExpander.cpp \
 	ScalarEvolutionNormalization.cpp \
 	SparsePropagation.cpp \
+	TargetTransformInfo.cpp \
 	Trace.cpp \
 	TypeBasedAliasAnalysis.cpp \
 	ValueTracking.cpp

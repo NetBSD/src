@@ -1,4 +1,4 @@
-.\"	$NetBSD: open.2,v 1.51.6.1 2012/11/20 03:00:43 tls Exp $
+.\"	$NetBSD: open.2,v 1.51.6.2 2013/02/25 00:27:54 tls Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)open.2	8.2 (Berkeley) 11/16/93
 .\"
-.Dd January 23, 2012
+.Dd November 18, 2012
 .Dt OPEN 2
 .Os
 .Sh NAME
@@ -58,18 +58,26 @@ works the same way as
 .Fn open
 except if
 .Fa path
-is relative. In that case, it is looked up from a directory whose file
+is relative.
+In that case, it is looked up from a directory whose file
 descriptor was passed as
 .Fa fd .
-Search permission is required on
-.Fa fd
-except if that file descriptor was open with
-.Dv O_SEARCH
-option.
+Search permission is required on this directory.
+.\"    (These alternatives await a decision about the semantics of O_SEARCH)
+.\" Search permission is required on this directory
+.\" except if
+.\" .Fa fd
+.\" was opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.\"    - or -
+.\" This file descriptor must have been opened with the
+.\" .Dv O_SEARCH
+.\" flag.
 .Fa fd
 can be set to
 .Dv AT_FDCWD
-in order to specify current directory.
+in order to specify the current directory.
 .Pp
 The
 .Fa flags
@@ -186,23 +194,24 @@ Enable the
 signal to be sent to the process group
 when I/O is possible, e.g.,
 upon availability of data to be read.
-.It Dv O_SEARCH
-If opening a directory, search permission check will not be performed on
-subsequent usage of the file descriptor for looking up relative paths by
-.Xr faccessat 2 ,
-.Xr fchmodat 2 ,
-.Xr fchownat 2 ,
-.Xr fstatat 2 ,
-.Xr linkat 2 ,
-.Xr mkdirat 2 ,
-.Xr mkfifoat 2 ,
-.Xr mknodat 2 ,
-.Xr openat 2 ,
-.Xr readlinkat 2 ,
-.Xr symlinkat 2 ,
-.Xr unlinkat 2 ,
-and
-.Xr utimensat 2 .
+.\"    (This block awaits a decision about the semantics of O_SEARCH)
+.\" .It Dv O_SEARCH
+.\" If opening a directory, search permission checks will not be performed on
+.\" subsequent usage of the file descriptor for looking up relative paths by
+.\" .Xr faccessat 2 ,
+.\" .Xr fchmodat 2 ,
+.\" .Xr fchownat 2 ,
+.\" .Xr fstatat 2 ,
+.\" .Xr linkat 2 ,
+.\" .Xr mkdirat 2 ,
+.\" .Xr mkfifoat 2 ,
+.\" .Xr mknodat 2 ,
+.\" .Xr openat 2 ,
+.\" .Xr readlinkat 2 ,
+.\" .Xr symlinkat 2 ,
+.\" .Xr unlinkat 2 ,
+.\" and
+.\" .Xr utimensat 2 .
 .El
 .Pp
 Opening a file with
@@ -425,7 +434,7 @@ function conforms to
 .St -p1003.1-90 .
 .Fn openat
 conforms to
-.St -p1003.1-2008 . 
+.St -p1003.1-2008 .
 .Pp
 The
 .Fa flags
@@ -436,9 +445,10 @@ and
 .Dv O_RSYNC
 are extensions defined in
 .St -p1003.1b-93 .
-.Dv O_SEARCH
-is defined in 
-.St -p1003.1-2008
+.\"    (This block awaits a decision about the semantics of O_SEARCH)
+.\" .Dv O_SEARCH
+.\" is defined in
+.\" .St -p1003.1-2008 .
 .Pp
 The
 .Dv O_SHLOCK

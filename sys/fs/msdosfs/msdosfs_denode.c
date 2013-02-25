@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.46.12.1 2012/11/20 03:02:39 tls Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.46.12.2 2013/02/25 00:29:47 tls Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.46.12.1 2012/11/20 03:02:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.46.12.2 2013/02/25 00:29:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,7 +524,6 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
 			    pmp->pm_bpcluster, NOCRED, B_MODIFY, &bp);
 			if (error) {
-				brelse(bp, 0);
 #ifdef MSDOSFS_DEBUG
 				printf("detrunc(): bread fails %d\n", error);
 #endif

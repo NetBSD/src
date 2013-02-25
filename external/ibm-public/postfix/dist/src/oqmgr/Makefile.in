@@ -112,6 +112,7 @@ qmgr_active.o: ../../include/trace.h
 qmgr_active.o: ../../include/vbuf.h
 qmgr_active.o: ../../include/vstream.h
 qmgr_active.o: ../../include/vstring.h
+qmgr_active.o: ../../include/warn_stat.h
 qmgr_active.o: qmgr.h
 qmgr_active.o: qmgr_active.c
 qmgr_bounce.o: ../../include/attr.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.11 2012/07/25 22:11:36 matt Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.11.2.1 2013/02/25 00:28:53 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.11 2012/07/25 22:11:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.11.2.1 2013/02/25 00:28:53 tls Exp $");
 
 #include <sys/param.h>
 
@@ -202,6 +202,7 @@ hwtlb_write(const struct e500_hwtlb hwtlb, bool needs_sync)
 	 */
 	if (hwtlb.hwtlb_mas1 & MAS1_V) {
 		mtspr(SPR_MAS3, hwtlb.hwtlb_mas3);
+		//mtspr(SPR_MAS7, 0);
 	}
 	
 #if 0
@@ -543,6 +544,7 @@ e500_tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert)
 	}
 	mtspr(SPR_MAS2, hwtlb.hwtlb_mas2);
 	mtspr(SPR_MAS3, hwtlb.hwtlb_mas3);
+	//mtspr(SPR_MAS7, 0);
 	__asm volatile("tlbwe");
 	if (asid == KERNEL_PID)
 		__asm volatile("isync\n\tsync");
@@ -641,11 +643,6 @@ e500_tlb_walk(void *ctx, bool (*func)(void *, vaddr_t, uint32_t, uint32_t))
 			mtspr(SPR_MAS2, epn);
 			__asm volatile("tlbre");
 			hwtlb.hwtlb_mas1 = mfspr(SPR_MAS1);
-			/*
-			 * If this is a valid entry for AS space 1 and
-			 * its asid matches the constraints of the caller,
-			 * clear its valid bit.
-			 */
 			if (hwtlb.hwtlb_mas1 & MAS1_V) {
 				hwtlb.hwtlb_mas2 = mfspr(SPR_MAS2);
 				hwtlb.hwtlb_mas3 = mfspr(SPR_MAS3);
@@ -682,7 +679,7 @@ e500_tlb_lookup_xtlb_pa(vaddr_t pa, u_int *slotp)
 	return NULL;
 }
 
-static struct e500_xtlb *
+struct e500_xtlb *
 e500_tlb_lookup_xtlb(vaddr_t va, u_int *slotp)
 {
 	struct e500_tlb1 * const tlb1 = &e500_tlb1;
@@ -942,6 +939,15 @@ e500_tlb_init(vaddr_t endkernel, psize_t memsize)
 		if (xtlb->e_tlb.tlb_va == 0
 		    || xtlb->e_tlb.tlb_va + xtlb->e_tlb.tlb_size <= memsize) {
 			memmapped += xtlb->e_tlb.tlb_size;
+			/*
+			 * Let make sure main memory is setup so it's memory
+			 * coherent.  For some reason u-boot doesn't set it up
+			 * that way.
+			 */
+			if ((xtlb->e_hwtlb.hwtlb_mas2 & MAS2_M) == 0) {
+				xtlb->e_hwtlb.hwtlb_mas2 |= MAS2_M;
+				hwtlb_write(xtlb->e_hwtlb, true);
+			}
 		}
 	}
 

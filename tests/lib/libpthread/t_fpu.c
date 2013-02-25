@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpu.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $ */
+/* $NetBSD: t_fpu.c,v 1.1.12.1 2013/02/25 00:30:23 tls Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_fpu.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $");
+__RCSID("$NetBSD: t_fpu.c,v 1.1.12.1 2013/02/25 00:30:23 tls Exp $");
 
 /*
  * This is adapted from part of csw/cstest of the MPD implementation by
@@ -137,7 +137,7 @@ ATF_TC_BODY(fpu, tc)
 	pthread_create(&s5, 0, stir, stirseed);
 	recurse();
 
-	atf_tc_fail("exitting from main");
+	atf_tc_fail("exiting from main");
 }
 
 ATF_TP_ADD_TCS(tp)

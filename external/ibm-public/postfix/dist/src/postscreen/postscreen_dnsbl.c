@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_dnsbl.c,v 1.1.1.2 2011/03/23 19:07:49 tron Exp $	*/
+/*	$NetBSD: postscreen_dnsbl.c,v 1.1.1.2.10.1 2013/02/25 00:27:26 tls Exp $	*/
 
 /*++
 /* NAME
@@ -263,6 +263,9 @@ static void psc_dnsbl_add_site(const char *site)
 	if (psc_dnsbl_reply == 0
 	 || (head->safe_dnsbl = dict_get(psc_dnsbl_reply, saved_site)) == 0)
 	    head->safe_dnsbl = ht->key;
+	if (psc_dnsbl_reply && psc_dnsbl_reply->error)
+	    msg_fatal("%s:%s lookup error", psc_dnsbl_reply->type,
+		      psc_dnsbl_reply->name);
 	head->first = 0;
     }
 

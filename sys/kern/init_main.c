@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.445 2012/07/29 18:05:48 mlelstv Exp $	*/
+/*	$NetBSD: init_main.c,v 1.445.2.1 2013/02/25 00:29:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.445 2012/07/29 18:05:48 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.445.2.1 2013/02/25 00:29:49 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -234,11 +234,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.445 2012/07/29 18:05:48 mlelstv Exp 
 #include <net/raw_cb.h>
 
 #include <prop/proplib.h>
-
-#ifdef COMPAT_50
-#include <compat/sys/time.h>
-struct timeval50 boottime50;
-#endif
 
 #include <sys/userconf.h>
 
@@ -664,13 +659,7 @@ main(void)
 	 */
 	getnanotime(&time);
 	boottime = time;
-#ifdef COMPAT_50
-	{
-		struct timeval tv;
-		TIMESPEC_TO_TIMEVAL(&tv, &time);
-		timeval_to_timeval50(&tv, &boottime50);
-	}
-#endif
+
 	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & PK_MARKER) == 0);
@@ -1125,7 +1114,7 @@ banner(void)
 	static char notice[] = " Notice: this software is "
 	    "protected by copyright";
 	char pbuf[81];
-	void (*pr)(const char *, ...);
+	void (*pr)(const char *, ...) __printflike(1, 2);
 	int i;
 
 	if ((boothowto & AB_SILENT) != 0) {

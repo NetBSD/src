@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 2012/08/28 15:54:40 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.74.2.1 2013/02/25 00:28:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2012/08/28 15:54:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74.2.1 2013/02/25 00:28:19 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -199,7 +199,7 @@ trap_print(const struct trapframe *frame, const lwp_t *l)
 	    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
 	    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
 
-	printf("curlwp %p pid %d lid %d lowest kstack %p\n",
+	printf("curlwp %p pid %d.%d lowest kstack %p\n",
 	    l, l->l_proc->p_pid, l->l_lid, KSTACK_LOWEST_ADDR(l));
 }
 
@@ -390,8 +390,8 @@ kernelfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d (%s): BUS/SEGV (%x) at rip %lx addr %lx\n",
-		    p->p_pid, p->p_comm, type, frame->tf_rip, rcr2());
+		printf("pid %d.%d (%s): BUS/SEGV (%x) at rip %lx addr %lx\n",
+		    p->p_pid, l->l_lid, p->p_comm, type, frame->tf_rip, rcr2());
 		frame_dump(frame);
 #endif
 		KSI_INIT_TRAP(&ksi);
@@ -424,8 +424,8 @@ kernelfault:
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d (%s): ILL at rip %lx addr %lx\n",
-		    p->p_pid, p->p_comm, frame->tf_rip, rcr2());
+		printf("pid %d.%d (%s): ILL at rip %lx addr %lx\n",
+		    p->p_pid, l->l_lid, p->p_comm, frame->tf_rip, rcr2());
 		frame_dump(frame);
 #endif
 		KSI_INIT_TRAP(&ksi);
@@ -463,8 +463,8 @@ kernelfault:
 
 #if 0 /* handled by fpudna() */
 	case T_DNA|T_USER: {
-		printf("pid %d killed due to lack of floating point\n",
-		    p->p_pid);
+		printf("pid %d.%d killed due to lack of floating point\n",
+		    p->p_pid, l->l_lid);
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGKILL;
 		ksi.ksi_trap = type & ~T_USER;
@@ -639,14 +639,14 @@ faultcommon:
 		}
 		if (error == ENOMEM) {
 			ksi.ksi_signo = SIGKILL;
-			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
-			       p->p_pid, p->p_comm,
+			printf("UVM: pid %d.%d (%s), uid %d killed: out of swap\n",
+			       p->p_pid, l->l_lid, p->p_comm,
 			       l->l_cred ?
 			       kauth_cred_geteuid(l->l_cred) : -1);
 		} else {
 #ifdef TRAP_SIGDEBUG
-			printf("pid %d (%s): SEGV at rip %lx addr %lx\n",
-			    p->p_pid, p->p_comm, frame->tf_rip, va);
+			printf("pid %d.%d (%s): SEGV at rip %lx addr %lx\n",
+			    p->p_pid, l->l_lid, p->p_comm, frame->tf_rip, va);
 			frame_dump(frame);
 #endif
 			ksi.ksi_signo = SIGSEGV;

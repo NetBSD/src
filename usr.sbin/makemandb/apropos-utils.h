@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.h,v 1.3.2.1 2012/11/20 03:03:02 tls Exp $	*/
+/*	$NetBSD: apropos-utils.h,v 1.3.2.2 2013/02/25 00:30:45 tls Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -79,6 +79,8 @@ typedef struct query_args {
 		const char *, size_t);	// The callback function
 	void *callback_data;	// data to pass to the callback function
 	char **errmsg;		// buffer for storing the error msg
+	int  flags;
+#define APROPOS_NOFORMAT 1
 } query_args;
 
 char *lower(char *);
@@ -90,4 +92,5 @@ char *get_dbpath(const char *);
 int run_query(sqlite3 *, const char *[3], query_args *);
 int run_query_html(sqlite3 *, query_args *);
 int run_query_pager(sqlite3 *, query_args *);
-#endif 
+int run_query_term(sqlite3 *, query_args *);
+#endif

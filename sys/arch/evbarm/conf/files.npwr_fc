@@ -1,11 +1,7 @@
-#	$NetBSD: files.npwr_fc,v 1.2 2007/12/03 15:33:31 ad Exp $
+#	$NetBSD: files.npwr_fc,v 1.2.62.1 2013/02/25 00:28:35 tls Exp $
 #
 # Intel IQ80321 evaluation board configuration info
 #
-
-# Use the shared initarm_common() code.
-# XXX: Not yet ready for prime-time
-#file	arch/evbarm/evbarm/initarm_common.c
 
 file	arch/evbarm/npwr_fc/npwr_fc_machdep.c
 file	arch/evbarm/npwr_fc/npwr_fc_pci.c

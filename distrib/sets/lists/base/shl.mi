@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.635.2.1 2012/11/20 02:57:46 tls Exp $
+# $NetBSD: shl.mi,v 1.635.2.2 2013/02/25 00:24:30 tls Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -21,13 +21,13 @@
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
 ./lib/libcrypto.so				base-crypto-shlib	crypto,dynamicroot
 ./lib/libcrypto.so.8				base-crypto-shlib	crypto,dynamicroot
-./lib/libcrypto.so.8.0				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.8.1				base-crypto-shlib	crypto,dynamicroot
 ./lib/libdevmapper.so				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
 ./lib/libedit.so				base-sys-shlib		dynamicroot
 ./lib/libedit.so.3				base-sys-shlib		dynamicroot
-./lib/libedit.so.3.0				base-sys-shlib		dynamicroot
+./lib/libedit.so.3.1				base-sys-shlib		dynamicroot
 ./lib/libevent.so				base-sys-shlib		dynamicroot
 ./lib/libevent.so.3				base-sys-shlib		dynamicroot
 ./lib/libevent.so.3.2				base-sys-shlib		dynamicroot
@@ -46,6 +46,9 @@
 ./lib/liblzma.so				base-sys-shlib		dynamicroot
 ./lib/liblzma.so.1				base-sys-shlib		dynamicroot
 ./lib/liblzma.so.1.1				base-sys-shlib		dynamicroot
+./lib/libnpf.so					base-sys-shlib		dynamicroot
+./lib/libnpf.so.0				base-sys-shlib		dynamicroot
+./lib/libnpf.so.0.0				base-sys-shlib		dynamicroot
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
 ./lib/libm.so.0.10				base-sys-shlib		dynamicroot
@@ -167,7 +170,7 @@
 ./usr/lib/libbfd.so.12.0			base-sys-shlib		binutils
 ./usr/lib/libbind9.so				base-bind-shlib
 ./usr/lib/libbind9.so.5				base-bind-shlib
-./usr/lib/libbind9.so.5.7			base-bind-shlib
+./usr/lib/libbind9.so.5.8			base-bind-shlib
 ./usr/lib/libbluetooth.so			base-sys-shlib
 ./usr/lib/libbluetooth.so.4			base-sys-shlib
 ./usr/lib/libbluetooth.so.4.2			base-sys-shlib
@@ -189,7 +192,7 @@
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib
 ./usr/lib/libcrypto.so				base-crypto-shlib	crypto
 ./usr/lib/libcrypto.so.8			base-crypto-shlib	crypto
-./usr/lib/libcrypto.so.8.0			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.8.1			base-crypto-shlib	crypto
 ./usr/lib/libcrypto_idea.so.7			base-obsolete		obsolete
 ./usr/lib/libcrypto_idea.so.7.0			base-obsolete		obsolete
 ./usr/lib/libcrypto_mdc2.so.7			base-obsolete		obsolete
@@ -215,7 +218,7 @@
 ./usr/lib/libdm.so.0.0				base-sys-shlib
 ./usr/lib/libdns.so				base-bind-shlib
 ./usr/lib/libdns.so.5				base-bind-shlib
-./usr/lib/libdns.so.5.7				base-bind-shlib
+./usr/lib/libdns.so.5.8				base-bind-shlib
 ./usr/lib/libdns_sd.so				base-mdns-shlib		mdns
 ./usr/lib/libdns_sd.so.0			base-mdns-shlib		mdns
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		mdns
@@ -224,10 +227,10 @@
 ./usr/lib/libdtrace.so.2.0			base-sys-shlib		dtrace
 ./usr/lib/libdwarf.so				base-sys-shlib
 ./usr/lib/libdwarf.so.0				base-sys-shlib
-./usr/lib/libdwarf.so.0.0			base-sys-shlib
+./usr/lib/libdwarf.so.0.1			base-sys-shlib
 ./usr/lib/libedit.so				base-sys-shlib
 ./usr/lib/libedit.so.3				base-sys-shlib
-./usr/lib/libedit.so.3.0			base-sys-shlib
+./usr/lib/libedit.so.3.1			base-sys-shlib
 ./usr/lib/libelf.so				base-sys-shlib
 ./usr/lib/libelf.so.0				base-sys-shlib
 ./usr/lib/libelf.so.0.0				base-sys-shlib
@@ -281,13 +284,13 @@
 ./usr/lib/libipsec.so.3.0			base-net-shlib
 ./usr/lib/libisc.so				base-bind-shlib
 ./usr/lib/libisc.so.5				base-bind-shlib
-./usr/lib/libisc.so.5.7				base-bind-shlib
+./usr/lib/libisc.so.5.8				base-bind-shlib
 ./usr/lib/libisccc.so				base-bind-shlib
 ./usr/lib/libisccc.so.5				base-bind-shlib
-./usr/lib/libisccc.so.5.7			base-bind-shlib
+./usr/lib/libisccc.so.5.8			base-bind-shlib
 ./usr/lib/libisccfg.so				base-bind-shlib
 ./usr/lib/libisccfg.so.5			base-bind-shlib
-./usr/lib/libisccfg.so.5.7			base-bind-shlib
+./usr/lib/libisccfg.so.5.8			base-bind-shlib
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi
@@ -328,9 +331,12 @@
 ./usr/lib/liblua.so				base-sys-shlib
 ./usr/lib/liblua.so.1				base-sys-shlib
 ./usr/lib/liblua.so.1.0				base-sys-shlib
+./usr/lib/liblutok.so				base-sys-shlib		kyua
+./usr/lib/liblutok.so.1				base-sys-shlib		kyua
+./usr/lib/liblutok.so.1.0			base-sys-shlib		kyua
 ./usr/lib/liblwres.so				base-bind-shlib
 ./usr/lib/liblwres.so.5				base-bind-shlib
-./usr/lib/liblwres.so.5.7			base-bind-shlib
+./usr/lib/liblwres.so.5.8			base-bind-shlib
 ./usr/lib/liblzma.so				base-sys-shlib
 ./usr/lib/liblzma.so.1				base-sys-shlib
 ./usr/lib/liblzma.so.1.1			base-sys-shlib
@@ -341,8 +347,8 @@
 ./usr/lib/libm.so.0				base-sys-shlib
 ./usr/lib/libm.so.0.10				base-sys-shlib
 ./usr/lib/libmagic.so				base-sys-shlib
-./usr/lib/libmagic.so.3				base-sys-shlib
-./usr/lib/libmagic.so.3.1			base-sys-shlib
+./usr/lib/libmagic.so.4				base-sys-shlib
+./usr/lib/libmagic.so.4.0			base-sys-shlib
 ./usr/lib/libmenu.so				base-sys-shlib
 ./usr/lib/libmenu.so.6				base-sys-shlib
 ./usr/lib/libmenu.so.6.0			base-sys-shlib
@@ -352,6 +358,9 @@
 ./usr/lib/libnetpgp.so				base-crypto-shlib	crypto
 ./usr/lib/libnetpgp.so.3			base-crypto-shlib	crypto
 ./usr/lib/libnetpgp.so.3.0			base-crypto-shlib	crypto
+./usr/lib/libnetpgpverify.so			base-crypto-shlib	crypto
+./usr/lib/libnetpgpverify.so.4			base-crypto-shlib	crypto
+./usr/lib/libnetpgpverify.so.4.0		base-crypto-shlib	crypto
 ./usr/lib/libnpf.so				base-npf-shlib		npf
 ./usr/lib/libnpf.so.0				base-npf-shlib		npf
 ./usr/lib/libnpf.so.0.0				base-npf-shlib		npf
@@ -669,11 +678,11 @@
 ./usr/lib/libsqlite3.so.1.1			base-sys-shlib
 ./usr/lib/libss.so				base-obsolete		obsolete
 ./usr/lib/libssh.so				base-secsh-shlib	crypto
-./usr/lib/libssh.so.19				base-secsh-shlib	crypto
-./usr/lib/libssh.so.19.0			base-secsh-shlib	crypto
+./usr/lib/libssh.so.20				base-secsh-shlib	crypto
+./usr/lib/libssh.so.20.0			base-secsh-shlib	crypto
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
 ./usr/lib/libssl.so.10				base-crypto-shlib	crypto
-./usr/lib/libssl.so.10.0				base-crypto-shlib	crypto
+./usr/lib/libssl.so.10.1				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so				base-sys-shlib		gcc,cxx
 ./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx
@@ -691,10 +700,14 @@
 ./usr/lib/libtermlib.so				base-sys-shlib
 ./usr/lib/libtermlib.so.0			base-sys-shlib
 ./usr/lib/libtermlib.so.0.6			base-sys-shlib
-./usr/lib/libtpm_unseal.so.1.0			base-tmp-shlib		tpm
+./usr/lib/libtpm_unseal.so			base-sys-shlib		tpm
+./usr/lib/libtpm_unseal.so.1			base-sys-shlib		tpm
+./usr/lib/libtpm_unseal.so.1.0			base-sys-shlib		tpm
 ./usr/lib/libtre.so				base-sys-shlib
 ./usr/lib/libtre.so.0				base-sys-shlib
 ./usr/lib/libtre.so.0.8				base-sys-shlib
+./usr/lib/libtspi.so				base-sys-shlib		tpm
+./usr/lib/libtspi.so.3				base-sys-shlib		tpm
 ./usr/lib/libtspi.so.3.0			base-sys-shlib		tpm
 ./usr/lib/libukfs.so				base-sys-shlib		rump
 ./usr/lib/libukfs.so.1				base-sys-shlib		rump
@@ -735,6 +748,9 @@
 ./usr/lib/npf/ext_normalise.so			base-npf-shlib		npf
 ./usr/lib/npf/ext_normalise.so.0		base-npf-shlib		npf
 ./usr/lib/npf/ext_normalise.so.0.0		base-npf-shlib		npf
+./usr/lib/npf/ext_rndblock.so			base-npf-shlib		npf
+./usr/lib/npf/ext_rndblock.so.0		base-npf-shlib		npf
+./usr/lib/npf/ext_rndblock.so.0.0		base-npf-shlib		npf
 ./usr/lib/nss_mdns.so.0				base-obsolete		obsolete
 ./usr/lib/nss_mdnsd.so.0			base-mdns-shlib		mdns
 ./usr/lib/nss_multicast_dns.so.0		base-mdns-shlib		mdns

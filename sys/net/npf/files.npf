@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.7.2.1 2012/11/20 03:02:47 tls Exp $
+# $NetBSD: files.npf,v 1.7.2.2 2013/02/25 00:30:02 tls Exp $
 #
 # Public Domain.
 #
@@ -11,6 +11,7 @@ defpseudo	npf:	ifnet
 
 # Core
 file	net/npf/npf.c				npf
+file	net/npf/npf_conf.c			npf
 file	net/npf/npf_ctl.c			npf
 file	net/npf/npf_handler.c			npf
 file	net/npf/npf_instr.c			npf
@@ -31,6 +32,7 @@ file	net/npf/npf_sendpkt.c			npf
 # Built-in extensions.
 file	net/npf/npf_ext_log.c			npf
 file	net/npf/npf_ext_normalise.c		npf
+file	net/npf/npf_ext_rndblock.c		npf
 
 # ALGs
 file	net/npf/npf_alg_icmp.c			npf

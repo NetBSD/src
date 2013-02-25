@@ -1,4 +1,4 @@
-.\" $NetBSD: cgd.4,v 1.16 2010/04/15 09:56:56 wiz Exp $
+.\" $NetBSD: cgd.4,v 1.16.14.1 2013/02/25 00:28:13 tls Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 15, 2010
+.Dd December 3, 2012
 .Dt CGD 4
 .Os
 .Sh NAME
@@ -147,6 +147,9 @@ sets up the encryption parameters and points the
 at the underlying disk.
 .It Dv CGDIOCCLR
 Unconfigure the
+.Nm .
+.It Dv CGDIOCGET
+Get info about the
 .Nm .
 .El
 .Pp

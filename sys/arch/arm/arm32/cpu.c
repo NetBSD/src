@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.86.2.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: cpu.c,v 1.86.2.2 2013/02/25 00:28:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86.2.1 2012/11/20 03:01:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86.2.2 2013/02/25 00:28:24 tls Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -60,12 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86.2.1 2012/11/20 03:01:02 tls Exp $");
 #include <arm/cpuconf.h>
 #include <arm/undefined.h>
 
-#ifdef ARMFPE
-#include <machine/bootconfig.h> /* For boot args */
-#include <arm/fpe-arm/armfpe.h>
-#endif
-
 char cpu_model[256];
+extern const char *cpu_arch;
 
 #ifdef MULTIPROCESSOR
 volatile u_int arm_cpu_hatched = 0;
@@ -209,39 +205,6 @@ cpu_attach(device_t dv, cpuid_t id)
  	}
 #endif
 
-#ifdef ARMFPE
-	/*
-	 * Ok now we test for an FPA
-	 * At this point no floating point emulator has been installed.
-	 * This means any FP instruction will cause undefined exception.
-	 * We install a temporay coproc 1 handler which will modify
-	 * undefined_test if it is called.
-	 * We then try to read the FP status register. If undefined_test
-	 * has been decremented then the instruction was not handled by
-	 * an FPA so we know the FPA is missing. If undefined_test is
-	 * still 1 then we know the instruction was handled by an FPA.
-	 * We then remove our test handler and look at the
-	 * FP status register for identification.
-	 */
- 
-	/*
-	 * Ok if ARMFPE is defined and the boot options request the 
-	 * ARM FPE then it will be installed as the FPE.
-	 * This is just while I work on integrating the new FPE.
-	 * It means the new FPE gets installed if compiled int (ARMFPE
-	 * defined) and also gives me a on/off option when I boot in
-	 * case the new FPE is causing panics.
-	 */
-
-
-	int usearmfpe = 1;
-	if (boot_args)
-		get_bootconf_option(boot_args, "armfpe",
-		    BOOTOPT_TYPE_BOOLEAN, &usearmfpe);
-	if (usearmfpe)
-		initialise_arm_fpe();
-#endif
-
 	vfp_attach();		/* XXX SMP */
 }
 
@@ -367,161 +330,164 @@ struct cpuidtab {
 	enum		cpu_class cpu_class;
 	const char	*cpu_classname;
 	const char * const *cpu_steppings;
+	char		cpu_arch[8];
 };
 
 const struct cpuidtab cpuids[] = {
 	{ CPU_ID_ARM2,		CPU_CLASS_ARM2,		"ARM2",
-	  generic_steppings },
+	  generic_steppings, "2" },
 	{ CPU_ID_ARM250,	CPU_CLASS_ARM2AS,	"ARM250",
-	  generic_steppings },
+	  generic_steppings, "2" },
 
 	{ CPU_ID_ARM3,		CPU_CLASS_ARM3,		"ARM3",
-	  generic_steppings },
+	  generic_steppings, "2A" },
 
 	{ CPU_ID_ARM600,	CPU_CLASS_ARM6,		"ARM600",
-	  generic_steppings },
+	  generic_steppings, "3" },
 	{ CPU_ID_ARM610,	CPU_CLASS_ARM6,		"ARM610",
-	  generic_steppings },
+	  generic_steppings, "3" },
 	{ CPU_ID_ARM620,	CPU_CLASS_ARM6,		"ARM620",
-	  generic_steppings },
+	  generic_steppings, "3" },
 
 	{ CPU_ID_ARM700,	CPU_CLASS_ARM7,		"ARM700",
-	  generic_steppings },
+	  generic_steppings, "3" },
 	{ CPU_ID_ARM710,	CPU_CLASS_ARM7,		"ARM710",
-	  generic_steppings },
+	  generic_steppings, "3" },
 	{ CPU_ID_ARM7500,	CPU_CLASS_ARM7,		"ARM7500",
-	  generic_steppings },
+	  generic_steppings, "3" },
 	{ CPU_ID_ARM710A,	CPU_CLASS_ARM7,		"ARM710a",
-	  generic_steppings },
+	  generic_steppings, "3" },
 	{ CPU_ID_ARM7500FE,	CPU_CLASS_ARM7,		"ARM7500FE",
-	  generic_steppings },
-	{ CPU_ID_ARM710T,	CPU_CLASS_ARM7TDMI,	"ARM710T",
-	  generic_steppings },
-	{ CPU_ID_ARM720T,	CPU_CLASS_ARM7TDMI,	"ARM720T",
-	  generic_steppings },
-	{ CPU_ID_ARM740T8K,	CPU_CLASS_ARM7TDMI, "ARM740T (8 KB cache)",
-	  generic_steppings },
-	{ CPU_ID_ARM740T4K,	CPU_CLASS_ARM7TDMI, "ARM740T (4 KB cache)",
-	  generic_steppings },
+	  generic_steppings, "3" },
 
 	{ CPU_ID_ARM810,	CPU_CLASS_ARM8,		"ARM810",
-	  generic_steppings },
-
-	{ CPU_ID_ARM920T,	CPU_CLASS_ARM9TDMI,	"ARM920T",
-	  generic_steppings },
-	{ CPU_ID_ARM922T,	CPU_CLASS_ARM9TDMI,	"ARM922T",
-	  generic_steppings },
-	{ CPU_ID_ARM926EJS,	CPU_CLASS_ARM9EJS,	"ARM926EJ-S",
-	  generic_steppings },
-	{ CPU_ID_ARM940T,	CPU_CLASS_ARM9TDMI,	"ARM940T",
-	  generic_steppings },
-	{ CPU_ID_ARM946ES,	CPU_CLASS_ARM9ES,	"ARM946E-S",
-	  generic_steppings },
-	{ CPU_ID_ARM966ES,	CPU_CLASS_ARM9ES,	"ARM966E-S",
-	  generic_steppings },
-	{ CPU_ID_ARM966ESR1,	CPU_CLASS_ARM9ES,	"ARM966E-S",
-	  generic_steppings },
-	{ CPU_ID_TI925T,	CPU_CLASS_ARM9TDMI,	"TI ARM925T",
-	  generic_steppings },
-	{ CPU_ID_MV88SV131,	CPU_CLASS_ARM9ES,	"Sheeva 88SV131",
-	  generic_steppings },
-	{ CPU_ID_MV88FR571_VD,	CPU_CLASS_ARM9ES,	"Sheeva 88FR571-vd",
-	  generic_steppings },
-
-	{ CPU_ID_ARM1020E,	CPU_CLASS_ARM10E,	"ARM1020E",
-	  generic_steppings },
-	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022E-S",
-	  generic_steppings },
-	{ CPU_ID_ARM1026EJS,	CPU_CLASS_ARM10EJ,	"ARM1026EJ-S",
-	  generic_steppings },
+	  generic_steppings, "4" },
 
 	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110",
-	  sa110_steppings },
+	  sa110_steppings, "4" },
 	{ CPU_ID_SA1100,	CPU_CLASS_SA1,		"SA-1100",
-	  sa1100_steppings },
+	  sa1100_steppings, "4" },
 	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110",
-	  sa1110_steppings },
+	  sa1110_steppings, "4" },
+
+	{ CPU_ID_FA526,		CPU_CLASS_ARMV4,	"FA526",
+	  generic_steppings, "4" },
 
 	{ CPU_ID_IXP1200,	CPU_CLASS_SA1,		"IXP1200",
-	  ixp12x0_steppings },
+	  ixp12x0_steppings, "4" },
+
+	{ CPU_ID_ARM710T,	CPU_CLASS_ARM7TDMI,	"ARM710T",
+	  generic_steppings, "4T" },
+	{ CPU_ID_ARM720T,	CPU_CLASS_ARM7TDMI,	"ARM720T",
+	  generic_steppings, "4T" },
+	{ CPU_ID_ARM740T8K,	CPU_CLASS_ARM7TDMI, "ARM740T (8 KB cache)",
+	  generic_steppings, "4T" },
+	{ CPU_ID_ARM740T4K,	CPU_CLASS_ARM7TDMI, "ARM740T (4 KB cache)",
+	  generic_steppings, "4T" },
+	{ CPU_ID_ARM920T,	CPU_CLASS_ARM9TDMI,	"ARM920T",
+	  generic_steppings, "4T" },
+	{ CPU_ID_ARM922T,	CPU_CLASS_ARM9TDMI,	"ARM922T",
+	  generic_steppings, "4T" },
+	{ CPU_ID_ARM940T,	CPU_CLASS_ARM9TDMI,	"ARM940T",
+	  generic_steppings, "4T" },
+	{ CPU_ID_TI925T,	CPU_CLASS_ARM9TDMI,	"TI ARM925T",
+	  generic_steppings, "4T" },
+
+	{ CPU_ID_ARM946ES,	CPU_CLASS_ARM9ES,	"ARM946E-S",
+	  generic_steppings, "5TE" },
+	{ CPU_ID_ARM966ES,	CPU_CLASS_ARM9ES,	"ARM966E-S",
+	  generic_steppings, "5TE" },
+	{ CPU_ID_ARM966ESR1,	CPU_CLASS_ARM9ES,	"ARM966E-S",
+	  generic_steppings, "5TE" },
+	{ CPU_ID_MV88SV131,	CPU_CLASS_ARM9ES,	"Sheeva 88SV131",
+	  generic_steppings, "5TE" },
+	{ CPU_ID_MV88FR571_VD,	CPU_CLASS_ARM9ES,	"Sheeva 88FR571-vd",
+	  generic_steppings, "5TE" },
 
 	{ CPU_ID_80200,		CPU_CLASS_XSCALE,	"i80200",
-	  xscale_steppings },
+	  xscale_steppings, "5TE" },
 
 	{ CPU_ID_80321_400,	CPU_CLASS_XSCALE,	"i80321 400MHz",
-	  i80321_steppings },
+	  i80321_steppings, "5TE" },
 	{ CPU_ID_80321_600,	CPU_CLASS_XSCALE,	"i80321 600MHz",
-	  i80321_steppings },
+	  i80321_steppings, "5TE" },
 	{ CPU_ID_80321_400_B0,	CPU_CLASS_XSCALE,	"i80321 400MHz",
-	  i80321_steppings },
+	  i80321_steppings, "5TE" },
 	{ CPU_ID_80321_600_B0,	CPU_CLASS_XSCALE,	"i80321 600MHz",
-	  i80321_steppings },
+	  i80321_steppings, "5TE" },
 
 	{ CPU_ID_80219_400,	CPU_CLASS_XSCALE,	"i80219 400MHz",
-	  i80219_steppings },
+	  i80219_steppings, "5TE" },
 	{ CPU_ID_80219_600,	CPU_CLASS_XSCALE,	"i80219 600MHz",
-	  i80219_steppings },
+	  i80219_steppings, "5TE" },
 
 	{ CPU_ID_PXA27X,	CPU_CLASS_XSCALE,	"PXA27x",
-	  pxa27x_steppings },
+	  pxa27x_steppings, "5TE" },
 	{ CPU_ID_PXA250A,	CPU_CLASS_XSCALE,	"PXA250",
-	  pxa2x0_steppings },
+	  pxa2x0_steppings, "5TE" },
 	{ CPU_ID_PXA210A,	CPU_CLASS_XSCALE,	"PXA210",
-	  pxa2x0_steppings },
+	  pxa2x0_steppings, "5TE" },
 	{ CPU_ID_PXA250B,	CPU_CLASS_XSCALE,	"PXA250",
-	  pxa2x0_steppings },
+	  pxa2x0_steppings, "5TE" },
 	{ CPU_ID_PXA210B,	CPU_CLASS_XSCALE,	"PXA210",
-	  pxa2x0_steppings },
+	  pxa2x0_steppings, "5TE" },
 	{ CPU_ID_PXA250C, 	CPU_CLASS_XSCALE,	"PXA255/26x",
-	  pxa255_steppings },
+	  pxa255_steppings, "5TE" },
 	{ CPU_ID_PXA210C, 	CPU_CLASS_XSCALE,	"PXA210",
-	  pxa2x0_steppings },
+	  pxa2x0_steppings, "5TE" },
 
 	{ CPU_ID_IXP425_533,	CPU_CLASS_XSCALE,	"IXP425 533MHz",
-	  ixp425_steppings },
+	  ixp425_steppings, "5TE" },
 	{ CPU_ID_IXP425_400,	CPU_CLASS_XSCALE,	"IXP425 400MHz",
-	  ixp425_steppings },
+	  ixp425_steppings, "5TE" },
 	{ CPU_ID_IXP425_266,	CPU_CLASS_XSCALE,	"IXP425 266MHz",
-	  ixp425_steppings },
+	  ixp425_steppings, "5TE" },
+
+	{ CPU_ID_ARM1020E,	CPU_CLASS_ARM10E,	"ARM1020E",
+	  generic_steppings, "5TE" },
+	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022E-S",
+	  generic_steppings, "5TE" },
+
+	{ CPU_ID_ARM1026EJS,	CPU_CLASS_ARM10EJ,	"ARM1026EJ-S",
+	  generic_steppings, "5TEJ" },
+	{ CPU_ID_ARM926EJS,	CPU_CLASS_ARM9EJS,	"ARM926EJ-S",
+	  generic_steppings, "5TEJ" },
 
 	{ CPU_ID_ARM1136JS,	CPU_CLASS_ARM11J,	"ARM1136J-S r0",
-	  pN_steppings },
+	  pN_steppings, "6J" },
 	{ CPU_ID_ARM1136JSR1,	CPU_CLASS_ARM11J,	"ARM1136J-S r1",
-	  pN_steppings },
+	  pN_steppings, "6J" },
 #if 0
 	/* The ARM1156T2-S only has a memory protection unit */
 	{ CPU_ID_ARM1156T2S,	CPU_CLASS_ARM11J,	"ARM1156T2-S r0",
-	  pN_steppings },
+	  pN_steppings, "6T2" },
 #endif
 	{ CPU_ID_ARM1176JZS,	CPU_CLASS_ARM11J,	"ARM1176JZ-S r0",
-	  pN_steppings },
+	  pN_steppings, "6ZK" },
 
 	{ CPU_ID_ARM11MPCORE,	CPU_CLASS_ARM11J, 	"ARM11 MPCore",
-	  generic_steppings },
+	  generic_steppings, "6K" },
 
 	{ CPU_ID_CORTEXA5R0,	CPU_CLASS_CORTEX,	"Cortex-A5 r0",
-	  pN_steppings },
+	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA8R1,	CPU_CLASS_CORTEX,	"Cortex-A8 r1",
-	  pN_steppings },
+	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA8R2,	CPU_CLASS_CORTEX,	"Cortex-A8 r2",
-	  pN_steppings },
+	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA8R3,	CPU_CLASS_CORTEX,	"Cortex-A8 r3",
-	  pN_steppings },
+	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA9R2,	CPU_CLASS_CORTEX,	"Cortex-A9 r2",
-	  pN_steppings },
+	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA9R3,	CPU_CLASS_CORTEX,	"Cortex-A9 r3",
-	  pN_steppings },
+	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA9R4,	CPU_CLASS_CORTEX,	"Cortex-A9 r4",
-	  pN_steppings },
+	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA15R2,	CPU_CLASS_CORTEX,	"Cortex-A15 r2",
-	  pN_steppings },
+	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA15R3,	CPU_CLASS_CORTEX,	"Cortex-A15 r3",
-	  pN_steppings },
+	  pN_steppings, "7A" },
 
-	{ CPU_ID_FA526,		CPU_CLASS_ARMV4,	"FA526",
-	  generic_steppings },
-
-	{ 0, CPU_CLASS_NONE, NULL, NULL }
+	{ 0, CPU_CLASS_NONE, NULL, NULL, "" }
 };
 
 struct cpu_classtab {
@@ -611,18 +577,21 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 	for (i = 0; cpuids[i].cpuid != 0; i++)
 		if (cpuids[i].cpuid == (cpuid & CPU_ID_CPU_MASK)) {
 			cpu_class = cpuids[i].cpu_class;
+			cpu_arch = cpuids[i].cpu_arch;
 			steppingstr = cpuids[i].cpu_steppings[cpuid &
-			    CPU_ID_REVISION_MASK],
-			sprintf(cpu_model, "%s%s%s (%s core)",
-			    cpuids[i].cpu_classname,
+			    CPU_ID_REVISION_MASK];
+			snprintf(cpu_model, sizeof(cpu_model),
+			    "%s%s%s (%s V%s core)", cpuids[i].cpu_classname,
 			    steppingstr[0] == '*' ? "" : " ",
 			    &steppingstr[steppingstr[0] == '*'],
-			    cpu_classes[cpu_class].class_name);
+			    cpu_classes[cpu_class].class_name,
+			    cpu_arch);
 			break;
 		}
 
 	if (cpuids[i].cpuid == 0)
-		sprintf(cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
+		snprintf(cpu_model, sizeof(cpu_model),
+		    "unknown CPU (ID = 0x%x)", cpuid);
 
 	if (ci->ci_data.cpu_cc_freq != 0) {
 		char freqbuf[8];
@@ -685,11 +654,10 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 
 	aprint_normal("\n");
 
-#if defined(CPU_CORTEX)
-	if (CPU_ID_CORTEX_P(cpuid)) {
+	if (CPU_ID_CORTEX_P(cpuid) || CPU_ID_ARM11_P(cpuid)) {
 		identify_features(dv);
 	}
-#endif
+
 	/* Print cache info. */
 	if (arm_pcache.icache_line_size != 0 || arm_pcache.dcache_line_size != 0) {
 		print_cache_info(dv, &arm_pcache, 0);
@@ -764,42 +732,57 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 	}
 }
 
-#if defined(CPU_CORTEX)
+extern int cpu_instruction_set_attributes[6];
+extern int cpu_memory_model_features[4];
+extern int cpu_processor_features[2];
+extern int cpu_simd_present;
+extern int cpu_simdex_present;
+
 void
 identify_features(device_t dv)
 {
-	uint32_t isar0 = armreg_isar0_read();
-	uint32_t isar1 = armreg_isar1_read();
-	uint32_t isar2 = armreg_isar2_read();
-	uint32_t isar3 = armreg_isar3_read();
-	uint32_t isar4 = armreg_isar4_read();
-	uint32_t isar5 = armreg_isar5_read();
+	cpu_instruction_set_attributes[0] = armreg_isar0_read();
+	cpu_instruction_set_attributes[1] = armreg_isar1_read();
+	cpu_instruction_set_attributes[2] = armreg_isar2_read();
+	cpu_instruction_set_attributes[3] = armreg_isar3_read();
+	cpu_instruction_set_attributes[4] = armreg_isar4_read();
+	cpu_instruction_set_attributes[5] = armreg_isar5_read();
 
-	uint32_t mmfr0 = armreg_mmfr0_read();
-	uint32_t mmfr1 = armreg_mmfr1_read();
-	uint32_t mmfr2 = armreg_mmfr2_read();
-	uint32_t mmfr3 = armreg_mmfr3_read();
+	cpu_simd_present =
+	    ((cpu_instruction_set_attributes[3] >> 4) & 0x0f) >= 3;
+	cpu_simdex_present = cpu_simd_present
+	    && ((cpu_instruction_set_attributes[1] >> 12) & 0x0f) >= 2;
 
-	if (__SHIFTOUT(mmfr3, __BITS(23,20))) {
+	cpu_memory_model_features[0] = armreg_mmfr0_read();
+	cpu_memory_model_features[1] = armreg_mmfr1_read();
+	cpu_memory_model_features[2] = armreg_mmfr2_read();
+	cpu_memory_model_features[3] = armreg_mmfr3_read();
+
+	if (__SHIFTOUT(cpu_memory_model_features[3], __BITS(23,20))) {
 		/*
 		 * Updates to the translation tables do not require a clean
-		 * to the point of unification to ensure visibility by subsequent
-		 * translation table walks.
+		 * to the point of unification to ensure visibility by
+		 * subsequent translation table walks.
 		 */
 		pmap_needs_pte_sync = 0;
 	}
 
-	uint32_t pfr0 = armreg_pfr0_read();
-	uint32_t pfr1 = armreg_pfr1_read();
+	cpu_processor_features[0] = armreg_pfr0_read();
+	cpu_processor_features[1] = armreg_pfr1_read();
 
 	aprint_verbose_dev(dv,
 	    "isar: [0]=%#x [1]=%#x [2]=%#x [3]=%#x, [4]=%#x, [5]=%#x\n",
-	    isar0, isar1, isar2, isar3, isar4, isar5);
+	    cpu_instruction_set_attributes[0],
+	    cpu_instruction_set_attributes[1],
+	    cpu_instruction_set_attributes[2],
+	    cpu_instruction_set_attributes[3],
+	    cpu_instruction_set_attributes[4],
+	    cpu_instruction_set_attributes[5]);
 	aprint_verbose_dev(dv,
 	    "mmfr: [0]=%#x [1]=%#x [2]=%#x [3]=%#x\n",
-	    mmfr0, mmfr1, mmfr2, mmfr3);
+	    cpu_memory_model_features[0], cpu_memory_model_features[1],
+	    cpu_memory_model_features[2], cpu_memory_model_features[3]);
 	aprint_verbose_dev(dv,
 	    "pfr: [0]=%#x [1]=%#x\n",
-	    pfr0, pfr1);
+	    cpu_processor_features[0], cpu_processor_features[1]);
 }
-#endif /* CPU_CORTEX */

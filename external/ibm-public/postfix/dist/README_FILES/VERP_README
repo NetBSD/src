@@ -57,9 +57,8 @@ smtpd_authorized_verp_clients (default value: none)
     authorized_verp_clients (default: $mynetworks).
 
 disable_verp_bounces (default: no)
-    if Postfix sends one bounce report for multi-recipient VERP mail, or one
-    bounce report per recipient. The default, one per recipient, is what ezmlm
-    needs.
+    Send one bounce report for multi-recipient VERP mail, instead of one bounce
+    report per recipient. The default, one per recipient, is what ezmlm needs.
 
 UUssiinngg VVEERRPP wwiitthh mmaajjoorrddoommoo eettcc.. mmaaiilliinngg lliissttss
 
@@ -137,6 +136,16 @@ delivery. The syntax allows two forms:
 
 The first form uses the default main.cf VERP delimiters, the second form
 overrides them explicitly. The values shown are the recommended ones.
+
+You can use the smtpd_command_filter feature to append XVERP to SMTP commands
+from legacy sofware. This requires Postfix 2.7 or later.
+
+    /etc/postfix/main.cf:
+        smtpd_command_filter = pcre:/etc/postfix/append_verp.pcre
+        smtpd_authorized_verp_clients = $mynetworks
+
+    /etc/postfix/append_verp.pcre:
+        /^(MAIL FROM:<listname@example\.com>.*)/ $1 XVERP
 
 VVEERRPP ssuuppppoorrtt iinn tthhee PPoossttffiixx sseennddmmaaiill ccoommmmaanndd
 

@@ -75,4 +75,5 @@ postfix.o: ../../include/sys_defs.h
 postfix.o: ../../include/vbuf.h
 postfix.o: ../../include/vstream.h
 postfix.o: ../../include/vstring.h
+postfix.o: ../../include/warn_stat.h
 postfix.o: postfix.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.87 2012/03/28 20:11:25 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.87.2.1 2013/02/25 00:23:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.87 2012/03/28 20:11:25 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.87.2.1 2013/02/25 00:23:53 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -248,7 +248,7 @@ argstr(char *p, int flag)
 			break;
 		default:
 			STPUTC(c, expdest);
-			if (flag & EXP_IFS_SPLIT & ifs_split && strchr(ifs, c) != NULL) {
+			if (flag & ifs_split && strchr(ifs, c) != NULL) {
 				/* We need to get the output split here... */
 				recordregion(expdest - stackblock() - 1,
 						expdest - stackblock(), 0);
@@ -703,8 +703,21 @@ again: /* jump here after setting a variable with ${var=text} */
 	}
 
 
-	apply_ifs = ((varflags & VSQUOTE) == 0 ||
-		(*var == '@' && shellparam.nparam != 1));
+	if (flag & EXP_IN_QUOTES)
+		apply_ifs = 0;
+	else if (varflags & VSQUOTE) {
+		if  (*var == '@' && shellparam.nparam != 1)
+		    apply_ifs = 1;
+		else {
+		    /*
+		     * Mark so that we don't apply IFS if we recurse through
+		     * here expanding $bar from "${foo-$bar}".
+		     */
+		    flag |= EXP_IN_QUOTES;
+		    apply_ifs = 0;
+		}
+	} else
+		apply_ifs = 1;
 
 	switch (subtype) {
 	case VSLENGTH:

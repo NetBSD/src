@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.32.8.1 2012/11/20 03:03:02 tls Exp $	*/
+/*	$NetBSD: extern.h,v 1.32.8.2 2013/02/25 00:30:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,6 +42,7 @@
 #include <err.h> 
 #include <fts.h>
 #include <util.h>
+#include <stdbool.h>
 
 #if HAVE_NETDB_H
 /* For MAXHOSTNAMELEN on some platforms. */
@@ -51,6 +52,12 @@
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 256
 #endif
+
+enum flavor {
+	F_MTREE,
+	F_FREEBSD9,
+	F_NETBSD6
+};
 
 void	 addtag(slist_t *, char *);
 int	 check_excludes(const char *, const char *);
@@ -68,11 +75,14 @@ u_int	 parsetype(const char *);
 void	 read_excludes_file(const char *);
 const char *rlink(const char *);
 int	 verify(FILE *);
+void	 load_only(const char *fname);
+bool	 find_only(const char *path);
 
-extern int	dflag, eflag, iflag, jflag, lflag, mflag,
+extern int	bflag, dflag, eflag, iflag, jflag, lflag, mflag,
 		nflag, qflag, rflag, sflag, tflag, uflag;
 extern int	mtree_Mflag, mtree_Sflag, mtree_Wflag;
 extern size_t	mtree_lineno;
+extern enum flavor	flavor;
 extern u_int32_t crc_total;
 extern int	ftsoptions, keys;
 extern char	fullpath[];

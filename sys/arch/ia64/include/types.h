@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.6 2011/10/01 15:59:28 chs Exp $	*/
+/*	$NetBSD: types.h,v 1.6.12.1 2013/02/25 00:28:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,6 +75,7 @@ typedef	__volatile int		__cpu_simple_lock_t;
 #define	__HAVE_OLD_DISKLABEL
 #define	__HAVE_ATOMIC64_OPS
 /* XXX: #define	__HAVE_CPU_MAXPROC */
+#define	__HAVE_TLS_VARIANT_I
 
 #if defined(_KERNEL)
 #define __HAVE_RAS

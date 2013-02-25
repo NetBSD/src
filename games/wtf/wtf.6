@@ -1,41 +1,46 @@
-.\"	$NetBSD: wtf.6,v 1.13.12.1 2012/11/20 02:58:48 tls Exp $
+.\"	$NetBSD: wtf.6,v 1.13.12.2 2013/02/25 00:27:45 tls Exp $
 .\"
 .\" Public Domain
 .\"
-.Dd October 3, 2012
+.Dd November 20, 2012
 .Dt WTF 6
 .Os
 .Sh NAME
 .Nm wtf
-.Nd translate acronyms
+.Nd look up terms
 .Sh SYNOPSIS
 .Nm
 .Op Fl f Ar dbfile
 .Op Ar is
-.Ar acronym ...
+.Ar term ...
 .Sh DESCRIPTION
 The
 .Nm
-utility displays the expansion of one or more acronyms
-specified on the command line.
-If an acronym is not in any of the acronym databases,
+utility looks up the meaning of one or more
+.Ar term
+operands specified on the command line.
+.Pp
+.Ar term
+will first be searched for as an acronym in the acronym databases,
 which are expected to be in the format
-.Dq acronym[tab]meaning ,
+.Dq acronym[tab]meaning .
+If no match has been found,
 .Nm
-will check to see if it is known by
+will check to see if the term is known by
 .Xr whatis 1 ,
 .Xr pkg_info 1 ,
-or via pkgsrc's internal help mechanism,
+or, when called from within a pkgsrc package directory,
+pkgsrc's internal help facility,
 .Dq make help topic=XXX .
 .Pp
-If
-.Dq is
-is specified on the command line, it will be ignored, allowing the
+The optional
+.Ar is
+operand will be ignored, allowing the
 fairly natural
 .Dq wtf is WTF
 usage.
 .Pp
-The following options are available:
+The following option is available:
 .Bl -tag -width flag
 .It Fl f Ar dbfile
 Overrides the default list of acronym databases, bypassing the value of the
@@ -70,3 +75,5 @@ default computer-related acronym database.
 .Nm
 first appeared in
 .Nx 1.5 .
+Initially it only translated acronyms;
+functionality to look up the meaning of terms in other sources was added later.

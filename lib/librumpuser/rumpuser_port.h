@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.3.2.1 2012/11/20 03:00:45 tls Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.3.2.2 2013/02/25 00:28:01 tls Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -14,10 +14,6 @@
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
-
-#ifdef __sun__
-typedef long register_t;
-#endif
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
@@ -53,7 +49,9 @@ typedef long register_t;
 #include <sys/types.h>
 #include <sys/param.h>
 
-#if defined(__linux__) || defined(__sun__)
+/* maybe this should be !__NetBSD__ ? */
+#if defined(__linux__) || defined(__sun__) || defined(__FreeBSD__)	\
+    || defined(__DragonFly__) || defined(__CYGWIN__)
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -78,8 +76,10 @@ getenv_r(const char *name, char *buf, size_t buflen)
 }
 #endif
 
-/* Solarisa 10 has memalign() but no posix_memalign() */
 #if defined(__sun__)
+#include <sys/sysmacros.h>
+
+/* Solarisa 10 has memalign() but no posix_memalign() */
 #include <stdlib.h>
 
 static inline int
@@ -105,10 +105,10 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #define _DIAGASSERT(_p_)
 #endif
 
-#if defined(__linux__) || defined(__sun__)
-#define SA_SETLEN(a,b)
+#if defined(__linux__) || defined(__sun__) || defined(__CYGWIN__)
+#define SIN_SETLEN(a,b)
 #else /* BSD */
-#define SA_SETLEN(_sa_, _len_) ((struct sockaddr *)_sa_)->sa_len = _len_
+#define SIN_SETLEN(_sin_, _len_) _sin_.sin_len = _len_
 #endif
 
 #ifndef __predict_true
@@ -117,7 +117,7 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #endif
 
 #ifndef __dead
-#define __dead
+#define __dead __attribute__((__noreturn__))
 #endif
 
 #ifndef __printflike
@@ -140,8 +140,9 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #define __UNCONST(_a_) ((void *)(unsigned long)(const void *)(_a_))
 #endif
 
-#if defined(__linux__) || defined(__sun__)
+#if defined(__linux__) || defined(__sun__) || defined (__CYGWIN__)
 #define arc4random() random()
+#define RUMPUSER_USE_RANDOM
 #endif
 
 #ifndef __NetBSD_Prereq__
@@ -166,6 +167,11 @@ posix_memalign(void **ptr, size_t align, size_t size)
 /* pfft, but what are you going to do? */
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
+#endif
+
+#if defined(__sun__) && !defined(RUMP_REGISTER_T)
+#define RUMP_REGISTER_T long
+typedef RUMP_REGISTER_T register_t;
 #endif
 
 #endif /* _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_ */

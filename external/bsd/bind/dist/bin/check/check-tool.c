@@ -1,4 +1,4 @@
-/*	$NetBSD: check-tool.c,v 1.3 2012/06/05 00:38:47 christos Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.3.2.1 2013/02/25 00:25:00 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -642,6 +642,9 @@ dump_zone(const char *zonename, dns_zone_t *zone, const char *filename,
 {
 	isc_result_t result;
 	FILE *output = stdout;
+	const char *flags;
+
+	flags = (fileformat == dns_masterformat_text) ? "w+" : "wb+";
 
 	if (debug) {
 		if (filename != NULL && strcmp(filename, "-") != 0)
@@ -652,7 +655,7 @@ dump_zone(const char *zonename, dns_zone_t *zone, const char *filename,
 	}
 
 	if (filename != NULL && strcmp(filename, "-") != 0) {
-		result = isc_stdio_open(filename, "w+", &output);
+		result = isc_stdio_open(filename, flags, &output);
 
 		if (result != ISC_R_SUCCESS) {
 			fprintf(stderr, "could not open output "

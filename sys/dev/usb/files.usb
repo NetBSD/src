@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.125 2012/09/01 18:17:51 jakllsch Exp $
+#	$NetBSD: files.usb,v 1.125.2.1 2013/02/25 00:29:33 tls Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -236,6 +236,11 @@ device	udsbr: radiodev
 attach	udsbr at usbdevif
 file	dev/usb/udsbr.c			udsbr
 
+# Silicon Labs USB radio module (FM)
+device	slurm: radiodev
+attach	slurm at usbifif
+file	dev/usb/slurm.c			slurm
+
 # TEMPerHUM HID
 device	uthum: hid, sysmon_envsys
 attach	uthum at uhidbus
@@ -377,6 +382,11 @@ file	dev/usb/if_atu.c		atu
 device	upgt: ether, ifnet, arp, wlan, firmload
 attach	upgt at usbdevif
 file	dev/usb/if_upgt.c		upgt
+
+# SMSC LAN95xx
+device	usmsc: arp, ether, ifnet, mii, mii_phy
+attach	usmsc at usbdevif
+file	dev/usb/if_smsc.c		usmsc
 
 # Ralink Technology RT2500USB
 device	ural: arp, ether, ifnet, wlan, firmload

@@ -115,6 +115,8 @@ const struct option cf_options[] = {
 	{"ipv6ra_fork",     no_argument,       NULL, O_IPV6RA_FORK},
 	{"ipv6ra_own",      no_argument,       NULL, O_IPV6RA_OWN},
 	{"ipv6ra_own_default", no_argument,    NULL, O_IPV6RA_OWN_D},
+	{"ipv4only",        no_argument,       NULL, '4'},
+	{"ipv6only",        no_argument,       NULL, '6'},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -339,7 +341,7 @@ static int
 parse_option(struct if_options *ifo, int opt, const char *arg)
 {
 	int i;
-	char *p = NULL, *np;
+	char *p = NULL, *fp, *np;
 	ssize_t s;
 	struct in_addr addr, addr2;
 	struct rt *rt;
@@ -652,7 +654,7 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		    strncmp(arg, "classless_static_routes=", strlen("classless_static_routes=")) == 0 ||
 		    strncmp(arg, "ms_classless_static_routes=", strlen("ms_classless_static_routes=")) == 0)
 		{
-			np = strchr(p, ' ');
+			fp = np = strchr(p, ' ');
 			if (np == NULL) {
 				syslog(LOG_ERR, "all routes need a gateway");
 				return -1;
@@ -672,7 +674,11 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 			rt->next = NULL;
 			if (parse_addr(&rt->dest, &rt->net, p) == -1 ||
 			    parse_addr(&rt->gate, NULL, np) == -1)
+			{
+				*fp = ' ';
 				return -1;
+			}
+			*fp = ' ';
 		} else if (strncmp(arg, "routers=", strlen("routers=")) == 0) {
 			if (ifo->routes == NULL) {
 				rt = ifo->routes = xzalloc(sizeof(*rt));
@@ -730,6 +736,14 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		break;
 	case 'Z':
 		ifdv = splitv(&ifdc, ifdv, arg);
+		break;
+	case '4':
+		ifo->options &= ~(DHCPCD_IPV6 | DHCPCD_IPV6RS);
+		ifo->options |= DHCPCD_IPV4;
+		break;
+	case '6':
+		ifo->options &= ~DHCPCD_IPV4;
+		ifo->options |= DHCPCD_IPV6 | DHCPCD_IPV6RS;
 		break;
 	case O_ARPING:
 		if (parse_addr(&addr, NULL, arg) != 0)
@@ -810,9 +824,10 @@ read_config(const char *file,
 
 	/* Seed our default options */
 	ifo = xzalloc(sizeof(*ifo));
+	ifo->options |= DHCPCD_IPV4 | DHCPCD_IPV4LL;
 	ifo->options |= DHCPCD_GATEWAY | DHCPCD_DAEMONISE | DHCPCD_LINK;
-	ifo->options |= DHCPCD_ARP | DHCPCD_IPV4LL;
-	ifo->options |= DHCPCD_IPV6RS | DHCPCD_IPV6RA_REQRDNSS;
+	ifo->options |= DHCPCD_ARP;
+	ifo->options |= DHCPCD_IPV6 | DHCPCD_IPV6RS | DHCPCD_IPV6RA_REQRDNSS;
 	ifo->timeout = DEFAULT_TIMEOUT;
 	ifo->reboot = DEFAULT_REBOOT;
 	ifo->metric = -1;

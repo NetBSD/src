@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/12/11 14:58:51 joerg Exp $
+#	$NetBSD: Makefile,v 1.4.6.1 2013/02/25 00:26:41 tls Exp $
 
 LIB=	clangSerialization
 
@@ -14,6 +14,7 @@ SRCS+=	ASTCommon.cpp \
 	ASTWriterDecl.cpp \
 	ASTWriterStmt.cpp \
 	GeneratePCH.cpp \
+	GlobalModuleIndex.cpp \
 	Module.cpp \
 	ModuleManager.cpp
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.114 2012/03/22 20:34:39 drochner Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.114.2.1 2013/02/25 00:30:05 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.114 2012/03/22 20:34:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.114.2.1 2013/02/25 00:30:05 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -478,8 +478,7 @@ rip_bind(struct inpcb *inp, struct mbuf *nam)
 		return (EINVAL);
 	if (TAILQ_FIRST(&ifnet) == 0)
 		return (EADDRNOTAVAIL);
-	if (addr->sin_family != AF_INET &&
-	    addr->sin_family != AF_IMPLINK)
+	if (addr->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
 	if (!in_nullhost(addr->sin_addr) &&
 	    ifa_ifwithaddr(sintosa(addr)) == 0)
@@ -497,8 +496,7 @@ rip_connect(struct inpcb *inp, struct mbuf *nam)
 		return (EINVAL);
 	if (TAILQ_FIRST(&ifnet) == 0)
 		return (EADDRNOTAVAIL);
-	if (addr->sin_family != AF_INET &&
-	    addr->sin_family != AF_IMPLINK)
+	if (addr->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
 	inp->inp_faddr = addr->sin_addr;
 	return (0);

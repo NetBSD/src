@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.8 2012/08/12 05:05:47 matt Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.8.2.1 2013/02/25 00:28:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -41,6 +41,9 @@
  * Pickup definition of uintptr_t
  */
 #include <sys/stdint.h>
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
 
 /*
  * Architecture specific syscalls (arm)
@@ -49,6 +52,7 @@
 #define ARM_SYNC_ICACHE		0
 #define ARM_DRAIN_WRITEBUF	1
 #define ARM_VFP_FPSCR		2
+#define ARM_FPU_USED		3
 
 struct arm_sync_icache_args {
 	uintptr_t	addr;		/* Virtual start address */
@@ -58,6 +62,10 @@ struct arm_sync_icache_args {
 struct arm_vfp_fpscr_args {
 	uint32_t	fpscr_clear;	/* bits to clear */
 	uint32_t	fpscr_set;	/* bits to set */
+};
+
+struct arm_unaligned_faults_args {
+	bool		enabled;	/* unaligned faults are enabled */ 
 };
 
 #ifndef _KERNEL

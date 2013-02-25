@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.70.14.1 2012/11/20 03:02:50 tls Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.70.14.2 2013/02/25 00:30:08 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -61,6 +61,12 @@ enum rump_component_type {
 	RUMP_COMPONENT_VFS,
 	RUMP_COMPONENT_KERN,
 		RUMP_COMPONENT_KERN_VFS,
+	RUMP_COMPONENT_POSTINIT,
+
+	RUMP__FACTION_DEV,
+	RUMP__FACTION_VFS,
+	RUMP__FACTION_NET,
+
 	RUMP_COMPONENT_MAX,
 };
 struct rump_component {
@@ -132,5 +138,7 @@ void	rump_softint_run(struct cpu_info *);
 
 void	*rump_hypermalloc(size_t, int, bool, const char *);
 void	rump_hyperfree(void *, size_t);
+
+void	rump_xc_highpri(struct cpu_info *);
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */

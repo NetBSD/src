@@ -1,4 +1,4 @@
-/*	$NetBSD: mailbox.c,v 1.1.1.1 2009/06/23 10:09:02 tron Exp $	*/
+/*	$NetBSD: mailbox.c,v 1.1.1.1.16.1 2013/02/25 00:27:33 tls Exp $	*/
 
 /*++
 /* NAME
@@ -197,7 +197,7 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
     mailbox_res = mail_addr_find(virtual_mailbox_maps, state.msg_attr.user,
 				 IGNORE_EXTENSION);
     if (mailbox_res == 0) {
-	if (dict_errno == 0)
+	if (virtual_mailbox_maps->error == 0)
 	    return (NO);
 	msg_warn("table %s: lookup %s: %m", virtual_mailbox_maps->title,
 		 state.msg_attr.user);

@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.10 2012/05/02 02:41:08 christos Exp $	*/
-/* $OpenBSD: key.c,v 1.98 2011/10/18 04:58:26 djm Exp $ */
+/*	$NetBSD: key.c,v 1.10.2.1 2013/02/25 00:24:06 tls Exp $	*/
+/* $OpenBSD: key.c,v 1.99 2012/05/23 03:28:28 djm Exp $ */
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: key.c,v 1.10 2012/05/02 02:41:08 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.10.2.1 2013/02/25 00:24:06 tls Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 
@@ -332,6 +332,9 @@ key_fingerprint_raw(Key *k, enum fp_type dgst_type, u_int *dgst_raw_length)
 		break;
 	case SSH_FP_SHA1:
 		md = EVP_sha1();
+		break;
+	case SSH_FP_SHA256:
+		md = EVP_sha256();
 		break;
 	default:
 		fatal("key_fingerprint_raw: bad digest type %d",

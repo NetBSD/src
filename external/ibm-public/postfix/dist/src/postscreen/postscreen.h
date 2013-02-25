@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen.h,v 1.1.1.1 2011/03/02 19:32:26 tron Exp $	*/
+/*	$NetBSD: postscreen.h,v 1.1.1.1.12.1 2013/02/25 00:27:26 tls Exp $	*/
 
 /*++
 /* NAME
@@ -29,6 +29,7 @@
 #include <addr_match_list.h>
 #include <string_list.h>
 #include <maps.h>
+#include <server_acl.h>
 
  /*
   * Preliminary stuff, to be fixed.
@@ -83,7 +84,8 @@ typedef struct {
 #define PSC_STATE_FLAG_NEW		(1<<3)	/* some test was never passed */
 #define PSC_STATE_FLAG_BLIST_FAIL	(1<<4)	/* blacklisted */
 #define PSC_STATE_FLAG_HANGUP		(1<<5)	/* NOT a test failure */
-#define PSC_STATE_FLAG_CACHE_EXPIRED	(1<<6)	/* cache retention expired */
+#define PSC_STATE_FLAG_SMTPD_X21	(1<<6)	/* hang up after command */
+#define PSC_STATE_FLAG_WLIST_FAIL	(1<<7)	/* do not whitelist */
 
  /*
   * Important: every MUMBLE_TODO flag must have a MUMBLE_PASS flag, such that
@@ -192,7 +194,8 @@ typedef struct {
   */
 #define PSC_STATE_MASK_ANY_FAIL \
 	(PSC_STATE_FLAG_BLIST_FAIL | PSC_STATE_FLAG_PENAL_FAIL | \
-	PSC_STATE_MASK_EARLY_FAIL | PSC_STATE_MASK_SMTPD_FAIL)
+	PSC_STATE_MASK_EARLY_FAIL | PSC_STATE_MASK_SMTPD_FAIL | \
+	PSC_STATE_FLAG_WLIST_FAIL)
 
 #define PSC_STATE_MASK_ANY_PASS \
 	(PSC_STATE_MASK_EARLY_PASS | PSC_STATE_MASK_SMTPD_PASS)
@@ -435,6 +438,12 @@ extern void psc_smtpd_tests(PSC_STATE *);
 extern void psc_smtpd_init(void);
 extern void psc_smtpd_pre_jail_init(void);
 
+#define PSC_SMTPD_X21(state, reply) do { \
+	(state)->flags |= PSC_STATE_FLAG_SMTPD_X21; \
+	(state)->final_reply = (reply); \
+	psc_smtpd_tests(state); \
+    } while (0)
+
  /*
   * postscreen_misc.c
   */
@@ -462,16 +471,16 @@ extern void psc_expand_init(void);
 extern const char *psc_expand_lookup(const char *, int, char *);
 
  /*
-  * postscreen_access.c
+  * postscreen_access emulation.
   */
-#define PSC_ACL_ACT_WHITELIST	1
-#define PSC_ACL_ACT_DUNNO	0
-#define PSC_ACL_ACT_BLACKLIST	(-1)
-#define PSC_ACL_ACT_ERROR	(-2)
+#define PSC_ACL_ACT_WHITELIST	SERVER_ACL_ACT_PERMIT
+#define PSC_ACL_ACT_DUNNO	SERVER_ACL_ACT_DUNNO
+#define PSC_ACL_ACT_BLACKLIST	SERVER_ACL_ACT_REJECT
+#define PSC_ACL_ACT_ERROR	SERVER_ACL_ACT_ERROR
 
-extern void psc_acl_pre_jail_init(void);
-extern ARGV *psc_acl_parse(const char *, const char *);
-extern int psc_acl_eval(PSC_STATE *, ARGV *, const char *);
+#define psc_acl_pre_jail_init	server_acl_pre_jail_init
+#define psc_acl_parse		server_acl_parse
+#define psc_acl_eval(s,a,p)	server_acl_eval((s)->smtp_client_addr, (a), (p))
 
 /* LICENSE
 /* .ad

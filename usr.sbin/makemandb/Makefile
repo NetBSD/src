@@ -1,8 +1,7 @@
-# $NetBSD: Makefile,v 1.2.4.1 2012/11/20 03:03:02 tls Exp $
+# $NetBSD: Makefile,v 1.2.4.2 2013/02/25 00:30:45 tls Exp $
 
 .include <bsd.own.mk>
 
-MDIST=	${NETBSDSRCDIR}/external/bsd/mdocml/dist
 MDOCDIR=${NETBSDSRCDIR}/external/bsd/mdocml
 MANCONFDIR=${NETBSDSRCDIR}/usr.bin/man
 
@@ -20,15 +19,15 @@ BINDIR.whatis=		/usr/bin
 
 .PATH: ${MANCONFDIR}
 
-CPPFLAGS+=-I${MDIST} -I${MANCONFDIR} -I${.OBJDIR}
+CPPFLAGS+= -I${MDOCDIR} -I${MANCONFDIR} -I${.OBJDIR}
 
 MDOCMLOBJDIR!=	cd ${MDOCDIR}/lib/libmandoc && ${PRINTOBJDIR}
 MDOCMLLIB=	${MDOCMLOBJDIR}/libmandoc.a
 
 DPADD.makemandb+= 	${MDOCMLLIB} ${LIBARCHIVE} ${LIBBZ2} ${LIBLZMA}
 LDADD.makemandb+= 	-L${MDOCMLOBJDIR} -lmandoc -larchive -lbz2 -llzma
-DPADD+=		${LIBSQLITE3} ${LIBM} ${LIBZ} ${LIBUTIL}
-LDADD+=		-lsqlite3 -lm -lz -lutil
+DPADD+=		${LIBSQLITE3} ${LIBM} ${LIBZ} ${LIBTERMLIB} ${LIBUTIL}
+LDADD+=		-lsqlite3 -lm -lz -ltermlib -lutil
 
 stopwords.c: stopwords.txt
 	( set -e; ${TOOL_NBPERF} -n stopwords_hash -s -p ${.ALLSRC};	\

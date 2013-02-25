@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.37 2011/11/10 17:18:22 chs Exp $
+# $NetBSD: md.vax,v 1.37.6.1 2013/02/25 00:24:33 tls Exp $
 ./usr/include/ieeefp.h				comp-obsolete		obsolete
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/vax				comp-c-include
@@ -76,4 +76,3 @@
 ./usr/include/vax/wchar_limits.h		comp-c-include
 ./usr/lib/c++rt0.o				comp-obsolete		obsolete
 ./usr/lib/scrt0.o				comp-obsolete		obsolete
-./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic

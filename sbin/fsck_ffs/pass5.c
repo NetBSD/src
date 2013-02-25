@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.50 2012/08/26 09:33:42 dholland Exp $	*/
+/*	$NetBSD: pass5.c,v 1.50.2.1 2013/02/25 00:28:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.50 2012/08/26 09:33:42 dholland Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.50.2.1 2013/02/25 00:28:06 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ pass5(void)
 	struct inostat *info;
 	u_int32_t ncgsize;
 
-	inoinfo(WINO)->ino_state = USTATE;
+	inoinfo(UFS_WINO)->ino_state = USTATE;
 	memset(newcg, 0, (size_t)fs->fs_cgsize);
 	newcg->cg_niblk = fs->fs_ipg;
 	if (cvtlevel >= 3) {
@@ -330,14 +330,14 @@ pass5(void)
 				break;
 
 			default:
-				if ((ino_t)j < ROOTINO)
+				if ((ino_t)j < UFS_ROOTINO)
 					break;
 				errexit("BAD STATE %d FOR INODE I=%ld",
 				    info->ino_state, (long)j);
 			}
 		}
 		if (c == 0)
-			for (i = 0; i < (long)ROOTINO; i++) {
+			for (i = 0; i < (long)UFS_ROOTINO; i++) {
 				setbit(cg_inosused(newcg, 0), i);
 				newcg->cg_cs.cs_nifree--;
 			}

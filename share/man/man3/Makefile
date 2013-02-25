@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 2011/08/09 17:58:27 jruoho Exp $
+#	$NetBSD: Makefile,v 1.79.8.1 2013/02/25 00:28:12 tls Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
@@ -6,7 +6,7 @@ MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
 	__builtin_constant_p.3 __builtin_prefetch.3 \
 	__builtin_return_address.3 \
 	__builtin_types_compatible_p.3 __insn_barrier.3 \
-	assert.3 attribute.3 bitops.3 bits.3 bitstring.3 \
+	assert.3 attribute.3 bitmap.3 bitops.3 bits.3 bitstring.3 \
 	cdefs.3 dirent.3 dlfcn.3 dl_iterate_phdr.3 end.3 \
 	fast_divide32.3 ffs32.3 gcq.3 \
 	ilog2.3 intro.3 inttypes.3 iso646.3 limits.3 \
@@ -268,6 +268,12 @@ MLINKS+=CMSG_DATA.3 CMSG_FIRSTHDR.3 \
 	CMSG_DATA.3 CMSG_NXTHDR.3 \
 	CMSG_DATA.3 CMSG_SPACE.3 \
 	CMSG_DATA.3 cmsg.3
+MLINKS+=bitmap.3 __BITMAP_CLR.3 \
+	bitmap.3 __BITMAP_ISSET.3 \
+	bitmap.3 __BITMAP_SET.3 \
+	bitmap.3 __BITMAP_SIZE.3 \
+	bitmap.3 __BITMAP_TYPE.3 \
+	bitmap.3 __BITMAP_ZERO.3
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>

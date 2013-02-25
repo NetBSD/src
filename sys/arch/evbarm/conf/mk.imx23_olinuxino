@@ -1,0 +1,7 @@
+# $Id: mk.imx23_olinuxino,v 1.1.6.2 2013/02/25 00:28:35 tls Exp $
+
+SYSTEM_FIRST_OBJ=	imx23_olinuxino_start.o
+SYSTEM_FIRST_SFILE=	${THISARM}/imx23_olinuxino/imx23_olinuxino_start.S
+
+KERNEL_BASE_PHYS=0x40000000
+KERNEL_BASE_VIRT=0x40000000

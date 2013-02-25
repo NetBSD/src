@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.8 2011/12/23 00:51:44 jakllsch Exp $	*/
+/*	$NetBSD: uberry.c,v 1.8.6.1 2013/02/25 00:29:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.8 2011/12/23 00:51:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.8.6.1 2013/02/25 00:29:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,8 @@ uberry_charge(struct uberry_softc *sc)
 
 	err = usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "setting config no failed\n");
+		aprint_error_dev(sc->sc_dev, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
 }
@@ -145,7 +146,8 @@ uberry_dual_mode(struct uberry_softc *sc)
 
 	err = usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "setting config no failed\n");
+		aprint_error_dev(sc->sc_dev, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.234.2.1 2012/11/20 03:02:18 tls Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.234.2.2 2013/02/25 00:29:18 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.234.2.1 2012/11/20 03:02:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.234.2.2 2013/02/25 00:29:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +132,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.234.2.1 2012/11/20 03:02:18 tls Exp $");
 #define	WM_DEBUG_RX		0x04
 #define	WM_DEBUG_GMII		0x08
 #define	WM_DEBUG_MANAGE		0x10
+#define	WM_DEBUG_NVM		0x20
 int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
-    | WM_DEBUG_MANAGE;
+    | WM_DEBUG_MANAGE | WM_DEBUG_NVM;
 
 #define	DPRINTF(x, y)	if (wm_debug & (x)) printf y
 #else
@@ -532,16 +533,16 @@ static void	wm_gmii_reset(struct wm_softc *);
 
 static int	wm_gmii_i82543_readreg(device_t, int, int);
 static void	wm_gmii_i82543_writereg(device_t, int, int, int);
-
 static int	wm_gmii_i82544_readreg(device_t, int, int);
 static void	wm_gmii_i82544_writereg(device_t, int, int, int);
-
 static int	wm_gmii_i80003_readreg(device_t, int, int);
 static void	wm_gmii_i80003_writereg(device_t, int, int, int);
 static int	wm_gmii_bm_readreg(device_t, int, int);
 static void	wm_gmii_bm_writereg(device_t, int, int, int);
 static int	wm_gmii_hv_readreg(device_t, int, int);
 static void	wm_gmii_hv_writereg(device_t, int, int, int);
+static int	wm_gmii_82580_readreg(device_t, int, int);
+static void	wm_gmii_82580_writereg(device_t, int, int, int);
 static int	wm_sgmii_readreg(device_t, int, int);
 static void	wm_sgmii_writereg(device_t, int, int, int);
 
@@ -931,13 +932,13 @@ static const struct wm_product {
 	  WM_T_PCH,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_D_DC,
 	  "PCH LAN (82578DC) Controller",
-	  WM_T_PCH2,		WMP_F_1000T },
+	  WM_T_PCH,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH2_LV_LM,
 	  "PCH2 LAN (82579LM) Controller",
 	  WM_T_PCH2,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH2_LV_V,
 	  "PCH2 LAN (82579V) Controller",
-	  WM_T_PCH,		WMP_F_1000T },
+	  WM_T_PCH2,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82575EB_COPPER,
 	  "82575EB dual-1000baseT Ethernet",
 	  WM_T_82575,		WMP_F_1000T },
@@ -1216,11 +1217,14 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_type >= WM_T_82544) {
 		/* First we have to find the I/O BAR. */
 		for (i = PCI_MAPREG_START; i < PCI_MAPREG_END; i += 4) {
-			if (pci_mapreg_type(pa->pa_pc, pa->pa_tag, i) ==
-			    PCI_MAPREG_TYPE_IO)
+			memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, i);
+			if (memtype == PCI_MAPREG_TYPE_IO)
 				break;
+			if (PCI_MAPREG_MEM_TYPE(memtype) ==
+			    PCI_MAPREG_MEM_TYPE_64BIT)
+				i += 4;	/* skip high bits, too */
 		}
-		if (i != PCI_MAPREG_END) {
+		if (i < PCI_MAPREG_END) {
 			/*
 			 * We found PCI_MAPREG_TYPE_IO. Note that 82580
 			 * (and newer?) chip has no PCI_MAPREG_TYPE_IO.
@@ -4126,7 +4130,7 @@ wm_reset(struct wm_softc *sc)
 		if (wm_check_reset_block(sc) == 0) {
 			/*
 			 * Gate automatic PHY configuration by hardware on
-			 * manaed 82579
+			 * non-managed 82579
 			 */
 			if ((sc->sc_type == WM_T_PCH2)
 			    && ((CSR_READ(sc, WMREG_FWSM) & FWSM_FW_VALID)
@@ -5260,6 +5264,32 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 
 	checksum = 0;
 
+#ifdef WM_DEBUG
+	/* Dump EEPROM image for debug */
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
+	    || (sc->sc_type == WM_T_PCH2)) {
+		wm_read_eeprom(sc, 0x19, 1, &eeprom_data);
+		if ((eeprom_data & 0x40) == 0) {
+			DPRINTF(WM_DEBUG_NVM,("%s: NVM need to be updated\n",
+				device_xname(sc->sc_dev)));
+		}
+	}
+
+	if ((wm_debug & WM_DEBUG_NVM) != 0) {
+		printf("%s: NVM dump:\n", device_xname(sc->sc_dev));
+		for (i = 0; i < EEPROM_SIZE; i++) {
+			if (wm_read_eeprom(sc, i, 1, &eeprom_data))
+				printf("XX ");
+			else
+				printf("%04x ", eeprom_data);
+			if (i % 8 == 7)
+				printf("\n");
+		}
+	}
+
+#endif /* WM_DEBUG */
+
 	for (i = 0; i < EEPROM_SIZE; i++) {
 		if (wm_read_eeprom(sc, i, 1, &eeprom_data))
 			return 1;
@@ -5613,10 +5643,17 @@ wm_set_filter(struct wm_softc *sc)
 	 * Set the station address in the first RAL slot, and
 	 * clear the remaining slots.
 	 */
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
-	    || (sc->sc_type == WM_T_PCH2))
-		size = WM_ICH8_RAL_TABSIZE;
+	if (sc->sc_type == WM_T_ICH8)
+		size = WM_RAL_TABSIZE_ICH8 -1;
+	else if ((sc->sc_type == WM_T_ICH9) || (sc->sc_type == WM_T_ICH10)
+	    || (sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2))
+		size = WM_RAL_TABSIZE_ICH8;
+	else if (sc->sc_type == WM_T_82575)
+		size = WM_RAL_TABSIZE_82575;
+	else if ((sc->sc_type == WM_T_82576) || (sc->sc_type == WM_T_82580))
+		size = WM_RAL_TABSIZE_82576;
+	else if (sc->sc_type == WM_T_I350)
+		size = WM_RAL_TABSIZE_I350;
 	else
 		size = WM_RAL_TABSIZE;
 	wm_set_ral(sc, CLLADDR(ifp->if_sadl), 0);
@@ -6217,6 +6254,7 @@ static void
 wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
 
 	/* We have MII. */
 	sc->sc_flags |= WM_F_HAS_MII;
@@ -6236,29 +6274,42 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
 	/* Initialize our media structures and probe the GMII. */
-	sc->sc_mii.mii_ifp = ifp;
+	mii->mii_ifp = ifp;
 
+	/*
+	 * Determine the PHY access method.
+	 *
+	 *  For SGMII, use SGMII specific method.
+	 *
+	 *  For some devices, we can determine the PHY access method
+	 * from sc_type.
+	 * 
+	 *  For ICH8 variants, it's difficult to detemine the PHY access
+	 * method by sc_type, so use the PCI product ID for some devices.
+	 * For other ICH8 variants, try to use igp's method. If the PHY
+	 * can't detect, then use bm's method.
+	 */
 	switch (prodid) {
 	case PCI_PRODUCT_INTEL_PCH_M_LM:
 	case PCI_PRODUCT_INTEL_PCH_M_LC:
 		/* 82577 */
 		sc->sc_phytype = WMPHY_82577;
-		sc->sc_mii.mii_readreg = wm_gmii_hv_readreg;
-		sc->sc_mii.mii_writereg = wm_gmii_hv_writereg;
+		mii->mii_readreg = wm_gmii_hv_readreg;
+		mii->mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_PCH_D_DM:
 	case PCI_PRODUCT_INTEL_PCH_D_DC:
 		/* 82578 */
 		sc->sc_phytype = WMPHY_82578;
-		sc->sc_mii.mii_readreg = wm_gmii_hv_readreg;
-		sc->sc_mii.mii_writereg = wm_gmii_hv_writereg;
+		mii->mii_readreg = wm_gmii_hv_readreg;
+		mii->mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_PCH2_LV_LM:
 	case PCI_PRODUCT_INTEL_PCH2_LV_V:
-		/* 82578 */
+		/* 82579 */
 		sc->sc_phytype = WMPHY_82579;
-		sc->sc_mii.mii_readreg = wm_gmii_hv_readreg;
-		sc->sc_mii.mii_writereg = wm_gmii_hv_writereg;
+		mii->mii_readreg = wm_gmii_hv_readreg;
+		mii->mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_82801I_BM:
 	case PCI_PRODUCT_INTEL_82801J_R_BM_LM:
@@ -6268,31 +6319,35 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	case PCI_PRODUCT_INTEL_82801J_R_BM_V:
 		/* 82567 */
 		sc->sc_phytype = WMPHY_BM;
-		sc->sc_mii.mii_readreg = wm_gmii_bm_readreg;
-		sc->sc_mii.mii_writereg = wm_gmii_bm_writereg;
+		mii->mii_readreg = wm_gmii_bm_readreg;
+		mii->mii_writereg = wm_gmii_bm_writereg;
 		break;
 	default:
 		if ((sc->sc_flags & WM_F_SGMII) != 0) {
-			sc->sc_mii.mii_readreg = wm_sgmii_readreg;
-			sc->sc_mii.mii_writereg = wm_sgmii_writereg;
+			mii->mii_readreg = wm_sgmii_readreg;
+			mii->mii_writereg = wm_sgmii_writereg;
 		} else if (sc->sc_type >= WM_T_80003) {
-			sc->sc_mii.mii_readreg = wm_gmii_i80003_readreg;
-			sc->sc_mii.mii_writereg = wm_gmii_i80003_writereg;
+			mii->mii_readreg = wm_gmii_i80003_readreg;
+			mii->mii_writereg = wm_gmii_i80003_writereg;
+		} else if (sc->sc_type >= WM_T_82580) {
+			sc->sc_phytype = WMPHY_82580;
+			mii->mii_readreg = wm_gmii_82580_readreg;
+			mii->mii_writereg = wm_gmii_82580_writereg;
 		} else if (sc->sc_type >= WM_T_82544) {
-			sc->sc_mii.mii_readreg = wm_gmii_i82544_readreg;
-			sc->sc_mii.mii_writereg = wm_gmii_i82544_writereg;
+			mii->mii_readreg = wm_gmii_i82544_readreg;
+			mii->mii_writereg = wm_gmii_i82544_writereg;
 		} else {
-			sc->sc_mii.mii_readreg = wm_gmii_i82543_readreg;
-			sc->sc_mii.mii_writereg = wm_gmii_i82543_writereg;
+			mii->mii_readreg = wm_gmii_i82543_readreg;
+			mii->mii_writereg = wm_gmii_i82543_writereg;
 		}
 		break;
 	}
-	sc->sc_mii.mii_statchg = wm_gmii_statchg;
+	mii->mii_statchg = wm_gmii_statchg;
 
 	wm_gmii_reset(sc);
 
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_gmii_mediachange,
+	ifmedia_init(&mii->mii_media, IFM_IMASK, wm_gmii_mediachange,
 	    wm_gmii_mediastatus);
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
@@ -6326,31 +6381,44 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	}
 
+	/*
+	 * If the MAC is PCH2 and failed to detect MII PHY, call
+	 * wm_set_mdio_slow_mode_hv() for a workaround and retry.
+	 */
 	if ((sc->sc_type == WM_T_PCH2) &&
-	    (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL)) {
+	    (LIST_FIRST(&mii->mii_phys) == NULL)) {
 		wm_set_mdio_slow_mode_hv(sc);
 		mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 		    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	}
-			
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+
+	/*
+	 * (For ICH8 variants)
+	 * If PHY detection failed, use BM's r/w function and retry.
+	 */
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		/* if failed, retry with *_bm_* */
-		sc->sc_mii.mii_readreg = wm_gmii_bm_readreg;
-		sc->sc_mii.mii_writereg = wm_gmii_bm_writereg;
+		mii->mii_readreg = wm_gmii_bm_readreg;
+		mii->mii_writereg = wm_gmii_bm_writereg;
 
 		mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 		    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	}
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		/* Any PHY wasn't find */
+		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_NONE);
 		sc->sc_phytype = WMPHY_NONE;
 	} else {
-		/* Check PHY type */
+		/*
+		 * PHY Found!
+		 * Check PHY type.
+		 */
 		uint32_t model;
 		struct mii_softc *child;
 
-		child = LIST_FIRST(&sc->sc_mii.mii_phys);
+		child = LIST_FIRST(&mii->mii_phys);
 		if (device_is_a(child->mii_dev, "igphy")) {
 			struct igphy_softc *isc = (struct igphy_softc *)child;
 
@@ -6359,7 +6427,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 				sc->sc_phytype = WMPHY_IGP_3;
 		}
 
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	}
 }
 
@@ -6703,7 +6771,7 @@ wm_gmii_bm_readreg(device_t self, int phy, int reg)
 
 	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 		if (phy == 1)
-			wm_gmii_i82544_writereg(self, phy, 0x1f,
+			wm_gmii_i82544_writereg(self, phy, MII_IGPHY_PAGE_SELECT,
 			    reg);
 		else
 			wm_gmii_i82544_writereg(self, phy,
@@ -6738,7 +6806,7 @@ wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
 
 	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 		if (phy == 1)
-			wm_gmii_i82544_writereg(self, phy, 0x1f,
+			wm_gmii_i82544_writereg(self, phy, MII_IGPHY_PAGE_SELECT,
 			    reg);
 		else
 			wm_gmii_i82544_writereg(self, phy,
@@ -6898,9 +6966,9 @@ wm_gmii_hv_writereg(device_t self, int phy, int reg, int val)
 }
 
 /*
- * wm_gmii_hv_readreg:	[mii interface function]
+ * wm_sgmii_readreg:	[mii interface function]
  *
- *	Read a PHY register on the kumeran
+ *	Read a PHY register on the SGMII
  * This could be handled by the PHY layer if we didn't have to lock the
  * ressource ...
  */
@@ -6941,9 +7009,9 @@ wm_sgmii_readreg(device_t self, int phy, int reg)
 }
 
 /*
- * wm_gmii_hv_writereg:	[mii interface function]
+ * wm_sgmii_writereg:	[mii interface function]
  *
- *	Write a PHY register on the kumeran.
+ *	Write a PHY register on the SGMII.
  * This could be handled by the PHY layer if we didn't have to lock the
  * ressource ...
  */
@@ -6978,6 +7046,58 @@ wm_sgmii_writereg(device_t self, int phy, int reg, int val)
 		aprint_error_dev(sc->sc_dev, "I2CCMD Error bit set\n");
 
 	wm_put_swfw_semaphore(sc, SWFW_PHY0_SM);
+}
+
+/*
+ * wm_gmii_82580_readreg:	[mii interface function]
+ *
+ *	Read a PHY register on the 82580 and I350.
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static int
+wm_gmii_82580_readreg(device_t self, int phy, int reg)
+{
+	struct wm_softc *sc = device_private(self);
+	int sem;
+	int rv;
+
+	sem = swfwphysem[sc->sc_funcid];
+	if (wm_get_swfw_semaphore(sc, sem)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return 0;
+	}
+
+	rv = wm_gmii_i82544_readreg(self, phy, reg);
+
+	wm_put_swfw_semaphore(sc, sem);
+	return rv;
+}
+
+/*
+ * wm_gmii_82580_writereg:	[mii interface function]
+ *
+ *	Write a PHY register on the 82580 and I350.
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static void
+wm_gmii_82580_writereg(device_t self, int phy, int reg, int val)
+{
+	struct wm_softc *sc = device_private(self);
+	int sem;
+
+	sem = swfwphysem[sc->sc_funcid];
+	if (wm_get_swfw_semaphore(sc, sem)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return;
+	}
+
+	wm_gmii_i82544_writereg(self, phy, reg, val);
+
+	wm_put_swfw_semaphore(sc, sem);
 }
 
 /*
@@ -7265,14 +7385,15 @@ wm_valid_nvm_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 		/* Value of bit 22 corresponds to the flash bank we're on. */
 		*bank = (CSR_READ(sc, WMREG_EECD) & EECD_SEC1VAL) ? 1 : 0;
 	} else {
-		uint8_t bank_high_byte;
-		wm_read_ich8_byte(sc, act_offset, &bank_high_byte);
-		if ((bank_high_byte & 0xc0) == 0x80)
+		uint8_t sig_byte;
+		wm_read_ich8_byte(sc, act_offset, &sig_byte);
+		if ((sig_byte & ICH_NVM_VALID_SIG_MASK) == ICH_NVM_SIG_VALUE)
 			*bank = 0;
 		else {
 			wm_read_ich8_byte(sc, act_offset + bank1_offset,
-			    &bank_high_byte);
-			if ((bank_high_byte & 0xc0) == 0x80)
+			    &sig_byte);
+			if ((sig_byte & ICH_NVM_VALID_SIG_MASK)
+			    == ICH_NVM_SIG_VALUE)
 				*bank = 1;
 			else {
 				aprint_error_dev(sc->sc_dev,

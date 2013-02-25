@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.83.2.1 2012/12/02 05:46:39 tls Exp $	*/
+/*	$NetBSD: fss.c,v 1.83.2.2 2013/02/25 00:29:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.83.2.1 2012/12/02 05:46:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.83.2.2 2013/02/25 00:29:10 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,11 +236,13 @@ fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 	error = 0;
 
+	mutex_enter(&fss_device_lock);
 restart:
 	mutex_enter(&sc->sc_slock);
 	if ((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) != mflag) {
 		sc->sc_flags &= ~mflag;
 		mutex_exit(&sc->sc_slock);
+		mutex_exit(&fss_device_lock);
 		return 0;
 	}
 	if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
@@ -252,11 +254,8 @@ restart:
 	}
 	if ((sc->sc_flags & FSS_ACTIVE) != 0) {
 		mutex_exit(&sc->sc_slock);
+		mutex_exit(&fss_device_lock);
 		return error;
-	}
-	if (! mutex_tryenter(&fss_device_lock)) {
-		mutex_exit(&sc->sc_slock);
-		goto restart;
 	}
 
 	KASSERT((sc->sc_flags & FSS_ACTIVE) == 0);
@@ -705,24 +704,13 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	vrele(vp);
 
 	/*
-	 * Get the block device it is mounted on.
+	 * Get the block device it is mounted on and its size.
 	 */
 
-	error = namei_simple_kernel(sc->sc_mount->mnt_stat.f_mntfromname,
-				NSM_FOLLOW_NOEMULROOT, &vp);
-	if (error != 0)
+	error = spec_node_lookup_by_mount(sc->sc_mount, &vp);
+	if (error)
 		return error;
-
-	if (vp->v_type != VBLK) {
-		vrele(vp);
-		return EINVAL;
-	}
-
 	sc->sc_bdev = vp->v_rdev;
-
-	/*
-	 * Get the block device size.
-	 */
 
 	error = getdisksize(vp, &numsec, &secsize);
 	vrele(vp);

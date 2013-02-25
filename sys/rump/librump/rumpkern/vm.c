@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.130.2.1 2012/11/20 03:02:50 tls Exp $	*/
+/*	$NetBSD: vm.c,v 1.130.2.2 2013/02/25 00:30:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.130.2.1 2012/11/20 03:02:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.130.2.2 2013/02/25 00:30:09 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -338,12 +338,11 @@ uvm_init(void)
 	pool_subsystem_init();
 
 #ifndef RUMP_UNREAL_ALLOCATORS
-	vmem_bootstrap();
 	kmem_arena = vmem_create("kmem", 0, 1024*1024, PAGE_SIZE,
 	    NULL, NULL, NULL,
 	    0, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
 
-	vmem_init(kmem_arena);
+	vmem_subsystem_init(kmem_arena);
 
 	kmem_va_arena = vmem_create("kva", 0, 0, PAGE_SIZE,
 	    vmem_alloc, vmem_free, kmem_arena,
@@ -1106,7 +1105,8 @@ uvm_pageout(void *arg)
 		 * And then drain the pools.  Wipe them out ... all of them.
 		 */
 		for (pp_first = NULL;;) {
-			rump_vfs_drainbufs(10 /* XXX: estimate better */);
+			if (rump_vfs_drainbufs)
+				rump_vfs_drainbufs(10 /* XXX: estimate! */);
 
 			succ = pool_drain(&pp);
 			if (succ || pp == pp_first)

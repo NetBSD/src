@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.3 2012/06/24 17:01:35 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.3.2.1 2013/02/25 00:29:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -278,7 +278,9 @@ collect_text_data(pdu_t *pdu, ccb_t *req_ccb)
 		nlen = req_ccb->text_len + pdu->temp_data_len;
 		/* Note: allocate extra 2 bytes for text terminator */
 		if ((newp = malloc(nlen + 2, M_TEMP, M_WAITOK)) == NULL) {
+			DEBOUT(("Collect Text Data: Out of Memory, ccb = %p\n", req_ccb));
 			req_ccb->status = ISCSI_STATUS_NO_RESOURCES;
+			/* XXX where is CCB freed? */
 			return 1;
 		}
 		memcpy(newp, req_ccb->text_data, req_ccb->text_len);
@@ -374,8 +376,7 @@ check_CmdSN(connection_t *conn, uint32_t nw_sn)
 	uint32_t sn = ntohl(nw_sn);
 	ccb_t *ccb, *nxt;
 
-	for (ccb = TAILQ_FIRST(&conn->ccbs_waiting); ccb != NULL; ccb = nxt) {
-		nxt = TAILQ_NEXT(ccb, chain);
+	TAILQ_FOREACH_SAFE(ccb, &conn->ccbs_waiting, chain, nxt) {
 		DEBC(conn, 10,
 			("CheckCmdSN - CmdSN=%d, ExpCmdSn=%d, waiting=%p, flags=%x\n",
 			ccb->CmdSN, sn, ccb->pdu_waiting, ccb->flags));
@@ -429,10 +430,7 @@ receive_login_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 		DEBC(conn, 1, ("Login problem - Class = %x, Detail = %x\n",
 				pdu->pdu.p.login_rsp.StatusClass,
 				pdu->pdu.p.login_rsp.StatusDetail));
-
-		req_ccb->status = ISCSI_STATUS_LOGIN_FAILED;
-		/* XXX */
-		wake_ccb(req_ccb);
+		wake_ccb(req_ccb, ISCSI_STATUS_LOGIN_FAILED);
 		return 0;
 	}
 
@@ -511,6 +509,7 @@ receive_logout_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 {
 	bool otherconn;
 	uint8_t response;
+	uint32_t status;
 
 	otherconn = (req_ccb != NULL) ? (req_ccb->flags & CCBF_OTHERCONN) != 0 : 1;
 	response = pdu->pdu.OpcodeSpecific [0];
@@ -526,16 +525,16 @@ receive_logout_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 
 	switch (response) {
 	case 0:
-		req_ccb->status = ISCSI_STATUS_SUCCESS;
+		status = ISCSI_STATUS_SUCCESS;
 		break;
 	case 1:
-		req_ccb->status = ISCSI_STATUS_LOGOUT_CID_NOT_FOUND;
+		status = ISCSI_STATUS_LOGOUT_CID_NOT_FOUND;
 		break;
 	case 2:
-		req_ccb->status = ISCSI_STATUS_LOGOUT_RECOVERY_NS;
+		status = ISCSI_STATUS_LOGOUT_RECOVERY_NS;
 		break;
 	default:
-		req_ccb->status = ISCSI_STATUS_LOGOUT_ERROR;
+		status = ISCSI_STATUS_LOGOUT_ERROR;
 		break;
 	}
 
@@ -546,7 +545,7 @@ receive_logout_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 		refconn->Time2Retain = ntohs(pdu->pdu.p.logout_rsp.Time2Retain);
 	}
 
-	wake_ccb(req_ccb);
+	wake_ccb(req_ccb, status);
 
 	if (!otherconn && conn->state == ST_LOGOUT_SENT) {
 		conn->terminating = ISCSI_STATUS_LOGOUT;
@@ -641,14 +640,13 @@ receive_data_in_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 		/* successful transfer, reset recover count */
 		conn->recover = 0;
 
-		if (done) {
-			wake_ccb(req_ccb);
-		}
-		if (check_StatSN(conn, pdu->pdu.p.data_in.StatSN, done)) {
+		if (done)
+			wake_ccb(req_ccb, ISCSI_STATUS_SUCCESS);
+		if (check_StatSN(conn, pdu->pdu.p.data_in.StatSN, done))
 			return -1;
-		}
+
 	} else if (done && (req_ccb->flags & CCBF_COMPLETE)) {
-		wake_ccb(req_ccb);
+		wake_ccb(req_ccb, ISCSI_STATUS_SUCCESS);
 	}
 	/* else wait for command response */
 
@@ -699,6 +697,7 @@ receive_command_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 {
 	int len, rc;
 	bool done;
+	uint32_t status;
 
 	/* Read any provided data */
 	if (pdu->temp_data_len && req_ccb != NULL && req_ccb->sense_len_req) {
@@ -726,23 +725,23 @@ receive_command_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	conn->recover = 0;	/* successful transfer, reset recover count */
 
 	if (pdu->pdu.OpcodeSpecific[0]) {	/* Response */
-		req_ccb->status = ISCSI_STATUS_TARGET_FAILURE;
+		status = ISCSI_STATUS_TARGET_FAILURE;
 	} else {
 		switch (pdu->pdu.OpcodeSpecific[1]) {	/* Status */
 		case 0x00:
-			/* success */
+			status = ISCSI_STATUS_SUCCESS;
 			break;
 
 		case 0x02:
-			req_ccb->status = ISCSI_STATUS_CHECK_CONDITION;
+			status = ISCSI_STATUS_CHECK_CONDITION;
 			break;
 
 		case 0x08:
-			req_ccb->status = ISCSI_STATUS_TARGET_BUSY;
+			status = ISCSI_STATUS_TARGET_BUSY;
 			break;
 
 		default:
-			req_ccb->status = ISCSI_STATUS_TARGET_ERROR;
+			status = ISCSI_STATUS_TARGET_ERROR;
 			break;
 		}
 	}
@@ -750,7 +749,7 @@ receive_command_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	if (pdu->pdu.Flags & (FLAG_OVERFLOW | FLAG_UNDERFLOW))
 		req_ccb->residual = ntohl(pdu->pdu.p.response.ResidualCount);
 
-	done = req_ccb->status || sn_empty(&req_ccb->DataSN_buf);
+	done = status || sn_empty(&req_ccb->DataSN_buf);
 
 	DEBC(conn, 10, ("Rx Command Response rsp = %x, status = %x\n",
 			pdu->pdu.OpcodeSpecific[0], pdu->pdu.OpcodeSpecific[1]));
@@ -758,7 +757,7 @@ receive_command_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	rc = check_StatSN(conn, pdu->pdu.p.response.StatSN, done);
 
 	if (done)
-		wake_ccb(req_ccb);
+		wake_ccb(req_ccb, status);
 
 	return rc;
 }
@@ -836,6 +835,7 @@ receive_reject_pdu(connection_t *conn, pdu_t *pdu)
 {
 	pdu_header_t *hpdu;
 	ccb_t *req_ccb;
+	uint32_t status;
 
 	DEBOUT(("Received Reject PDU, reason = %x, data_len = %d\n",
 			pdu->pdu.OpcodeSpecific[0], pdu->temp_data_len));
@@ -864,23 +864,23 @@ receive_reject_pdu(connection_t *conn, pdu_t *pdu)
 
 		case REJECT_SNACK:
 		case REJECT_PROTOCOL_ERROR:
-			req_ccb->status = ISCSI_STATUS_PROTOCOL_ERROR;
+			status = ISCSI_STATUS_PROTOCOL_ERROR;
 			break;
 
 		case REJECT_CMD_NOT_SUPPORTED:
-			req_ccb->status = ISCSI_STATUS_CMD_NOT_SUPPORTED;
+			status = ISCSI_STATUS_CMD_NOT_SUPPORTED;
 			break;
 
 		case REJECT_INVALID_PDU_FIELD:
-			req_ccb->status = ISCSI_STATUS_PDU_ERROR;
+			status = ISCSI_STATUS_PDU_ERROR;
 			break;
 
 		default:
-			req_ccb->status = ISCSI_STATUS_GENERAL_ERROR;
+			status = ISCSI_STATUS_GENERAL_ERROR;
 			break;
 		}
 
-		wake_ccb(req_ccb);
+		wake_ccb(req_ccb, status);
 		handle_connection_error(conn, ISCSI_STATUS_PROTOCOL_ERROR,
 							LOGOUT_CONNECTION);
 	}
@@ -901,6 +901,7 @@ receive_reject_pdu(connection_t *conn, pdu_t *pdu)
 STATIC int
 receive_task_management_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 {
+	uint32_t status;
 
 	DEBC(conn, 2, ("Received Task Management PDU, response %d, req_ccb %p\n",
 			pdu->pdu.OpcodeSpecific[0], req_ccb));
@@ -908,34 +909,34 @@ receive_task_management_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	if (req_ccb != NULL) {
 		switch (pdu->pdu.OpcodeSpecific[0]) {	/* Response */
 		case 0:
-			req_ccb->status = ISCSI_STATUS_SUCCESS;
+			status = ISCSI_STATUS_SUCCESS;
 			break;
 		case 1:
-			req_ccb->status = ISCSI_STATUS_TASK_NOT_FOUND;
+			status = ISCSI_STATUS_TASK_NOT_FOUND;
 			break;
 		case 2:
-			req_ccb->status = ISCSI_STATUS_LUN_NOT_FOUND;
+			status = ISCSI_STATUS_LUN_NOT_FOUND;
 			break;
 		case 3:
-			req_ccb->status = ISCSI_STATUS_TASK_ALLEGIANT;
+			status = ISCSI_STATUS_TASK_ALLEGIANT;
 			break;
 		case 4:
-			req_ccb->status = ISCSI_STATUS_CANT_REASSIGN;
+			status = ISCSI_STATUS_CANT_REASSIGN;
 			break;
 		case 5:
-			req_ccb->status = ISCSI_STATUS_FUNCTION_UNSUPPORTED;
+			status = ISCSI_STATUS_FUNCTION_UNSUPPORTED;
 			break;
 		case 6:
-			req_ccb->status = ISCSI_STATUS_FUNCTION_NOT_AUTHORIZED;
+			status = ISCSI_STATUS_FUNCTION_NOT_AUTHORIZED;
 			break;
 		case 255:
-			req_ccb->status = ISCSI_STATUS_FUNCTION_REJECTED;
+			status = ISCSI_STATUS_FUNCTION_REJECTED;
 			break;
 		default:
-			req_ccb->status = ISCSI_STATUS_UNKNOWN_REASON;
+			status = ISCSI_STATUS_UNKNOWN_REASON;
 			break;
 		}
-		wake_ccb(req_ccb);
+		wake_ccb(req_ccb, status);
 	}
 
 	check_StatSN(conn, pdu->pdu.p.task_rsp.StatSN, TRUE);
@@ -982,7 +983,7 @@ receive_nop_in_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 		/* and advance StatSN */
 		check_CmdSN(conn, pdu->pdu.p.nop_in.ExpCmdSN);
 
-		wake_ccb(req_ccb);
+		wake_ccb(req_ccb, ISCSI_STATUS_SUCCESS);
 
 		check_StatSN(conn, pdu->pdu.p.nop_in.StatSN, TRUE);
 	}
@@ -1007,7 +1008,7 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 {
 	ccb_t *req_ccb;
 	ccb_list_t waiting;
-	int rc;
+	int rc, s;
 	uint32_t MaxCmdSN, digest;
 	session_t *sess = conn->session;
 
@@ -1131,24 +1132,22 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 	 */
 	if (MaxCmdSN != sess->MaxCmdSN) {
 		sess->MaxCmdSN = MaxCmdSN;
-#if 0
-/* XXX - agc */
-		if (TAILQ_FIRST(&sess->ccbs_throttled) == NULL ||
-			!sn_a_lt_b(sess->CmdSN, MaxCmdSN))
-			return 0;
-#else
 		if (TAILQ_FIRST(&sess->ccbs_throttled) == NULL)
 			return 0;
-#endif
 
 		DEBC(conn, 1, ("Unthrottling - MaxCmdSN = %d\n", MaxCmdSN));
 
-		CS_BEGIN;
+		s = splbio();
 		TAILQ_INIT(&waiting);
-		TAILQ_CONCAT(&waiting, &sess->ccbs_throttled, chain);
-		CS_END;
+		while ((req_ccb = TAILQ_FIRST(&sess->ccbs_throttled)) != NULL) {
+			throttle_ccb(req_ccb, FALSE);
+			TAILQ_INSERT_TAIL(&waiting, req_ccb, chain);
+		}
+		splbio();
+
 		while ((req_ccb = TAILQ_FIRST(&waiting)) != NULL) {
 			TAILQ_REMOVE(&waiting, req_ccb, chain);
+
 			DEBC(conn, 1, ("Unthrottling - ccb = %p, disp = %d\n",
 					req_ccb, req_ccb->disp));
 
@@ -1181,7 +1180,7 @@ iscsi_rcv_thread(void *par)
 
 	do {
 		while (!conn->terminating) {
-			pdu = get_pdu(conn);
+			pdu = get_pdu(conn, TRUE);
 			pdu->uio.uio_iov = pdu->io_vec;
 			UIO_SETUP_SYSSPACE(&pdu->uio);
 			pdu->uio.uio_iovcnt = 1;
@@ -1216,7 +1215,7 @@ iscsi_rcv_thread(void *par)
 			}
 		}
 		if (!conn->destroy) {
-			tsleep(conn, PRIBIO, "conn_idle", 0);
+			tsleep(conn, PRIBIO, "conn_idle", 30 * hz);
 		}
 	} while (!conn->destroy);
 

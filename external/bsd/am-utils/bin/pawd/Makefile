@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/06/20 07:43:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.8.1 2013/02/25 00:24:53 tls Exp $
 
 BINDIR=	/usr/bin
 
@@ -13,7 +13,6 @@ SRCS=	amq_clnt.c amq_xdr.c pawd.c
 MAN+=	pawd.1
 
 CPPFLAGS+=	-I${DIST}
-LDADD+=		${LIBAMU}
 
 .if defined(HAVE_GCC)
 COPTS.amq_xdr.c+=	-fno-strict-aliasing

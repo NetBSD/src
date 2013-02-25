@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.5.2.1 2012/11/20 03:01:07 tls Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.5.2.2 2013/02/25 00:28:32 tls Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -39,6 +39,12 @@
 #include <arm/pcb.h>
 #include <arm/undefined.h>
 #include <arm/vfpreg.h>
+#include <arm/mcontext.h>
+
+#include <uvm/uvm_extern.h>		/* for pmap.h */
+
+extern int cpu_media_and_vfp_features[];
+extern int cpu_neon_present;
 
 /* 
  * Use generic co-processor instructions to avoid assembly problems.
@@ -89,10 +95,6 @@ read_fpinst2(void)
 	return rv;
 }
 
-/* FSTMD <X>, {d0-d15} */
-#define save_vfpregs(X)	__asm __volatile("stc p11, c0, [%0], {32}" : \
-			    : "r" (X) : "memory")
-
 /* FMXR <X>, fpscr */
 #define write_fpscr(X)	__asm __volatile("mcr p10, 7, %0, c1, c0, 0" : \
 			    : "r" (X))
@@ -105,24 +107,94 @@ read_fpinst2(void)
 /* FMXR <X>, fpinst2 */
 #define write_fpinst2(X) __asm __volatile("mcr p10, 7, %0, c10, c0, 0" : \
 			    : "r" (X))
-/* FLDMD <X>, {d0-d15} */
-#define load_vfpregs(X)	__asm __volatile("ldc p11, c0, [%0], {32}" : \
-			    : "r" (X) : "memory");
 
 #ifdef FPU_VFP
 
+/* FLDMD <X>, {d0-d15} */
+static inline void
+load_vfpregs_lo(const uint64_t *p)
+{
+	/* vldmia rN, {d0-d15} */
+	__asm __volatile("ldc\tp11, c0, [%0], {32}" :: "r" (p) : "memory");
+}
+
+/* FSTMD <X>, {d0-d15} */
+static inline void
+save_vfpregs_lo(uint64_t *p)
+{
+	__asm __volatile("stc\tp11, c0, [%0], {32}" :: "r" (p) : "memory");
+}
+
+#ifdef CPU_CORTEX
+/* FLDMD <X>, {d16-d31} */
+static inline void
+load_vfpregs_hi(const uint64_t *p)
+{
+	__asm __volatile("ldcl\tp11, c0, [%0], {32}" :: "r" (&p[16]) : "memory");
+}
+
+/* FLDMD <X>, {d16-d31} */
+static inline void
+save_vfpregs_hi(uint64_t *p)
+{
+	__asm __volatile("stcl\tp11, c0, [%0], {32}" :: "r" (&p[16]) : "memory");
+}
+#endif
+
+static inline void
+load_vfpregs(const struct vfpreg *fregs)
+{
+	load_vfpregs_lo(fregs->vfp_regs);
+#ifdef CPU_CORTEX
+#ifdef CPU_ARM11
+	switch (curcpu()->ci_vfp_id) {
+	case FPU_VFP_CORTEXA5:
+	case FPU_VFP_CORTEXA7:
+	case FPU_VFP_CORTEXA8:
+	case FPU_VFP_CORTEXA9:
+#endif
+		load_vfpregs_hi(fregs->vfp_regs);
+#ifdef CPU_ARM11
+		break;
+	}
+#endif
+#endif
+}
+
+static inline void
+save_vfpregs(struct vfpreg *fregs)
+{
+	save_vfpregs_lo(fregs->vfp_regs);
+#ifdef CPU_CORTEX
+#ifdef CPU_ARM11
+	switch (curcpu()->ci_vfp_id) {
+	case FPU_VFP_CORTEXA5:
+	case FPU_VFP_CORTEXA7:
+	case FPU_VFP_CORTEXA8:
+	case FPU_VFP_CORTEXA9:
+#endif
+		save_vfpregs_hi(fregs->vfp_regs);
+#ifdef CPU_ARM11
+		break;
+	}
+#endif
+#endif
+}
+
 /* The real handler for VFP bounces.  */
 static int vfp_handler(u_int, u_int, trapframe_t *, int);
-static int vfp_handler(u_int, u_int, trapframe_t *, int);
+#ifdef CPU_CORTEX
+static int neon_handler(u_int, u_int, trapframe_t *, int);
+#endif
 
-static void vfp_state_load(lwp_t *, bool);
-static void vfp_state_save(lwp_t *);
-static void vfp_state_release(lwp_t *);
+static void vfp_state_load(lwp_t *, u_int);
+static void vfp_state_save(lwp_t *, u_int);
+static void vfp_state_release(lwp_t *, u_int);
 
 const pcu_ops_t arm_vfp_ops = {
 	.pcu_id = PCU_FPU,
-	.pcu_state_load = vfp_state_load,
 	.pcu_state_save = vfp_state_save,
+	.pcu_state_load = vfp_state_load,
 	.pcu_state_release = vfp_state_release,
 };
 
@@ -211,6 +283,35 @@ vfp_attach(void)
 }
 
 #else
+#if 0
+static bool
+vfp_patch_branch(uintptr_t code, uintptr_t func, uintptr_t newfunc)
+{
+	for (;; code += sizeof(uint32_t)) {
+		uint32_t insn = *(uint32_t *)code; 
+		if ((insn & 0xffd08000) == 0xe8908000)	/* ldm ... { pc } */
+			return false;
+		if ((insn & 0xfffffff0) == 0xe12fff10)	/* bx rN */
+			return false;
+		if ((insn & 0xf1a0f000) == 0xe1a0f000)	/* mov pc, ... */
+			return false;
+		if ((insn >> 25) != 0x75)		/* not b/bl insn */
+			continue;
+		intptr_t imm26 = ((int32_t)insn << 8) >> 6;
+		if (code + imm26 + 8 == func) {
+			int32_t imm24 = (newfunc - (code + 8)) >> 2;
+			uint32_t new_insn = (insn & 0xff000000)
+			   | (imm24 & 0xffffff);
+			KASSERTMSG((uint32_t)((imm24 >> 24) + 1) <= 1, "%x",
+			    ((imm24 >> 24) + 1));
+			*(uint32_t *)code = new_insn;
+			cpu_idcache_wbinv_range(code, sizeof(uint32_t));
+			return true;
+		}
+	}
+}
+#endif
+
 void
 vfp_attach(void)
 {
@@ -218,7 +319,6 @@ vfp_attach(void)
 	const char *model = NULL;
 	bool vfp_p = false;
 
-#ifdef FPU_VFP
 	if (CPU_ID_ARM11_P(curcpu()->ci_arm_cpuid)
 	    || CPU_ID_CORTEX_P(curcpu()->ci_arm_cpuid)) {
 		const uint32_t cpacr_vfp = CPACR_CPn(VFP_COPROC);
@@ -230,6 +330,15 @@ vfp_attach(void)
 		uint32_t cpacr = armreg_cpacr_read();
 		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp);
 		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp2);
+#if 0
+		if (CPU_ID_CORTEX_P(curcpu()->ci_arm_cpuid)) {
+			/*
+			 * Disable access to the upper 16 FP registers and NEON.
+			 */
+			cpacr |= CPACR_V7_D32DIS;
+			cpacr |= CPACR_V7_ASEDIS;
+		}
+#endif
 		armreg_cpacr_write(cpacr);
 
 		/*
@@ -239,7 +348,6 @@ vfp_attach(void)
 		vfp_p = __SHIFTOUT(cpacr, cpacr_vfp2) != CPACR_NOACCESS
 		    || __SHIFTOUT(cpacr, cpacr_vfp) != CPACR_NOACCESS;
 	}
-#endif
 
 	void *uh = install_coproc_handler(VFP_COPROC, vfp_test);
 
@@ -269,6 +377,7 @@ vfp_attach(void)
 	case FPU_VFP_CORTEXA8:
 	case FPU_VFP_CORTEXA9:
 		model = "NEON MPE (VFP 3.0+)";
+		cpu_neon_present = 1;
 		break;
 	default:
 		aprint_normal_dev(ci->ci_dev, "unrecognized VFP version %x\n",
@@ -277,17 +386,30 @@ vfp_attach(void)
 		return;
 	}
 
+	cpu_fpu_present = 1;
+	__asm("mrc p10,7,%0,c7,c0,0" : "=r"(cpu_media_and_vfp_features[0]));
+	__asm("mrc p10,7,%0,c6,c0,0" : "=r"(cpu_media_and_vfp_features[1]));
 	if (fpsid != 0) {
 		aprint_normal("vfp%d at %s: %s\n",
 		    device_unit(curcpu()->ci_dev), device_xname(curcpu()->ci_dev),
 		    model);
 	}
 	evcnt_attach_dynamic(&vfpevent_use, EVCNT_TYPE_MISC, NULL,
-	    "VFP", "proc use");
+	    "VFP", "coproc use");
 	evcnt_attach_dynamic(&vfpevent_reuse, EVCNT_TYPE_MISC, NULL,
-	    "VFP", "proc re-use");
+	    "VFP", "coproc re-use");
 	install_coproc_handler(VFP_COPROC, vfp_handler);
 	install_coproc_handler(VFP_COPROC2, vfp_handler);
+#ifdef CPU_CORTEX
+	install_coproc_handler(CORE_UNKNOWN_HANDLER, neon_handler);
+#endif
+
+#if 0
+	vfp_patch_branch((uintptr_t)pmap_copy_page_generic,
+	   (uintptr_t)bcopy_page, (uintptr_t)bcopy_page_vfp);
+	vfp_patch_branch((uintptr_t)pmap_zero_page_generic,
+	   (uintptr_t)bzero_page, (uintptr_t)bzero_page_vfp);
+#endif
 }
 
 /* The real handler for VFP bounces.  */
@@ -299,7 +421,7 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame,
 
 	/* This shouldn't ever happen.  */
 	if (fault_code != FAULT_USER)
-		panic("VFP fault in non-user mode");
+		panic("VFP fault at %#x in non-user mode", frame->tf_pc);
 
 	if (ci->ci_vfp_id == 0)
 		/* No VFP detected, just fault.  */
@@ -318,10 +440,57 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame,
 	return 0;
 }
 
+#ifdef CPU_CORTEX
+/* The real handler for NEON bounces.  */
+static int
+neon_handler(u_int address, u_int insn, trapframe_t *frame,
+    int fault_code)
+{
+	struct cpu_info * const ci = curcpu();
+
+	if (ci->ci_vfp_id == 0)
+		/* No VFP detected, just fault.  */
+		return 1;
+
+	if ((insn & 0xfe000000) != 0xf2000000
+	    && (insn & 0xfe000000) != 0xf4000000)
+		/* Not NEON instruction, just fault.  */
+		return 1;
+
+	/* This shouldn't ever happen.  */
+	if (fault_code != FAULT_USER)
+		panic("NEON fault in non-user mode");
+
+	pcu_load(&arm_vfp_ops);
+
+	/* Need to restart the faulted instruction.  */
+//	frame->tf_pc -= INSN_SIZE;
+	return 0;
+}
+#endif
+
 static void
-vfp_state_load(lwp_t *l, bool used)
+vfp_state_load(lwp_t *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
+
+	KASSERT(flags & PCU_ENABLE);
+
+	if (flags & PCU_KERNEL) {
+		if ((flags & PCU_LOADED) == 0) {
+			pcb->pcb_kernel_vfp.vfp_fpexc = pcb->pcb_vfp.vfp_fpexc;
+		}
+		pcb->pcb_vfp.vfp_fpexc = VFP_FPEXC_EN;
+		write_fpexc(pcb->pcb_vfp.vfp_fpexc);
+		/*
+		 * Load the kernel registers (just the first 16) if they've
+		 * been used..
+		 */
+		if (flags & PCU_LOADED) {
+			load_vfpregs_lo(pcb->pcb_kernel_vfp.vfp_regs);
+		}
+		return;
+	}
 	struct vfpreg * const fregs = &pcb->pcb_vfp;
 
 	/*
@@ -351,26 +520,32 @@ vfp_state_load(lwp_t *l, bool used)
 		return;
 	}
 
-	/* Enable the VFP (so that we can write the registers).  */
-	uint32_t fpexc = read_fpexc();
-	KDASSERT((fpexc & VFP_FPEXC_EX) == 0);
-	write_fpexc(fpexc | VFP_FPEXC_EN);
+	/* Load and Enable the VFP (so that we can write the registers).  */
+	if (flags & PCU_RELOAD) {
+		uint32_t fpexc = read_fpexc();
+		KDASSERT((fpexc & VFP_FPEXC_EX) == 0);
+		write_fpexc(fpexc | VFP_FPEXC_EN);
 
-	load_vfpregs(fregs->vfp_regs);
-	write_fpscr(fregs->vfp_fpscr);
+		load_vfpregs(fregs);
+		write_fpscr(fregs->vfp_fpscr);
 
-	if (fregs->vfp_fpexc & VFP_FPEXC_EX) {
-		struct cpu_info * const ci = curcpu();
-		/* Need to restore the exception handling state.  */
-		switch (ci->ci_vfp_id) {
-		case FPU_VFP10_ARM10E:
-		case FPU_VFP11_ARM11:
-			write_fpinst2(fregs->vfp_fpinst2);
-			write_fpinst(fregs->vfp_fpinst);
-			break;
-		default:
-			panic("%s: Unsupported VFP %#x",
-			    __func__, ci->ci_vfp_id);
+		if (fregs->vfp_fpexc & VFP_FPEXC_EX) {
+			struct cpu_info * const ci = curcpu();
+			/* Need to restore the exception handling state.  */
+			switch (ci->ci_vfp_id) {
+			case FPU_VFP10_ARM10E:
+			case FPU_VFP11_ARM11:
+			case FPU_VFP_CORTEXA5:
+			case FPU_VFP_CORTEXA7:
+			case FPU_VFP_CORTEXA8:
+			case FPU_VFP_CORTEXA9:
+				write_fpinst2(fregs->vfp_fpinst2);
+				write_fpinst(fregs->vfp_fpinst);
+				break;
+			default:
+				panic("%s: Unsupported VFP %#x",
+				    __func__, ci->ci_vfp_id);
+			}
 		}
 	}
 
@@ -380,26 +555,28 @@ vfp_state_load(lwp_t *l, bool used)
 }
 
 void
-vfp_state_save(lwp_t *l)
+vfp_state_save(lwp_t *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
-	struct vfpreg * const fregs = &pcb->pcb_vfp;
+	uint32_t fpexc = read_fpexc();
+	write_fpexc((fpexc | VFP_FPEXC_EN) & ~VFP_FPEXC_EX);
 
-	/*
-	 * If it's already disabled, then the state has been saved
-	 * (or discarded).
-	 */
-	if ((fregs->vfp_fpexc & VFP_FPEXC_EN) == 0)
+	if (flags & PCU_KERNEL) {
+		/*
+		 * Save the kernel set of VFP registers.
+		 * (just the first 16).
+		 */
+		save_vfpregs_lo(pcb->pcb_kernel_vfp.vfp_regs);
 		return;
+	}
+
+	struct vfpreg * const fregs = &pcb->pcb_vfp;
 
 	/*
 	 * Enable the VFP (so we can read the registers).  
 	 * Make sure the exception bit is cleared so that we can
 	 * safely dump the registers.
 	 */
-	uint32_t fpexc = read_fpexc();
-	write_fpexc((fpexc | VFP_FPEXC_EN) & ~VFP_FPEXC_EX);
-
 	fregs->vfp_fpexc = fpexc;
 	if (fpexc & VFP_FPEXC_EX) {
 		struct cpu_info * const ci = curcpu();
@@ -407,6 +584,10 @@ vfp_state_save(lwp_t *l)
 		switch (ci->ci_vfp_id) {
 		case FPU_VFP10_ARM10E:
 		case FPU_VFP11_ARM11:
+		case FPU_VFP_CORTEXA5:
+		case FPU_VFP_CORTEXA7:
+		case FPU_VFP_CORTEXA8:
+		case FPU_VFP_CORTEXA9:
 			fregs->vfp_fpinst = read_fpinst();
 			fregs->vfp_fpinst2 = read_fpinst2();
 			break;
@@ -416,29 +597,36 @@ vfp_state_save(lwp_t *l)
 		}
 	}
 	fregs->vfp_fpscr = read_fpscr();
-	save_vfpregs(fregs->vfp_regs);
+	save_vfpregs(fregs);
 
 	/* Disable the VFP.  */
 	write_fpexc(fpexc);
 }
 
 void
-vfp_state_release(lwp_t *l)
+vfp_state_release(lwp_t *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
-	/*
-	 * Now mark the VFP as disabled (and our state has been already
-	 * saved or is being discarded).
-	 */
-	pcb->pcb_vfp.vfp_fpexc &= ~VFP_FPEXC_EN;
+	if (flags & PCU_KERNEL) {
+		/*
+		 * Restore the FPEXC since we borrowed that field.
+		 */
+		pcb->pcb_vfp.vfp_fpexc = pcb->pcb_kernel_vfp.vfp_fpexc;
+	} else {
+		/*
+		 * Now mark the VFP as disabled (and our state
+		 * has been already saved or is being discarded).
+		 */
+		pcb->pcb_vfp.vfp_fpexc &= ~VFP_FPEXC_EN;
+	}
 
 	/*
 	 * Turn off the FPU so the next time a VFP instruction is issued
 	 * an exception happens.  We don't know if this LWP's state was
 	 * loaded but if we turned off the FPU for some other LWP, when
 	 * pcu_load invokes vfp_state_load it will see that VFP_FPEXC_EN
-	 * is still set so it just restroe fpexc and return since its
+	 * is still set so it just restore fpexc and return since its
 	 * contents are still sitting in the VFP.
 	 */
 	write_fpexc(read_fpexc() & ~VFP_FPEXC_EN);
@@ -454,6 +642,66 @@ void
 vfp_discardcontext(void)
 {
 	pcu_discard(&arm_vfp_ops);
+}
+
+void
+vfp_kernel_acquire(void)
+{
+	if (__predict_false(cpu_intr_p())) {
+		write_fpexc(VFP_FPEXC_EN);
+		if (curcpu()->ci_data.cpu_pcu_curlwp[PCU_FPU] != NULL) {
+			lwp_t * const l = curlwp;
+			struct pcb * const pcb = lwp_getpcb(l);
+			KASSERT((l->l_md.md_flags & MDLWP_VFPINTR) == 0);
+			l->l_md.md_flags |= MDLWP_VFPINTR;
+			save_vfpregs_lo(&pcb->pcb_kernel_vfp.vfp_regs[16]);
+		}
+	} else {
+		pcu_kernel_acquire(&arm_vfp_ops);
+	}
+}
+
+void
+vfp_kernel_release(void)
+{
+	if (__predict_false(cpu_intr_p())) {
+		uint32_t fpexc = 0;
+		if (curcpu()->ci_data.cpu_pcu_curlwp[PCU_FPU] != NULL) {
+			lwp_t * const l = curlwp;
+			struct pcb * const pcb = lwp_getpcb(l);
+			KASSERT(l->l_md.md_flags & MDLWP_VFPINTR);
+			load_vfpregs_lo(&pcb->pcb_kernel_vfp.vfp_regs[16]);
+			l->l_md.md_flags &= ~MDLWP_VFPINTR;
+			fpexc = pcb->pcb_vfp.vfp_fpexc;
+		}
+		write_fpexc(fpexc);
+	} else {
+		pcu_kernel_release(&arm_vfp_ops);
+	}
+}
+
+void
+vfp_getcontext(struct lwp *l, mcontext_t *mcp, int *flagsp)
+{
+	if (l->l_md.md_flags & MDLWP_VFPUSED) {
+		const struct pcb * const pcb = lwp_getpcb(l);
+		pcu_save(&arm_vfp_ops);
+		mcp->__fpu.__vfpregs.__vfp_fpscr = pcb->pcb_vfp.vfp_fpscr;
+		memcpy(mcp->__fpu.__vfpregs.__vfp_fstmx, pcb->pcb_vfp.vfp_regs,
+		    sizeof(mcp->__fpu.__vfpregs.__vfp_fstmx));
+		*flagsp |= _UC_FPU|_UC_ARM_VFP;
+	}
+}
+
+void
+vfp_setcontext(struct lwp *l, const mcontext_t *mcp)
+{
+	pcu_discard(&arm_vfp_ops);
+	struct pcb * const pcb = lwp_getpcb(l);
+	l->l_md.md_flags |= MDLWP_VFPUSED;
+	pcb->pcb_vfp.vfp_fpscr = mcp->__fpu.__vfpregs.__vfp_fpscr;
+	memcpy(pcb->pcb_vfp.vfp_regs, mcp->__fpu.__vfpregs.__vfp_fstmx,
+	    sizeof(mcp->__fpu.__vfpregs.__vfp_fstmx));
 }
 
 #endif /* FPU_VFP */

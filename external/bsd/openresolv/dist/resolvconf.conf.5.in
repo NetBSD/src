@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 19, 2012
+.Dd October 2, 2012
 .Dt RESOLVCONF.CONF 5 SMM
 .Os
 .Sh NAME
@@ -194,6 +194,44 @@ Example resolvconf.conf for unbound:
 Example unbound.conf:
 .D1 include: /etc/unbound-resolvconf.conf
 .El
+.Sh SUBSCRIBER INTEGRATION
+Not all distributions store the files the subscribers need in the same
+locations.
+For example, named service scripts have been called named, bind and rc.bind
+and they could be located in a directory called /etc/rc.d, /etc/init.d or
+similar.
+Each subscriber attempts to automatically configure itself, but not every
+distribution has been catered for.
+Also, users could equally want to use a different version from the one
+installed by default, such as bind8 and bind9.
+To accomodate this, the subscribers have these files in configurable
+variables, documented below.
+.Pp
+.Bl -tag -width indent
+.It Sy dbus_pid
+Locaiton of the dbus pidfile.
+.It Sy dnsmasq_service
+Location of the dnsmasq service.
+.It Sy dnsmasq_restart
+Command to restart the dnsmasq service.
+.It Sy dnsmasq_pid
+Location of the dnsmasq pidfile.
+.It Sy libc_service
+Location of the libc service.
+.It Sy libc_restart
+Command to restart the libc service.
+.It Sy named_service
+Location of the named service.
+.It Sy named_restart
+Command to restart the named service.
+.It Sy pdnsd_restart
+Command to restart the pdnsd service.
+.It Sy unbound_service
+Location of the unbound service.
+.It Sy unbound_restart
+Command to restart the unbound service.
+.It Sy unbound_pid
+Location of the unbound pidfile.
 .Sh SEE ALSO
 .Xr resolv.conf 5
 and
@@ -201,5 +239,8 @@ and
 .Sh AUTHORS
 .An Roy Marples Aq roy@marples.name
 .Sh BUGS
+Each distribution is a special snowflake and likes to name the same thing
+differently, namely the named service script and the dbus pidfile location.
+.Pp
 Please report them to
 .Lk http://roy.marples.name/projects/openresolv

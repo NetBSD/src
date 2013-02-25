@@ -1,4 +1,4 @@
-/*	$NetBSD: dotforward.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: dotforward.c,v 1.1.1.1.16.1 2013/02/25 00:27:20 tls Exp $	*/
 
 /*++
 /* NAME
@@ -76,6 +76,7 @@
 
 #include <mypwd.h>
 #include <bounce.h>
+#include <defer.h>
 #include <been_here.h>
 #include <mail_params.h>
 #include <mail_conf.h>
@@ -128,7 +129,15 @@ int     deliver_dotforward(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
      * Skip non-existing users. The mailbox delivery routine will catch the
      * error.
      */
-    if ((mypwd = mypwnam(state.msg_attr.user)) == 0)
+    if ((errno = mypwnam_err(state.msg_attr.user, &mypwd)) != 0) {
+	msg_warn("error looking up passwd info for %s: %m",
+		 state.msg_attr.user);
+	dsb_simple(state.msg_attr.why, "4.0.0", "user lookup error");
+	*statusp = defer_append(BOUNCE_FLAGS(state.request),
+				BOUNCE_ATTR(state.msg_attr));
+	return (YES);
+    }
+    if (mypwd == 0)
 	return (NO);
 
     /*

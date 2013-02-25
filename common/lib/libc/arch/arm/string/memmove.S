@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.3 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: memmove.S,v 1.3.26.1 2013/02/25 00:23:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,6 +30,10 @@
  */
 
 #include <machine/asm.h>
+
+#if defined(__ARM_EABI__) && !defined(BCOPY)
+STRONG_ALIAS(__aeabi_memmove, memmove)
+#endif
 
 #ifndef _BCOPY
 /* LINTSTUB: Func: void *memmove(void *, const void *, size_t) */

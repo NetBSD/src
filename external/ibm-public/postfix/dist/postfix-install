@@ -363,7 +363,7 @@ HTML files. Specify \"no\" if you do not want to install these files."
 
 : ${install_root=/}
 : ${tempdir=`pwd`}
-: ${config_directory=`bin/postconf -h -d config_directory`}
+: ${config_directory=`bin/postconf -c conf -h -d config_directory`}
 
 # Find out the location of installed configuration files.
 
@@ -446,7 +446,7 @@ do
     case "$junk" in
     "") eval unset $name;;
     esac
-    eval : \${$name=\`bin/postconf -d -h $name\`} || exit 1
+    eval : \${$name=\`bin/postconf -c conf -d -h $name\`} || exit 1
 done
 
 # Override settings manually.

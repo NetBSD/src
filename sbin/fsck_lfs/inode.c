@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.42 2010/02/16 23:20:30 mlelstv Exp $	 */
+/* $NetBSD: inode.c,v 1.42.12.1 2013/02/25 00:28:06 tls Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 	ndb = howmany(dino.di_size, fs->lfs_bsize);
 
 	thisvp = vget(fs, idesc->id_number);
-	for (lbn = 0; lbn < NDADDR; lbn++) {
+	for (lbn = 0; lbn < UFS_NDADDR; lbn++) {
 		ap = dino.di_db + lbn;
 		if (thisvp)
 			idesc->id_numfrags =
@@ -189,9 +189,9 @@ ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 			return (ret);
 	}
 	idesc->id_numfrags = fs->lfs_frag;
-	remsize = dino.di_size - fs->lfs_bsize * NDADDR;
+	remsize = dino.di_size - fs->lfs_bsize * UFS_NDADDR;
 	sizepb = fs->lfs_bsize;
-	for (ap = &dino.di_ib[0], n = 1; n <= NIADDR; ap++, n++) {
+	for (ap = &dino.di_ib[0], n = 1; n <= UFS_NIADDR; ap++, n++) {
 		if (*ap) {
 			idesc->id_blkno = *ap;
 			ret = iblock(idesc, n, remsize);
@@ -357,15 +357,15 @@ cacheino(struct ufs1_dinode * dp, ino_t inumber)
 	unsigned int blks;
 
 	blks = howmany(dp->di_size, fs->lfs_bsize);
-	if (blks > NDADDR)
-		blks = NDADDR + NIADDR;
+	if (blks > UFS_NDADDR)
+		blks = UFS_NDADDR + UFS_NIADDR;
 	inp = emalloc(sizeof(*inp) + (blks - 1) * sizeof(ufs_daddr_t));
 	inpp = &inphead[inumber % numdirs];
 	inp->i_nexthash = *inpp;
 	*inpp = inp;
 	inp->i_child = inp->i_sibling = inp->i_parentp = 0;
-	if (inumber == ROOTINO)
-		inp->i_parent = ROOTINO;
+	if (inumber == UFS_ROOTINO)
+		inp->i_parent = UFS_ROOTINO;
 	else
 		inp->i_parent = (ino_t) 0;
 	inp->i_dotdot = (ino_t) 0;
@@ -509,7 +509,7 @@ findino(struct inodesc * idesc)
 	if (dirp->d_ino == 0)
 		return (KEEPON);
 	if (strcmp(dirp->d_name, idesc->id_name) == 0 &&
-	    dirp->d_ino >= ROOTINO && dirp->d_ino < maxino) {
+	    dirp->d_ino >= UFS_ROOTINO && dirp->d_ino < maxino) {
 		idesc->id_parent = dirp->d_ino;
 		return (STOP | FOUND);
 	}
@@ -523,7 +523,7 @@ pinode(ino_t ino)
 	struct passwd *pw;
 
 	printf(" I=%llu ", (unsigned long long)ino);
-	if (ino < ROOTINO || ino >= maxino)
+	if (ino < UFS_ROOTINO || ino >= maxino)
 		return;
 	dp = ginode(ino);
 	if (dp) {
@@ -584,7 +584,7 @@ allocino(ino_t request, int type)
 	struct ubuf *bp;
 
 	if (request == 0)
-		request = ROOTINO;
+		request = UFS_ROOTINO;
 	else if (statemap[request] != USTATE)
 		return (0);
 	for (ino = request; ino < maxino; ino++)
