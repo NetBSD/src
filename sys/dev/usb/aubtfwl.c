@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.3 2011/12/23 00:51:43 jakllsch Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.3.6.1 2013/02/25 00:29:33 tls Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.3 2011/12/23 00:51:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.3.6.1 2013/02/25 00:29:33 tls Exp $");
 
 #include <sys/param.h>
 #include <dev/usb/usb.h>
@@ -110,7 +110,8 @@ aubtfwl_attach_hook(device_t self)
 
 	error = usbd_set_config_no(sc->sc_udev, 1, 0);
 	if (error != 0) {
-		aprint_error_dev(self, "could not set configuration no\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(error));
 		goto out_firmware;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.156 2012/07/17 14:22:42 njoly Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.156.2.1 2013/02/25 00:29:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.156 2012/07/17 14:22:42 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.156.2.1 2013/02/25 00:29:56 tls Exp $");
 
 #include "opt_pipe.h"
 
@@ -234,6 +234,8 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock,
 	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	fp2->f_ops = &socketops;
 	fp2->f_data = so2;
+	if (flags & SOCK_NONBLOCK)
+		so2->so_state |= SS_NBIO;
 	error = soaccept(so2, nam);
 	so2->so_cred = kauth_cred_dup(so->so_cred);
 	sounlock(so);
@@ -424,6 +426,8 @@ makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
 	(*fp)->f_type = DTYPE_SOCKET;
 	(*fp)->f_ops = &socketops;
 	(*fp)->f_data = so;
+	if (flags & SOCK_NONBLOCK)
+		so->so_state |= SS_NBIO;
 	return 0;
 }
 
@@ -634,10 +638,9 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 		*retsize = len - auio.uio_resid;
 
 bad:
-	if (ktrpoint(KTR_GENIO)) {
+	if (ktriov != NULL) {
 		ktrgeniov(s, UIO_WRITE, ktriov, *retsize, error);
-		if (ktriov != NULL)
-			kmem_free(ktriov, iovsz);
+		kmem_free(ktriov, iovsz);
 	}
 
  	if (iov != aiov)
@@ -810,17 +813,21 @@ sys_sendmmsg(struct lwp *l, const struct sys_sendmmsg_args *uap,
 static void
 free_rights(struct mbuf *m)
 {
-	int nfd;
-	int i;
+	struct cmsghdr *cm;
 	int *fdv;
+	unsigned int nfds, i;
 
-	nfd = m->m_len < CMSG_SPACE(sizeof(int)) ? 0
-	    : (m->m_len - CMSG_SPACE(sizeof(int))) / sizeof(int) + 1;
-	fdv = (int *) CMSG_DATA(mtod(m,struct cmsghdr *));
-	for (i = 0; i < nfd; i++) {
+	KASSERT(sizeof(*cm) <= m->m_len);
+	cm = mtod(m, struct cmsghdr *);
+
+	KASSERT(CMSG_ALIGN(sizeof(*cm)) <= cm->cmsg_len);
+	KASSERT(cm->cmsg_len <= m->m_len);
+	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) / sizeof(int);
+	fdv = (int *)CMSG_DATA(cm);
+
+	for (i = 0; i < nfds; i++)
 		if (fd_getfile(fdv[i]) != NULL)
 			(void)fd_close(fdv[i]);
-	}
 }
 
 void
@@ -964,10 +971,9 @@ do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
 		/* Some data transferred */
 		error = 0;
 
-	if (ktrpoint(KTR_GENIO)) {
+	if (ktriov != NULL) {
 		ktrgeniov(s, UIO_READ, ktriov, len, error);
-		if (ktriov != NULL)
-			kmem_free(ktriov, iovsz);
+		kmem_free(ktriov, iovsz);
 	}
 
 	if (error != 0) {

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.54.2.1 2012/11/20 03:01:02 tls Exp $
+#	$NetBSD: genassym.cf,v 1.54.2.2 2013/02/25 00:28:24 tls Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -46,6 +46,7 @@ include <netinet/ip_var.h>
 include <uvm/uvm_extern.h>
 
 include <arm/fiq.h>
+include <arm/vfpreg.h>
 
 include <arm/arm32/pte.h>
 include <machine/pmap.h>
@@ -60,6 +61,10 @@ include "opt_execfmt.h"
 define	__PROG32		1
 ifdef __ARM_FIQ_INDIRECT
 define	__ARM_FIQ_INDIRECT	1
+endif
+
+ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS	1
 endif
 
 ifdef __HAVE_FAST_SOFTINTS
@@ -130,11 +135,12 @@ define	PCB_R9			offsetof(struct pcb, pcb_un.un_32.pcb32_r9)
 define	PCB_R10			offsetof(struct pcb, pcb_un.un_32.pcb32_r10)
 define	PCB_R11			offsetof(struct pcb, pcb_un.un_32.pcb32_r11)
 define	PCB_R12			offsetof(struct pcb, pcb_un.un_32.pcb32_r12)
-define	PCB_SP			offsetof(struct pcb, pcb_un.un_32.pcb32_sp)
+define	PCB_KSP			offsetof(struct pcb, pcb_un.un_32.pcb32_sp)
 define	PCB_LR			offsetof(struct pcb, pcb_un.un_32.pcb32_lr)
 define	PCB_PC			offsetof(struct pcb, pcb_un.un_32.pcb32_pc)
 define	PCB_USER_PID_RW		offsetof(struct pcb, pcb_un.un_32.pcb32_user_pid_rw)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_VFP_FPEXC		offsetof(struct pcb, pcb_vfp.vfp_fpexc)
 
 define	PCB_SIZE		sizeof(struct pcb)
 
@@ -187,7 +193,11 @@ define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CI_CC_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
 define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 define	CI_CC_NSOFT		offsetof(struct cpu_info, ci_data.cpu_nsoft)
+ifdef FPU_VFP
+define	CI_VFP_ID		offsetof(struct cpu_info, ci_vfp_id)
+endif
 
+define	VFP_FPEXC_EN		VFP_FPEXC_EN
 
 # Constants required for in_cksum() and friends.
 define	M_LEN				offsetof(struct mbuf, m_len)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ni.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: dict_ni.c,v 1.1.1.1.16.1 2013/02/25 00:27:31 tls Exp $	*/
 
 /*++
 /* NAME
@@ -82,8 +82,6 @@ static const char *dict_ni_do_lookup(char *path, char *key_prop,
     ni_status r;
     ni_id   dir;
 
-    dict_errno = 0;
-
     if (msg_verbose)
 	msg_info("ni_lookup %s %s=%s", path, key_prop, key_value);
 
@@ -152,6 +150,8 @@ static const char *dict_ni_lookup(DICT *dict, const char *key)
 {
     DICT_NI *d = (DICT_NI *) dict;
 
+    dict->error = 0;
+
     /*
      * Optionally fold the key.
      */
@@ -187,6 +187,7 @@ DICT   *dict_ni_open(const char *path, int unused_flags, int dict_flags)
     d->dict.flags = dict_flags | DICT_FLAG_FIXED;
     if (dict_flags & DICT_FLAG_FOLD_FIX)
 	d->dict.fold_buf = vstring_alloc(10);
+    d->dict.owner.status = DICT_OWNER_TRUSTED;
 
     return (DICT_DEBUG (&d->dict));
 }

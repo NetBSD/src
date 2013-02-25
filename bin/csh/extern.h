@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.24 2011/11/09 19:16:01 christos Exp $ */
+/* $NetBSD: extern.h,v 1.24.6.1 2013/02/25 00:23:50 tls Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,6 +48,9 @@ void initdesc(void);
 __dead void pintr(int);
 __dead void pintr1(int);
 void printprompt(void);
+#ifdef EDIT
+char *printpromptstr(EditLine *);
+#endif
 void process(int);
 void rechist(void);
 void untty(void);
@@ -172,6 +175,9 @@ int sortscmp(const ptr_t, const ptr_t);
  */
 void dohist(Char **, struct command *);
 struct Hist *enthist(int, struct wordent *, int);
+#ifdef EDIT
+void loadhist(struct Hist *);
+#endif
 void savehist(struct wordent *);
 
 /*
@@ -186,6 +192,9 @@ Char *domod(Char *, int);
 void freelex(struct wordent *);
 int lex(struct wordent *);
 void prlex(FILE *, struct wordent *);
+#ifdef EDIT
+int sprlex(char **, struct wordent *);
+#endif
 int readc(int);
 void settell(void);
 void unreadc(int);
@@ -301,33 +310,32 @@ void Free(ptr_t);
 ptr_t Malloc(size_t);
 ptr_t Realloc(ptr_t, size_t);
 ptr_t Calloc(size_t, size_t);
-void showall(Char **, struct command *);
 
 /*
  * str.c:
  */
 #ifdef SHORT_STRINGS
-Char *s_strchr(Char *, int);
-Char *s_strrchr(Char *, int);
-Char *s_strcat(Char *, Char *);
+Char *s_strchr(const Char *, int);
+Char *s_strrchr(const Char *, int);
+Char *s_strcat(Char *, const Char *);
 #ifdef NOTUSED
-Char *s_strncat(Char *, Char *, size_t);
+Char *s_strncat(Char *, const Char *, size_t);
 #endif
-Char *s_strcpy(Char *, Char *);
-Char *s_strncpy(Char *, Char *, size_t);
-Char *s_strspl(Char *, Char *);
-size_t s_strlen(Char *);
-int s_strcmp(Char *, Char *);
-int s_strncmp(Char *, Char *, size_t);
-Char *s_strsave(Char *);
-Char *s_strend(Char *);
-Char *s_strstr(Char *, Char *);
+Char *s_strcpy(Char *, const Char *);
+Char *s_strncpy(Char *, const Char *, size_t);
+Char *s_strspl(const Char *, const Char *);
+size_t s_strlen(const Char *);
+int s_strcmp(const Char *, const Char *);
+int s_strncmp(const Char *, const Char *, size_t);
+Char *s_strsave(const Char *);
+Char *s_strend(const Char *);
+Char *s_strstr(const Char *, const Char *);
 Char *str2short(const char *);
 Char **blk2short(char **);
-char *short2str(Char *);
-char **short2blk(Char **);
+char *short2str(const Char *);
+char **short2blk(Char * const *);
 #endif
-char *short2qstr(Char *);
-char *vis_str(Char *);
+char *short2qstr(const Char *);
+char *vis_str(const Char *);
 
 #endif /* !_EXTERN_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.42.2.1 2012/11/20 03:01:14 tls Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.42.2.2 2013/02/25 00:28:36 tls Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -171,11 +171,13 @@
 #include <machine/frame.h>
 
 #include <arm/arm32/machdep.h>
+#ifdef OVERO
 #include <arm/omap/omap2_gpmcreg.h>
 #include <arm/omap/omap2_prcm.h>
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_com.h>
+#endif
 #include <arm/undefined.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
@@ -547,7 +549,7 @@ initarm(void *arg)
 	kgdb_port_init();
 #endif
 
-        /*
+	/*
 	 * Examine the boot args string for options we need to know about
 	 * now.
 	 */
@@ -650,7 +652,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("freestart = 0x%08lx, free_pages = %d (0x%08x)\n",
-	       physical_freestart, free_pages, free_pages);
+	    physical_freestart, free_pages, free_pages);
 #endif
 
 	/* Define a macro to simplify memory allocation */
@@ -865,7 +867,7 @@ initarm(void *arg)
 	/* Switch tables */
 #ifdef VERBOSE_INIT_ARM
 	printf("freestart = 0x%08lx, free_pages = %d (0x%x)\n",
-	       physical_freestart, free_pages, free_pages);
+	    physical_freestart, free_pages, free_pages);
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 
@@ -1327,19 +1329,32 @@ kgdb_port_init(void)
 static void
 gumstix_device_register(device_t dev, void *aux)
 {
+	prop_dictionary_t dict = device_properties(dev);
 
+	if (device_is_a(dev, "ehci")) {
+		prop_dictionary_set_cstring(dict, "port0-mode", "none");
+		prop_dictionary_set_cstring(dict, "port1-mode", "phy");
+		prop_dictionary_set_cstring(dict, "port2-mode", "none");
+		prop_dictionary_set_bool(dict, "phy-reset", true);
+		prop_dictionary_set_int16(dict, "port0-gpio", -1);
+		prop_dictionary_set_int16(dict, "port1-gpio", 183);
+		prop_dictionary_set_int16(dict, "port2-gpio", -1);
+		prop_dictionary_set_uint16(dict, "dpll5-m", 120);
+		prop_dictionary_set_uint16(dict, "dpll5-n", 12);
+		prop_dictionary_set_uint16(dict, "dpll5-m2", 1);
+	}
 	if (device_is_a(dev, "ohci")) {
-		if (prop_dictionary_set_bool(device_properties(dev),
+		if (prop_dictionary_set_bool(dict,
 		    "Ganged-power-mask-on-port1", 1) == false) {
 			printf("WARNING: unable to set power-mask for port1"
 			    " property for %s\n", device_xname(dev));
 		}
-		if (prop_dictionary_set_bool(device_properties(dev),
+		if (prop_dictionary_set_bool(dict,
 		    "Ganged-power-mask-on-port2", 1) == false) {
 			printf("WARNING: unable to set power-mask for port2"
 			    " property for %s\n", device_xname(dev));
 		}
-		if (prop_dictionary_set_bool(device_properties(dev),
+		if (prop_dictionary_set_bool(dict,
 		    "Ganged-power-mask-on-port3", 1) == false) {
 			printf("WARNING: unable to set power-mask for port3"
 			    " property for %s\n", device_xname(dev));

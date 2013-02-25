@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_listen.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: fifo_listen.c,v 1.1.1.1.16.1 2013/02/25 00:27:31 tls Exp $	*/
 
 /*++
 /* NAME
@@ -45,6 +45,7 @@
 #include "msg.h"
 #include "iostuff.h"
 #include "listen.h"
+#include "warn_stat.h"
 
 #define BUF_LEN	100
 

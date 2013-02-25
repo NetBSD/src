@@ -1,4 +1,4 @@
-/* $NetBSD: hist.c,v 1.18 2007/07/16 18:26:10 christos Exp $ */
+/* $NetBSD: hist.c,v 1.18.40.1 2013/02/25 00:23:51 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.18 2007/07/16 18:26:10 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.18.40.1 2013/02/25 00:23:51 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,11 +82,35 @@ savehist(struct wordent *sp)
     (void) enthist(++eventno, sp, 1);
 }
 
+#ifdef EDIT
+void
+loadhist(struct Hist *hp) {
+    char *h = NULL;
+
+    if (hi == NULL || hp == NULL)
+	return;
+    loadhist(hp->Hnext);
+    if (sprlex(&h, &hp->Hlex) != -1) {
+	HistEvent ev;
+	history(hi, &ev, H_ENTER, h);
+    }
+}
+#endif
+
 struct Hist *
 enthist(int event, struct wordent *lp, int docopy)
 {
     struct Hist *np;
 
+#ifdef EDIT
+    if (hi) {
+	char *h = NULL;
+	if (sprlex(&h, lp) != -1) {
+	    HistEvent ev;
+	    history(hi, &ev, H_ENTER, h);
+	}
+    }
+#endif
     np = (struct Hist *)xmalloc((size_t)sizeof(*np));
     np->Hnum = np->Href = event;
     if (docopy) {

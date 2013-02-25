@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lockf.c,v 1.1.2.2 2012/11/07 14:00:39 pgoyette Exp $	*/
+/*	$NetBSD: t_lockf.c,v 1.1.2.3 2013/02/25 00:30:22 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,10 +53,11 @@
  * When finished, reap all the children.
  */
 
-int nlocks = 500;		/* number of locks per thread */
-int nprocs = 10;		/* number of processes to spawn */
-int sleeptime = 150000;		/* sleep time between locks, usec */
-off_t size = 8192;		/* size of file to lock */
+#define	nlocks		500	/* number of locks per thread */
+#define	nprocs		10	/* number of processes to spawn */
+#define	npasses		50	/* number of passes to make over the children */
+#define	sleeptime	150000	/* sleep time between locks, usec */
+#define	filesize 	8192	/* size of file to lock */
 
 const char *lockfile = "lockf_test";
 
@@ -80,11 +81,11 @@ trylocks(int id)
 
 	printf("%d: start\n", id);
 
-	for (i=0; i<nlocks; i++) {
+	for (i = 0; i < nlocks; i++) {
 		struct flock fl;
 
-		fl.l_start = random_uint32() % size;
-		fl.l_len = random_uint32() % size;
+		fl.l_start = random_uint32() % filesize;
+		fl.l_len = random_uint32() % filesize;
 		switch (random_uint32() % 3) {
 		case 0:
 			fl.l_type = F_RDLCK;
@@ -118,51 +119,65 @@ ATF_TC_HEAD(randlock, tc)
 ATF_TC_BODY(randlock, tc)
 {
 	int i, j, fd;
+	int pipe_fd[2];
 	pid_t *pid;
 	int status;
+	char pipe_in, pipe_out;
+	const char pipe_errmsg[] = "child: pipe write failed\n";
 
 	(void)unlink(lockfile);
 
 	fd = open (lockfile, O_RDWR|O_CREAT|O_EXCL|O_TRUNC, 0666);
 	ATF_REQUIRE_MSG(fd >= 0, "open(%s): %s", lockfile, strerror(errno));
 
-	ATF_REQUIRE_MSG(ftruncate(fd, size) >= 0,
+	ATF_REQUIRE_MSG(ftruncate(fd, filesize) >= 0,
 	    "ftruncate(%s): %s", lockfile, strerror(errno));
+
+	ATF_REQUIRE_MSG(pipe(pipe_fd) == 0, "pipe: %s", strerror(errno));
 
 	fsync(fd);
 	close(fd);
 
 	pid = malloc(nprocs * sizeof(pid_t));
 	
-	for (i=0; i<nprocs; i++) {
+	for (i = 0; i < nprocs; i++) {
+		pipe_out = (char)('A' + i);
 		pid[i] = fork();
 		switch (pid[i]) {
 		case 0:
-			trylocks(i);
+			if (write(pipe_fd[1], &pipe_out, 1) != 1)
+				write(STDERR_FILENO, pipe_errmsg,
+				    __arraycount(pipe_errmsg) - 1);
+			else
+				trylocks(i);
 			_exit(0);
 			break;
 		case -1:
 			atf_tc_fail("fork %d failed", i);
 			break;
 		default:
+			ATF_REQUIRE_MSG(read(pipe_fd[0], &pipe_in, 1) == 1,
+			    "parent: read_pipe(%i): %s", i, strerror(errno));
+			ATF_REQUIRE_MSG(pipe_in == pipe_out,
+			    "parent: pipe does not match");
 			break;
 		}
 	}
-	for (j=0; j<100; j++) {
+	for (j = 0; j < npasses; j++) {
 		printf("parent: run %i\n", j+1);
-		for (i=0; i<nprocs; i++) {
+		for (i = 0; i < nprocs; i++) {
 			ATF_REQUIRE_MSG(ptrace(PT_ATTACH, pid[i], 0, 0) >= 0,
 			    "ptrace attach %d", pid[i]);
 			ATF_REQUIRE_MSG(waitpid(pid[i], &status, WUNTRACED) >= 0,
 			    "waitpid(ptrace)");
-			usleep(sleeptime/3);
+			usleep(sleeptime / 3);
 			ATF_REQUIRE_MSG(ptrace(PT_DETACH, pid[i], (caddr_t)1,
 					       0) >= 0,
 			    "ptrace detach %d", pid[i]);
-			usleep(sleeptime/3);
+			usleep(sleeptime / 3);
 		}
 	}
-	for (i=0; i<nprocs; i++) {
+	for (i = 0; i < nprocs; i++) {
 		printf("reap %d: ", i);
 		fflush(stdout);
 		kill(pid[i], SIGINT);
@@ -210,7 +225,7 @@ ATF_TC_BODY(deadlock, tc)
 	fd = open (lockfile, O_RDWR|O_CREAT|O_EXCL|O_TRUNC, 0666);
 	ATF_REQUIRE_MSG(fd >= 0, "open(%s): %s", lockfile, strerror(errno));
 
-	ATF_REQUIRE_MSG(ftruncate(fd, size) >= 0,
+	ATF_REQUIRE_MSG(ftruncate(fd, filesize) >= 0,
 	    "ftruncate(%s): %s", lockfile, strerror(errno));
 
 	fsync(fd);
@@ -230,7 +245,7 @@ ATF_TC_BODY(deadlock, tc)
 	sleep(1);	/* give child time to grab its lock then block */
 
 	error = dolock(fd, F_LOCK, 1, 1);
-	ATF_CHECK_MSG(error != EDEADLK, "parent did not deadlock: %s",
+	ATF_REQUIRE_MSG(error == EDEADLK, "parent did not detect deadlock: %s",
 	    strerror(errno));
 	ret = kill(pid, SIGKILL);
 	ATF_REQUIRE_MSG(ret != -1, "failed to kill child: %s", strerror(errno));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.9 2012/04/05 16:31:53 plunky Exp $	*/
+/*	$NetBSD: uhso.c,v 1.9.2.1 2013/02/25 00:29:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.9 2012/04/05 16:31:53 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.9.2.1 2013/02/25 00:29:39 tls Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -478,9 +480,8 @@ uhso_attach(device_t parent, device_t self, void *aux)
 
 	status = usbd_set_config_no(sc->sc_udev, UHSO_CONFIG_NO, 1);
 	if (status != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "could not set config no %d: %s\n",
-		    UHSO_CONFIG_NO, usbd_errstr(status));
-
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(status));
 		return;
 	}
 
@@ -606,7 +607,7 @@ uhso_switch_mode(usbd_device_handle udev)
 	xfer = usbd_alloc_xfer(udev);
 	if (xfer == NULL)
 		return ENOMEM;
-	
+
 	USETDW(cmd.dCBWSignature, CBWSIGNATURE);
 	USETDW(cmd.dCBWTag, 1);
 	USETDW(cmd.dCBWDataTransferLength, 0);

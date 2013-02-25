@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.6 2011/10/30 21:08:33 phx Exp $ */
+/* $NetBSD: rge.c,v 1.6.12.1 2013/02/25 00:28:55 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -102,6 +102,9 @@ struct desc {
 #define	 RCR_AM		(1U << 2)	/* accept multicast frame */
 #define	 RCR_APM	(1U << 1)	/* accept unicast frame */
 #define	 RCR_AAP	(1U << 0)	/* promiscuous */
+#define RGE_EECMD	0x50		/* EEPROM command register */
+#define  EECMD_LOCK	0x00
+#define  EECMD_UNLOCK	0xc0
 #define RGE_PHYAR	0x60		/* PHY access */
 #define RGE_PHYSR	0x6c		/* PHY status */
 #define RGE_RMS		0xda		/* Rx maximum frame size */
@@ -146,7 +149,8 @@ rge_init(unsigned tag, void *data)
 	unsigned val;
 	struct local *l;
 	struct desc *txd, *rxd;
-	uint8_t *en = data;
+	uint32_t reg;
+	uint8_t *en;
 
 	l = ALLOC(struct local, 256);	/* desc alignment */
 	memset(l, 0, sizeof(struct local));
@@ -158,14 +162,27 @@ rge_init(unsigned tag, void *data)
 	} while (val & CR_RESET);
 
 	mii_initphy(l);
-
 	en = data;
-	en[0] = CSR_READ_1(l, RGE_IDR0);
-	en[1] = CSR_READ_1(l, RGE_IDR1);
-	en[2] = CSR_READ_1(l, RGE_IDR2);
-	en[3] = CSR_READ_1(l, RGE_IDR3);
-	en[4] = CSR_READ_1(l, RGE_IDR4);
-	en[5] = CSR_READ_1(l, RGE_IDR5);
+
+	if (brdtype == BRD_QNAPTS) {
+		/* read the MAC from flash and write it into the ID-Regs */
+		read_mac_from_flash(en);
+
+		CSR_WRITE_1(l, RGE_EECMD, EECMD_UNLOCK);
+		reg = en[0] | (en[1] << 8) | (en[2] << 16) | (en[3] << 24);
+		CSR_WRITE_4(l, RGE_IDR0, reg);
+		reg = en[4] | (en[5] << 8);
+		CSR_WRITE_4(l, RGE_IDR4, reg);
+		CSR_WRITE_1(l, RGE_EECMD, EECMD_LOCK);
+	} else {
+		/* pretent the ID-Regs have the correct address */
+		en[0] = CSR_READ_1(l, RGE_IDR0);
+		en[1] = CSR_READ_1(l, RGE_IDR1);
+		en[2] = CSR_READ_1(l, RGE_IDR2);
+		en[3] = CSR_READ_1(l, RGE_IDR3);
+		en[4] = CSR_READ_1(l, RGE_IDR4);
+		en[5] = CSR_READ_1(l, RGE_IDR5);
+	}
 
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
 	    en[0], en[1], en[2], en[3], en[4], en[5]);

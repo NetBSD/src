@@ -1,4 +1,4 @@
-.\"	$NetBSD: verify.8,v 1.1.1.2 2010/06/17 18:06:29 tron Exp $
+.\"	$NetBSD: verify.8,v 1.1.1.2.12.1 2013/02/25 00:27:12 tls Exp $
 .\"
 .TH VERIFY 8 
 .ad
@@ -94,6 +94,19 @@ a configuration change.
 
 The text below provides only a parameter summary. See
 \fBpostconf\fR(5) for more details including examples.
+.SH "PROBE MESSAGE CONTROLS"
+.na
+.nf
+.ad
+.fi
+.IP "\fBaddress_verify_sender ($double_bounce_sender)\fR"
+The sender address to use in address verification probes; prior
+to Postfix 2.5 the default was "postmaster".
+.PP
+Available with Postfix 2.9 and later:
+.IP "\fBaddress_verify_sender_ttl (0s)\fR"
+The time between changes in the time-dependent portion of address
+verification probe sender addresses.
 .SH "CACHE CONTROLS"
 .na
 .nf
@@ -102,9 +115,6 @@ The text below provides only a parameter summary. See
 .IP "\fBaddress_verify_map (see 'postconf -d' output)\fR"
 Lookup table for persistent address verification status
 storage.
-.IP "\fBaddress_verify_sender ($double_bounce_sender)\fR"
-The sender address to use in address verification probes; prior
-to Postfix 2.5 the default was "postmaster".
 .IP "\fBaddress_verify_positive_expire_time (31d)\fR"
 The time after which a successful probe expires from the address
 verification cache.

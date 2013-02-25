@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.48 2012/08/29 20:39:24 bouyer Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.48.2.1 2013/02/25 00:29:18 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -255,6 +255,7 @@ struct livengood_tcpip_ctxdesc {
 #define	EECD_EE_TYPE	(1U << 13)	/* EEPROM type
 					   (0 = Microwire, 1 = SPI) */
 #define EECD_SEC1VAL	(1U << 22)	/* Sector One Valid */
+#define EECD_SEC1VAL_VALMASK (EECD_EE_AUTORD | EECD_EE_PRES) /* Valid Mask */
 
 #define	UWIRE_OPC_ERASE	0x04		/* MicroWire "erase" opcode */
 #define	UWIRE_OPC_WRITE	0x05		/* MicroWire "write" opcode */
@@ -420,8 +421,11 @@ struct livengood_tcpip_ctxdesc {
 #define	RAL_RDR1	(1U << 30)	/* put packet in alt. rx ring */
 #define	RAL_AV		(1U << 31)	/* entry is valid */
 
-#define	WM_RAL_TABSIZE	16
-#define	WM_ICH8_RAL_TABSIZE 7
+#define	WM_RAL_TABSIZE		15	/* RAL size for old devices */
+#define	WM_RAL_TABSIZE_ICH8	7	/* RAL size for ICH* and PCH* */
+#define	WM_RAL_TABSIZE_82575	16	/* RAL size for 82575 */
+#define	WM_RAL_TABSIZE_82576	24	/* RAL size for 82576 and 82580 */
+#define	WM_RAL_TABSIZE_I350	32	/* RAL size for I350 */
 
 #define	WMREG_ICR	0x00c0	/* Interrupt Cause Register */
 #define	ICR_TXDW	(1U << 0)	/* Tx desc written back */
@@ -960,6 +964,8 @@ struct livengood_tcpip_ctxdesc {
 
 #define ICH_NVM_SIG_WORD	0x13
 #define ICH_NVM_SIG_MASK	0xc000
+#define ICH_NVM_VALID_SIG_MASK	0xc0
+#define ICH_NVM_SIG_VALUE	0x80
 
 /* for PCI express Capability registers */
 #define	WM_PCI_PCIE_DCSR2_16MS	0x00000005

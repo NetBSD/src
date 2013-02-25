@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.11 2011/04/09 22:09:05 christos Exp $ */
+/* $NetBSD: edid.c,v 1.11.14.1 2013/02/25 00:29:43 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.11 2011/04/09 22:09:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.11.14.1 2013/02/25 00:29:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -626,7 +626,7 @@ edid_parse(uint8_t *data, struct edid_info *edid)
 		if (edid->edid_modes[i].dot_clock > max_dotclock)
 			max_dotclock = edid->edid_modes[i].dot_clock;
 
-	aprint_verbose("max_dotclock according to supported modes: %d\n",
+	aprint_debug("max_dotclock according to supported modes: %d\n",
 	    max_dotclock);
 
 	mhz = (max_dotclock + 999) / 1000;

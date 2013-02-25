@@ -85,6 +85,7 @@
 #ifndef _LOCORE
 /* 1 == use cpu_sleep(), 0 == don't */
 extern int cpu_do_powersave;
+extern int cpu_fpu_present;
 #endif
 
 #ifdef _LOCORE
@@ -408,6 +409,8 @@ void ucas_ras_check(trapframe_t *);
 void vfp_attach(void);
 void vfp_discardcontext(void);
 void vfp_savecontext(void);
+void vfp_kernel_acquire(void);
+void vfp_kernel_release(void);
 extern const pcu_ops_t arm_vfp_ops;
 
 #endif	/* !_LOCORE */

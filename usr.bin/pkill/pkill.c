@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.27 2010/12/07 07:39:15 mrg Exp $	*/
+/*	$NetBSD: pkill.c,v 1.27.12.1 2013/02/25 00:30:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.27 2010/12/07 07:39:15 mrg Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.27.12.1 2013/02/25 00:30:38 tls Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: pkill.c,v 1.27 2010/12/07 07:39:15 mrg Exp $");
 #include <sys/sysctl.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 
 #include <stdio.h>
@@ -102,7 +103,6 @@ static struct listhead ppidlist = SLIST_HEAD_INITIALIZER(list);
 static struct listhead tdevlist = SLIST_HEAD_INITIALIZER(list);
 static struct listhead sidlist = SLIST_HEAD_INITIALIZER(list);
 
-int	main(int, char **);
 static void	usage(void) __dead;
 static int	killact(const struct kinfo_proc2 *);
 static int	reniceact(const struct kinfo_proc2 *);
@@ -117,7 +117,7 @@ main(int argc, char **argv)
 	int (*action)(const struct kinfo_proc2 *);
 	const struct kinfo_proc2 *kp;
 	struct list *li;
-	const char *mstr, *p;
+	const char *p;
 	u_int32_t bestsec, bestusec;
 	regex_t reg;
 	regmatch_t regmatch;
@@ -286,9 +286,9 @@ main(int argc, char **argv)
 			if ((kp->p_flag & P_SYSTEM) != 0 || kp->p_pid == mypid)
 				continue;
 
+			if ((pargv = kvm_getargv2(kd, kp, 0)) == NULL)
+				continue;
 			if (matchargs) {
-				if ((pargv = kvm_getargv2(kd, kp, 0)) == NULL)
-					continue;
 
 				j = 0;
 				while (j < (int)sizeof(buf) && *pargv != NULL) {
@@ -297,16 +297,15 @@ main(int argc, char **argv)
 					    pargv[0]);
 					pargv++;
 				}
-
-				mstr = buf;
 			} else
-				mstr = kp->p_comm;
+				strlcpy(buf, pargv[0], sizeof(buf));
 
-			rv = regexec(&reg, mstr, 1, &regmatch, 0);
+			rv = regexec(&reg, buf, 1, &regmatch, 0);
 			if (rv == 0) {
 				if (fullmatch) {
 					if (regmatch.rm_so == 0 &&
-					    regmatch.rm_eo == (regoff_t)strlen(mstr))
+					    regmatch.rm_eo == 
+					    (regoff_t)strlen(buf))
 						selected[i] = 1;
 				} else
 					selected[i] = 1;
@@ -560,7 +559,7 @@ makelist(struct listhead *head, enum listtype type, char *src)
 			usage();
 
 		if ((li = malloc(sizeof(*li))) == NULL)
-			err(STATUS_ERROR, "Cannot allocate %zd bytes",
+			err(STATUS_ERROR, "Cannot allocate %zu bytes",
 			    sizeof(*li));
 		SLIST_INSERT_HEAD(head, li, li_chain);
 		empty = 0;

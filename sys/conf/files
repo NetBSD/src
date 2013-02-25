@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1057.2.1 2012/11/20 03:01:57 tls Exp $
+#	$NetBSD: files,v 1.1057.2.2 2013/02/25 00:29:09 tls Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -994,7 +994,7 @@ device	siisata: ata, ata_dma, ata_udma, sata, sata_fis, sata_pmp, siisata
 # Marvell Serial-ATA Host Controller
 define mvsata
 file dev/ic/mvsata.c			mvsata
-device mvsata: ata, ata_dma, ata_udma, wdc_common, sata, mvsata
+device mvsata: ata, ata_dma, ata_udma, wdc_common, sata, sata_pmp, mvsata
 defflag opt_mvsata.h		MVSATA_WITHOUTDMA
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
@@ -1207,6 +1207,11 @@ file	dev/usb/xhci.c			xhci			needs-flag
 defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
 device	slhci: usbus, usbroothub
 file	dev/ic/sl811hs.c		slhci			needs-flag
+
+# DesignWare OTG host controller
+#
+device dotg: usbus, usbroothub, usb_dma
+file	dev/usb/dwc_otg.c		dotg			needs-flag
 
 # USB HID processing (as used by bluetooth and usb code)
 define	hid
@@ -1668,7 +1673,7 @@ file	net/if_ecosubr.c		eco
 file	net/if_etherip.c		etherip			needs-flag
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
 					    wlan
-file	net/if_faith.c			faith & inet & inet6	needs-flag
+file	net/if_faith.c			faith & (inet | inet6)	needs-flag
 file	net/if_fddisubr.c		fddi			needs-flag
 file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-flag
@@ -1679,7 +1684,7 @@ file	net/if_media.c
 file	net/if_mpls.c			ifmpls			needs-flag
 file	net/if_ppp.c			ppp			needs-flag
 file	net/if_srt.c			srt
-file	net/if_stf.c			stf & inet & inet6	needs-flag
+file	net/if_stf.c			stf & (inet | inet6)	needs-flag
 file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
 file	net/if_strip.c			strip			needs-flag

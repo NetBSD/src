@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_l2t.c,v 1.1 2010/03/21 21:11:13 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_l2t.c,v 1.1.24.1 2013/02/25 00:29:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ t3_l2t_get(struct toedev *dev, struct rtentry *neigh,
 {
     struct l2t_entry *e;
     struct l2t_data *d = L2DATA(dev);
-    u32 addr = *(u32 *)neigh->_rt_key;
+    u32 addr = ((struct sockaddr_in *)rt_getkey(neigh))->sin_addr.s_addr;
     int ifidx = neigh->rt_ifp->if_index;
     int hash = arp_hash(addr, ifidx, d);
 
@@ -427,7 +427,7 @@ t3_l2t_update(struct toedev *dev, struct rtentry *neigh)
     struct l2t_entry *e;
     struct mbuf *arpq = NULL;
     struct l2t_data *d = L2DATA(dev);
-    u32 addr = *(u32 *)neigh->_rt_key;
+    u32 addr = ((struct sockaddr_in *)rt_getkey(neigh))->sin_addr.s_addr;
     int ifidx = neigh->rt_ifp->if_index;
     int hash = arp_hash(addr, ifidx, d);
     struct llinfo_arp *la;

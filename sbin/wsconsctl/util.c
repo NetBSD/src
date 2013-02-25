@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.30 2011/12/15 14:25:12 phx Exp $ */
+/*	$NetBSD: util.c,v 1.30.6.1 2013/02/25 00:28:12 tls Exp $ */
 
 /*-
- * Copyright (c) 1998, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2006, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -257,6 +257,9 @@ pr_field(struct field *f, const char *sep)
 	case FMT_UINT:
 		(void)printf("%u", *((unsigned int *) f->valp));
 		break;
+	case FMT_INT:
+		(void)printf("%d", *((int *) f->valp));
+		break;
 	case FMT_STRING:
 		(void)printf("\"%s\"", *((char **) f->valp));
 		break;
@@ -360,6 +363,14 @@ rd_field(struct field *f, char *val, int merge)
 			*((unsigned int *) f->valp) += u;
 		else
 			*((unsigned int *) f->valp) = u;
+		break;
+	case FMT_INT:
+		if (sscanf(val, "%d", &i) != 1)
+			errx(EXIT_FAILURE, "%s: not a number", val);
+		if (merge)
+			*((int *) f->valp) += i;
+		else
+			*((int *) f->valp) = i;
 		break;
 	case FMT_STRING:
 		if ((*((char **) f->valp) = strdup(val)) == NULL)

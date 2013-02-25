@@ -1,0 +1,4 @@
+./maps fail:1maps <<EOF
+
+foobar
+EOF

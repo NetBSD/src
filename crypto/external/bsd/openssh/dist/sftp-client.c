@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.c,v 1.6 2012/05/02 02:41:08 christos Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.96 2011/09/12 08:46:15 markus Exp $ */
+/*	$NetBSD: sftp-client.c,v 1.6.2.1 2013/02/25 00:24:07 tls Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.97 2012/07/02 12:13:26 dtucker Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -22,7 +22,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.6 2012/05/02 02:41:08 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.6.2.1 2013/02/25 00:24:07 tls Exp $");
 #include <sys/types.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
@@ -753,7 +753,8 @@ do_realpath(struct sftp_conn *conn, const char *path)
 	longname = buffer_get_string(&msg, NULL);
 	a = decode_attrib(&msg);
 
-	debug3("SSH_FXP_REALPATH %s -> %s", path, filename);
+	debug3("SSH_FXP_REALPATH %s -> %s size %lu", path, filename,
+	    (unsigned long)a->size);
 
 	xfree(longname);
 

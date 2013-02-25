@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.34 2012/02/17 18:40:19 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.34.2.1 2013/02/25 00:29:06 tls Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -38,7 +38,6 @@
 #ifndef _LOCORE
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
-#include <xen/evtchn.h>
 #include <machine/pic.h>
 #include <sys/evcnt.h>
 

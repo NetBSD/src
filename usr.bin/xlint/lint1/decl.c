@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.54 2012/03/27 19:24:03 christos Exp $ */
+/* $NetBSD: decl.c,v 1.54.2.1 2013/02/25 00:30:41 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.54 2012/03/27 19:24:03 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.54.2.1 2013/02/25 00:30:41 tls Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1662,7 +1662,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 			tp->t_str->stag = tag;
 		} else {
 			tp->t_isenum = 1;
-			tp->t_enum = getblk(sizeof (enum_t));
+			tp->t_enum = getblk(sizeof(*tp->t_enum));
 			tp->t_enum->etag = tag;
 		}
 		/* ist unvollstaendiger Typ */

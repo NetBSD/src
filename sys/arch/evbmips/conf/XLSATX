@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.10 2012/02/09 18:58:14 matt Exp $
+#	$NetBSD: XLSATX,v 1.10.6.1 2013/02/25 00:28:39 tls Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.10 $"
+#ident 		"XLSATX-$Revision: 1.10.6.1 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -95,7 +95,7 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# Internet protocols
-#options 	INET6		# IPV6
+options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)

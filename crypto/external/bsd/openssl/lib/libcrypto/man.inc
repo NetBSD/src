@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.2 2010/01/24 21:19:53 joerg Exp $
+#	$NetBSD: man.inc,v 1.2.12.1 2013/02/25 00:24:19 tls Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -94,7 +94,8 @@ MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 	X509_STORE_CTX_get_error.3 X509_STORE_CTX_get_ex_new_index.3 \
 	X509_STORE_CTX_new.3 X509_STORE_CTX_set_verify_cb.3 \
 	X509_STORE_CTX_set_verify_cb.3 X509_STORE_set_verify_cb_func.3 \
-	X509_VERIFY_PARAM_set_flags.3 X509_verify_cert.3
+	X509_VERIFY_PARAM_set_flags.3 X509_verify_cert.3 \
+	EVP_PKEY_verify_recover.3
 
 MAN+=	openssl.cnf.5
 

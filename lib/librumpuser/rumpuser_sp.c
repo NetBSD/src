@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.47.2.1 2012/11/20 03:00:45 tls Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.47.2.2 2013/02/25 00:28:01 tls Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.47.2.1 2012/11/20 03:00:45 tls Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.47.2.2 2013/02/25 00:28:01 tls Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@ static char banner[MAXBANNER];
 
 
 /* how to use atomic ops on Linux? */
-#ifdef __linux__
+#if defined(__linux__) || defined(__CYGWIN__)
 static pthread_mutex_t discomtx = PTHREAD_MUTEX_INITIALIZER;
 
 static void
@@ -116,6 +116,12 @@ getdisco(void)
 
 	return discocnt;
 }
+
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+
+#include <machine/atomic.h>
+#define signaldisco()	atomic_add_int(&disco, 1)
+#define getdisco()	atomic_readandclear_int(&disco)
 
 #else /* NetBSD */
 

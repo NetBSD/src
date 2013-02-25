@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.6 2012/06/09 11:27:09 tron Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.1.1.6.2.1 2013/02/25 00:27:16 tls Exp $	*/
 
 /*++
 /* NAME
@@ -392,6 +392,11 @@ static int cleanup_milter_header_checks(CLEANUP_STATE *state, VSTRING *buf)
 			    MIME_HDR_PRIMARY, (HEADER_OPTS *) 0,
 			    buf, (off_t) 0);
     if (ret == 0) {
+	return (0);
+    } else if (ret == HBC_CHECKS_STAT_ERROR) {
+	msg_warn("%s: %s lookup error -- deferring delivery",
+		 state->queue_id, VAR_MILT_HEAD_CHECKS);
+	state->errs |= CLEANUP_STAT_WRITE;
 	return (0);
     } else {
 	if (ret != STR(buf)) {
@@ -2151,7 +2156,7 @@ char   *var_milt_head_checks = "";
 
 /* Dummies to satisfy unused external references. */
 
-int     cleanup_masquerade_internal(VSTRING *addr, ARGV *masq_domains)
+int     cleanup_masquerade_internal(CLEANUP_STATE *state, VSTRING *addr, ARGV *masq_domains)
 {
     msg_panic("cleanup_masquerade_internal dummy");
 }

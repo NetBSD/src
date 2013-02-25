@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.120 2012/06/10 06:15:53 mrg Exp $	*/
+/*	$NetBSD: ugen.c,v 1.120.2.1 2013/02/25 00:29:38 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,9 +37,11 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.120 2012/06/10 06:15:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.120.2.1 2013/02/25 00:29:38 tls Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +93,6 @@ struct ugen_endpoint {
 #define UGEN_RA_WB_STOP	0x20	/* RA/WB xfer is stopped (buffer full/empty) */
 	usbd_pipe_handle pipeh;
 	struct clist q;
-	struct selinfo rsel;
 	u_char *ibuf;		/* start of buffer (circular for isoc) */
 	u_char *fill;		/* location for input (isoc) */
 	u_char *limit;		/* end of circular buffer (isoc) */
@@ -108,8 +109,10 @@ struct ugen_endpoint {
 		void *dmabuf;
 		u_int16_t sizes[UGEN_NISORFRMS];
 	} isoreqs[UGEN_NISOREQS];
-	/* Keep this last; we don't overwrite it in ugen_set_config() */
-	kcondvar_t		cv;
+	/* Keep these last; we don't overwrite them in ugen_set_config() */
+#define UGEN_ENDPOINT_NONZERO_CRUFT	offsetof(struct ugen_endpoint, rsel)
+	struct selinfo rsel;
+	kcondvar_t cv;
 };
 
 struct ugen_softc {
@@ -174,7 +177,7 @@ CFATTACH_DECL_NEW(ugen, sizeof(struct ugen_softc), ugen_match, ugen_attach, ugen
 /* toggle to control attach priority. -1 means "let autoconf decide" */
 int ugen_override = -1;
 
-int 
+int
 ugen_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -193,7 +196,7 @@ ugen_match(device_t parent, cfdata_t match, void *aux)
 		return (UMATCH_NONE);
 }
 
-void 
+void
 ugen_attach(device_t parent, device_t self, void *aux)
 {
 	struct ugen_softc *sc = device_private(self);
@@ -216,6 +219,16 @@ ugen_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_udev = udev = uaa->device;
 
+	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
+		for (dir = OUT; dir <= IN; dir++) {
+			struct ugen_endpoint *sce;
+
+			sce = &sc->sc_endpoints[i][dir];
+			selinit(&sce->rsel);
+			cv_init(&sce->cv, "ugensce");
+		}
+	}
+
 	/* First set configuration index 0, the default one for ugen. */
 	err = usbd_set_config_index(udev, 0, 0);
 	if (err) {
@@ -233,16 +246,6 @@ ugen_attach(device_t parent, device_t self, void *aux)
 		    conf);
 		sc->sc_dying = 1;
 		return;
-	}
-
-	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
-		for (dir = OUT; dir <= IN; dir++) {
-			struct ugen_endpoint *sce;
-
-			sce = &sc->sc_endpoints[i][dir];
-			selinit(&sce->rsel);
-			cv_init(&sce->cv, "ugensce");
-		}
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
@@ -294,11 +297,11 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 	if (err)
 		return (err);
 
-	/* Clear out the old info, but leave the cv initialised. */
+	/* Clear out the old info, but leave the selinfo and cv initialised. */
 	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {
 			sce = &sc->sc_endpoints[i][dir];
-			memset(sce, 0, offsetof(struct ugen_endpoint, cv));
+			memset(sce, 0, UGEN_ENDPOINT_NONZERO_CRUFT);
 		}
 	}
 
@@ -396,16 +399,20 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 			sce->ibuf = malloc(isize, M_USBDEV, M_WAITOK);
 			DPRINTFN(5, ("ugenopen: intr endpt=%d,isize=%d\n",
 				     endpt, isize));
-			if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1)
+			if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1) {
+				free(sce->ibuf, M_USBDEV);
+				sce->ibuf = NULL;
 				return (ENOMEM);
+			}
 			err = usbd_open_pipe_intr(sce->iface,
 				  edesc->bEndpointAddress,
 				  USBD_SHORT_XFER_OK, &sce->pipeh, sce,
 				  sce->ibuf, isize, ugenintr,
 				  USBD_DEFAULT_INTERVAL);
 			if (err) {
-				free(sce->ibuf, M_USBDEV);
 				clfree(&sce->q);
+				free(sce->ibuf, M_USBDEV);
+				sce->ibuf = NULL;
 				return (EIO);
 			}
 			DPRINTFN(5, ("ugenopen: interrupt open done\n"));
@@ -416,7 +423,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 			if (err)
 				return (EIO);
 			sce->ra_wb_bufsize = UGEN_BULK_RA_WB_BUFSIZE;
-			/* 
+			/*
 			 * Use request size for non-RA/WB transfers
 			 * as the default.
 			 */
@@ -438,6 +445,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 				  edesc->bEndpointAddress, 0, &sce->pipeh);
 			if (err) {
 				free(sce->ibuf, M_USBDEV);
+				sce->ibuf = NULL;
 				return (EIO);
 			}
 			for(i = 0; i < UGEN_NISOREQS; ++i) {
@@ -467,6 +475,10 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 		bad:
 			while (--i >= 0) /* implicit buffer free */
 				usbd_free_xfer(sce->isoreqs[i].xfer);
+			usbd_close_pipe(sce->pipeh);
+			sce->pipeh = NULL;
+			free(sce->ibuf, M_USBDEV);
+			sce->ibuf = NULL;
 			return (ENOMEM);
 		case UE_CONTROL:
 			sce->timeout = USBD_DEFAULT_TIMEOUT;
@@ -661,7 +673,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 						sce->cur = sce->ibuf;
 				}
 
-				/* 
+				/*
 				 * If the transfers stopped because the
 				 * buffer was full, restart them.
 				 */
@@ -833,7 +845,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 				return (EWOULDBLOCK);
 			}
 			while (uio->uio_resid > 0 && !error) {
-				while (sce->ra_wb_used == 
+				while (sce->ra_wb_used ==
 				       sce->limit - sce->ibuf) {
 					sce->state |= UGEN_ASLP;
 					DPRINTFN(5,
@@ -994,7 +1006,7 @@ ugen_activate(device_t self, enum devact act)
 	}
 }
 
-int 
+int
 ugen_detach(device_t self, int flags)
 {
 	struct ugen_softc *sc = device_private(self);
@@ -1249,7 +1261,7 @@ ugen_bulkwb_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 	/* Update buffer pointers. */
 	sce->cur += count;
 	if (sce->cur >= sce->limit)
-		sce->cur = sce->ibuf + (sce->cur - sce->limit); 
+		sce->cur = sce->ibuf + (sce->cur - sce->limit);
 
 	/* Set up next request if necessary. */
 	if (sce->ra_wb_used > 0) {
@@ -1550,7 +1562,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			sce->state &= ~UGEN_BULK_WB;
 			/*
 			 * XXX Discard whatever's in the buffer, but we
-			 * should keep it around and keep writing to 
+			 * should keep it around and keep writing to
 			 * drain the buffer instead.
 			 */
 			usbd_abort_pipe(sce->pipeh);
@@ -1578,7 +1590,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		    opt->ra_wb_request_size < 1 ||
 		    opt->ra_wb_request_size > opt->ra_wb_buffer_size)
 			return (EINVAL);
-		/* 
+		/*
 		 * XXX These changes do not take effect until the
 		 * next time RA/WB mode is enabled but they ought to
 		 * take effect immediately.

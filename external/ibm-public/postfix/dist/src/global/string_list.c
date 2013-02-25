@@ -1,4 +1,4 @@
-/*	$NetBSD: string_list.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: string_list.c,v 1.1.1.1.16.1 2013/02/25 00:27:20 tls Exp $	*/
 
 /*++
 /* NAME
@@ -33,8 +33,15 @@
 /*	In order to reverse the result, precede a pattern with an
 /*	exclamation point (!).
 /*
-/*	string_list_init() performs initializations. The flags argument
-/*	is ignored; pattern_list specifies a list of string patterns.
+/*	string_list_init() performs initializations. The first argument
+/*	is a bit-wise OR of zero or more of following:
+/* .IP MATCH_FLAG_RETURN
+/*	Request that string_list_match() logs a warning and returns
+/*	zero with list->error set to a non-zero dictionary error
+/*	code, instead of raising a fatal error.
+/* .PP
+/*	Specify MATCH_FLAG_NONE to request none of the above.
+/*	The second argument specifies a list of string patterns.
 /*
 /*	string_list_match() matches the specified string against the
 /*	compiled pattern list.
@@ -101,10 +108,10 @@ int     main(int argc, char **argv)
     }
     if (argc != optind + 2)
 	usage(argv[0]);
-    list = string_list_init(MATCH_FLAG_NONE, argv[optind]);
+    list = string_list_init(MATCH_FLAG_RETURN, argv[optind]);
     string = argv[optind + 1];
     vstream_printf("%s: %s\n", string, string_list_match(list, string) ?
-		   "YES" : "NO");
+		   "YES" : list->error == 0 ? "NO" : "ERROR");
     vstream_fflush(VSTREAM_OUT);
     string_list_free(list);
     return (0);

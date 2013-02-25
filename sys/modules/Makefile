@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.110.2.1 2012/11/20 03:02:46 tls Exp $
+#	$NetBSD: Makefile,v 1.110.2.2 2013/02/25 00:29:59 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -50,6 +50,7 @@ SUBDIR+=	npf
 SUBDIR+=	npf_alg_icmp
 SUBDIR+=	npf_ext_log
 SUBDIR+=	npf_ext_normalise
+SUBDIR+=	npf_ext_rndblock
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	onewire
@@ -241,6 +242,7 @@ SUBDIR+= 	dm
 .endif
 
 .if (${MKDTRACE} != "no")
+SUBDIR+=	cyclic
 SUBDIR+=	dtrace
 .endif
 

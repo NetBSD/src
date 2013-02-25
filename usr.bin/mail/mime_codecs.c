@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_codecs.c,v 1.9 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: mime_codecs.c,v 1.9.12.1 2013/02/25 00:30:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_codecs.c,v 1.9 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: mime_codecs.c,v 1.9.12.1 2013/02/25 00:30:36 tls Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -237,6 +237,10 @@ mime_b64tobin(char *bin, const char *b64, size_t cnt)
 		unsigned c = uchar64(q[2]);
 		unsigned d = uchar64(q[3]);
 
+		if (a == BAD || a == EQU || b == BAD || b == EQU ||
+		    c == BAD || d == BAD)
+			return -1;
+
 		*p++ = ((a << 2) | ((b & 0x30) >> 4));
 		if (c == EQU)	{ /* got '=' */
 			if (d != EQU)
@@ -248,9 +252,6 @@ mime_b64tobin(char *bin, const char *b64, size_t cnt)
 			break;
 		}
 		*p++ = (((c & 0x03) << 6) | d);
-
-		if (a == BAD || b == BAD || c == BAD || d == BAD)
-			return -1;
 	}
 
 #undef uchar64
@@ -388,9 +389,83 @@ mime_fB64_decode(FILE *fi, FILE *fo, void *add_lf)
 /************************************************************************
  * Core quoted-printable routines.
  *
- * Note: the header QP routines are slightly different and burried
- * inside mime_header.c
+ * Defined in sec 6.7 of RFC 2045.
  */
+
+/*
+ * strtol(3), but inline and with easy error indication.
+ */
+static inline int
+_qp_cfromhex(char const *hex)
+{
+	/* Be robust, allow lowercase hexadecimal letters, too */
+	static unsigned char const atoi16[] = {
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, /* 0x30-0x37 */
+		0x08, 0x09, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, /* 0x38-0x3F */
+		0xFF, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0xFF, /* 0x40-0x47 */
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, /* 0x48-0x4f */
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, /* 0x50-0x57 */
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, /* 0x58-0x5f */
+		0xFF, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0xFF  /* 0x60-0x67 */
+	};
+	unsigned char i1, i2;
+	int r;
+
+	if ((i1 = (unsigned char)hex[0] - '0') >= __arraycount(atoi16) ||
+	    (i2 = (unsigned char)hex[1] - '0') >= __arraycount(atoi16))
+		goto jerr;
+	i1 = atoi16[i1];
+	i2 = atoi16[i2];
+	if ((i1 | i2) & 0xF0)
+		goto jerr;
+	r = i1;
+	r <<= 4;
+	r += i2;
+jleave:
+	return r;
+jerr:
+	r = -1;
+	goto jleave;
+}
+
+/*
+ * Header specific "quoted-printable" decode!
+ * Differences with body QP decoding (see rfc 2047, sec 4.2):
+ * 1) '=' occurs _only_ when followed by two hex digits (FWS is not allowed).
+ * 2) Spaces can be encoded as '_' in headers for readability.
+ */
+static ssize_t
+mime_QPh_decode(char *outbuf, size_t outlen, const char *inbuf, size_t inlen)
+{
+	const char *p, *inend;
+	char *outend;
+	char *q;
+
+	outend = outbuf + outlen;
+	inend = inbuf + inlen;
+	q = outbuf;
+	for (p = inbuf; p < inend; p++) {
+		if (q >= outend)
+			return -1;
+		if (*p == '=') {
+			p++;
+			if (p + 1 < inend) {
+				int c = _qp_cfromhex(p++);
+				if (c < 0)
+					return -1;
+				*q++ = (char)c;
+			}
+			else
+				return -1;
+		}
+		else if (*p == '_')  /* header's may encode ' ' as '_' */
+			*q++ = ' ';
+		else
+			*q++ = *p;
+	}
+	return q - outbuf;
+}
+
 
 static int
 mustquote(unsigned char *p, unsigned char *end, size_t l)
@@ -478,8 +553,11 @@ fput_quoted_line(FILE *fo, char *line, size_t len, size_t limit)
 		}
 		else {
 			if (*p == '\n') {
-				if (p > beg && p[-1] == '\r')
+				if (p > beg && p[-1] == '\r') {
+					if (l + 4 > limit)
+						(void)fputs("=\n", fo);
 					(void)fputs("=0A=", fo);
+				}
 				l = (size_t)-1;
 			}
 			else if (l + 2 > limit) {
@@ -540,14 +618,11 @@ mime_fQP_decode(FILE *fi, FILE *fo, void *cookie __unused)
 				while (p < end && is_WSP(*p))
 					p++;
 				if (*p != '\n' && p + 1 < end) {
-					int c;
-					char buf[3];
-
-					buf[0] = *p++;
-					buf[1] = *p;
-					buf[2] = '\0';
-					c = (int)strtol(buf, NULL, 16);
-					(void)fputc(c, fo);
+					int c = _qp_cfromhex(p++);
+					if (c >= 0)
+						(void)fputc(c, fo);
+					else
+						(void)fputs("[?]", fo);
 				}
 			}
 			else
@@ -627,6 +702,24 @@ mime_fio_decoder(const char *ename)
 		if (strcasecmp(tep->name, ename) == 0)
 			break;
 	return tep->dec;
+}
+
+/*
+ * Decode a RFC 2047 extended message header *encoded-word*.
+ * *encoding* is the corresponding character of the *encoded-word*.
+ */
+PUBLIC ssize_t
+mime_rfc2047_decode(char encoding, char *outbuf, size_t outlen,
+	const char *inbuf, size_t inlen)
+{
+	ssize_t declen = -1;
+
+	if (encoding == 'B' || encoding == 'b') {
+		if (outlen >= 3 * roundup(inlen, 4) / 4)
+			declen = mime_b64tobin(outbuf, inbuf, inlen);
+	} else if (encoding == 'Q' || encoding == 'q')
+		declen = mime_QPh_decode(outbuf, outlen, inbuf, inlen);
+	return declen;
 }
 
 /*

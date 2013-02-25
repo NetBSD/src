@@ -51,6 +51,11 @@ BIND 9
         For up-to-date release notes and errata, see
         http://www.isc.org/software/bind9/releasenotes
 
+BIND 9.9.2
+
+	BIND 9.9.2 is a maintenance release and patches the security
+	flaw described in CVE-2012-4244.
+
 BIND 9.9.1
 
 	BIND 9.9.1 is a maintenance release.
@@ -178,7 +183,8 @@ Building
 
 	    CFLAGS
 		C compiler flags.  Defaults to include -g and/or -O2
-		as supported by the compiler.  
+		as supported by the compiler.  Please include '-g'
+		if you need to set CFLAGS.
 
 	    STD_CINCLUDES
 		System header file directories.	 Can be used to specify
@@ -295,6 +301,10 @@ Building
 	libraries.  sh-utils-1.16 provides a "printf" which compiles
 	on SunOS 4.
 
+Known limitations
+
+	Linux requires kernel build 2.6.39 or later to get the
+	performance benefits from using multiple sockets.
 
 Documentation
 

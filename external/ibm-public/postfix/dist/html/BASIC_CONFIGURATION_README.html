@@ -258,6 +258,10 @@ with the <a href="postconf.5.html#mynetworks">mynetworks</a> configuration param
 authorize all clients in the IP subnetworks that the local machine
 is attached to. </p>
 
+<p> Postfix can also be configured to relay mail from "mobile"
+clients that send mail from outside an authorized network block.
+This is explained in the <a href="SASL_README.html">SASL_README</a> and <a href="TLS_README.html">TLS_README</a> documents. </p>
+
 <p> IMPORTANT: If your machine is connected to a wide area network
 then your default <a href="postconf.5.html#mynetworks">mynetworks</a> setting may be too friendly. </p>
 

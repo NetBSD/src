@@ -25,7 +25,7 @@ update: ../../bin/$(PROG)
 ../../bin/$(PROG): $(PROG)
 	cp $(PROG) ../../bin
 
-tests:	test1 test2
+tests:	test1 test2 fail_test
 
 root_tests:
 
@@ -54,6 +54,11 @@ test2:	$(PROG) map.in map-abc2.ref map-ghi2.ref map-uABC2.ref
 	    echo $${key} | ./$(PROG) -fq - map.in | diff map-u$${key}2.ref -; \
 	done
 	rm -f map.in.db
+
+fail_test: $(PROG) aliases fail_test.in fail_test.ref
+	-sh fail_test.in > fail_test.tmp 2>&1 || exit 0
+	diff fail_test.ref fail_test.tmp
+	rm -f fail_test.tmp
 
 printfck: $(OBJS) $(PROG)
 	rm -rf printfck
@@ -106,4 +111,5 @@ postmap.o: ../../include/vbuf.h
 postmap.o: ../../include/vstream.h
 postmap.o: ../../include/vstring.h
 postmap.o: ../../include/vstring_vstream.h
+postmap.o: ../../include/warn_stat.h
 postmap.o: postmap.c

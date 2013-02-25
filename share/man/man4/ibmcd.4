@@ -1,0 +1,68 @@
+.\"	$NetBSD: ibmcd.4,v 1.2.6.2 2013/02/25 00:28:13 tls Exp $
+.\"
+.\" Copyright (c) 2012 Marc Balmer <marc@msys.ch>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 17, 2012
+.Dt IBMCD 4
+.Os
+.Sh NAME
+.Nm ibmcd
+.Nd support for the IBM 4810 BSP cash drawer port
+.Sh SYNOPSIS
+.Cd "ibmcd* at at pci ? dev ? function ?"
+.Cd "gpio* at ibmcd?"
+.Sh DESCRIPTION
+The
+.Nm
+driver controls the cash drawer port of the IBM 4810 BSP PCI device found
+in IBM point of sale terminals (e.g. in the SurePOS 300 series) using the GPIO
+subsystem.
+.Pp
+.Nm
+provides a GPIO device with three pins: pin 0 is used to control the cash drawer
+while pin 1 can be used to read the current state of the sense input pin.
+A logical 0 means the cash drawer is closed, a logical 1 means the cash drawer
+is open.
+.Pp
+Pin 2 reports if a cash drawer is connected.
+A logical 0 means there is no cash drawer connected, a logical 1 means the cash drawer is connected.
+.Pp
+To open the cash drawer, set pin 0 to logical 1.
+There is no need to reset pin 0 to logical 0 afterwards as the device generates
+a oneshot impulse.
+.Sh SEE ALSO
+.Xr gpio 4 ,
+.Xr ptcd 4 ,
+.Xr gpioctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 6.1 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Marc Balmer Aq marc@msys.ch .

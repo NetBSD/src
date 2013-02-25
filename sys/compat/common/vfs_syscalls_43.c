@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.54 2010/11/19 06:44:36 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.54.18.1 2013/02/25 00:29:07 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.54 2010/11/19 06:44:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.54.18.1 2013/02/25 00:29:07 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.54 2010/11/19 06:44:36 dhollan
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
+#include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
@@ -71,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.54 2010/11/19 06:44:36 dhollan
 #include <compat/sys/mount.h>
 
 #include <compat/common/compat_util.h>
+#include <compat/common/compat_mod.h>
 
 static void cvtstat(struct stat *, struct stat43 *);
 
@@ -458,7 +460,6 @@ unionread:
  * sysctl helper routine for vfs.generic.conf lookups.
  */
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
-static struct sysctllog *compat_clog;
 
 static int
 sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
@@ -498,29 +499,22 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
  * Top level filesystem related information gathering.
  */
 void
-compat_sysctl_init(void)
+compat_sysctl_vfs(struct sysctllog **clog)
 {
 	extern int nmountcompatnames;
 
-	sysctl_createv(&compat_clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "maxtypenum",
 		       SYSCTL_DESCR("Highest valid filesystem type number"),
 		       NULL, nmountcompatnames, NULL, 0,
 		       CTL_VFS, VFS_GENERIC, VFS_MAXTYPENUM, CTL_EOL);
-	sysctl_createv(&compat_clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "conf",
 		       SYSCTL_DESCR("Filesystem configuration information"),
 		       sysctl_vfs_generic_conf, 0, NULL,
 		       sizeof(struct vfsconf),
 		       CTL_VFS, VFS_GENERIC, VFS_CONF, CTL_EOL);
-}
-
-void
-compat_sysctl_fini(void)
-{
-
-	sysctl_teardown(&compat_clog);
 }
 #endif

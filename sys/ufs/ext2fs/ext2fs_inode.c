@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.75 2012/01/27 19:22:48 para Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.75.6.1 2013/02/25 00:30:14 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.75 2012/01/27 19:22:48 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.75.6.1 2013/02/25 00:30:14 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,14 @@ extern int prtactive;
 
 static int ext2fs_indirtrunc(struct inode *, daddr_t, daddr_t,
 				  daddr_t, int, long *);
+
+/*
+ * These are fortunately the same values; it is likely that there is
+ * code that assumes they're equal. In any event, neither ought to
+ * ever change because it's a property of the on-disk formats.
+ */
+CTASSERT(EXT2FS_NDADDR == UFS_NDADDR);
+CTASSERT(EXT2FS_NIADDR == UFS_NIADDR);
 
 /*
  * Get the size of an inode.
@@ -126,6 +134,54 @@ ext2fs_setsize(struct inode *ip, uint64_t size)
 	ip->i_e2fs_size = size;
 
 	return 0;
+}
+
+uint64_t
+ext2fs_nblock(struct inode *ip)
+{
+	uint64_t nblock = ip->i_e2fs_nblock;
+	struct m_ext2fs * const fs = ip->i_e2fs;
+
+	if (fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_HUGE_FILE) {
+		nblock |= (uint64_t)ip->i_e2fs_nblock_high << 32;
+
+		if ((ip->i_e2fs_flags & EXT2_HUGE_FILE)) {
+			nblock = fsbtodb(fs, nblock);
+		}
+	}
+
+	return nblock;
+}
+
+int
+ext2fs_setnblock(struct inode *ip, uint64_t nblock)
+{
+	struct m_ext2fs * const fs = ip->i_e2fs;
+
+	if (nblock <= 0xffffffffULL) {
+		CLR(ip->i_e2fs_flags, EXT2_HUGE_FILE);
+		ip->i_e2fs_nblock = nblock;
+		return 0;
+	}
+
+	if (!ISSET(fs->e2fs.e2fs_features_rocompat, EXT2F_ROCOMPAT_HUGE_FILE)) 
+		return EFBIG;
+
+	if (nblock <= 0xffffffffffffULL) {
+		CLR(ip->i_e2fs_flags, EXT2_HUGE_FILE);
+		ip->i_e2fs_nblock = nblock & 0xffffffff;
+		ip->i_e2fs_nblock_high = (nblock >> 32) & 0xffff;
+		return 0;
+	}
+
+	if (dbtofsb(fs, nblock) <= 0xffffffffffffULL) {
+		SET(ip->i_e2fs_flags, EXT2_HUGE_FILE);
+		ip->i_e2fs_nblock = dbtofsb(fs, nblock) & 0xffffffff;
+		ip->i_e2fs_nblock_high = (dbtofsb(fs, nblock) >> 32) & 0xffff;
+		return 0;
+	}
+
+	return EFBIG;
 }
 
 /*
@@ -208,7 +264,6 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
 			  fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
 			  (int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return (error);
 	}
 	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
@@ -238,9 +293,9 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 {
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
-	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	daddr_t bn, lastiblock[EXT2FS_NIADDR], indir_lbn[EXT2FS_NIADDR];
 	/* XXX ondisk32 */
-	int32_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
+	int32_t oldblks[EXT2FS_NDADDR + EXT2FS_NIADDR], newblks[EXT2FS_NDADDR + EXT2FS_NIADDR];
 	struct m_ext2fs *fs;
 	int offset, size, level;
 	long count, blocksreleased = 0;
@@ -260,7 +315,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 
 	if (ovp->v_type == VLNK &&
 	    (ext2fs_size(oip) < ump->um_maxsymlinklen ||
-	     (ump->um_maxsymlinklen == 0 && oip->i_e2fs_nblock == 0))) {
+	     (ump->um_maxsymlinklen == 0 && ext2fs_nblock(oip) == 0))) {
 		KDASSERT(length == 0);
 		memset((char *)&oip->i_din.e2fs_din->e2di_shortlink, 0,
 			(u_int)ext2fs_size(oip));
@@ -323,7 +378,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	 * the file is truncated to 0.
 	 */
 	lastblock = lblkno(fs, length + fs->e2fs_bsize - 1) - 1;
-	lastiblock[SINGLE] = lastblock - NDADDR;
+	lastiblock[SINGLE] = lastblock - EXT2FS_NDADDR;
 	lastiblock[DOUBLE] = lastiblock[SINGLE] - NINDIR(fs);
 	lastiblock[TRIPLE] = lastiblock[DOUBLE] - NINDIR(fs) * NINDIR(fs);
 	nblocks = btodb(fs->e2fs_bsize);
@@ -336,13 +391,13 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	memcpy((void *)oldblks, (void *)&oip->i_e2fs_blocks[0], sizeof oldblks);
 	sync = 0;
 	for (level = TRIPLE; level >= SINGLE; level--) {
-		if (lastiblock[level] < 0 && oldblks[NDADDR + level] != 0) {
+		if (lastiblock[level] < 0 && oldblks[EXT2FS_NDADDR + level] != 0) {
 			sync = 1;
-			oip->i_e2fs_blocks[NDADDR + level] = 0;
+			oip->i_e2fs_blocks[EXT2FS_NDADDR + level] = 0;
 			lastiblock[level] = -1;
 		}
 	}
-	for (i = 0; i < NDADDR; i++) {
+	for (i = 0; i < EXT2FS_NDADDR; i++) {
 		if (i > lastblock && oldblks[i] != 0) {
 			sync = 1;
 			oip->i_e2fs_blocks[i] = 0;
@@ -372,12 +427,12 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	/*
 	 * Indirect blocks first.
 	 */
-	indir_lbn[SINGLE] = -NDADDR;
+	indir_lbn[SINGLE] = -EXT2FS_NDADDR;
 	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - NINDIR(fs) -1;
 	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - NINDIR(fs) * NINDIR(fs) - 1;
 	for (level = TRIPLE; level >= SINGLE; level--) {
 		/* XXX ondisk32 */
-		bn = fs2h32(oip->i_e2fs_blocks[NDADDR + level]);
+		bn = fs2h32(oip->i_e2fs_blocks[EXT2FS_NDADDR + level]);
 		if (bn != 0) {
 			error = ext2fs_indirtrunc(oip, indir_lbn[level],
 			    fsbtodb(fs, bn), lastiblock[level], level, &count);
@@ -385,7 +440,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 				allerror = error;
 			blocksreleased += count;
 			if (lastiblock[level] < 0) {
-				oip->i_e2fs_blocks[NDADDR + level] = 0;
+				oip->i_e2fs_blocks[EXT2FS_NDADDR + level] = 0;
 				ext2fs_blkfree(oip, bn);
 				blocksreleased += nblocks;
 			}
@@ -397,7 +452,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	/*
 	 * All whole direct blocks or frags.
 	 */
-	for (i = NDADDR - 1; i > lastblock; i--) {
+	for (i = EXT2FS_NDADDR - 1; i > lastblock; i--) {
 		/* XXX ondisk32 */
 		bn = fs2h32(oip->i_e2fs_blocks[i]);
 		if (bn == 0)
@@ -410,10 +465,10 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 done:
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if (newblks[NDADDR + level] !=
-		    oip->i_e2fs_blocks[NDADDR + level])
+		if (newblks[EXT2FS_NDADDR + level] !=
+		    oip->i_e2fs_blocks[EXT2FS_NDADDR + level])
 			panic("ext2fs_truncate1");
-	for (i = 0; i < NDADDR; i++)
+	for (i = 0; i < EXT2FS_NDADDR; i++)
 		if (newblks[i] != oip->i_e2fs_blocks[i])
 			panic("ext2fs_truncate2");
 	if (length == 0 &&
@@ -425,7 +480,9 @@ done:
 	 * Put back the real size.
 	 */
 	(void)ext2fs_setsize(oip, length);
-	oip->i_e2fs_nblock -= blocksreleased;
+	error = ext2fs_setnblock(oip, ext2fs_nblock(oip) - blocksreleased);
+	if (error != 0)
+		allerror = error;
 	oip->i_flag |= IN_CHANGE;
 	KASSERT(ovp->v_type != VREG || ovp->v_size == ext2fs_size(oip));
 	return (allerror);

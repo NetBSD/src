@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.c,v 1.1.1.4 2012/02/17 08:36:07 tron Exp $	*/
+/*	$NetBSD: dict_ldap.c,v 1.1.1.4.2.1 2013/02/25 00:27:17 tls Exp $	*/
 
 /*++
 /* NAME
@@ -88,14 +88,14 @@
 /* .IP recursion_limit
 /*	Maximum recursion depth when expanding DN or URL references.
 /*	Queries which exceed the recursion limit fail with
-/*	dict_errno = DICT_ERR_RETRY.
+/*	dict->error = DICT_ERR_RETRY.
 /* .IP expansion_limit
 /*	Limit (if any) on the total number of lookup result values. Lookups which
-/*	exceed the limit fail with dict_errno=DICT_ERR_RETRY. Note that
+/*	exceed the limit fail with dict->error=DICT_ERR_RETRY. Note that
 /*	each value of a multivalued result attribute counts as one result.
 /* .IP size_limit
 /*	Limit on the number of entries returned by individual LDAP queries.
-/*	Queries which exceed the limit fail with dict_errno=DICT_ERR_RETRY.
+/*	Queries which exceed the limit fail with dict->error=DICT_ERR_RETRY.
 /*	This is an *entry* count, for any single query performed during the
 /*	possibly recursive lookup.
 /* .IP chase_referrals
@@ -319,7 +319,7 @@ typedef struct {
 #define DICT_LDAP_UNBIND_RETURN(__ld, __err, __ret) do { \
 	dict_ldap_unbind(__ld); \
 	(__ld) = 0; \
-	dict_errno = (__err); \
+	dict_ldap->dict.error = (__err); \
 	return ((__ret)); \
     } while (0)
 
@@ -730,7 +730,7 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
 	msg_warn("%s: Unable to set LDAP debug level.", myname);
 #endif
 
-    dict_errno = 0;
+    dict_ldap->dict.error = 0;
 
     if (msg_verbose)
 	msg_info("%s: Connecting to server %s", myname,
@@ -746,7 +746,7 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
     if (dict_ldap->ld == NULL) {
 	msg_warn("%s: Unable to init LDAP server %s",
 		 myname, dict_ldap->server_host);
-	dict_errno = DICT_ERR_RETRY;
+	dict_ldap->dict.error = DICT_ERR_RETRY;
 	return (-1);
     }
     mytimeval.tv_sec = dict_ldap->timeout;
@@ -760,7 +760,7 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
     if ((saved_alarm = signal(SIGALRM, dict_ldap_timeout)) == SIG_ERR) {
 	msg_warn("%s: Error setting signal handler for open timeout: %m",
 		 myname);
-	dict_errno = DICT_ERR_RETRY;
+	dict_ldap->dict.error = DICT_ERR_RETRY;
 	return (-1);
     }
     alarm(dict_ldap->timeout);
@@ -774,13 +774,13 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
     if (signal(SIGALRM, saved_alarm) == SIG_ERR) {
 	msg_warn("%s: Error resetting signal handler after open: %m",
 		 myname);
-	dict_errno = DICT_ERR_RETRY;
+	dict_ldap->dict.error = DICT_ERR_RETRY;
 	return (-1);
     }
     if (dict_ldap->ld == NULL) {
 	msg_warn("%s: Unable to connect to LDAP server %s",
 		 myname, dict_ldap->server_host);
-	dict_errno = DICT_ERR_RETRY;
+	dict_ldap->dict.error = DICT_ERR_RETRY;
 	return (-1);
     }
 #endif
@@ -863,13 +863,13 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
 	if (signal(SIGALRM, saved_alarm) == SIG_ERR) {
 	    msg_warn("%s: Error resetting signal handler after STARTTLS: %m",
 		     myname);
-	    dict_errno = DICT_ERR_RETRY;
+	    dict_ldap->dict.error = DICT_ERR_RETRY;
 	    return (-1);
 	}
 	if (rc != LDAP_SUCCESS) {
 	    msg_error("%s: Unable to set STARTTLS: %d: %s", myname,
 		      rc, ldap_err2string(rc));
-	    dict_errno = DICT_ERR_RETRY;
+	    dict_ldap->dict.error = DICT_ERR_RETRY;
 	    return (-1);
 	}
     }
@@ -932,8 +932,11 @@ static void dict_ldap_conn_find(DICT_LDAP *dict_ldap)
 #endif
     LDAP_CONN *conn;
 
+    /*
+     * Join key fields with null characters.
+     */
 #define ADDSTR(vp, s) vstring_memcat((vp), (s), strlen((s))+1)
-#define ADDINT(vp, i) vstring_sprintf_append((vp), "%lu", (unsigned long)(i))
+#define ADDINT(vp, i) vstring_sprintf_append((vp), "%lu%c", (unsigned long)(i), 0)
 
     ADDSTR(keybuf, dict_ldap->server_host);
     ADDINT(keybuf, dict_ldap->server_port);
@@ -1106,13 +1109,13 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
 	 * LDAP should not, but may produce more than the requested maximum
 	 * number of entries.
 	 */
-	if (dict_errno == 0
+	if (dict_ldap->dict.error == 0
 	    && dict_ldap->size_limit
 	    && ++entries > dict_ldap->size_limit) {
 	    msg_warn("%s[%d]: %s: Query size limit (%ld) exceeded",
 		     myname, recursion, dict_ldap->parser->name,
 		     dict_ldap->size_limit);
-	    dict_errno = DICT_ERR_RETRY;
+	    dict_ldap->dict.error = DICT_ERR_RETRY;
 	}
 
 	/*
@@ -1171,7 +1174,7 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
 	     * leaks, but it will likely be more fragile and not worth the
 	     * extra code.
 	     */
-	    if (dict_errno != 0 || valcount == 0) {
+	    if (dict_ldap->dict.error != 0 || valcount == 0) {
 		ldap_value_free_len(vals);
 		continue;
 	    }
@@ -1216,11 +1219,11 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
 			    msg_warn("%s[%d]: %s: Expansion limit exceeded "
 				     "for key: '%s'", myname, recursion,
 				     dict_ldap->parser->name, name);
-			    dict_errno = DICT_ERR_RETRY;
+			    dict_ldap->dict.error = DICT_ERR_RETRY;
 			    break;
 			}
 		    }
-		    if (dict_errno != 0)
+		    if (dict_ldap->dict.error != 0)
 			continue;
 		    if (msg_verbose)
 			msg_info("%s[%d]: search returned %d value(s) for"
@@ -1257,7 +1260,7 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
 			    msg_warn("%s[%d]: malformed URL %s: %s(%d)",
 				     myname, recursion, vals[i]->bv_val,
 				     ldap_err2string(rc), rc);
-			    dict_errno = DICT_ERR_RETRY;
+			    dict_ldap->dict.error = DICT_ERR_RETRY;
 			    break;
 			}
 		    } else {
@@ -1285,17 +1288,17 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
 		    default:
 			msg_warn("%s[%d]: search error %d: %s ", myname,
 				 recursion, rc, ldap_err2string(rc));
-			dict_errno = DICT_ERR_RETRY;
+			dict_ldap->dict.error = DICT_ERR_RETRY;
 			break;
 		    }
 
 		    if (resloop != 0)
 			ldap_msgfree(resloop);
 
-		    if (dict_errno != 0)
+		    if (dict_ldap->dict.error != 0)
 			break;
 		}
-		if (msg_verbose && dict_errno == 0)
+		if (msg_verbose && dict_ldap->dict.error == 0)
 		    msg_info("%s[%d]: search returned %d value(s) for"
 			     " special result attribute %s",
 			     myname, recursion, valcount, attr);
@@ -1304,7 +1307,7 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
 		msg_warn("%s[%d]: %s: Recursion limit exceeded"
 			 " for special attribute %s=%s", myname, recursion,
 			 dict_ldap->parser->name, attr, vals[0]->bv_val);
-		dict_errno = DICT_ERR_RETRY;
+		dict_ldap->dict.error = DICT_ERR_RETRY;
 	    }
 	    ldap_value_free_len(vals);
 	}
@@ -1329,8 +1332,9 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
     static VSTRING *result;
     int     rc = 0;
     int     sizelimit;
+    int     domain_rc;
 
-    dict_errno = 0;
+    dict_ldap->dict.error = 0;
 
     if (msg_verbose)
 	msg_info("%s: In dict_ldap_lookup", myname);
@@ -1360,12 +1364,15 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
      * addresses in domains on the list. This can significantly reduce the
      * load on the LDAP server.
      */
-    if (db_common_check_domain(dict_ldap->ctx, name) == 0) {
+    if ((domain_rc = db_common_check_domain(dict_ldap->ctx, name)) == 0) {
 	if (msg_verbose)
 	    msg_info("%s: %s: Skipping lookup of key '%s': domain mismatch",
 		     myname, dict_ldap->parser->name, name);
 	return (0);
     }
+    if (domain_rc < 0)
+	DICT_ERR_VAL_RETURN(dict, domain_rc, (char *) 0);
+
 #define INIT_VSTR(buf, len) do { \
 	if (buf == 0) \
 	    buf = vstring_alloc(len); \
@@ -1396,9 +1403,9 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
 	dict_ldap_connect(dict_ldap);
 
 	/*
-	 * if dict_ldap_connect() set dict_errno, abort.
+	 * if dict_ldap_connect() set dict_ldap->dict.error, abort.
 	 */
-	if (dict_errno)
+	if (dict_ldap->dict.error)
 	    return (0);
     } else if (msg_verbose)
 	msg_info("%s: Using existing connection for LDAP source %s",
@@ -1416,7 +1423,7 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
 	!= LDAP_OPT_SUCCESS) {
 	msg_warn("%s: %s: Unable to set query result size limit to %ld.",
 		 myname, dict_ldap->parser->name, dict_ldap->size_limit);
-	dict_errno = DICT_ERR_RETRY;
+	dict_ldap->dict.error = DICT_ERR_RETRY;
 	return (0);
     }
 
@@ -1465,9 +1472,9 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
 	dict_ldap_connect(dict_ldap);
 
 	/*
-	 * if dict_ldap_connect() set dict_errno, abort.
+	 * if dict_ldap_connect() set dict_ldap->dict.error, abort.
 	 */
-	if (dict_errno)
+	if (dict_ldap->dict.error)
 	    return (0);
 
 	rc = search_st(dict_ldap->ld, vstring_str(base), dict_ldap->scope,
@@ -1515,7 +1522,7 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
 	msg_warn("%s: %s: Search base '%s' not found: %d: %s",
 		 myname, dict_ldap->parser->name,
 		 vstring_str(base), rc, ldap_err2string(rc));
-	dict_errno = DICT_ERR_RETRY;
+	dict_ldap->dict.error = DICT_ERR_RETRY;
 	break;
 
     default:
@@ -1536,7 +1543,7 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
 	/*
 	 * And tell the caller to try again later.
 	 */
-	dict_errno = DICT_ERR_RETRY;
+	dict_ldap->dict.error = DICT_ERR_RETRY;
 	break;
     }
 
@@ -1550,7 +1557,7 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
      * If we had an error, return nothing, Otherwise, return the result, if
      * any.
      */
-    return (VSTRING_LEN(result) > 0 && !dict_errno ? vstring_str(result) : 0);
+    return (VSTRING_LEN(result) > 0 && !dict_ldap->dict.error ? vstring_str(result) : 0);
 }
 
 /* dict_ldap_close - disassociate from data base */
@@ -1604,7 +1611,7 @@ static void dict_ldap_close(DICT *dict)
 
 /* dict_ldap_open - create association with data base */
 
-DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
+DICT   *dict_ldap_open(const char *ldapsource, int open_flags, int dict_flags)
 {
     const char *myname = "dict_ldap_open";
     DICT_LDAP *dict_ldap;
@@ -1617,9 +1624,25 @@ DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
     char   *bindopt;
     int     tmp;
     int     vendor_version = dict_ldap_vendor_version();
+    CFG_PARSER *parser;
 
     if (msg_verbose)
 	msg_info("%s: Using LDAP source %s", myname, ldapsource);
+
+    /*
+     * Sanity check.
+     */
+    if (open_flags != O_RDONLY)
+	return (dict_surrogate(DICT_TYPE_LDAP, ldapsource, open_flags, dict_flags,
+			       "%s:%s map requires O_RDONLY access mode",
+			       DICT_TYPE_LDAP, ldapsource));
+
+    /*
+     * Open the configuration file.
+     */
+    if ((parser = cfg_parser_alloc(ldapsource)) == 0)
+	return (dict_surrogate(DICT_TYPE_LDAP, ldapsource, open_flags, dict_flags,
+			       "open %s: %m", ldapsource));
 
     dict_ldap = (DICT_LDAP *) dict_alloc(DICT_TYPE_LDAP, ldapsource,
 					 sizeof(*dict_ldap));
@@ -1628,7 +1651,7 @@ DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
     dict_ldap->dict.flags = dict_flags;
 
     dict_ldap->ld = NULL;
-    dict_ldap->parser = cfg_parser_alloc(ldapsource);
+    dict_ldap->parser = parser;
 
     server_host = cfg_get_str(dict_ldap->parser, "server_host",
 			      "localhost", 1, 0);
@@ -1968,6 +1991,7 @@ DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
     /*
      * Return the new dict_ldap structure.
      */
+    dict_ldap->dict.owner = cfg_get_owner(dict_ldap->parser);
     return (DICT_DEBUG (&dict_ldap->dict));
 }
 

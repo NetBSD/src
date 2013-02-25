@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.188.2.1 2012/11/20 03:00:40 tls Exp $
+#	$NetBSD: Makefile,v 1.188.2.2 2013/02/25 00:27:47 tls Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -39,6 +39,9 @@ SUBDIR+=	libarch \
 		libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
 
+.if (${MACHINE_ARCH:C/e[bl]$//} == "arm")
+SUBDIR+=	libc_vfp
+.endif
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpclient
 .endif
@@ -48,6 +51,7 @@ SUBDIR+=	libskey
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/netpgp/libmj
+SUBDIR+=	../crypto/external/bsd/netpgp/lib/verify
 .endif
 
 .if (${MKMDNS} != "no")
@@ -148,6 +152,10 @@ SUBDIR+=	.WAIT
 
 .if (${MKATF} != "no")
 SUBDIR+=	../external/bsd/atf/lib		# depends on libstdc++
+.endif
+
+.if (${MKKYUA} != "no")
+SUBDIR+=	../external/bsd/lutok/lib	# depends on lua and libstdc++
 .endif
 
 SUBDIR+=	libform		# depends on libcurses

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.24 2012/07/31 15:50:34 bouyer Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.24.2.1 2013/02/25 00:29:15 tls Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.24 2012/07/31 15:50:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.24.2.1 2013/02/25 00:29:15 tls Exp $");
 
 #include "opt_mvsata.h"
 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.24 2012/07/31 15:50:34 bouyer Exp $");
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
+#include <dev/ata/satapmpreg.h>
 #include <dev/ata/satareg.h>
 #include <dev/ata/satavar.h>
 
@@ -178,8 +179,8 @@ static inline void mvsata_dma_bufunload(struct mvsata_port *, int, int);
 static void mvsata_hreset_port(struct mvsata_port *);
 static void mvsata_reset_port(struct mvsata_port *);
 static void mvsata_reset_hc(struct mvsata_hc *);
+static uint32_t mvsata_softreset(struct mvsata_port *, int);
 #ifndef MVSATA_WITHOUTDMA
-static void mvsata_softreset(struct mvsata_port *, int);
 static void mvsata_edma_reset_qptr(struct mvsata_port *);
 static inline void mvsata_edma_enable(struct mvsata_port *);
 static int mvsata_edma_disable(struct mvsata_port *, int, int);
@@ -204,6 +205,7 @@ static void mvsata_print_crpb(struct mvsata_port *, int);
 static void mvsata_print_eprd(struct mvsata_port *, int);
 #endif
 
+static void mvsata_probe_drive(struct ata_channel *);
 
 struct ata_bustype mvsata_ata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
@@ -229,6 +231,23 @@ static const struct scsipi_bustype mvsata_atapi_bustype = {
 #endif /* NATAPIBUS */
 #endif
 
+static void
+mvsata_pmp_select(struct mvsata_port *mvport, int pmpport)
+{
+	uint32_t ifctl;
+
+	KASSERT(pmpport < PMP_MAX_DRIVES);
+#if defined(DIAGNOSTIC) || defined(MVSATA_DEBUG)
+	if ((MVSATA_EDMA_READ_4(mvport, EDMA_CMD) & EDMA_CMD_EENEDMA) != 0) {
+		panic("EDMA enabled");
+	}
+#endif
+
+	ifctl = MVSATA_EDMA_READ_4(mvport, SATA_SATAICTL);
+	ifctl &= ~0xf;
+	ifctl |= pmpport;
+	MVSATA_EDMA_WRITE_4(mvport, SATA_SATAICTL, ifctl);
+}
 
 int
 mvsata_attach(struct mvsata_softc *sc, struct mvsata_product *product,
@@ -309,7 +328,7 @@ mvsata_attach(struct mvsata_softc *sc, struct mvsata_product *product,
 #endif
 #endif
 	sc->sc_wdcdev.wdc_maxdrives = 1;	/* SATA is always 1 drive */
-	sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
+	sc->sc_wdcdev.sc_atac.atac_probe = mvsata_probe_drive;
 	sc->sc_wdcdev.sc_atac.atac_set_modes = mvsata_setup_channel;
 
 	sc->sc_wdc_regs =
@@ -415,9 +434,20 @@ mvsata_error(struct mvsata_port *mvport)
 {
 	struct mvsata_softc *sc = device_private(MVSATA_DEV2(mvport));
 	uint32_t cause;
-	int handled = 0;
 
 	cause = MVSATA_EDMA_READ_4(mvport, EDMA_IEC);
+	/*
+	 * We must ack SATA_SE and SATA_FISIC before acking coresponding bits
+	 * in EDMA_IEC.
+	 */
+	if (cause & EDMA_IE_SERRINT) {
+		MVSATA_EDMA_WRITE_4(mvport, SATA_SE,
+		    MVSATA_EDMA_READ_4(mvport, SATA_SEIM));
+	}
+	if (cause & EDMA_IE_ETRANSINT) {
+		MVSATA_EDMA_WRITE_4(mvport, SATA_FISIC,
+		    ~MVSATA_EDMA_READ_4(mvport, SATA_FISIM));
+	}
 	MVSATA_EDMA_WRITE_4(mvport, EDMA_IEC, ~cause);
 
 	DPRINTFN(3, ("%s:%d:%d:"
@@ -430,25 +460,16 @@ mvsata_error(struct mvsata_port *mvport)
 	if (!cause)
 		return 0;
 
-	/* If PM connected, connect/disconnect interrupts storm could happen */
-	if (MVSATA_EDMA_READ_4(mvport, EDMA_IEC) &
-	    (EDMA_IE_EDEVDIS | EDMA_IE_EDEVCON))
-		if (sc->sc_gen == gen2 || sc->sc_gen == gen2e) {
-			delay(20 * 1000);
-			cause = MVSATA_EDMA_READ_4(mvport, EDMA_IEC);
-			MVSATA_EDMA_WRITE_4(mvport, EDMA_IEC, ~cause);
-		}
-
-	if (cause & EDMA_IE_EDEVDIS)
+	if (cause & EDMA_IE_EDEVDIS) {
 		aprint_normal("%s:%d:%d: device disconnect\n",
 		    device_xname(MVSATA_DEV2(mvport)),
 		    mvport->port_hc->hc, mvport->port);
+	}
 	if (cause & EDMA_IE_EDEVCON) {
 		if (sc->sc_gen == gen1)
 			mvsata_devconn_gen1(mvport);
 
 		DPRINTFN(3, ("    device connected\n"));
-		handled = 1;
 	}
 #ifndef MVSATA_WITHOUTDMA
 	if ((sc->sc_gen == gen1 && cause & EDMA_IE_ETRANSINT) ||
@@ -472,7 +493,6 @@ mvsata_error(struct mvsata_port *mvport)
 			    mvport->port_hc->hc, mvport->port, cause);
 			break;
 		}
-		handled = 1;
 	}
 #endif
 	if (cause & EDMA_IE_ETRANSINT) {
@@ -482,13 +502,32 @@ mvsata_error(struct mvsata_port *mvport)
 		    mvport->port_hc->hc, mvport->port);
 	}
 
-	return handled;
+	return 1;
 }
 
 
 /*
  * ATA callback entry points
  */
+
+static void
+mvsata_probe_drive(struct ata_channel *chp)
+{
+	struct mvsata_port * const mvport = (struct mvsata_port *)chp;
+	uint32_t sstat, sig;
+
+	sstat = sata_reset_interface(chp, mvport->port_iot,
+	    mvport->port_sata_scontrol, mvport->port_sata_sstatus);
+	switch (sstat) {
+	case SStatus_DET_DEV:
+		mvsata_pmp_select(mvport, PMP_PORT_CTL);
+		sig = mvsata_softreset(mvport, AT_WAIT);
+		sata_interpret_sig(chp, 0, sig);
+		break;
+	default:
+		break;
+	}
+}
 
 #ifndef MVSATA_WITHOUTDMA
 static int
@@ -529,8 +568,7 @@ mvsata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	uint32_t edma_c;
-
-	KASSERT(sigp == NULL);
+	uint32_t sig;
 
 	edma_c = MVSATA_EDMA_READ_4(mvport, EDMA_CMD);
 
@@ -541,7 +579,12 @@ mvsata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 	if (edma_c & EDMA_CMD_EENEDMA)
 		mvsata_edma_disable(mvport, 10000, flags & AT_WAIT);
 
-	mvsata_softreset(mvport, flags & AT_WAIT);
+	mvsata_pmp_select(mvport, drvp->drive);
+
+	sig = mvsata_softreset(mvport, flags & AT_WAIT);
+
+	if (sigp)
+		*sigp = sig;
 
 	if (edma_c & EDMA_CMD_EENEDMA) {
 		mvsata_edma_reset_qptr(mvport);
@@ -609,11 +652,11 @@ mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	int rv, s;
 
 	DPRINTFN(1, ("%s:%d: mvsata_exec_command: drive=%d, bcount=%d,"
-	    " r_command=0x%x, r_head=0x%x, r_cyl=0x%x, r_sector=0x%x,"
-	    " r_count=0x%x, r_features=0x%x\n",
+	    " r_lba=0x%012"PRIx64", r_count=0x%04x, r_features=0x%04x,"
+	    " r_device=0x%02x, r_command=0x%02x\n",
 	    device_xname(MVSATA_DEV2(mvport)), chp->ch_channel,
-	    drvp->drive, ata_c->bcount, ata_c->r_command, ata_c->r_head,
-	    ata_c->r_cyl, ata_c->r_sector, ata_c->r_count, ata_c->r_features));
+	    drvp->drive, ata_c->bcount, ata_c->r_lba, ata_c->r_count,
+	    ata_c->r_features, ata_c->r_device, ata_c->r_command));
 
 	xfer = ata_get_xfer(ata_c->flags & AT_WAIT ? ATAXF_CANSLEEP :
 	    ATAXF_NOSLEEP);
@@ -1138,6 +1181,8 @@ do_pio:
 		if (mvport->port_edmamode != nodma)
 			mvsata_edma_disable(mvport, 10 /* ms */, wait_flags);
 
+		mvsata_pmp_select(mvport, xfer->c_drive);
+
 		/* Do control operations specially. */
 		if (__predict_false(drvp->state < READY)) {
 			/*
@@ -1173,10 +1218,10 @@ do_pio:
 			return;
 		}
 		if (ata_bio->flags & ATA_LBA48)
-			wdccommandext(chp, xfer->c_drive, atacmd_to48(cmd),
-			    (uint64_t)ata_bio->blkno, nblks, 0);
+			wdccommandext(chp, 0, atacmd_to48(cmd),
+			    ata_bio->blkno, nblks, 0, WDSD_LBA);
 		else
-			wdccommand(chp, xfer->c_drive, cmd, cyl,
+			wdccommand(chp, 0, cmd, cyl,
 			    head, sect, nblks,
 			    (ata_bio->lp->d_type == DTYPE_ST506) ?
 			    ata_bio->lp->d_precompcyl / 4 : 0);
@@ -1260,14 +1305,6 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 
 	chp->ch_flags &= ~(ATACH_IRQ_WAIT|ATACH_DMA_WAIT);
 
-	/* Is it not a transfer, but a control operation? */
-	if (!(xfer->c_flags & C_DMA) && drvp->state < READY) {
-		aprint_error_dev(atac->atac_dev,
-		    "channel %d: drive %d bad state %d in mvsata_bio_intr\n",
-		    chp->ch_channel, xfer->c_drive, drvp->state);
-		panic("mvsata_bio_intr: bad state");
-	}
-
 	/*
 	 * If we missed an interrupt transfer, reset and restart.
 	 * Don't try to continue transfer, we may have missed cycles.
@@ -1276,6 +1313,14 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		ata_bio->error = TIMEOUT;
 		mvsata_bio_done(chp, xfer);
 		return 1;
+	}
+
+	/* Is it not a transfer, but a control operation? */
+	if (!(xfer->c_flags & C_DMA) && drvp->state < READY) {
+		aprint_error_dev(atac->atac_dev,
+		    "channel %d: drive %d bad state %d in mvsata_bio_intr\n",
+		    chp->ch_channel, xfer->c_drive, drvp->state);
+		panic("mvsata_bio_intr: bad state");
 	}
 
 	/* Ack interrupt done by wdc_wait_for_unbusy */
@@ -1423,8 +1468,6 @@ mvsata_bio_ready(struct mvsata_port *mvport, struct ata_bio *ata_bio, int drive,
 	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 	const char *errstring;
 
-	flags |= AT_POLL;	/* XXX */
-
 	/*
 	 * disable interrupts, all commands here should be quick
 	 * enough to be able to poll, and we don't go here that often
@@ -1435,8 +1478,8 @@ mvsata_bio_ready(struct mvsata_port *mvport, struct ata_bio *ata_bio, int drive,
 	errstring = "wait";
 	if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, flags))
 		goto ctrltimeout;
-	wdccommandshort(chp, drive, WDCC_RECAL);
-	/* Wait for at last 400ns for status bit to be valid */
+	wdccommandshort(chp, 0, WDCC_RECAL);
+	/* Wait for at least 400ns for status bit to be valid */
 	DELAY(1);
 	errstring = "recal";
 	if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, flags))
@@ -1449,7 +1492,7 @@ mvsata_bio_ready(struct mvsata_port *mvport, struct ata_bio *ata_bio, int drive,
 	/* Also don't try if the drive didn't report its mode */
 	if ((drvp->drive_flags & ATA_DRIVE_MODE) == 0)
 		goto geometry;
-	wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
+	wdccommand(chp, 0, SET_FEATURES, 0, 0, 0,
 	    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
 	errstring = "piomode";
 	if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, flags))
@@ -1457,10 +1500,10 @@ mvsata_bio_ready(struct mvsata_port *mvport, struct ata_bio *ata_bio, int drive,
 	if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 		goto ctrlerror;
 	if (drvp->drive_flags & ATA_DRIVE_UDMA)
-		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
+		wdccommand(chp, 0, SET_FEATURES, 0, 0, 0,
 		    0x40 | drvp->UDMA_mode, WDSF_SET_MODE);
 	else if (drvp->drive_flags & ATA_DRIVE_DMA)
-		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
+		wdccommand(chp, 0, SET_FEATURES, 0, 0, 0,
 		    0x20 | drvp->DMA_mode, WDSF_SET_MODE);
 	else
 		goto geometry;
@@ -1472,7 +1515,7 @@ mvsata_bio_ready(struct mvsata_port *mvport, struct ata_bio *ata_bio, int drive,
 geometry:
 	if (ata_bio->flags & ATA_LBA)
 		goto multimode;
-	wdccommand(chp, drive, WDCC_IDP, ata_bio->lp->d_ncylinders,
+	wdccommand(chp, 0, WDCC_IDP, ata_bio->lp->d_ncylinders,
 	    ata_bio->lp->d_ntracks - 1, 0, ata_bio->lp->d_nsectors,
 	    (ata_bio->lp->d_type == DTYPE_ST506) ?
 	    ata_bio->lp->d_precompcyl / 4 : 0);
@@ -1484,7 +1527,7 @@ geometry:
 multimode:
 	if (ata_bio->multi == 1)
 		goto ready;
-	wdccommand(chp, drive, WDCC_SETMULTI, 0, 0, 0, ata_bio->multi, 0);
+	wdccommand(chp, 0, WDCC_SETMULTI, 0, 0, 0, ata_bio->multi, 0);
 	errstring = "setmulti";
 	if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, flags))
 		goto ctrltimeout;
@@ -1536,6 +1579,8 @@ mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	if (mvport->port_edmamode != nodma)
 		mvsata_edma_disable(mvport, 10 /* ms */, wait_flags);
 
+	mvsata_pmp_select(mvport, drive);
+
 	MVSATA_WDC_WRITE_1(mvport, SRB_H, WDSD_IBM);
 	switch(wdcwait(chp, ata_c->r_st_bmask | WDCS_DRQ,
 	    ata_c->r_st_bmask, ata_c->timeout, wait_flags)) {
@@ -1552,10 +1597,11 @@ mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		/* polled command, disable interrupts */
 		MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT | WDCTL_IDS);
 	if ((ata_c->flags & AT_LBA48) != 0) {
-		wdccommandext(chp, drive, ata_c->r_command,
-		    ata_c->r_lba, ata_c->r_count, ata_c->r_features);
+		wdccommandext(chp, 0, ata_c->r_command,
+		    ata_c->r_lba, ata_c->r_count, ata_c->r_features,
+		    ata_c->r_device & ~0x10);
 	} else {
-		wdccommand(chp, drive, ata_c->r_command,
+		wdccommand(chp, 0, ata_c->r_command,
 		    (ata_c->r_lba >> 8) & 0xffff,
 		    (((ata_c->flags & AT_LBA) != 0) ? WDSD_LBA : 0) |
 		    ((ata_c->r_lba >> 24) & 0x0f),
@@ -1818,6 +1864,8 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	if (mvport->port_edmamode != nodma)
 		mvsata_edma_disable(mvport, 10 /* ms */, wait_flags);
 
+	mvsata_pmp_select(mvport, xfer->c_drive);
+
 	if ((xfer->c_flags & C_DMA) && (drvp->n_xfers <= NXFER))
 		drvp->n_xfers++;
 
@@ -1845,7 +1893,7 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		errstring = "unbusy";
 		if (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags))
 			goto timeout;
-		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
+		wdccommand(chp, 0, SET_FEATURES, 0, 0, 0,
 		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
 		errstring = "piomode";
 		if (wdc_wait_for_unbusy(chp, ATAPI_MODE_DELAY, wait_flags))
@@ -1868,11 +1916,11 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 				goto error;
 		}
 		if (drvp->drive_flags & ATA_DRIVE_UDMA)
-			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
+			wdccommand(chp, 0, SET_FEATURES, 0, 0, 0,
 			    0x40 | drvp->UDMA_mode, WDSF_SET_MODE);
 		else
 		if (drvp->drive_flags & ATA_DRIVE_DMA)
-			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
+			wdccommand(chp, 0, SET_FEATURES, 0, 0, 0,
 			    0x20 | drvp->DMA_mode, WDSF_SET_MODE);
 		else
 			goto ready;
@@ -1933,7 +1981,7 @@ ready:
 	 * data is necessary, multiple data transfer phases will be done.
 	 */
 
-	wdccommand(chp, xfer->c_drive, ATAPI_PKT_CMD,
+	wdccommand(chp, 0, ATAPI_PKT_CMD,
 	    xfer->c_bcount <= 0xffff ? xfer->c_bcount : 0xffff, 0, 0, 0,
 	    (xfer->c_flags & C_DMA) ? ATAPI_PKT_CMD_FTRE_DMA : 0);
 
@@ -2234,7 +2282,9 @@ mvsata_atapi_reset(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 
-	wdccommandshort(chp, xfer->c_drive, ATAPI_SOFT_RESET);
+	mvsata_pmp_select(mvport, xfer->c_drive);
+
+	wdccommandshort(chp, 0, ATAPI_SOFT_RESET);
 	drvp->state = 0;
 	if (wdc_wait_for_unbusy(chp, WDC_RESET_WAIT, AT_POLL) != 0) {
 		printf("%s:%d:%d: reset failed\n", device_xname(atac->atac_dev),
@@ -3126,6 +3176,9 @@ mvsata_reset_port(struct mvsata_port *mvport)
 		MVSATA_EDMA_WRITE_4(mvport, EDMA_CFG,
 		    EDMA_CFG_RESERVED | EDMA_CFG_RESERVED2);
 	MVSATA_EDMA_WRITE_4(mvport, EDMA_T, 0);
+	MVSATA_EDMA_WRITE_4(mvport, SATA_SEIM, 0x019c0000);
+	MVSATA_EDMA_WRITE_4(mvport, SATA_SE, ~0);
+	MVSATA_EDMA_WRITE_4(mvport, SATA_FISIC, 0);
 	MVSATA_EDMA_WRITE_4(mvport, EDMA_IEC, 0);
 	MVSATA_EDMA_WRITE_4(mvport, EDMA_IEM, 0);
 	MVSATA_EDMA_WRITE_4(mvport, EDMA_REQQBAH, 0);
@@ -3137,8 +3190,6 @@ mvsata_reset_port(struct mvsata_port *mvport)
 	MVSATA_EDMA_WRITE_4(mvport, EDMA_CMD, 0);
 	MVSATA_EDMA_WRITE_4(mvport, EDMA_TC, 0);
 	MVSATA_EDMA_WRITE_4(mvport, EDMA_IORT, 0xbc);
-
-	MVSATA_EDMA_WRITE_4(mvport, SATA_FISIC, 0);
 }
 
 static void
@@ -3166,33 +3217,50 @@ mvsata_reset_hc(struct mvsata_hc *mvhc)
 #endif
 }
 
-#ifndef MVSATA_WITHOUTDMA
-static void
+#define WDCDELAY  100 /* 100 microseconds */
+#define WDCNDELAY_RST (WDC_RESET_WAIT * 1000 / WDCDELAY)
+
+static uint32_t
 mvsata_softreset(struct mvsata_port *mvport, int waitok)
 {
-	uint32_t stat;
-	int i;
+	uint32_t sig0 = ~0;
+	int timeout, nloop;
+	uint8_t st0;
 
-	MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_RST | WDCTL_IDS);
+	MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_RST | WDCTL_IDS | WDCTL_4BIT);
 	delay(10);
-	MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_IDS);
-	delay(2000);
+	(void) MVSATA_WDC_READ_1(mvport, SRB_FE);
+	MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_IDS | WDCTL_4BIT);
+	delay(10);
 
-	if (waitok) {
-		/* wait maximum 31sec */
-		for (i = 31000; i > 0; i--) {
-			stat = MVSATA_WDC_READ_1(mvport, SRB_CS);
-			if (!(stat & WDCS_BSY))
-				break;
-			delay(1000);
+	if (!waitok)
+		nloop = WDCNDELAY_RST;
+	else
+		nloop = WDC_RESET_WAIT * hz / 1000;
+
+	/* wait for BSY to deassert */
+	for (timeout = 0; timeout < nloop; timeout++) {
+		st0 = MVSATA_WDC_READ_1(mvport, SRB_CS);
+
+		if ((st0 & WDCS_BSY) == 0) {
+			sig0 = MVSATA_WDC_READ_1(mvport, SRB_SC) << 0;
+			sig0 |= MVSATA_WDC_READ_1(mvport, SRB_LBAL) << 8;
+			sig0 |= MVSATA_WDC_READ_1(mvport, SRB_LBAM) << 16;
+			sig0 |= MVSATA_WDC_READ_1(mvport, SRB_LBAH) << 24;
+			goto out;
 		}
-		if (i == 0)
-			aprint_error("%s:%d:%d: soft reset failed\n",
-			    device_xname(MVSATA_DEV2(mvport)),
-			    mvport->port_hc->hc, mvport->port);
+		if (!waitok)
+			delay(WDCDELAY);
+		else
+			tsleep(&nloop, PRIBIO, "atarst", 1);
 	}
+	
+out:
+	MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT);
+	return sig0;
 }
 
+#ifndef MVSATA_WITHOUTDMA
 static void
 mvsata_edma_reset_qptr(struct mvsata_port *mvport)
 {
@@ -3233,8 +3301,12 @@ mvsata_edma_disable(struct mvsata_port *mvport, int timeout, int waitok)
 			else
 				delay(1000);
 		}
-		if (ms == timeout)
+		if (ms == timeout) {
+			aprint_error("%s:%d:%d: unable to stop EDMA\n",
+			    device_xname(MVSATA_DEV2(mvport)),
+			    mvport->port_hc->hc, mvport->port);
 			return EBUSY;
+		}
 
 		/* The diable bit (eDsEDMA) is self negated. */
 		MVSATA_EDMA_WRITE_4(mvport, EDMA_CMD, EDMA_CMD_EDSEDMA);
@@ -3378,7 +3450,11 @@ mvsata_edma_setup_crqb(struct mvsata_port *mvport, int erqqip, int quetag,
 	    mvport->port_reqtbl[quetag].eprd_offset;
 	rw = (ata_bio->flags & ATA_READ) ? CRQB_CDIR_READ : CRQB_CDIR_WRITE;
 	cmd = (ata_bio->flags & ATA_READ) ? WDCC_READDMA : WDCC_WRITEDMA;
-	head = WDSD_LBA;
+	if (ata_bio->flags & (ATA_LBA|ATA_LBA48)) {
+		head = WDSD_LBA;
+	} else {
+		head = 0;
+	}
 	blkno = ata_bio->blkno;
 	if (ata_bio->flags & ATA_LBA48)
 		cmd = atacmd_to48(cmd);
@@ -3621,10 +3697,14 @@ mvsata_edma_setup_crqb_gen2e(struct mvsata_port *mvport, int erqqip, int quetag,
 	eprd_addr = mvport->port_eprd_dmamap->dm_segs[0].ds_addr +
 	    mvport->port_reqtbl[quetag].eprd_offset;
 	rw = (ata_bio->flags & ATA_READ) ? CRQB_CDIR_READ : CRQB_CDIR_WRITE;
-	ctrlflg = (rw | CRQB_CDEVICEQUETAG(quetag) | CRQB_CPMPORT(drive) |
+	ctrlflg = (rw | CRQB_CDEVICEQUETAG(0) | CRQB_CPMPORT(drive) |
 	    CRQB_CPRDMODE_EPRD | CRQB_CHOSTQUETAG_GEN2(quetag));
 	cmd = (ata_bio->flags & ATA_READ) ? WDCC_READDMA : WDCC_WRITEDMA;
-	head = WDSD_LBA;
+	if (ata_bio->flags & (ATA_LBA|ATA_LBA48)) {
+		head = WDSD_LBA;
+	} else {
+		head = 0;
+	}
 	blkno = ata_bio->blkno;
 	if (ata_bio->flags & ATA_LBA48)
 		cmd = atacmd_to48(cmd);

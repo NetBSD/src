@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Portions Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Portions Copyright (C) 2004, 2006, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
 # Portions Copyright (C) 1999-2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -33,6 +33,13 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the NetBSD
+#	Foundation, Inc. and its contributors.
+# 4. Neither the name of The NetBSD Foundation nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 # ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

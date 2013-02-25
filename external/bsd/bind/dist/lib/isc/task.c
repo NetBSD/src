@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.5 2012/06/05 00:42:32 christos Exp $	*/
+/*	$NetBSD: task.c,v 1.5.2.1 2013/02/25 00:25:50 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -158,6 +158,7 @@ struct isc__taskmgr {
 	isc_boolean_t			pause_requested;
 	isc_boolean_t			exclusive_requested;
 	isc_boolean_t			exiting;
+	isc__task_t			*excl;
 #ifdef USE_SHARED_MANAGER
 	unsigned int			refs;
 #endif /* ISC_PLATFORM_USETHREADS */
@@ -227,6 +228,10 @@ isc__taskmgr_create(isc_mem_t *mctx, unsigned int workers,
 		    unsigned int default_quantum, isc_taskmgr_t **managerp);
 ISC_TASKFUNC_SCOPE void
 isc__taskmgr_destroy(isc_taskmgr_t **managerp);
+ISC_TASKFUNC_SCOPE void
+isc__taskmgr_setexcltask(isc_taskmgr_t *mgr0, isc_task_t *task0);
+ISC_TASKFUNC_SCOPE isc_result_t
+isc__taskmgr_excltask(isc_taskmgr_t *mgr0, isc_task_t **taskp);
 ISC_TASKFUNC_SCOPE isc_result_t
 isc__task_beginexclusive(isc_task_t *task);
 ISC_TASKFUNC_SCOPE void
@@ -288,7 +293,9 @@ static isc_taskmgrmethods_t taskmgrmethods = {
 	isc__taskmgr_destroy,
 	isc__taskmgr_setmode,
 	isc__taskmgr_mode,
-	isc__task_create
+	isc__task_create,
+	isc__taskmgr_setexcltask,
+	isc__taskmgr_excltask
 };
 
 /***
@@ -1398,6 +1405,7 @@ isc__taskmgr_create(isc_mem_t *mctx, unsigned int workers,
 	manager->exclusive_requested = ISC_FALSE;
 	manager->pause_requested = ISC_FALSE;
 	manager->exiting = ISC_FALSE;
+	manager->excl = NULL;
 
 	isc_mem_attach(mctx, &manager->mctx);
 
@@ -1480,6 +1488,12 @@ isc__taskmgr_destroy(isc_taskmgr_t **managerp) {
 	 * isc_taskmgr_destroy(), e.g. by signalling a condition variable
 	 * that the startup thread is sleeping on.
 	 */
+
+	/*
+	 * Detach the exclusive task before acquiring the manager lock
+	 */
+	if (manager->excl != NULL)
+		isc__task_detach((isc_task_t **) &manager->excl);
 
 	/*
 	 * Unlike elsewhere, we're going to hold this lock a long time.
@@ -1631,12 +1645,41 @@ isc__taskmgr_resume(isc_taskmgr_t *manager0) {
 }
 #endif /* USE_WORKER_THREADS */
 
+ISC_TASKFUNC_SCOPE void
+isc__taskmgr_setexcltask(isc_taskmgr_t *mgr0, isc_task_t *task0) {
+	isc__taskmgr_t *mgr = (isc__taskmgr_t *) mgr0;
+	isc__task_t *task = (isc__task_t *) task0;
+
+	REQUIRE(VALID_MANAGER(mgr));
+	REQUIRE(VALID_TASK(task));
+	if (mgr->excl != NULL)
+		isc__task_detach((isc_task_t **) &mgr->excl);
+	isc__task_attach(task0, (isc_task_t **) &mgr->excl);
+}
+
+ISC_TASKFUNC_SCOPE isc_result_t
+isc__taskmgr_excltask(isc_taskmgr_t *mgr0, isc_task_t **taskp) {
+	isc__taskmgr_t *mgr = (isc__taskmgr_t *) mgr0;
+
+	REQUIRE(VALID_MANAGER(mgr));
+	REQUIRE(taskp != NULL && *taskp == NULL);
+
+	if (mgr->excl == NULL)
+		return (ISC_R_NOTFOUND);
+
+	isc__task_attach((isc_task_t *) mgr->excl, taskp);
+	return (ISC_R_SUCCESS);
+}
+
 ISC_TASKFUNC_SCOPE isc_result_t
 isc__task_beginexclusive(isc_task_t *task0) {
 #ifdef USE_WORKER_THREADS
 	isc__task_t *task = (isc__task_t *)task0;
 	isc__taskmgr_t *manager = task->manager;
+
 	REQUIRE(task->state == task_state_running);
+	/* XXX: Require task == manager->excl? */
+
 	LOCK(&manager->lock);
 	if (manager->exclusive_requested) {
 		UNLOCK(&manager->lock);

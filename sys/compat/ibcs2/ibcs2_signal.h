@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.h,v 1.20 2007/12/05 00:31:01 dsl Exp $	*/
+/*	$NetBSD: ibcs2_signal.h,v 1.20.60.1 2013/02/25 00:29:07 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -121,10 +121,12 @@ struct ibcs2_sigaltstack {
 #define	IBCS2_SS_DISABLE	0x00000002
 #define	IBCS2_SS_ALLBITS	0x00000003
 
+#ifdef _KERNEL
 extern const int native_to_ibcs2_signo[];
 void ibcs2_to_native_sigset(const ibcs2_sigset_t *, sigset_t *);
 void native_to_ibcs2_sigset(const sigset_t *, ibcs2_sigset_t *);
 
 void	ibcs2_sendsig(const struct ksiginfo *, const sigset_t *);
+#endif
 
 #endif /* _IBCS2_SIGNAL_H */

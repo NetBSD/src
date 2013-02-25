@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fchownat.c,v 1.1.2.2 2012/11/18 17:41:55 manu Exp $ */
+/*	$NetBSD: t_fchownat.c,v 1.1.2.3 2013/02/25 00:30:22 tls Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fchownat.c,v 1.1.2.2 2012/11/18 17:41:55 manu Exp $");
+__RCSID("$NetBSD: t_fchownat.c,v 1.1.2.3 2013/02/25 00:30:22 tls Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -69,6 +69,7 @@ ATF_TC_WITH_CLEANUP(fchownat_fd);
 ATF_TC_HEAD(fchownat_fd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fchownat works with fd");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(fchownat_fd, tc)
@@ -105,6 +106,7 @@ ATF_TC_HEAD(fchownat_fdcwd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 			  "See that fchownat works with fd as AT_FDCWD");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(fchownat_fdcwd, tc)
@@ -139,6 +141,7 @@ ATF_TC_HEAD(fchownat_fdcwderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 		  "See that fchownat fails with fd as AT_FDCWD and bad path");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(fchownat_fdcwderr, tc)
@@ -162,6 +165,7 @@ ATF_TC_WITH_CLEANUP(fchownat_fderr1);
 ATF_TC_HEAD(fchownat_fderr1, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fchownat fail with bad path");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(fchownat_fderr1, tc)
@@ -188,6 +192,7 @@ ATF_TC_WITH_CLEANUP(fchownat_fderr2);
 ATF_TC_HEAD(fchownat_fderr2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fchownat fails with bad fdat");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(fchownat_fderr2, tc)
@@ -219,6 +224,7 @@ ATF_TC_WITH_CLEANUP(fchownat_fderr3);
 ATF_TC_HEAD(fchownat_fderr3, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fchownat fails with fd as -1");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(fchownat_fderr3, tc)
@@ -246,6 +252,7 @@ ATF_TC_WITH_CLEANUP(fchownat_fdlink);
 ATF_TC_HEAD(fchownat_fdlink, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fchownat works on symlink");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(fchownat_fdlink, tc)

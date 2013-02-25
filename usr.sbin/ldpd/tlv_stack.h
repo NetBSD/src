@@ -1,4 +1,4 @@
-/* $NetBSD: tlv_stack.h,v 1.1 2010/12/08 07:20:15 kefren Exp $ */
+/* $NetBSD: tlv_stack.h,v 1.1.12.1 2013/02/25 00:30:44 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -42,12 +42,12 @@
 int	map_label(struct ldp_peer *, struct fec_tlv *, struct label_tlv *);
 int	withdraw_label(struct ldp_peer *, struct fec_tlv *);
 void	prepare_release(struct tlv *);
-void	send_label_tlv(struct ldp_peer *, struct in_addr *, uint8_t,
+void	send_label_tlv(struct ldp_peer *, struct sockaddr *, uint8_t,
 		uint32_t, struct label_request_tlv *);
-void	send_label_tlv_to_all(struct in_addr *, uint8_t, uint32_t);
+void	send_label_tlv_to_all(struct sockaddr *, uint8_t, uint32_t);
 void	send_all_bindings(struct ldp_peer *);
-void	send_withdraw_tlv(struct ldp_peer *, struct in_addr *, uint8_t);
-void	send_withdraw_tlv_to_all(struct in_addr *, uint8_t);
+void	send_withdraw_tlv(struct ldp_peer *, struct sockaddr *, uint8_t);
+void	send_withdraw_tlv_to_all(struct sockaddr *, uint8_t);
 int	request_respond(struct ldp_peer *, struct label_map_tlv *,
 		struct fec_tlv *);
 

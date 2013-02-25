@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.150 2012/07/21 14:52:40 gdt Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.150.2.1 2013/02/25 00:30:05 tls Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.150 2012/07/21 14:52:40 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.150.2.1 2013/02/25 00:30:05 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2554,7 +2554,7 @@ ip6_getmoptions(struct sockopt *sopt, struct ip6_moptions *im6o)
 
 	case IPV6_MULTICAST_LOOP:
 		if (im6o == NULL)
-			optval = ip6_defmcasthlim;
+			optval = IPV6_DEFAULT_MULTICAST_LOOP;
 		else
 			optval = im6o->im6o_multicast_loop;
 

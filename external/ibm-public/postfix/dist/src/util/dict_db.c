@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_db.c,v 1.1.1.3 2011/03/02 19:32:42 tron Exp $	*/
+/*	$NetBSD: dict_db.c,v 1.1.1.3.10.1 2013/02/25 00:27:31 tls Exp $	*/
 
 /*++
 /* NAME
@@ -111,6 +111,7 @@
 #include "myflock.h"
 #include "dict.h"
 #include "dict_db.h"
+#include "warn_stat.h"
 
 /* Application-specific. */
 
@@ -183,13 +184,14 @@ static const char *dict_db_lookup(DICT *dict, const char *name)
     int     status;
     const char *result = 0;
 
+    dict->error = 0;
+
     /*
      * Sanity check.
      */
     if ((dict->flags & (DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL)) == 0)
 	msg_panic("dict_db_lookup: no DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL flag");
 
-    dict_errno = 0;
     memset(&db_key, 0, sizeof(db_key));
     memset(&db_value, 0, sizeof(db_value));
 
@@ -252,13 +254,15 @@ static const char *dict_db_lookup(DICT *dict, const char *name)
 
 /* dict_db_update - add or update database entry */
 
-static void dict_db_update(DICT *dict, const char *name, const char *value)
+static int dict_db_update(DICT *dict, const char *name, const char *value)
 {
     DICT_DB *dict_db = (DICT_DB *) dict;
     DB     *db = dict_db->db;
     DBT     db_key;
     DBT     db_value;
     int     status;
+
+    dict->error = 0;
 
     /*
      * Sanity check.
@@ -334,6 +338,8 @@ static void dict_db_update(DICT *dict, const char *name, const char *value)
     if ((dict->flags & DICT_FLAG_LOCK)
 	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
 	msg_fatal("%s: unlock dictionary: %m", dict_db->dict.name);
+
+    return (status);
 }
 
 /* delete one entry from the dictionary */
@@ -345,6 +351,8 @@ static int dict_db_delete(DICT *dict, const char *name)
     DBT     db_key;
     int     status = 1;
     int     flags = 0;
+
+    dict->error = 0;
 
     /*
      * Sanity check.
@@ -422,12 +430,13 @@ static int dict_db_sequence(DICT *dict, int function,
     int     status = 0;
     int     db_function;
 
+    dict->error = 0;
+
 #if DB_VERSION_MAJOR > 1
 
     /*
      * Initialize.
      */
-    dict_errno = 0;
     memset(&db_key, 0, sizeof(db_key));
     memset(&db_value, 0, sizeof(db_value));
 
@@ -567,8 +576,8 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
 {
     DICT_DB *dict_db;
     struct stat st;
-    DB     *db;
-    char   *db_path;
+    DB     *db = 0;
+    char   *db_path = 0;
     int     lock_fd = -1;
     int     dbfd;
 
@@ -588,10 +597,11 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
 
     (void) db_version(&major_version, &minor_version, &patch_version);
     if (major_version != DB_VERSION_MAJOR || minor_version != DB_VERSION_MINOR)
-	msg_fatal("incorrect version of Berkeley DB: "
+	return (dict_surrogate(class, path, open_flags, dict_flags,
+			       "incorrect version of Berkeley DB: "
 	      "compiled against %d.%d.%d, run-time linked against %d.%d.%d",
-		  DB_VERSION_MAJOR, DB_VERSION_MINOR, DB_VERSION_PATCH,
-		  major_version, minor_version, patch_version);
+		       DB_VERSION_MAJOR, DB_VERSION_MINOR, DB_VERSION_PATCH,
+			       major_version, minor_version, patch_version));
     if (msg_verbose) {
 	msg_info("Compiled against Berkeley DB: %d.%d.%d\n",
 		 DB_VERSION_MAJOR, DB_VERSION_MINOR, DB_VERSION_PATCH);
@@ -617,11 +627,16 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
      * db_open() create a non-existent file for us.
      */
 #define LOCK_OPEN_FLAGS(f) ((f) & ~(O_CREAT|O_TRUNC))
+#define FREE_RETURN(e) do { \
+	DICT *_dict = (e); if (db) DICT_DB_CLOSE(db); \
+	if (db_path) myfree(db_path); return (_dict); \
+    } while (0)
 
     if (dict_flags & DICT_FLAG_LOCK) {
 	if ((lock_fd = open(db_path, LOCK_OPEN_FLAGS(open_flags), 0644)) < 0) {
 	    if (errno != ENOENT)
-		msg_fatal("open database %s: %m", db_path);
+		FREE_RETURN(dict_surrogate(class, path, open_flags, dict_flags,
+					   "open database %s: %m", db_path));
 	} else {
 	    if (myflock(lock_fd, INTERNAL_LOCK, MYFLOCK_OP_SHARED) < 0)
 		msg_fatal("shared-lock database %s for open: %m", db_path);
@@ -636,7 +651,8 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
      */
 #if DB_VERSION_MAJOR < 2
     if ((db = dbopen(db_path, open_flags, 0644, type, tweak)) == 0)
-	msg_fatal("open database %s: %m", db_path);
+	FREE_RETURN(dict_surrogate(class, path, open_flags, dict_flags,
+				   "open database %s: %m", db_path));
     dbfd = db->fd(db);
 #endif
 
@@ -652,7 +668,8 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
     if (open_flags & O_TRUNC)
 	db_flags |= DB_TRUNCATE;
     if ((errno = db_open(db_path, type, db_flags, 0644, 0, tweak, &db)) != 0)
-	msg_fatal("open database %s: %m", db_path);
+	FREE_RETURN(dict_surrogate(class, path, open_flags, dict_flags,
+				   "open database %s: %m", db_path));
     if (db == 0)
 	msg_panic("db_open null result");
     if ((errno = db->fd(db, &dbfd)) != 0)
@@ -680,10 +697,12 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
 	msg_fatal("set DB hash element count %d: %m", DICT_DB_NELM);
 #if DB_VERSION_MAJOR == 5 || (DB_VERSION_MAJOR == 4 && DB_VERSION_MINOR > 0)
     if ((errno = db->open(db, 0, db_path, 0, type, db_flags, 0644)) != 0)
-	msg_fatal("open database %s: %m", db_path);
+	FREE_RETURN(dict_surrogate(class, path, open_flags, dict_flags,
+				   "open database %s: %m", db_path));
 #elif (DB_VERSION_MAJOR == 3 || DB_VERSION_MAJOR == 4)
     if ((errno = db->open(db, db_path, 0, type, db_flags, 0644)) != 0)
-	msg_fatal("open database %s: %m", db_path);
+	FREE_RETURN(dict_surrogate(class, path, open_flags, dict_flags,
+				   "open database %s: %m", db_path));
 #else
 #error "Unsupported Berkeley DB version"
 #endif
@@ -707,6 +726,8 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
     if (fstat(dict_db->dict.stat_fd, &st) < 0)
 	msg_fatal("dict_db_open: fstat: %m");
     dict_db->dict.mtime = st.st_mtime;
+    dict_db->dict.owner.uid = st.st_uid;
+    dict_db->dict.owner.status = (st.st_uid != 0);
 
     /*
      * Warn if the source file is newer than the indexed file, except when

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrenum.c,v 1.14 2011/12/10 19:14:29 roy Exp $	*/
+/*	$NetBSD: rrenum.c,v 1.14.6.1 2013/02/25 00:30:48 tls Exp $	*/
 /*	$KAME: rrenum.c,v 1.14 2004/06/14 05:36:00 itojun Exp $	*/
 
 /*
@@ -36,6 +36,9 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#ifdef __FreeBSD__
+#include <net/if_var.h>
+#endif
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -175,9 +178,9 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 		irr->irr_u_uselen = rpu->rpu_uselen;
 		irr->irr_u_keeplen = rpu->rpu_keeplen;
 		irr->irr_raf_mask_onlink =
-			(rpu->rpu_ramask & ICMP6_RR_PCOUSE_RAFLAGS_ONLINK);
+			!!(rpu->rpu_ramask & ICMP6_RR_PCOUSE_RAFLAGS_ONLINK);
 		irr->irr_raf_mask_auto =
-			(rpu->rpu_ramask & ICMP6_RR_PCOUSE_RAFLAGS_AUTO);
+			!!(rpu->rpu_ramask & ICMP6_RR_PCOUSE_RAFLAGS_AUTO);
 		irr->irr_vltime = ntohl(rpu->rpu_vltime);
 		irr->irr_pltime = ntohl(rpu->rpu_pltime);
 		irr->irr_raf_onlink =
@@ -241,6 +244,7 @@ do_pco(struct icmp6_router_renum *rr, int len, struct rr_pco_match *rpm)
 {
 	int ifindex = 0;
 	struct in6_rrenumreq irr;
+	struct rainfo *rai;
 
 	if ((rr_pco_check(len, rpm) != 0))
 		return 1;
@@ -260,16 +264,19 @@ do_pco(struct icmp6_router_renum *rr, int len, struct rr_pco_match *rpm)
 	irr.irr_matchprefix.sin6_family = AF_INET6;
 	irr.irr_matchprefix.sin6_addr = rpm->rpm_prefix;
 
-	while (if_indextoname(++ifindex, irr.irr_name)) {
-		/*
-		 * if ICMP6_RR_FLAGS_FORCEAPPLY(A flag) is 0 and IFF_UP is off,
-		 * the interface is not applied
-		 */
-		if ((rr->rr_flags & ICMP6_RR_FLAGS_FORCEAPPLY) == 0 &&
-		    (iflist[ifindex]->ifm_flags & IFF_UP) == 0)
-			continue;
-		/* TODO: interface scope check */
-		do_use_prefix(len, rpm, &irr, ifindex);
+	/*
+	 * if ICMP6_RR_FLAGS_FORCEAPPLY(A flag) is 0 and IFF_UP is off,
+	 * the interface is not applied
+	 */
+
+	if (rr->rr_flags & ICMP6_RR_FLAGS_FORCEAPPLY) {
+		while (if_indextoname(++ifindex, irr.irr_name)) {
+			rai = if_indextorainfo(ifindex);
+			if (rai && (rai->ifflags & IFF_UP)) {
+				/* TODO: interface scope check */
+				do_use_prefix(len, rpm, &irr, ifindex);
+			}
+		}
 	}
 	if (errno == ENXIO)
 		return 0;
@@ -295,9 +302,6 @@ do_rr(size_t len, struct icmp6_router_renum *rr)
 	lim = (char *)rr + len;
 	cp = (char *)(rr + 1);
 	len -= sizeof(struct icmp6_router_renum);
-
-	/* get iflist block from kernel again, to get up-to-date information */
-	init_iflist();
 
 	while (cp < lim) {
 		size_t rpmlen;

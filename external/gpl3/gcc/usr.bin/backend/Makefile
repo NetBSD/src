@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2011/11/10 09:28:25 yamt Exp $
+#	$NetBSD: Makefile,v 1.14.6.1 2013/02/25 00:26:58 tls Exp $
 
 LIBISPRIVATE=	yes
 
@@ -112,19 +112,19 @@ gengtype: gengtype.lo gengtype-lex.lo gengtype-parse.lo build-errors.lo
 gtyp-gen.h: Makefile
 	${_MKTARGET_CREATE}
 	(\
+	unset empty							; \
 	echo "static const char *srcdir = \"$(G_GTFILES_SRCDIR)\";"	; \
 	echo "static const char *lang_files[] = {"			; \
-	for f in $(G_GTFILES_FILES_FILES); do echo "\"$$f\", "; done	; \
+	for f in $$empty $(G_GTFILES_FILES_FILES); do echo "\"$$f\", "; done ; \
 	echo "NULL };"							; \
 	echo "static const char *langs_for_lang_files[] = {"		; \
-	for f in $(G_GTFILES_FILES_LANGS); do echo "\"$$f\", "; done 	; \
+	for f in $$empty $(G_GTFILES_FILES_LANGS); do echo "\"$$f\", "; done ; \
 	echo "NULL };"							; \
 	echo "static const char *all_files[] = {"			; \
-	for f in $(G_GTFILES); do echo "\"$$f\", "; done		; \
+	for f in $$empty $(G_GTFILES); do echo "\"$$f\", "; done	; \
 	echo " NULL };"							; \
 	echo "static const char *lang_dir_names[] = {"			; \
-	echo "\"c\", "							; \
-	for f in $(G_GTFILES_LANG_DIR_NAMES); do echo "\"$$f\", "; done	; \
+	for f in c $(G_GTFILES_LANG_DIR_NAMES); do echo "\"$$f\", "; done ; \
 	echo "NULL };"							; \
 	) >${.TARGET}
 

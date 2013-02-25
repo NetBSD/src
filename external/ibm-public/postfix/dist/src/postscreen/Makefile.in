@@ -2,16 +2,16 @@ SHELL	= /bin/sh
 SRCS	= postscreen.c postscreen_dict.c postscreen_dnsbl.c \
 	postscreen_early.c postscreen_smtpd.c postscreen_misc.c \
 	postscreen_state.c postscreen_tests.c postscreen_send.c \
-	postscreen_starttls.c postscreen_expand.c postscreen_access.c
+	postscreen_starttls.c postscreen_expand.c
 OBJS	= postscreen.o postscreen_dict.o postscreen_dnsbl.o \
 	postscreen_early.o postscreen_smtpd.o postscreen_misc.o \
 	postscreen_state.o postscreen_tests.o postscreen_send.o \
-	postscreen_starttls.o postscreen_expand.o postscreen_access.o
+	postscreen_starttls.o postscreen_expand.o
 HDRS	= 
 TESTSRC	=
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
-TESTPROG= postscreen_access
+TESTPROG=
 PROG	= postscreen
 INC_DIR = ../../include
 LIBS	= ../../lib/libmaster.a ../../lib/libtls.a ../../lib/libglobal.a \
@@ -37,11 +37,6 @@ update: ../../libexec/$(PROG)
 
 ../../libexec/$(PROG): $(PROG)
 	cp $(PROG) ../../libexec
-
-postscreen_access: $(PROG) $(LIBS)
-	mv $@.o junk
-	$(CC) -DTEST $(CFLAGS) -o $@ $@.c $(LIBS) $(SYSLIBS)
-	mv junk $@.o
 
 printfck: $(OBJS) $(PROG)
 	rm -rf printfck
@@ -77,6 +72,7 @@ postscreen.o: ../../include/dict.h
 postscreen.o: ../../include/dict_cache.h
 postscreen.o: ../../include/events.h
 postscreen.o: ../../include/htable.h
+postscreen.o: ../../include/inet_proto.h
 postscreen.o: ../../include/iostuff.h
 postscreen.o: ../../include/mail_conf.h
 postscreen.o: ../../include/mail_params.h
@@ -85,11 +81,11 @@ postscreen.o: ../../include/mail_server.h
 postscreen.o: ../../include/mail_version.h
 postscreen.o: ../../include/maps.h
 postscreen.o: ../../include/match_list.h
-postscreen.o: ../../include/match_ops.h
 postscreen.o: ../../include/msg.h
 postscreen.o: ../../include/myaddrinfo.h
 postscreen.o: ../../include/mymalloc.h
 postscreen.o: ../../include/name_code.h
+postscreen.o: ../../include/server_acl.h
 postscreen.o: ../../include/set_eugid.h
 postscreen.o: ../../include/string_list.h
 postscreen.o: ../../include/sys_defs.h
@@ -98,27 +94,6 @@ postscreen.o: ../../include/vstream.h
 postscreen.o: ../../include/vstring.h
 postscreen.o: postscreen.c
 postscreen.o: postscreen.h
-postscreen_access.o: ../../include/addr_match_list.h
-postscreen_access.o: ../../include/argv.h
-postscreen_access.o: ../../include/dict.h
-postscreen_access.o: ../../include/dict_cache.h
-postscreen_access.o: ../../include/events.h
-postscreen_access.o: ../../include/htable.h
-postscreen_access.o: ../../include/mail_params.h
-postscreen_access.o: ../../include/maps.h
-postscreen_access.o: ../../include/match_list.h
-postscreen_access.o: ../../include/match_ops.h
-postscreen_access.o: ../../include/match_parent_style.h
-postscreen_access.o: ../../include/msg.h
-postscreen_access.o: ../../include/mymalloc.h
-postscreen_access.o: ../../include/string_list.h
-postscreen_access.o: ../../include/stringops.h
-postscreen_access.o: ../../include/sys_defs.h
-postscreen_access.o: ../../include/vbuf.h
-postscreen_access.o: ../../include/vstream.h
-postscreen_access.o: ../../include/vstring.h
-postscreen_access.o: postscreen.h
-postscreen_access.o: postscreen_access.c
 postscreen_dict.o: ../../include/addr_match_list.h
 postscreen_dict.o: ../../include/argv.h
 postscreen_dict.o: ../../include/dict.h
@@ -127,8 +102,8 @@ postscreen_dict.o: ../../include/events.h
 postscreen_dict.o: ../../include/htable.h
 postscreen_dict.o: ../../include/maps.h
 postscreen_dict.o: ../../include/match_list.h
-postscreen_dict.o: ../../include/match_ops.h
 postscreen_dict.o: ../../include/msg.h
+postscreen_dict.o: ../../include/server_acl.h
 postscreen_dict.o: ../../include/string_list.h
 postscreen_dict.o: ../../include/sys_defs.h
 postscreen_dict.o: ../../include/vbuf.h
@@ -150,10 +125,10 @@ postscreen_dnsbl.o: ../../include/mail_params.h
 postscreen_dnsbl.o: ../../include/mail_proto.h
 postscreen_dnsbl.o: ../../include/maps.h
 postscreen_dnsbl.o: ../../include/match_list.h
-postscreen_dnsbl.o: ../../include/match_ops.h
 postscreen_dnsbl.o: ../../include/msg.h
 postscreen_dnsbl.o: ../../include/myaddrinfo.h
 postscreen_dnsbl.o: ../../include/mymalloc.h
+postscreen_dnsbl.o: ../../include/server_acl.h
 postscreen_dnsbl.o: ../../include/split_at.h
 postscreen_dnsbl.o: ../../include/string_list.h
 postscreen_dnsbl.o: ../../include/stringops.h
@@ -173,9 +148,9 @@ postscreen_early.o: ../../include/htable.h
 postscreen_early.o: ../../include/mail_params.h
 postscreen_early.o: ../../include/maps.h
 postscreen_early.o: ../../include/match_list.h
-postscreen_early.o: ../../include/match_ops.h
 postscreen_early.o: ../../include/msg.h
 postscreen_early.o: ../../include/mymalloc.h
+postscreen_early.o: ../../include/server_acl.h
 postscreen_early.o: ../../include/string_list.h
 postscreen_early.o: ../../include/stringops.h
 postscreen_early.o: ../../include/sys_defs.h
@@ -196,8 +171,8 @@ postscreen_expand.o: ../../include/mail_params.h
 postscreen_expand.o: ../../include/mail_proto.h
 postscreen_expand.o: ../../include/maps.h
 postscreen_expand.o: ../../include/match_list.h
-postscreen_expand.o: ../../include/match_ops.h
 postscreen_expand.o: ../../include/msg.h
+postscreen_expand.o: ../../include/server_acl.h
 postscreen_expand.o: ../../include/string_list.h
 postscreen_expand.o: ../../include/stringops.h
 postscreen_expand.o: ../../include/sys_defs.h
@@ -217,8 +192,8 @@ postscreen_misc.o: ../../include/iostuff.h
 postscreen_misc.o: ../../include/mail_params.h
 postscreen_misc.o: ../../include/maps.h
 postscreen_misc.o: ../../include/match_list.h
-postscreen_misc.o: ../../include/match_ops.h
 postscreen_misc.o: ../../include/msg.h
+postscreen_misc.o: ../../include/server_acl.h
 postscreen_misc.o: ../../include/string_list.h
 postscreen_misc.o: ../../include/sys_defs.h
 postscreen_misc.o: ../../include/vbuf.h
@@ -239,8 +214,8 @@ postscreen_send.o: ../../include/mac_parse.h
 postscreen_send.o: ../../include/mail_params.h
 postscreen_send.o: ../../include/maps.h
 postscreen_send.o: ../../include/match_list.h
-postscreen_send.o: ../../include/match_ops.h
 postscreen_send.o: ../../include/msg.h
+postscreen_send.o: ../../include/server_acl.h
 postscreen_send.o: ../../include/smtp_reply_footer.h
 postscreen_send.o: ../../include/string_list.h
 postscreen_send.o: ../../include/sys_defs.h
@@ -264,11 +239,11 @@ postscreen_smtpd.o: ../../include/mail_params.h
 postscreen_smtpd.o: ../../include/mail_proto.h
 postscreen_smtpd.o: ../../include/maps.h
 postscreen_smtpd.o: ../../include/match_list.h
-postscreen_smtpd.o: ../../include/match_ops.h
 postscreen_smtpd.o: ../../include/msg.h
 postscreen_smtpd.o: ../../include/mymalloc.h
 postscreen_smtpd.o: ../../include/name_code.h
 postscreen_smtpd.o: ../../include/name_mask.h
+postscreen_smtpd.o: ../../include/server_acl.h
 postscreen_smtpd.o: ../../include/string_list.h
 postscreen_smtpd.o: ../../include/stringops.h
 postscreen_smtpd.o: ../../include/sys_defs.h
@@ -291,11 +266,11 @@ postscreen_starttls.o: ../../include/mail_params.h
 postscreen_starttls.o: ../../include/mail_proto.h
 postscreen_starttls.o: ../../include/maps.h
 postscreen_starttls.o: ../../include/match_list.h
-postscreen_starttls.o: ../../include/match_ops.h
 postscreen_starttls.o: ../../include/msg.h
 postscreen_starttls.o: ../../include/mymalloc.h
 postscreen_starttls.o: ../../include/name_code.h
 postscreen_starttls.o: ../../include/name_mask.h
+postscreen_starttls.o: ../../include/server_acl.h
 postscreen_starttls.o: ../../include/string_list.h
 postscreen_starttls.o: ../../include/stringops.h
 postscreen_starttls.o: ../../include/sys_defs.h
@@ -318,10 +293,10 @@ postscreen_state.o: ../../include/mail_proto.h
 postscreen_state.o: ../../include/mail_server.h
 postscreen_state.o: ../../include/maps.h
 postscreen_state.o: ../../include/match_list.h
-postscreen_state.o: ../../include/match_ops.h
 postscreen_state.o: ../../include/msg.h
 postscreen_state.o: ../../include/mymalloc.h
 postscreen_state.o: ../../include/name_mask.h
+postscreen_state.o: ../../include/server_acl.h
 postscreen_state.o: ../../include/string_list.h
 postscreen_state.o: ../../include/sys_defs.h
 postscreen_state.o: ../../include/vbuf.h
@@ -338,8 +313,8 @@ postscreen_tests.o: ../../include/htable.h
 postscreen_tests.o: ../../include/mail_params.h
 postscreen_tests.o: ../../include/maps.h
 postscreen_tests.o: ../../include/match_list.h
-postscreen_tests.o: ../../include/match_ops.h
 postscreen_tests.o: ../../include/msg.h
+postscreen_tests.o: ../../include/server_acl.h
 postscreen_tests.o: ../../include/string_list.h
 postscreen_tests.o: ../../include/sys_defs.h
 postscreen_tests.o: ../../include/vbuf.h

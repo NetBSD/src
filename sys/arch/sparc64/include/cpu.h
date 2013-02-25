@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.98.12.1 2012/11/20 03:01:45 tls Exp $ */
+/*	$NetBSD: cpu.h,v 1.98.12.2 2013/02/25 00:28:59 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,8 @@
 #define	CPU_BOOTED_DEVICE	2	/* string: device booted from */
 #define	CPU_BOOT_ARGS		3	/* string: args booted with */
 #define	CPU_ARCH		4	/* integer: cpu architecture version */
-#define	CPU_MAXID		5	/* number of valid machdep ids */
+#define CPU_VIS			5	/* 0 - no VIS, 1 - VIS 1.0, etc. */
+#define	CPU_MAXID		6	/* number of valid machdep ids */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 /*

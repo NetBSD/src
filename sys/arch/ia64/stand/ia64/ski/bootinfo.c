@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.3 2009/07/20 04:59:04 kiyohara Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.3.22.1 2013/02/25 00:28:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -44,6 +44,7 @@
 
 
 #include "bootstrap.h"
+#include "libski.h"
 
 /*
  * Return a 'boothowto' value corresponding to the kernel arguments in

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_error.h,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_error.h,v 1.1.1.1.16.1 2013/02/25 00:27:18 tls Exp $	*/
 
 #ifndef _MAIL_ERROR_H_INCLUDED_
 #define _MAIL_ERROR_H_INCLUDED_
@@ -28,6 +28,7 @@
 #define MAIL_ERROR_RESOURCE	(1<<4)
 #define MAIL_ERROR_2BOUNCE	(1<<5)
 #define MAIL_ERROR_DELAY	(1<<6)
+#define MAIL_ERROR_DATA		(1<<7)
 
 extern const NAME_MASK mail_error_masks[];
 

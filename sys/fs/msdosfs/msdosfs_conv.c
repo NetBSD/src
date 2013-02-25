@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.7 2009/03/15 17:15:57 cegger Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.7.22.1 2013/02/25 00:29:47 tls Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -47,18 +47,28 @@
  * October 1992
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.7 2009/03/15 17:15:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.7.22.1 2013/02/25 00:29:47 tls Exp $");
 
 /*
  * System include files.
  */
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
+#ifdef _KERNEL
 #include <sys/dirent.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/vnode.h>
+#else
+#include <stdio.h>
+#include <dirent.h>
+#include <sys/queue.h>
+#endif
 
 /*
  * MSDOSFS include files.
@@ -209,8 +219,8 @@ dos2unixtime(u_int dd, u_int dt, u_int dh, int gmtoff, struct timespec *tsp)
 		 */
 		month = (dd & DD_MONTH_MASK) >> DD_MONTH_SHIFT;
 		if (month == 0) {
-			printf("dos2unixtime(): month value out of range (%ld)\n",
-			    month);
+			printf("%s: month value out of range (%ld)\n",
+			    __func__, month);
 			month = 1;
 		}
 		for (m = 0; m < month - 1; m++)
@@ -700,7 +710,7 @@ int
 win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 {
 	u_int8_t *cp;
-	u_int8_t *np, *ep = dp->d_name + WIN_MAXLEN;
+	u_int8_t *np, *ep = (u_int8_t *)dp->d_name + WIN_MAXLEN;
 	int i;
 
 	if ((wep->weCnt&WIN_CNT) > howmany(WIN_MAXLEN, WIN_CHARS)
@@ -715,7 +725,9 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 		/*
 		 * This works even though d_namlen is one byte!
 		 */
+#ifdef __NetBSD__
 		dp->d_namlen = (wep->weCnt&WIN_CNT) * WIN_CHARS;
+#endif
 	} else if (chksum != wep->weChksum)
 		chksum = -1;
 	if (chksum == -1)
@@ -733,8 +745,10 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 	for (cp = wep->wePart1, i = sizeof(wep->wePart1)/2; --i >= 0;) {
 		switch (*np++ = *cp++) {
 		case 0:
+#ifdef __NetBSD__
 			dp->d_namlen -= sizeof(wep->wePart2)/2
 			    + sizeof(wep->wePart3)/2 + i + 1;
+#endif
 			return chksum;
 		case '/':
 			np[-1] = 0;
@@ -755,7 +769,9 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 	for (cp = wep->wePart2, i = sizeof(wep->wePart2)/2; --i >= 0;) {
 		switch (*np++ = *cp++) {
 		case 0:
+#ifdef __NetBSD__
 			dp->d_namlen -= sizeof(wep->wePart3)/2 + i + 1;
+#endif
 			return chksum;
 		case '/':
 			np[-1] = 0;
@@ -776,7 +792,9 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 	for (cp = wep->wePart3, i = sizeof(wep->wePart3)/2; --i >= 0;) {
 		switch (*np++ = *cp++) {
 		case 0:
+#ifdef __NetBSD__
 			dp->d_namlen -= i + 1;
+#endif
 			return chksum;
 		case '/':
 			np[-1] = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.15 2012/08/12 05:05:47 matt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15.2.1 2013/02/25 00:28:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15 2012/08/12 05:05:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15.2.1 2013/02/25 00:28:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15 2012/08/12 05:05:47 matt Exp $"
 static int arm32_sync_icache(struct lwp *, const void *, register_t *);
 static int arm32_drain_writebuf(struct lwp *, const void *, register_t *);
 static int arm32_vfp_fpscr(struct lwp *, const void *, register_t *);
+static int arm32_fpu_used(struct lwp *, const void *, register_t *);
 
 static int
 arm32_sync_icache(struct lwp *l, const void *args, register_t *retval)
@@ -117,6 +118,14 @@ arm32_vfp_fpscr(struct lwp *l, const void *uap, register_t *retval)
 	return 0;
 }
 
+static int
+arm32_fpu_used(struct lwp *l, const void *uap, register_t *retval)
+{
+	/* No args */
+	retval[0] = (curlwp->l_md.md_flags & MDLWP_VFPUSED) != 0;
+	return 0;
+}
+
 int
 sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
@@ -137,6 +146,10 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 
 	case ARM_VFP_FPSCR :
 		error = arm32_vfp_fpscr(l, SCARG(uap, parms), retval);
+		break;
+
+	case ARM_FPU_USED :
+		error = arm32_fpu_used(l, SCARG(uap, parms), retval);
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.172.2.1 2012/11/20 03:02:42 tls Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.172.2.2 2013/02/25 00:29:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.172.2.1 2012/11/20 03:02:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.172.2.2 2013/02/25 00:29:51 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -704,6 +704,62 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 	return error;
 }
 
+static lwpid_t
+lwp_find_free_lid(lwpid_t try_lid, lwp_t * new_lwp, proc_t *p)
+{
+	#define LID_SCAN (1u << 31)
+	lwp_t *scan, *free_before;
+	lwpid_t nxt_lid;
+
+	/*
+	 * We want the first unused lid greater than or equal to
+	 * try_lid (modulo 2^31).
+	 * (If nothing else ld.elf_so doesn't want lwpid with the top bit set.)
+	 * We must not return 0, and avoiding 'LID_SCAN - 1' makes
+	 * the outer test easier.
+	 * This would be much easier if the list were sorted in
+	 * increasing order.
+	 * The list is kept sorted in decreasing order.
+	 * This code is only used after a process has generated 2^31 lwp.
+	 *
+	 * Code assumes it can always find an id.
+	 */
+
+	try_lid &= LID_SCAN - 1;
+	if (try_lid <= 1)
+		try_lid = 2;
+
+	free_before = NULL;
+	nxt_lid = LID_SCAN - 1;
+	LIST_FOREACH(scan, &p->p_lwps, l_sibling) {
+		if (scan->l_lid != nxt_lid) {
+			/* There are available lid before this entry */
+			free_before = scan;
+			if (try_lid > scan->l_lid)
+				break;
+		} 
+		if (try_lid == scan->l_lid) {
+			/* The ideal lid is busy, take a higher one */
+			if (free_before != NULL) {
+				try_lid = free_before->l_lid + 1;
+				break;
+			}
+			/* No higher ones, reuse low numbers */
+			try_lid = 2;
+		}
+
+		nxt_lid = scan->l_lid - 1;
+		if (LIST_NEXT(scan, l_sibling) == NULL) {
+		    /* The value we have is lower than any existing lwp */
+		    LIST_INSERT_AFTER(scan, new_lwp, l_sibling);
+		    return try_lid;
+		}
+	}
+
+	LIST_INSERT_BEFORE(free_before, new_lwp, l_sibling);
+	return try_lid;
+}
+
 /*
  * Create a new LWP within process 'p2', using LWP 'l1' as a template.
  * The new LWP is created in state LSIDL and must be set running,
@@ -858,14 +914,25 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	CIRCLEQ_INIT(&l2->l_sigpend.sp_info);
 	sigemptyset(&l2->l_sigpend.sp_set);
 
-	if (lid == 0) {
-		p2->p_nlwpid++;
-		if (p2->p_nlwpid == 0)
-			p2->p_nlwpid++;
-		lid = p2->p_nlwpid;
+	if (__predict_true(lid == 0)) {
+		/*
+		 * XXX: l_lid are expected to be unique (for a process)
+		 * if LWP_PIDLID is sometimes set this won't be true.
+		 * Once 2^31 threads have been allocated we have to
+		 * scan to ensure we allocate a unique value.
+		 */
+		lid = ++p2->p_nlwpid;
+		if (__predict_false(lid & LID_SCAN)) {
+			lid = lwp_find_free_lid(lid, l2, p2);
+			p2->p_nlwpid = lid | LID_SCAN;
+			/* l2 as been inserted into p_lwps in order */
+			goto skip_insert;
+		}
+		p2->p_nlwpid = lid;
 	}
-	l2->l_lid = lid;
 	LIST_INSERT_HEAD(&p2->p_lwps, l2, l_sibling);
+    skip_insert:
+	l2->l_lid = lid;
 	p2->p_nlwps++;
 	p2->p_nrlwps++;
 

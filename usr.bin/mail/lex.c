@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.41 2012/04/29 23:50:22 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.41.2.1 2013/02/25 00:30:36 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.41 2012/04/29 23:50:22 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.41.2.1 2013/02/25 00:30:36 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,6 +141,47 @@ file_leak_check(void)
 }
 #endif /* DEBUG_FILE_LEAK */
 
+static void
+update_mailname(const char *name)
+{
+	char tbuf[PATHSIZE];
+	size_t l;
+
+	/* Don't realpath(3) if it's only an update request */
+	if (name != NULL && realpath(name, mailname) == NULL) {
+		warn("Can't canonicalize `%s'", name);
+		return;
+	}
+
+	if (getfold(tbuf, sizeof(tbuf)) >= 0) {
+		l = strlen(tbuf);
+		if (l < sizeof(tbuf) - 1)
+			tbuf[l++] = '/';
+		if (strncmp(tbuf, mailname, l) == 0) {
+			char const *sep = "", *cp = mailname + l;
+
+			l = strlen(cp);
+			if (l >= sizeof(displayname)) {
+				cp += l;
+				cp -= sizeof(displayname) - 5;
+				sep = "...";
+			}
+			(void)snprintf(displayname, sizeof(displayname),
+			    "+%s%s", sep, cp);
+			return;
+		}
+	}
+
+	l = strlen(mailname);
+	if (l < sizeof(displayname))
+		strcpy(displayname, mailname);
+	else {
+		l -= sizeof(displayname) - 4 - sizeof(displayname) / 3;
+		(void)snprintf(displayname, sizeof(displayname), "%.*s...%s",
+			(int)sizeof(displayname) / 3, mailname, mailname + l);
+	}
+}
+
 /*
  * Set the size of the message vector used to construct argument
  * lists to message list functions.
@@ -232,8 +273,7 @@ setfile(const char *name)
 	shudclob = 1;
 	edit = isedit;
 	(void)strcpy(prevfile, mailname);
-	if (name != mailname)
-		(void)strcpy(mailname, name);
+	update_mailname(name != mailname ? name : NULL);
 	mailsize = fsize(ibuf);
 	(void)snprintf(tempname, sizeof(tempname),
 	    "%s/mail.RxXXXXXXXXXX", tmpdir);
@@ -971,8 +1011,6 @@ newfileinfo(int omsgCount)
 {
 	struct message *mp;
 	int d, n, s, t, u, mdot;
-	char fname[PATHSIZE];
-	char *ename;
 
 	/*
 	 * Figure out where to set the 'dot'.  Use the first new or
@@ -1016,23 +1054,11 @@ newfileinfo(int omsgCount)
 		if (mp->m_flag & MTAGGED)
 			t++;
 	}
-	ename = mailname;
-	if (getfold(fname, sizeof(fname)) >= 0) {
-		char zname[PATHSIZE];
-		size_t l;
-		l = strlen(fname);
-		if (l < sizeof(fname) - 1)
-			fname[l++] = '/';
-		if (strncmp(fname, mailname, l) == 0) {
-			(void)snprintf(zname, sizeof(zname), "+%s",
-			    mailname + l);
-			ename = zname;
-		}
-	}
 	/*
 	 * Display the statistics.
 	 */
-	(void)printf("\"%s\": ", ename);
+	update_mailname(NULL);
+	(void)printf("\"%s\": ", displayname);
 	{
 		int cnt = get_abs_msgCount();
 		(void)printf("%d message%s", cnt, cnt == 1 ? "" : "s");

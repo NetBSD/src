@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1742.2.1 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1742.2.2 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -142,3 +142,62 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	msm6242b(4): Add MI OKI MSM6242B driver. [rkujawa 20121114]
 	amiga: A2000-style RTCs are now driven by the msm6242b(4) driver.
 		[rkujawa 20121114]
+	xsurf(4): Add X-Surf IDE controller support. [rkujawa 20121119]
+	z3rambd(4): Add driver for Zorro III RAM boards as block devices.
+		[rkujawa 20121126]
+	bind: update to 9.9.2-P1 to fix the DNS64 vulnerability.
+		[spz 20121204]
+	arm: ARMFPE support had bitrotted and has been removed. [matt 20121205]
+	dhcpcd(8): Import dhcpcd-5.6.4 [roy 20121206]
+	openresolv(8): Import openresolv-3.5.3 [roy 20121206]
+	arm: fix EHCI support for OMAP3.  [jmcneill 20121211]
+	arm: enable direct-mapped poolpage support.  [matt 20121211]
+	arm: enable VFP-based pmap page zero/copy ops.  [matt 20121211]
+	openssh: Import 6.1. [christos 20121212]
+	ptcd(4): Add a driver for the Protech PS3100 cash drawer port.
+		[mbalmer 20121216]
+	ibmcd(4): Add a driver for the IBM 4810 BSP cash drawer port.
+		[mbalmer 20121217]
+	postfix(1): Import version 2.8.13 [tron 20121218]
+	dhcpcd(8): Import dhcpcd-5.6.6 [roy 20121219]
+	arm: support NEON in userland [matt 20121226]
+	kernel: allow MD kernel code to use PCUs [matt 20121226]
+	units(1): add -l and -L options.  [apb 20130101]
+	postfix(1): Import version 2.9.5 [tron 20130102]
+	file(1): upgraded to 5.12 [christos 20130103]
+	luna68k: Add native bootloader. Based on 4.4BSD-Lite2/luna68k
+		"Stinger" loader. [tsutsui 20130105]
+	kernel: Add dotg(4), a driver for Synopsys DesignWare USB OTG,
+		ported from FreeBSD. [skrll 20130109]
+	kernel: Add usmsc(4), a driver for SMSC LAN95xx USB LAN devices, 
+		ported from OpenBSD. [skrll 20130109]
+	hp300: Add support for sti(4) framebuffer at sgc bus on some 425t.
+		Ported by kiyohara@ from OpenBSD. [tsutsui 20130111]
+	arm: kill userland FPA support, replace with VFP. [matt 20130111]
+	luna68k: Add netboot support. [tsutsui 20130113]
+	luna68k: Fix bootloader to make secondary SPC SCSI on LUNA-II work
+		properly.  [tsutsui 20130114]
+	libdwarf: Sync with FreeBSD [christos 20130117]
+	empm(4): Add driver for power manager present on Mediator 1200 TX and
+		SX bridges. [rkujawa 20130128]
+	amiga: Support software power-off with empm(4). [rkujawa 20130128]
+	dhcpcd(8): Import dhcpcd-5.6.7 [roy 20130128]
+	em4k(4): Add driver for Mediator 4000 PCI bridges. [rkujawa 20130129]
+	makefs(8): Add support for msdos, creating filesystems at an offset,
+		merging directories with common files.  [christos 20130202]
+	openssl: update to 1.0.1d [christos 20130205]
+	sparc: Add hardware acceleration for cgfourteen(4) using SX
+		[macallan 20130207]
+	openssl: update to 1.0.1e [christos 20130212]
+	atf(7): Import 0.17.  [jmmv 20130215]
+	lutok: Import 0.2.  This is a new import that provides a C++ wrapper
+		for the Lua API and will be used by Kyua.  Its build depends
+		on the MKKYUA knob.  [jmmv 20130216]
+	kyua(1): Import kyua-testers 0.1.  This is a new import that provides
+		scriptable utilities to invoke test programs that implement
+		different interfaces.  [jmmv 20130217]
+	services(5), protocols(5): Pull iana-generated services and protocols
+		[christos 20130221]
+	kyua(1): Import kyua-cli 0.6.  This is a new import that provides the
+		command-line interface to Kyua.  Its build depends on the
+		MKKYUA knob.  [jmmv 20130223]

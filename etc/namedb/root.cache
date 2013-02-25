@@ -1,4 +1,4 @@
-;	$NetBSD: root.cache,v 1.16 2011/08/01 10:04:27 taca Exp $
+;	$NetBSD: root.cache,v 1.16.8.1 2013/02/25 00:24:52 tls Exp $
 ;       This file holds the information on root name servers needed to
 ;       initialize cache of Internet domain name servers
 ;       (e.g. reference this file in the "cache  .  <file>"
@@ -10,8 +10,8 @@
 ;           on server           FTP.INTERNIC.NET
 ;       -OR-                    RS.INTERNIC.NET
 ;
-;       last update:    Jun 8, 2011
-;       related version of root zone:   2011060800
+;       last update:    Jan 3, 2013
+;       related version of root zone:   2013010300
 ;
 ; formerly NS.INTERNIC.NET
 ;
@@ -32,7 +32,7 @@ C.ROOT-SERVERS.NET.      3600000      A     192.33.4.12
 ; FORMERLY TERP.UMD.EDU
 ;
 .                        3600000      NS    D.ROOT-SERVERS.NET.
-D.ROOT-SERVERS.NET.      3600000      A     128.8.10.90
+D.ROOT-SERVERS.NET.      3600000      A     199.7.91.13
 D.ROOT-SERVERS.NET.	 3600000      AAAA  2001:500:2D::D
 ;
 ; FORMERLY NS.NASA.GOV

@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.5 2009/03/18 16:00:12 cegger Exp $ */
+/* $NetBSD: exec.c,v 1.5.22.1 2013/02/25 00:28:46 tls Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
+#include <lib/libkern/libkern.h>
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -80,6 +81,7 @@
 
 #include <efi.h>
 #include <efilib.h>
+#include <efiboot.h>
 
 #include "bootstrap.h"
 

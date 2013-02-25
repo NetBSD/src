@@ -1,11 +1,7 @@
-#	$NetBSD: files.iq80321,v 1.8 2007/12/03 15:33:31 ad Exp $
+#	$NetBSD: files.iq80321,v 1.8.62.1 2013/02/25 00:28:34 tls Exp $
 #
 # Intel IQ80321 evaluation board configuration info
 #
-
-# Use the shared initarm_common() code.
-# XXX: Not yet ready for prime-time
-#file	arch/evbarm/evbarm/initarm_common.c
 
 file	arch/evbarm/iq80321/iq80321_7seg.c
 file	arch/evbarm/iq80321/iq80321_machdep.c

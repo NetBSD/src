@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.44.8.1 2012/11/20 03:02:51 tls Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.44.8.2 2013/02/25 00:30:10 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44.8.1 2012/11/20 03:02:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44.8.2 2013/02/25 00:30:10 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -551,7 +551,8 @@ shmif_start(struct ifnet *ifp)
 		KASSERT(pktwrote == pktsize);
 		if (wrap) {
 			busmem->shm_gen++;
-			DPRINTF(("bus generation now %d\n", busmem->shm_gen));
+			DPRINTF(("bus generation now %" PRIu64 "\n",
+			    busmem->shm_gen));
 		}
 		shmif_unlockbus(busmem);
 
@@ -653,7 +654,8 @@ shmif_rcv(void *arg)
 			MCLGET(m, M_WAIT);
 		}
 
-		DPRINTF(("waiting %d/%d\n", sc->sc_nextpacket, sc->sc_devgen));
+		DPRINTF(("waiting %d/%" PRIu64 "\n",
+		    sc->sc_nextpacket, sc->sc_devgen));
 		KASSERT(m->m_flags & M_EXT);
 
 		shmif_lockbus(busmem);
@@ -682,7 +684,7 @@ shmif_rcv(void *arg)
 				sc->sc_devgen = busmem->shm_gen - 1;
 			else
 				sc->sc_devgen = busmem->shm_gen;
-			DPRINTF(("dev %p overrun, new data: %d/%d\n",
+			DPRINTF(("dev %p overrun, new data: %d/%" PRIu64 "\n",
 			    sc, nextpkt, sc->sc_devgen));
 		}
 
@@ -708,7 +710,7 @@ shmif_rcv(void *arg)
 
 		if (wrap) {
 			sc->sc_devgen++;
-			DPRINTF(("dev %p generation now %d\n",
+			DPRINTF(("dev %p generation now %" PRIu64 "\n",
 			    sc, sc->sc_devgen));
 		}
 

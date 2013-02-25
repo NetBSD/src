@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.91 2012/04/07 17:28:44 christos Exp $
+# $NetBSD: rc.subr,v 1.91.2.1 2013/02/25 00:24:49 tls Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1254,6 +1254,34 @@ collapse_backslash_newline()
 			;;
 		esac
 	done
+}
+
+# Shell implementations of basename and dirname, usable before
+# the /usr file system is mounted.
+#
+basename()
+{
+	local file="$1"
+	local suffix="$2"
+	local base
+
+	base="${file##*/}"		# remove up to and including last '/'
+	base="${base%${suffix}}"	# remove suffix, if any
+	command printf "%s\n" "${base}"
+}
+
+dirname()
+{
+	local file="$1"
+	local dir
+
+	case "$file" in
+	/*/*)	dir="${file%/*}" ;;	# common case: absolute path
+	/*)	dir="/" ;;		# special case: name in root dir
+	*/*)	dir="${file%/*}" ;;	# common case: relative path with '/'
+	*)	dir="." ;;		# special case: name without '/'
+	esac
+	command printf "%s\n" "${dir}"
 }
 
 # Override the normal "echo" and "printf" commands, so that

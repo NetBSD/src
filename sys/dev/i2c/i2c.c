@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.38 2012/03/14 02:57:10 pgoyette Exp $	*/
+/*	$NetBSD: i2c.c,v 1.38.2.1 2013/02/25 00:29:13 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.38 2012/03/14 02:57:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.38.2.1 2013/02/25 00:29:13 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,6 +221,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 			ia.ia_tag = ic;
 			ia.ia_name = name;
 			ia.ia_cookie = cookie;
+			ia.ia_size = size;
 
 			buf = NULL;
 			cdata = prop_dictionary_get(dev, "compatible");

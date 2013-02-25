@@ -1,4 +1,4 @@
-.\"	$NetBSD: sendmail.1,v 1.1.1.1 2009/06/23 10:08:33 tron Exp $
+.\"	$NetBSD: sendmail.1,v 1.1.1.1.16.1 2013/02/25 00:27:11 tls Exp $
 .\"
 .TH SENDMAIL 1 
 .ad
@@ -276,6 +276,15 @@ The following \fBmain.cf\fR parameters are especially relevant to
 this program.
 The text below provides only a parameter summary. See
 \fBpostconf\fR(5) for more details including examples.
+.SH "COMPATIBILITY CONTROLS"
+.na
+.nf
+.ad
+.fi
+Available with Postfix 2.9 and later:
+.IP "\fBsendmail_fix_line_endings (always)\fR"
+Controls how the Postfix sendmail command converts email message
+line endings from <CR><LF> into UNIX format (<LF>).
 .SH "TROUBLE SHOOTING CONTROLS"
 .na
 .nf

@@ -1,4 +1,4 @@
-/*	$NetBSD: load_file.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: load_file.c,v 1.1.1.1.16.1 2013/02/25 00:27:32 tls Exp $	*/
 
 /*++
 /* NAME
@@ -48,6 +48,7 @@
 #include <vstream.h>
 #include <iostuff.h>
 #include <load_file.h>
+#include <warn_stat.h>
 
 /* load_file - load file with some prejudice */
 

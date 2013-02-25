@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rtadvd,v 1.6 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: rtadvd,v 1.6.56.1 2013/02/25 00:24:52 tls Exp $
 #
 
 # PROVIDE: rtadvd
@@ -12,6 +12,8 @@ $_rc_subr_loaded . /etc/rc.subr
 name="rtadvd"
 rcvar=$name
 command="/usr/sbin/${name}"
+pidfile="/var/run/$name.pid"
+extra_commands="reload"
 start_precmd="rtadvd_precmd"
 
 rtadvd_precmd()

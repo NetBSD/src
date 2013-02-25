@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state.c,v 1.12 2012/08/15 19:47:38 rmind Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.12.2.1 2013/02/25 00:30:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.12 2012/08/15 19:47:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.12.2.1 2013/02/25 00:30:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.12 2012/08/15 19:47:38 rmind Exp $")
 /*
  * Generic session states and timeout table.
  *
- * Note: used for connnection-less protocols.
+ * Note: used for connection-less protocols.
  */
 
 #define	NPF_ANY_SESSION_CLOSED		0
@@ -92,9 +92,9 @@ static void (*npf_state_sample)(npf_state_t *, bool) = NULL;
  * success and false otherwise (e.g. if protocol is not supported).
  */
 bool
-npf_state_init(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
+npf_state_init(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
 {
-	const int proto = npf_cache_ipproto(npc);
+	const int proto = npc->npc_proto;
 	bool ret;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
@@ -136,10 +136,10 @@ npf_state_destroy(npf_state_t *nst)
  * the packet belongs to the tracked connection) and false otherwise.
  */
 bool
-npf_state_inspect(const npf_cache_t *npc, nbuf_t *nbuf,
+npf_state_inspect(npf_cache_t *npc, nbuf_t *nbuf,
     npf_state_t *nst, const bool forw)
 {
-	const int proto = npf_cache_ipproto(npc);
+	const int proto = npc->npc_proto;
 	const int di = forw ? NPF_FLOW_FORW : NPF_FLOW_BACK;
 	bool ret;
 

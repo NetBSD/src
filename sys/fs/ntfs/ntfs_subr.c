@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.48 2012/07/12 17:24:47 dsl Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.48.2.1 2013/02/25 00:29:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.48 2012/07/12 17:24:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.48.2.1 2013/02/25 00:29:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,6 @@ ntfs_loadntnode(
 			      NOCRED, 0, &bp);
 		if (error) {
 			printf("%s: BREAD FAILED\n", __func__);
-			brelse(bp, 0);
 			goto out;
 		}
 		memcpy(mfrp, bp->b_data, ntfs_bntob(ntmp->ntm_bpmftrec));
@@ -1546,7 +1545,6 @@ ntfs_writentvattr_plain(
 				error = bread(ntmp->ntm_devvp, ntfs_cntobn(cn),
 				    ntfs_cntob(cl), NOCRED, B_MODIFY, &bp);
 				if (error) {
-					brelse(bp, 0);
 					return (error);
 				}
 			}
@@ -1652,7 +1650,6 @@ ntfs_readntvattr_plain(
 						      ntfs_cntob(cl),
 						      NOCRED, 0, &bp);
 					if (error) {
-						brelse(bp, 0);
 						return (error);
 					}
 					if (uio) {

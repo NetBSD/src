@@ -83,3 +83,12 @@ OK
 >>> # Authorized destination - accept.
 >>> rcpt wietse@porcupine.org
 OK
+>>> # Numeric TLD - dunno.
+>>> rcpt wietse@12345
+./smtpd_check: <queue id>: reject: RCPT from example.tld[168.100.189.2]: 554 5.7.1 <wietse@12345>: Relay access denied; to=<wietse@12345> proto=SMTP helo=<foobar>
+554 5.7.1 <wietse@12345>: Relay access denied
+>>> rcpt wietse@12345.porcupine.org
+OK
+>>> rcpt wietse@porcupine.12345
+./smtpd_check: <queue id>: reject: RCPT from example.tld[168.100.189.2]: 554 5.7.1 <wietse@porcupine.12345>: Relay access denied; to=<wietse@porcupine.12345> proto=SMTP helo=<foobar>
+554 5.7.1 <wietse@porcupine.12345>: Relay access denied

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.81 2009/04/12 10:18:52 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.81.12.1 2013/02/25 00:30:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ enum {
 
 #define	FTP_PORT	21	/* default if ! getservbyname("ftp/tcp") */
 #define	HTTP_PORT	80	/* default if ! getservbyname("http/tcp") */
+#define	HTTPS_PORT	443	/* default if ! getservbyname("https/tcp") */
 #ifndef	GATE_PORT
 #define	GATE_PORT	21	/* default if ! getservbyname("ftpgate/tcp") */
 #endif
@@ -273,6 +274,9 @@ GLOBAL	char   *username;	/* name of user logged in as. (dynamic) */
 GLOBAL	sa_family_t family;	/* address family to use for connections */
 GLOBAL	const char *ftpport;	/* port number to use for FTP connections */
 GLOBAL	const char *httpport;	/* port number to use for HTTP connections */
+#ifdef WITH_SSL
+GLOBAL	const char *httpsport;	/* port number to use for HTTPS connections */
+#endif
 GLOBAL	const char *gateport;	/* port number to use for gateftp connections */
 GLOBAL	struct addrinfo *bindai; /* local address to bind as */
 

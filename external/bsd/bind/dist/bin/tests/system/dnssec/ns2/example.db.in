@@ -1,4 +1,4 @@
-; Copyright (C) 2004, 2007-2011  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2004, 2007-2012  Internet Systems Consortium, Inc. ("ISC")
 ; Copyright (C) 2000-2002  Internet Software Consortium.
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
@@ -138,3 +138,12 @@ ns.split-dnssec		A	10.53.0.3
 
 split-smart		NS	ns.split-smart
 ns.split-smart		A	10.53.0.3
+
+upper			NS	ns.upper
+ns.upper		A	10.53.0.3
+
+LOWER			NS	NS.LOWER
+NS.LOWER		A	10.53.0.3
+
+expiring                 NS      ns.expiring
+ns.expiring              A       10.53.0.3

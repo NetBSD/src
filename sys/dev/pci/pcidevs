@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1132.2.1 2012/11/20 03:02:20 tls Exp $
+$NetBSD: pcidevs,v 1.1132.2.2 2013/02/25 00:29:18 tls Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1623,17 +1623,24 @@ product BROADCOM BCM5704S_ALT	0x1649	BCM5704S 1000baseSX Ethernet
 product BROADCOM BCM5706	0x164a	BCM5706 NetXtreme II 1000baseT Ethernet
 product BROADCOM BCM5708	0x164c	BCM5708 NetXtreme II 1000baseT Ethernet
 product BROADCOM BCM5702FE	0x164d	BCM5702FE 10/100 Ethernet
+product BROADCOM BCM57710	0x164e	BCM57710 NetXtreme II 10Gb Ethernet
+product BROADCOM BCM57711	0x164f	BCM57711 NetXtreme II 10Gb Ethernet
+product BROADCOM BCM57711E	0x1650	BCM57711E NetXtreme II 10Gb Ethernet
 product BROADCOM BCM5705	0x1653	BCM5705 10/100/1000 Ethernet
 product BROADCOM BCM5705K	0x1654	BCM5705K 10/100/1000 Ethernet
 product BROADCOM BCM5717	0x1655	BCM5717 10/100/1000 Ethernet
 product BROADCOM BCM5718	0x1656	BCM5718 10/100/1000 Ethernet
-product BROADCOM BCM5720	0x1658	BCM5720 NetXtreme 1000baseT Ethernet
+product BROADCOM BCM5719	0x1657	BCM5719 NetXtreme II 10Gb Ethernet
+// product BROADCOM BCM5720	0x1658	BCM5720 NetXtreme 1000baseT Ethernet
 product BROADCOM BCM5721	0x1659	BCM5721 NetXtreme 1000baseT Ethernet
 product BROADCOM BCM5722	0x165a	BCM5722 NetXtreme 1000baseT Ethernet
 product BROADCOM BCM5723	0x165b	BCM5723 NetXtreme 1000baseT Ethernet
 product BROADCOM BCM5724	0x165c	BCM5724 10/100/1000 Ethernet
 product BROADCOM BCM5705M	0x165d	BCM5705M 10/100/1000 Ethernet
 product BROADCOM BCM5705M_ALT	0x165e	BCM5705M 10/100/1000 Ethernet
+product BROADCOM BCM5720	0x165f	BCM5720 NetXtreme 1000baseT Ethernet
+product BROADCOM BCM57712	0x1662	BCM57712 NetXtreme II 10Gb Ethernet
+product BROADCOM BCM57712E	0x1663	BCM57712E NetXtreme II 10Gb Ethernet
 product BROADCOM BCM5714	0x1668	BCM5714 1000baseT Ethernet
 product BROADCOM BCM5714S	0x1669	BCM5714S 1000baseSX Ethernet
 product BROADCOM BCM5780	0x166a	BCM5780 NetXtreme 1000baseT Ethernet
@@ -2773,7 +2780,7 @@ product INTEL C600_PCIE_6	0x1d1a	C600/X79 PCIE
 product INTEL C600_PCIE_7	0x1d1c	C600/X79 PCIE
 product INTEL C600_PCIE_8	0x1d1e	C600/X79 PCIE
 product INTEL C600_HDA		0x1d20	C600 HD Audio
-product INTEL C600_SMB_1	0x1d22	C600/X79 SMBus Controller
+product INTEL C600_SMBUS	0x1d22	C600 SMBus Controller
 product INTEL C600_THERM	0x1d24	C600 Thermal Management Controller
 product INTEL C600_EHCI_1	0x1d26	C600 USB
 product INTEL C600_EHCI_2	0x1d2d	C600 USB
@@ -2799,7 +2806,9 @@ product INTEL C600_SAS_10	0x1d6c	C600 SAS Controller
 product INTEL C600_SAS_11	0x1d6d	C600 SAS Controller
 product INTEL C600_SAS_12	0x1d6e	C600 SAS Controller
 product INTEL C600_SAS_SATA_4	0x1d6f	C600 SAS Controller (SATA)
-product INTEL C600_SMB_2	0x1d70	C600/X79 Series SMBus Controller
+product INTEL C600_SMB_0	0x1d70	C600/X79 Series SMBus Controller
+product INTEL C600_SMB_1	0x1d71	C606/C608 SMBus Controller
+product INTEL C600_SMB_2	0x1d72	C608 SMBus Controller
 product INTEL 7SER_DT_SATA_1	0x1e00	7 Series (desktop) SATA Controller
 product INTEL 7SER_MO_SATA_1	0x1e01	7 Series (mobile) SATA Controller
 product INTEL 7SER_DT_SATA_AHCI	0x1e02	7 Series (desktop) SATA Controller (AHCI)
@@ -2869,6 +2878,7 @@ product INTEL 82801BAM_IDE	0x244a	82801BAM IDE Controller
 product INTEL 82801BA_IDE	0x244b	82801BA IDE Controller
 product INTEL 82801BAM_LPC	0x244c	82801BAM LPC Interface Bridge
 product INTEL 82801BA_HPB	0x244e	82801BA Hub-PCI Bridge
+product INTEL 82801E_LPC	0x2450	82801E LPC Interface Bridge
 product INTEL 82801E_SMB	0x2453	82801E SMBus Controller
 product INTEL 82801E_LAN_1	0x2459	82801E LAN Controller
 product INTEL 82801E_LAN_2	0x245d	82801E LAN Controller
@@ -3028,6 +3038,7 @@ product INTEL 82945GM_IGD	0x27a2	82945GM/PM/GMS Integrated Graphics Device
 product INTEL 82945GM_IGD_1	0x27a6	82945GM/PM/GMS Integrated Graphics Device
 product INTEL 82945GME_HB	0x27ac	82945GME Host Bridge
 product INTEL 82945GME_IGD	0x27ae	82945GME Integrated Graphics Device
+product INTEL 82801GH_LPC	0x27b0	82801GH LPC Interface Bridge
 product INTEL 82801G_LPC	0x27b8	82801GB/GR LPC Interface Bridge
 product INTEL 82801GBM_LPC	0x27b9	82801GBM LPC Interface Bridge
 product INTEL NM10_LPC		0x27bc	NM10 Family LPC Interface Bridge
@@ -3250,7 +3261,18 @@ product INTEL 82801JD_PCIE_4	0x3a76	82801JD PCI Express Port
 product INTEL 82801JD_PCIE_5	0x3a78	82801JD PCI Express Port
 product INTEL 82801JD_PCIE_6	0x3a7a	82801JD PCI Express Port
 product INTEL 82801JD_LAN	0x3a7c	82801JD LAN Controller
-product INTEL 3400_LPC		0x3b14	3400 LPC Interface Bridge
+product INTEL P55_LPC		0x3b02	P55 LPC Interface Bridge
+product INTEL PM55_LPC		0x3b03	PM55 LPC Interface Bridge
+product INTEL H55_LPC		0x3b06	H55 LPC Interface Bridge
+product INTEL QM57_LPC		0x3b07	QM57 LPC Interface Bridge
+product INTEL H57_LPC		0x3b08	H57 LPC Interface Bridge
+product INTEL HM55_LPC		0x3b09	HM55 LPC Interface Bridge
+product INTEL Q57_LPC		0x3b0a	Q57 LPC Interface Bridge
+product INTEL HM57_LPC		0x3b0b	HM57 LPC Interface Bridge
+product INTEL QS57_LPC		0x3b0f	QS57 LPC Interface Bridge
+product INTEL 3400_LPC		0x3b12	3400 LPC Interface Bridge
+product INTEL 3420_LPC		0x3b14	3420 LPC Interface Bridge
+product INTEL 3450_LPC		0x3b16	3450 LPC Interface Bridge
 product INTEL 3400_SATA_1	0x3b20	3400 SATA
 product INTEL 3400_SATA_2	0x3b21	3400 SATA
 product INTEL 3400_AHCI_1	0x3b22	3400 AHCI
@@ -3265,14 +3287,14 @@ product INTEL 3400_SATA_6	0x3b2e	3400 SATA
 product INTEL 3400_AHCI_4	0x3b2f	3400 AHCI
 product INTEL 3400_SMB		0x3b30	3400 SMBus
 product INTEL 3400_THERMAL	0x3b32	3400 Thermal
-product INTEL 3400_EHCI_1	0x3b34	3400 USB
+product INTEL 3400_EHCI_1	0x3b34	3400 USB EHCI
 product INTEL 3400_UHCI_1	0x3b36	3400 USB
 product INTEL 3400_UHCI_2	0x3b37	3400 USB
 product INTEL 3400_UHCI_3	0x3b38	3400 USB
 product INTEL 3400_UHCI_4	0x3b39	3400 USB
 product INTEL 3400_UHCI_5	0x3b3a	3400 USB
 product INTEL 3400_UHCI_6	0x3b3b	3400 USB
-product INTEL 3400_EHCI_2	0x3b3c	3400 USB
+product INTEL 3400_EHCI_2	0x3b3c	3400 USB ECHI
 product INTEL 3400_UHCI_7	0x3b3e	3400 USB
 product INTEL 3400_UHCI_8	0x3b3f	3400 USB
 product INTEL 3400_PCIE_1	0x3b42	3400 PCIE
@@ -3384,6 +3406,7 @@ product INTEL 82443GX_AGP	0x71a1	82443GX AGP Interface
 product INTEL 82443GX_NOAGP	0x71a2	82443GX Host Bridge/Controller (AGP disabled)
 product INTEL I740		0x7800	i740 Graphics Accelerator
 product INTEL SCH_IDE		0x811a  SCH IDE Controller
+product INTEL E600_LPC		0x8186	Atom Processor E6xx LPC Bridge
 product INTEL PCI450_PB		0x84c4	82454KX/GX PCI Bridge (PB)
 product INTEL PCI450_MC		0x84c5	82451KX/GX Memory Controller (MC)
 product INTEL 82451NX_MIOC	0x84ca	82451NX Memory & I/O Controller (MIOC)

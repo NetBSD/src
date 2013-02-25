@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsproxy_state.c,v 1.1.1.1 2011/03/02 19:32:39 tron Exp $	*/
+/*	$NetBSD: tlsproxy_state.c,v 1.1.1.1.12.1 2013/02/25 00:27:30 tls Exp $	*/
 
 /*++
 /* NAME
@@ -47,6 +47,9 @@
 /*	Time limit for plaintext and ciphertext I/O.
 /* .IP remote_endpt
 /*	Printable remote endpoint name.
+/*	The destructor will automatically destroy the string.
+/* .IP server_id
+/*	TLS session cache identifier.
 /*	The destructor will automatically destroy the string.
 /* DIAGNOSTICS
 /*	All errors are fatal.
@@ -105,6 +108,7 @@ TLSP_STATE *tlsp_state_create(const char *service,
     state->ciphertext_timer = 0;
     state->timeout = -1;
     state->remote_endpt = 0;
+    state->server_id = 0;
     state->tls_context = 0;
 
     return (state);
@@ -128,6 +132,8 @@ void    tlsp_state_free(TLSP_STATE *state)
 	msg_info("DISCONNECT %s", state->remote_endpt);
 	myfree(state->remote_endpt);
     }
+    if (state->server_id)
+	myfree(state->server_id);
     if (state->tls_context)
 	tls_free_context(state->tls_context);
     myfree((char *) state);

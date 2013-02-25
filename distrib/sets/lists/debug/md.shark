@@ -1,0 +1,4 @@
+# $NetBSD: md.shark,v 1.2.6.2 2013/02/25 00:24:38 tls Exp $
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
+./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2011/04/24 21:42:06 elric Exp $
+#	$NetBSD: Makefile,v 1.42.10.1 2013/02/25 00:30:38 tls Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
@@ -31,8 +31,10 @@ SRCS+=	krb5_passwd.c
 
 DPADD+=	${LIBKRB5} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN} ${LIBCRYPT}
 LDADD+=	-lkrb5 -lcrypto -lasn1 -lcom_err -lroken -lcrypt
+.ifdef OVERRIDE_HEIMDAL_KPASSWD
 LINKS+=	${BINDIR}/passwd ${BINDIR}/kpasswd
 MAN+=	kpasswd.1
+.endif
 .endif
 
 .if (${USE_PAM} != "no")

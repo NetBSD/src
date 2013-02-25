@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_debug.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: dict_debug.c,v 1.1.1.1.16.1 2013/02/25 00:27:31 tls Exp $	*/
 
 /*++
 /* NAME
@@ -58,23 +58,28 @@ typedef struct {
 static const char *dict_debug_lookup(DICT *dict, const char *key)
 {
     DICT_DEBUG *dict_debug = (DICT_DEBUG *) dict;
+    DICT   *real_dict = dict_debug->real_dict;
     const char *result;
 
-    result = dict_get(dict_debug->real_dict, key);
+    result = dict_get(real_dict, key);
     msg_info("%s:%s lookup: \"%s\" = \"%s\"", dict->type, dict->name, key,
-	     result ? result : dict_errno ? "try again" : "not_found");
-    return (result);
+	     result ? result : real_dict->error ? "error" : "not_found");
+    DICT_ERR_VAL_RETURN(dict, real_dict->error, result);
 }
 
 /* dict_debug_update - log update operation */
 
-static void dict_debug_update(DICT *dict, const char *key, const char *value)
+static int dict_debug_update(DICT *dict, const char *key, const char *value)
 {
     DICT_DEBUG *dict_debug = (DICT_DEBUG *) dict;
+    DICT   *real_dict = dict_debug->real_dict;
+    int     result;
 
-    msg_info("%s:%s update: \"%s\" = \"%s\"", dict->type, dict->name,
-	     key, value);
-    dict_put(dict_debug->real_dict, key, value);
+    result = dict_put(real_dict, key, value);
+    msg_info("%s:%s update: \"%s\" = \"%s\": %s", dict->type, dict->name,
+	     key, value, result == 0 ? "success" : real_dict->error ?
+	     "error" : "failed");
+    DICT_ERR_VAL_RETURN(dict, real_dict->error, result);
 }
 
 /* dict_debug_delete - log delete operation */
@@ -82,12 +87,14 @@ static void dict_debug_update(DICT *dict, const char *key, const char *value)
 static int dict_debug_delete(DICT *dict, const char *key)
 {
     DICT_DEBUG *dict_debug = (DICT_DEBUG *) dict;
+    DICT   *real_dict = dict_debug->real_dict;
     int     result;
 
-    result = dict_del(dict_debug->real_dict, key);
-    msg_info("%s:%s delete: \"%s\" = \"%s\"", dict->type, dict->name, key,
-	     result ? "failed" : "success");
-    return (result);
+    result = dict_del(real_dict, key);
+    msg_info("%s:%s delete: \"%s\": %s", dict->type, dict->name, key,
+	     result == 0 ? "success" : real_dict->error ?
+	     "error" : "failed");
+    DICT_ERR_VAL_RETURN(dict, real_dict->error, result);
 }
 
 /* dict_debug_sequence - log sequence operation */
@@ -96,15 +103,16 @@ static int dict_debug_sequence(DICT *dict, int function,
 			               const char **key, const char **value)
 {
     DICT_DEBUG *dict_debug = (DICT_DEBUG *) dict;
+    DICT   *real_dict = dict_debug->real_dict;
     int     result;
 
-    result = dict_seq(dict_debug->real_dict, function, key, value);
+    result = dict_seq(real_dict, function, key, value);
     if (result == 0)
 	msg_info("%s:%s sequence: \"%s\" = \"%s\"", dict->type, dict->name,
 		 *key, *value);
     else
 	msg_info("%s:%s sequence: found EOF", dict->type, dict->name);
-    return (result);
+    DICT_ERR_VAL_RETURN(dict, real_dict->error, result);
 }
 
 /* dict_debug_close - log operation */

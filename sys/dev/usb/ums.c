@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.84 2012/04/30 17:27:50 christos Exp $	*/
+/*	$NetBSD: ums.c,v 1.84.2.1 2013/02/25 00:29:40 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.84 2012/04/30 17:27:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.84.2.1 2013/02/25 00:29:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.84 2012/04/30 17:27:50 christos Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-#ifdef USB_DEBUG
+#ifdef UMS_DEBUG
 #define DPRINTF(x)	if (umsdebug) printf x
 #define DPRINTFN(n,x)	if (umsdebug>(n)) printf x
 int	umsdebug = 0;
@@ -240,12 +240,12 @@ ums_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Try the wheel first as the Z activator since it's tradition. */
-	hl = hid_locate(desc, 
-			size, 
-			HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL), 
-			uha->reportid, 
-			hid_input, 
-			&sc->sc_loc_z, 
+	hl = hid_locate(desc,
+			size,
+			HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL),
+			uha->reportid,
+			hid_input,
+			&sc->sc_loc_z,
 			&flags);
 
 	zloc = &sc->sc_loc_z;
@@ -264,8 +264,8 @@ ums_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	hl = hid_locate(desc, 
-			size, 
+	hl = hid_locate(desc,
+			size,
 			HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
 			uha->reportid,
 			hid_input,
@@ -278,9 +278,9 @@ ums_attach(device_t parent, device_t self, void *aux)
 	 * any Z then check that.
 	 */
 	if (!hl) {
-		hl = hid_locate(desc, 
-				size, 
-				HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN), 
+		hl = hid_locate(desc,
+				size,
+				HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN),
 				uha->reportid,
 				hid_input,
 				zloc,
@@ -307,7 +307,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (uha->uaa->vendor == USB_VENDOR_MICROSOFT &&
 	    (uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR10 ||
-	     uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR20)) {	
+	     uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR20)) {
 		if ((sc->flags & UMS_Z) && sc->sc_loc_z.pos == 0)
 			sc->sc_loc_z.pos = 24;
 		if ((sc->flags & UMS_W) && sc->sc_loc_w.pos == 0)
@@ -322,7 +322,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 
 	if (isdigitizer) {
 		for (size_t j = 0; j < __arraycount(digbut); j++) {
-			if (hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS, 
+			if (hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS,
 			    digbut[j].feature), uha->reportid, hid_input,
 			    &sc->sc_loc_btn[i - 1], 0)) {
 				if (i <= MAX_BUTTONS) {
@@ -347,7 +347,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 	    sc->flags & UMS_BARREL_SWITCH ? ", barrel" : "",
 	    sc->flags & UMS_ERASER ? ", eraser" : "");
 
-#ifdef USB_DEBUG
+#ifdef UMS_DEBUG
 	DPRINTF(("ums_attach: sc=%p\n", sc));
 	DPRINTF(("ums_attach: X\t%d/%d\n",
 		 sc->sc_loc_x.pos, sc->sc_loc_x.size));

@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.20 2010/02/16 23:20:30 mlelstv Exp $ */
+/* $NetBSD: segwrite.c,v 1.20.12.1 2013/02/25 00:28:07 tls Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -122,7 +122,7 @@ lfs_match_indir(struct lfs * fs, struct ubuf * bp)
 	daddr_t lbn;
 
 	lbn = bp->b_lblkno;
-	return (lbn < 0 && (-lbn - NDADDR) % NINDIR(fs) == 0);
+	return (lbn < 0 && (-lbn - UFS_NDADDR) % NINDIR(fs) == 0);
 }
 
 int
@@ -131,7 +131,7 @@ lfs_match_dindir(struct lfs * fs, struct ubuf * bp)
 	daddr_t lbn;
 
 	lbn = bp->b_lblkno;
-	return (lbn < 0 && (-lbn - NDADDR) % NINDIR(fs) == 1);
+	return (lbn < 0 && (-lbn - UFS_NDADDR) % NINDIR(fs) == 1);
 }
 
 int
@@ -140,7 +140,7 @@ lfs_match_tindir(struct lfs * fs, struct ubuf * bp)
 	daddr_t lbn;
 
 	lbn = bp->b_lblkno;
-	return (lbn < 0 && (-lbn - NDADDR) % NINDIR(fs) == 2);
+	return (lbn < 0 && (-lbn - UFS_NDADDR) % NINDIR(fs) == 2);
 }
 
 /*
@@ -435,7 +435,7 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 {
 	SEGUSE *sup;
 	struct ubuf *bp;
-	struct indir a[NIADDR + 2], *ap;
+	struct indir a[UFS_NIADDR + 2], *ap;
 	struct inode *ip;
 	struct uvnode *vp;
 	daddr_t daddr, ooff;
@@ -490,7 +490,7 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 	 */
 	if (daddr > 0) {
 		u_int32_t oldsn = dtosn(fs, daddr);
-		if (lbn >= 0 && lbn < NDADDR)
+		if (lbn >= 0 && lbn < UFS_NDADDR)
 			osize = ip->i_lfs_fragsize[lbn];
 		else
 			osize = fs->lfs_bsize;
@@ -505,7 +505,7 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 	 * segment no longer owns it, we can forget about its
 	 * old size.
 	 */
-	if (lbn >= 0 && lbn < NDADDR)
+	if (lbn >= 0 && lbn < UFS_NDADDR)
 		ip->i_lfs_fragsize[lbn] = size;
 }
 

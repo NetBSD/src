@@ -86,6 +86,7 @@ verify.o: ../../include/stringops.h
 verify.o: ../../include/sys_defs.h
 verify.o: ../../include/vbuf.h
 verify.o: ../../include/verify_clnt.h
+verify.o: ../../include/verify_sender_addr.h
 verify.o: ../../include/vstream.h
 verify.o: ../../include/vstring.h
 verify.o: verify.c

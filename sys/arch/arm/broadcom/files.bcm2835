@@ -1,9 +1,11 @@
-#	$NetBSD: files.bcm2835,v 1.5 2012/08/22 13:21:31 jakllsch Exp $
+#	$NetBSD: files.bcm2835,v 1.5.2.1 2013/02/25 00:28:25 tls Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
 
 include "arch/arm/pic/files.pic"
+
+define bcmmboxbus { }
 
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/broadcom/bcm2835_dma.c
@@ -26,7 +28,7 @@ attach	bcmicu at obio with bcmicu
 file	arch/arm/broadcom/bcm2835_intr.c	bcmicu
 
 # VC Mailbox (BCM2835_ARMMBOX_BASE)
-device	bcmmbox
+device	bcmmbox: bcmmboxbus
 attach	bcmmbox at obio with bcmmbox
 file	arch/arm/broadcom/bcm2835_mbox.c	bcmmbox
 
@@ -36,9 +38,14 @@ attach	bcmtmr at obio with bcmtmr_amba
 file	arch/arm/broadcom/bcm2835_tmr.c		bcmtmr
 
 # Power Management, Reset Controller, and Watchdog (BCM2835_PM_BASE)
-device	bcmpm
+device	bcmpm: sysmon_wdog
 attach	bcmpm at obio with bcmpm_amba
 file	arch/arm/broadcom/bcm2835_pm.c		bcmpm
+
+# Random number generator (BCM2835_RNG_BASE)
+device	bcmrng
+attach	bcmrng at obio with bcmrng_amba
+file	arch/arm/broadcom/bcm2835_rng.c		bcmrng
 
 # UART Interface (BCM2835_UART0_BASE)
 attach	plcom at obio with bcmplcom
@@ -47,3 +54,25 @@ file	arch/arm/broadcom/bcm2835_plcom.c	bcmplcom
 # External Mass Media Controller (BCM2835_EMMC_BASE)
 attach	sdhc at obio with bcmemmc
 file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
+
+# USB (BCM2835_USB_BASE)
+attach dotg at obio with dotg_amba
+file	arch/arm/broadcom/bcm2835_dotg.c	dotg	needs-flag
+
+# GPIO misc. functions
+define	bcm2835_gpio_subr
+file	arch/arm/broadcom/bcm2835_gpio_subr.c	bcm2835_gpio_subr
+
+# SPI controller (BCM2835_SPI0_BASE)
+device	bcmspi: spibus, bcm2835_gpio_subr
+attach	bcmspi at obio
+file	arch/arm/broadcom/bcm2835_spi.c		bcmspi	needs-flag
+
+# BSC (I2C) controller (BCM2835_BSC[01]_BASE)
+device	bsciic: i2cbus, bcm2835_gpio_subr
+attach	bsciic at obio
+file	arch/arm/broadcom/bcm2835_bsc.c		bsciic	needs-flag
+
+# Generic framebuffer console driver
+attach	genfb at obio with bcmgenfb: edid
+file	arch/arm/broadcom/bcm2835_genfb.c	bcmgenfb	needs-flag

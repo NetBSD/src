@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_proto.h,v 1.1.1.1 2009/06/23 10:08:56 tron Exp $	*/
+/*	$NetBSD: smtpd_sasl_proto.h,v 1.1.1.1.16.1 2013/02/25 00:27:29 tls Exp $	*/
 
 /*++
 /* NAME
@@ -18,6 +18,9 @@ extern void smtpd_sasl_auth_reset(SMTPD_STATE *);
 extern char *smtpd_sasl_mail_opt(SMTPD_STATE *, const char *);
 extern void smtpd_sasl_mail_log(SMTPD_STATE *);
 extern void smtpd_sasl_mail_reset(SMTPD_STATE *);
+
+#define smtpd_sasl_auth_extern	smtpd_sasl_login
+#define smtpd_sasl_auth_reset	smtpd_sasl_logout
 
 /* LICENSE
 /* .ad

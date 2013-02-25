@@ -724,13 +724,14 @@ arm*-*-freebsd*)
 arm*-*-netbsdelf*)
 	tm_file="dbxelf.h elfos.h netbsd.h netbsd-elf.h arm/elf.h arm/aout.h arm/arm.h"
 	case ${target} in
-	armeb*) tm_defines="${tm_defines} TARGET_ENDIAN_DEFAULT=MASK_BIG_END" ;;
+	armeb*) tm_defines="${tm_defines} TARGET_BIG_ENDIAN_DEFAULT=1" ;;
 	esac
 	tmake_file="${tmake_file} arm/t-arm"
 	case ${target} in
-	arm*-*-netbsdelf-*eabi)
+	arm*-*-netbsdelf-*eabi*)
 	    tm_file="$tm_file arm/bpabi.h arm/netbsd-elf.h arm/netbsd-eabi.h"
-	    tmake_file="$tmake_file arm/t-arm-elf arm/t-bpabi"
+	    #tmake_file="$tmake_file arm/t-arm-elf"
+	    tmake_file="$tmake_file arm/t-bpabi"
 	    tmake_file="$tmake_file arm/t-netbsd-eabi"
   	    # The BPABI long long divmod functions return a 128-bit value in
 	    # registers r0-r3.  Correctly modeling that requires the use of
@@ -742,6 +743,11 @@ arm*-*-netbsdelf*)
 	*)
 	    tm_file="$tm_file arm/netbsd-elf.h"
 	    tmake_file="$tmake_file arm/t-netbsd"
+	    ;;
+	esac
+	case ${target} in
+	arm*-*-netbsdelf-*eabihf*)
+	    tm_defines="${tm_defines} TARGET_DEFAULT_FLOAT_ABI=ARM_FLOAT_ABI_HARD"
 	    ;;
 	esac
 	;;
@@ -1503,6 +1509,9 @@ ia64*-*-netbsd*)
 	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h ia64/sysv4.h ia64/netbsd.h"
 	target_cpu_default="MASK_GNU_AS|MASK_GNU_LD"
 	tmake_file="${tmake_file} ia64/t-ia64"
+	if test x$with_system_libunwind != xyes ; then
+		tmake_file="${tmake_file} t-libunwind-elf ia64/t-glibc-libunwind"
+	fi
 	extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o crtfastmath.o"
 	;;
 ia64*-*-freebsd*)

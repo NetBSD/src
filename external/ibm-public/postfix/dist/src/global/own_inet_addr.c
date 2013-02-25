@@ -1,4 +1,4 @@
-/*	$NetBSD: own_inet_addr.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: own_inet_addr.c,v 1.1.1.1.16.1 2013/02/25 00:27:19 tls Exp $	*/
 
 /*++
 /* NAME
@@ -93,6 +93,19 @@ static void own_inet_addr_init(INET_ADDR_LIST *addr_list,
 
     inet_addr_list_init(addr_list);
     inet_addr_list_init(mask_list);
+
+    /*
+     * Avoid run-time errors when all network protocols are disabled. We
+     * can't look up interface information, and we can't convert explicit
+     * names or addresses.
+     */
+    if (inet_proto_info()->ai_family_list[0] == 0) {
+	if (msg_verbose)
+	    msg_info("skipping %s setting - "
+		     "all network protocols are disabled",
+		     VAR_INET_INTERFACES);
+	return;
+    }
 
     /*
      * If we are listening on all interfaces (default), ask the system what

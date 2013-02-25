@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.18 2012/03/20 20:34:59 matt Exp $	*/
+/*	$NetBSD: units.c,v 1.18.2.1 2013/02/25 00:30:40 tls Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -19,6 +19,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <float.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -38,6 +39,13 @@
 #define MAXSUBUNITS 500
 
 #define PRIMITIVECHAR '!'
+
+static int precision = 8;		/* for printf with "%.*g" format */
+
+static const char *errprefix = NULL;	/* if not NULL, then prepend this
+					 * to error messages and send them to
+					 * stdout instead of stderr.
+					 */
 
 static const char *powerstring = "^";
 
@@ -98,9 +106,27 @@ dupstr(const char *str)
 
 
 static void
+mywarnx(const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	if (errprefix) {
+		/* warn to stdout, with errprefix prepended */
+		printf("%s", errprefix);
+		vprintf(fmt, args);
+		printf("%s", "\n");
+	} else {
+		/* warn to stderr */
+		vwarnx(fmt, args);
+	}
+	va_end(args);
+}
+
+static void
 readerror(int linenum)
 {
-	warnx("Error in units file '%s' line %d", UNITSFILE, linenum);
+	mywarnx("Error in units file '%s' line %d", UNITSFILE, linenum);
 }
 
 
@@ -109,7 +135,7 @@ readunits(const char *userfile)
 {
 	FILE *unitfile;
 	char line[80], *lineptr;
-	int len, linenum, i;
+	int len, linenum, i, isdup;
 
 	unitcount = 0;
 	linenum = 0;
@@ -168,19 +194,26 @@ readunits(const char *userfile)
 			continue;
 		if (lineptr[strlen(lineptr) - 1] == '-') { /* it's a prefix */
 			if (prefixcount == MAXPREFIXES) {
-				warnx("Memory for prefixes exceeded in line %d",
-				    linenum);
+				mywarnx(
+			"Memory for prefixes exceeded in line %d",
+					linenum);
 				continue;
 			}
 			lineptr[strlen(lineptr) - 1] = 0;
-			prefixtable[prefixcount].prefixname = dupstr(lineptr);
-			for (i = 0; i < prefixcount; i++)
-				if (!strcmp(prefixtable[i].prefixname, lineptr)) {
-					warnx(
-			"Redefinition of prefix '%s' on line %d ignored",
-					    lineptr, linenum);
-					continue;
+			for (isdup = 0, i = 0; i < prefixcount; i++) {
+				if (!strcmp(prefixtable[i].prefixname,
+				    lineptr)) {
+					isdup = 1;
+					break;
 				}
+			}
+			if (isdup) {
+				mywarnx(
+			"Redefinition of prefix '%s' on line %d ignored",
+				    lineptr, linenum);
+				continue;
+			}
+			prefixtable[prefixcount].prefixname = dupstr(lineptr);
 			lineptr += len + 1;
 			if (!strlen(lineptr)) {
 				readerror(linenum);
@@ -193,18 +226,23 @@ readunits(const char *userfile)
 		}
 		else {		/* it's not a prefix */
 			if (unitcount == MAXUNITS) {
-				warnx("Memory for units exceeded in line %d",
+				mywarnx("Memory for units exceeded in line %d",
 				    linenum);
 				continue;
 			}
-			unittable[unitcount].uname = dupstr(lineptr);
-			for (i = 0; i < unitcount; i++)
+			for (isdup = 0, i = 0; i < unitcount; i++) {
 				if (!strcmp(unittable[i].uname, lineptr)) {
-					warnx(
-				"Redefinition of unit '%s' on line %d ignored",
-					    lineptr, linenum);
-					continue;
+					isdup = 1;
+					break;
 				}
+			}
+			if (isdup) {
+				mywarnx(
+				"Redefinition of unit '%s' on line %d ignored",
+				    lineptr, linenum);
+				continue;
+			}
+			unittable[unitcount].uname = dupstr(lineptr);
 			lineptr += len + 1;
 			lineptr += strspn(lineptr, " \n\t");
 			if (!strlen(lineptr)) {
@@ -233,7 +271,7 @@ addsubunit(const char *product[], const char *toadd)
 
 	for (ptr = product; *ptr && *ptr != NULLUNIT; ptr++);
 	if (ptr >= product + MAXSUBUNITS) {
-		warnx("Memory overflow in unit reduction");
+		mywarnx("Memory overflow in unit reduction");
 		return 1;
 	}
 	if (!*ptr)
@@ -249,7 +287,7 @@ showunit(struct unittype * theunit)
 	int printedslash;
 	int counter = 1;
 
-	printf("\t%.8g", theunit->factor);
+	printf("\t%.*g", precision, theunit->factor);
 	for (ptr = theunit->numerator; *ptr; ptr++) {
 		if (ptr > theunit->numerator && **ptr &&
 		    !strcmp(*ptr, *(ptr - 1)))
@@ -290,7 +328,7 @@ showunit(struct unittype * theunit)
 static void
 zeroerror(void)
 {
-	warnx("Unit reduces to zero");
+	mywarnx("Unit reduces to zero");
 }
 
 /*
@@ -321,22 +359,29 @@ addunit(struct unittype * theunit, const char *toadd, int flip)
 	do {
 		item = strtok(scratch, " *\t\n/");
 		while (item) {
-			if (strchr("0123456789.", *item)) { /* item is a number */
+			if (strchr("0123456789.", *item)) {
+				/* item starts with a number */
+				char *endptr;
 				double num;
 
 				divider = strchr(item, '|');
 				if (divider) {
 					*divider = 0;
-					num = atof(item);
+					num = strtod(item, &endptr);
 					if (!num) {
 						zeroerror();
+						return 1;
+					}
+					if (endptr != divider) {
+						/* "6foo|2" is an error */
+						mywarnx("Junk before '|'");
 						return 1;
 					}
 					if (doingtop ^ flip)
 						theunit->factor *= num;
 					else
 						theunit->factor /= num;
-					num = atof(divider + 1);
+					num = strtod(divider + 1, &endptr);
 					if (!num) {
 						zeroerror();
 						return 1;
@@ -345,9 +390,14 @@ addunit(struct unittype * theunit, const char *toadd, int flip)
 						theunit->factor /= num;
 					else
 						theunit->factor *= num;
+					if (*endptr) {
+						/* "6|2foo" is like "6|2 foo" */
+						item = endptr;
+						continue;
+					}
 				}
 				else {
-					num = atof(item);
+					num = strtod(item, &endptr);
 					if (!num) {
 						zeroerror();
 						return 1;
@@ -356,7 +406,11 @@ addunit(struct unittype * theunit, const char *toadd, int flip)
 						theunit->factor *= num;
 					else
 						theunit->factor /= num;
-
+					if (*endptr) {
+						/* "3foo" is like "3 foo" */
+						item = endptr;
+						continue;
+					}
 				}
 			}
 			else {	/* item is not a number */
@@ -534,7 +588,7 @@ reduceproduct(struct unittype * theunit, int flip)
 				break;
 			toadd = lookupunit(*product);
 			if (!toadd) {
-				printf("unknown unit '%s'\n", *product);
+				mywarnx("Unknown unit '%s'", *product);
 				return ERROR;
 			}
 			if (strchr(toadd, PRIMITIVECHAR))
@@ -632,22 +686,118 @@ showanswer(struct unittype * have, struct unittype * want)
 			showunit(want);
 		} else {
 			printf("\treciprocal conversion\n");
-			printf("\t* %.8g\n\t/ %.8g\n", 1 / (have->factor * want->factor),
-			    want->factor * have->factor);
+			printf("\t* %.*g\n\t/ %.*g\n",
+			    precision, 1 / (have->factor * want->factor),
+			    precision, want->factor * have->factor);
 		}
 	}
 	else
-		printf("\t* %.8g\n\t/ %.8g\n", have->factor / want->factor,
-		    want->factor / have->factor);
+		printf("\t* %.*g\n\t/ %.*g\n",
+		    precision, have->factor / want->factor,
+		    precision, want->factor / have->factor);
 }
 
+static int
+listunits(int expand)
+{
+	struct unittype theunit;
+	const char *thename;
+	const char *thedefn;
+	int errors = 0;
+	int i;
+	int printexpansion;
+
+	/*
+	 * send error and warning messages to stdout,
+	 * and make them look like comments.
+	 */
+	errprefix = "/ ";
+
+#if 0 /* debug */
+	printf("/ expand=%d precision=%d unitcount=%d prefixcount=%d\n",
+	    expand, precision, unitcount, prefixcount);
+#endif
+
+	/* 1. Dump all primitive units, e.g. "m !a!", "kg !b!", ... */
+	printf("/ Primitive units\n");
+	for (i = 0; i < unitcount; i++) {
+		thename = unittable[i].uname;
+		thedefn = unittable[i].uval;
+		if (thedefn[0] == PRIMITIVECHAR) {
+			printf("%s\t%s\n", thename, thedefn);
+		}
+	}
+
+	/* 2. Dump all prefixes, e.g. "yotta- 1e24", "zetta- 1e21", ... */
+	printf("/ Prefixes\n");
+	for (i = 0; i < prefixcount; i++) {
+		printexpansion = expand;
+		thename = prefixtable[i].prefixname;
+		thedefn = prefixtable[i].prefixval;
+		if (expand) {
+			/*
+			 * prefix names are sometimes identical to unit
+			 * names, so we have to expand thedefn instead of
+			 * expanding thename.
+			 */
+			initializeunit(&theunit);
+			if (addunit(&theunit, thedefn, 0) != 0
+			    || completereduce(&theunit) != 0) {
+				errors++;
+				printexpansion = 0;
+				mywarnx("Error in prefix '%s-'", thename);
+			}
+		}
+		if (printexpansion) {
+			printf("%s-", thename);
+			showunit(&theunit);
+		} else
+			printf("%s-\t%s\n", thename, thedefn);
+	}
+
+	/* 3. Dump all other units. */
+	printf("/ Other units\n");
+	for (i = 0; i < unitcount; i++) {
+		printexpansion = expand;
+		thename = unittable[i].uname;
+		thedefn = unittable[i].uval;
+		if (thedefn[0] == PRIMITIVECHAR)
+			continue;
+		if (expand) {
+			/*
+			 * expand thename, not thedefn, so that
+			 * we can catch errors in the name itself.
+			 * e.g. a name that contains a hyphen
+			 * will be interpreted as multiplication.
+			 */
+			initializeunit(&theunit);
+			if (addunit(&theunit, thename, 0) != 0
+			    || completereduce(&theunit) != 0) {
+				errors++;
+				printexpansion = 0;
+				mywarnx("Error in unit '%s'", thename);
+			}
+		}
+		if (printexpansion) {
+			printf("%s", thename);
+			showunit(&theunit);
+		} else
+			printf("%s\t%s\n", thename, thedefn);
+	}
+
+	if (errors)
+		mywarnx("Definitions with errors: %d", errors);
+	return (errors ? 1 : 0);
+}
 
 static void
 usage(void)
 {
 	fprintf(stderr,
-	    "\nunits [-f unitsfile] [-q] [-v] [from-unit to-unit]\n");
+	    "\nunits [-Llqv] [-f filename] [[count] from-unit to-unit]\n");
 	fprintf(stderr, "\n    -f specify units file\n");
+	fprintf(stderr, "    -L list units in standardized base units\n");
+	fprintf(stderr, "    -l list units\n");
 	fprintf(stderr, "    -q suppress prompting (quiet)\n");
 	fprintf(stderr, "    -v print version number\n");
 	exit(3);
@@ -661,10 +811,19 @@ main(int argc, char **argv)
 	char havestr[81], wantstr[81];
 	int optchar;
 	const char *userfile = 0;
+	int list = 0, listexpand = 0;
 	int quiet = 0;
 
-	while ((optchar = getopt(argc, argv, "vqf:")) != -1) {
+	while ((optchar = getopt(argc, argv, "lLvqf:")) != -1) {
 		switch (optchar) {
+		case 'l':
+			list = 1;
+			break;
+		case 'L':
+			list = 1;
+			listexpand = 1;
+			precision = DBL_DIG;
+			break;
 		case 'f':
 			userfile = optarg;
 			break;
@@ -685,10 +844,17 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 3 && argc != 2 && argc != 0)
+	if ((argc != 3 && argc != 2 && argc != 0)
+	    || (list && argc != 0))
 		usage();
 
+	if (list)
+		errprefix = "/ ";	/* set this before reading the file */
+
 	readunits(userfile);
+
+	if (list)
+		return listunits(listexpand);
 
 	if (argc == 3) {
 		strlcpy(havestr, argv[0], sizeof(havestr));

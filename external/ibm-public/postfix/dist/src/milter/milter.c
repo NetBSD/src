@@ -1,4 +1,4 @@
-/*	$NetBSD: milter.c,v 1.1.1.2 2010/06/17 18:06:55 tron Exp $	*/
+/*	$NetBSD: milter.c,v 1.1.1.2.12.1 2013/02/25 00:27:21 tls Exp $	*/
 
 /*++
 /* NAME
@@ -636,6 +636,9 @@ int     milter_send(MILTERS *milters, VSTREAM *stream)
 		count++;
     (void) rec_fprintf(stream, REC_TYPE_MILT_COUNT, "%d", count);
 
+    if (msg_verbose)
+	msg_info("send %d milters", count);
+
     /*
      * XXX Optimization: don't send or receive further information when there
      * aren't any active filters.
@@ -680,6 +683,9 @@ MILTERS *milter_receive(VSTREAM *stream, int count)
     MILTER *head = 0;
     MILTER *tail = 0;
     MILTER *milter = 0;
+
+    if (msg_verbose)
+	msg_info("receive %d milters", count);
 
     /*
      * XXX We must instantiate a MILTERS structure even when the sender has

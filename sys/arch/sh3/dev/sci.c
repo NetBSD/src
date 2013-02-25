@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.54.6.1 2012/11/20 03:01:42 tls Exp $ */
+/* $NetBSD: sci.c,v 1.54.6.2 2013/02/25 00:28:56 tls Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.54.6.1 2012/11/20 03:01:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.54.6.2 2013/02/25 00:28:56 tls Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -375,6 +375,7 @@ sci_attach(device_t parent, device_t self, void *aux)
 
 	sci_attached = 1;
 
+	sc->sc_dev = self;
 	sc->sc_hwflags = 0;	/* XXX */
 	sc->sc_swflags = 0;	/* XXX */
 	sc->sc_fifolen = 0;	/* XXX */

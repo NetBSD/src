@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/02 22:24:56 tron Exp $
+#	$NetBSD: Makefile,v 1.2.10.1 2013/02/25 00:27:34 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,7 @@ PFX_CONFIG= access.5.html aliases.5.html canonical.5.html cidr_table.5.html \
 	pcre_table.5.html pgsql_table.5.html postconf.5.html \
 	regexp_table.5.html relocated.5.html sqlite_table.5.html \
 	transport.5.html virtual.5.html postfix-wrapper.5.html \
-	postfix-manuals.html
+	postfix-manuals.html memcache_table.5.html
 PFX_READMES= ADDRESS_CLASS_README.html ADDRESS_REWRITING_README.html \
 	ADDRESS_VERIFICATION_README.html BACKSCATTER_README.html \
 	BASIC_CONFIGURATION_README.html BUILTIN_FILTER_README.html \

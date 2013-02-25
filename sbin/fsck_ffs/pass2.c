@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.48 2011/08/14 12:32:01 christos Exp $	*/
+/*	$NetBSD: pass2.c,v 1.48.8.1 2013/02/25 00:28:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.48 2011/08/14 12:32:01 christos Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.48.8.1 2013/02/25 00:28:06 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ pass2(void)
 	unsigned ii;
 	char pathbuf[MAXPATHLEN + 1];
 
-	rinfo = inoinfo(ROOTINO);
+	rinfo = inoinfo(UFS_ROOTINO);
 	switch (rinfo->ino_state) {
 
 	case USTATE:
@@ -83,15 +83,15 @@ pass2(void)
 			ckfini(1);
 			exit(FSCK_EXIT_CHECK_FAILED);
 		}
-		if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
+		if (allocdir(UFS_ROOTINO, UFS_ROOTINO, 0755) != UFS_ROOTINO)
 			errexit("CANNOT ALLOCATE ROOT INODE");
 		break;
 
 	case DCLEAR:
 		pfatal("DUPS/BAD IN ROOT INODE");
 		if (reply("REALLOCATE")) {
-			freeino(ROOTINO);
-			if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
+			freeino(UFS_ROOTINO);
+			if (allocdir(UFS_ROOTINO, UFS_ROOTINO, 0755) != UFS_ROOTINO)
 				errexit("CANNOT ALLOCATE ROOT INODE");
 			break;
 		}
@@ -106,8 +106,8 @@ pass2(void)
 	case FCLEAR:
 		pfatal("ROOT INODE NOT DIRECTORY");
 		if (reply("REALLOCATE")) {
-			freeino(ROOTINO);
-			if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
+			freeino(UFS_ROOTINO);
+			if (allocdir(UFS_ROOTINO, UFS_ROOTINO, 0755) != UFS_ROOTINO)
 				errexit("CANNOT ALLOCATE ROOT INODE");
 			break;
 		}
@@ -116,7 +116,7 @@ pass2(void)
 			ckfini(1);
 			exit(FSCK_EXIT_CHECK_FAILED);
 		}
-		dp = ginode(ROOTINO);
+		dp = ginode(UFS_ROOTINO);
 		DIP_SET(dp, mode,
 		    iswap16((iswap16(DIP(dp, mode)) & ~IFMT) | IFDIR));
 		inodirty();
@@ -129,7 +129,7 @@ pass2(void)
 		errexit("BAD STATE %d FOR ROOT INODE", rinfo->ino_state);
 	}
 	if (newinofmt) {
-		info = inoinfo(WINO);
+		info = inoinfo(UFS_WINO);
 		info->ino_state = FSTATE;
 		info->ino_type = DT_WHT;
 	}
@@ -194,26 +194,26 @@ pass2(void)
 		if (!is_ufs2) {
 			dp->dp1.di_mode = iswap16(IFDIR);
 			dp->dp1.di_size = iswap64(inp->i_isize);
-			maxblk = inp->i_numblks < NDADDR ? inp->i_numblks :
-			    NDADDR;
+			maxblk = inp->i_numblks < UFS_NDADDR ? inp->i_numblks :
+			    UFS_NDADDR;
 			for (i = 0; i < maxblk; i++)
 				dp->dp1.di_db[i] = inp->i_blks[i];
-			if (inp->i_numblks > NDADDR) {
-				for (i = 0; i < NIADDR; i++)
+			if (inp->i_numblks > UFS_NDADDR) {
+				for (i = 0; i < UFS_NIADDR; i++)
 					dp->dp1.di_ib[i] =
-					    inp->i_blks[NDADDR + i];
+					    inp->i_blks[UFS_NDADDR + i];
 			}
 		} else {
 			dp->dp2.di_mode = iswap16(IFDIR);
 			dp->dp2.di_size = iswap64(inp->i_isize);
-			maxblk = inp->i_numblks < NDADDR ? inp->i_numblks :
-			    NDADDR;
+			maxblk = inp->i_numblks < UFS_NDADDR ? inp->i_numblks :
+			    UFS_NDADDR;
 			for (i = 0; i < maxblk; i++)
 				dp->dp2.di_db[i] = inp->i_blks[i];
-			if (inp->i_numblks > NDADDR) {
-				for (i = 0; i < NIADDR; i++)
+			if (inp->i_numblks > UFS_NDADDR) {
+				for (i = 0; i < UFS_NIADDR; i++)
 					dp->dp2.di_ib[i] =
-					    inp->i_blks[NDADDR + i];
+					    inp->i_blks[UFS_NDADDR + i];
 			}
 		}
 		curino.id_number = inp->i_number;
@@ -301,7 +301,7 @@ pass2(void)
 	for (inpp = inpsort; inpp < inpend; inpp++) {
 		inp = *inpp;
 		if (inp->i_parent == 0 ||
-		    inp->i_number == ROOTINO)
+		    inp->i_number == UFS_ROOTINO)
 			continue;
 		pinp = getinoinfo(inp->i_parent);
 		inp->i_sibling = pinp->i_child;
@@ -310,7 +310,7 @@ pass2(void)
 	/*
 	 * Mark all the directories that can be found from the root.
 	 */
-	propagate(ROOTINO);
+	propagate(UFS_ROOTINO);
 
 #ifdef PROGRESS
 	if (!preen)
@@ -519,10 +519,10 @@ chk2:
 		if (n == 0)
 			markclean = 0;
 	} else if (newinofmt &&
-		   ((iswap32(dirp->d_ino) == WINO && dirp->d_type != DT_WHT) ||
-		    (iswap32(dirp->d_ino) != WINO && dirp->d_type == DT_WHT))) {
+		   ((iswap32(dirp->d_ino) == UFS_WINO && dirp->d_type != DT_WHT) ||
+		    (iswap32(dirp->d_ino) != UFS_WINO && dirp->d_type == DT_WHT))) {
 		fileerror(idesc->id_number, iswap32(dirp->d_ino), "BAD WHITEOUT ENTRY");
-		dirp->d_ino = iswap32(WINO);
+		dirp->d_ino = iswap32(UFS_WINO);
 		dirp->d_type = DT_WHT;
 		if (reply("FIX") == 1)
 			ret |= ALTERED;

@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.38 2011/07/17 20:54:30 joerg Exp $
+# $NetBSD: ad.mips,v 1.38.8.1 2013/02/25 00:24:31 tls Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -54,6 +54,7 @@
 ./usr/include/mips/rwlock.h			comp-c-include
 ./usr/include/mips/setjmp.h			comp-c-include
 ./usr/include/mips/signal.h			comp-c-include
+./usr/include/mips/sljitarch.h			comp-c-include
 ./usr/include/mips/stdarg.h			comp-obsolete		obsolete
 ./usr/include/mips/sysarch.h			comp-c-include
 ./usr/include/mips/trap.h			comp-c-include
@@ -61,5 +62,3 @@
 ./usr/include/mips/varargs.h			comp-obsolete		obsolete
 ./usr/include/mips/vmparam.h			comp-c-include
 ./usr/include/mips/wchar_limits.h		comp-c-include
-./usr/libdata/debug/usr/bin/elf2aout.debug	comp-obsolete		obsolete
-./usr/libdata/debug/usr/bin/elf2ecoff.debug	comp-sysutil-debug	debug

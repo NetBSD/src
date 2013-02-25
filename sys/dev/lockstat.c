@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.15 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.15.44.1 2013/02/25 00:29:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.15 2008/04/28 20:23:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.15.44.1 2013/02/25 00:29:11 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -270,7 +270,7 @@ lockstat_stop(lsdisable_t *ld)
 
 	cpuno = 0;
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (cpuno > sizeof(ld->ld_freq) / sizeof(ld->ld_freq[0])) {
+		if (cpuno >= sizeof(ld->ld_freq) / sizeof(ld->ld_freq[0])) {
 			log(LOG_WARNING, "lockstat: too many CPUs\n");
 			break;
 		}

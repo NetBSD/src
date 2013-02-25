@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/10/20 09:20:11 jmmv Exp $
+# $NetBSD: Makefile,v 1.1.12.1 2013/02/25 00:24:56 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libatf-c++
 
 TESTS_CXX=
 .for test in	application_test \
+		auto_array_test \
 		env_test \
 		exceptions_test \
 		expand_test \

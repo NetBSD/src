@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.105.2.1 2012/11/20 03:00:43 tls Exp $	*/
+/*	$NetBSD: readline.c,v 1.105.2.2 2013/02/25 00:27:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.105.2.1 2012/11/20 03:00:43 tls Exp $");
+__RCSID("$NetBSD: readline.c,v 1.105.2.2 2013/02/25 00:27:56 tls Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -2104,9 +2104,9 @@ void
 rl_get_screen_size(int *rows, int *cols)
 {
 	if (rows)
-		el_get(e, EL_GETTC, "li", rows, NULL);
+		el_get(e, EL_GETTC, "li", rows, (void *)0);
 	if (cols)
-		el_get(e, EL_GETTC, "co", cols, NULL);
+		el_get(e, EL_GETTC, "co", cols, (void *)0);
 }
 
 void

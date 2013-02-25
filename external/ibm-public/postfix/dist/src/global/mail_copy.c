@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_copy.c,v 1.1.1.2 2010/06/17 18:06:49 tron Exp $	*/
+/*	$NetBSD: mail_copy.c,v 1.1.1.2.12.1 2013/02/25 00:27:18 tls Exp $	*/
 
 /*++
 /* NAME
@@ -109,6 +109,7 @@
 #include <vstring_vstream.h>
 #include <stringops.h>
 #include <iostuff.h>
+#include <warn_stat.h>
 
 /* Global library. */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.102.2.1 2012/11/20 03:01:42 tls Exp $
+#	$NetBSD: GENERIC,v 1.102.2.2 2013/02/25 00:28:56 tls Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.102.2.1 $"
+#ident		"GENERIC-$Revision: 1.102.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -32,10 +32,6 @@ makeoptions	CPUFLAGS="-march=armv4 -mtune=strongarm"
 # compatibility with old version of OFW, which may have incorrect
 # properties and/or may set up devices incorrectly.
 options 	COMPAT_OLD_OFW
-
-# FPA options
-
-#options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
 

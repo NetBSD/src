@@ -50,7 +50,7 @@ are in fact case insensitive.
 
     xclient-command = XCLIENT 1*( SP attribute-name"="attribute-value )
 
-    attribute-name = ( NAME | ADDR | PORT | PROTO | HELO )
+    attribute-name = ( NAME | ADDR | PORT | PROTO | HELO | LOGIN )
 
     attribute-value = xtext
 
@@ -73,6 +73,9 @@ are in fact case insensitive.
   * The HELO attribute specifies an SMTP HELO parameter value, or the value
     [UNAVAILABLE] when the information is unavailable.
 
+  * The LOGIN attribute specifies a SASL login name, or the value [UNAVAILABLE]
+    when the information is unavailable.
+
 Note 1: syntactically valid NAME and HELO attribute-value elements can be up to
 255 characters long. The client must not send XCLIENT commands that exceed the
 512 character limit for SMTP commands. To avoid exceeding the limit the client
@@ -86,8 +89,8 @@ Note 3: Postfix implementations prior to version 2.3 do not xtext encode
 attribute values. Servers that wish to interoperate with these older
 implementations should be prepared to receive unencoded information.
 
-Note 4: Postfix implementations prior to version 2.5 do not implement the PORT
-attribute.
+Note 4: Some Postfix implementations do not implement the PORT or LOGIN
+attributes.
 
 XXCCLLIIEENNTT SSeerrvveerr rreessppoonnssee
 

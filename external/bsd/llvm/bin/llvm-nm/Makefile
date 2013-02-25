@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.12.1 2013/02/25 00:26:34 tls Exp $
 
 PROG_CXX=	llvm-nm
 NOMAN=		yes
@@ -12,7 +12,7 @@ SRCS=	llvm-nm.cpp
 LLVM_LIBS+= \
 	Archive \
 	BitReader \
-	Core \
+	IR \
 	Object \
 	Support
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: postfix.c,v 1.1.1.2 2011/03/02 19:32:25 tron Exp $	*/
+/*	$NetBSD: postfix.c,v 1.1.1.2.10.1 2013/02/25 00:27:24 tls Exp $	*/
 
 /*++
 /* NAME
@@ -242,6 +242,7 @@
 /*	Table lookup mechanisms:
 /*	cidr_table(5), Associate CIDR pattern with value
 /*	ldap_table(5), Postfix LDAP client
+/*	memcache_table(5), Postfix memcache client
 /*	mysql_table(5), Postfix MYSQL client
 /*	nisplus_table(5), Postfix NIS+ client
 /*	pcre_table(5), Associate PCRE pattern with value
@@ -356,6 +357,7 @@
 #include <clean_env.h>
 #include <argv.h>
 #include <safe.h>
+#include <warn_stat.h>
 
 /* Global library. */
 
@@ -437,6 +439,11 @@ int     main(int argc, char **argv)
     if (isatty(STDERR_FILENO))
 	msg_vstream_init(argv[0], VSTREAM_ERR);
     msg_syslog_init(argv[0], LOG_PID, LOG_FACILITY);
+
+    /*
+     * Check the Postfix library version as soon as we enable logging.
+     */
+    MAIL_VERSION_CHECK;
 
     /*
      * The mail system must be run by the superuser so it can revoke
@@ -526,7 +533,7 @@ int     main(int argc, char **argv)
     /*
      * Run the management script.
      */
-    if (force_single_instance 
+    if (force_single_instance
 	|| argv_split(var_multi_conf_dirs, "\t\r\n, ")->argc == 0) {
 	script = concatenate(var_daemon_dir, "/postfix-script", (char *) 0);
 	if (optind < 1)

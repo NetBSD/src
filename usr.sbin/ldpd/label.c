@@ -1,4 +1,4 @@
-/* $NetBSD: label.c,v 1.3 2010/12/30 11:29:21 kefren Exp $ */
+/* $NetBSD: label.c,v 1.3.12.1 2013/02/25 00:30:43 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ label_add(union sockunion * so_dest, union sockunion * so_pref,
 	warnp("[label_add] added binding %d for %s/%s\n", l->binding,
 	    union_ntoa(so_dest), spreftmp);
 
-	send_label_tlv_to_all(&(so_dest->sin.sin_addr),
+	send_label_tlv_to_all(&(so_dest->sa),
 	    from_union_to_cidr(so_pref), l->binding);
 	return l;
 }
@@ -223,12 +223,12 @@ label_del_by_binding(uint32_t binding, int readd)
  * For Compatibility with old bindinds code
  */
 struct label*
-label_get_by_prefix(struct in_addr *a, int prefixlen)
+label_get_by_prefix(const struct sockaddr *a, int prefixlen)
 {
 	union sockunion *so_dest, *so_pref;
 	struct label *l;
 
-	so_dest = make_inet_union(inet_ntoa(*a));
+	so_dest = make_inet_union(satos(a));	// XXX: grobian
 	so_pref = from_cidr_to_union(prefixlen);
 
 	l = label_get(so_dest, so_pref);
@@ -264,10 +264,10 @@ get_free_local_label()
 void
 change_local_label(struct label *l, uint32_t newbind)
 {
-	send_withdraw_tlv_to_all(&(l->so_dest.sin.sin_addr),
+	send_withdraw_tlv_to_all(&(l->so_dest.sa),
 		from_union_to_cidr(&(l->so_pref)));
 	l->binding = newbind;
-	send_label_tlv_to_all(&(l->so_dest.sin.sin_addr),
+	send_label_tlv_to_all(&(l->so_dest.sa),
 		from_union_to_cidr(&(l->so_pref)),
 		l->binding);
 }

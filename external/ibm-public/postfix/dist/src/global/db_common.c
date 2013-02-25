@@ -1,4 +1,4 @@
-/*	$NetBSD: db_common.c,v 1.1.1.3 2011/03/02 19:32:13 tron Exp $	*/
+/*	$NetBSD: db_common.c,v 1.1.1.3.10.1 2013/02/25 00:27:17 tls Exp $	*/
 
 /*++
 /* NAME
@@ -51,6 +51,9 @@
 /*	value indicates that data-depedent '%' expansions were found in the input
 /*	template.
 /*
+/*	db_common_alloc() provides a way to use db_common_parse_domain()
+/*	etc. without prior db_common_parse() call.
+/*
 /*	\fIdb_common_expand\fR expands the specifiers in \fIformat\fR.
 /*	When the input data lacks all fields needed for the expansion, zero
 /*	is returned and the query or result should be skipped. Otherwise
@@ -86,10 +89,10 @@
 /*	If \fIkey\fR is a fully qualified address, the domain part of the
 /*	address.  Otherwise the query against the database is suppressed and
 /*	the lookup returns no results.
-/*
 /* .PP
-/*	\fIdb_common_check_domain\fR checks domain list so that query optimization
-/*	can be performed
+/*	\fIdb_common_check_domain\fR() checks the domain list so
+/*	that query optimization can be performed. The result is >0
+/*	(match found), 0 (no match), or <0 (dictionary error code).
 /*
 /* .PP
 /*	\fIdb_common_sql_build_query\fR builds the "default"(backwards compatible)
@@ -165,6 +168,20 @@ typedef struct {
     int     nparts;
 } DB_COMMON_CTX;
 
+/* db_common_alloc - allocate db_common context */
+
+void   *db_common_alloc(DICT *dict)
+{
+    DB_COMMON_CTX *ctx;
+
+    ctx = (DB_COMMON_CTX *) mymalloc(sizeof *ctx);
+    ctx->dict = dict;
+    ctx->domain = 0;
+    ctx->flags = 0;
+    ctx->nparts = 0;
+    return ((void *) ctx);
+}
+
 /* db_common_parse - validate query or result template */
 
 int     db_common_parse(DICT *dict, void **ctxPtr, const char *format, int query)
@@ -173,13 +190,9 @@ int     db_common_parse(DICT *dict, void **ctxPtr, const char *format, int query
     const char *cp;
     int     dynamic = 0;
 
-    if (ctx == 0) {
-	ctx = (DB_COMMON_CTX *) (*ctxPtr = mymalloc(sizeof *ctx));
-	ctx->dict = dict;
-	ctx->domain = 0;
-	ctx->flags = 0;
-	ctx->nparts = 0;
-    }
+    if (ctx == 0)
+	ctx = (DB_COMMON_CTX *) (*ctxPtr = db_common_alloc(dict));
+
     for (cp = format; *cp; ++cp)
 	if (*cp == '%')
 	    switch (*++cp) {
@@ -245,7 +258,7 @@ void    db_common_parse_domain(CFG_PARSER *parser, void *ctxPtr)
 
     domainlist = cfg_get_str(parser, "domain", "", 0, 0);
     if (*domainlist) {
-	ctx->domain = string_list_init(MATCH_FLAG_NONE, domainlist);
+	ctx->domain = string_list_init(MATCH_FLAG_RETURN, domainlist);
 	if (ctx->domain == 0)
 
 	    /*
@@ -517,7 +530,7 @@ int     db_common_check_domain(void *ctxPtr, const char *addr)
 	if (domain == NULL || domain == addr + 1)
 	    return (0);
 	if (match_list_match(ctx->domain, domain) == 0)
-	    return (0);
+	    return (ctx->domain->error);
     }
     return (1);
 }

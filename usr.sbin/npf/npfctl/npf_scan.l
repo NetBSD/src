@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.5.2.1 2012/11/20 03:03:03 tls Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.5.2.2 2013/02/25 00:30:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -41,6 +41,42 @@ int	yycolumn;
 
 #define	YY_USER_ACTION	yycolumn += yyleng;
 
+extern int		yyparsetarget;
+extern int		yylineno;
+extern const char *	yyfilename;
+extern int		yyparse(void);
+extern void		yyrestart(FILE *);
+
+void
+npfctl_parse_file(const char *name)
+{
+	FILE *fp;
+
+	fp = fopen(name, "r");
+	if (fp == NULL) {
+		err(EXIT_FAILURE, "open '%s'", name);
+	}
+	yyparsetarget = NPFCTL_PARSE_FILE;
+	yyrestart(fp);
+	yylineno = 1;
+	yycolumn = 0;
+	yyfilename = name;
+	yyparse();
+	fclose(fp);
+}
+
+void
+npfctl_parse_string(const char *str)
+{
+	YY_BUFFER_STATE bs;
+
+	yyparsetarget = NPFCTL_PARSE_STRING;
+	bs = yy_scan_string(str);
+	yyfilename = "stdin";
+	yyparse();
+	yy_delete_buffer(bs);
+}
+
 %}
 
 %option noyywrap nounput noinput
@@ -71,6 +107,7 @@ group			return GROUP;
 default			return DEFAULT;
 in			return IN;
 out			return OUT;
+forw			return FORW;
 interface		return INTERFACE;
 all			return ALL;
 block			return BLOCK;
@@ -80,6 +117,7 @@ apply			return APPLY;
 final			return FINAL;
 quick			return FINAL;
 on			return ON;
+ifnet			return IFNET;
 inet6			return INET6;
 inet4			return INET;
 inet			return INET;
@@ -92,6 +130,7 @@ ipv6-icmp		{ yylval.num = IPPROTO_ICMPV6; return ICMP6; }
 return-rst		return RETURNRST;
 return-icmp		return RETURNICMP;
 return			return RETURN;
+ruleset			return GROUP;
 from			return FROM;
 to			return TO;
 port			return PORT;

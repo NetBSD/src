@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.457.2.1 2012/11/20 03:02:45 tls Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.457.2.2 2013/02/25 00:29:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.457.2.1 2012/11/20 03:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.457.2.2 2013/02/25 00:29:57 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -181,18 +181,11 @@ fd_nameiat(struct lwp *l, int fdat, struct nameidata *ndp)
 		if ((error = fd_getvnode(fdat, &dfp)) != 0)
 			goto out;
 
-		if (!(dfp->f_flag & FSEARCH)) {
-			error = VOP_ACCESS(dfp->f_data, VEXEC, l->l_cred);
-			if (error)
-				goto cleanup;
-		}
-
 		NDAT(ndp, dfp->f_data);
 	}
 
 	error = namei(ndp);
 
-cleanup:
 	if (fdat != AT_FDCWD)
 		fd_putfile(fdat);
 out:
@@ -211,12 +204,6 @@ fd_nameiat_simple_user(struct lwp *l, int fdat, const char *path,
 		if ((error = fd_getvnode(fdat, &dfp)) != 0)
 			goto out;
 
-		if (!(dfp->f_flag & FSEARCH)) {
-			error = VOP_ACCESS(dfp->f_data, VEXEC, l->l_cred);
-			if (error)
-				goto cleanup;
-		}
-
 		dvp = dfp->f_data;
 	} else {
 		dvp = NULL;
@@ -224,7 +211,6 @@ fd_nameiat_simple_user(struct lwp *l, int fdat, const char *path,
 
 	error = nameiat_simple_user(dvp, path, sflags, vp_ret);
 
-cleanup:
 	if (fdat != AT_FDCWD)
 		fd_putfile(fdat);
 out:
@@ -1573,6 +1559,10 @@ do_open(lwp_t *l, struct vnode *dvp, struct pathbuf *pb, int open_flags,
 	int indx, error;
 	struct nameidata nd;
 
+	if (open_flags & O_SEARCH) {
+		open_flags &= ~(int)O_SEARCH;
+	}
+
 	flags = FFLAGS(open_flags);
 	if ((flags & (FREAD | FWRITE)) == 0)
 		return EINVAL;
@@ -1637,7 +1627,6 @@ fd_open(const char *path, int open_flags, int open_mode, int *fd)
 /*
  * Check permissions, allocate an open file structure,
  * and call the device open routine if any.
- * XXX implement O_SEARCH
  */
 static int
 do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
@@ -1658,17 +1647,10 @@ do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
 			goto out;
 
 		dvp = dfp->f_data;
-
-		if (!(dfp->f_flag & FSEARCH)) {
-			error = VOP_ACCESS(dfp->f_data, VEXEC, l->l_cred);
-			if (error)
-				goto cleanup;
-		}
 	}
 
 	error = do_open(l, dvp, pb, flags, mode, fd);
 
-cleanup:
 	if (dfp != NULL)
 		fd_putfile(fdat);
 out:
@@ -1981,6 +1963,10 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
 	    0, NULL, NULL, NULL)))
 		return (error);
+
+	if (oflags & O_SEARCH) {
+		oflags &= ~(int)O_SEARCH;
+	}
 
 	flags = FFLAGS(oflags);
 	if ((flags & (FREAD | FWRITE)) == 0)
@@ -3115,14 +3101,19 @@ sys_fstatat(struct lwp *l, const struct sys_fstatat_args *uap,
 		syscallarg(int) flag;
 	} */
 	unsigned int nd_flag;
+	struct stat sb;
+	int error;
 
 	if (SCARG(uap, flag) & AT_SYMLINK_NOFOLLOW)
 		nd_flag = NOFOLLOW;
 	else
 		nd_flag = FOLLOW;
 
-	return do_sys_statat(l, SCARG(uap, fd), SCARG(uap, path), nd_flag, 
-	    SCARG(uap, buf));
+	error = do_sys_statat(l, SCARG(uap, fd), SCARG(uap, path), nd_flag, 
+	    &sb);
+	if (error)
+		return error;
+	return copyout(&sb, SCARG(uap, buf), sizeof(sb));
 }
 
 /*

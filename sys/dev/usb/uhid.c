@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.88 2012/06/10 06:15:54 mrg Exp $	*/
+/*	$NetBSD: uhid.c,v 1.88.2.1 2013/02/25 00:29:39 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,9 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.88 2012/06/10 06:15:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.88.2.1 2013/02/25 00:29:39 tls Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

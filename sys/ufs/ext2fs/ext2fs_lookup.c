@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.70.2.1 2012/11/20 03:02:53 tls Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.70.2.2 2013/02/25 00:30:14 tls Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.70.2.1 2012/11/20 03:02:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.70.2.2 2013/02/25 00:30:14 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1045,7 +1045,7 @@ ext2fs_checkpath(struct inode *source, struct inode *target,
 		error = EEXIST;
 		goto out;
 	}
-	rootino = ROOTINO;
+	rootino = UFS_ROOTINO;
 	error = 0;
 	if (target->i_number == rootino)
 		goto out;

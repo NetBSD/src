@@ -1,4 +1,4 @@
-/*	$NetBSD: maildir.c,v 1.1.1.1 2009/06/23 10:09:02 tron Exp $	*/
+/*	$NetBSD: maildir.c,v 1.1.1.1.16.1 2013/02/25 00:27:33 tls Exp $	*/
 
 /*++
 /* NAME
@@ -54,6 +54,7 @@
 #include <set_eugid.h>
 #include <get_hostname.h>
 #include <sane_fsops.h>
+#include <warn_stat.h>
 
 /* Global library. */
 

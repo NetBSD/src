@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.298.2.1 2012/10/17 01:36:13 tls Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.298.2.2 2013/02/25 00:29:30 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.298.2.1 2012/10/17 01:36:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.298.2.2 2013/02/25 00:29:30 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -423,7 +423,7 @@ rf_autoconfig(device_t self)
 	config_sets = rf_create_auto_sets(ac_list);
 
 	/*
-	 * 3. Evaluate each set andconfigure the valid ones.
+	 * 3. Evaluate each set and configure the valid ones.
 	 * This gets done in rf_buildroothack().
 	 */
 	rf_buildroothack(config_sets);
@@ -1426,7 +1426,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		    rf_ds_reconstructing) {
 			printf("raid%d: Unable to reconstruct to disk at:\n",
 			       raidPtr->raidid);
-			printf("raid%d:    Col: %d   Reconstruction already occuring!\n", raidPtr->raidid, column);
+			printf("raid%d:    Col: %d   Reconstruction already occurring!\n", raidPtr->raidid, column);
 
 			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
@@ -3255,7 +3255,7 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel, uint64_t numsecs)
  * For reasons yet unknown, some old component labels have garbage in
  * the newer numBlocksHi region, and this causes lossage.  Since those
  * disks will also have numsecs set to less than 32 bits of sectors,
- * we can determine when this corruption has occured, and fix it.
+ * we can determine when this corruption has occurred, and fix it.
  *
  * The exact same problem, with the same unknown reason, happens to
  * the partitionSizeHi member as well.
@@ -3390,7 +3390,7 @@ rf_does_it_fit(RF_ConfigSet_t *cset, RF_AutoConfig_t *ac)
 	/* note that we are not checking partitionSize here..
 
 	   Note that we are also not checking the mod_counters here.
-	   If everything else matches execpt the mod_counter, that's
+	   If everything else matches except the mod_counter, that's
 	   good enough for this test.  We will deal with the mod_counters
 	   a little later in the autoconfiguration process.
 

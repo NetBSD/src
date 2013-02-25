@@ -1,16 +1,34 @@
-#	$NetBSD: Makefile,v 1.156.2.1 2012/11/20 03:02:56 tls Exp $
+#	$NetBSD: Makefile,v 1.156.2.2 2013/02/25 00:30:27 tls Exp $
 
 .include <bsd.own.mk>
+.include <bsd.endian.mk>
 
 # Make sure that the ordered build/install processing applies when using
 # plain make.
 .MAIN: build_install
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
+# TOOLDIR must be valid, unless MKTOOLS=no
+.if ${MKTOOLS:Uyes} != "no"
+.if "${TOOLDIR}" == ""
+.error "TOOLDIR is undefined or empty"
+.elif "${TOOLDIR:tW:M/*}" == ""
+.error "TOOLDIR is not an absolute path: ${TOOLDIR}"
+#.elif !exists(TOOLDIR) # XXX .exists fails for directories
+#.error "TOOLDIR does not exist: ${TOOLDIR}"
+.endif
+.endif # MKTOOLS != no
+
+# TOOLS_BUILDRUMP == yes builds only the subset of the tools required
+# for building rump kernels and the hypervisor.  It is typically used
+# when building rump kernels targeted for non-NetBSD systems (via
+# buildrump.sh), and should not be set for a regular "make build".
+TOOLS_BUILDRUMP?=no
+
+.if ${TOOLCHAIN_MISSING} == "no"
+.if defined(HAVE_GCC)
 TOOLCHAIN_BITS= gmake .WAIT
 .endif
 
-.if ${TOOLCHAIN_MISSING} == "no"
 .if defined(HAVE_GCC)
 .if ${HAVE_GCC} >= 45
 TOOLCHAIN_BITS+= gmp .WAIT
@@ -50,7 +68,7 @@ DTRACE_BITS=
 .if ${MKDTRACE} != "no"
 DTRACE_BITS+= .WAIT libelf
 DTRACE_BITS+= .WAIT libdwarf
-DTRACE_BITS+= .WAIT libctf 
+DTRACE_BITS+= .WAIT libctf
 DTRACE_BITS+= .WAIT ctfconvert ctfmerge
 .endif
 
@@ -59,22 +77,43 @@ LINT_BITS=
 LINT_BITS= lint lint2
 .endif
 
+# All of host-mkdep, compat, and binstall are needed before anything
+# else.  Within this group, they must be built in a specific order, and
+# all of them must be built before any of them is installed.  They may
+# be installed in any order.  This can't be expressed using the .WAIT
+# notation inside the SUBDIR list.
+#
+# XXX .ORDER does not work when multiple targets are passed on the
+# make command line without "-j", so use dependencies in addition to .ORDER.
+#
+.ORDER: dependall-host-mkdep dependall-compat dependall-binstall
+.if make(dependall-host-mkdep) && make(dependall-compat)
+dependall-compat: dependall-host-mkdep
+.endif
+.if make(dependall-compat) && make(dependall-binstall)
+dependall-binstall: dependall-compat
+.endif
+
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
-SUBDIR=	host-mkdep .WAIT compat .WAIT \
-	binstall .WAIT mktemp .WAIT sed .WAIT \
-		cap_mkdb crunchgen ctags genassym gencat hexdump join \
+# See above for special treatment for host-mkdep, compat, and binstall.
+#
+SUBDIR=	host-mkdep compat binstall \
+	.WAIT mktemp .WAIT sed .WAIT
+.if ${TOOLS_BUILDRUMP} == "no"
+SUBDIR+= cap_mkdb crunchgen ctags genassym gencat hexdump \
 		${LINT_BITS} \
-		lorder makewhatis mkdep mtree nbperf .WAIT rpcgen tsort \
-		uudecode m4 \
-	.WAIT texinfo \
-	.WAIT yacc \
-	.WAIT awk \
+		makewhatis mtree nbperf .WAIT rpcgen uudecode
+.endif
+
+SUBDIR+= join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
+
+.if ${TOOLS_BUILDRUMP} == "no"
+SUBDIR += .WAIT texinfo \
 	.WAIT tic \
-	.WAIT lex \
 	.WAIT pax \
 	.WAIT ${TOOLCHAIN_BITS} \
 	${DTRACE_BITS} \
-		asn1_compile cat cksum compile_et config db \
+		asn1_compile cat cksum compile_et db \
 		file lint1 slc \
 		makefs .WAIT menuc mkcsmapper mkesdb mklocale mknod msgc \
 		.WAIT disklabel \
@@ -82,6 +121,8 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		.WAIT fdisk \
 		.WAIT installboot \
 		pwd_mkdb stat strfile sunlabel zic
+.endif
+SUBDIR+= .WAIT config
 
 .if ${MKLLVM} != "no"
 SUBDIR+= \
@@ -99,6 +140,8 @@ SUBDIR+=	groff
 .  endif
 SUBDIR+=	mandoc
 .endif
+
+.if ${TOOLS_BUILDRUMP} == "no"
 
 .if ${MKMAINTAINERTOOLS:Uno} != "no"
 SUBDIR+=	autoconf .WAIT gettext
@@ -154,7 +197,9 @@ SUBDIR+=	amiga-txlt
 SUBDIR+=	hp300-mkboot
 .endif
 
-.if ${MACHINE} == "evbarm"
+.if ${MACHINE} == "evbarm" \
+    && ${MACHINE_CPU} == "arm" \
+    && ${TARGET_ENDIANNESS} == "1234"
 SUBDIR+=	elftosb
 .endif
 
@@ -162,6 +207,8 @@ SUBDIR+=	elftosb
     ${MACHINE} == "evbppc" || ${MACHINE} == "sandpoint"
 SUBDIR+=	mkubootimage
 .endif
+
+.endif # TOOLCHAIN_BUILDRUMP
 
 check_MKTOOLS: .PHONY .NOTMAIN
 .if ${MKTOOLS:Uyes} == "no"
@@ -172,12 +219,8 @@ check_MKTOOLS: .PHONY .NOTMAIN
 .endif
 
 .if ${MKTOOLS:Uyes} == "no" || ${USETOOLS} != "yes"	# {
+SUBDIR= # empty
 realall realdepend install: check_MKTOOLS
-
-.for dir in ${SUBDIR:N.WAIT}
-all-${dir} depend-${dir} dependall-${dir} install-${dir}:
-	@true
-.endfor
 .endif							# }
 
 .include <bsd.subdir.mk>
@@ -188,7 +231,7 @@ all-${dir} depend-${dir} dependall-${dir} install-${dir}:
 .  if exists(PREVIOUSTOOLDIR)
 PREVIOUSTOOLDIR!=	cat PREVIOUSTOOLDIR
 .  else
-PREVIOUSTOOLDIR=	
+PREVIOUSTOOLDIR=
 .  endif
 .endif
 

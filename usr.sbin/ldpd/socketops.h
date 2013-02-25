@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.h,v 1.2.8.1 2012/11/20 03:03:02 tls Exp $ */
+/* $NetBSD: socketops.h,v 1.2.8.2 2013/02/25 00:30:43 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -56,10 +56,17 @@ int	send_tlv(struct ldp_peer *, struct tlv *);
 int	send_addresses(struct ldp_peer *);
 
 struct	hello_info {
-	struct in_addr address, transport_address, ldp_id;
+	union sockunion transport_address;
+	struct in_addr ldp_id;
 	int keepalive;
 	SLIST_ENTRY(hello_info) infos;
 };
 SLIST_HEAD(,hello_info) hello_info_head;
+
+struct	hello_socket {
+	int type, socket;
+	SLIST_ENTRY(hello_socket) listentry;
+};
+SLIST_HEAD(,hello_socket) hello_socket_head;
 
 #endif	/* !_SOCKETOPS_H_ */

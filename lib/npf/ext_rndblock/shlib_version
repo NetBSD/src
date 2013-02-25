@@ -1,0 +1,4 @@
+# $NetBSD: shlib_version,v 1.1.8.2 2013/02/25 00:28:02 tls Exp $
+
+major=0
+minor=0

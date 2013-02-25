@@ -1,4 +1,4 @@
-/*	$NetBSD: mbufs.c,v 1.15 2009/04/13 23:20:27 lukem Exp $	*/
+/*	$NetBSD: mbufs.c,v 1.15.12.1 2013/02/25 00:30:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,37 +34,24 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: mbufs.c,v 1.15 2009/04/13 23:20:27 lukem Exp $");
+__RCSID("$NetBSD: mbufs.c,v 1.15.12.1 2013/02/25 00:30:39 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
+#define MBUFTYPES
 #include <sys/mbuf.h>
+#include <sys/sysctl.h>
 
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 
 #include "systat.h"
 #include "extern.h"
 
 static struct mbstat *mb;
 
-const char *mtnames[] = {
-	"free",
-	"data",
-	"headers",
-	"sockets",
-	"pcbs",
-	"routes",
-	"hosts",
-	"arps",
-	"socknames",
-	"zombies",
-	"sockopts",
-	"frags",
-	"rights",
-	"ifaddrs",
-};
-
-#define	NNAMES	(sizeof (mtnames) / sizeof (mtnames[0]))
+#define	NNAMES	__arraycount(mbuftypes)
 
 WINDOW *
 openmbufs(void)
@@ -101,7 +88,7 @@ showmbufs(void)
 
 	if (mb == 0)
 		return;
-	for (j = 0; j < getmaxy(wnd); j++) {
+	for (j = 1; j <= getmaxy(wnd); j++) {
 		max = 0, idx = -1; 
 		for (i = 0; i < getmaxy(wnd); i++)
 			if (mb->m_mtypes[i] > max) {
@@ -110,11 +97,11 @@ showmbufs(void)
 			}
 		if (max == 0)
 			break;
-		if (j > (int)NNAMES)
-			mvwprintw(wnd, 1+j, 0, "%10d", idx);
+		if (j >= (int)NNAMES)
+			mvwprintw(wnd, j, 0, "%10d", idx);
 		else
-			mvwprintw(wnd, 1+j, 0, "%-10.10s", mtnames[idx]);
-		wmove(wnd, 1 + j, 10);
+			mvwprintw(wnd, j, 0, "%-10.10s", &mbuftypes[idx][2]);
+		wmove(wnd, j, 10);
 		if (max > 60) {
 			snprintf(buf, sizeof buf, " %5d", max);
 			max = 60;
@@ -127,39 +114,22 @@ showmbufs(void)
 		}
 		mb->m_mtypes[idx] = 0;
 	}
-	wmove(wnd, 1+j, 0); wclrtobot(wnd);
+	wmove(wnd, j, 0);
+	wclrtobot(wnd);
 }
-
-static struct nlist namelist[] = {
-#define	X_MBSTAT	0
-	{ .n_name = "_mbstat" },
-	{ .n_name = NULL }
-};
 
 int
 initmbufs(void)
 {
-
-	if (namelist[X_MBSTAT].n_type == 0) {
-		if (kvm_nlist(kd, namelist)) {
-			nlisterr(namelist);
-			return(0);
-		}
-		if (namelist[X_MBSTAT].n_type == 0) {
-			error("No namelist");
-			return(0);
-		}
-	}
 	if (mb == 0)
-		mb = (struct mbstat *)calloc(1, sizeof (*mb));
+		mb = calloc(1, sizeof (*mb));
 	return(1);
 }
 
 void
 fetchmbufs(void)
 {
-
-	if (namelist[X_MBSTAT].n_type == 0)
-		return;
-	NREAD(X_MBSTAT, mb, sizeof (*mb));
+	size_t len = sizeof(*mb);
+	if (sysctlbyname("kern.mbuf.stats", mb, &len, NULL, 0))
+		error("error getting \"kern.mbuf.stats\": %s", strerror(errno));
 }

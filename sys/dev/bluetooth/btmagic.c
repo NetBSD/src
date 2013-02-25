@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.3 2012/06/02 21:36:43 dsl Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.3.2.1 2013/02/25 00:29:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.3 2012/06/02 21:36:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.3.2.1 2013/02/25 00:29:12 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -272,6 +272,7 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 	struct wsmousedev_attach_args wsma;
 	const struct sysctlnode *node;
 	prop_object_t obj;
+	int err;
 
 	/*
 	 * Init softc
@@ -306,7 +307,8 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 
 		aprint_verbose(" %s %s", BTDEVmode,
 		    prop_string_cstring_nocopy(obj));
-	}
+	} else
+		sockopt_setint(&sc->sc_mode, 0);
 
 	aprint_normal(": 3 buttons, W and Z dirs\n");
 	aprint_naive("\n");
@@ -391,7 +393,8 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 	 * start bluetooth connections
 	 */
 	mutex_enter(bt_lock);
-	btmagic_listen(sc);
+	if ((err = btmagic_listen(sc)) != 0)
+		aprint_error_dev(self, "failed to listen (%d)\n", err);
 	btmagic_connect(sc);
 	mutex_exit(bt_lock);
 }
@@ -532,8 +535,11 @@ btmagic_connect(struct btmagic_softc *sc)
 	}
 
 	err = l2cap_setopt(sc->sc_ctl, &sc->sc_mode);
-	if (err)
+	if (err) {
+		printf("%s: l2cap_setopt failed (%d)\n",
+		    device_xname(sc->sc_dev), err);
 		return err;
+	}
 
 	bdaddr_copy(&sa.bt_bdaddr, &sc->sc_laddr);
 	err = l2cap_bind(sc->sc_ctl, &sa);
@@ -884,7 +890,7 @@ btmagic_ctl_disconnected(void *arg, int err)
 	}
 
 	if (sc->sc_int == NULL) {
-		printf("%s: disconnected\n", device_xname(sc->sc_dev));
+		printf("%s: disconnected (%d)\n", device_xname(sc->sc_dev), err);
 		CLR(sc->sc_flags, BTMAGIC_CONNECTING);
 		sc->sc_state = BTMAGIC_WAIT_CTL;
 	} else {
@@ -910,7 +916,7 @@ btmagic_int_disconnected(void *arg, int err)
 	}
 
 	if (sc->sc_ctl == NULL) {
-		printf("%s: disconnected\n", device_xname(sc->sc_dev));
+		printf("%s: disconnected (%d)\n", device_xname(sc->sc_dev), err);
 		CLR(sc->sc_flags, BTMAGIC_CONNECTING);
 		sc->sc_state = BTMAGIC_WAIT_CTL;
 	} else {

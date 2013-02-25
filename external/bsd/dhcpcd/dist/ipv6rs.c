@@ -186,20 +186,22 @@ ipv6rs_open(void)
 static int
 ipv6rs_makeprobe(struct interface *ifp)
 {
+	struct rs_state *state;
 	struct nd_router_solicit *rs;
 	struct nd_opt_hdr *nd;
 
-	free(ifp->rs);
-	ifp->rslen = sizeof(*rs) + ROUNDUP8(ifp->hwlen + 2);
-	ifp->rs = xzalloc(ifp->rslen);
-	if (ifp->rs == NULL)
+	state = RS_STATE(ifp);
+	free(state->rs);
+	state->rslen = sizeof(*rs) + ROUNDUP8(ifp->hwlen + 2);
+	state->rs = xzalloc(state->rslen);
+	if (state->rs == NULL)
 		return -1;
-	rs = (struct nd_router_solicit *)(void *)ifp->rs;
+	rs = (struct nd_router_solicit *)(void *)state->rs;
 	rs->nd_rs_type = ND_ROUTER_SOLICIT;
 	rs->nd_rs_code = 0;
 	rs->nd_rs_cksum = 0;
 	rs->nd_rs_reserved = 0;
-	nd = (struct nd_opt_hdr *)(ifp->rs + sizeof(*rs));
+	nd = (struct nd_opt_hdr *)(state->rs + sizeof(*rs));
 	nd->nd_opt_type = ND_OPT_SOURCE_LINKADDR;
 	nd->nd_opt_len = (ROUNDUP8(ifp->hwlen + 2)) >> 3;
 	memcpy(nd + 1, ifp->hwaddr, ifp->hwlen);
@@ -210,6 +212,7 @@ static void
 ipv6rs_sendprobe(void *arg)
 {
 	struct interface *ifp = arg;
+	struct rs_state *state;
 	struct sockaddr_in6 dst;
 	struct cmsghdr *cm;
 	struct in6_pktinfo pi;
@@ -218,10 +221,10 @@ ipv6rs_sendprobe(void *arg)
 	dst = allrouters;
 	//dst.sin6_scope_id = ifp->linkid;
 
-	ipv6rs_makeprobe(ifp);
+	state = RS_STATE(ifp);
 	sndhdr.msg_name = (caddr_t)&dst;
-	sndhdr.msg_iov[0].iov_base = ifp->rs;
-	sndhdr.msg_iov[0].iov_len = ifp->rslen;
+	sndhdr.msg_iov[0].iov_base = state->rs;
+	sndhdr.msg_iov[0].iov_len = state->rslen;
 
 	/* Set the outbound interface */
 	cm = CMSG_FIRSTHDR(&sndhdr);
@@ -243,7 +246,7 @@ ipv6rs_sendprobe(void *arg)
 	if (sendmsg(sock, &sndhdr, 0) == -1)
 		syslog(LOG_ERR, "%s: sendmsg: %m", ifp->name);
 
-	if (ifp->rsprobes++ < MAX_RTR_SOLICITATIONS)
+	if (state->rsprobes++ < MAX_RTR_SOLICITATIONS)
 		add_timeout_sec(RTR_SOLICITATION_INTERVAL,
 		    ipv6rs_sendprobe, ifp);
 	else
@@ -262,6 +265,21 @@ ipv6rs_free_opts(struct ra *rap)
 	}
 }
 
+static int
+ipv6rs_addrexists(struct ipv6_addr *a)
+{
+	struct ra *rap;
+	struct ipv6_addr *ap;
+
+	TAILQ_FOREACH(rap, &ipv6_routers, next) {
+		TAILQ_FOREACH(ap, &rap->addrs, next) {
+			if (memcmp(&ap->addr, &a->addr, sizeof(a->addr)) == 0)
+				return 1;
+		}
+	}
+	return 0;
+}
+
 static void
 ipv6rs_freedrop_addrs(struct ra *rap, int drop)
 {
@@ -269,7 +287,13 @@ ipv6rs_freedrop_addrs(struct ra *rap, int drop)
 
 	while ((ap = TAILQ_FIRST(&rap->addrs))) {
 		TAILQ_REMOVE(&rap->addrs, ap, next);
-		if (drop && (options & DHCPCD_IPV6RA_OWN)) {
+		/* Only drop the address if no other RAs have assigned it.
+		 * This is safe because the RA is removed from the list
+		 * before we are called. */
+		if (drop && (options & DHCPCD_IPV6RA_OWN) &&
+		    !IN6_IS_ADDR_UNSPECIFIED(&ap->addr) &&
+		    !ipv6rs_addrexists(ap))
+		{
 			syslog(LOG_INFO, "%s: deleting address %s",
 			    rap->iface->name, ap->saddr);
 			if (del_address6(rap->iface, ap) == -1)
@@ -295,11 +319,16 @@ void ipv6rs_freedrop_ra(struct ra *rap, int drop)
 ssize_t
 ipv6rs_free(struct interface *ifp)
 {
+	struct rs_state *state;
 	struct ra *rap, *ran;
 	ssize_t n;
 
-	free(ifp->rs);
-	ifp->rs = NULL;
+	state = RS_STATE(ifp);
+	if (state) {
+		free(state->rs);
+		free(state);
+		ifp->if_data[IF_DATA_IPV6RS] = NULL;
+	}
 	n = 0;
 	TAILQ_FOREACH_SAFE(rap, &ipv6_routers, next, ran) {
 		if (rap->iface == ifp) {
@@ -313,6 +342,7 @@ ipv6rs_free(struct interface *ifp)
 static int
 rtpref(struct ra *rap)
 {
+
 	switch (rap->flags & ND_RA_FLAG_RTPREF_MASK) {
 	case ND_RA_FLAG_RTPREF_HIGH:
 		return (RTPREF_HIGH);
@@ -349,7 +379,7 @@ add_router(struct ra *router)
 void
 ipv6rs_handledata(_unused void *arg)
 {
-	ssize_t len, l, n, olen;
+	ssize_t len, l, m, n, olen;
 	struct cmsghdr *cm;
 	int hoplimit;
 	struct in6_pktinfo pkt;
@@ -370,9 +400,9 @@ ipv6rs_handledata(_unused void *arg)
 	struct nd_opt_hdr *ndo;
 	struct ra_opt *rao;
 	struct ipv6_addr *ap;
-	char *opt;
+	char *opt, *tmp;
 	struct timeval expire;
-	int has_dns, new_rap;
+	uint8_t has_prefix, has_dns, new_rap, new_data;
 
 	len = recvmsg(sock, &rcvhdr, 0);
 	if (len == -1) {
@@ -433,7 +463,8 @@ ipv6rs_handledata(_unused void *arg)
 		return;
 	}
 	TAILQ_FOREACH(rap, &ipv6_routers, next) {
-		if (memcmp(rap->from.s6_addr, from.sin6_addr.s6_addr,
+		if (ifp == rap->iface &&
+		    memcmp(rap->from.s6_addr, from.sin6_addr.s6_addr,
 		    sizeof(rap->from.s6_addr)) == 0)
 			break;
 	}
@@ -441,7 +472,7 @@ ipv6rs_handledata(_unused void *arg)
 	/* We don't want to spam the log with the fact we got an RA every
 	 * 30 seconds or so, so only spam the log if it's different. */
 	if (options & DHCPCD_DEBUG || rap == NULL ||
-	    (rap->expired || rap->data_len != len ||
+	    (rap->data_len != len ||
 	     memcmp(rap->data, (unsigned char *)icp, rap->data_len) != 0))
 	{
 		if (rap) {
@@ -451,9 +482,11 @@ ipv6rs_handledata(_unused void *arg)
 			rap->ns = NULL;
 			rap->nslen = 0;
 		}
+		new_data = 1;
 		syslog(LOG_INFO, "%s: Router Advertisement from %s",
 		    ifp->name, sfrom);
-	}
+	} else
+		new_data = 0;
 
 	if (rap == NULL) {
 		rap = xzalloc(sizeof(*rap));
@@ -483,13 +516,14 @@ ipv6rs_handledata(_unused void *arg)
 	}
 	if (nd_ra->nd_ra_retransmit)
 		rap->retrans = ntohl(nd_ra->nd_ra_retransmit);
-	rap->expired = 0;
+	if (rap->lifetime)
+		rap->expired = 0;
 
 	len -= sizeof(struct nd_router_advert);
 	p = ((uint8_t *)icp) + sizeof(struct nd_router_advert);
 	olen = 0;
 	lifetime = ~0U;
-	has_dns = 0;
+	has_prefix = has_dns = 0;
 	for (olen = 0; len > 0; p += olen, len -= olen) {
 		if ((size_t)len < sizeof(struct nd_opt_hdr)) {
 			syslog(LOG_ERR, "%s: Short option", ifp->name);
@@ -536,21 +570,41 @@ ipv6rs_handledata(_unused void *arg)
 				    sizeof(ap->prefix.s6_addr)) == 0)
 					break;
 			if (ap == NULL) {
+				/* As we haven't added the prefix before
+				 * check if we can make an address with it */
+				if (!(pi->nd_opt_pi_flags_reserved &
+				    ND_OPT_PI_FLAG_AUTO) &&
+				    !(pi->nd_opt_pi_flags_reserved &
+				    ND_OPT_PI_FLAG_ONLINK))
+					break;
 				ap = xmalloc(sizeof(*ap));
 				ap->new = 1;
+				ap->onlink = 0;
 				ap->prefix_len = pi->nd_opt_pi_prefix_len;
 				memcpy(ap->prefix.s6_addr,
 				   pi->nd_opt_pi_prefix.s6_addr,
 				   sizeof(ap->prefix.s6_addr));
-				ipv6_makeaddr(&ap->addr, ifp->name,
-				    &ap->prefix, pi->nd_opt_pi_prefix_len);
-				cbp = inet_ntop(AF_INET6, ap->addr.s6_addr,
-				    ntopbuf, INET6_ADDRSTRLEN);
-				if (cbp)
-					snprintf(ap->saddr, sizeof(ap->saddr),
-					    "%s/%d", cbp, ap->prefix_len);
-				else
+				if (pi->nd_opt_pi_flags_reserved &
+				    ND_OPT_PI_FLAG_AUTO)
+				{
+					ipv6_makeaddr(&ap->addr, ifp->name,
+					    &ap->prefix,
+					    pi->nd_opt_pi_prefix_len);
+					cbp = inet_ntop(AF_INET6,
+					    ap->addr.s6_addr,
+					    ntopbuf, INET6_ADDRSTRLEN);
+					if (cbp)
+						snprintf(ap->saddr,
+						    sizeof(ap->saddr),
+						    "%s/%d",
+						    cbp, ap->prefix_len);
+					else
+						ap->saddr[0] = '\0';
+				} else {
+					memset(ap->addr.s6_addr, 0,
+					    sizeof(ap->addr.s6_addr));
 					ap->saddr[0] = '\0';
+				}
 				TAILQ_INSERT_TAIL(&rap->addrs, ap, next);
 			} else if (ap->prefix_vltime !=
 			    ntohl(pi->nd_opt_pi_valid_time) ||
@@ -559,6 +613,10 @@ ipv6rs_handledata(_unused void *arg)
 				ap->new = 1;
 			else
 				ap->new = 0;
+			/* onlink should not change from on to off */
+			if (pi->nd_opt_pi_flags_reserved &
+			    ND_OPT_PI_FLAG_ONLINK)
+				ap->onlink = 1;
 			ap->prefix_vltime =
 			    ntohl(pi->nd_opt_pi_valid_time);
 			ap->prefix_pltime =
@@ -572,6 +630,8 @@ ipv6rs_handledata(_unused void *arg)
 			} else
 				opt = xstrdup(ap->saddr);
 			lifetime = ap->prefix_vltime;
+			if (lifetime > 0)
+				has_prefix = 1;
 			break;
 
 		case ND_OPT_MTU:
@@ -582,8 +642,7 @@ ipv6rs_handledata(_unused void *arg)
 				    ifp->name, mtuv);
 				break;
 			}
-			if (rap->mtu == 0 || mtuv < rap->mtu)
-				rap->mtu = mtuv;
+			rap->mtu = mtuv;
 			snprintf(buf, sizeof(buf), "%d", mtuv);
 			opt = xstrdup(buf);
 			break;
@@ -596,27 +655,36 @@ ipv6rs_handledata(_unused void *arg)
 			    nd_opt_rdnss_lifetime);
 			op += sizeof(rdnss->nd_opt_rdnss_lifetime);
 			l = 0;
-			for (n = ndo->nd_opt_len - 1; n > 1; n -= 2) {
-				memcpy(&addr.s6_addr, op, sizeof(addr.s6_addr));
-				cbp = inet_ntop(AF_INET6, &addr,
-				    ntopbuf, INET6_ADDRSTRLEN);
-				if (cbp == NULL) {
-					syslog(LOG_ERR,
-					    "%s: invalid RDNSS address",
+			for (n = ndo->nd_opt_len - 1; n > 1; n -= 2,
+			    op += sizeof(addr.s6_addr))
+			{
+				m = ipv6_printaddr(NULL, 0, op, ifp->name);
+				if (m != -1)
+					l += m + 1;
+			}
+			op = (uint8_t *)ndo;
+			op += offsetof(struct nd_opt_rdnss,
+			    nd_opt_rdnss_lifetime);
+			op += sizeof(rdnss->nd_opt_rdnss_lifetime);
+			tmp = opt = malloc(l);
+			if (opt) {
+				for (n = ndo->nd_opt_len - 1; n > 1; n -= 2,
+				    op += sizeof(addr.s6_addr))
+				{
+					m = ipv6_printaddr(tmp, l, op,
 					    ifp->name);
-				} else {
-					if (opt) {
-						l = strlen(opt);
-						opt = xrealloc(opt,
-							l + strlen(cbp) + 2);
-						opt[l] = ' ';
-						strcpy(opt + l + 1, cbp);
-					} else
-						opt = xstrdup(cbp);
-					if (lifetime > 0)
-						has_dns = 1;
+					if (m != -1) {
+						l -= (m + 1);
+						tmp += m;
+						*tmp++ = ' ';
+						if (lifetime > 0)
+							has_dns = 1;
+					}
 				}
-		        	op += sizeof(addr.s6_addr);
+				if (tmp != opt)
+					(*--tmp) = '\0';
+				else
+					*opt = '\0';
 			}
 			break;
 			
@@ -632,8 +700,14 @@ ipv6rs_handledata(_unused void *arg)
 				syslog(LOG_ERR, "%s: invalid DNSSL option",
 				    ifp->name);
 			} else {
-				opt = xmalloc(l);
-				decode_rfc3397(opt, l, n, op);
+				tmp = xmalloc(l);
+				decode_rfc3397(tmp, l, n, op);
+				n = print_string(NULL, 0,
+				    l - 1, (const uint8_t *)tmp);
+				opt = xmalloc(n);
+				print_string(opt, n,
+				    l - 1, (const uint8_t *)tmp);
+				free(tmp);
 			}
 			break;
 		}
@@ -674,6 +748,9 @@ ipv6rs_handledata(_unused void *arg)
 		add_router(rap);
 	if (options & DHCPCD_IPV6RA_OWN && !(options & DHCPCD_TEST)) {
 		TAILQ_FOREACH(ap, &rap->addrs, next) {
+			if (ap->prefix_vltime == 0 ||
+			    IN6_IS_ADDR_UNSPECIFIED(&ap->addr))
+				continue;
 			syslog(ap->new ? LOG_INFO : LOG_DEBUG,
 			    "%s: adding address %s",
 			    ifp->name, ap->saddr);
@@ -688,22 +765,24 @@ ipv6rs_handledata(_unused void *arg)
 				    ap->prefix_pltime);
 		}
 	}
-	if (!(options & DHCPCD_TEST))
-		ipv6_build_routes();
-	run_script_reason(ifp, options & DHCPCD_TEST ? "TEST" : "ROUTERADVERT");
-	if (options & DHCPCD_TEST)
-		exit(EXIT_SUCCESS);
+	if (options & DHCPCD_TEST) {
+		run_script_reason(ifp, "TEST");
+		goto handle_flag;
+	}
+	ipv6_build_routes();
+        /* We will get run by the expire function */
+	if (rap->lifetime)
+		run_script_reason(ifp, "ROUTERADVERT");
 
 	/* If we don't require RDNSS then set has_dns = 1 so we fork */
 	if (!(ifp->state->options->options & DHCPCD_IPV6RA_REQRDNSS))
 		has_dns = 1;
 
-	if (has_dns)
+	if (has_prefix && has_dns)
 		delete_q_timeout(0, handle_exit_timeout, NULL);
 	delete_timeout(NULL, ifp);
 	delete_timeout(NULL, rap); /* reachable timer */
-	ipv6rs_expire(ifp);
-	if (has_dns)
+	if (has_prefix && has_dns)
 		daemonise();
 	else if (options & DHCPCD_DAEMONISE && !(options & DHCPCD_DAEMONISED))
 		syslog(LOG_WARNING,
@@ -718,6 +797,25 @@ ipv6rs_handledata(_unused void *arg)
 		rap->nsprobes = 0;
 		ipv6ns_sendprobe(rap);
 	}
+
+handle_flag:
+	if (rap->flags & (ND_RA_FLAG_MANAGED | ND_RA_FLAG_OTHER)) {
+		if (new_data)
+			syslog(LOG_WARNING,
+			    "%s: no support for DHCPv6 management",
+			    ifp->name);
+		if (options & DHCPCD_TEST)
+			exit(EXIT_SUCCESS);
+	} else {
+		if (new_data)
+			syslog(LOG_DEBUG, "%s: No DHCPv6 instruction in RA",
+			    ifp->name);
+		if (options & DHCPCD_TEST)
+			exit(EXIT_SUCCESS);
+	}
+
+	/* Expire should be called last as the rap object could be destroyed */
+	ipv6rs_expire(ifp);
 }
 
 int
@@ -735,12 +833,14 @@ ssize_t
 ipv6rs_env(char **env, const char *prefix, const struct interface *ifp)
 {
 	ssize_t l;
+	size_t len;
 	struct timeval now;
 	const struct ra *rap;
 	const struct ra_opt *rao;
 	int i;
 	char buffer[32];
 	const char *optn;
+	char **pref, **mtu, **rdnss, **dnssl, ***var, *new;
 
 	i = 0;
 	l = 0;
@@ -756,30 +856,75 @@ ipv6rs_env(char **env, const char *prefix, const struct interface *ifp)
 		}
 		l++;
 
+		pref = mtu = rdnss = dnssl = NULL;
 		TAILQ_FOREACH(rao, &rap->options, next) {
 			if (rao->option == NULL)
 				continue;
-			l++;
-			if (env == NULL)
-				continue;
-			switch (rao->type) {
+			var = NULL;
+			switch(rao->type) {
 			case ND_OPT_PREFIX_INFORMATION:
 				optn = "prefix";
+				var = &pref;
 				break;
 			case ND_OPT_MTU:
 				optn = "mtu";
+				var = &mtu;
 				break;
 			case ND_OPT_RDNSS:
 				optn = "rdnss";
+				var = &rdnss;	
 				break;
 			case ND_OPT_DNSSL:
 				optn = "dnssl";
+				var = &dnssl;
 				break;
 			default:
 				continue;
 			}
-			snprintf(buffer, sizeof(buffer), "ra%d_%s", i, optn);
-			setvar(&env, prefix, buffer, rao->option);
+			if (*var == NULL) {
+				*var = env ? env : &new;
+				l++;
+			} else if (env) {
+				/* With single only options, last one takes
+				 * precedence */
+				if (rao->type == ND_OPT_MTU) {
+					new = strchr(**var, '=');
+					if (new == NULL) {
+						syslog(LOG_ERR, "new is null");
+						continue;
+					} else
+						new++;
+					len = (new - **var) + strlen(rao->option) + 1;
+					if (len > strlen(**var))
+						new = realloc(**var, len);
+					else
+						new = **var;
+					if (new) {
+						**var = new;
+						new = strchr(**var, '=');
+						if (new)
+							strcpy(new + 1, rao->option);
+						else
+							syslog(LOG_ERR, "new is null");
+					}
+					continue;
+				}
+				new = realloc(**var,
+				    strlen(**var) + 1 +
+				    strlen(rao->option) + 1);
+				if (new) {
+					**var = new;
+					new += strlen(new);
+					*new++ = ' ';
+					strcpy(new, rao->option);
+					continue;
+				}
+			}
+			if (env) {
+				snprintf(buffer, sizeof(buffer),
+				    "ra%d_%s", i, optn);
+				setvar(&env, prefix, buffer, rao->option);
+			}
 		}
 	}
 
@@ -789,14 +934,31 @@ ipv6rs_env(char **env, const char *prefix, const struct interface *ifp)
 	return l;
 }
 
+static const struct ipv6_addr *
+ipv6rs_findsameaddr(const struct ipv6_addr *ap)
+{
+	const struct ra *rap;
+	const struct ipv6_addr *a;
+
+	TAILQ_FOREACH(rap, &ipv6_routers, next) {
+		TAILQ_FOREACH(a, &rap->addrs, next) {
+			if (ap != a &&
+			    memcmp(&a->addr, &ap->addr, sizeof(ap->addr) == 0))
+				return a;
+		}
+	}
+	return NULL;
+}
+
 void
 ipv6rs_expire(void *arg)
 {
 	struct interface *ifp;
 	struct ra *rap, *ran;
+	struct ipv6_addr *ap, *apn;
 	struct ra_opt *rao, *raon;
 	struct timeval now, lt, expire, next;
-	int expired;
+	int expired, valid;
 
 	ifp = arg;
 	get_monotonic(&now);
@@ -810,32 +972,79 @@ ipv6rs_expire(void *arg)
 		lt.tv_usec = 0;
 		timeradd(&rap->received, &lt, &expire);
 		if (timercmp(&now, &expire, >)) {
-			syslog(LOG_INFO, "%s: %s: expired Router Advertisement",
-			    ifp->name, rap->sfrom);
-			rap->expired = expired = 1;
-			continue;
+			valid = 0;
+			if (!rap->expired) {
+				syslog(LOG_INFO,
+				    "%s: %s: expired default Router",
+				    ifp->name, rap->sfrom);
+				rap->expired = expired = 1;
+			}
+		} else {
+			valid = 1;
+			timersub(&expire, &now, &lt);
+			if (!timerisset(&next) || timercmp(&next, &lt, >))
+				next = lt;
 		}
-		timersub(&expire, &now, &lt);
-		if (!timerisset(&next) || timercmp(&next, &lt, >))
-			next = lt;
+
+		if (options & DHCPCD_IPV6RA_OWN) {
+			TAILQ_FOREACH_SAFE(ap, &rap->addrs, next, apn) {
+				lt.tv_sec = ap->prefix_vltime;
+				lt.tv_usec = 0;
+				timeradd(&rap->received, &lt, &expire);
+				if (timercmp(&now, &expire, >) &&
+				    ipv6rs_findsameaddr(ap) == NULL)
+				{
+					syslog(LOG_INFO,
+					    "%s: %s: expired address",
+					    ifp->name, ap->saddr);
+					TAILQ_REMOVE(&rap->addrs, ap, next);
+					free(ap);
+					/* No need to delete it as the kernel
+					 * should have done this. */
+				}
+			}
+		}
 	
 		TAILQ_FOREACH_SAFE(rao, &rap->options, next, raon) {
+			if (rap->expired) {
+				switch(rao->type) {
+				case ND_OPT_RDNSS: /* FALLTHROUGH */
+				case ND_OPT_DNSSL:
+					/* RFC6018 end of section 5.2 states
+					 * that if tha RA has a lifetime of 0
+					 * then we should expire these
+					 * options */
+					TAILQ_REMOVE(&rap->options, rao, next);
+					expired = 1;
+					free(rao->option);
+					free(rao);
+					continue;
+				}
+			}
 			if (!timerisset(&rao->expire))
 				continue;
 			if (timercmp(&now, &rao->expire, >)) {
-				syslog(LOG_INFO,
-				    "%s: %s: expired option %d",
-				    ifp->name, rap->sfrom, rao->type);
+				/* Expired prefixes are logged above */
+				if (rao->type != ND_OPT_PREFIX_INFORMATION)
+					syslog(LOG_INFO,
+					    "%s: %s: expired option %d",
+					    ifp->name, rap->sfrom, rao->type);
 				TAILQ_REMOVE(&rap->options, rao, next);
 				expired = 1;
 				free(rao->option);
 				free(rao);
 				continue;
 			}
+			valid = 1;
 			timersub(&rao->expire, &now, &lt);
 			if (!timerisset(&next) || timercmp(&next, &lt, >))
 				next = lt;
 		}
+
+		/* No valid lifetimes are left on the RA, so we might
+		 * as well punt it. */
+		if (!valid)
+			ipv6rs_free_ra(rap);
 	}
 
 	if (timerisset(&next))
@@ -849,16 +1058,23 @@ ipv6rs_expire(void *arg)
 int
 ipv6rs_start(struct interface *ifp)
 {
+	struct rs_state *state;
 
 	delete_timeout(NULL, ifp);
+
+	state = RS_STATE(ifp);
+	if (state == NULL) {
+		ifp->if_data[IF_DATA_IPV6RS] = xzalloc(sizeof(*state));
+		state = RS_STATE(ifp);
+	}
 
 	/* Always make a new probe as the underlying hardware
 	 * address could have changed. */
 	ipv6rs_makeprobe(ifp);
-	if (ifp->rs == NULL)
+	if (state->rs == NULL)
 		return -1;
 
-	ifp->rsprobes = 0;
+	state->rsprobes = 0;
 	ipv6rs_sendprobe(ifp);
 	return 0;
 }
@@ -866,14 +1082,30 @@ ipv6rs_start(struct interface *ifp)
 void
 ipv6rs_drop(struct interface *ifp)
 {
-	struct ra *rap;
+	struct ra *rap, *ran;
 	int expired = 0;
+	TAILQ_HEAD(, ipv6_addr) addrs;
 
-	TAILQ_FOREACH(rap, &ipv6_routers, next)
-		if (rap->iface == ifp)
+	delete_timeout(NULL, ifp);
+	/* We need to drop routes before addresses
+	 * We do this by moving addresses to a local list, then building
+	 * the routes and finally adding the addresses back to a RA before
+	 * dropping it. Which RA the addresses end up on does not matter. */
+	TAILQ_INIT(&addrs);
+	TAILQ_FOREACH(rap, &ipv6_routers, next) {
+		if (rap->iface == ifp) {
 			rap->expired = expired = 1;
+			TAILQ_CONCAT(&addrs, &rap->addrs, next);
+		}
+	}
 	if (expired) {
 		ipv6_build_routes();
+		TAILQ_FOREACH_SAFE(rap, &ipv6_routers, next, ran) {
+			if (rap->iface == ifp) {
+				TAILQ_CONCAT(&rap->addrs, &addrs, next);
+				ipv6rs_drop_ra(rap);
+			}
+		}
 		run_script_reason(ifp, "ROUTERADVERT");
 	}
 }

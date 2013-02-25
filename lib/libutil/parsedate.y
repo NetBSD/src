@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
 #include <string.h>
 #include <time.h>
 #include <util.h>
@@ -148,8 +149,8 @@ cvsstamp: tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUM
 	}
 	;
 
-epochdate: AT_SIGN tUNUMBER {
-            time_t    when = $2;
+epochdate: AT_SIGN at_number {
+            time_t    when = $<Number>2;
             struct tm tmbuf;
             if (gmtime_r(&when, &tmbuf) != NULL) {
 		param->yyYear = tmbuf.tm_year + 1900;
@@ -172,6 +173,8 @@ epochdate: AT_SIGN tUNUMBER {
 	    param->yyTimezone = 0;
 	}
 	;
+
+at_number : tUNUMBER | tSNUMBER ;
 
 time	: tUNUMBER tMERIDIAN {
 	    param->yyHour = $1;
@@ -590,7 +593,8 @@ Convert(
     DSTMODE	DSTmode		/* DST on/off/maybe */
 )
 {
-    struct tm tm;
+    struct tm tm = {.tm_sec = 0};
+    time_t result;
 
     /* XXX Y2K */
     if (Year < 0)
@@ -611,9 +615,11 @@ Convert(
     case DSToff: tm.tm_isdst = 0; break;
     default:     tm.tm_isdst = -1; break;
     }
-    tm.tm_gmtoff = -Timezone;
 
-    return mktime(&tm);
+    /* We rely on mktime_z(NULL, ...) working in UTC, not in local time. */
+    result = mktime_z(NULL, &tm);
+    result -= Timezone;
+    return result;
 }
 
 
@@ -880,6 +886,10 @@ parsedate(const char *p, const time_t *now, const int *zone)
     time_t		Start;
     time_t		tod, rm;
     struct dateinfo	param;
+    int			saved_errno;
+    
+    saved_errno = errno;
+    errno = 0;
 
     if (now == NULL || zone == NULL) {
         now = &nowt;
@@ -924,14 +934,16 @@ parsedate(const char *p, const time_t *now, const int *zone)
     param.yyHaveZone = 0;
 
     if (yyparse(&param, &p) || param.yyHaveTime > 1 || param.yyHaveZone > 1 ||
-	param.yyHaveDate > 1 || param.yyHaveDay > 1)
+	param.yyHaveDate > 1 || param.yyHaveDay > 1) {
+	errno = EINVAL;
 	return -1;
+    }
 
     if (param.yyHaveDate || param.yyHaveTime || param.yyHaveDay) {
 	Start = Convert(param.yyMonth, param.yyDay, param.yyYear, param.yyHour,
 	    param.yyMinutes, param.yySeconds, param.yyTimezone,
 	    param.yyMeridian, param.yyDSTmode);
-	if (Start == -1)
+	if (Start == -1 && errno != 0)
 	    return -1;
     }
     else {
@@ -942,7 +954,7 @@ parsedate(const char *p, const time_t *now, const int *zone)
 
     Start += param.yyRelSeconds;
     rm = RelativeMonth(Start, param.yyRelMonth, param.yyTimezone);
-    if (rm == -1)
+    if (rm == -1 && errno != 0)
 	return -1;
     Start += rm;
 
@@ -951,6 +963,8 @@ parsedate(const char *p, const time_t *now, const int *zone)
 	Start += tod;
     }
 
+    if (errno == 0)
+	errno = saved_errno;
     return Start;
 }
 
@@ -959,21 +973,21 @@ parsedate(const char *p, const time_t *now, const int *zone)
 
 /* ARGSUSED */
 int
-main(ac, av)
-    int		ac;
-    char	*av[];
+main(int ac, char *av[])
 {
     char	buff[128];
     time_t	d;
 
     (void)printf("Enter date, or blank line to exit.\n\t> ");
     (void)fflush(stdout);
-    while (gets(buff) && buff[0]) {
+    while (fgets(buff, sizeof(buff), stdin) && buff[0] != '\n') {
+	errno = 0;
 	d = parsedate(buff, NULL, NULL);
-	if (d == -1)
-	    (void)printf("Bad format - couldn't convert.\n");
+	if (d == -1 && errno != 0)
+	    (void)printf("Bad format - couldn't convert: %s\n",
+	        strerror(errno));
 	else
-	    (void)printf("%s", ctime(&d));
+	    (void)printf("%jd\t%s", (intmax_t)d, ctime(&d));
 	(void)printf("\t> ");
 	(void)fflush(stdout);
     }

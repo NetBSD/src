@@ -1,4 +1,4 @@
-# $NetBSD: md.zaurus,v 1.9 2011/07/19 15:12:26 dyoung Exp $
+# $NetBSD: md.zaurus,v 1.9.8.1 2013/02/25 00:24:33 tls Exp $
 ./usr/include/zaurus				comp-c-include
 ./usr/include/zaurus/ansi.h			comp-c-include
 ./usr/include/zaurus/aout_machdep.h		comp-c-include
@@ -13,7 +13,7 @@
 ./usr/include/zaurus/endian.h			comp-c-include
 ./usr/include/zaurus/endian_machdep.h		comp-c-include
 ./usr/include/zaurus/float.h			comp-c-include
-./usr/include/zaurus/fp.h			comp-c-include
+./usr/include/zaurus/fp.h			comp-obsolete		obsolete
 ./usr/include/zaurus/frame.h			comp-c-include
 ./usr/include/zaurus/ieee.h			comp-c-include
 ./usr/include/zaurus/ieeefp.h			comp-c-include
@@ -47,6 +47,3 @@
 ./usr/include/zaurus/varargs.h			comp-obsolete		obsolete
 ./usr/include/zaurus/vmparam.h			comp-c-include
 ./usr/include/zaurus/wchar_limits.h		comp-c-include
-./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug

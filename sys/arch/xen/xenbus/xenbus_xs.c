@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.22 2011/07/27 23:11:23 matt Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.22.12.1 2013/02/25 00:29:06 tls Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.22 2011/07/27 23:11:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.22.12.1 2013/02/25 00:29:06 tls Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -751,7 +751,7 @@ xenwatch_thread(void *unused)
 static int
 process_msg(void)
 {
-	struct xs_stored_msg *msg;
+	struct xs_stored_msg *msg, *s_msg;
 	char *body;
 	int err;
 
@@ -782,7 +782,7 @@ process_msg(void)
 	body[msg->hdr.len] = '\0';
 
 	if (msg->hdr.type == XS_WATCH_EVENT) {
-		bool found;
+		bool found, repeated;
 
 		DPRINTK("process_msg: XS_WATCH_EVENT");
 		msg->u.watch.vec = split(body, msg->hdr.len,
@@ -796,14 +796,24 @@ process_msg(void)
 		msg->u.watch.handle = find_watch(
 		    msg->u.watch.vec[XS_WATCH_TOKEN]);
 		found = (msg->u.watch.handle != NULL);
+		repeated = false;
 		if (found) {
 			mutex_enter(&watch_events_lock);
-			SIMPLEQ_INSERT_TAIL(&watch_events, msg, msg_next);
-			cv_broadcast(&watch_cv);
+			/* Don't add duplicate events to the queue of pending watches */
+			SIMPLEQ_FOREACH(s_msg, &watch_events, msg_next) {
+				if (s_msg->u.watch.handle == msg->u.watch.handle) {
+					repeated = true;
+					break;
+				}
+			}
+			if (!repeated) {
+				SIMPLEQ_INSERT_TAIL(&watch_events, msg, msg_next);
+				cv_broadcast(&watch_cv);
+			}
 			mutex_exit(&watch_events_lock);
 		}
 		mutex_exit(&watches_lock);
-		if (!found) {
+		if (!found || repeated) {
 			free(msg->u.watch.vec, M_DEVBUF);
 			free(msg, M_DEVBUF);
 		}

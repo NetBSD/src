@@ -1,4 +1,4 @@
-#	$NetBSD: files.rpi,v 1.2 2012/09/01 17:15:43 skrll Exp $
+#	$NetBSD: files.rpi,v 1.2.2.1 2013/02/25 00:28:35 tls Exp $
 #
 # Raspberry Pi 
 #
@@ -15,3 +15,7 @@ defparam opt_machdep.h				BOOT_ARGS
 # CPU support and integrated peripherals
 include "arch/arm/broadcom/files.bcm2835"
 
+# Raspberry Pi Mailbox interface
+device	vcmbox: sysmon_envsys
+attach	vcmbox at bcmmboxbus
+file	arch/evbarm/rpi/rpi_vcmbox.c		vcmbox

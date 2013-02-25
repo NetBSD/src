@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.40.2.1 2012/11/20 02:57:59 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.40.2.2 2013/02/25 00:26:31 tls Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -7,13 +7,13 @@ LLVM_TOPLEVEL_MK=
 
 SVN_ROOT=		http://llvm.org/svn/llvm-project
 
-COMMON_REVISION=	168187
+COMMON_REVISION=	175373
 LLVM_REVISION=		${COMMON_REVISION}
 CLANG_REVISION=		${COMMON_REVISION}
 COMPILER_RT_REVISION=	${COMMON_REVISION}
 
-LLVM_VERSION=		3.2
-CLANG_VERSION=		3.2
+LLVM_VERSION=		3.3
+CLANG_VERSION=		3.3
 
 LLVM_SRCDIR:=	${.PARSEDIR}/dist/llvm
 CLANG_SRCDIR:=	${.PARSEDIR}/dist/clang
@@ -42,7 +42,7 @@ CPPFLAGS+=	-I${LLVM_INCLUDE_OBJDIR} -I${LLVM_INCLUDE_CONFIG} \
 		-I${CLANG_INCLUDE_CONFIG}
 
 LLVM_CONFIGURE_ARGS=	\
-	--enable-targets=x86,powerpc,sparc,arm,mips \
+	--enable-targets=x86,powerpc,sparc,aarch64,arm,mips \
 	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION}:/usr/include \
 	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
 	--with-clang-srcdir=${CLANG_SRCDIR} \

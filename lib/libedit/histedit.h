@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.49 2012/05/31 13:16:39 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.49.2.1 2013/02/25 00:27:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -84,6 +84,8 @@ typedef struct lineinfo {
  * Initialization, cleanup, and resetting
  */
 EditLine	*el_init(const char *, FILE *, FILE *, FILE *);
+EditLine	*el_init_fd(const char *, FILE *, FILE *, FILE *,
+    int, int, int);
 void		 el_end(EditLine *);
 void		 el_reset(EditLine *);
 

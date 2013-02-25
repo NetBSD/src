@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.2.2.1 2012/11/20 03:01:05 tls Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.2.2.2 2013/02/25 00:28:29 tls Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.2.2.1 2012/11/20 03:01:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.2.2.2 2013/02/25 00:28:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_unit = aa->aa_unit;
 	sc->sc_usbc = usbc;
 	hsc->sc_bus.hci_private = sc;
+	hsc->sc_flags |= EHCIF_ETTF;
 
 	aprint_normal("\n");
 

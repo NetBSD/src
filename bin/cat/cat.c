@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.48.2.1 2012/11/20 02:57:28 tls Exp $	*/
+/* $NetBSD: cat.c,v 1.48.2.2 2013/02/25 00:23:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.48.2.1 2012/11/20 02:57:28 tls Exp $");
+__RCSID("$NetBSD: cat.c,v 1.48.2.2 2013/02/25 00:23:50 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,11 +302,13 @@ raw_cat(int rfd)
 			    (size_t)sbuf.st_blksize > sizeof(fb_buf))
 				bsize = sbuf.st_blksize;
 		}
-		if (bsize != 0)
+		if (bsize > sizeof(fb_buf)) {
 			buf = malloc(bsize);
+			if (buf == NULL)
+				warnx("malloc, using %zu buffer", bsize);
+		}
 		if (buf == NULL) {
 			bsize = sizeof(fb_buf);
-			warnx("malloc, using %zu buffer", bsize);
 			buf = fb_buf;
 		}
 	}

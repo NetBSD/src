@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.239 2012/06/03 16:23:44 dsl Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.239.2.1 2013/02/25 00:29:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.239 2012/06/03 16:23:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.239.2.1 2013/02/25 00:29:56 tls Exp $");
 
 #include "opt_bufcache.h"
 
@@ -662,11 +662,13 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 
 	bp = getblk(vp, blkno, size, 0, 0);
 
-#ifdef DIAGNOSTIC
+	/*
+	 * getblk() may return NULL if we are the pagedaemon.
+	 */
 	if (bp == NULL) {
-		panic("bio_doread: no such buf");
+		KASSERT(curlwp == uvm.pagedaemon_lwp);
+		return NULL;
 	}
-#endif
 
 	/*
 	 * If buffer does not have data valid, start a read.
@@ -720,11 +722,17 @@ bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 
 	/* Get buffer for block. */
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
+	if (bp == NULL)
+		return ENOMEM;
 
 	/* Wait for the read to complete, and return result. */
 	error = biowait(bp);
 	if (error == 0 && (flags & B_MODIFY) != 0)
 		error = fscow_run(bp, true);
+	if (error) {
+		brelse(bp, 0);
+		*bpp = NULL;
+	}
 
 	return error;
 }
@@ -741,6 +749,8 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
 	int error, i;
 
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
+	if (bp == NULL)
+		return ENOMEM;
 
 	/*
 	 * For each of the read-ahead blocks, start a read, if necessary.
@@ -762,6 +772,11 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
 	error = biowait(bp);
 	if (error == 0 && (flags & B_MODIFY) != 0)
 		error = fscow_run(bp, true);
+	if (error) {
+		brelse(bp, 0);
+		*bpp = NULL;
+	}
+
 	return error;
 }
 
@@ -957,6 +972,7 @@ brelsel(buf_t *bp, int set)
 	struct bqueue *bufq;
 	struct vnode *vp;
 
+	KASSERT(bp != NULL);
 	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT(!cv_has_waiters(&bp->b_done));
 	KASSERT(bp->b_refcnt > 0);

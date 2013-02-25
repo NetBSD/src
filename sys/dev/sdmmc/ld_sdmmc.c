@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.10 2012/02/02 19:43:06 tls Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.10.6.1 2013/02/25 00:29:31 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.10 2012/02/02 19:43:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.10.6.1 2013/02/25 00:29:31 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -113,7 +113,9 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 
 	ld->sc_dv = self;
 
-	aprint_normal(": <%s>\n", sa->sf->cid.pnm);
+	aprint_normal(": <0x%02x:0x%04x:%s:0x%02x:0x%08x:0x%03x>\n",
+	    sa->sf->cid.mid, sa->sf->cid.oid, sa->sf->cid.pnm,
+	    sa->sf->cid.rev, sa->sf->cid.psn, sa->sf->cid.mdt);
 	aprint_naive("\n");
 
 	callout_init(&sc->sc_task.task_callout, CALLOUT_MPSAFE);
@@ -130,7 +132,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	ld->sc_start = ld_sdmmc_start;
 
 	/*
-	 * It is avoided that the error occurs when the card attaches it, 
+	 * It is avoided that the error occurs when the card attaches it,
 	 * when wedge is supported.
 	 */
 	config_pending_incr();

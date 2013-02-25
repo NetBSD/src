@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.44 2012/07/22 14:33:06 matt Exp $	*/
+/*	$NetBSD: if_url.c,v 1.44.2.1 2013/02/25 00:29:36 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,9 +44,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.44 2012/07/22 14:33:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.44.2.1 2013/02/25 00:29:36 tls Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +167,7 @@ static const struct url_type {
 
 
 /* Probe */
-int 
+int
 url_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -174,7 +176,7 @@ url_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 /* Attach */
-void 
+void
 url_attach(device_t parent, device_t self, void *aux)
 {
 	struct url_softc *sc = device_private(self);
@@ -202,13 +204,14 @@ url_attach(device_t parent, device_t self, void *aux)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, URL_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, "setting config no failed\n");
+		aprint_error_dev(self, "failed to set configuration"
+		    ", err=%s\n", usbd_errstr(err));
 		goto bad;
 	}
 
-	usb_init_task(&sc->sc_tick_task, url_tick_task, sc);
+	usb_init_task(&sc->sc_tick_task, url_tick_task, sc, 0);
 	rw_init(&sc->sc_mii_rwlock);
-	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) url_stop_task, sc);
+	usb_init_task(&sc->sc_stop_task, (void (*)(void *))url_stop_task, sc, 0);
 
 	/* get control interface */
 	err = usbd_device2interface_handle(dev, URL_IFACE_INDEX, &iface);
@@ -328,7 +331,7 @@ url_attach(device_t parent, device_t self, void *aux)
 }
 
 /* detach */
-int 
+int
 url_detach(device_t self, int flags)
 {
 	struct url_softc *sc = device_private(self);
@@ -1579,4 +1582,3 @@ url_ext_miibus_writereg(device_t dev, int phy, int reg, int data)
 	return;
 }
 #endif
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_lists.c,v 1.7 2012/05/28 00:37:55 riz Exp $	*/
+/*	$NetBSD: iscsid_lists.c,v 1.7.2.1 2013/02/25 00:28:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -543,10 +543,16 @@ get_session_list(iscsid_response_t ** prsp, int *prsp_temp)
 		conn = (connection_t *)(void *)TAILQ_FIRST(&sess->connections);
 
 		ent->session_id = sess->entry.sid;
-		ent->first_connection_id = conn->entry.sid.id;
 		ent->num_connections = sess->num_connections;
-		ent->portal_id = conn->portal.sid.id;
-		ent->initiator_id = conn->initiator_id;
+		if (conn) {
+			ent->first_connection_id = conn->entry.sid.id;
+			ent->portal_id = conn->portal.sid.id;
+			ent->initiator_id = conn->initiator_id;
+		} else {
+			ent->first_connection_id = 0;
+			ent->portal_id = 0;
+			ent->initiator_id = 0;
+		}
 		ent++;
 	}
 	UNLOCK_SESSIONS;
@@ -652,19 +658,29 @@ get_connection_info(iscsid_get_connection_info_req_t * req,
 		return;
 	}
 
-	if (conn->initiator_id)
+	if (conn && conn->initiator_id)
 		init = find_initiator_id(conn->initiator_id);
 
 	res = (iscsid_get_connection_info_rsp_t *)(void *)rsp->parameter;
 
 	res->session_id = sess->entry.sid;
-	res->connection_id = conn->entry.sid;
-	res->target_portal_id = conn->portal.sid;
-	res->target_portal = conn->portal.addr;
-	strlcpy((char *)res->TargetName, (char *)conn->target.TargetName,
-		sizeof(res->TargetName));
-	strlcpy((char *)res->TargetAlias, (char *)conn->target.TargetAlias,
-		sizeof(res->TargetAlias));
+	if (conn) {
+		res->connection_id = conn->entry.sid;
+		res->target_portal_id = conn->portal.sid;
+		res->target_portal = conn->portal.addr;
+		strlcpy((char *)res->TargetName, (char *)conn->target.TargetName,
+			sizeof(res->TargetName));
+		strlcpy((char *)res->TargetAlias, (char *)conn->target.TargetAlias,
+			sizeof(res->TargetAlias));
+	} else {
+		res->connection_id.id = 0;
+		res->connection_id.name[0] = '\0';
+		res->target_portal_id.id = 0;
+		res->target_portal_id.name[0] = '\0';
+		memset(&res->target_portal, 0, sizeof(res->target_portal));
+		memset(&res->TargetName, 0, sizeof(res->TargetName));
+		memset(&res->TargetAlias, 0, sizeof(res->TargetAlias));
+	}
 	if (init != NULL) {
 		res->initiator_id = init->entry.sid;
 		strlcpy((char *)res->initiator_address, (char *)init->address,

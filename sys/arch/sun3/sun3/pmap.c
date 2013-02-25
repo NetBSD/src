@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.167 2012/01/29 16:24:51 para Exp $	*/
+/*	$NetBSD: pmap.c,v 1.167.6.1 2013/02/25 00:29:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167 2012/01/29 16:24:51 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167.6.1 2013/02/25 00:29:01 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -3621,12 +3621,18 @@ pmap_zero_page(paddr_t pa)
  * (This will just seg-align mappings.)
  */
 void 
-pmap_prefer(vaddr_t fo, vaddr_t *va)
+pmap_prefer(vaddr_t fo, vaddr_t *va, int td)
 {
 	long d;
 
 	d = fo - *va;
 	d &= SEGOFSET;
+	if (d == 0) {
+		return;
+	}
+	if (td) {
+		*va -= SEGOFSET + 1;
+	}
 	*va += d;
 }
 

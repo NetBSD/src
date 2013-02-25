@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.278 2012/08/24 20:26:24 jmmv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.278.2.1 2013/02/25 00:28:17 tls Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -33,12 +33,18 @@ CLEANFILES+=strings
 .c.o:
 	${CC} -E ${CPPFLAGS} ${CFLAGS} ${.IMPSRC} | xstr -c -
 	@${CC} ${CPPFLAGS} ${CFLAGS} -c x.c -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	@rm -f x.c
 
 .cc.o .cpp.o .cxx.o .C.o:
 	${CXX} -E ${CPPFLAGS} ${CXXFLAGS} ${.IMPSRC} | xstr -c -
 	@mv -f x.c x.cc
 	@${CXX} ${CPPFLAGS} ${CXXFLAGS} -c x.cc -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	@rm -f x.cc
 .endif
 
@@ -49,6 +55,9 @@ LDFLAGS+=	${PIE_LDFLAGS}
 .endif
 
 CFLAGS+=	${COPTS}
+.if defined(MKDEBUG) && (${MKDEBUG} != "no")
+CFLAGS+=	-g
+.endif
 OBJCFLAGS+=	${OBJCOPTS}
 MKDEP_SUFFIXES?=	.o .ln
 
@@ -368,6 +377,23 @@ PROGS=		${PROG}
 .  endif
 .endif
 
+##### Libraries that this may depend upon.
+.if defined(PROGDPLIBS) 						# {
+.for _lib _dir in ${PROGDPLIBS}
+.if !defined(BINDO.${_lib})
+PROGDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=PROGDO.${_lib}
+.endif
+LDADD+=		-L${PROGDO.${_lib}} -l${_lib}
+.if exists(${PROGDO.${_lib}}/lib${_lib}_pic.a)
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}_pic.a
+.elif exists(${PROGDO.${_lib}}/lib${_lib}.so)
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}.so
+.else
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}.a
+.endif
+.endfor
+.endif									# }
 #
 # Per-program definitions and targets.
 #

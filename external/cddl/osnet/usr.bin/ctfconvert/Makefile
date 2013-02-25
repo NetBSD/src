@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/21 11:00:01 darran Exp $
+#	$NetBSD: Makefile,v 1.3.12.1 2013/02/25 00:26:47 tls Exp $
 
 # $FreeBSD: src/cddl/usr.bin/ctfconvert/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -54,7 +54,5 @@ LDADD+=		-lctf -ldwarf -lelf -lz
 .PATH:		${.CURDIR}
 .PATH:		${OPENSOLARIS_USR_DISTDIR}/tools/ctf/common
 .PATH:		${OPENSOLARIS_USR_DISTDIR}/tools/ctf/cvt
-
-MKMAN=		no
 
 .include <bsd.prog.mk>

@@ -207,27 +207,32 @@ POSTMAP(1)                                                          POSTMAP(1)
                      <i>file</i><b>_</b><i>name</i><b>.db</b>.  This is available on  systems
                      with support for <b>db</b> databases.
 
-              <b>sdbm</b>   The  output  consists  of  two  files, named
-                     <i>file</i><b>_</b><i>name</i><b>.pag</b> and  <i>file</i><b>_</b><i>name</i><b>.dir</b>.   This  is
-                     available  on  systems with support for <b>sdbm</b>
+              <b>fail</b>   A  table  that  reliably fails all requests.
+                     The lookup table name is  used  for  logging
+                     only.  This table exists to simplify Postfix
+                     error tests.
+
+              <b>sdbm</b>   The output  consists  of  two  files,  named
+                     <i>file</i><b>_</b><i>name</i><b>.pag</b>  and  <i>file</i><b>_</b><i>name</i><b>.dir</b>.   This is
+                     available on systems with support  for  <b>sdbm</b>
                      databases.
 
-              When no <i>file</i><b>_</b><i>type</i> is specified, the  software  uses
-              the  database  type specified via the <b><a href="postconf.5.html#default_database_type">default_data</a>-</b>
+              When  no  <i>file</i><b>_</b><i>type</i> is specified, the software uses
+              the database type specified via  the  <b><a href="postconf.5.html#default_database_type">default_data</a>-</b>
               <b><a href="postconf.5.html#default_database_type">base_type</a></b> configuration parameter.
 
        <i>file</i><b>_</b><i>name</i>
-              The name of  the  lookup  table  source  file  when
+              The  name  of  the  lookup  table  source file when
               rebuilding a database.
 
 <b>DIAGNOSTICS</b>
-       Problems  are  logged  to the standard error stream and to
-       <b>syslogd</b>(8).   No  output  means  that  no  problems   were
-       detected.  Duplicate  entries  are skipped and are flagged
+       Problems are logged to the standard error  stream  and  to
+       <b>syslogd</b>(8).    No  output  means  that  no  problems  were
+       detected. Duplicate entries are skipped  and  are  flagged
        with a warning.
 
-       <a href="postmap.1.html"><b>postmap</b>(1)</a> terminates with zero exit  status  in  case  of
-       success  (including  successful  "<b>postmap  -q</b>" lookup) and
+       <a href="postmap.1.html"><b>postmap</b>(1)</a>  terminates  with  zero  exit status in case of
+       success (including successful  "<b>postmap  -q</b>"  lookup)  and
        terminates with non-zero exit status in case of failure.
 
 <b>ENVIRONMENT</b>
@@ -238,21 +243,21 @@ POSTMAP(1)                                                          POSTMAP(1)
               Enable verbose logging for debugging purposes.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are  especially  relevant
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant
        to this program.  The text below provides only a parameter
-       summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including  exam-
+       summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
        ples.
 
        <b><a href="postconf.5.html#berkeley_db_create_buffer_size">berkeley_db_create_buffer_size</a> (16777216)</b>
-              The  per-table  I/O  buffer  size for programs that
+              The per-table I/O buffer  size  for  programs  that
               create Berkeley DB hash or btree tables.
 
        <b><a href="postconf.5.html#berkeley_db_read_buffer_size">berkeley_db_read_buffer_size</a> (131072)</b>
-              The per-table I/O buffer  size  for  programs  that
+              The  per-table  I/O  buffer  size for programs that
               read Berkeley DB hash or btree tables.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
               <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#default_database_type">default_database_type</a> (see 'postconf -d' output)</b>
@@ -263,8 +268,8 @@ POSTMAP(1)                                                          POSTMAP(1)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name  that  is  prepended to the
-              process name in syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>SEE ALSO</b>
@@ -277,7 +282,7 @@ POSTMAP(1)                                                          POSTMAP(1)
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>

@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.6.2.1 2012/11/20 02:57:57 tls Exp $	*/
+/*	$NetBSD: master.c,v 1.6.2.2 2013/02/25 00:25:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -2079,20 +2079,22 @@ load_raw(dns_loadctx_t *lctx) {
 	unsigned int loop_cnt = 0;
 	dns_rdatacallbacks_t *callbacks;
 	unsigned char namebuf[DNS_NAME_MAXWIRE];
-	isc_region_t r;
-	dns_name_t name;
+	dns_fixedname_t fixed;
+	dns_name_t *name;
 	rdatalist_head_t head, dummy;
 	dns_rdatalist_t rdatalist;
 	isc_mem_t *mctx = lctx->mctx;
 	dns_rdata_t *rdata = NULL;
 	unsigned int rdata_size = 0;
 	int target_size = TSIZ;
-	isc_buffer_t target;
+	isc_buffer_t target, buf;
 	unsigned char *target_mem = NULL;
 	dns_masterrawheader_t header;
+	dns_decompress_t dctx;
 
 	REQUIRE(DNS_LCTX_VALID(lctx));
 	callbacks = lctx->callbacks;
+	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_NONE);
 
 	dns_master_initrawheader(&header);
 
@@ -2172,6 +2174,9 @@ load_raw(dns_loadctx_t *lctx) {
 	}
 	isc_buffer_init(&target, target_mem, target_size);
 
+	dns_fixedname_init(&fixed);
+	name = dns_fixedname_name(&fixed);
+
 	/*
 	 * In the following loop, we regard any error fatal regardless of
 	 * whether "MANYERRORS" is set in the context option.  This is because
@@ -2183,7 +2188,7 @@ load_raw(dns_loadctx_t *lctx) {
 	for (loop_cnt = 0;
 	     (lctx->loop_cnt == 0 || loop_cnt < lctx->loop_cnt);
 	     loop_cnt++) {
-		unsigned int i, rdcount, consumed_name;
+		unsigned int i, rdcount;
 		isc_uint16_t namelen;
 		isc_uint32_t totallen;
 		size_t minlen, readlen;
@@ -2273,12 +2278,11 @@ load_raw(dns_loadctx_t *lctx) {
 					lctx->f);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
+
 		isc_buffer_setactive(&target, (unsigned int)namelen);
-		isc_buffer_activeregion(&target, &r);
-		dns_name_init(&name, NULL);
-		dns_name_fromregion(&name, &r);
-		isc_buffer_forward(&target, (unsigned int)namelen);
-		consumed_name = isc_buffer_consumedlength(&target);
+		result = dns_name_fromwire(name, &target, &dctx, 0, NULL);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
 
 		/* Rdata contents. */
 		if (rdcount > rdata_size) {
@@ -2309,7 +2313,7 @@ load_raw(dns_loadctx_t *lctx) {
 
 				/* Partial Commit. */
 				ISC_LIST_APPEND(head, &rdatalist, link);
-				result = commit(callbacks, lctx, &head, &name,
+				result = commit(callbacks, lctx, &head, name,
 						NULL, 0);
 				for (j = 0; j < i; j++) {
 					ISC_LIST_UNLINK(rdatalist.rdata,
@@ -2321,8 +2325,6 @@ load_raw(dns_loadctx_t *lctx) {
 
 				/* Rewind the buffer and continue */
 				isc_buffer_clear(&target);
-				isc_buffer_add(&target, consumed_name);
-				isc_buffer_forward(&target, consumed_name);
 
 				rdcount -= i;
 
@@ -2342,11 +2344,20 @@ load_raw(dns_loadctx_t *lctx) {
 			if (result != ISC_R_SUCCESS)
 				goto cleanup;
 			isc_buffer_setactive(&target, (unsigned int)rdlen);
-			isc_buffer_activeregion(&target, &r);
-			isc_buffer_forward(&target, (unsigned int)rdlen);
-			dns_rdata_fromregion(&rdata[i], rdatalist.rdclass,
-					     rdatalist.type, &r);
-
+			/*
+			 * It is safe to have the source active region and
+			 * the target available region be the same if
+			 * decompression is disabled (see dctx above) and we
+			 * are not downcasing names (options == 0).
+			 */
+			isc_buffer_init(&buf, isc_buffer_current(&target),
+					(unsigned int)rdlen);
+			result = dns_rdata_fromwire(&rdata[i],
+						    rdatalist.rdclass,
+						    rdatalist.type, &target,
+						    &dctx, 0, &buf);
+			if (result != ISC_R_SUCCESS)
+				goto cleanup;
 			ISC_LIST_APPEND(rdatalist.rdata, &rdata[i], link);
 		}
 
@@ -2363,7 +2374,7 @@ load_raw(dns_loadctx_t *lctx) {
 		ISC_LIST_APPEND(head, &rdatalist, link);
 
 		/* Commit this RRset.  rdatalist will be unlinked. */
-		result = commit(callbacks, lctx, &head, &name, NULL, 0);
+		result = commit(callbacks, lctx, &head, name, NULL, 0);
 
 		for (i = 0; i < rdcount; i++) {
 			ISC_LIST_UNLINK(rdatalist.rdata, &rdata[i], link);

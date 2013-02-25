@@ -1,0 +1,9 @@
+# $NetBSD: ad.arm,v 1.4.4.2 2013/02/25 00:24:37 tls Exp $
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/lib/libarm.so.0.0.debug	comp-sys-debug		debug,pic
+./usr/libdata/debug/usr/lib/libc_vfp.so.0.0.debug	comp-sys-debug		debug,pic,softfloat
+./usr/libdata/debug/usr/lib/libpmc.so.1.0.debug	comp-sys-debug		debug,pic
+./usr/lib/libarm_g.a				-unknown-		debuglib
+./usr/lib/libc_vfp_g.a				-unknown-		debuglib,softfloat
+./usr/lib/libpmc_g.a				-unknown-		debuglib

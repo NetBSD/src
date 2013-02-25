@@ -1,4 +1,4 @@
-/*	$NetBSD: addr_match_list.h,v 1.1.1.1 2010/06/17 18:06:46 tron Exp $	*/
+/*	$NetBSD: addr_match_list.h,v 1.1.1.1.14.1 2013/02/25 00:27:17 tls Exp $	*/
 
 #ifndef _ADDR_MATCH_LIST_H_INCLUDED_
 #define _ADDR_MATCH_LIST_H_INCLUDED_
@@ -17,7 +17,6 @@
   * Utility library.
   */
 #include <match_list.h>
-#include <match_ops.h>
 
  /*
   * External interface.

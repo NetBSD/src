@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.10 2012/05/19 16:00:41 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.10.2.1 2013/02/25 00:29:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.10 2012/05/19 16:00:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.10.2.1 2013/02/25 00:29:11 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -100,16 +100,6 @@ static pool_cache_t rp_cpc;
  * The per-CPU RNGs used for short requests
  */
 cprng_strong_t **rp_cpurngs;
-
-/*
- * A context.  cprng plus a smidge.
- */
-typedef struct {
-	cprng_strong_t	*cprng;
-	int		hard;
-	int		bytesonkey;
-	kmutex_t	interlock;
-} rp_ctx_t;
 
 /*
  * Our random pool.  This is defined here rather than using the general

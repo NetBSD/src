@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.21 2011/11/06 00:28:12 phx Exp $
+$NetBSD: README.NAS,v 1.21.10.1 2013/02/25 00:28:55 tls Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -33,7 +33,8 @@ stge.15	acardide.16	D-Link DSM-G600 (Rev.B only!), Conceptronic CH3WNAS
 re.15	iteide.16	Netronix NH-230, Allnet ALL6250, Encore ENNHD-1000,
 			Planex NAS-01G
 re.15	satalink.16	Netronix NH-231, Allnet ALL6260, Longshine LCS-8311,
-			Fujitsu-Siemens AMS150, Fujitsu-Siemens SBLAN2
+			Fujitsu-Siemens AMS150, Fujitsu-Siemens SBLAN2,
+			Vibe NS-349-S
 
 
 PCI line/pin and EPIC IRQ assignments

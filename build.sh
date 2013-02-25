@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.255.2.1 2012/11/20 02:57:27 tls Exp $
+#	$NetBSD: build.sh,v 1.255.2.2 2013/02/25 00:23:49 tls Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -430,6 +430,7 @@ initdefaults()
 	unsetmakeenv INFODIR
 	unsetmakeenv LESSCHARSET
 	unsetmakeenv MAKEFLAGS
+	unsetmakeenv TERMINFO
 	setmakeenv LC_ALL C
 
 	# Find information about the build platform.  This should be
@@ -507,6 +508,7 @@ initdefaults()
 	do_iso_image_source=false
 	do_live_image=false
 	do_install_image=false
+	do_disk_image=false
 	do_params=false
 	do_rump=false
 
@@ -588,6 +590,8 @@ MACHINE=evbarm		MACHINE_ARCH=arm	ALIAS=evbarm-el	DEFAULT
 MACHINE=evbarm		MACHINE_ARCH=armeb	ALIAS=evbarm-eb
 MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el
 MACHINE=evbarm		MACHINE_ARCH=earmeb	ALIAS=evbearm-eb
+MACHINE=evbarm		MACHINE_ARCH=earmhf	ALIAS=evbearmhf-el
+MACHINE=evbarm		MACHINE_ARCH=earmhfeb	ALIAS=evbearmhf-eb
 MACHINE=evbmips		MACHINE_ARCH=		NO_DEFAULT
 MACHINE=evbmips		MACHINE_ARCH=mips64eb	ALIAS=evbmips64-eb
 MACHINE=evbmips		MACHINE_ARCH=mips64el	ALIAS=evbmips64-el
@@ -919,6 +923,8 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
                         RELEASEDIR/RELEASEMACHINEDIR/installation/liveimage.
     install-image       Create bootable installation image in
                         RELEASEDIR/RELEASEMACHINEDIR/installation/installimage.
+    disk-image=target	Creae bootable disk image in
+			RELEASEDIR/RELEASEMACHINEDIR/binary/gzimg/target.img.gz.
     params              Display various make(1) parameters.
 
  Options:
@@ -1205,6 +1211,14 @@ parseoptions()
 			    bomb "Must supply a kernel name with \`${op}=...'"
 			;;
 
+		disk-image=*)
+			arg=${op#*=}
+			op=disk_image
+			[ -n "${arg}" ] ||
+			    bomb "Must supply a target name with \`${op}=...'"
+
+			;;
+
 		modules)
 			op=modules
 			;;
@@ -1253,6 +1267,24 @@ parseoptions()
 #
 sanitycheck()
 {
+	# Non-root should always use either the -U or -E flag.
+	#
+	if ! ${do_expertmode} && \
+	    [ "$id_u" -ne 0 ] && \
+	    [ "${MKUNPRIVED}" = "no" ] ; then
+		bomb "-U or -E must be set for build as an unprivileged user."
+	fi
+
+	# Install as non-root is a bad idea.
+	#
+	if ${do_install} && [ "$id_u" -ne 0 ] ; then
+		if ${do_expertmode}; then
+			warning "Will install as an unprivileged user."
+		else
+			bomb "-E must be set for install as an unprivileged user."
+		fi
+	fi
+
 	# If the PATH contains any non-absolute components (including,
 	# but not limited to, "." or ""), then complain.  As an exception,
 	# allow "" or "." as the last component of the PATH.  This is fatal
@@ -1436,7 +1468,8 @@ rebuildmake()
 		${runcmd} env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" \
 			CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
 			${HOST_SH} "${TOP}/tools/make/configure" ||
-		    bomb "Configure of ${toolprefix}make failed"
+		    ( cp ${tmpdir}/config.log ${tmpdir}-config.log
+		      bomb "Configure of ${toolprefix}make failed, see ${tmpdir}-config.log for details" )
 		${runcmd} ${HOST_SH} buildmake.sh ||
 		    bomb "Build of ${toolprefix}make failed"
 		make="${tmpdir}/${toolprefix}make"
@@ -1580,43 +1613,24 @@ validatemakeparams()
 	removedirs="${TOOLDIR}"
 
 	if [ -z "${DESTDIR}" ] || [ "${DESTDIR}" = "/" ]; then
-		if ${do_build} || ${do_distribution} || ${do_release}; then
-			if ! ${do_build} || \
-			   [ "${uname_s}" != "NetBSD" ] || \
-			   [ "${uname_m}" != "${MACHINE}" ]; then
-				bomb "DESTDIR must != / for cross builds, or ${progname} 'distribution' or 'release'."
-			fi
-			if ! ${do_expertmode}; then
-				bomb "DESTDIR must != / for non -E (expert) builds"
-			fi
-			statusmsg "WARNING: Building to /, in expert mode."
-			statusmsg "         This may cause your system to break!  Reasons include:"
-			statusmsg "            - your kernel is not up to date"
-			statusmsg "            - the libraries or toolchain have changed"
-			statusmsg "         YOU HAVE BEEN WARNED!"
+		if ${do_distribution} || ${do_release} || \
+		   [ "${uname_s}" != "NetBSD" ] || \
+		   [ "${uname_m}" != "${MACHINE}" ]; then
+			bomb "DESTDIR must != / for cross builds, or ${progname} 'distribution' or 'release'."
 		fi
+		if ! ${do_expertmode}; then
+			bomb "DESTDIR must != / for non -E (expert) builds"
+		fi
+		statusmsg "WARNING: Building to /, in expert mode."
+		statusmsg "         This may cause your system to break!  Reasons include:"
+		statusmsg "            - your kernel is not up to date"
+		statusmsg "            - the libraries or toolchain have changed"
+		statusmsg "         YOU HAVE BEEN WARNED!"
 	else
 		removedirs="${removedirs} ${DESTDIR}"
 	fi
-	if ${do_build} || ${do_distribution} || ${do_release}; then
-		if ! ${do_expertmode} && \
-		    [ "$id_u" -ne 0 ] && \
-		    [ "${MKUNPRIVED}" = "no" ] ; then
-			bomb "-U or -E must be set for build as an unprivileged user."
-		fi
-	fi
 	if ${do_releasekernel} && [ -z "${RELEASEDIR}" ]; then
 		bomb "Must set RELEASEDIR with \`releasekernel=...'"
-	fi
-
-	# Install as non-root is a bad idea.
-	#
-	if ${do_install} && [ "$id_u" -ne 0 ] ; then
-		if ${do_expertmode}; then
-			warning "Will install as an unprivileged user."
-		else
-			bomb "-E must be set for install as an unprivileged user."
-		fi
 	fi
 
 	# If a previous build.sh run used -U (and therefore created a
@@ -1629,9 +1643,7 @@ validatemakeparams()
 		# DESTDIR is about to be removed
 		;;
 	*)
-		if ( ${do_build} || ${do_distribution} || ${do_release} || \
-		    ${do_install} ) && \
-		    [ -e "${DESTDIR}/METALOG" ] && \
+		if [ -e "${DESTDIR}/METALOG" ] && \
 		    [ "${MKUNPRIVED}" = "no" ] ; then
 			if $do_expertmode; then
 				warning "A previous build.sh run specified -U."
@@ -1718,7 +1730,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.255.2.1 2012/11/20 02:57:27 tls Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.255.2.2 2013/02/25 00:23:49 tls Exp $
 # with these arguments: ${_args}
 #
 
@@ -1796,6 +1808,18 @@ getkernelconf()
 		;;
 	esac
 	kernelbuildpath="${KERNOBJDIR}/${kernelconfname}"
+}
+
+diskimage()
+{
+	ARG="$(echo $1 | tr '[:lower:]' '[:upper:]')"
+	[ -f "${DESTDIR}/etc/mtree/set.base" ] || 
+	    bomb "The release binaries must be built first"
+	kerneldir="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel"
+	kernel="${kerneldir}/netbsd-${ARG}.gz"
+	[ -f "${kernel}" ] ||
+	    bomb "The kernel ${kernel} must be built first"
+	make_in_dir "${NETBSDSRCDIR}/etc" "smp_${1}"
 }
 
 buildkernel()
@@ -2063,6 +2087,11 @@ main()
 		releasekernel=*)
 			arg=${op#*=}
 			releasekernel "${arg}"
+			;;
+
+		disk-image=*)
+			arg=${op#*=}
+			diskimage "${arg}"
 			;;
 
 		modules)

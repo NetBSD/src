@@ -1,7 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.1 2008/09/19 21:41:28 christos Exp $
-
-.include <bsd.own.mk>
-
-LIBAMUOBJDIR!=cd ${.CURDIR}/../../lib/libamu && ${PRINTOBJDIR}
+#	$NetBSD: Makefile.inc,v 1.1.26.1 2013/02/25 00:24:52 tls Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"

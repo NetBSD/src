@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_state.c,v 1.1.1.4 2011/09/10 10:36:31 tron Exp $	*/
+/*	$NetBSD: smtpd_state.c,v 1.1.1.4.8.1 2013/02/25 00:27:29 tls Exp $	*/
 
 /*++
 /* NAME
@@ -147,10 +147,16 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream,
     state->tls_context = 0;
 #endif
 
+
+    /*
+     * Minimal initialization to support external authentication (e.g.,
+     * XCLIENT) without having to enable SASL in main.cf.
+     */
 #ifdef USE_SASL_AUTH
     if (SMTPD_STAND_ALONE(state))
 	var_smtpd_sasl_enable = 0;
     smtpd_sasl_set_inactive(state);
+    smtpd_sasl_state_init(state);
 #endif
 
     state->milter_argv = 0;
@@ -170,6 +176,9 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream,
      * Initialize the conversation history.
      */
     smtpd_chat_reset(state);
+
+    state->ehlo_argv = 0;
+    state->ehlo_buf = 0;
 }
 
 /* smtpd_state_reset - cleanup after disconnect */

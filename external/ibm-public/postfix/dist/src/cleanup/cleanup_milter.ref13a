@@ -22,12 +22,10 @@
       516 original_recipient: you@porcupine.org
       535 recipient: you@porcupine.org
       554 pointer_record:             573
-      573 named_attribute: notify_flags=1
-      589 original_recipient: me@porcupine.org
-      607 canceled_recipient: me@porcupine.org
-      625 pointer_record:             642
-      642 named_attribute: notify_flags=1
-      658 original_recipient: em@porcupine.org
-      676 canceled_recipient: em@porcupine.org
-      694 pointer_record:             571
+      573 original_recipient: me@porcupine.org
+      591 canceled_recipient: me@porcupine.org
+      609 pointer_record:             626
+      626 original_recipient: em@porcupine.org
+      644 canceled_recipient: em@porcupine.org
+      662 pointer_record:             571
       571 *** MESSAGE FILE END test-queue-file13a.tmp ***

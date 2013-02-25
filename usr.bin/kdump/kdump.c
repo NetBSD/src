@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.115 2011/09/28 16:28:27 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.115.8.1 2013/02/25 00:30:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,16 +39,15 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.115 2011/09/28 16:28:27 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.115.8.1 2013/02/25 00:30:36 tls Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/proc.h> /* XXX #include <sys/file.h> fails without this header */
-#define _KERNEL
 #include <sys/file.h>
+#define _KMEMUSER        /* To get the pseudo errors defined */
 #include <sys/errno.h>
-#undef _KERNEL
+#undef _KMEMUSER
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/ktrace.h>

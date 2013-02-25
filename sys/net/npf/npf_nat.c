@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_nat.c,v 1.17 2012/08/15 18:44:56 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.17.2.1 2013/02/25 00:30:03 tls Exp $	*/
 
 /*-
- * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,8 +30,8 @@
  */
 
 /*
- * NPF network address port translation (NAPT).
- * Described in RFC 2663, RFC 3022.  Commonly just "NAT".
+ * NPF network address port translation (NAPT) and other forms of NAT.
+ * Described in RFC 2663, RFC 3022, etc.
  *
  * Overview
  *
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.17 2012/08/15 18:44:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.17.2.1 2013/02/25 00:30:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.17 2012/08/15 18:44:56 rmind Exp $");
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/cprng.h>
 
 #include <net/pfil.h>
@@ -117,6 +118,7 @@ typedef struct {
  */
 struct npf_natpolicy {
 	LIST_HEAD(, npf_nat)	n_nat_list;
+	volatile u_int		n_refcnt;
 	kmutex_t		n_lock;
 	kcondvar_t		n_cv;
 	npf_portmap_t *		n_portmap;
@@ -257,6 +259,11 @@ npf_nat_freepolicy(npf_natpolicy_t *np)
 		cv_wait(&np->n_cv, &np->n_lock);
 	}
 	mutex_exit(&np->n_lock);
+
+	/* All references should be going away. */
+	while (np->n_refcnt) {
+		kpause("npfgcnat", false, 1, NULL);
+	}
 
 	/* Destroy the port map, on last reference. */
 	if (pm && --pm->p_refcnt == 0) {
@@ -415,27 +422,25 @@ npf_nat_putport(npf_natpolicy_t *np, in_port_t port)
 
 /*
  * npf_nat_inspect: inspect packet against NAT ruleset and return a policy.
+ *
+ * => Acquire a reference on the policy, if found.
  */
 static npf_natpolicy_t *
-npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, const ifnet_t *ifp,
-    const int di)
+npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 {
-	npf_ruleset_t *rlset;
+	int slock = npf_config_read_enter();
+	npf_ruleset_t *rlset = npf_config_natset();
 	npf_natpolicy_t *np;
 	npf_rule_t *rl;
 
-	npf_core_enter();
-	rlset = npf_core_natset();
-	rl = npf_ruleset_inspect(npc, nbuf, rlset, ifp, di, NPF_LAYER_3);
+	rl = npf_ruleset_inspect(npc, nbuf, rlset, di, NPF_LAYER_3);
 	if (rl == NULL) {
-		npf_core_exit();
+		npf_config_read_exit(slock);
 		return NULL;
 	}
 	np = npf_rule_getnat(rl);
-	if (np == NULL) {
-		npf_core_exit();
-		return NULL;
-	}
+	atomic_inc_uint(&np->n_refcnt);
+	npf_config_read_exit(slock);
 	return np;
 }
 
@@ -445,7 +450,7 @@ npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, const ifnet_t *ifp,
 static npf_nat_t *
 npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np)
 {
-	const int proto = npf_cache_ipproto(npc);
+	const int proto = npc->npc_proto;
 	npf_nat_t *nt;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
@@ -483,11 +488,11 @@ npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np)
 
 	/* Save the relevant TCP/UDP port. */
 	if (proto == IPPROTO_TCP) {
-		struct tcphdr *th = &npc->npc_l4.tcp;
+		const struct tcphdr *th = npc->npc_l4.tcp;
 		nt->nt_oport = (np->n_type == NPF_NATOUT) ?
 		    th->th_sport : th->th_dport;
 	} else {
-		struct udphdr *uh = &npc->npc_l4.udp;
+		const struct udphdr *uh = npc->npc_l4.udp;
 		nt->nt_oport = (np->n_type == NPF_NATOUT) ?
 		    uh->uh_sport : uh->uh_dport;
 	}
@@ -508,16 +513,17 @@ out:
 /*
  * npf_nat_translate: perform address and/or port translation.
  */
-static int
+int
 npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
     const bool forw, const int di)
 {
-	void *n_ptr = nbuf_dataptr(nbuf);
-	npf_natpolicy_t *np = nt->nt_natpolicy;
-	npf_addr_t *addr;
+	const int proto = npc->npc_proto;
+	const npf_natpolicy_t *np = nt->nt_natpolicy;
+	const npf_addr_t *addr;
 	in_port_t port;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
+	KASSERT(npf_iscached(npc, NPC_LAYER4));
 
 	if (forw) {
 		/* "Forwards" stream: use translation address/port. */
@@ -530,14 +536,23 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
 	}
 	KASSERT((np->n_flags & NPF_NAT_PORTS) != 0 || port == 0);
 
+	/* Process delayed checksums (XXX: NetBSD). */
+	if (nbuf_cksum_barrier(nbuf, di)) {
+		npf_recache(npc, nbuf);
+	}
+	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
+
 	/* Execute ALG hook first. */
-	npf_alg_exec(npc, nbuf, nt, di);
+	if ((npc->npc_info & NPC_ALG_EXEC) == 0) {
+		npc->npc_info |= NPC_ALG_EXEC;
+		npf_alg_exec(npc, nbuf, nt, di);
+	}
 
 	/*
 	 * Rewrite IP and/or TCP/UDP checksums first, since it will use
 	 * the cache containing original values for checksum calculation.
 	 */
-	if (!npf_rwrcksum(npc, nbuf, n_ptr, di, addr, port)) {
+	if (!npf_rwrcksum(npc, di, addr, port)) {
 		return EINVAL;
 	}
 
@@ -545,7 +560,7 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
 	 * Address translation: rewrite source/destination address, depending
 	 * on direction (PFIL_OUT - for source, PFIL_IN - for destination).
 	 */
-	if (!npf_rwrip(npc, nbuf, n_ptr, di, addr)) {
+	if (!npf_rwrip(npc, di, addr)) {
 		return EINVAL;
 	}
 	if ((np->n_flags & NPF_NAT_PORTS) == 0) {
@@ -553,12 +568,12 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
 		return 0;
 	}
 
-	switch (npf_cache_ipproto(npc)) {
+	switch (proto) {
 	case IPPROTO_TCP:
 	case IPPROTO_UDP:
 		KASSERT(npf_iscached(npc, NPC_TCP) || npf_iscached(npc, NPC_UDP));
 		/* Rewrite source/destination port. */
-		if (!npf_rwrport(npc, nbuf, n_ptr, di, port)) {
+		if (!npf_rwrport(npc, di, port)) {
 			return EINVAL;
 		}
 		break;
@@ -582,8 +597,7 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
  *	- Associate a NAT policy with a session (may establish a new).
  */
 int
-npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf,
-    const ifnet_t *ifp, const int di)
+npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf, const int di)
 {
 	npf_session_t *nse = NULL;
 	npf_natpolicy_t *np;
@@ -595,6 +609,7 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf,
 	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
 		return 0;
 	}
+	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 
 	/*
 	 * Return the NAT entry associated with the session, if any.
@@ -609,9 +624,9 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf,
 
 	/*
 	 * Inspect the packet for a NAT policy, if there is no session.
-	 * Note: acquires the lock (releases, if not found).
+	 * Note: acquires a reference if found.
 	 */
-	np = npf_nat_inspect(npc, nbuf, ifp, di);
+	np = npf_nat_inspect(npc, nbuf, di);
 	if (np == NULL) {
 		/* If packet does not match - done. */
 		return 0;
@@ -619,21 +634,18 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf,
 	forw = true;
 
 	/*
-	 * Create a new NAT entry.  Note: it is safe to unlock, since the
-	 * NAT policy wont be desotroyed while there are list entries, which
-	 * are removed only on session expiration.  Currently, NAT entry is
-	 * not yet associated with any session.
+	 * Create a new NAT entry (not yet associated with any session).
+	 * We will consume the reference on success (release on error).
 	 */
 	nt = npf_nat_create(npc, np);
 	if (nt == NULL) {
-		npf_core_exit();
+		atomic_dec_uint(&np->n_refcnt);
 		return ENOMEM;
 	}
-	npf_core_exit();
 	new = true;
 
 	/* Determine whether any ALG matches. */
-	if (npf_alg_match(npc, nbuf, nt)) {
+	if (npf_alg_match(npc, nbuf, nt, di)) {
 		KASSERT(nt->nt_alg != NULL);
 	}
 
@@ -644,7 +656,7 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf,
 	 * stream depends on other, stateless filtering rules.
 	 */
 	if (se == NULL) {
-		nse = npf_session_establish(npc, nbuf, ifp, di);
+		nse = npf_session_establish(npc, nbuf, di);
 		if (nse == NULL) {
 			error = ENOMEM;
 			goto out;
@@ -734,6 +746,7 @@ npf_nat_expire(npf_nat_t *nt)
 	if (LIST_EMPTY(&np->n_nat_list)) {
 		cv_broadcast(&np->n_cv);
 	}
+	atomic_dec_uint(&np->n_refcnt);
 	mutex_exit(&np->n_lock);
 
 	/* Free structure, increase the counter. */
@@ -815,7 +828,8 @@ npf_nat_restore(prop_dictionary_t sedict, npf_session_t *se)
 	}
 
 	/* Match if there is an existing NAT policy. */
-	rl = npf_ruleset_matchnat(npf_core_natset(), __UNCONST(onp));
+	KASSERT(npf_config_locked_p());
+	rl = npf_ruleset_matchnat(npf_config_natset(), __UNCONST(onp));
 	if (rl == NULL) {
 		return NULL;
 	}

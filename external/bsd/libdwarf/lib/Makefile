@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/12/23 00:10:15 darran Exp $
+#	$NetBSD: Makefile,v 1.1.12.1 2013/02/25 00:26:31 tls Exp $
 
 .include <bsd.init.mk>
 
@@ -15,6 +15,7 @@ SRCS=	dwarf_abbrev.c		\
 	dwarf_errno.c		\
 	dwarf_finish.c		\
 	dwarf_form.c		\
+	dwarf_func.c		\
 	dwarf_init.c		\
 	dwarf_loc.c
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.198 2012/08/28 15:52:19 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.198.2.1 2013/02/25 00:29:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.198 2012/08/28 15:52:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.198.2.1 2013/02/25 00:29:53 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -203,9 +203,9 @@ static void	*pool_allocator_alloc(struct pool *, int);
 static void	pool_allocator_free(struct pool *, void *);
 
 static void pool_print_pagelist(struct pool *, struct pool_pagelist *,
-	void (*)(const char *, ...));
+	void (*)(const char *, ...) __printflike(1, 2));
 static void pool_print1(struct pool *, const char *,
-	void (*)(const char *, ...));
+	void (*)(const char *, ...) __printflike(1, 2));
 
 static int pool_chk_page(struct pool *, const char *,
 			 struct pool_item_header *);

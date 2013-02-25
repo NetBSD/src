@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.9.8.1 2012/11/20 03:02:56 tls Exp $
+$NetBSD: README.mknative,v 1.9.8.2 2013/02/25 00:30:30 tls Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -22,6 +22,9 @@ work.
    gets built, eliciting proper HAVE_*GETTEXT* defns in config.h files.)
 
 2. Build and install a cross toolchain (via "build.sh -m MACHINE tools").
+   Note that while PR #47353 is not fixed, you can not use the -O option
+   to build.sh. Use -M instead. (The difference is only a minor layout/
+   pathname prefixe in the object directory pointed to bei either option.)
 
 3. In src/tools/gcc, do "nbmake-MACHINE bootstrap-libgcc".
 
@@ -33,8 +36,11 @@ work.
    will regenerate the "proper" libgcc config files.
 
 4. At top level, do
-   "nbmake-MACHINE obj do-distrib-dirs MKGCC=no MKBINUTILS=no", and
-   "nbmake-MACHINE includes HAVE_GCC= MKGCC=no MKBINUTILS=no".
+   "nbmake-MACHINE obj do-distrib-dirs MKGCC=no MKBINUTILS=no HAVE_GCC=45", and
+   "nbmake-MACHINE includes HAVE_GCC= MKGCC=no MKBINUTILS=no HAVE_GCC=45".
+   (Note: replace 45 [for gcc 4.5.x] with the appropriate version you are
+   going to mknative-for, the MKGCC=no prevents the standard makefiles from
+   picking up any gcc version info automatically)
 
 5. In src/lib/csu, do
    "nbmake-MACHINE dependall". and "nbmake-MACHINE install".
@@ -55,7 +61,7 @@ work.
    installs a header file that is not part of standard build.
 
 9. In src/lib, do
-   "nbmake-MACHINE dependall install MKGCC=no".
+   "nbmake-MACHINE dependall install MKGCC=no HAVE_GCC=45".
 
    Optionally, all of the following may be set in the environment to reduce
    the amount of code needed to build at this step.  Basically, it must be
@@ -67,6 +73,7 @@ work.
    MKLINT=no
    MKPROFILE=no
    MKSHARE=no
+   MKRUMP=no
 
 10. In src/tools/gcc, do "nbmake-MACHINE native-gcc".
 

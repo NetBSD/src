@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.22 2011/12/22 11:33:54 kiyohara Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.22.6.1 2013/02/25 00:28:53 tls Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -166,9 +166,10 @@ _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 	mfxer	%r30;			/* save XER */		\
 	mfsrr1	%r31;						\
 	mtcr	%r31;						\
-	lwz	%r1,CI_INTSTK(%r1);	/* get intstk */	\
-	bt	MSR_PR,1f;		/* branch if PSL_PR is true */ \
-	mfsprg1	%r1;			/* yes, get old SP */	\
+	mfsprg1	%r1;			/* restore SP */ 	\
+	bf	MSR_PR,1f;		/* branch if PSL_PR is false */ \
+	GET_PCB(%r1);						\
+	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
 1:
 
 /*
@@ -485,7 +486,6 @@ intr_exit:
 /* Disable interrupts */
 	wrteei	0
 	isync
-	GET_CPUINFO(%r5)
 
 	lwz	%r4,FRAME_SRR1(%r1)
 /* Returning to user mode? */
@@ -499,7 +499,7 @@ intr_exit:
 	FRAME_SAVE_CALLEE		/* save rest of callee registers */
 	li	%r6,EXC_AST
 	stw	%r6,FRAME_EXC(%r1)
-	mr	%r31,%r5		/* move SRR1 to R31 */
+	lwz	%r31,FRAME_SRR1(%r1)	/* move SRR1 to R31 */
 	b	trapagain
 
 /*

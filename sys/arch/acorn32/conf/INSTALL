@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.63 2012/08/17 20:11:37 abs Exp $
+#	$NetBSD: INSTALL,v 1.63.2.1 2013/02/25 00:28:18 tls Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.63 $"
+#ident		"INSTALL-$Revision: 1.63.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -41,9 +41,6 @@ options 	CPU_ARM7	# Support the ARM7 core
 
 # For StrongARM only kernels
 #makeoptions	COPTS="-O2 -march=armv3m -mtune=strongarm"
-
-# FPA options
-#options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.81.18.1 2012/11/20 03:02:47 tls Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.81.18.2 2013/02/25 00:30:01 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.81.18.1 2012/11/20 03:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.81.18.2 2013/02/25 00:30:01 tls Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -443,39 +443,6 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		break;
 	}
 
-	case AF_IMPLINK:
-	{
-		fh = mtod(m, struct fddi_header *);
-		error = EPROTONOSUPPORT;
-		switch (fh->fddi_fc & (FDDIFC_C|FDDIFC_L|FDDIFC_F)) {
-			case FDDIFC_LLC_ASYNC: {
-				/* legal priorities are 0 through 7 */
-				if ((fh->fddi_fc & FDDIFC_Z) > 7)
-			        	goto bad;
-				break;
-			}
-			case FDDIFC_LLC_SYNC: {
-				/* FDDIFC_Z bits reserved, must be zero */
-				if (fh->fddi_fc & FDDIFC_Z)
-					goto bad;
-				break;
-			}
-			case FDDIFC_SMT: {
-				/* FDDIFC_Z bits must be non zero */
-				if ((fh->fddi_fc & FDDIFC_Z) == 0)
-					goto bad;
-				break;
-			}
-			default: {
-				/* anything else is too dangerous */
-               	 		goto bad;
-			}
-		}
-		error = 0;
-		if (fh->fddi_dhost[0] & 1)
-			m->m_flags |= (M_BCAST|M_MCAST);
-		goto queue_it;
-	}
 	default:
 		printf("%s: can't handle af%d\n", ifp->if_xname,
 		       dst->sa_family);
@@ -505,8 +472,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		senderr(ENOBUFS);
 	fh = mtod(m, struct fddi_header *);
 	fh->fddi_fc = FDDIFC_LLC_ASYNC|FDDIFC_LLC_PRIO4;
- 	memcpy(fh->fddi_dhost, edst, sizeof (edst));
-  queue_it:
+	memcpy(fh->fddi_dhost, edst, sizeof (edst));
 	if (hdrcmplt)
 		memcpy(fh->fddi_shost, esrc, sizeof(fh->fddi_shost));
 	else

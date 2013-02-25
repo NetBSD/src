@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.67.12.1 2012/11/20 03:02:50 tls Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.67.12.2 2013/02/25 00:30:10 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.67.12.1 2012/11/20 03:02:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.67.12.2 2013/02/25 00:30:10 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -73,8 +73,23 @@ pvfs_rele(struct proc *p)
 	cwdfree(p->p_cwdi);
 }
 
-void
-rump_vfs_init(void)
+static void
+fini(void)
+{
+
+	vfs_shutdown();
+}
+
+static void
+drainbufs(int npages)
+{
+
+	mutex_enter(&bufcache_lock);
+	buf_drain(npages);
+	mutex_exit(&bufcache_lock);
+}
+
+RUMP_COMPONENT(RUMP__FACTION_VFS)
 {
 	extern struct devsw_conv devsw_conv0[];
 	extern int max_devsw_convs;
@@ -82,6 +97,10 @@ rump_vfs_init(void)
 	char buf[64];
 	int error;
 	int rv, i;
+
+	/* initialize indirect interfaces */
+	rump_vfs_fini = fini;
+	rump_vfs_drainbufs = drainbufs;
 
 	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
 		desiredvnodes = strtoul(buf, NULL, 10);
@@ -164,13 +183,6 @@ rump_vfs_init(void)
 	rump_vfs_builddevs(devsw_conv0, max_devsw_convs);
 
 	rump_component_init(RUMP_COMPONENT_VFS);
-}
-
-void
-rump_vfs_fini(void)
-{
-
-	vfs_shutdown();
 }
 
 struct rumpcn {
@@ -269,7 +281,7 @@ rump_getvninfo(struct vnode *vp, enum rump_vtype *vtype,
 	voff_t *vsize, dev_t *vdev)
 {
 
-	*vtype = vp->v_type;
+	*vtype = (enum rump_vtype)vp->v_type;
 	*vsize = vp->v_size;
 	if (vp->v_specnode)
 		*vdev = vp->v_rdev;
@@ -323,7 +335,7 @@ void
 rump_vattr_settype(struct vattr *vap, enum rump_vtype vt)
 {
 
-	vap->va_type = vt;
+	vap->va_type = (enum vtype)vt;
 }
 
 void
@@ -484,13 +496,4 @@ rump_biodone(void *arg, size_t count, int error)
 	bp->b_error = error;
 
 	biodone(bp);
-}
-
-void
-rump_vfs_drainbufs(int npages)
-{
-
-	mutex_enter(&bufcache_lock);
-	buf_drain(npages);
-	mutex_exit(&bufcache_lock);
 }

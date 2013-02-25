@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.h,v 1.1 2010/12/30 11:29:21 kefren Exp $ */
+/* $NetBSD: conffile.h,v 1.1.12.1 2013/02/25 00:30:43 tls Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef __CONFFILE_H
 #define __CONFFILE_H
 
+#include <net/if.h>
 #include <netinet/in.h>
 #include <sys/queue.h>
 
@@ -50,6 +51,11 @@ struct conf_neighbour {
 };
 SLIST_HEAD(,conf_neighbour) conei_head;
 
+struct passive_if {
+	char if_name[IF_NAMESIZE];
+	SLIST_ENTRY(passive_if) listentry;
+};
+SLIST_HEAD(,passive_if) passifs_head;
 
 int conf_parsefile(char *fname);
 

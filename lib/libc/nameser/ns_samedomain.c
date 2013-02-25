@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_samedomain.c,v 1.6.12.1 2012/11/20 03:00:42 tls Exp $	*/
+/*	$NetBSD: ns_samedomain.c,v 1.6.12.2 2013/02/25 00:27:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_samedomain.c,v 1.6 2005/04/27 04:56:40 sra Exp";
 #else
-__RCSID("$NetBSD: ns_samedomain.c,v 1.6.12.1 2012/11/20 03:00:42 tls Exp $");
+__RCSID("$NetBSD: ns_samedomain.c,v 1.6.12.2 2013/02/25 00:27:51 tls Exp $");
 #endif
 #endif
 
@@ -157,7 +157,7 @@ ns_subdomain(const char *a, const char *b) {
 	return (ns_samename(a, b) != 1 && ns_samedomain(a, b));
 }
 #endif
-
+#ifdef _LIBC
 /*%
  *	make a canonical copy of domain name "src"
  *
@@ -212,5 +212,5 @@ ns_samename(const char *a, const char *b) {
 	else
 		return (0);
 }
-
+#endif
 /*! \file */

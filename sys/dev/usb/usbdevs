@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.626.2.1 2012/11/20 03:02:34 tls Exp $
+$NetBSD: usbdevs,v 1.626.2.2 2013/02/25 00:29:41 tls Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ vendor CREATIVE		0x041e	Creative Labs
 vendor NOKIA		0x0421	Nokia
 vendor ADI		0x0422	ADI Systems
 vendor CATC		0x0423	Computer Access Technology
-vendor SMC2		0x0424	Standard Microsystems
+vendor SMSC		0x0424	SMSC
 vendor GRAVIS		0x0428	Advanced Gravis Computer
 vendor SUN		0x0430	Sun Microsystems
 vendor TAUGA		0x0436	Taugagreining HF
@@ -518,6 +518,7 @@ vendor ASUSTEK2		0x1761	ASUSTeK Computer
 vendor SWEEX2		0x177f	Sweex
 vendor MISC		0x1781	Misc Vendors
 vendor DISPLAYLINK	0x17e9	DisplayLink
+vendor LENOVO		0x17ef	Lenovo
 vendor E3C		0x18b4	E3C Technologies
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
@@ -867,6 +868,7 @@ product ASIX AX88178		0x1780	AX88178 USB 2.0 gigabit ethernet controller
 product ASIX AX88772		0x7720	AX88772 USB 2.0 10/100 ethernet controller
 product ASIX AX88772A		0x772a	AX88772A USB 2.0 10/100 Ethernet adapter
 product ASIX AX88772B		0x772b	AX88772B USB 2.0 10/100 Ethernet adapter
+product ASIX AX88772B_1		0x7e2b	AX88772B1 USB 2.0 10/100 Ethernet adapter
 
 /* ASUSTeK computer products */
 product ASUSTEK WL167G		0x1707	WL-167g USB2.0 WLAN Adapter
@@ -1269,11 +1271,13 @@ product DISPLAYLINK LUM70	0x02a9	Lilliput UM-70
 product DISPLAYLINK LCD8000UD_DVI	0x02b8	LCD-8000UD-DVI
 product DISPLAYLINK LDEWX015U	0x02e3	Logitec LDE-WX015U
 product DISPLAYLINK LT1421WIDE	0x03e0	Lenovo ThinkVision LT1421 Wide
+product DISPLAYLINK SD_U2VDH	0x046d	AREA SD-U2VDH
 product DISPLAYLINK UM7X0	0x401a	nanovision MiMo
 
 /* D-Link products */
 /*product DLINK DSBS25		0x0100	DSB-S25 serial adapter*/
 product DLINK DUBE100		0x1a00	10/100 ethernet adapter
+product DLINK DUBE100C1		0x1a02	DUB-E100 rev C1
 product DLINK DSB650TX4		0x200c	10/100 ethernet adapter
 product DLINK DWL120E		0x3200	DWL-120 rev E
 product DLINK DWA130C		0x3301	DWA-130 rev C
@@ -1743,7 +1747,7 @@ product INTEL TESTBOARD		0x9890	82930 test board
 product INTERSIL PRISM_GT	0x1000	PrismGT USB 2.0 WLAN
 product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
 
-/* Interpid Control Systems products */
+/* Intrepid Control Systems products */
 product INTREPIDCS VALUECAN	0x0601	ValueCAN
 product INTREPIDCS NEOVI	0x0701	NeoVI Blue
 
@@ -1882,6 +1886,9 @@ product KYOCERA AHK3001V	0x0203	AH-K3001V
 product LACIE PKTDRV		0x0211	PocketDrive
 product LACIE HD		0xa601	Hard Disk
 product LACIE CDRW		0xa602	CD R/W
+
+/* Lenovo products */
+product LENOVO ETHERNET		0x7203	USB 2.0 Ethernet
 
 /* Lexar products */
 product LEXAR JUMPSHOT		0x0001	jumpSHOT CompactFlash Reader
@@ -2556,7 +2563,6 @@ product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 product RAINBOW IKEY2000	0x1200	i-Key 2000
 
 /* Ralink Technology products */
-product QUANTA RT3070		0x0304	RT3070
 product RALINK RT2570		0x1706	RT2570
 product RALINK RT2070		0x2070	RT2070
 product RALINK RT2570_2		0x2570	RT2570
@@ -2569,6 +2575,7 @@ product RALINK RT3071		0x3071	RT3071
 product RALINK RT3072		0x3072	RT3072
 product RALINK RT3370		0x3370	RT3370
 product RALINK RT3572		0x3572	RT3572
+product RALINK RT5370		0x5370	RT5370
 product RALINK RT8070		0x8070	RT8070
 product RALINK RT2570_3		0x9020	RT2570
 
@@ -2875,35 +2882,38 @@ product SITECOMEU WL113R2	0x9712	WL-113 rev 2
 product SMARTBRIDGES SMARTLINK	0x0001	SmartLink USB ethernet adapter
 product SMARTBRIDGES SMARTNIC	0x0003	smartNIC 2 PnP Adapter
 
-/* SMC products */
+/* SMC Networks products */
 product SMC 2102USB		0x0100	10Mbps ethernet adapter
 product SMC 2202USB		0x0200	10/100 ethernet adapter
 product SMC 2206USB		0x0201	EZ Connect USB Ethernet Adapter
-product SMC2 2020HUB		0x2020	USB Hub
-product SMC2 SMSC9500		0x9500	SMSC9500 Ethernet device
-product SMC2 SMSC9505		0x9505	SMSC9505 Ethernet device
-product SMC2 SMSC9500A		0x9e00	SMSC9500A Ethernet device
-product SMC2 SMSC9505A		0x9e01	SMSC9505A Ethernet device
-product SMC2 SMSC9512_14	0xec00	SMSC9512/9514 USB Hub & Ethernet device
-product SMC2 SMSC9500_SAL10	0x9900	SMSC9500 Ethernet device (SAL10)
-product SMC2 SMSC9505_SAL10	0x9901	SMSC9505 Ethernet device (SAL10)
-product SMC2 SMSC9500A_SAL10	0x9902	SMSC9500A Ethernet device (SAL10)
-product SMC2 SMSC9505A_SAL10	0x9903	SMSC9505A Ethernet device (SAL10)
-product SMC2 SMSC9512_14_SAL10	0x9904	SMSC9512/14 Hub & Ethernet Device (SAL10)
-product SMC2 SMSC9500A_HAL	0x9905	SMSC9500A Ethernet Device (HAL)
-product SMC2 SMSC9505A_HAL	0x9906	SMSC9505A Ethernet Device (HAL)
-product SMC2 SMSC9500_ALT	0x9907	SMSC9500 Ethernet Device
-product SMC2 SMSC9500A_ALT	0x9908	SMSC9500A Ethernet Device
-product SMC2 SMSC9512_14_ALT	0x9909	SMSC9512 Hub & Ethernet Device
-product SMC2 LAN9530		0x9530	LAN9530 Ethernet Device
-product SMC2 LAN9730		0x9730	LAN9730 Ethernet Device
-product SMC2 LAN89530		0x9e08	LAN89530
 product SMC3 2662WV1		0xa001	EZ Connect 11Mbps
 product SMC3 2662WV2		0xa002	EZ Connect 11Mbps v2
 product SMC 2862WG		0xee13	EZ Connect 54Mbps
 
 /* SMK products */
 product SMK MCE_IR		0x031d	eHome Infrared Transceiver
+
+/* SMSC products */
+product SMSC 2020HUB		0x2020	USB Hub
+product SMSC SMSC9500		0x9500	SMSC9500 Ethernet device
+product SMSC SMSC9505		0x9505	SMSC9505 Ethernet device
+product SMSC SMSC9512		0x9512	SMSC9512 USB Hub
+product SMSC LAN9530		0x9530	LAN9530 Ethernet Device
+product SMSC LAN9730		0x9730	LAN9730 Ethernet Device
+product SMSC SMSC9500_SAL10	0x9900	SMSC9500 Ethernet device (SAL10)
+product SMSC SMSC9505_SAL10	0x9901	SMSC9505 Ethernet device (SAL10)
+product SMSC SMSC9500A_SAL10	0x9902	SMSC9500A Ethernet device (SAL10)
+product SMSC SMSC9505A_SAL10	0x9903	SMSC9505A Ethernet device (SAL10)
+product SMSC SMSC9512_14_SAL10	0x9904	SMSC9512/14 Hub & Ethernet Device (SAL10)
+product SMSC SMSC9500A_HAL	0x9905	SMSC9500A Ethernet Device (HAL)
+product SMSC SMSC9505A_HAL	0x9906	SMSC9505A Ethernet Device (HAL)
+product SMSC SMSC9500_ALT	0x9907	SMSC9500 Ethernet Device
+product SMSC SMSC9500A_ALT	0x9908	SMSC9500A Ethernet Device
+product SMSC SMSC9512_14_ALT	0x9909	SMSC9512 Hub & Ethernet Device
+product SMSC SMSC9500A		0x9e00	SMSC9500A Ethernet device
+product SMSC SMSC9505A		0x9e01	SMSC9505A Ethernet device
+product SMSC LAN89530		0x9e08	LAN89530
+product SMSC SMSC9512_14	0xec00	SMSC9512/9514 USB Hub & Ethernet device
 
 /* SOHOware products */
 product SOHOWARE NUB100		0x9100	10/100 USB Ethernet

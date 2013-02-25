@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.17 2012/03/15 02:02:24 joerg Exp $	*/
+/*	$NetBSD: powerd.c,v 1.17.2.1 2013/02/25 00:30:47 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -371,4 +371,5 @@ powerd_log(int pri, const char *msg, ...)
 			    "UNKNOWN" : prioritynames[i].c_name);
 		vfprintf(stderr, msg, arglist);
 	}
+	va_end(arglist);
 }

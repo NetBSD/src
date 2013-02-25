@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2012/06/17 07:40:25 joerg Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 2013/02/25 00:30:31 tls Exp $
 
 .include <bsd.init.mk>
 
@@ -13,8 +13,11 @@ realdepends realall: config/config.status need-dl
 
 config/config.status: ${LLVM_SRCDIR}/configure
 	mkdir -p config
+	printf '#!/bin/sh\necho 2.7.3' > config/python
+	chmod 755 config/python
 	cd config && ${LLVM_SRCDIR}/configure ${LLVM_CONFIGURE_ARGS} \
-	    --enable-optimized CC=${HOST_CC:Q}
+	    --enable-optimized CC=${HOST_CC:Q} \
+	    --with-python=${.OBJDIR}/config/python
 # --disable-assertions
 
 need-dl:

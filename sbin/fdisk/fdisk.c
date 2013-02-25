@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.142 2012/06/05 13:41:23 tsutsui Exp $ */
+/*	$NetBSD: fdisk.c,v 1.142.2.1 2013/02/25 00:28:05 tls Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.142 2012/06/05 13:41:23 tsutsui Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.142.2.1 2013/02/25 00:28:05 tls Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -1645,6 +1645,8 @@ intuit_translated_geometry(void)
 	}
 
 	if (xheads == -1) {
+		if (F_flag)
+			return;
 		warnx("Cannot determine the number of heads");
 		return;
 	}
@@ -2671,6 +2673,8 @@ read_s0(daddr_t offset, struct mbr_sector *boot)
 		return -1;
 	}
 	if (boot->mbr_magic != LE_MBR_MAGIC) {
+		if (F_flag && boot->mbr_magic == 0)
+			return -1;
 		warnx("%s partition table invalid, "
 		    "no magic in sector %"PRIdaddr, tabletype, offset);
 		return -1;
@@ -2769,8 +2773,8 @@ yesno(const char *str, ...)
 	va_list ap;
 
 	va_start(ap, str);
-
 	vprintf(str, ap);
+	va_end(ap);
 	printf(" [n] ");
 
 	first = ch = getchar();

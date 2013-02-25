@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.124 2012/06/10 06:15:54 mrg Exp $        */
+/*      $NetBSD: ukbd.c,v 1.124.2.1 2013/02/25 00:29:39 tls Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.124 2012/06/10 06:15:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.124.2.1 2013/02/25 00:29:39 tls Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_ukbd.h"
+#include "opt_ukbd_layout.h"
+#include "opt_wsdisplay_compat.h"
+#include "opt_ddb.h"
+#endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,13 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.124 2012/06/10 06:15:54 mrg Exp $");
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-
-#ifdef _KERNEL_OPT
-#include "opt_ukbd.h"
-#include "opt_ukbd_layout.h"
-#include "opt_wsdisplay_compat.h"
-#include "opt_ddb.h"
-#endif /* _KERNEL_OPT */
 
 #ifdef UKBD_DEBUG
 #define DPRINTF(x)	if (ukbddebug) printf x
@@ -148,7 +148,7 @@ Static const struct ukbd_keycodetrans trtab_apple_iso[] = {
 };
 
 #ifdef GDIUM_KEYBOARD_HACK
-Static const struct ukbd_keycodetrans trtab_gdium_fn[] = {	
+Static const struct ukbd_keycodetrans trtab_gdium_fn[] = {
 #ifdef notyet
 	{ 58, 0 },	/* F1 -> toggle camera */
 	{ 59, 0 },	/* F2 -> toggle wireless */

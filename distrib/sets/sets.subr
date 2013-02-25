@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.138.2.1 2012/11/20 02:57:44 tls Exp $
+#	$NetBSD: sets.subr,v 1.138.2.2 2013/02/25 00:24:29 tls Exp $
 #
 
 #
@@ -19,7 +19,7 @@
 #	HAVE_BINUTILS
 #	HAVE_GCC
 #	HAVE_GDB
-#	HAS_SSP
+#	HAVE_SSP
 #	TOOLCHAIN_MISSING
 #	OBJECT_FMT
 # as well as:
@@ -144,6 +144,13 @@ if [ "${MKATF}" = "no" ]; then
 else
 	testset="tests"
 fi
+if [ "${MKDEBUG}" = "no" ]; then
+	debugset=""
+	xdebugset=""
+else
+	debugset="debug"
+	xdebugset="xdebug"
+fi
 # Determine lib type. Do this first so stlib also gets set.
 if [ "${OBJECT_FMT}" = "ELF" ]; then
 	shlib=elf
@@ -155,8 +162,8 @@ stlib=$shlib
 if [ "${MKPIC}" = "no" ]; then
 	shlib=no
 fi
-nlists="base comp etc games man misc $modset $testset text"
-xlists="xbase xcomp xetc xfont xserver"
+nlists="base comp $debugset etc games man misc $modset $testset text"
+xlists="xbase xcomp $xdebugset xetc xfont xserver"
 extlists="extbase extcomp extetc"
 
 OSRELEASE=$(${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -k)
@@ -172,7 +179,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.138.2.1 2012/11/20 02:57:44 tls Exp $
+# 	# $NetBSD: sets.subr,v 1.138.2.2 2013/02/25 00:24:29 tls Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -218,6 +225,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	iscsi			${MKISCSI} != no
 #	kerberos		${MKKERBEROS} != no
 #	kmod			${MKKMOD} != no
+#	kyua			${MKKYUA} != no
 #	ldap			${MKLDAP} != no
 #	lint			${MKLINT} != no
 #	llvm			${MKLLVM} != no
@@ -241,7 +249,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	skey			${MKSKEY} != no
 #	sljit			${MKSLJIT} != no
 #	solaris			${MKDTRACE} != no or ${MKZFS} != no
-#	ssp			${HAS_SSP} != no
+#	ssp			${HAVE_SSP} != no
 #	tpm			${MKTPM} != no
 #	x11			${MKX11} != no && ${X11FLAVOUR} != "Xorg"
 #	xorg			${MKX11} != no && ${X11FLAVOUR} == "Xorg"
@@ -280,7 +288,7 @@ list_set_files()
 				nv = needvars[vi]
 				kw = tolower(nv)
 				sub(/^mk/, "", kw)
-				sub(/^has_/, "", kw)
+				sub(/^have_/, "", kw)
 				if (ENVIRON[nv] != "no")
 					wanted[kw] = 1 
 			}

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkfifo.2,v 1.20.12.1 2012/11/20 03:00:43 tls Exp $
+.\"	$NetBSD: mkfifo.2,v 1.20.12.2 2013/02/25 00:27:54 tls Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mkfifo.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd November 18, 2012
 .Dt MKFIFO 2
 .Os
 .Sh NAME
@@ -60,18 +60,26 @@ works the same way as
 .Fn mkfifo
 except if
 .Fa path
-is relative. In that case, it is looked up from a directory whose file
+is relative.
+In that case, it is looked up from a directory whose file
 descriptor was passed as
 .Fa fd .
-Search permission is required on
-.Fa fd
-except if that file descriptor was open with
-.Dv O_SEARCH
-option.
+Search permission is required on this directory.
+.\"    (These alternatives await a decision about the semantics of O_SEARCH)
+.\" Search permission is required on this directory
+.\" except if
+.\" .Fa fd
+.\" was opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.\"    - or -
+.\" This file descriptor must have been opened with the
+.\" .Dv O_SEARCH
+.\" flag.
 .Fa fd
 can be set to
 .Dv AT_FDCWD
-in order to specify current directory.
+in order to specify the current directory.
 .Pp
 The fifo's owner ID is set to the process's effective user ID.
 The fifo's group ID is set to that of the parent directory in
@@ -84,10 +92,29 @@ A \-1 return value indicates an error, and an error code is stored in
 .Fn mkfifo
 will fail and no fifo will be created if:
 .Bl -tag -width Er
-.It Bq Er EOPNOTSUPP
-The kernel has not been configured to support fifo's.
-.It Bq Er ENOTDIR
-A component of the path prefix is not a directory.
+.It Bq Er EACCES
+Search permission is denied for a component of the path prefix.
+.It Bq Er EDQUOT
+The directory in which the entry for the new fifo
+is being placed cannot be extended because the
+user's quota of disk blocks on the file system
+containing the directory has been exhausted.
+Or, the user's quota of inodes on the file system on
+which the fifo is being created has been exhausted.
+.It Bq Er EEXIST
+The named file exists.
+.It Bq Er EFAULT
+.Fa path
+points outside the process's allocated address space.
+.It Bq Er EIO
+An
+.Tn I/O
+error occurred while making the directory entry or allocating the inode.
+Or, an
+.Tn I/O
+error occurred while reading from or writing to the file system.
+.It Bq Er ELOOP
+Too many symbolic links were encountered in translating the pathname.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
 .Brq Dv NAME_MAX
@@ -96,40 +123,18 @@ characters, or an entire path name exceeded
 characters.
 .It Bq Er ENOENT
 A component of the path prefix does not exist.
-.It Bq Er EACCES
-Search permission is denied for a component of the path prefix.
-.It Bq Er ELOOP
-Too many symbolic links were encountered in translating the pathname.
-.It Bq Er EROFS
-The named file resides on a read-only file system.
-.It Bq Er EEXIST
-The named file exists.
 .It Bq Er ENOSPC
 The directory in which the entry for the new fifo is being placed
 cannot be extended because there is no space left on the file
 system containing the directory.
-.It Bq Er ENOSPC
-There are no free inodes on the file system on which the
+Or, there are no free inodes on the file system on which the
 fifo is being created.
-.It Bq Er EDQUOT
-The directory in which the entry for the new fifo
-is being placed cannot be extended because the
-user's quota of disk blocks on the file system
-containing the directory has been exhausted.
-.It Bq Er EDQUOT
-The user's quota of inodes on the file system on
-which the fifo is being created has been exhausted.
-.It Bq Er EIO
-An
-.Tn I/O
-error occurred while making the directory entry or allocating the inode.
-.It Bq Er EIO
-An
-.Tn I/O
-error occurred while reading from or writing to the file system.
-.It Bq Er EFAULT
-.Fa path
-points outside the process's allocated address space.
+.It Bq Er ENOTDIR
+A component of the path prefix is not a directory.
+.It Bq Er EOPNOTSUPP
+The kernel has not been configured to support fifo's.
+.It Bq Er EROFS
+The named file resides on a read-only file system.
 .El
 .Sh SEE ALSO
 .Xr chmod 2 ,
@@ -143,4 +148,3 @@ function call conforms to
 .Fn mkfifoat
 conforms to
 .St -p1003.1-2008 .
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.43 2012/08/16 16:41:53 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.43.2.1 2013/02/25 00:28:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.43 2012/08/16 16:41:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.43.2.1 2013/02/25 00:28:23 tls Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -191,10 +191,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
-#ifdef ARMFPE
-	/* Save Floating Point Register context. */
-	arm_fpe_getcontext(p, (struct fpreg *)(void *)&mcp->fpregs);
-	*flags |= _UC_FPU;
+#ifdef FPU_VFP
+	vfp_getcontext(l, mcp, flags);
 #endif
 
 	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
@@ -219,6 +217,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	const __greg_t * const gr = mcp->__gregs;
 	struct proc * const p = l->l_proc;
 	int error;
+
+#ifdef FPU_VFP
+	if ((flags & _UC_FPU)
+	    && (curcpu()->ci_vfp_id || (flags & _UC_ARM_VFP) == 0))
+		return EINVAL;
+#endif
 
 	if ((flags & _UC_CPU) != 0) {
 		/* Restore General Register context. */
@@ -245,10 +249,10 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_spsr   = gr[_REG_CPSR];
 	}
 
-#ifdef ARMFPE
+#ifdef FPU_VFP
 	if ((flags & _UC_FPU) != 0) {
 		/* Restore Floating Point Register context. */
-		arm_fpe_setcontext(p, (struct fpreg *)(void *)&mcp->__fpregs);
+		vfp_setcontext(l, mcp);
 	}
 #endif
 

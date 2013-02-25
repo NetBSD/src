@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.c,v 1.4 2006/09/09 16:22:36 manu Exp $	*/
+/*	$NetBSD: sha2.c,v 1.4.50.1 2013/02/25 00:24:03 tls Exp $	*/
 
 /* Id: sha2.c,v 1.6 2004/09/21 14:35:25 ludvigm Exp */
 
@@ -56,9 +56,7 @@
 #define bzero(a, b) memset((a), 0, (b))
 #define panic(a) err(1, (a))
 
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L
 #define HAVE_EVP_097
-#endif
 
 /*
  * ASSERT NOTE:

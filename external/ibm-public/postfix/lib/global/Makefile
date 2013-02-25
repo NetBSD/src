@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/03/04 16:12:24 tron Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2013/02/25 00:27:33 tls Exp $
 
 LIBISPRIVATE=	yes
 
@@ -13,8 +13,8 @@ SRCS=	abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	canon_addr.c cfg_parser.c cleanup_strerror.c cleanup_strflags.c \
 	clnt_stream.c conv_time.c db_common.c debug_peer.c debug_process.c \
 	defer.c deliver_completed.c deliver_flock.c deliver_pass.c \
-	deliver_request.c dict_ldap.c dict_mysql.c dict_pgsql.c \
-	dict_proxy.c dict_sqlite.c \
+	deliver_request.c dict_ldap.c dict_memcache.c dict_mysql.c \
+	dict_pgsql.c dict_proxy.c dict_sqlite.c \
 	domain_list.c dot_lockfile.c dot_lockfile_as.c \
 	dsb_scan.c dsn.c dsn_buf.c dsn_mask.c dsn_print.c dsn_util.c \
 	ehlo_mask.c ext_prop.c file_id.c flush_clnt.c header_opts.c \
@@ -41,6 +41,7 @@ SRCS=	abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	verp_sender.c wildcard_inet_addr.c xtext.c data_redirect.c \
 	delivered_hdr.c fold_addr.c mkmap_proxy.c header_body_checks.c \
 	mail_conf_nint.c match_service.c match_service.h mail_conf_nbool.c \
-	smtp_reply_footer.c
+	smtp_reply_footer.c memcache_proto.c mkmap_fail.c safe_ultostr.c \
+	server_acl.c verify_sender_addr.c mail_version.c
 
 .include <bsd.lib.mk>

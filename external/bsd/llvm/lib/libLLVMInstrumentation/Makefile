@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2012/11/20 02:58:02 tls Exp $
+#	$NetBSD: Makefile,v 1.6.2.2 2013/02/25 00:26:38 tls Exp $
 
 LIB=	LLVMInstrumentation
 
@@ -12,6 +12,7 @@ SRCS+=	AddressSanitizer.cpp \
 	EdgeProfiling.cpp \
 	GCOVProfiling.cpp \
 	Instrumentation.cpp \
+	MemorySanitizer.cpp \
 	OptimalEdgeProfiling.cpp \
 	PathProfiling.cpp \
 	ProfilingUtils.cpp \

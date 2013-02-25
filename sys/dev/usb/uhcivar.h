@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.51 2012/06/10 06:15:54 mrg Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.51.2.1 2013/02/25 00:29:39 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,6 +29,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _UHCIVAR_H_
+#define _UHCIVAR_H_
+
+#include <sys/pool.h>
 
 /*
  * To avoid having 1024 TDs for each isochronous transfer we introduce
@@ -152,7 +157,7 @@ typedef struct uhci_softc {
 	uhci_soft_td_t *sc_freetds;	/* TD free list */
 	uhci_soft_qh_t *sc_freeqhs;	/* QH free list */
 
-	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
+	pool_cache_t sc_xferpool;	/* free xfer pool */
 
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
@@ -187,3 +192,5 @@ void		uhci_childdet(device_t, device_t);
 int		uhci_activate(device_t, enum devact);
 bool		uhci_resume(device_t, const pmf_qual_t *);
 bool		uhci_suspend(device_t, const pmf_qual_t *);
+
+#endif /* _UHCIVAR_H_ */

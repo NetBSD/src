@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.10 2010/10/14 06:39:52 kiyohara Exp $	*/
+/*	$NetBSD: devopen.c,v 1.10.18.1 2013/02/25 00:28:33 tls Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -40,10 +40,10 @@ static int devparse(const char *, int *, int *, int *, int *, int *, char **);
  * Parse a device spec.
  *   i.e.
  *     /dev/disk/floppy
- *     /dev/disk/ide/0/master/0
- *     /dev/disk/ide/0/slave/0
- *     /dev/disk/scsi/0/0/0
- *     /dev/disk/scsi/0/3/0
+ *     /dev/disk/ide/0/master/0_n
+ *     /dev/disk/ide/0/slave/0_n
+ *     /dev/disk/scsi/000/0_n
+ *     /dev/disk/scsi/030/0_n
  */
 static int
 devparse(const char *fname, int *dev, int *ctlr, int *unit, int *lunit,
@@ -106,7 +106,7 @@ devparse(const char *fname, int *dev, int *ctlr, int *unit, int *lunit,
 		p += strlen(scsi);
 		if (*p++ != '/' ||
 		    !isdigit(*p++) ||
-		    *p++ != '/' ||
+		    !isdigit(*p++) ||
 		    !isdigit(*p++) ||
 		    *p++ != '/' ||
 		    !isdigit(*p++) ||
@@ -114,8 +114,8 @@ devparse(const char *fname, int *dev, int *ctlr, int *unit, int *lunit,
 		    !isdigit(*p++))
 			return EINVAL;
 		*ctlr = *(p - 7) - '0';
-		*unit = *(p - 5) - '0';
-		*lunit = *(p - 3) - '0';
+		*unit = *(p - 6) - '0';
+		*lunit = *(p - 5) - '0';
 		*part = *(p - 1) - '0';
 		for (i = 0; devsw[i].dv_name != NULL; i++)
 			if (strcmp(devsw[i].dv_name, "sd") == 0) {

@@ -53,4 +53,9 @@ Boston, MA 02111-1307, USA.  */
 /* Attempt to enable execute permissions on the stack.  */
 #define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
 
+/* Make sure _enable_execute_stack() isn't the empty function in libgcc2.c.
+   It gets defined in _trampoline.o via NETBSD_ENABLE_EXECUTE_STACK.  */
+#undef ENABLE_EXECUTE_STACK
+#define ENABLE_EXECUTE_STACK
+
 #define TARGET_VERSION fprintf (stderr, " (NetBSD/ia64 ELF)");

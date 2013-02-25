@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mainbus.c,v 1.2 2011/07/19 15:44:53 dyoung Exp $	*/
+/*	$NetBSD: if_ne_mainbus.c,v 1.2.12.1 2013/02/25 00:28:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBS$");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_mainbus.c,v 1.2.12.1 2013/02/25 00:28:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

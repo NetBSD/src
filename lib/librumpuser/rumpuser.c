@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.19.2.1 2012/11/20 03:00:45 tls Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.19.2.2 2013/02/25 00:28:01 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.19.2.1 2012/11/20 03:00:45 tls Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.19.2.2 2013/02/25 00:28:01 tls Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -41,8 +41,11 @@ __RCSID("$NetBSD: rumpuser.c,v 1.19.2.1 2012/11/20 03:00:45 tls Exp $");
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
-#include <sys/sysctl.h>
 #include <sys/event.h>
+#endif
+
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#include <sys/sysctl.h>
 #endif
 
 #include <assert.h>
@@ -261,7 +264,7 @@ rumpuser_anonmmap(void *prefaddr, size_t size, int alignbit,
 	if (exec)
 		prot |= PROT_EXEC;
 	rv = mmap(prefaddr, size, prot,
-	    MAP_ANON | MAP_ALIGNED(alignbit), -1, 0);
+	    MAP_PRIVATE | MAP_ANON | MAP_ALIGNED(alignbit), -1, 0);
 	if (rv == MAP_FAILED) {
 		seterror(errno);
 		return NULL;
@@ -693,6 +696,31 @@ rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
 	}
 	return (nn/sizeof(iev));
 }
+
+#else
+
+/* a polling default implementation */
+int
+rumpuser_writewatchfile_setup(int inotify, int fd, intptr_t notused, int *error)
+{
+	static int warned = 0;
+
+	if (!warned) {
+		fprintf(stderr, "WARNING: rumpuser writewatchfile routines are "
+		    "polling-only on this platform\n");
+		warned = 1;
+	}
+
+	return 0;
+}
+
+int
+rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
+{
+
+	KLOCK_WRAP(usleep(10000));
+	return 0;
+}
 #endif
 
 /*
@@ -733,11 +761,11 @@ rumpuser_getnhostcpu(void)
 {
 	int ncpu = 1;
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	size_t sz = sizeof(ncpu);
 
 	sysctlbyname("hw.ncpu", &ncpu, &sz, NULL, 0);
-#elif __linux__
+#elif defined(__linux__) || defined(__CYGWIN__)
 	FILE *fp;
 	char *line = NULL;
 	size_t n = 0;

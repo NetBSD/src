@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.46 2011/09/06 18:31:44 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.46.8.1 2013/02/25 00:30:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,13 +36,16 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.46 2011/09/06 18:31:44 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.46.8.1 2013/02/25 00:30:39 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/ioctl.h>
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -51,21 +54,10 @@ __RCSID("$NetBSD: main.c,v 1.46 2011/09/06 18:31:44 joerg Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <termios.h>
-#include <sys/ioctl.h>
 
 #include "systat.h"
 #include "extern.h"
 
-static struct nlist namelist[] = {
-#define X_FIRST		0
-#define	X_HZ		0
-	{ .n_name = "_hz" },
-#define	X_STATHZ		1
-	{ .n_name = "_stathz" },
-#define	X_MAXSLP		2
-	{ .n_name = "_maxslp" },
-	{ .n_name = NULL }
-};
 static int     dellave;
 
 kvm_t *kd;
@@ -103,6 +95,8 @@ main(int argc, char **argv)
 	int ch;
 	char errbuf[_POSIX2_LINE_MAX];
 	const char *all;
+	struct clockinfo clk;
+	size_t len;
 
 	all = "all";
 	egid = getegid();
@@ -186,13 +180,6 @@ main(int argc, char **argv)
 	if (nlistf == NULL && memf == NULL)
 		(void)setegid(getgid());
 
-	if (kvm_nlist(kd, namelist)) {
-		if (nlistf)
-			errx(1, "%s: no namelist", nlistf);
-		else
-			errx(1, "no namelist");
-	}
-
 	signal(SIGINT, die);
 	signal(SIGQUIT, die);
 	signal(SIGTERM, die);
@@ -223,9 +210,17 @@ main(int argc, char **argv)
 	}
 	gethostname(hostname, sizeof (hostname));
 	hostname[sizeof(hostname) - 1] = '\0';
-	NREAD(X_HZ, &hz, sizeof hz);
-	NREAD(X_STATHZ, &stathz, sizeof stathz);
-	NREAD(X_MAXSLP, &maxslp, sizeof maxslp);
+
+	len = sizeof(clk);
+	if (sysctlbyname("kern.clockrate", &clk, &len, NULL, 0))
+		error("can't get \"kern.clockrate\": %s", strerror(errno));
+	hz = clk.hz;
+	stathz = clk.stathz;
+
+	len = sizeof(maxslp);
+	if (sysctlbyname("vm.maxslp", &maxslp, &len, NULL, 0))
+		error("can't get \"vm.maxslp\": %s", strerror(errno));
+
 	(*curmode->c_init)();
 	curmode->c_flags |= CF_INIT;
 	labels();

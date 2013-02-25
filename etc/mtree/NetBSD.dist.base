@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.104.2.1 2012/11/20 02:57:56 tls Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.104.2.2 2013/02/25 00:24:51 tls Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -36,6 +36,7 @@
 ./etc/fonts/conf.avail
 ./etc/iscsi
 ./etc/kerberosV
+./etc/kyua
 ./etc/mail
 ./etc/mtree
 ./etc/namedb
@@ -94,7 +95,7 @@
 ./usr/include/arpa
 ./usr/include/atf-c
 ./usr/include/atf-c++
-./usr/include/clang-3.2
+./usr/include/clang-3.3
 ./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/apm
@@ -141,6 +142,7 @@
 ./usr/include/isofs/cd9660
 ./usr/include/kadm5
 ./usr/include/krb5
+./usr/include/lutok
 ./usr/include/lzma
 ./usr/include/miscfs
 ./usr/include/miscfs/fdesc
@@ -166,6 +168,7 @@
 ./usr/include/netiso
 ./usr/include/netkey
 ./usr/include/netnatm
+./usr/include/netpgp
 ./usr/include/netsmb
 ./usr/include/nfs
 ./usr/include/ntfs
@@ -251,6 +254,8 @@
 ./usr/share/doc/html/ntp/drivers/scripts
 ./usr/share/doc/html/ntp/icons
 ./usr/share/doc/html/ntp/scripts
+./usr/share/doc/kyua-cli
+./usr/share/doc/kyua-testers
 ./usr/share/doc/psd
 ./usr/share/doc/psd/01.cacm
 ./usr/share/doc/psd/02.implement
@@ -342,9 +347,11 @@
 ./usr/share/examples/ipf
 ./usr/share/examples/isdn
 ./usr/share/examples/kerberos
+./usr/share/examples/kyua-cli
 ./usr/share/examples/libsaslc
 ./usr/share/examples/libsaslc/mech
 ./usr/share/examples/lua
+./usr/share/examples/lutok
 ./usr/share/examples/mount_portal
 ./usr/share/examples/npf
 ./usr/share/examples/openssl
@@ -431,6 +438,9 @@
 ./usr/share/keymaps/amiga
 ./usr/share/keymaps/atari
 ./usr/share/keymaps/x68k
+./usr/share/kyua-cli
+./usr/share/kyua-cli/misc
+./usr/share/kyua-cli/store
 ./usr/share/legal
 ./usr/share/locale
 ./usr/share/locale/af_ZA.ISO8859-1

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mysql_table.5,v 1.1.1.2 2011/03/02 19:31:51 tron Exp $
+.\"	$NetBSD: mysql_table.5,v 1.1.1.2.10.1 2013/02/25 00:27:11 tls Exp $
 .\"
 .TH MYSQL_TABLE 5 
 .ad
@@ -97,7 +97,7 @@ The hosts that Postfix will try to connect to and query from.
 Specify \fIunix:\fR for UNIX domain sockets, \fIinet:\fR for TCP
 connections (default).  Example:
 .nf
-    hosts = host1.some.domain host2.some.domain
+    hosts = host1.some.domain host2.some.domain:port
     hosts = unix:/file/name
 .fi
 

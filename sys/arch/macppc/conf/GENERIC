@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.303.2.1 2012/11/20 03:01:31 tls Exp $
+# $NetBSD: GENERIC,v 1.303.2.2 2013/02/25 00:28:50 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.303.2.1 $"
+#ident 		"GENERIC-$Revision: 1.303.2.2 $"
 
 maxusers	32
 
@@ -172,7 +172,9 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 # wscons options
 #options 	WSEMUL_SUN			# sun terminal emulation
 options 	WSEMUL_VT100			# VT100 / VT220 emulation
-options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
 
 options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE

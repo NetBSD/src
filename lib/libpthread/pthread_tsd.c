@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_tsd.c,v 1.8 2012/03/02 18:11:53 joerg Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.8.2.1 2013/02/25 00:27:59 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams, and by Andrew Doran.
+ * by Nathan J. Williams, by Andrew Doran, and by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.8 2012/03/02 18:11:53 joerg Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.8.2.1 2013/02/25 00:27:59 tls Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -38,13 +38,22 @@ __RCSID("$NetBSD: pthread_tsd.c,v 1.8 2012/03/02 18:11:53 joerg Exp $");
 #include "pthread.h"
 #include "pthread_int.h"
 
+
 static pthread_mutex_t tsd_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int nextkey;
-void *pthread__tsd_alloc[PTHREAD_KEYS_MAX];
+
+PTQ_HEAD(pthread__tsd_list, pt_specific)
+    pthread__tsd_list[PTHREAD_KEYS_MAX];
 void (*pthread__tsd_destructors[PTHREAD_KEYS_MAX])(void *);
 
 __strong_alias(__libc_thr_keycreate,pthread_key_create)
 __strong_alias(__libc_thr_keydelete,pthread_key_delete)
+
+static void
+/*ARGSUSED*/
+null_destructor(void *p)
+{
+}
 
 int
 pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
@@ -54,10 +63,14 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	/* Get a lock on the allocation list */
 	pthread_mutex_lock(&tsd_mutex);
 	
-	/* Find an available slot */
+	/* Find an available slot:
+	 * The condition for an available slot is one with the destructor
+	 * not being NULL. If the desired destructor is NULL we set it to 
+	 * our own internal destructor to satisfy the non NULL condition.
+	 */
 	/* 1. Search from "nextkey" to the end of the list. */
 	for (i = nextkey; i < PTHREAD_KEYS_MAX; i++)
-		if (pthread__tsd_alloc[i] == NULL)
+		if (pthread__tsd_destructors[i] == NULL)
 			break;
 
 	if (i == PTHREAD_KEYS_MAX) {
@@ -65,7 +78,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 		 *    of the list back to "nextkey".
 		 */
 		for (i = 0; i < nextkey; i++)
-			if (pthread__tsd_alloc[i] == NULL)
+			if (pthread__tsd_destructors[i] == NULL)
 				break;
 		
 		if (i == nextkey) {
@@ -78,11 +91,56 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	}
 
 	/* Got one. */
-	pthread__tsd_alloc[i] = (void *)__builtin_return_address(0);
+	pthread__assert(PTQ_EMPTY(&pthread__tsd_list[i]));
+	pthread__tsd_destructors[i] = destructor ? destructor : null_destructor;
+
 	nextkey = (i + 1) % PTHREAD_KEYS_MAX;
-	pthread__tsd_destructors[i] = destructor;
 	pthread_mutex_unlock(&tsd_mutex);
 	*key = i;
+
+	return 0;
+}
+
+/*
+ * Each thread holds an array of PTHREAD_KEYS_MAX pt_specific list
+ * elements. When an element is used it is inserted into the appropriate
+ * key bucket of pthread__tsd_list. This means that ptqe_prev == NULL,
+ * means that the element is not threaded, ptqe_prev != NULL it is
+ * already part of the list. When we set to a NULL value we delete from the
+ * list if it was in the list, and when we set to non-NULL value, we insert
+ * in the list if it was not already there.
+ *
+ * We keep this global array of lists of threads that have called
+ * pthread_set_specific with non-null values, for each key so that
+ * we don't have to check all threads for non-NULL values in
+ * pthread_key_destroy
+ *
+ * We could keep an accounting of the number of specific used
+ * entries per thread, so that we can update pt_havespecific when we delete
+ * the last one, but we don't bother for now
+ */
+int
+pthread__add_specific(pthread_t self, pthread_key_t key, const void *value)
+{
+	struct pt_specific *pt;
+
+	pthread__assert(key >= 0 && key < PTHREAD_KEYS_MAX);
+
+	pthread_mutex_lock(&tsd_mutex);
+	pthread__assert(pthread__tsd_destructors[key] != NULL);
+	pt = &self->pt_specific[key];
+	self->pt_havespecific = 1;
+	if (value) {
+		if (pt->pts_next.ptqe_prev == NULL)
+			PTQ_INSERT_HEAD(&pthread__tsd_list[key], pt, pts_next);
+	} else {
+		if (pt->pts_next.ptqe_prev != NULL) {
+			PTQ_REMOVE(&pthread__tsd_list[key], pt, pts_next);
+			pt->pts_next.ptqe_prev = NULL;
+		}
+	}
+	pt->pts_value = __UNCONST(value);
+	pthread_mutex_unlock(&tsd_mutex);
 
 	return 0;
 }
@@ -103,7 +161,8 @@ pthread_key_delete(pthread_key_t key)
 	 * Subject: Re: TSD key reusing issue
 	 * Message-ID: <u97d8.29$fL6.200@news.cpqcorp.net>
 	 * Date: Thu, 21 Feb 2002 09:06:17 -0500
-	 * http://groups.google.com/groups?hl=en&selm=u97d8.29%24fL6.200%40news.cpqcorp.net
+	 *	 http://groups.google.com/groups?\
+	 *	 hl=en&selm=u97d8.29%24fL6.200%40news.cpqcorp.net
 	 * 
 	 * Given:
 	 *
@@ -157,8 +216,31 @@ pthread_key_delete(pthread_key_t key)
 	 * apply in general, just to this implementation.
 	 */
 
-	/* For the momemt, we're going with option 1. */
+	/*
+	 * We do option 3; we find the list of all pt_specific structures
+	 * threaded on the key we are deleting, unthread them, and set the
+	 * pointer to NULL. Finally we unthread the entry, freeing it for
+	 * further use.
+	 *
+	 * We don't call the destructor here, it is the responsibility
+	 * of the application to cleanup the storage:
+	 * 	http://pubs.opengroup.org/onlinepubs/9699919799/functions/\
+	 *	pthread_key_delete.html
+	 */
+	struct pt_specific *pt;
+
+	pthread__assert(key >= 0 && key < PTHREAD_KEYS_MAX);
+
 	pthread_mutex_lock(&tsd_mutex);
+
+	pthread__assert(pthread__tsd_destructors[key] != NULL);
+
+	while ((pt = PTQ_FIRST(&pthread__tsd_list[key])) != NULL) {
+		PTQ_REMOVE(&pthread__tsd_list[key], pt, pts_next);
+		pt->pts_value = NULL;
+		pt->pts_next.ptqe_prev = NULL;
+	}
+
 	pthread__tsd_destructors[key] = NULL;
 	pthread_mutex_unlock(&tsd_mutex);
 
@@ -206,17 +288,24 @@ pthread__destroy_tsd(pthread_t self)
 	do {
 		done = 1;
 		for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
-			if (self->pt_specific[i] != NULL) {
-				pthread_mutex_lock(&tsd_mutex);
+			struct pt_specific *pt = &self->pt_specific[i];
+			if (pt->pts_next.ptqe_prev == NULL)
+				continue;
+			pthread_mutex_lock(&tsd_mutex);
+
+			if (pt->pts_next.ptqe_prev != NULL)  {
+				PTQ_REMOVE(&pthread__tsd_list[i], pt, pts_next);
+				val = pt->pts_value;
+				pt->pts_value = NULL;
+				pt->pts_next.ptqe_prev = NULL;
 				destructor = pthread__tsd_destructors[i];
-				pthread_mutex_unlock(&tsd_mutex);
-				if (destructor != NULL) {
-					done = 0;
-					val = self->pt_specific[i];
-					/* See above */
-					self->pt_specific[i] = NULL;
-					(*destructor)(val);
-				}
+			} else
+				destructor = NULL;
+
+			pthread_mutex_unlock(&tsd_mutex);
+			if (destructor != NULL) {
+				done = 0;
+				(*destructor)(val);
 			}
 		}
 	} while (!done && iterations--);

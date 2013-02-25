@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.32.2.1 2012/11/20 03:00:45 tls Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.32.2.2 2013/02/25 00:28:01 tls Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -546,7 +546,7 @@ tcp_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 	int port;
 
 	memset(&sin, 0, sizeof(sin));
-	SA_SETLEN(&sin, sizeof(sin));
+	SIN_SETLEN(sin, sizeof(sin));
 	sin.sin_family = AF_INET;
 
 	p = strchr(addr, ':');
@@ -665,7 +665,7 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 		}
 	}
 	strcat(s_un.sun_path, addr);
-#if defined(__linux__) || defined(__sun__)
+#if defined(__linux__) || defined(__sun__) || defined(__CYGWIN__)
 	slen = sizeof(s_un);
 #else
 	s_un.sun_len = SUN_LEN(&s_un);

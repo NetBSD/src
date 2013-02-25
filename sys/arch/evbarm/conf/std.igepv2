@@ -1,18 +1,13 @@
-#	$NetBSD: std.igepv2,v 1.4 2012/09/04 00:19:20 matt Exp $
+#	$NetBSD: std.igepv2,v 1.4.2.1 2013/02/25 00:28:35 tls Exp $
 #
 # standard NetBSD/evbarm for IGEPV2 options
 
 machine	evbarm arm
-include		"conf/std"	# MI standard options
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in BEAGLEBOARD config definitions.
-include "arch/evbarm/conf/files.beagle"
+include		"arch/evbarm/conf/files.beagle"
 
-options 	EXEC_ELF32
-options 	EXEC_SCRIPT
-
-# To support easy transit to ../arch/arm/arm32
-options 	ARM32
 options 	CORTEX_PMC
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h

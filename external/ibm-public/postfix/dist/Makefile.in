@@ -35,25 +35,25 @@ update printfck tests root_tests:
 update: $(LIBEXEC)
 
 libexec/post-install: conf/post-install
-	rm -f $@ && ln -sf ../$? $@
+	rm -f $@ && ln -f $? $@
 
 libexec/postfix-files: conf/postfix-files
-	rm -f $@ && ln -sf ../$? $@
+	rm -f $@ && ln -f $? $@
 
 libexec/postfix-script: conf/postfix-script
-	rm -f $@ && ln -sf ../$? $@
+	rm -f $@ && ln -f $? $@
 
 libexec/postfix-wrapper: conf/postfix-wrapper
-	rm -f $@ && ln -sf ../$? $@
+	rm -f $@ && ln -f $? $@
 
 libexec/main.cf: conf/main.cf
-	rm -f $@ && ln -sf ../$? $@
+	rm -f $@ && ln -f $? $@
 
 libexec/master.cf: conf/master.cf
-	rm -f $@ && ln -sf ../$? $@
+	rm -f $@ && ln -f $? $@
 
 libexec/postmulti-script: conf/postmulti-script
-	rm -f $@ && ln -sf ../$? $@
+	rm -f $@ && ln -f $? $@
 
 manpages:
 	set -e; for i in $(MANDIRS); do \

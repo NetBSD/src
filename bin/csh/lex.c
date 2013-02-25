@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.27 2010/01/17 12:15:36 wiz Exp $ */
+/* $NetBSD: lex.c,v 1.27.12.1 2013/02/25 00:23:51 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.27 2010/01/17 12:15:36 wiz Exp $");
+__RCSID("$NetBSD: lex.c,v 1.27.12.1 2013/02/25 00:23:51 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,6 +187,36 @@ prlex(FILE *fp, struct wordent *sp0)
 	    (void) fputc(' ', fp);
     }
 }
+
+#ifdef EDIT
+int
+sprlex(char **s, struct wordent *sp0)
+{
+    struct wordent *sp;
+
+    sp = sp0->next;
+    char *os = *s;
+    for (;;) {
+	char *w = vis_str(sp->word);
+	if (os == NULL) {
+	    if (asprintf(s, "%s", w) < 0)
+		return -1;
+	    os = *s;
+	} else if (*os != '\n') {
+	    if (asprintf(s, "%s %s", os, w) < 0) {
+		free(os);
+		return 1;
+	    }
+	    free(os);
+	    os = *s;
+	}
+	sp = sp->next;
+	if (sp == sp0)
+	    break;
+    }
+    return 0;
+}
+#endif
 
 void
 copylex(struct wordent *hp, struct wordent *fp)
@@ -1440,9 +1470,21 @@ again:
 	roomleft = BUFSIZE - off;
 
 #ifdef FILEC
-	roomleft = BUFSIZE - off;
 	for (;;) {
-	    if (filec && intty) {
+	    if ((editing || filec) && intty) {
+#ifdef EDIT
+		if (editing) {
+			const char *p;
+			if ((p = el_gets(el, &c)) != NULL) {
+				size_t i;
+				/* XXX: Truncation */
+				numleft = c > BUFSIZE ? BUFSIZE : c;
+				for (i = 0; *p && i < BUFSIZE; i++, p++)
+					ttyline[i] = *p;
+				ttyline[i - (i == BUFSIZE)] = '\0';
+			}
+		}
+#endif
 		c = numleft ? numleft : tenex(ttyline, BUFSIZE);
 		if (c > roomleft) {
 		    /* start with fresh buffer */

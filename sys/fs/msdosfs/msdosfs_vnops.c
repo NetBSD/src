@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.83 2012/04/29 22:53:59 chs Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.83.2.1 2013/02/25 00:29:47 tls Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.83 2012/04/29 22:53:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.83.2.1 2013/02/25 00:29:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,11 +525,10 @@ msdosfs_read(void *v)
 		 */
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, lbn), blsize,
 		    NOCRED, 0, &bp);
-		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
-			brelse(bp, 0);
 			goto bad;
 		}
+		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		error = uiomove((char *)bp->b_data + on, (int) n, uio);
 		brelse(bp, 0);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
@@ -1103,7 +1102,6 @@ abortit:
 		    pmp->pm_bpcluster, NOCRED, B_MODIFY, &bp);
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
-			brelse(bp, 0);
 			VOP_UNLOCK(fvp);
 			goto bad;
 		}
@@ -1495,7 +1493,6 @@ msdosfs_readdir(void *v)
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    NOCRED, 0, &bp);
 		if (error) {
-			brelse(bp, 0);
 			goto bad;
 		}
 		n = MIN(n, blsize - bp->b_resid);

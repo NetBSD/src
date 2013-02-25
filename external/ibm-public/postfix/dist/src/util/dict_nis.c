@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_nis.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: dict_nis.c,v 1.1.1.1.16.1 2013/02/25 00:27:31 tls Exp $	*/
 
 /*++
 /* NAME
@@ -146,13 +146,14 @@ static const char *dict_nis_lookup(DICT *dict, const char *key)
     int     err;
     static VSTRING *buf;
 
+    dict->error = 0;
+
     /*
      * Sanity check.
      */
     if ((dict->flags & (DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL)) == 0)
 	msg_panic("dict_nis_lookup: no DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL flag");
 
-    dict_errno = 0;
     if (dict_nis_domain == dict_nis_disabled)
 	return (0);
 
@@ -206,7 +207,7 @@ static const char *dict_nis_lookup(DICT *dict, const char *key)
 	msg_warn("lookup %s, NIS domain %s, map %s: %s",
 		 key, dict_nis_domain, dict_nis->dict.name,
 		 dict_nis_strerror(err));
-	dict_errno = DICT_ERR_RETRY;
+	dict->error = DICT_ERR_RETRY;
     }
     return (0);
 }
@@ -227,8 +228,9 @@ DICT   *dict_nis_open(const char *map, int open_flags, int dict_flags)
     DICT_NIS *dict_nis;
 
     if (open_flags != O_RDONLY)
-	msg_fatal("%s:%s map requires O_RDONLY access mode",
-		  DICT_TYPE_NIS, map);
+	return (dict_surrogate(DICT_TYPE_NIS, map, open_flags, dict_flags,
+			       "%s:%s map requires O_RDONLY access mode",
+			       DICT_TYPE_NIS, map));
 
     dict_nis = (DICT_NIS *) dict_alloc(DICT_TYPE_NIS, map, sizeof(*dict_nis));
     dict_nis->dict.lookup = dict_nis_lookup;
@@ -240,6 +242,7 @@ DICT   *dict_nis_open(const char *map, int open_flags, int dict_flags)
 	dict_nis->dict.fold_buf = vstring_alloc(10);
     if (dict_nis_domain == 0)
 	dict_nis_init();
+    dict_nis->dict.owner.status = DICT_OWNER_TRUSTED;
     return (DICT_DEBUG (&dict_nis->dict));
 }
 

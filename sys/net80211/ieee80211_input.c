@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.72 2011/12/31 20:41:58 christos Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.72.6.1 2013/02/25 00:30:04 tls Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.72 2011/12/31 20:41:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.72.6.1 2013/02/25 00:30:04 tls Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -2168,8 +2168,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ni->ni_rssi = rssi;
 		ni->ni_rstamp = rstamp;
 		rate = ieee80211_setup_rates(ni, rates, xrates,
-			  IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE
-			| IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
+			  IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE
+			| IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
 		if (rate & IEEE80211_RATE_BASIC) {
 			IEEE80211_DISCARD(ic, IEEE80211_MSG_XRATE,
 			    wh, ieee80211_mgt_subtype_name[subtype >>
@@ -2398,8 +2398,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			return;
 		}
 		rate = ieee80211_setup_rates(ni, rates, xrates,
-				IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
-				IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
+				IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE |
+				IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
 		/*
 		 * If constrained to 11g-only stations reject an
 		 * 11b-only station.  We cheat a bit here by looking
@@ -2519,8 +2519,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 
 		IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
 		rate = ieee80211_setup_rates(ni, rates, xrates,
-				IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
-				IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
+				IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE |
+				IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
 		if (rate & IEEE80211_RATE_BASIC) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 			    "[%s] %sassoc failed (rate set mismatch)\n",

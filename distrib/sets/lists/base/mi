@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1003.2.1 2012/11/20 02:57:45 tls Exp $
+# $NetBSD: mi,v 1.1003.2.2 2013/02/25 00:24:30 tls Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -99,6 +99,7 @@
 ./etc/iscsi					base-sysutil-root
 ./etc/kerberosIV				base-obsolete		obsolete
 ./etc/kerberosV					base-krb5-root
+./etc/kyua					base-kyua-root
 ./etc/mail					base-postfix-bin
 ./etc/mtree					base-sys-root
 ./etc/mtree/set.base				base-sys-root
@@ -201,6 +202,7 @@
 ./libexec					base-sys-root
 ./libexec/devpubd-hooks				base-sysutil-root
 ./libexec/devpubd-hooks/01-makedev		base-sysutil-root
+./libexec/devpubd-hooks/02-wedgenames		base-sysutil-root
 ./libexec/devpubd-run-hooks			base-sysutil-root
 ./libexec/dhcpcd-hooks				base-dhcpcd-root
 ./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root
@@ -517,6 +519,7 @@
 ./usr/bin/krb5-config				base-krb5-bin		kerberos
 ./usr/bin/ktrace				base-debug-bin
 ./usr/bin/ktruss				base-debug-bin
+./usr/bin/kyua					base-kyua-bin		kyua
 ./usr/bin/lam					base-util-bin
 ./usr/bin/last					base-util-bin
 ./usr/bin/lastcomm				base-util-bin
@@ -791,7 +794,8 @@
 ./usr/include/arpa				base-c-usr
 ./usr/include/cdk				base-obsolete		obsolete
 ./usr/include/clang-3.0				base-obsolete		obsolete
-./usr/include/clang-3.2				base-c-usr
+./usr/include/clang-3.2				base-obsolete		obsolete
+./usr/include/clang-3.3				base-c-usr
 ./usr/include/compat				base-obsolete		obsolete
 ./usr/include/crypto				base-c-usr
 ./usr/include/dev				base-c-usr
@@ -903,6 +907,7 @@
 ./usr/include/netmpls				base-c-usr
 ./usr/include/netnatm				base-c-usr
 ./usr/include/netns				base-obsolete		obsolete
+./usr/include/netpgp				base-c-usr
 ./usr/include/netsmb				base-c-usr
 ./usr/include/nfs				base-c-usr
 ./usr/include/ntfs				base-c-usr
@@ -1061,6 +1066,8 @@
 ./usr/libexec/kdc				base-obsolete		obsolete
 ./usr/libexec/kfd				base-obsolete		obsolete
 ./usr/libexec/kpasswdd				base-krb5-bin		kerberos
+./usr/libexec/kyua-atf-tester			base-kyua-bin		kyua
+./usr/libexec/kyua-plain-tester			base-kyua-bin		kyua
 ./usr/libexec/lfs_cleanerd			base-obsolete		obsolete
 ./usr/libexec/locate.bigram			base-sysutil-bin
 ./usr/libexec/locate.code			base-sysutil-bin
@@ -1225,6 +1232,7 @@
 ./usr/sbin/dnssec-settime			base-bind-bin
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
 ./usr/sbin/dnssec-signzone			base-bind-bin
+./usr/sbin/dnssec-verify			base-bind-bin
 ./usr/sbin/download-vulnerability-list		base-pkgutil-bin	crypto
 ./usr/sbin/dtmfdecode				base-isdn-bin
 ./usr/sbin/dtrace				base-debug-bin		dtrace
@@ -2515,6 +2523,15 @@
 ./usr/share/keymaps/amiga			base-sys-share
 ./usr/share/keymaps/atari			base-sys-share
 ./usr/share/keymaps/x68k			base-sys-share
+./usr/share/kyua-cli				base-kyua-bin
+./usr/share/kyua-cli/misc			base-kyua-bin
+./usr/share/kyua-cli/misc/context.html		base-kyua-bin		share,kyua
+./usr/share/kyua-cli/misc/index.html		base-kyua-bin		share,kyua
+./usr/share/kyua-cli/misc/report.css		base-kyua-bin		share,kyua
+./usr/share/kyua-cli/misc/test_result.html	base-kyua-bin		share,kyua
+./usr/share/kyua-cli/store			base-kyua-bin
+./usr/share/kyua-cli/store/migrate_v1_v2.sql	base-kyua-bin		share,kyua
+./usr/share/kyua-cli/store/schema_v2.sql	base-kyua-bin		share,kyua
 ./usr/share/ldscripts				base-obsolete		obsolete
 ./usr/share/legal				base-sys-share
 ./usr/share/legal/COPYRIGHT			base-sys-share		share
@@ -5012,6 +5029,7 @@
 ./var/db/obsolete				base-sys-root
 ./var/db/obsolete/base				base-sys-root
 ./var/db/obsolete/comp				base-sys-root
+./var/db/obsolete/debug				base-sys-root		debug
 ./var/db/obsolete/etc				base-sys-root
 ./var/db/obsolete/games				base-sys-root
 ./var/db/obsolete/man				base-sys-root

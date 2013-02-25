@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARDXM,v 1.6.2.1 2012/11/20 03:01:13 tls Exp $
+#	$NetBSD: BEAGLEBOARDXM,v 1.6.2.2 2013/02/25 00:28:34 tls Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -296,3 +296,4 @@ pseudo-device	pty			# pseudo-terminals
 #options	RND_COM
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling

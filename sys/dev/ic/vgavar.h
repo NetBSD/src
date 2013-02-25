@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.29 2010/12/09 23:33:30 christos Exp $ */
+/* $NetBSD: vgavar.h,v 1.29.18.1 2013/02/25 00:29:15 tls Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -217,7 +217,5 @@ void 	vga_load_builtinfont(struct vga_handle *, u_int8_t *, int, int);
 #endif /* !VGA_RASTERCONSOLE */
 void	vga_reset(struct vga_handle *, void (*)(struct vga_handle *));
 void	vga_initregs(struct vga_handle *);
-void	vga_save_palette(struct vga_config *);
-void	vga_restore_palette(struct vga_config *);
 
 extern int vga_no_builtinfont;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2012/04/04 10:42:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2013/02/25 00:26:32 tls Exp $
 
 PROG_CXX=	llc
 NOMAN=		yes
@@ -13,6 +13,12 @@ LLVM_LIBS+= \
 	AsmPrinter \
 	AsmParser \
 	BitReader \
+	AArch64CodeGen \
+	AArch64TargetInfo \
+	AArch64MCTargetDesc \
+	AArch64AsmParser \
+	AArch64AsmPrinter \
+	AArch64Utils \
 	ARMCodeGen \
 	ARMTargetInfo \
 	ARMMCTargetDesc \
@@ -44,7 +50,7 @@ LLVM_LIBS+= \
 	Target \
 	MCParser \
 	MC \
-	Core \
+	IR \
 	Support
 
 .include "${.PARSEDIR}/../../link.mk"

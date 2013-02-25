@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_addr_map.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_addr_map.c,v 1.1.1.1.16.1 2013/02/25 00:27:18 tls Exp $	*/
 
 /*++
 /* NAME
@@ -34,7 +34,7 @@
 /* DIAGNOSTICS
 /*	Warnings: map lookup returns a non-address result.
 /*
-/*	The global \fIdict_errno\fR is non-zero when the lookup
+/*	The path->error value is non-zero when the lookup
 /*	should be tried again.
 /* SEE ALSO
 /*	mail_addr_find(3), mail address matching
@@ -122,7 +122,7 @@ ARGV   *mail_addr_map(MAPS *path, const char *address, int propagate)
 	    msg_warn("%s lookup of %s returns non-address result \"%s\"",
 		     path->title, address, string);
 	    argv = argv_free(argv);
-	    dict_errno = DICT_ERR_RETRY;
+	    path->error = DICT_ERR_RETRY;
 	}
     }
 
@@ -132,7 +132,7 @@ ARGV   *mail_addr_map(MAPS *path, const char *address, int propagate)
     else {
 	if (msg_verbose)
 	    msg_info("%s: %s -> %s", myname, address,
-		     dict_errno ? "(try again)" : "(not found)");
+		     path->error ? "(try again)" : "(not found)");
     }
 
     /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.2 2012/08/20 07:32:49 christos Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.2.2.1 2013/02/25 00:29:36 tls Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -16,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef _IF_URTWNVAR_H_
+#define _IF_URTWNVAR_H_
 
 /*
  * Driver definitions.
@@ -126,6 +128,7 @@ struct urtwn_softc {
 	kmutex_t			sc_task_mtx;
 	kmutex_t			sc_fwcmd_mtx;
 	kmutex_t			sc_tx_mtx;
+	kmutex_t			sc_write_mtx;
 
 	usbd_pipe_handle		rx_pipe;
 	int				rx_npipe;
@@ -176,3 +179,6 @@ struct urtwn_softc {
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
 };
+
+#endif /* _IF_URTWNVAR_H_ */
+

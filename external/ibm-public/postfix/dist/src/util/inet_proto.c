@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_proto.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: inet_proto.c,v 1.1.1.1.16.1 2013/02/25 00:27:32 tls Exp $	*/
 
 /*++
 /* NAME
@@ -58,7 +58,7 @@
 /*	One or more of PF_INET or PF_INET6. This can be used as
 /*	input for the inet_addr_local() routine.
 /* .IP dns_atype_list
-/*	One or more of T_AAAA or TA. This can be used as input for
+/*	One or more of T_AAAA or T_A. This can be used as input for
 /*	the dns_lookup_v() and dns_lookup_l() routines.
 /* .IP sa_family_list
 /*	One or more of AF_INET6 or AF_INET. This can be used as an
@@ -67,9 +67,8 @@
 /* SEE ALSO
 /*	msg(3) diagnostics interface
 /* DIAGNOSTICS
-/*	This module will report if IPv6 is unavailable, and will
-/*	disable IPv6 support in Postfix. When IPv6 is the only
-/*	selected protocol, this is a fatal error.
+/*	This module will warn and turn off support for any protocol
+/*	that is requested but unavailable.
 /*
 /*	Fatal errors: memory allocation problem.
 /* LICENSE
@@ -188,6 +187,35 @@ INET_PROTO_INFO *inet_proto_init(const char *context, const char *protocols)
     int     sock;
 
     /*
+     * Avoid run-time errors when all network protocols are disabled. We
+     * can't look up interface information, and we can't convert explicit
+     * names or addresses.
+     */
+    inet_proto_mask = name_mask(context, proto_table, protocols);
+#ifdef HAS_IPV6
+    if (inet_proto_mask & INET_PROTO_MASK_IPV6) {
+	if ((sock = socket(PF_INET6, SOCK_STREAM, 0)) >= 0) {
+	    close(sock);
+	} else if (errno == EAFNOSUPPORT || errno == EPROTONOSUPPORT) {
+	    msg_warn("%s: disabling IPv6 name/address support: %m", context);
+	    inet_proto_mask &= ~INET_PROTO_MASK_IPV6;
+	} else {
+	    msg_fatal("socket: %m");
+	}
+    }
+#endif
+    if (inet_proto_mask & INET_PROTO_MASK_IPV4) {
+	if ((sock = socket(PF_INET, SOCK_STREAM, 0)) >= 0) {
+	    close(sock);
+	} else if (errno == EAFNOSUPPORT || errno == EPROTONOSUPPORT) {
+	    msg_warn("%s: disabling IPv4 name/address support: %m", context);
+	    inet_proto_mask &= ~INET_PROTO_MASK_IPV4;
+	} else {
+	    msg_fatal("socket: %m");
+	}
+    }
+
+    /*
      * Store addess family etc. info as null-terminated vectors. If that
      * breaks because we must be able to store nulls, we'll deal with the
      * additional complexity.
@@ -195,39 +223,22 @@ INET_PROTO_INFO *inet_proto_init(const char *context, const char *protocols)
      * XXX Use compile-time initialized data templates instead of building the
      * reply on the fly.
      */
-    inet_proto_mask = name_mask(context, proto_table, protocols);
     switch (inet_proto_mask) {
 #ifdef HAS_IPV6
     case INET_PROTO_MASK_IPV6:
-	if ((sock = socket(PF_INET6, SOCK_STREAM, 0)) >= 0) {
-	    close(sock);
-	    pf = (INET_PROTO_INFO *) mymalloc(sizeof(*pf));
-	    pf->ai_family = PF_INET6;
-	    pf->ai_family_list = make_unsigned_vector(2, PF_INET6, 0);
-	    pf->dns_atype_list = make_unsigned_vector(2, T_AAAA, 0);
-	    pf->sa_family_list = make_uchar_vector(2, AF_INET6, 0);
-	    break;
-	} else if (errno == EAFNOSUPPORT) {
-	    msg_fatal("%s: IPv6 support is disabled: %m", context);
-	} else {
-	    msg_fatal("socket: %m");
-	}
+	pf = (INET_PROTO_INFO *) mymalloc(sizeof(*pf));
+	pf->ai_family = PF_INET6;
+	pf->ai_family_list = make_unsigned_vector(2, PF_INET6, 0);
+	pf->dns_atype_list = make_unsigned_vector(2, T_AAAA, 0);
+	pf->sa_family_list = make_uchar_vector(2, AF_INET6, 0);
+	break;
     case (INET_PROTO_MASK_IPV6 | INET_PROTO_MASK_IPV4):
-	if ((sock = socket(PF_INET6, SOCK_STREAM, 0)) >= 0) {
-	    close(sock);
-	    pf = (INET_PROTO_INFO *) mymalloc(sizeof(*pf));
-	    pf->ai_family = PF_UNSPEC;
-	    pf->ai_family_list = make_unsigned_vector(3, PF_INET, PF_INET6, 0);
-	    pf->dns_atype_list = make_unsigned_vector(3, T_A, T_AAAA, 0);
-	    pf->sa_family_list = make_uchar_vector(3, AF_INET, AF_INET6, 0);
-	    break;
-	} else if (errno == EAFNOSUPPORT) {
-	    msg_warn("%s: IPv6 support is disabled: %m", context);
-	    msg_warn("%s: configuring for IPv4 support only", context);
-	    /* FALLTHROUGH */
-	} else {
-	    msg_fatal("socket: %m");
-	}
+	pf = (INET_PROTO_INFO *) mymalloc(sizeof(*pf));
+	pf->ai_family = PF_UNSPEC;
+	pf->ai_family_list = make_unsigned_vector(3, PF_INET, PF_INET6, 0);
+	pf->dns_atype_list = make_unsigned_vector(3, T_A, T_AAAA, 0);
+	pf->sa_family_list = make_uchar_vector(3, AF_INET, AF_INET6, 0);
+	break;
 #endif
     case INET_PROTO_MASK_IPV4:
 	pf = (INET_PROTO_INFO *) mymalloc(sizeof(*pf));
@@ -235,6 +246,13 @@ INET_PROTO_INFO *inet_proto_init(const char *context, const char *protocols)
 	pf->ai_family_list = make_unsigned_vector(2, PF_INET, 0);
 	pf->dns_atype_list = make_unsigned_vector(2, T_A, 0);
 	pf->sa_family_list = make_uchar_vector(2, AF_INET, 0);
+	break;
+    case 0:
+	pf = (INET_PROTO_INFO *) mymalloc(sizeof(*pf));
+	pf->ai_family = PF_UNSPEC;
+	pf->ai_family_list = make_unsigned_vector(1, 0);
+	pf->dns_atype_list = make_unsigned_vector(1, 0);
+	pf->sa_family_list = make_uchar_vector(1, 0);
 	break;
     default:
 	msg_panic("%s: bad inet_proto_mask 0x%x", myname, inet_proto_mask);
@@ -249,27 +267,58 @@ INET_PROTO_INFO *inet_proto_init(const char *context, const char *protocols)
  /*
   * Small driver for unit tests.
   */
+
+static char *print_unsigned_vector(VSTRING *buf, unsigned *vector)
+{
+    unsigned *p;
+
+    VSTRING_RESET(buf);
+    for (p = vector; *p; p++) {
+	vstring_sprintf_append(buf, "%u", *p);
+	if (p[1])
+	    VSTRING_ADDCH(buf, ' ');
+    }
+    VSTRING_TERMINATE(buf);
+    return (vstring_str(buf));
+}
+
+static char *print_uchar_vector(VSTRING *buf, unsigned char *vector)
+{
+    unsigned char *p;
+
+    VSTRING_RESET(buf);
+    for (p = vector; *p; p++) {
+	vstring_sprintf_append(buf, "%u", *p);
+	if (p[1])
+	    VSTRING_ADDCH(buf, ' ');
+    }
+    VSTRING_TERMINATE(buf);
+    return (vstring_str(buf));
+}
+
 int     main(int argc, char **argv)
 {
     const char *myname = argv[0];
     INET_PROTO_INFO *pf;
+    VSTRING *buf;
 
     if (argc < 2)
 	msg_fatal("usage: %s protocol(s)...", myname);
 
+    buf = vstring_alloc(10);
     while (*++argv) {
 	msg_info("=== %s ===", *argv);
-	if (**argv)
-	    inet_proto_init(myname, *argv);
+	inet_proto_init(myname, *argv);
 	pf = inet_proto_table;
 	msg_info("ai_family = %u", pf->ai_family);
-	msg_info("ai_family_list = %u %u...",
-		 pf->ai_family_list[0], pf->ai_family_list[1]);
-	msg_info("dns_atype_list = %u %u...",
-		 pf->dns_atype_list[0], pf->dns_atype_list[1]);
-	msg_info("sa_family_list = %u %u...",
-		 pf->sa_family_list[0], pf->sa_family_list[1]);
+	msg_info("ai_family_list = %s",
+		 print_unsigned_vector(buf, pf->ai_family_list));
+	msg_info("dns_atype_list = %s",
+		 print_unsigned_vector(buf, pf->dns_atype_list));
+	msg_info("sa_family_list = %s",
+		 print_uchar_vector(buf, pf->sa_family_list));
     }
+    vstring_free(buf);
     return (0);
 }
 

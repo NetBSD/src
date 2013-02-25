@@ -1,4 +1,4 @@
-/*	$NetBSD: database.c,v 1.7 2011/10/14 14:38:20 christos Exp $	*/
+/*	$NetBSD: database.c,v 1.7.8.1 2013/02/25 00:26:02 tls Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: database.c,v 1.7 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: database.c,v 1.7 2011/10/14 14:38:20 christos Exp $");
+__RCSID("$NetBSD: database.c,v 1.7.8.1 2013/02/25 00:26:02 tls Exp $");
 #endif
 #endif
 
@@ -237,7 +237,7 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 {
 	struct passwd *pw = NULL;
 	int crontab_fd = OK - 1;
-	mode_t eqmode = 0600, badmode = 0;
+	mode_t eqmode = 0400, badmode = 0;
 	user *u;
 
 	if (fname == NULL) {
@@ -272,7 +272,7 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		log_it(fname, getpid(), "NOT REGULAR", tabname);
 		goto next_crontab;
 	}
-	if ((eqmode && (statbuf->st_mode & 07777) != eqmode) ||
+	if ((eqmode && (statbuf->st_mode & 07577) != eqmode) ||
 	    (badmode && (statbuf->st_mode & badmode) != 0)) {
 		log_it(fname, getpid(), "BAD FILE MODE", tabname);
 		goto next_crontab;

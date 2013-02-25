@@ -41,6 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "makefs.h"
 #include "chfs_makefs.h"
@@ -51,58 +52,46 @@ static void chfs_validate(const char *, fsnode *, fsinfo_t *);
 static int chfs_create_image(const char *, fsinfo_t *);
 static int chfs_populate_dir(const char *, fsnode *, fsnode *, fsinfo_t *);
 
-chfs_opt_t chfs_opts;
 
 void
 chfs_prep_opts(fsinfo_t *fsopts)
 {
-	fsopts->size = 0;
-	fsopts->fs_specific = &chfs_opts;
+	chfs_opt_t *chfs_opts = ecalloc(1, sizeof(*chfs_opts));
 
-	chfs_opts.pagesize = -1;
-	chfs_opts.eraseblock = -1;
-	chfs_opts.mediatype = -1;
+	const option_t chfs_options[] = {
+		{ 'p', "pagesize", &chfs_opts->pagesize, OPT_INT32,
+		  1, INT_MAX, "page size" },
+		{ 'e', "eraseblock", &chfs_opts->eraseblock, OPT_INT32,
+		  1, INT_MAX, "eraseblock size" },
+		{ 'm', "mediatype", &chfs_opts->mediatype, OPT_INT32,
+		  0, 1, "type of the media, 0 (nor) or 1 (nand)" },
+		{ .name = NULL }
+	};
+
+	chfs_opts->pagesize = -1;
+	chfs_opts->eraseblock = -1;
+	chfs_opts->mediatype = -1;
+
+	fsopts->size = 0;
+	fsopts->fs_specific = chfs_opts;
+	fsopts->fs_options = copy_opts(chfs_options);
 }
 
 void
 chfs_cleanup_opts(fsinfo_t *fsopts)
 {
-
+	free(fsopts->fs_specific);
+	free(fsopts->fs_options);
 }
 
 int
 chfs_parse_opts(const char *option, fsinfo_t *fsopts)
 {
-	static const option_t chfs_options[] = {
-		{ "pagesize", &chfs_opts.pagesize,	1,	INT_MAX, "page size" },
-		{ "eraseblock", &chfs_opts.eraseblock, 1, INT_MAX, "eraseblock size" },
-		{ "mediatype", &chfs_opts.mediatype, 0, 1, 
-		    "type of the media, 0 (nor) or 1 (nand)" },
-		{ .name = NULL }
-	};
-
-	char *var, *val;
-	int retval;
 
 	assert(option != NULL);
 	assert(fsopts != NULL);
 
-	if ((var = strdup(option)) == NULL) {
-		err(EXIT_FAILURE, "Allocating memory for copy of option string");
-	}
-	retval = 0;
-
-	if ((val = strchr(var, '=')) == NULL) {
-		warnx("Option `%s' doesn't contain a value", var);
-		goto leave_chfs_parse_opts;
-	}
-	*val++ = '\0';
-
-	retval = set_option(chfs_options, var, val);
-	
-leave_chfs_parse_opts:
-	free(var);
-	return retval;
+	return set_option(fsopts->fs_options, option, NULL, 0) != -1;
 }
 
 void
@@ -150,18 +139,21 @@ chfs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 static void
 chfs_validate(const char* dir, fsnode *root, fsinfo_t *fsopts)
 {
+	chfs_opt_t *chfs_opts;
 	assert(dir != NULL);
 	assert(root != NULL);
 	assert(fsopts != NULL);
 
-	if (chfs_opts.pagesize == -1) {
-		chfs_opts.pagesize = DEFAULT_PAGESIZE;
+	chfs_opts = fsopts->fs_specific;
+
+	if (chfs_opts->pagesize == -1) {
+		chfs_opts->pagesize = DEFAULT_PAGESIZE;
 	}
-	if (chfs_opts.eraseblock == -1) {
-		chfs_opts.eraseblock = DEFAULT_ERASEBLOCK;
+	if (chfs_opts->eraseblock == -1) {
+		chfs_opts->eraseblock = DEFAULT_ERASEBLOCK;
 	}
-	if (chfs_opts.mediatype == -1) {
-		chfs_opts.mediatype = DEFAULT_MEDIATYPE;
+	if (chfs_opts->mediatype == -1) {
+		chfs_opts->mediatype = DEFAULT_MEDIATYPE;
 	}
 }
 

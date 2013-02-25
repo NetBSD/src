@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.1.1.1 2011/09/11 17:20:28 christos Exp $	*/
+/*	$NetBSD: macros.h,v 1.1.1.1.8.1 2013/02/25 00:26:01 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
@@ -127,31 +127,31 @@
         atfu_err = atf_tp_add_tc(tp, &atfu_ ## tc ## _tc); \
         if (atf_is_error(atfu_err)) \
             return atfu_err; \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 #define ATF_REQUIRE_MSG(x, fmt, ...) \
     do { \
         if (!(x)) \
             atf_tc_fail_requirement(__FILE__, __LINE__, fmt, ##__VA_ARGS__); \
-    } while(0)
+    } while(/*CONSTCOND*/0)
 
 #define ATF_CHECK_MSG(x, fmt, ...) \
     do { \
         if (!(x)) \
             atf_tc_fail_check(__FILE__, __LINE__, fmt, ##__VA_ARGS__); \
-    } while(0)
+    } while(/*CONSTCOND*/0)
 
 #define ATF_REQUIRE(x) \
     do { \
         if (!(x)) \
             atf_tc_fail_requirement(__FILE__, __LINE__, "%s", #x " not met"); \
-    } while(0)
+    } while(/*CONSTCOND*/0)
 
 #define ATF_CHECK(x) \
     do { \
         if (!(x)) \
             atf_tc_fail_check(__FILE__, __LINE__, "%s", #x " not met"); \
-    } while(0)
+    } while(/*CONSTCOND*/0)
 
 #define ATF_REQUIRE_EQ(x, y) \
     ATF_REQUIRE_MSG((x) == (y), "%s != %s", #x, #y)

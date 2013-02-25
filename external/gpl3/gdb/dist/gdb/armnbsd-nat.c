@@ -123,16 +123,16 @@ arm_supply_gregset (struct regcache *regcache, struct reg *gregset)
 }
 
 static void
-arm_supply_fparegset (struct regcache *regcache, struct fpreg *fparegset)
+arm_supply_vfpregset (struct regcache *regcache, struct fpreg *vfpregset)
 {
   int regno;
 
-  for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
-    regcache_raw_supply (regcache, regno,
-			 (char *) &fparegset->fpr[regno - ARM_F0_REGNUM]);
+  for (regno = 0; regno < 16; regno++)
+    regcache_raw_supply (regcache, regno + ARM_D0_REGNUM,
+			 (char *) vfpregset->fpr_vfp.vfp_regs + 8*regno);
 
-  regcache_raw_supply (regcache, ARM_FPS_REGNUM,
-		       (char *) &fparegset->fpr_fpsr);
+  regcache_raw_supply (regcache, ARM_FPSCR_REGNUM,
+		       (char *) &vfpregset->fpr_vfp.vfp_fpscr);
 }
 
 void
@@ -166,19 +166,22 @@ fill_gregset (const struct regcache *regcache, gregset_t *gregsetp, int regno)
  }
  
 void
-fill_fpregset (const struct regcache *regcache, fpregset_t *fpregsetp, int regno)
+fill_fpregset (const struct regcache *regcache, fpregset_t *vfpregsetp, int regno)
 {
   if (-1 == regno)
     {
        int regnum;
-       for (regnum = ARM_F0_REGNUM; regnum <= ARM_F7_REGNUM; regnum++)
-         regcache_raw_collect(regcache, regnum, (char *) &fpregsetp->fpr[regnum - ARM_F0_REGNUM]);
+       for (regnum = 0; regnum <= 15; regnum++)
+         regcache_raw_collect(regcache, regnum + ARM_D0_REGNUM,
+			      (char *) vfpregsetp->fpr_vfp.vfp_regs + 8*regnum);
     }
-  else if (regno >= ARM_F0_REGNUM && regno <= ARM_F7_REGNUM)
-    regcache_raw_collect(regcache, regno, (char *) &fpregsetp->fpr[regno - ARM_F0_REGNUM]);
+  else if (regno >= ARM_D0_REGNUM && regno <= ARM_D0_REGNUM + 15)
+    regcache_raw_collect(regcache, regno,
+			 (char *) vfpregsetp->fpr_vfp.vfp_regs + 8*regno);
 
-  if (ARM_FPS_REGNUM == regno || -1 == regno)
-    regcache_raw_collect (regcache, ARM_FPS_REGNUM, (char *) &fpregsetp->fpr_fpsr);
+  if (ARM_FPSCR_REGNUM == regno || -1 == regno)
+    regcache_raw_collect (regcache, ARM_FPSCR_REGNUM,
+			  (char *) &vfpregsetp->fpr_vfp.vfp_fpscr);
 }
 
 void
@@ -190,7 +193,7 @@ supply_gregset (struct regcache *regcache, const gdb_gregset_t *gregsetp)
 void
 supply_fpregset (struct regcache *regcache, const gdb_fpregset_t *fpregsetp)
 {
-  arm_supply_fparegset (regcache, (struct fpreg *)fpregsetp);
+  arm_supply_vfpregset (regcache, (struct fpreg *)fpregsetp);
 }
 
 static void
@@ -281,14 +284,14 @@ fetch_fp_register (struct regcache *regcache, int regno)
 
   switch (regno)
     {
-    case ARM_FPS_REGNUM:
-      regcache_raw_supply (regcache, ARM_FPS_REGNUM,
-			   (char *) &inferior_fp_registers.fpr_fpsr);
+    case ARM_FPSCR_REGNUM:
+      regcache_raw_supply (regcache, ARM_FPSCR_REGNUM,
+			   (char *) &inferior_fp_registers.fpr_vfp.vfp_fpscr);
       break;
 
     default:
       regcache_raw_supply (regcache, regno,
-			   (char *) &inferior_fp_registers.fpr[regno - ARM_F0_REGNUM]);
+			   (char *) inferior_fp_registers.fpr_vfp.vfp_regs + 8 * (regno - ARM_D0_REGNUM));
       break;
     }
 }
@@ -309,7 +312,7 @@ fetch_fp_regs (struct regcache *regcache)
       return;
     }
 
-  arm_supply_fparegset (regcache, &inferior_fp_registers);
+  arm_supply_vfpregset (regcache, &inferior_fp_registers);
 }
 
 static void
@@ -318,10 +321,10 @@ armnbsd_fetch_registers (struct target_ops *ops,
 {
   if (regno >= 0)
     {
-      if (regno < ARM_F0_REGNUM || regno > ARM_FPS_REGNUM)
-	fetch_register (regcache, regno);
-      else
+      if (regno >= ARM_D0_REGNUM && regno <= ARM_FPSCR_REGNUM)
 	fetch_fp_register (regcache, regno);
+      else
+	fetch_register (regcache, regno);
     }
   else
     {
@@ -473,14 +476,15 @@ store_fp_register (const struct regcache *regcache, int regno)
 
   switch (regno)
     {
-    case ARM_FPS_REGNUM:
+    case ARM_FPSCR_REGNUM:
       regcache_raw_collect (regcache, ARM_FPS_REGNUM,
-			    (char *) &inferior_fp_registers.fpr_fpsr);
+			    (char *) &inferior_fp_registers.fpr_vfp.vfp_fpscr);
       break;
 
     default:
       regcache_raw_collect (regcache, regno,
-			    (char *) &inferior_fp_registers.fpr[regno - ARM_F0_REGNUM]);
+			    (char *) inferior_fp_registers.fpr_vfp.vfp_regs
+			    + 8 * (regno - ARM_D0_REGNUM));
       break;
     }
 
@@ -499,12 +503,13 @@ store_fp_regs (const struct regcache *regcache)
   int regno;
 
 
-  for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
-    regcache_raw_collect (regcache, regno,
-			  (char *) &inferior_fp_registers.fpr[regno - ARM_F0_REGNUM]);
+  for (regno = 0; regno <= 15; regno++)
+    regcache_raw_collect (regcache, regno + ARM_D0_REGNUM,
+			  (char *) inferior_fp_registers.fpr_vfp.vfp_regs
+				   + 8 * regno);
 
-  regcache_raw_collect (regcache, ARM_FPS_REGNUM,
-			(char *) &inferior_fp_registers.fpr_fpsr);
+  regcache_raw_collect (regcache, ARM_FPSCR_REGNUM,
+			(char *) &inferior_fp_registers.fpr_vfp.vfp_fpscr);
 
   ret = ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
 		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
@@ -519,10 +524,10 @@ armnbsd_store_registers (struct target_ops *ops,
 {
   if (regno >= 0)
     {
-      if (regno < ARM_F0_REGNUM || regno > ARM_FPS_REGNUM)
-	store_register (regcache, regno);
-      else
+      if (regno >= ARM_D0_REGNUM && regno <= ARM_FPSCR_REGNUM)
 	store_fp_register (regcache, regno);
+      else
+	store_register (regcache, regno);
     }
   else
     {
@@ -547,7 +552,7 @@ fetch_core_registers (struct regcache *regcache,
   CORE_ADDR r_pc;
 
   arm_supply_gregset (regcache, &core_reg->intreg);
-  arm_supply_fparegset (regcache, &core_reg->freg);
+  arm_supply_vfpregset (regcache, &core_reg->freg);
 }
 
 static void
@@ -556,7 +561,7 @@ fetch_elfcore_registers (struct regcache *regcache,
 			 int which, CORE_ADDR ignore)
 {
   struct reg gregset;
-  struct fpreg fparegset;
+  struct fpreg vfpregset;
 
   switch (which)
     {
@@ -579,8 +584,8 @@ fetch_elfcore_registers (struct regcache *regcache,
 	{
 	  /* The memcpy may be unnecessary, but we can't really be sure
 	     of the alignment of the data in the core file.  */
-	  memcpy (&fparegset, core_reg_sect, sizeof (fparegset));
-	  arm_supply_fparegset (regcache, &fparegset);
+	  memcpy (&vfpregset, core_reg_sect, sizeof (vfpregset));
+	  arm_supply_vfpregset (regcache, &vfpregset);
 	}
       break;
 

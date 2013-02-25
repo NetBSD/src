@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.190.2.1 2012/11/20 03:02:41 tls Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.190.2.2 2013/02/25 00:29:50 tls Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,12 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190.2.1 2012/11/20 03:02:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190.2.2 2013/02/25 00:29:50 tls Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
 #include "pty.h"
+
+#define SYSCTL_PRIVATE
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,10 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190.2.1 2012/11/20 03:02:41 tls Ex
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
 #include <sys/ksem.h>
-
-#ifdef COMPAT_50
-#include <compat/sys/time.h>
-#endif
 
 #include <sys/cpu.h>
 
@@ -326,17 +324,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("System boot time"),
 		       NULL, 0, &boottime, sizeof(boottime),
 		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
-#ifdef COMPAT_50
-	{
-		extern struct timeval50 boottime50;
-		sysctl_createv(clog, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_STRUCT, "oboottime",
-			       SYSCTL_DESCR("System boot time"),
-			       NULL, 0, &boottime50, sizeof(boottime50),
-			       CTL_KERN, KERN_OBOOTTIME, CTL_EOL);
-	}
-#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "domainname",

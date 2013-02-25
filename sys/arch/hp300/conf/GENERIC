@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.171.2.1 2012/11/20 03:01:21 tls Exp $
+# $NetBSD: GENERIC,v 1.171.2.2 2013/02/25 00:28:41 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.171.2.1 $"
+#ident 		"GENERIC-$Revision: 1.171.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -196,7 +196,7 @@ mainbus0	at root			# root "bus"
 
 intio0		at mainbus0		# internal i/o space
 dio0		at mainbus0		# DIO/DIO-II bus
-#sgc0		at mainbus0		# SGC bus
+sgc0		at mainbus0		# SGC bus
 
 # Human Interface Loop devices
 hil0		at intio?		# HIL controller
@@ -242,8 +242,8 @@ wsdisplay*	at tvrx?
 gendiofb*	at dio? scode ?		# dumb framebuffer support for 362/382
 wsdisplay*	at gendiofb?
 
-#sti*		at sgc?	slot ?		# SGC EVRX framebuffers
-#wsdisplay*	at sti?
+sti*		at sgc?	slot ?		# SGC EVRX framebuffers
+wsdisplay*	at sti?
 
 com0		at dio0 scode 9		# DCA serial interfaces
 com*		at dio? scode ?

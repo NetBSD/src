@@ -6,42 +6,40 @@
       147 sender_fullname: Wietse Venema
       162 sender: me@porcupine.org
       180 pointer_record:             573
-      573 named_attribute: notify_flags=1
-      589 original_recipient: me@porcupine.org
-      607 canceled_recipient: me@porcupine.org
-      625 pointer_record:            1413
-     1413 named_attribute: notify_flags=1
-     1429 original_recipient: em@porcupine.org
-     1447 canceled_recipient: em@porcupine.org
-     1465 pointer_record:             197
+      573 original_recipient: me@porcupine.org
+      591 canceled_recipient: me@porcupine.org
+      609 pointer_record:            1397
+     1397 original_recipient: em@porcupine.org
+     1415 canceled_recipient: em@porcupine.org
+     1433 pointer_record:             197
       197 *** MESSAGE CONTENTS test-queue-file3.tmp ***
       199 regular_text: Received: by hades.porcupine.org (Postfix, from userid 1001)
       261 regular_text: 	id B85F1290407; Sat, 20 Jan 2007 20:53:59 -0500 (EST)
-      317 pointer_record:             858
-      858 pointer_record:            1331
-     1331 pointer_record:            1372
-     1372 pointer_record:            1482
-     1482 pointer_record:            1739
-     1739 pointer_record:            1780
-     1780 regular_text: From: me@porcupine.org
-     1804 pointer_record:            1523
-     1523 pointer_record:            1821
-     1821 pointer_record:            1861
-     1861 regular_text: To: you@porcupine.org
-     1884 pointer_record:            1563
-     1563 pointer_record:            1901
-     1901 pointer_record:            1980
-     1980 regular_text: Message-Id: <20060725192735.5EC2D29013F@hades.porcupine.org>
-     2042 pointer_record:            1642
-     1642 pointer_record:            2059
-     2059 pointer_record:            2121
-     2121 regular_text: Date: Tue, 25 Jul 2006 15:27:19 -0400 (EDT)
-     2166 pointer_record:            1704
-     1704 pointer_record:            2183
-     2183 pointer_record:            2218
-     2218 regular_text: Subject: hey!
-     2233 padding: 0
-     2236 pointer_record:             489
+      317 pointer_record:             842
+      842 pointer_record:            1315
+     1315 pointer_record:            1356
+     1356 pointer_record:            1450
+     1450 pointer_record:            1707
+     1707 pointer_record:            1748
+     1748 regular_text: From: me@porcupine.org
+     1772 pointer_record:            1491
+     1491 pointer_record:            1789
+     1789 pointer_record:            1829
+     1829 regular_text: To: you@porcupine.org
+     1852 pointer_record:            1531
+     1531 pointer_record:            1869
+     1869 pointer_record:            1948
+     1948 regular_text: Message-Id: <20060725192735.5EC2D29013F@hades.porcupine.org>
+     2010 pointer_record:            1610
+     1610 pointer_record:            2027
+     2027 pointer_record:            2089
+     2089 regular_text: Date: Tue, 25 Jul 2006 15:27:19 -0400 (EDT)
+     2134 pointer_record:            1672
+     1672 pointer_record:            2151
+     2151 pointer_record:            2186
+     2186 regular_text: Subject: hey!
+     2201 padding: 0
+     2204 pointer_record:             489
       489 pointer_record:               0
       506 regular_text: 
       508 regular_text: text

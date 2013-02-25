@@ -1,0 +1,53 @@
+These diffs for pflogsumm versions 1.1.1 and 1.1.3 work around a
+change in the Postfix 2.9 default master.cf file.
+
+That change made the logging from submission and smtps services easier
+to distinguish, by changing postfix/smtpd into postfix/submission/smtpd
+and postfix/smtps/smtpd, respectively.
+
+Below are diffs for pflogsumm-1.1.1 and pflogsumm-1.1.3 (beta).
+Choose one that fits your pflogsumm version.
+
+====begin diff=====================
+*** ./pflogsumm-1.1.1/pflogsumm.pl-	Fri Apr  6 10:06:37 2007
+--- ./pflogsumm-1.1.1/pflogsumm.pl	Fri Jan 20 17:05:10 2012
+***************
+*** 542,548 ****
+      my $logRmdr;
+      next unless((($msgMonStr, $msgDay, $msgHr, $msgMin, $msgSec, $logRmdr) =
+  	/^(...) +(\d+) (..):(..):(..) \S+ (.+)$/o) == 6);
+!     unless((($cmd, $qid) = $logRmdr =~ m#^(?:postfix|$syslogName)/([^\[:]*).*?: ([^:\s]+)#o) == 2 ||
+             (($cmd, $qid) = $logRmdr =~ m#^((?:postfix)(?:-script)?)(?:\[\d+\])?: ([^:\s]+)#o) == 2)
+      {
+  	#print UNPROCD "$_";
+--- 542,548 ----
+      my $logRmdr;
+      next unless((($msgMonStr, $msgDay, $msgHr, $msgMin, $msgSec, $logRmdr) =
+  	/^(...) +(\d+) (..):(..):(..) \S+ (.+)$/o) == 6);
+!     unless((($cmd, $qid) = $logRmdr =~ m#^(?:postfix|$syslogName)(?:/(?:smtps|submission))?/([^\[:]*).*?: ([^:\s]+)#o) == 2 ||
+             (($cmd, $qid) = $logRmdr =~ m#^((?:postfix)(?:-script)?)(?:\[\d+\])?: ([^:\s]+)#o) == 2)
+      {
+  	#print UNPROCD "$_";
+====end diff=====================
+
+====begin diff=====================
+*** ./pflogsumm-1.1.3/pflogsumm.pl-	Sat Mar 20 16:00:42 2010
+--- ./pflogsumm-1.1.3/pflogsumm.pl	Fri Jan 20 17:02:37 2012
+***************
+*** 636,642 ****
+  	--$msgMon;
+      }
+  
+!     unless((($cmd, $qid) = $logRmdr =~ m#^(?:postfix|$syslogName)/([^\[:]*).*?: ([^:\s]+)#o) == 2 ||
+             (($cmd, $qid) = $logRmdr =~ m#^((?:postfix)(?:-script)?)(?:\[\d+\])?: ([^:\s]+)#o) == 2)
+      {
+  	#print UNPROCD "$_";
+--- 636,642 ----
+  	--$msgMon;
+      }
+  
+!     unless((($cmd, $qid) = $logRmdr =~ m#^(?:postfix|$syslogName)(?:/(?:smtps|submission))?/([^\[:]*).*?: ([^:\s]+)#o) == 2 ||
+             (($cmd, $qid) = $logRmdr =~ m#^((?:postfix)(?:-script)?)(?:\[\d+\])?: ([^:\s]+)#o) == 2)
+      {
+  	#print UNPROCD "$_";
+====end diff=====================

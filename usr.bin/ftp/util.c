@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.157 2012/07/04 06:09:37 is Exp $	*/
+/*	$NetBSD: util.c,v 1.157.2.1 2013/02/25 00:30:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.157 2012/07/04 06:09:37 is Exp $");
+__RCSID("$NetBSD: util.c,v 1.157.2.1 2013/02/25 00:30:35 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -202,25 +202,20 @@ getremoteinfo(void)
 			/* determine remote system type */
 	if (command("SYST") == COMPLETE) {
 		if (overbose) {
-			char *cp, c;
-
-			c = 0;
-			cp = strchr(reply_string + 4, ' ');
-			if (cp == NULL)
-				cp = strchr(reply_string + 4, '\r');
-			if (cp) {
-				if (cp[-1] == '.')
-					cp--;
-				c = *cp;
-				*cp = '\0';
-			}
-
-			fprintf(ttyout, "Remote system type is %s.\n",
-			    reply_string + 4);
-			if (cp)
-				*cp = c;
+			int os_len = strcspn(reply_string + 4, " \r\n\t");
+			if (os_len > 1 && reply_string[4 + os_len - 1] == '.')
+				os_len--;
+			fprintf(ttyout, "Remote system type is %.*s.\n",
+			    os_len, reply_string + 4);
 		}
-		if (!strncmp(reply_string, "215 UNIX Type: L8", 17)) {
+		/*
+		 * Decide whether we should default to bninary.
+		 * Traditionally checked for "215 UNIX Type: L8", but
+		 * some printers report "Linux" ! so be more forgiving.
+		 * In reality we probably almost never want text any more.
+		 */
+		if (!strncasecmp(reply_string + 4, "unix", 4) ||
+		    !strncasecmp(reply_string + 4, "linux", 5)) {
 			if (proxy)
 				unix_proxy = 1;
 			else

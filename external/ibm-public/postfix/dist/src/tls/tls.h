@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.1.1.3 2012/06/09 11:27:18 tron Exp $	*/
+/*	$NetBSD: tls.h,v 1.1.1.3.2.1 2013/02/25 00:27:29 tls Exp $	*/
 
 #ifndef _TLS_H_INCLUDED_
 #define _TLS_H_INCLUDED_
@@ -65,8 +65,6 @@ extern const NAME_CODE tls_level_table[];
 #include <name_mask.h>
 #include <name_code.h>
 
-#define TLS_BIO_BUFSIZE	8192
-
  /*
   * Names of valid tlsmgr(8) session caches.
   */
@@ -87,6 +85,7 @@ typedef struct {
     char   *peer_CN;			/* Peer Common Name */
     char   *issuer_CN;			/* Issuer Common Name */
     char   *peer_fingerprint;		/* ASCII fingerprint */
+    char   *peer_pkey_fprint;		/* ASCII public key fingerprint */
     int     peer_status;		/* Certificate and match status */
     const char *protocol;
     const char *cipher_name;
@@ -97,7 +96,7 @@ typedef struct {
     char   *cache_type;			/* tlsmgr(8) cache type if enabled */
     char   *serverid;			/* unique server identifier */
     char   *namaddr;			/* nam[addr] for logging */
-    int     log_level;			/* TLS library logging level */
+    int     log_mask;			/* What to log */
     int     session_reused;		/* this session was reused */
     int     am_server;			/* Are we an SSL server or client? */
     /* Built-in vs external SSL_accept/read/write/shutdown support. */
@@ -113,7 +112,6 @@ typedef struct {
 #define TLS_CERT_FLAG_ALTNAME		(1<<1)
 #define TLS_CERT_FLAG_TRUSTED		(1<<2)
 #define TLS_CERT_FLAG_MATCHED		(1<<3)
-#define TLS_CERT_FLAG_LOGGED		(1<<4)	/* Logged trust chain error */
 
 #define TLS_CERT_IS_PRESENT(c) ((c) && ((c)->peer_status&TLS_CERT_FLAG_PRESENT))
 #define TLS_CERT_IS_ALTNAME(c) ((c) && ((c)->peer_status&TLS_CERT_FLAG_ALTNAME))
@@ -128,10 +126,30 @@ typedef struct TLS_APPL_STATE TLS_APPL_STATE;
 #ifdef TLS_INTERNAL
 
  /*
+  * Log mask details are internal to the library.
+  */
+extern int tls_log_mask(const char *, const char *);
+
+ /*
+  * What to log.
+  */
+#define TLS_LOG_NONE			(1<<0)
+#define TLS_LOG_SUMMARY			(1<<1)
+#define TLS_LOG_UNTRUSTED		(1<<2)
+#define TLS_LOG_PEERCERT		(1<<3)
+#define TLS_LOG_CERTMATCH		(1<<4)
+#define TLS_LOG_VERBOSE			(1<<5)
+#define TLS_LOG_CACHE			(1<<6)
+#define TLS_LOG_DEBUG			(1<<7)
+#define TLS_LOG_TLSPKTS			(1<<8)
+#define TLS_LOG_ALLPKTS			(1<<9)
+
+ /*
   * Client and Server application contexts
   */
 struct TLS_APPL_STATE {
     SSL_CTX *ssl_ctx;
+    int     log_mask;
     char   *cache_type;
     char   *cipher_exclusions;		/* Last cipher selection state */
     char   *cipher_list;		/* Last cipher selection state */
@@ -206,7 +224,8 @@ extern const char *tls_set_ciphers(TLS_APPL_STATE *, const char *,
   * tls_client.c
   */
 typedef struct {
-    int     log_level;
+    const char *log_param;
+    const char *log_level;
     int     verifydepth;
     const char *cache_type;
     const char *cert_file;
@@ -223,7 +242,6 @@ typedef struct {
 typedef struct {
     TLS_APPL_STATE *ctx;
     VSTREAM *stream;
-    int     log_level;
     int     timeout;
     int     tls_level;			/* Security level */
     const char *nexthop;		/* destination domain */
@@ -244,24 +262,25 @@ extern TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *);
 	tls_session_stop(ctx, (stream), (timeout), (failure), (TLScontext))
 
 #define TLS_CLIENT_INIT(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, \
-    a10, a11, a12) \
+    a10, a11, a12, a13) \
     tls_client_init((((props)->a1), ((props)->a2), ((props)->a3), \
     ((props)->a4), ((props)->a5), ((props)->a6), ((props)->a7), \
     ((props)->a8), ((props)->a9), ((props)->a10), ((props)->a11), \
-    ((props)->a12), (props)))
+    ((props)->a12), ((props)->a13), (props)))
 
 #define TLS_CLIENT_START(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, \
-    a10, a11, a12, a13, a14) \
+    a10, a11, a12, a13) \
     tls_client_start((((props)->a1), ((props)->a2), ((props)->a3), \
     ((props)->a4), ((props)->a5), ((props)->a6), ((props)->a7), \
     ((props)->a8), ((props)->a9), ((props)->a10), ((props)->a11), \
-    ((props)->a12), ((props)->a13), ((props)->a14), (props)))
+    ((props)->a12), ((props)->a13), (props)))
 
  /*
   * tls_server.c
   */
 typedef struct {
-    int     log_level;
+    const char *log_param;
+    const char *log_level;
     int     verifydepth;
     const char *cache_type;
     long    scache_timeout;
@@ -286,7 +305,6 @@ typedef struct {
     TLS_APPL_STATE *ctx;		/* TLS application context */
     VSTREAM *stream;			/* Client stream */
     int     fd;				/* Event-driven file descriptor */
-    int     log_level;			/* TLS log level */
     int     timeout;			/* TLS handshake timeout */
     int     requirecert;		/* Insist on client cert? */
     const char *serverid;		/* Server instance (salt cache key) */
@@ -304,17 +322,18 @@ extern TLS_SESS_STATE *tls_server_post_accept(TLS_SESS_STATE *);
 	tls_session_stop(ctx, (stream), (timeout), (failure), (TLScontext))
 
 #define TLS_SERVER_INIT(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, \
-    a10, a11, a12, a13, a14, a15, a16, a17, a18, a19) \
+    a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20) \
     tls_server_init((((props)->a1), ((props)->a2), ((props)->a3), \
     ((props)->a4), ((props)->a5), ((props)->a6), ((props)->a7), \
     ((props)->a8), ((props)->a9), ((props)->a10), ((props)->a11), \
     ((props)->a12), ((props)->a13), ((props)->a14), ((props)->a15), \
-    ((props)->a16), ((props)->a17), ((props)->a18), ((props)->a19), (props)))
+    ((props)->a16), ((props)->a17), ((props)->a18), ((props)->a19), \
+    ((props)->a20), (props)))
 
-#define TLS_SERVER_START(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) \
+#define TLS_SERVER_START(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) \
     tls_server_start((((props)->a1), ((props)->a2), ((props)->a3), \
     ((props)->a4), ((props)->a5), ((props)->a6), ((props)->a7), \
-    ((props)->a8), ((props)->a9), ((props)->a10), ((props)->a11), (props)))
+    ((props)->a8), ((props)->a9), ((props)->a10), (props)))
 
  /*
   * tls_session.c
@@ -381,6 +400,7 @@ extern char *tls_peer_CN(X509 *, const TLS_SESS_STATE *);
 extern char *tls_issuer_CN(X509 *, const TLS_SESS_STATE *);
 extern const char *tls_dns_name(const GENERAL_NAME *, const TLS_SESS_STATE *);
 extern char *tls_fingerprint(X509 *, const char *);
+extern char *tls_pkey_fprint(X509 *, const char *);
 extern int tls_verify_certificate_callback(int, X509_STORE_CTX *);
 
  /*
@@ -397,7 +417,7 @@ extern int tls_set_my_certificate_key_info(SSL_CTX *,
   */
 extern int TLScontext_index;
 
-extern TLS_APPL_STATE *tls_alloc_app_context(SSL_CTX *);
+extern TLS_APPL_STATE *tls_alloc_app_context(SSL_CTX *, int);
 extern TLS_SESS_STATE *tls_alloc_sess_context(int, const char *);
 extern void tls_free_context(TLS_SESS_STATE *);
 extern void tls_check_version(void);

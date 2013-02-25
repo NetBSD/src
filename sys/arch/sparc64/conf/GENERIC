@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.152.2.1 2012/11/20 03:01:44 tls Exp $
+# $NetBSD: GENERIC,v 1.152.2.2 2013/02/25 00:28:59 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.152.2.1 $"
+#ident 		"GENERIC-$Revision: 1.152.2.2 $"
 
 maxusers	64
 
@@ -593,6 +593,9 @@ wsmouse* at uep? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
+# USB TEMPer and TEMPerHUM
+uthum*	at uhidev? reportid ?
+
 # USB serial adapter
 ucycom*	at uhidev? reportid ?
 
@@ -923,10 +926,13 @@ wskbd0 at kbd0
 options 	WSEMUL_VT100		# allow us to be wsvt25
 options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some more ioctls
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_GALLANT12x22		# PROM font look-alike
+options 	FONT_DROID_SANS_MONO12x22	# antialiased font
 
 #### Other device configuration
 
@@ -949,6 +955,7 @@ ecadc*		at iic? addr?	# envctrl/envctrltwo on E250/E450
 lmtemp*		at iic? addr?
 tda*		at iic? addr?	# fan control on SB1000/2000
 dbcool*		at iic? addr?	# SB25000
+seeprom*	at iic? addr?	# i2c-at24c64 fru's
 
 ### Other pseudo-devices
 

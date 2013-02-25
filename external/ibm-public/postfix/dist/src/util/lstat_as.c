@@ -1,4 +1,4 @@
-/*	$NetBSD: lstat_as.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: lstat_as.c,v 1.1.1.1.16.1 2013/02/25 00:27:32 tls Exp $	*/
 
 /*++
 /* NAME
@@ -46,6 +46,7 @@
 #include "msg.h"
 #include "set_eugid.h"
 #include "lstat_as.h"
+#include "warn_stat.h"
 
 /* lstat_as - lstat file as user */
 

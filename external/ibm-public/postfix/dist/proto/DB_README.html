@@ -33,8 +33,11 @@ before 2.0.  </p>
 
 <ol>
 
-<li> <p> How to build Postfix on <a href="#no_db">systems without
-Berkeley DB library</a>. </p>
+<li> <p> How to build Postfix <a href="#disable_db">without Berkeley
+DB support</a> even if the system comes with Berkeley DB. </p>
+
+<li> <p> How to build Postfix on <a href="#no_db">systems that
+normally have no Berkeley DB library</a>. </p>
 
 <li> <p> How to build Postfix on <a href="#bsd">BSD</a> or <a
 href="#linux">Linux</a> systems with multiple Berkeley DB
@@ -46,8 +49,26 @@ versions.  </p>
 
 </ol>
 
-<h2><a name="no_db">Building Postfix on systems without Berkeley
-DB</a></h2>
+<h2><a name="disable_db">Building Postfix without Berkeley
+DB support even if the system comes with Berkeley DB</a></h2>
+
+<p> Note: The following instructions apply to Postfix 2.9 and later. </p>
+
+<p> Postfix will normally enable Berkeley DB support if the system
+is known to have it. To build Postfix without Berkeley DB support,
+build the makefiles as follows: </p>
+
+<blockquote>
+<pre>
+% make makefiles CCARGS="-DNO_DB"
+% make
+</pre>
+</blockquote>
+
+<p> This will disable support for "hash" and "btree" files. </p>
+
+<h2><a name="no_db">Building Postfix on systems that normally have
+no Berkeley DB library</a></h2>
 
 <p> Some UNIXes ship without Berkeley DB support; for historical
 reasons these use DBM files instead. A problem with DBM files is
@@ -73,7 +94,6 @@ source code, use something like: </p>
 
 <blockquote>
 <pre>
-% make tidy
 % make makefiles CCARGS="-DHAS_DB -I/usr/local/BerkeleyDB/include" \
     AUXLIBS="-L/usr/local/BerkeleyDB/lib -ldb"
 % make
@@ -84,7 +104,6 @@ source code, use something like: </p>
 
 <blockquote>
 <pre>
-% make tidy
 % make makefiles CCARGS="-DHAS_DB -I/usr/local/BerkeleyDB/include" \
     AUXLIBS="-R/usr/local/BerkeleyDB/lib -L/usr/local/BerkeleyDB/lib -ldb"
 % make
@@ -119,7 +138,6 @@ use a variant of the following commands: </p>
 
 <blockquote>
 <pre>
-% make tidy
 % make makefiles CCARGS=-I/usr/include/db3 AUXLIBS=-ldb3
 % make
 </pre>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.137.2.1 2012/11/20 03:00:44 tls Exp $	*/
+/*	$NetBSD: pthread.c,v 1.137.2.2 2013/02/25 00:27:59 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.137.2.1 2012/11/20 03:00:44 tls Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.137.2.2 2013/02/25 00:27:59 tls Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: pthread.c,v 1.137.2.1 2012/11/20 03:00:44 tls Exp $");
 #include <sys/mman.h>
 #include <sys/lwp.h>
 #include <sys/lwpctl.h>
+#include <sys/resource.h>
 #include <sys/tls.h>
 
 #include <assert.h>

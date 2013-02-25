@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.65 2012/07/29 18:05:47 mlelstv Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.65.2.1 2013/02/25 00:29:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.65 2012/07/29 18:05:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.65.2.1 2013/02/25 00:29:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,7 @@ matchbiosdisks(void)
 			error = vn_rdwr(UIO_READ, tv, mbr, DEV_BSIZE, 0,
 			    UIO_SYSSPACE, 0, NOCRED, NULL, NULL);
 			VOP_CLOSE(tv, FREAD, NOCRED);
+			vput(tv);
 			if (error) {
 #ifdef GEOM_DEBUG
 				printf("matchbiosdisks: %s: MBR read failure\n",
@@ -187,7 +188,6 @@ matchbiosdisks(void)
 				}
 			}
 			x86_alldisks->dl_nativedisks[n].ni_nmatches = m;
-			vput(tv);
 		}
 	}
 	deviter_release(&di);

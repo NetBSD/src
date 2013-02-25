@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.348.6.1 2012/11/20 03:01:44 tls Exp $ */
+/*	$NetBSD: pmap.c,v 1.348.6.2 2013/02/25 00:28:58 tls Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.348.6.1 2012/11/20 03:01:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.348.6.2 2013/02/25 00:28:58 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -7408,21 +7408,32 @@ kvm_iocache(char *va, int npages)
  * (This will just seg-align mappings.)
  */
 void
-pmap_prefer(vaddr_t foff, vaddr_t *vap)
+pmap_prefer(vaddr_t foff, vaddr_t *vap, size_t size, int td)
 {
 	vaddr_t va = *vap;
-	long d, m;
-
-	if (VA_INHOLE(va))
-		va = MMU_HOLE_END;
+	long m;
 
 	m = CACHE_ALIAS_DIST;
 	if (m == 0)		/* m=0 => no cache aliasing */
 		return;
 
-	d = foff - va;
-	d &= (m - 1);
-	*vap = va + d;
+	if (VA_INHOLE(va)) {
+		if (td)
+			va = MMU_HOLE_START - size;
+		else
+			va = MMU_HOLE_END;
+	}
+
+	va = (va & ~(m - 1)) | (foff & (m - 1));
+
+	if (td) {
+		if (va > *vap)
+			va -= m;
+	} else {
+		if (va < *vap)
+			va += m;
+	}
+	*vap = va;
 }
 
 void

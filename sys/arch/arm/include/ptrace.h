@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.5 2008/01/25 11:59:20 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.5.54.1 2013/02/25 00:28:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster
@@ -39,12 +39,15 @@
 #endif
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
-#define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
-#define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
+/* 3 and 4 are for FPE registers */
+#define	PT_GETFPREGS	(PT_FIRSTMACH + 5)
+#define	PT_SETFPREGS	(PT_FIRSTMACH + 6)
 
 #define PT_MACHDEP_STRINGS \
 	"(unused)", \
 	"PT_GETREGS", \
 	"PT_SETREGS", \
+	"old PT_GETFPREGS", \
+	"old PT_SETFPREGS", \
 	"PT_GETFPREGS", \
 	"PT_SETFPREGS",

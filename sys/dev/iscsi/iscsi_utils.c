@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.4 2012/06/25 20:34:26 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.4.2.1 2013/02/25 00:29:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -219,14 +219,15 @@ get_ccb(connection_t *conn, bool waitok)
 {
 	ccb_t *ccb;
 	session_t *sess = conn->session;
+	int s;
 
 	do {
-		CS_BEGIN;
+		s = splbio();
 		ccb = TAILQ_FIRST(&sess->ccb_pool);
-		if (ccb != NULL) {
+		if (ccb != NULL)
 			TAILQ_REMOVE(&sess->ccb_pool, ccb, chain);
-		}
-		CS_END;
+		splx(s);
+
 		DEB(100, ("get_ccb: ccb = %p, waitok = %d\n", ccb, waitok));
 		if (ccb == NULL) {
 			if (!waitok || conn->terminating) {
@@ -262,6 +263,10 @@ free_ccb(ccb_t *ccb)
 {
 	session_t *sess = ccb->session;
 	pdu_t *pdu;
+	int s;
+
+	KASSERT((ccb->flags & CCBF_THROTTLING) == 0);
+	KASSERT((ccb->flags & CCBF_WAITQUEUE) == 0);
 
 	ccb->connection->usecount--;
 	ccb->connection = NULL;
@@ -281,9 +286,10 @@ free_ccb(ccb_t *ccb)
 		free_pdu(pdu);
 	}
 
-	CS_BEGIN;
+	s = splbio();
 	TAILQ_INSERT_TAIL(&sess->ccb_pool, ccb, chain);
-	CS_END;
+	splx(s);
+
 	wakeup(&sess->ccb_pool);
 }
 
@@ -319,6 +325,50 @@ create_ccbs(session_t *sess)
 	}
 }
 
+/*
+ * suspend_ccb:
+ *    Put CCB on wait queue
+ */
+void
+suspend_ccb(ccb_t *ccb, bool yes)
+{
+	connection_t *conn;
+
+	conn = ccb->connection;
+	if (yes) {
+		KASSERT((ccb->flags & CCBF_THROTTLING) == 0);
+		KASSERT((ccb->flags & CCBF_WAITQUEUE) == 0);
+		TAILQ_INSERT_TAIL(&conn->ccbs_waiting, ccb, chain);
+		ccb->flags |= CCBF_WAITQUEUE;
+	} else if (ccb->flags & CCBF_WAITQUEUE) {
+		KASSERT((ccb->flags & CCBF_THROTTLING) == 0);
+		TAILQ_REMOVE(&conn->ccbs_waiting, ccb, chain);
+		ccb->flags &= ~CCBF_WAITQUEUE;
+	}
+}
+
+/*
+ * throttle_ccb:
+ *    Put CCB on throttling queue
+ */
+void
+throttle_ccb(ccb_t *ccb, bool yes)
+{
+	session_t *sess;
+
+	sess = ccb->session;
+	if (yes) {
+		KASSERT((ccb->flags & CCBF_THROTTLING) == 0);
+		KASSERT((ccb->flags & CCBF_WAITQUEUE) == 0);
+		TAILQ_INSERT_TAIL(&sess->ccbs_throttled, ccb, chain);
+		ccb->flags |= CCBF_THROTTLING;
+	} else if (ccb->flags & CCBF_THROTTLING) {
+		KASSERT((ccb->flags & CCBF_WAITQUEUE) == 0);
+		TAILQ_REMOVE(&sess->ccbs_throttled, ccb, chain);
+		ccb->flags &= ~CCBF_THROTTLING;
+	}
+}
+
 
 /*
  * wake_ccb:
@@ -326,33 +376,21 @@ create_ccbs(session_t *sess)
  *    either wake up the requesting thread, signal SCSIPI that we're done,
  *    or just free the CCB for CCBDISP_FREE.
  *
- *    Parameter:  The CCB to handle.
+ *    Parameter:  The CCB to handle and the new status of the CCB
  */
 
 void
-wake_ccb(ccb_t *ccb)
+wake_ccb(ccb_t *ccb, uint32_t status)
 {
 	ccb_disp_t disp;
 	connection_t *conn;
 	int s;
-#ifdef ISCSI_DEBUG
-	static ccb_t *lastccb = NULL;
-	static int lastdisp = -1;
-#endif
-
-	/* Just in case */
-	if (ccb == NULL)
-		return;
 
 	conn = ccb->connection;
 
 #ifdef ISCSI_DEBUG
-	if (ccb != lastccb || ccb->disp != lastdisp) {
-		DEBC(conn, 9, ("Wake CCB, ccb = %p, disp = %d\n",
-			ccb, (ccb) ? ccb->disp : 0));
-		lastccb = ccb;
-		lastdisp = (ccb) ? ccb->disp : 0;
-	}
+	DEBC(conn, 9, ("CCB done, ccb = %p, disp = %d\n",
+		ccb, ccb->disp));
 #endif
 
 	callout_stop(&ccb->timeout);
@@ -365,86 +403,46 @@ wake_ccb(ccb_t *ccb)
 		return;
 	}
 
-	TAILQ_REMOVE(&conn->ccbs_waiting, ccb, chain);
+	suspend_ccb(ccb, FALSE);
+	throttle_ccb(ccb, FALSE);
 
 	/* change the disposition so nobody tries this again */
 	ccb->disp = CCBDISP_BUSY;
+	ccb->status = status;
 	splx(s);
 
 	PERF_END(ccb);
 
 	switch (disp) {
+	case CCBDISP_FREE:
+		free_ccb(ccb);
+		break;
+
 	case CCBDISP_WAIT:
 		wakeup(ccb);
 		break;
 
 	case CCBDISP_SCSIPI:
 		iscsi_done(ccb);
+		free_ccb(ccb);
 		break;
 
 	case CCBDISP_DEFER:
 		break;
 
 	default:
+		DEBC(conn, 1, ("CCB done, ccb = %p, invalid disposition %d", ccb, disp));
 		free_ccb(ccb);
 		break;
 	}
 }
-
-
-/*
- * complete_ccb:
- *    Same as wake_ccb, but the CCB is not assumed to be in the waiting list.
- *
- *    Parameter:  The CCB to handle.
- */
-
-void
-complete_ccb(ccb_t *ccb)
-{
-	ccb_disp_t disp;
-	int s;
-
-	/* Just in case */
-	if (ccb == NULL)
-		return;
-
-	callout_stop(&ccb->timeout);
-
-	s = splbio();
-	disp = ccb->disp;
-	if (disp <= CCBDISP_NOWAIT || disp == CCBDISP_DEFER) {
-		splx(s);
-		return;
-	}
-	/* change the disposition so nobody tries this again */
-	ccb->disp = CCBDISP_BUSY;
-	splx(s);
-
-	PERF_END(ccb);
-
-	switch (disp) {
-	case CCBDISP_WAIT:
-		wakeup(ccb);
-		break;
-
-	case CCBDISP_SCSIPI:
-		iscsi_done(ccb);
-		break;
-
-	default:
-		free_ccb(ccb);
-		break;
-	}
-}
-
 
 /*****************************************************************************
  * PDU management functions
  *****************************************************************************/
 
 /*
- * get_pdu_c:
+ * get_pdu:
  *    Get a PDU for the SCSI operation.
  *
  *    Parameter:
@@ -455,63 +453,24 @@ complete_ccb(ccb_t *ccb)
  */
 
 pdu_t *
-get_pdu_c(connection_t *conn, bool waitok)
+get_pdu(connection_t *conn, bool waitok)
 {
 	pdu_t *pdu;
+	int s;
 
 	do {
-		CS_BEGIN;
+		s = splbio();
 		pdu = TAILQ_FIRST(&conn->pdu_pool);
-		if (pdu != NULL) {
+		if (pdu != NULL)
 			TAILQ_REMOVE(&conn->pdu_pool, pdu, chain);
-		}
-		CS_END;
+		splx(s);
+
 		DEB(100, ("get_pdu_c: pdu = %p, waitok = %d\n", pdu, waitok));
 		if (pdu == NULL) {
 			if (!waitok || conn->terminating)
 				return NULL;
 			PDEBOUT(("Waiting for PDU!\n"));
 			tsleep(&conn->pdu_pool, PWAIT, "get_pdu_c", 0);
-		}
-	} while (pdu == NULL);
-
-	memset(pdu, 0, sizeof(pdu_t));
-	pdu->connection = conn;
-	pdu->disp = PDUDISP_FREE;
-
-	return pdu;
-}
-
-/*
- * get_pdu:
- *    Get a PDU for the SCSI operation, waits if none is available.
- *    Same as get_pdu_c, but with wait always OK.
- *    Duplicated code because this is the more common case.
- *
- *    Parameter:  The connection this PDU should be associated with.
- *
- *    Returns:    The PDU.
- */
-
-pdu_t *
-get_pdu(connection_t *conn)
-{
-	pdu_t *pdu;
-
-	do {
-		CS_BEGIN;
-		pdu = TAILQ_FIRST(&conn->pdu_pool);
-		if (pdu != NULL) {
-			TAILQ_REMOVE(&conn->pdu_pool, pdu, chain);
-		}
-		CS_END;
-		DEB(100, ("get_pdu: pdu = %p\n", pdu));
-		if (pdu == NULL) {
-			if (conn->terminating)
-				return NULL;
-
-			PDEBOUT(("Waiting for PDU!\n"));
-			tsleep(&conn->pdu_pool, PWAIT, "get_pdu", 0);
 		}
 	} while (pdu == NULL);
 
@@ -534,6 +493,7 @@ free_pdu(pdu_t *pdu)
 {
 	connection_t *conn = pdu->connection;
 	pdu_disp_t pdisp;
+	int s;
 
 	if (PDUDISP_UNUSED == (pdisp = pdu->disp))
 		return;
@@ -551,9 +511,10 @@ free_pdu(pdu_t *pdu)
 	if (pdu->temp_data)
 		free(pdu->temp_data, M_TEMP);
 
-	CS_BEGIN;
+	s = splbio();
 	TAILQ_INSERT_TAIL(&conn->pdu_pool, pdu, chain);
-	CS_END;
+	splx(s);
+
 	wakeup(&conn->pdu_pool);
 }
 

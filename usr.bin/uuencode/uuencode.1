@@ -1,4 +1,4 @@
-.\"	$NetBSD: uuencode.1,v 1.21 2009/03/10 19:54:43 joerg Exp $
+.\"	$NetBSD: uuencode.1,v 1.21.12.1 2013/02/25 00:30:41 tls Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)uuencode.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd November 30, 2008
+.Dd January 28, 2012
 .Dt UUENCODE 1
 .Os
 .Sh NAME
@@ -42,7 +42,8 @@
 .Op Ar inputfile
 .Ar outputname
 .Nm uudecode
-.Op Fl m | Fl p
+.Op Fl m
+.Op Fl p | Fl o Ar outputfile
 .Op Ar encoded-file ...
 .Sh DESCRIPTION
 .Nm
@@ -57,6 +58,25 @@ The following options are available:
 .Bl -tag -width ".Fl m"
 .It Fl m
 Use base64 encoding.
+The default is that
+.Nm
+uses the historical uuencode algorithm,
+and
+.Nm uudecode
+automatically detects the encoding.
+.It Fl o Ar outputname
+.Po Nm uudecode No only . Pc
+Use the specified
+.Ar outputname
+as the name of the output file.
+The default is that
+.Nm uudecode
+obtains the name of the output file from the data stream, where
+.Nm
+would have recorded it.
+.It Fl p
+.Po Nm uudecode No only . Pc
+Write the decoded file to stdout instead of to a named file.
 .El
 .Pp
 .Nm
@@ -79,11 +99,17 @@ files (or by default, the standard input) into the original form.
 The resulting file is named
 .Ar outputname
 as recorded in the encoded file,
+or as specified by the
+.Fl o
+option,
 and will have the mode of the original file except that setuid
-and execute bits are not retained; if the
+and execute bits are not retained.
+If the
 .Fl p
-option is specified, the data will be written to the standard output
-instead.
+option is specified, or if the output file name is given as
+.Pa /dev/stdout ,
+then the data will be written to the standard output
+instead of to a named file.
 .Nm uudecode
 ignores any leading and trailing lines.
 .Sh EXIT STATUS
@@ -122,7 +148,7 @@ The
 and
 .Nm
 utilities conform to
-.St -p1003.2-92 .
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Nm uudecode

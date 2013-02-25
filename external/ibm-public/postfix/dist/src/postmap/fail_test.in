@@ -1,0 +1,8 @@
+./postmap -q xx fail:aliases
+echo xx | ./postmap -q - fail:aliases
+echo xx | ./postmap -bq - fail:aliases
+./postmap -d xx fail:aliases
+echo xx | ./postmap -d - fail:aliases
+./postmap -s fail:aliases
+./postmap -i fail:aliases < aliases
+./postmap fail:aliases

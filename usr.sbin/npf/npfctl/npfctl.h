@@ -1,8 +1,11 @@
-/*	$NetBSD: npfctl.h,v 1.19.2.1 2012/11/20 03:03:03 tls Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.19.2.2 2013/02/25 00:30:46 tls Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This material is based upon work partially supported by The
+ * NetBSD Foundation under a contract with Mindaugas Rasiukevicius.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,8 +54,15 @@ typedef struct fam_addr_mask {
 	sa_family_t	fam_family;
 	npf_addr_t	fam_addr;
 	npf_netmask_t	fam_mask;
-	npfvar_t *	fam_interface;
+	unsigned long	fam_ifindex;
 } fam_addr_mask_t;
+
+typedef struct ifnet_addr {
+	unsigned long	ifna_index;
+	sa_family_t	ifna_family;
+	npfvar_t *	ifna_filter;
+	npfvar_t *	ifna_addrs;
+} ifnet_addr_t;
 
 typedef struct port_range {
 	in_port_t	pr_start;
@@ -78,6 +88,7 @@ typedef struct rule_group {
 	const char *	rg_name;
 	uint32_t	rg_attr;
 	u_int		rg_ifnum;
+	bool		rg_default;
 } rule_group_t;
 
 typedef struct proc_call {
@@ -90,7 +101,11 @@ typedef struct proc_param {
 	const char *	pp_value;
 } proc_param_t;
 
+enum { NPFCTL_PARSE_FILE, NPFCTL_PARSE_STRING };
+
 void		yyerror(const char *, ...) __printflike(1, 2) __dead;
+void		npfctl_parse_file(const char *);
+void		npfctl_parse_string(const char *);
 
 void		npfctl_print_error(const nl_error_t *);
 char *		npfctl_print_addrmask(int, npf_addr_t *, npf_netmask_t);
@@ -100,10 +115,10 @@ in_port_t	npfctl_portno(const char *);
 uint8_t		npfctl_icmpcode(int, uint8_t, const char *);
 uint8_t		npfctl_icmptype(int, const char *);
 unsigned long   npfctl_find_ifindex(const char *);
+npfvar_t *	npfctl_parse_ifnet(const char *, const int);
 npfvar_t *	npfctl_parse_tcpflag(const char *);
 npfvar_t *	npfctl_parse_table_id(const char *);
 npfvar_t * 	npfctl_parse_icmp(int, int, int);
-npfvar_t *	npfctl_parse_iface(const char *);
 npfvar_t *	npfctl_parse_port_range(in_port_t, in_port_t);
 npfvar_t *	npfctl_parse_port_range_variable(const char *);
 npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
@@ -170,12 +185,17 @@ int		npfctl_ncode_disassemble(nc_inf_t *, const void *, size_t);
 
 void		npfctl_config_init(bool);
 int		npfctl_config_send(int, const char *);
+nl_config_t *	npfctl_config_ref(void);
 int		npfctl_config_show(int);
+int		npfctl_ruleset_show(int, const char *);
+
+nl_rule_t *	npfctl_rule_ref(void);
 unsigned long	npfctl_debug_addif(const char *);
 
 void		npfctl_build_rproc(const char *, npfvar_t *);
-void		npfctl_build_group(const char *, int, u_int);
-void		npfctl_build_rule(int, u_int, sa_family_t,
+void		npfctl_build_group(const char *, int, u_int, bool);
+void		npfctl_build_group_end(void);
+void		npfctl_build_rule(uint32_t, u_int, sa_family_t,
 		    const opt_proto_t *, const filt_opts_t *, const char *);
 void		npfctl_build_natseg(int, int, u_int, const addr_port_t *,
 		    const addr_port_t *, const filt_opts_t *);

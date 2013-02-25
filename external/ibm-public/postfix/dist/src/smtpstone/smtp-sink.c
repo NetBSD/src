@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp-sink.c,v 1.1.1.2 2011/03/02 19:32:39 tron Exp $	*/
+/*	$NetBSD: smtp-sink.c,v 1.1.1.2.10.1 2013/02/25 00:27:29 tls Exp $	*/
 
 /*++
 /* NAME
@@ -337,6 +337,15 @@ typedef struct SINK_STATE {
 #define SOFT_ERROR_RESP		"450 4.3.0 Error: command failed"
 #define HARD_ERROR_RESP		"500 5.3.0 Error: command failed"
 
+ /*
+  * We can't rely on vstream auto-flushing, so we have to prepare for the
+  * next read request.
+  */
+#define SMTP_FLUSH(fp) do { \
+    if (vstream_peek(fp) <= 0 && readable(vstream_fileno(fp)) <= 0) \
+        smtp_flush(fp); \
+    } while (0)
+
 static int var_tmout = 100;
 static int var_max_line_length = 2048;
 static char *var_myhostname;
@@ -388,16 +397,16 @@ static void do_stats(void)
 
 static void hard_err_resp(SINK_STATE *state)
 {
-    smtp_printf(state->stream, hard_error_resp);
-    smtp_flush(state->stream);
+    smtp_printf(state->stream, "%s", hard_error_resp);
+    SMTP_FLUSH(state->stream);
 }
 
 /* soft_err_resp - generic soft error response */
 
 static void soft_err_resp(SINK_STATE *state)
 {
-    smtp_printf(state->stream, soft_error_resp);
-    smtp_flush(state->stream);
+    smtp_printf(state->stream, "%s", soft_error_resp);
+    SMTP_FLUSH(state->stream);
 }
 
 /* exp_path_template - expand template pathname, static result */
@@ -618,8 +627,9 @@ static void ehlo_response(SINK_STATE *state, const char *args)
 	smtp_printf(state->stream, "250-XFORWARD NAME ADDR PROTO HELO");
     if (!disable_enh_status)
 	smtp_printf(state->stream, "250-ENHANCEDSTATUSCODES");
+    /* RFC 821/2821/5321: Format is replycode<SPACE>optional-text<CRLF> */
     smtp_printf(state->stream, "250 ");
-    smtp_flush(state->stream);
+    SMTP_FLUSH(state->stream);
     if (single_template) {
 	if (state->helo_args)
 	    myfree(state->helo_args);
@@ -636,7 +646,7 @@ static void helo_response(SINK_STATE *state, const char *args)
     mail_cmd_reset(state);
     state->client_proto = "SMTP";
     smtp_printf(state->stream, "250 %s", var_myhostname);
-    smtp_flush(state->stream);
+    SMTP_FLUSH(state->stream);
     if (single_template) {
 	if (state->helo_args)
 	    myfree(state->helo_args);
@@ -650,7 +660,7 @@ static void helo_response(SINK_STATE *state, const char *args)
 static void ok_response(SINK_STATE *state, const char *unused_args)
 {
     smtp_printf(state->stream, "250 2.0.0 Ok");
-    smtp_flush(state->stream);
+    SMTP_FLUSH(state->stream);
 }
 
 /* rset_response - reset, send 250 OK */
@@ -659,7 +669,7 @@ static void rset_response(SINK_STATE *state, const char *unused_args)
 {
     mail_cmd_reset(state);
     smtp_printf(state->stream, "250 2.1.0 Ok");
-    smtp_flush(state->stream);
+    SMTP_FLUSH(state->stream);
 }
 
 /* mail_response - reset recipient count, send 250 OK */
@@ -668,13 +678,13 @@ static void mail_response(SINK_STATE *state, const char *args)
 {
     if (state->in_mail) {
 	smtp_printf(state->stream, "503 5.5.1 Error: nested MAIL command");
-	smtp_flush(state->stream);
+	SMTP_FLUSH(state->stream);
 	return;
     }
     state->in_mail++;
     state->rcpts = 0;
     smtp_printf(state->stream, "250 2.1.0 Ok");
-    smtp_flush(state->stream);
+    SMTP_FLUSH(state->stream);
     if (single_template) {
 	mail_file_open(state);
 	SKIP(args, *args != ':');
@@ -690,12 +700,12 @@ static void rcpt_response(SINK_STATE *state, const char *args)
 {
     if (state->in_mail == 0) {
 	smtp_printf(state->stream, "503 5.5.1 Error: need MAIL command");
-	smtp_flush(state->stream);
+	SMTP_FLUSH(state->stream);
 	return;
     }
     state->rcpts++;
     smtp_printf(state->stream, "250 2.1.5 Ok");
-    smtp_flush(state->stream);
+    SMTP_FLUSH(state->stream);
     /* Note: there may be more than one recipient per mail transaction. */
     if (state->dump_file) {
 	SKIP(args, *args != ':');
@@ -712,7 +722,7 @@ static void abort_event(int unused_event, char *context)
     SINK_STATE *state = (SINK_STATE *) context;
 
     smtp_printf(state->stream, "550 This violates SMTP");
-    smtp_flush(state->stream);
+    SMTP_FLUSH(state->stream);
     disconnect(state);
 }
 
@@ -722,13 +732,13 @@ static void data_response(SINK_STATE *state, const char *unused_args)
 {
     if (state->in_mail == 0 || state->rcpts == 0) {
 	smtp_printf(state->stream, "503 5.5.1 Error: need RCPT command");
-	smtp_flush(state->stream);
+	SMTP_FLUSH(state->stream);
 	return;
     }
     /* Not: ST_ANY. */
     state->data_state = ST_CR_LF;
     smtp_printf(state->stream, "354 End data with <CR><LF>.<CR><LF>");
-    smtp_flush(state->stream);
+    SMTP_FLUSH(state->stream);
     if (abort_delay < 0) {
 	state->read_fn = data_read;
     } else {
@@ -747,11 +757,11 @@ static void dot_resp_hard(SINK_STATE *state)
 {
     if (enable_lmtp) {
 	while (state->rcpts-- > 0)	/* XXX this could block */
-	    smtp_printf(state->stream, hard_error_resp);
+	    smtp_printf(state->stream, "%s", hard_error_resp);
     } else {
-	smtp_printf(state->stream, hard_error_resp);
+	smtp_printf(state->stream, "%s", hard_error_resp);
     }
-    smtp_flush(state->stream);
+    SMTP_FLUSH(state->stream);
 }
 
 /* dot_resp_soft - soft error response to . command */
@@ -760,11 +770,11 @@ static void dot_resp_soft(SINK_STATE *state)
 {
     if (enable_lmtp) {
 	while (state->rcpts-- > 0)	/* XXX this could block */
-	    smtp_printf(state->stream, soft_error_resp);
+	    smtp_printf(state->stream, "%s", soft_error_resp);
     } else {
-	smtp_printf(state->stream, soft_error_resp);
+	smtp_printf(state->stream, "%s", soft_error_resp);
     }
-    smtp_flush(state->stream);
+    SMTP_FLUSH(state->stream);
 }
 
 /* dot_response - response to . command */
@@ -777,7 +787,7 @@ static void dot_response(SINK_STATE *state, const char *unused_args)
     } else {
 	smtp_printf(state->stream, "250 2.0.0 Ok");
     }
-    smtp_flush(state->stream);
+    SMTP_FLUSH(state->stream);
 }
 
 /* quit_response - respond to QUIT command */
@@ -785,7 +795,7 @@ static void dot_response(SINK_STATE *state, const char *unused_args)
 static void quit_response(SINK_STATE *state, const char *unused_args)
 {
     smtp_printf(state->stream, "221 Bye");
-    smtp_flush(state->stream);
+    smtp_flush(state->stream);			/* not: SMTP_FLUSH */
     if (count)
 	quit_count++;
 }
@@ -800,7 +810,7 @@ static void conn_response(SINK_STATE *state, const char *unused_args)
 	smtp_printf(state->stream, "220 %s", var_myhostname);
     else
 	smtp_printf(state->stream, "220 %s ESMTP", var_myhostname);
-    smtp_flush(state->stream);
+    SMTP_FLUSH(state->stream);
 }
 
 /* delay_event - delayed command response */
@@ -1176,7 +1186,7 @@ static int command_read(SINK_STATE *state)
 	msg_info("%s", ptr);
     if ((command = mystrtok(&ptr, " \t")) == 0) {
 	smtp_printf(state->stream, "500 5.5.2 Error: unknown command");
-	smtp_flush(state->stream);
+	SMTP_FLUSH(state->stream);
 	return (0);
     }
     for (cmdp = command_table; cmdp->name != 0; cmdp++)
@@ -1184,7 +1194,7 @@ static int command_read(SINK_STATE *state)
 	    break;
     if (cmdp->name == 0 || (cmdp->flags & FLAG_ENABLE) == 0) {
 	smtp_printf(state->stream, "500 5.5.1 Error: unknown command");
-	smtp_flush(state->stream);
+	SMTP_FLUSH(state->stream);
 	return (0);
     }
     return (command_resp(state, cmdp, command, printable(ptr, '?')));

@@ -1,0 +1,2 @@
+# $NetBSD: md.vax,v 1.2.6.2 2013/02/25 00:24:38 tls Exp $
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic

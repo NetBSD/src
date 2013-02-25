@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.126 2012/08/05 01:43:59 matt Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.126.2.1 2013/02/25 00:30:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -668,7 +668,12 @@ typedef struct {
 #define DT_FINI_ARRAY	26	/* Size, in bytes, of DT_INIT_ARRAY array */
 #define DT_INIT_ARRAYSZ 27	/* Address of termination function array */
 #define DT_FINI_ARRAYSZ 28	/* Size, in bytes, of DT_FINI_ARRAY array*/
-#define DT_NUM		29
+#define DT_RUNPATH	29	/* overrides DT_RPATH */
+#define DT_FLAGS	30	/* Encodes ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS */
+#define DT_ENCODING	31	/* ??? */
+#define DT_PREINIT_ARRAY 32	/* Address of pre-init function array */
+#define DT_PREINIT_ARRAYSZ 33	/* Size, in bytes, of DT_PREINIT_ARRAY array */
+#define DT_NUM		34
 
 #define DT_LOOS		0x60000000	/* Operating system specific range */
 #define DT_VERSYM	0x6ffffff0	/* Symbol versions */

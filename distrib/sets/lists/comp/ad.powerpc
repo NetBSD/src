@@ -1,9 +1,10 @@
-# $NetBSD: ad.powerpc,v 1.59 2012/06/16 17:01:02 joerg Exp $
+# $NetBSD: ad.powerpc,v 1.59.2.1 2013/02/25 00:24:32 tls Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
 ./usr/include/clang-3.0/altivec.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/altivec.h		comp-c-include		llvm
+./usr/include/clang-3.2/altivec.h		comp-obsolete		obsolete
+./usr/include/clang-3.3/altivec.h		comp-c-include		llvm
 ./usr/include/gcc-4.1/altivec.h			comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/altivec.h			comp-obsolete		gcc=45,obsolete
 ./usr/include/gcc-4.5/altivec.h			comp-c-include		gcccmds,gcc=45
@@ -92,6 +93,3 @@
 ./usr/include/powerpc/varargs.h			comp-obsolete		obsolete
 ./usr/include/powerpc/vmparam.h			comp-c-include
 ./usr/include/powerpc/wchar_limits.h		comp-c-include
-./usr/libdata/debug/usr/bin/elf2aout.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/psim.debug		comp-debug-debug	debug,gdb

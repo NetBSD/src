@@ -1,4 +1,4 @@
-/*	$NetBSD: domain_list.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: domain_list.h,v 1.1.1.1.16.1 2013/02/25 00:27:17 tls Exp $	*/
 
 #ifndef _DOMAIN_LIST_H_INCLUDED_
 #define _DOMAIN_LIST_H_INCLUDED_
@@ -17,7 +17,6 @@
   * Utility library.
   */
 #include <match_list.h>
-#include <match_ops.h>
 
  /*
   * External interface.

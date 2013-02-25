@@ -1,4 +1,4 @@
-/*	$NetBSD: strnames.c,v 1.9 2008/07/14 05:40:13 tteras Exp $	*/
+/*	$NetBSD: strnames.c,v 1.9.18.1 2013/02/25 00:24:03 tls Exp $	*/
 
 /*	$KAME: strnames.c,v 1.25 2003/11/13 10:53:26 itojun Exp $	*/
 
@@ -471,6 +471,7 @@ static struct ksmap name_ipsecdoi_trns_esp[] = {
 { IPSECDOI_ESP_RC4,		"RC4",		NULL },
 { IPSECDOI_ESP_NULL,		"NULL",		NULL },
 { IPSECDOI_ESP_AES,		"AES",		NULL },
+{ IPSECDOI_ESP_AESGCM16,	"AES_GCM_16",	NULL },
 { IPSECDOI_ESP_TWOFISH,		"TWOFISH",	NULL },
 { IPSECDOI_ESP_CAMELLIA,	"CAMELLIA",	NULL },
 };
@@ -583,6 +584,7 @@ static struct ksmap name_attr_ipsec_auth[] = {
 { IPSECDOI_ATTR_AUTH_HMAC_SHA2_512,	"hmac-sha512",	NULL },
 { IPSECDOI_ATTR_AUTH_DES_MAC,		"des-mac",	NULL },
 { IPSECDOI_ATTR_AUTH_KPDK,		"kpdk",		NULL },
+{ IPSECDOI_ATTR_AUTH_NONE,		"non_auth",		NULL },
 };
 
 char *

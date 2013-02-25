@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.50 2012/06/05 08:44:15 abs Exp $
+#	$NetBSD: INSTALL,v 1.50.2.1 2013/02/25 00:28:56 tls Exp $
 #
 #	Shark installation kernel
 #
@@ -31,10 +31,6 @@ options 	NSIO		# We are using the National Semi SuperIO
 # compatibility with old version of OFW, which may have incorrect
 # properties and/or may set up devices incorrectly.
 options 	COMPAT_OLD_OFW
-
-# FPA options
-
-#options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
 

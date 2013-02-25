@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.c,v 1.6 2012/02/22 17:53:51 christos Exp $	*/
+/*	$NetBSD: cdf.c,v 1.6.2.1 2013/02/25 00:26:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf.c,v 1.50 2012/02/20 22:35:29 christos Exp $")
+FILE_RCSID("@(#)$File: cdf.c,v 1.51 2012/03/20 18:28:02 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf.c,v 1.6 2012/02/22 17:53:51 christos Exp $");
+__RCSID("$NetBSD: cdf.c,v 1.6.2.1 2013/02/25 00:26:06 tls Exp $");
 #endif
 #endif
 
@@ -274,10 +274,10 @@ cdf_check_stream_offset(const cdf_stream_t *sst, const cdf_header_t *h,
 	const char *b = (const char *)sst->sst_tab;
 	const char *e = ((const char *)p) + tail;
 	(void)&line;
-	if (e >= b && (size_t)(e - b) < CDF_SEC_SIZE(h) * sst->sst_len)
+	if (e >= b && (size_t)(e - b) <= CDF_SEC_SIZE(h) * sst->sst_len)
 		return 0;
-	DPRINTF(("%d: offset begin %p end %p %" SIZE_T_FORMAT "u"
-	    " >= %" SIZE_T_FORMAT "u [%" SIZE_T_FORMAT "u %"
+	DPRINTF(("%d: offset begin %p < end %p || %" SIZE_T_FORMAT "u"
+	    " > %" SIZE_T_FORMAT "u [%" SIZE_T_FORMAT "u %"
 	    SIZE_T_FORMAT "u]\n", line, b, e, (size_t)(e - b),
 	    CDF_SEC_SIZE(h) * sst->sst_len, CDF_SEC_SIZE(h), sst->sst_len));
 	errno = EFTYPE;

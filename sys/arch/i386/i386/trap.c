@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.264.2.1 2012/11/20 03:01:27 tls Exp $	*/
+/*	$NetBSD: trap.c,v 1.264.2.2 2013/02/25 00:28:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.264.2.1 2012/11/20 03:01:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.264.2.2 2013/02/25 00:28:44 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -102,7 +102,9 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.264.2.1 2012/11/20 03:01:27 tls Exp $");
 #include <machine/db_machdep.h>
 
 #include "mca.h"
+#if NMCA > 0
 #include <machine/mca_machdep.h>
+#endif
 
 #include <x86/nmi.h>
 
@@ -584,9 +586,11 @@ kernelfault:
 		case T_DIVIDE|T_USER:
 			ksi.ksi_code = FPE_INTDIV;
 			break;
+#if NNPX > 0
 		case T_ARITHTRAP|T_USER:
 			ksi.ksi_code = npxtrap(l);
 			break;
+#endif
 		default:
 			ksi.ksi_code = 0;
 			break;
@@ -780,7 +784,9 @@ faultcommon:
 		if (kdb_trap(type, 0, frame))
 			return;
 		/* machine/parity/power fail/"kitchen sink" faults */
+#if NMCA > 0
 		mca_nmi();
+#endif
 		x86_nmi();
 	}
 

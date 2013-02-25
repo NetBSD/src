@@ -1,0 +1,22 @@
+#	$NetBSD: std.integrator_cp,v 1.1.4.2 2013/02/25 00:28:35 tls Exp $
+#
+# standard NetBSD/integrator options
+
+machine	evbarm arm
+include 	"arch/evbarm/conf/std.evbarm"
+
+# Pull in Integrator config definitions.
+include 	"arch/evbarm/conf/files.integrator"
+
+options 	EXEC_AOUT
+
+options 	_ARM32_NEED_BUS_DMA_BOUNCE
+
+#options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
+
+makeoptions	BOARDTYPE="integrator"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.integrator_cp"
+
+options 	ARM_INTR_IMPL="<arch/evbarm/ifpga/ifpga_intr.h>"
+
+options 	KERNEL_BASE_EXT=0xc0000000

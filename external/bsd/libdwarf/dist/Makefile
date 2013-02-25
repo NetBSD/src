@@ -1,4 +1,4 @@
-# $FreeBSD: src/lib/libdwarf/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
+# $FreeBSD: src/lib/libdwarf/Makefile,v 1.7 2012/11/17 01:49:48 svnexp Exp $
 
 LIB=	dwarf
 
@@ -14,17 +14,16 @@ SRCS=	\
 	dwarf_errno.c		\
 	dwarf_finish.c		\
 	dwarf_form.c		\
+	dwarf_func.c		\
 	dwarf_init.c		\
 	dwarf_loc.c
 
 INCS=	dwarf.h libdwarf.h
 
-CFLAGS+=	-I. -I${.CURDIR}
+CFLAGS+=	-I${.CURDIR}
 
-SHLIB_MAJOR=	2
+SHLIB_MAJOR=	3
 
-WARNS?=	6
-
-WITHOUT_MAN=	yes
+WITHOUT_MAN=
 
 .include <bsd.lib.mk>

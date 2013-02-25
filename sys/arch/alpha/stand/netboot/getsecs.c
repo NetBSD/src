@@ -1,7 +1,8 @@
-/*	$NetBSD: getsecs.c,v 1.9 2009/01/12 11:32:43 tsutsui Exp $	*/
+/*	$NetBSD: getsecs.c,v 1.9.24.1 2013/02/25 00:28:19 tls Exp $	*/
 
 #include <sys/param.h>
 
+#include <machine/cpu.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
   

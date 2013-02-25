@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 2012/06/05 00:42:29 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.3.2.1 2013/02/25 00:25:50 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -1193,7 +1193,7 @@ isc___mem_putanddetach(isc_mem_t **ctxp, void *ptr, size_t size FLARG) {
 				oldsize -= ALIGNMENT_SIZE;
 			INSIST(oldsize == size);
 		}
-		isc_mem_free((isc_mem_t *)ctx, ptr);
+		isc__mem_free((isc_mem_t *)ctx, ptr FLARG_PASS);
 
 		MCTXLOCK(ctx, &ctx->lock);
 		ctx->references--;
@@ -1329,7 +1329,7 @@ isc___mem_put(isc_mem_t *ctx0, void *ptr, size_t size FLARG) {
 				oldsize -= ALIGNMENT_SIZE;
 			INSIST(oldsize == size);
 		}
-		isc_mem_free((isc_mem_t *)ctx, ptr);
+		isc__mem_free((isc_mem_t *)ctx, ptr FLARG_PASS);
 		return;
 	}
 
@@ -1594,7 +1594,11 @@ isc___mem_reallocate(isc_mem_t *ctx0, void *ptr, size_t size FLARG) {
 			oldsize = (((size_info *)ptr)[-1]).u.size;
 			INSIST(oldsize >= ALIGNMENT_SIZE);
 			oldsize -= ALIGNMENT_SIZE;
-			copysize = oldsize > size ? size : oldsize;
+			if ((isc_mem_debugging & ISC_MEM_DEBUGCTX) != 0) {
+				INSIST(oldsize >= ALIGNMENT_SIZE);
+				oldsize -= ALIGNMENT_SIZE;
+			}
+			copysize = (oldsize > size) ? size : oldsize;
 			memcpy(new_ptr, ptr, copysize);
 			isc__mem_free(ctx0, ptr FLARG_PASS);
 		}

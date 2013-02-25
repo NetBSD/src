@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.223.2.2 2012/11/20 03:02:43 tls Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.223.2.3 2013/02/25 00:29:52 tls Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.223.2.2 2012/11/20 03:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.223.2.3 2013/02/25 00:29:52 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -239,7 +239,8 @@ frob_cfdrivervec(struct cfdriver * const *cfdriverv,
 	cfdriver_fn drv_do, cfdriver_fn drv_undo,
 	const char *style, bool dopanic)
 {
-	void (*pr)(const char *, ...) = dopanic ? panic : printf;
+	void (*pr)(const char *, ...) __printflike(1, 2) =
+	    dopanic ? panic : printf;
 	int i = 0, error = 0, e2;
 
 	for (i = 0; cfdriverv[i] != NULL; i++) {
@@ -270,7 +271,8 @@ frob_cfattachvec(const struct cfattachinit *cfattachv,
 	const char *style, bool dopanic)
 {
 	const struct cfattachinit *cfai = NULL;
-	void (*pr)(const char *, ...) = dopanic ? panic : printf;
+	void (*pr)(const char *, ...) __printflike(1, 2) =
+	    dopanic ? panic : printf;
 	int j = 0, error = 0, e2;
 
 	for (cfai = &cfattachv[0]; cfai->cfai_name != NULL; cfai++) {
@@ -1589,7 +1591,12 @@ config_attach_pseudo(cfdata_t cf)
 #if 0	/* XXXJRT not yet */
 	device_register(dev, NULL);	/* like a root node */
 #endif
+
+	/* Let userland know */
+	devmon_report_device(dev, true);
+
 	(*dev->dv_cfattach->ca_attach)(ROOT, dev, NULL);
+
 	config_process_deferred(&deferred_config_queue, dev);
 	return dev;
 }

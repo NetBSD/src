@@ -1,7 +1,7 @@
-/*	$NetBSD: wsconsctl.h,v 1.11 2011/08/27 19:01:34 joerg Exp $ */
+/*	$NetBSD: wsconsctl.h,v 1.11.8.1 2013/02/25 00:28:12 tls Exp $ */
 
 /*-
- * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -55,6 +55,7 @@ struct field {
 #define FMT_UINT	1		/* unsigned integer */
 #define FMT_STRING	2		/* zero terminated string */
 #define FMT_BITFIELD	3		/* bit field */
+#define FMT_INT		4		/* signed integer */
 #define FMT_KBDTYPE	101		/* keyboard type */
 #define FMT_MSTYPE	102		/* mouse type */
 #define FMT_DPYTYPE	103		/* display type */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.6 2012/07/30 19:27:46 pgoyette Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.6.2.1 2013/02/25 00:29:45 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.6 2012/07/30 19:27:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.6.2.1 2013/02/25 00:29:45 tls Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -2253,7 +2253,8 @@ void
 ipf_nat_delete(ipf_main_softc_t *softc, struct nat *nat, int logtype)
 {
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
-	int madeorphan = 0, bkt, removed = 0;
+	int madeorphan = 0, removed = 0;
+	u_int bkt;
 	nat_stat_side_t *nss;
 	struct ipnat *ipn;
 
@@ -2269,6 +2270,7 @@ ipf_nat_delete(ipf_main_softc_t *softc, struct nat *nat, int logtype)
 
 		bkt = nat->nat_hv[0] % softn->ipf_nat_table_sz;
 		nss = &softn->ipf_nat_stats.ns_side[0];
+		ASSERT(nss->ns_bucketlen[bkt] > 0);
 		nss->ns_bucketlen[bkt]--;
 		if (nss->ns_bucketlen[bkt] == 0) {
 			nss->ns_inuse--;
@@ -2276,6 +2278,7 @@ ipf_nat_delete(ipf_main_softc_t *softc, struct nat *nat, int logtype)
 
 		bkt = nat->nat_hv[1] % softn->ipf_nat_table_sz;
 		nss = &softn->ipf_nat_stats.ns_side[1];
+		ASSERT(nss->ns_bucketlen[bkt] > 0);
 		nss->ns_bucketlen[bkt]--;
 		if (nss->ns_bucketlen[bkt] == 0) {
 			nss->ns_inuse--;
@@ -3032,12 +3035,12 @@ ipf_nat_newrdr(fr_info_t *fin, nat_t *nat, natinfo_t *ni)
 /* Attempts to create a new NAT entry.  Does not actually change the packet */
 /* in any way.                                                              */
 /*                                                                          */
-/* This fucntion is in three main parts: (1) deal with creating a new NAT   */
+/* This function is in three main parts: (1) deal with creating a new NAT   */
 /* structure for a "MAP" rule (outgoing NAT translation); (2) deal with     */
 /* creating a new NAT structure for a "RDR" rule (incoming NAT translation) */
 /* and (3) building that structure and putting it into the NAT table(s).    */
 /*                                                                          */
-/* NOTE: natsave should NOT be used top point back to an ipstate_t struct   */
+/* NOTE: natsave should NOT be used to point back to an ipstate_t struct    */
 /*       as it can result in memory being corrupted.                        */
 /* ------------------------------------------------------------------------ */
 nat_t *
@@ -3353,6 +3356,7 @@ ipf_nat_insert(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
 	u_int hv0, hv1;
 	u_int sp, dp;
 	ipnat_t *in;
+	int ret;
 
 	/*
 	 * Try and return an error as early as possible, so calculate the hash
@@ -3402,8 +3406,13 @@ ipf_nat_insert(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
 		/* TRACE nat_nsrcaddr, nat_ndstaddr, hv1 */
 	}
 
-	nat->nat_hv[0] = hv0;
-	nat->nat_hv[1] = hv1;
+	if ((nat->nat_dir & NAT_OUTBOUND) == NAT_OUTBOUND) {
+		nat->nat_hv[0] = hv0;
+		nat->nat_hv[1] = hv1;
+	} else {
+		nat->nat_hv[0] = hv1;
+		nat->nat_hv[1] = hv0;
+	}
 
 	MUTEX_INIT(&nat->nat_lock, "nat entry lock");
 
@@ -3435,15 +3444,20 @@ ipf_nat_insert(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
 		nat->nat_mtu[1] = GETIFMTU_4(nat->nat_ifps[1]);
 	}
 
-	return ipf_nat_hashtab_add(softc, softn, nat);
+	ret = ipf_nat_hashtab_add(softc, softn, nat);
+	if (ret == -1)
+		MUTEX_DESTROY(&nat->nat_lock);
+	return ret;
 }
 
 
 /* ------------------------------------------------------------------------ */
 /* Function:    ipf_nat_hashtab_add                                         */
+/* Returns:     int - 0 == sucess, -1 == failure                            */
 /* Parameters:  softc(I) - pointer to soft context main structure           */
 /*              softn(I) - pointer to NAT context structure                 */
 /*              nat(I) - pointer to NAT structure                           */
+/* Write Lock:  ipf_nat                                                     */
 /*                                                                          */
 /* Handle the insertion of a NAT entry into the table/list.                 */
 /* ------------------------------------------------------------------------ */
@@ -3456,14 +3470,6 @@ ipf_nat_hashtab_add(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
 
 	hv0 = nat->nat_hv[0] % softn->ipf_nat_table_sz;
 	hv1 = nat->nat_hv[1] % softn->ipf_nat_table_sz;
-
-	if (nat->nat_dir == NAT_INBOUND || nat->nat_dir == NAT_DIVERTIN) {
-		u_int swap;
-
-		swap = hv0;
-		hv0 = hv1;
-		hv1 = swap;
-	}
 
 	if (softn->ipf_nat_stats.ns_side[0].ns_bucketlen[hv0] >=
 	    softn->ipf_nat_maxbucket) {
@@ -4265,14 +4271,17 @@ ipf_nat_tabmove(ipf_nat_softc_t *softn, nat_t *nat)
 	if (nat->nat_hnext[0])
 		nat->nat_hnext[0]->nat_phnext[0] = nat->nat_phnext[0];
 	*nat->nat_phnext[0] = nat->nat_hnext[0];
-	nsp->ns_side[0].ns_bucketlen[nat->nat_hv[0] %
-				     softn->ipf_nat_table_sz]--;
+	hv0 = nat->nat_hv[0] % softn->ipf_nat_table_sz;
+	hv1 = nat->nat_hv[1] % softn->ipf_nat_table_sz;
+
+	ASSERT(nsp->ns_side[0].ns_bucketlen[hv0] > 0);
+	nsp->ns_side[0].ns_bucketlen[hv0]--;
 
 	if (nat->nat_hnext[1])
 		nat->nat_hnext[1]->nat_phnext[1] = nat->nat_phnext[1];
 	*nat->nat_phnext[1] = nat->nat_hnext[1];
-	nsp->ns_side[1].ns_bucketlen[nat->nat_hv[1] %
-				     softn->ipf_nat_table_sz]--;
+	ASSERT(nsp->ns_side[1].ns_bucketlen[hv1] > 0);
+	nsp->ns_side[1].ns_bucketlen[hv1]--;
 
 	/*
 	 * Add into the NAT table in the new position
@@ -4284,21 +4293,20 @@ ipf_nat_tabmove(ipf_nat_softc_t *softn, nat_t *nat)
 	rhv1 = NAT_HASH_FN(nat->nat_ndstaddr, rhv1 + nat->nat_ndport,
 			   0xffffffff);
 
-	hv0 = rhv0 % softn->ipf_nat_table_sz;
-	hv1 = rhv1 % softn->ipf_nat_table_sz;
-
-	if (nat->nat_dir == NAT_INBOUND || nat->nat_dir == NAT_DIVERTIN) {
-		u_int swap;
-
-		swap = hv0;
-		hv0 = hv1;
-		hv1 = swap;
+	if ((nat->nat_dir & NAT_OUTBOUND) == NAT_OUTBOUND) {
+		nat->nat_hv[0] = rhv0;
+		nat->nat_hv[1] = rhv1;
+	} else {
+		nat->nat_hv[0] = rhv1;
+		nat->nat_hv[1] = rhv0;
 	}
+
+	hv0 = nat->nat_hv[0] % softn->ipf_nat_table_sz;
+	hv1 = nat->nat_hv[1] % softn->ipf_nat_table_sz;
 
 	/* TRACE nat_osrcaddr, nat_osport, nat_odstaddr, nat_odport, hv0 */
 	/* TRACE nat_nsrcaddr, nat_nsport, nat_ndstaddr, nat_ndport, hv1 */
 
-	nat->nat_hv[0] = rhv0;
 	natp = &softn->ipf_nat_table[0][hv0];
 	if (*natp)
 		(*natp)->nat_phnext[0] = &nat->nat_hnext[0];
@@ -4307,7 +4315,6 @@ ipf_nat_tabmove(ipf_nat_softc_t *softn, nat_t *nat)
 	*natp = nat;
 	nsp->ns_side[0].ns_bucketlen[hv0]++;
 
-	nat->nat_hv[1] = rhv1;
 	natp = &softn->ipf_nat_table[1][hv1];
 	if (*natp)
 		(*natp)->nat_phnext[1] = &nat->nat_hnext[1];

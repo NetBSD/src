@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cache.h,v 1.1.1.1 2010/06/17 18:07:12 tron Exp $	*/
+/*	$NetBSD: dict_cache.h,v 1.1.1.1.14.1 2013/02/25 00:27:31 tls Exp $	*/
 
 #ifndef _DICT_CACHE_H_INCLUDED_
 #define _DICT_CACHE_H_INCLUDED_
@@ -27,7 +27,7 @@ typedef int (*DICT_CACHE_VALIDATOR_FN) (const char *, const char *, char *);
 extern DICT_CACHE *dict_cache_open(const char *, int, int);
 extern void dict_cache_close(DICT_CACHE *);
 extern const char *dict_cache_lookup(DICT_CACHE *, const char *);
-extern void dict_cache_update(DICT_CACHE *, const char *, const char *);
+extern int dict_cache_update(DICT_CACHE *, const char *, const char *);
 extern int dict_cache_delete(DICT_CACHE *, const char *);
 extern int dict_cache_sequence(DICT_CACHE *, int, const char **, const char **);
 extern void dict_cache_control(DICT_CACHE *,...);

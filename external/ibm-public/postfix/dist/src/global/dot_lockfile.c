@@ -1,4 +1,4 @@
-/*	$NetBSD: dot_lockfile.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: dot_lockfile.c,v 1.1.1.1.16.1 2013/02/25 00:27:17 tls Exp $	*/
 
 /*++
 /* NAME
@@ -66,6 +66,7 @@
 #include <stringops.h>
 #include <mymalloc.h>
 #include <iostuff.h>
+#include <warn_stat.h>
 
 /* Global library. */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.10 2009/01/13 13:35:54 yamt Exp $ */
+/* $NetBSD: spiflash.c,v 1.10.24.1 2013/02/25 00:29:32 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.10 2009/01/13 13:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.10.24.1 2013/02/25 00:29:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -436,7 +436,7 @@ spiflash_process_write(spiflash_handle_t sc)
 			    (unsigned)bp->b_blkno, bp->b_bcount, resid));
 
 		data = bp->b_data;
-		dst = save + (bp->b_blkno - blkno) * DEV_BSIZE;
+		dst = save + (bp->b_blkno * DEV_BSIZE) - base;
 
 		/*
 		 * NOR flash bits.  We can clear a bit, but we cannot

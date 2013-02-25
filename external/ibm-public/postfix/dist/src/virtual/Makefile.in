@@ -133,6 +133,7 @@ maildir.o: ../../include/sys_defs.h
 maildir.o: ../../include/vbuf.h
 maildir.o: ../../include/vstream.h
 maildir.o: ../../include/vstring.h
+maildir.o: ../../include/warn_stat.h
 maildir.o: maildir.c
 maildir.o: virtual.h
 recipient.o: ../../include/argv.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.95 2012/07/31 15:50:35 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.95.2.1 2013/02/25 00:29:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -81,7 +81,8 @@ struct wdc_softc {
 	int		cap;		/* controller capabilities */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 #define WDC_CAPABILITY_PREATA	0x0200	/* ctrl can be a pre-ata one */
-#define WDC_CAPABILITY_WIDEREGS 0x0400  /* Ctrl has wide (16bit) registers  */
+#define WDC_CAPABILITY_WIDEREGS 0x0400  /* ctrl has wide (16bit) registers  */
+#define WDC_CAPABILITY_NO_AUXCTL 0x0800 /* ctrl has no aux control registers */
 
 #if NATA_DMA || NATA_PIOBM
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
@@ -165,7 +166,7 @@ int	wdc_dmawait(struct ata_channel *, struct ata_xfer *, int);
 void	wdccommand(struct ata_channel *, u_int8_t, u_int8_t, u_int16_t,
 		   u_int8_t, u_int8_t, u_int8_t, u_int8_t);
 void	wdccommandext(struct ata_channel *, u_int8_t, u_int8_t, u_int64_t,
-		      u_int16_t, u_int16_t);
+		      u_int16_t, u_int16_t, u_int8_t);
 void	wdccommandshort(struct ata_channel *, int, int);
 void	wdctimeout(void *arg);
 void	wdc_reset_drive(struct ata_drive_datas *, int, uint32_t *);

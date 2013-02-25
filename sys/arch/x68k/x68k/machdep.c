@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.185 2012/07/30 17:19:59 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.185.2.1 2013/02/25 00:29:04 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185 2012/07/30 17:19:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185.2.1 2013/02/25 00:29:04 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -125,6 +125,7 @@ int	maxmem;			/* max memory per process */
 
 /* prototypes for local functions */
 void	identifycpu(void);
+static int check_emulator(char *, int);
 void	initcpu(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
@@ -304,6 +305,7 @@ identifycpu(void)
 	/* there's alot of XXX in here... */
 	const char *cpu_type, *mach, *mmu, *fpu;
 	char clock[16];
+	char emubuf[20];
 
 	/*
 	 * check machine type constant
@@ -334,6 +336,9 @@ identifycpu(void)
 		mach = "000?(unknown model)";
 		break;
 	}
+
+	emubuf[0] = '\0';
+	check_emulator(emubuf, sizeof(emubuf));
 
 	cpuspeed = 2048 / delay_divisor;
 	sprintf(clock, "%dMHz", cpuspeed);
@@ -367,9 +372,57 @@ identifycpu(void)
 		fpu = fpu_descr[fputype];
 	else
 		fpu = ", unknown FPU";
-	sprintf(cpu_model, "X68%s (%s CPU%s%s, %s clock)",
-	    mach, cpu_type, mmu, fpu, clock);
+	sprintf(cpu_model, "X68%s (%s CPU%s%s, %s clock)%s%s",
+	    mach, cpu_type, mmu, fpu, clock,
+		emubuf[0] ? " on " : "", emubuf);
 	printf("%s\n", cpu_model);
+}
+
+/*
+ * If it is an emulator, store the name in buf and return 1.
+ * Otherwise return 0.
+ */
+static int
+check_emulator(char *buf, int bufsize)
+{
+	int xm6major;
+	int xm6minor;
+	int xm6imark;
+	int xm6imajor;
+	int xm6iminor;
+
+	/* XM6 and its family */
+	intio_set_sysport_sramwp('X');
+	if (intio_get_sysport_sramwp() == '6') {
+		xm6major = intio_get_sysport_sramwp();
+		xm6minor = intio_get_sysport_sramwp();
+		xm6imark = intio_get_sysport_sramwp();
+		switch (xm6imark) {
+		case 0xff:	/* Original XM6 or unknown compatibles */
+			snprintf(buf, bufsize, "XM6 v%d.%02d",
+				xm6major, xm6minor);
+			break;
+
+		case 'i':	/* XM6i */
+			xm6imajor = intio_get_sysport_sramwp();
+			xm6iminor = intio_get_sysport_sramwp();
+			snprintf(buf, bufsize, "XM6i v%d.%02d",
+				xm6imajor, xm6iminor);
+			break;
+
+		case 'g':	/* XM6 TypeG */
+			snprintf(buf, bufsize, "XM6 TypeG v%d.%02d",
+				xm6major, xm6minor);
+			break;
+
+		default:	/* Other XM6 compatibles? */
+			/* XXX what should I do? */
+			return 0;
+		}
+		return 1;
+	}
+
+	return 0;
 }
 
 /*

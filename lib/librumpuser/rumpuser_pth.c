@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.8.2.1 2012/11/20 03:00:45 tls Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.8.2.2 2013/02/25 00:28:01 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.8.2.1 2012/11/20 03:00:45 tls Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.8.2.2 2013/02/25 00:28:01 tls Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -182,7 +182,7 @@ rumpuser_biothread(void *arg)
 void
 rumpuser_thrinit(kernel_lockfn lockfn, kernel_unlockfn unlockfn, int threads)
 {
-#ifdef __linux__
+#ifdef RUMPUSER_USE_RANDOM
 	/* XXX: there's no rumpuser_bootstrap, so do this here */
 	uint32_t rv;
 	int fd;
@@ -242,8 +242,14 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
 	if (rv == 0 && thrname)
 		pthread_setname_np(ptid, thrname, NULL);
 #elif defined(__linux__)
+	/*
+	 * The pthread_setname_np() call varies from one Linux distro to
+	 * another.  Comment out the call pending autoconf support.
+	 */
+#if 0
 	if (rv == 0 && thrname)
 		pthread_setname_np(ptid, thrname);
+#endif
 #endif
 
 	if (joinable) {
@@ -386,7 +392,7 @@ rumpuser_rw_init(struct rumpuser_rw **rw)
 
 	NOFAIL(*rw = malloc(sizeof(struct rumpuser_rw)));
 	NOFAIL_ERRNO(pthread_rwlock_init(&((*rw)->pthrw), NULL));
-	NOFAIL_ERRNO(pthread_spin_init(&((*rw)->spin), PTHREAD_PROCESS_SHARED));
+	NOFAIL_ERRNO(pthread_spin_init(&((*rw)->spin),PTHREAD_PROCESS_PRIVATE));
 	(*rw)->readers = 0;
 	(*rw)->writer = NULL;
 }

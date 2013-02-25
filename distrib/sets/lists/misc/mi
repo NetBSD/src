@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.176.6.1 2012/11/20 02:57:51 tls Exp $
+# $NetBSD: mi,v 1.176.6.2 2013/02/25 00:24:40 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -361,6 +361,7 @@
 ./usr/share/doc/html/postfix/mailq.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/master.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/master.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/memcache_table.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/motivation.html	misc-obsolete		obsolete
 ./usr/share/doc/html/postfix/mysql_table.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/newaliases.1.html	misc-postfix-htmldoc	postfix,doc
@@ -420,6 +421,16 @@
 ./usr/share/doc/html/postfix/verify.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/virtual.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/virtual.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/kyua-cli			misc-kyua-doc
+./usr/share/doc/kyua-cli/AUTHORS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-cli/COPYING		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-cli/NEWS			misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-cli/README			misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-testers			misc-kyua-doc
+./usr/share/doc/kyua-testers/AUTHORS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-testers/COPYING		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-testers/NEWS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-testers/README		misc-kyua-doc		doc,kyua
 ./usr/share/doc/psd/00.contents			misc-psd-doc		doc
 ./usr/share/doc/psd/05.sysman/0.t		misc-psd-doc		doc
 ./usr/share/doc/psd/05.sysman/1.0.t		misc-psd-doc		doc
@@ -745,6 +756,9 @@
 ./usr/share/examples/isdn/isdnd.rates.UK.BT	misc-isdn-examples	share
 ./usr/share/examples/isdn/isdnd.rc.sample	misc-isdn-examples	share
 ./usr/share/examples/kerberos/krb5.conf		misc-krb5-examples	kerberos,share
+./usr/share/examples/kyua-cli			misc-kyua-examples
+./usr/share/examples/kyua-cli/Kyuafile.top	misc-kyua-examples	share,kyua
+./usr/share/examples/kyua-cli/kyua.conf		misc-kyua-examples	share,kyua
 ./usr/share/examples/libsaslc			misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/README		misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech		misc-libsaslc-examples	share
@@ -756,6 +770,11 @@
 ./usr/share/examples/libsaslc/mech/GSSAPI.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/LOGIN.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/PLAIN.conf	misc-libsaslc-examples	share
+./usr/share/examples/lutok			misc-lutok-examples
+./usr/share/examples/lutok/bindings.cpp		misc-lutok-examples	share,kyua
+./usr/share/examples/lutok/hello.cpp		misc-lutok-examples	share,kyua
+./usr/share/examples/lutok/interpreter.cpp	misc-lutok-examples	share,kyua
+./usr/share/examples/lutok/raii.cpp		misc-lutok-examples	share,kyua
 ./usr/share/examples/mount_portal/advanced.1	misc-sys-examples	share
 ./usr/share/examples/mount_portal/advanced.1.conf	misc-sys-examples	share
 ./usr/share/examples/mount_portal/cvs.1		misc-sys-examples	share
@@ -806,6 +825,7 @@
 ./usr/share/examples/postfix/LMTP_README	misc-obsolete	obsolete
 ./usr/share/examples/postfix/LOCAL_RECIPIENT_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MAILDROP_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/MEMCACHE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MILTER_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MULTI_INSTANCE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MYSQL_README	misc-postfix-examples	postfix,doc

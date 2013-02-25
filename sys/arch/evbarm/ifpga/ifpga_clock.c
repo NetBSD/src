@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.14 2009/07/21 16:04:16 dyoung Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.14.22.1 2013/02/25 00:28:36 tls Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -31,15 +31,16 @@
 
 /* 
  * The IFPGA has three timers.  Timer 0 is clocked by the system bus clock,
- * while timers 1 and 2 are clocked at 24MHz.  To keep things simple here,
- * we use timers 1 and 2 only.  All three timers are 16-bit counters that
- * are programmable in either periodic mode or in one-shot mode.
+ * while timers 1 and 2 are clocked at 24MHz (1Mhz for Integrator CP).  To
+ * keep things simple here, we use timers 1 and 2 only.  All three timers
+ * are 16-bit counters that are programmable in either periodic mode or in
+ * one-shot mode.
  */
 
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.14 2009/07/21 16:04:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.14.22.1 2013/02/25 00:28:36 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -198,8 +199,13 @@ load_timer(int base, int intvl)
 	if (intvl & ~0x0000ffff)
 		panic("clock: Invalid interval");
 
+#if defined(INTEGRATOR_CP)
+	control = (TIMERx_CTRL_ENABLE | TIMERx_CTRL_MODE_PERIODIC | 
+	    TIMERx_CTRL_PRESCALE_DIV16 | TIMERx_CTRL_RAISE_IRQ);
+#else
 	control = (TIMERx_CTRL_ENABLE | TIMERx_CTRL_MODE_PERIODIC | 
 	    TIMERx_CTRL_PRESCALE_DIV16);
+#endif
 
 	bus_space_write_4(ifpga_sc->sc_iot, ifpga_sc->sc_tmr_ioh,
 	    base + TIMERx_LOAD, intvl);

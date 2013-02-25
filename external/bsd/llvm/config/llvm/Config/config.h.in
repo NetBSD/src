@@ -14,7 +14,7 @@
 #define CLANG_RESOURCE_DIR ""
 
 /* Directories clang will search for headers */
-#define C_INCLUDE_DIRS "/usr/include/clang-3.2:/usr/include"
+#define C_INCLUDE_DIRS "/usr/include/clang-3.3:/usr/include"
 
 /* Default <path> to all compiler invocations for --sysroot=<path>. */
 #define DEFAULT_SYSROOT ""
@@ -70,7 +70,7 @@
 /* Define to 1 if you have the <CrashReporterClient.h> header file. */
 /* #undef HAVE_CRASHREPORTERCLIENT_H */
 
-/* Define if __crashreporter_info__ exists. */
+/* can use __crashreporter_info__ */
 #define HAVE_CRASHREPORTER_INFO 0
 
 /* Define to 1 if you have the <ctype.h> header file. */

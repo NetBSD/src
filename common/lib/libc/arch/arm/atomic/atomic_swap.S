@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.4 2012/08/31 23:41:52 matt Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.4.2.1 2013/02/25 00:23:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ ENTRY_NP(_atomic_swap_32)
 #else
 	swp	r0, r1, [r2]
 	cmp	r0, r1
-	movsne	ip, #0
+	movnes	ip, #0
 #endif
 	cmpne	ip, #0
 	bne	1b

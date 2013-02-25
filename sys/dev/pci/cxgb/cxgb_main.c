@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.2.14.1 2012/11/20 03:02:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.2.14.2 2013/02/25 00:29:30 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1123,7 +1123,7 @@ cxgb_up(struct adapter *sc)
             err = EINVAL;
             goto out;
         }
-        device_printf(sc->dev, "allocated intr_handle=%p\n", sc->intr_handle);
+        device_printf(sc->dev, "allocated intr_handle=%d\n", sc->intr_handle);
         sc->intr_cookie = pci_intr_establish(sc->pa.pa_pc,
                     sc->intr_handle, IPL_NET,
                     sc->cxgb_intr, sc);

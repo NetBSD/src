@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.26.2.1 2012/11/20 03:02:39 tls Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.26.2.2 2013/02/25 00:29:47 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.26.2.1 2012/11/20 03:02:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.26.2.2 2013/02/25 00:29:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,6 @@ efs_readdir(void *v)
 			err = efs_bread(VFSTOEFS(ap->a_vp->v_mount),
 			    ex.ex_bn + i, NULL, &bp);
 			if (err) {
-				brelse(bp, 0);
 				goto exit_err;
 			}
 
@@ -530,7 +529,6 @@ efs_readlink(void *v)
 				err = efs_bread(VFSTOEFS(ap->a_vp->v_mount),
 				    ex.ex_bn + i, NULL, &bp);
 				if (err) {
-					brelse(bp, 0);
 					free(buf, M_EFSTMP);
 					return (err);
 				}

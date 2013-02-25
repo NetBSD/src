@@ -1,4 +1,4 @@
-/*	$NetBSD: xsurf.c,v 1.1.6.1 2012/11/20 03:00:59 tls Exp $ */
+/*	$NetBSD: xsurf.c,v 1.1.6.2 2013/02/25 00:28:22 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xsurf.c,v 1.1.6.1 2012/11/20 03:00:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xsurf.c,v 1.1.6.2 2013/02/25 00:28:22 tls Exp $");
 
 /*
  * X-Surf driver, split from ne_zbus. 
@@ -78,6 +78,7 @@ CFATTACH_DECL_NEW(xsurf, sizeof(struct xsurf_softc),
     xsurf_match, xsurf_attach, NULL, NULL);
 
 #define XSURF_NE_OFFSET		0x8000
+#define XSURF_WDC_OFFSET	0xB000
 
 /*
  * Clockport offsets.
@@ -115,6 +116,7 @@ xsurf_attach(device_t parent, device_t self, void *aux)
 	struct xsurfbus_attach_args xaa_ne;
 	struct xsurfbus_attach_args xaa_gencp1;
 	struct xsurfbus_attach_args xaa_gencp2;
+	struct xsurfbus_attach_args xaa_wdc;
 
 	struct zbus_args *zap = aux;
 
@@ -143,6 +145,12 @@ xsurf_attach(device_t parent, device_t self, void *aux)
 	xaa_ne.xaa_base = (bus_addr_t)zap->va + XSURF_NE_OFFSET;
 	strcpy(xaa_ne.xaa_name, "ne_xsurf");
 	config_found_ia(sc->sc_dev, "xsurfbus", &xaa_ne, xsurf_print);
+
+	/* Add wdc(4). */
+	xaa_wdc.xaa_base = (bus_addr_t)zap->va + XSURF_WDC_OFFSET;
+	strcpy(xaa_wdc.xaa_name, "wdc_xsurf");
+	config_found_ia(sc->sc_dev, "xsurfbus", &xaa_wdc, xsurf_print);
+
 }
 
 static int

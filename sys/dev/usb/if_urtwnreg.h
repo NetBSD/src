@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnreg.h,v 1.1 2012/03/25 00:11:16 nonaka Exp $	*/
+/*	$NetBSD: if_urtwnreg.h,v 1.1.8.1 2013/02/25 00:29:36 tls Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -190,23 +190,48 @@
 /* WMAC Configuration. */
 #define R92C_APSD_CTRL			0x600
 #define R92C_BWOPMODE			0x603
+#define R92C_TCR			0x604
 #define R92C_RCR			0x608
+#define R92C_RX_PKT_LIMIT		0x60c
+#define R92C_RX_DLK_TIME		0x60d
 #define R92C_RX_DRVINFO_SZ		0x60f
 #define R92C_MACID			0x610
 #define R92C_BSSID			0x618
 #define R92C_MAR			0x620
+#define R92C_MBIDCAMCFG			0x628
+#define R92C_USTIME_EDCA		0x638
 #define R92C_MAC_SPEC_SIFS		0x63a
 #define R92C_R2T_SIFS			0x63c
 #define R92C_T2T_SIFS			0x63e
 #define R92C_ACKTO			0x640
+#define R92C_CTS2TO			0x641
+#define R92C_EIFS			0x642
+#define R92C_NAV_CTRL			0x650
+#define R92C_BACAMCMD			0x654
+#define R92C_BACAMCONTENT		0x658
+#define R92C_LBDLY			0x660
+#define R92C_FWDLY			0x661
+#define R92C_RXERR_RPT			0x664
+#define R92C_WMAC_TRXPTCL_CTL		0x668
 #define R92C_CAMCMD			0x670
 #define R92C_CAMWRITE			0x674
 #define R92C_CAMREAD			0x678
 #define R92C_CAMDBG			0x67c
 #define R92C_SECCFG			0x680
+#define R92C_WOW_CTRL			0x690
+#define R92C_PSSTATUS			0x691
+#define R92C_PS_RX_INFO			0x692
+#define R92C_LPNAV_CTRL			0x694
+#define R92C_WKFMCAM_CMD		0x698
+#define R92C_WKFMCAM_RWD		0x69c
 #define R92C_RXFLTMAP0			0x6a0
 #define R92C_RXFLTMAP1			0x6a2
 #define R92C_RXFLTMAP2			0x6a4
+#define R92C_BCN_PSR_RPT		0x6a8
+#define R92C_CALB32K_CTRL		0x6ac
+#define R92C_PKT_MON_CTRL		0x6b4
+#define R92C_BT_COEX_TABLE		0x6c0
+#define R92C_WMAC_RESP_TXINFO		0x6d8
 
 /* Bits for R92C_SYS_ISO_CTRL. */
 #define R92C_SYS_ISO_CTRL_MD2PP		0x0001
@@ -468,28 +493,28 @@
 #define R92C_BWOPMODE_20MHZ	0x04
 
 /* Bits for R92C_RCR. */
-#define R92C_RCR_AAP		0x00000001
-#define R92C_RCR_APM		0x00000002
-#define R92C_RCR_AM		0x00000004
-#define R92C_RCR_AB		0x00000008
-#define R92C_RCR_ADD3		0x00000010
-#define R92C_RCR_APWRMGT	0x00000020
-#define R92C_RCR_CBSSID_DATA	0x00000040
-#define R92C_RCR_CBSSID_BCN	0x00000080
-#define R92C_RCR_ACRC32		0x00000100
-#define R92C_RCR_AICV		0x00000200
-#define R92C_RCR_ADF		0x00000800
-#define R92C_RCR_ACF		0x00001000
-#define R92C_RCR_AMF		0x00002000
-#define R92C_RCR_HTC_LOC_CTRL	0x00004000
+#define R92C_RCR_AAP		0x00000001	// Accept all unicast packet
+#define R92C_RCR_APM		0x00000002	// Accept physical match packet
+#define R92C_RCR_AM		0x00000004	// Accept multicast packet
+#define R92C_RCR_AB		0x00000008	// Accept broadcast packet
+#define R92C_RCR_ADD3		0x00000010	// Accept address 3 match packet
+#define R92C_RCR_APWRMGT	0x00000020	// Accept power management packet
+#define R92C_RCR_CBSSID_DATA	0x00000040	// Accept BSSID match packet (Data)
+#define R92C_RCR_CBSSID_BCN	0x00000080	// Accept BSSID match packet (Rx beacon, probe rsp)
+#define R92C_RCR_ACRC32		0x00000100	// Accept CRC32 error packet
+#define R92C_RCR_AICV		0x00000200	// Accept ICV error packet
+#define R92C_RCR_ADF		0x00000800	// Accept data type frame
+#define R92C_RCR_ACF		0x00001000	// Accept control type frame
+#define R92C_RCR_AMF		0x00002000	// Accept management type frame
+#define R92C_RCR_HTC_LOC_CTRL	0x00004000	// MFC<--HTC=1 MFC-->HTC=0
 #define R92C_RCR_MFBEN		0x00400000
 #define R92C_RCR_LSIGEN		0x00800000
-#define R92C_RCR_ENMBID		0x01000000
-#define R92C_RCR_APP_BA_SSN	0x08000000
+#define R92C_RCR_ENMBID		0x01000000	// Enable Multiple BssId.
+#define R92C_RCR_APP_BA_SSN	0x08000000	// Accept BA SSN
 #define R92C_RCR_APP_PHYSTS	0x10000000
 #define R92C_RCR_APP_ICV	0x20000000
 #define R92C_RCR_APP_MIC	0x40000000
-#define R92C_RCR_APPFCS		0x80000000
+#define R92C_RCR_APPFCS		0x80000000	// WMAC append FCS after payload
 
 /* Bits for R92C_CAMCMD. */
 #define R92C_CAMCMD_ADDR_M	0x0000ffff
@@ -660,11 +685,11 @@
 #define R92C_OFDM0_AGCCORE1_GAIN_M	0x0000007f
 #define R92C_OFDM0_AGCCORE1_GAIN_S	0
 
-
 /*
  * USB registers.
  */
 #define R92C_USB_INFO			0xfe17
+#define R92C_TEST_USB_TXQS		0xfe48
 #define R92C_USB_SPECIAL_OPTION		0xfe55
 #define R92C_USB_HCPWM			0xfe57
 #define R92C_USB_HRPWM			0xfe58
@@ -675,7 +700,7 @@
 #define R92C_USB_PID			0xfe62
 #define R92C_USB_OPTIONAL		0xfe64
 #define R92C_USB_EP			0xfe65
-#define R92C_USB_PHY			0xfe68
+#define R92C_USB_PHY			0xfe68	/* XXX: linux-3.7.4(rtlwifi/rtl8192ce/reg.h) has 0xfe66 */
 #define R92C_USB_MAC_ADDR		0xfe70
 #define R92C_USB_STRING			0xfe80
 

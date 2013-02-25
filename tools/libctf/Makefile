@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/04/17 12:52:26 tron Exp $
+#	$NetBSD: Makefile,v 1.3.10.1 2013/02/25 00:30:30 tls Exp $
 
 HOSTLIB=	ctf
 
@@ -23,8 +23,8 @@ LIBELF_DIR=	${.CURDIR}/../../external/bsd/libelf/dist
 CPPFLAGS+=	-DCTF_OLD_VERSIONS
 
 .ifndef NOCOMPATLIB
-COMPATOBJ!=     cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
-CPPFLAGS+=	-I${COMPATOBJ}
+COMPATLIB_NO_LIB= yes # only the include files, not the library
+.-include	"${TOOLDIR}/share/compat/defs.mk"
 .endif
 
 CPPFLAGS+=	-I${.CURDIR}/../compat \
@@ -51,7 +51,7 @@ CPPFLAGS+=	-DHAVE_NBTOOL_CONFIG_H=1 -D_FILE_OFFSET_BITS=64
 .PATH:		${OPENSOLARIS_DISTDIR}/common/ctf
 .PATH:		${OPENSOLARIS_DISTDIR}/lib/libctf/common
 
-HOST_CPPFLAGS:=	${CPPFLAGS}
+HOST_CPPFLAGS:=	${CPPFLAGS} ${HOST_CPPFLAGS}
 CPPFLAGS:=	# empty
 
 realinstall: install.host

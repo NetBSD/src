@@ -1,4 +1,4 @@
-/* $NetBSD: tlv.h,v 1.1.12.1 2012/11/20 03:03:02 tls Exp $ */
+/* $NetBSD: tlv.h,v 1.1.12.2 2013/02/25 00:30:43 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ struct hello_tlv {
 	/* XXX: optional parameters */
 }               __packed;
 
-/* IPv4 Transport address TLV */
+/* Transport address TLV */
 struct transport_address_tlv {
 	uint16_t       type;
 	uint16_t       length;

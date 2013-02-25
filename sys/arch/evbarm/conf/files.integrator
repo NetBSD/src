@@ -1,9 +1,11 @@
-#	$NetBSD: files.integrator,v 1.9 2012/07/13 06:09:18 skrll Exp $
+#	$NetBSD: files.integrator,v 1.9.2.1 2013/02/25 00:28:34 tls Exp $
 #
 # ARM, Ltd. Integrator evaluation board configuraiton info
 #
 
 file    arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
 
 file	arch/evbarm/integrator/integrator_machdep.c
 file	arch/evbarm/integrator/int_bus_dma.c
@@ -29,3 +31,7 @@ file	arch/evbarm/ifpga/pl030_rtc.c		plrtc
 
 # Integrator PCI support
 file	arch/evbarm/integrator/pci_machdep.c	pci
+
+# SMSC LAN91C111
+attach	sm at ifpga with sm_ifpga
+file	arch/evbarm/ifpga/sm_ifpga.c		sm_ifpga

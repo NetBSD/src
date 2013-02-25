@@ -1,4 +1,4 @@
-.\" $NetBSD: altboot.8,v 1.7 2012/01/22 16:41:42 wiz Exp $
+.\" $NetBSD: altboot.8,v 1.7.6.1 2013/02/25 00:28:15 tls Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 22, 2012
+.Dd November 29, 2012
 .Dt ALTBOOT 8 sandpoint
 .Os
 .Sh NAME
@@ -276,3 +276,8 @@ The
 .Nm
 first appeared in
 .Nx 6.0 .
+.Sh BUGS
+The Realtek Gigabit Ethernet driver does not work correctly at 1000 Mbps.
+Another known problem of this driver is that it runs into a timeout after
+a coldstart.
+The system has to be rebooted at least once to make it work.

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.10 2012/08/30 12:16:48 drochner Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.10.2.1 2013/02/25 00:29:10 tls Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,13 +37,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.10 2012/08/30 12:16:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.10.2.1 2013/02/25 00:29:10 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
 #include <dev/cgd_crypto.h>
+
+#include <crypto/rijndael/rijndael-api-fst.h>
+#include <crypto/des/des.h>
+#include <crypto/blowfish/blowfish.h>
 
 #ifdef DIAGNOSTIC
 #define DIAGPANIC(x)	panic x
@@ -58,26 +62,52 @@ __KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.10 2012/08/30 12:16:48 drochner Exp
  * to check key size and block size.
  */
 
-extern struct cryptfuncs cgd_AES_funcs;
-extern struct cryptfuncs cgd_3des_funcs;
-extern struct cryptfuncs cgd_BF_funcs;
+static cfunc_init	cgd_cipher_aes_init;
+static cfunc_destroy	cgd_cipher_aes_destroy;
+static cfunc_cipher	cgd_cipher_aes_cbc;
 
-struct cryptfuncs *
+static cfunc_init	cgd_cipher_3des_init;
+static cfunc_destroy	cgd_cipher_3des_destroy;
+static cfunc_cipher	cgd_cipher_3des_cbc;
+
+static cfunc_init	cgd_cipher_bf_init;
+static cfunc_destroy	cgd_cipher_bf_destroy;
+static cfunc_cipher	cgd_cipher_bf_cbc;
+
+static const struct cryptfuncs cf[] = {
+	{
+		.cf_name	= "aes-cbc",
+		.cf_init	= cgd_cipher_aes_init,
+		.cf_destroy	= cgd_cipher_aes_destroy,
+		.cf_cipher	= cgd_cipher_aes_cbc,
+	},
+	{
+		.cf_name	= "3des-cbc",
+		.cf_init	= cgd_cipher_3des_init,
+		.cf_destroy	= cgd_cipher_3des_destroy,
+		.cf_cipher	= cgd_cipher_3des_cbc,
+	},
+	{
+		.cf_name	= "blowfish-cbc",
+		.cf_init	= cgd_cipher_bf_init,
+		.cf_destroy	= cgd_cipher_bf_destroy,
+		.cf_cipher	= cgd_cipher_bf_cbc,
+	},
+};
+const struct cryptfuncs *
 cryptfuncs_find(const char *alg)
 {
 
-	if (!strcmp("aes-cbc", alg))
-		return &cgd_AES_funcs;
-	if (!strcmp("3des-cbc", alg))
-		return &cgd_3des_funcs;
-	if (!strcmp("blowfish-cbc", alg))
-		return &cgd_BF_funcs;
+	for (size_t i = 0; i < __arraycount(cf); i++)
+		if (strcmp(cf[i].cf_name, alg) == 0)
+			return &cf[i];
+
 	return NULL;
 }
 
 typedef void	(*cipher_func)(void *, void *, const void *, size_t);
 
-void
+static void
 cgd_cipher_uio_cbc(void *privdata, cipher_func cipher,
 	struct uio *dstuio, struct uio *srcuio);
 
@@ -92,7 +122,7 @@ cgd_cipher_uio_cbc(void *privdata, cipher_func cipher,
  * of this case, either by issuing an error or copying the data.
  */
 
-void
+static void
 cgd_cipher_uio_cbc(void *privdata, cipher_func cipher,
     struct uio *dstuio, struct uio *srcuio)
 {
@@ -139,18 +169,6 @@ cgd_cipher_uio_cbc(void *privdata, cipher_func cipher,
  *  AES Framework
  */
 
-#include <crypto/rijndael/rijndael-api-fst.h>
-
-cfunc_init	cgd_cipher_aes_init;
-cfunc_destroy	cgd_cipher_aes_destroy;
-cfunc_cipher	cgd_cipher_aes_cbc;
-
-struct cryptfuncs cgd_AES_funcs = {
-	cgd_cipher_aes_init,
-	cgd_cipher_aes_destroy,
-	cgd_cipher_aes_cbc,
-};
-
 /*
  * NOTE: we do not store the blocksize in here, because it is not
  *       variable [yet], we hardcode the blocksize to 16 (128 bits).
@@ -166,10 +184,7 @@ struct aes_encdata {
 	u_int8_t	 ae_iv[16];	/* Initialization Vector */
 };
 
-static void	aes_cbc_enc_int(void *, void *, const void *, size_t);
-static void	aes_cbc_dec_int(void *, void *, const void *, size_t);
-
-void *
+static void *
 cgd_cipher_aes_init(size_t keylen, const void *key, size_t *blocksize)
 {
 	struct	aes_privdata *ap;
@@ -190,7 +205,7 @@ cgd_cipher_aes_init(size_t keylen, const void *key, size_t *blocksize)
 	return ap;
 }
 
-void
+static void
 cgd_cipher_aes_destroy(void *data)
 {
 	struct aes_privdata *apd = data;
@@ -199,7 +214,7 @@ cgd_cipher_aes_destroy(void *data)
 	free(apd, M_DEVBUF);
 }
 
-void
+static void
 aes_cbc_enc_int(void *privdata, void *dst, const void *src, size_t len)
 {
 	struct aes_encdata	*ae = privdata;
@@ -210,7 +225,7 @@ aes_cbc_enc_int(void *privdata, void *dst, const void *src, size_t len)
 	(void)memcpy(ae->ae_iv, (u_int8_t *)dst + (len - 16), 16);
 }
 
-void
+static void
 aes_cbc_dec_int(void *privdata, void *dst, const void *src, size_t len)
 {
 	struct aes_encdata	*ae = privdata;
@@ -221,7 +236,7 @@ aes_cbc_dec_int(void *privdata, void *dst, const void *src, size_t len)
 	(void)memcpy(ae->ae_iv, (const u_int8_t *)src + (len - 16), 16);
 }
 
-void
+static void
 cgd_cipher_aes_cbc(void *privdata, struct uio *dstuio,
     struct uio *srcuio, void *iv, int dir)
 {
@@ -247,26 +262,11 @@ cgd_cipher_aes_cbc(void *privdata, struct uio *dstuio,
  * 3DES Framework
  */
 
-#include <crypto/des/des.h>
-
-cfunc_init	cgd_cipher_3des_init;
-cfunc_destroy	cgd_cipher_3des_destroy;
-cfunc_cipher	cgd_cipher_3des_cbc;
-
-struct cryptfuncs cgd_3des_funcs = {
-	cgd_cipher_3des_init,
-	cgd_cipher_3des_destroy,
-	cgd_cipher_3des_cbc,
-};
-
 struct c3des_privdata {
 	des_key_schedule	cp_key1;
 	des_key_schedule	cp_key2;
 	des_key_schedule	cp_key3;
 };
-
-static void	c3des_cbc_enc_int(void *, void *, const void *, size_t);
-static void	c3des_cbc_dec_int(void *, void *, const void *, size_t);
 
 struct c3des_encdata {
 	des_key_schedule	*ce_key1;
@@ -275,7 +275,7 @@ struct c3des_encdata {
 	u_int8_t		ce_iv[8];
 };
 
-void *
+static void *
 cgd_cipher_3des_init(size_t keylen, const void *key, size_t *blocksize)
 {
 	struct	c3des_privdata *cp;
@@ -303,7 +303,7 @@ cgd_cipher_3des_init(size_t keylen, const void *key, size_t *blocksize)
 	return cp;
 }
 
-void
+static void
 cgd_cipher_3des_destroy(void *data)
 {
 	struct c3des_privdata *cp = data;
@@ -332,7 +332,7 @@ c3des_cbc_dec_int(void *privdata, void *dst, const void *src, size_t len)
 	(void)memcpy(ce->ce_iv, (const u_int8_t *)src + (len - 8), 8);
 }
 
-void
+static void
 cgd_cipher_3des_cbc(void *privdata, struct uio *dstuio,
 	struct uio *srcuio, void *iv, int dir)
 {
@@ -359,21 +359,6 @@ cgd_cipher_3des_cbc(void *privdata, struct uio *dstuio,
  * Blowfish Framework
  */
 
-#include <crypto/blowfish/blowfish.h>
-
-cfunc_init	cgd_cipher_bf_init;
-cfunc_destroy	cgd_cipher_bf_destroy;
-cfunc_cipher	cgd_cipher_bf_cbc;
-
-struct cryptfuncs cgd_BF_funcs = {
-	cgd_cipher_bf_init,
-	cgd_cipher_bf_destroy,
-	cgd_cipher_bf_cbc,
-};
-
-static void	bf_cbc_enc_int(void *, void *, const void *, size_t);
-static void	bf_cbc_dec_int(void *, void *, const void *, size_t);
-
 struct bf_privdata {
 	BF_KEY	bp_key;
 };
@@ -383,7 +368,7 @@ struct bf_encdata {
 	u_int8_t	 be_iv[8];
 };
 
-void *
+static void *
 cgd_cipher_bf_init(size_t keylen, const void *key, size_t *blocksize)
 {
 	struct	bf_privdata *bp;
@@ -403,7 +388,7 @@ cgd_cipher_bf_init(size_t keylen, const void *key, size_t *blocksize)
 	return bp;
 }
 
-void
+static void
 cgd_cipher_bf_destroy(void *data)
 {
 	struct	bf_privdata *bp = data;
@@ -412,7 +397,7 @@ cgd_cipher_bf_destroy(void *data)
 	free(bp, M_DEVBUF);
 }
 
-void
+static void
 bf_cbc_enc_int(void *privdata, void *dst, const void *src, size_t len)
 {
 	struct	bf_encdata *be = privdata;
@@ -421,7 +406,7 @@ bf_cbc_enc_int(void *privdata, void *dst, const void *src, size_t len)
 	(void)memcpy(be->be_iv, (u_int8_t *)dst + (len - 8), 8);
 }
 
-void
+static void
 bf_cbc_dec_int(void *privdata, void *dst, const void *src, size_t len)
 {
 	struct	bf_encdata *be = privdata;
@@ -430,7 +415,7 @@ bf_cbc_dec_int(void *privdata, void *dst, const void *src, size_t len)
 	(void)memcpy(be->be_iv, (const u_int8_t *)src + (len - 8), 8);
 }
 
-void
+static void
 cgd_cipher_bf_cbc(void *privdata, struct uio *dstuio,
     struct uio *srcuio, void *iv, int dir)
 {

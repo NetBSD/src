@@ -1,3 +1,4 @@
+/*	$NetBSD: tcp_vtw.h,v 1.5.12.1 2013/02/25 00:30:05 tls Exp $	*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -186,7 +187,7 @@ fatp_full(fatp_t *fp)
 {
 	fatp_t full;
 
-	full.inuse = ~0;
+	full.inuse = (1U << FATP_NTAGS) - 1U;
 
 	return (fp->inuse == full.inuse);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: genfth.cf,v 1.7 2010/02/13 23:38:17 eeh Exp $
+#	$NetBSD: genfth.cf,v 1.7.20.1 2013/02/25 00:28:58 tls Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -161,9 +161,9 @@ define	fs1_magic_value	FS_UFS1_MAGIC
 define	fs2_magic_value	FS_UFS2_MAGIC
 define	fs_42postblfmt	FS_42POSTBLFMT
 define	fs_44inodefmt	FS_44INODEFMT
-define	ndaddr		NDADDR
-define	niaddr		NIADDR
-define	rootino		ROOTINO
+define	ndaddr		UFS_NDADDR
+define	niaddr		UFS_NIADDR
+define	rootino		UFS_ROOTINO
 define	ifmt		IFMT
 define	ifdir		IFDIR
 define	iflnk		IFLNK

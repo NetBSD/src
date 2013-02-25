@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.4 2012/02/22 17:53:51 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.4.2.1 2013/02/25 00:26:07 tls Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: print.c,v 1.71 2011/09/20 15:28:09 christos Exp $")
+FILE_RCSID("@(#)$File: print.c,v 1.75 2012/10/30 23:11:51 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.4 2012/02/22 17:53:51 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.4.2.1 2013/02/25 00:26:07 tls Exp $");
 #endif
 #endif  /* lint */
 
@@ -51,11 +51,14 @@ __RCSID("$NetBSD: print.c,v 1.4 2012/02/22 17:53:51 christos Exp $");
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
 
+#include "cdf.h"
+
 #ifndef COMPILE_ONLY
 protected void
 file_mdump(struct magic *m)
 {
-	private const char optyp[] = { FILE_OPS };
+	static const char optyp[] = { FILE_OPS };
+	char tbuf[26];
 
 	(void) fprintf(stderr, "%u: %.*s %u", m->lineno,
 	    (m->cont_level & 7) + 1, ">>>>>>>>", m->offset);
@@ -159,26 +162,31 @@ file_mdump(struct magic *m)
 		case FILE_BEDATE:
 		case FILE_MEDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime(m->value.l, 1));
+			    file_fmttime(m->value.l, FILE_T_LOCAL, tbuf));
 			break;
 		case FILE_LDATE:
 		case FILE_LELDATE:
 		case FILE_BELDATE:
 		case FILE_MELDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime(m->value.l, 0));
-			break;
+			    file_fmttime(m->value.l, 0, tbuf));
 		case FILE_QDATE:
 		case FILE_LEQDATE:
 		case FILE_BEQDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime((uint32_t)m->value.q, 1));
+			    file_fmttime(m->value.q, FILE_T_LOCAL, tbuf));
 			break;
 		case FILE_QLDATE:
 		case FILE_LEQLDATE:
 		case FILE_BEQLDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime((uint32_t)m->value.q, 0));
+			    file_fmttime(m->value.q, 0, tbuf));
+			break;
+		case FILE_QWDATE:
+		case FILE_LEQWDATE:
+		case FILE_BEQWDATE:
+			(void)fprintf(stderr, "%s,",
+			    file_fmttime(m->value.q, FILE_T_WINDOWS, tbuf));
 			break;
 		case FILE_FLOAT:
 		case FILE_BEFLOAT:
@@ -192,6 +200,10 @@ file_mdump(struct magic *m)
 			break;
 		case FILE_DEFAULT:
 			/* XXX - do anything here? */
+			break;
+		case FILE_USE:
+		case FILE_NAME:
+			(void) fprintf(stderr, "'%s'", m->value.s);
 			break;
 		default:
 			(void) fputs("*bad*", stderr);
@@ -222,14 +234,20 @@ file_magwarn(struct magic_set *ms, const char *f, ...)
 }
 
 protected const char *
-file_fmttime(uint32_t v, int local)
+file_fmttime(uint64_t v, int flags, char *buf)
 {
 	char *pp;
 	time_t t = (time_t)v;
 	struct tm *tm;
 
-	if (local) {
-		pp = ctime(&t);
+	if (flags & FILE_T_WINDOWS) {
+		struct timespec ts;
+		cdf_timestamp_to_timespec(&ts, t);
+		t = ts.tv_sec;
+	}
+
+	if (flags & FILE_T_LOCAL) {
+		pp = ctime_r(&t, buf);
 	} else {
 #ifndef HAVE_DAYLIGHT
 		private int daylight = 0;
@@ -251,7 +269,7 @@ file_fmttime(uint32_t v, int local)
 		tm = gmtime(&t);
 		if (tm == NULL)
 			goto out;
-		pp = asctime(tm);
+		pp = asctime_r(tm, buf);
 	}
 
 	if (pp == NULL)
@@ -259,5 +277,5 @@ file_fmttime(uint32_t v, int local)
 	pp[strcspn(pp, "\n")] = '\0';
 	return pp;
 out:
-	return "*Invalid time*";
+	return strcpy(buf, "*Invalid time*");
 }

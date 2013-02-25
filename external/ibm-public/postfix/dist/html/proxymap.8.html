@@ -79,6 +79,14 @@ PROXYMAP(8)                                                        PROXYMAP(8)
 
               This request is supported in Postfix 2.5 and later.
 
+       <b>sequence</b> <i>maptype:mapname flags function</i>
+              Iterate  over  the specified database. The <i>function</i>
+              is one of DICT_SEQ_FUN_FIRST or  DICT_SEQ_FUN_NEXT.
+              The reply is the request completion status code and
+              a lookup key and result value, if found.
+
+              This request is supported in Postfix 2.9 and later.
+
        The  request  completion status is one of OK, RETRY, NOKEY
        (lookup failed because the key was not found),  BAD  (mal-
        formed  request)  or  DENY  (the table is not approved for

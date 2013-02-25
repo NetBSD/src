@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.58 2012/01/01 15:57:31 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.58.6.1 2013/02/25 00:24:02 tls Exp $	*/
 
-/* $Id: pfkey.c,v 1.58 2012/01/01 15:57:31 tteras Exp $ */
+/* $Id: pfkey.c,v 1.58.6.1 2013/02/25 00:24:02 tls Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -586,6 +586,10 @@ ipsecdoi2pfkey_ealg(t_id)
 #ifdef SADB_X_EALG_AESCBC
 	case IPSECDOI_ESP_AES:
 		return SADB_X_EALG_AESCBC;
+#endif
+#ifdef SADB_X_EALG_AESGCM16
+	case IPSECDOI_ESP_AESGCM16:
+		return SADB_X_EALG_AESGCM16;
 #endif
 #ifdef SADB_X_EALG_TWOFISHCBC
 	case IPSECDOI_ESP_TWOFISH:

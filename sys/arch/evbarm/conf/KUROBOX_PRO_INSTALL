@@ -1,0 +1,8 @@
+#	$NetBSD: KUROBOX_PRO_INSTALL,v 1.1.4.2 2013/02/25 00:28:34 tls Exp $
+#
+#	KUROBOX_PRO_INSTALL -- KUROBOX_PRO kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/KUROBOX_PRO"
+include "arch/evbarm/conf/INSTALL"

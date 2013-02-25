@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.o32.mk,v 1.9 2011/09/23 06:44:37 mrg Exp $
+#	$NetBSD: bsd.o32.mk,v 1.9.8.1 2013/02/25 00:24:01 tls Exp $
 
 .if ${MACHINE_ARCH} == "mips64eb"
 LD+=		-m elf32btsmip
@@ -7,6 +7,7 @@ LD+=		-m elf32ltsmip
 .endif
 MLIBDIR=	o32
 
+LIBGCC_MACHINE_ARCH=    ${MACHINE_ARCH:S/64//}
 GOMP_MACHINE_ARCH=    ${MACHINE_ARCH:S/64//}
 
 COPTS+=		-mabi=32 -march=mips3

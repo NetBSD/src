@@ -1,21 +1,18 @@
+#	$NetBSD: std.mmnet,v 1.1.12.1 2013/02/25 00:28:35 tls Exp $
 #
 # NetBSD/evbarm options for Propox MMnet1002 evaluation board
 #
 
 machine	evbarm arm
-include		"conf/std"	# MI standard options
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in MMnet config definitions.
 include		"arch/evbarm/conf/files.mmnet"
 
 options		AT91SAM9260
 
-options 	EXEC_ELF32
 options 	EXEC_AOUT
-options 	EXEC_SCRIPT
 
-# To support easy transit to ../arch/arm/arm32
-options 	ARM32
 options 	ARM_GENERIC_TODR
 
 # timer speed

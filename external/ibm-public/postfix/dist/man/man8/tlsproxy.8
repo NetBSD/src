@@ -1,4 +1,4 @@
-.\"	$NetBSD: tlsproxy.8,v 1.1.1.1 2011/03/02 19:31:55 tron Exp $
+.\"	$NetBSD: tlsproxy.8,v 1.1.1.1.12.1 2013/02/25 00:27:12 tls Exp $
 .\"
 .TH TLSPROXY 8 
 .ad
@@ -120,7 +120,8 @@ elliptic-curve Diffie-Hellman (EECDH) key exchange.
 List of ciphers or cipher types to exclude from the \fBtlsproxy\fR(8)
 server cipher list at all TLS security levels.
 .IP "\fBtlsproxy_tls_fingerprint_digest ($smtpd_tls_fingerprint_digest)\fR"
-The message digest algorithm used to construct client-certificate
+The message digest algorithm to construct remote SMTP
+client-certificate
 fingerprints.
 .IP "\fBtlsproxy_tls_key_file ($smtpd_tls_key_file)\fR"
 File with the Postfix \fBtlsproxy\fR(8) server RSA private key in PEM
@@ -158,10 +159,10 @@ cache information.
 These parameters are supported for compatibility with
 \fBsmtpd\fR(8) legacy parameters.
 .IP "\fBtlsproxy_use_tls ($smtpd_use_tls)\fR"
-Opportunistic TLS: announce STARTTLS support to SMTP clients,
+Opportunistic TLS: announce STARTTLS support to remote SMTP clients,
 but do not require that clients use TLS encryption.
 .IP "\fBtlsproxy_enforce_tls ($smtpd_enforce_tls)\fR"
-Mandatory TLS: announce STARTTLS support to SMTP clients, and
+Mandatory TLS: announce STARTTLS support to remote SMTP clients, and
 require that clients use TLS encryption.
 .SH "RESOURCE CONTROLS"
 .na

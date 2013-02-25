@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.87 2012/08/17 19:43:25 abs Exp $
+#	$NetBSD: JORNADA720,v 1.87.2.1 2013/02/25 00:28:42 tls Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.87 $"
+#ident 		"GENERIC-$Revision: 1.87.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -23,10 +23,6 @@ maxusers	32
 options 	CPU_SA1110	# Support the SA-1110 core
 
 # Architecture options
-
-# FPA options
-
-#options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
 

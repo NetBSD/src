@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_openssl.h,v 1.4 2012/06/05 00:41:31 christos Exp $	*/
+/*	$NetBSD: dst_openssl.h,v 1.4.2.1 2013/02/25 00:25:42 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -40,6 +40,9 @@ ISC_LANG_BEGINDECLS
 
 isc_result_t
 dst__openssl_toresult(isc_result_t fallback);
+
+isc_result_t
+dst__openssl_toresult2(const char *funcname, isc_result_t fallback);
 
 #ifdef USE_ENGINE
 ENGINE *

@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.h,v 1.1.1.2 2011/03/02 19:32:46 tron Exp $	*/
+/*	$NetBSD: vstream.h,v 1.1.1.2.10.1 2013/02/25 00:27:32 tls Exp $	*/
 
 #ifndef _VSTREAM_H_INCLUDED_
 #define _VSTREAM_H_INCLUDED_
@@ -59,6 +59,7 @@ typedef struct VSTREAM {
     int     timeout;			/* read/write timout */
     VSTREAM_JMP_BUF *jbuf;		/* exception handling */
     struct timeval iotime;		/* time of last fill/flush */
+    struct timeval time_limit;		/* read/write time limit */
 } VSTREAM;
 
 extern VSTREAM vstream_fstd[];		/* pre-defined streams */
@@ -66,6 +67,11 @@ extern VSTREAM vstream_fstd[];		/* pre-defined streams */
 #define VSTREAM_IN		(&vstream_fstd[0])
 #define VSTREAM_OUT		(&vstream_fstd[1])
 #define VSTREAM_ERR		(&vstream_fstd[2])
+
+#define VSTREAM_FLAG_RD_ERR	VBUF_FLAG_RD_ERR	/* read error */
+#define VSTREAM_FLAG_WR_ERR	VBUF_FLAG_WR_ERR	/* write error */
+#define VSTREAM_FLAG_RD_TIMEOUT	VBUF_FLAG_RD_TIMEOUT	/* read timeout */
+#define VSTREAM_FLAG_WR_TIMEOUT	VBUF_FLAG_WR_TIMEOUT	/* write timeout */
 
 #define	VSTREAM_FLAG_ERR	VBUF_FLAG_ERR	/* some I/O error */
 #define VSTREAM_FLAG_EOF	VBUF_FLAG_EOF	/* end of file */
@@ -78,6 +84,7 @@ extern VSTREAM vstream_fstd[];		/* pre-defined streams */
 #define VSTREAM_FLAG_SEEK	(1<<10)	/* seek info valid */
 #define VSTREAM_FLAG_NSEEK	(1<<11)	/* can't seek this file */
 #define VSTREAM_FLAG_DOUBLE	(1<<12)	/* double buffer */
+#define VSTREAM_FLAG_DEADLINE	(1<<13)	/* deadline active */
 
 #define VSTREAM_PURGE_READ	(1<<0)	/* flush unread data */
 #define VSTREAM_PURGE_WRITE	(1<<1)	/* flush unwritten data */
@@ -109,13 +116,19 @@ extern int vstream_fdclose(VSTREAM *);
 #define vstream_fileno(vp)	((vp)->fd)
 #define vstream_req_bufsize(vp)	((const ssize_t) ((vp)->req_bufsize))
 #define vstream_context(vp)	((vp)->context)
+#define vstream_rd_error(vp)	vbuf_rd_error(&(vp)->buf)
+#define vstream_wr_error(vp)	vbuf_wr_error(&(vp)->buf)
 #define vstream_ferror(vp)	vbuf_error(&(vp)->buf)
 #define vstream_feof(vp)	vbuf_eof(&(vp)->buf)
+#define vstream_rd_timeout(vp)	vbuf_rd_timeout(&(vp)->buf)
+#define vstream_wr_timeout(vp)	vbuf_wr_timeout(&(vp)->buf)
 #define vstream_ftimeout(vp)	vbuf_timeout(&(vp)->buf)
 #define vstream_clearerr(vp)	vbuf_clearerr(&(vp)->buf)
 #define VSTREAM_PATH(vp)	((vp)->path ? (const char *) (vp)->path : "unknown_stream")
 #define vstream_ftime(vp)	((time_t) ((vp)->iotime.tv_sec))
 #define vstream_ftimeval(vp)	((vp)->iotime)
+
+#define vstream_fstat(vp, fl)	((vp)->buf.flags & (fl))
 
 extern void vstream_control(VSTREAM *, int,...);
 
@@ -135,6 +148,8 @@ extern void vstream_control(VSTREAM *, int,...);
 #endif
 #define VSTREAM_CTL_BUFSIZE	12
 #define VSTREAM_CTL_SWAP_FD	13
+#define VSTREAM_CTL_START_DEADLINE	14
+#define VSTREAM_CTL_STOP_DEADLINE	15
 
 extern VSTREAM *PRINTFLIKE(1, 2) vstream_printf(const char *,...);
 extern VSTREAM *PRINTFLIKE(2, 3) vstream_fprintf(VSTREAM *, const char *,...);
@@ -154,6 +169,7 @@ extern int vstream_pclose(VSTREAM *);
 #define VSTREAM_POPEN_WAITPID_FN 7	/* child catcher, waitpid() compat. */
 #define VSTREAM_POPEN_EXPORT	8	/* exportable environment */
 
+extern VSTREAM *vstream_vprintf(const char *, va_list);
 extern VSTREAM *vstream_vfprintf(VSTREAM *, const char *, va_list);
 
 extern ssize_t vstream_peek(VSTREAM *);
@@ -168,6 +184,8 @@ extern ssize_t vstream_bufstat(VSTREAM *, int);
 #define VSTREAM_BST_OUT_PEND	(VSTREAM_BST_FLAG_OUT | VSTREAM_BST_FLAG_PEND)
 
 #define vstream_peek(vp) vstream_bufstat((vp), VSTREAM_BST_IN_PEND)
+
+extern const char *vstream_peek_data(VSTREAM *);
 
  /*
   * Exception handling. We use pointer to jmp_buf to avoid a lot of unused

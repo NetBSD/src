@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.47 2012/01/01 16:14:11 tteras Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.47.6.1 2013/02/25 00:24:02 tls Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1722,6 +1722,7 @@ algorithm
 	:	ALGORITHMTYPE keylength
 		{
 			int defklen;
+			int encklen_tmp;
 
 			$$ = newsainfoalg();
 			if ($$ == NULL) {
@@ -1754,9 +1755,35 @@ algorithm
 			else
 				$$->encklen = defklen;
 
+			/* Check keymat size instead of "human" key size
+			 * because kernel store keymat size instead of "human key size".
+			 * For example, the keymat size of aes_gcm_16 128 is 160 bits
+			 * (128 bits + 4 bytes) instead of 128 bits.
+			 *
+			 * Currently, it is only useful for aes_gcm_16 (ipsec_enc).
+			 */
+			if (cur_algclass == algclass_ipsec_enc)
+			{
+				encklen_tmp = alg_ipsec_encdef_keylen($$->alg, $$->encklen);
+				if (encklen_tmp < 0)
+				{
+					yyerror("Failed to convert keylen %d to keymat len for alg %d",
+						$$->encklen, $$->alg);
+					racoon_free($$);
+					$$ = NULL;
+					return -1;
+				}
+			}
+			else
+			{
+				/* XXX Convert key size to keymat size for other algorithm ?
+				 */
+				encklen_tmp = $$->encklen;
+			}
+
 			/* check if it's supported algorithm by kernel */
 			if (!(cur_algclass == algclass_ipsec_auth && $1 == algtype_non_auth)
-			 && pk_checkalg(cur_algclass, $1, $$->encklen)) {
+			 && pk_checkalg(cur_algclass, $1, encklen_tmp)) {
 				int a = algclass2doi(cur_algclass);
 				int b = algtype2doi(cur_algclass, $1);
 				if (a == IPSECDOI_ATTR_AUTH)

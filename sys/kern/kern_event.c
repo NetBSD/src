@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.76.2.1 2012/11/20 03:02:42 tls Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.76.2.2 2013/02/25 00:29:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.76.2.1 2012/11/20 03:02:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.76.2.2 2013/02/25 00:29:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -972,6 +972,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			kn = newkn;
 			newkn = NULL;
 			kn->kn_obj = fp;
+			kn->kn_id = kev->ident;
 			kn->kn_kq = kq;
 			kn->kn_fop = kfilter->filtops;
 			kn->kn_kfilter = kfilter;
@@ -1013,6 +1014,10 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			error = (*kfilter->filtops->f_attach)(kn);
 			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 			if (error != 0) {
+#ifdef DIAGNOSTIC
+				printf("%s: event not supported for file type"
+				    " %d\n", __func__, fp ? fp->f_type : -1);
+#endif
 				/* knote_detach() drops fdp->fd_lock */
 				knote_detach(kn, fdp, false);
 				goto done;
@@ -1028,6 +1033,13 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			kn->kn_sdata = kev->data;
 			kn->kn_kevent.udata = kev->udata;
 		}
+		/*
+		 * We can get here if we are trying to attach
+		 * an event to a file descriptor that does not
+		 * support events, and the attach routine is
+		 * broken and does not return an error.
+		 */
+		KASSERT(kn->kn_fop->f_event != NULL);
 		KERNEL_LOCK(1, NULL);			/* XXXSMP */
 		rv = (*kn->kn_fop->f_event)(kn, 0);
 		KERNEL_UNLOCK_ONE(NULL);		/* XXXSMP */
@@ -1432,6 +1444,8 @@ kqueue_close(file_t *fp)
 	int i;
 
 	kq = fp->f_data;
+	fp->f_data = NULL;
+	fp->f_type = 0;
 	fdp = curlwp->l_fd;
 
 	mutex_enter(&fdp->fd_lock);
@@ -1452,7 +1466,6 @@ kqueue_close(file_t *fp)
 	cv_destroy(&kq->kq_cv);
 	seldestroy(&kq->kq_sel);
 	kmem_free(kq, sizeof(*kq));
-	fp->f_data = NULL;
 
 	return (0);
 }

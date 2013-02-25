@@ -1,0 +1,50 @@
+PPoossttffiixx mmeemmccaacchhee cclliieenntt HHoowwttoo
+
+-------------------------------------------------------------------------------
+
+IInnttrroodduuccttiioonn
+
+The Postfix memcache client allows you to hook up Postfix to a memcache server.
+The current implementation supports one memcache server per Postfix table, with
+one optional Postfix database that provides persistent backup. The Postfix
+memcache client supports the lookup, update, delete and sequence operations.
+The sequence (i.e. first/next) operation requires a backup database that
+supports this operation.
+
+Typically, the Postfix memcache client is used to reduce query load on a
+persistent database, but it may also be used to query a memory-only database
+for low-value, easy-to-recreate, information such as a reputation cache for
+postscreen(8), verify(8) or greylisting.
+
+LLiimmiittaattiioonnss
+
+  * The Postfix memcache client cannot be used for security-sensitive tables
+    such as alias_maps (these may contain "|command" and "/file/name"
+    destinations), or virtual_uid_maps, virtual_gid_maps and
+    virtual_mailbox_maps (these specify UNIX process privileges or "/file/name"
+    destinations). Typically, a memcache database is writable by any process
+    that can talk to the memcache server; in contrast, security-sensitive
+    tables must never be writable by the unprivileged Postfix user.
+
+  * The Postfix memcache client requires additional configuration when used as
+    postscreen(8) or verify(8) cache. For details see the backup and ttl
+    parameter discussions in the memcache_table(5) manual page.
+
+BBuuiillddiinngg PPoossttffiixx wwiitthh mmeemmccaacchhee ssuuppppoorrtt
+
+The Postfix memcache client has no external dependencies, and is therefore
+built into Postfix by default.
+
+CCoonnffiigguurriinngg mmeemmccaacchhee llooookkuupp ttaabblleess
+
+Configuration is described in the memcache_table(5) manpage.
+
+CCrreeddiittss
+
+The first memcache client for Postfix was written by Omar Kilani, and was based
+on the libmemcache library.
+
+Wietse wrote the current memcache client from the ground up for Postfix version
+2.9. This implementation does not use libmemcache, and bears no resemblance to
+earlier work.
+

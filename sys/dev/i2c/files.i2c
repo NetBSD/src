@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.45 2011/11/18 22:18:08 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.45.10.1 2013/02/25 00:29:13 tls Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -171,3 +171,8 @@ file	dev/i2c/g760a.c			g760a
 device	ibmhawk: sysmon_envsys
 attach	ibmhawk at iic
 file	dev/i2c/ibmhawk.c		ibmhawk
+
+# TI TPS65950 OMAP Power Management and System Companion Device
+device	tps65950pm: sysmon_wdog
+attach	tps65950pm at iic
+file	dev/i2c/tps65950.c		tps65950pm

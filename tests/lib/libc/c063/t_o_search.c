@@ -1,4 +1,4 @@
-/*	$NetBSD: t_o_search.c,v 1.1.2.2 2012/11/18 17:41:55 manu Exp $ */
+/*	$NetBSD: t_o_search.c,v 1.1.2.3 2013/02/25 00:30:22 tls Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_o_search.c,v 1.1.2.2 2012/11/18 17:41:55 manu Exp $");
+__RCSID("$NetBSD: t_o_search.c,v 1.1.2.3 2013/02/25 00:30:22 tls Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -42,14 +42,24 @@ __RCSID("$NetBSD: t_o_search.c,v 1.1.2.2 2012/11/18 17:41:55 manu Exp $");
 #include <pwd.h>
 #include <sys/param.h>
 
+/*
+ * dholland 20130112: disable tests that require O_SEARCH semantics
+ * until a decision is reached about the semantics of O_SEARCH and a
+ * non-broken implementation is available.
+ */
+#if (O_MASK & O_SEARCH) != 0
+#define USE_O_SEARCH
+#endif
+
 #define DIR "dir"
 #define FILE "dir/o_search"
 #define BASEFILE "o_search"
 
+
 ATF_TC_WITH_CLEANUP(o_search_perm1);
 ATF_TC_HEAD(o_search_perm1, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "See that openat enforce search permission");
+	atf_tc_set_md_var(tc, "descr", "See that openat enforces search permission");
 	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
 
@@ -81,13 +91,17 @@ ATF_TC_CLEANUP(o_search_perm1, tc)
 	(void)rmdir(DIR);
 } 
 
-ATF_TC_WITH_CLEANUP(o_search_flag1);
-ATF_TC_HEAD(o_search_flag1, tc)
+
+#ifdef USE_O_SEARCH
+
+ATF_TC_WITH_CLEANUP(o_search_root_flag1);
+ATF_TC_HEAD(o_search_root_flag1, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "See that openat honours O_SEARCH");
+	atf_tc_set_md_var(tc, "descr", "See that root openat honours O_SEARCH");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
-ATF_TC_BODY(o_search_flag1, tc)
+ATF_TC_BODY(o_search_root_flag1, tc)
 {
 	int dfd;
 	int fd;
@@ -113,16 +127,59 @@ ATF_TC_BODY(o_search_flag1, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(o_search_flag1, tc)
+ATF_TC_CLEANUP(o_search_root_flag1, tc)
 {
 	(void)unlink(FILE);
 	(void)rmdir(DIR);
 } 
 
+
+ATF_TC_WITH_CLEANUP(o_search_unpriv_flag1);
+ATF_TC_HEAD(o_search_unpriv_flag1, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "See that openat honours O_SEARCH");
+	atf_tc_set_md_var(tc, "require.user", "unprivileged");
+}
+
+ATF_TC_BODY(o_search_unpriv_flag1, tc)
+{
+	int dfd;
+	int fd;
+
+	ATF_REQUIRE(mkdir(DIR, 0755) == 0);
+	ATF_REQUIRE((fd = open(FILE, O_CREAT|O_RDWR, 0644)) != -1);
+	ATF_REQUIRE(close(fd) == 0);
+
+	ATF_REQUIRE((dfd = open(DIR, O_RDONLY|O_SEARCH, 0)) != -1);
+
+	ATF_REQUIRE((fd = openat(dfd, BASEFILE, O_RDWR, 0)) != -1);
+	ATF_REQUIRE(close(fd) == 0);
+
+	ATF_REQUIRE(fchmod(dfd, 644) == 0);
+
+	ATF_REQUIRE((fd = openat(dfd, BASEFILE, O_RDWR, 0)) != -1);
+	ATF_REQUIRE(close(fd) == 0);
+
+	ATF_REQUIRE(fchmod(dfd, 444) == 0);
+
+	ATF_REQUIRE((fd = openat(dfd, BASEFILE, O_RDWR, 0)) != -1);
+
+	ATF_REQUIRE(close(dfd) == 0);
+}
+
+ATF_TC_CLEANUP(o_search_unpriv_flag1, tc)
+{
+	(void)unlink(FILE);
+	(void)rmdir(DIR);
+} 
+
+#endif /* USE_O_SEARCH */
+
+
 ATF_TC_WITH_CLEANUP(o_search_perm2);
 ATF_TC_HEAD(o_search_perm2, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "See that fstatat enforce search permission");
+	atf_tc_set_md_var(tc, "descr", "See that faccessat enforces search permission");
 	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
 
@@ -152,13 +209,17 @@ ATF_TC_CLEANUP(o_search_perm2, tc)
 	(void)rmdir(DIR);
 } 
 
-ATF_TC_WITH_CLEANUP(o_search_flag2);
-ATF_TC_HEAD(o_search_flag2, tc)
+
+#ifdef USE_O_SEARCH
+
+ATF_TC_WITH_CLEANUP(o_search_root_flag2);
+ATF_TC_HEAD(o_search_root_flag2, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "See that fstatat honours O_SEARCH");
+	atf_tc_set_md_var(tc, "descr", "See that root fstatat honours O_SEARCH");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
-ATF_TC_BODY(o_search_flag2, tc)
+ATF_TC_BODY(o_search_root_flag2, tc)
 {
 	int dfd;
 	int fd;
@@ -182,11 +243,52 @@ ATF_TC_BODY(o_search_flag2, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(o_search_flag2, tc)
+ATF_TC_CLEANUP(o_search_root_flag2, tc)
 {
 	(void)unlink(FILE);
 	(void)rmdir(DIR);
 } 
+
+
+ATF_TC_WITH_CLEANUP(o_search_unpriv_flag2);
+ATF_TC_HEAD(o_search_unpriv_flag2, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "See that fstatat honours O_SEARCH");
+	atf_tc_set_md_var(tc, "require.user", "unprivileged");
+}
+
+ATF_TC_BODY(o_search_unpriv_flag2, tc)
+{
+	int dfd;
+	int fd;
+
+	ATF_REQUIRE(mkdir(DIR, 0755) == 0);
+	ATF_REQUIRE((fd = open(FILE, O_CREAT|O_RDWR, 0644)) != -1);
+	ATF_REQUIRE(close(fd) == 0);
+
+	ATF_REQUIRE((dfd = open(DIR, O_RDONLY|O_SEARCH, 0)) != -1);
+
+	ATF_REQUIRE(faccessat(dfd, BASEFILE, W_OK, 0) == 0);
+
+	ATF_REQUIRE(fchmod(dfd, 644) == 0);
+
+	ATF_REQUIRE(faccessat(dfd, BASEFILE, W_OK, 0) == 0);
+
+	ATF_REQUIRE(fchmod(dfd, 444) == 0);
+
+	ATF_REQUIRE(faccessat(dfd, BASEFILE, W_OK, 0) == 0);
+
+	ATF_REQUIRE(close(dfd) == 0);
+}
+
+ATF_TC_CLEANUP(o_search_unpriv_flag2, tc)
+{
+	(void)unlink(FILE);
+	(void)rmdir(DIR);
+}
+
+#endif /* USE_O_SEARCH */
+
 
 ATF_TC_WITH_CLEANUP(o_search_notdir);
 ATF_TC_HEAD(o_search_notdir, tc)
@@ -217,9 +319,15 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, o_search_perm1);
-	ATF_TP_ADD_TC(tp, o_search_flag1);
+#ifdef USE_O_SEARCH
+	ATF_TP_ADD_TC(tp, o_search_root_flag1);
+	ATF_TP_ADD_TC(tp, o_search_unpriv_flag1);
+#endif
 	ATF_TP_ADD_TC(tp, o_search_perm2);
-	ATF_TP_ADD_TC(tp, o_search_flag2);
+#ifdef USE_O_SEARCH
+	ATF_TP_ADD_TC(tp, o_search_root_flag2);
+	ATF_TP_ADD_TC(tp, o_search_unpriv_flag2);
+#endif
 	ATF_TP_ADD_TC(tp, o_search_notdir);
 
 	return atf_no_error();

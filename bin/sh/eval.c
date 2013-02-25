@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.104 2012/06/14 18:56:54 joerg Exp $	*/
+/*	$NetBSD: eval.c,v 1.104.2.1 2013/02/25 00:23:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.104 2012/06/14 18:56:54 joerg Exp $");
+__RCSID("$NetBSD: eval.c,v 1.104.2.1 2013/02/25 00:23:52 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: eval.c,v 1.104 2012/06/14 18:56:54 joerg Exp $");
 #include <signal.h>
 #include <stdio.h>
 #include <errno.h>
+#include <limits.h>
 #include <unistd.h>
 #include <sys/fcntl.h>
 #include <sys/times.h>

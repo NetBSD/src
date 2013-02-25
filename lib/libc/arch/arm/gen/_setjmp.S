@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.7 2012/08/01 06:02:13 matt Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.7.2.1 2013/02/25 00:27:48 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -32,6 +32,14 @@
  * SUCH DAMAGE.
  */
 
+#if !defined(__SOFTFP__) && !defined(__VFP_FP__) && !defined(__ARM_PCS)
+#error FPA is not supported anymore
+#endif
+
+#ifdef __ARM_EABI__
+	.fpu	vfp
+#endif
+
 #include <machine/asm.h>
 #include <machine/setjmp.h>
 
@@ -45,23 +53,35 @@
  * The previous signal state is NOT restored.
  *
  * Note: r0 is the return value
- *       r1-r3 are scratch registers in functions
+ *       r1-r3,ip are scratch registers in functions
  */
 
 ENTRY(_setjmp)
 	ldr	r1, .L_setjmp_magic
-	str	r1, [r0], #4
-#ifdef SOFTFLOAT
-	add	r0, r0, #52
-#elif defined(__VFP_FP__)
-#error _setjmp VFP support missing
+
+#ifdef __ARM_EABI__
+	ldr	r2, .Lfpu_present
+#ifdef PIC
+	GOT_INIT(r3, .L_setjmp_got, .L_setjmp_gotinit)
+	ldr	r2, [r2, r3]
 #else
-	/* Store fp registers */
-	sfm	f4, 4, [r0], #48
-	/* Store fpsr */
-	rfs	r1
-	str	r1, [r0], #0x0004
-#endif	/* SOFTFLOAT */
+	ldr	r2, [r2]
+#endif
+	teq	r2, #0		/* do we have a FPU? */
+	beq	1f		/*   no, don't save VFP registers */
+
+	orr	r1, r1, #(_JB_MAGIC__SETJMP ^ _JB_MAGIC__SETJMP_VFP)
+				/* change magic to VFP magic */
+	add	r2, r0, #(_JB_REG_D8 * 4)
+	vstmia	r2, {d8-d15}
+	vmrs	r2, fpscr
+	str	r2, [r0, #(_JB_REG_FPSCR * 4)]
+1:
+#endif /* __ARM_EABI__ */
+
+	str	r1, [r0]
+
+	add	r0, r0, #(_JB_REG_R4 * 4)
 	/* Store integer registers */
         stmia	r0, {r4-r14}
 
@@ -70,24 +90,31 @@ ENTRY(_setjmp)
 
 .L_setjmp_magic:
 	.word	_JB_MAGIC__SETJMP
+#ifdef __ARM_EABI__
+	GOT_INITSYM(.L_setjmp_got, .L_setjmp_gotinit)
+.Lfpu_present:
+	.word	PIC_SYM(_libc_arm_fpu_present, GOTOFF)
+#endif /* __ARM_EABI__ */
 
 ENTRY(_longjmp)
-	ldr	r2, .L_setjmp_magic
-	ldr	r3, [r0], #4
-	teq	r2, r3
-	bne	botch
+	ldr	r2, [r0]			/* get magic from jmp_buf */
+	bic	r3, r2, #(_JB_MAGIC__SETJMP ^ _JB_MAGIC__SETJMP_VFP)
+						/* ignore VFP-ness of magic */
+	ldr	ip, .L_setjmp_magic		/* load magic */
+	teq	ip, r3				/* magic correct? */
+	bne	botch				/*   no, botch */
 
-#ifdef SOFTFLOAT
-	add	r0, r0, #52
-#elif defined(__VFP_FP__)
-#error _longjmp VFP support missing
-#else
-	/* Restore fp registers */
-	lfm	f4, 4, [r0], #48
-	/* Restore fpsr */
-	ldr	r4, [r0], #0x0004
-	wfs	r4
-#endif	/* SOFTFLOAT */
+#ifdef __ARM_EABI__
+	teq	r3, r2				/* did magic change? */
+	beq	1f				/*   no, don't restore VFP */
+	add	r1, r0, #(_JB_REG_D8 * 4)
+	vldmia	r1, {d8-d15}
+	ldr	r1, [r0, #(_JB_REG_FPSCR * 4)]
+	vmsr	fpscr, r1
+1:
+#endif /* __ARM_EABI__ */
+
+	add	r0, r0, #(_JB_REG_R4 * 4)
        	/* Restore integer registers */
         ldmia	r0, {r4-r14}
 

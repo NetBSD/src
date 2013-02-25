@@ -1,4 +1,4 @@
-.\" $NetBSD: kcpuset.9,v 1.3.2.1 2012/11/20 03:00:51 tls Exp $ */
+.\" $NetBSD: kcpuset.9,v 1.3.2.2 2013/02/25 00:28:15 tls Exp $ */
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen.iki.fi>
 .\" All rights reserved.
@@ -234,7 +234,7 @@ from the
 set
 .Fa kcp
 atomically.
-.Fn kcpuset_export_u32 "kcp" "bitfield" "len"
+.It Fn kcpuset_export_u32 "kcp" "bitfield" "len"
 Exports the CPU set
 .Fa kcp
 into a format of 32-bit integer array,

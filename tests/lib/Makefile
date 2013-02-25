@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20.2.1 2012/11/20 03:02:54 tls Exp $
+# $NetBSD: Makefile,v 1.20.2.2 2013/02/25 00:30:22 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,12 @@ TESTS_SUBDIRS+= librumpclient librumphijack
 
 .if ${MKCRYPTO} != "no"
 TESTS_SUBDIRS+= libdes
+.endif
+
+.if ${MKKYUA} != "no"
+# These tests come from external/bsd/lutok/tests/lib/liblutok.  Ensure they
+# get registered in the Atffile only when installed.
+ATFFILE_EXTRA_TPS=	liblutok
 .endif
 
 .if (${MKSKEY} != "no")

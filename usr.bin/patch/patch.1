@@ -1,6 +1,6 @@
 .\"	$OpenBSD: patch.1,v 1.22 2008/06/06 20:44:00 jmc Exp $
 .\"	$DragonFly: src/usr.bin/patch/patch.1,v 1.10 2008/08/18 19:15:55 joerg Exp $
-.\"	$NetBSD: patch.1,v 1.15 2012/04/08 22:00:39 wiz Exp $
+.\"	$NetBSD: patch.1,v 1.15.2.1 2013/02/25 00:30:38 tls Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -158,7 +158,7 @@ This option does not suppress commentary; use
 for that.
 .It Fl i Ar patchfile , Fl Fl input Ar patchfile
 Causes the next argument to be interpreted as the input file name
-(i.e. a patchfile).
+(i.e., a patchfile).
 This option may be specified multiple times.
 .It Fl l , Fl Fl ignore-whitespace
 Causes the pattern matching to be done loosely, in case the tabs and
@@ -240,7 +240,7 @@ If it can, you will be asked if you want to have the
 option set.
 If it can't, the patch will continue to be applied normally.
 (Note: this method cannot detect a reversed patch if it is a normal diff
-and if the first command is an append (i.e. it should have been a delete)
+and if the first command is an append (i.e., it should have been a delete)
 since appends always succeed, due to the fact that a null context will match
 anywhere.
 Luckily, most patches add or change lines rather than delete them, so most

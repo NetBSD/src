@@ -1,4 +1,4 @@
-/* $NetBSD: cd9660_archimedes.c,v 1.1 2009/01/10 22:06:29 bjh21 Exp $ */
+/* $NetBSD: cd9660_archimedes.c,v 1.1.14.1 2013/02/25 00:30:44 tls Exp $ */
 
 /*-
  * Copyright (c) 1998, 2009 Ben Harris
@@ -43,13 +43,14 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_archimedes.c,v 1.1 2009/01/10 22:06:29 bjh21 Exp $");
+__RCSID("$NetBSD: cd9660_archimedes.c,v 1.1.14.1 2013/02/25 00:30:44 tls Exp $");
 #endif  /* !__lint */
 
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <util.h>
 
 #include "makefs.h"
 #include "cd9660.h"
@@ -97,11 +98,8 @@ archimedes_convert_node(cd9660node *node)
 		return;
 	if (type == -1) type = 0;
 
-	assert(sizeof(struct ISO_ARCHIMEDES) == 32);
-	if ((arc = calloc(1, sizeof(struct ISO_ARCHIMEDES))) == NULL) {
-		CD9660_MEM_ALLOC_ERROR("archimedes_convert_node");
-		exit(1);
-	}
+	assert(sizeof(*arc) == 32);
+	arc = ecalloc(1, sizeof(*arc));
 
 	stamp = riscos_date(node->node->inode->st.st_mtime);
 

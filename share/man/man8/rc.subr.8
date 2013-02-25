@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.subr.8,v 1.29 2011/08/11 22:52:46 apb Exp $
+.\" 	$NetBSD: rc.subr.8,v 1.29.8.1 2013/02/25 00:28:14 tls Exp $
 .\"
 .\" Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 11, 2011
+.Dd December 17, 2012
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -40,6 +40,8 @@
 .It
 .Ic backup_file Ar action Ar file Ar current Ar backup
 .It
+.Ic basename Ar file Op Ar suffix
+.It
 .Ic checkyesno Ar var
 .It
 .Ic check_pidfile Ar pidfile Ar procname Op Ar interpreter
@@ -47,6 +49,8 @@
 .Ic check_process Ar procname Op Ar interpreter
 .It
 .Ic collapse_backslash_newline
+.It
+.Ic dirname Ar file
 .It
 .Ic err Ar exitval Ar message
 .It
@@ -157,6 +161,12 @@ otherwise
 is moved to
 .Ar backup .
 .El
+.Ic basename Ar file Op Ar suffix
+Just like
+.Xr basename 1 ,
+except implemented using shell built-in commands, and usable before the
+.Pa /usr/bin
+direcory is available.
 .It Ic checkyesno Ar var
 Return 0 if
 .Ar var
@@ -214,6 +224,12 @@ is handled as per
 Copy input to output, collapsing
 .Ao backslash Ac Ns Ao newline Ac
 to nothing, but leaving other backslashes alone.
+.Ic dirname Ar file
+Just like
+.Xr dirname 1 ,
+except implemented using shell built-in commands, and usable before the
+.Pa /usr/bin
+direcory is available.
 .It Ic err Ar exitval Ar message
 Display an error message to
 .Em stderr ,

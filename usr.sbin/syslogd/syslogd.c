@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.112 2012/06/20 01:39:34 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.112.2.1 2013/02/25 00:30:49 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.112 2012/06/20 01:39:34 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.112.2.1 2013/02/25 00:30:49 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -2562,6 +2562,14 @@ wallmsg(struct filed *f, struct iovec *iov, size_t iovcnt)
 			if (!f->f_un.f_uname[i][0])
 				break;
 			if (strcmp(f->f_un.f_uname[i], ep->name) == 0) {
+				struct stat st;
+				char tty[MAXPATHLEN];
+				snprintf(tty, sizeof(tty), "%s/%s", _PATH_DEV,
+				    ep->line);
+				if (stat(tty, &st) != -1 &&
+				    (st.st_mode & S_IWGRP) == 0)
+					break;
+
 				if ((p = ttymsg(iov, iovcnt, ep->line,
 				    TTYMSGTIME)) != NULL) {
 					errno = 0;	/* already in msg */

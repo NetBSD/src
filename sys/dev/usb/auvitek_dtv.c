@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_dtv.c,v 1.5 2012/01/09 10:57:34 jmcneill Exp $ */
+/* $NetBSD: auvitek_dtv.c,v 1.5.6.1 2013/02/25 00:29:33 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.5 2012/01/09 10:57:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.5.6.1 2013/02/25 00:29:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ auvitek_dtv_init_pipes(struct auvitek_softc *sc)
 
 	KERNEL_LOCK(1, curlwp);
 	err = usbd_open_pipe(sc->sc_bulk_iface, sc->sc_ab.ab_endpt,
-	    USBD_EXCLUSIVE_USE, &sc->sc_ab.ab_pipe);
+	    USBD_EXCLUSIVE_USE|USBD_MPSAFE, &sc->sc_ab.ab_pipe);
 	KERNEL_UNLOCK_ONE(curlwp);
 
 	if (err) {

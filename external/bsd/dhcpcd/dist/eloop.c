@@ -276,6 +276,13 @@ cleanup(void)
 	}
 	free(fds);
 }
+
+void
+eloop_init(void)
+{
+
+	atexit(cleanup);
+}
 #endif
 
 _noreturn void
@@ -286,10 +293,6 @@ start_eloop(void)
 	struct event *e;
 	struct timeout *t;
 	struct timeval tv;
-
-#ifdef DEBUG_MEMORY
-	atexit(cleanup);
-#endif
 
 	for (;;) {
 		/* Run all timeouts first.

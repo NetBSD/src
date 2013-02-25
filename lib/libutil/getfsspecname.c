@@ -1,4 +1,4 @@
-/*	$NetBSD: getfsspecname.c,v 1.3 2012/04/08 20:56:12 christos Exp $	*/
+/*	$NetBSD: getfsspecname.c,v 1.3.4.1 2013/02/25 00:28:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,9 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getfsspecname.c,v 1.3 2012/04/08 20:56:12 christos Exp $");
+__RCSID("$NetBSD: getfsspecname.c,v 1.3.4.1 2013/02/25 00:28:01 tls Exp $");
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/disk.h>
 
