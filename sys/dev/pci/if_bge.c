@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.205 2013/02/26 11:03:17 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.206 2013/02/26 11:06:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.205 2013/02/26 11:03:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.206 2013/02/26 11:06:23 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -699,6 +699,7 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5787_A0, "BCM5754/5787 A0" },
 	{ BGE_CHIPID_BCM5787_A1, "BCM5754/5787 A1" },
 	{ BGE_CHIPID_BCM5787_A2, "BCM5754/5787 A2" },
+	{ BGE_CHIPID_BCM5906_A0, "BCM5906 A0" },
 	{ BGE_CHIPID_BCM5906_A1, "BCM5906 A1" },
 	{ BGE_CHIPID_BCM5906_A2, "BCM5906 A2" },
 	{ BGE_CHIPID_BCM57780_A0, "BCM57780 A0" },
@@ -2097,6 +2098,14 @@ bge_blockinit(struct bge_softc *sc)
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 
+	/* Choose de-pipeline mode for BCM5906 A0, A1 and A2. */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
+		if (sc->bge_chipid == BGE_CHIPID_BCM5906_A0 ||
+		    sc->bge_chipid == BGE_CHIPID_BCM5906_A1 ||
+		    sc->bge_chipid == BGE_CHIPID_BCM5906_A2)
+			CSR_WRITE_4(sc, BGE_ISO_PKT_TX,
+			    (CSR_READ_4(sc, BGE_ISO_PKT_TX) & ~3) | 2);
+	}
 	/*
 	 * Set the BD ring replenish thresholds. The recommended
 	 * values are 1/8th the number of descriptors allocated to
@@ -2308,6 +2317,9 @@ bge_blockinit(struct bge_softc *sc)
 	/* Enable host coalescing bug fix; see Linux tg3.c */
 	if (BGE_IS_5755_PLUS(sc))
 		val |= BGE_WDMAMODE_STATUS_TAG_FIX;
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785)
+		val |= BGE_WDMAMODE_BURST_ALL_DATA;
 
 	/* Turn on write DMA state machine */
 	CSR_WRITE_4(sc, BGE_WDMA_MODE, val);
@@ -4304,6 +4316,7 @@ bge_init(struct ifnet *ifp)
 {
 	struct bge_softc *sc = ifp->if_softc;
 	const uint16_t *m;
+	uint32_t mode;
 	int s, error = 0;
 
 	s = splnet();
@@ -4384,11 +4397,19 @@ bge_init(struct ifnet *ifp)
 	/* Init TX ring. */
 	bge_init_tx_ring(sc);
 
+	/* Enable TX MAC state machine lockup fix. */
+	mode = CSR_READ_4(sc, BGE_TX_MODE);
+	if (BGE_IS_5755_PLUS(sc) ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
+		mode |= BGE_TXMODE_MBUF_LOCKUP_FIX;
+
 	/* Turn on transmitter */
-	BGE_SETBIT(sc, BGE_TX_MODE, BGE_TXMODE_ENABLE);
+	CSR_WRITE_4(sc, BGE_TX_MODE, mode | BGE_TXMODE_ENABLE);
+	DELAY(100);
 
 	/* Turn on receiver */
 	BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
+	DELAY(10);
 
 	CSR_WRITE_4(sc, BGE_MAX_RX_FRAME_LOWAT, 2);
 
