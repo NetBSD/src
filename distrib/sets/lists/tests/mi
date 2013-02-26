@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.524 2013/02/25 00:34:15 jmmv Exp $
+# $NetBSD: mi,v 1.525 2013/02/26 17:08:21 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2017,6 +2017,7 @@
 ./usr/tests/lib/libc/rpc			tests-lib-tests
 ./usr/tests/lib/libc/rpc/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/rpc/Kyuafile		tests-lib-tests		atf,kyua
+./usr/tests/lib/libc/rpc/t_rpc			tests-lib-tests		atf
 ./usr/tests/lib/libc/rpc/t_xdr			tests-lib-tests		atf
 ./usr/tests/lib/libc/setjmp			tests-lib-tests
 ./usr/tests/lib/libc/setjmp/Atffile		tests-lib-tests		atf

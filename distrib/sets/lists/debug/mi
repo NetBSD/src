@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.9 2013/02/25 00:34:14 jmmv Exp $
+# $NetBSD: mi,v 1.10 2013/02/26 17:08:20 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -1558,6 +1558,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex_att.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/regex/t_regex_att.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/rpc/t_rpc.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/rpc/t_xdr.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp/t_threadjmp.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp/t_setjmp.debug		tests-lib-debug		debug,atf
