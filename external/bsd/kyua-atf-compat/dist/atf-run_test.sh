@@ -144,13 +144,13 @@ config__priorities_body()
     create_atffile Atffile 'prop: test-suite = "irrelevant"' 'tp: helper'
 
     echo "Checking system-wide configuration only"
-    create_config system/common.conf 'unprivileged-user = "nobody"'
+    create_config system/common.conf '   unprivileged-user  =    "nobody"'
     atf_check -s exit:0 -o 'match:helper:config  ->  passed' -e ignore atf-run
     atf_check -s exit:0 -o 'inline:unprivileged-user = nobody\n' \
         cat config.out
 
     echo "Checking user-specific overrides"
-    create_config user/.atf/common.conf 'unprivileged-user = "root"'
+    create_config user/.atf/common.conf '	unprivileged-user =   "root"'
     atf_check -s exit:0 -o 'match:helper:config  ->  passed' -e ignore atf-run
     atf_check -s exit:0 -o 'inline:unprivileged-user = root\n' \
         cat config.out

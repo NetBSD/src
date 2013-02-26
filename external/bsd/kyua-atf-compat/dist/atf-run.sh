@@ -63,7 +63,7 @@ load_configs() {
         *) prefix="test_suites.$(basename "${file}" | sed -e 's,.conf$,,')." ;;
         esac
 
-        local ws='[ \t]*'
+        local ws='[ 	]*'  # That's a space and a tab.
         local name='[a-zA-Z][-_a-zA-Z0-9]*'
         local repl="--variable='${prefix}\\1=\\2'"
         local vars="$(grep "^${ws}${name}${ws}=" "${file}" | \
