@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/01/08 06:59:37 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2 2013/02/26 17:06:55 christos Exp $
 
 MKMAN=	no
 
@@ -8,6 +8,8 @@ TESTSDIR=		${TESTSBASE}/lib/libc/rpc
 
 TESTS_C=		t_xdr
 SRCS.t_xdr=		${RPCSRCS:.x=_xdr.c} t_xdr.c
+
+TESTS_C+=		t_rpc
 
 RPCSRCS=		h_testbits.x
 DPSRCS=			${RPCSRCS:.x=.h}
