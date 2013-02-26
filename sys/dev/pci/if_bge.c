@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.204 2013/02/25 00:36:22 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.205 2013/02/26 11:03:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.204 2013/02/25 00:36:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.205 2013/02/26 11:03:17 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -1495,7 +1495,7 @@ bge_init_rx_ring_jumbo(struct bge_softc *sc)
 	for (i = 0; i < BGE_JUMBO_RX_RING_CNT; i++) {
 		if (bge_newbuf_jumbo(sc, i, NULL) == ENOBUFS)
 			return ENOBUFS;
-	};
+	}
 
 	sc->bge_jumbo = i - 1;
 	sc->bge_flags |= BGE_JUMBO_RXRING_VALID;
@@ -4969,11 +4969,11 @@ bge_get_eaddr_mem(struct bge_softc *sc, uint8_t ether_addr[])
 {
 	uint32_t mac_addr;
 
-	mac_addr = bge_readmem_ind(sc, 0x0c14);
+	mac_addr = bge_readmem_ind(sc, BGE_SRAM_MAC_ADDR_HIGH_MB);
 	if ((mac_addr >> 16) == 0x484b) {
 		ether_addr[0] = (uint8_t)(mac_addr >> 8);
 		ether_addr[1] = (uint8_t)mac_addr;
-		mac_addr = bge_readmem_ind(sc, 0x0c18);
+		mac_addr = bge_readmem_ind(sc, BGE_SRAM_MAC_ADDR_LOW_MB);
 		ether_addr[2] = (uint8_t)(mac_addr >> 24);
 		ether_addr[3] = (uint8_t)(mac_addr >> 16);
 		ether_addr[4] = (uint8_t)(mac_addr >> 8);
