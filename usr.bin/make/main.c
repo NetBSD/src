@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.208 2013/02/25 00:15:09 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.209 2013/02/26 00:45:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.208 2013/02/25 00:15:09 dholland Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.209 2013/02/26 00:45:27 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.208 2013/02/25 00:15:09 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.209 2013/02/26 00:45:27 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -799,7 +799,7 @@ main(int argc, char **argv)
 		progname++;
 	else
 		progname = argv[0];
-#ifdef RLIMIT_NOFILE
+#if defined(MAKE_NATIVE) || (defined(HAVE_SETRLIMIT) && defined(RLIMIT_NOFILE))
 	/*
 	 * get rid of resource limit on file descriptors
 	 */
