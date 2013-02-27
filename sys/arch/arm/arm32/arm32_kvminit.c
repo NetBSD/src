@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.17 2013/02/27 16:55:39 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.18 2013/02/27 22:15:46 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.17 2013/02/27 16:55:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.18 2013/02/27 22:15:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -358,7 +358,8 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 
 	bmi->bmi_freepages -= npages;
 
-	memset((void *)pv->pv_va, 0, nbytes);
+	if (zero_p)
+		memset((void *)pv->pv_va, 0, nbytes);
 }
 
 void
@@ -542,7 +543,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	if (xscale_use_minidata)
 #endif          
 		valloc_pages(bmi, extrapv, nextrapages,
-		    VM_PROT_READ|VM_PROT_WRITE, 0, false);
+		    VM_PROT_READ|VM_PROT_WRITE, 0, true);
 #endif
 
 	/*
