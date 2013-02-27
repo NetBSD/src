@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.144 2013/02/15 19:49:48 jmmv Exp $
+#	$NetBSD: sets.subr,v 1.145 2013/02/27 21:25:05 joerg Exp $
 #
 
 #
@@ -179,7 +179,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.144 2013/02/15 19:49:48 jmmv Exp $
+# 	# $NetBSD: sets.subr,v 1.145 2013/02/27 21:25:05 joerg Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -234,6 +234,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	man			${MKMAN} != no
 #	manpages		${MKMANPAGES} != no
 #	manz			${MKMANZ} != no
+#	mclinker		${MKMCLINKER} != no
 #	mdns			${MKMDNS} != no
 #	nls			${MKNLS} != no
 #	nvi			${MKNVI} != no
