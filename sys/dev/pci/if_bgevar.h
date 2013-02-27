@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.9 2012/02/02 19:43:05 tls Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.10 2013/02/27 13:53:51 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -100,14 +100,14 @@
 	bus_space_read_4(sc->bge_btag, sc->bge_bhandle, reg)
 
 #define BGE_SETBIT(sc, reg, x)	\
-	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) | x))
+	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) | (x)))
 #define BGE_CLRBIT(sc, reg, x)	\
-	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) & ~x))
+	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) & ~(x)))
 
 #define PCI_SETBIT(pc, tag, reg, x)	\
-	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) | x))
+	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) | (x)))
 #define PCI_CLRBIT(pc, tag, reg, x)	\
-	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) & ~x))
+	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) & ~(x)))
 
 /*
  * Memory management stuff. Note: the SSLOTS, MSLOTS and JSLOTS
