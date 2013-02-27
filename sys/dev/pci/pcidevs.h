@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1140 2013/02/20 04:40:40 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1141 2013/02/27 13:59:30 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1148 2013/02/20 04:40:15 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1149 2013/02/27 13:59:00 msaitoh Exp
  */
 
 /*
@@ -1126,6 +1126,7 @@
 #define	PCI_PRODUCT_APPLE_INTREPID2_ATA	0x0069		/* Intrepid 2 ATA */
 #define	PCI_PRODUCT_APPLE_INTREPID2_FW	0x006a		/* Intrepid 2 FireWire */
 #define	PCI_PRODUCT_APPLE_INTREPID2_GMAC	0x006b		/* Intrepid 2 GMAC */
+#define	PCI_PRODUCT_APPLE_BCM5701	0x1645		/* BCM5701 */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
@@ -1637,8 +1638,7 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5705K	0x1654		/* BCM5705K 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5717	0x1655		/* BCM5717 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5718	0x1656		/* BCM5718 10/100/1000 Ethernet */
-#define	PCI_PRODUCT_BROADCOM_BCM5719	0x1657		/* BCM5719 NetXtreme II 10Gb Ethernet */
-// product BROADCOM BCM5720	0x1658	BCM5720 NetXtreme 1000baseT Ethernet
+#define	PCI_PRODUCT_BROADCOM_BCM5719	0x1657		/* BCM5719 NetXtreme 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5721	0x1659		/* BCM5721 NetXtreme 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5722	0x165a		/* BCM5722 NetXtreme 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5723	0x165b		/* BCM5723 NetXtreme 1000baseT Ethernet */
@@ -1670,6 +1670,7 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5761	0x1681		/* BCM5761 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57762	0x1682		/* BCM57762 Gigabit Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5764	0x1684		/* BCM5764 NetXtreme 1000baseT Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM57766	0x1686		/* BCM57766 NetXtreme 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5761S	0x1688		/* BCM5761S 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5761SE	0x1689		/* BCM5761SE 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57760	0x1690		/* BCM57760 NetXtreme 1000baseT Ethernet */
