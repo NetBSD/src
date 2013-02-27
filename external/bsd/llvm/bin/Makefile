@@ -1,10 +1,15 @@
-#	$NetBSD: Makefile,v 1.7 2013/01/23 15:02:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2013/02/27 21:25:08 joerg Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	clang \
 	clang-tblgen \
 	tblgen
+
+.if ${MKMCLINKER} != "no"
+SUBDIR+=	\
+	llvm-mcld
+.endif
 
 .if defined(LLVM_DEVELOPER)
 SUBDIR+= \
