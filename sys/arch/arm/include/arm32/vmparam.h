@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.28 2013/02/25 16:12:13 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.29 2013/02/27 17:50:07 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  * While the ARM architecture defines Section mappings, large pages,
  * and small pages, the standard page size is (and will always be) 4K.
  */
-#define	PAGE_SHIFT	12
+#define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
