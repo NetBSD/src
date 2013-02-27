@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1806 2013/02/22 15:14:29 jmmv Exp $
+#	$NetBSD: mi,v 1.1807 2013/02/27 21:25:06 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -47,6 +47,7 @@
 ./usr/bin/gettext				comp-c-bin
 ./usr/bin/gettextize				comp-obsolete		obsolete
 ./usr/bin/gprof					comp-debug-bin		binutils
+./usr/bin/ld.mcld				comp-c-bin		mclinker
 ./usr/bin/lex					comp-c-bin
 ./usr/bin/lint					comp-c-bin
 ./usr/bin/llvm-tblgen				comp-c-bin		llvm
