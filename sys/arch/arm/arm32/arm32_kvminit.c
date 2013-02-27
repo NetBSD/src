@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.16 2012/12/31 01:23:31 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.17 2013/02/27 16:55:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.16 2012/12/31 01:23:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.17 2013/02/27 16:55:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -295,7 +295,7 @@ add_pages(struct bootmem_info *bmi, pv_addr_t *pv)
 
 static void
 valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
-	int prot, int cache)
+	int prot, int cache, bool zero_p)
 {
 	size_t nbytes = npages * PAGE_SIZE;
 	pv_addr_t *free_pv = bmi->bmi_freeblocks;
@@ -311,7 +311,7 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 	    && free_pv->pv_size >= L1_TABLE_SIZE) {
 		l1pt_found = true;
 		valloc_pages(bmi, &kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &kernel_l1pt);
 	}
 
@@ -454,7 +454,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	printf(" vector");
 #endif
 	valloc_pages(bmi, &bmi->bmi_vector_l2pt, L2_TABLE_SIZE / PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 	add_pages(bmi, &bmi->bmi_vector_l2pt);
 
 	/*
@@ -465,7 +465,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #endif
 	for (size_t idx = 0; idx < KERNEL_L2PT_KERNEL_NUM; ++idx) {
 		valloc_pages(bmi, &kernel_l2pt[idx], L2_TABLE_SIZE / PAGE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &kernel_l2pt[idx]);
 	}
 
@@ -477,7 +477,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #endif
 	for (size_t idx = 0; idx < KERNEL_L2PT_VMDATA_NUM; ++idx) {
 		valloc_pages(bmi, &vmdata_l2pt[idx], L2_TABLE_SIZE / PAGE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &vmdata_l2pt[idx]);
 	}
 
@@ -489,7 +489,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		printf(" io");
 #endif
 		valloc_pages(bmi, &bmi->bmi_io_l2pt, L2_TABLE_SIZE / PAGE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &bmi->bmi_io_l2pt);
 	}
 
@@ -499,28 +499,28 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 	/* Allocate stacks for all modes and CPUs */
 	valloc_pages(bmi, &abtstack, ABT_STACK_SIZE * cpu_num,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE, true);
 	add_pages(bmi, &abtstack);
 	valloc_pages(bmi, &fiqstack, FIQ_STACK_SIZE * cpu_num,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE, true);
 	add_pages(bmi, &fiqstack);
 	valloc_pages(bmi, &irqstack, IRQ_STACK_SIZE * cpu_num,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE, true);
 	add_pages(bmi, &irqstack);
 	valloc_pages(bmi, &undstack, UND_STACK_SIZE * cpu_num,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE, true);
 	add_pages(bmi, &undstack);
 	valloc_pages(bmi, &idlestack, UPAGES * cpu_num,		/* SVC32 */
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE, true);
 	add_pages(bmi, &idlestack);
 	valloc_pages(bmi, &kernelstack, UPAGES,			/* SVC32 */
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE, true);
 	add_pages(bmi, &kernelstack);
 
 	/* Allocate the message buffer from the end of memory. */
 	const size_t msgbuf_pgs = round_page(MSGBUFSIZE) / PAGE_SIZE;
 	valloc_pages(bmi, &msgbuf, msgbuf_pgs,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE, false);
 	add_pages(bmi, &msgbuf);
 	msgbufphys = msgbuf.pv_pa;
 
@@ -529,7 +529,8 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 * This page will just contain the system vectors and can be
 	 * shared by all processes.
 	 */
-	valloc_pages(bmi, &systempage, 1, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	valloc_pages(bmi, &systempage, 1, VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_CACHE, true);
 	systempage.pv_va = vectors;
 
 	/*
@@ -541,7 +542,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	if (xscale_use_minidata)
 #endif          
 		valloc_pages(bmi, extrapv, nextrapages,
-		    VM_PROT_READ|VM_PROT_WRITE, 0);
+		    VM_PROT_READ|VM_PROT_WRITE, 0, false);
 #endif
 
 	/*
@@ -883,7 +884,11 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 	cpu_idcache_wbinv_all();
+#ifdef ARM_MMU_EXTENDED
+	cpu_setttb(l1pt_pa, KERNEL_PID);
+#else
 	cpu_setttb(l1pt_pa, true);
+#endif
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
