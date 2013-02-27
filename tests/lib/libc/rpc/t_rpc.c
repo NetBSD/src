@@ -1,7 +1,7 @@
-/*	$NetBSD: t_rpc.c,v 1.1 2013/02/26 17:06:55 christos Exp $	*/
+/*	$NetBSD: t_rpc.c,v 1.2 2013/02/27 18:39:58 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rpc.c,v 1.1 2013/02/26 17:06:55 christos Exp $");
+__RCSID("$NetBSD: t_rpc.c,v 1.2 2013/02/27 18:39:58 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -17,8 +17,15 @@ __RCSID("$NetBSD: t_rpc.c,v 1.1 2013/02/26 17:06:55 christos Exp $");
 #include <atf-c.h>
 
 #define ERRX(ev, msg, ...)	ATF_REQUIRE_MSG(0, msg, __VA_ARGS__)
+
+#define SKIPX(ev, msg, ...)	do {			\
+	atf_tc_skip(msg, __VA_ARGS__);			\
+	return;						\
+} while(/*CONSTCOND*/0)
+
 #else
 #define ERRX(ev, msg, ...)	errx(ev, msg, __VA_ARGS__)
+#define SKIPX(ev, msg, ...)	errx(ev, msg, __VA_ARGS__)
 #endif
 
 
@@ -40,6 +47,8 @@ reply(caddr_t replyp, struct netbuf * raddrp, struct netconfig * nconf)
 	return 0;
 }
 
+extern bool __rpc_control(int, void *);
+
 static void
 onehost(const char *host, const char *transp)
 {
@@ -47,9 +56,16 @@ onehost(const char *host, const char *transp)
 	struct netbuf   addr;
 	struct timeval  tv;
 
+	/*
+	 * Magic!
+	 */
+	tv.tv_sec = 0;
+	tv.tv_usec = 500000;
+#define CLCR_SET_RPCB_TIMEOUT   2
+	__rpc_control(CLCR_SET_RPCB_TIMEOUT, &tv);
 
 	if ((clnt = clnt_create(host, RPCBPROG, RPCBVERS, transp)) == NULL)
-		ERRX(EXIT_FAILURE, "clnt_create (%s)", clnt_spcreateerror(""));
+		SKIPX(EXIT_FAILURE, "clnt_create (%s)", clnt_spcreateerror(""));
 
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
