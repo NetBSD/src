@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.206 2013/02/26 11:06:23 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.207 2013/02/27 14:19:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.206 2013/02/26 11:06:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.207 2013/02/27 14:19:38 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -259,8 +259,8 @@ static void bge_sig_pre_reset(struct bge_softc *, int);
 static void bge_stop_fw(struct bge_softc *);
 static int bge_reset(struct bge_softc *);
 static void bge_link_upd(struct bge_softc *);
-static void sysctl_bge_init(struct bge_softc *);
-static int sysctl_bge_verify(SYSCTLFN_PROTO);
+static void bge_sysctl_init(struct bge_softc *);
+static int bge_sysctl_verify(SYSCTLFN_PROTO);
 
 #ifdef BGE_DEBUG
 #define DPRINTF(x)	if (bgedebug) printf x
@@ -624,18 +624,10 @@ static const struct bge_product {
 	  NULL },
 };
 
-/*
- * XXX: how to handle variants based on 5750 and derivatives:
- * 5750 5751, 5721, possibly 5714, 5752, and 5708?, which
- * in general behave like a 5705, except with additional quirks.
- * This driver's current handling of the 5721 is wrong;
- * how we map ASIC revision to "quirks" needs more thought.
- * (defined here until the thought is done).
- */
 #define BGE_IS_5700_FAMILY(sc)		((sc)->bge_flags & BGE_5700_FAMILY)
 #define BGE_IS_5714_FAMILY(sc)		((sc)->bge_flags & BGE_5714_FAMILY)
 #define BGE_IS_5705_PLUS(sc)	((sc)->bge_flags & BGE_5705_PLUS)
-#define BGE_IS_5750_OR_BEYOND(sc)	((sc)->bge_flags & BGE_5750_PLUS)
+#define BGE_IS_575X_PLUS(sc)	((sc)->bge_flags & BGE_575X_PLUS)
 #define BGE_IS_5755_PLUS(sc)	((sc)->bge_flags & BGE_5755_PLUS)
 #define BGE_IS_JUMBO_CAPABLE(sc)	((sc)->bge_flags & BGE_JUMBO_CAPABLE)
 
@@ -2690,10 +2682,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906 ||
 	    BGE_IS_5755_PLUS(sc) ||
 	    BGE_IS_5714_FAMILY(sc))
-		sc->bge_flags |= BGE_5750_PLUS;
+		sc->bge_flags |= BGE_575X_PLUS;
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 ||
-	    BGE_IS_5750_OR_BEYOND(sc))
+	    BGE_IS_575X_PLUS(sc))
 		sc->bge_flags |= BGE_5705_PLUS;
 
 	/*
@@ -2820,7 +2812,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		    & BGE_HWCFG_ASF) {
 			sc->bge_asf_mode |= ASF_ENABLE;
 			sc->bge_asf_mode |= ASF_STACKUP;
-			if (BGE_IS_5750_OR_BEYOND(sc)) {
+			if (BGE_IS_575X_PLUS(sc)) {
 				sc->bge_asf_mode |= ASF_NEW_HANDSHAKE;
 			}
 		}
@@ -3092,7 +3084,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	sysctl_bge_init(sc);
+	bge_sysctl_init(sc);
 
 #ifdef BGE_DEBUG
 	bge_debug_info(sc);
@@ -3120,7 +3112,7 @@ bge_reset(struct bge_softc *sc)
 	int i, val;
 	void (*write_op)(struct bge_softc *, int, int);
 
-	if (BGE_IS_5750_OR_BEYOND(sc) && !BGE_IS_5714_FAMILY(sc)
+	if (BGE_IS_575X_PLUS(sc) && !BGE_IS_5714_FAMILY(sc)
 	    && (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906)) {
 	    	if (sc->bge_flags & BGE_PCIE)
 			write_op = bge_writemem_direct;
@@ -3940,7 +3932,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 }
 
 /*
- * Encapsulate an mbuf chain in the tx ring  by coupling the mbuf data
+ * Encapsulate an mbuf chain in the tx ring by coupling the mbuf data
  * pointers to descriptors.
  */
 static int
@@ -4092,7 +4084,7 @@ doit:
 					   - sizeof(struct tcphdr)
 					   - sizeof(struct ip)) >> 2;
 		}
-		if (BGE_IS_5750_OR_BEYOND(sc)) {
+		if (BGE_IS_575X_PLUS(sc)) {
 			th->th_sum = 0;
 			csum_flags &= ~(BGE_TXBDFLAG_TCP_UDP_CSUM);
 		} else {
@@ -4176,7 +4168,7 @@ doit:
 		 * of TSO flags and segsize.
 		 */
 		if (use_tso) {
-			if (BGE_IS_5750_OR_BEYOND(sc) || i == 0) {
+			if (BGE_IS_575X_PLUS(sc) || i == 0) {
 				f->bge_rsvd = maxsegsize;
 				f->bge_flags = csum_flags | txbd_tso_flags;
 			} else {
@@ -4856,7 +4848,7 @@ bge_link_upd(struct bge_softc *sc)
 }
 
 static int
-sysctl_bge_verify(SYSCTLFN_ARGS)
+bge_sysctl_verify(SYSCTLFN_ARGS)
 {
 	int error, t;
 	struct sysctlnode node;
@@ -4889,7 +4881,7 @@ sysctl_bge_verify(SYSCTLFN_ARGS)
  * Set up sysctl(3) MIB, hw.bge.*.
  */
 static void
-sysctl_bge_init(struct bge_softc *sc)
+bge_sysctl_init(struct bge_softc *sc)
 {
 	int rc, bge_root_num;
 	const struct sysctlnode *node;
@@ -4914,7 +4906,7 @@ sysctl_bge_init(struct bge_softc *sc)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "rx_lvl",
 	    SYSCTL_DESCR("BGE receive interrupt mitigation level"),
-	    sysctl_bge_verify, 0,
+	    bge_sysctl_verify, 0,
 	    &bge_rx_thresh_lvl,
 	    0, CTL_HW, bge_root_num, CTL_CREATE,
 	    CTL_EOL)) != 0) {
@@ -4937,8 +4929,8 @@ bge_debug_info(struct bge_softc *sc)
 	printf("Hardware Flags:\n");
 	if (BGE_IS_5755_PLUS(sc))
 		printf(" - 5755 Plus\n");
-	if (BGE_IS_5750_OR_BEYOND(sc))
-		printf(" - 5750 Plus\n");
+	if (BGE_IS_575X_PLUS(sc))
+		printf(" - 575X Plus\n");
 	if (BGE_IS_5705_PLUS(sc))
 		printf(" - 5705 Plus\n");
 	if (BGE_IS_5714_FAMILY(sc))
