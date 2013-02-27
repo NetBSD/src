@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.30 2012/11/21 19:38:36 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.31 2013/02/27 17:52:44 matt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -37,12 +37,11 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/param.h>
 
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.30 2012/11/21 19:38:36 matt Exp $")
+	RCSID("$NetBSD: locore.S,v 1.31 2013/02/27 17:52:44 matt Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
