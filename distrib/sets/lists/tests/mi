@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.526 2013/02/28 15:36:07 martin Exp $
+# $NetBSD: mi,v 1.527 2013/02/28 21:54:09 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1937,6 +1937,7 @@
 ./usr/tests/lib/libc/locale/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libc/locale/t_ctype1		tests-obsolete		obsolete
 ./usr/tests/lib/libc/locale/t_ctype2		tests-obsolete		obsolete
+./usr/tests/lib/libc/locale/t_io		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_mbrtowc		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_mbstowcs		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_mbtowc		tests-lib-tests		atf
