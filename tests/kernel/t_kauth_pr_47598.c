@@ -27,7 +27,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2013\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_kauth_pr_47598.c,v 1.1 2013/02/28 15:31:22 martin Exp $");
+__RCSID("$NetBSD: t_kauth_pr_47598.c,v 1.2 2013/02/28 20:41:21 martin Exp $");
 
 #include <errno.h>
 #include <unistd.h>
@@ -62,7 +62,8 @@ ATF_TC_BODY(kauth_curtain, tc)
 	static const char curtain_name[] = "security.models.bsd44.curtain";
 
 	int old_curtain, new_curtain = 1, s, s2, err;
-	size_t old_curtain_len = sizeof(old_curtain), slen;
+	size_t old_curtain_len = sizeof(old_curtain);
+	socklen_t slen;
 	struct sockaddr_in sa;
 
 	/*
