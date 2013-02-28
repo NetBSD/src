@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.4 2013/01/28 00:51:29 jym Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.5 2013/02/28 15:23:24 martin Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.4 2013/01/28 00:51:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.5 2013/02/28 15:23:24 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -480,6 +480,9 @@ secmodel_extensions_network_cb(kauth_cred_t cred, kauth_action_t action,
 
 	if (curtain != 0) {
 		struct socket *so = (struct socket *)arg1;
+
+		if (__predict_false(so == NULL || so->so_cred == NULL))
+			return KAUTH_RESULT_DENY;
 
 		if (!kauth_cred_uidmatch(cred, so->so_cred)) {
 			int error;
