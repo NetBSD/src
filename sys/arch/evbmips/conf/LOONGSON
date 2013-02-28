@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.13 2012/10/17 14:48:11 apb Exp $
+# $NetBSD: LOONGSON,v 1.14 2013/02/28 12:51:18 macallan Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.13 $"
+#ident 		"LOONGSON-$Revision: 1.14 $"
 
 maxusers	16
 
@@ -149,7 +149,10 @@ config		netbsd		root on ? type ?
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
-options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
+options		WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options		WSDISPLAY_COMPAT_USL
+options		WSDISPLAY_SCROLLSUPPORT
 options		WS_KERNEL_FG=WSCOL_GREEN
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_GALLANT12x22
@@ -168,6 +171,7 @@ pci0		at bonito0
 sisfb0		at pci0 dev ? function ?
 voyager0	at pci0 dev ? function ?	# SM502 on GDIUM
 voyagerfb0	at voyager0			# framebuffer portion
+pwmclock0	at voyager0			# clock and CPU freq scaling
 iic*		at voyager0
 strtc*		at iic? addr 0x68		# GDIUM's real time clock
 options 	STRTC_NO_USERRAM
