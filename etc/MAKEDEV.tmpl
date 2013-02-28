@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.162 2013/02/10 14:54:33 christos Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.163 2013/02/28 02:00:27 christos Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -296,6 +296,9 @@
 #
 # Trusted Computing devices
 #	tpm	Trusted Platform Module
+#
+# Debugging and tracing
+	dtrace	Dynamic tracing framework
 
 
 #
@@ -2071,6 +2074,11 @@ tap|tap[0-9]*)
 
 tpm)
 	mkdev tpm c %tpm_chr% 0 600
+	;;
+
+dtrace)
+	makedir dtrace 755
+	mkdev dtrace/dtrace c %dtrace_chr% 0 600
 	;;
 
 fw[0-9]*)
