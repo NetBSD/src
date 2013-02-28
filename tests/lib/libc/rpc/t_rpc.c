@@ -1,7 +1,7 @@
-/*	$NetBSD: t_rpc.c,v 1.2 2013/02/27 18:39:58 christos Exp $	*/
+/*	$NetBSD: t_rpc.c,v 1.3 2013/02/28 15:56:53 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rpc.c,v 1.2 2013/02/27 18:39:58 christos Exp $");
+__RCSID("$NetBSD: t_rpc.c,v 1.3 2013/02/28 15:56:53 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -125,7 +125,6 @@ ATF_TC(get_svc_addr_tcp);
 ATF_TC_HEAD(get_svc_addr_tcp, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks CLGET_SVC_ADDR for tcp");
-	atf_tc_set_md_var(tc, "timeout", "1");
 
 }
 
@@ -139,7 +138,6 @@ ATF_TC(get_svc_addr_udp);
 ATF_TC_HEAD(get_svc_addr_udp, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks CLGET_SVC_ADDR for udp");
-	atf_tc_set_md_var(tc, "timeout", "1");
 }
 
 ATF_TC_BODY(get_svc_addr_udp, tc)
