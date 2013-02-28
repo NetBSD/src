@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.14 2013/02/28 12:51:18 macallan Exp $
+# $NetBSD: LOONGSON,v 1.15 2013/02/28 13:02:20 macallan Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.14 $"
+#ident 		"LOONGSON-$Revision: 1.15 $"
 
 maxusers	16
 
@@ -68,6 +68,8 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+options 	INSECURE	# disable kernel security levels
 
 # Filesystem options
 file-system 	FFS		# fast filesystem with user and group quotas
