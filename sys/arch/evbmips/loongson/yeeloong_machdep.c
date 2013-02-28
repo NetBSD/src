@@ -1,4 +1,4 @@
-/*	$NetBSD: yeeloong_machdep.c,v 1.4 2012/10/27 17:17:50 chs Exp $	*/
+/*	$NetBSD: yeeloong_machdep.c,v 1.5 2013/02/28 13:22:36 macallan Exp $	*/
 /*	$OpenBSD: yeeloong_machdep.c,v 1.16 2011/04/15 20:40:06 deraadt Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.4 2012/10/27 17:17:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.5 2013/02/28 13:22:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,8 +235,9 @@ const struct platform yeeloong_platform = {
 #endif
 };
 
+#if NISA > 0
 static int stray_intr[BONITO_NISA];
-
+#endif
 /*
  * PCI model specific routines
  */
@@ -354,7 +355,7 @@ lemote_intr_map(int dev, int fn, int pin, pci_intr_handle_t *ihp)
 /*
  * ISA model specific routines
  */
-
+#if NISA > 0
 void
 lemote_isa_attach_hook(device_t parent, device_t self,
     struct isabus_attach_args *iba)
@@ -407,7 +408,7 @@ lemote_isa_intr_string(void *v, int irq)
 
 	return loongson_intr_string(&lemote_bonito, BONITO_ISA_IRQ(irq));
 }
-
+#endif
 /*
  * Legacy (ISA) interrupt handling
  */
