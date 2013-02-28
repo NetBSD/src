@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.106 2011/09/22 05:08:52 macallan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.107 2013/02/28 12:44:38 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -162,6 +162,7 @@ struct cpu_info {
 #define CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
 #define CPU_ROOT_DEVICE		3	/* string: root device name */
 #define CPU_LLSC		4	/* OS/CPU supports LL/SC instruction */
+#define CPU_LMMI		5	/* Loongson multimedia instructions */
 
 /*
  * Platform can override, but note this breaks userland compatibility
@@ -305,6 +306,7 @@ extern struct mips_options mips_options;
 # define MIPS_HAS_LLSC		0
 # define MIPS_HAS_LLADDR	0
 # define MIPS_HAS_DSP		0
+# define MIPS_HAS_LMMI		0
 
 #elif defined(MIPS3) || defined(MIPS4)
 
@@ -328,7 +330,11 @@ extern struct mips_options mips_options;
 # endif	/* _LOCORE */
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 # define MIPS_HAS_DSP		0
-
+# if defined(MIPS3_LOONGSON2)
+#  define MIPS_HAS_LMMI		((mips_options.mips_cpu_flags & CPU_MIPS_LOONGSON2) != 0)
+# else
+#  define MIPS_HAS_LMMI		0
+# endif
 #elif defined(MIPS32)
 
 # define CPUISMIPS3		1
@@ -343,6 +349,7 @@ extern struct mips_options mips_options;
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 # define MIPS_HAS_DSP		0
+# define MIPS_HAS_LMMI		0
 
 #elif defined(MIPS32R2)
 
@@ -358,6 +365,7 @@ extern struct mips_options mips_options;
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 # define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
+# define MIPS_HAS_LMMI		0
 
 #elif defined(MIPS64)
 
@@ -373,6 +381,7 @@ extern struct mips_options mips_options;
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 # define MIPS_HAS_DSP		0
+# define MIPS_HAS_LMMI		0
 
 #elif defined(MIPS64R2)
 
@@ -388,6 +397,7 @@ extern struct mips_options mips_options;
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 # define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
+# define MIPS_HAS_LMMI		0
 
 #endif
 
