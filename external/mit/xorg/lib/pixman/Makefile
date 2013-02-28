@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2013/02/11 09:26:07 martin Exp $
+#	$NetBSD: Makefile,v 1.21 2013/02/28 12:40:47 macallan Exp $
 
 NOLINT=	1	# defined
 
@@ -74,6 +74,14 @@ CPPFLAGS+=	-DUSE_ARM_NEON
 SRCS+=		pixman-mmx.c
 COPTS.pixman-mmx.c=	-mcpu=iwmmxt
 CPPFLAGS+=	-DUSE_ARM_IWMMXT
+.endif
+
+.if ${MACHINE} == "evbmips"
+# Loongson MMI
+SRCS+=		pixman-mmx.c
+CPPFLAGS+=	-DUSE_LOONGSON_MMI
+# SIMD instructions use floatpoint registers so we need to enable their use
+COPTS.pixman-mmx.c=	-march=loongson2f -mhard-float
 .endif
 
 INCS=	pixman.h pixman-version.h
