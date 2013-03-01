@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.8 2013/02/16 21:40:39 jmmv Exp $
+# $NetBSD: shl.mi,v 1.9 2013/03/01 18:15:39 pooka Exp $
 ./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libDECHanyu.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libEUC.so.5.0.debug	comp-i18n-debug	debug
@@ -195,7 +195,7 @@
 ./usr/libdata/debug/usr/lib/librumpnet_shmif.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_sockin.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_virtif.so.0.0.debug	comp-rump-debug	debug,rump
-./usr/libdata/debug/usr/lib/librumpuser.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpuser.so.0.1.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpvfs.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpvfs_fifofs.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug,rump
