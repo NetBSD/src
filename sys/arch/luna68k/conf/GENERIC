@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.101 2012/10/17 14:48:13 apb Exp $
+# $NetBSD: GENERIC,v 1.102 2013/03/01 18:25:46 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.101 $"
+#ident 		"GENERIC-$Revision: 1.102 $"
 
 maxusers	8
 
@@ -110,8 +110,6 @@ options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

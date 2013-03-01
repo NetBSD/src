@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.84 2013/01/28 13:49:08 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.85 2013/03/01 18:26:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.84 2013/01/28 13:49:08 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.85 2013/03/01 18:26:11 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,125 +81,99 @@ struct nlist nl[] = {
 	{ "_udpstat", 0, 0, 0, 0 },	/* not available via kvm */
 #define	N_IFNET		6
 	{ "_ifnet", 0, 0, 0, 0 },
-#define	N_IMP		7
-	{ "_imp_softc", 0, 0, 0, 0 },
-#define	N_ICMPSTAT	8
+#define	N_ICMPSTAT	7
 	{ "_icmpstat", 0, 0, 0, 0 },	/* not available via kvm */
-#define	N_RTSTAT	9
+#define	N_RTSTAT	8
 	{ "_rtstat", 0, 0, 0, 0 },
-#define	N_UNIXSW	10
+#define	N_UNIXSW	9
 	{ "_unixsw", 0, 0, 0, 0 },
-#define	N_CLNPSTAT	11
-	{ "_clnp_stat", 0, 0, 0, 0 },
-#define	IN_NOTUSED	12
-	{ "_tp_inpcb", 0, 0, 0, 0 },
-#define	ISO_TP		13
-	{ "_tp_refinfo", 0, 0, 0, 0 },
-#define	N_TPSTAT	14
-	{ "_tp_stat", 0, 0, 0, 0 },
-#define	N_ESISSTAT	15
-	{ "_esis_stat", 0, 0, 0, 0 },
-#define N_NIMP		16
-	{ "_nimp", 0, 0, 0, 0 },
-#define N_RTREE		17
+#define N_RTREE		10
 	{ "_rt_tables", 0, 0, 0, 0 },
-#define N_CLTP		18
-	{ "_cltb", 0, 0, 0, 0 },
-#define N_CLTPSTAT	19
-	{ "_cltpstat", 0, 0, 0, 0 },
-#define	N_NFILE		20
+#define	N_NFILE		11
 	{ "_nfile", 0, 0, 0, 0 },
-#define	N_FILE		21
-	{ "_file", 0, 0, 0, 0 },
-#define N_IGMPSTAT	22
+#define N_IGMPSTAT	12
 	{ "_igmpstat", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_MRTPROTO	23
+#define N_MRTPROTO	13
 	{ "_ip_mrtproto", 0, 0, 0, 0 },
-#define N_MRTSTAT	24
+#define N_MRTSTAT	14
 	{ "_mrtstat", 0, 0, 0, 0 },
-#define N_MFCHASHTBL	25
+#define N_MFCHASHTBL	15
 	{ "_mfchashtbl", 0, 0, 0, 0 },
-#define	N_MFCHASH	26
+#define	N_MFCHASH	16
 	{ "_mfchash", 0, 0, 0, 0 },
-#define N_VIFTABLE	27
+#define N_VIFTABLE	17
 	{ "_viftable", 0, 0, 0, 0 },
-#define N_MSIZE		28
+#define N_MSIZE		18
 	{ "_msize", 0, 0, 0, 0 },
-#define N_MCLBYTES	29
+#define N_MCLBYTES	19
 	{ "_mclbytes", 0, 0, 0, 0 },
-#define N_DDPSTAT	30
+#define N_DDPSTAT	20
 	{ "_ddpstat", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_DDPCB		31
+#define N_DDPCB		21
 	{ "_ddpcb", 0, 0, 0, 0 },
-#define N_MBPOOL	32
+#define N_MBPOOL	22
 	{ "_mbpool", 0, 0, 0, 0 },
-#define N_MCLPOOL	33
+#define N_MCLPOOL	23
 	{ "_mclpool", 0, 0, 0, 0 },
-#define N_DIVPCB	34
-	{ "_divcb", 0, 0, 0, 0 },
-#define N_DIVSTAT	35
-	{ "_divstat", 0, 0, 0, 0 },
-#define N_IP6STAT	36
+#define N_IP6STAT	24
 	{ "_ip6stat", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_TCP6STAT	37
+#define N_TCP6STAT	25
 	{ "_tcp6stat", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_UDP6STAT	38
+#define N_UDP6STAT	26
 	{ "_udp6stat", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_ICMP6STAT	39
+#define N_ICMP6STAT	27
 	{ "_icmp6stat", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_IPSECSTAT	40
+#define N_IPSECSTAT	28
 	{ "_ipsecstat", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_IPSEC6STAT	41
+#define N_IPSEC6STAT	29
 	{ "_ipsec6stat", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_PIM6STAT	42
+#define N_PIM6STAT	30
 	{ "_pim6stat", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_MRT6PROTO	43
+#define N_MRT6PROTO	31
 	{ "_ip6_mrtproto", 0, 0, 0, 0 },
-#define N_MRT6STAT	44
+#define N_MRT6STAT	32
 	{ "_mrt6stat", 0, 0, 0, 0 },
-#define N_MF6CTABLE	45
+#define N_MF6CTABLE	33
 	{ "_mf6ctable", 0, 0, 0, 0 },
-#define N_MIF6TABLE	46
+#define N_MIF6TABLE	34
 	{ "_mif6table", 0, 0, 0, 0 },
-#define N_PFKEYSTAT	47
+#define N_PFKEYSTAT	35
 	{ "_pfkeystat", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_ARPSTAT	48
+#define N_ARPSTAT	36
 	{ "_arpstat", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_RIP6STAT	49
+#define N_RIP6STAT	37
 	{ "_rip6stat", 0, 0, 0, 0 },	/* not available via kvm */
-#define	N_ARPINTRQ	50
+#define	N_ARPINTRQ	38
 	{ "_arpintrq", 0, 0, 0, 0 },
-#define	N_IPINTRQ	51
+#define	N_IPINTRQ	39
 	{ "_ipintrq", 0, 0, 0, 0 },
-#define	N_IP6INTRQ	52
+#define	N_IP6INTRQ	40
 	{ "_ip6intrq", 0, 0, 0, 0 },
-#define	N_ATINTRQ1	53
+#define	N_ATINTRQ1	41
 	{ "_atintrq1", 0, 0, 0, 0 },
-#define	N_ATINTRQ2	54
+#define	N_ATINTRQ2	42
 	{ "_atintrq2", 0, 0, 0, 0 },
-#define	N_NSINTRQ	55
+#define	N_NSINTRQ	43
 	{ "_nsintrq", 0, 0, 0, 0 },
-#define	N_CLNLINTRQ	56
-	{ "_clnlintrq", 0, 0, 0, 0 },
-#define	N_LLCINTRQ	57
+#define	N_LLCINTRQ	44
 	{ "_llcintrq", 0, 0, 0, 0 },
-#define	N_HDINTRQ	58
+#define	N_HDINTRQ	45
 	{ "_hdintrq", 0, 0, 0, 0 },
-#define	N_NATMINTRQ	59
+#define	N_NATMINTRQ	46
 	{ "_natmintrq", 0, 0, 0, 0 },
-#define	N_PPPOEDISCINQ	61
+#define	N_PPPOEDISCINQ	47
 	{ "_ppoediscinq", 0, 0, 0, 0 },
-#define	N_PPPOEINQ	61
+#define	N_PPPOEINQ	48
 	{ "_ppoeinq", 0, 0, 0, 0 },
-#define	N_PKINTRQ	62
+#define	N_PKINTRQ	49
 	{ "_pkintrq", 0, 0, 0, 0 },
-#define	N_HARDCLOCK_TICKS 63
+#define	N_HARDCLOCK_TICKS 50
 	{ "_hardclock_ticks", 0, 0, 0, 0 },
-#define N_PIMSTAT	64
+#define N_PIMSTAT	51
 	{ "_pimstat", 0, 0, 0, 0 },
-#define N_CARPSTAT	65
+#define N_CARPSTAT	52
 	{ "_carpstats", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_PFSYNCSTAT	66
+#define N_PFSYNCSTAT	53
 	{ "_pfsyncstats", 0, 0, 0, 0},  /* not available via kvm */
 	{ "", 0, 0, 0, 0 },
 };
@@ -293,19 +267,6 @@ struct protox atalkprotox[] = {
 	{ -1,		-1,		0,	0,
 	  0,		NULL,		0,	NULL }
 };
-
-struct protox isoprotox[] = {
-	{ ISO_TP,	N_TPSTAT,	1,	iso_protopr,
-	  tp_stats,	NULL,		0,	"tp" },
-	{ N_CLTP,	N_CLTPSTAT,	1,	iso_protopr,
-	  cltp_stats,	NULL,		0,	"cltp" },
-	{ -1,		N_CLNPSTAT,	1,	 0,
-	  clnp_stats,	NULL,		0,	"clnp"},
-	{ -1,		N_ESISSTAT,	1,	 0,
-	  esis_stats,	NULL,		0,	"esis"},
-	{ -1,		-1,		0,	0,
-	  0,		NULL,		0,	0 }
-};
 #endif
 
 struct protox *protoprotox[] = { protox,
@@ -318,7 +279,6 @@ struct protox *protoprotox[] = { protox,
 #endif
 #ifndef SMALL
 				 atalkprotox,
-				 isoprotox,
 #endif
 				 NULL };
 
@@ -331,7 +291,6 @@ const struct softintrq {
 	{ "ip6intrq", N_IP6INTRQ },
 	{ "atintrq1", N_ATINTRQ1 },
 	{ "atintrq2", N_ATINTRQ2 },
-	{ "clnlintrq", N_CLNLINTRQ },
 	{ "llcintrq", N_LLCINTRQ },
 	{ "hdintrq", N_HDINTRQ },
 	{ "natmintrq", N_NATMINTRQ },
@@ -396,10 +355,6 @@ prepare(const char *nf, const char *mf, struct protox *tp)
 		   iflag ||
 #ifndef SMALL
 		   gflag ||
-		   (pflag && tp->pr_sindex == N_TPSTAT) ||
-		   (pflag && tp->pr_sindex == N_CLTPSTAT) ||
-		   (pflag && tp->pr_sindex == N_CLNPSTAT) ||
-		   (pflag && tp->pr_sindex == N_ESISSTAT) ||
 #endif
 		   (pflag && tp->pr_sindex == N_PIMSTAT) ||
 		   Pflag) {
@@ -484,8 +439,6 @@ main(int argc, char *argv[])
 			else if (strcmp(optarg, "unix") == 0
 			    || strcmp(optarg, "local") == 0)
 				af = AF_LOCAL;
-			else if (strcmp(optarg, "iso") == 0)
-				af = AF_ISO;
 			else if (strcmp(optarg, "atalk") == 0)
 				af = AF_APPLETALK;
 			else if (strcmp(optarg, "mpls") == 0)
@@ -730,9 +683,6 @@ main(int argc, char *argv[])
 #ifndef SMALL
 	if (af == AF_APPLETALK || af == AF_UNSPEC)
 		for (tp = atalkprotox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name);
-	if (af == AF_ISO || af == AF_UNSPEC)
-		for (tp = isoprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
 	if ((af == AF_LOCAL || af == AF_UNSPEC) && !sflag)
 		unixpr(nl[N_UNIXSW].n_value);

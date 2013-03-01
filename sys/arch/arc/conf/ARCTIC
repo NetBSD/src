@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.58 2012/08/17 20:11:38 abs Exp $
+#	$NetBSD: ARCTIC,v 1.59 2013/03/01 18:25:29 joerg Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -102,8 +102,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

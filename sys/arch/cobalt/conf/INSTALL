@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.48 2012/03/10 21:51:50 joerg Exp $
+# $NetBSD: INSTALL,v 1.49 2013/03/01 18:25:31 joerg Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.48 $"
+#ident 		"INSTALL-$Revision: 1.49 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -100,8 +100,6 @@ options 	INET		# Internet protocols
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

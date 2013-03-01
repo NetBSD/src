@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.9 2012/08/29 08:29:58 skrll Exp $
+#	$NetBSD: MARVELL_NAS,v 1.10 2013/03/01 18:25:34 joerg Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -75,8 +75,6 @@ options 	INET6		# IPv6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
