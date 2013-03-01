@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.36 2012/10/17 14:48:08 apb Exp $
+# $NetBSD: NULL,v 1.37 2013/03/01 18:25:29 joerg Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.36 $"
+#ident          "GENERIC-$Revision: 1.37 $"
 
 maxusers	8
 
@@ -130,8 +130,6 @@ options 	INET6		# IPV6
 
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

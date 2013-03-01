@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.77 2011/11/22 21:25:21 tls Exp $
+# $NetBSD: NET4501,v 1.78 2013/03/01 18:25:45 joerg Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.77 $"
+#ident 		"NET4501-$Revision: 1.78 $"
 
 maxusers	32		# estimated number of users
 
@@ -138,8 +138,6 @@ options 	INET6		# IPv6
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	MROUTING	# IP multicast routing
 options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

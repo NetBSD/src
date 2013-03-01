@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.82 2012/12/27 07:08:59 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.83 2013/03/01 18:25:16 joerg Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -51,7 +51,7 @@ COPTS.gethnamaddr.c+=	${${ACTIVE_CC} == "gcc" :? -fno-tree-ter :}
 
 MAN+=	byteorder.3 ethers.3 gethostbyname.3 getifaddrs.3 \
 	getnetent.3 getprotoent.3 getpeereid.3 \
-	getservent.3 inet.3 inet_net.3 iso_addr.3 linkaddr.3 \
+	getservent.3 inet.3 inet_net.3 linkaddr.3 \
 	nsdispatch.3 rcmd.3 resolver.3 sockatmark.3
 
 .if (${MKHESIOD} != "no")

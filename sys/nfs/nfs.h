@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.72 2010/03/02 23:19:09 pooka Exp $	*/
+/*	$NetBSD: nfs.h,v 1.73 2013/03/01 18:26:10 joerg Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -422,13 +422,8 @@ struct nfsuid {
 /* Bits for nu_flag */
 #define	NU_INETADDR	0x1
 #define NU_NAM		0x2
-#ifdef INET6
 #define NU_NETFAM(u) \
-	(((u)->nu_flag & NU_INETADDR) ? \
-	(((u)->nu_flag & NU_NAM) ? AF_INET6 : AF_INET) : AF_ISO)
-#else
-#define NU_NETFAM(u)	(((u)->nu_flag & NU_INETADDR) ? AF_INET : AF_ISO)
-#endif
+	(((u)->nu_flag & NU_INETADDR) ? AF_INET : AF_INET6)
 
 /*
  * b: protected by SLP_BUSY

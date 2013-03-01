@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.40 2012/08/17 20:11:37 abs Exp $
+# $NetBSD: FOURMEG,v 1.41 2013/03/01 18:25:27 joerg Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -69,8 +69,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

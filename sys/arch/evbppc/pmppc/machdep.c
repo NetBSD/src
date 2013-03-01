@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2011/06/20 07:18:06 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2013/03/01 18:25:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,14 +61,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2011/06/20 07:18:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2013/03/01 18:25:39 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
 #include "opt_inet.h"
 #include "opt_ccitt.h"
-#include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_ipkdb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.59 2011/05/24 18:07:11 spz Exp $	*/
+/*	$NetBSD: inet6.c,v 1.60 2013/03/01 18:26:11 joerg Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.59 2011/05/24 18:07:11 spz Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.60 2013/03/01 18:26:11 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -565,7 +565,7 @@ static	const char *ip6nh[] = {
 	NULL,
 	NULL,
 	NULL,
-	"TP",
+	NULL,
 /*30*/	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 /*40*/	NULL,
 	"IP6",
@@ -590,7 +590,7 @@ static	const char *ip6nh[] = {
 	NULL,
 /*65*/	NULL, NULL, NULL, NULL, NULL,
 /*70*/	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-/*80*/	"ISOIP",
+/*80*/	NULL,
 	NULL,
 	NULL,
 	NULL,

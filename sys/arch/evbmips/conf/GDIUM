@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.17 2012/10/17 14:48:11 apb Exp $
+# $NetBSD: GDIUM,v 1.18 2013/03/01 18:25:37 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.17 $"
+#ident 		"GDIUM-$Revision: 1.18 $"
 
 maxusers	16
 
@@ -99,9 +99,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO		# OSI networking
-#options 	TPIP		# TPIP
-#options 	EON		# OSI tunneling over IP
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.140 2012/01/30 20:02:55 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.141 2013/03/01 18:25:57 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.140 2012/01/30 20:02:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.141 2013/03/01 18:25:57 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -172,9 +172,6 @@ rt_adjustcount(int af, int cnt)
 		cb->ip6_count += cnt;
 		return;
 #endif
-	case AF_ISO:
-		cb->iso_count += cnt;
-		return;
 	case AF_MPLS:
 		cb->mpls_count += cnt;
 		return;

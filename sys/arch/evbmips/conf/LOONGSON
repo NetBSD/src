@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.15 2013/02/28 13:02:20 macallan Exp $
+# $NetBSD: LOONGSON,v 1.16 2013/03/01 18:25:37 joerg Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.15 $"
+#ident 		"LOONGSON-$Revision: 1.16 $"
 
 maxusers	16
 
@@ -107,9 +107,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO		# OSI networking
-#options 	TPIP		# TPIP
-#options 	EON		# OSI tunneling over IP
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support

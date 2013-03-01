@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-bdz.c,v 1.7 2013/01/31 16:32:02 joerg Exp $	*/
+/*	$NetBSD: nbperf-bdz.c,v 1.8 2013/03/01 18:26:10 joerg Exp $	*/
 /*-
  * Copyright (c) 2009, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-bdz.c,v 1.7 2013/01/31 16:32:02 joerg Exp $");
+__RCSID("$NetBSD: nbperf-bdz.c,v 1.8 2013/03/01 18:26:10 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -241,7 +241,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	    "\tidx2 = idx - holes64[idx >> 6] - holes64k[idx >> 16];\n"
 	    "\tidx2 -= popcount64(g1[idx >> 6] & g2[idx >> 6]\n"
 	    "\t                   & (((uint64_t)1 << idx) - 1));\n"
-	    "\treturn idx2;");
+	    "\treturn idx2;\n");
 
 	fprintf(nbperf->output, "}\n");
 

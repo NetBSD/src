@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.35 2012/03/11 06:11:29 nakayama Exp $
+# 	$NetBSD: NONPLUS64,v 1.36 2013/03/01 18:25:52 joerg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.35 $"
+#ident		"NONPLUS64-$Revision: 1.36 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -165,8 +165,6 @@ options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
-options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.113 2013/02/25 00:31:51 jmmv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.114 2013/03/01 18:25:15 joerg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -165,7 +165,6 @@
 ./usr/include/netinet6
 ./usr/include/netipsec
 ./usr/include/netisdn
-./usr/include/netiso
 ./usr/include/netkey
 ./usr/include/netnatm
 ./usr/include/netpgp

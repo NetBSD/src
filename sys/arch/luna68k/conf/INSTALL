@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.8 2012/10/17 14:49:41 apb Exp $
+# $NetBSD: INSTALL,v 1.9 2013/03/01 18:25:47 joerg Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -96,8 +96,6 @@ options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD1,v 1.16 2012/10/17 14:48:11 apb Exp $
+#	$NetBSD: VIRTEX_GSRD1,v 1.17 2013/03/01 18:25:39 joerg Exp $
 #
 # VIRTEX_GSRD1
 #
@@ -112,8 +112,6 @@ options 	INET6		# IPV6
 #options        DIRECTED_BROADCAST      # allow broadcasts through routers
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
-options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

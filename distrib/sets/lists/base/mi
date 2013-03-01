@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1022 2013/02/25 00:34:13 jmmv Exp $
+# $NetBSD: mi,v 1.1023 2013/03/01 18:25:13 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -907,7 +907,7 @@
 ./usr/include/netinet6				base-c-usr
 ./usr/include/netipsec				base-c-usr
 ./usr/include/netisdn				base-c-usr
-./usr/include/netiso				base-c-usr
+./usr/include/netiso				base-obsolete		obsolete
 ./usr/include/netkey				base-c-usr
 ./usr/include/netmpls				base-c-usr
 ./usr/include/netnatm				base-c-usr

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.125 2011/12/17 20:05:39 tls Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.126 2013/03/01 18:25:56 joerg Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,12 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.125 2011/12/17 20:05:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.126 2013/03/01 18:25:56 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_ipx.h"
-#include "opt_iso.h"
 #include "opt_pfil_hooks.h"
 #include "opt_modular.h"
 #include "opt_compat_netbsd.h"
@@ -90,14 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.125 2011/12/17 20:05:39 tls Exp $"
 #ifdef IPX
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
-#endif
-
-
-#ifdef ISO
-#include <netiso/argo_debug.h>
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-#include <netiso/iso_snpac.h>
 #endif
 
 #include <net/if_sppp.h>
@@ -645,15 +636,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		}
 		break;
 #endif
-#ifdef ISO
-	case PPP_ISO:
-		/* OSI NLCP not implemented yet */
-		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
-			schednetisr(NETISR_ISO);
-			inq = &clnlintrq;
-		}
-		break;
-#endif
 	}
 
 queue_pkt:
@@ -846,14 +828,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		protocol = htons((sp->pp_flags & PP_CISCO) ?
 			ETHERTYPE_IPX : PPP_IPX);
 		break;
-#endif
-#ifdef ISO
-	case AF_ISO:    /* ISO OSI Protocol */
-		if (sp->pp_flags & PP_CISCO)
-			goto nosupport;
-		protocol = htons(PPP_ISO);
-		break;
-nosupport:
 #endif
 	default:
 		m_freem(m);

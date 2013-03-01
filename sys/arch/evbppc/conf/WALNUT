@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.60 2012/10/17 14:48:11 apb Exp $
+#	$NetBSD: WALNUT,v 1.61 2013/03/01 18:25:39 joerg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -104,8 +104,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options        DIRECTED_BROADCAST      # allow broadcasts through routers
-options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

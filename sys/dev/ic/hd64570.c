@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.43 2010/04/05 07:19:34 joerg Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.44 2013/03/01 18:25:55 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,10 +65,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.43 2010/04/05 07:19:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.44 2013/03/01 18:25:55 joerg Exp $");
 
 #include "opt_inet.h"
-#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,12 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.43 2010/04/05 07:19:34 joerg Exp $");
 #ifdef INET6
 #include <netinet6/in6_var.h>
 #endif
-#endif
-
-#ifdef ISO
-#include <net/if_llc.h>
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
 #endif
 
 #include <net/bpf.h>
@@ -797,9 +790,6 @@ sca_output(
     const struct sockaddr *dst,
     struct rtentry *rt0)
 {
-#ifdef ISO
-	struct hdlc_llc_header *llc;
-#endif
 	struct hdlc_header *hdlc;
 	struct ifqueue *ifq = NULL;
 	int s, error, len;
@@ -852,21 +842,6 @@ sca_output(
 			return (ENOBUFS);
 		hdlc = mtod(m, struct hdlc_header *);
 		hdlc->h_proto = htons(HDLC_PROTOCOL_IPV6);
-		break;
-#endif
-#ifdef ISO
-       case AF_ISO:
-               /*
-                * Add cisco llc serial line header. If there is no
-                * space in the first mbuf, allocate another.
-                */
-		M_PREPEND(m, sizeof(struct hdlc_llc_header), M_DONTWAIT);
-		if (m == 0)
-			return (ENOBUFS);
-		hdlc = mtod(m, struct hdlc_header *);
-		llc = mtod(m, struct hdlc_llc_header *);
-		llc->hl_dsap = llc->hl_ssap = LLC_ISO_LSAP;
-		llc->hl_ffb = 0;
 		break;
 #endif
 	default:
@@ -1622,18 +1597,6 @@ sca_frame_process(sca_port_t *scp)
 		schednetisr(NETISR_IPV6);
 		break;
 #endif	/* INET6 */
-#ifdef ISO
-	case HDLC_PROTOCOL_ISO:
-		if (m->m_pkthdr.len < sizeof(struct hdlc_llc_header))
-                       goto dropit;
-		m->m_pkthdr.rcvif = &scp->sp_if;
-		m->m_pkthdr.len -= sizeof(struct hdlc_llc_header);
-		m->m_data += sizeof(struct hdlc_llc_header);
-		m->m_len -= sizeof(struct hdlc_llc_header);
-		ifq = &clnlintrq;
-		schednetisr(NETISR_ISO);
-		break;
-#endif	/* ISO */
 	case CISCO_KEEPALIVE:
 		SCA_DPRINTF(SCA_DEBUG_CISCO,
 			    ("Received CISCO keepalive packet\n"));

@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.45 2011/11/22 21:25:38 tls Exp $
+# $NetBSD: DISKLESS,v 1.46 2013/03/01 18:25:53 joerg Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DISKLESS-$Revision: 1.45 $"
+#ident 		"DISKLESS-$Revision: 1.46 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -82,8 +82,6 @@ options 	INET		# IP protocol stack support
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

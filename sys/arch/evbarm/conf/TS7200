@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.53 2012/10/17 14:48:11 apb Exp $
+#	$NetBSD: TS7200,v 1.54 2013/03/01 18:25:36 joerg Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -69,8 +69,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

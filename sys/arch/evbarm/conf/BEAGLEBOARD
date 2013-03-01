@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.46 2013/02/21 12:31:22 macallan Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.47 2013/03/01 18:25:32 joerg Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -65,8 +65,6 @@ options 	INET6		# IPV6
 #options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks

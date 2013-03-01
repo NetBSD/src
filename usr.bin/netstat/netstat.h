@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.45 2013/01/28 13:49:08 joerg Exp $	*/
+/*	$NetBSD: netstat.h,v 1.46 2013/03/01 18:26:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -150,15 +150,6 @@ void	ddp_stats __P((u_long, const char *));
 void	intpr __P((int, u_long, void (*) __P((const char *))));
 
 void	unixpr __P((u_long));
-
-void	esis_stats __P((u_long, const char *));
-void	clnp_stats __P((u_long, const char *));
-void	cltp_stats __P((u_long, const char *));
-void	iso_protopr __P((u_long, const char *));
-void	iso_protopr1 __P((u_long, int));
-void	tp_protopr __P((u_long, const char *));
-void	tp_inproto __P((u_long));
-void	tp_stats __P((u_long, const char *));
 
 void	mroutepr __P((u_long, u_long, u_long, u_long));
 void	mrt_stats __P((u_long, u_long));

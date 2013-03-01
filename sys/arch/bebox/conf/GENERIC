@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.133 2012/10/20 11:58:45 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.134 2013/03/01 18:25:30 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.133 $"
+#ident 		"GENERIC-$Revision: 1.134 $"
 
 maxusers	32
 
@@ -118,8 +118,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

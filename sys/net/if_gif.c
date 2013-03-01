@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.81 2013/01/19 16:18:32 degroote Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.82 2013/03/01 18:25:56 joerg Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,10 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.81 2013/01/19 16:18:32 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.82 2013/03/01 18:25:56 joerg Exp $");
 
 #include "opt_inet.h"
-#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,11 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.81 2013/01/19 16:18:32 degroote Exp $")
 #include <netinet6/ip6protosw.h>
 #endif /* INET6 */
 
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-#endif
-
 #include <netinet/ip_encap.h>
 #include <net/if_gif.h>
 
@@ -89,10 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.81 2013/01/19 16:18:32 degroote Exp $")
 
 void	gifattach(int);
 static void	gifintr(void *);
-#ifdef ISO
-static struct mbuf *gif_eon_encap(struct mbuf *);
-static struct mbuf *gif_eon_decap(struct ifnet *, struct mbuf *);
-#endif
 
 /*
  * gif global variable definitions
@@ -212,10 +202,6 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	case IPPROTO_IPV6:
 		break;
 #endif
-#ifdef ISO
-	case IPPROTO_EON:
-		break;
-#endif
 	default:
 		return 0;
 	}
@@ -284,21 +270,6 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		m_freem(m);
 		error = ENETDOWN;
 		goto end;
-	}
-
-	/* inner AF-specific encapsulation */
-	switch (dst->sa_family) {
-#ifdef ISO
-	case AF_ISO:
-		m = gif_eon_encap(m);
-		if (!m) {
-			error = ENOBUFS;
-			goto end;
-		}
-		break;
-#endif
-	default:
-		break;
 	}
 
 	/* XXX should we check if our outer source is legal? */
@@ -434,15 +405,6 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 	case AF_INET6:
 		ifq = &ip6intrq;
 		isr = NETISR_IPV6;
-		break;
-#endif
-#ifdef ISO
-	case AF_ISO:
-		m = gif_eon_decap(ifp, m);
-		if (!m)
-			return;
-		ifq = &clnlintrq;
-		isr = NETISR_ISO;
 		break;
 #endif
 	default:
@@ -840,67 +802,3 @@ gif_delete_tunnel(struct ifnet *ifp)
 		ifp->if_flags &= ~IFF_RUNNING;
 	splx(s);
 }
-
-#ifdef ISO
-struct eonhdr {
-	uint8_t version;
-	uint8_t class;
-	uint16_t cksum;
-};
-
-/*
- * prepend EON header to ISO PDU
- */
-static struct mbuf *
-gif_eon_encap(struct mbuf *m)
-{
-	struct eonhdr *ehdr;
-
-	M_PREPEND(m, sizeof(*ehdr), M_DONTWAIT);
-	if (m && m->m_len < sizeof(*ehdr))
-		m = m_pullup(m, sizeof(*ehdr));
-	if (m == NULL)
-		return NULL;
-	ehdr = mtod(m, struct eonhdr *);
-	ehdr->version = 1;
-	ehdr->class = 0;		/* always unicast */
-#if 0
-	/* calculate the checksum of the eonhdr */
-	{
-		struct mbuf mhead;
-		memset(&mhead, 0, sizeof(mhead));
-		ehdr->cksum = 0;
-		mhead.m_data = (void *)ehdr;
-		mhead.m_len = sizeof(*ehdr);
-		mhead.m_next = 0;
-		iso_gen_csum(&mhead, offsetof(struct eonhdr, cksum),
-		    mhead.m_len);
-	}
-#else
-	/* since the data is always constant we'll just plug the value in */
-	ehdr->cksum = htons(0xfc02);
-#endif
-	return m;
-}
-
-/*
- * remove EON header and check checksum
- */
-static struct mbuf *
-gif_eon_decap(struct ifnet *ifp, struct mbuf *m)
-{
-	struct eonhdr *ehdr;
-
-	if (m->m_len < sizeof(*ehdr) &&
-	    (m = m_pullup(m, sizeof(*ehdr))) == NULL) {
-		ifp->if_ierrors++;
-		return NULL;
-	}
-	if (iso_check_csum(m, sizeof(struct eonhdr))) {
-		m_freem(m);
-		return NULL;
-	}
-	m_adj(m, sizeof(*ehdr));
-	return m;
-}
-#endif /*ISO*/

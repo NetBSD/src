@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.17 2012/10/17 14:48:10 apb Exp $
+#	$NetBSD: NETWALKER,v 1.18 2013/03/01 18:25:35 joerg Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -64,8 +64,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

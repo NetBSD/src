@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.45 2012/10/17 14:48:11 apb Exp $
+#	$NetBSD: ALCHEMY,v 1.46 2013/03/01 18:25:37 joerg Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.45 $"
+#ident 		"ALCHEMY-$Revision: 1.46 $"
 
 maxusers	32
 
@@ -104,8 +104,6 @@ options 	INET		# Internet protocols
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

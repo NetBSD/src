@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.61 2011/07/19 19:42:27 tron Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.62 2013/03/01 18:25:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,11 +92,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.61 2011/07/19 19:42:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.62 2013/03/01 18:25:57 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
-#include "opt_iso.h"
 #include "opt_gateway.h"
 
 
@@ -140,14 +139,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.61 2011/07/19 19:42:27 tron Exp $
 #ifdef DECNET
 #include <netdnet/dn.h>
 #endif
-
-#ifdef ISO
-#include <netiso/argo_debug.h>
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-#include <netiso/iso_snpac.h>
-#endif
-
 
 #define senderr(e) { error = (e); goto bad;}
 
@@ -333,51 +324,6 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		}
 		break;
 #endif
-#ifdef	ISO
-	case AF_ISO: {
-		int	snpalen;
-		struct	llc *l;
-		const struct sockaddr_dl *sdl;
-
-		if (rt && (sdl = satocsdl(rt->rt_gateway)) &&
-		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
-			memcpy(edst, CLLADDR(sdl), sizeof(edst));
-		}
-		else if ((error = iso_snparesolve(ifp,
-		    (const struct sockaddr_iso *)dst, (char *)edst, &snpalen)))
-			goto bad; /* Not resolved */
-		/* If broadcasting on a simplex interface, loopback a copy. */
-		if (*edst & 1)
-			m->m_flags |= (M_BCAST|M_MCAST);
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
-		    (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
-			M_PREPEND(mcopy, sizeof (*trh), M_DONTWAIT);
-			if (mcopy) {
-				trh = mtod(mcopy, struct token_header *);
-				bcopy((void *)edst,
-				    (void *)trh->token_dhost, sizeof (edst));
-				bcopy(CLLADDR(ifp->if_sadl),
-				    (void *)trh->token_shost, sizeof (edst));
-			}
-		}
-		M_PREPEND(m, 3, M_DONTWAIT);
-		if (m == NULL)
-			return (0);
-		etype = 0;
-		l = mtod(m, struct llc *);
-		l->llc_dsap = l->llc_ssap = LLC_ISO_LSAP;
-		l->llc_control = LLC_UI;
-#if defined(__FreeBSD__)
-		IFDEBUG(D_ETHER)
-			int i;
-			printf("token_output: sending pkt to: ");
-			for (i=0; i < ISO88025_ADDR_LEN; i++)
-				printf("%x ", edst[i] & 0xff);
-			printf("\n");
-		ENDDEBUG
-#endif
-		} break;
-#endif /* ISO */
 
 	case AF_UNSPEC:
 	{
@@ -551,71 +497,11 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 		break;
 	}
 #endif /* INET || NS || DECNET */
-#ifdef	ISO
-	case LLC_ISO_LSAP:
-		switch (l->llc_control) {
-		case LLC_UI:
-			/* LLC_UI_P forbidden in class 1 service */
-			if ((l->llc_dsap == LLC_ISO_LSAP) &&
-			    (l->llc_ssap == LLC_ISO_LSAP)) {
-
-#if defined(__FreeBSD__)
-				IFDEBUG(D_ETHER)
-					printf("clnp packet");
-				ENDDEBUG
-#endif
-				schednetisr(NETISR_ISO);
-				inq = &clnlintrq;
-				break;
-			}
-			goto dropanyway;
-
-		case LLC_XID:
-		case LLC_XID_P:
-			if(m->m_len < LLC_XID_BASIC_MINLEN + lan_hdr_len)
-				goto dropanyway;
-			l->llc_window = 0;
-			l->llc_fid = LLC_XID_FORMAT_BASIC;
-			l->llc_class = LLC_XID_CLASS_I;
-			l->llc_dsap = l->llc_ssap = 0;
-			/* Fall through to */
-		case LLC_TEST:
-		case LLC_TEST_P:
-		{
-			struct sockaddr sa;
-			struct ether_header *eh;
-			int i;
-			u_char c = l->llc_dsap;
-
-			l->llc_dsap = l->llc_ssap;
-			l->llc_ssap = c;
-			if (m->m_flags & (M_BCAST | M_MCAST))
-				bcopy(CLLADDR(ifp->if_sadl),
-				    (void *)trh->token_dhost,
-				    ISO88025_ADDR_LEN);
-			sa.sa_family = AF_UNSPEC;
-			sa.sa_len = sizeof(sa);
-			eh = (struct ether_header *)sa.sa_data;
-			for (i = 0; i < ISO88025_ADDR_LEN; i++) {
-				eh->ether_shost[i] = trh->token_dhost[i];
-				eh->ether_dhost[i] = trh->token_shost[i];
-			}
-			eh->ether_type = 0;
-			m_adj(m, lan_hdr_len);
-			ifp->if_output(ifp, m, &sa, NULL);
-			return;
-		}
-		default:
-			m_freem(m);
-			return;
-		}
-		break;
-#endif /* ISO */
 
 	default:
 		/* printf("token_input: unknown dsap 0x%x\n", l->llc_dsap); */
 		ifp->if_noproto++;
-#if defined(INET) || defined(NS) || defined(DECNET) || defined(ISO)
+#if defined(INET) || defined(NS) || defined(DECNET)
 	dropanyway:
 #endif
 		m_freem(m);

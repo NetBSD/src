@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.75 2012/10/17 14:48:10 apb Exp $
+#	$NetBSD: IQ80321,v 1.76 2013/03/01 18:25:34 joerg Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -64,8 +64,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

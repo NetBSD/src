@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.44 2011/11/11 15:09:32 gdt Exp $	*/
+/*	$NetBSD: show.c,v 1.45 2013/03/01 18:25:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.44 2011/11/11 15:09:32 gdt Exp $");
+__RCSID("$NetBSD: show.c,v 1.45 2013/03/01 18:25:17 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,11 +132,6 @@ parse_show_opts(int argc, char * const *argv, int *afp, int *flagsp,
 #ifndef SMALL
 		case K_ATALK:
 			af = AF_APPLETALK;
-			afname = argv[argc - 1] + 1;
-			break;
-		case K_ISO:
-		case K_OSI:
-			af = AF_ISO;
 			afname = argv[argc - 1] + 1;
 			break;
 		case K_MPLS:
@@ -321,9 +316,6 @@ pr_family(int af)
 		break;
 #endif /* INET6 */
 #ifndef SMALL
-	case AF_ISO:
-		afname = "ISO";
-		break;
 	case AF_MPLS:
 		afname = "MPLS";
 		break;

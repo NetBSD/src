@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.7 2012/10/17 14:48:12 apb Exp $
+#	$NetBSD: NETBOOKPRO,v 1.8 2013/03/01 18:25:41 joerg Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 # estimated number of users
 maxusers	32
@@ -74,8 +74,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

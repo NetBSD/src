@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.74 2012/10/17 14:48:16 apb Exp $
+# $NetBSD: GENERIC,v 1.75 2013/03/01 18:25:51 joerg Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.74 $"
+#ident 		"GENERIC-$Revision: 1.75 $"
 
 maxusers	32
 
@@ -132,8 +132,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

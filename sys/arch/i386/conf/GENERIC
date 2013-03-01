@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1086 2012/12/25 10:51:03 mbalmer Exp $
+# $NetBSD: GENERIC,v 1.1087 2013/03/01 18:25:44 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1086 $"
+#ident 		"GENERIC-$Revision: 1.1087 $"
 
 maxusers	64		# estimated number of users
 
@@ -206,8 +206,6 @@ options 	INET6		# IPv6
 #options 	MPLS		# MultiProtocol Label Switching (needs ifmpls)
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

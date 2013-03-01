@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.88 2012/10/17 14:48:16 apb Exp $
+# $NetBSD: GENERIC,v 1.89 2013/03/01 18:25:51 joerg Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.88 $"
+#ident 		"GENERIC-$Revision: 1.89 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -93,8 +93,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

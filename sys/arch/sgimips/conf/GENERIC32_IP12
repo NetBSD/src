@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.16 2012/10/17 14:48:16 apb Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.17 2013/03/01 18:25:51 joerg Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -32,7 +32,7 @@ makeoptions	TEXTADDR=0x80002000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.16 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.17 $"
 
 maxusers	32
 
@@ -132,8 +132,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

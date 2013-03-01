@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1808 2013/03/01 18:15:37 pooka Exp $
+#	$NetBSD: mi,v 1.1809 2013/03/01 18:25:13 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1993,36 +1993,36 @@
 ./usr/include/netisdn/i4b_ioctl.h		comp-c-include
 ./usr/include/netisdn/i4b_rbch_ioctl.h		comp-c-include
 ./usr/include/netisdn/i4b_tel_ioctl.h		comp-c-include
-./usr/include/netisdn/i4b_trace.h		comp-c-include
-./usr/include/netiso/argo_debug.h		comp-c-include
-./usr/include/netiso/clnl.h			comp-c-include
-./usr/include/netiso/clnp.h			comp-c-include
-./usr/include/netiso/clnp_stat.h		comp-c-include
-./usr/include/netiso/cltp_var.h			comp-c-include
-./usr/include/netiso/cons.h			comp-c-include
+./usr/include/netisdn/i4b_trace.h		comp-obsolete		obsolete
+./usr/include/netiso/argo_debug.h		comp-obsolete		obsolete
+./usr/include/netiso/clnl.h			comp-obsolete		obsolete
+./usr/include/netiso/clnp.h			comp-obsolete		obsolete
+./usr/include/netiso/clnp_stat.h		comp-obsolete		obsolete
+./usr/include/netiso/cltp_var.h			comp-obsolete		obsolete
+./usr/include/netiso/cons.h			comp-obsolete		obsolete
 ./usr/include/netiso/cons_pcb.h			comp-obsolete		obsolete
-./usr/include/netiso/eonvar.h			comp-c-include
-./usr/include/netiso/esis.h			comp-c-include
-./usr/include/netiso/idrp_var.h			comp-c-include
-./usr/include/netiso/iso.h			comp-c-include
-./usr/include/netiso/iso_errno.h		comp-c-include
-./usr/include/netiso/iso_pcb.h			comp-c-include
-./usr/include/netiso/iso_snpac.h		comp-c-include
-./usr/include/netiso/iso_var.h			comp-c-include
-./usr/include/netiso/tp_clnp.h			comp-c-include
-./usr/include/netiso/tp_events.h		comp-c-include
-./usr/include/netiso/tp_ip.h			comp-c-include
-./usr/include/netiso/tp_meas.h			comp-c-include
-./usr/include/netiso/tp_param.h			comp-c-include
-./usr/include/netiso/tp_pcb.h			comp-c-include
-./usr/include/netiso/tp_seq.h			comp-c-include
-./usr/include/netiso/tp_stat.h			comp-c-include
-./usr/include/netiso/tp_states.h		comp-c-include
-./usr/include/netiso/tp_timer.h			comp-c-include
-./usr/include/netiso/tp_tpdu.h			comp-c-include
-./usr/include/netiso/tp_trace.h			comp-c-include
-./usr/include/netiso/tp_user.h			comp-c-include
-./usr/include/netiso/tp_var.h			comp-c-include
+./usr/include/netiso/eonvar.h			comp-obsolete		obsolete
+./usr/include/netiso/esis.h			comp-obsolete		obsolete
+./usr/include/netiso/idrp_var.h			comp-obsolete		obsolete
+./usr/include/netiso/iso.h			comp-obsolete		obsolete
+./usr/include/netiso/iso_errno.h		comp-obsolete		obsolete
+./usr/include/netiso/iso_pcb.h			comp-obsolete		obsolete
+./usr/include/netiso/iso_snpac.h		comp-obsolete		obsolete
+./usr/include/netiso/iso_var.h			comp-obsolete		obsolete
+./usr/include/netiso/tp_clnp.h			comp-obsolete		obsolete
+./usr/include/netiso/tp_events.h		comp-obsolete		obsolete
+./usr/include/netiso/tp_ip.h			comp-obsolete		obsolete
+./usr/include/netiso/tp_meas.h			comp-obsolete		obsolete
+./usr/include/netiso/tp_param.h			comp-obsolete		obsolete
+./usr/include/netiso/tp_pcb.h			comp-obsolete		obsolete
+./usr/include/netiso/tp_seq.h			comp-obsolete		obsolete
+./usr/include/netiso/tp_stat.h			comp-obsolete		obsolete
+./usr/include/netiso/tp_states.h		comp-obsolete		obsolete
+./usr/include/netiso/tp_timer.h			comp-obsolete		obsolete
+./usr/include/netiso/tp_tpdu.h			comp-obsolete		obsolete
+./usr/include/netiso/tp_trace.h			comp-obsolete		obsolete
+./usr/include/netiso/tp_user.h			comp-obsolete		obsolete
+./usr/include/netiso/tp_var.h			comp-obsolete		obsolete
 ./usr/include/netiso/tuba_table.h		comp-obsolete		obsolete
 ./usr/include/netkey/key.h			comp-obsolete		obsolete
 ./usr/include/netkey/key_debug.h		comp-obsolete		obsolete
@@ -5964,7 +5964,7 @@
 ./usr/share/man/cat3/isnormal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isns.0			comp-isns-catman		.cat
 ./usr/share/man/cat3/iso646.0			comp-c-catman		.cat
-./usr/share/man/cat3/iso_addr.0			comp-c-catman		.cat
+./usr/share/man/cat3/iso_addr.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/isprint.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ispunct.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isspace.0			comp-c-catman		.cat
@@ -12459,7 +12459,7 @@
 ./usr/share/man/html3/isns.html			comp-c-htmlman		html
 ./usr/share/man/html3/isns.html		comp-isns-htmlman		.html
 ./usr/share/man/html3/iso646.html		comp-c-htmlman		html
-./usr/share/man/html3/iso_addr.html		comp-c-htmlman		html
+./usr/share/man/html3/iso_addr.html		comp-obsolete		obsolete
 ./usr/share/man/html3/isprint.html		comp-c-htmlman		html
 ./usr/share/man/html3/ispunct.html		comp-c-htmlman		html
 ./usr/share/man/html3/isspace.html		comp-c-htmlman		html
@@ -18872,7 +18872,7 @@
 ./usr/share/man/man3/isnormal.3			comp-c-man		.man
 ./usr/share/man/man3/isns.3		comp-isns-man		.man
 ./usr/share/man/man3/iso646.3			comp-c-man		.man
-./usr/share/man/man3/iso_addr.3			comp-c-man		.man
+./usr/share/man/man3/iso_addr.3			comp-obsolete		obsolete
 ./usr/share/man/man3/isprint.3			comp-c-man		.man
 ./usr/share/man/man3/ispunct.3			comp-c-man		.man
 ./usr/share/man/man3/isspace.3			comp-c-man		.man

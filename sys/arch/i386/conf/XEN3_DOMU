@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.48 2013/01/24 13:58:41 bouyer Exp $
+# $NetBSD: XEN3_DOMU,v 1.49 2013/03/01 18:25:45 joerg Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -132,8 +132,6 @@ options 	INET6		# IPv6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

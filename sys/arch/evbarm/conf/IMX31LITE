@@ -1,4 +1,4 @@
-#	$NetBSD: IMX31LITE,v 1.20 2012/10/17 14:48:10 apb Exp $
+#	$NetBSD: IMX31LITE,v 1.21 2013/03/01 18:25:33 joerg Exp $
 #
 #	IMX31LITE -- Freescale IMX31LITE Evaluation Board Kernel
 #
@@ -63,8 +63,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

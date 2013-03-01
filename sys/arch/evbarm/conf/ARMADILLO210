@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.25 2012/10/17 14:48:10 apb Exp $
+#	$NetBSD: ARMADILLO210,v 1.26 2013/03/01 18:25:32 joerg Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -59,8 +59,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

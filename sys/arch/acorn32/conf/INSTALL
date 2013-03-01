@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.64 2012/12/06 06:25:24 msaitoh Exp $
+#	$NetBSD: INSTALL,v 1.65 2013/03/01 18:25:28 joerg Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.64 $"
+#ident		"INSTALL-$Revision: 1.65 $"
 
 # estimated number of users
 maxusers	32
@@ -81,8 +81,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

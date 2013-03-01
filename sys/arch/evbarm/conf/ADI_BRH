@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.60 2012/10/17 14:48:10 apb Exp $
+#	$NetBSD: ADI_BRH,v 1.61 2013/03/01 18:25:32 joerg Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -64,8 +64,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

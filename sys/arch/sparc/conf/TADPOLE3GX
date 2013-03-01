@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.58 2012/10/17 14:48:17 apb Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.59 2013/03/01 18:25:52 joerg Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -177,8 +177,6 @@ options 	INET		# IP (Internet Protocol) v4
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP

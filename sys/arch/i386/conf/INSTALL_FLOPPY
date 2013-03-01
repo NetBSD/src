@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.16 2012/06/05 08:44:13 abs Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.17 2013/03/01 18:25:44 joerg Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -133,8 +133,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
