@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.69 2013/03/01 14:05:43 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.70 2013/03/01 18:11:11 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -76,25 +76,25 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 # Support for component-specific hypercalls
 #
 
-.ifdef RUMPUSER_COMPONENT
-rumpuser_component.d: rumpuser_component.c
+.ifdef RUMPCOMP_USER
+rumpcomp_user.d: rumpcomp_user.c
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPUSER_COMPONENT_CPPFLAGS} ${.CURDIR}/rumpuser_component.c
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${.CURDIR}/rumpcomp_user.c
 
-rumpuser_component.o: rumpuser_component.c
+rumpcomp_user.o: rumpcomp_user.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPUSER_COMPONENT_CPPFLAGS} ${RUMPUSER_COMPONENT_CFLAGS} -c ${.CURDIR}/rumpuser_component.c
+	${CC} -o ${.TARGET} ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.CURDIR}/rumpcomp_user.c
 
-rumpuser_component.pico: rumpuser_component.c
+rumpcomp_user.pico: rumpcomp_user.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} -fPIC -DPIC ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPUSER_COMPONENT_CPPFLAGS} ${RUMPUSER_COMPONENT_CFLAGS} -c ${.CURDIR}/rumpuser_component.c
+	${CC} -o ${.TARGET} -fPIC -DPIC ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.CURDIR}/rumpcomp_user.c
 
-rumpuser_component.po: rumpuser_component.c
+rumpcomp_user.po: rumpcomp_user.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPUSER_COMPONENT_CPPFLAGS} ${RUMPUSER_COMPONENT_CFLAGS} -c ${.CURDIR}/rumpuser_component.c
+	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.CURDIR}/rumpcomp_user.c
 
-RUMPUSER_OBJ=rumpuser_component.*o
-SRCS+=rumpuser_component.c
+RUMPCOMP_USEROBJ=rumpcomp_user.*o
+SRCS+=rumpcomp_user.c
 .endif
 
 #
@@ -157,7 +157,7 @@ __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
 .endif
-	for obj in ${RUMP_SYMREN:U${.ALLSRC:N${RUMPUSER_OBJ}}}; do \
+	for obj in ${RUMP_SYMREN:U${.ALLSRC:N${RUMPCOMP_USEROBJ}}}; do \
 		${NM} -go $${obj} | ${TOOL_AWK} ' \
 		    $$NF!~/^'${_PQ}'(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
 		      {s=$$NF;sub(/^'${_PQ}'/, "&rumpns_", s); print $$NF, s}'\
