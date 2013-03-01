@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.40 2011/11/22 21:25:39 tls Exp $
+# $NetBSD: VME,v 1.41 2013/03/01 18:25:53 joerg Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.40 $"
+#ident 		"VME-$Revision: 1.41 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -85,8 +85,6 @@ options 	INET		# IP protocol stack support
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

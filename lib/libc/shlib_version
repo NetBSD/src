@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.236 2012/10/24 20:14:55 joerg Exp $
+#	$NetBSD: shlib_version,v 1.237 2013/03/01 18:25:16 joerg Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -7,6 +7,7 @@
 # - md2, md4, md5, rmd160 & sha1 functions should take the same arguments AFAP
 # - Crypto hashes have name overlap with libcrypto, rename them
 # - libc/gen/assert.c: __{diag,}assert13() -> __{diag,}assert()
+# - lib/libc/net/iso_addr.c: remove
 # - libc/gen/times.c: remove; __times13() -> times()
 # - libc/gen/timezone.c: remove; __timezone13 -> timezone
 # - libc/net/getaddrinfo.c, netdb.h: remove __ai_pad0

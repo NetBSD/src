@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.52 2012/10/17 14:48:17 apb Exp $
+# $NetBSD: INSTALL,v 1.53 2013/03/01 18:25:54 joerg Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -89,8 +89,6 @@ options 	WAPBL		# File system journaling support
 # Networking options
 options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

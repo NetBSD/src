@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.58 2009/03/14 14:46:10 dsl Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.59 2013/03/01 18:25:58 joerg Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,10 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.58 2009/03/14 14:46:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.59 2013/03/01 18:25:58 joerg Exp $");
 
 #include "opt_inet.h"
-#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,12 +135,6 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		break;
 	    }
-#endif
-#ifdef ISO
-	case AF_ISO:
-		proto = IPPROTO_EON;
-		itos = 0;
-		break;
 #endif
 	default:
 #ifdef DEBUG
@@ -276,11 +269,6 @@ in6_gif_input(struct mbuf **mp, int *offp, int proto)
 			ip6_ecn_egress(ECN_NOCARE, &otos, &ip6x->ip6_flow);
 		break;
 	    }
-#endif
-#ifdef ISO
-	case IPPROTO_EON:
-		af = AF_ISO;
-		break;
 #endif
 	default:
 		IP6_STATINC(IP6_STAT_NOGIF);

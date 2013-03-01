@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.8 2012/10/17 14:48:11 apb Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.9 2013/03/01 18:25:35 joerg Exp $
 #
 #  OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -79,8 +79,6 @@ options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

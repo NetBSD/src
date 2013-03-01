@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.46 2011/11/11 15:09:32 gdt Exp $
+.\"	$NetBSD: route.8,v 1.47 2013/03/01 18:25:17 joerg Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd August 6, 2006
+.Dd February 5, 2013
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -148,7 +148,6 @@ command is specified,
 .Nm
 will ``flush'' the routing tables of all gateway entries.
 When the address family is specified by any of the
-.Fl osi ,
 .Fl xns ,
 .Fl atalk ,
 .Fl inet ,
@@ -230,13 +229,11 @@ indicating the interface to be used for transmission.
 .Pp
 The optional modifiers
 .Fl xns ,
-.Fl osi ,
 .Fl atalk ,
 and
 .Fl link
 specify that all subsequent addresses are in the
 .Tn XNS ,
-.Tn OSI ,
 or
 .Tn AppleTalk
 address families,
@@ -260,7 +257,6 @@ The optional
 .Fl netmask
 qualifier is intended
 to achieve the effect of an
-.Tn OSI
 .Tn ESIS
 redirect with the netmask option,
 or to manually add subnet routes with
@@ -324,10 +320,7 @@ In a
 or
 .Cm add
 command where the destination and gateway are not sufficient to specify
-the route (as in the
-.Tn ISO
-case where several interfaces may have the
-same address), the
+the route the
 .Fl ifp
 or
 .Fl ifa
