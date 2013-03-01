@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.73 2012/09/14 16:29:21 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.74 2013/03/01 13:52:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -27,6 +27,10 @@
 
 #ifndef _RUMP_RUMPUSER_H_
 #define _RUMP_RUMPUSER_H_
+
+#if !defined(_KERNEL) && !defined(LIBRUMPUSER)
+#error The rump/rumpuser.h interface is not for non-kernel consumers
+#endif
 
 #ifdef _KERNEL
 #include <sys/stdint.h>
