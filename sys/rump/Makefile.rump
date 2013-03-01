@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.68 2012/11/22 21:21:21 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.69 2013/03/01 14:05:43 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -73,6 +73,31 @@ CPPFLAGS+=	-DPPC_OEA
 DPSRCS+=	${RUMPTOP}/Makefile.rump
 
 #
+# Support for component-specific hypercalls
+#
+
+.ifdef RUMPUSER_COMPONENT
+rumpuser_component.d: rumpuser_component.c
+	${_MKTARGET_CREATE}
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPUSER_COMPONENT_CPPFLAGS} ${.CURDIR}/rumpuser_component.c
+
+rumpuser_component.o: rumpuser_component.c
+	${_MKTARGET_COMPILE}
+	${CC} -o ${.TARGET} ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPUSER_COMPONENT_CPPFLAGS} ${RUMPUSER_COMPONENT_CFLAGS} -c ${.CURDIR}/rumpuser_component.c
+
+rumpuser_component.pico: rumpuser_component.c
+	${_MKTARGET_COMPILE}
+	${CC} -o ${.TARGET} -fPIC -DPIC ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPUSER_COMPONENT_CPPFLAGS} ${RUMPUSER_COMPONENT_CFLAGS} -c ${.CURDIR}/rumpuser_component.c
+
+rumpuser_component.po: rumpuser_component.c
+	${_MKTARGET_COMPILE}
+	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPUSER_COMPONENT_CPPFLAGS} ${RUMPUSER_COMPONENT_CFLAGS} -c ${.CURDIR}/rumpuser_component.c
+
+RUMPUSER_OBJ=rumpuser_component.*o
+SRCS+=rumpuser_component.c
+.endif
+
+#
 # Rename library symbols before use.  If a symbol does not already belong
 # to a rump namespace ("rump" or "RUMP"), prefix it with "rumpns".  This
 # avoids accidentally linking any kernel symbol against host platform
@@ -131,17 +156,19 @@ __archivebuild: .USE
 .else
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 .endif
-	${NM} -go ${RUMP_SYMREN:U${.TARGET}} | ${TOOL_AWK} '	\
-	    $$NF!~/^'${_PQ}'(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
-	      {s = $$NF; sub(/^'${_PQ}'/, "&rumpns_", s); print $$NF, s}' \
-	    | sort | uniq  > renametab.${.TARGET}
-	${OBJCOPY} --preserve-dates --redefine-syms \
-	    renametab.${.TARGET} ${RUMP_SYMREN:U${.TARGET}}
-	rm -f renametab.${.TARGET}
+	for obj in ${RUMP_SYMREN:U${.ALLSRC:N${RUMPUSER_OBJ}}}; do \
+		${NM} -go $${obj} | ${TOOL_AWK} ' \
+		    $$NF!~/^'${_PQ}'(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
+		      {s=$$NF;sub(/^'${_PQ}'/, "&rumpns_", s); print $$NF, s}'\
+		    | sort | uniq  > renametab.$${obj}; \
+		${OBJCOPY} --preserve-dates --redefine-syms \
+		    renametab.$${obj} $${obj}; \
+		rm -f renametab.$${obj}; \
+	done
 .if !defined(RUMP_SYMREN)
-	${AR} ${_ARRANFL} ${.TARGET}
+	${AR} ${_ARFL} ${.TARGET} \
+	    `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 .endif
 
 _BSD_IOCONF_MK_USER_=1
