@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.7 2013/02/16 21:40:38 jmmv Exp $
+# $NetBSD: md.amd64,v 1.8 2013/03/01 18:15:39 pooka Exp $
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/lib/i386/i18n/libBIG5.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
@@ -133,7 +133,7 @@
 ./usr/libdata/debug/usr/lib/i386/librumpdev.so.0.0.debug	comp-compat-shlib	compat,pic,debug,rump
 ./usr/libdata/debug/usr/lib/i386/librumphijack.so.0.0.debug	comp-compat-shlib	compat,pic,debug,rump
 ./usr/libdata/debug/usr/lib/i386/librumpnet.so.0.0.debug	comp-compat-shlib	compat,pic,debug,rump
-./usr/libdata/debug/usr/lib/i386/librumpuser.so.0.0.debug	comp-compat-shlib	compat,pic,debug,rump
+./usr/libdata/debug/usr/lib/i386/librumpuser.so.0.1.debug	comp-compat-shlib	compat,pic,debug,rump
 ./usr/libdata/debug/usr/lib/i386/librumpvfs.so.0.0.debug	comp-compat-shlib	compat,pic,debug,rump
 ./usr/libdata/debug/usr/lib/i386/libsaslc.so.0.0.debug	comp-compat-shlib	compat,pic,crypto,debug
 ./usr/libdata/debug/usr/lib/i386/libskey.so.2.0.debug	comp-compat-shlib	compat,pic,skey,debug
