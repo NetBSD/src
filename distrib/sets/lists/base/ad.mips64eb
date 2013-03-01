@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.114 2013/02/16 21:40:08 jmmv Exp $
+# $NetBSD: ad.mips64eb,v 1.115 2013/03/01 18:15:36 pooka Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -244,7 +244,7 @@
 ./usr/lib/64/librumpnet.so.0			base-compat-shlib	compat,pic,rump
 ./usr/lib/64/librumpnet.so.0.0			base-compat-shlib	compat,pic,rump
 ./usr/lib/64/librumpuser.so.0			base-compat-shlib	compat,pic,rump
-./usr/lib/64/librumpuser.so.0.0			base-compat-shlib	compat,pic,rump
+./usr/lib/64/librumpuser.so.0.1			base-compat-shlib	compat,pic,rump
 ./usr/lib/64/librumpvfs.so.0			base-compat-shlib	compat,pic,rump
 ./usr/lib/64/librumpvfs.so.0.0			base-compat-shlib	compat,pic,rump
 ./usr/lib/64/libsaslc.so.0			base-compat-shlib	compat,pic,crypto
@@ -560,7 +560,7 @@
 ./usr/lib/o32/librumpnet.so.0			base-compat-shlib	compat,pic,rump
 ./usr/lib/o32/librumpnet.so.0.0			base-compat-shlib	compat,pic,rump
 ./usr/lib/o32/librumpuser.so.0			base-compat-shlib	compat,pic,rump
-./usr/lib/o32/librumpuser.so.0.0		base-compat-shlib	compat,pic,rump
+./usr/lib/o32/librumpuser.so.0.1		base-compat-shlib	compat,pic,rump
 ./usr/lib/o32/librumpvfs.so.0			base-compat-shlib	compat,pic,rump
 ./usr/lib/o32/librumpvfs.so.0.0			base-compat-shlib	compat,pic,rump
 ./usr/lib/o32/libsaslc.so.0			base-compat-shlib	compat,pic,crypto
