@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.60 2012/10/17 14:48:11 apb Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.61 2013/03/01 18:25:38 joerg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs266"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.60 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.61 $"
 
 maxusers	32
 
@@ -122,8 +122,6 @@ options 	INET6		# IPv6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options        DIRECTED_BROADCAST      # allow broadcasts through routers
-options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

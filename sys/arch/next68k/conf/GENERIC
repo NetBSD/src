@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.128 2012/10/17 14:48:15 apb Exp $
+# $NetBSD: GENERIC,v 1.129 2013/03/01 18:25:50 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.128 $"
+#ident 		"GENERIC-$Revision: 1.129 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -134,8 +134,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

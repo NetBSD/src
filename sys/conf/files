@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1064 2013/02/22 15:59:14 christos Exp $
+#	$NetBSD: files,v 1.1065 2013/03/01 18:25:55 joerg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -196,7 +196,6 @@ include "netbt/files.netbt"
 include "netinet/files.netinet"
 include "netinet6/files.netinet6"
 include "netipsec/files.netipsec"
-include "netiso/files.netiso"
 include "netmpls/files.netmpls"
 include "netnatm/files.netnatm"
 include "netsmb/files.netsmb"
@@ -210,7 +209,6 @@ obsolete defflag		HDLC		# obsolete
 obsolete defflag		LLC		# obsolete
 obsolete defflag opt_ns.h	NS NSIP		# obsolete
 obsolete defflag		IPX		# obsolete
-obsolete defflag opt_iso.h	TPCONS
 obsolete defparam opt_md.h	MEMORY_RBFLAGS	# superseded by
 						# MEMORY_DISK_RBFLAGS
 

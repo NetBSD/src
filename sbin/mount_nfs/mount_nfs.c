@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.69 2011/08/29 14:35:02 joerg Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.70 2013/03/01 18:25:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.69 2011/08/29 14:35:02 joerg Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.70 2013/03/01 18:25:17 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,10 +51,6 @@ __RCSID("$NetBSD: mount_nfs.c,v 1.69 2011/08/29 14:35:02 joerg Exp $");
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <syslog.h>
-
-#ifdef ISO
-#include <netiso/iso.h>
-#endif
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -116,9 +112,6 @@ static const struct mntopt mopts[] = {
 	{ "rdirplus", 0, ALTF_RDIRPLUS, 1 },
 	{ "mntudp", 0, ALTF_MNTUDP, 1 },
 	{ "resport", 1, ALTF_NORESPORT, 1 },
-#ifdef ISO
-	{ "seqpacket", 0, ALTF_SEQPACKET, 1 },
-#endif
 	{ "nqnfs", 0, ALTF_NQNFS, 1 },
 	{ "soft", 0, ALTF_SOFT, 1 },
 	{ "tcp", 0, ALTF_TCP, 1 },
@@ -167,9 +160,6 @@ int mnttcp_ok = 1;
 int port = 0;
 
 static void	shownfsargs(const struct nfs_args *);
-#ifdef ISO
-static struct	iso_addr *iso_addr(const char *);
-#endif
 int	mount_nfs(int argc, char **argv);
 /* void	set_rpc_maxgrouplist(int); */
 __dead static void	usage(void);
@@ -315,10 +305,6 @@ mount_nfs_parseargs(int argc, char *argv[],
 				mnttcp_ok = 0;
 			if (altflags & ALTF_NORESPORT)
 				nfsargsp->flags &= ~NFSMNT_RESVPORT;
-#ifdef ISO
-			if (altflags & ALTF_SEQPACKET)
-				nfsargsp->sotype = SOCK_SEQPACKET;
-#endif
 			if (altflags & ALTF_SOFT)
 				nfsargsp->flags |= NFSMNT_SOFT;
 			if (altflags & ALTF_TCP) {
@@ -397,11 +383,6 @@ mount_nfs_parseargs(int argc, char *argv[],
 			nfsargsp->rsize = num;
 			nfsargsp->flags |= NFSMNT_RSIZE;
 			break;
-#ifdef ISO
-		case 'S':
-			nfsargsp->sotype = SOCK_SEQPACKET;
-			break;
-#endif
 		case 's':
 			nfsargsp->flags |= NFSMNT_SOFT;
 			break;

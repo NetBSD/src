@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.41 2012/08/17 20:11:38 abs Exp $
+# $NetBSD: RPC44,v 1.42 2013/03/01 18:25:29 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.41 $"
+#ident		"GENERIC-$Revision: 1.42 $"
 
 maxusers	32		# estimated number of users
 
@@ -123,8 +123,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

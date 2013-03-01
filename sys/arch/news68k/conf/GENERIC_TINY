@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.72 2012/10/17 14:48:15 apb Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.73 2013/03/01 18:25:49 joerg Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.72 $"
+#ident 		"GENERIC_TINY-$Revision: 1.73 $"
 
 maxusers	4
 
@@ -97,8 +97,6 @@ options 	INET6		# IPV6
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

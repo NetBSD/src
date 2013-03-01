@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.49 2012/10/17 14:48:11 apb Exp $
+#	$NetBSD: EXPLORA451,v 1.50 2013/03/01 18:25:38 joerg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -114,8 +114,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
