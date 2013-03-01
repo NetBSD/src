@@ -1,4 +1,4 @@
-#	$NetBSD: VERSION,v 1.4 2013/01/31 19:16:11 pooka Exp $
+#	$NetBSD: VERSION,v 1.5 2013/03/01 18:57:59 pooka Exp $
 #
 # Since cvs does not provide a version number for the entire tree, provide
 # identifiers which can be used by external parties to check if the NetBSD
@@ -9,4 +9,4 @@
 # when date is bumped.
 #
 
-BUILDRUMP=20130131:0
+BUILDRUMP=20130301:0
