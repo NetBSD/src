@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.39 2012/10/17 14:48:17 apb Exp $
+# $NetBSD: MRCOFFEE,v 1.40 2013/03/01 18:25:52 joerg Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.39 $"
+#ident 		"MRCOFFEE-$Revision: 1.40 $"
 
 maxusers	32
 
@@ -206,8 +206,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
-options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP

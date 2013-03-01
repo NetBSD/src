@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.350 2012/12/27 14:39:39 skrll Exp $
+# $NetBSD: ALL,v 1.351 2013/03/01 18:25:43 joerg Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.350 $"
+#ident 		"ALL-$Revision: 1.351 $"
 
 maxusers	64		# estimated number of users
 
@@ -217,8 +217,6 @@ options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 options 	MPLS		# MultiProtocol Label Switching (needs ifmpls)
 options 	MROUTING	# IP multicast routing
 options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
-options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

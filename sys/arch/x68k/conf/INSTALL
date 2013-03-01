@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.96 2012/11/10 17:40:09 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.97 2013/03/01 18:25:54 joerg Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.96 $"
+#ident 		"INSTALL-$Revision: 1.97 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -191,8 +191,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP

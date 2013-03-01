@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.75 2011/06/20 09:43:27 kefren Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.76 2013/03/01 18:25:56 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,11 +65,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.75 2011/06/20 09:43:27 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.76 2013/03/01 18:25:56 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
-#include "opt_iso.h"
 #include "opt_ipx.h"
 #include "opt_mbuftrace.h"
 #include "opt_mpls.h"
@@ -111,11 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.75 2011/06/20 09:43:27 kefren Exp $");
 #ifdef IPX
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
-#endif
-
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
 #endif
 
 #ifdef MPLS
@@ -309,12 +303,6 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		isr = NETISR_IPV6;
 		break;
 #endif
-#ifdef ISO
-	case AF_ISO:
-		ifq = &clnlintrq;
-		isr = NETISR_ISO;
-		break;
-#endif
 #ifdef IPX
 	case AF_IPX:
 		ifq = &ipxintrq;
@@ -385,12 +373,6 @@ lostart(struct ifnet *ifp)
 			isr = NETISR_IPX;
 			break;
 #endif
-#ifdef ISO
-		case AF_ISO:
-			ifq = &clnlintrq;
-			isr = NETISR_ISO;
-			break;
-#endif
 #ifdef NETATALK
 		case AF_APPLETALK:
 			ifq = &atintrq2;
@@ -445,7 +427,7 @@ loioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		ifa = (struct ifaddr *)data;
-		if (ifa != NULL /*&& ifa->ifa_addr->sa_family == AF_ISO*/)
+		if (ifa != NULL)
 			ifa->ifa_rtrequest = lortrequest;
 		/*
 		 * Everything else is done at a higher level.
@@ -456,7 +438,6 @@ loioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((unsigned)ifr->ifr_mtu > LOMTU_MAX)
 			error = EINVAL;
 		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET){
-			/* XXX update rt mtu for AF_ISO? */
 			error = 0;
 		}
 		break;

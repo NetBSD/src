@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.133 2012/10/17 14:48:13 apb Exp $
+#	$NetBSD: GENERIC_TINY,v 1.134 2013/03/01 18:25:44 joerg Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -113,8 +113,6 @@ options 	FFS_NO_SNAPSHOT	# No FF snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

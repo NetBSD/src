@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.47 2011/11/22 21:25:27 tls Exp $
+#	$NetBSD: MMTAROMNEW,v 1.48 2013/03/01 18:25:48 joerg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -100,8 +100,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
