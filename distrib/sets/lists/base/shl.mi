@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.651 2013/02/16 21:40:13 jmmv Exp $
+# $NetBSD: shl.mi,v 1.652 2013/03/01 18:15:36 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -650,7 +650,7 @@
 ./usr/lib/librumpnet_virtif.so.0.0		base-rump-shlib	rump
 ./usr/lib/librumpuser.so			base-rump-shlib	rump
 ./usr/lib/librumpuser.so.0			base-rump-shlib	rump
-./usr/lib/librumpuser.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpuser.so.0.1			base-rump-shlib	rump
 ./usr/lib/librumphijack.so			base-rump-shlib	rump
 ./usr/lib/librumphijack.so.0			base-rump-shlib	rump
 ./usr/lib/librumphijack.so.0.0			base-rump-shlib	rump
