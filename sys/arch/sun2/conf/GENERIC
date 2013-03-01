@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.84 2012/10/17 14:48:17 apb Exp $
+# $NetBSD: GENERIC,v 1.85 2013/03/01 18:25:53 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.84 $"
+#ident 		"GENERIC-$Revision: 1.85 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -112,8 +112,6 @@ options 	INET		# IP protocol stack support
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

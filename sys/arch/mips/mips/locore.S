@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.189 2011/11/13 15:57:57 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.190 2013/03/01 18:25:47 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,6 @@
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_iso.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 

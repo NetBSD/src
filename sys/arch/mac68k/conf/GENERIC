@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.208 2012/10/17 14:48:14 apb Exp $
+# $NetBSD: GENERIC,v 1.209 2013/03/01 18:25:47 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.208 $"
+#ident 		"GENERIC-$Revision: 1.209 $"
 
 maxusers	16		# estimated number of users
 
@@ -140,8 +140,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

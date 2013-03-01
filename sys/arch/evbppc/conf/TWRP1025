@@ -1,4 +1,4 @@
-#	$NetBSD: TWRP1025,v 1.8 2012/10/17 14:48:11 apb Exp $
+#	$NetBSD: TWRP1025,v 1.9 2013/03/01 18:25:38 joerg Exp $
 #
 #	TWRP1025 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"TWRP1025-$Revision: 1.8 $"
+ident 		"TWRP1025-$Revision: 1.9 $"
 
 maxusers	32
 
@@ -112,8 +112,6 @@ options 	UDP_CSUM_COUNTERS
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options        DIRECTED_BROADCAST      # allow broadcasts through routers
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

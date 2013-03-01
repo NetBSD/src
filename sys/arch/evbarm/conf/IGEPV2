@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.14 2012/12/19 07:54:41 msaitoh Exp $
+#	$NetBSD: IGEPV2,v 1.15 2013/03/01 18:25:33 joerg Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -65,8 +65,6 @@ options 	INET6		# IPV6
 #options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks

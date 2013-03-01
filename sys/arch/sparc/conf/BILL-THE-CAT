@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.52 2012/03/11 06:18:46 nakayama Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.53 2013/03/01 18:25:52 joerg Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -164,8 +164,6 @@ options 	INET		# IP (Internet Protocol) v4
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP

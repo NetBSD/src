@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.56 2011/11/22 21:25:27 tls Exp $
+#	$NetBSD: VME147,v 1.57 2013/03/01 18:25:48 joerg Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -35,9 +35,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 # Networking options
 options 	INET
 #options 	GATEWAY		# IP packet forwarding
-#options 	ISO		# OSI networking
-#options 	TPIP
-#options 	EON
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out

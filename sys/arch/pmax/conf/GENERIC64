@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.11 2012/08/17 20:11:41 abs Exp $
+# $NetBSD: GENERIC64,v 1.12 2013/03/01 18:25:50 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.11 $"
+#ident		"GENERIC-$Revision: 1.12 $"
 
 maxusers	64
 
@@ -105,9 +105,6 @@ options 	INET6		# IPV6
 options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO		# OSI networking
-#options 	TPIP		# TPIP
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.75 2012/10/19 19:50:19 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.76 2013/03/01 18:26:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.75 2012/10/19 19:50:19 msaitoh Exp $");
+__RCSID("$NetBSD: if.c,v 1.76 2013/03/01 18:26:11 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,8 +51,6 @@ __RCSID("$NetBSD: if.c,v 1.75 2012/10/19 19:50:19 msaitoh Exp $");
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
 #include <arpa/inet.h>
 
 #include <kvm.h>
@@ -248,7 +246,6 @@ union ifaddr_u {
 #ifdef INET6
 	struct in6_ifaddr in6;
 #endif /* INET6 */
-	struct iso_ifaddr iso;
 };
 
 static void
