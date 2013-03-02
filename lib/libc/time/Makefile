@@ -2,8 +2,11 @@
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
+# Package name for the code distribution.
+PACKAGE=	tzcode
+
 # Version numbers of the code and data distributions.
-VERSION =	2013a
+VERSION=	2013a
 
 # Email address for bug reports.
 BUGEMAIL=	tz@iana.org
@@ -118,8 +121,6 @@ LDLIBS=
 #  -DNO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU=1
 #	if you do not want run time warnings about formats that may cause
 #	year 2000 grief
-#  -DNO_ERROR_IN_DST_GAP=1
-#	if you want mktime() not to return an error in the DST gap.
 #  -DZIC_MAX_ABBR_LEN_WO_WARN=3
 #	(or some other number) to set the maximum time zone abbreviation length
 #	that zic will accept without a warning (the default is 6)
@@ -246,6 +247,7 @@ KSHELL=		/bin/bash
 
 # The path where SGML DTDs are kept.
 # The default is appropriate for Ubuntu 12.10.
+SGML_TOPDIR= /usr
 SGML_DTDDIR= $(SGML_TOPDIR)/share/xml/w3c-sgml-lib/schema/dtd
 SGML_SEARCH_PATH= $(SGML_DTDDIR)/REC-html401-19991224
 
@@ -478,11 +480,12 @@ tzcode$(VERSION).tar.gz: $(COMMON) $(DOCS) $(SOURCES) $(MISC)
 		  LC_ALL=C sh workman.sh $$i > $$i.txt && \
 		  touch -r $$i $$i.txt || exit; \
 		done
-		$(AWK) -f checktab.awk $(PRIMARY_YDATA)
 		LC_ALL=C && export LC_ALL && \
 		tar $(TARFLAGS) -cf - \
 		    $(COMMON) $(DOCS) $(SOURCES) $(MISC) *.[1-8].txt | \
-		  gzip $(GZIPFLAGS) > tzcode$(VERSION).tar.gz
+		  gzip $(GZIPFLAGS) > $@
+
+tzdata$(VERSION).tar.gz: $(COMMON) $(DATA)
 		LC_ALL=C && export LC_ALL && \
 		tar $(TARFLAGS) -cf - $(COMMON) $(DATA) | \
 		  gzip $(GZIPFLAGS) > $@
