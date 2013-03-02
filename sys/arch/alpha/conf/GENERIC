@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.347 2013/03/01 18:25:28 joerg Exp $
+# $NetBSD: GENERIC,v 1.348 2013/03/02 02:42:08 christos Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.347 $"
+ident		"GENERIC-$Revision: 1.348 $"
 
 maxusers 32
 
@@ -104,7 +104,6 @@ options 	NFSSERVER	# Sun NFS-compatible file system server
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing

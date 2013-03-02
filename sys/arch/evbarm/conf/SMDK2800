@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.50 2013/03/01 18:25:36 joerg Exp $
+#	$NetBSD: SMDK2800,v 1.51 2013/03/02 02:42:12 christos Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -66,7 +66,6 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing

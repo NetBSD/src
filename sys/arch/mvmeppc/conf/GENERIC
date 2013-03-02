@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.16 2012/08/17 20:11:40 abs Exp $
+# $NetBSD: GENERIC,v 1.17 2013/03/02 02:42:18 christos Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.16 $"
+ident		"GENERIC-$Revision: 1.17 $"
 
 maxusers	8
 
@@ -71,7 +71,6 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
