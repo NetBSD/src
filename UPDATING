@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.241 2012/10/03 19:17:00 wiz Exp $
+$NetBSD: UPDATING,v 1.242 2013/03/02 07:32:59 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20130301:
+	The removal of netiso requires manual removal of /usr/include/netiso
+	prior to the build.
 
 20120726:
 	The update of OpenSSL requires cleaning both the OpenSSL build
