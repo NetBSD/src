@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.42 2013/03/02 16:35:18 christos Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.43 2013/03/02 18:37:19 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.42 2013/03/02 16:35:18 christos Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.43 2013/03/02 18:37:19 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -765,7 +765,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-468Edn] [-e char] [-l username] [-p port] "
+	    "Usage: %s [-468dEn] [-e char] [-l username] [-p port] "
 	    "[username@]host\n", getprogname());
 	exit(1);
 }
