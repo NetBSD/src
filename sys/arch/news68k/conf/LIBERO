@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.56 2012/10/17 14:48:15 apb Exp $
+# 	$NetBSD: LIBERO,v 1.57 2013/03/02 02:42:18 christos Exp $
 
 #	NEWS1750 config file;
 #
@@ -80,7 +80,6 @@ options 	FFS_NO_SNAPSHOT	# FFS snapshot support
 options 	INET		# Internet protocols
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding

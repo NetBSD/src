@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.134 2013/03/01 18:25:30 joerg Exp $
+# $NetBSD: GENERIC,v 1.135 2013/03/02 02:42:10 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.134 $"
+#ident 		"GENERIC-$Revision: 1.135 $"
 
 maxusers	32
 
@@ -113,7 +113,6 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing

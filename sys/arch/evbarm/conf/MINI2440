@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.8 2013/03/01 18:25:34 joerg Exp $
+#	$NetBSD: MINI2440,v 1.9 2013/03/02 02:42:11 christos Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -84,7 +84,6 @@ options 	WAPBL		# File system journaling support - Experimental
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing

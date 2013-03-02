@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.166 2013/03/01 18:25:28 joerg Exp $
+# $NetBSD: DRACO,v 1.167 2013/03/02 02:42:09 christos Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.166 $"
+#ident 		"GENERIC-$Revision: 1.167 $"
 
 
 maxusers	8
@@ -51,7 +51,6 @@ options 	M060SP		# MC68060 software support (Required for 060)
 options 	INET		# IP networking support (Required)
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding
