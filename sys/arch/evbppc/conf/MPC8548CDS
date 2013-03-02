@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8548CDS,v 1.15 2013/03/01 18:25:38 joerg Exp $
+#	$NetBSD: MPC8548CDS,v 1.16 2013/03/02 02:42:13 christos Exp $
 #
 #	MPC8548CDS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8548CDS-$Revision: 1.15 $"
+ident 		"MPC8548CDS-$Revision: 1.16 $"
 
 maxusers	32
 
@@ -108,7 +108,6 @@ options 	TCP_CSUM_COUNTERS
 options 	UDP_CSUM_COUNTERS
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing

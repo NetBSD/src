@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.116 2013/02/01 14:48:15 phx Exp $
+# $NetBSD: INSTALL,v 1.117 2013/03/02 02:42:09 christos Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.116 $"
+#ident 		"GENERIC-$Revision: 1.117 $"
 
 makeoptions	COPTS="-Os"
 
@@ -64,7 +64,6 @@ options 	FPU_EMULATE	# FPU emulation
 options 	INET		# IP networking support (Required)
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding

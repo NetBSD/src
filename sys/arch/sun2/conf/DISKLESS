@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.46 2013/03/01 18:25:53 joerg Exp $
+# $NetBSD: DISKLESS,v 1.47 2013/03/02 02:42:21 christos Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DISKLESS-$Revision: 1.46 $"
+#ident 		"DISKLESS-$Revision: 1.47 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -78,7 +78,6 @@ file-system	PTYFS		# /dev/pts/N support
 options 	INET		# IP protocol stack support
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding

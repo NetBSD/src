@@ -1,4 +1,4 @@
-#	$NetBSD: DB120,v 1.7 2013/03/01 18:25:37 joerg Exp $
+#	$NetBSD: DB120,v 1.8 2013/03/02 02:42:13 christos Exp $
 #
 # Qualcomm Atheros AR9344 DB120 evaluation board.
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DB120-$Revision: 1.7 $"
+#ident 		"DB120-$Revision: 1.8 $"
 
 maxusers	32
 
@@ -104,7 +104,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
