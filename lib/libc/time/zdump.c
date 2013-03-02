@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.27 2013/01/31 15:47:53 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.28 2013/03/02 21:24:28 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.27 2013/01/31 15:47:53 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.28 2013/03/02 21:24:28 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -254,8 +254,8 @@ usage(FILE *const stream, const int status)
 	(void) fprintf(stream,
 _("%s: usage is %s [ --version ] [ --help ] [ -v ] [ -c [loyear,]hiyear ] zonename ...\n\
 \n\
-Report bugs to tz@elsie.nci.nih.gov.\n"),
-		       progname, progname);
+Report bugs to %s.\n"),
+		       progname, progname, REPORT_BUGS_TO);
 	exit(status);
 }
 
@@ -291,7 +291,7 @@ main(int argc, char *argv[])
 	progname = argv[0];
 	for (i = 1; i < argc; ++i)
 		if (strcmp(argv[i], "--version") == 0) {
-			(void) printf("%s\n", TZVERSION);
+			(void) printf("zdump %s%s\n", PKGVERSION, TZVERSION);
 			exit(EXIT_SUCCESS);
 		} else if (strcmp(argv[i], "--help") == 0) {
 			usage(stdout, EXIT_SUCCESS);
