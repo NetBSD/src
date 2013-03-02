@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.46 2013/03/01 18:25:37 joerg Exp $
+#	$NetBSD: ALCHEMY,v 1.47 2013/03/02 02:42:13 christos Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.46 $"
+#ident 		"ALCHEMY-$Revision: 1.47 $"
 
 maxusers	32
 
@@ -99,7 +99,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets

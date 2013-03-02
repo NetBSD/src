@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.367 2013/03/01 18:25:28 joerg Exp $
+# $NetBSD: GENERIC,v 1.368 2013/03/02 02:42:08 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.367 $"
+#ident 		"GENERIC-$Revision: 1.368 $"
 
 maxusers	64		# estimated number of users
 
@@ -177,7 +177,6 @@ options 	NFSSERVER	# Network File System server
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MPLS		# MultiProtocol Label Switching (needs ifmpls)

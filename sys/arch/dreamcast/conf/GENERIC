@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110 2013/03/01 18:25:31 joerg Exp $
+# $NetBSD: GENERIC,v 1.111 2013/03/02 02:42:11 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -104,7 +104,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing

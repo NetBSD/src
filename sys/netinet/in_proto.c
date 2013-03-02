@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.104 2013/03/01 18:25:58 joerg Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.105 2013/03/02 02:42:22 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.104 2013/03/01 18:25:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.105 2013/03/02 02:42:22 christos Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -167,9 +167,6 @@ PR_WRAP_CTLOUTPUT(tcp_ctloutput)
 PR_WRAP_CTLINPUT(ah4_ctlinput)
 
 #define	ah4_ctlinput	ah4_ctlinput_wrapper
-#endif
-
-#if defined(IPSEC_ESP) || defined(FAST_IPSEC)
 PR_WRAP_CTLINPUT(esp4_ctlinput)
 
 #define	esp4_ctlinput	esp4_ctlinput_wrapper

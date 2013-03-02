@@ -1,10 +1,10 @@
-#	$NetBSD: WGT624V3,v 1.16 2013/03/01 18:25:37 joerg Exp $
+#	$NetBSD: WGT624V3,v 1.17 2013/03/02 02:42:13 christos Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"WGT624V3-$Revision: 1.16 $"
+#ident 		"WGT624V3-$Revision: 1.17 $"
 
 maxusers	32
 
@@ -98,7 +98,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets

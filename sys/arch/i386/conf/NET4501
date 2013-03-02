@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.78 2013/03/01 18:25:45 joerg Exp $
+# $NetBSD: NET4501,v 1.79 2013/03/02 02:42:15 christos Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.78 $"
+#ident 		"NET4501-$Revision: 1.79 $"
 
 maxusers	32		# estimated number of users
 
@@ -133,7 +133,6 @@ options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	MROUTING	# IP multicast routing

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.50 2012/10/17 14:49:41 apb Exp $
+# $NetBSD: INSTALL,v 1.51 2013/03/02 02:42:14 christos Exp $
 #
 # INSTALL machine description file
 #
@@ -93,7 +93,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP forwarding

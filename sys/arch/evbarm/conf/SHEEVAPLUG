@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.28 2013/03/01 18:25:35 joerg Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.29 2013/03/02 02:42:12 christos Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -75,7 +75,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing

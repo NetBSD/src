@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.112 2013/03/01 18:25:49 joerg Exp $
+# $NetBSD: GENERIC,v 1.113 2013/03/02 02:42:18 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.112 $"
+#ident 		"GENERIC-$Revision: 1.113 $"
 
 maxusers	8
 
@@ -113,7 +113,6 @@ options 	WAPBL		# File system journaling support
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding

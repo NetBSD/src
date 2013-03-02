@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.174 2013/03/01 18:25:40 joerg Exp $
+# $NetBSD: GENERIC,v 1.175 2013/03/02 02:42:14 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.174 $"
+#ident 		"GENERIC-$Revision: 1.175 $"
 
 maxusers	32		# estimated number of users
 
@@ -133,7 +133,6 @@ options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	GATEWAY		# IP forwarding

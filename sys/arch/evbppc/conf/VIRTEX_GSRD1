@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD1,v 1.17 2013/03/01 18:25:39 joerg Exp $
+#	$NetBSD: VIRTEX_GSRD1,v 1.18 2013/03/02 02:42:14 christos Exp $
 #
 # VIRTEX_GSRD1
 #
@@ -104,7 +104,6 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing

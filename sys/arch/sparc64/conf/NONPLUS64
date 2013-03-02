@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.36 2013/03/01 18:25:52 joerg Exp $
+# 	$NetBSD: NONPLUS64,v 1.37 2013/03/02 02:42:21 christos Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.36 $"
+#ident		"NONPLUS64-$Revision: 1.37 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -157,7 +157,6 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	INET		# IP (Internet Protocol) v4
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions

@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.94 2013/03/01 18:25:42 joerg Exp $
+#	$NetBSD: TX3922,v 1.95 2013/03/02 02:42:15 christos Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -74,7 +74,6 @@ file-system	PTYFS		# /dev/pts/N support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support

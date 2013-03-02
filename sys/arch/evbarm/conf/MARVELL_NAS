@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.10 2013/03/01 18:25:34 joerg Exp $
+#	$NetBSD: MARVELL_NAS,v 1.11 2013/03/02 02:42:11 christos Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -70,7 +70,6 @@ options 	NFSSERVER	# Network File System server
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing

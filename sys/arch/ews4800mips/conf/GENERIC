@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.40 2013/03/01 18:25:39 joerg Exp $
+# $NetBSD: GENERIC,v 1.41 2013/03/02 02:42:14 christos Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.40 $"
+#ident		"GENERIC-$Revision: 1.41 $"
 
 maxusers	16
 
@@ -129,7 +129,6 @@ options 	NFSSERVER	# Network File System server
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing

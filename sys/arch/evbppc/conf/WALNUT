@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.61 2013/03/01 18:25:39 joerg Exp $
+#	$NetBSD: WALNUT,v 1.62 2013/03/02 02:42:13 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -98,7 +98,6 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing

@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.64 2012/08/17 20:11:37 abs Exp $
+#	$NetBSD: P4032,v 1.65 2013/03/02 02:42:08 christos Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.64 $"
+#ident 		"P4032-$Revision: 1.65 $"
 
 maxusers 32
 
@@ -54,7 +54,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
-options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 

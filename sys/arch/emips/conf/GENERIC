@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.7 2013/03/01 18:25:32 joerg Exp $
+# $NetBSD: GENERIC,v 1.8 2013/03/02 02:42:16 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/emips/conf/std.emips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.7 $"
+#ident		"GENERIC-$Revision: 1.8 $"
 
 maxusers	64
 
@@ -99,7 +99,6 @@ options 	FFS_EI		# FFS Endian Independent support
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding

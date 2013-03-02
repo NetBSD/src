@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.165 2013/03/01 18:25:54 joerg Exp $
+# $NetBSD: GENERIC,v 1.166 2013/03/02 02:42:22 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.165 $"
+#ident 		"GENERIC-$Revision: 1.166 $"
 
 maxusers	8
 
@@ -201,7 +201,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP (Internet Protocol) v4
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding ("router switch")

@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.61 2013/03/01 18:25:38 joerg Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.62 2013/03/02 02:42:13 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs266"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.61 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.62 $"
 
 maxusers	32
 
@@ -116,7 +116,6 @@ options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
