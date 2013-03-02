@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.34 2012/10/25 15:04:05 martin Exp $	*/
+/*	$NetBSD: zic.c,v 1.35 2013/03/02 21:24:28 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.34 2012/10/25 15:04:05 martin Exp $");
+__RCSID("$NetBSD: zic.c,v 1.35 2013/03/02 21:24:28 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -442,8 +442,8 @@ usage(FILE *stream, int status)
 [ --version ] [ --help ] [ -v ] [ -l localtime ] [ -p posixrules ] \\\n\
 \t[ -d directory ] [ -L leapseconds ] [ -y yearistype ] [ filename ... ]\n\
 \n\
-Report bugs to tz@elsie.nci.nih.gov.\n"),
-		       progname, progname);
+Report bugs to %s.\n"),
+		       progname, progname, REPORT_BUGS_TO);
 	exit(status);
 }
 
@@ -478,7 +478,7 @@ main(int argc, char *argv[])
 	}
 	for (i = 1; i < argc; ++i)
 		if (strcmp(argv[i], "--version") == 0) {
-			(void) printf("%s\n", TZVERSION);
+			(void) printf("zic %s%s\n", PKGVERSION, TZVERSION);
 			exit(EXIT_SUCCESS);
 		} else if (strcmp(argv[i], "--help") == 0) {
 			usage(stdout, EXIT_SUCCESS);
@@ -1761,7 +1761,7 @@ stringoffset(char *result, long offset)
 	minutes = offset % MINSPERHOUR;
 	offset /= MINSPERHOUR;
 	hours = offset;
-	if (hours >= HOURSPERDAY) {
+	if (hours > HOURSPERDAY) {
 		result[0] = '\0';
 		return -1;
 	}
@@ -1865,7 +1865,9 @@ stringzone(char *result, const int resultlen, const struct zone *const zpfirst,
 			rp = &zp->z_rules[i];
 			if (stdrp == NULL || rp->r_hiyear > stdrp->r_hiyear ||
 				(rp->r_hiyear == stdrp->r_hiyear &&
-				rp->r_month > stdrp->r_month))
+				(rp->r_month > stdrp->r_month ||
+				(rp->r_month == stdrp->r_month &&
+				rp->r_dayofmonth > stdrp->r_dayofmonth))))
 					stdrp = rp;
 		}
 		if (stdrp != NULL && stdrp->r_stdoff != 0)
@@ -2550,8 +2552,8 @@ newabbr(const char *const string)
 				++cp;
 		if (cp - string == 0)
 mp = _("time zone abbreviation lacks alphabetic at start");
-		if (noise && cp - string > 3)
-mp = _("time zone abbreviation has more than 3 alphabetics");
+		if (noise && cp - string < 3)
+mp = _("time zone abbreviation has fewer than 3 alphabetics");
 		if (cp - string > ZIC_MAX_ABBR_LEN_WO_WARN)
 mp = _("time zone abbreviation has too many alphabetics");
 		if (mp == NULL && (*cp == '+' || *cp == '-')) {
