@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.351 2013/03/01 18:25:43 joerg Exp $
+# $NetBSD: ALL,v 1.352 2013/03/02 02:42:16 christos Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.351 $"
+#ident 		"ALL-$Revision: 1.352 $"
 
 maxusers	64		# estimated number of users
 
@@ -211,7 +211,6 @@ options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 options 	IPSEC		# IP security
-options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	MPLS		# MultiProtocol Label Switching (needs ifmpls)

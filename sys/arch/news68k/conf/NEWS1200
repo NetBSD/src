@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.54 2013/03/01 18:25:49 joerg Exp $
+# 	$NetBSD: NEWS1200,v 1.55 2013/03/02 02:42:18 christos Exp $
 
 #	news1200 config file
 #
@@ -82,7 +82,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
