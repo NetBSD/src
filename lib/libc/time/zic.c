@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.35 2013/03/02 21:24:28 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.36 2013/03/02 21:39:48 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.35 2013/03/02 21:24:28 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.36 2013/03/02 21:39:48 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -160,8 +160,8 @@ static int		leapseen;
 static int		leapminyear;
 static int		leapmaxyear;
 static int		linenum;
-static int		max_abbrvar_len;
-static int		max_format_len;
+static size_t		max_abbrvar_len;
+static size_t		max_format_len;
 static int		max_year;
 static int		min_year;
 static int		noise;
@@ -1598,7 +1598,7 @@ writezone(const char *const name, const char *const string)
 		thistypecnt = 0;
 		for (i = 0; i < typecnt; ++i)
 			typemap[i] = writetype[i] ?  thistypecnt++ : -1;
-		for (i = 0; i < sizeof indmap / sizeof indmap[0]; ++i)
+		for (i = 0; i < (int)(sizeof indmap / sizeof indmap[0]); ++i)
 			indmap[i] = -1;
 		thischarcnt = 0;
 		for (i = 0; i < typecnt; ++i) {
@@ -1928,8 +1928,8 @@ outzone(const struct zone *const zpfirst, const int zonecount)
 	char *			startbuf;
 	char *			ab;
 	char *			envvar;
-	int			max_abbr_len;
-	int			max_envvar_len;
+	size_t			max_abbr_len;
+	size_t			max_envvar_len;
 	int			prodstic; /* all rules are min to max */
 
 	max_abbr_len = 2 + max_format_len + max_abbrvar_len;
