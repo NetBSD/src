@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.41 2011/09/06 18:28:35 joerg Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.42 2013/03/02 16:35:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.41 2011/09/06 18:28:35 joerg Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.42 2013/03/02 16:35:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: rlogin.c,v 1.41 2011/09/06 18:28:35 joerg Exp $");
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
 
 #include <err.h>
 #include <errno.h>
@@ -72,7 +73,6 @@ __RCSID("$NetBSD: rlogin.c,v 1.41 2011/09/06 18:28:35 joerg Exp $");
 #include <unistd.h>
 
 #include "getport.h"
-
 
 #ifndef TIOCPKT_WINDOW
 #define	TIOCPKT_WINDOW	0x80
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 	struct termios tty;
 	sigset_t smask;
 	uid_t uid;
-	int argoff, ch, dflag, one;
+	int argoff, ch, dflag, nflag, one;
 	int i, len, len2;
 	int family = AF_UNSPEC;
 	char *host, *p, *user, *name, term[1024] = "network";
@@ -143,7 +143,7 @@ main(int argc, char *argv[])
 	char *service = NULL;
 	struct rlimit rlim;
 
-	argoff = dflag = 0;
+	argoff = dflag = nflag = 0;
 	one = 1;
 	host = user = NULL;
 	sp = NULL;
@@ -160,7 +160,7 @@ main(int argc, char *argv[])
 		argoff = 1;
 	}
 
-#define	OPTIONS	"468dEe:l:p:"
+#define	OPTIONS	"468dEe:l:np:"
 	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != -1)
 		switch(ch) {
 		case '4':
@@ -184,6 +184,9 @@ main(int argc, char *argv[])
 			break;
 		case 'l':
 			user = optarg;
+			break;
+		case 'n':
+			nflag = 1;
 			break;
 		case 'p':
 			sp = getport(service = optarg, "tcp");
@@ -258,34 +261,34 @@ main(int argc, char *argv[])
 	(void)sigaction(SIGURG, &sa, (struct sigaction *) 0);
 	sa.sa_handler = writeroob;
 	(void)sigaction(SIGUSR1, &sa, (struct sigaction *) 0);
-	
+
 	/* don't dump core */
 	rlim.rlim_cur = rlim.rlim_max = 0;
 	if (setrlimit(RLIMIT_CORE, &rlim) < 0)
 		warn("setrlimit");
 
 	rem = rcmd_af(&host, sp->s_port, name, user, term, 0, family);
-
-
 	if (rem < 0)
 		exit(1);
 
 	if (dflag &&
 	    setsockopt(rem, SOL_SOCKET, SO_DEBUG, &one, sizeof(one)) < 0)
 		warn("setsockopt DEBUG (ignored)");
-    {
-	struct sockaddr_storage ss;
-	socklen_t sslen;
-	sslen = sizeof(ss);
-	if (getsockname(rem, (struct sockaddr *)&ss, &sslen) == 0
-	 && ((struct sockaddr *)&ss)->sa_family == AF_INET) {
-		one = IPTOS_LOWDELAY;
-		if (setsockopt(rem, IPPROTO_IP, IP_TOS, (char *)&one,
-				sizeof(int)) < 0) {
-			warn("setsockopt TOS (ignored)");
+	if (nflag &&
+	    setsockopt(rem, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
+		warn("setsockopt NODELAY (ignored)");
+
+	{
+		struct sockaddr_storage ss;
+		socklen_t sslen = sizeof(ss);
+		if (getsockname(rem, (struct sockaddr *)&ss, &sslen) == 0
+		     && ((struct sockaddr *)&ss)->sa_family == AF_INET) {
+			one = IPTOS_LOWDELAY;
+			if (setsockopt(rem, IPPROTO_IP, IP_TOS, (char *)&one,
+			    sizeof(int)) < 0)
+				warn("setsockopt TOS (ignored)");
 		}
 	}
-    }
 
 	(void)setuid(uid);
 	doit(&smask);
@@ -471,14 +474,14 @@ writer(void)
 				continue;
 			}
 			if (c != escapechar) {
-					(void)write(rem, &escapechar, 1);
+				(void)write(rem, &escapechar, 1);
 			}
 		}
 
-			if (write(rem, &c, 1) == 0) {
-				msg("line gone");
-				break;
-			}
+		if (write(rem, &c, 1) == 0) {
+			msg("line gone");
+			break;
+		}
 
 		bol = CCEQ(deftty.c_cc[VKILL], c) ||
 		    CCEQ(deftty.c_cc[VEOF], c) ||
@@ -559,7 +562,7 @@ sendwindow(void)
 	wp->ws_xpixel = htons(winsize.ws_xpixel);
 	wp->ws_ypixel = htons(winsize.ws_ypixel);
 
-		(void)write(rem, obuf, sizeof(obuf));
+	(void)write(rem, obuf, sizeof(obuf));
 }
 
 /*
@@ -689,8 +692,7 @@ reader(sigset_t *smask)
 		rcvcnt = 0;
 		rcvstate = READING;
 
-			rcvcnt = read(rem, rcvbuf, sizeof (rcvbuf));
-
+		rcvcnt = read(rem, rcvbuf, sizeof (rcvbuf));
 		if (rcvcnt == 0)
 			return (0);
 		if (rcvcnt < 0) {
@@ -759,13 +761,12 @@ msg(const char *str)
 	(void)fprintf(stderr, "rlogin: %s\r\n", str);
 }
 
-
 static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: rlogin [-%s]%s[-e char] [-l username] [-p port] [username@]host\n",
-	    "468Ed", " ");
+	    "Usage: %s [-468Edn] [-e char] [-l username] [-p port] "
+	    "[username@]host\n", getprogname());
 	exit(1);
 }
 

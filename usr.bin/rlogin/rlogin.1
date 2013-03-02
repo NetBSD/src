@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlogin.1,v 1.25 2005/07/16 12:35:59 rpaulo Exp $
+.\"	$NetBSD: rlogin.1,v 1.26 2013/03/02 16:35:17 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)rlogin.1	8.2 (Berkeley) 4/29/95
 .\"
-.Dd July 16, 2005
+.Dd March 2, 2013
 .Dt RLOGIN 1
 .Os
 .Sh NAME
@@ -37,20 +37,20 @@
 .Nd remote login
 .Sh SYNOPSIS
 .Nm
-.Op Fl 468Ed
+.Op Fl 468dEn
 .Op Fl e Ar char
 .Op Fl l Ar username
 .Op Fl p Ar port
 .Ar host
 .Nm
-.Op Fl 468Ed
+.Op Fl 468dEn
 .Op Fl e Ar char
 .Op Fl p Ar port
 .Ar username@host
 .Sh DESCRIPTION
 .Nm
 starts a terminal session on a remote host
-.Ar host  .
+.Ar host .
 .Pp
 .Nm
 first attempts to use the standard Berkeley
@@ -69,6 +69,12 @@ option allows an eight-bit input data path at all times; otherwise
 parity bits are stripped except when the remote side's stop and start
 characters are other than
 .Sq \&^S/^Q .
+.It Fl d
+The
+.Fl d
+option turns on socket debugging (see
+.Xr setsockopt 2 )
+on the TCP sockets used for communication with the remote host.
 .It Fl E
 The
 .Fl E
@@ -76,12 +82,6 @@ option stops any character from being recognized as an escape character.
 When used with the
 .Fl 8
 option, this provides a completely transparent connection.
-.It Fl d
-The
-.Fl d
-option turns on socket debugging (see
-.Xr setsockopt 2 )
-on the TCP sockets used for communication with the remote host.
 .It Fl e Ar char
 The
 .Fl e
@@ -97,6 +97,12 @@ option specifies an alternate
 .Ar username
 for the remote login.
 If this option is not specified, your local username will be used.
+.It Fl n
+Set the
+.Dv TCP_NODELAY
+socket option,
+which can improve interactive responsiveness at the possible downside of
+increased network load.
 .It Fl p Ar port
 Uses the given
 .Ar port
