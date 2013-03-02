@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.71 2012/04/20 18:35:28 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.72 2013/03/02 21:25:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.71 2012/04/20 18:35:28 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.72 2013/03/02 21:25:12 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2822,7 +2822,7 @@ foldtst(tnode_t *tn)
 
 	switch (tn->tn_op) {
 	case NOT:
-		if (hflag)
+		if (hflag && !ccflg)
 			/* constant argument to NOT */
 			warning(239);
 		v->v_quad = !l;
