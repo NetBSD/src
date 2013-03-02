@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.242 2013/03/02 07:32:59 christos Exp $
+$NetBSD: UPDATING,v 1.243 2013/03/02 08:51:42 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,7 +18,7 @@ Recent changes:
 
 20130301:
 	The removal of netiso requires manual removal of /usr/include/netiso
-	prior to the build.
+	prior to the build and make cleandir in /usr/src/usr.bin/{ktruss,kdump}
 
 20120726:
 	The update of OpenSSL requires cleaning both the OpenSSL build
