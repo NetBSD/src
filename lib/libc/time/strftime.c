@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.23 2012/10/24 00:10:03 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.24 2013/03/02 21:24:28 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -6,14 +6,16 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.23 2012/10/24 00:10:03 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.24 2013/03/02 21:24:28 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 /*
-** Based on the UCB version with the ID appearing below.
+** Based on the UCB version with the copyright notice and sccsid
+** appearing below.
+**
 ** This is ANSIish only when "multibyte character == plain character".
 */
 
