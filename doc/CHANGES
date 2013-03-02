@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1798 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1799 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -206,3 +206,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		version of atf-run and atf-report that use kyua(1) internally.
 		[jmmv 20130223]
 	kernel: Retire OSI protocol support.  [joerg 20130301]
+	libc: Update to tzcode2013a. [christos 20130302]
