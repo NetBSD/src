@@ -1,14 +1,9 @@
-#	$NetBSD: Makefile,v 1.10 2012/10/25 15:14:36 martin Exp $
+#	$NetBSD: Makefile,v 1.11 2013/03/02 21:38:19 christos Exp $
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45
-WARNS?=	2	# XXX -Wcast-qual in lib/libc/time
-.else
-# warning with older gcc:
-# "comparison is always false due to limited range of data type"
-# and no way to make it shut up?
-WARNS=		0
-NOGCCERROR=	1
-.endif
+.include "Makefile.inc"
+
+COPTS.zic.c	+= -Wno-format-nonliteral
+COPTS.scheck.c	+= -Wno-format-nonliteral
 
 .include <bsd.own.mk>
 
