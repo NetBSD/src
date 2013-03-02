@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.48 2013/03/01 18:25:35 joerg Exp $
+#	$NetBSD: NAPPI,v 1.49 2013/03/02 02:42:11 christos Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -58,7 +58,6 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing

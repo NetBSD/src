@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.41 2013/03/01 18:25:27 joerg Exp $
+# $NetBSD: FOURMEG,v 1.42 2013/03/02 02:42:07 christos Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -64,7 +64,6 @@ options 	EXEC_SCRIPT
 options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
