@@ -6,7 +6,10 @@
 PACKAGE=	tzcode
 
 # Version numbers of the code and data distributions.
-VERSION=	2012j
+VERSION=	2013a
+
+# Email address for bug reports.
+BUGEMAIL=	tz@iana.org
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -243,9 +246,10 @@ AWK=		awk
 KSHELL=		/bin/bash
 
 # The path where SGML DTDs are kept.
-# The default is appropriate for Ubuntu.
+# The default is appropriate for Ubuntu 12.10.
 SGML_TOPDIR= /usr
-SGML_SEARCH_PATH= $(SGML_TOPDIR)/share/xml/xhtml/schema/dtd/REC-html401-19991224
+SGML_DTDDIR= $(SGML_TOPDIR)/share/xml/w3c-sgml-lib/schema/dtd
+SGML_SEARCH_PATH= $(SGML_DTDDIR)/REC-html401-19991224
 
 # The catalog file(s) to use when validating.
 SGML_CATALOG_FILES= HTML4.cat
@@ -260,6 +264,17 @@ VALIDATE_ENV = \
   SGML_SEARCH_PATH=$(SGML_SEARCH_PATH) \
   SP_CHARSET_FIXED=YES \
   SP_ENCODING=UTF-8
+
+# INVALID_CHAR is a regular expression that matches invalid characters in
+# distributed files.  For now, stick to a safe subset of ASCII.
+# The caller must set the shell variable 'sharp' to the character '#',
+# since Makefile macros cannot contain '#'.
+# TAB_CHAR is a single tab character, in single quotes.
+TAB_CHAR=	'	'
+INVALID_CHAR1=	$(TAB_CHAR)' !\"'$$sharp'$$%&'\''()*+,./0123456789:;<=>?@'
+INVALID_CHAR2=	'ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\^_`'
+INVALID_CHAR3=	'abcdefghijklmnopqrstuvwxyz{|}~'
+INVALID_CHAR=	'[^]'$(INVALID_CHAR1)$(INVALID_CHAR2)$(INVALID_CHAR3)'-]'
 
 # Flags to give 'tar' when making a distribution.
 # Try to use flags appropriate for GNU tar.
@@ -344,7 +359,8 @@ INSTALL:	ALL install date.1
 
 version.h:
 		(echo 'static char const PKGVERSION[]="($(PACKAGE)) ";' && \
-		 echo 'static char const TZVERSION[]="$(VERSION)";') >$@
+		 echo 'static char const TZVERSION[]="$(VERSION)";' && \
+		 echo 'static char const REPORT_BUGS_TO[]="$(BUGEMAIL)";') >$@
 
 zdump:		$(TZDOBJS)
 		$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(TZDOBJS) $(LDLIBS)
@@ -396,12 +412,16 @@ tzselect:	tzselect.ksh
 			-e 's|#!/bin/bash|#!$(KSHELL)|g' \
 			-e 's|AWK=[^}]*|AWK=$(AWK)|g' \
 			-e 's|\(PKGVERSION\)=.*|\1='\''($(PACKAGE)) '\''|' \
+			-e 's|\(REPORT_BUGS_TO\)=.*|\1=$(BUGEMAIL)|' \
 			-e 's|TZDIR=[^}]*|TZDIR=$(TZDIR)|' \
 			-e 's|\(TZVERSION\)=.*|\1=$(VERSION)|' \
 			<$? >$@
 		chmod +x $@
 
-check:		check_tables check_web
+check:		check_character_set check_tables check_web
+
+check_character_set: $(ENCHILADA)
+		sharp='#'; ! grep -n $(INVALID_CHAR) $(ENCHILADA)
 
 check_tables:	checktab.awk $(PRIMARY_YDATA)
 		$(AWK) -f checktab.awk $(PRIMARY_YDATA)
