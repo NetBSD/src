@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.207 2013/02/27 14:19:38 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.208 2013/03/03 20:20:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.207 2013/02/27 14:19:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.208 2013/03/03 20:20:14 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -1014,9 +1014,8 @@ bge_miibus_writereg(device_t dev, int phy, int reg, int val)
 	}
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906 &&
-	    (reg == BRGPHY_MII_1000CTL || reg == BRGPHY_MII_AUXCTL)) {
+	    (reg == BRGPHY_MII_1000CTL || reg == BRGPHY_MII_AUXCTL))
 		return;
-	}
 
 	/* Reading with autopolling on may trigger PCI errors */
 	autopoll = CSR_READ_4(sc, BGE_MI_MODE);
@@ -1111,8 +1110,6 @@ bge_set_thresh(struct ifnet *ifp, int lvl)
 	sc->bge_rx_max_coal_bds = bge_rx_threshes[lvl].rx_max_bds;
 	sc->bge_pending_rxintr_change = 1;
 	splx(s);
-
-	 return;
 }
 
 
@@ -1655,6 +1652,7 @@ bge_setmulti(struct bge_softc *sc)
 static void
 bge_sig_pre_reset(struct bge_softc *sc, int type)
 {
+
 	/*
 	 * Some chips don't like this so only do this if ASF is enabled
 	 */
@@ -2306,7 +2304,7 @@ bge_blockinit(struct bge_softc *sc)
 
 	val = BGE_WDMAMODE_ENABLE | BGE_WDMAMODE_ALL_ATTNS;
 
-	/* Enable host coalescing bug fix; see Linux tg3.c */
+	/* Enable host coalescing bug fix */
 	if (BGE_IS_5755_PLUS(sc))
 		val |= BGE_WDMAMODE_STATUS_TAG_FIX;
 
@@ -3229,7 +3227,8 @@ bge_reset(struct bge_softc *sc)
 		devctl = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 		    sc->bge_pciecap + PCI_PCIE_DCSR);
 		/* Clear enable no snoop and disable relaxed ordering. */
-		devctl &= ~(0x0010 | PCI_PCIE_DCSR_ENA_NO_SNOOP);
+		devctl &= ~(PCI_PCIE_DCSR_ENA_RELAX_ORD |
+		    PCI_PCIE_DCSR_ENA_NO_SNOOP);
 		/* Set PCIE max payload size to 128. */
 		devctl &= ~(0x00e0);
 		/* Clear device status register. Write 1b to clear */
@@ -4675,7 +4674,7 @@ bge_stop(struct ifnet *ifp, int disable)
 	bge_writembx(sc, BGE_MBX_IRQ0_LO, 1);
 
 	/*
-	 * Disable all of the receiver blocks
+	 * Disable all of the receiver blocks.
 	 */
 	bge_stop_block(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
 	bge_stop_block(sc, BGE_RBDI_MODE, BGE_RBDIMODE_ENABLE);
@@ -4687,7 +4686,7 @@ bge_stop(struct ifnet *ifp, int disable)
 	bge_stop_block(sc, BGE_RBDC_MODE, BGE_RBDCMODE_ENABLE);
 
 	/*
-	 * Disable all of the transmit blocks
+	 * Disable all of the transmit blocks.
 	 */
 	bge_stop_block(sc, BGE_SRS_MODE, BGE_SRSMODE_ENABLE);
 	bge_stop_block(sc, BGE_SBDI_MODE, BGE_SBDIMODE_ENABLE);
