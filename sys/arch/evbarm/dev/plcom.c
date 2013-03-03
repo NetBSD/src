@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.43 2012/10/10 21:54:13 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.44 2013/03/03 10:26:18 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.43 2012/10/10 21:54:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.44 2013/03/03 10:26:18 mlelstv Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -537,7 +537,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 	 * Allow kgdb to "take over" this port.  If this is
 	 * the kgdb device, it has exclusive use.
 	 */
-	if (bus_space_is_equal(iot, plcomkgdb_info.pi_iot) &&
+	if (bus_space_is_equal(pi->pi_iot, plcomkgdb_info.pi_iot) &&
 	    pi->pi_iobase == plcomkgdb_info.pi_iobase) {
 		if (!ISSET(sc->sc_hwflags, PLCOM_HW_CONSOLE)) {
 			plcom_kgdb_attached = 1;
@@ -2481,15 +2481,14 @@ plcom_kgdb_attach(struct plcom_instance *pi, int rate, int frequency,
 int
 plcom_kgdb_getc(void *arg)
 {
-
-	return plcom_common_getc(NODEV, plcom_kgdb_iot, plcom_kgdb_ioh);
+	return plcom_common_getc(NODEV, &plcomkgdb_info);
 }
 
 /* ARGSUSED */
 void
 plcom_kgdb_putc(void *arg, int c)
 {
-	plcom_common_putc(NODEV, plcom_kgdb_iot, plcom_kgdb_ioh, c);
+	plcom_common_putc(NODEV, &plcomkgdb_info, c);
 }
 #endif /* KGDB */
 
@@ -2509,7 +2508,7 @@ plcom_is_console(bus_space_tag_t iot, bus_addr_t iobase,
 	else if (!plcom_kgdb_attached &&
 	    bus_space_is_equal(iot, plcomkgdb_info.pi_iot) &&
 	    iobase == plcomkgdb_info.pi_iobase) 
-		help = plcom_kgdb_ioh;
+		help = plcomkgdb_info.pi_ioh;
 #endif
 	else
 		return 0;
