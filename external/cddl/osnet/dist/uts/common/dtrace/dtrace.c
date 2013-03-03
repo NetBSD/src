@@ -16605,7 +16605,7 @@ static int		dtrace_unload(void);
 #include <dtrace_hacks.c>
 #include <dtrace_isa.c>
 
-MODULE(MODULE_CLASS_MISC, dtrace, "solaris");
+MODULE(MODULE_CLASS_DRIVER, dtrace, "solaris");
 
 #if 0
 DEV_MODULE(dtrace, dtrace_modevent, NULL);
