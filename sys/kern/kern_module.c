@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.87 2013/02/12 19:14:50 christos Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.88 2013/03/03 16:55:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.87 2013/02/12 19:14:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.88 2013/03/03 16:55:26 christos Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -99,6 +99,15 @@ static void	module_enqueue(module_t *);
 static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 
 static void	sysctl_module_setup(void);
+#define MODULE_CLASS_MATCH(mi, class) \
+	((class) == MODULE_CLASS_ANY || (class) == (mi)->mi_class)
+
+static void
+module_incompat(const modinfo_t *mi, int class)
+{
+	module_error("incompatible module class for `%s' (%d != %d)",
+	    mi->mi_name, class, mi->mi_class);
+}
 
 /*
  * module_error:
@@ -451,8 +460,12 @@ module_init_class(modclass_t class)
 	do {
 		TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 			mi = mod->mod_info;
-			if (class != MODULE_CLASS_ANY && class != mi->mi_class)
+			if (!MODULE_CLASS_MATCH(mi, class)) {
+#ifdef DIAGNOSTIC
+				module_incompat(mi, class);
+#endif
 				continue;
+			}
 			/*
 			 * If initializing a builtin module fails, don't try
 			 * to load it again.  But keep it around and queue it
@@ -478,8 +491,12 @@ module_init_class(modclass_t class)
 	do {
 		TAILQ_FOREACH(mod, &module_bootlist, mod_chain) {
 			mi = mod->mod_info;
-			if (class != MODULE_CLASS_ANY && class != mi->mi_class)
+			if (!MODULE_CLASS_MATCH(mi, class)) {
+#ifdef DIAGNOSTIC
+				module_incompat(mi, class);
+#endif
 				continue;
+			}
 			module_do_load(mi->mi_name, false, 0, NULL, NULL,
 			    class, false);
 			break;
@@ -913,6 +930,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		error = module_load_vfs_vec(name, flags, autoload, mod,
 					    &filedict);
 		if (error != 0) {
+			module_error("vfs load failed %d for `%s'", error,
+			    name);
 			kmem_free(mod, sizeof(*mod));
 			depth--;
 			return error;
@@ -951,9 +970,8 @@ module_do_load(const char *name, bool isdep, int flags,
 	 * If a specific kind of module was requested, ensure that we have
 	 * a match.
 	 */
-	if (class != MODULE_CLASS_ANY && class != mi->mi_class) {
-		module_print("incompatible module class for `%s' (%d != %d)",
-		    name, class, mi->mi_class);
+	if (!MODULE_CLASS_MATCH(mi, class)) {
+		module_incompat(mi, class);
 		error = ENOENT;
 		goto fail;
 	}
@@ -1031,8 +1049,11 @@ module_do_load(const char *name, bool isdep, int flags,
 			}
 			error = module_do_load(buf, true, flags, NULL,
 			    &mod2, MODULE_CLASS_ANY, true);
-			if (error != 0)
+			if (error != 0) {
+				module_error("recursive load failed for `%s'",
+				    mi->mi_name);
 				goto fail;
+			}
 			mod->mod_required[mod->mod_nrequired++] = mod2;
 		}
 	}
