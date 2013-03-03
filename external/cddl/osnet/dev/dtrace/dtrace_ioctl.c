@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_ioctl.c,v 1.3 2011/08/31 21:57:16 christos Exp $	*/
+/*	$NetBSD: dtrace_ioctl.c,v 1.4 2013/03/03 18:16:35 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -647,6 +647,8 @@ dtrace_ioctl(struct file *fp, u_long cmd, void *addr)
 		DTRACE_IOCTL_PRINTF("%s(%d): DTRACEIOC_PROVIDER\n",__func__,__LINE__);
 
 		pvd->dtvd_name[DTRACE_PROVNAMELEN - 1] = '\0';
+		error = 0;
+again:
 		mutex_enter(&dtrace_provider_lock);
 
 		for (pvp = dtrace_provider; pvp != NULL; pvp = pvp->dtpv_next) {
@@ -655,6 +657,13 @@ dtrace_ioctl(struct file *fp, u_long cmd, void *addr)
 		}
 
 		mutex_exit(&dtrace_provider_lock);
+
+		if (pvp == NULL && error == 0) {
+			error = module_autoload(pvd->dtvd_name,
+			    MODULE_CLASS_MISC);
+			if (error == 0)
+				goto again;
+		}
 
 		if (pvp == NULL)
 			return (ESRCH);
@@ -758,16 +767,15 @@ dtrace_ioctl(struct file *fp, u_long cmd, void *addr)
 		return (0);
 	}
 	case DTRACEIOC_STOP: {
-		int rval;
 		processorid_t *cpuid = (processorid_t *) addr;
 
 		DTRACE_IOCTL_PRINTF("%s(%d): DTRACEIOC_STOP\n",__func__,__LINE__);
 
 		mutex_enter(&dtrace_lock);
-		rval = dtrace_state_stop(state, cpuid);
+		error = dtrace_state_stop(state, cpuid);
 		mutex_exit(&dtrace_lock);
 
-		return (rval);
+		return (error);
 	}
 	default:
 		error = ENOTTY;
