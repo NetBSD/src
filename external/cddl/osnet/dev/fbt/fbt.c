@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.11 2012/06/16 17:31:47 chs Exp $	*/
+/*	$NetBSD: fbt.c,v 1.12 2013/03/03 18:18:13 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -1463,12 +1463,14 @@ fbt_getargdesc(void *arg __unused, dtrace_id_t id __unused, void *parg, dtrace_a
 	n = CTF_INFO_VLEN(info);
 
 	if (kind == CTF_K_UNKNOWN && n == 0) {
-		printf("%s(%d): Unknown function!\n",__func__,__LINE__);
+		printf("%s(%d): Unknown function %s!\n",__func__,__LINE__,
+		    fbt->fbtp_name);
 		return;
 	}
 
 	if (kind != CTF_K_FUNCTION) {
-		printf("%s(%d): Expected a function!\n",__func__,__LINE__);
+		printf("%s(%d): Expected a function %s!\n",__func__,__LINE__,
+		    fbt->fbtp_name);
 		return;
 	}
 
