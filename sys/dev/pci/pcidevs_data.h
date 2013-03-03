@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1140 2013/02/27 13:59:31 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1141 2013/03/03 19:51:46 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1149 2013/02/27 13:59:00 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1150 2013/03/03 19:51:13 msaitoh Exp
  */
 
 /*
@@ -2452,7 +2452,7 @@ static const uint16_t pci_products[] = {
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5789, 
 	    11572, 11487, 7647, 5487, 0,
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5785F, 
-	    11580, 5502, 5487, 0,
+	    11580, 5589, 5487, 0,
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702X, 
 	    11589, 5502, 5487, 0,
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703X, 
@@ -9700,7 +9700,7 @@ static const char pci_words[] = { "."
 	    "Gigabit\0" /* 104 refs @ 5479 */
 	    "Ethernet\0" /* 404 refs @ 5487 */
 	    "3c996\0" /* 1 refs @ 5496 */
-	    "10/100/1000\0" /* 47 refs @ 5502 */
+	    "10/100/1000\0" /* 46 refs @ 5502 */
 	    "3c556\0" /* 2 refs @ 5514 */
 	    "V.90\0" /* 1 refs @ 5520 */
 	    "Mini-PCI\0" /* 15 refs @ 5525 */
@@ -9712,7 +9712,7 @@ static const char pci_words[] = { "."
 	    "3c359\0" /* 1 refs @ 5571 */
 	    "XL\0" /* 7 refs @ 5577 */
 	    "3c450-TX\0" /* 1 refs @ 5580 */
-	    "10/100\0" /* 111 refs @ 5589 */
+	    "10/100\0" /* 112 refs @ 5589 */
 	    "3c575-TX\0" /* 1 refs @ 5596 */
 	    "3CCFE575BT\0" /* 1 refs @ 5605 */
 	    "3CCFE575CT\0" /* 1 refs @ 5616 */
