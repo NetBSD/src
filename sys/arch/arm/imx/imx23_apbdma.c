@@ -1,4 +1,4 @@
-/* $Id: imx23_apbdma.c,v 1.2 2012/12/16 19:40:00 jkunz Exp $ */
+/* $Id: imx23_apbdma.c,v 1.3 2013/03/03 10:33:56 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,52 +30,24 @@
  */
 
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/mutex.h>
 #include <sys/kmem.h>
-#include <sys/queue.h>
 #include <sys/systm.h>
 
+#include <arm/imx/imx23_apbdma.h>
 #include <arm/imx/imx23_apbdmareg.h>
+#include <arm/imx/imx23_apbdmavar.h>
 #include <arm/imx/imx23_apbhdmareg.h>
 #include <arm/imx/imx23_apbxdmareg.h>
-#include <arm/imx/imx23_apbdma.h>
 #include <arm/imx/imx23var.h>
 
 static int	apbdma_match(device_t, cfdata_t, void *);
 static void	apbdma_attach(device_t, device_t, void *);
 static int	apbdma_activate(device_t, enum devact);
-
-#define APBDMA_SOFT_RST_LOOP 455 /* At least 1 us ... */
-#define DMACTRL_RD(sc, reg)						\
-		bus_space_read_4(sc->sc_iot, sc->sc_hdl, (reg))
-#define DMACTRL_WR(sc, reg, val)					\
-		bus_space_write_4(sc->sc_iot, sc->sc_hdl, (reg), (val))
-
-struct apbdma_softc {
-	device_t sc_dev;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_hdl;
-	bus_dma_tag_t sc_dmat;
-	bus_dmamap_t sc_dmamp;
-	struct imx23_dma_channel *sc_channel;
-	int n_channel;
-};
-
-struct imx23_dma_cmd {
-	uint32_t next_cmd;
-	uint32_t cmd;
-	uint32_t buffer;
-	uint32_t pio[CMDPIOWORDS_MAX];
-	SIMPLEQ_ENTRY(imx23_dma_cmd) entries;
-};
-
-struct imx23_dma_channel {
-	SIMPLEQ_HEAD(simplehead, imx23_dma_cmd) head;
-	struct simplehead *headp;
-	struct apbdma_softc *sc;
-};
 
 CFATTACH_DECL3_NEW(apbdma,
 	sizeof(struct apbdma_softc),
@@ -88,6 +60,14 @@ CFATTACH_DECL3_NEW(apbdma,
 	0);
 
 static void	apbdma_reset(struct apbdma_softc *);
+static void	apbdma_init(struct apbdma_softc *);
+
+#define DMA_RD(sc, reg)							\
+		bus_space_read_4(sc->sc_iot, sc->sc_ioh, (reg))
+#define DMA_WR(sc, reg, val)						\
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, (reg), (val))
+
+#define APBDMA_SOFT_RST_LOOP 455 /* At least 1 us ... */
 
 static int
 apbdma_match(device_t parent, cfdata_t match, void *aux)
@@ -108,67 +88,44 @@ apbdma_attach(device_t parent, device_t self, void *aux)
 {
 	struct apb_attach_args *aa = aux;
 	struct apbdma_softc *sc = device_private(self);
-	//struct apb_softc *scp = device_private(parent);
+	struct apb_softc *sc_parent = device_private(parent);
+	static u_int apbdma_attached = 0;
 
-//	static int apbdma_attached = 0;
-//	struct imx23_dma_channel *chan;
-//	int i;
-	int error;
-
-//	if (apbdma_attached)
-//		return;
+	if ((strncmp(device_xname(parent), "apbh", 4) == 0) &&
+	    (apbdma_attached & F_AHBH_DMA))
+		return;
+	if ((strncmp(device_xname(parent), "apbx", 4) == 0) &&
+	    (apbdma_attached & F_AHBX_DMA))
+		return;
 
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_dmat = aa->aa_dmat;
 
-	/*
- 	 * Parent bus softc has a pointer to DMA controller device_t for
-	 * specific bus. As different busses need different instances of the
-	 * DMA driver. The apb_softc.dmac is set up here. Now device drivers
-	 * which use DMA can pass apb_softc.dmac from their parent to apbdma
-	 * functions.
-	 */
 	if (bus_space_map(sc->sc_iot,
-	    aa->aa_addr, aa->aa_size, 0, &(sc->sc_hdl))) {
+	    aa->aa_addr, aa->aa_size, 0, &sc->sc_ioh)) {
 		aprint_error_dev(sc->sc_dev, "unable to map bus space\n");
 		return;
 	}
 
-	error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1,
-	    PAGE_SIZE, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &sc->sc_dmamp);
-	if (error) {
-		aprint_error_dev(sc->sc_dev,
-			"couldn't create dma map. (error=%d)\n", error);
-		return;
-	}
-#ifdef notyet	
-	if (aa->aa_addr == HW_APBHDMA_BASE && aa->aa_size == HW_APBHDMA_SIZE) {
-		sc->sc_channel = kmem_alloc(sizeof(struct imx23_dma_channel)
-		    * APBH_DMA_N_CHANNELS, KM_SLEEP);
-		sc->n_channel = APBH_DMA_N_CHANNELS;
-	}
+	if (strncmp(device_xname(parent), "apbh", 4) == 0)
+		sc->flags = F_AHBH_DMA;
 
-	if (aa->aa_addr == HW_APBXDMA_BASE && aa->aa_size == HW_APBXDMA_SIZE) {
-		sc->sc_channel = kmem_alloc(sizeof(struct imx23_dma_channel)
-		    * APBX_DMA_N_CHANNELS, KM_SLEEP);
-		sc->n_channel = APBX_DMA_N_CHANNELS;
-	}
+	if (strncmp(device_xname(parent), "apbx", 4) == 0)
+		sc->flags = F_AHBX_DMA;
 
-	if (sc->sc_channel == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate memory for"
-		    " DMA channel structures\n");
-		return;
-	}
-
-	for (i=0; i < sc->n_channel; i++) {
-		chan = (struct imx23_dma_channel *)sc->sc_channel+i;
-		chan->sc = sc;
-		SIMPLEQ_INIT(&chan->head);
-	}
-#endif
 	apbdma_reset(sc);
-//	apbdma_attached = 1;
+	apbdma_init(sc);
+
+	if (sc->flags & F_AHBH_DMA)
+		apbdma_attached |= F_AHBH_DMA;
+	if (sc->flags & F_AHBX_DMA)
+		apbdma_attached |= F_AHBX_DMA;
+
+	sc_parent->dmac = self;
+
+	/* Initialize mutex to control concurrent access from the drivers. */
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	aprint_normal("\n");
 
@@ -195,85 +152,242 @@ apbdma_reset(struct apbdma_softc *sc)
 	 * Prepare for soft-reset by making sure that SFTRST is not currently
 	 * asserted. Also clear CLKGATE so we can wait for its assertion below.
 	 */
-	DMACTRL_WR(sc, HW_APB_CTRL0_CLR, HW_APB_CTRL0_SFTRST);
+	DMA_WR(sc, HW_APB_CTRL0_CLR, HW_APB_CTRL0_SFTRST);
 
 	/* Wait at least a microsecond for SFTRST to deassert. */
 	loop = 0;
-	while ((DMACTRL_RD(sc, HW_APB_CTRL0) &  HW_APB_CTRL0_SFTRST) ||
-		(loop < APBDMA_SOFT_RST_LOOP))
-	{
+	while ((DMA_RD(sc, HW_APB_CTRL0) & HW_APB_CTRL0_SFTRST) ||
+	    (loop < APBDMA_SOFT_RST_LOOP))
 		loop++;
-	}
 
 	/* Clear CLKGATE so we can wait for its assertion below. */
-	DMACTRL_WR(sc, HW_APB_CTRL0_CLR, HW_APB_CTRL0_CLKGATE);
+	DMA_WR(sc, HW_APB_CTRL0_CLR, HW_APB_CTRL0_CLKGATE);
 
 	/* Soft-reset the block. */
-	DMACTRL_WR(sc, HW_APB_CTRL0_SET, HW_APB_CTRL0_SFTRST);
+	DMA_WR(sc, HW_APB_CTRL0_SET, HW_APB_CTRL0_SFTRST);
 
 	/* Wait until clock is in the gated state. */
-	while (!(DMACTRL_RD(sc, HW_APB_CTRL0) & HW_APB_CTRL0_CLKGATE));
+	while (!(DMA_RD(sc, HW_APB_CTRL0) & HW_APB_CTRL0_CLKGATE));
 
 	/* Bring block out of reset. */
-	DMACTRL_WR(sc, HW_APB_CTRL0_CLR, HW_APB_CTRL0_SFTRST);
+	DMA_WR(sc, HW_APB_CTRL0_CLR, HW_APB_CTRL0_SFTRST);
 
 	loop = 0;
-	while ((DMACTRL_RD(sc, HW_APB_CTRL0) & HW_APB_CTRL0_SFTRST) ||
-		(loop < APBDMA_SOFT_RST_LOOP))
-	{
+	while ((DMA_RD(sc, HW_APB_CTRL0) & HW_APB_CTRL0_SFTRST) ||
+	    (loop < APBDMA_SOFT_RST_LOOP))
 		loop++;
-	}
-         
-	DMACTRL_WR(sc, HW_APB_CTRL0_CLR, HW_APB_CTRL0_CLKGATE);
 
-        /* Wait until clock is in the NON-gated state. */
-	while (DMACTRL_RD(sc, HW_APB_CTRL0) & HW_APB_CTRL0_CLKGATE);
+	DMA_WR(sc, HW_APB_CTRL0_CLR, HW_APB_CTRL0_CLKGATE);
 
-        return;
+	/* Wait until clock is in the NON-gated state. */
+	while (DMA_RD(sc, HW_APB_CTRL0) & HW_APB_CTRL0_CLKGATE);
+
+	return;
 }
 
 /*
- * Allocate DMA safe memory for commands.
+ * Initialize APB{H,X}DMA block.
  */
-void *
-apbdma_dmamem_alloc(device_t dmac, int channel, bus_size_t size)
+static void
+apbdma_init(struct apbdma_softc *sc)
 {
-	struct apbdma_softc *sc = device_private(dmac);
-	bus_dma_segment_t segs[1];	/* bus_dmamem_free needs. */
-	int rsegs;
-	int error;
-	void *ptr = NULL;	/* bus_dmamem_unmap needs (size also) */
 
-	if (size > PAGE_SIZE)
-		return NULL;
+	if (sc->flags & F_AHBH_DMA) {
+		DMA_WR(sc, HW_APBH_CTRL0_SET, HW_APBH_CTRL0_AHB_BURST8_EN);
+		DMA_WR(sc, HW_APBH_CTRL0_SET, HW_APBH_CTRL0_APB_BURST4_EN);
+	}
+	return;
+}
 
-	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, segs, 1,
-			&rsegs, BUS_DMA_NOWAIT);
-	if (error)
-		goto out;
-//XXX:
-	printf("segs[0].ds_addr=%lx, segs[0].ds_len=%lx, rsegs=%d\n", segs[0].ds_addr, segs[0].ds_len, rsegs);
+/* 
+ * Chain DMA commands together.
+ *
+ * Set src->next point to trg's physical DMA mapped address.
+ */
+void
+apbdma_cmd_chain(apbdma_command_t src, apbdma_command_t trg, void *buf,
+    bus_dmamap_t dmap)
+{
+	int i; 
+	bus_size_t daddr;
+	bus_addr_t trg_offset;
 
-	error = bus_dmamem_map(sc->sc_dmat, segs, 1, size, &ptr,
-			BUS_DMA_NOWAIT);
-	if (error)
-		goto free;
-//XXX:
-	printf("segs[0].ds_addr=%lx, segs[0].ds_len=%lx, ptr=%p\n", segs[0].ds_addr, segs[0].ds_len, ptr);
+	trg_offset = (bus_addr_t)trg - (bus_addr_t)buf;
+	daddr = 0;
 
-	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamp, ptr, size, NULL,
-			BUS_DMA_NOWAIT | BUS_DMA_WRITE);
-	if (error)
-		goto unmap;
+	for (i = 0; i < dmap->dm_nsegs; i++) {
+		daddr += dmap->dm_segs[i].ds_len;
+		if (trg_offset < daddr) {
+			src->next = (void *)(dmap->dm_segs[i].ds_addr +
+			    (trg_offset - (daddr - dmap->dm_segs[i].ds_len)));
+			break;
+		}
+	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamp, 0, size,
-		BUS_DMASYNC_PREWRITE);
+	return;
+}
 
-	// return usable memory
-unmap:
-	bus_dmamem_unmap(sc->sc_dmat, ptr, size);
-free:
-	bus_dmamem_free(sc->sc_dmat, segs, 1);
-out:
-	return NULL;
+/*
+ * Set DMA command buffer.
+ *
+ * Set cmd->buffer point to physical DMA address at offset in DMA map.
+ */
+void
+apbdma_cmd_buf(apbdma_command_t cmd, bus_addr_t offset, bus_dmamap_t dmap)
+{
+	int i;
+	bus_size_t daddr;
+
+	daddr = 0;
+
+	for (i = 0; i < dmap->dm_nsegs; i++) {
+		daddr += dmap->dm_segs[i].ds_len;
+		if (offset < daddr) {
+			cmd->buffer = (void *)(dmap->dm_segs[i].ds_addr +
+			    (offset - (daddr - dmap->dm_segs[i].ds_len)));
+			break;
+		}
+	}
+
+	return;
+}
+
+/*
+ * Initialize DMA channel.
+ */
+void
+apbdma_chan_init(struct apbdma_softc *sc, unsigned int channel)
+{
+
+	mutex_enter(&sc->sc_lock);
+
+	/* Enable CMDCMPLT_IRQ. */
+	DMA_WR(sc, HW_APB_CTRL1_SET, (1<<channel)<<16);
+
+	mutex_exit(&sc->sc_lock);
+
+	return;
+}
+
+/*
+ * Set command chain for DMA channel.
+ */
+#define HW_APB_CHN_NXTCMDAR(base, channel)	(base + (0x70 * channel))
+void
+apbdma_chan_set_chain(struct apbdma_softc *sc, unsigned int channel,
+	bus_dmamap_t dmap)
+{
+	uint32_t reg;
+
+	if (sc->flags & F_AHBH_DMA)
+		reg = HW_APB_CHN_NXTCMDAR(HW_APBH_CH0_NXTCMDAR, channel);
+	else
+		reg = HW_APB_CHN_NXTCMDAR(HW_APBX_CH0_NXTCMDAR, channel);
+	
+	mutex_enter(&sc->sc_lock);
+	DMA_WR(sc, reg, dmap->dm_segs[0].ds_addr);
+	mutex_exit(&sc->sc_lock);
+
+	return;
+}
+
+/*
+ * Initiate DMA transfer.
+ */
+#define HW_APB_CHN_SEMA(base, channel)	(base + (0x70 * channel))
+void
+apbdma_run(struct apbdma_softc *sc, unsigned int channel)
+{
+	uint32_t reg;
+	uint8_t val;
+
+	if (sc->flags & F_AHBH_DMA) {
+		reg = HW_APB_CHN_SEMA(HW_APBH_CH0_SEMA, channel);
+		val = __SHIFTIN(1, HW_APBH_CH0_SEMA_INCREMENT_SEMA);
+	 } else {
+		reg = HW_APB_CHN_SEMA(HW_APBX_CH0_SEMA, channel);
+		val = __SHIFTIN(1, HW_APBX_CH0_SEMA_INCREMENT_SEMA);
+	}
+
+	mutex_enter(&sc->sc_lock);
+	DMA_WR(sc, reg, val);
+	mutex_exit(&sc->sc_lock);
+
+	return;
+}
+
+/*
+ * Acknowledge command complete IRQ.
+ */
+void
+apbdma_ack_intr(struct apbdma_softc *sc, unsigned int channel)
+{
+
+	mutex_enter(&sc->sc_lock);
+	DMA_WR(sc, HW_APB_CTRL1_CLR, (1<<channel));
+	mutex_exit(&sc->sc_lock);
+
+	return;
+}
+
+/*
+ * Acknowledge error IRQ.
+ */
+void
+apbdma_ack_error_intr(struct apbdma_softc *sc, unsigned int channel)
+{
+
+	mutex_enter(&sc->sc_lock);
+	DMA_WR(sc, HW_APB_CTRL2_CLR, (1<<channel));
+	mutex_exit(&sc->sc_lock);
+
+	return;
+}
+
+/*
+ * Return reason for the IRQ.
+ */
+unsigned int
+apbdma_intr_status(struct apbdma_softc *sc, unsigned int channel)
+{
+	unsigned int reason;
+
+	reason = 0;
+
+	mutex_enter(&sc->sc_lock);
+
+	/* Check if this was command complete IRQ. */
+	if (DMA_RD(sc, HW_APB_CTRL1) & (1<<channel))
+		reason = DMA_IRQ_CMDCMPLT;
+
+	/* Check if error was set. */
+	if (DMA_RD(sc, HW_APB_CTRL2) & (1<<channel)) {
+		if (DMA_RD(sc, HW_APB_CTRL2) & (1<<channel)<<16)
+			reason = DMA_IRQ_BUS_ERROR;
+		else
+			reason = DMA_IRQ_TERM;
+	}
+
+	mutex_exit(&sc->sc_lock);
+
+	return reason;
+}
+
+/*
+ * Reset DMA channel.
+ * Use only for devices on APBH bus.
+ */
+void
+apbdma_chan_reset(struct apbdma_softc *sc, unsigned int channel)
+{
+	
+	mutex_enter(&sc->sc_lock);
+
+	DMA_WR(sc, HW_APB_CTRL0_SET,
+	    __SHIFTIN((1<<channel), HW_APBH_CTRL0_RESET_CHANNEL));
+	while(DMA_RD(sc, HW_APB_CTRL0) & HW_APBH_CTRL0_RESET_CHANNEL);
+
+	mutex_exit(&sc->sc_lock);
+
+	return;
 }

@@ -1,4 +1,4 @@
-/* $Id: imx23_apbhdmareg.h,v 1.1 2012/11/20 19:06:13 jkunz Exp $ */
+/* $Id: imx23_apbhdmareg.h,v 1.2 2013/03/03 10:33:56 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -121,6 +121,30 @@
 #define HW_APBH_DEVSEL_CH2	__BITS(11, 8)
 #define HW_APBH_DEVSEL_CH1	__BITS(7, 4)
 #define HW_APBH_DEVSEL_CH0	__BITS(3, 0)
+
+/*
+ * APBH DMA Channel 0 Current Command Address Register.
+ */
+#define HW_APBH_CH0_CURCMDAR	0x040
+
+#define HW_APBH_CH0_CURCMDAR_CMD_ADDR	__BITS(31, 0)
+
+/*
+ * APBH DMA Channel 0 Next Command Address.
+ */
+#define HW_APBH_CH0_NXTCMDAR	0x050
+
+#define HW_APBH_CH0_NXTCMDAR_CMD_ADDR	__BITS(31, 0)
+
+/*
+ * APBH DMA Channel 0 Semaphore Register.
+ */
+#define HW_APBH_CH0_SEMA	0x080
+
+#define HW_APBH_CH0_SEMA_RSVD2		__BITS(31, 24)
+#define HW_APBH_CH0_SEMA_PHORE		__BITS(23, 16)
+#define HW_APBH_CH0_SEMA_RSVD1		__BITS(15, 8)
+#define HW_APBH_CH0_SEMA_INCREMENT_SEMA	__BITS(7, 0)
 
 /*
  * APBH DMA Channel 1 Current Command Address Register.

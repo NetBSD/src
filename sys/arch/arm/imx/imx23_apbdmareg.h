@@ -1,4 +1,4 @@
-/* $Id: imx23_apbdmareg.h,v 1.1 2012/11/20 19:06:12 jkunz Exp $ */
+/* $Id: imx23_apbdmareg.h,v 1.2 2013/03/03 10:33:56 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -49,5 +49,21 @@
 #define HW_APB_CTRL0_SFTRST	__BIT(31)
 #define HW_APB_CTRL0_CLKGATE	__BIT(30)
 #define HW_APB_CTRL0_RSVD0	__BITS(29, 0)
+
+/*
+ * AHB to APB{H,X} Bridge Control Register 1.
+ */
+#define HW_APB_CTRL1		0x010
+#define HW_APB_CTRL1_SET	0x014
+#define HW_APB_CTRL1_CLR	0x018
+#define HW_APB_CTRL1_TOG	0x01C
+
+/*
+ * AHB to APB{H,X} Bridge Control and Status Register 2.
+ */
+#define HW_APB_CTRL2		0x020
+#define HW_APB_CTRL2_SET	0x024
+#define HW_APB_CTRL2_CLR	0x028
+#define HW_APB_CTRL2_TOG	0x02C
 
 #endif /* !_ARM_IMX_IMX23_APBDMAREG_H_ */
