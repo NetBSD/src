@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.75 2012/10/20 00:33:36 matt Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.76 2013/03/03 20:10:47 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -648,6 +648,7 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_DCAP		0x04	/* Device Capabilities Register */
 #define PCI_PCIE_DCSR		0x08	/* Device Control & Status Register */
 #define PCI_PCIE_DCSR_MAX_READ_REQ	__BITS(14, 12)
+#define PCI_PCIE_DCSR_ENA_RELAX_ORD	__BIT(4)
 #define PCI_PCIE_DCSR_ENA_NO_SNOOP	__BIT(11)
 #define PCI_PCIE_DCSR_CED	__BIT(0 + 16)
 #define PCI_PCIE_DCSR_NFED	__BIT(1 + 16)
