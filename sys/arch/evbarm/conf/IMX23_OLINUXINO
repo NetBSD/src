@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.2 2012/12/16 19:45:52 jkunz Exp $
+# $Id: IMX23_OLINUXINO,v 1.3 2013/03/03 10:33:56 jkunz Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -7,7 +7,7 @@ include "arch/evbarm/conf/std.imx23_olinuxino"
 
 maxusers	8
 
-config netbsd root on ld0a type ?
+config netbsd root on ? type ?
 
 # The main bus device
 mainbus0	at root
@@ -16,10 +16,10 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # APBH bus
-apbh0		at mainbus? base 0x80000000 size 0x00040000
+apbh0		at mainbus? base 0x80000000 size 0x40000
 
 # APBH DMA
-#apbdma0	at apbh? addr 0x80004000 size 0x2000 irq -1
+apbdma0		at apbh? addr 0x80004000 size 0x2000 irq -1
 
 # Interrupt controller
 icoll0		at apbh? addr 0x80000000 size 0x2000 irq -1
@@ -27,13 +27,13 @@ icoll0		at apbh? addr 0x80000000 size 0x2000 irq -1
 # Synchronous serial port for SD/MMC
 ssp0		at apbh? addr 0x80010000 size 0x2000 irq 15
 sdmmc*		at ssp?
-ld*			at sdmmc?
+ld*		at sdmmc?
 
 # APBX bus
-apbx0		at mainbus? base 0x80040000 size 0x00040000
+apbx0		at mainbus? base 0x80040000 size 0x40000
 
 # APBX DMA
-#apbdma1	at apbx? addr 0x80024000 size 0x2000 irq -1
+apbdma1		at apbx? addr 0x80024000 size 0x2000 irq -1
 
 # Timers and rotary decoder
 timrot0		at apbx? addr 0x80068020 size 0x20 irq 28
@@ -50,4 +50,8 @@ options		HZ=100
 file-system	FFS
 file-system	EXT2FS
 file-system	MSDOSFS
+file-system	KERNFS
+file-system	PROCFS
+file-system	PTYFS
 
+pseudo-device	pty	# pseudo-terminals
