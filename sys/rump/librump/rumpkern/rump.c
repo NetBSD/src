@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.251 2013/02/19 09:04:54 martin Exp $	*/
+/*	$NetBSD: rump.c,v 1.252 2013/03/03 13:11:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.251 2013/02/19 09:04:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.252 2013/03/03 13:11:33 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -206,6 +206,15 @@ rump_daemonize_done(int error)
 {
 
 	return rumpuser_daemonize_done(error);
+}
+
+RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
+{
+
+	/*
+	 * dummy component to make sure at least one component is
+	 * present in every possible rump kernel configuration
+	 */
 }
 
 int
