@@ -4509,7 +4509,7 @@ zfsdev_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 #include <sys/module.h>
 #include <uvm/uvm_extern.h>
 
-MODULE(MODULE_CLASS_VFS, zfs, "solaris");
+MODULE(MODULE_CLASS_DRIVER, zfs, "solaris");
 
 static int
 nb_zvol_copen(dev_t dev, int flag, int mode, lwp_t *l)
