@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.14 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.15 2013/03/04 17:29:03 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_dg.c,v 1.14 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: svc_dg.c,v 1.15 2013/03/04 17:29:03 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -128,15 +128,15 @@ svc_dg_create(int fd, u_int sendsize, u_int recvsize)
 
 	xprt = mem_alloc(sizeof (SVCXPRT));
 	if (xprt == NULL)
-		goto freedata;
+		goto outofmem;
 	memset(xprt, 0, sizeof (SVCXPRT));
 
 	su = mem_alloc(sizeof (*su));
 	if (su == NULL)
-		goto freedata;
+		goto outofmem;
 	su->su_iosz = ((MAX(sendsize, recvsize) + 3) / 4) * 4;
 	if ((rpc_buffer(xprt) = malloc(su->su_iosz)) == NULL)
-		goto freedata;
+		goto outofmem;
 	_DIAGASSERT(__type_fit(u_int, su->su_iosz));
 	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), (u_int)su->su_iosz,
 		XDR_DECODE);
@@ -149,16 +149,19 @@ svc_dg_create(int fd, u_int sendsize, u_int recvsize)
 
 	slen = sizeof ss;
 	if (getsockname(fd, (struct sockaddr *)(void *)&ss, &slen) < 0)
-		goto freedata;
+		goto outofmem;
 	xprt->xp_ltaddr.buf = mem_alloc(sizeof (struct sockaddr_storage));
 	xprt->xp_ltaddr.maxlen = sizeof (struct sockaddr_storage);
 	xprt->xp_ltaddr.len = slen;
 	memcpy(xprt->xp_ltaddr.buf, &ss, slen);
 
-	xprt_register(xprt);
+	if (!xprt_register(xprt))
+		goto freedata;
 	return (xprt);
-freedata:
+
+outofmem:
 	(void) warnx(svc_dg_str, __no_mem_str);
+freedata:
 	if (xprt) {
 		if (su)
 			(void) mem_free(su, sizeof (*su));
