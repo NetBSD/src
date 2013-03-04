@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.27 2013/03/04 17:17:56 christos Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.28 2013/03/04 17:29:03 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.27 2013/03/04 17:17:56 christos Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.28 2013/03/04 17:29:03 christos Exp $");
 #endif
 #endif
 
@@ -188,7 +188,8 @@ svc_vc_create(int fd, u_int sendsize, u_int recvsize)
 	memcpy(xprt->xp_ltaddr.buf, &sslocal, (size_t)sslocal.ss_len);
 
 	xprt->xp_rtaddr.maxlen = sizeof (struct sockaddr_storage);
-	xprt_register(xprt);
+	if (!xprt_register(xprt))
+		goto cleanup_svc_vc_create;
 	return xprt;
 cleanup_svc_vc_create:
 	if (xprt)
@@ -268,11 +269,11 @@ makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 
 	xprt = mem_alloc(sizeof(SVCXPRT));
 	if (xprt == NULL)
-		goto out;
+		goto outofmem;
 	memset(xprt, 0, sizeof *xprt);
 	cd = mem_alloc(sizeof(struct cf_conn));
 	if (cd == NULL)
-		goto out;
+		goto outofmem;
 	cd->strm_stat = XPRT_IDLE;
 	xdrrec_create(&(cd->xdrs), sendsize, recvsize,
 	    (caddr_t)(void *)xprt, read_vc, write_vc);
@@ -283,12 +284,15 @@ makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 	xprt->xp_fd = fd;
 	if (__rpc_fd2sockinfo(fd, &si) && __rpc_sockinfo2netid(&si, &netid))
 		if ((xprt->xp_netid = strdup(netid)) == NULL)
-			goto out;
+			goto outofmem;
 
-	xprt_register(xprt);
+	if (!xprt_register(xprt))
+		goto out;
 	return xprt;
-out:
+
+outofmem:
 	warn("svc_tcp: makefd_xprt");
+out:
 	if (xprt)
 		mem_free(xprt, sizeof(SVCXPRT));
 	return NULL;

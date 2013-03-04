@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.31 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: svc.c,v 1.32 2013/03/04 17:29:03 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.31 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: svc.c,v 1.32 2013/03/04 17:29:03 christos Exp $");
 #endif
 #endif
 
@@ -125,7 +125,7 @@ static void __xprt_do_unregister(SVCXPRT *xprt, bool_t dolock);
 /*
  * Activate a transport handle.
  */
-void
+bool_t
 xprt_register(SVCXPRT *xprt)
 {
 	int sock;
@@ -138,18 +138,25 @@ xprt_register(SVCXPRT *xprt)
 	if (__svc_xports == NULL) {
 		__svc_xports = mem_alloc(FD_SETSIZE * sizeof(SVCXPRT *));
 		if (__svc_xports == NULL) {
-			warn("xprt_register");
+			warn("%s: out of memory", __func__);
 			goto out;
 		}
 		memset(__svc_xports, '\0', FD_SETSIZE * sizeof(SVCXPRT *));
 	}
-	if (sock < FD_SETSIZE) {
-		__svc_xports[sock] = xprt;
-		FD_SET(sock, &svc_fdset);
-		svc_maxfd = max(svc_maxfd, sock);
+	if (sock >= FD_SETSIZE) {
+		warnx("%s: socket descriptor %d too large for setsize %u",
+		    __func__, sock, (unsigned)FD_SETSIZE);
+		goto out;
 	}
+	__svc_xports[sock] = xprt;
+	FD_SET(sock, &svc_fdset);
+	svc_maxfd = max(svc_maxfd, sock);
+	rwlock_unlock(&svc_fd_lock);
+	return (TRUE);
+
 out:
 	rwlock_unlock(&svc_fd_lock);
+	return (FALSE);
 }
 
 void
