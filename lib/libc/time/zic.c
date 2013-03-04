@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.36 2013/03/02 21:39:48 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.37 2013/03/04 21:18:51 joerg Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.36 2013/03/02 21:39:48 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.37 2013/03/04 21:18:51 joerg Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -435,7 +435,7 @@ warning(const char *const string)
 	--errors;
 }
 
-static void
+__dead static void
 usage(FILE *stream, int status)
 {
 	(void) fprintf(stream, _("%s: usage is %s \
