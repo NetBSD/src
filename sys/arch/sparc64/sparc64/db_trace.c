@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.49 2012/02/12 16:34:10 matt Exp $ */
+/*	$NetBSD: db_trace.c,v 1.50 2013/03/04 20:17:46 christos Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.49 2012/02/12 16:34:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50 2013/03/04 20:17:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.49 2012/02/12 16:34:10 matt Exp $");
 #include <machine/ctlreg.h>
 
 #include <ddb/db_access.h>
+#include <ddb/db_proc.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
@@ -91,35 +92,45 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			kernel_only = false;
 	}
 
-	if (!have_addr)
+	if (!have_addr) {
+#ifndef _KERNEL
+		extern struct pcb pcb;
+		frame = (vaddr_t)pcb.pcb_sp;
+#else
 		frame = (vaddr_t)DDB_TF->tf_out[6];
-	else {
+#endif
+	} else {
 		if (trace_thread) {
-			struct proc *p;
-			struct lwp *l;
+			proc_t p;
+			lwp_t l;
 			struct pcb *pcb;
 			if (lwpaddr) {
-				l = (struct lwp *)(uintptr_t)addr;
-				p = l->l_proc;
-				(*pr)("trace: pid %d ", p->p_pid);
+				db_read_bytes(addr, sizeof(l), (char *)&l);
+				db_read_bytes((db_addr_t)l.l_proc,
+				    sizeof(p), (char *)&p);
+
+				(*pr)("trace: pid %d ", p.p_pid);
 			} else {
+				proc_t *pp;
 				(*pr)("trace: pid %d ", (int)addr);
-#ifdef _KERNEL
-				p = proc_find_raw(addr);
-				if (p == NULL) {
+				pp = db_proc_find((pid_t)addr);
+				if (pp == NULL) {
 					(*pr)("not found\n");
 					return;
 				}
-				l = LIST_FIRST(&p->p_lwps);
-				KASSERT(l != NULL);
-#else
-				(*pr)("no proc_find_raw() in crash\n");
-				return;
-#endif
+				db_read_bytes((db_addr_t)pp, sizeof(p),
+				    (char *)&p);
+				addr = (db_addr_t)p.p_lwps.lh_first;
+				db_read_bytes(addr, sizeof(l), (char *)&l);
 			}
-			(*pr)("lid %d ", l->l_lid);
-			pcb = lwp_getpcb(l);
+			(*pr)("lid %d ", l.l_lid);
+			pcb = lwp_getpcb(&l);
+#ifndef _KERNEL
+			db_read_bytes((db_addr_t)&pcb->pcb_sp,
+			    sizeof(frame), (char *)&frame);
+#else
 			frame = (vaddr_t)pcb->pcb_sp;
+#endif
 			(*pr)("at %p\n", frame);
 		} else {
 			frame = (vaddr_t)addr;
