@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.31 2012/06/25 22:32:45 abs Exp $	*/
+/*	$NetBSD: xdr.c,v 1.32 2013/03/04 17:17:57 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.31 2012/06/25 22:32:45 abs Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.32 2013/03/04 17:17:57 christos Exp $");
 #endif
 #endif
 
@@ -619,7 +619,7 @@ xdr_bytes(XDR *xdrs, char **cpp, u_int *sizep, u_int maxsize)
 			*cpp = sp = mem_alloc(nodesize);
 		}
 		if (sp == NULL) {
-			warnx("xdr_bytes: out of memory");
+			warn("%s: out of memory", __func__);
 			return (FALSE);
 		}
 		/* FALLTHROUGH */
@@ -768,7 +768,7 @@ xdr_string(XDR *xdrs, char **cpp, u_int maxsize)
 		if (sp == NULL)
 			*cpp = sp = mem_alloc(nodesize);
 		if (sp == NULL) {
-			warnx("xdr_string: out of memory");
+			warn("%s: out of memory", __func__);
 			return (FALSE);
 		}
 		sp[size] = 0;

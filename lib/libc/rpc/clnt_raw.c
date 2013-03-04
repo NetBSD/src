@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.30 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.31 2013/03/04 17:17:56 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.30 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.31 2013/03/04 17:17:56 christos Exp $");
 #endif
 #endif
 
@@ -128,7 +128,7 @@ clnt_raw_create(rpcprog_t prog, rpcvers_t vers)
 	call_msg.rm_call.cb_vers = (u_int32_t)vers;
 	xdrmem_create(xdrs, clp->u.mashl_callmsg, MCALL_MSG_SIZE, XDR_ENCODE); 
 	if (! xdr_callhdr(xdrs, &call_msg))
-		warnx("clntraw_create - Fatal header serialization error.");
+		warnx("%s: Fatal header serialization error", __func__);
 	clp->mcnt = XDR_GETPOS(xdrs);
 	XDR_DESTROY(xdrs);
 
