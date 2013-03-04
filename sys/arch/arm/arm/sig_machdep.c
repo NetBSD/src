@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.45 2012/12/08 06:47:31 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.46 2013/03/04 23:12:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.45 2012/12/08 06:47:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.46 2013/03/04 23:12:52 matt Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -220,7 +220,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 #ifdef FPU_VFP
 	if ((flags & _UC_FPU)
-	    && (curcpu()->ci_vfp_id || (flags & _UC_ARM_VFP) == 0))
+	    && (curcpu()->ci_vfp_id == 0 || (flags & _UC_ARM_VFP) == 0))
 		return EINVAL;
 #endif
 
