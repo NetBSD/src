@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.26 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.27 2013/03/04 17:17:56 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.26 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.27 2013/03/04 17:17:56 christos Exp $");
 #endif
 #endif
 
@@ -145,7 +145,7 @@ svc_vc_create(int fd, u_int sendsize, u_int recvsize)
 
 	r = mem_alloc(sizeof(*r));
 	if (r == NULL) {
-		warnx("svc_vc_create: out of memory");
+		warn("%s: out of memory", __func__);
 		return NULL;
 	}
 	r->sendsize = __rpc_get_t_size(si.si_af, si.si_proto, (int)sendsize);
@@ -153,7 +153,7 @@ svc_vc_create(int fd, u_int sendsize, u_int recvsize)
 	r->maxrec = __svc_maxrec;
 	xprt = mem_alloc(sizeof(SVCXPRT));
 	if (xprt == NULL) {
-		warnx("svc_vc_create: out of memory");
+		warn("%s: out of memory", __func__);
 		goto cleanup_svc_vc_create;
 	}
 	xprt->xp_tp = NULL;
@@ -167,7 +167,7 @@ svc_vc_create(int fd, u_int sendsize, u_int recvsize)
 
 	slen = sizeof (struct sockaddr_storage);
 	if (getsockname(fd, (struct sockaddr *)(void *)&sslocal, &slen) < 0) {
-		warnx("svc_vc_create: could not retrieve local addr");
+		warn("%s: could not retrieve local addr", __func__);
 		goto cleanup_svc_vc_create;
 	}
 
@@ -182,7 +182,7 @@ svc_vc_create(int fd, u_int sendsize, u_int recvsize)
 	xprt->xp_ltaddr.maxlen = xprt->xp_ltaddr.len = sslocal.ss_len;
 	xprt->xp_ltaddr.buf = mem_alloc((size_t)sslocal.ss_len);
 	if (xprt->xp_ltaddr.buf == NULL) {
-		warnx("svc_vc_create: no mem for local addr");
+		warn("%s: out of memory", __func__);
 		goto cleanup_svc_vc_create;
 	}
 	memcpy(xprt->xp_ltaddr.buf, &sslocal, (size_t)sslocal.ss_len);
@@ -217,26 +217,26 @@ svc_fd_create(int fd, u_int sendsize, u_int recvsize)
 
 	slen = sizeof (struct sockaddr_storage);
 	if (getsockname(fd, (struct sockaddr *)(void *)&ss, &slen) < 0) {
-		warnx("svc_fd_create: could not retrieve local addr");
+		warn("%s: could not retrieve local addr", __func__);
 		goto freedata;
 	}
 	ret->xp_ltaddr.maxlen = ret->xp_ltaddr.len = ss.ss_len;
 	ret->xp_ltaddr.buf = mem_alloc((size_t)ss.ss_len);
 	if (ret->xp_ltaddr.buf == NULL) {
-		warnx("svc_fd_create: no mem for local addr");
+		warn("%s: out of memory", __func__);
 		goto freedata;
 	}
 	memcpy(ret->xp_ltaddr.buf, &ss, (size_t)ss.ss_len);
 
 	slen = sizeof (struct sockaddr_storage);
 	if (getpeername(fd, (struct sockaddr *)(void *)&ss, &slen) < 0) {
-		warnx("svc_fd_create: could not retrieve remote addr");
+		warn("%s: could not retrieve remote addr", __func__);
 		goto freedata;
 	}
 	ret->xp_rtaddr.maxlen = ret->xp_rtaddr.len = ss.ss_len;
 	ret->xp_rtaddr.buf = mem_alloc((size_t)ss.ss_len);
 	if (ret->xp_rtaddr.buf == NULL) {
-		warnx("svc_fd_create: no mem for local addr");
+		warn("%s: out of memory", __func__);
 		goto freedata;
 	}
 	memcpy(ret->xp_rtaddr.buf, &ss, (size_t)ss.ss_len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.17 2012/06/25 22:32:45 abs Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.18 2013/03/04 17:17:57 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_array.c,v 1.17 2012/06/25 22:32:45 abs Exp $");
+__RCSID("$NetBSD: xdr_array.c,v 1.18 2013/03/04 17:17:57 christos Exp $");
 #endif
 #endif
 
@@ -102,7 +102,7 @@ xdr_array(XDR *xdrs, caddr_t *addrp, u_int *sizep, u_int maxsize, u_int elsize,
 				return (TRUE);
 			*addrp = target = mem_alloc(nodesize);
 			if (target == NULL) {
-				warnx("xdr_array: out of memory");
+				warn("%s: out of memory", __func__);
 				return (FALSE);
 			}
 			memset(target, 0, nodesize);

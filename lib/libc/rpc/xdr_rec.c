@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.33 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.34 2013/03/04 17:17:57 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.33 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.34 2013/03/04 17:17:57 christos Exp $");
 #endif
 #endif
 
@@ -187,7 +187,7 @@ xdrrec_create(
 	RECSTREAM *rstrm = mem_alloc(sizeof(RECSTREAM));
 
 	if (rstrm == NULL) {
-		warnx("xdrrec_create: out of memory");
+		warn("%s: out of memory", __func__);
 		/* 
 		 *  This is bad.  Should rework xdrrec_create to 
 		 *  return a handle, and in this case return NULL
@@ -198,7 +198,7 @@ xdrrec_create(
 	rstrm->sendsize = sendsize = fix_buf_size(sendsize);
 	rstrm->out_base = malloc(rstrm->sendsize);
 	if (rstrm->out_base == NULL) {
-		warnx("xdrrec_create: out of memory");
+		warn("%s: out of memory", __func__);
 		mem_free(rstrm, sizeof(RECSTREAM));
 		return;
 	}
@@ -206,7 +206,7 @@ xdrrec_create(
 	rstrm->recvsize = recvsize = fix_buf_size(recvsize);
 	rstrm->in_base = malloc(recvsize);
 	if (rstrm->in_base == NULL) {
-		warnx("xdrrec_create: out of memory");
+		warn("%s: out of memory", __func__);
 		mem_free(rstrm->out_base, sendsize);
 		mem_free(rstrm, sizeof(RECSTREAM));
 		return;

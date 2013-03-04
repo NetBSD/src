@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_generic.c,v 1.12 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: svc_generic.c,v 1.13 2013/03/04 17:17:56 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_generic.c 1.21 89/02/28 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_generic.c,v 1.12 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: svc_generic.c,v 1.13 2013/03/04 17:17:56 christos Exp $");
 #endif
 #endif
 
@@ -105,7 +105,7 @@ svc_create(
 /* VARIABLES PROTECTED BY xprtlist_lock: xprtlist */
 
 	if ((handle = __rpc_setconf(nettype)) == NULL) {
-		warnx("svc_create: unknown protocol");
+		warnx("%s: unknown protocol %s", __func__, nettype);
 		return (0);
 	}
 	while ((nconf = __rpc_getconf(handle)) != NULL) {
@@ -116,10 +116,10 @@ svc_create(
 				(void) rpcb_unset(prognum, versnum, nconf);
 				if (svc_reg(l->xprt, prognum, versnum,
 					dispatch, nconf) == FALSE)
-					warnx(
-		"svc_create: could not register prog %u vers %u on %s",
-					(unsigned)prognum, (unsigned)versnum,
-					 nconf->nc_netid);
+					warnx("%s: could not register prog %u "
+					    "vers %u on %s", __func__,
+					    (unsigned)prognum,
+					    (unsigned)versnum, nconf->nc_netid);
 				else
 					num++;
 				break;
@@ -131,7 +131,7 @@ svc_create(
 			if (xprt) {
 				l = malloc(sizeof(*l));
 				if (l == NULL) {
-					warnx("svc_create: no memory");
+					warn("%s: out of memory", __func__);
 					mutex_unlock(&xprtlist_lock);
 					return (0);
 				}
@@ -166,9 +166,8 @@ svc_tp_create(
 	SVCXPRT *xprt;
 
 	if (nconf == NULL) {
-		warnx(
-	"svc_tp_create: invalid netconfig structure for prog %u vers %u",
-				(unsigned)prognum, (unsigned)versnum);
+		warnx("%s: invalid netconfig structure for prog %u vers %u",
+		    __func__, (unsigned)prognum, (unsigned)versnum);
 		return (NULL);
 	}
 	xprt = svc_tli_create(RPC_ANYFD, nconf, NULL, 0, 0);
@@ -177,10 +176,9 @@ svc_tp_create(
 	}
 	(void) rpcb_unset(prognum, versnum, __UNCONST(nconf));
 	if (svc_reg(xprt, prognum, versnum, dispatch, nconf) == FALSE) {
-		warnx(
-		"svc_tp_create: Could not register prog %u vers %u on %s",
-				(unsigned)prognum, (unsigned)versnum,
-				nconf->nc_netid);
+		warnx("%s: Could not register prog %u vers %u on %s",
+		    __func__, (unsigned)prognum, (unsigned)versnum,
+		    nconf->nc_netid);
 		SVC_DESTROY(xprt);
 		return (NULL);
 	}
@@ -212,14 +210,13 @@ svc_tli_create(
 
 	if (fd == RPC_ANYFD) {
 		if (nconf == NULL) {
-			warnx("svc_tli_create: invalid netconfig");
+			warnx("%s: invalid netconfig", __func__);
 			return (NULL);
 		}
 		fd = __rpc_nconf2fd(nconf);
 		if (fd == -1) {
-			warnx(
-			    "svc_tli_create: could not open connection for %s",
-					nconf->nc_netid);
+			warnx("%s: could not open connection for %s", __func__,
+			    nconf->nc_netid);
 			return (NULL);
 		}
 		__rpc_nconf2sockinfo(nconf, &si);
@@ -229,8 +226,8 @@ svc_tli_create(
 		 * It is an open descriptor. Get the transport info.
 		 */
 		if (!__rpc_fd2sockinfo(fd, &si)) {
-			warnx(
-		"svc_tli_create: could not get transport information");
+			warnx("%s: could not get transport information",
+			    __func__);
 			return (NULL);
 		}
 	}
@@ -246,8 +243,8 @@ svc_tli_create(
 				ss.ss_len = si.si_alen;
 				if (bind(fd, (struct sockaddr *)(void *)&ss,
 				    (socklen_t)si.si_alen) < 0) {
-					warnx(
-			"svc_tli_create: could not bind to anonymous port");
+					warn( "%s: could not bind to anonymous "
+					    "port", __func__);
 					goto freedata;
 				}
 			}
@@ -256,8 +253,8 @@ svc_tli_create(
 			if (bind(fd,
 			    (struct sockaddr *)bindaddr->addr.buf,
 			    (socklen_t)si.si_alen) < 0) {
-				warnx(
-		"svc_tli_create: could not bind to requested address");
+				warnx("%s: could not bind to requested address",
+				    __func__);
 				goto freedata;
 			}
 			listen(fd, (int)bindaddr->qlen);
@@ -268,29 +265,29 @@ svc_tli_create(
 	 * call transport specific function.
 	 */
 	switch (si.si_socktype) {
-		case SOCK_STREAM:
-			slen = sizeof ss;
-			if (getpeername(fd, (struct sockaddr *)(void *)&ss, &slen)
-			    == 0) {
-				/* accepted socket */
-				xprt = svc_fd_create(fd, sendsz, recvsz);
-			} else
-				xprt = svc_vc_create(fd, sendsz, recvsz);
-			if (!nconf || !xprt)
-				break;
+	case SOCK_STREAM:
+		slen = sizeof ss;
+		if (getpeername(fd, (struct sockaddr *)(void *)&ss, &slen)
+		    == 0) {
+			/* accepted socket */
+			xprt = svc_fd_create(fd, sendsz, recvsz);
+		} else
+			xprt = svc_vc_create(fd, sendsz, recvsz);
+		if (!nconf || !xprt)
+			break;
 #if 0
-			/* XXX fvdl */
-			if (strcmp(nconf->nc_protofmly, "inet") == 0 ||
-			    strcmp(nconf->nc_protofmly, "inet6") == 0)
-				(void) __svc_vc_setflag(xprt, TRUE);
+		/* XXX fvdl */
+		if (strcmp(nconf->nc_protofmly, "inet") == 0 ||
+		    strcmp(nconf->nc_protofmly, "inet6") == 0)
+			(void) __svc_vc_setflag(xprt, TRUE);
 #endif
-			break;
-		case SOCK_DGRAM:
-			xprt = svc_dg_create(fd, sendsz, recvsz);
-			break;
-		default:
-			warnx("svc_tli_create: bad service type");
-			goto freedata;
+		break;
+	case SOCK_DGRAM:
+		xprt = svc_dg_create(fd, sendsz, recvsz);
+		break;
+	default:
+		warnx("%s: bad service type %u", __func__, si.si_socktype);
+		goto freedata;
 	}
 
 	if (xprt == NULL)

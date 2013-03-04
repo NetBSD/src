@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.23 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.24 2013/03/04 17:17:56 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.23 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.24 2013/03/04 17:17:56 christos Exp $");
 #endif
 #endif
 
@@ -115,14 +115,14 @@ authunix_create(char *machname, int uid, int gid, int len, int *aup_gids)
 	auth = mem_alloc(sizeof(*auth));
 #ifndef KERNEL
 	if (auth == NULL) {
-		warnx("authunix_create: out of memory");
+		warn("%s: out of memory", __func__);
 		goto cleanup_authunix_create;
 	}
 #endif
 	au = mem_alloc(sizeof(*au));
 #ifndef KERNEL
 	if (au == NULL) {
-		warnx("authunix_create: out of memory");
+		warn("%s: out of memory", __func__);
 		goto cleanup_authunix_create;
 	}
 #endif
@@ -155,7 +155,7 @@ authunix_create(char *machname, int uid, int gid, int len, int *aup_gids)
 	au->au_origcred.oa_base = mem_alloc((size_t)len);
 #else
 	if ((au->au_origcred.oa_base = mem_alloc((size_t)len)) == NULL) {
-		warnx("authunix_create: out of memory");
+		warn("%s: out of memory", __func__);
 		goto cleanup_authunix_create;
 	}
 #endif
@@ -342,7 +342,7 @@ marshal_new_auth(AUTH *auth)
 	xdrmem_create(xdrs, au->au_marshed, MAX_AUTH_BYTES, XDR_ENCODE);
 	if ((! xdr_opaque_auth(xdrs, &(auth->ah_cred))) ||
 	    (! xdr_opaque_auth(xdrs, &(auth->ah_verf))))
-		warnx("auth_none.c - Fatal marshalling problem");
+		warnx("%s: Fatal marshalling problem", __func__);
 	else
 		au->au_mpos = XDR_GETPOS(xdrs);
 	XDR_DESTROY(xdrs);
