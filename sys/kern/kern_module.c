@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.88 2013/03/03 16:55:26 christos Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.89 2013/03/05 03:04:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.88 2013/03/03 16:55:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.89 2013/03/05 03:04:00 christos Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -460,12 +460,8 @@ module_init_class(modclass_t class)
 	do {
 		TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 			mi = mod->mod_info;
-			if (!MODULE_CLASS_MATCH(mi, class)) {
-#ifdef DIAGNOSTIC
-				module_incompat(mi, class);
-#endif
+			if (!MODULE_CLASS_MATCH(mi, class))
 				continue;
-			}
 			/*
 			 * If initializing a builtin module fails, don't try
 			 * to load it again.  But keep it around and queue it
@@ -491,12 +487,8 @@ module_init_class(modclass_t class)
 	do {
 		TAILQ_FOREACH(mod, &module_bootlist, mod_chain) {
 			mi = mod->mod_info;
-			if (!MODULE_CLASS_MATCH(mi, class)) {
-#ifdef DIAGNOSTIC
-				module_incompat(mi, class);
-#endif
+			if (!MODULE_CLASS_MATCH(mi, class))
 				continue;
-			}
 			module_do_load(mi->mi_name, false, 0, NULL, NULL,
 			    class, false);
 			break;
