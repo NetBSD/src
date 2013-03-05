@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.331 2013/02/13 08:00:47 nakayama Exp $
+#	$NetBSD: bsd.lib.mk,v 1.332 2013/03/05 21:16:24 pooka Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -47,7 +47,8 @@ CFLAGS+=        ${PIE_CFLAGS}
 AFLAGS+=        ${PIE_AFLAGS}
 .endif
 
-.if defined(MKDEBUG) && (${MKDEBUG} != "no")
+.if (defined(MKDEBUG) && (${MKDEBUG} != "no")) || \
+    (defined(CFLAGS) && !empty(CFLAGS:M*-g*))
 # We only add -g to the shared library objects
 # because we don't currently split .a archives.
 CSHLIBFLAGS+=	-g
