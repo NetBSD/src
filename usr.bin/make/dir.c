@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.65 2012/06/12 19:21:50 joerg Exp $	*/
+/*	$NetBSD: dir.c,v 1.66 2013/03/05 02:04:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.65 2012/06/12 19:21:50 joerg Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.66 2013/03/05 02:04:10 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.65 2012/06/12 19:21:50 joerg Exp $");
+__RCSID("$NetBSD: dir.c,v 1.66 2013/03/05 02:04:10 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1464,8 +1464,9 @@ Dir_MTime(GNode *gn, Boolean recheck)
 			 */
 			gn->path = bmake_strdup(fullName);
 			fprintf(stdout,
-				"%s: ignoring stale %s for %s, found %s\n",
-				progname, makeDependfile, gn->name, fullName);
+			    "%s: %s, %d: ignoring stale %s for %s, found %s\n",
+			    progname, gn->fname, gn->lineno,
+			    makeDependfile, gn->name, fullName);
 		    }
 		}
 	    }
