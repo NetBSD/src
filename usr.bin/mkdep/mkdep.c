@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.42 2013/03/05 01:59:56 christos Exp $ */
+/* $NetBSD: mkdep.c,v 1.43 2013/03/05 21:57:47 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: mkdep.c,v 1.42 2013/03/05 01:59:56 christos Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.43 2013/03/05 21:57:47 christos Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -328,7 +328,7 @@ main(int argc, char **argv)
 			} else
 				fname = *argv++;
 			if (iflag) {
-				if (dprintf(dependfile, ".include \"%s\"\n",
+				if (dprintf(dependfile, ".-include \"%s\"\n",
 				    fname) < 0)
 					goto wrerror;
 				continue;
