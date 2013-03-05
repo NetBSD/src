@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.313 2013/02/16 21:40:45 jmmv Exp $
+#	$NetBSD: bsd.README,v 1.314 2013/03/05 02:02:07 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -156,6 +156,13 @@ MKDEBUG		If "no", don't build and install separate debugging symbols
 MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
 		with -DDEBUG.
 		Default: no
+
+MKDEPINCLUDES	If "yes" issue .include statements in the .depend file
+		instead of inlining the contents of the .d files. Useful
+		when stale dependencies are present, to list the exact
+		files that need refreshing. It is off by default because
+		it is possibly slower.
+		Default "no"
 
 MKDOC		If "no", don't build or install the documentation.
 		Default: yes
