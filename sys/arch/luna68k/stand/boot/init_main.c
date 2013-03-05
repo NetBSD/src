@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.5 2013/01/21 11:58:12 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.6 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -71,6 +71,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/boot_flag.h>
 #include <machine/cpu.h>
 #include <luna68k/stand/boot/samachdep.h>
 #include <luna68k/stand/boot/stinger.h>
@@ -87,6 +88,7 @@ static int reorder_dipsw(int);
 int cpuspeed;	/* for DELAY() macro */
 int hz = 60;
 int machtype;
+char default_file[64];
 
 #define	VERS_LOCAL	"Phase-31"
 
@@ -117,6 +119,10 @@ main(void)
 {
 	int i, status = 0;
 	const char *machstr;
+	const char *cp;
+	char bootarg[64];
+	bool netboot = false;
+	int unit, part;
 
 	/*
 	 * Initialize the console before we print anything out.
@@ -126,11 +132,25 @@ main(void)
 		machstr  = "LUNA-I";
 		cpuspeed = MHZ_25;
 		hz = 60;
+		memcpy(bootarg, (char *)*RVPtr->vec53, sizeof(bootarg));
+
+		/* check netboot */
+		for (i = 0, cp = bootarg; i < sizeof(bootarg); i++, cp++) {
+			if (*cp == '\0')
+				break;
+			if (*cp == 'E' && memcmp("ENADDR=", cp, 7) == 0) {
+				netboot = true;
+				break;
+			}
+		}
 	} else {
 		machtype = LUNA_II;
 		machstr  = "LUNA-II";
 		cpuspeed = MHZ_25 * 2;	/* XXX */
 		hz = 100;
+		memcpy(bootarg, (char *)*RVPtr->vec02, sizeof(bootarg));
+
+		/* LUNA-II's boot monitor doesn't support netboot */
 	}
 
 	nplane   = get_plane_numbers();
@@ -164,6 +184,11 @@ main(void)
 	find_devs();
 	configure();
 	printf("\n");
+
+	unit = 0;	/* XXX should parse monitor's Boot-file constant */
+	part = 0;
+	snprintf(default_file, sizeof(default_file),
+	    "%s(%d,%d)%s", netboot ? "le" : "sd", unit, part, "netbsd");
 
 	howto = reorder_dipsw(dipsw2);
 
