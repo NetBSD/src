@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_run.c,v 1.20 2012/06/24 15:26:03 christos Exp $	*/
+/*	$NetBSD: svc_run.c,v 1.21 2013/03/05 19:55:23 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_run.c,v 1.20 2012/06/24 15:26:03 christos Exp $");
+__RCSID("$NetBSD: svc_run.c,v 1.21 2013/03/05 19:55:23 christos Exp $");
 #endif
 #endif
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: svc_run.c,v 1.20 2012/06/24 15:26:03 christos Exp $");
 
 #include <rpc/rpc.h>
 
+#include "svc_fdset.h"
 #include "rpc_internal.h"
 
 #ifdef __weak_alias
@@ -65,6 +66,10 @@ svc_run(void)
 {
 	fd_set readfds, cleanfds;
 	struct timeval timeout;
+	int maxfd;
+#ifndef RUMP_RPC		
+	int probs = 0;
+#endif
 #ifdef _REENTRANT
 	extern rwlock_t svc_fd_lock;
 #endif
@@ -74,21 +79,31 @@ svc_run(void)
 
 	for (;;) {
 		rwlock_rdlock(&svc_fd_lock);
-		readfds = svc_fdset;
-		cleanfds = svc_fdset;
+		readfds = *get_fdset();
+		cleanfds = *get_fdset();
+		maxfd = *get_fdsetmax();
 		rwlock_unlock(&svc_fd_lock);
-		switch (select(svc_maxfd+1, &readfds, NULL, NULL, &timeout)) {
+		switch (select(maxfd + 1, &readfds, NULL, NULL, &timeout)) {
 		case -1:
+#ifndef RUMP_RPC		
+			if ((errno == EINTR || errno == EBADF) && probs < 100) {
+				probs++;
+				continue;
+			}
+#endif
 			if (errno == EINTR) {
 				continue;
 			}
-			warn("svc_run: - select failed");
+			warn("%s: select failed", __func__);
 			return;
 		case 0:
 			__svc_clean_idle(&cleanfds, 30, FALSE);
 			continue;
 		default:
 			svc_getreqset(&readfds);
+#ifndef RUMP_RPC
+			probs = 0;
+#endif
 		}
 	}
 }
@@ -105,6 +120,6 @@ svc_exit(void)
 #endif
 
 	rwlock_wrlock(&svc_fd_lock);
-	FD_ZERO(&svc_fdset);
+	FD_ZERO(get_fdset());
 	rwlock_unlock(&svc_fd_lock);
 }

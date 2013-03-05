@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.15 2013/03/04 17:29:03 christos Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.16 2013/03/05 19:55:23 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_dg.c,v 1.15 2013/03/04 17:29:03 christos Exp $");
+__RCSID("$NetBSD: svc_dg.c,v 1.16 2013/03/05 19:55:23 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: svc_dg.c,v 1.15 2013/03/04 17:29:03 christos Exp $");
 #endif
 #include <err.h>
 
+#include "svc_fdset.h"
 #include "rpc_internal.h"
 #include "svc_dg.h"
 
@@ -149,7 +150,7 @@ svc_dg_create(int fd, u_int sendsize, u_int recvsize)
 
 	slen = sizeof ss;
 	if (getsockname(fd, (struct sockaddr *)(void *)&ss, &slen) < 0)
-		goto outofmem;
+		goto freedata;
 	xprt->xp_ltaddr.buf = mem_alloc(sizeof (struct sockaddr_storage));
 	xprt->xp_ltaddr.maxlen = sizeof (struct sockaddr_storage);
 	xprt->xp_ltaddr.len = slen;

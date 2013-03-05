@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.26 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.27 2013/03/05 19:55:22 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.26 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.27 2013/03/05 19:55:22 christos Exp $");
 #endif
 #endif
 
@@ -62,6 +62,8 @@ __RCSID("$NetBSD: clnt_dg.c,v 1.26 2012/03/20 17:14:50 matt Exp $");
 #include <signal.h>
 #include <unistd.h>
 #include <err.h>
+
+#include "svc_fdset.h"
 #include "rpc_internal.h"
 
 #ifdef __weak_alias
@@ -247,8 +249,13 @@ clnt_dg_create(
 	cu->cu_rlen = svcaddr->len;
 	cu->cu_outbuf = &cu->cu_inbuf[recvsz];
 	/* Other values can also be set through clnt_control() */
+#ifdef RUMP_RPC
 	cu->cu_wait.tv_sec = 15;	/* heuristically chosen */
 	cu->cu_wait.tv_usec = 0;
+#else
+	cu->cu_wait.tv_sec = 0;		/* for testing, 10x / second */
+	cu->cu_wait.tv_usec = 100000;
+#endif
 	cu->cu_total.tv_sec = -1;
 	cu->cu_total.tv_usec = -1;
 	cu->cu_sendsz = sendsz;

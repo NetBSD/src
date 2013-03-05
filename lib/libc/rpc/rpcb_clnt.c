@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.27 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.28 2013/03/05 19:55:22 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.27 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.28 2013/03/05 19:55:22 christos Exp $");
 #endif
 #endif
 
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: rpcb_clnt.c,v 1.27 2012/03/20 17:14:50 matt Exp $");
 #include <syslog.h>
 #include <unistd.h>
 
+#include "svc_fdset.h"
 #include "rpc_internal.h"
 
 #ifdef __weak_alias

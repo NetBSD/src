@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.32 2013/03/04 17:29:03 christos Exp $	*/
+/*	$NetBSD: svc.c,v 1.33 2013/03/05 19:55:23 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.32 2013/03/04 17:29:03 christos Exp $");
+__RCSID("$NetBSD: svc.c,v 1.33 2013/03/05 19:55:23 christos Exp $");
 #endif
 #endif
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: svc.c,v 1.32 2013/03/04 17:29:03 christos Exp $");
 #include <rpc/pmap_clnt.h>
 #endif
 
+#include "svc_fdset.h"
 #include "rpc_internal.h"
 
 #ifdef __weak_alias
@@ -149,8 +150,8 @@ xprt_register(SVCXPRT *xprt)
 		goto out;
 	}
 	__svc_xports[sock] = xprt;
-	FD_SET(sock, &svc_fdset);
-	svc_maxfd = max(svc_maxfd, sock);
+	FD_SET(sock, get_fdset());
+	*get_fdsetmax() = max(*get_fdsetmax(), sock);
 	rwlock_unlock(&svc_fd_lock);
 	return (TRUE);
 
@@ -187,10 +188,11 @@ __xprt_do_unregister(SVCXPRT *xprt, bool_t dolock)
 		rwlock_wrlock(&svc_fd_lock);
 	if ((sock < FD_SETSIZE) && (__svc_xports[sock] == xprt)) {
 		__svc_xports[sock] = NULL;
-		FD_CLR(sock, &svc_fdset);
-		if (sock >= svc_maxfd) {
-			for (svc_maxfd--; svc_maxfd>=0; svc_maxfd--)
-				if (__svc_xports[svc_maxfd])
+		FD_CLR(sock, get_fdset());
+		if (sock >= *get_fdsetmax()) {
+			for ((*get_fdsetmax())--; *get_fdsetmax() >= 0;
+			    (*get_fdsetmax())--)
+				if (__svc_xports[*get_fdsetmax()])
 					break;
 		}
 	}
@@ -736,7 +738,7 @@ svc_getreq_poll(struct pollfd *pfdp, int pollretval)
 			 */
 			if (p->revents & POLLNVAL) {
 				rwlock_wrlock(&svc_fd_lock);
-				FD_CLR(p->fd, &svc_fdset);
+				FD_CLR(p->fd, get_fdset());
 				rwlock_unlock(&svc_fd_lock);
 			} else
 				svc_getreq_common(p->fd);
