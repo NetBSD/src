@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.5 2013/03/05 05:39:54 christos Exp $	*/
+/*	$NetBSD: svc.c,v 1.6 2013/03/05 16:54:08 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.5 2013/03/05 05:39:54 christos Exp $");
+__RCSID("$NetBSD: svc.c,v 1.6 2013/03/05 16:54:08 christos Exp $");
 #endif
 #endif
 
@@ -204,7 +204,7 @@ xprt_register(SVCXPRT *xprt)
 		goto out;
 	}
 	__svc_xports[sock] = xprt;
-	FD_SET(sock, &svc_fdset);
+	FD_SET(sock, get_fdset());
 	*get_fdsetmax() = max(*get_fdsetmax(), sock);
 	rwlock_unlock(&svc_fd_lock);
 	return (TRUE);
