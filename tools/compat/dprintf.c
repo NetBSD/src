@@ -1,4 +1,4 @@
-/*	$NetBSD: dprintf.c,v 1.1 2013/03/05 16:26:41 christos Exp $	*/
+/*	$NetBSD: dprintf.c,v 1.2 2013/03/05 16:29:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 NetBSD Foundation, Inc.
@@ -52,8 +52,10 @@ dprintf(int fd, const char *fmt, ...)
 	if ((e = dup(fd)) == -1)
 		return -1;
 
-	if ((fp = fdopen(e, "r+")) == NULL)
+	if ((fp = fdopen(e, "r+")) == NULL) {
+		(void)close(e);
 		return -1;
+	}
 
 	va_start(ap, fmt);
 	e = vfprintf(fp, fmt, ap);
