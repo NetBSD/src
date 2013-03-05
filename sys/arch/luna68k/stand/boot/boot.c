@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2013/01/21 11:58:12 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -88,7 +88,6 @@ int howto;
 static int get_boot_device(const char *, int *, int *, int *);
 
 struct exec header;
-char default_file[] = "sd(0,0)netbsd";
 
 char *how_to_info[] = {
 	"RB_ASKNAME	ask for file name to reboot from",
