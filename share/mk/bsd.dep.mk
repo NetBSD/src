@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.75 2012/11/18 19:48:29 apb Exp $
+#	$NetBSD: bsd.dep.mk,v 1.76 2013/03/05 02:02:07 christos Exp $
 
 ##### Basic targets
 realdepend:	beforedepend .depend afterdepend
@@ -36,34 +36,44 @@ __DPSRCS.notd=	${__DPSRCS.all:O:u:N*.d}
 ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 .endif									# }
 
+MKDEPSUFFLAGS=-s ${MKDEP_SUFFIXES:Q}
+
+.if defined(MKDEPINCLUDES) && ${MKDEPINCLUDES} != "no"
+_MKDEP_MERGEFLAGS=-i
+_MKDEP_FILEFLAGS=${MKDEPSUFFLAGS}
+.else
+_MKDEP_MERGEFLAGS=${MKDEPSUFFLAGS}
+_MKDEP_FILEFLAGS=
+.endif
+
 .depend: ${__DPSRCS.d}
 	${_MKTARGET_CREATE}
 	rm -f .depend
-	${MKDEP} -d -f ${.TARGET} -s ${MKDEP_SUFFIXES:Q} ${__DPSRCS.d}
+	${MKDEP} ${_MKDEP_MERGEFLAGS} -d -f ${.TARGET} ${__DPSRCS.d}
 
 .SUFFIXES: .d .s .S .c .C .cc .cpp .cxx .m
 
 .c.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
+	${MKDEP} -f ${.TARGET} ${_MKDEP_FILEFLAGS} -- ${MKDEPFLAGS} \
 	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 .m.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
+	${MKDEP} -f ${.TARGET} ${_MKDEP_FILEFLAGS} -- ${MKDEPFLAGS} \
 	    ${OBJCFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 .s.d .S.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
+	${MKDEP} -f ${.TARGET} ${_MKDEP_FILEFLAGS} -- ${MKDEPFLAGS} \
 	    ${AFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${__acpp_flags} ${.IMPSRC}
 
 .C.d .cc.d .cpp.d .cxx.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
+	${MKDEP} -f ${.TARGET} ${_MKDEP_FILEFLAGS} -- ${MKDEPFLAGS} \
 	    ${CXXFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
