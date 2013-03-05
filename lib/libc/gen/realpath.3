@@ -1,4 +1,4 @@
-.\"	$NetBSD: realpath.3,v 1.14 2012/06/21 21:35:25 wiz Exp $
+.\"	$NetBSD: realpath.3,v 1.15 2013/03/05 02:46:33 soda Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,7 +65,8 @@ argument
 .Em must
 refer to a buffer capable of storing at least
 .Dv MAXPATHLEN
-characters.
+characters, or be
+.Dv NULL .
 .Pp
 The
 .Fn realpath
