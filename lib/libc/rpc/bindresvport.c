@@ -1,4 +1,4 @@
-/*	$NetBSD: bindresvport.c,v 1.23 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: bindresvport.c,v 1.24 2013/03/05 19:55:22 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)bindresvport.c 1.8 88/02/08 SMI";
 static char *sccsid = "@(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: bindresvport.c,v 1.23 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: bindresvport.c,v 1.24 2013/03/05 19:55:22 christos Exp $");
 #endif
 #endif
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: bindresvport.c,v 1.23 2012/03/20 17:14:50 matt Exp $");
 #include <unistd.h>
 
 #include <rpc/rpc.h>
+#include "svc_fdset.h"
 
 #ifdef __weak_alias
 __weak_alias(bindresvport,_bindresvport)
