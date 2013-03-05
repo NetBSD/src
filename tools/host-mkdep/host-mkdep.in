@@ -1,6 +1,6 @@
 #!@BSHELL@ -
 #
-#	$NetBSD: host-mkdep.in,v 1.23 2012/12/09 23:53:39 christos Exp $
+#	$NetBSD: host-mkdep.in,v 1.24 2013/03/05 03:06:21 christos Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -84,6 +84,7 @@ while [ $# -gt 0 ]; do
 		-o)	OPTIONAL=true; AWK_OPTIONAL='print ".OPTIONAL:" $0';;
 		-p)	NEWEXT=;;
 		-q)	QUIET=true;;
+		-[iv])	;;
 
 		-[fPs])	# Options with arguments
 			[ -z "$optarg" ] && {
@@ -180,7 +181,9 @@ else
 		--sysroot*)
 				shift
 				;;
-
+		-[iv])
+				shift
+				;;
 		-*)		
 				echo "$0: Unknown option: $1" 1>&2 # all other -options
 				exit 1
