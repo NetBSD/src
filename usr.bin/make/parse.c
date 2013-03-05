@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.186 2013/03/05 02:04:11 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.187 2013/03/05 22:01:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.186 2013/03/05 02:04:11 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.187 2013/03/05 22:01:44 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.186 2013/03/05 02:04:11 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.187 2013/03/05 22:01:44 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -210,6 +210,7 @@ typedef enum {
     ExShell,	    /* .SHELL */
     Silent,	    /* .SILENT */
     SingleShell,    /* .SINGLESHELL */
+    Stale,	    /* .STALE */
     Suffixes,	    /* .SUFFIXES */
     Wait,	    /* .WAIT */
     Attribute	    /* Generic attribute */
@@ -333,6 +334,7 @@ static const struct {
 { ".SHELL", 	  ExShell,    	0 },
 { ".SILENT",	  Silent,   	OP_SILENT },
 { ".SINGLESHELL", SingleShell,	0 },
+{ ".STALE",	  Stale,	0 },
 { ".SUFFIXES",	  Suffixes, 	0 },
 { ".USE",   	  Attribute,   	OP_USE },
 { ".USEBEFORE",   Attribute,   	OP_USEBEFORE },
@@ -1292,6 +1294,7 @@ ParseDoDependency(char *line)
 		 *	    	    	apply the .DEFAULT commands.
 		 *	.PHONY		The list of targets
 		 *	.NOPATH		Don't search for file in the path
+		 *	.STALE
 		 *	.BEGIN
 		 *	.END
 		 *	.ERROR
@@ -1302,44 +1305,45 @@ ParseDoDependency(char *line)
 		 *  	.ORDER	    	Must set initial predecessor to NULL
 		 */
 		switch (specType) {
-		    case ExPath:
-			if (paths == NULL) {
-			    paths = Lst_Init(FALSE);
-			}
-			(void)Lst_AtEnd(paths, dirSearchPath);
-			break;
-		    case Main:
-			if (!Lst_IsEmpty(create)) {
-			    specType = Not;
-			}
-			break;
-		    case Begin:
-		    case End:
-		    case dotError:
-		    case Interrupt:
-			gn = Targ_FindNode(line, TARG_CREATE);
-			if (doing_depend)
-			    ParseMark(gn);
-			gn->type |= OP_NOTMAIN|OP_SPECIAL;
-			(void)Lst_AtEnd(targets, gn);
-			break;
-		    case Default:
-			gn = Targ_NewGN(".DEFAULT");
-			gn->type |= (OP_NOTMAIN|OP_TRANSFORM);
-			(void)Lst_AtEnd(targets, gn);
-			DEFAULT = gn;
-			break;
-		    case NotParallel:
-			maxJobs = 1;
-			break;
-		    case SingleShell:
-			compatMake = TRUE;
-			break;
-		    case Order:
-			predecessor = NULL;
-			break;
-		    default:
-			break;
+		case ExPath:
+		    if (paths == NULL) {
+			paths = Lst_Init(FALSE);
+		    }
+		    (void)Lst_AtEnd(paths, dirSearchPath);
+		    break;
+		case Main:
+		    if (!Lst_IsEmpty(create)) {
+			specType = Not;
+		    }
+		    break;
+		case Begin:
+		case End:
+		case Stale:
+		case dotError:
+		case Interrupt:
+		    gn = Targ_FindNode(line, TARG_CREATE);
+		    if (doing_depend)
+			ParseMark(gn);
+		    gn->type |= OP_NOTMAIN|OP_SPECIAL;
+		    (void)Lst_AtEnd(targets, gn);
+		    break;
+		case Default:
+		    gn = Targ_NewGN(".DEFAULT");
+		    gn->type |= (OP_NOTMAIN|OP_TRANSFORM);
+		    (void)Lst_AtEnd(targets, gn);
+		    DEFAULT = gn;
+		    break;
+		case NotParallel:
+		    maxJobs = 1;
+		    break;
+		case SingleShell:
+		    compatMake = TRUE;
+		    break;
+		case Order:
+		    predecessor = NULL;
+		    break;
+		default:
+		    break;
 		}
 	    } else if (strncmp(line, ".PATH", 5) == 0) {
 		/*
@@ -1447,6 +1451,7 @@ ParseDoDependency(char *line)
 		Parse_Error(PARSE_WARNING, "Special and mundane targets don't mix. Mundane ones ignored");
 		break;
 	    case Default:
+	    case Stale:
 	    case Begin:
 	    case End:
 	    case dotError:
