@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.185 2012/06/12 19:21:51 joerg Exp $	*/
+/*	$NetBSD: parse.c,v 1.186 2013/03/05 02:04:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.185 2012/06/12 19:21:51 joerg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.186 2013/03/05 02:04:11 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.185 2012/06/12 19:21:51 joerg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.186 2013/03/05 02:04:11 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -905,6 +905,8 @@ ParseDoOp(void *gnp, void *opp)
 	gn->type |= op & ~OP_OPMASK;
 
 	cohort = Targ_FindNode(gn->name, TARG_NOHASH);
+	if (doing_depend)
+	    ParseMark(cohort);
 	/*
 	 * Make the cohort invisible as well to avoid duplicating it into
 	 * other variables. True, parents of this target won't tend to do
@@ -977,6 +979,8 @@ ParseDoSrc(int tOp, const char *src)
 		 */
 		snprintf(wait_src, sizeof wait_src, ".WAIT_%u", ++wait_number);
 		gn = Targ_FindNode(wait_src, TARG_NOHASH);
+		if (doing_depend)
+		    ParseMark(gn);
 		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
 		Lst_ForEach(targets, ParseLinkSrc, gn);
 		return;
@@ -1008,6 +1012,8 @@ ParseDoSrc(int tOp, const char *src)
 	 * source and the current one.
 	 */
 	gn = Targ_FindNode(src, TARG_CREATE);
+	if (doing_depend)
+	    ParseMark(gn);
 	if (predecessor != NULL) {
 	    (void)Lst_AtEnd(predecessor->order_succ, gn);
 	    (void)Lst_AtEnd(gn->order_pred, predecessor);
@@ -1039,6 +1045,8 @@ ParseDoSrc(int tOp, const char *src)
 
 	/* Find/create the 'src' node and attach to all targets */
 	gn = Targ_FindNode(src, TARG_CREATE);
+	if (doing_depend)
+	    ParseMark(gn);
 	if (tOp) {
 	    gn->type |= tOp;
 	} else {
@@ -1310,6 +1318,8 @@ ParseDoDependency(char *line)
 		    case dotError:
 		    case Interrupt:
 			gn = Targ_FindNode(line, TARG_CREATE);
+			if (doing_depend)
+			    ParseMark(gn);
 			gn->type |= OP_NOTMAIN|OP_SPECIAL;
 			(void)Lst_AtEnd(targets, gn);
 			break;
@@ -1388,6 +1398,8 @@ ParseDoDependency(char *line)
 		} else {
 		    gn = Suff_AddTransform(targName);
 		}
+		if (doing_depend)
+		    ParseMark(gn);
 
 		(void)Lst_AtEnd(targets, gn);
 	    }
