@@ -1,19 +1,18 @@
-#	$NetBSD: Makefile,v 1.12 2013/03/05 10:19:58 martin Exp $
+#	$NetBSD: Makefile,v 1.13 2013/03/05 13:42:04 apb Exp $
 
 .include "Makefile.inc"
+.include <bsd.own.mk>
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45
 COPTS.zic.c	+= -Wno-format-nonliteral
 COPTS.scheck.c	+= -Wno-format-nonliteral
-.else
-# warning with older gcc:
-# "comparison is always false due to limited range of data type"
-# and no way to make it shut up?
-WARNS=         0
-NOGCCERROR=    1
-.endif
 
-.include <bsd.own.mk>
+.if defined(HAVE_GCC) && ${HAVE_GCC} < 45
+# gcc-4.1 says:
+# "warning: comparison is always false due to limited range of data type"
+# and there is no -Wno-foo option to suppress that warning.
+#
+COPTS.zic.c+= ${${ACTIVE_CC} == "gcc" :? -Wno-error :}
+.endif # HAVE_GCC < 45
 
 PROG=	zic
 SRCS=	zic.c scheck.c ialloc.c
