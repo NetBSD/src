@@ -1,4 +1,4 @@
-.\"	$NetBSD: realpath.3,v 1.15 2013/03/05 02:46:33 soda Exp $
+.\"	$NetBSD: realpath.3,v 1.16 2013/03/05 03:11:27 enami Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,7 @@ and return the absolute pathname corresponding to
 .Fa pathname .
 .Sh RETURN VALUES
 If
-.Fa resolvednamed
+.Fa resolvedname
 is
 .Dv NULL ,
 it will be allocated and the returned pointer can be deallocated using
@@ -92,7 +92,7 @@ returns
 and
 .Fa resolvedname
 was not allocated by
-.Nm ,
+.Fn realpath ,
 it will contain the pathname which caused the problem.
 .Sh ERRORS
 The function
