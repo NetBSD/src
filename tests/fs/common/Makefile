@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2012/08/31 14:46:54 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2013/03/05 19:58:33 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -15,8 +15,17 @@ CPPFLAGS+=-DWANT_ZFS_TESTS
 
 WARNS=	3
 
-.PATH: ${.CURDIR}/nfsrpc
-.include "nfsrpc/Makefile.inc"
+# NFSRPC libc rpc using rump syscalls
+SRCS+=	bindresvport.c clnt_bcast.c clnt_dg.c clnt_generic.c clnt_vc.c \
+	rpc_generic.c rpc_soc.c rpcb_clnt.c \
+	svc.c svc_dg.c svc_fdset.c svc_generic.c svc_run.c svc_vc.c
+
+LIBC=${NETBSDSRCDIR}/lib/libc
+.PATH: ${NETBSDSRCDIR}/lib/libc/rpc
+CPPFLAGS+=	-DPORTMAP -D_REENTRANT -DRUMP_SYS_NETWORKING
+CPPFLAGS+=	-DDEBUG -DLIBWRAP -DRUMP_RPC
+CPPFLAGS+=	-I${LIBC}/include -I${LIBC}/rpc
+
 
 LIBISPRIVATE=	# yup
 
