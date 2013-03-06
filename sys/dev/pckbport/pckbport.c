@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.15 2013/03/06 03:26:17 christos Exp $ */
+/* $NetBSD: pckbport.c,v 1.16 2013/03/06 04:22:03 christos Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.15 2013/03/06 03:26:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.16 2013/03/06 04:22:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,7 +578,7 @@ pckbportintr(pckbport_tag_t t, pckbport_slot_t slot, int data)
 		(*t->t_inputhandler[slot])(t->t_inputarg[slot], data);
 		return;
 	}
-	DPRINTF(("%s: slot %d lost %d\n", slot, data, __func__));
+	DPRINTF(("%s: slot %d lost %d\n", __func__, slot, data));
 }
 
 int
