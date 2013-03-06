@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.36 2013/02/09 00:31:21 christos Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.37 2013/03/06 11:25:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.36 2013/02/09 00:31:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.37 2013/03/06 11:25:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,6 +89,8 @@ typedef struct {
 	struct evcnt	r_ev_stay;
 	struct evcnt	r_ev_localize;
 } runqueue_t;
+
+#define	AVGCOUNT_SHIFT	4	/* shift for r_avgcount */
 
 static void *	sched_getrq(runqueue_t *, const pri_t);
 #ifdef MULTIPROCESSOR
@@ -383,7 +385,7 @@ sched_takecpu(struct lwp *l)
 	/* Make sure that thread is in appropriate processor-set */
 	if (__predict_true(spc->spc_psid == l->l_psid)) {
 		/* If CPU of this thread is idling - run there */
-		if (ci_rq->r_count == 0) {
+		if (ci_rq->r_avgcount <= (1 << AVGCOUNT_SHIFT)) {
 			ci_rq->r_ev_stay.ev_count++;
 			return ci;
 		}
@@ -522,10 +524,20 @@ sched_balance(void *nocallout)
 
 	/* Make lockless countings */
 	for (CPU_INFO_FOREACH(cii, ci)) {
+		const bool notidle = ci->ci_data.cpu_idlelwp != ci->ci_curlwp;
+		u_int nrunning;
+
 		ci_rq = ci->ci_schedstate.spc_sched_info;
 
 		/* Average count of the threads */
-		ci_rq->r_avgcount = (ci_rq->r_avgcount + ci_rq->r_mcount) >> 1;
+		nrunning = ci_rq->r_count + notidle;
+		ci_rq->r_avgcount = (ci_rq->r_avgcount +
+		    (nrunning << AVGCOUNT_SHIFT)) >> 1;
+
+		/* We are not interested in a CPU without migratable threads */
+		if (ci_rq->r_mcount == 0) {
+			continue;
+		}
 
 		/* Look for CPU with the highest average */
 		if (ci_rq->r_avgcount > highest) {
