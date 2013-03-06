@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.50 2012/10/20 05:57:34 matt Exp $	*/
+/*	$NetBSD: ppb.c,v 1.51 2013/03/06 11:50:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.50 2012/10/20 05:57:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.51 2013/03/06 11:50:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,8 @@ ppb_fix_pcie(device_t self)
 			u_int ls = (reg >> 16) & 0x0f;
 			if (lw != mlw || ls != mls) {
 				if (ls < __arraycount(pcie_linkspeed_strings)) {
-					aprint_normal("> x%d @ %sGb/s\n",
+					aprint_normal_dev(self,
+					    "link is x%d @ %sGb/s\n",
 					    lw, pcie_linkspeed_strings[ls]);
 				} else {
 					aprint_normal_dev(self,
