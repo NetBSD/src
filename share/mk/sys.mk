@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.115 2013/01/26 22:04:18 christos Exp $
+#	$NetBSD: sys.mk,v 1.116 2013/03/06 11:19:08 yamt Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -41,8 +41,8 @@ COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 # C Type Format data is required for DTrace
-CTFFLAGS	?=	-L VERSION
-CTFMFLAGS	?=	-t -L VERSION
+CTFFLAGS	?=	-g -L VERSION
+CTFMFLAGS	?=	-g -t -L VERSION
 
 # We don't define these here, we let the bsd.own.mk to do it
 #CTFCONVERT	?=	ctfconvert
