@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.118 2012/02/20 22:42:52 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.119 2013/03/06 11:38:15 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.118 2012/02/20 22:42:52 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.119 2013/03/06 11:38:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -1569,7 +1569,7 @@ ReconWriteDoneProc(void *arg, int status)
 
 	Dprintf2("Reconstruction completed on psid %ld ru %d\n", rbuf->parityStripeID, rbuf->which_ru);
 	if (status) {
-		printf("raid%d: Recon write failed (status %d(0x%x)!\n", rbuf->raidPtr->raidid,status,status);
+		printf("raid%d: Recon write failed (status %d(0x%x))!\n", rbuf->raidPtr->raidid,status,status);
 		rf_CauseReconEvent(rbuf->raidPtr, rbuf->col, arg, RF_REVENT_WRITE_FAILED);
 		return(0);
 	}
