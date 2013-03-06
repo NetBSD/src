@@ -1,4 +1,4 @@
-.\"	$NetBSD: lockstat.8,v 1.9 2009/03/21 13:02:19 ad Exp $
+.\"	$NetBSD: lockstat.8,v 1.10 2013/03/06 11:49:06 yamt Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 21, 2009
+.Dd March 6, 2013
 .Dt LOCKSTAT 8
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nd display kernel locking statistics
 .Sh SYNOPSIS
 .Nm
-.Op Fl ceflMmpstx
+.Op Fl cdeflMmpstx
 .Op Fl b Ar nbuf
 .Op Fl E Ar event
 .Op Fl F Ar func
@@ -70,6 +70,10 @@ Adjust the number of trace buffers allocated by the kernel to
 Report percentage of total events by count, and sort the output by number
 of events.
 The default is to key on event timings.
+.It Fl d
+Disable lockstat.
+This is useful when a program crashed leaving the lockstat kernel driver
+enabled.
 .It Fl E Ar event
 Limit tracing to one type of event.
 Use the
