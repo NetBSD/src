@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.50 2012/06/30 23:36:20 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.51 2013/03/06 11:37:23 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.50 2012/06/30 23:36:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.51 2013/03/06 11:37:23 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -1202,7 +1202,7 @@ xennetback_ifsoftstart_copy(void *arg)
 	gnttab_copy_t *gop;
 	int id, offset;
 
-	XENPRINTF(("xennetback_ifsoftstart_transfer "));
+	XENPRINTF(("xennetback_ifsoftstart_copy "));
 	int s = splnet();
 	if (__predict_false(
 	    (ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)) {
