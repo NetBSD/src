@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.2 2010/08/03 17:24:45 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2013/03/06 13:36:50 christos Exp $
 
 SRCS.rumpnfsd+=	check_bound.c rpcb_stat.c rpcb_svc_4.c rpcbind.c pmap_svc.c \
 		rpcb_svc.c rpcb_svc_com.c security.c util.c 
 
-LIBRPCDIR=        /usr/src/lib/libc/rpc
+LIBRPCDIR=        ${NETBSDSRCDIR}/lib/libc/rpc
 
 CPPFLAGS+=	-I${LIBRPCDIR} -DPORTMAP -DLIBWRAP
 
