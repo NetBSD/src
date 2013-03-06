@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.38 2013/03/06 18:19:07 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.39 2013/03/06 18:21:18 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.38 2013/03/06 18:19:07 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.39 2013/03/06 18:21:18 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -869,7 +869,6 @@ _("%s: panic: Invalid l_value %d\n"),
 static zic_t
 gethms(const char *string, const char *const errstring, const int signable)
 {
-	long 	lhh;
 	zic_t	hh;
 	int	mm, ss, sign;
 
@@ -881,16 +880,15 @@ gethms(const char *string, const char *const errstring, const int signable)
 		sign = -1;
 		++string;
 	} else	sign = 1;
-	if (sscanf(string, scheck(string, "%ld"), &lhh) == 1)
+	if (sscanf(string, scheck(string, "%jd"), &hh) == 1)
 		mm = ss = 0;
-	else if (sscanf(string, scheck(string, "%ld:%d"), &lhh, &mm) == 2)
+	else if (sscanf(string, scheck(string, "%jd:%d"), &hh, &mm) == 2)
 		ss = 0;
-	else if (sscanf(string, scheck(string, "%ld:%d:%d"),
-		&lhh, &mm, &ss) != 3) {
+	else if (sscanf(string, scheck(string, "%jd:%d:%d"),
+		&hh, &mm, &ss) != 3) {
 			error(errstring);
 			return 0;
 	}
-	hh = lhh;
 	if (hh < 0 ||
 		mm < 0 || mm >= MINSPERHOUR ||
 		ss < 0 || ss > SECSPERMIN) {
