@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.32 2012/06/30 15:03:57 reinoud Exp $
+# $NetBSD: Makefile.usermode,v 1.33 2013/03/06 11:36:21 yamt Exp $
 
 USETOOLS?=			no
 NEED_OWN_INSTALL_TARGET?=	no
@@ -21,7 +21,8 @@ MACHINE_ARCH!=uname -p
 USERMODE_HOSTOS!=uname -s
 USERMODE_HOSTMACHINE!=uname -m
 USERMODE_LIBS= -L${DESTDIR}/usr/lib -lrt
-USERMODE_CPPFLAGS=${DEBUG} -U_KERNEL -I/usr/include
+USERMODE_CPPFLAGS=${DEBUG} -U_KERNEL
+USERMODE_CPPFLAGS+=-I${DESTDIR}/usr/include
 USERMODE_CPPFLAGS+=${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 
 ## XXX hack to make it work under build.sh
@@ -95,6 +96,8 @@ thunk.d: ${USERMODE}/usermode/thunk.c
 
 thunk.o: ${USERMODE}/usermode/thunk.c
 	${CC} ${COPTS} ${CPPFLAGS.thunk.c} -c -o $@ ${USERMODE}/usermode/thunk.c
+
+cpu_${MACHINE_ARCH}.o:	${USERMODE}/target/${MACHINE_ARCH}/cpu_${MACHINE_ARCH}.c
 
 ##
 ## (7) misc settings
