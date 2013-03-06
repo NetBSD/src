@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.68 2012/06/10 15:04:47 christos Exp $
+.\" $NetBSD: mdoc.local,v 1.69 2013/03/06 21:42:47 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,6 +90,7 @@
 .ds doc-str-Lb-libfetch         File Transfer Library for URLs (libfetch, \-lfetch)
 .ds doc-str-Lb-libiscsi         iSCSI protocol library (libiscsi, \-liscsi)
 .ds doc-str-Lb-libisns          Internet Storage Name Service Library (libisns, \-lisns)
+.ds doc-str-Lb-libmandoc        Mandoc Macro Compiler Library (libmandoc, \-lmandoc)
 .ds doc-str-Lb-libnetpgp        Netpgp signing, verification, encryption and decryption (libnetpgp, \-lnetpgp)
 .ds doc-str-Lb-libperfuse       PUFFS enabled relay to FUSE Library (libperfuse, \-lperfuse)
 .ds doc-str-Lb-libppath         Property-List Paths Library (libppath, \-lppath)
