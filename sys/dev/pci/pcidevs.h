@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1142 2013/03/03 19:51:46 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1143 2013/03/06 17:03:41 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1150 2013/03/03 19:51:13 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1151 2013/03/06 17:03:15 msaitoh Exp
  */
 
 /*
@@ -941,6 +941,7 @@
 #define	PCI_PRODUCT_ALTIMA_AC1000	0x03e8		/* AC1000 Gigabit Ethernet */
 #define	PCI_PRODUCT_ALTIMA_AC1001	0x03e9		/* AC1001 Gigabit Ethernet */
 #define	PCI_PRODUCT_ALTIMA_AC9100	0x03ea		/* AC9100 Gigabit Ethernet */
+#define	PCI_PRODUCT_ALTIMA_AC1003	0x03eb		/* AC1003 Gigabit Ethernet */
 
 /* AMD products */
 #define	PCI_PRODUCT_AMD_AMD64_HT	0x1100		/* K8 AMD64 HyperTransport Configuration */
@@ -1694,9 +1695,11 @@
 #define	PCI_PRODUCT_BROADCOM_BCM57761	0x16b0		/* BCM57761 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57781	0x16b1		/* BCM57781 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57791	0x16b2		/* BCM57791 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM57786	0x16b3		/* BCM57786 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57765	0x16b4		/* BCM57765 Integrated Gigabit Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57785	0x16b5		/* BCM57785 Integrated Gigabit Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57795	0x16b6		/* BCM57795 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM57782	0x16b7		/* BCM57782 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5702_ALT	0x16c6		/* BCM5702 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5703_ALT	0x16c7		/* BCM5703 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5781	0x16dd		/* BCM5781 Integrated Gigabit Ethernet */
