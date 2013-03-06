@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.54 2012/08/16 04:49:47 matt Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.55 2013/03/06 11:31:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.54 2012/08/16 04:49:47 matt Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.55 2013/03/06 11:31:34 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -129,7 +129,6 @@ pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
 
 	return 0;
 }
-
 
 int
 pthread_mutex_destroy(pthread_mutex_t *ptm)
@@ -465,6 +464,12 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 	return error;
 }
 
+/*
+ * pthread__mutex_wakeup: unpark threads waiting for us
+ *
+ * unpark threads on the ptm->ptm_waiters list and self->pt_waiters.
+ */
+
 static void
 pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 {
@@ -530,6 +535,7 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 		}
 	}
 }
+
 int
 pthread_mutexattr_init(pthread_mutexattr_t *attr)
 {
@@ -577,6 +583,16 @@ pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
 		return EINVAL;
 	}
 }
+
+/*
+ * pthread__mutex_deferwake: try to defer unparking threads in self->pt_waiters
+ *
+ * In order to avoid unnecessary contention on the interlocking mutex,
+ * we defer waking up threads until we unlock the mutex.  The threads will
+ * be woken up when the calling thread (self) releases the first mutex with
+ * MUTEX_DEFERRED_BIT set.  It likely be the mutex 'ptm', but no problem
+ * even if it isn't.
+ */
 
 void
 pthread__mutex_deferwake(pthread_t self, pthread_mutex_t *ptm)
