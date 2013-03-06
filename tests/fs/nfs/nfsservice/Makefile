@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/07/19 03:30:46 dholland Exp $
+#	$NetBSD: Makefile,v 1.7 2013/03/06 13:35:22 christos Exp $
 #
 
 NOMAN=	1
@@ -28,12 +28,9 @@ LDADD+=	-lpthread -lutil
 
 CPPFLAGS+=	-DDEBUG -DMOUNT_NOMAIN -D_REENTRANT
 CPPFLAGS+=	-DRUMP_SYS_NETWORKING
-#CPPFLAGS+=	-DSVC_RUN_DEBUG
-CPPFLAGS+=	-I${.CURDIR}/../../common/nfsrpc
 
 .PATH: ${.CURDIR}/rpcbind
 .include "rpcbind/Makefile.inc"
-#.include "rpc/Makefile.inc"
 
 WARNS=	2
 
