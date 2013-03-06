@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.82 2012/08/11 01:10:11 manu Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.83 2013/03/06 11:39:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -147,6 +147,10 @@ struct puffs_mount {
 	struct puffs_node_hashlist	*pmp_pnodehash;
 	int				pmp_npnodehash;
 
+	/*
+	 * a list of cookies which is going to be puffs_getvnode'd.
+	 * this is merely a loose attempt to prevent races.
+	 */
 	LIST_HEAD(, puffs_newcookie)	pmp_newcookie;
 
 	struct mount			*pmp_mp;
