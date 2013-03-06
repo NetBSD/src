@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.82 2013/02/09 00:31:21 christos Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.83 2013/03/06 11:20:10 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.82 2013/02/09 00:31:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.83 2013/03/06 11:20:10 yamt Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -988,10 +988,7 @@ vmem_roundup_size(vmem_t *vm, vmem_size_t size)
 }
 
 /*
- * vmem_alloc:
- *
- * => caller must ensure appropriate spl,
- *    if the arena can be accessed from interrupt context.
+ * vmem_alloc: allocate resource from the arena.
  */
 
 int
@@ -1221,10 +1218,7 @@ gotit:
 }
 
 /*
- * vmem_free:
- *
- * => caller must ensure appropriate spl,
- *    if the arena can be accessed from interrupt context.
+ * vmem_free: free the resource to the arena.
  */
 
 void
