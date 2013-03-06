@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.39 2013/03/06 18:21:18 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.40 2013/03/06 18:40:19 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.39 2013/03/06 18:21:18 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.40 2013/03/06 18:40:19 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -792,7 +792,7 @@ infile(const char *name)
 			break;
 		cp = strchr(buf, '\n');
 		if (cp == NULL) {
-			error(_("line too zic_t"));
+			error(_("line too long"));
 			exit(EXIT_FAILURE);
 		}
 		*cp = '\0';
@@ -2574,7 +2574,7 @@ mp = _("time zone abbreviation differs from POSIX standard");
 	}
 	i = strlen(string) + 1;
 	if (charcnt + i > TZ_MAX_CHARS) {
-		error(_("too many, or too zic_t, time zone abbreviations"));
+		error(_("too many, or too long, time zone abbreviations"));
 		exit(EXIT_FAILURE);
 	}
 	(void)strncpy(&chars[charcnt], string, sizeof(chars) - charcnt - 1);
