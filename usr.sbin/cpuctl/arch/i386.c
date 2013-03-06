@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.38 2013/01/07 23:20:42 dsl Exp $	*/
+/*	$NetBSD: i386.c,v 1.39 2013/03/06 11:52:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.38 2013/01/07 23:20:42 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.39 2013/03/06 11:52:53 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -658,6 +658,7 @@ identifycpu_cpuids(struct cpu_info *ci)
 	u_int core_max = 1;	/* core per package */
 	u_int smt_bits, core_bits;
 	uint32_t descs[4];
+	uint32_t highest_basic_info;
 
 	aprint_verbose("%s: Initial APIC ID %u\n", cpuname, ci->ci_initapicid);
 	ci->ci_packageid = ci->ci_initapicid;
@@ -676,7 +677,8 @@ identifycpu_cpuids(struct cpu_info *ci)
 		lp_max = (descs[1] >> 16) & 0xff;
 	}
 	x86_cpuid(0, descs);
-	if (descs[0] >= 4) {
+	highest_basic_info = descs[0];
+	if (highest_basic_info >= 4) {
 		x86_cpuid2(4, 0, descs);
 		core_max = (descs[0] >> 26) + 1;
 	}
@@ -1426,6 +1428,44 @@ identifycpu(int fd, const char *cpuname)
 			aprint_verbose("%s: SVM NASID %d\n", cpuname, data[1]);
 			print_bits(cpuname, "SVM features", CPUID_AMD_SVM_FLAGS,
 				   data[3]);
+		}
+	} else if (cpu_vendor == CPUVENDOR_INTEL) {
+		uint32_t data[4];
+		uint32_t highest_basic_info;
+		uint32_t bi_index;
+
+		x86_cpuid(0x00000000, data);
+		highest_basic_info = data[0];
+		aprint_verbose("%s: highest basic info %08x\n", cpuname,
+		    highest_basic_info);
+		for (bi_index = 1; bi_index <= highest_basic_info; bi_index++) {
+			x86_cpuid(bi_index, data);
+			switch (bi_index) {
+			case 6:
+				print_bits(cpuname, "DSPM-eax",
+				    CPUID_DSPM_FLAGS, data[0]);
+				print_bits(cpuname, "DSPM-ecx",
+				    CPUID_DSPM_FLAGS1, data[2]);
+				break;
+			case 7:
+				aprint_verbose("%s: SEF highest subleaf %08x\n",
+				    cpuname, data[0]);
+				print_bits(cpuname, "SEF-main", CPUID_SEF_FLAGS,
+				    data[1]);
+				break;
+#if 0
+			default:
+				aprint_verbose("%s: basic %08x-eax %08x\n",
+				    cpuname, bi_index, data[0]);
+				aprint_verbose("%s: basic %08x-ebx %08x\n",
+				    cpuname, bi_index, data[1]);
+				aprint_verbose("%s: basic %08x-ecx %08x\n",
+				    cpuname, bi_index, data[2]);
+				aprint_verbose("%s: basic %08x-edx %08x\n",
+				    cpuname, bi_index, data[3]);
+				break;
+#endif
+			}
 		}
 	}
 
