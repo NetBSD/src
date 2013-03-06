@@ -1,4 +1,4 @@
-.\"	$NetBSD: edid.9,v 1.4 2010/12/02 12:54:13 wiz Exp $
+.\"	$NetBSD: edid.9,v 1.5 2013/03/06 22:18:29 wiz Exp $
 .\"
 .\" Copyright 2006 Itronix Inc.
 .\" All rights reserved.
@@ -60,9 +60,10 @@ The
 .Fn edid_is_valid
 function simply tests if the EDID block in
 .Fa data
-contains valid data.  This test includes a verification of the checksum,
-and that valid vendor and product idenfication data is present.  The data
-block contain at least 128 bytes.
+contains valid data.
+This test includes a verification of the checksum,
+and that valid vendor and product idenfication data is present.
+The data block contain at least 128 bytes.
 .Pp
 The
 .Fn edid_parse
