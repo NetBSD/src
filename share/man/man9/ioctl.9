@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.30 2010/12/11 17:32:14 cegger Exp $
+.\" $NetBSD: ioctl.9,v 1.31 2013/03/06 22:07:54 wiz Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -246,13 +246,17 @@ structure and not a pointer to it or sizeof(struct foo)
 .El
 .Pp
 In order for the new ioctl to be known to the system it is installed
-in either \*[Lt]sys/ioctl.h\*[Gt] or one of the files that are reached from
-\*[Lt]sys/ioctl.h\*[Gt].
+in either
+.Aq Pa sys/ioctl.h
+or one of the files that are reached from
+.Aq Pa sys/ioctl.h .
 .Sh RETURN VALUES
-All ioctl() routines should return either 0 or a defined error code.
-The use of magic numbers such as -1, to indicate that a given ioctl
+All
+.Fn ioctl
+routines should return either 0 or a defined error code.
+The use of magic numbers such as \-1, to indicate that a given ioctl
 code was not handled is strongly discouraged.
-The value -1 coincides with the historic value for
+The value \-1 coincides with the historic value for
 .Cm ERESTART
 which was shown to produce user space code that never returned from
 a call to
@@ -267,7 +271,7 @@ indicates that no error occurred during processing (it did not fail),
 but neither was anything processed (it did not succeed).
 This supersedes the use of either
 .Cm ENOTTY
-(which is an explicit failure) or -1 (which has no contextual meaning)
+(which is an explicit failure) or \-1 (which has no contextual meaning)
 as a return value.
 .Cm ENOTTY
 will get passed directly back to user space and bypass any further
@@ -295,7 +299,9 @@ int a = 3;
 error = ioctl(s, FOOICTL, \*[Am]a);
 .Ed
 .Pp
-Within the ioctl()-routine of the driver, it can be then accessed like
+Within the
+.Fn ioctl Ns No -routine
+of the driver, it can be then accessed like
 .Bd -literal -offset indent
 driver_ioctl(..., u_long cmd, void *data)
 {
@@ -313,7 +319,11 @@ driver_ioctl(..., u_long cmd, void *data)
 Note that if you for example try to read information from an ethernet
 driver where the name of the card is included in the third argument
 (e.g., ioctl(s, READFROMETH, struct ifreq *)), then you have to use
-the _IOWR() form not the _IOR(), as passing the name of the card to the
+the
+.Fn _IOWR
+form not the
+.Fn _IOR ,
+as passing the name of the card to the
 kernel already consists of writing data.
 .Sh SEE ALSO
 .Xr ioctl 2
