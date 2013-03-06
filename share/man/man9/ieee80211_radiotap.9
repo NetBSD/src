@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_radiotap.9,v 1.12 2010/04/05 19:34:28 joerg Exp $
+.\" $NetBSD: ieee80211_radiotap.9,v 1.13 2013/03/06 22:19:03 wiz Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>.
@@ -91,8 +91,8 @@ typically defines a structure embedding an instance of
 .Vt "struct ieee80211_radiotap_header"
 at the beginning,
 with subsequent fields naturally aligned,
-and in the appropriate order.  Also, a driver defines
-a macro to set the bits of the
+and in the appropriate order.
+Also, a driver defines a macro to set the bits of the
 .Va it_present
 bitmap to indicate which fields exist and are filled in by the driver.
 .\"
