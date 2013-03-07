@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.10 2013/02/27 13:53:51 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.11 2013/03/07 08:46:54 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -99,10 +99,26 @@
 #define CSR_READ_4(sc, reg)		\
 	bus_space_read_4(sc->bge_btag, sc->bge_bhandle, reg)
 
+#define CSR_WRITE_4_FLUSH(sc, reg, val)		\
+	do {					\
+		CSR_WRITE_4(sc, reg, val);	\
+		CSR_READ_4(sc, reg);		\
+	} while(0)
+
 #define BGE_SETBIT(sc, reg, x)	\
 	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) | (x)))
+#define BGE_SETBIT_FLUSH(sc, reg, x)	\
+	do {				\
+		BGE_SETBIT(sc, reg, x);	\
+		CSR_READ_4(sc, reg);	\
+	} while(0)
 #define BGE_CLRBIT(sc, reg, x)	\
 	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) & ~(x)))
+#define BGE_CLRBIT_FLUSH(sc, reg, x)	\
+	do {				\
+		BGE_CLRBIT(sc, reg, x);	\
+		CSR_READ_4(sc, reg);	\
+	} while(0)
 
 #define PCI_SETBIT(pc, tag, reg, x)	\
 	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) | (x)))
