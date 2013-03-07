@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.7 2012/09/21 16:38:54 joerg Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.8 2013/03/07 22:12:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.7 2012/09/21 16:38:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.8 2013/03/07 22:12:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,8 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.7 2012/09/21 16:38:54 joerg Exp $");
 #include "rump_vfs_private.h"
 
 /* realqvik(tm) "devfs" */
-int
-rump_vfs_makeonedevnode(dev_t devtype, const char *devname,
+static int
+makeonedevnode(dev_t devtype, const char *devname,
 	devmajor_t majnum, devminor_t minnum)
 {
 	register_t retval;
@@ -55,8 +55,8 @@ rump_vfs_makeonedevnode(dev_t devtype, const char *devname,
 	return 0;
 }
 
-int
-rump_vfs_makedevnodes(dev_t devtype, const char *basename, char minchar,
+static int
+makedevnodes(dev_t devtype, const char *basename, char minchar,
 	devmajor_t maj, devminor_t minnum, int nnodes)
 {
 	int error = 0;
@@ -174,6 +174,9 @@ rump_vfs_builddevs(struct devsw_conv *dcvec, size_t dcvecsize)
 	struct devsw_conv *dc;
 	size_t i;
 	int v1, v2;
+
+	rump_vfs_makeonedevnode = makeonedevnode;
+	rump_vfs_makedevnodes = makedevnodes;
 
 	for (i = 0; i < dcvecsize; i++) {
 		dc = &dcvec[i];
