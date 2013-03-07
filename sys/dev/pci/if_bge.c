@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.210 2013/03/07 04:42:09 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.211 2013/03/07 08:46:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.210 2013/03/07 04:42:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.211 2013/03/07 08:46:54 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -243,6 +243,7 @@ static int bge_setpowerstate(struct bge_softc *, int);
 static uint32_t bge_readmem_ind(struct bge_softc *, int);
 static void bge_writemem_ind(struct bge_softc *, int, int);
 static void bge_writembx(struct bge_softc *, int, int);
+static void bge_writembx_flush(struct bge_softc *, int, int);
 static void bge_writemem_direct(struct bge_softc *, int, int);
 static void bge_writereg_ind(struct bge_softc *, int, int);
 static void bge_set_max_readrq(struct bge_softc *);
@@ -825,6 +826,15 @@ bge_writembx(struct bge_softc *sc, int off, int val)
 	CSR_WRITE_4(sc, off, val);
 }
 
+static void
+bge_writembx_flush(struct bge_softc *sc, int off, int val)
+{
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
+		off += BGE_LPMBX_IRQ0_HI - BGE_MBX_IRQ0_HI;
+
+	CSR_WRITE_4_FLUSH(sc, off, val);
+}
+
 static uint8_t
 bge_nvram_getbyte(struct bge_softc *sc, int addr, uint8_t *dest)
 {
@@ -869,8 +879,7 @@ bge_nvram_getbyte(struct bge_softc *sc, int addr, uint8_t *dest)
 	CSR_WRITE_4(sc, BGE_NVRAM_ACCESS, access);
 
 	/* Unlock. */
-	CSR_WRITE_4(sc, BGE_NVRAM_SWARB, BGE_NVRAMSWARB_CLR1);
-	CSR_READ_4(sc, BGE_NVRAM_SWARB);
+	CSR_WRITE_4_FLUSH(sc, BGE_NVRAM_SWARB, BGE_NVRAMSWARB_CLR1);
 
 	return 0;
 }
@@ -987,11 +996,11 @@ bge_miibus_readreg(device_t dev, int phy, int reg)
 	autopoll = CSR_READ_4(sc, BGE_MI_MODE);
 	if (autopoll & BGE_MIMODE_AUTOPOLL) {
 		BGE_STS_CLRBIT(sc, BGE_STS_AUTOPOLL);
-		BGE_CLRBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
+		BGE_CLRBIT_FLUSH(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
 		DELAY(40);
 	}
 
-	CSR_WRITE_4(sc, BGE_MI_COMM, BGE_MICMD_READ | BGE_MICOMM_BUSY |
+	CSR_WRITE_4_FLUSH(sc, BGE_MI_COMM, BGE_MICMD_READ | BGE_MICOMM_BUSY |
 	    BGE_MIPHY(phy) | BGE_MIREG(reg));
 
 	for (i = 0; i < BGE_TIMEOUT; i++) {
@@ -1012,7 +1021,7 @@ bge_miibus_readreg(device_t dev, int phy, int reg)
 done:
 	if (autopoll & BGE_MIMODE_AUTOPOLL) {
 		BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
-		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
+		BGE_SETBIT_FLUSH(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
 		DELAY(40);
 	}
 
@@ -1042,11 +1051,11 @@ bge_miibus_writereg(device_t dev, int phy, int reg, int val)
 	if (autopoll & BGE_MIMODE_AUTOPOLL) {
 		delay(40);
 		BGE_STS_CLRBIT(sc, BGE_STS_AUTOPOLL);
-		BGE_CLRBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
+		BGE_CLRBIT_FLUSH(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
 		delay(10); /* 40 usec is supposed to be adequate */
 	}
 
-	CSR_WRITE_4(sc, BGE_MI_COMM, BGE_MICMD_WRITE | BGE_MICOMM_BUSY |
+	CSR_WRITE_4_FLUSH(sc, BGE_MI_COMM, BGE_MICMD_WRITE | BGE_MICOMM_BUSY |
 	    BGE_MIPHY(phy) | BGE_MIREG(reg) | val);
 
 	for (i = 0; i < BGE_TIMEOUT; i++) {
@@ -1060,7 +1069,7 @@ bge_miibus_writereg(device_t dev, int phy, int reg, int val)
 
 	if (autopoll & BGE_MIMODE_AUTOPOLL) {
 		BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
-		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
+		BGE_SETBIT_FLUSH(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
 		delay(40);
 	}
 
@@ -1091,9 +1100,10 @@ bge_miibus_statchg(struct ifnet *ifp)
 		BGE_SETBIT(sc, BGE_MAC_MODE, BGE_PORTMODE_MII);
 
 	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
-		BGE_CLRBIT(sc, BGE_MAC_MODE, BGE_MACMODE_HALF_DUPLEX);
+		BGE_CLRBIT_FLUSH(sc, BGE_MAC_MODE, BGE_MACMODE_HALF_DUPLEX);
 	else
-		BGE_SETBIT(sc, BGE_MAC_MODE, BGE_MACMODE_HALF_DUPLEX);
+		BGE_SETBIT_FLUSH(sc, BGE_MAC_MODE, BGE_MACMODE_HALF_DUPLEX);
+	DELAY(40);
 
 	/*
 	 * 802.3x flow control
@@ -1731,7 +1741,7 @@ bge_stop_fw(struct bge_softc *sc)
 
 	if (sc->bge_asf_mode) {
 		bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM_FW, BGE_FW_PAUSE);
-		CSR_WRITE_4(sc, BGE_CPU_EVENT,
+		CSR_WRITE_4_FLUSH(sc, BGE_CPU_EVENT,
 		    CSR_READ_4(sc, BGE_CPU_EVENT) | (1 << 14));
 
 		for (i = 0; i < 100; i++) {
@@ -1932,8 +1942,7 @@ bge_chipinit(struct bge_softc *sc)
 		DELAY(40);	/* XXX */
 
 		/* Put PHY into ready state */
-		BGE_CLRBIT(sc, BGE_MISC_CFG, BGE_MISCCFG_EPHY_IDDQ);
-		CSR_READ_4(sc, BGE_MISC_CFG); /* Flush */
+		BGE_CLRBIT_FLUSH(sc, BGE_MISC_CFG, BGE_MISCCFG_EPHY_IDDQ);
 		DELAY(40);
 	}
 
@@ -2297,7 +2306,8 @@ bge_blockinit(struct bge_softc *sc)
 		val |= BGE_PORTMODE_MII;
 
 	/* Turn on DMA, clear stats */
-	CSR_WRITE_4(sc, BGE_MAC_MODE, val);
+	CSR_WRITE_4_FLUSH(sc, BGE_MAC_MODE, val);
+	DELAY(40);
 
 	/* Set misc. local control, enable interrupts on attentions */
 	sc->bge_local_ctrl_reg = BGE_MLC_INTR_ONATTN | BGE_MLC_AUTO_EEPROM;
@@ -2349,7 +2359,7 @@ bge_blockinit(struct bge_softc *sc)
 		val |= BGE_RDMAMODE_TSO4_ENABLE;
 
 	/* Turn on read DMA state machine */
-	CSR_WRITE_4(sc, BGE_RDMA_MODE, val);
+	CSR_WRITE_4_FLUSH(sc, BGE_RDMA_MODE, val);
 	delay(40);
 
 	/* Turn on RX data completion state machine */
@@ -3280,7 +3290,8 @@ bge_reset(struct bge_softc *sc)
 	 * Step 18: wirte mac mode
 	 * XXX Write 0x0c for 5703S and 5704S
 	 */
-	CSR_WRITE_4(sc, BGE_MAC_MODE, 0);
+	CSR_WRITE_4_FLUSH(sc, BGE_MAC_MODE, 0);
+	DELAY(40);
 
 
 	/* Step 21: 5822 B0 errata */
@@ -3626,7 +3637,7 @@ bge_intr(void *xsc)
 	    (!(pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE) &
 		BGE_PCISTATE_INTR_NOT_ACTIVE))) {
 		/* Ack interrupt and stop others from occuring. */
-		bge_writembx(sc, BGE_MBX_IRQ0_LO, 1);
+		bge_writembx_flush(sc, BGE_MBX_IRQ0_LO, 1);
 
 		BGE_EVCNT_INCR(sc->bge_ev_intr);
 
@@ -3664,7 +3675,7 @@ bge_intr(void *xsc)
 		bge_handle_events(sc);
 
 		/* Re-enable interrupts. */
-		bge_writembx(sc, BGE_MBX_IRQ0_LO, 0);
+		bge_writembx_flush(sc, BGE_MBX_IRQ0_LO, 0);
 
 		if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
 			bge_start(ifp);
@@ -3687,7 +3698,7 @@ bge_asf_driver_up(struct bge_softc *sc)
 			    BGE_FW_DRV_ALIVE);
 			bge_writemem_ind(sc, BGE_SOFTWARE_GENNCOMM_FW_LEN, 4);
 			bge_writemem_ind(sc, BGE_SOFTWARE_GENNCOMM_FW_DATA, 3);
-			CSR_WRITE_4(sc, BGE_CPU_EVENT,
+			CSR_WRITE_4_FLUSH(sc, BGE_CPU_EVENT,
 			    CSR_READ_4(sc, BGE_CPU_EVENT) | (1 << 14));
 		}
 	}
@@ -4417,11 +4428,11 @@ bge_init(struct ifnet *ifp)
 		mode |= BGE_TXMODE_MBUF_LOCKUP_FIX;
 
 	/* Turn on transmitter */
-	CSR_WRITE_4(sc, BGE_TX_MODE, mode | BGE_TXMODE_ENABLE);
+	CSR_WRITE_4_FLUSH(sc, BGE_TX_MODE, mode | BGE_TXMODE_ENABLE);
 	DELAY(100);
 
 	/* Turn on receiver */
-	BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
+	BGE_SETBIT_FLUSH(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
 	DELAY(10);
 
 	CSR_WRITE_4(sc, BGE_MAX_RX_FRAME_LOWAT, 2);
@@ -4434,7 +4445,7 @@ bge_init(struct ifnet *ifp)
 	    BGE_PCIMISCCTL_CLEAR_INTA);
 	PCI_CLRBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_MASK_PCI_INTR);
-	bge_writembx(sc, BGE_MBX_IRQ0_LO, 0);
+	bge_writembx_flush(sc, BGE_MBX_IRQ0_LO, 0);
 
 	if ((error = bge_ifmedia_upd(ifp)) != 0)
 		goto out;
@@ -4482,10 +4493,11 @@ bge_ifmedia_upd(struct ifnet *ifp)
 					sgdig |= BGE_SGDIGCFG_AUTO |
 					    BGE_SGDIGCFG_PAUSE_CAP |
 					    BGE_SGDIGCFG_ASYM_PAUSE;
-					CSR_WRITE_4(sc, BGE_SGDIG_CFG,
+					CSR_WRITE_4_FLUSH(sc, BGE_SGDIG_CFG,
 					    sgdig | BGE_SGDIGCFG_SEND);
 					DELAY(5);
-					CSR_WRITE_4(sc, BGE_SGDIG_CFG, sgdig);
+					CSR_WRITE_4_FLUSH(sc, BGE_SGDIG_CFG,
+					    sgdig);
 				}
 			}
 			break;
@@ -4658,7 +4670,7 @@ bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
 {
 	int i;
 
-	BGE_CLRBIT(sc, reg, bit);
+	BGE_CLRBIT_FLUSH(sc, reg, bit);
 
 	for (i = 0; i < 1000; i++) {
 		if ((CSR_READ_4(sc, reg) & bit) == 0)
@@ -4696,7 +4708,7 @@ bge_stop(struct ifnet *ifp, int disable)
 	/* Disable host interrupts. */
 	PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_MASK_PCI_INTR);
-	bge_writembx(sc, BGE_MBX_IRQ0_LO, 1);
+	bge_writembx_flush(sc, BGE_MBX_IRQ0_LO, 1);
 
 	/*
 	 * Disable all of the receiver blocks.
