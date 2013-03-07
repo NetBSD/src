@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.212 2013/03/07 09:24:24 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.213 2013/03/07 10:57:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.212 2013/03/07 09:24:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.213 2013/03/07 10:57:01 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -2345,7 +2345,8 @@ bge_blockinit(struct bge_softc *sc)
 		val |= BGE_WDMAMODE_BURST_ALL_DATA;
 
 	/* Turn on write DMA state machine */
-	CSR_WRITE_4(sc, BGE_WDMA_MODE, val);
+	CSR_WRITE_4_FLUSH(sc, BGE_WDMA_MODE, val);
+	DELAY(40);
 
 	val = BGE_RDMAMODE_ENABLE | BGE_RDMAMODE_ALL_ATTNS;
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
