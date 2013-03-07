@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.12 2011/01/02 12:53:13 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.13 2013/03/07 18:50:17 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.10 2011/01/02 12:52:25 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.11 2013/03/07 18:49:13 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.6 2013/02/14 10:54:54 pooka Exp 
  */
 
 #include <sys/cdefs.h>
@@ -192,6 +192,15 @@ rump_pub_lwproc_curlwp(void)
 	rump_unschedule();
 
 	return rv;
+}
+
+void
+rump_pub_lwproc_sysent_usenative(void)
+{
+
+	rump_schedule();
+	rump_lwproc_sysent_usenative();
+	rump_unschedule();
 }
 
 void
