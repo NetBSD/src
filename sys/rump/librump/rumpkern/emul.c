@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.153 2013/02/19 09:04:54 martin Exp $	*/
+/*	$NetBSD: emul.c,v 1.154 2013/03/07 19:07:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.153 2013/02/19 09:04:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.154 2013/03/07 19:07:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.153 2013/02/19 09:04:54 martin Exp $");
 #include <sys/module.h>
 #include <sys/tty.h>
 #include <sys/reboot.h>
+#include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/xcall.h>
 #include <sys/sleepq.h>
@@ -128,6 +129,9 @@ struct loadavg averunnable = {
 struct emul emul_netbsd = {
 	.e_name = "netbsd-rump",
 	.e_sysent = rump_sysent,
+#ifndef __HAVE_MINIMAL_EMUL
+	.e_nsysent = SYS_NSYSENT,
+#endif
 	.e_vm_default_addr = uvm_default_mapaddr,
 #ifdef __HAVE_SYSCALL_INTERN
 	.e_syscall_intern = syscall_intern,
