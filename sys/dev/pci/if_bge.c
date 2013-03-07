@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.209 2013/03/07 03:53:35 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.210 2013/03/07 04:42:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.209 2013/03/07 03:53:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.210 2013/03/07 04:42:09 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -1852,7 +1852,8 @@ bge_chipinit(struct bge_softc *sc)
 			uint32_t tmp;
 
 			/* Set ONEDMA_ATONCE for hardware workaround. */
-			tmp = CSR_READ_4(sc, BGE_PCI_CLKCTL) & 0x1f;
+			tmp = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+			    BGE_PCI_CLKCTL) & 0x1f;
 			if (tmp == 6 || tmp == 7)
 				dma_rw_ctl |=
 				    BGE_PCIDMARWCTL_ONEDMA_ATONCE_GLOBAL;
@@ -3622,7 +3623,8 @@ bge_intr(void *xsc)
 	statusword = sc->bge_rdata->bge_status_block.bge_status;
 
 	if ((statusword & BGE_STATFLAG_UPDATED) ||
-	    (!(CSR_READ_4(sc, BGE_PCI_PCISTATE) & BGE_PCISTATE_INTR_NOT_ACTIVE))) {
+	    (!(pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE) &
+		BGE_PCISTATE_INTR_NOT_ACTIVE))) {
 		/* Ack interrupt and stop others from occuring. */
 		bge_writembx(sc, BGE_MBX_IRQ0_LO, 1);
 
@@ -4428,8 +4430,10 @@ bge_init(struct ifnet *ifp)
 	BGE_SETBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
 
 	/* Enable host interrupts. */
-	BGE_SETBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_CLEAR_INTA);
-	BGE_CLRBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_MASK_PCI_INTR);
+	PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
+	    BGE_PCIMISCCTL_CLEAR_INTA);
+	PCI_CLRBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
+	    BGE_PCIMISCCTL_MASK_PCI_INTR);
 	bge_writembx(sc, BGE_MBX_IRQ0_LO, 0);
 
 	if ((error = bge_ifmedia_upd(ifp)) != 0)
@@ -4690,7 +4694,8 @@ bge_stop(struct ifnet *ifp, int disable)
 	bge_sig_pre_reset(sc, BGE_RESET_STOP);
 
 	/* Disable host interrupts. */
-	BGE_SETBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_MASK_PCI_INTR);
+	PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
+	    BGE_PCIMISCCTL_MASK_PCI_INTR);
 	bge_writembx(sc, BGE_MBX_IRQ0_LO, 1);
 
 	/*
