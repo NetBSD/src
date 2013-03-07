@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2012/09/19 21:45:40 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2013/03/07 18:53:39 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../compat/linux/common
@@ -13,7 +13,7 @@ SRCS=	linux_blkio.c linux_cdrom.c linux_errno.c linux_fdio.c		\
 SRCS+=	rump_linux_sysent.c component.c
 
 # XXX
-CPPFLAGS+= -I${.CURDIR}
+CPPFLAGS+= -I${.CURDIR} -I${RUMPTOP}/librump/rumpkern
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
