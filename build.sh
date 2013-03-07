@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.264 2013/02/13 02:17:54 christos Exp $
+#	$NetBSD: build.sh,v 1.265 2013/03/07 04:51:58 oki Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1434,7 +1434,7 @@ print_tooldir_make()
 #    1. build a new version of nbmake in a temporary directory;
 #    2. use the temporary nbmake to create the top level obj directory;
 #    3. use $(getmakevar TOOLDIR) with the temporary nbmake to
-#       get the corect value of TOOLDIR;
+#       get the correct value of TOOLDIR;
 #    4. move the temporary nbmake to ${TOOLDIR}/bin/nbmake.
 #
 # However, people don't like building nbmake unnecessarily if their
@@ -1730,7 +1730,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.264 2013/02/13 02:17:54 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.265 2013/03/07 04:51:58 oki Exp $
 # with these arguments: ${_args}
 #
 
