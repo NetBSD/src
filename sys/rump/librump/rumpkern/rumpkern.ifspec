@@ -1,4 +1,4 @@
-;	$NetBSD: rumpkern.ifspec,v 1.10 2011/01/02 12:52:25 pooka Exp $
+;	$NetBSD: rumpkern.ifspec,v 1.11 2013/03/07 18:49:13 pooka Exp $
 
 NAME|kern
 PUBHDR|include/rump/rumpkern_if_pub.h
@@ -28,5 +28,6 @@ int		|lwproc_newlwp		|pid_t
 void		|lwproc_switch		|struct lwp *
 void		|lwproc_releaselwp	|void
 struct lwp *	|lwproc_curlwp		|void
+void		|lwproc_sysent_usenative|void
 
 void		|allbetsareoff_setid	|pid_t, int
