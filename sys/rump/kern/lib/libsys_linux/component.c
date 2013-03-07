@@ -1,9 +1,11 @@
-/*	$NetBSD: component.c,v 1.3 2012/11/17 16:38:22 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.4 2013/03/07 18:53:40 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "rump_private.h"
 
 extern struct sysent rump_linux_sysent[];
 
@@ -15,6 +17,13 @@ struct emul emul_rump_sys_linux = {
 	.e_syscall_intern = syscall_intern,
 #endif
 };
+
+RUMP_COMPONENT(RUMP_COMPONENT_KERN)
+{
+	extern struct emul *emul_default;
+
+	emul_default = &emul_rump_sys_linux;
+}
 
 /*
  * XXX: the linux emulation code is not split into factions
