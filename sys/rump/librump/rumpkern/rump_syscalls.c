@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.85 2013/01/17 21:31:11 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.86 2013/03/07 19:18:08 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.85 2013/01/17 21:31:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.86 2013/03/07 19:18:08 pooka Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -47,12 +47,19 @@ __KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.85 2013/01/17 21:31:11 pooka Exp
 static int
 rsys_syscall(int num, void *data, size_t dlen, register_t *retval)
 {
-	struct sysent *callp = rump_sysent + num;
+	struct proc *p;
+	struct emul *e;
+	struct sysent *callp;
 	int rv;
 
-	KASSERT(num > 0 && num < SYS_NSYSENT);
-
 	rump_schedule();
+	p = curproc;
+	e = p->p_emul;
+#ifndef __HAVE_MINIMAL_EMUL
+	KASSERT(num > 0 && num < e->e_nsysent);
+#endif
+	callp = e->e_sysent + num;
+
 	rv = sy_call(callp, curlwp, data, retval);
 	rump_unschedule();
 
