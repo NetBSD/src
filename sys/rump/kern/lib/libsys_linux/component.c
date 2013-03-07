@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.4 2013/03/07 18:53:40 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.5 2013/03/07 18:57:42 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -23,6 +23,16 @@ RUMP_COMPONENT(RUMP_COMPONENT_KERN)
 	extern struct emul *emul_default;
 
 	emul_default = &emul_rump_sys_linux;
+}
+
+#include <compat/linux/common/linux_machdep.h>
+
+dev_t
+linux_fakedev(dev_t in, int raw)
+{
+
+	/* I don't really think it matters what we return here */
+	return in;
 }
 
 /*
