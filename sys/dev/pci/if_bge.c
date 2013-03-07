@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.208 2013/03/03 20:20:14 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.209 2013/03/07 03:53:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.208 2013/03/03 20:20:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.209 2013/03/07 03:53:35 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -313,8 +313,16 @@ static const struct bge_product {
 	  "Altima AC1001 Gigabit Ethernet",
 	   },
 	{ PCI_VENDOR_ALTIMA,
+	  PCI_PRODUCT_ALTIMA_AC1003,
+	  "Altima AC1003 Gigabit Ethernet",
+	   },
+	{ PCI_VENDOR_ALTIMA,
 	  PCI_PRODUCT_ALTIMA_AC9100,
 	  "Altima AC9100 Gigabit Ethernet",
+	  },
+	{ PCI_VENDOR_APPLE,
+	  PCI_PRODUCT_APPLE_BCM5701,
+	  "APPLE BCM5701 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5700,
@@ -516,12 +524,24 @@ static const struct bge_product {
 	  "BCM5784M NetLink 1000baseT Ethernet",
 	},
 	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5785F,
+	  "BCM5785F NetLink 10/100 Ethernet",
+	},
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5785G,
+	  "BCM5785G NetLink 1000baseT Ethernet",
+	},
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5786,
 	  "Broadcom BCM5786 Gigabit Ethernet",
 	},
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5787,
 	  "Broadcom BCM5787 Gigabit Ethernet",
+	},
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5787F,
+	  "Broadcom BCM5787F 10/100 Ethernet",
 	},
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5787M,
