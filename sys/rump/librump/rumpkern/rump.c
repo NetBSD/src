@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.252 2013/03/03 13:11:33 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.253 2013/03/07 18:33:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.252 2013/03/03 13:11:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.253 2013/03/07 18:33:27 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -210,11 +210,15 @@ rump_daemonize_done(int error)
 
 RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
 {
+	extern void *__start_link_set_rump_components;
+	extern void *__stop_link_set_rump_components;
 
 	/*
-	 * dummy component to make sure at least one component is
-	 * present in every possible rump kernel configuration
+	 * Trick compiler into generating references so that statically
+	 * linked rump kernels are generated with the link set symbols.
 	 */
+	asm("" :: "r"(__start_link_set_rump_components));
+	asm("" :: "r"(__stop_link_set_rump_components));
 }
 
 int
