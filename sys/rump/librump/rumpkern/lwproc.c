@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.19 2012/11/13 20:10:02 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.20 2013/03/07 18:49:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.19 2012/11/13 20:10:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.20 2013/03/07 18:49:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.19 2012/11/13 20:10:02 pooka Exp $");
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
+
+struct emul *emul_default = &emul_netbsd;
 
 static void
 lwproc_proc_free(struct proc *p)
@@ -90,7 +92,7 @@ lwproc_proc_free(struct proc *p)
 /*
  * Allocate a new process.  Mostly mimic fork by
  * copying the properties of the parent.  However, there are some
- * differences.  For example, we never share the fd table.
+ * differences.
  *
  * Switch to the new lwp and return a pointer to it.
  */
@@ -125,7 +127,7 @@ lwproc_newproc(struct proc *parent, int flags)
 	p->p_stats = pstatscopy(parent->p_stats);
 
 	p->p_vmspace = vmspace_kernel();
-	p->p_emul = &emul_netbsd;
+	p->p_emul = emul_default;
 	if (*parent->p_comm)
 		strcpy(p->p_comm, parent->p_comm);
 	else
@@ -399,4 +401,15 @@ rump_lwproc_curlwp(void)
 	if (l->l_flag & LW_WEXIT)
 		return NULL;
 	return l;
+}
+
+/* this interface is under construction (like the proverbial 90's web page) */
+int rump_i_know_what_i_am_doing_with_sysents = 0;
+void
+rump_lwproc_sysent_usenative()
+{
+
+	if (!rump_i_know_what_i_am_doing_with_sysents)
+		panic("don't use rump_lwproc_sysent_usenative()");
+	curproc->p_emul = &emul_netbsd;
 }
