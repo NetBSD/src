@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.70 2013/03/07 05:33:13 agc Exp $
+.\" $NetBSD: mdoc.local,v 1.71 2013/03/07 21:54:04 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,13 +88,14 @@
 .ds doc-str-Lb-libdm            Device-mapper Library (libdm, \-ldm)
 .ds doc-str-Lb-libexecinfo	Backtrace Access Library (libexecinfo, \-lexecinfo)
 .ds doc-str-Lb-libfetch         File Transfer Library for URLs (libfetch, \-lfetch)
-.ds doc-str-Lb-libiscsi         iSCSI protocol library (libiscsi, \-liscsi)
+.ds doc-str-Lb-libiscsi         iSCSI Protocol Library (libiscsi, \-liscsi)
 .ds doc-str-Lb-libisns          Internet Storage Name Service Library (libisns, \-lisns)
-.ds doc-str-Lb-libmj            Minimalist JSON library (libmj, \-lmj)
+.ds doc-str-Lb-libmj            Minimalist JSON Library (libmj, \-lmj)
 .ds doc-str-Lb-libmandoc        Mandoc Macro Compiler Library (libmandoc, \-lmandoc)
-.ds doc-str-Lb-libnetpgp        Netpgp signing, verification, encryption and decryption (libnetpgp, \-lnetpgp)
-.ds doc-str-Lb-libnetpgpverify  Netpgp signature verification (libnetpgpverify, \-lnetpgpverify)
-.ds doc-str-Lb-libperfuse       PUFFS enabled relay to FUSE Library (libperfuse, \-lperfuse)
+.ds doc-str-Lb-libnetpgp        Netpgp Signing, Verification, Encryption and Decryption (libnetpgp, \-lnetpgp)
+.ds doc-str-Lb-libnetpgpverify  Netpgp Signature Verification (libnetpgpverify, \-lnetpgpverify)
+.ds doc-str-Lb-libnpf           NPF Packet Filter Library (libnpf, \-lnpf)
+.ds doc-str-Lb-libperfuse       PUFFS-enabled Relay to FUSE Library (libperfuse, \-lperfuse)
 .ds doc-str-Lb-libppath         Property-List Paths Library (libppath, \-lppath)
 .ds doc-str-Lb-libprop          Property Container Object Library (libprop, \-lprop)
 .ds doc-str-Lb-libpuffs         puffs Convenience Library (libpuffs, \-lpuffs)
