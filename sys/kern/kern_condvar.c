@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.30 2011/07/27 14:35:33 uebayasi Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.31 2013/03/08 08:35:09 apb Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.30 2011/07/27 14:35:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.31 2013/03/08 08:35:09 apb Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -244,6 +244,8 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
  *	Wait on a condition variable until awoken or the specified timeout
  *	expires.  Returns zero if awoken normally or EWOULDBLOCK if the
  *	timeout expired.
+ *
+ *	timo is a timeout in ticks.  timo = 0 specifies an infinite timeout.
  */
 int
 cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
