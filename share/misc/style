@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.50 2012/06/27 22:04:02 riastradh Exp $ */
+/* $NetBSD: style,v 1.51 2013/03/08 16:50:02 christos Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.50 2012/06/27 22:04:02 riastradh Exp $");
+__RCSID("$NetBSD: style,v 1.51 2013/03/08 16:50:02 christos Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -359,7 +359,7 @@ function(int a1, int a2, float fl, int a4)
 	 * not:
 	 *	!(p = f())
 	 *
-	 * The notable exception here is varyadic functions. Since our
+	 * The notable exception here is variadic functions. Since our
 	 * code is designed to compile and work on different environments
 	 * where we don't have control over the NULL definition (on NetBSD
 	 * it is defined as ((void *)0), but on other systems it can be
