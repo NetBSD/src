@@ -1,4 +1,4 @@
-.\"	$NetBSD: utimes.2,v 1.36 2013/01/13 08:15:02 dholland Exp $
+.\"	$NetBSD: utimes.2,v 1.37 2013/03/08 16:52:11 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 18, 2012
+.Dd March 8, 2013
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -50,11 +50,11 @@
 .Ft int
 .Fn lutimes "const char *path" "const struct timeval times[2]"
 .Ft int
-.Fn utimens "const char *path" "const struct timeval times[2]"
-.Ft int
-.Fn lutimens "const char *path" "const struct timeval times[2]"
-.Ft int
 .Fn futimes "int fd" "const struct timeval times[2]"
+.Ft int
+.Fn utimens "const char *path" "const struct timespec times[2]"
+.Ft int
+.Fn lutimens "const char *path" "const struct timespec times[2]"
 .Ft int
 .Fn futimens "int fd" "const struct timespec times[2]"
 .In fcntl.h
