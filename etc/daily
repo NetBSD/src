@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.87 2012/08/29 20:34:18 wiz Exp $
+#	$NetBSD: daily,v 1.88 2013/03/08 14:32:12 christos Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -258,7 +258,7 @@ if checkyesno run_rdist && [ -f /etc/Distfile ]; then
 fi
 
 if pkg_info ${_compat_K_flag} -q -E '*'; then
-	if [ -z "fetch_pkg_vulnerabilities" ]; then
+	if [ -z "$fetch_pkg_vulnerabilities" ]; then
 		echo "fetch_pkg_vulnerabilities is not set in daily.conf(5)."
 		echo "You should set it to YES to enable vulnerability checks"
 		echo "or set it to NO to get rid of this warning."
