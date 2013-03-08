@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.22 2011/08/31 16:25:00 plunky Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.23 2013/03/08 20:56:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -113,7 +113,7 @@ makedir(char *fname, unsigned int mode, struct stat * statp)
 
 	if (lstat(fname, statp) != -1 && !S_ISDIR(statp->st_mode)) {
 		if (unlink(fname) == -1) {
-			notify("SUP: Can't delete %s (%s)\n", fname,
+			notify(1, "Can't delete %s (%s)", fname,
 			    strerror(errno));
 			return -1;
 		}
@@ -142,7 +142,7 @@ estabd(char *fname, char *dname)
 		return (FALSE);	/* exists */
 	path(dname, dpart, fpart);
 	if (strcmp(fpart, ".") == 0) {	/* dname is / or . */
-		notify("SUP: Can't create directory %s for %s (Invalid name)\n",
+		notify(1, "Can't create directory %s for %s (Invalid name)",
 		    dname, fname);
 		errno = EINVAL;
 		return (TRUE);
@@ -152,12 +152,12 @@ estabd(char *fname, char *dname)
 		return (TRUE);
 	if (makedir(dname, 0755, &sbuf) < 0) {
 		int oerrno = errno;
-		notify("SUP: Can't create directory %s for %s (%s)\n", dname,
+		notify(1, "Can't create directory %s for %s (%s)", dname,
 		    fname, strerror(errno));
 		errno = oerrno;
 		return TRUE;
 	}
-	vnotify("SUP Created directory %s for %s\n", dname, fname);
+	vnotify(0, "Created directory %s for %s", dname, fname);
 	return (FALSE);
 }
 /***************************************
@@ -267,7 +267,7 @@ ugconvert(char *uname, char *gname, int *uid, int *gid, int *mode)
  *********************************************/
 
 void
-notify(const char *fmt, ...)
+notify(int f, const char *fmt, ...)
 {				/* record error message */
 	char buf[STRINGLENGTH];
 	char collrelname[STRINGLENGTH];
@@ -278,6 +278,7 @@ notify(const char *fmt, ...)
 	int shouldMail = (thisC->Cflags & CFMAIL) && thisC->Cnotify;
 	int needFile = shouldMail || silent;
 
+	(void)gethostname(hostname, sizeof(hostname));
 	va_start(ap, fmt);
 
 	if ((thisC->Cflags & CFURELSUF) && thisC->Crelease)
@@ -291,7 +292,6 @@ notify(const char *fmt, ...)
 			FILE *outF;
 
 			if (shouldMail) {
-				(void)gethostname(hostname, sizeof(hostname));
 				(void) snprintf(buf, sizeof(buf),
 				    "mail -s \"SUP Upgrade of %s on %s\" %s >"
 				    " /dev/null", collrelname, hostname,
@@ -332,11 +332,13 @@ notify(const char *fmt, ...)
 		} else
 			noteF = stdout;
 		tloc = time(NULL);
-		fprintf(noteF, "SUP Upgrade of %s at %s",
+		fprintf(noteF, "SUP@%s Upgrade of %s at %s", hostname,
 		    collrelname, ctime(&tloc));
 		(void) fflush(noteF);
 	}
+	fprintf(noteF, "SUP@%s%s ", hostname, f ? ":" : "");
 	vfprintf(noteF, fmt, ap);
+	fprintf(noteF, "\n");
 	va_end(ap);
 	(void) fflush(noteF);
 }
@@ -363,10 +365,10 @@ char *
 fmttime(time_t time)
 {
 	static char buf[STRINGLENGTH];
-	unsigned int len;
+	char *p;
 
-	(void) strcpy(buf, ctime(&time));
-	len = strlen(buf + 4) - 6;
-	buf[len] = '\0';
-	return buf + 4;
+	(void) strcpy(buf, ctime(&time) + 4);
+	if ((p = strchr(buf, '\n')) != NULL)
+		*p = '\0';
+	return buf;
 }

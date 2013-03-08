@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.23 2011/09/21 19:32:59 christos Exp $	*/
+/*	$NetBSD: supextern.h,v 1.24 2013/03/08 20:56:44 christos Exp $	*/
 
 struct stat;
 
@@ -143,8 +143,8 @@ int establishdir(char *);
 int makedir(char *, unsigned int, struct stat *);
 int estabd(char *, char *);
 void ugconvert(char *, char *, int *, int *, int *);
-void notify(const char *, ...)
-	__attribute__((__format__(__printf__, 1, 2)));
+void notify(int, const char *, ...)
+	__attribute__((__format__(__printf__, 2, 3)));
 void lockout(int);
 char *fmttime(time_t);
 
