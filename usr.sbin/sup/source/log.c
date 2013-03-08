@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.11 2013/03/08 20:56:44 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.12 2013/03/08 20:58:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -72,7 +72,7 @@ vfmtbuf(int f, char *buf, size_t bufsiz, const char *fmt, va_list ap)
 	snprintf(ybuf, sizeof(ybuf), "SUP@%s%s ", hostname, f ? ":" : "");
 	vsnprintf(xbuf, sizeof(xbuf), fmt, ap);
 	snprintf(buf, bufsiz, "%s%s", ybuf, xbuf);
-	return buf;
+	return;
 }
 
 

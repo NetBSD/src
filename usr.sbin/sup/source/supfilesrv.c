@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.48 2013/03/08 20:56:44 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.49 2013/03/08 20:58:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -375,7 +375,7 @@ struct hostpid {
 	pid_t pid;
 } *hp;
 
-static int
+static void
 addchild(pid_t pid)
 {
 	size_t i;
