@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.12 2013/01/14 21:00:16 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.13 2013/03/08 19:04:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.12 2013/01/14 21:00:16 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.13 2013/03/08 19:04:27 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -66,12 +66,6 @@ static unsigned char eident;
 #ifndef Elf_Symindx
 #define Elf_Symindx uint32_t
 #endif
-
-/*
- * Linux ld.so requires a valid handle for dlinfo(), so use the main
- * handle.  We initialize this variable in rumpuser_dl_bootstrap()
- */
-static void *mainhandle;
 
 static void *
 reservespace(void *store, size_t *storesize,
@@ -146,9 +140,13 @@ do {									\
  * the address the dso is mapped at.  On Linux, they seem to contain
  * the absolute address.  I couldn't find anything definite from a quick
  * read of the standard and therefore I will not go and figure beyond ifdef.
+ * On Solaris, the main object works differently ... uuuuh.
  */
-#ifdef __linux__
+#if defined(__linux__)
 #define adjptr(_map_, _ptr_) ((void *)(_ptr_))
+#elif defined(__sun__)
+#define adjptr(_map_, _ptr_) \
+    (mainmap_p(_map_) ? (void *)(_ptr_) : (void *)(_map_->l_addr + (_ptr_)))
 #else
 #define adjptr(_map_, _ptr_) ((void *)(_map_->l_addr + (_ptr_)))
 #endif
@@ -341,29 +339,24 @@ getsymbols(struct link_map *map)
 }
 
 static void
-process(const char *soname, rump_modinit_fn domodinit)
+process_object(void *handle,
+	rump_modinit_fn domodinit, rump_compload_fn docompload)
 {
-	void *handle;
 	const struct modinfo *const *mi_start, *const *mi_end;
-
-	if (strstr(soname, "librump") == NULL)
-		return;
-
-	handle = dlopen(soname, RTLD_LAZY);
-	if (handle == NULL)
-		return;
+	struct rump_component *const *rc, *const *rc_end;
 
 	mi_start = dlsym(handle, "__start_link_set_modules");
-	if (!mi_start)
-		goto out;
 	mi_end = dlsym(handle, "__stop_link_set_modules");
-	if (!mi_end)
-		goto out;
+	if (mi_start && mi_end)
+		domodinit(mi_start, (size_t)(mi_end-mi_start));
 
-	domodinit(mi_start, (size_t)(mi_end-mi_start));
-
- out:
-	dlclose(handle);
+	rc = dlsym(handle, "__start_link_set_rump_components");
+	rc_end = dlsym(handle, "__stop_link_set_rump_components");
+	if (rc && rc_end) {
+		for (; rc < rc_end; rc++)
+			docompload(*rc);
+		assert(rc == rc_end);
+	}
 }
 
 /*
@@ -372,17 +365,20 @@ process(const char *soname, rump_modinit_fn domodinit)
  */
 void
 rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
-	rump_symload_fn symload)
+	rump_symload_fn symload, rump_compload_fn compload)
 {
-	struct link_map *map, *origmap;
+	struct link_map *map, *origmap, *mainmap;
+	void *mainhandle;
 	int error;
 
 	mainhandle = dlopen(NULL, RTLD_NOW);
-	if (dlinfo(mainhandle, RTLD_DI_LINKMAP, &origmap) == -1) {
+	if (dlinfo(mainhandle, RTLD_DI_LINKMAP, &mainmap) == -1) {
 		fprintf(stderr, "warning: rumpuser module bootstrap "
 		    "failed: %s\n", dlerror());
 		return;
 	}
+	origmap = mainmap;
+
 	/*
 	 * Process last->first because that's the most probable
 	 * order for dependencies
@@ -397,10 +393,7 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	 */
 	error = 0;
 	for (map = origmap; map && !error; map = map->l_prev) {
-		if (strstr(map->l_name, "librump") != NULL)
-			error = getsymbols(map);
-		/* this should be the main object */
-		else if (!map->l_addr && map->l_prev == NULL)
+		if (strstr(map->l_name, "librump") != NULL || map == mainmap)
 			error = getsymbols(map);
 	}
 
@@ -432,77 +425,45 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	free(strtab);
 
 	/*
-	 * Next, load modules from dynlibs.
+	 * Next, load modules and components.
+	 *
+	 * Simply loop through all objects, ones unrelated to rump kernels
+	 * will not contain link_set_rump_components (well, not including
+	 * "sabotage", but that needs to be solved at another level anyway).
 	 */
-	for (map = origmap; map; map = map->l_prev)
-		process(map->l_name, domodinit);
-}
+	for (map = origmap; map; map = map->l_prev) {
+		void *handle;
 
-void
-rumpuser_dl_component_init(int type, rump_component_init_fn compinit)
-{
-	struct link_map *map;
-
-	if (dlinfo(mainhandle, RTLD_DI_LINKMAP, &map) == -1) {
-		fprintf(stderr, "warning: rumpuser module bootstrap "
-		    "failed: %s\n", dlerror());
-		return;
-	}
-
-	for (; map->l_next; map = map->l_next)
-		continue;
-	for (; map; map = map->l_prev) {
-		if (strstr(map->l_name, "librump") != NULL) {
-			void *handle;
-			struct rump_component **rc, **rc_end;
-
+		if (map == mainmap) {
+			handle = mainhandle;
+		} else {
 			handle = dlopen(map->l_name, RTLD_LAZY);
 			if (handle == NULL)
 				continue;
-
-			rc = dlsym(handle,
-			    "__start_link_set_rump_components");
-			if (!rc)
-				goto loop;
-			rc_end = dlsym(handle,
-			    "__stop_link_set_rump_components");
-			if (!rc_end)
-				goto loop;
-
-			for (; rc < rc_end; rc++)
-				compinit(*rc, type);
-			assert(rc == rc_end);
- loop:
-			dlclose(handle);
 		}
+		process_object(handle, domodinit, compload);
+		if (map != mainmap)
+			dlclose(handle);
 	}
 }
 #else
-void
-rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
-	rump_symload_fn symload)
-{
-
-	fprintf(stderr, "Warning, dlinfo() unsupported on host?\n");
-}
-
 /*
  * "default" implementation for platforms where we don't support
  * dynamic linking.  Assumes that all rump kernel components are
- * statically linked with the local client.
+ * statically linked with the local client.  No need to handle modules
+ * since the module code does that all by itself.
  */
-
-extern void *__start_link_set_rump_components;
-extern void *__stop_link_set_rump_components;
 void
-rumpuser_dl_component_init(int type, rump_component_init_fn compinit)
+rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
+	rump_symload_fn symload, rump_compload_fn compload)
 {
+	extern void *__start_link_set_rump_components;
+	extern void *__stop_link_set_rump_components;
 	void **rc = &__start_link_set_rump_components;
 	void **rc_end = &__stop_link_set_rump_components;
 
 	for (; rc < rc_end; rc++)
-		compinit(*rc, type);
-
+		compload(*rc);
 }
 #endif
 
