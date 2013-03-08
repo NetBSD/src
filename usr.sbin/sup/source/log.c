@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.10 2009/10/16 12:41:37 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.11 2013/03/08 20:56:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -63,6 +63,19 @@ logopen(char *program)
 	opened++;
 }
 
+static void
+vfmtbuf(int f, char *buf, size_t bufsiz, const char *fmt, va_list ap)
+{
+	char hostname[MAXHOSTNAMELEN];
+	char xbuf[STRINGLENGTH], ybuf[STRINGLENGTH];
+	gethostname(hostname, sizeof(hostname));
+	snprintf(ybuf, sizeof(ybuf), "SUP@%s%s ", hostname, f ? ":" : "");
+	vsnprintf(xbuf, sizeof(xbuf), fmt, ap);
+	snprintf(buf, bufsiz, "%s%s", ybuf, xbuf);
+	return buf;
+}
+
+
 void
 logquit(int retval, const char *fmt, ...)
 {
@@ -70,7 +83,7 @@ logquit(int retval, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
+	vfmtbuf(1, buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
 		syslog(LOG_ERR, "%s", buf);
@@ -87,7 +100,7 @@ logerr(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
+	vfmtbuf(1, buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
 		syslog(LOG_ERR, "%s", buf);
@@ -104,7 +117,7 @@ loginfo(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
+	vfmtbuf(0, buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
 		syslog(LOG_INFO, "%s", buf);
@@ -137,7 +150,7 @@ logdeny(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
+	vfmtbuf(1, buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
 		syslog(deny_severity, "%s", buf);
@@ -154,7 +167,7 @@ logallow(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
+	vfmtbuf(1, buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
 		syslog(allow_severity, "%s", buf);

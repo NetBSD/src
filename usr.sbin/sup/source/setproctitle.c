@@ -62,12 +62,12 @@ setproctitle(const char *fmt, ...)
 	 */
 
 	/* 1 for the first entry, 1 for the NULL */
-	char **args = __environ - 2, *s;
+	char **args = __environ - 2;
 #ifdef _SC_ARG_MAX
 	s = (char *)sysconf(_SC_ARG_MAX);
-#elifdef ARG_MAX
+#elif defined(ARG_MAX)
 	s = (char *)ARG_MAX;
-#elifdef NCARGS
+#elif defined(NCARGS)
 	s = (char *)NCARGS;
 #else
 	s = (char *)(256 * 1024);
@@ -82,21 +82,23 @@ setproctitle(const char *fmt, ...)
 	*(int *)args = 1; /* *argc = 1; */
 	pname = *++args;  /* pname = argv[0] */
  
+	/* In case we get called again */
+	if ((p = strchr(pname, ':')) != NULL)
+		*p = '\0';
+
 	/* Just the last component of the name */
 	if ((p = strrchr(pname, '/')) != NULL)
-		pname = p + 1;
-
-	/* In case we get called again */
-	if ((p = strrchr(pname, ':')) != NULL)
-		*p = '\0';
+		p = p + 1;
+	else
+		p = pname;
 
 	va_start(ap, fmt);
 	if (fmt != NULL) {
-		len = snprintf(buf, sizeof(buf), "%s: ", pname);
+		len = snprintf(buf, sizeof(buf), "%s: ", p);
 		if (len >= 0)
 			(void)vsnprintf(buf + len, sizeof(buf) - len, fmt, ap);
 	} else
-		(void)snprintf(buf, sizeof(buf), "%s", pname);
+		(void)snprintf(buf, sizeof(buf), "%s", p);
 	va_end(ap);
  
 	(void)strcpy(pname, buf);
