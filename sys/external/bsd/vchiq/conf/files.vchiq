@@ -1,0 +1,20 @@
+#	$NetBSD: files.vchiq,v 1.1 2013/03/08 12:32:29 jmcneill Exp $
+#
+# Broadcom VideoCore IV
+#
+
+define	vchiqbus { }
+
+device	vchiq: vchiqbus
+attach	vchiq at obio
+file	external/bsd/vchiq/dist/interface/compat/vchi_bsd.c		vchiq
+file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_2835_arm.c	vchiq
+file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_arm.c		vchiq
+file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_connected.c	vchiq
+file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_core.c	vchiq
+file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_shim.c	vchiq
+file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_util.c	vchiq
+file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_kern_lib.c	vchiq
+file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_kmod_netbsd.c	vchiq
+
+makeoptions	vchiq	CPPFLAGS+="-I$S/external/bsd/vchiq/dist -DVCOS_VERIFY_BKPTS=1 -DUSE_VCHIQ_ARM -D__VCCOREVER__=0x04000000 -DVCHIQ_ENABLE_DEBUG=1 -DVCHIQ_LOG_DEFAULT=5"
