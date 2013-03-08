@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.142 2012/06/28 16:34:07 kefren Exp $
+#	$NetBSD: special,v 1.143 2013/03/08 14:31:28 christos Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -310,6 +310,8 @@
 ./etc/ssh/ssh_config		type=file mode=0644 optional
 ./etc/ssh/ssh_host_dsa_key	type=file mode=0600 optional tags=nodiff
 ./etc/ssh/ssh_host_dsa_key.pub	type=file mode=0644 optional
+./etc/ssh/ssh_host_edsa_key	type=file mode=0600 optional tags=nodiff
+./etc/ssh/ssh_host_edsa_key.pub	type=file mode=0644 optional
 ./etc/ssh/ssh_host_key		type=file mode=0600 optional tags=nodiff
 ./etc/ssh/ssh_host_key.pub	type=file mode=0644 optional
 ./etc/ssh/ssh_host_rsa_key	type=file mode=0600 optional tags=nodiff
