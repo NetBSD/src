@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.74 2013/03/01 13:52:31 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.75 2013/03/08 19:04:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
 #include <stdint.h>
 #endif
 
-#define RUMPUSER_VERSION 14
+#define RUMPUSER_VERSION 15
 int rumpuser_getversion(void);
 
 int rumpuser_daemonize_begin(void);
@@ -218,9 +218,8 @@ struct modinfo;
 struct rump_component;
 typedef void (*rump_modinit_fn)(const struct modinfo *const *, size_t);
 typedef int (*rump_symload_fn)(void *, uint64_t, char *, uint64_t);
-typedef void (*rump_component_init_fn)(struct rump_component *, int);
-void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn);
-void rumpuser_dl_component_init(int, rump_component_init_fn);
+typedef void (*rump_compload_fn)(const struct rump_component *);
+void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn, rump_compload_fn);
 void *rumpuser_dl_globalsym(const char *);
 
 /* syscall proxy routines */
