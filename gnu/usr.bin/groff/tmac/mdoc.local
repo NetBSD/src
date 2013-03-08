@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.72 2013/03/08 08:13:34 pooka Exp $
+.\" $NetBSD: mdoc.local,v 1.73 2013/03/08 08:29:37 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -101,7 +101,7 @@
 .ds doc-str-Lb-libpuffs         puffs Convenience Library (libpuffs, \-lpuffs)
 .ds doc-str-Lb-libquota		Disk Quota Access and Control Library (libquota, \-lquota)
 .ds doc-str-Lb-librefuse        File System in Userspace Convenience Library (librefuse, \-lrefuse)
-.ds doc-str-Lb-librumpclient	Clientside stubs for rump kernel remote protocols (librumpclient, \-lrumpclient)
+.ds doc-str-Lb-librumpclient	Clientside Stubs for rump Kernel Remote Protocols (librumpclient, \-lrumpclient)
 .ds doc-str-Lb-libsaslc         Simple Authentication and Security Layer client library (libsaslc, \-lsaslc)
 .ds doc-str-Lb-libssp           Buffer Overflow Protection Library (libssp, \-lssp)
 .ds doc-str-Lb-libterminfo      Terminal Information Library (libterminfo, \-lterminfo)
