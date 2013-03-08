@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.22 2012/04/25 22:35:00 martin Exp $	*/
+/*	$NetBSD: supscan.c,v 1.23 2013/03/08 20:56:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -195,7 +195,11 @@ main(int argc, char **argv)
 		collname = c->Cname;
 		basedir = c->Cbase;
 		prefix = c->Cprefix;
-		(void) chdir(basedir);
+		if (chdir(basedir) < 0) {
+			fprintf(stderr, "supscan: Can't chdir to %s (%s)",
+			    basedir, strerror(errno));
+			return 1;
+		}
 		scantime = time(NULL);
 		if (!quiet)
 			printf("SUP Scan for %s starting at %s", collname,

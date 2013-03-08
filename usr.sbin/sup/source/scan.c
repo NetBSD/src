@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.30 2011/08/31 16:25:00 plunky Exp $	*/
+/*	$NetBSD: scan.c,v 1.31 2013/03/08 20:56:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -310,7 +310,9 @@ getrelease(char *release)
 					free(frelease);
 				return (FALSE);
 			} else
-				(void) chdir(basedir);
+				if (chdir(basedir) < 0)
+					goaway("Can't chdir to %s (%s)",
+					    basedir, strerror(errno));
 			tl->TLnext = listTL;
 			listTL = tl;
 			if (release == NULL)
@@ -363,8 +365,11 @@ makescanlists(void)
 				prefix = saveprefix;
 			if (prefix != NULL) {
 				if (chdir(prefix) < 0)
-					goaway("Can't chdir to %s", prefix);
-				(void) chdir(basedir);
+					goaway("Can't chdir to %s (%s)",
+					    prefix, strerror(errno));
+				if (chdir(basedir) < 0)
+					goaway("Can't chdir to %s (%s)",
+					    basedir, strerror(errno));
 			}
 			makescan(tl->TLlist, tl->TLscan);
 			free(tl);
@@ -628,13 +633,21 @@ listentry(char *name, char *fullname, char *updir, int always)
 		}
 		listdir(fullname, always);
 		if (updir == 0 || linkcount) {
-			(void) chdir(basedir);
+			if (chdir(basedir) < 0)
+				goaway("Can't chdir to %s (%s)",
+				    basedir, strerror(errno));
 			if (prefix)
-				(void) chdir(prefix);
+				if (chdir(prefix) < 0)
+					goaway("Can't chdir to %s (%s)",
+					    prefix, strerror(errno));
 			if (updir && *updir)
-				(void) chdir(updir);
+				if (chdir(updir) < 0)
+					goaway("Can't chdir to %s (%s)",
+					    updir, strerror(errno));
 		} else
-			(void) chdir("..");
+			if (chdir("..") < 0)
+				goaway("Can't chdir to %s (%s)",
+				    "..", strerror(errno));
 		return;
 	}
 	if (access(name, R_OK) < 0)
@@ -1009,12 +1022,16 @@ cdprefix(char *prefix)
 	if (curprefix == NULL) {
 		if (prefix == NULL)
 			return;
-		(void) chdir(prefix);
+		if (chdir(prefix) < 0)
+			goaway("Can't chdir to %s (%s)",
+			    prefix, strerror(errno));
 		curprefix = prefix;
 		return;
 	}
 	if (prefix == NULL) {
-		(void) chdir(basedir);
+		if (chdir(basedir) < 0)
+			goaway("Can't chdir to %s (%s)",
+			    basedir, strerror(errno));
 		curprefix = NULL;
 		return;
 	}
@@ -1024,7 +1041,11 @@ cdprefix(char *prefix)
 		curprefix = prefix;
 		return;
 	}
-	(void) chdir(basedir);
-	(void) chdir(prefix);
+	if (chdir(basedir) < 0)
+		goaway("Can't chdir to %s (%s)",
+		    basedir, strerror(errno));
+	if (chdir(prefix) < 0)
+		goaway("Can't chdir to %s (%s)",
+		    prefix, strerror(errno));
 	curprefix = prefix;
 }
