@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.39 2013/01/22 01:45:59 christos Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.40 2013/03/08 08:48:38 apb Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.39 2013/01/22 01:45:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.40 2013/03/08 08:48:38 apb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -715,6 +715,9 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 
 	/*
 	 * Calculate timeout, if it was specified.
+	 *
+	 * NULL pointer means an infinite timeout.
+	 * {.tv_sec = 0, .tv_nsec = 0} means do not block.
 	 */
 	if (SCARG(uap, timeout)) {
 		error = (*fetchts)(SCARG(uap, timeout), &ts, sizeof(ts));
