@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigtimedwait.c,v 1.1 2013/03/08 17:01:54 martin Exp $ */
+/* $NetBSD: t_sigtimedwait.c,v 1.2 2013/03/08 23:18:00 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigtimedwait.c,v 1.1 2013/03/08 17:01:54 martin Exp $");
+__RCSID("$NetBSD: t_sigtimedwait.c,v 1.2 2013/03/08 23:18:00 martin Exp $");
 
 #include <sys/time.h>
 #include <errno.h>
@@ -49,19 +49,21 @@ ATF_TC_HEAD(sigtimedwait_all0timeout, tc)
 ATF_TC_BODY(sigtimedwait_all0timeout, tc)
 {
 	sigset_t block;
-	struct timespec ts;
+	struct timespec ts, before, after, len;
 	siginfo_t info;
 	int r;
 
 	sigemptyset(&block);
 	ts.tv_sec = 0;
 	ts.tv_nsec = 0;
+	clock_gettime(CLOCK_MONOTONIC, &before);
 	r = sigtimedwait(&block, &info, &ts);
+	clock_gettime(CLOCK_MONOTONIC, &after);
 	ATF_REQUIRE(r == -1);
 	ATF_REQUIRE_ERRNO(EAGAIN, errno);
+	timespecsub(&after, &before, &len);
+	ATF_REQUIRE(len.tv_sec < 1);
 }
-
-#if 0
 
 ATF_TC(sigtimedwait_NULL_timeout);
 
@@ -80,17 +82,15 @@ ATF_TC_BODY(sigtimedwait_NULL_timeout, tc)
 
 	/* arrange for a SIGALRM signal in a few seconds */
 	memset(&it, 0, sizeof it);
-	it.it_interval.tv_sec = 5;
+	it.it_value.tv_sec = 5;
 	ATF_REQUIRE(setitimer(ITIMER_REAL, &it, NULL) == 0);
 
 	/* wait without timeout */
 	sigemptyset(&sig);
 	sigaddset(&sig, SIGALRM);
-	(void)sigprocmask(SIG_UNBLOCK, &sig, NULL);
 	r = sigtimedwait(&sig, &info, NULL);
 	ATF_REQUIRE(r == SIGALRM);
 }
-#endif
 
 ATF_TC(sigtimedwait_small_timeout);
 
@@ -119,7 +119,7 @@ ATF_TC_BODY(sigtimedwait_small_timeout, tc)
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, sigtimedwait_all0timeout);
-//	ATF_TP_ADD_TC(tp, sigtimedwait_NULL_timeout);
+	ATF_TP_ADD_TC(tp, sigtimedwait_NULL_timeout);
 	ATF_TP_ADD_TC(tp, sigtimedwait_small_timeout);
 
 	return atf_no_error();
