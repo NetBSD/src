@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.254 2013/03/07 22:12:34 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.255 2013/03/08 19:04:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.254 2013/03/07 22:12:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.255 2013/03/08 19:04:28 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -105,6 +105,9 @@ static int rump_proxy_syscall(int, void *, register_t *);
 static int rump_proxy_rfork(void *, int, const char *);
 static void rump_proxy_lwpexit(void);
 static void rump_proxy_execnotify(const char *);
+
+static void rump_component_load(const struct rump_component *);
+static struct lwp *bootlwp;
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
 
@@ -348,6 +351,7 @@ rump__init(int rump_version)
 	rumpuser_set_curlwp(NULL);
 	initproc = &proc0; /* borrow proc0 before we get initproc started */
 	rump_schedule();
+	bootlwp = curlwp;
 
 	percpu_init();
 	inittimecounter();
@@ -400,7 +404,8 @@ rump__init(int rump_version)
 		uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */
 
 	/* process dso's */
-	rumpuser_dl_bootstrap(add_linkedin_modules, rump_kernelfsym_load);
+	rumpuser_dl_bootstrap(add_linkedin_modules,
+	    rump_kernelfsym_load, rump_component_load);
 
 	rump_component_init(RUMP_COMPONENT_KERN);
 
@@ -520,6 +525,7 @@ rump__init(int rump_version)
 	rump_component_init(RUMP_COMPONENT_POSTINIT);
 
 	/* release cpu */
+	bootlwp = NULL;
 	rump_unschedule();
 
 	return 0;
@@ -665,33 +671,58 @@ rump_cred_put(kauth_cred_t cred)
 static int compcounter[RUMP_COMPONENT_MAX];
 static int compinited[RUMP_COMPONENT_MAX];
 
+/*
+ * Yea, this is O(n^2), but we're only looking at a handful of components.
+ * Components are always initialized from the thread that called rump_init().
+ * Could also free these when done with them, but prolly not worth it.
+ */
+struct compstore {
+	const struct rump_component *cs_rc;
+	LIST_ENTRY(compstore) cs_entries;
+};
+static LIST_HEAD(, compstore) cshead = LIST_HEAD_INITIALIZER(cshead);
+
 static void
-rump_component_init_cb(struct rump_component *rc, int type)
+rump_component_load(const struct rump_component *rc)
 {
+	struct compstore *cs;
 
-	KASSERT(type < RUMP_COMPONENT_MAX);
+	KASSERT(curlwp == bootlwp);
 
-	if (rc->rc_type == type) {
-		rc->rc_init();
-		compcounter[type]++;
+	LIST_FOREACH(cs, &cshead, cs_entries) {
+		if (rc == cs->cs_rc)
+			return;
 	}
+
+	cs = kmem_alloc(sizeof(*cs), KM_SLEEP);
+	cs->cs_rc = rc;
+	LIST_INSERT_HEAD(&cshead, cs, cs_entries);
+	KASSERT(rc->rc_type < RUMP_COMPONENT_MAX);
+	compcounter[rc->rc_type]++;
 }
 
 int
 rump_component_count(enum rump_component_type type)
 {
 
-	KASSERT(type <= RUMP_COMPONENT_MAX);
-	KASSERT(compinited[type]);
+	KASSERT(curlwp == bootlwp);
+	KASSERT(type < RUMP_COMPONENT_MAX);
 	return compcounter[type];
 }
 
 void
 rump_component_init(enum rump_component_type type)
 {
+	struct compstore *cs;
+	const struct rump_component *rc;
 
+	KASSERT(curlwp == bootlwp);
 	KASSERT(!compinited[type]);
-	rumpuser_dl_component_init(type, rump_component_init_cb);
+	LIST_FOREACH(cs, &cshead, cs_entries) {
+		rc = cs->cs_rc;
+		if (rc->rc_type == type)
+			rc->rc_init();
+	}
 	compinited[type] = 1;
 }
 
