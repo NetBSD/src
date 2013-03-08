@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.164 2013/02/28 03:04:12 christos Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.165 2013/03/08 12:33:25 jmcneill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2105,6 +2105,10 @@ zfs)
 iscsi[0-9]*)
 	unit=${i#iscsi}
 	mkdev iscsi${unit} c %iscsi_chr% 0 600
+	;;
+
+vchiq)
+	mkdev vchiq c %vchiq_chr% 0 600
 	;;
 
 midevend)
