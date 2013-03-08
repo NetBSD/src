@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.40 2011/09/21 19:34:54 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.41 2013/03/08 20:56:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -164,6 +164,15 @@ getonehost(TREE * t, void *v)
 	return (SCMEOF);
 }
 
+static char *
+supctime(time_t *loc)
+{
+	char *p, *x = ctime(loc);
+	if ((p = strchr(x, '\n')))
+		*p = '\0';
+	return x;
+}
+
 TREE *
 getcollhost(int *tout, int *backoff, long int *state, int *nhostsp)
 {
@@ -211,7 +220,7 @@ getcoll(void)
 		t = getcollhost(&tout, &backoff, &state, &nhosts);
 		if (t == NULL) {
 			finishup(SCMEOF);
-			notify(NULL);
+			notify(0, NULL);
 			return;
 		}
 		t->Tmode = SCMEOF;
@@ -234,7 +243,7 @@ getcoll(void)
 		thisC->Clockfd = -1;
 	}
 	finishup(x);
-	notify(NULL);
+	notify(0, NULL);
 }
 /***  Sign on to file server ***/
 
@@ -246,7 +255,7 @@ signon(TREE * t, int nhosts, int *tout)
 	time_t tloc;
 
 	if ((thisC->Cflags & CFLOCAL) == 0 && thishost(thisC->Chost->Tname)) {
-		vnotify("SUP: Skipping local collection %s\n", collname);
+		vnotify(1, "Skipping local collection %s", collname);
 		t->Tmode = SCMEOF;
 		return (TRUE);
 	}
@@ -260,7 +269,7 @@ signon(TREE * t, int nhosts, int *tout)
 		*tout = timeout;
 	if (x != SCMOK) {
 		if (nhosts) {
-			notify("SUP: Can't connect to host %s\n",
+			notify(1, "Can't connect to host %s",
 			    thisC->Chost->Tname);
 			t->Tmode = SCMEOF;
 		} else
@@ -275,16 +284,16 @@ signon(TREE * t, int nhosts, int *tout)
 	if (x != SCMOK)
 		goaway("Error reading signon reply from fileserver");
 	tloc = time(NULL);
-	vnotify("SUP Fileserver %d.%d (%s) %d on %s at %.8s\n",
-	    protver, pgmver, scmver, fspid, remotehost(), ctime(&tloc) + 11);
+	vnotify(0, "Fileserver %d.%d (%s) %d on %s at %.8s",
+	    protver, pgmver, scmver, fspid, remotehost(), supctime(&tloc) + 11);
 	free(scmver);
 	scmver = NULL;
 	if (protver < 4) {
 		dontjump = TRUE;
 		goaway("Fileserver sup protocol version is obsolete.");
-		notify("SUP: This version of sup can only communicate with a fileserver using at least\n");
-		notify("SUP: version 4 of the sup network protocol.  You should either run a newer\n");
-		notify("SUP: version of the sup fileserver or find an older version of sup.\n");
+		notify(1, "This version of sup can only communicate with a fileserver using at least");
+		notify(1, "version 4 of the sup network protocol.  You should either run a newer");
+		notify(1, "version of the sup fileserver or find an older version of sup.");
 		t->Tmode = SCMEOF;
 		return (TRUE);
 	}
@@ -309,7 +318,7 @@ setup(TREE * t)
 		(void) mkdir("sup", 0755);
 		if (stat("sup", &sbuf) < 0)
 			goaway("Can't create directory %s/sup", thisC->Cbase);
-		vnotify("SUP Created directory %s/sup\n", thisC->Cbase);
+		vnotify(0, "Created directory %s/sup", thisC->Cbase);
 	}
 	if (thisC->Cprefix && chdir(thisC->Cprefix) < 0)
 		goaway("Can't change to %s from base directory %s",
@@ -319,7 +328,9 @@ setup(TREE * t)
 		    thisC->Cprefix ? "prefix" : "base",
 		    thisC->Cprefix ? thisC->Cprefix : thisC->Cbase);
 	if (thisC->Cprefix)
-		(void) chdir(thisC->Cbase);
+		if (chdir(thisC->Cbase) < 0)
+			goaway("Can't chdir to %s (%s)", thisC->Cbase,
+			    strerror(errno));
 	/* read time of last upgrade from when file */
 
 	if ((thisC->Cflags & CFURELSUF) && thisC->Crelease)
@@ -357,21 +368,21 @@ setup(TREE * t)
 	}
 	switch (setupack) {
 	case FSETUPSAME:
-		notify("SUP: Attempt to upgrade from same host to same directory\n");
+		notify(1, "Attempt to upgrade from same host to same directory");
 		done(FDONESRVERROR, "Overwrite error");
 	case FSETUPHOST:
-		notify("SUP: This host has no permission to access %s\n",
+		notify(1, "This host has no permission to access %s",
 		    collname);
 		done(FDONESRVERROR, "Permission denied");
 	case FSETUPOLD:
-		notify("SUP: This version of SUP is too old for the fileserver\n");
+		notify(1, "This version of SUP is too old for the fileserver");
 		done(FDONESRVERROR, "Obsolete client");
 	case FSETUPRELEASE:
-		notify("SUP: Invalid release %s for collection %s\n",
+		notify(1, "Invalid release %s for collection %s",
 		    release == NULL ? DEFRELEASE : release, collname);
 		done(FDONESRVERROR, "Invalid release");
 	case FSETUPBUSY:
-		vnotify("SUP Fileserver is currently busy\n");
+		vnotify(0, "Fileserver is currently busy");
 		t->Tmode = SCMOK;
 		doneack = FDONESRVERROR;
 		donereason = "Fileserver is busy";
@@ -421,14 +432,15 @@ suplogin(void)
 					goaway("Collection %s is locked by another sup", collname);
 				goaway("Can't lock collection %s", collname);
 			}
-			vnotify("SUP Waiting for exclusive access lock\n");
+			vnotify(0, "Waiting for exclusive access lock");
 			if (WAITLOCK(f) < 0) {
 				(void) close(f);
 				goaway("Can't lock collection %s", collname);
 			}
 		}
 		thisC->Clockfd = f;
-		vnotify("SUP Locked collection %s for exclusive access\n", collname);
+		vnotify(0, "Locked collection %s for exclusive access",
+		    collname);
 	}
 	logcrypt = NULL;
 	loguser = thisC->Clogin;
@@ -454,10 +466,10 @@ suplogin(void)
 	if (x != SCMOK)
 		goaway("Error reading login reply from file server");
 	if (logack == FLOGNG) {
-		notify("SUP: %s\n", logerror);
+		notify(1, "%s", logerror);
 		free(logerror);
 		logerror = NULL;
-		notify("SUP: Improper login to %s account",
+		notify(1, "Improper login to %s account",
 		    thisC->Clogin ? thisC->Clogin : "default");
 		done(FDONESRVERROR, "Improper login");
 	}
@@ -513,7 +525,7 @@ listfiles(void)
 		}
 		(void) fclose(f);
 	}
-	vnotify("SUP Requesting changes since %s", ctime(&lasttime) + 4);
+	vnotify(0, "Requesting changes since %s", supctime(&lasttime) + 4);
 	x = msgrefuse();
 	if (x != SCMOK)
 		goaway("Error sending refuse list to file server");
@@ -522,7 +534,9 @@ listfiles(void)
 	if (x != SCMOK)
 		goaway("Error reading file list from file server");
 	if (thisC->Cprefix)
-		(void) chdir(thisC->Cprefix);
+		if (chdir(thisC->Cprefix) < 0)
+			goaway("Can't chdir to %s (%s)",
+			    thisC->Cprefix, strerror(errno));
 	needT = NULL;
 	(void) Tprocess(listT, needone, NULL);
 	Tfree(&listT);
@@ -597,7 +611,7 @@ needone(TREE * t, void *dummy __unused)
 static int 
 denyone(TREE * t, void *v __unused)
 {
-	vnotify("SUP: Access denied to %s\n", t->Tname);
+	vnotify(1, "Access denied to %s", t->Tname);
 	return (SCMOK);
 }
 
@@ -616,41 +630,41 @@ deleteone(TREE * t, void *v __unused)
 	/* is it a symbolic link ? */
 	if (S_ISLNK(sbuf.st_mode)) {
 		if (Tlookup(refuseT, name)) {
-			vnotify("SUP Would not delete symbolic link %s\n",
+			vnotify(0, "Would not delete symbolic link %s",
 			    name);
 			return (SCMOK);
 		}
 		if (thisC->Cflags & CFLIST) {
-			vnotify("SUP Would delete symbolic link %s\n", name);
+			vnotify(0, "Would delete symbolic link %s", name);
 			return (SCMOK);
 		}
 		if ((thisC->Cflags & CFDELETE) == 0) {
-			notify("SUP Please delete symbolic link %s\n", name);
+			notify(0, "Please delete symbolic link %s", name);
 			t->Tflags |= FUPDATE;
 			return (SCMOK);
 		}
 		x = unlink(name);
 		if (x < 0) {
-			notify("SUP: Unable to delete symbolic link %s (%s)\n",
+			notify(1, "Unable to delete symbolic link %s (%s)",
 			    name, strerror(errno));
 			t->Tflags |= FUPDATE;
 			return (SCMOK);
 		}
-		vnotify("SUP Deleted symbolic link %s\n", name);
+		vnotify(0, "Deleted symbolic link %s", name);
 		return (SCMOK);
 	}
 	/* is it a directory ? */
 	if (S_ISDIR(sbuf.st_mode)) {
 		if (Tlookup(refuseT, name)) {
-			vnotify("SUP Would not delete directory %s\n", name);
+			vnotify(0, "Would not delete directory %s", name);
 			return (SCMOK);
 		}
 		if (thisC->Cflags & CFLIST) {
-			vnotify("SUP Would delete directory %s\n", name);
+			vnotify(0, "Would delete directory %s", name);
 			return (SCMOK);
 		}
 		if ((thisC->Cflags & CFDELETE) == 0) {
-			notify("SUP Please delete directory %s\n", name);
+			notify(0, "Please delete directory %s", name);
 			t->Tflags |= FUPDATE;
 			return (SCMOK);
 		}
@@ -664,36 +678,36 @@ deleteone(TREE * t, void *v __unused)
 			runp("rm", "rm", "-rf", name, 0);
 		}
 		if (rmdir(name) < 0 && errno != ENOENT) {
-			notify("SUP: Unable to delete directory %s (%s)\n",
+			notify(1, "Unable to delete directory %s (%s)",
 			    name, strerror(errno));
 			t->Tflags |= FUPDATE;
 			return (SCMOK);
 		}
-		vnotify("SUP Deleted directory %s\n", name);
+		vnotify(0, "Deleted directory %s", name);
 		return (SCMOK);
 	}
 	/* it is a file */
 	if (Tlookup(refuseT, name)) {
-		vnotify("SUP Would not delete file %s\n", name);
+		vnotify(0, "Would not delete file %s", name);
 		return (SCMOK);
 	}
 	if (thisC->Cflags & CFLIST) {
-		vnotify("SUP Would delete file %s\n", name);
+		vnotify(0, "Would delete file %s", name);
 		return (SCMOK);
 	}
 	if ((thisC->Cflags & CFDELETE) == 0) {
-		notify("SUP Please delete file %s\n", name);
+		notify(0, "Please delete file %s", name);
 		t->Tflags |= FUPDATE;
 		return (SCMOK);
 	}
 	x = unlink(name);
 	if (x < 0) {
-		notify("SUP: Unable to delete file %s (%s)\n", name,
+		notify(1, "Unable to delete file %s (%s)", name,
 		    strerror(errno));
 		t->Tflags |= FUPDATE;
 		return (SCMOK);
 	}
-	vnotify("SUP Deleted file %s\n", name);
+	vnotify(0, "Deleted file %s", name);
 	return (SCMOK);
 }
 /***************************************
@@ -722,9 +736,9 @@ recvfiles(void)
 		if (x != SCMOK)
 			goaway("Error sending compression check to server");
 		if (docompress)
-			vnotify("SUP Using compressed file transfer\n");
+			vnotify(0, "Using compressed file transfer");
 		if (thisC->Cflags & CFCANONICALIZE)
-			vnotify("SUP Filename canonicalization is on\n");
+			vnotify(0, "Filename canonicalization is on");
 	}
 	recvmore = TRUE;
 	upgradeT = NULL;
@@ -777,7 +791,7 @@ prepare(char *name, int mode, int *newp, struct stat * statp)
 		break;
 	}
 	if (thisC->Cflags & CFLIST) {
-		vnotify("SUP Would remove %s %s\n", type, name);
+		vnotify(0, "Would remove %s %s", type, name);
 		return (FALSE);
 	}
 	if (S_ISDIR(statp->st_mode)) {
@@ -797,10 +811,10 @@ prepare(char *name, int mode, int *newp, struct stat * statp)
 			er = errno;
 	}
 	if (stat(name, statp) < 0) {
-		vnotify("SUP Removed %s %s\n", type, name);
+		vnotify(0, "Removed %s %s", type, name);
 		return (FALSE);
 	}
-	notify("SUP: Couldn't remove %s %s (%s)\n", type, name, strerror(er));
+	notify(1, "Couldn't remove %s %s (%s)", type, name, strerror(er));
 	return (TRUE);
 }
 
@@ -820,13 +834,13 @@ recvone(TREE * t, va_list ap)
 	}
 	/* check for failed access at fileserver */
 	if (t->Tmode == 0) {
-		notify("SUP: File server unable to transfer file %s\n",
+		notify(1, "File server unable to transfer file %s",
 		    t->Tname);
 		thisC->Cnogood = TRUE;
 		return (SCMOK);
 	}
 	if (prepare(t->Tname, t->Tmode & S_IFMT, &new, &sbuf)) {
-		notify("SUP: Can't prepare path for %s (%s)\n", t->Tname,
+		notify(1, "Can't prepare path for %s (%s)", t->Tname,
 		    strerror(errno));
 		if (S_ISREG(t->Tmode)) {
 			x = readskip();	/* skip over file */
@@ -848,7 +862,7 @@ recvone(TREE * t, va_list ap)
 		x = recvreg(t, new, &sbuf);
 		break;
 	default:
-		goaway("Unknown file type %o\n", t->Tmode & S_IFMT);
+		goaway("Unknown file type %o", t->Tmode & S_IFMT);
 	}
 	if (x) {
 		thisC->Cnogood = TRUE;
@@ -867,11 +881,11 @@ recvdir(TREE * t, int new, struct stat * statp)
 
 	if (new) {
 		if (thisC->Cflags & CFLIST) {
-			vnotify("SUP Would create directory %s\n", t->Tname);
+			vnotify(0, "Would create directory %s", t->Tname);
 			return (FALSE);
 		}
 		if (makedir(t->Tname, 0755, statp) == -1) {
-			notify("SUP: Can't create directory %s (%s)\n",
+			notify(1, "Can't create directory %s (%s)",
 			    t->Tname, strerror(errno));
 			return TRUE;
 		}
@@ -887,12 +901,16 @@ recvdir(TREE * t, int new, struct stat * statp)
 			return (FALSE);
 	}
 	if (thisC->Cflags & CFLIST) {
-		vnotify("SUP Would update directory %s\n", t->Tname);
+		vnotify(0, "Would update directory %s", t->Tname);
 		return (FALSE);
 	}
 	if ((t->Tflags & FNOACCT) == 0) {
-		(void) chown(t->Tname, t->Tuid, t->Tgid);
-		(void) chmod(t->Tname, t->Tmode & S_IMODE);
+		if (chown(t->Tname, t->Tuid, t->Tgid) < 0)
+			goaway("Can't chown %s (%s)", t->Tname,
+			    strerror(errno)); 
+		if (chmod(t->Tname, t->Tmode & S_IMODE) < 0)
+			goaway("Can't chmod %s (%s)", t->Tname,
+			    strerror(errno)); 
 	}
 	tbuf[0].tv_sec = time(NULL);
 	tbuf[0].tv_usec = 0;
@@ -900,7 +918,7 @@ recvdir(TREE * t, int new, struct stat * statp)
 	tbuf[1].tv_usec = 0;
 	if (!noutime)
 		(void) utimes(t->Tname, tbuf);
-	vnotify("SUP %s directory %s\n", new ? "Created" : "Updated", t->Tname);
+	vnotify(0, "%s directory %s", new ? "Created" : "Updated", t->Tname);
 	return (FALSE);
 }
 
@@ -912,7 +930,7 @@ recvsym(TREE * t, int new, struct stat * statp)
 	char *linkname;
 
 	if (t->Tlink == NULL || t->Tlink->Tname == NULL) {
-		notify("SUP: Missing linkname for symbolic link %s\n",
+		notify(1, "Missing linkname for symbolic link %s",
 		    t->Tname);
 		return (TRUE);
 	}
@@ -925,18 +943,18 @@ recvsym(TREE * t, int new, struct stat * statp)
 	if (n >= 0)
 		t->Tname[n] = '\0';
 	if (thisC->Cflags & CFLIST) {
-		vnotify("SUP Would %s symbolic link %s to %s\n",
+		vnotify(0, "Would %s symbolic link %s to %s",
 		    new ? "create" : "update", t->Tname, linkname);
 		return (FALSE);
 	}
 	if (!new)
 		(void) unlink(t->Tname);
 	if (symlink(linkname, t->Tname) < 0 || lstat(t->Tname, statp) < 0) {
-		notify("SUP: Unable to create symbolic link %s (%s)\n",
+		notify(1, "Unable to create symbolic link %s (%s)",
 		    t->Tname, strerror(errno));
 		return (TRUE);
 	}
-	vnotify("SUP Created symbolic link %s to %s\n", t->Tname, linkname);
+	vnotify(0, "SUP Created symbolic link %s to %s", t->Tname, linkname);
 	return (FALSE);
 }
 
@@ -957,7 +975,7 @@ recvreg(TREE * t, int new, struct stat * statp)
 		noupdate = 1;
 		break;
 	case -1:
-		notify("SUP: Can't create path for %s (%s)\n", t->Tname,
+		notify(1, "Can't create path for %s (%s)", t->Tname,
 		    strerror(errno));
 		return TRUE;
 	}
@@ -977,13 +995,17 @@ recvreg(TREE * t, int new, struct stat * statp)
 				return (FALSE);
 		}
 		if (thisC->Cflags & CFLIST) {
-			vnotify("SUP Would update file %s\n", t->Tname);
+			vnotify(0, "Would update file %s", t->Tname);
 			return (FALSE);
 		}
-		vnotify("SUP Updating file %s\n", t->Tname);
+		vnotify(0, "Updating file %s", t->Tname);
 		if ((t->Tflags & FNOACCT) == 0) {
-			(void) chown(t->Tname, t->Tuid, t->Tgid);
-			(void) chmod(t->Tname, t->Tmode & S_IMODE);
+			if (chown(t->Tname, t->Tuid, t->Tgid) < 0)
+				goaway("Can't chown %s (%s)", t->Tname,
+				    strerror(errno)); 
+			if (chmod(t->Tname, t->Tmode & S_IMODE) < 0)
+				goaway("Can't chmod %s (%s)", t->Tname,
+				    strerror(errno)); 
 		}
 		tbuf[0].tv_sec = time(NULL);
 		tbuf[0].tv_usec = 0;
@@ -1002,10 +1024,10 @@ recvreg(TREE * t, int new, struct stat * statp)
 			p = "receive old";
 		else
 			p = "receive";
-		vnotify("SUP Would %s file %s\n", p, t->Tname);
+		vnotify(0, "Would %s file %s", p, t->Tname);
 		return (FALSE);
 	}
-	vnotify("SUP Receiving file %s\n", t->Tname);
+	vnotify(0, "Receiving file %s", t->Tname);
 	if (!new && S_ISREG(t->Tmode) &&
 	    (t->Tflags & FBACKUP) && (thisC->Cflags & CFBACKUP)) {
 		fin = fopen(t->Tname, "r");	/* create backup */
@@ -1013,7 +1035,7 @@ recvreg(TREE * t, int new, struct stat * statp)
 			x = readskip();	/* skip over file */
 			if (x != SCMOK)
 				goaway("Can't skip file transfer");
-			notify("SUP: Can't open %s to create backup\n",
+			notify(1, "Can't open %s to create backup",
 			    t->Tname);
 			return (TRUE);	/* mark upgrade as nogood */
 		}
@@ -1029,14 +1051,14 @@ recvreg(TREE * t, int new, struct stat * statp)
 			x = readskip();	/* skip over file */
 			if (x != SCMOK)
 				goaway("Can't skip file transfer");
-			notify("SUP: Can't create %s for backup\n", filename);
+			notify(1, "Can't create %s for backup", filename);
 			(void) fclose(fin);
 			return (TRUE);
 		}
 		ffilecopy(fin, fout);
 		(void) fclose(fin);
 		(void) fclose(fout);
-		vnotify("SUP Backup of %s created\n", t->Tname);
+		vnotify(0, "Backup of %s created", t->Tname);
 	}
 	x = copyfile(t->Tname, NULL);
 	if (x)
@@ -1044,8 +1066,12 @@ recvreg(TREE * t, int new, struct stat * statp)
 	if ((t->Tflags & FNOACCT) == 0) {
 		/* convert user and group names to local ids */
 		ugconvert(t->Tuser, t->Tgroup, &t->Tuid, &t->Tgid, &t->Tmode);
-		(void) chown(t->Tname, t->Tuid, t->Tgid);
-		(void) chmod(t->Tname, t->Tmode & S_IMODE);
+		if (chown(t->Tname, t->Tuid, t->Tgid) < 0)
+			goaway("Can't chown %s (%s)", t->Tname,
+			    strerror(errno)); 
+		if (chmod(t->Tname, t->Tmode & S_IMODE) < 0)
+			goaway("Can't chmod %s (%s)", t->Tname,
+			    strerror(errno)); 
 	}
 	tbuf[0].tv_sec = time(NULL);
 	tbuf[0].tv_usec = 0;
@@ -1067,10 +1093,10 @@ linkone(TREE * t, void *fv)
 
 	if (lstat(fname, &fbuf) < 0) {	/* source file */
 		if (thisC->Cflags & CFLIST) {
-			vnotify("SUP Would link %s to %s\n", name, fname);
+			vnotify(0, "Would link %s to %s", name, fname);
 			return (SCMOK);
 		}
-		notify("SUP: Can't link %s to missing file %s\n", name, fname);
+		notify(1, "Can't link %s to missing file %s", name, fname);
 		thisC->Cnogood = TRUE;
 		return (SCMOK);
 	}
@@ -1082,7 +1108,7 @@ linkone(TREE * t, void *fv)
 	    fbuf.st_dev == sbuf.st_dev && fbuf.st_ino == sbuf.st_ino)
 		return (SCMOK);
 	if (thisC->Cflags & CFLIST) {
-		vnotify("SUP Would link %s to %s\n", name, fname);
+		notify(0, "Would link %s to %s", name, fname);
 		return (SCMOK);
 	}
 	(void) unlink(name);
@@ -1092,11 +1118,11 @@ linkone(TREE * t, void *fv)
 		x = symlink(fname, name);
 	}
 	if (x < 0 || lstat(name, &sbuf) < 0) {
-		notify("SUP: Unable to create %slink %s (%s)\n", type, name,
+		notify(1, "Unable to create %slink %s (%s)", type, name,
 		    strerror(x));
 		return (TRUE);
 	}
-	vnotify("SUP Created %slink %s to %s\n", type, name, fname);
+	vnotify(0, "Created %slink %s to %s", type, name, fname);
 	return (SCMOK);
 }
 
@@ -1106,26 +1132,26 @@ execone(TREE * t, void *v __unused)
 	int w;
 
 	if (thisC->Cflags & CFLIST) {
-		vnotify("SUP Would execute %s\n", t->Tname);
+		vnotify(0, "Would execute %s", t->Tname);
 		return (SCMOK);
 	}
 	if ((thisC->Cflags & CFEXECUTE) == 0) {
-		notify("SUP Please execute %s\n", t->Tname);
+		notify(0, "Please execute %s", t->Tname);
 		return (SCMOK);
 	}
-	vnotify("SUP Executing %s\n", t->Tname);
+	vnotify(0, "Executing %s", t->Tname);
 
 	w = system(t->Tname);
 	if (WIFEXITED(w) && WEXITSTATUS(w) != 0) {
-		notify("SUP: Execute command returned failure status %#o\n",
+		notify(1, "Execute command returned failure status %#o",
 		    WEXITSTATUS(w));
 		thisC->Cnogood = TRUE;
 	} else if (WIFSIGNALED(w)) {
-		notify("SUP: Execute command killed by signal %d\n",
+		notify(1, "Execute command killed by signal %d",
 		    WTERMSIG(w));
 		thisC->Cnogood = TRUE;
 	} else if (WIFSTOPPED(w)) {
-		notify("SUP: Execute command stopped by signal %d\n",
+		notify(1, "Execute command stopped by signal %d",
 		    WSTOPSIG(w));
 		thisC->Cnogood = TRUE;
 	}
@@ -1202,7 +1228,7 @@ copyfile(char *to, char *from)
 	if (from) {		/* reading file */
 		fromf = open(from, O_RDONLY, 0);
 		if (fromf < 0) {
-			notify("SUP: Can't open %s to copy to %s (%s)\n",
+			notify(1, "Can't open %s to copy to %s (%s)",
 			    from, to, strerror(errno));
 			return (TRUE);
 		}
@@ -1222,19 +1248,25 @@ copyfile(char *to, char *from)
 			break;
 		/* try sup directory */
 		if (thisC->Cprefix)
-			(void) chdir(thisC->Cbase);
+			if (chdir(thisC->Cbase) < 0)
+				goaway("Can't chdir to %s (%s)", thisC->Cbase,
+				    strerror(errno));
 		(void) sprintf(tname, "sup/#%d.sup", thispid);
 		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (tof >= 0) {
 			if (thisC->Cprefix)
-				(void) chdir(thisC->Cprefix);
+				if (chdir(thisC->Cprefix) < 0)
+					goaway("Can't chdir to %s (%s)",
+					    thisC->Cprefix, strerror(errno));
 			break;
 		}
 		/* try base directory */
 		(void) sprintf(tname, "#%d.sup", thispid);
 		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (thisC->Cprefix)
-			(void) chdir(thisC->Cprefix);
+			if (chdir(thisC->Cprefix) < 0)
+				goaway("Can't chdir to %s (%s)",
+				    thisC->Cprefix, strerror(errno));
 		if (tof >= 0)
 			break;
 #ifdef	VAR_TMP
@@ -1262,7 +1294,7 @@ copyfile(char *to, char *from)
 		if (tof >= 0)
 			break;
 		/* no luck */
-		notify("SUP: Can't create %s or temp file for it (%s)\n", to,
+		notify(1, "Can't create %s or temp file for it (%s)", to,
 		    strerror(errno));
 		lockout(FALSE);
 		if (fromf >= 0)
@@ -1280,7 +1312,7 @@ copyfile(char *to, char *from)
 		(void) close(fromf);
 		(void) close(tof);
 		if (x < 0) {
-			notify("SUP: Error in copying %s to %s\n", from, to);
+			notify(1, "Error in copying %s to %s", from, to);
 			if (istemp)
 				(void) unlink(tname);
 			lockout(FALSE);
@@ -1338,7 +1370,7 @@ copyfile(char *to, char *from)
 			if (istemp)
 				(void) unlink(tname);
 			lockout(FALSE);
-			goaway("Error in receiving %s\n", to);
+			goaway("Error in receiving %s", to);
 		}
 	}
 	if (!istemp) {		/* no temp file used */
@@ -1369,7 +1401,7 @@ copyfile(char *to, char *from)
 		    unlink(tname) == -1 ||
 		    (outfd = open(tname, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0600)) == -1 ||
 		    runiofd(av, infd, outfd, 2) != 0) {
-			notify("SUP: Error in uncompressing file %s (%s)\n",
+			notify(1, "Error in uncompressing file %s (%s)",
 			    to, tname);
 			(void) unlink(tname);
 			if (infd != -1)
@@ -1390,7 +1422,7 @@ copyfile(char *to, char *from)
 	}
 	fromf = open(tname, O_RDONLY, 0);
 	if (fromf < 0) {
-		notify("SUP: Error in moving temp file to %s (%s)\n",
+		notify(1, "Error in moving temp file to %s (%s)",
 		    to, strerror(errno));
 		(void) unlink(tname);
 		lockout(FALSE);
@@ -1399,7 +1431,7 @@ copyfile(char *to, char *from)
 	tof = open(to, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 	if (tof < 0) {
 		(void) close(fromf);
-		notify("SUP: Can't create %s from temp file (%s)\n",
+		notify(1, "Can't create %s from temp file (%s)",
 		    to, strerror(errno));
 		(void) unlink(tname);
 		lockout(FALSE);
@@ -1411,7 +1443,7 @@ copyfile(char *to, char *from)
 	(void) unlink(tname);
 	lockout(FALSE);
 	if (x < 0) {
-		notify("SUP: Error in storing data in %s\n", to);
+		notify(1, "Error in storing data in %s", to);
 		return (TRUE);
 	}
 	return (FALSE);
@@ -1444,8 +1476,8 @@ finishup(int x)
 	}
 	tloc = time(NULL);
 	if (x != SCMOK) {
-		notify("SUP: Upgrade of %s aborted at %s",
-		    collrelname, ctime(&tloc) + 4);
+		notify(1, "Upgrade of %s aborted at %s",
+		    collrelname, supctime(&tloc) + 4);
 		Tfree(&lastT);
 		if (protver < 6)
 			return;
@@ -1456,9 +1488,9 @@ finishup(int x)
 		return;
 	}
 	if (thisC->Cnogood) {
-		notify("SUP: Upgrade of %s completed with errors at %s",
-		    collrelname, ctime(&tloc) + 4);
-		notify("SUP: Upgrade time will not be updated\n");
+		notify(1, "Upgrade of %s completed with errors at %s",
+		    collrelname, supctime(&tloc) + 4);
+		notify(1, "Upgrade time will not be updated");
 		Tfree(&lastT);
 		if (protver < 6)
 			return;
@@ -1467,9 +1499,11 @@ finishup(int x)
 		return;
 	}
 	if (thisC->Cprefix)
-		(void) chdir(thisC->Cbase);
-	vnotify("SUP Upgrade of %s completed at %s",
-	    collrelname, ctime(&tloc) + 4);
+		if (chdir(thisC->Cbase) < 0)
+			goaway("Can't chdir to %s (%s)", thisC->Cbase,
+			    strerror(errno));
+	vnotify(0, "Upgrade of %s completed at %s",
+	    collrelname, supctime(&tloc) + 4);
 	if (thisC->Cflags & CFLIST) {
 		Tfree(&lastT);
 		if (protver < 6)
@@ -1491,7 +1525,7 @@ finishup(int x)
 	}
 	if (!putwhen(fname, scantime)) {
 		int oerrno = errno;
-		notify("SUP: Can't record current time in %s (%s)\n",
+		notify(1, "Can't record current time in %s (%s)",
 		    fname, strerror(oerrno));
 		Tfree(&lastT);
 		if (protver < 6)
@@ -1510,7 +1544,7 @@ finishup(int x)
 	(void) sprintf(tname, FILELASTTEMP, collname, relsufix);
 	finishfile = fopen(tname, "w");
 	if (finishfile == NULL) {
-		notify("SUP: Can't record list of all files in %s\n", tname);
+		notify(1, "Can't record list of all files in %s", tname);
 		Tfree(&lastT);
 		return;
 	}
@@ -1518,7 +1552,7 @@ finishup(int x)
 	(void) fclose(finishfile);
 	(void) sprintf(fname, FILELAST, collname, relsufix);
 	if (rename(tname, fname) < 0)
-		notify("SUP: Can't change %s to %s (%s)\n", tname, fname,
+		notify(1, "Can't change %s to %s (%s)", tname, fname,
 		    strerror(errno));
 	(void) unlink(tname);
 	Tfree(&lastT);
@@ -1529,7 +1563,7 @@ finishone(TREE * t, void *fv)
 {
 	FILE *finishfile = fv;
 	if ((thisC->Cflags & CFDELETE) == 0 || (t->Tflags & FUPDATE))
-		fprintf(finishfile, "%s\n", t->Tname);
+		fprintf(finishfile, "%s", t->Tname);
 	return (SCMOK);
 }
 
@@ -1577,7 +1611,7 @@ goaway(const char *fmt, ...)
 	(void) msggoaway();
 	if (fmt) {
 		if (thisC)
-			notify("SUP: %s\n", buf);
+			notify(1, "%s", buf);
 		else
 			printf("SUP: %s\n", buf);
 	}
