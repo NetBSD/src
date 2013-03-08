@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.527 2013/02/28 21:54:09 christos Exp $
+# $NetBSD: mi,v 1.528 2013/03/08 10:43:44 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2156,6 +2156,7 @@
 ./usr/tests/lib/libc/sys/t_setuid		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_sigaction		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_sigqueue		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_sigtimedwait_pr_47625	tests-lib-tests	atf
 ./usr/tests/lib/libc/sys/t_socketpair		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_stat			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_swapcontext		tests-lib-tests		atf
