@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.32 2012/07/19 09:53:06 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.33 2013/03/09 21:36:04 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -871,7 +871,7 @@ escape_rfc3986(bozohttpd_t *httpd, const char *url)
 		return buf;
 	}
 
-	for (s = url, d = buf; *s;) {
+	for (len = 0, s = url, d = buf; *s;) {
 		if (*s & 0x80)
 			goto encode_it;
 		switch (*s) {
@@ -893,13 +893,16 @@ escape_rfc3986(bozohttpd_t *httpd, const char *url)
 		case ',':
 		case ';':
 		case '=':
+		case '%':
 		encode_it:
 			snprintf(d, 4, "%%%2X", *s++);
 			d += 3;
 			len += 3;
+			break;
 		default:
 			*d++ = *s++;
 			len++;
+			break;
 		}
 	}
 	buf[len] = 0;
