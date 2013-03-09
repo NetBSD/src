@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.15 2013/01/18 02:46:30 msaitoh Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.16 2013/03/09 16:02:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.15 2013/01/18 02:46:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.16 2013/03/09 16:02:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,8 @@ mbr_label_read(dev_t dev,
 		int nfound = 0;
 
 		/* XXX "there has to be a better check than this." */
-		if (memcmp((char *)bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig))) {
+		if (memcmp((char *)bp->b_data + MBRSIGOFS, mbrsig,
+		    sizeof(mbrsig))) {
 			rv = 0;
 			goto out;
 		}
@@ -162,22 +163,22 @@ mbr_label_read(dev_t dev,
 			pp->p_fstype = xlat_mbr_fstype(mbrp->mbrp_type);
 
 			/* is this ours? */
-			if (mbrp == ourmbrp) {
-				/* need sector address for SCSI/IDE,
-				 cylinder for ESDI/ST506/RLL */
-				mbrpartoff = le32toh(mbrp->mbrp_start);
-				cyl = MBR_PCYL(mbrp->mbrp_scyl, mbrp->mbrp_ssect);
+			if (mbrp != ourmbrp)
+				continue;
+
+			/* need sector address for SCSI/IDE,
+			   cylinder for ESDI/ST506/RLL */
+			mbrpartoff = le32toh(mbrp->mbrp_start);
+			cyl = MBR_PCYL(mbrp->mbrp_scyl, mbrp->mbrp_ssect);
 
 #ifdef __i386__ /* XXX? */
-				/* update disklabel with details */
-				lp->d_partitions[2].p_size =
-				    le32toh(mbrp->mbrp_size);
-				lp->d_partitions[2].p_offset = 
-				    le32toh(mbrp->mbrp_start);
-				lp->d_ntracks = mbrp->mbrp_ehd + 1;
-				lp->d_nsectors = MBR_PSECT(mbrp->mbrp_esect);
-				lp->d_secpercyl =
-				    lp->d_ntracks * lp->d_nsectors;
+			/* update disklabel with details */
+			lp->d_partitions[2].p_size = le32toh(mbrp->mbrp_size);
+			lp->d_partitions[2].p_offset = 
+			    le32toh(mbrp->mbrp_start);
+			lp->d_ntracks = mbrp->mbrp_ehd + 1;
+			lp->d_nsectors = MBR_PSECT(mbrp->mbrp_esect);
+			lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 #endif
 			}
 		}
@@ -196,6 +197,9 @@ out:
 	return (rv);
 }
 
+/*
+ * Return -1 not found, 0 found positive errno
+ */
 int
 mbr_label_locate(dev_t dev,
 	void (*strat)(struct buf *),
@@ -227,7 +231,6 @@ mbr_label_locate(dev_t dev,
 	(*strat)(bp);
 
 	if ((rv = biowait(bp)) != 0) {
-		rv = -rv;
 		goto out;
 	}
 
@@ -237,7 +240,8 @@ mbr_label_locate(dev_t dev,
 	}
 
 	/* XXX how do we check veracity/bounds of this? */
-	memcpy(mbrp, (char *)bp->b_data + MBR_PART_OFFSET, MBR_PART_COUNT * sizeof(*mbrp));
+	memcpy(mbrp, (char *)bp->b_data + MBR_PART_OFFSET,
+	    MBR_PART_COUNT * sizeof(*mbrp));
 
 	/* look for NetBSD partition */
 	ourmbrp = NULL;
@@ -265,7 +269,7 @@ mbr_label_locate(dev_t dev,
 
 	*cylp = cyl;
 	*netbsd_label_offp = mbrpartoff;
-	rv = 1;
+	rv = -1;
 out:
         brelse(bp, 0);
 	return (rv);
