@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.13 2013/03/08 19:04:27 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.14 2013/03/09 13:25:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.13 2013/03/08 19:04:27 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.14 2013/03/09 13:25:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -146,13 +146,13 @@ do {									\
 #define adjptr(_map_, _ptr_) ((void *)(_ptr_))
 #elif defined(__sun__)
 #define adjptr(_map_, _ptr_) \
-    (mainmap_p(_map_) ? (void *)(_ptr_) : (void *)(_map_->l_addr + (_ptr_)))
+    (ismainobj ? (void *)(_ptr_) : (void *)(_map_->l_addr + (_ptr_)))
 #else
 #define adjptr(_map_, _ptr_) ((void *)(_map_->l_addr + (_ptr_)))
 #endif
 
 static int
-getsymbols(struct link_map *map)
+getsymbols(struct link_map *map, int ismainobj)
 {
 	char *str_base;
 	void *syms_base = NULL; /* XXXgcc */
@@ -394,7 +394,7 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	error = 0;
 	for (map = origmap; map && !error; map = map->l_prev) {
 		if (strstr(map->l_name, "librump") != NULL || map == mainmap)
-			error = getsymbols(map);
+			error = getsymbols(map, map == mainmap);
 	}
 
 	if (error == 0) {
