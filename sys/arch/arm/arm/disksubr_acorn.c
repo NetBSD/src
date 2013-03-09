@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.10 2009/03/15 22:23:16 cegger Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.11 2013/03/09 10:10:45 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.10 2009/03/15 22:23:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.11 2013/03/09 10:10:45 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,7 +365,7 @@ filecore_label_locate(dev_t dev,
 
 	if (bb->partition_type != PARTITION_FORMAT_RISCBSD) {
 		printf("writedisklabel: Invalid partition format\n");
-		rv = -1;
+		rv = -EINVAL;
 		goto out;
 	}
 
