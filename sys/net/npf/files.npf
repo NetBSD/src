@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.10 2013/02/09 03:35:31 rmind Exp $
+# $NetBSD: files.npf,v 1.11 2013/03/10 20:51:44 christos Exp $
 #
 # Public Domain.
 #
@@ -36,3 +36,6 @@ file	net/npf/npf_ext_rndblock.c		npf
 
 # ALGs
 file	net/npf/npf_alg_icmp.c			npf
+
+# Interfaces
+file	net/npf/if_npflog.c			npf
