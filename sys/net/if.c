@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.261 2012/11/01 06:36:30 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.262 2013/03/10 19:46:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.261 2012/11/01 06:36:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.262 2013/03/10 19:46:12 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.261 2012/11/01 06:36:30 msaitoh Exp $");
 #include <net/radix.h>
 #include <net/route.h>
 #include <net/netisr.h>
+#include <sys/module.h>
 #ifdef NETATALK
 #include <netatalk/at_extern.h>
 #include <netatalk/at.h>
@@ -984,25 +985,32 @@ if_clone_lookup(const char *name, int *unitp)
 {
 	struct if_clone *ifc;
 	const char *cp;
+	char *dp, ifname[IFNAMSIZ + 3];
 	int unit;
 
+	strcpy(ifname, "if_");
 	/* separate interface name from unit */
-	for (cp = name;
-	    cp - name < IFNAMSIZ && *cp && (*cp < '0' || *cp > '9');
-	    cp++)
-		continue;
+	for (dp = ifname + 3, cp = name; cp - name < IFNAMSIZ &&
+	    *cp && (*cp < '0' || *cp > '9');)
+		*dp++ = *cp++;
 
 	if (cp == name || cp - name == IFNAMSIZ || !*cp)
 		return NULL;	/* No name or unit number */
+	*dp++ = '\0';
 
+again:
 	LIST_FOREACH(ifc, &if_cloners, ifc_list) {
-		if (strlen(ifc->ifc_name) == cp - name &&
-		    strncmp(name, ifc->ifc_name, cp - name) == 0)
+		if (strcmp(ifname + 3, ifc->ifc_name) == 0)
 			break;
 	}
 
-	if (ifc == NULL)
-		return NULL;
+	if (ifc == NULL) {
+		if (*ifname == '\0' ||
+		    module_autoload(ifname, MODULE_CLASS_DRIVER))
+			return NULL;
+		*ifname = '\0';
+		goto again;
+	}
 
 	unit = 0;
 	while (cp - name < IFNAMSIZ && *cp) {
