@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.122 2013/03/10 16:27:11 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.123 2013/03/10 17:05:12 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -20,7 +20,7 @@ LIB=		rump
 # Source modules, first the ones specifically implemented for librump.
 # 
 SRCS=	rump.c rumpcopy.c emul.c intr.c lwproc.c klock.c	\
-	kobj_rename.c ltsleep.c memalloc.c scheduler.c		\
+	kobj_rename.c ltsleep.c scheduler.c			\
 	signals.c sleepq.c threads.c vm.c cprng_stub.c
 
 # Multiprocessor or uniprocessor locking.  TODO: select right
@@ -137,9 +137,9 @@ SRCS+=	kern_select_50.c
 # all kernel corner cases as well (not to mention if you want to debug the
 # allocators themselves).
 .if defined(RUMP_UNREAL_ALLOCATORS) && ${RUMP_UNREAL_ALLOCATORS} == "yes"
-CPPFLAGS+=	-DRUMP_UNREAL_ALLOCATORS
+SRCS+=		memalloc.c
 .else
-SRCS+=		subr_kmem.c subr_pool.c
+SRCS+=		kern_malloc.c subr_kmem.c subr_pool.c
 .endif
 
 .ifdef RUMP_LOCKDEBUG
