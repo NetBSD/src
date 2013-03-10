@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.19 2013/01/23 22:34:37 matt Exp $
+#	$NetBSD: Makefile.libkern,v 1.20 2013/03/10 07:31:03 christos Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -70,11 +70,15 @@ SRCS+=	strsep.c strstr.c
 SRCS+=	strlcpy.c strlcat.c
 
 SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c
-SRCS+=	memcpy.c memmove.c
+SRCS+=	memmove.c
 SRCS+=	strchr.c strrchr.c
 SRCS+=	memcmp.c
+
+.if (${MACHINE_ARCH} != "sparc64") # provided by memcpyset.s
+SRCS+=	memcpy.c
 .if empty(SRCS:Mmemset2.*)
 SRCS+=	memset.c 
+.endif
 .endif
 SRCS+=	popcount32.c popcount64.c
 SRCS+=	strtoul.c strtoll.c strtoull.c strtoumax.c
