@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.71 2012/03/03 03:21:16 nakayama Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.72 2013/03/10 07:18:21 christos Exp $
 
 #=========================================================================
 #
@@ -75,7 +75,12 @@ AFLAGS+=	-x assembler-with-cpp
 ##
 ## (3) libkern and compat
 ##
-# KERN_AS=	obj	# memcpy, memset, etc. are in locore.s
+OPT_MODULAR=	%MODULAR%
+.if !empty(OPT_MODULAR)
+KERN_AS=	obj
+.else
+KERN_AS=	library
+.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.27 2011/01/21 15:59:09 joerg Exp $
+#	$NetBSD: Makefile.sh3,v 1.28 2013/03/10 07:18:21 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -40,6 +40,12 @@ COPTS?=		-Os -freorder-blocks
 ##
 ## (3) libkern and compat
 ##
+OPT_MODULAR=	%MODULAR%
+.if !empty(OPT_MODULAR)
+KERN_AS=	obj
+.else
+KERN_AS=	library
+.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies
