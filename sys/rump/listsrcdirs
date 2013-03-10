@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.2 2013/03/10 09:18:50 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.3 2013/03/10 14:15:54 pooka Exp $
 #
 
 #
@@ -9,9 +9,6 @@
 # Feed the output to whichever method you use to obtain NetBSD sources, e.g.
 #
 # ./listsrcdirs | xargs cvs -d anoncvs@anoncvs.netbsd.org:/cvsroot -z3 co -P
-#
-# TODO: avoid checkout of sys/arch, since only sys/arch/*/include
-# is required.
 #
 
 precho ()
@@ -23,7 +20,7 @@ precho ()
 }
 
 precho src/			build.sh Makefile Makefile.inc
-precho src/			sys tools common include share/mk
+precho src/			tools common include share/mk
 precho src/etc/			Makefile.params master.passwd group
 precho src/lib/lib		c util rump
 precho src/lib/librump		user client dev net vfs
@@ -33,3 +30,17 @@ precho src/external/historical/	nawk
 precho src/usr.bin/		make xinstall config mktemp sed tsort
 precho src/usr.bin/		lorder join cksum m4 mkdep
 precho src/usr.sbin/		mtree
+
+# If -c is given, use CVS syntax to exclude large subdirectories
+# of sys.  Otherwise just do it wholesale.
+if [ "${1}" = '-c' ]; then
+	echo \!src/sys/arch \!src/sys/dev/microcode	\
+	    \!src/sys/dev/pci src/sys
+
+	# pick a few useful archs, namely those mentioned in buildrump.sh
+	for x in amd64 i386 x86 arm evbarm sparc sparc64 ; do
+		precho src/sys/arch/${x}/ include ${x}
+	done
+else
+	echo src/sys
+fi
