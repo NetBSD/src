@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_log.c,v 1.2 2012/12/24 19:05:42 rmind Exp $	*/
+/*	$NetBSD: npf_ext_log.c,v 1.3 2013/03/10 20:51:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.2 2012/12/24 19:05:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.3 2013/03/10 20:51:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.2 2012/12/24 19:05:42 rmind Exp $"
 
 #include "npf_impl.h"
 
-NPF_EXT_MODULE(npf_ext_log, "");
+NPF_EXT_MODULE(npf_ext_log, "if_npflog");
 
 #define	NPFEXT_LOG_VER		1
 
@@ -60,101 +60,6 @@ static void *		npf_ext_log_id;
 typedef struct {
 	unsigned int	if_idx;
 } npf_ext_log_t;
-
-typedef struct npflog_softc {
-	LIST_ENTRY(npflog_softc)	sc_entry;
-	kmutex_t			sc_lock;
-	ifnet_t				sc_if;
-	int				sc_unit;
-} npflog_softc_t;
-
-static int	npflog_clone_create(struct if_clone *, int);
-static int	npflog_clone_destroy(ifnet_t *);
-
-static LIST_HEAD(, npflog_softc)	npflog_if_list	__cacheline_aligned;
-static struct if_clone			npflog_cloner =
-    IF_CLONE_INITIALIZER("npflog", npflog_clone_create, npflog_clone_destroy);
-
-void
-npflogattach(int nunits)
-{
-
-	LIST_INIT(&npflog_if_list);
-	if_clone_attach(&npflog_cloner);
-}
-
-void
-npflogdetach(void)
-{
-	npflog_softc_t *sc;
-
-	while ((sc = LIST_FIRST(&npflog_if_list)) != NULL) {
-		npflog_clone_destroy(&sc->sc_if);
-	}
-	if_clone_detach(&npflog_cloner);
-}
-
-static int
-npflog_ioctl(ifnet_t *ifp, u_long cmd, void *data)
-{
-	npflog_softc_t *sc = ifp->if_softc;
-	int error = 0;
-
-	mutex_enter(&sc->sc_lock);
-	switch (cmd) {
-	case SIOCINITIFADDR:
-		ifp->if_flags |= (IFF_UP | IFF_RUNNING);
-		break;
-	default:
-		error = ifioctl_common(ifp, cmd, data);
-		break;
-	}
-	mutex_exit(&sc->sc_lock);
-	return error;
-}
-
-static int
-npflog_clone_create(struct if_clone *ifc, int unit)
-{
-	npflog_softc_t *sc;
-	ifnet_t *ifp;
-
-	sc = kmem_zalloc(sizeof(npflog_softc_t), KM_SLEEP);
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTNET);
-
-	ifp = &sc->sc_if;
-	ifp->if_softc = sc;
-
-	if_initname(ifp, "npflog", unit);
-	ifp->if_type = IFT_OTHER;
-	ifp->if_dlt = DLT_NULL;
-	ifp->if_ioctl = npflog_ioctl;
-
-	KERNEL_LOCK(1, NULL);
-	if_attach(ifp);
-	if_alloc_sadl(ifp);
-	bpf_attach(ifp, DLT_NULL, 0);
-	LIST_INSERT_HEAD(&npflog_if_list, sc, sc_entry);
-	KERNEL_UNLOCK_ONE(NULL);
-
-	return 0;
-}
-
-static int
-npflog_clone_destroy(ifnet_t *ifp)
-{
-	npflog_softc_t *sc = ifp->if_softc;
-
-	KERNEL_LOCK(1, NULL);
-	LIST_REMOVE(sc, sc_entry);
-	bpf_detach(ifp);
-	if_detach(ifp);
-	KERNEL_UNLOCK_ONE(NULL);
-
-	mutex_destroy(&sc->sc_lock);
-	kmem_free(sc, sizeof(npflog_softc_t));
-	return 0;
-}
 
 static int
 npf_log_ctor(npf_rproc_t *rp, prop_dictionary_t params)
@@ -227,7 +132,6 @@ npf_ext_log_modcmd(modcmd_t cmd, void *arg)
 		/*
 		 * Initialise the NPF logging extension.
 		 */
-		npflogattach(1);
 		npf_ext_log_id = npf_ext_register("log", &npf_log_ops);
 		if (!npf_ext_log_id) {
 			npflogdetach();
@@ -240,7 +144,6 @@ npf_ext_log_modcmd(modcmd_t cmd, void *arg)
 		if (error) {
 			return error;
 		}
-		npflogdetach();
 		break;
 
 	case MODULE_CMD_AUTOUNLOAD:
