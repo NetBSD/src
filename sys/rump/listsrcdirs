@@ -1,24 +1,35 @@
-#	$NetBSD: listsrcdirs,v 1.1 2013/02/13 18:45:20 pooka Exp $
+#!/bin/sh
+#
+#	$NetBSD: listsrcdirs,v 1.2 2013/03/10 09:18:50 pooka Exp $
 #
 
 #
-# Run this script with a shell which supports brace expansion (bash, csh, etc.)
-# It will echo all of the NetBSD source directories required to build rump
+# This script echoes the NetBSD source directories required to build rump
 # kernels with TOOLS_BUILDRUMP=yes (used for example by buildrump.sh).
 # Feed the output to whichever method you use to obtain NetBSD sources, e.g.
 #
-# bash listsrcdirs | xargs cvs -d anoncvs@anoncvs.netbsd.org:/cvsroot -z3 co -P
+# ./listsrcdirs | xargs cvs -d anoncvs@anoncvs.netbsd.org:/cvsroot -z3 co -P
+#
+# TODO: avoid checkout of sys/arch, since only sys/arch/*/include
+# is required.
 #
 
-echo src/{build.sh,Makefile,Makefile.inc} \
-    src/{sys,tools,common,include} \
-    src/share/mk \
-    src/etc/{Makefile.params,master.passwd,group} \
-    src/lib/lib{c,util} \
-    src/lib/librump{user,client,,dev,net,vfs} \
-    src/external/bsd/{flex,mdocml,byacc} \
-    src/external/historical/nawk \
-    src/external/cddl/osnet \
-    src/usr.bin/{make,xinstall,config,mktemp,sed,tsort,cksum,m4,mkdep,lorder} \
-    src/usr.bin/join \
-    src/usr.sbin/mtree
+precho ()
+{
+
+	pfx=$1
+	shift
+	for arg in $* ; do echo ${pfx}${arg} ; done
+}
+
+precho src/			build.sh Makefile Makefile.inc
+precho src/			sys tools common include share/mk
+precho src/etc/			Makefile.params master.passwd group
+precho src/lib/lib		c util rump
+precho src/lib/librump		user client dev net vfs
+precho src/external/bsd/	flex mdocml byacc
+precho src/external/cddl/	osnet
+precho src/external/historical/	nawk
+precho src/usr.bin/		make xinstall config mktemp sed tsort
+precho src/usr.bin/		lorder join cksum m4 mkdep
+precho src/usr.sbin/		mtree
