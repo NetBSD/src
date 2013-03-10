@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.4 2011/08/31 13:32:36 joerg Exp $	*/
+/*	$NetBSD: crash.c,v 1.5 2013/03/10 19:32:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.4 2011/08/31 13:32:36 joerg Exp $");
+__RCSID("$NetBSD: crash.c,v 1.5 2013/03/10 19:32:29 christos Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -390,7 +390,7 @@ main(int argc, char **argv)
 		}
 	} else {
 		sz = sb.st_size;
-		elf = mmap(NULL, sz, PROT_READ, MAP_FILE, fd, 0);
+		elf = mmap(NULL, sz, PROT_READ, MAP_PRIVATE|MAP_FILE, fd, 0);
 		if (elf == MAP_FAILED) {
 			err(EXIT_FAILURE, "mmap `%s'", nlistf);
 		}
