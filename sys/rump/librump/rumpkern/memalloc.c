@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.18 2012/07/20 09:20:05 pooka Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.19 2013/03/10 16:27:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,14 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.18 2012/07/20 09:20:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.19 2013/03/10 16:27:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
-#include <sys/percpu.h>
 #include <sys/pool.h>
-#include <sys/vmem.h>
 
 #include <rump/rumpuser.h>
 
@@ -148,6 +146,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int align_offset,
 
 	pp->pr_size = size;
 	pp->pr_align = align;
+	pp->pr_wchan = wchan;
 }
 
 void
@@ -327,68 +326,4 @@ struct pool_allocator pool_allocator_kmem = {
         .pa_pagesz = 0
 };
 
-void
-vmem_rehash_start()
-{
-
-	return;
-}
-
-/*
- * A simplified percpu is included in here since subr_percpu.c uses
- * the vmem allocator and I don't want to reimplement vmem.  So use
- * this simplified percpu for non-vmem systems.
- */
-
-static kmutex_t pcmtx;
-
-void
-percpu_init(void)
-{
-
-	mutex_init(&pcmtx, MUTEX_DEFAULT, IPL_NONE);
-}
-
-void
-percpu_init_cpu(struct cpu_info *ci)
-{
-
-	/* nada */
-}
-
-void *
-percpu_getref(percpu_t *pc)
-{
-
-	mutex_enter(&pcmtx);
-	return pc;
-}
-
-void
-percpu_putref(percpu_t *pc)
-{
-
-	mutex_exit(&pcmtx);
-}
-
-percpu_t *
-percpu_alloc(size_t size)
-{
-
-	return kmem_alloc(size, KM_SLEEP);
-}
-
-void
-percpu_free(percpu_t *pc, size_t size)
-{
-
-	kmem_free(pc, size);
-}
-
-void
-percpu_foreach(percpu_t *pc, percpu_callback_t cb, void *arg)
-{
-
-	cb(pc, arg, rump_cpu);
-}
 #endif /* RUMP_UNREAL_ALLOCATORS */
