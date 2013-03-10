@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.18 2013/02/09 03:35:33 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.19 2013/03/10 23:11:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ yyerror(const char *fmt, ...)
 %token	<str>		TABLE_ID
 %token	<str>		VAR_ID
 
-%type	<str>		addr, some_name, list_elem, table_store
+%type	<str>		addr, some_name, list_elem, table_store, string
 %type	<str>		proc_param_val, opt_apply
 %type	<num>		ifindex, port, opt_final, on_ifindex
 %type	<num>		afamily, opt_family
@@ -621,10 +621,17 @@ addr_or_ifnet
 	| VAR_ID
 	{
 		npfvar_t *vp = npfvar_lookup($1);
-		const int type = npfvar_get_type(vp, 0);
+		int type = npfvar_get_type(vp, 0);
 		ifnet_addr_t *ifna;
 
+again:
 		switch (type) {
+		case NPFVAR_IDENTIFIER:
+		case NPFVAR_STRING:
+			vp = npfctl_parse_ifnet(npfvar_expand_string(vp),
+			    AF_UNSPEC);
+			type = npfvar_get_type(vp, 0);
+			goto again;
 		case NPFVAR_FAM:
 			$$ = vp;
 			break;
@@ -727,15 +734,42 @@ icmp_type
 	}
 	;
 
+string
+	: IDENTIFIER
+	{
+		$$ = $1;
+	}
+	| VAR_ID
+	{
+		npfvar_t *vp = npfvar_lookup($1);
+		const int type = npfvar_get_type(vp, 0);
+
+		switch (type) {
+		case NPFVAR_STRING:
+		case NPFVAR_IDENTIFIER:
+			$$ = npfvar_expand_string(vp);
+			break;
+		case -1:
+			yyerror("undefined variable '%s' for interface", $1);
+			break;
+		default:
+			yyerror("wrong variable '%s' type '%s' for string",
+			    $1, npfvar_type(type));
+			break;
+		}
+	}
+	;
+
 ifnet
-	: IFNET PAR_OPEN IDENTIFIER PAR_CLOSE
+	: IFNET PAR_OPEN string PAR_CLOSE
 	{
 		$$ = npfctl_parse_ifnet($3, AF_UNSPEC);
 	}
-	| afamily PAR_OPEN IDENTIFIER PAR_CLOSE
+	| afamily PAR_OPEN string PAR_CLOSE
 	{
 		$$ = npfctl_parse_ifnet($3, $1);
 	}
+	;
 
 ifindex
 	: some_name
