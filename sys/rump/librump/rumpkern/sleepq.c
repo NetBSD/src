@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.13 2011/01/28 17:57:03 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.14 2013/03/10 11:21:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.13 2011/01/28 17:57:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.14 2013/03/10 11:21:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -38,12 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.13 2011/01/28 17:57:03 pooka Exp $");
 #include <sys/atomic.h>
 
 #include "rump_private.h"
-
-/*
- * Flimsy and minimalistic sleepq implementation.  This is implemented
- * only for the use of callouts in kern_timeout.c.  locking etc is
- * completely incorrect, horrible, etc etc etc.
- */
 
 syncobj_t sleep_syncobj;
 static kcondvar_t sq_cv;
@@ -60,7 +54,7 @@ sqinit1(void)
 void
 sleepq_init(sleepq_t *sq)
 {
-	ONCE_DECL(sqctl);
+	static ONCE_DECL(sqctl);
 
 	RUN_ONCE(&sqctl, sqinit1);
 
