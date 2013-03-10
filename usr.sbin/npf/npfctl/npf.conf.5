@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.27 2013/02/09 03:35:32 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.28 2013/03/10 21:17:30 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -283,7 +283,7 @@ $localnet = { 10.1.1.0/24 }
 # Note: if $ext_if has multiple IP address (e.g. IPv6 as well),
 # then the translation address has to be specified explicitly.
 map $ext_if dynamic 10.1.1.0/24 -> $ext_if
-map $ext_if dynamic 10.1.1.2 port 22 <- $ext_if 9022
+map $ext_if dynamic 10.1.1.2 port 22 <- $ext_if port 9022
 
 procedure "log" {
 	# Note: npf_ext_log kernel module should be loaded, if not built-in.
