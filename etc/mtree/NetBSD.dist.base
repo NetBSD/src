@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.114 2013/03/01 18:25:15 joerg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.115 2013/03/10 21:40:05 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -62,6 +62,7 @@
 ./etc/ssh
 ./etc/zfs
 ./lib
+./lib/npf
 ./libdata
 ./libdata/firmware
 ./libdata/firmware/if_ipw
@@ -197,12 +198,13 @@
 ./usr/lib/i18n
 ./usr/lib/lua
 ./usr/lib/lua/5.1
-./usr/lib/npf
 ./usr/lib/pkgconfig
 ./usr/lib/security
 ./usr/libdata
 ./usr/libdata/debug
 ./usr/libdata/debug/bin
+./usr/libdata/debug/lib
+./usr/libdata/debug/lib/npf
 ./usr/libdata/debug/libexec
 ./usr/libdata/debug/sbin
 ./usr/libdata/debug/usr
@@ -210,7 +212,6 @@
 ./usr/libdata/debug/usr/games
 ./usr/libdata/debug/usr/lib
 ./usr/libdata/debug/usr/lib/i18n
-./usr/libdata/debug/usr/lib/npf
 ./usr/libdata/debug/usr/libexec
 ./usr/libdata/debug/usr/libexec/ching
 ./usr/libdata/debug/usr/libexec/lpr
