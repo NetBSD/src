@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.6 2013/02/09 03:35:32 rmind Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.7 2013/03/10 20:51:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/module.h>
 
 #include "npf_impl.h"
 
@@ -218,6 +219,9 @@ npf_rprocset_destroy(npf_rprocset_t *rpset)
 	kmem_free(rpset, sizeof(npf_rprocset_t));
 }
 
+static const char npf_ext_prefix[] = "npf_ext_";
+#define NPF_EXT_PREFLEN (sizeof(npf_ext_prefix) - 1)
+
 /*
  * npf_rproc_lookup: find a rule procedure by the name.
  */
@@ -225,12 +229,21 @@ npf_rproc_t *
 npf_rprocset_lookup(npf_rprocset_t *rpset, const char *name)
 {
 	npf_rproc_t *rp;
+	char modname[RPROC_NAME_LEN + NPF_EXT_PREFLEN];
+	int loaded = 0;
 
+again:
 	LIST_FOREACH(rp, &rpset->rps_list, rp_entry) {
 		if (strncmp(rp->rp_name, name, RPROC_NAME_LEN) == 0)
 			break;
 	}
-	return rp;
+	if (rp != NULL || loaded != 0)
+		return rp;
+	loaded++;
+	snprintf(modname, sizeof(modname), "%s%s", npf_ext_prefix, name);
+	if (module_autoload(modname, MODULE_CLASS_MISC))
+		return NULL;
+	goto again;
 }
 
 /*
