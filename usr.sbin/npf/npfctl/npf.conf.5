@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.28 2013/03/10 21:17:30 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.29 2013/03/10 21:55:40 christos Exp $
 .\"
 .\" Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 11, 2013
+.Dd March 10, 2013
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -184,7 +184,7 @@ For example:
 .Bd -literal
 procedure "someproc" {
 	log: npflog0
-	normalise: "random-id", "min-ttl" 64
+	normalize: "random-id", "min-ttl" 64
 }
 .Ed
 .Pp
