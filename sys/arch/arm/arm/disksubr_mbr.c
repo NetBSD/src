@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.16 2013/03/09 16:02:25 christos Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.17 2013/03/10 04:01:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.16 2013/03/09 16:02:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.17 2013/03/10 04:01:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,6 @@ mbr_label_read(dev_t dev,
 			lp->d_nsectors = MBR_PSECT(mbrp->mbrp_esect);
 			lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 #endif
-			}
 		}
 		if (nfound > 0) {
 			lp->d_npartitions = 'e' - 'a' + i;
