@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.121 2012/12/30 23:52:12 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.122 2013/03/10 16:27:11 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -97,10 +97,12 @@ SRCS+=	init_sysctl_base.c	\
 	subr_log.c		\
 	subr_lwp_specificdata.c	\
 	subr_once.c		\
+	subr_percpu.c		\
 	subr_prf.c		\
 	subr_pserialize.c	\
 	subr_specificdata.c	\
 	subr_time.c		\
+	subr_vmem.c		\
 	subr_workqueue.c	\
 	subr_xcall.c		\
 	sys_descrip.c		\
@@ -137,7 +139,7 @@ SRCS+=	kern_select_50.c
 .if defined(RUMP_UNREAL_ALLOCATORS) && ${RUMP_UNREAL_ALLOCATORS} == "yes"
 CPPFLAGS+=	-DRUMP_UNREAL_ALLOCATORS
 .else
-SRCS+=		subr_kmem.c subr_percpu.c subr_pool.c subr_vmem.c
+SRCS+=		subr_kmem.c subr_pool.c
 .endif
 
 .ifdef RUMP_LOCKDEBUG
