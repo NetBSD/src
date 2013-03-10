@@ -1,4 +1,7 @@
-# $NetBSD: shl.mi,v 1.9 2013/03/01 18:15:39 pooka Exp $
+# $NetBSD: shl.mi,v 1.10 2013/03/10 21:48:18 christos Exp $
+./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,npf
+./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug	comp-sys-debug	debug,npf
+./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libDECHanyu.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libEUC.so.5.0.debug	comp-i18n-debug	debug
@@ -22,14 +25,11 @@
 ./usr/libdata/debug/usr/lib/i18n/libmapper_serial.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug		debug
 ./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug
-./usr/libdata/debug/usr/lib/npf/ext_log.so.0.0.debug	comp-npf-debug		debug
-./usr/libdata/debug/usr/lib/npf/ext_normalise.so.0.0.debug	comp-npf-debug		debug
-./usr/libdata/debug/usr/lib/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug
 ./usr/libdata/debug/usr/lib/libamu.so.4.0.debug		comp-amd-debug	debug
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug	comp-krb5-debug	kerberos,debug
-./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug	comp-atf-debug	atf,debug
 ./usr/libdata/debug/usr/lib/libatf-c++.so.0.0.debug	comp-atf-debug	atf,debug
+./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug	comp-atf-debug	atf,debug
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug
 ./usr/libdata/debug/usr/lib/libbind9.so.5.8.debug	comp-bind-debug	debug
@@ -210,8 +210,8 @@
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.1.0.debug	comp-tpm-debug	tpm,debug
-./usr/libdata/debug/usr/lib/libtspi.so.3.0.debug	comp-tpm-debug	tpm,debug
 ./usr/libdata/debug/usr/lib/libtre.so.0.8.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libtspi.so.3.0.debug	comp-tpm-debug	tpm,debug
 ./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug	comp-sys-debug	debug,rump
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug	comp-sys-debug	debug
@@ -222,9 +222,9 @@
 ./usr/libdata/debug/usr/lib/libz.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libzfs.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libzpool.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
-./usr/libdata/debug/usr/lib/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,npf
-./usr/libdata/debug/usr/lib/npf/ext_normalise.so.0.0.debug	comp-sys-debug	debug,npf
-./usr/libdata/debug/usr/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
+./usr/libdata/debug/usr/lib/npf/ext_log.so.0.0.debug	comp-obsolete	debug,npf,obsolete
+./usr/libdata/debug/usr/lib/npf/ext_normalise.so.0.0.debug	comp-obsolete	debug,npf,obsolete
+./usr/libdata/debug/usr/lib/npf/ext_rndblock.so.0.0.debug	comp-obsolete	debug,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_log.so.0.0.debug	comp-obsolete	debug,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-obsolete	debug,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-obsolete	debug,npf,obsolete
