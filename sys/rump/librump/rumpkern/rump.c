@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.255 2013/03/08 19:04:28 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.256 2013/03/10 16:51:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.255 2013/03/08 19:04:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.256 2013/03/10 16:51:31 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -267,6 +267,7 @@ rump__init(int rump_version)
 	} else {
 		numcpu = rumpuser_getnhostcpu();
 	}
+	rump_thread_init();
 	rump_cpus_bootstrap(&numcpu);
 
 	rumpuser_gettime(&sec, &nsec, &error);
@@ -384,6 +385,9 @@ rump__init(int rump_version)
 
 		aprint_verbose("cpu%d at thinair0: rump virtual cpu\n", i);
 	}
+
+	/* CPUs are up.  allow kernel threads to run */
+	rump_thread_allow();
 
 	mksysctls();
 	kqueue_init();

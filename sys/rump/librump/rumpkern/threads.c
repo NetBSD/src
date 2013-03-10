@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.17 2012/11/04 14:40:47 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.18 2013/03/10 16:51:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.17 2012/11/04 14:40:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.18 2013/03/10 16:51:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -48,6 +48,10 @@ struct kthdesc {
 	struct lwp *mylwp;
 };
 
+static bool threads_are_go;
+static struct rumpuser_mtx *thrmtx;
+static struct rumpuser_cv *thrcv;
+
 static void *
 threadbouncer(void *arg)
 {
@@ -58,6 +62,15 @@ threadbouncer(void *arg)
 
 	f = k->f;
 	thrarg = k->arg;
+
+	/* don't allow threads to run before all CPUs have fully attached */
+	if (!threads_are_go) {
+		rumpuser_mutex_enter_nowrap(thrmtx);
+		while (!threads_are_go) {
+			rumpuser_cv_wait_nowrap(thrcv, thrmtx);
+		}
+		rumpuser_mutex_exit(thrmtx);
+	}
 
 	/* schedule ourselves */
 	rumpuser_set_curlwp(l);
@@ -72,6 +85,25 @@ threadbouncer(void *arg)
 	f(thrarg);
 
 	panic("unreachable, should kthread_exit()");
+}
+
+void
+rump_thread_init(void)
+{
+
+	rumpuser_mutex_init(&thrmtx);
+	rumpuser_cv_init(&thrcv);
+}
+
+void
+rump_thread_allow(void)
+{
+
+	rumpuser_mutex_enter(thrmtx);
+	threads_are_go = true;
+	rumpuser_cv_broadcast(thrcv);
+	rumpuser_mutex_exit(thrmtx);
+
 }
 
 static struct {
