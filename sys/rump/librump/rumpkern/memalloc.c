@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.19 2013/03/10 16:27:11 pooka Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.20 2013/03/10 17:05:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,12 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.19 2013/03/10 16:27:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.20 2013/03/10 17:05:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <rump/rumpuser.h>
 
@@ -51,6 +53,13 @@ __KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.19 2013/03/10 16:27:11 pooka Exp $");
 /*
  * malloc
  */
+
+void
+kmeminit(void)
+{
+
+	return;
+}
 
 void *
 kern_malloc(unsigned long size, int flags)
@@ -86,7 +95,6 @@ kern_free(void *ptr)
  * Kmem
  */
 
-#ifdef RUMP_UNREAL_ALLOCATORS
 void
 kmem_init()
 {
@@ -325,5 +333,3 @@ struct pool_allocator pool_allocator_kmem = {
         .pa_free = pool_page_free,
         .pa_pagesz = 0
 };
-
-#endif /* RUMP_UNREAL_ALLOCATORS */
