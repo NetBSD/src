@@ -1,4 +1,4 @@
-/*	$NetBSD: npfext_log.c,v 1.2 2013/03/11 00:03:18 christos Exp $	*/
+/*	$NetBSD: npfext_log.c,v 1.3 2013/03/11 00:18:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfext_log.c,v 1.2 2013/03/11 00:03:18 christos Exp $");
+__RCSID("$NetBSD: npfext_log.c,v 1.3 2013/03/11 00:18:11 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -99,7 +99,7 @@ npfext_log_param(nl_ext_t *ext, const char *param, const char *val __unused)
 
 		ifr.ifr_flags |= IFF_UP;
 		if (ioctl(s, SIOCSIFFLAGS, &ifr) == -1) {
-			warn("Can't SIOSGIFFLAGS `%s'", param);
+			warn("Can't SIOCSIFFLAGS `%s'", param);
 			close(s);
 			return errno;
 		}
