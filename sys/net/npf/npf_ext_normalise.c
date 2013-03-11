@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_normalise.c,v 1.2 2012/12/24 19:05:42 rmind Exp $	*/
+/*	$NetBSD: npf_ext_normalise.c,v 1.3 2013/03/11 16:37:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalise.c,v 1.2 2012/12/24 19:05:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalise.c,v 1.3 2013/03/11 16:37:43 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ext_normalise.c,v 1.2 2012/12/24 19:05:42 rmind 
 /*
  * NPF extension module definition and the identifier.
  */
-NPF_EXT_MODULE(npf_ext_normalise, "");
+NPF_EXT_MODULE(npf_ext_normalise, NULL);
 
 #define	NPFEXT_NORMALISE_VER	1
 
