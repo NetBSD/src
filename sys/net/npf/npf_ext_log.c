@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_log.c,v 1.3 2013/03/10 20:51:44 christos Exp $	*/
+/*	$NetBSD: npf_ext_log.c,v 1.4 2013/03/11 01:42:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.3 2013/03/10 20:51:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.4 2013/03/11 01:42:12 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -134,7 +134,6 @@ npf_ext_log_modcmd(modcmd_t cmd, void *arg)
 		 */
 		npf_ext_log_id = npf_ext_register("log", &npf_log_ops);
 		if (!npf_ext_log_id) {
-			npflogdetach();
 			return EEXIST;
 		}
 		break;
