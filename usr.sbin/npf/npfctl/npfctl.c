@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.32 2013/03/10 23:59:00 christos Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.33 2013/03/11 00:16:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.32 2013/03/10 23:59:00 christos Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.33 2013/03/11 00:16:59 christos Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -115,7 +115,11 @@ usage(void)
 	const char *progname = getprogname();
 
 	fprintf(stderr,
-	    "usage:\t%s [ start | stop | reload | flush | show | stats ]\n",
+	    "Usage:\t%s start | stop | flush | show | stats | sess-load | "
+	    "sess-save\n",
+	    progname);
+	fprintf(stderr,
+	    "\t%s validate | reload [<rule-file>]\n",
 	    progname);
 	fprintf(stderr,
 	    "\t%s rule \"rule-name\" { add | rem } <rule-syntax>\n",

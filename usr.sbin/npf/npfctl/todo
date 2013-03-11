@@ -5,7 +5,6 @@
 -- npfctl start does not load if not loaded. It is not clear you need to
    reload first. Or if it loads it should print the error messages.
 -- able to specify interfaces before they are created
--- npfctl validate is not listed in the usage, what else is wrong in doc
 -- docs/examples out of date
 -- npf starts up too late (after traffic can go through)
 -- need libpcap in /
@@ -21,3 +20,4 @@ ok parse dynamic map rule properly inet4($ext_if) does not work
 ok create npflog interface automatically
 ok need to bring interface npflog up
 ok parse 'port "ftp-data"' properly
+ok fix usage
