@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.33 2013/03/11 00:16:59 christos Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.34 2013/03/11 00:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.33 2013/03/11 00:16:59 christos Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.34 2013/03/11 00:34:43 christos Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -135,9 +135,6 @@ usage(void)
 	    progname);
 	fprintf(stderr,
 	    "\t%s table <tid> { list | flush }\n",
-	    progname);
-	fprintf(stderr,
-	    "\t%s ( sess-save | sess-load )\n",
 	    progname);
 	exit(EXIT_FAILURE);
 }
