@@ -1,6 +1,17 @@
-# $NetBSD: md.amd64,v 1.192 2013/03/01 18:15:36 pooka Exp $
+# $NetBSD: md.amd64,v 1.193 2013/03/11 15:53:05 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
+./lib/i386/					base-compat-shlib		compat
+./lib/i386/npf					base-npf-shlib		compat
+./lib/i386/npf/ext_log.so			base-npf-shlib		compat,pic
+./lib/i386/npf/ext_log.so.0			base-npf-shlib		compat,pic
+./lib/i386/npf/ext_log.so.0.0			base-npf-shlib		compat,pic
+./lib/i386/npf/ext_normalize.so			base-npf-shlib		compat,pic
+./lib/i386/npf/ext_normalize.so.0		base-npf-shlib		compat,pic
+./lib/i386/npf/ext_normalize.so.0.0		base-npf-shlib		compat,pic
+./lib/i386/npf/ext_rndblock.so			base-npf-shlib		compat,pic
+./lib/i386/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
+./lib/i386/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
 ./usr/bin/fdformat				base-util-bin
 ./usr/bin/iasl					base-util-bin
@@ -300,16 +311,16 @@
 ./usr/lib/i386/lua/5.1				base-compat-shlib	compat
 ./usr/lib/i386/lua/5.1/gpio.so			base-compat-shlib	compat,pic
 ./usr/lib/i386/lua/5.1/sqlite.so		base-compat-shlib	compat,pic
-./usr/lib/i386/npf				base-npf-shlib		compat
-./usr/lib/i386/npf/ext_log.so			base-npf-shlib		compat,pic
-./usr/lib/i386/npf/ext_log.so.0			base-npf-shlib		compat,pic
-./usr/lib/i386/npf/ext_log.so.0.0		base-npf-shlib		compat,pic
-./usr/lib/i386/npf/ext_normalise.so		base-npf-shlib		compat,pic
-./usr/lib/i386/npf/ext_normalise.so.0		base-npf-shlib		compat,pic
-./usr/lib/i386/npf/ext_normalise.so.0.0		base-npf-shlib		compat,pic
-./usr/lib/i386/npf/ext_rndblock.so		base-npf-shlib		compat,pic
-./usr/lib/i386/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
-./usr/lib/i386/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
+./usr/lib/i386/npf				base-obsolete		obsolete
+./usr/lib/i386/npf/ext_log.so			base-obsolete		obsolete
+./usr/lib/i386/npf/ext_log.so.0			base-obsolete		obsolete
+./usr/lib/i386/npf/ext_log.so.0.0		base-obsolete		obsolete
+./usr/lib/i386/npf/ext_normalise.so		base-obsolete		obsolete
+./usr/lib/i386/npf/ext_normalise.so.0		base-obsolete		obsolete
+./usr/lib/i386/npf/ext_normalise.so.0.0		base-obsolete		obsolete
+./usr/lib/i386/npf/ext_rndblock.so		base-obsolete		obsolete
+./usr/lib/i386/npf/ext_rndblock.so.0		base-obsolete		obsolete
+./usr/lib/i386/npf/ext_rndblock.so.0.0		base-obsolete		obsolete
 ./usr/lib/i386/security				base-compat-shlib	compat
 ./usr/lib/i386/security/pam_afslog.so.3		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/i386/security/pam_chroot.so.3		base-compat-shlib	compat,pic,pam
