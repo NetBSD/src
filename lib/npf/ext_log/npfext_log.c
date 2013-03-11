@@ -1,4 +1,4 @@
-/*	$NetBSD: npfext_log.c,v 1.3 2013/03/11 00:18:11 christos Exp $	*/
+/*	$NetBSD: npfext_log.c,v 1.4 2013/03/11 00:29:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfext_log.c,v 1.3 2013/03/11 00:18:11 christos Exp $");
+__RCSID("$NetBSD: npfext_log.c,v 1.4 2013/03/11 00:29:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
@@ -66,7 +67,7 @@ npfext_log_construct(const char *name)
 int
 npfext_log_param(nl_ext_t *ext, const char *param, const char *val __unused)
 {
-	unsigned long if_idx;
+	unsigned int if_idx;
 
 	assert(param != NULL);
 
