@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.7 2013/03/10 20:51:44 christos Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.8 2013/03/11 01:43:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -98,17 +98,35 @@ npf_ext_sysfini(void)
  * NPF extension management for the rule procedures.
  */
 
+static const char npf_ext_prefix[] = "npf_ext_";
+#define NPF_EXT_PREFLEN (sizeof(npf_ext_prefix) - 1)
+
 static npf_ext_t *
 npf_ext_lookup(const char *name)
 {
-	npf_ext_t *ext = NULL;
+	npf_ext_t *ext;
+	char modname[RPROC_NAME_LEN + NPF_EXT_PREFLEN];
+	int error, loaded = 0;
 
 	KASSERT(mutex_owned(&ext_lock));
 
+again:
 	LIST_FOREACH(ext, &ext_list, ext_entry)
 		if (strcmp(ext->ext_callname, name) == 0)
 			break;
-	return ext;
+
+	if (ext != NULL || loaded != 0)
+		return ext;
+
+	mutex_exit(&ext_lock);
+	loaded++;
+	snprintf(modname, sizeof(modname), "%s%s", npf_ext_prefix, name);
+	error = module_autoload(modname, MODULE_CLASS_MISC);
+	mutex_enter(&ext_lock);
+
+	if (error)
+		return NULL;
+	goto again;
 }
 
 void *
@@ -219,9 +237,6 @@ npf_rprocset_destroy(npf_rprocset_t *rpset)
 	kmem_free(rpset, sizeof(npf_rprocset_t));
 }
 
-static const char npf_ext_prefix[] = "npf_ext_";
-#define NPF_EXT_PREFLEN (sizeof(npf_ext_prefix) - 1)
-
 /*
  * npf_rproc_lookup: find a rule procedure by the name.
  */
@@ -229,21 +244,12 @@ npf_rproc_t *
 npf_rprocset_lookup(npf_rprocset_t *rpset, const char *name)
 {
 	npf_rproc_t *rp;
-	char modname[RPROC_NAME_LEN + NPF_EXT_PREFLEN];
-	int loaded = 0;
 
-again:
 	LIST_FOREACH(rp, &rpset->rps_list, rp_entry) {
 		if (strncmp(rp->rp_name, name, RPROC_NAME_LEN) == 0)
 			break;
 	}
-	if (rp != NULL || loaded != 0)
-		return rp;
-	loaded++;
-	snprintf(modname, sizeof(modname), "%s%s", npf_ext_prefix, name);
-	if (module_autoload(modname, MODULE_CLASS_MISC))
-		return NULL;
-	goto again;
+	return rp;
 }
 
 /*
