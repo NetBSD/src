@@ -15,6 +15,7 @@
    for system failures is probably not good enough. For example if a module
    failed to autoload, it is probably an error and it should be reported
    differently?
+-- fix 'ifconfig npflog0 destroy; modunload if_npflog'
 
 ok npf and dependent modules should autoload automagically as they are used
 ok have a way to register cloners? through a mapping file? consistently naming
