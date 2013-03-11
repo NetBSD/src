@@ -1,4 +1,3 @@
--- parse "port ftp-data" properly
 -- how to convert other packet filters to npf
 -- have a way to use npflog to log packets to syslog
 -- have a way to match dropped packets to rules
@@ -21,3 +20,4 @@ ok modules should move from /usr/lib to /lib
 ok parse dynamic map rule properly inet4($ext_if) does not work
 ok create npflog interface automatically
 ok need to bring interface npflog up
+ok parse 'port "ftp-data"' properly
