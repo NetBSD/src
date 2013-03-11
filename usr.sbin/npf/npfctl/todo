@@ -2,13 +2,19 @@
 -- have a way to use npflog to log packets to syslog
 -- have a way to match dropped packets to rules
 -- have a way to list the active nat sessions
--- npfctl start does not load if not loaded. It is not clear you need to
-   reload first. Or if it loads it should print the error messages.
+-- npfctl start does not load the configuration if not loaded.
+   It is not clear you need to reload first. Or if it loads it should
+   print the error messages. Or it should be called enable/disable since
+   this is what it does. It does not "start" because like an engine with
+   no fuel, an npf with no configuration does not do much.
 -- able to specify interfaces before they are created
 -- docs/examples out of date
 -- npf starts up too late (after traffic can go through)
 -- need libpcap in /
--- get better messages from the kernel when things fail
+-- although the framework checks the file for consistency, returning EINVAL
+   for system failures is probably not good enough. For example if a module
+   failed to autoload, it is probably an error and it should be reported
+   differently?
 
 ok npf and dependent modules should autoload automagically as they are used
 ok have a way to register cloners? through a mapping file? consistently naming
@@ -21,3 +27,6 @@ ok create npflog interface automatically
 ok need to bring interface npflog up
 ok parse 'port "ftp-data"' properly
 ok fix usage
+ok get better messages from the kernel when things fail: Ok with
+   DEBUG/DIAGNOSTIC, you get the file/line in the kernel that failed 
+   which is good enough.
