@@ -1,0 +1,22 @@
+-- parse "port ftp-data" properly
+-- how to convert other packet filters to npf
+-- have a way to use npflog to log packets to syslog
+-- have a way to match dropped packets to rules
+-- have a way to list the active nat sessions
+-- npfctl start does not load if not loaded. It is not clear you need to
+   reload first. Or if it loads it should print the error messages.
+-- able to specify interfaces before they are created
+-- npfctl validate is not listed in the usage, what else is wrong in doc
+-- docs/examples out of date
+-- npf starts up too late (after traffic can go through)
+-- need libpcap in /
+
+ok npf and dependent modules should autoload automagically as they are used
+ok have a way to register cloners? through a mapping file? consistently naming
+   the cloner modules? if_cloner? Split if_npflog from the ext_log module and
+   added autoloading for cloners.
+ok normalise -> normalize (the official project language is US/English)
+ok modules should move from /usr/lib to /lib
+ok parse dynamic map rule properly inet4($ext_if) does not work
+ok create npflog interface automatically
+ok need to bring interface npflog up
