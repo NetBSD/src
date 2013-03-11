@@ -1,4 +1,10 @@
-# $NetBSD: ad.mips64el,v 1.8 2013/03/01 18:15:39 pooka Exp $
+# $NetBSD: ad.mips64el,v 1.9 2013/03/11 15:53:05 christos Exp $
+./usr/libdata/debug/lib/64/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/lib/64/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/lib/64/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/lib/o32/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/lib/o32/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/lib/o32/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/usr/bin/elf2aout.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/elf2ecoff.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/lib/64/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug,compat
@@ -24,9 +30,9 @@
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_serial.so.5.0.debug	comp-i18n-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug		debug,compat
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug,compat
-./usr/libdata/debug/usr/lib/64/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
-./usr/libdata/debug/usr/lib/64/npf/ext_normalise.so.0.0.debug	comp-npf-debug		debug,compat
-./usr/libdata/debug/usr/lib/64/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/64/npf/ext_log.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/64/npf/ext_normalise.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/64/npf/ext_rndblock.so.0.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/64/libamu.so.4.0.debug		comp-amd-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
@@ -186,9 +192,9 @@
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_serial.so.5.0.debug	comp-i18n-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug		debug,compat
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug,compat
-./usr/libdata/debug/usr/lib/o32/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
-./usr/libdata/debug/usr/lib/o32/npf/ext_normalise.so.0.0.debug	comp-npf-debug		debug,compat
-./usr/libdata/debug/usr/lib/o32/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/o32/npf/ext_log.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/o32/npf/ext_normalise.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/o32/npf/ext_rndblock.so.0.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/o32/libamu.so.4.0.debug		comp-amd-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete

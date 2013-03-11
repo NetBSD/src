@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.30 2013/03/10 20:58:49 christos Exp $
+# $NetBSD: md.evbppc,v 1.31 2013/03/11 15:53:05 christos Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -116,8 +116,10 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_alg_icmp/npf_alg_icmp.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_log			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_log/npf_ext_log.kmod	base-kernel-modules	kmod
-./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalise		base-kernel-modules	kmod
-./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalise		base-obsolete	obsolete
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalise/npf_ext_normalise.kmod	base-obsolete	obsolete
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalize		base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalize/npf_ext_normalize.kmod	base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_rndblock		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_rndblock/npf_ext_rndblock.kmod	base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ntfs				base-kernel-modules	kmod,compatmodules
@@ -311,8 +313,10 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_alg_icmp/npf_alg_icmp.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_log			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_log/npf_ext_log.kmod	base-kernel-modules	kmod
-./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalise		base-kernel-modules	kmod
-./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalise		base-obsolete	obsolete
+./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalise/npf_ext_normalise.kmod	base-kobsolete	obsoleteernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalize		base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalize/npf_ext_normalize.kmod	base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_rndblock		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_rndblock/npf_ext_rndblock.kmod	base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/ntfs				base-kernel-modules	kmod,compatmodules

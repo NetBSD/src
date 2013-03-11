@@ -1,4 +1,15 @@
-# $NetBSD: md.sparc64,v 1.180 2013/03/01 18:15:36 pooka Exp $
+# $NetBSD: md.sparc64,v 1.181 2013/03/11 15:53:05 christos Exp $
+./lib/sparc					base-npf-shlib		compat
+./lib/sparc/npf					base-npf-shlib		compat
+./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
+./lib/sparc/npf/ext_log.so.0			base-npf-shlib		compat,pic
+./lib/sparc/npf/ext_log.so.0.0			base-npf-shlib		compat,pic
+./lib/sparc/npf/ext_normalize.so		base-npf-shlib		compat,pic
+./lib/sparc/npf/ext_normalize.so.0		base-npf-shlib		compat,pic
+./lib/sparc/npf/ext_normalize.so.0.0		base-npf-shlib		compat,pic
+./lib/sparc/npf/ext_rndblock.so			base-npf-shlib		compat,pic
+./lib/sparc/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
+./lib/sparc/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -294,16 +305,16 @@
 ./usr/lib/sparc/lua/5.1				base-compat-shlib	compat
 ./usr/lib/sparc/lua/5.1/gpio.so			base-compat-shlib	compat,pic
 ./usr/lib/sparc/lua/5.1/sqlite.so		base-compat-shlib	compat,pic
-./usr/lib/sparc/npf				base-npf-shlib		compat
-./usr/lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
-./usr/lib/sparc/npf/ext_log.so.0		base-npf-shlib		compat,pic
-./usr/lib/sparc/npf/ext_log.so.0.0		base-npf-shlib		compat,pic
-./usr/lib/sparc/npf/ext_normalise.so		base-npf-shlib		compat,pic
-./usr/lib/sparc/npf/ext_normalise.so.0		base-npf-shlib		compat,pic
-./usr/lib/sparc/npf/ext_normalise.so.0.0	base-npf-shlib		compat,pic
-./usr/lib/sparc/npf/ext_rndblock.so		base-npf-shlib		compat,pic
-./usr/lib/sparc/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
-./usr/lib/sparc/npf/ext_rndblock.so.0.0	base-npf-shlib		compat,pic
+./usr/lib/sparc/npf				base-obsolete		obsolete
+./usr/lib/sparc/npf/ext_log.so			base-obsolete		obsolete
+./usr/lib/sparc/npf/ext_log.so.0		base-obsolete		obsolete
+./usr/lib/sparc/npf/ext_log.so.0.0		base-obsolete		obsolete
+./usr/lib/sparc/npf/ext_normalise.so		base-obsolete		obsolete
+./usr/lib/sparc/npf/ext_normalise.so.0		base-obsolete		obsolete
+./usr/lib/sparc/npf/ext_normalise.so.0.0	base-obsolete		obsolete
+./usr/lib/sparc/npf/ext_rndblock.so		base-obsolete		obsolete
+./usr/lib/sparc/npf/ext_rndblock.so.0		base-obsolete		obsolete
+./usr/lib/sparc/npf/ext_rndblock.so.0.0		base-obsolete		obsolete
 ./usr/lib/sparc/security			base-compat-shlib	compat
 ./usr/lib/sparc/security/pam_afslog.so.3	base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/security/pam_chroot.so.3	base-compat-shlib	compat,pic

@@ -1,4 +1,7 @@
-# $NetBSD: md.amd64,v 1.8 2013/03/01 18:15:39 pooka Exp $
+# $NetBSD: md.amd64,v 1.9 2013/03/11 15:53:05 christos Exp $
+./usr/libdata/debug/lib/i386/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/lib/i386/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/lib/i386/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/lib/i386/i18n/libBIG5.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
@@ -24,9 +27,9 @@
 ./usr/libdata/debug/usr/lib/i386/i18n/libmapper_serial.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/i18n/libmapper_std.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/i18n/libmapper_zone.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
-./usr/libdata/debug/usr/lib/i386/npf/ext_normalise.so.0.0.debug	comp-npf-debug		debug,compat
-./usr/libdata/debug/usr/lib/i386/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
+./usr/libdata/debug/usr/lib/i386/npf/ext_log.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/i386/npf/ext_normalise.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/i386/npf/ext_rndblock.so.0.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/i386/libamu.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libarchive.so.3.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libasn1.so.8.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
