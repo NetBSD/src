@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_rndblock.c,v 1.2 2013/03/11 16:37:43 christos Exp $	*/
+/*	$NetBSD: npf_ext_rndblock.c,v 1.3 2013/03/11 17:03:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_rndblock.c,v 1.2 2013/03/11 16:37:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_rndblock.c,v 1.3 2013/03/11 17:03:55 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/cprng.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ext_rndblock.c,v 1.2 2013/03/11 16:37:43 christo
 /*
  * NPF extension module definition and the identifier.
  */
-NPF_EXT_MODULE(npf_ext_rndblock, NULL);
+NPF_EXT_MODULE(npf_ext_rndblock, "");
 
 #define	NPFEXT_RNDBLOCK_VER		1
 
