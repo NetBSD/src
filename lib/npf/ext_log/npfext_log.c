@@ -1,4 +1,4 @@
-/*	$NetBSD: npfext_log.c,v 1.1 2012/09/16 13:47:42 rmind Exp $	*/
+/*	$NetBSD: npfext_log.c,v 1.2 2013/03/11 00:03:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,14 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfext_log.c,v 1.1 2012/09/16 13:47:42 rmind Exp $");
+__RCSID("$NetBSD: npfext_log.c,v 1.2 2013/03/11 00:03:18 christos Exp $");
 
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <net/if.h>
 
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
+#include <err.h>
+#include <unistd.h>
 
 #include <npf.h>
 
@@ -68,7 +72,42 @@ npfext_log_param(nl_ext_t *ext, const char *param, const char *val __unused)
 
 	if_idx = if_nametoindex(param);
 	if (if_idx == 0) {
-		return EINVAL;
+		int s;
+		struct ifreq ifr;
+		struct ifconf ifc;
+
+		if ((s = socket(PF_INET, SOCK_DGRAM, 0)) == -1) {
+			warn("Can't create datagram socket for `%s'", param);
+			return errno;
+		}
+
+		memset(&ifr, 0, sizeof(ifr));
+		strlcpy(ifr.ifr_name, param, sizeof(ifr.ifr_name));
+		if (ioctl(s, SIOCIFCREATE, &ifr) == -1) {
+			warn("Can't SIOCIFCREATE `%s'", param);
+			close(s);
+			return errno;
+		}
+
+		memset(&ifc, 0, sizeof(ifc));
+		strlcpy(ifr.ifr_name, param, sizeof(ifr.ifr_name));
+		if (ioctl(s, SIOCGIFFLAGS, &ifr) == -1) {
+			warn("Can't SIOCGIFFLAGS `%s'", param);
+			close(s);
+			return errno;
+		}
+
+		ifr.ifr_flags |= IFF_UP;
+		if (ioctl(s, SIOCSIFFLAGS, &ifr) == -1) {
+			warn("Can't SIOSGIFFLAGS `%s'", param);
+			close(s);
+			return errno;
+		}
+		close(s);
+
+		if_idx = if_nametoindex(param);
+		if (if_idx == 0)
+			return EINVAL;
 	}
 	npf_ext_param_u32(ext, "log-interface", if_idx);
 	return 0;
