@@ -1,4 +1,26 @@
-# $NetBSD: ad.mips64el,v 1.115 2013/03/01 18:15:36 pooka Exp $
+# $NetBSD: ad.mips64el,v 1.116 2013/03/11 15:53:05 christos Exp $
+./lib/64					base-compat-shlib	compat
+./lib/64/npf					base-npf-shlib		compat
+./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic
+./lib/64/npf/ext_log.so.0			base-npf-shlib		compat,pic
+./lib/64/npf/ext_log.so.0.0			base-npf-shlib		compat,pic
+./lib/64/npf/ext_normalize.so			base-npf-shlib		compat,pic
+./lib/64/npf/ext_normalize.so.0			base-npf-shlib		compat,pic
+./lib/64/npf/ext_normalize.so.0.0		base-npf-shlib		compat,pic
+./lib/64/npf/ext_rndblock.so			base-npf-shlib		compat,pic
+./lib/64/npf/ext_rndblock.so.0			base-npf-shlib		compat,pic
+./lib/64/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
+./lib/o32					base-compat-shlib	compat
+./lib/o32/npf					base-npf-shlib		compat
+./lib/o32/npf/ext_log.so			base-npf-shlib		compat,pic
+./lib/o32/npf/ext_log.so.0			base-npf-shlib		compat,pic
+./lib/o32/npf/ext_log.so.0.0			base-npf-shlib		compat,pic
+./lib/o32/npf/ext_normalize.so			base-npf-shlib		compat,pic
+./lib/o32/npf/ext_normalize.so.0		base-npf-shlib		compat,pic
+./lib/o32/npf/ext_normalize.so.0.0		base-npf-shlib		compat,pic
+./lib/o32/npf/ext_rndblock.so			base-npf-shlib		compat,pic
+./lib/o32/npf/ext_rndblock.so.0			base-npf-shlib		compat,pic
+./lib/o32/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -292,16 +314,16 @@
 ./usr/lib/64/lua/5.1				base-compat-shlib	compat
 ./usr/lib/64/lua/5.1/gpio.so			base-compat-shlib	compat,pic
 ./usr/lib/64/lua/5.1/sqlite.so			base-compat-shlib	compat,pic
-./usr/lib/64/npf				base-npf-shlib		compat
-./usr/lib/64/npf/ext_log.so			base-npf-shlib		compat,pic
-./usr/lib/64/npf/ext_log.so.0			base-npf-shlib		compat,pic
-./usr/lib/64/npf/ext_log.so.0.0			base-npf-shlib		compat,pic
-./usr/lib/64/npf/ext_normalise.so		base-npf-shlib		compat,pic
-./usr/lib/64/npf/ext_normalise.so.0		base-npf-shlib		compat,pic
-./usr/lib/64/npf/ext_normalise.so.0.0		base-npf-shlib		compat,pic
-./usr/lib/64/npf/ext_rndblock.so		base-npf-shlib		compat,pic
-./usr/lib/64/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
-./usr/lib/64/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
+./usr/lib/64/npf				base-obsolete		obsolete
+./usr/lib/64/npf/ext_log.so			base-obsolete		obsolete
+./usr/lib/64/npf/ext_log.so.0			base-obsolete		obsolete
+./usr/lib/64/npf/ext_log.so.0.0			base-obsolete		obsolete
+./usr/lib/64/npf/ext_normalise.so		base-obsolete		obsolete
+./usr/lib/64/npf/ext_normalise.so.0		base-obsolete		obsolete
+./usr/lib/64/npf/ext_normalise.so.0.0		base-obsolete		obsolete
+./usr/lib/64/npf/ext_rndblock.so		base-obsolete		obsolete
+./usr/lib/64/npf/ext_rndblock.so.0		base-obsolete		obsolete
+./usr/lib/64/npf/ext_rndblock.so.0.0		base-obsolete		obsolete
 ./usr/lib/64/security				base-compat-shlib
 ./usr/lib/64/security/pam_afslog.so.3		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/64/security/pam_chroot.so.3		base-compat-shlib	compat,pic,pam
@@ -610,16 +632,16 @@
 ./usr/lib/o32/lua/5.1				base-compat-shlib	compat
 ./usr/lib/o32/lua/5.1/gpio.so			base-compat-shlib	compat,pic
 ./usr/lib/o32/lua/5.1/sqlite.so			base-compat-shlib	compat,pic
-./usr/lib/o32/npf				base-npf-shlib		compat
-./usr/lib/o32/npf/ext_log.so			base-npf-shlib		compat,pic
-./usr/lib/o32/npf/ext_log.so.0			base-npf-shlib		compat,pic
-./usr/lib/o32/npf/ext_log.so.0.0		base-npf-shlib		compat,pic
-./usr/lib/o32/npf/ext_normalise.so		base-npf-shlib		compat,pic
-./usr/lib/o32/npf/ext_normalise.so.0		base-npf-shlib		compat,pic
-./usr/lib/o32/npf/ext_normalise.so.0.0		base-npf-shlib		compat,pic
-./usr/lib/o32/npf/ext_rndblock.so		base-npf-shlib		compat,pic
-./usr/lib/o32/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
-./usr/lib/o32/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
+./usr/lib/o32/npf				base-obsolete		obsolete
+./usr/lib/o32/npf/ext_log.so			base-obsolete		obsolete
+./usr/lib/o32/npf/ext_log.so.0			base-obsolete		obsolete
+./usr/lib/o32/npf/ext_log.so.0.0		base-obsolete		obsolete
+./usr/lib/o32/npf/ext_normalise.so		base-obsolete		obsolete
+./usr/lib/o32/npf/ext_normalise.so.0		base-obsolete		obsolete
+./usr/lib/o32/npf/ext_normalise.so.0.0		base-obsolete		obsolete
+./usr/lib/o32/npf/ext_rndblock.so		base-obsolete		obsolete
+./usr/lib/o32/npf/ext_rndblock.so.0		base-obsolete		obsolete
+./usr/lib/o32/npf/ext_rndblock.so.0.0		base-obsolete		obsolete
 ./usr/lib/o32/security				base-compat-shlib
 ./usr/lib/o32/security/pam_afslog.so.3		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/o32/security/pam_chroot.so.3		base-compat-shlib	compat,pic,pam
