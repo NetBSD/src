@@ -10,6 +10,7 @@
 -- docs/examples out of date
 -- npf starts up too late (after traffic can go through)
 -- need libpcap in /
+-- get better messages from the kernel when things fail
 
 ok npf and dependent modules should autoload automagically as they are used
 ok have a way to register cloners? through a mapping file? consistently naming
