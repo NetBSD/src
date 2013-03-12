@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.21 2013/02/05 18:17:05 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.22 2013/03/12 14:19:34 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.21 2013/02/05 18:17:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.22 2013/03/12 14:19:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -233,7 +233,7 @@ static void	urtwn_pa_bias_init(struct urtwn_softc *);
 static void	urtwn_rxfilter_init(struct urtwn_softc *);
 static void	urtwn_edca_init(struct urtwn_softc *);
 static void	urtwn_write_txpower(struct urtwn_softc *, int, uint16_t[]);
-static void	urtwn_get_txpower(struct urtwn_softc *, int, u_int, u_int,
+static void	urtwn_get_txpower(struct urtwn_softc *, size_t, u_int, u_int,
 		    uint16_t[]);
 static void	urtwn_set_txpower(struct urtwn_softc *, u_int, u_int);
 static void	urtwn_set_chan(struct urtwn_softc *, struct ieee80211_channel *,
@@ -267,7 +267,8 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_if;
 	struct usb_attach_arg *uaa = aux;
 	char *devinfop;
-	int i, error;
+	size_t i;
+	int error;
 
 	sc->sc_dev = self;
 	sc->sc_udev = uaa->device;
@@ -323,7 +324,7 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	}
 	urtwn_read_rom(sc);
 
-	aprint_normal_dev(self, "MAC/BB RTL%s, RF 6052 %dT%dR, address %s\n",
+	aprint_normal_dev(self, "MAC/BB RTL%s, RF 6052 %zdT%zdR, address %s\n",
 	    (sc->chip & URTWN_CHIP_92C) ? "8192CU" :
 	    (sc->board_type == R92C_BOARD_TYPE_HIGHPA) ? "8188RU" :
 	    (sc->board_type == R92C_BOARD_TYPE_MINICARD) ? "8188CE-VAU" :
@@ -480,7 +481,8 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 	static const uint8_t epaddr[] = { 0x02, 0x03, 0x05 };
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	int i, ntx = 0, error;
+	size_t i, ntx = 0;
+	int error;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -493,11 +495,11 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 		    UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT)
 			ntx++;
 	}
-	DPRINTFN(DBG_INIT, ("%s: %s: found %d bulk-out pipes\n",
+	DPRINTFN(DBG_INIT, ("%s: %s: found %zd bulk-out pipes\n",
 	    device_xname(sc->sc_dev), __func__, ntx));
 	if (ntx == 0 || ntx > R92C_MAX_EPOUT) {
 		aprint_error_dev(sc->sc_dev,
-		    "%d: invalid number of Tx bulk pipes\n", ntx);
+		    "%zd: invalid number of Tx bulk pipes\n", ntx);
 		return (EIO);
 	}
 	sc->rx_npipe = 1;
@@ -539,23 +541,25 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 static void
 urtwn_close_pipes(struct urtwn_softc *sc)
 {
-	int i;
+	usbd_pipe_handle pipe;
+	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	/* Close Rx pipe. */
-	if (sc->rx_pipe != NULL) {
-		usbd_abort_pipe(sc->rx_pipe);
-		usbd_close_pipe(sc->rx_pipe);
-		sc->rx_pipe = NULL;
+	CTASSERT(sizeof(pipe) == sizeof(void *));
+	pipe = atomic_swap_ptr(&sc->rx_pipe, NULL);
+	if (pipe != NULL) {
+		usbd_abort_pipe(pipe);
+		usbd_close_pipe(pipe);
 	}
 	/* Close Tx pipes. */
 	for (i = 0; i < R92C_MAX_EPOUT; i++) {
-		if (sc->tx_pipe[i] == NULL)
-			continue;
-		usbd_abort_pipe(sc->tx_pipe[i]);
-		usbd_close_pipe(sc->tx_pipe[i]);
-		sc->tx_pipe[i] = NULL;
+		pipe = atomic_swap_ptr(&sc->tx_pipe[i], NULL);
+		if (pipe != NULL) {
+			usbd_abort_pipe(pipe);
+			usbd_close_pipe(pipe);
+		}
 	}
 }
 
@@ -563,7 +567,8 @@ static int
 urtwn_alloc_rx_list(struct urtwn_softc *sc)
 {
 	struct urtwn_rx_data *data;
-	int i, error = 0;
+	size_t i;
+	int error = 0;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -596,16 +601,17 @@ urtwn_alloc_rx_list(struct urtwn_softc *sc)
 static void
 urtwn_free_rx_list(struct urtwn_softc *sc)
 {
-	int i;
+	usbd_xfer_handle xfer;
+	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	/* NB: Caller must abort pipe first. */
 	for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
-		if (sc->rx_data[i].xfer != NULL) {
-			usbd_free_xfer(sc->rx_data[i].xfer);
-			sc->rx_data[i].xfer = NULL;
-		}
+		CTASSERT(sizeof(xfer) == sizeof(void *));
+		xfer = atomic_swap_ptr(&sc->tx_data[i].xfer, NULL);
+		if (xfer != NULL)
+			usbd_free_xfer(xfer);
 	}
 }
 
@@ -613,7 +619,8 @@ static int
 urtwn_alloc_tx_list(struct urtwn_softc *sc)
 {
 	struct urtwn_tx_data *data;
-	int i, error = 0;
+	size_t i;
+	int error = 0;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -655,19 +662,17 @@ urtwn_alloc_tx_list(struct urtwn_softc *sc)
 static void
 urtwn_free_tx_list(struct urtwn_softc *sc)
 {
-	struct urtwn_tx_data *data;
-	int i;
+	usbd_xfer_handle xfer;
+	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	/* NB: Caller must abort pipe first. */
 	for (i = 0; i < URTWN_TX_LIST_COUNT; i++) {
-		data = &sc->tx_data[i];
-
-		if (data->xfer != NULL) {
-			usbd_free_xfer(data->xfer);
-			data->xfer = NULL;
-		}
+		CTASSERT(sizeof(xfer) == sizeof(void *));
+		xfer = atomic_swap_ptr(&sc->tx_data[i].xfer, NULL);
+		if (xfer != NULL)
+			usbd_free_xfer(xfer);
 	}
 }
 
@@ -1017,7 +1022,7 @@ urtwn_efuse_read(struct urtwn_softc *sc)
 	uint32_t reg;
 	uint16_t addr = 0;
 	uint8_t off, msk;
-	int i;
+	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -1251,7 +1256,8 @@ urtwn_ra_init(struct urtwn_softc *sc)
 	uint32_t rates, basicrates;
 	uint32_t mask;
 	uint8_t mode;
-	int maxrate, maxbasicrate, error, i, j;
+	size_t maxrate, maxbasicrate, i, j;
+	int error;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -1262,7 +1268,7 @@ urtwn_ra_init(struct urtwn_softc *sc)
 	maxrate = maxbasicrate = 0;
 	for (i = 0; i < rs->rs_nrates; i++) {
 		/* Convert 802.11 rate to HW rate index. */
-		for (j = 0; j < (int)__arraycount(map); j++) {
+		for (j = 0; j < __arraycount(map); j++) {
 			if ((rs->rs_rates[i] & IEEE80211_RATE_VAL) == map[j]) {
 				break;
 			}
@@ -1290,7 +1296,7 @@ urtwn_ra_init(struct urtwn_softc *sc)
 		mode = R92C_RAID_11BG;
 	}
 	DPRINTFN(DBG_INIT, ("%s: %s: mode=0x%x rates=0x%x, basicrates=0x%x, "
-	    "maxrate=%x, maxbasicrate=%x\n",
+	    "maxrate=%zx, maxbasicrate=%zx\n",
 	    device_xname(sc->sc_dev), __func__, mode, rates, basicrates,
 	    maxrate, maxbasicrate));
 	if (basicrates == 0) {
@@ -1311,7 +1317,7 @@ urtwn_ra_init(struct urtwn_softc *sc)
 		return (error);
 	}
 	/* Set initial MRR rate. */
-	DPRINTFN(DBG_INIT, ("%s: %s: maxbasicrate=%d\n",
+	DPRINTFN(DBG_INIT, ("%s: %s: maxbasicrate=%zd\n",
 	    device_xname(sc->sc_dev), __func__, maxbasicrate));
 	urtwn_write_1(sc, R92C_INIDATA_RATE_SEL(URTWN_MACID_BC), maxbasicrate);
 
@@ -1328,7 +1334,7 @@ urtwn_ra_init(struct urtwn_softc *sc)
 		return (error);
 	}
 	/* Set initial MRR rate. */
-	DPRINTFN(DBG_INIT, ("%s: %s: maxrate=%d\n", device_xname(sc->sc_dev),
+	DPRINTFN(DBG_INIT, ("%s: %s: maxrate=%zd\n", device_xname(sc->sc_dev),
 	    __func__, maxrate));
 	urtwn_write_1(sc, R92C_INIDATA_RATE_SEL(URTWN_MACID_BSS), maxrate);
 
@@ -1935,7 +1941,8 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 	 * XXX: This will drop most control packets.  Do we really
 	 * want this in IEEE80211_M_MONITOR mode?
 	 */
-	if (__predict_false(pktlen < (int)sizeof(*wh))) {
+//	if (__predict_false(pktlen < (int)sizeof(*wh))) {
+	if (__predict_false(pktlen < (int)sizeof(struct ieee80211_frame_ack))) {
 		DPRINTFN(DBG_RX, ("%s: %s: packet too short %d\n",
 		    device_xname(sc->sc_dev), __func__, pktlen));
 		ic->ic_stats.is_rx_tooshort++;
@@ -2157,9 +2164,10 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	struct ieee80211_key *k = NULL;
 	struct r92c_tx_desc *txd;
 	usbd_pipe_handle pipe;
+	size_t i, padsize, xferlen;
 	uint16_t seq, sum;
 	uint8_t raid, type, tid, qid;
-	int i, s, hasqos, xferlen, padsize, error;
+	int s, hasqos, error;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -2226,7 +2234,7 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 
 	/* fix pad field */
 	if (padsize > 0) {
-		DPRINTFN(DBG_TX, ("%s: %s: padding: size=%d\n",
+		DPRINTFN(DBG_TX, ("%s: %s: padding: size=%zd\n",
 		    device_xname(sc->sc_dev), __func__, padsize));
 		txd->txdw1 |= htole32(SM(R92C_TXDW1_PKTOFF, (padsize / 8)));
 	}
@@ -2304,7 +2312,7 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 
 	/* Compute Tx descriptor checksum. */
 	sum = 0;
-	for (i = 0; i < (int)sizeof(*txd) / 2; i++)
+	for (i = 0; i < sizeof(*txd) / 2; i++)
 		sum ^= ((uint16_t *)txd)[i];
 	txd->txdsum = sum;	/* NB: already little endian. */
 
@@ -2588,7 +2596,8 @@ urtwn_power_on(struct urtwn_softc *sc)
 static int
 urtwn_llt_init(struct urtwn_softc *sc)
 {
-	int i, error;
+	size_t i;
+	int error;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -2882,14 +2891,14 @@ urtwn_dma_init(struct urtwn_softc *sc)
 static void
 urtwn_mac_init(struct urtwn_softc *sc)
 {
-	int i;
+	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
 	/* Write MAC initialization values. */
-	for (i = 0; i < (int)__arraycount(rtl8192cu_mac); i++)
+	for (i = 0; i < __arraycount(rtl8192cu_mac); i++)
 		urtwn_write_1(sc, rtl8192cu_mac[i].reg, rtl8192cu_mac[i].val);
 }
 
@@ -2898,7 +2907,7 @@ urtwn_bb_init(struct urtwn_softc *sc)
 {
 	const struct urtwn_bb_prog *prog;
 	uint32_t reg;
-	int i;
+	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -3022,7 +3031,7 @@ urtwn_rf_init(struct urtwn_softc *sc)
 {
 	const struct urtwn_rf_prog *prog;
 	uint32_t reg, mask, saved;
-	int i, j, idx;
+	size_t i, j, idx;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -3104,7 +3113,7 @@ urtwn_cam_init(struct urtwn_softc *sc)
 {
 	uint32_t content, command;
 	uint8_t idx;
-	int i;
+	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -3136,7 +3145,7 @@ urtwn_cam_init(struct urtwn_softc *sc)
 			command = R92C_CAMCMD_POLLING
 			    | R92C_CAMCMD_WRITE
 			    | R92C_CAM_CTL0(idx)
-			    | (u_int)i;
+			    | i;
 
 			urtwn_write_4(sc, R92C_CAMWRITE, content);
 			urtwn_write_4(sc, R92C_CAMCMD, command);
@@ -3151,7 +3160,7 @@ static void
 urtwn_pa_bias_init(struct urtwn_softc *sc)
 {
 	uint8_t reg;
-	int i;
+	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -3287,7 +3296,7 @@ urtwn_write_txpower(struct urtwn_softc *sc, int chain,
 }
 
 static void
-urtwn_get_txpower(struct urtwn_softc *sc, int chain, u_int chan, u_int ht40m,
+urtwn_get_txpower(struct urtwn_softc *sc, size_t chain, u_int chan, u_int ht40m,
     uint16_t power[URTWN_RIDX_COUNT])
 {
 	struct r92c_rom *rom = &sc->rom;
@@ -3295,7 +3304,7 @@ urtwn_get_txpower(struct urtwn_softc *sc, int chain, u_int chan, u_int ht40m,
 	const struct urtwn_txpwr *base;
 	int ridx, group;
 
-	DPRINTFN(DBG_FN, ("%s: %s: chain=%d, chan=%d\n",
+	DPRINTFN(DBG_FN, ("%s: %s: chain=%zd, chan=%d\n",
 	    device_xname(sc->sc_dev), __func__, chain, chan));
 
 	/* Determine channel group. */
@@ -3389,7 +3398,7 @@ urtwn_get_txpower(struct urtwn_softc *sc, int chain, u_int chan, u_int ht40m,
 #ifdef URTWN_DEBUG
 	if (urtwn_debug & DBG_RF) {
 		/* Dump per-rate Tx power values. */
-		printf("%s: %s: Tx power for chain %d:\n",
+		printf("%s: %s: Tx power for chain %zd:\n",
 		    device_xname(sc->sc_dev), __func__, chain);
 		for (ridx = 0; ridx < URTWN_RIDX_COUNT; ridx++) {
 			printf("%s: %s: Rate %d = %u\n",
@@ -3404,7 +3413,7 @@ static void
 urtwn_set_txpower(struct urtwn_softc *sc, u_int chan, u_int ht40m)
 {
 	uint16_t power[URTWN_RIDX_COUNT];
-	int i;
+	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -3421,7 +3430,7 @@ urtwn_set_chan(struct urtwn_softc *sc, struct ieee80211_channel *c, u_int ht40m)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	u_int chan;
-	int i;
+	size_t i;
 
 	chan = ieee80211_chan2ieee(ic, c);	/* XXX center freq! */
 
@@ -3515,7 +3524,7 @@ urtwn_lc_calib(struct urtwn_softc *sc)
 {
 	uint32_t rf_ac[2];
 	uint8_t txmode;
-	int i;
+	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -3609,7 +3618,8 @@ urtwn_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct urtwn_rx_data *data;
 	uint32_t reg;
-	int i, error;
+	size_t i;
+	int error;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -3833,7 +3843,8 @@ urtwn_stop(struct ifnet *ifp, int disable)
 {
 	struct urtwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	int i, s;
+	size_t i;
+	int s;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
