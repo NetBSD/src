@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.3.6.2 2012/11/28 22:40:25 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.3.6.3 2013/03/12 21:20:04 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -367,17 +367,18 @@ a9_mpstart:
 	/* Now we will wait for someone tell this cpu to start running */
 #ifdef MULTIPROCESSOR
 	ldr	r0, .Lcpu_mbox
-#else
-	cmp	r0, r0
 #endif
 2:
 #ifdef MULTIPROCESSOR
 	dmb
 	ldr	r2, [r0]
 	tst	r2, r5
-#endif
-	@wfeeq
+	wfieq
 	beq	2b
+#else
+	wfi
+	b	2b
+#endif
 
 #ifdef MULTIPROCESSOR
 3:	XPUTC(#98)
