@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.14 2013/03/09 13:25:17 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.15 2013/03/12 14:03:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.14 2013/03/09 13:25:17 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.15 2013/03/12 14:03:32 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -140,11 +140,11 @@ do {									\
  * the address the dso is mapped at.  On Linux, they seem to contain
  * the absolute address.  I couldn't find anything definite from a quick
  * read of the standard and therefore I will not go and figure beyond ifdef.
- * On Solaris, the main object works differently ... uuuuh.
+ * On Solaris and DragonFly, the main object works differently ... uuuuh.
  */
 #if defined(__linux__)
 #define adjptr(_map_, _ptr_) ((void *)(_ptr_))
-#elif defined(__sun__)
+#elif defined(__sun__) || defined(__DragonFly__)
 #define adjptr(_map_, _ptr_) \
     (ismainobj ? (void *)(_ptr_) : (void *)(_map_->l_addr + (_ptr_)))
 #else
