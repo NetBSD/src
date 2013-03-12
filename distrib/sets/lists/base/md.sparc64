@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.181 2013/03/11 15:53:05 christos Exp $
+# $NetBSD: md.sparc64,v 1.182 2013/03/12 21:04:58 christos Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -338,9 +338,11 @@
 ./usr/lib/sparc/security/pam_skey.so.3		base-compat-shlib	compat,pic,skey
 ./usr/lib/sparc/security/pam_ssh.so.3		base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/security/pam_unix.so.3		base-compat-shlib	compat,pic
+./usr/libdata/debug/lib/sparc			base-compat-lib		compat
+./usr/libdata/debug/lib/sparc/npf		base-compat-lib		compat
 ./usr/libdata/debug/usr/lib/sparc		base-compat-lib		compat
 ./usr/libdata/debug/usr/lib/sparc/i18n		base-compat-lib		compat
-./usr/libdata/debug/usr/lib/sparc/npf		base-compat-lib		compat
+./usr/libdata/debug/usr/lib/sparc/npf		base-obsolete		obsolete
 ./usr/libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./usr/lkm/compat_netbsd32.o			base-obsolete		obsolete
 ./usr/lkm/compat_sunos32.o			base-obsolete		obsolete
