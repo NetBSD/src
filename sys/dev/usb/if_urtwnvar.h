@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.4 2013/01/20 20:21:57 christos Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.5 2013/03/12 14:19:34 christos Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -148,8 +148,8 @@ struct urtwn_softc {
 	int				avg_pwdb;
 	int				thcal_state;
 	int				thcal_lctemp;
-	int				ntxchains;
-	int				nrxchains;
+	size_t				ntxchains;
+	size_t				nrxchains;
 	int				ledlink;
 	bool				iqk_inited;
 
@@ -181,4 +181,3 @@ struct urtwn_softc {
 };
 
 #endif /* _IF_URTWNVAR_H_ */
-
