@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.5 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.6 2013/03/12 19:38:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -56,6 +56,8 @@ __longjmp14(jmp_buf env, int val)
 	if (val == 0)
 		val = -1;
 
+	memset(&uc, 0, sizeof uc);
+
 	/* Set _UC_SIGMASK and _UC_CPU */
 	uc.uc_flags = _UC_SIGMASK | _UC_CPU;
 
@@ -74,6 +76,7 @@ __longjmp14(jmp_buf env, int val)
 	uc.uc_mcontext.__gregs[_REG_S5] = sc->sc_regs[R_S5];
 	uc.uc_mcontext.__gregs[_REG_S6] = sc->sc_regs[R_S6];
 	uc.uc_mcontext.__gregs[_REG_RA] = sc->sc_regs[R_RA];
+	uc.uc_mcontext.__gregs[_REG_GP] = sc->sc_regs[R_GP];
 	uc.uc_mcontext.__gregs[_REG_SP] = sc->sc_sp;
 	uc.uc_mcontext.__gregs[_REG_PC] = sc->sc_pc;
 	uc.uc_mcontext.__gregs[_REG_PS] =
