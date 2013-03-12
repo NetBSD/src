@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.9 2013/03/11 15:53:05 christos Exp $
+# $NetBSD: md.sparc64,v 1.10 2013/03/12 20:07:23 christos Exp $
 ./usr/libdata/debug/lib/sparc/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -261,6 +261,7 @@
 ./usr/lib/sparc/libpcap_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/libpci_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/libperfuse_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/sparc/libppath_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/sparc/libposix_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/libprop_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/libpthread_dbg_g.a		-unknown-		compat,debuglib
