@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn_data.h,v 1.1 2012/03/25 00:11:16 nonaka Exp $	*/
+/*	$NetBSD: if_urtwn_data.h,v 1.2 2013/03/12 14:19:34 christos Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -52,10 +52,10 @@ static const struct {
  * Baseband initialization values.
  */
 struct urtwn_bb_prog {
-	int		count;
+	size_t		count;
 	const uint16_t	*regs;
 	const uint32_t	*vals;
-	int		agccount;
+	size_t		agccount;
 	const uint32_t	*agcvals;
 };
 
@@ -473,7 +473,7 @@ static const struct urtwn_bb_prog rtl8188ru_bb_prog = {
  * RF initialization values.
  */
 struct urtwn_rf_prog {
-	int		count;
+	size_t		count;
 	const uint8_t	*regs;
 	const uint32_t	*vals;
 };
