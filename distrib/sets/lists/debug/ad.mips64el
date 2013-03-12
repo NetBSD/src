@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.9 2013/03/11 15:53:05 christos Exp $
+# $NetBSD: ad.mips64el,v 1.10 2013/03/12 20:07:23 christos Exp $
 ./usr/libdata/debug/lib/64/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -344,6 +344,7 @@
 ./usr/lib/64/libmpc_g.a				-unknown-		obsolete
 ./usr/lib/64/libmpfr_g.a			-unknown-		obsolete
 ./usr/lib/64/libperfuse_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/64/libppath_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/64/libwind_g.a			comp-c-proflib		compat,debuglib,kerberos
 ./usr/lib/o32/libdevmapper_g.a			-unknown-		compat,debuglib,lvm
 ./usr/lib/o32/libdm_g.a				-unknown-		compat,debuglib
@@ -354,4 +355,5 @@
 ./usr/lib/o32/libmpc_g.a			-unknown-		obsolete
 ./usr/lib/o32/libmpfr_g.a			-unknown-		obsolete
 ./usr/lib/o32/libperfuse_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/o32/libppath_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/o32/libwind_g.a			comp-c-proflib		compat,debuglib,kerberos
