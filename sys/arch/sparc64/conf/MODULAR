@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.3 2011/01/05 13:29:27 martin Exp $
+# $NetBSD: MODULAR,v 1.4 2013/03/12 21:41:40 christos Exp $
 #
 # MODULAR kernel - like GENERIC, but excluding lots of stuff that can
 # be loaded as a module later
@@ -6,8 +6,9 @@
 
 include 	"arch/sparc64/conf/GENERIC"
 
-#ident		"MODULAR-$Revision: 1.3 $"
+#ident		"MODULAR-$Revision: 1.4 $"
 
+no options	MODULAR
 options		MODULAR		# allow loading of kernel modules
 options		INSECURE	# disable kernel security levels initially
 				# (we can't load file system modules otherwise)
