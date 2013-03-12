@@ -1,4 +1,6 @@
-#	$NetBSD: mod.mk,v 1.2 2013/03/10 21:45:46 rmind Exp $
+#	$NetBSD: mod.mk,v 1.3 2013/03/12 20:02:40 christos Exp $
+
+.include <bsd.own.mk>
 
 WARNS=		5
 MKLINT=		no
@@ -6,9 +8,9 @@ MKLINT=		no
 LIBISMODULE=	yes
 LIBROOTDIR=	/lib
 
-.if exists(${.CURDIR}/../../Makefile.inc)
+#.if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
-.endif
+#.endif
 
 .if defined(MLIBDIR)
 LIBDIR=		${LIBROOTDIR}/${MLIBDIR}/npf
