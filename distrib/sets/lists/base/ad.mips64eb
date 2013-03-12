@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.116 2013/03/11 15:53:04 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.117 2013/03/12 21:04:57 christos Exp $
 ./lib/64					base-compat-shlib	compat
 ./lib/64/npf					base-npf-shlib		compat
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic
@@ -665,12 +665,16 @@
 ./usr/lib/o32/security/pam_skey.so.3		base-compat-shlib	compat,pic,skey,pam
 ./usr/lib/o32/security/pam_ssh.so.3		base-compat-shlib	compat,pic,crypto,pam
 ./usr/lib/o32/security/pam_unix.so.3		base-compat-shlib	compat,pic,pam
+./usr/libdata/debug/lib/64			base-compat-lib		compat
+./usr/libdata/debug/lib/64/npf			base-compat-lib		compat
+./usr/libdata/debug/lib/o32			base-compat-lib		compat
+./usr/libdata/debug/lib/o32/npf			base-compat-lib		compat
 ./usr/libdata/debug/usr/lib/64			base-compat-lib		compat
 ./usr/libdata/debug/usr/lib/64/i18n		base-compat-lib		compat
-./usr/libdata/debug/usr/lib/64/npf		base-compat-lib		compat
+./usr/libdata/debug/usr/lib/64/npf		base-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/o32			base-compat-lib		compat
 ./usr/libdata/debug/usr/lib/o32/i18n		base-compat-lib		compat
-./usr/libdata/debug/usr/lib/o32/npf		base-compat-lib		compat
+./usr/libdata/debug/usr/lib/o32/npf		base-obsolete		obsolete
 ./usr/libexec/ld.elf_so-64			base-compat-shlib	compat,pic
 ./usr/libexec/ld.elf_so-o32			base-sysutil-bin	compat,pic
 ./usr/lkm/ldscript				base-obsolete		obsolete
