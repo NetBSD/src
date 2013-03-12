@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.118 2013/03/10 20:54:14 christos Exp $
+#	$NetBSD: Makefile,v 1.119 2013/03/12 20:49:22 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -50,7 +50,7 @@ SUBDIR+=	nilfs
 SUBDIR+=	npf
 SUBDIR+=	npf_alg_icmp
 SUBDIR+=	npf_ext_log
-SUBDIR+=	npf_ext_normalise
+SUBDIR+=	npf_ext_normalize
 SUBDIR+=	npf_ext_rndblock
 SUBDIR+=	ntfs
 SUBDIR+=	null

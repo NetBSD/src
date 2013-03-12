@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_normalise.c,v 1.4 2013/03/11 17:03:55 christos Exp $	*/
+/*	$NetBSD: npf_ext_normalize.c,v 1.1 2013/03/12 20:47:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalise.c,v 1.4 2013/03/11 17:03:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.1 2013/03/12 20:47:48 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -44,11 +44,11 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ext_normalise.c,v 1.4 2013/03/11 17:03:55 christ
 /*
  * NPF extension module definition and the identifier.
  */
-NPF_EXT_MODULE(npf_ext_normalise, "");
+NPF_EXT_MODULE(npf_ext_normalize, "");
 
-#define	NPFEXT_NORMALISE_VER	1
+#define	NPFEXT_NORMALIZE_VER	1
 
-static void *		npf_ext_normalise_id;
+static void *		npf_ext_normalize_id;
 
 /*
  * Normalisation parameters.
@@ -58,19 +58,19 @@ typedef struct {
 	u_int		n_maxmss;
 	bool		n_random_id;
 	bool		n_no_df;
-} npf_normalise_t;
+} npf_normalize_t;
 
 /*
- * npf_normalise_ctor: a constructor for the normalisation rule procedure
+ * npf_normalize_ctor: a constructor for the normalisation rule procedure
  * with the given parameters.
  */
 static int
-npf_normalise_ctor(npf_rproc_t *rp, prop_dictionary_t params)
+npf_normalize_ctor(npf_rproc_t *rp, prop_dictionary_t params)
 {
-	npf_normalise_t *np;
+	npf_normalize_t *np;
 
 	/* Create a structure for normalisation parameters. */
-	np = kmem_zalloc(sizeof(npf_normalise_t), KM_SLEEP);
+	np = kmem_zalloc(sizeof(npf_normalize_t), KM_SLEEP);
 
 	/* IP ID randomisation and IP_DF flag cleansing. */
 	prop_dictionary_get_bool(params, "random-id", &np->n_random_id);
@@ -86,21 +86,21 @@ npf_normalise_ctor(npf_rproc_t *rp, prop_dictionary_t params)
 }
 
 /*
- * npf_normalise_dtor: a destructor for a normalisation rule procedure.
+ * npf_normalize_dtor: a destructor for a normalisation rule procedure.
  */
 static void
-npf_normalise_dtor(npf_rproc_t *rp, void *params)
+npf_normalize_dtor(npf_rproc_t *rp, void *params)
 {
 	/* Free our meta-data, associated with the procedure. */
-	kmem_free(params, sizeof(npf_normalise_t));
+	kmem_free(params, sizeof(npf_normalize_t));
 }
 
 /*
- * npf_normalise_ip4: routine to normalise IPv4 header (randomise ID,
+ * npf_normalize_ip4: routine to normalize IPv4 header (randomise ID,
  * clear "don't fragment" and/or enforce minimum TTL).
  */
 static inline void
-npf_normalise_ip4(npf_cache_t *npc, npf_normalise_t *np)
+npf_normalize_ip4(npf_cache_t *npc, npf_normalize_t *np)
 {
 	struct ip *ip = npc->npc_ip.v4;
 	uint16_t cksum = ip->ip_sum;
@@ -138,12 +138,12 @@ npf_normalise_ip4(npf_cache_t *npc, npf_normalise_t *np)
 }
 
 /*
- * npf_normalise: the main routine to normalise IPv4 and/or TCP headers.
+ * npf_normalize: the main routine to normalize IPv4 and/or TCP headers.
  */
 static void
-npf_normalise(npf_cache_t *npc, nbuf_t *nbuf, void *params, int *decision)
+npf_normalize(npf_cache_t *npc, nbuf_t *nbuf, void *params, int *decision)
 {
-	npf_normalise_t *np = params;
+	npf_normalize_t *np = params;
 	struct tcphdr *th = npc->npc_l4.tcp;
 	uint16_t cksum, mss, maxmss = np->n_maxmss;
 	int wscale;
@@ -155,7 +155,7 @@ npf_normalise(npf_cache_t *npc, nbuf_t *nbuf, void *params, int *decision)
 
 	/* Normalise IPv4.  Nothing to do for IPv6. */
 	if (npf_iscached(npc, NPC_IP4) && (np->n_random_id || np->n_minttl)) {
-		npf_normalise_ip4(npc, np);
+		npf_normalize_ip4(npc, np);
 	}
 
 	/*
@@ -185,29 +185,29 @@ npf_normalise(npf_cache_t *npc, nbuf_t *nbuf, void *params, int *decision)
 }
 
 static int
-npf_ext_normalise_modcmd(modcmd_t cmd, void *arg)
+npf_ext_normalize_modcmd(modcmd_t cmd, void *arg)
 {
-	static const npf_ext_ops_t npf_normalise_ops = {
-		.version	= NPFEXT_NORMALISE_VER,
+	static const npf_ext_ops_t npf_normalize_ops = {
+		.version	= NPFEXT_NORMALIZE_VER,
 		.ctx		= NULL,
-		.ctor		= npf_normalise_ctor,
-		.dtor		= npf_normalise_dtor,
-		.proc		= npf_normalise
+		.ctor		= npf_normalize_ctor,
+		.dtor		= npf_normalize_dtor,
+		.proc		= npf_normalize
 	};
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		/*
-		 * Initialise normalisation module.  Register the "normalise"
+		 * Initialise normalisation module.  Register the "normalize"
 		 * extension and its calls.
 		 */
-		npf_ext_normalise_id =
-		    npf_ext_register("normalise", &npf_normalise_ops);
-		return npf_ext_normalise_id ? 0 : EEXIST;
+		npf_ext_normalize_id =
+		    npf_ext_register("normalize", &npf_normalize_ops);
+		return npf_ext_normalize_id ? 0 : EEXIST;
 
 	case MODULE_CMD_FINI:
 		/* Unregister the normalisation rule procedure. */
-		return npf_ext_unregister(npf_ext_normalise_id);
+		return npf_ext_unregister(npf_ext_normalize_id);
 
 	case MODULE_CMD_AUTOUNLOAD:
 		return npf_autounload_p() ? 0 : EBUSY;
