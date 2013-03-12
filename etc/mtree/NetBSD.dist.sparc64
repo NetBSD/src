@@ -1,7 +1,7 @@
-#	$NetBSD: NetBSD.dist.sparc64,v 1.6 2013/03/12 20:01:55 christos Exp $
+#	$NetBSD: NetBSD.dist.sparc64,v 1.7 2013/03/12 20:22:00 christos Exp $
 
-./usr/sparc
-./usr/sparc/npf
+./lib/sparc
+./lib/sparc/npf
 ./usr/lib/sparc
 ./usr/lib/sparc/i18n
 ./usr/lib/sparc/lua
