@@ -1,6 +1,6 @@
 #!@BSHELL@ -
 #
-#	$NetBSD: host-mkdep.in,v 1.24 2013/03/05 03:06:21 christos Exp $
+#	$NetBSD: host-mkdep.in,v 1.25 2013/03/12 01:52:20 christos Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -67,6 +67,13 @@ set_objlist()
 	else
 		objlist="$PREFIX$file"
 	fi
+}
+
+# Send the command output to 4, and a command to set the exit code to 5
+exec 5>&1
+run_cmd() {
+	"$@" 1>&4 4>&-
+	echo rv=$? 1>&5 5>&-
 }
 
 # A getopt compatible command line parser in shell comands.
@@ -226,12 +233,13 @@ if $MERGE; then
 		done <$f
 	done >$TMP
 else
+	exec 5>&1
 	for f in $SRCS; do
 		file=${f##*/}
 		file=${file%.*}
 		set_objlist $file
 
-		@CPP@ "$@" $f | @AWK@ '
+		eval $( (run_cmd @CPP@ "$@" $f 4>&1 | @AWK@ '
 			/^#/ {
 				# Be as tolerant as possible.
 				sub(/^#(line)? [ 0-9]*\"?/, "")
@@ -247,7 +255,11 @@ else
 				print "'"$objlist"'" ": " $0
 				'"$AWK_OPTIONAL"'
 			}
-		' >> $TMP
+		' >> $TMP) 5>&1)
+		case "$rv" in
+		0);;
+		*)	exit $rv;;
+		esac
 	done
 fi
 
