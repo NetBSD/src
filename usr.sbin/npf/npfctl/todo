@@ -18,6 +18,10 @@
 -- npf algorithms like icmp, are loaded via modules. Perhaps it is better
    to have some config magic to autoload it instead of needing to run a
    module command.
+-- startup/stop script does not load and save session state
+-- add algo for "with short"
+-- implement "port-unr"
+-- implement block return-icmp in log final all with ipopts
 
 ok npf and dependent modules should autoload automagically as they are used
 ok have a way to register cloners? through a mapping file? consistently naming
