@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.213 2013/03/07 10:57:01 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.214 2013/03/13 09:44:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.213 2013/03/07 10:57:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.214 2013/03/13 09:44:20 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -652,6 +652,8 @@ static const struct bge_product {
 #define BGE_IS_5705_PLUS(sc)	((sc)->bge_flags & BGE_5705_PLUS)
 #define BGE_IS_575X_PLUS(sc)	((sc)->bge_flags & BGE_575X_PLUS)
 #define BGE_IS_5755_PLUS(sc)	((sc)->bge_flags & BGE_5755_PLUS)
+#define BGE_IS_5717_PLUS(sc)		((sc)->bge_flags & BGE_5717_PLUS)
+#define BGE_IS_57765_PLUS(sc)		((sc)->bge_flags & BGE_57765_PLUS)
 #define BGE_IS_JUMBO_CAPABLE(sc)	((sc)->bge_flags & BGE_JUMBO_CAPABLE)
 
 static const struct bge_revision {
@@ -717,6 +719,8 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5906_A0, "BCM5906 A0" },
 	{ BGE_CHIPID_BCM5906_A1, "BCM5906 A1" },
 	{ BGE_CHIPID_BCM5906_A2, "BCM5906 A2" },
+	{ BGE_CHIPID_BCM57765_A0, "BCM57765 A0" },
+	{ BGE_CHIPID_BCM57765_B0, "BCM57765 B0" },
 	{ BGE_CHIPID_BCM57780_A0, "BCM57780 A0" },
 	{ BGE_CHIPID_BCM57780_A1, "BCM57780 A1" },
 
@@ -1793,6 +1797,11 @@ bge_poll_fw(struct bge_softc *sc)
 		}
 	}
 
+	if (sc->bge_chipid == BGE_CHIPID_BCM57765_A0) {
+		/* tg3 says we have to wait extra time */
+		delay(10 * 1000);
+	}
+
 	return 0;
 }
 
@@ -1803,8 +1812,8 @@ bge_poll_fw(struct bge_softc *sc)
 static int
 bge_chipinit(struct bge_softc *sc)
 {
+	uint32_t dma_rw_ctl, mode_ctl, reg;
 	int i;
-	uint32_t dma_rw_ctl;
 
 	/* Set endianness before we access any non-PCI registers. */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
@@ -1827,6 +1836,75 @@ bge_chipinit(struct bge_softc *sc)
 	for (i = BGE_STATUS_BLOCK;
 	    i < BGE_STATUS_BLOCK_END + 1; i += sizeof(uint32_t))
 		BGE_MEMWIN_WRITE(sc->sc_pc, sc->sc_pcitag, i, 0);
+
+	/* 5717 workaround from tg3 */
+	if (sc->bge_chipid == BGE_CHIPID_BCM5717_A0) {
+		/* Save */
+		mode_ctl = CSR_READ_4(sc, BGE_MODE_CTL);
+
+		/* Temporary modify MODE_CTL to control TLP */
+		reg = mode_ctl & ~BGE_MODECTL_PCIE_TLPADDRMASK;
+		CSR_WRITE_4(sc, BGE_MODE_CTL, reg | BGE_MODECTL_PCIE_TLPADDR1);
+
+		/* Control TLP */
+		reg = CSR_READ_4(sc, BGE_TLP_CONTROL_REG +
+		    BGE_TLP_PHYCTL1);
+		CSR_WRITE_4(sc, BGE_TLP_CONTROL_REG + BGE_TLP_PHYCTL1,
+		    reg | BGE_TLP_PHYCTL1_EN_L1PLLPD);
+
+		/* Restore */
+		CSR_WRITE_4(sc, BGE_MODE_CTL, mode_ctl);
+	}
+		
+	/* XXX Should we use 57765_FAMILY? */
+	if (BGE_IS_57765_PLUS(sc)) {
+		if (sc->bge_chipid == BGE_CHIPID_BCM57765_A0) {
+			/* Save */
+			mode_ctl = CSR_READ_4(sc, BGE_MODE_CTL);
+
+			/* Temporary modify MODE_CTL to control TLP */
+			reg = mode_ctl & ~BGE_MODECTL_PCIE_TLPADDRMASK;
+			CSR_WRITE_4(sc, BGE_MODE_CTL,
+			    reg | BGE_MODECTL_PCIE_TLPADDR1);
+			
+			/* Control TLP */
+			reg = CSR_READ_4(sc, BGE_TLP_CONTROL_REG +
+			    BGE_TLP_PHYCTL5);
+			CSR_WRITE_4(sc, BGE_TLP_CONTROL_REG + BGE_TLP_PHYCTL5,
+			    reg | BGE_TLP_PHYCTL5_DIS_L2CLKREQ);
+
+			/* Restore */
+			CSR_WRITE_4(sc, BGE_MODE_CTL, mode_ctl);
+		}
+		if (BGE_CHIPREV(sc->bge_chipid) != BGE_CHIPREV_57765_AX) {
+			reg = CSR_READ_4(sc, BGE_CPMU_PADRNG_CTL);
+			CSR_WRITE_4(sc, BGE_CPMU_PADRNG_CTL,
+			    reg | BGE_CPMU_PADRNG_CTL_RDIV2);
+
+			/* Save */
+			mode_ctl = CSR_READ_4(sc, BGE_MODE_CTL);
+
+			/* Temporary modify MODE_CTL to control TLP */
+			reg = mode_ctl & ~BGE_MODECTL_PCIE_TLPADDRMASK;
+			CSR_WRITE_4(sc, BGE_MODE_CTL,
+			    reg | BGE_MODECTL_PCIE_TLPADDR0);
+
+			/* Control TLP */
+			reg = CSR_READ_4(sc, BGE_TLP_CONTROL_REG +
+			    BGE_TLP_FTSMAX);
+			reg &= ~BGE_TLP_FTSMAX_MSK;
+			CSR_WRITE_4(sc, BGE_TLP_CONTROL_REG + BGE_TLP_FTSMAX,
+			    reg | BGE_TLP_FTSMAX_VAL);
+
+			/* Restore */
+			CSR_WRITE_4(sc, BGE_MODE_CTL, mode_ctl);
+		}
+
+		reg = CSR_READ_4(sc, BGE_CPMU_LSPD_10MB_CLK);
+		reg &= ~BGE_CPMU_LSPD_10MB_MACCLK_MASK;
+		reg |= BGE_CPMU_LSPD_10MB_MACCLK_6_25;
+		CSR_WRITE_4(sc, BGE_CPMU_LSPD_10MB_CLK, reg);
+	}
 
 	/* Set up the PCI DMA control register. */
 	dma_rw_ctl = BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD;
@@ -1893,6 +1971,21 @@ bge_chipinit(struct bge_softc *sc)
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
 		dma_rw_ctl &= ~BGE_PCIDMARWCTL_MINDMA;
+
+	if (BGE_IS_5717_PLUS(sc)) {
+		dma_rw_ctl &= ~BGE_PCIDMARWCTL_DIS_CACHE_ALIGNMENT;
+		if (sc->bge_chipid == BGE_CHIPID_BCM57765_A0)
+			dma_rw_ctl &= ~BGE_PCIDMARWCTL_CRDRDR_RDMA_MRRS_MSK;
+
+		/*
+		 * Enable HW workaround for controllers that misinterpret
+		 * a status tag update and leave interrupts permanently
+		 * disabled.
+		 */
+		if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
+		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57765)
+			dma_rw_ctl |= BGE_PCIDMARWCTL_TAGGED_STATUS_WA;
+	}
 
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
 	    dma_rw_ctl);
@@ -2720,6 +2813,13 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    BGE_IS_575X_PLUS(sc))
 		sc->bge_flags |= BGE_5705_PLUS;
 
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57765 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57766)
+		sc->bge_flags |= BGE_57765_PLUS;
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
+	    BGE_IS_57765_PLUS(sc))
+		sc->bge_flags |= BGE_5717_PLUS;
 	/*
 	 * When using the BCM5701 in PCI-X mode, data corruption has
 	 * been observed in the first few bytes of some received packets.
@@ -2832,6 +2932,14 @@ bge_attach(device_t parent, device_t self, void *aux)
 	/* Now check the 'ROM failed' bit on the RX CPU */
 	else if (CSR_READ_4(sc, BGE_RXCPU_MODE) & BGE_RXCPUMODE_ROMFAIL)
 		sc->bge_flags |= BGE_NO_EEPROM;
+
+	/* Identify the chips that use an CPMU. */
+	if (BGE_IS_5717_PLUS(sc) ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
+		sc->bge_flags |= BGE_CPMU_PRESENT;
 
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));
@@ -3187,9 +3295,14 @@ bge_reset(struct bge_softc *sc)
 	 * XXX: from FreeBSD/Linux; no documentation
 	 */
 	if (sc->bge_flags & BGE_PCIE) {
-		if (CSR_READ_4(sc, BGE_PCIE_CTL1) == 0x60)
+		if (BGE_ASICREV(sc->bge_chipid != BGE_ASICREV_BCM5785) &&
+		    !BGE_IS_57765_PLUS(sc) &&
+		    (CSR_READ_4(sc, BGE_PCIE_CTL1) ==
+			(BGE_PHY_PCIE_LTASS_MODE | BGE_PHY_PCIE_SCRAM_MODE))) {
 			/* PCI Express 1.0 system */
-			CSR_WRITE_4(sc, BGE_PCIE_CTL1, 0x20);
+			CSR_WRITE_4(sc, BGE_PHY_TEST_CTRL_REG,
+			    BGE_PHY_PCIE_SCRAM_MODE);
+		}
 		if (sc->bge_chipid != BGE_CHIPID_BCM5750_A0) {
 			/*
 			 * Prevent PCI Express link training
@@ -3356,11 +3469,9 @@ bge_reset(struct bge_softc *sc)
 	}
 
 	if (sc->bge_flags & BGE_PCIE &&
+	    !BGE_IS_57765_PLUS(sc) &&
 	    sc->bge_chipid != BGE_CHIPID_BCM5750_A0 &&
-	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
-	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785 &&
-	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57765 &&
-	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57766) {
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785) {
 		uint32_t v;
 
 		/* Enable PCI Express bug fix */
@@ -4966,6 +5077,10 @@ bge_debug_info(struct bge_softc *sc)
 {
 
 	printf("Hardware Flags:\n");
+	if (BGE_IS_57765_PLUS(sc))
+		printf(" - 57765 Plus\n");
+	if (BGE_IS_5717_PLUS(sc))
+		printf(" - 5717 Plus\n");
 	if (BGE_IS_5755_PLUS(sc))
 		printf(" - 5755 Plus\n");
 	if (BGE_IS_575X_PLUS(sc))
@@ -4990,6 +5105,8 @@ bge_debug_info(struct bge_softc *sc)
 		printf(" - No 3 LEDs\n");
 	if (sc->bge_flags & BGE_RX_ALIGNBUG)
 		printf(" - RX Alignment Bug\n");
+	if (sc->bge_flags & BGE_CPMU_PRESENT)
+		printf(" - CPMU\n");
 	if (sc->bge_flags & BGE_TSO)
 		printf(" - TSO\n");
 }
