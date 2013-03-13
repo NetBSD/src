@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2012/10/27 17:17:50 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2013/03/13 21:17:43 macallan Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2012/10/27 17:17:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2013/03/13 21:17:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,11 +44,13 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2012/10/27 17:17:50 chs Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
+#include <evbmips/loongson/autoconf.h>
 
 static void	findroot(void);
 
 enum devclass bootdev_class = DV_DULL;
 char          bootdev[16];
+extern const struct platform *sys_platform;
 
 void
 cpu_configure(void)
@@ -118,19 +120,12 @@ device_register(device_t dev, void *aux)
 	if ((booted_device == NULL) && (netboot == 1))
 		if (device_class(dev) == DV_IFNET)
 			booted_device = dev;
-	if (device_is_a(dev, "genfb")) {
-		dict = device_properties(dev);
-		/*
-		 * this is a hack
-		 * is_console and address need to be checked against reality
-		 */
-		prop_dictionary_set_bool(dict, "is_console", 1);
-		prop_dictionary_set_uint32(dict, "width", 1024);
-		prop_dictionary_set_uint32(dict, "height", 600);
-		prop_dictionary_set_uint32(dict, "depth", 16);
-		prop_dictionary_set_uint32(dict, "linebytes", 2048);
-		prop_dictionary_set_uint32(dict, "address", 0x04000000);
+
+	if (sys_platform->device_register != NULL) {
+		sys_platform->device_register(dev, aux);
 	}
+
+	/* is this yeeloong specific? */
 	if (device_is_a(dev, "lynxfb")) {
 		dict = device_properties(dev);
 		/*
