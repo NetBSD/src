@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.6 2013/03/12 19:38:20 martin Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.7 2013/03/13 08:05:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -55,8 +55,6 @@ __longjmp14(jmp_buf env, int val)
 	/* Ensure non-zero return value */
 	if (val == 0)
 		val = -1;
-
-	memset(&uc, 0, sizeof uc);
 
 	/* Set _UC_SIGMASK and _UC_CPU */
 	uc.uc_flags = _UC_SIGMASK | _UC_CPU;
