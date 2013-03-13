@@ -1,4 +1,4 @@
-.\"     $NetBSD: rbtree.3,v 1.7 2012/08/19 19:31:13 wiz Exp $
+.\"     $NetBSD: rbtree.3,v 1.8 2013/03/13 13:38:05 riastradh Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 19, 2012
+.Dd March 13, 2013
 .Dt RBTREE 3
 .Os
 .Sh NAME
@@ -50,7 +50,13 @@
 .Ft void *
 .Fn rb_tree_find_node_leq "rb_tree_t *rbt" "const void *key"
 .Ft void *
-.Fn rb_tree_iterate "rb_tree_t *rbt" "void *rb" "const unsigned int direction"
+.Fn rb_tree_iterate "rb_tree_t *rbt" "void *rb" "unsigned int direction"
+.Ft void *
+.Fn RB_TREE_MIN "rb_tree_t *rbt"
+.Ft void *
+.Fn RB_TREE_MAX "rb_tree_t *rbt"
+.Fn RB_TREE_FOREACH "void *rb" "rb_tree_t *rbt"
+.Fn RB_TREE_FOREACH_REVERSE "void *rb" "rb_tree_t *rbt"
 .Sh DESCRIPTION
 .Nm
 provides red-black trees.
@@ -190,7 +196,7 @@ or, if
 .Fa rb
 is
 .Dv NULL ,
-return the last node in
+return the first node in
 .Fa rbt
 or, if the tree is empty, return
 .Dv NULL .
@@ -207,10 +213,44 @@ or, if
 .Fa rb
 is
 .Dv NULL ,
-return the first node in
+return the last node in
 .Fa rbt
 or, if the tree is empty, return
 .Dv NULL .
+.It Fn RB_TREE_MIN "rbt"
+Return the first node in
+.Fa rbt ,
+i.e. the node with the least key, or
+.Dv NULL
+if
+.Fa rbt
+is empty.
+.It Fn RB_TREE_MAX "rbt"
+Return the last node in
+.Fa rbt ,
+i.e. the node with the greatest key, or
+.Dv NULL
+if
+.Fa rbt
+is empty.
+.It Fn RB_TREE_FOREACH "rb" "rbt"
+.Nm RB_TREE_FOREACH
+is a macro to be used in the place of a
+.Dv for
+header preceding a statement to traverse the nodes in
+.Fa rbt
+from least to greatest, assigning
+.Fa rb
+to each node in turn and executing the statement.
+.It Fn RB_TREE_FOREACH_REVERSE "rb" "rbt"
+.Nm RB_TREE_FOREACH_REVERSE
+is a macro to be used in the place of a
+.Dv for
+header preceding a statement to traverse the nodes in
+.Fa rbt
+from greatest to least, assigning
+.Fa rb
+to each node in turn and executing the statement.
 .El
 .Sh CODE REFERENCES
 The
