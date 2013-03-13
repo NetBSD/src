@@ -240,6 +240,20 @@ gdium_device_register(device_t dev, void *aux)
 	static int gkey_chain_pos = 0;
 	static device_t lastparent = NULL;
 
+	if (device_is_a(dev, "genfb") || device_is_a(dev, "voyagerfb")) {
+		dict = device_properties(dev);
+		/*
+		 * this is a hack
+		 * is_console needs to be checked against reality
+		 */
+		prop_dictionary_set_bool(dict, "is_console", 1);
+		prop_dictionary_set_uint32(dict, "width", 1024);
+		prop_dictionary_set_uint32(dict, "height", 600);
+		prop_dictionary_set_uint32(dict, "depth", 16);
+		prop_dictionary_set_uint32(dict, "linebytes", 2048);
+		if (fb_addr != 0)
+			prop_dictionary_set_uint32(dict, "address", fb_addr);
+	}
 	if (device_parent(dev) != lastparent && gkey_chain_pos != 0)
 		return;
 
@@ -282,21 +296,6 @@ gdium_device_register(device_t dev, void *aux)
 		if (booted_device == NULL)
 			booted_device = dev;
 		break;
-	}
-
-	if (device_is_a(dev, "genfb") || device_is_a(dev, "voyagerfb")) {
-		dict = device_properties(dev);
-		/*
-		 * this is a hack
-		 * is_console needs to be checked against reality
-		 */
-		prop_dictionary_set_bool(dict, "is_console", 1);
-		prop_dictionary_set_uint32(dict, "width", 1024);
-		prop_dictionary_set_uint32(dict, "height", 600);
-		prop_dictionary_set_uint32(dict, "depth", 16);
-		prop_dictionary_set_uint32(dict, "linebytes", 2048);
-		if (fb_addr != 0)
-			prop_dictionary_set_uint32(dict, "address", fb_addr);
 	}
 
 	return;
