@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.6 2013/03/02 02:42:13 christos Exp $
+#	$NetBSD: N900,v 1.7 2013/03/13 03:08:18 khorben Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -17,6 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
+#options 	UVMHIST,UVMHIST_PRINT
 options 	CPU_CORTEXA8
 options 	OMAP_3430
 options 	PMAPCOUNTERS
@@ -34,9 +35,9 @@ file-system	NFS		# Network file system
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
-#file-system	KERNFS		# /kern
+file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
-#file-system	PROCFS		# /proc
+file-system	PROCFS		# /proc
 #file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -137,7 +138,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=530000
+options 	SYMTAB_SPACE=800000
 
 ## USB Debugging options
 options USB_DEBUG
@@ -212,14 +213,20 @@ omapgpio4	at obio2 addr 0x49056000 size 0x0400 intrbase 224 intr 33
 
 gpio*		at omapgpio?
 
-# # I2C Controller
-# omapi2c0	at tipb? addr 0xfffb3800 intr 36 mult 4
-# iic*		at omapi2c?
-# # omap's own i2c address
-# options		OMAP_I2C_ADDRESS=0xe
-# # i2c bus clock low and high times in ns
-# options		I2C_LOW_TIME_nSEC=1500
-# options		I2C_HIGH_TIME_nSEC=1000
+# System Control Module
+omapscm0 	at obio0 addr 0x48002000 size 0x1000
+
+# I2C Controller
+omapiic0	at obio0 addr 0x48070000 size 0x80
+omapiic1	at obio0 addr 0x48072000 size 0x80
+omapiic2	at obio0 addr 0x48060000 size 0x80
+iic*		at omapiic?
+
+# Power Managent and System Companion Device
+tps65950pm0	at iic0 addr 0x48
+tps65950pm1	at iic0 addr 0x49
+tps65950pm2	at iic0 addr 0x4a
+tps65950pm3	at iic0 addr 0x4b
 
 # On-board 16550 UARTs
 com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
@@ -236,8 +243,10 @@ options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 
 # Watchdog timers
 #omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
-#omapwdt32k*	at obio1 addr 0x4830c000 size 2048	# WDT1
-#omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
+omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
+
+# onboard DMA
+omapdma0	at obio0 addr 0x48056000 size 0x1000
 
 # onboard video
 omapfb*		at obio0 addr 0x48050000 size 0x10000
@@ -253,6 +262,8 @@ options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options		WS_KERNEL_FG=WSCOL_GREEN
 options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some more ioctls
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -307,3 +318,5 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
+
+cinclude "arch/evbarm/conf/N900.local"

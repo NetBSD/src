@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_i2c.c,v 1.2 2013/01/01 23:20:24 jmcneill Exp $ */
+/* $NetBSD: omap3_i2c.c,v 1.3 2013/03/13 03:08:17 khorben Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_i2c.c,v 1.2 2013/01/01 23:20:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_i2c.c,v 1.3 2013/03/13 03:08:17 khorben Exp $");
 
 #include "opt_omap.h"
 
@@ -99,7 +99,7 @@ omap3_i2c_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct obio_attach_args *obio = opaque;
 
-#if defined(OMAP_3530)
+#if defined(OMAP_3430) || defined(OMAP_3530)
 	if (obio->obio_addr == I2C1_BASE_3530 ||
 	    obio->obio_addr == I2C2_BASE_3530 ||
 	    obio->obio_addr == I2C3_BASE_3530)
