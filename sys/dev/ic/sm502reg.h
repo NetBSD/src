@@ -1,4 +1,4 @@
-/*	$NetBSD: sm502reg.h,v 1.6 2013/03/13 21:20:46 macallan Exp $	*/
+/*	$NetBSD: sm502reg.h,v 1.7 2013/03/13 21:31:01 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -69,7 +69,7 @@
 	#define SM502_MEM_16M		0x00004000
 	#define SM502_MEM_32M		0x00006000
 	#define SM502_MEM_64M		0x00008000
-	#define SM502_MEM_2M		0x00009000
+	#define SM502_MEM_2M		0x0000a000
 
 #define SM502_ARB_CONTROL		0x00000014
 #define SM502_COMMANDLIST_STATUS	0x00000024
