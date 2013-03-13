@@ -41,6 +41,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#define HAVE_SYS_MMAN_H 1
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
 
@@ -53,6 +56,9 @@
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #define LT_OBJDIR ".libs/"
+
+/* Target triple MCLinker will generate code for by default */
+#define MCLD_DEFAULT_TARGET_TRIPLE "x86_64--netbsd"
 
 /* Define if this is Unixish platform */
 #define MCLD_ON_UNIX 1
