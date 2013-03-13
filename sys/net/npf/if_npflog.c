@@ -1,4 +1,4 @@
-/*	$NetBSD: if_npflog.c,v 1.1 2013/03/10 20:51:44 christos Exp $	*/
+/*	$NetBSD: if_npflog.c,v 1.2 2013/03/13 02:34:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_npflog.c,v 1.1 2013/03/10 20:51:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_npflog.c,v 1.2 2013/03/13 02:34:37 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_npflog.c,v 1.1 2013/03/10 20:51:44 christos Exp $
 #include <net/if_types.h>
 #include <net/bpf.h>
 
-MODULE(MODULE_CLASS_DRIVER, if_npflog, NULL);
+MODULE(MODULE_CLASS_DRIVER, if_npflog);
 
 typedef struct npflog_softc {
 	LIST_ENTRY(npflog_softc)	sc_entry;
@@ -161,6 +161,9 @@ if_npflog_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 		npflogdetach();
 		break;
+
+	case MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
 
 	default:
 		return ENOTTY;
