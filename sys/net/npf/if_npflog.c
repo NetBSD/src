@@ -1,4 +1,4 @@
-/*	$NetBSD: if_npflog.c,v 1.2 2013/03/13 02:34:37 christos Exp $	*/
+/*	$NetBSD: if_npflog.c,v 1.3 2013/03/13 13:15:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_npflog.c,v 1.2 2013/03/13 02:34:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_npflog.c,v 1.3 2013/03/13 13:15:47 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_npflog.c,v 1.2 2013/03/13 02:34:37 christos Exp $
 #include <net/if_types.h>
 #include <net/bpf.h>
 
-MODULE(MODULE_CLASS_DRIVER, if_npflog);
+MODULE(MODULE_CLASS_DRIVER, if_npflog, NULL);
 
 typedef struct npflog_softc {
 	LIST_ENTRY(npflog_softc)	sc_entry;
