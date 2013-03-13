@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.1 2013/03/13 21:13:45 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.2 2013/03/13 21:17:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -127,7 +127,7 @@ rumpcomp_virtif_send(struct virtif_user *viu,
 
 /* how often to check for interface going south */
 #define POLLTIMO_MS 10
-size_t
+ssize_t
 rumpcomp_virtif_recv(struct virtif_user *viu, void *data, size_t dlen)
 {
 	void *cookie = rumpuser_component_unschedule();
@@ -145,8 +145,10 @@ rumpcomp_virtif_recv(struct virtif_user *viu, void *data, size_t dlen)
 		rv = poll(&pfd, 1, POLLTIMO_MS);
 		if (rv == 0)
 			continue;
-		if (rv == -1)
+		if (rv == -1) {
+			nn = -1;
 			break;
+		}
 
 		nn = read(viu->viu_fd, data, dlen);
 		if (nn == -1 && errno == EAGAIN)
