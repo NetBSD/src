@@ -1,4 +1,4 @@
-/*	$NetBSD: sm502reg.h,v 1.5 2011/12/07 08:49:29 macallan Exp $	*/
+/*	$NetBSD: sm502reg.h,v 1.6 2013/03/13 21:20:46 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -64,6 +64,13 @@
 #define SM502_GPIO0_CONTROL		0x00000008
 #define SM502_GPIO1_CONTROL		0x0000000c
 #define SM502_DRAM_CONTROL		0x00000010
+	#define SM502_MEM_4M		0x00000000
+	#define SM502_MEM_8M		0x00002000
+	#define SM502_MEM_16M		0x00004000
+	#define SM502_MEM_32M		0x00006000
+	#define SM502_MEM_64M		0x00008000
+	#define SM502_MEM_2M		0x00009000
+
 #define SM502_ARB_CONTROL		0x00000014
 #define SM502_COMMANDLIST_STATUS	0x00000024
 #define SM502_INTR_STATUS_R		0x00000028	/* on read */
