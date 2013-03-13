@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.36 2013/02/09 22:11:29 christos Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.37 2013/03/13 03:03:04 khorben Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.36 2013/02/09 22:11:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.37 2013/03/13 03:03:04 khorben Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -203,7 +203,11 @@ u_int uboot_args[4] = { 0 };	/* filled in by beagle_start.S (not in bss) */
 extern char KERNEL_BASE_phys[];
 extern char _end[];
 
+#if NCOM > 0
 int use_fb_console = false;
+#else
+int use_fb_console = true;
+#endif
 
 /*
  * Macros to translate between physical and virtual for a subset of the
@@ -231,7 +235,7 @@ static void omap4_cpu_clk(void);
 static void am335x_cpu_clk(void);
 #endif
 
-#if defined(OMAP_3530) || defined(OMAP_3430)
+#if defined(OMAP_3430) || defined(OMAP_3530)
 static psize_t omap3530_memprobe(void);
 #endif
 
@@ -363,6 +367,7 @@ void beagle_putchar(char c);
 void
 beagle_putchar(char c)
 {
+#if NCOM > 0
 	unsigned char *com0addr = (char *)CONSADDR_VA;
 	int timo = 150000;
 
@@ -375,6 +380,7 @@ beagle_putchar(char c)
 	while ((com0addr[5 * 4] & 0x20) == 0)
 		if (--timo == 0)
 			break;
+#endif
 }
 
 /*
@@ -452,7 +458,7 @@ initarm(void *arg)
 	 * Set up the variables that define the availability of physical
 	 * memory.
 	 */
-#if defined(OMAP_3530) || defined(OMAP_3430)
+#if defined(OMAP_3430) || defined(OMAP_3530)
 	ram_size = omap3530_memprobe();
 #endif
 	/*
@@ -514,6 +520,7 @@ init_clocks(void)
 #endif
 }
 
+#if NCOM > 0
 #ifndef CONSADDR
 #error Specify the address of the console UART with the CONSADDR option.
 #endif
@@ -527,11 +534,14 @@ init_clocks(void)
 static const bus_addr_t consaddr = CONSADDR;
 static const int conspeed = CONSPEED;
 static const int conmode = CONMODE;
+#endif
 
 void
 consinit(void)
 {
+#if NCOM > 0
 	bus_space_handle_t bh;
+#endif
 	static int consinit_called = 0;
 
 	if (consinit_called != 0)
@@ -541,6 +551,7 @@ consinit(void)
 
 	beagle_putchar('e');
 
+#if NCOM > 0
 	if (bus_space_map(&omap_a4x_bs_tag, consaddr, OMAP_COM_SIZE, 0, &bh))
 		panic("Serial console can not be mapped.");
 
@@ -549,6 +560,7 @@ consinit(void)
 		panic("Serial console can not be initialized.");
 
 	bus_space_unmap(&omap_a4x_bs_tag, bh, OMAP_COM_SIZE);
+#endif
 
 #if NUKBD > 0
 	ukbd_cnattach();	/* allow USB keyboard to become console */
@@ -679,7 +691,7 @@ am335x_cpu_clk(void)
 }
 #endif
 
-#if defined(OMAP_3530) || defined(OMAP_3430)
+#if defined(OMAP_3430) || defined(OMAP_3530)
 #define SDRC_MCFG(p)		(0x80 + (0x30 * (p)))
 #define SDRC_MCFG_MEMSIZE(m)	((((m) & __BITS(8,17)) >> 8) * 2)
 static psize_t 
@@ -782,7 +794,7 @@ beagle_device_register(device_t self, void *aux)
 	}
 
 	if (device_is_a(self, "sdhc")) {
-#if defined(OMAP_3530)
+#if defined(OMAP_3430) || defined(OMAP_3530)
 		prop_dictionary_set_uint32(dict, "clkmask", 0);
 		prop_dictionary_set_bool(dict, "8bit", true);
 #endif
