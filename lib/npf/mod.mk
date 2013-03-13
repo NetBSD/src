@@ -1,4 +1,4 @@
-#	$NetBSD: mod.mk,v 1.4 2013/03/13 02:32:05 christos Exp $
+#	$NetBSD: mod.mk,v 1.5 2013/03/13 13:16:38 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -27,6 +27,3 @@ LIB=		${MOD}
 SRCS=		npf${MOD}.c
 
 .include <bsd.lib.mk>
-
-foo:
-	echo ${SHLIBINSTALLDIR}
