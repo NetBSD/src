@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.23 2013/03/13 21:28:12 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.24 2013/03/13 21:35:18 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.23 2013/03/13 21:28:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.24 2013/03/13 21:35:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,10 @@ static void	voyagerfb_copyrows(void *, int, int, int);
 static void	voyagerfb_eraserows(void *, int, int, long);
 
 static int	voyagerfb_set_curpos(struct voyagerfb_softc *, int, int);
-static int	voyagerfb_gcursor(struct voyagerfb_softc *, struct wsdisplay_cursor *);
-static int	voyagerfb_scursor(struct voyagerfb_softc *, struct wsdisplay_cursor *);
+static int	voyagerfb_gcursor(struct voyagerfb_softc *,
+		 struct wsdisplay_cursor *);
+static int	voyagerfb_scursor(struct voyagerfb_softc *,
+		 struct wsdisplay_cursor *);
 
 struct wsdisplay_accessops voyagerfb_accessops = {
 	voyagerfb_ioctl,
@@ -317,7 +319,8 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
 			/* do some minimal setup to avoid weirdness later */
-			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
+			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
+			    &defattr);
 		}
 	}
 	glyphcache_init(&sc->sc_gc, sc->sc_height,
@@ -532,8 +535,8 @@ voyagerfb_mmap(void *v, void *vs, off_t offset, int prot)
 	/*
 	 * restrict all other mappings to processes with privileges
 	 */
-	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
-	    NULL, NULL, NULL, NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: mmap() rejected.\n",
 		    device_xname(sc->sc_dev));
 		return -1;
@@ -761,12 +764,15 @@ voyagerfb_init(struct voyagerfb_softc *sc)
 	/* put the cursor at the end of video memory */
 	sc->sc_cursor_addr = 16 * 1024 * 1024 - 16 * 64;	/* XXX */
 	DPRINTF("%s: %08x\n", __func__, sc->sc_cursor_addr); 
-	sc->sc_cursor = (uint32_t *)((uint8_t *)bus_space_vaddr(sc->sc_memt, sc->sc_fbh)
-			 + sc->sc_cursor_addr);
+	sc->sc_cursor = (uint32_t *)((uint8_t *)bus_space_vaddr(sc->sc_memt,
+			 sc->sc_fbh) + sc->sc_cursor_addr);
 #ifdef VOYAGERFB_DEBUG
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_XY, 0x00100010);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_COL12, 0x0000ffff);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_COL3, 0x0000f800);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_XY,
+							 0x00100010);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_COL12,
+							 0x0000ffff);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_COL3,
+							 0x0000f800);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_ADDR,
 	    SM502_CRSR_ENABLE | sc->sc_cursor_addr);
 	sc->sc_cursor[0] = 0x00000000;
@@ -1008,7 +1014,8 @@ voyagerfb_putchar_aa32(void *cookie, int row, int col, u_int c, long attr)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_CONTROL, cmd);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_SRC, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DST, (x << 16) | y);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DIMENSION, (wi << 16) | he);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DIMENSION,
+	    (wi << 16) | he);
 	rf = (fg >> 16) & 0xff;
 	rb = (bg >> 16) & 0xff;
 	gf = (fg >> 8) & 0xff;
@@ -1097,7 +1104,8 @@ voyagerfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_CONTROL, cmd);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_SRC, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DST, (x << 16) | y);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DIMENSION, (wi << 16) | he);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DIMENSION,
+	    (wi << 16) | he);
 
 	/*
 	 * we need the RGB colours here, so get offsets into rasops_cmap
@@ -1286,9 +1294,11 @@ voyagerfb_set_backlight(struct voyagerfb_softc *sc, int level)
 		/* in these cases bypass the PWM and use the gpio */
 		voyager_control_gpio(sc->sc_gpio_cookie, ~GPIO_BACKLIGHT, 0);
 		if (level == 0) {
-			voyager_write_gpio(sc->sc_gpio_cookie, ~GPIO_BACKLIGHT, 0);
+			voyager_write_gpio(sc->sc_gpio_cookie,
+			    ~GPIO_BACKLIGHT, 0);
 		} else {
-			voyager_write_gpio(sc->sc_gpio_cookie, 0xffffffff, GPIO_BACKLIGHT);
+			voyager_write_gpio(sc->sc_gpio_cookie,
+			    0xffffffff, GPIO_BACKLIGHT);
 		}
 	} else {
 		uint32_t pwm;
@@ -1298,7 +1308,8 @@ voyagerfb_set_backlight(struct voyagerfb_softc *sc, int level)
 		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PWM0, pwm);
 
 		/* let the PWM take over */
-		voyager_control_gpio(sc->sc_gpio_cookie, 0xffffffff, GPIO_BACKLIGHT);
+		voyager_control_gpio(sc->sc_gpio_cookie,
+		    0xffffffff, GPIO_BACKLIGHT);
 	}
 }
 
@@ -1407,7 +1418,8 @@ voyagerfb_scursor(struct voyagerfb_softc *sc, struct wsdisplay_cursor *cur)
 				    SM502_PANEL_CRSR_COL3,
 				    val);
 			}
-			DPRINTF("%s: %d %04x\n", __func__, i + cur->cmap.index, val);
+			DPRINTF("%s: %d %04x\n", __func__, i + cur->cmap.index,
+			    val);
 		}
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
