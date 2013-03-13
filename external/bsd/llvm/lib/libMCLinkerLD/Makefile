@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/02/27 21:25:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/03/13 13:21:18 joerg Exp $
 
 LIB=	MCLinkerLD
 
@@ -32,7 +32,6 @@ SRCS=	Archive.cpp \
 	ELFReaderIf.cpp \
 	ELFSegment.cpp \
 	ELFSegmentFactory.cpp \
-	ELFWriter.cpp \
 	GNUArchiveReader.cpp \
 	GroupReader.cpp \
 	LDContext.cpp \
@@ -40,7 +39,6 @@ SRCS=	Archive.cpp \
 	LDReader.cpp \
 	LDSection.cpp \
 	LDSymbol.cpp \
-	LDWriter.cpp \
 	MsgHandler.cpp \
 	NamePool.cpp \
 	ObjectWriter.cpp \
