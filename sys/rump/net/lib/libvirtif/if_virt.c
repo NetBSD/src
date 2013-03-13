@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.27 2012/09/14 16:29:22 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.28 2013/03/13 21:13:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.27 2012/09/14 16:29:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.28 2013/03/13 21:13:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -49,10 +49,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.27 2012/09/14 16:29:22 pooka Exp $");
 #include <netinet/in_var.h>
 
 #include <rump/rump.h>
-#include <rump/rumpuser.h>
 
 #include "rump_private.h"
 #include "rump_net_private.h"
+
+#include "rumpcomp_user.h"
 
 /*
  * Virtual interface for userspace purposes.  Uses tap(4) to
@@ -69,7 +70,7 @@ static void	virtif_stop(struct ifnet *, int);
 
 struct virtif_sc {
 	struct ethercom sc_ec;
-	int sc_tapfd;
+	struct virtif_user *sc_viu;
 	bool sc_dying;
 	struct lwp *sc_l_snd, *sc_l_rcv;
 	kmutex_t sc_mtx;
@@ -88,27 +89,23 @@ int
 rump_virtif_create(int num)
 {
 	struct virtif_sc *sc;
+	struct virtif_user *viu;
 	struct ifnet *ifp;
 	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0x0a, 0x00, 0x0b, 0x0e, 0x01 };
-	char tapdev[16];
-	int fd, error = 0;
+	int error = 0;
 
 	if (num >= 0x100)
 		return E2BIG;
 
-	snprintf(tapdev, sizeof(tapdev), "/dev/tap%d", num);
-	fd = rumpuser_open(tapdev, RUMPUSER_OPEN_RDWR, &error);
-	if (fd == -1) {
-		printf("virtif_create: can't open /dev/tap%d: %d\n",
-		    num, error);
-		return error;
-	}
+	if ((viu = rumpcomp_virtif_create(num)) == NULL)
+		return ENXIO;
+
 	enaddr[2] = cprng_fast32() & 0xff;
 	enaddr[5] = num;
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	sc->sc_dying = false;
-	sc->sc_tapfd = fd;
+	sc->sc_viu = viu;
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_cv, "virtsnd");
@@ -168,6 +165,8 @@ virtif_unclone(struct ifnet *ifp)
 	cv_broadcast(&sc->sc_cv);
 	mutex_exit(&sc->sc_mtx);
 
+	rumpcomp_virtif_dying(sc->sc_viu);
+
 	virtif_stop(ifp, 1);
 	if_down(ifp);
 
@@ -180,7 +179,7 @@ virtif_unclone(struct ifnet *ifp)
 		sc->sc_l_rcv = NULL;
 	}
 
-	rumpuser_close(sc->sc_tapfd, NULL);
+	rumpcomp_virtif_destroy(sc->sc_viu);
 
 	mutex_destroy(&sc->sc_mtx);
 	cv_destroy(&sc->sc_cv);
@@ -220,7 +219,6 @@ virtif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return rv;
 }
 
-/* just send everything in-context */
 static void
 virtif_start(struct ifnet *ifp)
 {
@@ -252,35 +250,21 @@ virtif_receiver(void *arg)
 	struct virtif_sc *sc = ifp->if_softc;
 	struct mbuf *m;
 	size_t plen = ETHER_MAX_LEN_JUMBO+1;
-	struct pollfd pfd;
 	ssize_t n;
-	int error, rv;
-
-	pfd.fd = sc->sc_tapfd;
-	pfd.events = POLLIN;
 
 	for (;;) {
 		m = m_gethdr(M_WAIT, MT_DATA);
 		MEXTMALLOC(m, plen, M_WAIT);
 
  again:
-		/* poll, but periodically check if we should die */
-		rv = rumpuser_poll(&pfd, 1, POLLTIMO_MS, &error);
 		if (sc->sc_dying) {
 			m_freem(m);
 			break;
 		}
-		if (rv == 0)
-			goto again;
-
-		n = rumpuser_read(sc->sc_tapfd, mtod(m, void *), plen, &error);
-		KASSERT(n < ETHER_MAX_LEN_JUMBO);
-		if (__predict_false(n < 0)) {
-			if (n == -1 && error == EAGAIN) {
-				goto again;
-			}
-
-			printf("%s: read from /dev/tap failed. host is down?\n",
+		
+		n = rumpcomp_virtif_recv(sc->sc_viu, mtod(m, void *), plen);
+		if (n < 0) {
+			printf("%s: read hypercall failed. host if down?\n",
 			    ifp->if_xname);
 			mutex_enter(&sc->sc_mtx);
 			/* could check if need go, done soon anyway */
@@ -314,8 +298,8 @@ virtif_sender(void *arg)
 	struct ifnet *ifp = arg;
 	struct virtif_sc *sc = ifp->if_softc;
 	struct mbuf *m, *m0;
-	struct rumpuser_iovec io[LB_SH];
-	int i, error;
+	struct iovec io[LB_SH];
+	int i;
 
 	mutex_enter(&sc->sc_mtx);
 	KERNEL_LOCK(1, NULL);
@@ -341,11 +325,9 @@ virtif_sender(void *arg)
 		if (i == LB_SH)
 			panic("lazy bum");
 		bpf_mtap(ifp, m0);
-		KERNEL_UNLOCK_LAST(curlwp);
 
-		rumpuser_writev(sc->sc_tapfd, io, i, &error);
+		rumpcomp_virtif_send(sc->sc_viu, io, i);
 
-		KERNEL_LOCK(1, NULL);
 		m_freem(m0);
 		mutex_enter(&sc->sc_mtx);
 	}
