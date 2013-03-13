@@ -17,7 +17,7 @@
    differently?
 -- npf algorithms like icmp, are loaded via modules. Perhaps it is better
    to have some config magic to autoload it instead of needing to run a
-   module command.
+   module command. algorithm "icmp" { }
 -- startup/stop script does not load and save session state
 -- add algo for "with short"
 -- implement "port-unr"
