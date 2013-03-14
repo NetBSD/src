@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.213 2013/02/14 21:57:58 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.214 2013/03/14 19:13:17 gdt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.213 2013/02/14 21:57:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.214 2013/03/14 19:13:17 gdt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -538,6 +538,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 		lock = lockso->so_lock;
 		so->so_lock = lock;
 		mutex_obj_hold(lock);
+		/* XXX Why is this not solock, to match sounlock? */
 		mutex_enter(lock);
 	} else {
 		/* Lock assigned and taken during PRU_ATTACH. */
