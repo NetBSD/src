@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.21 2013/03/11 11:44:48 christos Exp $
+#	$NetBSD: Makefile.libkern,v 1.22 2013/03/14 11:53:33 nakayama Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -74,7 +74,7 @@ SRCS+=	memmove.c
 SRCS+=	strchr.c strrchr.c
 SRCS+=	memcmp.c
 
-.if (${MACHINE_ARCH} != "sparc64") || defined(RUMPTOP)
+.if (${MACHINE} != "sparc64") || defined(RUMPTOP)
 # provided by memcpyset.s on sparc64, but RUMP does not know about it.
 SRCS+=	memcpy.c
 .if empty(SRCS:Mmemset2.*)
