@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.27 2012/11/01 00:38:43 christos Exp $	*/
+/*	$NetBSD: u3g.c,v 1.28 2013/03/14 13:08:56 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.27 2012/11/01 00:38:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.28 2013/03/14 13:08:56 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,6 +191,7 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_EM770W },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_K3765 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_MOBILE },
+	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E171 },
 	/* OEM: Merlin */
 	{ USB_VENDOR_MERLIN, USB_PRODUCT_MERLIN_V620 },
 	/* OEM: Novatel */
@@ -427,6 +428,25 @@ u3g_huawei_k3765_reinit(usbd_device_handle dev)
 }
 
 static int
+u3g_huawei_e171_reinit(usbd_device_handle dev)
+{
+	unsigned char cmd[31];
+
+	/* magic string adapted from some webpage */
+	memset(cmd, 0, sizeof(cmd));
+	cmd[0] = 0x55; 
+	cmd[1] = 0x53;
+	cmd[2] = 0x42;
+	cmd[3] = 0x43;
+	cmd[15]= 0x11;
+	cmd[16]= 0x06;
+	cmd[17]= 0x20;
+	cmd[20]= 0x01;
+
+	return send_bulkmsg(dev, cmd, sizeof(cmd));
+}
+
+static int
 u3g_sierra_reinit(usbd_device_handle dev)
 {
 	/* Some Sierra devices presents themselves as a umass device with
@@ -483,6 +503,9 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 		case USB_PRODUCT_HUAWEI_E1750INIT:
 		case USB_PRODUCT_HUAWEI_K3765INIT:
 			return u3g_huawei_k3765_reinit(uaa->device);
+			break;
+		case USB_PRODUCT_HUAWEI_E171INIT:
+			return u3g_huawei_e171_reinit(uaa->device);
 			break;
 		default:
 			return u3g_huawei_reinit(uaa->device);
