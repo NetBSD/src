@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.106 2013/02/19 04:53:08 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.107 2013/03/14 16:33:57 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8579,3 +8579,39 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 6.1_RC1!
 	[riz]
+
+lib/libterminfo/tparm.c				1.10
+
+	Fix conditionals in terminal descriptions. PR#47490.
+	[roy, ticket #834]
+
+lib/libterminfo/Makefile.hash			1.7
+lib/libterminfo/genman				1.5
+lib/libterminfo/term.h				1.13-1.14
+lib/libterminfo/term_private.h			1.11
+lib/libterminfo/terminfo.3			1.9-1.10
+lib/libterminfo/terminfo.5.in			1.18
+lib/libterminfo/tparm.c				1.11-1.14
+usr.bin/tput/Makefile				1.11
+usr.bin/tput/tput.c				1.23-1.26
+
+	Various libterminfo/tput fixes.  PR#46793, PR#47090, PR#47532.
+	[roy, ticket #835]
+
+external/historical/nawk/dist/tran.c		1.8
+
+	Fix awk segfault due to NULL dereference.  PR#47553.
+	[cheusov, ticket #836]
+
+sys/compat/common/compat_mod.c			1.16-1.18 via patch
+sys/compat/common/compat_mod.h			1.1
+sys/compat/common/compat_util.h			1.23 via patch
+sys/compat/common/kern_time_50.c		1.25 via patch
+sys/compat/common/vfs_syscalls_43.c		1.55 via patch
+sys/kern/init_main.c				1.447 via patch
+sys/kern/init_sysctl.c				1.195 via patch
+
+	Move boottime50 and its associated sysctl into the compat module.
+	PR#47579.
+	[pgoyette, ticket #837]
+
