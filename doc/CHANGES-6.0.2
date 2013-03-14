@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.22 2013/03/14 21:56:58 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.23 2013/03/14 22:37:37 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -156,4 +156,11 @@ sys/secmodel/extensions/secmodel_extensions.c	1.5
 	Fix a crash which can happen with sysctl security.curtain=1
 	set.  PR#47598.
 	[martin, ticket #839]
+
+lib/libc/arch/alpha/gen/__longjmp14.c		1.6-1.7
+lib/libc/arch/alpha/gen/__setjmp14.S		1.6
+
+	Fix longjmp/setjmp on alpha for statically linked programs
+	such as those in /rescue.
+	[martin, ticket #846]
 
