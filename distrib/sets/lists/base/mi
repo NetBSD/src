@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984.2.14 2012/12/15 05:40:17 riz Exp $
+# $NetBSD: mi,v 1.984.2.15 2013/03/14 19:16:40 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4552,6 +4552,7 @@
 ./usr/share/zoneinfo/Asia/Kashgar		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kathmandu		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Katmandu		base-sys-share		share
+./usr/share/zoneinfo/Asia/Khandyga		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kolkata		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Krasnoyarsk		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kuala_Lumpur		base-sys-share		share
@@ -4597,6 +4598,7 @@
 ./usr/share/zoneinfo/Asia/Ulaanbaatar		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Ulan_Bator		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Urumqi		base-sys-share		share
+./usr/share/zoneinfo/Asia/Ust-Nera		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Vientiane		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Vladivostok		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Yakutsk		base-sys-share		share
@@ -4712,6 +4714,7 @@
 ./usr/share/zoneinfo/Europe/Brussels		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Bucharest		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Budapest		base-sys-share		share
+./usr/share/zoneinfo/Europe/Busingen		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Chisinau		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Copenhagen		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Dublin		base-sys-share		share
