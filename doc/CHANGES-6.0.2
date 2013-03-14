@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.19 2013/02/11 20:43:01 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.20 2013/03/14 15:55:30 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -122,4 +122,9 @@ sys/kern/subr_pserialize.c			1.7
 
 	Avoid possible race with softint handler.
 	[rmind, ticket #811]
+
+external/historical/nawk/dist/tran.c		1.8
+
+	Fix awk segfault due to NULL dereference.  PR#47553.
+	[cheusov, ticket #836]
 
