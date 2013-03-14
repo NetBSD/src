@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.441.2.2 2012/08/08 15:51:06 martin Exp $	*/
+/*	$NetBSD: init_main.c,v 1.441.2.3 2013/03/14 16:33:10 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.441.2.2 2012/08/08 15:51:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.441.2.3 2013/03/14 16:33:10 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -238,11 +238,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.441.2.2 2012/08/08 15:51:06 martin E
 #include <net/raw_cb.h>
 
 #include <prop/proplib.h>
-
-#ifdef COMPAT_50
-#include <compat/sys/time.h>
-struct timeval50 boottime50;
-#endif
 
 #include <sys/userconf.h>
 
@@ -671,13 +666,7 @@ main(void)
 	 */
 	getnanotime(&time);
 	boottime = time;
-#ifdef COMPAT_50
-	{
-		struct timeval tv;
-		TIMESPEC_TO_TIMEVAL(&tv, &time);
-		timeval_to_timeval50(&tv, &boottime50);
-	}
-#endif
+
 	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & PK_MARKER) == 0);
