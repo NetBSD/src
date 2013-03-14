@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.34 2009/08/14 19:23:54 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.35 2013/03/14 11:53:34 nakayama Exp $
 
 SRCS+=	ffs.S
+.if (${MACHINE} != "sparc64") || defined(RUMPTOP)
+# provided by memcpyset.s on sparc64 32-bit kernel
 SRCS+=	memset.S
+.endif
 SRCS+=	strlen.S
 SRCS+=	htonl.S htons.S ntohl.S ntohs.S
 SRCS+=	random.S
