@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.18 2013/02/19 15:35:43 jmmv Exp $
+# $NetBSD: Makefile,v 1.19 2013/03/14 07:10:06 jmmv Exp $
 
 NOLINT=		# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 LIB=		atf-c++
 LIBISCXX=	yes
@@ -16,10 +16,10 @@ LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../external/gpl3/gcc/lib/libstdc++
 LIBDPLIBS+=     m	${.CURDIR}/../../../../../lib/libm
 
 
-SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}
 .PATH:		${SRCDIR}/atf-c++
 .PATH:		${SRCDIR}/atf-c++/detail
+.PATH:		${TOPDIR}/lib/libatf-c  # For bconfig.h
 
 CPPFLAGS+=	-I${.CURDIR}/../libatf-c
 CPPFLAGS+=	-I.
@@ -62,8 +62,8 @@ FILES+=		atf-c++.pc
 FILESDIR=	/usr/lib/pkgconfig
 
 realall: atf-c++.pc
-atf-c++.pc: Makefile atf-c++.pc.in
-	${TOOL_SED} -e 's,__ATF_VERSION__,0.17,g' \
+atf-c++.pc: Makefile atf-c++.pc.in bconfig.h
+	${TOOL_SED} -e 's,__ATF_VERSION__,${ATF_VERSION},g' \
 	    -e 's,__CXX__,g++,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \
