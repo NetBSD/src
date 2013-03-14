@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.19 2012/02/15 17:55:22 riz Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.19.2.1 2013/03/14 22:33:16 riz Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -67,7 +67,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.19 2012/02/15 17:55:22 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.19.2.1 2013/03/14 22:33:16 riz Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.22 2010/01/31 16:22:55 darrenr Exp";
 #endif
@@ -612,7 +612,6 @@ iplookup_iterate(void *data, int uid, void *ctx)
 	SPL_SCHED(s);
 	token = ipf_findtoken(iter.ili_key, uid, ctx);
 	if (token == NULL) {
-		RWLOCK_EXIT(&ipf_tokens);
 		SPL_X(s);
 		return ESRCH;
 	}
