@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.20 2013/03/14 15:55:30 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.21 2013/03/14 19:55:38 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -127,4 +127,27 @@ external/historical/nawk/dist/tran.c		1.8
 
 	Fix awk segfault due to NULL dereference.  PR#47553.
 	[cheusov, ticket #836]
+
+doc/3RDPARTY					patch
+share/zoneinfo/africa				patch
+share/zoneinfo/northamerica			patch
+share/zoneinfo/southamerica			patch
+distrib/sets/lists/base/mi			patch
+
+	Merge tzdata2013a and tzdata2013b from
+	ftp://ftp.iana.org/tz/releases/tzdata2013a.tar.gz and
+	ftp://ftp.iana.org/tz/releases/tzdata2013b.tar.gz .
+	Important changes from tzdata2012j to tzdata2013a:
+	 Chile's 2013 rules, and we guess rules for 2014 and later, will be
+	 the same as 2012, namely Apr Sun>=23 03:00 UTC to
+	 Sep Sun>=2 04:00 UTC.
+	 New Zones Asia/Khandyga, Asia/Ust-Nera, Europe/Busingen.
+	 Many changes affect historical time stamps before 1940.
+	Important changes from tzdata2013a to tzdata2013b:
+	 Haiti uses US daylight-saving rules this year, and presumably
+	 future years.
+	 Paraguay will end DST on March 24 this year.
+	 Morocco does not observe DST during Ramadan;
+	 try to predict Ramadan in Morocco as best we can. 
+	[apb, ticket #845]
 
