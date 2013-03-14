@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.21 2013/03/14 19:55:38 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.22 2013/03/14 21:56:58 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -150,4 +150,10 @@ distrib/sets/lists/base/mi			patch
 	 Morocco does not observe DST during Ramadan;
 	 try to predict Ramadan in Morocco as best we can. 
 	[apb, ticket #845]
+
+sys/secmodel/extensions/secmodel_extensions.c	1.5
+
+	Fix a crash which can happen with sysctl security.curtain=1
+	set.  PR#47598.
+	[martin, ticket #839]
 
