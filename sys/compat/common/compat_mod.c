@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.14 2011/08/08 23:44:06 jakllsch Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.14.8.1 2013/03/14 16:33:09 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14 2011/08/08 23:44:06 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14.8.1 2013/03/14 16:33:09 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -52,12 +52,18 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14 2011/08/08 23:44:06 jakllsch Exp
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
 
 #include <compat/common/compat_util.h>
+#include <compat/common/compat_mod.h>
 
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
+static struct sysctllog *compat_clog = NULL;
+#endif
+ 
 MODULE(MODULE_CLASS_MISC, compat, NULL);
 
 int	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
@@ -269,9 +275,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		sendsig_sigcontext_vec = sendsig_sigcontext;
 #endif
 #endif
-#if defined(COMPAT_09) || defined(COMPAT_43)
 		compat_sysctl_init();
-#endif
 		return 0;
 
 	case MODULE_CMD_FINI:
@@ -328,12 +332,31 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		rw_exit(&exec_lock);
 #endif
 #endif	/* COMPAT_16 */
-#if defined(COMPAT_09) || defined(COMPAT_43)
 		compat_sysctl_fini();
-#endif
 		return 0;
 
 	default:
 		return ENOTTY;
 	}
+}
+
+void
+compat_sysctl_init(void)
+{
+
+#if defined(COMPAT_09) || defined(COMPAT_43)
+	compat_sysctl_vfs(&compat_clog);
+#endif
+#if defined(COMPAT_50)
+	compat_sysctl_time(&compat_clog);
+#endif
+}
+
+void
+compat_sysctl_fini(void)
+{
+ 
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
+        sysctl_teardown(&compat_clog);
+#endif
 }
