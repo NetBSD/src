@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR_CP,v 1.2 2013/03/02 02:42:13 christos Exp $
+#	$NetBSD: INTEGRATOR_CP,v 1.3 2013/03/14 10:06:45 joerg Exp $
 #
 #	INTEGRATOR_CP -- ARM Integrator CP kernel
 #
@@ -42,6 +42,7 @@ file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# memory file system
 
 # File system options
 #options 	QUOTA		# legacy UFS quotas
