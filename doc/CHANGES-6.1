@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.108 2013/03/14 19:08:11 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.109 2013/03/14 19:56:24 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8614,4 +8614,27 @@ sys/kern/init_sysctl.c				1.195 via patch
 	Move boottime50 and its associated sysctl into the compat module.
 	PR#47579.
 	[pgoyette, ticket #837]
+
+doc/3RDPARTY					patch
+share/zoneinfo/africa				patch
+share/zoneinfo/northamerica			patch
+share/zoneinfo/southamerica			patch
+distrib/sets/lists/base/mi			patch
+
+	Merge tzdata2013a and tzdata2013b from
+	ftp://ftp.iana.org/tz/releases/tzdata2013a.tar.gz and
+	ftp://ftp.iana.org/tz/releases/tzdata2013b.tar.gz .
+	Important changes from tzdata2012j to tzdata2013a:
+	 Chile's 2013 rules, and we guess rules for 2014 and later, will be
+	 the same as 2012, namely Apr Sun>=23 03:00 UTC to
+	 Sep Sun>=2 04:00 UTC.
+	 New Zones Asia/Khandyga, Asia/Ust-Nera, Europe/Busingen.
+	 Many changes affect historical time stamps before 1940.
+	Important changes from tzdata2013a to tzdata2013b:
+	 Haiti uses US daylight-saving rules this year, and presumably
+	 future years.
+	 Paraguay will end DST on March 24 this year.
+	 Morocco does not observe DST during Ramadan;
+	 try to predict Ramadan in Morocco as best we can. 
+	[apb, ticket #845]
 
