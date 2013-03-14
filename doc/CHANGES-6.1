@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.110 2013/03/14 22:04:32 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.111 2013/03/14 22:37:10 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8705,4 +8705,18 @@ lib/libc/rpc/xdr_stdio.c			1.19
 	Vice President, Linux and Virtualization at Oracle Corporation.
 	This fixes PR lib/45293 by Pedro Giffuni.
 	[tron, ticket #843]
+
+src/sys/dist/ipf/netinet/fil.c			patch
+src/sys/dist/ipf/netinet/ip_lookup.c		patch
+
+	Fix some problems in IPF where a lock may be left locked
+	when it should be released or unlocked when it's not locked.
+	[chs, ticket #844]
+
+lib/libc/arch/alpha/gen/__longjmp14.c		1.6-1.7
+lib/libc/arch/alpha/gen/__setjmp14.S		1.6
+
+	Fix longjmp/setjmp on alpha for statically linked programs
+	such as those in /rescue.
+	[martin, ticket #846]
 
