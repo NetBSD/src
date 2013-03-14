@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.7.4.1 2012/12/11 04:26:26 riz Exp $ */
+/* $NetBSD: tparm.c,v 1.7.4.2 2013/03/14 15:40:58 riz Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.7.4.1 2012/12/11 04:26:26 riz Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.7.4.2 2013/03/14 15:40:58 riz Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -453,7 +453,7 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 			break;
 		case 't': /* then */
 			pop(&val, NULL, &stack);
-			if (val != 0) {
+			if (val == 0) {
 				l = 0;
 				for (; *str != '\0'; str++) {
 					if (*str != '%')
@@ -464,10 +464,14 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 					else if (*str == ';') {
 						if (l > 0)
 							l--;
-						else
+						else {
+							str++;
 							break;
-					} else if (*str == 'e' && l == 0)
+						}
+					} else if (*str == 'e' && l == 0) {
+						str++;
 						break;
+					}
 				}
 			}
 			break;
@@ -482,8 +486,10 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 				else if (*str == ';') {
 					if (l > 0)
 						l--;
-					else
+					else {
+						str++;
 						break;
+					}
 				}
 			}
 			break;
