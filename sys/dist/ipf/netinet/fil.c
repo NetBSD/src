@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.53 2012/02/15 17:55:21 riz Exp $	*/
+/*	$NetBSD: fil.c,v 1.53.2.1 2013/03/14 22:33:15 riz Exp $	*/
 
 /*
  * Copyright (C) 1993-2010 by Darren Reed.
@@ -157,7 +157,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.53 2012/02/15 17:55:21 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.53.2.1 2013/03/14 22:33:15 riz Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.154 2010/02/24 10:07:57 darrenr Exp";
@@ -6617,9 +6617,6 @@ ipf_deltoken(int type, int uid, void *ptr)
 /* matches the tuple (type, uid, ptr).  If one cannot be found then one is  */
 /* allocated.  If one is found then it is moved to the top of the list of   */
 /* currently active tokens.                                                 */
-/*                                                                          */
-/* NOTE: It is by design that this function returns holding a read lock on  */
-/*       ipf_tokens.  Callers must make sure they release it!               */
 /* ------------------------------------------------------------------------ */
 ipftoken_t *
 ipf_findtoken(int type, int uid, void *ptr)
@@ -6638,8 +6635,10 @@ ipf_findtoken(int type, int uid, void *ptr)
 	if (it == NULL) {
 		it = new;
 		new = NULL;
-		if (it == NULL)
+		if (it == NULL) {
+			RWLOCK_EXIT(&ipf_tokens);
 			return NULL;
+		}
 		it->ipt_data = NULL;
 		it->ipt_ctx = ptr;
 		it->ipt_uid = uid;
@@ -7014,7 +7013,6 @@ ipf_genericiter(void *data, int uid, void *ctx)
 		RWLOCK_EXIT(&ipf_tokens);
 	} else
 		error = EFAULT;
-	RWLOCK_EXIT(&ipf_tokens);
 
 	return error;
 }
