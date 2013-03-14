@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.12 2013/01/17 21:42:22 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.13 2013/03/14 20:42:57 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -76,7 +76,7 @@ getenv_r(const char *name, char *buf, size_t buflen)
 }
 #endif
 
-#if defined(__sun__)
+#if defined(__sun__) && !defined(HAVE_POSIX_MEMALIGN)
 #include <sys/sysmacros.h>
 
 /* Solarisa 10 has memalign() but no posix_memalign() */
