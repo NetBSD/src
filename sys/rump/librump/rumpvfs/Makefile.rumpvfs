@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.35 2012/05/13 09:42:36 dholland Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.36 2013/03/15 12:09:59 pooka Exp $
 #
-
-.include "${RUMPTOP}/Makefile.rump"
 
 LIB=	rumpvfs
 
@@ -68,6 +66,8 @@ SHLIB_MAJOR=    0
 SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
+
+.include "${RUMPTOP}/Makefile.rump"
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
