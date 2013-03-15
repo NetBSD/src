@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.72 2013/03/15 12:15:52 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.73 2013/03/15 12:18:41 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -44,7 +44,7 @@ SRCS+=		linksyms_sun.c
 PATH:		${RUMPTOP}
 .else
 LDFLAGS+=	-Wl,-T ${RUMPTOP}/ldscript.rump
-.fi
+.endif
 
 RUMP_DIAGNOSTIC?=yes
 .if ${RUMP_DIAGNOSTIC} == "yes"
