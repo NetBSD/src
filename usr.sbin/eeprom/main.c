@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2009/04/29 09:13:58 nakayama Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2013/03/15 20:22:44 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.21 2009/04/29 09:13:58 nakayama Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2013/03/15 20:22:44 nakayama Exp $");
 #endif
 
 #include <sys/param.h>
@@ -43,16 +43,15 @@ __RCSID("$NetBSD: main.c,v 1.21 2009/04/29 09:13:58 nakayama Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
-#ifdef __sun__
+#if defined(USE_EEPROM) || defined(USE_OPENPROM)
 #include <machine/eeprom.h>
 #endif
 
 #include "defs.h"
 #include "pathnames.h"
 
-#if defined(__sparc__)
-# define USE_OPENPROM
-# if defined(__arch64__)
+#ifdef USE_OPENPROM
+# ifndef USE_EEPROM
 #  define ee_action(a,b)
 #  define ee_dump()
 #  define ee_updatechecksums() (void)0

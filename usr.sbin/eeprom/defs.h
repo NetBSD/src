@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.13 2009/04/29 09:13:58 nakayama Exp $	*/
+/*	$NetBSD: defs.h,v 1.14 2013/03/15 20:22:44 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ struct	strvaltabent {
 	u_char	sv_val;			/* ... and the value */
 };
 
-#ifdef __sparc__
+#ifdef USE_OPENPROM
 struct	opiocdesc;
 /*
  * This is an entry in a table which describes a set of `exceptions'.
@@ -88,7 +88,7 @@ struct	extabent {
 		    struct opiocdesc *, char *);
 					/* handler function for this entry */
 };
-#endif /* __sparc__ */
+#endif
 
 #ifdef USE_OPENFIRM
 struct	extabent {
@@ -129,13 +129,11 @@ u_char	ee_checksum (u_char *, size_t);
 void	ee_updatechecksums (void);
 void	ee_verifychecksums (void);
 
-#ifdef __sparc__
 /* Sparc Openprom handlers. */
 char	*op_handler (char *, char *);
 void	op_action (char *, char *);
 void	op_dump (void);
 int	check_for_openprom (void);
-#endif /* __sparc__ */
 
 /* OpenFirmware handlers. */
 char	*of_handler (char *, char *);
