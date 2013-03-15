@@ -1,4 +1,4 @@
-.\" $NetBSD: security.7,v 1.8 2011/03/30 11:41:48 jruoho Exp $
+.\" $NetBSD: security.7,v 1.9 2013/03/15 19:32:31 njoly Exp $
 .\"
 .\" Copyright (c) 2006, 2011 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -429,7 +429,7 @@ In particular, it is possible to configure
 to automatically audit all third-party packages installed via
 .Xr pkgsrc 7 .
 To audit for any known vulnerabilities on daily basis, set the following in
-.Fa /etc/daily.conf :
+.Pa /etc/daily.conf :
 .Bd -literal -offset indent
 fetch_pkg_vulnerabilities=YES
 .Ed
