@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.309 2012/05/06 17:23:10 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.310 2013/03/15 16:16:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.309 2012/05/06 17:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.310 2013/03/15 16:16:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3033,6 +3033,7 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 		gc_cmd.opcode = GET_CONFIGURATION;
 		_lto2b(last_feature, gc_cmd.start_at_feature);
 		_lto2b(feat_tbl_len, gc_cmd.data_len);
+		memset(gc, 0, feat_tbl_len);
 
 		error = scsipi_command(periph,
 			(void *)&gc_cmd, sizeof(gc_cmd),
@@ -3044,7 +3045,7 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 		}
 
 		features_len = _4btol(gc->data_len);
-		if (features_len < 4)
+		if (features_len < 4 || features_len > feat_tbl_len)
 			break;
 
 		pos  = 0;
