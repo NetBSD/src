@@ -1,4 +1,4 @@
-/*	$NetBSD: scsitest.c,v 1.5 2012/10/27 17:18:40 chs Exp $	*/
+/*	$NetBSD: scsitest.c,v 1.6 2013/03/15 16:14:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsitest.c,v 1.5 2012/10/27 17:18:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsitest.c,v 1.6 2013/03/15 16:14:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -176,7 +176,7 @@ scsitest_request(struct scsipi_channel *chan,
 		break;
 	}
 	case GET_CONFIGURATION: {
-
+		memset(xs->data, 0, sizeof(struct scsipi_get_conf_data));
 		break;
 	}
 	case SCSI_READ_6_COMMAND: {
