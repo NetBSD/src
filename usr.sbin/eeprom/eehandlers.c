@@ -1,4 +1,4 @@
-/*	$NetBSD: eehandlers.c,v 1.16 2013/02/03 15:30:04 christos Exp $	*/
+/*	$NetBSD: eehandlers.c,v 1.17 2013/03/15 20:22:44 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,9 +43,6 @@
 #include <sys/inttypes.h>
 
 #include <machine/eeprom.h>
-#ifdef __sparc__
-#include <machine/openpromio.h>
-#endif /* __sparc__ */
 
 #include "defs.h"
 
