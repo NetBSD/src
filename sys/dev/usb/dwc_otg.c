@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.47 2013/02/23 08:22:05 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.48 2013/03/16 12:05:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.47 2013/02/23 08:22:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.48 2013/03/16 12:05:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2987,7 +2987,7 @@ dwc_otg_host_data_tx(struct dwc_otg_td *td)
 					return 0;	/* complete */
 
 				/*
-				 * Else we need to transmit a short
+				 * Else we need to transmit a 0 length
 				 * packet:
 				 */
 			}
@@ -3682,7 +3682,6 @@ dwc_otg_setup_ctrl_chain(usbd_xfer_handle xfer)
 	uint32_t len = UGETW(req->wLength);
 	struct dwc_otg_std_temp temp;	/* XXX */
 	struct dwc_otg_td *td;
-	int done;
 
 	DPRINTFN(3, "type=0x%02x, request=0x%02x, wValue=0x%04x,"
 	    "wIndex=0x%04x len=%d, addr=%d, endpt=%d, dir=%s, speed=%d\n",
@@ -3712,11 +3711,8 @@ dwc_otg_setup_ctrl_chain(usbd_xfer_handle xfer)
 	temp.short_pkt = 1;		/* We're 8 bytes this is short for HS */
 	temp.setup_alt_next = 0;	/* XXXNH */
 
-	DPRINTF("SE temp.len %d temp.pc %p\n", temp.len, temp.buf);
-
 	dwc_otg_setup_standard_chain_sub(&temp);
 
-	done = 0;
 	KASSERT((temp.buf == NULL) == (temp.len == 0));
 	if (dir == UT_READ) {
 		temp.func = &dwc_otg_host_data_rx;
@@ -3725,22 +3721,15 @@ dwc_otg_setup_ctrl_chain(usbd_xfer_handle xfer)
 	}
 
 	/* Optional Data stage */
-	while (done != len) {
+	if (len != 0) {
 
 		/* DATA0 / DATA1 message */
 
-		temp.buf = len ? KERNADDR(&xfer->dmabuf, done) : NULL;
-		temp.len = len - done;
+		temp.buf = KERNADDR(&xfer->dmabuf, 0);
+		temp.len = len;
 		temp.short_pkt = ( (xfer->flags & USBD_FORCE_SHORT_XFER) ? 0 : 1);
 
-		if (temp.len > UGETW(ed->wMaxPacketSize))
-			temp.len = UGETW(ed->wMaxPacketSize);
-
 		dwc_otg_setup_standard_chain_sub(&temp);
-
-		done += temp.len;
-		if (temp.len)
-			temp.buf = (char *)KERNADDR(&xfer->dmabuf, 0) + done;
 	}
 
 	/* Status Stage */
@@ -3783,9 +3772,6 @@ dwc_otg_setup_data_chain(usbd_xfer_handle xfer)
 	uint8_t dir = UE_GET_DIR(ed->bEndpointAddress);
 	struct dwc_otg_std_temp temp;	/* XXX */
 	struct dwc_otg_td *td;
-	int off;
-	int done;
-	int len;
 
 	DPRINTFN(3, "xfer=%p, len=%d, flags=%d, addr=%d, endpt=%d, dir %s\n",
 	    xfer, xfer->length, xfer->flags, dev->address,
@@ -3806,29 +3792,26 @@ dwc_otg_setup_data_chain(usbd_xfer_handle xfer)
 	temp.did_stall = 0; /* !xfer->flags_int.control_stall; */
 	temp.func = NULL;
 
-	done = 0;
 	if (dir == UE_DIR_IN) {
 		temp.func = &dwc_otg_host_data_rx;
 	} else {
 		temp.func = &dwc_otg_host_data_tx;
 	}
 
-	/* Data stage */
-	off = 0;
-	len = xfer->length;
-	while (len > 0) {
-		/* DATA0 / DATA1 message */
-		temp.buf = KERNADDR(&xfer->dmabuf, off);
-		temp.len = MIN(len, UGETW(ed->wMaxPacketSize));
+	/* DATA0 / DATA1 message */
+	temp.buf = KERNADDR(&xfer->dmabuf, 0);
+	temp.len = xfer->length;
+	if (temp.len == 0) {
+
+		/* make sure that we send an USB packet */
+
+		temp.short_pkt = 0;
+
+	} else {
 		temp.short_pkt = (xfer->flags & USBD_FORCE_SHORT_XFER) ? 0 : 1;
-		if (len <= UGETW(ed->wMaxPacketSize))
-			temp.setup_alt_next = 0;
-
-		dwc_otg_setup_standard_chain_sub(&temp);
-
-		len -= temp.len;
-		off += temp.len;
 	}
+
+	dwc_otg_setup_standard_chain_sub(&temp);
 
 	/* must have at least one frame! */
 	td = temp.td;
