@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unpriv.c,v 1.9 2012/04/04 18:53:34 njoly Exp $	*/
+/*	$NetBSD: t_unpriv.c,v 1.10 2013/03/16 05:45:37 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@ owner(const atf_tc_t *tc, const char *mp)
 	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 	if (rump_sys_setuid(1) == -1)
 		atf_tc_fail_errno("setuid");
+	if (FSTYPE_ZFS(tc))
+		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
         if (rump_sys_chown(".", 1, -1) != -1 || errno != EPERM)
 		atf_tc_fail_errno("chown");
         if (rump_sys_chmod(".", 0000) != -1 || errno != EPERM) 
@@ -93,6 +95,8 @@ dirperms(const atf_tc_t *tc, const char *mp)
 	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 	if (rump_sys_setuid(1) == -1)
 		atf_tc_fail_errno("setuid");
+	if (FSTYPE_ZFS(tc))
+		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
         if (rump_sys_open(name, O_RDWR|O_CREAT, 0666) != -1 || errno != EACCES)
 		atf_tc_fail_errno("open");
 	rump_pub_lwproc_releaselwp();
@@ -135,6 +139,8 @@ times(const atf_tc_t *tc, const char *mp)
 	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 	if (rump_sys_setuid(1) == -1)
 		atf_tc_fail_errno("setuid");
+	if (FSTYPE_ZFS(tc))
+		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	if (rump_sys_utimes(name, NULL) != -1 || errno != EACCES)
 		atf_tc_fail_errno("utimes");
 	rump_pub_lwproc_releaselwp();
@@ -174,6 +180,8 @@ flags(const atf_tc_t *tc, const char *mp)
 
 	if (rump_sys_stat(name, &st) == -1)
 		atf_tc_fail_errno("stat");
+	if (FSTYPE_ZFS(tc))
+		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	if (rump_sys_chflags(name, st.st_flags) == -1) {
 		if (errno == EOPNOTSUPP)
 			atf_tc_skip("file flags not supported by file system");
