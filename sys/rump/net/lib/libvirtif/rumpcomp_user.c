@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.2 2013/03/13 21:17:32 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.3 2013/03/16 21:37:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -25,6 +25,7 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _KERNEL
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -180,3 +181,4 @@ rumpcomp_virtif_destroy(struct virtif_user *viu)
 
 	rumpuser_component_schedule(cookie);
 }
+#endif
