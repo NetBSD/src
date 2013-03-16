@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.87 2012/10/25 15:05:23 tsutsui Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.88 2013/03/16 17:10:17 christos Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -790,6 +790,12 @@ message set_gnusrc
 
 message set_xsrc
 {X11 sources}
+
+message set_debug
+{Debug sets}
+
+message set_xdebug
+{Debug X11 sets}
 
 message cur_distsets_row
 {%-30s %3s}
