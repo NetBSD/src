@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.181 2013/03/16 17:10:17 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.182 2013/03/16 22:16:02 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,7 @@
 #define MD_SETS_SELECTED_NOX SET_KERNEL_1, SET_SYSTEM, SET_MD
 #endif
 #ifndef MD_SETS_VALID
-#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD, SET_SOURCE SET_DEBUGGING
+#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD, SET_SOURCE, SET_DEBUGGING
 #endif
 
 #define MAX_CD_DEVS	256	/* how many cd drives do we expect to attach */
