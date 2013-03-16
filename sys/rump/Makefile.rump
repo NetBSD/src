@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.74 2013/03/15 12:42:18 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.75 2013/03/16 21:38:21 christos Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -83,22 +83,27 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 # Support for component-specific hypercalls
 #
 
+
 .ifdef RUMPCOMP_USER
+.if empty(DESTDIR)
+DESTDIR=/
+.endif
+BUILDRUMP_CPPFLAGS ?= -isysroot ${DESTDIR}
 rumpcomp_user.d: rumpcomp_user.c
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${BUILDRUMP_CPPFLAGS:U-isysroot ${DESTDIR}} ${RUMPCOMP_USER_CPPFLAGS} ${.CURDIR}/rumpcomp_user.c
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${.ALLSRC:M*.c}
 
 rumpcomp_user.o: rumpcomp_user.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS:U-isysroot ${DESTDIR}} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.CURDIR}/rumpcomp_user.c
+	${CC} -o ${.TARGET} ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:M*.c}
 
 rumpcomp_user.pico: rumpcomp_user.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} -fPIC -DPIC ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS:U-isysroot ${DESTDIR}} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.CURDIR}/rumpcomp_user.c
+	${CC} -o ${.TARGET} -fPIC -DPIC ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:M*.c}
 
 rumpcomp_user.po: rumpcomp_user.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS:U-isysroot ${DESTDIR}} ${BUILDRUMP_CPPFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.CURDIR}/rumpcomp_user.c
+	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:M*.c}
 
 RUMPCOMP_USEROBJ=rumpcomp_user.*o
 SRCS+=rumpcomp_user.c
