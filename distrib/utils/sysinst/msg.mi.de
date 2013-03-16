@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.71 2012/10/25 15:05:22 tsutsui Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.72 2013/03/16 17:10:16 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -849,6 +849,12 @@ message set_gnusrc
 
 message set_xsrc
 {X11 Quelltexte}
+
+message set_debug
+{Debuggen Sets}
+
+message set_xdebug
+{Debuggen X11 Sets}
 
 message cur_distsets_row
 {%-27s %3s}
