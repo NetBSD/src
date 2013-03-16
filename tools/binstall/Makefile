@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2013/03/16 02:51:25 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2013/03/16 22:32:50 christos Exp $
 
+NOMAN=
 .include <bsd.own.mk>
 
 HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-install
@@ -10,7 +11,6 @@ CPPFLAGS+=	-DTARGET_STRIP=\"${STRIP}\"
 # Prevent Makefile.host from trying to use the version of libnbcompat
 # from ${TOOLDIR}.
 NOCOMPATLIB=
-
 
 # Use uninstalled copy of host-mkdep
 HOST_MKDEP_OBJ!= cd ${.CURDIR}/../host-mkdep && ${PRINTOBJDIR}
