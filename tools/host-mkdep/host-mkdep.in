@@ -1,6 +1,6 @@
 #!@BSHELL@ -
 #
-#	$NetBSD: host-mkdep.in,v 1.27 2013/03/14 14:55:35 joerg Exp $
+#	$NetBSD: host-mkdep.in,v 1.28 2013/03/16 02:51:56 christos Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -231,7 +231,7 @@ else
 		file=${file%.*}
 		set_objlist $file
 
-		@CPP@ "$@" $f | @AWK@ '
+		((@CPP@ "$@" $f; echo $? >&3) | @AWK@ '
 			/^#/ {
 				# Be as tolerant as possible.
 				sub(/^#(line)? [ 0-9]*\"?/, "")
@@ -247,7 +247,7 @@ else
 				print "'"$objlist"'" ": " $0
 				'"$AWK_OPTIONAL"'
 			}
-		' >> $TMP
+		' >> $TMP) 3>&1 | (read a; exit $a)
 	done
 fi
 
