@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.5 2013/03/12 14:19:34 christos Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.6 2013/03/16 15:48:21 skrll Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -23,7 +23,12 @@
  * Driver definitions.
  */
 #define URTWN_RX_LIST_COUNT		1
+#ifndef URTWN_DOTG_WORKAROUND
 #define URTWN_TX_LIST_COUNT		8
+#else
+#define URTWN_TX_LIST_COUNT		1
+#endif
+
 #define URTWN_HOST_CMD_RING_COUNT	32
 
 #define URTWN_RXBUFSZ	(16 * 1024)
