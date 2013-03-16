@@ -1,4 +1,4 @@
-#	$NetBSD: std.rpi,v 1.6 2013/02/19 10:58:35 skrll Exp $
+#	$NetBSD: std.rpi,v 1.7 2013/03/16 15:48:21 skrll Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
@@ -13,6 +13,7 @@ options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	TPIDRPRW_IS_CURCPU
 options 	KERNEL_BASE_EXT=0xc0000000
+options 	URTWN_DOTG_WORKAROUND
 
 options 	EVBARM_BOARDTYPE="rpi"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.rpi"
