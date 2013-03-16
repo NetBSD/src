@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.164 2013/03/16 17:10:16 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.165 2013/03/16 22:16:02 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -132,7 +132,7 @@ enum {
 
     /* Debug sets */
     SET_DEBUG,
-    SET_XDEBUG,
+    SET_X11_DEBUG,
 
     SET_LAST,
     SET_GROUP,		/* Start of submenu */
@@ -160,7 +160,7 @@ enum {
 #define SET_SOURCE SET_SYSSRC, SET_SRC, SET_SHARESRC, SET_GNUSRC, SET_XSRC
 
 /* All debug sets */
-#define SET_DEBUGGING SET_DEBUG, SET_XDEBUG
+#define SET_DEBUGGING SET_DEBUG, SET_X11_DEBUG
 
 /* Set list flags */
 #define SFLAG_MINIMAL	1
