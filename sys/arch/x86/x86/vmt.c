@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.7 2011/10/21 10:10:28 jmcneill Exp $ */
+/* $NetBSD: vmt.c,v 1.8 2013/03/16 01:26:53 jmmv Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 #include <sys/timetc.h>
 #include <sys/module.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -182,6 +183,7 @@ struct vmt_event {
 struct vmt_softc {
 	device_t		sc_dev;
 
+	struct sysctllog	*sc_log;
 	struct vm_rpc		sc_tclo_rpc;
 	bool			sc_tclo_rpc_open;
 	char			*sc_rpc_buf;
@@ -193,6 +195,10 @@ struct vmt_softc {
 	struct callout		sc_tick;
 	struct callout		sc_tclo_tick;
 
+#define VMT_CLOCK_SYNC_PERIOD_SECONDS 60
+	int			sc_clock_sync_period_seconds;
+	struct callout		sc_clock_sync_tick;
+
 	struct vmt_event	sc_ev_power;
 	struct vmt_event	sc_ev_reset;
 	struct vmt_event	sc_ev_sleep;
@@ -203,6 +209,10 @@ struct vmt_softc {
 
 CFATTACH_DECL_NEW(vmt, sizeof(struct vmt_softc),
 	vmt_match, vmt_attach, vmt_detach, NULL);
+
+static int vmt_sysctl_setup_root(device_t);
+static int vmt_sysctl_setup_clock_sync(device_t, const struct sysctlnode *);
+static int vmt_sysctl_update_clock_sync_period(SYSCTLFN_PROTO);
 
 static void vm_cmd(struct vm_backdoor *);
 static void vm_ins(struct vm_backdoor *);
@@ -230,6 +240,7 @@ static void vmt_sync_guest_clock(struct vmt_softc *);
 
 static void vmt_tick(void *);
 static void vmt_tclo_tick(void *);
+static void vmt_clock_sync_tick(void *);
 static bool vmt_shutdown(device_t, int);
 static void vmt_pswitch_event(void *);
 
@@ -294,14 +305,27 @@ vmt_type(void)
 static void
 vmt_attach(device_t parent, device_t self, void *aux)
 {
+	int rv;
 	struct vmt_softc *sc = device_private(self);
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", vmt_type());
 
 	sc->sc_dev = self;
+	sc->sc_log = NULL;
+
 	callout_init(&sc->sc_tick, 0);
 	callout_init(&sc->sc_tclo_tick, 0);
+	callout_init(&sc->sc_clock_sync_tick, 0);
+
+	sc->sc_clock_sync_period_seconds = VMT_CLOCK_SYNC_PERIOD_SECONDS;
+
+	rv = vmt_sysctl_setup_root(self);
+	if (rv != 0) {
+		aprint_error_dev(self, "failed to initialize sysctl "
+		    "(err %d)\n", rv);
+		goto free;
+	}
 
 	sc->sc_rpc_buf = kmem_alloc(VMT_RPC_BUFLEN, KM_SLEEP);
 	if (sc->sc_rpc_buf == NULL) {
@@ -346,6 +370,10 @@ vmt_attach(device_t parent, device_t self, void *aux)
 	callout_schedule(&sc->sc_tclo_tick, hz);
 	sc->sc_tclo_ping = 1;
 
+	callout_setfunc(&sc->sc_clock_sync_tick, vmt_clock_sync_tick, sc);
+	callout_schedule(&sc->sc_clock_sync_tick,
+	    mstohz(sc->sc_clock_sync_period_seconds * 1000));
+
 	vmt_sync_guest_clock(sc);
 
 	return;
@@ -354,6 +382,8 @@ free:
 	if (sc->sc_rpc_buf)
 		kmem_free(sc->sc_rpc_buf, VMT_RPC_BUFLEN);
 	pmf_device_register(self, NULL, NULL);
+	if (sc->sc_log)
+		sysctl_teardown(&sc->sc_log);
 }
 
 static int
@@ -376,10 +406,109 @@ vmt_detach(device_t self, int flags)
 	callout_halt(&sc->sc_tclo_tick, NULL);
 	callout_destroy(&sc->sc_tclo_tick);
 
+	callout_halt(&sc->sc_clock_sync_tick, NULL);
+	callout_destroy(&sc->sc_clock_sync_tick);
+
 	if (sc->sc_rpc_buf)
 		kmem_free(sc->sc_rpc_buf, VMT_RPC_BUFLEN);
 
+	if (sc->sc_log) {
+		sysctl_teardown(&sc->sc_log);
+		sc->sc_log = NULL;
+	}
+
 	return 0;
+}
+
+static int
+vmt_sysctl_setup_root(device_t self)
+{
+	const struct sysctlnode *machdep_node, *vmt_node;
+	struct vmt_softc *sc = device_private(self);
+	int rv;
+
+	rv = sysctl_createv(&sc->sc_log, 0, NULL, &machdep_node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(&sc->sc_log, 0, &machdep_node, &vmt_node,
+	    0, CTLTYPE_NODE, device_xname(self), NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	if (rv != 0)
+		goto fail;
+
+	rv = vmt_sysctl_setup_clock_sync(self, vmt_node);
+	if (rv != 0)
+		goto fail;
+
+	return 0;
+
+fail:
+	sysctl_teardown(&sc->sc_log);
+	sc->sc_log = NULL;
+
+	return rv;
+}
+
+static int
+vmt_sysctl_setup_clock_sync(device_t self, const struct sysctlnode *root_node)
+{
+	const struct sysctlnode *node, *period_node;
+	struct vmt_softc *sc = device_private(self);
+	int rv;
+
+	rv = sysctl_createv(&sc->sc_log, 0, &root_node, &node,
+	    0, CTLTYPE_NODE, "clock_sync", NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	if (rv != 0)
+		return rv;
+
+	rv = sysctl_createv(&sc->sc_log, 0, &node, &period_node,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "period",
+	    SYSCTL_DESCR("Period, in seconds, at which to update the "
+	        "guest's clock"),
+	    vmt_sysctl_update_clock_sync_period, 0, (void *)sc, 0,
+	    CTL_CREATE, CTL_EOL);
+	return rv;
+}
+
+static int
+vmt_sysctl_update_clock_sync_period(SYSCTLFN_ARGS)
+{
+	int error, period;
+	struct sysctlnode node;
+	struct vmt_softc *sc;
+
+	node = *rnode;
+	sc = (struct vmt_softc *)node.sysctl_data;
+
+	period = sc->sc_clock_sync_period_seconds;
+	node.sysctl_data = &period;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (sc->sc_clock_sync_period_seconds != period) {
+		callout_halt(&sc->sc_clock_sync_tick, NULL);
+		sc->sc_clock_sync_period_seconds = period;
+		if (sc->sc_clock_sync_period_seconds > 0)
+			callout_schedule(&sc->sc_clock_sync_tick,
+			    mstohz(sc->sc_clock_sync_period_seconds * 1000));
+	}
+	return 0;
+}
+
+static void
+vmt_clock_sync_tick(void *xarg)
+{
+	struct vmt_softc *sc = xarg;
+
+	vmt_sync_guest_clock(sc);
+
+	callout_schedule(&sc->sc_clock_sync_tick,
+	    mstohz(sc->sc_clock_sync_period_seconds * 1000));
 }
 
 static void
