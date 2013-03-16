@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmt.4,v 1.3 2011/10/18 14:25:06 wiz Exp $
+.\"	$NetBSD: vmt.4,v 1.4 2013/03/16 01:26:53 jmmv Exp $
 .\"	$OpenBSD: vmt.4,v 1.4 2010/10/26 05:07:31 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -15,7 +15,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd October 18, 2011
+.Dd March 16, 2013
 .Dt VMT 4 x86
 .Os
 .Sh NAME
@@ -44,6 +44,25 @@ host.
 .Pp
 .Nm
 reports the guest's hostname and first non-loopback IP address to the host.
+.Ss Clock synchronization
+The
+.Nm
+driver synchronizes the virtual machine's clock with the host clock in the
+following situations:
+.Bl -bullet
+.It
+When the virtual machine resumes after having been suspended.
+.It
+Periodically with the interval indicated by the
+.Va machdep.vmt0.clock_sync.period
+.Xr sysctl 8
+variable.
+This is done so that the virtual machine can keep its clock synchronized
+when the host is suspended, because in this case the
+.Nm
+driver receives no notification of such an event.
+Setting this tunable to zero disables clock synchronization.
+.El
 .Sh SEE ALSO
 .\" .Xr cpu 4 ,
 .Xr powerd 8
