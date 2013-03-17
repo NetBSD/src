@@ -1,4 +1,4 @@
-/* $NetBSD: t_io.c,v 1.1 2013/02/28 21:52:02 christos Exp $ */
+/* $NetBSD: t_io.c,v 1.2 2013/03/17 05:02:13 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_io.c,v 1.1 2013/02/28 21:52:02 christos Exp $");
+__RCSID("$NetBSD: t_io.c,v 1.2 2013/03/17 05:02:13 jmmv Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -55,6 +55,7 @@ ATF_TC_BODY(bad_big5_wprintf, tc)
 {
 	wchar_t ibuf[] = { 0xcf10, 0 };
 	setlocale(LC_CTYPE, "zh_TW.Big5");
+	atf_tc_expect_fail("PR lib/47660");
 	ATF_REQUIRE_EQ(wprintf(L"%ls\n", ibuf), -1);
 }
 
@@ -154,6 +155,7 @@ ATF_TC_BODY(bad_eucJP_getwc, tc)
 	setlocale(LC_CTYPE, "ja_JP.eucJP");
 	// WTF? Not even returning what it read?
 	ATF_CHECK_EQ(getwc(fp), 0xcf20);
+	atf_tc_expect_fail("PR lib/47660");
 	ATF_REQUIRE_EQ(getwc(fp), WEOF);
 	fclose(fp);
 }
