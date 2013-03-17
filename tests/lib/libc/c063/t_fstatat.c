@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fstatat.c,v 1.1 2012/11/18 17:41:54 manu Exp $ */
+/*	$NetBSD: t_fstatat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fstatat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
+__RCSID("$NetBSD: t_fstatat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -48,12 +48,11 @@ __RCSID("$NetBSD: t_fstatat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
 #define BASELINK "symlink"
 #define FILEERR "dir/symlink"
 
-ATF_TC_WITH_CLEANUP(fstatat_fd);
+ATF_TC(fstatat_fd);
 ATF_TC_HEAD(fstatat_fd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fstatat works with fd");
 }
-
 ATF_TC_BODY(fstatat_fd, tc)
 {
 	int dfd;
@@ -72,20 +71,12 @@ ATF_TC_BODY(fstatat_fd, tc)
 	ATF_REQUIRE(memcmp(&st1, &st2, sizeof(st1)) == 0);
 }
 
-ATF_TC_CLEANUP(fstatat_fd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(fstatat_fdcwd);
+ATF_TC(fstatat_fdcwd);
 ATF_TC_HEAD(fstatat_fdcwd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 			  "See that fstatat works with fd as AT_FDCWD");
 }
-
 ATF_TC_BODY(fstatat_fdcwd, tc)
 {
 	int fd;
@@ -99,20 +90,12 @@ ATF_TC_BODY(fstatat_fdcwd, tc)
 	ATF_REQUIRE(fstatat(AT_FDCWD, BASEFILE, &st, 0) == 0);
 }
 
-ATF_TC_CLEANUP(fstatat_fdcwd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(fstatat_fdcwderr);
+ATF_TC(fstatat_fdcwderr);
 ATF_TC_HEAD(fstatat_fdcwderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 		  "See that fstatat fails with fd as AT_FDCWD and bad path");
 }
-
 ATF_TC_BODY(fstatat_fdcwderr, tc)
 {
 	struct stat st;
@@ -121,19 +104,11 @@ ATF_TC_BODY(fstatat_fdcwderr, tc)
 	ATF_REQUIRE(fstatat(AT_FDCWD, FILEERR, &st, 0) == -1);
 }
 
-ATF_TC_CLEANUP(fstatat_fdcwderr, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(fstatat_fderr1);
+ATF_TC(fstatat_fderr1);
 ATF_TC_HEAD(fstatat_fderr1, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fstatat fail with bad path");
 }
-
 ATF_TC_BODY(fstatat_fderr1, tc)
 {
 	int dfd;
@@ -143,22 +118,13 @@ ATF_TC_BODY(fstatat_fderr1, tc)
 	ATF_REQUIRE((dfd = open(DIR, O_RDONLY, 0)) != -1);
 	ATF_REQUIRE(fstatat(dfd, FILEERR, &st, 0) == -1);
 	ATF_REQUIRE(close(dfd) == 0);
-	
 }
 
-ATF_TC_CLEANUP(fstatat_fderr1, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(fstatat_fderr2);
+ATF_TC(fstatat_fderr2);
 ATF_TC_HEAD(fstatat_fderr2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fstatat fails with bad fdat");
 }
-
 ATF_TC_BODY(fstatat_fderr2, tc)
 {
 	int dfd;
@@ -175,19 +141,11 @@ ATF_TC_BODY(fstatat_fderr2, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(fstatat_fderr2, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(fstatat_fderr3);
+ATF_TC(fstatat_fderr3);
 ATF_TC_HEAD(fstatat_fderr3, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fstatat fails with fd as -1");
 }
-
 ATF_TC_BODY(fstatat_fderr3, tc)
 {
 	int fd;
@@ -200,20 +158,11 @@ ATF_TC_BODY(fstatat_fderr3, tc)
 	ATF_REQUIRE(fstatat(-1, FILE, &st, 0) == -1);
 }
 
-ATF_TC_CLEANUP(fstatat_fderr3, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-
-ATF_TC_WITH_CLEANUP(fstatat_fdlink);
+ATF_TC(fstatat_fdlink);
 ATF_TC_HEAD(fstatat_fdlink, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fstatat works on symlink");
 }
-
 ATF_TC_BODY(fstatat_fdlink, tc)
 {
 	int dfd;
@@ -230,12 +179,6 @@ ATF_TC_BODY(fstatat_fdlink, tc)
 	ATF_REQUIRE(fstatat(dfd, BASELINK, &st, AT_SYMLINK_NOFOLLOW) == 0);
 
 	ATF_REQUIRE(close(dfd) == 0);
-}
-
-ATF_TC_CLEANUP(fstatat_fdlink, tc)
-{
-	(void)unlink(LINK);
-	(void)rmdir(DIR);
 }
 
 ATF_TP_ADD_TCS(tp)

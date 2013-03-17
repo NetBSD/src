@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fchmodat.c,v 1.1 2012/11/18 17:41:54 manu Exp $ */
+/*	$NetBSD: t_fchmodat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fchmodat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
+__RCSID("$NetBSD: t_fchmodat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -48,12 +48,11 @@ __RCSID("$NetBSD: t_fchmodat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
 #define BASELINK "symlink"
 #define FILEERR "dir/fchmodaterr"
 
-ATF_TC_WITH_CLEANUP(fchmodat_fd);
+ATF_TC(fchmodat_fd);
 ATF_TC_HEAD(fchmodat_fd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fchmodat works with fd");
 }
-
 ATF_TC_BODY(fchmodat_fd, tc)
 {
 	int dfd;
@@ -72,20 +71,12 @@ ATF_TC_BODY(fchmodat_fd, tc)
 	ATF_REQUIRE(st.st_mode = 0600);
 }
 
-ATF_TC_CLEANUP(fchmodat_fd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(fchmodat_fdcwd);
+ATF_TC(fchmodat_fdcwd);
 ATF_TC_HEAD(fchmodat_fdcwd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 			  "See that fchmodat works with fd as AT_FDCWD");
 }
-
 ATF_TC_BODY(fchmodat_fdcwd, tc)
 {
 	int fd;
@@ -102,39 +93,23 @@ ATF_TC_BODY(fchmodat_fdcwd, tc)
 	ATF_REQUIRE(st.st_mode = 0600);
 }
 
-ATF_TC_CLEANUP(fchmodat_fdcwd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(fchmodat_fdcwderr);
+ATF_TC(fchmodat_fdcwderr);
 ATF_TC_HEAD(fchmodat_fdcwderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 		  "See that fchmodat fails with fd as AT_FDCWD and bad path");
 }
-
 ATF_TC_BODY(fchmodat_fdcwderr, tc)
 {
 	ATF_REQUIRE(mkdir(DIR, 0755) == 0);
 	ATF_REQUIRE(fchmodat(AT_FDCWD, FILEERR, 0600, 0) == -1);
 }
 
-ATF_TC_CLEANUP(fchmodat_fdcwderr, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(fchmodat_fderr1);
+ATF_TC(fchmodat_fderr1);
 ATF_TC_HEAD(fchmodat_fderr1, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fchmodat fail with bad path");
 }
-
 ATF_TC_BODY(fchmodat_fderr1, tc)
 {
 	int dfd;
@@ -145,19 +120,11 @@ ATF_TC_BODY(fchmodat_fderr1, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(fchmodat_fderr1, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(fchmodat_fderr2);
+ATF_TC(fchmodat_fderr2);
 ATF_TC_HEAD(fchmodat_fderr2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fchmodat fails with bad fdat");
 }
-
 ATF_TC_BODY(fchmodat_fderr2, tc)
 {
 	int dfd;
@@ -173,19 +140,11 @@ ATF_TC_BODY(fchmodat_fderr2, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(fchmodat_fderr2, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(fchmodat_fderr3);
+ATF_TC(fchmodat_fderr3);
 ATF_TC_HEAD(fchmodat_fderr3, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fchmodat fails with fd as -1");
 }
-
 ATF_TC_BODY(fchmodat_fderr3, tc)
 {
 	int fd;
@@ -197,20 +156,11 @@ ATF_TC_BODY(fchmodat_fderr3, tc)
 	ATF_REQUIRE(fchmodat(-1, FILE, 0600, 0) == -1);
 }
 
-ATF_TC_CLEANUP(fchmodat_fderr3, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-
-ATF_TC_WITH_CLEANUP(fchmodat_fdlink);
+ATF_TC(fchmodat_fdlink);
 ATF_TC_HEAD(fchmodat_fdlink, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fchmodat works on symlink");
 }
-
 ATF_TC_BODY(fchmodat_fdlink, tc)
 {
 	int dfdlink;
@@ -230,12 +180,6 @@ ATF_TC_BODY(fchmodat_fdlink, tc)
 
 	ATF_REQUIRE(lstat(LINK, &st) == 0);
 	ATF_REQUIRE(st.st_mode = 0600);
-}
-
-ATF_TC_CLEANUP(fchmodat_fdlink, tc)
-{
-	(void)unlink(LINK);
-	(void)rmdir(DIR);
 }
 
 ATF_TP_ADD_TCS(tp)
