@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.63 2013/03/17 04:06:39 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.64 2013/03/17 18:46:10 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1865,12 +1865,6 @@
 #define BGE_FASTBOOT_PC			0x6894
 
 #define	BGE_RX_CPU_DRV_EVENT		0x00004000
-
-/*
- * XXX: Those names are made up as I have no documentation about it;
- *      I only know it is only used in the PCI-Express case.
- */
-#define BGE_PCIE_CTL0			0x7c00
 
 /*
  * NVRAM Control registers

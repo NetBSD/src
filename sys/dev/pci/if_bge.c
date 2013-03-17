@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.216 2013/03/17 04:06:39 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.217 2013/03/17 18:46:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.216 2013/03/17 04:06:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.217 2013/03/17 18:46:10 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -2940,7 +2940,7 @@ bge_blockinit(struct bge_softc *sc)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780 ||
-	    BGE_IS_5717_PLUS(sc)) { /* XXX msaitoh 57765? */
+	    BGE_IS_5717_PLUS(sc)) { /* XXX 57765? */
 		dmactl = CSR_READ_4(sc, BGE_RDMA_RSRVCTRL);
 		/*
 		 * Adjust tx margin to prevent TX data corruption and
@@ -4004,8 +4004,9 @@ bge_reset(struct bge_softc *sc)
 		uint32_t v;
 
 		/* Enable PCI Express bug fix */
-		v = CSR_READ_4(sc, 0x7c00);
-		CSR_WRITE_4(sc, 0x7c00, v | (1<<25));
+		v = CSR_READ_4(sc, BGE_TLP_CONTROL_REG);
+		CSR_WRITE_4(sc, BGE_TLP_CONTROL_REG,
+		    v | BGE_TLP_DATA_FIFO_PROTECT);
 	}
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720)
