@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.11 2013/03/07 08:46:54 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.12 2013/03/17 04:06:39 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -120,7 +120,25 @@
 		CSR_READ_4(sc, reg);	\
 	} while(0)
 
-#define PCI_SETBIT(pc, tag, reg, x)	\
+/* BAR2 APE register access macros. */
+#define	APE_WRITE_4(sc, reg, val)	\
+	bus_space_write_4(sc->bge_apetag, sc->bge_apehandle, reg, val)
+
+#define	APE_READ_4(sc, reg)		\
+	bus_space_read_4(sc->bge_apetag, sc->bge_apehandle, reg)
+
+#define	APE_WRITE_4_FLUSH(sc, reg, val)		\
+	do {					\
+		APE_WRITE_4(sc, reg, val);	\
+		APE_READ_4(sc, reg);		\
+	} while(0)
+
+#define	APE_SETBIT(sc, reg, x)						      \
+	APE_WRITE_4(sc, reg, (APE_READ_4(sc, reg) | (x)))
+#define	APE_CLRBIT(sc, reg, x)	\
+	APE_WRITE_4(sc, reg, (APE_READ_4(sc, reg) & ~(x)))
+
+#define PCI_SETBIT(pc, tag, reg, x)					      \
 	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) | (x)))
 #define PCI_CLRBIT(pc, tag, reg, x)	\
 	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) & ~(x)))
@@ -187,6 +205,7 @@ struct bge_ring_data {
 #endif
 #endif	/* TSO values */
 
+#define	BGE_STATUS_BLK_SZ	sizeof (struct bge_status_block)
 
 /*
  * Mbuf pointers. We need these to keep track of the virtual addresses
@@ -242,10 +261,13 @@ struct bge_softc {
 	struct ethercom		ethercom;	/* interface info */
 	bus_space_handle_t	bge_bhandle;
 	bus_space_tag_t		bge_btag;
+	bus_space_handle_t	bge_apehandle;
+	bus_space_tag_t		bge_apetag;
 	void			*bge_intrhand;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
 
+	struct pci_attach_args	bge_pa;
 	struct mii_data		bge_mii;
 	struct ifmedia		bge_ifmedia;	/* media info */
 	uint32_t		bge_return_ring_cnt;
@@ -253,6 +275,14 @@ struct bge_softc {
 	bus_dma_tag_t		bge_dmatag;
 	uint32_t		bge_pcixcap;
 	uint32_t		bge_pciecap;
+	int			bge_expmrq;
+	u_int32_t		bge_mfw_flags;  /* Management F/W flags */
+#define	BGE_MFW_ON_RXCPU	0x00000001
+#define	BGE_MFW_ON_APE		0x00000002
+#define	BGE_MFW_TYPE_NCSI	0x00000004
+#define	BGE_MFW_TYPE_DASH	0x00000008
+	int			bge_phy_ape_lock;
+	int			bge_phy_addr;
 	uint32_t		bge_chipid;
 	uint32_t		bge_local_ctrl_reg;
 	uint8_t			bge_asf_mode;
