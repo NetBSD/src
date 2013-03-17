@@ -1,4 +1,4 @@
-/*	$NetBSD: t_utimensat.c,v 1.4 2012/11/22 14:59:59 martin Exp $ */
+/*	$NetBSD: t_utimensat.c,v 1.5 2013/03/17 04:46:06 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_utimensat.c,v 1.4 2012/11/22 14:59:59 martin Exp $");
+__RCSID("$NetBSD: t_utimensat.c,v 1.5 2013/03/17 04:46:06 jmmv Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -54,12 +54,11 @@ const struct timespec tptr[] = {
 	{ 0x15263748, 123456789 },
 };
 
-ATF_TC_WITH_CLEANUP(utimensat_fd);
+ATF_TC(utimensat_fd);
 ATF_TC_HEAD(utimensat_fd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that utimensat works with fd");
 }
-
 ATF_TC_BODY(utimensat_fd, tc)
 {
 	int dfd;
@@ -81,20 +80,12 @@ ATF_TC_BODY(utimensat_fd, tc)
 	ATF_REQUIRE(st.st_mtimespec.tv_nsec == tptr[1].tv_nsec);
 }
 
-ATF_TC_CLEANUP(utimensat_fd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(utimensat_fdcwd);
+ATF_TC(utimensat_fdcwd);
 ATF_TC_HEAD(utimensat_fdcwd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 			  "See that utimensat works with fd as AT_FDCWD");
 }
-
 ATF_TC_BODY(utimensat_fdcwd, tc)
 {
 	int fd;
@@ -114,39 +105,23 @@ ATF_TC_BODY(utimensat_fdcwd, tc)
 	ATF_REQUIRE(st.st_mtimespec.tv_nsec == tptr[1].tv_nsec);
 }
 
-ATF_TC_CLEANUP(utimensat_fdcwd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(utimensat_fdcwderr);
+ATF_TC(utimensat_fdcwderr);
 ATF_TC_HEAD(utimensat_fdcwderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 		  "See that utimensat fails with fd as AT_FDCWD and bad path");
 }
-
 ATF_TC_BODY(utimensat_fdcwderr, tc)
 {
 	ATF_REQUIRE(mkdir(DIR, 0755) == 0);
 	ATF_REQUIRE(utimensat(AT_FDCWD, FILEERR, tptr, 0) == -1);
 }
 
-ATF_TC_CLEANUP(utimensat_fdcwderr, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(utimensat_fderr1);
+ATF_TC(utimensat_fderr1);
 ATF_TC_HEAD(utimensat_fderr1, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that utimensat fail with bad path");
 }
-
 ATF_TC_BODY(utimensat_fderr1, tc)
 {
 	int dfd;
@@ -157,19 +132,11 @@ ATF_TC_BODY(utimensat_fderr1, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(utimensat_fderr1, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(utimensat_fderr2);
+ATF_TC(utimensat_fderr2);
 ATF_TC_HEAD(utimensat_fderr2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that utimensat fails with bad fdat");
 }
-
 ATF_TC_BODY(utimensat_fderr2, tc)
 {
 	int dfd;
@@ -185,19 +152,11 @@ ATF_TC_BODY(utimensat_fderr2, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(utimensat_fderr2, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(utimensat_fderr3);
+ATF_TC(utimensat_fderr3);
 ATF_TC_HEAD(utimensat_fderr3, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that utimensat fails with fd as -1");
 }
-
 ATF_TC_BODY(utimensat_fderr3, tc)
 {
 	int fd;
@@ -209,19 +168,11 @@ ATF_TC_BODY(utimensat_fderr3, tc)
 	ATF_REQUIRE(utimensat(-1, FILE, tptr, 0) == -1);
 }
 
-ATF_TC_CLEANUP(utimensat_fderr3, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(utimensat_fdlink);
+ATF_TC(utimensat_fdlink);
 ATF_TC_HEAD(utimensat_fdlink, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that utimensat works on symlink");
 }
-
 ATF_TC_BODY(utimensat_fdlink, tc)
 {
 	int dfd;
@@ -244,12 +195,6 @@ ATF_TC_BODY(utimensat_fdlink, tc)
 	ATF_REQUIRE(st.st_atimespec.tv_nsec == tptr[0].tv_nsec);
 	ATF_REQUIRE(st.st_mtimespec.tv_sec == tptr[1].tv_sec);
 	ATF_REQUIRE(st.st_mtimespec.tv_nsec == tptr[1].tv_nsec);
-}
-
-ATF_TC_CLEANUP(utimensat_fdlink, tc)
-{
-	(void)unlink(LINK);
-	(void)rmdir(DIR);
 }
 
 ATF_TP_ADD_TCS(tp)

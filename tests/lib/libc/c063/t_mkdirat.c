@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mkdirat.c,v 1.1 2012/11/18 17:41:54 manu Exp $ */
+/*	$NetBSD: t_mkdirat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mkdirat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
+__RCSID("$NetBSD: t_mkdirat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -47,12 +47,11 @@ __RCSID("$NetBSD: t_mkdirat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
 #define BASESDIR "openat"
 #define SDIRERR "dir/openaterr" 
 
-ATF_TC_WITH_CLEANUP(mkdirat_fd);
+ATF_TC(mkdirat_fd);
 ATF_TC_HEAD(mkdirat_fd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that mkdirat works with fd");
 }
-
 ATF_TC_BODY(mkdirat_fd, tc)
 {
 	int dfd;
@@ -65,21 +64,12 @@ ATF_TC_BODY(mkdirat_fd, tc)
 	ATF_REQUIRE(access(SDIR, F_OK) == 0);
 }
 
-ATF_TC_CLEANUP(mkdirat_fd, tc)
-{
-	(void)unlink(SDIR);
-	(void)unlink(SDIRERR);
-	(void)rmdir(DIR);
-}
-
-
-ATF_TC_WITH_CLEANUP(mkdirat_fdcwd);
+ATF_TC(mkdirat_fdcwd);
 ATF_TC_HEAD(mkdirat_fdcwd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 			  "See that mkdirat works with fd as AT_FDCWD");
 }
-
 ATF_TC_BODY(mkdirat_fdcwd, tc)
 {
 	mode_t mode = 0755;
@@ -89,20 +79,12 @@ ATF_TC_BODY(mkdirat_fdcwd, tc)
 	ATF_REQUIRE(access(SDIR, F_OK) == 0);
 }
 
-ATF_TC_CLEANUP(mkdirat_fdcwd, tc)
-{
-	(void)unlink(SDIR);
-	(void)unlink(SDIRERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(mkdirat_fdcwderr);
+ATF_TC(mkdirat_fdcwderr);
 ATF_TC_HEAD(mkdirat_fdcwderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 		  "See that mkdirat fails with fd as AT_FDCWD and bad path");
 }
-
 ATF_TC_BODY(mkdirat_fdcwderr, tc)
 {
 	mode_t mode = 0755;
@@ -110,19 +92,11 @@ ATF_TC_BODY(mkdirat_fdcwderr, tc)
 	ATF_REQUIRE(mkdirat(AT_FDCWD, SDIRERR, mode) == -1);
 }
 
-ATF_TC_CLEANUP(mkdirat_fdcwderr, tc)
-{
-	(void)unlink(SDIR);
-	(void)unlink(SDIRERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(mkdirat_fderr);
+ATF_TC(mkdirat_fderr);
 ATF_TC_HEAD(mkdirat_fderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that mkdirat fails with fd as -1");
 }
-
 ATF_TC_BODY(mkdirat_fderr, tc)
 {
 	int fd;
@@ -133,14 +107,6 @@ ATF_TC_BODY(mkdirat_fderr, tc)
 	ATF_REQUIRE(close(fd) == 0);
 	ATF_REQUIRE(mkdirat(-1, SDIR, mode) == -1);
 }
-
-ATF_TC_CLEANUP(mkdirat_fderr, tc)
-{
-	(void)unlink(SDIR);
-	(void)unlink(SDIRERR);
-	(void)rmdir(DIR);
-}
-
 
 ATF_TP_ADD_TCS(tp)
 {
