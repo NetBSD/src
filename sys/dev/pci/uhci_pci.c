@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.55 2012/06/10 06:15:53 mrg Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.56 2013/03/17 18:30:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.55 2012/06/10 06:15:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.56 2013/03/17 18:30:00 martin Exp $");
 
 #include "ehci.h"
 
@@ -65,6 +65,9 @@ struct uhci_pci_softc {
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */
+	unsigned		sc_initialized;
+#define		SC_INIT_UHCI	1
+#define		SC_INIT_PMF	2
 };
 
 static int
@@ -180,6 +183,7 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "init failed, error=%d\n", r);
 		return;
 	}
+	sc->sc_initialized = SC_INIT_UHCI;
 
 #if NEHCI > 0
 	usb_pci_add(&sc->sc_pci, pa, self);
@@ -187,6 +191,8 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, uhci_suspend, uhci_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		sc->sc_initialized |= SC_INIT_PMF;
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
@@ -198,11 +204,14 @@ uhci_pci_detach(device_t self, int flags)
 	struct uhci_pci_softc *sc = device_private(self);
 	int rv;
 
-	rv = uhci_detach(&sc->sc, flags);
-	if (rv)
-		return (rv);
+	if (sc->sc_initialized & SC_INIT_UHCI) {
+		rv = uhci_detach(&sc->sc, flags);
+		if (rv)
+			return (rv);
+	}
 
-	pmf_device_deregister(self);
+	if (sc->sc_initialized & SC_INIT_PMF)
+		pmf_device_deregister(self);
 
 	/* disable interrupts and acknowledge any pending */
 	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
