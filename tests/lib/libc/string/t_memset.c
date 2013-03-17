@@ -1,4 +1,4 @@
-/* $NetBSD: t_memset.c,v 1.2 2011/07/14 07:33:20 jruoho Exp $ */
+/* $NetBSD: t_memset.c,v 1.3 2013/03/17 02:23:31 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_memset.c,v 1.2 2011/07/14 07:33:20 jruoho Exp $");
+__RCSID("$NetBSD: t_memset.c,v 1.3 2013/03/17 02:23:31 christos Exp $");
 
 #include <sys/stat.h>
 
@@ -61,6 +61,20 @@ ATF_TC_BODY(memset_array, tc)
 
 	if (check(buf, sizeof(buf), 'x') != true)
 		atf_tc_fail("memset(3) did not fill a static buffer");
+}
+
+ATF_TC(memset_return);
+ATF_TC_HEAD(memset_return, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test memset(3) return value");
+}
+
+ATF_TC_BODY(memset_return, tc)
+{
+	char *b = (char *)0x1;
+	char c[2];
+	ATF_REQUIRE_EQ(memset(b, 0, 0), b);
+	ATF_REQUIRE_EQ(memset(c, 2, sizeof(c)), c);
 }
 
 ATF_TC(memset_basic);
@@ -187,6 +201,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, memset_basic);
 	ATF_TP_ADD_TC(tp, memset_nonzero);
 	ATF_TP_ADD_TC(tp, memset_struct);
+	ATF_TP_ADD_TC(tp, memset_return);
 
 	return atf_no_error();
 }
