@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.47 2013/02/21 15:13:11 hans Exp $
+#	$NetBSD: Makefile.inc,v 1.48 2013/03/17 12:19:57 mlelstv Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -38,7 +38,9 @@ __mkimage: .USE
 # Little endian platforms with VFP
 EVBARM_BOARDS+=		BCM5301X BEAGLEBOARD BEAGLEBOARDXM BEAGLEBONE TISDP2420
 smp_beagleboard: ${IMAGE.kern}/netbsd-BEAGLEBOARD.ub.gz __mkimage
+.if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MBEAGLEBOARD)
 SNAP_MD_POST_DEPS+=	smp_beagleboard
+.endif
 .endif
 .if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm"
 # Little endian platforms (armv5t+)
@@ -64,7 +66,9 @@ KERNEL_SETS+=		HDL_G INTEGRATOR_CP IXM1200
     || ${MACHINE_ARCH} == "earmhf"
 EXTRA_KERNELS+=		RPI
 smp_rpi: ${IMAGE.kern}/netbsd-RPI.bin.gz __mkimage
+.if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI)
 SNAP_MD_POST_DEPS+=	smp_rpi
+.endif
 .endif
 
 .if ${MACHINE_ARCH} == "armeb"
