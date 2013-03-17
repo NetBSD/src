@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.5 2012/11/09 20:13:24 pgoyette Exp $ */
+/* $NetBSD: t_sleep.c,v 1.6 2013/03/17 05:47:48 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -301,8 +301,7 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 		delta3 *= round;
 
 		if (delta3 > FUZZ || delta3 < -FUZZ) {
-			if (!sim_remain &&
-			    system("cpuctl identify 0 | grep -q QEMU") == 0) 
+			if (!sim_remain)
 				atf_tc_expect_fail("Long reschedule latency "
 				    "due to PR kern/43997");
 
