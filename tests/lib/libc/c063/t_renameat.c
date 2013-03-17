@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renameat.c,v 1.1 2012/11/18 17:41:54 manu Exp $ */
+/*	$NetBSD: t_renameat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_renameat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
+__RCSID("$NetBSD: t_renameat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -51,12 +51,11 @@ __RCSID("$NetBSD: t_renameat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
 #define BASETARGET "new"
 #define FILEERR "olddir/olderr" 
 
-ATF_TC_WITH_CLEANUP(renameat_fd);
+ATF_TC(renameat_fd);
 ATF_TC_HEAD(renameat_fd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that renameat works with fd");
 }
-
 ATF_TC_BODY(renameat_fd, tc)
 {
 	int ofd, nfd, fd;
@@ -79,16 +78,7 @@ ATF_TC_BODY(renameat_fd, tc)
 	ATF_REQUIRE(ost.st_ino == nst.st_ino);
 }
 
-ATF_TC_CLEANUP(renameat_fd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(TARGET);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
-}
-
-
-ATF_TC_WITH_CLEANUP(renameat_fdcwd);
+ATF_TC(renameat_fdcwd);
 ATF_TC_HEAD(renameat_fdcwd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
@@ -113,21 +103,12 @@ ATF_TC_BODY(renameat_fdcwd, tc)
 	ATF_REQUIRE(ost.st_ino == nst.st_ino);
 }
 
-ATF_TC_CLEANUP(renameat_fdcwd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(TARGET);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
-}
-
-ATF_TC_WITH_CLEANUP(renameat_fdcwderr);
+ATF_TC(renameat_fdcwderr);
 ATF_TC_HEAD(renameat_fdcwderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 		  "See that renameat fails with fd as AT_FDCWD and bad path");
 }
-
 ATF_TC_BODY(renameat_fdcwderr, tc)
 {
 	int fd;
@@ -140,21 +121,11 @@ ATF_TC_BODY(renameat_fdcwderr, tc)
 	ATF_REQUIRE(renameat(AT_FDCWD, FILEERR, AT_FDCWD, TARGET) == -1);
 }
 
-ATF_TC_CLEANUP(renameat_fdcwderr, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)unlink(TARGET);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
-}
-
-ATF_TC_WITH_CLEANUP(renameat_fderr);
+ATF_TC(renameat_fderr);
 ATF_TC_HEAD(renameat_fderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that renameat fails with fd as -1");
 }
-
 ATF_TC_BODY(renameat_fderr, tc)
 {
 	int fd;
@@ -167,14 +138,6 @@ ATF_TC_BODY(renameat_fderr, tc)
 	ATF_REQUIRE(renameat(-1, FILE, AT_FDCWD, TARGET) == -1);
 	ATF_REQUIRE(renameat(AT_FDCWD, FILE, -1, TARGET) == -1);
 	ATF_REQUIRE(renameat(-1, FILE, -1, TARGET) == -1);
-}
-
-ATF_TC_CLEANUP(renameat_fderr, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(TARGET);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
 }
 
 ATF_TP_ADD_TCS(tp)

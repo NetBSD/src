@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mkfifoat.c,v 1.1 2012/11/18 17:41:54 manu Exp $ */
+/*	$NetBSD: t_mkfifoat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mkfifoat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
+__RCSID("$NetBSD: t_mkfifoat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -47,12 +47,11 @@ __RCSID("$NetBSD: t_mkfifoat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
 #define BASEFIFO "openat"
 #define FIFOERR "dir/openaterr" 
 
-ATF_TC_WITH_CLEANUP(mkfifoat_fd);
+ATF_TC(mkfifoat_fd);
 ATF_TC_HEAD(mkfifoat_fd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that mkfifoat works with fd");
 }
-
 ATF_TC_BODY(mkfifoat_fd, tc)
 {
 	int dfd;
@@ -66,21 +65,12 @@ ATF_TC_BODY(mkfifoat_fd, tc)
 	ATF_REQUIRE(access(FIFO, F_OK) == 0);
 }
 
-ATF_TC_CLEANUP(mkfifoat_fd, tc)
-{
-	(void)unlink(FIFO);
-	(void)unlink(FIFOERR);
-	(void)rmdir(DIR);
-}
-
-
-ATF_TC_WITH_CLEANUP(mkfifoat_fdcwd);
+ATF_TC(mkfifoat_fdcwd);
 ATF_TC_HEAD(mkfifoat_fdcwd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 			  "See that mkfifoat works with fd as AT_FDCWD");
 }
-
 ATF_TC_BODY(mkfifoat_fdcwd, tc)
 {
 	int fd;
@@ -92,20 +82,12 @@ ATF_TC_BODY(mkfifoat_fdcwd, tc)
 	ATF_REQUIRE(access(FIFO, F_OK) == 0);
 }
 
-ATF_TC_CLEANUP(mkfifoat_fdcwd, tc)
-{
-	(void)unlink(FIFO);
-	(void)unlink(FIFOERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(mkfifoat_fdcwderr);
+ATF_TC(mkfifoat_fdcwderr);
 ATF_TC_HEAD(mkfifoat_fdcwderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 		  "See that mkfifoat fails with fd as AT_FDCWD and bad path");
 }
-
 ATF_TC_BODY(mkfifoat_fdcwderr, tc)
 {
 	int fd;
@@ -114,19 +96,11 @@ ATF_TC_BODY(mkfifoat_fdcwderr, tc)
 	ATF_REQUIRE((fd = mkfifoat(AT_FDCWD, FIFOERR, mode)) == -1);
 }
 
-ATF_TC_CLEANUP(mkfifoat_fdcwderr, tc)
-{
-	(void)unlink(FIFO);
-	(void)unlink(FIFOERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(mkfifoat_fderr);
+ATF_TC(mkfifoat_fderr);
 ATF_TC_HEAD(mkfifoat_fderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that mkfifoat fails with fd as -1");
 }
-
 ATF_TC_BODY(mkfifoat_fderr, tc)
 {
 	int fd;
@@ -137,14 +111,6 @@ ATF_TC_BODY(mkfifoat_fderr, tc)
 	ATF_REQUIRE(close(fd) == 0);
 	ATF_REQUIRE((fd = mkfifoat(-1, FIFO, mode)) == -1);
 }
-
-ATF_TC_CLEANUP(mkfifoat_fderr, tc)
-{
-	(void)unlink(FIFO);
-	(void)unlink(FIFOERR);
-	(void)rmdir(DIR);
-}
-
 
 ATF_TP_ADD_TCS(tp)
 {

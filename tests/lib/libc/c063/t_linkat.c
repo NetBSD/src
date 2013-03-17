@@ -1,4 +1,4 @@
-/*	$NetBSD: t_linkat.c,v 1.1 2012/11/18 17:41:54 manu Exp $ */
+/*	$NetBSD: t_linkat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_linkat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
+__RCSID("$NetBSD: t_linkat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -53,12 +53,11 @@ __RCSID("$NetBSD: t_linkat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
 #define BASELINK "symlink"
 #define FILEERR "olddir/olderr" 
 
-ATF_TC_WITH_CLEANUP(linkat_fd);
+ATF_TC(linkat_fd);
 ATF_TC_HEAD(linkat_fd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that linkat works with fd");
 }
-
 ATF_TC_BODY(linkat_fd, tc)
 {
 	int ofd, nfd, fd;
@@ -80,22 +79,12 @@ ATF_TC_BODY(linkat_fd, tc)
 	ATF_REQUIRE(ost.st_ino == nst.st_ino);
 }
 
-ATF_TC_CLEANUP(linkat_fd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(TARGET);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
-}
-
-
-ATF_TC_WITH_CLEANUP(linkat_fdcwd);
+ATF_TC(linkat_fdcwd);
 ATF_TC_HEAD(linkat_fdcwd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 			  "See that linkat works with fd as AT_FDCWD");
 }
-
 ATF_TC_BODY(linkat_fdcwd, tc)
 {
 	int fd;
@@ -113,21 +102,12 @@ ATF_TC_BODY(linkat_fdcwd, tc)
 	ATF_REQUIRE(ost.st_ino == nst.st_ino);
 }
 
-ATF_TC_CLEANUP(linkat_fdcwd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(TARGET);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
-}
-
-ATF_TC_WITH_CLEANUP(linkat_fdcwderr);
+ATF_TC(linkat_fdcwderr);
 ATF_TC_HEAD(linkat_fdcwderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 		  "See that linkat fails with fd as AT_FDCWD and bad path");
 }
-
 ATF_TC_BODY(linkat_fdcwderr, tc)
 {
 	int fd;
@@ -140,21 +120,11 @@ ATF_TC_BODY(linkat_fdcwderr, tc)
 	ATF_REQUIRE(linkat(AT_FDCWD, FILEERR, AT_FDCWD, TARGET, 0) == -1);
 }
 
-ATF_TC_CLEANUP(linkat_fdcwderr, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)unlink(TARGET);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
-}
-
-ATF_TC_WITH_CLEANUP(linkat_fderr);
+ATF_TC(linkat_fderr);
 ATF_TC_HEAD(linkat_fderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that linkat fails with fd as -1");
 }
-
 ATF_TC_BODY(linkat_fderr, tc)
 {
 	int fd;
@@ -169,20 +139,11 @@ ATF_TC_BODY(linkat_fderr, tc)
 	ATF_REQUIRE(linkat(-1, FILE, -1, TARGET, 0) == -1);
 }
 
-ATF_TC_CLEANUP(linkat_fderr, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(TARGET);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
-}
-
-ATF_TC_WITH_CLEANUP(linkat_fdlink1);
+ATF_TC(linkat_fdlink1);
 ATF_TC_HEAD(linkat_fdlink1, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that linkat works on symlink target");
 }
-
 ATF_TC_BODY(linkat_fdlink1, tc)
 {
 	int ofd, nfd, fd;
@@ -210,22 +171,12 @@ ATF_TC_BODY(linkat_fdlink1, tc)
 	ATF_REQUIRE(ost.st_ino == nst.st_ino);
 }
 
-ATF_TC_CLEANUP(linkat_fdlink1, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(LINK);
-	(void)unlink(TARGET);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
-}
 
-
-ATF_TC_WITH_CLEANUP(linkat_fdlink2);
+ATF_TC(linkat_fdlink2);
 ATF_TC_HEAD(linkat_fdlink2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that linkat works on symlink source");
 }
-
 ATF_TC_BODY(linkat_fdlink2, tc)
 {
 	int ofd, nfd, fd;
@@ -250,15 +201,6 @@ ATF_TC_BODY(linkat_fdlink2, tc)
 	ATF_REQUIRE(lstat(FILE, &ost) == 0);
 	ATF_REQUIRE(lstat(TARGET, &nst) == 0);
 	ATF_REQUIRE(ost.st_ino != nst.st_ino);
-}
-
-ATF_TC_CLEANUP(linkat_fdlink2, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(LINK);
-	(void)unlink(TARGET);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
 }
 
 ATF_TP_ADD_TCS(tp)

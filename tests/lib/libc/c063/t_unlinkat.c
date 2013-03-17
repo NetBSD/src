@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unlinkat.c,v 1.1 2012/11/18 17:41:54 manu Exp $ */
+/*	$NetBSD: t_unlinkat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_unlinkat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
+__RCSID("$NetBSD: t_unlinkat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -46,12 +46,11 @@ __RCSID("$NetBSD: t_unlinkat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
 #define BASEFILE "unlinkat"
 #define FILEERR "dir/unlinkaterr"
 
-ATF_TC_WITH_CLEANUP(unlinkat_fd);
+ATF_TC(unlinkat_fd);
 ATF_TC_HEAD(unlinkat_fd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that unlinkat works with fd");
 }
-
 ATF_TC_BODY(unlinkat_fd, tc)
 {
 	int dfd;
@@ -66,20 +65,12 @@ ATF_TC_BODY(unlinkat_fd, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(unlinkat_fd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(unlinkat_fdcwd);
+ATF_TC(unlinkat_fdcwd);
 ATF_TC_HEAD(unlinkat_fdcwd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 			  "See that unlinkat works with fd as AT_FDCWD");
 }
-
 ATF_TC_BODY(unlinkat_fdcwd, tc)
 {
 	int fd;
@@ -92,39 +83,23 @@ ATF_TC_BODY(unlinkat_fdcwd, tc)
 	ATF_REQUIRE(unlinkat(AT_FDCWD, BASEFILE, 0) == 0);
 }
 
-ATF_TC_CLEANUP(unlinkat_fdcwd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(unlinkat_fdcwderr);
+ATF_TC(unlinkat_fdcwderr);
 ATF_TC_HEAD(unlinkat_fdcwderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 		  "See that unlinkat fails with fd as AT_FDCWD and bad path");
 }
-
 ATF_TC_BODY(unlinkat_fdcwderr, tc)
 {
 	ATF_REQUIRE(mkdir(DIR, 0755) == 0);
 	ATF_REQUIRE(unlinkat(AT_FDCWD, FILEERR, 0) == -1);
 }
 
-ATF_TC_CLEANUP(unlinkat_fdcwderr, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(unlinkat_fderr1);
+ATF_TC(unlinkat_fderr1);
 ATF_TC_HEAD(unlinkat_fderr1, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that unlinkat fail with bad path");
 }
-
 ATF_TC_BODY(unlinkat_fderr1, tc)
 {
 	int dfd;
@@ -133,22 +108,13 @@ ATF_TC_BODY(unlinkat_fderr1, tc)
 	ATF_REQUIRE((dfd = open(DIR, O_RDONLY, 0)) != -1);
 	ATF_REQUIRE(unlinkat(dfd, FILEERR, 0) == -1);
 	ATF_REQUIRE(close(dfd) == 0);
-	
 }
 
-ATF_TC_CLEANUP(unlinkat_fderr1, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(unlinkat_fderr2);
+ATF_TC(unlinkat_fderr2);
 ATF_TC_HEAD(unlinkat_fderr2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that unlinkat fails with bad fdat");
 }
-
 ATF_TC_BODY(unlinkat_fderr2, tc)
 {
 	int dfd;
@@ -164,19 +130,11 @@ ATF_TC_BODY(unlinkat_fderr2, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(unlinkat_fderr2, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(unlinkat_fderr3);
+ATF_TC(unlinkat_fderr3);
 ATF_TC_HEAD(unlinkat_fderr3, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that unlinkat fails with fd as -1");
 }
-
 ATF_TC_BODY(unlinkat_fderr3, tc)
 {
 	int fd;
@@ -188,20 +146,12 @@ ATF_TC_BODY(unlinkat_fderr3, tc)
 	ATF_REQUIRE(unlinkat(-1, FILE, 0) == -1);
 }
 
-ATF_TC_CLEANUP(unlinkat_fderr3, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(unlinkat_dir);
+ATF_TC(unlinkat_dir);
 ATF_TC_HEAD(unlinkat_dir, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 			  "See that unlinkat can remove directories");
 }
-
 ATF_TC_BODY(unlinkat_dir, tc)
 {
 	ATF_REQUIRE(mkdir(DIR, 0755) == 0);
@@ -209,11 +159,6 @@ ATF_TC_BODY(unlinkat_dir, tc)
 	ATF_REQUIRE(unlinkat(AT_FDCWD, DIR, 0) == -1);
 	ATF_REQUIRE(errno == EPERM);
 	ATF_REQUIRE(unlinkat(AT_FDCWD, DIR, AT_REMOVEDIR) == 0);
-}
-
-ATF_TC_CLEANUP(unlinkat_dir, tc)
-{
-	(void)rmdir(DIR);
 }
 
 ATF_TP_ADD_TCS(tp)
