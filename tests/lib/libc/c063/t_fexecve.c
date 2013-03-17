@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fexecve.c,v 1.1 2012/11/18 17:41:54 manu Exp $ */
+/*	$NetBSD: t_fexecve.c,v 1.2 2013/03/17 04:35:59 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,48 +29,61 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fexecve.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
+__RCSID("$NetBSD: t_fexecve.c,v 1.2 2013/03/17 04:35:59 jmmv Exp $");
+
+#include <sys/wait.h>
 
 #include <atf-c.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <paths.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/param.h>
 
-#define FILE "test"
-
-ATF_TC_WITH_CLEANUP(fexecve);
+ATF_TC(fexecve);
 ATF_TC_HEAD(fexecve, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fexecve works");
 }
-
 ATF_TC_BODY(fexecve, tc)
 {
-	int fd;
+	int status;
 	pid_t pid;
-	const char *const argv[] = { "touch", FILE, NULL };
+	const char *const argv[] = { "touch", "test", NULL };
 	const char *const envp[] = { NULL };
 
 	ATF_REQUIRE((pid = fork()) != -1);
-	if (pid != 0) {	/* parent */
-		sleep(1);
-		ATF_REQUIRE(access(FILE, F_OK) == 0);
-	} else {	/* child */
-		ATF_REQUIRE((fd = open("/usr/bin/touch", O_RDONLY, 0)) != -1);
-		ATF_REQUIRE(fexecve(fd, __UNCONST(argv), __UNCONST(envp)) == 0);
+	if (pid == 0) {
+		int fd;
+
+		if ((fd = open("/usr/bin/touch", O_RDONLY, 0)) == -1)
+			err(EXIT_FAILURE, "open /usr/bin/touch");
+
+		if (fexecve(fd, __UNCONST(argv), __UNCONST(envp)) == -1) {
+			int error;
+			if (errno == ENOSYS)
+				error = 76;
+			else
+				error = EXIT_FAILURE;
+			err(error, "fexecve");
+		}
 	}
-}
 
-ATF_TC_CLEANUP(fexecve, tc)
-{
-	(void)unlink(FILE);
-}
+	ATF_REQUIRE(waitpid(pid, &status, 0) != -1);
+	if (!WIFEXITED(status))
+		atf_tc_fail("child process did not exit cleanly");
+	if (WEXITSTATUS(status) == 76)
+		atf_tc_expect_fail("fexecve not implemented");
+	else
+		ATF_REQUIRE(WEXITSTATUS(status) == EXIT_SUCCESS);
 
+	ATF_REQUIRE(access("test", F_OK) == 0);
+}
 
 ATF_TP_ADD_TCS(tp)
 {
