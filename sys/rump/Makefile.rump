@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.77 2013/03/16 23:51:39 christos Exp $
+#	$NetBSD: Makefile.rump,v 1.78 2013/03/17 01:13:00 christos Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -91,7 +91,7 @@ DESTDIR=/
 BUILDRUMP_CPPFLAGS ?= -isysroot ${DESTDIR}
 rumpcomp_user.d: rumpcomp_user.c
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${.ALLSRC:O:uM*.c}
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${.ALLSRC:O:u:M*.c}
 
 rumpcomp_user.o: rumpcomp_user.c
 	${_MKTARGET_COMPILE}
