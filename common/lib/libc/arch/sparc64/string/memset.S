@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.1 2013/03/17 00:42:32 christos Exp $	*/
+/*	$NetBSD: memset.S,v 1.2 2013/03/17 02:12:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -24,6 +24,10 @@
  *
  */
 #include "strmacros.h"
+#if defined(LIBC_SCCS) && !defined(lint)
+RCSID("$NetBSD: memset.S,v 1.2 2013/03/17 02:12:41 christos Exp $")
+#endif  /* LIBC_SCCS and not lint */
+
 
 /*
  * XXXXXXXXXXXXXXXXXXXX
@@ -49,7 +53,7 @@
 ENTRY(bzero)
 	! %o0 = addr, %o1 = len
 	mov	%o1, %o2
-	mov	0, %o1
+	clr	%o1			! ser pattern
 #endif	
 ENTRY(memset)
 	! %o0 = addr, %o1 = pattern, %o2 = len
