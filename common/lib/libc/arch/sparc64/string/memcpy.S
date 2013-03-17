@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.1 2013/03/17 00:42:31 christos Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.2 2013/03/17 02:13:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -24,10 +24,13 @@
  *
  */
 #include "strmacros.h"
+#if defined(LIBC_SCCS) && !defined(lint)
+RCSID("$NetBSD: memcpy.S,v 1.2 2013/03/17 02:13:10 christos Exp $")
+#endif  /* LIBC_SCCS and not lint */
 
 /*
- * kernel memcpy
- * Assumes regions do not overlap; has no useful return value.
+ * memcpy
+ * Assumes regions do not overlap;
  *
  * Must not use %g7 (see copyin/copyout above).
  */
