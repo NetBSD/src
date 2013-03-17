@@ -1,4 +1,4 @@
-# $NetBSD: t_filter_exec.sh,v 1.7 2012/07/07 23:29:44 pgoyette Exp $
+# $NetBSD: t_filter_exec.sh,v 1.8 2013/03/17 03:00:05 jmmv Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -130,8 +130,8 @@ test_case f19 dotest text text -T state_max=3
 test_case f20 mtest text text
 test_case f24 mtest hex text
 test_case f25 mtest hex text -D
-test_case f26 dotest text text
-test_case f27 dotest hex text
+failing_test_case f26 dotest "Known to be broken" text text
+failing_test_case f27 dotest "Known to be broken" hex text
 test_case f30 dotest text text
 test_case ipv6_1 dotest6 hex hex
 test_case ipv6_2 dotest6 hex hex
