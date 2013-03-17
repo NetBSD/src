@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.113 2013/01/22 09:39:12 dholland Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.114 2013/03/17 12:25:36 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.113 2013/01/22 09:39:12 dholland Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.114 2013/03/17 12:25:36 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,6 @@ static void setblock(struct fs *, unsigned char *, int);
 static int ilog2(int);
 static void zap_old_sblock(int);
 #ifdef MFS
-static void calc_memfree(void);
 static void *mkfs_malloc(size_t size);
 #endif
 
@@ -191,9 +190,6 @@ mkfs(const char *fsys, int fi, int fo,
 #endif
 #ifdef MFS
 	if (mfs && !Nflag) {
-		calc_memfree();
-		if ((uint64_t)fssize * sectorsize > memleft)
-			fssize = memleft / sectorsize;
 		if ((membase = mkfs_malloc(fssize * sectorsize)) == NULL)
 			exit(12);
 	}
@@ -1625,33 +1621,6 @@ zap_old_sblock(int sblkoff)
 
 #ifdef MFS
 /*
- * XXX!
- * Attempt to guess how much more space is available for process data.  The
- * heuristic we use is
- *
- *	max_data_limit - (sbrk(0) - etext) - 128kB
- *
- * etext approximates that start address of the data segment, and the 128kB
- * allows some slop for both segment gap between text and data, and for other
- * (libc) malloc usage.
- */
-static void
-calc_memfree(void)
-{
-	extern char etext;
-	struct rlimit rlp;
-	u_long base;
-
-	base = (u_long)sbrk(0) - (u_long)&etext;
-	if (getrlimit(RLIMIT_DATA, &rlp) < 0)
-		perror("getrlimit");
-	rlp.rlim_cur = rlp.rlim_max;
-	if (setrlimit(RLIMIT_DATA, &rlp) < 0)
-		perror("setrlimit");
-	memleft = rlp.rlim_max - base - (128 * 1024);
-}
-
-/*
  * Internal version of malloc that trims the requested size if not enough
  * memory is available.
  */
@@ -1659,20 +1628,36 @@ static void *
 mkfs_malloc(size_t size)
 {
 	u_long pgsz;
-	caddr_t *memory;
+	caddr_t *memory, *extra;
+	size_t exsize = 128 * 1024;
 
 	if (size == 0)
 		return (NULL);
-	if (memleft == 0)
-		calc_memfree();
 
 	pgsz = getpagesize() - 1;
 	size = (size + pgsz) &~ pgsz;
-	if (size > memleft)
-		size = memleft;
-	memleft -= size;
+
+	/* try to map requested size */
 	memory = mmap(0, size, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
 	    -1, 0);
-	return memory != MAP_FAILED ? memory : NULL;
+	if (memory == MAP_FAILED)
+		return NULL;
+
+	/* try to map something extra */
+	extra = mmap(0, exsize, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
+	    -1, 0);
+	munmap(extra, exsize);
+
+	/* if extra memory couldn't be mapped, reduce original request accordingly */
+	if (extra == MAP_FAILED) {
+		munmap(memory, size);
+		size -= exsize;
+		memory = mmap(0, size, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
+		    -1, 0);
+		if (memory == MAP_FAILED)
+			return NULL;
+	}
+
+	return memory;
 }
 #endif	/* MFS */
