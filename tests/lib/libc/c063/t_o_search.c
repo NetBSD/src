@@ -1,4 +1,4 @@
-/*	$NetBSD: t_o_search.c,v 1.3 2013/01/13 08:15:03 dholland Exp $ */
+/*	$NetBSD: t_o_search.c,v 1.4 2013/03/17 04:46:06 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_o_search.c,v 1.3 2013/01/13 08:15:03 dholland Exp $");
+__RCSID("$NetBSD: t_o_search.c,v 1.4 2013/03/17 04:46:06 jmmv Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -56,13 +56,12 @@ __RCSID("$NetBSD: t_o_search.c,v 1.3 2013/01/13 08:15:03 dholland Exp $");
 #define BASEFILE "o_search"
 
 
-ATF_TC_WITH_CLEANUP(o_search_perm1);
+ATF_TC(o_search_perm1);
 ATF_TC_HEAD(o_search_perm1, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that openat enforces search permission");
 	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
-
 ATF_TC_BODY(o_search_perm1, tc)
 {
 	int dfd;
@@ -85,22 +84,14 @@ ATF_TC_BODY(o_search_perm1, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(o_search_perm1, tc)
-{
-	(void)unlink(FILE);
-	(void)rmdir(DIR);
-} 
-
-
 #ifdef USE_O_SEARCH
 
-ATF_TC_WITH_CLEANUP(o_search_root_flag1);
+ATF_TC(o_search_root_flag1);
 ATF_TC_HEAD(o_search_root_flag1, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that root openat honours O_SEARCH");
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
-
 ATF_TC_BODY(o_search_root_flag1, tc)
 {
 	int dfd;
@@ -127,20 +118,12 @@ ATF_TC_BODY(o_search_root_flag1, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(o_search_root_flag1, tc)
-{
-	(void)unlink(FILE);
-	(void)rmdir(DIR);
-} 
-
-
-ATF_TC_WITH_CLEANUP(o_search_unpriv_flag1);
+ATF_TC(o_search_unpriv_flag1);
 ATF_TC_HEAD(o_search_unpriv_flag1, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that openat honours O_SEARCH");
 	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
-
 ATF_TC_BODY(o_search_unpriv_flag1, tc)
 {
 	int dfd;
@@ -167,22 +150,14 @@ ATF_TC_BODY(o_search_unpriv_flag1, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(o_search_unpriv_flag1, tc)
-{
-	(void)unlink(FILE);
-	(void)rmdir(DIR);
-} 
-
 #endif /* USE_O_SEARCH */
 
-
-ATF_TC_WITH_CLEANUP(o_search_perm2);
+ATF_TC(o_search_perm2);
 ATF_TC_HEAD(o_search_perm2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that faccessat enforces search permission");
 	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
-
 ATF_TC_BODY(o_search_perm2, tc)
 {
 	int dfd;
@@ -203,22 +178,14 @@ ATF_TC_BODY(o_search_perm2, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(o_search_perm2, tc)
-{
-	(void)unlink(FILE);
-	(void)rmdir(DIR);
-} 
-
-
 #ifdef USE_O_SEARCH
 
-ATF_TC_WITH_CLEANUP(o_search_root_flag2);
+ATF_TC(o_search_root_flag2);
 ATF_TC_HEAD(o_search_root_flag2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that root fstatat honours O_SEARCH");
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
-
 ATF_TC_BODY(o_search_root_flag2, tc)
 {
 	int dfd;
@@ -243,20 +210,12 @@ ATF_TC_BODY(o_search_root_flag2, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(o_search_root_flag2, tc)
-{
-	(void)unlink(FILE);
-	(void)rmdir(DIR);
-} 
-
-
-ATF_TC_WITH_CLEANUP(o_search_unpriv_flag2);
+ATF_TC(o_search_unpriv_flag2);
 ATF_TC_HEAD(o_search_unpriv_flag2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that fstatat honours O_SEARCH");
 	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
-
 ATF_TC_BODY(o_search_unpriv_flag2, tc)
 {
 	int dfd;
@@ -281,21 +240,14 @@ ATF_TC_BODY(o_search_unpriv_flag2, tc)
 	ATF_REQUIRE(close(dfd) == 0);
 }
 
-ATF_TC_CLEANUP(o_search_unpriv_flag2, tc)
-{
-	(void)unlink(FILE);
-	(void)rmdir(DIR);
-}
-
 #endif /* USE_O_SEARCH */
 
 
-ATF_TC_WITH_CLEANUP(o_search_notdir);
+ATF_TC(o_search_notdir);
 ATF_TC_HEAD(o_search_notdir, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that openat fails with non dir fd");
 }
-
 ATF_TC_BODY(o_search_notdir, tc)
 {
 	int dfd;
@@ -306,14 +258,6 @@ ATF_TC_BODY(o_search_notdir, tc)
 	ATF_REQUIRE((fd = openat(dfd, BASEFILE, O_RDWR, 0)) == -1);
 	ATF_REQUIRE(errno == ENOTDIR);
 }
-
-ATF_TC_CLEANUP(o_search_notdir, tc)
-{
-	(void)unlink(FILE);
-	(void)rmdir(DIR);
-} 
-
-
 
 ATF_TP_ADD_TCS(tp)
 {
