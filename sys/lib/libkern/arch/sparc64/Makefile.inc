@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2009/08/14 19:23:55 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2013/03/17 04:47:16 nakayama Exp $
 
 SRCS+=	ffs.S
 SRCS+=	strlen.S
@@ -7,7 +7,6 @@ SRCS+=	random.S
 
 SRCS+=	bswap16.c bswap32.c
 
-SRCS+=	umul.S mul.S rem.S sdiv.S udiv.S umul.S urem.S
 SRCS+=	mul.S saveregs.S umul.S
 
 # `source' files built from m4 source
