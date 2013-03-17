@@ -1,4 +1,4 @@
-/*	$NetBSD: t_symlinkat.c,v 1.1 2012/11/18 17:41:54 manu Exp $ */
+/*	$NetBSD: t_symlinkat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_symlinkat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
+__RCSID("$NetBSD: t_symlinkat.c,v 1.2 2013/03/17 04:46:06 jmmv Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -51,12 +51,11 @@ __RCSID("$NetBSD: t_symlinkat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
 #define BASELINK "symlink"
 #define FILEERR "olddir/olderr" 
 
-ATF_TC_WITH_CLEANUP(symlinkat_fd);
+ATF_TC(symlinkat_fd);
 ATF_TC_HEAD(symlinkat_fd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that symlinkat works with fd");
 }
-
 ATF_TC_BODY(symlinkat_fd, tc)
 {
 	int dfd, fd;
@@ -76,22 +75,12 @@ ATF_TC_BODY(symlinkat_fd, tc)
 	ATF_REQUIRE(ost.st_ino == nst.st_ino);
 }
 
-ATF_TC_CLEANUP(symlinkat_fd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(LINK);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
-}
-
-
-ATF_TC_WITH_CLEANUP(symlinkat_fdcwd);
+ATF_TC(symlinkat_fdcwd);
 ATF_TC_HEAD(symlinkat_fdcwd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 			  "See that symlinkat works with fd as AT_FDCWD");
 }
-
 ATF_TC_BODY(symlinkat_fdcwd, tc)
 {
 	int fd;
@@ -109,21 +98,12 @@ ATF_TC_BODY(symlinkat_fdcwd, tc)
 	ATF_REQUIRE(ost.st_ino == nst.st_ino);
 }
 
-ATF_TC_CLEANUP(symlinkat_fdcwd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(LINK);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
-}
-
-ATF_TC_WITH_CLEANUP(symlinkat_fdcwderr);
+ATF_TC(symlinkat_fdcwderr);
 ATF_TC_HEAD(symlinkat_fdcwderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 		  "See that symlinkat works with fd as AT_FDCWD and bad path");
 }
-
 ATF_TC_BODY(symlinkat_fdcwderr, tc)
 {
 	int fd;
@@ -141,21 +121,11 @@ ATF_TC_BODY(symlinkat_fdcwderr, tc)
 
 }
 
-ATF_TC_CLEANUP(symlinkat_fdcwderr, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)unlink(LINK);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
-}
-
-ATF_TC_WITH_CLEANUP(symlinkat_fderr);
+ATF_TC(symlinkat_fderr);
 ATF_TC_HEAD(symlinkat_fderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that symlinkat fails with fd as -1");
 }
-
 ATF_TC_BODY(symlinkat_fderr, tc)
 {
 	int fd;
@@ -166,14 +136,6 @@ ATF_TC_BODY(symlinkat_fderr, tc)
 	ATF_REQUIRE(close(fd) != -1);
 
 	ATF_REQUIRE(symlinkat(RELFILE, -1, LINK) == -1);
-}
-
-ATF_TC_CLEANUP(symlinkat_fderr, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(LINK);
-	(void)rmdir(NDIR);
-	(void)rmdir(ODIR);
 }
 
 ATF_TP_ADD_TCS(tp)

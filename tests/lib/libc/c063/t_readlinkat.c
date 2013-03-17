@@ -1,4 +1,4 @@
-/*	$NetBSD: t_readlinkat.c,v 1.2 2012/11/22 20:17:48 martin Exp $ */
+/*	$NetBSD: t_readlinkat.c,v 1.3 2013/03/17 04:46:06 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_readlinkat.c,v 1.2 2012/11/22 20:17:48 martin Exp $");
+__RCSID("$NetBSD: t_readlinkat.c,v 1.3 2013/03/17 04:46:06 jmmv Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -48,12 +48,11 @@ __RCSID("$NetBSD: t_readlinkat.c,v 1.2 2012/11/22 20:17:48 martin Exp $");
 #define BASELINK "symlink"
 #define FILEERR "dir/readlinkaterr"
 
-ATF_TC_WITH_CLEANUP(readlinkat_fd);
+ATF_TC(readlinkat_fd);
 ATF_TC_HEAD(readlinkat_fd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that readlinkat works with fd");
 }
-
 ATF_TC_BODY(readlinkat_fd, tc)
 {
 	int dfd;
@@ -75,21 +74,12 @@ ATF_TC_BODY(readlinkat_fd, tc)
 	ATF_REQUIRE(strcmp(buf, FILE) == 0);
 }
 
-ATF_TC_CLEANUP(readlinkat_fd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(LINK);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(readlinkat_fdcwd);
+ATF_TC(readlinkat_fdcwd);
 ATF_TC_HEAD(readlinkat_fdcwd, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 			  "See that readlinkat works with fd as AT_FDCWD");
 }
-
 ATF_TC_BODY(readlinkat_fdcwd, tc)
 {
 	int fd;
@@ -108,21 +98,12 @@ ATF_TC_BODY(readlinkat_fdcwd, tc)
 	ATF_REQUIRE(strcmp(buf, FILE) == 0);
 }
 
-ATF_TC_CLEANUP(readlinkat_fdcwd, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(LINK);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(readlinkat_fdcwderr);
+ATF_TC(readlinkat_fdcwderr);
 ATF_TC_HEAD(readlinkat_fdcwderr, tc)
 {
 	atf_tc_set_md_var(tc, "descr", 
 		  "See that readlinkat fails with fd as AT_FDCWD and bad path");
 }
-
 ATF_TC_BODY(readlinkat_fdcwderr, tc)
 {
 	char buf[MAXPATHLEN];
@@ -130,20 +111,11 @@ ATF_TC_BODY(readlinkat_fdcwderr, tc)
 	ATF_REQUIRE(readlinkat(AT_FDCWD, LINK, buf, sizeof(buf)) == -1);
 }
 
-ATF_TC_CLEANUP(readlinkat_fdcwderr, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(LINK);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(readlinkat_fderr1);
+ATF_TC(readlinkat_fderr1);
 ATF_TC_HEAD(readlinkat_fderr1, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that readlinkat fail with bad path");
 }
-
 ATF_TC_BODY(readlinkat_fderr1, tc)
 {
 	int dfd;
@@ -152,22 +124,13 @@ ATF_TC_BODY(readlinkat_fderr1, tc)
 	ATF_REQUIRE((dfd = open(DIR, O_RDONLY, 0)) != -1);
 	ATF_REQUIRE(readlinkat(dfd, FILEERR, F_OK, 0) == -1);
 	ATF_REQUIRE(close(dfd) == 0);
-	
 }
 
-ATF_TC_CLEANUP(readlinkat_fderr1, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
-ATF_TC_WITH_CLEANUP(readlinkat_fderr2);
+ATF_TC(readlinkat_fderr2);
 ATF_TC_HEAD(readlinkat_fderr2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "See that readlinkat fails with fd as -1");
 }
-
 ATF_TC_BODY(readlinkat_fderr2, tc)
 {
 	int fd;
@@ -180,15 +143,6 @@ ATF_TC_BODY(readlinkat_fderr2, tc)
 
 	ATF_REQUIRE(readlinkat(-1, LINK, buf, sizeof(buf)) == -1);
 }
-
-ATF_TC_CLEANUP(readlinkat_fderr2, tc)
-{
-	(void)unlink(FILE);
-	(void)unlink(LINK);
-	(void)unlink(FILEERR);
-	(void)rmdir(DIR);
-}
-
 
 ATF_TP_ADD_TCS(tp)
 {
