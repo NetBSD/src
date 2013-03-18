@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.151 2013/01/25 10:33:53 kefren Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.152 2013/03/18 19:31:39 gdt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.151 2013/01/25 10:33:53 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.152 2013/03/18 19:31:39 gdt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -905,6 +905,11 @@ ip6_output(
 			mhip6 = mtod(m, struct ip6_hdr *);
 			*mhip6 = *ip6;
 			m->m_len = sizeof(*mhip6);
+			/*
+			 * ip6f must be valid if error is 0.  But how
+			 * can a compiler be expected to infer this?
+			 */
+			ip6f = NULL;
 			error = ip6_insertfraghdr(m0, m, hlen, &ip6f);
 			if (error) {
 				IP6_STATINC(IP6_STAT_ODROPPED);
