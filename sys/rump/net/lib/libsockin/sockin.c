@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.26 2011/03/31 19:40:54 dyoung Exp $	*/
+/*	$NetBSD: sockin.c,v 1.27 2013/03/18 13:14:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.26 2011/03/31 19:40:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.27 2013/03/18 13:14:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.26 2011/03/31 19:40:54 dyoung Exp $");
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
+#include "rumpcomp_user.h"
 
 /*
  * An inet communication domain which uses the socket interface.
@@ -198,7 +199,7 @@ sockin_process(struct socket *so)
 	rmsg.msg_name = (struct sockaddr *)&from;
 	rmsg.msg_namelen = sizeof(from);
 
-	n = rumpuser_net_recvmsg(SO2S(so), &rmsg, 0, &error);
+	n = rumpcomp_sockin_recvmsg(SO2S(so), &rmsg, 0, &error);
 	if (n <= 0) {
 		m_freem(m);
 
@@ -236,7 +237,7 @@ sockin_accept(struct socket *so)
 	int news, error, slen;
 
 	slen = sizeof(sin);
-	news = rumpuser_net_accept(SO2S(so), (struct sockaddr *)&sin,
+	news = rumpcomp_sockin_accept(SO2S(so), (struct sockaddr *)&sin,
 	    &slen, &error);
 	if (news == -1)
 		return;
@@ -371,7 +372,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				break;
 		}
 
-		news = rumpuser_net_socket(PF_INET, so->so_proto->pr_type,
+		news = rumpcomp_sockin_socket(PF_INET, so->so_proto->pr_type,
 		    0, &error);
 		if (news == -1)
 			break;
@@ -379,10 +380,12 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/* for UDP sockets, make sure we can send&recv max */
 		if (so->so_proto->pr_type == SOCK_DGRAM) {
 			sbsize = SOCKIN_SBSIZE;
-			rumpuser_net_setsockopt(news, SOL_SOCKET, SO_SNDBUF,
+			rumpcomp_sockin_setsockopt(news,
+			    SOL_SOCKET, SO_SNDBUF,
 			    &sbsize, sizeof(sbsize), &error);
 			sbsize = SOCKIN_SBSIZE;
-			rumpuser_net_setsockopt(news, SOL_SOCKET, SO_RCVBUF,
+			rumpcomp_sockin_setsockopt(news,
+			    SOL_SOCKET, SO_RCVBUF,
 			    &sbsize, sizeof(sbsize), &error);
 		}
 
@@ -397,12 +400,13 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_BIND:
-		rumpuser_net_bind(SO2S(so), mtod(nam, const struct sockaddr *),
+		rumpcomp_sockin_bind(SO2S(so),
+		    mtod(nam, const struct sockaddr *),
 		    sizeof(struct sockaddr_in), &error);
 		break;
 
 	case PRU_CONNECT:
-		rv = rumpuser_net_connect(SO2S(so),
+		rv = rumpcomp_sockin_connect(SO2S(so),
 		    mtod(nam, struct sockaddr *), sizeof(struct sockaddr_in),
 		    &error);
 		if (rv == 0)
@@ -410,7 +414,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_LISTEN:
-		rumpuser_net_listen(SO2S(so), so->so_qlimit, &error);
+		rumpcomp_sockin_listen(SO2S(so), so->so_qlimit, &error);
 		break;
 
 	case PRU_SEND:
@@ -455,7 +459,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			mhdr.msg_namelen = saddr->sa_len;
 		}
 
-		rumpuser_net_sendmsg(s, &mhdr, 0, &error);
+		rumpcomp_sockin_sendmsg(s, &mhdr, 0, &error);
 
 		if (iov != iov_buf)
 			kmem_free(iov, sizeof(struct iovec) * iov_max);
@@ -477,13 +481,13 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_PEERADDR:
 	{
 		int slen = nam->m_len;
-		enum rumpuser_getnametype which;
+		enum rumpcomp_sockin_getnametype which;
 
 		if (req == PRU_SOCKADDR)
-			which = RUMPUSER_SOCKNAME;
+			which = RUMPCOMP_SOCKIN_SOCKNAME;
 		else
-			which = RUMPUSER_PEERNAME;
-		rumpuser_net_getname(SO2S(so),
+			which = RUMPCOMP_SOCKIN_PEERNAME;
+		rumpcomp_sockin_getname(SO2S(so),
 		    mtod(nam, struct sockaddr *), &slen, which, &error);
 		if (error == 0)
 			nam->m_len = slen;
@@ -506,7 +510,7 @@ sockin_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	int error;
 
-	rumpuser_net_setsockopt(SO2S(so), sopt->sopt_level,
+	rumpcomp_sockin_setsockopt(SO2S(so), sopt->sopt_level,
 	    sopt->sopt_name, sopt->sopt_data, sopt->sopt_size, &error);
 	return error;
 }
