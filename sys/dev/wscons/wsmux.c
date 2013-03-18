@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.54 2012/01/30 01:54:08 rmind Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.55 2013/03/18 11:40:39 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.54 2012/01/30 01:54:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.55 2013/03/18 11:40:39 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
@@ -481,6 +481,16 @@ wsmux_do_ioctl(device_t dv, u_long cmd, void *data, int flag,
 		DPRINTF(("wsmux_do_ioctl: save rawkbd = %d\n", sc->sc_rawkbd));
 		break;
 #endif
+
+	case WSKBDIO_SETVERSION:
+	case WSMOUSEIO_SETVERSION:
+	case WSDISPLAYIO_SETVERSION:
+		DPRINTF(("%s: WSxxxIO_SETVERSION\n", device_xname(sc->sc_base.me_dv)));
+		evar = sc->sc_base.me_evp;
+		if (evar == NULL)
+			return (EINVAL);
+		return wsevent_setversion(evar, *(int *)data);
+
 	case FIONBIO:
 		DPRINTF(("%s: FIONBIO\n", device_xname(sc->sc_base.me_dv)));
 		return (0);
