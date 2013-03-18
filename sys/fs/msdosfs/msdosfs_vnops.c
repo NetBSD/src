@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.85 2012/12/28 08:03:59 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.86 2013/03/18 19:35:37 plunky Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.85 2012/12/28 08:03:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.86 2013/03/18 19:35:37 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ msdosfs_check_permitted(struct vnode *vp, struct denode *dep, mode_t mode,
 
 	file_mode &= (vp->v_type == VDIR ? pmp->pm_dirmask : pmp->pm_mask);
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, file_mode), vp, NULL, genfs_can_access(vp->v_type,
 	    file_mode, pmp->pm_uid, pmp->pm_gid, mode, cred));
 }

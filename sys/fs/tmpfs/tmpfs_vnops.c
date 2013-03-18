@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.101 2013/03/18 19:35:40 plunky Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.101 2013/03/18 19:35:40 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -422,7 +422,7 @@ tmpfs_access(void *v)
 		return EPERM;
 	}
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, node->tn_mode), vp, NULL, genfs_can_access(vp->v_type,
 	    node->tn_mode, node->tn_uid, node->tn_gid, mode, cred));
 }

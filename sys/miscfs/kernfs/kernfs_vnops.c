@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.146 2012/03/22 20:34:38 drochner Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.147 2013/03/18 19:35:44 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.146 2012/03/22 20:34:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.147 2013/03/18 19:35:44 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,7 +586,7 @@ kernfs_access(void *v)
 		return (error);
 
 	return kauth_authorize_vnode(ap->a_cred,
-	    kauth_access_action(ap->a_mode, ap->a_vp->v_type, va.va_mode),
+	    KAUTH_ACCESS_ACTION(ap->a_mode, ap->a_vp->v_type, va.va_mode),
 	    ap->a_vp, NULL, genfs_can_access(va.va_type, va.va_mode,
 	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }

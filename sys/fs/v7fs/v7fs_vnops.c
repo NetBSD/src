@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.11 2012/04/29 22:54:00 chs Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.12 2013/03/18 19:35:42 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.11 2012/04/29 22:54:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.12 2013/03/18 19:35:42 plunky Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -374,7 +374,7 @@ v7fs_check_permitted(struct vnode *vp, struct v7fs_node *v7node,
 
 	struct v7fs_inode *inode = &v7node->inode;
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, inode->mode), vp, NULL, genfs_can_access(vp->v_type,
 	    inode->mode, inode->uid, inode->gid, mode, cred));
 }

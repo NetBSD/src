@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.26 2012/07/22 00:53:19 rmind Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.27 2013/03/18 19:35:37 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.26 2012/07/22 00:53:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.27 2013/03/18 19:35:37 plunky Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -556,7 +556,7 @@ hfs_check_permitted(vnode_t *vp, struct vattr *va, mode_t mode,
     kauth_cred_t cred)
 {
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    va->va_type, va->va_mode), vp, NULL,  genfs_can_access(va->va_type,
 	    va->va_mode, va->va_uid, va->va_gid, mode, cred));
 }

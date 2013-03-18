@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.211 2013/01/22 09:39:19 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.212 2013/03/18 19:35:48 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.211 2013/01/22 09:39:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.212 2013/03/18 19:35:48 plunky Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -345,7 +345,7 @@ ufs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
     kauth_cred_t cred)
 {
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode, vp->v_type,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
 	    ip->i_mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
 	    ip->i_mode & ALLPERMS, ip->i_uid, ip->i_gid, mode, cred));
 }
