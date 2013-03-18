@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.27 2013/02/16 21:11:15 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.28 2013/03/18 02:17:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -199,6 +199,7 @@ void		npfctl_build_rule(uint32_t, u_int, sa_family_t,
 		    const opt_proto_t *, const filt_opts_t *, const char *);
 void		npfctl_build_natseg(int, int, u_int, const addr_port_t *,
 		    const addr_port_t *, const filt_opts_t *);
+void		npfctl_build_maprset(const char *, int, u_int);
 void		npfctl_build_table(const char *, u_int, const char *);
 
 #endif
