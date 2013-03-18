@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.46 2012/06/11 21:11:41 agc Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.47 2013/03/18 19:35:40 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.46 2012/06/11 21:11:41 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.47 2013/03/18 19:35:40 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -251,7 +251,7 @@ sysvbfs_check_permitted(struct vnode *vp, struct sysvbfs_node *bnode,
 {
 	struct bfs_fileattr *attr = &bnode->inode->attr;
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, attr->mode), vp, NULL, genfs_can_access(vp->v_type,
 	    attr->mode, attr->uid, attr->gid, mode, cred));
 }
