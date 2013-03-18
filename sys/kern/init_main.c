@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.447 2013/02/21 01:39:55 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.448 2013/03/18 13:36:21 para Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.447 2013/02/21 01:39:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.448 2013/03/18 13:36:21 para Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -444,8 +444,8 @@ main(void)
 	 * 10% of memory for vnodes and associated data structures in the
 	 * assumed worst case.  Do not provide fewer than NVNODE vnodes.
 	 */
-	usevnodes =
-	    calc_cache_size(kernel_map, 10, VNODE_VA_MAXPCT) / VNODE_COST;
+	usevnodes = calc_cache_size(vmem_size(kmem_arena, VMEM_FREE|VMEM_ALLOC),
+	    10, VNODE_KMEM_MAXPCT) / VNODE_COST;
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
@@ -1078,20 +1078,17 @@ start_init(void *arg)
 }
 
 /*
- * calculate cache size (in bytes) from physmem and vm_map size.
+ * calculate cache size (in bytes) from physmem and vsize.
  */
 vaddr_t
-calc_cache_size(struct vm_map *map, int pct, int va_pct)
+calc_cache_size(vsize_t vsize, int pct, int va_pct)
 {
 	paddr_t t;
 
 	/* XXX should consider competing cache if any */
 	/* XXX should consider submaps */
 	t = (uintmax_t)physmem * pct / 100 * PAGE_SIZE;
-	if (map != NULL) {
-		vsize_t vsize;
-
-		vsize = vm_map_max(map) - vm_map_min(map);
+	if (vsize != 0) {
 		vsize = (uintmax_t)vsize * va_pct / 100;
 		if (t > vsize) {
 			t = vsize;
