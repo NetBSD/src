@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.35 2013/03/11 00:39:32 christos Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.36 2013/03/18 02:17:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.35 2013/03/11 00:39:32 christos Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.36 2013/03/18 02:17:49 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -404,35 +404,37 @@ npfctl_rule(int fd, int argc, char **argv)
 	static const struct ruleops_s {
 		const char *	cmd;
 		int		action;
+		bool		extra_arg;
 	} ruleops[] = {
-		{ "add",	NPF_CMD_RULE_ADD		},
-		{ "rem",	NPF_CMD_RULE_REMKEY		},
-		{ "del",	NPF_CMD_RULE_REMKEY		},
-		{ "rem-id",	NPF_CMD_RULE_REMOVE		},
-		{ "list",	NPF_CMD_RULE_LIST		},
-		{ "flush",	NPF_CMD_RULE_FLUSH		},
-		{ NULL,		0				}
+		{ "add",	NPF_CMD_RULE_ADD,	true	},
+		{ "rem",	NPF_CMD_RULE_REMKEY,	true	},
+		{ "del",	NPF_CMD_RULE_REMKEY,	true	},
+		{ "rem-id",	NPF_CMD_RULE_REMOVE,	true	},
+		{ "list",	NPF_CMD_RULE_LIST,	false	},
+		{ "flush",	NPF_CMD_RULE_FLUSH,	false	},
+		{ NULL,		0,			0	}
 	};
 	uint8_t key[NPF_RULE_MAXKEYLEN];
 	const char *ruleset_name = argv[0];
 	const char *cmd = argv[1];
 	int error, action = 0;
 	uint64_t rule_id;
+	bool extra_arg;
 	nl_rule_t *rl;
 
 	for (int n = 0; ruleops[n].cmd != NULL; n++) {
 		if (strcmp(cmd, ruleops[n].cmd) == 0) {
 			action = ruleops[n].action;
+			extra_arg = ruleops[n].extra_arg;
 			break;
 		}
 	}
-
-	bool narg = action == NPF_CMD_RULE_LIST || action == NPF_CMD_RULE_FLUSH;
-	if (!action || (argc < 3 && !narg)) {
-		usage();
-	}
 	argc -= 2;
 	argv += 2;
+
+	if (!action || (extra_arg && argc == 0)) {
+		usage();
+	}
 
 	switch (action) {
 	case NPF_CMD_RULE_ADD:
