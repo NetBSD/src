@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.28 2013/01/14 21:04:15 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.29 2013/03/18 21:00:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.28 2013/01/14 21:04:15 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.29 2013/03/18 21:00:52 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -660,8 +660,8 @@ rumpuser_writewatchfile_setup(int inotify, int fd, intptr_t notused, int *error)
 
 	/* ok, need to map fd into path for inotify */
 	snprintf(procbuf, sizeof(procbuf), "/proc/self/fd/%d", fd);
-	nn = readlink(procbuf, linkbuf, sizeof(linkbuf));
-	if (nn >= (ssize_t)sizeof(linkbuf)) {
+	nn = readlink(procbuf, linkbuf, sizeof(linkbuf)-1);
+	if (nn >= (ssize_t)sizeof(linkbuf)-1) {
 		nn = -1;
 		errno = E2BIG; /* pick something */
 	}
@@ -671,6 +671,7 @@ rumpuser_writewatchfile_setup(int inotify, int fd, intptr_t notused, int *error)
 		return -1;
 	}
 
+	linkbuf[nn] = '\0';
 	if (inotify_add_watch(inotify, linkbuf, IN_MODIFY) == -1) {
 		seterror(errno);
 		close(inotify);
