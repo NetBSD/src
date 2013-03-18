@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.21 2013/02/16 21:11:14 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.22 2013/03/18 02:17:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.21 2013/02/16 21:11:14 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.22 2013/03/18 02:17:49 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -451,6 +451,22 @@ npfctl_build_rproc(const char *name, npfvar_t *procs)
 		proc_call_t *pc = npfvar_get_data(procs, NPFVAR_PROC, i);
 		npfctl_build_rpcall(rp, pc->pc_name, pc->pc_opts);
 	}
+}
+
+void
+npfctl_build_maprset(const char *name, int attr, u_int if_idx)
+{
+	const int attr_di = (NPF_RULE_IN | NPF_RULE_OUT);
+	nl_rule_t *rl;
+
+	/* If no direction is not specified, then both. */
+	if ((attr & attr_di) == 0) {
+		attr |= attr_di;
+	}
+	/* Allow only "in/out" attributes. */
+	attr = NPF_RULE_GROUP | NPF_RULE_GROUP | (attr & attr_di);
+	rl = npf_rule_create(name, attr, if_idx);
+	npf_nat_insert(npf_conf, rl, NPF_PRI_LAST);
 }
 
 /*
