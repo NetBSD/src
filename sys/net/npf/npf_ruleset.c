@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.19 2013/02/16 21:11:13 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.20 2013/03/18 02:24:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,17 +34,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.19 2013/02/16 21:11:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.20 2013/03/18 02:24:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
+#include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/mbuf.h>
 #include <sys/types.h>
 
 #include <net/bpf.h>
+#include <net/bpfjit.h>
 #include <net/pfil.h>
 #include <net/if.h>
 
@@ -80,6 +82,7 @@ struct npf_rule {
 
 	/* Code to process, if any. */
 	int			r_type;
+	bpfjit_function_t	r_jcode;
 	void *			r_code;
 	size_t			r_clen;
 
@@ -535,11 +538,18 @@ npf_rule_alloc(prop_dictionary_t rldict)
 /*
  * npf_rule_setcode: assign filter code to the rule.
  *
- * => The code should be validated by the caller.
+ * => The code must be validated by the caller.
+ * => JIT compilation may be performed here.
  */
 void
 npf_rule_setcode(npf_rule_t *rl, const int type, void *code, size_t size)
 {
+	/* Perform BPF JIT if possible. */
+	if (type == NPF_CODE_BPF && (membar_consumer(),
+	    bpfjit_module_ops.bj_generate_code != NULL)) {
+		KASSERT(rl->r_jcode == NULL);
+		rl->r_jcode = bpfjit_module_ops.bj_generate_code(code, size);
+	}
 	rl->r_type = type;
 	rl->r_code = code;
 	rl->r_clen = size;
@@ -573,8 +583,13 @@ npf_rule_free(npf_rule_t *rl)
 		npf_rproc_release(rp);
 	}
 	if (rl->r_code) {
-		/* Free n-code. */
+		/* Free byte-code. */
 		kmem_free(rl->r_code, rl->r_clen);
+	}
+	if (rl->r_jcode) {
+		/* Free JIT code. */
+		KASSERT(bpfjit_module_ops.bj_free_code != NULL);
+		bpfjit_module_ops.bj_free_code(rl->r_jcode);
 	}
 	if (rl->r_dict) {
 		/* Destroy the dictionary. */
@@ -647,7 +662,15 @@ npf_rule_inspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *rl,
 			return false;
 	}
 
-	/* Execute the code, if any. */
+	/* Execute JIT code, if any. */
+	if (__predict_true(rl->r_jcode)) {
+		struct mbuf *m = nbuf_head_mbuf(nbuf);
+		size_t pktlen = m_length(m);
+
+		return rl->r_jcode((unsigned char *)m, pktlen, 0) != 0;
+	}
+
+	/* Execute the byte-code, if any. */
 	if ((code = rl->r_code) == NULL) {
 		return true;
 	}
