@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.21 2013/02/09 03:35:32 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.22 2013/03/18 00:14:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.21 2013/02/09 03:35:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.22 2013/03/18 00:14:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -452,6 +452,67 @@ npf_session_tracking(bool track)
 	return 0;
 }
 
+static bool
+npf_session_trackable_p(const npf_cache_t *npc)
+{
+	/*
+	 * Check if session tracking is on.  Also, if layer 3 and 4 are not
+	 * cached - protocol is not supported or packet is invalid.
+	 */
+	if (sess_tracking == SESS_TRACKING_OFF) {
+		return false;
+	}
+	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
+		return false;
+	}
+	return true;
+}
+
+/*
+ * npf_session_fillent: fill a session entry with the protocol data.
+ */
+static bool
+npf_session_fillent(const npf_cache_t *npc, npf_sentry_t *sen)
+{
+	const struct tcphdr *th;
+	const struct udphdr *uh;
+
+	switch (npc->npc_proto) {
+	case IPPROTO_TCP:
+		KASSERT(npf_iscached(npc, NPC_TCP));
+		th = npc->npc_l4.tcp;
+		sen->se_src_id = th->th_sport;
+		sen->se_dst_id = th->th_dport;
+		break;
+	case IPPROTO_UDP:
+		KASSERT(npf_iscached(npc, NPC_UDP));
+		uh = npc->npc_l4.udp;
+		sen->se_src_id = uh->uh_sport;
+		sen->se_dst_id = uh->uh_dport;
+		break;
+	case IPPROTO_ICMP:
+		if (npf_iscached(npc, NPC_ICMP_ID)) {
+			const struct icmp *ic = npc->npc_l4.icmp;
+			sen->se_src_id = ic->icmp_id;
+			sen->se_dst_id = ic->icmp_id;
+			break;
+		}
+		return false;
+	case IPPROTO_ICMPV6:
+		if (npf_iscached(npc, NPC_ICMP_ID)) {
+			const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
+			sen->se_src_id = ic6->icmp6_id;
+			sen->se_dst_id = ic6->icmp6_id;
+			break;
+		}
+		return false;
+	default:
+		/* Unsupported protocol. */
+		return false;
+	}
+	return true;
+}
+
 /*
  * npf_session_lookup: lookup for an established session (connection).
  *
@@ -468,40 +529,9 @@ npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
 	npf_sehash_t *sh;
 	int flags;
 
-	switch (proto) {
-	case IPPROTO_TCP: {
-		const struct tcphdr *th = npc->npc_l4.tcp;
-		senkey.se_src_id = th->th_sport;
-		senkey.se_dst_id = th->th_dport;
-		break;
-	}
-	case IPPROTO_UDP: {
-		const struct udphdr *uh = npc->npc_l4.udp;
-		senkey.se_src_id = uh->uh_sport;
-		senkey.se_dst_id = uh->uh_dport;
-		break;
-	}
-	case IPPROTO_ICMP:
-		if (npf_iscached(npc, NPC_ICMP_ID)) {
-			const struct icmp *ic = npc->npc_l4.icmp;
-			senkey.se_src_id = ic->icmp_id;
-			senkey.se_dst_id = ic->icmp_id;
-			break;
-		}
-		return NULL;
-	case IPPROTO_ICMPV6:
-		if (npf_iscached(npc, NPC_ICMP_ID)) {
-			const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
-			senkey.se_src_id = ic6->icmp6_id;
-			senkey.se_dst_id = ic6->icmp6_id;
-			break;
-		}
-		return NULL;
-	default:
-		/* Unsupported protocol. */
+	if (!npf_session_fillent(npc, &senkey)) {
 		return NULL;
 	}
-
 	KASSERT(npc->npc_srcip && npc->npc_dstip && npc->npc_alen > 0);
 	memcpy(&senkey.se_src_addr, npc->npc_srcip, npc->npc_alen);
 	memcpy(&senkey.se_dst_addr, npc->npc_dstip, npc->npc_alen);
@@ -571,15 +601,7 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 	bool forw;
 
 	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
-
-	/*
-	 * Check if session tracking is on.  Also, if layer 3 and 4 are not
-	 * cached - protocol is not supported or packet is invalid.
-	 */
-	if (sess_tracking == SESS_TRACKING_OFF) {
-		return NULL;
-	}
-	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
+	if (!npf_session_trackable_p(npc)) {
 		return NULL;
 	}
 
@@ -620,24 +642,14 @@ npf_session_t *
 npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 {
 	const ifnet_t *ifp = nbuf->nb_ifp;
-	const struct tcphdr *th;
-	const struct udphdr *uh;
 	npf_sentry_t *fw, *bk;
 	npf_sehash_t *sh;
 	npf_session_t *se;
-	u_int proto, alen;
+	u_int alen;
 	bool ok;
 
 	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
-
-	/*
-	 * Check if session tracking is on.  Also, if layer 3 and 4 are not
-	 * cached - protocol is not supported or packet is invalid.
-	 */
-	if (sess_tracking == SESS_TRACKING_OFF) {
-		return NULL;
-	}
-	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
+	if (!npf_session_trackable_p(npc)) {
 		return NULL;
 	}
 
@@ -669,54 +681,14 @@ npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	memcpy(&fw->se_dst_addr, npc->npc_dstip, alen);
 
 	/* Protocol and interface. */
-	proto = npc->npc_proto;
 	memset(&se->s_common_id, 0, sizeof(npf_secomid_t));
-	se->s_common_id.proto = proto;
+	se->s_common_id.proto = npc->npc_proto;
 	se->s_common_id.if_idx = ifp->if_index;
 
-	switch (proto) {
-	case IPPROTO_TCP:
-		KASSERT(npf_iscached(npc, NPC_TCP));
-		th = npc->npc_l4.tcp;
-		/* Additional IDs: ports. */
-		fw->se_src_id = th->th_sport;
-		fw->se_dst_id = th->th_dport;
-		break;
-	case IPPROTO_UDP:
-		KASSERT(npf_iscached(npc, NPC_UDP));
-		/* Additional IDs: ports. */
-		uh = npc->npc_l4.udp;
-		fw->se_src_id = uh->uh_sport;
-		fw->se_dst_id = uh->uh_dport;
-		break;
-	case IPPROTO_ICMP:
-		if (npf_iscached(npc, NPC_ICMP_ID)) {
-			/* ICMP query ID. */
-			const struct icmp *ic = npc->npc_l4.icmp;
-			fw->se_src_id = ic->icmp_id;
-			fw->se_dst_id = ic->icmp_id;
-			break;
-		}
-		ok = false;
-		goto out;
-	case IPPROTO_ICMPV6:
-		if (npf_iscached(npc, NPC_ICMP_ID)) {
-			/* ICMP query ID. */
-			const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
-			fw->se_src_id = ic6->icmp6_id;
-			fw->se_dst_id = ic6->icmp6_id;
-			break;
-		}
-		ok = false;
-		goto out;
-	default:
-		/* Unsupported. */
-		ok = false;
-		goto out;
+	/* Setup "forwards" entry. */
+	if (!npf_session_fillent(npc, fw)) {
+		return NULL;
 	}
-
-	/* Set last activity time for a new session. */
-	getnanouptime(&se->s_atime);
 
 	/* Setup inverted "backwards". */
 	bk = &se->s_back_entry;
@@ -728,6 +700,9 @@ npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	/* Finish the setup of entries. */
 	fw->se_backptr = bk->se_backptr = se;
 	fw->se_alen = bk->se_alen = alen;
+
+	/* Set last activity time for a new session. */
+	getnanouptime(&se->s_atime);
 
 	/*
 	 * Insert the session and both entries into the tree.
