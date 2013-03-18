@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.10 2013/02/09 03:35:33 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.11 2013/03/18 02:17:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ ipv6-icmp		{ yylval.num = IPPROTO_ICMPV6; return ICMP6; }
 return-rst		return RETURNRST;
 return-icmp		return RETURNICMP;
 return			return RETURN;
-ruleset			return GROUP;
+ruleset			return RULESET;
 from			return FROM;
 to			return TO;
 port			return PORT;
