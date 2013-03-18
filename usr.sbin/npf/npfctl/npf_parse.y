@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.20 2013/03/11 00:09:07 christos Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.21 2013/03/18 02:17:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ yyerror(const char *fmt, ...)
 %token			RETURN
 %token			RETURNICMP
 %token			RETURNRST
+%token			RULESET
 %token			SEPLINE
 %token			SLASH
 %token			STATEFUL
@@ -310,6 +311,10 @@ map
 	{
 		npfctl_build_natseg($3, $5, $2, &$4, &$6, NULL);
 	}
+	| MAP RULESET PAR_OPEN group_attr PAR_CLOSE
+	{
+		npfctl_build_maprset($4.rg_name, $4.rg_attr, $4.rg_ifnum);
+	}
 	;
 
 rproc
@@ -383,6 +388,15 @@ group
 	}
 	;
 
+ruleset
+	: RULESET PAR_OPEN group_attr PAR_CLOSE
+	{
+		/* Ruleset is a dynamic group. */
+		npfctl_build_group($3.rg_name, $3.rg_attr | NPF_RULE_DYNAMIC,
+		    $3.rg_ifnum, $3.rg_default);
+		npfctl_build_group_end();
+	}
+
 group_attr
 	: group_opt COMMA group_attr
 	{
@@ -443,18 +457,18 @@ group_opt
 	;
 
 ruleset_block
-	: CURLY_OPEN ruleset CURLY_CLOSE
-	| /* Empty (for a dynamic ruleset). */
+	: CURLY_OPEN ruleset_def CURLY_CLOSE
 	;
 
-ruleset
-	: rule_group SEPLINE ruleset
+ruleset_def
+	: rule_group SEPLINE ruleset_def
 	| rule_group
 	;
 
 rule_group
 	: rule
 	| group
+	| ruleset
 	|
 
 rule
