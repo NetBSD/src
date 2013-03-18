@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.22 2013/03/18 00:14:57 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.23 2013/03/18 00:17:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.22 2013/03/18 00:14:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.23 2013/03/18 00:17:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -687,7 +687,8 @@ npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 
 	/* Setup "forwards" entry. */
 	if (!npf_session_fillent(npc, fw)) {
-		return NULL;
+		ok = false;
+		goto out;
 	}
 
 	/* Setup inverted "backwards". */
