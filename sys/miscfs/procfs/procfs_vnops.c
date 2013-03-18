@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.185 2012/11/25 01:03:05 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.186 2013/03/18 19:35:44 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.185 2012/11/25 01:03:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.186 2013/03/18 19:35:44 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -955,7 +955,7 @@ procfs_access(void *v)
 		return (error);
 
 	return kauth_authorize_vnode(ap->a_cred,
-	    kauth_access_action(ap->a_mode, ap->a_vp->v_type, va.va_mode),
+	    KAUTH_ACCESS_ACTION(ap->a_mode, ap->a_vp->v_type, va.va_mode),
 	    ap->a_vp, NULL, genfs_can_access(va.va_type, va.va_mode,
 	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }

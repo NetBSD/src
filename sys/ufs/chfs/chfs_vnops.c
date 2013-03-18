@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.14 2013/01/22 09:39:15 dholland Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.15 2013/03/18 19:35:47 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -393,7 +393,7 @@ chfs_access(void *v)
 	if (mode & VWRITE && ip->flags & IMMUTABLE)
 		return (EPERM);
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode, vp->v_type,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
 	    ip->mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
 	    ip->mode & ALLPERMS, ip->uid, ip->gid, mode, cred));
 }
