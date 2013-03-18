@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.3 2013/03/10 14:15:54 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.4 2013/03/18 15:55:43 pooka Exp $
 #
 
 #
@@ -23,7 +23,7 @@ precho src/			build.sh Makefile Makefile.inc
 precho src/			tools common include share/mk
 precho src/etc/			Makefile.params master.passwd group
 precho src/lib/lib		c util rump
-precho src/lib/librump		user client dev net vfs
+precho src/lib/librump		user client hijack dev net vfs
 precho src/external/bsd/	flex mdocml byacc
 precho src/external/cddl/	osnet
 precho src/external/historical/	nawk
