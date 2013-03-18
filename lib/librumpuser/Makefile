@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/03/01 18:15:36 pooka Exp $
+#	$NetBSD: Makefile,v 1.9 2013/03/18 13:14:10 pooka Exp $
 #
 
 WARNS?=		5
@@ -11,7 +11,7 @@ LIBDPLIBS+=	pthread ${.CURDIR}/../libpthread
 CPPFLAGS+=	-DLIBRUMPUSER
 #CPPFLAGS+=	-D_DIAGNOSTIC
 
-SRCS=		rumpuser.c rumpuser_net.c
+SRCS=		rumpuser.c
 SRCS+=		rumpuser_pth.c
 SRCS+=		rumpuser_dl.c rumpuser_sp.c rumpuser_daemonize.c
 SRCS+=		rumpuser_component.c
