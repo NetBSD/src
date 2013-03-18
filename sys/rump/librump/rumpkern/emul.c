@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.154 2013/03/07 19:07:05 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.155 2013/03/18 13:36:23 para Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.154 2013/03/07 19:07:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.155 2013/03/18 13:36:23 para Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -192,7 +192,7 @@ lwp_update_creds(struct lwp *l)
 }
 
 vaddr_t
-calc_cache_size(struct vm_map *map, int pct, int va_pct)
+calc_cache_size(vsize_t vasz, int pct, int va_pct)
 {
 	paddr_t t;
 

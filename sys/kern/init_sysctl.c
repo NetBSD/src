@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.196 2013/03/07 18:02:54 matt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.197 2013/03/18 13:36:22 para Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.196 2013/03/07 18:02:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.197 2013/03/18 13:36:22 para Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -961,8 +961,9 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 	if (new_vnodes <= 0)
 		return (EINVAL);
 
-	/* Limits: 75% of KVA and physical memory. */
-	new_max = calc_cache_size(kernel_map, 75, 75) / VNODE_COST;
+	/* Limits: 75% of kmem and physical memory. */
+	new_max = calc_cache_size(vmem_size(kmem_arena, VMEM_FREE|VMEM_ALLOC),
+	    75, 75) / VNODE_COST;
 	if (new_vnodes > new_max)
 		new_vnodes = new_max;
 
