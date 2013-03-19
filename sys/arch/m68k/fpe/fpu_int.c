@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_int.c,v 1.11 2012/06/25 04:52:23 isaki Exp $	*/
+/*	$NetBSD: fpu_int.c,v 1.12 2013/03/19 09:17:17 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_int.c,v 1.11 2012/06/25 04:52:23 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_int.c,v 1.12 2013/03/19 09:17:17 isaki Exp $");
 
 #include <sys/types.h>
 
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_int.c,v 1.11 2012/06/25 04:52:23 isaki Exp $");
 struct fpn *
 fpu_intrz(struct fpemu *fe)
 {
-	register struct fpn *x = &fe->fe_f2;
-	register int sh, clr, mask, i;
+	struct fpn *x = &fe->fe_f2;
+	int sh, clr, mask, i;
 
 	/* special cases first */
 	if (x->fp_class != FPC_NUM) {
@@ -77,8 +77,8 @@ fpu_intrz(struct fpemu *fe)
 struct fpn *
 fpu_int(struct fpemu *fe)
 {
-	register struct fpn *x = &fe->fe_f2;
-	register int rsh;
+	struct fpn *x = &fe->fe_f2;
+	int rsh;
 
 	/* special cases first */
 	if (x->fp_class != FPC_NUM) {
