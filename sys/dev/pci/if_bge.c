@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.220 2013/03/19 04:10:13 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.221 2013/03/19 16:49:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.220 2013/03/19 04:10:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.221 2013/03/19 16:49:11 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -5694,7 +5694,7 @@ bge_debug_info(struct bge_softc *sc)
 		printf(" - 5704 A0 bug\n");
 	if (sc->bge_flags & BGE_PHY_JITTER_BUG)
 		printf(" - jitter bug\n");
-	if (sc->bge_flags & BGE_PHY_BER_BGU)
+	if (sc->bge_flags & BGE_PHY_BER_BUG)
 		printf(" - BER bug\n");
 	if (sc->bge_flags & BGE_PHY_ADJUST_TRIM)
 		printf(" - adjust trim\n");
