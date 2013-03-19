@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_asm_generic.S,v 1.8 2012/09/27 00:23:52 matt Exp $	*/
+/*	$NetBSD: bus_space_asm_generic.S,v 1.9 2013/03/19 17:11:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.
@@ -40,6 +40,8 @@
 
 #ifdef _ARM_ARCH_7
 #define	DSB	dsb
+#elif defined(_ARM_ARCH_6)
+#define	DSB	mcr p15, 0, r0, c7, c10, 4
 #else
 #define	DSB
 #endif
