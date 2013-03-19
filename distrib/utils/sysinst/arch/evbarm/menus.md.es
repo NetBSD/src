@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.es,v 1.3 2011/04/04 08:30:24 mbalmer Exp $	*/
+/*	$NetBSD: menus.md.es,v 1.4 2013/03/19 22:16:54 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,4 +34,8 @@
  */
 
 /* evbarm machine dependent menus, spanish */
+
+menu prelim, title "What kind of system do you have?", y=-10;
+	option "Raspberry PI", exit, action { boardtype = 1; };
+	option "Other", exit, action { boardtype = 0; };
 

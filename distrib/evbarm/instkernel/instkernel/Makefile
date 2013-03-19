@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.18 2013/01/30 13:53:54 he Exp $
+#	$NetBSD: Makefile,v 1.19 2013/03/19 22:16:53 garbled Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
+SSHRAMDISKDIR!=	cd ${.CURDIR}/../sshramdisk && ${PRINTOBJDIR}
+SSHRAMDISK=	${SSHRAMDISKDIR}/sshramdisk.fs
 
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms.
@@ -20,6 +22,7 @@ MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-	\
 			OPENRD_INSTALL		${RAMDISK}	-	\
 			TS7200_INSTALL		${RAMDISK}	- 	\
 			TEAMASA_NPWR_INSTALL	${RAMDISK}	-	\
+			RPI_INSTALL		${SSHRAMDISK}	-	\
 			KUROBOX_PRO_INSTALL	${RAMDISK}	-
 .else
 # Big endian platforms.
