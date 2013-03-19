@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.12 2013/03/19 09:17:17 isaki Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.13 2013/03/19 09:28:39 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.12 2013/03/19 09:17:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.13 2013/03/19 09:28:39 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ fpu_xtof(struct fpn *fp, u_int i, u_int j, u_int k)
  * Explode the contents of a memory operand.
  */
 void
-fpu_explode(struct fpemu *fe, struct fpn *fp, int type, u_int *space)
+fpu_explode(struct fpemu *fe, struct fpn *fp, int type, const u_int *space)
 {
 	u_int s;
 
