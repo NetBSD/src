@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.72 2013/03/10 07:18:21 christos Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.73 2013/03/19 19:59:40 christos Exp $
 
 #=========================================================================
 #
@@ -98,6 +98,9 @@ copy.o:	${SPARC64}/sparc64/copy.S assym.h
 
 mp_subr.o:	${SPARC64}/sparc64/mp_subr.S assym.h
 	${NORMAL_S}
+
+# Our libkern needs stuff from assym.h for memcpy and memset.
+dependkernlib:	assym.h
 
 ##
 ## (5) link settings
