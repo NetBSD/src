@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.64 2013/03/17 18:46:10 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.65 2013/03/19 03:40:16 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2260,6 +2260,7 @@ struct bge_rx_bd {
 #define BGE_RXBDFLAG_IP_CSUM		0x1000
 #define BGE_RXBDFLAG_TCP_UDP_CSUM	0x2000
 #define BGE_RXBDFLAG_TCP_UDP_IS_TCP	0x4000
+#define	BGE_RXBDFLAG_IPV6		0x8000
 
 #define BGE_RXERRFLAG_BAD_CRC		0x0001
 #define BGE_RXERRFLAG_COLL_DETECT	0x0002
