@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.35 2013/02/15 00:13:06 christos Exp $
+# $NetBSD: mkimage,v 1.36 2013/03/19 22:16:53 garbled Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -68,13 +68,13 @@ getsize() {
 
 usage() {
 	cat << EOF 1>&2
-Usage: $PROG -h <host-arch> [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
+Usage: $PROG -h <host-arch> [-b] [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
 EOF
 	exit 1
 }
 
 # First pass for options to get the host and src directories
-OPTS="K:D:S:c:h:s:x"
+OPTS="K:D:S:bc:h:s:x"
 while getopts "$OPTS" f
 do
 	case $f in
@@ -106,6 +106,7 @@ do
 	D)	release="$OPTARG";;
 	K)	kernel="$OPTARG";;
 	S)	;;
+	b)	bootonly="true";;
 	c)	custom="$OPTARG";;
 	h)	;;
 	s)	size="$OPTARG";;
@@ -126,32 +127,38 @@ case "$image" in
 *)	compress=false;;
 esac
 
-echo ${bar} configuring sets ${bar}
-(echo '/set type=dir uname=root gname=wheel mode=0755'
-for i in $selected_sets; do
-	s="${release}/etc/mtree/set.$i"
-	if [ -f "$s" ]; then
-		cat "$s"
-	fi
-done) > "$tmp/selected_sets"
+if [ -z "$bootonly" ]; then
+	echo ${bar} configuring sets ${bar}
+	(echo '/set type=dir uname=root gname=wheel mode=0755'
+	for i in $selected_sets; do
+		s="${release}/etc/mtree/set.$i"
+		if [ -f "$s" ]; then
+			cat "$s"
+		fi
+	done) > "$tmp/selected_sets"
+fi
 
 make_fstab
 customize
 populate
 
-(cd ${mnt}; ${MTREE} -N ${release}/etc -c -k all | 
-    ${MTREE} -N ${release}/etc -C -k all) >> "$tmp/selected_sets"
+if [ -z "$bootonly" ]; then
+	(cd ${mnt}; ${MTREE} -N ${release}/etc -c -k all | 
+	    ${MTREE} -N ${release}/etc -C -k all) >> "$tmp/selected_sets"
+fi
 if [ -n ${msdosid} ]; then
 	echo ${bar} Populating msdos filesystem ${bar}
 	${MAKEFS} -N ${release}/etc -t msdos \
-	    -O $((${init} / 2))m -s $((${boot} / 2))m ${image} ${mnt}/boot
+	    -O $((${init} / 2))m -s $((${boot} / 2 + ${init} / 2))m ${image} ${mnt}/boot
 fi
 
-echo ${bar} Populating ffs filesystem ${bar}
-${MAKEFS} -N ${release}/etc -t ffs -rx \
-    -O $(((${init} + ${boot} + ${swap}) / 2))m \
-    -b $((${extra} / 2))m \
-    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
+if [ -z "$bootonly" ]; then
+	echo ${bar} Populating ffs filesystem ${bar}
+	${MAKEFS} -N ${release}/etc -t ffs -rx \
+	    -O $(((${init} + ${boot} + ${swap}) / 2))m \
+	    -b $((${extra} / 2))m \
+	    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
+fi
 
 if [ "${size}" = 0 ]; then
 	size="$(getsize "${image}")"
