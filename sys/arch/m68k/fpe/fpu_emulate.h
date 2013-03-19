@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.19 2011/10/15 15:34:06 tsutsui Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.20 2013/03/19 09:17:17 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -136,7 +136,7 @@ CPYFPN(struct fpn *dst, const struct fpn *src)
 		SWAP(x, y); \
 }
 #define	SWAP(x, y) {				\
-	register struct fpn *swap;		\
+	struct fpn *swap;			\
 	swap = (x), (x) = (y), (y) = swap;	\
 }
 
@@ -224,7 +224,7 @@ int	fpu_shr(struct fpn *, int);
 /*
  * Round a number according to the round mode in FPCR
  */
-int	fpu_round(register struct fpemu *, register struct fpn *);
+int	fpu_round(struct fpemu *, struct fpn *);
 
 /* type conversion */
 void	fpu_explode(struct fpemu *, struct fpn *, int t, u_int *);
@@ -266,7 +266,7 @@ int fpu_store_ea(struct frame *, struct instruction *,
 		  struct insn_ea *, char *);
 
 /* fpu_subr.c */
-void fpu_norm(register struct fpn *);
+void fpu_norm(struct fpn *);
 
 #if !defined(FPE_DEBUG)
 #  define FPE_DEBUG 0
