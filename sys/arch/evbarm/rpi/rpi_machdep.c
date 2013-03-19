@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.34 2013/02/04 21:46:14 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.35 2013/03/19 22:16:55 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.34 2013/02/04 21:46:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.35 2013/03/19 22:16:55 garbled Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.34 2013/02/04 21:46:14 skrll Exp $
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/reboot.h>
 #include <sys/sysctl.h>
 #include <sys/bus.h>
 

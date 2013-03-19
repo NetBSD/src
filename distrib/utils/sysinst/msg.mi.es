@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.49 2013/03/16 17:10:17 christos Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.50 2013/03/19 22:16:54 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -986,6 +986,7 @@ message other {otro }
 message Perform_IPv6_autoconfiguration {¿Realizar autoconfiguración IPv6?}
 message Perform_DHCP_autoconfiguration {¿Realizar autoconfiguración DHCP ?}
 message Root_shell {Shell de root}
+message User_shell {Shell de user}
 
 .if AOUT2ELF
 message aoutfail
@@ -1063,6 +1064,7 @@ message enable_sshd {Activar sshd}
 message enable_ntpd {Activar ntpd}
 message run_ntpdate {Ejecutar ntpdate durante el arranque}
 message enable_mdnsd {Activar mdnsd}
+message add_a_user {Add a user}
 message configmenu {Configurar elementos adicionales bajo demanda.}
 message doneconfig {Terminar configuración}
 message Install_pkgin {Instalar pkgin y actualizar la lista de paquetes}
@@ -1094,3 +1096,5 @@ message pkgin_failed
 paquetes binarios.  Por favor verifique el camino a los paquetes y
 reinténtelo de nuevo.}
 message failed {Error}
+message addusername {8 character username to add:}
+message addusertowheel {Do you wish to add this user to group wheel?}
