@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.165 2013/03/16 22:16:02 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.166 2013/03/19 22:16:53 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -327,6 +327,9 @@ char pkg_dir[STRSIZE];
 /* Place we look for pkgsrc in all fs types */
 char pkgsrc_dir[STRSIZE];
 
+/* User shell */
+const char *ushell;
+
 struct ftpinfo {
     char host[STRSIZE];
     char dir[STRSIZE] ;
@@ -362,6 +365,7 @@ void set_menu_numopts(int, int);
 
 /* Machine dependent functions .... */
 void	md_init(void);
+void	md_prelim_menu(void);
 void	md_init_set_status(int); /* SFLAG_foo */
 
  /* MD functions if user selects install - in order called */

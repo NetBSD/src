@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.48 2013/03/17 12:19:57 mlelstv Exp $
+#	$NetBSD: Makefile.inc,v 1.49 2013/03/19 22:16:54 garbled Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -20,6 +20,7 @@ EVBARM_BOARDS+=		ADI_BRH CP3100 GEMINI GUMSTIX INTEGRATOR \
 IMAGE.rel=	${RELEASEDIR}/${RELEASEMACHINEDIR}
 IMAGE.dir=	${IMAGE.rel}/binary/gzimg
 IMAGE.kern=	${IMAGE.rel}/binary/kernel
+IMAGE.instk=	${IMAGE.rel}/installation/instkernel
 
 __mkimage: .USE
 	TOOL_MAKEFS=${TOOL_MAKEFS} \
@@ -30,7 +31,7 @@ __mkimage: .USE
 	TOOL_MTREE=${TOOL_MTREE} \
 	HOST_SH=${HOST_SH} \
 	${HOST_SH} ${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
-	    -K ${.ALLSRC} -S ${NETBSDSRCDIR} \
+	    -K ${.ALLSRC} -S ${NETBSDSRCDIR} ${MKI_OPTS.${.TARGET}} \
 	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
 
 .if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm" \
@@ -64,10 +65,13 @@ KERNEL_SETS+=		HDL_G INTEGRATOR_CP IXM1200
 
 .if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm" \
     || ${MACHINE_ARCH} == "earmhf"
-EXTRA_KERNELS+=		RPI
+BUILD_KERNELS+=		RPI_INSTALL
+KERNEL_SETS+=		RPI
 smp_rpi: ${IMAGE.kern}/netbsd-RPI.bin.gz __mkimage
+MKI_OPTS.smp_rpi_inst="-b"
+smp_rpi_inst: ${IMAGE.instk}/netbsd-RPI_INSTALL.bin.gz __mkimage
 .if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI)
-SNAP_MD_POST_DEPS+=	smp_rpi
+SNAP_MD_POST_DEPS+=	smp_rpi smp_rpi_inst
 .endif
 .endif
 

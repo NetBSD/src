@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.72 2013/03/16 17:10:16 christos Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.73 2013/03/19 22:16:53 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1020,6 +1020,7 @@ message other {andere }
 message Perform_IPv6_autoconfiguration {IPv6 automatisch konfigurieren?}
 message Perform_DHCP_autoconfiguration {Konfiguration per DHCP ermitteln?}
 message Root_shell {Root-Shell}
+message User_shell {User-Shell}
 
 .if AOUT2ELF
 message aoutfail
@@ -1087,6 +1088,7 @@ message enable_sshd {sshd aktivieren}
 message enable_ntpd {ntpd aktivieren}
 message run_ntpdate {ntpdate beim Starten ausführen}
 message enable_mdnsd {mdnsd aktivieren}
+message add_a_user {Add a user}
 message configmenu {Zusätzliche Einstellungen konfigurieren.}
 message doneconfig {Konfiguration abgeschlossen.}
 message Install_pkgin {pkgin installieren und Datenbank initialisieren}
@@ -1114,3 +1116,5 @@ message pkgin_failed
 {Die Installation von pkgin ist fehlgeschlagen, evtl. weil keine Binärpakete 
 vorhanden sind. Bitte den Pfad der Pakete überprüfen und noch einmal versuchen.}
 message failed {Fehlgeschlagen}
+message addusername {8 character username to add:}
+message addusertowheel {Do you wish to add this user to group wheel?}

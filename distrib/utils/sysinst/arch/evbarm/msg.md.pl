@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.10 2012/02/03 00:35:35 nisimura Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.11 2013/03/19 22:16:54 garbled Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:02:54 thorpej Exp */
 
@@ -84,3 +84,11 @@ message set_kernel_6
 {Kernel (TEAMASA_NPWR)}
 message set_kernel_7
 {Kernel (TS7200)}
+message set_kernel_8
+{Kernel (RPI)}
+
+message nomsdospart
+{There is no MSDOS boot partition in the MBR partition table.}
+
+message rpikernelmissing
+{The RPI kernel was not installed, perhaps you didn't select it?}

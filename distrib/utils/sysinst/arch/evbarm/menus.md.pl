@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.7 2011/04/04 08:30:24 mbalmer Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.8 2013/03/19 22:16:54 garbled Exp $	*/
 /* Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2002/03/31 02:14:06 thorpej Exp */
 
@@ -36,4 +36,8 @@
  */
 
 /* evbarm machine dependent menus, Polish */
+
+menu prelim, title "What kind of system do you have?", y=-10;
+	option "Raspberry PI", exit, action { boardtype = 1; };
+	option "Other", exit, action { boardtype = 0; };
 

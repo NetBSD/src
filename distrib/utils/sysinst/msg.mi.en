@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.177 2013/03/16 17:10:16 christos Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.178 2013/03/19 22:16:54 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -960,6 +960,7 @@ message other {other }
 message Perform_IPv6_autoconfiguration {Perform IPv6 autoconfiguration?}
 message Perform_DHCP_autoconfiguration {Perform DHCP autoconfiguration?}
 message Root_shell {Root shell}
+message User_shell {User shell}
 
 .if AOUT2ELF
 message aoutfail
@@ -1019,6 +1020,7 @@ message enable_sshd {Enable sshd}
 message enable_ntpd {Enable ntpd}
 message run_ntpdate {Run ntpdate at boot}
 message enable_mdnsd {Enable mdnsd}
+message add_a_user {Add a user}
 message configmenu {Configure the additional items as needed.}
 message doneconfig {Finished configuring}
 message Install_pkgin {Install pkgin and update package summary}
@@ -1044,3 +1046,5 @@ message pkgin_failed
 {Installation of pkgin failed, possibly because no binary packages
 exist.  Please check the package path and try again.}
 message failed {Failed}
+message addusername {8 character username to add:}
+message addusertowheel {Do you wish to add this user to group wheel?}

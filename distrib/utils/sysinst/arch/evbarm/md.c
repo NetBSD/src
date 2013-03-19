@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26 2012/02/07 09:06:04 nisimura Exp $ */
+/*	$NetBSD: md.c,v 1.27 2013/03/19 22:16:54 garbled Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,6 +49,15 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+int boardtype = 0, rpi_bootpart = PART_A;
+
+void
+md_prelim_menu(void)
+{
+	/* get the boardtype from the user */
+	process_menu(MENU_prelim, NULL);
+}
+
 void
 md_init(void)
 {
@@ -57,7 +66,8 @@ md_init(void)
 void
 md_init_set_status(int flags)
 {
-	(void)flags;
+	if (boardtype == BOARD_TYPE_RPI)
+		set_kernel_set(SET_KERNEL_RPI);
 }
 
 int
@@ -66,6 +76,9 @@ md_get_info(void)
 	struct disklabel disklabel;
 	int fd;
 	char dev_name[100];
+
+	if (boardtype == BOARD_TYPE_RPI)
+		return set_bios_geom_with_mbr_guess();
 
 	if (no_mbr)
 		return 1;
@@ -131,7 +144,21 @@ md_make_bsd_partitions(void)
 int
 md_check_partitions(void)
 {
-	return 1;
+	int part;
+
+	if (boardtype == BOARD_TYPE_NORMAL)
+		return 1;
+	if (boardtype == BOARD_TYPE_RPI) {
+		for (part = PART_A; part < MAXPARTITIONS; part++)
+			if (bsdlabel[part].pi_fstype == FS_MSDOS) {
+				rpi_bootpart = part;
+				return 1;
+			}
+
+		msg_display(MSG_nomsdospart);
+		process_menu(MENU_ok, NULL);
+	}
+	return 0;
 }
 
 /*
@@ -151,6 +178,11 @@ md_pre_disklabel(void)
 		process_menu(MENU_ok, NULL);
 		return 1;
 	}
+	/* nuke the disklabel from orbit, because d from the gzimg
+	   corrupts it hopelessly
+	*/
+	if (boardtype == BOARD_TYPE_RPI)
+		run_program(RUN_DISPLAY, "/sbin/disklabel -D %s", diskdev);
 	return 0;
 }
 
@@ -177,6 +209,21 @@ md_post_newfs(void)
 int
 md_post_extract(void)
 {
+	char kernelbin[100];
+
+	if (boardtype == BOARD_TYPE_NORMAL)
+		return 0;
+	if (boardtype == BOARD_TYPE_RPI) {
+		snprintf(kernelbin, 100, "%s/netbsd.bin", targetroot_mnt);
+		if (file_exists_p(kernelbin)) {
+			run_program(RUN_DISPLAY,
+			    "/bin/cp %s /targetroot/boot/kernel.img", kernelbin);
+		} else {
+			msg_display(MSG_rpikernelmissing);
+			process_menu(MENU_ok, NULL);
+			return 1;
+		}
+	}
 	return 0;
 }
 
@@ -185,6 +232,8 @@ md_cleanup_install(void)
 {
 #ifndef DEBUG
 	enable_rc_conf();
+	add_rc_conf("sshd=YES\n");
+	add_rc_conf("dhcpcd=YES\n");
 #endif
 }
 
@@ -211,11 +260,69 @@ md_pre_mount()
 int
 md_check_mbr(mbr_info_t *mbri)
 {
+	mbr_info_t *ext;
+	struct mbr_partition *part;
+	int i, hasboot=0;
+
+	if (boardtype == BOARD_TYPE_NORMAL)
+		return 2;
+	/* raspi code */
+	if (boardtype == BOARD_TYPE_RPI) {
+		for (ext = mbri; ext; ext = ext->extended) {
+			part = ext->mbr.mbr_parts;
+			for (i=0, hasboot=0; i < MBR_PART_COUNT; part++, i++) {
+				if (part->mbrp_type != MBR_PTYPE_FAT32L)
+					continue;
+				hasboot = 1;
+				break;
+			}
+		}
+		if (!hasboot) {
+			msg_display(MSG_nomsdospart);
+			msg_display_add(MSG_reeditpart, 0);
+			process_menu(MENU_yesno, NULL);
+			if (!yesno)
+				return 0;
+			return 1;
+		}
+	}
 	return 2;
 }
 
 int
 md_mbr_use_wholedisk(mbr_info_t *mbri)
 {
+	struct mbr_sector *mbrs = &mbri->mbr;
+	struct mbr_partition *part;
+	int offset;
+
+	if (boardtype == BOARD_TYPE_NORMAL) {
+		/* this keeps it from creating /boot as msdos */
+		bootsize = 0;
+		return mbr_use_wholedisk(mbri);
+	}
+
+	/* raspi code */
+	if (boardtype == BOARD_TYPE_RPI) {
+		part = &mbrs->mbr_parts[0];
+		if (part[0].mbrp_type != MBR_PTYPE_FAT32L) {
+			/* It's hopelessly corrupt, punt for now */
+			msg_display(MSG_nomsdospart);
+			process_menu(MENU_ok, NULL);
+			return 0;
+		}
+		offset = part[0].mbrp_start + part[0].mbrp_size;
+		part[1].mbrp_type = MBR_PTYPE_NETBSD;
+		part[1].mbrp_size = dlsize - offset;
+		part[1].mbrp_start = offset;
+		part[1].mbrp_flag = 0;
+
+		ptstart = part[1].mbrp_start;
+		ptsize = part[1].mbrp_size;
+		bootstart = part[0].mbrp_start;
+		bootsize = part[0].mbrp_size;
+		return 1;
+	}
+
 	return mbr_use_wholedisk(mbri);
 }
