@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_add.c,v 1.7 2009/03/14 15:36:09 dsl Exp $ */
+/*	$NetBSD: fpu_add.c,v 1.8 2013/03/19 09:17:17 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.7 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.8 2013/03/19 09:17:17 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -58,11 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.7 2009/03/14 15:36:09 dsl Exp $");
 #include "fpu_emulate.h"
 
 struct fpn *
-fpu_add(register struct fpemu *fe)
+fpu_add(struct fpemu *fe)
 {
-	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2, *r;
-	register u_int r0, r1, r2;
-	register int rd;
+	struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2, *r;
+	u_int r0, r1, r2;
+	int rd;
 
 	/*
 	 * Put the `heavier' operand on the right (see fpu_emu.h).
