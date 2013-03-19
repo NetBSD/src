@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.24 2013/03/13 21:35:18 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.25 2013/03/19 16:49:56 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.24 2013/03/13 21:35:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.25 2013/03/19 16:49:56 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,9 +269,6 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_depth = 8;
 #endif
 
-	/* init engine here */
-	voyagerfb_init(sc);
-
 	printf("%s: %d x %d, %d bit, stride %d\n", device_xname(self), 
 		sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
 
@@ -281,6 +278,9 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	 */
 	aprint_normal("%s: %d MB video memory at 0x%08x\n", device_xname(self),
 	    (int)(sc->sc_fbsize >> 20), (uint32_t)sc->sc_fb);
+
+	/* init engine here */
+	voyagerfb_init(sc);
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",
@@ -758,6 +758,11 @@ voyagerfb_init(struct voyagerfb_softc *sc)
 	}
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_FB_OFFSET,
 	    (sc->sc_stride << 16) | sc->sc_stride);
+
+	/* clear the screen... */
+	voyagerfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height, 0);
+
+	/* ...and then switch colour depth. For aesthetic reasons. */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CTRL,
 	    reg);
 
@@ -786,7 +791,7 @@ voyagerfb_init(struct voyagerfb_softc *sc)
 #else
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_ADDR,
 	    sc->sc_cursor_addr);
-#endif	
+#endif
 }
 
 static void
