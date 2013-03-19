@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.65 2013/03/19 03:40:16 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.66 2013/03/19 04:10:13 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2601,7 +2601,7 @@ struct vpd_key {
 #define BGE_RXRING_VALID	0x00000002
 #define BGE_JUMBO_RXRING_VALID	0x00000004
 #define BGE_RX_ALIGNBUG		0x00000008
-#define BGE_NO_3LED		0x00000010
+#define BGE_PHY_NO_3LED		0x00000010
 #define BGE_PCIX		0x00000020
 #define BGE_PCIE		0x00000040
 #define BGE_NO_EEPROM		0x00000100
@@ -2615,7 +2615,7 @@ struct vpd_key {
 #define BGE_PHY_JITTER_BUG	0x00010000
 #define BGE_PHY_BER_BUG		0x00020000
 #define BGE_PHY_ADJUST_TRIM	0x00040000
-#define BGE_NO_ETH_WIRE_SPEED	0x00080000
+#define BGE_PHY_NO_WIRESPEED	0x00080000
 #define BGE_IS_5788		0x00100000
 #define BGE_5705_PLUS		0x00200000
 #define BGE_575X_PLUS		0x00400000
