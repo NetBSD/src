@@ -1,0 +1,20 @@
+#	$NetBSD: sshd_config,v 1.1 2013/03/19 22:16:53 garbled Exp $
+
+# Special cut-down sshd_config for sshramdisk
+# Tim Rightnour <garbled@NetBSD.org>
+
+#Port 22
+#AddressFamily any
+#ListenAddress 0.0.0.0
+#ListenAddress ::
+#Protocol 2
+#HostKey /etc/ssh/ssh_host_dsa_key
+LoginGraceTime 600
+# needed because sysinst is uid 0
+PermitRootLogin yes
+AuthorizedKeysFile	.ssh/authorized_keys
+PasswordAuthentication yes
+# just in case
+PermitEmptyPasswords yes
+UsePrivilegeSeparation sandbox
+AllowUsers pi sysinst
