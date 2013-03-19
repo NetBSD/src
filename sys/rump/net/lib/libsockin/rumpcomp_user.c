@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.1 2013/03/18 13:14:11 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.2 2013/03/19 02:07:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -25,6 +25,7 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _KERNEL
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -164,3 +165,4 @@ rumpcomp_sockin_setsockopt(int s, int level, int name,
 	seterror();
 	return rv;
 }
+#endif
