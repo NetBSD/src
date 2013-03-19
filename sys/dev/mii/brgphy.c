@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.61 2013/03/15 06:18:13 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.62 2013/03/19 04:10:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.61 2013/03/15 06:18:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.62 2013/03/19 04:10:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -709,12 +709,12 @@ brgphy_reset(struct mii_softc *sc)
 				PHY_WRITE(sc, BRGPHY_MII_EPHY_PTEST, 0x12);
 
 			/* Enable Ethernet@Wirespeed */
-			if (!(bsc->sc_phyflags & BGE_NO_ETH_WIRE_SPEED))
+			if (!(bsc->sc_phyflags & BGE_PHY_NO_WIRESPEED))
 				brgphy_eth_wirespeed(sc);
 
 #if 0
 			/* Enable Link LED on Dell boxes */
-			if (bsc->sc_phyflags & BGE_NO_3LED) {
+			if (bsc->sc_phyflags & BGE_PHY_NO_3LED) {
 				PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
 				PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
 					& ~BRGPHY_PHY_EXTCTL_3_LED);
