@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.218 2013/03/19 02:56:16 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.219 2013/03/19 03:40:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.218 2013/03/19 02:56:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.219 2013/03/19 03:40:16 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -196,6 +196,7 @@ static int bge_get_eaddr_eeprom(struct bge_softc *, uint8_t[]);
 static int bge_get_eaddr(struct bge_softc *, uint8_t[]);
 
 static void bge_txeof(struct bge_softc *);
+static void bge_rxcsum(struct bge_softc *, struct bge_rx_bd *, struct mbuf *);
 static void bge_rxeof(struct bge_softc *);
 
 static void bge_asf_driver_up (struct bge_softc *);
@@ -2936,8 +2937,7 @@ bge_blockinit(struct bge_softc *sc)
 		 * Adjust tx margin to prevent TX data corruption and
 		 * fix internal FIFO overflow.
 		 */
-		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
-		    sc->bge_chipid == BGE_CHIPID_BCM5719_A0) {
+		if (sc->bge_chipid == BGE_CHIPID_BCM5719_A0) {
 			dmactl &= ~(BGE_RDMA_RSRVCTRL_FIFO_LWM_MASK |
 			    BGE_RDMA_RSRVCTRL_FIFO_HWM_MASK |
 			    BGE_RDMA_RSRVCTRL_TXMRGN_MASK);
@@ -4141,30 +4141,7 @@ bge_rxeof(struct bge_softc *sc)
 		 */
 		bpf_mtap(ifp, m);
 
-		m->m_pkthdr.csum_flags = M_CSUM_IPv4;
-
-		if (BGE_IS_5717_PLUS(sc)) {
-			if ((cur_rx->bge_error_flag &
-				BGE_RXERRFLAG_IP_CSUM_NOK) != 0)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
-		} else {
-			if ((cur_rx->bge_ip_csum ^ 0xffff) != 0)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
-		}
-		/*
-		 * Rx transport checksum-offload may also
-		 * have bugs with packets which, when transmitted,
-		 * were `runts' requiring padding.
-		 */
-		if (cur_rx->bge_flags & BGE_RXBDFLAG_TCP_UDP_CSUM &&
-		    (/* (sc->_bge_quirks & BGE_QUIRK_SHORT_CKSUM_BUG) == 0 ||*/
-		     m->m_pkthdr.len >= ETHER_MIN_NOPAD)) {
-			m->m_pkthdr.csum_data =
-			    cur_rx->bge_tcp_udp_csum;
-			m->m_pkthdr.csum_flags |=
-			    (M_CSUM_TCPv4|M_CSUM_UDPv4|
-			     M_CSUM_DATA);
-		}
+		bge_rxcsum(sc, cur_rx, m);
 
 		/*
 		 * If we received a packet with a vlan tag, pass it
@@ -4183,6 +4160,47 @@ bge_rxeof(struct bge_softc *sc)
 		bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
 	if (jumbocnt)
 		bge_writembx(sc, BGE_MBX_RX_JUMBO_PROD_LO, sc->bge_jumbo);
+}
+
+static void
+bge_rxcsum(struct bge_softc *sc, struct bge_rx_bd *cur_rx, struct mbuf *m)
+{
+
+	if (BGE_IS_5717_PLUS(sc)) {
+		if ((cur_rx->bge_flags & BGE_RXBDFLAG_IPV6) == 0) {
+			if ((cur_rx->bge_flags & BGE_RXBDFLAG_IP_CSUM) != 0)
+				m->m_pkthdr.csum_flags = M_CSUM_IPv4;
+			if ((cur_rx->bge_error_flag &
+				BGE_RXERRFLAG_IP_CSUM_NOK) != 0)
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
+			if (cur_rx->bge_flags & BGE_RXBDFLAG_TCP_UDP_CSUM) {
+				m->m_pkthdr.csum_data =
+				    cur_rx->bge_tcp_udp_csum;
+				m->m_pkthdr.csum_flags |=
+				    (M_CSUM_TCPv4|M_CSUM_UDPv4|
+					M_CSUM_DATA);
+			}
+		}
+	} else {
+		if ((cur_rx->bge_flags & BGE_RXBDFLAG_IP_CSUM) != 0)
+			m->m_pkthdr.csum_flags = M_CSUM_IPv4;
+		if ((cur_rx->bge_ip_csum ^ 0xffff) != 0)
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
+		/*
+		 * Rx transport checksum-offload may also
+		 * have bugs with packets which, when transmitted,
+		 * were `runts' requiring padding.
+		 */
+		if (cur_rx->bge_flags & BGE_RXBDFLAG_TCP_UDP_CSUM &&
+		    (/* (sc->_bge_quirks & BGE_QUIRK_SHORT_CKSUM_BUG) == 0 ||*/
+			    m->m_pkthdr.len >= ETHER_MIN_NOPAD)) {
+			m->m_pkthdr.csum_data =
+			    cur_rx->bge_tcp_udp_csum;
+			m->m_pkthdr.csum_flags |=
+			    (M_CSUM_TCPv4|M_CSUM_UDPv4|
+				M_CSUM_DATA);
+		}
+	}
 }
 
 static void
@@ -5504,9 +5522,12 @@ bge_link_upd(struct bge_softc *sc)
 		if (status & BGE_MACSTAT_TBI_PCS_SYNCHED) {
 			if (!BGE_STS_BIT(sc, BGE_STS_LINK)) {
 				BGE_STS_SETBIT(sc, BGE_STS_LINK);
-				if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
+				if (BGE_ASICREV(sc->bge_chipid)
+				    == BGE_ASICREV_BCM5704) {
 					BGE_CLRBIT(sc, BGE_MAC_MODE,
 					    BGE_MACMODE_TBI_SEND_CFGS);
+					DELAY(40);
+				}
 				CSR_WRITE_4(sc, BGE_MAC_STS, 0xFFFFFFFF);
 				if_link_state_change(ifp, LINK_STATE_UP);
 			}
