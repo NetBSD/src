@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.219 2013/03/19 03:40:16 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.220 2013/03/19 04:10:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.219 2013/03/19 03:40:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.220 2013/03/19 04:10:13 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -3164,6 +3164,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	bus_size_t		memsize, apesize;
 	uint32_t		pm_ctl;
 	bool			no_seeprom;
+	int			capmask;
 
 	bp = bge_lookup(pa);
 	KASSERT(bp != NULL);
@@ -3368,11 +3369,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if (BGE_IS_5700_FAMILY(sc))
 		sc->bge_flags |= BGE_JUMBO_CAPABLE;
 
-	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701) &&
-	    PCI_VENDOR(subid) == PCI_VENDOR_DELL)
-		sc->bge_flags |= BGE_NO_3LED;
-
 	misccfg = CSR_READ_4(sc, BGE_MISC_CFG);
 	misccfg &= BGE_MISCCFG_BOARD_ID_MASK;
 
@@ -3403,6 +3399,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 			sc->bge_flags |= BGE_TSO;
 	}
 
+	capmask = 0xffffffff; /* XXX BMSR_DEFCAPMASK */
 	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703 &&
 	     (misccfg == 0x4000 || misccfg == 0x8000)) ||
 	    (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 &&
@@ -3417,16 +3414,18 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57790 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57791 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57795 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
-		sc->bge_flags |= BGE_10_100_ONLY;
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
+		capmask &= ~BMSR_EXTSTAT;
+		sc->bge_flags |= BGE_PHY_NO_WIRESPEED;
+	}
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
 	    (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 &&
 	     (sc->bge_chipid != BGE_CHIPID_BCM5705_A0 &&
-	      sc->bge_chipid != BGE_CHIPID_BCM5705_A1)) ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
-		sc->bge_flags |= BGE_NO_ETH_WIRE_SPEED;
+		 sc->bge_chipid != BGE_CHIPID_BCM5705_A1)))
+		sc->bge_flags |= BGE_PHY_NO_WIRESPEED;
 
+	/* Set various PHY bug flags. */
 	if (sc->bge_chipid == BGE_CHIPID_BCM5701_A0 ||
 	    sc->bge_chipid == BGE_CHIPID_BCM5701_B0)
 		sc->bge_flags |= BGE_PHY_CRC_BUG;
@@ -3435,7 +3434,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 		sc->bge_flags |= BGE_PHY_ADC_BUG;
 	if (sc->bge_chipid == BGE_CHIPID_BCM5704_A0)
 		sc->bge_flags |= BGE_PHY_5704_A0_BUG;
-
+	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701) &&
+	    PCI_VENDOR(subid) == PCI_VENDOR_DELL)
+		sc->bge_flags |= BGE_PHY_NO_3LED;
 	if (BGE_IS_5705_PLUS(sc) &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785 &&
@@ -3686,7 +3688,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 
 		ifmedia_init(&sc->bge_mii.mii_media, 0, bge_ifmedia_upd,
 			     bge_ifmedia_sts);
-		mii_attach(sc->bge_dev, &sc->bge_mii, 0xffffffff,
+		mii_attach(sc->bge_dev, &sc->bge_mii, capmask,
 			   sc->bge_phy_addr, MII_OFFSET_ANY,
 			   MIIF_DOPAUSE);
 
@@ -5673,8 +5675,6 @@ bge_debug_info(struct bge_softc *sc)
 		printf(" - PCI-X Bus\n");
 	if (sc->bge_flags & BGE_PCIE)
 		printf(" - PCI Express Bus\n");
-	if (sc->bge_flags & BGE_NO_3LED)
-		printf(" - No 3 LEDs\n");
 	if (sc->bge_flags & BGE_RX_ALIGNBUG)
 		printf(" - RX Alignment Bug\n");
 	if (sc->bge_flags & BGE_APE)
@@ -5683,6 +5683,23 @@ bge_debug_info(struct bge_softc *sc)
 		printf(" - CPMU\n");
 	if (sc->bge_flags & BGE_TSO)
 		printf(" - TSO\n");
+
+	if (sc->bge_flags & BGE_PHY_NO_3LED)
+		printf(" - No 3 LEDs\n");
+	if (sc->bge_flags & BGE_PHY_CRC_BUG)
+		printf(" - CRC bug\n");
+	if (sc->bge_flags & BGE_PHY_ADC_BUG)
+		printf(" - ADC bug\n");
+	if (sc->bge_flags & BGE_PHY_5704_A0_BUG)
+		printf(" - 5704 A0 bug\n");
+	if (sc->bge_flags & BGE_PHY_JITTER_BUG)
+		printf(" - jitter bug\n");
+	if (sc->bge_flags & BGE_PHY_BER_BGU)
+		printf(" - BER bug\n");
+	if (sc->bge_flags & BGE_PHY_ADJUST_TRIM)
+		printf(" - adjust trim\n");
+	if (sc->bge_flags & BGE_PHY_NO_WIRESPEED)
+		printf(" - no wirespeed\n");
 }
 #endif /* BGE_DEBUG */
 
