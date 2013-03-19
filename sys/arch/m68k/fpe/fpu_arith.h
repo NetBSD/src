@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_arith.h,v 1.5 2005/12/24 22:45:35 perry Exp $ */
+/*	$NetBSD: fpu_arith.h,v 1.6 2013/03/19 09:17:17 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,7 +110,7 @@
 #else
 
 /* set up for extended-precision arithemtic */
-#define	FPU_DECL_CARRY register int fpu_tmp;
+#define	FPU_DECL_CARRY int fpu_tmp;
 
 /*
  * We have three kinds of add:
