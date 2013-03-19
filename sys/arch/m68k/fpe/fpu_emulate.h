@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.20 2013/03/19 09:17:17 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.21 2013/03/19 09:28:39 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -227,7 +227,7 @@ int	fpu_shr(struct fpn *, int);
 int	fpu_round(struct fpemu *, struct fpn *);
 
 /* type conversion */
-void	fpu_explode(struct fpemu *, struct fpn *, int t, u_int *);
+void	fpu_explode(struct fpemu *, struct fpn *, int t, const u_int *);
 void	fpu_implode(struct fpemu *, struct fpn *, int t, u_int *);
 
 /*
