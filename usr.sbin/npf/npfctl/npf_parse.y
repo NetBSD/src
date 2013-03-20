@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.21 2013/03/18 02:17:49 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.22 2013/03/20 00:29:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ yyerror(const char *fmt, ...)
 
 %}
 
+%token			ALG
 %token			ALL
 %token			ANY
 %token			APPLY
@@ -196,6 +197,7 @@ line
 	| map
 	| group
 	| rproc
+	| alg
 	|
 	;
 
@@ -324,6 +326,12 @@ rproc
 	}
 	;
 
+alg	
+	: ALG STRING
+	{
+		npfctl_build_alg($2);
+	}
+	;
 procs
 	: proc_call SEPLINE procs
 	{
