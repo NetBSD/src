@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.15 2013/03/12 14:03:32 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.16 2013/03/20 12:30:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -30,10 +30,18 @@
  * Called during rump bootstrap.
  */
 
+/*
+ * Solaris libelf.h doesn't support _FILE_OFFSET_BITS=64.  Luckily,
+ * for this module it doesn't matter.
+ */
+#if defined(__sun__) && defined(_IPL32)
+#define _FILE_OFFSET_BITS 32
+#endif
+
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.15 2013/03/12 14:03:32 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.16 2013/03/20 12:30:13 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
