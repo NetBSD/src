@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.obs405.inc,v 1.6 2010/10/30 03:46:03 uebayasi Exp $
+#	$NetBSD: Makefile.obs405.inc,v 1.7 2013/03/20 06:35:49 kiyohara Exp $
 
 CFLAGS+=-mcpu=405
 AFLAGS+=-mcpu=405
@@ -41,8 +41,25 @@ TEXTADDR?=	25000
 SYSTEM_FIRST_OBJ=	obs600_locore.o
 SYSTEM_FIRST_SFILE=	${THISPPC}/obs405/obs600_locore.S
 
+.if ${USETOOLS} == "yes"
+MKUBOOTIMAGE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkubootimage
+.else
+MKUBOOTIMAGE=		mkubootimage
+.endif
+MKUBOOTIMAGEARGS=	-A powerpc -T kernel
+MKUBOOTIMAGEARGS+=	-a $(TEXTADDR)
+MKUBOOTIMAGEARGS+=	-n "NetBSD/openblocks600 ${_OSRELEASE}"
+MKUBOOTIMAGEARGS_NONE=  ${MKUBOOTIMAGEARGS} -C none
+MKUBOOTIMAGEARGS_GZ=    ${MKUBOOTIMAGEARGS} -C gz
+
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
-	${OBJCOPY} -S -O binary $@ $@.bin;
+	${OBJCOPY} -S -O binary $@ $@.bin; \
+	echo "gzip -c $@.bin > $@.bin.gz"; \
+	gzip -c $@.bin > $@.bin.gz; \
+	echo ${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
+	${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
+	echo ${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
+	${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub;
 
 .endif
