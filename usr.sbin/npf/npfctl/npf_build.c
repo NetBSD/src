@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.22 2013/03/18 02:17:49 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.23 2013/03/20 00:29:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.22 2013/03/18 02:17:49 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.23 2013/03/20 00:29:47 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -443,7 +443,7 @@ npfctl_build_rproc(const char *name, npfvar_t *procs)
 
 	rp = npf_rproc_create(name);
 	if (rp == NULL) {
-		errx(EXIT_FAILURE, "npf_rproc_create failed");
+		errx(EXIT_FAILURE, "%s failed", __func__);
 	}
 	npf_rproc_insert(npf_conf, rp);
 
@@ -708,5 +708,17 @@ npfctl_build_table(const char *tid, u_int type, const char *fname)
 
 	if (fname) {
 		npfctl_fill_table(tl, type, fname);
+	}
+}
+
+/*
+ * npfctl_build_alg: create an NPF application level gatewayl and add it
+ * to the configuration.
+ */
+void
+npfctl_build_alg(const char *al_name)
+{
+	if (_npf_alg_load(npf_conf, al_name) != 0) {
+		errx(EXIT_FAILURE, "ALG '%s' already loaded", al_name);
 	}
 }
