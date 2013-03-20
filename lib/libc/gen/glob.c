@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.34 2013/02/21 18:17:43 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.35 2013/03/20 23:44:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.34 2013/02/21 18:17:43 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.35 2013/03/20 23:44:47 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -132,7 +132,7 @@ struct glob_limit {
 #define	M_MASK		0xffff
 #define	M_ASCII		0x00ff
 
-typedef u_short Char;
+typedef unsigned short Char;
 
 #else
 
@@ -183,14 +183,14 @@ int
 glob(const char * __restrict pattern, int flags, int (*errfunc)(const char *,
     int), glob_t * __restrict pglob)
 {
-	const u_char *patnext;
+	const unsigned char *patnext;
 	int c;
 	Char *bufnext, *bufend, patbuf[MAXPATHLEN+1];
 	struct glob_limit limit = { 0, 0, 0, 0 };
 
 	_DIAGASSERT(pattern != NULL);
 
-	patnext = (const u_char *) pattern;
+	patnext = (const unsigned char *) pattern;
 	if (!(flags & GLOB_APPEND)) {
 		pglob->gl_pathc = 0;
 		pglob->gl_pathv = NULL;
@@ -770,7 +770,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
 	else
 		readdirfunc = (struct dirent *(*)(void *)) readdir;
 	while ((dp = (*readdirfunc)(dirp)) != NULL) {
-		u_char *sc;
+		unsigned char *sc;
 		Char *dc;
 
 		if ((pglob->gl_flags & GLOB_LIMIT) &&
@@ -801,7 +801,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
 		 * The resulting string contains EOS, so we can
 		 * use the pathlim character, if it is the nul
 		 */
-		for (sc = (u_char *) dp->d_name, dc = pathend; 
+		for (sc = (unsigned char *) dp->d_name, dc = pathend; 
 		     dc <= pathlim && (*dc++ = *sc++) != EOS;)
 			continue;
 
