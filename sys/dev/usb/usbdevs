@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.638 2013/03/14 12:47:33 nonaka Exp $
+$NetBSD: usbdevs,v 1.639 2013/03/20 15:33:24 garbled Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -3087,6 +3087,7 @@ product TRENDNET RTL8188CU	0x648b	RTL8188CU
 /* Tripp-Lite products */
 product TRIPPLITE U209		0x2008	U209 Serial adapter
 product TRIPPLITE2 UPS		0x1007	Tripp Lite UPS
+product TRIPPLITE2 SMARTLCD	0x2009	SmartLCD UPS
 
 /* Trumpion products */
 product TRUMPION T33521		0x1003	USB/MP3 decoder
