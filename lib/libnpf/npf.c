@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.18 2013/02/16 21:11:16 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.19 2013/03/20 00:29:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.18 2013/02/16 21:11:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.19 2013/03/20 00:29:46 christos Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.18 2013/02/16 21:11:16 rmind Exp $");
 struct nl_config {
 	/* Rules, translations, tables, procedures. */
 	prop_dictionary_t	ncf_dict;
+	prop_array_t		ncf_alg_list;
 	prop_array_t		ncf_rules_list;
 	prop_array_t		ncf_rproc_list;
 	prop_array_t		ncf_table_list;
@@ -75,6 +76,10 @@ struct nl_table {
 	prop_dictionary_t	ntl_dict;
 };
 
+struct nl_alg {
+	prop_dictionary_t	nal_dict;
+};
+
 struct nl_ext {
 	const char *		nxt_name;
 	prop_dictionary_t	nxt_dict;
@@ -95,6 +100,7 @@ npf_config_create(void)
 	if (ncf == NULL) {
 		return NULL;
 	}
+	ncf->ncf_alg_list = prop_array_create();
 	ncf->ncf_rules_list = prop_array_create();
 	ncf->ncf_rproc_list = prop_array_create();
 	ncf->ncf_table_list = prop_array_create();
@@ -128,6 +134,7 @@ npf_config_submit(nl_config_t *ncf, int fd)
 	prop_dictionary_set(npf_dict, "rules", rlset);
 	prop_object_release(rlset);
 
+	prop_dictionary_set(npf_dict, "algs", ncf->ncf_alg_list);
 	prop_dictionary_set(npf_dict, "rprocs", ncf->ncf_rproc_list);
 	prop_dictionary_set(npf_dict, "tables", ncf->ncf_table_list);
 	prop_dictionary_set(npf_dict, "translation", ncf->ncf_nat_list);
@@ -174,6 +181,7 @@ npf_config_retrieve(int fd, bool *active, bool *loaded)
 		return NULL;
 	}
 	ncf->ncf_dict = npf_dict;
+	ncf->ncf_alg_list = prop_dictionary_get(npf_dict, "algs");
 	ncf->ncf_rules_list = prop_dictionary_get(npf_dict, "rules");
 	ncf->ncf_rproc_list = prop_dictionary_get(npf_dict, "rprocs");
 	ncf->ncf_table_list = prop_dictionary_get(npf_dict, "tables");
@@ -220,6 +228,7 @@ npf_config_destroy(nl_config_t *ncf)
 {
 
 	if (!ncf->ncf_dict) {
+		prop_object_release(ncf->ncf_alg_list);
 		prop_object_release(ncf->ncf_rules_list);
 		prop_object_release(ncf->ncf_rproc_list);
 		prop_object_release(ncf->ncf_table_list);
@@ -773,7 +782,7 @@ npf_nat_create(int type, u_int flags, u_int if_idx,
 }
 
 int
-npf_nat_insert(nl_config_t *ncf, nl_nat_t *nt, pri_t pri)
+npf_nat_insert(nl_config_t *ncf, nl_nat_t *nt, pri_t pri __unused)
 {
 	prop_dictionary_t rldict = nt->nrl_dict;
 
@@ -933,6 +942,36 @@ _npf_table_foreach(nl_config_t *ncf, nl_table_callback_t func)
 		(*func)(id, type);
 	}
 	prop_object_iterator_release(it);
+}
+
+/*
+ * ALG INTERFACE.
+ */
+
+int
+_npf_alg_load(nl_config_t *ncf, const char *name)
+{
+	prop_dictionary_t al_dict;
+
+	if (_npf_prop_array_lookup(ncf->ncf_alg_list, "name", name))
+		return EEXIST;
+
+	al_dict = prop_dictionary_create();
+	prop_dictionary_set_cstring(al_dict, "name", name);
+	prop_array_add(ncf->ncf_alg_list, al_dict);
+	prop_object_release(al_dict);
+	return 0;
+}
+
+int
+_npf_alg_unload(nl_config_t *ncf, const char *name)
+{
+
+	if (!_npf_prop_array_lookup(ncf->ncf_alg_list, "name", name))
+		return ENOENT;
+
+	// Not yet: prop_array_add(ncf->ncf_alg_list, al_dict);
+	return ENOTSUP;
 }
 
 /*

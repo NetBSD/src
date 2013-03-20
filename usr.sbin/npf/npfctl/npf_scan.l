@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.11 2013/03/18 02:17:49 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.12 2013/03/20 00:29:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ NID	[a-zA-Z_0-9]+
 NUMBER	[0-9]+
 
 %%
+alg			return ALG;
 table			return TABLE;
 type			return TYPE;
 hash			return HASH;
