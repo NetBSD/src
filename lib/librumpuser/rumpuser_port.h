@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.14 2013/03/14 21:31:35 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.15 2013/03/20 12:30:13 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -44,6 +44,10 @@
 #define _FILE_OFFSET_BITS 64
 #define _GNU_SOURCE
 #include <features.h>
+#endif
+
+#if defined(__sun__) && !defined(_FILE_OFFSET_BITS)
+#define _FILE_OFFSET_BITS 64
 #endif
 
 #include <sys/types.h>
