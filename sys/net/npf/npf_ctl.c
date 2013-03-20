@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.23 2013/02/16 21:11:12 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.24 2013/03/20 00:29:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.23 2013/02/16 21:11:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.24 2013/03/20 00:29:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -211,6 +211,35 @@ npf_mk_rprocs(npf_rprocset_t *rpset, prop_array_t rprocs,
 			break;
 		}
 		npf_rprocset_insert(rpset, rp);
+	}
+	prop_object_iterator_release(it);
+	return error;
+}
+
+static npf_alg_t *
+npf_mk_singlealg(prop_dictionary_t aldict)
+{
+	const char *name;
+
+	if (!prop_dictionary_get_cstring_nocopy(aldict, "name", &name))
+		return NULL;
+	return npf_alg_construct(name);
+}
+
+static int __noinline
+npf_mk_algs(prop_array_t alglist, prop_dictionary_t errdict)
+{
+	prop_object_iterator_t it;
+	prop_dictionary_t nadict;
+	int error = 0;
+
+	it = prop_array_iterator(alglist);
+	while ((nadict = prop_object_iterator_next(it)) != NULL) {
+		if (npf_mk_singlealg(nadict) == NULL) {
+			NPF_ERR_DEBUG(errdict);
+			error = EINVAL;
+			break;
+		}
 	}
 	prop_object_iterator_release(it);
 	return error;
@@ -419,7 +448,7 @@ npfctl_reload(u_long cmd, void *data)
 {
 	struct plistref *pref = data;
 	prop_dictionary_t npf_dict, errdict;
-	prop_array_t natlist, tables, rprocs, rules;
+	prop_array_t alglist, natlist, tables, rprocs, rules;
 	npf_tableset_t *tblset = NULL;
 	npf_rprocset_t *rpset = NULL;
 	npf_ruleset_t *rlset = NULL;
@@ -443,6 +472,13 @@ npfctl_reload(u_long cmd, void *data)
 	prop_dictionary_get_uint32(npf_dict, "version", &ver);
 	if (ver != NPF_VERSION) {
 		error = EPROGMISMATCH;
+		goto fail;
+	}
+
+	/* ALGs. */
+	alglist = prop_dictionary_get(npf_dict, "algs");
+	error = npf_mk_algs(alglist, errdict);
+	if (error) {
 		goto fail;
 	}
 

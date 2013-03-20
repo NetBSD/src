@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.28 2013/02/16 21:11:12 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.29 2013/03/20 00:29:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -324,9 +324,10 @@ npf_nat_t *	npf_nat_restore(prop_dictionary_t, npf_session_t *);
 /* ALG interface. */
 void		npf_alg_sysinit(void);
 void		npf_alg_sysfini(void);
-npf_alg_t *	npf_alg_register(npf_alg_func_t, npf_alg_func_t,
+npf_alg_t *	npf_alg_register(const char *, npf_alg_func_t, npf_alg_func_t,
 		    npf_alg_sfunc_t);
 int		npf_alg_unregister(npf_alg_t *);
+npf_alg_t *	npf_alg_construct(const char *);
 bool		npf_alg_match(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
 void		npf_alg_exec(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
 npf_session_t *	npf_alg_session(npf_cache_t *, nbuf_t *, int);

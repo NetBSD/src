@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.15 2013/02/09 03:35:31 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.16 2013/03/20 00:29:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.15 2013/02/09 03:35:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.16 2013/03/20 00:29:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -79,7 +79,7 @@ static int
 npf_alg_icmp_init(void)
 {
 
-	alg_icmp = npf_alg_register(npfa_icmp_match,
+	alg_icmp = npf_alg_register("icmp", npfa_icmp_match,
 	    npfa_icmp_nat, npfa_icmp_session);
 	KASSERT(alg_icmp != NULL);
 	return 0;

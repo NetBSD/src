@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.7 2013/02/09 03:35:31 rmind Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.8 2013/03/20 00:29:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.7 2013/02/09 03:35:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.8 2013/03/20 00:29:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,12 +43,14 @@ __KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.7 2013/02/09 03:35:31 rmind Exp $");
 #include <sys/pserialize.h>
 #include <sys/mutex.h>
 #include <net/pfil.h>
+#include <sys/module.h>
 
 #include "npf_impl.h"
 
 /* NAT ALG structure for registration. */
 struct npf_alg {
 	LIST_ENTRY(npf_alg)	na_entry;
+	const char *		na_name;
 	npf_alg_t *		na_bptr;
 	npf_alg_func_t		na_match_func;
 	npf_alg_func_t		na_tr_func;
@@ -77,22 +79,70 @@ npf_alg_sysfini(void)
 	mutex_destroy(&nat_alg_lock);
 }
 
+static const char npf_alg_prefix[] = "npf_alg_";
+#define NPF_EXT_PREFLEN (sizeof(npf_alg_prefix) - 1)
+
+static npf_alg_t *
+npf_alg_lookup(const char *name, bool autoload)
+{
+	npf_alg_t *alg;
+	char modname[64 + NPF_EXT_PREFLEN];
+	int error;
+
+	KASSERT(mutex_owned(&nat_alg_lock));
+
+again:
+	LIST_FOREACH(alg, &nat_alg_list, na_entry)
+		if (strcmp(alg->na_name, name) == 0)
+			break;
+
+	if (alg != NULL || !autoload)
+		return alg;
+
+	mutex_exit(&nat_alg_lock);
+	autoload = false;
+	snprintf(modname, sizeof(modname), "%s%s", npf_alg_prefix, name);
+	error = module_autoload(modname, MODULE_CLASS_MISC);
+	mutex_enter(&nat_alg_lock);
+
+	if (error)
+		return NULL;
+	goto again;
+}
+
+npf_alg_t *
+npf_alg_construct(const char *name)
+{
+	npf_alg_t *alg;
+
+	mutex_enter(&nat_alg_lock);
+	alg = npf_alg_lookup(name, true);
+	mutex_exit(&nat_alg_lock);
+	return alg;
+}
+
 /*
  * npf_alg_register: register application-level gateway.
  */
 npf_alg_t *
-npf_alg_register(npf_alg_func_t mfunc, npf_alg_func_t tfunc,
+npf_alg_register(const char *name, npf_alg_func_t mfunc, npf_alg_func_t tfunc,
     npf_alg_sfunc_t sfunc)
 {
 	npf_alg_t *alg;
 
 	alg = kmem_zalloc(sizeof(npf_alg_t), KM_SLEEP);
+	alg->na_name = name;
 	alg->na_bptr = alg;
 	alg->na_match_func = mfunc;
 	alg->na_tr_func = tfunc;
 	alg->na_se_func = sfunc;
 
 	mutex_enter(&nat_alg_lock);
+	if (npf_alg_lookup(name, false) != NULL) {
+		mutex_exit(&nat_alg_lock);
+		kmem_free(alg, sizeof(npf_alg_t));
+		return NULL;
+	}
 	LIST_INSERT_HEAD(&nat_alg_list, alg, na_entry);
 	mutex_exit(&nat_alg_lock);
 
