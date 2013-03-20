@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.189 2013/01/22 14:01:19 jmcneill Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.190 2013/03/20 11:14:51 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.189 2013/01/22 14:01:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.190 2013/03/20 11:14:51 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1133,7 +1133,11 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	 * (which uses 64 bytes so it shouldn't be less),
 	 * highspeed devices must support 64 byte packets anyway
 	 */
-	USETW(dev->def_ep_desc.wMaxPacketSize, 64);
+	if (speed == USB_SPEED_HIGH || speed == USB_SPEED_FULL)
+		USETW(dev->def_ep_desc.wMaxPacketSize, 64);
+	else
+		USETW(dev->def_ep_desc.wMaxPacketSize, USB_MAX_IPACKET);
+
 	dev->def_ep_desc.bInterval = 0;
 
 	/* doesn't matter, just don't let it uninitialized */
