@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18 2012/12/07 18:46:50 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.19 2013/03/20 13:43:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -57,7 +57,7 @@
 #define USPACE          (UPAGES * NBPG) /* total size of u-area */
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#define MSGBUFSIZE	16384	 	/* default message buffer size */
 #endif
 
 /*
