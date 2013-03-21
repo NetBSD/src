@@ -166,7 +166,7 @@ Only display the specified pid.
 .B "\-s \fItime\fP, \-\-delay=\fItime\fP"
 Set the delay between screen updates to
 .I time
-seconds.  The default delay between updates is \nD seconds.
+seconds.  The default delay between updates is 5 seconds.
 .TP
 .B "\-U \fIusername\fP, \-\-user=\fIusername\fP"
 Show only those processes owned by
