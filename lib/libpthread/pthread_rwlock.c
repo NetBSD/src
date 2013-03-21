@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.32 2008/10/25 14:14:11 yamt Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.33 2013/03/21 16:49:12 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,16 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.32 2008/10/25 14:14:11 yamt Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.33 2013/03/21 16:49:12 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
 
+#include <time.h>
 #include <errno.h>
 #include <stddef.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
+#include "reentrant.h"
 
 #define	_RW_LOCKED		0
 #define	_RW_WANT_WRITE		1
@@ -85,6 +87,8 @@ int
 pthread_rwlock_init(pthread_rwlock_t *ptr,
 	    const pthread_rwlockattr_t *attr)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_rwlock_init_stub(ptr, attr);
 
 	if (attr && (attr->ptra_magic != _PT_RWLOCKATTR_MAGIC))
 		return EINVAL;
@@ -101,6 +105,8 @@ pthread_rwlock_init(pthread_rwlock_t *ptr,
 int
 pthread_rwlock_destroy(pthread_rwlock_t *ptr)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_rwlock_destroy_stub(ptr);
 
 	if ((ptr->ptr_magic != _PT_RWLOCK_MAGIC) ||
 	    (!PTQ_EMPTY(&ptr->ptr_rblocked)) ||
@@ -233,6 +239,9 @@ pthread_rwlock_tryrdlock(pthread_rwlock_t *ptr)
 {
 	uintptr_t owner, next;
 
+	if (__predict_false(__uselibcstub))
+		return __libc_rwlock_tryrdlock_stub(ptr);
+
 #ifdef ERRORCHECK
 	if (ptr->ptr_magic != _PT_RWLOCK_MAGIC)
 		return EINVAL;
@@ -355,6 +364,9 @@ pthread_rwlock_trywrlock(pthread_rwlock_t *ptr)
 	uintptr_t owner, next;
 	pthread_t self;
 
+	if (__predict_false(__uselibcstub))
+		return __libc_rwlock_trywrlock_stub(ptr);
+
 #ifdef ERRORCHECK
 	if (ptr->ptr_magic != _PT_RWLOCK_MAGIC)
 		return EINVAL;
@@ -379,6 +391,8 @@ pthread_rwlock_trywrlock(pthread_rwlock_t *ptr)
 int
 pthread_rwlock_rdlock(pthread_rwlock_t *ptr)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_rwlock_rdlock_stub(ptr);
 
 	return pthread__rwlock_rdlock(ptr, NULL);
 }
@@ -387,7 +401,6 @@ int
 pthread_rwlock_timedrdlock(pthread_rwlock_t *ptr,
 			   const struct timespec *abs_timeout)
 {
-
 	if (abs_timeout == NULL)
 		return EINVAL;
 	if ((abs_timeout->tv_nsec >= 1000000000) ||
@@ -401,6 +414,8 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *ptr,
 int
 pthread_rwlock_wrlock(pthread_rwlock_t *ptr)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_rwlock_wrlock_stub(ptr);
 
 	return pthread__rwlock_wrlock(ptr, NULL);
 }
@@ -409,7 +424,6 @@ int
 pthread_rwlock_timedwrlock(pthread_rwlock_t *ptr,
 			   const struct timespec *abs_timeout)
 {
-
 	if (abs_timeout == NULL)
 		return EINVAL;
 	if ((abs_timeout->tv_nsec >= 1000000000) ||
@@ -427,6 +441,9 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 	uintptr_t owner, decr, new, next;
 	pthread_mutex_t *interlock;
 	pthread_t self, thread;
+
+	if (__predict_false(__uselibcstub))
+		return __libc_rwlock_unlock_stub(ptr);
 
 #ifdef ERRORCHECK
 	if ((ptr == NULL) || (ptr->ptr_magic != _PT_RWLOCK_MAGIC))
