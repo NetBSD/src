@@ -1,4 +1,4 @@
-# $NetBSD: services,v 1.96 2013/02/22 03:42:06 christos Exp $
+# $NetBSD: services,v 1.97 2013/03/21 17:45:03 christos Exp $
 # See also: services(5), http://www.sethwklein.net/projects/iana-etc/
 #
 #  Last Updated
@@ -19764,7 +19764,6 @@ nfsd		2049/tcp		# Sun NFS
 eklogin		2105/tcp		# Kerberos encrypted `rlogin'
 zephyr-hm-srv   2105/udp		# Zephyr hm-serv connection
 ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
-iscsi		3260/tcp
 fud		4201/udp		# Cyrus IMAP finger-like service
 X11		6000/tcp		# X Window System
 ircd		6667/tcp		# Often used IRC port (also see 194)
