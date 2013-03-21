@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.26 2013/03/21 21:00:12 martin Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.27 2013/03/21 21:01:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.26 2013/03/21 21:00:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.27 2013/03/21 21:01:10 martin Exp $");
 
 #include "opt_rasops.h"
 
@@ -61,9 +61,9 @@ rasops32_init(struct rasops_info *ri)
 		ri->ri_bpos = 16;
 	}
 
-//	if (FONT_IS_ALPHA(ri->ri_font)) {
-//		ri->ri_ops.putchar = rasops32_putchar_aa;
-//	} else
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = rasops32_putchar_aa;
+	} else
 		ri->ri_ops.putchar = rasops32_putchar;
 }
 
