@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.49 2013/03/19 22:16:54 garbled Exp $
+#	$NetBSD: Makefile.inc,v 1.50 2013/03/21 15:16:43 mlelstv Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -65,13 +65,16 @@ KERNEL_SETS+=		HDL_G INTEGRATOR_CP IXM1200
 
 .if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm" \
     || ${MACHINE_ARCH} == "earmhf"
-BUILD_KERNELS+=		RPI_INSTALL
 KERNEL_SETS+=		RPI
+BUILD_KERNELS+=		RPI_INSTALL
 smp_rpi: ${IMAGE.kern}/netbsd-RPI.bin.gz __mkimage
+.if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI)
+SNAP_MD_POST_DEPS+=	smp_rpi
+.endif
 MKI_OPTS.smp_rpi_inst="-b"
 smp_rpi_inst: ${IMAGE.instk}/netbsd-RPI_INSTALL.bin.gz __mkimage
-.if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI)
-SNAP_MD_POST_DEPS+=	smp_rpi smp_rpi_inst
+.if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI_INSTALL)
+SNAP_MD_POST_DEPS+=	smp_rpi_inst
 .endif
 .endif
 
