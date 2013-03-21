@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.100 2013/01/13 06:56:30 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.101 2013/03/21 12:47:16 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -134,6 +134,7 @@ MALLOC_DECLARE(M_USBHC);
 #define USB_STACK_VERSION 2
 
 #define USB_MAX_DEVICES 128
+#define USB_MIN_DEVICES 2               /* unused + root HUB */
 #define USB_START_ADDR 0
 
 #define USB_CONTROL_ENDPOINT 0
@@ -183,11 +184,16 @@ typedef struct {
 	uWord		wLength;
 } UPACKED usb_device_request_t;
 
+#define UT_GET_DIR(a) ((a) & 0x80)
 #define UT_WRITE		0x00
 #define UT_READ			0x80
+
+#define UT_GET_TYPE(a) ((a) & 0x60)
 #define UT_STANDARD		0x00
 #define UT_CLASS		0x20
 #define UT_VENDOR		0x40
+
+#define UT_GET_RECIPIENT(a) ((a) & 0x1f)
 #define UT_DEVICE		0x00
 #define UT_INTERFACE		0x01
 #define UT_ENDPOINT		0x02
@@ -216,7 +222,7 @@ typedef struct {
 #define UT_WRITE_VENDOR_OTHER	(UT_WRITE | UT_VENDOR | UT_OTHER)
 #define UT_WRITE_VENDOR_ENDPOINT (UT_WRITE | UT_VENDOR | UT_ENDPOINT)
 
-/* Requests */
+/* Standard Requests Codes from the USB 2.0 spec, table 9-4 */
 #define UR_GET_STATUS		0x00
 #define UR_CLEAR_FEATURE	0x01
 #define UR_SET_FEATURE		0x03
@@ -246,10 +252,16 @@ typedef struct {
 #define UR_SET_INTERFACE	0x0b
 #define UR_SYNCH_FRAME		0x0c
 
-/* Feature numbers */
+/*
+ * Feature selectors. USB 2.0 spec, table 9-6 and OTG and EH suppliment,
+ * table 6-2
+ */
 #define UF_ENDPOINT_HALT	0
 #define UF_DEVICE_REMOTE_WAKEUP	1
 #define UF_TEST_MODE		2
+#define UF_DEVICE_B_HNP_ENABLE	3
+#define UF_DEVICE_A_HNP_SUPPORT	4
+#define UF_DEVICE_A_ALT_HNP_SUPPORT 5
 
 #define USB_MAX_IPACKET		8 /* maximum size of the initial packet */
 
@@ -368,7 +380,10 @@ typedef struct {
 #define UR_GET_TT_STATE		0x0a
 #define UR_STOP_TT		0x0b
 
-/* Hub features */
+/*
+ * Hub features from USB 2.0 spec, table 11-17 and updated by the
+ * LPM ECN table 4-7.
+ */
 #define UHF_C_HUB_LOCAL_POWER	0
 #define UHF_C_HUB_OVER_CURRENT	1
 #define UHF_PORT_CONNECTION	0
@@ -378,6 +393,7 @@ typedef struct {
 #define UHF_PORT_RESET		4
 #define UHF_PORT_POWER		8
 #define UHF_PORT_LOW_SPEED	9
+#define UHF_PORT_L1		10
 #define UHF_C_PORT_CONNECTION	16
 #define UHF_C_PORT_ENABLE	17
 #define UHF_C_PORT_SUSPEND	18
@@ -385,6 +401,7 @@ typedef struct {
 #define UHF_C_PORT_RESET	20
 #define UHF_PORT_TEST		21
 #define UHF_PORT_INDICATOR	22
+#define UHF_C_PORT_L1		23
 
 typedef struct {
 	uByte		bDescLength;
