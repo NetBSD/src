@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2011/09/16 16:41:21 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2013/03/21 02:04:05 christos Exp $
 
 .include <bsd.own.mk>
 
 PROG=	top
 BINDIR=	/usr/bin
+NOMANDOC=	yes
 
 TOPDIR=${.CURDIR}/../dist
 .PATH:	${TOPDIR} ${TOPDIR}/machine
