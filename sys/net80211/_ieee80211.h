@@ -151,43 +151,35 @@ struct ieee80211_channel {
 #define	IEEE80211_CHAN_ALLTURBO \
 	(IEEE80211_CHAN_ALL | IEEE80211_CHAN_TURBO)
 
-#define	IEEE80211_IS_CHAN_FHSS(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_FHSS) == IEEE80211_CHAN_FHSS)
-#define	IEEE80211_IS_CHAN_A(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_A) == IEEE80211_CHAN_A)
-#define	IEEE80211_IS_CHAN_B(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_B) == IEEE80211_CHAN_B)
-#define	IEEE80211_IS_CHAN_PUREG(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_PUREG) == IEEE80211_CHAN_PUREG)
-#define	IEEE80211_IS_CHAN_G(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_G) == IEEE80211_CHAN_G)
-#define	IEEE80211_IS_CHAN_ANYG(_c) \
-	(IEEE80211_IS_CHAN_PUREG(_c) || IEEE80211_IS_CHAN_G(_c))
-#define	IEEE80211_IS_CHAN_T(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_T) == IEEE80211_CHAN_T)
-#define	IEEE80211_IS_CHAN_108G(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_108G) == IEEE80211_CHAN_108G)
+#define IEEE80211_IS_CHAN_ANYC(_c) \
+	((_c) == IEEE80211_CHAN_ANYC)
 
-#define	IEEE80211_IS_CHAN_2GHZ(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_2GHZ) != 0)
-#define	IEEE80211_IS_CHAN_5GHZ(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_5GHZ) != 0)
-#define	IEEE80211_IS_CHAN_OFDM(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_OFDM) != 0)
-#define	IEEE80211_IS_CHAN_CCK(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_CCK) != 0)
-#define	IEEE80211_IS_CHAN_GFSK(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_GFSK) != 0)
-#define	IEEE80211_IS_CHAN_HALF(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_HALF) != 0)
-#define	IEEE80211_IS_CHAN_QUARTER(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_QUARTER) != 0)
+#define _IEEE80211_IS_CHAN(_c, _ch) \
+	(!IEEE80211_IS_CHAN_ANYC(_c) && \
+	((_c)->ic_flags & IEEE80211_CHAN_ ## _ch) == IEEE80211_CHAN_ ## _ch)
+
+#define	IEEE80211_IS_CHAN_FHSS(_c)	_IEEE80211_IS_CHAN(_c, FHSS)
+#define	IEEE80211_IS_CHAN_A(_c)		_IEEE80211_IS_CHAN(_c, A)
+#define	IEEE80211_IS_CHAN_B(_c)		_IEEE80211_IS_CHAN(_c, B)
+#define	IEEE80211_IS_CHAN_PUREG(_c)	_IEEE80211_IS_CHAN(_c, PUREG)
+#define	IEEE80211_IS_CHAN_G(_c)		_IEEE80211_IS_CHAN(_c, G)
+#define	IEEE80211_IS_CHAN_ANYG(_c)	_IEEE80211_IS_CHAN(_c, ANYG)
+#define	IEEE80211_IS_CHAN_T(_c)		_IEEE80211_IS_CHAN(_c, T)
+#define	IEEE80211_IS_CHAN_108G(_c)	_IEEE80211_IS_CHAN(_c, 108G)
+
+#define	IEEE80211_IS_CHAN_2GHZ(_c) 	_IEEE80211_IS_CHAN(_c, 2GHZ)
+#define	IEEE80211_IS_CHAN_5GHZ(_c) 	_IEEE80211_IS_CHAN(_c, 5GHZ)
+#define	IEEE80211_IS_CHAN_OFDM(_c) 	_IEEE80211_IS_CHAN(_c, OFDM)
+#define	IEEE80211_IS_CHAN_CCK(_c) 	_IEEE80211_IS_CHAN(_c, CCK)
+#define	IEEE80211_IS_CHAN_GFSK(_c) 	_IEEE80211_IS_CHAN(_c, GFSK)
+#define	IEEE80211_IS_CHAN_HALF(_c) 	_IEEE80211_IS_CHAN(_c, HALF)
+#define	IEEE80211_IS_CHAN_QUARTER(_c) 	_IEEE80211_IS_CHAN(_c, QUARTER)
 #define	IEEE80211_IS_CHAN_FULL(_c) \
-	(((_c)->ic_flags & (IEEE80211_CHAN_QUARTER | IEEE80211_CHAN_HALF)) == 0)
-#define	IEEE80211_IS_CHAN_GSM(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_GSM) != 0)
-#define	IEEE80211_IS_CHAN_PASSIVE(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_PASSIVE) != 0)
+	(!IEEE80211_IS_CHAN_ANYC(_c) && \
+	((_c)->ic_flags & (IEEE80211_CHAN_QUARTER | IEEE80211_CHAN_HALF)) == 0)
+
+#define	IEEE80211_IS_CHAN_GSM(_c) 	_IEEE80211_IS_CHAN(_c, GSM)
+#define	IEEE80211_IS_CHAN_PASSIVE(_c) 	_IEEE80211_IS_CHAN(_c, PASSIVE)
 
 
 /* ni_chan encoding for FH phy */
