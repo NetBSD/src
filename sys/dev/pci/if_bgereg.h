@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.66 2013/03/19 04:10:13 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.67 2013/03/21 12:33:11 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -890,6 +890,7 @@
 #define BGE_SDIMODE_RESET		0x00000001
 #define BGE_SDIMODE_ENABLE		0x00000002
 #define BGE_SDIMODE_STATS_OFLOW_ATTN	0x00000004
+#define	BGE_SDIMODE_HW_LSO_PRE_DMA	0x00000008
 
 /* Send Data Initiator stats register */
 #define BGE_SDISTAT_STATS_OFLOW_ATTN	0x00000004
