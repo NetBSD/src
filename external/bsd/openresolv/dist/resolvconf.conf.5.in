@@ -232,6 +232,7 @@ Location of the unbound service.
 Command to restart the unbound service.
 .It Sy unbound_pid
 Location of the unbound pidfile.
+.El
 .Sh SEE ALSO
 .Xr resolv.conf 5
 and
