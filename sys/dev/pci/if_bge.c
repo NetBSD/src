@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.222 2013/03/21 12:33:11 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.223 2013/03/21 12:56:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.222 2013/03/21 12:33:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.223 2013/03/21 12:56:03 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -3991,6 +3991,20 @@ bge_reset(struct bge_softc *sc)
 
 	/* Step 28: Fix up byte swapping */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS);
+
+	/*
+	 * Wait for the bootcode to complete initialization.
+	 * See BCM5718 programmer's guide's "step 13, Device reset Procedure,
+	 * Section 7".
+	 */
+	if (BGE_IS_5717_PLUS(sc)) {
+		for (i = 0; i < 1000*1000; i++) {
+			val = bge_readmem_ind(sc, BGE_SRAM_FW_MB);
+			if (val == BGE_SRAM_FW_MB_RESET_MAGIC)
+				break;
+			DELAY(10);
+		}
+	}
 
 	/* Step 21: 5822 B0 errata */
 	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX) {
