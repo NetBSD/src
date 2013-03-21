@@ -107,11 +107,12 @@ struct ieee80211_channel {
 	u_int16_t	ic_flags;	/* see below */
 };
 
+extern const struct ieee80211_channel ieee80211_channel_anyc;
+
 #define	IEEE80211_CHAN_MAX	255
 #define	IEEE80211_CHAN_BYTES	32	/* howmany(IEEE80211_CHAN_MAX, NBBY) */
 #define	IEEE80211_CHAN_ANY	0xffff	/* token for ``any channel'' */
-#define	IEEE80211_CHAN_ANYC \
-	((struct ieee80211_channel *) 0x1)
+#define	IEEE80211_CHAN_ANYC 	(__UNCONST(&ieee80211_channel_anyc))
 
 /* bits 0-3 are for private use by drivers */
 /* channel attributes */
@@ -155,8 +156,7 @@ struct ieee80211_channel {
 	((_c) == IEEE80211_CHAN_ANYC)
 
 #define _IEEE80211_IS_CHAN(_c, _ch) \
-	(!IEEE80211_IS_CHAN_ANYC(_c) && \
-	((_c)->ic_flags & IEEE80211_CHAN_ ## _ch) == IEEE80211_CHAN_ ## _ch)
+	(((_c)->ic_flags & IEEE80211_CHAN_ ## _ch) == IEEE80211_CHAN_ ## _ch)
 
 #define	IEEE80211_IS_CHAN_FHSS(_c)	_IEEE80211_IS_CHAN(_c, FHSS)
 #define	IEEE80211_IS_CHAN_A(_c)		_IEEE80211_IS_CHAN(_c, A)
