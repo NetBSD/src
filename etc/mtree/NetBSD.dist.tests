@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.95 2013/02/25 00:31:51 jmmv Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.96 2013/03/21 19:17:51 christos Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -110,6 +110,7 @@
 ./usr/libdata/debug/usr/tests/lib/libppath
 ./usr/libdata/debug/usr/tests/lib/libprop
 ./usr/libdata/debug/usr/tests/lib/libpthread
+./usr/libdata/debug/usr/tests/lib/libpthread/dlopen
 ./usr/libdata/debug/usr/tests/lib/librt
 ./usr/libdata/debug/usr/tests/lib/librumpclient
 ./usr/libdata/debug/usr/tests/lib/librumphijack
@@ -277,6 +278,7 @@
 ./usr/tests/lib/libppath
 ./usr/tests/lib/libprop
 ./usr/tests/lib/libpthread
+./usr/tests/lib/libpthread/dlopen
 ./usr/tests/lib/librt
 ./usr/tests/lib/librumpclient
 ./usr/tests/lib/librumphijack
