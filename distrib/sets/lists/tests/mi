@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.529 2013/03/08 17:02:29 martin Exp $
+# $NetBSD: mi,v 1.530 2013/03/21 16:51:07 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -123,6 +123,7 @@
 ./usr/libdata/debug/usr/tests/lib/libppath				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libprop				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libpthread				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libpthread/dlopen			tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librt					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librumpclient					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librumphijack					tests-lib-debug
@@ -2393,6 +2394,13 @@
 ./usr/tests/lib/libprop/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libprop/t_basic			tests-lib-tests		atf
 ./usr/tests/lib/libpthread			tests-lib-tests
+./usr/tests/lib/libpthread/dlopen			tests-lib-tests
+./usr/tests/lib/libpthread/dlopen/Atffile	tests-lib-tests		atf
+./usr/tests/lib/libpthread/dlopen/h_pthread_dlopen.so	tests-lib-tests		atf
+./usr/tests/lib/libpthread/dlopen/h_pthread_dlopen.so.1	tests-lib-tests		atf
+./usr/tests/lib/libpthread/dlopen/t_dlopen	tests-lib-tests		atf
+./usr/tests/lib/libpthread/dlopen/t_dso_pthread_create	tests-lib-tests		atf
+./usr/tests/lib/libpthread/dlopen/t_main_pthread_create	tests-lib-tests		atf
 ./usr/tests/lib/libpthread/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/Kyuafile		tests-lib-tests		atf,kyua
 ./usr/tests/lib/libpthread/d_mach		tests-lib-tests		atf
