@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.111 2013/03/21 01:48:14 christos Exp $
+#	$NetBSD: bsd.man.mk,v 1.112 2013/03/21 02:04:17 christos Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -208,14 +208,14 @@ ${_MNUMBERS:@N@.$N.html$N@}: 				# build rule
 		${.IMPSRC} > ${.TARGET}.tmp && \
 		mv ${.TARGET}.tmp ${.TARGET}; \
 	else \
-		${TOOL_ROFF_HTML} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
+		${TOOL_ROFF_HTML} ${.IMPSRC} ${MANCOMPRESS} \
 		    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}; \
 	fi
 .elif defined(USETBL)
-	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_HTML} -mandoc ${MANCOMPRESS} \
+	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_HTML} ${MANCOMPRESS} \
 	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${TOOL_ROFF_HTML} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
+	${TOOL_ROFF_HTML} ${.IMPSRC} ${MANCOMPRESS} \
 	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .endif
 
