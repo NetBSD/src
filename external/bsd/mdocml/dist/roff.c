@@ -21,8 +21,10 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "mandoc.h"
 #include "libroff.h"
@@ -117,6 +119,7 @@ struct	roff {
 	struct eqn_node	*last_eqn; /* last equation parsed */
 	struct eqn_node	*first_eqn; /* first equation parsed */
 	struct eqn_node	*eqn; /* current equation being parsed */
+	struct roff_nr  *nr[64];	/* numbered register set */
 };
 
 struct	roffnode {
@@ -1234,26 +1237,88 @@ roff_regunset(struct roff *r, enum regs reg)
 	r->regs[(int)reg].set = 0;
 }
 
+struct roff_nr {
+	char *str;
+	uint32_t hash;
+	intmax_t val;
+	struct roff_nr *next;
+};
+
+static uint32_t
+hash_str(const char *str)
+{
+	const uint8_t *s = (const uint8_t *)str;
+	uint8_t c;
+	uint32_t hv = 0;
+	while ((c = *s++) != '\0') 
+		hv = hv * 33 + c;           /* "perl": k=33, r=r+r/32 */
+	return hv + (hv >> 5);
+}
+
+static struct roff_nr *
+hash_find(struct roff *r, const char *str, uint32_t *h)
+{
+	struct roff_nr *e;
+	*h = hash_str(str) % __arraycount(r->nr);
+
+	for (e = r->nr[*h]; e; e = e->next)
+		if (e->hash == *h && strcmp(e->str, str) == 0)
+			return e;
+	return NULL;
+}
+
+static struct roff_nr *
+hash_insert(struct roff *r, const char *str, uint32_t h)
+{
+	struct roff_nr *e;
+
+	e = mandoc_malloc(sizeof(*e));
+	e->str = mandoc_strdup(str);
+	e->hash = h;
+	e->next = r->nr[h];
+	r->nr[h] = e;
+	return e;
+}
+
 /* ARGSUSED */
 static enum rofferr
 roff_nr(ROFF_ARGS)
 {
 	const char	*key;
 	char		*val;
-	int		 iv;
+	uint32_t	 hv;
+	struct roff_nr	*h;
 
 	val = *bufp + pos;
 	key = roff_getname(r, &val, ln, pos);
 
+	if ((h = hash_find(r, key, &hv)) == NULL)
+		h = hash_insert(r, key, hv);
+
+	h->val = mandoc_strntoi(val, strlen(val), 10);
+
 	if (0 == strcmp(key, "nS")) {
 		r->regs[(int)REG_nS].set = 1;
-		if ((iv = mandoc_strntoi(val, strlen(val), 10)) >= 0)
-			r->regs[(int)REG_nS].u = (unsigned)iv;
+		if (h->val >= 0)
+			r->regs[(int)REG_nS].u = (unsigned)h->val;
 		else
 			r->regs[(int)REG_nS].u = 0u;
 	}
 
 	return(ROFF_IGN);
+}
+
+size_t
+roff_expand_nr(struct roff *r, const char *key, char *lp, size_t lpl)
+{
+	uint32_t	 hv;
+	struct roff_nr	*h;
+
+	if ((h = hash_find(r, key, &hv)) == NULL)
+		return 0;
+
+	/* XXX: support .af */
+	return snprintf(lp, lpl, "%jd", h->val);
 }
 
 /* ARGSUSED */
