@@ -353,6 +353,22 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 				continue;
 			}
 
+			if ('\\' == blk.buf[i] && 'n' == blk.buf[i + 1]) {
+				int j, k;
+				i += 2;
+				if ('(' == blk.buf[i]) /* ) */
+					i++;
+				resize_buf(&ln, 256);
+				for (j = i, k = pos; i < j + 256 
+				    && i < (int)blk.sz
+				    && !isspace((unsigned char)blk.buf[i]);)
+				    ln.buf[k++] = blk.buf[i++];
+
+				ln.buf[k] = '\0';
+				pos += roff_expand_nr(curp->roff,
+				    ln.buf + pos, ln.buf + pos, 256);
+			}
+
 			/*
 			 * Found escape and at least one other character.
 			 * When it's a newline character, skip it.
