@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.53 2010/04/05 07:22:24 joerg Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.54 2013/03/21 18:30:09 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.53 2010/04/05 07:22:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.54 2013/03/21 18:30:09 christos Exp $");
 #endif
 
 /*
@@ -72,6 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.53 2010/04/05 07:22:24 joerg Exp $")
 #include <netinet/in.h> 
 #include <net/if_ether.h>
 #endif
+
+const struct ieee80211_channel ieee80211_channel_anyc = {
+	0, 0
+};
 
 struct ieee80211com_head ieee80211com_head =
     LIST_HEAD_INITIALIZER(ieee80211com_head);
