@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.32 2012/01/25 20:18:04 macallan Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.33 2013/03/21 21:00:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.32 2012/01/25 20:18:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.33 2013/03/21 21:00:12 martin Exp $");
 
 #include "opt_rasops.h"
 
@@ -76,7 +76,7 @@ void
 rasops8_init(struct rasops_info *ri)
 {
 
-	if FONT_IS_ALPHA(ri->ri_font) {
+	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = rasops8_putchar_aa;
 	} else {
 		switch (ri->ri_font->fontwidth) {
