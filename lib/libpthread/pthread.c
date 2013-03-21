@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.142 2013/01/01 18:42:39 dsl Exp $	*/
+/*	$NetBSD: pthread.c,v 1.143 2013/03/21 16:49:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.142 2013/01/01 18:42:39 dsl Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.143 2013/03/21 16:49:11 christos Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: pthread.c,v 1.142 2013/01/01 18:42:39 dsl Exp $");
 
 #include "pthread.h"
 #include "pthread_int.h"
+#include "reentrant.h"
 
 pthread_rwlock_t pthread__alltree_lock = PTHREAD_RWLOCK_INITIALIZER;
 static rb_tree_t	pthread__alltree;
@@ -84,6 +85,7 @@ static void	pthread__start(void);
 void	pthread__init(void);
 
 int pthread__started;
+int __uselibcstub = 1;
 pthread_mutex_t pthread__deadqueue_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_queue_t pthread__deadqueue;
 pthread_queue_t pthread__allqueue;
@@ -161,6 +163,8 @@ pthread__init(void)
 	char *p;
 	int i;
 	extern int __isthreaded;
+
+	__uselibcstub = 0;
 
 	pthread__pagesize = (size_t)sysconf(_SC_PAGESIZE);
 	pthread__concurrency = (int)sysconf(_SC_NPROCESSORS_CONF);
@@ -387,6 +391,12 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	void *private_area;
 	int ret;
 
+	if (__predict_false(__uselibcstub)) {
+    		pthread__errorfunc(__FILE__, __LINE__, __func__,
+		    "pthread_create() requires linking with -lpthread");
+		return __libc_thr_create_stub(thread, attr, startfunc, arg);
+	}
+
 	/*
 	 * It's okay to check this without a lock because there can
 	 * only be one thread before it becomes true.
@@ -601,6 +611,11 @@ pthread_exit(void *retval)
 	struct pt_clean_t *cleanup;
 	char *name;
 
+	if (__predict_false(__uselibcstub)) {
+		__libc_thr_exit_stub(retval);
+		goto out;
+	}
+
 	self = pthread__self();
 
 	/* Disable cancellability. */
@@ -643,6 +658,7 @@ pthread_exit(void *retval)
 		_lwp_exit();
 	}
 
+out:
 	/*NOTREACHED*/
 	pthread__abort();
 	exit(1);
@@ -720,6 +736,8 @@ pthread__reap(pthread_t thread)
 int
 pthread_equal(pthread_t t1, pthread_t t2)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_equal_stub(t1, t2);
 
 	/* Nothing special here. */
 	return (t1 == t2);
@@ -819,6 +837,8 @@ pthread_setname_np(pthread_t thread, const char *name, void *arg)
 pthread_t
 pthread_self(void)
 {
+	if (__predict_false(__uselibcstub))
+		return (pthread_t)__libc_thr_self_stub();
 
 	return pthread__self();
 }
@@ -848,6 +868,9 @@ pthread_setcancelstate(int state, int *oldstate)
 {
 	pthread_t self;
 	int retval;
+
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_setcancelstate_stub(state, oldstate);
 
 	self = pthread__self();
 	retval = 0;
@@ -1016,6 +1039,12 @@ int *
 pthread__errno(void)
 {
 	pthread_t self;
+
+	if (__predict_false(__uselibcstub)) {
+    		pthread__errorfunc(__FILE__, __LINE__, __func__,
+		    "pthread__errno() requires linking with -lpthread");
+		return __libc_thr_errno_stub();
+	}
 
 	self = pthread__self();
 

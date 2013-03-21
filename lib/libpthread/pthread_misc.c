@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_misc.c,v 1.14 2009/08/12 23:51:23 enami Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.15 2013/03/21 16:49:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.14 2009/08/12 23:51:23 enami Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.15 2013/03/21 16:49:12 christos Exp $");
 
 #include <errno.h>
 #include <string.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: pthread_misc.c,v 1.14 2009/08/12 23:51:23 enami Exp $");
 
 #include "pthread.h"
 #include "pthread_int.h"
+#include "reentrant.h"
 
 int	pthread__sched_yield(void);
 
@@ -142,7 +143,6 @@ pthread_kill(pthread_t thread, int sig)
 int
 pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 {
-
 	if (_sys___sigprocmask14(how, set, oset))
 		return errno;
 	return 0;
@@ -153,6 +153,9 @@ pthread__sched_yield(void)
 {
 	pthread_t self;
 	int error;
+
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_yield();
 
 	self = pthread__self();
 
