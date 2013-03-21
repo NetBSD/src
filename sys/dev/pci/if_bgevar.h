@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.12 2013/03/17 04:06:39 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.13 2013/03/21 12:33:10 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -284,7 +284,6 @@ struct bge_softc {
 	int			bge_phy_ape_lock;
 	int			bge_phy_addr;
 	uint32_t		bge_chipid;
-	uint32_t		bge_local_ctrl_reg;
 	uint8_t			bge_asf_mode;
 	uint8_t			bge_asf_count;
 	struct bge_ring_data	*bge_rdata;	/* rings */
