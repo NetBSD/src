@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 2013/02/25 17:04:46 apb Exp $
+#	$NetBSD: Makefile,v 1.80 2013/03/21 16:49:11 christos Exp $
 #
 
 WARNS?=	5
@@ -25,15 +25,14 @@ INCSDIR=/usr/include
 ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 .PATH:	${ARCHDIR}
 
-CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC
-CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__
+CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC -D_REENTRANT
+CPPFLAGS+=	-I${.CURDIR}/../libc/include
+CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__ -D__LIBC_THREAD_STUBS
 
 # XXX: This crappy poke at libc's internals needs to be fixed.
 CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${.CURDIR}/../libc
 
 LIB=	pthread
-
-LDFLAGS+=	-Wl,-znodlopen
 
 #
 # NOTE: When you create a new file for libpthread, make sure that pthread.c
