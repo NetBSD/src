@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2012/09/12 02:00:55 manu Exp $
+# $NetBSD: Makefile,v 1.9 2013/03/21 16:50:21 christos Exp $
 
 NOMAN=		# defined
 
@@ -47,5 +47,7 @@ PROGS+=		h_resolv
 
 FILESDIR=	${TESTSDIR}
 FILES=		d_mach
+
+SUBDIR=		dlopen
 
 .include <bsd.test.mk>
