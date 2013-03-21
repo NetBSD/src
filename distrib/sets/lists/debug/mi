@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.15 2013/03/12 15:17:58 njoly Exp $
+# $NetBSD: mi,v 1.16 2013/03/21 16:51:07 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -1746,6 +1746,11 @@
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2/t_rename.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libppath/t_ppath.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libprop/t_basic.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/h_pthread_dlopen.so.1.debug	tests-lib-debug	debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_dso_pthread_create.debug 	tests-lib-debug	debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_dlopen.debug	tests-lib-debug	debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_main_pthread_create.debug 	tests-lib-debug	debug,atf
+
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_atexit.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_cancel.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_exit.debug		tests-lib-tests		debug,atf
