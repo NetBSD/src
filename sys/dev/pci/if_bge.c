@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.221 2013/03/19 16:49:11 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.222 2013/03/21 12:33:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.221 2013/03/19 16:49:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.222 2013/03/21 12:33:11 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -2478,10 +2478,10 @@ bge_blockinit(struct bge_softc *sc)
 {
 	volatile struct bge_rcb	 *rcb;
 	bus_size_t rcb_addr;
-	int i;
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	bge_hostaddr taddr;
 	uint32_t	dmactl, val;
+	int		i, limit;
 
 	/*
 	 * Initialize the memory window pointer register so that
@@ -2508,12 +2508,6 @@ bge_blockinit(struct bge_softc *sc)
 	}
 
 	/* Step 35: Configure mbuf pool watermarks */
-#ifdef ORIG_WPAUL_VALUES
-	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 24);
-	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 24);
-	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 48);
-#else
-
 	/* new broadcom docs strongly recommend these: */
 	if (BGE_IS_5717_PLUS(sc)) {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
@@ -2534,7 +2528,6 @@ bge_blockinit(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
 	}
-#endif
 
 	/* Step 36: Configure DMA resource watermarks */
 	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_LOWAT, 5);
@@ -2586,27 +2579,82 @@ bge_blockinit(struct bge_softc *sc)
 		return ENXIO;
 	}
 
+	/*
+	 * Summary of rings supported by the controller:
+	 *
+	 * Standard Receive Producer Ring
+	 * - This ring is used to feed receive buffers for "standard"
+	 *   sized frames (typically 1536 bytes) to the controller.
+	 *
+	 * Jumbo Receive Producer Ring
+	 * - This ring is used to feed receive buffers for jumbo sized
+	 *   frames (i.e. anything bigger than the "standard" frames)
+	 *   to the controller.
+	 *
+	 * Mini Receive Producer Ring
+	 * - This ring is used to feed receive buffers for "mini"
+	 *   sized frames to the controller.
+	 * - This feature required external memory for the controller
+	 *   but was never used in a production system.  Should always
+	 *   be disabled.
+	 *
+	 * Receive Return Ring
+	 * - After the controller has placed an incoming frame into a
+	 *   receive buffer that buffer is moved into a receive return
+	 *   ring.  The driver is then responsible to passing the
+	 *   buffer up to the stack.  Many versions of the controller
+	 *   support multiple RR rings.
+	 *
+	 * Send Ring
+	 * - This ring is used for outgoing frames.  Many versions of
+	 *   the controller support multiple send rings.
+	 */
+
 	/* Step 41: Initialize the standard RX ring control block */
 	rcb = &sc->bge_rdata->bge_info.bge_std_rx_rcb;
 	BGE_HOSTADDR(rcb->bge_hostaddr, BGE_RING_DMA_ADDR(sc, bge_rx_std_ring));
-	if (BGE_IS_5717_PLUS(sc))
+	if (BGE_IS_5717_PLUS(sc)) {
+		/*
+		 * Bits 31-16: Programmable ring size (2048, 1024, 512, .., 32)
+		 * Bits 15-2 : Maximum RX frame size
+		 * Bit 1     : 1 = Ring Disabled, 0 = Ring ENabled
+		 * Bit 0     : Reserved
+		 */
 		rcb->bge_maxlen_flags =
 		    BGE_RCB_MAXLEN_FLAGS(512, BGE_MAX_FRAMELEN << 2);
-	else if (BGE_IS_5705_PLUS(sc))
+	} else if (BGE_IS_5705_PLUS(sc)) {
+		/*
+		 * Bits 31-16: Programmable ring size (512, 256, 128, 64, 32)
+		 * Bits 15-2 : Reserved (should be 0)
+		 * Bit 1     : 1 = Ring Disabled, 0 = Ring Enabled
+		 * Bit 0     : Reserved
+		 */
 		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(512, 0);
-	else
+	} else {
+		/*
+		 * Ring size is always XXX entries
+		 * Bits 31-16: Maximum RX frame size
+		 * Bits 15-2 : Reserved (should be 0)
+		 * Bit 1     : 1 = Ring Disabled, 0 = Ring Enabled
+		 * Bit 0     : Reserved
+		 */
 		rcb->bge_maxlen_flags =
 		    BGE_RCB_MAXLEN_FLAGS(BGE_MAX_FRAMELEN, 0);
+	}
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720)
 		rcb->bge_nicaddr = BGE_STD_RX_RINGS_5717;
 	else
 		rcb->bge_nicaddr = BGE_STD_RX_RINGS;
+	/* Write the standard receive producer ring control block. */
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_HADDR_HI, rcb->bge_hostaddr.bge_addr_hi);
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_HADDR_LO, rcb->bge_hostaddr.bge_addr_lo);
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_MAXLEN_FLAGS, rcb->bge_maxlen_flags);
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_NICADDR, rcb->bge_nicaddr);
+
+	/* Reset the standard receive producer ring producer index. */
+	bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, 0);
 
 	/*
 	 * Step 42: Initialize the jumbo RX ring control block
@@ -2619,9 +2667,8 @@ bge_blockinit(struct bge_softc *sc)
 		rcb = &sc->bge_rdata->bge_info.bge_jumbo_rx_rcb;
 		BGE_HOSTADDR(rcb->bge_hostaddr,
 		    BGE_RING_DMA_ADDR(sc, bge_rx_jumbo_ring));
-		rcb->bge_maxlen_flags =
-		    BGE_RCB_MAXLEN_FLAGS(BGE_MAX_FRAMELEN,
-			BGE_RCB_FLAG_RING_DISABLED);
+		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(0,
+		    BGE_RCB_FLAG_USE_EXT_RX_BD | BGE_RCB_FLAG_RING_DISABLED);
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720)
@@ -2632,6 +2679,7 @@ bge_blockinit(struct bge_softc *sc)
 		    rcb->bge_hostaddr.bge_addr_hi);
 		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_HADDR_LO,
 		    rcb->bge_hostaddr.bge_addr_lo);
+		/* Program the jumbo receive producer ring RCB parameters. */
 		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_MAXLEN_FLAGS,
 		    rcb->bge_maxlen_flags);
 		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_NICADDR, rcb->bge_nicaddr);
@@ -2643,8 +2691,8 @@ bge_blockinit(struct bge_softc *sc)
 	if (BGE_IS_5700_FAMILY(sc)) {
 		/* Set up dummy disabled mini ring RCB */
 		rcb = &sc->bge_rdata->bge_info.bge_mini_rx_rcb;
-		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(0,
-		    BGE_RCB_FLAG_RING_DISABLED);
+		rcb->bge_maxlen_flags =
+		    BGE_RCB_MAXLEN_FLAGS(0, BGE_RCB_FLAG_RING_DISABLED);
 		CSR_WRITE_4(sc, BGE_RX_MINI_RCB_MAXLEN_FLAGS,
 		    rcb->bge_maxlen_flags);
 		/* Reset the mini receive producer ring producer index. */
@@ -2665,22 +2713,21 @@ bge_blockinit(struct bge_softc *sc)
 			    (CSR_READ_4(sc, BGE_ISO_PKT_TX) & ~3) | 2);
 	}
 	/*
+	 * The BD ring replenish thresholds control how often the
+	 * hardware fetches new BD's from the producer rings in host
+	 * memory.  Setting the value too low on a busy system can
+	 * starve the hardware and recue the throughpout.
+	 *
 	 * Set the BD ring replenish thresholds. The recommended
 	 * values are 1/8th the number of descriptors allocated to
-	 * each ring.
+	 * each ring, but since we try to avoid filling the entire
+	 * ring we set these to the minimal value of 8.  This needs to
+	 * be done on several of the supported chip revisions anyway,
+	 * to work around HW bugs.
 	 */
-	i = BGE_STD_RX_RING_CNT / 8;
-
-	/*
-	 * Use a value of 8 for the following chips to workaround HW errata.
-	 * Some of these chips have been added based on empirical
-	 * evidence (they don't work unless this is done).
-	 */
-	if (BGE_IS_5705_PLUS(sc))
-		i = 8;
-
-	CSR_WRITE_4(sc, BGE_RBDI_STD_REPL_THRESH, i);
-	CSR_WRITE_4(sc, BGE_RBDI_JUMBO_REPL_THRESH, BGE_JUMBO_RX_RING_CNT / 8);
+	CSR_WRITE_4(sc, BGE_RBDI_STD_REPL_THRESH, 8);
+	if (BGE_IS_JUMBO_CAPABLE(sc))
+		CSR_WRITE_4(sc, BGE_RBDI_JUMBO_REPL_THRESH, 8);
 
 	if (BGE_IS_5717_PLUS(sc)) {
 		CSR_WRITE_4(sc, BGE_STD_REPL_LWM, 4);
@@ -2688,19 +2735,24 @@ bge_blockinit(struct bge_softc *sc)
 	}
 
 	/*
-	 * Disable all unused send rings by setting the 'ring disabled'
-	 * bit in the flags field of all the TX send ring control blocks.
-	 * These are located in NIC memory.
+	 * Disable all send rings by setting the 'ring disabled' bit
+	 * in the flags field of all the TX send ring control blocks,
+	 * located in NIC memory.
 	 */
+	if (BGE_IS_5700_FAMILY(sc)) {
+		/* 5700 to 5704 had 16 send rings. */
+		limit = BGE_TX_RINGS_EXTSSRAM_MAX;
+	} else
+		limit = 1;
 	rcb_addr = BGE_MEMWIN_START + BGE_SEND_RING_RCB;
-	for (i = 0; i < BGE_TX_RINGS_EXTSSRAM_MAX; i++) {
+	for (i = 0; i < limit; i++) {
 		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
 		    BGE_RCB_MAXLEN_FLAGS(0, BGE_RCB_FLAG_RING_DISABLED));
 		RCB_WRITE_4(sc, rcb_addr, bge_nicaddr, 0);
 		rcb_addr += sizeof(struct bge_rcb);
 	}
 
-	/* Configure TX RCB 0 (we use only the first ring) */
+	/* Configure send ring RCB 0 (we use only the first ring) */
 	rcb_addr = BGE_MEMWIN_START + BGE_SEND_RING_RCB;
 	BGE_HOSTADDR(taddr, BGE_RING_DMA_ADDR(sc, bge_tx_ring));
 	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_hi, taddr.bge_addr_hi);
@@ -2712,13 +2764,29 @@ bge_blockinit(struct bge_softc *sc)
 	else
 		RCB_WRITE_4(sc, rcb_addr, bge_nicaddr,
 		    BGE_NIC_TXRING_ADDR(0, BGE_TX_RING_CNT));
-	if (BGE_IS_5700_FAMILY(sc))
-		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
-		    BGE_RCB_MAXLEN_FLAGS(BGE_TX_RING_CNT, 0));
+	RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
+	    BGE_RCB_MAXLEN_FLAGS(BGE_TX_RING_CNT, 0));
 
-	/* Disable all unused RX return rings */
+	/*
+	 * Disable all receive return rings by setting the
+	 * 'ring diabled' bit in the flags field of all the receive
+	 * return ring control blocks, located in NIC memory.
+	 */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720) {
+		/* Should be 17, use 16 until we get an SRAM map. */
+		limit = 16;
+	} else if (BGE_IS_5700_FAMILY(sc))
+		limit = BGE_RX_RINGS_MAX;
+	else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+	    BGE_IS_57765_PLUS(sc))
+		limit = 4;
+	else
+		limit = 1;
+	/* Disable all receive return rings */
 	rcb_addr = BGE_MEMWIN_START + BGE_RX_RETURN_RING_RCB;
-	for (i = 0; i < BGE_RX_RINGS_MAX; i++) {
+	for (i = 0; i < limit; i++) {
 		RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_hi, 0);
 		RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_lo, 0);
 		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
@@ -2731,10 +2799,9 @@ bge_blockinit(struct bge_softc *sc)
 	}
 
 	/*
-	 * Set up RX return ring 0
-	 * Note that the NIC address for RX return rings is 0x00000000.
-	 * The return rings live entirely within the host, so the
-	 * nicaddr field in the RCB isn't used.
+	 * Set up receive return ring 0.  Note that the NIC address
+	 * for RX return rings is 0x0.  The return rings live entirely
+	 * within the host, so the nicaddr field in the RCB isn't used.
 	 */
 	rcb_addr = BGE_MEMWIN_START + BGE_RX_RETURN_RING_RCB;
 	BGE_HOSTADDR(taddr, BGE_RING_DMA_ADDR(sc, bge_rx_return_ring));
@@ -2864,24 +2931,7 @@ bge_blockinit(struct bge_softc *sc)
 	DELAY(40);
 
 	/* Set misc. local control, enable interrupts on attentions */
-	sc->bge_local_ctrl_reg = BGE_MLC_INTR_ONATTN | BGE_MLC_AUTO_EEPROM;
-
-#ifdef notdef
-	/* Assert GPIO pins for PHY reset */
-	BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_MISCIO_OUT0|
-	    BGE_MLC_MISCIO_OUT1|BGE_MLC_MISCIO_OUT2);
-	BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_MISCIO_OUTEN0|
-	    BGE_MLC_MISCIO_OUTEN1|BGE_MLC_MISCIO_OUTEN2);
-#endif
-
-#if defined(not_quite_yet)
-	/* Linux driver enables enable gpio pin #1 on 5700s */
-	if (sc->bge_chipid == BGE_CHIPID_BCM5700) {
-		sc->bge_local_ctrl_reg |=
-		  (BGE_MLC_MISCIO_OUT1|BGE_MLC_MISCIO_OUTEN1);
-	}
-#endif
-	CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL, sc->bge_local_ctrl_reg);
+	CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_INTR_ONATTN);
 
 	/* Turn on DMA completion state machine */
 	if (!(BGE_IS_5705_PLUS(sc)))
@@ -2999,7 +3049,8 @@ bge_blockinit(struct bge_softc *sc)
 	/* Turn on send data initiator state machine */
 	if (sc->bge_flags & BGE_TSO) {
 		/* XXX: magic value from Linux driver */
-		CSR_WRITE_4(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE | 0x08);
+		CSR_WRITE_4(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE |
+		    BGE_SDIMODE_HW_LSO_PRE_DMA);
 	} else
 		CSR_WRITE_4(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE);
 
@@ -3578,13 +3629,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	sc->bge_stat_ticks = BGE_TICKS_PER_SEC;
 	sc->bge_rx_coal_ticks = 150;
 	sc->bge_rx_max_coal_bds = 64;
-#ifdef ORIG_WPAUL_VALUES
-	sc->bge_tx_coal_ticks = 150;
-	sc->bge_tx_max_coal_bds = 128;
-#else
 	sc->bge_tx_coal_ticks = 300;
 	sc->bge_tx_max_coal_bds = 400;
-#endif
 	if (BGE_IS_5705_PLUS(sc)) {
 		sc->bge_tx_coal_ticks = (12 * 5);
 		sc->bge_tx_max_coal_bds = (12 * 5);
@@ -3844,7 +3890,7 @@ bge_reset(struct bge_softc *sc)
 			 * during global reset.
 			 */
 			CSR_WRITE_4(sc, BGE_MISC_CFG, 1 << 29);
-			reset |= (1<<29);
+			reset |= (1 << 29);
 		}
 	}
 
@@ -3864,10 +3910,6 @@ bge_reset(struct bge_softc *sc)
 	if (BGE_IS_5705_PLUS(sc) &&
 	    (sc->bge_flags & BGE_CPMU_PRESENT) == 0)
 		reset |= BGE_MISCCFG_GPHY_PD_OVERRIDE;
-
-	/* XXX 5721, 5751 and 5752 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750)
-		reset |= BGE_MISCCFG_GRC_RESET_DISABLE;
 
 	/* Issue global reset */
 	write_op(sc, BGE_MISC_CFG, reset);
