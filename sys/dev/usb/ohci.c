@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.232 2013/01/29 00:00:15 christos Exp $	*/
+/*	$NetBSD: ohci.c,v 1.233 2013/03/22 12:47:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.232 2013/01/29 00:00:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.233 2013/03/22 12:47:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2323,7 +2323,6 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		while (xfer->hcflags & UXFER_ABORTING)
 			cv_wait(&xfer->hccv, &sc->sc_lock);
 		goto done;
-		return;
 	}
 	xfer->hcflags |= UXFER_ABORTING;
 
