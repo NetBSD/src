@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.234 2013/03/22 13:20:12 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.235 2013/03/22 13:28:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.234 2013/03/22 13:20:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.235 2013/03/22 13:28:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2316,7 +2316,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		DPRINTFN(2, ("ohci_abort_xfer: already aborting\n"));
 #ifdef DIAGNOSTIC
 		if (status == USBD_TIMEOUT)
-			printf("0hci_abort_xfer: TIMEOUT while aborting\n");
+			printf("%s: TIMEOUT while aborting\n", __func__);
 #endif
 		/* Override the status which might be USBD_TIMEOUT. */
 		xfer->status = status;
