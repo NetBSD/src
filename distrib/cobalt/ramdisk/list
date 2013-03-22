@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 2011/07/03 23:11:32 tron Exp $
+#	$NetBSD: list,v 1.12 2013/03/22 10:52:21 tsutsui Exp $
 
 SRCDIRS external/bsd/less/bin
 SRCDIRS	bin sbin usr.bin usr.sbin
@@ -24,7 +24,6 @@ PROG	bin/stty
 PROG	bin/sync
 
 PROG	sbin/chown	bin/chgrp
-PROG	sbin/dhclient
 PROG	sbin/disklabel
 PROG	sbin/dmesg
 PROG	sbin/fdisk
@@ -63,7 +62,6 @@ PROG	usr/sbin/chroot
 # init invokes the shell as -sh
 ARGVLN	sh	-sh
 
-SPECIAL	dhclient	srcdir	distrib/utils/x_dhclient
 SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	gzip		srcdir	distrib/utils/x_gzip
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
@@ -81,7 +79,6 @@ COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
 COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
-COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script 555
 
 # and the boot script
 COPY	${CURDIR}/dot.profile		.profile
