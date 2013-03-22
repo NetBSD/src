@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.233 2013/03/22 12:47:56 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.234 2013/03/22 13:20:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.233 2013/03/22 12:47:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.234 2013/03/22 13:20:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1311,7 +1311,8 @@ ohci_softintr(void *v)
 #ifdef OHCI_DEBUG
 	if (ohcidebug > 10) {
 		DPRINTF(("ohci_process_done: TD done:\n"));
-		ohci_dump_tds(sc, sdone);
+		for (std = sdone; std; std = std->dnext)
+			ohci_dump_td(sc, std);	
 	}
 #endif
 
@@ -1388,7 +1389,8 @@ ohci_softintr(void *v)
 #ifdef OHCI_DEBUG
 	if (ohcidebug > 10) {
 		DPRINTF(("ohci_softintr: ITD done:\n"));
-		ohci_dump_itds(sc, sidone);
+		for (sitd = sidone; sitd; sitd = sitd->dnext)
+			ohci_dump_itd(sc, sitd);	
 	}
 #endif
 
