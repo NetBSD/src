@@ -1267,7 +1267,7 @@ static struct roff_nr *
 hash_find(struct roff *r, const char *str, uint32_t *h)
 {
 	struct roff_nr *e;
-	*h = hash_str(str) % __arraycount(r->nr);
+	*h = hash_str(str) % (sizeof(r->nr) / sizeof(r->nr[0]));
 
 	for (e = r->nr[*h]; e; e = e->next)
 		if (e->hash == *h && strcmp(e->str, str) == 0)
