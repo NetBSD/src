@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.13 2013/03/19 09:17:17 isaki Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.14 2013/03/22 13:46:38 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.13 2013/03/19 09:17:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.14 2013/03/22 13:46:38 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -433,8 +433,10 @@ fpu_ftox(struct fpemu *fe, struct fpn *fp, u_int *res)
 #if (FP_NMANT - FP_NG - EXT_FRACBITS) > 0
 	(void) fpu_shr(fp, FP_NMANT - FP_NG - EXT_FRACBITS);
 #endif
-	if (fpu_round(fe, fp) && fp->fp_mant[0] == EXT_EXPLICIT2)
+	if (fpu_round(fe, fp) && fp->fp_mant[0] == EXT_EXPLICIT2) {
 		exp++;
+		fpu_shr(fp, 1);
+	}
 	if (exp >= EXT_EXP_INFNAN) {
 		fe->fe_fpsr |= FPSR_OPERR | FPSR_INEX2 | FPSR_OVFL;
 		if (toinf(fe, sign)) {
