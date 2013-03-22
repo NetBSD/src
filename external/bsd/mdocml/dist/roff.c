@@ -177,6 +177,8 @@ static	enum rofferr	 roff_cond(ROFF_ARGS);
 static	enum rofferr	 roff_cond_text(ROFF_ARGS);
 static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
 static	enum rofferr	 roff_ds(ROFF_ARGS);
+static  void		 roff_expand_nr_inplace(struct roff *, char **, int *,
+				size_t *);
 static	enum roffrule	 roff_evalcond(const char *, int *);
 static	void		 roff_free1(struct roff *);
 static	void		 roff_freestr(struct roffkv *);
@@ -1053,6 +1055,12 @@ roff_cond_text(ROFF_ARGS)
 	ep = &(*bufp)[pos];
 	for ( ; NULL != (ep = strchr(ep, '\\')); ep++) {
 		ep++;
+		if (*ep == 'n') {
+			int i = ep - *bufp - 1;
+			roff_expand_nr_inplace(r, bufp, &i, szp);
+			ep = *bufp + i;
+			continue;
+		}
 		if ('}' != *ep)
 			continue;
 		*ep = '&';
@@ -1308,17 +1316,76 @@ roff_nr(ROFF_ARGS)
 	return(ROFF_IGN);
 }
 
-size_t
-roff_expand_nr(struct roff *r, const char *key, char *lp, size_t lpl)
+void
+roff_expand_nr(struct roff *r, const char *src, int *sp, size_t slen,
+    char **dst, int *dp, size_t *dlenp)
 {
 	uint32_t	 hv;
 	struct roff_nr	*h;
+	int		 l, s, d;
+	char		 e, *key;
 
-	if ((h = hash_find(r, key, &hv)) == NULL)
-		return 0;
+	s = *sp + 2;	/* skip \\\n */
+	d = *dp;
+
+	if ('[' == src[s]) {		/* XXX: Support builtins */
+		s++;
+		e = ']';
+	} else
+		e = '\0';
+
+	for (l = s; l < (int)slen; l++) {
+		if (e) {
+			if (src[l] == e)
+				break;
+		} else {
+			if (isspace((unsigned char)src[l]))
+				break;
+		}
+	}
+	*sp = l;
+	l -= s;
+	key = mandoc_malloc(l + 1);
+	memcpy(key, src + s, l);
+	key[l] = '\0';
+
+	if ((h = hash_find(r, key, &hv)) == NULL) {
+		free(key);
+		return;
+	}
+	if (*dst == NULL || *dlenp - *dp < 256)
+		*dst = mandoc_realloc(*dst, *dlenp += 256);
 
 	/* XXX: support .af */
-	return snprintf(lp, lpl, "%jd", h->val);
+	*dp += snprintf(*dst + *dp, *dlenp - *dp, "%jd", h->val);
+}
+
+static void
+roff_expand_nr_inplace(struct roff *r, char **src, int *sp, size_t *slenp)
+{
+	int j, i, k;
+	size_t dlen;
+	char *dst;
+
+	k = i = *sp;
+
+	dst = NULL;
+	j = 0;
+	dlen = 0;
+
+	roff_expand_nr(r, *src, &i, *slenp, &dst, &j, &dlen);
+
+	if (j) {
+		int l = j - (i - k);
+		if (l > 0) {
+			*slenp += l;
+			*src = mandoc_realloc(*src, *slenp);
+		}
+		memmove(*src + j + k, *src + i, *slenp - i);
+		memcpy(*src + k, dst, j);
+		free(dst);
+	}
+	*sp = k + j;
 }
 
 /* ARGSUSED */
