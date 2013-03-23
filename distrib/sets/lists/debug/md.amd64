@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.9 2013/03/11 15:53:05 christos Exp $
+# $NetBSD: md.amd64,v 1.10 2013/03/23 16:17:21 christos Exp $
 ./usr/libdata/debug/lib/i386/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/i386/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/i386/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -100,7 +100,7 @@
 ./usr/libdata/debug/usr/lib/i386/liblzf.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblzma.so.1.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libm.so.0.10.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libmagic.so.4.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libmagic.so.5.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmenu.so.6.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmj.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmpc.so.2.0.debug	comp-compat-shlib	obsolete
