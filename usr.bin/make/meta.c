@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.26 2013/01/19 04:23:37 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.27 2013/03/23 05:31:29 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -539,8 +539,24 @@ boolValue(char *s)
     return TRUE;
 }
 
+/*
+ * Initialization we need before reading makefiles.
+ */
 void
-meta_init(const char *make_mode)
+meta_init()
+{
+#ifdef USE_FILEMON
+	/* this allows makefiles to test if we have filemon support */
+	Var_Set(".MAKE.PATH_FILEMON", _PATH_FILEMON, VAR_GLOBAL, 0);
+#endif
+}
+
+
+/*
+ * Initialization we need after reading makefiles.
+ */
+void
+meta_mode_init(const char *make_mode)
 {
     static int once = 0;
     char *cp;
