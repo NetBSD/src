@@ -87,7 +87,7 @@ delete_media(MEDIA m)
 }
 
 
-unsigned long
+uint32_t
 media_granularity(MEDIA m)
 {
     if (m == 0) {
@@ -110,7 +110,7 @@ media_total_size(MEDIA m)
 
 
 long
-read_media(MEDIA m, long long offset, unsigned long count, void *address)
+read_media(MEDIA m, long long offset, uint32_t count, void *address)
 {
     long result;
     
@@ -126,7 +126,7 @@ read_media(MEDIA m, long long offset, unsigned long count, void *address)
 
 
 long
-write_media(MEDIA m, long long offset, unsigned long count, void *address)
+write_media(MEDIA m, long long offset, uint32_t count, void *address)
 {
     long result;
     

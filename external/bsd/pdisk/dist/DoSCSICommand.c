@@ -93,7 +93,7 @@ OSErr OriginalSCSI(
 OSErr DoOriginalSCSICommand(
     DeviceIdent             scsiDevice,
     const SCSI_CommandPtr   theSCSICommand,
-    unsigned short          cmdBlockLength,
+    uint16_t          cmdBlockLength,
     Ptr                     dataBuffer,
     ByteCount               dataLength,
     UInt32                  scsiFlags,
@@ -193,7 +193,7 @@ DoSCSICommand(
 {
     OSErr                   status;
     SCSI_Command            theSCSICommand;
-    unsigned short          cmdBlockLength;
+    uint16_t          cmdBlockLength;
 	
 //      SpinSpinner(&gCurrentInfoPtr->spinnerRecord);
 //      ShowProgressAction(currentAction);
@@ -280,7 +280,7 @@ OSErr
 DoOriginalSCSICommand(
     DeviceIdent             scsiDevice,
     const SCSI_CommandPtr   theSCSICommand,
-    unsigned short          cmdBlockLength,
+    uint16_t          cmdBlockLength,
     Ptr                     dataBuffer,
     ByteCount               dataLength,
     UInt32                  scsiFlags,
@@ -360,8 +360,8 @@ OriginalSCSI(
     short                   totalTries;         /* Get/Select retries       */
     short                   getTries;           /* Get retries              */
     short                   iCount;             /* Bus free counter         */
-    unsigned long           watchdog;           /* Timeout after this       */
-    unsigned long           myTransferCount;    /* Gets TIB loop counter    */
+    uint32_t           watchdog;           /* Timeout after this       */
+    uint32_t           myTransferCount;    /* Gets TIB loop counter    */
     short                   scsiStatusByte;     /* Gets SCSIComplete result */
     short                   scsiMsgByte;        /* Gets SCSIComplete result */
     Boolean                 bufferHoldFlag;
@@ -388,10 +388,10 @@ OriginalSCSI(
      */
     if (dataBuffer != NULL) {
 	tib[0].scOpcode = scInc;
-	tib[0].scParam1 = (unsigned long) dataBuffer;
+	tib[0].scParam1 = (uint32_t) dataBuffer;
 	tib[0].scParam2 = 1;
 	tib[1].scOpcode = scAdd;
-	tib[1].scParam1 = (unsigned long) &myTransferCount;
+	tib[1].scParam1 = (uint32_t) &myTransferCount;
 	tib[1].scParam2 = 1;
 	tib[2].scOpcode = scLoop;
 	tib[2].scParam1 = (-2 * sizeof (SCSIInstr));
@@ -589,7 +589,7 @@ GetCommandLength(
     const SCSI_CommandPtr   cmdPtr
     )
 {
-    unsigned short          result;
+    uint16_t          result;
     /*
      * Look at the "group code" in the command operation. Return zero
      * error for the reserved (3, 4) and vendor-specific command (6, 7)

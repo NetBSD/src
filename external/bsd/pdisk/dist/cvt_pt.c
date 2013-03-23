@@ -1,16 +1,12 @@
 /*
  * cvt_pt.c
  *
- *	Covert partition type.	$Revision: 1.1.1.1 $
+ *	Covert partition type.	$Revision: 1.2 $
  *
  *	Copyright (c)  1999, Eryk Vershen
  * 
  * History:
- * $Log: cvt_pt.c,v $
- * Revision 1.1.1.1  2013/03/23 15:36:33  christos
- * from:
- * http://cantaforda.com/cfcl/eryk/linux/pdisk/dist/pdisk.20000516.src.tar
- *
+ * Log: cvt_pt.c,v
  * Revision 1.2  2000/05/16 13:56:11  eryk
  * Minor fixes
  *
@@ -112,7 +108,8 @@ main(int argc, char **argv)
 	    bool_option = 1;
 	    break;
 	default:
-	    sprintf(option_error, "no such option as -%c", c);
+	    snprintf(option_error, sizeof(option_error),
+	        "no such option as -%c", c);
 	    usage(option_error);
 	}
     }
@@ -138,7 +135,7 @@ trim_num(char *s)
     }
 
     for (t--; t >= s; t--) {
-        if (!isdigit(*t)) {
+        if (!isdigit((uint8_t)*t)) {
             t++;
             if (*t) {
                 n = atoi(t);
@@ -184,8 +181,8 @@ process(char *filename)
 
     // 3)       verify the type for the partition;
 
-    if (map->writeable == 0) {
-	fatal(-1, "The map is not writeable");
+    if (map->writable == 0) {
+	fatal(-1, "The map is not writable");
         return;
     }
 

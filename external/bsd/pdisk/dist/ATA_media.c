@@ -87,69 +87,69 @@ struct ATA_media_iterator {
 };
 
 struct ATA_identify_drive_info {        /* word */
-    unsigned short  config_bits;        /*  0 */
-    unsigned short  num_cylinders;      /*  1 */
-    unsigned short  reserved2;          /*  2 */
-    unsigned short  num_heads;          /*  3 */
-    unsigned short  bytes_per_track;    /*  4 */
-    unsigned short  bytes_per_sector;   /*  5 */
-    unsigned short  sectors_per_track;  /*  6 */
-    unsigned short  vendor7[3];         /*  7-9 */
+    uint16_t  config_bits;        /*  0 */
+    uint16_t  num_cylinders;      /*  1 */
+    uint16_t  reserved2;          /*  2 */
+    uint16_t  num_heads;          /*  3 */
+    uint16_t  bytes_per_track;    /*  4 */
+    uint16_t  bytes_per_sector;   /*  5 */
+    uint16_t  sectors_per_track;  /*  6 */
+    uint16_t  vendor7[3];         /*  7-9 */
     char            serial_number[20];  /* 10-19 */
-    unsigned short  buffer_type;        /* 20 */
-    unsigned short  buffer_size;        /* 21 */
-    unsigned short  num_of_ecc_bytes;   /* 22 */
+    uint16_t  buffer_type;        /* 20 */
+    uint16_t  buffer_size;        /* 21 */
+    uint16_t  num_of_ecc_bytes;   /* 22 */
     char            firmware_rev[8];    /* 23-26 */
     char            model_number[40];   /* 27-46 */
-    unsigned short  word47;             /* 47 */
-    unsigned short  double_word_io;     /* 48 */
-    unsigned short  capabilities;       /* 49 */
-    unsigned short  reserved50;         /* 50 */
-    unsigned short  pio_timing;         /* 51 */
-    unsigned short  dma_timing;         /* 52 */
-    unsigned short  current_is_valid;   /* 53 */
-    unsigned short  cur_cylinders;      /* 54 */
-    unsigned short  cur_heads;          /* 55 */
-    unsigned short  cur_sec_per_track;  /* 56 */
-    unsigned long   total_sectors;      /* 57-58 */
-    unsigned short  multiple_sectors;   /* 59 */
-    unsigned long   lba_sectors;        /* 60-61 */
-    unsigned short  singleword_dma;     /* 62 */
-    unsigned short  multiword_dma;      /* 63 */
-    unsigned short  reserved64[64];     /* 64-127 */
-    unsigned short  vendor128[32];      /* 128-159 */
-    unsigned short  reserved160[96];    /* 160-255 */
+    uint16_t  word47;             /* 47 */
+    uint16_t  double_word_io;     /* 48 */
+    uint16_t  capabilities;       /* 49 */
+    uint16_t  reserved50;         /* 50 */
+    uint16_t  pio_timing;         /* 51 */
+    uint16_t  dma_timing;         /* 52 */
+    uint16_t  current_is_valid;   /* 53 */
+    uint16_t  cur_cylinders;      /* 54 */
+    uint16_t  cur_heads;          /* 55 */
+    uint16_t  cur_sec_per_track;  /* 56 */
+    uint32_t   total_sectors;      /* 57-58 */
+    uint16_t  multiple_sectors;   /* 59 */
+    uint32_t   lba_sectors;        /* 60-61 */
+    uint16_t  singleword_dma;     /* 62 */
+    uint16_t  multiword_dma;      /* 63 */
+    uint16_t  reserved64[64];     /* 64-127 */
+    uint16_t  vendor128[32];      /* 128-159 */
+    uint16_t  reserved160[96];    /* 160-255 */
 };
 
 struct ATAPI_identify_drive_info {      /* word */
-    unsigned short  config_bits;        /*  0 */
-    unsigned short  retired1[9];        /*  1-9 */
+    uint16_t  config_bits;        /*  0 */
+    uint16_t  retired1[9];        /*  1-9 */
     char            serial_number[20];  /* 10-19 */
-    unsigned short  retired20[3];       /* 20-22 */
+    uint16_t  retired20[3];       /* 20-22 */
     char            firmware_rev[8];    /* 23-26 */
     char            model_number[40];   /* 27-46 */
-    unsigned short  retired47[2];       /* 47-48 */
-    unsigned short  capabilities;       /* 49 */
-    unsigned short  reserved50;         /* 50 */
-    unsigned short  pio_timing;         /* 51 */
-    unsigned short  dma_timing;         /* 52 */
-    unsigned short  current_is_valid;   /* 53 */
-    unsigned short  retired54[8];       /* 54-61 */
-    unsigned short  singleword_dma;     /* 62 */
-    unsigned short  multiword_dma;      /* 63 */
-    unsigned short  pio_transfer;       /* 64 */
-    unsigned short  min_cycle_time;     /* 65 */
-    unsigned short  rec_cycle_time;     /* 66 */
-    unsigned short  min_wo_flow;        /* 67 */
-    unsigned short  min_with_flow;      /* 68 */
-    unsigned short  reserved69[2];      /* 69-70 */
-    unsigned short  release_over;       /* 71 */
-    unsigned short  release_service;    /* 72 */
-    unsigned short  major_rev;          /* 73 */
-    unsigned short  minor_rev;          /* 74 */
-    unsigned short  reserved75[53];     /* 75-127 */
-    unsigned short  vendor128[32];      /* 128-159 */
-    unsigned short  reserved160[96];    /* 160-255 */
+    uint16_t  retired47[2];       /* 47-48 */
+    uint16_t  capabilities;       /* 49 */
+    uint16_t  reserved50;         /* 50 */
+    uint16_t  pio_timing;         /* 51 */
+    uint16_t  dma_timing;         /* 52 */
+    uint16_t  current_is_valid;   /* 53 */
+    uint16_t  retired54[8];       /* 54-61 */
+    uint16_t  singleword_dma;     /* 62 */
+    uint16_t  multiword_dma;      /* 63 */
+    uint16_t  pio_transfer;       /* 64 */
+    uint16_t  min_cycle_time;     /* 65 */
+    uint16_t  rec_cycle_time;     /* 66 */
+    uint16_t  min_wo_flow;        /* 67 */
+    uint16_t  min_with_flow;      /* 68 */
+    uint16_t  reserved69[2];      /* 69-70 */
+    uint16_t  release_over;       /* 71 */
+    uint16_t  release_service;    /* 72 */
+    uint16_t  major_rev;          /* 73 */
+    uint16_t  minor_rev;          /* 74 */
+    uint16_t  reserved75[53];     /* 75-127 */
+    uint16_t  vendor128[32];      /* 128-159 */
+    uint16_t  reserved160[96];    /* 160-255 */
 };
 
 /* Identifies the bus protocol type. */
@@ -185,8 +185,8 @@ int ATAHardwarePresent(void);
 pascal SInt16 ataManager(ataPB *pb);
 void ata_init(void);
 ATA_MEDIA new_ata_media(void);
-long read_ata_media(MEDIA m, long long offset, unsigned long count, void *address);
-long write_ata_media(MEDIA m, long long offset, unsigned long count, void *address);
+long read_ata_media(MEDIA m, long long offset, uint32_t count, void *address);
+long write_ata_media(MEDIA m, long long offset, uint32_t count, void *address);
 long close_ata_media(MEDIA m);
 long os_reload_ata_media(MEDIA m);
 long compute_id(long bus, long device);
@@ -196,11 +196,11 @@ int ATA_WriteBlock(UInt32 deviceID, ATA_INFO info, UInt32 block_size, UInt32 blo
 long get_info(long id, struct ATA_identify_drive_info *ip);
 long get_pi_info(long id, struct ATAPI_identify_drive_info *ip);
 long is_atapi(long id);
-long read_atapi_media(MEDIA m, long long offset, unsigned long count, void *address);
-long write_atapi_media(MEDIA m, long long offset, unsigned long count, void *address);
+long read_atapi_media(MEDIA m, long long offset, uint32_t count, void *address);
+long write_atapi_media(MEDIA m, long long offset, uint32_t count, void *address);
 int ATAPI_ReadBlock(UInt32 deviceID, UInt32 block_size, UInt32 block, UInt8 *address);
 int ATAPI_TestUnitReady(UInt32 deviceID);
-int ATAPI_ReadCapacity(UInt32 deviceID, unsigned long *block_size, unsigned long *blocks);
+int ATAPI_ReadCapacity(UInt32 deviceID, uint32_t *block_size, uint32_t *blocks);
 ATA_MEDIA_ITERATOR new_ata_iterator(void);
 void reset_ata_iterator(MEDIA_ITERATOR m);
 char *step_ata_iterator(MEDIA_ITERATOR m);
@@ -439,8 +439,8 @@ open_ata_as_media(long bus, long device)
     ATA_MEDIA   a;
     long        id;
     struct ATA_identify_drive_info  info;
-    unsigned char *buf;
-    unsigned long total;
+    uint8_t *buf;
+    uint32_t total;
     
     if (ata_inited == 0) {
 	ata_init();
@@ -510,7 +510,7 @@ open_ata_as_media(long bus, long device)
 
 
 long
-read_ata_media(MEDIA m, long long offset, unsigned long count, void *address)
+read_ata_media(MEDIA m, long long offset, uint32_t count, void *address)
 {
     ATA_MEDIA a;
     ataIOPB pb;
@@ -519,7 +519,7 @@ read_ata_media(MEDIA m, long long offset, unsigned long count, void *address)
     long block;
     long block_count;
     long block_size;
-    unsigned char *buffer;
+    uint8_t *buffer;
     int i;
     
     a = (ATA_MEDIA) m;
@@ -555,14 +555,14 @@ read_ata_media(MEDIA m, long long offset, unsigned long count, void *address)
 
 
 long
-write_ata_media(MEDIA m, long long offset, unsigned long count, void *address)
+write_ata_media(MEDIA m, long long offset, uint32_t count, void *address)
 {
     ATA_MEDIA a;
     long rtn_value;
     long block;
     long block_count;
     long block_size;
-    unsigned char *buffer;
+    uint8_t *buffer;
     int i;
     
     a = (ATA_MEDIA) m;
@@ -772,9 +772,9 @@ open_atapi_as_media(long bus, long device)
     ATA_MEDIA   a;
     long        id;
     struct ATAPI_identify_drive_info    info;
-    unsigned char *buf;
-    unsigned long block_size;
-    unsigned long blocks;   
+    uint8_t *buf;
+    uint32_t block_size;
+    uint32_t blocks;   
     
     if (ata_inited == 0) {
 	ata_init();
@@ -821,7 +821,7 @@ open_atapi_as_media(long bus, long device)
 
 
 long
-read_atapi_media(MEDIA m, long long offset, unsigned long count, void *address)
+read_atapi_media(MEDIA m, long long offset, uint32_t count, void *address)
 {
     ATA_MEDIA a;
     ataIOPB pb;
@@ -830,7 +830,7 @@ read_atapi_media(MEDIA m, long long offset, unsigned long count, void *address)
     long block;
     long block_count;
     long block_size;
-    unsigned char *buffer;
+    uint8_t *buffer;
     int i;
     
     a = (ATA_MEDIA) m;
@@ -866,7 +866,7 @@ read_atapi_media(MEDIA m, long long offset, unsigned long count, void *address)
 
 
 long
-write_atapi_media(MEDIA m, long long offset, unsigned long count, void *address)
+write_atapi_media(MEDIA m, long long offset, uint32_t count, void *address)
 {   
     return 0;
 }
@@ -974,7 +974,7 @@ ATAPI_TestUnitReady(UInt32 deviceID)
 
 
 int
-ATAPI_ReadCapacity(UInt32 deviceID, unsigned long *block_size, unsigned long *blocks)
+ATAPI_ReadCapacity(UInt32 deviceID, uint32_t *block_size, uint32_t *blocks)
 {
     ataIOPB         pb;
     OSErr           status;
@@ -993,7 +993,7 @@ ATAPI_ReadCapacity(UInt32 deviceID, unsigned long *block_size, unsigned long *bl
     pb.ataPBFlags           =   mATAFlagTFRead | mATAFlagIORead | mATAFlagProtocol1;
     pb.ataPBTimeOut         =   kATAtimeout;
     
-    pb.ataPBBuffer          =   (unsigned char *)&rcd;
+    pb.ataPBBuffer          =   (uint8_t *)&rcd;
     pb.ataPBByteCount = 8;
     pb.ataPBTaskFile.ataTFCylinder = 8;
     if (deviceID & 0x0FF00) {
@@ -1155,7 +1155,8 @@ step_ata_iterator(MEDIA_ITERATOR m)
 		/* generate result */
 		result = (char *) malloc(20);
 		if (result != NULL) {
-		    sprintf(result, "/dev/ata%c.%c", '0'+a->bus, '0'+a->id);
+		    snprintf(result, 20, "/dev/ata%c.%c",
+		        '0'+a->bus, '0'+a->id);
 		}
 
 		a->id += 1; /* next id */
@@ -1233,7 +1234,7 @@ linux_ata_name(long bus, long id)
     	/* name is hda, hdb, hdc, hdd, ...
     	 * in order (0,0)  (0,1)  (1,0)  (1,1) ...
     	 */
-	sprintf(result, "/dev/hd%c", 'a' + (bus*2 + id));
+	snprintf(result, 20, "/dev/hd%c", 'a' + (bus*2 + id));
     }
     return result;
 }
