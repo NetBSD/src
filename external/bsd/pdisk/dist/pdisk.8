@@ -1,222 +1,240 @@
-.TH PDISK 8 "16 May 2000" "LinuxPPC" "Linux Programmer's Manual"
-.SH NAME
-pdisk \- Apple partition table editor for Linux
-.SH SYNOPSIS
-.B pdisk
-.B "[\-h|\--help]"
-.br
-.B pdisk
-.B "[\-i|\--interactive]"
-.br
-.B pdisk
-.B "[\-l|\--list [name ...]]"
-.br
-.B pdisk
-device ...
-.br
-.B pdisk
-.B "[\-v|\--version] [\-r|\--readonly] [\-abbr] [\--logical] [\-c|\--compute_size] [\-p|\--pname] [\-d|\--debug]"
-.SH DESCRIPTION
-.B pdisk
+.\"	$NetBSD: pdisk.8,v 1.2 2013/03/23 15:39:43 christos Exp $
+.Dd April 24, 2003
+.Dt PDISK 8
+.Os
+.Sh NAME
+.Nm pdisk
+.Nd Apple partition table editor
+.Sh SYNOPSIS
+.Nm
+.Op Fl acdfhilLrv
+.Op Fl -abbr
+.Op Fl -compute_size
+.Op Fl -debug
+.Op Fl -fname
+.Op Fl -help
+.Op Fl -interactive
+.Op Fl -list Ar device
+.Op Fl -logical
+.Op Fl -readonly
+.Op Fl -version
+.Op Ar device ...
+.Sh DESCRIPTION
+.Nm
 is a menu driven program which partitions disks using the standard Apple
 disk partitioning scheme described in "Inside Macintosh: Devices".
-It does not support the intel/dos partitioning scheme supported by 
-.BR fdisk .
-The
-.I device
-is usually one of the following:
-
-.nf
-.RS
-/dev/sda
-/dev/sdb
-/dev/sdc
-/dev/sdd
-/dev/sde
-/dev/sdf
-/dev/sdg
-/dev/hda
-/dev/hdb
-/dev/hdc
-/dev/hdd
-
-.RE
-.fi
-In standard Linux /dev/sda is the first hard disk on the SCSI bus (i.e. the
-one with the lowest id), /dev/sdb is the second hard disk, and so on.
-The
-.I partition
-is a
-.I device
-name followed by a partition number.
-The partition number is the index (starting from one) of the partition
-map entry in the partition map.
-For example,
-.B /dev/sda2
-is the partition described by the second entry in the partiton map on /dev/sda.
-
-.SH OPTIONS
-.TP
-.B \-v | \--version
-Prints version number of the
-.B pdisk
-program.
-.TP
-.B \-h | \--help
-Prints a rather lame set of help messages for the
-.B pdisk
-program.
-.TP
-.B \-i | \--interactive
+It does not support the Intel/DOS partitioning scheme supported by
+.Xr fdisk 8 .
+.Pp
+Supported options are:
+.Bl -tag -width "--compute_sizeXX" -compact
+.It Fl a
+.It Fl -abbr
+Abbreviate the partition types shown in the partition list.
+.It Fl c
+.It Fl -compute_size
 Causes
-.B pdisk
-to go into an interactive mode similar to the MacOS version of the program.
-.TP
-.B \-l | \--list
-If no
-.IR name s
-are present then lists the partition tables for
-.BR /dev/sda ,
-.BR /dev/sdb ,
-etc. ,
-.BR /dev/hda ,
-.BR /dev/hdb ,
-etc. , and
-.BR /dev/scd0 ,
-.BR /dev/scd1 ,
-etc..
-Otherwise, lists the partition tables for the specified
-.IR name s.
-.TP
-.B \-r | \--readonly
-Prevents
-.B pdisk
-from writing to the device.
-.TP
-.B \-c | \--compute_size
-Causes
-.B pdisk
+.Nm
 to always ignore the device size listed in the partition table
 and compute the device size by other means.
-.TP
-.B \-p | \--pname
-Since the default behaviour of
-.B pdisk
-is to show the Mac volume name, this flag forces
-.B pdisk
-to show the partition name instead.
-.TP
-.B \-d | \--debug
-Turns on debugging.  Doesn't add that much output, but does add
-a new command 'x' to the editing commands that accesses an
-eclectic bunch of undocumented functionality.
-.SH "Editing Partition Tables"
+.It Fl d
+.It Fl -debug
+Turns on debugging.
+Doesn't add that much output, but does add a new command
+.Sq x
+to the editing commands that accesses an eclectic bunch of
+undocumented functionality.
+.It Fl f
+.It Fl -fname
+Show HFS volume names instead of partition name when available.
+.It Fl h
+.It Fl -help
+Prints a short help message.
+.It Fl i
+.It Fl -interactive
+Causes
+.Nm
+to go into an interactive mode similar to the MacOS version of the program.
+.It Fl l
+.It Fl -list Ar device
+.\"If no
+.\".Ar device
+.\"argument is given,
+.\".Nm
+.\"tries to list partition tables for all available hard drives.
+.\"Otherwise,
+.\".Nm
+.\"lists
+List
+the partition tables for the specified
+.Ar devices .
+.It Fl L
+.It Fl -logical
+Show partition limits in logical blocks.
+Default is physical blocks.
+.It Fl r
+.It Fl -readonly
+Prevents
+.Nm
+from writing to the device.
+.It Fl v
+.It Fl -version
+Prints the version number of
+.Nm .
+.El
+.Ss Editing Partition Tables
 An argument which is simply the name of a
-.I device
+.Ar device
 indicates that
-.B pdisk
+.Nm
 should edit the partition table of that device.
-
+.Pp
 The current top level editing commands are:
-
-.nf
-.RS
-h    command help
-p    print the partition table
-P    (print ordered by base address)
-i    initialize partition map
-s    change size of partition map
-c    create new partition (standard MkLinux type)
+.Bd -unfilled -offset indent
 C    (create with type also specified)
-n    (re)name a partition
+c    create new partition
 d    delete a partition
-r    reorder partition entry in map
-w    write the partition table
+h    command help
+i    initialize partition map
+n    (re)name a partition
+P    (print ordered by base address)
+p    print the partition table
 q    quit editing (don't save changes)
-
-.RE
-.fi
+r    reorder partition entry in map
+s    change size of partition map
+t    change the type of an existing partition
+w    write the partition table
+.Ed
+.Pp
 Commands which take arguments prompt for each argument in turn.
 You can also type any number of the arguments separated by spaces
 and those prompts will be skipped.
 The only exception to typeahead are the confirmation prompts on the
-.B i
+.Ic i
 and
-.B w
-commands.
-The idea being that if we expect you to confirm the decision we
-shouldn't undermine that by allowing you to be precipitate about it.
-
+.Ic w
+commands,
+since if we expect you to confirm the decision, we shouldn't undermine
+that by allowing you to be precipitate about it.
+.Pp
 Partitions are always specified by their number,
-which the index of the partition entry in the partition map.
+which is the index of the partition entry in the partition map.
 Most of the commands will change the index numbers of all partitions
 after the affected partition.
 You are advised to print the table as frequently as necessary.
-
-Creating more than fifteen partitions is not advised.
-There is currently a bug in the some (all?) of the kernels which causes
-access to the whole disk fail if more than fifteen partitions are in the map.
-
+.Pp
+.\"Creating more than fifteen partitions is not advised.
+.\"There may be a bug in old linux kernels which causes
+.\"access to the whole disk fail if more than fifteen partitions are in the map.
+.\".Pp
 The
-.B c
+.Ic c
 (create new partition) command is the only one with complicated arguments.
 The first argument is the base address (in blocks) of the partition.
 Besides a raw number, you can also specify a partition number followed
-by the letter 'p' to indicate that the first block of the new partition should
-be the same as the first block of that existing free  space partition.
+by the letter
+.Sq p
+to indicate that the first block of the new partition should be the same
+as the first block of that existing free space partition.
 The second argument is the length of the partition in blocks.
 This can be a raw number or can be a partition number followed by the
-letter 'p' to use the size of that partition or can be a number followed
-by 'k', 'm', or 'g' to indicate the size in kilobytes, megabytes, or gigabytes
-respectively.
+letter
+.Sq p
+to use the size of that partition or can be a number followed
+by
+.Sq k ,
+.Sq m ,
+or
+.Sq g
+to indicate the size in kilobytes, megabytes, or gigabytes respectively.
 (These are powers of 1024, of course, not powers of 1000.)
-The last argument is the name of the partition.
+The third argument is the name of the partition.
 This can be a single word without quotes, or a string surrounded by
 single or double quotes.
-The type of the created partition is the correct type for MkLinux.
-
+The type of the created partition will be Apple_UNIX_SVR2, which is
+the correct type for use with
+.Nx .
+This command will prompt for the unix filesystem slice to set
+in the Block Zero Block bits.
+.Pp
 The
-.B C
-command is identical to the
-.B c
+.Ic C
+command is similar to the
+.Ic c
 command, with the addition of a partition type argument after the
 other arguments.
-
+Choosing a type of Apple_UNIX_SVR2 will prompt for
+the unix filesystem slice to set in the Block Zero Block bits.
+.Pp
 The
-.B n
+.Ic i
+(initalize) command prompts for the size of the device.
+.\"This was done to get around a bug in the kernel where it reports the wrong
+.\"size for the device.
+.Pp
+The
+.Ic n
 (name) command allows the name of a partition to be changed.
 Note that the various "Apple_Driver" partitions depend
 on the name field for proper functioning.
-I am not aware of any other partition types with this limitation.
-
+We are not aware of any other partition types with this limitation.
+.Pp
 The
-.B r
+.Ic r
 (reorder) command allows the index number of partitions to be changed.
 The index numbers are constrained to be a contiguous sequence.
-
+.Pp
 The
-.B i
-(initalize) command prompts for the size of the device.
-This was done to get around a bug in the kernel where it reports the wrong
-size for the device.
-
+.Ic t
+(change partition type) command allows the type of a partition to be
+changed.
+Changing the type to Apple_UNIX_SVR2 will prompt for the
+unix filesystem slice to set in the Block Zero Block bits.
+.Pp
 The
-.B w
-(write) command does write the partition map out,
-but there is currently a bug in the interaction between MkLinux and Mach
-which causes the partition map not to be reinterpreted.
+.Ic w
+(write) command writes the partition map out.
+.\"but there is currently a bug in the interaction between MkLinux and Mach
+.\"which causes the partition map not to be reinterpreted.
 In order to use the new partition map you must reboot.
-
-.SH BUGS
+.Sh SEE ALSO
+.Xr fdisk 8 ,
+.Xr newfs 8
+.Sh HISTORY
+The
+.Nm
+utility was originally developed for MkLinux.
+.Sh AUTHORS
+.An Eryk Vershen
+.Sh BUGS
 Some people believe there should really be just one disk partitioning utility.
-.br
-.B pdisk
-should be able to create HFS partitions that work.
-.br
-Even more help should be available during user input.
-.SH "SEE ALSO"
-.BR fdisk (8), 
-.BR mkswap (8),
-.BR mkfs (8)
-.SH AUTHOR
-Eryk Vershen
+.Pp
+.\".Nm
+.\"should be able to create HFS partitions that work.
+.\".Pp
+Filesystem volume names are out of place in a partition utility.
+This utility supports HFS volume names, but not volume names
+of any other filesystem types.
+.Pp
+The
+.Fl -logical
+option has not been heavily tested.
+.Pp
+.Nm
+will first try to use
+.Xr lseek 2
+with
+.Dv SEEK_END
+to compute the size of the device.
+If this fails, it will try a binary search using
+.Xr lseek 2
+and
+.Xr read 2
+to find the end of the device.
+This has been observed to fail on some raw disk devices.
+As a workaround, try using the block device instead.
+.Nm
+should probably read the disklabel using the
+.Dv DIOCGDINFO
+.Xr ioctl 2
+to get the device size instead.
