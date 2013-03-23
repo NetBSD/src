@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1014 2013/03/23 15:45:27 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1015 2013/03/23 16:11:05 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -989,7 +989,7 @@ License:	BSD-like
 Location:	dist/pdisk
 Notes:
 This is the disk partition utility used by Apple's mkLinux and OS X
-It is imported into external/bsd//pdisk.
+It is imported into external/bsd/pdisk.
 
 Package:	pdksh
 Version:	5.2.14p2
