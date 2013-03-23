@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.182 2013/03/16 22:16:02 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.183 2013/03/23 11:50:02 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,6 +117,9 @@ distinfo dist_list[] = {
 #endif
 #ifdef SET_KERNEL_8_NAME
 	{SET_KERNEL_8_NAME,	SET_KERNEL_8,		MSG_set_kernel_8, NULL},
+#endif
+#ifdef SET_KERNEL_9_NAME
+	{SET_KERNEL_9_NAME,	SET_KERNEL_9,		MSG_set_kernel_9, NULL},
 #endif
 
 	{"modules",		SET_MODULES,		MSG_set_modules, NULL},
