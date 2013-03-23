@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2011/03/13 12:58:02 he Exp $
+#	$NetBSD: Makefile,v 1.35 2013/03/23 17:29:38 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -11,7 +11,7 @@ WARNS=		1
 DBG=		-Os
 
 CRUNCHBIN=	ramdiskbin
-LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst.en
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	floppy
