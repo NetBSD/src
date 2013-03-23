@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_hyperb.c,v 1.6 2011/10/15 15:14:30 tsutsui Exp $	*/
+/*	$NetBSD: fpu_hyperb.c,v 1.7 2013/03/23 12:06:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.6 2011/10/15 15:14:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.7 2013/03/23 12:06:24 isaki Exp $");
 
 #include "fpu_emulate.h"
 
@@ -81,8 +81,6 @@ fpu_cosh(struct fpemu *fe)
 	struct fpn *r;
 	int hyperb = 1;
 
-	fe->fe_fpsr &= ~FPSR_EXCP; /* clear all exceptions */
-
 	if (ISNAN(&fe->fe_f2))
 		return &fe->fe_f2;
 
@@ -95,7 +93,6 @@ fpu_cosh(struct fpemu *fe)
 	r = fpu_sincos_taylor(fe, &s0, 1, hyperb);
 	CPYFPN(&fe->fe_f2, r);
 
-	fpu_upd_fpsr(fe, &fe->fe_f2);
 	return &fe->fe_f2;
 }
 
@@ -106,8 +103,6 @@ fpu_sinh(struct fpemu *fe)
 	struct fpn *r;
 	int hyperb = 1;
 
-	fe->fe_fpsr &= ~FPSR_EXCP; /* clear all exceptions */
-
 	if (ISNAN(&fe->fe_f2))
 		return &fe->fe_f2;
 	if (ISINF(&fe->fe_f2))
@@ -117,7 +112,6 @@ fpu_sinh(struct fpemu *fe)
 	r = fpu_sincos_taylor(fe, &s0, 2, hyperb);
 	CPYFPN(&fe->fe_f2, r);
 
-	fpu_upd_fpsr(fe, &fe->fe_f2);
 	return &fe->fe_f2;
 }
 
@@ -128,8 +122,6 @@ fpu_tanh(struct fpemu *fe)
 	struct fpn s;
 	struct fpn *r;
 	int sign;
-
-	fe->fe_fpsr &= ~FPSR_EXCP; /* clear all exceptions */
 
 	if (ISNAN(&fe->fe_f2))
 		return &fe->fe_f2;
@@ -158,6 +150,5 @@ fpu_tanh(struct fpemu *fe)
 
 	CPYFPN(&fe->fe_f2, r);
 
-	fpu_upd_fpsr(fe, &fe->fe_f2);
 	return &fe->fe_f2;
 }
