@@ -39,42 +39,42 @@
  * I/O requests.
  */
 struct SCSI_6_Byte_Command {                /* Six-byte command         */
-    unsigned char       opcode;             /*  0                       */
-    unsigned char       lbn3;               /*  1 lbn in low 5          */
-    unsigned char       lbn2;               /*  2                       */
-    unsigned char       lbn1;               /*  3                       */
-    unsigned char       len;                /*  4                       */
-    unsigned char       ctrl;               /*  5                       */
+    uint8_t       opcode;             /*  0                       */
+    uint8_t       lbn3;               /*  1 lbn in low 5          */
+    uint8_t       lbn2;               /*  2                       */
+    uint8_t       lbn1;               /*  3                       */
+    uint8_t       len;                /*  4                       */
+    uint8_t       ctrl;               /*  5                       */
 };
 typedef struct SCSI_6_Byte_Command SCSI_6_Byte_Command;
 
 struct SCSI_10_Byte_Command {               /* Ten-byte command         */
-    unsigned char       opcode;             /*  0                       */
-    unsigned char       lun;                /*  1                       */
-    unsigned char       lbn4;               /*  2                       */
-    unsigned char       lbn3;               /*  3                       */
-    unsigned char       lbn2;               /*  4                       */
-    unsigned char       lbn1;               /*  5                       */
-    unsigned char       pad;                /*  6                       */
-    unsigned char       len2;               /*  7                       */
-    unsigned char       len1;               /*  8                       */
-    unsigned char       ctrl;               /*  9                       */
+    uint8_t       opcode;             /*  0                       */
+    uint8_t       lun;                /*  1                       */
+    uint8_t       lbn4;               /*  2                       */
+    uint8_t       lbn3;               /*  3                       */
+    uint8_t       lbn2;               /*  4                       */
+    uint8_t       lbn1;               /*  5                       */
+    uint8_t       pad;                /*  6                       */
+    uint8_t       len2;               /*  7                       */
+    uint8_t       len1;               /*  8                       */
+    uint8_t       ctrl;               /*  9                       */
 };
 typedef struct SCSI_10_Byte_Command SCSI_10_Byte_Command;
 
 struct SCSI_12_Byte_Command {               /* Twelve-byte command      */
-    unsigned char       opcode;             /*  0                       */
-    unsigned char       lun;                /*  1                       */
-    unsigned char       lbn4;               /*  2                       */
-    unsigned char       lbn3;               /*  3                       */
-    unsigned char       lbn2;               /*  4                       */
-    unsigned char       lbn1;               /*  5                       */
-    unsigned char       len4;               /*  6                       */
-    unsigned char       len3;               /*  7                       */
-    unsigned char       len2;               /*  8                       */
-    unsigned char       len1;               /*  9                       */
-    unsigned char       pad;                /* 10                       */
-    unsigned char       ctrl;               /* 11                       */
+    uint8_t       opcode;             /*  0                       */
+    uint8_t       lun;                /*  1                       */
+    uint8_t       lbn4;               /*  2                       */
+    uint8_t       lbn3;               /*  3                       */
+    uint8_t       lbn2;               /*  4                       */
+    uint8_t       lbn1;               /*  5                       */
+    uint8_t       len4;               /*  6                       */
+    uint8_t       len3;               /*  7                       */
+    uint8_t       len2;               /*  8                       */
+    uint8_t       len1;               /*  9                       */
+    uint8_t       pad;                /* 10                       */
+    uint8_t       ctrl;               /* 11                       */
 };
 typedef struct SCSI_12_Byte_Command SCSI_12_Byte_Command;
 
@@ -85,7 +85,7 @@ union SCSI_Command {
     SCSI_6_Byte_Command     scsi6;
     SCSI_10_Byte_Command    scsi10;
     SCSI_12_Byte_Command    scsi12;
-    unsigned char           scsi[12];
+    uint8_t           scsi[12];
 };
 typedef union SCSI_Command SCSI_Command, *SCSI_CommandPtr;
 
@@ -93,31 +93,31 @@ typedef union SCSI_Command SCSI_Command, *SCSI_CommandPtr;
  * Returned by a read-capacity command.
  */
 struct SCSI_Capacity_Data {
-    unsigned char       lbn4;               /* Number                   */
-    unsigned char       lbn3;               /*  of                      */
-    unsigned char       lbn2;               /*   logical                */
-    unsigned char       lbn1;               /*    blocks                */
-    unsigned char       len4;               /* Length                   */
-    unsigned char       len3;               /*  of each                 */
-    unsigned char       len2;               /*   logical block          */
-    unsigned char       len1;               /*    in bytes              */
+    uint8_t       lbn4;               /* Number                   */
+    uint8_t       lbn3;               /*  of                      */
+    uint8_t       lbn2;               /*   logical                */
+    uint8_t       lbn1;               /*    blocks                */
+    uint8_t       len4;               /* Length                   */
+    uint8_t       len3;               /*  of each                 */
+    uint8_t       len2;               /*   logical block          */
+    uint8_t       len1;               /*    in bytes              */
 };
 typedef struct SCSI_Capacity_Data SCSI_Capacity_Data;
 
 struct SCSI_Inquiry_Data {                  /* Inquiry returns this     */
-    unsigned char       devType;            /*  0 Device type,          */
-    unsigned char       devTypeMod;         /*  1 Device type modifier  */
-    unsigned char       version;            /*  2 ISO/ECMA/ANSI version */
-    unsigned char       format;             /*  3 Response data format  */
-    unsigned char       length;             /*  4 Additional Length     */
-    unsigned char       reserved5;          /*  5 Reserved              */
-    unsigned char       reserved6;          /*  6 Reserved              */
-    unsigned char       flags;              /*  7 Capability flags      */
-    unsigned char       vendor[8];          /*  8-15 Vendor-specific    */
-    unsigned char       product[16];        /* 16-31 Product id         */
-    unsigned char       revision[4];        /* 32-35 Product revision   */
-    unsigned char       vendorSpecific[20]; /* 36-55 Vendor stuff       */
-    unsigned char       moreReserved[40];   /* 56-95 Reserved           */
+    uint8_t       devType;            /*  0 Device type,          */
+    uint8_t       devTypeMod;         /*  1 Device type modifier  */
+    uint8_t       version;            /*  2 ISO/ECMA/ANSI version */
+    uint8_t       format;             /*  3 Response data format  */
+    uint8_t       length;             /*  4 Additional Length     */
+    uint8_t       reserved5;          /*  5 Reserved              */
+    uint8_t       reserved6;          /*  6 Reserved              */
+    uint8_t       flags;              /*  7 Capability flags      */
+    uint8_t       vendor[8];          /*  8-15 Vendor-specific    */
+    uint8_t       product[16];        /* 16-31 Product id         */
+    uint8_t       revision[4];        /* 32-35 Product revision   */
+    uint8_t       vendorSpecific[20]; /* 36-55 Vendor stuff       */
+    uint8_t       moreReserved[40];   /* 56-95 Reserved           */
 };
 typedef struct SCSI_Inquiry_Data SCSI_Inquiry_Data;
 
@@ -186,17 +186,17 @@ enum {
  * logical block number (most-significant byte first).
  */
 struct SCSI_Sense_Data {                /* Request Sense result         */
-    unsigned char       errorCode;      /*  0   Class code, valid lbn   */
-    unsigned char       segmentNumber;  /*  1   Segment number          */
-    unsigned char       senseKey;       /*  2   Sense key and flags     */
-    unsigned char       info[4];
-    unsigned char       additionalSenseLength;
-    unsigned char       reservedForCopy[4];
-    unsigned char       additionalSenseCode;
-    unsigned char       additionalSenseQualifier;   
-    unsigned char       fruCode;        /* Field replacable unit code   */
-    unsigned char       senseKeySpecific[2];
-    unsigned char       additional[101];
+    uint8_t       errorCode;      /*  0   Class code, valid lbn   */
+    uint8_t       segmentNumber;  /*  1   Segment number          */
+    uint8_t       senseKey;       /*  2   Sense key and flags     */
+    uint8_t       info[4];
+    uint8_t       additionalSenseLength;
+    uint8_t       reservedForCopy[4];
+    uint8_t       additionalSenseCode;
+    uint8_t       additionalSenseQualifier;   
+    uint8_t       fruCode;        /* Field replacable unit code   */
+    uint8_t       senseKeySpecific[2];
+    uint8_t       additional[101];
 };
 typedef struct SCSI_Sense_Data SCSI_Sense_Data;
 /*
@@ -239,26 +239,26 @@ typedef struct SCSI_Sense_Data SCSI_Sense_Data;
  * Mode sense parameter header
  */
 struct SCSI_ModeParamHeader {
-    unsigned char       modeDataLength;
-    unsigned char       mediumType;
-    unsigned char       deviceSpecific;
-    unsigned char       blockDescriptorLength;
+    uint8_t       modeDataLength;
+    uint8_t       mediumType;
+    uint8_t       deviceSpecific;
+    uint8_t       blockDescriptorLength;
 };
 typedef struct SCSI_ModeParamHeader SCSI_ModeParamHeader;
 
 struct SCSI_ModeParamBlockDescriptor {
-    unsigned char       densityCode;
-    unsigned char       numberOfBlocks[3];
-    unsigned char       reserved;
-    unsigned char       blockLength[3];
+    uint8_t       densityCode;
+    uint8_t       numberOfBlocks[3];
+    uint8_t       reserved;
+    uint8_t       blockLength[3];
 };
 typedef struct SCSI_ModeParamBlockDescriptor SCSI_ModeParamBlockDescriptor;
 
 union SCSI_ModeParamPage {
-    unsigned char       data[1];
+    uint8_t       data[1];
     struct {
-	unsigned char   code;
-	unsigned char   length;
+	uint8_t   code;
+	uint8_t   length;
     } page;
 };
 typedef union SCSI_ModeParamPage SCSI_ModeParamPage;
@@ -267,9 +267,9 @@ typedef union SCSI_ModeParamPage SCSI_ModeParamPage;
  * LogSense parameter header
  */
 struct SCSI_LogSenseParamHeader {
-    unsigned char       pageCode;
-    unsigned char       reserved;
-    unsigned char       pageLength[2];
+    uint8_t       pageCode;
+    uint8_t       reserved;
+    uint8_t       pageLength[2];
 };
 typedef struct SCSI_LogSenseParamHeader SCSI_LogSenseParamHeader;
 
@@ -277,11 +277,11 @@ typedef struct SCSI_LogSenseParamHeader SCSI_LogSenseParamHeader;
  * Log parameter pages are variable-length with a fixed length header.
  */
 union SCSI_LogSenseParamPage {
-    unsigned char       data[1];
+    uint8_t       data[1];
     struct {
-	unsigned char   parameterCode[2];
-	unsigned char   flags;
-	unsigned char   parameterLength;
+	uint8_t   parameterCode[2];
+	uint8_t   flags;
+	uint8_t   parameterLength;
     } page;
 };
 typedef union SCSI_LogSenseParamPage SCSI_LogSenseParamPage;
