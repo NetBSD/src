@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.10 2013/03/10 21:48:18 christos Exp $
+# $NetBSD: shl.mi,v 1.11 2013/03/23 16:17:21 christos Exp $
 ./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
@@ -91,7 +91,7 @@
 ./usr/libdata/debug/usr/lib/liblzf.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblzma.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libm.so.0.10.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libmagic.so.4.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libmagic.so.5.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmenu.so.6.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmj.so.1.0.debug		comp-crypto-debug	debug
 ./usr/libdata/debug/usr/lib/libmpc.so.2.0.debug		comp-c-shlib	obsolete
