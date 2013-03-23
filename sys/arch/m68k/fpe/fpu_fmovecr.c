@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fmovecr.c,v 1.14 2011/07/18 14:11:27 isaki Exp $	*/
+/*	$NetBSD: fpu_fmovecr.c,v 1.15 2013/03/23 12:08:47 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fmovecr.c,v 1.14 2011/07/18 14:11:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fmovecr.c,v 1.15 2013/03/23 12:08:47 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_fmovecr.c,v 1.14 2011/07/18 14:11:27 isaki Exp $
 
 /* XXX: quick consistency check */
 #if (FP_1 != 0x40000)
-Error you have to change this table when changing the mantissa size
+#error you have to change this table when changing the mantissa size
 #endif
 
 static struct fpn constrom[] = {
