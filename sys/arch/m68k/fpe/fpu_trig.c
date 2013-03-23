@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.6 2011/10/15 15:14:30 tsutsui Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.7 2013/03/23 12:06:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.6 2011/10/15 15:14:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.7 2013/03/23 12:06:24 isaki Exp $");
 
 #include "fpu_emulate.h"
 
@@ -239,8 +239,6 @@ fpu_cos(struct fpemu *fe)
 	struct fpn *r;
 	int sign;
 
-	fe->fe_fpsr &= ~FPSR_EXCP; /* clear all exceptions */
-
 	if (ISNAN(&fe->fe_f2))
 		return &fe->fe_f2;
 	if (ISINF(&fe->fe_f2))
@@ -319,7 +317,6 @@ fpu_cos(struct fpemu *fe)
 	CPYFPN(&fe->fe_f2, r);
 	fe->fe_f2.fp_sign = sign;
 
-	fpu_upd_fpsr(fe, &fe->fe_f2);
 	return &fe->fe_f2;
 }
 
@@ -353,8 +350,6 @@ fpu_sin(struct fpemu *fe)
 	struct fpn p;
 	struct fpn *r;
 	int sign;
-
-	fe->fe_fpsr &= ~FPSR_EXCP; /* clear all exceptions */
 
 	if (ISNAN(&fe->fe_f2))
 		return &fe->fe_f2;
@@ -433,7 +428,6 @@ fpu_sin(struct fpemu *fe)
 	CPYFPN(&fe->fe_f2, r);
 	fe->fe_f2.fp_sign = sign;
 
-	fpu_upd_fpsr(fe, &fe->fe_f2);
 	return &fe->fe_f2;
 }
 
@@ -446,8 +440,6 @@ fpu_tan(struct fpemu *fe)
 	struct fpn x;
 	struct fpn s;
 	struct fpn *r;
-
-	fe->fe_fpsr &= ~FPSR_EXCP; /* clear all exceptions */
 
 	if (ISNAN(&fe->fe_f2))
 		return &fe->fe_f2;
@@ -471,7 +463,6 @@ fpu_tan(struct fpemu *fe)
 
 	CPYFPN(&fe->fe_f2, r);
 
-	fpu_upd_fpsr(fe, &fe->fe_f2);
 	return &fe->fe_f2;
 }
 
@@ -490,6 +481,5 @@ fpu_sincos(struct fpemu *fe, int regc)
 	/* sin(x) */
 	CPYFPN(&fe->fe_f2, &x);
 	r = fpu_sin(fe);
-	fpu_upd_fpsr(fe, r);
 	return r;
 }
