@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.223 2013/03/21 12:56:03 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.224 2013/03/23 19:40:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.223 2013/03/21 12:56:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.224 2013/03/23 19:40:43 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -2932,6 +2932,10 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Set misc. local control, enable interrupts on attentions */
 	CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_INTR_ONATTN);
+	if (BGE_IS_5717_PLUS(sc)) {
+		CSR_READ_4(sc, BGE_MISC_LOCAL_CTL); /* Flush */
+		DELAY(100);
+	}
 
 	/* Turn on DMA completion state machine */
 	if (!(BGE_IS_5705_PLUS(sc)))
