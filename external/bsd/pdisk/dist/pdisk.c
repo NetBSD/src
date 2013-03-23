@@ -30,8 +30,10 @@
 // for printf()
 #include <stdio.h>
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__NetBSD__)
 #include <getopt.h>
+#endif
+#ifdef __linux__
 #include <malloc.h>
 #else
 // for malloc() & free()
@@ -40,6 +42,10 @@
 // for SIOUXsettings
 #include <SIOUX.h>
 #endif
+#endif
+
+#ifdef __unix__
+#include <unistd.h>
 #endif
 
 // for strncpy() & strlen()
@@ -55,10 +61,13 @@
 #include <linux/hdreg.h>
 #endif
 
+#include <stdint.h>
+
 #include "pdisk.h"
 #include "io.h"
 #include "partition_map.h"
 #include "pathname.h"
+#include "hfs_misc.h"
 #include "errors.h"
 #include "dump.h"
 #include "validate.h"
@@ -115,6 +124,7 @@ static int first_get = 1;
 // Forward declarations
 //
 void do_change_map_size(partition_map_header *map);
+void do_update_dpme(partition_map *entry);
 void do_create_partition(partition_map_header *map, int get_type);
 void do_delete_partition(partition_map_header *map);
 void do_display_block(partition_map_header *map, char *alt_name);
@@ -122,6 +132,7 @@ void do_display_entry(partition_map_header *map);
 void do_examine_patch_partition(partition_map_header *map);
 int do_expert(partition_map_header *map, char *name);
 void do_rename_partition(partition_map_header *map);
+void do_change_type(partition_map_header *map);
 void do_reorder(partition_map_header *map);
 void do_write_partition_map(partition_map_header *map);
 void edit(char *name, int ask_logical_size);
@@ -129,10 +140,10 @@ int get_base_argument(long *number, partition_map_header *map);
 int get_command_line(int *argc, char ***argv);
 int get_size_argument(long *number, partition_map_header *map);
 int get_options(int argc, char **argv);
-void interact();
-void print_edit_notes();
-void print_expert_notes();
-void print_top_notes();
+void interact(void);
+void print_edit_notes(void);
+void print_expert_notes(void);
+void print_top_notes(void);
 
 
 //
@@ -156,14 +167,12 @@ main(int argc, char **argv)
     init_program_name(argv);
 
     if (sizeof(DPME) != PBLOCK_SIZE) {
-	fatal(-1, "Size of partion map entry (%d) "
-		"is not equal to block size (%d)\n",
-		sizeof(DPME), PBLOCK_SIZE);
+	fatal(-1, "Size of partition map entry (%zu) "
+	    "is not equal to block size (%d)\n", sizeof(DPME), PBLOCK_SIZE);
     }
     if (sizeof(Block0) != PBLOCK_SIZE) {
-	fatal(-1, "Size of block zero structure (%d) "
-		"is not equal to block size (%d)\n",
-		sizeof(Block0), PBLOCK_SIZE);
+	fatal(-1, "Size of block zero structure (%zu) "
+	    "is not equal to block size (%d)\n", sizeof(Block0), PBLOCK_SIZE);
     }
     if (strcmp(VERSION, get_version_string()) != 0) {
 	fatal(-1, "Version string static form (%s) does not match dynamic form (%s)\n",
@@ -188,7 +197,12 @@ main(int argc, char **argv)
 		dump(argv[name_index++]);
 	    }
 	} else {
+#ifdef __linux__
 	    list_all_disks();
+#else
+	    usage("no device argument");
+	    do_help();
+#endif
 	}
     } else if (name_index < argc) {
 	while (name_index < argc) {
@@ -212,7 +226,7 @@ main(int argc, char **argv)
 
 
 void
-print_top_notes()
+print_top_notes(void)
 {
     printf("Notes:\n");
     printf("  Disks have fake names of the form /dev/scsi<bus>.<id>\n");
@@ -225,7 +239,7 @@ print_top_notes()
 
 
 void
-interact()
+interact(void)
 {
     char *name;
     int command;
@@ -245,7 +259,9 @@ interact()
 	    printf("  h    print help\n");
 	    printf("  v    print the version number and release date\n");
 	    printf("  l    list device's map\n");
+#ifdef __linux__
 	    printf("  L    list all devices' maps\n");
+#endif
 	    printf("  e    edit device's map\n");
 	    printf("  E    (edit map with specified block size)\n");
 	    printf("  r    toggle readonly flag\n");
@@ -267,9 +283,11 @@ interact()
 	case 'v':
 	    printf("version " VERSION " (" RELEASE_DATE ")\n");
 	    break;
+#ifdef __linux__
 	case 'L':
 	    list_all_disks();
 	    break;
+#endif
 	case 'l':
 	    if (get_string_argument("Name of device: ", &name, 1) == 0) {
 		bad_input("Bad name");
@@ -376,7 +394,7 @@ int
 get_options(int argc, char **argv)
 {
     int c;
-#ifdef __linux__
+#if defined(__linux__) || defined(__NetBSD__)
     static struct option long_options[] =
     {
 	// name		has_arg			&flag	val
@@ -386,7 +404,7 @@ get_options(int argc, char **argv)
 	{"debug",	no_argument,		0,	'd'},
 	{"readonly",	no_argument,		0,	'r'},
 	{"abbr",	no_argument,		0,	'a'},
-	{"pname",	no_argument,		0,	'p'},
+	{"fname",	no_argument,		0,	'f'},
 	{"logical",	no_argument,		0,	kLogicalOption},
 	{"interactive",	no_argument,		0,	'i'},
 	{"compute_size", no_argument,		0,	'c'},
@@ -414,16 +432,16 @@ get_options(int argc, char **argv)
     cflag = CFLAG_DEFAULT;
     fflag = FFLAG_DEFAULT;
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__NetBSD__)
     optind = 0;	// reset option scanner logic
-    while ((c = getopt_long(argc, argv, "hlvdricp", long_options,
+    while ((c = getopt_long(argc, argv, "hlvdraLicf", long_options,
 	    &option_index)) >= 0)
 #else
     opterr = 0;			/* tell getopt to be quiet */
-    while ((c = getopt(argc, argv, "hlvdraLicp")) != EOF)
+    while ((c = getopt(argc, argv, "hlvdraLicf")) != EOF)
 #endif
 	{
-#ifndef __linux__
+#if !(defined(__linux__) || defined(__NetBSD__))
 	if (c == '?') {
 	    getopt_error = 1;
 	    c = optopt;
@@ -486,7 +504,7 @@ get_options(int argc, char **argv)
 
 
 void
-print_edit_notes()
+print_edit_notes(void)
 {
     printf("Notes:\n");
     printf("  Base and length fields are blocks, which vary in size between media.\n");
@@ -518,9 +536,11 @@ edit(char *name, int ask_logical_size)
 
     printf("Edit %s -\n", name);
     
+#if 0 /* this check is not found in linux fdisk-0.1 */
     if (map != NULL && map->blocks_in_map > MAX_LINUX_MAP) {
 	error(-1, "Map contains more than %d blocks - Linux may have trouble", MAX_LINUX_MAP);
     }
+#endif
 
     while (get_command("Command (? for help): ", first_get, &command)) {
 	first_get = 0;
@@ -534,20 +554,21 @@ edit(char *name, int ask_logical_size)
 	case 'H':
 	case 'h':
 	    printf("Commands are:\n");
-	    printf("  h    help\n");
-	    printf("  p    print the partition table\n");
-	    printf("  P    (print ordered by base address)\n");
-	    printf("  i    initialize partition map\n");
-	    printf("  s    change size of partition map\n");
-	    printf("  c    create new partition (standard linux type)\n");
 	    printf("  C    (create with type also specified)\n");
-	    printf("  n    (re)name a partition\n");
+	    printf("  c    create new partition (standard unix root)\n");
 	    printf("  d    delete a partition\n");
+	    printf("  h    help\n");
+	    printf("  i    initialize partition map\n");
+	    printf("  n    (re)name a partition\n");
+	    printf("  P    (print ordered by base address)\n");
+	    printf("  p    print the partition table\n");
+	    printf("  q    quit editing\n");
 	    printf("  r    reorder partition entry in map\n");
+	    printf("  s    change size of partition map\n");
+	    printf("  t    change a partition's type\n");
 	    if (!rflag) {
 		printf("  w    write the partition table\n");
 	    }
-	    printf("  q    quit editing\n");
 	    if (dflag) {
 		printf("  x    extra extensions for experts\n");
 	    }
@@ -560,7 +581,7 @@ edit(char *name, int ask_logical_size)
 	    break;
 	case 'Q':
 	case 'q':
-	    if (map->changed) {
+	    if (map && map->changed) {
 		if (get_okay("Discard changes? [n/y]: ", 0) != 1) {
 		    break;
 		}
@@ -594,6 +615,10 @@ edit(char *name, int ask_logical_size)
 	case 's':
 	    do_change_map_size(map);
 	    break;
+	case 'T':
+	case 't':
+	    do_change_type(map);
+	    break;
 	case 'X':
 	case 'x':
 	    if (!dflag) {
@@ -622,21 +647,40 @@ finis:
     close_partition_map(map);
 }
 
+void
+do_update_dpme(partition_map *entry)
+{
+    int slice = 0;
+    if (!entry) return;
+    dpme_init_flags(entry->data);
+    entry->HFS_name = get_HFS_name(entry, &entry->HFS_kind);
+    if (istrncmp(entry->data->dpme_type, kUnixType, DPISTRLEN) == 0) {
+	printf("Available partition slices for %s:\n",entry->data->dpme_type);
+	printf("  a   root partition\n");
+	printf("  b   swap partition\n");
+	printf("  c   do not set any bzb bits\n");
+	printf("  g   user partition\n");
+	printf("Other lettered values will create user partitions\n");
+	get_command("Select a slice for default bzb values: ",0,&slice);
+    }
+    bzb_init_slice((BZB *)entry->data->dpme_bzb,slice);
+    entry->the_map->changed = 1;
+}
 
 void
 do_create_partition(partition_map_header *map, int get_type)
 {
     long base;
     long length;
-    char *name;
-    char *type_name;
+    char *name = 0;
+    char *type_name = 0;
 
     if (map == NULL) {
 	bad_input("No partition map exists");
 	return;
     }
-    if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+    if (!rflag && map->writable == 0) {
+	printf("The map is not writable.\n");
     }
 // XXX add help feature (i.e. '?' in any argument routine prints help string)
     if (get_base_argument(&base, map) == 0) {
@@ -652,11 +696,12 @@ do_create_partition(partition_map_header *map, int get_type)
     }
     if (get_type == 0) {
 	add_partition_to_map(name, kUnixType, base, length, map);
+#if 0 /* this check is not found in linux fdisk-0.1 */
 	if (map->blocks_in_map > MAX_LINUX_MAP) {
 	    error(-1, "Map contains more than %d blocks - Linux may have trouble", MAX_LINUX_MAP);
 	}
 	goto xit1;
-
+#endif
     } else if (get_string_argument("Type of partition: ", &type_name, 1) == 0) {
 	bad_input("Bad type");
 	goto xit1;
@@ -670,14 +715,19 @@ do_create_partition(partition_map_header *map, int get_type)
 	    goto xit2;
 	}
 	add_partition_to_map(name, type_name, base, length, map);
+#if 0 /* this check is not found in linux fdisk-0.1 */
 	if (map->blocks_in_map > MAX_LINUX_MAP) {
 	    error(-1, "Map contains more than %d blocks - Linux may have trouble", MAX_LINUX_MAP);
 	}
+#endif
     }
+    do_update_dpme(find_entry_by_base(base,map));
 xit2:
-    free(type_name);
+    if (type_name)
+        free(type_name);
 xit1:
-    free(name);
+    if (name)
+        free(name);
     return;
 }
 
@@ -711,7 +761,7 @@ get_size_argument(long *number, partition_map_header *map)
 {
     partition_map * entry;
     int result = 0;
-    unsigned long multiple;
+    uint32_t multiple;
 
     if (get_number_argument("Length in blocks: ", number, kDefault) == 0) {
 	bad_input("Bad length");
@@ -742,17 +792,17 @@ void
 do_rename_partition(partition_map_header *map)
 {
     partition_map * entry;
-    long index;
+    long ix;
     char *name;
 
     if (map == NULL) {
 	bad_input("No partition map exists");
 	return;
     }
-    if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+    if (!rflag && map->writable == 0) {
+	printf("The map is not writable.\n");
     }
-    if (get_number_argument("Partition number: ", &index, kDefault) == 0) {
+    if (get_number_argument("Partition number: ", &ix, kDefault) == 0) {
 	bad_input("Bad partition number");
 	return;
     }
@@ -762,7 +812,7 @@ do_rename_partition(partition_map_header *map)
     }
 
 	// find partition and change it
-    entry = find_entry_by_disk_address(index, map);
+    entry = find_entry_by_disk_address(ix, map);
     if (entry == NULL) {
 	printf("No such partition\n");
     } else {
@@ -774,27 +824,71 @@ do_rename_partition(partition_map_header *map)
     return;
 }
 
-
 void
-do_delete_partition(partition_map_header *map)
+do_change_type(partition_map_header *map)
 {
-    partition_map * cur;
-    long index;
+    partition_map * entry;
+    long ix;
+    char *type = NULL;
 
     if (map == NULL) {
 	bad_input("No partition map exists");
 	return;
     }
-    if (!rflag && map->writeable == 0) {
+
+    if (!rflag && map->writable == 0) {
 	printf("The map is not writeable.\n");
     }
-    if (get_number_argument("Partition number: ", &index, kDefault) == 0) {
+
+    if (get_number_argument("Partition number: ", &ix, kDefault) == 0) {
+	bad_input("Bad partition number");
+	return;
+    }
+
+    entry = find_entry_by_disk_address(ix, map);
+
+    if (entry == NULL ) {
+        printf("No such partition\n");
+	goto out;
+    }
+
+    printf("Existing partition type ``%s''.\n", entry->data->dpme_type);
+    if (get_string_argument("New type of partition: ", &type, 1) == 0) {
+	bad_input("Bad type");
+	goto out;
+    }
+
+    strncpy(entry->data->dpme_type, type, DPISTRLEN);
+    do_update_dpme(entry);
+    map->changed = 1;
+
+out:
+    if (type)
+        free(type);
+    return;
+}
+
+
+void
+do_delete_partition(partition_map_header *map)
+{
+    partition_map * cur;
+    long ix;
+
+    if (map == NULL) {
+	bad_input("No partition map exists");
+	return;
+    }
+    if (!rflag && map->writable == 0) {
+	printf("The map is not writable.\n");
+    }
+    if (get_number_argument("Partition number: ", &ix, kDefault) == 0) {
 	bad_input("Bad partition number");
 	return;
     }
 
 	// find partition and delete it
-    cur = find_entry_by_disk_address(index, map);
+    cur = find_entry_by_disk_address(ix, map);
     if (cur == NULL) {
 	printf("No such partition\n");
     } else {
@@ -807,25 +901,25 @@ void
 do_reorder(partition_map_header *map)
 {
     long old_index;
-    long index;
+    long ix;
 
     if (map == NULL) {
 	bad_input("No partition map exists");
 	return;
     }
-    if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+    if (!rflag && map->writable == 0) {
+	printf("The map is not writable.\n");
     }
     if (get_number_argument("Partition number: ", &old_index, kDefault) == 0) {
 	bad_input("Bad partition number");
 	return;
     }
-    if (get_number_argument("New number: ", &index, kDefault) == 0) {
+    if (get_number_argument("New number: ", &ix, kDefault) == 0) {
 	bad_input("Bad partition number");
 	return;
     }
 
-    move_entry_in_map(old_index, index, map);
+    move_entry_in_map(old_index, ix, map);
 }
 
 
@@ -840,13 +934,15 @@ do_write_partition_map(partition_map_header *map)
 	bad_input("The map has not been changed.");
 	return;
     }
-    if (map->writeable == 0) {
-	bad_input("The map is not writeable.");
+    if (map->writable == 0) {
+	bad_input("The map is not writable.");
 	return;
     }
+#if 0 /* this check is not found in linux fdisk-0.1 */
     if (map->blocks_in_map > MAX_LINUX_MAP) {
 	error(-1, "Map contains more than %d blocks - Linux may have trouble", MAX_LINUX_MAP);
     }
+#endif
     printf("Writing the map destroys what was there before. ");
     if (get_okay("Is that okay? [n/y]: ", 0) != 1) {
 	return;
@@ -862,7 +958,7 @@ do_write_partition_map(partition_map_header *map)
 
 
 void
-print_expert_notes()
+print_expert_notes(void)
 {
     printf("Notes:\n");
     printf("  The expert commands are for low level and experimental features.\n");
@@ -955,8 +1051,8 @@ do_change_map_size(partition_map_header *map)
 	bad_input("No partition map exists");
 	return;
     }
-    if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+    if (!rflag && map->writable == 0) {
+	printf("The map is not writable.\n");
     }
     if (get_number_argument("New size: ", &size, kDefault) == 0) {
 	bad_input("Bad size");
@@ -972,7 +1068,7 @@ do_display_block(partition_map_header *map, char *alt_name)
     MEDIA m;
     long number;
     char *name;
-    static unsigned char *display_block;
+    static uint8_t *display_block;
     static int display_g;
     int g;
     static long next_number = -1;
@@ -988,8 +1084,7 @@ do_display_block(partition_map_header *map, char *alt_name)
 		return;
 	    }
 	} else {
-	    name = malloc(strlen(alt_name)+1);
-	    strcpy(name, alt_name);
+	    name = strdup(alt_name);
 	}
 	m = open_pathname_as_media(name, O_RDONLY);
 	if (m == 0) {
@@ -1011,7 +1106,7 @@ do_display_block(partition_map_header *map, char *alt_name)
     	    free(display_block);
     	    display_g = 0;
 	}
-	display_block = (unsigned char *) malloc(g);
+	display_block = (uint8_t *) malloc(g);
 	if (display_block == NULL) {
 	    error(errno, "can't allocate memory for display block buffer");
 	    goto xit;
@@ -1020,7 +1115,7 @@ do_display_block(partition_map_header *map, char *alt_name)
     }
     if (read_media(m, ((long long)number) * g, g, (char *)display_block) != 0) {
 	printf("block %ld -", number);
-	dump_block((unsigned char*) display_block, g);
+	dump_block((uint8_t*) display_block, g);
 	next_number = number + 1;
     }
 

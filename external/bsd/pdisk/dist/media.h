@@ -60,14 +60,14 @@
 typedef struct media *MEDIA;
 
 /* those who define media objects need the struct and internal routine types */
-typedef long (*media_read)(MEDIA m, long long offset, unsigned long count, void *address);
-typedef long (*media_write)(MEDIA m, long long offset, unsigned long count, void *address);
+typedef long (*media_read)(MEDIA m, long long offset, uint32_t count, void *address);
+typedef long (*media_write)(MEDIA m, long long offset, uint32_t count, void *address);
 typedef long (*media_close)(MEDIA m);
 typedef long (*media_os_reload)(MEDIA m);
 
 struct media {
     long            kind;           /* kind of media - SCSI, IDE, etc. */
-    unsigned long   grain;          /* granularity (offset & size) */
+    uint32_t   grain;          /* granularity (offset & size) */
     long long       size_in_bytes;  /* offset granularity */
     media_read      do_read;        /* device specific routines */
     media_write     do_write;
@@ -115,10 +115,10 @@ struct media_iterator {
  * Forward declarations
  */
 /* those whose use media objects need these routines */
-unsigned long media_granularity(MEDIA m);
+uint32_t media_granularity(MEDIA m);
 long long media_total_size(MEDIA m);
-long read_media(MEDIA m, long long offset, unsigned long count, void *address);
-long write_media(MEDIA m, long long offset, unsigned long count, void *address);
+long read_media(MEDIA m, long long offset, uint32_t count, void *address);
+long write_media(MEDIA m, long long offset, uint32_t count, void *address);
 void close_media(MEDIA m);
 void os_reload_media(MEDIA m);
 
