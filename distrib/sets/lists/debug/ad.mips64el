@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.10 2013/03/12 20:07:23 christos Exp $
+# $NetBSD: ad.mips64el,v 1.11 2013/03/23 16:17:21 christos Exp $
 ./usr/libdata/debug/lib/64/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -106,7 +106,7 @@
 ./usr/libdata/debug/usr/lib/64/liblzf.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libm.so.0.10.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libmagic.so.4.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libmagic.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libmenu.so.6.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libmj.so.1.0.debug		comp-crypto-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libmpc.so.2.0.debug	comp-sys-debug	obsolete
@@ -268,7 +268,7 @@
 ./usr/libdata/debug/usr/lib/o32/liblzf.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libm.so.0.10.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libmagic.so.4.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libmagic.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libmenu.so.6.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libmj.so.1.0.debug		comp-crypto-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libmpc.so.2.0.debug		comp-sys-debug	obsolete
