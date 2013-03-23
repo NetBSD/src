@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.50 2013/03/21 15:16:43 mlelstv Exp $
+#	$NetBSD: Makefile.inc,v 1.51 2013/03/23 11:51:47 he Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -13,7 +13,7 @@ EVBARM_BOARDS=
 # Little endian platforms (armv4 or pre-armv5t)
 EVBARM_BOARDS+=		ADI_BRH CP3100 GEMINI GUMSTIX INTEGRATOR \
 			IQ80310 IQ80321 MINI2440 MV2120 SMDK2410 \
-			SMDK2800 TEAMASA_NPWR TS7200 TWINTAIL
+			SMDK2800 TEAMASA_NPWR TS7200 TWINTAIL KUROBOX_PRO
 .endif
 
 
