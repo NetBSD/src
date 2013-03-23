@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.50 2013/03/19 22:16:54 garbled Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.51 2013/03/23 15:53:48 gson Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -797,7 +797,7 @@ message set_X11_prog
 {Programación de X11}
 
 message set_source
-{Source sets}
+{Source and debug sets}
 
 message set_syssrc
 {Kernel sources}
@@ -815,10 +815,10 @@ message set_xsrc
 {X11 sources}
 
 message set_debug
-{debug sets}
+{Debug symbols}
 
 message set_xdebug
-{debug X11 sets}
+{X11 debug symbols}
 
 message cur_distsets_row
 {%-27s %3s}
