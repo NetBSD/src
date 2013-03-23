@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2013/02/25 00:21:04 jmmv Exp $
+#	$NetBSD: Makefile,v 1.40 2013/03/23 15:42:00 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -31,5 +31,7 @@ SUBDIR+= llvm
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
 .endif
+
+SUBDIR+= pdisk
 
 .include <bsd.subdir.mk>
