@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.27 2013/03/23 05:31:29 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.28 2013/03/23 23:39:47 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1053,6 +1053,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    char *tp = Lst_Datum(ln);
 			    Lst_Remove(missingFiles, ln);
 			    free(tp);
+			    ln = NULL;	/* we're done with it */
 			}
 		    }
 		    break;
