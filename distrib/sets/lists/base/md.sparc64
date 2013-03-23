@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.182 2013/03/12 21:04:58 christos Exp $
+# $NetBSD: md.sparc64,v 1.183 2013/03/23 16:17:21 christos Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -185,8 +185,8 @@
 ./usr/lib/sparc/liblzma.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libm.so.0.10			base-compat-shlib	compat,pic
-./usr/lib/sparc/libmagic.so.4			base-compat-shlib	compat,pic
-./usr/lib/sparc/libmagic.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libmagic.so.5			base-compat-shlib	compat,pic
+./usr/lib/sparc/libmagic.so.5.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmenu.so.6			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmenu.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmj.so.1			base-compat-shlib	compat,pic,crypto
