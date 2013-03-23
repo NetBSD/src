@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.11 2013/03/19 22:16:54 garbled Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.12 2013/03/23 11:50:03 he Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:02:54 thorpej Exp */
 
@@ -86,6 +86,8 @@ message set_kernel_7
 {Kernel (TS7200)}
 message set_kernel_8
 {Kernel (RPI)}
+message set_kernel_9
+{Kernel (KUROBOX_PRO)}
 
 message nomsdospart
 {There is no MSDOS boot partition in the MBR partition table.}

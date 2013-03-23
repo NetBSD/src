@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.20 2013/03/19 22:16:54 garbled Exp $	*/
+/*	$NetBSD: md.h,v 1.21 2013/03/23 11:50:03 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,6 +61,7 @@
 #define SET_KERNEL_6_NAME	"kern-TEAMASA_NPWR"
 #define SET_KERNEL_7_NAME	"kern-TS7200"
 #define SET_KERNEL_8_NAME	"kern-RPI"
+#define SET_KERNEL_9_NAME	"kern-KUROBOX_PRO"
 #define SET_KERNEL_RPI		SET_KERNEL_8
 
 #define MD_SETS_SELECTED SET_SYSTEM
