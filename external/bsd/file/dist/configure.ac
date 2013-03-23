@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([file],[5.12],[christos@astron.com])
+AC_INIT([file],[5.14],[christos@astron.com])
 AM_INIT_AUTOMAKE([subdir-objects foreign])
 AM_MAINTAINER_MODE(disable)
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
@@ -140,7 +140,7 @@ dnl Checks for functions
 AC_CHECK_FUNCS(strerror strndup strtoul mkstemp mkostemp utimes utime wcwidth strtof)
 
 dnl Provide implementation of some required functions if necessary
-AC_REPLACE_FUNCS(getopt_long asprintf vasprintf strlcpy strlcat getline ctime_r asctime_r)
+AC_REPLACE_FUNCS(getopt_long asprintf vasprintf strlcpy strlcat getline ctime_r asctime_r pread)
 
 dnl Checks for libraries
 AC_CHECK_LIB(z,gzopen)
