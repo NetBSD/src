@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.89 2013/03/19 22:16:54 garbled Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.90 2013/03/23 15:53:48 gson Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -774,7 +774,7 @@ message set_X11_prog
 {Programowanie X11}
 
 message set_source
-{Source sets}
+{Source and debug sets}
 
 message set_syssrc
 {Kernel sources}
@@ -792,10 +792,10 @@ message set_xsrc
 {X11 sources}
 
 message set_debug
-{Debug sets}
+{Debug symbols}
 
 message set_xdebug
-{Debug X11 sets}
+{X11 debug symbols}
 
 message cur_distsets_row
 {%-30s %3s}
