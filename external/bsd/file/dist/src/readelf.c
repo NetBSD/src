@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.5 2013/01/03 23:05:38 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.6 2013/03/23 16:15:58 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readelf.c,v 1.94 2012/12/13 13:48:31 christos Exp $")
+FILE_RCSID("@(#)$File: readelf.c,v 1.97 2013/03/06 03:35:30 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.5 2013/01/03 23:05:38 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.6 2013/03/23 16:15:58 christos Exp $");
 #endif
 #endif
 
@@ -54,7 +54,7 @@ private int dophn_core(struct magic_set *, int, int, int, off_t, int, size_t,
 private int dophn_exec(struct magic_set *, int, int, int, off_t, int, size_t,
     off_t, int *, int);
 private int doshn(struct magic_set *, int, int, int, off_t, int, size_t,
-    off_t, int *, int);
+    off_t, int *, int, int);
 private size_t donote(struct magic_set *, void *, size_t, size_t, int,
     int, size_t, int *);
 
@@ -64,9 +64,7 @@ private size_t donote(struct magic_set *, void *, size_t, size_t, int,
 
 private uint16_t getu16(int, uint16_t);
 private uint32_t getu32(int, uint32_t);
-#ifndef USE_ARRAY_FOR_64BIT_TYPES
 private uint64_t getu64(int, uint64_t);
-#endif
 
 private uint16_t
 getu16(int swap, uint16_t value)
@@ -108,7 +106,6 @@ getu32(int swap, uint32_t value)
 		return value;
 }
 
-#ifndef USE_ARRAY_FOR_64BIT_TYPES
 private uint64_t
 getu64(int swap, uint64_t value)
 {
@@ -133,25 +130,18 @@ getu64(int swap, uint64_t value)
 	} else
 		return value;
 }
-#endif
 
 #define elf_getu16(swap, value) getu16(swap, value)
 #define elf_getu32(swap, value) getu32(swap, value)
-#ifdef USE_ARRAY_FOR_64BIT_TYPES
-# define elf_getu64(swap, array) \
-	((swap ? ((uint64_t)elf_getu32(swap, array[0])) << 32 : elf_getu32(swap, array[0])) + \
-	 (swap ? elf_getu32(swap, array[1]) : ((uint64_t)elf_getu32(swap, array[1]) << 32)))
-#else
-# define elf_getu64(swap, value) getu64(swap, value)
-#endif
+#define elf_getu64(swap, value) getu64(swap, value)
 
 #define xsh_addr	(clazz == ELFCLASS32			\
-			 ? (void *) &sh32			\
-			 : (void *) &sh64)
+			 ? (void *)&sh32			\
+			 : (void *)&sh64)
 #define xsh_sizeof	(clazz == ELFCLASS32			\
-			 ? sizeof sh32				\
-			 : sizeof sh64)
-#define xsh_size	(clazz == ELFCLASS32			\
+			 ? sizeof(sh32)				\
+			 : sizeof(sh64))
+#define xsh_size	(size_t)(clazz == ELFCLASS32		\
 			 ? elf_getu32(swap, sh32.sh_size)	\
 			 : elf_getu64(swap, sh64.sh_size))
 #define xsh_offset	(off_t)(clazz == ELFCLASS32		\
@@ -160,12 +150,15 @@ getu64(int swap, uint64_t value)
 #define xsh_type	(clazz == ELFCLASS32			\
 			 ? elf_getu32(swap, sh32.sh_type)	\
 			 : elf_getu32(swap, sh64.sh_type))
+#define xsh_name    	(clazz == ELFCLASS32			\
+			 ? elf_getu32(swap, sh32.sh_name)	\
+			 : elf_getu32(swap, sh64.sh_name))
 #define xph_addr	(clazz == ELFCLASS32			\
 			 ? (void *) &ph32			\
 			 : (void *) &ph64)
 #define xph_sizeof	(clazz == ELFCLASS32			\
-			 ? sizeof ph32				\
-			 : sizeof ph64)
+			 ? sizeof(ph32)				\
+			 : sizeof(ph64))
 #define xph_type	(clazz == ELFCLASS32			\
 			 ? elf_getu32(swap, ph32.p_type)	\
 			 : elf_getu32(swap, ph64.p_type))
@@ -181,8 +174,8 @@ getu64(int swap, uint64_t value)
 			 ? elf_getu32(swap, ph32.p_filesz)	\
 			 : elf_getu64(swap, ph64.p_filesz)))
 #define xnh_addr	(clazz == ELFCLASS32			\
-			 ? (void *) &nh32			\
-			 : (void *) &nh64)
+			 ? (void *)&nh32			\
+			 : (void *)&nh64)
 #define xph_memsz	(size_t)((clazz == ELFCLASS32		\
 			 ? elf_getu32(swap, ph32.p_memsz)	\
 			 : elf_getu64(swap, ph64.p_memsz)))
@@ -202,8 +195,8 @@ getu64(int swap, uint64_t value)
 			 ? prpsoffsets32[i]			\
 			 : prpsoffsets64[i])
 #define xcap_addr	(clazz == ELFCLASS32			\
-			 ? (void *) &cap32			\
-			 : (void *) &cap64)
+			 ? (void *)&cap32			\
+			 : (void *)&cap64)
 #define xcap_sizeof	(clazz == ELFCLASS32			\
 			 ? sizeof cap32				\
 			 : sizeof cap64)
@@ -305,7 +298,7 @@ dophn_core(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 {
 	Elf32_Phdr ph32;
 	Elf64_Phdr ph64;
-	size_t offset;
+	size_t offset, len;
 	unsigned char nbuf[BUFSIZ];
 	ssize_t bufsize;
 
@@ -319,11 +312,7 @@ dophn_core(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 	 * Loop through all the program headers.
 	 */
 	for ( ; num; num--) {
-		if (lseek(fd, off, SEEK_SET) == (off_t)-1) {
-			file_badseek(ms);
-			return -1;
-		}
-		if (read(fd, xph_addr, xph_sizeof) == -1) {
+		if (pread(fd, xph_addr, xph_sizeof, off) == -1) {
 			file_badread(ms);
 			return -1;
 		}
@@ -341,13 +330,8 @@ dophn_core(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 		 * This is a PT_NOTE section; loop through all the notes
 		 * in the section.
 		 */
-		if (lseek(fd, xph_offset, SEEK_SET) == (off_t)-1) {
-			file_badseek(ms);
-			return -1;
-		}
-		bufsize = read(fd, nbuf,
-		    ((xph_filesz < sizeof(nbuf)) ? xph_filesz : sizeof(nbuf)));
-		if (bufsize == -1) {
+		len = xph_filesz < sizeof(nbuf) ? xph_filesz : sizeof(nbuf);
+		if ((bufsize = pread(fd, nbuf, len, xph_offset)) == -1) {
 			file_badread(ms);
 			return -1;
 		}
@@ -857,15 +841,16 @@ static const cap_desc_t cap_desc_386[] = {
 
 private int
 doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
-    size_t size, off_t fsize, int *flags, int mach)
+    size_t size, off_t fsize, int *flags, int mach, int strtab)
 {
 	Elf32_Shdr sh32;
 	Elf64_Shdr sh64;
 	int stripped = 1;
 	void *nbuf;
-	off_t noff, coff;
+	off_t noff, coff, name_off;
 	uint64_t cap_hw1 = 0;	/* SunOS 5.x hardware capabilites */
 	uint64_t cap_sf1 = 0;	/* SunOS 5.x software capabilites */
+	char name[50];
 
 	if (size != xsh_sizeof) {
 		if (file_printf(ms, ", corrupted section header size") == -1)
@@ -873,12 +858,24 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 		return 0;
 	}
 
+	/* Read offset of name section to be able to read section names later */
+	if (pread(fd, xsh_addr, xsh_sizeof, off + size * strtab) == -1) {
+		file_badread(ms);
+		return -1;
+	}
+	name_off = xsh_offset;
+
 	for ( ; num; num--) {
-		if (lseek(fd, off, SEEK_SET) == (off_t)-1) {
-			file_badseek(ms);
+		/* Read the name of this section. */
+		if (pread(fd, name, sizeof(name), name_off + xsh_name) == -1) {
+			file_badread(ms);
 			return -1;
 		}
-		if (read(fd, xsh_addr, xsh_sizeof) == -1) {
+		name[sizeof(name) - 1] = '\0';
+		if (strcmp(name, ".debug_info") == 0)
+			stripped = 0;
+
+		if (pread(fd, xsh_addr, xsh_sizeof, off) == -1) {
 			file_badread(ms);
 			return -1;
 		}
@@ -903,21 +900,14 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 		/* Things we can determine when we seek */
 		switch (xsh_type) {
 		case SHT_NOTE:
-			if ((nbuf = malloc((size_t)xsh_size)) == NULL) {
+			if ((nbuf = malloc(xsh_size)) == NULL) {
 				file_error(ms, errno, "Cannot allocate memory"
 				    " for note");
 				return -1;
 			}
-			if ((noff = lseek(fd, (off_t)xsh_offset, SEEK_SET)) ==
-			    (off_t)-1) {
+			if (pread(fd, nbuf, xsh_size, xsh_offset) == -1) {
 				file_badread(ms);
 				free(nbuf);
-				return -1;
-			}
-			if (read(fd, nbuf, (size_t)xsh_size) !=
-			    (ssize_t)xsh_size) {
-				free(nbuf);
-				file_badread(ms);
 				return -1;
 			}
 
@@ -926,8 +916,7 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 				if (noff >= (off_t)xsh_size)
 					break;
 				noff = donote(ms, nbuf, (size_t)noff,
-				    (size_t)xsh_size, clazz, swap, 4,
-				    flags);
+				    xsh_size, clazz, swap, 4, flags);
 				if (noff == 0)
 					break;
 			}
@@ -945,8 +934,7 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 				goto skip;
 			}
 
-			if (lseek(fd, (off_t)xsh_offset, SEEK_SET) ==
-			    (off_t)-1) {
+			if (lseek(fd, xsh_offset, SEEK_SET) == (off_t)-1) {
 				file_badseek(ms);
 				return -1;
 			}
@@ -1069,7 +1057,7 @@ dophn_exec(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 	const char *shared_libraries = "";
 	unsigned char nbuf[BUFSIZ];
 	ssize_t bufsize;
-	size_t offset, align;
+	size_t offset, align, len;
 	
 	if (size != xph_sizeof) {
 		if (file_printf(ms, ", corrupted program header size") == -1)
@@ -1078,13 +1066,8 @@ dophn_exec(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 	}
 
   	for ( ; num; num--) {
-		if (lseek(fd, off, SEEK_SET) == (off_t)-1) {
-			file_badseek(ms);
-			return -1;
-		}
-
-  		if (read(fd, xph_addr, xph_sizeof) == -1) {
-  			file_badread(ms);
+		if (pread(fd, xph_addr, xph_sizeof, off) == -1) {
+			file_badread(ms);
 			return -1;
 		}
 
@@ -1122,12 +1105,9 @@ dophn_exec(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 			 * This is a PT_NOTE section; loop through all the notes
 			 * in the section.
 			 */
-			if (lseek(fd, xph_offset, SEEK_SET) == (off_t)-1) {
-				file_badseek(ms);
-				return -1;
-			}
-			bufsize = read(fd, nbuf, ((xph_filesz < sizeof(nbuf)) ?
-			    xph_filesz : sizeof(nbuf)));
+			len = xph_filesz < sizeof(nbuf) ? xph_filesz
+			    : sizeof(nbuf);
+			bufsize = pread(fd, nbuf, len, xph_offset);
 			if (bufsize == -1) {
 				file_badread(ms);
 				return -1;

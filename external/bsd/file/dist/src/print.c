@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.5 2013/01/03 23:05:38 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.6 2013/03/23 16:15:58 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: print.c,v 1.75 2012/10/30 23:11:51 christos Exp $")
+FILE_RCSID("@(#)$File: print.c,v 1.76 2013/02/26 18:25:00 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.5 2013/01/03 23:05:38 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.6 2013/03/23 16:15:58 christos Exp $");
 #endif
 #endif  /* lint */
 
@@ -65,20 +65,19 @@ file_mdump(struct magic *m)
 
 	if (m->flag & INDIR) {
 		(void) fprintf(stderr, "(%s,",
-			       /* Note: type is unsigned */
-			       (m->in_type < file_nnames) ? 
-					file_names[m->in_type] : "*bad*");
+		    /* Note: type is unsigned */
+		    (m->in_type < file_nnames) ? file_names[m->in_type] :
+		    "*bad in_type*");
 		if (m->in_op & FILE_OPINVERSE)
 			(void) fputc('~', stderr);
 		(void) fprintf(stderr, "%c%u),",
-			       ((size_t)(m->in_op & FILE_OPS_MASK) <
-			       SZOF(optyp)) ? 
-					optyp[m->in_op & FILE_OPS_MASK] : '?',
-				m->in_offset);
+		    ((size_t)(m->in_op & FILE_OPS_MASK) <
+		    SZOF(optyp)) ? optyp[m->in_op & FILE_OPS_MASK] : '?',
+		    m->in_offset);
 	}
 	(void) fprintf(stderr, " %s%s", (m->flag & UNSIGNED) ? "u" : "",
-		       /* Note: type is unsigned */
-		       (m->type < file_nnames) ? file_names[m->type] : "*bad*");
+	    /* Note: type is unsigned */
+	    (m->type < file_nnames) ? file_names[m->type] : "*bad type");
 	if (m->mask_op & FILE_OPINVERSE)
 		(void) fputc('~', stderr);
 
@@ -141,6 +140,7 @@ file_mdump(struct magic *m)
 		case FILE_MELONG:
 		case FILE_BESHORT:
 		case FILE_BELONG:
+		case FILE_INDIRECT:
 			(void) fprintf(stderr, "%d", m->value.l);
 			break;
 		case FILE_BEQUAD:
@@ -206,7 +206,7 @@ file_mdump(struct magic *m)
 			(void) fprintf(stderr, "'%s'", m->value.s);
 			break;
 		default:
-			(void) fputs("*bad*", stderr);
+			(void) fprintf(stderr, "*bad type %d*", m->type);
 			break;
 		}
 	}

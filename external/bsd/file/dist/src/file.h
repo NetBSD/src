@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.7 2013/01/03 23:05:38 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.8 2013/03/23 16:15:58 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -29,7 +29,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$File: file.h,v 1.140 2012/10/30 23:11:51 christos Exp $
+ * @(#)$File: file.h,v 1.144 2013/02/18 15:40:59 christos Exp $
  */
 
 #ifndef __file_h__
@@ -130,12 +130,13 @@
 #endif
 #define MAXMAGIS 8192		/* max entries in any one magic file
 				   or directory */
-#define MAXDESC	64		/* max leng of text description/MIME type */
-#define MAXstring 64		/* max leng of "string" types */
+#define MAXDESC	64		/* max len of text description/MIME type */
+#define MAXMIME	80		/* max len of text MIME type */
+#define MAXstring 64		/* max len of "string" types */
 
 #define MAGICNO		0xF11E041C
-#define VERSIONNO	9
-#define FILE_MAGICSIZE	232
+#define VERSIONNO	10
+#define FILE_MAGICSIZE	248
 
 #define	FILE_LOAD	0
 #define FILE_CHECK	1
@@ -302,9 +303,9 @@ struct magic {
 	union VALUETYPE value;	/* either number or string */
 	/* Words 17-32 */
 	char desc[MAXDESC];	/* description */
-	/* Words 33-48 */
-	char mimetype[MAXDESC]; /* MIME type */
-	/* Words 49-50 */
+	/* Words 33-52 */
+	char mimetype[MAXMIME]; /* MIME type */
+	/* Words 53-54 */
 	char apple[8];
 };
 
@@ -348,10 +349,8 @@ struct magic {
 /* list of magic entries */
 struct mlist {
 	struct magic *magic;		/* array of magic entries */
-	uint32_t nmagic;			/* number of entries in array */
-	int mapped;  /* allocation type: 0 => apprentice_file
-		      *                  1 => apprentice_map + malloc
-		      *                  2 => apprentice_map + mmap */
+	uint32_t nmagic;		/* number of entries in array */
+	void *map;			/* internal resources used by entry */
 	struct mlist *next, *prev;
 };
 
@@ -446,7 +445,6 @@ protected int file_apprentice(struct magic_set *, const char *, int);
 protected int file_magicfind(struct magic_set *, const char *, struct mlist *);
 protected uint64_t file_signextend(struct magic_set *, struct magic *,
     uint64_t);
-protected void file_delmagic(struct magic *, int type, size_t entries);
 protected void file_badread(struct magic_set *);
 protected void file_badseek(struct magic_set *);
 protected void file_oomem(struct magic_set *, size_t);
@@ -488,6 +486,9 @@ extern char *sys_errlist[];
 #define strtoul(a, b, c)	strtol(a, b, c)
 #endif
 
+#ifndef HAVE_PREAD
+ssize_t pread(int, void *, size_t, off_t);
+#endif
 #ifndef HAVE_VASPRINTF
 int vasprintf(char **, const char *, va_list);
 #endif

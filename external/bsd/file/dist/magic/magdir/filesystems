@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: filesystems,v 1.69 2012/12/18 17:28:43 christos Exp $
+# $File: filesystems,v 1.77 2013/03/14 01:38:30 christos Exp $
 # filesystems:  file(1) magic for different filesystems
 #
 0	string	\366\366\366\366	PC formatted floppy with no filesystem
@@ -60,8 +60,9 @@
 # x86 boot sector updated by Joerg Jenderek at Sep 2007,May 2011
 # for any allowed sector sizes
 30		search/481	\x55\xAA	
-# to display x86 boot sector (40) before old one (strength=50), SYSLINUX MBR (?) and DOS BPB information (71) like in previous file version
-!:strength +40
+# to display x86 boot sector (40) before old one (strength=50+21),Syslinux bootloader (71),SYSLINUX MBR (37+36),NetBSD mbr (110),AdvanceMAME mbr (111)
+# DOS BPB information (70) and after DOS floppy (120) like in previous file version
+!:strength +72
 # for sector sizes < 512 Bytes
 >11		uleshort	<512		
 >>(11.s-2)	uleshort	0xAA55		x86 boot sector
@@ -70,11 +71,158 @@
 # keep old x86 boot sector as dummy for mbr and bootloader displaying
 # only for sector sizes with 512 or more Bytes
 0x1FE	leshort	0xAA55			
-# to display information (51) before DOS BPB (strength=71) and after DOS floppy (120) like in old file version
+# to display information (50) before DOS BPB (strength=70) and after DOS floppy (120) like in old file version
 !:strength +21
 >2	string	OSBS			\b, OS/BS MBR
-# J\xf6rg Jenderek <joerg dot jenderek at web dot de>
->0x8C	string	Invalid\ partition\ table	\b, MS-DOS MBR
+# added by Joerg Jenderek at Feb 2013 according to http://thestarman.pcministry.com/asm/mbr/
+# and http://en.wikipedia.org/wiki/Master_Boot_Record
+# test for nearly all MS-DOS Master Boot Record initial program loader (IPL) is now done by 
+# characteristic assembler instructions: xor ax,ax;mov ss,ax;mov sp,7c00
+>0	search/2	\x33\xc0\x8e\xd0\xbc\x00\x7c	MS-MBR
+# Microsoft Windows 95A and early ( http://thestarman.pcministry.com/asm/mbr/STDMBR.htm )
+# assembler instructions: mov si,sp;push ax;pop es;push ax;pop ds;sti;cld
+>>8	ubequad		0x8bf45007501ffbfc		
+# http://thestarman.pcministry.com/asm/mbr/200MBR.htm
+>>>0x16	ubyte		0xF3				\b,DOS 2
+>>>>219	regex		Author\ -\ 			Author:
+# found "David Litton" , "A Pehrsson  "
+>>>>>&0	string		x				"%s"
+>>>0x16	ubyte		0xF2				
+# NEC MS-DOS 3.30 Rev. 3 . See http://thestarman.pcministry.com/asm/mbr/DOS33MBR.htm
+# assembler instructions: mov di,077c;cmp word ptrl[di],a55a;jnz
+>>>>0x22	ubequad	0xbf7c07813d5aa575		\b,NEC 3.3
+# version MS-DOS 3.30 til MS-Windows 95A (WinVer=4.00.1111)
+>>>>0x22	default	x				\b,D0S version 3.3-7.0
+# error messages are printed by assembler instructions: mov si,06nn;...;int 10 (0xBEnn06;...)
+# where nn is string offset varying for different languages
+# "Invalid partition table"				nn=0x8b for english version
+>>>>>(0x49.b)	string		Invalid\ partition\ table		english
+>>>>>(0x49.b)	string		Ung\201ltige\ Partitionstabelle		german
+>>>>>(0x49.b)	string		Table\ de\ partition\ invalide		french
+>>>>>(0x49.b)	string		Tabela\ de\ parti\207ao\ inv\240lida	portuguese
+>>>>>(0x49.b)	string		Tabla\ de\ partici\242n\ no\ v\240lida	spanish
+>>>>>(0x49.b)	string		Tavola\ delle\ partizioni\ non\ valida	italian
+>>>>>0x49	ubyte		>0			at offset 0x%x
+>>>>>>(0x49.b)	string		>\0			"%s"
+# "Error loading operating system"			nn=0xa3 for english version
+# "Fehler beim Laden des Betriebssystems"		nn=0xa7 for german version
+# "Erreur en chargeant syst\212me d'exploitation"	nn=0xa7 for french version
+# "Erro na inicializa\207ao do sistema operacional"	nn=0xa7 for portuguese Brazilian version
+# "Error al cargar sistema operativo"			nn=0xa8 for spanish version
+# "Errore durante il caricamento del sistema operativo"	nn=0xae for italian version
+>>>>>0x74	ubyte		>0			at offset 0x%x
+>>>>>>(0x74.b)	string		>\0			"%s"
+# "Missing operating system"				nn=0xc2 for english version
+# "Betriebssystem fehlt"				nn=0xcd for german version
+# "Syst\212me d'exploitation absent"			nn=0xd2 for french version
+# "Sistema operacional nao encontrado"			nn=0xd4 for portuguese Brazilian version
+# "Falta sistema operativo"				nn=0xca for spanish version
+# "Sistema operativo mancante"				nn=0xe2 for italian version
+>>>>>0x79	ubyte		>0			at offset 0x%x
+>>>>>>(0x79.b)	string		>\0			"%s"
+# Microsoft Windows 95B to XP (http://thestarman.pcministry.com/asm/mbr/95BMEMBR.htm)
+# assembler instructions: push ax;pop es;push  ax;pop ds;cld;mov si,7c1b
+>>8	ubequad		0x5007501ffcbe1b7c		
+# assembler instructions: rep;movsb;retf;mov si,07be;mov cl,04
+>>>24		ubequad	0xf3a4cbbebe07b104		9M
+# "Invalid partition table"				nn=0x10F for english version
+# "UngÃ¼ltige Partitionstabelle"				nn=0x10F for german version
+# "Table de partition erronÃ©e"				nn=0x10F for french version
+# "\216\257\245\340\240\346\250\256\255\255\240\357 \341\250\341\342\245\254\240 \255\245 \255\240\251\244\245\255\240"	nn=0x10F for russian version
+>>>>(0x3C.b+0x0FF)	string	Invalid\ partition\ table		english
+>>>>(0x3C.b+0x0FF)	string	Ung\201ltige\ Partitionstabelle		german
+>>>>(0x3C.b+0x0FF)	string	Table\ de\ partition\ erron\202e	french
+>>>>(0x3C.b+0x0FF)	string	\215\245\257\340\240\242\250\253\354\255\240\357\ \342\240\241\253\250\346\240	russian
+>>>>0x3C		ubyte	x			at offset 0x%x+0xFF
+>>>>(0x3C.b+0x0FF)	string	>\0			"%s"
+# "Error loading operating system"			nn=0x127 for english version
+# "Fehler beim Laden des Betriebssystems"		nn=0x12b for german version
+# "Erreur lors du chargement du systÃ¨me d'exploitation"	nn=0x12a for french version
+# "\216\350\250\241\252\240 \257\340\250 \247\240\243\340\343\247\252\245 \256\257\245\340\240\346\250\256\255\255\256\251 \341\250\341\342\245\254\353"	nn=0x12d for russian version
+>>>>0xBD		ubyte	x			at offset 0x1%x
+>>>>(0xBD.b+0x100)	string	>\0			"%s"
+# "Missing operating system"				nn=0x146 for english version
+# "Betriebssystem fehlt"				nn=0x151 for german version
+# "SystÃ¨me d'exploitation manquant"			nn=0x15e for french version
+# "\216\257\245\340\240\346\250\256\255\255\240\357 \341\250\341\342\245\254\240 \255\245 \255\240\251\244\245\255\240"	nn=0x156 for russian version
+>>>>0xA9		ubyte	x			at offset 0x1%x
+>>>>(0xA9.b+0x100)	string	>\0			"%s"
+# http://thestarman.pcministry.com/asm/mbr/Win2kmbr.htm
+# assembler instructions: rep;movsb;retf;mov BP,07be;mov cl,04
+>>>24		ubequad	0xf3a4cbbdbe07b104		XP
+# where xxyyzz are lower bits from offsets of error messages varying for different languages
+>>>>0x1B4	ubelong&0x00FFFFFF	0x002c4463	english
+>>>>0x1B4	ubelong&0x00FFFFFF	0x002c486e	german
+# "Invalid partition table"				xx=0x12C for english version
+# "UngÃ¼ltige Partitionstabelle"				xx=0x12C for german version
+>>>>0x1b5	ubyte		>0			at offset 0x1%x
+>>>>(0x1b5.b+0x100)	string	>\0			"%s"
+# "Error loading operating system"			yy=0x144 for english version
+# "Fehler beim Laden des Betriebssystems"		yy=0x148 for german version
+>>>>0x1b6	ubyte		>0			at offset 0x1%x
+>>>>(0x1b6.b+0x100)	string	>\0			"%s"
+# "Missing operating system"				zz=0x163 for english version
+# "Betriebssystem nicht vorhanden"			zz=0x16e for german version
+>>>>0x1b7	ubyte		>0			at offset 0x1%x
+>>>>(0x1b7.b+0x100)	string	>\0			"%s"
+# Microsoft Windows Vista or 7
+# assembler instructions: ..;mov ds,ax;mov si,7c00;mov di,..00
+>>8	ubequad		0xc08ed8be007cbf00		
+# Microsoft Windows Vista (http://thestarman.pcministry.com/asm/mbr/VistaMBR.htm)
+# assembler instructions: jnz 0729;cmp ebx,"TCPA"
+>>>0xEC		ubequad	0x753b6681fb544350		Vista
+# where xxyyzz are lower bits from offsets of error messages varying for different languages
+>>>>0x1B4	ubelong&0x00FFFFFF	0x00627a99	english
+#>>>>0x1B4	ubelong&0x00FFFFFF	?		german
+# "Invalid partition table"				xx=0x162 for english version
+# "UngÃ¼ltige Partitionstabelle"				xx=0x1?? for german version
+>>>>0x1b5	ubyte		>0			at offset 0x1%x
+>>>>(0x1b5.b+0x100)	string	>\0			"%s"
+# "Error loading operating system"			yy=0x17a for english version
+# "Fehler beim Laden des Betriebssystems"		yy= 0x1?? for german version
+>>>>0x1b6	ubyte		>0			at offset 0x1%x
+>>>>(0x1b6.b+0x100)	string	>\0			"%s"
+# "Missing operating system"				zz=0x199 for english version
+# "Betriebssystem nicht vorhanden"			zz=0x1?? for german version
+>>>>0x1b7	ubyte		>0			at offset 0x1%x
+>>>>(0x1b7.b+0x100)	string	>\0			"%s"
+# Microsoft Windows 7 (http://thestarman.pcministry.com/asm/mbr/W7MBR.htm)
+# assembler instructions: cmp ebx,"TCPA";cmp
+>>>0xEC		ubequad	0x6681fb5443504175		Windows 7
+# where xxyyzz are lower bits from offsets of error messages varying for different languages
+>>>>0x1B4	ubelong&0x00FFFFFF	0x00637b9a	english
+#>>>>0x1B4	ubelong&0x00FFFFFF	?		german
+# "Invalid partition table"				xx=0x163 for english version
+# "UngÃ¼ltige Partitionstabelle"				xx=0x1?? for german version
+>>>>0x1b5	ubyte		>0			at offset 0x1%x
+>>>>(0x1b5.b+0x100)	string	>\0			"%s"
+# "Error loading operating system"			yy=0x17b for english version
+# "Fehler beim Laden des Betriebssystems"		yy=0x1?? for german version
+>>>>0x1b6	ubyte		>0			at offset 0x1%x
+>>>>(0x1b6.b+0x100)	string	>\0			"%s"
+# "Missing operating system"				zz=0x19a for english version
+# "Betriebssystem nicht vorhanden"			zz=0x1?? for german version
+>>>>0x1b7	ubyte		>0			at offset 0x1%x
+>>>>(0x1b7.b+0x100)	string	>\0			"%s"
+# http://thestarman.pcministry.com/asm/mbr/Win2kmbr.htm#DiskSigs
+# http://en.wikipedia.org/wiki/MBR_disk_signature#ID
+>>0x1b8	ulelong		>0				\b, disk signature 0x%-.4x
+# driveID/timestamp for Win 95B,98,98SE and ME. See http://thestarman.pcministry.com/asm/mbr/mystery.htm
+>>0xDA	uleshort		0			
+>>>0xDC 	ulelong		>0			\b, created
+# physical drive number (0x80-0xFF) when the Windows wrote that byte to the drive
+>>>>0xDC	ubyte		x			with driveID 0x%x
+# hours, minutes and seconds 
+>>>>0xDf	ubyte		x			at %x
+>>>>0xDe	ubyte		x			\b:%x
+>>>>0xDd	ubyte		x			\b:%x
+# special case for Microsoft MS-DOS 3.21 spanish
+# assembler instructions: cli;mov $0x30,%ax;mov %ax,%ss;mov 
+>0	ubequad		0xfab830008ed0bc00		
+# assembler instructions: $0x1f00,%sp;mov $0x80cb,%di;add %cl,(%bx,%si);in (%dx),%ax;mov 
+>>8	ubequad		0x1fbfcb800008ed8		MS-MBR,D0S version 3.21 spanish
+# Microsoft MBR IPL end
+
 # dr-dos with some upper-, lowercase variants
 >0x9D	string	Invalid\ partition\ table$	
 >>181	string	No\ Operating\ System$		
@@ -93,30 +241,9 @@
 >>>>>>358	string	Press\ any\ key\ to\ continue.\n\r$	
 >>>>>>>387	string	Copyright\ (c)\ 1984,1998	
 >>>>>>>>411	string	Caldera\ Inc.\0		\b, DR-DOS MBR (IBMBIO.LDR)
->0x10F	string	Ung\201ltige\ Partitionstabelle	\b, MS-DOS MBR, german version 4.10.1998, 4.10.2222
->>0x1B8	ubelong	>0				\b, Serial 0x%-.4x
->0x8B	string	Ung\201ltige\ Partitionstabelle	\b, MS-DOS MBR, german version 5.00 to 4.00.950
->271	string	Invalid\ partition\ table\0		
->>295	string	Error\ loading\ operating\ system\0	
->>>326	string	Missing\ operating\ system\0		\b, mbr
 #
->139	string	Invalid\ partition\ table\0		
->>163	string	Error\ loading\ operating\ system\0	
->>>194	string	Missing\ operating\ system\0		\b, Microsoft Windows XP mbr
-# http://www.heise.de/ct/05/09/006/ page 184
-#HKEY_LOCAL_MACHINE\SYSTEM\MountedDevices\DosDevices\?:=Serial4Bytes+8Bytes
->>>>0x1B8	ulelong	>0				\b,Serial 0x%-.4x
->300	string	Invalid\ partition\ table\0	
->>324	string	Error\ loading\ operating\ system\0
->>>355	string	Missing\ operating\ system\0		\b, Microsoft Windows XP MBR
-#??>>>389	string	Invalid\ system\ disk		
->>>>0x1B8	ulelong	>0				\b, Serial 0x%-.4x
->300	string	Ung\201ltige\ Partitionstabelle
-#split string to avoid error: String too long
->>328	string	Fehler\ beim\ Laden\ 	
->>>346	string	des\ Betriebssystems	
->>>>366	string	Betriebssystem\ nicht\ vorhanden	\b, Microsoft Windows XP MBR (german)
->>>>>0x1B8	ulelong	>0				\b, Serial 0x%-.4x
+# tests for different MS-DOS Master Boot Records (MBR) moved and merged
+#
 #>0x145	string	Default:\ F				\b, FREE-DOS MBR
 #>0x14B	string	Default:\ F				\b, FREE-DOS 1.0 MBR
 >0x145	search/7	Default:\ F			\b, FREE-DOS MBR
@@ -290,7 +417,7 @@
 >242	string	Bootsector\ from\ C.H.\ Hochst\204	
 # http://freecode.com/projects/dosfstools	dosfstools-n.m/src/mkdosfs.c
 # updated by Joerg Jenderek at Nov 2012. Use search directive with offset instead of string
-# skip name "C.H. Hochstätter" partly because it is sometimes written without umlaut
+# skip name "C.H. Hochstaetter" partly because it is sometimes written without umlaut
 >242	search/127	Bootsector\ from\ C.H.\ Hochst			
 >>278	search/127	No\ Systemdisk.\ Booting\ from\ harddisk	
 # followed by variants with point,CR-NL or NL-CR
@@ -787,6 +914,14 @@
 >>>>>495		string		RENF		\b, FAT (16 bit)
 # x86 bootloader end
 
+# added by Joerg Jenderek at Feb 2013 according to http://thestarman.pcministry.com/asm/mbr/MSWIN41.htm#FSINFO
+# and http://en.wikipedia.org/wiki/File_Allocation_Table#FS_Information_Sector
+>0		string		RRaA		
+>>0x1E4		string		rrAa		\b, FSInfosector
+#>>0x1FC	uleshort	=0		SHOULD BE ZERO
+>>>0x1E8	ulelong		<0xffffffff	\b, %u free clusters
+>>>0x1EC	ulelong		<0xffffffff	\b, last allocated cluster %u
+
 # added by Joerg Jenderek at Nov 2012
 # http://www.thenakedpc.com/articles/v04/08/0408-05.html
 # Symantec (Peter Norton) Image.dat file consists of variable header, bootrecord, part of FAT and root directory data
@@ -865,6 +1000,8 @@
 # SYSLINUX MBR updated and separated from "x86 boot sector" by Joerg Jenderek at Sep 2012
 # assembler instructions: mov di,0600h;mov cx,0100h
 16	search/4	\xbf\x00\x06\xb9\x00\x01		
+# to display SYSLINUX MBR (36) before old x86 boot sector one with partition table (strength=50+21)
+!:strength +36
 >94	search/249	Missing\ operating\ system		
 # followed by \r for versions older 3.35 , .\r for versions newer 3.52 and point for other
 # skip Ranish MBR
@@ -1184,7 +1321,17 @@
 #>>>>>>>>>80	ulelong		=0		\b, checksum 0x%x=0 (usual)
 >>>>>>>>>0x258	ulelong&0x00009090	=0x00009090	
 >>>>>>>>>>&-92		indirect	x	\b; contains 
-### DOS boot sector end
+# For 2nd NTFS sector added by Joerg Jenderek at Jan 2013
+# http://thestarman.pcministry.com/asm/mbr/NTFSbrHexEd.htm
+# unused assembler instructions JMP y2;NOP;NOP
+0x056		ulelong&0xFFFF0FFF	0x909002EB	
+# unicode loadername terminated by CTRL-D
+>(0.s*2)	ulelong&0xFFFFFF00	0x00040000		
+# loadernames are NTLDR,CMLDR,PELDR,$LDR$ or BOOTMGR
+>>0x002		lestring16	x	Microsoft Windows XP/VISTA bootloader %-5.5s
+>>0x12		string		$	
+>>>0x0c		lestring16	x	\b%-2.2s
+### DOS,NTFS boot sectors end
 
 9564	lelong		0x00011954	Unix Fast File system [v1] (little-endian),
 >8404	string		x		last mounted on %s,
@@ -1351,32 +1498,40 @@
 # Minix filesystems - Juan Cespedes <cespedes@debian.org>
 0x410	leshort		0x137f
 !:strength / 2
->0x402	beshort		< 100		Minix filesystem, V1, %d zones
+>0x402	beshort		< 100
+>0x402	beshort		> -1		Minix filesystem, V1, %d zones
 >0x1e	string		minix		\b, bootable
 0x410	beshort		0x137f
 !:strength / 2
->0x402	beshort		< 100		Minix filesystem, V1 (big endian), %d zones
+>0x402	beshort		< 100
+>0x402	beshort		> -1		Minix filesystem, V1 (big endian), %d zones
 >0x1e	string		minix		\b, bootable
 0x410	leshort		0x138f
 !:strength / 2
->0x402	beshort		< 100		Minix filesystem, V1, 30 char names, %d zones
+>0x402	beshort		< 100
+>0x402	beshort		> -1		Minix filesystem, V1, 30 char names, %d zones
 >0x1e	string		minix		\b, bootable
 0x410	beshort		0x138f
 !:strength / 2
->0x402	beshort		< 100		Minix filesystem, V1, 30 char names (big endian), %d zones
+>0x402	beshort		< 100
+>0x402	beshort		> -1		Minix filesystem, V1, 30 char names (big endian), %d zones
 >0x1e	string		minix		\b, bootable
 0x410	leshort		0x2468
->0x402	beshort		< 100		Minix filesystem, V2, %d zones
+>0x402	beshort		< 100
+>>0x402	beshort		> -1		Minix filesystem, V2, %d zones
 >0x1e	string		minix		\b, bootable
 0x410	beshort		0x2468
->0x402	beshort		< 100		Minix filesystem, V2 (big endian), %d zones
+>0x402	beshort		< 100
+>0x402	beshort		> -1		Minix filesystem, V2 (big endian), %d zones
 >0x1e	string		minix		\b, bootable
 
 0x410	leshort		0x2478
->0x402	beshort		< 100		Minix filesystem, V2, 30 char names, %d zones
+>0x402	beshort		< 100
+>0x402	beshort		> -1		Minix filesystem, V2, 30 char names, %d zones
 >0x1e	string		minix		\b, bootable
 0x410	leshort		0x2478
->0x402	beshort		< 100		Minix filesystem, V2, 30 char names, %d zones
+>0x402	beshort		< 100
+>0x402	beshort		> -1		Minix filesystem, V2, 30 char names, %d zones
 >0x1e	string		minix		\b, bootable
 0x410	beshort		0x2478
 >0x402	beshort		!0		Minix filesystem, V2, 30 char names (big endian), %d zones
@@ -1454,8 +1609,8 @@
 #        10	SS, 8 SPT
 #        11	DS, 8 SPT
 #
-#  11111001	Double density 3½ floppy disk, high density 5¼
-#  11110000	High density 3½ floppy disk
+#  11111001	Double density 3 1/2 floppy disk, high density 5 1/4
+#  11110000	High density 3 1/2 floppy disk
 #  11111000	Hard disk any format
 #
 
@@ -1642,8 +1797,6 @@
 >28 leshort >3
 >>8	ledate	x	created: %s
 
-0	string		td\000		floppy image data (TeleDisk)
-
 # AFS Dump Magic
 # From: Ty Sarna <tsarna@sarna.org> 
 0       string                  \x01\xb3\xa1\x13\x22    AFS Dump
@@ -1820,3 +1973,18 @@
 >60	lelong	x		\b address of last segment written 0x%x,
 >64	lelong	x		\b address of next segment to write 0x%x,
 >68	lelong	x		\b address of current segment written 0x%x
+
+0	string	td\000		floppy image data (TeleDisk, compressed)
+0	string	TD\000		floppy image data (TeleDisk)
+
+0	string	CQ\024		floppy image data (CopyQM, 
+>16	leshort	x		%d sectors, 
+>18	leshort	x		%d heads.)
+
+0	string	ACT\020Apricot\020disk\020image\032\004	floppy image data (ApriDisk)
+
+0	beshort	0xAA58		floppy image data (IBM SaveDskF, old)
+0	beshort	0xAA59		floppy image data (IBM SaveDskF)
+0	beshort	0xAA5A		floppy image data (IBM SaveDskF, compressed)
+
+0	string	\074CPM_Disk\076	disk image data (YAZE)
