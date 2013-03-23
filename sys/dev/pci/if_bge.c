@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.224 2013/03/23 19:40:43 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.225 2013/03/23 21:08:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.224 2013/03/23 19:40:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.225 2013/03/23 21:08:50 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -3031,9 +3031,6 @@ bge_blockinit(struct bge_softc *sc)
 	/* Turn on RX data completion state machine */
 	CSR_WRITE_4(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
 
-	/* Turn on RX BD initiator state machine */
-	CSR_WRITE_4(sc, BGE_RBDI_MODE, BGE_RBDIMODE_ENABLE);
-
 	/* Turn on RX data and RX BD initiator state machine */
 	CSR_WRITE_4(sc, BGE_RDBDI_MODE, BGE_RDBDIMODE_ENABLE);
 
@@ -3041,14 +3038,17 @@ bge_blockinit(struct bge_softc *sc)
 	if (!BGE_IS_5705_PLUS(sc))
 		CSR_WRITE_4(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
 
-	/* Turn on send BD completion state machine */
-	CSR_WRITE_4(sc, BGE_SBDC_MODE, BGE_SBDCMODE_ENABLE);
-
 	/* Turn on send data completion state machine */
 	val = BGE_SDCMODE_ENABLE;
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761)
 		val |= BGE_SDCMODE_CDELAY;
 	CSR_WRITE_4(sc, BGE_SDC_MODE, val);
+
+	/* Turn on send BD completion state machine */
+	CSR_WRITE_4(sc, BGE_SBDC_MODE, BGE_SBDCMODE_ENABLE);
+
+	/* Turn on RX BD initiator state machine */
+	CSR_WRITE_4(sc, BGE_RBDI_MODE, BGE_RBDIMODE_ENABLE);
 
 	/* Turn on send data initiator state machine */
 	if (sc->bge_flags & BGE_TSO) {
