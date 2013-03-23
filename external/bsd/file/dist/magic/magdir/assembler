@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# $File: assembler,v 1.2 2012/10/31 18:41:42 christos Exp $
+# $File: assembler,v 1.4 2013/01/04 23:31:11 christos Exp $
 # make:  file(1) magic for assembler source
 #
 0	regex	\^[\020\t]*\\.asciiz		assembler source text
