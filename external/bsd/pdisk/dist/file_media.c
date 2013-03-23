@@ -60,6 +60,10 @@
 #ifdef __linux__
 #define LOFF_MAX 9223372036854775807LL
 extern __loff_t llseek __P ((int __fd, __loff_t __offset, int __whence));
+#elif defined(__NetBSD__) || defined(__APPLE__)
+#define loff_t off_t
+#define llseek lseek
+#define LOFF_MAX LLONG_MAX
 #else
 #define loff_t long
 #define llseek lseek
@@ -96,7 +100,7 @@ struct file_media_iterator {
  * Global Constants
  */
 int potential_block_sizes[] = {
-    1, 512, 1024, 2048,
+    1, 512, 1024, 2048, 4096, 8192, 16834,
     0
 };
 
@@ -120,8 +124,8 @@ static struct file_media_globals file_info;
 int compute_block_size(int fd);
 void file_init(void);
 FILE_MEDIA new_file_media(void);
-long read_file_media(MEDIA m, long long offset, unsigned long count, void *address);
-long write_file_media(MEDIA m, long long offset, unsigned long count, void *address);
+long read_file_media(MEDIA m, long long offset, uint32_t count, void *address);
+long write_file_media(MEDIA m, long long offset, uint32_t count, void *address);
 long close_file_media(MEDIA m);
 long os_reload_file_media(MEDIA m);
 FILE_MEDIA_ITERATOR new_file_iterator(void);
@@ -245,7 +249,7 @@ open_file_as_media(char *file, int oflag)
 
 
 long
-read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
+read_file_media(MEDIA m, long long offset, uint32_t count, void *address)
 {
     FILE_MEDIA a;
     long rtn_value;
@@ -256,33 +260,33 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
     rtn_value = 0;
     if (a == 0) {
 	/* no media */
-	//printf("no media\n");
+	fprintf(stderr,"no media\n");
     } else if (a->m.kind != file_info.kind) {
 	/* wrong kind - XXX need to error here - this is an internal problem */
-	//printf("wrong kind\n");
+	fprintf(stderr,"wrong kind\n");
     } else if (count <= 0 || count % a->m.grain != 0) {
 	/* can't handle size */
-	//printf("bad size\n");
+	fprintf(stderr,"bad size\n");
     } else if (offset < 0 || offset % a->m.grain != 0) {
 	/* can't handle offset */
-	//printf("bad offset\n");
-    } else if (offset + count > a->m.size_in_bytes && a->m.size_in_bytes != (long long) 0) {
+	fprintf(stderr,"bad offset\n");
+    } else if (offset + (long long) count > a->m.size_in_bytes && a->m.size_in_bytes != (long long) 0) {
 	/* check for offset (and offset+count) too large */
-	//printf("offset+count too large\n");
+	fprintf(stderr,"offset+count too large\n");
     } else if (offset + count > (long long) LOFF_MAX) {
 	/* check for offset (and offset+count) too large */
-	//printf("offset+count too large 2\n");
+	fprintf(stderr,"offset+count too large 2\n");
     } else {
 	/* do the read */
 	off = offset;
 	if ((off = llseek(a->fd, off, 0)) >= 0) {
-	    if ((t = read(a->fd, address, count)) == count) {
+	    if ((t = read(a->fd, address, count)) == (ssize_t)count) {
 		rtn_value = 1;
 	    } else {
-		//printf("read failed\n");
+		fprintf(stderr,"read failed\n");
 	    }
 	} else {
-	    //printf("lseek failed\n");
+	    fprintf(stderr,"lseek failed\n");
 	}
     }
     return rtn_value;
@@ -290,7 +294,7 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
 
 
 long
-write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
+write_file_media(MEDIA m, long long offset, uint32_t count, void *address)
 {
     FILE_MEDIA a;
     long rtn_value;
@@ -313,8 +317,8 @@ write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
 	/* do the write  */
 	off = offset;
 	if ((off = llseek(a->fd, off, 0)) >= 0) {
-	    if ((t = write(a->fd, address, count)) == count) {
-		if (off + count > a->m.size_in_bytes) {
+		if ((t = write(a->fd, address, count)) == (ssize_t)count) {
+		if (off + (long long) count > a->m.size_in_bytes) {
 			a->m.size_in_bytes = off + count;
 		}
 		rtn_value = 1;
@@ -502,9 +506,9 @@ step_file_iterator(MEDIA_ITERATOR m)
 		    switch (a->style) {
 		    case kSCSI_Disks:
 			if (value < 26) {
-			    sprintf(result, "/dev/sd%c", 'a'+value);
+			    snprintf(result, 20, "/dev/sd%c", 'a'+value);
 			} else if (value < 676) {
-			    sprintf(result, "/dev/sd%c%c",
+			    snprintf(result, 20, "/dev/sd%c%c",
 				    'a' + value / 26,
 				    'a' + value % 26);
 			} else {
@@ -513,14 +517,14 @@ step_file_iterator(MEDIA_ITERATOR m)
 			break;
 		    case kATA_Devices:
 			if (value < 26) {
-			    sprintf(result, "/dev/hd%c", 'a'+value);
+			    snprintf(result, 20, "/dev/hd%c", 'a'+value);
 			} else {
 			    bump = -1;
 			}
 			break;
 		    case kSCSI_CDs:
 			if (value < 10) {
-			    sprintf(result, "/dev/scd%c", '0'+value);
+			    snprintf(result, 20, "/dev/scd%c", '0'+value);
 			} else {
 			    bump = -1;
 			}

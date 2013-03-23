@@ -29,6 +29,8 @@
 
 #ifdef __linux__
 #include <endian.h>
+#elif __NetBSD__
+#include <machine/endian.h>
 #else
 #define LITTLE_ENDIAN 1234
 #define BIG_ENDIAN 4321
@@ -62,8 +64,8 @@
 //
 // Forward declarations
 //
-void reverse2(u8 *bytes);
-void reverse4(u8 *bytes);
+void reverse2(uint8_t *bytes);
+void reverse4(uint8_t *bytes);
 
 
 //
@@ -75,21 +77,21 @@ convert_dpme(DPME *data, int to_cpu_form)
 #if BYTE_ORDER == LITTLE_ENDIAN
     // Since we will toss the block if the signature doesn't match
     // we don't need to check the signature down here.
-    reverse2((u8 *)&data->dpme_signature);
-    reverse2((u8 *)&data->dpme_reserved_1);
-    reverse4((u8 *)&data->dpme_map_entries);
-    reverse4((u8 *)&data->dpme_pblock_start);
-    reverse4((u8 *)&data->dpme_pblocks);
-    reverse4((u8 *)&data->dpme_lblock_start);
-    reverse4((u8 *)&data->dpme_lblocks);
-    reverse4((u8 *)&data->dpme_flags);
-    reverse4((u8 *)&data->dpme_boot_block);
-    reverse4((u8 *)&data->dpme_boot_bytes);
-    reverse4((u8 *)&data->dpme_load_addr);
-    reverse4((u8 *)&data->dpme_load_addr_2);
-    reverse4((u8 *)&data->dpme_goto_addr);
-    reverse4((u8 *)&data->dpme_goto_addr_2);
-    reverse4((u8 *)&data->dpme_checksum);
+    reverse2((uint8_t *)&data->dpme_signature);
+    reverse2((uint8_t *)&data->dpme_reserved_1);
+    reverse4((uint8_t *)&data->dpme_map_entries);
+    reverse4((uint8_t *)&data->dpme_pblock_start);
+    reverse4((uint8_t *)&data->dpme_pblocks);
+    reverse4((uint8_t *)&data->dpme_lblock_start);
+    reverse4((uint8_t *)&data->dpme_lblocks);
+    reverse4((uint8_t *)&data->dpme_flags);
+    reverse4((uint8_t *)&data->dpme_boot_block);
+    reverse4((uint8_t *)&data->dpme_boot_bytes);
+    reverse4((uint8_t *)&data->dpme_load_addr);
+    reverse4((uint8_t *)&data->dpme_load_addr_2);
+    reverse4((uint8_t *)&data->dpme_goto_addr);
+    reverse4((uint8_t *)&data->dpme_goto_addr_2);
+    reverse4((uint8_t *)&data->dpme_checksum);
     convert_bzb((BZB *)data->dpme_bzb, to_cpu_form);
 #endif
     return 0;
@@ -104,9 +106,9 @@ convert_bzb(BZB *data, int to_cpu_form)
     // do not want to convert willy-nilly. We use the flag to determine
     // whether to check for the signature before or after we flip the bytes.
     if (to_cpu_form) {
-	reverse4((u8 *)&data->bzb_magic);
+	reverse4((uint8_t *)&data->bzb_magic);
 	if (data->bzb_magic != BZBMAGIC) {
-	    reverse4((u8 *)&data->bzb_magic);
+	    reverse4((uint8_t *)&data->bzb_magic);
 	    if (data->bzb_magic != BZBMAGIC) {
 		return 0;
 	    }
@@ -115,13 +117,13 @@ convert_bzb(BZB *data, int to_cpu_form)
 	if (data->bzb_magic != BZBMAGIC) {
 	    return 0;
 	}
-	reverse4((u8 *)&data->bzb_magic);
+	reverse4((uint8_t *)&data->bzb_magic);
     }
-    reverse2((u8 *)&data->bzb_inode);
-    reverse4((u8 *)&data->bzb_flags);
-    reverse4((u8 *)&data->bzb_tmade);
-    reverse4((u8 *)&data->bzb_tmount);
-    reverse4((u8 *)&data->bzb_tumount);
+    reverse2((uint8_t *)&data->bzb_inode);
+    reverse4((uint8_t *)&data->bzb_flags);
+    reverse4((uint8_t *)&data->bzb_tmade);
+    reverse4((uint8_t *)&data->bzb_tmount);
+    reverse4((uint8_t *)&data->bzb_tumount);
     return 0;
 }
 #endif
@@ -132,7 +134,7 @@ convert_block0(Block0 *data, int to_cpu_form)
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
     DDMap *m;
-    u16 count;
+    uint16_t count;
     int i;
 
     // Since this data is optional we do not want to convert willy-nilly.
@@ -140,9 +142,9 @@ convert_block0(Block0 *data, int to_cpu_form)
     // before or after we flip the bytes and to determine which form of
     // the count to use.
     if (to_cpu_form) {
-	reverse2((u8 *)&data->sbSig);
+	reverse2((uint8_t *)&data->sbSig);
 	if (data->sbSig != BLOCK0_SIGNATURE) {
-	    reverse2((u8 *)&data->sbSig);
+	    reverse2((uint8_t *)&data->sbSig);
 	    if (data->sbSig != BLOCK0_SIGNATURE) {
 		return 0;
 	    }
@@ -151,27 +153,27 @@ convert_block0(Block0 *data, int to_cpu_form)
 	if (data->sbSig != BLOCK0_SIGNATURE) {
 	    return 0;
 	}
-	reverse2((u8 *)&data->sbSig);
+	reverse2((uint8_t *)&data->sbSig);
     }
-    reverse2((u8 *)&data->sbBlkSize);
-    reverse4((u8 *)&data->sbBlkCount);
-    reverse2((u8 *)&data->sbDevType);
-    reverse2((u8 *)&data->sbDevId);
-    reverse4((u8 *)&data->sbData);
+    reverse2((uint8_t *)&data->sbBlkSize);
+    reverse4((uint8_t *)&data->sbBlkCount);
+    reverse2((uint8_t *)&data->sbDevType);
+    reverse2((uint8_t *)&data->sbDevId);
+    reverse4((uint8_t *)&data->sbData);
     if (to_cpu_form) {
-	reverse2((u8 *)&data->sbDrvrCount);
+	reverse2((uint8_t *)&data->sbDrvrCount);
 	count = data->sbDrvrCount;
     } else {
 	count = data->sbDrvrCount;
-	reverse2((u8 *)&data->sbDrvrCount);
+	reverse2((uint8_t *)&data->sbDrvrCount);
     }
 
     if (count > 0) {
 	m = (DDMap *) data->sbMap;
 	for (i = 0; i < count; i++) {
-	    reverse4((u8 *)&m[i].ddBlock);
-	    reverse2((u8 *)&m[i].ddSize);
-	    reverse2((u8 *)&m[i].ddType);
+	    reverse4((uint8_t *)&m[i].ddBlock);
+	    reverse2((uint8_t *)&m[i].ddSize);
+	    reverse2((uint8_t *)&m[i].ddType);
 	}
     }
 #endif
@@ -180,9 +182,9 @@ convert_block0(Block0 *data, int to_cpu_form)
 
 
 void
-reverse2(u8 *bytes)
+reverse2(uint8_t *bytes)
 {
-    u8 t;
+    uint8_t t;
 
     t = *bytes;
     *bytes = bytes[1];
@@ -191,9 +193,9 @@ reverse2(u8 *bytes)
 
 
 void
-reverse4(u8 *bytes)
+reverse4(uint8_t *bytes)
 {
-    u8 t;
+    uint8_t t;
 
     t = *bytes;
     *bytes = bytes[3];

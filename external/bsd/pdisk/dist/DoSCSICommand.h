@@ -64,14 +64,14 @@
  */
 #if !defined(__NewTypesDefined__)
 #define __NewTypesDefined__
-typedef signed char     SInt8;
-typedef signed short    SInt16;
-typedef signed long     SInt32;
-typedef unsigned char   UInt8;
-typedef unsigned short  UInt16;
-typedef unsigned long   UInt32;
-typedef unsigned long   ItemCount;
-typedef unsigned long   ByteCount;
+typedef int8_t     SInt8;
+typedef int16_t    SInt16;
+typedef int32_t     SInt32;
+typedef uint8_t   UInt8;
+typedef uint16_t  UInt16;
+typedef uint32_t   UInt32;
+typedef uint32_t   ItemCount;
+typedef uint32_t   ByteCount;
 #endif
 
 

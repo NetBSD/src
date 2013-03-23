@@ -43,7 +43,7 @@
  *	Z is two digits indicating the delta within the stage
  *
  * Note that within the 'vers' resource all these fields end up
- * comprising a four byte unsigned integer with the property that any later
+ * comprising a four byte uint32_teger with the property that any later
  * version will be be represented by a larger number.
  */
 

@@ -27,6 +27,7 @@
 
 // for *printf()
 #include <stdio.h>
+#include <errno.h>
 
 // for exit()
 #ifndef __linux__
@@ -91,14 +92,18 @@ init_program_name(char **argv)
 
 
 void
-do_help()
+do_help(void)
 {
     printf("\t%s [-h|--help]\n", program_name);
     printf("\t%s [-v|--version]\n", program_name);
-    printf("\t%s [-l|--list [name ...]]\n", program_name);
+#ifdef __linux__
+    printf("\t%s [-l|--list [name]] [...]\n", program_name);
+#else
+    printf("\t%s [-l|--list] name [...]\n", program_name);
+#endif
     printf("\t%s [-r|--readonly] name ...\n", program_name);
     printf("\t%s [-i|--interactive]\n", program_name);
-    printf("\t%s name ...\n", program_name);
+    printf("\t%s name [...]\n", program_name);
 /*
 	{"debug",	no_argument,		0,	'd'},
 	{"abbr",	no_argument,		0,	'a'},
@@ -110,7 +115,7 @@ do_help()
 
 
 void
-usage(char *kind)
+usage(const char *kind)
 {
     error(-1, "bad usage - %s\n", kind);
     hflag = 1;
@@ -123,7 +128,7 @@ usage(char *kind)
 // the perror(3) message.
 //
 void
-fatal(int value, char *fmt, ...)
+fatal(int value, const char *fmt, ...)
 {
     va_list ap;
 
@@ -152,7 +157,7 @@ fatal(int value, char *fmt, ...)
 // the perror(3) message.
 //
 void
-error(int value, char *fmt, ...)
+error(int value, const char *fmt, ...)
 {
     va_list ap;
 

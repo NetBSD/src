@@ -54,14 +54,14 @@ extern const long kDefault;
 //
 // Forward declarations
 //
-void bad_input(char *fmt, ...);
+void bad_input(const char *fmt, ...) __printflike(1, 2);
 void flush_to_newline(int keep_newline);
-int get_command(char *prompt, int promptBeforeGet, int *command);
-unsigned long get_multiplier(long divisor);
-int get_number_argument(char *prompt, long *number, long default_value);
-int get_okay(char *prompt, int default_value);
+int get_command(const char *prompt, int promptBeforeGet, int *command);
+uint32_t get_multiplier(long divisor);
+int get_number_argument(const char *prompt, long *number, long default_value);
+int get_okay(const char *prompt, int default_value);
 int get_partition_modifier(void);
-int get_string_argument(char *prompt, char **string, int reprompt);
-int number_of_digits(unsigned long value);
+int get_string_argument(const char *prompt, char **string, int reprompt);
+int number_of_digits(uint32_t value);
 
 #endif /* __io__ */

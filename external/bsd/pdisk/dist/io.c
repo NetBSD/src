@@ -89,15 +89,14 @@ char io_buffer[MAXIOSIZE];
 //
 long get_number(int first_char);
 char* get_string(int eos);
-int my_getch();
+int my_getch(void);
 void my_ungetch(int c);
-
 
 //
 // Routines
 //
 int
-my_getch()
+my_getch(void)
 {
     if (unget_count > 0) {
 	return (unget_buf[--unget_count]);
@@ -145,12 +144,12 @@ flush_to_newline(int keep_newline)
 
 
 int
-get_okay(char *prompt, int default_value)
+get_okay(const char *prompt, int default_value)
 {
     int		c;
 
     flush_to_newline(0);
-    printf(prompt);
+    printf("%s", prompt);
 
     for (;;) {
 	c = my_getch();
@@ -168,7 +167,7 @@ get_okay(char *prompt, int default_value)
 	    return 0;
 	} else {
 	    flush_to_newline(0);
-	    printf(prompt);
+	    printf("%s", prompt);
 	}
     }
     return -1;
@@ -176,12 +175,12 @@ get_okay(char *prompt, int default_value)
 
 	
 int
-get_command(char *prompt, int promptBeforeGet, int *command)
+get_command(const char *prompt, int promptBeforeGet, int *command)
 {
     int		c;
 
     if (promptBeforeGet) {
-	printf(prompt);
+	printf("%s", prompt);
     }	
     for (;;) {
 	c = my_getch();
@@ -191,7 +190,7 @@ get_command(char *prompt, int promptBeforeGet, int *command)
 	} else if (c == ' ' || c == '\t') {
 	    // skip blanks and tabs
 	} else if (c == '\n') {
-	    printf(prompt);
+	    printf("%s", prompt);
 	} else {
 	    *command = c;
 	    return 1;
@@ -202,7 +201,7 @@ get_command(char *prompt, int promptBeforeGet, int *command)
 
 	
 int
-get_number_argument(char *prompt, long *number, long default_value)
+get_number_argument(const char *prompt, long *number, long default_value)
 {
     int c;
     int result = 0;
@@ -216,7 +215,7 @@ get_number_argument(char *prompt, long *number, long default_value)
 	    // skip blanks and tabs
 	} else if (c == '\n') {
 	    if (default_value == kDefault) {
-		printf(prompt);
+		printf("%s", prompt);
 	    } else {
 		my_ungetch(c);
 		*number = default_value;
@@ -281,7 +280,7 @@ get_number(int first_char)
 
 	
 int
-get_string_argument(char *prompt, char **string, int reprompt)
+get_string_argument(const char *prompt, char **string, int reprompt)
 {
     int c;
     int result = 0;
@@ -295,7 +294,7 @@ get_string_argument(char *prompt, char **string, int reprompt)
 	    // skip blanks and tabs
 	} else if (c == '\n') {
 	    if (reprompt) {
-		printf(prompt);
+		printf("%s", prompt);
 	    } else {
 		my_ungetch(c);
 		*string = NULL;
@@ -370,12 +369,12 @@ get_string(int eos)
 }
 
 
-unsigned long
+uint32_t
 get_multiplier(long divisor)
 {
     int c;
-    unsigned long result;
-    unsigned long extra;
+    uint32_t result;
+    uint32_t extra;
 
     c = my_getch();
 
@@ -404,7 +403,7 @@ get_multiplier(long divisor)
 	    } else {
 		result *= extra;
 	    }
-	} else if (result >= divisor) {
+	} else if ((long long)result >= divisor) {
 	    result /= divisor;
 	} else {
 	    result = 1;
@@ -434,7 +433,7 @@ get_partition_modifier(void)
 
 
 int
-number_of_digits(unsigned long value)
+number_of_digits(uint32_t value)
 {
     int j;
 
@@ -451,7 +450,7 @@ number_of_digits(unsigned long value)
 // Print a message on standard error & flush the input.
 //
 void
-bad_input(char *fmt, ...)
+bad_input(const char *fmt, ...)
 {
     va_list ap;
 
