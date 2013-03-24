@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.150 2013/01/22 13:27:59 jmcneill Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.151 2013/03/24 22:38:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.150 2013/01/22 13:27:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.151 2013/03/24 22:38:45 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -82,7 +82,7 @@ usbd_xfer_isread(usbd_xfer_handle xfer)
 			UE_DIR_IN);
 }
 
-#if defined(USB_DEBUG) || defined(EHCI_DEBUG)
+#if defined(USB_DEBUG) || defined(EHCI_DEBUG) || defined(OHCI_DEBUG)
 void
 usbd_dump_iface(struct usbd_interface *iface)
 {
