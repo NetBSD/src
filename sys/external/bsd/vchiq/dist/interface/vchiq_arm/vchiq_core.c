@@ -2263,10 +2263,6 @@ vchiq_init_state(VCHIQ_STATE_T *state, VCHIQ_SLOT_ZERO_T *slot_zero,
 	static int id;
 	int i;
 
-	vchiq_log_warning(vchiq_core_log_level,
-		"%s: slot_zero = 0x%08lx, is_master = %d",
-		__func__, (unsigned long)slot_zero, is_master);
-
 	/* Check the input configuration */
 
 	if (slot_zero->magic != VCHIQ_MAGIC) {
@@ -2277,6 +2273,11 @@ vchiq_init_state(VCHIQ_STATE_T *state, VCHIQ_SLOT_ZERO_T *slot_zero,
 		vchiq_loud_error_footer();
 		return VCHIQ_ERROR;
 	}
+
+	vchiq_log_warning(vchiq_core_log_level,
+		"%s: local ver %d (min %d), remote ver %d\n",
+		__func__, VCHIQ_VERSION, VCHIQ_VERSION_MIN,
+		slot_zero->version);
 
 	if (slot_zero->version < VCHIQ_VERSION_MIN) {
 		vchiq_loud_error_header();
