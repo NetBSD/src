@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.3 2012/06/05 00:41:33 christos Exp $	*/
+/*	$NetBSD: lib.c,v 1.4 2013/03/24 18:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -77,9 +77,7 @@ dns_lib_initmsgcat(void) {
 
 static isc_once_t init_once = ISC_ONCE_INIT;
 static isc_mem_t *dns_g_mctx = NULL;
-#ifndef BIND9
 static dns_dbimplementation_t *dbimp = NULL;
-#endif
 static isc_boolean_t initialize_done = ISC_FALSE;
 static isc_mutex_t reflock;
 static unsigned int references = 0;
@@ -94,11 +92,9 @@ initialize(void) {
 	if (result != ISC_R_SUCCESS)
 		return;
 	dns_result_register();
-#ifndef BIND9
 	result = dns_ecdb_register(dns_g_mctx, &dbimp);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_mctx;
-#endif
 	result = isc_hash_create(dns_g_mctx, NULL, DNS_NAME_MAXWIRE);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_db;
@@ -119,10 +115,8 @@ initialize(void) {
   cleanup_hash:
 	isc_hash_destroy();
   cleanup_db:
-#ifndef BIND9
 	dns_ecdb_unregister(&dbimp);
   cleanup_mctx:
-#endif
 	isc_mem_detach(&dns_g_mctx);
 }
 
@@ -163,8 +157,6 @@ dns_lib_shutdown(void) {
 
 	dst_lib_destroy();
 	isc_hash_destroy();
-#ifndef BIND9
 	dns_ecdb_unregister(&dbimp);
-#endif
 	isc_mem_detach(&dns_g_mctx);
 }
