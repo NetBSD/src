@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.90 2013/03/10 04:25:06 christos Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.91 2013/03/24 22:06:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.90 2013/03/10 04:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.91 2013/03/24 22:06:37 christos Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -925,8 +925,10 @@ module_do_load(const char *name, bool isdep, int flags,
 		error = module_load_vfs_vec(name, flags, autoload, mod,
 					    &filedict);
 		if (error != 0) {
+#ifdef DEBUG
 			module_error("vfs load failed for `%s', error %d",
 			    name, error);
+#endif
 			kmem_free(mod, sizeof(*mod));
 			depth--;
 			return error;
