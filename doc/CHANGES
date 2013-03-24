@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1805 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1806 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -213,4 +213,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	vmt(4): Synchronize the clock periodically to ensure it remains
 		up-to-date even when the host is suspended.  [jmmv 20130316]
 	file(1): upgraded to 5.14 [christos 20130323]
-	dhcp: upgrade to 4.2.3 [christos 20130324]
+	dhcp: upgrade to 4.2.5 [christos 20130324]
