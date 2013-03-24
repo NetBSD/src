@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata_test.c,v 1.4 2012/06/05 00:39:25 christos Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.5 2013/03/24 18:44:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -918,6 +918,10 @@ main(int argc, char *argv[]) {
 	int raw = 0;
 	int tostruct = 0;
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	while ((c = isc_commandline_parse(argc, argv, "dqswtarzS")) != -1) {
 		switch (c) {
 		case 'd':
