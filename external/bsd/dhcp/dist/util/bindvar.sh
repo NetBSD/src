@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: bindvar.sh,v 1.2.2.1 2009-12-02 22:35:03 sar Exp 
+# Id: bindvar.sh,v 1.2 2009/12/02 20:43:52 sar Exp 
 
 # Create a file with the base directory and gmake pat for
 # use by the bind/Makefile, we do this to minimize portability

@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhcrelay.8,v 1.1.1.1 2013/03/24 15:45:59 christos Exp $
+.\"	$NetBSD: dhcrelay.8,v 1.1.1.2 2013/03/24 22:50:37 christos Exp $
 .\"
 .\"	dhcrelay.8
 .\"
-.\" Copyright (c) 2009-2011 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2009-2012 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1997-2003 by Internet Software Consortium
 .\"
@@ -30,7 +30,7 @@
 .\" Support and other services are available for ISC products - see
 .\" https://www.isc.org for more information or to learn more about ISC.
 .\"
-.\" Id: dhcrelay.8,v 1.16.24.3 2011-04-15 22:12:50 sar Exp 
+.\" Id: dhcrelay.8,v 1.16.24.4 2012/05/14 23:20:00 sar Exp 
 .\"
 .TH dhcrelay 8
 .SH NAME
@@ -178,7 +178,7 @@ will write a pid file.
 .TP
 -a
 Append an agent option field to each request before forwarding it to
-the server.   Agent option fields in responses sent from servers to
+the server.  Agent option fields in responses sent from servers to
 clients will be stripped before forwarding such responses back to the
 client.  The agent option field will contain two agent options: the Circuit
 ID suboption and the Remote ID suboption.  Currently, the Circuit ID will
@@ -213,6 +213,8 @@ in four ways:  It may \fIappend\fR its own set of relay options to the
 packet, leaving the supplied option field intact; it may \fIreplace\fR the
 existing agent option field; it may \fIforward\fR the packet unchanged; or,
 it may \fIdiscard\fR it.
+
+To use this option you must also enable the \fB-a\fR option.
 .PP
 \fIOptions available in DHCPv6 mode only:\fR
 .TP

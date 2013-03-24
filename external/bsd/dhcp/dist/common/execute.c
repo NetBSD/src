@@ -1,11 +1,12 @@
-/*	$NetBSD: execute.c,v 1.1.1.1 2013/03/24 15:45:53 christos Exp $	*/
+/*	$NetBSD: execute.c,v 1.1.1.2 2013/03/24 22:50:31 christos Exp $	*/
 
 /* execute.c
 
    Support for executable statements. */
 
 /*
- * Copyright (c) 2004-2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1998-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -35,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: execute.c,v 1.1.1.1 2013/03/24 15:45:53 christos Exp $");
+__RCSID("$NetBSD: execute.c,v 1.1.1.2 2013/03/24 22:50:31 christos Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -331,67 +332,68 @@ int execute_statements (result, packet, lease, client_state,
 
 		      case set_statement:
 		      case define_statement:
+			status = 1;
 			if (!scope) {
-				log_error ("set %s: no scope",
-					   r -> data.set.name);
+				log_error("set %s: no scope",
+					   r->data.set.name);
 				status = 0;
 				break;
 			}
 			if (!*scope) {
-			    if (!binding_scope_allocate (scope, MDL)) {
-				log_error ("set %s: can't allocate scope",
-					   r -> data.set.name);
+			    if (!binding_scope_allocate(scope, MDL)) {
+				log_error("set %s: can't allocate scope",
+					  r->data.set.name);
 				status = 0;
 				break;
 			    }
 			}
-			binding = find_binding (*scope, r -> data.set.name);
+			binding = find_binding(*scope, r->data.set.name);
 #if defined (DEBUG_EXPRESSIONS)
-			log_debug ("exec: set %s", r -> data.set.name);
+			log_debug("exec: set %s", r->data.set.name);
 #endif
-			if (!binding) {
-				binding = dmalloc (sizeof *binding, MDL);
-				if (binding) {
-				    memset (binding, 0, sizeof *binding);
-				    binding -> name =
-					    dmalloc (strlen
-						     (r -> data.set.name) + 1,
-						     MDL);
-				    if (binding -> name) {
-					strcpy (binding -> name,
-						r -> data.set.name);
-					binding -> next = (*scope) -> bindings;
-					(*scope) -> bindings = binding;
+			if (binding == NULL) {
+				binding = dmalloc(sizeof(*binding), MDL);
+				if (binding != NULL) {
+				    memset(binding, 0, sizeof(*binding));
+				    binding->name =
+					    dmalloc(strlen
+						    (r->data.set.name) + 1,
+						    MDL);
+				    if (binding->name != NULL) {
+					strcpy(binding->name, r->data.set.name);
+					binding->next = (*scope)->bindings;
+					(*scope)->bindings = binding;
 				    } else {
-					dfree (binding, MDL);
-					binding = (struct binding *)0;
+					dfree(binding, MDL);
+					binding = NULL;
 				    }
 				}
 			}
-			if (binding) {
-				if (binding -> value)
+			if (binding != NULL) {
+				if (binding->value != NULL)
 					binding_value_dereference
-						(&binding -> value, MDL);
-				if (r -> op == set_statement) {
+						(&binding->value, MDL);
+				if (r->op == set_statement) {
 					status = (evaluate_expression
-						  (&binding -> value, packet,
+						  (&binding->value, packet,
 						   lease, client_state,
 						   in_options, out_options,
-						   scope, r -> data.set.expr,
+						   scope, r->data.set.expr,
 						   MDL));
 				} else {
 				    if (!(binding_value_allocate
-					  (&binding -> value, MDL))) {
-					    dfree (binding, MDL);
-					    binding = (struct binding *)0;
+					  (&binding->value, MDL))) {
+					    dfree(binding, MDL);
+					    binding = NULL;
 				    }
-				    if (binding -> value) {
-				        binding -> value -> type =
-						binding_function;
-					(fundef_reference
-					 (&binding -> value -> value.fundef,
-					  r -> data.set.expr -> data.func,
-					  MDL));
+				    if ((binding != NULL) &&
+					(binding->value != NULL)) {
+					    binding->value->type =
+						    binding_function;
+					    (fundef_reference
+					     (&binding->value->value.fundef,
+					      r->data.set.expr->data.func,
+					      MDL));
 				    }
 				}
 			}
@@ -422,30 +424,31 @@ int execute_statements (result, packet, lease, client_state,
 
 		      case let_statement:
 #if defined (DEBUG_EXPRESSIONS)
-			log_debug ("exec: let %s", r -> data.let.name);
+			log_debug("exec: let %s", r->data.let.name);
 #endif
-			ns = (struct binding_scope *)0;
+			status = 0;
+			ns = NULL;
 			binding_scope_allocate (&ns, MDL);
 			e = r;
 
 		      next_let:
 			if (ns) {
-				binding = dmalloc (sizeof *binding, MDL);
-				memset (binding, 0, sizeof *binding);
+				binding = dmalloc(sizeof(*binding), MDL);
+				memset(binding, 0, sizeof(*binding));
 				if (!binding) {
 				   blb:
-				    binding_scope_dereference (&ns, MDL);
+				    binding_scope_dereference(&ns, MDL);
 				} else {
-				    binding -> name =
-					    dmalloc (strlen
-						     (e -> data.let.name + 1),
-						     MDL);
-				    if (binding -> name)
-					strcpy (binding -> name,
-						e -> data.let.name);
+				    binding->name =
+					    dmalloc(strlen
+						    (e->data.let.name + 1),
+						    MDL);
+				    if (binding->name)
+					strcpy(binding->name,
+					       e->data.let.name);
 				    else {
-					dfree (binding, MDL);
-					binding = (struct binding *)0;
+					dfree(binding, MDL);
+					binding = NULL;
 					goto blb;
 				    }
 				}
@@ -454,35 +457,35 @@ int execute_statements (result, packet, lease, client_state,
 
 			if (ns && binding) {
 				status = (evaluate_expression
-					  (&binding -> value, packet, lease,
+					  (&binding->value, packet, lease,
 					   client_state,
 					   in_options, out_options,
-					   scope, e -> data.set.expr, MDL));
-				binding -> next = ns -> bindings;
-				ns -> bindings = binding;
+					   scope, e->data.set.expr, MDL));
+				binding->next = ns->bindings;
+				ns->bindings = binding;
 			}
 
 #if defined (DEBUG_EXPRESSIONS)
-			log_debug ("exec: let %s%s", e -> data.let.name,
-				   (binding && status ? "" : "failed"));
+			log_debug("exec: let %s%s", e->data.let.name,
+				  (binding && status ? "" : "failed"));
 #endif
-			if (!e -> data.let.statements) {
-			} else if (e -> data.let.statements -> op ==
+			if (!e->data.let.statements) {
+			} else if (e->data.let.statements->op ==
 				   let_statement) {
-				e = e -> data.let.statements;
+				e = e->data.let.statements;
 				goto next_let;
 			} else if (ns) {
 				if (scope && *scope)
-				    	binding_scope_reference (&ns -> outer,
-								 *scope, MDL);
+				    	binding_scope_reference(&ns->outer,
+								*scope, MDL);
 				execute_statements
 				      (result, packet, lease,
 				       client_state,
 				       in_options, out_options,
-				       &ns, e -> data.let.statements);
+				       &ns, e->data.let.statements);
 			}
 			if (ns)
-				binding_scope_dereference (&ns, MDL);
+				binding_scope_dereference(&ns, MDL);
 			break;
 
 		      case log_statement:

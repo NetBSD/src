@@ -1,11 +1,11 @@
-/*	$NetBSD: parse.c,v 1.1.1.1 2013/03/24 15:45:54 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.1.1.2 2013/03/24 22:50:30 christos Exp $	*/
 
 /* parse.c
 
    Common parser code for dhcpd and dhclient. */
 
 /*
- * Copyright (c) 2004-2010 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2012 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.1.1.1 2013/03/24 15:45:54 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.1.1.2 2013/03/24 22:50:30 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -574,7 +574,9 @@ parse_ip_addr_with_subnet(cfile, match)
 
 /*
  * hardware-parameter :== HARDWARE hardware-type colon-separated-hex-list SEMI
- * hardware-type :== ETHERNET | TOKEN_RING | TOKEN_FDDI
+ * hardware-type :== ETHERNET | TOKEN_RING | TOKEN_FDDI | INFINIBAND
+ * Note that INFINIBAND may not be useful for some items, such as classification
+ * as the hardware address won't always be available.
  */
 
 void parse_hardware_param (cfile, hardware)
@@ -586,24 +588,27 @@ void parse_hardware_param (cfile, hardware)
 	unsigned hlen;
 	unsigned char *t;
 
-	token = next_token (&val, (unsigned *)0, cfile);
+	token = next_token(&val, NULL, cfile);
 	switch (token) {
 	      case ETHERNET:
-		hardware -> hbuf [0] = HTYPE_ETHER;
+		hardware->hbuf[0] = HTYPE_ETHER;
 		break;
 	      case TOKEN_RING:
-		hardware -> hbuf [0] = HTYPE_IEEE802;
+		hardware->hbuf[0] = HTYPE_IEEE802;
 		break;
 	      case TOKEN_FDDI:
-		hardware -> hbuf [0] = HTYPE_FDDI;
+		hardware->hbuf[0] = HTYPE_FDDI;
+		break;
+	      case TOKEN_INFINIBAND:
+		hardware->hbuf[0] = HTYPE_INFINIBAND;
 		break;
 	      default:
-		if (!strncmp (val, "unknown-", 8)) {
-			hardware -> hbuf [0] = atoi (&val [8]);
+		if (!strncmp(val, "unknown-", 8)) {
+			hardware->hbuf[0] = atoi(&val[8]);
 		} else {
-			parse_warn (cfile,
-				    "expecting a network hardware type");
-			skip_to_semi (cfile);
+			parse_warn(cfile,
+				   "expecting a network hardware type");
+			skip_to_semi(cfile);
 
 			return;
 		}
@@ -617,34 +622,33 @@ void parse_hardware_param (cfile, hardware)
 	   that data in the lease file rather than simply failing on such
 	   clients.   Yuck. */
 	hlen = 0;
-	token = peek_token (&val, (unsigned *)0, cfile);
+	token = peek_token(&val, NULL, cfile);
 	if (token == SEMI) {
-		hardware -> hlen = 1;
+		hardware->hlen = 1;
 		goto out;
 	}
-	t = parse_numeric_aggregate (cfile, (unsigned char *)0, &hlen,
-				     COLON, 16, 8);
-	if (!t) {
-		hardware -> hlen = 1;
+	t = parse_numeric_aggregate(cfile, NULL, &hlen, COLON, 16, 8);
+	if (t == NULL) {
+		hardware->hlen = 1;
 		return;
 	}
-	if (hlen + 1 > sizeof hardware -> hbuf) {
-		dfree (t, MDL);
-		parse_warn (cfile, "hardware address too long");
+	if (hlen + 1 > sizeof(hardware->hbuf)) {
+		dfree(t, MDL);
+		parse_warn(cfile, "hardware address too long");
 	} else {
-		hardware -> hlen = hlen + 1;
-		memcpy ((unsigned char *)&hardware -> hbuf [1], t, hlen);
-		if (hlen + 1 < sizeof hardware -> hbuf)
-			memset (&hardware -> hbuf [hlen + 1], 0,
-				(sizeof hardware -> hbuf) - hlen - 1);
-		dfree (t, MDL);
+		hardware->hlen = hlen + 1;
+		memcpy((unsigned char *)&hardware->hbuf[1], t, hlen);
+		if (hlen + 1 < sizeof(hardware->hbuf))
+			memset(&hardware->hbuf[hlen + 1], 0,
+			       (sizeof(hardware->hbuf)) - hlen - 1);
+		dfree(t, MDL);
 	}
 	
       out:
-	token = next_token (&val, (unsigned *)0, cfile);
+	token = next_token(&val, NULL, cfile);
 	if (token != SEMI) {
-		parse_warn (cfile, "expecting semicolon.");
-		skip_to_semi (cfile);
+		parse_warn(cfile, "expecting semicolon.");
+		skip_to_semi(cfile);
 	}
 }
 
@@ -676,7 +680,23 @@ void parse_lease_time (cfile, timep)
    the token specified in separator.  If max is zero, any number of
    numbers will be parsed; otherwise, exactly max numbers are
    expected.  Base and size tell us how to internalize the numbers
-   once they've been tokenized. */
+   once they've been tokenized.
+
+   buf - A pointer to space to return the parsed value, if it is null
+   then the function will allocate space for the return.
+
+   max - The maximum number of items to store.  If zero there is no
+   maximum.  When buf is null and the function needs to allocate space
+   it will do an allocation of max size at the beginning if max is non
+   zero.  If max is zero then the allocation will be done later, after
+   the function has determined the size necessary for the incoming
+   string.
+
+   returns NULL on errors or a pointer to the value string on success.
+   The pointer will either be buf if it was non-NULL or newly allocated
+   space if buf was NULL
+ */
+
 
 unsigned char *parse_numeric_aggregate (cfile, buf,
 					max, separator, base, size)
@@ -697,9 +717,8 @@ unsigned char *parse_numeric_aggregate (cfile, buf,
 		bufp = (unsigned char *)dmalloc (*max * size / 8, MDL);
 		if (!bufp)
 			log_fatal ("no space for numeric aggregate");
-		s = 0;
-	} else
-		s = bufp;
+	}
+	s = bufp;
 
 	do {
 		if (count) {
@@ -714,6 +733,9 @@ unsigned char *parse_numeric_aggregate (cfile, buf,
 				parse_warn (cfile, "too few numbers.");
 				if (token != SEMI)
 					skip_to_semi (cfile);
+				/* free bufp if it was allocated */
+				if ((bufp != NULL) && (bufp != buf))
+					dfree(bufp, MDL);
 				return (unsigned char *)0;
 			}
 			token = next_token (&val, (unsigned *)0, cfile);
@@ -730,7 +752,17 @@ unsigned char *parse_numeric_aggregate (cfile, buf,
 		    (base != 16 || token != NUMBER_OR_NAME)) {
 			parse_warn (cfile, "expecting numeric value.");
 			skip_to_semi (cfile);
-			return (unsigned char *)0;
+			/* free bufp if it was allocated */
+			if ((bufp != NULL) && (bufp != buf))
+				dfree(bufp, MDL);
+			/* free any linked numbers we may have allocated */
+			while (c) {
+				pair cdr = c->cdr;
+				dfree(c->car, MDL);
+				dfree(c, MDL);
+				c = cdr;
+			}
+			return (NULL);
 		}
 		/* If we can, convert the number now; otherwise, build
 		   a linked list of all the numbers. */
@@ -748,6 +780,10 @@ unsigned char *parse_numeric_aggregate (cfile, buf,
 
 	/* If we had to cons up a list, convert it now. */
 	if (c) {
+		/*
+		 * No need to cleanup bufp, to get here we didn't allocate
+		 * bufp above
+		 */
 		bufp = (unsigned char *)dmalloc (count * size / 8, MDL);
 		if (!bufp)
 			log_fatal ("no space for numeric aggregate.");
@@ -908,7 +944,7 @@ parse_date_core(cfile)
 	struct parse *cfile;
 {
 	int guess;
-	int tzoff, wday, year, mon, mday, hour, min, sec;
+	int tzoff, year, mon, mday, hour, min, sec;
 	const char *val;
 	enum dhcp_token token;
 	static int months[11] = { 31, 59, 90, 120, 151, 181,
@@ -946,7 +982,7 @@ parse_date_core(cfile)
 		return((TIME)0);
 	}
 	token = next_token(&val, NULL, cfile); /* consume day of week */
-	wday = atoi(val);
+        /* we are not using this for anything */
 
 	/* Year... */
 	token = peek_token(&val, NULL, cfile);
@@ -1819,7 +1855,6 @@ int parse_base64 (data, cfile)
 	struct data_string *data;
 	struct parse *cfile;
 {
-	enum dhcp_token token;
 	const char *val;
 	int i, j, k;
 	unsigned acc = 0;
@@ -1836,11 +1871,12 @@ int parse_base64 (data, cfile)
 			     33, 34, 35, 36, 37, 38, 39, 40,  /* hijklmno */
 			     41, 42, 43, 44, 45, 46, 47, 48,  /* pqrstuvw */
 			     49, 50, 51, 64, 64, 64, 64, 64}; /* xyz{|}~  */
-	struct string_list *bufs = (struct string_list *)0,
-			   *last = (struct string_list *)0,
+	struct string_list *bufs = NULL,
+			   *last = NULL,
 			   *t;
 	int cc = 0;
 	int terminated = 0;
+	int valid_base64;
 	
 	/* It's possible for a + or a / to cause a base64 quantity to be
 	   tokenized into more than one token, so we have to parse them all
@@ -1848,55 +1884,64 @@ int parse_base64 (data, cfile)
 	do {
 		unsigned l;
 
-		token = next_token (&val, &l, cfile);
-		t = dmalloc (l + sizeof *t, MDL);
-		if (!t)
-			log_fatal ("no memory for base64 buffer.");
-		memset (t, 0, (sizeof *t) - 1);
-		memcpy (t -> string, val, l + 1);
+		(void)next_token(&val, &l, cfile);
+		t = dmalloc(l + sizeof(*t), MDL);
+		if (t == NULL)
+			log_fatal("no memory for base64 buffer.");
+		memset(t, 0, (sizeof(*t)) - 1);
+		memcpy(t->string, val, l + 1);
 		cc += l;
 		if (last)
-			last -> next = t;
+			last->next = t;
 		else
 			bufs = t;
 		last = t;
-		token = peek_token (&val, (unsigned *)0, cfile);
-	} while (token == NUMBER_OR_NAME || token == NAME || token == EQUAL ||
-		 token == NUMBER || token == PLUS || token == SLASH ||
-		 token == STRING);
+		(void)peek_token(&val, NULL, cfile);
+		valid_base64 = 1;
+		for (i = 0; val[i]; i++) {
+			/* Check to see if the character is valid.  It
+			   may be out of range or within the right range
+			   but not used in the mapping */
+			if (((val[i] < ' ') || (val[i] > 'z')) ||
+			    ((from64[val[i] - ' '] > 63) && (val[i] != '='))) {
+				valid_base64 = 0;
+				break; /* no need to continue for loop */
+			}
+		}
+	} while (valid_base64);
 
-	data -> len = cc;
-	data -> len = (data -> len * 3) / 4;
-	if (!buffer_allocate (&data -> buffer, data -> len, MDL)) {
+	data->len = cc;
+	data->len = (data->len * 3) / 4;
+	if (!buffer_allocate(&data->buffer, data->len, MDL)) {
 		parse_warn (cfile, "can't allocate buffer for base64 data.");
-		data -> len = 0;
-		data -> data = (unsigned char *)0;
-		return 0;
+		data->len = 0;
+		data->data = NULL;
+		goto out;
 	}
 		
 	j = k = 0;
-	for (t = bufs; t; t = t -> next) {
-	    for (i = 0; t -> string [i]; i++) {
-		unsigned foo = t -> string [i];
+	for (t = bufs; t; t = t->next) {
+	    for (i = 0; t->string[i]; i++) {
+		unsigned foo = t->string[i];
 		if (terminated && foo != '=') {
-			parse_warn (cfile,
-				    "stuff after base64 '=' terminator: %s.",
-				    &t -> string [i]);
+			parse_warn(cfile,
+				   "stuff after base64 '=' terminator: %s.",
+				   &t->string[i]);
 			goto bad;
 		}
-		if (foo < ' ' || foo > 'z') {
+		if ((foo < ' ') || (foo > 'z')) {
 		      bad64:
-			parse_warn (cfile,
-				    "invalid base64 character %d.",
-				    t -> string [i]);
+			parse_warn(cfile,
+				   "invalid base64 character %d.",
+				   t->string[i]);
 		      bad:
-			data_string_forget (data, MDL);
+			data_string_forget(data, MDL);
 			goto out;
 		}
 		if (foo == '=')
 			terminated = 1;
 		else {
-			foo = from64 [foo - ' '];
+			foo = from64[foo - ' '];
 			if (foo == 64)
 				goto bad64;
 			acc = (acc << 6) + foo;
@@ -1904,16 +1949,16 @@ int parse_base64 (data, cfile)
 			      case 0:
 				break;
 			      case 1:
-				data -> buffer -> data [j++] = (acc >> 4);
+				data->buffer->data[j++] = (acc >> 4);
 				acc = acc & 0x0f;
 				break;
 				
 			      case 2:
-				data -> buffer -> data [j++] = (acc >> 2);
+				data->buffer->data[j++] = (acc >> 2);
 				acc = acc & 0x03;
 				break;
 			      case 3:
-				data -> buffer -> data [j++] = acc;
+				data->buffer->data[j++] = acc;
 				acc = 0;
 				break;
 			}
@@ -1923,19 +1968,19 @@ int parse_base64 (data, cfile)
 	}
 	if (k % 4) {
 		if (acc) {
-			parse_warn (cfile,
-				    "partial base64 value left over: %d.",
-				    acc);
+			parse_warn(cfile,
+				   "partial base64 value left over: %d.",
+				   acc);
 		}
 	}
-	data -> len = j;
-	data -> data = data -> buffer -> data;
+	data->len = j;
+	data->data = data->buffer->data;
       out:
 	for (t = bufs; t; t = last) {
-		last = t -> next;
-		dfree (t, MDL);
+		last = t->next;
+		dfree(t, MDL);
 	}
-	if (data -> len)
+	if (data->len)
 		return 1;
 	else
 		return 0;
@@ -3391,11 +3436,10 @@ int parse_boolean_expression (expr, cfile, lose)
 int parse_boolean (cfile)
 	struct parse *cfile;
 {
-	enum dhcp_token token;
 	const char *val;
 	int rv;
 
-	token = next_token (&val, (unsigned *)0, cfile);
+        (void)next_token(&val, NULL, cfile);
 	if (!strcasecmp (val, "true")
 	    || !strcasecmp (val, "on"))
 		rv = 1;
@@ -5260,6 +5304,8 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 			return 0;
 		}
 		*fmt = g;
+		/* FALL THROUGH */
+		/* to get string value for the option */
 	      case 'X':
 		token = peek_token (&val, (unsigned *)0, cfile);
 		if (token == NUMBER_OR_NAME || token == NUMBER) {
@@ -5520,11 +5566,26 @@ int parse_option_decl (oc, cfile)
 	if (status != ISC_R_SUCCESS || option == NULL)
 		return 0;
 
+	fmt = option->format;
+
 	/* Parse the option data... */
 	do {
-		for (fmt = option -> format; *fmt; fmt++) {
-			if (*fmt == 'A')
+		for (; *fmt; fmt++) {
+			if (*fmt == 'A') {
+				/* 'A' is an array of records, start at
+				 *  the beginning
+				 */
+				fmt = option->format;
 				break;
+			}
+
+			if (*fmt == 'a') {
+				/* 'a' is an array of the last field,
+				 * back up one format character
+				 */
+				fmt--;
+				break;
+			}
 			if (*fmt == 'o' && fmt != option -> format)
 				continue;
 			switch (*fmt) {
@@ -5536,6 +5597,8 @@ int parse_option_decl (oc, cfile)
 						    "encapsulation format");
 					goto parse_exit;
 				}
+				/* FALL THROUGH */
+				/* to get string value for the option */
 			      case 'X':
 				len = parse_X (cfile, &hunkbuf [hunkix],
 					       sizeof hunkbuf - hunkix);
@@ -5720,7 +5783,7 @@ int parse_option_decl (oc, cfile)
 				goto alloc;
 
 			      case 'Z':	/* Zero-length option */
-				token = next_token(&val, (unsigned *)0, cfile);
+				token = peek_token(&val, (unsigned *)0, cfile);
 				if (token != SEMI) {
 					parse_warn(cfile,
 						   "semicolon expected.");
@@ -5737,7 +5800,7 @@ int parse_option_decl (oc, cfile)
 			}
 		}
 		token = next_token (&val, (unsigned *)0, cfile);
-	} while (*fmt == 'A' && token == COMMA);
+	} while (*fmt && token == COMMA);
 
 	if (token != SEMI) {
 		parse_warn (cfile, "semicolon expected.");
@@ -5747,8 +5810,6 @@ int parse_option_decl (oc, cfile)
 	bp = (struct buffer *)0;
 	if (!buffer_allocate (&bp, hunkix + nul_term, MDL))
 		log_fatal ("no memory to store option declaration.");
-	if (!bp -> data)
-		log_fatal ("out of memory allocating option data.");
 	memcpy (bp -> data, hunkbuf, hunkix + nul_term);
 	
 	if (!option_cache_allocate (oc, MDL))

@@ -91,6 +91,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to the string for a noreturn attribute. */
+#undef ISC_DHCP_NORETURN
+
 /* Define to 1 if the system has 'struct if_laddrconf'. */
 #undef ISC_PLATFORM_HAVEIF_LADDRCONF
 
@@ -123,6 +126,9 @@
 
 /* Define to any value to include Ari's PARANOIA patch. */
 #undef PARANOIA
+
+/* Define to correct bad byteorders in secs field. */
+#undef SECS_BYTEORDER
 
 /* The size of `struct iaddr *', as computed by sizeof. */
 #undef SIZEOF_STRUCT_IADDR_P

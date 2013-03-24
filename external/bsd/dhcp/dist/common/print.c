@@ -1,11 +1,11 @@
-/*	$NetBSD: print.c,v 1.1.1.1 2013/03/24 15:45:54 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.1.1.2 2013/03/24 22:50:32 christos Exp $	*/
 
 /* print.c
 
    Turn data structures into printable text. */
 
 /*
- * Copyright (c) 2009-2011 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009-2012 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.1.1.1 2013/03/24 15:45:54 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.1.1.2 2013/03/24 22:50:32 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -484,10 +484,9 @@ char *print_dotted_quads (len, data)
 {
 	static char dq_buf [DQLEN + 1];
 	int i;
-	char *s, *last;
+	char *s;
 
 	s = &dq_buf [0];
-	last = s;
 	
 	i = 0;
 
@@ -1140,6 +1139,7 @@ static unsigned print_subexpression (expr, buf, len)
 			buf [rv] = 0;
 			return rv;
 		}
+		break;
 
 	      case expr_gethostname:
 		if (len > 13) {
@@ -1251,7 +1251,12 @@ int token_print_indent (FILE *file, int col, int indent,
 			const char *prefix,
 			const char *suffix, const char *buf)
 {
-	int len = strlen (buf) + strlen (prefix);
+	int len = 0;
+	if (prefix != NULL)
+		len = strlen (prefix);
+	if (buf != NULL)
+		len += strlen (buf);
+
 	if (col + len > 79) {
 		if (indent + len < 79) {
 			indent_spaces (file, indent);
@@ -1264,8 +1269,10 @@ int token_print_indent (FILE *file, int col, int indent,
 		fputs (prefix, file);
 		col += strlen (prefix);
 	}
-	fputs (buf, file);
-	col += len;
+	if ((buf != NULL) && (*buf != 0)) {
+		fputs (buf, file);
+		col += strlen(buf);
+	}
 	if (suffix && *suffix) {
 		if (col + strlen (suffix) > 79) {
 			indent_spaces (file, indent);
