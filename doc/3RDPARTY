@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1016 2013/03/23 16:18:29 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1017 2013/03/24 22:26:45 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -283,8 +283,8 @@ distribution into the netbsd format.  The script can be found in
 src/lib/libc/db/db2netbsd.
 
 Package:	dhcp
-Version:	3.0.3
-Current Vers:	4.1-ESV-R6/4.2.4-P1
+Version:	4.2.3
+Current Vers:	4.2.4-P1
 Maintainer:	mellon
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Home Page:	http://www.isc.org/software/dhcp/
@@ -294,10 +294,9 @@ Mailing List:	dhcp-announce@isc.org
 Mailing List:	dhcp-bugs@isc.org
 Responsible:	mellon
 License:	BSD (3-clause)
-Location:	dist/dhcp
+Location:	external/bsd/dhcp
 Notes:
-No changes for NetBSD integration - just import the new distribution on
-top of the current tree.
+Use the dhcp2netbsd script.
 
 Package:	dhcpcd
 Version:	5.6.7
