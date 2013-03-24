@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.29 2012/11/05 15:11:36 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.30 2013/03/24 06:27:52 kiyohara Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2012/11/05 15:11:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2013/03/24 06:27:52 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1026,11 +1026,15 @@ pmap_kremove(vaddr_t va, vsize_t size)
 {
         struct ia64_lpte *pte;
 
-        pte = pmap_find_kpte(va);
-        if (pmap_present(pte)) {
-                pmap_remove_vhpt(va);
-                pmap_invalidate_page(pmap_kernel(), va);
-                pmap_clear_present(pte);
+	while (size > 0) {
+		pte = pmap_find_kpte(va);
+		if (pmap_present(pte)) {
+			pmap_remove_vhpt(va);
+			pmap_invalidate_page(pmap_kernel(), va);
+			pmap_clear_present(pte);
+		}
+		va += PAGE_SIZE;
+		size -= PAGE_SIZE;
         }
 }
 
