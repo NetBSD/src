@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.3 2013/03/24 16:27:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
@@ -207,7 +207,6 @@ b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
  */
 
 int
-/*###207 [cc] error: no previous prototype for 'b64_pton'%%%*/
 b64_pton(char const *src, u_char *target, size_t targsize)
 {
 	int tarindex, state, ch;
