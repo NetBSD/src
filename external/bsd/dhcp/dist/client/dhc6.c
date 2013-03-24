@@ -1,4 +1,4 @@
-/*	$NetBSD: dhc6.c,v 1.1.1.1 2013/03/24 15:45:59 christos Exp $	*/
+/*	$NetBSD: dhc6.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
 
 /* dhc6.c - DHCPv6 client routines. */
 
@@ -4790,7 +4790,7 @@ unconfigure6(struct client_state *client, const char *reason)
 	}
 }
 
-void
+static void
 refresh_info_request6(void *input)
 {
 	struct client_state *client;
