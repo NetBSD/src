@@ -1,11 +1,12 @@
-/*	$NetBSD: alloc.c,v 1.1.1.1 2013/03/24 15:45:52 christos Exp $	*/
+/*	$NetBSD: alloc.c,v 1.1.1.2 2013/03/24 22:50:29 christos Exp $	*/
 
 /* alloc.c
 
    Memory allocation... */
 
 /*
- * Copyright (c) 2004-2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -35,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: alloc.c,v 1.1.1.1 2013/03/24 15:45:52 christos Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.1.1.2 2013/03/24 22:50:29 christos Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -836,11 +837,11 @@ int dns_host_entry_dereference (ptr, file, line)
 #endif
 	}
 
-	(*ptr) -> refcnt--;
-	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt, 1, RC_MISC);
-	if (!(*ptr) -> refcnt)
+	(*ptr)->refcnt--;
+	rc_register (file, line, ptr, *ptr, (*ptr)->refcnt, 1, RC_MISC);
+	if ((*ptr)->refcnt == 0) {
 		dfree ((*ptr), file, line);
-	if ((*ptr) -> refcnt < 0) {
+	} else if ((*ptr)->refcnt < 0) {
 		log_error ("%s(%d): negative refcnt!", file, line);
 #if defined (DEBUG_RC_HISTORY)
 		dump_rc_history (*ptr);

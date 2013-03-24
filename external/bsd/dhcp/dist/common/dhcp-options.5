@@ -1,7 +1,8 @@
-.\"	$NetBSD: dhcp-options.5,v 1.1.1.1 2013/03/24 15:45:51 christos Exp $
+.\"	$NetBSD: dhcp-options.5,v 1.1.1.2 2013/03/24 22:50:30 christos Exp $
 .\"
-.\"	Id: dhcp-options.5,v 1.45.18.6 2011-05-20 14:33:26 tomasz Exp 
+.\"	Id: dhcp-options.5,v 1.45.18.6 2011/05/20 14:33:26 tomasz Exp 
 .\"
+.\" Copyright (c) 2012 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2004-2010 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
@@ -36,18 +37,18 @@ dhcp-options - Dynamic Host Configuration Protocol options
 The Dynamic Host Configuration protocol allows the client to receive
 .B options
 from the DHCP server describing the network configuration and various
-services that are available on the network.   When configuring
+services that are available on the network.  When configuring
 .B dhcpd(8)
 or
 .B dhclient(8) ,
-options must often be declared.   The syntax for declaring options,
+options must often be declared.  The syntax for declaring options,
 and the names and formats of the options that can be declared, are
 documented here.
 .SH REFERENCE: OPTION STATEMENTS
 .PP
 DHCP \fIoption\fR statements always start with the \fIoption\fR
 keyword, followed by an option name, followed by option data.  The
-option names and data formats are described below.   It is not
+option names and data formats are described below.  It is not
 necessary to exhaustively specify all DHCP options - only those
 options which are needed by clients must be specified.
 .PP
@@ -66,13 +67,13 @@ data specifies an IPv6 address, like ::1 or 3ffe:bbbb:aaaa:aaaa::1.
 .PP
 The
 .B int32
-data type specifies a signed 32-bit integer.   The 
+data type specifies a signed 32-bit integer.  The
 .B uint32
-data type specifies an unsigned 32-bit integer.   The 
+data type specifies an unsigned 32-bit integer.  The
 .B int16
 and
 .B uint16
-data types specify signed and unsigned 16-bit integers.   The 
+data types specify signed and unsigned 16-bit integers.  The
 .B int8
 and
 .B uint8
@@ -92,8 +93,8 @@ option root-path "10.0.1.4:/var/tmp/rootfs";
 The
 .B domain-name
 data type specifies a domain name, which must not be
-enclosed in double quotes.   This data type is not used for any
-existing DHCP options.   The domain name is stored just as if it were
+enclosed in double quotes.  This data type is not used for any
+existing DHCP options.  The domain name is stored just as if it were
 a text option.
 .PP
 The
@@ -103,14 +104,14 @@ separated by commas ("example.com", "foo.example.com").
 .PP
 The
 .B flag
-data type specifies a boolean value.   Booleans can be either true or
+data type specifies a boolean value.  Booleans can be either true or
 false (or on or off, if that makes more sense to you).
 .PP
 The
 .B string
 data type specifies either an NVT ASCII string
 enclosed in double quotes, or a series of octets specified in
-hexadecimal, separated by colons.   For example:
+hexadecimal, separated by colons.  For example:
 .nf
 .sp 1
   option dhcp-client-identifier "CLIENT-FOO";
@@ -119,10 +120,10 @@ or
 .fi
 .SH SETTING OPTION VALUES USING EXPRESSIONS
 Sometimes it's helpful to be able to set the value of a DHCP option
-based on some value that the client has sent.   To do this, you can
-use expression evaluation.   The 
+based on some value that the client has sent.  To do this, you can
+use expression evaluation.  The 
 .B dhcp-eval(5)
-manual page describes how to write expressions.   To assign the result
+manual page describes how to write expressions.  To assign the result
 of an evaluation to an option, define the option as follows:
 .nf
 .sp 1
@@ -253,7 +254,7 @@ against the client identifier.
 .PP
 Please be aware that some DHCP clients, when configured with client
 identifiers that are ASCII text, will prepend a zero to the ASCII
-text.   So you may need to write:
+text.  So you may need to write:
 .nf
 
 	option dhcp-client-identifier "\\0foo";
@@ -270,7 +271,7 @@ rather than:
 This option is used in a client request (DHCPDISCOVER or DHCPREQUEST)
 to allow the client to request a lease time for the IP address.  In a
 server reply (DHCPOFFER), a DHCP server uses this option to specify
-the lease time it is willing to offer.                                    
+the lease time it is willing to offer.
 .PP
 This option is not directly user configurable in the server; refer to the
 \fImax-lease-time\fR and \fIdefault-lease-time\fR server options in
@@ -281,9 +282,9 @@ This option is not directly user configurable in the server; refer to the
 .RS 0.25i
 .PP
 This option, when sent by the client, specifies the maximum size of
-any response that the server sends to the client.   When specified on
+any response that the server sends to the client.  When specified on
 the server, if the client did not send a dhcp-max-message-size option,
-the size specified on the server is used.   This works for BOOTP as
+the size specified on the server is used.  This works for BOOTP as
 well as DHCP responses.
 .RE
 .PP
@@ -313,7 +314,7 @@ RFC2132) are:
              5     DHCPACK
              6     DHCPNAK
              7     DHCPRELEASE
-             8     DHCPINFORM               
+             8     DHCPINFORM
 .fi
 .PP
 This option is not user configurable.
@@ -336,7 +337,7 @@ Legal values for this option are:
 .nf
              1     the \'file\' field is used to hold options
              2     the \'sname\' field is used to hold options
-             3     both fields are used to hold options                        
+             3     both fields are used to hold options
 .fi
 .PP
 This option is not user configurable.
@@ -348,12 +349,12 @@ This option is not user configurable.
 .RS 0.25i
 .PP
 This option, when sent by the client, specifies which options the
-client wishes the server to return.   Normally, in the ISC DHCP
-client, this is done using the \fIrequest\fR statement.   If this
+client wishes the server to return.  Normally, in the ISC DHCP
+client, this is done using the \fIrequest\fR statement.  If this
 option is not specified by the client, the DHCP server will normally
 return every option that is valid in scope and that fits into the
-reply.   When this option is specified on the server, the server
-returns the specified options.   This can be used to force a client to
+reply.  When this option is specified on the server, the server
+returns the specified options.  This can be used to force a client to
 take options that it hasn't requested, and it can also be used to
 tailor the response of the DHCP server for clients that may need a
 more limited set of options than those the server would normally
@@ -367,7 +368,7 @@ This option specifies the number of seconds from the time a client gets
 an address until the client transitions to the REBINDING state.
 .PP
 This option is user configurable, but it will be ignored if the value is
-greater than the lease time.
+greater than or equal to the lease time.
 .PP
 To make DHCPv4+DHCPv6 migration easier in the future, any value configured
 in this option is also used as a DHCPv6 "T1" (renew) time.
@@ -381,7 +382,7 @@ This option specifies the number of seconds from the time a client gets
 an address until the client transitions to the RENEWING state.
 .PP
 This option is user configurable, but it will be ignored if the value is
-greater than the rebinding time, or lease time.
+greater than or equal to the rebinding time, or lease time.
 .PP
 To make DHCPv4+DHCPv6 migration easier in the future, any value configured
 in this option is also used as a DHCPv6 "T2" (rebind) time.
@@ -392,7 +393,7 @@ in this option is also used as a DHCPv6 "T2" (rebind) time.
 .RS 0.25i
 .PP
 This option is used by the client in a DHCPDISCOVER to
-request that a particular IP address be assigned.                 
+request that a particular IP address be assigned.
 .PP
 This option is not user configurable.
 .PP
@@ -412,7 +413,7 @@ this option in a DHCPREQUEST message.
 .PP
 The value of this option is the IP address of the server.
 .PP
-This option is not directly user configurable. See the 
+This option is not directly user configurable. See the
 \fIserver-identifier\fR server option in
 .B \fIdhcpd.conf(5).
 .PP
@@ -515,7 +516,7 @@ preference.
 .B option \fBinterface-mtu\fR \fIuint16\fR\fB;\fR
 .RS 0.25i
 .PP
-This option specifies the MTU to use on this interface.   The minimum
+This option specifies the MTU to use on this interface.  The minimum
 legal value for the MTU is 68.
 .RE
 .PP
@@ -620,8 +621,8 @@ list of RFC 1001/1002 NBDD servers listed in order of preference.
 .RS 0.25i
 .PP
 The NetBIOS name server (NBNS) option specifies a list of RFC
-1001/1002 NBNS name servers listed in order of preference.   NetBIOS
-Name Service is currently more commonly referred to as WINS.   WINS
+1001/1002 NBNS name servers listed in order of preference.  NetBIOS
+Name Service is currently more commonly referred to as WINS.  WINS
 servers can be specified using the netbios-name-servers option.
 .RE
 .PP
@@ -749,7 +750,7 @@ use.
 .RS 0.25i
 .PP
 A sequence of suboptions for NetWare/IP clients - see RFC2242 for
-details.   Normally this option is set by specifying specific
+details.  Normally this option is set by specifying specific
 NetWare/IP suboptions - see the NETWARE/IP SUBOPTIONS section for more
 information.
 .RE
@@ -853,8 +854,8 @@ client's subnet.  Routers should be listed in order of preference.
 .PP
 This option specifies two things: the IP addresses of one or more
 Service Location Protocol Directory Agents, and whether the use of
-these addresses is mandatory.   If the initial boolean value is true,
-the SLP agent should just use the IP addresses given.   If the value
+these addresses is mandatory.  If the initial boolean value is true,
+the SLP agent should just use the IP addresses given.  If the value
 is false, the SLP agent may additionally do active or passive
 multicast discovery of SLP agents (see RFC2165 for details).
 .PP
@@ -879,7 +880,7 @@ otherwise, it may use its own static configuration in preference to
 the list provided in this option.
 .PP
 The text string should be a comma-separated list of scopes that the
-SLP agent should use.   It may be omitted, in which case the SLP Agent
+SLP agent should use.  It may be omitted, in which case the SLP Agent
 will use the aggregated list of scopes of all directory agents known
 to the SLP agent.
 .RE
@@ -910,8 +911,8 @@ the destination.
 The default route (0.0.0.0) is an illegal destination for a static
 route.  To specify the default route, use the
 .B routers
-option.   Also, please note that this option is not intended for
-classless IP routing - it does not include a subnet mask.   Since
+option.  Also, please note that this option is not intended for
+classless IP routing - it does not include a subnet mask.  Since
 classless IP routing is now the most widely deployed routing standard,
 this option is virtually useless, and is not implemented by any of the
 popular DHCP clients, for example the Microsoft DHCP client.
@@ -994,7 +995,7 @@ connections unless specifically requested by an application.
 .PP
 This option is used to identify a TFTP server and, if supported by the
 client, should have the same effect as the \fBserver-name\fR
-declaration.   BOOTP clients are unlikely to support this option.
+declaration.  BOOTP clients are unlikely to support this option.
 Some DHCP clients will support it, and others actually require it.
 .RE
 .PP
@@ -1033,7 +1034,7 @@ servers can accept either HTTP 1.1 or SSLv3 connections.  If the list
 includes a URL that does not contain a port component, the normal
 default port is assumed (i.e., port 80 for http and port 443 for
 https).  If the list includes a URL that does not contain a path
-component, the path /uap is assumed.   If more than one URL is
+component, the path /uap is assumed.  If more than one URL is
 specified in this list, the URLs are separated by spaces.
 .RE
 .PP
@@ -1041,9 +1042,9 @@ specified in this list, the URLs are separated by spaces.
 .RS 0.25i
 .PP
 This option is used by some DHCP clients as a way for users to
-specify identifying information to the client.   This can be used in a
+specify identifying information to the client.  This can be used in a
 similar way to the vendor-class-identifier option, but the value of
-the option is specified by the user, not the vendor.   Most recent
+the option is specified by the user, not the vendor.  Most recent
 DHCP clients have a way in the user interface to specify the value for
 this identifier, usually as a text string.
 .RE
@@ -1054,7 +1055,7 @@ this identifier, usually as a text string.
 This option is used by some DHCP clients to identify the vendor
 type and possibly the configuration of a DHCP client.  The information
 is a string of bytes whose contents are specific to the vendor and are
-not specified in a standard.   To see what vendor class identifier
+not specified in a standard.  To see what vendor class identifier
 clients are sending, you can write the following in your DHCP server
 configuration file:
 .nf
@@ -1073,7 +1074,7 @@ set vendor-string = "SUNW.Ultra-5_10";
 The vendor-class-identifier option is normally used by the DHCP server
 to determine the options that are returned in the
 .B vendor-encapsulated-options
-option.   Please see the VENDOR ENCAPSULATED OPTIONS section later in this
+option.  Please see the VENDOR ENCAPSULATED OPTIONS section later in this
 manual page for further information.
 .RE
 .PP
@@ -1082,7 +1083,7 @@ manual page for further information.
 .PP
 The \fBvendor-encapsulated-options\fR option can contain either a
 single vendor-specific value or one or more vendor-specific
-suboptions.   This option is not normally specified in the DHCP server
+suboptions.  This option is not normally specified in the DHCP server
 configuration file - instead, a vendor class is defined for each
 vendor, vendor class suboptions are defined, values for those
 suboptions are defined, and the DHCP server makes up a response on
@@ -1125,18 +1126,18 @@ should be listed in order of preference.
 .SH RELAY AGENT INFORMATION OPTION
 An IETF draft, draft-ietf-dhc-agent-options-11.txt, defines a series
 of encapsulated options that a relay agent can add to a DHCP packet
-when relaying it to the DHCP server.   The server can then make
+when relaying it to the DHCP server.  The server can then make
 address allocation decisions (or whatever other decisions it wants)
-based on these options.   The server also returns these options in any
+based on these options.  The server also returns these options in any
 replies it sends through the relay agent, so that the relay agent can
 use the information in these options for delivery or accounting
 purposes.
 .PP
-The current draft defines two options.   To reference
+The current draft defines two options.  To reference
 these options in the dhcp server, specify the option space name,
-"agent", followed by a period, followed by the option name.   It is
+"agent", followed by a period, followed by the option name.  It is
 not normally useful to define values for these options in the server,
-although it is permissible.   These options are not supported in the
+although it is permissible.  These options are not supported in the
 client.
 .PP
 .B option \fBagent.circuit-id\fR \fIstring\fR\fB;\fR
@@ -1145,7 +1146,7 @@ client.
 The circuit-id suboption encodes an agent-local identifier of the
 circuit from which a DHCP client-to-server packet was received.  It is
 intended for use by agents in relaying DHCP responses back to the
-proper circuit.   The format of this option is currently defined to be
+proper circuit.  The format of this option is currently defined to be
 vendor-dependent, and will probably remain that way, although the
 current draft allows for for the possibility of standardizing the
 format in the future.
@@ -1155,9 +1156,9 @@ format in the future.
 .RS 0.25i
 .PP
 The remote-id suboption encodes information about the remote host end
-of a circuit.   Examples of what it might contain include caller ID
+of a circuit.  Examples of what it might contain include caller ID
 information, username information, remote ATM address, cable modem ID,
-and similar things.   In principal, the meaning is not well-specified,
+and similar things.  In principal, the meaning is not well-specified,
 and it should generally be assumed to be an opaque object that is
 administratively guaranteed to be unique to a particular remote end of
 a circuit.
@@ -1192,9 +1193,9 @@ appropriate.
 .SH THE CLIENT FQDN SUBOPTIONS
 The Client FQDN option, currently defined in the Internet Draft
 draft-ietf-dhc-fqdn-option-00.txt is not a standard yet, but is in
-sufficiently wide use already that we have implemented it.   Due to
+sufficiently wide use already that we have implemented it.  Due to
 the complexity of the option format, we have implemented it as a
-suboption space rather than a single option.   In general this
+suboption space rather than a single option.  In general this
 option should not be configured by the user - instead it should be
 used as part of an automatic DNS update system.
 .PP
@@ -1202,7 +1203,7 @@ used as part of an automatic DNS update system.
 .RS 0.25i
 .PP
 When the client sends this, if it is true, it means the client will not
-attempt to update its A record.   When sent by the server to the client,
+attempt to update its A record.  When sent by the server to the client,
 it means that the client \fIshould not\fR update its own A record.
 .RE
 .PP
@@ -1210,7 +1211,7 @@ it means that the client \fIshould not\fR update its own A record.
 .RS 0.25i
 .PP
 When the client sends this to the server, it is requesting that the server
-update its A record.   When sent by the server, it means that the server
+update its A record.  When sent by the server, it means that the server
 has updated (or is about to update) the client's A record.
 .RE
 .PP
@@ -1218,10 +1219,10 @@ has updated (or is about to update) the client's A record.
 .RS 0.25i
 .PP
 If true, this indicates that the domain name included in the option is
-encoded in DNS wire format, rather than as plain ASCII text.   The client
+encoded in DNS wire format, rather than as plain ASCII text.  The client
 normally sets this to false if it doesn't support DNS wire format in the
-FQDN option.   The server should always send back the same value that the
-client sent.   When this value is set on the configuration side, it controls
+FQDN option.  The server should always send back the same value that the
+client sent.  When this value is set on the configuration side, it controls
 the format in which the \fIfqdn.fqdn\fR suboption is encoded.
 .RE
 .PP
@@ -1238,8 +1239,8 @@ The values of these fields are those defined in the DNS protocol specification.
 .B option fqdn.fqdn \fItext\fB;
 .RS 0.25i
 .PP
-Specifies the domain name that the client wishes to use.   This can be a
-fully-qualified domain name, or a single label.   If there is no trailing
+Specifies the domain name that the client wishes to use.  This can be a
+fully-qualified domain name, or a single label.  If there is no trailing
 \'.\' character in the name, it is not fully-qualified, and the server will
 generally update that name in some locally-defined domain.
 .RE
@@ -1261,7 +1262,7 @@ This option should never be set, but it can be read back using the \fBoption\fR
 and \fBconfig-option\fR operators in an expression, in which case it returns
 all labels after the first label in the \fBfqdn.fqdn\fR suboption - for
 example, if the value of \fBfqdn.fqdn\fR is "foo.example.com.",
-then \fBfqdn.hostname\fR will be "example.com.".   If this suboption value
+then \fBfqdn.hostname\fR will be "example.com.".  If this suboption value
 is not set, it means that an unqualified name was sent in the fqdn option,
 or that no fqdn option was sent at all.
 .RE
@@ -1281,7 +1282,7 @@ The following options can be specified:
 .RS 0.25i
 .PP
 If true, the client should use the NetWare Nearest Server Query to
-locate a NetWare/IP server.   The behaviour of the Novell client if
+locate a NetWare/IP server.  The behaviour of the Novell client if
 this suboption is false, or is not present, is not specified.
 .PP
 .RE
@@ -1320,7 +1321,7 @@ server at startup.
 .RS 0.25i
 .PP
 If true, the NetWare/IP client should support NetWare/IP version 1.1
-compatibility.   This is only needed if the client will be contacting
+compatibility.  This is only needed if the client will be contacting
 Netware/IP version 1.1 servers.
 .RE
 .PP
@@ -1328,7 +1329,7 @@ Netware/IP version 1.1 servers.
 .RS 0.25i
 .PP
 Specifies the IP address of the Primary Domain SAP/RIP Service server
-(DSS) for this NetWare/IP domain.   The NetWare/IP administration
+(DSS) for this NetWare/IP domain.  The NetWare/IP administration
 utility uses this value as Primary DSS server when configuring a
 secondary DSS server.
 .RE
@@ -1717,19 +1718,19 @@ The \fBlq-client-link\fR option is used internally by for lease query.
 .RE
 .SH DEFINING NEW OPTIONS
 The Internet Systems Consortium DHCP client and server provide the
-capability to define new options.   Each DHCP option has a name, a
-code, and a structure.   The name is used by you to refer to the
-option.   The code is a number, used by the DHCP server and client to
-refer to an option.   The structure describes what the contents of an
+capability to define new options.  Each DHCP option has a name, a
+code, and a structure.  The name is used by you to refer to the
+option.  The code is a number, used by the DHCP server and client to
+refer to an option.  The structure describes what the contents of an
 option looks like.
 .PP
 To define a new option, you need to choose a name for it that is not
 in use for some other option - for example, you can't use "host-name"
 because the DHCP protocol already defines a host-name option, which is
-documented earlier in this manual page.   If an option name doesn't
+documented earlier in this manual page.  If an option name doesn't
 appear in this manual page, you can use it, but it's probably a good
 idea to put some kind of unique string at the beginning so you can be
-sure that future options don't take your name.   For example, you
+sure that future options don't take your name.  For example, you
 might define an option, "local-host-name", feeling some confidence
 that no official DHCP option name will ever start with "local".
 .PP
@@ -1745,7 +1746,7 @@ a vendor-documented option code in either the new or old site-local
 spaces, please contact your vendor and inform them about rfc3942.
 .PP
 The structure of an option is simply the format in which the option
-data appears.   The ISC DHCP server currently supports a few simple
+data appears.  The ISC DHCP server currently supports a few simple
 types, like integers, booleans, strings and IP addresses, and it also
 supports the ability to define arrays of single types or arrays of
 fixed sequences of types.
@@ -1765,7 +1766,7 @@ The values of
 and
 .I new-code
 should be the name you have chosen for the new option and the code you
-have chosen.   The
+have chosen.  The
 .I definition
 should be the definition of the structure of the option.
 .PP
@@ -1782,7 +1783,7 @@ The following simple option type definitions are supported:
 .B ;
 .PP
 An option of type boolean is a flag with a value of either on or off
-(or true or false).   So an example use of the boolean type would be:
+(or true or false).  So an example use of the boolean type would be:
 .nf
 
 option use-zephyr code 180 = boolean;
@@ -1802,8 +1803,8 @@ option use-zephyr on;
 .B ;
 .PP
 The \fIsign\fR token should either be blank, \fIunsigned\fR
-or \fIsigned\fR.   The width can be either 8, 16 or 32, and refers to
-the number of bits in the integer.   So for example, the following two
+or \fIsigned\fR.  The width can be either 8, 16 or 32, and refers to
+the number of bits in the integer.  So for example, the following two
 lines show a definition of the sql-connection-max option and its use:
 .nf
 
@@ -1860,7 +1861,7 @@ option dhcp6.some-server 3ffe:bbbb:aaaa:aaaa::1, 3ffe:bbbb:aaaa:aaaa::2;
 .B text
 .B ;
 .PP
-An option whose type is text will encode an ASCII text string.   For
+An option whose type is text will encode an ASCII text string.  For
 example:
 .nf
 
@@ -1882,7 +1883,7 @@ option sql-default-connection-name "PRODZA";
 An option whose type is a data string is essentially just a collection
 of bytes, and can be specified either as quoted text, like the text
 type, or as a list of hexadecimal contents separated by colons whose
-values must be between 0 and FF.   For example:
+values must be between 0 and FF.  For example:
 .nf
 
 option sql-identification-token code 195 = string;
@@ -1934,7 +1935,7 @@ appropriate for direct use in eg /etc/resolv.conf.
 .B ;
 .PP
 An option whose type is \fBencapsulate\fR will encapsulate the
-contents of the option space specified in \fIidentifier\fR.   Examples
+contents of the option space specified in \fIidentifier\fR.  Examples
 of encapsulated options in the DHCP protocol as it currently exists
 include the vendor-encapsulated-options option, the netware-suboptions
 option and the relay-agent-information option.
@@ -1951,7 +1952,7 @@ option local.demo "demo";
 .PP
 Options can contain arrays of any of the above types except for the
 text and data string types, which aren't currently supported in
-arrays.   An example of an array definition is as follows:
+arrays.  An example of an array definition is as follows:
 .nf
 
 option kerberos-servers code 200 = array of ip-address;
@@ -1961,7 +1962,7 @@ option kerberos-servers 10.20.10.1, 10.20.11.1;
 .B RECORDS
 .PP
 Options can also contain data structures consisting of a sequence of
-data types, which is sometimes called a record type.   For example:
+data types, which is sometimes called a record type.  For example:
 .nf
 
 option contrived-001 code 201 = { boolean, integer 32, text };
@@ -1994,7 +1995,7 @@ options according to each Vendor's specifications.  You will need to refer
 to your vendor's documentation in order to form options to their
 specification.
 .PP
-The value of these options can be set in one of two ways.   The first
+The value of these options can be set in one of two ways.  The first
 way is to simply specify the data directly, using a text string or a
 colon-separated list of hexadecimal values.  For help in forming these
 strings, please refer to \fBRFC2132\fR for the DHCPv4 \fBVendor Specific
@@ -2021,7 +2022,7 @@ option dhcp6.vendor-opts
 .fi
 .PP
 The second way of setting the value of these options is to have the DHCP
-server generate a vendor-specific option buffer.   To do this, you
+server generate a vendor-specific option buffer.  To do this, you
 must do four things: define an option space, define some options in
 that option space, provide values for them, and specify that that 
 option space should be used to generate the relevant option.
@@ -2065,7 +2066,7 @@ space.  Previous versions of ISC DHCP (up to and including DHCP 3.0.*),
 this value was fixed at 9973.
 .PP
 The name can then be used in option definitions, as described earlier in
-this document.   For example:
+this document.  For example:
 .nf
 
 option space SUNW code width 1 length width 1 hash size 3;
@@ -2093,8 +2094,8 @@ option vsio.docsis code 4491 = encapsulate docsis;
 .fi
 Once you have defined an option space and the format of some options,
 you can set up scopes that define values for those options, and you
-can say when to use them.   For example, suppose you want to handle
-two different classes of clients.   Using the option space definition
+can say when to use them.  For example, suppose you want to handle
+two different classes of clients.  Using the option space definition
 shown in the previous example, you can send different option values to
 different clients based on the vendor-class-identifier option that the
 clients send, as follows:
