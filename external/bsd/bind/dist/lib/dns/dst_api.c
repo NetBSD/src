@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.5 2012/12/04 23:38:42 spz Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.6 2013/03/24 18:43:32 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -164,11 +164,7 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 	isc_result_t result;
 
 	REQUIRE(mctx != NULL);
-#ifdef BIND9
-	REQUIRE(ectx != NULL);
-#else
 	UNUSED(ectx);
-#endif
 	REQUIRE(dst_initialized == ISC_FALSE);
 
 #ifndef OPENSSL
@@ -199,7 +195,8 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 	isc_mem_attach(mctx, &dst__memory_pool);
 #endif
 #ifdef BIND9
-	isc_entropy_attach(ectx, &dst_entropy_pool);
+	if (ectx)
+		isc_entropy_attach(ectx, &dst_entropy_pool);
 #endif
 	dst_entropy_flags = eflags;
 
