@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.12 2013/03/24 18:55:35 christos Exp $
+# $NetBSD: ad.mips64el,v 1.13 2013/03/24 19:56:06 christos Exp $
 ./usr/libdata/debug/lib/64/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -41,7 +41,7 @@
 ./usr/libdata/debug/usr/lib/64/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/64/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/64/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat
-./usr/libdata/debug/usr/lib/64/libbind9.so.5.8.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libbind9.so.6.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
@@ -102,7 +102,7 @@
 ./usr/libdata/debug/usr/lib/64/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/64/liblua.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/liblutok.so.1.0.debug		comp-kyua-debug	kyua,debug,compat
-./usr/libdata/debug/usr/lib/64/liblwres.so.5.8.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/liblwres.so.6.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/liblzf.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libm.so.0.10.debug		comp-sys-debug	debug,compat
@@ -203,7 +203,7 @@
 ./usr/libdata/debug/usr/lib/o32/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/o32/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat
-./usr/libdata/debug/usr/lib/o32/libbind9.so.5.8.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libbind9.so.6.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
@@ -264,7 +264,7 @@
 ./usr/libdata/debug/usr/lib/o32/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/o32/liblua.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/liblutok.so.1.0.debug		comp-kyua-debug	kyua,debug,compat
-./usr/libdata/debug/usr/lib/o32/liblwres.so.5.8.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/liblwres.so.6.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/liblzf.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libm.so.0.10.debug		comp-sys-debug	debug,compat

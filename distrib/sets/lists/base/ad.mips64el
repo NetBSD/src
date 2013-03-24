@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.119 2013/03/24 18:55:33 christos Exp $
+# $NetBSD: ad.mips64el,v 1.120 2013/03/24 19:56:06 christos Exp $
 ./lib/64					base-compat-shlib	compat
 ./lib/64/npf					base-npf-shlib		compat
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic
@@ -83,8 +83,8 @@
 ./usr/lib/64/libatf-c++.so.0.0			base-compat-shlib	compat,pic,atf
 ./usr/lib/64/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/64/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
-./usr/lib/64/libbind9.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/libbind9.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/64/libbind9.so.6			base-compat-shlib	compat,pic
+./usr/lib/64/libbind9.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libbluetooth.so.4			base-compat-shlib	compat,pic
 ./usr/lib/64/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/64/libbsdmalloc.so.0			base-compat-shlib	compat,pic
@@ -185,8 +185,8 @@
 ./usr/lib/64/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblutok.so.1			base-compat-shlib	compat,pic,kyua
 ./usr/lib/64/liblutok.so.1.0			base-compat-shlib	compat,pic,kyua
-./usr/lib/64/liblwres.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/liblwres.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/64/liblwres.so.6			base-compat-shlib	compat,pic
+./usr/lib/64/liblwres.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/liblzf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblzma.so.1			base-compat-shlib	compat,pic
@@ -407,8 +407,8 @@
 ./usr/lib/o32/libatf-c++.so.0.0			base-compat-shlib	compat,pic,atf
 ./usr/lib/o32/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/o32/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
-./usr/lib/o32/libbind9.so.5			base-compat-shlib	compat,pic
-./usr/lib/o32/libbind9.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/o32/libbind9.so.6			base-compat-shlib	compat,pic
+./usr/lib/o32/libbind9.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libbluetooth.so.4			base-compat-shlib	compat,pic
 ./usr/lib/o32/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/o32/libbsdmalloc.so.0			base-compat-shlib	compat,pic
@@ -503,8 +503,8 @@
 ./usr/lib/o32/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblutok.so.1			base-compat-shlib	compat,pic,kyua
 ./usr/lib/o32/liblutok.so.1.0			base-compat-shlib	compat,pic,kyua
-./usr/lib/o32/liblwres.so.5			base-compat-shlib	compat,pic
-./usr/lib/o32/liblwres.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/o32/liblwres.so.6			base-compat-shlib	compat,pic
+./usr/lib/o32/liblwres.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblzf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblzma.so.1			base-compat-shlib	compat,pic

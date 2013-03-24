@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.12 2013/03/24 18:55:35 christos Exp $
+# $NetBSD: shl.mi,v 1.13 2013/03/24 19:56:06 christos Exp $
 ./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
@@ -32,7 +32,7 @@
 ./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug	comp-atf-debug	atf,debug
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug
-./usr/libdata/debug/usr/lib/libbind9.so.5.8.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libbind9.so.6.0.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug		comp-sys-debug	debug
@@ -87,7 +87,7 @@
 ./usr/libdata/debug/usr/lib/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug
 ./usr/libdata/debug/usr/lib/liblua.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblutok.so.1.0.debug	comp-kyua-debug	kyua,debug
-./usr/libdata/debug/usr/lib/liblwres.so.5.8.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/liblwres.so.6.0.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/liblzf.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblzma.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libm.so.0.10.debug		comp-sys-debug	debug
