@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.13 2013/03/21 12:33:10 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.14 2013/03/24 22:33:59 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -261,8 +261,10 @@ struct bge_softc {
 	struct ethercom		ethercom;	/* interface info */
 	bus_space_handle_t	bge_bhandle;
 	bus_space_tag_t		bge_btag;
+	bus_size_t		bge_bsize;
 	bus_space_handle_t	bge_apehandle;
 	bus_space_tag_t		bge_apetag;
+	bus_size_t		bge_apesize;
 	void			*bge_intrhand;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
@@ -289,6 +291,8 @@ struct bge_softc {
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
 	bus_dmamap_t		bge_ring_map;
+	bus_dma_segment_t	bge_ring_seg;
+	int			bge_ring_rseg;
 	uint16_t		bge_tx_saved_considx;
 	uint16_t		bge_rx_saved_considx;
 	uint16_t		bge_ev_saved_considx;
@@ -326,8 +330,6 @@ struct bge_softc {
 #endif /* BGE_EVENT_COUNTERS */
 	int			bge_txcnt;
 	struct callout		bge_timeout;
-	char			*bge_vpd_prodname;
-	char			*bge_vpd_readonly;
 	int			bge_pending_rxintr_change;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
