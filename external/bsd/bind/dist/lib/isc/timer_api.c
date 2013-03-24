@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_api.c,v 1.3 2012/06/05 00:42:33 christos Exp $	*/
+/*	$NetBSD: timer_api.c,v 1.4 2013/03/24 18:42:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -94,6 +94,13 @@ isc_timermgr_destroy(isc_timermgr_t **managerp) {
 	(*managerp)->methods->destroy(managerp);
 
 	ENSURE(*managerp == NULL);
+}
+
+void
+isc_timermgr_poke(isc_timermgr_t *manager) {
+	REQUIRE(ISCAPI_TIMERMGR_VALID(manager));
+
+	manager->methods->poke(manager);
 }
 
 isc_result_t

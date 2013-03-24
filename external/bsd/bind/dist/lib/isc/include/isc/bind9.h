@@ -1,4 +1,4 @@
-/*	$NetBSD: bind9.h,v 1.3 2012/06/05 00:42:34 christos Exp $	*/
+/*	$NetBSD: bind9.h,v 1.4 2013/03/24 18:42:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -27,6 +27,4 @@
  * standard BIND9 build defines BIND9; the version included with the
  * exportable libraries does not.
  */
-#define BIND9 1
-
 #endif /* ISC_BIND9_H */
