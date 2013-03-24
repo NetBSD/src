@@ -1,11 +1,12 @@
-/*	$NetBSD: packet.c,v 1.1.1.1 2013/03/24 15:45:54 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.1.1.2 2013/03/24 22:50:32 christos Exp $	*/
 
 /* packet.c
 
    Packet assembly code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 2004,2005,2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004,2005,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -107,18 +108,25 @@ void assemble_hw_header (interface, buf, bufix, to)
 	unsigned *bufix;
 	struct hardware *to;
 {
-#if defined (HAVE_TR_SUPPORT)
-	if (interface -> hw_address.hbuf [0] == HTYPE_IEEE802)
-		assemble_tr_header (interface, buf, bufix, to);
-	else
+	switch (interface->hw_address.hbuf[0]) {
+#if defined(HAVE_TR_SUPPORT)
+	case HTYPE_IEEE802:
+		assemble_tr_header(interface, buf, bufix, to);
+		break;
 #endif
 #if defined (DEC_FDDI)
-	     if (interface -> hw_address.hbuf [0] == HTYPE_FDDI)
-		     assemble_fddi_header (interface, buf, bufix, to);
-	else
+	case HTYPE_FDDI:
+		assemble_fddi_header(interface, buf, bufix, to);
+		break;
 #endif
-		assemble_ethernet_header (interface, buf, bufix, to);
-
+	case HTYPE_INFINIBAND:
+		log_error("Attempt to assemble hw header for infiniband");
+		break;
+	case HTYPE_ETHER:
+	default:
+		assemble_ethernet_header(interface, buf, bufix, to);
+		break;
+	}
 }
 
 /* UDP header and IP header assembled together for convenience. */
@@ -186,7 +194,9 @@ void assemble_udp_ip_header (interface, buf, bufix,
 
 #ifdef PACKET_DECODING
 /* Decode a hardware header... */
-/* XXX currently only supports ethernet; doesn't check for other types. */
+/* Support for ethernet, TR and FDDI
+ * Doesn't support infiniband yet as the supported oses shouldn't get here
+ */
 
 ssize_t decode_hw_header (interface, buf, bufix, from)
      struct interface_info *interface;
@@ -194,17 +204,22 @@ ssize_t decode_hw_header (interface, buf, bufix, from)
      unsigned bufix;
      struct hardware *from;
 {
+	switch(interface->hw_address.hbuf[0]) {
 #if defined (HAVE_TR_SUPPORT)
-	if (interface -> hw_address.hbuf [0] == HTYPE_IEEE802)
-		return decode_tr_header (interface, buf, bufix, from);
-	else
+	case HTYPE_IEEE802:
+		return (decode_tr_header(interface, buf, bufix, from));
 #endif
 #if defined (DEC_FDDI)
-	     if (interface -> hw_address.hbuf [0] == HTYPE_FDDI)
-		     return decode_fddi_header (interface, buf, bufix, from);
-	else
+	case HTYPE_FDDI:
+		return (decode_fddi_header(interface, buf, bufix, from));
 #endif
-		return decode_ethernet_header (interface, buf, bufix, from);
+	case HTYPE_INFINIBAND:
+		log_error("Attempt to decode hw header for infiniband");
+		return (0);
+	case HTYPE_ETHER:
+	default:
+		return (decode_ethernet_header(interface, buf, bufix, from));
+	}
 }
 
 /* UDP header and IP header decoded together for convenience. */

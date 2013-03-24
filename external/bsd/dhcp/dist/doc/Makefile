@@ -27,3 +27,18 @@ References.txt: References.xml
 References.html: References.xml
 	xml2html References.xml
 
+devel:
+	mkdir -p html
+	doxygen devel/doxyfile > html/doxygen.log 2>html/doxygen-warnings.log
+
+cppcheck:
+	mkdir -p html
+	cd .. && cppcheck --enable=all --inline-suppr \
+          -f -v -j 2  -i tests/ -i dhcp-*/ \
+          . 1> doc/html/cppcheck.log 2> doc/html/cppcheck-error.log
+
+#       cppcheck can be extended with list of suppressions.
+#          --suppressions-list=doc/cppcheck-skip.txt \
+
+
+.PHONY: devel cppcheck

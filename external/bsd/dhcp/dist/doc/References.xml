@@ -1,6 +1,6 @@
 <?xml version='1.0' ?>
 
-<!-- Id: References.xml,v 1.4.24.3 2011-07-05 16:57:20 sar Exp  -->
+<!-- Id: References.xml,v 1.4.24.4 2012/01/05 00:02:51 sar Exp  -->
 
 <?rfc private="ISC-DHCP-REFERENCES" ?>
 
@@ -92,6 +92,8 @@
 	'http://xml.resource.org/public/rfc/bibxml/reference.RFC.4702.xml'>
   <!ENTITY rfc4703 PUBLIC ''
 	'http://xml.resource.org/public/rfc/bibxml/reference.RFC.4703.xml'>
+  <!ENTITY rfc5453 PUBLIC ''
+	'http://xml.resource.org/public/rfc/bibxml/reference.RFC.5453.xml'>
   ]>
 
 
@@ -133,7 +135,7 @@
       </address>
     </author>
 
-    <date day="20" month="May" year="2011"/>
+    <date day="04" month="January" year="2012"/>
 
     <keyword>ISC</keyword>
     <keyword>DHCP</keyword>
@@ -610,6 +612,10 @@
 
 	<t>Precisely how to correctly support the above conundrums has not
 	quite yet been settled, so support is incomplete.</t>
+
+	<t><xref target="RFC5453"/> creates a registry at IANA to reserve
+	interface identifiers and specifies a starting set.  These IIDs should
+	not be used when constructing addresses to avoid possible conflicts.</t>
       </section>
 
       <section title="DHCPv6 Options References">
@@ -760,6 +766,7 @@
       <?rfc include='http://xml.resource.org/public/rfc/bibxml/reference.RFC.4704'?>
       <?rfc include='http://xml.resource.org/public/rfc/bibxml/reference.RFC.4994'?>
       <?rfc include='http://xml.resource.org/public/rfc/bibxml/reference.RFC.5007'?>
+      <?rfc include='http://xml.resource.org/public/rfc/bibxml/reference.RFC.5453'?>
       <?rfc include='http://xml.resource.org/public/rfc/bibxml/reference.RFC.5460'?>
       <?rfc include='http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-mif-dhcpv6-route-option'?>
       <?rfc include='http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-dhc-dhcpv6-ldra'?>

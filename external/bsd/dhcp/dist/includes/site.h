@@ -1,4 +1,4 @@
-/*	$NetBSD: site.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $	*/
+/*	$NetBSD: site.h,v 1.1.1.2 2013/03/24 22:50:35 christos Exp $	*/
 
 /* Site-specific definitions.
 
@@ -229,3 +229,51 @@
    future. */
 
 #define ACCEPT_LIST_IN_DOMAIN_NAME
+
+/* In RFC3315 section 17.2.2 stated that if the server was not going
+   to be able to assign any addresses to any IAs in a subsequent Request
+   from a client that the server should not include any IAs.  This
+   requirement was removed in an errata from August 2010.  Define the
+   following if you want the pre-errata version.  
+   You should only enable this option if you have clients that
+   require the original functionality. */
+
+/* #define RFC3315_PRE_ERRATA_2010_08 */
+
+/* In previous versions of the code when the server generates a NAK
+   it doesn't attempt to determine if the configuration included a
+   server ID for that client.  Defining this option causes the server
+   to make a modest effort to determine the server id when building
+   a NAK as a response.  This effort will only check the first subnet
+   and pool associated with a shared subnet and will not check for
+   host declarations.  With some configurations the server id
+   computed for a NAK may not match that computed for an ACK. */
+
+/* #define SERVER_ID_FOR_NAK */
+
+/* When processing a request do a simple check to compare the
+   server id the client sent with the one the server would send.
+   In order to minimize the complexity of the code the server
+   only checks for a server id option in the global and subnet
+   scopes.  Complicated configurations may result in differnet
+   server ids for this check and when the server id for a reply
+   packet is determined, which would prohibit the server from
+   responding.
+
+   The primary use for this option is when a client broadcasts
+   a request but requires the response to come from one of the
+   failover peers.  An example of this would be when a client
+   reboots while its lease is still active - in this case both
+   servers will normally respond.  Most of the time the client
+   won't check the server id and can use either of the responses.
+   However if the client does check the server id it may reject
+   the response if it came from the wrong peer.  If the timing
+   is such that the "wrong" peer responds first most of the time
+   the client may not get an address for some time.
+
+   Currently this option is only available when failover is in
+   use.
+
+   Care should be taken before enabling this option. */
+
+/* #define SERVER_ID_CHECK */

@@ -1,12 +1,13 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.1 2013/03/24 15:45:56 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.1.1.2 2013/03/24 22:50:33 christos Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "Header: /proj/cvs/prod/DHCP/dst/dst_api.c,v 1.9 2009-10-29 00:46:48 sar Exp ";
+static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/dst_api.c,v 1.9.6.1 2012/04/11 15:43:55 sar Exp ";
 #endif
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
  * Portions Copyright (c) 2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (c) 2012 by Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -344,13 +345,13 @@ dst_read_key(const char *in_keyname, const unsigned in_id,
 			 in_alg));
 		return (NULL);
 	}
-	if ((type && (DST_PUBLIC | DST_PRIVATE)) == 0) 
+	if ((type & (DST_PUBLIC | DST_PRIVATE)) == 0) 
 		return (NULL);
 	if (in_keyname == NULL) {
 		EREPORT(("dst_read_private_key(): Null key name passed in\n"));
 		return (NULL);
 	} else
-		strcpy(keyname, in_keyname);
+		strncpy(keyname, in_keyname, PATH_MAX);
 
 	/* before I read in the public key, check if it is allowed to sign */
 	if ((pubkey = dst_s_read_public_key(keyname, in_id, in_alg)) == NULL)
@@ -444,6 +445,7 @@ dst_s_write_private_key(const DST_KEY *key)
 		if ((nn = fwrite(encoded_block, 1, len, fp)) != len) {
 			EREPORT(("dst_write_private_key(): Write failure on %s %d != %d errno=%d\n",
 				 file, out_len, nn, errno));
+			fclose(fp);
 			return (-5);
 		}
 		fclose(fp);
@@ -664,7 +666,7 @@ dst_dnskey_to_key(const char *in_name,
 	int alg ;
 	int start = DST_KEY_START;
 
-	if (rdata == NULL || len <= DST_KEY_ALG) /* no data */
+	if (in_name == NULL || rdata == NULL || len <= DST_KEY_ALG) /* no data */
 		return (NULL);
 	alg = (u_int8_t) rdata[DST_KEY_ALG];
 	if (!dst_check_algorithm(alg)) { /* make sure alg is available */
@@ -675,8 +677,6 @@ dst_dnskey_to_key(const char *in_name,
 	if ((key_st = dst_s_get_key_struct(in_name, alg, 0, 0, 0)) == NULL)
 		return (NULL);
 
-	if (in_name == NULL)
-		return (NULL);
 	key_st->dk_flags = dst_s_get_int16(rdata);
 	key_st->dk_proto = (u_int16_t) rdata[DST_KEY_PROT];
 	if (key_st->dk_flags & DST_EXTEND_FLAG) {
@@ -796,10 +796,12 @@ dst_buffer_to_key(const char *key_name,		/* name of the key */
 	    dkey->dk_func->from_dns_key != NULL) {
 		if (dkey->dk_func->from_dns_key(dkey, key_buf, key_len) < 0) {
 			EREPORT(("dst_buffer_to_key(): dst_buffer_to_hmac failed\n"));
-			return (dst_free_key(dkey));
+			(void) (dst_free_key(dkey));
+			return (NULL);
 		}
 		return (dkey);
 	}
+	(void) (dst_free_key(dkey));
 	return (NULL);
 }
 
@@ -1013,11 +1015,9 @@ dst_free_key(DST_KEY *f_key)
 	else {
 		EREPORT(("dst_free_key(): Unknown key alg %d\n",
 			 f_key->dk_alg));
-		free(f_key->dk_KEY_struct);	/* SHOULD NOT happen */
 	}
 	if (f_key->dk_KEY_struct) {
-		free(f_key->dk_KEY_struct);
-		f_key->dk_KEY_struct = NULL;
+		SAFE_FREE(f_key->dk_KEY_struct);
 	}
 	if (f_key->dk_key_name)
 		SAFE_FREE(f_key->dk_key_name);

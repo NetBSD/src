@@ -1,7 +1,8 @@
-.\"	$NetBSD: dhclient-script.8,v 1.1.1.1 2013/03/24 15:45:57 christos Exp $
+.\"	$NetBSD: dhclient-script.8,v 1.1.1.2 2013/03/24 22:50:26 christos Exp $
 .\"
 .\"	dhclient-script.8
 .\"
+.\" Copyright (c) 2012 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2009-2010 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2004-2005 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
@@ -30,7 +31,7 @@
 .\" Support and other services are available for ISC products - see
 .\" https://www.isc.org for more information or to learn more about ISC.
 .\"
-.\" Id: dhclient-script.8,v 1.12.24.2 2010-07-06 19:03:11 sar Exp 
+.\" Id: dhclient-script.8,v 1.12.24.2 2010/07/06 19:03:11 sar Exp 
 .\"
 .TH dhclient-script 8
 .SH NAME
@@ -127,7 +128,13 @@ options acquired from the server are passed using the option name
 described in \fBdhcp-options\fR, except that dashes (\'-\') are replaced
 by underscores (\'_\') in order to make valid shell variables, and the
 variable names start with new_.   So for example, the new subnet mask
-would be passed in $new_subnet_mask.
+would be passed in $new_subnet_mask.  The options that the client
+explicitly requested via a PRL or ORO option are passed with the same
+option name as above but prepended with requested_ and with a value of 1,
+or example requested_subnet_mask=1.  No such variable is defined for
+options not requested by the client or options that don't require a
+request option, such as the ip address (*_ip_address) or expiration
+time (*_expiry). 
 .PP
 Before actually configuring the address, dhclient-script should
 somehow ARP for it and exit with a nonzero status if it receives a
@@ -154,13 +161,13 @@ address not be used if it is identical to the bound IP address
 in this case.
 .SH RENEW
 When a binding has been renewed, the script is called as in BOUND,
-except that in addition to all the variables starting with $new_,
-there is another set of variables starting with $old_.  Persistent
-settings that may have changed need to be deleted - for example, if a
-local route to the bound address is being configured, the old local
-route should be deleted.  If the default route has changed, the old default
-route should be deleted.  If the static routes have changed, the old
-ones should be deleted.  Otherwise, processing can be done as with
+except that in addition to all the variables starting with $new_, and
+$requested_ there is another set of variables starting with $old_.
+Persistent settings that may have changed need to be deleted - for
+example, if a local route to the bound address is being configured,
+the old local route should be deleted.  If the default route has changed,
+the old default route should be deleted.  If the static routes have changed,
+the old ones should be deleted.  Otherwise, processing can be done as with
 BOUND.
 .SH REBIND
 The DHCP client has rebound to a new DHCP server.  This can be handled

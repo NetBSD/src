@@ -1,6 +1,6 @@
-/*	$NetBSD: dhcpctl.h,v 1.1.1.1 2013/03/24 15:45:47 christos Exp $	*/
+/*	$NetBSD: dhcpctl.h,v 1.1.1.2 2013/03/24 22:50:34 christos Exp $	*/
 
-/* Id: dhcpctl.h,v 1.17.24.1 2009-11-20 01:49:01 sar Exp 
+/* Id: dhcpctl.h,v 1.17.24.1 2009/11/20 01:49:01 sar Exp 
 
    Subroutines providing general support for objects. */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpctl.h,v 1.1.1.1 2013/03/24 15:45:47 christos Exp $");
+__RCSID("$NetBSD: dhcpctl.h,v 1.1.1.2 2013/03/24 22:50:34 christos Exp $");
 
 #ifndef _DHCPCTL_H_
 #define _DHCPCTL_H_

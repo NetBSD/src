@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhcpd.8,v 1.1.1.1 2013/03/24 15:46:05 christos Exp $
+.\"	$NetBSD: dhcpd.8,v 1.1.1.2 2013/03/24 22:50:40 christos Exp $
 .\"
 .\"	dhcpd.8
 .\"
-.\" Copyright (c) 2009-2011 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2009-2012 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
@@ -30,7 +30,7 @@
 .\" Support and other services are available for ISC products - see
 .\" https://www.isc.org for more information or to learn more about ISC.
 .\"
-.\" Id: dhcpd.8,v 1.30.24.5 2011-05-20 14:33:28 tomasz Exp 
+.\" Id: dhcpd.8,v 1.30.24.5 2011/05/20 14:33:28 tomasz Exp 
 .\"
 .TH dhcpd 8
 .SH NAME
@@ -107,7 +107,7 @@ functionality, with certain restrictions.
 .PP
 The DHCP protocol allows a host which is unknown to the network
 administrator to be automatically assigned a new IP address out of a
-pool of IP addresses for its network.   In order for this to work, the
+pool of IP addresses for its network.  In order for this to work, the
 network administrator allocates address pools in each subnet and
 enters them into the dhcpd.conf(5) file.
 .PP
@@ -132,30 +132,30 @@ address.
 .PP
 In order to keep track of leases across system reboots and server
 restarts, dhcpd keeps a list of leases it has assigned in the
-dhcpd.leases(5) file.   Before dhcpd grants a lease to a host, it
+dhcpd.leases(5) file.  Before dhcpd grants a lease to a host, it
 records the lease in this file and makes sure that the contents of the
-file are flushed to disk.   This ensures that even in the event of a
+file are flushed to disk.  This ensures that even in the event of a
 system crash, dhcpd will not forget about a lease that it has
-assigned.   On startup, after reading the dhcpd.conf file, dhcpd
+assigned.  On startup, after reading the dhcpd.conf file, dhcpd
 reads the dhcpd.leases file to refresh its memory about what leases
 have been assigned.
 .PP
 New leases are appended to the end of the dhcpd.leases
-file.   In order to prevent the file from becoming arbitrarily large,
+file.  In order to prevent the file from becoming arbitrarily large,
 from time to time dhcpd creates a new dhcpd.leases file from its
 in-core lease database.  Once this file has been written to disk, the
 old file is renamed
 .IR dhcpd.leases~ ,
-and the new file is renamed dhcpd.leases.   If the system crashes in
+and the new file is renamed dhcpd.leases.  If the system crashes in
 the middle of this process, whichever dhcpd.leases file remains will
 contain all the lease information, so there is no need for a special
 crash recovery process.
 .PP
 BOOTP support is also provided by this server.  Unlike DHCP, the BOOTP
 protocol does not provide a protocol for recovering
-dynamically-assigned addresses once they are no longer needed.   It is
+dynamically-assigned addresses once they are no longer needed.  It is
 still possible to dynamically assign addresses to BOOTP clients, but
-some administrative process for reclaiming addresses is required.   By
+some administrative process for reclaiming addresses is required.  By
 default, leases are granted to BOOTP clients in perpetuity, although
 the network administrator may set an earlier cutoff date or a shorter
 lease length for BOOTP leases if that makes sense.
@@ -165,18 +165,18 @@ simply provide a declaration in the dhcpd.conf file for each
 BOOTP client, permanently assigning an address to each client.
 .PP
 Whenever changes are made to the dhcpd.conf file, dhcpd must be
-restarted.   To restart dhcpd, send a SIGTERM (signal 15) to the
+restarted.  To restart dhcpd, send a SIGTERM (signal 15) to the
 process ID contained in
 .IR RUNDIR/dhcpd.pid ,
 and then re-invoke dhcpd.  Because the DHCP server database is not as
 lightweight as a BOOTP database, dhcpd does not automatically restart
 itself when it sees a change to the dhcpd.conf file.
 .PP
-Note: We get a lot of complaints about this.   We realize that it would
+Note: We get a lot of complaints about this.  We realize that it would
 be nice if one could send a SIGHUP to the server and have it reload
-the database.   This is not technically impossible, but it would
+the database.  This is not technically impossible, but it would
 require a great deal of work, our resources are extremely limited, and
-they can be better spent elsewhere.   So please don't complain about
+they can be better spent elsewhere.  So please don't complain about
 this on the mailing list unless you're prepared to fund a project to
 implement this feature, or prepared to do it yourself.
 .SH COMMAND LINE
@@ -225,7 +225,7 @@ out of inittab on System V systems.
 Send log messages to the standard error descriptor.
 This can be useful for debugging, and also at sites where a
 complete log of all dhcp activity must be kept but syslogd is not
-reliable or otherwise cannot be used.   Normally, 
+reliable or otherwise cannot be used.  Normally, 
 .B dhcpd
 will log all
 output using the \fBsyslog(3)\fR function with the log facility set to
@@ -242,13 +242,13 @@ from a system startup script (e.g., /etc/rc).
 .BI \-t
 Test the configuration file.  The server tests the configuration file
 for correct syntax, but will not attempt to perform any network
-operations.   This can be used to test a new configuration file
+operations.  This can be used to test a new configuration file
 automatically before installing it.
 .TP
 .BI \-T
 Test the lease file.  The server tests the lease file
 for correct syntax, but will not attempt to perform any network
-operations.   This can be used to test a new leaes file
+operations.  This can be used to test a new leaes file
 automatically before installing it.
 .TP
 .BI \-tf \ tracefile
@@ -295,17 +295,17 @@ will write a pid file.  If the program is invoked with this
 option it will not check for an existing server process.
 .PP
 .SH CONFIGURATION
-The syntax of the dhcpd.conf(5) file is discussed separately.   This
+The syntax of the dhcpd.conf(5) file is discussed separately.  This
 section should be used as an overview of the configuration process,
 and the dhcpd.conf(5) documentation should be consulted for detailed
 reference information.
 .PP
 .SH Subnets
 dhcpd needs to know the subnet numbers and netmasks of all subnets for
-which it will be providing service.   In addition, in order to
+which it will be providing service.  In addition, in order to
 dynamically allocate addresses, it must be assigned one or more ranges
 of addresses on each subnet which it can in turn assign to client
-hosts as they boot.   Thus, a very simple configuration providing DHCP
+hosts as they boot.  Thus, a very simple configuration providing DHCP
 support might look like this:
 .nf
 .sp 1
@@ -329,21 +329,21 @@ subnet statement must appear.
 .PP
 .SH Lease Lengths
 DHCP leases can be assigned almost any length from zero seconds to
-infinity.   What lease length makes sense for any given subnet, or for
+infinity.  What lease length makes sense for any given subnet, or for
 any given installation, will vary depending on the kinds of hosts
 being served.
 .PP
 For example, in an office environment where systems are added from
 time to time and removed from time to time, but move relatively
 infrequently, it might make sense to allow lease times of a month or
-more.   In a final test environment on a manufacturing floor, it may
+more.  In a final test environment on a manufacturing floor, it may
 make more sense to assign a maximum lease length of 30 minutes -
 enough time to go through a simple test procedure on a network
 appliance before packaging it up for delivery.
 .PP
 It is possible to specify two lease lengths: the default length that
 will be assigned if a client doesn't ask for any particular lease
-length, and a maximum lease length.   These are specified as clauses
+length, and a maximum lease length.  These are specified as clauses
 to the subnet command:
 .nf
 .sp 1
@@ -356,7 +356,7 @@ to the subnet command:
 .PP
 This particular subnet declaration specifies a default lease time of
 600 seconds (ten minutes), and a maximum lease time of 7200 seconds
-(two hours).   Other common values would be 86400 (one day), 604800
+(two hours).  Other common values would be 86400 (one day), 604800
 (one week) and 2592000 (30 days).
 .PP
 Each subnet need not have the same lease\(emin the case of an office
@@ -365,10 +365,10 @@ server, it might make sense to have widely disparate values for
 default and maximum lease times on each subnet.
 .SH BOOTP Support
 Each BOOTP client must be explicitly declared in the dhcpd.conf
-file.   A very basic client declaration will specify the client
+file.  A very basic client declaration will specify the client
 network interface's hardware address and the IP address to assign to
-that client.   If the client needs to be able to load a boot file from
-the server, that file's name must be specified.   A simple bootp
+that client.  If the client needs to be able to load a boot file from
+the server, that file's name must be specified.  A simple bootp
 client declaration might look like this:
 .nf
 .sp 1
@@ -386,10 +386,10 @@ the client can access various network services (e.g., DNS, IP routers,
 and so on).
 .PP
 These options can be specified on a per-subnet basis, and, for BOOTP
-clients, also on a per-client basis.   In the event that a BOOTP
+clients, also on a per-client basis.  In the event that a BOOTP
 client declaration specifies options that are also specified in its
 subnet declaration, the options specified in the client declaration
-take precedence.   A reasonably complete DHCP configuration might
+take precedence.  A reasonably complete DHCP configuration might
 look something like this:
 .nf
 .sp 1
@@ -428,15 +428,15 @@ clients connect to the server using TCP/IP, authenticate, and can then
 examine the server's current status and make changes to it.
 .PP
 Rather than implementing the underlying OMAPI protocol directly, user
-programs should use the dhcpctl API or OMAPI itself.   Dhcpctl is a
+programs should use the dhcpctl API or OMAPI itself.  Dhcpctl is a
 wrapper that handles some of the housekeeping chores that OMAPI does
-not do automatically.   Dhcpctl and OMAPI are documented in \fBdhcpctl(3)\fR
+not do automatically.  Dhcpctl and OMAPI are documented in \fBdhcpctl(3)\fR
 and \fBomapi(3)\fR.
 .PP
-OMAPI exports objects, which can then be examined and modified.   The
+OMAPI exports objects, which can then be examined and modified.  The
 DHCP server exports the following objects: lease, host,
-failover-state and group.   Each object has a number of methods that
-are provided: lookup, create, and destroy.   In addition, it is
+failover-state and group.  Each object has a number of methods that
+are provided: lookup, create, and destroy.  In addition, it is
 possible to look at attributes that are stored on objects, and in some
 cases to modify those attributes.
 .SH THE LEASE OBJECT
@@ -544,7 +544,7 @@ The time of the last transaction with the client on this lease.
 .SH THE HOST OBJECT
 Hosts can be created, destroyed, looked up, examined and modified.
 If a host declaration is created or deleted using OMAPI, that
-information will be recorded in the dhcpd.leases file.   It is
+information will be recorded in the dhcpd.leases file.  It is
 permissible to delete host declarations that are declared in the
 dhcpd.conf file.
 .PP
@@ -552,7 +552,7 @@ Hosts have the following attributes:
 .PP
 .B name \fIdata\fR lookup, examine, modify
 .RS 0.5i
-the name of the host declaration.   This name must be unique among all
+the name of the host declaration.  This name must be unique among all
 host declarations.
 .RE
 .PP
@@ -570,7 +570,7 @@ Only valid if hardware-type is also present.
 .B hardware-type \fIinteger\fR lookup, examine, modify
 .RS 0.5i
 the type of the network interface that will be used to match the
-client, if any.   Only valid if hardware-address is also present.
+client, if any.  Only valid if hardware-address is also present.
 .RE
 .PP
 .B dhcp-client-identifier \fIdata\fR lookup, examine, modify
@@ -582,7 +582,7 @@ client, if any.
 .B ip-address \fIdata\fR examine, modify
 .RS 0.5i
 a fixed IP address which is reserved for a DHCP client that matches
-this host declaration.   The IP address will only be assigned to the
+this host declaration.  The IP address will only be assigned to the
 client if it is valid for the network segment to which the client is
 connected.
 .RE
@@ -596,7 +596,7 @@ executed whenever a message from the client is being processed.
 .B known \fIinteger\fR examine, modify
 .RS 0.5i
 if nonzero, indicates that a client matching this host declaration
-will be treated as \fIknown\fR in pool permit lists.   If zero, the
+will be treated as \fIknown\fR in pool permit lists.  If zero, the
 client will not be treated as known.
 .RE
 .SH THE GROUP OBJECT
@@ -608,7 +608,7 @@ dhcpd.conf file.
 .PP
 Named groups currently can only be associated with
 hosts - this allows one set of statements to be efficiently attached
-to more than one host declaration.   
+to more than one host declaration.  
 .PP
 Groups have the following attributes:
 .PP
@@ -625,7 +625,7 @@ executed whenever a message from a client whose host declaration
 references this group is processed.
 .RE
 .SH THE CONTROL OBJECT
-The control object allows you to shut the server down.   If the server
+The control object allows you to shut the server down.  If the server
 is doing failover with another peer, it will make a clean transition
 into the shutdown state and notify its peer, so that the peer can go
 into partner down, and then record the "recover" state in the lease
@@ -702,7 +702,7 @@ relationship.
 .B local-state \fIinteger\fR examine, modify
 .RS 0.5i
 Indicates the present state of the DHCP server in this failover
-relationship.   Possible values for state are:
+relationship.  Possible values for state are:
 .RE
 .RS 1i
 .PP
@@ -730,12 +730,12 @@ relationship.   Possible values for state are:
 In general it is not a good idea to make changes to this state.
 However, in the case that the failover partner is known to be down, it
 can be useful to set the DHCP server's failover state to partner
-down.   At this point the DHCP server will take over service of the
+down.  At this point the DHCP server will take over service of the
 failover partner's leases as soon as possible, and will give out
-normal leases, not leases that are restricted by MCLT.   If you do put
+normal leases, not leases that are restricted by MCLT.  If you do put
 the DHCP server into the partner-down when the other DHCP server is
 not in the partner-down state, but is not reachable, IP address
-assignment conflicts are possible, even likely.   Once a server has
+assignment conflicts are possible, even likely.  Once a server has
 been put into partner-down mode, its failover partner must not be
 brought back online until communication is possible between the two
 servers.
@@ -802,6 +802,6 @@ dhclient(8), dhcrelay(8), dhcpd.conf(5), dhcpd.leases(5)
 .B dhcpd(8)
 was originally written by Ted Lemon under a contract with Vixie Labs.
 Funding for this project was provided by Internet Systems
-Consortium.   Version 3 of the DHCP server was funded by Nominum, Inc.
+Consortium.  Version 3 of the DHCP server was funded by Nominum, Inc.
 Information about Internet Systems Consortium is available at
 .B https://www.isc.org/\fR.

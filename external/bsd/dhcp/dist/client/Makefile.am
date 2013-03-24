@@ -1,4 +1,4 @@
-dist_sysconf_DATA = dhclient.conf
+dist_sysconf_DATA = dhclient.conf.example
 sbin_PROGRAMS = dhclient
 dhclient_SOURCES = clparse.c dhclient.c dhc6.c \
 		   scripts/bsdos scripts/freebsd scripts/linux scripts/macos \

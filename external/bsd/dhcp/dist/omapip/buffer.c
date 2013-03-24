@@ -1,11 +1,12 @@
-/*	$NetBSD: buffer.c,v 1.1.1.1 2013/03/24 15:45:56 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.1.1.2 2013/03/24 22:50:36 christos Exp $	*/
 
 /* buffer.c
 
    Buffer access functions for the object management protocol... */
 
 /*
- * Copyright (c) 2004,2005,2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004,2005,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -35,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer.c,v 1.1.1.1 2013/03/24 15:45:56 christos Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.1.1.2 2013/03/24 22:50:36 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -284,9 +285,7 @@ isc_result_t omapi_connection_copyin (omapi_object_t *h,
 	int sig_flags = SIG_MODE_UPDATE;
 	omapi_connection_object_t *c;
 
-	/* Make sure len is valid. */
-	if (len < 0)
-		return DHCP_R_INVALIDARG;
+	/* no need to verify len as it's unsigned */
 	if (!h || h -> type != omapi_type_connection)
 		return DHCP_R_INVALIDARG;
 	c = (omapi_connection_object_t *)h;

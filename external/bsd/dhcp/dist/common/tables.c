@@ -1,10 +1,11 @@
-/*	$NetBSD: tables.c,v 1.1.1.1 2013/03/24 15:45:55 christos Exp $	*/
+/*	$NetBSD: tables.c,v 1.1.1.2 2013/03/24 22:50:32 christos Exp $	*/
 
 /* tables.c
 
    Tables of information... */
 
 /*
+ * Copyright (c) 2011-2012 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004-2009 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
@@ -35,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tables.c,v 1.1.1.1 2013/03/24 15:45:55 christos Exp $");
+__RCSID("$NetBSD: tables.c,v 1.1.1.2 2013/03/24 22:50:32 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -68,9 +69,10 @@ HASH_FUNCTIONS (option_code, const unsigned *, struct option,
        some event.  The special all-ones value means 'infinite'.  May either
        be printed as a decimal, eg, "3600", or as this name, eg, "infinite".
    f - flag (true or false)
-   A - array of whatever precedes (e.g., IA means array of IP addresses)
-   a - array of the preceding character (e.g., IIa means two or more IP
-       addresses)
+   A - array of all that precedes (e.g., fIA means array of records of
+       a flag and an IP address)
+   a - array of the preceding character (e.g., fIa means a single flag
+       followed by an array of IP addresses)
    U - name of an option space (universe)
    F - implicit flag - the presence of the option indicates that the
        flag is true.
@@ -606,7 +608,7 @@ const char *hardware_types [] = {
 	"unknown-29",
 	"unknown-30",
 	"unknown-31",
-	"unknown-32",
+	"infiniband",
 	"unknown-33",
 	"unknown-34",
 	"unknown-35",

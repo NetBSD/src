@@ -33,7 +33,8 @@ POST_UNINSTALL = :
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(nobase_include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(top_srcdir)/configure depcomp install-sh missing
+	$(top_srcdir)/configure $(top_srcdir)/doc/devel/doxyfile.in \
+	depcomp install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -42,7 +43,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/includes/config.h
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = doc/devel/doxyfile
 SOURCES =
 DIST_SOURCES =
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
@@ -79,6 +80,8 @@ distuninstallcheck_listfiles = find . -type f -print
 distcleancheck_listfiles = find . -type f -print
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+ATF_CFLAGS = @ATF_CFLAGS@
+ATF_LDFLAGS = @ATF_LDFLAGS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -185,7 +188,8 @@ EXTRA_DIST = RELNOTES LICENSE \
 	     doc/ja_JP.eucJP/dhcp-eval.5 doc/ja_JP.eucJP/dhcp-options.5 \
 	     doc/examples/dhclient-dhcpv6.conf doc/examples/dhcpd-dhcpv6.conf \
 	     util/bindvar.sh \
-	     bind/Makefile bind/bind.tar.gz bind/version.tmp 
+	     bind/Makefile bind/bind.tar.gz bind/version.tmp \
+	     common/tests/Atffile server/tests/Atffile
 
 SUBDIRS = bind includes tests common dst omapip client dhcpctl relay server
 nobase_include_HEADERS = dhcpctl/dhcpctl.h
@@ -216,6 +220,8 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(srcdir) && $(AUTOCONF)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
+doc/devel/doxyfile: $(top_builddir)/config.status $(top_srcdir)/doc/devel/doxyfile.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 install-nobase_includeHEADERS: $(nobase_include_HEADERS)
 	@$(NORMAL_INSTALL)
 	test -z "$(includedir)" || $(MKDIR_P) "$(DESTDIR)$(includedir)"

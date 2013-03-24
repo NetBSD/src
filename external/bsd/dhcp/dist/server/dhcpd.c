@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcpd.c,v 1.1.1.1 2013/03/24 15:46:00 christos Exp $	*/
+/*	$NetBSD: dhcpd.c,v 1.1.1.2 2013/03/24 22:50:40 christos Exp $	*/
 
 /* dhcpd.c
 
    DHCP Server Daemon. */
 
 /*
- * Copyright (c) 2004-2011 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2013 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -35,10 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.c,v 1.1.1.1 2013/03/24 15:46:00 christos Exp $");
+__RCSID("$NetBSD: dhcpd.c,v 1.1.1.2 2013/03/24 22:50:40 christos Exp $");
 
 static const char copyright[] =
-"Copyright 2004-2011 Internet Systems Consortium.";
+"Copyright 2004-2013 Internet Systems Consortium.";
 static const char arr [] = "All rights reserved.";
 static const char message [] = "Internet Systems Consortium DHCP Server";
 static const char url [] =
@@ -63,7 +63,9 @@ static const char url [] =
 #  undef group
 #endif /* PARANOIA */
 
+#ifndef UNIT_TEST
 static void usage(void);
+#endif
 
 struct iaddr server_identifier;
 int server_identifier_matched;
@@ -1206,7 +1208,7 @@ void postdb_startup (void)
 }
 
 /* Print usage message. */
-
+#ifndef UNIT_TEST
 static void
 usage(void) {
 	log_info("%s %s", message, PACKAGE_VERSION);
@@ -1230,6 +1232,7 @@ usage(void) {
 		  "             [-pf pid-file] [--no-pid] [-s server]\n"
 		  "             [if0 [...ifN]]");
 }
+#endif
 
 void lease_pinged (from, packet, length)
 	struct iaddr from;

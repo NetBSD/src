@@ -19,7 +19,8 @@ EXTRA_DIST = RELNOTES LICENSE \
 	     doc/ja_JP.eucJP/dhcp-eval.5 doc/ja_JP.eucJP/dhcp-options.5 \
 	     doc/examples/dhclient-dhcpv6.conf doc/examples/dhcpd-dhcpv6.conf \
 	     util/bindvar.sh \
-	     bind/Makefile bind/bind.tar.gz bind/version.tmp 
+	     bind/Makefile bind/bind.tar.gz bind/version.tmp \
+	     common/tests/Atffile server/tests/Atffile
 
 SUBDIRS = bind includes tests common dst omapip client dhcpctl relay server
 

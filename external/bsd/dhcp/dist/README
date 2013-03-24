@@ -1,8 +1,8 @@
 	      Internet Systems Consortium DHCP Distribution
-			      Version 4.2.3
-			     18 October 2011
+			      Version 4.2.5
+			      8 January 2013
 
-			      README FILE
+			        README FILE
 
 You should read this file carefully before trying to install or use
 the ISC DHCP Distribution.
@@ -34,7 +34,8 @@ the ISC DHCP Distribution.
 	 5.7	 NeXTSTEP
 	 5.8	 SOLARIS
 	  5.8.1 Solaris 11
-	  5.8.2 Other Solaris Items
+	  5.8.2 Solaris 11 and ATF
+	  5.8.3 Other Solaris Items
 	 5.9	 AIX
 	 5.10	 MacOS X
 	6	SUPPORT
@@ -58,8 +59,8 @@ DHCP server documentation is in the dhcpd man page.  Information about
 the DHCP server lease database is in the dhcpd.leases man page.
 Server configuration documentation is in the dhcpd.conf man page as
 well as the dhcp-options man page.   A sample DHCP server
-configuration is in the file server/dhcpd.conf.   The source for the
-dhcpd, dhcpd.leases and dhcpd.conf man pages is in the server/ sub-
+configuration is in the file server/dhcpd.conf.example.   The source for
+the dhcpd, dhcpd.leases and dhcpd.conf man pages is in the server/ sub-
 directory in the distribution.   The source for the dhcp-options.5
 man page is in the common/ subdirectory.
 
@@ -97,7 +98,7 @@ directory, it may not have up-to-date information).
 
 			    RELEASE STATUS
 
-This is ISC DHCP 4.2.3, a maintenance release containing patches.
+This is ISC DHCP 4.2.5, a maintenance release containing patches.
 
 In this release, the DHCPv6 server should be fully functional on Linux,
 Solaris, or any BSD.  The DHCPv6 client should be similarly functional
@@ -132,12 +133,12 @@ information.   On Digital Unix, type ``man pfilt''.
 To build the DHCP Distribution, unpack the compressed tar file using
 the tar utility and the gzip command - type something like:
 
-	gunzip dhcp-4.2.3.tar.gz
-	tar xvf dhcp-4.2.3.tar
+	gunzip dhcp-4.2.5.tar.gz
+	tar xvf dhcp-4.2.5.tar
 
 			    CONFIGURING IT
 
-Now, cd to the dhcp-4.2.3 subdirectory that you've just created and
+Now, cd to the dhcp-4.2.5 subdirectory that you've just created and
 configure the source tree by typing:
 
 	./configure
@@ -147,6 +148,11 @@ running on, it will create a custom Makefile for you for that
 system; otherwise, it will complain.  If it can't figure out what
 system you are using, that system is not supported - you are on
 your own.
+
+Several options may be enabled or disabled via the configure command.
+You can get a list of these by typing:
+
+	./configure --help
 
 			 DYNAMIC DNS UPDATES
 
@@ -449,6 +455,36 @@ enable both USE_SOCKETS and USE_V4_PKTINFO as part of the
 configuration step.  The command line would be something like:
 
 	  ./configure --enable-use-sockets --enable-ipv4-pktinfo
+
+				Solaris 11 and ATF
+
+We have reports that ATF 0.15 and 0.16 do not build on Solaris 11.  The
+following changes to the ATF source code appear to fix this issue:
+
+diff -ru atf-0.15/atf-c/tp_test.c atf-0.15-patched/atf-c/tp_test.c
+--- atf-0.15/atf-c/tp_test.c 2011-12-06 06:31:11.000000000 +0100
++++ atf-0.15-patched/atf-c/tp_test.c 2012-06-19 15:54:57.000000000 +0200
+@@ -28,6 +28,7 @@
+*/
+
+#include <string.h>
++#include <stdio.h>
+#include <unistd.h>
+
+#include <atf-c.h>
+
+diff -ru atf-0.15/atf-run/requirements.cpp atf-0.15-patched/atf-run/requirements.cpp
+--- atf-0.15/atf-run/requirements.cpp 2012-01-13 20:44:25.000000000 +0100
++++ atf-0.15-patched/atf-run/requirements.cpp 2012-06-19 15:41:51.000000000 +0200
+@@ -29,7 +29,7 @@
+
+extern "C" {
+#include <sys/param.h>
+-#include <sys/sysctl.h>
++//#include <sys/sysctl.h>
+}
+
+#include <cerrno>
 
 				Other Solaris Items
 

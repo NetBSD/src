@@ -10,4 +10,8 @@ libdhcp_a_SOURCES = alloc.c bpf.c comapi.c conflex.c ctrace.c discover.c \
 man_MANS = dhcp-eval.5 dhcp-options.5
 EXTRA_DIST = $(man_MANS)
 
-SUBDIRS = tests
+# We want to build this directory first, before descending into tests subdir.
+# The reason is that ideally the tests should link existing objects from this
+# directory. That eliminates any discrepancies between tested code and
+# production code. Sadly, we are not there yet.
+SUBDIRS = . tests

@@ -1,11 +1,11 @@
-/*	$NetBSD: connection.c,v 1.1.1.1 2013/03/24 15:45:57 christos Exp $	*/
+/*	$NetBSD: connection.c,v 1.1.1.2 2013/03/24 22:50:36 christos Exp $	*/
 
 /* connection.c
 
    Subroutines for dealing with connections. */
 
 /*
- * Copyright (c) 2009-2011 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009-2012 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: connection.c,v 1.1.1.1 2013/03/24 15:45:57 christos Exp $");
+__RCSID("$NetBSD: connection.c,v 1.1.1.2 2013/03/24 22:50:36 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -401,22 +401,23 @@ static void trace_connect_input (trace_type_t *ttype,
 	/* Find the matching connect object, if there is one. */
 	omapi_array_foreach_begin (omapi_connections,
 				   omapi_connection_object_t, lp) {
-	    for (i = 0; (lp -> connect_list &&
-			 i < lp -> connect_list -> count); i++) {
+	    for (i = 0; (lp->connect_list &&
+			 i < lp->connect_list->count); i++) {
 		    if (!memcmp (&remote.sin_addr,
-				 &lp -> connect_list -> addresses [i].address,
+				 &lp->connect_list->addresses[i].address,
 				 sizeof remote.sin_addr) &&
 			(ntohs (remote.sin_port) ==
-			 lp -> connect_list -> addresses [i].port))
-			lp -> state = omapi_connection_connected;
-			lp -> remote_addr = remote;
-			lp -> remote_addr.sin_family = AF_INET;
-			omapi_addr_list_dereference (&lp -> connect_list, MDL);
-			lp -> index = connect_index;
-			status = omapi_signal_in ((omapi_object_t *)lp,
-						  "connect");
-			omapi_connection_dereference (&lp, MDL);
-			return;
+			 lp->connect_list->addresses[i].port)) {
+			    lp->state = omapi_connection_connected;
+			    lp->remote_addr = remote;
+			    lp->remote_addr.sin_family = AF_INET;
+			    omapi_addr_list_dereference(&lp->connect_list, MDL);
+			    lp->index = connect_index;
+			    status = omapi_signal_in((omapi_object_t *)lp,
+						     "connect");
+			    omapi_connection_dereference (&lp, MDL);
+			    return;
+		    }
 		}
 	} omapi_array_foreach_end (omapi_connections,
 				   omapi_connection_object_t, lp);
@@ -633,7 +634,7 @@ isc_result_t omapi_connection_connect (omapi_object_t *h)
 
 static isc_result_t omapi_connection_connect_internal (omapi_object_t *h)
 {
-	int error;
+	int error = 0;
 	omapi_connection_object_t *c;
 	socklen_t sl;
 	isc_result_t status;

@@ -1,12 +1,13 @@
-/*	$NetBSD: support.c,v 1.1.1.1 2013/03/24 15:45:57 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.1.1.2 2013/03/24 22:50:37 christos Exp $	*/
 
 /* support.c
 
    Subroutines providing general support for objects. */
 
 /*
- * Copyright (c) 2004-2007,2009-2010
- *				by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009-2010 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -36,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: support.c,v 1.1.1.1 2013/03/24 15:45:57 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.1.1.2 2013/03/24 22:50:37 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -557,8 +558,14 @@ isc_result_t omapi_object_update (omapi_object_t *obj, omapi_object_t *id,
 		if (status != ISC_R_SUCCESS && status != DHCP_R_UNCHANGED)
 			return status;
 	}
+
+	/*
+	 * For now ignore the return value.  I'm not sure if we want to
+	 * generate an error if we can't set the handle value.  If we
+	 * do add a check we probably should allow unchanged and notfound
+	 */
 	if (handle)
-		omapi_set_int_value (obj, id, "remote-handle", (int)handle);
+		(void) omapi_set_int_value (obj, id, "remote-handle", (int)handle);
 	status = omapi_signal (obj, "updated");
 	if (status != ISC_R_NOTFOUND)
 		return status;

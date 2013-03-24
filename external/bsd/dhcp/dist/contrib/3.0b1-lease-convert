@@ -3,7 +3,7 @@
 # Start Date:   Mon, 26 Mar 2001 14:24:09 +0200
 # Time-stamp:   <Monday, 26 March 2001 16:09:44 by brister>
 # File:         leaseconvertor.pl
-# RCSId:        Id: 3.0b1-lease-convert,v 1.1 2001-04-18 19:17:34 mellon Exp 
+# RCSId:        Id: 3.0b1-lease-convert,v 1.1 2001/04/18 19:17:34 mellon Exp 
 #
 # Description:  Convert 3.0b1 to 3.0b2/final lease file format
 #
@@ -11,7 +11,7 @@
 require 5.004;
 
 my $rcsID =<<'EOM';
-Id: 3.0b1-lease-convert,v 1.1 2001-04-18 19:17:34 mellon Exp 
+Id: 3.0b1-lease-convert,v 1.1 2001/04/18 19:17:34 mellon Exp 
 EOM
 
 use strict;

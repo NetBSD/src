@@ -1,11 +1,12 @@
-/*	$NetBSD: protocol.c,v 1.1.1.1 2013/03/24 15:45:56 christos Exp $	*/
+/*	$NetBSD: protocol.c,v 1.1.1.2 2013/03/24 22:50:37 christos Exp $	*/
 
 /* protocol.c
 
    Functions supporting the object management protocol... */
 
 /*
- * Copyright (c) 2004-2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -35,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: protocol.c,v 1.1.1.1 2013/03/24 15:45:56 christos Exp $");
+__RCSID("$NetBSD: protocol.c,v 1.1.1.2 2013/03/24 22:50:37 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -358,7 +359,7 @@ isc_result_t omapi_protocol_signal_handler (omapi_object_t *h,
 	omapi_protocol_object_t *p;
 	omapi_object_t *c;
 	omapi_message_object_t *m;
-	omapi_value_t *signature;
+	omapi_value_t *signature = NULL;
 	u_int16_t nlen;
 	u_int32_t vlen;
 	u_int32_t th;
@@ -684,7 +685,6 @@ isc_result_t omapi_protocol_signal_handler (omapi_object_t *h,
 	      case omapi_protocol_signature_wait:
 		if (p -> message -> id_object) {
 			/* Compute the signature of the message. */
-			signature = (omapi_value_t *)0;
 			status = omapi_get_value_str (c, (omapi_object_t *)0,
 						      "input-signature",
 						      &signature);
@@ -711,7 +711,9 @@ isc_result_t omapi_protocol_signal_handler (omapi_object_t *h,
 					       p -> message -> authlen);
 			
 		if (status != ISC_R_SUCCESS) {
-			omapi_value_dereference (&signature, MDL);
+			if (signature != NULL) {
+				omapi_value_dereference (&signature, MDL);
+			}
 			omapi_disconnect (c, 1);
 			return ISC_R_NOMEMORY;
 		}
@@ -730,7 +732,9 @@ isc_result_t omapi_protocol_signal_handler (omapi_object_t *h,
 			p->verify_result = DHCP_R_INVALIDKEY;
 		}
 
-		omapi_value_dereference (&signature, MDL);
+		if (signature != NULL) {
+			omapi_value_dereference (&signature, MDL);
+		}
 
 		/* Process the message. */
 	      message_done:
@@ -864,10 +868,10 @@ isc_result_t omapi_protocol_set_value (omapi_object_t *h,
 	p = (omapi_protocol_object_t *)h;
 
 	if (omapi_ds_strcmp (name, "default-authenticator") == 0) {
-		if (value -> type != omapi_datatype_object)
+		if (!value || value -> type != omapi_datatype_object)
 			return DHCP_R_INVALIDARG;
 
-		if (!value || !value -> u.object) {
+		if (!value -> u.object) {
 			p -> default_auth = (omapi_remote_auth_t *)0;
 		} else {
 			for (r = p -> remote_auth_list; r; r = r -> next)
@@ -931,12 +935,10 @@ isc_result_t omapi_protocol_destroy (omapi_object_t *h,
 		dfree (p -> default_auth, file, line);
 
 	while (p -> remote_auth_list) {
-		omapi_remote_auth_t *r = p -> remote_auth_list -> next;
-		p -> remote_auth_list = r;
-		if (r) {
-			omapi_object_dereference (&r -> a, file, line);
-			dfree (r, file, line);
-		}
+		omapi_remote_auth_t *r = p -> remote_auth_list;
+		p -> remote_auth_list =  p -> remote_auth_list -> next;
+		omapi_object_dereference (&r -> a, file, line);
+		dfree (r, file, line);
 	}
 	return ISC_R_SUCCESS;
 }
@@ -993,7 +995,11 @@ isc_result_t omapi_protocol_configure_security (omapi_object_t *h,
 	l -> verify_auth = verify_auth;
 	l -> insecure = 0;
 
-	return omapi_listener_configure_security (h -> outer, verify_addr);
+	if (h -> outer != NULL) {
+		return omapi_listener_configure_security (h -> outer, verify_addr);
+	} else {
+		return DHCP_R_INVALIDARG;
+	}
 }
 					      
 
