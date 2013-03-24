@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.5 2012/12/04 23:38:39 spz Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.6 2013/03/24 18:44:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -2996,6 +2996,10 @@ main(int argc, char **argv) {
 
 	interactive = ISC_TF(isatty(0));
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	isc_app_start();
 
 	pre_parse_args(argc, argv);
