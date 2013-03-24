@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.226 2013/03/24 19:16:10 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.227 2013/03/24 22:33:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.226 2013/03/24 19:16:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.227 2013/03/24 22:33:59 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -187,6 +187,7 @@ typedef int (*bge_eaddr_fcn_t)(struct bge_softc *, uint8_t[]);
 static uint32_t bge_chipid(const struct pci_attach_args *pa);
 static int bge_probe(device_t, cfdata_t, void *);
 static void bge_attach(device_t, device_t, void *);
+static int bge_detach(device_t, int);
 static void bge_release_resources(struct bge_softc *);
 
 static int bge_get_eaddr_fw(struct bge_softc *, uint8_t[]);
@@ -789,8 +790,8 @@ static const struct bge_revision bge_majorrevs[] = {
 
 static int bge_allow_asf = 1;
 
-CFATTACH_DECL_NEW(bge, sizeof(struct bge_softc),
-    bge_probe, bge_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(bge, sizeof(struct bge_softc),
+    bge_probe, bge_attach, bge_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 static uint32_t
 bge_readmem_ind(struct bge_softc *sc, int off)
@@ -3205,8 +3206,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t	pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
-	bus_dma_segment_t	seg;
-	int			rseg;
 	uint32_t		hwcfg = 0;
 	uint32_t		command;
 	struct ifnet		*ifp;
@@ -3215,7 +3214,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 	u_char			eaddr[ETHER_ADDR_LEN];
 	pcireg_t		memtype, subid, reg;
 	bus_addr_t		memaddr;
-	bus_size_t		memsize, apesize;
 	uint32_t		pm_ctl;
 	bool			no_seeprom;
 	int			capmask;
@@ -3256,7 +3254,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		if (pci_mapreg_map(pa, BGE_PCI_BAR0,
 		    memtype, 0, &sc->bge_btag, &sc->bge_bhandle,
-		    &memaddr, &memsize) == 0)
+		    &memaddr, &sc->bge_bsize) == 0)
 			break;
 	default:
 		aprint_error_dev(sc->bge_dev, "can't find mem space\n");
@@ -3378,7 +3376,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if ((sc->bge_flags & BGE_APE) != 0) {
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR2);
 		if (pci_mapreg_map(pa, BGE_PCI_BAR2, memtype, 0,
-		    &sc->bge_apetag, &sc->bge_apehandle, NULL, &apesize)) {
+			&sc->bge_apetag, &sc->bge_apehandle, NULL,
+			&sc->bge_apesize)) {
 			aprint_error_dev(sc->bge_dev,
 			    "couldn't map BAR2 memory\n");
 			return;
@@ -3579,18 +3578,20 @@ bge_attach(device_t parent, device_t self, void *aux)
 		sc->bge_dmatag = pa->pa_dmat;
 	DPRINTFN(5, ("bus_dmamem_alloc\n"));
 	if (bus_dmamem_alloc(sc->bge_dmatag, sizeof(struct bge_ring_data),
-			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+			     PAGE_SIZE, 0, &sc->bge_ring_seg, 1,
+		&sc->bge_ring_rseg, BUS_DMA_NOWAIT)) {
 		aprint_error_dev(sc->bge_dev, "can't alloc rx buffers\n");
 		return;
 	}
 	DPRINTFN(5, ("bus_dmamem_map\n"));
-	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg,
-			   sizeof(struct bge_ring_data), &kva,
+	if (bus_dmamem_map(sc->bge_dmatag, &sc->bge_ring_seg,
+		sc->bge_ring_rseg, sizeof(struct bge_ring_data), &kva,
 			   BUS_DMA_NOWAIT)) {
 		aprint_error_dev(sc->bge_dev,
 		    "can't map DMA buffers (%zu bytes)\n",
 		    sizeof(struct bge_ring_data));
-		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
+		bus_dmamem_free(sc->bge_dmatag, &sc->bge_ring_seg,
+		    sc->bge_ring_rseg);
 		return;
 	}
 	DPRINTFN(5, ("bus_dmamem_create\n"));
@@ -3600,7 +3601,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->bge_dev, "can't create DMA map\n");
 		bus_dmamem_unmap(sc->bge_dmatag, kva,
 				 sizeof(struct bge_ring_data));
-		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
+		bus_dmamem_free(sc->bge_dmatag, &sc->bge_ring_seg,
+		    sc->bge_ring_rseg);
 		return;
 	}
 	DPRINTFN(5, ("bus_dmamem_load\n"));
@@ -3610,7 +3612,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 		bus_dmamap_destroy(sc->bge_dmatag, sc->bge_ring_map);
 		bus_dmamem_unmap(sc->bge_dmatag, kva,
 				 sizeof(struct bge_ring_data));
-		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
+		bus_dmamem_free(sc->bge_dmatag, &sc->bge_ring_seg,
+		    sc->bge_ring_rseg);
 		return;
 	}
 
@@ -3802,14 +3805,63 @@ bge_attach(device_t parent, device_t self, void *aux)
 #endif
 }
 
+/*
+ * Stop all chip I/O so that the kernel's probe routines don't
+ * get confused by errant DMAs when rebooting.
+ */
+static int
+bge_detach(device_t self, int flags __unused)
+{
+	struct bge_softc *sc = device_private(self);
+	struct ifnet *ifp = &sc->ethercom.ec_if;
+	int s;
+
+	s = splnet();
+	/* Stop the interface. Callouts are stopped in it. */
+	bge_stop(ifp, 1);
+	splx(s);
+
+	mii_detach(&sc->bge_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	
+	/* Delete all remaining media. */
+	ifmedia_delete_instance(&sc->bge_mii.mii_media, IFM_INST_ANY);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	bge_release_resources(sc);
+
+	return 0;
+}
+
 static void
 bge_release_resources(struct bge_softc *sc)
 {
-	if (sc->bge_vpd_prodname != NULL)
-		free(sc->bge_vpd_prodname, M_DEVBUF);
 
-	if (sc->bge_vpd_readonly != NULL)
-		free(sc->bge_vpd_readonly, M_DEVBUF);
+	/* Disestablish the interrupt handler */
+	if (sc->bge_intrhand != NULL) {
+		pci_intr_disestablish(sc->sc_pc, sc->bge_intrhand);
+		sc->bge_intrhand = NULL;
+	}
+
+	bus_dmamap_unload(sc->bge_dmatag, sc->bge_ring_map);
+	bus_dmamap_destroy(sc->bge_dmatag, sc->bge_ring_map);
+	bus_dmamem_unmap(sc->bge_dmatag, (void *)sc->bge_rdata,
+	    sizeof(struct bge_ring_data));
+	bus_dmamem_free(sc->bge_dmatag, &sc->bge_ring_seg, sc->bge_ring_rseg);
+
+	/* Unmap the device registers */
+	if (sc->bge_bsize != 0) {
+		bus_space_unmap(sc->bge_btag, sc->bge_bhandle, sc->bge_bsize);
+		sc->bge_bsize = 0;
+	}
+
+	/* Unmap the APE registers */
+	if (sc->bge_apesize != 0) {
+		bus_space_unmap(sc->bge_apetag, sc->bge_apehandle,
+		    sc->bge_apesize);
+		sc->bge_apesize = 0;
+	}
 }
 
 static int
