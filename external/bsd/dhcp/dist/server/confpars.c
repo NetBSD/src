@@ -1,11 +1,11 @@
-/*	$NetBSD: confpars.c,v 1.1.1.1 2013/03/24 15:46:01 christos Exp $	*/
+/*	$NetBSD: confpars.c,v 1.1.1.2 2013/03/24 22:50:38 christos Exp $	*/
 
 /* confpars.c
 
    Parser for dhcpd config file... */
 
 /*
- * Copyright (c) 2004-2010 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2012 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: confpars.c,v 1.1.1.1 2013/03/24 15:46:01 christos Exp $");
+__RCSID("$NetBSD: confpars.c,v 1.1.1.2 2013/03/24 22:50:38 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -1051,7 +1051,6 @@ void parse_failover_peer (cfile, group, type)
 			if (hba_len != 32) {
 				parse_warn (cfile,
 					    "HBA must be exactly 32 bytes.");
-				dfree (hba, MDL);
 				break;
 			}
 		      make_hba:
@@ -2128,7 +2127,7 @@ int parse_class_declaration (cp, cfile, group, type)
 					log_fatal ("no memory for billing");
 				memset (class -> billed_leases, 0,
 					(class -> lease_limit *
-					 sizeof class -> billed_leases));
+					 sizeof (struct lease *)));
 			}
 			data_string_copy (&class -> hash_string, &data, MDL);
 			if (!pc -> hash &&
@@ -2324,7 +2323,7 @@ int parse_class_declaration (cp, cfile, group, type)
 				log_fatal ("no memory for billed leases.");
 			memset (class -> billed_leases, 0,
 				(class -> lease_limit *
-				 sizeof class -> billed_leases));
+				 sizeof (struct lease *)));
 			have_billing_classes = 1;
 			parse_semi (cfile);
 		} else {
@@ -2388,7 +2387,9 @@ void parse_shared_net_declaration (cfile, group)
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't allocate shared subnet: %s",
 			   isc_result_totext (status));
-	clone_group (&share -> group, group, MDL);
+	if (clone_group (&share -> group, group, MDL) == 0) {
+		log_fatal ("Can't clone group for shared net");
+	}
 	shared_network_reference (&share -> group -> shared_network,
 				  share, MDL);
 
@@ -2729,84 +2730,83 @@ void parse_group_declaration (cfile, group)
 	enum dhcp_token token;
 	struct group *g;
 	int declaration = 0;
-	struct group_object *t;
+	struct group_object *t = NULL;
 	isc_result_t status;
 	char *name = NULL;
 	int deletedp = 0;
 	int dynamicp = 0;
 	int staticp = 0;
 
-	g = (struct group *)0;
-	if (!clone_group (&g, group, MDL))
-		log_fatal ("no memory for explicit group.");
+	g = NULL;
+	if (!clone_group(&g, group, MDL))
+		log_fatal("no memory for explicit group.");
 
-	token = peek_token (&val, (unsigned *)0, cfile);
+	token = peek_token(&val, NULL, cfile);
 	if (is_identifier (token) || token == STRING) {
-		next_token (&val, (unsigned *)0, cfile);
+		next_token(&val, NULL, cfile);
 		
-		name = dmalloc (strlen (val) + 1, MDL);
+		name = dmalloc(strlen(val) + 1, MDL);
 		if (!name)
-			log_fatal ("no memory for group decl name %s", val);
-		strcpy (name, val);
+			log_fatal("no memory for group decl name %s", val);
+		strcpy(name, val);
 	}		
 
-	if (!parse_lbrace (cfile)) {
-		group_dereference (&g, MDL);
+	if (!parse_lbrace(cfile)) {
+		group_dereference(&g, MDL);
 		return;
 	}
 
 	do {
-		token = peek_token (&val, (unsigned *)0, cfile);
+		token = peek_token(&val, NULL, cfile);
 		if (token == RBRACE) {
-			token = next_token (&val, (unsigned *)0, cfile);
+			token = next_token(&val, NULL, cfile);
 			break;
 		} else if (token == END_OF_FILE) {
-			token = next_token (&val, (unsigned *)0, cfile);
-			parse_warn (cfile, "unexpected end of file");
+			token = next_token(&val, NULL, cfile);
+			parse_warn(cfile, "unexpected end of file");
 			break;
 		} else if (token == TOKEN_DELETED) {
-			token = next_token (&val, (unsigned *)0, cfile);
-			parse_semi (cfile);
+			token = next_token(&val, NULL, cfile);
+			parse_semi(cfile);
 			deletedp = 1;
 		} else if (token == DYNAMIC) {
-			token = next_token (&val, (unsigned *)0, cfile);
-			parse_semi (cfile);
+			token = next_token(&val, NULL, cfile);
+			parse_semi(cfile);
 			dynamicp = 1;
 		} else if (token == STATIC) {
-			token = next_token (&val, (unsigned *)0, cfile);
-			parse_semi (cfile);
+			token = next_token(&val, NULL, cfile);
+			parse_semi(cfile);
 			staticp = 1;
 		}
-		declaration = parse_statement (cfile, g, GROUP_DECL,
-					       (struct host_decl *)0,
-					       declaration);
+		declaration = parse_statement(cfile, g, GROUP_DECL,
+					      NULL, declaration);
 	} while (1);
 
 	if (name) {
 		if (deletedp) {
 			if (group_name_hash) {
-				t = (struct group_object *)0;
-				if (group_hash_lookup (&t, group_name_hash,
-						       name,
-						       strlen (name), MDL)) {
-					delete_group (t, 0);
+				t = NULL;
+				if (group_hash_lookup(&t, group_name_hash,
+						      name,
+						      strlen(name), MDL)) {
+					delete_group(t, 0);
 				}
 			}
 		} else {
-			t = (struct group_object *)0;
-			status = group_object_allocate (&t, MDL);
+			t = NULL;
+			status = group_object_allocate(&t, MDL);
 			if (status != ISC_R_SUCCESS)
-				log_fatal ("no memory for group decl %s: %s",
-					   val, isc_result_totext (status));
-			group_reference (&t -> group, g, MDL);
-			t -> name = name;
-			t -> flags = ((staticp ? GROUP_OBJECT_STATIC : 0) |
-				      (dynamicp ? GROUP_OBJECT_DYNAMIC : 0) |
-				      (deletedp ? GROUP_OBJECT_DELETED : 0));
-			supersede_group (t, 0);
+				log_fatal("no memory for group decl %s: %s",
+					  val, isc_result_totext(status));
+			group_reference(&t->group, g, MDL);
+			t->name = name;
+			/* no need to include deletedp as it's handled above */
+			t->flags = ((staticp ? GROUP_OBJECT_STATIC : 0) |
+				    (dynamicp ? GROUP_OBJECT_DYNAMIC : 0));
+			supersede_group(t, 0);
 		}
-		if (t)
-			group_object_dereference (&t, MDL);
+		if (t != NULL)
+			group_object_dereference(&t, MDL);
 	}
 }
 
@@ -4446,21 +4446,39 @@ parse_ia_na_declaration(struct parse *cfile) {
 			binding_scope_dereference(&scope, MDL);
 		}
 
-		/* add to our various structures */
-		ia_add_iasubopt(ia, iaaddr, MDL);
-		ia_reference(&iaaddr->ia, ia, MDL);
+		/* find the pool this address is in */
 		pool = NULL;
 		if (find_ipv6_pool(&pool, D6O_IA_NA,
 				   &iaaddr->addr) != ISC_R_SUCCESS) {
 			inet_ntop(AF_INET6, &iaaddr->addr,
 				  addr_buf, sizeof(addr_buf));
-			parse_warn(cfile, "no pool found for address %s", 
+			parse_warn(cfile, "no pool found for address %s",
 				   addr_buf);
 			return;
 		}
-		add_lease6(pool, iaaddr, end_time);
-		ipv6_pool_dereference(&pool, MDL);
+
+		/* remove old information */
+		if (cleanup_lease6(ia_na_active, pool,
+				   iaaddr, ia) != ISC_R_SUCCESS) {
+			inet_ntop(AF_INET6, &iaaddr->addr,
+				  addr_buf, sizeof(addr_buf));
+			parse_warn(cfile, "duplicate na lease for address %s",
+				   addr_buf);
+		}
+
+		/*
+		 * if we like the lease we add it to our various structues
+		 * otherwise we leave it and it will get cleaned when we
+		 * do the iasubopt_dereference.
+		 */
+		if ((state == FTS_ACTIVE) || (state == FTS_ABANDONED)) {
+			ia_add_iasubopt(ia, iaaddr, MDL);
+			ia_reference(&iaaddr->ia, ia, MDL);
+			add_lease6(pool, iaaddr, end_time);
+		}
+
 		iasubopt_dereference(&iaaddr, MDL);
+		ipv6_pool_dereference(&pool, MDL);
 	}
 
 	/*
@@ -4809,19 +4827,37 @@ parse_ia_ta_declaration(struct parse *cfile) {
 			binding_scope_dereference(&scope, MDL);
 		}
 
-		/* add to our various structures */
-		ia_add_iasubopt(ia, iaaddr, MDL);
-		ia_reference(&iaaddr->ia, ia, MDL);
+		/* find the pool this address is in */
 		pool = NULL;
 		if (find_ipv6_pool(&pool, D6O_IA_TA,
 				   &iaaddr->addr) != ISC_R_SUCCESS) {
 			inet_ntop(AF_INET6, &iaaddr->addr,
 				  addr_buf, sizeof(addr_buf));
-			parse_warn(cfile, "no pool found for address %s", 
+			parse_warn(cfile, "no pool found for address %s",
 				   addr_buf);
 			return;
 		}
-		add_lease6(pool, iaaddr, end_time);
+
+		/* remove old information */
+		if (cleanup_lease6(ia_ta_active, pool,
+				   iaaddr, ia) != ISC_R_SUCCESS) {
+			inet_ntop(AF_INET6, &iaaddr->addr,
+				  addr_buf, sizeof(addr_buf));
+			parse_warn(cfile, "duplicate ta lease for address %s",
+				   addr_buf);
+		}
+
+		/*
+		 * if we like the lease we add it to our various structues
+		 * otherwise we leave it and it will get cleaned when we
+		 * do the iasubopt_dereference.
+		 */
+		if ((state == FTS_ACTIVE) || (state == FTS_ABANDONED)) {
+			ia_add_iasubopt(ia, iaaddr, MDL);
+			ia_reference(&iaaddr->ia, ia, MDL);
+			add_lease6(pool, iaaddr, end_time);
+		}
+
 		ipv6_pool_dereference(&pool, MDL);
 		iasubopt_dereference(&iaaddr, MDL);
 	}
@@ -5173,19 +5209,37 @@ parse_ia_pd_declaration(struct parse *cfile) {
 			binding_scope_dereference(&scope, MDL);
 		}
 
-		/* add to our various structures */
-		ia_add_iasubopt(ia, iapref, MDL);
-		ia_reference(&iapref->ia, ia, MDL);
+		/* find the pool this address is in */
 		pool = NULL;
 		if (find_ipv6_pool(&pool, D6O_IA_PD,
 				   &iapref->addr) != ISC_R_SUCCESS) {
 			inet_ntop(AF_INET6, &iapref->addr,
 				  addr_buf, sizeof(addr_buf));
-			parse_warn(cfile, "no pool found for address %s", 
+			parse_warn(cfile, "no pool found for address %s",
 				   addr_buf);
 			return;
 		}
-		add_lease6(pool, iapref, end_time);
+
+		/* remove old information */
+		if (cleanup_lease6(ia_pd_active, pool,
+				   iapref, ia) != ISC_R_SUCCESS) {
+			inet_ntop(AF_INET6, &iapref->addr,
+				  addr_buf, sizeof(addr_buf));
+			parse_warn(cfile, "duplicate pd lease for address %s",
+				   addr_buf);
+		}
+
+		/*
+		 * if we like the lease we add it to our various structues
+		 * otherwise we leave it and it will get cleaned when we
+		 * do the iasubopt_dereference.
+		 */
+		if ((state == FTS_ACTIVE) || (state == FTS_ABANDONED)) {
+			ia_add_iasubopt(ia, iapref, MDL);
+			ia_reference(&iapref->ia, ia, MDL);
+			add_lease6(pool, iapref, end_time);
+		}
+
 		ipv6_pool_dereference(&pool, MDL);
 		iasubopt_dereference(&iapref, MDL);
 	}

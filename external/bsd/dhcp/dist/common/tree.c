@@ -1,11 +1,11 @@
-/*	$NetBSD: tree.c,v 1.1.1.1 2013/03/24 15:45:55 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.1.1.2 2013/03/24 22:50:33 christos Exp $	*/
 
 /* tree.c
 
    Routines for manipulating parse trees... */
 
 /*
- * Copyright (c) 2011 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2011-2012 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004-2007,2009 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tree.c,v 1.1.1.1 2013/03/24 15:45:55 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.1.1.2 2013/03/24 22:50:33 christos Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -1125,6 +1125,7 @@ int evaluate_boolean_expression (result, packet, lease, client_state,
 		*result = 0;
 		memset(&re, 0, sizeof(re));
 		if (bleft && bright &&
+		    (left.data != NULL) && (right.data != NULL) &&
         	    (regcomp(&re, (char *)right.data, regflags) == 0) &&
 		    (regexec(&re, (char *)left.data, (size_t)0, NULL, 0) == 0))
 				*result = 1;
@@ -1216,17 +1217,15 @@ int evaluate_boolean_expression (result, packet, lease, client_state,
 		return 0;
 
 	      case expr_not:
-		sleft = evaluate_boolean_expression (&bleft, packet, lease,
-						     client_state,
-						     in_options, cfg_options,
-						     scope,
-						     expr -> data.not);
+		sleft = evaluate_boolean_expression(&bleft, packet, lease,
+						    client_state,
+						    in_options, cfg_options,
+						    scope,
+						    expr->data.not);
 #if defined (DEBUG_EXPRESSIONS)
-		log_debug ("bool: not (%s) = %s",
-		      sleft ? (bleft ? "true" : "false") : "NULL",
-		      ((sleft && sright)
-		       ? (!bleft ? "true" : "false") : "NULL"));
-
+		log_debug("bool: not (%s) = %s",
+			  sleft ? (bleft ? "true" : "false") : "NULL",
+			  sleft ? (!bleft ? "true" : "false") : "NULL");
 #endif
 		if (sleft) {
 			*result = !bleft;
@@ -2413,6 +2412,7 @@ int evaluate_numeric_expression (result, packet, lease, client_state,
 	struct binding *binding;
 	struct binding_value *bv;
 	unsigned long ileft, iright;
+	int rc = 0;
 
 	switch (expr -> op) {
 	      case expr_check:
@@ -2477,36 +2477,48 @@ int evaluate_numeric_expression (result, packet, lease, client_state,
 		return status;
 
 	      case expr_extract_int16:
-		memset (&data, 0, sizeof data);
+		memset(&data, 0, sizeof(data));
 		status = (evaluate_data_expression
 			  (&data, packet, lease, client_state, in_options,
-			   cfg_options, scope, expr -> data.extract_int, MDL));
-		if (status && data.len >= 2)
-			*result = getUShort (data.data);
+			   cfg_options, scope, expr->data.extract_int, MDL));
+		if (status && data.len >= 2) {
+			*result = getUShort(data.data);
+			rc = 1;
+		}
 #if defined (DEBUG_EXPRESSIONS)
-		log_debug ("num: extract_int16 (%s) = %ld",
-		      ((status && data.len >= 2) ?
-		       print_hex_1 (data.len, data.data, 60) : "NULL"),
-		      *result);
+		if (rc == 1) {
+			log_debug("num: extract_int16 (%s) = %ld",
+				  print_hex_1(data.len, data.data, 60),
+				  *result);
+		} else {
+			log_debug("num: extract_int16 (NULL) = NULL");
+		}
 #endif
-		if (status) data_string_forget (&data, MDL);
-		return (status && data.len >= 2);
+		if (status)
+			data_string_forget(&data, MDL);
+
+		return (rc);
 
 	      case expr_extract_int32:
 		memset (&data, 0, sizeof data);
 		status = (evaluate_data_expression
 			  (&data, packet, lease, client_state, in_options,
 			   cfg_options, scope, expr -> data.extract_int, MDL));
-		if (status && data.len >= 4)
+		if (status && data.len >= 4) {
 			*result = getULong (data.data);
+			rc = 1;
+		}
 #if defined (DEBUG_EXPRESSIONS)
-		log_debug ("num: extract_int32 (%s) = %ld",
-		      ((status && data.len >= 4) ?
-		       print_hex_1 (data.len, data.data, 60) : "NULL"),
-		      *result);
+		if (rc == 1) {
+			log_debug ("num: extract_int32 (%s) = %ld",
+				   print_hex_1 (data.len, data.data, 60),
+				   *result);
+		} else {
+			log_debug ("num: extract_int32 (NULL) = NULL");
+		}
 #endif
 		if (status) data_string_forget (&data, MDL);
-		return (status && data.len >= 4);
+		return (rc);
 
 	      case expr_const_int:
 		*result = expr -> data.const_int;
@@ -2517,22 +2529,22 @@ int evaluate_numeric_expression (result, packet, lease, client_state,
 
 	      case expr_lease_time:
 		if (!lease) {
-			log_error ("data: leased_lease: not available");
-			return 0;
+			log_error("data: leased_lease: not available");
+			return (0);
 		}
-		if (lease -> ends < cur_time) {
-			log_error ("%s %lu when it is now %lu",
-				   "data: lease_time: lease ends at",
-				   (long)(lease -> ends), (long)cur_time);
-			return 0;
+		if (lease->ends < cur_time) {
+			log_error("%s %lu when it is now %lu",
+				  "data: lease_time: lease ends at",
+				  (long)(lease->ends), (long)cur_time);
+			return (0);
 		}
-		*result = lease -> ends - cur_time;
+		*result = lease->ends - cur_time;
 #if defined (DEBUG_EXPRESSIONS)
-		log_debug ("number: lease-time = (%lu - %lu) = %ld",
-			   lease -> ends,
-			   cur_time, *result);
+		log_debug("number: lease-time = (%lu - %lu) = %ld",
+			  (long unsigned)lease->ends,
+			  (long unsigned)cur_time, *result);
 #endif
-		return 1;
+		return (1);
  
 	      case expr_dns_transaction:
 #if !defined (NSUPDATE_OLD)
@@ -2895,10 +2907,17 @@ int evaluate_numeric_expression (result, packet, lease, client_state,
 	return 0;
 }
 
-/* Return data hanging off of an option cache structure, or if there
-   isn't any, evaluate the expression hanging off of it and return the
-   result of that evaluation.   There should never be both an expression
-   and a valid data_string. */
+/*
+ * Return data hanging off of an option cache structure, or if there
+ * isn't any, evaluate the expression hanging off of it and return the
+ * result of that evaluation.   There should never be both an expression
+ * and a valid data_string.
+ *
+ * returns 0 if there wasn't an expression or it couldn't be evaluated
+ * returns non-zero if there was an expression or string that was evaluated
+ * When it returns zero the arguements, in particualr resutl,  should not
+ * be modified
+ */
 
 int evaluate_option_cache (result, packet, lease, client_state,
 			   in_options, cfg_options, scope, oc, file, line)
@@ -3606,6 +3625,7 @@ int write_expression (file, expr, col, indent, firstp)
 		col = write_expression (file, expr -> data.suffix.len,
 					col, scol, 0);
 		col = token_print_indent (file, col, indent, "", "", ")");
+		break;
 
 	      case expr_lcase:
 		col = token_print_indent(file, col, indent, "", "", "lcase");
@@ -4141,10 +4161,10 @@ int fundef_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
-	struct fundef *bp = *ptr;
+	struct fundef *bp;
 	struct string_list *sp, *next;
 
-	if (!ptr) {
+	if ((ptr == NULL) || (*ptr == NULL)) {
 		log_error ("%s(%d): null pointer", file, line);
 #if defined (POINTER_DEBUG)
 		abort ();
@@ -4153,15 +4173,7 @@ int fundef_dereference (ptr, file, line)
 #endif
 	}
 
-	if (!bp) {
-		log_error ("%s(%d): null pointer", file, line);
-#if defined (POINTER_DEBUG)
-		abort ();
-#else
-		return 0;
-#endif
-	}
-
+	bp = *ptr;
 	bp -> refcnt--;
 	rc_register (file, line, ptr, bp, bp -> refcnt, 1, RC_MISC);
 	if (bp -> refcnt < 0) {
@@ -4433,11 +4445,11 @@ int find_bound_string (struct data_string *value,
 	if (binding -> value -> value.data.terminated) {
 		data_string_copy (value, &binding -> value -> value.data, MDL);
 	} else {
-		buffer_allocate (&value -> buffer,
-				 binding -> value -> value.data.len,
-				 MDL);
-		if (!value -> buffer)
+		if (buffer_allocate (&value->buffer,
+				     binding->value->value.data.len,
+				     MDL) == 0) {
 			return 0;
+		}
 
 		memcpy (value -> buffer -> data,
 			binding -> value -> value.data.data,
