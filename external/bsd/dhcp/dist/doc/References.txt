@@ -4,7 +4,7 @@
 ISC-DHCP-REFERENCES                                           D. Hankins
                                                             T. Mrugalski
                                                                      ISC
-                                                            May 20, 2011
+                                                        January 04, 2012
 
 
                      ISC DHCP References Collection
@@ -54,7 +54,7 @@ Copyright Notice
 
 Hankins & Mrugalski                                             [Page 1]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
 Table of Contents
@@ -110,7 +110,7 @@ Table of Contents
 
 Hankins & Mrugalski                                             [Page 2]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
 1.  Introduction
@@ -166,7 +166,7 @@ Hankins & Mrugalski                                             [Page 2]
 
 Hankins & Mrugalski                                             [Page 3]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
    o  To produce new externally-visible behaviour, one must first
@@ -222,7 +222,7 @@ Hankins & Mrugalski                                             [Page 3]
 
 Hankins & Mrugalski                                             [Page 4]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
        address yet) interface.
@@ -278,7 +278,7 @@ Hankins & Mrugalski                                             [Page 4]
 
 Hankins & Mrugalski                                             [Page 5]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
    now unicast without ARP by inserting an entry into the ARP cache
@@ -334,7 +334,7 @@ Hankins & Mrugalski                                             [Page 5]
 
 Hankins & Mrugalski                                             [Page 6]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
 5.  DHCPv4 Protocol References
@@ -390,7 +390,7 @@ Hankins & Mrugalski                                             [Page 6]
 
 Hankins & Mrugalski                                             [Page 7]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
    RFC2485 [RFC2485] defines the Open Group's UAP option.
@@ -446,7 +446,7 @@ Hankins & Mrugalski                                             [Page 7]
 
 Hankins & Mrugalski                                             [Page 8]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
 5.2.1.  Relay Agent Information Option Options
@@ -502,7 +502,7 @@ Hankins & Mrugalski                                             [Page 8]
 
 Hankins & Mrugalski                                             [Page 9]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
    this document was edited, and the authors no longer show any interest
@@ -558,7 +558,7 @@ Hankins & Mrugalski                                             [Page 9]
 
 Hankins & Mrugalski                                            [Page 10]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
    IA_NAs within one packet from the client, our client only supports
@@ -586,6 +586,10 @@ Hankins & Mrugalski                                            [Page 10]
    Precisely how to correctly support the above conundrums has not quite
    yet been settled, so support is incomplete.
 
+   [RFC5453] creates a registry at IANA to reserve interface identifiers
+   and specifies a starting set.  These IIDs should not be used when
+   constructing addresses to avoid possible conflicts.
+
 6.2.  DHCPv6 Options References
 
    [RFC3319] defines the SIP server options for DHCPv6.
@@ -605,17 +609,18 @@ Hankins & Mrugalski                                            [Page 10]
    [RFC4242] defines the Information Refresh Time option, which advises
    DHCPv6 Information-Request clients to return for updated information.
 
-   [RFC4280] defines two BCMS server options for each protocol family.
-
-   [RFC4580] defines a DHCPv6 subscriber-id option, which is similar in
-   principle to the DHCPv4 relay agent option of the same name.
 
 
 
 Hankins & Mrugalski                                            [Page 11]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
+
+   [RFC4280] defines two BCMS server options for each protocol family.
+
+   [RFC4580] defines a DHCPv6 subscriber-id option, which is similar in
+   principle to the DHCPv4 relay agent option of the same name.
 
    [RFC4649] defines a DHCPv6 remote-id option, which is similar in
    principle to the DHCPv4 relay agent remote-id.
@@ -661,18 +666,17 @@ Hankins & Mrugalski                                            [Page 11]
    [RFC2485]  Drach, S., "DHCP Option for The Open Group's User
               Authentication Protocol", RFC 2485, January 1999.
 
-   [RFC2563]  Troll, R., "DHCP Option to Disable Stateless Auto-
-              Configuration in IPv4 Clients", RFC 2563, May 1999.
-
-   [RFC2610]  Perkins, C. and E. Guttman, "DHCP Options for Service
-
 
 
 Hankins & Mrugalski                                            [Page 12]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
+   [RFC2563]  Troll, R., "DHCP Option to Disable Stateless Auto-
+              Configuration in IPv4 Clients", RFC 2563, May 1999.
+
+   [RFC2610]  Perkins, C. and E. Guttman, "DHCP Options for Service
               Location Protocol", RFC 2610, June 1999.
 
    [RFC2855]  Fujisawa, K., "DHCP for IEEE 1394", RFC 2855, June 2000.
@@ -717,18 +721,18 @@ Hankins & Mrugalski                                            [Page 12]
               November 2002.
 
    [RFC3397]  Aboba, B. and S. Cheshire, "Dynamic Host Configuration
-              Protocol (DHCP) Domain Search Option", RFC 3397,
-              November 2002.
-
-   [RFC3442]  Lemon, T., Cheshire, S., and B. Volz, "The Classless
 
 
 
 Hankins & Mrugalski                                            [Page 13]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
+              Protocol (DHCP) Domain Search Option", RFC 3397,
+              November 2002.
+
+   [RFC3442]  Lemon, T., Cheshire, S., and B. Volz, "The Classless
               Static Route Option for Dynamic Host Configuration
               Protocol (DHCP) version 4", RFC 3442, December 2002.
 
@@ -773,17 +777,18 @@ Hankins & Mrugalski                                            [Page 13]
               Suboption for the Dynamic Host Configuration Protocol
               (DHCP) Relay Agent Option", RFC 3993, March 2005.
 
-   [RFC4014]  Droms, R. and J. Schnizlein, "Remote Authentication
-              Dial-In User Service (RADIUS) Attributes Suboption for the
-              Dynamic Host Configuration Protocol (DHCP) Relay Agent
-              Information Option", RFC 4014, February 2005.
 
 
 
 Hankins & Mrugalski                                            [Page 14]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
+
+   [RFC4014]  Droms, R. and J. Schnizlein, "Remote Authentication
+              Dial-In User Service (RADIUS) Attributes Suboption for the
+              Dynamic Host Configuration Protocol (DHCP) Relay Agent
+              Information Option", RFC 4014, February 2005.
 
    [RFC4030]  Stapp, M. and T. Lemon, "The Authentication Suboption for
               the Dynamic Host Configuration Protocol (DHCP) Relay Agent
@@ -829,17 +834,16 @@ Hankins & Mrugalski                                            [Page 14]
               Configuration Protocol (DHCP) Clients", RFC 4703,
               October 2006.
 
-   [RFC5010]  Kinnear, K., Normoyle, M., and M. Stapp, "The Dynamic Host
-              Configuration Protocol Version 4 (DHCPv4) Relay Agent
-              Flags Suboption", RFC 5010, September 2007.
-
-
 
 
 Hankins & Mrugalski                                            [Page 15]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
+
+   [RFC5010]  Kinnear, K., Normoyle, M., and M. Stapp, "The Dynamic Host
+              Configuration Protocol Version 4 (DHCPv4) Relay Agent
+              Flags Suboption", RFC 5010, September 2007.
 
    [RFC5071]  Hankins, D., "Dynamic Host Configuration Protocol Options
               Used by PXELINUX", RFC 5071, December 2007.
@@ -885,17 +889,18 @@ Hankins & Mrugalski                                            [Page 15]
               draft-ietf-dhc-leasequery-by-remote-id-09 (work in
               progress), December 2010.
 
-   [I-D.ietf-dhc-relay-id-suboption]
-              Stapp, M., "The DHCPv4 Relay Agent Identifier Suboption",
-              draft-ietf-dhc-relay-id-suboption-07 (work in progress),
-              July 2009.
 
 
 
 Hankins & Mrugalski                                            [Page 16]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
+
+   [I-D.ietf-dhc-relay-id-suboption]
+              Stapp, M., "The DHCPv4 Relay Agent Identifier Suboption",
+              draft-ietf-dhc-relay-id-suboption-07 (work in progress),
+              July 2009.
 
    [I-D.ietf-mip6-hiopt]
               Jang, H., Yegin, A., Chowdhury, K., and J. Choi, "DHCP
@@ -941,18 +946,17 @@ Hankins & Mrugalski                                            [Page 16]
               Location Information Server (LIS)", RFC 5986,
               September 2010.
 
-   [I-D.ietf-dhc-vpn-option]
-              Kinnear, K., Johnson, R., and M. Stapp, "Virtual Subnet
-              Selection Options for DHCPv4 and DHCPv6",
-              draft-ietf-dhc-vpn-option-12 (work in progress),
-
 
 
 Hankins & Mrugalski                                            [Page 17]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
+   [I-D.ietf-dhc-vpn-option]
+              Kinnear, K., Johnson, R., and M. Stapp, "Virtual Subnet
+              Selection Options for DHCPv4 and DHCPv6",
+              draft-ietf-dhc-vpn-option-12 (work in progress),
               October 2010.
 
 7.3.  Published DHCPv6 References
@@ -997,18 +1001,18 @@ Hankins & Mrugalski                                            [Page 17]
 
    [RFC4649]  Volz, B., "Dynamic Host Configuration Protocol for IPv6
               (DHCPv6) Relay Agent Remote-ID Option", RFC 4649,
-              August 2006.
-
-   [RFC4704]  Volz, B., "The Dynamic Host Configuration Protocol for
-              IPv6 (DHCPv6) Client Fully Qualified Domain Name (FQDN)
 
 
 
 Hankins & Mrugalski                                            [Page 18]
 
-                     ISC DHCP References Collection             May 2011
+                     ISC DHCP References Collection         January 2012
 
 
+              August 2006.
+
+   [RFC4704]  Volz, B., "The Dynamic Host Configuration Protocol for
+              IPv6 (DHCPv6) Client Fully Qualified Domain Name (FQDN)
               Option", RFC 4704, October 2006.
 
    [RFC4994]  Zeng, S., Volz, B., Kinnear, K., and J. Brzozowski,
@@ -1018,13 +1022,16 @@ Hankins & Mrugalski                                            [Page 18]
    [RFC5007]  Brzozowski, J., Kinnear, K., Volz, B., and S. Zeng,
               "DHCPv6 Leasequery", RFC 5007, September 2007.
 
+   [RFC5453]  Krishnan, S., "Reserved IPv6 Interface Identifiers",
+              RFC 5453, February 2009.
+
    [RFC5460]  Stapp, M., "DHCPv6 Bulk Leasequery", RFC 5460,
               February 2009.
 
    [I-D.ietf-mif-dhcpv6-route-option]
               Dec, W., Mrugalski, T., Sun, T., and B. Sarikaya, "DHCPv6
-              Route Option", draft-ietf-mif-dhcpv6-route-option-01 (work
-              in progress), March 2011.
+              Route Options", draft-ietf-mif-dhcpv6-route-option-03
+              (work in progress), September 2011.
 
    [I-D.ietf-dhc-dhcpv6-ldra]
               Miles, D., Ooghe, S., Dec, W., Krishnan, S., and A.
@@ -1034,8 +1041,8 @@ Hankins & Mrugalski                                            [Page 18]
 
    [I-D.ietf-dhc-dhcpv6-relay-supplied-options]
               Lemon, T. and W. Wu, "Relay-Supplied DHCP Options",
-              draft-ietf-dhc-dhcpv6-relay-supplied-options-06 (work in
-              progress), May 2011.
+              draft-ietf-dhc-dhcpv6-relay-supplied-options-09 (work in
+              progress), September 2011.
 
    [I-D.ietf-dhc-pd-exclude]
               Korhonen, J., Savolainen, T., Krishnan, S., and O. Troan,
@@ -1050,6 +1057,14 @@ Hankins & Mrugalski                                            [Page 18]
 
    [I-D.ietf-mext-nemo-pd]
               Droms, R., Thubert, P., Dupont, F., Haddad, W., and C.
+
+
+
+Hankins & Mrugalski                                            [Page 19]
+
+                     ISC DHCP References Collection         January 2012
+
+
               Bernardos, "DHCPv6 Prefix Delegation for NEMO",
               draft-ietf-mext-nemo-pd-07 (work in progress),
               December 2010.
@@ -1057,14 +1072,6 @@ Hankins & Mrugalski                                            [Page 18]
    [I-D.ietf-dhc-duid-uuid]
               Narten, T. and J. Johnson, "Definition of the UUID-based
               DHCPv6 Unique Identifier (DUID-UUID)",
-
-
-
-Hankins & Mrugalski                                            [Page 19]
-
-                     ISC DHCP References Collection             May 2011
-
-
               draft-ietf-dhc-duid-uuid-03 (work in progress),
               February 2011.
 
@@ -1100,6 +1107,20 @@ Authors' Addresses
    Redwood City, CA  94063
 
 
+
+
+
+
+
+
+
+
+
+Hankins & Mrugalski                                            [Page 20]
+
+                     ISC DHCP References Collection         January 2012
+
+
    Tomasz Mrugalski
    Internet Systems Consortium, Inc.
    950 Charter Street
@@ -1116,5 +1137,40 @@ Authors' Addresses
 
 
 
-Hankins & Mrugalski                                            [Page 20]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Hankins & Mrugalski                                            [Page 21]
 

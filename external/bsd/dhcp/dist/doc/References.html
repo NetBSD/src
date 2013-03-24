@@ -145,7 +145,7 @@
 <tr><td class="header">ISC-DHCP-REFERENCES</td><td class="header">D. Hankins</td></tr>
 <tr><td class="header">&nbsp;</td><td class="header">T. Mrugalski</td></tr>
 <tr><td class="header">&nbsp;</td><td class="header">ISC</td></tr>
-<tr><td class="header">&nbsp;</td><td class="header">May 20, 2011</td></tr>
+<tr><td class="header">&nbsp;</td><td class="header">January 04, 2012</td></tr>
 </table></td></tr></table>
 <h1><br />ISC DHCP References Collection</h1>
 
@@ -740,6 +740,10 @@ DHCPv6 Protocol References</h3>
 <p>Precisely how to correctly support the above conundrums has not
 	quite yet been settled, so support is incomplete.
 </p>
+<p><a class='info' href='#RFC5453'>[RFC5453]<span> (</span><span class='info'>Krishnan, S., &ldquo;Reserved IPv6 Interface Identifiers,&rdquo; February&nbsp;2009.</span><span>)</span></a> creates a registry at IANA to reserve
+	interface identifiers and specifies a starting set.  These IIDs should
+	not be used when constructing addresses to avoid possible conflicts.
+</p>
 <a name="anchor20"></a><br /><hr />
 <table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
 <a name="rfc.section.6.2"></a><h3>6.2.&nbsp;
@@ -974,14 +978,16 @@ References</h3>
 <td class="author-text">Zeng, S., Volz, B., Kinnear, K., and J. Brzozowski, &ldquo;<a href="http://tools.ietf.org/html/rfc4994">DHCPv6 Relay Agent Echo Request Option</a>,&rdquo; RFC&nbsp;4994, September&nbsp;2007 (<a href="http://www.rfc-editor.org/rfc/rfc4994.txt">TXT</a>).</td></tr>
 <tr><td class="author-text" valign="top"><a name="RFC5007">[RFC5007]</a></td>
 <td class="author-text">Brzozowski, J., Kinnear, K., Volz, B., and S. Zeng, &ldquo;<a href="http://tools.ietf.org/html/rfc5007">DHCPv6 Leasequery</a>,&rdquo; RFC&nbsp;5007, September&nbsp;2007 (<a href="http://www.rfc-editor.org/rfc/rfc5007.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="RFC5453">[RFC5453]</a></td>
+<td class="author-text">Krishnan, S., &ldquo;<a href="http://tools.ietf.org/html/rfc5453">Reserved IPv6 Interface Identifiers</a>,&rdquo; RFC&nbsp;5453, February&nbsp;2009 (<a href="http://www.rfc-editor.org/rfc/rfc5453.txt">TXT</a>).</td></tr>
 <tr><td class="author-text" valign="top"><a name="RFC5460">[RFC5460]</a></td>
 <td class="author-text">Stapp, M., &ldquo;<a href="http://tools.ietf.org/html/rfc5460">DHCPv6 Bulk Leasequery</a>,&rdquo; RFC&nbsp;5460, February&nbsp;2009 (<a href="http://www.rfc-editor.org/rfc/rfc5460.txt">TXT</a>).</td></tr>
 <tr><td class="author-text" valign="top"><a name="I-D.ietf-mif-dhcpv6-route-option">[I-D.ietf-mif-dhcpv6-route-option]</a></td>
-<td class="author-text">Dec, W., Mrugalski, T., Sun, T., and B. Sarikaya, &ldquo;<a href="http://tools.ietf.org/html/draft-ietf-mif-dhcpv6-route-option-01">DHCPv6 Route Option</a>,&rdquo; draft-ietf-mif-dhcpv6-route-option-01 (work in progress), March&nbsp;2011 (<a href="http://www.ietf.org/internet-drafts/draft-ietf-mif-dhcpv6-route-option-01.txt">TXT</a>).</td></tr>
+<td class="author-text">Dec, W., Mrugalski, T., Sun, T., and B. Sarikaya, &ldquo;<a href="http://tools.ietf.org/html/draft-ietf-mif-dhcpv6-route-option-03">DHCPv6 Route Options</a>,&rdquo; draft-ietf-mif-dhcpv6-route-option-03 (work in progress), September&nbsp;2011 (<a href="http://www.ietf.org/internet-drafts/draft-ietf-mif-dhcpv6-route-option-03.txt">TXT</a>).</td></tr>
 <tr><td class="author-text" valign="top"><a name="I-D.ietf-dhc-dhcpv6-ldra">[I-D.ietf-dhc-dhcpv6-ldra]</a></td>
 <td class="author-text">Miles, D., Ooghe, S., Dec, W., Krishnan, S., and A. Kavanagh, &ldquo;<a href="http://tools.ietf.org/html/draft-ietf-dhc-dhcpv6-ldra-03">Lightweight DHCPv6 Relay Agent</a>,&rdquo; draft-ietf-dhc-dhcpv6-ldra-03 (work in progress), October&nbsp;2010 (<a href="http://www.ietf.org/internet-drafts/draft-ietf-dhc-dhcpv6-ldra-03.txt">TXT</a>).</td></tr>
 <tr><td class="author-text" valign="top"><a name="I-D.ietf-dhc-dhcpv6-relay-supplied-options">[I-D.ietf-dhc-dhcpv6-relay-supplied-options]</a></td>
-<td class="author-text">Lemon, T. and W. Wu, &ldquo;<a href="http://tools.ietf.org/html/draft-ietf-dhc-dhcpv6-relay-supplied-options-06">Relay-Supplied DHCP Options</a>,&rdquo; draft-ietf-dhc-dhcpv6-relay-supplied-options-06 (work in progress), May&nbsp;2011 (<a href="http://www.ietf.org/internet-drafts/draft-ietf-dhc-dhcpv6-relay-supplied-options-06.txt">TXT</a>).</td></tr>
+<td class="author-text">Lemon, T. and W. Wu, &ldquo;<a href="http://tools.ietf.org/html/draft-ietf-dhc-dhcpv6-relay-supplied-options-09">Relay-Supplied DHCP Options</a>,&rdquo; draft-ietf-dhc-dhcpv6-relay-supplied-options-09 (work in progress), September&nbsp;2011 (<a href="http://www.ietf.org/internet-drafts/draft-ietf-dhc-dhcpv6-relay-supplied-options-09.txt">TXT</a>).</td></tr>
 <tr><td class="author-text" valign="top"><a name="I-D.ietf-dhc-pd-exclude">[I-D.ietf-dhc-pd-exclude]</a></td>
 <td class="author-text">Korhonen, J., Savolainen, T., Krishnan, S., and O. Troan, &ldquo;<a href="http://tools.ietf.org/html/draft-ietf-dhc-pd-exclude-01">Prefix Exclude Option for DHCPv6-based Prefix Delegation</a>,&rdquo; draft-ietf-dhc-pd-exclude-01 (work in progress), January&nbsp;2011 (<a href="http://www.ietf.org/internet-drafts/draft-ietf-dhc-pd-exclude-01.txt">TXT</a>).</td></tr>
 <tr><td class="author-text" valign="top"><a name="I-D.ietf-dhc-secure-dhcpv6">[I-D.ietf-dhc-secure-dhcpv6]</a></td>
