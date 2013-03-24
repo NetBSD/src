@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2013/03/24 11:07:07 martin Exp $
+#	$NetBSD: Makefile,v 1.29 2013/03/24 17:05:27 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -27,7 +27,7 @@ LISTS+=		${.CURDIR}/list.${f}
 .endfor
 
 .for f in pdisk
-PROG_${f}!=	cd ${NETBSDSRCDIR}/external/bsd/${f} && ${MAKE} -V PROG
+PROG_${f}!=	cd ${NETBSDSRCDIR}/external/bsd/${f}/bin && ${MAKE} -V PROG
 .if (${PROG_${f}} != "")
 LISTS+=		${.CURDIR}/list.${f}
 .endif
