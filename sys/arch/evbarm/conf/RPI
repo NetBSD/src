@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.28 2013/03/08 14:59:34 skrll Exp $
+#	$NetBSD: RPI,v 1.29 2013/03/24 13:56:24 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -286,6 +286,9 @@ pseudo-device	wsfont
 # data mover pseudo-devices
 #pseudo-device	swdmover		# software dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device 	drvctl
 
 # local configuration
 cinclude "arch/evbarm/conf/RPI.local"
