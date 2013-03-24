@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.225 2013/03/23 21:08:50 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.226 2013/03/24 19:16:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.225 2013/03/23 21:08:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.226 2013/03/24 19:16:10 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -2362,8 +2362,7 @@ bge_chipinit(struct bge_softc *sc)
 			uint32_t tmp;
 
 			/* Set ONEDMA_ATONCE for hardware workaround. */
-			tmp = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
-			    BGE_PCI_CLKCTL) & 0x1f;
+			tmp = CSR_READ_4(sc, BGE_PCI_CLKCTL) & 0x1f;
 			if (tmp == 6 || tmp == 7)
 				dma_rw_ctl |=
 				    BGE_PCIDMARWCTL_ONEDMA_ATONCE_GLOBAL;
@@ -4357,8 +4356,7 @@ bge_intr(void *xsc)
 	statusword = sc->bge_rdata->bge_status_block.bge_status;
 
 	if ((statusword & BGE_STATFLAG_UPDATED) ||
-	    (!(pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE) &
-		BGE_PCISTATE_INTR_NOT_ACTIVE))) {
+	    (!(CSR_READ_4(sc, BGE_PCI_PCISTATE) & BGE_PCISTATE_INTR_NOT_ACTIVE))) {
 		/* Ack interrupt and stop others from occuring. */
 		bge_writembx_flush(sc, BGE_MBX_IRQ0_LO, 1);
 
@@ -5179,10 +5177,8 @@ bge_init(struct ifnet *ifp)
 	BGE_SETBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
 
 	/* Enable host interrupts. */
-	PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
-	    BGE_PCIMISCCTL_CLEAR_INTA);
-	PCI_CLRBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
-	    BGE_PCIMISCCTL_MASK_PCI_INTR);
+	BGE_SETBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_CLEAR_INTA);
+	BGE_CLRBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_MASK_PCI_INTR);
 	bge_writembx_flush(sc, BGE_MBX_IRQ0_LO, 0);
 
 	if ((error = bge_ifmedia_upd(ifp)) != 0)
@@ -5439,8 +5435,7 @@ bge_stop(struct ifnet *ifp, int disable)
 	callout_stop(&sc->bge_timeout);
 
 	/* Disable host interrupts. */
-	PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
-	    BGE_PCIMISCCTL_MASK_PCI_INTR);
+	BGE_SETBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_MASK_PCI_INTR);
 	bge_writembx_flush(sc, BGE_MBX_IRQ0_LO, 1);
 
 	/*
