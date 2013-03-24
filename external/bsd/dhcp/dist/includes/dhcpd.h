@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpd.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $	*/
+/*	$NetBSD: dhcpd.h,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
 
 /* dhcpd.h
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $");
+__RCSID("$NetBSD: dhcpd.h,v 1.2 2013/03/24 15:53:58 christos Exp $");
 
 #include "config.h"
 
@@ -3535,7 +3535,7 @@ isc_result_t renew_leases(struct ia_xx *ia);
 isc_result_t release_leases(struct ia_xx *ia);
 isc_result_t decline_leases(struct ia_xx *ia);
 void schedule_lease_timeout(struct ipv6_pool *pool);
-void schedule_all_ipv6_lease_timeouts();
+void schedule_all_ipv6_lease_timeouts(void);
 
 void mark_hosts_unavailable(void);
 void mark_phosts_unavailable(void);
