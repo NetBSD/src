@@ -1,5 +1,5 @@
-/*	$NetBSD: context.S,v 1.4 2013/01/15 13:43:27 kiyohara Exp $	*/
-	
+/*	$NetBSD: context.S,v 1.5 2013/03/24 06:06:19 kiyohara Exp $	*/
+
 /*
  * Copyright (c) 2003 Marcel Moolenaar
  * All rights reserved.
@@ -657,7 +657,7 @@ ENTRY(restore_high_fp, 1)
 	ldf.fill	f32=[r32],32
 	;;
 	ldf.fill	f33=[r31],32
-	ldf.fill	f34=[r32],32	
+	ldf.fill	f34=[r32],32
 	;;
 	ldf.fill	f35=[r31],32
 	ldf.fill	f36=[r32],32
