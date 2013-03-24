@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2013/01/23 15:02:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2013/03/24 13:02:17 joerg Exp $
 
 LIB=	LLVMMipsCodeGen
 
@@ -6,12 +6,15 @@ LIB=	LLVMMipsCodeGen
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/Mips
 
-SRCS+=	Mips16InstrInfo.cpp \
+SRCS+=	Mips16ISelDAGToDAG.cpp \
+	Mips16ISelLowering.cpp \
+	Mips16InstrInfo.cpp \
 	Mips16FrameLowering.cpp \
 	Mips16RegisterInfo.cpp \
 	MipsAnalyzeImmediate.cpp \
 	MipsAsmPrinter.cpp \
 	MipsCodeEmitter.cpp \
+	MipsConstantIslandPass.cpp \
 	MipsDelaySlotFiller.cpp \
 	MipsFrameLowering.cpp \
 	MipsInstrInfo.cpp \
@@ -22,6 +25,8 @@ SRCS+=	Mips16InstrInfo.cpp \
 	MipsMachineFunction.cpp \
 	MipsMCInstLower.cpp \
 	MipsRegisterInfo.cpp \
+	MipsSEISelLowering.cpp \
+	MipsSEISelDAGToDAG.cpp \
 	MipsSEInstrInfo.cpp \
 	MipsSEFrameLowering.cpp \
 	MipsSERegisterInfo.cpp \
@@ -29,6 +34,7 @@ SRCS+=	Mips16InstrInfo.cpp \
 	MipsTargetMachine.cpp \
 	MipsTargetObjectFile.cpp \
 	MipsSelectionDAGInfo.cpp
+
 
 TABLEGEN_SRC=		Mips.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/Mips

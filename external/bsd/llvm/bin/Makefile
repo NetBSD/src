@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/02/27 21:25:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2013/03/24 13:02:16 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ SUBDIR+=	\
 .if defined(LLVM_DEVELOPER)
 SUBDIR+= \
 	bugpoint \
+	clang-format \
 	llc \
 	lli \
 	llvm-ar \

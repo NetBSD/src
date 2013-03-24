@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/01/23 15:02:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/03/24 13:02:17 joerg Exp $
 
 PROG_CXX=	llvm-readobj
 NOMAN=		yes
@@ -7,7 +7,8 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/tools/llvm-readobj
 
-SRCS=	llvm-readobj.cpp
+SRCS=	llvm-readobj.cpp \
+	ELF.cpp
 
 LLVM_LIBS+= \
 	Archive \
