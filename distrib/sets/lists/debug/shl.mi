@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.11 2013/03/23 16:17:21 christos Exp $
+# $NetBSD: shl.mi,v 1.12 2013/03/24 18:55:35 christos Exp $
 ./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
@@ -48,7 +48,7 @@
 ./usr/libdata/debug/usr/lib/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug
 ./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libdns.so.5.8.debug 	comp-bind-debug debug
+./usr/libdata/debug/usr/lib/libdns.so.6.0.debug 	comp-bind-debug debug
 ./usr/libdata/debug/usr/lib/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug
 ./usr/libdata/debug/usr/lib/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug
 ./usr/libdata/debug/usr/lib/libdwarf.so.0.1.debug	comp-sys-debug	debug
@@ -71,9 +71,9 @@
 ./usr/libdata/debug/usr/lib/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libintl.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libipsec.so.3.0.debug	comp-net-debug	debug
-./usr/libdata/debug/usr/lib/libisc.so.5.8.debug		comp-bind-debug	debug
-./usr/libdata/debug/usr/lib/libisccc.so.5.8.debug	comp-bind-debug	debug
-./usr/libdata/debug/usr/lib/libisccfg.so.5.8.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libisc.so.6.0.debug		comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libisccc.so.6.0.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libisccfg.so.6.0.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug
 ./usr/libdata/debug/usr/lib/libisns.so.0.0.debug	comp-isns-debug	debug
 ./usr/libdata/debug/usr/lib/libkadm5clnt.so.13.0.debug	comp-krb5-debug	kerberos,debug
