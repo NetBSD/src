@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.5 2012/06/05 00:42:45 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.6 2013/03/24 18:42:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -50,25 +50,13 @@
 #include <isc/time.h>
 #include <isc/util.h>
 
-/*%
- * For BIND9 internal applications built with threads, we use a single app
- * context and let multiple worker, I/O, timer threads do actual jobs.
- * For other cases (including BIND9 built without threads) an app context acts
- * as an event loop dispatching various events.
- */
-#if defined(ISC_PLATFORM_USETHREADS) && defined(BIND9)
-#define USE_THREADS_SINGLECTX
-#endif
-
 #ifdef ISC_PLATFORM_USETHREADS
 #include <pthread.h>
 #endif
 
-#ifndef USE_THREADS_SINGLECTX
 #include "../timer_p.h"
 #include "../task_p.h"
 #include "socket_p.h"
-#endif /* USE_THREADS_SINGLECTX */
 
 #ifdef ISC_PLATFORM_USETHREADS
 static pthread_t		blockedthread;
@@ -78,32 +66,16 @@ static pthread_t		blockedthread;
  * The following can be either static or public, depending on build environment.
  */
 
-#ifdef BIND9
-#define ISC_APPFUNC_SCOPE
-#else
 #define ISC_APPFUNC_SCOPE static
-#endif
 
-ISC_APPFUNC_SCOPE isc_result_t isc__app_start(void);
 ISC_APPFUNC_SCOPE isc_result_t isc__app_ctxstart(isc_appctx_t *ctx);
-ISC_APPFUNC_SCOPE isc_result_t isc__app_onrun(isc_mem_t *mctx,
-					      isc_task_t *task,
-					      isc_taskaction_t action,
-					      void *arg);
 ISC_APPFUNC_SCOPE isc_result_t isc__app_ctxrun(isc_appctx_t *ctx);
-ISC_APPFUNC_SCOPE isc_result_t isc__app_run(void);
 ISC_APPFUNC_SCOPE isc_result_t isc__app_ctxshutdown(isc_appctx_t *ctx);
-ISC_APPFUNC_SCOPE isc_result_t isc__app_shutdown(void);
 ISC_APPFUNC_SCOPE isc_result_t isc__app_reload(void);
 ISC_APPFUNC_SCOPE isc_result_t isc__app_ctxsuspend(isc_appctx_t *ctx);
 ISC_APPFUNC_SCOPE void isc__app_ctxfinish(isc_appctx_t *ctx);
-ISC_APPFUNC_SCOPE void isc__app_finish(void);
-ISC_APPFUNC_SCOPE void isc__app_block(void);
-ISC_APPFUNC_SCOPE void isc__app_unblock(void);
-#ifdef USE_APPIMPREGISTER
 ISC_APPFUNC_SCOPE isc_result_t isc__appctx_create(isc_mem_t *mctx,
 						  isc_appctx_t **ctxp);
-#endif
 ISC_APPFUNC_SCOPE void isc__appctx_destroy(isc_appctx_t **ctxp);
 ISC_APPFUNC_SCOPE void isc__appctx_settaskmgr(isc_appctx_t *ctx,
 					      isc_taskmgr_t *taskmgr);
@@ -151,10 +123,7 @@ static struct {
 	/*%
 	 * The following are defined just for avoiding unused static functions.
 	 */
-#ifndef BIND9
-	void *run, *shutdown, *start, *onrun, *reload, *finish,
-		*block, *unblock;
-#endif
+	void *reload;
 } appmethods = {
 	{
 		isc__appctx_destroy,
@@ -166,14 +135,8 @@ static struct {
 		isc__appctx_settaskmgr,
 		isc__appctx_setsocketmgr,
 		isc__appctx_settimermgr
-	}
-#ifndef BIND9
-	,
-	(void *)isc__app_run, (void *)isc__app_shutdown,
-	(void *)isc__app_start, (void *)isc__app_onrun, (void *)isc__app_reload,
-	(void *)isc__app_finish, (void *)isc__app_block,
-	(void *)isc__app_unblock
-#endif
+	},
+	(void *)isc__app_reload,
 };
 
 #ifdef HAVE_LINUXTHREADS
@@ -269,8 +232,8 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
 	return (ISC_R_SUCCESS);
 }
 
-ISC_APPFUNC_SCOPE isc_result_t
-isc__app_start(void) {
+isc_result_t
+isc_app_start(void) {
 	isc_result_t result;
 	int presult;
 	sigset_t sset;
@@ -387,8 +350,8 @@ isc__app_start(void) {
 	return (ISC_R_SUCCESS);
 }
 
-ISC_APPFUNC_SCOPE isc_result_t
-isc__app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
+isc_result_t
+isc_app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
 	      void *arg)
 {
 	isc_event_t *event;
@@ -424,7 +387,7 @@ isc__app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
 	return (result);
 }
 
-#ifndef USE_THREADS_SINGLECTX
+#ifndef ISC_PLATFORM_USETHREADS
 /*!
  * Event loop for nonthreaded programs.
  */
@@ -502,9 +465,7 @@ evloop(isc__appctx_t *ctx) {
 	}
 	return (ISC_R_SUCCESS);
 }
-#endif	/* USE_THREADS_SINGLECTX */
 
-#ifndef ISC_PLATFORM_USETHREADS
 /*
  * This is a gross hack to support waiting for condition
  * variables in nonthreaded programs in a limited way;
@@ -573,13 +534,11 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 	int result;
 	isc_event_t *event, *next_event;
 	isc_task_t *task;
-#ifdef USE_THREADS_SINGLECTX
 	sigset_t sset;
 	char strbuf[ISC_STRERRORSIZE];
 #ifdef HAVE_SIGWAIT
 	int sig;
 #endif
-#endif /* USE_THREADS_SINGLECTX */
 
 	REQUIRE(VALID_APPCTX(ctx));
 
@@ -623,12 +582,10 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 	}
 #endif
 
-#ifdef USE_THREADS_SINGLECTX
 	/*
 	 * When we are using multiple contexts, we don't rely on signals.
 	 */
-	if (ctx != &isc_g_appctx)
-		return (ISC_R_SUCCESS);
+	if (ctx == &isc_g_appctx) {
 
 	/*
 	 * There is no danger if isc_app_shutdown() is called before we wait
@@ -692,22 +649,21 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 		if (ctx->want_shutdown && ctx->blocked)
 			exit(1);
 	}
-
-#else /* USE_THREADS_SINGLECTX */
+	} else {
 
 	(void)isc__taskmgr_dispatch(ctx->taskmgr);
-
+#ifndef ISC_PLATFORM_USETHREADS
 	result = evloop(ctx);
 	if (result != ISC_R_SUCCESS)
 		return (result);
-
-#endif /* USE_THREADS_SINGLECTX */
+#endif
+	}
 
 	return (ISC_R_SUCCESS);
 }
 
-ISC_APPFUNC_SCOPE isc_result_t
-isc__app_run() {
+isc_result_t
+isc_app_run() {
 	return (isc__app_ctxrun((isc_appctx_t *)&isc_g_appctx));
 }
 
@@ -761,8 +717,8 @@ isc__app_ctxshutdown(isc_appctx_t *ctx0) {
 	return (ISC_R_SUCCESS);
 }
 
-ISC_APPFUNC_SCOPE isc_result_t
-isc__app_shutdown() {
+isc_result_t
+isc_app_shutdown() {
 	return (isc__app_ctxshutdown((isc_appctx_t *)&isc_g_appctx));
 }
 
@@ -831,13 +787,13 @@ isc__app_ctxfinish(isc_appctx_t *ctx0) {
 	DESTROYLOCK(&ctx->lock);
 }
 
-ISC_APPFUNC_SCOPE void
-isc__app_finish(void) {
+void
+isc_app_finish(void) {
 	isc__app_ctxfinish((isc_appctx_t *)&isc_g_appctx);
 }
 
-ISC_APPFUNC_SCOPE void
-isc__app_block(void) {
+void
+isc_app_block(void) {
 #ifdef ISC_PLATFORM_USETHREADS
 	sigset_t sset;
 #endif /* ISC_PLATFORM_USETHREADS */
@@ -854,8 +810,8 @@ isc__app_block(void) {
 #endif /* ISC_PLATFORM_USETHREADS */
 }
 
-ISC_APPFUNC_SCOPE void
-isc__app_unblock(void) {
+void
+isc_app_unblock(void) {
 #ifdef ISC_PLATFORM_USETHREADS
 	sigset_t sset;
 #endif /* ISC_PLATFORM_USETHREADS */
@@ -875,7 +831,6 @@ isc__app_unblock(void) {
 #endif /* ISC_PLATFORM_USETHREADS */
 }
 
-#ifdef USE_APPIMPREGISTER
 ISC_APPFUNC_SCOPE isc_result_t
 isc__appctx_create(isc_mem_t *mctx, isc_appctx_t **ctxp) {
 	isc__appctx_t *ctx;
@@ -902,7 +857,6 @@ isc__appctx_create(isc_mem_t *mctx, isc_appctx_t **ctxp) {
 
 	return (ISC_R_SUCCESS);
 }
-#endif
 
 ISC_APPFUNC_SCOPE void
 isc__appctx_destroy(isc_appctx_t **ctxp) {
@@ -944,9 +898,7 @@ isc__appctx_settimermgr(isc_appctx_t *ctx0, isc_timermgr_t *timermgr) {
 	ctx->timermgr = timermgr;
 }
 
-#ifdef USE_APPIMPREGISTER
 isc_result_t
 isc__app_register() {
 	return (isc_app_register(isc__appctx_create));
 }
-#endif
