@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2009/10/25 00:18:40 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2013/03/24 18:55:55 christos Exp $
 
 LIB=isc
+#USE_SHLIBDIR=   yes
 
 .include <bsd.own.mk>
 
@@ -21,6 +22,7 @@ UNIX_SRCS=	app.c backtrace.c dir.c entropy.c errno2result.c file.c \
 		backtrace-emptytbl.c
 NLS_SRCS=	msgcat.c
 PTHREAD_SRCS=	condition.c mutex.c thread.c
+API_SRCS=	app_api.c mem_api.c socket_api.c task_api.c timer_api.c 
 
 SRCS=		assertions.c base32.c base64.c bitstring.c buffer.c \
 		bufferlist.c commandline.c error.c event.c \
@@ -30,7 +32,8 @@ SRCS=		assertions.c base32.c base64.c bitstring.c buffer.c \
 		portset.c quota.c radix.c random.c ratelimiter.c refcount.c \
 		region.c result.c rwlock.c serial.c sha1.c sha2.c sockaddr.c \
 		stats.c string.c strtoul.c symtab.c task.c taskpool.c timer.c \
-		version.c ${UNIX_SRCS} ${NLS_SRCS} ${PTHREAD_SRCS}
+		version.c ${UNIX_SRCS} ${NLS_SRCS} ${PTHREAD_SRCS} ${API_SRCS}
+
 
 .if (${USE_INET6} == "no")
 CPPFLAGS.net.c=	-Wno-error
