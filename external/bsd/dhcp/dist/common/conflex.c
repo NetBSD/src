@@ -1,11 +1,11 @@
-/*	$NetBSD: conflex.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
+/*	$NetBSD: conflex.c,v 1.3 2013/03/24 23:03:06 christos Exp $	*/
 
 /* conflex.c
 
    Lexical scanner for dhcpd config file... */
 
 /*
- * Copyright (c) 2004-2011 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2012 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conflex.c,v 1.2 2013/03/24 15:53:58 christos Exp $");
+__RCSID("$NetBSD: conflex.c,v 1.3 2013/03/24 23:03:06 christos Exp $");
 
 #include "dhcpd.h"
 #include <ctype.h>
@@ -1048,6 +1048,8 @@ intern(char *atom, enum dhcp_token dfv) {
 			return INCLUDE;
 		if (!strcasecmp (atom + 1, "nteger"))
 			return INTEGER;
+		if (!strcasecmp (atom  + 1, "nfiniband"))
+			return TOKEN_INFINIBAND;
 		if (!strcasecmp (atom + 1, "nfinite"))
 			return INFINITE;
 		if (!strcasecmp (atom + 1, "nfo"))
