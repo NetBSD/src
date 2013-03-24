@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 2012/12/04 23:38:44 spz Exp $	*/
+/*	$NetBSD: mem.c,v 1.5 2013/03/24 18:42:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -221,11 +221,7 @@ print_active(isc__mem_t *ctx, FILE *out);
  * The following can be either static or public, depending on build environment.
  */
 
-#ifdef BIND9
-#define ISC_MEMFUNC_SCOPE
-#else
 #define ISC_MEMFUNC_SCOPE static
-#endif
 
 ISC_MEMFUNC_SCOPE isc_result_t
 isc__mem_createx(size_t init_max_size, size_t target_size,
@@ -254,8 +250,6 @@ ISC_MEMFUNC_SCOPE void *
 isc___mem_get(isc_mem_t *ctx, size_t size FLARG);
 ISC_MEMFUNC_SCOPE void
 isc___mem_put(isc_mem_t *ctx, void *ptr, size_t size FLARG);
-ISC_MEMFUNC_SCOPE void
-isc__mem_stats(isc_mem_t *ctx, FILE *out);
 ISC_MEMFUNC_SCOPE void *
 isc___mem_allocate(isc_mem_t *ctx, size_t size FLARG);
 ISC_MEMFUNC_SCOPE void *
@@ -313,16 +307,13 @@ ISC_MEMFUNC_SCOPE void
 isc__mempool_setfillcount(isc_mempool_t *mpctx, unsigned int limit);
 ISC_MEMFUNC_SCOPE unsigned int
 isc__mempool_getfillcount(isc_mempool_t *mpctx);
-#ifdef BIND9
 ISC_MEMFUNC_SCOPE void
 isc__mem_printactive(isc_mem_t *ctx0, FILE *file);
 ISC_MEMFUNC_SCOPE void
 isc__mem_printallactive(FILE *file);
-ISC_MEMFUNC_SCOPE void
-isc__mem_checkdestroyed(FILE *file);
-ISC_MEMFUNC_SCOPE unsigned int
+
+unsigned int
 isc__mem_references(isc_mem_t *ctx0);
-#endif
 
 static struct isc__memmethods {
 	isc_memmethods_t methods;
@@ -330,10 +321,9 @@ static struct isc__memmethods {
 	/*%
 	 * The following are defined just for avoiding unused static functions.
 	 */
-#ifndef BIND9
-	void *createx, *create, *create2, *ondestroy, *stats,
-		*setquota, *getquota, *setname, *getname, *gettag;
-#endif
+	void *createx, *create, *create2, *ondestroy,
+		*setquota, *getquota, *setname, *getname, *gettag,
+		*printactive, *printallactive;
 } memmethods = {
 	{
 		isc__mem_attach,
@@ -352,15 +342,15 @@ static struct isc__memmethods {
 		isc__mem_inuse,
 		isc__mem_isovermem,
 		isc__mempool_create
-	}
-#ifndef BIND9
-	,
+	},
 	(void *)isc__mem_createx, (void *)isc__mem_create,
 	(void *)isc__mem_create2, (void *)isc__mem_ondestroy,
-	(void *)isc__mem_stats, (void *)isc__mem_setquota,
+	(void *)isc__mem_setquota,
 	(void *)isc__mem_getquota, (void *)isc__mem_setname,
-	(void *)isc__mem_getname, (void *)isc__mem_gettag
-#endif
+	(void *)isc__mem_getname, (void *)isc__mem_gettag,
+	(void *)isc__mem_printactive,
+	(void *)isc__mem_printallactive,
+
 };
 
 static struct isc__mempoolmethods {
@@ -369,9 +359,7 @@ static struct isc__mempoolmethods {
 	/*%
 	 * The following are defined just for avoiding unused static functions.
 	 */
-#ifndef BIND9
 	void *getfreemax, *getfreecount, *getmaxalloc, *getfillcount;
-#endif
 } mempoolmethods = {
 	{
 		isc__mempool_destroy,
@@ -383,12 +371,9 @@ static struct isc__mempoolmethods {
 		isc__mempool_setname,
 		isc__mempool_associatelock,
 		isc__mempool_setfillcount
-	}
-#ifndef BIND9
-	,
+	},
 	(void *)isc__mempool_getfreemax, (void *)isc__mempool_getfreecount,
 	(void *)isc__mempool_getmaxalloc, (void *)isc__mempool_getfillcount
-#endif
 };
 
 /*!
@@ -867,16 +852,16 @@ mem_putstats(isc__mem_t *ctx, void *ptr, size_t size) {
  * Private.
  */
 
-static void *
-default_memalloc(void *arg, size_t size) {
+void *
+isc_default_memalloc(void *arg, size_t size) {
 	UNUSED(arg);
 	if (size == 0U)
 		size = 1;
 	return (malloc(size));
 }
 
-static void
-default_memfree(void *arg, void *ptr) {
+void
+isc_default_memfree(void *arg, void *ptr) {
 	UNUSED(arg);
 	free(ptr);
 }
@@ -1039,8 +1024,8 @@ isc__mem_createx2(size_t init_max_size, size_t target_size,
 ISC_MEMFUNC_SCOPE isc_result_t
 isc__mem_create(size_t init_max_size, size_t target_size, isc_mem_t **ctxp) {
 	return (isc__mem_createx2(init_max_size, target_size,
-				  default_memalloc, default_memfree, NULL,
-				  ctxp, ISC_MEMFLAG_DEFAULT));
+				  isc_default_memalloc, isc_default_memfree,
+				  NULL, ctxp, ISC_MEMFLAG_DEFAULT));
 }
 
 ISC_MEMFUNC_SCOPE isc_result_t
@@ -1048,8 +1033,8 @@ isc__mem_create2(size_t init_max_size, size_t target_size,
 		 isc_mem_t **ctxp, unsigned int flags)
 {
 	return (isc__mem_createx2(init_max_size, target_size,
-				  default_memalloc, default_memfree, NULL,
-				  ctxp, flags));
+				  isc_default_memalloc, isc_default_memfree,
+				  NULL, ctxp, flags));
 }
 
 static void
@@ -1422,8 +1407,8 @@ print_active(isc__mem_t *mctx, FILE *out) {
 /*
  * Print the stats[] on the stream "out" with suitable formatting.
  */
-ISC_MEMFUNC_SCOPE void
-isc__mem_stats(isc_mem_t *ctx0, FILE *out) {
+void
+isc_mem_stats(isc_mem_t *ctx0, FILE *out) {
 	isc__mem_t *ctx = (isc__mem_t *)ctx0;
 	size_t i;
 	const struct stats *s;
@@ -2252,14 +2237,11 @@ isc__mempool_getfillcount(isc_mempool_t *mpctx0) {
 	return (fillcount);
 }
 
-#ifdef USE_MEMIMPREGISTER
 isc_result_t
 isc__mem_register() {
-	return (isc_mem_register(isc__mem_create2));
+	return (isc_mem_register(isc__mem_createx2));
 }
-#endif
 
-#ifdef BIND9
 ISC_MEMFUNC_SCOPE void
 isc__mem_printactive(isc_mem_t *ctx0, FILE *file) {
 	isc__mem_t *ctx = (isc__mem_t *)ctx0;
@@ -2295,8 +2277,8 @@ isc__mem_printallactive(FILE *file) {
 #endif
 }
 
-ISC_MEMFUNC_SCOPE void
-isc__mem_checkdestroyed(FILE *file) {
+void
+isc_mem_checkdestroyed(FILE *file) {
 
 	RUNTIME_CHECK(isc_once_do(&once, initialize_action) == ISC_R_SUCCESS);
 
@@ -2318,7 +2300,7 @@ isc__mem_checkdestroyed(FILE *file) {
 	UNLOCK(&lock);
 }
 
-ISC_MEMFUNC_SCOPE unsigned int
+unsigned int
 isc_mem_references(isc_mem_t *ctx0) {
 	isc__mem_t *ctx = (isc__mem_t *)ctx0;
 	unsigned int references;
@@ -2480,4 +2462,3 @@ isc_mem_renderxml(xmlTextWriterPtr writer) {
 }
 
 #endif /* HAVE_LIBXML2 */
-#endif /* BIND9 */

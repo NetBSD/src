@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.5 2012/06/05 00:42:32 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.6 2013/03/24 18:42:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -41,13 +41,11 @@
 #endif
 
 /* See task.c about the following definition: */
-#ifdef BIND9
 #ifdef ISC_PLATFORM_USETHREADS
 #define USE_TIMER_THREAD
 #else
 #define USE_SHARED_MANAGER
 #endif	/* ISC_PLATFORM_USETHREADS */
-#endif	/* BIND9 */
 
 #ifndef USE_TIMER_THREAD
 #include "timer_p.h"
@@ -124,11 +122,7 @@ struct isc__timermgr {
  * environment.
  */
 
-#ifdef BIND9
-#define ISC_TIMERFUNC_SCOPE
-#else
 #define ISC_TIMERFUNC_SCOPE static
-#endif
 
 ISC_TIMERFUNC_SCOPE isc_result_t
 isc__timer_create(isc_timermgr_t *manager, isc_timertype_t type,
@@ -160,36 +154,25 @@ static struct isc__timermethods {
 	/*%
 	 * The following are defined just for avoiding unused static functions.
 	 */
-#ifndef BIND9
 	void *gettype;
-#endif
 } timermethods = {
 	{
 		isc__timer_attach,
 		isc__timer_detach,
 		isc__timer_reset,
 		isc__timer_touch
-	}
-#ifndef BIND9
-	,
+	},
 	(void *)isc__timer_gettype
-#endif
 };
 
 static struct isc__timermgrmethods {
 	isc_timermgrmethods_t methods;
-#ifndef BIND9
-	void *poke;		/* see above */
-#endif
 } timermgrmethods = {
 	{
 		isc__timermgr_destroy,
-		isc__timer_create
-	}
-#ifndef BIND9
-	,
-	(void *)isc__timermgr_poke
-#endif
+		isc__timer_create,
+		isc__timermgr_poke
+	},
 };
 
 #ifdef USE_SHARED_MANAGER
@@ -1066,9 +1049,7 @@ isc__timermgr_dispatch(isc_timermgr_t *manager0) {
 }
 #endif /* USE_TIMER_THREAD */
 
-#ifdef USE_TIMERIMPREGISTER
 isc_result_t
 isc__timer_register() {
 	return (isc_timer_register(isc__timermgr_create));
 }
-#endif

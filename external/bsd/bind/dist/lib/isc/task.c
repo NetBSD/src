@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.6 2012/12/04 23:38:44 spz Exp $	*/
+/*	$NetBSD: task.c,v 1.7 2013/03/24 18:42:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -58,13 +58,11 @@
  * is expected to have a separate manager; no "worker threads" are shared by
  * the application threads.
  */
-#ifdef BIND9
 #ifdef ISC_PLATFORM_USETHREADS
 #define USE_WORKER_THREADS
 #else
 #define USE_SHARED_MANAGER
 #endif	/* ISC_PLATFORM_USETHREADS */
-#endif	/* BIND9 */
 
 #include "task_p.h"
 
@@ -90,7 +88,7 @@ typedef enum {
 	task_state_done
 } task_state_t;
 
-#if defined(HAVE_LIBXML2) && defined(BIND9)
+#if defined(HAVE_LIBXML2)
 static const char *statenames[] = {
 	"idle", "ready", "running", "done",
 };
@@ -176,11 +174,7 @@ static isc__taskmgr_t *taskmgr = NULL;
  * The following can be either static or public, depending on build environment.
  */
 
-#ifdef BIND9
-#define ISC_TASKFUNC_SCOPE
-#else
 #define ISC_TASKFUNC_SCOPE static
-#endif
 
 ISC_TASKFUNC_SCOPE isc_result_t
 isc__task_create(isc_taskmgr_t *manager0, unsigned int quantum,
@@ -260,9 +254,7 @@ static struct isc__taskmethods {
 	/*%
 	 * The following are defined just for avoiding unused static functions.
 	 */
-#ifndef BIND9
-	void *purgeevent, *unsendrange, *getname, *gettag, *getcurrenttime;
-#endif
+	void *purgeevent, *unsendrange, *getname, *gettag;
 } taskmethods = {
 	{
 		isc__task_attach,
@@ -279,14 +271,11 @@ static struct isc__taskmethods {
 		isc__task_beginexclusive,
 		isc__task_endexclusive,
 		isc__task_setprivilege,
-		isc__task_privilege
-	}
-#ifndef BIND9
-	,
+		isc__task_privilege,
+		isc__task_getcurrenttime
+	},
 	(void *)isc__task_purgeevent, (void *)isc__task_unsendrange,
 	(void *)isc__task_getname, (void *)isc__task_gettag,
-	(void *)isc__task_getcurrenttime
-#endif
 };
 
 static isc_taskmgrmethods_t taskmgrmethods = {
@@ -1550,10 +1539,8 @@ isc__taskmgr_destroy(isc_taskmgr_t **managerp) {
 	UNLOCK(&manager->lock);
 	while (isc__taskmgr_ready((isc_taskmgr_t *)manager))
 		(void)isc__taskmgr_dispatch((isc_taskmgr_t *)manager);
-#ifdef BIND9
 	if (!ISC_LIST_EMPTY(manager->tasks))
 		isc_mem_printallactive(stderr);
-#endif
 	INSIST(ISC_LIST_EMPTY(manager->tasks));
 #ifdef USE_SHARED_MANAGER
 	taskmgr = NULL;
@@ -1584,6 +1571,22 @@ isc__taskmgr_mode(isc_taskmgr_t *manager0) {
 	return (mode);
 }
 
+isc_result_t
+isc__taskmgr_dispatch(isc_taskmgr_t *manager0) {
+	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
+
+#ifdef USE_SHARED_MANAGER
+	if (manager == NULL)
+		manager = taskmgr;
+#endif
+	if (manager == NULL)
+		return (ISC_R_NOTFOUND);
+
+	dispatch(manager);
+
+	return (ISC_R_SUCCESS);
+}
+
 #ifndef USE_WORKER_THREADS
 isc_boolean_t
 isc__taskmgr_ready(isc_taskmgr_t *manager0) {
@@ -1604,24 +1607,8 @@ isc__taskmgr_ready(isc_taskmgr_t *manager0) {
 	return (is_ready);
 }
 
-isc_result_t
-isc__taskmgr_dispatch(isc_taskmgr_t *manager0) {
-	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
-
-#ifdef USE_SHARED_MANAGER
-	if (manager == NULL)
-		manager = taskmgr;
-#endif
-	if (manager == NULL)
-		return (ISC_R_NOTFOUND);
-
-	dispatch(manager);
-
-	return (ISC_R_SUCCESS);
-}
-
 #else
-ISC_TASKFUNC_SCOPE void
+void
 isc__taskmgr_pause(isc_taskmgr_t *manager0) {
 	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
 	LOCK(&manager->lock);
@@ -1632,7 +1619,7 @@ isc__taskmgr_pause(isc_taskmgr_t *manager0) {
 	UNLOCK(&manager->lock);
 }
 
-ISC_TASKFUNC_SCOPE void
+void
 isc__taskmgr_resume(isc_taskmgr_t *manager0) {
 	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
 
@@ -1751,12 +1738,10 @@ isc__task_privilege(isc_task_t *task0) {
 	return (priv);
 }
 
-#ifdef USE_SOCKETIMPREGISTER
 isc_result_t
 isc__task_register() {
 	return (isc_task_register(isc__taskmgr_create));
 }
-#endif
 
 isc_boolean_t
 isc_task_exiting(isc_task_t *t) {
@@ -1767,7 +1752,7 @@ isc_task_exiting(isc_task_t *t) {
 }
 
 
-#if defined(HAVE_LIBXML2) && defined(BIND9)
+#if defined(HAVE_LIBXML2)
 void
 isc_taskmgr_renderxml(isc_taskmgr_t *mgr0, xmlTextWriterPtr writer) {
 	isc__taskmgr_t *mgr = (isc__taskmgr_t *)mgr0;
@@ -1847,4 +1832,4 @@ isc_taskmgr_renderxml(isc_taskmgr_t *mgr0, xmlTextWriterPtr writer) {
 
 	UNLOCK(&mgr->lock);
 }
-#endif /* HAVE_LIBXML2 && BIND9 */
+#endif /* HAVE_LIBXML2 */

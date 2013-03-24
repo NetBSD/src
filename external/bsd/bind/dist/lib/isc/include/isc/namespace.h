@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.5 2012/12/04 23:38:44 spz Exp $	*/
+/*	$NetBSD: namespace.h,v 1.6 2013/03/24 18:42:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -24,9 +24,7 @@
 /*%
  * name space conversions
  */
-
-#ifdef BIND9
-
+#if 0
 #define isc_app_start isc__app_start
 #define isc_app_ctxstart isc__app_ctxstart
 #define isc_app_onrun isc__app_onrun
@@ -169,7 +167,6 @@
 #define isc_timermgr_create isc__timermgr_create
 #define isc_timermgr_poke isc__timermgr_poke
 #define isc_timermgr_destroy isc__timermgr_destroy
-
-#endif /* BIND9 */
+#endif
 
 #endif /* ISCAPI_NAMESPACE_H */

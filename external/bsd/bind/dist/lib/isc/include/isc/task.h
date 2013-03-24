@@ -1,4 +1,4 @@
-/*	$NetBSD: task.h,v 1.6 2012/12/04 23:38:44 spz Exp $	*/
+/*	$NetBSD: task.h,v 1.7 2013/03/24 18:42:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -142,6 +142,7 @@ typedef struct isc_taskmethods {
 	void (*endexclusive)(isc_task_t *task);
     void (*setprivilege)(isc_task_t *task, isc_boolean_t priv);
     isc_boolean_t (*privilege)(isc_task_t *task);
+    void (*getcurrenttime)(isc_task_t *task, isc_stdtime_t *t);
 } isc_taskmethods_t;
 
 /*%

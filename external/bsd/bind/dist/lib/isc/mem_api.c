@@ -1,4 +1,4 @@
-/*	$NetBSD: mem_api.c,v 1.3 2012/06/05 00:42:29 christos Exp $	*/
+/*	$NetBSD: mem_api.c,v 1.4 2013/03/24 18:42:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -65,8 +65,9 @@ isc_mem_create(size_t init_max_size, size_t target_size, isc_mem_t **mctxp) {
 	LOCK(&createlock);
 
 	REQUIRE(mem_createfunc != NULL);
-	result = (*mem_createfunc)(init_max_size, target_size, mctxp,
-				   ISC_MEMFLAG_DEFAULT);
+	result = (*mem_createfunc)(init_max_size, target_size,
+				   isc_default_memalloc, isc_default_memfree,
+				   NULL, mctxp, ISC_MEMFLAG_DEFAULT);
 
 	UNLOCK(&createlock);
 
@@ -82,7 +83,26 @@ isc_mem_create2(size_t init_max_size, size_t target_size, isc_mem_t **mctxp,
 	LOCK(&createlock);
 
 	REQUIRE(mem_createfunc != NULL);
-	result = (*mem_createfunc)(init_max_size, target_size, mctxp, flags);
+	result = (*mem_createfunc)(init_max_size, target_size,
+				   isc_default_memalloc, isc_default_memfree,
+				   NULL, mctxp, flags);
+
+	UNLOCK(&createlock);
+
+	return (result);
+}
+
+isc_result_t
+isc_mem_createx2(size_t init_max_size, size_t target_size,
+		 isc_memalloc_t memalloc, isc_memfree_t memfree,
+		 void *arg, isc_mem_t **mctxp, unsigned int flags) {
+	isc_result_t result;
+
+	LOCK(&createlock);
+
+	REQUIRE(mem_createfunc != NULL);
+	result = (*mem_createfunc)(init_max_size, target_size, memalloc,
+				   memfree, arg, mctxp, flags);
 
 	UNLOCK(&createlock);
 

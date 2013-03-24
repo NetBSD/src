@@ -1,4 +1,4 @@
-/*	$NetBSD: app.h,v 1.3 2012/06/05 00:42:33 christos Exp $	*/
+/*	$NetBSD: app.h,v 1.4 2013/03/24 18:42:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -347,7 +347,6 @@ isc_appctx_settimermgr(isc_appctx_t *ctx, isc_timermgr_t *timermgr);
  *\li	'timermgr' is a valid timer manager.
  */
 
-#ifdef USE_APPIMPREGISTER
 /*%<
  * See isc_appctx_create() above.
  */
@@ -370,7 +369,6 @@ isc__app_register(void);
  * usually do not have to care about this function: it would call
  * isc_lib_register(), which internally calls this function.
  */
-#endif /* USE_APPIMPREGISTER */
 
 ISC_LANG_ENDDECLS
 
