@@ -13,8 +13,8 @@
 #define DHCP_BYTE_ORDER _BYTE_ORDER
 
 #if 0
-/* Define to 1 to include DHCPv6 support. */
 /* From the Makefile */
+/* Define to 1 to include DHCPv6 support. */
 #define DHCPv6 1
 #endif
 
@@ -37,7 +37,7 @@
 #define FLEXIBLE_ARRAY_MEMBER 
 
 /* Define to 1 to use the Berkeley Packet Filter interface code. */
-#define HAVE_BPF ""
+#define HAVE_BPF 1
 
 /* Define to 1 if you have the /dev/random file. */
 #define HAVE_DEV_RANDOM 1
@@ -96,6 +96,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define to the string for a noreturn attribute. */
+#define ISC_DHCP_NORETURN __attribute__((noreturn))
+
 /* Define to 1 if the system has 'struct if_laddrconf'. */
 /* #undef ISC_PLATFORM_HAVEIF_LADDRCONF */
 
@@ -118,16 +121,19 @@
 #define PACKAGE_NAME "DHCP"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "DHCP 4.2.3"
+#define PACKAGE_STRING "DHCP 4.2.5"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "dhcp"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.3"
+#define PACKAGE_VERSION "4.2.5"
 
 /* Define to any value to include Ari's PARANOIA patch. */
 /* #undef PARANOIA */
+
+/* Define to correct bad byteorders in secs field. */
+/* #undef SECS_BYTEORDER */
 
 /* The size of `struct iaddr *', as computed by sizeof. */
 #define SIZEOF_STRUCT_IADDR_P 8
@@ -145,7 +151,7 @@
 /* #undef USE_V4_PKTINFO */
 
 /* Version number of package */
-#define VERSION "4.2.3"
+#define VERSION "4.2.5"
 
 /* Define to 1 if on AIX 3.
    System headers sometimes define this.

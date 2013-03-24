@@ -1,7 +1,7 @@
-/*	$NetBSD: dhcpv6.c,v 1.2 2013/03/24 15:53:59 christos Exp $	*/
+/*	$NetBSD: dhcpv6.c,v 1.3 2013/03/24 23:03:06 christos Exp $	*/
 
 /*
- * Copyright (C) 2006-2011 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006-2012 by Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -574,6 +574,7 @@ valid_client_info_req(struct packet *packet, struct data_string *server_id) {
 
 	ret_val = 0;
 	memset(server_id, 0, sizeof(*server_id));
+	memset(&client_id, 0, sizeof(client_id));
 
 	/*
 	 * Make a string that we can print out to give more 
@@ -1094,7 +1095,8 @@ try_client_v6_prefix(struct iasubopt **pref,
 		return DHCP_R_INVALIDARG;
 	}
 	tmp_plen = (int) requested_pref->data[0];
-	if ((tmp_plen < 3) || (tmp_plen > 128)) {
+	if ((tmp_plen < 3) || (tmp_plen > 128) ||
+	    ((int)tmp_plen != pool->units)) {
 		return ISC_R_FAILURE;
 	}
 	memcpy(&tmp_pref, requested_pref->data + 1, sizeof(tmp_pref));
@@ -1107,9 +1109,8 @@ try_client_v6_prefix(struct iasubopt **pref,
 		return ISC_R_FAILURE;
 	}
 
-	if (((int)tmp_plen != pool->units) ||
-	    !ipv6_in_pool(&tmp_pref, pool)) {
-		return ISC_R_FAILURE;
+	if (!ipv6_in_pool(&tmp_pref, pool)) {
+		return ISC_R_ADDRNOTAVAIL;
 	}
 
 	if (prefix6_exists(pool, &tmp_pref, tmp_plen)) {
@@ -1209,6 +1210,10 @@ pick_v6_prefix(struct iasubopt **pref, int plen,
 }
 
 /*
+ *! \file server/dhcpv6.c
+ *
+ * \brief construct a reply containing information about a client's lease
+ *
  * lease_to_client() is called from several messages to construct a
  * reply that contains all that we know about the client's correct lease
  * (or projected lease).
@@ -1230,8 +1235,15 @@ pick_v6_prefix(struct iasubopt **pref, int plen,
  * validate and echo back any contents that can be.  If the client-supplied
  * data does not error out (on renew/rebind as above), but we did not send
  * any addresses, attempt to allocate one.
+ *
+ * At the end of the this function we call commit_leases_timed() to
+ * fsync and rotate the file as necessary.  commit_leases_timed() will
+ * check that we have written at least one lease to the file and that
+ * some time has passed before doing any fsync or file rewrite so we
+ * don't bother tracking if we did a write_ia during this function.
  */
 /* TODO: look at client hints for lease times */
+
 static void
 lease_to_client(struct data_string *reply_ret,
 		struct packet *packet, 
@@ -1241,7 +1253,11 @@ lease_to_client(struct data_string *reply_ret,
 	static struct reply_state reply;
 	struct option_cache *oc;
 	struct data_string packet_oro;
-	isc_boolean_t no_resources_avail;
+#if defined (RFC3315_PRE_ERRATA_2010_08)
+	isc_boolean_t no_resources_avail = ISC_FALSE;
+#endif
+
+	memset(&packet_oro, 0, sizeof(packet_oro));
 
 	/* Locate the client.  */
 	if (shared_network_from_packet6(&reply.shared,
@@ -1265,7 +1281,6 @@ lease_to_client(struct data_string *reply_ret,
 	 * Get the ORO from the packet, if any.
 	 */
 	oc = lookup_option(&dhcpv6_universe, packet->options, D6O_ORO);
-	memset(&packet_oro, 0, sizeof(packet_oro));
 	if (oc != NULL) {
 		if (!evaluate_option_cache(&packet_oro, packet, 
 					   NULL, NULL, 
@@ -1299,7 +1314,7 @@ lease_to_client(struct data_string *reply_ret,
 	/* Process the client supplied IA's onto the reply buffer. */
 	reply.ia_count = 0;
 	oc = lookup_option(&dhcpv6_universe, packet->options, D6O_IA_NA);
-	no_resources_avail = ISC_FALSE;
+
 	for (; oc != NULL ; oc = oc->next) {
 		isc_result_t status;
 
@@ -1317,12 +1332,14 @@ lease_to_client(struct data_string *reply_ret,
 		    (status != ISC_R_NORESOURCES))
 			goto exit;
 
+#if defined (RFC3315_PRE_ERRATA_2010_08)
 		/*
 		 * If any address cannot be given to any IA, then set the
 		 * NoAddrsAvail status code.
 		 */
 		if (reply.client_resources == 0)
 			no_resources_avail = ISC_TRUE;
+#endif
 	}
 	oc = lookup_option(&dhcpv6_universe, packet->options, D6O_IA_TA);
 	for (; oc != NULL ; oc = oc->next) {
@@ -1342,12 +1359,14 @@ lease_to_client(struct data_string *reply_ret,
 		    (status != ISC_R_NORESOURCES))
 			goto exit;
 
+#if defined (RFC3315_PRE_ERRATA_2010_08)
 		/*
 		 * If any address cannot be given to any IA, then set the
 		 * NoAddrsAvail status code.
 		 */
 		if (reply.client_resources == 0)
 			no_resources_avail = ISC_TRUE;
+#endif
 	}
 
 	/* Same for IA_PD's. */
@@ -1369,13 +1388,6 @@ lease_to_client(struct data_string *reply_ret,
 		if ((status != ISC_R_SUCCESS) &&
 		    (status != ISC_R_NORESOURCES))
 			goto exit;
-
-		/*
-		 * If any prefix cannot be given to any IA_PD, then
-		 * set the NoPrefixAvail status code.
-		 */
-		if (reply.client_resources == 0)
-			no_resources_avail = ISC_TRUE;
 	}
 
 	/*
@@ -1431,6 +1443,7 @@ lease_to_client(struct data_string *reply_ret,
 	 * the server.
 	 * Sends a Renew/Rebind if the IA is not in the Reply message.
 	 */
+#if defined (RFC3315_PRE_ERRATA_2010_08)
 	if (no_resources_avail && (reply.ia_count != 0) &&
 	    (reply.packet->dhcpv6_msg_type == DHCPV6_SOLICIT))
 	{
@@ -1440,36 +1453,6 @@ lease_to_client(struct data_string *reply_ret,
 				     "interface.", reply.opt_state)) {
 			log_error("lease_to_client: Unable to set "
 				  "NoAddrsAvail status code.");
-			goto exit;
-		}
-
-		/* Rewind the cursor to the start. */
-		reply.cursor = REPLY_OPTIONS_INDEX;
-
-		/*
-		 * Produce an advertise that includes only:
-		 *
-		 * Status code.
-		 * Server DUID.
-		 * Client DUID.
-		 */
-		reply.buf.reply.msg_type = DHCPV6_ADVERTISE;
-		reply.cursor += store_options6((char *)reply.buf.data +
-							reply.cursor,
-					       sizeof(reply.buf) -
-					       		reply.cursor,
-					       reply.opt_state, reply.packet,
-					       required_opts_NAA,
-					       NULL);
-	} else if (no_resources_avail && (reply.ia_count == 0) &&
-		   (reply.packet->dhcpv6_msg_type == DHCPV6_SOLICIT))
-	{
-		/* Set the NoPrefixAvail status code. */
-		if (!set_status_code(STATUS_NoPrefixAvail,
-				     "No prefixes available for this "
-				     "interface.", reply.opt_state)) {
-			log_error("lease_to_client: Unable to set "
-				  "NoPrefixAvail status code.");
 			goto exit;
 		}
 
@@ -1504,6 +1487,17 @@ lease_to_client(struct data_string *reply_ret,
 					       required_opts_solicit,
 					       &packet_oro);
 	}
+#else /* defined (RFC3315_PRE_ERRATA_2010_08) */
+	/*
+	 * Having stored the client's IA's, store any options that
+	 * will fit in the remaining space.
+	 */
+	reply.cursor += store_options6((char *)reply.buf.data + reply.cursor,
+				       sizeof(reply.buf) - reply.cursor,
+				       reply.opt_state, reply.packet,
+				       required_opts_solicit,
+				       &packet_oro);
+#endif /* defined (RFC3315_PRE_ERRATA_2010_08) */
 
 	/* Return our reply to the caller. */
 	reply_ret->len = reply.cursor;
@@ -1513,6 +1507,9 @@ lease_to_client(struct data_string *reply_ret,
 	}
 	memcpy(reply_ret->buffer->data, reply.buf.data, reply.cursor);
 	reply_ret->data = reply_ret->buffer->data;
+
+	/* If appropriate commit and rotate the lease file */
+	(void) commit_leases_timed();
 
       exit:
 	/* Cleanup. */
@@ -1526,6 +1523,8 @@ lease_to_client(struct data_string *reply_ret,
 		packet_dereference(&reply.packet, MDL);
 	if (reply.client_id.data != NULL)
 		data_string_forget(&reply.client_id, MDL);
+	if (packet_oro.buffer != NULL)
+		data_string_forget(&packet_oro, MDL);
 	reply.renew = reply.rebind = reply.prefer = reply.valid = 0;
 	reply.cursor = 0;
 }
@@ -1841,9 +1840,6 @@ reply_process_ia_na(struct reply_state *reply, struct option_cache *ia) {
 			ia_reference(&tmp->ia, reply->ia, MDL);
 
 			/* Commit 'hard' bindings. */
-			tmp->hard_lifetime_end_time =
-				tmp->soft_lifetime_end_time;
-			tmp->soft_lifetime_end_time = 0;
 			renew_lease6(tmp->ipv6_pool, tmp);
 			schedule_lease_timeout(tmp->ipv6_pool);
 
@@ -2230,13 +2226,13 @@ address_is_owned(struct reply_state *reply, struct iaddr *addr) {
 			log_fatal("Impossible condition at %s:%d.", MDL);
 
 		if (memcmp(addr->iabuf, reply->fixed.data, 16) == 0)
-			return ISC_TRUE;
+			return (ISC_TRUE);
 
-		return ISC_FALSE;
+		return (ISC_FALSE);
 	}
 
 	if ((reply->old_ia == NULL) || (reply->old_ia->num_iasubopt == 0))
-		return ISC_FALSE;
+		return (ISC_FALSE);
 
 	for (i = 0 ; i < reply->old_ia->num_iasubopt ; i++) {
 		struct iasubopt *tmp;
@@ -2244,12 +2240,15 @@ address_is_owned(struct reply_state *reply, struct iaddr *addr) {
 		tmp = reply->old_ia->iasubopt[i];
 
 		if (memcmp(addr->iabuf, &tmp->addr, 16) == 0) {
+			if (lease6_usable(tmp) == ISC_FALSE) {
+				return (ISC_FALSE);
+			}
 			iasubopt_reference(&reply->lease, tmp, MDL);
-			return ISC_TRUE;
+			return (ISC_TRUE);
 		}
 	}
 
-	return ISC_FALSE;
+	return (ISC_FALSE);
 }
 
 /* Process a client-supplied IA_TA.  This may append options to the tail of
@@ -2499,9 +2498,6 @@ reply_process_ia_ta(struct reply_state *reply, struct option_cache *ia) {
 			ia_reference(&tmp->ia, reply->ia, MDL);
 
 			/* Commit 'hard' bindings. */
-			tmp->hard_lifetime_end_time =
-				tmp->soft_lifetime_end_time;
-			tmp->soft_lifetime_end_time = 0;
 			renew_lease6(tmp->ipv6_pool, tmp);
 			schedule_lease_timeout(tmp->ipv6_pool);
 
@@ -2687,9 +2683,11 @@ find_client_temporaries(struct reply_state *reply) {
 		if (status != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
-		if (reply->lease != NULL) {
-			iasubopt_dereference(&reply->lease, MDL);
-		}
+		/*
+		 * reply->lease can't be null as we use it above
+		 * add check if that changes
+		 */
+		iasubopt_dereference(&reply->lease, MDL);
 	}
 
       cleanup:
@@ -2705,15 +2703,17 @@ find_client_temporaries(struct reply_state *reply) {
  */
 static isc_result_t
 reply_process_try_addr(struct reply_state *reply, struct iaddr *addr) {
-	isc_result_t status = ISC_R_NORESOURCES;
+	isc_result_t status = ISC_R_ADDRNOTAVAIL;
 	struct ipv6_pool *pool;
 	int i;
 	struct data_string data_addr;
 
 	if ((reply == NULL) || (reply->shared == NULL) ||
-	    (reply->shared->ipv6_pools == NULL) || (addr == NULL) ||
-	    (reply->lease != NULL))
-		return DHCP_R_INVALIDARG;
+	    (addr == NULL) || (reply->lease != NULL))
+		return (DHCP_R_INVALIDARG);
+
+	if  (reply->shared->ipv6_pools == NULL)
+		return (ISC_R_ADDRNOTAVAIL);
 
 	memset(&data_addr, 0, sizeof(data_addr));
 	data_addr.len = addr->len;
@@ -2731,7 +2731,7 @@ reply_process_try_addr(struct reply_state *reply, struct iaddr *addr) {
 	/* Note that this is just pedantry.  There is no allocation to free. */
 	data_string_forget(&data_addr, MDL);
 	/* Return just the most recent status... */
-	return status;
+	return (status);
 }
 
 /* Look around for an address to give the client.  First, look through the
@@ -2771,7 +2771,8 @@ find_client_address(struct reply_state *reply) {
 			 * Look for the best lease on the client's shared
 			 * network.
 			 */
-			if (candidate_shared == reply->shared) {
+			if ((candidate_shared == reply->shared) && 
+			    (lease6_usable(lease) == ISC_TRUE)) {
 				best_lease = lease_compare(lease, best_lease);
 			}
 		}
@@ -2782,7 +2783,7 @@ find_client_address(struct reply_state *reply) {
 	 */
 	if ((best_lease == NULL) || (best_lease->state == FTS_ABANDONED)) {
 		status = pick_v6_address(&reply->lease, reply->shared,
-					 &reply->client_id);
+					 &reply->ia->iaid_duid);
 	} else if (best_lease != NULL) {
 		iasubopt_reference(&reply->lease, best_lease, MDL);
 		status = ISC_R_SUCCESS;
@@ -3226,7 +3227,9 @@ reply_process_ia_pd(struct reply_state *reply, struct option_cache *ia) {
 		if (status == ISC_R_CANCELED)
 			break;
 
-		if ((status != ISC_R_SUCCESS) && (status != ISC_R_ADDRINUSE))
+		if ((status != ISC_R_SUCCESS) &&
+		    (status != ISC_R_ADDRINUSE) &&
+		    (status != ISC_R_ADDRNOTAVAIL))
 			goto cleanup;
 	}
 
@@ -3366,9 +3369,6 @@ reply_process_ia_pd(struct reply_state *reply, struct option_cache *ia) {
 			ia_reference(&tmp->ia, reply->ia, MDL);
 
 			/* Commit 'hard' bindings. */
-			tmp->hard_lifetime_end_time =
-				tmp->soft_lifetime_end_time;
-			tmp->soft_lifetime_end_time = 0;
 			renew_lease6(tmp->ipv6_pool, tmp);
 			schedule_lease_timeout(tmp->ipv6_pool);
 		}
@@ -3505,8 +3505,9 @@ reply_process_prefix(struct reply_state *reply, struct option_cache *pref) {
 			status = reply_process_try_prefix(reply, &tmp_pref);
 
 			/* Either error out or skip this prefix. */
-			if ((status != ISC_R_SUCCESS) && 
-			    (status != ISC_R_ADDRINUSE)) 
+			if ((status != ISC_R_SUCCESS) &&
+			    (status != ISC_R_ADDRINUSE) &&
+			    (status != ISC_R_ADDRNOTAVAIL))
 				goto cleanup;
 
 			if (reply->lease == NULL) {
@@ -3654,14 +3655,14 @@ prefix_is_owned(struct reply_state *reply, struct iaddrcidrnet *pref) {
 			if ((pref->bits == l->cidrnet.bits) &&
 			    (memcmp(pref->lo_addr.iabuf,
 				    l->cidrnet.lo_addr.iabuf, 16) == 0))
-				return ISC_TRUE;
+				return (ISC_TRUE);
 		}
-		return ISC_FALSE;
+		return (ISC_FALSE);
 	}
 
 	if ((reply->old_ia == NULL) ||
 	    (reply->old_ia->num_iasubopt == 0))
-		return ISC_FALSE;
+		return (ISC_FALSE);
 
 	for (i = 0 ; i < reply->old_ia->num_iasubopt ; i++) {
 		struct iasubopt *tmp;
@@ -3669,13 +3670,16 @@ prefix_is_owned(struct reply_state *reply, struct iaddrcidrnet *pref) {
 		tmp = reply->old_ia->iasubopt[i];
 
 		if ((pref->bits == (int) tmp->plen) &&
-		    memcmp(pref->lo_addr.iabuf, &tmp->addr, 16) == 0) {
+		    (memcmp(pref->lo_addr.iabuf, &tmp->addr, 16) == 0)) {
+			if (lease6_usable(tmp) == ISC_FALSE) {
+				return (ISC_FALSE);
+			}
 			iasubopt_reference(&reply->lease, tmp, MDL);
-			return ISC_TRUE;
+			return (ISC_TRUE);
 		}
 	}
 
-	return ISC_FALSE;
+	return (ISC_FALSE);
 }
 
 /*
@@ -3685,21 +3689,23 @@ prefix_is_owned(struct reply_state *reply, struct iaddrcidrnet *pref) {
 static isc_result_t
 reply_process_try_prefix(struct reply_state *reply,
 			 struct iaddrcidrnet *pref) {
-	isc_result_t status = ISC_R_NORESOURCES;
+	isc_result_t status = ISC_R_ADDRNOTAVAIL;
 	struct ipv6_pool *pool;
 	int i;
 	struct data_string data_pref;
 
 	if ((reply == NULL) || (reply->shared == NULL) ||
-	    (reply->shared->ipv6_pools == NULL) || (pref == NULL) ||
-	    (reply->lease != NULL))
-		return DHCP_R_INVALIDARG;
+	    (pref == NULL) || (reply->lease != NULL))
+		return (DHCP_R_INVALIDARG);
+
+	if (reply->shared->ipv6_pools == NULL)
+		return (ISC_R_ADDRNOTAVAIL);
 
 	memset(&data_pref, 0, sizeof(data_pref));
 	data_pref.len = 17;
 	if (!buffer_allocate(&data_pref.buffer, data_pref.len, MDL)) {
 		log_error("reply_process_try_prefix: out of memory.");
-		return ISC_R_NOMEMORY;
+		return (ISC_R_NOMEMORY);
 	}
 	data_pref.data = data_pref.buffer->data;
 	data_pref.buffer->data[0] = (u_int8_t) pref->bits;
@@ -3718,7 +3724,7 @@ reply_process_try_prefix(struct reply_state *reply,
 
 	data_string_forget(&data_pref, MDL);
 	/* Return just the most recent status... */
-	return status;
+	return (status);
 }
 
 /* Look around for a prefix to give the client.  First, look through the old
@@ -3769,8 +3775,9 @@ find_client_prefix(struct reply_state *reply) {
 			 * if it is scoped in a pool under the client's shared
 			 * network.
 			 */
-			if (candidate_shared == NULL ||
-			    candidate_shared == reply->shared) {
+			if (((candidate_shared == NULL) ||
+			     (candidate_shared == reply->shared)) &&
+			    (lease6_usable(prefix) == ISC_TRUE)) {
 				best_prefix = prefix_compare(reply, prefix,
 							     best_prefix);
 			}
@@ -4624,7 +4631,6 @@ iterate_over_ia_na(struct data_string *reply_ret,
 	struct option_state *host_opt_state;
 	struct data_string iaaddr;
 	struct data_string fixed_addr;
-	int iaaddr_is_found;
 	char reply_data[65536];
 	struct dhcpv6_packet *reply = (struct dhcpv6_packet *)reply_data;
 	int reply_ofs = (int)(offsetof(struct dhcpv6_packet, options));
@@ -4731,7 +4737,6 @@ iterate_over_ia_na(struct data_string *reply_ret,
 	 */
 	for (ia = lookup_option(&dhcpv6_universe, packet->options, D6O_IA_NA);
 	     ia != NULL; ia = ia->next) {
-	     	iaaddr_is_found = 0;
 
 		if (!get_encapsulated_IA_state(&cli_enc_opt_state,
 					       &cli_enc_opt_data,
@@ -5148,7 +5153,6 @@ iterate_over_ia_pd(struct data_string *reply_ret,
 	struct host_decl *host;
 	struct option_state *host_opt_state;
 	struct data_string iaprefix;
-	int iaprefix_is_found;
 	char reply_data[65536];
 	int reply_ofs;
 	struct iasubopt *prefix;
@@ -5215,7 +5219,6 @@ iterate_over_ia_pd(struct data_string *reply_ret,
 	 */
 	for (ia = lookup_option(&dhcpv6_universe, packet->options, D6O_IA_PD);
 	     ia != NULL; ia = ia->next) {
-	    iaprefix_is_found = 0;
 
 	    if (!get_encapsulated_IA_state(&cli_enc_opt_state,
 					   &cli_enc_opt_data,
@@ -5543,6 +5546,7 @@ dhcpv6_relay_forw(struct data_string *reply_ret, struct packet *packet) {
 	msg_type = enc_opt_data.data[0];
 	if ((msg_type == DHCPV6_RELAY_FORW) ||
 	    (msg_type == DHCPV6_RELAY_REPL)) {
+		int relaylen = (int)(offsetof(struct dhcpv6_relay_packet, options));
 		relay = (struct dhcpv6_relay_packet *)enc_opt_data.data;
 		enc_packet->dhcpv6_msg_type = relay->msg_type;
 
@@ -5555,13 +5559,14 @@ dhcpv6_relay_forw(struct data_string *reply_ret, struct packet *packet) {
 
 		if (!parse_option_buffer(enc_packet->options,
 					 relay->options, 
-					 enc_opt_data.len-sizeof(*relay),
+					 enc_opt_data.len - relaylen,
 					 &dhcpv6_universe)) {
 			/* no logging here, as parse_option_buffer() logs all
 			   cases where it fails */
 			goto exit;
 		}
 	} else {
+		int msglen = (int)(offsetof(struct dhcpv6_packet, options));
 		msg = (struct dhcpv6_packet *)enc_opt_data.data;
 		enc_packet->dhcpv6_msg_type = msg->msg_type;
 
@@ -5572,7 +5577,7 @@ dhcpv6_relay_forw(struct data_string *reply_ret, struct packet *packet) {
 
 		if (!parse_option_buffer(enc_packet->options,
 					 msg->options, 
-					 enc_opt_data.len-sizeof(*msg),
+					 enc_opt_data.len - msglen,
 					 &dhcpv6_universe)) {
 			/* no logging here, as parse_option_buffer() logs all
 			   cases where it fails */
@@ -6041,7 +6046,7 @@ find_hosts_by_duid_chaddr(struct host_decl **host,
 		break;
 	}
 
-	if (hlen == 0)
+	if ((hlen == 0) || (hlen > HARDWARE_ADDR_LEN)) 
 		return 0;
 
 	/*

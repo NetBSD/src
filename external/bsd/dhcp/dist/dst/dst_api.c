@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.2 2013/03/24 22:50:33 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.2 2013/03/24 23:03:06 christos Exp $	*/
 
 #ifndef LINT
 static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/dst_api.c,v 1.9.6.1 2012/04/11 15:43:55 sar Exp ";
@@ -1017,7 +1017,7 @@ dst_free_key(DST_KEY *f_key)
 			 f_key->dk_alg));
 	}
 	if (f_key->dk_KEY_struct) {
-		SAFE_FREE(f_key->dk_KEY_struct);
+		SAFE_FREE2(f_key->dk_KEY_struct, 0);
 	}
 	if (f_key->dk_key_name)
 		SAFE_FREE(f_key->dk_key_name);
