@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/12/11 14:58:50 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/03/24 13:02:17 joerg Exp $
 
 LIB=	clangCodeGen
 
@@ -7,6 +7,7 @@ LIB=	clangCodeGen
 .PATH: ${CLANG_SRCDIR}/lib/CodeGen
 
 SRCS+=	BackendUtil.cpp \
+	CGAtomic.cpp \
 	CGBlocks.cpp \
 	CGBuiltin.cpp \
 	CGCUDANV.cpp \
