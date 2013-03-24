@@ -1,0 +1,153 @@
+Introduction
+------------
+
+In DHCP, a unit test exercises a particular piece of code in 
+isolation. There is a separate unit test per module or API. Each unit
+test lives in a directory beneath the code it is designed to exercise.
+So, we have:
+
+    client/tests/
+    common/tests/
+    dhcpctl/tests/
+
+And so on.
+
+Ideally each function would be invoked with every possible type of
+input, and each branch of every function would be checked. In practice
+we try to be a bit more pragmatic, and target the most basic
+operations, as well tricky code, and areas we have seen bugs in the
+past.
+
+
+Running Unit Tests
+------------------
+
+In order to run the unit tests for DHCP, use:
+
+$ make check
+
+This will run all of the unit tests.
+
+You can run a single test by going to the appropriate test directory 
+and invoking the test directly:
+
+$ cd common/tests
+$ make test_alloc
+$ ./test_alloc
+
+There are also a number of options that you can use when running a
+test. To see these, use the "-u" flag on the program.
+
+
+Adding a New Unit Test
+----------------------
+
+To add an additional test to an existing test program, you must create
+a function for the new test in the C source file:
+
+static void
+mynewtest(void) {
+	static const char *test_desc = "describe the test";
+
+	t_assert("mynewtest", 1, T_REQUIRED, test_desc);
+
+	/* ... test code ... */ 
+
+	t_result(T_PASS);
+}
+
+Then add this function to the T_testlist[] array in the file:
+
+testspec_t T_testlist[] = {
+        ...
+	{	mynewtest, 	"some new test" },
+	{	NULL, 		NULL		}
+};
+
+Then you should be able to compile and run your new test.
+
+
+Adding a New Unit Test Program
+------------------------------
+
+To add a new program, such as when a new module is added, you can copy
+the "unit_test_sample.c" file (in this directory) to a new name, add
+the new file as a target in Makefile.am, and begin adding tests. Do
+not forget to add it to CVS via "cvs add".
+
+If there is no "tests" directory for a given subdirectory, then one 
+must be created. This can be done by:
+
+1. Creating the directory:
+   
+    $ mkdir $subdir/tests
+    $ cvs add tests
+
+2. Adding the subdirectory to the build system:
+
+    Add to $subdir/Makefile.am:
+
+        SUBDIRS = tests
+
+    Add to the AC_OUTPUT macro in configure.ac:
+
+        $subdir/tests/Makefile
+
+3. Create a Makefile.am in the new directory, something like this:
+
+    AM_CPPFLAGS = -I../..
+
+    check_PROGRAMS = test_foo
+
+    TESTS = test_foo
+
+    test_foo_SOURCES = test_foo.c
+    test_foo_LDADD = ../../tests/libt_api.a     # plus others...
+
+
+See existing Makefile.am for examples, and the Automake documentation:
+
+    http://www.gnu.org/software/automake/manual/html_node/Tests.html
+
+
+Support Functions
+-----------------
+
+Here are a few of the most useful functions defined in t_api that you
+can use in testing:
+
+	void
+	t_assert(const char *component, int anum, int class,
+		 const char *what, ...);
+
+		The name of this function is slightly misleading. It
+		actually just prints out an error message in the test
+		output.
+
+	void
+	t_info(const char *format, ...);
+
+		Prints out a message in the test output. You should
+		include "\n" at the end.
+
+	void
+	t_result(int result);
+
+		Prints out the result in the test output. You should
+		use one of the constants for this:
+
+			T_PASS
+			T_FAIL
+			T_UNRESOLVED
+			T_UNSUPPORTED
+			T_UNTESTED
+			T_THREADONLY
+
+Additional Testing
+------------------
+
+Other static or runtime testing is always an option. For instance, you
+can use valgrind to check for memory leaks.
+
+
+Id: HOWTO-unit-test,v 1.2 2007-11-16 11:04:12 shane Exp 
