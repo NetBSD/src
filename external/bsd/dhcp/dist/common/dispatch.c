@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.1.1.1 2013/03/24 15:45:52 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
 
 /* dispatch.c
 
@@ -118,7 +118,7 @@ dispatch(void)
 		   isc_result_totext (status));
 }
 
-void
+static void
 isclib_timer_callback(isc_task_t  *taskp,
 		      isc_event_t *eventp)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.1.1.1 2013/03/24 15:45:56 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
@@ -69,6 +69,7 @@ static const char rcsid[] = "Id: base64.c,v 1.5.6.1 2009-11-20 01:49:01 sar Exp 
 #include "cdefs.h"
 #include "osdep.h"
 #include "arpa/nameser.h"
+#include "dst_internal.h"
 
 #define Assert(Cond) if (!(Cond)) abort()
 
@@ -206,10 +207,8 @@ b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
  */
 
 int
-b64_pton(src, target, targsize)
-	char const *src;
-	u_char *target;
-	size_t targsize;
+/*###207 [cc] error: no previous prototype for 'b64_pton'%%%*/
+b64_pton(char const *src, u_char *target, size_t targsize)
 {
 	int tarindex, state, ch;
 	char *pos;
