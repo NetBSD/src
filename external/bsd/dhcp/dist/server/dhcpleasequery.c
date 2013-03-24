@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpleasequery.c,v 1.1.1.1 2013/03/24 15:46:00 christos Exp $	*/
+/*	$NetBSD: dhcpleasequery.c,v 1.2 2013/03/24 15:53:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2006-2007,2009 by Internet Systems Consortium, Inc. ("ISC")
@@ -60,7 +60,7 @@ next_uid(const struct lease *lease) {
 	return lease->n_uid;
 }
 
-void
+static void
 get_newest_lease(struct lease **retval,
 		 struct lease *lease,
 		 struct lease *(*next)(const struct lease *)) {
