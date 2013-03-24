@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.1.1.1 2013/03/24 15:45:56 christos Exp $	*/
+/*	$NetBSD: alloc.c,v 1.1.1.2 2013/03/24 22:50:36 christos Exp $	*/
 
 /* alloc.c
 
@@ -6,6 +6,7 @@
    protocol... */
 
 /*
+ * Copyright (c) 2012 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2009-2010 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
@@ -37,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: alloc.c,v 1.1.1.1 2013/03/24 15:45:56 christos Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.1.1.2 2013/03/24 22:50:36 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -316,7 +317,7 @@ void dmalloc_dump_outstanding ()
 				inhistory = 1;
 				if (!noted) {
 				    log_info ("  %s(%d): %ld", dp -> file,
-					      dp -> line, dp -> size);
+					      dp -> line, (long) dp -> size);
 				    noted = 1;
 				}
 				print_rc_hist_entry (i);
@@ -329,7 +330,8 @@ void dmalloc_dump_outstanding ()
 			if (!inhistory)
 #endif
 				log_info ("  %s(%d): %ld",
-					  dp -> file, dp -> line, dp -> size);
+					  dp -> file, dp -> line, 
+					  (long) dp -> size);
 		}
 #endif
 	}

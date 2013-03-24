@@ -1,7 +1,8 @@
-.\"	$NetBSD: omshell.1,v 1.1.1.1 2013/03/24 15:45:47 christos Exp $
+.\"	$NetBSD: omshell.1,v 1.1.1.2 2013/03/24 22:50:34 christos Exp $
 .\"
-.\"	Id: omshell.1,v 1.5.24.1 2009-11-20 01:49:01 sar Exp 
+.\"	Id: omshell.1,v 1.5.24.1 2009/11/20 01:49:01 sar Exp 
 .\"
+.\" Copyright (c) 2012 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2001-2003 by Internet Software Consortium
 .\"
@@ -27,7 +28,7 @@
 .\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
 .\" To learn more about Internet Systems Consortium, see
 .\" ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
-.\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+.\" see ``http://www.vix.com''.  To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
 .TH omshell 1
 .SH NAME
@@ -39,11 +40,11 @@ The OMAPI Command Shell, omshell, provides an interactive way to connect to,
 query, and possibly change, the ISC DHCP Server's state via OMAPI, the Object
 Management API.  By using OMAPI and omshell, you do not have to stop, make
 changes, and then restart the DHCP server, but can make the changes
-while the server is running.   Omshell provides a way of accessing
+while the server is running.  Omshell provides a way of accessing
 OMAPI.
 .PP
 OMAPI is simply a communications mechanism that allows you to
-manipulate objects.   In order to actually \fIuse\fR omshell, you
+manipulate objects.  In order to actually \fIuse\fR omshell, you
 .I must
 understand what objects are available and how to use them.
 Documentation for OMAPI objects can be found in the documentation for
@@ -278,7 +279,7 @@ dhcpd.conf, but was created dynamically via OMAPI.
 .SH RESETTING ATTRIBUTES
 .PP
 If you want to remove an attribute from an object, you can do this with the
-\fBunset\fR command.   Once you have unset an attribute, you must use the
+\fBunset\fR command.  Once you have unset an attribute, you must use the
 \fBupdate\fR command to update the remote object.  So, if the host "some-host"
 from the previous example will not have a static IP address anymore, the
 commands in omshell would look like this:
