@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcrelay.c,v 1.2 2013/03/24 15:53:59 christos Exp $	*/
+/*	$NetBSD: dhcrelay.c,v 1.3 2013/03/24 23:03:06 christos Exp $	*/
 
 /* dhcrelay.c
 
    DHCP/BOOTP Relay Agent. */
 
 /*
- * Copyright(c) 2004-2011 by Internet Systems Consortium, Inc.("ISC")
+ * Copyright(c) 2004-2013 by Internet Systems Consortium, Inc.("ISC")
  * Copyright(c) 1997-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.2 2013/03/24 15:53:59 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.3 2013/03/24 23:03:06 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -135,7 +135,7 @@ static int strip_relay_agent_options(struct interface_info *,
 				     struct dhcp_packet *, unsigned);
 
 static const char copyright[] =
-"Copyright 2004-2011 Internet Systems Consortium.";
+"Copyright 2004-2013 Internet Systems Consortium.";
 static const char arr[] = "All rights reserved.";
 static const char message[] =
 "Internet Systems Consortium DHCP Relay Agent";
@@ -262,13 +262,19 @@ main(int argc, char **argv) {
 			local_family_set = 1;
 			local_family = AF_INET;
 #endif
+			if (++i == argc) {
+				usage();
+			}
+			if (strlen(argv[i]) >= sizeof(tmp->name)) {
+				log_fatal("%s: interface name too long "
+					  "(is %ld)",
+					  argv[i], (long)strlen(argv[i]));
+			}
 			status = interface_allocate(&tmp, MDL);
-			if (status != ISC_R_SUCCESS)
+			if (status != ISC_R_SUCCESS) {
 				log_fatal("%s: interface_allocate: %s",
 					  argv[i],
 					  isc_result_totext(status));
-			if (++i == argc) {
-				usage();
 			}
 			strcpy(tmp->name, argv[i]);
 			interface_snorf(tmp, INTERFACE_REQUESTED);
@@ -613,9 +619,10 @@ do_relay4(struct interface_info *ip, struct dhcp_packet *packet,
 
 			for (i = 0 ; i < out->address_count ; i++ ) {
 				if (out->addresses[i].s_addr ==
-				    packet->giaddr.s_addr)
+				    packet->giaddr.s_addr) {
 					i = -1;
 					break;
+				}
 			}
 
 			if (i == -1)

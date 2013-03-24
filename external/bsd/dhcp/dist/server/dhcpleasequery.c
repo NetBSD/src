@@ -1,6 +1,7 @@
-/*	$NetBSD: dhcpleasequery.c,v 1.2 2013/03/24 15:53:59 christos Exp $	*/
+/*	$NetBSD: dhcpleasequery.c,v 1.3 2013/03/24 23:03:06 christos Exp $	*/
 
 /*
+ * Copyright (C) 2011-2012 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2006-2007,2009 by Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -456,10 +457,7 @@ dhcpleasequery(struct packet *packet, int ms_nulltp) {
 			(lease_duration / 8);
 
 		if (time_renewal > cur_time) {
-			if (time_renewal < cur_time)
-				time_renewal = 0;
-			else
-				time_renewal = htonl(time_renewal - cur_time);
+			time_renewal = htonl(time_renewal - cur_time);
 
 			if (!add_option(options, 
 					DHO_DHCP_RENEWAL_TIME,
@@ -489,15 +487,8 @@ dhcpleasequery(struct packet *packet, int ms_nulltp) {
 		}
 
 		if (lease->ends > cur_time) {
-			if (time_expiry < cur_time) {
-				log_error("Impossible condition at %s:%d.",
-					  MDL);
-
-				option_state_dereference(&options, MDL);
-				lease_dereference(&lease, MDL);
-				return;
-			}
 			time_expiry = htonl(lease->ends - cur_time);
+
 			if (!add_option(options, 
 					DHO_DHCP_LEASE_TIME,
 					&time_expiry, 
@@ -627,7 +618,7 @@ dhcpleasequery(struct packet *packet, int ms_nulltp) {
 	/*
 	 * Figure out which address to use to send from.
 	 */
-	get_server_source_address(&siaddr, options, packet);
+	get_server_source_address(&siaddr, options, options, packet);
 
 	/* 
 	 * Set up the option buffer.

@@ -1,11 +1,11 @@
-/*	$NetBSD: dhclient.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
+/*	$NetBSD: dhclient.c,v 1.3 2013/03/24 23:03:05 christos Exp $	*/
 
 /* dhclient.c
 
    DHCP Client. */
 
 /*
- * Copyright (c) 2004-2011 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2013 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -70,7 +70,7 @@ int duid_type = 0;
 #define ASSERT_STATE(state_is, state_shouldbe) {}
 
 static const char copyright[] =
-"Copyright 2004-2011 Internet Systems Consortium.";
+"Copyright 2004-2013 Internet Systems Consortium.";
 static const char arr [] = "All rights reserved.";
 static const char message [] = "Internet Systems Consortium DHCP Client";
 static const char url [] = 
@@ -1207,6 +1207,7 @@ void bind_lease (client)
 	if (client -> active && client -> state != S_REBOOTING)
 		script_write_params (client, "old_", client -> active);
 	script_write_params (client, "new_", client -> new);
+	script_write_requested(client);
 	if (client -> alias)
 		script_write_params (client, "alias_", client -> alias);
 
@@ -1313,6 +1314,7 @@ void state_stop (cpp)
 	if (client->active) {
 		script_init(client, "STOP", client->active->medium);
 		script_write_params(client, "old_", client->active);
+		script_write_requested(client);
 		if (client->alias)
 			script_write_params(client, "alias_", client->alias);
 		script_go(client);
@@ -1787,6 +1789,7 @@ void dhcpnak (packet)
 	 */
 	script_init(client, "EXPIRE", NULL);
 	script_write_params(client, "old_", client->active);
+	script_write_requested(client);
 	if (client->alias)
 		script_write_params(client, "alias_", client->alias);
 	script_go(client);
@@ -1903,11 +1906,14 @@ void send_discover (cpp)
 	      ntohs (sockaddr_broadcast.sin_port), (long)(client -> interval));
 
 	/* Send out a packet. */
-	result = send_packet (client -> interface, (struct packet *)0,
-			      &client -> packet,
-			      client -> packet_length,
-			      inaddr_any, &sockaddr_broadcast,
-			      (struct hardware *)0);
+	result = send_packet(client->interface, NULL, &client->packet,
+			     client->packet_length, inaddr_any,
+                             &sockaddr_broadcast, NULL);
+        if (result < 0) {
+		log_error("%s:%d: Failed to send %d byte long packet over %s "
+			  "interface.", MDL, client->packet_length,
+			  client->interface->name);
+	}
 
 	/*
 	 * If we used 0 microseconds here, and there were other clients on the
@@ -1952,6 +1958,7 @@ void state_panic (cpp)
 			script_init (client, "TIMEOUT",
 				     client -> active -> medium);
 			script_write_params (client, "new_", client -> active);
+			script_write_requested(client);
 			if (client -> alias)
 				script_write_params (client, "alias_",
 						     client -> alias);
@@ -2090,6 +2097,7 @@ void send_request (cpp)
 		/* Run the client script with the new parameters. */
 		script_init (client, "EXPIRE", (struct string_list *)0);
 		script_write_params (client, "old_", client -> active);
+		script_write_requested(client);
 		if (client -> alias)
 			script_write_params (client, "alias_",
 					     client -> alias);
@@ -2170,20 +2178,29 @@ void send_request (cpp)
 	      ntohs (destination.sin_port));
 
 	if (destination.sin_addr.s_addr != INADDR_BROADCAST &&
-	    fallback_interface)
-		result = send_packet (fallback_interface,
-				      (struct packet *)0,
-				      &client -> packet,
-				      client -> packet_length,
-				      from, &destination,
-				      (struct hardware *)0);
-	else
+	    fallback_interface) {
+		result = send_packet(fallback_interface, NULL, &client->packet,
+				     client->packet_length, from, &destination,
+				     NULL);
+		if (result < 0) {
+			log_error("%s:%d: Failed to send %d byte long packet "
+				  "over %s interface.", MDL,
+				  client->packet_length,
+				  fallback_interface->name);
+		}
+        }
+	else {
 		/* Send out a packet. */
-		result = send_packet (client -> interface, (struct packet *)0,
-				      &client -> packet,
-				      client -> packet_length,
-				      from, &destination,
-				      (struct hardware *)0);
+		result = send_packet(client->interface, NULL, &client->packet,
+				     client->packet_length, from, &destination,
+				     NULL);
+		if (result < 0) {
+			log_error("%s:%d: Failed to send %d byte long packet"
+				  " over %s interface.", MDL,
+				  client->packet_length,
+				  client->interface->name);
+		}
+        }
 
 	tv.tv_sec = cur_tv.tv_sec + client->interval;
 	tv.tv_usec = ((tv.tv_sec - cur_tv.tv_sec) > 1) ?
@@ -2199,16 +2216,19 @@ void send_decline (cpp)
 	int result;
 
 	log_info ("DHCPDECLINE on %s to %s port %d",
-	      client -> name ? client -> name : client -> interface -> name,
-	      inet_ntoa (sockaddr_broadcast.sin_addr),
-	      ntohs (sockaddr_broadcast.sin_port));
+	      client->name ? client->name : client->interface->name,
+	      inet_ntoa(sockaddr_broadcast.sin_addr),
+	      ntohs(sockaddr_broadcast.sin_port));
 
 	/* Send out a packet. */
-	result = send_packet (client -> interface, (struct packet *)0,
-			      &client -> packet,
-			      client -> packet_length,
-			      inaddr_any, &sockaddr_broadcast,
-			      (struct hardware *)0);
+	result = send_packet(client->interface, NULL, &client->packet,
+			     client->packet_length, inaddr_any,
+			     &sockaddr_broadcast, NULL);
+	if (result < 0) {
+		log_error("%s:%d: Failed to send %d byte long packet over %s"
+			  " interface.", MDL, client->packet_length,
+			  client->interface->name);
+	}
 }
 
 void send_release (cpp)
@@ -2246,20 +2266,29 @@ void send_release (cpp)
 	      inet_ntoa (destination.sin_addr),
 	      ntohs (destination.sin_port));
 
-	if (fallback_interface)
-		result = send_packet (fallback_interface,
-				      (struct packet *)0,
-				      &client -> packet,
-				      client -> packet_length,
-				      from, &destination,
-				      (struct hardware *)0);
-	else
+	if (fallback_interface) {
+		result = send_packet(fallback_interface, NULL, &client->packet,
+				      client->packet_length, from, &destination,
+				      NULL);
+		if (result < 0) {
+			log_error("%s:%d: Failed to send %d byte long packet"
+				  " over %s interface.", MDL,
+				  client->packet_length,
+				  fallback_interface->name);
+		}
+        } else {
 		/* Send out a packet. */
-		result = send_packet (client -> interface, (struct packet *)0,
-				      &client -> packet,
-				      client -> packet_length,
-				      from, &destination,
-				      (struct hardware *)0);
+		result = send_packet(client->interface, NULL, &client->packet,
+				      client->packet_length, from, &destination,
+				      NULL);
+		if (result < 0) {
+			log_error ("%s:%d: Failed to send %d byte long packet"
+				   " over %s interface.", MDL,
+				   client->packet_length,
+				   client->interface->name);
+		}
+
+        }
 }
 
 void
@@ -2722,10 +2751,21 @@ void write_lease_option (struct option_cache *oc,
 	}
 	if (evaluate_option_cache (&ds, packet, lease, client_state,
 				   in_options, cfg_options, scope, oc, MDL)) {
-		fprintf(leaseFile, "%soption %s%s%s %s;\n", preamble,
-			name, dot, oc->option->name,
-			pretty_print_option(oc->option, ds.data, ds.len,
-					    1, 1));
+		/* The option name */
+		fprintf(leaseFile, "%soption %s%s%s", preamble,
+			name, dot, oc->option->name);
+
+		/* The option value if there is one */
+		if ((oc->option->format == NULL) ||
+		    (oc->option->format[0] != 'Z')) {
+			fprintf(leaseFile, " %s",
+				pretty_print_option(oc->option, ds.data,
+						    ds.len, 1, 1));
+		}
+
+		/* The closing semi-colon and newline */
+		fprintf(leaseFile, ";\n");
+
 		data_string_forget (&ds, MDL);
 	}
 }
@@ -3223,7 +3263,6 @@ void script_write_params (client, prefix, lease)
 				  lease->server_name);
 		}
 	}
-				
 
 	for (i = 0; i < lease -> options -> universe_count; i++) {
 		option_space_foreach ((struct packet *)0, (struct lease *)0,
@@ -3233,6 +3272,31 @@ void script_write_params (client, prefix, lease)
 				      &es, client_option_envadd);
 	}
 	client_envadd (client, prefix, "expiry", "%d", (int)(lease -> expiry));
+}
+
+/*
+ * Write out the environment variables for the objects that the
+ * client requested.  If the object was requested the variable will be:
+ * requested_<option_name>=1
+ * If it wasn't requested there won't be a variable.
+ */
+void script_write_requested(client)
+	struct client_state *client;
+{
+	int i;
+	struct option **req;
+	char name[256];
+	req = client->config->requested_options;
+
+	if (req == NULL)
+		return;
+
+	for (i = 0 ; req[i] != NULL ; i++) {
+		if ((req[i]->universe == &dhcp_universe) &&
+		    dhcp_option_ev_name(name, sizeof(name), req[i])) {
+			client_envadd(client, "requested_", name, "%d", 1);
+		}
+	}
 }
 
 int script_go (client)
@@ -3542,6 +3606,7 @@ void do_release(client)
 			script_write_params (client, "alias_",
 					     client -> alias);
 		script_write_params (client, "old_", client -> active);
+		script_write_requested(client);
 		script_go (client);
 	}
 
@@ -3708,7 +3773,7 @@ client_dns_remove_action(dhcp_ddns_cb_t *ddns_cb,
 		/* Do the second stage of the FWD removal */
 		ddns_cb->state = DDNS_STATE_REM_FW_NXRR;
 
-		result = ddns_modify_fwd(ddns_cb);
+		result = ddns_modify_fwd(ddns_cb, MDL);
 		if (result == ISC_R_SUCCESS) {
 			return;
 		}
@@ -3728,7 +3793,7 @@ client_dns_remove(struct client_state *client,
 
 	/* if we have an old ddns request for this client, cancel it */
 	if (client->ddns_cb != NULL) {
-		ddns_cancel(client->ddns_cb);
+		ddns_cancel(client->ddns_cb, MDL);
 		client->ddns_cb = NULL;
 	}
 	
@@ -3886,7 +3951,7 @@ client_dns_update_action(dhcp_ddns_cb_t *ddns_cb,
 			ddns_cb->state = DDNS_STATE_ADD_FW_YXDHCID;
 			ddns_cb->cur_func = client_dns_update_action;
 
-			result = ddns_modify_fwd(ddns_cb);
+			result = ddns_modify_fwd(ddns_cb, MDL);
 			if (result == ISC_R_SUCCESS) {
 				return;
 			}
@@ -4023,7 +4088,7 @@ client_dns_update(struct client_state *client, dhcp_ddns_cb_t *ddns_cb)
 	 * Perform updates.
 	 */
 	if (ddns_cb->fwd_name.len && ddns_cb->dhcid.len) {
-		rcode = ddns_modify_fwd(ddns_cb);
+		rcode = ddns_modify_fwd(ddns_cb, MDL);
 	} else
 		rcode = ISC_R_FAILURE;
 
@@ -4056,7 +4121,7 @@ dhclient_schedule_updates(struct client_state *client,
 
 	/* cancel any outstanding ddns requests */
 	if (client->ddns_cb != NULL) {
-		ddns_cancel(client->ddns_cb);
+		ddns_cancel(client->ddns_cb, MDL);
 		client->ddns_cb = NULL;
 	}
 
