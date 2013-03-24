@@ -1,4 +1,4 @@
-/*	$NetBSD: db_test.c,v 1.3 2012/06/05 00:39:21 christos Exp $	*/
+/*	$NetBSD: db_test.c,v 1.4 2013/03/24 18:44:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -374,6 +374,10 @@ main(int argc, char *argv[]) {
 	unsigned int addopts;
 	isc_log_t *lctx = NULL;
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	dns_result_register();
 
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);

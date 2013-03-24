@@ -1,4 +1,4 @@
-/*	$NetBSD: inter_test.c,v 1.3 2012/06/05 00:39:23 christos Exp $	*/
+/*	$NetBSD: inter_test.c,v 1.4 2013/03/24 18:44:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -40,6 +40,10 @@ main(int argc, char **argv) {
 	UNUSED(argc);
 	UNUSED(argv);
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
 	result = isc_interfaceiter_create(mctx, &iter);
 	if (result != ISC_R_SUCCESS)

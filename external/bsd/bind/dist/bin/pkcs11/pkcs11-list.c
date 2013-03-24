@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11-list.c,v 1.3 2012/06/05 00:39:18 christos Exp $	*/
+/*	$NetBSD: pkcs11-list.c,v 1.4 2013/03/24 18:44:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -89,6 +89,10 @@ main(int argc, char *argv[])
 	extern char *optarg;
 	extern int optopt;
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	pk11_provider = getenv("PKCS11_PROVIDER");
 	if (pk11_provider != NULL)
 		pk11_libname = pk11_provider;

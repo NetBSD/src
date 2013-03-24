@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkconf.c,v 1.4 2012/06/05 00:38:48 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.5 2013/03/24 18:44:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -433,6 +433,7 @@ main(int argc, char **argv) {
 	isc_boolean_t load_zones = ISC_FALSE;
 	isc_boolean_t print = ISC_FALSE;
 
+	isc__mem_register();
 	isc_commandline_errprint = ISC_FALSE;
 
 	while ((c = isc_commandline_parse(argc, argv, "dhjt:pvz")) != EOF) {

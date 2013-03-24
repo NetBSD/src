@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_test.c,v 1.3 2012/06/05 00:39:28 christos Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.4 2013/03/24 18:44:42 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -240,6 +240,10 @@ main(void) {
 	dns_name_t *name;
 	isc_result_t result;
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	result = isc_mem_create(0, 0, &mctx);
 	if (result != ISC_R_SUCCESS)
 		return (1);

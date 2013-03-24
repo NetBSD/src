@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.7 2012/12/04 23:38:38 spz Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.8 2013/03/24 18:44:38 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -3006,6 +3006,8 @@ main(int argc, char *argv[]) {
 	isc_boolean_t set_iter = ISC_FALSE;
 	isc_boolean_t nonsecify = ISC_FALSE;
 
+	isc__mem_register();
+	isc__task_register();
 #define CMDLINE_FLAGS \
 	"3:AaCc:Dd:E:e:f:FghH:i:I:j:K:k:L:l:m:n:N:o:O:PpRr:s:ST:tuUv:X:xzZ:"
 

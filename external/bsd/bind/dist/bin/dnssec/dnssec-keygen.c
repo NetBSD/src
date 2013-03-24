@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.9 2012/12/04 23:38:38 spz Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.10 2013/03/24 18:44:38 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -249,6 +249,7 @@ main(int argc, char **argv) {
 	isc_boolean_t	show_progress = ISC_FALSE;
 	unsigned char	c;
 
+	isc__mem_register();
 	if (argc == 1)
 		usage();
 

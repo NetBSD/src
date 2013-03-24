@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimiter_test.c,v 1.3 2012/06/05 00:39:25 christos Exp $	*/
+/*	$NetBSD: ratelimiter_test.c,v 1.4 2013/03/24 18:44:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -109,6 +109,10 @@ main(int argc, char *argv[]) {
 	UNUSED(argc);
 	UNUSED(argv);
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	isc_app_start();
 	isc_interval_set(&linterval, 1, 0);
 
