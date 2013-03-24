@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.183 2013/03/23 16:17:21 christos Exp $
+# $NetBSD: md.sparc64,v 1.184 2013/03/24 18:55:34 christos Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -103,8 +103,8 @@
 ./usr/lib/sparc/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
 ./usr/lib/sparc/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdm.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdns.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdns.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdns.so.6			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdns.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/sparc/libdns_sd.so.0.0		base-compat-shlib	compat,pic,mdns
 ./usr/lib/sparc/libdwarf.so.0			base-compat-shlib	compat,pic
@@ -143,12 +143,12 @@
 ./usr/lib/sparc/libintl.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libipsec.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisc.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisc.so.5.8			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisccc.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisccc.so.5.8			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisccfg.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisccfg.so.5.8		base-compat-shlib	compat,pic
+./usr/lib/sparc/libisc.so.6			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisc.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisccc.so.6			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisccc.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisccfg.so.6			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisccfg.so.6.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/sparc/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/sparc/libisns.so.0			base-compat-shlib	compat,pic

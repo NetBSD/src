@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.10 2013/03/23 16:17:21 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.11 2013/03/24 18:55:35 christos Exp $
 ./usr/libdata/debug/lib/64/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -56,7 +56,7 @@
 ./usr/libdata/debug/usr/lib/64/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat
 ./usr/libdata/debug/usr/lib/64/libdm.so.0.0.debug 		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libdns.so.5.8.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libdns.so.6.0.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat
 ./usr/libdata/debug/usr/lib/64/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/64/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat
@@ -82,9 +82,9 @@
 ./usr/libdata/debug/usr/lib/64/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/64/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libipsec.so.3.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libisc.so.5.8.debug		comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libisccc.so.5.8.debug	comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libisccfg.so.5.8.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libisc.so.6.0.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libisccc.so.6.0.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/64/libisns.so.0.0.debug	comp-isns-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
@@ -218,7 +218,7 @@
 ./usr/libdata/debug/usr/lib/o32/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdm.so.0.0.debug 		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libdns.so.5.8.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libdns.so.6.0.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat
@@ -244,9 +244,9 @@
 ./usr/libdata/debug/usr/lib/o32/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libipsec.so.3.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libisc.so.5.8.debug		comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libisccc.so.5.8.debug	comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libisccfg.so.5.8.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libisc.so.6.0.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libisccc.so.6.0.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libisns.so.0.0.debug	comp-isns-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete

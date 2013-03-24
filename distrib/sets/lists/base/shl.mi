@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.654 2013/03/23 16:17:21 christos Exp $
+# $NetBSD: shl.mi,v 1.655 2013/03/24 18:55:34 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -34,6 +34,9 @@
 ./lib/libdevmapper.so				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
+#./lib/libdns.so					base-net-shlib		dynamicroot
+#./lib/libdns.so.6				base-net-shlib		dynamicroot
+#./lib/libdns.so.6.0				base-net-shlib		dynamicroot
 ./lib/libedit.so				base-sys-shlib		dynamicroot
 ./lib/libedit.so.3				base-sys-shlib		dynamicroot
 ./lib/libedit.so.3.1				base-sys-shlib		dynamicroot
@@ -46,6 +49,9 @@
 ./lib/libipsec.so				base-net-shlib		dynamicroot
 ./lib/libipsec.so.3				base-net-shlib		dynamicroot
 ./lib/libipsec.so.3.0				base-net-shlib		dynamicroot
+#./lib/libisc.so					base-net-shlib		dynamicroot
+#./lib/libisc.so.6				base-net-shlib		dynamicroot
+#./lib/libisc.so.6.0				base-net-shlib		dynamicroot
 ./lib/libkvm.so					base-sys-shlib		dynamicroot
 ./lib/libkvm.so.6				base-sys-shlib		dynamicroot
 ./lib/libkvm.so.6.0				base-sys-shlib		dynamicroot
@@ -61,12 +67,18 @@
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
 ./lib/libm.so.0.10				base-sys-shlib		dynamicroot
+#./lib/libpcap.so				base-net-shlib		dynamicroot
+#./lib/libpcap.so.4				base-net-shlib		dynamicroot
+#./lib/libpcap.so.4.0				base-net-shlib		dynamicroot
 ./lib/libppath.so				base-sys-shlib		dynamicroot
 ./lib/libppath.so.0				base-sys-shlib		dynamicroot
 ./lib/libppath.so.0.0				base-sys-shlib		dynamicroot
 ./lib/libprop.so				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1.1				base-sys-shlib		dynamicroot
+#./lib/libpthread.so				base-sys-shlib		dynamicroot
+#./lib/libpthread.so.1				base-sys-shlib		dynamicroot
+#./lib/libpthread.so.1.1				base-sys-shlib		dynamicroot
 ./lib/libradius.so				base-sys-shlib		dynamicroot
 ./lib/libradius.so.4				base-sys-shlib		dynamicroot
 ./lib/libradius.so.4.0				base-sys-shlib		dynamicroot
@@ -226,8 +238,8 @@
 ./usr/lib/libdm.so.0				base-sys-shlib
 ./usr/lib/libdm.so.0.0				base-sys-shlib
 ./usr/lib/libdns.so				base-bind-shlib
-./usr/lib/libdns.so.5				base-bind-shlib
-./usr/lib/libdns.so.5.8				base-bind-shlib
+./usr/lib/libdns.so.6				base-bind-shlib
+./usr/lib/libdns.so.6.0				base-bind-shlib
 ./usr/lib/libdns_sd.so				base-mdns-shlib		mdns
 ./usr/lib/libdns_sd.so.0			base-mdns-shlib		mdns
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		mdns
@@ -292,14 +304,14 @@
 ./usr/lib/libipsec.so.3				base-net-shlib
 ./usr/lib/libipsec.so.3.0			base-net-shlib
 ./usr/lib/libisc.so				base-bind-shlib
-./usr/lib/libisc.so.5				base-bind-shlib
-./usr/lib/libisc.so.5.8				base-bind-shlib
+./usr/lib/libisc.so.6				base-bind-shlib
+./usr/lib/libisc.so.6.0				base-bind-shlib
 ./usr/lib/libisccc.so				base-bind-shlib
-./usr/lib/libisccc.so.5				base-bind-shlib
-./usr/lib/libisccc.so.5.8			base-bind-shlib
+./usr/lib/libisccc.so.6				base-bind-shlib
+./usr/lib/libisccc.so.6.0			base-bind-shlib
 ./usr/lib/libisccfg.so				base-bind-shlib
-./usr/lib/libisccfg.so.5			base-bind-shlib
-./usr/lib/libisccfg.so.5.8			base-bind-shlib
+./usr/lib/libisccfg.so.6			base-bind-shlib
+./usr/lib/libisccfg.so.6.0			base-bind-shlib
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi
