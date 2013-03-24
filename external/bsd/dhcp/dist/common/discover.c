@@ -1,4 +1,4 @@
-/*	$NetBSD: discover.c,v 1.1.1.1 2013/03/24 15:45:52 christos Exp $	*/
+/*	$NetBSD: discover.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
 
 /* discover.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: discover.c,v 1.1.1.1 2013/03/24 15:45:52 christos Exp $");
+__RCSID("$NetBSD: discover.c,v 1.2 2013/03/24 15:53:58 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -798,7 +798,7 @@ struct iface_info {
  *
  * The iface_conf_list structure maintains state for this process.
  */
-int 
+static int 
 begin_iface_scan(struct iface_conf_list *ifaces) {
 	if (getifaddrs(&ifaces->head) != 0) {
 		log_error("Error getting interfaces; %m");
@@ -814,7 +814,7 @@ begin_iface_scan(struct iface_conf_list *ifaces) {
  * Returns information in the info structure. 
  * Sets err to 1 if there is an error, otherwise 0.
  */
-int
+static int
 next_iface(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 	if (ifaces->next == NULL) {
 		*err = 0;
@@ -838,7 +838,7 @@ next_iface(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 /*
  * End scan of interfaces.
  */
-void
+static void
 end_iface_scan(struct iface_conf_list *ifaces) {
 	freeifaddrs(ifaces->head);
 	ifaces->head = NULL;
@@ -847,7 +847,7 @@ end_iface_scan(struct iface_conf_list *ifaces) {
 #endif 
 
 /* XXX: perhaps create drealloc() rather than do it manually */
-void
+static void
 add_ipv4_addr_to_interface(struct interface_info *iface, 
 			   const struct in_addr *addr) {
 	/*
@@ -884,7 +884,7 @@ add_ipv4_addr_to_interface(struct interface_info *iface,
 
 #ifdef DHCPv6
 /* XXX: perhaps create drealloc() rather than do it manually */
-void
+static void
 add_ipv6_addr_to_interface(struct interface_info *iface, 
 			   const struct in6_addr *addr) {
 	/*

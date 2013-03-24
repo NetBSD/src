@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.1.1.1 2013/03/24 15:45:53 christos Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
@@ -243,6 +243,7 @@ MRns_name_pton(const char *src, u_char *dst, size_t dstsiz) {
 	return (0);
 }
 
+#ifdef notdef
 /*
  * MRns_name_ntol(src, dst, dstsiz)
  *	Convert a network strings labels into all lowercase.
@@ -252,7 +253,7 @@ MRns_name_pton(const char *src, u_char *dst, size_t dstsiz) {
  *	Enforces label and domain length limits.
  */
 
-int
+static int
 MRns_name_ntol(const u_char *src, u_char *dst, size_t dstsiz) {
 	const u_char *cp;
 	u_char *dn, *eom;
@@ -289,6 +290,7 @@ MRns_name_ntol(const u_char *src, u_char *dst, size_t dstsiz) {
 	*dn++ = '\0';
 	return (dn - dst);
 }
+#endif
 
 /*
  * MRns_name_unpack(msg, eom, src, dst, dstsiz)
@@ -468,6 +470,7 @@ cleanup:
 	return (dstp - dst);
 }
 
+#ifdef notdef
 /*
  * MRns_name_uncompress(msg, eom, src, dst, dstsiz)
  *	Expand compressed domain name to presentation format.
@@ -476,7 +479,7 @@ cleanup:
  * note:
  *	Root domain returns as "." not "".
  */
-int
+static int
 MRns_name_uncompress(const u_char *msg, const u_char *eom, const u_char *src,
 		     char *dst, size_t dstsiz)
 {
@@ -489,6 +492,7 @@ MRns_name_uncompress(const u_char *msg, const u_char *eom, const u_char *src,
 		return (-1);
 	return (n);
 }
+#endif
 
 /*
  * MRns_name_compress(src, dst, dstsiz, dnptrs, lastdnptr)
@@ -515,13 +519,14 @@ MRns_name_compress(const char *src, u_char *dst, size_t dstsiz,
 	return (MRns_name_pack(tmp, dst, dstsiz, dnptrs, lastdnptr));
 }
 
+#ifdef notdef
 /*
  * MRns_name_skip(ptrptr, eom)
  *	Advance *ptrptr to skip over the compressed name it points at.
  * return:
  *	0 on success, -1 (with errno set) on failure.
  */
-int
+static int
 MRns_name_skip(const u_char **ptrptr, const u_char *eom) {
 	const u_char *cp;
 	u_int n;
@@ -549,6 +554,7 @@ MRns_name_skip(const u_char **ptrptr, const u_char *eom) {
 	*ptrptr = cp;
 	return (0);
 }
+#endif
 
 /* Private. */
 

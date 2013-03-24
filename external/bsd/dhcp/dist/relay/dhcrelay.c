@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcrelay.c,v 1.1.1.1 2013/03/24 15:46:00 christos Exp $	*/
+/*	$NetBSD: dhcrelay.c,v 1.2 2013/03/24 15:53:59 christos Exp $	*/
 
 /* dhcrelay.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.1.1.1 2013/03/24 15:46:00 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.2 2013/03/24 15:53:59 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -165,7 +165,7 @@ static const char url[] =
 "                server0 [ ... serverN]\n\n"
 #endif
 
-static void usage() {
+static void usage(void) {
 	log_fatal(DHCRELAY_USAGE);
 }
 

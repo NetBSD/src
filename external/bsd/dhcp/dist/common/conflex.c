@@ -1,4 +1,4 @@
-/*	$NetBSD: conflex.c,v 1.1.1.1 2013/03/24 15:45:52 christos Exp $	*/
+/*	$NetBSD: conflex.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
 
 /* conflex.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conflex.c,v 1.1.1.1 2013/03/24 15:45:52 christos Exp $");
+__RCSID("$NetBSD: conflex.c,v 1.2 2013/03/24 15:53:58 christos Exp $");
 
 #include "dhcpd.h"
 #include <ctype.h>
@@ -388,7 +388,7 @@ next_raw_token(const char **rval, unsigned *rlen, struct parse *cfile) {
  * warning in the GENERAL NOTES ABOUT TOKENS above though.)
  */
 
-enum dhcp_token
+static enum dhcp_token
 do_peek_token(const char **rval, unsigned int *rlen,
 	      struct parse *cfile, isc_boolean_t raw) {
 	int x;

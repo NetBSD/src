@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.c,v 1.1.1.1 2013/03/24 15:45:53 christos Exp $	*/
+/*	$NetBSD: dns.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
 
 /* dns.c
 
@@ -217,7 +217,7 @@ trace_type_t *trace_ddns_output;
  * 64 bits pointer of cb
  */
 
-void
+static void
 trace_ddns_input_write(dhcp_ddns_cb_t *ddns_cb, isc_result_t result)
 {
 	trace_iov_t iov[2];
@@ -318,7 +318,7 @@ trace_ddns_input_stop(trace_type_t *ttype)
  * contents of cb
  */
 
-isc_result_t
+static isc_result_t
 trace_ddns_output_write(dns_client_t *client, dns_rdataclass_t rdclass,
 			dns_name_t *zonename, dns_namelist_t *prerequisites,
 			dns_namelist_t *updates, isc_sockaddrlist_t *servers,

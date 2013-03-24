@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb6.c,v 1.1.1.1 2013/03/24 15:46:04 christos Exp $	*/
+/*	$NetBSD: mdb6.c,v 1.2 2013/03/24 15:53:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2007-2011 by Internet Systems Consortium, Inc. ("ISC")
@@ -1350,7 +1350,7 @@ prefix6_exists(const struct ipv6_pool *pool,
  *
  * This is used for host entries and the addresses of the server itself.
  */
-isc_result_t
+static isc_result_t
 mark_lease_unavailable(struct ipv6_pool *pool, const struct in6_addr *addr) {
 	struct iasubopt *dummy_iasubopt;
 	isc_result_t result;

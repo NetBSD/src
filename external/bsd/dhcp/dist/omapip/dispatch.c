@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.1.1.1 2013/03/24 15:45:57 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.2 2013/03/24 15:53:59 christos Exp $	*/
 
 /* dispatch.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dispatch.c,v 1.1.1.1 2013/03/24 15:45:57 christos Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.2 2013/03/24 15:53:59 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -127,7 +127,7 @@ trigger_event(struct eventqueue **queue)
  * 1 is delete, 0 is leave in place
  */
 #define SOCKDELETE 1
-int
+static int
 omapi_iscsock_cb(isc_task_t   *task,
 		 isc_socket_t *socket,
 		 void         *cbarg,

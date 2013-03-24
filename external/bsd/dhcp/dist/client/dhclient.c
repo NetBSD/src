@@ -1,4 +1,4 @@
-/*	$NetBSD: dhclient.c,v 1.1.1.1 2013/03/24 15:45:58 christos Exp $	*/
+/*	$NetBSD: dhclient.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
 
 /* dhclient.c
 
@@ -3696,7 +3696,7 @@ static void shutdown_exit (void *foo)
  */
 
 /* The first and second stages are pretty similar so we combine them */
-void
+static void
 client_dns_remove_action(dhcp_ddns_cb_t *ddns_cb,
 			 isc_result_t    eresult)
 {
@@ -3863,7 +3863,7 @@ client_dns_update_timeout (void *cp)
  */
 
 /* The first and second stages are pretty similar so we combine them */
-void
+static void
 client_dns_update_action(dhcp_ddns_cb_t *ddns_cb,
 			 isc_result_t    eresult)
 {

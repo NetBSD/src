@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpv6.c,v 1.1.1.1 2013/03/24 15:46:04 christos Exp $	*/
+/*	$NetBSD: dhcpv6.c,v 1.2 2013/03/24 15:53:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2006-2011 by Internet Systems Consortium, Inc. ("ISC")
@@ -382,7 +382,7 @@ get_client_id(struct packet *packet, struct data_string *client_id) {
  *    Client Identifier option or that do include a Server Identifier
  *    option.
  */
-int
+static int
 valid_client_msg(struct packet *packet, struct data_string *client_id) {
 	int ret_val;
 	struct option_cache *oc;
@@ -475,7 +475,7 @@ exit:
  *      server's DUID.
  *   -  the message does not include a Client Identifier option.
  */
-int
+static int
 valid_client_resp(struct packet *packet,
 		  struct data_string *client_id,
 		  struct data_string *server_id)
@@ -564,7 +564,7 @@ exit:
  *
  *   -  The message includes an IA option.
  */
-int
+static int
 valid_client_info_req(struct packet *packet, struct data_string *server_id) {
 	int ret_val;
 	struct option_cache *oc;
@@ -4605,8 +4605,13 @@ iterate_over_ia_na(struct data_string *reply_ret,
 		   const struct data_string *client_id,
 		   const struct data_string *server_id,
 		   const char *packet_type,
-		   void (*ia_na_match)(),
-		   void (*ia_na_nomatch)())
+		   void (*ia_na_match)(const struct data_string *,
+				       const struct data_string *,
+				       struct iasubopt *),
+		   void (*ia_na_nomatch)(const struct data_string *,
+					 const struct data_string *,
+					 u_int32_t *, struct packet *, char *,
+					 int *, int))
 {
 	struct option_state *opt_state;
 	struct host_decl *packet_host;
@@ -5123,8 +5128,13 @@ iterate_over_ia_pd(struct data_string *reply_ret,
 		   const struct data_string *client_id,
 		   const struct data_string *server_id,
 		   const char *packet_type,
-		   void (*ia_pd_match)(),
-		   void (*ia_pd_nomatch)())
+		   void (*ia_pd_match)(const struct data_string *,
+				       const struct data_string *,
+				       struct iasubopt *),
+		   void (*ia_pd_nomatch)(const struct data_string *,
+					 const struct data_string *,
+					 u_int32_t *, struct packet *, char *,
+					 int *, int))
 {
 	struct data_string reply_new;
 	int reply_len;
