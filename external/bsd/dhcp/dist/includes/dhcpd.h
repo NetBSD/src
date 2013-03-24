@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcpd.h,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
+/*	$NetBSD: dhcpd.h,v 1.3 2013/03/24 23:03:06 christos Exp $	*/
 
 /* dhcpd.h
 
    Definitions for dhcpd... */
 
 /*
- * Copyright (c) 2004-2011 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2012 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.h,v 1.2 2013/03/24 15:53:58 christos Exp $");
+__RCSID("$NetBSD: dhcpd.h,v 1.3 2013/03/24 23:03:06 christos Exp $");
 
 #include "config.h"
 
@@ -437,11 +437,17 @@ struct packet {
 	isc_boolean_t unicast;
 };
 
-/* A network interface's MAC address. */
+/*
+ * A network interface's MAC address.
+ * 20 bytes for the hardware address
+ * and 1 byte for the type tag
+ */
+
+#define HARDWARE_ADDR_LEN 20
 
 struct hardware {
 	u_int8_t hlen;
-	u_int8_t hbuf [17];
+	u_int8_t hbuf[HARDWARE_ADDR_LEN + 1];
 };
 
 #if defined(LDAP_CONFIGURATION)
@@ -1562,7 +1568,7 @@ struct ipv6_pool {
 #define DDNS_EXECUTE_NEXT       0x20
 #define DDNS_ABORT              0x40
 #define DDNS_STATIC_LEASE       0x80
-
+#define DDNS_ACTIVE_LEASE	0x100
 /*
  * The following two groups are separate and we could reuse
  * values but not reusing them may be useful in the future.
@@ -1603,7 +1609,7 @@ typedef struct dhcp_ddns_cb {
 	int zone_addr_count;
 	struct dns_zone *zone;
 
-	int flags;
+	u_int16_t flags;
 	TIME timeout;
 	int state;
 	ddns_action_t cur_func;
@@ -1858,6 +1864,8 @@ void do_packet6(struct interface_info *, const char *,
 		int, int, const struct iaddr *, isc_boolean_t);
 int packet6_len_okay(const char *, int);
 
+int validate_packet(struct packet *);
+
 int add_option(struct option_state *options,
 	       unsigned int option_num,
 	       void *data,
@@ -1955,7 +1963,8 @@ void parse_server_duid_conf(struct parse *cfile);
 /* ddns.c */
 int ddns_updates(struct packet *, struct lease *, struct lease *,
 		 struct iasubopt *, struct iasubopt *, struct option_state *);
-int ddns_removals(struct lease *, struct iasubopt *, struct dhcp_ddns_cb *);
+isc_result_t ddns_removals(struct lease *, struct iasubopt *,
+			   struct dhcp_ddns_cb *, isc_boolean_t);
 #if defined (TRACING)
 void trace_ddns_init(void);
 #endif
@@ -2177,7 +2186,11 @@ unsigned cons_agent_information_options (struct option_state *,
 					 unsigned, unsigned);
 void get_server_source_address(struct in_addr *from,
 			       struct option_state *options,
+			       struct option_state *out_options,
 			       struct packet *packet);
+void setup_server_source_address(struct in_addr *from,
+				 struct option_state *options,
+				 struct packet *packet);
 
 /* dhcpleasequery.c */
 void dhcpleasequery (struct packet *, int);
@@ -2735,6 +2748,7 @@ void client_option_envadd (struct option_cache *, struct packet *,
 			   struct binding_scope **, struct universe *, void *);
 void script_write_params (struct client_state *, const char *,
 			  struct client_lease *);
+void script_write_requested (struct client_state *);
 int script_go (struct client_state *);
 void client_envadd (struct client_state *,
 		    const char *, const char *, const char *, ...)
@@ -2783,6 +2797,7 @@ int write_billing_class (struct class *);
 void commit_leases_timeout (void *);
 void commit_leases_readerdry(void *);
 int commit_leases (void);
+int commit_leases_timed (void);
 void db_startup (int);
 int new_lease_file (void);
 int group_writer (struct group_object *);
@@ -3248,7 +3263,10 @@ void make_binding_state_transition (struct lease *);
 int lease_copy (struct lease **, struct lease *, const char *, int);
 void release_lease (struct lease *, struct packet *);
 void abandon_lease (struct lease *, const char *);
+#if 0
+/* this appears to be unused and I plan to remove it SAR */
 void dissociate_lease (struct lease *);
+#endif
 void pool_timer (void *);
 int find_lease_by_uid (struct lease **, const unsigned char *,
 		       unsigned, const char *, int);
@@ -3514,9 +3532,13 @@ isc_result_t release_lease6(struct ipv6_pool *pool, struct iasubopt *lease);
 isc_result_t decline_lease6(struct ipv6_pool *pool, struct iasubopt *lease);
 isc_boolean_t lease6_exists(const struct ipv6_pool *pool,
 			    const struct in6_addr *addr);
+isc_boolean_t lease6_usable(struct iasubopt *lease);
+isc_result_t cleanup_lease6(ia_hash_t *ia_table,
+			    struct ipv6_pool *pool,
+			    struct iasubopt *lease,
+			    struct ia_xx *ia);
 isc_result_t mark_lease_unavailble(struct ipv6_pool *pool,
 				   const struct in6_addr *addr);
-
 isc_result_t create_prefix6(struct ipv6_pool *pool,
 			    struct iasubopt **pref,
 			    unsigned int *attempts,
@@ -3548,13 +3570,13 @@ void ddns_cb_forget_zone (dhcp_ddns_cb_t *ddns_cb);
 //void *key_from_zone(struct dns_zone *zone);
 
 isc_result_t
-ddns_modify_fwd(dhcp_ddns_cb_t *ddns_cb);
+ddns_modify_fwd(dhcp_ddns_cb_t *ddns_cb, const char *file, int line);
 
 isc_result_t
-ddns_modify_ptr(dhcp_ddns_cb_t *ddns_cb);
+ddns_modify_ptr(dhcp_ddns_cb_t *ddns_cb, const char *file, int line);
 
 void
-ddns_cancel(dhcp_ddns_cb_t *ddns_cb);
+ddns_cancel(dhcp_ddns_cb_t *ddns_cb, const char *file, int line);
 
 #define MAX_ADDRESS_STRING_LEN \
    (sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"))

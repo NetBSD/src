@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.2 2013/03/24 15:53:59 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.3 2013/03/24 23:03:06 christos Exp $	*/
 
 /* dispatch.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dispatch.c,v 1.2 2013/03/24 15:53:59 christos Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.3 2013/03/24 23:03:06 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -176,8 +176,15 @@ omapi_iscsock_cb(isc_task_t   *task,
 	if ((flags == ISC_SOCKFDWATCH_READ) &&
 	    (obj->reader != NULL) &&
 	    (obj->inner != NULL)) {
-		obj->reader(obj->inner);
-		/* We always ask for more when reading */
+		status = obj->reader(obj->inner);
+		/* 
+		 * If we are shutting down (basically tried to
+		 * read and got no bytes) we don't need to try
+		 * again.
+		 */
+		if (status == ISC_R_SHUTTINGDOWN)
+			return (0);
+		/* Otherwise We always ask for more when reading */
 		return (1);
 	} else if ((flags == ISC_SOCKFDWATCH_WRITE) &&
 		 (obj->writer != NULL) &&
