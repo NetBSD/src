@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.655 2013/03/24 18:55:34 christos Exp $
+# $NetBSD: shl.mi,v 1.656 2013/03/24 19:56:06 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -190,8 +190,8 @@
 ./usr/lib/libbfd.so.12				base-sys-shlib		binutils
 ./usr/lib/libbfd.so.12.0			base-sys-shlib		binutils
 ./usr/lib/libbind9.so				base-bind-shlib
-./usr/lib/libbind9.so.5				base-bind-shlib
-./usr/lib/libbind9.so.5.8			base-bind-shlib
+./usr/lib/libbind9.so.6				base-bind-shlib
+./usr/lib/libbind9.so.6.0			base-bind-shlib
 ./usr/lib/libbluetooth.so			base-sys-shlib
 ./usr/lib/libbluetooth.so.4			base-sys-shlib
 ./usr/lib/libbluetooth.so.4.2			base-sys-shlib
@@ -356,8 +356,8 @@
 ./usr/lib/liblutok.so.1				base-sys-shlib		kyua
 ./usr/lib/liblutok.so.1.0			base-sys-shlib		kyua
 ./usr/lib/liblwres.so				base-bind-shlib
-./usr/lib/liblwres.so.5				base-bind-shlib
-./usr/lib/liblwres.so.5.8			base-bind-shlib
+./usr/lib/liblwres.so.6				base-bind-shlib
+./usr/lib/liblwres.so.6.0			base-bind-shlib
 ./usr/lib/liblzma.so				base-sys-shlib
 ./usr/lib/liblzma.so.1				base-sys-shlib
 ./usr/lib/liblzma.so.1.1			base-sys-shlib

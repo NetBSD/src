@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.197 2013/03/24 18:55:34 christos Exp $
+# $NetBSD: md.amd64,v 1.198 2013/03/24 19:56:06 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -75,8 +75,8 @@
 ./usr/lib/i386/libatf-c++.so.0.0		base-compat-shlib	compat,pic,atf
 ./usr/lib/i386/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
-./usr/lib/i386/libbind9.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libbind9.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/i386/libbind9.so.6			base-compat-shlib	compat,pic
+./usr/lib/i386/libbind9.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbsdmalloc.so.0		base-compat-shlib	compat,pic
@@ -187,8 +187,8 @@
 ./usr/lib/i386/liblutok.so			base-compat-shlib	compat,pic,kyua
 ./usr/lib/i386/liblutok.so.1			base-compat-shlib	compat,pic,kyua
 ./usr/lib/i386/liblutok.so.1.0			base-compat-shlib	compat,pic,kyua
-./usr/lib/i386/liblwres.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/liblwres.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/i386/liblwres.so.6			base-compat-shlib	compat,pic
+./usr/lib/i386/liblwres.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzma.so.1			base-compat-shlib	compat,pic
