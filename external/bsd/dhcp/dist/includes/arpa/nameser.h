@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $	*/
+/*	$NetBSD: nameser.h,v 1.1.1.2 2013/03/24 22:50:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -57,7 +57,7 @@
  */
 
 /*
- *	Id: nameser.h,v 1.6.24.1 2009-11-20 01:49:01 sar Exp 
+ *	Id: nameser.h,v 1.6.24.1 2009/11/20 01:49:01 sar Exp 
  */
 
 #ifndef _ARPA_NAMESER_H_

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Id: macos,v 1.2.108.2 2011-09-20 17:04:03 sar Exp 
+# Id: macos,v 1.2.108.2 2011/09/20 17:04:03 sar Exp 
 #
 # automous run of this script will commit the DNS setting
 #

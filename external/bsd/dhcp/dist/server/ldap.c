@@ -1,4 +1,4 @@
-/*	$NetBSD: ldap.c,v 1.1.1.1 2013/03/24 15:46:05 christos Exp $	*/
+/*	$NetBSD: ldap.c,v 1.1.1.2 2013/03/24 22:50:42 christos Exp $	*/
 
 /* ldap.c
 
@@ -1990,7 +1990,7 @@ find_subclass_in_ldap (struct class *class, struct class **newclass,
               return (0);
             }
           memset ((*newclass)->billed_leases, 0, 
-                ((*newclass)->lease_limit * sizeof (*newclass)->billed_leases));
+		  ((*newclass)->lease_limit * sizeof (struct lease *)));
         }
 
       data_string_copy (&(*newclass)->hash_string, data, MDL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.1.1.1 2013/03/24 15:45:56 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.1.1.2 2013/03/24 22:50:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
@@ -49,7 +49,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: base64.c,v 1.5.6.1 2009-11-20 01:49:01 sar Exp ";
+static const char rcsid[] = "Id: base64.c,v 1.5.6.1 2009/11/20 01:49:01 sar Exp ";
 #endif /* not lint */
 
 #include <sys/types.h>

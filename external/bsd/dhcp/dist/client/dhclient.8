@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhclient.8,v 1.1.1.1 2013/03/24 15:45:59 christos Exp $
+.\"	$NetBSD: dhclient.8,v 1.1.1.2 2013/03/24 22:50:27 christos Exp $
 .\"
-.\"	Id: dhclient.8,v 1.32.24.4 2011-04-15 22:12:50 sar Exp 
+.\"	Id: dhclient.8,v 1.32.24.4 2011/04/15 22:12:50 sar Exp 
 .\"
-.\" Copyright (c) 2004,2007-2011 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2004,2007-2012 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -63,7 +63,7 @@ dhclient - Dynamic Host Configuration Protocol Client
 ]
 [
 .B -p
-.I port
+.I port-number
 ]
 [
 .B -d
@@ -140,8 +140,8 @@ fail, by statically assigning an address.
 .PP
 The DHCP protocol allows a host to contact a central server which
 maintains a list of IP addresses which may be assigned on one or more
-subnets.   A DHCP client may request an address from this pool, and
-then use it on a temporary basis for communication on network.   The
+subnets.  A DHCP client may request an address from this pool, and
+then use it on a temporary basis for communication on network.  The
 DHCP protocol also provides a mechanism whereby a client can learn
 important details about the network to which it is attached, such as
 the location of a default router, the location of a name server, and
@@ -155,19 +155,19 @@ or
 options.
 .PP
 On startup, \fBdhclient\fR reads the dhclient.conf
-for configuration instructions.   It then gets a list of all the
-network interfaces that are configured in the current system.   For
+for configuration instructions.  It then gets a list of all the
+network interfaces that are configured in the current system.  For
 each interface, it attempts to configure the interface using the DHCP
 protocol.
 .PP
 In order to keep track of leases across system reboots and server
 restarts, \fBdhclient\fR keeps a list of leases it has been assigned in the
-dhclient.leases file.   On startup, after reading the dhclient.conf
+dhclient.leases file.  On startup, after reading the dhclient.conf
 file, \fBdhclient\fR reads the dhclient.leases file to refresh its memory
 about what leases it has been assigned.
 .PP
 When a new lease is acquired, it is appended to the end of the
-dhclient.leases file.   In order to prevent the file from becoming
+dhclient.leases file.  In order to prevent the file from becoming
 arbitrarily large, from time to time \fBdhclient\fR creates a new
 dhclient.leases file from its in-core lease database.  The old version
 of the dhclient.leases file is retained under the name
@@ -176,19 +176,19 @@ until the next time \fBdhclient\fR rewrites the database.
 .PP
 Old leases are kept around in case the DHCP server is unavailable when
 \fBdhclient\fR is first invoked (generally during the initial system boot
-process).   In that event, old leases from the dhclient.leases file
+process).  In that event, old leases from the dhclient.leases file
 which have not yet expired are tested, and if they are determined to
 be valid, they are used until either they expire or the DHCP server
 becomes available.
 .PP
 A mobile host which may sometimes need to access a network on which no
 DHCP server exists may be preloaded with a lease for a fixed
-address on that network.   When all attempts to contact a DHCP server
+address on that network.  When all attempts to contact a DHCP server
 have failed, \fBdhclient\fR will try to validate the static lease, and if it
 succeeds, will use that lease until it is restarted.
 .PP
 A mobile host may also travel to some networks on which DHCP is not
-available but BOOTP is.   In that case, it may be advantageous to
+available but BOOTP is.  In that case, it may be advantageous to
 arrange with the network administrator for an entry on the BOOTP
 database, so that the host can boot quickly on that network rather
 than cycling through the list of old leases.
@@ -201,7 +201,7 @@ network interfaces, eliminating non-broadcast interfaces if
 possible, and attempt to configure each interface.
 .PP
 It is also possible to specify interfaces by name in the dhclient.conf
-file.   If interfaces are specified in this way, then the client will
+file.  If interfaces are specified in this way, then the client will
 only configure interfaces that are either specified in the
 configuration file or on the command line, and will ignore all other
 interfaces.
@@ -233,9 +233,7 @@ types together or even to share the lease file between them.
 Try to get a lease once.  On failure exit with code 2.  In DHCPv6 this
 sets the maximum duration of the initial exchange to
 .I timeout
-(from 
-.IR dhclient.conf(5)
-with a default of sixty seconds).
+(from dhclient.conf with a default of sixty seconds).
 .TP
 .BI \-d
 .\" This is not intuitive.
@@ -264,7 +262,7 @@ DHCP client will exit if it isn't able to identify any network interfaces
 to configure.  On laptop computers and other computers with
 hot-swappable I/O buses, it is possible that a broadcast interface may
 be added after system startup.  This flag can be used to cause the client
-not to exit when it doesn't find any such interfaces.   The
+not to exit when it doesn't find any such interfaces.  The
 .B omshell(1)
 program can then be used to notify the client when a network interface
 has been added or removed, so that the client can attempt to configure an IP
@@ -276,9 +274,9 @@ combination with the
 .B -w
 flag.
 .TP
-.BI \-e \ VAR=val
+.BI \-e \ VAR=value
 Define additional environment variables for the environment where 
-.B dhclient-script(8)
+.B dhclient-script
 executes.  You may specify multiple 
 .B \-e
 options on the command line.
@@ -286,7 +284,7 @@ options on the command line.
 .BI \-r
 Release the current lease and stop the running DHCP client as previously
 recorded in the PID file.  When shutdown via this method 
-.B dhclient-script(8)
+.B dhclient-script
 will be executed with the specific reason for calling the script set.
 The client normally doesn't release the current lease as this is not
 required by the DHCP protocol but some cable ISPs require their clients
@@ -298,10 +296,10 @@ to notify the server if they wish to release an assigned IP address.
 Stop the running DHCP client without releasing the current lease.
 Kills existing \fBdhclient\fR process as previously recorded in the
 PID file.  When shutdown via this method 
-.B dhclient-script(8)
+.B dhclient-script
 will be executed with the specific reason for calling the script set.
 .TP
-.BI \-p \ port
+.BI \-p \ port-number
 The UDP port number on which the DHCP client should listen and transmit.
 If unspecified,
 .B dhclient
@@ -379,7 +377,7 @@ is used.  See \fBdhclient.conf(5)\fR for a description of this file.
 .BI \-lf \ lease-file
 Path to the lease database file.  If unspecified, the default
 .B DBDIR/dhclient.leases
-is used.  See \fBdhclient.leases(5)\fR for a descriptionof this file.
+is used.  See \fBdhclient.leases(5)\fR for a description of this file.
 .TP
 .BI \-pf \ pid-file
 Path to the process ID file.  If unspecified, the default
@@ -411,28 +409,28 @@ client using TCP/IP, authenticate, and can then examine the client's
 current status and make changes to it. 
 .PP
 Rather than implementing the underlying OMAPI protocol directly, user
-programs should use the dhcpctl API or OMAPI itself.   Dhcpctl is a
+programs should use the dhcpctl API or OMAPI itself.  Dhcpctl is a
 wrapper that handles some of the housekeeping chores that OMAPI does
-not do automatically.   Dhcpctl and OMAPI are documented in
+not do automatically.  Dhcpctl and OMAPI are documented in
 \fBdhcpctl(3)\fR
-and \fBomapi(3)\fR.   Most things you'd want to do with the client can
+and \fBomapi(3)\fR.  Most things you'd want to do with the client can
 be done directly using the \fBomshell(1)\fR command, rather than
 having to write a special program.
 .SH THE CONTROL OBJECT
 The control object allows you to shut the client down, releasing all
 leases that it holds and deleting any DNS records it may have added.
 It also allows you to pause the client - this unconfigures any
-interfaces the client is using.   You can then restart it, which
-causes it to reconfigure those interfaces.   You would normally pause
+interfaces the client is using.  You can then restart it, which
+causes it to reconfigure those interfaces.  You would normally pause
 the client prior to going into hibernation or sleep on a laptop
-computer.   You would then resume it after the power comes back.
+computer.  You would then resume it after the power comes back.
 This allows PC cards to be shut down while the computer is hibernating
 or sleeping, and then reinitialized to their previous state once the
 computer comes out of hibernation or sleep.
 .PP
-The control object has one attribute - the state attribute.   To shut
-the client down, set its state attribute to 2.   It will automatically
-do a DHCPRELEASE.   To pause it, set its state attribute to 3.   To
+The control object has one attribute - the state attribute.  To shut
+the client down, set its state attribute to 2.  It will automatically
+do a DHCPRELEASE.  To pause it, set its state attribute to 3.  To
 resume it, set its state attribute to 4.
 .PP
 .SH ENVIRONMENT VARIABLES
@@ -479,7 +477,7 @@ Stanford.
 The current version owes much to Elliot's Linux enhancements, but
 was substantially reorganized and partially rewritten by Ted Lemon
 so as to use the same networking framework that the Internet Systems
-Consortium DHCP server uses.   Much system-specific configuration code
+Consortium DHCP server uses.  Much system-specific configuration code
 was moved into a shell script so that as support for more operating
 systems is added, it will not be necessary to port and maintain
 system-specific configuration code to these operating systems - instead,
