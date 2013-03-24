@@ -1,4 +1,4 @@
-/*	$NetBSD: isc-hmac-fixup.c,v 1.3 2012/06/05 00:39:36 christos Exp $	*/
+/*	$NetBSD: isc-hmac-fixup.c,v 1.4 2013/03/24 18:44:43 christos Exp $	*/
 
 /*
  * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -41,6 +41,10 @@ main(int argc, char **argv)  {
 	isc_region_t r;
 	isc_result_t result;
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	if (argc != 3) {
 		fprintf(stderr, "Usage:\t%s algorithm secret\n", argv[0]);
 		fprintf(stderr, "\talgorithm: (MD5 | SHA1 | SHA224 | "
