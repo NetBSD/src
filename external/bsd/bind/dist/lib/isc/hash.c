@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.3 2012/06/05 00:42:27 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.4 2013/03/24 18:41:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -196,12 +196,8 @@ isc_hash_ctxcreate(isc_mem_t *mctx, isc_entropy_t *entropy,
 	hctx->vectorlen = vlen;
 	hctx->rndvector = rv;
 
-#ifdef BIND9
 	if (entropy != NULL)
 		isc_entropy_attach(entropy, &hctx->entropy);
-#else
-	UNUSED(entropy);
-#endif
 
 	*hctxp = hctx;
 	return (ISC_R_SUCCESS);
@@ -248,16 +244,12 @@ isc_hash_ctxinit(isc_hash_t *hctx) {
 		goto out;
 
 	if (hctx->entropy) {
-#ifdef BIND9
 		isc_result_t result;
 
 		result = isc_entropy_getdata(hctx->entropy,
 					     hctx->rndvector, hctx->vectorlen,
 					     NULL, 0);
 		INSIST(result == ISC_R_SUCCESS);
-#else
-		INSIST(0);
-#endif
 	} else {
 		isc_uint32_t pr;
 		unsigned int i, copylen;
@@ -314,10 +306,8 @@ destroy(isc_hash_t **hctxp) {
 	isc_refcount_destroy(&hctx->refcnt);
 
 	mctx = hctx->mctx;
-#ifdef BIND9
 	if (hctx->entropy != NULL)
 		isc_entropy_detach(&hctx->entropy);
-#endif
 	if (hctx->rndvector != NULL)
 		isc_mem_put(mctx, hctx->rndvector, hctx->vectorlen);
 

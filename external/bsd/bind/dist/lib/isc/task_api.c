@@ -1,4 +1,4 @@
-/*	$NetBSD: task_api.c,v 1.4 2012/12/04 23:38:44 spz Exp $	*/
+/*	$NetBSD: task_api.c,v 1.5 2013/03/24 18:42:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -126,6 +126,13 @@ isc_task_create(isc_taskmgr_t *manager, unsigned int quantum,
 }
 
 void
+isc_task_destroy(isc_task_t **taskp) {
+	REQUIRE(taskp != NULL && ISCAPI_TASK_VALID(*taskp));
+
+	(*taskp)->methods->destroy(taskp);
+}
+
+void
 isc_task_attach(isc_task_t *source, isc_task_t **targetp) {
 	REQUIRE(ISCAPI_TASK_VALID(source));
 	REQUIRE(targetp != NULL && *targetp == NULL);
@@ -204,9 +211,10 @@ isc_task_purge(isc_task_t *task, void *sender, isc_eventtype_t type, void *tag)
 }
 
 void
+/*ARGSUSED*/
 isc_taskmgr_setexcltask(isc_taskmgr_t *mgr, isc_task_t *task) {
 	REQUIRE(ISCAPI_TASK_VALID(task));
-	return (mgr->methods->setexcltask(mgr, task));
+	mgr->methods->setexcltask(mgr, task);
 }
 
 isc_result_t
@@ -254,4 +262,11 @@ isc_task_purgerange(isc_task_t *task, void *sender, isc_eventtype_t first,
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
 	return (task->methods->purgerange(task, sender, first, last, tag));
+}
+
+void
+isc_task_getcurrenttime(isc_task_t *task, isc_stdtime_t *t) {
+	REQUIRE(ISCAPI_TASK_VALID(task));
+
+	task->methods->getcurrenttime(task, t);
 }

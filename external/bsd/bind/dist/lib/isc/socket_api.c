@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_api.c,v 1.4 2012/06/05 00:42:31 christos Exp $	*/
+/*	$NetBSD: socket_api.c,v 1.5 2013/03/24 18:42:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -61,7 +61,7 @@ isc_socketmgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
 	LOCK(&createlock);
 
 	REQUIRE(socketmgr_createfunc != NULL);
-	result = (*socketmgr_createfunc)(mctx, managerp);
+	result = (*socketmgr_createfunc)(mctx, managerp, 0);
 
 	UNLOCK(&createlock);
 
@@ -78,13 +78,27 @@ isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp) {
 	LOCK(&createlock);
 
 	REQUIRE(socketmgr_createfunc != NULL);
-	result = (*socketmgr_createfunc)(mctx, managerp);
+	result = (*socketmgr_createfunc)(mctx, managerp, 0);
 
 	UNLOCK(&createlock);
 
 	return (result);
 }
 
+isc_result_t
+isc_socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
+		      unsigned int maxsocks) {
+	isc_result_t result;
+
+	LOCK(&createlock);
+
+	REQUIRE(socketmgr_createfunc != NULL);
+	result = (*socketmgr_createfunc)(mctx, managerp, maxsocks);
+
+	UNLOCK(&createlock);
+
+	return (result);
+}
 void
 isc_socketmgr_destroy(isc_socketmgr_t **managerp) {
 	REQUIRE(managerp != NULL && ISCAPI_SOCKETMGR_VALID(*managerp));
@@ -94,6 +108,13 @@ isc_socketmgr_destroy(isc_socketmgr_t **managerp) {
 	ENSURE(*managerp == NULL);
 }
 
+void
+isc__socketmgr_maxudp(isc_socketmgr_t *manager, int maxudp) {
+	REQUIRE(ISCAPI_SOCKETMGR_VALID(manager));
+
+	manager->methods->_maxudp(manager, maxudp);
+}
+
 isc_result_t
 isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 		  isc_socket_t **socketp)
@@ -101,6 +122,22 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 	REQUIRE(ISCAPI_SOCKETMGR_VALID(manager));
 
 	return (manager->methods->socketcreate(manager, pf, type, socketp));
+}
+
+isc_result_t
+isc_socket_open(isc_socket_t *sock)
+{
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return (sock->methods->open(sock));
+}
+
+isc_result_t
+isc_socket_close(isc_socket_t *sock)
+{
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return (sock->methods->close(sock));
 }
 
 void
@@ -152,6 +189,15 @@ isc_socket_connect(isc_socket_t *sock, isc_sockaddr_t *addr, isc_task_t *task,
 }
 
 isc_result_t
+isc_socket_sendv(isc_socket_t *sock, isc_bufferlist_t *buflist,
+		 isc_task_t *task, isc_taskaction_t action, const void *arg)
+{
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return (sock->methods->sendv(sock, buflist, task, action, arg));
+}
+
+isc_result_t
 isc_socket_recv(isc_socket_t *sock, isc_region_t *region, unsigned int minimum,
 		isc_task_t *task, isc_taskaction_t action, const void *arg)
 {
@@ -189,12 +235,10 @@ isc_socket_gettype(isc_socket_t *sock) {
 }
 
 void
-isc_socket_setname(isc_socket_t *socket, const char *name, void *tag) {
-	REQUIRE(ISCAPI_SOCKET_VALID(socket));
+isc_socket_setname(isc_socket_t *sock, const char *name, void *tag) {
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
-	UNUSED(socket);		/* in case REQUIRE() is empty */
-	UNUSED(name);
-	UNUSED(tag);
+	sock->methods->setname(sock, name, tag);
 }
 
 isc_result_t
@@ -230,4 +274,82 @@ isc_socket_getfd(isc_socket_t *sock) {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
 	return(sock->methods->getfd(sock));
+}
+
+isc_result_t
+isc_socket_accept(isc_socket_t *sock, isc_task_t *task,
+		  isc_taskaction_t action, const void *arg) {
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return(sock->methods->accept(sock, task, action, arg));
+}
+
+isc_result_t
+isc_socket_filter(isc_socket_t *sock, const char *filter) {
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return(sock->methods->filter(sock, filter));
+}
+
+isc_result_t
+isc_socket_getpeername(isc_socket_t *sock, isc_sockaddr_t *addressp) {
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return(sock->methods->getpeername(sock, addressp));
+}
+
+isc_result_t
+isc_socket_listen(isc_socket_t *sock, unsigned int backlog) {
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return(sock->methods->listen(sock, backlog));
+}
+
+isc_result_t
+isc_socket_recv2(isc_socket_t *sock, isc_region_t *region,
+		 unsigned int minimum, isc_task_t *task,
+		 isc_socketevent_t *event, unsigned int flags) {
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return(sock->methods->recv2(sock, region, minimum, task, event, flags));
+}
+
+isc_result_t
+isc_socket_send(isc_socket_t *sock, isc_region_t *region,
+		isc_task_t *task, isc_taskaction_t action,
+		const void *arg) {
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return(sock->methods->send(sock, region, task, action, arg));
+}
+
+
+isc_result_t
+isc_socket_sendto2(isc_socket_t *sock, isc_region_t *region,
+		   isc_task_t *task, isc_sockaddr_t *address,
+		   struct in6_pktinfo *pktinfo, isc_socketevent_t *event,
+		   unsigned int flags) {
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return(sock->methods->sendto2(sock, region, task, address, pktinfo,
+				      event, flags));
+}
+
+isc_result_t
+isc_socket_sendtov(isc_socket_t *sock, isc_bufferlist_t *buflist,
+		   isc_task_t *task, isc_taskaction_t action, const void *arg,
+		   isc_sockaddr_t *address, struct in6_pktinfo *pktinfo) {
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return(sock->methods->sendtov(sock, buflist, task, action, arg,
+				      address, pktinfo));
+}
+
+isc_result_t
+isc_socket_recvv(isc_socket_t *sock, isc_bufferlist_t *buflist,
+		 unsigned int minimum,
+		 isc_task_t *task, isc_taskaction_t action, const void *arg) {
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return(sock->methods->recvv(sock, buflist, minimum, task, action, arg));
 }
