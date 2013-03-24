@@ -1,4 +1,4 @@
-/*	$NetBSD: wire_test.c,v 1.3 2012/06/05 00:39:27 christos Exp $	*/
+/*	$NetBSD: wire_test.c,v 1.4 2013/03/24 18:44:42 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -88,6 +88,10 @@ main(int argc, char *argv[]) {
 	isc_boolean_t tcp = ISC_FALSE;
 	int ch;
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	mctx = NULL;
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
 

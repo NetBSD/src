@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_test.c,v 1.3 2012/06/05 00:39:23 christos Exp $	*/
+/*	$NetBSD: lex_test.c,v 1.4 2013/03/24 18:44:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -83,6 +83,10 @@ main(int argc, char *argv[]) {
 	unsigned int options = 0;
 	int done = 0;
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	while ((c = isc_commandline_parse(argc, argv, "qmcs")) != -1) {
 		switch (c) {
 		case 'q':
