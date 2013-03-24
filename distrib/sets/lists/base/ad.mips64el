@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.118 2013/03/23 16:17:20 christos Exp $
+# $NetBSD: ad.mips64el,v 1.119 2013/03/24 18:55:33 christos Exp $
 ./lib/64					base-compat-shlib	compat
 ./lib/64/npf					base-npf-shlib		compat
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic
@@ -113,8 +113,8 @@
 ./usr/lib/64/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
 ./usr/lib/64/libdm.so.0				base-compat-shlib	compat,pic
 ./usr/lib/64/libdm.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/64/libdns.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/libdns.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/64/libdns.so.6			base-compat-shlib	compat,pic
+./usr/lib/64/libdns.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/64/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/64/libdwarf.so.0			base-compat-shlib	compat,pic
@@ -153,12 +153,12 @@
 ./usr/lib/64/libintl.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libipsec.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/64/libisc.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/libisc.so.5.8			base-compat-shlib	compat,pic
-./usr/lib/64/libisccc.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/libisccc.so.5.8			base-compat-shlib	compat,pic
-./usr/lib/64/libisccfg.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/libisccfg.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/64/libisc.so.6			base-compat-shlib	compat,pic
+./usr/lib/64/libisc.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/64/libisccc.so.6			base-compat-shlib	compat,pic
+./usr/lib/64/libisccc.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/64/libisccfg.so.6			base-compat-shlib	compat,pic
+./usr/lib/64/libisccfg.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/64/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/64/libisns.so.0			base-compat-shlib	compat,pic
@@ -431,8 +431,8 @@
 ./usr/lib/o32/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
 ./usr/lib/o32/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdm.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libdns.so.5			base-compat-shlib	compat,pic
-./usr/lib/o32/libdns.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/o32/libdns.so.6			base-compat-shlib	compat,pic
+./usr/lib/o32/libdns.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/o32/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/o32/libdwarf.so.0			base-compat-shlib	compat,pic
@@ -471,12 +471,12 @@
 ./usr/lib/o32/libintl.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libipsec.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libisc.so.5			base-compat-shlib	compat,pic
-./usr/lib/o32/libisc.so.5.8			base-compat-shlib	compat,pic
-./usr/lib/o32/libisccc.so.5			base-compat-shlib	compat,pic
-./usr/lib/o32/libisccc.so.5.8			base-compat-shlib	compat,pic
-./usr/lib/o32/libisccfg.so.5			base-compat-shlib	compat,pic
-./usr/lib/o32/libisccfg.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/o32/libisc.so.6			base-compat-shlib	compat,pic
+./usr/lib/o32/libisc.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libisccc.so.6			base-compat-shlib	compat,pic
+./usr/lib/o32/libisccc.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libisccfg.so.6			base-compat-shlib	compat,pic
+./usr/lib/o32/libisccfg.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/o32/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/o32/libisns.so.0			base-compat-shlib	compat,pic
