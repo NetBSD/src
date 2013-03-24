@@ -1,4 +1,4 @@
-/*	$NetBSD: ecdb.c,v 1.3 2012/06/05 00:41:31 christos Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.4 2013/03/24 18:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -767,19 +767,23 @@ rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust) {
 
 static void
 rdatasetiter_destroy(dns_rdatasetiter_t **iteratorp) {
-	ecdb_rdatasetiter_t *ecdbiterator;
+	union {
+		dns_rdatasetiter_t *rdatasetiterator;
+		ecdb_rdatasetiter_t *ecdbiterator;
+	} u;
 	isc_mem_t *mctx;
 
 	REQUIRE(iteratorp != NULL);
-	ecdbiterator = (ecdb_rdatasetiter_t *)*iteratorp;
-	REQUIRE(DNS_RDATASETITER_VALID(&ecdbiterator->common));
+	u.rdatasetiterator = *iteratorp;
+//	REQUIRE(DNS_RDATASETITER_VALID(&(u.ecdbiterator->common)));
 
-	mctx = ecdbiterator->common.db->mctx;
+	mctx = u.ecdbiterator->common.db->mctx;
 
-	ecdbiterator->common.magic = 0;
+	u.ecdbiterator->common.magic = 0;
 
-	dns_db_detachnode(ecdbiterator->common.db, &ecdbiterator->common.node);
-	isc_mem_put(mctx, ecdbiterator, sizeof(ecdb_rdatasetiter_t));
+	dns_db_detachnode(u.ecdbiterator->common.db,
+	    &u.ecdbiterator->common.node);
+	isc_mem_put(mctx, u.ecdbiterator, sizeof(ecdb_rdatasetiter_t));
 
 	*iteratorp = NULL;
 }
