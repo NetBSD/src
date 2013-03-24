@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.67 2013/03/19 22:16:53 garbled Exp $	*/
+/*	$NetBSD: main.c,v 1.68 2013/03/24 20:57:19 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,7 +58,6 @@ __dead static void miscsighandler(int);
 static void ttysighandler(int);
 static void cleanup(void);
 static void process_f_flag(char *);
-static void prelim_menu(void);
 
 static int exit_cleanly = 0;	/* Did we finish nicely? */
 FILE *logfp;			/* log file */
@@ -138,17 +137,8 @@ init(void)
 	pkg.xfer_type = pkgsrc.xfer_type = "http";
 }
 
-#ifdef __weak_reference
 __weakref_visible void prelim_menu(void)
     __weak_reference(md_prelim_menu);
-#endif
-#if 0
-static void
-prelim_menu(void)
-{
-	/* do nothing, weak reference stub for md_prelim_menu */
-}
-#endif
 
 int
 main(int argc, char **argv)
