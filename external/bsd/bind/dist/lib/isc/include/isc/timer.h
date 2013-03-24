@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.3 2012/06/05 00:42:41 christos Exp $	*/
+/*	$NetBSD: timer.h,v 1.4 2013/03/24 18:42:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -116,6 +116,7 @@ typedef struct {
 				       isc_taskaction_t action,
 				       const void *arg,
 				       isc_timer_t **timerp);
+	void 		(*poke)(isc_timermgr_t *mgr);
 } isc_timermgrmethods_t;
 
 typedef struct {
@@ -403,7 +404,6 @@ isc_timermgr_destroy(isc_timermgr_t **managerp);
 
 void isc_timermgr_poke(isc_timermgr_t *m);
 
-#ifdef USE_TIMERIMPREGISTER
 /*%<
  * See isc_timermgr_create() above.
  */
@@ -426,7 +426,6 @@ isc_timer_register(isc_timermgrcreatefunc_t createfunc);
  * usually do not have to care about this function: it would call
  * isc_lib_register(), which internally calls this function.
  */
-#endif /* USE_TIMERIMPREGISTER */
 
 ISC_LANG_ENDDECLS
 
