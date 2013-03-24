@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.184 2013/03/24 18:55:34 christos Exp $
+# $NetBSD: md.sparc64,v 1.185 2013/03/24 19:56:06 christos Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -73,8 +73,8 @@
 ./usr/lib/sparc/libatf-c++.so.0.0		base-compat-shlib	compat,pic,atf
 ./usr/lib/sparc/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
-./usr/lib/sparc/libbind9.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libbind9.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/sparc/libbind9.so.6			base-compat-shlib	compat,pic
+./usr/lib/sparc/libbind9.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbsdmalloc.so.0		base-compat-shlib	compat,pic
@@ -177,8 +177,8 @@
 ./usr/lib/sparc/liblutok.so			base-compat-shlib	compat,pic,kyua
 ./usr/lib/sparc/liblutok.so.1			base-compat-shlib	compat,pic,kyua
 ./usr/lib/sparc/liblutok.so.1.0			base-compat-shlib	compat,pic,kyua
-./usr/lib/sparc/liblwres.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/liblwres.so.5.8			base-compat-shlib	compat,pic
+./usr/lib/sparc/liblwres.so.6			base-compat-shlib	compat,pic
+./usr/lib/sparc/liblwres.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzma.so.1			base-compat-shlib	compat,pic
