@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2013/03/24 15:54:29 christos Exp $
+# $NetBSD: Makefile.inc,v 1.2 2013/03/24 22:21:21 christos Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -31,9 +31,17 @@ CPPFLAGS+= -I${BIND}/lib/${dir}/pthreads/include
 CPPFLAGS+= -DLOCALSTATEDIR='"/var"'
 LDADD+= ${COBJDIR}/libdhcp.a
 LDADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
+.if defined(PROG) && ${PROG} == "dhclient"
+LDADD+=--static
+.endif
 LDADD+= -ldns -lisc
-LDADD+= -lipsec
+LDADD+=-lpthread
+.if defined(PROG) && ${PROG} == "dhclient"
+LDADD+=--dynamic
+.endif
+LDADD+= -lcrypto -lipsec
 DPADD+= ${COBJDIR}/libdhcp.a
 DPADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
 DPADD+=	${LIBDNS} ${LIBISC}
-DPADD+= ${LIBIPSEC}
+DPADD+= ${LIBCRYPTO} ${LIBIPSEC}
+DPADD+= ${LIBPTHREAD}
