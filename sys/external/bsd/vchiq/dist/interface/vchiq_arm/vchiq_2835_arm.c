@@ -341,11 +341,9 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	pagelist->offset = va & PAGE_MASK;
 
 	/*
-	 * busdma coalesce contiguous pages for us
+	 * busdma already coalesces contiguous pages for us
 	 */
 	for (int i = 0; i < bi->dmamap->dm_nsegs; i++) {
-		KASSERT(bi->dmamap->dm_segs[i].ds_len / PAGE_SIZE < PAGE_SIZE);
-
 		pagelist->addrs[i] = bi->dmamap->dm_segs[i].ds_addr & ~PAGE_MASK;
 		pagelist->addrs[i] |= atop(round_page(bi->dmamap->dm_segs[i].ds_len)) - 1;
 	}
