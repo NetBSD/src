@@ -2275,8 +2275,8 @@ vchiq_init_state(VCHIQ_STATE_T *state, VCHIQ_SLOT_ZERO_T *slot_zero,
 	}
 
 	vchiq_log_warning(vchiq_core_log_level,
-		"%s: local ver %d (min %d), remote ver %d\n",
-		__func__, VCHIQ_VERSION, VCHIQ_VERSION_MIN,
+		"local ver %d (min %d), remote ver %d.",
+		VCHIQ_VERSION, VCHIQ_VERSION_MIN,
 		slot_zero->version);
 
 	if (slot_zero->version < VCHIQ_VERSION_MIN) {
