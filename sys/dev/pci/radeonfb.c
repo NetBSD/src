@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.74 2013/01/07 23:24:28 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.75 2013/03/25 17:35:51 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.74 2013/01/07 23:24:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.75 2013/03/25 17:35:51 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2214,7 +2214,7 @@ radeonfb_setcrtc(struct radeonfb_display *dp, int index)
 	 * H_SYNC_STRT_WID
 	 */
 	v = (((mode->hsync_end - mode->hsync_start) / 8) << 16);
-	v |= mode->hsync_start;
+	v |= (mode->hsync_start - 8);	/* match xf86-video-radeon */
 	if (mode->flags & VID_NHSYNC)
 		v |= RADEON_CRTC_H_SYNC_POL;
 	PUT32(sc, hsyncstrt, v);
