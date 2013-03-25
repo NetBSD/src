@@ -107,15 +107,9 @@ typedef volatile unsigned int atomic_t;
 #define atomic_add_return(v, p)	atomic_add_int_nv(p, v)
 #define atomic_sub_return(v, p)	atomic_add_int_nv(p, -(v))
 #define atomic_xchg(p, v)	atomic_swap_uint(p, v)
+#define atomic_cmpxchg(p, oldv, newv) atomic_cas_uint(p, oldv, newv)
 
 #define ATOMIC_INIT(v)		(v)
-
-static inline int
-atomic_cmpxchg(atomic_t *v, int oldv, int newv)
-{
-	atomic_cas_uint(v, oldv, newv);
-	return *v;
-}
 
 /*
  * Spinlock API
