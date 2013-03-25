@@ -263,7 +263,8 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	int ret;
 
 	vchiq_log_info(vchiq_arm_log_level,
-	    "%s: buf %p size %08x dir %s\n", __func__, buf, size, dir == VCHIQ_BULK_RECEIVE ? "read" : "write");
+	    "%s: buf %p size %08x dir %s\n", __func__, buf, size,
+	    dir == VCHIQ_BULK_RECEIVE ? "read" : "write");
 
 	vaddr_t va = (vaddr_t)buf;
 	const size_t maxsegs = atop(round_page(va + size) - trunc_page(va));
