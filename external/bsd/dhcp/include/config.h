@@ -136,7 +136,7 @@
 /* #undef SECS_BYTEORDER */
 
 /* The size of `struct iaddr *', as computed by sizeof. */
-#define SIZEOF_STRUCT_IADDR_P 8
+/* #undef SIZEOF_STRUCT_IADDR_P */
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
