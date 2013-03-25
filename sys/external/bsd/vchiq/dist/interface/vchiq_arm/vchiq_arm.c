@@ -520,7 +520,9 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 				}
 			}
 
+#ifdef VCHIQ_IOCTL_DEBUG
 			printf("%s: [CREATE SERVICE] handle = %08x\n", __func__, service->handle);
+#endif
 			pargs->handle = service->handle;
 
 			service = NULL;
@@ -533,7 +535,9 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 	case VCHIQ_IOC_CLOSE_SERVICE: {
 		VCHIQ_SERVICE_HANDLE_T handle = *(VCHIQ_SERVICE_HANDLE_T *)arg;
 
+#ifdef VCHIQ_IOCTL_DEBUG
 		printf("%s: [CLOSE SERVICE] handle = %08x\n", __func__, handle);
+#endif
 
 		service = find_service_for_instance(instance, handle);
 		if (service != NULL)
@@ -545,7 +549,9 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 	case VCHIQ_IOC_REMOVE_SERVICE: {
 		VCHIQ_SERVICE_HANDLE_T handle = *(VCHIQ_SERVICE_HANDLE_T *)arg;
 
+#ifdef VCHIQ_IOCTL_DEBUG
 		printf("%s: [REMOVE SERVICE] handle = %08x\n", __func__, handle);
+#endif
 
 		service = find_service_for_instance(instance, handle);
 		if (service != NULL)
@@ -558,8 +564,10 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 	case VCHIQ_IOC_RELEASE_SERVICE:	{
 		VCHIQ_SERVICE_HANDLE_T handle = *(VCHIQ_SERVICE_HANDLE_T *)arg;
 
+#ifdef VCHIQ_IOCTL_DEBUG
 		printf("%s: [%s SERVICE] handle = %08x\n", __func__,
 		    cmd == VCHIQ_IOC_USE_SERVICE ? "USE" : "RELEASE", handle);
+#endif
 
 		service = find_service_for_instance(instance, handle);
 		if (service != NULL) {
@@ -587,7 +595,9 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 	case VCHIQ_IOC_QUEUE_MESSAGE: {
 		VCHIQ_QUEUE_MESSAGE_T *pargs = arg;
 
+#ifdef VCHIQ_IOCTL_DEBUG
 		printf("%s: [QUEUE MESSAGE] handle = %08x\n", __func__, pargs->handle);
+#endif
 
 		service = find_service_for_instance(instance, pargs->handle);
 
