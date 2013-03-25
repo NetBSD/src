@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.129 2012/03/22 20:34:38 drochner Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.130 2013/03/25 18:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.129 2012/03/22 20:34:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.130 2013/03/25 18:43:30 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -452,45 +452,42 @@ icmp_input(struct mbuf *m, ...)
 
 	case ICMP_UNREACH:
 		switch (code) {
-			case ICMP_UNREACH_NET:
-				code = PRC_UNREACH_NET;
-				break;
+		case ICMP_UNREACH_PROTOCOL:
+			code = PRC_UNREACH_PROTOCOL;
+			break;
 
-			case ICMP_UNREACH_HOST:
-				code = PRC_UNREACH_HOST;
-				break;
+		case ICMP_UNREACH_PORT:
+			code = PRC_UNREACH_PORT;
+			break;
 
-			case ICMP_UNREACH_PROTOCOL:
-				code = PRC_UNREACH_PROTOCOL;
-				break;
+		case ICMP_UNREACH_SRCFAIL:
+			code = PRC_UNREACH_SRCFAIL;
+			break;
 
-			case ICMP_UNREACH_PORT:
-				code = PRC_UNREACH_PORT;
-				break;
+		case ICMP_UNREACH_NEEDFRAG:
+			code = PRC_MSGSIZE;
+			break;
 
-			case ICMP_UNREACH_SRCFAIL:
-				code = PRC_UNREACH_SRCFAIL;
-				break;
+		case ICMP_UNREACH_NET:
+		case ICMP_UNREACH_NET_UNKNOWN:
+		case ICMP_UNREACH_NET_PROHIB:
+		case ICMP_UNREACH_TOSNET:
+			code = PRC_UNREACH_NET;
+			break;
 
-			case ICMP_UNREACH_NEEDFRAG:
-				code = PRC_MSGSIZE;
-				break;
+		case ICMP_UNREACH_HOST:
+		case ICMP_UNREACH_HOST_UNKNOWN:
+		case ICMP_UNREACH_ISOLATED:
+		case ICMP_UNREACH_HOST_PROHIB:
+		case ICMP_UNREACH_TOSHOST:
+		case ICMP_UNREACH_ADMIN_PROHIBIT:
+		case ICMP_UNREACH_HOST_PREC:
+		case ICMP_UNREACH_PREC_CUTOFF:
+			code = PRC_UNREACH_HOST;
+			break;
 
-			case ICMP_UNREACH_NET_UNKNOWN:
-			case ICMP_UNREACH_NET_PROHIB:
-			case ICMP_UNREACH_TOSNET:
-				code = PRC_UNREACH_NET;
-				break;
-
-			case ICMP_UNREACH_HOST_UNKNOWN:
-			case ICMP_UNREACH_ISOLATED:
-			case ICMP_UNREACH_HOST_PROHIB:
-			case ICMP_UNREACH_TOSHOST:
-				code = PRC_UNREACH_HOST;
-				break;
-
-			default:
-				goto badcode;
+		default:
+			goto badcode;
 		}
 		goto deliver;
 
