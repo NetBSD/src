@@ -500,26 +500,6 @@ vchiq_platform_handle_timeout(VCHIQ_STATE_T *state)
  * Local functions
  */
 
-#ifdef notyet 
-static irqreturn_t
-vchiq_doorbell_irq(int irq, void *dev_id)
-{
-	VCHIQ_STATE_T *state = dev_id;
-	irqreturn_t ret = IRQ_NONE;
-	unsigned int status;
-
-	/* Read (and clear) the doorbell */
-	status = readl(__io_address(ARM_0_BELL0));
-
-	if (status & 0x4) {  /* Was the doorbell rung? */
-		remote_event_pollall(state);
-		ret = IRQ_HANDLED;
-	}
-
-	return ret;
-}
-#endif
-
 /* There is a potential problem with partial cache lines (pages?)
 ** at the ends of the block when reading. If the CPU accessed anything in
 ** the same line (page?) then it may have pulled old data into the cache,
