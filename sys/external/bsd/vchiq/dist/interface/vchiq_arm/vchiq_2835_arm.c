@@ -537,15 +537,15 @@ vchiq_doorbell_irq(int irq, void *dev_id)
 #if 0
 static int
 create_pagelist(char __user *buf, size_t count, unsigned short type,
-	lwp_t *l, PAGELIST_T ** ppagelist)
+	struct task_struct *task, PAGELIST_T ** ppagelist)
 {
 	PAGELIST_T *pagelist;
-	paddr_t *pages;
+	struct page **pages;
+	struct page *page;
 	unsigned long *addrs;
 	unsigned int num_pages, offset, i;
-	int pagelist_size;
 	char *addr, *base_addr, *next_addr;
-	int run, addridx, err;
+	int run, addridx, actual_pages;
 
 	offset = (unsigned int)buf & (PAGE_SIZE - 1);
 	num_pages = (count + offset + PAGE_SIZE - 1) / PAGE_SIZE;
@@ -555,10 +555,10 @@ create_pagelist(char __user *buf, size_t count, unsigned short type,
 	/* Allocate enough storage to hold the page pointers and the page
 	** list
 	*/
-	pagelist_size = sizeof(PAGELIST_T) +
+	pagelist = kmalloc(sizeof(PAGELIST_T) +
 		(num_pages * sizeof(unsigned long)) +
-		(num_pages * sizeof(paddr_t));
-	pagelist = malloc(pagelist_size, M_VCPAGELIST, M_WAITOK | M_ZERO);
+		(num_pages * sizeof(pages[0])),
+		GFP_KERNEL);
 
 	vchiq_log_trace(vchiq_arm_log_level,
 		"create_pagelist - %x", (unsigned int)pagelist);
@@ -566,28 +566,27 @@ create_pagelist(char __user *buf, size_t count, unsigned short type,
 		return -ENOMEM;
 
 	addrs = pagelist->addrs;
-	pages = (paddr_t *)(addrs + num_pages);
+	pages = (struct page **)(addrs + num_pages);
 
-	err = uvm_map_pageable(&l->l_proc->p_vmspace->vm_map,
-	    (vaddr_t)buf, (vaddr_t)buf + count, false, 0);
-	if (err == 0) {
-		err = uvm_map_protect(&l->l_proc->p_vmspace->vm_map,
-		    (vaddr_t)buf, (vaddr_t)buf + count,
-		    (type == PAGELIST_READ ? VM_PROT_WRITE : 0) | VM_PROT_READ,
-		    false);
-	}
-	if (err == 0) {
-		for (i = 0; i < num_pages; i++) {
-			pmap_extract(vm_map_pmap(&l->l_proc->p_vmspace->vm_map),
-			    (vaddr_t)buf + (i * PAGE_SIZE), &pages[i]);
-		}
-	}
+	down_read(&task->mm->mmap_sem);
+	actual_pages = get_user_pages(task, task->mm,
+		(unsigned long)buf & ~(PAGE_SIZE - 1), num_pages,
+		(type == PAGELIST_READ) /*Write */ , 0 /*Force */ ,
+		pages, NULL /*vmas */);
+	up_read(&task->mm->mmap_sem);
 
-	if (err != 0) {
-		uvm_map_pageable(&l->l_proc->p_vmspace->vm_map,
-		    (vaddr_t)buf, (vaddr_t)buf + count, true, 0);
-		free(pagelist, M_VCPAGELIST);
-		return (-ENOMEM);
+   if (actual_pages != num_pages)
+   {
+      /* This is probably due to the process being killed */
+      while (actual_pages > 0)
+      {
+         actual_pages--;
+         page_cache_release(pages[actual_pages]);
+      }
+      kfree(pagelist);
+      if (actual_pages == 0)
+         actual_pages = -ENOMEM;
+      return actual_pages;
 	}
 
 	pagelist->length = count;
@@ -596,13 +595,13 @@ create_pagelist(char __user *buf, size_t count, unsigned short type,
 
 	/* Group the pages into runs of contiguous pages */
 
-	base_addr = (void *)PHYS_TO_VCBUS(pages[0]);
+	base_addr = VCHIQ_ARM_ADDRESS(page_address(pages[0]));
 	next_addr = base_addr + PAGE_SIZE;
 	addridx = 0;
 	run = 0;
 
 	for (i = 1; i < num_pages; i++) {
-		addr = (void *)PHYS_TO_VCBUS(pages[i]);
+		addr = VCHIQ_ARM_ADDRESS(page_address(pages[i]));
 		if ((addr == next_addr) && (run < (PAGE_SIZE - 1))) {
 			next_addr += PAGE_SIZE;
 			run++;
@@ -626,7 +625,7 @@ create_pagelist(char __user *buf, size_t count, unsigned short type,
 		FRAGMENTS_T *fragments;
 
 		if (down_interruptible(&g_free_fragments_sema) != 0) {
-      			free(pagelist, M_VCPAGELIST);
+			kfree(pagelist);
 			return -EINTR;
 		}
 
@@ -642,7 +641,11 @@ create_pagelist(char __user *buf, size_t count, unsigned short type,
 							 g_fragments_base);
 	}
 
-	cpu_dcache_wbinv_range((vm_offset_t)pagelist, pagelist_size);
+	for (page = virt_to_page(pagelist);
+		page <= virt_to_page(addrs + num_pages - 1); page++) {
+		flush_dcache_page(page);
+	}
+
 	*ppagelist = pagelist;
 
 	return 0;
@@ -651,9 +654,8 @@ create_pagelist(char __user *buf, size_t count, unsigned short type,
 static void
 free_pagelist(PAGELIST_T *pagelist, int actual)
 {
-	paddr_t *pages;
-	unsigned int num_pages;
-	void *page_address;
+	struct page **pages;
+	unsigned int num_pages, i;
 
 	vchiq_log_trace(vchiq_arm_log_level,
 		"free_pagelist - %x, %d", (unsigned int)pagelist, actual);
@@ -662,7 +664,7 @@ free_pagelist(PAGELIST_T *pagelist, int actual)
 		(pagelist->length + pagelist->offset + PAGE_SIZE - 1) /
 		PAGE_SIZE;
 
-	pages = (paddr_t *)(pagelist->addrs + num_pages);
+	pages = (struct page **)(pagelist->addrs + num_pages);
 
 	/* Deal with any partial cache lines (fragments) */
 	if (pagelist->type >= PAGELIST_READ_WITH_FRAGMENTS) {
@@ -674,32 +676,21 @@ free_pagelist(PAGELIST_T *pagelist, int actual)
 		tail_bytes = (pagelist->offset + actual) &
 			(CACHE_LINE_SIZE - 1);
 
-		if (actual >= 0) {
-			/* XXXBSD: might be inefficient */
-			//page_address = pmap_mapdev(pages[0], PAGE_SIZE*num_pages);
-			panic("free_pagelist: XXX TODO");
-		}
-		else 
-			page_address = NULL;
 		if ((actual >= 0) && (head_bytes != 0)) {
 			if (head_bytes > actual)
 				head_bytes = actual;
 
-			memcpy((char *)page_address +
+			memcpy((char *)page_address(pages[0]) +
 				pagelist->offset,
 				fragments->headbuf,
 				head_bytes);
 		}
 		if ((actual >= 0) && (head_bytes < actual) &&
 			(tail_bytes != 0)) {
-			memcpy((char *)page_address + PAGE_SIZE*(num_pages - 1) +
-					 ((pagelist->offset + actual) & (PAGE_SIZE -
-								1) & ~(CACHE_LINE_SIZE - 1)),
+			memcpy((char *)page_address(pages[num_pages - 1]) +
+				((pagelist->offset + actual) &
+				(PAGE_SIZE - 1) & ~(CACHE_LINE_SIZE - 1)),
 					 fragments->tailbuf, tail_bytes);
-		}
-
-		if (page_address) {
-			panic("free_pagelist: XXX TODO");
 		}
 
 		down(&g_free_fragments_mutex);
@@ -709,15 +700,12 @@ free_pagelist(PAGELIST_T *pagelist, int actual)
 		up(&g_free_fragments_sema);
 	}
 
-#if 0
 	for (i = 0; i < num_pages; i++) {
 		if (pagelist->type != PAGELIST_WRITE)
-			vm_page_dirty(pages[i]);
+			set_page_dirty(pages[i]);
+		page_cache_release(pages[i]);
 	}
 
-	vm_page_unhold_pages(pages, num_pages);
-#endif
-
-	free(pagelist, M_VCPAGELIST);
+	kfree(pagelist);
 }
 #endif
