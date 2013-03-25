@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_kmod_netbsd.c,v 1.1 2013/03/08 12:32:31 jmcneill Exp $ */
+/* $NetBSD: vchiq_kmod_netbsd.c,v 1.2 2013/03/25 22:59:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.1 2013/03/08 12:32:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.2 2013/03/25 22:59:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,9 +104,18 @@ vchiq_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	vchiq_core_initialize();
-
 	vchiq_softc = sc;
+
+	config_mountroot(self, vchiq_defer);
+}
+
+static void
+vchiq_defer(device_t self)
+{
+	struct vchiq_attach_args vaa;
+	struct vchiq_softc *sc = device_private(self);
+
+	vchiq_core_initialize();
 
 	sc->sc_ih = bcm2835_intr_establish(sc->sc_intr, IPL_VM,
 	    vchiq_intr, sc);
@@ -117,14 +126,6 @@ vchiq_attach(device_t parent, device_t self, void *aux)
 	}
 
 	vchiq_init();
-
-	config_mountroot(self, vchiq_defer);
-}
-
-static void
-vchiq_defer(device_t self)
-{
-	struct vchiq_attach_args vaa;
 
 	vaa.vaa_name = "AUDS";
 	config_found_ia(self, "vchiqbus", &vaa, vchiq_print);
