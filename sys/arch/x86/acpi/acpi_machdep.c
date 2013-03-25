@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.4 2012/09/23 00:31:05 chs Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.5 2013/03/25 01:30:37 chs Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.4 2012/09/23 00:31:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.5 2013/03/25 01:30:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,31 @@ acpi_md_OsGetRootPointer(void)
 	return PhysicalAddress;
 }
 
+struct acpi_md_override {
+	int irq;
+	int pin;
+	int flags;
+};
+
+static ACPI_STATUS
+acpi_md_findoverride(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
+{
+	ACPI_MADT_INTERRUPT_OVERRIDE *iop;
+	struct acpi_md_override *ovrp;
+
+	if (hdrp->Type != ACPI_MADT_TYPE_INTERRUPT_OVERRIDE) {
+		return AE_OK;
+	}
+
+	iop = (void *)hdrp;
+	ovrp = aux;
+	if (iop->SourceIrq == ovrp->irq) {
+		ovrp->pin = iop->GlobalIrq;
+		ovrp->flags = iop->IntiFlags;
+	}
+	return AE_OK;
+}
+
 ACPI_STATUS
 acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
     ACPI_OSD_HANDLER ServiceRoutine, void *Context, void **cookiep)
@@ -101,41 +126,61 @@ acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
 	struct pic *pic;
 #if NIOAPIC > 0
 	struct ioapic_softc *sc;
+	struct acpi_md_override ovr;
+	struct mp_intr_map tmpmap, *mip, **mipp = NULL;
 #endif
-	int irq, pin, trigger;
+	int irq, pin, type, redir, mpflags;
+
+	/*
+	 * ACPI interrupts default to level-triggered active-low.
+	 */
+
+	type = IST_LEVEL;
+	mpflags = (MPS_INTTR_LEVEL << 2) | MPS_INTPO_ACTLO;
+	redir = IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 
 #if NIOAPIC > 0
+
 	/*
-	 * Can only match on ACPI global interrupt numbers if the ACPI
-	 * interrupt info was extracted, which is in the ACPI case.
+	 * Apply any MADT override setting.
 	 */
-	if (mpacpi_sci_override != NULL) {
-		pic = mpacpi_sci_override->ioapic;
-		pin = mpacpi_sci_override->ioapic_pin;
-		if (mpacpi_sci_override->redir & IOAPIC_REDLO_LEVEL)
-			trigger = IST_LEVEL;
-		else
-			trigger = IST_EDGE;
-		if (pic->pic_type == PIC_IOAPIC)
-			irq = -1;
-		else
-			irq = (int)InterruptNumber;
-		goto sci_override;
+
+	ovr.irq = InterruptNumber;
+	ovr.pin = -1;
+	if (acpi_madt_map() == AE_OK) {
+		acpi_madt_walk(acpi_md_findoverride, &ovr);
+		acpi_madt_unmap();
+	} else {
+		aprint_debug("acpi_madt_map() failed, can't check for MADT override\n");
 	}
-#endif
+
+	if (ovr.pin != -1) {
+		bool sci = InterruptNumber == AcpiGbl_FADT.SciInterrupt;
+		int polarity = ovr.flags & ACPI_MADT_POLARITY_MASK;
+		int trigger = ovr.flags & ACPI_MADT_TRIGGER_MASK;
+
+		InterruptNumber = ovr.pin;
+		if (polarity == ACPI_MADT_POLARITY_ACTIVE_HIGH ||
+		    (!sci && polarity == ACPI_MADT_POLARITY_CONFORMS)) {
+			mpflags &= ~MPS_INTPO_ACTLO;
+			redir &= ~IOAPIC_REDLO_ACTLO;
+		}
+		if (trigger == ACPI_MADT_TRIGGER_EDGE ||
+		    (!sci && trigger == ACPI_MADT_TRIGGER_CONFORMS)) {
+			type = IST_EDGE;
+			mpflags &= ~(MPS_INTTR_LEVEL << 2);
+			redir &= ~IOAPIC_REDLO_LEVEL;
+		}
+	}
 
 	/*
-	 * There was no ACPI interrupt source override,
-	 *
-	 * If the interrupt is handled via IOAPIC, mark it
-	 * as level-triggered, active low in the table.
+	 * If the interrupt is handled via IOAPIC, update the map.
+	 * If the map isn't set up yet, install a temporary one.
 	 */
 
-#if NIOAPIC > 0
 	sc = ioapic_find_bybase(InterruptNumber);
 	if (sc != NULL) {
 		pic = &sc->sc_pic;
-		struct mp_intr_map *mip;
 
 		if (pic->pic_type == PIC_IOAPIC) {
 			pin = (int)InterruptNumber - pic->pic_vecbase;
@@ -146,9 +191,15 @@ acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
 
 		mip = sc->sc_pins[pin].ip_map;
 		if (mip) {
-			mip->flags &= ~3;
-			mip->flags |= MPS_INTPO_ACTLO;
-			mip->redir |= IOAPIC_REDLO_ACTLO;
+			mip->flags &= ~0xf;
+			mip->flags |= mpflags;
+			mip->redir &= ~(IOAPIC_REDLO_LEVEL |
+					IOAPIC_REDLO_ACTLO);
+			mip->redir |= redir;
+		} else {
+			mipp = &sc->sc_pins[pin].ip_map;
+			*mipp = &tmpmap;
+			tmpmap.redir = redir;
 		}
 	} else
 #endif
@@ -157,17 +208,17 @@ acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
 		irq = pin = (int)InterruptNumber;
 	}
 
-	trigger = IST_LEVEL;
-
-#if NIOAPIC > 0
-sci_override:
-#endif
-
 	/*
 	 * XXX probably, IPL_BIO is enough.
 	 */
-	ih = intr_establish(irq, pic, pin, trigger, IPL_TTY,
+	ih = intr_establish(irq, pic, pin, type, IPL_TTY,
 	    (int (*)(void *)) ServiceRoutine, Context, false);
+
+#if NIOAPIC > 0
+	if (mipp) {
+		*mipp = NULL;
+	}
+#endif
 
 	if (ih == NULL)
 		return AE_NO_MEMORY;
