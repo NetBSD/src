@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.29 2013/03/24 13:56:24 jmcneill Exp $
+#	$NetBSD: RPI,v 1.30 2013/03/25 23:01:23 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -181,7 +181,11 @@ bcmmbox0	at obio?
 vcmbox0 	at bcmmbox0
 
 # VCHIQ
-#vchiq0		at obio?
+vchiq0		at obio?
+
+# AUDS
+vcaudio0	at vchiq0
+audio0		at vcaudio0
 
 # PL011 uart
 plcom0		at obio?
