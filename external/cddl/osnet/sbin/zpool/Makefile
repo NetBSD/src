@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2010/12/14 01:03:10 haad Exp $
+#	$NetBSD: Makefile,v 1.4.18.1 2013/03/26 01:59:13 agc Exp $
+
+.include <bsd.own.mk>
 
 .include "../../Makefile.zfs"
 
@@ -30,6 +32,8 @@ LIBZPOOL_OBJDIR!=  cd ${LIBZPOOL_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=         -L${LIBZPOOL_OBJDIR} -lzpool
 
 LDADD+= -lm -lutil -lpthread
+
+PROGDPLIBS+=     z               ${NETBSDSRCDIR}/lib/libz
 
 .PATH: ${ZFSDIR}/dist/cmd/zpool
 
