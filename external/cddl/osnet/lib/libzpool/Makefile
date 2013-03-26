@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2010/12/14 23:39:11 haad Exp $
+#	$NetBSD: Makefile,v 1.6.18.1 2013/03/26 01:59:13 agc Exp $
+
+.include <bsd.own.mk>
 
 .include "${.CURDIR}/../../dist/uts/common/Makefile.files"
 .include "../../Makefile.zfs"
@@ -10,8 +12,9 @@
 .PATH: ${.CURDIR}/../../dist/uts/common/os
 
 LIB=		zpool
-DPADD=		${LIBPTHREAD} ${LIBZ}
-LDADD=		-lpthread -lz
+DPADD=		${LIBPTHREAD}
+LDADD=		-lpthread
+LIBDPLIBS+=	z		${NETBSDSRCDIR}/lib/libz
 CPPFLAGS+=	-std=c99
 #CPPFLAGS+=-Wall -Wno-unknown-pragmas
 

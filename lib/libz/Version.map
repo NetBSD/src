@@ -1,0 +1,85 @@
+LIBZ_1.0.0.0 {
+global:
+	uncompress;
+	inflateBack;
+	inflateBackEnd;
+	inflateBackInit_;
+	gzclearerr;
+	gzclose;
+	gzdirect;
+	gzdopen;
+	gzeof;
+	gzerror;
+	gzflush;
+	gzgetc;
+	gzgets;
+	gzopen;
+	gzprintf;
+	gzputc;
+	gzputs;
+	gzread;
+	gzrewind;
+	gzseek;
+	gzsetparams;
+	gztell;
+	gzungetc;
+	gzwrite;
+	inflate;
+	inflateCopy;
+	inflateEnd;
+	inflateGetHeader;
+	inflateInit2_;
+	inflateInit_;
+	inflatePrime;
+	inflateReset;
+	inflateSetDictionary;
+	inflateSync;
+	inflateSyncPoint;
+	inflate_fast;
+	inflate_table;
+	deflate;
+	deflateBound;
+	deflateCopy;
+	deflateEnd;
+	deflateInit2_;
+	deflateInit_;
+	deflateParams;
+	deflatePrime;
+	deflateReset;
+	deflateSetDictionary;
+	deflateSetHeader;
+	deflateTune;
+	zError;
+	zcalloc;
+	zcfree;
+	zlibCompileFlags;
+	zlibVersion;
+	tr_align;
+	tr_flush_block;
+	tr_init;
+	tr_stored_block;
+	tr_tally;
+	crc32;
+	crc32_combine;
+	get_crc_table;
+	compress;
+	compress2;
+	compressBound;
+	adler32;
+	adler32_combine;
+};
+
+NetBSD_6.99.18.0 {
+} LIBZ_1.0.0.0;
+
+LIBZ_private_1.0.0.0 {
+global:
+	_tr_align;
+	_tr_flush_block;
+	_tr_init;
+	_tr_stored_block;
+	_tr_tally;
+local:
+	*;
+};
+
