@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1018 2013/03/24 23:04:07 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1019 2013/03/26 16:20:49 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -284,7 +284,7 @@ src/lib/libc/db/db2netbsd.
 
 Package:	dhcp
 Version:	4.2.5
-Current Vers:	4.2.5
+Current Vers:	4.2.5-P1
 Maintainer:	mellon
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Home Page:	http://www.isc.org/software/dhcp/
@@ -1048,7 +1048,7 @@ now to do a new import.
 
 Package:	Postfix
 Version:	2.9.5
-Current Vers:	2.9.5
+Current Vers:	2.10.0/2.9.5
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
