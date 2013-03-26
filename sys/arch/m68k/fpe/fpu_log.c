@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_log.c,v 1.14 2011/07/18 14:11:27 isaki Exp $	*/
+/*	$NetBSD: fpu_log.c,v 1.15 2013/03/26 11:30:21 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,30 +32,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.14 2011/07/18 14:11:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.15 2013/03/26 11:30:21 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 
 #include "fpu_emulate.h"
 
-static u_int logA6[] = { 0x3FC2499A, 0xB5E4040B };
-static u_int logA5[] = { 0xBFC555B5, 0x848CB7DB };
-static u_int logA4[] = { 0x3FC99999, 0x987D8730 };
-static u_int logA3[] = { 0xBFCFFFFF, 0xFF6F7E97 };
-static u_int logA2[] = { 0x3FD55555, 0x555555A4 };
-static u_int logA1[] = { 0xBFE00000, 0x00000008 };
+static uint32_t logA6[] = { 0x3FC2499A, 0xB5E4040B };
+static uint32_t logA5[] = { 0xBFC555B5, 0x848CB7DB };
+static uint32_t logA4[] = { 0x3FC99999, 0x987D8730 };
+static uint32_t logA3[] = { 0xBFCFFFFF, 0xFF6F7E97 };
+static uint32_t logA2[] = { 0x3FD55555, 0x555555A4 };
+static uint32_t logA1[] = { 0xBFE00000, 0x00000008 };
 
-static u_int logB5[] = { 0x3F175496, 0xADD7DAD6 };
-static u_int logB4[] = { 0x3F3C71C2, 0xFE80C7E0 };
-static u_int logB3[] = { 0x3F624924, 0x928BCCFF };
-static u_int logB2[] = { 0x3F899999, 0x999995EC };
-static u_int logB1[] = { 0x3FB55555, 0x55555555 };
+static uint32_t logB5[] = { 0x3F175496, 0xADD7DAD6 };
+static uint32_t logB4[] = { 0x3F3C71C2, 0xFE80C7E0 };
+static uint32_t logB3[] = { 0x3F624924, 0x928BCCFF };
+static uint32_t logB2[] = { 0x3F899999, 0x999995EC };
+static uint32_t logB1[] = { 0x3FB55555, 0x55555555 };
 
 /* sfpn = shortened fp number; can represent only positive numbers */
 static struct sfpn {
 	int		sp_exp;
-	u_int	sp_m0, sp_m1;
+	uint32_t	sp_m0, sp_m1;
 } logtbl[] = {
 	{ 0x3FFE - 0x3fff, 0xFE03F80FU, 0xE03F80FEU },
 	{ 0x3FF7 - 0x3fff, 0xFF015358U, 0x833C47E2U },
@@ -337,7 +337,8 @@ __fpu_logn(struct fpemu *fe)
 		fe->fe_f2.fp_mant[0] = (logtbl[i].sp_m0 >> (31 - FP_LG));
 		fe->fe_f2.fp_mant[1] = (logtbl[i].sp_m0 << (FP_LG + 1)) |
 		    (logtbl[i].sp_m1 >> (31 - FP_LG));
-		fe->fe_f2.fp_mant[2] = (u_int)(logtbl[i].sp_m1 << (FP_LG + 1));
+		fe->fe_f2.fp_mant[2] =
+			(uint32_t)(logtbl[i].sp_m1 << (FP_LG + 1));
 
 #if FPE_DEBUG
 		printf("__fpu_logn: 1/F=(%d,%08x,%08x...)\n", fe->fe_f2.fp_exp,
@@ -477,7 +478,7 @@ struct fpn *
 fpu_log10(struct fpemu *fe)
 {
 	struct fpn *fp = &fe->fe_f2;
-	u_int fpsr;
+	uint32_t fpsr;
 
 	fpsr = fe->fe_fpsr & ~FPSR_EXCP;	/* clear all exceptions */
 
@@ -514,7 +515,7 @@ struct fpn *
 fpu_log2(struct fpemu *fe)
 {
 	struct fpn *fp = &fe->fe_f2;
-	u_int fpsr;
+	uint32_t fpsr;
 
 	fpsr = fe->fe_fpsr & ~FPSR_EXCP;	/* clear all exceptions */
 
@@ -558,7 +559,7 @@ struct fpn *
 fpu_logn(struct fpemu *fe)
 {
 	struct fpn *fp = &fe->fe_f2;
-	u_int fpsr;
+	uint32_t fpsr;
 
 	fpsr = fe->fe_fpsr & ~FPSR_EXCP;	/* clear all exceptions */
 
