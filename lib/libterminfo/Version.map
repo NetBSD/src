@@ -1,0 +1,61 @@
+LIBTERMINFO_1.0.0.0 {
+global:
+	PC;
+	ospeed;
+	putp;
+	ti_putp;
+	ti_puts;
+	tputs;
+	ti_getflag;
+	ti_getnum;
+	ti_getstr;
+	tigetflag;
+	tigetnum;
+	tigetstr;
+	BC;
+	UP;
+	captoinfo;
+	tgetent;
+	tgetflag;
+	tgetnum;
+	tgetstr;
+	tgoto;
+	_ti_parm_analyse;
+	ti_tiparm;
+	tiparm;
+	tparm;
+	setupterm;
+	ti_setupterm;
+	_ti_database;
+	_ti_getterm;
+	_ti_compile;
+	_ti_find_cap;
+	_ti_find_extra;
+	_ti_flatten;
+	_ti_freetic;
+	_ti_get_token;
+	_ti_grow_tbuf;
+	_ti_store_extra;
+	_ti_setospeed;
+	cur_term;
+	del_curterm;
+	longname;
+	set_curterm;
+	termname;
+	ttytype;
+	_ti_flagid;
+	_ti_flagindex;
+	_ti_numid;
+	_ti_numindex;
+	_ti_strid;
+	_ti_strindex;
+};
+
+NetBSD_6.99.18.0 {
+} LIBTERMINFO_1.0.0.0;
+
+LIBTERMINFO_private_1.0.0.0 {
+local:
+	*;
+};
+
