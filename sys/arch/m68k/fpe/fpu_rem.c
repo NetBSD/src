@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.11 2011/07/18 14:11:27 isaki Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.12 2013/03/26 10:57:13 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.11 2011/07/18 14:11:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.12 2013/03/26 10:57:13 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -92,6 +92,7 @@ __fpu_modrem(struct fpemu *fe, int modrem)
 {
 	static struct fpn X, Y;
 	struct fpn *x, *y, *r;
+	struct fpn r_bkup;
 	u_int signX, signY, signQ;
 	int j, k, l, q;
 	int Last_Subtract;
@@ -130,15 +131,15 @@ __fpu_modrem(struct fpemu *fe, int modrem)
 		       y->fp_mant[2] != r->fp_mant[2]) {
 
 			/* Step 3.2 */
-			if (y->fp_exp < r->fp_exp ||
-			    y->fp_mant[0] < r->fp_mant[0] ||
-			    y->fp_mant[1] < r->fp_mant[1] ||
-			    y->fp_mant[2] < r->fp_mant[2]) {
-				CPYFPN(&fe->fe_f1, r);
-				CPYFPN(&fe->fe_f2, y);
-				fe->fe_f2.fp_sign = 1;
-				r = fpu_add(fe);
+			CPYFPN(&r_bkup, r);
+			CPYFPN(&fe->fe_f1, r);
+			CPYFPN(&fe->fe_f2, y);
+			fe->fe_f2.fp_sign = 1;
+			r = fpu_add(fe);
+			if (r->fp_sign == 0) {
 				q++;
+			} else {
+				CPYFPN(r, &r_bkup);
 			}
 
 			/* Step 3.3 */
