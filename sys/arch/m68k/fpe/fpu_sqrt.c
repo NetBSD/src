@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_sqrt.c,v 1.7 2013/03/19 09:17:17 isaki Exp $ */
+/*	$NetBSD: fpu_sqrt.c,v 1.8 2013/03/26 11:30:21 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.7 2013/03/19 09:17:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.8 2013/03/26 11:30:21 isaki Exp $");
 
 #include <sys/types.h>
 
@@ -189,10 +189,10 @@ struct fpn *
 fpu_sqrt(struct fpemu *fe)
 {
 	struct fpn *x = &fe->fe_f2;
-	u_int bit, q, tt;
-	u_int x0, x1, x2;
-	u_int y0, y1, y2;
-	u_int d0, d1, d2;
+	uint32_t bit, q, tt;
+	uint32_t x0, x1, x2;
+	uint32_t y0, y1, y2;
+	uint32_t d0, d1, d2;
 	int e;
 	FPU_DECL_CARRY
 

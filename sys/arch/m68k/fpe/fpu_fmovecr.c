@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fmovecr.c,v 1.15 2013/03/23 12:08:47 isaki Exp $	*/
+/*	$NetBSD: fpu_fmovecr.c,v 1.16 2013/03/26 11:30:20 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fmovecr.c,v 1.15 2013/03/23 12:08:47 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fmovecr.c,v 1.16 2013/03/26 11:30:20 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static struct fpn constrom[] = {
 };
 
 struct fpn *
-fpu_const(struct fpn *fp, u_int offset)
+fpu_const(struct fpn *fp, uint32_t offset)
 {
 	struct fpn *r;
 
@@ -101,7 +101,7 @@ int
 fpu_emul_fmovecr(struct fpemu *fe, struct instruction *insn)
 {
 	int dstreg, offset;
-	u_int *fpreg;
+	uint32_t *fpreg;
 
 	dstreg = (insn->is_word1 >> 7) & 0x7;
 	offset = insn->is_word1 & 0x7F;

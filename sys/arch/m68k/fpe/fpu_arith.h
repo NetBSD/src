@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_arith.h,v 1.6 2013/03/19 09:17:17 isaki Exp $ */
+/*	$NetBSD: fpu_arith.h,v 1.7 2013/03/26 11:30:20 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,13 +80,13 @@
 #define	FPU_ADDS(r, x, y) \
 	{ \
 		fpu_tmp = (quad_t)(x) + (quad_t)(y); \
-		(r) = (u_int)fpu_tmp; \
+		(r) = (uint32_t)fpu_tmp; \
 		fpu_carry = ((fpu_tmp & 0xffffffff00000000LL) != 0); \
 	}
 #define	FPU_ADDCS(r, x, y) \
 	{ \
 		fpu_tmp = (quad_t)(x) + (quad_t)(y) + (!!fpu_carry); \
-		(r) = (u_int)fpu_tmp; \
+		(r) = (uint32_t)fpu_tmp; \
 		fpu_carry = ((fpu_tmp & 0xffffffff00000000LL) != 0); \
 	}
 #define	FPU_SUBC(r, x, y) \
@@ -94,13 +94,13 @@
 #define	FPU_SUBS(r, x, y) \
 	{ \
 		fpu_tmp = (quad_t)(x) - (quad_t)(y); \
-		(r) = (u_int)fpu_tmp; \
+		(r) = (uint32_t)fpu_tmp; \
 		fpu_carry = ((fpu_tmp & 0xffffffff00000000LL) != 0); \
 	}
 #define	FPU_SUBCS(r, x, y) \
 	{ \
 		fpu_tmp = (quad_t)(x) - (quad_t)(y) - (!!fpu_carry); \
-		(r) = (u_int)fpu_tmp; \
+		(r) = (uint32_t)fpu_tmp; \
 		fpu_carry = ((fpu_tmp & 0xffffffff00000000LL) != 0); \
 	}
 

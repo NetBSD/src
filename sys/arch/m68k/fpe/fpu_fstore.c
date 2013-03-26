@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fstore.c,v 1.13 2011/07/18 14:11:27 isaki Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.14 2013/03/26 11:30:21 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.13 2011/07/18 14:11:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.14 2013/03/26 11:30:21 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -45,11 +45,11 @@ int
 fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 {
 	struct frame *frame = fe->fe_frame;
-	u_int *fpregs = fe->fe_fpframe->fpf_regs;
+	uint32_t *fpregs = fe->fe_fpframe->fpf_regs;
 	int word1, sig;
 	int regnum;
 	int format;
-	u_int buf[3];
+	uint32_t buf[3];
 
 #if DEBUG_FPE
 	printf("  fpu_emul_fstore: frame at %p fpframe at %p\n",

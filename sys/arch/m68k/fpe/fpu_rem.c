@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.12 2013/03/26 10:57:13 isaki Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.13 2013/03/26 11:30:21 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.12 2013/03/26 10:57:13 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.13 2013/03/26 11:30:21 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -93,7 +93,7 @@ __fpu_modrem(struct fpemu *fe, int modrem)
 	static struct fpn X, Y;
 	struct fpn *x, *y, *r;
 	struct fpn r_bkup;
-	u_int signX, signY, signQ;
+	uint32_t signX, signY, signQ;
 	int j, k, l, q;
 	int Last_Subtract;
 

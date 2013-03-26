@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_div.c,v 1.7 2013/03/19 09:17:17 isaki Exp $ */
+/*	$NetBSD: fpu_div.c,v 1.8 2013/03/26 11:30:20 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.7 2013/03/19 09:17:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.8 2013/03/26 11:30:20 isaki Exp $");
 
 #include <sys/types.h>
 
@@ -153,8 +153,8 @@ struct fpn *
 fpu_div(struct fpemu *fe)
 {
 	struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
-	u_int q, bit;
-	u_int r0, r1, r2, d0, d1, d2, y0, y1, y2;
+	uint32_t q, bit;
+	uint32_t r0, r1, r2, d0, d1, d2, y0, y1, y2;
 	FPU_DECL_CARRY
 
 	fe->fe_fpsr &= ~FPSR_EXCP; /* clear all exceptions */

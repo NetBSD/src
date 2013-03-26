@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_subr.c,v 1.9 2013/03/19 09:17:17 isaki Exp $ */
+/*	$NetBSD: fpu_subr.c,v 1.10 2013/03/26 11:30:21 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.9 2013/03/19 09:17:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.10 2013/03/26 11:30:21 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.9 2013/03/19 09:17:17 isaki Exp $");
 int
 fpu_shr(struct fpn *fp, int rsh)
 {
-	u_int m0, m1, m2, s;
+	uint32_t m0, m1, m2, s;
 	int lsh;
 
 #ifdef DIAGNOSTIC
@@ -131,7 +131,7 @@ fpu_shr(struct fpn *fp, int rsh)
 void
 fpu_norm(struct fpn *fp)
 {
-	u_int m0, m1, m2, sup, nrm;
+	uint32_t m0, m1, m2, sup, nrm;
 	int lsh, rsh, exp;
 
 	exp = fp->fp_exp;
