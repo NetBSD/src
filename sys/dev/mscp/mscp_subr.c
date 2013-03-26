@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.44 2012/10/27 17:18:27 chs Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.45 2013/03/26 23:29:11 martin Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.44 2012/10/27 17:18:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.45 2013/03/26 23:29:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -550,7 +550,7 @@ mscp_print(void *aux, const char *name)
 void
 mscp_strategy(struct buf *bp, device_t usc)
 {
-	struct	mscp_softc *mi = (void *)usc;
+	struct	mscp_softc *mi = device_private(usc);
 	int s = spluba();
 
 	bufq_put(mi->mi_resq, bp);
