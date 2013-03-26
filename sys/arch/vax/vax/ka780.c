@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.29 2010/12/14 23:44:49 matt Exp $ */
+/*	$NetBSD: ka780.c,v 1.30 2013/03/26 20:52:30 martin Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.29 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.30 2013/03/26 20:52:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,7 @@ ka780_attach_cpu(device_t self)
 {
 	struct ka78x * const ka78 = (void *)&vax_cpudata;
 
-	aprint_normal("KA%s, serial number %d(%d), hardware ECO level %d(%d)\n",
+	aprint_normal(": KA%s, S/N %d(%d), hardware ECO level %d(%d)\n",
 	    &cpu_model[8], ka78->snr, ka78->plant, ka78->eco >> 4, ka78->eco);
 	aprint_normal_dev(self, "4KB L1 cachen");
 	if (mfpr(PR_ACCS) & 255) {

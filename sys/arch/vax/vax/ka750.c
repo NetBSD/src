@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.44 2010/12/14 23:44:49 matt Exp $ */
+/*	$NetBSD: ka750.c,v 1.45 2013/03/26 20:52:29 martin Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.44 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.45 2013/03/26 20:52:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ ka750_conf(void)
 void
 ka750_attach_cpu(device_t self)
 {
-	aprint_normal("KA750, 4KB L1 cache, hardware/ucode rev %d/%d, ",
+	aprint_normal(": KA750, 4KB L1 cache, hardware/ucode rev %d/%d, ",
 	    V750HARDW(vax_cpudata), V750UCODE(vax_cpudata));
 	if (mfpr(PR_ACCS) & 255) {
 		aprint_normal("FPA present\n");
