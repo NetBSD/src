@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.332 2013/03/05 21:16:24 pooka Exp $
+#	$NetBSD: bsd.lib.mk,v 1.332.2.1 2013/03/26 01:54:23 agc Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -454,6 +454,15 @@ CLEANFILES+=	${_LIB}_combine.d
 .else							# } {
 OBJS+=${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 .endif							# }
+
+# Symbol versioning 
+MK_SYMVER?=no
+.if ${MK_SYMVER} == "yes"
+VERSION_MAP?=	${.CURDIR}/Version.map
+.  if exists(${VERSION_MAP})
+LDFLAGS+=       -Wl,--version-script=${VERSION_MAP}
+.  endif
+.endif
 
 STOBJS+=${OBJS}
 
