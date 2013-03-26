@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.7 2013/03/23 12:06:24 isaki Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.8 2013/03/26 11:30:21 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.7 2013/03/23 12:06:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.8 2013/03/26 11:30:21 isaki Exp $");
 
 #include "fpu_emulate.h"
 
@@ -90,14 +90,14 @@ fpu_atan(struct fpemu *fe)
  * hyperb is for sinh(), cosh().
  */
 struct fpn *
-fpu_sincos_taylor(struct fpemu *fe, struct fpn *s0, u_int f, int hyperb)
+fpu_sincos_taylor(struct fpemu *fe, struct fpn *s0, uint32_t f, int hyperb)
 {
 	struct fpn res;
 	struct fpn x2;
 	struct fpn *s1;
 	struct fpn *r;
 	int sign;
-	u_int k;
+	uint32_t k;
 
 	/* x2 := x * x */
 	CPYFPN(&fe->fe_f1, &fe->fe_f2);

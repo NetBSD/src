@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_mul.c,v 1.7 2013/03/19 09:17:17 isaki Exp $ */
+/*	$NetBSD: fpu_mul.c,v 1.8 2013/03/26 11:30:21 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_mul.c,v 1.7 2013/03/19 09:17:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_mul.c,v 1.8 2013/03/26 11:30:21 isaki Exp $");
 
 #include <sys/types.h>
 
@@ -100,7 +100,7 @@ struct fpn *
 fpu_mul(struct fpemu *fe)
 {
 	struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
-	u_int a2, a1, a0, x2, x1, x0, bit, m;
+	uint32_t a2, a1, a0, x2, x1, x0, bit, m;
 	int sticky;
 	FPU_DECL_CARRY
 
