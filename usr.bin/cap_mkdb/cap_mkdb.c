@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.28 2013/01/23 20:27:01 riastradh Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.29 2013/03/26 20:58:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.28 2013/01/23 20:27:01 riastradh Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.29 2013/03/26 20:58:35 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,7 +63,7 @@ static int	count_records(char **);
 
 static DB *capdbp;
 static int verbose;
-static char *capname, buf[8 * 1024];
+static char *capname, outfile[MAXPATHLEN];
 
 static HASHINFO openinfo = {
 	4096,		/* bsize */
@@ -126,13 +126,17 @@ main(int argc, char *argv[])
 	 * The database file is the first argument if no name is specified.
 	 * Make arrangements to unlink it if exit badly.
 	 */
-	(void)snprintf(buf, sizeof(buf), "%s.db.tmp",
+	(void)snprintf(outfile, sizeof(outfile), "%s.db.tmp",
 	    capname ? capname : *argv);
-	if ((capname = strdup(buf)) == NULL)
+	if ((capname = strdup(outfile)) == NULL)
 		err(1, "strdup");
+	p = strrchr(outfile, '.');
+	assert(p != NULL);
+	*p = '\0';
+	(void)unlink(outfile);
 	if ((capdbp = dbopen(capname, O_CREAT | O_TRUNC | O_RDWR,
 	    DEFFILEMODE, DB_HASH, &openinfo)) == NULL)
-		err(1, "%s", buf);
+		err(1, "%s", outfile);
 
 	if (atexit(dounlink))
 		err(1, "atexit");
@@ -141,10 +145,7 @@ main(int argc, char *argv[])
 
 	if (capdbp->close(capdbp) < 0)
 		err(1, "%s", capname);
-	p = strrchr(buf, '.');
-	assert(p != NULL);
-	*p = '\0';
-	if (rename(capname, buf) == -1)
+	if (rename(capname, outfile) == -1)
 		err(1, "rename");
 	free(capname);
 	capname = NULL;
@@ -155,7 +156,7 @@ static void
 dounlink(void)
 {
 	if (capname != NULL)
-		(void)unlink(capname);
+		unlink(capname);
 }
 
 /*
