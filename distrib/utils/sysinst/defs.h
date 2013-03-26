@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.166 2013/03/19 22:16:53 garbled Exp $	*/
+/*	$NetBSD: defs.h,v 1.167 2013/03/26 20:56:54 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,7 +95,8 @@ enum {
     SET_KERNEL_6,	/* MD kernel... */
     SET_KERNEL_7,	/* MD kernel... */
     SET_KERNEL_8,	/* MD kernel... */
-    SET_KERNEL_LAST,	/* allow 8 kernels */
+    SET_KERNEL_9,	/* MD kernel... */
+    SET_KERNEL_LAST,	/* allow 9 kernels */
 
     /* System sets */
     SET_BASE,		/* base */
