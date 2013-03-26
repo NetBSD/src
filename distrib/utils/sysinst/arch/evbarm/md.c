@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.27 2013/03/19 22:16:54 garbled Exp $ */
+/*	$NetBSD: md.c,v 1.28 2013/03/26 20:56:55 garbled Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -178,11 +178,6 @@ md_pre_disklabel(void)
 		process_menu(MENU_ok, NULL);
 		return 1;
 	}
-	/* nuke the disklabel from orbit, because d from the gzimg
-	   corrupts it hopelessly
-	*/
-	if (boardtype == BOARD_TYPE_RPI)
-		run_program(RUN_DISPLAY, "/sbin/disklabel -D %s", diskdev);
 	return 0;
 }
 

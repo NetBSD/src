@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.6 2013/03/19 22:16:53 garbled Exp $ */
+/* $NetBSD: configmenu.c,v 1.7 2013/03/26 20:56:54 garbled Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ configinfo config_list[] = {
 	{MSG_enable_ntpd, CONFIGOPT_NTPD, "ntpd", toggle_rcvar, NULL},
 	{MSG_run_ntpdate, CONFIGOPT_NTPDATE, "ntpdate", toggle_rcvar, NULL},
 	{MSG_enable_mdnsd, CONFIGOPT_MDNSD, "mdnsd", toggle_rcvar, NULL},
-	{MSG_add_a_user, CONFIGOPT_ADDUSER, NULL, add_new_user, NULL},
+	{MSG_add_a_user, CONFIGOPT_ADDUSER, NULL, add_new_user, ""},
 	{NULL,		CONFIGOPT_LAST,	NULL, NULL, NULL}
 };
 
