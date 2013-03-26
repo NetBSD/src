@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_add.c,v 1.8 2013/03/19 09:17:17 isaki Exp $ */
+/*	$NetBSD: fpu_add.c,v 1.9 2013/03/26 11:30:20 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.8 2013/03/19 09:17:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.9 2013/03/26 11:30:20 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ struct fpn *
 fpu_add(struct fpemu *fe)
 {
 	struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2, *r;
-	u_int r0, r1, r2;
+	uint32_t r0, r1, r2;
 	int rd;
 
 	/*
