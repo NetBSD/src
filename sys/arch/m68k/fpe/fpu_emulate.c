@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.36 2011/10/15 15:14:29 tsutsui Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.37 2013/03/26 11:30:20 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.36 2011/10/15 15:14:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.37 2013/03/26 11:30:20 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -245,8 +245,8 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 int
 fpu_upd_excp(struct fpemu *fe)
 {
-	u_int fpsr;
-	u_int fpcr;
+	uint32_t fpsr;
+	uint32_t fpcr;
 
 	fpsr = fe->fe_fpsr;
 	fpcr = fe->fe_fpcr;
@@ -276,10 +276,10 @@ fpu_upd_excp(struct fpemu *fe)
 }
 
 /* update fpsr according to fp (= result of an fp op) */
-u_int
+uint32_t
 fpu_upd_fpsr(struct fpemu *fe, struct fpn *fp)
 {
-	u_int fpsr;
+	uint32_t fpsr;
 
 	DPRINTF(("%s: previous fpsr=%08x\n", __func__, fe->fe_fpsr));
 	/* clear all condition code */
@@ -556,12 +556,12 @@ static int
 fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 {
 	struct frame *frame = fe->fe_frame;
-	u_int *fpregs = &(fe->fe_fpframe->fpf_regs[0]);
+	uint32_t *fpregs = &(fe->fe_fpframe->fpf_regs[0]);
 	struct fpn *res;
 	int word1, sig = 0;
 	int regnum, format;
 	int discard_result = 0;
-	u_int buf[3];
+	uint32_t buf[3];
 #ifdef DEBUG_FPE
 	int flags;
 	char regname;
