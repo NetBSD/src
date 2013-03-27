@@ -1,4 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.1.1.2 2013/03/24 22:50:31 christos Exp $	*/
+/*	$NetBSD: lpf.c,v 1.1.1.3 2013/03/27 00:31:35 christos Exp $	*/
 
 /* lpf.c
 
@@ -28,6 +28,9 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: lpf.c,v 1.1.1.3 2013/03/27 00:31:35 christos Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_LPF_SEND) || defined (USE_LPF_RECEIVE)
