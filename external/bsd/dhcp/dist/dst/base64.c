@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.4 2013/03/24 23:03:06 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.5 2013/03/27 00:38:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,9 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: base64.c,v 1.5 2013/03/27 00:38:08 christos Exp $");
 
 /*
  * Portions Copyright (c) 1995 by International Business Machines, Inc.
