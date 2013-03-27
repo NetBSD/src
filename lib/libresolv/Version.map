@@ -1,0 +1,66 @@
+LIBRESOLV_3.0.0.0 {
+global:
+	__res_nupdate;
+	__res_nsendsigned;
+	__res_buildprotolist;
+	__res_destroyprotolist;
+	__res_destroyservicelist;
+	__res_freeupdrec;
+	__res_mkupdrec;
+	__res_nmkupdate;
+	__res_protocolname;
+	__res_protocolnumber;
+	__res_servicename;
+	__res_servicenumber;
+	__res_findzonecut;
+	__res_findzonecut2;
+	__ns_find_tsig;
+	__ns_verify50;
+	__ns_verify_tcp;
+	__ns_verify_tcp_init;
+	__ns_sign250;
+	__ns_sign50;
+	__ns_sign_tcp;
+	__ns_sign_tcp2;
+	__ns_sign_tcp_init;
+	__ns_samedomain;
+	__ns_subdomain;
+	__ns_datetosecs;
+	__dst_hmac_md5_init;
+	__dst_s_build_filename;
+	__dst_s_calculate_bits;
+	__dst_s_dns_key_id;
+	__dst_s_dump;
+	__dst_s_filename_length;
+	__dst_s_fopen;
+	__dst_s_get_int16;
+	__dst_s_get_int32;
+	__dst_s_id_calc;
+	__dst_s_put_int16;
+	__dst_s_put_int32;
+	__dst_s_verify_str;
+	__dst_buffer_to_key;
+	__dst_check_algorithm;
+	__dst_compare_keys;
+	__dst_dnskey_to_key;
+	__dst_free_key;
+	__dst_generate_key;
+	__dst_init;
+	__dst_key_to_buffer;
+	__dst_key_to_dnskey;
+	__dst_read_key;
+	__dst_sig_size;
+	__dst_sign_data;
+	__dst_verify_data;
+	__dst_write_key;
+	dst_t_func;
+};
+
+NetBSD_6.99.18.0 {
+} LIBRESOLV_3.0.0.0;
+
+LIBRESOLV_private_3.0.0.0 {
+local:
+	*;
+};
+
