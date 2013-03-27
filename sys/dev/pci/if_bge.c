@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.228 2013/03/27 10:26:05 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.229 2013/03/27 12:03:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.228 2013/03/27 10:26:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.229 2013/03/27 12:03:51 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -1130,15 +1130,11 @@ bge_ape_send_event(struct bge_softc *sc, uint32_t event)
 	if ((sc->bge_mfw_flags & BGE_MFW_ON_APE) == 0)
 		return;
 
-	printf("%s: APE event 0x%08x send\n", device_xname(sc->bge_dev), event);
-
 	/* Wait up to 1ms for APE to service previous event. */
 	for (i = 10; i > 0; i--) {
 		if (bge_ape_lock(sc, BGE_APE_LOCK_MEM) != 0)
 			break;
 		apedata = APE_READ_4(sc, BGE_APE_EVENT_STATUS);
-		printf("%s: APE data 0x%08x -> 0x%08x\n",
-		    device_xname(sc->bge_dev), apedata, event);
 		if ((apedata & BGE_APE_EVENT_STATUS_EVENT_PENDING) == 0) {
 			APE_WRITE_4(sc, BGE_APE_EVENT_STATUS, event |
 			    BGE_APE_EVENT_STATUS_EVENT_PENDING);
@@ -3482,15 +3478,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 		 sc->bge_chipid != BGE_CHIPID_BCM5705_A1)))
 		sc->bge_flags |= BGE_PHY_NO_WIRESPEED;
 
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57766 ||
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5718 &&
-		sc->bge_chipid != BGE_CHIPID_BCM5717_A0) ||
-	    (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57765 &&
-		sc->bge_chipid != BGE_CHIPID_BCM57765_A0))
-		sc->bge_flags |= BGE_PHY_EEE;
-
 	/* Set various PHY bug flags. */
 	if (sc->bge_chipid == BGE_CHIPID_BCM5701_A0 ||
 	    sc->bge_chipid == BGE_CHIPID_BCM5701_B0)
@@ -4132,13 +4119,6 @@ bge_reset(struct bge_softc *sc)
 		BGE_CLRBIT(sc, BGE_CPMU_CLCK_ORIDE,
 		    CPMU_CLCK_ORIDE_MAC_ORIDE_EN);
 
-	if ((sc->bge_flags & BGE_PHY_EEE) != 0) {
-		uint32_t eeemode;
-
-		eeemode = CSR_READ_4(sc, BGE_CPMU_EEE_MODE);
-		printf("EEEMODE = %x\n", eeemode);
-		CSR_WRITE_4(sc, BGE_CPMU_EEE_MODE, 0);
-	}
 	return 0;
 }
 
@@ -5693,13 +5673,6 @@ bge_link_upd(struct bge_softc *sc)
 			    IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE))
 				BGE_STS_CLRBIT(sc, BGE_STS_LINK);
 		}
-	} else {
-		/*
-		 * For controllers that call mii_tick, we have to poll
-		 * link status.
-		 */
-		mii_pollstat(mii);
-		bge_miibus_statchg(ifp);
 	}
 
 	/* Clear the attention */
