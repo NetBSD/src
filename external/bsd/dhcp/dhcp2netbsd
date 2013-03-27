@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: dhcp2netbsd,v 1.1 2013/03/24 15:54:29 christos Exp $
+#	$NetBSD: dhcp2netbsd,v 1.2 2013/03/27 00:38:41 christos Exp $
 #
 # Copyright (c) 2003, 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -52,17 +52,37 @@ find "$FILE" -type f -name '*.[chly]' -print | while read c; do
 	sed -e '1{/$NetBSD/!{i\
 /*	\$NetBSD\$	*/\
 
-};}' -e \
-'/www.nominum.com/ {
-	N
-	N
-	a\
-#include <sys/cdefs.h>\
-__RCSID("\$NetBSD\$\");\
+};}' $c > /tmp/dhcp1$$
+mv /tmp/dhcp1$$ $c && echo did source mods for $c
+done
 
+find "$FILE" -type f -name '*.[cly]' -print | while read c; do
+sed -e \
+'/:\/\/www.isc.org/,/^ \*\// {
+    /^ \*\//a\
+\
+#include <sys/cdefs.h>\
+__RCSID("\$NetBSD\$");
 }' $c > /tmp/dhcp1$$
 mv /tmp/dhcp1$$ $c && echo did source mods for $c
 done
+
+ for f in dst/dst_api.c dst/dst_support.c dst/hmac_link.c dst/prandom.c \
+     omapip/inet_addr.c omapip/iscprint.c server/dhcpv6.c \
+     server/dhcpleasequery.c server/ldap.c server/mdb6.c; do
+	c=$FILE/$f
+	sed -E -e \
+'/\* TH(E|IS) SOFTWARE/,/^ \*\// {
+    /^ \*\//a\
+\
+#include <sys/cdefs.h>\
+__RCSID("\$NetBSD\$");\
+
+}' $c > /tmp/dhcp1$$
+    mv /tmp/dhcp1$$ $c && echo did source mods for $c
+done
+
+
 
 #### Add RCS tags to man pages
 find "$FILE" -type f -name '*.[0-9]' -print | while read m; do
