@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.3 2013/03/27 00:38:07 christos Exp $	*/
 
 /* dispatch.c
 
@@ -27,6 +27,9 @@
  *   https://www.isc.org/
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dispatch.c,v 1.3 2013/03/27 00:38:07 christos Exp $");
 
 #include "dhcpd.h"
 
