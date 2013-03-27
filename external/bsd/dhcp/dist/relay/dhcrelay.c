@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcrelay.c,v 1.3 2013/03/24 23:03:06 christos Exp $	*/
+/*	$NetBSD: dhcrelay.c,v 1.4 2013/03/27 00:38:08 christos Exp $	*/
 
 /* dhcrelay.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.3 2013/03/24 23:03:06 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.4 2013/03/27 00:38:08 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -928,6 +928,9 @@ find_interface_by_agent_option(struct dhcp_packet *packet,
  * Agent Information option tacked onto its tail.   If it is, tack
  * the option on.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dhcrelay.c,v 1.4 2013/03/27 00:38:08 christos Exp $");
 static int
 add_relay_agent_options(struct interface_info *ip, struct dhcp_packet *packet,
 			unsigned length, struct in_addr giaddr) {

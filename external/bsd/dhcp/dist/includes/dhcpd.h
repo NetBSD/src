@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpd.h,v 1.3 2013/03/24 23:03:06 christos Exp $	*/
+/*	$NetBSD: dhcpd.h,v 1.4 2013/03/27 00:38:08 christos Exp $	*/
 
 /* dhcpd.h
 
@@ -33,9 +33,6 @@
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
  */
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.h,v 1.3 2013/03/24 23:03:06 christos Exp $");
 
 #include "config.h"
 

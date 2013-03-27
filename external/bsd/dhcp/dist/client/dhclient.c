@@ -1,4 +1,4 @@
-/*	$NetBSD: dhclient.c,v 1.3 2013/03/24 23:03:05 christos Exp $	*/
+/*	$NetBSD: dhclient.c,v 1.4 2013/03/27 00:38:07 christos Exp $	*/
 
 /* dhclient.c
 
@@ -31,6 +31,9 @@
  * by Ted Lemon since then, so any mistakes you find are probably his
  * fault and not Elliot's.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dhclient.c,v 1.4 2013/03/27 00:38:07 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -865,6 +868,9 @@ int find_subnet (struct subnet **sp,
  * In leases on the acked_leases list, this simply determines when we
  * can no longer legitimately use the lease.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dhclient.c,v 1.4 2013/03/27 00:38:07 christos Exp $");
 
 void state_reboot (cpp)
 	void *cpp;
