@@ -1,4 +1,4 @@
-/*	$NetBSD: prandom.c,v 1.1.1.2 2013/03/24 22:50:34 christos Exp $	*/
+/*	$NetBSD: prandom.c,v 1.1.1.3 2013/03/27 00:31:37 christos Exp $	*/
 
 #ifndef LINT
 static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/prandom.c,v 1.8.6.2 2012/03/09 11:28:11 tomasz Exp ";
@@ -20,6 +20,10 @@ static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/prandom.c,v 1.8.6.2 2
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
  * WITH THE USE OR PERFORMANCE OF THE SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: prandom.c,v 1.1.1.3 2013/03/27 00:31:37 christos Exp $");
+
 
 #include <stdio.h>
 #include <sys/types.h>
