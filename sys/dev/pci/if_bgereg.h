@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.68 2013/03/21 12:56:03 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.69 2013/03/27 10:26:06 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1222,6 +1222,7 @@
 #define	BGE_CPMU_MUTEX_GNT		0x3660
 #define	BGE_CPMU_PHY_STRAP		0x3664
 #define	BGE_CPMU_PADRNG_CTL		0x3668
+#define	BGE_CPMU_EEE_MODE		0x36b0
 
 /* CPMU Control register */
 #define	BGE_CPMU_CTRL_LINK_IDLE_MODE	0x00000200
@@ -1263,6 +1264,9 @@
 
 /* CPMU Padring Control register */
 #define	BGE_CPMU_PADRNG_CTL_RDIV2	0x00040000
+
+/* CPMU EEE_MODE register */
+#define	BGE_CPMU_EEEMODE_LPIENABLE	0x00000080
 
 /*
  * Mbuf Cluster Free registers (has nothing to do with BSD mbufs)
@@ -2628,4 +2632,5 @@ struct vpd_key {
 #define	BGE_57765_PLUS		0x08000000
 #define	BGE_APE			0x10000000
 #define	BGE_CPMU_PRESENT	0x20000000
+#define	BGE_PHY_EEE		0x40000000
 #define BGE_TSO			0x80000000
