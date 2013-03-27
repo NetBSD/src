@@ -1,4 +1,4 @@
-/*	$NetBSD: cltest.c,v 1.1.1.1 2013/03/24 15:45:48 christos Exp $	*/
+/*	$NetBSD: cltest.c,v 1.1.1.2 2013/03/27 00:31:38 christos Exp $	*/
 
 /* cltest.c
 
@@ -29,6 +29,9 @@
  * This software was contributed to Internet Systems Consortium
  * by Brian Murrell.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: cltest.c,v 1.1.1.2 2013/03/27 00:31:38 christos Exp $");
 
 #include <time.h>
 #include <sys/time.h>

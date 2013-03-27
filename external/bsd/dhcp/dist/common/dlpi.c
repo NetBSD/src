@@ -1,4 +1,4 @@
-/*	$NetBSD: dlpi.c,v 1.1.1.1 2013/03/24 15:45:52 christos Exp $	*/
+/*	$NetBSD: dlpi.c,v 1.1.1.2 2013/03/27 00:31:34 christos Exp $	*/
 
 /* dlpi.c
  
@@ -35,6 +35,9 @@
  * support on Solaris and getting this code to work properly on a variety
  * of different Solaris platforms.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dlpi.c,v 1.1.1.2 2013/03/27 00:31:34 christos Exp $");
 
 /*
  * Based largely in part to the existing NIT code in nit.c.
