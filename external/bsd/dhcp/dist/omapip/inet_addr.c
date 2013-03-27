@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.1.1.1 2013/03/24 15:45:56 christos Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.1.1.2 2013/03/27 00:31:40 christos Exp $	*/
 
 /*	NetBSD: inet_addr.c,v 1.6 1996/02/02 15:22:23 mrg Exp 	*/
 
@@ -34,6 +34,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: inet_addr.c,v 1.1.1.2 2013/03/27 00:31:40 christos Exp $");
+
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0

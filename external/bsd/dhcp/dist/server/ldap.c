@@ -1,4 +1,4 @@
-/*	$NetBSD: ldap.c,v 1.1.1.2 2013/03/24 22:50:42 christos Exp $	*/
+/*	$NetBSD: ldap.c,v 1.1.1.3 2013/03/27 00:31:46 christos Exp $	*/
 
 /* ldap.c
 
@@ -38,6 +38,10 @@
  * This LDAP module was written by Brian Masney <masneyb@ntelos.net>. Its
  * development was sponsored by Ntelos, Inc. (www.ntelos.com).
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ldap.c,v 1.1.1.3 2013/03/27 00:31:46 christos Exp $");
+
 
 #include "dhcpd.h"
 #include <signal.h>

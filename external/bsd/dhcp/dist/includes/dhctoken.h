@@ -1,4 +1,4 @@
-/*	$NetBSD: dhctoken.h,v 1.1.1.2 2013/03/24 22:50:34 christos Exp $	*/
+/*	$NetBSD: dhctoken.h,v 1.1.1.3 2013/03/27 00:31:38 christos Exp $	*/
 
 /* dhctoken.h
 
@@ -33,9 +33,6 @@
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
  */
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: dhctoken.h,v 1.1.1.2 2013/03/24 22:50:34 christos Exp $");
 
 enum dhcp_token {
 	SEMI = ';',

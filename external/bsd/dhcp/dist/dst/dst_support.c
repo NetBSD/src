@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_support.c,v 1.1.1.2 2013/03/24 22:50:34 christos Exp $	*/
+/*	$NetBSD: dst_support.c,v 1.1.1.3 2013/03/27 00:31:37 christos Exp $	*/
 
 static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/dst_support.c,v 1.6.6.1 2009/11/20 01:49:01 sar Exp ";
 
@@ -21,6 +21,10 @@ static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/dst_support.c,v 1.6.6
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
  * WITH THE USE OR PERFORMANCE OF THE SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dst_support.c,v 1.1.1.3 2013/03/27 00:31:37 christos Exp $");
+
 
 #include <stdio.h>
 #include <unistd.h>

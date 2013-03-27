@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $	*/
+/*	$NetBSD: trace.h,v 1.1.1.2 2013/03/27 00:31:39 christos Exp $	*/
 
 /* trace.h
 
@@ -31,9 +31,6 @@
  * about Internet Systems Consortium, see https://www.isc.org/.  To
  * learn more about Nominum, Inc., see ``http://www.nominum.com''.
  */
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $");
 
 #define TRACEFILE_MAGIC		0x64484370UL	/* dHCp */
 #define TRACEFILE_VERSION	1

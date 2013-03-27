@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpctl.h,v 1.1.1.2 2013/03/24 22:50:34 christos Exp $	*/
+/*	$NetBSD: dhcpctl.h,v 1.1.1.3 2013/03/27 00:31:38 christos Exp $	*/
 
 /* Id: dhcpctl.h,v 1.17.24.1 2009/11/20 01:49:01 sar Exp 
 
@@ -33,9 +33,6 @@
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
  */
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpctl.h,v 1.1.1.2 2013/03/24 22:50:34 christos Exp $");
 
 #ifndef _DHCPCTL_H_
 #define _DHCPCTL_H_

@@ -1,6 +1,6 @@
 	      Internet Systems Consortium DHCP Distribution
-			      Version 4.2.5
-			      8 January 2013
+			     Version 4.2.5-P1
+			      26 March 2013
 
 			        README FILE
 
@@ -98,7 +98,9 @@ directory, it may not have up-to-date information).
 
 			    RELEASE STATUS
 
-This is ISC DHCP 4.2.5, a maintenance release containing patches.
+This is ISC DHCP 4.2.5-P1, a security release.  A security issue has
+been found and fixed in Bind9, this release includes the updated Bind9
+code.  There are no code changes to DHCP.
 
 In this release, the DHCPv6 server should be fully functional on Linux,
 Solaris, or any BSD.  The DHCPv6 client should be similarly functional
@@ -133,12 +135,12 @@ information.   On Digital Unix, type ``man pfilt''.
 To build the DHCP Distribution, unpack the compressed tar file using
 the tar utility and the gzip command - type something like:
 
-	gunzip dhcp-4.2.5.tar.gz
-	tar xvf dhcp-4.2.5.tar
+	gunzip dhcp-4.2.5-P1.tar.gz
+	tar xvf dhcp-4.2.5-P1.tar
 
 			    CONFIGURING IT
 
-Now, cd to the dhcp-4.2.5 subdirectory that you've just created and
+Now, cd to the dhcp-4.2.5-P1 subdirectory that you've just created and
 configure the source tree by typing:
 
 	./configure

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.1.1.1 2013/03/24 15:45:52 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.1.1.2 2013/03/27 00:31:33 christos Exp $	*/
 
 /* bpf.c
 
@@ -33,6 +33,9 @@
  * Stapleton, and maintained for a while by Mike Meredith before he
  * managed to get me to integrate them.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: bpf.c,v 1.1.1.2 2013/03/27 00:31:33 christos Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_BPF_SEND) || defined (USE_BPF_RECEIVE)	\

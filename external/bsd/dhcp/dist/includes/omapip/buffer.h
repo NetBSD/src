@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $	*/
+/*	$NetBSD: buffer.h,v 1.1.1.2 2013/03/27 00:31:39 christos Exp $	*/
 
 /* buffer.h
 
@@ -33,9 +33,6 @@
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
  */
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $");
 
 /* OMAPI buffers are ring buffers, which means that the beginning of the
    buffer and the end of the buffer chase each other around.   As long as

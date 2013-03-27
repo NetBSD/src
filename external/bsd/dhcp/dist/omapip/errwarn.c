@@ -1,4 +1,4 @@
-/*	$NetBSD: errwarn.c,v 1.1.1.1 2013/03/24 15:45:57 christos Exp $	*/
+/*	$NetBSD: errwarn.c,v 1.1.1.2 2013/03/27 00:31:40 christos Exp $	*/
 
 /* errwarn.c
 
@@ -32,6 +32,9 @@
  * been made for Internet Systems Consortium under a contract
  * with Vixie Laboratories.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: errwarn.c,v 1.1.1.2 2013/03/27 00:31:40 christos Exp $");
 
 #include "dhcpd.h"
 

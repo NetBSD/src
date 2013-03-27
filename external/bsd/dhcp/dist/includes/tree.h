@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $	*/
+/*	$NetBSD: tree.h,v 1.1.1.2 2013/03/27 00:31:39 christos Exp $	*/
 
 /* tree.h
 
@@ -34,9 +34,6 @@
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
  */
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: tree.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $");
 
 /* A pair of pointers, suitable for making a linked list. */
 typedef struct _pair {
