@@ -1,6 +1,6 @@
 	      Internet Systems Consortium DHCP Distribution
-			     Version 4.2.5
-			     8 January 2013
+			    Version 4.2.5-P1
+			     26 March 2013
 
 			      Release Notes
 
@@ -38,6 +38,13 @@ output of "./configure --help" to see what options are available.
 The system has only been tested on Linux, FreeBSD, and Solaris, and may not
 work on other platforms. Please report any problems and suggested fixes to
 <dhcp-users@isc.org>.
+
+			Changes since 4.2.5
+
+- A security issue in Bind9 was found and fixed.  This release includes the
+  fixed Bind9 code.  There have been no code changes to the DHCP code.
+  [ISC-Bugs #32688]
+  CVE: CVE-2013-2266
 
 			Changes since 4.2.5rc1
 

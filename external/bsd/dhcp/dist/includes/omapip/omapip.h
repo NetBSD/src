@@ -1,4 +1,4 @@
-/*	$NetBSD: omapip.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $	*/
+/*	$NetBSD: omapip.h,v 1.1.1.2 2013/03/27 00:31:39 christos Exp $	*/
 
 /* omapip.h
 
@@ -33,9 +33,6 @@
  * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
  * ``http://www.nominum.com''.
  */
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: omapip.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $");
 
 #ifndef _OMAPIP_H_
 #define _OMAPIP_H_

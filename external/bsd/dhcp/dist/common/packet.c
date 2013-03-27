@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.1.1.2 2013/03/24 22:50:32 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.1.1.3 2013/03/27 00:31:35 christos Exp $	*/
 
 /* packet.c
 
@@ -33,6 +33,9 @@
  * users, without whose gracious and thorough help the checksum code would
  * still be disabled.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: packet.c,v 1.1.1.3 2013/03/27 00:31:35 christos Exp $");
 
 #include "dhcpd.h"
 

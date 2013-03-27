@@ -1,4 +1,4 @@
-/*	$NetBSD: md5_dgst.c,v 1.1.1.1 2013/03/24 15:45:56 christos Exp $	*/
+/*	$NetBSD: md5_dgst.c,v 1.1.1.2 2013/03/27 00:31:37 christos Exp $	*/
 
 /* crypto/md/md5_dgst.c */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
@@ -79,6 +79,9 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: md5_dgst.c,v 1.1.1.2 2013/03/27 00:31:37 christos Exp $");
 
 #include <stdio.h>
 #include <sys/types.h>
