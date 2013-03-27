@@ -233,7 +233,6 @@ lock_name (const char *repository, const char *name)
 	if (len == -1)
 	    error (1, 0, "%s not found in %s",
 		repository, current_parsed_root->directory);
-	assert(len != -1);
 	short_repos = repository + len + 1;
 
 	if (strcmp (repository, current_parsed_root->directory) == 0)
