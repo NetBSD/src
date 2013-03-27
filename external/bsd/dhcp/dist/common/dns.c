@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.c,v 1.1.1.2 2013/03/24 22:50:30 christos Exp $	*/
+/*	$NetBSD: dns.c,v 1.1.1.3 2013/03/27 00:31:34 christos Exp $	*/
 
 /* dns.c
 
@@ -31,6 +31,9 @@
  * by Ted Lemon it has since been extensively modified to use the
  * asynchronous DNS routines.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dns.c,v 1.1.1.3 2013/03/27 00:31:34 christos Exp $");
 
 #include "dhcpd.h"
 #include "arpa/nameser.h"

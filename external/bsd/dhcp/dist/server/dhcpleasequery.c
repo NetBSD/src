@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpleasequery.c,v 1.1.1.2 2013/03/24 22:50:41 christos Exp $	*/
+/*	$NetBSD: dhcpleasequery.c,v 1.1.1.3 2013/03/27 00:31:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2011-2012 by Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,10 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dhcpleasequery.c,v 1.1.1.3 2013/03/27 00:31:45 christos Exp $");
+
 
 #include "dhcpd.h"
 

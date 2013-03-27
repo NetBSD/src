@@ -1,4 +1,4 @@
-/*	$NetBSD: dhc6.c,v 1.1.1.2 2013/03/24 22:50:27 christos Exp $	*/
+/*	$NetBSD: dhc6.c,v 1.1.1.3 2013/03/27 00:31:31 christos Exp $	*/
 
 /* dhc6.c - DHCPv6 client routines. */
 
@@ -24,6 +24,9 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dhc6.c,v 1.1.1.3 2013/03/27 00:31:31 christos Exp $");
 
 #include "dhcpd.h"
 
