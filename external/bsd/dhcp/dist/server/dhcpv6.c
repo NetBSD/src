@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpv6.c,v 1.3 2013/03/24 23:03:06 christos Exp $	*/
+/*	$NetBSD: dhcpv6.c,v 1.4 2013/03/27 00:38:09 christos Exp $	*/
 
 /*
  * Copyright (C) 2006-2012 by Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,10 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dhcpv6.c,v 1.4 2013/03/27 00:38:09 christos Exp $");
+
 
 #include "dhcpd.h"
 
