@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_link.c,v 1.1.1.2 2013/03/24 22:50:34 christos Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.1.1.3 2013/03/27 00:31:37 christos Exp $	*/
 
 #ifdef HMAC_MD5
 #ifndef LINT
@@ -22,6 +22,10 @@ static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/hmac_link.c,v 1.5.6.1
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
  * WITH THE USE OR PERFORMANCE OF THE SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: hmac_link.c,v 1.1.1.3 2013/03/27 00:31:37 christos Exp $");
+
 
 /* 
  * This file contains an implementation of the HMAC-MD5 algorithm.
