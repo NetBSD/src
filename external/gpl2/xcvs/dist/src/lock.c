@@ -230,6 +230,9 @@ lock_name (const char *repository, const char *name)
 	 * might have symlinks present
 	 */
 	len = find_root(repository, current_parsed_root->directory);
+	if (len == -1)
+	    error (1, 0, "%s not found in %s",
+		repository, current_parsed_root->directory);
 	assert(len != -1);
 	short_repos = repository + len + 1;
 
