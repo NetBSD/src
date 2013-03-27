@@ -121,13 +121,13 @@
 #define PACKAGE_NAME "DHCP"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "DHCP 4.2.5"
+#define PACKAGE_STRING "DHCP 4.2.5-P1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "dhcp"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.5"
+#define PACKAGE_VERSION "4.2.5-P1"
 
 /* Define to any value to include Ari's PARANOIA patch. */
 /* #undef PARANOIA */
@@ -151,7 +151,7 @@
 /* #undef USE_V4_PKTINFO */
 
 /* Version number of package */
-#define VERSION "4.2.5"
+#define VERSION "4.2.5-P1"
 
 /* Define to 1 if on AIX 3.
    System headers sometimes define this.
