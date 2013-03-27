@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.70 2013/03/27 10:27:58 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.71 2013/03/27 12:11:57 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2178,6 +2178,7 @@
  * code from running.
  */
 #define	BGE_SRAM_FW_MB_MAGIC	0x4B657654
+#define	BGE_SRAM_FW_MB_RESET_MAGIC	0xB49A89AB
 
 typedef struct {
 	volatile u_int32_t	bge_addr_hi;
