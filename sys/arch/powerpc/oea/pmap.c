@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.87 2012/10/20 14:42:15 kiyohara Exp $	*/
+/*	$NetBSD: pmap.c,v 1.88 2013/03/28 00:22:21 christos Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2012/10/20 14:42:15 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2013/03/28 00:22:21 christos Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -3090,7 +3090,7 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
 int
 pmap_setup_segment0_map(int use_large_pages, ...)
 {
-    vaddr_t va;
+    vaddr_t va, va_end;
 
     register_t pte_lo = 0x0;
     int ptegidx = 0, i = 0;
@@ -3123,7 +3123,7 @@ pmap_setup_segment0_map(int use_large_pages, ...)
         pa = va_arg(ap, paddr_t);
         size = va_arg(ap, size_t);
 
-        for (; va < (va + size); va += 0x1000, pa += 0x1000) {
+        for (va_end = va + size; va < va_end; va += 0x1000, pa += 0x1000) {
 #if 0
 	    printf("%s: Inserting: va: %#" _PRIxva ", pa: %#" _PRIxpa "\n", __func__,  va, pa);
 #endif
