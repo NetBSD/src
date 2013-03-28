@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.531 2013/03/23 15:14:15 christos Exp $
+# $NetBSD: mi,v 1.532 2013/03/28 18:51:28 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2412,6 +2412,7 @@
 ./usr/tests/lib/libpthread/t_barrier		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_cancel		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_cond		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_condwait		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_detach		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_equal		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_exit		tests-lib-tests		atf
