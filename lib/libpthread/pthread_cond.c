@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.59 2013/03/21 16:49:12 christos Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.60 2013/03/28 18:07:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.59 2013/03/21 16:49:12 christos Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.60 2013/03/28 18:07:12 christos Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -74,6 +74,13 @@ __strong_alias(__libc_cond_broadcast,pthread_cond_broadcast)
 __strong_alias(__libc_cond_wait,pthread_cond_wait)
 __strong_alias(__libc_cond_timedwait,pthread_cond_timedwait)
 __strong_alias(__libc_cond_destroy,pthread_cond_destroy)
+
+static clockid_t
+pthread_cond_getclock(const pthread_cond_t *cond)
+{
+	return cond->ptc_private ? 
+	    *(clockid_t *)cond->ptc_private : CLOCK_REALTIME;
+}
 
 int
 pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
@@ -135,6 +142,19 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	pthread__error(EPERM, "Mutex not locked in condition wait",
 	    mutex->ptm_owner != NULL);
 	if (abstime != NULL) {
+		/*
+		 * XXX: This should be done in the kernel to avoid
+		 * extra system calls! 
+		 */
+		if (pthread_cond_getclock(cond) == CLOCK_MONOTONIC) {
+			struct timespec mono, real;
+			if (clock_gettime(CLOCK_REALTIME, &real) == -1 ||
+			    clock_gettime(CLOCK_MONOTONIC, &mono) == -1)
+				return errno;
+			timespecsub(abstime, &mono, &mono);
+			timespecadd(&mono, &real, &mono);
+			abstime = &mono;
+		}
 		pthread__error(EINVAL, "Invalid wait time", 
 		    (abstime->tv_sec >= 0) &&
 		    (abstime->tv_nsec >= 0) &&
@@ -390,8 +410,7 @@ pthread_cond_wait_nothread(pthread_t self, pthread_mutex_t *mutex,
 		diff.tv_sec = 99999999;
 		diff.tv_nsec = 0;
 	} else {
-		clockid_t clck = cond->ptc_private ?
-		    *(clockid_t *)cond->ptc_private : CLOCK_REALTIME;
+		clockid_t clck = pthread_cond_getclock(cond);
 		clock_gettime(clck, &now);
 		if  (timespeccmp(abstime, &now, <))
 			timespecclear(&diff);
