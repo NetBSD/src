@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.16 2013/03/21 16:51:07 christos Exp $
+# $NetBSD: mi,v 1.17 2013/03/28 18:51:28 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -1757,6 +1757,7 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_resolv.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_barrier.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_cond.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_condwait.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_detach.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_equal.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_fork.debug		tests-lib-tests		debug,atf
