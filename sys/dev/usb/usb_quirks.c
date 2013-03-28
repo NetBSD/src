@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.78 2013/03/20 15:40:29 garbled Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.79 2013/03/28 04:07:55 garbled Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.78 2013/03/20 15:40:29 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.79 2013/03/28 04:07:55 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,10 +60,7 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_MGE, USB_PRODUCT_MGE_UPS2,	    ANY,   { UQ_HID_IGNORE }},
  { USB_VENDOR_MICROCHIP,  USB_PRODUCT_MICROCHIP_PICKIT1,
 	ANY,	{ UQ_HID_IGNORE }},
- { USB_VENDOR_TRIPPLITE2, USB_PRODUCT_TRIPPLITE2_UPS,
-	ANY,   { UQ_HID_IGNORE }},
- { USB_VENDOR_TRIPPLITE2, USB_PRODUCT_TRIPPLITE2_SMARTLCD,
-	ANY,   { UQ_HID_IGNORE }},
+ { USB_VENDOR_TRIPPLITE2, ANY,			    ANY,   { UQ_HID_IGNORE }},
  { USB_VENDOR_MISC, USB_PRODUCT_MISC_WISPY_24X, ANY, { UQ_HID_IGNORE }},
 
  { USB_VENDOR_KYE, USB_PRODUCT_KYE_NICHE,	    0x100, { UQ_NO_SET_PROTO}},
@@ -160,7 +157,7 @@ usbd_find_quirk(usb_device_descriptor_t *d)
 
 	for (t = usb_quirks; t->idVendor != 0; t++) {
 		if (t->idVendor  == vendor &&
-		    t->idProduct == product &&
+		    (t->idProduct == ANY || t->idProduct == product) &&
 		    (t->bcdDevice == ANY || t->bcdDevice == revision))
 			break;
 	}
