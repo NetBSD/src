@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.369 2012/12/02 19:51:56 rkujawa Exp $
+#       $NetBSD: Makefile,v 1.370 2013/03/28 11:17:41 wiz Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -405,10 +405,13 @@ MLINKS+=kcpuset.9 kcpuset_create.9 \
 	kcpuset.9 kcpuset_fill.9 \
 	kcpuset.9 kcpuset_set.9 \
 	kcpuset.9 kcpuset_clear.9 \
+	kcpuset.9 kcpuset_isotherset.9 \
 	kcpuset.9 kcpuset_isset.9 \
 	kcpuset.9 kcpuset_iszero.9 \
+	kcpuset.9 kcpuset_countset.9 \
 	kcpuset.9 kcpuset_match.9 \
 	kcpuset.9 kcpuset_merge.9 \
+	kcpuset.9 kcpuset_export_32.9 \
 	kcpuset.9 kcpuset_atomic_set.9 \
 	kcpuset.9 kcpuset_atomic_clear.9
 MLINKS+=kmem.9 kmem_alloc.9 \
