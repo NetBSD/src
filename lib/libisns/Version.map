@@ -1,0 +1,66 @@
+LIBISNS_0.0.0.0 {
+global:
+	isns_add_servercon;
+	isns_init;
+	isns_init_reg_refresh;
+	isns_stop;
+	isns_change_kevent_list;
+	isns_destroy_config;
+	isns_issue_cmd;
+	isns_issue_cmd_with_data;
+	isns_new_config;
+	isns_process_connection_loss;
+	isns_thread_create;
+	isns_thread_destroy;
+	isns_control_thread;
+	isns_kevent_pipe;
+	isns_kevent_socket;
+	isns_kevent_timer_recon;
+	isns_kevent_timer_refresh;
+	isns_end_task;
+	isns_free_task;
+	isns_new_task;
+	isns_run_task;
+	isns_taskq_insert_head;
+	isns_taskq_insert_tail;
+	isns_taskq_remove;
+	isns_taskq_remove_trans;
+	isns_wait_task;
+	isns_socket_close;
+	isns_socket_connect;
+	isns_socket_create;
+	isns_socket_readv;
+	isns_socket_writev;
+	isns_abort_trans;
+	isns_add_buffer_pool;
+	isns_add_pdu_request;
+	isns_add_pdu_response;
+	isns_add_string;
+	isns_add_tlv;
+	isns_complete_trans;
+	isns_destroy_buffer_pool;
+	isns_free_buffer;
+	isns_free_pdu;
+	isns_free_trans;
+	isns_get_pdu_request_tail;
+	isns_get_pdu_response_status;
+	isns_get_tlv;
+	isns_init_buffer_pool;
+	isns_new_buffer;
+	isns_new_pdu;
+	isns_new_trans;
+	isns_send_pdu;
+	isns_send_trans;
+	isns_set_trans_flags;
+	isns_file_readv;
+	isns_file_writev;
+};
+
+NetBSD_6.99.18.0 {
+} LIBISNS_0.0.0.0;
+
+LIBISNS_private_0.0.0.0 {
+local:
+	*;
+};
+
