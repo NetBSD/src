@@ -1,0 +1,63 @@
+LIBDM_0.0.0.0 {
+global:
+	libdm_cmd_create;
+	libdm_cmd_destroy;
+	libdm_cmd_get_deps;
+	libdm_cmd_get_dev;
+	libdm_cmd_get_table;
+	libdm_cmd_get_target;
+	libdm_cmd_iter_create;
+	libdm_cmd_set_table;
+	libdm_dev_destroy;
+	libdm_dev_get_minor;
+	libdm_dev_get_name;
+	libdm_dev_set_newname;
+	libdm_iter_destroy;
+	libdm_table_create;
+	libdm_table_destroy;
+	libdm_table_get_length;
+	libdm_table_get_params;
+	libdm_table_get_start;
+	libdm_table_get_status;
+	libdm_table_get_target;
+	libdm_table_set_length;
+	libdm_table_set_params;
+	libdm_table_set_start;
+	libdm_table_set_target;
+	libdm_target_destroy;
+	libdm_target_get_name;
+	libdm_target_get_version;
+	libdm_task_create;
+	libdm_task_del_exists_flag;
+	libdm_task_del_status_flag;
+	libdm_task_del_suspend_flag;
+	libdm_task_destroy;
+	libdm_task_get_cmd;
+	libdm_task_get_cmd_version;
+	libdm_task_get_command;
+	libdm_task_get_event_num;
+	libdm_task_get_flags;
+	libdm_task_get_minor;
+	libdm_task_get_name;
+	libdm_task_get_open_num;
+	libdm_task_get_target_num;
+	libdm_task_get_uuid;
+	libdm_task_run;
+	libdm_task_set_cmd;
+	libdm_task_set_exists_flag;
+	libdm_task_set_flags;
+	libdm_task_set_minor;
+	libdm_task_set_name;
+	libdm_task_set_status_flag;
+	libdm_task_set_suspend_flag;
+	libdm_task_set_uuid;
+};
+
+NetBSD_6.99.18.0 {
+} LIBDM_0.0.0.0;
+
+LIBDM_private_0.0.0.0 {
+local:
+	*;
+};
+
