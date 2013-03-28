@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.75 2013/03/25 17:35:51 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.76 2013/03/28 17:25:10 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.75 2013/03/25 17:35:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.76 2013/03/28 17:25:10 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -807,7 +807,6 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 		dp->rd_softc = sc;
 		dp->rd_wsmode = WSDISPLAYIO_MODE_EMUL;
-		dp->rd_bg = WS_DEFAULT_BG;
 		dp->rd_bpp = RADEONFB_DEFAULT_DEPTH;	/* XXX */
 
 		/* for text mode, we pick a resolution that won't
@@ -903,8 +902,9 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 		/* clear the screen */
 		rasops_unpack_attr(defattr, &fg, &bg, &ul);
+		dp->rd_bg = ri->ri_devcmap[bg & 0xf];
 		radeonfb_rectfill(dp, 0, 0, ri->ri_width, ri->ri_height,
-		    ri->ri_devcmap[bg & 0xf]);
+		    dp->rd_bg);
 
 		dp->rd_wsscreens->textops = &ri->ri_ops;
 		dp->rd_wsscreens->capabilities = ri->ri_caps;
@@ -1125,6 +1125,8 @@ radeonfb_ioctl(void *v, void *vs,
 				glyphcache_wipe(&dp->rd_gc);
 				radeonfb_init_palette(dp);
 				radeonfb_modeswitch(dp);
+				radeonfb_rectfill(dp, 0, 0, dp->rd_virtx,
+				    dp->rd_virty, dp->rd_bg);
 				vcons_redraw_screen(dp->rd_vd.active);
 			} else {
 				radeonfb_unmap(sc);
