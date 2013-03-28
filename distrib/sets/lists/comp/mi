@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1809 2013/03/01 18:25:13 joerg Exp $
+#	$NetBSD: mi,v 1.1810 2013/03/28 11:17:39 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9238,9 +9238,12 @@
 ./usr/share/man/cat9/kcpuset_copy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kcpuset_copyin.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kcpuset_copyout.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_countset.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kcpuset_create.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kcpuset_destroy.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_export_32.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/kcpuset_fill.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_isotherset.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/kcpuset_isset.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kcpuset_iszero.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kcpuset_match.0		comp-sys-catman		.cat
@@ -15609,12 +15612,15 @@
 ./usr/share/man/html9/kcpuset_atomic_clear.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_atomic_set.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_clear.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_countset.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_copy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_copyin.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_copyout.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_create.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_destroy.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_export_32.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_fill.html		comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_isotherset.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_isset.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_iszero.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_match.html	comp-sys-htmlman	html
@@ -22141,9 +22147,12 @@
 ./usr/share/man/man9/kcpuset_copy.9		comp-sys-man		.man
 ./usr/share/man/man9/kcpuset_copyin.9		comp-sys-man		.man
 ./usr/share/man/man9/kcpuset_copyout.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_countset.9		comp-sys-man		.man
 ./usr/share/man/man9/kcpuset_create.9		comp-sys-man		.man
 ./usr/share/man/man9/kcpuset_destroy.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_export_32.9	comp-sys-man		.man
 ./usr/share/man/man9/kcpuset_fill.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_isotherset.9	comp-sys-man		.man
 ./usr/share/man/man9/kcpuset_isset.9		comp-sys-man		.man
 ./usr/share/man/man9/kcpuset_iszero.9		comp-sys-man		.man
 ./usr/share/man/man9/kcpuset_match.9		comp-sys-man		.man
