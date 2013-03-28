@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2013/03/21 16:50:21 christos Exp $
+# $NetBSD: Makefile,v 1.10 2013/03/28 18:50:01 christos Exp $
 
 NOMAN=		# defined
 
@@ -17,6 +17,7 @@ TESTS_SH+=	t_atexit
 TESTS_C+=	t_barrier
 TESTS_SH+=	t_cancel
 TESTS_C+=	t_cond
+TESTS_C+=	t_condwait
 TESTS_C+=	t_detach
 TESTS_C+=	t_equal
 TESTS_SH+=	t_exit
