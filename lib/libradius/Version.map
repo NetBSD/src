@@ -1,0 +1,41 @@
+LIBRADIUS_4.0.0.0 {
+global:
+	rad_acct_open;
+	rad_add_server;
+	rad_auth_open;
+	rad_close;
+	rad_config;
+	rad_continue_send_request;
+	rad_create_request;
+	rad_cvt_addr;
+	rad_cvt_int;
+	rad_cvt_string;
+	rad_demangle;
+	rad_demangle_mppe_key;
+	rad_get_attr;
+	rad_get_vendor_attr;
+	rad_init_send_request;
+	rad_open;
+	rad_put_addr;
+	rad_put_attr;
+	rad_put_int;
+	rad_put_message_authentic;
+	rad_put_string;
+	rad_put_vendor_addr;
+	rad_put_vendor_attr;
+	rad_put_vendor_int;
+	rad_put_vendor_string;
+	rad_request_authenticator;
+	rad_send_request;
+	rad_server_secret;
+	rad_strerror;
+};
+
+NetBSD_6.99.18.0 {
+} LIBRADIUS_4.0.0.0;
+
+LIBRADIUS_private_4.0.0.0 {
+local:
+	*;
+};
+
