@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.36 2013/03/19 22:16:53 garbled Exp $
+# $NetBSD: mkimage,v 1.37 2013/03/28 00:20:02 jmcneill Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -157,6 +157,7 @@ if [ -z "$bootonly" ]; then
 	${MAKEFS} -N ${release}/etc -t ffs -rx \
 	    -O $(((${init} + ${boot} + ${swap}) / 2))m \
 	    -b $((${extra} / 2))m \
+	    -o d=4096 \
 	    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
 fi
 
