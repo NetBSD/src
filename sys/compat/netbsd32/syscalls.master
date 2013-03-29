@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.96 2012/10/02 01:44:28 christos Exp $
+	$NetBSD: syscalls.master,v 1.97 2013/03/29 01:04:30 christos Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -890,7 +890,7 @@
 			    netbsd32_timespecp_t timeout); }
 432	UNIMPL 		netbsd32___mq_timedsend50
 433	UNIMPL 		netbsd32___mq_timedreceive50
-434	STD 		{ int|netbsd32|50|_lwp_park( \
+434	COMPAT_60 	{ int|netbsd32||_lwp_park( \
 			    const netbsd32_timespecp_t ts, \
 			    lwpid_t unpark, const netbsd32_voidp hint, \
 			    const netbsd32_voidp unparkhint); }
@@ -1039,3 +1039,8 @@
 			    netbsd32_clockid_t clock_id, \
 			    int flags, const netbsd32_timespecp_t rqtp, \
 			    netbsd32_timespecp_t rmtp); }
+478	STD 		{ int|netbsd32|60|_lwp_park(\
+			    netbsd32_clockid_t clock_id, \
+			    int flags, const netbsd32_timespecp_t ts, \
+			    lwpid_t unpark, netbsd32_voidp hint, \
+			    netbsd32_voidp unparkhint); }
