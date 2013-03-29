@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.176 2013/03/29 01:08:17 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.177 2013/03/29 10:34:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.176 2013/03/29 01:08:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.177 2013/03/29 10:34:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -188,24 +188,6 @@ sys___clock_gettime50(struct lwp *l,
 		return error;
 
 	return copyout(&ats, SCARG(uap, tp), sizeof(ats));
-}
-
-int
-clock_gettime1(clockid_t clock_id, struct timespec *ts)
-{
-
-	switch (clock_id) {
-	case CLOCK_REALTIME:
-		nanotime(ts);
-		break;
-	case CLOCK_MONOTONIC:
-		nanouptime(ts);
-		break;
-	default:
-		return EINVAL;
-	}
-
-	return 0;
 }
 
 /* ARGSUSED */

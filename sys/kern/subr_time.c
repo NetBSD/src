@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.10 2013/03/29 01:08:17 christos Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.11 2013/03/29 10:34:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.10 2013/03/29 01:08:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.11 2013/03/29 10:34:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -210,6 +210,24 @@ gettimeleft(struct timespec *ts, struct timespec *sleepts)
 	*sleepts = sleptts;
 
 	return tstohz(ts);
+}
+
+int
+clock_gettime1(clockid_t clock_id, struct timespec *ts)
+{
+
+	switch (clock_id) {
+	case CLOCK_REALTIME:
+		nanotime(ts);
+		break;
+	case CLOCK_MONOTONIC:
+		nanouptime(ts);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
 }
 
 /*
