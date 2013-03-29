@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.65 2013/03/29 02:20:17 christos Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.66 2013/03/29 02:26:45 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.65 2013/03/29 02:20:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.66 2013/03/29 02:26:45 christos Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1908,9 +1908,18 @@ ieee80211_timeout_stations(struct ieee80211_node_table *nt)
 		   ic->ic_opmode == IEEE80211_M_AHDEMO);
 	IEEE80211_SCAN_LOCK(nt);
 	gen = ++nt->nt_scangen;
+	IEEE80211_SCAN_UNLOCK(nt);
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
 		"%s: %s scangen %u\n", __func__, nt->nt_name, gen);
 restart:
+	IEEE80211_SCAN_LOCK(nt);
+	if (gen != nt->nt_scangen) {
+		printf("%s: scan aborted %u\n", __func__, gen);
+		IEEE80211_SCAN_UNLOCK(nt);
+		return;
+	}
+	IEEE80211_SCAN_UNLOCK(nt);
+
 	IEEE80211_NODE_LOCK(nt);
 	TAILQ_FOREACH(ni, &nt->nt_node, ni_list) {
 		if (ni->ni_scangen == gen)	/* previously handled */
@@ -2039,8 +2048,6 @@ IEEE80211_DPRINTF(ic, IEEE80211_MSG_POWER, "[%s] discard frame, age %u\n", ether
 	}
 	IEEE80211_NODE_UNLOCK(nt);
 
-	IEEE80211_SCAN_UNLOCK(nt);
-
 	nt->nt_inact_timer = IEEE80211_INACT_WAIT;
 }
 
@@ -2052,7 +2059,16 @@ ieee80211_iterate_nodes(struct ieee80211_node_table *nt, ieee80211_iter_func *f,
 
 	IEEE80211_SCAN_LOCK(nt);
 	gen = ++nt->nt_scangen;
+	IEEE80211_SCAN_UNLOCK(nt);
 restart:
+	IEEE80211_SCAN_LOCK(nt);
+	if (gen != nt->nt_scangen) {
+		printf("%s: scan aborted %u\n", __func__, gen);
+		IEEE80211_SCAN_UNLOCK(nt);
+		return;
+	}
+	IEEE80211_SCAN_UNLOCK(nt);
+
 	IEEE80211_NODE_LOCK(nt);
 	TAILQ_FOREACH(ni, &nt->nt_node, ni_list) {
 		if (ni->ni_scangen != gen) {
@@ -2065,8 +2081,6 @@ restart:
 		}
 	}
 	IEEE80211_NODE_UNLOCK(nt);
-
-	IEEE80211_SCAN_UNLOCK(nt);
 }
 
 void
