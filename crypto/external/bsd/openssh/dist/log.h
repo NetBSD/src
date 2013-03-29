@@ -1,5 +1,5 @@
-/*	$NetBSD: log.h,v 1.4 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: log.h,v 1.18 2011/06/17 21:44:30 djm Exp $ */
+/*	$NetBSD: log.h,v 1.5 2013/03/29 16:19:45 christos Exp $	*/
+/* $OpenBSD: log.h,v 1.19 2012/09/06 04:37:39 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -47,6 +47,8 @@ typedef enum {
 typedef void (log_handler_fn)(LogLevel, const char *, void *);
 
 void     log_init(const char *, LogLevel, SyslogFacility, int);
+void     log_change_level(LogLevel);
+int      log_is_on_stderr(void);
 
 SyslogFacility	log_facility_number(char *);
 const char * 	log_facility_name(SyslogFacility);

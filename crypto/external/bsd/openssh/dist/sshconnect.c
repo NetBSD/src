@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.c,v 1.7 2012/04/27 15:45:37 tls Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.234 2011/05/24 07:15:47 djm Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.8 2013/03/29 16:19:45 christos Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.236 2012/09/14 16:51:34 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.7 2012/04/27 15:45:37 tls Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.8 2013/03/29 16:19:45 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/wait.h>
@@ -462,6 +462,24 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	return 0;
 }
 
+static void
+send_client_banner(int connection_out, int minor1)
+{
+	/* Send our own protocol version identification. */
+	if (compat20) {
+		xasprintf(&client_version_string, "SSH-%d.%d-%.100s\r\n",
+		    PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2, SSH_VERSION);
+	} else {
+		xasprintf(&client_version_string, "SSH-%d.%d-%.100s\n",
+		    PROTOCOL_MAJOR_1, minor1, SSH_VERSION);
+	}
+	if (roaming_atomicio(vwrite, connection_out, client_version_string,
+	    strlen(client_version_string)) != strlen(client_version_string))
+		fatal("write: %.100s", strerror(errno));
+	chop(client_version_string);
+	debug("Local version string %.100s", client_version_string);
+}
+
 /*
  * Waits for the server identification string, and sends our own
  * identification string.
@@ -473,8 +491,7 @@ ssh_exchange_identification(int timeout_ms)
 	int remote_major, remote_minor, mismatch;
 	int connection_in = packet_get_connection_in();
 	int connection_out = packet_get_connection_out();
-	int minor1 = PROTOCOL_MINOR_1;
-	int mefirst = 0;
+	int minor1 = PROTOCOL_MINOR_1, client_banner_sent = 0;
 	u_int i, n;
 	size_t len;
 	int fdsetsz, remaining, rc;
@@ -485,29 +502,13 @@ ssh_exchange_identification(int timeout_ms)
 	fdset = xcalloc(1, fdsetsz);
 
 	/*
-	 * If we are configured to do version 2 only, we can send our
-	 * own version string first in order to work around borken
-	 * proxies that elsewise impose a delay while trying to figure
-	 * out what protocol we are speaking.
+	 * If we are SSH2-only then we can send the banner immediately and
+	 * save a round-trip.
 	 */
-
-	if (options.send_version_first == 1 && 
-	    ((options.protocol & SSH_PROTO_2) &&
-	    !(options.protocol & SSH_PROTO_1) &&
-	    !(options.protocol & SSH_PROTO_1_PREFERRED))) {
-
-        	/* Send our own protocol version identification. */
-		snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s%s",
-			 PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2,
-			 SSH_VERSION, "\r\n");
-		if (roaming_atomicio(vwrite, connection_out, buf,
-				     strlen(buf)) != strlen(buf))
-			fatal("write: %.100s", strerror(errno));
-		client_version_string = xstrdup(buf);
-		chop(client_version_string);
-		debug("Local version string %.100s", client_version_string);
-
-		mefirst = 1;
+	if (options.protocol == SSH_PROTO_2) {
+		enable_compat20();
+		send_client_banner(connection_out, 0);
+		client_banner_sent = 1;
 	}
 
 	/* Read other side's version identification. */
@@ -612,20 +613,9 @@ ssh_exchange_identification(int timeout_ms)
 		fatal("Protocol major versions differ: %d vs. %d",
 		    (options.protocol & SSH_PROTO_2) ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
 		    remote_major);
-	if (!mefirst) {
-		/* Send our own protocol version identification. */
-		snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s%s",
-		    compat20 ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
-		    compat20 ? PROTOCOL_MINOR_2 : minor1,
-		    SSH_RELEASE, compat20 ? "\r\n" : "\n");
-		if (roaming_atomicio(vwrite, connection_out, buf, strlen(buf))
-		    != strlen(buf))
-			fatal("write: %.100s", strerror(errno));
-		client_version_string = xstrdup(buf);
-		chop(client_version_string);
-	}
+	if (!client_banner_sent)
+		send_client_banner(connection_out, minor1);
 	chop(server_version_string);
-	debug("Local version string %.100s", client_version_string);
 }
 
 /* defaults to 'no' */

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-chall.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: auth2-chall.c,v 1.34 2008/12/09 04:32:22 djm Exp $ */
+/*	$NetBSD: auth2-chall.c,v 1.4 2013/03/29 16:19:44 christos Exp $	*/
+/* $OpenBSD: auth2-chall.c,v 1.36 2012/12/03 00:14:06 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-chall.c,v 1.3 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: auth2-chall.c,v 1.4 2013/03/29 16:19:44 christos Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>
@@ -284,7 +284,8 @@ input_userauth_info_response(int type, u_int32_t seq, void *ctxt)
 	KbdintAuthctxt *kbdintctxt;
 	int authenticated = 0, res;
 	u_int i, nresp;
-	char **response = NULL, *method;
+	const char *devicename = NULL;
+	char **response = NULL;
 
 	if (authctxt == NULL)
 		fatal("input_userauth_info_response: no authctxt");
@@ -330,9 +331,7 @@ input_userauth_info_response(int type, u_int32_t seq, void *ctxt)
 		/* Failure! */
 		break;
 	}
-
-	xasprintf(&method, "keyboard-interactive/%s", kbdintctxt->device->name);
-
+	devicename = kbdintctxt->device->name;
 	if (!authctxt->postponed) {
 		if (authenticated) {
 			auth2_challenge_stop(authctxt);
@@ -342,8 +341,8 @@ input_userauth_info_response(int type, u_int32_t seq, void *ctxt)
 			auth2_challenge_start(authctxt);
 		}
 	}
-	userauth_finish(authctxt, authenticated, method);
-	xfree(method);
+	userauth_finish(authctxt, authenticated, "keyboard-interactive",
+	    devicename);
 }
 
 void

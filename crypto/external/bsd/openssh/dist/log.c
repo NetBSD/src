@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.7 2011/11/04 11:54:46 joerg Exp $	*/
-/* $OpenBSD: log.c,v 1.42 2011/06/17 21:44:30 djm Exp $ */
+/*	$NetBSD: log.c,v 1.8 2013/03/29 16:19:45 christos Exp $	*/
+/* $OpenBSD: log.c,v 1.43 2012/09/06 04:37:39 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.7 2011/11/04 11:54:46 joerg Exp $");
+__RCSID("$NetBSD: log.c,v 1.8 2013/03/29 16:19:45 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -300,6 +300,21 @@ log_init(const char *av0, LogLevel level, SyslogFacility facility,
 	}
 }
 
+void
+log_change_level(LogLevel new_log_level)
+{
+	/* no-op if log_init has not been called */
+	if (argv0 == NULL)
+		return;
+	log_init(argv0, new_log_level, log_facility, log_on_stderr);
+}
+
+int
+log_is_on_stderr(void)
+{
+	return log_on_stderr;
+}
+
 #define MSGBUFSIZ 1024
 
 void
@@ -396,6 +411,7 @@ do_log(LogLevel level, const char *fmt, va_list args)
 			{ visbuf, len3 },
 			{ __UNCONST("\r\n"), 2 },
 		};
+/*###414 [lint] warning conversion to 'int' due to prototype, arg #3 [259]%%%*/
 		writev(STDERR_FILENO, iov, __arraycount(iov));
 	} else {
 #ifdef SYSLOG_DATA_INIT

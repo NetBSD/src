@@ -1,5 +1,5 @@
-/*	$NetBSD: sshd.c,v 1.11 2012/12/12 17:42:40 christos Exp $	*/
-/* $OpenBSD: sshd.c,v 1.393 2012/07/10 02:19:15 djm Exp $ */
+/*	$NetBSD: sshd.c,v 1.12 2013/03/29 16:19:45 christos Exp $	*/
+/* $OpenBSD: sshd.c,v 1.397 2013/02/11 21:21:58 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.11 2012/12/12 17:42:40 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.12 2013/03/29 16:19:45 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -353,6 +353,15 @@ grace_alarm_handler(int sig)
 {
 	if (use_privsep && pmonitor != NULL && pmonitor->m_pid > 0)
 		kill(pmonitor->m_pid, SIGALRM);
+
+	/*
+	 * Try to kill any processes that we have spawned, E.g. authorized
+	 * keys command helpers.
+	 */
+	if (getpgid(0) == getpid()) {
+		signal(SIGTERM, SIG_IGN);
+		killpg(0, SIGTERM);
+	}
 
 	/* Log error and exit. */
 	sigdie("Timeout before authentication for %s", get_remote_ipaddr());
@@ -1331,6 +1340,7 @@ main(int ac, char **av)
 	int remote_port;
 	char *line;
 	int config_s[2] = { -1 , -1 };
+	u_int n;
 	u_int64_t ibytes, obytes;
 	mode_t new_umask;
 	Key *key;
@@ -1549,6 +1559,33 @@ main(int ac, char **av)
 	if (options.challenge_response_authentication)
 		options.kbd_interactive_authentication = 1;
 
+	/* Check that options are sensible */
+	if (options.authorized_keys_command_user == NULL &&
+	    (options.authorized_keys_command != NULL &&
+	    strcasecmp(options.authorized_keys_command, "none") != 0))
+		fatal("AuthorizedKeysCommand set without "
+		    "AuthorizedKeysCommandUser");
+
+	/*
+	 * Check whether there is any path through configured auth methods.
+	 * Unfortunately it is not possible to verify this generally before
+	 * daemonisation in the presence of Match block, but this catches
+	 * and warns for trivial misconfigurations that could break login.
+	 */
+	if (options.num_auth_methods != 0) {
+		if ((options.protocol & SSH_PROTO_1))
+			fatal("AuthenticationMethods is not supported with "
+			    "SSH protocol 1");
+		for (n = 0; n < options.num_auth_methods; n++) {
+			if (auth2_methods_valid(options.auth_methods[n],
+			    1) == 0)
+				break;
+		}
+		if (n >= options.num_auth_methods)
+			fatal("AuthenticationMethods cannot be satisfied by "
+			    "enabled authentication methods");
+	}
+
 	/* set default channel AF */
 	channel_set_af(options.address_family);
 
@@ -1559,16 +1596,17 @@ main(int ac, char **av)
 	}
 
 #ifdef WITH_LDAP_PUBKEY
-    /* ldap_options_print(&options.lpk); */
-    /* XXX initialize/check ldap connection and set *LD */
-    if (options.lpk.on) {
-        if (options.lpk.l_conf && (ldap_parse_lconf(&options.lpk) < 0) )
-            error("[LDAP] could not parse %s", options.lpk.l_conf);
-        if (ldap_connect(&options.lpk) < 0)
-            error("[LDAP] could not initialize ldap connection");
-    }
+	/* ldap_options_print(&options.lpk); */
+	/* XXX initialize/check ldap connection and set *LD */
+	if (options.lpk.on) {
+	    if (options.lpk.l_conf && (ldap_parse_lconf(&options.lpk) < 0) )
+		error("[LDAP] could not parse %s", options.lpk.l_conf);
+	    if (ldap_connect(&options.lpk) < 0)
+		error("[LDAP] could not initialize ldap connection");
+	}
 #endif
-	debug("sshd version %.100s", SSH_VERSION);
+	debug("sshd version %s, %s", SSH_VERSION,
+	    SSLeay_version(SSLEAY_VERSION));
 
 	/* load private host keys */
 	sensitive_data.host_keys = xcalloc(options.num_host_key_files,

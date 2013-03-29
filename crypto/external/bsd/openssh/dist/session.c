@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.10 2012/12/12 17:42:40 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.260 2012/03/15 03:10:27 guenther Exp $ */
+/*	$NetBSD: session.c,v 1.11 2013/03/29 16:19:45 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.261 2012/12/02 20:46:11 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.10 2012/12/12 17:42:40 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.11 2013/03/29 16:19:45 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -262,7 +262,10 @@ do_authenticated(Authctxt *authctxt)
 	setproctitle("%s", authctxt->pw->pw_name);
 
 	/* setup the channel layer */
-	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
+	if (no_port_forwarding_flag ||
+	    (options.allow_tcp_forwarding & FORWARD_LOCAL) == 0)
+		channel_disable_adm_local_opens();
+	else
 		channel_permit_all_opens();
 
 	auth_debug_send();
@@ -372,7 +375,7 @@ do_authenticated1(Authctxt *authctxt)
 				debug("Port forwarding not permitted for this authentication.");
 				break;
 			}
-			if (!options.allow_tcp_forwarding) {
+			if (!(options.allow_tcp_forwarding & FORWARD_REMOTE)) {
 				debug("Port forwarding not permitted.");
 				break;
 			}
