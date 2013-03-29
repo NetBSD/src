@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.113 2013/03/15 23:26:27 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.114 2013/03/29 00:50:32 msaitoh Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8730,3 +8730,21 @@ sys/sys/param.h					patched by hand
 	Welcome to 6.1_RC2!
 	[riz]
 
+sys/kern/subr_cprng.c				1.16
+
+	Re-fix 'fix' for SA-2013-003.  Because the original fix evaluated a
+	flag backwards, in low-entropy conditions there was a time interval
+	in which /dev/urandom could still output bits on an unacceptably
+	short key.  Output from /dev/random was *NOT* impacted.
+
+	Eliminate the flag in question -- it's safest to always fill the
+	requested key buffer with output from the entropy-pool, even if we
+	let the caller know we couldn't provide bytes with the full entropy
+	it requested.
+
+	Advisory will be updated soon with a full worst-case analysis of the
+	/dev/urandom output path in the presence of either variant of the
+	SA-2013-003 bug.  Fortunately, because a large amount of other input
+	is mixed in before users can obtain any output, it doesn't look as
+	dangerous in practice as I'd feared it might be.
+	[tls, ticket #859]
