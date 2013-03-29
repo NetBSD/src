@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.55 2012/09/27 20:43:15 rmind Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.56 2013/03/29 01:08:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.55 2012/09/27 20:43:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.56 2013/03/29 01:08:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -532,7 +532,7 @@ lwp_unpark(lwpid_t target, const void *hint)
 }
 
 int
-lwp_park(struct timespec *ts, const void *hint)
+lwp_park(clockid_t clock_id, int flags, struct timespec *ts, const void *hint)
 {
 	sleepq_t *sq;
 	kmutex_t *mp;
@@ -540,12 +540,9 @@ lwp_park(struct timespec *ts, const void *hint)
 	int timo, error;
 	lwp_t *l;
 
-	/* Fix up the given timeout value. */
 	if (ts != NULL) {
-		error = abstimeout2timo(ts, &timo);
-		if (error) {
+		if ((error = ts2timo(clock_id, flags, ts, &timo, NULL)) != 0)
 			return error;
-		}
 		KASSERT(timo != 0);
 	} else {
 		timo = 0;
@@ -591,10 +588,12 @@ lwp_park(struct timespec *ts, const void *hint)
  * requests that it be unparked.
  */
 int
-sys____lwp_park50(struct lwp *l, const struct sys____lwp_park50_args *uap,
+sys____lwp_park60(struct lwp *l, const struct sys____lwp_park60_args *uap,
     register_t *retval)
 {
 	/* {
+		syscallarg(clockid_t)			clock_id;
+		syscallarg(int)				flags;
 		syscallarg(const struct timespec *)	ts;
 		syscallarg(lwpid_t)			unpark;
 		syscallarg(const void *)		hint;
@@ -618,7 +617,8 @@ sys____lwp_park50(struct lwp *l, const struct sys____lwp_park50_args *uap,
 			return error;
 	}
 
-	return lwp_park(tsp, SCARG(uap, hint));
+	return lwp_park(SCARG(uap, clock_id), SCARG(uap, flags), tsp,
+	    SCARG(uap, hint));
 }
 
 int
