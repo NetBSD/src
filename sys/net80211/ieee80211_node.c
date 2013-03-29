@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.64 2013/01/10 17:40:10 christos Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.65 2013/03/29 02:20:17 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,14 +36,14 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.64 2013/01/10 17:40:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.65 2013/03/29 02:20:17 christos Exp $");
 #endif
 
 #include "opt_inet.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.64 2013/01/10 17:40:10 christos
 #include <net/bpf.h>
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <net/if_ether.h>
 #endif
 
@@ -213,7 +213,7 @@ ieee80211_node_detach(struct ieee80211com *ic)
 	}
 }
 
-/* 
+/*
  * Port authorize/unauthorize interfaces for use by an authenticator.
  */
 
@@ -453,7 +453,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		else
 			ni->ni_bssid[0] |= 0x02;	/* local bit for IBSS */
 	}
-	/* 
+	/*
 	 * Fix the channel and related attributes.
 	 */
 	ieee80211_set_chan(ic, ni, chan);
@@ -763,7 +763,7 @@ ieee80211_end_scan(struct ieee80211com *ic)
 		goto notfound;
 	}
 }
- 
+
 /*
  * Handle 802.11 ad hoc network merge.  The
  * convention, set by the Wireless Ethernet Compatibility Alliance
@@ -846,7 +846,7 @@ ieee80211_sta_join(struct ieee80211com *ic, struct ieee80211_node *selbs)
 	 * Set the erp state (mostly the slot time) to deal with
 	 * the auto-select case; this should be redundant if the
 	 * mode is locked.
-	 */ 
+	 */
 	ic->ic_curmode = ieee80211_chan2mode(ic, selbs->ni_chan);
 	ic->ic_curchan = selbs->ni_chan;
 	ieee80211_reset_erp(ic);
@@ -1199,7 +1199,7 @@ dump_probe_beacon(u_int8_t subtype, int isnew,
 	printf("\n");
 
 	if (isnew) {
-		printf("[%s] caps 0x%x bintval %u erp 0x%x", 
+		printf("[%s] caps 0x%x bintval %u erp 0x%x",
 			ether_sprintf(mac), sp->capinfo, sp->bintval, sp->erp);
 		if (sp->country != NULL) {
 #ifdef __FreeBSD__
@@ -1374,7 +1374,7 @@ ieee80211_add_neighbor(struct ieee80211com *ic,
  * are required to pass some node so we fall back to ic_bss
  * when this frame is from an unknown sender.  The 802.11 layer
  * knows this means the sender wasn't in the node table and
- * acts accordingly. 
+ * acts accordingly.
  */
 struct ieee80211_node *
 #ifdef IEEE80211_DEBUG_REFCNT
