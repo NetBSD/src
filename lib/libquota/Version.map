@@ -1,0 +1,72 @@
+LIBQUOTA_private_1.0.0.0 {
+};
+
+LIBQUOTA_1.0.0.0 {
+global:
+	quota_opencursor;
+	quotacursor_atend;
+	quotacursor_close;
+	quotacursor_get;
+	quotacursor_getn;
+	quotacursor_rewind;
+	quotacursor_skipidtype;
+	quota_delete;
+	quota_put;
+	quota_getimplname;
+	quota_getnumidtypes;
+	quota_getnumobjtypes;
+	quota_getrestrictions;
+	quota_idtype_getname;
+	quota_objtype_getname;
+	quota_objtype_isbytes;
+	quota_close;
+	quota_getmountdevice;
+	quota_getmountpoint;
+	quota_open;
+	quota_quotaoff;
+	quota_quotaon;
+	__quota_kernel_cursor_atend;
+	__quota_kernel_cursor_create;
+	__quota_kernel_cursor_destroy;
+	__quota_kernel_cursor_get;
+	__quota_kernel_cursor_getn;
+	__quota_kernel_cursor_rewind;
+	__quota_kernel_cursor_skipidtype;
+	__quota_kernel_delete;
+	__quota_kernel_get;
+	__quota_kernel_getimplname;
+	__quota_kernel_getnumidtypes;
+	__quota_kernel_getnumobjtypes;
+	__quota_kernel_getrestrictions;
+	__quota_kernel_idtype_getname;
+	__quota_kernel_objtype_getname;
+	__quota_kernel_objtype_isbytes;
+	__quota_kernel_put;
+	__quota_kernel_quotaoff;
+	__quota_kernel_quotaon;
+	__quota_oldfiles_cursor_atend;
+	__quota_oldfiles_cursor_create;
+	__quota_oldfiles_cursor_destroy;
+	__quota_oldfiles_cursor_get;
+	__quota_oldfiles_cursor_getn;
+	__quota_oldfiles_cursor_rewind;
+	__quota_oldfiles_cursor_skipidtype;
+	__quota_oldfiles_delete;
+	__quota_oldfiles_get;
+	__quota_oldfiles_getimplname;
+	__quota_oldfiles_getquotafile;
+	__quota_oldfiles_infstab;
+	__quota_oldfiles_initialize;
+	__quota_oldfiles_load_fstab;
+	__quota_oldfiles_put;
+	__quota_oldfiles_quotaon;
+	__quota_nfs_get;
+	quota_get;
+	quotaval_clear;
+};
+
+NetBSD_6.99.18.0 {
+local:
+	*;
+} LIBQUOTA_1.0.0.0;
+
