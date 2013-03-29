@@ -1,4 +1,4 @@
-.\" $NetBSD: apropos.1,v 1.8 2013/03/29 20:07:31 christos Exp $
+.\" $NetBSD: apropos.1,v 1.9 2013/03/29 20:17:19 christos Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -66,24 +66,8 @@ Quotes are optional for specifying multiword queries.
 .Pp
 It supports the following options:
 .Bl -tag -width indent
-.It Fl 1
-Search only within section 1 manual pages.
-.It Fl 2
-Search only within section 2 manual pages.
-.It Fl 3
-Search only within section 3 manual pages.
-.It Fl 4
-Search only within section 4 manual pages.
-.It Fl 5
-Search only within section 5 manual pages.
-.It Fl 6
-Search only within section 6 manual pages.
-.It Fl 7
-Search only within section 7 manual pages.
-.It Fl 8
-Search only within section 8 manual pages.
-.It Fl 9
-Search only within section 9 manual pages.
+.It Fl [1-9]
+Search only within the specified section manual pages.
 .It Fl C
 Do not show the context of the match.
 .It Fl c
@@ -93,6 +77,21 @@ Turn on escape code formatting.
 .It Fl l
 Legacy mode: Only searches name and name description.
 Does not print context, or escape format the text.
+Note that this still does not behave exactly like the old
+.Nm
+did because FTS can only search for words, not partial words.
+For example
+.Nm
+used to return
+.Dq xlsfonts
+when searching for
+.Dq ls ,
+but now it cannot.
+One can approximate the behavior better by searching for
+.Dq ls*
+and this works because the index is sorted, but unfortunately
+.Dq *ls*
+does not work.
 .It Fl n
 Output up to the specified number of search results.
 The default limit is infinity.
