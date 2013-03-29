@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.13 2013/03/29 20:37:00 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.14 2013/03/29 20:46:07 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.13 2013/03/29 20:37:00 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.14 2013/03/29 20:46:07 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -735,10 +735,13 @@ run_query_html(sqlite3 *db, query_args *args)
  * underline a string, pager style.
  */
 static char *
-ul_pager(const char *s)
+ul_pager(int ul, const char *s)
 {
 	size_t len;
 	char *dst, *d;
+
+	if (!ul)
+		return estrdup(s);
 
 	// a -> _\ba
 	len = strlen(s) * 3 + 1;
@@ -767,7 +770,7 @@ callback_pager(void *data, const char *section, const char *name,
 	char *psnippet;
 	const char *temp = snippet;
 	int count = 0;
-	int i = 0;
+	int i = 0, did;
 	size_t sz = 0;
 	size_t psnippet_length;
 
@@ -792,6 +795,7 @@ callback_pager(void *data, const char *section, const char *name,
 	 * 2. The bytes after \002 need to be overstriked till we encounter \003.
 	 * 3. To overstrike a byte 'A' we need to write 'A\bA'
 	 */
+	did = 0;
 	while (*snippet) {
 		sz = strcspn(snippet, "\002");
 		memcpy(&psnippet[i], snippet, sz);
@@ -804,6 +808,7 @@ callback_pager(void *data, const char *section, const char *name,
 		if (*snippet == '\002')
 			snippet++;
 		while (*snippet && *snippet != '\003') {
+			did = 1;
 			psnippet[i++] = *snippet;
 			psnippet[i++] = '\b';
 			psnippet[i++] = *snippet++;
@@ -813,9 +818,9 @@ callback_pager(void *data, const char *section, const char *name,
 	}
 
 	psnippet[i] = 0;
-	char *ul_section = ul_pager(section);
-	char *ul_name = ul_pager(name);
-	char *ul_name_desc = ul_pager(name_desc);
+	char *ul_section = ul_pager(did, section);
+	char *ul_name = ul_pager(did, name);
+	char *ul_name_desc = ul_pager(did, name_desc);
 	(orig_data->callback)(orig_data->data, ul_section, ul_name,
 	    ul_name_desc, psnippet, psnippet_length);
 	free(ul_section);
