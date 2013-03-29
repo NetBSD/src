@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.13 2013/03/24 19:56:06 christos Exp $
+# $NetBSD: md.sparc64,v 1.14 2013/03/29 21:59:52 christos Exp $
 ./usr/libdata/debug/lib/sparc/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -139,7 +139,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libsl.so.5.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libsqlite3.so.1.1.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libss.so.6.0.debug			comp-compat-shlib	obsolete
-./usr/libdata/debug/usr/lib/sparc/libssh.so.20.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libssh.so.21.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libssl.so.10.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.0.debug		comp-compat-shlib	gcc=4,compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.1.debug		comp-compat-shlib	gcc=45,compat,pic,debug

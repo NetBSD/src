@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.13 2013/03/24 19:56:06 christos Exp $
+# $NetBSD: shl.mi,v 1.14 2013/03/29 21:59:52 christos Exp $
 ./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
@@ -203,7 +203,7 @@
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug	comp-sys-debug	skey,debug
 ./usr/libdata/debug/usr/lib/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.1.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libssh.so.20.0.debug	comp-secsh-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libssh.so.21.0.debug	comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libssl.so.10.1.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug
