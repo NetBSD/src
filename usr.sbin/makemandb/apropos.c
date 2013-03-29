@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.12 2013/02/10 23:58:28 christos Exp $	*/
+/*	$NetBSD: apropos.c,v 1.13 2013/03/29 20:07:31 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.12 2013/02/10 23:58:28 christos Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.13 2013/03/29 20:07:31 christos Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -50,6 +50,7 @@ typedef struct apropos_flags {
 	int pager;
 	int no_context;
 	int no_format;
+	int legacy;
 	const char *machine;
 } apropos_flags;
 
@@ -66,6 +67,62 @@ __dead static void usage(void);
 
 #define _PATH_PAGER	"/usr/bin/more -s"
 
+static void
+parseargs(int argc, char **argv, struct apropos_flags *aflags)
+{
+	int ch;
+	while ((ch = getopt(argc, argv, "123456789Cciln:prS:s:")) != -1) {
+		switch (ch) {
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			aflags->sec_nums[ch - '1'] = 1;
+			break;
+		case 'C':
+			aflags->no_context = 1;
+			break;
+		case 'c':
+			aflags->no_context = 0;
+			break;
+		case 'i':
+			aflags->no_format = 0;
+			break;
+		case 'l':
+			aflags->legacy = 1;
+			aflags->no_context = 1;
+			aflags->no_format = 1;
+			break;
+		case 'n':
+			aflags->nresults = atoi(optarg);
+			break;
+		case 'p':	// user wants a pager
+			aflags->pager = 1;
+			break;
+		case 'r':
+			aflags->no_format = 1;
+			break;
+		case 'S':
+			aflags->machine = optarg;
+			break;
+		case 's':
+			ch = atoi(optarg);
+			if (ch < 1 || ch > 9)
+				errx(EXIT_FAILURE, "Invalid section");
+			aflags->sec_nums[ch - 1] = 1;
+			break;
+		case '?':
+		default:
+			usage();
+		}
+	}
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -73,7 +130,7 @@ main(int argc, char *argv[])
 	char *query = NULL;	// the user query
 	char *errmsg = NULL;
 	char *str;
-	int ch, rc = 0;
+	int rc = 0;
 	int s;
 	callback_data cbdata;
 	cbdata.out = stdout;		// the default output stream
@@ -87,53 +144,30 @@ main(int argc, char *argv[])
 
 	memset(&aflags, 0, sizeof(aflags));
 
-	/*If the user specifies a section number as an option, the corresponding
-	 * index element in sec_nums is set to the string representing that
-	 * section number.
-	 */
-	while ((ch = getopt(argc, argv, "123456789Ccn:prS:s:")) != -1) {
-		switch (ch) {
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			aflags.sec_nums[ch - '1'] = 1;
-			break;
-		case 'C':
-			aflags.no_context = 1;
-			break;
-		case 'c':
-			aflags.no_context = 0;
-			break;
-		case 'n':
-			aflags.nresults = atoi(optarg);
-			break;
-		case 'p':	//user wants to view more than 10 results and page them
-			aflags.pager = 1;
-			aflags.nresults = -1;	// Fetch all records
-			break;
-		case 'r':
-			aflags.no_format = 1;
-			break;
-		case 'S':
-			aflags.machine = optarg;
-			break;
-		case 's':
-			s = atoi(optarg);
-			if (s < 1 || s > 9)
-				errx(EXIT_FAILURE, "Invalid section");
-			aflags.sec_nums[s - 1] = 1;
-			break;
-		case '?':
-		default:
-			usage();
-		}
+	if (!isatty(STDOUT_FILENO))
+		aflags.no_format = 1;
+
+	if ((str = getenv("APROPOS")) != NULL) {
+		char **ptr = emalloc((strlen(str) + 2) * sizeof(*ptr));
+#define WS "\t\n\r "
+		ptr[0] = __UNCONST(getprogname());
+		for (s = 1, str = strtok(str, WS); str;
+		    str = strtok(NULL, WS), s++)
+			ptr[s] = str;
+		ptr[s] = NULL;
+		parseargs(s, ptr, &aflags);
+		free(ptr);
+		optreset = 1;
+		optind = 1;
 	}
+
+	parseargs(argc, argv, &aflags);
+
+	/*
+	 * If the user specifies a section number as an option, the
+	 * corresponding index element in sec_nums is set to the string
+	 * representing that section number.
+	 */
 
 	argc -= optind;
 	argv += optind;
@@ -169,6 +203,7 @@ main(int argc, char *argv[])
 
 	args.search_str = query;
 	args.sec_nums = aflags.sec_nums;
+	args.legacy = aflags.legacy;
 	args.nrec = aflags.nresults ? aflags.nresults : 10;
 	args.offset = 0;
 	args.machine = aflags.machine;
@@ -177,10 +212,10 @@ main(int argc, char *argv[])
 	args.errmsg = &errmsg;
 	args.flags = aflags.no_format ? APROPOS_NOFORMAT : 0;
 
-	if (isatty(STDOUT_FILENO))
-		rc = run_query_term(db, &args);
-	else
+	if (aflags.pager)
 		rc = run_query_pager(db, &args);
+	else
+		rc = run_query_term(db, &args);
 
 	free(query);
 	close_db(db);
@@ -197,8 +232,8 @@ main(int argc, char *argv[])
 
 	if (cbdata.count == 0) {
 		warnx("No relevant results obtained.\n"
-			  "Please make sure that you spelled all the terms correctly "
-			  "or try using better keywords.");
+		    "Please make sure that you spelled all the terms correctly "
+		    "or try using better keywords.");
 	}
 	return 0;
 }
@@ -217,7 +252,8 @@ query_callback(void *data, const char *section, const char *name,
 	callback_data *cbdata = (callback_data *) data;
 	FILE *out = cbdata->out;
 	cbdata->count++;
-	fprintf(out, "%s (%s)\t%s\n", name, section, name_desc);
+	fprintf(out, cbdata->aflags->legacy ? "%s(%s)\t- %s\n" :
+	    "%s (%s)\t%s\n", name, section, name_desc);
 
 	if (cbdata->aflags->no_context == 0)
 		fprintf(out, "%s\n\n", snippet);
@@ -277,8 +313,8 @@ remove_stopwords(const char *query)
 static void
 usage(void)
 {
-	fprintf(stderr,
-		"Usage: %s [-n Number of records] [-123456789Ccp] [-S machine] query\n",
-		getprogname());
+	fprintf(stderr, "Usage: %s [-123456789Ccilpr] [-n <results>] "
+	    "[-s <section>] [-S <machine>] <query>\n",
+	    getprogname());
 	exit(1);
 }
