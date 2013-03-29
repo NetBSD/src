@@ -1,4 +1,4 @@
-/* $NetBSD: t_condwait.c,v 1.1 2013/03/28 18:50:01 christos Exp $ */
+/* $NetBSD: t_condwait.c,v 1.2 2013/03/29 02:32:38 christos Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_condwait.c,v 1.1 2013/03/28 18:50:01 christos Exp $");
+__RCSID("$NetBSD: t_condwait.c,v 1.2 2013/03/29 02:32:38 christos Exp $");
 
 #include <errno.h>
 #include <pthread.h>
@@ -64,7 +64,8 @@ run(void *param)
 	to = ts;
 
 	if (debug)
-		printf("started: %ld.%09ld sec\n", to.tv_sec, to.tv_nsec);
+		printf("started: %lld.%09ld sec\n", (long long)to.tv_sec,
+		    to.tv_nsec);
 
 	ts.tv_sec += WAITTIME;	/* Timeout wait */
 
@@ -74,10 +75,10 @@ run(void *param)
 		ATF_REQUIRE_EQ(clock_gettime(clck, &te), 0);
 		timespecsub(&te, &to, &to);
 		if (debug) {
-			printf("timeout: %ld.%09ld sec\n",
-			    te.tv_sec, te.tv_nsec);
-			printf("elapsed: %ld.%09ld sec\n",
-			    to.tv_sec, to.tv_nsec);
+			printf("timeout: %lld.%09ld sec\n",
+			    (long long)te.tv_sec, te.tv_nsec);
+			printf("elapsed: %lld.%09ld sec\n",
+			    (long long)to.tv_sec, to.tv_nsec);
 		}
 		ATF_REQUIRE_EQ(to.tv_sec, WAITTIME);
 		break;
