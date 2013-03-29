@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.h,v 1.7 2013/02/10 23:58:27 christos Exp $	*/
+/*	$NetBSD: apropos-utils.h,v 1.8 2013/03/29 20:07:31 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -74,6 +74,7 @@ typedef struct query_args {
 	int *sec_nums;		// Section in which to do the search
 	int nrec;			// number of records to fetch
 	int offset;		//From which position to start processing the records
+	int legacy;
 	const char *machine;
 	int (*callback) (void *, const char *, const char *, const char *,
 		const char *, size_t);	// The callback function
