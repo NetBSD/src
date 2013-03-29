@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.66 2013/03/29 02:26:45 christos Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.67 2013/03/29 02:30:18 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.66 2013/03/29 02:26:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.67 2013/03/29 02:30:18 christos Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1161,7 +1161,7 @@ ieee80211_find_node(struct ieee80211_node_table *nt, const u_int8_t *macaddr)
 
 /*
  * Fake up a node; this handles node discovery in adhoc mode.
- * Note that for the driver's benefit we we treat this like
+ * Note that for the driver's benefit we treat this like
  * an association so the driver has an opportunity to setup
  * it's private state.
  */
