@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.22 2012/11/03 23:22:22 njoly Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.23 2013/03/29 01:04:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.22 2012/11/03 23:22:22 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.23 2013/03/29 01:04:30 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -561,7 +561,8 @@ compat_50_netbsd32__lwp_park(struct lwp *l,
 			return error;
 	}
 
-	return lwp_park(tsp, SCARG_P32(uap, hint));
+	return lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, tsp,
+	    SCARG_P32(uap, hint));
 	return 0;
 }
 
