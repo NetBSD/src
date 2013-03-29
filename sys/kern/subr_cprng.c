@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.5.2.7 2013/01/26 21:35:23 bouyer Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.5.2.8 2013/03/29 00:44:28 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.5.2.7 2013/01/26 21:35:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.5.2.8 2013/03/29 00:44:28 msaitoh Exp $");
 
 void
 cprng_init(void)
@@ -157,11 +157,11 @@ cprng_strong_reseed(void *const arg)
 }
 
 static size_t
-cprng_entropy_try(uint8_t *key, size_t keylen, int hard)
+cprng_entropy_try(uint8_t *key, size_t keylen)
 {
 	int r;
 	r = rnd_extract_data(key, keylen, RND_EXTRACT_GOOD);
-	if (r != keylen && !hard) {
+	if (r != keylen) {	/* Always fill in, for safety */
 		rnd_extract_data(key + r, keylen - r, RND_EXTRACT_ANY);
 	}
 	return r;
@@ -196,7 +196,7 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 
 	selinit(&c->selq);
 
-	r = cprng_entropy_try(key, sizeof(key), c->flags & CPRNG_INIT_ANY);
+	r = cprng_entropy_try(key, sizeof(key));
 	if (r != sizeof(key)) {
 		if (c->flags & CPRNG_INIT_ANY) {
 #ifdef DEBUG
@@ -251,7 +251,7 @@ rekeyany:
 		if (c->flags & CPRNG_REKEY_ANY) {
 			uint8_t key[NIST_BLOCK_KEYLEN_BYTES];
 
-			if (cprng_entropy_try(key, sizeof(key), 0) !=
+			if (cprng_entropy_try(key, sizeof(key)) !=
 			    sizeof(key)) {
  				printf("cprng %s: WARNING "
 				       "pseudorandom rekeying.\n", c->name);
