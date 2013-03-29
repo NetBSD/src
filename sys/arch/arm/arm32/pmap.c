@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.253 2013/02/13 23:14:35 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.254 2013/03/29 13:27:08 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.253 2013/02/13 23:14:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.254 2013/03/29 13:27:08 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2502,7 +2502,7 @@ void
 pmap_flush_page(struct vm_page_md *md, paddr_t pa, enum pmap_flush_op flush)
 {
 	vsize_t va_offset, end_va;
-	void (*cf)(vaddr_t, vsize_t);
+	bool wbinv_p;
 
 	if (arm_cache_prefer_mask == 0)
 		return;
@@ -2523,19 +2523,19 @@ pmap_flush_page(struct vm_page_md *md, paddr_t pa, enum pmap_flush_op flush)
 		 * Mark that the page is no longer dirty.
 		 */
 		md->pvh_attrs &= ~PVF_DIRTY;
-		cf = cpufuncs.cf_idcache_wbinv_range;
+		wbinv_p = true;
 		break;
 	case PMAP_FLUSH_SECONDARY:
 		va_offset = 0;
 		end_va = arm_cache_prefer_mask;
-		cf = cpufuncs.cf_idcache_wbinv_range;
+		wbinv_p = true;
 		md->pvh_attrs &= ~PVF_MULTCLR;
 		PMAPCOUNT(vac_flush_lots);
 		break;
 	case PMAP_CLEAN_PRIMARY:
 		va_offset = md->pvh_attrs & arm_cache_prefer_mask;
 		end_va = va_offset;
-		cf = cpufuncs.cf_dcache_wb_range;
+		wbinv_p = false;
 		/*
 		 * Mark that the page is no longer dirty.
 		 */
@@ -2551,6 +2551,8 @@ pmap_flush_page(struct vm_page_md *md, paddr_t pa, enum pmap_flush_op flush)
 
 	NPDEBUG(PDB_VAC, printf("pmap_flush_page: md=%p (attrs=%#x)\n",
 	    md, md->pvh_attrs));
+
+	const size_t scache_line_size = arm_scache.dcache_line_size;
 
 	for (; va_offset <= end_va; va_offset += PAGE_SIZE) {
 		const size_t pte_offset = va_offset >> PGSHIFT;
@@ -2575,7 +2577,22 @@ pmap_flush_page(struct vm_page_md *md, paddr_t pa, enum pmap_flush_op flush)
 		/*
 		 * Flush it.
 		 */
-		(*cf)(cdstp + va_offset, PAGE_SIZE);
+                vaddr_t va = cdstp + va_offset;  
+		if (scache_line_size != 0) {
+			cpu_dcache_wb_range(va, PAGE_SIZE); 
+			if (wbinv_p) {
+				cpu_sdcache_wbinv_range(va, pa, PAGE_SIZE); 
+				cpu_dcache_inv_range(va, PAGE_SIZE);
+			} else {
+				cpu_sdcache_wb_range(va, pa, PAGE_SIZE);
+			}
+		} else {
+			if (wbinv_p) {
+				cpu_dcache_wbinv_range(va, PAGE_SIZE);
+			} else {
+				cpu_dcache_wb_range(va, PAGE_SIZE);
+			}
+		}
 
 		/*
 		 * Restore the page table entry since we might have interrupted
