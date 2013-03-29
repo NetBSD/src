@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.9 2011/12/18 22:30:25 christos Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.10 2013/03/29 01:08:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.9 2011/12/18 22:30:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.10 2013/03/29 01:08:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -216,21 +216,31 @@ gettimeleft(struct timespec *ts, struct timespec *sleepts)
  * Calculate delta and convert from struct timespec to the ticks.
  */
 int
-abstimeout2timo(struct timespec *ts, int *timo)
+ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
+    int *timo, struct timespec *start)
 {
-	struct timespec tsd;
 	int error;
+	struct timespec tsd;
 
-	getnanotime(&tsd);
-	timespecsub(ts, &tsd, &tsd);
-	if (tsd.tv_sec < 0 || (tsd.tv_sec == 0 && tsd.tv_nsec <= 0)) {
+	flags &= TIMER_ABSTIME;
+
+	if (start == NULL || flags)
+		start = &tsd;
+
+	if (start)
+		if ((error = clock_gettime1(clock_id, start)) != 0)
+			return error;
+
+	if (flags)
+		timespecsub(ts, start, ts);
+
+	if (ts->tv_sec < 0 || (ts->tv_sec == 0 && ts->tv_nsec <= 0))
 		return ETIMEDOUT;
-	}
-	error = itimespecfix(&tsd);
-	if (error) {
+
+	if ((error = itimespecfix(ts)) !=  0)
 		return error;
-	}
-	*timo = tstohz(&tsd);
+
+	*timo = tstohz(ts);
 	KASSERT(*timo != 0);
 
 	return 0;

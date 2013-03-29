@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.34 2012/03/13 18:40:53 elad Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.35 2013/03/29 01:08:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.34 2012/03/13 18:40:53 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.35 2013/03/29 01:08:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -655,7 +655,8 @@ mq_recv1(mqd_t mqdes, void *msg_ptr, size_t msg_len, u_int *msg_prio,
 			goto error;
 		}
 		if (ts) {
-			error = abstimeout2timo(ts, &t);
+			error = ts2timo(CLOCK_REALTIME, TIMER_ABSTIME, ts, &t,
+			    NULL);
 			if (error)
 				goto error;
 		} else
@@ -835,7 +836,8 @@ mq_send1(mqd_t mqdes, const char *msg_ptr, size_t msg_len, u_int msg_prio,
 			goto error;
 		}
 		if (ts) {
-			error = abstimeout2timo(ts, &t);
+			error = ts2timo(CLOCK_REALTIME, TIMER_ABSTIME, ts, &t,
+			    NULL);
 			if (error)
 				goto error;
 		} else
