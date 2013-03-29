@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.14 2013/03/29 20:37:00 christos Exp $	*/
+/*	$NetBSD: apropos.c,v 1.15 2013/03/29 21:39:16 wiz Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.14 2013/03/29 20:37:00 christos Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.15 2013/03/29 21:39:16 wiz Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -313,8 +313,8 @@ remove_stopwords(const char *query)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-123456789Ccilpr] [-n <results>] "
-	    "[-s <section>] [-S <machine>] <query>\n",
+	fprintf(stderr, "Usage: %s [-123456789Ccilpr] [-n results] "
+	    "[-S machine] [-s section] query\n",
 	    getprogname());
 	exit(1);
 }
