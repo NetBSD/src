@@ -1,5 +1,5 @@
-/*	$NetBSD: mac.c,v 1.6 2012/12/12 17:42:39 christos Exp $	*/
-/* $OpenBSD: mac.c,v 1.18 2012/06/28 05:07:45 dtucker Exp $ */
+/*	$NetBSD: mac.c,v 1.7 2013/03/29 16:19:45 christos Exp $	*/
+/* $OpenBSD: mac.c,v 1.21 2012/12/11 22:51:45 sthen Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mac.c,v 1.6 2012/12/12 17:42:39 christos Exp $");
+__RCSID("$NetBSD: mac.c,v 1.7 2013/03/29 16:19:45 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/hmac.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: mac.c,v 1.6 2012/12/12 17:42:39 christos Exp $");
 
 #define SSH_EVP		1	/* OpenSSL EVP-based MAC */
 #define SSH_UMAC	2	/* UMAC (not integrated with OpenSSL) */
+#define SSH_UMAC128	3
 
 struct {
 	const char	*name;
@@ -56,19 +57,34 @@ struct {
 	int		truncatebits;	/* truncate digest if != 0 */
 	int		key_len;	/* just for UMAC */
 	int		len;		/* just for UMAC */
+	int		etm;		/* Encrypt-then-MAC */
 } macs[] = {
-	{ "hmac-sha1",			SSH_EVP, EVP_sha1, 0, -1, -1 },
-	{ "hmac-sha1-96",		SSH_EVP, EVP_sha1, 96, -1, -1 },
-	{ "hmac-sha2-256",		SSH_EVP, EVP_sha256, 0, -1, -1 },
-	{ "hmac-sha2-512",		SSH_EVP, EVP_sha512, 0, -1, -1 },
-	{ "hmac-md5",			SSH_EVP, EVP_md5, 0, -1, -1 },
-	{ "hmac-md5-96",		SSH_EVP, EVP_md5, 96, -1, -1 },
-	{ "hmac-ripemd160",		SSH_EVP, EVP_ripemd160, 0, -1, -1 },
-	{ "hmac-ripemd160@openssh.com",	SSH_EVP, EVP_ripemd160, 0, -1, -1 },
+	/* Encrypt-and-MAC (encrypt-and-authenticate) variants */
+	{ "hmac-sha1",				SSH_EVP, EVP_sha1, 0, 0, 0, 0 },
+	{ "hmac-sha1-96",			SSH_EVP, EVP_sha1, 96, 0, 0, 0 },
+	{ "hmac-sha2-256",			SSH_EVP, EVP_sha256, 0, 0, 0, 0 },
+	{ "hmac-sha2-512",			SSH_EVP, EVP_sha512, 0, 0, 0, 0 },
+	{ "hmac-md5",				SSH_EVP, EVP_md5, 0, 0, 0, 0 },
+	{ "hmac-md5-96",			SSH_EVP, EVP_md5, 96, 0, 0, 0 },
+	{ "hmac-ripemd160",			SSH_EVP, EVP_ripemd160, 0, 0, 0, 0 },
+	{ "hmac-ripemd160@openssh.com",		SSH_EVP, EVP_ripemd160, 0, 0, 0, 0 },
 #ifdef UMAC_HAS_BEEN_UNBROKEN
-	{ "umac-64@openssh.com",	SSH_UMAC, NULL, 0, 128, 64 },
+	{ "umac-64@openssh.com",		SSH_UMAC, NULL, 0, 128, 64, 0 },
+	{ "umac-128@openssh.com",		SSH_UMAC128, NULL, 0, 128, 128, 0 },
 #endif
-	{ NULL,				0, NULL, 0, -1, -1 }
+
+	/* Encrypt-then-MAC variants */
+	{ "hmac-sha1-etm@openssh.com",		SSH_EVP, EVP_sha1, 0, 0, 0, 1 },
+	{ "hmac-sha1-96-etm@openssh.com",	SSH_EVP, EVP_sha1, 96, 0, 0, 1 },
+	{ "hmac-sha2-256-etm@openssh.com",	SSH_EVP, EVP_sha256, 0, 0, 0, 1 },
+	{ "hmac-sha2-512-etm@openssh.com",	SSH_EVP, EVP_sha512, 0, 0, 0, 1 },
+	{ "hmac-md5-etm@openssh.com",		SSH_EVP, EVP_md5, 0, 0, 0, 1 },
+	{ "hmac-md5-96-etm@openssh.com",	SSH_EVP, EVP_md5, 96, 0, 0, 1 },
+	{ "hmac-ripemd160-etm@openssh.com",	SSH_EVP, EVP_ripemd160, 0, 0, 0, 1 },
+	{ "umac-64-etm@openssh.com",		SSH_UMAC, NULL, 0, 128, 64, 1 },
+	{ "umac-128-etm@openssh.com",		SSH_UMAC128, NULL, 0, 128, 128, 1 },
+
+	{ NULL,					0, NULL, 0, 0, 0, 0 }
 };
 
 static void
@@ -88,6 +104,7 @@ mac_setup_by_id(Mac *mac, int which)
 	}
 	if (macs[which].truncatebits != 0)
 		mac->mac_len = macs[which].truncatebits / 8;
+	mac->etm = macs[which].etm;
 }
 
 int
@@ -123,6 +140,9 @@ mac_init(Mac *mac)
 	case SSH_UMAC:
 		mac->umac_ctx = umac_new(mac->key);
 		return 0;
+	case SSH_UMAC128:
+		mac->umac_ctx = umac128_new(mac->key);
+		return 0;
 #endif
 	default:
 		return -1;
@@ -157,6 +177,11 @@ mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
 		umac_update(mac->umac_ctx, data, datalen);
 		umac_final(mac->umac_ctx, m, nonce);
 		break;
+	case SSH_UMAC128:
+		put_u64(nonce, seqno);
+		umac128_update(mac->umac_ctx, data, datalen);
+		umac128_final(mac->umac_ctx, m, nonce);
+		break;
 #endif
 	default:
 		fatal("mac_compute: unknown MAC type");
@@ -171,6 +196,9 @@ mac_clear(Mac *mac)
 	if (mac->type == SSH_UMAC) {
 		if (mac->umac_ctx != NULL)
 			umac_delete(mac->umac_ctx);
+	} else if (mac->type == SSH_UMAC128) {
+		if (mac->umac_ctx != NULL)
+			umac128_delete(mac->umac_ctx);
 	} else
 #endif
 	if (mac->evp_md != NULL)

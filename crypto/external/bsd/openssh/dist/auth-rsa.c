@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rsa.c,v 1.6 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: auth-rsa.c,v 1.80 2011/05/23 03:30:07 djm Exp $ */
+/*	$NetBSD: auth-rsa.c,v 1.7 2013/03/29 16:19:44 christos Exp $	*/
+/* $OpenBSD: auth-rsa.c,v 1.81 2012/10/30 21:29:54 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rsa.c,v 1.6 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: auth-rsa.c,v 1.7 2013/03/29 16:19:44 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -361,6 +361,8 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 #endif
 
 	for (i = 0; !allowed && i < options.num_authkeys_files; i++) {
+		if (strcasecmp(options.authorized_keys_files[i], "none") == 0)
+			continue;
 		file = expand_authorized_keys(
 		    options.authorized_keys_files[i], pw);
 		allowed = rsa_key_allowed_in_file(pw, file, client_n, rkey);

@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.c,v 1.9 2012/12/12 17:42:39 christos Exp $	*/
-/* $OpenBSD: channels.c,v 1.318 2012/04/23 08:18:17 djm Exp $ */
+/*	$NetBSD: channels.c,v 1.10 2013/03/29 16:19:45 christos Exp $	*/
+/* $OpenBSD: channels.c,v 1.319 2012/12/02 20:46:11 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.9 2012/12/12 17:42:39 christos Exp $");
+__RCSID("$NetBSD: channels.c,v 1.10 2013/03/29 16:19:45 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -3193,12 +3193,10 @@ channel_add_adm_permitted_opens(char *host, int port)
 void
 channel_disable_adm_local_opens(void)
 {
-	if (num_adm_permitted_opens == 0) {
-		permitted_adm_opens = xmalloc(sizeof(*permitted_adm_opens));
-		permitted_adm_opens[num_adm_permitted_opens].host_to_connect
-		   = NULL;
-		num_adm_permitted_opens = 1;
-	}
+	channel_clear_adm_permitted_opens();
+	permitted_adm_opens = xmalloc(sizeof(*permitted_adm_opens));
+	permitted_adm_opens[num_adm_permitted_opens].host_to_connect = NULL;
+	num_adm_permitted_opens = 1;
 }
 
 void
