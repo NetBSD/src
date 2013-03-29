@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.11 2013/02/10 23:58:27 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.12 2013/03/29 20:07:31 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.11 2013/02/10 23:58:27 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.12 2013/03/29 20:07:31 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -549,18 +549,42 @@ run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
 		default_snippet_args[2] = "...";
 		snippet_args = default_snippet_args;
 	}
-	query = sqlite3_mprintf("SELECT section, name, name_desc, machine,"
-	    " snippet(mandb, %Q, %Q, %Q, -1, 40 ),"
-	    " rank_func(matchinfo(mandb, \"pclxn\")) AS rank"
-	    " FROM mandb"
-	    " WHERE mandb MATCH %Q %s "
-	    "%s"
-	    " ORDER BY rank DESC"
-	    "%s",
-	    snippet_args[0], snippet_args[1], snippet_args[2], args->search_str,
-	    machine_clause ? machine_clause : "",
-	    section_clause ? section_clause : "",
-	    limit_clause ? limit_clause : "");
+	if (args->legacy) {
+	    query = sqlite3_mprintf("SELECT section, name, name_desc, machine,"
+		" snippet(mandb, %Q, %Q, %Q, -1, 40 ),"
+		" rank_func(matchinfo(mandb, \"pclxn\")) AS rank"
+		" FROM mandb"
+		" WHERE name MATCH %Q "
+		"%s"
+		" UNION SELECT section, name, name_desc, machine,"
+		" snippet(mandb, %Q, %Q, %Q, -1, 40 ),"
+		" rank_func(matchinfo(mandb, \"pclxn\")) AS rank"
+		" FROM mandb"
+		" WHERE name_desc MATCH %Q "
+		"%s"
+		" ORDER BY rank DESC"
+		"%s",
+		snippet_args[0], snippet_args[1], snippet_args[2],
+		args->search_str,
+		section_clause ? section_clause : "",
+		snippet_args[0], snippet_args[1], snippet_args[2],
+		args->search_str,
+		section_clause ? section_clause : "",
+		limit_clause ? limit_clause : "");
+	} else {
+	    query = sqlite3_mprintf("SELECT section, name, name_desc, machine,"
+		" snippet(mandb, %Q, %Q, %Q, -1, 40 ),"
+		" rank_func(matchinfo(mandb, \"pclxn\")) AS rank"
+		" FROM mandb"
+		" WHERE mandb MATCH %Q %s "
+		"%s"
+		" ORDER BY rank DESC"
+		"%s",
+		snippet_args[0], snippet_args[1], snippet_args[2],
+		args->search_str, machine_clause ? machine_clause : "",
+		section_clause ? section_clause : "",
+		limit_clause ? limit_clause : "");
+	}
 
 	free(machine_clause);
 	free(section_clause);
@@ -862,7 +886,15 @@ run_query_pager(sqlite3 *db, query_args *args)
 	struct orig_callback_data orig_data;
 	orig_data.callback = args->callback;
 	orig_data.data = args->callback_data;
-	const char *snippet_args[] = {"\002", "\003", "..."};
+	const char *snippet_args[3];
+
+	if (args->flags & APROPOS_NOFORMAT) {
+		snippet_args[0] = snippet_args[1] = "";
+	} else {
+		snippet_args[0] = "\002";
+		snippet_args[1] = "\003";
+	}
+	snippet_args[2] = "...";
 	args->callback = &callback_pager;
 	args->callback_data = (void *) &orig_data;
 	return run_query(db, snippet_args, args);

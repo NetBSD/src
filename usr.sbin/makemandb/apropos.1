@@ -1,4 +1,4 @@
-.\" $NetBSD: apropos.1,v 1.7 2013/02/10 23:58:28 christos Exp $
+.\" $NetBSD: apropos.1,v 1.8 2013/03/29 20:07:31 christos Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 10, 2013
+.Dd March 29, 2013
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd search the complete content of all man pages
 .Sh SYNOPSIS
 .Nm
-.Op Fl 123456789Ccpr
+.Op Fl 123456789Ccilpr
 .Op Fl n Ar Number of results
 .Op Fl S Ar machine
 .Op Fl s Ar section
@@ -88,11 +88,16 @@ Search only within section 9 manual pages.
 Do not show the context of the match.
 .It Fl c
 Do show the context of the match (default).
+.It Fl i
+Turn on escape code formatting.
+.It Fl l
+Legacy mode: Only searches name and name description.
+Does not print context, or escape format the text.
 .It Fl n
 Output up to the specified number of search results.
-The default limit is 10.
+The default limit is infinity.
 .It Fl p
-Display all matching results and pipe them through a pager (defaulting to
+Pipe the results through a pager (defaulting to
 .Xr more 1 ) .
 .It Fl r
 On tty output don't issue any formatting escape codes.
@@ -114,6 +119,12 @@ The location of the Sqlite FTS database can be configured using the
 .Cd _mandb
 tag.
 .El
+.Sh ENVIRONMENT VARIABLES
+The
+.Dv APROPOS
+environment variables is white-space tokenized as an argument vector
+and the options in it are parsed and set.
+Command line options override the environment options.
 .Sh SEE ALSO
 .Xr man 1 ,
 .Xr whatis 1 ,
