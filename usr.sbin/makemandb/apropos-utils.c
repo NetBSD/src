@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.12 2013/03/29 20:07:31 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.13 2013/03/29 20:37:00 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.12 2013/03/29 20:07:31 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.13 2013/03/29 20:37:00 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -550,27 +550,21 @@ run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
 		snippet_args = default_snippet_args;
 	}
 	if (args->legacy) {
+	    char *wild;
+	    easprintf(&wild, "%%%s%%", args->search_str);
 	    query = sqlite3_mprintf("SELECT section, name, name_desc, machine,"
-		" snippet(mandb, %Q, %Q, %Q, -1, 40 ),"
-		" rank_func(matchinfo(mandb, \"pclxn\")) AS rank"
+		" snippet(mandb, %Q, %Q, %Q, -1, 40 )"
 		" FROM mandb"
-		" WHERE name MATCH %Q "
+		" WHERE name LIKE %Q OR name_desc LIKE %Q "
 		"%s"
-		" UNION SELECT section, name, name_desc, machine,"
-		" snippet(mandb, %Q, %Q, %Q, -1, 40 ),"
-		" rank_func(matchinfo(mandb, \"pclxn\")) AS rank"
-		" FROM mandb"
-		" WHERE name_desc MATCH %Q "
-		"%s"
-		" ORDER BY rank DESC"
 		"%s",
 		snippet_args[0], snippet_args[1], snippet_args[2],
-		args->search_str,
+		wild,
 		section_clause ? section_clause : "",
 		snippet_args[0], snippet_args[1], snippet_args[2],
-		args->search_str,
 		section_clause ? section_clause : "",
 		limit_clause ? limit_clause : "");
+		free(wild);
 	} else {
 	    query = sqlite3_mprintf("SELECT section, name, name_desc, machine,"
 		" snippet(mandb, %Q, %Q, %Q, -1, 40 ),"

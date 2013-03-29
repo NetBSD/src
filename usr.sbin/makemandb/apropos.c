@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.13 2013/03/29 20:07:31 christos Exp $	*/
+/*	$NetBSD: apropos.c,v 1.14 2013/03/29 20:37:00 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.13 2013/03/29 20:07:31 christos Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.14 2013/03/29 20:37:00 christos Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -204,7 +204,7 @@ main(int argc, char *argv[])
 	args.search_str = query;
 	args.sec_nums = aflags.sec_nums;
 	args.legacy = aflags.legacy;
-	args.nrec = aflags.nresults ? aflags.nresults : 10;
+	args.nrec = aflags.nresults ? aflags.nresults : -1;
 	args.offset = 0;
 	args.machine = aflags.machine;
 	args.callback = &query_callback;
@@ -252,7 +252,7 @@ query_callback(void *data, const char *section, const char *name,
 	callback_data *cbdata = (callback_data *) data;
 	FILE *out = cbdata->out;
 	cbdata->count++;
-	fprintf(out, cbdata->aflags->legacy ? "%s(%s)\t- %s\n" :
+	fprintf(out, cbdata->aflags->legacy ? "%s(%s) - %s\n" :
 	    "%s (%s)\t%s\n", name, section, name_desc);
 
 	if (cbdata->aflags->no_context == 0)

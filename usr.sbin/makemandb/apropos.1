@@ -1,4 +1,4 @@
-.\" $NetBSD: apropos.1,v 1.9 2013/03/29 20:17:19 christos Exp $
+.\" $NetBSD: apropos.1,v 1.10 2013/03/29 20:37:00 christos Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -77,21 +77,6 @@ Turn on escape code formatting.
 .It Fl l
 Legacy mode: Only searches name and name description.
 Does not print context, or escape format the text.
-Note that this still does not behave exactly like the old
-.Nm
-did because FTS can only search for words, not partial words.
-For example
-.Nm
-used to return
-.Dq xlsfonts
-when searching for
-.Dq ls ,
-but now it cannot.
-One can approximate the behavior better by searching for
-.Dq ls*
-and this works because the index is sorted, but unfortunately
-.Dq *ls*
-does not work.
 .It Fl n
 Output up to the specified number of search results.
 The default limit is infinity.
