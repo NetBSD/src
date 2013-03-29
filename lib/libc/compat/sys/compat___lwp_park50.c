@@ -1,11 +1,11 @@
-/*	$NetBSD: lwp.h,v 1.3 2013/03/29 02:09:58 christos Exp $	*/
+/*	$NetBSD: compat___lwp_park50.c,v 1.1 2013/03/29 02:09:58 christos Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Christos Zoulas <christos@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -35,15 +28,40 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _COMPAT_LWP_H_
-#define _COMPAT_LWP_H_
 
-__BEGIN_DECLS
-struct timespec50;
-int	_lwp_park(const struct timespec50 *, lwpid_t, const void *, const void *);
-int	___lwp_park50(const struct timespec *, lwpid_t, const void *, const void *);
-int	___lwp_park60(clockid_t , int, const struct timespec *, lwpid_t,
-    const void *, const void *);
-__END_DECLS
 
-#endif /* !_COMPAT_LWP_H_ */
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: compat___lwp_park50.c,v 1.1 2013/03/29 02:09:58 christos Exp $");
+#endif /* LIBC_SCCS and not lint */
+
+#define __LIBC12_SOURCE__
+
+#include <sys/types.h>
+#include <sys/mount.h>
+#include <compat/include/fstypes.h>
+#include <compat/sys/mount.h>
+#include <compat/include/lwp.h>
+
+#ifndef notyet
+#include <unistd.h>
+#include <sys/syscall.h>
+#endif
+
+__warn_references(fhstat,
+    "warning: reference to compatibility ___lwp_park50(); include <lwp.h> to generate correct reference")
+
+/*
+ * Convert old __lwp_park() call to new
+ */
+int
+___lwp_park50(const struct timespec *ts, lwpid_t unpark, const void *hint,
+	const void *unparkhint)
+{
+#ifdef notyet
+	return ___lwp_park60(CLOCK_REALTIME, TIMER_ABSTIME, ts,  unpark,
+	    hint, unparkhint);
+#else
+	return syscall(SYS_compat_60__lwp_park, ts, unpark, hint, unparkhint);
+#endif
+}
