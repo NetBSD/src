@@ -1,4 +1,4 @@
-.\"	$NetBSD: tree.3,v 1.9 2013/03/29 21:16:31 christos Exp $
+.\"	$NetBSD: tree.3,v 1.10 2013/03/29 21:45:27 wiz Exp $
 .\"	$OpenBSD: tree.3,v 1.23 2011/07/09 08:43:01 jmc Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -24,7 +24,7 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.Dd July 9 2011
+.Dd July 9, 2011
 .Dt TREE 3
 .Os
 .Sh NAME
@@ -241,11 +241,7 @@ macro, but should be used only once.
 Finally,
 the
 .Fa CMP
-<<<<<<< tree.3
 argument is the name of a function used to compare trees' nodes
-=======
-argument is the name of a function used to compare tree nodes
->>>>>>> 1.8
 with each other.
 The function takes two arguments of type
 .Fa "struct TYPE *" .
@@ -273,7 +269,7 @@ macro inserts the new element
 .Fa elm
 into the tree.
 Upon success,
-.Va NULL
+.Dv NULL
 is returned.
 If a matching element already exists in the tree, the insertion is
 aborted, and a pointer to the existing element is returned.
@@ -285,7 +281,7 @@ macro removes the element
 from the tree pointed by
 .Fa head .
 Upon success, a pointer to the removed element is returned.
-.Va NULL
+.Dv NULL
 is returned if
 .Fa elm
 is not present in the tree.
@@ -418,7 +414,7 @@ macro inserts the new element
 .Fa elm
 into the tree.
 Upon success,
-.Va NULL
+.Dv NULL
 is returned.
 If a matching element already exists in the tree, the insertion is
 aborted, and a pointer to the existing element is returned.
@@ -455,7 +451,7 @@ The
 .Fn RB_ROOT ,
 .Fn RB_MIN ,
 .Fn RB_MAX ,
-.Fn RB_NEXT,
+.Fn RB_NEXT ,
 and
 .Fn RB_PREV
 macros can be used to traverse the tree:
