@@ -1,4 +1,5 @@
-/*	$NetBSD: ssh-add.c,v 1.6 2012/05/02 02:41:08 christos Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.7 2013/03/29 16:19:45 christos Exp $	*/
+/* $OpenBSD: ssh-add.c,v 1.105 2012/12/05 15:42:52 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-add.c,v 1.6 2012/05/02 02:41:08 christos Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.7 2013/03/29 16:19:45 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -92,10 +93,10 @@ clear_pass(void)
 }
 
 static int
-delete_file(AuthenticationConnection *ac, const char *filename)
+delete_file(AuthenticationConnection *ac, const char *filename, int key_only)
 {
-	Key *public;
-	char *comment = NULL;
+	Key *public = NULL, *cert = NULL;
+	char *certpath = NULL, *comment = NULL;
 	int ret = -1;
 
 	public = key_load_public(filename, &comment);
@@ -109,8 +110,33 @@ delete_file(AuthenticationConnection *ac, const char *filename)
 	} else
 		fprintf(stderr, "Could not remove identity: %s\n", filename);
 
-	key_free(public);
-	xfree(comment);
+	if (key_only)
+		goto out;
+
+	/* Now try to delete the corresponding certificate too */
+	free(comment);
+	comment = NULL;
+	xasprintf(&certpath, "%s-cert.pub", filename);
+	if ((cert = key_load_public(certpath, &comment)) == NULL)
+		goto out;
+	if (!key_equal_public(cert, public))
+		fatal("Certificate %s does not match private key %s",
+		    certpath, filename);
+
+	if (ssh_remove_identity(ac, cert)) {
+		fprintf(stderr, "Identity removed: %s (%s)\n", certpath,
+		    comment);
+		ret = 0;
+	} else
+		fprintf(stderr, "Could not remove identity: %s\n", certpath);
+
+ out:
+	if (cert != NULL)
+		key_free(cert);
+	if (public != NULL)
+		key_free(public);
+	free(certpath);
+	free(comment);
 
 	return ret;
 }
@@ -350,7 +376,7 @@ static int
 do_file(AuthenticationConnection *ac, int deleting, int key_only, char *file)
 {
 	if (deleting) {
-		if (delete_file(ac, file) == -1)
+		if (delete_file(ac, file, key_only) == -1)
 			return -1;
 	} else {
 		if (add_file(ac, file, key_only) == -1)
