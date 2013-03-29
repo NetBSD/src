@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-options.c,v 1.5 2012/05/02 02:41:08 christos Exp $	*/
-/* $OpenBSD: auth-options.c,v 1.56 2011/10/18 04:58:26 djm Exp $ */
+/*	$NetBSD: auth-options.c,v 1.6 2013/03/29 16:19:44 christos Exp $	*/
+/* $OpenBSD: auth-options.c,v 1.57 2012/12/02 20:46:11 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.5 2012/05/02 02:41:08 christos Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.6 2013/03/29 16:19:44 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -352,7 +352,7 @@ auth_parse_options(struct passwd *pw, const char *opts, const char *file,
 				xfree(patterns);
 				goto bad_option;
 			}
-			if (options.allow_tcp_forwarding)
+			if ((options.allow_tcp_forwarding & FORWARD_LOCAL) != 0)
 				channel_add_permitted_opens(host, port);
 			xfree(patterns);
 			goto next_option;

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth1.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: auth1.c,v 1.75 2010/08/31 09:58:37 djm Exp $ */
+/*	$NetBSD: auth1.c,v 1.6 2013/03/29 16:19:44 christos Exp $	*/
+/* $OpenBSD: auth1.c,v 1.77 2012/12/02 20:34:09 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth1.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.6 2013/03/29 16:19:44 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -322,7 +322,8 @@ do_authloop(Authctxt *authctxt)
  		if (options.use_pam && PRIVSEP(do_pam_account()))
 #endif
 		{
-			auth_log(authctxt, 1, "without authentication", "");
+			auth_log(authctxt, 1, 0, "without authentication",
+			    NULL, "");
 			return;
 		}
 		return;
@@ -396,7 +397,8 @@ do_authloop(Authctxt *authctxt)
 
  skip:
 		/* Log before sending the reply */
-		auth_log(authctxt, authenticated, get_authname(type), info);
+		auth_log(authctxt, authenticated, 0, get_authname(type),
+		    NULL, info);
 
 		if (authenticated)
 			return;
@@ -450,6 +452,11 @@ do_authentication(Authctxt *authctxt)
 		debug("do_authentication: invalid user %s", user);
 		authctxt->pw = fakepw();
 	}
+
+	/* Configuration may have changed as a result of Match */
+	if (options.num_auth_methods != 0)
+		fatal("AuthenticationMethods is not supported with SSH "
+		    "protocol 1");
 
 	setproctitle("%s%s", authctxt->valid ? user : "unknown",
 	    use_privsep ? " [net]" : "");
