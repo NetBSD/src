@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.175 2012/10/02 01:44:28 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.176 2013/03/29 01:08:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.175 2012/10/02 01:44:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.176 2013/03/29 01:08:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -346,16 +346,11 @@ nanosleep1(struct lwp *l, clockid_t clock_id, int flags, struct timespec *rqt,
 	struct timespec rmtstart;
 	int error, timo;
 
-	if ((error = clock_gettime1(clock_id, &rmtstart)) != 0)
-		return ENOTSUP;
+	if ((error = ts2timo(clock_id, flags, rqt, &timo, &rmtstart)) != 0) {
+		if (error == ETIMEDOUT)
+			timo = 0;
+	}
 
-	if (flags & TIMER_ABSTIME)
-		timespecsub(rqt, &rmtstart, rqt);
-
-	if ((error = itimespecfix(rqt)) != 0)
-		return error;
-
-	timo = tstohz(rqt);
 	/*
 	 * Avoid inadvertently sleeping forever
 	 */

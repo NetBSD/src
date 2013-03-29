@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.261 2012/10/02 01:44:28 christos Exp $
+	$NetBSD: syscalls.master,v 1.262 2013/03/29 01:08:17 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -834,7 +834,7 @@
 433	STD MODULAR	{ ssize_t|sys|50|mq_timedreceive(mqd_t mqdes, \
 			    char *msg_ptr, size_t msg_len, unsigned *msg_prio, \
 			    const struct timespec *abs_timeout); }
-434	STD 		{ int|sys|50|_lwp_park(const struct timespec *ts, \
+434	COMPAT_60 MODULAR { int|sys||_lwp_park(const struct timespec *ts, \
 				lwpid_t unpark, const void *hint, \
 				const void *unparkhint); }
 435	STD	RUMP	{ int|sys|50|kevent(int fd, \
@@ -941,3 +941,6 @@
 477	STD 		{ int|sys||clock_nanosleep(clockid_t clock_id, \
 			    int flags, const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
+478	STD 		{ int|sys|60|_lwp_park(clockid_t clock_id, int flags, \
+			    const struct timespec *ts, lwpid_t unpark, \
+			    const void *hint, const void *unparkhint); }
