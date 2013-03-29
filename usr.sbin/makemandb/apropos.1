@@ -1,4 +1,4 @@
-.\" $NetBSD: apropos.1,v 1.10 2013/03/29 20:37:00 christos Exp $
+.\" $NetBSD: apropos.1,v 1.11 2013/03/29 21:39:09 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl 123456789Ccilpr
-.Op Fl n Ar Number of results
+.Op Fl n Ar results
 .Op Fl S Ar machine
 .Op Fl s Ar section
 .Ar query
@@ -77,7 +77,7 @@ Turn on escape code formatting.
 .It Fl l
 Legacy mode: Only searches name and name description.
 Does not print context, or escape format the text.
-.It Fl n
+.It Fl n Ar results
 Output up to the specified number of search results.
 The default limit is infinity.
 .It Fl p
@@ -105,7 +105,7 @@ tag.
 .El
 .Sh ENVIRONMENT VARIABLES
 The
-.Dv APROPOS
+.Ev APROPOS
 environment variables is white-space tokenized as an argument vector
 and the options in it are parsed and set.
 Command line options override the environment options.
