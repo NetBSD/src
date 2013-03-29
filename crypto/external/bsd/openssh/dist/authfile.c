@@ -1,5 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.6 2012/05/02 02:41:08 christos Exp $	*/
-/* $OpenBSD: authfile.c,v 1.93 2012/01/25 19:36:31 markus Exp $ */
+/*	$NetBSD: authfile.c,v 1.7 2013/03/29 16:19:45 christos Exp $	*/
+/* $OpenBSD: authfile.c,v 1.95 2013/01/08 18:49:04 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.6 2012/05/02 02:41:08 christos Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.7 2013/03/29 16:19:45 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -147,7 +147,7 @@ key_private_rsa1_to_blob(Key *key, Buffer *blob, const char *passphrase,
 	cipher_set_key_string(&ciphercontext, cipher, passphrase,
 	    CIPHER_ENCRYPT);
 	cipher_crypt(&ciphercontext, cp,
-	    buffer_ptr(&buffer), buffer_len(&buffer));
+	    buffer_ptr(&buffer), buffer_len(&buffer), 0, 0);
 	cipher_cleanup(&ciphercontext);
 	memset(&ciphercontext, 0, sizeof(ciphercontext));
 
@@ -465,7 +465,7 @@ key_parse_private_rsa1(Buffer *blob, const char *passphrase, char **commentp)
 	cipher_set_key_string(&ciphercontext, cipher, passphrase,
 	    CIPHER_DECRYPT);
 	cipher_crypt(&ciphercontext, cp,
-	    buffer_ptr(&copy), buffer_len(&copy));
+	    buffer_ptr(&copy), buffer_len(&copy), 0, 0);
 	cipher_cleanup(&ciphercontext);
 	memset(&ciphercontext, 0, sizeof(ciphercontext));
 	buffer_free(&copy);

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: auth.h,v 1.69 2011/05/23 03:30:07 djm Exp $ */
+/*	$NetBSD: auth.h,v 1.6 2013/03/29 16:19:44 christos Exp $	*/
+/* $OpenBSD: auth.h,v 1.72 2012/12/02 20:34:09 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -68,6 +68,8 @@ struct Authctxt {
 #ifdef KRB4
 	char		*krb4_ticket_file;
 #endif 
+	char		**auth_methods;	/* modified from server config */
+	u_int		 num_auth_methods;
 #ifdef KRB5
 	krb5_context	 krb5_ctx;
 	krb5_auth_context krb5_auth_ctx;
@@ -142,6 +144,10 @@ int     auth_afs_token(Authctxt *, const char *);
 
 #endif /* KRB4 */
 
+struct stat;
+int	 auth_secure_path(const char *, struct stat *, const char *, uid_t,
+    char *, size_t);
+
 #ifdef KRB5
 int	auth_krb5(Authctxt *authctxt, krb5_data *auth, char **client, krb5_data *);
 int	auth_krb5_tgt(Authctxt *authctxt, krb5_data *tgt);
@@ -152,12 +158,15 @@ void	krb5_cleanup_proc(Authctxt *authctxt);
 void	do_authentication(Authctxt *);
 void	do_authentication2(Authctxt *);
 
-void	auth_log(Authctxt *, int, const char *, const char *);
-void	userauth_finish(Authctxt *, int, const char *);
-void	userauth_send_banner(const char *);
+void	auth_log(Authctxt *, int, int, const char *, const char *,
+    const char *);
+void	userauth_finish(Authctxt *, int, const char *, const char *);
 int	auth_root_allowed(const char *);
 
 char	*auth2_read_banner(void);
+int	 auth2_methods_valid(const char *, int);
+int	 auth2_update_methods_lists(Authctxt *, const char *);
+int	 auth2_setup_methods_lists(Authctxt *);
 
 void	privsep_challenge_enable(void);
 
