@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.11 2012/12/12 17:42:39 christos Exp $	*/
-/* $OpenBSD: key.c,v 1.99 2012/05/23 03:28:28 djm Exp $ */
+/*	$NetBSD: key.c,v 1.12 2013/03/29 16:19:45 christos Exp $	*/
+/* $OpenBSD: key.c,v 1.100 2013/01/17 23:00:01 djm Exp $ */
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: key.c,v 1.11 2012/12/12 17:42:39 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.12 2013/03/29 16:19:45 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 
@@ -53,6 +53,8 @@ __RCSID("$NetBSD: key.c,v 1.11 2012/12/12 17:42:39 christos Exp $");
 #include "log.h"
 #include "misc.h"
 #include "ssh2.h"
+
+static int to_blob(const Key *, u_char **, u_int *, int);
 
 static struct KeyCert *
 cert_new(void)
@@ -315,14 +317,15 @@ key_equal(const Key *a, const Key *b)
 }
 
 u_char*
-key_fingerprint_raw(Key *k, enum fp_type dgst_type, u_int *dgst_raw_length)
+key_fingerprint_raw(const Key *k, enum fp_type dgst_type,
+    u_int *dgst_raw_length)
 {
 	const EVP_MD *md = NULL;
 	EVP_MD_CTX ctx;
 	u_char *blob = NULL;
 	u_char *retval = NULL;
 	u_int len = 0;
-	int nlen, elen, otype;
+	int nlen, elen;
 
 	*dgst_raw_length = 0;
 
@@ -360,10 +363,7 @@ key_fingerprint_raw(Key *k, enum fp_type dgst_type, u_int *dgst_raw_length)
 	case KEY_ECDSA_CERT:
 	case KEY_RSA_CERT:
 		/* We want a fingerprint of the _key_ not of the cert */
-		otype = k->type;
-		k->type = key_type_plain(k->type);
-		key_to_blob(k, &blob, &len);
-		k->type = otype;
+		to_blob(k, &blob, &len, 1);
 		break;
 	case KEY_UNSPEC:
 		return retval;
@@ -1533,18 +1533,19 @@ key_from_blob(const u_char *blob, u_int blen)
 	return key;
 }
 
-int
-key_to_blob(const Key *key, u_char **blobp, u_int *lenp)
+static int
+to_blob(const Key *key, u_char **blobp, u_int *lenp, int force_plain)
 {
 	Buffer b;
-	int len;
+	int len, type;
 
 	if (key == NULL) {
 		error("key_to_blob: key == NULL");
 		return 0;
 	}
 	buffer_init(&b);
-	switch (key->type) {
+	type = force_plain ? key_type_plain(key->type) : key->type;
+	switch (type) {
 	case KEY_DSA_CERT_V00:
 	case KEY_RSA_CERT_V00:
 	case KEY_DSA_CERT:
@@ -1555,20 +1556,23 @@ key_to_blob(const Key *key, u_char **blobp, u_int *lenp)
 		    buffer_len(&key->cert->certblob));
 		break;
 	case KEY_DSA:
-		buffer_put_cstring(&b, key_ssh_name(key));
+		buffer_put_cstring(&b,
+		    key_ssh_name_from_type_nid(type, key->ecdsa_nid));
 		buffer_put_bignum2(&b, key->dsa->p);
 		buffer_put_bignum2(&b, key->dsa->q);
 		buffer_put_bignum2(&b, key->dsa->g);
 		buffer_put_bignum2(&b, key->dsa->pub_key);
 		break;
 	case KEY_ECDSA:
-		buffer_put_cstring(&b, key_ssh_name(key));
+		buffer_put_cstring(&b,
+		    key_ssh_name_from_type_nid(type, key->ecdsa_nid));
 		buffer_put_cstring(&b, key_curve_nid_to_name(key->ecdsa_nid));
 		buffer_put_ecpoint(&b, EC_KEY_get0_group(key->ecdsa),
 		    EC_KEY_get0_public_key(key->ecdsa));
 		break;
 	case KEY_RSA:
-		buffer_put_cstring(&b, key_ssh_name(key));
+		buffer_put_cstring(&b,
+		    key_ssh_name_from_type_nid(type, key->ecdsa_nid));
 		buffer_put_bignum2(&b, key->rsa->e);
 		buffer_put_bignum2(&b, key->rsa->n);
 		break;
@@ -1587,6 +1591,12 @@ key_to_blob(const Key *key, u_char **blobp, u_int *lenp)
 	memset(buffer_ptr(&b), 0, len);
 	buffer_free(&b);
 	return len;
+}
+
+int
+key_to_blob(const Key *key, u_char **blobp, u_int *lenp)
+{
+	return to_blob(key, blobp, lenp, 0);
 }
 
 int
@@ -1960,7 +1970,7 @@ key_cert_check_authority(const Key *k, int want_host, int require_principal,
 }
 
 int
-key_cert_is_legacy(Key *k)
+key_cert_is_legacy(const Key *k)
 {
 	switch (k->type) {
 	case KEY_DSA_CERT_V00:
