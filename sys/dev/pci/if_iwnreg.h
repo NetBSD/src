@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnreg.h,v 1.10 2011/10/08 09:15:08 elric Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.11 2013/03/30 14:14:31 christos Exp $	*/
 /*	$OpenBSD: if_iwnreg.h,v 1.40 2010/05/05 19:41:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,6 @@
  */
 
 /* XXX Added for NetBSD */
-#define EDCA_NUM_AC		4
 #define IEEE80211_TKIP_MICLEN	8
 
 #define IWN_TX_RING_COUNT	256
@@ -536,7 +535,7 @@ struct iwn_edca_params {
 		uint8_t		aifsn;
 		uint8_t		reserved;
 		uint16_t	txoplimit;
-	} __packed	ac[EDCA_NUM_AC];
+	} __packed	ac[WME_NUM_AC];
 } __packed;
 
 /* Structure for command IWN_CMD_TIMING. */
@@ -687,7 +686,7 @@ struct iwn_cmd_link_quality {
 	uint8_t		mimo;
 	uint8_t		antmsk_1stream;
 	uint8_t		antmsk_2stream;
-	uint8_t		ridx[EDCA_NUM_AC];
+	uint8_t		ridx[WME_NUM_AC];
 	uint16_t	ampdu_limit;
 	uint8_t		ampdu_threshold;
 	uint8_t		ampdu_max;

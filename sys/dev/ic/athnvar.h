@@ -1,4 +1,4 @@
-/*	$NetBSD: athnvar.h,v 1.1 2013/03/30 02:53:02 christos Exp $	*/
+/*	$NetBSD: athnvar.h,v 1.2 2013/03/30 14:14:30 christos Exp $	*/
 /*	$OpenBSD: athnvar.h,v 1.33 2012/10/20 09:54:20 stsp Exp $	*/
 
 /*-
@@ -254,11 +254,11 @@ struct athn_serdes {
 #define ATHN_QID_COUNT		8
 
 /* Map Access Category to Tx queue Id. */
-static const uint8_t athn_ac2qid[EDCA_NUM_AC] = {
-	ATHN_QID_AC_BE,	/* EDCA_AC_BE */
-	ATHN_QID_AC_BK,	/* EDCA_AC_BK */
-	ATHN_QID_AC_VI,	/* EDCA_AC_VI */
-	ATHN_QID_AC_VO	/* EDCA_AC_VO */
+static const uint8_t athn_ac2qid[WME_NUM_AC] = {
+	ATHN_QID_AC_BE,	/* WME_AC_BE */
+	ATHN_QID_AC_BK,	/* WME_AC_BK */
+	ATHN_QID_AC_VI,	/* WME_AC_VI */
+	ATHN_QID_AC_VO	/* WME_AC_VO */
 };
 
 static const uint8_t athn_5ghz_chans[] = {

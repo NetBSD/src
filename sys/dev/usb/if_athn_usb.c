@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.2 2013/03/30 03:12:39 christos Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.3 2013/03/30 14:14:31 christos Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.2 2013/03/30 03:12:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.3 2013/03/30 14:14:31 christos Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -134,7 +134,7 @@ Static void	athn_usb_rx_enable(struct athn_softc *);
 Static void	athn_usb_rx_frame(struct athn_usb_softc *, struct mbuf *);
 Static void	athn_usb_rx_radiotap(struct athn_softc *, struct mbuf *,
 		    struct ar_rx_status *);
-Static void	athn_usb_rx_wmi_ctrl(struct athn_usb_softc *, uint8_t *, int);
+Static void	athn_usb_rx_wmi_ctrl(struct athn_usb_softc *, uint8_t *, size_t);
 Static void	athn_usb_rxeof(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
 Static void	athn_usb_start(struct ifnet *);
@@ -813,7 +813,7 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 		name = "athn-ar9271";
 
 	/* Read firmware image from the filesystem. */
-	if ((error = firmware_open("if_athn", name, &fwh)) != 0) {
+	if ((error = firmware_open("if_athn_usb", name, &fwh)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed to open firmware file %s (%d)\n", name, error);
 		return error;
@@ -938,19 +938,19 @@ athn_usb_htc_setup(struct athn_usb_softc *usc)
 	if (error != 0)
 		return error;
 	error = athn_usb_htc_connect_svc(usc, AR_SVC_WMI_DATA_BE,
-	    AR_PIPE_TX_DATA, AR_PIPE_RX_DATA, &usc->usc_ep_data[EDCA_AC_BE]);
+	    AR_PIPE_TX_DATA, AR_PIPE_RX_DATA, &usc->usc_ep_data[WME_AC_BE]);
 	if (error != 0)
 		return error;
 	error = athn_usb_htc_connect_svc(usc, AR_SVC_WMI_DATA_BK,
-	    AR_PIPE_TX_DATA, AR_PIPE_RX_DATA, &usc->usc_ep_data[EDCA_AC_BK]);
+	    AR_PIPE_TX_DATA, AR_PIPE_RX_DATA, &usc->usc_ep_data[WME_AC_BK]);
 	if (error != 0)
 		return error;
 	error = athn_usb_htc_connect_svc(usc, AR_SVC_WMI_DATA_VI,
-	    AR_PIPE_TX_DATA, AR_PIPE_RX_DATA, &usc->usc_ep_data[EDCA_AC_VI]);
+	    AR_PIPE_TX_DATA, AR_PIPE_RX_DATA, &usc->usc_ep_data[WME_AC_VI]);
 	if (error != 0)
 		return error;
 	error = athn_usb_htc_connect_svc(usc, AR_SVC_WMI_DATA_VO,
-	    AR_PIPE_TX_DATA, AR_PIPE_RX_DATA, &usc->usc_ep_data[EDCA_AC_VO]);
+	    AR_PIPE_TX_DATA, AR_PIPE_RX_DATA, &usc->usc_ep_data[WME_AC_VO]);
 	if (error != 0)
 		return error;
 
@@ -1833,7 +1833,7 @@ athn_usb_swba(struct athn_usb_softc *usc)
 #endif
 
 Static void
-athn_usb_rx_wmi_ctrl(struct athn_usb_softc *usc, uint8_t *buf, int len)
+athn_usb_rx_wmi_ctrl(struct athn_usb_softc *usc, uint8_t *buf, size_t len)
 {
 #ifdef ATHN_DEBUG
 	struct ar_wmi_evt_txrate *txrate;
@@ -1846,7 +1846,7 @@ athn_usb_rx_wmi_ctrl(struct athn_usb_softc *usc, uint8_t *buf, int len)
 
 	DPRINTFN(DBG_FN, usc, "\n");
 
-	if (__predict_false(len < (int)sizeof(*wmi)))
+	if (__predict_false(len < sizeof(*wmi)))
 		return;
 	wmi = (struct ar_wmi_cmd_hdr *)buf;
 	cmd_id = be16toh(wmi->cmd_id);
@@ -2293,7 +2293,7 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 #endif /* notyet_edca */
 	{
 		tid = 0;
-		qid = EDCA_AC_BE;
+		qid = WME_AC_BE;
 	}
 
 	/* XXX Change radiotap Tx header for USB (no txrate). */
