@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.18 2012/07/22 14:33:02 matt Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.19 2013/03/30 03:21:04 christos Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.18 2012/07/22 14:33:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.19 2013/03/30 03:21:04 christos Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -275,14 +275,14 @@ next:
 
 			desc = buf + sizeof(*vpd);
 
-			/* 
+			/*
 			 * ...which is an instance property...
 			 */
 			if (desc[0] != 'I')
 				continue;
 			desc += 3;
 
-			/* 
+			/*
 			 * ...that's a byte array with the proper
 			 * length for a MAC address...
 			 */
@@ -296,7 +296,7 @@ next:
 			if (strcmp(desc, "local-mac-address") != 0)
 				continue;
 			desc += strlen("local-mac-address") + 1;
-					
+				
 			memcpy(enaddr, desc, ETHER_ADDR_LEN);
 			rv = 0;
 		}
@@ -549,7 +549,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL &&
 	    sc->sc_mif_config & (CAS_MIF_CONFIG_MDI0|CAS_MIF_CONFIG_MDI1)) {
-		/* 
+		/*
 		 * Try the external PCS SERDES if we didn't find any
 		 * MII devices.
 		 */
@@ -1292,7 +1292,7 @@ cas_rint(struct cas_softc *sc)
 
 			cp = rxs->rxs_kva + off * 256 + ETHER_ALIGN;
 			m = m_devget(cp, len, 0, ifp, NULL);
-			
+		
 			if (word[0] & CAS_RC0_RELEASE_HDR)
 				cas_add_rxbuf(sc, idx);
 

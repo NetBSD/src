@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.245 2013/02/13 16:58:04 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.246 2013/03/30 03:21:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -37,32 +37,32 @@
 
 /*******************************************************************************
 
-  Copyright (c) 2001-2005, Intel Corporation 
+  Copyright (c) 2001-2005, Intel Corporation
   All rights reserved.
-  
-  Redistribution and use in source and binary forms, with or without 
+ 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  
-   1. Redistributions of source code must retain the above copyright notice, 
+ 
+   1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
-  
-   2. Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
+ 
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-  
-   3. Neither the name of the Intel Corporation nor the names of its 
-      contributors may be used to endorse or promote products derived from 
+ 
+   3. Neither the name of the Intel Corporation nor the names of its
+      contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
-  
+ 
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.245 2013/02/13 16:58:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.246 2013/03/30 03:21:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2107,7 +2107,7 @@ wm_detach(device_t self, int flags __unused)
 	if_detach(ifp);
 
 
-	/* Unload RX dmamaps and free mbufs */ 
+	/* Unload RX dmamaps and free mbufs */
 	wm_rxdrain(sc);
 
 	/* Free dmamap. It's the same as the end of the wm_attach() function */
@@ -2956,9 +2956,9 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs,
 	sc->sc_nq_txdescs[sc->sc_txnext].nqrx_ctx.nqtxc_vl_len =
 	    htole32(vl_len);
 	sc->sc_nq_txdescs[sc->sc_txnext].nqrx_ctx.nqtxc_sn = 0;
-	sc->sc_nq_txdescs[sc->sc_txnext].nqrx_ctx.nqtxc_cmd = 
+	sc->sc_nq_txdescs[sc->sc_txnext].nqrx_ctx.nqtxc_cmd =
 	    htole32(cmdc);
-	sc->sc_nq_txdescs[sc->sc_txnext].nqrx_ctx.nqtxc_mssidx = 
+	sc->sc_nq_txdescs[sc->sc_txnext].nqrx_ctx.nqtxc_mssidx =
 	    htole32(mssidx);
 	WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
 	DPRINTF(WM_DEBUG_TX,
@@ -3159,7 +3159,7 @@ wm_nq_start(struct ifnet *ifp)
 			    htole32(fields);
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: adv data desc %d 0x%" PRIx64 "\n",
-			    device_xname(sc->sc_dev), nexttx, 
+			    device_xname(sc->sc_dev), nexttx,
 			    (uint64_t)dmamap->dm_segs[0].ds_addr));
 			DPRINTF(WM_DEBUG_TX,
 			    ("\t 0x%08x%08x\n", fields,
@@ -5152,7 +5152,7 @@ wm_read_eeprom_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 			delay(2);
 		}
 		/* XXX: end of workaround */
-		
+	
 		/* Set CHIP SELECT. */
 		reg |= EECD_CS;
 		CSR_WRITE(sc, WMREG_EECD, reg);
@@ -5544,7 +5544,7 @@ wm_add_rxbuf(struct wm_softc *sc, int idx)
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		if ((sc->sc_rctl & RCTL_EN) != 0)
 			WM_INIT_RXDESC(sc, idx);
-	} else 
+	} else
 		WM_INIT_RXDESC(sc, idx);
 
 	return 0;
@@ -6283,7 +6283,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	 *
 	 *  For some devices, we can determine the PHY access method
 	 * from sc_type.
-	 * 
+	 *
 	 *  For ICH8 variants, it's difficult to detemine the PHY access
 	 * method by sc_type, so use the PCI product ID for some devices.
 	 * For other ICH8 variants, try to use igp's method. If the PHY
@@ -7863,7 +7863,7 @@ wm_release_hw_control(struct wm_softc *sc)
 
 	if ((sc->sc_flags & WM_F_HAS_MANAGE) == 0)
 		return;
-	
+
 	if (sc->sc_type == WM_T_82573) {
 		reg = CSR_READ(sc, WMREG_SWSM);
 		reg &= ~SWSM_DRV_LOAD;
@@ -7980,7 +7980,7 @@ wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *sc)
 	reg = CSR_READ(sc, WMREG_PHY_CTRL);
 	reg |= PHY_CTRL_GBE_DIS | PHY_CTRL_NOND0A_GBE_DIS;
 	CSR_WRITE(sc, WMREG_PHY_CTRL, reg);
-	
+
 	/*
 	 * Call gig speed drop workaround on Gig disable before accessing
 	 * any PHY registers.
@@ -8260,7 +8260,7 @@ wm_init_manageability(struct wm_softc *sc)
 			manc |= MANC_EN_MNG2HOST;
 			manc2h |= MANC2H_PORT_623| MANC2H_PORT_624;
 			CSR_WRITE(sc, WMREG_MANC2H, manc2h);
-			
+		
 		}
 
 		CSR_WRITE(sc, WMREG_MANC, manc);
@@ -8291,7 +8291,7 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_82583:
 		sc->sc_flags |= WM_F_HAS_AMT;
 		/* FALLTHROUGH */
-	case WM_T_80003: 
+	case WM_T_80003:
 	case WM_T_82541:
 	case WM_T_82547:
 	case WM_T_82571:

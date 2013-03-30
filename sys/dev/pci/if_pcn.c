@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.55 2012/07/22 14:33:03 matt Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.56 2013/03/30 03:21:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.55 2012/07/22 14:33:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.56 2013/03/30 03:21:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,7 +503,7 @@ pcn_is_vmware(const char *enaddr)
 	 */
 	if (enaddr[0] == 0x00 && enaddr[1] == 0x0c && enaddr[2] == 0x29)
 		return (TRUE);
-	
+
 	/*
 	 * VMware uses the OUI 00:50:56 for manually-set MAC
 	 * addresses (and some auto-generated ones).
@@ -2117,9 +2117,9 @@ pcn_79c971_mediainit(struct pcn_softc *sc)
 	/*
 	 * The built-in 10BASE-T interface is mapped to the MII
 	 * on the PCNet-FAST.  Unfortunately, there's no EEPROM
-	 * word that tells us which PHY to use. 
-	 * This driver used to ignore all but the first PHY to 
-	 * answer, but this code was removed to support multiple 
+	 * word that tells us which PHY to use.
+	 * This driver used to ignore all but the first PHY to
+	 * answer, but this code was removed to support multiple
 	 * external PHYs. As the default instance will be the first
 	 * one to answer, no harm is done by letting the possibly
 	 * non-connected internal PHY show up.
