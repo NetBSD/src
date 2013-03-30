@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.22 2013/03/12 14:19:34 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.23 2013/03/30 03:17:33 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.22 2013/03/12 14:19:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.23 2013/03/30 03:17:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2197,7 +2197,7 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
 	}
 
-	if ((hasqos = IEEE80211_QOS_HAS_SEQ(wh))) {
+	if ((hasqos = ieee80211_has_qos(wh))) {
 		/* data frames in 11n mode */
 		struct ieee80211_qosframe *qwh = (void *)wh;
 		tid = qwh->i_qos[0] & IEEE80211_QOS_TID;
