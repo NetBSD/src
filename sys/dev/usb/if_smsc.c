@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.9 2013/03/30 03:15:52 christos Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.10 2013/03/30 14:30:24 christos Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1308,7 +1308,7 @@ smsc_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		m->m_pkthdr.rcvif = ifp;
 
 		pktlen -= 2;	// JDM
-	
+
 		m->m_pkthdr.len = m->m_len = pktlen;
 #define ETHER_ALIGN 2
 		m_adj(m, ETHER_ALIGN);
