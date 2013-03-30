@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pci.c,v 1.3 2012/08/05 09:16:54 degroote Exp $	*/
+/*	$NetBSD: if_malo_pci.c,v 1.4 2013/03/30 03:21:06 christos Exp $	*/
 /*	$OpenBSD: if_malo_pci.c,v 1.6 2010/08/28 23:19:29 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.3 2012/08/05 09:16:54 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.4 2013/03/30 03:21:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -123,7 +123,7 @@ malo_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	error = pci_mapreg_map(pa, MALO_PCI_BAR1,
-	    memtype1, 0, &sc->sc_mem1_bt, &sc->sc_mem1_bh, 
+	    memtype1, 0, &sc->sc_mem1_bt, &sc->sc_mem1_bh,
 		NULL, &psc->sc_mapsize1);
 	if (error != 0) {
 		aprint_error_dev(self, "can't map 1st mem space\n");
@@ -142,7 +142,7 @@ malo_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	error = pci_mapreg_map(pa, MALO_PCI_BAR2,
-	    memtype2, 0, &sc->sc_mem2_bt, &sc->sc_mem2_bh, 
+	    memtype2, 0, &sc->sc_mem2_bt, &sc->sc_mem2_bh,
 		NULL, &psc->sc_mapsize2);
 	if (error != 0) {
 		aprint_error_dev(self, "can't map 2nd mem space\n");
@@ -187,7 +187,7 @@ malo_pci_detach(device_t self, int flags)
 	return (0);
 }
 
-static bool 
+static bool
 malo_pci_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct malo_pci_softc *psc = device_private(self);
@@ -199,7 +199,7 @@ malo_pci_suspend(device_t self, const pmf_qual_t *qual)
 	return true;
 }
 
-static bool 
+static bool
 malo_pci_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct malo_pci_softc *psc = device_private(self);
