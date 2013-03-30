@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.18 2013/03/30 03:09:44 christos Exp $	*/
+/*	$NetBSD: power.h,v 1.19 2013/03/30 19:05:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -97,7 +97,7 @@
 #define		PSWITCH_HK_EJECT_BUTTON		"eject-button"
 #define		PSWITCH_HK_ZOOM_BUTTON		"zoom-button"
 #define		PSWITCH_HK_VENDOR_BUTTON	"vendor-button"
-#ifdef THINKPAD_EXTENDED_HOTKEYS
+#ifndef THINKPAD_NORMAL_HOTKEYS
 #define		PSWITCH_HK_FNF1_BUTTON		"fnf1-button"
 #define		PSWITCH_HK_WIRELESS_BUTTON	"wireless-button"
 #define		PSWITCH_HK_WWAN_BUTTON		"wWAN-button"
@@ -110,7 +110,7 @@
 #define		PSWITCH_HK_VOLUME_UP		"volume-up"
 #define		PSWITCH_HK_VOLUME_DOWN		"volume-down"
 #define		PSWITCH_HK_VOLUME_MUTE		"volume-mute"
-#endif /* THINKPAD_EXTENDED_HOTKEYS */
+#endif /* THINKPAD_NORMAL_HOTKEYS */
 
 #define	PSWITCH_EVENT_PRESSED	0	/* button pressed, lid closed, AC off */
 #define	PSWITCH_EVENT_RELEASED	1	/* button released, lid open, AC on */
