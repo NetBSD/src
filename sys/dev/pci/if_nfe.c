@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.57 2012/09/23 01:12:01 chs Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.58 2013/03/30 03:21:06 christos Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.57 2012/09/23 01:12:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.58 2013/03/30 03:21:06 christos Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -958,7 +958,7 @@ skip1:
 			desc32->physaddr = htole32(physaddr);
 		}
 
-skip:	
+skip:
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
 			desc64->length = htole16(sc->rxq.bufsz);
 			desc64->flags = htole16(NFE_RX_READY);

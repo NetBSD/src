@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.155 2012/09/23 01:10:59 chs Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.156 2013/03/30 03:21:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.155 2012/09/23 01:10:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.156 2013/03/30 03:21:07 christos Exp $");
 
 
 
@@ -293,7 +293,7 @@ struct sip_softc {
 		/* VLAN_ATTACHED */
 		int		is_vlan;
 	}	sc_prev;
-		
+	
 	short	sc_if_flags;
 
 	int	sc_rxptr;		/* next ready Rx descriptor/descsoft */
@@ -1397,7 +1397,7 @@ sipcom_set_extsts(struct sip_softc *sc, int lasttx, struct mbuf *m0,
 	 */
 	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL) {
 		sc->sc_txdescs[lasttx].sipd_extsts |=
-		    htole32(EXTSTS_VPKT | 
+		    htole32(EXTSTS_VPKT |
 				(bswap16(VLAN_TAG_VALUE(mtag)) &
 				 EXTSTS_VTCI));
 	}

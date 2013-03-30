@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.55 2012/07/22 14:33:04 matt Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.56 2013/03/30 03:21:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.55 2012/07/22 14:33:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.56 2013/03/30 03:21:07 christos Exp $");
 
 
 #include <sys/param.h>
@@ -574,7 +574,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 		} else {
 			uint16_t myaddr[ETHER_ADDR_LEN / 2];
 			for (i = 0; i <ETHER_ADDR_LEN / 2; i++) {
-				stge_read_eeprom(sc, 
+				stge_read_eeprom(sc,
 				    STGE_EEPROM_StationAddress0 + i,
 				    &myaddr[i]);
 				myaddr[i] = le16toh(myaddr[i]);

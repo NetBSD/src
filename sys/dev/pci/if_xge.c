@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.17 2012/10/27 17:18:34 chs Exp $ */
+/*      $NetBSD: if_xge.c,v 1.18 2013/03/30 03:21:09 christos Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.17 2012/10/27 17:18:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.18 2013/03/30 03:21:09 christos Exp $");
 
 
 #include <sys/param.h>
@@ -204,7 +204,7 @@ pif_wcsr(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 
 	lval = val&0xffffffff;
 	hval = val>>32;
-	bus_space_write_4(sc->sc_st, sc->sc_sh, csr, lval); 
+	bus_space_write_4(sc->sc_st, sc->sc_sh, csr, lval);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, csr+4, hval);
 }
 
@@ -225,7 +225,7 @@ txp_wcsr(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 
 	lval = val&0xffffffff;
 	hval = val>>32;
-	bus_space_write_4(sc->sc_txt, sc->sc_txh, csr, lval); 
+	bus_space_write_4(sc->sc_txt, sc->sc_txh, csr, lval);
 	bus_space_write_4(sc->sc_txt, sc->sc_txh, csr+4, hval);
 }
 
@@ -238,7 +238,7 @@ pif_wkey(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 	lval = val&0xffffffff;
 	hval = val>>32;
 	PIF_WCSR(RMAC_CFG_KEY, RMAC_KEY_VALUE);
-	bus_space_write_4(sc->sc_st, sc->sc_sh, csr, lval); 
+	bus_space_write_4(sc->sc_st, sc->sc_sh, csr, lval);
 	PIF_WCSR(RMAC_CFG_KEY, RMAC_KEY_VALUE);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, csr+4, hval);
 }
@@ -328,7 +328,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * The MAC addr may be all FF's, which is not good.
-	 * Resolve it by writing some magics to GPIO_CONTROL and 
+	 * Resolve it by writing some magics to GPIO_CONTROL and
 	 * force a chip reset to read in the serial eeprom again.
 	 */
 	for (i = 0; i < sizeof(fix_mac)/sizeof(fix_mac[0]); i++) {
@@ -578,7 +578,7 @@ xge_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_active = IFM_ETHER|IFM_10G_LR;
 
 	reg = PIF_RCSR(ADAPTER_STATUS);
-	if ((reg & (RMAC_REMOTE_FAULT|RMAC_LOCAL_FAULT)) == 0)	
+	if ((reg & (RMAC_REMOTE_FAULT|RMAC_LOCAL_FAULT)) == 0)
 		ifmr->ifm_status |= IFM_ACTIVE;
 }
 
@@ -606,7 +606,7 @@ xge_enable(struct xge_softc *sc)
 
 }
 
-int 
+int
 xge_init(struct ifnet *ifp)
 {
 	struct xge_softc *sc = ifp->if_softc;
@@ -695,7 +695,7 @@ xge_intr(void *pv)
 		while ((PIF_RCSR(ADAPTER_STATUS) & QUIESCENT) != QUIESCENT)
 			;
 		PIF_WCSR(MAC_RMAC_ERR_REG, RMAC_LINK_STATE_CHANGE_INT);
-			
+		
 		val = PIF_RCSR(ADAPTER_STATUS);
 		if ((val & (RMAC_REMOTE_FAULT|RMAC_LOCAL_FAULT)) == 0)
 			xge_enable(sc); /* Only if link restored */
@@ -819,7 +819,7 @@ xge_intr(void *pv)
 	return 0;
 }
 
-int 
+int
 xge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct xge_softc *sc = ifp->if_softc;
@@ -917,7 +917,7 @@ allmulti:
 		;
 }
 
-void 
+void
 xge_start(struct ifnet *ifp)
 {
 	struct xge_softc *sc = ifp->if_softc;
@@ -1094,7 +1094,7 @@ xge_alloc_rxmem(struct xge_softc *sc)
 		rxpp->r4_next = (uint64_t)sc->sc_rxmap->dm_segs[0].ds_addr +
 		    (i*sizeof(struct rxd_4k)) + sizeof(struct rxd_4k);
 	}
-	sc->sc_rxd_4k[NRXPAGES-1]->r4_next = 
+	sc->sc_rxd_4k[NRXPAGES-1]->r4_next =
 	    (uint64_t)sc->sc_rxmap->dm_segs[0].ds_addr;
 
 	return 0;
@@ -1155,7 +1155,7 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 		MCLGET(m[3], M_DONTWAIT);
 	if (m[4])
 		MCLGET(m[4], M_DONTWAIT);
-	if (!m[0] || !m[1] || !m[2] || !m[3] || !m[4] || 
+	if (!m[0] || !m[1] || !m[2] || !m[3] || !m[4] ||
 	    ((m[3]->m_flags & M_EXT) == 0) || ((m[4]->m_flags & M_EXT) == 0)) {
 		/* Out of something */
 		for (i = 0; i < 5; i++)
@@ -1245,7 +1245,7 @@ xge_setup_xgxs(struct xge_softc *sc)
 	PIF_WCSR(DTX_CONTROL, 0x00180400000000e0ULL); DELAY(50);
 	PIF_WCSR(DTX_CONTROL, 0x00180400000000ecULL); DELAY(50);
 
-	/* 
+	/*
 	 * Reading the MDIO control with value 0x1804001c0F001c
 	 * means the TxLanes were already in sync
 	 * Reading the MDIO control with value 0x1804000c0x001c
@@ -1255,7 +1255,7 @@ xge_setup_xgxs(struct xge_softc *sc)
 #if 0
 	val = PIF_RCSR(MDIO_CONTROL);
 	if (val != 0x1804001c0F001cULL) {
-		printf("%s: MDIO_CONTROL: %llx != %llx\n", 
+		printf("%s: MDIO_CONTROL: %llx != %llx\n",
 		    XNAME, val, 0x1804001c0F001cULL);
 		return 1;
 	}
@@ -1272,7 +1272,7 @@ xge_setup_xgxs(struct xge_softc *sc)
 	/* Reading the DTX control register Should be 0x5152040001c */
 	val = PIF_RCSR(DTX_CONTROL);
 	if (val != 0x5152040001cULL) {
-		printf("%s: DTX_CONTROL: %llx != %llx\n", 
+		printf("%s: DTX_CONTROL: %llx != %llx\n",
 		    XNAME, val, 0x5152040001cULL);
 		return 1;
 	}
