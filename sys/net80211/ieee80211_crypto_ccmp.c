@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.9 2013/03/30 03:24:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.10 2013/03/30 15:12:28 christos Exp $");
 #endif
 
 /*
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.9 2013/03/30 03:24:55 ch
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>  
+#include <sys/mbuf.h> 
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
@@ -303,7 +303,7 @@ ccmp_init_blocks(rijndael_ctx *ctx, struct ieee80211_frame *wh,
 {
 #define	IS_4ADDRESS(wh) \
 	((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
-#define	IS_QOS_DATA(wh)	IEEE80211_QOS_HAS_SEQ(wh)
+#define	IS_QOS_DATA(wh)	ieee80211_has_qos(wh)
 
 	/* CCM Initial Block:
 	 * Flag (Include authentication header, M=3 (8-octet MIC),

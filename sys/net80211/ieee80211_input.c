@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.74 2013/03/30 03:24:55 christos Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.75 2013/03/30 15:12:28 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.74 2013/03/30 03:24:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.75 2013/03/30 15:12:28 christos Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.74 2013/03/30 03:24:55 christo
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>  
+#include <sys/mbuf.h> 
 #include <sys/malloc.h>
 #include <sys/endian.h>
 #include <sys/kernel.h>
@@ -282,7 +282,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 		ni->ni_rstamp = rstamp;
 		if (HAS_SEQ(type)) {
 			u_int8_t tid;
-			if (IEEE80211_QOS_HAS_SEQ(wh)) {
+			if (ieee80211_has_qos(wh)) {
 				tid = ((struct ieee80211_qosframe *)wh)->
 					i_qos[0] & IEEE80211_QOS_TID;
 				if (TID_TO_WME_AC(tid) >= WME_AC_VI)
@@ -1340,7 +1340,7 @@ ieee80211_ssid_mismatch(struct ieee80211com *ic, const char *tag,
 } while (0)
 #endif /* !IEEE80211_DEBUG */
 
-/* unalligned little endian access */    
+/* unalligned little endian access */   
 #define LE_READ_2(p)					\
 	((u_int16_t)					\
 	 ((((const u_int8_t *)(p))[0]      ) |		\
