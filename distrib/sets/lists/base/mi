@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1025 2013/03/10 21:48:17 christos Exp $
+# $NetBSD: mi,v 1.1026 2013/03/30 02:49:26 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -130,6 +130,10 @@
 ./lib/libssp.so					base-obsolete		obsolete
 ./libdata					base-sys-root
 ./libdata/firmware				base-firmware-root
+./libdata/firmware/if_athn/athn-ar7010		base-firmware-root
+./libdata/firmware/if_athn/athn-ar7010-11	base-firmware-root
+./libdata/firmware/if_athn/athn-ar9271		base-firmware-root
+./libdata/firmware/if_athn/athn-license		base-firmware-root
 ./libdata/firmware/if_ipw			base-firmware-root
 ./libdata/firmware/if_ipw/LICENSE		base-firmware-root
 ./libdata/firmware/if_ipw/ipw2100-1.2-i.fw	base-firmware-root
