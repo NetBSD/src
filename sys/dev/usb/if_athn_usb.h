@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.h,v 1.1 2013/03/30 02:53:02 christos Exp $	*/
+/*	$NetBSD: if_athn_usb.h,v 1.2 2013/03/30 14:14:31 christos Exp $	*/
 /*	$OpenBSD: if_athn_usb.h,v 1.3 2012/11/10 14:35:06 mikeb Exp $	*/
 
 /*-
@@ -486,7 +486,7 @@ struct athn_usb_softc {
 	uint8_t				usc_ep_cab;
 	uint8_t				usc_ep_uapsd;
 	uint8_t				usc_ep_mgmt;
-	uint8_t				usc_ep_data[EDCA_NUM_AC];
+	uint8_t				usc_ep_data[WME_NUM_AC];
 	void			(*usc_node_cleanup)(struct ieee80211_node *);
 };
 
