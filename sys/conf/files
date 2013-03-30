@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1065 2013/03/01 18:25:55 joerg Exp $
+#	$NetBSD: files,v 1.1066 2013/03/30 02:38:59 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -632,9 +632,9 @@ include "external/isc/atheros_hal/conf/files.ath_hal"
 # Atheros 5210/5211/5212 multi-mode 802.11
 #
 device	ath: arp, wlan, ifnet
-file	dev/ic/ath.c					ath
-file	dev/ic/ath_netbsd.c				ath
-file	dev/ic/athrate-sample.c				ath
+file	dev/ic/ath.c			ath
+file	dev/ic/ath_netbsd.c		ath
+file	dev/ic/athrate-sample.c		ath
 
 # ADMtek ADM8211 802.11
 #
@@ -1779,3 +1779,15 @@ include "dev/nor/files.nor"
 # iscsi
 #
 include "dev/iscsi/files.iscsi"
+
+# Atheros AR9k (802.11a/g/n) driver
+defflag opt_athn.h	ATHN_DEBUG
+device	athn: arp, ether, ifnet, wlan
+file	dev/ic/athn.c			athn
+file	dev/ic/arn5008.c		athn
+file	dev/ic/arn5416.c		athn
+file	dev/ic/arn9003.c		athn
+file	dev/ic/arn9280.c		athn
+file	dev/ic/arn9285.c		athn
+file	dev/ic/arn9287.c		athn
+file	dev/ic/arn9380.c		athn

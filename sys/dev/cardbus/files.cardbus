@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.37 2012/04/08 20:49:29 christos Exp $
+#	$NetBSD: files.cardbus,v 1.38 2013/03/30 02:38:59 christos Exp $
 #
 # files.cardbus
 #
@@ -125,6 +125,12 @@ file	dev/cardbus/adv_cardbus.c	adv_cardbus
 #
 attach	ath at cardbus with ath_cardbus
 file	dev/cardbus/if_ath_cardbus.c	ath_cardbus
+
+#
+# Atheros AR9k Wireless LAN
+#
+attach	athn at cardbus with athn_cardbus
+file	dev/cardbus/if_athn_cardbus.c	athn_cardbus
 
 #
 # Workbit NinjaSCSI-32 controllers
