@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.23 2013/01/29 13:54:26 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.24 2013/03/30 14:14:31 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.23 2013/01/29 13:54:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.24 2013/03/30 14:14:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1972,12 +1972,12 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		qid = ieee80211_up_to_ac(ic, qos & IEEE80211_QOS_TID);
 	} else {
 		qos = 0;
-		qid = EDCA_AC_BE;
+		qid = WME_AC_BE;
 	}
 #else
 	hasqos = 0;
 	qos = 0;
-	qid = EDCA_AC_BE;
+	qid = WME_AC_BE;
 #endif
 
 	/* Pickup a rate index. */
@@ -2382,38 +2382,38 @@ otus_updateedca_cb_locked(struct otus_softc *sc)
 
 	/* Set CWmin/CWmax values. */
 	otus_write(sc, AR_MAC_REG_AC0_CW,
-	    EXP2(edca[EDCA_AC_BE].ac_ecwmax) << 16 |
-	    EXP2(edca[EDCA_AC_BE].ac_ecwmin));
+	    EXP2(edca[WME_AC_BE].ac_ecwmax) << 16 |
+	    EXP2(edca[WME_AC_BE].ac_ecwmin));
 	otus_write(sc, AR_MAC_REG_AC1_CW,
-	    EXP2(edca[EDCA_AC_BK].ac_ecwmax) << 16 |
-	    EXP2(edca[EDCA_AC_BK].ac_ecwmin));
+	    EXP2(edca[WME_AC_BK].ac_ecwmax) << 16 |
+	    EXP2(edca[WME_AC_BK].ac_ecwmin));
 	otus_write(sc, AR_MAC_REG_AC2_CW,
-	    EXP2(edca[EDCA_AC_VI].ac_ecwmax) << 16 |
-	    EXP2(edca[EDCA_AC_VI].ac_ecwmin));
+	    EXP2(edca[WME_AC_VI].ac_ecwmax) << 16 |
+	    EXP2(edca[WME_AC_VI].ac_ecwmin));
 	otus_write(sc, AR_MAC_REG_AC3_CW,
-	    EXP2(edca[EDCA_AC_VO].ac_ecwmax) << 16 |
-	    EXP2(edca[EDCA_AC_VO].ac_ecwmin));
+	    EXP2(edca[WME_AC_VO].ac_ecwmax) << 16 |
+	    EXP2(edca[WME_AC_VO].ac_ecwmin));
 	otus_write(sc, AR_MAC_REG_AC4_CW,		/* Special TXQ. */
-	    EXP2(edca[EDCA_AC_VO].ac_ecwmax) << 16 |
-	    EXP2(edca[EDCA_AC_VO].ac_ecwmin));
+	    EXP2(edca[WME_AC_VO].ac_ecwmax) << 16 |
+	    EXP2(edca[WME_AC_VO].ac_ecwmin));
 
 	/* Set AIFSN values. */
 	otus_write(sc, AR_MAC_REG_AC1_AC0_AIFS,
-	    AIFS(edca[EDCA_AC_VI].ac_aifsn) << 24 |
-	    AIFS(edca[EDCA_AC_BK].ac_aifsn) << 12 |
-	    AIFS(edca[EDCA_AC_BE].ac_aifsn));
+	    AIFS(edca[WME_AC_VI].ac_aifsn) << 24 |
+	    AIFS(edca[WME_AC_BK].ac_aifsn) << 12 |
+	    AIFS(edca[WME_AC_BE].ac_aifsn));
 	otus_write(sc, AR_MAC_REG_AC3_AC2_AIFS,
-	    AIFS(edca[EDCA_AC_VO].ac_aifsn) << 16 |	/* Special TXQ. */
-	    AIFS(edca[EDCA_AC_VO].ac_aifsn) <<  4 |
-	    AIFS(edca[EDCA_AC_VI].ac_aifsn) >>  8);
+	    AIFS(edca[WME_AC_VO].ac_aifsn) << 16 |	/* Special TXQ. */
+	    AIFS(edca[WME_AC_VO].ac_aifsn) <<  4 |
+	    AIFS(edca[WME_AC_VI].ac_aifsn) >>  8);
 
 	/* Set TXOP limit. */
 	otus_write(sc, AR_MAC_REG_AC1_AC0_TXOP,
-	    edca[EDCA_AC_BK].ac_txoplimit << 16 |
-	    edca[EDCA_AC_BE].ac_txoplimit);
+	    edca[WME_AC_BK].ac_txoplimit << 16 |
+	    edca[WME_AC_BE].ac_txoplimit);
 	otus_write(sc, AR_MAC_REG_AC3_AC2_TXOP,
-	    edca[EDCA_AC_VO].ac_txoplimit << 16 |
-	    edca[EDCA_AC_VI].ac_txoplimit);
+	    edca[WME_AC_VO].ac_txoplimit << 16 |
+	    edca[WME_AC_VI].ac_txoplimit);
 #undef AIFS
 #undef EXP2
 

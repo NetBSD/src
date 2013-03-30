@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.25 2013/03/30 03:25:47 christos Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.26 2013/03/30 14:14:31 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -203,17 +203,6 @@ struct ieee80211_qosframe_addr4 {
 #define	IEEE80211_QOS_TID			0x000f
 
 /*
- * EDCA Access Categories.
- */
-enum ieee80211_edca_ac {
-	EDCA_AC_BK  = 1,	/* Background */
-	EDCA_AC_BE  = 0,	/* Best Effort */
-	EDCA_AC_VI  = 2,	/* Video */
-	EDCA_AC_VO  = 3		/* Voice */
-};
-#define EDCA_NUM_AC	4
-
-/*
  * WME/802.11e information element.
  */
 struct ieee80211_wme_info {
@@ -263,7 +252,14 @@ struct ieee80211_wme_acparams {
 	u_int16_t	acp_txop;
 } __packed;
 
-#define WME_NUM_AC		4	/* 4 AC categories */
+/* WME stream classes */
+enum ieee80211_wme_ac {
+	WME_AC_BE	= 0,		/* best effort */
+	WME_AC_BK	= 1,		/* background */
+	WME_AC_VI	= 2,		/* video */
+	WME_AC_VO	= 3,		/* voice */
+};
+#define WME_NUM_AC	4		/* 4 AC categories */
 
 #define WME_PARAM_ACI		0x60	/* Mask for ACI field */
 #define WME_PARAM_ACI_S		5	/* Shift for ACI field */
@@ -580,12 +576,6 @@ struct ieee80211_country_ie {
 #define	WME_INFO_OUI_SUBTYPE	0x00
 #define	WME_PARAM_OUI_SUBTYPE	0x01
 #define	WME_VERSION		1
-
-/* WME stream classes */
-#define	WME_AC_BE	0		/* best effort */
-#define	WME_AC_BK	1		/* background */
-#define	WME_AC_VI	2		/* video */
-#define	WME_AC_VO	3		/* voice */
 
 /*
  * AUTH management packets
