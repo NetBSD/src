@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusvar.h,v 1.6 2013/01/29 13:54:26 christos Exp $	*/
+/*	$NetBSD: if_otusvar.h,v 1.7 2013/03/30 01:10:00 christos Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -20,10 +20,6 @@
 #ifndef _IF_OTUSVAR_H_
 #define _IF_OTUSVAR_H_
 
-#ifdef EDCA_NUM_AC
-#define HAVE_EDCA
-#endif
-
 #ifndef HAVE_EDCA
 /************************************************************
  * XXX: This block belongs in sys/net80211/ieee80211_var.h.
@@ -38,56 +34,6 @@ struct ieee80211_edca_ac_params {
 	u_int16_t	ac_txoplimit;	/* 32TU */
 	u_int8_t	ac_acm;
 };
-/************************************************************/
-#endif /* ! HAVE_EDCA */
-
-#ifndef HAVE_EDCA
-/************************************************************
- * XXX: This block belongs in sys/net80211/ieee80211.h.
- */
-
-/*
- * EDCA Access Categories.
- */
-enum ieee80211_edca_ac {
-	EDCA_AC_BK  = 1,	/* Background */
-	EDCA_AC_BE  = 0,	/* Best Effort */
-	EDCA_AC_VI  = 2,	/* Video */
-	EDCA_AC_VO  = 3		/* Voice */
-};
-#define EDCA_NUM_AC	4
-
-/* XXX: OpenBSD has more of these defined with the standard referenced */
-#define IEEE80211_QOS_ACK_POLICY_NOACK		0x0020
-#define IEEE80211_QOS_ACK_POLICY_MASK		0x0060
-
-static __inline int
-ieee80211_has_addr4(const struct ieee80211_frame *wh)
-{
-	return (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
-	    IEEE80211_FC1_DIR_DSTODS;
-}
-
-static __inline int
-ieee80211_has_qos(const struct ieee80211_frame *wh)
-{
-	return (wh->i_fc[0] &
-	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
-	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS);
-}
-
-static __inline u_int16_t
-ieee80211_get_qos(const struct ieee80211_frame *wh)
-{
-	const u_int8_t *frm;
-
-	if (ieee80211_has_addr4(wh))
-		frm = ((const struct ieee80211_qosframe_addr4 *)wh)->i_qos;
-	else
-		frm = ((const struct ieee80211_qosframe *)wh)->i_qos;
-
-	return le16toh(*(const u_int16_t *)frm);
-}
 /************************************************************/
 #endif /* ! HAVE_EDCA */
 
