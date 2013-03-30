@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.127 2013/01/13 01:15:02 jakllsch Exp $
+#	$NetBSD: files.usb,v 1.128 2013/03/30 02:37:18 christos Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -8,8 +8,10 @@ defflag	USBVERBOSE
 defflag	opt_usb.h	USB_FRAG_DMA_WORKAROUND
 defflag	opt_usb.h	EHCI_DEBUG OHCI_DEBUG UHCI_DEBUG UHUB_DEBUG USB_DEBUG
 
+defflag	opt_umodem.h	UMODEM_DEBUG
 defflag	opt_uvideo.h	UVIDEO_DEBUG
 defflag	opt_umass.h	UMASS_DEBUG
+defflag	opt_uatp.h	UATP_DEBUG
 
 define	usbroothubif { }
 define	usbdevif { [port = -1], [configuration = -1], [interface = -1],
@@ -441,3 +443,13 @@ file	dev/usb/if_urtw.c		urtw
 device	run: ether, ifnet, arp, wlan, firmload
 attach	run at usbdevif
 file	dev/usb/if_run.c		run
+
+# Atheros AR9002U
+attach	athn at usbdevif with athn_usb: firmload
+file	dev/usb/if_athn_usb.c		athn_usb		needs-flag
+
+# XXX: ljt
+# Realtek RTL8188SU/RTL8191SU/RTL8192SU
+device	rsu: arp, ether, firmload, ifnet, wlan
+attach	rsu at usbdevif
+file	dev/usb/if_rsu.c		rsu
