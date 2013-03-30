@@ -1,4 +1,4 @@
-.\" $NetBSD: athn.4,v 1.2 2013/03/30 08:26:20 wiz Exp $
+.\" $NetBSD: athn.4,v 1.3 2013/03/30 09:09:50 wiz Exp $
 .\" $OpenBSD: athn.4,v 1.21 2012/09/17 11:04:24 sthen Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
@@ -175,7 +175,7 @@ firmware files, which are loaded when an interface is attached:
 .\".Xr fw_update 1 .
 .Sh EXAMPLES
 The following
-.Xr hostname.if 5
+.Xr ifconfig.if 5
 example configures athn0 to join whatever network is available on boot,
 using WEP key
 .Dq 0x1deadbeef1 ,
@@ -185,7 +185,7 @@ dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
 .Ed
 .Pp
 The following
-.Xr hostname.if 5
+.Xr ifconfig.if 5
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
 inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
@@ -231,7 +231,7 @@ The file might be missing or corrupted.
 .Xr netintro 4 ,
 .Xr pci 4 ,
 .Xr usb 4 ,
-.Xr hostname.if 5 ,
+.Xr ifconfig.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The
