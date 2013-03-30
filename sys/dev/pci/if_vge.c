@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.53 2012/07/22 14:33:04 matt Exp $ */
+/* $NetBSD: if_vge.c,v 1.54 2013/03/30 03:21:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.53 2012/07/22 14:33:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.54 2013/03/30 03:21:08 christos Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1553,7 +1553,7 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 
 #ifdef DIAGNOSTIC
 	/* If this descriptor is still owned by the chip, bail. */
-	VGE_TXDESCSYNC(sc, idx, 
+	VGE_TXDESCSYNC(sc, idx,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	td_sts = le32toh(txd->td_sts);
 	VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
@@ -1636,7 +1636,7 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	 */
 	mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m_head);
 	if (mtag != NULL) {
-		/* 
+		/*
 		 * No need htons() here since vge(4) chip assumes
 		 * that tags are written in little endian and
 		 * we already use htole32() here.

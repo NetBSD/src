@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.98 2012/07/22 14:33:04 matt Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.99 2013/03/30 03:21:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.98 2012/07/22 14:33:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.99 2013/03/30 03:21:08 christos Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -747,7 +747,7 @@ tl_init(struct ifnet *ifp)
 		error = 0;
 	else if (error != 0) {
 		errstring = "could not set media";
-		goto bad; 
+		goto bad;
 	}
 
 	/* start ticks calls */

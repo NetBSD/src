@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.7 2012/07/22 14:33:04 matt Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.8 2013/03/30 03:21:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.7 2012/07/22 14:33:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.8 2013/03/30 03:21:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,13 +259,13 @@ vte_attach(device_t parent, device_t self, void *aux)
 
         strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
         ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
-        ifp->if_ioctl = vte_ifioctl;   
-        ifp->if_start = vte_ifstart;   
+        ifp->if_ioctl = vte_ifioctl;  
+        ifp->if_start = vte_ifstart;  
         ifp->if_watchdog = vte_ifwatchdog;
-        ifp->if_init = vte_init;       
-        ifp->if_stop = vte_stop;       
+        ifp->if_init = vte_init;      
+        ifp->if_stop = vte_stop;      
         ifp->if_timer = 0;
-        IFQ_SET_READY(&ifp->if_snd);  
+        IFQ_SET_READY(&ifp->if_snd); 
         if_attach(ifp);
         ether_ifattach(&(sc)->vte_if, (sc)->vte_eaddr);
 
@@ -467,7 +467,7 @@ vte_dma_alloc(struct vte_softc *sc)
 	}
 	/* Allocate and map DMA'able memory and load the DMA map for TX ring. */
 	error = bus_dmamem_alloc(sc->vte_dmatag, VTE_TX_RING_SZ,
-	    VTE_TX_RING_ALIGN, 0, 
+	    VTE_TX_RING_ALIGN, 0,
 	    sc->vte_cdata.vte_tx_ring_seg, 1, &rseg,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
@@ -510,7 +510,7 @@ vte_dma_alloc(struct vte_softc *sc)
 	}
 	/* Allocate and map DMA'able memory and load the DMA map for RX ring. */
 	error = bus_dmamem_alloc(sc->vte_dmatag, VTE_RX_RING_SZ,
-	    VTE_RX_RING_ALIGN, 0, 
+	    VTE_RX_RING_ALIGN, 0,
 	    sc->vte_cdata.vte_rx_ring_seg, 1, &rseg,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
@@ -1000,7 +1000,7 @@ vte_txeof(struct vte_softc *sc)
 	if (sc->vte_cdata.vte_tx_cnt == 0)
 		return;
 	bus_dmamap_sync(sc->vte_dmatag,
-	    sc->vte_cdata.vte_tx_ring_map, 0, 
+	    sc->vte_cdata.vte_tx_ring_map, 0,
 	    sc->vte_cdata.vte_tx_ring_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	cons = sc->vte_cdata.vte_tx_cons;
@@ -1017,7 +1017,7 @@ vte_txeof(struct vte_softc *sc)
 			ifp->if_collisions += (status & 0xf);
 		sc->vte_cdata.vte_tx_cnt--;
 		/* Reclaim transmitted mbufs. */
-		bus_dmamap_sync(sc->vte_dmatag, txd->tx_dmamap, 0, 
+		bus_dmamap_sync(sc->vte_dmatag, txd->tx_dmamap, 0,
 		    txd->tx_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->vte_dmatag, txd->tx_dmamap);
 		if ((txd->tx_flags & VTE_TXMBUF) == 0)
