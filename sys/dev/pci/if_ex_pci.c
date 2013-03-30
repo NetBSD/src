@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.54 2011/07/26 20:51:24 dyoung Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.55 2013/03/30 03:21:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.54 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.55 2013/03/30 03:21:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ ex_pci_attach(device_t parent, device_t self, void *aux)
 	switch (error) {
 	case EOPNOTSUPP:
 		break;
-	case 0: 
+	case 0:
 		sc->enable = ex_pci_enable;
 		sc->disable = NULL;
 		break;

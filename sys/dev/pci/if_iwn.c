@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.62 2012/01/30 19:41:20 drochner Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.63 2013/03/30 03:21:05 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.62 2012/01/30 19:41:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.63 2013/03/30 03:21:05 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -108,10 +108,10 @@ static const struct ieee80211_rateset iwn_rateset_11a =
 	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 static const struct ieee80211_rateset iwn_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };	
+	{ 4, { 2, 4, 11, 22 } };
 
 static const struct ieee80211_rateset iwn_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };	
+	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 static int	iwn_match(device_t , struct cfdata *, void *);
 static void	iwn_attach(device_t , device_t , void *);
@@ -413,7 +413,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	if (error != 0) {
 		aprint_error(": could not attach device\n");
 		return;
-	}		
+	}	
 
 	if ((error = iwn_hw_prepare(sc)) != 0) {
 		aprint_error(": hardware not ready\n");
@@ -2814,7 +2814,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
 	    (IEEE80211_FC0_TYPE_CTL | IEEE80211_FC0_SUBTYPE_BAR))
 		flags |= IWN_TX_IMM_BA;		/* Cannot happen yet. */
-#endif          
+#endif         
 
 	if (wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG)
 		flags |= IWN_TX_MORE_FRAG;	/* Cannot happen yet. */

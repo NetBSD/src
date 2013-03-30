@@ -1,15 +1,15 @@
-/*	$NetBSD: if_et.c,v 1.6 2012/11/08 20:36:16 dyoung Exp $	*/
+/*	$NetBSD: if_et.c,v 1.7 2013/03/30 03:21:04 christos Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to The DragonFly Project
  * by Sepherosa Ziehau <sepherosa@gmail.com>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -19,7 +19,7 @@
  * 3. Neither the name of The DragonFly Project nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific, prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -32,12 +32,12 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * $DragonFly: src/sys/dev/netif/et/if_et.c,v 1.1 2007/10/12 14:12:42 sephe Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.6 2012/11/08 20:36:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.7 2013/03/30 03:21:04 christos Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.6 2012/11/08 20:36:16 dyoung Exp $");
 #include <sys/socket.h>
 
 #include <sys/bus.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.6 2012/11/08 20:36:16 dyoung Exp $");
 #endif
 
 #include <net/bpf.h>
- 
+
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
@@ -505,7 +505,7 @@ et_bus_config(struct et_softc *sc)
 	 */
 	pci_conf_read(sc->sc_pct, sc->sc_pcitag, ET_PCIR_EEPROM_MISC);
 	val = pci_conf_read(sc->sc_pct, sc->sc_pcitag, ET_PCIR_EEPROM_MISC);
-	
+
 	if (val & ET_PCIM_EEPROM_STATUS_ERROR) {
 		aprint_error_dev(sc->sc_dev, "EEPROM status error 0x%02x\n", val);
 		return ENXIO;
@@ -729,7 +729,7 @@ et_dma_free(struct et_softc *sc)
 	 * Destroy RX stat ring DMA stuffs
 	 */
 	et_dma_mem_destroy(sc, rxst_ring->rsr_stat, rxst_ring->rsr_dmap);
-			   
+			  
 	/*
 	 * Destroy RX status DMA stuffs
 	 */
@@ -820,7 +820,7 @@ et_dma_mbuf_destroy(struct et_softc *sc, int tx_done, const int rx_done[])
 
 			KASSERTMSG(rb->rb_mbuf == NULL,
 			    "RX mbuf in %d RX ring is not freed yet\n", i);
-			bus_dmamap_destroy(sc->sc_dmat, rb->rb_dmap); 
+			bus_dmamap_destroy(sc->sc_dmat, rb->rb_dmap);
 		}
 	}
 
@@ -1905,7 +1905,7 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 
 	bus_dmamap_sync(sc->sc_dmat, tx_ring->tr_dmap, 0,
 	    tx_ring->tr_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
-			
+		
 
 	tx_ready_pos = __SHIFTIN(tx_ring->tr_ready_index,
 		       ET_TX_READY_POS_INDEX);

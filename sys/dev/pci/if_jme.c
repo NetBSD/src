@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.21 2012/07/22 14:33:02 matt Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.22 2013/03/30 03:21:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.21 2012/07/22 14:33:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.22 2013/03/30 03:21:05 christos Exp $");
 
 
 #include <sys/param.h>
@@ -687,7 +687,7 @@ jme_add_rxbuf(jme_softc_t *sc, struct mbuf *m)
 			m_freem(m);
 		return EINVAL;
 	}
-	
+
 	if (m == NULL) {
 		sc->jme_rxmbuf[i] = NULL;
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -2012,7 +2012,7 @@ jme_eeprom_macaddr(struct jme_softc *sc)
 		}
 		if (fup & JME_EEPROM_DESC_END)
 			break;
-			
+		
 		/* Try next eeprom descriptor. */
 		offset += JME_EEPROM_DESC_BYTES;
 	} while (match != ETHER_ADDR_LEN && offset < JME_EEPROM_END);

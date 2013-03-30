@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.79 2012/02/02 19:43:05 tls Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.80 2013/03/30 03:21:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.79 2012/02/02 19:43:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.80 2013/03/30 03:21:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ fxp_pci_match(device_t parent, cfdata_t match, void *aux)
 }
 
 /*
- * On resume : (XXX it is necessary with new pmf framework ?) 
+ * On resume : (XXX it is necessary with new pmf framework ?)
  * Restore PCI configuration registers that may have been clobbered.
  * This is necessary due to bugs on the Sony VAIO Z505-series on-board
  * ethernet, after an APM suspend/resume, as well as after an ACPI
@@ -486,7 +486,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	    pci_activate_null))) {
 	case EOPNOTSUPP:
 		break;
-	case 0: 
+	case 0:
 		sc->sc_enable = fxp_pci_enable;
 		sc->sc_disable = NULL;
 		break;

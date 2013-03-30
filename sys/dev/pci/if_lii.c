@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.11 2012/07/22 14:33:02 matt Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.12 2013/03/30 03:21:06 christos Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.11 2012/07/22 14:33:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.12 2013/03/30 03:21:06 christos Exp $");
 
 
 #include <sys/param.h>
@@ -1146,7 +1146,7 @@ lii_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, (struct ifreq *)data, 
+		error = ifmedia_ioctl(ifp, (struct ifreq *)data,
 		    &sc->sc_mii.mii_media, cmd);
 		break;
 	default:

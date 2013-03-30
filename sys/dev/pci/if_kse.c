@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.23 2012/10/27 17:18:33 chs Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.24 2013/03/30 03:21:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.23 2012/10/27 17:18:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.24 2013/03/30 03:21:06 christos Exp $");
 
 
 #include <sys/param.h>
@@ -608,7 +608,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
 			    sc->sc_rxsoft[i].rxs_dmamap);
-	}	
+	}
  fail_4:
 	for (i = 0; i < KSE_TXQUEUELEN; i++) {
 		if (sc->sc_txsoft[i].txs_dmamap != NULL)
@@ -847,7 +847,7 @@ kse_watchdog(struct ifnet *ifp)
 {
 	struct kse_softc *sc = ifp->if_softc;
 
-	/*	
+	/*
 	 * Since we're not interrupting every packet, sweep
 	 * up before we report an error.
 	 */
@@ -1147,7 +1147,7 @@ rxintr(struct kse_softc *sc)
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		rxstat = sc->sc_rxdescs[i].r0;
-		
+	
 		if (rxstat & R0_OWN) /* desc is left empty */
 			break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.229 2013/03/27 12:03:51 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.230 2013/03/30 03:21:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.229 2013/03/27 12:03:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.230 2013/03/30 03:21:03 christos Exp $");
 
 #include "vlan.h"
 
@@ -2276,7 +2276,7 @@ bge_chipinit(struct bge_softc *sc)
 		/* Restore */
 		CSR_WRITE_4(sc, BGE_MODE_CTL, mode_ctl);
 	}
-		
+	
 	/* XXX Should we use 57765_FAMILY? */
 	if (BGE_IS_57765_PLUS(sc)) {
 		if (sc->bge_chipid == BGE_CHIPID_BCM57765_A0) {
@@ -2287,7 +2287,7 @@ bge_chipinit(struct bge_softc *sc)
 			reg = mode_ctl & ~BGE_MODECTL_PCIE_TLPADDRMASK;
 			CSR_WRITE_4(sc, BGE_MODE_CTL,
 			    reg | BGE_MODECTL_PCIE_TLPADDR1);
-			
+		
 			/* Control TLP */
 			reg = CSR_READ_4(sc, BGE_TLP_CONTROL_REG +
 			    BGE_TLP_PHYCTL5);
@@ -3825,7 +3825,7 @@ bge_detach(device_t self, int flags __unused)
 	splx(s);
 
 	mii_detach(&sc->bge_mii, MII_PHY_ANY, MII_OFFSET_ANY);
-	
+
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->bge_mii.mii_media, IFM_INST_ANY);
 
@@ -4067,7 +4067,7 @@ bge_reset(struct bge_softc *sc)
 	/* Step 21: 5822 B0 errata */
 	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX) {
 		pcireg_t msidata;
-		
+	
 		msidata = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 		    BGE_PCI_MSI_DATA);
 		msidata |= ((1 << 13 | 1 << 12 | 1 << 10) << 16);

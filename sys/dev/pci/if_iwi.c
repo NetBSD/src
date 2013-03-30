@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.91 2012/06/02 21:36:44 dsl Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.92 2013/03/30 03:21:05 christos Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.91 2012/06/02 21:36:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.92 2013/03/30 03:21:05 christos Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -416,7 +416,7 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(IWI_TX_RADIOTAP_PRESENT);
 
-	iwi_sysctlattach(sc);	
+	iwi_sysctlattach(sc);
 
 	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);
@@ -650,7 +650,7 @@ iwi_reset_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring)
 			m_freem(data->m);
 			data->m = NULL;
 		}
-		
+	
 		if (data->map != NULL) {
 			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
 			    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -841,7 +841,7 @@ iwi_media_change(struct ifnet *ifp)
 	return 0;
 }
 
-/* 
+/*
  * Convert h/w rate code to IEEE rate code.
  */
 static int
@@ -2155,7 +2155,7 @@ iwi_cache_firmware(struct iwi_softc *sc)
 	struct iwi_firmware *kfw = &sc->fw;
 	firmware_handle_t fwh;
 	struct iwi_firmware_hdr *hdr;
-	off_t size;	
+	off_t size;
 	char *fw;
 	int error;
 
@@ -2225,7 +2225,7 @@ iwi_cache_firmware(struct iwi_softc *sc)
 	kfw->boot = fw;
 	fw += kfw->boot_size;
 	kfw->ucode = fw;
-	fw += kfw->ucode_size; 
+	fw += kfw->ucode_size;
 	kfw->main = fw;
 
 	DPRINTF(("Firmware cached: boot %p, ucode %p, main %p\n",

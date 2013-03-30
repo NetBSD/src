@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.12 2011/07/26 20:51:24 dyoung Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.13 2013/03/30 03:21:04 christos Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.12 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.13 2013/03/30 03:21:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -121,7 +121,7 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 	psc->psc_pcitag = pa->pa_tag;
 
 	/* map control / status registers */
-	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BWI_PCI_BAR0); 
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BWI_PCI_BAR0);
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
