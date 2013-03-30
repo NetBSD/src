@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.643 2013/03/30 02:42:05 christos Exp $
+$NetBSD: usbdevs,v 1.644 2013/03/30 02:59:03 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -659,7 +659,7 @@ product ACCTON RT2870_4		0xa618	RT2870
 product ACCTON RT3070_1		0xa701	RT3070
 product ACCTON RT3070_2		0xa702	RT3070
 product ACCTON RT3070_6		0xa703	RT3070
-+product ACCTON AR9280		0xa704	AR9280+AR7010
+product ACCTON AR9280		0xa704	AR9280+AR7010
 product ACCTON RT2870_1		0xb522	RT2870
 product ACCTON RTL8192SU	0xc512	RTL8192SU
 product ACCTON RT3070_3		0xc522	RT3070
