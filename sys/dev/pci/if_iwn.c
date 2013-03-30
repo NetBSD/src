@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.63 2013/03/30 03:21:05 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.64 2013/03/30 03:21:43 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.63 2013/03/30 03:21:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.64 2013/03/30 03:21:43 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -2726,7 +2726,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	hdrlen = ieee80211_anyhdrsize(wh);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
-	hdrlen2 = (IEEE80211_QOS_HAS_SEQ(wh)) ?
+	hdrlen2 = (ieee80211_has_qos(wh)) ?
 	    sizeof (struct ieee80211_qosframe) :
 	    sizeof (struct ieee80211_frame);
 
@@ -2736,7 +2736,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 
 	/* XXX OpenBSD sets a different tid when using QOS */
 	tid = 0;
-	if (IEEE80211_QOS_HAS_SEQ(wh)) {
+	if (ieee80211_has_qos(wh)) {
 		cap = &ic->ic_wme.wme_chanParams;
 		noack = cap->cap_wmeParams[ac].wmep_noackPolicy;
 	}
