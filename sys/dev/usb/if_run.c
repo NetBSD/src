@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.8 2013/01/22 12:40:42 jmcneill Exp $	*/
+/*	$NetBSD: if_run.c,v 1.9 2013/03/30 03:17:33 christos Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.8 2013/01/22 12:40:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.9 2013/03/30 03:17:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2251,7 +2251,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 #endif
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
-	if ((hasqos = IEEE80211_QOS_HAS_SEQ(wh))) {
+	if ((hasqos = ieee80211_has_qos(wh))) {
 		qos = ((struct ieee80211_qosframe *)wh)->i_qos[0];
 		tid = qos & IEEE80211_QOS_TID;
 		qid = TID_TO_WME_AC(tid);
