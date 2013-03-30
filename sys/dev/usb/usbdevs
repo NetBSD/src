@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.644 2013/03/30 02:59:03 christos Exp $
+$NetBSD: usbdevs,v 1.645 2013/03/30 03:03:48 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -924,6 +924,7 @@ product ATHEROS2 AR3011		0x3000	AR3011
 product ATHEROS2 AR9280		0x7010	AR9280+AR7010
 product ATHEROS2 AR9287		0x7015	AR9287+AR7010
 product ATHEROS2 AR9170		0x9170	AR9170
+product ATHEROS2 AR9271_2	0x9271	AR9271
 product ATHEROS2 AR9271_3	0xb003	AR9271
 
 /* ATI products */
