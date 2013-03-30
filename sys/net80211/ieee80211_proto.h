@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.20 2013/03/30 01:05:48 christos Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.21 2013/03/30 01:06:37 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -82,7 +82,7 @@ struct mbuf *ieee80211_get_rts(struct ieee80211com *,
 		const struct ieee80211_frame *, uint16_t);
 struct mbuf *ieee80211_get_cts_to_self(struct ieee80211com *,
 		uint16_t);
-void	ieee80211_pwrsave(struct ieee80211com *, struct ieee80211_node *, 
+void	ieee80211_pwrsave(struct ieee80211com *, struct ieee80211_node *,
 		struct mbuf *);
 
 void	ieee80211_reset_erp(struct ieee80211com *);
