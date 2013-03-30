@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.4 2012/03/02 04:22:57 jakllsch Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.5 2013/03/30 03:15:53 christos Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.4 2012/03/02 04:22:57 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.5 2013/03/30 03:15:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,7 @@ urndis_ctrl_handle_query(struct urndis_softc *sc,
 		    "go out of buffer limit %u\n",
 		    DEVNAME(sc),
 		    le32toh(msg->rm_infobuflen),
-		    le32toh(msg->rm_infobufoffset), 
+		    le32toh(msg->rm_infobufoffset),
 		    le32toh(msg->rm_infobuflen) +
 		    le32toh(msg->rm_infobufoffset) + (uint32_t)RNDIS_HEADER_OFFSET,
 		    le32toh(msg->rm_len));
@@ -580,7 +580,7 @@ urndis_ctrl_set(struct urndis_softc *sc, uint32_t oid, void *buf, size_t len)
 	rval = urndis_ctrl_handle(sc, hdr, NULL, NULL);
 	if (rval != RNDIS_STATUS_SUCCESS)
 		printf("%s: set failed 0x%x\n", DEVNAME(sc), rval);
- 
+
 	return rval;
 }
 
@@ -781,7 +781,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, uint32_t len)
 
 	ifp = GET_IFP(sc);
 	offset = 0;
-	
+
 	while (len > 0) {
 		msg = (struct urndis_packet_msg *)((char*)c->sc_buf + offset);
 		m = c->sc_mbuf;
@@ -834,7 +834,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, uint32_t len)
 		}
 
 		if (le32toh(msg->rm_dataoffset) +
-		    le32toh(msg->rm_datalen) + RNDIS_HEADER_OFFSET 
+		    le32toh(msg->rm_datalen) + RNDIS_HEADER_OFFSET
 		        > le32toh(msg->rm_len)) {
 			printf("%s: urndis_decap invalid data "
 			    "len/offset/end_position(%u/%u/%u) -> "
@@ -1475,7 +1475,7 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Initialize packet filter */
-	sc->sc_filter = RNDIS_PACKET_TYPE_BROADCAST; 
+	sc->sc_filter = RNDIS_PACKET_TYPE_BROADCAST;
 	sc->sc_filter |= RNDIS_PACKET_TYPE_ALL_MULTICAST;
 	filter = htole32(sc->sc_filter);
 	if (urndis_ctrl_set(sc, OID_GEN_CURRENT_PACKET_FILTER, &filter,
@@ -1504,7 +1504,7 @@ urndis_detach(device_t self, int flags)
 
 	DPRINTF(("urndis_detach: %s flags %u\n", DEVNAME(sc),
 	    flags));
-	
+
 	if (!sc->sc_attached)
 		return 0;
 

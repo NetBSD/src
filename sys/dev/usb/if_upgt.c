@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.8 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.9 2013/03/30 03:15:53 christos Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.8 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.9 2013/03/30 03:15:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -727,7 +727,7 @@ upgt_fw_verify(struct upgt_softc *sc)
 		if (*uc != 0)
 			break;
 	}
-	if (offset == sc->sc_fw_size) { 
+	if (offset == sc->sc_fw_size) {
 		aprint_error_dev(sc->sc_dev,
 		    "firmware Boot Record Area not found\n");
 		return EIO;
