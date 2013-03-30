@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1423 2013/03/01 18:25:14 joerg Exp $
+# $NetBSD: mi,v 1.1424 2013/03/30 18:23:56 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3817,6 +3817,7 @@
 ./usr/share/man/html4/ate.html			man-sys-htmlman		html
 ./usr/share/man/html4/atf-test-case.html	man-atf-htmlman		html,atf
 ./usr/share/man/html4/ath.html			man-sys-htmlman		html
+./usr/share/man/html4/athn.html			man-sys-htmlman		html
 ./usr/share/man/html4/atphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/atppc.html		man-sys-htmlman		html
 ./usr/share/man/html4/attimer.html		man-sys-htmlman		html
@@ -6544,6 +6545,7 @@
 ./usr/share/man/man4/ate.4			man-sys-man		.man
 ./usr/share/man/man4/atf-test-case.4		man-cat-man		.man,atf
 ./usr/share/man/man4/ath.4			man-sys-man		.man
+./usr/share/man/man4/athn.4			man-sys-man		.man
 ./usr/share/man/man4/atphy.4			man-sys-man		.man
 ./usr/share/man/man4/atppc.4			man-sys-man		.man
 ./usr/share/man/man4/attimer.4			man-sys-man		.man
