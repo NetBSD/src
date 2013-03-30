@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.43 2013/03/30 03:09:44 christos Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.44 2013/03/30 19:05:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.43 2013/03/30 03:09:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.44 2013/03/30 19:05:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -258,7 +258,7 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	psw[TP_PSW_EJECT_BUTTON].smpsw_name = PSWITCH_HK_EJECT_BUTTON;
 	psw[TP_PSW_ZOOM_BUTTON].smpsw_name = PSWITCH_HK_ZOOM_BUTTON;
 	psw[TP_PSW_VENDOR_BUTTON].smpsw_name = PSWITCH_HK_VENDOR_BUTTON;
-#ifdef THINKPAD_EXTENDED_HOTKEYS
+#ifndef THINKPAD_NORMAL_HOTKEYS
 	psw[TP_PSW_FNF1_BUTTON].smpsw_name     = PSWITCH_HK_FNF1_BUTTON;
 	psw[TP_PSW_WIRELESS_BUTTON].smpsw_name = PSWITCH_HK_WIRELESS_BUTTON;
 	psw[TP_PSW_WWAN_BUTTON].smpsw_name     = PSWITCH_HK_WWAN_BUTTON;
@@ -271,7 +271,7 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	psw[TP_PSW_VOLUME_UP].smpsw_name       = PSWITCH_HK_VOLUME_UP;
 	psw[TP_PSW_VOLUME_DOWN].smpsw_name     = PSWITCH_HK_VOLUME_DOWN;
 	psw[TP_PSW_VOLUME_MUTE].smpsw_name     = PSWITCH_HK_VOLUME_MUTE;
-#endif /* THINKPAD_EXTENDED_HOTKEYS */
+#endif /* THINKPAD_NORMAL_HOTKEYS */
 
 	for (i = 0; i < TP_PSW_LAST; i++) {
 		/* not supported yet */
@@ -370,7 +370,7 @@ thinkpad_get_hotkeys(void *opaque)
 		switch (event) {
 		case THINKPAD_NOTIFY_BrightnessUp:
 			thinkpad_brightness_up(self);
-#ifdef THINKPAD_EXTENDED_HOTKEYS
+#ifndef THINKPAD_NORMAL_HOTKEYS
 			if (sc->sc_smpsw_valid == false)
 				break;
 			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_BRIGHTNESS_UP],
@@ -379,7 +379,7 @@ thinkpad_get_hotkeys(void *opaque)
 			break;
 		case THINKPAD_NOTIFY_BrightnessDown:
 			thinkpad_brightness_down(self);
-#ifdef THINKPAD_EXTENDED_HOTKEYS
+#ifndef THINKPAD_NORMAL_HOTKEYS
 			if (sc->sc_smpsw_valid == false)
 				break;
 			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_BRIGHTNESS_DOWN],
@@ -388,7 +388,7 @@ thinkpad_get_hotkeys(void *opaque)
 			break;
 		case THINKPAD_NOTIFY_WirelessSwitch:
 			thinkpad_wireless_toggle(sc);
-#ifdef THINKPAD_EXTENDED_HOTKEYS
+#ifndef THINKPAD_NORMAL_HOTKEYS
 			if (sc->sc_smpsw_valid == false)
 				break;
 			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_WIRELESS_BUTTON],
@@ -397,7 +397,7 @@ thinkpad_get_hotkeys(void *opaque)
 			break;
 		case THINKPAD_NOTIFY_wWANSwitch:
 			thinkpad_wwan_toggle(sc);
-#ifdef THINKPAD_EXTENDED_HOTKEYS
+#ifndef THINKPAD_NORMAL_HOTKEYS
 			if (sc->sc_smpsw_valid == false)
 				break;
 			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_WWAN_BUTTON],
@@ -460,7 +460,7 @@ thinkpad_get_hotkeys(void *opaque)
 			    &sc->sc_smpsw[TP_PSW_VENDOR_BUTTON],
 			    PSWITCH_EVENT_PRESSED);
 			break;
-#ifdef THINKPAD_EXTENDED_HOTKEYS
+#ifndef THINKPAD_NORMAL_HOTKEYS
 		case THINKPAD_NOTIFY_FnF1:
 			if (sc->sc_smpsw_valid == false)
 				break;
@@ -523,7 +523,7 @@ thinkpad_get_hotkeys(void *opaque)
 		case THINKPAD_NOTIFY_VolumeMute:
 			/* XXXJDM we should deliver hotkeys as keycodes */
 			break;
-#endif /* THINKPAD_EXTENDED_HOTKEYS */
+#endif /* THINKPAD_NORMAL_HOTKEYS */
 		default:
 			aprint_debug_dev(self, "notify event 0x%03x\n", event);
 			break;
