@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.55 2013/03/30 03:21:08 christos Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.56 2013/03/30 03:21:43 christos Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.55 2013/03/30 03:21:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.56 2013/03/30 03:21:43 christos Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -1833,7 +1833,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
-	if (IEEE80211_QOS_HAS_SEQ(wh)) {
+	if (ieee80211_has_qos(wh)) {
 		cap = &ic->ic_wme.wme_chanParams;
 		noack = cap->cap_wmeParams[ac].wmep_noackPolicy;
 	}
