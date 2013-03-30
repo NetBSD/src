@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.642 2013/03/30 02:37:18 christos Exp $
+$NetBSD: usbdevs,v 1.643 2013/03/30 02:42:05 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2245,8 +2245,6 @@ product NETGEAR EA101		0x1001	Ethernet adapter
 product NETGEAR EA101X		0x1002	Ethernet adapter
 product NETGEAR FA101		0x1020	10/100 Ethernet
 product NETGEAR FA120		0x1040	USB 2.0 Fast Ethernet Adapter
-product NETGEAR2 MA101		0x4100	MA101
-product NETGEAR2 MA101B		0x4102	MA101 Rev B
 product NETGEAR MA111NA		0x4110	802.11b Adapter
 product NETGEAR MA111V2		0x4230  802.11b V2
 product NETGEAR WG111V2_2	0x4240	PrismGT USB 2.0 WLAN
