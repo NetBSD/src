@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.114 2013/03/29 00:50:32 msaitoh Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.115 2013/03/30 23:12:24 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8748,3 +8748,15 @@ sys/kern/subr_cprng.c				1.16
 	is mixed in before users can obtain any output, it doesn't look as
 	dangerous in practice as I'd feared it might be.
 	[tls, ticket #859]
+
+sys/dev/usb/dwc_otg.c				1.47 via patch, 1.48
+
+	Fix handling of large packets.
+	[nick, ticket #847]
+
+sys/dev/wscons/wsmux.c						1.55
+xsrc/external/mit/xf86-input-keyboard/dist/src/bsd_kbd.c	1.18
+
+	Correct some issues with wsmux hotplugging.
+	[jmcneill, ticket #848]
+
