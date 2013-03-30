@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.22 2012/08/20 07:30:10 christos Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.23 2013/03/30 01:05:48 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -149,6 +149,21 @@ struct ieee80211_qosframe_addr4 {
 #define	IEEE80211_FC0_SUBTYPE_QOS		0x80
 #define	IEEE80211_FC0_SUBTYPE_QOS_NULL		0xc0
 
+/*
+ * DS bit usage
+ *
+ * TA = transmitter address
+ * RA = receiver address
+ * DA = destination address
+ * SA = source address
+ *
+ * ToDS    FromDS  A1(RA)  A2(TA)  A3      A4      Use
+ * -----------------------------------------------------------------
+ *  0       0       DA      SA      BSSID   -       IBSS/DLS
+ *  0       1       DA      BSSID   SA      -       AP -> STA
+ *  1       0       BSSID   SA      DA      -       AP <- STA
+ *  1       1       RA      TA      DA      SA      unspecified (WDS)
+ */
 #define	IEEE80211_FC1_DIR_MASK			0x03
 #define	IEEE80211_FC1_DIR_NODS			0x00	/* STA->STA */
 #define	IEEE80211_FC1_DIR_TODS			0x01	/* STA->AP  */
@@ -188,10 +203,22 @@ struct ieee80211_qosframe_addr4 {
 #define	IEEE80211_QOS_TID			0x000f
 
 /* does frame have QoS sequence control data */
+/* XXX: use ieee80211_has_qos() instead */
 #define	IEEE80211_QOS_HAS_SEQ(wh) \
 	(((wh)->i_fc[0] & \
 	  (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) == \
 	  (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS))
+
+/*
+ * EDCA Access Categories.
+ */
+enum ieee80211_edca_ac {
+	EDCA_AC_BK  = 1,	/* Background */
+	EDCA_AC_BE  = 0,	/* Best Effort */
+	EDCA_AC_VI  = 2,	/* Video */
+	EDCA_AC_VO  = 3		/* Voice */
+};
+#define EDCA_NUM_AC	4
 
 /*
  * WME/802.11e information element.
@@ -345,6 +372,50 @@ struct ieee80211_frame_cfend {		/* NB: also CF-End+CF-Ack */
 	u_int8_t	i_bssid[IEEE80211_ADDR_LEN];
 	/* FCS */
 } __packed;
+
+static __inline int
+ieee80211_has_seq(const struct ieee80211_frame *wh)
+{
+	return (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
+	    IEEE80211_FC0_TYPE_CTL;
+}
+
+static __inline int
+ieee80211_has_addr4(const struct ieee80211_frame *wh)
+{
+	return (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
+	    IEEE80211_FC1_DIR_DSTODS;
+}
+
+static __inline int
+ieee80211_has_qos(const struct ieee80211_frame *wh)
+{
+	return (wh->i_fc[0] &
+	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
+	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS);
+}
+
+static __inline int
+ieee80211_has_htc(const struct ieee80211_frame *wh)
+{
+	return (wh->i_fc[1] & IEEE80211_FC1_ORDER) &&
+	    (ieee80211_has_qos(wh) ||
+	     (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	     IEEE80211_FC0_TYPE_MGT);
+}
+
+static __inline u_int16_t
+ieee80211_get_qos(const struct ieee80211_frame *wh)
+{
+	const u_int8_t *frm;
+
+	if (ieee80211_has_addr4(wh))
+		frm = ((const struct ieee80211_qosframe_addr4 *)wh)->i_qos;
+	else
+		frm = ((const struct ieee80211_qosframe *)wh)->i_qos;
+
+	return le16toh(*(const u_int16_t *)frm);
+}
 
 /*
  * BEACON management packets
