@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.115 2013/03/10 21:40:05 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.116 2013/03/30 17:31:54 martin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -219,6 +219,7 @@
 ./usr/libdata/debug/usr/mdec
 ./usr/libdata/debug/usr/sbin
 ./usr/libdata/firmware
+./usr/libdata/firmware/if_athn
 ./usr/libdata/firmware/radeon
 ./usr/libdata/ldscripts
 ./usr/libdata/lint
