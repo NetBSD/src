@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.3 2013/03/30 14:14:31 christos Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.4 2013/03/30 14:30:24 christos Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.3 2013/03/30 14:14:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.4 2013/03/30 14:30:24 christos Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -813,7 +813,7 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 		name = "athn-ar9271";
 
 	/* Read firmware image from the filesystem. */
-	if ((error = firmware_open("if_athn_usb", name, &fwh)) != 0) {
+	if ((error = firmware_open("if_athn", name, &fwh)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed to open firmware file %s (%d)\n", name, error);
 		return error;
