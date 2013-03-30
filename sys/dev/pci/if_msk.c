@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.42 2012/08/04 03:46:30 riastradh Exp $ */
+/* $NetBSD: if_msk.c,v 1.43 2013/03/30 03:21:06 christos Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.42 2012/08/04 03:46:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.43 2013/03/30 03:21:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ msk_miibus_readreg(device_t dev, int phy, int reg)
 
         SK_YU_WRITE_2(sc_if, YUKON_SMICR, YU_SMICR_PHYAD(phy) |
 		      YU_SMICR_REGAD(reg) | YU_SMICR_OP_READ);
-        
+       
 	for (i = 0; i < SK_TIMEOUT; i++) {
 		DELAY(1);
 		val = SK_YU_READ_2(sc_if, YUKON_SMICR);
@@ -239,7 +239,7 @@ msk_miibus_readreg(device_t dev, int phy, int reg)
 		aprint_error_dev(sc_if->sk_dev, "phy failed to come ready\n");
 		return (0);
 	}
-        
+       
  	DPRINTFN(9, ("msk_miibus_readreg: i=%d, timeout=%d\n", i,
 		     SK_TIMEOUT));
 
@@ -317,7 +317,7 @@ msk_miibus_statchg(struct ifnet *ifp)
 }
 
 #define HASH_BITS	6
-  
+ 
 void
 msk_setfilt(struct sk_if_softc *sc_if, void *addrv, int slot)
 {
@@ -490,7 +490,7 @@ msk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL)
 			return (ENOBUFS);
-		
+	
 		/* Allocate the jumbo buffer */
 		buf = msk_jalloc(sc_if);
 		if (buf == NULL) {
@@ -799,12 +799,12 @@ void msk_reset(struct sk_softc *sc)
 		reg1 |= (SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
 	else
 		reg1 &= ~(SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
-	
+
 	if (sc->sk_type == SK_YUKON_EC_U) {
 		uint32_t our;
 
 		CSR_WRITE_2(sc, SK_CSR, SK_CSR_WOL_ON);
-		
+	
 		/* enable all clocks. */
 		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG3), 0);
 		our = sk_win_read_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG4));
@@ -812,7 +812,7 @@ void msk_reset(struct sk_softc *sc)
 			SK_Y2_REG4_ASPM_GPHY_LINK_DOWN|
 			SK_Y2_REG4_ASPM_INT_FIFO_EMPTY|
 			SK_Y2_REG4_ASPM_CLKRUN_REQUEST);
-		/* Set all bits to 0 except bits 15..12 */ 
+		/* Set all bits to 0 except bits 15..12 */
 		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG4), our);
 		/* Set to default value */
 		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG5), 0);
@@ -820,7 +820,7 @@ void msk_reset(struct sk_softc *sc)
 
 	/* release PHY from PowerDown/Coma mode. */
 	sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG1), reg1);
- 
+
 	if (sc->sk_type == SK_YUKON_XL && sc->sk_rev > SK_YUKON_XL_REV_A1)
 		sk_win_write_1(sc, SK_Y2_CLKGATE,
 		    SK_Y2_CLKGATE_LINK1_GATE_DIS |
@@ -830,7 +830,7 @@ void msk_reset(struct sk_softc *sc)
 		    SK_Y2_CLKGATE_LINK1_PCI_DIS | SK_Y2_CLKGATE_LINK2_PCI_DIS);
 	else
 		sk_win_write_1(sc, SK_Y2_CLKGATE, 0);
- 
+
 	CSR_WRITE_2(sc, SK_LINK_CTRL, SK_LINK_RESET_SET);
 	CSR_WRITE_2(sc, SK_LINK_CTRL + SK_WIN_LEN, SK_LINK_RESET_SET);
 	DELAY(1000);
@@ -958,7 +958,7 @@ static bool
 msk_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct sk_if_softc *sc_if = device_private(dv);
-	
+
 	msk_init_yukon(sc_if);
 	return true;
 }
@@ -1457,7 +1457,7 @@ mskc_attach(device_t parent, device_t self, void *aux)
 fail_5:
 	bus_dmamap_destroy(sc->sc_dmatag, sc->sk_status_map);
 fail_4:
-	bus_dmamem_unmap(sc->sc_dmatag, kva, 
+	bus_dmamem_unmap(sc->sc_dmatag, kva,
 	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
 fail_3:
 	bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
@@ -1813,7 +1813,7 @@ msk_txeof(struct sk_if_softc *sc_if, int idx)
 void
 msk_tick(void *xsc_if)
 {
-	struct sk_if_softc *sc_if = xsc_if;  
+	struct sk_if_softc *sc_if = xsc_if; 
 	struct mii_data *mii = &sc_if->sk_mii;
 	uint16_t gpsr;
 	int s;
@@ -2038,7 +2038,7 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	/* Setup Yukon's address */
 	for (i = 0; i < 3; i++) {
 		/* Write Source Address 1 (unicast filter) */
-		SK_YU_WRITE_2(sc_if, YUKON_SAL1 + i * 4, 
+		SK_YU_WRITE_2(sc_if, YUKON_SAL1 + i * 4,
 			      sc_if->sk_enaddr[i * 2] |
 			      sc_if->sk_enaddr[i * 2 + 1] << 8);
 	}
@@ -2343,7 +2343,7 @@ msk_dump_bytes(const char *data, int len)
 			if ((j & 0xf) == 7 && j > 0)
 				printf(" ");
 		}
-		
+	
 		for (; j < 16; j++)
 			printf("   ");
 		printf("  ");
@@ -2352,9 +2352,9 @@ msk_dump_bytes(const char *data, int len)
 			int ch = data[i + j] & 0xff;
 			printf("%c", ' ' <= ch && ch <= '~' ? ch : ' ');
 		}
-		
+	
 		printf("\n");
-		
+	
 		if (c < 16)
 			break;
 	}

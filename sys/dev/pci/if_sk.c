@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.72 2012/07/22 14:33:03 matt Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.73 2013/03/30 03:21:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.72 2012/07/22 14:33:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.73 2013/03/30 03:21:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -707,7 +707,7 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 	}
 
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
-		if (sk_newbuf(sc_if, i, NULL, 
+		if (sk_newbuf(sc_if, i, NULL,
 		    sc_if->sk_cdata.sk_rx_jumbo_map) == ENOBUFS) {
 			aprint_error_dev(sc_if->sk_dev,
 			    "failed alloc of %dth mbuf\n", i);
@@ -1384,7 +1384,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 		aprint_error("%s: jumbo buffer allocation failed\n", ifp->if_xname);
 		goto fail;
 	}
-	sc_if->sk_ethercom.ec_capabilities = ETHERCAP_VLAN_MTU 
+	sc_if->sk_ethercom.ec_capabilities = ETHERCAP_VLAN_MTU
 		| ETHERCAP_JUMBO_MTU;
 
 	ifp->if_softc = sc_if;
