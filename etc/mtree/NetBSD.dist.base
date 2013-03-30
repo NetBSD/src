@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.116 2013/03/30 17:31:54 martin Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.117 2013/03/30 18:14:50 martin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -65,6 +65,7 @@
 ./lib/npf
 ./libdata
 ./libdata/firmware
+./libdata/firmware/if_athn
 ./libdata/firmware/if_ipw
 ./libdata/firmware/if_iwi
 ./libdata/firmware/if_iwn
@@ -219,7 +220,6 @@
 ./usr/libdata/debug/usr/mdec
 ./usr/libdata/debug/usr/sbin
 ./usr/libdata/firmware
-./usr/libdata/firmware/if_athn
 ./usr/libdata/firmware/radeon
 ./usr/libdata/ldscripts
 ./usr/libdata/lint
