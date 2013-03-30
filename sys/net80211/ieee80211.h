@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.23 2013/03/30 01:05:48 christos Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.24 2013/03/30 01:06:37 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -52,7 +52,7 @@ struct ieee80211_plcp_hdr {
 	u_int16_t	i_crc;
 } __packed;
 
-#define IEEE80211_PLCP_SFD      0xF3A0 
+#define IEEE80211_PLCP_SFD      0xF3A0
 #define IEEE80211_PLCP_SERVICE  0x00
 
 /*
@@ -723,7 +723,7 @@ enum {
 
 #define	IEEE80211_AID(b)	((b) &~ 0xc000)
 
-/* 
+/*
  * RTS frame length parameters.  The default is specified in
  * the 802.11 spec as 512; we treat it as implementation-dependent
  * so it's defined in ieee80211_var.h.  The max may be wrong
@@ -732,7 +732,7 @@ enum {
 #define	IEEE80211_RTS_MIN		1
 #define	IEEE80211_RTS_MAX		2346
 
-/* 
+/*
  * TX fragmentation parameters.  As above for RTS, we treat
  * default as implementation-dependent so define it elsewhere.
  */
