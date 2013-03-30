@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.21 2013/03/30 01:06:37 christos Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.22 2013/03/30 15:12:28 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -106,7 +106,7 @@ ieee80211_hdrsize(const void *data)
 		("%s: control frame", __func__));
 	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
 		size += IEEE80211_ADDR_LEN;
-	if (IEEE80211_QOS_HAS_SEQ(wh))
+	if (ieee80211_has_qos(wh))
 		size += sizeof(u_int16_t);
 	return size;
 }
