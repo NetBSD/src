@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.24 2013/03/30 01:06:37 christos Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.25 2013/03/30 03:25:47 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -201,13 +201,6 @@ struct ieee80211_qosframe_addr4 {
 #define	IEEE80211_QOS_ESOP			0x0010
 #define	IEEE80211_QOS_ESOP_S			4
 #define	IEEE80211_QOS_TID			0x000f
-
-/* does frame have QoS sequence control data */
-/* XXX: use ieee80211_has_qos() instead */
-#define	IEEE80211_QOS_HAS_SEQ(wh) \
-	(((wh)->i_fc[0] & \
-	  (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) == \
-	  (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS))
 
 /*
  * EDCA Access Categories.
