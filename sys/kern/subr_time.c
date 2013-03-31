@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.11 2013/03/29 10:34:12 martin Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.12 2013/03/31 16:46:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.11 2013/03/29 10:34:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.12 2013/03/31 16:46:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -167,22 +167,26 @@ int
 itimerfix(struct timeval *tv)
 {
 
-	if (tv->tv_sec < 0 || tv->tv_usec < 0 || tv->tv_usec >= 1000000)
-		return (EINVAL);
+	if (tv->tv_usec < 0 || tv->tv_usec >= 1000000)
+		return EINVAL;
+	if (tv->tv_sec < 0)
+		return ETIMEDOUT;
 	if (tv->tv_sec == 0 && tv->tv_usec != 0 && tv->tv_usec < tick)
 		tv->tv_usec = tick;
-	return (0);
+	return 0;
 }
 
 int
 itimespecfix(struct timespec *ts)
 {
 
-	if (ts->tv_sec < 0 || ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
-		return (EINVAL);
+	if (ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
+		return EINVAL;
+	if (ts->tv_sec < 0)
+		return ETIMEDOUT;
 	if (ts->tv_sec == 0 && ts->tv_nsec != 0 && ts->tv_nsec < tick * 1000)
 		ts->tv_nsec = tick * 1000;
-	return (0);
+	return 0;
 }
 
 int
@@ -252,14 +256,11 @@ ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
 	if (flags)
 		timespecsub(ts, start, ts);
 
-	if (ts->tv_sec < 0 || (ts->tv_sec == 0 && ts->tv_nsec <= 0))
-		return ETIMEDOUT;
-
-	if ((error = itimespecfix(ts)) !=  0)
+	if ((error = itimespecfix(ts)) != 0)
 		return error;
 
 	*timo = tstohz(ts);
-	KASSERT(*timo != 0);
+	KASSERT(*timo > 0);
 
 	return 0;
 }
