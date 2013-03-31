@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.18.1 2013/03/26 01:59:13 agc Exp $
+#	$NetBSD: Makefile,v 1.6.18.2 2013/03/31 23:06:42 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -12,9 +12,8 @@
 .PATH: ${.CURDIR}/../../dist/uts/common/os
 
 LIB=		zpool
-DPADD=		${LIBPTHREAD}
-LDADD=		-lpthread
 LIBDPLIBS+=	z		${NETBSDSRCDIR}/lib/libz
+LIBDPLIBS+=	pthread		${NETBSDSRCDIR}/lib/libpthread
 CPPFLAGS+=	-std=c99
 #CPPFLAGS+=-Wall -Wno-unknown-pragmas
 
