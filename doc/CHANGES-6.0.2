@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.26 2013/03/31 17:30:52 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.27 2013/03/31 20:21:15 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -191,4 +191,9 @@ sys/sys/ptree.h					1.5
 
 	Cast constants to appropriate types to fix crashes in ptree(9).
 	[rmind, ticket #851]
+
+sys/netinet6/udp6_output.c			1.44
+
+	Fix sendto(2) issue with IPv6 UDP datagrams.  PR#47408.
+	[christos, ticket #853]
 
