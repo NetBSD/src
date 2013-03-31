@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.115 2013/03/30 23:12:24 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.116 2013/03/31 17:47:10 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8759,4 +8759,16 @@ xsrc/external/mit/xf86-input-keyboard/dist/src/bsd_kbd.c	1.18
 
 	Correct some issues with wsmux hotplugging.
 	[jmcneill, ticket #848]
+
+sys/sys/ptree.h					1.5
+
+	Cast constants to appropriate types to fix crashes in ptree(9).
+	[rmind, ticket #851]
+
+usr.sbin/npf/npfctl/npf.conf.5			1.28
+usr.sbin/npf/npfctl/npf_parse.y			1.19-1.20
+usr.sbin/npf/npfctl/npfctl.c			1.32
+
+	Minor npfctl(5) fixes in parsing and error handling.
+	[rmind, ticket #852]
 
