@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.92.8.1 2012/11/22 00:39:00 riz Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.92.8.2 2013/03/31 20:32:01 riz Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.92.8.1 2012/11/22 00:39:00 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.92.8.2 2013/03/31 20:32:01 riz Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -132,8 +132,6 @@ static int mpacpi_npci;
 static int mpacpi_maxpci;
 static int mpacpi_npciroots;
 #endif
-
-struct mp_intr_map *mpacpi_sci_override;
 
 static int mpacpi_intr_index;
 static paddr_t mpacpi_lapic_base = LAPIC_BASE;
@@ -299,9 +297,6 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		if (pic->pic_type == PIC_IOAPIC)
 			pic->pic_ioapic->sc_pins[pin].ip_map = mpi;
 #endif
-		if (isa_ovr->SourceIrq == AcpiGbl_FADT.SciInterrupt)
-			mpacpi_sci_override = mpi;
-
 		break;
 
 	case ACPI_MADT_TYPE_LOCAL_X2APIC_NMI:
@@ -942,13 +937,6 @@ mpacpi_find_interrupts(void *self)
 		printf("mpacpi: %d PCI busses\n", mpacpi_npci);
 #endif
 	mpacpi_config_irouting(acpi);
-#if NIOAPIC > 0
-	/*
-	 * XXX fix up the SCI interrupt polarity.
-	 * it's installed before we have parsed the MADT.
-	 */
-	ioapic_reenable();
-#endif
 	if (mp_verbose)
 		for (i = 0; i < mp_nintr; i++)
 			mpacpi_print_intr(&mp_intrs[i]);
