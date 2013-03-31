@@ -1,0 +1,45 @@
+LIBBZ2_1.1.0.0 {
+global:
+	BZ2_blockSort;
+	BZ2_bsInitWrite;
+	BZ2_bzBuffToBuffCompress;
+	BZ2_bzBuffToBuffDecompress;
+	BZ2_bzCompress;
+	BZ2_bzCompressEnd;
+	BZ2_bzCompressInit;
+	BZ2_bzDecompress;
+	BZ2_bzDecompressEnd;
+	BZ2_bzDecompressInit;
+	BZ2_bzRead;
+	BZ2_bzReadClose;
+	BZ2_bzReadGetUnused;
+	BZ2_bzReadOpen;
+	BZ2_bzWrite;
+	BZ2_bzWriteClose64;
+	BZ2_bzWriteClose;
+	BZ2_bzWriteOpen;
+	BZ2_bz__AssertH__fail;
+	BZ2_bzclose;
+	BZ2_bzdopen;
+	BZ2_bzerror;
+	BZ2_bzflush;
+	BZ2_bzlibVersion;
+	BZ2_bzopen;
+	BZ2_bzread;
+	BZ2_bzwrite;
+	BZ2_compressBlock;
+	BZ2_decompress;
+	BZ2_hbAssignCodes;
+	BZ2_hbCreateDecodeTables;
+	BZ2_hbMakeCodeLengths;
+	BZ2_indexIntoF;
+};
+
+NetBSD_6.99.18.0 {
+} LIBBZ2_1.1.0.0;
+
+LIBBZ2_private_1.1.0.0 {
+local:
+	*;
+};
+
