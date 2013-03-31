@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_pci.c,v 1.3 2013/03/31 11:12:30 martin Exp $	*/
+/*	$NetBSD: if_athn_pci.c,v 1.4 2013/03/31 11:38:36 martin Exp $	*/
 /*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.3 2013/03/31 11:12:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.4 2013/03/31 11:38:36 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -208,6 +208,7 @@ athn_pci_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_verbose_dev(self, "interrupting at %s\n", intrstr);
 
+	ic->ic_ifp = &sc->sc_if;
 	if (athn_attach(sc) != 0)
 		goto fail2;
 
