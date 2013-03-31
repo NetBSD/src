@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.27 2013/03/31 20:21:15 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.28 2013/03/31 20:27:15 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -196,4 +196,9 @@ sys/netinet6/udp6_output.c			1.44
 
 	Fix sendto(2) issue with IPv6 UDP datagrams.  PR#47408.
 	[christos, ticket #853]
+
+lib/libc/rpc/clnt_vc.c				1.19
+
+	Wrong memcpy() can cause memory corruption.  PR#13082.
+	[christos, ticket #854]
 
