@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.25 2013/03/29 00:52:23 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.26 2013/03/31 17:30:52 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -187,3 +187,8 @@ sys/kern/subr_cprng.c				1.16
 	is mixed in before users can obtain any output, it doesn't look as
 	dangerous in practice as I'd feared it might be.
 	[tls, ticket #859]
+sys/sys/ptree.h					1.5
+
+	Cast constants to appropriate types to fix crashes in ptree(9).
+	[rmind, ticket #851]
+
