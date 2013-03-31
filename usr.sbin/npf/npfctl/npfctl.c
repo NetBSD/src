@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.10.2.15 2013/02/18 18:26:14 riz Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.10.2.16 2013/03/31 17:43:16 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.10.2.15 2013/02/18 18:26:14 riz Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.10.2.16 2013/03/31 17:43:16 riz Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -339,7 +339,7 @@ again:
 		}
 		/* FALLTHROUGH */
 	default:
-		err(EXIT_FAILURE, "ioctl");
+		err(EXIT_FAILURE, "ioctl(IOC_NPF_TABLE)");
 	}
 
 	if (nct.nct_cmd == NPF_CMD_TABLE_LIST) {
@@ -484,7 +484,7 @@ npfctl(int action, int argc, char **argv)
 		err(EXIT_FAILURE, "cannot open '%s'", NPF_DEV_PATH);
 	}
 	if (ioctl(fd, IOC_NPF_VERSION, &ver) == -1) {
-		err(EXIT_FAILURE, "ioctl");
+		err(EXIT_FAILURE, "ioctl(IOC_NPF_VERSION)");
 	}
 	if (ver != NPF_VERSION) {
 		errx(EXIT_FAILURE,
@@ -492,33 +492,37 @@ npfctl(int action, int argc, char **argv)
 		    "Hint: update userland?", NPF_VERSION, ver);
 	}
 
+	const char *fun = "";
 	switch (action) {
 	case NPFCTL_START:
 		boolval = true;
 		ret = ioctl(fd, IOC_NPF_SWITCH, &boolval);
+		fun = "ioctl(IOC_NPF_SWITCH)";
 		break;
 	case NPFCTL_STOP:
 		boolval = false;
 		ret = ioctl(fd, IOC_NPF_SWITCH, &boolval);
+		fun = "ioctl(IOC_NPF_SWITCH)";
 		break;
 	case NPFCTL_RELOAD:
 		npfctl_config_init(false);
 		npfctl_parse_file(argc < 3 ? NPF_CONF_PATH : argv[2]);
-		ret = npfctl_config_send(fd, NULL);
-		if (ret) {
-			errx(EXIT_FAILURE, "ioctl: %s", strerror(ret));
-		}
+		errno = ret = npfctl_config_send(fd, NULL);
+		fun = "npfctl_config_send";
 		break;
 	case NPFCTL_SHOWCONF:
 		ret = npfctl_config_show(fd);
+		fun = "npfctl_config_show";
 		break;
 	case NPFCTL_FLUSH:
 		ret = npf_config_flush(fd);
+		fun = "npf_config_flush";
 		break;
 	case NPFCTL_VALIDATE:
 		npfctl_config_init(false);
 		npfctl_parse_file(argc < 3 ? NPF_CONF_PATH : argv[2]);
 		ret = npfctl_config_show(0);
+		fun = "npfctl_config_show";
 		break;
 	case NPFCTL_TABLE:
 		if ((argc -= 2) < 2) {
@@ -536,6 +540,7 @@ npfctl(int action, int argc, char **argv)
 		break;
 	case NPFCTL_STATS:
 		ret = npfctl_print_stats(fd);
+		fun = "npfctl_print_stats";
 		break;
 	case NPFCTL_SESSIONS_SAVE:
 		if (npf_sessions_recv(fd, NPF_SESSDB_PATH) != 0) {
@@ -551,7 +556,7 @@ npfctl(int action, int argc, char **argv)
 		break;
 	}
 	if (ret) {
-		err(EXIT_FAILURE, "ioctl");
+		err(EXIT_FAILURE, "%s", fun);
 	}
 	close(fd);
 }
