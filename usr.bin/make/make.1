@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.212 2013/03/23 05:31:29 sjg Exp $
+.\"	$NetBSD: make.1,v 1.213 2013/03/31 05:49:51 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd March 22, 2013
+.Dd March 30, 2013
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1764,6 +1764,20 @@ targets.
 Ignore differences in commands when deciding if target is out of date.
 This is useful if the command contains a value which always changes.
 If the number of commands change, though, the target will still be out of date.
+The same effect applies to any command line that uses the variable
+.Va .OODATE ,
+which can be used for that purpose even when not otherwise needed or desired:
+.Bd -literal -offset indent
+
+skip-compare-for-some:
+	@echo this will be compared
+	@echo this will not ${.OODATE:M.NOMETA_CMP}
+	@echo this will also be compared
+
+.Ed
+The
+.Cm \&:M
+pattern suppresses any expansion of the unwanted variable.
 .It Ic .NOPATH
 Do not search for the target in the directories specified by
 .Ic .PATH .
