@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.18.1 2013/03/26 01:59:13 agc Exp $
+#	$NetBSD: Makefile,v 1.4.18.2 2013/03/31 23:06:43 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -31,9 +31,10 @@ LDADD+=         -L${LIBUMEM_OBJDIR} -lumem
 LIBZPOOL_OBJDIR!=  cd ${LIBZPOOL_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=         -L${LIBZPOOL_OBJDIR} -lzpool
 
-LDADD+= -lm -lutil -lpthread
+LDADD+= -lm -lutil
 
-PROGDPLIBS+=     z               ${NETBSDSRCDIR}/lib/libz
+PROGDPLIBS+=     z		${NETBSDSRCDIR}/lib/libz
+PROGDPLIBS+=     pthread	${NETBSDSRCDIR}/lib/libpthread
 
 .PATH: ${ZFSDIR}/dist/cmd/zpool
 
