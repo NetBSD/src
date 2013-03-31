@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.116 2013/03/31 17:47:10 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.117 2013/03/31 22:24:11 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8771,4 +8771,53 @@ usr.sbin/npf/npfctl/npfctl.c			1.32
 
 	Minor npfctl(5) fixes in parsing and error handling.
 	[rmind, ticket #852]
+
+sys/netinet6/udp6_output.c			1.44
+
+	Fix sendto(2) issue with IPv6 UDP datagrams.  PR#47408.
+	[christos, ticket #853]
+
+lib/libc/rpc/clnt_vc.c				1.19
+
+	Wrong memcpy() can cause memory corruption.  PR#13082.
+	[christos, ticket #854]
+
+sys/arch/x86/acpi/acpi_machdep.c		1.5-1.6
+sys/arch/x86/x86/mpacpi.c			1.97
+
+	Address ACPI issues on some AMD systems, that were introduced
+	post-6.0. PR#47016, PR#47648.
+	[chs, ticket #855]
+
+sys/arch/x86/x86/intr.c				1.75
+
+	Only use db_printf() if we're actually called from DDB.
+	This prevents the boot-time one from pausing the boot process.
+	[chs, ticket #856]
+
+sys/dev/mscp/mscp_subr.c			1.45
+
+	Prevent a crash when accessing any disk devices on the VAX mscp bus.
+	[martin, ticket #857]
+
+usr.bin/cap_mkdb/cap_mkdb.c			1.28-1.29
+
+	Make cap_mkdb work when a db file already existed, rather than
+	repeat the old values.  Fixes bin/32591.
+	[gdt, ticket #858]
+
+sys/netinet/ip_icmp.c				1.130
+
+	Add missing codes to ICMP handling.  PR#47693.
+	[fair, ticket #860]
+
+share/terminfo/terminfo				1.6
+
+	Fix initialization for vt220.  PR#47674.
+	[uwe, ticket #861]
+
+sys/sys/param.h					patched by hand
+
+	Welcome to 6.1_RC3!
+	[riz]
 
