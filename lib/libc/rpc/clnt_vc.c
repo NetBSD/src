@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.17 2010/12/08 02:06:38 joerg Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.17.12.1 2013/03/31 20:26:59 riz Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.17 2010/12/08 02:06:38 joerg Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.17.12.1 2013/03/31 20:26:59 riz Exp $");
 #endif
 #endif
  
@@ -262,8 +262,8 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 	ct->ct_addr.buf = malloc((size_t)raddr->maxlen);
 	if (ct->ct_addr.buf == NULL)
 		goto fooy;
-	memcpy(ct->ct_addr.buf, &raddr->buf, (size_t)raddr->len);
-	ct->ct_addr.len = raddr->maxlen;
+	memcpy(ct->ct_addr.buf, raddr->buf, (size_t)raddr->len);
+	ct->ct_addr.len = raddr->len;
 	ct->ct_addr.maxlen = raddr->maxlen;
 
 	/*
