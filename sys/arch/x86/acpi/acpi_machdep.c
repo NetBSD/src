@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.5 2013/03/25 01:30:37 chs Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.6 2013/03/31 19:34:24 chs Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.5 2013/03/25 01:30:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6 2013/03/31 19:34:24 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,12 +163,14 @@ acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
 		if (polarity == ACPI_MADT_POLARITY_ACTIVE_HIGH ||
 		    (!sci && polarity == ACPI_MADT_POLARITY_CONFORMS)) {
 			mpflags &= ~MPS_INTPO_ACTLO;
+			mpflags |= MPS_INTPO_ACTHI;
 			redir &= ~IOAPIC_REDLO_ACTLO;
 		}
 		if (trigger == ACPI_MADT_TRIGGER_EDGE ||
 		    (!sci && trigger == ACPI_MADT_TRIGGER_CONFORMS)) {
 			type = IST_EDGE;
 			mpflags &= ~(MPS_INTTR_LEVEL << 2);
+			mpflags |= (MPS_INTTR_EDGE << 2);
 			redir &= ~IOAPIC_REDLO_LEVEL;
 		}
 	}
@@ -200,6 +202,7 @@ acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
 			mipp = &sc->sc_pins[pin].ip_map;
 			*mipp = &tmpmap;
 			tmpmap.redir = redir;
+			tmpmap.flags = mpflags;
 		}
 	} else
 #endif
