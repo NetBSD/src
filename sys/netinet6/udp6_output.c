@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.43 2011/09/24 17:22:14 christos Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.43.8.1 2013/03/31 20:20:07 riz Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.43 2011/09/24 17:22:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.43.8.1 2013/03/31 20:20:07 riz Exp $");
 
 #include "opt_inet.h"
 
@@ -177,8 +177,6 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 
 
 	if (sin6) {
-		faddr = &sin6->sin6_addr;
-
 		/*
 		 * IPv4 version of udp_output calls in_pcbconnect in this case,
 		 * which needs splnet and affects performance.
@@ -292,10 +290,12 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 			if (error)
 				goto release;
 
-			error = in6_pcbconnect(in6p, addr6, l);
+			error = in6_pcbsetport(&lsin6, in6p, l);
 
-			if (error)
+			if (error) {
+				in6p->in6p_laddr = in6addr_any;
 				goto release;
+			}
 		}
 	} else {
 		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
