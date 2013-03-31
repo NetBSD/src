@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_pci.c,v 1.2 2013/03/31 10:51:38 martin Exp $	*/
+/*	$NetBSD: if_athn_pci.c,v 1.3 2013/03/31 11:12:30 martin Exp $	*/
 /*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.2 2013/03/31 10:51:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.3 2013/03/31 11:12:30 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -131,6 +131,7 @@ athn_pci_attach(device_t parent, device_t self, void *aux)
 	pci_product_id_t subsysid;
 	int error;
 
+	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_tag = pa->pa_tag;
