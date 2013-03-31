@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.28 2013/03/23 23:39:47 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.29 2013/03/31 05:49:51 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1213,17 +1213,19 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    oodate = TRUE;
 		} else {
 		    char *cmd = (char *)Lst_Datum(ln);
+		    Boolean hasOODATE = FALSE;
 
-		    if (!needOODATE) {
-			if (strstr(cmd, "$?"))
-			    needOODATE = TRUE;
-			else if ((cp = strstr(cmd, ".OODATE"))) {
-			    /* check for $[{(].OODATE[)}] */
-			    if (cp > cmd + 2 && cp[-2] == '$')
-				needOODATE = TRUE;
-			}
-			if (needOODATE && DEBUG(META))
-			    fprintf(debug_file, "%s: %d: cannot compare commands using .OODATE\n", fname, lineno);
+		    if (strstr(cmd, "$?"))
+			hasOODATE = TRUE;
+		    else if ((cp = strstr(cmd, ".OODATE"))) {
+			/* check for $[{(].OODATE[:)}] */
+			if (cp > cmd + 2 && cp[-2] == '$')
+			    hasOODATE = TRUE;
+		    }
+		    if (hasOODATE) {
+			needOODATE = TRUE;
+			if (DEBUG(META))
+			    fprintf(debug_file, "%s: %d: cannot compare command using .OODATE\n", fname, lineno);
 		    }
 		    cmd = Var_Subst(NULL, cmd, gn, TRUE);
 
@@ -1252,7 +1254,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			if (buf[x - 1] == '\n')
 			    buf[x - 1] = '\0';
 		    }
-		    if (!needOODATE &&
+		    if (!hasOODATE &&
 			!(gn->type & OP_NOMETA_CMP) &&
 			strcmp(p, cmd) != 0) {
 			if (DEBUG(META))
