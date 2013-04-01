@@ -1,0 +1,69 @@
+#! /bin/sh
+
+# $NetBSD: mkvermap,v 1.1.2.1 2013/04/01 07:04:25 agc Exp $
+
+# Copyright (c) 2013 Alistair Crooks <agc@NetBSD.org>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+# Usage: mkvermap c
+#	makes symbol versioning info for /usr/lib/libc.so
+
+major=0
+minor=0
+minimus=0
+if [ -f shlib_version ]; then
+	. ./shlib_version
+fi
+os="$(uname -r)"
+output=Version.map
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--major=*)		major=${1#--major=} ;;
+	--minor=*)		minor=${1#--minor=} ;;
+	--os=*)			os=${1#--os=} ;;
+	--output=*)		output=${1#--output=} ;;
+	-o)			output=$2; shift ;;
+	-v)			set -x ;;
+	*)			break ;;
+	esac
+	shift
+done
+
+LIB=$1
+
+nm /usr/lib/lib${LIB}.so |
+	awk '$2 ~ /^[BCDRTWV]$/ { print "\t" $3 ";" }' |
+	sort -u |
+	awk -v LIB=${LIB} -v osver="${os}" -v major=${major} -v minor=${minor} -v minimus=${minimus} '
+	BEGIN {
+		printf("LIB%s_%s.%s.%s.0 {\nglobal:\n", toupper(LIB), major, minor, minimus)
+	}
+	{ print }
+	END {
+		printf("};\n\n");
+		printf("NetBSD_%s.0 {\n} LIB%s_%s.%s.%s.0;\n\n", osver, toupper(LIB), major, minor, minimus);
+		printf("LIB%s_private_%s.%s.%s.0 {\nlocal:\n\t*;\n};\n\n", toupper(LIB), major, minor, minimus);
+	}' > ${output}
+
+exit 0
