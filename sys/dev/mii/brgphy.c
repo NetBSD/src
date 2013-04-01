@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.62 2013/03/19 04:10:12 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.63 2013/04/01 13:41:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.62 2013/03/19 04:10:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.63 2013/04/01 13:41:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,14 +266,6 @@ brgphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_anegticks = MII_ANEGTICKS;
 	sc->mii_funcs = &brgphy_funcs;
 
-	PHY_RESET(sc);
-
-	sc->mii_capabilities =
-	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	if (sc->mii_capabilities & BMSR_EXTSTAT)
-		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
-
-
 	if (device_is_a(parent, "bge"))
 		bsc->sc_isbge = true;
 	else if (device_is_a(parent, "bnx"))
@@ -288,6 +280,13 @@ brgphyattach(device_t parent, device_t self, void *aux)
 		    &bsc->sc_chipid))
 			aprint_error_dev(self, "failed to get chipid\n");
 	}
+
+	PHY_RESET(sc);
+
+	sc->mii_capabilities =
+	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	if (sc->mii_capabilities & BMSR_EXTSTAT)
+		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
