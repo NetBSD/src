@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphyreg.h,v 1.5 2010/12/09 23:25:49 jym Exp $	*/
+/*	$NetBSD: brgphyreg.h,v 1.6 2013/04/01 13:44:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -41,6 +41,14 @@
  * Broadcom BCM5400 registers
  */
 
+#define BRGPHY_MII_1000CTL	0x09	/* 1000baseT control */
+#define	BRGPHY_1000CTL_TST	0xE000	/* Test modes */
+#define	BRGPHY_1000CTL_MSE	0x1000	/* Master/Slave enable */
+#define	BRGPHY_1000CTL_MSC	0x0800	/* Master/Slave configuration */
+#define	BRGPHY_1000CTL_RD	0x0400	/* Repeater/DTE */
+#define	BRGPHY_1000CTL_AFD	0x0200	/* Advertise full duplex */
+#define	BRGPHY_1000CTL_AHD	0x0100	/* Advertise half duplex */
+
 #define BRGPHY_MII_PHY_EXTCTL	0x10	/* PHY extended control */
 #define BRGPHY_PHY_EXTCTL_MAC_PHY	0x8000	/* 10BIT/GMI-interface */
 #define BRGPHY_PHY_EXTCTL_DIS_CROSS	0x4000	/* Disable MDI crossover */
@@ -74,14 +82,6 @@
 #define BRGPHY_PHY_EXTSTS_TX_ER		0x0004	/* TX error */
 #define BRGPHY_PHY_EXTSTS_LOCK_ER	0x0002	/* Lock error */
 #define BRGPHY_PHY_EXTSTS_MLT3_ER	0x0001	/* MLT3 code error */
-
-#define BRGPHY_MII_1000CTL	0x09	/* 1000baseT control */
-#define	BRGPHY_1000CTL_TST	0xE000	/* Test modes */
-#define	BRGPHY_1000CTL_MSE	0x1000	/* Master/Slave enable */
-#define	BRGPHY_1000CTL_MSC	0x0800	/* Master/Slave configuration */
-#define	BRGPHY_1000CTL_RD	0x0400	/* Repeater/DTE */
-#define	BRGPHY_1000CTL_AFD	0x0200	/* Advertise full duplex */
-#define	BRGPHY_1000CTL_AHD	0x0100	/* Advertise half duplex */
 
 #define BRGPHY_MII_RXERRCNT	0x12	/* RX error counter */
 
