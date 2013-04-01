@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.12 2013/03/31 16:46:29 christos Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.13 2013/04/01 12:31:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.12 2013/03/31 16:46:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.13 2013/04/01 12:31:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -241,7 +241,7 @@ int
 ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
     int *timo, struct timespec *start)
 {
-	int error;
+	int error, res;
 	struct timespec tsd;
 
 	flags &= TIMER_ABSTIME;
@@ -259,8 +259,12 @@ ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
 	if ((error = itimespecfix(ts)) != 0)
 		return error;
 
-	*timo = tstohz(ts);
-	KASSERT(*timo > 0);
+	res = tstohz(ts);
+	if (res == 0)
+		return ETIMEDOUT;
+
+	KASSERT(res > 0);
+	*timo = res;
 
 	return 0;
 }
