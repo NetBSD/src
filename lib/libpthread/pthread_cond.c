@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.60 2013/03/28 18:07:12 christos Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.61 2013/04/01 13:28:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.60 2013/03/28 18:07:12 christos Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.61 2013/04/01 13:28:21 christos Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -131,6 +131,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 {
 	pthread_t self;
 	int retval;
+	struct timespec mono;
 
 	if (__predict_false(__uselibcstub))
 		return __libc_cond_timedwait_stub(cond, mutex, abstime);
@@ -147,7 +148,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		 * extra system calls! 
 		 */
 		if (pthread_cond_getclock(cond) == CLOCK_MONOTONIC) {
-			struct timespec mono, real;
+			struct timespec real;
 			if (clock_gettime(CLOCK_REALTIME, &real) == -1 ||
 			    clock_gettime(CLOCK_MONOTONIC, &mono) == -1)
 				return errno;
