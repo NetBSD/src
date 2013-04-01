@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.14 2013/04/01 15:46:46 christos Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.15 2013/04/01 16:37:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.14 2013/04/01 15:46:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.15 2013/04/01 16:37:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -161,7 +161,9 @@ tstohz(const struct timespec *ts)
  * Check that a proposed value to load into the .it_value or
  * .it_interval part of an interval timer is acceptable, and
  * fix it to have at least minimal value (i.e. if it is less
- * than the resolution of the clock, round it up.)
+ * than the resolution of the clock, round it up.). We don't
+ * timeout the 0,0 value because this means to disable the
+ * timer or the interval.
  */
 int
 itimerfix(struct timeval *tv)
@@ -169,9 +171,9 @@ itimerfix(struct timeval *tv)
 
 	if (tv->tv_usec < 0 || tv->tv_usec >= 1000000)
 		return EINVAL;
-	if (ts->tv_sec < 0 || (ts->tv_sec == 0 && ts->tv_usec == 0))
+	if (tv->tv_sec < 0)
 		return ETIMEDOUT;
-	if (tv->tv_sec == 0 && tv->tv_usec < tick)
+	if (tv->tv_sec == 0 && tv->tv_usec != 0 && tv->tv_usec < tick)
 		tv->tv_usec = tick;
 	return 0;
 }
@@ -182,9 +184,9 @@ itimespecfix(struct timespec *ts)
 
 	if (ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
 		return EINVAL;
-	if (ts->tv_sec < 0 || (ts->tv_sec == 0 && ts->tv_nsec == 0))
+	if (ts->tv_sec < 0)
 		return ETIMEDOUT;
-	if (ts->tv_sec == 0 && ts->tv_nsec < tick * 1000)
+	if (ts->tv_sec == 0 && ts->tv_nsec != 0 && ts->tv_nsec < tick * 1000)
 		ts->tv_nsec = tick * 1000;
 	return 0;
 }
@@ -258,6 +260,9 @@ ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
 
 	if ((error = itimespecfix(ts)) != 0)
 		return error;
+
+	if (ts->tv_sec == 0 && ts->tv_nsec == 0)
+		return ETIMEDOUT;
 
 	*timo = tstohz(ts);
 	KASSERT(*timo > 0);
