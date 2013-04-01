@@ -1,0 +1,27 @@
+LIBPTHREAD_DBG_private_2.0.0.0 {
+};
+
+LIBPTHREAD_DBG_2.0.0.0 {
+global:
+	_fini;
+	_init;
+	td_close;
+	td_map_id2thr;
+	td_map_pth2thr;
+	td_open;
+	td_thr_getname;
+	td_thr_getregs;
+	td_thr_info;
+	td_thr_iter;
+	td_thr_resume;
+	td_thr_setregs;
+	td_thr_suspend;
+	td_thr_tsd;
+	td_tsd_iter;
+};
+
+NetBSD_6.99.18.0 {
+local:
+	*;
+} LIBPTHREAD_DBG_2.0.0.0;
+
