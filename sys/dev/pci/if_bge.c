@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.230 2013/03/30 03:21:03 christos Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.231 2013/04/02 10:12:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.230 2013/03/30 03:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.231 2013/04/02 10:12:22 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -908,7 +908,7 @@ bge_ape_lock_init(struct bge_softc *sc)
 			bit = BGE_APE_LOCK_GRANT_DRIVER0;
 			break;
 		default:
-			if (pa->pa_function != 0)
+			if (pa->pa_function == 0)
 				bit = BGE_APE_LOCK_GRANT_DRIVER0;
 			else
 				bit = (1 << pa->pa_function);
