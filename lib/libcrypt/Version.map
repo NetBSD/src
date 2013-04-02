@@ -1,0 +1,32 @@
+LIBCRYPT_1.0.0.0 {
+global:
+	__bcrypt;
+	__crypt_sha1;
+	__crypt_sha1_iterations;
+	__crypt_to64;
+	__gensalt_blowfish;
+	__gensalt_md5;
+	__gensalt_new;
+	__gensalt_old;
+	__gensalt_sha1;
+	__hmac_sha1;
+	__md5crypt;
+	_fini;
+	_init;
+	bcrypt_gensalt;
+	crypt;
+	des_cipher;
+	des_setkey;
+	encrypt;
+	pw_gensalt;
+	setkey;
+};
+
+NetBSD_6.99.18.0 {
+} LIBCRYPT_1.0.0.0;
+
+LIBCRYPT_private_1.0.0.0 {
+local:
+	*;
+};
+
