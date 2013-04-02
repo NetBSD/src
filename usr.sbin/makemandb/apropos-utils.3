@@ -1,4 +1,4 @@
-.\" $NetBSD: apropos-utils.3,v 1.1 2012/02/07 19:13:32 joerg Exp $
+.\" $NetBSD: apropos-utils.3,v 1.2 2013/04/02 17:16:50 christos Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -42,11 +42,7 @@
 .Ft void
 .Fn close_db "sqlite3 *db"
 .Ft int
-.Fn run_query "sqlite3 *db" "const char *snippet_args[3]" "query_args *args"
-.Ft int
-.Fn run_query_html "sqlite3 *db" "query_args *args"
-.Ft int
-.Fn run_query_pager "sqlite3 *db" "query_args *args"
+.Fn run_query "sqlite3 *db" "query_format fmt" "query_args *args"
 .Sh DESCRIPTION
 These functions all live in the
 .Pa apropos-utils.h
@@ -61,7 +57,5 @@ develop applications on top of it.
 .Xr close_db 3 ,
 .Xr init_db 3 ,
 .Xr run_query 3 ,
-.Xr run_query_html 3 ,
-.Xr run_query_pager 3
 .Sh AUTHORS
 .An Abhinav Upadhyay

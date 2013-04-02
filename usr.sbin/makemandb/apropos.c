@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.15 2013/03/29 21:39:16 wiz Exp $	*/
+/*	$NetBSD: apropos.c,v 1.16 2013/04/02 17:16:50 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.15 2013/03/29 21:39:16 wiz Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.16 2013/04/02 17:16:50 christos Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -49,7 +49,7 @@ typedef struct apropos_flags {
 	int nresults;
 	int pager;
 	int no_context;
-	int no_format;
+	query_format format;
 	int legacy;
 	const char *machine;
 } apropos_flags;
@@ -71,7 +71,7 @@ static void
 parseargs(int argc, char **argv, struct apropos_flags *aflags)
 {
 	int ch;
-	while ((ch = getopt(argc, argv, "123456789Cciln:prS:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "123456789Cchiln:PprS:s:")) != -1) {
 		switch (ch) {
 		case '1':
 		case '2':
@@ -90,22 +90,28 @@ parseargs(int argc, char **argv, struct apropos_flags *aflags)
 		case 'c':
 			aflags->no_context = 0;
 			break;
+		case 'h':
+			aflags->format = APROPOS_HTML;
+			break;
 		case 'i':
-			aflags->no_format = 0;
+			aflags->format = APROPOS_TERM;
 			break;
 		case 'l':
 			aflags->legacy = 1;
 			aflags->no_context = 1;
-			aflags->no_format = 1;
+			aflags->format = APROPOS_NONE;
 			break;
 		case 'n':
 			aflags->nresults = atoi(optarg);
 			break;
 		case 'p':	// user wants a pager
 			aflags->pager = 1;
+			/*FALLTHROUGH*/
+		case 'P':
+			aflags->format = APROPOS_PAGER;
 			break;
 		case 'r':
-			aflags->no_format = 1;
+			aflags->format = APROPOS_NONE;
 			break;
 		case 'S':
 			aflags->machine = optarg;
@@ -145,7 +151,9 @@ main(int argc, char *argv[])
 	memset(&aflags, 0, sizeof(aflags));
 
 	if (!isatty(STDOUT_FILENO))
-		aflags.no_format = 1;
+		aflags.format = APROPOS_NONE;
+	else
+		aflags.format = APROPOS_TERM;
 
 	if ((str = getenv("APROPOS")) != NULL) {
 		char **ptr = emalloc((strlen(str) + 2) * sizeof(*ptr));
@@ -210,12 +218,16 @@ main(int argc, char *argv[])
 	args.callback = &query_callback;
 	args.callback_data = &cbdata;
 	args.errmsg = &errmsg;
-	args.flags = aflags.no_format ? APROPOS_NOFORMAT : 0;
 
-	if (aflags.pager)
-		rc = run_query_pager(db, &args);
-	else
-		rc = run_query_term(db, &args);
+	if (aflags.format == APROPOS_HTML) {
+		fprintf(cbdata.out, "<html>\n<header>\n<title>apropos results "
+		    "for %s</title></header>\n<body>\n<table cellpadding=\"4\""
+		    "style=\"border: 1px solid #000000; border-collapse:"
+		    "collapse;\" border=\"1\">\n", query);
+	}
+	rc = run_query(db, aflags.format, &args);
+	if (aflags.format == APROPOS_HTML)
+		fprintf(cbdata.out, "</table>\n</body>\n</html>\n");
 
 	free(query);
 	close_db(db);
@@ -252,11 +264,17 @@ query_callback(void *data, const char *section, const char *name,
 	callback_data *cbdata = (callback_data *) data;
 	FILE *out = cbdata->out;
 	cbdata->count++;
-	fprintf(out, cbdata->aflags->legacy ? "%s(%s) - %s\n" :
-	    "%s (%s)\t%s\n", name, section, name_desc);
-
-	if (cbdata->aflags->no_context == 0)
-		fprintf(out, "%s\n\n", snippet);
+	if (cbdata->aflags->format != APROPOS_HTML) {
+	    fprintf(out, cbdata->aflags->legacy ? "%s(%s) - %s\n" :
+		"%s (%s)\t%s\n", name, section, name_desc);
+	    if (cbdata->aflags->no_context == 0)
+		    fprintf(out, "%s\n\n", snippet);
+	} else {
+	    fprintf(out, "<tr><td>%s(%s)</td><td>%s</td></tr>\n", name,
+		section, name_desc);
+	    if (cbdata->aflags->no_context == 0)
+		    fprintf(out, "<tr><td colspan=2>%s</td></tr>\n", snippet);
+	}
 
 	return 0;
 }
