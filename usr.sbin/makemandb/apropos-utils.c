@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.14 2013/03/29 20:46:07 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.15 2013/04/02 17:16:50 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.14 2013/03/29 20:46:07 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.15 2013/04/02 17:16:50 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -468,8 +468,8 @@ rank_func(sqlite3_context *pctx, int nval, sqlite3_value **apval)
  *  arpopos-utils.h for the description of individual fields.
  *
  */
-int
-run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
+static int
+run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
 {
 	const char *default_snippet_args[3];
 	char *section_clause = NULL;
@@ -719,7 +719,7 @@ callback_html(void *data, const char *section, const char *name,
  *  inline HTML fragments.
  *  After that it delegates the call the actual user supplied callback function.
  */
-int
+static int
 run_query_html(sqlite3 *db, query_args *args)
 {
 	struct orig_callback_data orig_data;
@@ -728,7 +728,7 @@ run_query_html(sqlite3 *db, query_args *args)
 	const char *snippet_args[] = {"\002", "\003", "..."};
 	args->callback = &callback_html;
 	args->callback_data = (void *) &orig_data;
-	return run_query(db, snippet_args, args);
+	return run_query_internal(db, snippet_args, args);
 }
 
 /*
@@ -879,24 +879,16 @@ callback_term(void *data, const char *section, const char *name,
  *  For this purpose it first calls it's own callback function callback_pager
  *  which then delegates the call to the user supplied callback.
  */
-int
+static int
 run_query_pager(sqlite3 *db, query_args *args)
 {
 	struct orig_callback_data orig_data;
 	orig_data.callback = args->callback;
 	orig_data.data = args->callback_data;
-	const char *snippet_args[3];
-
-	if (args->flags & APROPOS_NOFORMAT) {
-		snippet_args[0] = snippet_args[1] = "";
-	} else {
-		snippet_args[0] = "\002";
-		snippet_args[1] = "\003";
-	}
-	snippet_args[2] = "...";
+	const char *snippet_args[3] = { "\002", "\003", "..." };
 	args->callback = &callback_pager;
 	args->callback_data = (void *) &orig_data;
-	return run_query(db, snippet_args, args);
+	return run_query_internal(db, snippet_args, args);
 }
 
 static void
@@ -944,7 +936,7 @@ term_init(int fd, const char *sa[5])
  *  For this purpose it first calls it's own callback function callback_pager
  *  which then delegates the call to the user supplied callback.
  */
-int
+static int
 run_query_term(sqlite3 *db, query_args *args)
 {
 	struct orig_callback_data orig_data;
@@ -952,17 +944,43 @@ run_query_term(sqlite3 *db, query_args *args)
 	orig_data.callback = args->callback;
 	orig_data.data = args->callback_data;
 	const char *snippet_args[5];
-	if (args->flags & APROPOS_NOFORMAT) {
-		snippet_args[0] = snippet_args[1] = snippet_args[3] =
-		    snippet_args[4] = "";
-		snippet_args[2] = "...";
-	} else
-		term_init(STDOUT_FILENO, snippet_args);
+
+	term_init(STDOUT_FILENO, snippet_args);
 	ta.smul = snippet_args[3];
 	ta.rmul = snippet_args[4];
 	ta.orig_data = (void *) &orig_data;
 
 	args->callback = &callback_term;
 	args->callback_data = &ta;
-	return run_query(db, snippet_args, args);
+	return run_query_internal(db, snippet_args, args);
+}
+
+static int
+run_query_none(sqlite3 *db, query_args *args)
+{
+	struct orig_callback_data orig_data;
+	orig_data.callback = args->callback;
+	orig_data.data = args->callback_data;
+	const char *snippet_args[3] = { "", "", "..." };
+	args->callback = &callback_pager;
+	args->callback_data = (void *) &orig_data;
+	return run_query_internal(db, snippet_args, args);
+}
+
+int
+run_query(sqlite3 *db, query_format fmt, query_args *args)
+{
+	switch (fmt) {
+	case APROPOS_NONE:
+		return run_query_none(db, args);
+	case APROPOS_HTML:
+		return run_query_html(db, args);
+	case APROPOS_TERM:
+		return run_query_term(db, args);
+	case APROPOS_PAGER:
+		return run_query_pager(db, args);
+	default:
+		warnx("Unknown query format %d", (int)fmt);
+		return -1;
+	}
 }
