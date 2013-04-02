@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192 2013/01/12 16:56:11 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.193 2013/04/02 13:28:41 taca Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2013/01/12 16:56:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2013/04/02 13:28:41 taca Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1197,7 +1197,7 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 	for (i = 0; i < bytes; i += n, dump_totalbytesleft -= n) {
 		/* Print out how many MBs we have left to go. */
 		if ((dump_totalbytesleft % (1024*1024)) == 0)
-			printf("%lu ", (unsigned long)
+			printf_nolog("%lu ", (unsigned long)
 			    (dump_totalbytesleft / (1024 * 1024)));
 
 		/* Limit size for next transfer. */
