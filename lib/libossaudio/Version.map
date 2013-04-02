@@ -1,0 +1,15 @@
+LIBOSSAUDIO_1.0.0.0 {
+global:
+	_fini;
+	_init;
+	_oss_ioctl;
+};
+
+NetBSD_6.99.18.0 {
+} LIBOSSAUDIO_1.0.0.0;
+
+LIBOSSAUDIO_private_1.0.0.0 {
+local:
+	*;
+};
+

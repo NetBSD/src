@@ -1,0 +1,41 @@
+LIBSKEY_2.0.0.0 {
+global:
+	Wp;
+	_fini;
+	_init;
+	atob8;
+	backspace;
+	btoa8;
+	btoe;
+	etob;
+	f;
+	getskeyprompt;
+	htoi;
+	keycrunch;
+	put8;
+	readpass;
+	readskey;
+	rip;
+	sevenbit;
+	skey_authenticate;
+	skey_get_algorithm;
+	skey_haskey;
+	skey_keyinfo;
+	skey_passcheck;
+	skey_set_algorithm;
+	skeychallenge;
+	skeygetnext;
+	skeylookup;
+	skeyverify;
+	skeyzero;
+	skipspace;
+};
+
+NetBSD_6.99.18.0 {
+} LIBSKEY_2.0.0.0;
+
+LIBSKEY_private_2.0.0.0 {
+local:
+	*;
+};
+
