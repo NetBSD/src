@@ -1,0 +1,19 @@
+LIBPOSIX_0.1.0.0 {
+global:
+	__posix_cerror;
+	_fini;
+	_init;
+	chown;
+	fchown;
+	lchown;
+	rename;
+};
+
+NetBSD_6.99.18.0 {
+} LIBPOSIX_0.1.0.0;
+
+LIBPOSIX_private_0.1.0.0 {
+local:
+	*;
+};
+

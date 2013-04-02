@@ -1,0 +1,86 @@
+LIBMENU_6.0.0.0 {
+global:
+	_fini;
+	_init;
+	_menui_default_item;
+	_menui_default_menu;
+	_menui_draw_item;
+	_menui_draw_menu;
+	_menui_goto_item;
+	_menui_match_items;
+	_menui_match_pattern;
+	_menui_max_item_size;
+	_menui_stitch_items;
+	current_item;
+	free_item;
+	free_menu;
+	item_count;
+	item_description;
+	item_index;
+	item_init;
+	item_name;
+	item_opts;
+	item_opts_off;
+	item_opts_on;
+	item_selected;
+	item_term;
+	item_userptr;
+	item_value;
+	item_visible;
+	menu_back;
+	menu_driver;
+	menu_fore;
+	menu_format;
+	menu_grey;
+	menu_init;
+	menu_items;
+	menu_mark;
+	menu_opts;
+	menu_opts_off;
+	menu_opts_on;
+	menu_pad;
+	menu_pattern;
+	menu_sub;
+	menu_term;
+	menu_unmark;
+	menu_userptr;
+	menu_win;
+	new_item;
+	new_menu;
+	pos_menu_cursor;
+	post_menu;
+	scale_menu;
+	set_current_item;
+	set_item_init;
+	set_item_opts;
+	set_item_term;
+	set_item_userptr;
+	set_item_value;
+	set_menu_back;
+	set_menu_fore;
+	set_menu_format;
+	set_menu_grey;
+	set_menu_init;
+	set_menu_items;
+	set_menu_mark;
+	set_menu_opts;
+	set_menu_pad;
+	set_menu_pattern;
+	set_menu_sub;
+	set_menu_term;
+	set_menu_unmark;
+	set_menu_userptr;
+	set_menu_win;
+	set_top_row;
+	top_row;
+	unpost_menu;
+};
+
+NetBSD_6.99.18.0 {
+} LIBMENU_6.0.0.0;
+
+LIBMENU_private_6.0.0.0 {
+local:
+	*;
+};
+
