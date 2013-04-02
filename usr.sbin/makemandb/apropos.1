@@ -1,4 +1,4 @@
-.\" $NetBSD: apropos.1,v 1.11 2013/03/29 21:39:09 wiz Exp $
+.\" $NetBSD: apropos.1,v 1.12 2013/04/02 17:16:50 christos Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nd search the complete content of all man pages
 .Sh SYNOPSIS
 .Nm
-.Op Fl 123456789Ccilpr
+.Op Fl 123456789CchilPpr
 .Op Fl n Ar results
 .Op Fl S Ar machine
 .Op Fl s Ar section
@@ -72,19 +72,23 @@ Search only within the specified section manual pages.
 Do not show the context of the match.
 .It Fl c
 Do show the context of the match (default).
+.It Fl h
+Turn on html formatting.
 .It Fl i
-Turn on escape code formatting.
+Turn on terminal escape code formatting.
 .It Fl l
 Legacy mode: Only searches name and name description.
-Does not print context, or escape format the text.
+Does not print context and turns off formatting.
 .It Fl n Ar results
 Output up to the specified number of search results.
 The default limit is infinity.
+.It Fl P
+Turn on pager formatting.
 .It Fl p
-Pipe the results through a pager (defaulting to
+Turn on pager formatting, and pipe the results through a pager (defaulting to
 .Xr more 1 ) .
 .It Fl r
-On tty output don't issue any formatting escape codes.
+Turn off formatting.
 .It Fl S Ar machine
 Limit the search to the pages for the specified machine architecture.
 By default pages for all architectures are shown in the search results.
