@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.23 2012/10/22 16:43:05 jakllsch Exp $ */
+/* $NetBSD: siisata.c,v 1.24 2013/04/03 17:15:07 bouyer Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.23 2012/10/22 16:43:05 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.24 2013/04/03 17:15:07 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -630,7 +630,7 @@ siisata_reset_channel(struct ata_channel *chp, int flags)
 	    DEBUG_FUNCS);
 
 	if (sata_reset_interface(chp, sc->sc_prt, schp->sch_scontrol,
-	    schp->sch_sstatus) != SStatus_DET_DEV) {
+	    schp->sch_sstatus, flags) != SStatus_DET_DEV) {
 		aprint_error("%s port %d: reset failed\n",
 		    SIISATANAME(sc), chp->ch_channel);
 		/* XXX and then ? */
@@ -687,7 +687,7 @@ siisata_probe_drive(struct ata_channel *chp)
 	siisata_disable_port_interrupt(chp);
 
 	switch(sata_reset_interface(chp, sc->sc_prt, schp->sch_scontrol,
-		schp->sch_sstatus)) {
+		schp->sch_sstatus, AT_WAIT)) {
 	case SStatus_DET_DEV:
 		/* clear any interrupts */
 		(void)PRREAD(sc, PRX(chp->ch_channel, PRO_PSS));

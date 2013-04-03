@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.46 2013/02/02 14:11:37 matt Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.47 2013/04/03 17:15:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.46 2013/02/02 14:11:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.47 2013/04/03 17:15:07 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -748,7 +748,7 @@ end:
 		delay(500000);
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
-	ahci_channel_start(sc, chp, AT_WAIT,
+	ahci_channel_start(sc, chp, flags,
 	    (sc->sc_ahci_cap & AHCI_CAP_CLO) ? 1 : 0);
 	return 0;
 }
@@ -762,7 +762,7 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 
 	ahci_channel_stop(sc, chp, flags);
 	if (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
-	    achp->ahcic_sstatus) != SStatus_DET_DEV) {
+	    achp->ahcic_sstatus, flags) != SStatus_DET_DEV) {
 		printf("%s: port %d reset failed\n", AHCINAME(sc), chp->ch_channel);
 		/* XXX and then ? */
 	}
@@ -770,7 +770,7 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 		chp->ch_queue->active_xfer->c_kill_xfer(chp,
 		    chp->ch_queue->active_xfer, KILL_RESET);
 	}
-	tsleep(&sc, PRIBIO, "ahcirst", mstohz(500));
+	ata_delay(500, "ahcirst", flags);
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	/* clear SErrors and start operations */
@@ -781,7 +781,7 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 		if ((((tfd & AHCI_P_TFD_ST) >> AHCI_P_TFD_ST_SHIFT)
 		    & WDCS_BSY) == 0)
 			break;
-		tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
+		ata_delay(10, "ahcid2h", flags);
 	}
 	if (i == AHCI_RST_WAIT)
 		aprint_error("%s: BSY never cleared, TD 0x%x\n",
@@ -825,7 +825,7 @@ ahci_probe_drive(struct ata_channel *chp)
 	    AHCI_P_CMD_POD | AHCI_P_CMD_SUD);
 	/* reset the PHY and bring online */
 	switch (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
-	    achp->ahcic_sstatus)) {
+	    achp->ahcic_sstatus, AT_WAIT)) {
 	case SStatus_DET_DEV:
 		tsleep(&sc, PRIBIO, "ahcidv", mstohz(500));
 		if (sc->sc_ahci_cap & AHCI_CAP_SPM) {
@@ -1198,14 +1198,11 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	/*
 	 * Polled command. 
 	 */
-	for (i = 0; i < ATA_DELAY / 10; i++) {
+	for (i = 0; i < ATA_DELAY * 10; i++) {
 		if (ata_bio->flags & ATA_ITSDONE)
 			break;
 		ahci_intr_port(sc, achp);
-		if (ata_bio->flags & ATA_NOSLEEP)
-			delay(10000);
-		else
-			tsleep(&xfer, PRIBIO, "ahcipl", mstohz(10));
+		delay(100);
 	}
 	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), channel, 
 	    AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS),
