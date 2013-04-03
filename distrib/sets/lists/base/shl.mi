@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.657 2013/03/29 21:59:52 christos Exp $
+# $NetBSD: shl.mi,v 1.658 2013/04/03 15:49:23 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -34,9 +34,6 @@
 ./lib/libdevmapper.so				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
-#./lib/libdns.so					base-net-shlib		dynamicroot
-#./lib/libdns.so.6				base-net-shlib		dynamicroot
-#./lib/libdns.so.6.0				base-net-shlib		dynamicroot
 ./lib/libedit.so				base-sys-shlib		dynamicroot
 ./lib/libedit.so.3				base-sys-shlib		dynamicroot
 ./lib/libedit.so.3.1				base-sys-shlib		dynamicroot
@@ -49,9 +46,6 @@
 ./lib/libipsec.so				base-net-shlib		dynamicroot
 ./lib/libipsec.so.3				base-net-shlib		dynamicroot
 ./lib/libipsec.so.3.0				base-net-shlib		dynamicroot
-#./lib/libisc.so					base-net-shlib		dynamicroot
-#./lib/libisc.so.6				base-net-shlib		dynamicroot
-#./lib/libisc.so.6.0				base-net-shlib		dynamicroot
 ./lib/libkvm.so					base-sys-shlib		dynamicroot
 ./lib/libkvm.so.6				base-sys-shlib		dynamicroot
 ./lib/libkvm.so.6.0				base-sys-shlib		dynamicroot
@@ -67,18 +61,12 @@
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
 ./lib/libm.so.0.10				base-sys-shlib		dynamicroot
-#./lib/libpcap.so				base-net-shlib		dynamicroot
-#./lib/libpcap.so.4				base-net-shlib		dynamicroot
-#./lib/libpcap.so.4.0				base-net-shlib		dynamicroot
 ./lib/libppath.so				base-sys-shlib		dynamicroot
 ./lib/libppath.so.0				base-sys-shlib		dynamicroot
 ./lib/libppath.so.0.0				base-sys-shlib		dynamicroot
 ./lib/libprop.so				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1.1				base-sys-shlib		dynamicroot
-#./lib/libpthread.so				base-sys-shlib		dynamicroot
-#./lib/libpthread.so.1				base-sys-shlib		dynamicroot
-#./lib/libpthread.so.1.1				base-sys-shlib		dynamicroot
 ./lib/libradius.so				base-sys-shlib		dynamicroot
 ./lib/libradius.so.4				base-sys-shlib		dynamicroot
 ./lib/libradius.so.4.0				base-sys-shlib		dynamicroot
