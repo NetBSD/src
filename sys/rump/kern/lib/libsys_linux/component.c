@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.6 2013/03/07 19:10:59 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.7 2013/04/03 22:43:56 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -79,3 +79,7 @@ __weak_alias(oss_ioctl_sequencer,rumplinux__stub);
 __weak_alias(oss_ioctl_audio,rumplinux__stub);
 __weak_alias(rusage_to_rusage50,rumplinux__stub);
 __weak_alias(do_sys_wait,rumplinux__stub);
+
+/* arch-specific */
+__weak_alias(compat_offseterr,rumplinux__stub);
+__weak_alias(linux_sys_ptrace_arch,rumplinux__stub);
