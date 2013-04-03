@@ -1,4 +1,4 @@
-/*	$NetBSD: athnvar.h,v 1.2 2013/03/30 14:14:30 christos Exp $	*/
+/*	$NetBSD: athnvar.h,v 1.3 2013/04/03 14:20:03 christos Exp $	*/
 /*	$OpenBSD: athnvar.h,v 1.33 2012/10/20 09:54:20 stsp Exp $	*/
 
 /*-
@@ -455,7 +455,8 @@ struct athn_softc {
 	device_suspensor_t		sc_suspensor;
 	pmf_qual_t			sc_qual;
 	struct ieee80211com		sc_ic;
-	struct ifnet			sc_if;
+	struct ethercom			sc_ec;
+#define sc_if	sc_ec.ec_if
 
 #if 0
 	int				(*sc_enable)(struct athn_softc *);
