@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.20 2013/04/03 14:20:02 christos Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.21 2013/04/03 14:40:41 christos Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -854,7 +854,7 @@ ahd_check_cmdcmpltqueues(struct ahd_softc *ahd)
 	u_int retval;
 
 	retval = 0;
-	ahd_dmamap_sync1(ahd, ahd->parent_dmat /*shared_data_dmat*/, ahd->shared_data_map.dmamap,
+	ahd_dmamap_sync(ahd, ahd->parent_dmat /*shared_data_dmat*/, ahd->shared_data_map.dmamap,
 			/*offset*/ahd->qoutfifonext, /*len*/2,
 			BUS_DMASYNC_POSTREAD);
 	if ((ahd->qoutfifo[ahd->qoutfifonext]
