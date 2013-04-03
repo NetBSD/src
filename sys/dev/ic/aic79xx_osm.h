@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.21 2010/11/13 13:52:00 uebayasi Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.22 2013/04/03 14:20:02 christos Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.21 2010/11/13 13:52:00 uebayasi Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.22 2013/04/03 14:20:02 christos Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.21 2010/11/13 13:52:00 uebayasi Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.22 2013/04/03 14:20:02 christos Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
@@ -129,8 +129,28 @@ typedef pcireg_t ahd_dev_softc_t;
 	bus_dmamap_unload(tag, map)
 
 /* XXX Need to update Bus DMA for partial map syncs */
-#define ahd_dmamap_sync(ahd, dma_tag, dmamap, offset, len, op)		\
-	bus_dmamap_sync(dma_tag, dmamap, offset, len, op)
+#define ahd_dmamap_sync(ahd, dma_tag, dmamap, offset, len, op) 		\
+	do {								\
+		if (((op) & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTREAD)) != 0)\
+		if ((offset) >= (dmamap)->dm_mapsize) {			\
+			printf("%s, %d: %s: %x >= %x[%x]\n", __FILE__,	\
+			    __LINE__, __func__, (int)(offset),		\
+			    (int)(dmamap)->dm_mapsize, (int)(len));	\
+			return;						\
+		}							\
+		bus_dmamap_sync(dma_tag, dmamap, offset, len, op);	\
+	} while (/*CONSTCOND*/0)
+#define ahd_dmamap_sync1(ahd, dma_tag, dmamap, offset, len, op)		\
+	do {								\
+		if (((op) & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTREAD)) != 0)\
+		if ((offset) >= (dmamap)->dm_mapsize) {			\
+			printf("%s, %d: %s: %x >= %x[%x]\n", __FILE__,	\
+			    __LINE__, __func__, (int)(offset),		\
+			    (int)(dmamap)->dm_mapsize, (int)(len));	\
+			return 0;					\
+		}							\
+		bus_dmamap_sync(dma_tag, dmamap, offset, len, op);	\
+	} while (/*CONSTCOND*/0)
 
 /************************ Tunable Driver Parameters  **************************/
 /*
