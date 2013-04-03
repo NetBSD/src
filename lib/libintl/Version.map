@@ -1,0 +1,33 @@
+LIBINTL_1.0.0.0 {
+global:
+	__bindings;
+	__current_domainname;
+	__gettext_iconv;
+	__intl_string_hash;
+	__intl_sysdep_get_string_by_tag;
+	_fini;
+	_gettext_calculate_plural;
+	_gettext_free_plural;
+	_gettext_parse_plural;
+	_init;
+	_nl_msg_cat_cntr;
+	bind_textdomain_codeset;
+	bindtextdomain;
+	dcgettext;
+	dcngettext;
+	dgettext;
+	dngettext;
+	gettext;
+	ngettext;
+	sysdep_pair_table;
+	textdomain;
+};
+
+NetBSD_6.99.18.0 {
+} LIBINTL_1.0.0.0;
+
+LIBINTL_private_1.0.0.0 {
+local:
+	*;
+};
+

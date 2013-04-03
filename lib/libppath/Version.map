@@ -1,0 +1,79 @@
+LIBPPATH_0.0.0.0 {
+global:
+	_fini;
+	_init;
+	null_extant;
+	ppath_alloc;
+	ppath_component_at;
+	ppath_component_extant_dec;
+	ppath_component_extant_inc;
+	ppath_component_idx;
+	ppath_component_key;
+	ppath_component_release;
+	ppath_component_retain;
+	ppath_copy;
+	ppath_copydel_bool;
+	ppath_copydel_data;
+	ppath_copydel_int64;
+	ppath_copydel_object;
+	ppath_copydel_string;
+	ppath_copydel_uint64;
+	ppath_copyset_bool;
+	ppath_copyset_data;
+	ppath_copyset_int64;
+	ppath_copyset_object;
+	ppath_copyset_string;
+	ppath_copyset_uint64;
+	ppath_create;
+	ppath_create_bool;
+	ppath_create_data;
+	ppath_create_int64;
+	ppath_create_object;
+	ppath_create_string;
+	ppath_create_uint64;
+	ppath_delete_bool;
+	ppath_delete_data;
+	ppath_delete_int64;
+	ppath_delete_object;
+	ppath_delete_string;
+	ppath_delete_uint64;
+	ppath_dup_data;
+	ppath_dup_string;
+	ppath_extant_dec;
+	ppath_extant_inc;
+	ppath_free;
+	ppath_get_bool;
+	ppath_get_data;
+	ppath_get_int64;
+	ppath_get_object;
+	ppath_get_string;
+	ppath_get_uint64;
+	ppath_idx;
+	ppath_key;
+	ppath_length;
+	ppath_lookup;
+	ppath_pop;
+	ppath_push;
+	ppath_push_idx;
+	ppath_push_key;
+	ppath_release;
+	ppath_replace_idx;
+	ppath_replace_key;
+	ppath_retain;
+	ppath_set_bool;
+	ppath_set_data;
+	ppath_set_int64;
+	ppath_set_object;
+	ppath_set_string;
+	ppath_set_uint64;
+	ppath_subpath;
+};
+
+NetBSD_6.99.18.0 {
+} LIBPPATH_0.0.0.0;
+
+LIBPPATH_private_0.0.0.0 {
+local:
+	*;
+};
+

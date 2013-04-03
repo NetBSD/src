@@ -1,0 +1,55 @@
+LIBP2K_2.0.0.0 {
+global:
+	_fini;
+	_init;
+	p2k_cancel;
+	p2k_fs_extattrctl;
+	p2k_fs_fhtonode;
+	p2k_fs_nodetofh;
+	p2k_fs_statvfs;
+	p2k_fs_sync;
+	p2k_fs_unmount;
+	p2k_init;
+	p2k_mainloop;
+	p2k_node_access;
+	p2k_node_close;
+	p2k_node_create;
+	p2k_node_deleteextattr;
+	p2k_node_fsync;
+	p2k_node_getattr;
+	p2k_node_getextattr;
+	p2k_node_inactive;
+	p2k_node_link;
+	p2k_node_listextattr;
+	p2k_node_lookup;
+	p2k_node_mkdir;
+	p2k_node_mknod;
+	p2k_node_mmap;
+	p2k_node_open;
+	p2k_node_pathconf;
+	p2k_node_read;
+	p2k_node_readdir;
+	p2k_node_readlink;
+	p2k_node_reclaim;
+	p2k_node_remove;
+	p2k_node_rename;
+	p2k_node_rmdir;
+	p2k_node_seek;
+	p2k_node_setattr;
+	p2k_node_setextattr;
+	p2k_node_symlink;
+	p2k_node_write;
+	p2k_run_diskfs;
+	p2k_run_fs;
+	p2k_setup_diskfs;
+	p2k_setup_fs;
+};
+
+NetBSD_6.99.18.0 {
+} LIBP2K_2.0.0.0;
+
+LIBP2K_private_2.0.0.0 {
+local:
+	*;
+};
+

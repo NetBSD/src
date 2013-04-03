@@ -1,0 +1,50 @@
+LIBEXECINFO_0.0.0.0 {
+global:
+	_Unwind_Backtrace;
+	_Unwind_DeleteException;
+	_Unwind_FindEnclosingFunction;
+	_Unwind_Find_FDE;
+	_Unwind_ForcedUnwind;
+	_Unwind_GetCFA;
+	_Unwind_GetDataRelBase;
+	_Unwind_GetGR;
+	_Unwind_GetIP;
+	_Unwind_GetIPInfo;
+	_Unwind_GetLanguageSpecificData;
+	_Unwind_GetRegionStart;
+	_Unwind_GetTextRelBase;
+	_Unwind_RaiseException;
+	_Unwind_Resume;
+	_Unwind_Resume_or_Rethrow;
+	_Unwind_SetGR;
+	_Unwind_SetIP;
+	__deregister_frame;
+	__deregister_frame_info;
+	__deregister_frame_info_bases;
+	__frame_state_for;
+	__register_frame;
+	__register_frame_info;
+	__register_frame_info_bases;
+	__register_frame_info_table;
+	__register_frame_info_table_bases;
+	__register_frame_table;
+	_fini;
+	_init;
+	backtrace;
+	backtrace_symbols;
+	backtrace_symbols_fd;
+	backtrace_symbols_fd_fmt;
+	backtrace_symbols_fmt;
+	symtab_create;
+	symtab_destroy;
+	symtab_find;
+};
+
+NetBSD_6.99.18.0 {
+} LIBEXECINFO_0.0.0.0;
+
+LIBEXECINFO_private_0.0.0.0 {
+local:
+	*;
+};
+

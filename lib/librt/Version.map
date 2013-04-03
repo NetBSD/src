@@ -1,0 +1,53 @@
+LIBRT_1.1.0.0 {
+global:
+	__rt_cerror;
+	_fini;
+	_init;
+	_librt_sem_close;
+	_librt_sem_destroy;
+	_librt_sem_getvalue;
+	_librt_sem_init;
+	_librt_sem_open;
+	_librt_sem_post;
+	_librt_sem_timedwait;
+	_librt_sem_trywait;
+	_librt_sem_unlink;
+	_librt_sem_wait;
+	_pset_bind;
+	aio_cancel;
+	aio_error;
+	aio_fsync;
+	aio_read;
+	aio_return;
+	aio_write;
+	lio_listio;
+	mq_close;
+	mq_getattr;
+	mq_notify;
+	mq_open;
+	mq_setattr;
+	mq_unlink;
+	pset_assign;
+	pset_bind;
+	pset_create;
+	pset_destroy;
+	sem_close;
+	sem_destroy;
+	sem_getvalue;
+	sem_init;
+	sem_open;
+	sem_post;
+	sem_timedwait;
+	sem_trywait;
+	sem_unlink;
+	sem_wait;
+};
+
+NetBSD_6.99.18.0 {
+} LIBRT_1.1.0.0;
+
+LIBRT_private_1.1.0.0 {
+local:
+	*;
+};
+
