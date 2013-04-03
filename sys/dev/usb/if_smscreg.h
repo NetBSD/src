@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscreg.h,v 1.2 2013/02/09 16:42:45 skrll Exp $	*/
+/*	$NetBSD: if_smscreg.h,v 1.3 2013/04/03 15:57:44 skrll Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -40,7 +40,7 @@
  *
  */
 
-/**
+/*
  * TRANSMIT FRAMES
  * ---------------
  *   Tx frames are prefixed with an 8-byte header which describes the frame
@@ -63,17 +63,17 @@
  *      TX_CTRL_1 <10:0>   Packet byte length
  *
  */
-#define SMSC_TX_CTRL_0_OFFSET(x)         (((x) & 0x1FUL) << 16)
-#define SMSC_TX_CTRL_0_FIRST_SEG         (0x1UL << 13)
-#define SMSC_TX_CTRL_0_LAST_SEG          (0x1UL << 12)
-#define SMSC_TX_CTRL_0_BUF_SIZE(x)       ((x) & 0x000007FFUL)
+#define SMSC_TX_CTRL_0_OFFSET(x)	(((x) & 0x1FUL) << 16)
+#define SMSC_TX_CTRL_0_FIRST_SEG	(0x1UL << 13)
+#define SMSC_TX_CTRL_0_LAST_SEG		(0x1UL << 12)
+#define SMSC_TX_CTRL_0_BUF_SIZE(x)	((x) & 0x000007FFUL)
 
-#define SMSC_TX_CTRL_1_CSUM_ENABLE       (0x1UL << 14)
-#define SMSC_TX_CTRL_1_CRC_DISABLE       (0x1UL << 13)
-#define SMSC_TX_CTRL_1_PADDING_DISABLE   (0x1UL << 12)
-#define SMSC_TX_CTRL_1_PKT_LENGTH(x)     ((x) & 0x000007FFUL)
+#define SMSC_TX_CTRL_1_CSUM_ENABLE	(0x1UL << 14)
+#define SMSC_TX_CTRL_1_CRC_DISABLE	(0x1UL << 13)
+#define SMSC_TX_CTRL_1_PADDING_DISABLE	(0x1UL << 12)
+#define SMSC_TX_CTRL_1_PKT_LENGTH(x)	((x) & 0x000007FFUL)
 
-/**
+/*
  * RECEIVE FRAMES
  * --------------
  *   Rx frames are prefixed with an 4-byte status header which describes any
@@ -102,143 +102,142 @@
  *      RX_STAT   <1>      CRC Error
  *
  */
-#define SMSC_RX_STAT_FILTER_FAIL         (0x1UL << 30)
-#define SMSC_RX_STAT_FRM_LENGTH(x)       (((x) >> 16) & 0x3FFFUL)
-#define SMSC_RX_STAT_ERROR               (0x1UL << 15)
-#define SMSC_RX_STAT_BROADCAST           (0x1UL << 13)
-#define SMSC_RX_STAT_LENGTH_ERROR        (0x1UL << 12)
-#define SMSC_RX_STAT_RUNT                (0x1UL << 11)
-#define SMSC_RX_STAT_MULTICAST           (0x1UL << 10)
-#define SMSC_RX_STAT_FRM_TO_LONG         (0x1UL << 7)
-#define SMSC_RX_STAT_COLLISION           (0x1UL << 6)
-#define SMSC_RX_STAT_FRM_TYPE            (0x1UL << 5)
-#define SMSC_RX_STAT_WATCHDOG            (0x1UL << 4)
-#define SMSC_RX_STAT_MII_ERROR           (0x1UL << 3)
-#define SMSC_RX_STAT_DRIBBLING           (0x1UL << 2)
-#define SMSC_RX_STAT_CRC_ERROR           (0x1UL << 1)
+#define SMSC_RX_STAT_FILTER_FAIL	(0x1UL << 30)
+#define SMSC_RX_STAT_FRM_LENGTH(x)	(((x) >> 16) & 0x3FFFUL)
+#define SMSC_RX_STAT_ERROR		(0x1UL << 15)
+#define SMSC_RX_STAT_BROADCAST		(0x1UL << 13)
+#define SMSC_RX_STAT_LENGTH_ERROR	(0x1UL << 12)
+#define SMSC_RX_STAT_RUNT		(0x1UL << 11)
+#define SMSC_RX_STAT_MULTICAST		(0x1UL << 10)
+#define SMSC_RX_STAT_FRM_TOO_LONG	(0x1UL << 7)
+#define SMSC_RX_STAT_COLLISION		(0x1UL << 6)
+#define SMSC_RX_STAT_FRM_TYPE		(0x1UL << 5)
+#define SMSC_RX_STAT_WATCHDOG		(0x1UL << 4)
+#define SMSC_RX_STAT_MII_ERROR		(0x1UL << 3)
+#define SMSC_RX_STAT_DRIBBLING		(0x1UL << 2)
+#define SMSC_RX_STAT_CRC_ERROR		(0x1UL << 1)
 
-/**
+/*
  * REGISTERS
- *
  */
-#define SMSC_ID_REV                 0x000
-#define SMSC_INTR_STATUS            0x008
-#define SMSC_RX_CFG                 0x00C
-#define SMSC_TX_CFG                 0x010
-#define SMSC_HW_CFG                 0x014
-#define SMSC_PM_CTRL                0x020
-#define SMSC_LED_GPIO_CFG           0x024
-#define SMSC_GPIO_CFG               0x028
-#define SMSC_AFC_CFG                0x02C
-#define SMSC_EEPROM_CMD             0x030
-#define SMSC_EEPROM_DATA            0x034
-#define SMSC_BURST_CAP              0x038
-#define SMSC_GPIO_WAKE              0x064
-#define SMSC_INTR_CFG               0x068
-#define SMSC_BULK_IN_DLY            0x06C
-#define SMSC_MAC_CSR                0x100
-#define SMSC_MAC_ADDRH              0x104
-#define SMSC_MAC_ADDRL              0x108
-#define SMSC_HASHH                  0x10C
-#define SMSC_HASHL                  0x110
-#define SMSC_MII_ADDR               0x114
-#define SMSC_MII_DATA               0x118
-#define SMSC_FLOW                   0x11C
-#define SMSC_VLAN1                  0x120
-#define SMSC_VLAN2                  0x124
-#define SMSC_WUFF                   0x128
-#define SMSC_WUCSR                  0x12C
-#define SMSC_COE_CTRL               0x130
+#define SMSC_ID_REV		0x000
+#define SMSC_INTR_STATUS	0x008
+#define SMSC_RX_CFG		0x00C
+#define SMSC_TX_CFG		0x010
+#define SMSC_HW_CFG		0x014
+#define SMSC_PM_CTRL		0x020
+#define SMSC_LED_GPIO_CFG	0x024
+#define SMSC_GPIO_CFG		0x028
+#define SMSC_AFC_CFG		0x02C
+#define SMSC_EEPROM_CMD		0x030
+#define SMSC_EEPROM_DATA	0x034
+#define SMSC_BURST_CAP		0x038
+#define SMSC_GPIO_WAKE		0x064
+#define SMSC_INTR_CFG		0x068
+#define SMSC_BULK_IN_DLY	0x06C
+#define SMSC_MAC_CSR		0x100
+#define SMSC_MAC_ADDRH		0x104
+#define SMSC_MAC_ADDRL		0x108
+#define SMSC_HASHH		0x10C
+#define SMSC_HASHL		0x110
+#define SMSC_MII_ADDR		0x114
+#define SMSC_MII_DATA		0x118
+#define SMSC_FLOW		0x11C
+#define SMSC_VLAN1		0x120
+#define SMSC_VLAN2		0x124
+#define SMSC_WUFF		0x128
+#define SMSC_WUCSR		0x12C
+#define SMSC_COE_CTRL		0x130
 
 /* ID / Revision register */
-#define SMSC_ID_REV_CHIP_ID_MASK    0xFFFF0000UL
-#define SMSC_ID_REV_CHIP_REV_MASK   0x0000FFFFUL
+#define SMSC_ID_REV_CHIP_ID_MASK	0xFFFF0000UL
+#define SMSC_ID_REV_CHIP_REV_MASK	0x0000FFFFUL
 
-#define SMSC_RX_FIFO_FLUSH          (0x1UL << 0)
+#define SMSC_RX_FIFO_FLUSH		(0x1UL << 0)
 
-#define SMSC_TX_CFG_ON              (0x1UL << 2)
-#define SMSC_TX_CFG_STOP            (0x1UL << 1)
-#define SMSC_TX_CFG_FIFO_FLUSH      (0x1UL << 0)
+#define SMSC_TX_CFG_ON			(0x1UL << 2)
+#define SMSC_TX_CFG_STOP		(0x1UL << 1)
+#define SMSC_TX_CFG_FIFO_FLUSH		(0x1UL << 0)
 
-#define SMSC_HW_CFG_BIR             (0x1UL << 12)
-#define SMSC_HW_CFG_LEDB            (0x1UL << 11)
-#define SMSC_HW_CFG_RXDOFF          (0x3UL << 9)    /* RX pkt alignment */
-#define SMSC_HW_CFG_DRP             (0x1UL << 6)
-#define SMSC_HW_CFG_MEF             (0x1UL << 5)
-#define SMSC_HW_CFG_LRST            (0x1UL << 3)    /* Lite reset */
-#define SMSC_HW_CFG_PSEL            (0x1UL << 2)
-#define SMSC_HW_CFG_BCE             (0x1UL << 1)
-#define SMSC_HW_CFG_SRST            (0x1UL << 0)
+#define SMSC_HW_CFG_BIR			(0x1UL << 12)
+#define SMSC_HW_CFG_LEDB		(0x1UL << 11)
+#define SMSC_HW_CFG_RXDOFF		(0x3UL << 9)    /* RX pkt alignment */
+#define SMSC_HW_CFG_DRP			(0x1UL << 6)
+#define SMSC_HW_CFG_MEF			(0x1UL << 5)
+#define SMSC_HW_CFG_LRST		(0x1UL << 3)    /* Lite reset */
+#define SMSC_HW_CFG_PSEL		(0x1UL << 2)
+#define SMSC_HW_CFG_BCE			(0x1UL << 1)
+#define SMSC_HW_CFG_SRST		(0x1UL << 0)
 
-#define SMSC_PM_CTRL_PHY_RST        (0x1UL << 4)    /* PHY reset */
+#define SMSC_PM_CTRL_PHY_RST		(0x1UL << 4)    /* PHY reset */
 
-#define SMSC_LED_GPIO_CFG_SPD_LED   (0x1UL << 24)
-#define SMSC_LED_GPIO_CFG_LNK_LED   (0x1UL << 20)
-#define SMSC_LED_GPIO_CFG_FDX_LED   (0x1UL << 16)
+#define SMSC_LED_GPIO_CFG_SPD_LED	(0x1UL << 24)
+#define SMSC_LED_GPIO_CFG_LNK_LED	(0x1UL << 20)
+#define SMSC_LED_GPIO_CFG_FDX_LED	(0x1UL << 16)
 
 /* Hi watermark = 15.5Kb (~10 mtu pkts) */
 /* low watermark = 3k (~2 mtu pkts) */
 /* backpressure duration = ~ 350us */
 /* Apply FC on any frame. */
-#define AFC_CFG_DEFAULT             (0x00F830A1)
+#define AFC_CFG_DEFAULT			(0x00F830A1)
 
-#define SMSC_EEPROM_CMD_BUSY        (0x1UL << 31)
-#define SMSC_EEPROM_CMD_MASK        (0x7UL << 28)
-#define SMSC_EEPROM_CMD_READ        (0x0UL << 28)
-#define SMSC_EEPROM_CMD_WRITE       (0x3UL << 28)
-#define SMSC_EEPROM_CMD_ERASE       (0x5UL << 28)
-#define SMSC_EEPROM_CMD_RELOAD      (0x7UL << 28)
-#define SMSC_EEPROM_CMD_TIMEOUT     (0x1UL << 10)
-#define SMSC_EEPROM_CMD_ADDR_MASK   0x000001FFUL
+#define SMSC_EEPROM_CMD_BUSY		(0x1UL << 31)
+#define SMSC_EEPROM_CMD_MASK		(0x7UL << 28)
+#define SMSC_EEPROM_CMD_READ		(0x0UL << 28)
+#define SMSC_EEPROM_CMD_WRITE		(0x3UL << 28)
+#define SMSC_EEPROM_CMD_ERASE		(0x5UL << 28)
+#define SMSC_EEPROM_CMD_RELOAD		(0x7UL << 28)
+#define SMSC_EEPROM_CMD_TIMEOUT		(0x1UL << 10)
+#define SMSC_EEPROM_CMD_ADDR_MASK	0x000001FFUL
 
 /* MAC Control and Status Register */
-#define SMSC_MAC_CSR_RCVOWN         (0x1UL << 23)  /* Half duplex */
-#define SMSC_MAC_CSR_LOOPBK         (0x1UL << 21)  /* Loopback */
-#define SMSC_MAC_CSR_FDPX           (0x1UL << 20)  /* Full duplex */
-#define SMSC_MAC_CSR_MCPAS          (0x1UL << 19)  /* Multicast mode */
-#define SMSC_MAC_CSR_PRMS           (0x1UL << 18)  /* Promiscuous mode */
-#define SMSC_MAC_CSR_INVFILT        (0x1UL << 17)  /* Inverse filtering */
-#define SMSC_MAC_CSR_PASSBAD        (0x1UL << 16)  /* Pass on bad frames */
-#define SMSC_MAC_CSR_HPFILT         (0x1UL << 13)  /* Hash filtering */
-#define SMSC_MAC_CSR_BCAST          (0x1UL << 11)  /* Broadcast */
-#define SMSC_MAC_CSR_TXEN           (0x1UL << 3)   /* TX enable */
-#define SMSC_MAC_CSR_RXEN           (0x1UL << 2)   /* RX enable */
+#define SMSC_MAC_CSR_RCVOWN		(0x1UL << 23)  /* Half duplex */
+#define SMSC_MAC_CSR_LOOPBK		(0x1UL << 21)  /* Loopback */
+#define SMSC_MAC_CSR_FDPX		(0x1UL << 20)  /* Full duplex */
+#define SMSC_MAC_CSR_MCPAS		(0x1UL << 19)  /* Multicast mode */
+#define SMSC_MAC_CSR_PRMS		(0x1UL << 18)  /* Promiscuous mode */
+#define SMSC_MAC_CSR_INVFILT		(0x1UL << 17)  /* Inverse filtering */
+#define SMSC_MAC_CSR_PASSBAD		(0x1UL << 16)  /* Pass on bad frames */
+#define SMSC_MAC_CSR_HPFILT		(0x1UL << 13)  /* Hash filtering */
+#define SMSC_MAC_CSR_BCAST		(0x1UL << 11)  /* Broadcast */
+#define SMSC_MAC_CSR_TXEN		(0x1UL << 3)   /* TX enable */
+#define SMSC_MAC_CSR_RXEN		(0x1UL << 2)   /* RX enable */
 
 /* Interrupt control register */
-#define SMSC_INTR_NTEP              (0x1UL << 31)
-#define SMSC_INTR_MACRTO            (0x1UL << 19)
-#define SMSC_INTR_TX_STOP           (0x1UL << 17)
-#define SMSC_INTR_RX_STOP           (0x1UL << 16)
-#define SMSC_INTR_PHY_INT           (0x1UL << 15)
-#define SMSC_INTR_TXE               (0x1UL << 14)
-#define SMSC_INTR_TDFU              (0x1UL << 13)
-#define SMSC_INTR_TDFO              (0x1UL << 12)
-#define SMSC_INTR_RXDF              (0x1UL << 11)
-#define SMSC_INTR_GPIOS             0x000007FFUL
+#define SMSC_INTR_NTEP			(0x1UL << 31)
+#define SMSC_INTR_MACRTO		(0x1UL << 19)
+#define SMSC_INTR_TX_STOP		(0x1UL << 17)
+#define SMSC_INTR_RX_STOP		(0x1UL << 16)
+#define SMSC_INTR_PHY_INT		(0x1UL << 15)
+#define SMSC_INTR_TXE			(0x1UL << 14)
+#define SMSC_INTR_TDFU			(0x1UL << 13)
+#define SMSC_INTR_TDFO			(0x1UL << 12)
+#define SMSC_INTR_RXDF			(0x1UL << 11)
+#define SMSC_INTR_GPIOS			0x000007FFUL
 
 /* Phy MII interface register */
-#define SMSC_MII_WRITE              (0x1UL << 1)
-#define SMSC_MII_READ               (0x0UL << 1)
-#define SMSC_MII_BUSY               (0x1UL << 0)
+#define SMSC_MII_WRITE			(0x1UL << 1)
+#define SMSC_MII_READ			(0x0UL << 1)
+#define SMSC_MII_BUSY			(0x1UL << 0)
 
 /* H/W checksum register */
-#define SMSC_COE_CTRL_TX_EN         (0x1UL << 16)  /* Tx H/W csum enable */
-#define SMSC_COE_CTRL_RX_MODE       (0x1UL << 1)
-#define SMSC_COE_CTRL_RX_EN         (0x1UL << 0)   /* Rx H/W csum enable */
+#define SMSC_COE_CTRL_TX_EN		(0x1UL << 16)  /* Tx H/W csum enable */
+#define SMSC_COE_CTRL_RX_MODE		(0x1UL << 1)
+#define SMSC_COE_CTRL_RX_EN		(0x1UL << 0)   /* Rx H/W csum enable */
 
 /* Registers on the phy, accessed via MII/MDIO */
-#define SMSC_PHY_INTR_STAT          (29)
-#define SMSC_PHY_INTR_MASK          (30)
+#define SMSC_PHY_INTR_STAT		(29)
+#define SMSC_PHY_INTR_MASK		(30)
 
-#define SMSC_PHY_INTR_ENERGY_ON     (0x1U << 7)
-#define SMSC_PHY_INTR_ANEG_COMP     (0x1U << 6)
-#define SMSC_PHY_INTR_REMOTE_FAULT  (0x1U << 5)
-#define SMSC_PHY_INTR_LINK_DOWN     (0x1U << 4)
+#define SMSC_PHY_INTR_ENERGY_ON		(0x1U << 7)
+#define SMSC_PHY_INTR_ANEG_COMP		(0x1U << 6)
+#define SMSC_PHY_INTR_REMOTE_FAULT	(0x1U << 5)
+#define SMSC_PHY_INTR_LINK_DOWN		(0x1U << 4)
 
 /* USB Vendor Requests */
-#define SMSC_UR_WRITE_REG   0xA0
-#define SMSC_UR_READ_REG    0xA1
-#define SMSC_UR_GET_STATS   0xA2
+#define SMSC_UR_WRITE_REG	0xA0
+#define SMSC_UR_READ_REG	0xA1
+#define SMSC_UR_GET_STATS	0xA2
 
 #define SMSC_RX_LIST_CNT	1
 #define SMSC_TX_LIST_CNT	1
