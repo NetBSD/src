@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.31 2013/01/23 16:39:03 christos Exp $ */
+/* $NetBSD: set.c,v 1.32 2013/04/03 17:32:24 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.31 2013/01/23 16:39:03 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.32 2013/04/03 17:32:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,71 @@ static void balance(struct varent *, int, int);
 /*
  * C Shell
  */
+
+static void
+update_vars(Char *vp)
+{
+    if (eq(vp, STRpath)) {
+	struct varent *pt = adrof(STRpath); 
+	if (pt == NULL)
+	    stderror(ERR_NAME | ERR_UNDVAR);
+	else {
+	    exportpath(pt->vec);
+	    dohash(NULL, NULL);
+	}
+    }
+    else if (eq(vp, STRhistchars)) {
+	Char *pn = value(STRhistchars);
+
+	HIST = *pn++;
+	HISTSUB = *pn;
+    }
+    else if (eq(vp, STRuser)) {
+	Setenv(STRUSER, value(vp));
+	Setenv(STRLOGNAME, value(vp));
+    }
+    else if (eq(vp, STRwordchars)) {
+	word_chars = value(vp);
+    }
+    else if (eq(vp, STRterm))
+	Setenv(STRTERM, value(vp));
+    else if (eq(vp, STRhome)) {
+	Char *cp;
+
+	cp = Strsave(value(vp));	/* get the old value back */
+
+	/*
+	 * convert to canonical pathname (possibly resolving symlinks)
+	 */
+	cp = dcanon(cp, cp);
+
+	set(vp, Strsave(cp));	/* have to save the new val */
+
+	/* and now mirror home with HOME */
+	Setenv(STRHOME, cp);
+	/* fix directory stack for new tilde home */
+	dtilde();
+	xfree((ptr_t)cp);
+    }
+#ifdef FILEC
+    else if (eq(vp, STRfilec))
+	filec = 1;
+#endif
+#ifdef EDIT
+    else if (eq(vp, STRedit)) {
+	HistEvent ev;
+	editing = 1;
+	el = el_init_fd(getprogname(), cshin, cshout, csherr,
+	    SHIN, SHOUT, SHERR);
+	el_set(el, EL_EDITOR, "emacs");
+	el_set(el, EL_PROMPT, printpromptstr);
+	hi = history_init();
+	history(hi, &ev, H_SETSIZE, getn(value(STRhistory)));
+	loadhist(Histlist.Hnext);
+	el_set(el, EL_HIST, history, hi);
+    }
+#endif
+}
 
 void
 /*ARGSUSED*/
@@ -128,66 +193,7 @@ doset(Char **v, struct command *t)
 	    asx(vp, subscr, Strsave(p));
 	else
 	    set(vp, Strsave(p));
-	if (eq(vp, STRpath)) {
-	    struct varent *pt = adrof(STRpath); 
-	    if (pt == NULL)
-		stderror(ERR_NAME | ERR_UNDVAR);
-	    else {
-		exportpath(pt->vec);
-		dohash(NULL, NULL);
-	    }
-	}
-	else if (eq(vp, STRhistchars)) {
-	    Char *pn = value(STRhistchars);
-
-	    HIST = *pn++;
-	    HISTSUB = *pn;
-	}
-	else if (eq(vp, STRuser)) {
-	    Setenv(STRUSER, value(vp));
-	    Setenv(STRLOGNAME, value(vp));
-	}
-	else if (eq(vp, STRwordchars)) {
-	    word_chars = value(vp);
-	}
-	else if (eq(vp, STRterm))
-	    Setenv(STRTERM, value(vp));
-	else if (eq(vp, STRhome)) {
-	    Char *cp;
-
-	    cp = Strsave(value(vp));	/* get the old value back */
-
-	    /*
-	     * convert to canonical pathname (possibly resolving symlinks)
-	     */
-	    cp = dcanon(cp, cp);
-
-	    set(vp, Strsave(cp));	/* have to save the new val */
-
-	    /* and now mirror home with HOME */
-	    Setenv(STRHOME, cp);
-	    /* fix directory stack for new tilde home */
-	    dtilde();
-	    xfree((ptr_t)cp);
-	}
-#ifdef FILEC
-	else if (eq(vp, STRfilec))
-	    filec = 1;
-#endif
-#ifdef EDIT
-	else if (eq(vp, STRedit)) {
-	    HistEvent ev;
-	    editing = 1;
-	    el = el_init_fd(getprogname(), cshin, cshout, csherr,
-		SHIN, SHOUT, SHERR);
-	    el_set(el, EL_EDITOR, "emacs");
-	    el_set(el, EL_PROMPT, printpromptstr);
-	    hi = history_init();
-	    history(hi, &ev, H_SETSIZE, getn(value(STRhistory)));
-	    loadhist(Histlist.Hnext);
-	    el_set(el, EL_HIST, history, hi);
-	}
-#endif
+	update_vars(vp);
     } while ((p = *v++) != NULL);
 }
 
@@ -621,6 +627,7 @@ shift(Char **v, struct command *t)
     if (argv->vec[0] == 0)
 	stderror(ERR_NAME | ERR_NOMORE);
     lshift(argv->vec, 1);
+    update_vars(name);
 }
 
 static void
