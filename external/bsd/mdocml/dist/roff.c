@@ -1095,6 +1095,8 @@ roff_getop(const char *v, int *pos)
 			return c;
 		}
 		switch (c) {
+		case '=':
+			return '=';
 		case '>':
 			return 'g';
 		case '<':
