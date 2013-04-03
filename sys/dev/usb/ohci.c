@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.235 2013/03/22 13:28:11 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.236 2013/04/03 19:02:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.235 2013/03/22 13:28:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.236 2013/04/03 19:02:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,10 +98,8 @@ Static void		ohci_free_std(ohci_softc_t *, ohci_soft_td_t *);
 Static ohci_soft_itd_t *ohci_alloc_sitd(ohci_softc_t *);
 Static void		ohci_free_sitd(ohci_softc_t *,ohci_soft_itd_t *);
 
-#if 0
 Static void		ohci_free_std_chain(ohci_softc_t *, ohci_soft_td_t *,
 					    ohci_soft_td_t *);
-#endif
 Static usbd_status	ohci_alloc_std_chain(struct ohci_pipe *,
 			    ohci_softc_t *, int, int, usbd_xfer_handle,
 			    ohci_soft_td_t *, ohci_soft_td_t **);
@@ -565,11 +563,13 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, ohci_softc_t *sc,
 	return (USBD_NORMAL_COMPLETION);
 
  nomem:
-	/* XXX free chain */
+
+	/* Don't free sp - let the caller do that */
+	ohci_free_std_chain(sc, sp->nexttd, NULL);
+
 	return (USBD_NOMEM);
 }
 
-#if 0
 Static void
 ohci_free_std_chain(ohci_softc_t *sc, ohci_soft_td_t *std,
 		    ohci_soft_td_t *stdend)
@@ -581,7 +581,6 @@ ohci_free_std_chain(ohci_softc_t *sc, ohci_soft_td_t *std,
 		ohci_free_std(sc, std);
 	}
 }
-#endif
 
 ohci_soft_itd_t *
 ohci_alloc_sitd(ohci_softc_t *sc)
@@ -1757,9 +1756,12 @@ ohci_device_request(usbd_xfer_handle xfer)
 
 		err = ohci_alloc_std_chain(opipe, sc, len, isread, xfer,
 			  std, &stat);
-		stat = stat->nexttd; /* point at free TD */
-		if (err)
+		if (err) {
+			/* stat is unchanged if error */
 			goto bad3;
+		}
+		stat = stat->nexttd; /* point at free TD */
+
 		/* Start toggle at 1 and then use the carried toggle. */
 		std->td.td_flags &= HTOO32(~OHCI_TD_TOGGLE_MASK);
 		std->td.td_flags |= HTOO32(OHCI_TD_TOGGLE_1);
@@ -3044,6 +3046,9 @@ ohci_device_bulk_start(usbd_xfer_handle xfer)
 	data = opipe->tail.td;
 	err = ohci_alloc_std_chain(opipe, sc, len, isread, xfer,
 		  data, &tail);
+	if (err)
+		return err;
+	
 	/* We want interrupt at the end of the transfer. */
 	tail->td.td_flags &= HTOO32(~OHCI_TD_INTR_MASK);
 	tail->td.td_flags |= HTOO32(OHCI_TD_SET_DI(1));
