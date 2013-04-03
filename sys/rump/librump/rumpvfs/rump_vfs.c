@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.71 2013/01/14 16:45:47 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.72 2013/04/03 20:23:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.71 2013/01/14 16:45:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.72 2013/04/03 20:23:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -91,8 +91,6 @@ drainbufs(int npages)
 
 RUMP_COMPONENT(RUMP__FACTION_VFS)
 {
-	extern struct devsw_conv devsw_conv0[];
-	extern int max_devsw_convs;
 	extern struct vfsops rumpfs_vfsops;
 	char buf[64];
 	int error;
@@ -180,7 +178,22 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 
 	module_init_class(MODULE_CLASS_VFS);
 
+	/*
+	 * Don't build device names for a large set of devices by
+	 * default.  While the pseudo-devfs is a fun experiment,
+	 * creating many many device nodes may increase rump kernel
+	 * bootstrap time by ~40%.  Device nodes should be created
+	 * per-demand in the component constructors.
+	 */
+#if 0
+	{
+	extern struct devsw_conv devsw_conv0[];
+	extern int max_devsw_convs;
 	rump_vfs_builddevs(devsw_conv0, max_devsw_convs);
+	}
+#else
+	rump_vfs_builddevs(NULL, 0);
+#endif
 
 	rump_component_init(RUMP_COMPONENT_VFS);
 }
