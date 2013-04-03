@@ -1,0 +1,29 @@
+LIBUSBHID_1.0.0.0 {
+global:
+	_fini;
+	_init;
+	hid_dispose_report_desc;
+	hid_end_parse;
+	hid_get_data;
+	hid_get_item;
+	hid_get_report_desc;
+	hid_init;
+	hid_locate;
+	hid_parse_usage_in_page;
+	hid_parse_usage_page;
+	hid_report_size;
+	hid_set_data;
+	hid_start_parse;
+	hid_usage_in_page;
+	hid_usage_page;
+	hid_use_report_desc;
+};
+
+NetBSD_6.99.18.0 {
+} LIBUSBHID_1.0.0.0;
+
+LIBUSBHID_private_1.0.0.0 {
+local:
+	*;
+};
+

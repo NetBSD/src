@@ -1,0 +1,49 @@
+LIBWRAP_1.0.0.0 {
+global:
+	_fini;
+	_init;
+	clean_exit;
+	dot_quad_addr;
+	dry_run;
+	eval_client;
+	eval_hostaddr;
+	eval_hostinfo;
+	eval_hostname;
+	eval_server;
+	eval_user;
+	fix_options;
+	hosts_access;
+	hosts_access_verbose;
+	hosts_allow_table;
+	hosts_ctl;
+	hosts_deny_table;
+	paranoid;
+	percent_x;
+	process_options;
+	refuse;
+	request_init;
+	request_set;
+	resident;
+	rfc931;
+	rfc931_timeout;
+	shell_cmd;
+	sock_host;
+	sock_hostaddr;
+	sock_hostname;
+	split_at;
+	tcpd_buf;
+	tcpd_context;
+	tcpd_jump;
+	tcpd_warn;
+	unknown;
+	xgets;
+};
+
+NetBSD_6.99.18.0 {
+} LIBWRAP_1.0.0.0;
+
+LIBWRAP_private_1.0.0.0 {
+local:
+	*;
+};
+

@@ -1,0 +1,47 @@
+LIBKVM_6.0.0.0 {
+global:
+	_fini;
+	_init;
+	_kvm_err;
+	_kvm_freevtop;
+	_kvm_initvtop;
+	_kvm_kvatop;
+	_kvm_malloc;
+	_kvm_mdopen;
+	_kvm_pa2off;
+	_kvm_pread;
+	_kvm_realloc;
+	_kvm_syserr;
+	_kvm_uread;
+	kvm_close;
+	kvm_dump_header;
+	kvm_dump_inval;
+	kvm_dump_mkheader;
+	kvm_dump_wrtheader;
+	kvm_getargv2;
+	kvm_getargv;
+	kvm_getenvv2;
+	kvm_getenvv;
+	kvm_geterr;
+	kvm_getfiles;
+	kvm_getkernelname;
+	kvm_getloadavg;
+	kvm_getlwps;
+	kvm_getproc2;
+	kvm_getprocs;
+	kvm_nlist;
+	kvm_open;
+	kvm_openfiles;
+	kvm_read;
+	kvm_uread;
+	kvm_write;
+};
+
+NetBSD_6.99.18.0 {
+} LIBKVM_6.0.0.0;
+
+LIBKVM_private_6.0.0.0 {
+local:
+	*;
+};
+

@@ -1,0 +1,61 @@
+LIBNPF_0.0.0.0 {
+global:
+	_fini;
+	_init;
+	_npf_alg_load;
+	_npf_alg_unload;
+	_npf_config_error;
+	_npf_config_setsubmit;
+	_npf_debug_addif;
+	_npf_nat_foreach;
+	_npf_nat_getinfo;
+	_npf_rule_foreach;
+	_npf_rule_getinfo;
+	_npf_rule_ncode;
+	_npf_rule_rproc;
+	_npf_ruleset_list;
+	_npf_table_foreach;
+	npf_config_create;
+	npf_config_destroy;
+	npf_config_flush;
+	npf_config_retrieve;
+	npf_config_submit;
+	npf_ext_construct;
+	npf_ext_param_bool;
+	npf_ext_param_u32;
+	npf_nat_create;
+	npf_nat_insert;
+	npf_rproc_create;
+	npf_rproc_exists_p;
+	npf_rproc_extcall;
+	npf_rproc_insert;
+	npf_rule_create;
+	npf_rule_destroy;
+	npf_rule_exists_p;
+	npf_rule_export;
+	npf_rule_insert;
+	npf_rule_setcode;
+	npf_rule_setkey;
+	npf_rule_setprio;
+	npf_rule_setproc;
+	npf_ruleset_add;
+	npf_ruleset_flush;
+	npf_ruleset_remkey;
+	npf_ruleset_remove;
+	npf_sessions_recv;
+	npf_sessions_send;
+	npf_table_add_entry;
+	npf_table_create;
+	npf_table_destroy;
+	npf_table_exists_p;
+	npf_table_insert;
+};
+
+NetBSD_6.99.18.0 {
+} LIBNPF_0.0.0.0;
+
+LIBNPF_private_0.0.0.0 {
+local:
+	*;
+};
+

@@ -1,0 +1,33 @@
+LIBREFUSE_2.0.0.0 {
+global:
+	_fini;
+	_init;
+	fuse_destroy;
+	fuse_exit;
+	fuse_get_context;
+	fuse_loop;
+	fuse_main_real;
+	fuse_mount;
+	fuse_new;
+	fuse_opt_add_arg;
+	fuse_opt_add_opt;
+	fuse_opt_deep_copy_args;
+	fuse_opt_free_args;
+	fuse_opt_insert_arg;
+	fuse_opt_match;
+	fuse_opt_parse;
+	fuse_setup26;
+	fuse_setup;
+	fuse_teardown;
+	fuse_unmount;
+	fuse_unmount_compat22;
+};
+
+NetBSD_6.99.18.0 {
+} LIBREFUSE_2.0.0.0;
+
+LIBREFUSE_private_2.0.0.0 {
+local:
+	*;
+};
+

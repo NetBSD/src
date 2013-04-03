@@ -1,0 +1,18 @@
+LIBBSDMALLOC_0.0.0.0 {
+global:
+	__realloc_srchlen;
+	_fini;
+	_init;
+	free;
+	malloc;
+	realloc;
+};
+
+NetBSD_6.99.18.0 {
+} LIBBSDMALLOC_0.0.0.0;
+
+LIBBSDMALLOC_private_0.0.0.0 {
+local:
+	*;
+};
+
