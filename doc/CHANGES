@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1808 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1809 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -219,3 +219,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	vcaudio(4): Add support for Broadcom VideoCore IV audio service.
 		[jmcneill 20130325]
 	openssh: Import 6.2. [christos 20120329]
+	mdocml: Import 1.12.1 [christos 20120402]
