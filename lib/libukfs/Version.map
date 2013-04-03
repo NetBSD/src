@@ -1,0 +1,63 @@
+LIBUKFS_1.0.0.0 {
+global:
+	_fini;
+	_init;
+	_ukfs_init;
+	ukfs__disklabel_dkcksum;
+	ukfs__disklabel_scan;
+	ukfs_chdir;
+	ukfs_chflags;
+	ukfs_chmod;
+	ukfs_chown;
+	ukfs_close;
+	ukfs_closedir;
+	ukfs_create;
+	ukfs_getdents;
+	ukfs_getdents_cookie;
+	ukfs_getmp;
+	ukfs_getspecific;
+	ukfs_lchflags;
+	ukfs_lchmod;
+	ukfs_lchown;
+	ukfs_link;
+	ukfs_lstat;
+	ukfs_lutimes;
+	ukfs_mkdir;
+	ukfs_mkfifo;
+	ukfs_mknod;
+	ukfs_modload;
+	ukfs_modload_dir;
+	ukfs_mount;
+	ukfs_mount_disk;
+	ukfs_open;
+	ukfs_opendir;
+	ukfs_part_na;
+	ukfs_part_none;
+	ukfs_part_probe;
+	ukfs_part_release;
+	ukfs_part_tostring;
+	ukfs_read;
+	ukfs_read_fd;
+	ukfs_readlink;
+	ukfs_release;
+	ukfs_remove;
+	ukfs_rename;
+	ukfs_rmdir;
+	ukfs_setspecific;
+	ukfs_stat;
+	ukfs_symlink;
+	ukfs_util_builddirs;
+	ukfs_utimes;
+	ukfs_vfstypes;
+	ukfs_write;
+	ukfs_write_fd;
+};
+
+NetBSD_6.99.18.0 {
+} LIBUKFS_1.0.0.0;
+
+LIBUKFS_private_1.0.0.0 {
+local:
+	*;
+};
+

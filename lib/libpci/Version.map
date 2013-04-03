@@ -1,0 +1,27 @@
+LIBPCI_2.0.0.0 {
+global:
+	_fini;
+	_init;
+	pci_conf_print;
+	pci_devinfo;
+	pci_findproduct;
+	pci_findproduct_real;
+	pci_findvendor;
+	pci_findvendor_real;
+	pci_nwords;
+	pci_unmatched;
+	pcibus_conf_read;
+	pcibus_conf_write;
+	pcidev_conf_read;
+	pcidev_conf_write;
+	pciverbose_loaded;
+};
+
+NetBSD_6.99.18.0 {
+} LIBPCI_2.0.0.0;
+
+LIBPCI_private_2.0.0.0 {
+local:
+	*;
+};
+
