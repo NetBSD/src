@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.13 2013/03/29 21:59:52 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.14 2013/04/03 15:50:38 christos Exp $
 ./usr/libdata/debug/lib/64/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -128,7 +128,7 @@
 ./usr/libdata/debug/usr/lib/64/libposix.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libppath.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libprop.so.1.1.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libpthread.so.1.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libpthread.so.1.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libpthread_dbg.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libpuffs.so.2.0.debug	comp-puffs-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libquota.so.1.0.debug	comp-sys-debug	debug,compat
@@ -290,7 +290,7 @@
 ./usr/libdata/debug/usr/lib/o32/libposix.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libppath.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libprop.so.1.1.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libpthread.so.1.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libpthread.so.1.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libpthread_dbg.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libpuffs.so.2.0.debug	comp-puffs-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libquota.so.1.0.debug	comp-sys-debug	debug,compat

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.14 2013/03/29 21:59:52 christos Exp $
+# $NetBSD: shl.mi,v 1.15 2013/04/03 15:50:38 christos Exp $
 ./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
@@ -115,7 +115,7 @@
 ./usr/libdata/debug/usr/lib/libposix.so.0.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libppath.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libprop.so.1.1.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libpthread.so.1.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libpthread.so.1.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libpthread_dbg.so.2.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libpuffs.so.2.0.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/lib/libquota.so.1.0.debug	comp-sys-debug	debug
