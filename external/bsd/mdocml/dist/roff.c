@@ -1161,7 +1161,6 @@ roff_evalcond(const char *v, int *pos)
 out:
 	if (not)
 		lh = !lh;
-	fprintf(stderr, "res=[%d]\n", lh);
 	return lh ? ROFFRULE_ALLOW : ROFFRULE_DENY;
 }
 
