@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.14 2009/10/19 18:41:14 bouyer Exp $	*/
+/*	$NetBSD: mii.h,v 1.15 2013/04/03 03:24:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -171,7 +171,7 @@
 #define	GTSR_MAN_MS_FLT	0x8000	/* master/slave config fault */
 #define	GTSR_MS_RES	0x4000	/* result: 1 = master, 0 = slave */
 #define	GTSR_LRS	0x2000	/* local rx status, 1 = ok */
-#define	GTSR_RRS	0x1000	/* remove rx status, 1 = ok */
+#define	GTSR_RRS	0x1000	/* remote rx status, 1 = ok */
 #define	GTSR_LP_1000TFDX 0x0800	/* link partner 1000baseT FDX capable */
 #define	GTSR_LP_1000THDX 0x0400	/* link partner 1000baseT HDX capable */
 #define	GTSR_LP_ASM_DIR	0x0200	/* link partner asym. pause dir. capable */
