@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.20 2012/07/31 15:50:34 bouyer Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.21 2013/04/03 17:15:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * Common functions for Serial ATA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.20 2012/07/31 15:50:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.21 2013/04/03 17:15:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,7 +80,7 @@ sata_speed(uint32_t sstatus)
  */
 uint32_t
 sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
-    bus_space_handle_t scontrol_r, bus_space_handle_t sstatus_r)
+    bus_space_handle_t scontrol_r, bus_space_handle_t sstatus_r, int flags)
 {
 	uint32_t scontrol, sstatus;
 	int i;
@@ -94,17 +94,17 @@ sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
 	scontrol = SControl_IPM_NONE | SControl_SPD_ANY | SControl_DET_INIT;
 	bus_space_write_4 (sata_t, scontrol_r, 0, scontrol);
 
-	tsleep(chp, PRIBIO, "sataup", mstohz(50));
+	ata_delay(50, "sataup", flags);
 	scontrol &= ~SControl_DET_INIT;
 	bus_space_write_4(sata_t, scontrol_r, 0, scontrol);
 
-	tsleep(chp, PRIBIO, "sataup", mstohz(50));
+	ata_delay(50, "sataup", flags);
 	/* wait up to 1s for device to come up */
 	for (i = 0; i < 100; i++) {
 		sstatus = bus_space_read_4(sata_t, sstatus_r, 0);
 		if ((sstatus & SStatus_DET_mask) == SStatus_DET_DEV)
 			break;
-		tsleep(chp, PRIBIO, "sataup", mstohz(10));
+		ata_delay(10, "sataup", flags);
 	}
 	/*
 	 * if we have a link up without device, wait a few more seconds
@@ -112,7 +112,7 @@ sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
 	 */
 	if ((sstatus & SStatus_DET_mask) == SStatus_DET_DEV_NE) {
 		for (i = 0; i < 500; i++) {
-			tsleep(chp, PRIBIO, "sataup", mstohz(10));
+			ata_delay(10, "sataup", flags);
 			sstatus = bus_space_read_4(sata_t, sstatus_r, 0);
 			if ((sstatus & SStatus_DET_mask) == SStatus_DET_DEV)
 				break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.126 2012/11/01 13:46:52 abs Exp $	*/
+/*	$NetBSD: ata.c,v 1.127 2013/04/03 17:15:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.126 2012/11/01 13:46:52 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.127 2013/04/03 17:15:07 bouyer Exp $");
 
 #include "opt_ata.h"
 
@@ -1718,4 +1718,18 @@ atabus_rescan(device_t self, const char *ifattr, const int *locators)
 	wakeup(&chp->ch_thread);
 
 	return 0;
+}
+
+void
+ata_delay(int ms, const char *msg, int flags)
+{
+	if ((flags & (AT_WAIT | AT_POLL)) == AT_POLL) {
+		/*
+		 * can't use tsleep(), we may be in interrupt context
+		 * or taking a crash dump
+		 */
+		delay(ms * 1000);
+	} else {
+		kpause(msg, false, mstohz(ms), NULL);
+	}
 }

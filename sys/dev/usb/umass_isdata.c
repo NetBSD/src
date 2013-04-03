@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.27 2012/07/31 15:50:37 bouyer Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.28 2013/04/03 17:15:07 bouyer Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.27 2012/07/31 15:50:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.28 2013/04/03 17:15:07 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -288,8 +288,8 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 	DPRINTF(("%s\n", __func__));
 	/* XXX */
 
-	if (ata_bio->flags & ATA_NOSLEEP) {
-		printf("%s: ATA_NOSLEEP not supported\n", __func__);
+	if (ata_bio->flags & ATA_POLL) {
+		printf("%s: ATA_POLL not supported\n", __func__);
 		ata_bio->error = TIMEOUT;
 		ata_bio->flags |= ATA_ITSDONE;
 		return (ATACMD_COMPLETE);
