@@ -72,8 +72,8 @@ enum	rofft {
 };
 
 enum	roffrule {
-	ROFFRULE_ALLOW,
-	ROFFRULE_DENY
+	ROFFRULE_DENY,
+	ROFFRULE_ALLOW
 };
 
 /*
@@ -177,8 +177,6 @@ static	enum rofferr	 roff_cond(ROFF_ARGS);
 static	enum rofferr	 roff_cond_text(ROFF_ARGS);
 static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
 static	enum rofferr	 roff_ds(ROFF_ARGS);
-static  void		 roff_expand_nr_inplace(struct roff *, char **, int *,
-				size_t *);
 static	enum roffrule	 roff_evalcond(const char *, int *);
 static	void		 roff_free1(struct roff *);
 static	void		 roff_freestr(struct roffkv *);
@@ -397,7 +395,8 @@ roff_reset(struct roff *r)
 
 	roff_free1(r);
 
-	memset(&r->regs, 0, sizeof(struct reg) * REG__MAX);
+	memset(&r->regs, 0, sizeof(r->regs));
+	memset(&r->nr, 0, sizeof(r->nr));
 
 	for (i = 0; i < PREDEFS_MAX; i++) 
 		roff_setstr(r, predefs[i].name, predefs[i].str, 0);
@@ -626,20 +625,16 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 	 * no matter our state.
 	 */
 
-	if (r->last && ! ctl) {
-		t = r->last->tok;
-		assert(roffs[t].text);
-		e = (*roffs[t].text)
-			(r, t, bufp, szp, ln, pos, pos, offs);
-		assert(ROFF_IGN == e || ROFF_CONT == e);
-		if (ROFF_CONT != e)
-			return(e);
-		if (r->eqn)
-			return(eqn_read(&r->eqn, ln, *bufp, pos, offs));
-		if (r->tbl)
-			return(tbl_read(r->tbl, ln, *bufp, pos));
-		return(roff_parsetext(*bufp + pos));
-	} else if ( ! ctl) {
+	if (!ctl) {
+		if (r->last) {
+			t = r->last->tok;
+			assert(roffs[t].text);
+			e = (*roffs[t].text)
+			    (r, t, bufp, szp, ln, pos, pos, offs);
+			assert(ROFF_IGN == e || ROFF_CONT == e);
+			if (ROFF_CONT != e)
+				return(e);
+		}
 		if (r->eqn)
 			return(eqn_read(&r->eqn, ln, *bufp, pos, offs));
 		if (r->tbl)
@@ -1055,12 +1050,6 @@ roff_cond_text(ROFF_ARGS)
 	ep = &(*bufp)[pos];
 	for ( ; NULL != (ep = strchr(ep, '\\')); ep++) {
 		ep++;
-		if (*ep == 'n') {
-			int i = ep - *bufp - 1;
-			roff_expand_nr_inplace(r, bufp, &i, szp);
-			ep = *bufp + i;
-			continue;
-		}
 		if ('}' != *ep)
 			continue;
 		*ep = '&';
@@ -1070,10 +1059,59 @@ roff_cond_text(ROFF_ARGS)
 	return(ROFFRULE_DENY == rr ? ROFF_IGN : ROFF_CONT);
 }
 
+static int
+roff_getnum(const char *v, int *pos, int *res)
+{
+	int p, n;
+
+	if ((n = (v[*pos] == '-')) != 0)
+		(*pos)++;
+
+	p = *pos;
+	for (*res = 0; isdigit((unsigned char)v[p]); p++)
+		*res += 10 * *res + v[p] - '0';
+	if (p == *pos)
+		return 0;
+
+	if (n)
+		*res = -*res;
+
+	*pos = p;
+	return 1;
+}
+
+static int
+roff_getop(const char *v, int *pos)
+{
+	int c;
+	switch (c = v[*pos]) {
+	case '=':
+	case '!':
+	case '>':
+	case '<':
+		(*pos)++;
+		if (v[*pos] == '=')  {
+			(*pos)++;
+			return c;
+		}
+		switch (c) {
+		case '>':
+			return 'g';
+		case '<':
+			return 'l';
+		default:
+			return -1;
+		}
+	default:
+		return -1;
+	}
+}
+			
 static enum roffrule
 roff_evalcond(const char *v, int *pos)
 {
-
+	int not = 0;
+	int lh, rh, op;
 	switch (v[*pos]) {
 	case ('n'):
 		(*pos)++;
@@ -1085,13 +1123,46 @@ roff_evalcond(const char *v, int *pos)
 	case ('t'):
 		(*pos)++;
 		return(ROFFRULE_DENY);
+	case ('!'):
+		not++;
+		(*pos)++;
+		break;
 	default:
 		break;
 	}
-
-	while (v[*pos] && ' ' != v[*pos])
-		(*pos)++;
-	return(ROFFRULE_DENY);
+	if (!roff_getnum(v, pos, &lh))
+		return ROFFRULE_DENY;
+	if ((op = roff_getop(v, pos)) == -1)
+		goto out;
+	if (!roff_getnum(v, pos, &rh))
+		return ROFFRULE_DENY;
+	switch (op) {
+	case '>':
+		lh = lh >= rh;
+		break;
+	case '<':
+		lh = lh <= rh;
+		break;
+	case '=':
+		lh = lh == rh;
+		break;
+	case '!':
+		lh = lh != rh;
+		break;
+	case 'g':
+		lh = lh > rh;
+		break;
+	case 'l':
+		lh = lh < rh;
+		break;
+	default:
+		return ROFFRULE_DENY;
+	}
+out:
+	if (not)
+		lh = !lh;
+	fprintf(stderr, "res=[%d]\n", lh);
+	return lh ? ROFFRULE_ALLOW : ROFFRULE_DENY;
 }
 
 /* ARGSUSED */
@@ -1334,12 +1405,12 @@ roff_expand_nr(struct roff *r, const char *src, int *sp, size_t slen,
 	} else
 		e = '\0';
 
-	for (l = s; l < (int)slen; l++) {
+	for (l = s; src[l] && l < (int)slen; l++) {
 		if (e) {
 			if (src[l] == e)
 				break;
 		} else {
-			if (isspace((unsigned char)src[l]))
+			if (!isalnum((unsigned char)src[l]))
 				break;
 		}
 	}
@@ -1358,34 +1429,6 @@ roff_expand_nr(struct roff *r, const char *src, int *sp, size_t slen,
 
 	/* XXX: support .af */
 	*dp += snprintf(*dst + *dp, *dlenp - *dp, "%jd", h->val);
-}
-
-static void
-roff_expand_nr_inplace(struct roff *r, char **src, int *sp, size_t *slenp)
-{
-	int j, i, k;
-	size_t dlen;
-	char *dst;
-
-	k = i = *sp;
-
-	dst = NULL;
-	j = 0;
-	dlen = 0;
-
-	roff_expand_nr(r, *src, &i, *slenp, &dst, &j, &dlen);
-
-	if (j) {
-		int l = j - (i - k);
-		if (l > 0) {
-			*slenp += l;
-			*src = mandoc_realloc(*src, *slenp);
-		}
-		memmove(*src + j + k, *src + i, *slenp - i);
-		memcpy(*src + k, dst, j);
-		free(dst);
-	}
-	*sp = k + j;
 }
 
 /* ARGSUSED */
