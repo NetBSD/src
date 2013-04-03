@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.29 2013/02/10 21:21:29 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.30 2013/04/03 17:15:07 bouyer Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.29 2013/02/10 21:21:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.30 2013/04/03 17:15:07 bouyer Exp $");
 
 #include "opt_mvsata.h"
 
@@ -517,7 +517,7 @@ mvsata_probe_drive(struct ata_channel *chp)
 	uint32_t sstat, sig;
 
 	sstat = sata_reset_interface(chp, mvport->port_iot,
-	    mvport->port_sata_scontrol, mvport->port_sata_sstatus);
+	    mvport->port_sata_scontrol, mvport->port_sata_sstatus, AT_WAIT);
 	switch (sstat) {
 	case SStatus_DET_DEV:
 		mvsata_pmp_select(mvport, PMP_PORT_CTL);
@@ -607,7 +607,7 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 
 	mvsata_hreset_port(mvport);
 	sstat = sata_reset_interface(chp, mvport->port_iot,
-	    mvport->port_sata_scontrol, mvport->port_sata_sstatus);
+	    mvport->port_sata_scontrol, mvport->port_sata_sstatus, flags);
 
 	if (flags & AT_WAIT && sstat == SStatus_DET_DEV_NE &&
 	    sc->sc_gen != gen1) {
@@ -623,7 +623,8 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 
 		mvsata_hreset_port(mvport);
 		sata_reset_interface(chp, mvport->port_iot,
-		    mvport->port_sata_scontrol, mvport->port_sata_sstatus);
+		    mvport->port_sata_scontrol, mvport->port_sata_sstatus,
+		    flags);
 	}
 
 	for (i = 0; i < MVSATA_EDMAQ_LEN; i++) {
@@ -2651,7 +2652,7 @@ mvsata_edma_wait(struct mvsata_port *mvport, struct ata_xfer *xfer, int timeout)
 	for (xtime = 0;  xtime < timeout / 10; xtime++) {
 		if (mvsata_edma_handle(mvport, xfer))
 			return 0;
-		if (ata_bio->flags & ATA_NOSLEEP)
+		if (ata_bio->flags & ATA_POLL)
 			delay(10000);
 		else
 			tsleep(&xfer, PRIBIO, "mvsataipl", mstohz(10));
