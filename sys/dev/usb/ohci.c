@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.238 2013/04/04 09:46:42 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.239 2013/04/04 12:21:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.238 2013/04/04 09:46:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.239 2013/04/04 12:21:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1682,13 +1682,14 @@ ohci_poll(struct usbd_bus *bus)
 		last = new;
 	}
 #endif
-
+	mutex_enter(&sc->sc_lock);
 	sc->sc_eintrs |= OHCI_WDH;
 	if (OREAD4(sc, OHCI_INTERRUPT_STATUS) & sc->sc_eintrs) {
 		mutex_spin_enter(&sc->sc_intr_lock);
 		ohci_intr1(sc);
 		mutex_spin_exit(&sc->sc_intr_lock);
 	}
+	mutex_exit(&sc->sc_lock);
 }
 
 usbd_status
