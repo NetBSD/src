@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.14 2013/04/04 12:55:30 martin Exp $	*/
+/*	$NetBSD: vax.c,v 1.15 2013/04/04 16:11:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.14 2013/04/04 12:55:30 martin Exp $");
+__RCSID("$NetBSD: vax.c,v 1.15 2013/04/04 16:11:12 martin Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -83,6 +83,10 @@ __RCSID("$NetBSD: vax.c,v 1.14 2013/04/04 12:55:30 martin Exp $");
 #include <unistd.h>
 
 #include "installboot.h"
+
+#ifndef __CTASSERT
+#define	__CTASSERT(X)
+#endif
 
 static int	load_bootstrap(ib_params *, char **,
 		    uint32_t *, uint32_t *, size_t *);
