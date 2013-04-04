@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.282 2013/02/14 03:02:47 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.283 2013/04/04 21:14:36 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -510,8 +510,7 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
 	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} \
-	    ${OBJS.${_P}} ${_LDADD.${_P}} \
-	    ${_PROGLDOPTS}
+	    ${OBJS.${_P}} ${_PROGLDOPTS} ${_LDADD.${_P}}
 .if defined(CTFMERGE)
 	${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${OBJS.${_P}}
 .endif
