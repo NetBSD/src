@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.239 2013/04/04 12:21:12 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.240 2013/04/04 13:27:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.239 2013/04/04 12:21:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.240 2013/04/04 13:27:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,6 +429,8 @@ ohci_alloc_std(ohci_softc_t *sc)
 	int i, offs;
 	usb_dma_t dma;
 
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
+
 	if (sc->sc_freetds == NULL) {
 		DPRINTFN(2, ("ohci_alloc_std: allocating chunk\n"));
 		err = usb_allocmem(&sc->sc_bus, OHCI_STD_SIZE * OHCI_STD_CHUNK,
@@ -459,7 +461,8 @@ ohci_alloc_std(ohci_softc_t *sc)
 void
 ohci_free_std(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
-
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
+	
 	ohci_hash_rem_td(sc, std);
 	std->nexttd = sc->sc_freetds;
 	sc->sc_freetds = std;
@@ -1507,7 +1510,7 @@ ohci_device_intr_done(usbd_xfer_handle xfer)
 	DPRINTFN(10,("ohci_device_intr_done: xfer=%p, actlen=%d\n",
 		     xfer, xfer->actlen));
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 	usb_syncmem(&xfer->dmabuf, 0, xfer->length,
 	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
@@ -1682,14 +1685,12 @@ ohci_poll(struct usbd_bus *bus)
 		last = new;
 	}
 #endif
-	mutex_enter(&sc->sc_lock);
 	sc->sc_eintrs |= OHCI_WDH;
 	if (OREAD4(sc, OHCI_INTERRUPT_STATUS) & sc->sc_eintrs) {
 		mutex_spin_enter(&sc->sc_intr_lock);
 		ohci_intr1(sc);
 		mutex_spin_exit(&sc->sc_intr_lock);
 	}
-	mutex_exit(&sc->sc_lock);
 }
 
 usbd_status
@@ -1913,7 +1914,7 @@ ohci_hash_add_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
 	int h = HASH(std->physaddr);
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 	LIST_INSERT_HEAD(&sc->sc_hash_tds[h], std, hnext);
 }
@@ -1923,7 +1924,7 @@ void
 ohci_hash_rem_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 	LIST_REMOVE(std, hnext);
 }
