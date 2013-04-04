@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.40 2013/03/01 18:26:10 joerg Exp $
+#	$NetBSD: mkioctls,v 1.41 2013/04/04 22:32:12 dsl Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -75,6 +75,7 @@ echo "#include <netinet6/nd6.h>"
 echo "#include <dev/ic/hd44780reg.h>"
 echo "#include <dev/pci/mlyreg.h>"
 echo "#include <prop/proplib.h>"
+echo
 
 for i
 do
