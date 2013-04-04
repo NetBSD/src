@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.128 2012/01/25 00:28:36 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.129 2013/04/04 12:51:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.128 2012/01/25 00:28:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.129 2013/04/04 12:51:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -526,6 +526,12 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 	void 		*data, *memp;
 #define	STK_PARAMS	128
 	u_long		stkbuf[STK_PARAMS/sizeof(u_long)];
+#if  __TMPBIGMAXPARTITIONS > MAXPARTITIONS
+	size_t		zero_last = 0;
+#define	zero_size(SZ)	((SZ)+zero_last)
+#else
+#define	zero_size(SZ)	(SZ)
+#endif
 
 	memp = NULL;
 	alloc_size = 0;
@@ -563,7 +569,34 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 	 * but only copyin/out the smaller amount.
 	 */
 	if (IOCGROUP(com) == 'd') {
+#if  __TMPBIGMAXPARTITIONS > MAXPARTITIONS
+		u_long ocom = com;
+#endif
 		u_long ncom = com ^ (DIOCGDINFO ^ DIOCGDINFO32);
+
+#if  __TMPBIGMAXPARTITIONS > MAXPARTITIONS
+	/*
+	 * Userland might use struct disklabel that is bigger than the
+	 * the kernel version (historic accident) - alloc userland
+	 * size and zero unused part on copyout.
+	 */
+#define	DISKLABELLENDIFF	(sizeof(struct partition)	\
+				       *(__TMPBIGMAXPARTITIONS-MAXPARTITIONS))
+#define	IOCFIXUP(NIOC)	((NIOC&~(IOCPARM_MASK<<IOCPARM_SHIFT))	| \
+			   (IOCPARM_LEN(NIOC)-DISKLABELLENDIFF)<<IOCPARM_SHIFT)
+
+		switch (IOCFIXUP(ocom)) {
+		case DIOCGDINFO:
+		case DIOCWDINFO:
+		case DIOCSDINFO:
+		case DIOCGDEFLABEL:
+			com = ncom = IOCFIXUP(ocom);
+			zero_last = DISKLABELLENDIFF;
+			size -= DISKLABELLENDIFF;
+			goto done;
+		}
+#endif
+
 		switch (ncom) {
 		case DIOCGDINFO:
 		case DIOCWDINFO:
@@ -574,6 +607,9 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 				alloc_size = IOCPARM_LEN(DIOCGDINFO);
 			break;
 		}
+#if  __TMPBIGMAXPARTITIONS > MAXPARTITIONS
+		done: ;
+#endif
 	}
 	if (size > IOCPARM_MAX) {
 		error = ENOTTY;
@@ -615,7 +651,7 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 			 * Zero the buffer so the user always
 			 * gets back something deterministic.
 			 */
-			memset(data, 0, size);
+			memset(data, 0, zero_size(size));
 		} else if (com&IOC_VOID) {
 			*(void **)data = SCARG(uap, data);
 		}
@@ -648,7 +684,8 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 		 * already set and checked above.
 		 */
 		if (error == 0 && (com&IOC_OUT) && size) {
-			error = copyout(data, SCARG(uap, data), size);
+			error = copyout(data, SCARG(uap, data),
+			    zero_size(size));
 			ktrgenio(SCARG(uap, fd), UIO_READ, SCARG(uap, data),
 			    size, error);
 		}
