@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.237 2013/04/04 09:23:04 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.238 2013/04/04 09:46:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.237 2013/04/04 09:23:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.238 2013/04/04 09:46:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2051,7 +2051,7 @@ ohci_dump_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 	    "f\32\02EC\0"
 	    "f\34\04CC\0",
 	    (u_int32_t)O32TOH(std->td.td_flags));
-	printf("TD(%p) at %08lx: %s\ncbp=0x%08lx nexttd=0x%08lx be=0x%08lx\n",
+	printf("TD(%p) at %08lx:\n\tflags=%s\n\tcbp=0x%08lx nexttd=0x%08lx be=0x%08lx\n",
 	       std, (u_long)std->physaddr, sbuf,
 	       (u_long)O32TOH(std->td.td_cbp),
 	       (u_long)O32TOH(std->td.td_nexttd),
