@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.236 2013/04/03 19:02:12 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.237 2013/04/04 09:23:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.236 2013/04/03 19:02:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.237 2013/04/04 09:23:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2034,14 +2034,25 @@ ohci_dump_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 	usb_syncmem(&std->dma, std->offs, sizeof(std->td),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	snprintb(sbuf, sizeof(sbuf),
-	    "\20\23R\24OUT\25IN\31TOG1\32SETTOGGLE",
+	    "\177\20"
+	    "b\22R\0"
+	    "f\23\02DP\0"
+		"=\x0" "setup\0"
+		"=\x1" "out\0"
+		"=\x2" "in\0"
+		"=\x3" "reserved\0"
+	    "f\25\03DI\0"
+		"=\x07" "none\0"
+	    "f\30\02T\0"
+		"=\x0" "carry\0"
+		"=\x1" "carry\0"
+		"=\x2" "0\0"
+		"=\x3" "1\0"
+	    "f\32\02EC\0"
+	    "f\34\04CC\0",
 	    (u_int32_t)O32TOH(std->td.td_flags));
-	printf("TD(%p) at %08lx: %s delay=%d ec=%d cc=%d\ncbp=0x%08lx "
-	       "nexttd=0x%08lx be=0x%08lx\n",
+	printf("TD(%p) at %08lx: %s\ncbp=0x%08lx nexttd=0x%08lx be=0x%08lx\n",
 	       std, (u_long)std->physaddr, sbuf,
-	       OHCI_TD_GET_DI(O32TOH(std->td.td_flags)),
-	       OHCI_TD_GET_EC(O32TOH(std->td.td_flags)),
-	       OHCI_TD_GET_CC(O32TOH(std->td.td_flags)),
 	       (u_long)O32TOH(std->td.td_cbp),
 	       (u_long)O32TOH(std->td.td_nexttd),
 	       (u_long)O32TOH(std->td.td_be));
