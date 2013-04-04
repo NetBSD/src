@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.205 2013/02/01 12:53:47 tsutsui Exp $ */
+/*	$NetBSD: ehci.c,v 1.206 2013/04/04 13:27:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.205 2013/02/01 12:53:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.206 2013/04/04 13:27:55 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -776,7 +776,7 @@ ehci_check_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 
 	DPRINTFN(/*15*/2, ("ehci_check_intr: ex=%p\n", ex));
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 	attr = ex->xfer.pipe->endpoint->edesc->bmAttributes;
 	if (UE_GET_XFERTYPE(attr) == UE_ISOCHRONOUS)
@@ -793,7 +793,7 @@ ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 	ehci_soft_qtd_t *sqtd, *lsqtd;
 	__uint32_t status;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 	if (ex->sqtdstart == NULL) {
 		printf("ehci_check_qh_intr: not valid sqtd\n");
@@ -911,7 +911,7 @@ ehci_idone(struct ehci_xfer *ex)
 	u_int32_t status = 0, nstatus = 0;
 	int actlen;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(/*12*/2, ("ehci_idone: ex=%p\n", ex));
 
@@ -2708,7 +2708,7 @@ Static void
 ehci_free_sqtd(ehci_softc_t *sc, ehci_soft_qtd_t *sqtd)
 {
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 	sqtd->nextqtd = sc->sc_freeqtds;
 	sc->sc_freeqtds = sqtd;
@@ -3859,7 +3859,7 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 	DPRINTFN(10, ("ehci_device_intr_done: xfer=%p, actlen=%d\n",
 	    xfer, xfer->actlen));
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 	if (xfer->pipe->repeat) {
 		ehci_free_sqtd_chain(sc, ex->sqtdstart, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.151 2013/03/24 22:38:45 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.152 2013/04/04 13:27:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.151 2013/03/24 22:38:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.152 2013/04/04 13:27:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -790,12 +790,14 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	int sync = xfer->flags & USBD_SYNCHRONOUS;
 	int erred = xfer->status == USBD_CANCELLED ||
 	    xfer->status == USBD_TIMEOUT;
-	int repeat, polling;
+	int polling = pipe->device->bus->use_polling;
+	int repeat;
 
 	DPRINTFN(5, ("usb_transfer_complete: pipe=%p xfer=%p status=%d "
 		     "actlen=%d\n", pipe, xfer, xfer->status, xfer->actlen));
 
-	KASSERT(pipe->device->bus->lock == NULL || mutex_owned(pipe->device->bus->lock));
+	KASSERT(polling || pipe->device->bus->lock == NULL ||
+	    mutex_owned(pipe->device->bus->lock));
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_ONQU) {
@@ -811,7 +813,6 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	}
 #endif
 	repeat = pipe->repeat;
-	polling = pipe->device->bus->use_polling;
 	/* XXXX */
 	if (polling)
 		pipe->running = 0;
@@ -868,7 +869,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 	if (repeat) {
 		if (xfer->callback) {
-			if (pipe->device->bus->lock)
+			if (pipe->device->bus->lock && !polling)
 				mutex_exit(pipe->device->bus->lock);
 
 			if (!(pipe->flags & USBD_MPSAFE))
@@ -877,14 +878,14 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 			if (!(pipe->flags & USBD_MPSAFE))
 				KERNEL_UNLOCK_ONE(curlwp);
 
-			if (pipe->device->bus->lock)
+			if (pipe->device->bus->lock && !polling)
 				mutex_enter(pipe->device->bus->lock);
 		}
 		pipe->methods->done(xfer);
 	} else {
 		pipe->methods->done(xfer);
 		if (xfer->callback) {
-			if (pipe->device->bus->lock)
+			if (pipe->device->bus->lock && !polling)
 				mutex_exit(pipe->device->bus->lock);
 
 			if (!(pipe->flags & USBD_MPSAFE))
@@ -893,7 +894,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 			if (!(pipe->flags & USBD_MPSAFE))
 				KERNEL_UNLOCK_ONE(curlwp);
 
-			if (pipe->device->bus->lock)
+			if (pipe->device->bus->lock && !polling)
 				mutex_enter(pipe->device->bus->lock);
 		}
 	}
