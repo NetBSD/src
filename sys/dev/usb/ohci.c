@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.240 2013/04/04 13:27:55 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.241 2013/04/04 13:28:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.240 2013/04/04 13:27:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.241 2013/04/04 13:28:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2136,8 +2136,7 @@ ohci_open(usbd_pipe_handle pipe)
 		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
 
 	if (sc->sc_dying) {
-		err = USBD_IOERROR;
-		goto bad0;
+		return USBD_IOERROR;
 	}
 
 	std = NULL;
@@ -2153,19 +2152,20 @@ ohci_open(usbd_pipe_handle pipe)
 			break;
 		default:
 			err = USBD_INVAL;
-			goto bad0;
+			goto bad;
 		}
 	} else {
 		sed = ohci_alloc_sed(sc);
 		if (sed == NULL)
-			goto bad0;
+			goto bad;
 		opipe->sed = sed;
 		if (xfertype == UE_ISOCHRONOUS) {
 			mutex_enter(&sc->sc_lock);
 			sitd = ohci_alloc_sitd(sc);
 			mutex_exit(&sc->sc_lock);
 			if (sitd == NULL)
-				goto bad1;
+				goto bad;
+
 			opipe->tail.itd = sitd;
 			tdphys = sitd->physaddr;
 			fmt = OHCI_ED_FORMAT_ISO;
@@ -2178,7 +2178,8 @@ ohci_open(usbd_pipe_handle pipe)
 			std = ohci_alloc_std(sc);
 			mutex_exit(&sc->sc_lock);
 			if (std == NULL)
-				goto bad1;
+				goto bad;
+
 			opipe->tail.td = std;
 			tdphys = std->physaddr;
 			fmt = OHCI_ED_FORMAT_GEN | OHCI_ED_DIR_TD;
@@ -2231,12 +2232,13 @@ ohci_open(usbd_pipe_handle pipe)
 	return USBD_NORMAL_COMPLETION;
 
  bad:
-	if (std != NULL)
+	if (std != NULL) {
+		mutex_enter(&sc->sc_lock);
 		ohci_free_std(sc, std);
- bad1:
+		mutex_exit(&sc->sc_lock);
+	}
 	if (sed != NULL)
 		ohci_free_sed(sc, sed);
- bad0:
 	return err;
 
 }
