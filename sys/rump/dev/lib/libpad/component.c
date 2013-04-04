@@ -1,6 +1,6 @@
-/*	$NetBSD: component.c,v 1.3 2013/04/04 01:38:47 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.1 2013/04/04 01:41:51 pooka Exp $	*/
 
-/*
+/*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,43 +26,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.3 2013/04/04 01:38:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2013/04/04 01:41:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/mbuf.h>
 #include <sys/stat.h>
 
-#include "ioconf.c"
-
 #include "rump_private.h"
-#include "rump_dev_private.h"
 #include "rump_vfs_private.h"
-
-extern void mdattach(int); /* XXX */
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
-        extern const struct bdevsw md_bdevsw;
-        extern const struct cdevsw md_cdevsw;
-	devmajor_t bmaj, cmaj;
 	int error;
 
-	config_init_component(cfdriver_ioconf_md,
-	    cfattach_ioconf_md, cfdata_ioconf_md);
-
-	bmaj = cmaj = NODEVMAJOR;
-	if ((error = devsw_attach("md", &md_bdevsw, &bmaj,
-	    &md_cdevsw, &cmaj)) != 0)
-		panic("md devsw attach failed: %d", error);
-
-        if ((error = rump_vfs_makedevnodes(S_IFBLK, "/dev/md0", 'a',
-            bmaj, 0, 7)) != 0)
-                panic("cannot create cooked md dev nodes: %d", error);
-        if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/rmd0", 'a',
-            cmaj, 0, 7)) != 0)
-                panic("cannot create raw md dev nodes: %d", error);
-
-	rump_pdev_add(mdattach, 0);
+	if ((error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/pad", 189, 0)) != 0)
+		panic("cannot create pad device: %d", error);
 }
