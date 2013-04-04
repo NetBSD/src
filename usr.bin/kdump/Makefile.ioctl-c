@@ -1,14 +1,26 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.23 2008/10/25 22:23:55 apb Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.24 2013/04/04 22:35:28 dsl Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
-DEPFILEGLOB=	${DESTDIR}/usr/include/*/*.h ${DESTDIR}/usr/include/*/*/*.h
+# We are trying to get the list of .h files that define all ioctls
+# This version grabs the non-obsolete .h files from the set lists
+# and silently ignores any that don't exist in ${DESTDIR}.
+# NB: The compiler uses the .h files in ${NETBSDSRCDIR}.
+
+SETBASE=${NETBSDSRCDIR}/distrib/sets/lists/comp
+SETFILES:=${SETBASE}/mi
+.for md in md.${MACHINE} /md.${MACHINE}.${MACHINE_ARCH}
+.if exists(${SETBASE}/${md})
+SETFILES:= ${SETFILES} ${SETBASE}/${md}
+.endif
+.endfor
 
 .if !make(cleandir) && !make(obj) && !make(includes)
-DEPFILES != egrep -l '(_IO\(|_IOR\(|_IOW\(|_IOWR\()' ${DEPFILEGLOB} | fgrep -v xenio
+DEPFILEGLOB != ${TOOL_SED} -ne '/\/usr\/include\/.*\.h[ 	]/{s/[ 	]obsolete$$//;t' -e 's/xenio//;t' -e 's,\.\([^ 	]*\).*,${DESTDIR}\1,;p;}' ${SETFILES}
+DEPFILES != egrep -l '(_IO\(|_IOR\(|_IOW\(|_IOWR\()' ${DEPFILEGLOB} 2>/dev/null || :
 .endif
 
-${PROG}-ioctl.c: mkioctls Makefile ${DEPFILES}
+${PROG}-ioctl.c: mkioctls Makefile ${DEPFILES} ${SETFILES}
 	${_MKTARGET_CREATE}
 	AWK=${TOOL_AWK:Q} CC="${CC}" DESTDIR="${DESTDIR}" SED=${TOOL_SED:Q} \
 	    ${HOST_SH} ${NETBSDSRCDIR}/usr.bin/kdump/mkioctls \
