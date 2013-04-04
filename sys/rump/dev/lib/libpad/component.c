@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2013/04/04 01:41:51 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.2 2013/04/04 11:28:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2013/04/04 01:41:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2013/04/04 11:28:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -40,6 +40,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	int error;
 
-	if ((error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/pad", 189, 0)) != 0)
+        if ((error = rump_vfs_makedevnodes(S_IFCHR,
+	    "/dev/pad", '0', 189, 0, 4)) != 0)
 		panic("cannot create pad device: %d", error);
 }
