@@ -1,7 +1,8 @@
-# $NetBSD: shl.mi,v 1.15 2013/04/03 15:50:38 christos Exp $
+# $NetBSD: shl.mi,v 1.16 2013/04/05 20:23:13 christos Exp $
 ./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
+./usr/libdata/debug/usr/libexec/ld.elf_so.debug         comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libDECHanyu.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libEUC.so.5.0.debug	comp-i18n-debug	debug
