@@ -1,4 +1,4 @@
-.\"	$NetBSD: statvfs.5,v 1.12 2010/03/22 18:58:32 joerg Exp $
+.\"	$NetBSD: statvfs.5,v 1.13 2013/04/05 17:33:06 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)statfs.2	8.5 (Berkeley) 5/24/95
 .\"
-.Dd April 10, 2009
+.Dd April 5, 2013
 .Dt STATVFS 5
 .Os
 .Sh NAME
@@ -58,6 +58,7 @@ struct statvfs {
 	unsigned long	f_frsize; /* system fragment size */
 	unsigned long	f_iosize; /* optimal file system block size */
 
+	/* The following are in units of f_frsize */
 	fsblkcnt_t	f_blocks; /* number of blocks in file system */
 	fsblkcnt_t	f_bfree;  /* free blocks avail in file system */
 	fsblkcnt_t	f_bavail; /* free blocks avail to non-root */
