@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.28 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.29 2013/04/05 03:17:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpc_generic.c,v 1.28 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: rpc_generic.c,v 1.29 2013/04/05 03:17:38 dholland Exp $");
 #endif
 
 #include "namespace.h"
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: rpc_generic.c,v 1.28 2013/03/11 20:19:29 tron Exp $");
 #include <stdio.h>
 #include <netdb.h>
 #include <netconfig.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <rpc/nettype.h>
