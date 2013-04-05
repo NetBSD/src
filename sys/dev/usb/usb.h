@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.102 2013/04/05 09:07:15 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.103 2013/04/05 09:20:51 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -502,6 +502,7 @@ typedef struct {
 #define UPS_C_SUSPEND			0x0004
 #define UPS_C_OVERCURRENT_INDICATOR	0x0008
 #define UPS_C_PORT_RESET		0x0010
+#define UPS_C_PORT_L1			0x0020
 } UPACKED usb_port_status_t;
 
 /* Device class codes */
