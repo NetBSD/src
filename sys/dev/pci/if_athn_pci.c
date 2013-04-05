@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_pci.c,v 1.5 2013/04/03 14:20:03 christos Exp $	*/
+/*	$NetBSD: if_athn_pci.c,v 1.6 2013/04/05 19:15:08 martin Exp $	*/
 /*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.5 2013/04/03 14:20:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.6 2013/04/05 19:15:08 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -207,11 +207,12 @@ athn_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		goto fail1;
 	}
-	aprint_verbose_dev(self, "interrupting at %s\n", intrstr);
 
 	ic->ic_ifp = &sc->sc_if;
 	if (athn_attach(sc) != 0)
 		goto fail2;
+
+	aprint_verbose_dev(self, "interrupting at %s\n", intrstr);
 
 	if (pmf_device_register(self, athn_pci_suspend, athn_pci_resume)) {
 		pmf_class_network_register(self, &sc->sc_if);
