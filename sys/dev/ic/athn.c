@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.1 2013/03/30 02:53:02 christos Exp $	*/
+/*	$NetBSD: athn.c,v 1.2 2013/04/05 19:14:31 martin Exp $	*/
 /*	$OpenBSD: athn.c,v 1.75 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.1 2013/03/30 02:53:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.2 2013/04/05 19:14:31 martin Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -230,17 +230,20 @@ athn_attach(struct athn_softc *sc)
 	    ((sc->sc_rxchainmask >> 0) & 1);
 
 	if (AR_SINGLE_CHIP(sc)) {
-		aprint_normal_dev(sc->sc_dev,
-		    "%s rev %d (%dT%dR), ROM rev %d, address %s\n",
-		    athn_get_mac_name(sc), sc->sc_mac_rev,
+		aprint_normal("%s\n", athn_get_mac_name(sc));
+		aprint_verbose_dev(sc->sc_dev,
+		    "rev %d (%dT%dR), ROM rev %d, address %s\n",
+		    sc->sc_mac_rev,
 		    sc->sc_ntxchains, sc->sc_nrxchains, sc->sc_eep_rev,
 		    ether_sprintf(ic->ic_myaddr));
 	}
 	else {
-		aprint_normal_dev(sc->sc_dev,
-		    "MAC %s rev %d, RF %s (%dT%dR), ROM rev %d, address %s\n",
-		    athn_get_mac_name(sc), sc->sc_mac_rev,
-		    athn_get_rf_name(sc), sc->sc_ntxchains, sc->sc_nrxchains,
+		aprint_normal("%s, RF %s\n", athn_get_mac_name(sc),
+		    athn_get_rf_name(sc));
+		aprint_verbose_dev(sc->sc_dev,
+		    "rev %d (%dT%dR), ROM rev %d, address %s\n",
+		    sc->sc_mac_rev,
+		    sc->sc_ntxchains, sc->sc_nrxchains,
 		    sc->sc_eep_rev, ether_sprintf(ic->ic_myaddr));
 	}
 
