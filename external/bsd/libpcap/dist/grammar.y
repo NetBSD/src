@@ -1,3 +1,5 @@
+/*	$NetBSD: grammar.y,v 1.3 2013/04/06 17:29:53 christos Exp $	*/
+
 %{
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -22,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/grammar.y,v 1.101 2007-11-18 02:03:52 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/grammar.y,v 1.101 2007-11-18 02:03:52 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -272,12 +274,12 @@ pfaction_to_num(const char *action)
 
 %token  DST SRC HOST GATEWAY
 %token  NET NETMASK PORT PORTRANGE LESS GREATER PROTO PROTOCHAIN CBYTE
-%token  ARP RARP IP SCTP TCP UDP ICMP IGMP IGRP PIM VRRP
+%token  ARP RARP IP SCTP TCP UDP ICMP IGMP IGRP PIM VRRP CARP
 %token  ATALK AARP DECNET LAT SCA MOPRC MOPDL
 %token  TK_BROADCAST TK_MULTICAST
 %token  NUM INBOUND OUTBOUND
 %token  PF_IFNAME PF_RSET PF_RNR PF_SRNR PF_REASON PF_ACTION
-%token	TYPE SUBTYPE DIR ADDR1 ADDR2 ADDR3 ADDR4
+%token	TYPE SUBTYPE DIR ADDR1 ADDR2 ADDR3 ADDR4 RA TA
 %token  LINK
 %token	GEQ LEQ NEQ
 %token	ID EID HID HID6 AID
@@ -442,6 +444,8 @@ dqual:	  SRC			{ $$ = Q_SRC; }
 	| ADDR2			{ $$ = Q_ADDR2; }
 	| ADDR3			{ $$ = Q_ADDR3; }
 	| ADDR4			{ $$ = Q_ADDR4; }
+	| RA			{ $$ = Q_RA; }
+	| TA			{ $$ = Q_TA; }
 	;
 /* address type qualifiers */
 aqual:	  HOST			{ $$ = Q_HOST; }
@@ -464,6 +468,7 @@ pname:	  LINK			{ $$ = Q_LINK; }
 	| IGRP			{ $$ = Q_IGRP; }
 	| PIM			{ $$ = Q_PIM; }
 	| VRRP			{ $$ = Q_VRRP; }
+	| CARP 			{ $$ = Q_CARP; }
 	| ATALK			{ $$ = Q_ATALK; }
 	| AARP			{ $$ = Q_AARP; }
 	| DECNET		{ $$ = Q_DECNET; }
