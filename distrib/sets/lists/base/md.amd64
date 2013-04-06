@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.201 2013/04/06 02:20:02 christos Exp $
+# $NetBSD: md.amd64,v 1.202 2013/04/06 17:30:27 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -217,8 +217,8 @@
 ./usr/lib/i386/libp2k.so.2.0			base-compat-shlib	compat,pic,rump
 ./usr/lib/i386/libpam.so.4			base-compat-shlib	compat,pic,pam
 ./usr/lib/i386/libpam.so.4.0			base-compat-shlib	compat,pic,pam
-./usr/lib/i386/libpcap.so.4			base-compat-shlib	compat,pic
-./usr/lib/i386/libpcap.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libpcap.so.5			base-compat-shlib	compat,pic
+./usr/lib/i386/libpcap.so.5.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libpci.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libpci.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libperfuse.so			base-compat-shlib       compat,pic
