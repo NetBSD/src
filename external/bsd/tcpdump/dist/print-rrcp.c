@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-rrcp.c,v 1.2 2008-04-11 17:21:34 gianluca Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-rrcp.c,v 1.2 2008-04-11 17:21:34 gianluca Exp ";
 #else
-__RCSID("$NetBSD: print-rrcp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-rrcp.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -107,17 +107,17 @@ rrcp_print(netdissect_options *ndo,
         ND_PRINT((ndo, "%s > %s, %s %s",
 		etheraddr_string(ESRC(ep)),
 		etheraddr_string(EDST(ep)),
-		tok2strbuf(proto_values,"RRCP-0x%02d",rrcp_proto,proto_str,sizeof(proto_str)),
+		tok2strbuf(proto_values,"RRCP-0x%02x",rrcp_proto,proto_str,sizeof(proto_str)),
 		((*(rrcp + RRCP_OPCODE_ISREPLY_OFFSET)) & RRCP_ISREPLY) ? "reply" : "query"));
 	if (rrcp_proto==1){
     	    ND_PRINT((ndo, ": %s",
-		     tok2strbuf(opcode_values,"unknown opcode (0x%02d)",rrcp_opcode,opcode_str,sizeof(opcode_str))));
+		     tok2strbuf(opcode_values,"unknown opcode (0x%02x)",rrcp_opcode,opcode_str,sizeof(opcode_str))));
 	}
 	if (rrcp_opcode==1 || rrcp_opcode==2){
 	    ND_TCHECK2(*(rrcp + RRCP_REG_ADDR_OFFSET), 6);
     	    ND_PRINT((ndo, " addr=0x%04x, data=0x%08x",
-		     EXTRACT_16BITS(rrcp + RRCP_REG_ADDR_OFFSET),
-		     EXTRACT_32BITS(rrcp + RRCP_REG_DATA_OFFSET)));
+                     EXTRACT_LE_16BITS(rrcp + RRCP_REG_ADDR_OFFSET),
+                     EXTRACT_LE_32BITS(rrcp + RRCP_REG_DATA_OFFSET)));
 	}
 	if (rrcp_proto==1){
 	    ND_TCHECK2(*(rrcp + RRCP_AUTHKEY_OFFSET), 2);

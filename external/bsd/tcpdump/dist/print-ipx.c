@@ -26,9 +26,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ipx.c,v 1.42 2005-05-06 08:26:44 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ipx.c,v 1.42 2005-05-06 08:26:44 guy Exp ";
 #else
-__RCSID("$NetBSD: print-ipx.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-ipx.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -201,7 +201,7 @@ ipx_rip_print(const u_short *ipx, u_int length)
 	(void)printf("ipx-rip-req");
 	if (length > 0) {
 	    TCHECK(ipx[3]);
-	    (void)printf(" %u/%d.%d", EXTRACT_32BITS(&ipx[0]),
+	    (void)printf(" %08x/%d.%d", EXTRACT_32BITS(&ipx[0]),
 			 EXTRACT_16BITS(&ipx[2]), EXTRACT_16BITS(&ipx[3]));
 	}
 	break;
@@ -209,7 +209,7 @@ ipx_rip_print(const u_short *ipx, u_int length)
 	(void)printf("ipx-rip-resp");
 	for (i = 0; i < 50 && length > 0; i++) {
 	    TCHECK(ipx[3]);
-	    (void)printf(" %u/%d.%d", EXTRACT_32BITS(&ipx[0]),
+	    (void)printf(" %08x/%d.%d", EXTRACT_32BITS(&ipx[0]),
 			 EXTRACT_16BITS(&ipx[2]), EXTRACT_16BITS(&ipx[3]));
 
 	    ipx += 4;
