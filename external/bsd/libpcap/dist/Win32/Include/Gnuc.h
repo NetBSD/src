@@ -1,4 +1,6 @@
-/* @(#) Header: /tcpdump/master/libpcap/Win32/Include/Gnuc.h,v 1.1 2002-08-01 08:33:05 risso Exp (LBL) */
+/*	$NetBSD: Gnuc.h,v 1.1.1.3 2013/04/06 15:57:51 christos Exp $	*/
+
+/* @(#) Header: /tcpdump/master/libpcap/Win32/Include/Gnuc.h,v 1.1 2002-08-01 08:33:05 risso Exp  (LBL) */
 
 /* Define __P() macro, if necessary */
 

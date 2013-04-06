@@ -1,4 +1,6 @@
-/* @(#) Header: /tcpdump/master/libpcap/ppp.h,v 1.12 2005-02-08 19:52:19 guy Exp (LBL) */
+/*	$NetBSD: ppp.h,v 1.1.1.3 2013/04/06 15:57:45 christos Exp $	*/
+
+/* @(#) Header: /tcpdump/master/libpcap/ppp.h,v 1.12 2005-02-08 19:52:19 guy Exp  (LBL) */
 /*
  * Point to Point Protocol (PPP) RFC1331
  *

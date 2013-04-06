@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-septel.c,v 1.1.1.3 2013/04/06 15:57:46 christos Exp $	*/
+
 /*
  * pcap-septel.c: Packet capture interface for Intel/Septel card.
  *
@@ -16,7 +18,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/pcap-septel.c,v 1.4 2008-04-14 20:40:58 guy Exp";
+    "@(#) Header: /tcpdump/master/libpcap/pcap-septel.c,v 1.4 2008-04-14 20:40:58 guy Exp ";
 #endif
 
 #ifdef HAVE_CONFIG_H

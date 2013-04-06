@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-win32.c,v 1.1.1.3 2013/04/06 15:57:45 christos Exp $	*/
+
 /*
  * Copyright (c) 1999 - 2005 NetGroup, Politecnico di Torino (Italy)
  * Copyright (c) 2005 - 2008 CACE Technologies, Davis (California)
@@ -33,13 +35,18 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/pcap-win32.c,v 1.42 2008-05-21 22:15:25 gianluca Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/pcap-win32.c,v 1.42 2008-05-21 22:15:25 gianluca Exp  (LBL)";
 #endif
 
 #include <pcap-int.h>
 #include <Packet32.h>
 #ifdef __MINGW32__
+#ifdef __MINGW64__
+#include <ntddndis.h>
+#else  /*__MINGW64__*/
+#include <ddk/ntddndis.h>
 #include <ddk/ndis.h>
+#endif /*__MINGW64__*/
 #else /*__MINGW32__*/
 #include <ntddndis.h>
 #endif /*__MINGW32__*/
@@ -232,7 +239,7 @@ pcap_read_win32_npf(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 		 * XXX A bpf_hdr matches a pcap_pkthdr.
 		 */
 		(*callback)(user, (struct pcap_pkthdr*)bp, bp + hdrlen);
-		bp += BPF_WORDALIGN(caplen + hdrlen);
+		bp += Packet_WORDALIGN(caplen + hdrlen);
 		if (++n >= cnt && cnt > 0) {
 			p->bp = bp;
 			p->cc = ep - bp;

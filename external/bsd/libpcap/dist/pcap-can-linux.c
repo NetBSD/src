@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-can-linux.c,v 1.1.1.2 2013/04/06 15:57:49 christos Exp $	*/
+
 /*
  * Copyright (c) 2009 Felix Obenhuber
  * All rights reserved.
