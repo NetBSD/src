@@ -1,4 +1,4 @@
-/*	$NetBSD: scanopt.c,v 1.1.1.1 2009/10/26 00:26:56 christos Exp $	*/
+/*	$NetBSD: scanopt.c,v 1.1.1.2 2013/04/06 14:05:44 christos Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -191,7 +191,7 @@ scanopt_t *scanopt_init (options, argc, argv, flags)
 	s->aux = (struct _aux *) malloc (s->optc * sizeof (struct _aux));
 
 	for (i = 0; i < s->optc; i++) {
-		const char *p, *pname;
+		const Char *p, *pname;
 		const struct optspec_t *opt;
 		struct _aux *aux;
 
@@ -202,11 +202,11 @@ scanopt_t *scanopt_init (options, argc, argv, flags)
 
 		if (opt->opt_fmt[0] == '-' && opt->opt_fmt[1] == '-') {
 			aux->flags |= IS_LONG;
-			pname = opt->opt_fmt + 2;
+			pname = (const Char *)(opt->opt_fmt + 2);
 			s->has_long = 1;
 		}
 		else {
-			pname = opt->opt_fmt + 1;
+			pname = (const Char *)(opt->opt_fmt + 1);
 			s->has_short = 1;
 		}
 		aux->printlen = strlen (opt->opt_fmt);
@@ -483,7 +483,7 @@ int     scanopt_usage (scanner, fp, usage)
 
 					while (*p && n < maxlen[1]
 					       && *p != '\n') {
-						if (isspace (*p)
+						if (isspace ((Char)(*p))
 						    || *p == '-') lastws =
 								p;
 						n++;
@@ -506,8 +506,7 @@ int     scanopt_usage (scanner, fp, usage)
 						if (lastws) {
 							fprintf (fp,
 								 "%.*s\n",
-								 lastws -
-								 pstart,
+								 (int)(lastws - pstart),
 								 pstart);
 							pstart =
 								lastws + 1;
