@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2011/12/25 23:18:26 christos Exp $
+# $NetBSD: Makefile,v 1.15 2013/04/06 02:20:49 christos Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -48,7 +48,7 @@ WARNS=	4
 # 233: Struct/union never defined
 LINTFLAGS+= -Sw -X 233
 
-CPPFLAGS+= -DLIB_MAJ=${SHLIB_MAJOR} -DHAVE_STRLCPY
+CPPFLAGS+= -DLIB_MAJ=${SHLIB_MAJOR} -DHAVE_CONFIG_H -I${.CURDIR}
 
 SRCS=	openpam_borrow_cred.c \
 	openpam_check_owner_perms.c \
@@ -56,16 +56,22 @@ SRCS=	openpam_borrow_cred.c \
 	openpam_constants.c \
 	openpam_dispatch.c \
 	openpam_dynamic.c \
+	openpam_features.c \
 	openpam_findenv.c \
 	openpam_free_data.c \
 	openpam_free_envlist.c \
+	openpam_get_feature.c \
 	openpam_get_option.c \
 	openpam_load.c \
 	openpam_log.c \
 	openpam_nullconv.c \
 	openpam_readline.c \
+	openpam_readlinev.c \
+	openpam_readword.c \
 	openpam_restore_cred.c \
+	openpam_set_feature.c \
 	openpam_set_option.c \
+	openpam_straddch.c \
 	openpam_subst.c \
 	openpam_ttyconv.c \
 	pam_acct_mgmt.c \
@@ -101,12 +107,17 @@ MAN=	\
 	openpam_borrow_cred.3 \
 	openpam_free_data.3 \
 	openpam_free_envlist.3 \
+	openpam_get_feature.3 \
 	openpam_get_option.3 \
 	openpam_log.3 \
 	openpam_nullconv.3 \
 	openpam_readline.3 \
+	openpam_readlinev.3 \
+	openpam_readword.3 \
 	openpam_restore_cred.3 \
+	openpam_set_feature.3 \
 	openpam_set_option.3 \
+	openpam_straddch.3 \
 	openpam_subst.3 \
 	openpam_ttyconv.3 \
 	pam.3 \
