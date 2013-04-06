@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.659 2013/04/03 15:50:38 christos Exp $
+# $NetBSD: shl.mi,v 1.660 2013/04/06 02:20:03 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -394,8 +394,8 @@
 ./usr/lib/libp2k.so.2				base-puffs-shlib	rump
 ./usr/lib/libp2k.so.2.0				base-puffs-shlib	rump
 ./usr/lib/libpam.so				base-sys-shlib		pam
-./usr/lib/libpam.so.3				base-sys-shlib		pam
-./usr/lib/libpam.so.3.0				base-sys-shlib		pam
+./usr/lib/libpam.so.4				base-sys-shlib		pam
+./usr/lib/libpam.so.4.0				base-sys-shlib		pam
 ./usr/lib/libpcap.so				base-net-shlib
 ./usr/lib/libpcap.so.4				base-net-shlib
 ./usr/lib/libpcap.so.4.0			base-net-shlib
@@ -763,26 +763,26 @@
 ./usr/lib/nss_mdns.so.0				base-obsolete		obsolete
 ./usr/lib/nss_mdnsd.so.0			base-mdns-shlib		mdns
 ./usr/lib/nss_multicast_dns.so.0		base-mdns-shlib		mdns
-./usr/lib/security/pam_afslog.so.3		base-sys-shlib		kerberos,pam
-./usr/lib/security/pam_chroot.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_deny.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_echo.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_exec.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_ftpusers.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_group.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_guest.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_krb5.so.3		base-sys-shlib		kerberos,pam
-./usr/lib/security/pam_ksu.so.3			base-sys-shlib		kerberos,pam
-./usr/lib/security/pam_lastlog.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_login_access.so.3	base-sys-shlib		pam
-./usr/lib/security/pam_nologin.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_permit.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_radius.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_rhosts.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_rootok.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_securetty.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_self.so.3		base-sys-shlib		pam
-./usr/lib/security/pam_skey.so.3		base-sys-shlib		skey,pam
-./usr/lib/security/pam_ssh.so.3			base-sys-shlib		crypto,pam
-./usr/lib/security/pam_unix.so.3		base-sys-shlib		pam
+./usr/lib/security/pam_afslog.so.4		base-sys-shlib		kerberos,pam
+./usr/lib/security/pam_chroot.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_deny.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_echo.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_exec.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_ftpusers.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_group.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_guest.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_krb5.so.4		base-sys-shlib		kerberos,pam
+./usr/lib/security/pam_ksu.so.4			base-sys-shlib		kerberos,pam
+./usr/lib/security/pam_lastlog.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_login_access.so.4	base-sys-shlib		pam
+./usr/lib/security/pam_nologin.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_permit.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_radius.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_rhosts.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_rootok.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_securetty.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_self.so.4		base-sys-shlib		pam
+./usr/lib/security/pam_skey.so.4		base-sys-shlib		skey,pam
+./usr/lib/security/pam_ssh.so.4			base-sys-shlib		crypto,pam
+./usr/lib/security/pam_unix.so.4		base-sys-shlib		pam
 ./usr/libexec/ld.elf_so				base-sys-shlib
