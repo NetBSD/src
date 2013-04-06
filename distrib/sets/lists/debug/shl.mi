@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.16 2013/04/05 20:23:13 christos Exp $
+# $NetBSD: shl.mi,v 1.17 2013/04/06 02:20:07 christos Exp $
 ./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
@@ -109,7 +109,7 @@
 ./usr/libdata/debug/usr/lib/libopcodes.so.5.0.debug	comp-c-debug	binutils,debug
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug		comp-puffs-debug	debug,rump
-./usr/libdata/debug/usr/lib/libpam.so.3.0.debug		comp-sys-debug	pam,debug
+./usr/libdata/debug/usr/lib/libpam.so.4.0.debug		comp-sys-debug	pam,debug
 ./usr/libdata/debug/usr/lib/libpcap.so.4.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/libpci.so.2.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libperfuse.so.0.0.debug	comp-perfuse-debug	debug
