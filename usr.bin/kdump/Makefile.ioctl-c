@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.24 2013/04/04 22:35:28 dsl Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.25 2013/04/06 13:48:12 uebayasi Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -15,9 +15,9 @@ SETFILES:= ${SETFILES} ${SETBASE}/${md}
 .endif
 .endfor
 
-.if !make(cleandir) && !make(obj) && !make(includes)
-DEPFILEGLOB != ${TOOL_SED} -ne '/\/usr\/include\/.*\.h[ 	]/{s/[ 	]obsolete$$//;t' -e 's/xenio//;t' -e 's,\.\([^ 	]*\).*,${DESTDIR}\1,;p;}' ${SETFILES}
-DEPFILES != egrep -l '(_IO\(|_IOR\(|_IOW\(|_IOWR\()' ${DEPFILEGLOB} 2>/dev/null || :
+.if !make(cleandir) && !make(obj) && !make(includes) && !make(install)
+DEPFILEGLOB = ${TOOL_SED} -ne '/\/usr\/include\/.*\.h[ 	]/{s/[ 	]obsolete$$//;t' -e 's/xenio//;t' -e 's,\.\([^ 	]*\).*,${DESTDIR}\1,;p;}' ${SETFILES}
+DEPFILES != ${DEPFILEGLOB} | xargs egrep -l '(_IO\(|_IOR\(|_IOW\(|_IOWR\()' 2>/dev/null || :
 .endif
 
 ${PROG}-ioctl.c: mkioctls Makefile ${DEPFILES} ${SETFILES}
