@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1029 2013/04/06 17:50:47 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1030 2013/04/06 19:33:59 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1167,8 +1167,8 @@ Initial import uses a pre-release with a number of bug fixes to avoid
 unnecessary local changes.
 
 Package:	tcpdump
-Version:	4.1.1
-Current Vers:	4.1.1
+Version:	4.3.0
+Current Vers:	4.3.0
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
@@ -1177,7 +1177,7 @@ Responsible:
 License:	BSD (3-clause)
 Location:	external/bsd/tcpdump/dist
 Notes:
-Use the src/external/bsd/tcpdump/dist/tcpdump2netbsd script to prepare source
+Use the src/external/bsd/tcpdump/tcpdump2netbsd script to prepare source
 tree.
 
 Package:	TestFloat
