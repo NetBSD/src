@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.9 2013/04/06 17:29:12 christos Exp $	
+# $NetBSD: Makefile,v 1.10 2013/04/06 17:36:40 christos Exp $	
 
+USE_SHLIBDIR=yes
 .include <bsd.own.mk>
-
 USE_FORT?= yes	# network protocol library
 
 CWARNFLAGS.clang+=	-Wno-format-extra-args \
