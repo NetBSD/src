@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1811 2013/04/06 02:20:04 christos Exp $
+#	$NetBSD: mi,v 1.1812 2013/04/06 17:30:28 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7115,8 +7115,8 @@
 ./usr/share/man/cat3/pcap_file.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_fileno.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_findalldevs.0		comp-c-catman		.cat
-./usr/share/man/cat3/pcap_free_datalinks.0	comp-c-catman		.cat
-./usr/share/man/cat3/pcap_freealldevs.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_free_datalinks.0	comp-obsolete		obsolete
+./usr/share/man/cat3/pcap_freealldevs.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/pcap_freecode.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_get_selectable_fd.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_geterr.0		comp-c-catman		.cat
@@ -7124,6 +7124,7 @@
 ./usr/share/man/cat3/pcap_is_swapped.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_lib_version.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_list_datalinks.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_list_tstamp_types.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_lookupdev.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_lookupnet.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_loop.0		comp-c-catman		.cat
@@ -7139,6 +7140,7 @@
 ./usr/share/man/cat3/pcap_set_rfmon.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_snaplen.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_timeout.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_set_tstamp_type.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_setdirection.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_setfilter.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_setnonblock.0		comp-c-catman		.cat
@@ -7146,6 +7148,8 @@
 ./usr/share/man/cat3/pcap_stats.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_statustostr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_strerror.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_tstamp_type_name_to_val.0	comp-c-catman	.cat
+./usr/share/man/cat3/pcap_tstamp_type_val_to_name.0	comp-c-catman	.cat
 ./usr/share/man/cat3/pci.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pci_conf_print.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pci_devinfo.0		comp-c-catman		.cat
@@ -13581,8 +13585,8 @@
 ./usr/share/man/html3/pcap_file.html		comp-c-htmlman		html
 ./usr/share/man/html3/pcap_fileno.html		comp-c-htmlman		html
 ./usr/share/man/html3/pcap_findalldevs.html	comp-c-htmlman		html
-./usr/share/man/html3/pcap_free_datalinks.html	comp-c-htmlman		html
-./usr/share/man/html3/pcap_freealldevs.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_free_datalinks.html	comp-obsolete		obsolete
+./usr/share/man/html3/pcap_freealldevs.html	comp-obsolete		obsolete
 ./usr/share/man/html3/pcap_freecode.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_get_selectable_fd.html comp-c-htmlman	html
 ./usr/share/man/html3/pcap_geterr.html		comp-c-htmlman		html
@@ -13590,6 +13594,7 @@
 ./usr/share/man/html3/pcap_is_swapped.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_lib_version.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_list_datalinks.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_list_tstamp_types.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_lookupdev.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_lookupnet.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_loop.html		comp-c-htmlman		html
@@ -13605,6 +13610,7 @@
 ./usr/share/man/html3/pcap_set_rfmon.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_snaplen.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_timeout.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_set_tstamp_type.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_setdirection.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_setfilter.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_setnonblock.html	comp-c-htmlman		html
@@ -13612,6 +13618,8 @@
 ./usr/share/man/html3/pcap_stats.html		comp-c-htmlman		html
 ./usr/share/man/html3/pcap_statustostr.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_strerror.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_tstamp_type_name_to_val.html	comp-c-htmlman	html
+./usr/share/man/html3/pcap_tstamp_type_val_to_name.html	comp-c-htmlman	html
 ./usr/share/man/html3/pci.html			comp-c-htmlman		html
 ./usr/share/man/html3/pci_conf_print.html	comp-c-htmlman		html
 ./usr/share/man/html3/pci_devinfo.html		comp-c-htmlman		html
@@ -20039,8 +20047,8 @@
 ./usr/share/man/man3/pcap_file.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_fileno.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_findalldevs.3		comp-c-man		.man
-./usr/share/man/man3/pcap_free_datalinks.3	comp-c-man		.man
-./usr/share/man/man3/pcap_freealldevs.3		comp-c-man		.man
+./usr/share/man/man3/pcap_free_datalinks.3	comp-obsolete		obsolete
+./usr/share/man/man3/pcap_freealldevs.3		comp-obsolete		obsolete
 ./usr/share/man/man3/pcap_freecode.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_get_selectable_fd.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_geterr.3		comp-c-man		.man
@@ -20048,6 +20056,7 @@
 ./usr/share/man/man3/pcap_is_swapped.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_lib_version.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_list_datalinks.3	comp-c-man		.man
+./usr/share/man/man3/pcap_list_tstamp_types.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_lookupdev.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_lookupnet.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_loop.3		comp-c-man		.man
@@ -20063,6 +20072,7 @@
 ./usr/share/man/man3/pcap_set_rfmon.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_set_snaplen.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_set_timeout.3		comp-c-man		.man
+./usr/share/man/man3/pcap_set_tstamp_type.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_setdirection.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_setfilter.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_setnonblock.3		comp-c-man		.man
@@ -20070,6 +20080,8 @@
 ./usr/share/man/man3/pcap_stats.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_statustostr.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_strerror.3		comp-c-man		.man
+./usr/share/man/man3/pcap_tstamp_type_name_to_val.3	comp-c-man	.man
+./usr/share/man/man3/pcap_tstamp_type_val_to_name.3	comp-c-man	.man
 ./usr/share/man/man3/pci.3			comp-c-man		.man
 ./usr/share/man/man3/pci_conf_print.3		comp-c-man		.man
 ./usr/share/man/man3/pci_devinfo.3		comp-c-man		.man

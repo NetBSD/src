@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2011/12/21 19:00:28 christos Exp $	
+# $NetBSD: Makefile,v 1.9 2013/04/06 17:29:12 christos Exp $	
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ USE_FORT?= yes	# network protocol library
 CWARNFLAGS.clang+=	-Wno-format-extra-args \
 			-Wno-unneeded-internal-declaration
 
-CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H
+CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H -DHAVE_CONFIG_H
 
 .SUFFIXES: .3 .3pcap
 
@@ -28,30 +28,78 @@ SRCDIR=		${.CURDIR}/../dist
 .PATH:		${SRCDIR}
 
 LIB=		pcap
-MAN=		pcap.3 pcap_activate.3 pcap_breakloop.3 pcap_can_set_rfmon.3 \
-		pcap_close.3 pcap_compile.3 pcap_create.3 pcap_datalink.3 \
-		pcap_datalink_name_to_val.3 pcap_datalink_val_to_name.3 \
-		pcap_dump.3 pcap_dump_close.3 pcap_dump_file.3 \
-		pcap_dump_flush.3 pcap_dump_ftell.3 pcap_dump_open.3 \
-		pcap_file.3 pcap_fileno.3 pcap_findalldevs.3 \
-		pcap_free_datalinks.3 pcap_freealldevs.3 pcap_freecode.3 \
-		pcap_get_selectable_fd.3 pcap_geterr.3 pcap_inject.3  \
-		pcap_is_swapped.3 pcap_lib_version.3 pcap_list_datalinks.3 \
-		pcap_lookupdev.3 pcap_lookupnet.3 pcap_loop.3 \
-		pcap_major_version.3 pcap_next_ex.3 pcap_offline_filter.3 \
-		pcap_open_dead.3 pcap_open_live.3 pcap_open_offline.3 \
-		pcap_set_buffer_size.3 pcap_set_datalink.3 pcap_set_promisc.3 \
-		pcap_set_rfmon.3 pcap_set_snaplen.3 pcap_set_timeout.3 \
-		pcap_setdirection.3 pcap_setfilter.3 pcap_setnonblock.3 \
-		pcap_snapshot.3 pcap_stats.3 pcap_statustostr.3 \
-		pcap_strerror.3 pcap-savefile.5 pcap-filter.7 pcap-linktype.7
+MANSRC= \
+pcap.3pcap \
+pcap_activate.3pcap \
+pcap_breakloop.3pcap \
+pcap_can_set_rfmon.3pcap \
+pcap_close.3pcap \
+pcap_compile.3pcap \
+pcap_create.3pcap \
+pcap_datalink.3pcap \
+pcap_datalink_name_to_val.3pcap \
+pcap_datalink_val_to_name.3pcap \
+pcap_dump.3pcap \
+pcap_dump_close.3pcap \
+pcap_dump_file.3pcap \
+pcap_dump_flush.3pcap \
+pcap_dump_ftell.3pcap \
+pcap_dump_open.3pcap \
+pcap_file.3pcap \
+pcap_fileno.3pcap \
+pcap_findalldevs.3pcap \
+pcap_freecode.3pcap \
+pcap_get_selectable_fd.3pcap \
+pcap_geterr.3pcap \
+pcap_inject.3pcap \
+pcap_is_swapped.3pcap \
+pcap_lib_version.3pcap \
+pcap_list_datalinks.3pcap \
+pcap_list_tstamp_types.3pcap \
+pcap_lookupdev.3pcap \
+pcap_lookupnet.3pcap \
+pcap_loop.3pcap \
+pcap_major_version.3pcap \
+pcap_next_ex.3pcap \
+pcap_offline_filter.3pcap \
+pcap_open_dead.3pcap \
+pcap_open_live.3pcap \
+pcap_open_offline.3pcap \
+pcap_set_buffer_size.3pcap \
+pcap_set_datalink.3pcap \
+pcap_set_promisc.3pcap \
+pcap_set_rfmon.3pcap \
+pcap_set_snaplen.3pcap \
+pcap_set_timeout.3pcap \
+pcap_set_tstamp_type.3pcap \
+pcap_setdirection.3pcap \
+pcap_setfilter.3pcap \
+pcap_setnonblock.3pcap \
+pcap_snapshot.3pcap \
+pcap_stats.3pcap \
+pcap_statustostr.3pcap \
+pcap_strerror.3pcap \
+pcap_tstamp_type_name_to_val.3pcap \
+pcap_tstamp_type_val_to_name.3pcap
 
+MAN=${MANSRC:S/3pcap/3/g}
 
-MAN3IN= pcap.3pcap.in pcap_compile.3pcap.in pcap_datalink.3pcap.in \
-	pcap_dump_open.3pcap.in pcap_list_datalinks.3pcap.in \
-	pcap_open_dead.3pcap.in pcap_open_offline.3pcap.in
-MANMISCIN= pcap-filter.manmisc.in pcap-linktype.manmisc.in 
-MANFILEIN= pcap-savefile.manfile.in 
+MAN3IN= \
+pcap.3pcap.in \
+pcap_compile.3pcap.in \
+pcap_datalink.3pcap.in \
+pcap_dump_open.3pcap.in \
+pcap_list_datalinks.3pcap.in \
+pcap_list_tstamp_types.3pcap.in \
+pcap_open_dead.3pcap.in \
+pcap_open_offline.3pcap.in \
+pcap_set_tstamp_type.3pcap.in
+
+MANMISCIN= \
+pcap-filter.manmisc.in \
+pcap-linktype.manmisc.in \
+pcap-tstamp.manmisc.in
+MANFILEIN= pcap-savefile.manfile.in
 CLEANFILES+= ${MAN}
 
 WARNS?=		4

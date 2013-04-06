@@ -1,3 +1,5 @@
+/*	$NetBSD: bpf_filter.c,v 1.4 2013/04/06 17:29:53 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +38,7 @@
 
 #if !(defined(lint) || defined(KERNEL) || defined(_KERNEL))
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/bpf/net/bpf_filter.c,v 1.46 2008-01-02 04:16:46 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/bpf/net/bpf_filter.c,v 1.46 2008-01-02 04:16:46 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -393,7 +395,18 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 			continue;
 
 		case BPF_JMP|BPF_JA:
+#if defined(KERNEL) || defined(_KERNEL)
+			/*
+			 * No backward jumps allowed.
+			 */
 			pc += pc->k;
+#else
+			/*
+			 * XXX - we currently implement "ip6 protochain"
+			 * with backward jumps, so sign-extend pc->k.
+			 */
+			pc += (bpf_int32)pc->k;
+#endif
 			continue;
 
 		case BPF_JMP|BPF_JGT|BPF_K:
