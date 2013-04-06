@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1813 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1814 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -224,3 +224,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	flex: Import 2.5.37 [christos 20130405]
 	byacc: Import 20130304 [christos 20130405]
 	libpcap: Import 1.3.0 [christos 20130406]
+	tcpdump(8): Import 4.3.0 [christos 20130406]
