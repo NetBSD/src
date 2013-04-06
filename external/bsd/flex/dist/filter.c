@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.1.1.1 2009/10/26 00:26:00 christos Exp $	*/
+/*	$NetBSD: filter.c,v 1.1.1.2 2013/04/06 14:05:42 christos Exp $	*/
 
 /* filter - postprocessing of flex output through filters */
 
@@ -50,6 +50,8 @@ struct filter *filter_create_ext (struct filter *chain, const char *cmd,
 
 	/* allocate and initialize new filter */
 	f = (struct filter *) flex_alloc (sizeof (struct filter));
+	if (!f)
+		flexerror (_("flex_alloc failed (f) in filter_create_ext"));
 	memset (f, 0, sizeof (*f));
 	f->filter_func = NULL;
 	f->extra = NULL;
@@ -69,6 +71,8 @@ struct filter *filter_create_ext (struct filter *chain, const char *cmd,
 	f->argv =
 		(const char **) flex_alloc (sizeof (char *) *
 					    (max_args + 1));
+	if (!f->argv)
+		flexerror (_("flex_alloc failed (f->argv) in filter_create_ext"));
 	f->argv[f->argc++] = cmd;
 
 	va_start (ap, cmd);
@@ -106,6 +110,8 @@ struct filter *filter_create_int (struct filter *chain,
 
 	/* allocate and initialize new filter */
 	f = (struct filter *) flex_alloc (sizeof (struct filter));
+	if (!f)
+		flexerror (_("flex_alloc failed in filter_create_int"));
 	memset (f, 0, sizeof (*f));
 	f->next = NULL;
 	f->argc = 0;
@@ -131,6 +137,10 @@ struct filter *filter_create_int (struct filter *chain,
 bool filter_apply_chain (struct filter * chain)
 {
 	int     pid, pipes[2];
+	int     r;
+	const int readsz = 512;
+	char   *buf;
+
 
 	/* Tricky recursion, since we want to begin the chain
 	 * at the END. Why? Because we need all the forked processes
@@ -146,6 +156,7 @@ bool filter_apply_chain (struct filter * chain)
 
 	fflush (stdout);
 	fflush (stderr);
+
 
 	if (pipe (pipes) == -1)
 		flexerror (_("pipe failed"));
@@ -163,6 +174,7 @@ bool filter_apply_chain (struct filter * chain)
          * to sync the stream. This is a Hail Mary situation. It seems to work.
          */
 		close (pipes[1]);
+clearerr(stdin);
 		if (dup2 (pipes[0], fileno (stdin)) == -1)
 			flexfatal (_("dup2(pipes[0],0)"));
 		close (pipes[0]);
@@ -179,7 +191,8 @@ bool filter_apply_chain (struct filter * chain)
 		else {
 			execvp (chain->argv[0],
 				(char **const) (chain->argv));
-			flexfatal (_("exec failed"));
+            lerrsf_fatal ( _("exec of %s failed"),
+                    chain->argv[0]);
 		}
 
 		exit (1);
@@ -281,6 +294,8 @@ int filter_tee_header (struct filter *chain)
 		 outfilename ? outfilename : "<stdout>");
 
 	buf = (char *) flex_alloc (readsz);
+	if (!buf)
+		flexerror (_("flex_alloc failed in filter_tee_header"));
 	while (fgets (buf, readsz, stdin)) {
 		fputs (buf, to_c);
 		if (write_header)
@@ -298,13 +313,13 @@ int filter_tee_header (struct filter *chain)
 		fputs ("m4_undefine( [[M4_YY_IN_HEADER]])m4_dnl\n", to_h);
 
 		fflush (to_h);
-	    if (ferror (to_h))
-		    lerrsf (_("error writing output file %s"),
-                (char *) chain->extra);
+		if (ferror (to_h))
+			lerrsf (_("error writing output file %s"),
+				(char *) chain->extra);
 
-    	else if (fclose (to_h))
-	    	lerrsf (_("error closing output file %s"),
-                (char *) chain->extra);
+		else if (fclose (to_h))
+			lerrsf (_("error closing output file %s"),
+				(char *) chain->extra);
 	}
 
 	fflush (to_c);
@@ -340,6 +355,8 @@ int filter_fix_linedirs (struct filter *chain)
 		return 0;
 
 	buf = (char *) flex_alloc (readsz);
+	if (!buf)
+		flexerror (_("flex_alloc failed in filter_fix_linedirs"));
 
 	while (fgets (buf, readsz, stdin)) {
 
@@ -347,7 +364,7 @@ int filter_fix_linedirs (struct filter *chain)
 
 		/* Check for #line directive. */
 		if (buf[0] == '#'
-		    && regexec (&regex_linedir, buf, 3, m, 0) == 0) {
+			&& regexec (&regex_linedir, buf, 3, m, 0) == 0) {
 
 			int     num;
 			char   *fname;
