@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1028 2013/04/06 17:31:08 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1029 2013/04/06 17:50:47 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -690,8 +690,8 @@ Responsible:	dyoung
 License:	BSD (3/4-clause)
 Location:	external/bsd/libpcap/dist
 Notes:
-Use the src/external/bsd/libpcap/dist/libpcap2netbsd script to prepare source
-tree.
+Use the src/external/bsd/libpcap/libpcap2netbsd script to prepare source
+tree. sys/net/dlt.h is a copy of the dlt constants from pcap.h
 
 Package:	libwrap
 Version:	tcp_wrappers 7.6 w/ large amount of IPv6 changes
