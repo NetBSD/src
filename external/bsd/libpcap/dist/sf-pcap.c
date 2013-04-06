@@ -1,3 +1,5 @@
+/*	$NetBSD: sf-pcap.c,v 1.1.1.2 2013/04/06 15:57:44 christos Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +32,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/sf-pcap.c,v 1.1.1.1 2010/12/05 01:20:44 christos Exp $ (LBL)";
+    "@(#) Header (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -271,8 +273,12 @@ pcap_check_header(pcap_t *p, bpf_u_int32 magic, FILE *fp, char *errbuf)
 	 * Allocate a buffer for the packet data.
 	 */
 	p->bufsize = p->snapshot;
-	if (p->bufsize <= 0)
-		p->bufsize = BPF_MAXBUFSIZE;
+	if (p->bufsize <= 0) {
+		/*
+		 * Bogus snapshot length; use 64KiB as a fallback.
+		 */
+		p->bufsize = 65536;
+	}
 	p->buffer = malloc(p->bufsize);
 	if (p->buffer == NULL) {
 		snprintf(errbuf, PCAP_ERRBUF_SIZE, "out of memory");

@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-int.h,v 1.1.1.3 2013/04/06 15:57:45 christos Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/libpcap/pcap-int.h,v 1.94 2008-09-16 00:20:23 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap-int.h,v 1.94 2008-09-16 00:20:23 guy Exp  (LBL)
  */
 
 #ifndef pcap_int_h
@@ -209,6 +211,7 @@ struct pcap_opt {
 	char	*source;
 	int	promisc;
 	int	rfmon;
+	int	tstamp_type;
 };
 
 /*
@@ -331,6 +334,8 @@ struct pcap {
 	char errbuf[PCAP_ERRBUF_SIZE + 1];
 	int dlt_count;
 	u_int *dlt_list;
+	int tstamp_type_count;
+	u_int *tstamp_type_list;
 
 	struct pcap_pkthdr pcap_header;	/* This is needed for the pcap_next_ex() to work */
 };

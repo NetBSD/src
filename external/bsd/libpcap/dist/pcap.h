@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap.h,v 1.1.1.3 2013/04/06 15:57:45 christos Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/libpcap/pcap.h,v 1.59 2006-10-04 18:09:22 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap.h,v 1.59 2006-10-04 18:09:22 guy Exp  (LBL)
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-usb-linux.c,v 1.1.1.3 2013/04/06 15:57:49 christos Exp $	*/
+
 /*
  * Copyright (c) 2006 Paolo Abeni (Italy)
  * All rights reserved.
@@ -34,7 +36,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/pcap-usb-linux.c,v 1.33 2008-12-23 21:38:50 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/pcap-usb-linux.c,v 1.33 2008-12-23 21:38:50 guy Exp  (LBL)";
 #endif
  
 #ifdef HAVE_CONFIG_H
@@ -61,8 +63,15 @@ static const char rcsid[] _U_ =
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #ifdef HAVE_LINUX_USBDEVICE_FS_H
+/*
+ * We might need <linux/compiler.h> to define __user for
+ * <linux/usbdevice_fs.h>.
+ */
+#ifdef HAVE_LINUX_COMPILER_H
+#include <linux/compiler.h>
+#endif /* HAVE_LINUX_COMPILER_H */
 #include <linux/usbdevice_fs.h>
-#endif
+#endif /* HAVE_LINUX_USBDEVICE_FS_H */
 
 #define USB_IFACE "usbmon"
 #define USB_TEXT_DIR_OLD "/sys/kernel/debug/usbmon"
@@ -122,7 +131,6 @@ static int usb_read_linux(pcap_t *, int , pcap_handler , u_char *);
 static int usb_read_linux_bin(pcap_t *, int , pcap_handler , u_char *);
 static int usb_read_linux_mmap(pcap_t *, int , pcap_handler , u_char *);
 static int usb_inject_linux(pcap_t *, const void *, size_t);
-static int usb_setfilter_linux(pcap_t *, struct bpf_program *);
 static int usb_setdirection_linux(pcap_t *, pcap_direction_t);
 static void usb_cleanup_linux_mmap(pcap_t *);
 
@@ -301,7 +309,7 @@ usb_activate(pcap_t* handle)
 	handle->linktype = DLT_USB_LINUX;
 
 	handle->inject_op = usb_inject_linux;
-	handle->setfilter_op = usb_setfilter_linux;
+	handle->setfilter_op = install_bpf_program; /* no kernel filtering */
 	handle->setdirection_op = usb_setdirection_linux;
 	handle->set_datalink_op = NULL;	/* can't change data link type */
 	handle->getnonblock_op = pcap_getnonblock_fd;
@@ -597,12 +605,17 @@ usb_read_linux(pcap_t *handle, int max_packets, pcap_handler callback, u_char *u
 
 got:
 	uhdr->data_len = data_len;
-	handle->md.packets_read++;
 	if (pkth.caplen > handle->snapshot)
 		pkth.caplen = handle->snapshot;
 
-	callback(user, &pkth, handle->buffer);
-	return 1;
+	if (handle->fcode.bf_insns == NULL ||
+	    bpf_filter(handle->fcode.bf_insns, handle->buffer,
+	      pkth.len, pkth.caplen)) {
+		handle->md.packets_read++;
+		callback(user, &pkth, handle->buffer);
+		return 1;
+	}
+	return 0;	/* didn't pass filter */
 }
 
 static int
@@ -689,12 +702,6 @@ usb_stats_linux(pcap_t *handle, struct pcap_stat *stats)
 }
 
 static int 
-usb_setfilter_linux(pcap_t *p, struct bpf_program *fp)
-{
-	return 0;
-}
-
-static int 
 usb_setdirection_linux(pcap_t *p, pcap_direction_t d)
 {
 	p->direction = d;
@@ -767,9 +774,15 @@ usb_read_linux_bin(pcap_t *handle, int max_packets, pcap_handler callback, u_cha
 	pkth.ts.tv_sec = info.hdr->ts_sec;
 	pkth.ts.tv_usec = info.hdr->ts_usec;
 
-	handle->md.packets_read++;
-	callback(user, &pkth, handle->buffer);
-	return 1;
+	if (handle->fcode.bf_insns == NULL ||
+	    bpf_filter(handle->fcode.bf_insns, handle->buffer,
+	      pkth.len, pkth.caplen)) {
+		handle->md.packets_read++;
+		callback(user, &pkth, handle->buffer);
+		return 1;
+	}
+
+	return 0;	/* didn't pass filter */
 }
 
 /*
@@ -841,9 +854,13 @@ usb_read_linux_mmap(pcap_t *handle, int max_packets, pcap_handler callback, u_ch
 			pkth.ts.tv_sec = hdr->ts_sec;
 			pkth.ts.tv_usec = hdr->ts_usec;
 
-			handle->md.packets_read++;
-			callback(user, &pkth, (u_char*) hdr);
-			packets++;
+			if (handle->fcode.bf_insns == NULL ||
+			    bpf_filter(handle->fcode.bf_insns, (u_char*) hdr,
+			      pkth.len, pkth.caplen)) {
+				handle->md.packets_read++;
+				callback(user, &pkth, (u_char*) hdr);
+				packets++;
+			}
 		}
 
 		/* with max_packets <= 0 we stop afer the first chunk*/
