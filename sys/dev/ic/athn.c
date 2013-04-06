@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.2 2013/04/05 19:14:31 martin Exp $	*/
+/*	$NetBSD: athn.c,v 1.3 2013/04/06 14:57:38 martin Exp $	*/
 /*	$OpenBSD: athn.c,v 1.75 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.2 2013/04/05 19:14:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.3 2013/04/06 14:57:38 martin Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -136,6 +136,9 @@ Static void	athn_ani_restart(struct athn_softc *);
 Static void	athn_set_multi(struct athn_softc *);
 #endif /* notyet */
 
+Static void	athn_pmf_wlan_off(device_t self);
+
+
 PUBLIC int
 athn_attach(struct athn_softc *sc)
 {
@@ -179,6 +182,8 @@ athn_attach(struct athn_softc *sc)
 	}
 
 	pmf_self_suspensor_init(sc->sc_dev, &sc->sc_suspensor, &sc->sc_qual);
+	pmf_event_register(sc->sc_dev, PMFE_RADIO_OFF, athn_pmf_wlan_off,
+	    false);
 
 	/* We can put the chip in sleep state now. */
 	athn_set_power_sleep(sc);
@@ -230,7 +235,7 @@ athn_attach(struct athn_softc *sc)
 	    ((sc->sc_rxchainmask >> 0) & 1);
 
 	if (AR_SINGLE_CHIP(sc)) {
-		aprint_normal("%s\n", athn_get_mac_name(sc));
+		aprint_normal(": Atheros %s\n", athn_get_mac_name(sc));
 		aprint_verbose_dev(sc->sc_dev,
 		    "rev %d (%dT%dR), ROM rev %d, address %s\n",
 		    sc->sc_mac_rev,
@@ -238,7 +243,7 @@ athn_attach(struct athn_softc *sc)
 		    ether_sprintf(ic->ic_myaddr));
 	}
 	else {
-		aprint_normal("%s, RF %s\n", athn_get_mac_name(sc),
+		aprint_normal(": Atheros %s, RF %s\n", athn_get_mac_name(sc),
 		    athn_get_rf_name(sc));
 		aprint_verbose_dev(sc->sc_dev,
 		    "rev %d (%dT%dR), ROM rev %d, address %s\n",
@@ -2950,6 +2955,17 @@ athn_stop(struct ifnet *ifp, int disable)
 #endif
 	if (disable)
 		pmf_device_recursive_suspend(sc->sc_dev, &sc->sc_qual);
+}
+
+Static void
+athn_pmf_wlan_off(device_t self)
+{
+	struct athn_softc *sc = device_private(self);
+	struct ifnet *ifp = &sc->sc_if;
+
+	/* Turn the interface down. */
+	ifp->if_flags &= ~IFF_UP;
+	athn_stop(ifp, 1);
 }
 
 PUBLIC void
