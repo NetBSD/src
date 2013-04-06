@@ -1,4 +1,4 @@
-.\"	$NetBSD: openpam_ttyconv.3,v 1.1.1.1 2011/12/25 21:42:58 christos Exp $
+.\"	$NetBSD: openpam_ttyconv.3,v 1.1.1.2 2013/04/06 01:23:33 christos Exp $
 .\"
 .\"-
 .\" Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -34,9 +34,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: openpam_ttyconv.3,v 1.1.1.1 2011/12/25 21:42:58 christos Exp $
+.\" Id
 .\"
-.Dd December 18, 2011
+.Dd May 26, 2012
 .Dt OPENPAM_TTYCONV 3
 .Os
 .Sh NAME
@@ -52,14 +52,14 @@
 .Fn openpam_ttyconv "int n" "const struct pam_message **msg" "struct pam_response **resp" "void *data"
 .Sh DESCRIPTION
 The
-.Nm
+.Fn openpam_ttyconv
 function is a standard conversation function
 suitable for use on TTY devices.
 It should be adequate for the needs of most text-based interactive
 programs.
 .Pp
 The
-.Nm
+.Fn openpam_ttyconv
 function allows the application to specify a
 timeout for user input by setting the global integer variable
 .Va openpam_ttyconv_timeout
@@ -67,7 +67,7 @@ to the length of the timeout in seconds.
 .Pp
 .Sh RETURN VALUES
 The
-.Nm
+.Fn openpam_ttyconv
 function returns one of the following values:
 .Bl -tag -width 18n
 .It Bq Er PAM_BUF_ERR
@@ -85,15 +85,15 @@ System error.
 .Xr pam_vprompt 3
 .Sh STANDARDS
 The
-.Nm
+.Fn openpam_ttyconv
 function is an OpenPAM extension.
 .Sh AUTHORS
 The
-.Nm
-function and this manual page were developed for the
+.Fn openpam_ttyconv
+function and this manual page were
+developed for the
 .Fx
-Project by
-ThinkSec AS and Network Associates Laboratories, the
+Project by ThinkSec AS and Network Associates Laboratories, the
 Security Research Division of Network Associates, Inc.\& under
 DARPA/SPAWAR contract N66001-01-C-8035
 .Pq Dq CBOSS ,

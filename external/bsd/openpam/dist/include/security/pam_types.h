@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_types.h,v 1.1.1.1 2011/12/25 21:42:55 christos Exp $	*/
+/*	$NetBSD: pam_types.h,v 1.1.1.2 2013/04/06 01:23:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_types.h 437 2011-09-13 12:00:13Z des
+ * Id: pam_types.h 437 2011-09-13 12:00:13Z des 
  */
 
 #ifndef SECURITY_PAM_TYPES_H_INCLUDED

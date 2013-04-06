@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_putenv.c,v 1.1.1.1 2011/12/25 21:42:51 christos Exp $	*/
+/*	$NetBSD: pam_putenv.c,v 1.1.1.2 2013/04/06 01:23:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_putenv.c 437 2011-09-13 12:00:13Z des
+ * Id: pam_putenv.c 539 2012-03-31 20:53:22Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -104,7 +104,7 @@ pam_putenv(pam_handle_t *pamh,
  */
 
 /**
- * The =pam_putenv function sets a environment variable.
+ * The =pam_putenv function sets an environment variable.
  * Its semantics are similar to those of =putenv, but it modifies the PAM
  * context's environment list instead of the application's.
  *

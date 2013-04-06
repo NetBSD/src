@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_impl.h,v 1.1.1.1 2011/12/25 21:42:48 christos Exp $	*/
+/*	$NetBSD: openpam_impl.h,v 1.1.1.2 2013/04/06 01:23:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_impl.h 499 2011-11-22 11:51:50Z des
+ * Id: openpam_impl.h 594 2012-04-14 14:18:41Z des 
  */
 
 #ifndef OPENPAM_IMPL_H_INCLUDED
@@ -159,9 +159,23 @@ pam_module_t	*openpam_static(const char *);
 #endif
 pam_module_t	*openpam_dynamic(const char *);
 
-#define	FREE(p) do { free((p)); (p) = NULL; } while (0)
+#define	FREE(p)					\
+	do {					\
+		free(p);			\
+		(p) = NULL;			\
+	} while (0)
+
+#define FREEV(c, v)				\
+	do {					\
+		while (c) {			\
+			--(c);			\
+			FREE((v)[(c)]);		\
+		}				\
+		FREE(v);			\
+	} while (0)
 
 #include "openpam_constants.h"
 #include "openpam_debug.h"
+#include "openpam_features.h"
 
 #endif

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pam_get_item.3,v 1.1.1.1 2011/12/25 21:42:57 christos Exp $
+.\"	$NetBSD: pam_get_item.3,v 1.1.1.2 2013/04/06 01:23:32 christos Exp $
 .\"
 .\"-
 .\" Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -34,9 +34,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: pam_get_item.3,v 1.1.1.1 2011/12/25 21:42:57 christos Exp $
+.\" Id
 .\"
-.Dd December 18, 2011
+.Dd May 26, 2012
 .Dt PAM_GET_ITEM 3
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@
 .Fn pam_get_item "const pam_handle_t *pamh" "int item_type" "const void **item"
 .Sh DESCRIPTION
 The
-.Nm
+.Fn pam_get_item
 function stores a pointer to the item specified by
 the
 .Fa item_type
@@ -62,7 +62,7 @@ The item is retrieved from the PAM context specified by the
 .Fa pamh
 argument.
 If
-.Nm
+.Fn pam_get_item
 fails, the
 .Fa item
 argument is untouched.
@@ -109,7 +109,7 @@ for a description of
 .Pp
 .Sh RETURN VALUES
 The
-.Nm
+.Fn pam_get_item
 function returns one of the following values:
 .Bl -tag -width 18n
 .It Bq Er PAM_SYMBOL_ERR
@@ -129,11 +129,11 @@ System error.
 .Re
 .Sh AUTHORS
 The
-.Nm
-function and this manual page were developed for the
+.Fn pam_get_item
+function and this manual page were
+developed for the
 .Fx
-Project by
-ThinkSec AS and Network Associates Laboratories, the
+Project by ThinkSec AS and Network Associates Laboratories, the
 Security Research Division of Network Associates, Inc.\& under
 DARPA/SPAWAR contract N66001-01-C-8035
 .Pq Dq CBOSS ,

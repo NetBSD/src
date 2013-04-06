@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.1.1.1 2011/12/25 21:42:53 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.1.1.2 2013/04/06 01:23:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: su.c 458 2011-11-02 13:10:25Z des
+ * Id: su.c 458 2011-11-02 13:10:25Z des 
  */
 
 #ifdef HAVE_CONFIG_H

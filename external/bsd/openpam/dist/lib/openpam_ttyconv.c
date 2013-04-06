@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_ttyconv.c,v 1.1.1.1 2011/12/25 21:42:50 christos Exp $	*/
+/*	$NetBSD: openpam_ttyconv.c,v 1.1.1.2 2013/04/06 01:23:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_ttyconv.c 437 2011-09-13 12:00:13Z des
+ * Id: openpam_ttyconv.c 527 2012-02-26 03:23:59Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -71,17 +71,17 @@ prompt(const char *msg)
 {
 	char buf[PAM_MAX_RESP_SIZE];
 	struct sigaction action, saved_action;
-	sigset_t saved_sigset, sigset;
+	sigset_t saved_sigset, the_sigset;
 	unsigned int saved_alarm;
 	int eof, error, fd;
 	size_t len;
 	char *retval;
 	char ch;
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigaddset(&sigset, SIGTSTP);
-	sigprocmask(SIG_SETMASK, &sigset, &saved_sigset);
+	sigemptyset(&the_sigset);
+	sigaddset(&the_sigset, SIGINT);
+	sigaddset(&the_sigset, SIGTSTP);
+	sigprocmask(SIG_SETMASK, &the_sigset, &saved_sigset);
 	action.sa_handler = &timeout;
 	action.sa_flags = 0;
 	sigemptyset(&action.sa_mask);
