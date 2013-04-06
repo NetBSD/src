@@ -1,3 +1,5 @@
+/*	$NetBSD: nameser.h,v 1.1.1.2 2013/04/06 15:57:51 christos Exp $	*/
+
 /*
  * ++Copyright++ 1983, 1989, 1993
  * -

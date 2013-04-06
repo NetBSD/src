@@ -1,3 +1,5 @@
+/*	$NetBSD: inet_pton.c,v 1.1.1.3 2013/04/06 15:57:51 christos Exp $	*/
+
 /*
  * Copyright (c) 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -36,11 +38,11 @@
  * SUCH DAMAGE.
  */
 
-/* Id: inet_pton.c,v 1.3 2007-09-27 18:02:20 gianluca Exp */
+/* Id: inet_pton.c,v 1.3 2007-09-27 18:02:20 gianluca Exp  */
 
 #ifndef lint
 static const char rcsid[] _U_ =
-     "@(#) Header: /tcpdump/master/libpcap/Win32/Src/inet_pton.c,v 1.3 2007-09-27 18:02:20 gianluca Exp";
+     "@(#) Header: /tcpdump/master/libpcap/Win32/Src/inet_pton.c,v 1.3 2007-09-27 18:02:20 gianluca Exp ";
 #endif
 
 #include <errno.h>

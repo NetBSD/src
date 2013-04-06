@@ -1,3 +1,5 @@
+/*	$NetBSD: ip6_misc.h,v 1.1.1.3 2013/04/06 15:57:51 christos Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -18,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/libpcap/Win32/Include/ip6_misc.h,v 1.5 2006-01-22 18:02:18 gianluca Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/Win32/Include/ip6_misc.h,v 1.5 2006-01-22 18:02:18 gianluca Exp  (LBL)
  */
 
 /*

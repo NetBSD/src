@@ -1,3 +1,5 @@
+/*	$NetBSD: ndis2.h,v 1.1.1.2 2013/04/06 15:57:52 christos Exp $	*/
+
 /* 
  * Copyright (c) 1993,1994
  *      Texas A&M University.  All rights reserved.
