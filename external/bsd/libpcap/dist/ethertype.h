@@ -1,3 +1,5 @@
+/*	$NetBSD: ethertype.h,v 1.1.1.3 2013/04/06 15:57:48 christos Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -18,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/libpcap/ethertype.h,v 1.14 2005-09-05 09:06:58 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/ethertype.h,v 1.14 2005-09-05 09:06:58 guy Exp  (LBL)
  */
 
 /*
@@ -116,4 +118,7 @@
 #endif
 #ifndef	ETHERTYPE_LOOPBACK
 #define	ETHERTYPE_LOOPBACK	0x9000
+#endif
+#ifndef ETHERTYPE_8021QINQ
+#define ETHERTYPE_8021QINQ	0x9100
 #endif

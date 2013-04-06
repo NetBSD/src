@@ -1,5 +1,7 @@
+/*	$NetBSD: dlpisubs.h,v 1.1.1.3 2013/04/06 15:57:46 christos Exp $	*/
+
 /*
- * @(#) Header: /tcpdump/master/libpcap/dlpisubs.h,v 1.2 2008-04-04 19:37:45 guy Exp
+ * @(#) Header: /tcpdump/master/libpcap/dlpisubs.h,v 1.2 2008-04-04 19:37:45 guy Exp 
  */
 
 #ifndef dlpisubs_h
