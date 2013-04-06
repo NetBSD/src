@@ -144,7 +144,9 @@
 #define HAVE__BOOL 1
 
 /* Define to the m4 executable name. */
+#ifndef M4
 #define M4 "/usr/bin/m4"
+#endif
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 /* #undef NO_MINUS_C_MINUS_O */
