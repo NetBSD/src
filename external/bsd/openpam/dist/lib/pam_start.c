@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_start.c,v 1.3 2011/12/27 20:29:08 christos Exp $	*/
+/*	$NetBSD: pam_start.c,v 1.4 2013/04/06 02:20:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_start.c 503 2011-12-18 14:00:33Z des
+ * Id: pam_start.c 503 2011-12-18 14:00:33Z des 
  */
 
 #ifdef HAVE_CONFIG_H
