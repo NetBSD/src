@@ -17,9 +17,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/oui.c,v 1.9 2008-01-09 09:40:47 hannes Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/oui.c,v 1.9 2008-01-09 09:40:47 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: oui.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: oui.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -47,6 +47,7 @@ const struct tok oui_values[] = {
     { OUI_IEEE_8021_PRIVATE, "IEEE 802.1 Private"},
     { OUI_IEEE_8023_PRIVATE, "IEEE 802.3 Private"},
     { OUI_TIA, "ANSI/TIA"},
+    { OUI_DCBX, "DCBX"},
     { 0, NULL }
 };
 

@@ -23,9 +23,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-pim.c,v 1.49 2006-02-13 01:31:35 hannes Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-pim.c,v 1.49 2006-02-13 01:31:35 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-pim.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-pim.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -34,7 +34,15 @@ __RCSID("$NetBSD: print-pim.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
 #endif
 
 #include <tcpdump-stdinc.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "interface.h"
+#include "addrtoname.h"
+#include "extract.h"
+
+#include "ip.h"
 
 #define PIMV2_TYPE_HELLO         0
 #define PIMV2_TYPE_REGISTER      1
@@ -112,16 +120,6 @@ struct pim {
 	u_char  pim_rsv;	/* Reserved */
 	u_short	pim_cksum;	/* IP style check sum */
 };
-
-
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "interface.h"
-#include "addrtoname.h"
-#include "extract.h"
-
-#include "ip.h"
 
 static void pimv2_print(register const u_char *bp, register u_int len, u_int cksum);
 
@@ -404,8 +402,12 @@ cisco_autorp_print(register const u_char *bp, register u_int len)
 			TCHECK2(bp[0], 6);
 			(void)printf("%c%s%s/%d", s, bp[0] & 1 ? "!" : "",
 			    ipaddr_string(&bp[2]), bp[1]);
-			if (bp[0] & 0xfe)
-				(void)printf("[rsvd=0x%02x]", bp[0] & 0xfe);
+			if (bp[0] & 0x02) {
+			    (void)printf(" bidir");
+			}
+			if (bp[0] & 0xfc) {
+			    (void)printf("[rsvd=0x%02x]", bp[0] & 0xfc);
+			}
 			s = ',';
 			bp += 6; len -= 6;
 		}
@@ -670,7 +672,7 @@ pimv2_print(register const u_char *bp, register u_int len, u_int cksum)
 
 			case PIMV2_HELLO_OPTION_LANPRUNEDELAY:
 				if (olen != 4) {
-					(void)printf("ERROR: Option Lenght != 4 Bytes (%u)", olen);
+					(void)printf("ERROR: Option Length != 4 Bytes (%u)", olen);
 				} else {
 					char t_bit;
 					u_int16_t lan_delay, override_interval;
@@ -693,7 +695,7 @@ pimv2_print(register const u_char *bp, register u_int len, u_int cksum)
                                     printf("%u", EXTRACT_32BITS(bp));
                                     break;
                                 default:
-                                    printf("ERROR: Option Lenght != 4 Bytes (%u)", olen);
+                                    printf("ERROR: Option Length != 4 Bytes (%u)", olen);
                                     break;
                                 }
                                 break;
@@ -773,7 +775,7 @@ pimv2_print(register const u_char *bp, register u_int len, u_int cksum)
 			break;
 #ifdef INET6
 		case 6:	/* IPv6 */
-			ip6_print(bp, len);
+			ip6_print(gndo, bp, len);
 			break;
 #endif
                 default:
