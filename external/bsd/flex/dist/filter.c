@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.1.1.2 2013/04/06 14:05:42 christos Exp $	*/
+/*	$NetBSD: filter.c,v 1.2 2013/04/06 14:27:52 christos Exp $	*/
 
 /* filter - postprocessing of flex output through filters */
 
@@ -137,9 +137,6 @@ struct filter *filter_create_int (struct filter *chain,
 bool filter_apply_chain (struct filter * chain)
 {
 	int     pid, pipes[2];
-	int     r;
-	const int readsz = 512;
-	char   *buf;
 
 
 	/* Tricky recursion, since we want to begin the chain
