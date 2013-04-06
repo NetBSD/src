@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_dispatch.c,v 1.3 2011/12/25 23:18:56 christos Exp $	*/
+/*	$NetBSD: openpam_dispatch.c,v 1.4 2013/04/06 02:20:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_dispatch.c 501 2011-12-07 01:28:05Z des
+ * Id: openpam_dispatch.c 501 2011-12-07 01:28:05Z des 
  */
 
 #ifdef HAVE_CONFIG_H

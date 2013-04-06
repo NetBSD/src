@@ -1,4 +1,4 @@
-.\"	$NetBSD: pam_get_user.3,v 1.2 2011/12/25 22:27:55 christos Exp $
+.\"	$NetBSD: pam_get_user.3,v 1.3 2013/04/06 02:20:27 christos Exp $
 .\"
 .\"-
 .\" Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -36,7 +36,7 @@
 .\"
 .\" Id
 .\"
-.Dd December 18, 2011
+.Dd May 26, 2012
 .Dt PAM_GET_USER 3
 .Os
 .Sh NAME
@@ -51,13 +51,13 @@
 .Fn pam_get_user "pam_handle_t *pamh" "const char **user" "const char *prompt"
 .Sh DESCRIPTION
 The
-.Nm
+.Fn pam_get_user
 function returns the name of the target user, as
 specified to
 .Xr pam_start 3 .
 If no user was specified, nor set using
 .Xr pam_set_item 3 ,
-.Nm
+.Fn pam_get_user
 will prompt for a user name.
 Either way, a pointer to the user name is stored in the location
 pointed to by the
@@ -82,7 +82,7 @@ before it is
 passed to the conversation function.
 .Pp
 If
-.Nm
+.Fn pam_get_user
 is called from a module and the
 .Dv user_prompt
 option is
@@ -94,7 +94,7 @@ argument and the
 item.
 .Sh RETURN VALUES
 The
-.Nm
+.Fn pam_get_user
 function returns one of the following values:
 .Bl -tag -width 18n
 .It Bq Er PAM_BUF_ERR
@@ -119,11 +119,11 @@ System error.
 .Re
 .Sh AUTHORS
 The
-.Nm
-function and this manual page were developed for the
+.Fn pam_get_user
+function and this manual page were
+developed for the
 .Fx
-Project by
-ThinkSec AS and Network Associates Laboratories, the
+Project by ThinkSec AS and Network Associates Laboratories, the
 Security Research Division of Network Associates, Inc.\& under
 DARPA/SPAWAR contract N66001-01-C-8035
 .Pq Dq CBOSS ,

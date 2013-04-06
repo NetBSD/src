@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_load.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
+/*	$NetBSD: openpam_load.c,v 1.3 2013/04/06 02:20:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_load.c 491 2011-11-12 00:12:32Z des
+ * Id: openpam_load.c 547 2012-04-01 15:01:21Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -110,9 +110,7 @@ openpam_destroy_chain(pam_chain_t *chain)
 		return;
 	openpam_destroy_chain(chain->next);
 	chain->next = NULL;
-	while (chain->optc--)
-		FREE(chain->optv[chain->optc]);
-	FREE(chain->optv);
+	FREEV(chain->optc, chain->optv);
 	openpam_release_module(chain->module);
 	chain->module = NULL;
 	FREE(chain);

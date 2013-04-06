@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_constants.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
+/*	$NetBSD: openpam_constants.c,v 1.3 2013/04/06 02:20:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_constants.c 491 2011-11-12 00:12:32Z des
+ * Id: openpam_constants.c 491 2011-11-12 00:12:32Z des 
  */
 
 #ifdef HAVE_CONFIG_H

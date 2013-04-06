@@ -1,4 +1,4 @@
-.\"	$NetBSD: openpam_set_option.3,v 1.2 2011/12/25 22:27:55 christos Exp $
+.\"	$NetBSD: openpam_set_option.3,v 1.3 2013/04/06 02:20:26 christos Exp $
 .\"
 .\"-
 .\" Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -36,7 +36,7 @@
 .\"
 .\" Id
 .\"
-.Dd December 18, 2011
+.Dd May 26, 2012
 .Dt OPENPAM_SET_OPTION 3
 .Os
 .Sh NAME
@@ -52,12 +52,12 @@
 .Fn openpam_set_option "pam_handle_t *pamh" "const char *option" "const char *value"
 .Sh DESCRIPTION
 The
-.Nm
+.Fn openpam_set_option
 function sets the specified option in the
 context of the currently executing service module.
 .Sh RETURN VALUES
 The
-.Nm
+.Fn openpam_set_option
 function returns one of the following values:
 .Bl -tag -width 18n
 .It Bq Er PAM_BUF_ERR
@@ -71,15 +71,15 @@ System error.
 .Xr pam_strerror 3
 .Sh STANDARDS
 The
-.Nm
+.Fn openpam_set_option
 function is an OpenPAM extension.
 .Sh AUTHORS
 The
-.Nm
-function and this manual page were developed for the
+.Fn openpam_set_option
+function and this manual page were
+developed for the
 .Fx
-Project by
-ThinkSec AS and Network Associates Laboratories, the
+Project by ThinkSec AS and Network Associates Laboratories, the
 Security Research Division of Network Associates, Inc.\& under
 DARPA/SPAWAR contract N66001-01-C-8035
 .Pq Dq CBOSS ,

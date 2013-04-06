@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: openpam2netbsd,v 1.1 2011/12/25 23:18:56 christos Exp $
+#	$NetBSD: openpam2netbsd,v 1.2 2013/04/06 02:20:24 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,15 +36,6 @@
 #	$ sh /usr/src/external/bsd/openpam/openp2netbsd openpam-YYYYMMDD
 #	$ cd openpam-YYYYMMDD
 #	$ cvs -d cvs.netbsd.org:/cvsroot import -m "Import openpam-YYYYMMDD" src/external/bsd/openpam/dist OPENPAM flower-YYYYMMDD
-#	$ cd ../../../am-utils-6.x.y
-#	$ run ./configure
-# merge newly generated config.h with /usr/src/usr.sbin/openp/include/config.h
-# very carefully, since autoconfig seems to be broken (at least in 6.0.4)
-#	$ cd ..
-#	$ rm -r src am-utils-6.x.y
-#	$ cd /usr/src/usr.sbin/openp
-#	$ cvs commit -m "Updated autoconf generated files for am-utils 6.x.y."
-#
 #	- check makefiles to see if any extra sources have been added.
 #	- update distrib/sets if necessary.
 

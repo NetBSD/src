@@ -1,4 +1,4 @@
-.\"	$NetBSD: pam_chauthtok.3,v 1.2 2011/12/25 22:27:55 christos Exp $
+.\"	$NetBSD: pam_chauthtok.3,v 1.3 2013/04/06 02:20:27 christos Exp $
 .\"
 .\"-
 .\" Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -36,7 +36,7 @@
 .\"
 .\" Id
 .\"
-.Dd December 18, 2011
+.Dd May 26, 2012
 .Dt PAM_CHAUTHTOK 3
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@
 .Fn pam_chauthtok "pam_handle_t *pamh" "int flags"
 .Sh DESCRIPTION
 The
-.Nm
+.Fn pam_chauthtok
 function attempts to change the authentication token
 for the user associated with the pam context specified by the
 .Fa pamh
@@ -69,12 +69,12 @@ Change only those authentication tokens that have expired.
 .El
 .Pp
 If any other bits are set,
-.Nm
+.Fn pam_chauthtok
 will return
 .Dv PAM_SYMBOL_ERR .
 .Sh RETURN VALUES
 The
-.Nm
+.Fn pam_chauthtok
 function returns one of the following values:
 .Bl -tag -width 18n
 .It Bq Er PAM_ABORT
@@ -112,11 +112,11 @@ Try again.
 .Re
 .Sh AUTHORS
 The
-.Nm
-function and this manual page were developed for the
+.Fn pam_chauthtok
+function and this manual page were
+developed for the
 .Fx
-Project by
-ThinkSec AS and Network Associates Laboratories, the
+Project by ThinkSec AS and Network Associates Laboratories, the
 Security Research Division of Network Associates, Inc.\& under
 DARPA/SPAWAR contract N66001-01-C-8035
 .Pq Dq CBOSS ,

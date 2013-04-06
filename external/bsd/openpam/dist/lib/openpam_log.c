@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_log.c,v 1.3 2011/12/28 14:53:38 christos Exp $	*/
+/*	$NetBSD: openpam_log.c,v 1.4 2013/04/06 02:20:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,18 +34,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_log.c 437 2011-09-13 12:00:13Z des
+ * Id: openpam_log.c 544 2012-03-31 22:47:15Z des 
  */
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 
-#include <ctype.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <syslog.h>
 
 #include <security/pam_appl.h>
@@ -73,6 +72,7 @@ openpam_log(int level, const char *fmt, ...)
 	int priority;
 
 	switch (level) {
+	case PAM_LOG_LIBDEBUG:
 	case PAM_LOG_DEBUG:
 		if (!openpam_debug)
 			return;
@@ -101,9 +101,11 @@ _openpam_log(int level, const char *func, const char *fmt, ...)
 {
 	va_list ap;
 	char *msg;
-	int priority, rv;
+	int priority;
+	int rv;
 
 	switch (level) {
+	case PAM_LOG_LIBDEBUG:
 	case PAM_LOG_DEBUG:
 		if (!openpam_debug)
 			return;
@@ -143,6 +145,9 @@ _openpam_log(int level, const char *func, const char *fmt, ...)
  * The =level argument indicates the importance of the message.
  * The following levels are defined:
  *
+ *	=PAM_LOG_LIBDEBUG:
+ *		Debugging messages.
+ *		For internal use only.
  *	=PAM_LOG_DEBUG:
  *		Debugging messages.
  *		These messages are normally not logged unless the global

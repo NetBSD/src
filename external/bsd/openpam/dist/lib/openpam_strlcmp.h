@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_strlcmp.h,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
+/*	$NetBSD: openpam_strlcmp.h,v 1.3 2013/04/06 02:20:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
@@ -13,6 +13,9 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -26,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_strlcmp.h 475 2011-11-03 15:29:24Z des
+ * Id: openpam_strlcmp.h 578 2012-04-06 00:45:59Z des 
  */
 
 #ifndef OPENPAM_STRLCMP_H_INCLUDED
