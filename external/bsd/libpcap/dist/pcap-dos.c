@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-dos.c,v 1.1.1.3 2013/04/06 15:57:46 christos Exp $	*/
+
 /*
  *  This file is part of DOS-libpcap
  *  Ported to DOS/DOSX by G. Vanem <gvanem@broadpark.no>
@@ -5,7 +7,7 @@
  *  pcap-dos.c: Interface to PKTDRVR, NDIS2 and 32-bit pmode
  *              network drivers.
  *
- * @(#) Header: /tcpdump/master/libpcap/pcap-dos.c,v 1.7 2008-04-22 17:16:30 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap-dos.c,v 1.7 2008-04-22 17:16:30 guy Exp  (LBL)
  */
 
 #include <stdio.h>

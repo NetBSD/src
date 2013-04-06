@@ -1,3 +1,5 @@
+/*	$NetBSD: ipnet.h,v 1.1.1.2 2013/04/06 15:57:51 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.

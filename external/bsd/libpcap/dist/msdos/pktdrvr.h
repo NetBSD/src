@@ -1,3 +1,5 @@
+/*	$NetBSD: pktdrvr.h,v 1.1.1.2 2013/04/06 15:57:52 christos Exp $	*/
+
 #ifndef __PKTDRVR_H
 #define __PKTDRVR_H
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-stdinc.h,v 1.1.1.3 2013/04/06 15:57:46 christos Exp $	*/
+
 /*
  * Copyright (c) 2002 - 2005 NetGroup, Politecnico di Torino (Italy)
  * Copyright (c) 2005 - 2009 CACE Technologies, Inc. Davis (California)
@@ -28,17 +30,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/libpcap/pcap-stdinc.h,v 1.10.2.1 2008-10-06 15:38:39 gianluca Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap-stdinc.h,v 1.10.2.1 2008-10-06 15:38:39 gianluca Exp  (LBL)
  */
 #ifndef pcap_stdinc_h
 #define pcap_stdinc_h
-
-#define SIZEOF_CHAR 1
-#define SIZEOF_SHORT 2
-#define SIZEOF_INT 4
-#ifndef _MSC_EXTENSIONS
-#define SIZEOF_LONG_LONG 8
-#endif
 
 /*
  * Avoids a compiler warning in case this was already defined      
