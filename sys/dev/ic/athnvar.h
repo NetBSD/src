@@ -1,4 +1,4 @@
-/*	$NetBSD: athnvar.h,v 1.3 2013/04/03 14:20:03 christos Exp $	*/
+/*	$NetBSD: athnvar.h,v 1.4 2013/04/06 16:50:48 martin Exp $	*/
 /*	$OpenBSD: athnvar.h,v 1.33 2012/10/20 09:54:20 stsp Exp $	*/
 
 /*-
@@ -621,7 +621,7 @@ struct athn_softc {
 int	athn_attach(struct athn_softc *);
 void	athn_detach(struct athn_softc *);
 void	athn_suspend(struct athn_softc *);
-int	athn_resume(struct athn_softc *);
+bool	athn_resume(struct athn_softc *);
 int	athn_intr(void *);
 
 /* used by if_athn_usb.c */

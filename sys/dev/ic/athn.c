@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.3 2013/04/06 14:57:38 martin Exp $	*/
+/*	$NetBSD: athn.c,v 1.4 2013/04/06 16:50:48 martin Exp $	*/
 /*	$OpenBSD: athn.c,v 1.75 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.3 2013/04/06 14:57:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.4 2013/04/06 16:50:48 martin Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.3 2013/04/06 14:57:38 martin Exp $");
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 
 #include <sys/bus.h>
@@ -525,6 +526,13 @@ athn_intr(void *xsc)
 	struct ifnet *ifp = &sc->sc_if;
 
 	if (!IS_UP_AND_RUNNING(ifp))
+		return 0;
+
+	if (!device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER))
+		/*
+		 * The hardware is not ready/present, don't touch anything.
+		 * Note this can happen early on if the IRQ is shared.
+		 */
 		return 0;
 
 	return sc->sc_ops.intr(sc);
@@ -2605,7 +2613,8 @@ athn_start(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 	struct mbuf *m;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING
+	    || !device_is_active(sc->sc_dev))
 		return;
 
 	for (;;) {
@@ -2806,11 +2815,22 @@ athn_init(struct ifnet *ifp)
 	size_t i;
 	int error;
 
-	if (device_is_active(sc->sc_dev))
+	KASSERT(!cpu_intr_p());
+
+	if (device_is_active(sc->sc_dev)) {
 		athn_stop(ifp, 0);	/* XXX: necessary? */
-	else if (!pmf_device_subtree_resume(sc->sc_dev, &sc->sc_qual) ||
-	    !device_is_active(sc->sc_dev))
-		return 0;
+	} else {
+		short flags = ifp->if_flags;
+		ifp->if_flags &= ~IFF_UP;
+		/* avoid recursion in athn_resume */
+		if (!pmf_device_subtree_resume(sc->sc_dev, &sc->sc_qual) ||
+		    !device_is_active(sc->sc_dev)) {
+			printf("%s: failed to power up device\n",
+			    device_xname(sc->sc_dev));
+			return 0;
+		}
+		ifp->if_flags = flags;
+	}
 
 	curchan = ic->ic_curchan;
 	extchan = NULL;
@@ -2977,12 +2997,13 @@ athn_suspend(struct athn_softc *sc)
 		athn_stop(ifp, 1);
 }
 
-PUBLIC int
+PUBLIC bool
 athn_resume(struct athn_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 
 	if (ifp->if_flags & IFF_UP)
-		return athn_init(ifp);
-	return 0;
+		athn_init(ifp);
+
+	return true;
 }
