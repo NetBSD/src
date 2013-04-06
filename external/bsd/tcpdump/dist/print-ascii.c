@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ascii.c,v 1.1.1.1 2010/12/05 03:15:09 christos Exp $ 	*/
+/*	NetBSD: print-ascii.c,v 1.1 1999/09/30 14:49:12 sjg Exp  	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-     "@(#) Header: /tcpdump/master/tcpdump/print-ascii.c,v 1.17 2005-07-06 20:53:32 guy Exp";
+     "@(#) Header: /tcpdump/master/tcpdump/print-ascii.c,v 1.17 2005-07-06 20:53:32 guy Exp ";
 #endif
 #include <tcpdump-stdinc.h>
 #include <stdio.h>

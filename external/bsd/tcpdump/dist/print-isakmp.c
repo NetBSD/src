@@ -30,7 +30,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-isakmp.c,v 1.61 2008-02-05 19:34:25 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-isakmp.c,v 1.61 2008-02-05 19:34:25 guy Exp  (LBL)";
 #endif
 
 #define NETDISSECT_REWORKED

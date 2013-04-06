@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-cdp.c,v 1.25 2004-10-07 14:53:11 hannes Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-cdp.c,v 1.25 2004-10-07 14:53:11 hannes Exp ";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -124,7 +124,7 @@ cdp_print(const u_char *pptr, u_int length, u_int caplen)
                                tok2str(cdp_tlv_values,"unknown field type", type),
                                type,
                                len,
-                               len>1 ? "s" : ""); /* plural */
+                               PLURAL_SUFFIX(len)); /* plural */
 
                     switch (type) {
 

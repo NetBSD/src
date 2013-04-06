@@ -19,7 +19,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-lmp.c,v 1.11 2007-08-02 17:32:49 hannes Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-lmp.c,v 1.11 2007-08-02 17:32:49 hannes Exp ";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -871,7 +871,7 @@ lmp_print(register const u_char *pptr, register u_int len) {
         }
         /* do we want to see an additionally hexdump ? */
         if (vflag > 1 || hexdump==TRUE)
-            print_unknown_data(tptr+sizeof(sizeof(struct lmp_object_header)),"\n\t    ",
+            print_unknown_data(tptr+sizeof(struct lmp_object_header),"\n\t    ",
                                lmp_obj_len-sizeof(struct lmp_object_header));
 
         tptr+=lmp_obj_len;

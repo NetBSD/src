@@ -20,7 +20,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-slow.c,v 1.8 2006-10-12 05:44:33 hannes Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-slow.c,v 1.8 2006-10-12 05:44:33 hannes Exp ";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -368,7 +368,7 @@ void slow_marker_lacp_print(register const u_char *tptr, register u_int tlen) {
             tlv_header->type != LACP_TLV_TERMINATOR &&
             tlv_header->type != MARKER_TLV_TERMINATOR) {
             printf("\n\t-----trailing data-----");
-            print_unknown_data(tptr+sizeof(sizeof(struct tlv_header_t)),"\n\t  ",tlen);
+            print_unknown_data(tptr+sizeof(struct tlv_header_t),"\n\t  ",tlen);
             return;
         }
 
@@ -441,7 +441,7 @@ void slow_marker_lacp_print(register const u_char *tptr, register u_int tlen) {
         }
         /* do we want to see an additional hexdump ? */
         if (vflag > 1) {
-            print_unknown_data(tptr+sizeof(sizeof(struct tlv_header_t)),"\n\t  ",
+            print_unknown_data(tptr+sizeof(struct tlv_header_t),"\n\t  ",
                                tlv_len-sizeof(struct tlv_header_t));
         }
 

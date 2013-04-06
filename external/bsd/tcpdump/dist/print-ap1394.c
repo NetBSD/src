@@ -20,7 +20,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ap1394.c,v 1.5 2006-02-11 22:12:06 hannes Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ap1394.c,v 1.5 2006-02-11 22:12:06 hannes Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -106,7 +106,7 @@ ap1394_if_print(const struct pcap_pkthdr *h, const u_char *p)
 	p += FIREWIRE_HDRLEN;
 
 	ether_type = EXTRACT_16BITS(&fp->firewire_type);
-	if (ethertype_print(ether_type, p, length, caplen) == 0) {
+	if (ethertype_print(gndo, ether_type, p, length, caplen) == 0) {
 		/* ether_type not known, print raw packet */
 		if (!eflag)
 			ap1394_hdr_print((u_char *)fp, length + FIREWIRE_HDRLEN);

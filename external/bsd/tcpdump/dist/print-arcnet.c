@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-arcnet.c,v 1.20 2005-04-06 21:32:38 mcr Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-arcnet.c,v 1.20 2005-04-06 21:32:38 mcr Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -265,14 +265,14 @@ arcnet_encap_print(u_char arctype, const u_char *p,
 
 #ifdef INET6
 	case ARCTYPE_INET6:
-		ip6_print(p, length);
+		ip6_print(gndo, p, length);
 		return (1);
 #endif /*INET6*/
 
 	case ARCTYPE_ARP_OLD:
 	case ARCTYPE_ARP:
 	case ARCTYPE_REVARP:
-	  arp_print(gndo, p, length, caplen);
+		arp_print(gndo, p, length, caplen);
 		return (1);
 
 	case ARCTYPE_ATALK:	/* XXX was this ever used? */

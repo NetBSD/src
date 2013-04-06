@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-arp.c,v 1.66 2006-03-03 22:53:21 hannes Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-arp.c,v 1.66 2006-03-03 22:53:21 hannes Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -318,6 +318,7 @@ arp_print(netdissect_options *ndo,
             return;
         case ARPHRD_FRELAY:
             linkaddr = LINKADDR_FRELAY;
+            break;
         default:
             linkaddr = LINKADDR_ETHER;
             break;

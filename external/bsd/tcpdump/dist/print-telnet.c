@@ -1,4 +1,4 @@
-/*	$NetBSD: print-telnet.c,v 1.1.1.1 2010/12/05 03:15:36 christos Exp $ 	*/
+/*	NetBSD: print-telnet.c,v 1.2 1999/10/11 12:40:12 sjg Exp  	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-     "@(#) Header: /tcpdump/master/tcpdump/print-telnet.c,v 1.24 2003-12-29 11:05:10 hannes Exp";
+     "@(#) Header: /tcpdump/master/tcpdump/print-telnet.c,v 1.24 2003-12-29 11:05:10 hannes Exp ";
 #endif
 
 #include <tcpdump-stdinc.h>

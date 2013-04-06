@@ -1,4 +1,4 @@
-/* @(#) Header: /tcpdump/master/tcpdump/icmp6.h,v 1.18 2007-08-29 02:31:44 mcr Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/icmp6.h,v 1.18 2007-08-29 02:31:44 mcr Exp  (LBL) */
 /*	NetBSD: icmp6.h,v 1.13 2000/08/03 16:30:37 itojun Exp 	*/
 /*	$KAME: icmp6.h,v 1.22 2000/08/03 15:25:16 jinmei Exp $	*/
 

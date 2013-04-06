@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-chdlc.c,v 1.43 2005-11-29 08:56:19 hannes Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-chdlc.c,v 1.43 2005-11-29 08:56:19 hannes Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -85,7 +85,7 @@ chdlc_print(register const u_char *p, u_int length) {
 		break;
 #ifdef INET6
 	case ETHERTYPE_IPV6:
-		ip6_print(p, length);
+		ip6_print(gndo, p, length);
 		break;
 #endif
 	case CHDLC_TYPE_SLARP:

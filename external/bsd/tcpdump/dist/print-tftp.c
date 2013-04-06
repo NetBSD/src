@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-tftp.c,v 1.39 2008-04-11 16:47:38 gianluca Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-tftp.c,v 1.39 2008-04-11 16:47:38 gianluca Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -99,15 +99,7 @@ tftp_print(register const u_char *bp, u_int length)
 	case RRQ:
 	case WRQ:
 	case OACK:
-		/*
-		 * XXX Not all arpa/tftp.h's specify th_stuff as any
-		 * array; use address of th_block instead
-		 */
-#ifdef notdef
 		p = (u_char *)tp->th_stuff;
-#else
-		p = (u_char *)&tp->th_block;
-#endif
 		putchar(' ');
 		/* Print filename or first option */
 		if (opcode != OACK)

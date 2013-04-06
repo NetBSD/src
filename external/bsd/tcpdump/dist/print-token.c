@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-token.c,v 1.27 2005-11-13 12:12:43 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-token.c,v 1.27 2005-11-13 12:12:43 guy Exp ";
 #endif
 
 #ifdef HAVE_CONFIG_H

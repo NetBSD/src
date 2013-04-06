@@ -1,4 +1,4 @@
-/*	$NetBSD: print-mobile.c,v 1.1.1.1 2010/12/05 03:15:24 christos Exp $ */
+/*	NetBSD: print-mobile.c,v 1.2 1998/09/30 08:57:01 hwr Exp  */
 
 /*
  * (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-     "@(#) Header: /tcpdump/master/tcpdump/print-mobile.c,v 1.15 2004-03-24 01:58:14 guy Exp";
+     "@(#) Header: /tcpdump/master/tcpdump/print-mobile.c,v 1.15 2004-03-24 01:58:14 guy Exp ";
 #endif
 
 #include <tcpdump-stdinc.h>
@@ -72,6 +72,7 @@ mobile_print(const u_char *bp, u_int length)
 {
 	const u_char *cp = bp +8 ;
 	const struct mobile_ip *mob;
+	struct cksum_vec vec[1];
 	u_short proto,crc;
 	u_char osp =0;			/* old source address present */
 
@@ -101,7 +102,9 @@ mobile_print(const u_char *bp, u_int length)
 		(void)printf("> %s ",ipaddr_string(&mob->odst));
 		(void)printf("(oproto=%d)",proto>>8);
 	}
-	if (in_cksum((u_short *)mob, osp ? 12 : 8, 0)!=0) {
+	vec[0].ptr = (const u_int8_t *)(void *)mob;
+	vec[0].len = osp ? 12 : 8;
+	if (in_cksum(vec, 1)!=0) {
 		(void)printf(" (bad checksum %d)",crc);
 	}
 

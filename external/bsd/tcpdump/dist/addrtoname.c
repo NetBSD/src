@@ -23,7 +23,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.119 2007-08-08 14:06:34 hannes Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.119 2007-08-08 14:06:34 hannes Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -504,6 +504,34 @@ etheraddr_string(register const u_char *ep)
 	} else
 		*cp = '\0';
 	tp->e_name = strdup(buf);
+	return (tp->e_name);
+}
+
+const char *
+le64addr_string(const u_char *ep)
+{
+	const unsigned int len = 8;
+	register u_int i;
+	register char *cp;
+	register struct enamemem *tp;
+	char buf[BUFSIZE];
+
+	tp = lookup_bytestring(ep, len);
+	if (tp->e_name)
+		return (tp->e_name);
+
+	cp = buf;
+	for (i = len; i > 0 ; --i) {
+		*cp++ = hex[*(ep + i - 1) >> 4];
+		*cp++ = hex[*(ep + i - 1) & 0xf];
+		*cp++ = ':';
+	}
+	cp --;
+
+	*cp = '\0';
+
+	tp->e_name = strdup(buf);
+
 	return (tp->e_name);
 }
 

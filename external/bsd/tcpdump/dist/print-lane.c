@@ -22,7 +22,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-lane.c,v 1.25 2005-11-13 12:12:42 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-lane.c,v 1.25 2005-11-13 12:12:42 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -61,9 +61,9 @@ static const struct tok lecop2str[] = {
 };
 
 static void
-lane_hdr_print(const u_char *bp)
+lane_hdr_print(netdissect_options *ndo, const u_char *bp)
 {
-	(void)printf("lecid:%x ", EXTRACT_16BITS(bp));
+	(void)ND_PRINT((ndo, "lecid:%x ", EXTRACT_16BITS(bp)));
 }
 
 /*
@@ -106,7 +106,7 @@ lane_print(const u_char *p, u_int length, u_int caplen)
 	 * Now print the encapsulated frame, under the assumption
 	 * that it's an Ethernet frame.
 	 */
-	ether_print(p, length, caplen, lane_hdr_print, p - 2);
+	ether_print(gndo, p, length, caplen, lane_hdr_print, p - 2);
 }
 
 u_int
