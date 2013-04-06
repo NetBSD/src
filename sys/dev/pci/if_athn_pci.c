@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_pci.c,v 1.6 2013/04/05 19:15:08 martin Exp $	*/
+/*	$NetBSD: if_athn_pci.c,v 1.7 2013/04/06 16:52:47 martin Exp $	*/
 /*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.6 2013/04/05 19:15:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.7 2013/04/06 16:52:47 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -115,7 +115,11 @@ athn_pci_match(device_t parent, cfdata_t match, void *aux)
 	for (i = 0; i < __arraycount(athn_pci_devices); i++) {
 		if (PCI_VENDOR(pa->pa_id) == athn_pci_devices[i].apd_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == athn_pci_devices[i].apd_product)
-			return 1;
+			/*
+			 * Match better than 1, we prefer this driver
+			 * over ath(4)
+			 */
+			return 10;
 	}
 	return 0;
 }
