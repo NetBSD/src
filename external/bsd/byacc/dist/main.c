@@ -1,21 +1,17 @@
-/*	$NetBSD: main.c,v 1.1.1.4 2011/09/10 21:22:00 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.5 2013/04/06 14:45:26 christos Exp $	*/
 
-/* Id: main.c,v 1.36 2011/09/06 22:44:45 tom Exp */
+/* Id: main.c,v 1.40 2012/09/29 13:11:00 Adrian.Bunk Exp  */
 
 #include <signal.h>
 #include <unistd.h>		/* for _exit() */
 
 #include "defs.h"
 
-#if defined(HAVE_ATEXIT)
-# ifdef HAVE_MKSTEMP
-#  define USE_MKSTEMP 1
-# elif defined(HAVE_FCNTL_H)
-#  define USE_MKSTEMP 1
-#  include <fcntl.h>		/* for open(), O_EXCL, etc. */
-# else
-#  define USE_MKSTEMP 0
-# endif
+#ifdef HAVE_MKSTEMP
+# define USE_MKSTEMP 1
+#elif defined(HAVE_FCNTL_H)
+# define USE_MKSTEMP 1
+# include <fcntl.h>		/* for open(), O_EXCL, etc. */
 #else
 # define USE_MKSTEMP 0
 #endif
@@ -40,6 +36,7 @@ char iflag;
 char lflag;
 static char oflag;
 char rflag;
+char sflag;
 char tflag;
 char vflag;
 
@@ -203,6 +200,7 @@ usage(void)
 	,"  -p symbol_prefix      set symbol prefix (default \"yy\")"
 	,"  -P                    create a reentrant parser, e.g., \"%pure-parser\""
 	,"  -r                    produce separate code and table files (y.code.c)"
+	,"  -s                    suppress #define's for quoted names in %token lines"
 	,"  -t                    add debugging support"
 	,"  -v                    write description (y.output)"
 	,"  -V                    show version information and exit"
@@ -244,6 +242,10 @@ setflag(int ch)
 
     case 'r':
 	rflag = 1;
+	break;
+
+    case 's':
+	sflag = 1;
 	break;
 
     case 't':
@@ -363,7 +365,7 @@ allocate(size_t n)
 }
 
 #define CREATE_FILE_NAME(dest, suffix) \
-	dest = MALLOC(len + strlen(suffix) + 1); \
+	dest = TMALLOC(char, len + strlen(suffix) + 1); \
 	NO_SPACE(dest); \
 	strcpy(dest, file_prefix); \
 	strcpy(dest + len, suffix)
@@ -394,7 +396,7 @@ create_file_names(void)
     if (prefix != NULL)
     {
 	len = (size_t) (prefix - output_file_name);
-	file_prefix = (char *)MALLOC(len + 1);
+	file_prefix = TMALLOC(char, len + 1);
 	NO_SPACE(file_prefix);
 	strncpy(file_prefix, output_file_name, len)[len] = 0;
     }

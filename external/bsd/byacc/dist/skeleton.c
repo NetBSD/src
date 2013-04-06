@@ -1,6 +1,6 @@
-/*	$NetBSD: skeleton.c,v 1.1.1.4 2011/09/10 21:22:01 christos Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.1.1.5 2013/04/06 14:45:26 christos Exp $	*/
 
-/* Id: skeleton.c,v 1.31 2011/09/07 09:37:59 tom Exp */
+/* Id: skeleton.c,v 1.32 2013/03/04 23:19:39 tom Exp  */
 
 #include "defs.h"
 
@@ -154,7 +154,7 @@ const char *const body_1[] =
     "    else if ((newsize *= 2) > YYMAXDEPTH)",
     "        newsize = YYMAXDEPTH;",
     "",
-    "    i = data->s_mark - data->s_base;",
+    "    i = (int) (data->s_mark - data->s_base);",
     "    newss = (short *)realloc(data->s_base, newsize * sizeof(*newss));",
     "    if (newss == 0)",
     "        return -1;",

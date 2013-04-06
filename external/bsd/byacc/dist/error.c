@@ -1,6 +1,6 @@
-/*	$NetBSD: error.c,v 1.1.1.4 2011/09/10 21:22:00 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.5 2013/04/06 14:45:26 christos Exp $	*/
 
-/* Id: error.c,v 1.9 2011/09/05 23:27:43 tom Exp */
+/* Id: error.c,v 1.9 2011/09/05 23:27:43 tom Exp  */
 
 /* routines for printing error messages  */
 

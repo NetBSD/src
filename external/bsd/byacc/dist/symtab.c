@@ -1,6 +1,6 @@
-/*	$NetBSD: symtab.c,v 1.1.1.4 2011/09/10 21:22:02 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.1.1.5 2013/04/06 14:45:26 christos Exp $	*/
 
-/* Id: symtab.c,v 1.9 2010/11/24 15:12:29 tom Exp */
+/* Id: symtab.c,v 1.10 2012/05/26 15:16:12 tom Exp  */
 
 #include "defs.h"
 
@@ -35,13 +35,13 @@ make_bucket(const char *name)
 
     assert(name != 0);
 
-    bp = (bucket *)MALLOC(sizeof(bucket));
+    bp = TMALLOC(bucket, 1);
     NO_SPACE(bp);
 
     bp->link = 0;
     bp->next = 0;
 
-    bp->name = MALLOC(strlen(name) + 1);
+    bp->name = TMALLOC(char, strlen(name) + 1);
     NO_SPACE(bp->name);
 
     bp->tag = 0;
@@ -84,7 +84,7 @@ create_symbol_table(void)
     int i;
     bucket *bp;
 
-    symbol_table = (bucket **)MALLOC(TABLE_SIZE * sizeof(bucket *));
+    symbol_table = TMALLOC(bucket *, TABLE_SIZE);
     NO_SPACE(symbol_table);
 
     for (i = 0; i < TABLE_SIZE; i++)

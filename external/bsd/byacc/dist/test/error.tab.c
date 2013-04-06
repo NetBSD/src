@@ -1,4 +1,4 @@
-/*	$NetBSD: error.tab.c,v 1.1.1.4 2011/09/10 21:22:03 christos Exp $	*/
+/*	$NetBSD: error.tab.c,v 1.1.1.5 2013/04/06 14:45:29 christos Exp $	*/
 
 #ifndef lint
 static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
@@ -97,6 +97,10 @@ static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 
 #define YYPURE 0
 
+#line 2 "error.y"
+int yylex(void);
+static void yyerror(const char *);
+#line 102 "error.tab.c"
 
 #ifndef YYSTYPE
 typedef int YYSTYPE;
@@ -124,8 +128,12 @@ typedef int YYSTYPE;
 #endif
 
 /* Parameters sent to yyerror. */
+#ifndef YYERROR_DECL
 #define YYERROR_DECL() yyerror(const char *s)
+#endif
+#ifndef YYERROR_CALL
 #define YYERROR_CALL(msg) yyerror(msg)
+#endif
 
 extern int YYPARSE_DECL();
 
@@ -204,14 +212,9 @@ typedef struct {
 } YYSTACKDATA;
 /* variables for the parser stack */
 static YYSTACKDATA yystack;
-#line 4 "error.y"
+#line 8 "error.y"
 
 #include <stdio.h>
-
-#ifdef YYBYACC
-extern int YYLEX_DECL();
-static void YYERROR_DECL();
-#endif
 
 int
 main(void)
@@ -231,7 +234,7 @@ yyerror(const char* s)
 {
     printf("%s\n", s);
 }
-#line 233 "error.tab.c"
+#line 236 "error.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>		/* needed for printf */
@@ -255,7 +258,7 @@ static int yygrowstack(YYSTACKDATA *data)
     else if ((newsize *= 2) > YYMAXDEPTH)
         newsize = YYMAXDEPTH;
 
-    i = data->s_mark - data->s_base;
+    i = (int) (data->s_mark - data->s_base);
     newss = (short *)realloc(data->s_base, newsize * sizeof(*newss));
     if (newss == 0)
         return -1;

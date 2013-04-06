@@ -1,6 +1,6 @@
-/*	$NetBSD: verbose.c,v 1.1.1.4 2011/09/10 21:22:02 christos Exp $	*/
+/*	$NetBSD: verbose.c,v 1.1.1.5 2013/04/06 14:45:26 christos Exp $	*/
 
-/* Id: verbose.c,v 1.9 2010/06/09 08:58:29 tom Exp */
+/* Id: verbose.c,v 1.10 2012/05/26 00:45:17 tom Exp  */
 
 #include "defs.h"
 
@@ -25,7 +25,7 @@ verbose(void)
     if (!vflag)
 	return;
 
-    null_rules = (short *)MALLOC((unsigned)nrules * sizeof(short));
+    null_rules = TMALLOC(short, nrules);
     NO_SPACE(null_rules);
 
     fprintf(verbose_file, "\f\n");

@@ -1,6 +1,6 @@
-/*	$NetBSD: lr0.c,v 1.1.1.4 2011/09/10 21:22:00 christos Exp $	*/
+/*	$NetBSD: lr0.c,v 1.1.1.5 2013/04/06 14:45:26 christos Exp $	*/
 
-/* Id: lr0.c,v 1.12 2010/06/09 08:53:17 tom Exp */
+/* Id: lr0.c,v 1.13 2012/05/26 00:40:47 tom Exp  */
 
 #include "defs.h"
 
@@ -540,7 +540,7 @@ set_nullable(void)
     int empty;
     int done_flag;
 
-    nullable = MALLOC(nsyms);
+    nullable = TMALLOC(char, nsyms);
     NO_SPACE(nullable);
 
     for (i = 0; i < nsyms; ++i)

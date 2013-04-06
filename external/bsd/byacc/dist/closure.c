@@ -1,6 +1,6 @@
-/*	$NetBSD: closure.c,v 1.1.1.4 2011/09/10 21:21:56 christos Exp $	*/
+/*	$NetBSD: closure.c,v 1.1.1.5 2013/04/06 14:45:24 christos Exp $	*/
 
-/* Id: closure.c,v 1.9 2010/06/09 08:21:47 tom Exp */
+/* Id: closure.c,v 1.9 2010/06/09 08:21:47 tom Exp  */
 
 #include "defs.h"
 
