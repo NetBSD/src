@@ -22,9 +22,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-sll.c,v 1.19 2005-11-13 12:12:43 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-sll.c,v 1.19 2005-11-13 12:12:43 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-sll.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-sll.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -223,7 +223,7 @@ recurse:
 		caplen -= 4;
 		goto recurse;
 	} else {
-		if (ethertype_print(ether_type, p, length, caplen) == 0) {
+		if (ethertype_print(gndo, ether_type, p, length, caplen) == 0) {
 			/* ether_type not known, print raw packet */
 			if (!eflag)
 				sll_print(sllp, length + SLL_HDR_LEN);

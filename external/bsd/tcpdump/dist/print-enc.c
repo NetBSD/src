@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-enc.c,v 1.6 2008-11-18 07:35:32 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-enc.c,v 1.6 2008-11-18 07:35:32 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-enc.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-enc.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -85,7 +85,7 @@ enc_if_print(const struct pcap_pkthdr *h, register const u_char *p)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ip6_print(p, length);
+		ip6_print(gndo, p, length);
 		break;
 #endif /*INET6*/
 	}

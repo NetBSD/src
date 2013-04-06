@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-"@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.31 2005-04-26 19:48:38 guy Exp (LBL)";
+"@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.31 2005-04-26 19:48:38 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-pppoe.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-pppoe.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -75,6 +75,7 @@ enum {
 	PPPOE_AC_COOKIE = 0x0104,
 	PPPOE_VENDOR = 0x0105,
 	PPPOE_RELAY_SID = 0x0110,
+	PPPOE_MAX_PAYLOAD = 0x0120,
 	PPPOE_SERVICE_NAME_ERROR = 0x0201,
 	PPPOE_AC_SYSTEM_ERROR = 0x0202,
 	PPPOE_GENERIC_ERROR = 0x0203
@@ -88,6 +89,7 @@ static struct tok pppoetag2str[] = {
 	{ PPPOE_AC_COOKIE, "AC-Cookie" },
 	{ PPPOE_VENDOR, "Vendor-Specific" },
 	{ PPPOE_RELAY_SID, "Relay-Session-ID" },
+	{ PPPOE_MAX_PAYLOAD, "PPP-Max-Payload" },
 	{ PPPOE_SERVICE_NAME_ERROR, "Service-Name-Error" },
 	{ PPPOE_AC_SYSTEM_ERROR, "AC-System-Error" },
 	{ PPPOE_GENERIC_ERROR, "Generic-Error" },
