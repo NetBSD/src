@@ -32,9 +32,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-isakmp.c,v 1.61 2008-02-05 19:34:25 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-isakmp.c,v 1.61 2008-02-05 19:34:25 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-isakmp.c,v 1.3 2011/08/17 10:48:02 christos Exp $");
+__RCSID("$NetBSD: print-isakmp.c,v 1.4 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 

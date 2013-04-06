@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/ipproto.h,v 1.6 2005-09-20 06:01:22 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/ipproto.h,v 1.6 2005-09-20 06:01:22 guy Exp  (LBL)
  *
  * From:
  *	@(#)in.h	8.3 (Berkeley) 1/3/94
@@ -128,6 +128,9 @@ extern const struct tok ipproto_values[];
 #endif
 #ifndef IPPROTO_VRRP
 #define IPPROTO_VRRP		112
+#endif
+#ifndef IPPROTO_CARP
+#define IPPROTO_CARP		112
 #endif
 #ifndef IPPROTO_PGM
 #define IPPROTO_PGM             113

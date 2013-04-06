@@ -23,9 +23,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-chdlc.c,v 1.43 2005-11-29 08:56:19 hannes Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-chdlc.c,v 1.43 2005-11-29 08:56:19 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-chdlc.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-chdlc.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -90,7 +90,7 @@ chdlc_print(register const u_char *p, u_int length) {
 		break;
 #ifdef INET6
 	case ETHERTYPE_IPV6:
-		ip6_print(p, length);
+		ip6_print(gndo, p, length);
 		break;
 #endif
 	case CHDLC_TYPE_SLARP:

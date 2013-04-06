@@ -23,9 +23,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-sl.c,v 1.65 2005-04-06 21:32:42 mcr Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-sl.c,v 1.65 2005-04-06 21:32:42 mcr Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-sl.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-sl.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -78,7 +78,7 @@ sl_if_print(const struct pcap_pkthdr *h, const u_char *p)
 		break;
 #ifdef INET6
 	case 6:
-		ip6_print((u_char *)ip, length);
+		ip6_print(gndo, (u_char *)ip, length);
 		break;
 #endif
 	default:

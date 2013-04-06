@@ -21,9 +21,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-"@(#) Header: /tcpdump/master/tcpdump/print-lwapp.c,v 1.1 2007-07-24 16:07:30 hannes Exp";
+"@(#) Header: /tcpdump/master/tcpdump/print-lwapp.c,v 1.1 2007-07-24 16:07:30 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-lwapp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-lwapp.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -179,7 +179,7 @@ lwapp_control_print(const u_char *pptr, u_int len, int has_ap_ident) {
     const struct lwapp_transport_header *lwapp_trans_header;
     const struct lwapp_control_header *lwapp_control_header;
     const u_char *tptr;
-    int hexdump,tlen;
+    int  tlen;
     int  msg_tlen;
 
     tptr=pptr;
@@ -252,7 +252,6 @@ lwapp_control_print(const u_char *pptr, u_int len, int has_ap_ident) {
         /* did we capture enough for fully decoding the message */
         if (!TTEST2(*tptr, msg_tlen))
             goto trunc;
-        hexdump=FALSE;
 
 	/* XXX - Decode sub messages for each message */
         switch(lwapp_control_header->msg_type) {

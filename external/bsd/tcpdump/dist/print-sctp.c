@@ -37,9 +37,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-"@(#) Header: /tcpdump/master/tcpdump/print-sctp.c,v 1.21 2007-09-13 18:03:49 guy Exp (NETLAB/PEL)";
+"@(#) Header: /tcpdump/master/tcpdump/print-sctp.c,v 1.21 2007-09-13 18:03:49 guy Exp  (NETLAB/PEL)";
 #else
-__RCSID("$NetBSD: print-sctp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-sctp.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -64,9 +64,9 @@ __RCSID("$NetBSD: print-sctp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
 #include "ip6.h"
 #endif
 
-#define CHAN_HP 6700
-#define CHAN_MP 6701
-#define CHAN_LP 6702
+#define CHAN_HP 6704
+#define CHAN_MP 6705
+#define CHAN_LP 6706
 
 struct tok ForCES_channels[] = {
 	{ CHAN_HP, "ForCES HP" },

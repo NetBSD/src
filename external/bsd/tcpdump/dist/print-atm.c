@@ -22,9 +22,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-atm.c,v 1.49 2007-10-22 19:37:51 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-atm.c,v 1.49 2007-10-22 19:37:51 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-atm.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-atm.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -275,10 +275,12 @@ sig_print(const u_char *p, int caplen)
 		printf(":%s ",
 		    tok2str(msgtype2str, "msgtype#%d", p[MSG_TYPE_POS]));
 
-		if (caplen < CALL_REF_POS+3) {
-			printf("[|atm]");
-			return;
-		}
+		/*
+		 * The call reference comes before the message type,
+		 * so if we know we have the message type, which we
+		 * do from the caplen test above, we also know we have
+		 * the call reference.
+		 */
 		call_ref = EXTRACT_24BITS(&p[CALL_REF_POS]);
 		printf("CALL_REF:0x%06x", call_ref);
 	} else {

@@ -23,9 +23,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-pflog.c,v 1.16 2007-09-12 19:36:18 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-pflog.c,v 1.16 2007-09-12 19:36:18 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-pflog.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-pflog.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -167,7 +167,7 @@ pflog_if_print(const struct pcap_pkthdr *h, register const u_char *p)
 #if OPENBSD_AF_INET6 != AF_INET6
 		case OPENBSD_AF_INET6:		/* XXX: read pcap files */
 #endif
-			ip6_print(p, length);
+			ip6_print(gndo, p, length);
 			break;
 #endif
 
