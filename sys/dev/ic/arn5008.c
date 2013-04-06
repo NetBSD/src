@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.c,v 1.2 2013/04/03 14:20:02 christos Exp $	*/
+/*	$NetBSD: arn5008.c,v 1.3 2013/04/06 14:57:38 martin Exp $	*/
 /*	$OpenBSD: ar5008.c,v 1.21 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.2 2013/04/03 14:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.3 2013/04/06 14:57:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1256,13 +1256,7 @@ ar5008_intr(struct athn_softc *sc)
 
 		if ((sc->sc_flags & ATHN_FLAG_RFSILENT) &&
 		    (sync & AR_INTR_SYNC_GPIO_PIN(sc->sc_rfsilent_pin))) {
-			struct ifnet *ifp = &sc->sc_if;
-
-			printf("%s: radio switch turned off\n",
-			    device_xname(sc->sc_dev));
-			/* Turn the interface down. */
-			ifp->if_flags &= ~IFF_UP;
-			athn_stop(ifp, 1);
+			pmf_event_inject(sc->sc_dev, PMFE_RADIO_OFF);
 			return 1;
 		}
 
