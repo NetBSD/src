@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.352 2013/03/02 02:42:16 christos Exp $
+# $NetBSD: ALL,v 1.353 2013/04/06 16:57:32 martin Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.352 $"
+#ident 		"ALL-$Revision: 1.353 $"
 
 maxusers	64		# estimated number of users
 
@@ -995,6 +995,7 @@ an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 alc*	at pci? dev ? function ?	# Attansic/Atheros L1C/L2C Ethernet
 ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
+athn*	at pci? dev ? function ?	# Atheros AR9k (802.11a/g/n)
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce*	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
@@ -1116,6 +1117,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # CardBus network cards
 ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+athn*	at cardbus? function ?	# Atheros AR9k (802.11a/g/n)
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? function ?	# 3Com 3c575TX
 fxp*	at cardbus? function ?	# Intel i8255x
@@ -1286,6 +1288,7 @@ urndis* at uhub? port ?		# Microsoft RNDIS specification
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
+athn*	at uhub? port ?		# Atheros AR9002U
 otus*	at uhub? port ?		# Atheros AR9001U
 ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
