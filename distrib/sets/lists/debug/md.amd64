@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.15 2013/04/05 20:23:13 christos Exp $
+# $NetBSD: md.amd64,v 1.16 2013/04/06 02:20:07 christos Exp $
 ./usr/libdata/debug/lib/i386/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/i386/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/i386/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -113,7 +113,7 @@
 ./usr/libdata/debug/usr/lib/i386/libopcodes.so.5.0.debug	comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/i386/libossaudio.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libp2k.so.2.0.debug	comp-compat-shlib	compat,pic,debug,rump
-./usr/libdata/debug/usr/lib/i386/libpam.so.3.0.debug	comp-compat-shlib	compat,pic,pam,debug
+./usr/libdata/debug/usr/lib/i386/libpam.so.4.0.debug	comp-compat-shlib	compat,pic,pam,debug
 ./usr/libdata/debug/usr/lib/i386/libpcap.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libpci.so.2.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug
