@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.660 2013/04/06 02:20:03 christos Exp $
+# $NetBSD: shl.mi,v 1.661 2013/04/06 17:30:27 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -397,8 +397,8 @@
 ./usr/lib/libpam.so.4				base-sys-shlib		pam
 ./usr/lib/libpam.so.4.0				base-sys-shlib		pam
 ./usr/lib/libpcap.so				base-net-shlib
-./usr/lib/libpcap.so.4				base-net-shlib
-./usr/lib/libpcap.so.4.0			base-net-shlib
+./usr/lib/libpcap.so.5				base-net-shlib
+./usr/lib/libpcap.so.5.0			base-net-shlib
 ./usr/lib/libpci.so				base-sys-shlib
 ./usr/lib/libpci.so.2				base-sys-shlib
 ./usr/lib/libpci.so.2.0				base-sys-shlib
