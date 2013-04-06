@@ -1,4 +1,4 @@
-/* $NetBSD: pcap-namedb.h,v 1.2 2010/12/05 01:45:46 christos Exp $ */
+/*	$NetBSD: pcap-namedb.h,v 1.3 2013/04/06 17:29:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/libpcap/pcap-namedb.h,v 1.13 2006-10-04 18:13:32 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap-namedb.h,v 1.13 2006-10-04 18:13:32 guy Exp  (LBL)
  */
 
 /*
