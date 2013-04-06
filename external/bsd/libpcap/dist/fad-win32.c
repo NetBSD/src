@@ -1,3 +1,5 @@
+/*	$NetBSD: fad-win32.c,v 1.1.1.3 2013/04/06 15:57:47 christos Exp $	*/
+
 /*
  * Copyright (c) 2002 - 2005 NetGroup, Politecnico di Torino (Italy)
  * Copyright (c) 2005 - 2006 CACE Technologies, Davis (California)
@@ -33,7 +35,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/fad-win32.c,v 1.15 2007-09-25 20:34:36 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/fad-win32.c,v 1.15 2007-09-25 20:34:36 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H

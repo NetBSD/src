@@ -1,3 +1,5 @@
+/*	$NetBSD: inetprivate.h,v 1.1.1.2 2013/04/06 15:57:51 christos Exp $	*/
+
 /*
  * Copyright (c) 1999 - 2003
  * NetGroup, Politecnico di Torino (Italy)

@@ -1,3 +1,5 @@
+/*	$NetBSD: namedb.h,v 1.1.1.3 2013/04/06 15:57:51 christos Exp $	*/
+
 /*
  * Copyright (c) 1994, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/libpcap/pcap/namedb.h,v 1.1 2006-10-04 18:09:22 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap/namedb.h,v 1.1 2006-10-04 18:09:22 guy Exp  (LBL)
  */
 
 #ifndef lib_pcap_namedb_h
