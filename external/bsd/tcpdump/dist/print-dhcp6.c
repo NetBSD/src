@@ -42,9 +42,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-dhcp6.c,v 1.37 2008-02-06 10:26:09 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-dhcp6.c,v 1.37 2008-02-06 10:26:09 guy Exp ";
 #else
-__RCSID("$NetBSD: print-dhcp6.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-dhcp6.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
 #endif
 
@@ -234,15 +234,15 @@ dhcp6opt_name(int type)
 	case DH6OPT_SIP_SERVER_A:
 		return "SIP-servers-address";
 	case DH6OPT_DNS:
-		return "DNS";
+		return "DNS-server";
 	case DH6OPT_DNSNAME:
-		return "DNS-name";
+		return "DNS-search-list";
 	case DH6OPT_IA_PD:
 		return "IA_PD";
 	case DH6OPT_IA_PD_PREFIX:
 		return "IA_PD-prefix";
 	case DH6OPT_NTP_SERVERS:
-		return "NTP-Server";
+		return "NTP-server";
 	case DH6OPT_LIFETIME:
 		return "lifetime";
 	case DH6OPT_NIS_SERVERS:
