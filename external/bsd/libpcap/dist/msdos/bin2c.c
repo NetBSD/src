@@ -1,3 +1,5 @@
+/*	$NetBSD: bin2c.c,v 1.1.1.2 2013/04/06 15:57:52 christos Exp $	*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>

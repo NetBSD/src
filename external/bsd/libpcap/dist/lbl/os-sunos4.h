@@ -1,3 +1,5 @@
+/*	$NetBSD: os-sunos4.h,v 1.1.1.3 2013/04/06 15:57:52 christos Exp $	*/
+
 /*
  * Copyright (c) 1989, 1990, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -18,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/libpcap/lbl/os-sunos4.h,v 1.32 1999-10-07 23:46:41 mcr Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/lbl/os-sunos4.h,v 1.32 1999-10-07 23:46:41 mcr Exp  (LBL)
  */
 
 /* Prototypes missing in SunOS 4 */

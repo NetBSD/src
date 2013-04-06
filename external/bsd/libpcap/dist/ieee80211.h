@@ -1,3 +1,5 @@
+/*	$NetBSD: ieee80211.h,v 1.1.1.2 2013/04/06 15:57:48 christos Exp $	*/
+
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting

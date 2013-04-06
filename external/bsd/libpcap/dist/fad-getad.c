@@ -1,3 +1,5 @@
+/*	$NetBSD: fad-getad.c,v 1.1.1.3 2013/04/06 15:57:49 christos Exp $	*/
+
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -34,7 +36,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/fad-getad.c,v 1.12 2007-09-14 00:44:55 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/fad-getad.c,v 1.12 2007-09-14 00:44:55 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -61,15 +63,21 @@ static const char rcsid[] _U_ =
 #endif
 
 #ifdef AF_PACKET
+# ifdef HAVE_NETPACKET_PACKET_H
+/* Solaris 11 and later, Linux distributions with newer glibc */
+#  include <netpacket/packet.h>
+# else /* HAVE_NETPACKET_PACKET_H */
+/* LynxOS, Linux distributions with older glibc */
 # ifdef __Lynx__
 /* LynxOS */
 #  include <netpacket/if_packet.h>
-# else
+# else /* __Lynx__ */
 /* Linux */
 #  include <linux/types.h>
 #  include <linux/if_packet.h>
-# endif
-#endif
+# endif /* __Lynx__ */
+# endif /* HAVE_NETPACKET_PACKET_H */
+#endif /* AF_PACKET */
 
 /*
  * This is fun.

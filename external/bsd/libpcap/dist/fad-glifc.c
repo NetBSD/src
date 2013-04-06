@@ -1,3 +1,5 @@
+/*	$NetBSD: fad-glifc.c,v 1.1.1.3 2013/04/06 15:57:49 christos Exp $	*/
+
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -34,7 +36,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/fad-glifc.c,v 1.7 2008-01-30 09:35:48 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/fad-glifc.c,v 1.7 2008-01-30 09:35:48 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H

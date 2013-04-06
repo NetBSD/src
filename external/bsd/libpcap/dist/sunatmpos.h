@@ -1,3 +1,5 @@
+/*	$NetBSD: sunatmpos.h,v 1.1.1.3 2013/04/06 15:57:46 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Yen Yen Lim and North Dakota State University
  * All rights reserved.
@@ -29,7 +31,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/libpcap/sunatmpos.h,v 1.1 2002-07-11 09:06:47 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/sunatmpos.h,v 1.1 2002-07-11 09:06:47 guy Exp  (LBL)
  */
 
 /* SunATM header for ATM packet */

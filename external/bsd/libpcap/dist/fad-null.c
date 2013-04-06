@@ -1,3 +1,5 @@
+/*	$NetBSD: fad-null.c,v 1.1.1.3 2013/04/06 15:57:45 christos Exp $	*/
+
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -34,7 +36,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/fad-null.c,v 1.2 2003-11-15 23:23:58 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/fad-null.c,v 1.2 2003-11-15 23:23:58 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H

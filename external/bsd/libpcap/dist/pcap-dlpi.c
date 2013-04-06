@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-dlpi.c,v 1.1.1.3 2013/04/06 15:57:40 christos Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -70,7 +72,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/pcap-dlpi.c,v 1.128 2008-12-02 16:20:23 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/pcap-dlpi.c,v 1.128 2008-12-02 16:20:23 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -143,10 +145,9 @@ static int dl_doattach(int, int, char *);
 #ifdef DL_HP_RAWDLS
 static int dl_dohpuxbind(int, char *);
 #endif
-static int dlattachreq(int, bpf_u_int32, char *);
+static int dlpromiscon(pcap_t *, bpf_u_int32);
 static int dlbindreq(int, bpf_u_int32, char *);
 static int dlbindack(int, char *, char *, int *);
-static int dlpromisconreq(int, bpf_u_int32, char *);
 static int dlokack(int, const char *, char *, char *);
 static int dlinforeq(int, char *);
 static int dlinfoack(int, char *, char *);
@@ -450,7 +451,7 @@ pcap_activate_dlpi(pcap_t *p)
 	/* Try device without unit number */
 	if ((p->fd = open(dname, O_RDWR)) < 0) {
 		if (errno != ENOENT) {
-			if (errno == EACCES)
+			if (errno == EPERM || errno == EACCES)
 				status = PCAP_ERROR_PERM_DENIED;
 			snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "%s: %s", dname,
 			    pcap_strerror(errno));
@@ -486,7 +487,7 @@ pcap_activate_dlpi(pcap_t *p)
 				snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 				    "%s: No DLPI device found", p->opt.source);
 			} else {
-				if (errno == EACCES)
+				if (errno == EPERM || errno == EACCES)
 					status = PCAP_ERROR_PERM_DENIED;
 				snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "%s: %s",
 				    dname2, pcap_strerror(errno));
@@ -610,9 +611,12 @@ pcap_activate_dlpi(pcap_t *p)
 		/*
 		** Enable promiscuous (not necessary on send FD)
 		*/
-		if (dlpromisconreq(p->fd, DL_PROMISC_PHYS, p->errbuf) < 0 ||
-		    dlokack(p->fd, "promisc_phys", (char *)buf, p->errbuf) < 0)
+		status = dlpromiscon(p, DL_PROMISC_PHYS);
+		if (status < 0) {
+			if (status == PCAP_ERROR_PERM_DENIED)
+				status = PCAP_ERROR_PROMISC_PERM_DENIED;
 			goto bad;
+		}
 
 		/*
 		** Try to enable multicast (you would have thought
@@ -620,8 +624,8 @@ pcap_activate_dlpi(pcap_t *p)
 		** HP-UX or SINIX) (Not necessary on send FD)
 		*/
 #if !defined(__hpux) && !defined(sinix)
-		if (dlpromisconreq(p->fd, DL_PROMISC_MULTI, p->errbuf) < 0 ||
-		    dlokack(p->fd, "promisc_multi", (char *)buf, p->errbuf) < 0)
+		status = dlpromiscon(p, DL_PROMISC_MULTI);
+		if (status < 0)
 			status = PCAP_WARNING;
 #endif
 	}
@@ -631,20 +635,27 @@ pcap_activate_dlpi(pcap_t *p)
 	** under SINIX) (Not necessary on send FD)
 	*/
 #ifndef sinix
-	if (
-#ifdef __hpux
-	    !p->opt.promisc &&
+#if defined(__hpux)
+	/* HP-UX - only do this when not in promiscuous mode */
+	if (!p->opt.promisc) {
+#elif defined(HAVE_SOLARIS)
+	/* Solaris - don't do this on SunATM devices */
+	if (!isatm) {
+#else
+	/* Everything else (except for SINIX) - always do this */
+	{
 #endif
-#ifdef HAVE_SOLARIS
-	    !isatm &&
-#endif
-	    (dlpromisconreq(p->fd, DL_PROMISC_SAP, p->errbuf) < 0 ||
-	    dlokack(p->fd, "promisc_sap", (char *)buf, p->errbuf) < 0)) {
-		/* Not fatal if promisc since the DL_PROMISC_PHYS worked */
-		if (p->opt.promisc)
-			status = PCAP_WARNING;
-		else
-			goto bad;
+		status = dlpromiscon(p, DL_PROMISC_SAP);
+		if (status < 0) {
+			/*
+			 * Not fatal, since the DL_PROMISC_PHYS mode worked.
+			 * Report it as a warning, however.
+			 */
+			if (p->opt.promisc)
+				status = PCAP_WARNING;
+			else
+				goto bad;
+		}
 	}
 #endif /* sinix */
 
@@ -815,11 +826,15 @@ split_dname(char *device, int *unitp, char *ebuf)
 static int
 dl_doattach(int fd, int ppa, char *ebuf)
 {
+	dl_attach_req_t	req;
 	bpf_u_int32 buf[MAXDLBUF];
 	int err;
 
-	if (dlattachreq(fd, ppa, ebuf) < 0)
+	req.dl_primitive = DL_ATTACH_REQ;
+	req.dl_ppa = ppa;
+	if (send_request(fd, (char *)&req, sizeof(req), "attach", ebuf) < 0)
 		return (PCAP_ERROR);
+
 	err = dlokack(fd, "attach", (char *)buf, ebuf);
 	if (err < 0)
 		return (err);
@@ -876,6 +891,27 @@ dl_dohpuxbind(int fd, char *ebuf)
 	return (0);
 }
 #endif
+
+#define STRINGIFY(n)	#n
+
+static int
+dlpromiscon(pcap_t *p, bpf_u_int32 level)
+{
+	dl_promiscon_req_t req;
+	bpf_u_int32 buf[MAXDLBUF];
+	int err;
+
+	req.dl_primitive = DL_PROMISCON_REQ;
+	req.dl_level = level;
+	if (send_request(p->fd, (char *)&req, sizeof(req), "promiscon",
+	    p->errbuf) < 0)
+		return (PCAP_ERROR);
+	err = dlokack(p->fd, "promiscon" STRINGIFY(level), (char *)buf,
+	    p->errbuf);
+	if (err < 0)
+		return (err);
+	return (0);
+}
 
 int
 pcap_platform_finddevs(pcap_if_t **alldevsp, char *errbuf)
@@ -986,7 +1022,8 @@ recv_ack(int fd, int size, const char *what, char *bufp, char *ebuf, int *uerror
 			snprintf(ebuf, PCAP_ERRBUF_SIZE,
 			    "recv_ack: %s: UNIX error - %s",
 			    what, pcap_strerror(dlp->error_ack.dl_unix_errno));
-			if (dlp->error_ack.dl_unix_errno == EACCES)
+			if (dlp->error_ack.dl_unix_errno == EPERM ||
+			    dlp->error_ack.dl_unix_errno == EACCES)
 				return (PCAP_ERROR_PERM_DENIED);
 			break;
 
@@ -1222,17 +1259,6 @@ dlprim(bpf_u_int32 prim)
 }
 
 static int
-dlattachreq(int fd, bpf_u_int32 ppa, char *ebuf)
-{
-	dl_attach_req_t	req;
-
-	req.dl_primitive = DL_ATTACH_REQ;
-	req.dl_ppa = ppa;
-
-	return (send_request(fd, (char *)&req, sizeof(req), "attach", ebuf));
-}
-
-static int
 dlbindreq(int fd, bpf_u_int32 sap, char *ebuf)
 {
 
@@ -1257,17 +1283,6 @@ dlbindack(int fd, char *bufp, char *ebuf, int *uerror)
 {
 
 	return (recv_ack(fd, DL_BIND_ACK_SIZE, "bind", bufp, ebuf, uerror));
-}
-
-static int
-dlpromisconreq(int fd, bpf_u_int32 level, char *ebuf)
-{
-	dl_promiscon_req_t req;
-
-	req.dl_primitive = DL_PROMISCON_REQ;
-	req.dl_level = level;
-
-	return (send_request(fd, (char *)&req, sizeof(req), "promiscon", ebuf));
 }
 
 static int
