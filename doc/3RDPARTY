@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1026 2013/04/06 14:30:03 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1027 2013/04/06 14:54:05 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -190,8 +190,8 @@ Location:	share/misc/bsd-family-tree
 Notes:
 
 Package:	byacc
-Version:	20110908
-Current Vers:	20110908
+Version:	20130304
+Current Vers:	20130304
 Maintainer:	Thomas Dickey <dickey@invisible-island.net>
 Archive Site:	http://www.invisible-island.net/byacc/byacc.html
 Home Page:	http://www.invisible-island.net/byacc/byacc.html
