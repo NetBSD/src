@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.406 2013/02/24 03:06:13 jmmv Exp $
+#	$NetBSD: Makefile,v 1.407 2013/04/06 13:00:31 uebayasi Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -53,7 +53,7 @@ DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 # Note: At least mkisofs 2.0 should be used.
 #
 .if !defined(MKISOFS)
-MKISOFS!=       (which mkisofs || echo true)
+MKISOFS!=       (which mkisofs || echo true) 2>/dev/null
 .endif
 DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
 # ISO 9660 volume ID.  Note that this can only contain [A-Z0-9_].
