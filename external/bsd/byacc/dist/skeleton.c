@@ -1,10 +1,11 @@
-/*	$NetBSD: skeleton.c,v 1.10 2011/09/10 21:29:04 christos Exp $	*/
-/* Id: skeleton.c,v 1.31 2011/09/07 09:37:59 tom Exp */
+/*	$NetBSD: skeleton.c,v 1.11 2013/04/06 14:52:24 christos Exp $	*/
+
+/* Id: skeleton.c,v 1.32 2013/03/04 23:19:39 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeleton.c,v 1.10 2011/09/10 21:29:04 christos Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.11 2013/04/06 14:52:24 christos Exp $");
 
 /*  The definition of yysccsid in the banner should be replaced with	*/
 /*  a #pragma ident directive if the target C compiler supports		*/
@@ -166,7 +167,7 @@ const char *const body_1[] =
     "    else if ((newsize *= 2) > YYMAXDEPTH)",
     "        newsize = YYMAXDEPTH;",
     "",
-    "    i = data->s_mark - data->s_base;",
+    "    i = (int) (data->s_mark - data->s_base);",
     "    newss = (short *)realloc(data->s_base, newsize * sizeof(*newss));",
     "    if (newss == 0)",
     "        return -1;",
