@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.6 2010/04/06 17:39:47 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.7 2013/04/06 14:27:52 christos Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
