@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_version.h,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
+/*	$NetBSD: openpam_version.h,v 1.3 2013/04/06 02:20:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,14 +34,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_version.h 505 2011-12-18 14:13:08Z des
+ * Id: openpam_version.h 609 2012-05-26 13:57:45Z des 
  */
 
 #ifndef SECURITY_OPENPAM_VERSION_H_INCLUDED
 #define SECURITY_OPENPAM_VERSION_H_INCLUDED
 
 #define OPENPAM
-#define OPENPAM_VERSION	20111218
-#define OPENPAM_RELEASE	"Lycopsida"
+#define OPENPAM_VERSION	20120526
+#define OPENPAM_RELEASE	"Micrampelis"
 
 #endif /* !SECURITY_OPENPAM_VERSION_H_INCLUDED */
