@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_sm_chauthtok.c,v 1.2 2011/12/25 22:27:56 christos Exp $	*/
+/*	$NetBSD: pam_sm_chauthtok.c,v 1.3 2013/04/06 02:20:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_sm_chauthtok.c 466 2011-11-02 23:33:43Z des
+ * Id: pam_sm_chauthtok.c 466 2011-11-02 23:33:43Z des 
  */
 
 #ifdef HAVE_CONFIG_H
