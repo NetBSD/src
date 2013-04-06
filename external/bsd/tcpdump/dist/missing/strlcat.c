@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcat.c,v 1.1.1.1 2010/12/05 03:15:43 christos Exp $	*/
+/*	NetBSD: strlcat.c,v 1.5 1999/09/20 04:39:47 lukem Exp 	*/
 /*	from OpenBSD: strlcat.c,v 1.2 1999/06/17 16:28:58 millert Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/missing/strlcat.c,v 1.5 2003-11-16 09:36:51 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/missing/strlcat.c,v 1.5 2003-11-16 09:36:51 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H 
