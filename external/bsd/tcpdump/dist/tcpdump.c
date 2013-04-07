@@ -34,7 +34,7 @@ The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/tcpdump.c,v 1.283 2008-09-25 21:45:50 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: tcpdump.c,v 1.4 2013/04/06 19:33:09 christos Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.5 2013/04/07 19:17:11 christos Exp $");
 #endif
 #endif
 
@@ -71,6 +71,7 @@ extern int SIZE_BUF;
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <resolv.h>
 #ifndef WIN32
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -533,17 +534,25 @@ droproot(const char *username, const char *chroot_dir)
 	
 	pw = getpwnam(username);
 	if (pw) {
+		if (initgroups(pw->pw_name, pw->pw_gid) != 0) {
+			fprintf(stderr, "tcpdump: Couldn't initgroups to "
+			    "'%.32s' gid=%lu: %s\n", pw->pw_name,
+			    (unsigned long)pw->pw_gid,
+			    pcap_strerror(errno));
+			exit(1);
+		}
 		if (chroot_dir) {
 			setprotoent(1);
+			res_init();
 			if (chroot(chroot_dir) != 0 || chdir ("/") != 0) {
 				fprintf(stderr, "tcpdump: Couldn't chroot/chdir to '%.64s': %s\n",
 				    chroot_dir, pcap_strerror(errno));
 				exit(1);
 			}
 		}
-		if (initgroups(pw->pw_name, pw->pw_gid) != 0 ||
-		    setgid(pw->pw_gid) != 0 || setuid(pw->pw_uid) != 0) {
-			fprintf(stderr, "tcpdump: Couldn't change to '%.32s' uid=%lu gid=%lu: %s\n",
+		if (setgid(pw->pw_gid) != 0 || setuid(pw->pw_uid) != 0) {
+			fprintf(stderr, "tcpdump: Couldn't change to "
+			    "'%.32s' uid=%lu gid=%lu: %s\n",
 			    username, 
 			    (unsigned long)pw->pw_uid,
 			    (unsigned long)pw->pw_gid,
