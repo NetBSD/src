@@ -1,4 +1,4 @@
-/* $NetBSD: sesd.c,v 1.7 2013/04/07 18:48:24 wiz Exp $ */
+/* $NetBSD: sesd.c,v 1.8 2013/04/07 18:49:35 wiz Exp $ */
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -57,7 +57,7 @@ main(a, v)
 	char **v;
 {
 	static const char usage[] =
-	    "usage: %s [-d] [-t pollinterval] device [...]\n";
+	    "usage: %s [-d] [-t pollinterval] device [device ...]\n";
 	int c, fd, polltime, dev, nodaemon;
 	ses_encstat sestat, *carray;
 
