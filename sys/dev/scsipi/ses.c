@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.44 2012/10/27 17:18:38 chs Exp $ */
+/*	$NetBSD: ses.c,v 1.45 2013/04/07 18:50:33 wiz Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.44 2012/10/27 17:18:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.45 2013/04/07 18:50:33 wiz Exp $");
 
 #include "opt_scsi.h"
 
@@ -168,10 +168,11 @@ struct ses_softc {
 
 static int ses_match(device_t, cfdata_t, void *);
 static void ses_attach(device_t, device_t, void *);
+static int ses_detach(device_t, int);
 static enctyp ses_device_type(struct scsipibus_attach_args *);
 
 CFATTACH_DECL_NEW(ses, sizeof (struct ses_softc),
-    ses_match, ses_attach, NULL, NULL);
+    ses_match, ses_attach, ses_detach, NULL);
 
 extern struct cfdriver ses_cd;
 
@@ -275,7 +276,6 @@ ses_attach(device_t parent, device_t self, void *aux)
 	}
 	printf("\n%s: %s\n", device_xname(softc->sc_dev), tname);
 }
-
 
 static enctyp
 ses_device_type(struct scsipibus_attach_args *sa)
@@ -808,6 +808,29 @@ ses_softc_init(ses_softc_t *ssc, int doinit)
 	ssc->ses_nobjects = 0;
 	ssc->ses_encstat = 0;
 	return (ses_getconfig(ssc));
+}
+
+static int
+ses_detach(device_t self, int flags)
+{
+	struct ses_softc *ssc = device_private(self);
+	struct sscfg *cc = ssc->ses_private;
+
+	if (ssc->ses_objmap) {
+		SES_FREE(ssc->ses_objmap, (nobj * sizeof (encobj)));
+	}
+	if (cc != NULL) {
+		if (cc->ses_typidx) {
+			SES_FREE(cc->ses_typidx,
+			    (nobj * sizeof (struct typidx)));
+		}
+		if (cc->ses_eltmap) {
+			SES_FREE(cc->ses_eltmap, ntype);
+		}
+		SES_FREE(cc, sizeof (struct sscfg));
+	}
+
+	return 0;
 }
 
 static int
