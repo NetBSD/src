@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1424 2013/03/30 18:23:56 martin Exp $
+# $NetBSD: mi,v 1.1425 2013/04/07 14:14:49 kardel Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2159,6 +2159,7 @@
 ./usr/share/man/cat7/packages.0			man-obsolete		obsolete
 ./usr/share/man/cat7/pcap-filter.0		man-netutil-catman	.cat
 ./usr/share/man/cat7/pcap-linktype.0		man-netutil-catman	.cat
+./usr/share/man/cat7/pcap-tstamp.0		man-netutil-catman	.cat
 ./usr/share/man/cat7/pkgsrc.0			man-reference-catman	.cat
 ./usr/share/man/cat7/re_format.0		man-reference-catman	.cat
 ./usr/share/man/cat7/release.0			man-reference-catman	.cat
@@ -5017,6 +5018,7 @@
 ./usr/share/man/html7/orders.html		man-reference-htmlman	html
 ./usr/share/man/html7/pcap-filter.html		man-netutil-htmlman	html
 ./usr/share/man/html7/pcap-linktype.html	man-netutil-htmlman	html
+./usr/share/man/html7/pcap-tstamp.html		man-netutil-htmlman	html
 ./usr/share/man/html7/pkgsrc.html		man-reference-htmlman	html
 ./usr/share/man/html7/re_format.html		man-reference-htmlman	html
 ./usr/share/man/html7/release.html		man-reference-htmlman	html
@@ -7850,6 +7852,7 @@
 ./usr/share/man/man7/packages.7			man-obsolete		obsolete
 ./usr/share/man/man7/pcap-filter.7		man-netutil-man		.man
 ./usr/share/man/man7/pcap-linktype.7		man-netutil-man		.man
+./usr/share/man/man7/pcap-tstamp.7		man-netutil-man		.man
 ./usr/share/man/man7/pkgsrc.7			man-reference-man	.man
 ./usr/share/man/man7/re_format.7		man-reference-man	.man
 ./usr/share/man/man7/release.7			man-reference-man	.man
