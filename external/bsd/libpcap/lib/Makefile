@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2013/04/06 17:36:40 christos Exp $	
+# $NetBSD: Makefile,v 1.11 2013/04/07 00:18:55 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -28,7 +28,7 @@ SRCDIR=		${.CURDIR}/../dist
 .PATH:		${SRCDIR}
 
 LIB=		pcap
-MANSRC= \
+MAN3= \
 pcap.3pcap \
 pcap_activate.3pcap \
 pcap_breakloop.3pcap \
@@ -82,7 +82,6 @@ pcap_strerror.3pcap \
 pcap_tstamp_type_name_to_val.3pcap \
 pcap_tstamp_type_val_to_name.3pcap
 
-MAN=${MANSRC:S/3pcap/3/g}
 
 MAN3IN= \
 pcap.3pcap.in \
@@ -102,6 +101,8 @@ pcap-tstamp.manmisc.in
 MANFILEIN= pcap-savefile.manfile.in
 CLEANFILES+= ${MAN}
 
+MAN=	${MAN3:S/3pcap/3/g} ${MAN3IN:S/3pcap.in/3/g} \
+	${MANMISCIN:S/manmisc.in/7/g} ${MANFILEIN:S/manfile.in/5/g}
 WARNS?=		4
 
 .for i in ${MAN3IN}
