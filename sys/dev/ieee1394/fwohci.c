@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.133 2012/08/04 03:55:43 riastradh Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.134 2013/04/07 07:42:20 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.133 2012/08/04 03:55:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.134 2013/04/07 07:42:20 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -448,7 +448,7 @@ fwohci_attach(struct fwohci_softc *sc)
 	sc->fc.config_rom = fwdma_alloc_setup(sc->fc.dev, sc->fc.dmat,
 	    CROMSIZE, &sc->crom_dma, CROMSIZE, BUS_DMA_NOWAIT);
 	if (sc->fc.config_rom == NULL) {
-		aprint_error_dev(sc->fc.dev, "config_rom alloc failed.");
+		aprint_error_dev(sc->fc.dev, "config_rom alloc failed.\n");
 		return ENOMEM;
 	}
 
