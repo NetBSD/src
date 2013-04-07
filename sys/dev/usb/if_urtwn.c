@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.23 2013/03/30 03:17:33 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.24 2013/04/07 02:53:19 nonaka Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.23 2013/03/30 03:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.24 2013/04/07 02:53:19 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -609,7 +609,7 @@ urtwn_free_rx_list(struct urtwn_softc *sc)
 	/* NB: Caller must abort pipe first. */
 	for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
 		CTASSERT(sizeof(xfer) == sizeof(void *));
-		xfer = atomic_swap_ptr(&sc->tx_data[i].xfer, NULL);
+		xfer = atomic_swap_ptr(&sc->rx_data[i].xfer, NULL);
 		if (xfer != NULL)
 			usbd_free_xfer(xfer);
 	}
