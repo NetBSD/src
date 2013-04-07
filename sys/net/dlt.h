@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.13 2013/04/06 23:20:27 christos Exp $	*/
+/*	$NetBSD: dlt.h,v 1.14 2013/04/07 14:12:05 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -105,6 +105,8 @@
 #ifndef DLT_SLIP_BSDOS
 #define DLT_SLIP_BSDOS	13	/* BSD/OS Serial Line IP */
 #define DLT_PPP_BSDOS	14	/* BSD/OS Point-to-point Protocol */
+#define DLT_HIPPI	15	/* HIPPI */
+#define DLT_HDLC	16	/* HDLC framing */
 #endif
 #else
 #define DLT_SLIP_BSDOS	15	/* BSD/OS Serial Line IP */
