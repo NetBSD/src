@@ -1,4 +1,4 @@
-.\"	$NetBSD: sesd.8,v 1.6 2009/04/11 13:24:17 wiz Exp $
+.\"	$NetBSD: sesd.8,v 1.7 2013/04/07 18:49:06 wiz Exp $
 .\"	$OpenBSD: $
 .\"	$FreeBSD: $
 .\"
@@ -32,7 +32,7 @@
 .\" Matthew Jacob
 .\" Feral Software
 .\" mjacob@feral.com
-.Dd February 21, 2000
+.Dd April 7, 2013
 .Dt SESD 8
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@ The following options may be used:
 Instead of detaching and becoming a daemon, stay attached to the
 controlling terminal and log changes there as well as via the system
 logger.
-.It Fl p Ar poll-interval
+.It Fl t Ar poll-interval
 Change the interval of polling from the default 30 seconds to the number
 of seconds specified.
 .El
