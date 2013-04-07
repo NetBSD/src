@@ -1,4 +1,4 @@
-/* $NetBSD: sesd.c,v 1.6 2011/01/04 10:10:39 wiz Exp $ */
+/* $NetBSD: sesd.c,v 1.7 2013/04/07 18:48:24 wiz Exp $ */
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -57,8 +57,8 @@ main(a, v)
 	char **v;
 {
 	static const char usage[] =
-	    "usage: %s [ -d ] [ -t pollinterval ] device [ device ]\n";
-	int fd, polltime, dev, devbase, nodaemon;
+	    "usage: %s [-d] [-t pollinterval] device [...]\n";
+	int c, fd, polltime, dev, nodaemon;
 	ses_encstat sestat, *carray;
 
 	if (a < 2) {
@@ -66,34 +66,34 @@ main(a, v)
 		return (1);
 	}
 
-	devbase = 1;
-
-	if (strcmp(v[1], "-d") == 0) {
-		nodaemon = 1;
-		devbase++;
-	} else {
-		nodaemon = 0;
-	}
-
-	if (a > 2 && strcmp(v[2], "-t") == 0) {
-		devbase += 2;
-		polltime = atoi(v[3]);
-	} else {
-		polltime = 30;
-	}
+	nodaemon = 0;
+	polltime = 30;
+	while ((c = getopt(a, v, "dt:")) != -1) {
+		switch (c) {
+		case 'd':
+			nodaemon = 1;
+			break;
+		case 't':
+			polltime = atoi(optarg);
+			break;
+		default:
+			fprintf(stderr, usage, *v);
+			return (1);
+		}
+	}			 
 
 	carray = malloc(a);
 	if (carray == NULL) {
 		perror("malloc");
 		return (1);
 	}
-	for (dev = devbase; dev < a; dev++)
+	for (dev = optind; dev < a; dev++)
 		carray[dev] = (ses_encstat) -1;
 
 	/*
 	 * Check to make sure we can open all devices
 	 */
-	for (dev = devbase; dev < a; dev++) {
+	for (dev = optind; dev < a; dev++) {
 		fd = open(v[dev], O_RDWR);
 		if (fd < 0) {
 			perror(v[dev]);
@@ -118,7 +118,7 @@ main(a, v)
 	}
 
 	for (;;) {
-		for (dev = devbase; dev < a; dev++) {
+		for (dev = optind; dev < a; dev++) {
 			fd = open(v[dev], O_RDWR);
 			if (fd < 0) {
 				syslog(LOG_ERR, "%s: %m", v[dev]);
