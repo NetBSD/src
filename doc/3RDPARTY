@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1031 2013/04/06 22:21:35 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1032 2013/04/07 17:19:39 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -985,7 +985,7 @@ Home Page:	http://cantaforda.com/cfcl/eryk/linux/pdisk/index.html
 Mailing List:
 Responsible:	dbj
 License:	BSD-like
-Location:	dist/pdisk
+Location:	external/bsd/pdisk
 Notes:
 This is the disk partition utility used by Apple's mkLinux and OS X
 It is imported into external/bsd/pdisk.
