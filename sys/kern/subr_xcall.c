@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.14 2013/02/19 11:20:17 martin Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.15 2013/04/07 00:31:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.14 2013/02/19 11:20:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.15 2013/04/07 00:31:40 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -417,7 +417,7 @@ xc_highpri(xcfunc_t func, void *arg1, void *arg2, struct cpu_info *ci)
 	}
 	kpreempt_enable();
 #else
-	KASSERT(curcpu() == ci);
+	KASSERT(ci == NULL || curcpu() == ci);
 	xc_ipi_handler();
 #endif
 #endif
