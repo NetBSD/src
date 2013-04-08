@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.233 2013/04/08 01:59:11 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.234 2013/04/08 03:35:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.233 2013/04/08 01:59:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.234 2013/04/08 03:35:11 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -2220,7 +2220,7 @@ bge_phy_addr(struct bge_softc *sc)
 	case BGE_ASICREV_BCM5719:
 	case BGE_ASICREV_BCM5720:
 		phy_addr = pa->pa_function;
-		if (sc->bge_chipid == BGE_CHIPID_BCM5717_A0) {
+		if (sc->bge_chipid != BGE_CHIPID_BCM5717_A0) {
 			phy_addr += (CSR_READ_4(sc, BGE_SGDIG_STS) &
 			    BGE_SGDIGSTS_IS_SERDES) ? 8 : 1;
 		} else {
