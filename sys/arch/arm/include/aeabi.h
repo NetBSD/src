@@ -1,4 +1,4 @@
-/*	$NetBSD: aeabi.h,v 1.3 2013/01/24 10:14:17 matt Exp $	*/
+/*	$NetBSD: aeabi.h,v 1.4 2013/04/08 21:06:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #ifndef _ARM_AEABI_H_
 #define	_ARM_AEABI_H_
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/types.h>
 #else
 #include <stddef.h>
