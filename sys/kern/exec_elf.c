@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.43 2012/08/05 01:43:58 matt Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.44 2013/04/08 21:12:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.43 2012/08/05 01:43:58 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.44 2013/04/08 21:12:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -665,7 +665,6 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	int error, i, nload;
 	char *interp = NULL;
 	u_long phsize;
-	struct proc *p;
 	struct elf_args *ap = NULL;
 	bool is_dyn;
 
@@ -691,7 +690,6 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	 * Allocate space to hold all the program headers, and read them
 	 * from the file
 	 */
-	p = l->l_proc;
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = kmem_alloc(phsize, KM_SLEEP);
 
