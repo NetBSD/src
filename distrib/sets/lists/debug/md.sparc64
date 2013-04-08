@@ -1,9 +1,11 @@
-# $NetBSD: md.sparc64,v 1.19 2013/04/08 13:56:28 njoly Exp $
+# $NetBSD: md.sparc64,v 1.20 2013/04/08 18:46:01 spz Exp $
 ./usr/libdata/debug/lib/sparc/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/libexec/ld.elf_so-sparc.debug	comp-sys-debug		debug
 ./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
+./usr/libdata/debug/libexec/ld.elf_so-sparc.debug	comp-sys-debug		debug
+./usr/libdata/debug/usr/libexec/ld.elf_so.sparc	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/lib/sparc/i18n/libBIG5.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/i18n/libDECHanyu.so.5.0.debug		comp-i18n-shlib		compat,pic,debug

@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.19 2013/04/08 13:56:28 njoly Exp $
+# $NetBSD: ad.mips64el,v 1.20 2013/04/08 18:46:01 spz Exp $
 ./usr/libdata/debug/lib/64/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -7,6 +7,8 @@
 ./usr/libdata/debug/lib/o32/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/libexec/ld.elf_so-64.debug		comp-sys-debug		debug
 ./usr/libdata/debug/libexec/ld.elf_so-o32.debug		comp-sys-debug		debug
+./usr/libdata/debug/usr/libexec/ld.elf_so-o32	comp-obsolete		obsolete
+./usr/libdata/debug/usr/libexec/ld.elf_so-64	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/elf2aout.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/elf2ecoff.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/lib/64/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug,compat
