@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1812 2013/04/06 17:30:28 christos Exp $
+#	$NetBSD: mi,v 1.1813 2013/04/08 07:18:25 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1993,7 +1993,7 @@
 ./usr/include/netisdn/i4b_ioctl.h		comp-c-include
 ./usr/include/netisdn/i4b_rbch_ioctl.h		comp-c-include
 ./usr/include/netisdn/i4b_tel_ioctl.h		comp-c-include
-./usr/include/netisdn/i4b_trace.h		comp-obsolete		obsolete
+./usr/include/netisdn/i4b_trace.h		comp-c-include
 ./usr/include/netiso/argo_debug.h		comp-obsolete		obsolete
 ./usr/include/netiso/clnl.h			comp-obsolete		obsolete
 ./usr/include/netiso/clnp.h			comp-obsolete		obsolete
