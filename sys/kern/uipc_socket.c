@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.214 2013/03/14 19:13:17 gdt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.215 2013/04/08 21:12:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.214 2013/03/14 19:13:17 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.215 2013/04/08 21:12:33 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -877,12 +877,10 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	struct mbuf *control, int flags, struct lwp *l)
 {
 	struct mbuf	**mp, *m;
-	struct proc	*p;
 	long		space, len, resid, clen, mlen;
 	int		error, s, dontroute, atomic;
 	short		wakeup_state = 0;
 
-	p = l->l_proc;
 	clen = 0;
 
 	/*

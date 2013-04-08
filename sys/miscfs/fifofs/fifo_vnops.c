@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.72 2011/12/21 15:27:50 christos Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.73 2013/04/08 21:12:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.72 2011/12/21 15:27:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.73 2013/04/08 21:12:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,12 +128,10 @@ fifo_open(void *v)
 	struct lwp	*l = curlwp;
 	struct vnode	*vp;
 	struct fifoinfo	*fip;
-	struct proc	*p;
 	struct socket	*rso, *wso;
 	int		error;
 
 	vp = ap->a_vp;
-	p = l->l_proc;
 
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		fip = kmem_alloc(sizeof(*fip), KM_SLEEP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.48 2013/03/16 12:05:02 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.49 2013/04/08 21:12:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.48 2013/03/16 12:05:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.49 2013/04/08 21:12:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2917,16 +2917,12 @@ dwc_otg_host_data_tx(struct dwc_otg_td *td)
 	uint32_t count;
 	uint32_t hcint;
 	uint32_t hcchar;
-	uint8_t ep_type;
 
 	if (dwc_otg_host_channel_alloc(td))
 		return 1;		/* busy */
 
 	/* get pointer to softc */
 	sc = DWC_OTG_TD2SC(td);
-
-	ep_type = ((td->hcchar &
-	    HCCHAR_EPTYPE_MASK) >> HCCHAR_EPTYPE_SHIFT);
 
 	hcint = sc->sc_chan_state[td->channel].hcint;
 
@@ -3991,7 +3987,6 @@ dwc_otg_rhc(void *addr)
 {
 	struct dwc_otg_softc *sc = addr;
 	usbd_xfer_handle xfer;
-	usbd_pipe_handle pipe;
 	u_char *p;
 
 	DPRINTF("\n");
@@ -4005,8 +4000,6 @@ dwc_otg_rhc(void *addr)
 
 	}
 	/* set port bit */
-	pipe = xfer->pipe;
-
 	p = KERNADDR(&xfer->dmabuf, 0);
 
 	p[0] = 0x02;	/* we only have one port (1 << 1) */
