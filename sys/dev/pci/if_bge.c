@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.232 2013/04/02 12:27:02 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.233 2013/04/08 01:59:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.232 2013/04/02 12:27:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.233 2013/04/08 01:59:11 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -3539,6 +3539,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+#if 0
 	/*
 	 * Reset NVRAM before bge_reset(). It's required to acquire NVRAM
 	 * lock in bge_reset().
@@ -3547,6 +3548,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    BGE_EEADDR_RESET | BGE_EEHALFCLK(BGE_HALFCLK_384SCL));
 	delay(1000);
 	BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_AUTO_EEPROM);
+#endif
 
 	bge_stop_fw(sc);
 	bge_sig_pre_reset(sc, BGE_RESET_START);
@@ -3899,6 +3901,7 @@ bge_reset(struct bge_softc *sc)
 	} else
 		write_op = bge_writereg_ind;
 
+#if 0
 	if ((sc->bge_flags & BGE_NO_EEPROM) == 0 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5700 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5701) {
@@ -3914,6 +3917,7 @@ bge_reset(struct bge_softc *sc)
 			    device_xname(sc->bge_dev));
 		}
 	}
+#endif
 	/* Take APE lock when performing reset. */
 	bge_ape_lock(sc, BGE_APE_LOCK_GRC);
 
