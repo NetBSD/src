@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.1.1.2 2013/03/27 00:31:33 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.2 2013/04/08 02:16:03 christos Exp $	*/
 
 /* bpf.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bpf.c,v 1.1.1.2 2013/03/27 00:31:33 christos Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.2 2013/04/08 02:16:03 christos Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_BPF_SEND) || defined (USE_BPF_RECEIVE)	\
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: bpf.c,v 1.1.1.2 2013/03/27 00:31:33 christos Exp $");
 #  endif
 # endif
 
+#include <sys/param.h>
 #include <netinet/in_systm.h>
 #include "includes/netinet/ip.h"
 #include "includes/netinet/udp.h"
@@ -556,11 +557,50 @@ void maybe_setup_fallback ()
 	}
 }
 
+static int
+lladdr_active(int s, const char *name, const struct ifaddrs *ifa)
+{
+	if (ifa->ifa_addr->sa_family != AF_LINK)
+		return 0;
+	if (strcmp(ifa->ifa_name, name) != 0)
+		return 0;
+
+#ifdef SIOCGLIFADDR
+{
+	struct if_laddrreq iflr;
+	const struct sockaddr_dl *sdl;
+
+	sdl = satocsdl(ifa->ifa_addr);
+	memset(&iflr, 0, sizeof(iflr));
+
+	strlcpy(iflr.iflr_name, ifa->ifa_name, sizeof(iflr.iflr_name));
+	memcpy(&iflr.addr, ifa->ifa_addr, MIN(ifa->ifa_addr->sa_len,
+	    sizeof(iflr.addr)));
+	iflr.flags = IFLR_PREFIX;
+	iflr.prefixlen = sdl->sdl_alen * NBBY;
+
+	if (ioctl(s, SIOCGLIFADDR, &iflr) == -1) {
+		log_fatal("ioctl(SIOCGLIFADDR): %m");
+	}
+
+	if ((iflr.flags & IFLR_ACTIVE) == 0)
+		return 0;
+}
+#endif
+	return 1;
+}
+
+
 void
 get_hw_addr(const char *name, struct hardware *hw) {
 	struct ifaddrs *ifa;
 	struct ifaddrs *p;
 	struct sockaddr_dl *sa;
+	int s;
+
+	if ((s = socket(AF_LINK, SOCK_DGRAM, 0)) == -1) {
+		log_fatal("socket AF_LINK: %m");
+	}
 
 	if (getifaddrs(&ifa) != 0) {
 		log_fatal("Error getting interface information; %m");
@@ -570,15 +610,16 @@ get_hw_addr(const char *name, struct hardware *hw) {
 	 * Loop through our interfaces finding a match.
 	 */
 	sa = NULL;
-	for (p=ifa; (p != NULL) && (sa == NULL); p = p->ifa_next) {
-		if ((p->ifa_addr->sa_family == AF_LINK) && 
-		    !strcmp(p->ifa_name, name)) {
+	for (p = ifa; p != NULL; p = p->ifa_next) {
+		if (lladdr_active(s, name, p)) {
 		    	sa = (struct sockaddr_dl *)p->ifa_addr;
+			break;
 		}
 	}
 	if (sa == NULL) {
 		log_fatal("No interface called '%s'", name);
 	}
+	close(s);
 
 	/*
 	 * Pull out the appropriate information.
