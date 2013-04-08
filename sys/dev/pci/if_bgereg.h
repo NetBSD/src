@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.71 2013/03/27 12:11:57 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.72 2013/04/08 15:55:58 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -754,7 +754,7 @@
 #define BGE_LEDCTL_BLINKPERIOD_OVERRIDE	0x80000000
 
 /* TX backoff seed register */
-#define BGE_TX_BACKOFF_SEED_MASK	0x3F
+#define BGE_TX_BACKOFF_SEED_MASK	0x3FF
 
 /* Autopoll status register */
 #define BGE_AUTOPOLLSTS_ERROR		0x00000001
