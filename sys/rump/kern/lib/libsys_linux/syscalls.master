@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.3 2013/03/04 19:12:56 stacktic Exp $
+	$NetBSD: syscalls.master,v 1.4 2013/04/08 20:54:47 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -538,11 +538,13 @@
 			    struct timeval50 *tv); }
 418	UNIMPL		gettimeofday
 419	UNIMPL		settimeofday
-420	UNIMPL		utimes
+420	NODEF		{ int|linux_sys||utimes(const char *path, \
+			    struct linux_timeval *tv); }
 421	UNIMPL		adjtime
 422	UNIMPL		lfs_segwait
 423	UNIMPL		futimes
-424	UNIMPL		lutimes
+424	NODEF		{ int|linux_sys||lutimes(const char *path, \
+			    struct linux_timeval *tv); }
 425	UNIMPL		setitimer
 426	UNIMPL		getitimer
 427	UNIMPL		clock_gettime

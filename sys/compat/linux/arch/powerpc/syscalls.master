@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.51 2012/09/19 21:19:15 pooka Exp $  
+	$NetBSD: syscalls.master,v 1.52 2013/04/08 20:54:49 pooka Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -443,7 +443,7 @@
 			    struct linux_timespec *rmtp); }
 249	UNIMPL		swapcontext
 250	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
-251	UNIMPL		utimes
+251	STD		{ int|linux_sys||utimes(const char *path, struct linux_timeval *times); }
 252	STD		{ int|linux_sys||statfs64(const char *path, \
 			    size_t sz, struct linux_statfs64 *sp); }
 253	STD		{ int|linux_sys||fstatfs64(int fd, \
