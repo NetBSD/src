@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.41 2012/09/19 21:19:14 pooka Exp $
+	$NetBSD: syscalls.master,v 1.42 2013/04/08 20:54:47 pooka Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -440,7 +440,7 @@
 232	UNIMPL		epoll_wait
 233	UNIMPL		epoll_ctl
 234	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
-235	UNIMPL		utimes
+235	STD		{ int|linux_sys||utimes(const char *path, struct linux_timeval *times); }
 236	UNIMPL		vserver
 237	UNIMPL		mbind
 238	UNIMPL		set_mempolicy

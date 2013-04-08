@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.49 2012/09/19 21:19:14 pooka Exp $
+	$NetBSD: syscalls.master,v 1.50 2013/04/08 20:54:48 pooka Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -449,7 +449,7 @@
 267	STD		{ int|linux_sys||fstatfs64(int fd, \
 			    size_t sz, struct linux_statfs64 *sp); }
 268	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
-269	UNIMPL		utimes
+269	STD		{ int|linux_sys||utimes(const char *path, struct linux_timeval *times); }
 270	STD		{ int|linux_sys||fadvise64_64(int fd, \
 			    linux_off_t offset, linux_off_t len, int advice); }
 271	UNIMPL		pciconfig_iobase
