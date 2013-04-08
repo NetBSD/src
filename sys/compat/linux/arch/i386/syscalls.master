@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.108 2012/09/19 21:19:14 pooka Exp $
+	$NetBSD: syscalls.master,v 1.109 2013/04/08 20:54:48 pooka Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -451,7 +451,7 @@
 269	STD		{ int|linux_sys||fstatfs64(int fd, \
 			    size_t sz, struct linux_statfs64 *sp); }
 270	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
-271	UNIMPL		utimes
+271	STD		{ int|linux_sys||utimes(const char *path, struct linux_timeval *times); }
 272	STD		{ int|linux_sys||fadvise64_64(int fd, \
 			    linux_off_t offset, linux_off_t len, int advice); }
 273	UNIMPL		vserver
