@@ -1,4 +1,4 @@
-/* $NetBSD: t_acos.c,v 1.3 2012/03/23 23:45:31 matt Exp $ */
+/* $NetBSD: t_acos.c,v 1.4 2013/04/09 12:11:04 isaki Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,6 +31,20 @@
 
 #include <atf-c.h>
 #include <math.h>
+
+static const struct {
+	double x;
+	double y;
+} values[] = {
+	{ -1,    M_PI,              },
+	{ -0.99, 3.000053180265366, },
+	{ -0.5,  2.094395102393195, },
+	{ -0.1,  1.670963747956456, },
+	{  0,    M_PI / 2,          },
+	{  0.1,  1.470628905633337, },
+	{  0.5,  1.047197551196598, },
+	{  0.99, 0.141539473324427, },
+};
 
 /*
  * acos(3)
@@ -119,28 +133,25 @@ ATF_TC_BODY(acos_range, tc)
 #endif
 }
 
-ATF_TC(acos_cos);
-ATF_TC_HEAD(acos_cos, tc)
+ATF_TC(acos_inrange);
+ATF_TC_HEAD(acos_inrange, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test acos(cos(x)) == x");
+	atf_tc_set_md_var(tc, "descr", "Test acos(x) for some values");
 }
 
-ATF_TC_BODY(acos_cos, tc)
+ATF_TC_BODY(acos_inrange, tc)
 {
 #ifndef __vax__
-	const double x[] = { 0.0, 1.0, M_PI / 2, M_PI / 3, M_PI / 6 };
 	const double eps = 1.0e-15;
+	double x;
 	double y;
 	size_t i;
 
-	for (i = 0; i < __arraycount(x); i++) {
-
-		y = acos(cos(x[i]));
-
-		if (fabs(y - x[i]) > eps)
-			atf_tc_fail_nonfatal(
-			    "acos(cos(%0.03f)) != %0.03f (eps=%0.03e)",
-			    x[i], x[i], fabs(y - x[i]));
+	for (i = 0; i < __arraycount(values); i++) {
+		x = values[i].x;
+		y = values[i].y;
+		if (fabs(acos(x) - y) > eps)
+			atf_tc_fail_nonfatal("acos(%g) != %g", x, y);
 	}
 #endif
 }
@@ -232,28 +243,25 @@ ATF_TC_BODY(acosf_range, tc)
 #endif
 }
 
-ATF_TC(acosf_cosf);
-ATF_TC_HEAD(acosf_cosf, tc)
+ATF_TC(acosf_inrange);
+ATF_TC_HEAD(acosf_inrange, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test acosf(cosf(x)) == x");
+	atf_tc_set_md_var(tc, "descr", "Test acosf(x) for some values");
 }
 
-ATF_TC_BODY(acosf_cosf, tc)
+ATF_TC_BODY(acosf_inrange, tc)
 {
 #ifndef __vax__
-	const float x[] = { 0.0, 1.0, M_PI / 2, M_PI / 3, M_PI / 6 };
 	const float eps = 1.0e-5;
+	float x;
 	float y;
 	size_t i;
 
-	for (i = 0; i < __arraycount(x); i++) {
-
-		y = acosf(cosf(x[i]));
-
-		if (fabsf(y - x[i]) > eps)
-			atf_tc_fail_nonfatal(
-			    "acosf(cosf(%0.03f)) != %0.03f (eps=%0.03e)",
-			    x[i], x[i], fabs(y - x[i]));
+	for (i = 0; i < __arraycount(values); i++) {
+		x = values[i].x;
+		y = values[i].y;
+		if (fabsf(acosf(x) - y) > eps)
+			atf_tc_fail_nonfatal("acosf(%g) != %g", x, y);
 	}
 #endif
 }
@@ -266,14 +274,14 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, acos_inf_pos);
 	ATF_TP_ADD_TC(tp, acos_one_pos);
 	ATF_TP_ADD_TC(tp, acos_range);
-	ATF_TP_ADD_TC(tp, acos_cos);
+	ATF_TP_ADD_TC(tp, acos_inrange);
 
 	ATF_TP_ADD_TC(tp, acosf_nan);
 	ATF_TP_ADD_TC(tp, acosf_inf_neg);
 	ATF_TP_ADD_TC(tp, acosf_inf_pos);
 	ATF_TP_ADD_TC(tp, acosf_one_pos);
 	ATF_TP_ADD_TC(tp, acosf_range);
-	ATF_TP_ADD_TC(tp, acosf_cosf);
+	ATF_TP_ADD_TC(tp, acosf_inrange);
 
 	return atf_no_error();
 }

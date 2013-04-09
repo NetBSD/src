@@ -1,4 +1,4 @@
-/* $NetBSD: t_cosh.c,v 1.4 2011/10/18 14:16:42 jruoho Exp $ */
+/* $NetBSD: t_cosh.c,v 1.5 2013/04/09 12:11:04 isaki Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,41 +29,54 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cosh.c,v 1.4 2011/10/18 14:16:42 jruoho Exp $");
+__RCSID("$NetBSD: t_cosh.c,v 1.5 2013/04/09 12:11:04 isaki Exp $");
 
 #include <atf-c.h>
 #include <math.h>
 #include <stdio.h>
 
+static const struct {
+	double x;
+	double y;
+	double e;
+} values[] = {
+	{ -10,    11013.23292010332, 1e4, },
+	{ -2,     3.762195691083631, 1,   },
+	{ -1,     1.543080634815244, 1,   },
+	{ -0.05,  1.001250260438369, 1,   },
+	{ -0.001, 1.000000500000042, 1,   },
+	{  0,     1,                 1,   },
+	{  0.001, 1.000000500000042, 1,   },
+	{  0.05,  1.001250260438369, 1,   },
+	{  1,     1.543080634815244, 1,   },
+	{  2,     3.762195691083631, 1,   },
+	{  10,    11013.23292010332, 1e4, },
+};
+
 /*
  * cosh(3)
  */
-ATF_TC(cosh_def);
-ATF_TC_HEAD(cosh_def, tc)
+ATF_TC(cosh_inrange);
+ATF_TC_HEAD(cosh_inrange, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test the definition of cosh(3)");
+	atf_tc_set_md_var(tc, "descr", "cosh(x) for some values");
 }
 
-ATF_TC_BODY(cosh_def, tc)
+ATF_TC_BODY(cosh_inrange, tc)
 {
 #ifndef __vax__
-	const double x[] = { 0.005, 0.05, 0.0, 1.0, 10.0, 20.0 };
-	const double eps = 1.0e-8;
-	double y, z;
+	double eps;
+	double x;
+	double y;
 	size_t i;
 
-	for (i = 0; i < __arraycount(x); i++) {
+	for (i = 0; i < __arraycount(values); i++) {
+		x = values[i].x;
+		y = values[i].y;
+		eps = 1e-15 * values[i].e;
 
-		y = cosh(x[i]);
-		z = (exp(x[i]) + exp(-x[i])) / 2;
-
-		(void)fprintf(stderr,
-		    "cosh(%0.03f) = %f\n(exp(%0.03f) + "
-		    "exp(-%0.03f)) / 2 = %f\n", x[i], y, x[i], x[i], z);
-
-		if (fabs(y - z) > eps)
-			atf_tc_fail_nonfatal("cosh(%0.03f) != %0.03f\n",
-			    x[i], z);
+		if (fabs(cosh(x) - y) > eps)
+			atf_tc_fail_nonfatal("cosh(%g) != %g\n", x, y);
 	}
 #endif
 }
@@ -153,32 +166,27 @@ ATF_TC_BODY(cosh_zero_pos, tc)
 /*
  * coshf(3)
  */
-ATF_TC(coshf_def);
-ATF_TC_HEAD(coshf_def, tc)
+ATF_TC(coshf_inrange);
+ATF_TC_HEAD(coshf_inrange, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test the definition of coshf(3)");
+	atf_tc_set_md_var(tc, "descr", "coshf(x) for some values");
 }
 
-ATF_TC_BODY(coshf_def, tc)
+ATF_TC_BODY(coshf_inrange, tc)
 {
 #ifndef __vax__
-	const double x[] = { 0.005, 0.05, 0.0, 1.0, 10.0, 20.0 };
-	const float eps = 1.0e-3;
-	float y, z;
+	float eps;
+	float x;
+	float y;
 	size_t i;
 
-	for (i = 0; i < __arraycount(x); i++) {
+	for (i = 0; i < __arraycount(values); i++) {
+		x = values[i].x;
+		y = values[i].y;
+		eps = 1e-6 * values[i].e;
 
-		y = coshf(x[i]);
-		z = (expf(x[i]) + expf(-x[i])) / 2;
-
-		(void)fprintf(stderr,
-		    "coshf(%0.03f) = %f\n(expf(%0.03f) + "
-		    "expf(-%0.03f)) / 2 = %f\n", x[i], y, x[i], x[i], z);
-
-		if (fabsf(y - z) > eps)
-			atf_tc_fail_nonfatal("coshf(%0.03f) != %0.03f\n",
-			    x[i], z);
+		if (fabsf(coshf(x) - y) > eps)
+			atf_tc_fail_nonfatal("coshf(%g) != %g\n", x, y);
 	}
 #endif
 }
@@ -268,14 +276,14 @@ ATF_TC_BODY(coshf_zero_pos, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, cosh_def);
+	ATF_TP_ADD_TC(tp, cosh_inrange);
 	ATF_TP_ADD_TC(tp, cosh_nan);
 	ATF_TP_ADD_TC(tp, cosh_inf_neg);
 	ATF_TP_ADD_TC(tp, cosh_inf_pos);
 	ATF_TP_ADD_TC(tp, cosh_zero_neg);
 	ATF_TP_ADD_TC(tp, cosh_zero_pos);
 
-	ATF_TP_ADD_TC(tp, coshf_def);
+	ATF_TP_ADD_TC(tp, coshf_inrange);
 	ATF_TP_ADD_TC(tp, coshf_nan);
 	ATF_TP_ADD_TC(tp, coshf_inf_neg);
 	ATF_TP_ADD_TC(tp, coshf_inf_pos);
