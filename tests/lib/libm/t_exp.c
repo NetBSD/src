@@ -1,4 +1,4 @@
-/* $NetBSD: t_exp.c,v 1.2 2012/05/30 15:14:10 jruoho Exp $ */
+/* $NetBSD: t_exp.c,v 1.3 2013/04/09 11:42:56 isaki Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,16 +36,17 @@
 static const struct {
 	double x;
 	double y;
+	double e;
 } exp_values[] = {
-	{  -10, 0.4539992976248485e-4, },
-	{   -5, 0.6737946999085467e-2, },
-	{   -1, 0.3678794411714423, },
-	{ -0.1, 0.9048374180359595, },
-	{    0, 1.0000000000000000, },
-	{  0.1, 1.1051709180756477, },
-	{    1, 2.7182818284590452, },
-	{    5, 148.41315910257660, },
-	{   10, 22026.465794806718, },
+	{  -10, 0.4539992976248485e-4, 1e-4, },
+	{   -5, 0.6737946999085467e-2, 1e-2, },
+	{   -1, 0.3678794411714423,    1e-1, },
+	{ -0.1, 0.9048374180359595,    1e-1, },
+	{    0, 1.0000000000000000,    1,    },
+	{  0.1, 1.1051709180756477,    1,    },
+	{    1, 2.7182818284590452,    1,    },
+	{    5, 148.41315910257660,    1e2, },
+	{   10, 22026.465794806718,    1e4, },
 };
 
 /*
@@ -327,14 +328,15 @@ ATF_TC_HEAD(exp_product, tc)
 ATF_TC_BODY(exp_product, tc)
 {
 #ifndef __vax__
+	double eps;
 	double x;
 	double y;
-	const double eps = 1.0e-11;
 	size_t i;
 
 	for (i = 0; i < __arraycount(exp_values); i++) {
 		x = exp_values[i].x;
 		y = exp_values[i].y;
+		eps = 1e-15 * exp_values[i].e;
 
 		if (fabs(exp(x) - y) > eps)
 			atf_tc_fail_nonfatal("exp(%0.01f) != %18.18e", x, y);
@@ -436,14 +438,15 @@ ATF_TC_HEAD(expf_product, tc)
 ATF_TC_BODY(expf_product, tc)
 {
 #ifndef __vax__
+	float eps;
 	float x;
 	float y;
-	const float eps = 1.0e-2;
 	size_t i;
 
 	for (i = 0; i < __arraycount(exp_values); i++) {
 		x = exp_values[i].x;
 		y = exp_values[i].y;
+		eps = 1e-6 * exp_values[i].e;
 
 		if (fabsf(expf(x) - y) > eps)
 			atf_tc_fail_nonfatal("expf(%0.01f) != %18.18e", x, y);
