@@ -1,4 +1,4 @@
-.\"	$NetBSD: sup.1,v 1.21 2011/09/22 07:30:04 mrg Exp $
+.\"	$NetBSD: sup.1,v 1.22 2013/04/09 16:39:19 christos Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -45,7 +45,7 @@
 .\" 04-Apr-85  Steven Shafer (sas) at Carnegie-Mellon University
 .\" 	Created.
 .\"
-.TH SUP 1 10/01/08
+.TH SUP 1 2013/03/13
 .CM 4
 .SH "NAME"
 sup \- software upgrade protocol
@@ -265,6 +265,12 @@ A
 upgrade will be performed.
 Messages will be printed that indicate what would happen if
 an actual upgrade were done.
+.TP
+.B i
+Ignore errors from
+.IR chown(2)
+or
+.IR chgrp(2) .
 .TP
 .B -k
 .I Sup
