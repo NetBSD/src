@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1425 2013/04/07 14:14:49 kardel Exp $
+# $NetBSD: mi,v 1.1426 2013/04/09 13:31:08 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -854,6 +854,7 @@
 ./usr/share/man/cat4/ate.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atf-test-case.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat4/ath.0			man-sys-catman		.cat
+./usr/share/man/cat4/athn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atppc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/attimer.0			man-sys-catman		.cat
