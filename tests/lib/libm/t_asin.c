@@ -1,4 +1,4 @@
-/* $NetBSD: t_asin.c,v 1.1 2011/09/17 18:08:35 jruoho Exp $ */
+/* $NetBSD: t_asin.c,v 1.2 2013/04/09 12:11:04 isaki Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,6 +31,20 @@
 
 #include <atf-c.h>
 #include <math.h>
+
+static const struct {
+	double x;
+	double y;
+} values[] = {
+	{ -1.0, -M_PI / 2, },
+	{ -0.9, -1.119769514998634, },
+	{ -0.5, -M_PI / 6, },
+	{ -0.1, -0.1001674211615598, },
+	{  0.1,  0.1001674211615598, },
+	{  0.5,  M_PI / 6, },
+	{  0.9,  1.119769514998634, },
+	{  1.0,  M_PI / 2, },
+};
 
 /*
  * asin(3)
@@ -103,27 +117,24 @@ ATF_TC_BODY(asin_range, tc)
 #endif
 }
 
-ATF_TC(asin_sin);
-ATF_TC_HEAD(asin_sin, tc)
+ATF_TC(asin_inrange);
+ATF_TC_HEAD(asin_inrange, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test asin(sin(x)) == x");
+	atf_tc_set_md_var(tc, "descr", "Test asin(x) for some values");
 }
 
-ATF_TC_BODY(asin_sin, tc)
+ATF_TC_BODY(asin_inrange, tc)
 {
 #ifndef __vax__
-	const double x[] = { 0.0, 1.0, M_PI / 2, M_PI / 3, M_PI / 6 };
-	const double eps = 1.0e-40;
+	const double eps = 1.0e-15;
 	double y;
 	size_t i;
 
-	for (i = 0; i < __arraycount(x); i++) {
-
-		y = asin(sin(x[i]));
-
-		if (fabs(y - x[i]) > eps)
-			atf_tc_fail_nonfatal("asin(sin(%0.03f)) != %0.03f",
-			    x[i], x[i]);
+	for (i = 0; i < __arraycount(values); i++) {
+		y = asin(values[i].x);
+		if (fabs(y - values[i].y) > eps)
+			atf_tc_fail_nonfatal("asin(%g) != %g",
+				values[i].x, values[i].y);
 	}
 #endif
 }
@@ -233,27 +244,25 @@ ATF_TC_BODY(asinf_range, tc)
 #endif
 }
 
-ATF_TC(asinf_sinf);
-ATF_TC_HEAD(asinf_sinf, tc)
+ATF_TC(asinf_inrange);
+ATF_TC_HEAD(asinf_inrange, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test asinf(sinf(x)) == x");
+	atf_tc_set_md_var(tc, "descr", "Test asinf(x) for some values");
 }
 
-ATF_TC_BODY(asinf_sinf, tc)
+ATF_TC_BODY(asinf_inrange, tc)
 {
 #ifndef __vax__
-	const float x[] = { 0.0, 1.0, M_PI / 2, M_PI / 3, M_PI / 6 };
 	const float eps = 1.0e-6;
+	float x;
 	float y;
 	size_t i;
 
-	for (i = 0; i < __arraycount(x); i++) {
-
-		y = asinf(sinf(x[i]));
-
-		if (fabsf(y - x[i]) > eps)
-			atf_tc_fail_nonfatal("asinf(sinf(%0.03f)) != %0.03f",
-			    x[i], x[i]);
+	for (i = 0; i < __arraycount(values); i++) {
+		x = values[i].x;
+		y = values[i].y;
+		if (fabs(asinf(x) - y) > eps)
+			atf_tc_fail_nonfatal("asinf(%g) != %g", x, y);
 	}
 #endif
 }
@@ -299,7 +308,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, asin_inf_neg);
 	ATF_TP_ADD_TC(tp, asin_inf_pos);
 	ATF_TP_ADD_TC(tp, asin_range);
-	ATF_TP_ADD_TC(tp, asin_sin);
+	ATF_TP_ADD_TC(tp, asin_inrange);
 	ATF_TP_ADD_TC(tp, asin_zero_neg);
 	ATF_TP_ADD_TC(tp, asin_zero_pos);
 
@@ -307,7 +316,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, asinf_inf_neg);
 	ATF_TP_ADD_TC(tp, asinf_inf_pos);
 	ATF_TP_ADD_TC(tp, asinf_range);
-	ATF_TP_ADD_TC(tp, asinf_sinf);
+	ATF_TP_ADD_TC(tp, asinf_inrange);
 	ATF_TP_ADD_TC(tp, asinf_zero_neg);
 	ATF_TP_ADD_TC(tp, asinf_zero_pos);
 
