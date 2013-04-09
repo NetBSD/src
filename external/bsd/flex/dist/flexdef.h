@@ -1,4 +1,4 @@
-/*	$NetBSD: flexdef.h,v 1.4 2013/04/06 15:27:05 joerg Exp $	*/
+/*	$NetBSD: flexdef.h,v 1.5 2013/04/09 15:19:45 christos Exp $	*/
 
 
 /* flexdef - definitions file for flex */
@@ -1224,7 +1224,7 @@ extern void sf_pop(void);
 /*
  * From "misc.c"
  */
-#ifdef __NetBSD__
+#ifdef __printflike
 __printflike(1, 2)
 #endif
 void lerrsf_fatal (const char *msg, ...);
