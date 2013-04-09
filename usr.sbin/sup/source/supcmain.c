@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.32 2011/09/21 19:34:54 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.33 2013/04/09 16:39:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -470,7 +470,7 @@ doswitch(int *argc, char ***argv, TREE ** collTp, int *oflagsp, int *aflagsp,
 	int oflags, aflags;
 	int c;
 
-#define SUPOPTIONS "abBCdDeEfkKlmM:NoOPRsStuvXzZ=:"
+#define SUPOPTIONS "abBCdDeEifkKlmM:NoOPRsStuvXzZ=:"
 
 	oflags = aflags = 0;
 	while ((c = getopt(*argc, *argv, SUPOPTIONS)) != -1)
@@ -523,6 +523,10 @@ doswitch(int *argc, char ***argv, TREE ** collTp, int *oflagsp, int *aflagsp,
 			break;
 		case 'f':
 			oflags |= CFLIST;
+			break;
+		case 'i':
+			oflags |= CFIGNCHERR;
+			aflags &= ~CFIGNCHERR;
 			break;
 		case 'k':
 			oflags |= CFKEEP;
