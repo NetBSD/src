@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.44 2013/04/08 21:12:33 skrll Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.45 2013/04/09 07:39:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.44 2013/04/08 21:12:33 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.45 2013/04/09 07:39:01 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -736,7 +736,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	}
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
-	p->p_pax = epp->ep_pax_flags;
+	l->l_proc->p_pax = epp->ep_pax_flags;
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
 	if (is_dyn)
