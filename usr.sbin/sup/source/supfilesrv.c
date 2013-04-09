@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.49 2013/03/08 20:58:35 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.50 2013/04/09 16:38:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -496,7 +496,7 @@ main(int argc, char **argv)
 		 * If we are being bombarded, don't even spend time forking
 		 * or conversing
 		 */
-		if (nchildren >= maxchildren || !checkchild()) {
+		if (nchildren > maxchildren) {
 			(void) servicekill();
 			continue;
 		}
@@ -1011,7 +1011,7 @@ srvsetup(void)
 	if (x < 0)
 		goaway("Can't stat base/prefix directory (%s)",
 		    strerror(errno));
-	if (nchildren >= maxchildren) {
+	if (nchildren >= maxchildren || !checkchild()) {
 		setupack = FSETUPBUSY;
 		(void) msgsetupack();
 		if (protver >= 6)
