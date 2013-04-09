@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.30 2012/11/05 22:44:22 wiz Exp $
+.\"     $NetBSD: namei.9,v 1.31 2013/04/09 13:29:07 njoly Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -387,7 +387,7 @@ to set the starting directory.
 This supersedes the current process's current working directory as the
 initial point of departure for looking up relative paths.
 This mechanism is used by
-.Xr openat 3
+.Xr openat 2
 and related calls.
 .It Fn namei_simple_kernel "path" "sflags" "ret"
 Look up the path
