@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.41 2013/03/08 20:56:44 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.42 2013/04/09 16:39:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -334,7 +334,8 @@ setup(TREE * t)
 	/* read time of last upgrade from when file */
 
 	if ((thisC->Cflags & CFURELSUF) && thisC->Crelease)
-		(void) sprintf(relsufix, ".%s", thisC->Crelease);
+		(void) snprintf(relsufix, sizeof(relsufix), ".%s",
+		    thisC->Crelease);
 	else
 		relsufix[0] = '\0';
 	lasttime = getwhen(collname, relsufix);
@@ -404,7 +405,7 @@ suplogin(void)
 	int f, x;
 
 	/* lock collection if desired */
-	(void) sprintf(buf, FILELOCK, collname);
+	(void) snprintf(buf, sizeof(buf), FILELOCK, collname);
 	f = open(buf, O_RDONLY, 0);
 	if (f >= 0) {
 
@@ -495,15 +496,19 @@ listfiles(void)
 
 
 	if ((thisC->Cflags & CFURELSUF) && release)
-		(void) sprintf(relsufix, ".%s", release);
+		(void) snprintf(relsufix, sizeof(relsufix), ".%s", release);
 	else
 		relsufix[0] = '\0';
-	(void) sprintf(buf, FILELAST, collname, relsufix);
+	(void) snprintf(buf, sizeof(buf), FILELAST, collname, relsufix);
 	f = fopen(buf, "r");
 	if (f) {
 		while ((p = fgets(buf, STRINGLENGTH, f))) {
 			if ((q = strchr(p, '\n')))
 				*q = '\0';
+			else {
+				p[512] = '\0';
+				goaway("Line too long in LAST: %s", p);
+			}
 			if (strchr("#;:", *p))
 				continue;
 			if (canonicalize(p) != 0)
@@ -513,12 +518,16 @@ listfiles(void)
 		(void) fclose(f);
 	}
 	refuseT = NULL;
-	(void) sprintf(buf, FILEREFUSE, collname);
+	(void) snprintf(buf, sizeof(buf), FILEREFUSE, collname);
 	f = fopen(buf, "r");
 	if (f) {
 		while ((p = fgets(buf, STRINGLENGTH, f))) {
 			if ((q = strchr(p, '\n')))
 				*q = '\0';
+			else {
+				p[512] = '\0';
+				goaway("Line too long in REFUSE: %s", p);
+			}
 			if (strchr("#;:", *p))
 				continue;
 			(void) Tinsert(&refuseT, p, FALSE);
@@ -670,11 +679,9 @@ deleteone(TREE * t, void *v __unused)
 		}
 		if (rmdir(name) < 0) {
 			(void) chmod(name, sbuf.st_mode | S_IRWXU);
-			if (strlen(name) < MAXPATHLEN - 3) {
-				sprintf(pname, "%s/..", name);
-				if (stat(pname, &pbuf) == 0)
-					(void) chmod(pname, pbuf.st_mode | S_IRWXU);
-			}
+			snprintf(pname, sizeof(pname), "%s/..", name);
+			if (stat(pname, &pbuf) == 0)
+				(void) chmod(pname, pbuf.st_mode | S_IRWXU);
 			runp("rm", "rm", "-rf", name, 0);
 		}
 		if (rmdir(name) < 0 && errno != ENOENT) {
@@ -797,11 +804,9 @@ prepare(char *name, int mode, int *newp, struct stat * statp)
 	if (S_ISDIR(statp->st_mode)) {
 		if (rmdir(name) < 0) {
 			(void) chmod(name, statp->st_mode | S_IRWXU);
-			if (strlen(name) < MAXPATHLEN - 3) {
-				sprintf(pname, "%s/..", name);
-				if (stat(pname, &pbuf) == 0)
-					(void) chmod(pname, pbuf.st_mode | S_IRWXU);
-			}
+			snprintf(pname, sizeof(pname), "%s/..", name);
+			if (stat(pname, &pbuf) == 0)
+			    (void) chmod(pname, pbuf.st_mode | S_IRWXU);
 			runp("rm", "rm", "-rf", name, 0);
 		}
 		if (rmdir(name) < 0)
@@ -905,10 +910,12 @@ recvdir(TREE * t, int new, struct stat * statp)
 		return (FALSE);
 	}
 	if ((t->Tflags & FNOACCT) == 0) {
-		if (chown(t->Tname, t->Tuid, t->Tgid) < 0)
+		if (chown(t->Tname, t->Tuid, t->Tgid) < 0 &&
+		    (thisC->Cflags & CFIGNCHERR) == 0)
 			goaway("Can't chown %s (%s)", t->Tname,
 			    strerror(errno)); 
-		if (chmod(t->Tname, t->Tmode & S_IMODE) < 0)
+		if (chmod(t->Tname, t->Tmode & S_IMODE) < 0 &&
+		    (thisC->Cflags & CFIGNCHERR) == 0)
 			goaway("Can't chmod %s (%s)", t->Tname,
 			    strerror(errno)); 
 	}
@@ -1000,10 +1007,12 @@ recvreg(TREE * t, int new, struct stat * statp)
 		}
 		vnotify(0, "Updating file %s", t->Tname);
 		if ((t->Tflags & FNOACCT) == 0) {
-			if (chown(t->Tname, t->Tuid, t->Tgid) < 0)
+			if (chown(t->Tname, t->Tuid, t->Tgid) < 0 &&
+			    (thisC->Cflags & CFIGNCHERR) == 0)
 				goaway("Can't chown %s (%s)", t->Tname,
 				    strerror(errno)); 
-			if (chmod(t->Tname, t->Tmode & S_IMODE) < 0)
+			if (chmod(t->Tname, t->Tmode & S_IMODE) < 0 &&
+			    (thisC->Cflags & CFIGNCHERR) == 0)
 				goaway("Can't chmod %s (%s)", t->Tname,
 				    strerror(errno)); 
 		}
@@ -1040,10 +1049,11 @@ recvreg(TREE * t, int new, struct stat * statp)
 			return (TRUE);	/* mark upgrade as nogood */
 		}
 		path(t->Tname, dirpart, filepart);
-		(void) sprintf(filename, FILEBACKUP, dirpart, filepart);
+		(void) snprintf(filename, sizeof(filename), FILEBACKUP,
+		    dirpart, filepart);
 		fout = fopen(filename, "w");
 		if (fout == NULL) {
-			(void) sprintf(buf, FILEBKDIR, dirpart);
+			(void) snprintf(buf, sizeof(buf), FILEBKDIR, dirpart);
 			(void) mkdir(buf, 0755);
 			fout = fopen(filename, "w");
 		}
@@ -1066,10 +1076,12 @@ recvreg(TREE * t, int new, struct stat * statp)
 	if ((t->Tflags & FNOACCT) == 0) {
 		/* convert user and group names to local ids */
 		ugconvert(t->Tuser, t->Tgroup, &t->Tuid, &t->Tgid, &t->Tmode);
-		if (chown(t->Tname, t->Tuid, t->Tgid) < 0)
+		if (chown(t->Tname, t->Tuid, t->Tgid) < 0 &&
+		    (thisC->Cflags & CFIGNCHERR) == 0)
 			goaway("Can't chown %s (%s)", t->Tname,
 			    strerror(errno)); 
-		if (chmod(t->Tname, t->Tmode & S_IMODE) < 0)
+		if (chmod(t->Tname, t->Tmode & S_IMODE) < 0 &&
+		    (thisC->Cflags & CFIGNCHERR) == 0)
 			goaway("Can't chmod %s (%s)", t->Tname,
 			    strerror(errno)); 
 	}
@@ -1242,7 +1254,8 @@ copyfile(char *to, char *from)
 	for (;;) {
 		/* try destination directory */
 		path(to, dpart, fpart);
-		(void) sprintf(tname, "%s/#%d.sup", dpart, thispid);
+		(void) snprintf(tname, sizeof(tname), "%s/#%d.sup", dpart,
+		    thispid);
 		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (tof >= 0)
 			break;
@@ -1251,7 +1264,7 @@ copyfile(char *to, char *from)
 			if (chdir(thisC->Cbase) < 0)
 				goaway("Can't chdir to %s (%s)", thisC->Cbase,
 				    strerror(errno));
-		(void) sprintf(tname, "sup/#%d.sup", thispid);
+		(void) snprintf(tname, sizeof(tname), "sup/#%d.sup", thispid);
 		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (tof >= 0) {
 			if (thisC->Cprefix)
@@ -1261,7 +1274,7 @@ copyfile(char *to, char *from)
 			break;
 		}
 		/* try base directory */
-		(void) sprintf(tname, "#%d.sup", thispid);
+		(void) snprintf(tname, sizeof(tname), "#%d.sup", thispid);
 		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (thisC->Cprefix)
 			if (chdir(thisC->Cprefix) < 0)
@@ -1271,19 +1284,21 @@ copyfile(char *to, char *from)
 			break;
 #ifdef	VAR_TMP
 		/* try /var/tmp */
-		(void) sprintf(tname, "/var/tmp/#%d.sup", thispid);
+		(void) snprintf(tname, sizeof(tname), "/var/tmp/#%d.sup",
+		    thispid);
 		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (tof >= 0)
 			break;
 #else
 		/* try /usr/tmp */
-		(void) sprintf(tname, "/usr/tmp/#%d.sup", thispid);
+		(void) snprintf(tname, sizeof(tname), "/usr/tmp/#%d.sup",
+		    thispid);
 		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (tof >= 0)
 			break;
 #endif
 		/* try /tmp */
-		(void) sprintf(tname, "/tmp/#%d.sup", thispid);
+		(void) snprintf(tname, sizeof(tname), "/tmp/#%d.sup", thispid);
 		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (tof >= 0)
 			break;
@@ -1460,8 +1475,9 @@ finishup(int x)
 	FILE *finishfile;	/* record of all filenames */
 
 	if ((thisC->Cflags & CFURELSUF) && release) {
-		(void) sprintf(relsufix, ".%s", release);
-		(void) sprintf(collrelname, "%s-%s", collname, release);
+		(void) snprintf(relsufix, sizeof(relsufix), ".%s", release);
+		(void) snprintf(collrelname, sizeof(collrelname), "%s-%s",
+		    collname, release);
 	} else {
 		relsufix[0] = '\0';
 		(void) strcpy(collrelname, collname);
@@ -1512,7 +1528,7 @@ finishup(int x)
 		(void) requestend();
 		return;
 	}
-	(void) sprintf(fname, FILEWHEN, collname, relsufix);
+	(void) snprintf(fname, sizeof(fname), FILEWHEN, collname, relsufix);
 	if (establishdir(fname)) {
 		int oerrno = errno;
 		Tfree(&lastT);
@@ -1541,7 +1557,7 @@ finishup(int x)
 		done(FDONESUCCESS, "Success");
 		(void) requestend();
 	}
-	(void) sprintf(tname, FILELASTTEMP, collname, relsufix);
+	(void) snprintf(tname, sizeof(tname), FILELASTTEMP, collname, relsufix);
 	finishfile = fopen(tname, "w");
 	if (finishfile == NULL) {
 		notify(1, "Can't record list of all files in %s", tname);
@@ -1550,7 +1566,7 @@ finishup(int x)
 	}
 	(void) Tprocess(lastT, finishone, finishfile);
 	(void) fclose(finishfile);
-	(void) sprintf(fname, FILELAST, collname, relsufix);
+	(void) snprintf(fname, sizeof(fname), FILELAST, collname, relsufix);
 	if (rename(tname, fname) < 0)
 		notify(1, "Can't change %s to %s (%s)", tname, fname,
 		    strerror(errno));
@@ -1563,7 +1579,7 @@ finishone(TREE * t, void *fv)
 {
 	FILE *finishfile = fv;
 	if ((thisC->Cflags & CFDELETE) == 0 || (t->Tflags & FUPDATE))
-		fprintf(finishfile, "%s", t->Tname);
+		fprintf(finishfile, "%s\n", t->Tname);
 	return (SCMOK);
 }
 
