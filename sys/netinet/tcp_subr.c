@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.248 2012/09/08 02:58:13 msaitoh Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.249 2013/04/10 00:16:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.248 2012/09/08 02:58:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.249 2013/04/10 00:16:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -173,11 +173,28 @@ int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
 int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 int	tcp_do_ecn = 0;		/* Explicit Congestion Notification */
 #ifndef TCP_INIT_WIN
-#define	TCP_INIT_WIN	0	/* initial slow start window */
+#define	TCP_INIT_WIN	4	/* initial slow start window */
 #endif
 #ifndef TCP_INIT_WIN_LOCAL
 #define	TCP_INIT_WIN_LOCAL 4	/* initial slow start window for local nets */
 #endif
+/*
+ * Up to 5 we scale linearly, to reach 3 * 1460; then (iw) * 1460.
+ * This is to simulate current behavior for iw == 4
+ */
+int tcp_init_win_max[] = {
+	 1 * 1460,
+	 1 * 1460,
+	 2 * 1460,
+	 2 * 1460,
+	 3 * 1460,
+	 5 * 1460,
+	 6 * 1460,
+	 7 * 1460,
+	 8 * 1460,
+	 9 * 1460,
+	10 * 1460
+};
 int	tcp_init_win = TCP_INIT_WIN;
 int	tcp_init_win_local = TCP_INIT_WIN_LOCAL;
 int	tcp_mss_ifmtu = 0;
