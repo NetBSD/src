@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.4 2013/04/06 16:50:48 martin Exp $	*/
+/*	$NetBSD: athn.c,v 1.5 2013/04/10 12:46:50 christos Exp $	*/
 /*	$OpenBSD: athn.c,v 1.75 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.4 2013/04/06 16:50:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.5 2013/04/10 12:46:50 christos Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -111,6 +111,7 @@ Static void	athn_init_tx_queues(struct athn_softc *);
 Static void	athn_iter_func(void *, struct ieee80211_node *);
 Static void	athn_newassoc(struct ieee80211_node *, int);
 Static void	athn_next_scan(void *);
+Static void	athn_pmf_wlan_off(device_t self);
 Static void	athn_radiotap_attach(struct athn_softc *);
 Static void	athn_start(struct ifnet *);
 Static void	athn_tx_reclaim(struct athn_softc *, int);
@@ -119,8 +120,8 @@ Static void	athn_write_serdes(struct athn_softc *,
 		    const struct athn_serdes *);
 
 #ifdef ATHN_BT_COEXISTENCE
-Static void	athn_btcoex_enable(struct athn_softc *);
 Static void	athn_btcoex_disable(struct athn_softc *);
+Static void	athn_btcoex_enable(struct athn_softc *);
 #endif
 
 #ifdef unused
@@ -129,16 +130,13 @@ Static int	athn_rx_abort(struct athn_softc *);
 #endif
 
 #ifdef notyet
-Static void	athn_ani_monitor(struct athn_softc *);
-Static void	athn_ani_ofdm_err_trigger(struct athn_softc *);
 Static void	athn_ani_cck_err_trigger(struct athn_softc *);
 Static void	athn_ani_lower_immunity(struct athn_softc *);
+Static void	athn_ani_monitor(struct athn_softc *);
+Static void	athn_ani_ofdm_err_trigger(struct athn_softc *);
 Static void	athn_ani_restart(struct athn_softc *);
 Static void	athn_set_multi(struct athn_softc *);
 #endif /* notyet */
-
-Static void	athn_pmf_wlan_off(device_t self);
-
 
 PUBLIC int
 athn_attach(struct athn_softc *sc)
