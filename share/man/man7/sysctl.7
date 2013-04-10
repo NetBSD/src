@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.75 2013/04/10 00:20:14 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.76 2013/04/10 00:24:28 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1471,7 +1471,8 @@ Number of ticks to delay sending an ACK.
 .It Li tcp.do_loopback_cksum
 Perform TCP checksum on loopback.
 .It Li tcp.init_win
-A value indicating the TCP initial congestion window. The valid range
+A value indicating the TCP initial congestion window.
+The valid range
 is 0 to 10 (maximum specified by draft-ietf-tcpm-initcwnd-08.txt),
 with a default of 4 (approximately 4K per RFC3390).
 .It Li tcp.init_win_local
