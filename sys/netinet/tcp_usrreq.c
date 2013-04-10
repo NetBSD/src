@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.165 2012/06/02 21:36:47 dsl Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.166 2013/04/10 00:16:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.165 2012/06/02 21:36:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.166 2013/04/10 00:16:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1600,6 +1600,27 @@ sysctl_tcp_congctl(SYSCTLFN_ARGS)
 }
 
 static int
+sysctl_tcp_init_win(SYSCTLFN_ARGS)
+{
+	int error;
+	u_int iw;
+	struct sysctlnode node;
+
+	iw = *(u_int *)rnode->sysctl_data;
+	node = *rnode;
+	node.sysctl_data = &iw;
+	node.sysctl_size = sizeof(iw);
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (iw >= __arraycount(tcp_init_win_max))
+		return EINVAL;
+	*(u_int *)rnode->sysctl_data = iw;
+	return 0;
+}
+
+static int
 sysctl_tcp_keep(SYSCTLFN_ARGS)
 {  
 	int error;
@@ -1732,7 +1753,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "init_win",
 		       SYSCTL_DESCR("Initial TCP congestion window"),
-		       NULL, 0, &tcp_init_win, 0,
+		       sysctl_tcp_init_win, 0, &tcp_init_win, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_INIT_WIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -1861,7 +1882,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "init_win_local",
 		       SYSCTL_DESCR("Initial TCP window size (in segments)"),
-		       NULL, 0, &tcp_init_win_local, 0,
+		       sysctl_tcp_init_win, 0, &tcp_init_win_local, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_INIT_WIN_LOCAL,
 		       CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
