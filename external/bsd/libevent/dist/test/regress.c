@@ -1,4 +1,4 @@
-/*	$NetBSD: regress.c,v 1.5 2013/04/11 16:56:42 christos Exp $	*/
+/*	$NetBSD: regress.c,v 1.6 2013/04/11 20:14:44 christos Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -33,7 +33,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress.c,v 1.5 2013/04/11 16:56:42 christos Exp $");
+__RCSID("$NetBSD: regress.c,v 1.6 2013/04/11 20:14:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -580,7 +580,6 @@ end:
 	cleanup_test();
 }
 
-#if 0
 static void
 test_simpletimeout(void)
 {
@@ -599,7 +598,6 @@ test_simpletimeout(void)
 
 	cleanup_test();
 }
-#endif
 
 static void
 periodic_timeout_cb(evutil_socket_t fd, short event, void *arg)

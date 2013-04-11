@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_dns.c,v 1.3 2013/04/11 16:56:42 christos Exp $	*/
+/*	$NetBSD: regress_dns.c,v 1.4 2013/04/11 20:14:44 christos Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -34,7 +34,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_dns.c,v 1.3 2013/04/11 16:56:42 christos Exp $");
+__RCSID("$NetBSD: regress_dns.c,v 1.4 2013/04/11 20:14:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -79,10 +79,8 @@ __RCSID("$NetBSD: regress_dns.c,v 1.3 2013/04/11 16:56:42 christos Exp $");
 static int dns_ok = 0;
 static int dns_got_cancel = 0;
 static int dns_err = 0;
-#endif
 
 
-#if 0
 static void
 dns_gethostbyname_cb(int result, char type, int count, int ttl,
     void *addresses, void *arg)
@@ -223,7 +221,6 @@ end:
 	if (base)
 		event_base_free(base);
 }
-#endif
 
 static int n_server_responses = 0;
 
