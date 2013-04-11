@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.8 2013/03/26 11:30:21 isaki Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.9 2013/04/11 13:27:11 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.8 2013/03/26 11:30:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.9 2013/04/11 13:27:11 isaki Exp $");
 
 #include "fpu_emulate.h"
 
@@ -175,7 +175,7 @@ fpu_cos_halfpi(struct fpemu *fe)
 	struct fpn s0;
 
 	/* s0 := 1 */
-	fpu_const(&s0, 0x32);
+	fpu_const(&s0, FPU_CONST_1);
 
 	return fpu_sincos_taylor(fe, &s0, 1, 0);
 }
@@ -251,7 +251,7 @@ fpu_cos(struct fpemu *fe)
 	sign = 0;
 
 	/* p <- 2*pi */
-	fpu_const(&p, 0);
+	fpu_const(&p, FPU_CONST_PI);
 	p.fp_exp++;
 
 	/*
@@ -363,7 +363,7 @@ fpu_sin(struct fpemu *fe)
 	x.fp_sign = 0;
 
 	/* p <- 2*pi */
-	fpu_const(&p, 0);
+	fpu_const(&p, FPU_CONST_PI);
 	p.fp_exp++;
 
 	/*

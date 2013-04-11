@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.22 2013/03/26 11:30:20 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.23 2013/04/11 13:27:11 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -253,6 +253,11 @@ struct fpn *fpu_sincos_taylor(struct fpemu *, struct fpn *, uint32_t, int);
  */
 /* return values from constant rom */
 struct fpn *fpu_const(struct fpn *, uint32_t);
+#define FPU_CONST_PI	(0x00)	/* pi */
+#define FPU_CONST_LN_2	(0x30)	/* ln(2) */
+#define FPU_CONST_LN_10	(0x31)	/* ln(10) */
+#define FPU_CONST_1 	(0x32)	/* 1.0 */
+
 /* update exceptions and FPSR */
 int fpu_upd_excp(struct fpemu *);
 uint32_t fpu_upd_fpsr(struct fpemu *, struct fpn *);
