@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.190 2013/04/07 00:38:49 christos Exp $
+# $NetBSD: md.sparc64,v 1.191 2013/04/11 17:43:16 christos Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -113,8 +113,12 @@
 ./usr/lib/sparc/libedit.so.3.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libelf.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libelf.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libevent.so.3			base-compat-shlib	compat,pic
-./usr/lib/sparc/libevent.so.3.2			base-compat-shlib	compat,pic
+./usr/lib/sparc/libevent.so.4			base-compat-shlib	compat,pic
+./usr/lib/sparc/libevent.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libevent_openssl.so.4		base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libevent_openssl.so.4.0		base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libevent_pthreads.so.4		base-compat-shlib	compat,pic
+./usr/lib/sparc/libevent_pthreads.so.4.0	base-compat-shlib	compat,pic
 ./usr/lib/sparc/libexpat.so.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libexpat.so.2.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libfetch.so.3			base-compat-shlib	compat,pic
