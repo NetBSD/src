@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.117 2013/03/30 18:14:50 martin Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.118 2013/04/11 17:51:04 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -125,6 +125,7 @@
 ./usr/include/dev/usb
 ./usr/include/dev/vme
 ./usr/include/dev/wscons
+./usr/include/event2
 ./usr/include/filecorefs
 ./usr/include/fs
 ./usr/include/fs/smbfs
