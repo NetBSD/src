@@ -1,12 +1,25 @@
-# $NetBSD: shl.mi,v 1.21 2013/04/11 13:55:39 christos Exp $
+# $NetBSD: shl.mi,v 1.22 2013/04/11 14:14:35 skrll Exp $
 ./usr/libdata/debug/lib/libc.so.12.185.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libcrypto.so.8.1.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libdevmapper.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libedit.so.3.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libevent.so.3.2.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libgcc_s.so.1.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libipsec.so.3.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libkvm.so.6.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/liblzf.so.1.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/liblzma.so.1.1.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libm.so.0.10.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libnpf.so.0.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libpcap.so.5.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libppath.so.0.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libprop.so.1.1.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libradius.so.4.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/librumpclient.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libterminfo.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libutil.so.7.21.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libz.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
