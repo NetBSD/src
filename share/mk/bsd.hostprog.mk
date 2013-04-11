@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.69 2013/02/17 00:36:00 christos Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.70 2013/04/11 01:27:47 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -21,6 +21,8 @@ LIBDBM?=	/usr/lib/libdbm.a
 LIBDES?=	/usr/lib/libdes.a
 LIBEDIT?=	/usr/lib/libedit.a
 LIBEVENT?=	/usr/lib/libevent.a
+LIBEVENT_OPENSSL?=	/usr/lib/libevent_openssl.a
+LIBEVENT_PTHREADS?=	/usr/lib/libevent_pthreads.a
 LIBEXPAT?=	/usr/lib/libexpat.a
 LIBFETCH?=	/usr/lib/libfetch.a
 LIBFORM?=	/usr/lib/libform.a

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.314 2013/03/05 02:02:07 christos Exp $
+#	$NetBSD: bsd.README,v 1.315 2013/04/11 01:27:46 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1485,6 +1485,8 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBDNS?=	${DESTDIR}/usr/lib/libdns.a
 		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
+		LIBEVENT_OPENSSL?=	${DESTDIR}/usr/lib/libevent_openssl.a
+		LIBEVENT_PTHREADS?=	${DESTDIR}/usr/lib/libevent_pthreads.a
 		LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
 		LIBFETCH?=	${DESTDIR}/usr/lib/libfetch.a
 		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
