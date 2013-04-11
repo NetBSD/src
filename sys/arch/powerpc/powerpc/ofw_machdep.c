@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.21 2013/04/11 19:53:51 macallan Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.22 2013/04/11 19:55:10 macallan Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.21 2013/04/11 19:53:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.22 2013/04/11 19:55:10 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -105,7 +105,7 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 
 	/* move the data into OFmem */
 	memset(OFmem, 0, sizeof(OFmem));
-	for (i = 0, cnt = 0; i <= numregs; i++) {
+	for (i = 0, cnt = 0; i < numregs; i++) {
 		uint64_t addr, size;
 
 		if (acells > 1)
@@ -168,7 +168,7 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 
 	/* move the data into OFavail */
 	memset(OFavail, 0, sizeof(OFavail));
-	for (i = 0, cnt = 0; i <= numregs; i++) {
+	for (i = 0, cnt = 0; i < numregs; i++) {
 		uint64_t addr, size;
 
 		DPRINTF("%d\n", i);
