@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.246 2013/02/16 21:40:36 jmmv Exp $
+# $NetBSD: shl.mi,v 1.247 2013/04/11 17:43:19 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -34,6 +34,8 @@
 ./usr/lib/libedit_pic.a				comp-c-piclib
 ./usr/lib/libelf_pic.a				comp-c-piclib
 ./usr/lib/libevent_pic.a			comp-c-piclib
+./usr/lib/libevent_openssl_pic.a		comp-c-piclib		crypto
+./usr/lib/libevent_pthreads_pic.a		comp-c-piclib
 ./usr/lib/libexecinfo_pic.a			comp-c-piclib
 ./usr/lib/libexpat_pic.a			comp-c-piclib
 ./usr/lib/libfetch_pic.a			comp-c-piclib

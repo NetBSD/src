@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.17 2013/03/28 18:51:28 christos Exp $
+# $NetBSD: mi,v 1.18 2013/04/11 17:43:19 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -1934,6 +1934,8 @@
 ./usr/lib/libedit_g.a				-unknown-		debuglib
 ./usr/lib/libelf_g.a				-unknown-		debuglib
 ./usr/lib/libevent_g.a				-unknown-		debuglib
+./usr/lib/libevent_openssl_g.a			-unknown-		debuglib,crypto
+./usr/lib/libevent_pthreads_g.a			-unknown-		debuglib
 ./usr/lib/libexecinfo_g.a			-unknown-		debuglib
 ./usr/lib/libexpat_g.a				-unknown-		debuglib
 ./usr/lib/libfetch_g.a				-unknown-		debuglib

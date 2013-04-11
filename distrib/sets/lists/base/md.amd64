@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.203 2013/04/07 00:38:49 christos Exp $
+# $NetBSD: md.amd64,v 1.204 2013/04/11 17:43:16 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -121,8 +121,13 @@
 ./usr/lib/i386/libedit.so.3.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libelf.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libelf.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libevent.so.3			base-compat-shlib	compat,pic
-./usr/lib/i386/libevent.so.3.2			base-compat-shlib	compat,pic
+./usr/lib/i386/libevent.so.4			base-compat-shlib	compat,pic
+./usr/lib/i386/libevent.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libevent_openssl.so.4		base-compat-shlib	compat,pic,crypto
+./usr/lib/i386/libevent_openssl.so.4.0		base-compat-shlib	compat,pic,crypto
+./usr/lib/i386/libevent_pthreads.so.4		base-compat-shlib	compat,pic
+./usr/lib/i386/libevent_pthreads.so.4.0		base-compat-shlib	compat,pic
+./usr/lib/i386/libexecinfo.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libexecinfo.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libexecinfo.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libexpat.so.2			base-compat-shlib	compat,pic

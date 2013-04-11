@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.21 2013/04/08 20:08:05 spz Exp $
+# $NetBSD: md.sparc64,v 1.22 2013/04/11 17:43:19 christos Exp $
 ./usr/libdata/debug/lib/sparc/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -58,8 +58,10 @@
 ./usr/libdata/debug/usr/lib/sparc/libdwarf.so.0.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libedit.so.3.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libelf.so.0.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libevent.so.3.2.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libexecinfo.so.0.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libevent.so.4.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libevent_openssl.so.4.0.debug		comp-compat-shlib	compat,pic,debug,crypto
+./usr/libdata/debug/usr/lib/sparc/libevent_pthreads.so.4.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libexecinfo.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libexpat.so.2.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libfetch.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libform.so.6.0.debug			comp-compat-shlib	compat,pic,debug
@@ -206,6 +208,8 @@
 ./usr/lib/sparc/libedit_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/libelf_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/libevent_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libevent_openssl_g.a		-unknown-		compat,debuglib,crypto
+./usr/lib/sparc/libevent_pthreads_g.a		-unknown-		compat,debuglib
 ./usr/lib/sparc/libexecinfo_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/libexpat_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/libfetch_g.a			-unknown-		compat,debuglib
