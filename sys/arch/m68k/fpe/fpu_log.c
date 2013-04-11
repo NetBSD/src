@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_log.c,v 1.15 2013/03/26 11:30:21 isaki Exp $	*/
+/*	$NetBSD: fpu_log.c,v 1.16 2013/04/11 13:27:11 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.15 2013/03/26 11:30:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.16 2013/04/11 13:27:11 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -210,13 +210,13 @@ __fpu_logn(struct fpemu *fe)
 		printf("__fpu_logn: log near 1\n");
 #endif
 
-		fpu_const(&fe->fe_f1, 0x32);
+		fpu_const(&fe->fe_f1, FPU_CONST_1);
 		/* X+1 */
 		d = fpu_add(fe);
 		CPYFPN(&V, d);
 
 		CPYFPN(&fe->fe_f1, &X);
-		fpu_const(&fe->fe_f2, 0x32); /* 1.0 */
+		fpu_const(&fe->fe_f2, FPU_CONST_1);
 		fe->fe_f2.fp_sign = 1; /* -1.0 */
 		/* X-1 */
 		d = fpu_add(fe);
@@ -352,7 +352,7 @@ __fpu_logn(struct fpemu *fe)
 		/* KLOG2 = K * ln(2) */
 		/* fe_f1 == (fpn)k */
 		fpu_explode(fe, &fe->fe_f1, FTYPE_LNG, &k);
-		(void)fpu_const(&fe->fe_f2, 0x30 /* ln(2) */);
+		(void)fpu_const(&fe->fe_f2, FPU_CONST_LN_2);
 #if FPE_DEBUG
 		printf("__fpu_logn: fp(k)=(%d,%08x,%08x...)\n",
 		    fe->fe_f1.fp_exp,
@@ -491,7 +491,7 @@ fpu_log10(struct fpemu *fe)
 			fp = __fpu_logn(fe);
 			if (fp != &fe->fe_f1)
 				CPYFPN(&fe->fe_f1, fp);
-			(void)fpu_const(&fe->fe_f2, 0x31 /* ln(10) */);
+			(void)fpu_const(&fe->fe_f2, FPU_CONST_LN_10);
 			fp = fpu_div(fe);
 		} /* else if fp == +Inf, return +Inf */
 	} else if (fp->fp_class == FPC_ZERO) {
@@ -535,7 +535,7 @@ fpu_log2(struct fpemu *fe)
 				fp = __fpu_logn(fe);
 				if (fp != &fe->fe_f1)
 					CPYFPN(&fe->fe_f1, fp);
-				(void)fpu_const(&fe->fe_f2, 0x30 /* ln(2) */);
+				(void)fpu_const(&fe->fe_f2, FPU_CONST_LN_2);
 				fp = fpu_div(fe);
 			}
 		} /* else if fp == +Inf, return +Inf */
@@ -594,7 +594,7 @@ fpu_lognp1(struct fpemu *fe)
 	struct fpn *fp;
 
 	/* build a 1.0 */
-	fp = fpu_const(&fe->fe_f1, 0x32); /* get 1.0 */
+	fp = fpu_const(&fe->fe_f1, FPU_CONST_1);
 	/* fp = 1.0 + f2 */
 	fp = fpu_add(fe);
 
