@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.662 2013/04/06 17:40:14 christos Exp $
+# $NetBSD: shl.mi,v 1.663 2013/04/11 17:43:16 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -38,8 +38,8 @@
 ./lib/libedit.so.3				base-sys-shlib		dynamicroot
 ./lib/libedit.so.3.1				base-sys-shlib		dynamicroot
 ./lib/libevent.so				base-sys-shlib		dynamicroot
-./lib/libevent.so.3				base-sys-shlib		dynamicroot
-./lib/libevent.so.3.2				base-sys-shlib		dynamicroot
+./lib/libevent.so.4				base-sys-shlib		dynamicroot
+./lib/libevent.so.4.0				base-sys-shlib		dynamicroot
 ./lib/libgcc_s.so				base-sys-shlib		gcc
 ./lib/libgcc_s.so.1				base-sys-shlib		gcc 
 ./lib/libgcc_s.so.1.0				base-sys-shlib		gcc
@@ -247,8 +247,14 @@
 ./usr/lib/libelf.so.0				base-sys-shlib
 ./usr/lib/libelf.so.0.0				base-sys-shlib
 ./usr/lib/libevent.so				base-sys-shlib
-./usr/lib/libevent.so.3				base-sys-shlib
-./usr/lib/libevent.so.3.2			base-sys-shlib
+./usr/lib/libevent.so.4				base-sys-shlib
+./usr/lib/libevent.so.4.0			base-sys-shlib
+./usr/lib/libevent_openssl.so			base-sys-shlib		crypto
+./usr/lib/libevent_openssl.so.4			base-sys-shlib		crypto
+./usr/lib/libevent_openssl.so.4.0		base-sys-shlib		crypto
+./usr/lib/libevent_pthreads.so			base-sys-shlib
+./usr/lib/libevent_pthreads.so.4		base-sys-shlib
+./usr/lib/libevent_pthreads.so.4.0		base-sys-shlib
 ./usr/lib/libexecinfo.so			base-sys-shlib
 ./usr/lib/libexecinfo.so.0			base-sys-shlib
 ./usr/lib/libexecinfo.so.0.0			base-sys-shlib
