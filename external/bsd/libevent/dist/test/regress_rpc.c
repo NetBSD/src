@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_rpc.c,v 1.1.1.2 2013/04/11 16:43:33 christos Exp $	*/
+/*	$NetBSD: regress_rpc.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -36,7 +36,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_rpc.c,v 1.1.1.2 2013/04/11 16:43:33 christos Exp $");
+__RCSID("$NetBSD: regress_rpc.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -327,7 +327,7 @@ rpc_pool_with_connection(ev_uint16_t port)
 
 static void
 GotKillCb(struct evrpc_status *status,
-    struct msg *msg, struct kill *kill, void *arg)
+    struct msg *msg, struct kill *xkill, void *arg)
 {
 	char *weapon;
 	char *action;
@@ -343,11 +343,11 @@ GotKillCb(struct evrpc_status *status,
 	if (status->error != EVRPC_STATUS_ERR_NONE)
 		goto done;
 
-	if (EVTAG_GET(kill, weapon, &weapon) == -1) {
+	if (EVTAG_GET(xkill, weapon, &weapon) == -1) {
 		fprintf(stderr, "get weapon\n");
 		goto done;
 	}
-	if (EVTAG_GET(kill, action, &action) == -1) {
+	if (EVTAG_GET(xkill, action, &action) == -1) {
 		fprintf(stderr, "get action\n");
 		goto done;
 	}
@@ -366,7 +366,7 @@ done:
 
 static void
 GotKillCbTwo(struct evrpc_status *status,
-    struct msg *msg, struct kill *kill, void *arg)
+    struct msg *msg, struct kill *xkill, void *arg)
 {
 	char *weapon;
 	char *action;
@@ -374,11 +374,11 @@ GotKillCbTwo(struct evrpc_status *status,
 	if (status->error != EVRPC_STATUS_ERR_NONE)
 		goto done;
 
-	if (EVTAG_GET(kill, weapon, &weapon) == -1) {
+	if (EVTAG_GET(xkill, weapon, &weapon) == -1) {
 		fprintf(stderr, "get weapon\n");
 		goto done;
 	}
-	if (EVTAG_GET(kill, action, &action) == -1) {
+	if (EVTAG_GET(xkill, action, &action) == -1) {
 		fprintf(stderr, "get action\n");
 		goto done;
 	}
@@ -453,31 +453,31 @@ rpc_basic_client(void)
 	struct evrpc_base *base = NULL;
 	struct evrpc_pool *pool = NULL;
 	struct msg *msg = NULL;
-	struct kill *kill = NULL;
+	struct kill *xkill = NULL;
 
 	rpc_setup(&http, &port, &base);
 
 	need_input_hook = 1;
 	need_output_hook = 1;
 
-	assert(evrpc_add_hook(base, EVRPC_INPUT, rpc_hook_add_header, (void*)"input")
+	assert(evrpc_add_hook(base, EVRPC_INPUT, rpc_hook_add_header, __UNCONST("input"))
 	    != NULL);
-	assert(evrpc_add_hook(base, EVRPC_OUTPUT, rpc_hook_add_header, (void*)"output")
+	assert(evrpc_add_hook(base, EVRPC_OUTPUT, rpc_hook_add_header, __UNCONST("output"))
 	    != NULL);
 
 	pool = rpc_pool_with_connection(port);
 
 	assert(evrpc_add_hook(pool, EVRPC_OUTPUT, rpc_hook_add_meta, NULL));
-	assert(evrpc_add_hook(pool, EVRPC_INPUT, rpc_hook_remove_header, (void*)"output"));
+	assert(evrpc_add_hook(pool, EVRPC_INPUT, rpc_hook_remove_header, __UNCONST("output")));
 
 	/* set up the basic message */
 	msg = msg_new();
 	EVTAG_ASSIGN(msg, from_name, "niels");
 	EVTAG_ASSIGN(msg, to_name, "tester");
 
-	kill = kill_new();
+	xkill = kill_new();
 
-	EVRPC_MAKE_REQUEST(Message, pool, msg, kill,  GotKillCb, NULL);
+	EVRPC_MAKE_REQUEST(Message, pool, msg, xkill,  GotKillCb, NULL);
 
 	test_ok = 0;
 
@@ -486,16 +486,16 @@ rpc_basic_client(void)
 	tt_assert(test_ok == 1);
 
 	/* we do it twice to make sure that reuse works correctly */
-	kill_clear(kill);
+	kill_clear(xkill);
 
-	EVRPC_MAKE_REQUEST(Message, pool, msg, kill,  GotKillCb, NULL);
+	EVRPC_MAKE_REQUEST(Message, pool, msg, xkill,  GotKillCb, NULL);
 
 	event_dispatch();
 
 	tt_assert(test_ok == 2);
 
 	/* we do it trice to make sure other stuff works, too */
-	kill_clear(kill);
+	kill_clear(xkill);
 
 	{
 		struct evrpc_request_wrapper *ctx =
@@ -513,8 +513,8 @@ rpc_basic_client(void)
 end:
 	if (msg)
 		msg_free(msg);
-	if (kill)
-		kill_free(kill);
+	if (xkill)
+		kill_free(xkill);
 
 	if (pool)
 		evrpc_pool_free(pool);
@@ -578,13 +578,13 @@ end:
 
 static void
 GotErrorCb(struct evrpc_status *status,
-    struct msg *msg, struct kill *kill, void *arg)
+    struct msg *msg, struct kill *xkill, void *arg)
 {
 	if (status->error != EVRPC_STATUS_ERR_TIMEOUT)
 		goto done;
 
 	/* should never be complete but just to check */
-	if (kill_complete(kill) == 0)
+	if (kill_complete(xkill) == 0)
 		goto done;
 
 	test_ok += 1;
@@ -635,7 +635,7 @@ rpc_basic_client_with_pause(void)
 	struct evrpc_base *base = NULL;
 	struct evrpc_pool *pool = NULL;
 	struct msg *msg = NULL;
-	struct kill *kill= NULL;
+	struct kill *xkill= NULL;
 
 	rpc_setup(&http, &port, &base);
 
@@ -652,9 +652,9 @@ rpc_basic_client_with_pause(void)
 	EVTAG_ASSIGN(msg, from_name, "niels");
 	EVTAG_ASSIGN(msg, to_name, "tester");
 
-	kill = kill_new();
+	xkill = kill_new();
 
-	EVRPC_MAKE_REQUEST(Message, pool, msg, kill, GotKillCb, NULL);
+	EVRPC_MAKE_REQUEST(Message, pool, msg, xkill, GotKillCb, NULL);
 
 	test_ok = 0;
 
@@ -669,8 +669,8 @@ end:
 
 	if (msg)
 		msg_free(msg);
-	if (kill)
-		kill_free(kill);
+	if (xkill)
+		kill_free(xkill);
 
 	if (pool)
 		evrpc_pool_free(pool);
@@ -686,7 +686,7 @@ rpc_client_timeout(void)
 	struct evrpc_base *base = NULL;
 	struct evrpc_pool *pool = NULL;
 	struct msg *msg = NULL;
-	struct kill *kill = NULL;
+	struct kill *xkill = NULL;
 
 	rpc_setup(&http, &port, &base);
 
@@ -700,9 +700,9 @@ rpc_client_timeout(void)
 	EVTAG_ASSIGN(msg, from_name, "niels");
 	EVTAG_ASSIGN(msg, to_name, "tester");
 
-	kill = kill_new();
+	xkill = kill_new();
 
-	EVRPC_MAKE_REQUEST(NeverReply, pool, msg, kill, GotErrorCb, NULL);
+	EVRPC_MAKE_REQUEST(NeverReply, pool, msg, xkill, GotErrorCb, NULL);
 
 	test_ok = 0;
 
@@ -718,8 +718,8 @@ rpc_client_timeout(void)
 end:
 	if (msg)
 		msg_free(msg);
-	if (kill)
-		kill_free(kill);
+	if (xkill)
+		kill_free(xkill);
 
 	if (pool)
 		evrpc_pool_free(pool);
@@ -765,7 +765,7 @@ rpc_test(void)
 		}
 		EVTAG_ASSIGN(run, how, "very fast but with some data in it");
 		EVTAG_ASSIGN(run, fixed_bytes,
-		    (ev_uint8_t*)"012345678901234567890123");
+		    __UNCONST("012345678901234567890123"));
 
 		if (EVTAG_ARRAY_ADD_VALUE(
 			    run, notes, "this is my note") == NULL) {
