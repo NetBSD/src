@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.34 2012/07/18 17:41:59 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.35 2013/04/11 18:20:33 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.34 2012/07/18 17:41:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.35 2013/04/11 18:20:33 macallan Exp $");
 
 #define _POWERPC_BUS_SPACE_PRIVATE
 
@@ -597,20 +597,6 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		}
 	}
 #endif /* defined (PPC_OEA) || defined(PPC_OEA601) */
-
-	if (t->pbs_extent != NULL) {
-#if !defined(PPC_IBM4XX)
-		if (extent_flags == 0) {
-			extent_free(t->pbs_extent, bpa, size, EX_NOWAIT);
-#ifdef DEBUG
-			printf("bus_space_map(%p[%x:%x], %#x, %#x)"
-			    " failed: ENOMEM\n",
-			    t, t->pbs_base, t->pbs_limit, bpa, size);
-#endif
-			return (ENOMEM);
-		}
-#endif
-	}
 
 	/*
 	 * Map this into the kernel pmap.
