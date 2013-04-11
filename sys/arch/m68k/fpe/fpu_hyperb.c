@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_hyperb.c,v 1.7 2013/03/23 12:06:24 isaki Exp $	*/
+/*	$NetBSD: fpu_hyperb.c,v 1.8 2013/04/11 13:27:11 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.7 2013/03/23 12:06:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.8 2013/04/11 13:27:11 isaki Exp $");
 
 #include "fpu_emulate.h"
 
@@ -89,7 +89,7 @@ fpu_cosh(struct fpemu *fe)
 		return &fe->fe_f2;
 	}
 
-	fpu_const(&s0, 0x32);	/* 1.0 */
+	fpu_const(&s0, FPU_CONST_1);
 	r = fpu_sincos_taylor(fe, &s0, 1, hyperb);
 	CPYFPN(&fe->fe_f2, r);
 
@@ -128,7 +128,7 @@ fpu_tanh(struct fpemu *fe)
 
 	if (ISINF(&fe->fe_f2)) {
 		sign = fe->fe_f2.fp_sign;
-		fpu_const(&fe->fe_f2, 0x32);
+		fpu_const(&fe->fe_f2, FPU_CONST_1);
 		fe->fe_f2.fp_sign = sign;
 		return &fe->fe_f2;
 	}
