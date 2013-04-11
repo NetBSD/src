@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_thread.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $	*/
+/*	$NetBSD: regress_thread.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -30,7 +30,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_thread.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $");
+__RCSID("$NetBSD: regress_thread.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -80,7 +80,7 @@ __RCSID("$NetBSD: regress_thread.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $"
 #define THREAD_START(threadvar, fn, arg) do {		\
 	uintptr_t threadhandle = _beginthreadex(NULL,0,fn,(arg),0,NULL); \
 	(threadvar) = (HANDLE) threadhandle; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define THREAD_JOIN(th) WaitForSingleObject(th, INFINITE)
 #endif
 
@@ -505,7 +505,7 @@ struct testcase_t thread_testcases[] = {
 	  &basic_setup, NULL },
 #ifndef WIN32
 	{ "forking", thread_basic, TT_FORK|TT_NEED_THREADS|TT_NEED_BASE,
-	  &basic_setup, (char*)"forking" },
+	  &basic_setup, __UNCONST("forking") },
 #endif
 	TEST(conditions_simple),
 	TEST(deferred_cb_skew),

@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_bufferevent.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $	*/
+/*	$NetBSD: regress_bufferevent.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -36,7 +36,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_bufferevent.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $");
+__RCSID("$NetBSD: regress_bufferevent.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: regress_bufferevent.c,v 1.1.1.1 2013/04/11 16:43:33 christos E
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_bufferevent.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $");
+__RCSID("$NetBSD: regress_bufferevent.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
 #include "event2/event.h"
 #include "event2/event_struct.h"
 #include "event2/event_compat.h"
@@ -133,10 +133,10 @@ test_bufferevent_impl(int use_pair)
 	int i;
 
 	if (use_pair) {
-		struct bufferevent *pair[2];
-		tt_assert(0 == bufferevent_pair_new(NULL, 0, pair));
-		bev1 = pair[0];
-		bev2 = pair[1];
+		struct bufferevent *xpair[2];
+		tt_assert(0 == bufferevent_pair_new(NULL, 0, xpair));
+		bev1 = xpair[0];
+		bev2 = xpair[1];
 		bufferevent_setcb(bev1, readcb, writecb, errorcb, NULL);
 		bufferevent_setcb(bev2, readcb, writecb, errorcb, NULL);
 		tt_int_op(bufferevent_getfd(bev1), ==, -1);
@@ -239,10 +239,10 @@ test_bufferevent_watermarks_impl(int use_pair)
 	test_ok = 0;
 
 	if (use_pair) {
-		struct bufferevent *pair[2];
-		tt_assert(0 == bufferevent_pair_new(NULL, 0, pair));
-		bev1 = pair[0];
-		bev2 = pair[1];
+		struct bufferevent *xpair[2];
+		tt_assert(0 == bufferevent_pair_new(NULL, 0, xpair));
+		bev1 = xpair[0];
+		bev2 = xpair[1];
 		bufferevent_setcb(bev1, NULL, wm_writecb, errorcb, NULL);
 		bufferevent_setcb(bev2, wm_readcb, NULL, errorcb, NULL);
 	} else {
@@ -349,10 +349,10 @@ test_bufferevent_filters_impl(int use_pair)
 	test_ok = 0;
 
 	if (use_pair) {
-		struct bufferevent *pair[2];
-		tt_assert(0 == bufferevent_pair_new(NULL, 0, pair));
-		bev1 = pair[0];
-		bev2 = pair[1];
+		struct bufferevent *xpair[2];
+		tt_assert(0 == bufferevent_pair_new(NULL, 0, xpair));
+		bev1 = xpair[0];
+		bev2 = xpair[1];
 	} else {
 		bev1 = bufferevent_socket_new(NULL, pair[0], 0);
 		bev2 = bufferevent_socket_new(NULL, pair[1], 0);
@@ -793,27 +793,27 @@ struct testcase_t bufferevent_testcases[] = {
 	LEGACY(bufferevent_filters, TT_ISOLATED),
 	LEGACY(bufferevent_pair_filters, TT_ISOLATED),
 	{ "bufferevent_connect", test_bufferevent_connect, TT_FORK|TT_NEED_BASE,
-	  &basic_setup, (void*)"" },
+	  &basic_setup, __UNCONST("") },
 	{ "bufferevent_connect_defer", test_bufferevent_connect,
-	  TT_FORK|TT_NEED_BASE, &basic_setup, (void*)"defer" },
+	  TT_FORK|TT_NEED_BASE, &basic_setup, __UNCONST("defer") },
 	{ "bufferevent_connect_lock", test_bufferevent_connect,
-	  TT_FORK|TT_NEED_BASE|TT_NEED_THREADS, &basic_setup, (void*)"lock" },
+	  TT_FORK|TT_NEED_BASE|TT_NEED_THREADS, &basic_setup, __UNCONST("lock") },
 	{ "bufferevent_connect_lock_defer", test_bufferevent_connect,
 	  TT_FORK|TT_NEED_BASE|TT_NEED_THREADS, &basic_setup,
-	  (void*)"defer lock" },
+	  __UNCONST("defer lock") },
 	{ "bufferevent_connect_unlocked_cbs", test_bufferevent_connect,
 	  TT_FORK|TT_NEED_BASE|TT_NEED_THREADS, &basic_setup,
-	  (void*)"lock defer unlocked" },
+	  __UNCONST("lock defer unlocked") },
 	{ "bufferevent_connect_fail", test_bufferevent_connect_fail,
 	  TT_FORK|TT_NEED_BASE, &basic_setup, NULL },
 	{ "bufferevent_timeout", test_bufferevent_timeouts,
-	  TT_FORK|TT_NEED_BASE|TT_NEED_SOCKETPAIR, &basic_setup, (void*)"" },
+	  TT_FORK|TT_NEED_BASE|TT_NEED_SOCKETPAIR, &basic_setup, __UNCONST("") },
 	{ "bufferevent_timeout_pair", test_bufferevent_timeouts,
-	  TT_FORK|TT_NEED_BASE, &basic_setup, (void*)"pair" },
+	  TT_FORK|TT_NEED_BASE, &basic_setup, __UNCONST("pair") },
 	{ "bufferevent_timeout_filter", test_bufferevent_timeouts,
-	  TT_FORK|TT_NEED_BASE, &basic_setup, (void*)"filter" },
+	  TT_FORK|TT_NEED_BASE, &basic_setup, __UNCONST("filter") },
 	{ "bufferevent_timeout_filter_pair", test_bufferevent_timeouts,
-	  TT_FORK|TT_NEED_BASE, &basic_setup, (void*)"filter pair" },
+	  TT_FORK|TT_NEED_BASE, &basic_setup, __UNCONST("filter pair") },
 #ifdef _EVENT_HAVE_LIBZ
 	LEGACY(bufferevent_zlib, TT_ISOLATED),
 #else
@@ -829,20 +829,20 @@ struct testcase_t bufferevent_iocp_testcases[] = {
 	LEGACY(bufferevent_watermarks, TT_ISOLATED|TT_ENABLE_IOCP),
 	LEGACY(bufferevent_filters, TT_ISOLATED|TT_ENABLE_IOCP),
 	{ "bufferevent_connect", test_bufferevent_connect,
-	  TT_FORK|TT_NEED_BASE|TT_ENABLE_IOCP, &basic_setup, (void*)"" },
+	  TT_FORK|TT_NEED_BASE|TT_ENABLE_IOCP, &basic_setup, __UNCONST("") },
 	{ "bufferevent_connect_defer", test_bufferevent_connect,
-	  TT_FORK|TT_NEED_BASE|TT_ENABLE_IOCP, &basic_setup, (void*)"defer" },
+	  TT_FORK|TT_NEED_BASE|TT_ENABLE_IOCP, &basic_setup, __UNCONST("defer") },
 	{ "bufferevent_connect_lock", test_bufferevent_connect,
 	  TT_FORK|TT_NEED_BASE|TT_NEED_THREADS|TT_ENABLE_IOCP, &basic_setup,
-	  (void*)"lock" },
+	  __UNCONST("lock") },
 	{ "bufferevent_connect_lock_defer", test_bufferevent_connect,
 	  TT_FORK|TT_NEED_BASE|TT_NEED_THREADS|TT_ENABLE_IOCP, &basic_setup,
-	  (void*)"defer lock" },
+	  __UNCONST("defer lock") },
 	{ "bufferevent_connect_fail", test_bufferevent_connect_fail,
 	  TT_FORK|TT_NEED_BASE|TT_ENABLE_IOCP, &basic_setup, NULL },
 	{ "bufferevent_connect_nonblocking", test_bufferevent_connect,
 	  TT_FORK|TT_NEED_BASE|TT_ENABLE_IOCP, &basic_setup,
-	  (void*)"unset_connectex" },
+	  __UNCONST("unset_connectex") },
 
 	END_OF_TESTCASES,
 };
