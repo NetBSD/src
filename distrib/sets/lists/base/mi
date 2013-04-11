@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1027 2013/03/30 18:21:12 martin Exp $
+# $NetBSD: mi,v 1.1028 2013/04/11 17:43:16 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -849,6 +849,7 @@
 ./usr/include/dev/vinum				base-obsolete		obsolete
 ./usr/include/dev/vme				base-c-usr
 ./usr/include/dev/wscons			base-c-usr
+./usr/include/event2				base-c-usr
 ./usr/include/filecorefs			base-c-usr
 ./usr/include/fs				base-c-usr
 ./usr/include/fs/efs				base-c-usr
