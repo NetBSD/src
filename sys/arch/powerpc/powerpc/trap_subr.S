@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.75 2012/07/27 04:17:07 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.76 2013/04/11 17:13:15 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,11 +55,20 @@
 #define RESTORE_VRSAVE(tf,b)
 #endif
 
-#if defined (PPC_OEA64)
+#if defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #define	RFI	rfid
 #else
 #define	RFI	rfi
-#endif /* PPC_OEA64 */
+#endif /* PPC_OEA64 || PPC_OEA64_BRIDGE*/
+
+#if defined (PPC_OEA64_BRIDGE)
+#define ENABLE_64BIT_BRIDGE(t0)						\
+	mfmsr	t0;							\
+	clrldi	t0,t0,1;						\
+	mtmsrd	t0;
+#else
+#define ENABLE_64BIT_BRIDGE(t0)
+#endif /* PPC_OEA64_BRIDGE */
 
 #if defined(PPC_OEA64)
 /*
@@ -170,6 +179,7 @@
 	.globl	_C_LABEL(trapcode),_C_LABEL(trapsize)
 _C_LABEL(trapcode):
 	mtsprg1	%r1			/* save SP */
+	ENABLE_64BIT_BRIDGE(%r1)
 	GET_CPUINFO(%r1)
 	streg	%r28,(CI_TEMPSAVE+CPUSAVE_R28)(%r1)	/* free r28 */
 	streg	%r29,(CI_TEMPSAVE+CPUSAVE_R29)(%r1)	/* free r29 */
@@ -199,6 +209,7 @@ _C_LABEL(trapsize) = .-_C_LABEL(trapcode)
 	.globl	_C_LABEL(alitrap),_C_LABEL(alisize)
 _C_LABEL(alitrap):
 	mtsprg1	%r1			/* save SP */
+	ENABLE_64BIT_BRIDGE(%r1)
 	GET_CPUINFO(%r1)
 	streg	%r28,(CI_TEMPSAVE+CPUSAVE_R28)(%r1) /* save r28 */
 	streg	%r29,(CI_TEMPSAVE+CPUSAVE_R29)(%r1) /* save r29 */
@@ -234,6 +245,7 @@ _C_LABEL(alisize) = .-_C_LABEL(alitrap)
 	.globl	_C_LABEL(dsitrap),_C_LABEL(dsisize)
 _C_LABEL(dsitrap):
 	mtsprg1	%r1
+	ENABLE_64BIT_BRIDGE(%r1)
 	GET_CPUINFO(%r1)
 	streg	%r28,(CI_DISISAVE+CPUSAVE_R28)(%r1)	/* save r28 */
 	streg	%r29,(CI_DISISAVE+CPUSAVE_R29)(%r1)	/* save r29 */
@@ -330,6 +342,7 @@ _C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
 	.globl	_C_LABEL(dsi601trap),_C_LABEL(dsi601size)
 _C_LABEL(dsi601trap):
 	mtsprg1	%r1
+	ENABLE_64BIT_BRIDGE(%r1)
 	GET_CPUINFO(%r1)
 	streg	%r28,(CI_DISISAVE+CPUSAVE_R28)(%r1)	/* save r28 */
 	streg	%r29,(CI_DISISAVE+CPUSAVE_R29)(%r1)	/* save r29 */
@@ -397,6 +410,7 @@ _C_LABEL(dsi601size) = .-_C_LABEL(dsi601trap)
 	.globl	_C_LABEL(extint),_C_LABEL(extsize)
 _C_LABEL(extint):
 	mtsprg1	%r1			/* save SP */
+	ENABLE_64BIT_BRIDGE(%r1)
 	GET_CPUINFO(%r1)
 	streg	%r28,(CI_TEMPSAVE+CPUSAVE_R28)(%r1)	/* save r28 */
 	streg	%r29,(CI_TEMPSAVE+CPUSAVE_R29)(%r1)	/* save r29 */
@@ -430,6 +444,7 @@ _C_LABEL(extsize) = .-_C_LABEL(extint)
 	.globl	_C_LABEL(decrint),_C_LABEL(decrsize)
 _C_LABEL(decrint):
 	mtsprg1	%r1			/* save SP */
+	ENABLE_64BIT_BRIDGE(%r1)
 	GET_CPUINFO(%r1)
 	streg	%r28,(CI_TEMPSAVE+CPUSAVE_R28)(%r1)	/* save r28 */
 	streg	%r29,(CI_TEMPSAVE+CPUSAVE_R29)(%r1)	/* save r29 */
@@ -673,6 +688,7 @@ _C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
 	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
 _C_LABEL(ddblow):
 	mtsprg1	%r1			/* save SP */
+	ENABLE_64BIT_BRIDGE(%r1)
 	mtsprg2 %r29			/* save r29 */
 	mfcr	%r29			/* save CR in r29 */
 	mfsrr1	%r1
@@ -728,6 +744,7 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 	.globl	_C_LABEL(ipkdblow),_C_LABEL(ipkdbsize)
 _C_LABEL(ipkdblow):
 	mtsprg1	%r1			/* save SP */
+	ENABLE_64BIT_BRIDGE(%r1)
 	GET_CPUINFO(%r1)
 	streg	%r28,(CI_IPKDBSAVE+CPUSAVE_R28)(%r1) /* save r28 */
 	streg	%r29,(CI_IPKDBSAVE+CPUSAVE_R29)(%r1) /* save r29 */
@@ -1020,6 +1037,7 @@ intrleave:
 	.globl	_C_LABEL(sctrap),_C_LABEL(scsize),_C_LABEL(sctrapexit)
 _C_LABEL(sctrap):
 	mtsprg1	%r1			/* save SP */
+	ENABLE_64BIT_BRIDGE(%r1)
 	GET_CPUINFO(%r1)
 	streg	%r28,(CI_TEMPSAVE+CPUSAVE_R28)(%r1) /* save r28 */
 	streg	%r29,(CI_TEMPSAVE+CPUSAVE_R29)(%r1) /* save r20 */
@@ -1213,6 +1231,7 @@ _C_LABEL(ddb_trap):
 	andi.	%r3,%r3,~(PSL_EE|PSL_ME)@l
 	mtmsr	%r3			/* disable interrupts */
 	isync
+	ENABLE_64BIT_BRIDGE(%r3)
 	GET_CPUINFO(%r3)
 	streg	%r28,(CI_DDBSAVE+CPUSAVE_R28)(%r3)
 	streg	%r29,(CI_DDBSAVE+CPUSAVE_R29)(%r3)
@@ -1253,6 +1272,7 @@ _C_LABEL(ipkdb_trap):
 	andi.	%r3,%r3,~(PSL_EE|PSL_ME)@l
 	mtmsr	%r3			/* disable interrupts */
 	isync
+	ENABLE_64BIT_BRIDGE(%r3)
 	GET_CPUINFO(%r3)
 	streg	%r28,(CI_IPKDBSAVE+CPUSAVE_R28)(%r3)
 	streg	%r29,(CI_IPKDBSAVE+CPUSAVE_R29)(%r3)
