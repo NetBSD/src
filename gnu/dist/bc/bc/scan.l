@@ -80,10 +80,7 @@ null_prompt (EditLine *el)
 */
 
 static void
-bcel_input (buf, result, max)
-	char *buf;
-	int  *result;
-	int   max;
+bcel_input (char *buf, yy_size_t *result, int max)
 {
   if (!edit || yyin != stdin)
     {
