@@ -1,4 +1,4 @@
-/*	$NetBSD: ht-internal.h,v 1.1.1.1 2013/04/11 16:43:26 christos Exp $	*/
+/*	$NetBSD: ht-internal.h,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
 /* Based on work Copyright 2002 Christopher Clark */
 /* Copyright 2005-2012 Nick Mathewson */
 /* Copyright 2009-2012 Niels Provos and Nick Mathewson */
@@ -100,9 +100,9 @@ ht_string_hash(const char *s)
 
 #ifdef HT_CACHE_HASH_VALUES
 #define _HT_SET_HASH(elm, field, hashfn)        \
-	do { (elm)->field.hte_hash = hashfn(elm); } while (0)
+	do { (elm)->field.hte_hash = hashfn(elm); } while (/*CONSTCOND*/0)
 #define _HT_SET_HASHVAL(elm, field, val)	\
-	do { (elm)->field.hte_hash = (val); } while (0)
+	do { (elm)->field.hte_hash = (val); } while (/*CONSTCOND*/0)
 #define _HT_ELT_HASH(elm, field, hashfn)	\
 	((elm)->field.hte_hash)
 #else
@@ -157,7 +157,7 @@ ht_string_hash(const char *s)
   name##_HT_FIND(const struct name *head, struct type *elm)             \
   {                                                                     \
     struct type **p;                                                    \
-    struct name *h = (struct name *) head;                              \
+    struct name *h = __UNCONST(head);			                \
     _HT_SET_HASH(elm, field, hashfn);                                   \
     p = _##name##_HT_FIND_P(h, elm);                                    \
     return p ? *p : NULL;                                               \
