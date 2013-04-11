@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.333 2013/04/04 21:15:15 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.334 2013/04/11 01:27:47 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -444,6 +444,7 @@ _DEST.LIB:=${DESTDIR}${LIBDIR}
 _DEST.OBJ:=${DESTDIR}${_LIBSODIR}
 _DEST.LINT:=${DESTDIR}${LINTLIBDIR}
 _DEST.DEBUG:=${DESTDIR}${DEBUGDIR}${LIBDIR}
+_DEST.ODEBUG:=${DESTDIR}${DEBUGDIR}${_LIBSODIR}
 
 .if defined(LIB)							# {
 .if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
@@ -839,6 +840,10 @@ ${_DEST.DEBUG}/${_LIB.so.debug}: ${_LIB.so.debug}
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${DEBUGOWN} -g ${DEBUGGRP} -m ${DEBUGMODE} \
 	    ${.ALLSRC} ${.TARGET}
+.if ${_LIBSODIR} != ${LIBDIR}
+	${INSTALL_SYMLINK} -l r ${_DEST.DEBUG}/${_LIB.so.debug} \
+	    ${_DEST.ODEBUG}/${_LIB.so.debug} 
+.endif
 .endif
 
 .if ${MKLINT} != "no" && !empty(LOBJS)
