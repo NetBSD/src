@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_ssl.c,v 1.1.1.1 2013/04/11 16:43:31 christos Exp $	*/
+/*	$NetBSD: regress_ssl.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -67,6 +67,7 @@ static const char KEY[] =
     "p6BWh3DbMar/eQIgBPS6azH5vpp983KXkNv9AL4VZi9ac/b+BeINdzC6GP0CIDmB\n"
     "U6GFEQTZ3IfuiVabG5pummdC4DNbcdI+WKrSFNmQ\n"
     "-----END RSA PRIVATE KEY-----\n";
+static void *xkey = __UNCONST(KEY);
 
 static EVP_PKEY *
 getkey(void)
@@ -75,7 +76,7 @@ getkey(void)
 	BIO *bio;
 
 	/* new read-only BIO backed by KEY. */
-	bio = BIO_new_mem_buf((char*)KEY, -1);
+	bio = BIO_new_mem_buf(xkey, -1);
 	tt_assert(bio);
 
 	key = PEM_read_bio_PrivateKey(bio,NULL,NULL,NULL);
@@ -112,7 +113,7 @@ getcert(void)
 	nid = OBJ_txt2nid("commonName");
 	tt_assert(NID_undef != nid);
 	tt_assert(0 != X509_NAME_add_entry_by_NID(
-		    name, nid, MBSTRING_ASC, (unsigned char*)"example.com",
+		    name, nid, MBSTRING_ASC, __UNCONST("example.com"),
 		    -1, -1, 0));
 
 	X509_set_subject_name(x509, name);
@@ -271,9 +272,9 @@ open_ssl_bufevs(struct bufferevent **bev1_out, struct bufferevent **bev2_out,
 
 	}
 	bufferevent_setcb(*bev1_out, respond_to_number, done_writing_cb,
-	    eventcb, (void*)"client");
+	    eventcb, __UNCONST("client"));
 	bufferevent_setcb(*bev2_out, respond_to_number, done_writing_cb,
-	    eventcb, (void*)"server");
+	    eventcb, __UNCONST("server"));
 }
 
 static void
@@ -386,7 +387,7 @@ acceptcb(struct evconnlistener *listener, evutil_socket_t fd,
 		BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
 
 	bufferevent_setcb(bev, respond_to_number, NULL, eventcb,
-	    (void*)"server");
+	    __UNCONST("server"));
 
 	bufferevent_enable(bev, EV_READ|EV_WRITE);
 
@@ -430,7 +431,7 @@ regress_bufferevent_openssl_connect(void *arg)
 	tt_assert(bev);
 
 	bufferevent_setcb(bev, respond_to_number, NULL, eventcb,
-	    (void*)"client");
+	    __UNCONST("client"));
 
 	tt_assert(getsockname(evconnlistener_get_fd(listener),
 		(struct sockaddr*)&ss, &slen) == 0);
@@ -451,20 +452,20 @@ end:
 struct testcase_t ssl_testcases[] = {
 
 	{ "bufferevent_socketpair", regress_bufferevent_openssl, TT_ISOLATED,
-	  &basic_setup, (void*)"socketpair" },
+	  &basic_setup, __UNCONST("socketpair") },
 	{ "bufferevent_filter", regress_bufferevent_openssl,
 	  TT_ISOLATED,
-	  &basic_setup, (void*)"filter" },
+	  &basic_setup, __UNCONST("filter") },
 	{ "bufferevent_renegotiate_socketpair", regress_bufferevent_openssl,
 	  TT_ISOLATED,
-	  &basic_setup, (void*)"socketpair renegotiate" },
+	  &basic_setup, __UNCONST("socketpair renegotiate") },
 	{ "bufferevent_renegotiate_filter", regress_bufferevent_openssl,
 	  TT_ISOLATED,
-	  &basic_setup, (void*)"filter renegotiate" },
+	  &basic_setup, __UNCONST("filter renegotiate") },
 	{ "bufferevent_socketpair_startopen", regress_bufferevent_openssl,
-	  TT_ISOLATED, &basic_setup, (void*)"socketpair open" },
+	  TT_ISOLATED, &basic_setup, __UNCONST("socketpair open") },
 	{ "bufferevent_filter_startopen", regress_bufferevent_openssl,
-	  TT_ISOLATED, &basic_setup, (void*)"filter open" },
+	  TT_ISOLATED, &basic_setup, __UNCONST("filter open") },
 
 	{ "bufferevent_connect", regress_bufferevent_openssl_connect,
 	  TT_FORK|TT_NEED_BASE, &basic_setup, NULL },

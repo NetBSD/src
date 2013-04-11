@@ -1,4 +1,4 @@
-/*	$NetBSD: util-internal.h,v 1.1.1.1 2013/04/11 16:43:21 christos Exp $	*/
+/*	$NetBSD: util-internal.h,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -62,7 +62,7 @@ extern "C" {
  */
 #define _EVUTIL_NIL_CONDITION(condition) do { \
 	(void)sizeof(!(condition));  \
-} while(0)
+} while (/*CONSTCOND*/0)
 
 /* Internal use only: macros to match patterns of error codes in a
    cross-platform way.  We need these macros because of two historical
@@ -209,7 +209,7 @@ long _evutil_weakrand(void);
 			    __FILE__,__LINE__,#cond,__func__);		\
 			abort();					\
 		}							\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define EVUTIL_FAILURE_CHECK(cond) EVUTIL_UNLIKELY(cond)
 #endif
 
