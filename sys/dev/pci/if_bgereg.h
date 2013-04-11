@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.73 2013/04/11 10:10:41 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.74 2013/04/11 10:12:48 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -430,7 +430,7 @@
 
 /*
  * PCI state register -- note, this register is read only
- * unless the PCISTATE_WR bit of the PCI Misc. Host Control
+ * unless the PCISTATE_RW bit of the PCI Misc. Host Control
  * register is set.
  */
 #define BGE_PCISTATE_FORCE_RESET	0x00000001
