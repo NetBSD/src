@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.235 2013/04/08 15:55:58 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.236 2013/04/11 11:24:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.235 2013/04/08 15:55:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.236 2013/04/11 11:24:07 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -2491,8 +2491,9 @@ bge_blockinit(struct bge_softc *sc)
 	 */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MEMWIN_BASEADDR, 0);
 
-	/* Step 33: Configure mbuf memory pool */
 	if (!BGE_IS_5705_PLUS(sc)) {
+		/* 57XX step 33 */
+		/* Configure mbuf memory pool */
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
 		    BGE_BUFFPOOL_1);
 
@@ -2501,14 +2502,18 @@ bge_blockinit(struct bge_softc *sc)
 		else
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x18000);
 
+		/* 57XX step 34 */
 		/* Configure DMA resource pool */
 		CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_BASEADDR,
 		    BGE_DMA_DESCRIPTORS);
 		CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_LEN, 0x2000);
 	}
 
-	/* Step 35: Configure mbuf pool watermarks */
-	/* new broadcom docs strongly recommend these: */
+	/* 5718 step 11, 57XX step 35 */
+	/*
+	 * Configure mbuf pool watermarks. New broadcom docs strongly
+	 * recommend these.
+	 */
 	if (BGE_IS_5717_PLUS(sc)) {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x2a);
@@ -2529,11 +2534,13 @@ bge_blockinit(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
 	}
 
-	/* Step 36: Configure DMA resource watermarks */
+	/* 57XX step 36 */
+	/* Configure DMA resource watermarks */
 	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_LOWAT, 5);
 	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_HIWAT, 10);
 
-	/* Step 38: Enable buffer manager */
+	/* 5718 step 13, 57XX step 38 */
+	/* Enable buffer manager */
 	val = BGE_BMANMODE_ENABLE | BGE_BMANMODE_ATTN;
 	/*
 	 * Change the arbitration algorithm of TXMBUF read request to
@@ -2549,7 +2556,8 @@ bge_blockinit(struct bge_softc *sc)
 		val |= BGE_BMANMODE_LOMBUF_ATTN;
 	CSR_WRITE_4(sc, BGE_BMAN_MODE, val);
 
-	/* Step 39: Poll for buffer manager start indication */
+	/* 57XX step 39 */
+	/* Poll for buffer manager start indication */
 	for (i = 0; i < BGE_TIMEOUT * 2; i++) {
 		DELAY(10);
 		if (CSR_READ_4(sc, BGE_BMAN_MODE) & BGE_BMANMODE_ENABLE)
@@ -2562,7 +2570,8 @@ bge_blockinit(struct bge_softc *sc)
 		return ENXIO;
 	}
 
-	/* Step 40: Enable flow-through queues */
+	/* 57XX step 40 */
+	/* Enable flow-through queues */
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0xFFFFFFFF);
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0);
 
@@ -2610,9 +2619,11 @@ bge_blockinit(struct bge_softc *sc)
 	 *   the controller support multiple send rings.
 	 */
 
-	/* Step 41: Initialize the standard RX ring control block */
+	/* 5718 step 15, 57XX step 41 */
+	/* Initialize the standard RX ring control block */
 	rcb = &sc->bge_rdata->bge_info.bge_std_rx_rcb;
 	BGE_HOSTADDR(rcb->bge_hostaddr, BGE_RING_DMA_ADDR(sc, bge_rx_std_ring));
+	/* 5718 step 16 */
 	if (BGE_IS_5717_PLUS(sc)) {
 		/*
 		 * Bits 31-16: Programmable ring size (2048, 1024, 512, .., 32)
@@ -2656,8 +2667,9 @@ bge_blockinit(struct bge_softc *sc)
 	/* Reset the standard receive producer ring producer index. */
 	bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, 0);
 
+	/* 57XX step 42 */
 	/*
-	 * Step 42: Initialize the jumbo RX ring control block
+	 * Initialize the jumbo RX ring control block
 	 * We set the 'ring disabled' bit in the flags
 	 * field until we're actually ready to start
 	 * using this ring (i.e. once we set the MTU
@@ -2687,6 +2699,7 @@ bge_blockinit(struct bge_softc *sc)
 		bge_writembx(sc, BGE_MBX_RX_JUMBO_PROD_LO, 0);
 	}
 
+	/* 57XX step 43 */
 	/* Disable the mini receive producer ring RCB. */
 	if (BGE_IS_5700_FAMILY(sc)) {
 		/* Set up dummy disabled mini ring RCB */
@@ -2712,6 +2725,7 @@ bge_blockinit(struct bge_softc *sc)
 			CSR_WRITE_4(sc, BGE_ISO_PKT_TX,
 			    (CSR_READ_4(sc, BGE_ISO_PKT_TX) & ~3) | 2);
 	}
+	/* 5718 step 14, 57XX step 44 */
 	/*
 	 * The BD ring replenish thresholds control how often the
 	 * hardware fetches new BD's from the producer rings in host
@@ -2729,11 +2743,13 @@ bge_blockinit(struct bge_softc *sc)
 	if (BGE_IS_JUMBO_CAPABLE(sc))
 		CSR_WRITE_4(sc, BGE_RBDI_JUMBO_REPL_THRESH, 8);
 
+	/* 5718 step 18 */
 	if (BGE_IS_5717_PLUS(sc)) {
 		CSR_WRITE_4(sc, BGE_STD_REPL_LWM, 4);
 		CSR_WRITE_4(sc, BGE_JUMBO_REPL_LWM, 4);
 	}
 
+	/* 57XX step 45 */
 	/*
 	 * Disable all send rings by setting the 'ring disabled' bit
 	 * in the flags field of all the TX send ring control blocks,
@@ -2752,6 +2768,7 @@ bge_blockinit(struct bge_softc *sc)
 		rcb_addr += sizeof(struct bge_rcb);
 	}
 
+	/* 57XX step 46 and 47 */
 	/* Configure send ring RCB 0 (we use only the first ring) */
 	rcb_addr = BGE_MEMWIN_START + BGE_SEND_RING_RCB;
 	BGE_HOSTADDR(taddr, BGE_RING_DMA_ADDR(sc, bge_tx_ring));
@@ -2767,6 +2784,7 @@ bge_blockinit(struct bge_softc *sc)
 	RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
 	    BGE_RCB_MAXLEN_FLAGS(BGE_TX_RING_CNT, 0));
 
+	/* 57XX step 48 */
 	/*
 	 * Disable all receive return rings by setting the
 	 * 'ring diabled' bit in the flags field of all the receive
@@ -2798,6 +2816,7 @@ bge_blockinit(struct bge_softc *sc)
 		rcb_addr += sizeof(struct bge_rcb);
 	}
 
+	/* 57XX step 49 */
 	/*
 	 * Set up receive return ring 0.  Note that the NIC address
 	 * for RX return rings is 0x0.  The return rings live entirely
@@ -2811,6 +2830,7 @@ bge_blockinit(struct bge_softc *sc)
 	RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
 	    BGE_RCB_MAXLEN_FLAGS(sc->bge_return_ring_cnt, 0));
 
+	/* 5718 step 24, 57XX step 53 */
 	/* Set random backoff seed for TX */
 	CSR_WRITE_4(sc, BGE_TX_RANDOM_BACKOFF,
 	    (CLLADDR(ifp->if_sadl)[0] + CLLADDR(ifp->if_sadl)[1] +
@@ -2818,6 +2838,7 @@ bge_blockinit(struct bge_softc *sc)
 		CLLADDR(ifp->if_sadl)[4] + CLLADDR(ifp->if_sadl)[5]) &
 	    BGE_TX_BACKOFF_SEED_MASK);
 
+	/* 5718 step 26, 57XX step 55 */
 	/* Set inter-packet gap */
 	val = 0x2620;
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720)
@@ -2825,25 +2846,31 @@ bge_blockinit(struct bge_softc *sc)
 		    (BGE_TXLEN_JMB_FRM_LEN_MSK | BGE_TXLEN_CNT_DN_VAL_MSK);
 	CSR_WRITE_4(sc, BGE_TX_LENGTHS, val);
 
+	/* 5718 step 27, 57XX step 56 */
 	/*
 	 * Specify which ring to use for packets that don't match
 	 * any RX rules.
 	 */
 	CSR_WRITE_4(sc, BGE_RX_RULES_CFG, 0x08);
 
+	/* 5718 step 28, 57XX step 57 */
 	/*
 	 * Configure number of RX lists. One interrupt distribution
 	 * list, sixteen active lists, one bad frames class.
 	 */
 	CSR_WRITE_4(sc, BGE_RXLP_CFG, 0x181);
 
+	/* 5718 step 29, 57XX step 58 */
 	/* Inialize RX list placement stats mask. */
 	CSR_WRITE_4(sc, BGE_RXLP_STATS_ENABLE_MASK, 0x007FFFFF);
+	/* 5718 step 30, 57XX step 59 */
 	CSR_WRITE_4(sc, BGE_RXLP_STATS_CTL, 0x1);
 
+	/* 5718 step 33, 57XX step 62 */
 	/* Disable host coalescing until we get it set up */
 	CSR_WRITE_4(sc, BGE_HCC_MODE, 0x00000000);
 
+	/* 5718 step 34, 57XX step 63 */
 	/* Poll to make sure it's shut down. */
 	for (i = 0; i < BGE_TIMEOUT * 2; i++) {
 		DELAY(10);
@@ -2857,6 +2884,7 @@ bge_blockinit(struct bge_softc *sc)
 		return ENXIO;
 	}
 
+	/* 5718 step 35, 36, 37 */
 	/* Set up host coalescing defaults */
 	CSR_WRITE_4(sc, BGE_HCC_RX_COAL_TICKS, sc->bge_rx_coal_ticks);
 	CSR_WRITE_4(sc, BGE_HCC_TX_COAL_TICKS, sc->bge_tx_coal_ticks);
@@ -2878,6 +2906,7 @@ bge_blockinit(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_LO, taddr.bge_addr_lo);
 	}
 
+	/* 5718 step 38 */
 	/* Set up address of status block */
 	BGE_HOSTADDR(taddr, BGE_RING_DMA_ADDR(sc, bge_status_block));
 	CSR_WRITE_4(sc, BGE_HCC_STATUSBLK_BASEADDR, BGE_STATUS_BLOCK);
@@ -2896,16 +2925,20 @@ bge_blockinit(struct bge_softc *sc)
 		bzero(&sc->bge_rdata->bge_status_block, 32);
 	}
 
+	/* 5718 step 39, 57XX step 73 */
 	/* Turn on host coalescing state machine */
 	CSR_WRITE_4(sc, BGE_HCC_MODE, val | BGE_HCCMODE_ENABLE);
 
+	/* 5718 step 40, 57XX step 74 */
 	/* Turn on RX BD completion state machine and enable attentions */
 	CSR_WRITE_4(sc, BGE_RBDC_MODE,
 	    BGE_RBDCMODE_ENABLE | BGE_RBDCMODE_ATTN);
 
+	/* 5718 step 41, 57XX step 75 */
 	/* Turn on RX list placement state machine */
 	CSR_WRITE_4(sc, BGE_RXLP_MODE, BGE_RXLPMODE_ENABLE);
 
+	/* 57XX step 76 */
 	/* Turn on RX list selector state machine. */
 	if (!(BGE_IS_5705_PLUS(sc)))
 		CSR_WRITE_4(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
@@ -2922,27 +2955,34 @@ bge_blockinit(struct bge_softc *sc)
 	else
 		val |= BGE_PORTMODE_MII;
 
+	/* 5718 step 42 and 43, 57XX step 77 and 78 */
 	/* Allow APE to send/receive frames. */
 	if ((sc->bge_mfw_flags & BGE_MFW_ON_APE) != 0)
 		val |= BGE_MACMODE_APE_RX_EN | BGE_MACMODE_APE_TX_EN;
 
 	/* Turn on DMA, clear stats */
 	CSR_WRITE_4_FLUSH(sc, BGE_MAC_MODE, val);
+	/* 5718 step 44 */
 	DELAY(40);
 
+	/* 5718 step 45, 57XX step 79 */
 	/* Set misc. local control, enable interrupts on attentions */
 	CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_INTR_ONATTN);
 	if (BGE_IS_5717_PLUS(sc)) {
 		CSR_READ_4(sc, BGE_MISC_LOCAL_CTL); /* Flush */
+		/* 5718 step 46 */
 		DELAY(100);
 	}
 
+	/* 57XX step 81 */
 	/* Turn on DMA completion state machine */
 	if (!(BGE_IS_5705_PLUS(sc)))
 		CSR_WRITE_4(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
 
+	/* 5718 step 47, 57XX step 82 */
 	val = BGE_WDMAMODE_ENABLE | BGE_WDMAMODE_ALL_ATTNS;
 
+	/* 5718 step 48 */
 	/* Enable host coalescing bug fix. */
 	if (BGE_IS_5755_PLUS(sc))
 		val |= BGE_WDMAMODE_STATUS_TAG_FIX;
@@ -2952,6 +2992,7 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Turn on write DMA state machine */
 	CSR_WRITE_4_FLUSH(sc, BGE_WDMA_MODE, val);
+	/* 5718 step 49 */
 	DELAY(40);
 
 	val = BGE_RDMAMODE_ENABLE | BGE_RDMAMODE_ALL_ATTNS;
@@ -3026,30 +3067,37 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Turn on read DMA state machine */
 	CSR_WRITE_4_FLUSH(sc, BGE_RDMA_MODE, val);
+	/* 5718 step 52 */
 	delay(40);
 
+	/* 5718 step 56, 57XX step 84 */
 	/* Turn on RX data completion state machine */
 	CSR_WRITE_4(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
 
 	/* Turn on RX data and RX BD initiator state machine */
 	CSR_WRITE_4(sc, BGE_RDBDI_MODE, BGE_RDBDIMODE_ENABLE);
 
+	/* 57XX step 85 */
 	/* Turn on Mbuf cluster free state machine */
 	if (!BGE_IS_5705_PLUS(sc))
 		CSR_WRITE_4(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
 
+	/* 5718 step 57, 57XX step 86 */
 	/* Turn on send data completion state machine */
 	val = BGE_SDCMODE_ENABLE;
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761)
 		val |= BGE_SDCMODE_CDELAY;
 	CSR_WRITE_4(sc, BGE_SDC_MODE, val);
 
+	/* 5718 step 58 */
 	/* Turn on send BD completion state machine */
 	CSR_WRITE_4(sc, BGE_SBDC_MODE, BGE_SBDCMODE_ENABLE);
 
+	/* 57XX step 88 */
 	/* Turn on RX BD initiator state machine */
 	CSR_WRITE_4(sc, BGE_RBDI_MODE, BGE_RBDIMODE_ENABLE);
 
+	/* 5718 step 60, 57XX step 90 */
 	/* Turn on send data initiator state machine */
 	if (sc->bge_flags & BGE_TSO) {
 		/* XXX: magic value from Linux driver */
@@ -3058,13 +3106,17 @@ bge_blockinit(struct bge_softc *sc)
 	} else
 		CSR_WRITE_4(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE);
 
+	/* 5718 step 61, 57XX step 91 */
 	/* Turn on send BD initiator state machine */
 	CSR_WRITE_4(sc, BGE_SBDI_MODE, BGE_SBDIMODE_ENABLE);
 
+	/* 5718 step 62, 57XX step 92 */
 	/* Turn on send BD selector state machine */
 	CSR_WRITE_4(sc, BGE_SRS_MODE, BGE_SRSMODE_ENABLE);
 
+	/* 5718 step 31, 57XX step 60 */
 	CSR_WRITE_4(sc, BGE_SDI_STATS_ENABLE_MASK, 0x007FFFFF);
+	/* 5718 step 32, 57XX step 61 */
 	CSR_WRITE_4(sc, BGE_SDI_STATS_CTL,
 	    BGE_SDISTATSCTL_ENABLE | BGE_SDISTATSCTL_FASTER);
 
@@ -3081,7 +3133,9 @@ bge_blockinit(struct bge_softc *sc)
 	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		CSR_WRITE_4(sc, BGE_MI_STS, BGE_MISTS_LINK);
 	} else {
+		/* 5718 step 68 */
 		BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
+		/* 5718 step 69 (optionally) */
 		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL | (10 << 16));
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700)
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
@@ -3902,6 +3956,8 @@ bge_reset(struct bge_softc *sc)
 		write_op = bge_writereg_ind;
 
 #if 0
+	/* 57XX step 4 */
+	/* Acquire the NVM lock */
 	if ((sc->bge_flags & BGE_NO_EEPROM) == 0 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5700 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5701) {
@@ -3921,11 +3977,13 @@ bge_reset(struct bge_softc *sc)
 	/* Take APE lock when performing reset. */
 	bge_ape_lock(sc, BGE_APE_LOCK_GRC);
 
+	/* 57XX step 3 */
 	/* Save some important PCI state. */
 	cachesize = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CACHESZ);
+	/* 5718 reset step 3 */
 	command = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD);
 
-	/* Step 5b-5d: */
+	/* 5718 reset step 5, 57XX step 5b-5d */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS | BGE_PCIMISCCTL_MASK_PCI_INTR |
 	    BGE_HIF_SWAP_OPTIONS | BGE_PCIMISCCTL_PCISTATE_RW);
@@ -3935,14 +3993,15 @@ bge_reset(struct bge_softc *sc)
 	    BGE_IS_5755_PLUS(sc))
 		CSR_WRITE_4(sc, BGE_FASTBOOT_PC, 0);
 
+	/* 5718 reset step 2, 57XX step 6 */
 	/*
-	 * Step 6: Write the magic number to SRAM at offset 0xB50.
+	 * Write the magic number to SRAM at offset 0xB50.
 	 * When firmware finishes its initialization it will
 	 * write ~BGE_MAGIC_NUMBER to the same location.
 	 */
 	bge_writemem_ind(sc, BGE_SRAM_FW_MB, BGE_SRAM_FW_MB_MAGIC);
 
-	/* Step 7: */
+	/* 5718 reset step 6, 57XX step 7 */
 	reset = BGE_MISCCFG_RESET_CORE_CLOCKS | BGE_32BITTIME_66MHZ;
 	/*
 	 * XXX: from FreeBSD/Linux; no documentation
@@ -3986,7 +4045,7 @@ bge_reset(struct bge_softc *sc)
 	/* Issue global reset */
 	write_op(sc, BGE_MISC_CFG, reset);
 
-	/* Step 8: wait for complete */
+	/* 5718 reset step 7, 57XX step 8 */
 	if (sc->bge_flags & BGE_PCIE)
 		delay(100*1000); /* too big */
 	else
@@ -4022,7 +4081,11 @@ bge_reset(struct bge_softc *sc)
 	/* From Linux: dummy read to flush PCI posted writes */
 	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD);
 
-	/* Step 9-10: Reset some of the PCI state that got zapped by reset */
+	/*
+	 * Reset some of the PCI state that got zapped by reset
+	 * To modify the PCISTATE register, BGE_PCIMISCCTL_PCISTATE_RW must be
+	 * set, too.
+	 */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS | BGE_PCIMISCCTL_MASK_PCI_INTR |
 	    BGE_HIF_SWAP_OPTIONS | BGE_PCIMISCCTL_PCISTATE_RW);
@@ -4046,7 +4109,8 @@ bge_reset(struct bge_softc *sc)
 		    + PCI_PCIX_CMD, reg & ~PCI_PCIX_CMD_RELAXED_ORDER);
 	}
 
-	/* Step 12: Enable memory arbiter. */
+	/* 5718 reset step 10, 57XX step 12 */
+	/* Enable memory arbiter. */
 	if (BGE_IS_5714_FAMILY(sc)) {
 		val = CSR_READ_4(sc, BGE_MARB_MODE);
 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | val);
@@ -4061,13 +4125,15 @@ bge_reset(struct bge_softc *sc)
 		BGE_SETBIT(sc, BGE_TLP_CONTROL_REG, BGE_TLP_DATA_FIFO_PROTECT);
 	}
 
-	/* Step 28: Fix up byte swapping */
+	/* 5718 reset step 12, 57XX step 15 and 16 */
+	/* Fix up byte swapping */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS);
 
+	/* 5718 reset step 13, 57XX step 17 */
 	/*
 	 * Wait for the bootcode to complete initialization.
 	 * See BCM5718 programmer's guide's "step 13, Device reset Procedure,
-	 * Section 7".
+	 * Section 7". For 57XX, it's optional.
 	 */
 	if (BGE_IS_5717_PLUS(sc)) {
 		for (i = 0; i < 1000*1000; i++) {
@@ -4078,7 +4144,7 @@ bge_reset(struct bge_softc *sc)
 		}
 	}
 
-	/* Step 21: 5822 B0 errata */
+	/* 57XX step 21 */
 	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX) {
 		pcireg_t msidata;
 	
@@ -4089,8 +4155,8 @@ bge_reset(struct bge_softc *sc)
 		    msidata);
 	}
 
-	/*
-	 * Step 18: wirte mac mode
+	/* 57XX step 18 */
+	/* Wirte mac mode. 
 	 * XXX Write 0x0c for 5703S and 5704S
 	 */
 	val = CSR_READ_4(sc, BGE_MAC_MODE);
@@ -4100,7 +4166,8 @@ bge_reset(struct bge_softc *sc)
 
 	bge_ape_unlock(sc, BGE_APE_LOCK_GRC);
 
-	/* Step 17: Poll until the firmware initialization is complete */
+	/* 57XX step 17 */
+	/* Poll until the firmware initialization is complete */
 	bge_poll_fw(sc);
 
 	/*
@@ -5169,10 +5236,12 @@ bge_init(struct ifnet *ifp)
 
 	ifp = &sc->ethercom.ec_if;
 
+	/* 5718 step 25, 57XX step 54 */
 	/* Specify MTU. */
 	CSR_WRITE_4(sc, BGE_RX_MTU, ifp->if_mtu +
 	    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN);
 
+	/* 5718 step 23 */
 	/* Load our MAC address. */
 	m = (const uint16_t *)&(CLLADDR(ifp->if_sadl)[0]);
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_LO, htons(m[0]));
@@ -5218,6 +5287,7 @@ bge_init(struct ifnet *ifp)
 	/* Init TX ring. */
 	bge_init_tx_ring(sc);
 
+	/* 5718 step 63, 57XX step 94 */
 	/* Enable TX MAC state machine lockup fix. */
 	mode = CSR_READ_4(sc, BGE_TX_MODE);
 	if (BGE_IS_5755_PLUS(sc) ||
@@ -5231,15 +5301,19 @@ bge_init(struct ifnet *ifp)
 
 	/* Turn on transmitter */
 	CSR_WRITE_4_FLUSH(sc, BGE_TX_MODE, mode | BGE_TXMODE_ENABLE);
+	/* 5718 step 64 */
 	DELAY(100);
 
+	/* 5718 step 65, 57XX step 95 */
 	/* Turn on receiver */
 	mode = CSR_READ_4(sc, BGE_RX_MODE);
 	if (BGE_IS_5755_PLUS(sc))
 		mode |= BGE_RXMODE_IPV6_ENABLE;
 	CSR_WRITE_4_FLUSH(sc, BGE_RX_MODE, mode | BGE_RXMODE_ENABLE);
+	/* 5718 step 66 */
 	DELAY(10);
 
+	/* 5718 step 12 */
 	CSR_WRITE_4(sc, BGE_MAX_RX_FRAME_LOWAT, 2);
 
 	/* Tell firmware we're alive. */
@@ -5546,11 +5620,13 @@ bge_stop(struct ifnet *ifp, int disable)
 	 * Shut down all of the memory managers and related
 	 * state machines.
 	 */
+	/* 5718 step 5a,5b */
 	bge_stop_block(sc, BGE_HCC_MODE, BGE_HCCMODE_ENABLE);
 	bge_stop_block(sc, BGE_WDMA_MODE, BGE_WDMAMODE_ENABLE);
 	if (BGE_IS_5700_FAMILY(sc))
 		bge_stop_block(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
 
+	/* 5718 step 5c,5d */
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0xFFFFFFFF);
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0);
 
