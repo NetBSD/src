@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.1.1.2 2013/04/11 16:43:28 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -28,7 +28,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer.c,v 1.1.1.2 2013/04/11 16:43:28 christos Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -88,7 +88,7 @@ __RCSID("$NetBSD: buffer.c,v 1.1.1.2 2013/04/11 16:43:28 christos Exp $");
 #include "event2/thread.h"
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer.c,v 1.1.1.2 2013/04/11 16:43:28 christos Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
 #include "log-internal.h"
 #include "mm-internal.h"
 #include "util-internal.h"
@@ -1661,7 +1661,7 @@ evbuffer_prepend(struct evbuffer *buf, const void *data, size_t datlen)
 		} else if (chain->misalign) {
 			/* we can only fit some of the data. */
 			memcpy(chain->buffer,
-			    (char*)data + datlen - chain->misalign,
+			    (const char*)data + datlen - chain->misalign,
 			    (size_t)chain->misalign);
 			chain->off += (size_t)chain->misalign;
 			buf->total_len += (size_t)chain->misalign;
@@ -2702,7 +2702,7 @@ evbuffer_add_reference(struct evbuffer *outbuf,
 	if (!chain)
 		return (-1);
 	chain->flags |= EVBUFFER_REFERENCE | EVBUFFER_IMMUTABLE;
-	chain->buffer = (u_char *)data;
+	chain->buffer = __UNCONST(data);
 	chain->buffer_len = datlen;
 	chain->off = datlen;
 
@@ -2837,7 +2837,7 @@ evbuffer_add_file(struct evbuffer *outbuf, int fd,
 	{
 		/* the default implementation */
 		struct evbuffer *tmp = evbuffer_new();
-		ev_ssize_t read;
+		ev_ssize_t nread;
 
 		if (tmp == NULL)
 			return (-1);
@@ -2854,13 +2854,13 @@ evbuffer_add_file(struct evbuffer *outbuf, int fd,
 		 * can abort without side effects if the read fails.
 		 */
 		while (length) {
-			read = evbuffer_readfile(tmp, fd, (ev_ssize_t)length);
-			if (read == -1) {
+			nread = evbuffer_readfile(tmp, fd, (ev_ssize_t)length);
+			if (nread == -1) {
 				evbuffer_free(tmp);
 				return (-1);
 			}
 
-			length -= read;
+			length -= nread;
 		}
 
 		EVBUFFER_LOCK(outbuf);

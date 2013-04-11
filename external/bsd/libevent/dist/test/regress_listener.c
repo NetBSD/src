@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_listener.c,v 1.1.1.1 2013/04/11 16:43:32 christos Exp $	*/
+/*	$NetBSD: regress_listener.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -189,7 +189,7 @@ struct testcase_t listener_testcases[] = {
 	  &basic_setup, NULL},
 
 	{ "randport_ts", regress_pick_a_port, TT_FORK|TT_NEED_BASE,
-	  &basic_setup, (char*)"ts"},
+	  &basic_setup, __UNCONST("ts") },
 
 	{ "error", regress_listener_error,
 	  TT_FORK|TT_NEED_BASE|TT_NEED_SOCKETPAIR,
@@ -197,7 +197,7 @@ struct testcase_t listener_testcases[] = {
 
 	{ "error_ts", regress_listener_error,
 	  TT_FORK|TT_NEED_BASE|TT_NEED_SOCKETPAIR,
-	  &basic_setup, (char*)"ts"},
+	  &basic_setup, __UNCONST("ts") },
 
 	END_OF_TESTCASES,
 };

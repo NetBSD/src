@@ -1,4 +1,4 @@
-/*	$NetBSD: log-internal.h,v 1.1.1.1 2013/04/11 16:43:21 christos Exp $	*/
+/*	$NetBSD: log-internal.h,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -52,7 +52,7 @@ void _event_debugx(const char *fmt, ...) EV_CHECK_FMT(1,2);
 #ifdef USE_DEBUG
 #define event_debug(x) _event_debugx x
 #else
-#define event_debug(x) do {;} while (0)
+#define event_debug(x) do {;} while (/*CONSTCOND*/0)
 #endif
 
 #undef EV_CHECK_FMT

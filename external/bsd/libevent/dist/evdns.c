@@ -1,4 +1,4 @@
-/*	$NetBSD: evdns.c,v 1.1.1.2 2013/04/11 16:43:21 christos Exp $	*/
+/*	$NetBSD: evdns.c,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
 /* Copyright 2006-2007 Niels Provos
  * Copyright 2007-2012 Nick Mathewson and Niels Provos
  *
@@ -52,7 +52,7 @@
 #include <sys/types.h>
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evdns.c,v 1.1.1.2 2013/04/11 16:43:21 christos Exp $");
+__RCSID("$NetBSD: evdns.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
 
 #ifndef _FORTIFY_SOURCE
 #define _FORTIFY_SOURCE 3
@@ -940,9 +940,9 @@ name_parse(u8 *packet, int length, int *idx, char *name_out, int name_out_len) {
 	int name_end = -1;
 	int j = *idx;
 	int ptr_count = 0;
-#define GET32(x) do { if (j + 4 > length) goto err; memcpy(&_t32, packet + j, 4); j += 4; x = ntohl(_t32); } while (0)
-#define GET16(x) do { if (j + 2 > length) goto err; memcpy(&_t, packet + j, 2); j += 2; x = ntohs(_t); } while (0)
-#define GET8(x) do { if (j >= length) goto err; x = packet[j++]; } while (0)
+#define GET32(x) do { if (j + 4 > length) goto err; memcpy(&_t32, packet + j, 4); j += 4; x = ntohl(_t32); } while (/*CONSTCOND*/0)
+#define GET16(x) do { if (j + 2 > length) goto err; memcpy(&_t, packet + j, 2); j += 2; x = ntohs(_t); } while (/*CONSTCOND*/0)
+#define GET8(x) do { if (j >= length) goto err; x = packet[j++]; } while (/*CONSTCOND*/0)
 
 	char *cp = name_out;
 	const char *const end = name_out + name_out_len;
@@ -1038,7 +1038,7 @@ reply_parse(struct evdns_base *base, u8 *packet, int length) {
 		if (name_parse(packet, length, &j, tmp_name,	\
 			sizeof(tmp_name))<0)			\
 			goto err;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define TEST_NAME							\
 	do { tmp_name[0] = '\0';					\
 		cmp_name[0] = '\0';					\
@@ -1056,7 +1056,7 @@ reply_parse(struct evdns_base *base, u8 *packet, int length) {
 			if (evutil_ascii_strcasecmp(tmp_name, cmp_name) == 0) \
 				name_matches = 1;			\
 		}							\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	reply.type = req->request_type;
 
@@ -1591,14 +1591,14 @@ dnsname_to_labels(u8 *const buf, size_t buf_len, off_t j,
 		_t = htons(x);						\
 		memcpy(buf + j, &_t, 2);				\
 		j += 2;							\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define APPEND32(x) do {						\
 		if (j + 4 > (off_t)buf_len)				\
 			goto overflow;					\
 		_t32 = htonl(x);					\
 		memcpy(buf + j, &_t32, 4);				\
 		j += 4;							\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	if (name_len > 255) return -2;
 
@@ -1686,7 +1686,7 @@ evdns_request_data_build(const char *const name, const size_t name_len,
 
 /* exported function */
 struct evdns_server_port *
-evdns_add_server_port_with_base(struct event_base *base, evutil_socket_t socket, int flags, evdns_request_callback_fn_type cb, void *user_data)
+evdns_add_server_port_with_base(struct event_base *base, evutil_socket_t sock, int flags, evdns_request_callback_fn_type cb, void *user_data)
 {
 	struct evdns_server_port *port;
 	if (flags)
@@ -1696,7 +1696,7 @@ evdns_add_server_port_with_base(struct event_base *base, evutil_socket_t socket,
 	memset(port, 0, sizeof(struct evdns_server_port));
 
 
-	port->socket = socket;
+	port->socket = sock;
 	port->refcnt = 1;
 	port->choked = 0;
 	port->closing = 0;
@@ -1717,9 +1717,9 @@ evdns_add_server_port_with_base(struct event_base *base, evutil_socket_t socket,
 }
 
 struct evdns_server_port *
-evdns_add_server_port(evutil_socket_t socket, int flags, evdns_request_callback_fn_type cb, void *user_data)
+evdns_add_server_port(evutil_socket_t sock, int flags, evdns_request_callback_fn_type cb, void *user_data)
 {
-	return evdns_add_server_port_with_base(NULL, socket, flags, cb, user_data);
+	return evdns_add_server_port_with_base(NULL, sock, flags, cb, user_data);
 }
 
 /* exported function */
@@ -2459,7 +2459,7 @@ _evdns_nameserver_add_impl(struct evdns_base *base, const struct sockaddr *addre
 	ASSERT_LOCKED(base);
 	if (server) {
 		do {
-			if (!evutil_sockaddr_cmp((struct sockaddr*)&server->address, address, 1)) return 3;
+			if (!evutil_sockaddr_cmp((const struct sockaddr*)&server->address, address, 1)) return 3;
 			server = server->next;
 		} while (server != started_at);
 	}

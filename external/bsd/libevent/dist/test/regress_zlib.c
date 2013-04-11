@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_zlib.c,v 1.1.1.1 2013/04/11 16:43:32 christos Exp $	*/
+/*	$NetBSD: regress_zlib.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
 /*
  * Copyright (c) 2008-2012 Niels Provos and Nick Mathewson
  *
@@ -35,7 +35,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_zlib.c,v 1.1.1.1 2013/04/11 16:43:32 christos Exp $");
+__RCSID("$NetBSD: regress_zlib.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
 
 #include <sys/types.h>
 #ifndef WIN32
@@ -280,21 +280,21 @@ test_bufferevent_zlib(void *arg)
 	char buffer[8333];
 	z_stream z_input, z_output;
 	int i, r;
-	evutil_socket_t pair[2] = {-1, -1};
+	evutil_socket_t xpair[2] = {-1, -1};
 	(void)arg;
 
 	infilter_calls = outfilter_calls = readcb_finished = writecb_finished
 	    = errorcb_invoked = 0;
 
-	if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1) {
+	if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, xpair) == -1) {
 		tt_abort_perror("socketpair");
 	}
 
-	evutil_make_socket_nonblocking(pair[0]);
-	evutil_make_socket_nonblocking(pair[1]);
+	evutil_make_socket_nonblocking(xpair[0]);
+	evutil_make_socket_nonblocking(xpair[1]);
 
-	bev1 = bufferevent_socket_new(NULL, pair[0], 0);
-	bev2 = bufferevent_socket_new(NULL, pair[1], 0);
+	bev1 = bufferevent_socket_new(NULL, xpair[0], 0);
+	bev2 = bufferevent_socket_new(NULL, xpair[1], 0);
 
 	memset(&z_output, 0, sizeof(z_output));
 	r = deflateInit(&z_output, Z_DEFAULT_COMPRESSION);
@@ -341,8 +341,8 @@ end:
 	if (bev2)
 		bufferevent_free(bev2);
 
-	if (pair[0] >= 0)
-		evutil_closesocket(pair[0]);
-	if (pair[1] >= 0)
-		evutil_closesocket(pair[1]);
+	if (xpair[0] >= 0)
+		evutil_closesocket(xpair[0]);
+	if (xpair[1] >= 0)
+		evutil_closesocket(xpair[1]);
 }

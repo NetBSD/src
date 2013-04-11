@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.1.1.2 2013/04/11 16:43:29 christos Exp $	*/
+/*	$NetBSD: http.c,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -28,7 +28,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: http.c,v 1.1.1.2 2013/04/11 16:43:29 christos Exp $");
+__RCSID("$NetBSD: http.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
 
 #ifdef _EVENT_HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -4139,7 +4139,7 @@ enum uri_part {
  *   *(pchar / "/" / "?") if allow_qchars is true.
  */
 static char *
-end_of_path(char *cp, enum uri_part part, unsigned flags)
+end_of_path(const char *cp, enum uri_part part, unsigned flags)
 {
 	if (flags & EVHTTP_URI_NONCONFORMANT) {
 		/* If NONCONFORMANT:
@@ -4160,7 +4160,7 @@ end_of_path(char *cp, enum uri_part part, unsigned flags)
 			cp += strlen(cp);
 			break;
 		};
-		return cp;
+		return __UNCONST(cp);
 	}
 
 	while (*cp) {
@@ -4174,9 +4174,9 @@ end_of_path(char *cp, enum uri_part part, unsigned flags)
 		else if (*cp == '?' && part != PART_PATH)
 			++cp;
 		else
-			return cp;
+			return __UNCONST(cp);
 	}
-	return cp;
+	return __UNCONST(cp);
 }
 
 static int
@@ -4500,7 +4500,7 @@ evhttp_uri_set_port(struct evhttp_uri *uri, int port)
 	return 0;
 }
 #define end_of_cpath(cp,p,f) \
-	((const char*)(end_of_path(((char*)(cp)), (p), (f))))
+	((const char*)(end_of_path(((const char*)(cp)), (p), (f))))
 
 int
 evhttp_uri_set_path(struct evhttp_uri *uri, const char *path)

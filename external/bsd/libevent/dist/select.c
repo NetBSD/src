@@ -1,4 +1,4 @@
-/*	$NetBSD: select.c,v 1.1.1.2 2013/04/11 16:43:22 christos Exp $	*/
+/*	$NetBSD: select.c,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
 /*	$OpenBSD: select.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: select.c,v 1.1.1.2 2013/04/11 16:43:22 christos Exp $");
+__RCSID("$NetBSD: select.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
 
 #include <sys/types.h>
 #ifdef _EVENT_HAVE_SYS_TIME_H
@@ -125,7 +125,7 @@ check_selectop(struct selectop *sop)
 	/* nothing to be done here */
 }
 #else
-#define check_selectop(sop) do { (void) sop; } while (0)
+#define check_selectop(sop) do { (void) sop; } while (/*CONSTCOND*/0)
 #endif
 
 static int

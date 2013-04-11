@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_ratelim.c,v 1.1.1.1 2013/04/11 16:43:24 christos Exp $	*/
+/*	$NetBSD: bufferevent_ratelim.c,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  * Copyright (c) 2002-2006 Niels Provos <provos@citi.umich.edu>
@@ -214,7 +214,7 @@ _bufferevent_get_rlim_max(struct bufferevent_private *bev, int is_write)
 	do {					\
 		if (max_so_far > (x))		\
 			max_so_far = (x);	\
-	} while (0);
+	} while (/*CONSTCOND*/0);
 
 	if (!bev->rate_limiting)
 		return max_so_far;
@@ -482,7 +482,7 @@ _bev_group_random_element(struct bufferevent_rate_limit_group *group)
 		    bev = TAILQ_NEXT(bev, rate_limiting->next_in_group)) { \
 			block ;						\
 		}							\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 static void
 _bev_group_unsuspend_reading(struct bufferevent_rate_limit_group *g)

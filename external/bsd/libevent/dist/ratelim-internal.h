@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelim-internal.h,v 1.1.1.1 2013/04/11 16:43:21 christos Exp $	*/
+/*	$NetBSD: ratelim-internal.h,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -92,12 +92,12 @@ int bufferevent_remove_from_rate_limit_group_internal(struct bufferevent *bev,
 #define ev_token_bucket_decrement_read(b,n)	\
 	do {					\
 		(b)->read_limit -= (n);		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 /** Decrease the write limit of 'b' by 'n' bytes */
 #define ev_token_bucket_decrement_write(b,n)	\
 	do {					\
 		(b)->write_limit -= (n);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #ifdef __cplusplus
 }

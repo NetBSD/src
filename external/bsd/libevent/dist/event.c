@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.1.1.2 2013/04/11 16:43:20 christos Exp $	*/
+/*	$NetBSD: event.c,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -27,7 +27,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: event.c,v 1.1.1.2 2013/04/11 16:43:20 christos Exp $");
+__RCSID("$NetBSD: event.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -217,7 +217,7 @@ HT_GENERATE(event_debug_map, event_debug_entry, node, hash_debug_entry,
 		EVLOCK_UNLOCK(_event_debug_map_lock, 0);		\
 	}								\
 	event_debug_mode_too_late = 1;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 /* Macro: record that ev is no longer setup */
 #define _event_debug_note_teardown(ev) do {				\
 	if (_event_debug_mode_on) {					\
@@ -230,7 +230,7 @@ HT_GENERATE(event_debug_map, event_debug_entry, node, hash_debug_entry,
 		EVLOCK_UNLOCK(_event_debug_map_lock, 0);		\
 	}								\
 	event_debug_mode_too_late = 1;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 /* Macro: record that ev is now added */
 #define _event_debug_note_add(ev)	do {				\
 	if (_event_debug_mode_on) {					\
@@ -251,7 +251,7 @@ HT_GENERATE(event_debug_map, event_debug_entry, node, hash_debug_entry,
 		EVLOCK_UNLOCK(_event_debug_map_lock, 0);		\
 	}								\
 	event_debug_mode_too_late = 1;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 /* Macro: record that ev is no longer added */
 #define _event_debug_note_del(ev) do {					\
 	if (_event_debug_mode_on) {					\
@@ -272,7 +272,7 @@ HT_GENERATE(event_debug_map, event_debug_entry, node, hash_debug_entry,
 		EVLOCK_UNLOCK(_event_debug_map_lock, 0);		\
 	}								\
 	event_debug_mode_too_late = 1;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 /* Macro: assert that ev is setup (i.e., okay to add or inspect) */
 #define _event_debug_assert_is_setup(ev) do {				\
 	if (_event_debug_mode_on) {					\
@@ -290,7 +290,7 @@ HT_GENERATE(event_debug_map, event_debug_entry, node, hash_debug_entry,
 		}							\
 		EVLOCK_UNLOCK(_event_debug_map_lock, 0);		\
 	}								\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 /* Macro: assert that ev is not added (i.e., okay to tear down or set
  * up again) */
 #define _event_debug_assert_not_added(ev) do {				\
@@ -309,7 +309,7 @@ HT_GENERATE(event_debug_map, event_debug_entry, node, hash_debug_entry,
 		}							\
 		EVLOCK_UNLOCK(_event_debug_map_lock, 0);		\
 	}								\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #else
 #define _event_debug_note_setup(ev) \
 	((void)0)
@@ -915,7 +915,7 @@ event_get_supported_methods(void)
 	tmp[i] = NULL;
 
 	if (methods != NULL)
-		mm_free((char**)methods);
+		mm_free(__UNCONST(methods));
 
 	methods = tmp;
 
@@ -939,7 +939,7 @@ static void
 event_config_entry_free(struct event_config_entry *entry)
 {
 	if (entry->avoid_method != NULL)
-		mm_free((char *)entry->avoid_method);
+		mm_free(__UNCONST(entry->avoid_method));
 	mm_free(entry);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: evutil_rand.c,v 1.1.1.1 2013/04/11 16:43:20 christos Exp $	*/
+/*	$NetBSD: evutil_rand.c,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -35,7 +35,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evutil_rand.c,v 1.1.1.1 2013/04/11 16:43:20 christos Exp $");
+__RCSID("$NetBSD: evutil_rand.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
 
 #include <limits.h>
 
@@ -53,16 +53,19 @@ evutil_secure_rng_init(void)
 	return 0;
 }
 int
+/*ARGSUSED*/
 evutil_secure_rng_global_setup_locks_(const int enable_locks)
 {
 	return 0;
 }
 
 static void
+/*ARGSUED*/
 ev_arc4random_buf(void *buf, size_t n)
 {
 #if defined(_EVENT_HAVE_ARC4RANDOM_BUF) && !defined(__APPLE__)
-	return arc4random_buf(buf, n);
+	arc4random_buf(buf, n);
+	return;
 #else
 	unsigned char *b = buf;
 
@@ -156,7 +159,7 @@ evutil_secure_rng_get_bytes(void *buf, size_t n)
 void
 evutil_secure_rng_add_bytes(const char *buf, size_t n)
 {
-	arc4random_addrandom((unsigned char*)buf,
+	arc4random_addrandom(__UNCONST(buf),
 	    n>(size_t)INT_MAX ? INT_MAX : (int)n);
 }
 

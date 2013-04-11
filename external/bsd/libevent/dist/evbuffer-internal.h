@@ -1,4 +1,4 @@
-/*	$NetBSD: evbuffer-internal.h,v 1.1.1.1 2013/04/11 16:43:26 christos Exp $	*/
+/*	$NetBSD: evbuffer-internal.h,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -221,19 +221,19 @@ struct evbuffer_chain_reference {
 #define EVBUFFER_LOCK(buffer)						\
 	do {								\
 		EVLOCK_LOCK((buffer)->lock, 0);				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define EVBUFFER_UNLOCK(buffer)						\
 	do {								\
 		EVLOCK_UNLOCK((buffer)->lock, 0);			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define EVBUFFER_LOCK2(buffer1, buffer2)				\
 	do {								\
 		EVLOCK_LOCK2((buffer1)->lock, (buffer2)->lock, 0, 0);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define EVBUFFER_UNLOCK2(buffer1, buffer2)				\
 	do {								\
 		EVLOCK_UNLOCK2((buffer1)->lock, (buffer2)->lock, 0, 0);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /** Increase the reference count of buf by one. */
 void _evbuffer_incref(struct evbuffer *buf);
@@ -266,7 +266,7 @@ int _evbuffer_read_setup_vecs(struct evbuffer *buf, ev_ssize_t howmuch,
 #define WSABUF_FROM_EVBUFFER_IOV(i,ei) do {		\
 		(i)->buf = (ei)->iov_base;		\
 		(i)->len = (unsigned long)(ei)->iov_len;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 /* XXXX the cast above is safe for now, but not if we allow mmaps on win64.
  * See note in buffer_iocp's launch_write function */
 
