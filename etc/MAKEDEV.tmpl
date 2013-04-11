@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.165 2013/03/08 12:33:25 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.166 2013/04/11 19:13:46 martin Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2160,6 +2160,37 @@ makedisk_p8()
 	mkdev r${name}${unit}f	c $chr $(($unit * 8 + 5))	640 $g_operator
 	mkdev r${name}${unit}g	c $chr $(($unit * 8 + 6))	640 $g_operator
 	mkdev r${name}${unit}h	c $chr $(($unit * 8 + 7))	640 $g_operator
+}
+
+makedisk_p12high()
+{
+	ho=524280	# offset for partition 9 to 11 (same as ...p16high)
+	name="$1"; unit="$2"; blk="$3"; chr="$4"
+
+	mkdev ${name}${unit}a	b $blk $(($unit * 8 + 0))	640 $g_operator
+	mkdev ${name}${unit}b	b $blk $(($unit * 8 + 1))	640 $g_operator
+	mkdev ${name}${unit}c	b $blk $(($unit * 8 + 2))	640 $g_operator
+	mkdev ${name}${unit}d	b $blk $(($unit * 8 + 3))	640 $g_operator
+	mkdev ${name}${unit}e	b $blk $(($unit * 8 + 4))	640 $g_operator
+	mkdev ${name}${unit}f	b $blk $(($unit * 8 + 5))	640 $g_operator
+	mkdev ${name}${unit}g	b $blk $(($unit * 8 + 6))	640 $g_operator
+	mkdev ${name}${unit}h	b $blk $(($unit * 8 + 7))	640 $g_operator
+	mkdev ${name}${unit}i	b $blk $(($unit * 8 + $ho + 8)) 640 $g_operator
+	mkdev ${name}${unit}j	b $blk $(($unit * 8 + $ho + 9)) 640 $g_operator
+	mkdev ${name}${unit}k	b $blk $(($unit * 8 + $ho + 10)) 640 $g_operator
+	mkdev ${name}${unit}l	b $blk $(($unit * 8 + $ho + 11)) 640 $g_operator
+	mkdev r${name}${unit}a	c $chr $(($unit * 8 + 0))	640 $g_operator
+	mkdev r${name}${unit}b	c $chr $(($unit * 8 + 1))	640 $g_operator
+	mkdev r${name}${unit}c	c $chr $(($unit * 8 + 2))	640 $g_operator
+	mkdev r${name}${unit}d	c $chr $(($unit * 8 + 3))	640 $g_operator
+	mkdev r${name}${unit}e	c $chr $(($unit * 8 + 4))	640 $g_operator
+	mkdev r${name}${unit}f	c $chr $(($unit * 8 + 5))	640 $g_operator
+	mkdev r${name}${unit}g	c $chr $(($unit * 8 + 6))	640 $g_operator
+	mkdev r${name}${unit}h	c $chr $(($unit * 8 + 7))	640 $g_operator
+	mkdev r${name}${unit}i	c $chr $(($unit * 8 + $ho + 8)) 640 $g_operator
+	mkdev r${name}${unit}j	c $chr $(($unit * 8 + $ho + 9)) 640 $g_operator
+	mkdev r${name}${unit}k	c $chr $(($unit * 8 + $ho + 10)) 640 $g_operator
+	mkdev r${name}${unit}l	c $chr $(($unit * 8 + $ho + 11)) 640 $g_operator
 }
 
 makedisk_p16()
