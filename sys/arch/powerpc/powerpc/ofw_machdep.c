@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.20 2013/04/01 20:14:42 macallan Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.21 2013/04/11 19:53:51 macallan Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.20 2013/04/01 20:14:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.21 2013/04/11 19:53:51 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -99,13 +99,13 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 		goto error;
 
 	/* how many mem regions did we get? */
-	numregs = regcnt / (sizeof(uint32_t)*(acells+scells));
+	numregs = regcnt / (sizeof(uint32_t) * (acells + scells));
 	DPRINTF("regcnt=%d num=%d acell=%d scell=%d\n",
 	    regcnt, numregs, acells, scells);
 
 	/* move the data into OFmem */
 	memset(OFmem, 0, sizeof(OFmem));
-	for (i=0, cnt=0; i <= numregs; i++) {
+	for (i = 0, cnt = 0; i <= numregs; i++) {
 		uint64_t addr, size;
 
 		if (acells > 1)
@@ -168,7 +168,7 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 
 	/* move the data into OFavail */
 	memset(OFavail, 0, sizeof(OFavail));
-	for (i=0, cnt=0; i <= numregs; i++) {
+	for (i = 0, cnt = 0; i <= numregs; i++) {
 		uint64_t addr, size;
 
 		DPRINTF("%d\n", i);
@@ -188,7 +188,7 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 			continue;
 #ifndef _LP64
 		if (addr > 0xFFFFFFFF || size > 0xFFFFFFFF ||
-			(addr+size) > 0xFFFFFFFF) {
+			(addr + size) > 0xFFFFFFFF) {
 			aprint_error("Base addr of %llx or size of %llx too"
 			    " large for 32 bit OS. Skipping.", addr, size);
 			continue;
