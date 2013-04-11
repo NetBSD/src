@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 2013/03/28 00:22:21 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89 2013/04/11 17:13:15 macallan Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2013/03/28 00:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2013/04/11 17:13:15 macallan Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -3465,7 +3465,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	    sizeof(void *), 0, 0, "pmap_pl", &pmap_pool_uallocator,
 	    IPL_NONE);
 
-#if defined(PMAP_NEED_MAPKERNEL) || 1
+#if defined(PMAP_NEED_MAPKERNEL)
 	{
 		struct pmap *pm = pmap_kernel();
 #if defined(PMAP_NEED_FULL_MAPKERNEL)
