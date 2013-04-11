@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_et.c,v 1.1.1.1 2013/04/11 16:43:32 christos Exp $	*/
+/*	$NetBSD: regress_et.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -27,7 +27,7 @@
 #include "../util-internal.h"
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_et.c,v 1.1.1.1 2013/04/11 16:43:32 christos Exp $");
+__RCSID("$NetBSD: regress_et.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -86,7 +86,7 @@ test_edgetriggered(void *et)
 	struct event *ev = NULL;
 	struct event_base *base = NULL;
 	const char *test = "test string";
-	evutil_socket_t pair[2] = {-1,-1};
+	evutil_socket_t xpair[2] = {-1,-1};
 	int supports_et;
 
 	/* On Linux 3.2.1 (at least, as patched by Fedora and tested by Nick),
@@ -96,19 +96,19 @@ test_edgetriggered(void *et)
 	 * problem.
 	 */
 #ifdef __linux__
-	if (evutil_ersatz_socketpair(AF_INET, SOCK_STREAM, 0, pair) == -1) {
+	if (evutil_ersatz_socketpair(AF_INET, SOCK_STREAM, 0, xpair) == -1) {
 		tt_abort_perror("socketpair");
 	}
 #else
-	if (evutil_socketpair(LOCAL_SOCKETPAIR_AF, SOCK_STREAM, 0, pair) == -1) {
+	if (evutil_socketpair(LOCAL_SOCKETPAIR_AF, SOCK_STREAM, 0, xpair) == -1) {
 		tt_abort_perror("socketpair");
 	}
 #endif
 
 	called = was_et = 0;
 
-	tt_int_op(send(pair[0], test, (int)strlen(test)+1, 0), >, 0);
-	shutdown(pair[0], SHUT_WR);
+	tt_int_op(send(xpair[0], test, (int)strlen(test)+1, 0), >, 0);
+	shutdown(xpair[0], SHUT_WR);
 
 	/* Initalize the event library */
 	base = event_base_new();
@@ -125,12 +125,12 @@ test_edgetriggered(void *et)
 				supports_et?"":"not "));
 
 	/* Initalize one event */
-	ev = event_new(base, pair[1], EV_READ|EV_ET|EV_PERSIST, read_cb, &ev);
+	ev = event_new(base, xpair[1], EV_READ|EV_ET|EV_PERSIST, read_cb, &ev);
 
 	event_add(ev, NULL);
 
 	/* We're going to call the dispatch function twice.  The first invocation
-	 * will read a single byte from pair[1] in either case.  If we're edge
+	 * will read a single byte from xpair[1] in either case.  If we're edge
 	 * triggered, we'll only see the event once (since we only see transitions
 	 * from no data to data), so the second invocation of event_base_loop will
 	 * do nothing.  If we're level triggered, the second invocation of
@@ -154,8 +154,8 @@ test_edgetriggered(void *et)
 	}
 	if (base)
 		event_base_free(base);
-	evutil_closesocket(pair[0]);
-	evutil_closesocket(pair[1]);
+	evutil_closesocket(xpair[0]);
+	evutil_closesocket(xpair[1]);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_buffer.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $	*/
+/*	$NetBSD: regress_buffer.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -33,7 +33,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_buffer.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $");
+__RCSID("$NetBSD: regress_buffer.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -257,9 +257,9 @@ test_evbuffer(void *ptr)
 	{
 		struct evbuffer_iovec v[1];
 		char *buf;
-		int i, j, r;
+		int ii, j, r;
 
-		for (i = 0; i < 3; ++i) {
+		for (ii = 0; ii < 3; ++ii) {
 			r = evbuffer_reserve_space(evb, 10000, v, 1);
 			tt_int_op(r, ==, 1);
 			tt_assert(v[0].iov_len >= 10000);
@@ -636,7 +636,7 @@ test_evbuffer_add_file(void *ptr)
 	size_t datalen;
 	const char *compare;
 	int fd = -1;
-	evutil_socket_t pair[2] = {-1, -1};
+	evutil_socket_t xpair[2] = {-1, -1};
 	int r=0, n_written=0;
 
 	/* Add a test for a big file. XXXX */
@@ -664,10 +664,10 @@ test_evbuffer_add_file(void *ptr)
 #if defined(_EVENT_HAVE_SENDFILE) && defined(__sun__) && defined(__svr4__)
 	/* We need to use a pair of AF_INET sockets, since Solaris
 	   doesn't support sendfile() over AF_UNIX. */
-	if (evutil_ersatz_socketpair(AF_INET, SOCK_STREAM, 0, pair) == -1)
+	if (evutil_ersatz_socketpair(AF_INET, SOCK_STREAM, 0, xpair) == -1)
 		tt_abort_msg("ersatz_socketpair failed");
 #else
-	if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
+	if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, xpair) == -1)
 		tt_abort_msg("socketpair failed");
 #endif
 
@@ -681,7 +681,7 @@ test_evbuffer_add_file(void *ptr)
 	evbuffer_validate(src);
 
 	while (evbuffer_get_length(src) &&
-	    (r = evbuffer_write(src, pair[0])) > 0) {
+	    (r = evbuffer_write(src, xpair[0])) > 0) {
 		evbuffer_validate(src);
 		n_written += r;
 	}
@@ -689,7 +689,7 @@ test_evbuffer_add_file(void *ptr)
 	tt_int_op(n_written, ==, datalen);
 
 	evbuffer_validate(src);
-	tt_int_op(evbuffer_read(src, pair[1], (int)strlen(data)), ==, datalen);
+	tt_int_op(evbuffer_read(src, xpair[1], (int)strlen(data)), ==, datalen);
 	evbuffer_validate(src);
 	compare = (char *)evbuffer_pullup(src, datalen);
 	tt_assert(compare != NULL);
@@ -698,10 +698,10 @@ test_evbuffer_add_file(void *ptr)
 
 	evbuffer_validate(src);
  end:
-	if (pair[0] >= 0)
-		evutil_closesocket(pair[0]);
-	if (pair[1] >= 0)
-		evutil_closesocket(pair[1]);
+	if (xpair[0] >= 0)
+		evutil_closesocket(xpair[0]);
+	if (xpair[1] >= 0)
+		evutil_closesocket(xpair[1]);
 	evbuffer_free(src);
 }
 
@@ -992,9 +992,7 @@ test_evbuffer_iterative(void *ptr)
 	n = 0;
 	for (i = 0; i < 1000; ++i) {
 		for (j = 1; j < strlen(abc); ++j) {
-			char format[32];
-			evutil_snprintf(format, sizeof(format), "%%%u.%us", j, j);
-			evbuffer_add_printf(buf, format, abc);
+			evbuffer_add_printf(buf, "%*.*s", j, j, abc);
 
 			/* Only check for rep violations every so often.
 			   Walking over the whole list of chains can get
@@ -1039,13 +1037,13 @@ test_evbuffer_find(void *ptr)
 	tt_assert(buf);
 
 	/* make sure evbuffer_find doesn't match past the end of the buffer */
-	evbuffer_add(buf, (u_char*)test1, strlen(test1));
+	evbuffer_add(buf, __UNCONST(test1), strlen(test1));
 	evbuffer_validate(buf);
 	evbuffer_drain(buf, strlen(test1));
 	evbuffer_validate(buf);
-	evbuffer_add(buf, (u_char*)test2, strlen(test2));
+	evbuffer_add(buf, __UNCONST(test2), strlen(test2));
 	evbuffer_validate(buf);
-	p = evbuffer_find(buf, (u_char*)"\r\n", 2);
+	p = evbuffer_find(buf, __UNCONST("\r\n"), 2);
 	tt_want(p == NULL);
 
 	/*
@@ -1059,11 +1057,11 @@ test_evbuffer_find(void *ptr)
 	test3[EVBUFFER_INITIAL_LENGTH - 1] = 'x';
 	evbuffer_add(buf, (u_char *)test3, EVBUFFER_INITIAL_LENGTH);
 	evbuffer_validate(buf);
-	p = evbuffer_find(buf, (u_char *)"xy", 2);
+	p = evbuffer_find(buf, __UNCONST("xy"), 2);
 	tt_want(p == NULL);
 
 	/* simple test for match at end of allocated buffer */
-	p = evbuffer_find(buf, (u_char *)"ax", 2);
+	p = evbuffer_find(buf, __UNCONST("ax"), 2);
 	tt_assert(p != NULL);
 	tt_want(strncmp((char*)p, "ax", 2) == 0);
 
@@ -1579,7 +1577,7 @@ test_evbuffer_freeze(void *ptr)
 	    } else {					\
 		    tt_int_op((a), ==, (endcase));	\
 	    }						\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 	orig_length = evbuffer_get_length(buf);
@@ -1652,8 +1650,8 @@ struct testcase_t evbuffer_testcases[] = {
 	{ "remove_buffer_with_empty", test_evbuffer_remove_buffer_with_empty, 0, NULL, NULL },
 	{ "reserve2", test_evbuffer_reserve2, 0, NULL, NULL },
 	{ "reserve_many", test_evbuffer_reserve_many, 0, NULL, NULL },
-	{ "reserve_many2", test_evbuffer_reserve_many, 0, &nil_setup, (void*)"add" },
-	{ "reserve_many3", test_evbuffer_reserve_many, 0, &nil_setup, (void*)"fill" },
+	{ "reserve_many2", test_evbuffer_reserve_many, 0, &nil_setup, __UNCONST("add") },
+	{ "reserve_many3", test_evbuffer_reserve_many, 0, &nil_setup, __UNCONST("fill") },
 	{ "expand", test_evbuffer_expand, 0, NULL, NULL },
 	{ "reference", test_evbuffer_reference, 0, NULL, NULL },
 	{ "iterative", test_evbuffer_iterative, 0, NULL, NULL },
@@ -1666,15 +1664,15 @@ struct testcase_t evbuffer_testcases[] = {
 	{ "add_reference", test_evbuffer_add_reference, 0, NULL, NULL },
 	{ "prepend", test_evbuffer_prepend, TT_FORK, NULL, NULL },
 	{ "peek", test_evbuffer_peek, 0, NULL, NULL },
-	{ "freeze_start", test_evbuffer_freeze, 0, &nil_setup, (void*)"start" },
-	{ "freeze_end", test_evbuffer_freeze, 0, &nil_setup, (void*)"end" },
+	{ "freeze_start", test_evbuffer_freeze, 0, &nil_setup, __UNCONST("start") },
+	{ "freeze_end", test_evbuffer_freeze, 0, &nil_setup, __UNCONST("end") },
 	/* TODO: need a temp file implementation for Windows */
 	{ "add_file_sendfile", test_evbuffer_add_file, TT_FORK, &nil_setup,
-	  (void*)"sendfile" },
+	  __UNCONST("sendfile") },
 	{ "add_file_mmap", test_evbuffer_add_file, TT_FORK, &nil_setup,
-	  (void*)"mmap" },
+	  __UNCONST("mmap") },
 	{ "add_file_linear", test_evbuffer_add_file, TT_FORK, &nil_setup,
-	  (void*)"linear" },
+	  __UNCONST("linear") },
 
 	END_OF_TESTCASES
 };

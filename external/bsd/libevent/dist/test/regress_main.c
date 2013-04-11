@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_main.c,v 1.1.1.1 2013/04/11 16:43:32 christos Exp $	*/
+/*	$NetBSD: regress_main.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -43,7 +43,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_main.c,v 1.1.1.1 2013/04/11 16:43:32 christos Exp $");
+__RCSID("$NetBSD: regress_main.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
 
 #ifdef _EVENT___func__
 #define __func__ _EVENT___func__
@@ -87,7 +87,7 @@ __RCSID("$NetBSD: regress_main.c,v 1.1.1.1 2013/04/11 16:43:32 christos Exp $");
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_main.c,v 1.1.1.1 2013/04/11 16:43:32 christos Exp $");
+__RCSID("$NetBSD: regress_main.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
 #include "regress.h"
 #include "tinytest.h"
 #include "tinytest_macros.h"
@@ -385,8 +385,10 @@ struct testgroup_t testgroups[] = {
 	{ "iocp/bufferevent/", bufferevent_iocp_testcases },
 	{ "iocp/listener/", listener_iocp_testcases },
 #endif
+#ifdef LIBEVENT_CRYPTO
 #ifdef _EVENT_HAVE_OPENSSL
 	{ "ssl/", ssl_testcases },
+#endif
 #endif
 	END_OF_GROUPS
 };
