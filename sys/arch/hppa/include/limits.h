@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.14 2012/03/28 17:03:29 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.15 2013/04/11 00:57:34 christos Exp $	*/
 
 /*	$OpenBSD: limits.h,v 1.2 2000/07/31 20:06:02 millert Exp $	*/
 
@@ -101,6 +101,7 @@
 #endif
 
 #if defined(_NETBSD_SOURCE)
+#define	SSIZE_MIN	INT_MIN		/* min value for a ssize_t */
 #define SIZE_T_MAX      UINT_MAX        /* max value for a size_t */
 
 #define UQUAD_MAX       0xffffffffffffffffULL           /* max unsigned quad */
