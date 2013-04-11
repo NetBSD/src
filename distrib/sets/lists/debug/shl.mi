@@ -1,10 +1,10 @@
-# $NetBSD: shl.mi,v 1.22 2013/04/11 14:14:35 skrll Exp $
+# $NetBSD: shl.mi,v 1.23 2013/04/11 17:43:19 christos Exp $
 ./usr/libdata/debug/lib/libc.so.12.185.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libedit.so.3.1.debug		comp-sys-debug	debug
-./usr/libdata/debug/lib/libevent.so.3.2.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libevent.so.4.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libgcc_s.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libipsec.so.3.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libkvm.so.6.0.debug		comp-sys-debug	debug
@@ -77,7 +77,9 @@
 ./usr/libdata/debug/usr/lib/libdwarf.so.0.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libedit.so.3.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libelf.so.0.0.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libevent.so.3.2.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libevent.so.4.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,crypto
+./usr/libdata/debug/usr/lib/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libexecinfo.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libexpat.so.2.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libfetch.so.3.0.debug	comp-sys-debug	debug

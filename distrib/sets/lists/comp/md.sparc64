@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.166 2013/02/16 21:40:19 jmmv Exp $
+# $NetBSD: md.sparc64,v 1.167 2013/04/11 17:43:17 christos Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -345,6 +345,14 @@
 ./usr/lib/sparc/libevent.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libevent_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libevent_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libevent_openssl.a		comp-c-lib		compat,crypto
+./usr/lib/sparc/libevent_openssl.so		base-sys-shlib		compat,pic,crypto
+./usr/lib/sparc/libevent_openssl_p.a		comp-c-proflib		compat,profile,crypto
+./usr/lib/sparc/libevent_openssl_pic.a		comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/libevent_pthreads.a		comp-c-lib		compat
+./usr/lib/sparc/libevent_pthreads.so		base-sys-shlib		compat,pic
+./usr/lib/sparc/libevent_pthreads_p.a		comp-c-proflib		compat,profile
+./usr/lib/sparc/libevent_pthreads_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/sparc/libexecinfo.a			comp-c-lib		compat
 ./usr/lib/sparc/libexecinfo.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libexecinfo_p.a			comp-c-proflib		compat,profile

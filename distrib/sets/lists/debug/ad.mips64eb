@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.19 2013/04/08 18:46:00 spz Exp $
+# $NetBSD: ad.mips64eb,v 1.20 2013/04/11 17:43:19 christos Exp $
 ./usr/libdata/debug/lib/64/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/64/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -66,7 +66,9 @@
 ./usr/libdata/debug/usr/lib/64/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libedit.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libelf.so.0.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libevent.so.3.2.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libevent.so.4.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,compat,crypto
+./usr/libdata/debug/usr/lib/64/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libexecinfo.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libexpat.so.2.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libfetch.so.3.0.debug	comp-sys-debug	debug,compat
@@ -228,7 +230,9 @@
 ./usr/libdata/debug/usr/lib/o32/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libedit.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libelf.so.0.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libevent.so.3.2.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libevent.so.4.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,compat,crypto
+./usr/libdata/debug/usr/lib/o32/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libexecinfo.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libexpat.so.2.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libfetch.so.3.0.debug	comp-sys-debug	debug,compat
