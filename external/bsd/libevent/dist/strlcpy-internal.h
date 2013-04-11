@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy-internal.h,v 1.1.1.1 2009/11/02 10:01:02 plunky Exp $	*/
+/*	$NetBSD: strlcpy-internal.h,v 1.1.1.2 2013/04/11 16:43:25 christos Exp $	*/
 #ifndef _STRLCPY_INTERNAL_H_
 #define _STRLCPY_INTERNAL_H_
 
@@ -6,11 +6,9 @@
 extern "C" {
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
+#include "event2/event-config.h"
 
-#ifndef HAVE_STRLCPY
+#ifndef _EVENT_HAVE_STRLCPY
 #include <string.h>
 size_t _event_strlcpy(char *dst, const char *src, size_t siz);
 #define strlcpy _event_strlcpy
