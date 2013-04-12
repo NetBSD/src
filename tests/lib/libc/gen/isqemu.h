@@ -1,4 +1,4 @@
-/*	$NetBSD: isqemu.h,v 1.1 2013/04/12 17:13:54 christos Exp $	*/
+/*	$NetBSD: isqemu.h,v 1.2 2013/04/12 17:21:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 
 static bool
 isQEMU(void) {
+#if defined(__i386__) || defined(__x86_64__)
 	char name[1024];
 	size_t len = sizeof(name);
 
@@ -49,6 +50,9 @@ isQEMU(void) {
 		err(EXIT_FAILURE, "sysctl");
 	}
 	return strstr(name, "QEMU") != NULL;
+#else
+	return false;
+#endif
 }
 
 #ifdef TEST
