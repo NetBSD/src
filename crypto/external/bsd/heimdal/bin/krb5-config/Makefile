@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/04/13 19:16:46 elric Exp $
+#	$NetBSD: Makefile,v 1.2 2013/04/12 18:08:10 joerg Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -24,7 +24,7 @@ krb5-config: krb5-config.in
 	        -e "s!@LIB_dlopen\@!!g" \
 	        -e "s!@LIB_door_create\@!!g" \
 	        -e "s!@LIB_pkinit\@!-lhx509!g" \
-	        -e "s!@PTHREAD_LIBADD\@!-lpthread!g" \
+	        -e "s!@PTHREAD_LIBADD\@!!g" \
 	        -e "s!@LIBS\@!!g" \
 	        ${HEIMDIST}/tools/krb5-config.in > $@
 	chmod +x $@
