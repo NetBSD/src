@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.236 2013/04/11 11:24:07 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.237 2013/04/12 03:33:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.236 2013/04/11 11:24:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.237 2013/04/12 03:33:17 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -184,7 +184,7 @@ static int bge_rxthresh_nodenum;
 
 typedef int (*bge_eaddr_fcn_t)(struct bge_softc *, uint8_t[]);
 
-static uint32_t bge_chipid(const struct pci_attach_args *pa);
+static uint32_t bge_chipid(const struct pci_attach_args *);
 static int bge_probe(device_t, cfdata_t, void *);
 static void bge_attach(device_t, device_t, void *);
 static int bge_detach(device_t, int);
@@ -4156,7 +4156,7 @@ bge_reset(struct bge_softc *sc)
 	}
 
 	/* 57XX step 18 */
-	/* Wirte mac mode. 
+	/* Write mac mode. 
 	 * XXX Write 0x0c for 5703S and 5704S
 	 */
 	val = CSR_READ_4(sc, BGE_MAC_MODE);
