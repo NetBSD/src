@@ -1,4 +1,4 @@
-/*	$NetBSD: evutil.c,v 1.3 2013/04/12 19:41:45 christos Exp $	*/
+/*	$NetBSD: evutil.c,v 1.4 2013/04/12 20:02:00 christos Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -27,7 +27,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evutil.c,v 1.3 2013/04/12 19:41:45 christos Exp $");
+__RCSID("$NetBSD: evutil.c,v 1.4 2013/04/12 20:02:00 christos Exp $");
 
 #define _GNU_SOURCE
 
@@ -483,15 +483,6 @@ evutil_socket_connect(evutil_socket_t *fd_ptr, struct sockaddr *sa, int socklen)
 
 	if (connect(*fd_ptr, sa, socklen) < 0) {
 		int e = evutil_socket_geterror(*fd_ptr);
-#ifdef __NetBSD__
-		if (e == EINPROGRESS) {
-			socklen_t l = sizeof(e);
-			l = sizeof(e);
-			if (getsockopt(*fd_ptr, SOL_SOCKET, SO_ERROR,
-			    (void*)&e, &l) == -1)
-				abort();
-		}
-#endif
 		if (EVUTIL_ERR_CONNECT_RETRIABLE(e))
 			return 0;
 		if (EVUTIL_ERR_CONNECT_REFUSED(e))
