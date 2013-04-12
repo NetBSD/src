@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ip.c,v 1.159 2007-09-14 01:29:28 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.4 2013/04/12 23:51:50 christos Exp $");
 #endif
 #endif
 
@@ -491,6 +491,7 @@ again:
 		break;
 
 	default:
+		fprintf(stderr, "XXXX: %d %d\n", ndo->ndo_nflag, ipds->nh);
 		if (ndo->ndo_nflag==0 && (proto = getprotobynumber(ipds->nh)) != NULL)
 			ND_PRINT((ndo, " %s", proto->p_name));
 		else
