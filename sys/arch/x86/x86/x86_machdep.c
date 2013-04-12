@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.57 2011/11/28 07:56:54 tls Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.58 2013/04/12 16:59:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.57 2011/11/28 07:56:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.58 2013/04/12 16:59:40 christos Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1006,4 +1006,89 @@ x86_startup(void)
 #if !defined(XEN)
 	nmi_init();
 #endif /* !defined(XEN) */
+}
+
+/*  
+ * machine dependent system variables.
+ */ 
+static int
+sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
+{
+	struct btinfo_bootpath *bibp;
+	struct sysctlnode node;
+
+	bibp = lookup_bootinfo(BTINFO_BOOTPATH);
+	if(!bibp)
+		return ENOENT; /* ??? */
+
+	node = *rnode;
+	node.sysctl_data = bibp->bootpath;
+	node.sysctl_size = sizeof(bibp->bootpath);
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+static int
+sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
+{
+        struct sysctlnode node;
+	extern struct bi_devmatch *x86_alldisks;
+	extern int x86_ndisks;
+
+	if (x86_alldisks == NULL)
+		return EOPNOTSUPP;
+
+        node = *rnode;
+        node.sysctl_data = x86_alldisks;
+        node.sysctl_size = sizeof(struct disklist) +
+	    (x86_ndisks - 1) * sizeof(struct nativedisk_info);
+        return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+void
+x86_sysctl_machdep_setup(struct sysctllog **clog) {
+	extern uint64_t tsc_freq;
+	extern int sparse_dump;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_booted_kernel, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "diskinfo", NULL,
+		       sysctl_machdep_diskinfo, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL, 
+	    	       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "cpu_brand", NULL,
+		       NULL, 0, cpu_brand_string, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "sparse_dump", NULL,
+		       NULL, 0, &sparse_dump, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "tsc_freq", NULL,
+		       NULL, 0, &tsc_freq, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "pae",
+		       SYSCTL_DESCR("Whether the kernel uses PAE"),
+		       NULL, 0, &use_pae, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
