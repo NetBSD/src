@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.18 2012/06/13 11:45:17 njoly Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.19 2013/04/12 17:13:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
 #ifdef _FLOAT_IEEE754
 #include <ieeefp.h>
 #endif
+
+#include "isqemu.h"
 
 /* for sigbus */
 volatile char *addr;
@@ -303,7 +305,7 @@ ATF_TC_BODY(sigfpe_flt, tc)
 	struct sigaction sa;
 	double d = strtod("0", NULL);
 
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+	if (isQEMU())
 		atf_tc_skip("Test does not run correctly under qemu");
 	if (system("cpuctl identify 0 | grep -q "
 	    "'cpu0: Intel Pentium II (Klamath) (686-class), id 0x633'") == 0)
@@ -472,12 +474,8 @@ ATF_TC_BODY(sigbus_adraln, tc)
 	addr = calloc(2, sizeof(int));
 	ATF_REQUIRE(addr != NULL);
 
-	if (strcmp(arch, "i386") == 0 || strcmp(arch, "x86_64") == 0) {
-		if (system("cpuctl identify 0 | grep -q QEMU") == 0) {
-			atf_tc_expect_fail("QEMU fails to trap unaligned "
-			    "accesses");
-		}
-	}
+	if (isQEMU())
+		atf_tc_expect_fail("QEMU fails to trap unaligned accesses");
 
 	/* Force an unaligned access */
 	addr++;

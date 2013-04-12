@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.6 2013/03/17 05:47:48 jmmv Exp $ */
+/* $NetBSD: t_sleep.c,v 1.7 2013/04/12 17:13:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -38,6 +38,8 @@
 #include <sys/cdefs.h>
 #include <sys/event.h>
 #include <sys/signal.h>
+
+#include "isqemu.h"
 
 #define BILLION		1000000000LL	/* nano-seconds per second */
 #define MILLION		1000000LL	/* nano-seconds per milli-second */
@@ -157,7 +159,7 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 	 * under QEMU, make sure the delay is long enough to account
 	 * for the effects of PR kern/43997 !
 	 */
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0 &&
+	if (isQEMU() &&
 	    tmo/1000 < delay->tv_sec && tmo/500 > delay->tv_sec)
 		delay->tv_sec = MAXSLEEP;
 
