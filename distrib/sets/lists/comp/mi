@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1815 2013/04/12 00:30:57 christos Exp $
+#	$NetBSD: mi,v 1.1816 2013/04/12 00:55:12 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -11916,6 +11916,7 @@
 ./usr/share/man/html3/evbuffer_read.html		comp-obsolete		obsolete
 ./usr/share/man/html3/evbuffer_readline.html	comp-obsolete		obsolete
 ./usr/share/man/html3/evbuffer_write.html	comp-obsolete		obsolete
+./usr/share/man/html3/evdeprecated.html		comp-c-htmlman		html
 ./usr/share/man/html3/evdns.html			comp-c-htmlman		html
 ./usr/share/man/html3/evdns_clear_nameservers_and_suspend.html	comp-obsolete	obsolete
 ./usr/share/man/html3/evdns_compat.html		comp-c-htmlman		html
