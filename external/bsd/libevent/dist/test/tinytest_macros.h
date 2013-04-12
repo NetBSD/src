@@ -1,4 +1,4 @@
-/*	$NetBSD: tinytest_macros.h,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
+/*	$NetBSD: tinytest_macros.h,v 1.3 2013/04/12 18:11:40 joerg Exp $	*/
 /* tinytest_macros.h -- Copyright 2009-2012 Nick Mathewson
  *
  * Redistribution and use in source and binary forms, with or without
@@ -114,8 +114,8 @@
 #define tt_assert_test_fmt_type(a,b,str_test,type,test,printf_type,printf_fmt, \
     setup_block,cleanup_block,die_on_fail)				\
 	TT_STMT_BEGIN							\
-	const type _val1 = (const type)(a);				\
-	const type _val2 = (const type)(b);				\
+	type _val1 = (type)(a);						\
+	type _val2 = (type)(b);						\
 	int _tt_status = (test);					\
 	if (!_tt_status || _tinytest_get_verbosity()>1)	{		\
 		printf_type _print;					\
