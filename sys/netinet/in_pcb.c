@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.143 2012/06/25 15:28:39 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.144 2013/04/12 21:30:40 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.143 2012/06/25 15:28:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.144 2013/04/12 21:30:40 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -470,6 +470,11 @@ in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 		return (EAFNOSUPPORT);
 	if (sin->sin_port == 0)
 		return (EADDRNOTAVAIL);
+
+	if (IN_MULTICAST(sin->sin_addr.s_addr) &&
+	    inp->inp_socket->so_type == SOCK_STREAM)
+		return EADDRNOTAVAIL;
+
 	if (TAILQ_FIRST(&in_ifaddrhead) != 0) {
 		/*
 		 * If the destination address is INADDR_ANY,

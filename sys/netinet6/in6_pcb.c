@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.121 2012/08/24 06:03:18 dholland Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.122 2013/04/12 21:30:40 christos Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.121 2012/08/24 06:03:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.122 2013/04/12 21:30:40 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -451,6 +451,10 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 		return (EAFNOSUPPORT);
 	if (sin6->sin6_port == 0)
 		return (EADDRNOTAVAIL);
+
+	if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr) &&
+	    in6p->in6p_socket->so_type == SOCK_STREAM)
+		return EADDRNOTAVAIL;
 
 	if (sin6->sin6_scope_id == 0 && !ip6_use_defzone)
 		scope_ambiguous = 1;
