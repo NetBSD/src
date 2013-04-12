@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.24 2010/09/21 13:14:17 vanhu Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.24.4.1 2013/04/12 10:04:21 tteras Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -999,6 +999,9 @@ isakmp_cfg_varlen(iph1, attr, string, len)
 	vchar_t *buffer;
 	struct isakmp_data *new;
 	char *data;
+
+	if (!len)
+		return NULL;
 
 	if ((buffer = vmalloc(sizeof(*attr) + len)) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL, "Cannot allocate memory\n");
