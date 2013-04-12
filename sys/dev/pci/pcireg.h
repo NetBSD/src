@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.76 2013/03/03 20:10:47 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.77 2013/04/12 03:32:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -654,7 +654,7 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_DCSR_NFED	__BIT(1 + 16)
 #define PCI_PCIE_DCSR_FED	__BIT(2 + 16)
 #define PCI_PCIE_DCSR_URD	__BIT(3 + 16)
-#define PCI_PCIE_LCAP		0x0c
+#define PCI_PCIE_LCAP		0x0c	/* Link Capabilities Register */
 #define PCI_PCIE_LCSR		0x10	/* Link Control & Status Register */
 #define PCI_PCIE_LCSR_ASPM_L0S	__BIT(0)
 #define PCI_PCIE_LCSR_ASPM_L1	__BIT(1)
@@ -679,7 +679,7 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_SLCAP_PIP	__BIT(4)	/* Power Indicator Present */
 #define PCI_PCIE_SLCAP_HPS	__BIT(5)	/* Hot-Plug Surprise */
 #define PCI_PCIE_SLCAP_HPC	__BIT(6)	/* Hot-Plug Capable */
-#define PCI_PCIE_SLCSR		0x18
+#define PCI_PCIE_SLCSR		0x18	/* Slot Control & Status Register */
 #define PCI_PCIE_SLCSR_ABE	__BIT(0)
 #define PCI_PCIE_SLCSR_PFE	__BIT(1)
 #define PCI_PCIE_SLCSR_MSE	__BIT(2)
@@ -694,14 +694,14 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_SLCSR_MS	__BIT(5 + 16)
 #define PCI_PCIE_SLCSR_PDS	__BIT(6 + 16)
 #define PCI_PCIE_SLCSR_LACS	__BIT(8 + 16)
-#define PCI_PCIE_RCR		0x1c
-#define PCI_PCIE_RSR		0x20
-#define PCI_PCIE_DCAP2		0x24
-#define PCI_PCIE_DCSR2		0x28
-#define PCI_PCIE_LCAP2		0x2c
-#define PCI_PCIE_LCSR2		0x30
-#define PCI_PCIE_SLCAP2		0x34
-#define PCI_PCIE_SLCSR2		0x38
+#define PCI_PCIE_RCR		0x1c	/* Root Control & Capabilities Reg. */
+#define PCI_PCIE_RSR		0x20	/* Root Status Register */
+#define PCI_PCIE_DCAP2		0x24	/* Device Capabilities 2 Register */
+#define PCI_PCIE_DCSR2		0x28	/* Device Control & Status 2 Reg. */
+#define PCI_PCIE_LCAP2		0x2c	/* Link Capabilities 2 Register */
+#define PCI_PCIE_LCSR2		0x30	/* Link Control & Status 2 Register */
+#define PCI_PCIE_SLCAP2		0x34	/* Slot Capabilities 2 Register */
+#define PCI_PCIE_SLCSR2		0x38	/* Slot Control & Status 2 Register */
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.
