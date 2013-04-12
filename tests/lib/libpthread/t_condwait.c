@@ -1,4 +1,4 @@
-/* $NetBSD: t_condwait.c,v 1.2 2013/03/29 02:32:38 christos Exp $ */
+/* $NetBSD: t_condwait.c,v 1.3 2013/04/12 14:21:52 gson Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_condwait.c,v 1.2 2013/03/29 02:32:38 christos Exp $");
+__RCSID("$NetBSD: t_condwait.c,v 1.3 2013/04/12 14:21:52 gson Exp $");
 
 #include <errno.h>
 #include <pthread.h>
@@ -46,6 +46,7 @@ static void *
 run(void *param)
 {
 	struct timespec ts, to, te;
+	double to_seconds;
 	clockid_t clck;
 	pthread_condattr_t attr;
 	pthread_cond_t cond;
@@ -74,13 +75,16 @@ run(void *param)
 		/* Timeout */
 		ATF_REQUIRE_EQ(clock_gettime(clck, &te), 0);
 		timespecsub(&te, &to, &to);
+		to_seconds = to.tv_sec + 1e-9 * to.tv_nsec;
 		if (debug) {
 			printf("timeout: %lld.%09ld sec\n",
 			    (long long)te.tv_sec, te.tv_nsec);
 			printf("elapsed: %lld.%09ld sec\n",
 			    (long long)to.tv_sec, to.tv_nsec);
 		}
-		ATF_REQUIRE_EQ(to.tv_sec, WAITTIME);
+		ATF_REQUIRE(to_seconds >= WAITTIME * 0.9);
+		/* Use a loose upper limit because of qemu timing bugs */
+		ATF_REQUIRE(to_seconds < WAITTIME * 2.5);
 		break;
 	default:
 		ATF_REQUIRE_MSG(0, "pthread_cond_timedwait: %s", strerror(ret));
