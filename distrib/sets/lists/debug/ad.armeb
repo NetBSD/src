@@ -1,7 +1,8 @@
-# $NetBSD: ad.armeb,v 1.3 2013/02/02 18:19:38 christos Exp $
+# $NetBSD: ad.armeb,v 1.4 2013/04/12 16:32:37 skrll Exp $
+./usr/libdata/debug/lib/libc_vfp.so.0.0.debug           comp-sys-debug  debug,pic,softfloat
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/lib/libarm.so.0.0.debug	comp-sys-debug		debug,pic
-./usr/libdata/debug/usr/lib/libc_vfp.so.0.0.debug	comp-sys-debug		debug,pic
+./usr/libdata/debug/usr/lib/libc_vfp.so.0.0.debug	comp-sys-debug		debug,pic,softfloat
 ./usr/libdata/debug/usr/lib/libpmc.so.1.0.debug	comp-sys-debug		debug,pic
 ./usr/lib/libarm_g.a				-unknown-		debuglib
 ./usr/lib/libc_vfp_g.a				-unknown-		debuglib
