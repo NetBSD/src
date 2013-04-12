@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.7 2012/05/02 02:41:08 christos Exp $	*/
+/*	$NetBSD: scp.c,v 1.8 2013/04/12 18:09:19 joerg Exp $	*/
 /* $OpenBSD: scp.c,v 1.171 2011/09/09 22:37:01 djm Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.7 2012/05/02 02:41:08 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.8 2013/04/12 18:09:19 joerg Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -340,7 +340,7 @@ typedef struct {
 BUF *allocbuf(BUF *, int, int);
 __dead static void lostconn(int);
 int okname(char *);
-void run_err(const char *,...);
+void run_err(const char *,...) __printflike(1, 2);
 void verifydir(char *);
 
 struct passwd *pwd;
