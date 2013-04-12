@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193 2013/04/02 13:28:41 taca Exp $	*/
+/*	$NetBSD: machdep.c,v 1.194 2013/04/12 16:59:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2013/04/02 13:28:41 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2013/04/12 16:59:40 christos Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -515,65 +515,10 @@ cpu_init_tss(struct cpu_info *ci)
 	ci->ci_tss_sel = tss_alloc(tss);
 }
 
-/*  
- * machine dependent system variables.
- */ 
-static int
-sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
-{
-	struct btinfo_bootpath *bibp;
-	struct sysctlnode node;
-
-	bibp = lookup_bootinfo(BTINFO_BOOTPATH);
-	if(!bibp)
-		return(ENOENT); /* ??? */
-
-	node = *rnode;
-	node.sysctl_data = bibp->bootpath;
-	node.sysctl_size = sizeof(bibp->bootpath);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-}
-
-static int
-sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
-{
-        struct sysctlnode node;
-
-	if (x86_alldisks == NULL)
-		return (ENOENT);
-
-        node = *rnode;
-        node.sysctl_data = x86_alldisks;
-        node.sysctl_size = sizeof(struct disklist) +
-	    (x86_ndisks - 1) * sizeof(struct nativedisk_info);
-        return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-}
-
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
-	extern uint64_t tsc_freq;
+	x86_sysctl_machdep_setup(clog);
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "machdep", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "console_device", NULL,
-		       sysctl_consdev, 0, NULL, sizeof(dev_t),
-		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "booted_kernel", NULL,
-		       sysctl_machdep_booted_kernel, 0, NULL, 0,
-		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "diskinfo", NULL,
-		       sysctl_machdep_diskinfo, 0, NULL, 0,
-		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "fpu_present", NULL,
@@ -589,25 +534,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "sse2", NULL,
 		       NULL, 1, NULL, 0,
 		       CTL_MACHDEP, CPU_SSE2, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_QUAD, "tsc_freq", NULL,
-		       NULL, 0, &tsc_freq, 0,
-		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "pae",
-		       SYSCTL_DESCR("Whether the kernel uses PAE"),
-		       NULL, 0, &use_pae, 0,
-		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-#ifndef NO_SPARSE_DUMP
-	/* XXXjld Does this really belong under machdep, and not e.g. kern? */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "sparse_dump", NULL,
-		       NULL, 0, &sparse_dump, 0,
-		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-#endif
 }
 
 void
