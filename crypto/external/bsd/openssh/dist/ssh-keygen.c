@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.11 2013/03/29 16:19:45 christos Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.12 2013/04/12 18:09:30 joerg Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.225 2013/02/10 23:32:10 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.11 2013/03/29 16:19:45 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.12 2013/04/12 18:09:30 joerg Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -2082,7 +2082,7 @@ do_gen_krl(struct passwd *pw, int updating, int argc, char **argv)
 	ssh_krl_free(krl);
 }
 
-static void
+__dead static void
 do_check_krl(struct passwd *pw, int argc, char **argv)
 {
 	int i, r, ret = 0;
@@ -2109,7 +2109,7 @@ do_check_krl(struct passwd *pw, int argc, char **argv)
 	exit(ret);
 }
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [options]\n", __progname);
