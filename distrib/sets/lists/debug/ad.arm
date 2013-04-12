@@ -1,4 +1,5 @@
-# $NetBSD: ad.arm,v 1.4 2013/02/05 07:31:51 matt Exp $
+# $NetBSD: ad.arm,v 1.5 2013/04/12 16:32:37 skrll Exp $
+./usr/libdata/debug/lib/libc_vfp.so.0.0.debug           comp-sys-debug  debug,pic,softfloat
 ./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/lib/libarm.so.0.0.debug	comp-sys-debug		debug,pic
