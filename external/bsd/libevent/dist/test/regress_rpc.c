@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_rpc.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
+/*	$NetBSD: regress_rpc.c,v 1.3 2013/04/12 21:49:54 christos Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -36,7 +36,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_rpc.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
+__RCSID("$NetBSD: regress_rpc.c,v 1.3 2013/04/12 21:49:54 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -500,7 +500,7 @@ rpc_basic_client(void)
 	{
 		struct evrpc_request_wrapper *ctx =
 		    EVRPC_MAKE_CTX(Message, msg, kill,
-			pool, msg, kill, GotKillCb, NULL);
+			pool, msg, xkill, GotKillCb, NULL);
 		evrpc_make_request(ctx);
 	}
 
