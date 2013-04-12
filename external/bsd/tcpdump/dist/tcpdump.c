@@ -34,7 +34,7 @@ The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/tcpdump.c,v 1.283 2008-09-25 21:45:50 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: tcpdump.c,v 1.5 2013/04/07 19:17:11 christos Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.6 2013/04/12 23:51:50 christos Exp $");
 #endif
 #endif
 
@@ -1295,29 +1295,6 @@ main(int argc, char **argv)
 		(void)setsignal(SIGHUP, oldhandler);
 #endif /* WIN32 */
 
-#ifndef WIN32
-	/*
-	 * If a user name was specified with "-Z", attempt to switch to
-	 * that user's UID.  This would probably be used with sudo,
-	 * to allow tcpdump to be run in a special restricted
-	 * account (if you just want to allow users to open capture
-	 * devices, and can't just give users that permission,
-	 * you'd make tcpdump set-UID or set-GID).
-	 *
-	 * Tcpdump doesn't necessarily write only to one savefile;
-	 * the general only way to allow a -Z instance to write to
-	 * savefiles as the user under whose UID it's run, rather
-	 * than as the user specified with -Z, would thus be to switch
-	 * to the original user ID before opening a capture file and
-	 * then switch back to the -Z user ID after opening the savefile.
-	 * Switching to the -Z user ID only after opening the first
-	 * savefile doesn't handle the general case.
-	 */
-	if (getuid() == 0 || geteuid() == 0) {
-		if (username || chroot_dir)
-			droproot(username, chroot_dir);
-	}
-#endif /* WIN32 */
 
 	if (pcap_setfilter(pd, &fcode) < 0)
 		error("%s", pcap_geterr(pd));
@@ -1420,6 +1397,28 @@ main(int argc, char **argv)
 			    pcap_datalink_val_to_description(dlt), snaplen);
 		}
 		(void)fflush(stderr);
+	}
+
+	/*
+	 * If a user name was specified with "-Z", attempt to switch to
+	 * that user's UID.  This would probably be used with sudo,
+	 * to allow tcpdump to be run in a special restricted
+	 * account (if you just want to allow users to open capture
+	 * devices, and can't just give users that permission,
+	 * you'd make tcpdump set-UID or set-GID).
+	 *
+	 * Tcpdump doesn't necessarily write only to one savefile;
+	 * the general only way to allow a -Z instance to write to
+	 * savefiles as the user under whose UID it's run, rather
+	 * than as the user specified with -Z, would thus be to switch
+	 * to the original user ID before opening a capture file and
+	 * then switch back to the -Z user ID after opening the savefile.
+	 * Switching to the -Z user ID only after opening the first
+	 * savefile doesn't handle the general case.
+	 */
+	if (getuid() == 0 || geteuid() == 0) {
+		if (username || chroot_dir)
+			droproot(username, chroot_dir);
 	}
 #endif /* WIN32 */
 	status = pcap_loop(pd, cnt, callback, pcap_userdata);
