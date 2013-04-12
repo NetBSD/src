@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.149 2012/01/20 16:31:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.150 2013/04/12 19:58:45 joerg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -42,15 +42,17 @@ assym.h: ${ARCHDIR}/genassym.cf
 .endif
 
 # The following controls how to build compatibility code for old NetBSD
-# binaries. If BUILDCOLD is yes, then we build a separate library; otherwise
+# binaries. If BUILD_LEGACY is yes, then we build a separate library; otherwise
 # we include the code in libc.
-BUILDCOLD?= no
-.if "${BUILDCOLD}" == "yes"
+BUILD_LEGACY?= no
+.if "${BUILD_LEGACY}" == "yes"
 SUBDIR=compat
 .include <bsd.subdir.mk>
 .else
 COMPATDIR=${.CURDIR}/compat
 .include "${.CURDIR}/compat/Makefile.inc"
+# Marker for compat code that can't be easily isolated
+CPPFLAGS+=	-D__BUILD_LEGACY
 .endif
 
 .include "${.CURDIR}/../../common/lib/libc/Makefile.inc"
