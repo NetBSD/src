@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.49 2013/01/24 06:47:50 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.50 2013/04/12 09:53:10 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1116,6 +1116,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 	u_int64_t created;
 	size_t i;
 	caddr_t mhp[SADB_EXT_MAX + 1];
+	unsigned num_purged = 0;
 
 	plog(LLV_DEBUG2, LOCATION, NULL,
 		 "purge_ipsec_spi:\n");
@@ -1172,6 +1173,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 
 		plog(LLV_DEBUG2, LOCATION, NULL, "src: %s\n", saddr2str(src));
 		plog(LLV_DEBUG2, LOCATION, NULL, "dst: %s\n", saddr2str(dst));
+		plog(LLV_DEBUG2, LOCATION, NULL, "spi: %u\n", ntohl(sa->sadb_sa_spi));
 
 		/* XXX n^2 algorithm, inefficient */
 
@@ -1210,6 +1212,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 				"purged IPsec-SA proto_id=%s spi=%u.\n",
 				s_ipsecdoi_proto(proto),
 				ntohl(spi[i]));
+			num_purged++;
 		}
 
 		msg = next;
@@ -1217,6 +1220,8 @@ purge_ipsec_spi(dst0, proto, spi, n)
 
 	if (buf)
 		vfree(buf);
+
+	plog(LLV_DEBUG, LOCATION, NULL, "purged %u SAs.\n", num_purged);
 }
 
 /*
