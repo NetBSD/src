@@ -1,4 +1,4 @@
-/*	$NetBSD: regress.c,v 1.6 2013/04/11 20:14:44 christos Exp $	*/
+/*	$NetBSD: regress.c,v 1.7 2013/04/12 17:50:27 christos Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -33,7 +33,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress.c,v 1.6 2013/04/11 20:14:44 christos Exp $");
+__RCSID("$NetBSD: regress.c,v 1.7 2013/04/12 17:50:27 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -88,8 +88,6 @@ static int usepersist;
 static struct timeval tset;
 static struct timeval tcalled;
 
-
-static int interval;
 
 #define TEST1	"this is a test"
 #define SECONDS	1
@@ -247,7 +245,7 @@ timeout_cb(evutil_socket_t fd, short event, void *arg)
 	else
 		evutil_timersub(&tset, &tcalled, &tv);
 
-	diff = tv.tv_sec*1000 + tv.tv_usec/1000 - interval;
+	diff = tv.tv_sec*1000 + tv.tv_usec/1000 - SECONDS * 1000;
 	if (diff < 0)
 		diff = -diff;
 
