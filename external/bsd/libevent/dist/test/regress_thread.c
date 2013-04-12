@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_thread.c,v 1.3 2013/04/12 19:59:26 christos Exp $	*/
+/*	$NetBSD: regress_thread.c,v 1.4 2013/04/12 20:00:21 christos Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -30,7 +30,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_thread.c,v 1.3 2013/04/12 19:59:26 christos Exp $");
+__RCSID("$NetBSD: regress_thread.c,v 1.4 2013/04/12 20:00:21 christos Exp $");
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -99,6 +99,7 @@ wake_all_timeout(evutil_socket_t fd, short what, void *arg)
 
 }
 
+#if 0
 static void
 wake_one_timeout(evutil_socket_t fd, short what, void *arg)
 {
@@ -107,6 +108,7 @@ wake_one_timeout(evutil_socket_t fd, short what, void *arg)
 	EVTHREAD_COND_SIGNAL(cw->cond);
 	EVLOCK_UNLOCK(cw->lock, 0);
 }
+#endif
 
 #define NUM_THREADS	100
 #define NUM_ITERATIONS  100
@@ -282,6 +284,7 @@ struct alerted_record {
 	int timed_out;
 };
 
+#if 0
 static THREAD_FN
 wait_for_condition(void *arg)
 {
@@ -304,7 +307,6 @@ wait_for_condition(void *arg)
 	THREAD_RETURN();
 }
 
-#if 0
 static void
 thread_conditions_simple(void *arg)
 {
