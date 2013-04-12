@@ -84,12 +84,14 @@ bcel_input (char *buf, yy_size_t *result, int max)
 {
   if (!edit || yyin != stdin)
     {
-      while ( (*result = read( fileno(yyin), buf, max )) < 0 )
+      ssize_t rv;
+      while ( (rv = read( fileno(yyin), buf, max )) < 0 )
         if (errno != EINTR)
 	  {
 	    yyerror( "read() in flex scanner failed" );
 	    exit (1);
 	  }
+      *result = rv;
       return;
     }
 
