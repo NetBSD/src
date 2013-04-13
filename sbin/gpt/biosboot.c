@@ -1,9 +1,9 @@
-/*	$NetBSD: biosboot.c,v 1.5 2011/08/27 17:38:16 joerg Exp $ */
+/*	$NetBSD: biosboot.c,v 1.6 2013/04/13 18:25:56 jakllsch Exp $ */
 
 /*
- * Copyright (c) 2009 The NetBSD Foundation, Inc. 
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
- *     
+ *
  * This code is derived from software contributed to the NetBSD Foundation
  * by Mike M. Volokhov. Development of this software was supported by the
  * Google Summer of Code program.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.5 2011/08/27 17:38:16 joerg Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.6 2013/04/13 18:25:56 jakllsch Exp $");
 #endif
 
 #include <sys/stat.h>
