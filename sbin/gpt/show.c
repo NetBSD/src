@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.8 2013/01/18 17:58:15 jakllsch Exp $");
+__RCSID("$NetBSD: show.c,v 1.9 2013/04/13 18:04:33 jakllsch Exp $");
 #endif
 
 #include <sys/types.h>
@@ -193,7 +193,7 @@ show(int fd __unused)
 				printf("- \"%s\"",
 				    utf16_to_utf8(ent->ent_name));
 			} else {
-				le_uuid_dec(&ent->ent_type, &type);
+				le_uuid_dec(ent->ent_type, &type);
 				printf("- %s", friendly(&type));
 			}
 			break;
