@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpd.c,v 1.1.1.2 2013/03/24 22:50:40 christos Exp $	*/
+/*	$NetBSD: dhcpd.c,v 1.2 2013/04/13 23:04:35 christos Exp $	*/
 
 /* dhcpd.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.c,v 1.1.1.2 2013/03/24 22:50:40 christos Exp $");
+__RCSID("$NetBSD: dhcpd.c,v 1.2 2013/04/13 23:04:35 christos Exp $");
 
 static const char copyright[] =
 "Copyright 2004-2013 Internet Systems Consortium.";
@@ -287,27 +287,6 @@ main(int argc, char **argv) {
         else if (fd != -1)
                 close(fd);
 
-	/* Set up the isc and dns library managers */
-	status = dhcp_context_create();
-	if (status != ISC_R_SUCCESS)
-		log_fatal("Can't initialize context: %s",
-			  isc_result_totext(status));
-
-	/* Set up the client classification system. */
-	classification_setup ();
-
-	/* Initialize the omapi system. */
-	result = omapi_init ();
-	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't initialize OMAPI: %s",
-			   isc_result_totext (result));
-
-	/* Set up the OMAPI wrappers for common objects. */
-	dhcp_db_objects_setup ();
-	/* Set up the OMAPI wrappers for various server database internal
-	   objects. */
-	dhcp_common_objects_setup ();
-
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog ("dhcpd", LOG_NDELAY, DHCPD_LOG_FACILITY);
 
@@ -488,6 +467,40 @@ main(int argc, char **argv) {
 		quiet = 0;
 		log_perror = 0;
 	}
+#ifndef DEBUG
+	/*
+	 * We need to fork before we call the context create
+	 * call that creates the worker threads!
+	 */
+	if (daemon) {
+		/* First part of becoming a daemon... */
+		if ((pid = fork ()) < 0)
+			log_fatal ("Can't fork daemon: %m");
+		else if (pid)
+			exit (0);
+	}
+#endif
+
+	/* Set up the isc and dns library managers */
+	status = dhcp_context_create();
+	if (status != ISC_R_SUCCESS)
+		log_fatal("Can't initialize context: %s",
+			  isc_result_totext(status));
+
+	/* Set up the client classification system. */
+	classification_setup ();
+
+	/* Initialize the omapi system. */
+	result = omapi_init ();
+	if (result != ISC_R_SUCCESS)
+		log_fatal ("Can't initialize OMAPI: %s",
+			   isc_result_totext (result));
+
+	/* Set up the OMAPI wrappers for common objects. */
+	dhcp_db_objects_setup ();
+	/* Set up the OMAPI wrappers for various server database internal
+	   objects. */
+	dhcp_common_objects_setup ();
 
 #if defined (TRACING)
 	trace_init (set_time, MDL);
@@ -770,13 +783,6 @@ main(int argc, char **argv) {
 #endif /* DHCPv6 */
 
 #ifndef DEBUG
-	if (daemon) {
-		/* First part of becoming a daemon... */
-		if ((pid = fork ()) < 0)
-			log_fatal ("Can't fork daemon: %m");
-		else if (pid)
-			exit (0);
-	}
  
 #if defined (PARANOIA)
 	/* change uid to the specified one */
