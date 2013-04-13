@@ -33,11 +33,11 @@
   
 // Information as gleaned from /usr/include/ctype.h
 
-  extern "C" const u_int8_t _C_ctype_[];
+  extern "C" const unsigned short _C_ctype_tab_[];
 
   const ctype_base::mask*
   ctype<char>::classic_table() throw()
-  { return _C_ctype_ + 1; }
+  { return _C_ctype_tab_ + 1; }
 
   ctype<char>::ctype(__c_locale, const mask* __table, bool __del, 
 		     size_t __refs) 
