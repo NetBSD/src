@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.9 2013/04/13 18:04:33 jakllsch Exp $");
+__RCSID("$NetBSD: show.c,v 1.10 2013/04/13 18:32:01 jakllsch Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,23 +61,23 @@ usage_show(void)
 static const char *
 friendly(uuid_t *t)
 {
-	static uuid_t efi_slice = GPT_ENT_TYPE_EFI;
-	static uuid_t bios_boot = GPT_ENT_TYPE_BIOS;
-	static uuid_t msdata = GPT_ENT_TYPE_MS_BASIC_DATA;
-	static uuid_t freebsd = GPT_ENT_TYPE_FREEBSD;
-	static uuid_t hfs = GPT_ENT_TYPE_APPLE_HFS;
-	static uuid_t linuxdata = GPT_ENT_TYPE_LINUX_DATA;
-	static uuid_t linuxswap = GPT_ENT_TYPE_LINUX_SWAP;
-	static uuid_t msr = GPT_ENT_TYPE_MS_RESERVED;
-	static uuid_t swap = GPT_ENT_TYPE_FREEBSD_SWAP;
-	static uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
-	static uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
-	static uuid_t nb_swap = GPT_ENT_TYPE_NETBSD_SWAP;
-	static uuid_t nb_ffs = GPT_ENT_TYPE_NETBSD_FFS;
-	static uuid_t nb_lfs = GPT_ENT_TYPE_NETBSD_LFS;
-	static uuid_t nb_raid = GPT_ENT_TYPE_NETBSD_RAIDFRAME;
-	static uuid_t nb_ccd = GPT_ENT_TYPE_NETBSD_CCD;
-	static uuid_t nb_cgd = GPT_ENT_TYPE_NETBSD_CGD;
+	static const uuid_t efi_slice = GPT_ENT_TYPE_EFI;
+	static const uuid_t bios_boot = GPT_ENT_TYPE_BIOS;
+	static const uuid_t msdata = GPT_ENT_TYPE_MS_BASIC_DATA;
+	static const uuid_t freebsd = GPT_ENT_TYPE_FREEBSD;
+	static const uuid_t hfs = GPT_ENT_TYPE_APPLE_HFS;
+	static const uuid_t linuxdata = GPT_ENT_TYPE_LINUX_DATA;
+	static const uuid_t linuxswap = GPT_ENT_TYPE_LINUX_SWAP;
+	static const uuid_t msr = GPT_ENT_TYPE_MS_RESERVED;
+	static const uuid_t swap = GPT_ENT_TYPE_FREEBSD_SWAP;
+	static const uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
+	static const uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
+	static const uuid_t nb_swap = GPT_ENT_TYPE_NETBSD_SWAP;
+	static const uuid_t nb_ffs = GPT_ENT_TYPE_NETBSD_FFS;
+	static const uuid_t nb_lfs = GPT_ENT_TYPE_NETBSD_LFS;
+	static const uuid_t nb_raid = GPT_ENT_TYPE_NETBSD_RAIDFRAME;
+	static const uuid_t nb_ccd = GPT_ENT_TYPE_NETBSD_CCD;
+	static const uuid_t nb_cgd = GPT_ENT_TYPE_NETBSD_CGD;
 	static char buf[80];
 	char *s;
 
