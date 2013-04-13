@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.238 2013/04/12 19:58:46 joerg Exp $
+#	$NetBSD: shlib_version,v 1.239 2013/04/13 10:21:20 joerg Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -30,9 +30,6 @@
 #   for example in assembler code.
 # - kill sigcontext: never request version 0 or 1 signal trampoline.
 #   always request version 2 trampoline. (on vax, 3).
-# - change _ctype_ table in ctype.h and gen/ctype_.c 8bit -> 16 or 32bit.
-#   it's insufficient bitwidth to implement all ctype class.
-#   see isblank's comment in ctype.h.
 # - remove gets(); it is finally dead in c11.
 # - make __cerror (spelled CERROR) hidden again
 # - remove ruserok() and friends to libcompat (or entirely)
