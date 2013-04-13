@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.12 2013/04/13 18:04:33 jakllsch Exp $");
+__RCSID("$NetBSD: add.c,v 1.13 2013/04/13 18:32:01 jakllsch Exp $");
 #endif
 
 #include <sys/types.h>
@@ -218,7 +218,7 @@ cmd_add(int argc, char *argv[])
 
 	/* Create NetBSD FFS partitions by default. */
 	if (uuid_is_nil(&type, NULL)) {
-		uuid_t nb_ffs = GPT_ENT_TYPE_NETBSD_FFS;
+		static const uuid_t nb_ffs = GPT_ENT_TYPE_NETBSD_FFS;
 		type = nb_ffs;
 	}
 
