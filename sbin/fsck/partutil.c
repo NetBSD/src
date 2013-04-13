@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.11 2011/11/13 22:04:51 christos Exp $	*/
+/*	$NetBSD: partutil.c,v 1.12 2013/04/13 22:08:57 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.11 2011/11/13 22:04:51 christos Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.12 2013/04/13 22:08:57 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
@@ -89,30 +89,6 @@ dict2geom(struct disk_geom *geo, prop_dictionary_t dict)
 }
 
 
-static void
-part2wedge(struct dkwedge_info *dkw, const struct disklabel *lp, const char *s)
-{
-	struct stat sb;
-	const struct partition *pp;
-	int ptn;
-
-	(void)memset(dkw, 0, sizeof(*dkw));
-	if (stat(s, &sb) == -1)
-		return;
-
-	ptn = strchr(s, '\0')[-1] - 'a';
-	if ((unsigned)ptn >= lp->d_npartitions ||
-	    (devminor_t)ptn != DISKPART(sb.st_rdev))
-		return;
-
-	pp = &lp->d_partitions[ptn];
-	dkw->dkw_offset = pp->p_offset;
-	dkw->dkw_size = pp->p_size;
-	dkw->dkw_parent[0] = '*';
-	strlcpy(dkw->dkw_ptype, getfstypename(pp->p_fstype),
-	    sizeof(dkw->dkw_ptype));
-}
-
 int
 getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
     struct dkwedge_info *dkw)
@@ -120,6 +96,9 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 	struct disklabel lab;
 	struct disklabel *lp = &lab;
 	prop_dictionary_t disk_dict, geom_dict;
+	struct stat sb;
+	const struct partition *pp;
+	int ptn;
 
 	if (dt) {
 		lp = getdiskbyname(dt);
@@ -144,15 +123,41 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 		geom_dict = prop_dictionary_get(disk_dict, "geometry");
 		dict2geom(geo, geom_dict);
 	}
-	
-	/* Get info about partition/wedge */
-	if (ioctl(fd, DIOCGWEDGEINFO, dkw) == -1) {
-		if (ioctl(fd, DIOCGDINFO, lp) == -1)
-			err(1, "Please implement DIOCGWEDGEINFO or "
-			    "DIOCGDINFO for disk device %s", s);
 
-		part2wedge(dkw, lp, s);
+	/* Get info about partition/wedge */
+	if (ioctl(fd, DIOCGWEDGEINFO, dkw) != -1) {
+		/* DIOCGWEDGEINFO didn't fail, we're done */
+		return 0;
 	}
+
+	if (ioctl(fd, DIOCGDINFO, lp) == -1) {
+		err(1, "Please implement DIOCGWEDGEINFO or "
+		    "DIOCGDINFO for disk device %s", s);
+	}
+
+	/* DIOCGDINFO didn't fail */
+
+	(void)memset(dkw, 0, sizeof(*dkw));
+
+	if (stat(s, &sb) == -1)
+		return 0;
+
+	ptn = strchr(s, '\0')[-1] - 'a';
+	if ((unsigned)ptn >= lp->d_npartitions ||
+	    (devminor_t)ptn != DISKPART(sb.st_rdev))
+		return 0;
+
+	pp = &lp->d_partitions[ptn];
+	if (ptn != getrawpartition()) {
+		dkw->dkw_offset = pp->p_offset;
+		dkw->dkw_size = pp->p_size;
+	} else {
+		dkw->dkw_offset = 0;
+		dkw->dkw_size = geo->dg_secperunit;
+	}
+	dkw->dkw_parent[0] = '*';
+	strlcpy(dkw->dkw_ptype, getfstypename(pp->p_fstype),
+	    sizeof(dkw->dkw_ptype));
 
 	return 0;
 }
