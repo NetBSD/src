@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.8 2011/08/27 17:38:16 joerg Exp $");
+__RCSID("$NetBSD: label.c,v 1.9 2013/04/13 16:48:03 jakllsch Exp $");
 #endif
 
 #include <sys/types.h>
@@ -133,7 +133,7 @@ label(int fd)
 		ent = (void*)((char*)lbt->map_data + i *
 		    le32toh(hdr->hdr_entsz));
 
-		/* Label the secundary entry. */
+		/* Label the secondary entry. */
 		utf8_to_utf16(name, ent->ent_name, 36);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
