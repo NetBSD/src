@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: remove.c,v 1.6 2011/08/27 17:38:16 joerg Exp $");
+__RCSID("$NetBSD: remove.c,v 1.7 2013/04/13 16:48:03 jakllsch Exp $");
 #endif
 
 #include <sys/types.h>
@@ -132,7 +132,7 @@ rem(int fd)
 		ent = (void*)((char*)lbt->map_data + i *
 		    le32toh(hdr->hdr_entsz));
 
-		/* Remove the secundary entry. */
+		/* Remove the secondary entry. */
 		uuid_create_nil((uuid_t *)&ent->ent_type, NULL);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
