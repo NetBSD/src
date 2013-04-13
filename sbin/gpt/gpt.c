@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.18 2013/01/18 17:58:15 jakllsch Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.19 2013/04/13 18:04:33 jakllsch Exp $");
 #endif
 
 #include <sys/param.h>
@@ -241,6 +241,7 @@ utf8_to_utf16(const uint8_t *s8, uint16_t *s16, size_t s16len)
 	} while (c != 0);
 }
 
+#ifndef __NetBSD__
 void
 le_uuid_dec(void const *buf, uuid_t *uuid)
 {
@@ -273,6 +274,7 @@ le_uuid_enc(void *buf, uuid_t const *uuid)
 		p[10 + i] = uuid->node[i];
 }
 
+#endif
 int
 parse_uuid(const char *s, uuid_t *uuid)
 {
