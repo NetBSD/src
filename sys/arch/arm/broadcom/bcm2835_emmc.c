@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.7 2013/01/10 17:21:36 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.8 2013/04/14 15:11:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.7 2013/01/10 17:21:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.8 2013/04/14 15:11:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,8 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	frequency = prop_dictionary_get(dict, "frequency");
 	if (frequency != NULL) {
 		sc->sc.sc_clkbase = prop_number_integer_value(frequency) / 1000;
-	}    
-	
+	}
+
 	error = bus_space_map(sc->sc_iot, aaa->aaa_addr, aaa->aaa_size, 0,
 	    &sc->sc_ioh);
 	if (error) {

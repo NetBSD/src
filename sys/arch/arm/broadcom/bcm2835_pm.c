@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_pm.c,v 1.2 2013/01/10 02:23:26 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_pm.c,v 1.3 2013/04/14 15:11:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_pm.c,v 1.2 2013/01/10 02:23:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_pm.c,v 1.3 2013/04/14 15:11:52 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -107,7 +107,7 @@ bcmpm_attach(device_t parent, device_t self, void *aux)
 
 	if (bcm2835pm_sc == NULL)
 		bcm2835pm_sc = sc;
-	
+
 	sc->sc_dev = self;
 	sc->sc_iot = aaa->aaa_iot;
 
@@ -138,9 +138,9 @@ bcmpm_wdog_set_timeout(struct bcm2835pm_softc *sc, uint32_t ticks)
 
 	rstc |= tmp & ~BCM2835_PM_RSTC_CONFIGMASK;
 	rstc |= BCM2835_PM_RSTC_FULL_RESET;
-	
+
 	wdog |= ticks & BCM2835_PM_WDOG_TIMEMASK;
-	
+
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_PM_WDOG, wdog);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_PM_RSTC, rstc);
 }

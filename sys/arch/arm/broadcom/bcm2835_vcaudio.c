@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.1 2013/03/24 19:55:19 jmcneill Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.2 2013/04/14 15:11:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.1 2013/03/24 19:55:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.2 2013/04/14 15:11:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -239,7 +239,7 @@ vcaudio_init(struct vcaudio_softc *sc)
 	sc->sc_format.frequency_type = 0;
 	sc->sc_format.frequency[0] = 8000;
 	sc->sc_format.frequency[1] = 48000;
-	
+
 	error = auconv_create_encodings(&sc->sc_format, 1, &sc->sc_encodings);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
@@ -416,7 +416,7 @@ vcaudio_worker(struct work *wk, void *priv)
 		msg.type = VC_AUDIO_MSG_TYPE_WRITE;
 		msg.u.write.count = PAGE_SIZE * 3;
 		msg.u.write.callback = NULL;
-		msg.u.write.cookie = NULL; 
+		msg.u.write.cookie = NULL;
 		msg.u.write.silence = 1;
 		msg.u.write.max_packet = 0;
 		error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
@@ -435,7 +435,7 @@ vcaudio_worker(struct work *wk, void *priv)
 	msg.u.write.max_packet = 4000;
 	msg.u.write.count = count;
 	msg.u.write.callback = intr;
-	msg.u.write.cookie = intrarg; 
+	msg.u.write.cookie = intrarg;
 	msg.u.write.silence = 0;
 
 	error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
@@ -701,7 +701,7 @@ vcaudio_trigger_output(void *priv, void *start, void *end, int blksize,
 
 	return 0;
 }
-				      
+
 static int
 vcaudio_trigger_input(void *priv, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *params)
