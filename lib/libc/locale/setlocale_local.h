@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale_local.h,v 1.10 2013/04/14 23:30:16 joerg Exp $ */
+/* $NetBSD: setlocale_local.h,v 1.11 2013/04/14 23:44:54 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -92,6 +92,7 @@ _current_cache(void)
 }
 
 extern struct _locale	_global_locale;
+extern __dso_hidden struct _locale *_C_locale;
 extern size_t __mb_len_max_runtime;
 
 #endif /*_SETLOCALE_LOCAL_H_*/
