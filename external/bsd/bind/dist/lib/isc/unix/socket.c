@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.10 2013/03/24 18:42:01 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.11 2013/04/14 13:18:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -2149,6 +2149,7 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 
 	sock->common.magic = ISCAPI_SOCKET_MAGIC;
 	sock->common.impmagic = SOCKET_MAGIC;
+	sock->common.methods = (isc_socketmethods_t *)&socketmethods;
 	*socketp = sock;
 
 	return (ISC_R_SUCCESS);
@@ -2600,7 +2601,6 @@ socket_create(isc_socketmgr_t *manager0, int pf, isc_sockettype_t type,
 		return (result);
 	}
 
-	sock->common.methods = (isc_socketmethods_t *)&socketmethods;
 	sock->references = 1;
 	*socketp = (isc_socket_t *)sock;
 
@@ -2736,7 +2736,6 @@ isc__socket_fdwatchcreate(isc_socketmgr_t *manager0, int fd, int flags,
 	sock->fdwatchtask = task;
 	sock->statsindex = fdwatchstatsindex;
 
-	sock->common.methods = (isc_socketmethods_t *)&socketmethods;
 	sock->references = 1;
 	*socketp = (isc_socket_t *)sock;
 
