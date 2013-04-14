@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.23 2009/03/25 18:41:06 tls Exp $	*/
+/*	$NetBSD: cread.c,v 1.24 2013/04/14 22:23:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -302,7 +302,7 @@ close(int fd)
 #endif
 	f = &files[fd];
 
-	if ((f->f_flags & F_READ) == 0)
+	if ((f->f_flags & (F_READ|F_WRITE)) == F_READ)
 		return oclose(fd);
 
 	s = ss[fd];
