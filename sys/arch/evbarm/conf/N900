@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.7 2013/03/13 03:08:18 khorben Exp $
+#	$NetBSD: N900,v 1.8 2013/04/14 19:17:06 khorben Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -212,6 +212,10 @@ omapgpio4	at obio2 addr 0x49056000 size 0x0400 intrbase 224 intr 33
 #omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
 
 gpio*		at omapgpio?
+
+# GPIO devices
+# Charging sensor
+n900acad0	at gpio0 offset 7 mask 0x1 #intr 103
 
 # System Control Module
 omapscm0 	at obio0 addr 0x48002000 size 0x1000
