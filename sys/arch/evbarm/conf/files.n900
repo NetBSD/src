@@ -1,4 +1,4 @@
-#	$NetBSD: files.n900,v 1.1 2013/04/14 18:57:32 khorben Exp $
+#	$NetBSD: files.n900,v 1.2 2013/04/14 19:17:06 khorben Exp $
 #
 # Nokia N900 configuration info
 #
@@ -19,3 +19,8 @@ include "arch/arm/omap/files.omap2"
 attach com at obio with obiouart
 file	arch/arm/omap/obio_com.c		obiouart
 defparam opt_com.h				CONSADDR CONSPEED CONMODE
+
+# Charging sensor
+device n900acad: sysmon_envsys
+attach n900acad at gpio with n900acad
+file	arch/evbarm/n900/n900_acad.c		n900acad
