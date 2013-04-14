@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_debug.c,v 1.5 2012/06/16 17:31:47 chs Exp $	*/
+/*	$NetBSD: dtrace_debug.c,v 1.6 2013/04/14 16:39:59 christos Exp $	*/
 
 /*-
  * Copyright (C) 2008 John Birrell <jb@freebsd.org>.
@@ -77,6 +77,18 @@ dtrace_cmpset_long(volatile u_long *dst, u_long exp, u_long src)
 	: "memory");
 
 	return (res);
+}
+#elif defined(__arm__)
+static __inline int
+dtrace_cmpset_long(volatile u_long *dst, u_long exp, u_long src)
+{
+	u_char res;
+	if (*dst == src) {
+		res = *dst;
+		*dst = src;
+		return res;
+	}
+	return exp;
 }
 #endif
 
