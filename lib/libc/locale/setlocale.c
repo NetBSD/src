@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale.c,v 1.60 2012/03/04 21:14:56 tnozaki Exp $ */
+/* $NetBSD: setlocale.c,v 1.61 2013/04/14 23:30:16 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setlocale.c,v 1.60 2012/03/04 21:14:56 tnozaki Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.61 2013/04/14 23:30:16 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -86,7 +86,7 @@ char *
 __setlocale(int category, const char *name)
 {
 	_locale_set_t sl;
-	struct _locale_impl_t *impl;
+	struct _locale *impl;
 
 	sl = _find_category(category);
 	if (sl == NULL)

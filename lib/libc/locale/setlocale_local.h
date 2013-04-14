@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale_local.h,v 1.9 2013/04/13 10:21:21 joerg Exp $ */
+/* $NetBSD: setlocale_local.h,v 1.10 2013/04/14 23:30:16 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -53,7 +53,7 @@ struct _locale_cache_t {
 #endif
 };
 
-struct _locale_impl_t {
+struct _locale {
 	struct _locale_cache_t *cache;
 	char query[_LOCALENAME_LEN_MAX * (_LC_LAST - 1)];
 	const char *part_name[_LC_LAST];
@@ -61,28 +61,28 @@ struct _locale_impl_t {
 };
 
 typedef const char *(*_locale_set_t)(const char * __restrict,
-    struct _locale_impl_t * __restrict);
+    struct _locale * __restrict);
 
 __BEGIN_DECLS
 _locale_set_t		_find_category(int);
 const char		*_get_locale_env(const char *);
-struct _locale_impl_t	**_current_locale(void);
+struct _locale		**_current_locale(void);
 char			*__setlocale(int, const char *);
 
 const char *_generic_LC_ALL_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 const char *_dummy_LC_COLLATE_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 const char *_citrus_LC_CTYPE_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 const char *_citrus_LC_MONETARY_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 const char *_citrus_LC_NUMERIC_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 const char *_citrus_LC_TIME_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 const char *_citrus_LC_MESSAGES_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 __END_DECLS
 
 static __inline struct _locale_cache_t *
@@ -91,7 +91,7 @@ _current_cache(void)
 	return (*_current_locale())->cache;
 }
 
-extern struct _locale_impl_t	_global_locale;
+extern struct _locale	_global_locale;
 extern size_t __mb_len_max_runtime;
 
 #endif /*_SETLOCALE_LOCAL_H_*/
