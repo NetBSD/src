@@ -1,4 +1,4 @@
-/*	$NetBSD: isqemu.h,v 1.2 2013/04/12 17:21:04 christos Exp $	*/
+/*	$NetBSD: isqemu.h,v 1.3 2013/04/14 12:46:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <errno.h>
 #include <err.h>
 
-static bool
+static __inline bool
 isQEMU(void) {
 #if defined(__i386__) || defined(__x86_64__)
 	char name[1024];
