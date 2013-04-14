@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpioreg.h,v 1.1 2013/01/05 19:55:18 jakllsch Exp $	*/
+/*	$NetBSD: bcm2835_gpioreg.h,v 1.2 2013/04/14 15:11:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -31,7 +31,7 @@
 
 #define BCM2835_GPIO_GPFSEL(x)	(0x000 + (x) * sizeof(uint32_t))
 #define BCM2835_GPIO_GPFSEL_PINS_PER_REGISTER	10
-#define BCM2835_GPIO_GPFSEL_BITS_PER_PIN	3 
+#define BCM2835_GPIO_GPFSEL_BITS_PER_PIN	3
 
 #define BCM2835_GPIO_IN		00
 #define BCM2835_GPIO_OUT	01
