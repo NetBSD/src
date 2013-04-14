@@ -1,4 +1,4 @@
-# $NetBSD: t_swsensor.sh,v 1.6 2013/03/17 06:29:55 jmmv Exp $
+# $NetBSD: t_swsensor.sh,v 1.7 2013/04/14 16:07:46 martin Exp $
 
 get_sensor_info() {
 	rump.envstat -x | \
@@ -290,14 +290,14 @@ common_body() {
 	sleep 5
 	new_rnd_bits=$( get_rnd_bits_count )
 	if [ $new_rnd_bits -le $rnd_bits ] ; then
-		atf_tc_expect_fail "PR kern/47661"
+		atf_expect_fail "PR kern/47661"
 		atf_fail "14a: entropy bits did not increase after polling"
 	fi
 	rnd_bits=$new_rnd_bits
 	sleep 5
 	new_rnd_bits=$( get_rnd_bits_count )
 	if [ $new_rnd_bits -gt $rnd_bits ] ; then
-		atf_tc_expect_fail "PR kern/47661"
+		atf_expect_fail "PR kern/47661"
 		atf_fail "14b: entropy bits increased after poll with no value change"
 	fi
 
@@ -311,14 +311,14 @@ common_body() {
 	get_sensor_key cur-value
 	new_rnd_bits=$( get_rnd_bits_count )
 	if [ $new_rnd_bits -le $rnd_bits ] ; then
-		atf_tc_expect_fail "PR kern/47661"
+		atf_expect_fail "PR kern/47661"
 		atf_fail "15a: entropy bits did not increase after interrogation"
 	fi
 	rnd_bits=$new_rnd_bits
 	get_sensor_key cur-value
 	new_rnd_bits=$( get_rnd_bits_count )
 	if [ $new_rnd_bits -gt $rnd_bits ] ; then
-		atf_tc_expect_fail "PR kern/47661"
+		atf_expect_fail "PR kern/47661"
 		atf_fail "15b: entropy bits increased after interrogation with no value change"
 	fi
 }
