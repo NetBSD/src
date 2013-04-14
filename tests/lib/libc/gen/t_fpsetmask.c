@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.11 2013/04/14 12:45:50 martin Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.12 2013/04/14 16:03:06 martin Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include "isqemu.h"
 
 #ifndef _FLOAT_IEEE754
-
 
 ATF_TC(no_test);
 ATF_TC_HEAD(no_test, tc)
