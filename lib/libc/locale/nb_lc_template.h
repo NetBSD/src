@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_template.h,v 1.4 2012/03/04 21:14:56 tnozaki Exp $ */
+/* $NetBSD: nb_lc_template.h,v 1.5 2013/04/14 23:30:16 joerg Exp $ */
 
 /*-
  * Copyright (c)1999, 2008 Citrus Project,
@@ -216,7 +216,7 @@ done:
 
 const char *
 _PREFIX(setlocale)(const char * __restrict name,
-    struct _locale_impl_t * __restrict locale)
+    struct _locale * __restrict locale)
 {
 	_nb_part_t *part;
 

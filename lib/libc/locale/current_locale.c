@@ -1,4 +1,4 @@
-/* $NetBSD: current_locale.c,v 1.3 2012/03/20 17:44:18 matt Exp $ */
+/* $NetBSD: current_locale.c,v 1.4 2013/04/14 23:30:16 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: current_locale.c,v 1.3 2012/03/20 17:44:18 matt Exp $");
+__RCSID("$NetBSD: current_locale.c,v 1.4 2013/04/14 23:30:16 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -40,9 +40,9 @@ __RCSID("$NetBSD: current_locale.c,v 1.3 2012/03/20 17:44:18 matt Exp $");
 
 #include "setlocale_local.h"
 
-static struct _locale_impl_t *__current_locale = &_global_locale;
+static struct _locale *__current_locale = &_global_locale;
 
-struct _locale_impl_t **
+struct _locale **
 _current_locale(void)
 {
 	return &__current_locale;
