@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.3 2013/04/14 15:53:30 matt Exp $")
+RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.4 2013/04/14 17:05:11 skrll Exp $")
 
 /*
  * typedef struct { unsigned long long quo, rem } ulldiv_t;
@@ -42,7 +42,7 @@ ENTRY(__aeabi_uldivmod)
 	sub	sp, sp, #16
 	add	ip, sp, #8
 	str	ip, [sp]
-	blx	PLT_SYM(__qdivrem)
+	bl	PLT_SYM(__qdivrem)
 	add	sp, sp, #8
 	/*
 	 * The remainder is already on the stack just waiting to be popped
