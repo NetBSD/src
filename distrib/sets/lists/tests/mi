@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532 2013/03/28 18:51:28 christos Exp $
+# $NetBSD: mi,v 1.533 2013/04/14 18:00:48 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2396,6 +2396,7 @@
 ./usr/tests/lib/libpthread			tests-lib-tests
 ./usr/tests/lib/libpthread/dlopen			tests-lib-tests
 ./usr/tests/lib/libpthread/dlopen/Atffile	tests-lib-tests		atf
+./usr/tests/lib/libpthread/dlopen/Kyuafile	tests-lib-tests		atf,kyua
 ./usr/tests/lib/libpthread/dlopen/h_pthread_dlopen.so	tests-lib-tests		atf,pic
 ./usr/tests/lib/libpthread/dlopen/h_pthread_dlopen.so.1	tests-lib-tests		atf,pic
 ./usr/tests/lib/libpthread/dlopen/t_dlopen	tests-lib-tests		atf,pic
