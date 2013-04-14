@@ -1,4 +1,4 @@
-/*	$NetBSD: n900_acad.c,v 1.1 2013/04/14 19:17:06 khorben Exp $ */
+/*	$NetBSD: n900_acad.c,v 1.2 2013/04/14 20:18:17 khorben Exp $ */
 
 /*
  * AC adapter driver for the Nokia N900.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: n900_acad.c,v 1.1 2013/04/14 19:17:06 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: n900_acad.c,v 1.2 2013/04/14 20:18:17 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +132,8 @@ n900acad_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_normal("N900 keyboard acad\n");
-	aprint_naive("N900 keyboard acad\n");
+	aprint_normal("N900 AC adapter sensor\n");
+	aprint_naive("N900 AC adapter sensor\n");
 
 	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
 		aprint_error_dev(sc->sc_dev,
