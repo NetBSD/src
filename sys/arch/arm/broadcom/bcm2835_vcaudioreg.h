@@ -44,7 +44,7 @@ typedef enum
    VC_AUDIO_MSG_TYPE_RESULT,              // Generic result
    VC_AUDIO_MSG_TYPE_COMPLETE,              // playback of samples complete
    VC_AUDIO_MSG_TYPE_CONFIG,                 // Configure
-   VC_AUDIO_MSG_TYPE_CONTROL,                 // control 
+   VC_AUDIO_MSG_TYPE_CONTROL,                 // control
    VC_AUDIO_MSG_TYPE_OPEN,                 //  open
    VC_AUDIO_MSG_TYPE_CLOSE,                 // close/shutdown
    VC_AUDIO_MSG_TYPE_START,                 // start output (i.e. resume)
