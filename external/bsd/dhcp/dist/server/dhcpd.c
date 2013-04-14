@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpd.c,v 1.2 2013/04/13 23:04:35 christos Exp $	*/
+/*	$NetBSD: dhcpd.c,v 1.3 2013/04/14 01:51:39 christos Exp $	*/
 
 /* dhcpd.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.c,v 1.2 2013/04/13 23:04:35 christos Exp $");
+__RCSID("$NetBSD: dhcpd.c,v 1.3 2013/04/14 01:51:39 christos Exp $");
 
 static const char copyright[] =
 "Copyright 2004-2013 Internet Systems Consortium.";
@@ -287,6 +287,18 @@ main(int argc, char **argv) {
         else if (fd != -1)
                 close(fd);
 
+	/* Initialize the omapi system. */
+	result = omapi_init ();
+	if (result != ISC_R_SUCCESS)
+		log_fatal ("Can't initialize OMAPI: %s",
+			   isc_result_totext (result));
+
+	/* Set up the OMAPI wrappers for common objects. */
+	dhcp_db_objects_setup ();
+	/* Set up the OMAPI wrappers for various server database internal
+	   objects. */
+	dhcp_common_objects_setup ();
+
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog ("dhcpd", LOG_NDELAY, DHCPD_LOG_FACILITY);
 
@@ -489,19 +501,6 @@ main(int argc, char **argv) {
 
 	/* Set up the client classification system. */
 	classification_setup ();
-
-	/* Initialize the omapi system. */
-	result = omapi_init ();
-	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't initialize OMAPI: %s",
-			   isc_result_totext (result));
-
-	/* Set up the OMAPI wrappers for common objects. */
-	dhcp_db_objects_setup ();
-	/* Set up the OMAPI wrappers for various server database internal
-	   objects. */
-	dhcp_common_objects_setup ();
-
 #if defined (TRACING)
 	trace_init (set_time, MDL);
 	if (traceoutfile) {
