@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.1 2012/08/05 06:33:51 matt Exp $")
+RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.2 2013/04/14 15:53:30 matt Exp $")
 
 ENTRY(__aeabi_ldivmod)
 	push	{r4-r5, sl, lr}
@@ -64,9 +64,11 @@ ENTRY(__aeabi_ldivmod)
 	 * Arguments are setup, allocate some stack for the remainder
 	 * and call __qdivrem for the heavy lifting.
 	 */
-	sub	sp, sp, #8
-	mov	r4, sp		/* pointer to remainder */
+	sub	sp, sp, #16
+	add	ip, sp, #8
+	str	ip, [sp]
 	bl	PLT_SYM(__qdivrem)
+	add	sp, sp, #8
 
 	teq	NEG, #0		/* any signs to flip? */
 	/*
@@ -124,5 +126,4 @@ ENTRY(__aeabi_ldivmod)
 	mov	AHI, #0
 	pop	{r4-r5, sl, lr}
 	RET
-
 END(__aeabi_ldivmod)
