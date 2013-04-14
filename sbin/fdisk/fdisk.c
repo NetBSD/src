@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.144 2013/02/13 00:40:28 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.145 2013/04/14 22:48:22 jakllsch Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.144 2013/02/13 00:40:28 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.145 2013/04/14 22:48:22 jakllsch Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -200,7 +200,7 @@ static daddr_t dos_disksectors;
 
 #define DOSSECT(s,c)	(((s) & 0x3f) | (((c) >> 2) & 0xc0))
 #define DOSCYL(c)	((c) & 0xff)
-#define SEC_IN_1M (1024 * 1024 / 512)
+#define SEC_IN_1M (1024 * 1024 / secsize)
 #define SEC_TO_MB(sec) ((unsigned int)(((sec) + SEC_IN_1M / 2) / SEC_IN_1M))
 #define SEC_TO_CYL(sec) (((sec) + dos_cylindersectors/2) / dos_cylindersectors)
 
@@ -460,9 +460,6 @@ out:				 errx(EXIT_FAILURE, "Invalid sector size %zd",
 				continue;
 			if (ch != 1)
 				goto out;
-			if ((iobuf = malloc(secsize)) == NULL)
-				err(EXIT_FAILURE, "Cannot allocate %zd buffer",
-				    secsize);
 			break;
 		default:
 			usage();
@@ -507,6 +504,12 @@ out:				 errx(EXIT_FAILURE, "Invalid sector size %zd",
 
 	if (open_disk(B_flag || a_flag || i_flag || u_flag) < 0)
 		exit(1);
+
+	if (secsize > 512) {
+		if ((iobuf = malloc(secsize)) == NULL)
+			err(EXIT_FAILURE, "Cannot allocate %zd buffer",
+			    secsize);
+	}
 
 	if (read_s0(0, &mboot))
 		/* must have been a blank disk */
@@ -2321,8 +2324,9 @@ print_geometry(void)
 	printf("Disk: %s\n", disk);
 	printf("NetBSD disklabel disk geometry:\n");
 	printf("cylinders: %d, heads: %d, sectors/track: %d "
-	    "(%d sectors/cylinder)\ntotal sectors: %"PRIdaddr"\n\n",
-	    cylinders, heads, sectors, cylindersectors, disksectors);
+	    "(%d sectors/cylinder)\ntotal sectors: %"PRIdaddr", "
+	    "bytes/sector: %zd\n\n", cylinders, heads, sectors,
+	    cylindersectors, disksectors, secsize);
 	printf("BIOS disk geometry:\n");
 	printf("cylinders: %d, heads: %d, sectors/track: %d "
 	    "(%d sectors/cylinder)\ntotal sectors: %"PRIdaddr"\n\n",
@@ -2488,7 +2492,7 @@ read_disk(daddr_t sector, void *buf)
 	if (*rfd == -1)
 		errx(1, "read_disk(); fd == -1");
 
-	off_t offs = sector * (off_t)512;
+	off_t offs = sector * (off_t)secsize;
 	off_t mod = offs & (secsize - 1);
 	off_t rnd = offs & ~(secsize - 1);
 
@@ -2514,7 +2518,7 @@ write_disk(daddr_t sector, void *buf)
 	if (wfd == -1)
 		errx(1, "write_disk(); wfd == -1");
 
-	off_t offs = sector * (off_t)512;
+	off_t offs = sector * (off_t)secsize;
 	off_t mod = offs & (secsize - 1);
 	off_t rnd = offs & ~(secsize - 1);
 
@@ -2576,6 +2580,7 @@ get_params(void)
 		guess_geometry(disklabel.d_secperunit);
 		disklabel.d_ncylinders = dos_cylinders;
 		disklabel.d_ntracks = dos_heads;
+		disklabel.d_secsize = 512;
 		disklabel.d_nsectors = dos_sectors;
 	} else if (ioctl(fd, DIOCGDEFLABEL, &disklabel) == -1) {
 		warn("DIOCGDEFLABEL");
@@ -2588,6 +2593,7 @@ get_params(void)
 	disksectors = disklabel.d_secperunit;
 	cylinders = disklabel.d_ncylinders;
 	heads = disklabel.d_ntracks;
+	secsize = disklabel.d_secsize;
 	sectors = disklabel.d_nsectors;
 
 	/* pick up some defaults for the BIOS sizes */
