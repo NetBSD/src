@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.66 2011/08/31 16:24:59 plunky Exp $	*/
+/*	$NetBSD: route6d.c,v 1.67 2013/04/15 07:58:35 kardel Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.66 2011/08/31 16:24:59 plunky Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.67 2013/04/15 07:58:35 kardel Exp $");
 #endif
 
 #include <stdbool.h>
@@ -83,8 +83,12 @@ __RCSID("$NetBSD: route6d.c,v 1.66 2011/08/31 16:24:59 plunky Exp $");
 #endif
 
 /* alignment constraint for routing socket */
+#if defined(__NetBSD__) && defined(RT_ROUNDUP)
+#define ROUNDUP(a) RT_ROUNDUP(a)
+#else
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#endif
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 /*
