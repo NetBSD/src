@@ -1,4 +1,5 @@
-# $NetBSD: md.i386,v 1.2 2013/01/16 21:11:08 christos Exp $
+# $NetBSD: md.i386,v 1.3 2013/04/15 09:21:05 njoly Exp $
+./usr/libdata/debug/lib/libm387.so.0.1.debug	comp-sys-debug	pic,debug
 ./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		debug
