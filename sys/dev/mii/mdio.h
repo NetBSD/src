@@ -33,7 +33,7 @@
 /*
  * IEEE 802.3 Clause 45 definitions.
  * From:
- *	IEEE 802.3 2008
+ *	IEEE 802.3 2009
  *	IEEE 802.3at
  *	IEEE 802.3av
  *	IEEE 802.3az
@@ -112,8 +112,8 @@
 #define MDIO_PMAPMD_10PTONESTAT1	65  /* 10P tone status 1 */
 #define MDIO_PMAPMD_10PTONESTAT2	66  /* 10P tone status 2 */
 #define MDIO_PMAPMD_10PTONESTAT3	67  /* 10P tone status 3 */
-#define MDIO_PMAPMD_10POUTINDICAT	68  /* 10P outgoing indicatior bits */
-#define MDIO_PMAPMD_10PININDICAT	69  /* 10P incoming indicatior bits */
+#define MDIO_PMAPMD_10POUTINDICAT	68  /* 10P outgoing indicator bits */
+#define MDIO_PMAPMD_10PININDICAT	69  /* 10P incoming indicator bits */
 #define MDIO_PMAPMD_10PCYCLICEXTCNF	70  /* 10P cyclic extension config. */
 #define MDIO_PMAPMD_10PATTAINDSDR	71  /* 10P attainable downstream DR */
 	/* Values 72 to 79 are reserved */
@@ -167,7 +167,7 @@
 #define MDIO_PMAPMD_10GTSKEWDLY1	145 /* 10G-T skew delay 1 */
 #define MDIO_PMAPMD_10GTSKEWDLY2	146 /* 10G-T skew delay 2 */
 #define MDIO_PMAPMD_10GTFSTRETSTATCTRL	147 /* 10G-T fast retrain stat&ctrl */
-/* Values 148 to 149 are reserved */
+	/* Values 148 to 149 are reserved */
 #define MDIO_PMAPMD_10GKRPMDCTRL	150 /* 10G-KR PMD control */
 #define MDIO_PMAPMD_10GKRPMDSTAT	151 /* 10G-KR PMD status */
 #define MDIO_PMAPMD_10GKRLPCOEFUPD	152 /* 10G-KR LP coefficient update */
