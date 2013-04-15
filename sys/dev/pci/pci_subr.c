@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.95 2012/10/27 17:18:35 chs Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.96 2013/04/15 18:51:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.95 2012/10/27 17:18:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.96 2013/04/15 18:51:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -841,6 +841,12 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		break;
 	case 0x8:
 		printf("PCI/PCI-X to PCI Express Bridge\n");
+		break;
+	case 0x9:
+		printf("Root Complex Integrated Endpoint\n");
+		break;
+	case 0xa:
+		printf("Root Complex Event Collector\n");
 		break;
 	default:
 		printf("unknown\n");
