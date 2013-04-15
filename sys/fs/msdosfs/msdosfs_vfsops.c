@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.100 2012/11/04 17:57:59 jakllsch Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.101 2013/04/15 14:10:59 jakllsch Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.100 2012/11/04 17:57:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.101 2013/04/15 14:10:59 jakllsch Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -722,6 +722,18 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	if (pmp->pm_bpcluster ^ (1 << pmp->pm_cnshift)) {
 		DPRINTF(("bpcluster %lu cnshift %lu\n", 
 		    pmp->pm_bpcluster, pmp->pm_cnshift));
+		error = EINVAL;
+		goto error_exit;
+	}
+
+	/*
+	 * Cluster size must be within limit of MAXBSIZE.
+	 * Many FAT filesystems will not have clusters larger than
+	 * 32KiB due to limits in Windows versions before Vista.
+	 */
+	if (pmp->pm_bpcluster > MAXBSIZE) {
+		DPRINTF(("bpcluster %lu > MAXBSIZE %d\n",
+		    pmp->pm_bpcluster, MAXBSIZE));
 		error = EINVAL;
 		goto error_exit;
 	}
