@@ -1,4 +1,4 @@
-/* $NetBSD: ctype_bits.h,v 1.3 2013/04/13 10:21:21 joerg Exp $ */
+/* $NetBSD: ctype_bits.h,v 1.4 2013/04/15 11:01:40 joerg Exp $ */
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -58,5 +58,9 @@
 extern const unsigned short	*_ctype_tab_;
 extern const short	*_tolower_tab_;
 extern const short	*_toupper_tab_;
+
+extern const unsigned short _C_ctype_tab_[];
+extern const short _C_toupper_tab_[];
+extern const short _C_tolower_tab_[];
 
 #endif /* !_SYS_CTYPE_BITS_H_ */
