@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.126 2013/04/11 17:43:15 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.127 2013/04/15 19:26:15 christos Exp $
 ./lib/64					base-compat-shlib	compat
 ./lib/64/npf					base-npf-shlib		compat
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic
@@ -10,7 +10,7 @@
 ./lib/64/npf/ext_rndblock.so			base-npf-shlib		compat,pic
 ./lib/64/npf/ext_rndblock.so.0			base-npf-shlib		compat,pic
 ./lib/64/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
-./lib/o32/npf					base-compat-shlib	compat
+./lib/o32					base-compat-shlib	compat
 ./lib/o32/npf					base-npf-shlib		compat
 ./lib/o32/npf/ext_log.so			base-npf-shlib		compat,pic
 ./lib/o32/npf/ext_log.so.0			base-npf-shlib		compat,pic
