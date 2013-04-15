@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.77 2013/04/12 03:32:28 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.78 2013/04/15 18:48:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -644,17 +644,51 @@ struct pci_msix_table_entry {
 #define	 PCI_PCIE_XCAP_TYPE_DOWN	__SHIFTIN(0x6, PCI_PCIE_XCAP_TYPE_MASK)
 #define	 PCI_PCIE_XCAP_TYPE_PCIE2PCI	__SHIFTIN(0x7, PCI_PCIE_XCAP_TYPE_MASK)
 #define	 PCI_PCIE_XCAP_TYPE_PCI2PCIE	__SHIFTIN(0x8, PCI_PCIE_XCAP_TYPE_MASK)
+#define	 PCI_PCIE_XCAP_TYPE_ROOT_INTEP	__SHIFTIN(0x9, PCI_PCIE_XCAP_TYPE_MASK)
+#define	 PCI_PCIE_XCAP_TYPE_ROOT_EVNTC	__SHIFTIN(0xa, PCI_PCIE_XCAP_TYPE_MASK)
 #define PCI_PCIE_XCAP_SI	__SHIFTIN(__BIT(8), PCI_PCIE_XCAP_MASK)		/* Slot Implemented */
 #define PCI_PCIE_DCAP		0x04	/* Device Capabilities Register */
+#define PCI_PCIE_DCAP_MAX_PAYLOAD	__BITS(2, 0)
+#define PCI_PCIE_DCAP_PHANTHOM_FUNCS	__BITS(4, 3)
+#define PCI_PCIE_DCAP_EXT_TAG_FIELD	__BIT(5)
+#define PCI_PCIE_DCAP_L0S_LATENCY	__BITS(8, 6)
+#define PCI_PCIE_DCAP_L1_LATENCY	__BITS(11, 9)
+#define PCI_PCIE_DCAP_ROLE_ERR_RPT	__BIT(15)
+#define PCI_PCIE_DCAP_SLOT_PWR_LIM_VAL	__BITS(25, 18)
+#define PCI_PCIE_DCAP_SLOT_PWR_LIM_SCALE __BITS(27, 26)
+#define PCI_PCIE_DCAP_FLR		__BIT(28)
 #define PCI_PCIE_DCSR		0x08	/* Device Control & Status Register */
-#define PCI_PCIE_DCSR_MAX_READ_REQ	__BITS(14, 12)
+#define PCI_PCIE_DCSR_ENA_COR_ERR	__BIT(0)
+#define PCI_PCIE_DCSR_ENA_NFER		__BIT(1)
+#define PCI_PCIE_DCSR_ENA_FER		__BIT(2)
+#define PCI_PCIE_DCSR_ENA_URR		__BIT(3)
 #define PCI_PCIE_DCSR_ENA_RELAX_ORD	__BIT(4)
+#define PCI_PCIE_DCSR_MAX_PAYLOAD	__BITS(7, 5)
+#define PCI_PCIE_DCSR_EXT_TAG_FIELD	__BIT(8)
+#define PCI_PCIE_DCSR_PHANTOM_FUNCS	__BIT(9)
+#define PCI_PCIE_DCSR_AUX_POWER_PM	__BIT(10)
 #define PCI_PCIE_DCSR_ENA_NO_SNOOP	__BIT(11)
-#define PCI_PCIE_DCSR_CED	__BIT(0 + 16)
-#define PCI_PCIE_DCSR_NFED	__BIT(1 + 16)
-#define PCI_PCIE_DCSR_FED	__BIT(2 + 16)
-#define PCI_PCIE_DCSR_URD	__BIT(3 + 16)
+#define PCI_PCIE_DCSR_MAX_READ_REQ	__BITS(14, 12)
+#define PCI_PCIE_DCSR_BRDG_CFG_RETRY	__BIT(15)
+#define PCI_PCIE_DCSR_INITIATE_FLR	__BIT(15)
+#define PCI_PCIE_DCSR_CED		__BIT(0 + 16)
+#define PCI_PCIE_DCSR_NFED		__BIT(1 + 16)
+#define PCI_PCIE_DCSR_FED		__BIT(2 + 16)
+#define PCI_PCIE_DCSR_URD		__BIT(3 + 16)
+#define PCI_PCIE_DCSR_AUX_PWR		__BIT(4 + 16)
+#define PCI_PCIE_DCSR_TRANSACTION_PND	__BIT(5 + 16)
 #define PCI_PCIE_LCAP		0x0c	/* Link Capabilities Register */
+#define PCI_PCIE_LCAP_MAX_SPEED		__BITS(3, 0)
+#define PCI_PCIE_LCAP_MAX_WIDTH		__BITS(9, 4)
+#define PCI_PCIE_LCAP_ASPM		__BITS(11, 10)
+#define PCI_PCIE_LCAP_L0S_EXIT		__BITS(14, 12)
+#define PCI_PCIE_LCAP_L1_EXIT		__BITS(17, 15)
+#define PCI_PCIE_LCAP_CLOCK_PM		__BIT(18)
+#define PCI_PCIE_LCAP_SURPRISE_DOWN	__BIT(19)
+#define PCI_PCIE_LCAP_DL_ACTIVE		__BIT(20)
+#define PCI_PCIE_LCAP_LINK_BW_NOTIFY	__BIT(21)
+#define PCI_PCIE_LCAP_ASPM_COMPLIANCE	__BIT(22)
+#define PCI_PCIE_LCAP_PORT		__BITS(31, 24)
 #define PCI_PCIE_LCSR		0x10	/* Link Control & Status Register */
 #define PCI_PCIE_LCSR_ASPM_L0S	__BIT(0)
 #define PCI_PCIE_LCSR_ASPM_L1	__BIT(1)
@@ -664,11 +698,17 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_LCSR_COMCLKCFG	__BIT(6)
 #define PCI_PCIE_LCSR_EXTNDSYNC	__BIT(7)
 #define PCI_PCIE_LCSR_ENCLKPM	__BIT(8)
+#define PCI_PCIE_LCSR_HAWD	__BIT(9)
+#define PCI_PCIE_LCSR_LBMIE	__BIT(10)
+#define PCI_PCIE_LCSR_LABIE	__BIT(11)
 #define	PCI_PCIE_LCSR_LINKSPEED	__BITS(19,16)
 #define	PCI_PCIE_LCSR_NLW	__BITS(25,20)
+#define	PCI_PCIE_LCSR_LINKTRAIN_ERR	__BIT(26)
 #define	PCI_PCIE_LCSR_LINKTRAIN	__BIT(27)
 #define	PCI_PCIE_LCSR_SLOTCLKCFG __BIT(28)
 #define	PCI_PCIE_LCSR_DLACTIVE	__BIT(29)
+#define	PCI_PCIE_LCSR_LINK_BW_MGMT	__BIT(30)
+#define	PCI_PCIE_LCSR_LINK_AUTO_BW	__BIT(31)
 #define PCI_PCIE_SLCAP		0x14	/* Slot Capabilities Register */
 #define PCI_PCIE_SLCAP_ABP	__BIT(0)	/* Attention Button Present */
 #define PCI_PCIE_SLCAP_PCP	__BIT(1)	/* Power Controller Present */
@@ -679,6 +719,11 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_SLCAP_PIP	__BIT(4)	/* Power Indicator Present */
 #define PCI_PCIE_SLCAP_HPS	__BIT(5)	/* Hot-Plug Surprise */
 #define PCI_PCIE_SLCAP_HPC	__BIT(6)	/* Hot-Plug Capable */
+#define	PCI_PCIE_SLCAP_SPLV	__BITS(14, 7)
+#define	PCI_PCIE_SLCAP_SPLS	__BITS(16, 15)
+#define	PCI_PCIE_SLCAP_EIP	__BIT(17)
+#define	PCI_PCIE_SLCAP_NCCS	__BIT(18)
+#define	PCI_PCIE_SLCAP_PSN	__BIT(31, 19)
 #define PCI_PCIE_SLCSR		0x18	/* Slot Control & Status Register */
 #define PCI_PCIE_SLCSR_ABE	__BIT(0)
 #define PCI_PCIE_SLCSR_PFE	__BIT(1)
@@ -686,6 +731,12 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_SLCSR_PDE	__BIT(3)
 #define PCI_PCIE_SLCSR_CCE	__BIT(4)
 #define PCI_PCIE_SLCSR_HPE	__BIT(5)
+#define PCI_PCIE_SLCSR_AIC	__BITS(7, 6)
+#define PCI_PCIE_SLCSR_PIC	__BITS(9, 8)
+#define PCI_PCIE_SLCSR_PCC	__BIT(10)
+#define PCI_PCIE_SLCSR_EIC	__BIT(11)
+#define PCI_PCIE_SLCSR_DLLSCE	__BIT(12)
+
 #define PCI_PCIE_SLCSR_ABP	__BIT(0 + 16)
 #define PCI_PCIE_SLCSR_PFD	__BIT(1 + 16)
 #define PCI_PCIE_SLCSR_MSC	__BIT(2 + 16)
@@ -693,6 +744,7 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_SLCSR_CC	__BIT(4 + 16)
 #define PCI_PCIE_SLCSR_MS	__BIT(5 + 16)
 #define PCI_PCIE_SLCSR_PDS	__BIT(6 + 16)
+#define PCI_PCIE_SLCSR_EIS	__BIT(7 + 16)
 #define PCI_PCIE_SLCSR_LACS	__BIT(8 + 16)
 #define PCI_PCIE_RCR		0x1c	/* Root Control & Capabilities Reg. */
 #define PCI_PCIE_RSR		0x20	/* Root Status Register */
