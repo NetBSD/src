@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.37 2013/03/13 03:03:04 khorben Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.38 2013/04/15 18:56:38 bouyer Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.37 2013/03/13 03:03:04 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.38 2013/04/15 18:56:38 bouyer Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -135,6 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.37 2013/03/13 03:03:04 khorben 
 #include "opt_com.h"
 #include "opt_omap.h"
 #include "prcm.h"
+#include "com.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +242,6 @@ static psize_t omap3530_memprobe(void);
 
 bs_protos(bs_notimpl);
 
-#include "com.h"
 #if NCOM > 0
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
