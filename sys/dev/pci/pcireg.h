@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.79 2013/04/16 09:13:04 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.80 2013/04/16 15:50:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -650,10 +650,13 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_XCAP_IRQ	__SHIFTIN(__BITS(13, 9), PCI_PCIE_XCAP_MASK)
 #define PCI_PCIE_DCAP		0x04	/* Device Capabilities Register */
 #define PCI_PCIE_DCAP_MAX_PAYLOAD	__BITS(2, 0)
-#define PCI_PCIE_DCAP_PHANTHOM_FUNCS	__BITS(4, 3)
+#define PCI_PCIE_DCAP_PHANTOM_FUNCS	__BITS(4, 3)
 #define PCI_PCIE_DCAP_EXT_TAG_FIELD	__BIT(5)
 #define PCI_PCIE_DCAP_L0S_LATENCY	__BITS(8, 6)
 #define PCI_PCIE_DCAP_L1_LATENCY	__BITS(11, 9)
+#define PCI_PCIE_DCAP_ATTN_BUTTON	__BIT(12)
+#define PCI_PCIE_DCAP_ATTN_IND		__BIT(13)
+#define PCI_PCIE_DCAP_PWR_IND		__BIT(14)
 #define PCI_PCIE_DCAP_ROLE_ERR_RPT	__BIT(15)
 #define PCI_PCIE_DCAP_SLOT_PWR_LIM_VAL	__BITS(25, 18)
 #define PCI_PCIE_DCAP_SLOT_PWR_LIM_SCALE __BITS(27, 26)
