@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.298 2012/04/19 17:45:20 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.299 2013/04/16 21:01:09 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.298 2012/04/19 17:45:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.299 2013/04/16 21:01:09 jakllsch Exp $");
 
 #include "opt_scsi.h"
 
@@ -1319,7 +1319,10 @@ sdgetdefaultlabel(struct sd_softc *sd, struct disklabel *lp)
 	 */
 	strncpy(lp->d_typename, sd->name, 16);
 	strncpy(lp->d_packname, "fictitious", 16);
-	lp->d_secperunit = sd->params.disksize;
+	if (sd->params.disksize > UINT32_MAX)
+		lp->d_secperunit = UINT32_MAX;
+	else
+		lp->d_secperunit = sd->params.disksize;
 	lp->d_rpm = sd->params.rot_rate;
 	lp->d_interleave = 1;
 	lp->d_flags = sd->sc_periph->periph_flags & PERIPH_REMOVABLE ?
