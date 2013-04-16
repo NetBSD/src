@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.132 2013/02/22 08:19:50 plunky Exp $
+$NetBSD: acronyms.comp,v 1.133 2013/04/16 14:03:33 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -41,6 +41,7 @@ AM	access method
 AM	alignment mask
 AM	amplitude modulation
 AMI	alternate mark inversion
+AMQP	advanced message queuing protocol
 AMT	active management technology
 AN	Arabic number
 ANSI	American National Standards Institute
@@ -803,6 +804,7 @@ OSS	open sound system
 OSS	open source software
 OSVW	operating system visible workarounds
 OTP	one time password
+OTP	open telecom platform
 OU	organizational unit
 OUI	organizationally unique identifier
 OWL	Web Ontology Language
