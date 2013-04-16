@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat-for-gcc.h,v 1.9 2012/08/05 04:27:42 matt Exp $ */
+/* $NetBSD: softfloat-for-gcc.h,v 1.10 2013/04/16 10:54:53 matt Exp $ */
 
 /*
  * Move private identifiers with external linkage into implementation
@@ -207,20 +207,5 @@
 
 #define __extendsfdf2			__aeabi_f2d
 #define __truncdfsf2			__aeabi_d2f
-
-#define __eqsf2				__aeabi_fcmpeq
-#define __eqdf2				__aeabi_dcmpeq
-
-#define __ltsf2				__aeabi_fcmplt
-#define __ltdf2				__aeabi_dcmplt
-
-#define __lesf2				__aeabi_fcmple
-#define __ledf2				__aeabi_dcmple
-
-#define __gtsf2				__aeabi_fcmpgt
-#define __gtdf2				__aeabi_dcmpgt
-
-#define __gesf2				__aeabi_fcmpge
-#define __gedf2				__aeabi_dcmpge
 
 #endif /* __ARM_EABI__ */
