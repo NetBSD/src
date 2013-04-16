@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.43 2011/07/17 23:34:17 mrg Exp $ */
+/*	$NetBSD: msiiep.c,v 1.44 2013/04/16 06:57:06 jdc Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.43 2011/07/17 23:34:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.44 2013/04/16 06:57:06 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.43 2011/07/17 23:34:17 mrg Exp $");
 
 #include <sparc/sparc/msiiepreg.h>
 #include <sparc/sparc/msiiepvar.h>
-
+#include <sparc/sparc/pci_fixup.h>
 
 /*
  * Autoconfiguration.
@@ -98,23 +98,13 @@ CFATTACH_DECL_NEW(mspcic, sizeof(struct mspcic_softc),
 static struct sparc_pci_chipset mspcic_pc_tag = { NULL };
 
 
-/*
- * Bus space tags for memory and i/o.
- */
-
-struct mspcic_pci_map {
-	uint32_t sysbase;
-	uint32_t pcibase;
-	uint32_t size;
-};
-
 /* fixed i/o and one set of i/o cycle translation registers */
-static struct mspcic_pci_map mspcic_pci_iomap[2] = {
+struct mspcic_pci_map mspcic_pci_iomap[IOMAP_SIZE] = {
 	{ 0x30000000, 0x0, 0x00010000 }		/* fixed i/o (decoded bits) */
 };
 
 /* fixed mem and two sets of mem cycle translation registers */
-static struct mspcic_pci_map mspcic_pci_memmap[3] = {
+struct mspcic_pci_map mspcic_pci_memmap[MEMMAP_SIZE] = {
 	{ 0x30100000, 0x00100000, 0x00f00000 }	/* fixed mem (pass through) */
 };
 
@@ -282,7 +272,7 @@ mspcic_attach(device_t parent, device_t self, void *aux)
 	struct msiiep_attach_args *msa = aux;
 	struct mainbus_attach_args *ma = msa->msa_ma;
 	int node = ma->ma_node;
-	char devinfo[256];
+	char devinfo[256], buf[32], *model;
 
 	struct pcibus_attach_args pba;
 
@@ -299,6 +289,22 @@ mspcic_attach(device_t parent, device_t self, void *aux)
 	       clockfreq(prom_getpropint(node, "clock-frequency", 33333333)));
 
 	mspcic_init_maps();
+
+	/*
+	 * On Espresso, we need to adjust the interrupt mapping on
+	 * lines 4-7, as onboard devices and cards in the PCI slots use
+	 * those lines.  Note, that enabling line 5 (onboard ide) causes
+	 * a continuous interrupt stream, so leave that unmapped (0).
+	 * Any other device using line 5 can't be used.
+	 * Interrupt line wiring for slots is set in pci_machdep.c.
+	 * Set the PCI Trdy and Retry Counters to non-zero values, otherwise
+	 * we'll lock up when using devices behind a PCI-PCI bridge.
+	 */
+	model = prom_getpropstringA(prom_findroot(), "model", buf, sizeof(buf));
+	if (model != NULL && !strcmp(model, "SUNW,375-0059")) {
+		mspcic_write_2(pcic_intr_asgn_sel_hi, (uint16_t) 0x7502);
+		mspcic_write_4(pcic_cntrs, (uint32_t) 0x00808000);
+	}
 
 	/* init cookies/parents in our statically allocated tags */
 	mspcic_io_tag = *sc->sc_bustag;
@@ -352,6 +358,8 @@ mspcic_attach(device_t parent, device_t self, void *aux)
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &mspcic_pc_tag;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
+
+	mspcic_pci_scan(sc->sc_node);
 
 	config_found_ia(self, "pcibus", &pba, mspcic_print);
 }
