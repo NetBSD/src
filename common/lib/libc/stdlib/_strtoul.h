@@ -1,4 +1,4 @@
-/* $NetBSD: _strtoul.h,v 1.4 2013/04/16 19:34:58 joerg Exp $ */
+/* $NetBSD: _strtoul.h,v 1.5 2013/04/16 21:44:06 joerg Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,9 +40,19 @@
  *      __UINT     : return type
  *      __UINT_MAX : upper limit of the return type
  */
-
+#if defined(_KERNEL) || defined(_STANDALONE) || defined(HAVE_NBTOOL_CONFIG_H)
 __UINT
 _FUNCNAME(const char *nptr, char **endptr, int base)
+#else
+#include <locale.h>
+#include "setlocale_local.h"
+#define INT_FUNCNAME_(pre, name, post)	pre ## name ## post
+#define INT_FUNCNAME(pre, name, post)	INT_FUNCNAME_(pre, name, post)
+
+static __UINT
+INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char *nptr, char **endptr,
+				   int base, locale_t loc)
+#endif
 {
 	const char *s;
 	__UINT acc, cutoff;
@@ -68,9 +78,15 @@ _FUNCNAME(const char *nptr, char **endptr, int base)
 	 * assume decimal; if base is already 16, allow 0x.
 	 */
 	s = nptr;
+#if defined(_KERNEL) || defined(_STANDALONE) || defined(HAVE_NBTOOL_CONFIG_H)
 	do {
 		c = *s++;
 	} while (isspace(c));
+#else
+	do {
+		c = *s++;
+	} while (isspace_l(c, loc));
+#endif
 	if (c == '-') {
 		neg = 1;
 		c = *s++;
@@ -128,3 +144,19 @@ _FUNCNAME(const char *nptr, char **endptr, int base)
 		*endptr = __UNCONST(any ? s - 1 : nptr);
 	return(acc);
 }
+
+#if !defined(_KERNEL) && !defined(_STANDALONE) && !defined(HAVE_NBTOOL_CONFIG_H)
+__UINT
+_FUNCNAME(const char *nptr, char **endptr, int base)
+{
+	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(nptr, endptr, base, *_current_locale());
+}
+
+__UINT
+INT_FUNCNAME(, _FUNCNAME, _l)(const char *nptr, char **endptr, int base, locale_t loc)
+{
+	if (loc == NULL)
+		loc = _C_locale;
+	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(nptr, endptr, base, loc);
+}
+#endif
