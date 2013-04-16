@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.250 2013/02/14 12:44:16 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.251 2013/04/16 06:57:06 jdc Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.250 2013/02/14 12:44:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.251 2013/04/16 06:57:06 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -101,6 +101,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.250 2013/02/14 12:44:16 martin Exp $"
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 #include <sparc/sparc/msiiepreg.h>
+#ifdef MSIIEP
+#include <sparc/sparc/pci_fixup.h>
+#endif
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -360,7 +363,6 @@ bootstrap(void)
 
 	if ((bi_howto = lookup_bootinfo(BTINFO_BOOTHOWTO)) != NULL) {
 		boothowto = bi_howto->boothowto;
-printf("initialized boothowt from bootloader: %x\n", boothowto);
 	}
 }
 
@@ -1757,12 +1759,23 @@ nail_bootdev(device_t dev, struct bootpath *bp)
 	bootpath_store(1, NULL);
 }
 
+/*
+ * We use device_register() to:
+ *   set device properties on PCI devices
+ *   find the bootpath
+ */
 void
 device_register(device_t dev, void *aux)
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
 	const char *bpname;
 
+#ifdef MSIIEP
+	/* Check for PCI devices */
+	if (bus_class(device_parent(dev)) == BUSCLASS_PCI)
+		set_pci_props(dev);
+#endif
+		
 	/*
 	 * If device name does not match current bootpath component
 	 * then there's nothing interesting to consider.
