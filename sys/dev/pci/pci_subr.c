@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.96 2013/04/15 18:51:29 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.97 2013/04/16 09:13:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.96 2013/04/15 18:51:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.97 2013/04/16 09:13:04 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -855,7 +855,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	if (check_slot && (regs[o2i(capoff)] & 0x01000000) != 0)
 		printf("    Slot implemented\n");
 	printf("    Interrupt Message Number: %x\n",
-	    (unsigned int)((regs[o2i(capoff)] & 0x4e000000) >> 27));
+	    (unsigned int)((regs[o2i(capoff)] & PCI_PCIE_XCAP_IRQ) >> 27));
 	printf("    Link Capabilities Register: 0x%08x\n",
 	    regs[o2i(capoff + 0x0c)]);
 	printf("      Maximum Link Speed: ");
