@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.156 2012/08/20 21:38:10 dsl Exp $	*/
+/*	$NetBSD: namespace.h,v 1.157 2013/04/16 11:39:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -703,6 +703,7 @@
 #define wcstod			_wcstod
 #define wcstold			_wcstold
 #define wcwidth			_wcwidth
+#define wcwidth_l		_wcwidth_l
 #define xdr_accepted_reply	_xdr_accepted_reply
 #define xdr_array		_xdr_array
 #define xdr_authunix_parms	_xdr_authunix_parms
