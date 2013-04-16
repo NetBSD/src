@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.30 2011/07/17 20:54:34 joerg Exp $	*/
+/*	$NetBSD: wchar.h,v 1.31 2013/04/16 11:55:02 joerg Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -205,5 +205,14 @@ __END_DECLS
 #define getwchar() getwc(stdin)
 #define putwc(wc, f) fputwc((wc), (f))
 #define putwchar(wc) putwc((wc), stdout)
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+int	wcwidth_l(wchar_t, locale_t);
+int	wcswidth_l(const wchar_t *, size_t, locale_t);
+#endif
 
 #endif /* !_WCHAR_H_ */
