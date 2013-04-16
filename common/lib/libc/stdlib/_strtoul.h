@@ -1,4 +1,4 @@
-/* $NetBSD: _strtoul.h,v 1.3 2012/03/22 15:57:29 christos Exp $ */
+/* $NetBSD: _strtoul.h,v 1.4 2013/04/16 19:34:58 joerg Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -94,10 +94,12 @@ _FUNCNAME(const char *nptr, char **endptr, int base)
 	cutoff = ((__UINT)__UINT_MAX / (__UINT)base);
 	cutlim = (int)((__UINT)__UINT_MAX % (__UINT)base);
 	for (acc = 0, any = 0;; c = *s++) {
-		if (isdigit(c))
+		if (c >= '0' && c <= '9')
 			i = c - '0';
-		else if (isalpha(c))
-			i = c - (isupper(c) ? 'A' - 10 : 'a' - 10);
+		else if (c >= 'a' && c <= 'z')
+			i = (c - 'a') + 10;
+		else if (c >= 'A' && c <= 'Z')
+			i = (c - 'A') + 10;
 		else
 			break;
 		if (i >= base)
