@@ -1,4 +1,4 @@
-/*	$NetBSD: inttypes.h,v 1.8 2013/04/16 16:52:13 joerg Exp $	*/
+/*	$NetBSD: inttypes.h,v 1.9 2013/04/16 21:44:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,6 +65,10 @@ imaxdiv_t	imaxdiv(intmax_t, intmax_t);
 typedef struct _locale		*locale_t;
 #  define __LOCALE_T_DECLARED
 #  endif
+intmax_t	strtoimax_l(const char * __restrict,
+		    char ** __restrict, int, locale_t);
+uintmax_t	strtoumax_l(const char * __restrict,
+		    char ** __restrict, int, locale_t);
 intmax_t	wcstoimax_l(const wchar_t * __restrict,
 		    wchar_t ** __restrict, int, locale_t);
 uintmax_t	wcstoumax_l(const wchar_t * __restrict,
