@@ -1,4 +1,4 @@
-/*	$NetBSD: bonitoreg.h,v 1.7 2011/08/27 12:59:17 bouyer Exp $	*/
+/*	$NetBSD: bonitoreg.h,v 1.8 2013/04/16 09:02:32 macallan Exp $	*/
 
 /*
  * Bonito Register Map
@@ -220,6 +220,12 @@
 #define BONITO_PCIRDPOST		BONITO(BONITO_REGBASE + 0x60)
 #define BONITO_PCIDATA			BONITO(BONITO_REGBASE + 0x64)
 */
+
+#define LS2F_CHIPCFG0			BONITO(BONITO_REGBASE + 0x80)
+#define LS2FCFG_FREQSCALE_MASK		0x00000007
+#define LS2FCFG_DISABLE_SCACHE		0x00000008	/* disable secondary cache */
+#define LS2FCFG_BUFFER_CPU_TO_RAM	0x00000020
+#define LS2FCFG_BUFFER_PCI_TO_RAM	0x00000040
 
 /* 7. IDE DMA & Copier */
 
@@ -521,4 +527,5 @@
 
 #define	BONITO_DIRECT_MASK(imask)	((imask) & ((1L << BONITO_NDIRECT) - 1))
 #define	BONITO_ISA_MASK(imask)		((imask) >> BONITO_NDIRECT)
+
 #endif /* _BONITO_H_ */
