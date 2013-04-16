@@ -1,4 +1,4 @@
-/*	$NetBSD: pwmclock.c,v 1.7 2013/04/15 19:46:16 christos Exp $	*/
+/*	$NetBSD: pwmclock.c,v 1.8 2013/04/16 09:04:24 macallan Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.7 2013/04/15 19:46:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.8 2013/04/16 09:04:24 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,10 +157,9 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	/* ok, let's see how far the cycle counter gets between interrupts */
 	DPRINTF("calibrating CPU timer...\n");
 	for (clk = 1; clk < 8; clk++) {
-#if 0
+
 		REGVAL(LS2F_CHIPCFG0) =
 		    (REGVAL(LS2F_CHIPCFG0) & ~LS2FCFG_FREQSCALE_MASK) | clk;
-#endif
 		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PWM1,
 		    sc->sc_reg);
 		acc = 0;
@@ -236,10 +235,8 @@ pwmclock_shutdown(void *cookie)
 	/* just in case the interrupt handler runs again after this */
 	sc->sc_step_wanted = 7;
 	/* set the clock to full speed */
-#if 0
 	REGVAL(LS2F_CHIPCFG0) =
 	    (REGVAL(LS2F_CHIPCFG0) & ~LS2FCFG_FREQSCALE_MASK) | 7;
-#endif
 }
 
 void
@@ -296,11 +293,10 @@ pwmclock_intr(void *cookie)
 	 *   we only change sc_step after doing that
 	 */
 	if (sc->sc_step_wanted != sc->sc_step) {
-#if 0
+
 		REGVAL(LS2F_CHIPCFG0) =
 		    (REGVAL(LS2F_CHIPCFG0) & ~LS2FCFG_FREQSCALE_MASK) |
 		     sc->sc_step_wanted;
-#endif
 	}
 
 	now = mips3_cp0_count_read();		
