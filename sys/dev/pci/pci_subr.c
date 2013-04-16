@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.97 2013/04/16 09:13:04 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.98 2013/04/16 14:34:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.97 2013/04/16 09:13:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.98 2013/04/16 14:34:34 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -857,46 +857,51 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	printf("    Interrupt Message Number: %x\n",
 	    (unsigned int)((regs[o2i(capoff)] & PCI_PCIE_XCAP_IRQ) >> 27));
 	printf("    Link Capabilities Register: 0x%08x\n",
-	    regs[o2i(capoff + 0x0c)]);
+	    regs[o2i(capoff + PCI_PCIE_LCAP)]);
 	printf("      Maximum Link Speed: ");
-	if ((regs[o2i(capoff + 0x0c)] & 0x000f) < 1 ||
-	    (regs[o2i(capoff + 0x0c)] & 0x000f) > 3) {
+	if ((regs[o2i(capoff + PCI_PCIE_LCAP)] & 0x000f) < 1 ||
+	    (regs[o2i(capoff + PCI_PCIE_LCAP)] & 0x000f) > 3) {
 		printf("unknown %u value\n", 
-		    (regs[o2i(capoff + 0x0c)] & 0x000f));
+		    (regs[o2i(capoff + PCI_PCIE_LCAP)] & 0x000f));
 	} else {
-		printf("%sGb/s\n", linkspeeds[(regs[o2i(capoff + 0x0c)] & 0x000f) - 1]);
+		printf("%sGb/s\n",
+		    linkspeeds[(regs[o2i(capoff + PCI_PCIE_LCAP)] & 0x000f)
+			- 1]);
 	}
 	printf("      Maximum Link Width: x%u lanes\n",
-	    (regs[o2i(capoff + 0x0c)] & 0x03f0) >> 4);
-	printf("      Port Number: %u\n", regs[o2i(capoff + 0x0c)] >> 24);
+	    (regs[o2i(capoff + PCI_PCIE_LCAP)] & 0x03f0) >> 4);
+	printf("      Port Number: %u\n",
+	    regs[o2i(capoff + PCI_PCIE_LCAP)] >> 24);
 	printf("    Link Status Register: 0x%04x\n",
-	    regs[o2i(capoff + 0x10)] >> 16);
+	    regs[o2i(capoff + PCI_PCIE_LCSR)] >> 16);
 	printf("      Negotiated Link Speed: ");
-	if (((regs[o2i(capoff + 0x10)] >> 16) & 0x000f) < 1 ||
-	    ((regs[o2i(capoff + 0x10)] >> 16) & 0x000f) > 3) {
+	if (((regs[o2i(capoff + PCI_PCIE_LCSR)] >> 16) & 0x000f) < 1 ||
+	    ((regs[o2i(capoff + PCI_PCIE_LCSR)] >> 16) & 0x000f) > 3) {
 		printf("unknown %u value\n", 
-		    (regs[o2i(capoff + 0x10)] >> 16) & 0x000f);
+		    (regs[o2i(capoff + PCI_PCIE_LCSR)] >> 16) & 0x000f);
 	} else {
-		printf("%sGb/s\n", linkspeeds[((regs[o2i(capoff + 0x10)] >> 16) & 0x000f) - 1]);
+		printf("%sGb/s\n",
+		    linkspeeds[((regs[o2i(capoff + PCI_PCIE_LCSR)] >> 16)
+				& 0x000f) - 1]);
 	}
 	printf("      Negotiated Link Width: x%u lanes\n",
-	    (regs[o2i(capoff + 0x10)] >> 20) & 0x003f);
-	if ((regs[o2i(capoff + 0x18)] & 0x07ff) != 0) {
+	    (regs[o2i(capoff + PCI_PCIE_LCSR)] >> 20) & 0x003f);
+	if ((regs[o2i(capoff + PCI_PCIE_SLCSR)] & 0x07ff) != 0) {
 		printf("    Slot Control Register:\n");
-		if ((regs[o2i(capoff + 0x18)] & 0x0001) != 0)
+		if ((regs[o2i(capoff + PCI_PCIE_SLCSR)] & 0x0001) != 0)
 			printf("      Attention Button Pressed Enabled\n");
-		if ((regs[o2i(capoff + 0x18)] & 0x0002) != 0)
+		if ((regs[o2i(capoff + PCI_PCIE_SLCSR)] & 0x0002) != 0)
 			printf("      Power Fault Detected Enabled\n");
-		if ((regs[o2i(capoff + 0x18)] & 0x0004) != 0)
+		if ((regs[o2i(capoff + PCI_PCIE_SLCSR)] & 0x0004) != 0)
 			printf("      MRL Sensor Changed Enabled\n");
-		if ((regs[o2i(capoff + 0x18)] & 0x0008) != 0)
+		if ((regs[o2i(capoff + PCI_PCIE_SLCSR)] & 0x0008) != 0)
 			printf("      Presense Detected Changed Enabled\n");
-		if ((regs[o2i(capoff + 0x18)] & 0x0010) != 0)
+		if ((regs[o2i(capoff + PCI_PCIE_SLCSR)] & 0x0010) != 0)
 			printf("      Command Completed Interrupt Enabled\n");
-		if ((regs[o2i(capoff + 0x18)] & 0x0020) != 0)
+		if ((regs[o2i(capoff + PCI_PCIE_SLCSR)] & 0x0020) != 0)
 			printf("      Hot-Plug Interrupt Enabled\n");
 		printf("      Attention Indicator Control: ");
-		switch ((regs[o2i(capoff + 0x18)] & 0x00c0) >> 6) {
+		switch ((regs[o2i(capoff + PCI_PCIE_SLCSR)] & 0x00c0) >> 6) {
 		case 0x0:
 			printf("reserved\n");
 			break;
@@ -911,7 +916,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			break;
 		}
 		printf("      Power Indicator Control: ");
-		switch ((regs[o2i(capoff + 0x18)] & 0x0300) >> 8) {
+		switch ((regs[o2i(capoff + PCI_PCIE_SLCSR)] & 0x0300) >> 8) {
 		case 0x0:
 			printf("reserved\n");
 			break;
@@ -926,7 +931,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			break;
 		}
 		printf("      Power Controller Control: ");
-		if ((regs[o2i(capoff + 0x18)] & 0x0400) != 0)
+		if ((regs[o2i(capoff + PCI_PCIE_SLCSR)] & 0x0400) != 0)
 			printf("off\n");
 		else
 			printf("on\n");
