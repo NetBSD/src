@@ -1,4 +1,4 @@
-/* $NetBSD: isctype.c,v 1.22 2013/04/13 10:21:20 joerg Exp $ */
+/* $NetBSD: isctype.c,v 1.23 2013/04/16 11:29:13 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isctype.c,v 1.22 2013/04/13 10:21:20 joerg Exp $");
+__RCSID("$NetBSD: isctype.c,v 1.23 2013/04/16 11:29:13 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -53,6 +53,13 @@ int \
 is##name(int c) \
 { \
 	return (int)(_CTYPE_TAB(ctype_tab, c) & (bit)); \
+} \
+int \
+is##name ## _l(int c, locale_t loc) \
+{ \
+	if (loc == NULL) \
+		loc = _C_locale; \
+	return (int)(((loc->cache->ctype_tab + 1)[c]) & (bit)); \
 }
 
 _ISCTYPE_FUNC(alnum, (_CTYPE_A|_CTYPE_D))
@@ -75,9 +82,25 @@ toupper(int c)
 }
 
 int
+toupper_l(int c, locale_t loc)
+{
+	if (loc == NULL)
+		loc = _C_locale;
+	return (int)(((loc->cache->toupper_tab + 1)[c]));
+}
+
+int
 tolower(int c)
 {
 	return (int)_CTYPE_TAB(tolower_tab, c);
+}
+
+int
+tolower_l(int c, locale_t loc)
+{
+	if (loc == NULL)
+		loc = _C_locale;
+	return (int)(((loc->cache->tolower_tab + 1)[c]));
 }
 
 int
