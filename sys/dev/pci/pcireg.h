@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.78 2013/04/15 18:48:36 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.79 2013/04/16 09:13:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -647,6 +647,7 @@ struct pci_msix_table_entry {
 #define	 PCI_PCIE_XCAP_TYPE_ROOT_INTEP	__SHIFTIN(0x9, PCI_PCIE_XCAP_TYPE_MASK)
 #define	 PCI_PCIE_XCAP_TYPE_ROOT_EVNTC	__SHIFTIN(0xa, PCI_PCIE_XCAP_TYPE_MASK)
 #define PCI_PCIE_XCAP_SI	__SHIFTIN(__BIT(8), PCI_PCIE_XCAP_MASK)		/* Slot Implemented */
+#define PCI_PCIE_XCAP_IRQ	__SHIFTIN(__BITS(13, 9), PCI_PCIE_XCAP_MASK)
 #define PCI_PCIE_DCAP		0x04	/* Device Capabilities Register */
 #define PCI_PCIE_DCAP_MAX_PAYLOAD	__BITS(2, 0)
 #define PCI_PCIE_DCAP_PHANTHOM_FUNCS	__BITS(4, 3)
