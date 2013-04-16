@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.100 2012/06/21 21:13:29 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.101 2013/04/16 21:44:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -328,6 +328,28 @@ size_t	shquotev(int, char * const *, char *, size_t);
 #if defined(_NETBSD_SOURCE)
 qdiv_t	 qdiv(quad_t, quad_t);
 #endif
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+long	 strtol_l(const char * __restrict, char ** __restrict, int, locale_t);
+unsigned long
+	 strtoul_l(const char * __restrict, char ** __restrict, int, locale_t);
+/* LONGLONG */
+long long int
+	strtoll_l(const char * __restrict, char ** __restrict, int, locale_t);
+/* LONGLONG */
+unsigned long long int
+	strtoull_l(const char * __restrict, char ** __restrict, int, locale_t);
+
+#  if defined(_NETBSD_SOURCE)
+quad_t	 strtoq_l(const char * __restrict, char ** __restrict, int, locale_t);
+u_quad_t strtouq_l(const char * __restrict, char ** __restrict, int, locale_t);
+#  endif
+#endif /* _POSIX_C_SOURCE >= 200809 || _NETBSD_SOURCE */
+
 __END_DECLS
 
 #endif /* !_STDLIB_H_ */
