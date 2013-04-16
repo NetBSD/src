@@ -1,8 +1,9 @@
-#	$NetBSD: shlib_version,v 1.239 2013/04/13 10:21:20 joerg Exp $
+#	$NetBSD: shlib_version,v 1.240 2013/04/16 21:44:07 joerg Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
 # - remove code under BUILD_LEGACY
+# - remove BCS code in citrus and replace it with use of the C locale
 # - libc/net/rcmd.c: make __ivaliduser() and __ivaliduser_sa() static
 # - libc/net: resolver update to BIND8/9?
 # - md2, md4, md5, rmd160 & sha1 functions should take the same arguments AFAP

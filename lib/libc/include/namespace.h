@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.157 2013/04/16 11:39:13 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.158 2013/04/16 21:44:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -61,10 +61,14 @@
 #define strlcpy		_strlcpy
 #define strtof		_strtof
 #define strtoimax	_strtoimax
+#define strtoimax_l	_strtoimax_l
 #define strtold		_strtold
 #define strtoll		_strtoll
+#define strtoll_l	_strtoll_l
 #define strtoull	_strtoull
+#define strtoull_l	_strtoull_l
 #define strtoumax	_strtoumax
+#define strtoumax_l	_strtoumax_l
 #define sys_errlist	_sys_errlist
 #define sys_nerr	_sys_nerr
 #define sys_siglist	_sys_siglist
