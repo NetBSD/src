@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.31 2013/04/16 11:55:02 joerg Exp $	*/
+/*	$NetBSD: wchar.h,v 1.32 2013/04/16 16:52:13 joerg Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -211,6 +211,16 @@ __END_DECLS
 typedef struct _locale		*locale_t;
 #  define __LOCALE_T_DECLARED
 #  endif
+long int wcstol_l(const wchar_t * __restrict, wchar_t ** __restrict, int,
+		  locale_t);
+unsigned long int wcstoul_l(const wchar_t * __restrict,
+	wchar_t ** __restrict, int, locale_t);
+/* LONGLONG */
+long long int wcstoll_l(const wchar_t * __restrict, wchar_t ** __restrict, int,
+			locale_t);
+/* LONGLONG */
+unsigned long long int wcstoull_l(const wchar_t * __restrict,
+				  wchar_t ** __restrict, int, locale_t);
 int	wcwidth_l(wchar_t, locale_t);
 int	wcswidth_l(const wchar_t *, size_t, locale_t);
 #endif
