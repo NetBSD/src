@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.20 2013/04/11 17:43:19 christos Exp $
+# $NetBSD: md.amd64,v 1.21 2013/04/16 15:03:18 christos Exp $
 ./usr/libdata/debug/lib/i386/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/i386/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/i386/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -32,6 +32,9 @@
 ./usr/libdata/debug/usr/lib/i386/npf/ext_log.so.0.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/i386/npf/ext_normalise.so.0.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/i386/npf/ext_rndblock.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/i386/npf/libext_log.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/i386/npf/libext_normalise.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/i386/npf/libext_rndblock.so.0.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/i386/libamu.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libarchive.so.3.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libasn1.so.8.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
