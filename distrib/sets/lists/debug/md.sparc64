@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.22 2013/04/11 17:43:19 christos Exp $
+# $NetBSD: md.sparc64,v 1.23 2013/04/16 15:03:18 christos Exp $
 ./usr/libdata/debug/lib/sparc/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -32,6 +32,9 @@
 ./usr/libdata/debug/usr/lib/sparc/npf/ext_log.so.0.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/sparc/npf/ext_normalise.so.0.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/sparc/npf/ext_rndblock.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/sparc/npf/libext_log.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/sparc/npf/libext_normalise.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/sparc/npf/libext_rndblock.so.0.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/sparc/libamu.so.4.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libarchive.so.3.1.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
