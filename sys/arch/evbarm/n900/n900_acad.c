@@ -1,4 +1,4 @@
-/*	$NetBSD: n900_acad.c,v 1.2 2013/04/14 20:18:17 khorben Exp $ */
+/*	$NetBSD: n900_acad.c,v 1.3 2013/04/17 01:10:28 khorben Exp $ */
 
 /*
  * AC adapter driver for the Nokia N900.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: n900_acad.c,v 1.2 2013/04/14 20:18:17 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: n900_acad.c,v 1.3 2013/04/17 01:10:28 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,8 @@ static int	n900acad_detach(device_t, int);
 CFATTACH_DECL_NEW(n900acad, sizeof(struct n900acad_softc),
 	n900acad_match, n900acad_attach, n900acad_detach, NULL);
 
+static void	n900acad_refresh(struct n900acad_softc *);
+
 static int	n900acad_intr(void *v);
 
 
@@ -111,7 +113,7 @@ n900acad_attach(device_t parent, device_t self, void *aux)
 	sc->sc_map.pm_map = sc->sc_map_pins;
 	if (gpio_pin_map(sc->sc_gpio, ga->ga_offset, ga->ga_mask,
 				&sc->sc_map)) {
-		aprint_error(": can't map pins\n");
+		aprint_error(": could not map the pins\n");
 		return;
 	}
 
@@ -129,19 +131,23 @@ n900acad_attach(device_t parent, device_t self, void *aux)
 			IST_EDGE_BOTH, IPL_VM, n900acad_intr, sc);
 	if (sc->sc_intr == NULL) {
 		aprint_error(": could not establish interrupt\n");
+		gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 		return;
 	}
 
-	aprint_normal("N900 AC adapter sensor\n");
-	aprint_naive("N900 AC adapter sensor\n");
+	aprint_normal(": N900 AC adapter sensor\n");
+	aprint_naive(": N900 AC adapter sensor\n");
 
-	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
+	if (!pmf_device_register(sc->sc_dev, NULL, NULL)) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not establish power handler\n");
+	}
 
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_ACADAPTER;
 	sysmon_pswitch_register(&sc->sc_smpsw);
+
+	n900acad_refresh(sc);
 }
 
 static int
@@ -155,6 +161,7 @@ n900acad_detach(device_t self, int flags)
 
 	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 	pmf_device_deregister(self);
+
 	return 0;
 }
 
@@ -162,10 +169,17 @@ static int
 n900acad_intr(void *v)
 {
 	struct n900acad_softc *sc = v;
+
+	n900acad_refresh(sc);
+	return 1;
+}
+
+static void
+n900acad_refresh(struct n900acad_softc *sc)
+{
 	int i;
 
 	i = gpio_pin_read(sc->sc_gpio, &sc->sc_map, N900ACAD_PIN_INPUT);
-	sysmon_pswitch_event(&sc->sc_smpsw,
-			i ? PSWITCH_EVENT_RELEASED : PSWITCH_EVENT_PRESSED);
-	return 1;
+	sysmon_pswitch_event(&sc->sc_smpsw, (i == GPIO_PIN_HIGH)
+			? PSWITCH_EVENT_RELEASED : PSWITCH_EVENT_PRESSED);
 }
