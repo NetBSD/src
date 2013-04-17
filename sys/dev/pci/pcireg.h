@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.80 2013/04/16 15:50:57 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.81 2013/04/17 04:36:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -463,6 +463,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_DEBUGPORT	0x0a
 #define	PCI_CAP_CPCI_RSRCCTL	0x0b
 #define	PCI_CAP_HOTPLUG		0x0c
+#define	PCI_CAP_SUBVENDOR	0x0d
 #define	PCI_CAP_AGP8		0x0e
 #define	PCI_CAP_SECURE		0x0f
 #define	PCI_CAP_PCIEXPRESS     	0x10
