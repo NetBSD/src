@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.9 2013/03/02 02:42:12 christos Exp $
+#	$NetBSD: BEAGLEBONE,v 1.10 2013/04/17 14:38:04 bouyer Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -191,6 +191,9 @@ omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
 # Power, Reset and Clock Management
 prcm0		at obio0 addr 0x44e00000 size 0x2000	# PRM Module
 
+# Control Module
+sitaracm0	at obio0 addr 0x44e10000 size 0x2000
+
 # SDHC controllers
 # XXX Kludge -- the am335x's mmc registers start at an offset of #x100
 # from other omap3.  (What about omap4?)  Need to adapt the omap sdhc
@@ -212,14 +215,10 @@ ld*		at sdmmc?
 
 #gpio*		at omapgpio?
 
-# # I2C Controller
-# omapi2c0	at tipb? addr 0xfffb3800 intr 36 mult 4
-# iic*		at omapi2c?
-# # omap's own i2c address
-# options		OMAP_I2C_ADDRESS=0xe
-# # i2c bus clock low and high times in ns
-# options		I2C_LOW_TIME_nSEC=1500
-# options		I2C_HIGH_TIME_nSEC=1000
+# I2C Controller
+tiiic0		at obio0 addr 0x44e0b000 size 0x1000 intr 70
+iic*		at tiiic?
+seeprom*	at iic0 addr 0x50 size 32768
 
 # On-board 16550 UARTs
 com0		at obio0 addr 0x44e09000 size 0x1000 intr 72 mult 4	# UART0
