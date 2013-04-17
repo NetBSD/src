@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.82 2012/04/18 19:30:15 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.83 2013/04/17 09:07:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -228,7 +228,7 @@ int	 fflush(FILE *);
 int	 fgetc(FILE *);
 char	*fgets(char * __restrict, int, FILE * __restrict);
 FILE	*fopen(const char * __restrict , const char * __restrict);
-int	 fprintf(FILE * __restrict , const char * __restrict, ...)
+int	 fprintf(FILE * __restrict, const char * __restrict, ...)
 		__printflike(2, 3);
 int	 fputc(int, FILE *);
 int	 fputs(const char * __restrict, FILE * __restrict);
