@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.24 2013/01/09 04:49:05 macallan Exp $
+#	$NetBSD: files.omap2,v 1.25 2013/04/17 14:34:02 bouyer Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -37,6 +37,12 @@ file	arch/arm/arm/bus_space_a2x.S		obio
 file	arch/arm/omap/omap_a4x_space.c		obio
 file	arch/arm/arm/bus_space_a4x.S		obio
 
+# TI Sitara control module
+device	sitaracm
+attach	sitaracm at obio with sitaracm
+file	arch/arm/omap/sitara_cm.c		sitaracm
+file	arch/arm/omap/am335x_cm_padconf.c	ti_am335x
+
 # OMAP2 interrupt controller
 device	omapicu: pic, pic_splfuncs
 attach	omapicu at obio with omap2icu
@@ -47,6 +53,11 @@ file	arch/arm/omap/omap2430_intr.c		omap2 & !omapicu & !omap4
 device	omapgpio: gpiobus
 attach	omapgpio at obio with omap2gpio
 file	arch/arm/omap/omap2_gpio.c		(omap2 | omap3) & omapgpio
+
+# TI_AM335X (and maybe TI OMAP4) I2C controllers
+device	tiiic: i2cbus, i2cexec
+attach	tiiic at obio with ti_iic
+file	arch/arm/omap/ti_iic.c			ti_iic
 
 # OMAP3 I2C controllers
 device	omapiic: i2cbus, i2cexec
