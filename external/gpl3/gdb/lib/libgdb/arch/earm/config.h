@@ -164,7 +164,7 @@
 #define HAVE_DIRENT_H 1
 
 /* Define if ELF support should be included. */
-/* #undef HAVE_ELF */
+#define HAVE_ELF 1
 
 /* Define to 1 if you have the <elf_hp.h> header file. */
 /* #undef HAVE_ELF_HP_H */
@@ -260,7 +260,7 @@
 #define HAVE_LONG_DOUBLE 1
 
 /* Define to 1 if the system has the type `long long int'. */
-/* #undef HAVE_LONG_LONG_INT */
+#define HAVE_LONG_LONG_INT 1
 
 /* Define if <sys/procfs.h> has lwpid_t. */
 /* #undef HAVE_LWPID_T */
@@ -674,7 +674,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if the system has the type `unsigned long long int'. */
-/* #undef HAVE_UNSIGNED_LONG_LONG_INT */
+#define HAVE_UNSIGNED_LONG_LONG_INT 1
 
 /* Define to 1 if you have the `vfork' function. */
 #define HAVE_VFORK 1
@@ -713,7 +713,7 @@
 /* #undef HAVE_XML_STOPPARSER */
 
 /* Define to 1 if you have the <zlib.h> header file. */
-/* #undef HAVE_ZLIB_H */
+#define HAVE_ZLIB_H 1
 
 /* Define to 1 if your system has the _etext variable. */
 #define HAVE__ETEXT 1
