@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.99 2013/04/16 15:50:58 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.100 2013/04/17 04:36:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.99 2013/04/16 15:50:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.100 2013/04/17 04:36:27 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1352,6 +1352,9 @@ pci_conf_print_caplist(
 			break;
 		case PCI_CAP_HOTPLUG:
 			printf("Hot-Plug");
+			break;
+		case PCI_CAP_SUBVENDOR:
+			printf("Sub Vendor ID");
 			break;
 		case PCI_CAP_AGP8:
 			printf("AGP 8x");
