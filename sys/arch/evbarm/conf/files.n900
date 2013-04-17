@@ -1,4 +1,4 @@
-#	$NetBSD: files.n900,v 1.2 2013/04/14 19:17:06 khorben Exp $
+#	$NetBSD: files.n900,v 1.3 2013/04/17 01:06:14 khorben Exp $
 #
 # Nokia N900 configuration info
 #
@@ -24,3 +24,8 @@ defparam opt_com.h				CONSADDR CONSPEED CONMODE
 device n900acad: sysmon_envsys
 attach n900acad at gpio with n900acad
 file	arch/evbarm/n900/n900_acad.c		n900acad
+
+# Lock button
+device n900lckbtn: sysmon_envsys
+attach n900lckbtn at gpio with n900lckbtn
+file	arch/evbarm/n900/n900_lckbtn.c		n900lckbtn
