@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.8 2013/04/14 19:17:06 khorben Exp $
+#	$NetBSD: N900,v 1.9 2013/04/17 00:57:22 khorben Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -233,9 +233,9 @@ tps65950pm2	at iic0 addr 0x4a
 tps65950pm3	at iic0 addr 0x4b
 
 # On-board 16550 UARTs
-com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
+#com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
 #options 	CONSADDR=0x49020000, CONSPEED=38400
-options 	CONSADDR=0x49020000, CONSPEED=115200
+#options 	CONSADDR=0x49020000, CONSPEED=115200
 
 # Operating System Timer
 omapmputmr0	at obio2 addr 0x49032000 intr 38	# GP Timer 2
