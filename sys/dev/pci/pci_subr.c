@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.101 2013/04/17 06:31:15 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.102 2013/04/17 08:07:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.101 2013/04/17 06:31:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.102 2013/04/17 08:07:40 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1094,8 +1094,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	    (reg & PCI_PCIE_LCSR_LINK_AUTO_BW) != 0 ? "on" : "off");
 
 	/* XXX Is this check right? */
-	if ((check_slot == true)
-	    && ((regs[o2i(capoff + 0x18)] & 0x07ff) != 0)) {
+	if (check_slot == true) {
 		/* Slot Capability Register */
 		reg = regs[o2i(capoff + PCI_PCIE_SLCAP)];
 		printf("    Slot Capability Register: %08x\n", reg);
