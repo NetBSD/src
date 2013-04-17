@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.30 2013/03/25 23:01:23 jmcneill Exp $
+#	$NetBSD: RPI,v 1.31 2013/04/17 19:04:19 reinoud Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -193,6 +193,7 @@ plcom0		at obio?
 # Framebuffer console
 genfb0		at obio?
 wsdisplay*	at genfb?
+options		VCONS_DRAW_INTR
 
 # System timer
 bcmtmr0		at obio?
