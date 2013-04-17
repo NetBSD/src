@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.81 2013/04/17 04:36:27 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.82 2013/04/17 06:31:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -728,7 +728,7 @@ struct pci_msix_table_entry {
 #define	PCI_PCIE_SLCAP_SPLS	__BITS(16, 15)
 #define	PCI_PCIE_SLCAP_EIP	__BIT(17)
 #define	PCI_PCIE_SLCAP_NCCS	__BIT(18)
-#define	PCI_PCIE_SLCAP_PSN	__BIT(31, 19)
+#define	PCI_PCIE_SLCAP_PSN	__BITS(31, 19)
 #define PCI_PCIE_SLCSR		0x18	/* Slot Control & Status Register */
 #define PCI_PCIE_SLCSR_ABE	__BIT(0)
 #define PCI_PCIE_SLCSR_PFE	__BIT(1)
@@ -752,7 +752,14 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_SLCSR_EIS	__BIT(7 + 16)
 #define PCI_PCIE_SLCSR_LACS	__BIT(8 + 16)
 #define PCI_PCIE_RCR		0x1c	/* Root Control & Capabilities Reg. */
+#define PCI_PCIE_RCR_SERR_CER	__BIT(0)
+#define PCI_PCIE_RCR_SERR_NFER	__BIT(1)
+#define PCI_PCIE_RCR_SERR_FER	__BIT(2)
+#define PCI_PCIE_RCR_PME_IE	__BIT(3)
 #define PCI_PCIE_RSR		0x20	/* Root Status Register */
+#define PCI_PCIE_RSR_REQESTER	__BITS(15, 0)
+#define PCI_PCIE_RSR_PMESTAT	__BIT(16)
+#define PCI_PCIE_RSR_PMEPEND	__BIT(17)
 #define PCI_PCIE_DCAP2		0x24	/* Device Capabilities 2 Register */
 #define PCI_PCIE_DCSR2		0x28	/* Device Control & Status 2 Reg. */
 #define PCI_PCIE_LCAP2		0x2c	/* Link Capabilities 2 Register */
