@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.19 2013/01/08 19:03:16 macallan Exp $	*/
+/*	$Id: omap2_obio.c,v 1.20 2013/04/17 14:35:34 bouyer Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.19 2013/01/08 19:03:16 macallan Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.20 2013/04/17 14:35:34 bouyer Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.19 2013/01/08 19:03:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.20 2013/04/17 14:35:34 bouyer Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -384,6 +384,7 @@ static const struct {
 #if defined(TI_AM335X)
 	{ .name = "omapicu", .addr = 0x48200000, .required = true },
 	{ .name = "prcm", .addr = 0x44e00000, .required = true },
+	{ .name = "sitaracm", .addr = 0x44e10000, .required = true },
 #endif
 #if defined(OMAP_3530)
 	{ .name = "omapdma", .addr = OMAP3530_SDMA_BASE, .required = true },
