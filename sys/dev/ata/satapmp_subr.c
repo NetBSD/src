@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.10 2012/08/01 09:38:55 bouyer Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.11 2013/04/17 12:22:43 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.10 2012/08/01 09:38:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.11 2013/04/17 12:22:43 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,19 +73,19 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
 	    &ata_c) != ATACMD_COMPLETE) {
 		aprint_error_dev(chp->atabus,
-		    "PMP register %d read failed\n", reg);
+		    "PMP port %d register %d read failed\n", port, reg);
 		return EIO;
 	}
 	if (ata_c.flags & (AT_TIMEOU | AT_DF)) {
 		aprint_error_dev(chp->atabus,
-		    "PMP register %d read failed, flags 0x%x\n",
-		    reg, ata_c.flags);
+		    "PMP port %d register %d read failed, flags 0x%x\n",
+		    port, reg, ata_c.flags);
 		return EIO;
 	}
 	if (ata_c.flags & AT_ERROR) {
 		aprint_verbose_dev(chp->atabus,
-		    "PMP register %d read failed, error 0x%x\n",
-		    reg, ata_c.r_error);
+		    "PMP port %d register %d read failed, error 0x%x\n",
+		    port, reg, ata_c.r_error);
 		return EIO;
 	}
 
@@ -141,19 +141,19 @@ satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
 	    &ata_c) != ATACMD_COMPLETE) {
 		aprint_error_dev(chp->atabus,
-		    "PMP register %d write failed\n", reg);
+		    "PMP port %d register %d write failed\n", port, reg);
 		return EIO;
 	}
 	if (ata_c.flags & (AT_TIMEOU | AT_DF)) {
 		aprint_error_dev(chp->atabus,
-		    "PMP register %d write failed, flags 0x%x\n",
-		    reg, ata_c.flags);
+		    "PMP port %d register %d write failed, flags 0x%x\n",
+		    port, reg, ata_c.flags);
 		return EIO;
 	}
 	if (ata_c.flags & AT_ERROR) {
 		aprint_verbose_dev(chp->atabus,
-		    "PMP register %d write failed, error 0x%x\n",
-		    reg, ata_c.r_error);
+		    "PMP port %d register %d write failed, error 0x%x\n",
+		    port, reg, ata_c.r_error);
 		return EIO;
 	}
 	return 0;
