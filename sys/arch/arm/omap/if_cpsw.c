@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.2 2013/01/20 22:32:59 jakllsch Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.2 2013/01/20 22:32:59 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,6 +75,8 @@ __KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.2 2013/01/20 22:32:59 jakllsch Exp $")
 
 #include <arch/arm/omap/omap2_obiovar.h>
 #include <arch/arm/omap/if_cpswreg.h>
+#include <arch/arm/omap/sitara_cmreg.h>
+#include <arch/arm/omap/sitara_cm.h>
 
 #define ETHER_ALIGN (roundup2(ETHER_HDR_LEN, sizeof(uint32_t)) - ETHER_HDR_LEN)
 
@@ -326,7 +328,6 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	struct ifnet * const ifp = &ec->ec_if;
 	int error;
 	u_int i;
-	uint32_t reg;
 
 	KERNHIST_INIT(cpswhist, 4096);
 
@@ -341,23 +342,16 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	prop_data_t eaprop = prop_dictionary_get(dict, "mac-address");
 	if (eaprop == NULL) {
 		/* grab mac_id0 from AM335x control module */
-		bus_space_tag_t cm_bst = oa->obio_iot;
-		bus_space_handle_t cm_bsh;
+		uint32_t reg_lo, reg_hi;
 
-		error = bus_space_map(cm_bst, 0x44e10000, 0x2000, 0,
-		    &cm_bsh);
-
-		if (error == 0) {
-			reg = bus_space_read_4(cm_bst, cm_bsh, 0x634);
-			sc->sc_enaddr[0] = (reg >>  0) & 0xff;
-			sc->sc_enaddr[1] = (reg >>  8) & 0xff;
-			sc->sc_enaddr[2] = (reg >> 16) & 0xff;
-			sc->sc_enaddr[3] = (reg >> 24) & 0xff;
-			reg = bus_space_read_4(cm_bst, cm_bsh, 0x630);
-			sc->sc_enaddr[4] = (reg >>  0) & 0xff;
-			sc->sc_enaddr[5] = (reg >>  8) & 0xff;
-
-			bus_space_unmap(cm_bst, cm_bsh, 0x2000);
+		if (sitara_cm_reg_read_4(OMAP2SCM_MAC_ID0_LO, &reg_lo) == 0 &&
+		    sitara_cm_reg_read_4(OMAP2SCM_MAC_ID0_HI, &reg_hi) == 0) {
+			sc->sc_enaddr[0] = (reg_hi >>  0) & 0xff;
+			sc->sc_enaddr[1] = (reg_hi >>  8) & 0xff;
+			sc->sc_enaddr[2] = (reg_hi >> 16) & 0xff;
+			sc->sc_enaddr[3] = (reg_hi >> 24) & 0xff;
+			sc->sc_enaddr[4] = (reg_lo >>  0) & 0xff;
+			sc->sc_enaddr[5] = (reg_lo >>  8) & 0xff;
 		} else {
 			aprint_error_dev(sc->sc_dev,
 			    "using fake station address\n");
