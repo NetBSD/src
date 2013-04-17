@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.29 2013/04/16 23:03:05 christos Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.30 2013/04/17 14:39:40 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.29 2013/04/16 23:03:05 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.30 2013/04/17 14:39:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -206,7 +206,7 @@ linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t
 			if (error == ETIMEDOUT && SCARG(uap, timeout) != NULL)
 				tout = 1;
 			else
-				return error;
+				tout = 0;
 		}
 		FUTEX_SYSTEM_LOCK;
 		if ((error = copyin(SCARG(uap, uaddr), 
