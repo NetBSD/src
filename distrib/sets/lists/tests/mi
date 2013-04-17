@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.533 2013/04/14 18:00:48 jmmv Exp $
+# $NetBSD: mi,v 1.534 2013/04/17 01:36:41 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1601,6 +1601,7 @@
 ./usr/tests/kernel/t_time			tests-obsolete			obsolete
 ./usr/tests/kernel/t_ucontext			tests-obsolete			obsolete
 ./usr/tests/kernel/t_umount			tests-kernel-tests		atf
+./usr/tests/kernel/t_umountstress		tests-kernel-tests		atf
 ./usr/tests/kernel/t_writev			tests-obsolete			obsolete
 ./usr/tests/kernel/tty				tests-kernel-tests
 ./usr/tests/kernel/tty/Atffile			tests-kernel-tests		atf,rump
