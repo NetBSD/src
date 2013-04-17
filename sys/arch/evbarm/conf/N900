@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.9 2013/04/17 00:57:22 khorben Exp $
+#	$NetBSD: N900,v 1.10 2013/04/17 01:06:13 khorben Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -205,9 +205,9 @@ flash2		at nand0 offset 0x3a02040 size 0x0180000 # swap
 # Interrupt Controller
 omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
 omapgpio0	at obio1 addr 0x48310000 size 0x0400 intrbase 96  intr 29
-#omapgpio1	at obio2 addr 0x49050000 size 0x0400 intrbase 128 intr 30
-#omapgpio2	at obio2 addr 0x49052000 size 0x0400 intrbase 160 intr 31
-#omapgpio3	at obio2 addr 0x49054000 size 0x0400 intrbase 192 intr 32
+omapgpio1	at obio2 addr 0x49050000 size 0x0400 intrbase 128 intr 30
+omapgpio2	at obio2 addr 0x49052000 size 0x0400 intrbase 160 intr 31
+omapgpio3	at obio2 addr 0x49054000 size 0x0400 intrbase 192 intr 32
 omapgpio4	at obio2 addr 0x49056000 size 0x0400 intrbase 224 intr 33
 #omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
 
@@ -216,6 +216,9 @@ gpio*		at omapgpio?
 # GPIO devices
 # Charging sensor
 n900acad0	at gpio0 offset 7 mask 0x1 #intr 103
+
+# Lock button
+n900lckbtn0	at gpio3 offset 17 mask 0x1 #intr 209
 
 # System Control Module
 omapscm0 	at obio0 addr 0x48002000 size 0x1000
