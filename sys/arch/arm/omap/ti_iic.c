@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.1 2013/04/17 14:33:06 bouyer Exp $ */
+/* $NetBSD: ti_iic.c,v 1.2 2013/04/17 20:16:53 bouyer Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,9 +50,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.1 2013/04/17 14:33:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.2 2013/04/17 20:16:53 bouyer Exp $");
 
 #include "opt_omap.h"
+#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.1 2013/04/17 14:33:06 bouyer Exp $");
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -87,6 +89,14 @@ __KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.1 2013/04/17 14:33:06 bouyer Exp $");
 #define DPRINTF(args)
 #endif
 
+/* operation in progress */
+typedef enum {
+	TI_I2CREAD,
+	TI_I2CWRITE,
+	TI_I2CDONE,
+	TI_I2CERROR
+} ti_i2cop_t;
+
 struct ti_iic_softc {
 	device_t		sc_dev;
 	struct i2c_controller	sc_ic;
@@ -95,6 +105,14 @@ struct ti_iic_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	void			*sc_ih;
+	kmutex_t		sc_mtx;
+	kcondvar_t		sc_cv;
+	ti_i2cop_t		sc_op;
+	int			sc_buflen;
+	int			sc_bufidx;
+	char			*sc_buf;
 
 	int			sc_rxthres;
 	int			sc_txthres;
@@ -114,18 +132,22 @@ static void	ti_iic_attach(device_t, device_t, void *);
 static int	ti_iic_rescan(device_t, const char *, const int *);
 static void	ti_iic_childdet(device_t, device_t);
 
+static int	ti_iic_intr(void *);
+
 static int	ti_iic_acquire_bus(void *, int);
 static void	ti_iic_release_bus(void *, int);
 static int	ti_iic_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 			       size_t, void *, size_t, int);
 
 static int	ti_iic_reset(struct ti_iic_softc *);
-static int	ti_iic_read(struct ti_iic_softc *, i2c_addr_t,
+static int	ti_iic_op(struct ti_iic_softc *, i2c_addr_t, ti_i2cop_t,
 			       uint8_t *, size_t, int);
-static int	ti_iic_write(struct ti_iic_softc *, i2c_addr_t,
-				const uint8_t *, size_t, int);
-static int	ti_iic_wait(struct ti_iic_softc *, uint16_t, uint16_t);
-static int	ti_iic_stat(struct ti_iic_softc *);
+static void	ti_iic_handle_intr(struct ti_iic_softc *, uint32_t);
+static void	ti_iic_do_read(struct ti_iic_softc *, uint32_t);
+static void	ti_iic_do_write(struct ti_iic_softc *, uint32_t);
+
+static int	ti_iic_wait(struct ti_iic_softc *, uint16_t, uint16_t, int);
+static uint32_t	ti_iic_stat(struct ti_iic_softc *, uint32_t);
 static int	ti_iic_flush(struct ti_iic_softc *);
 
 i2c_tag_t	ti_iic_get_tag(device_t);
@@ -182,6 +204,8 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_dev = self;
 	sc->sc_iot = obio->obio_iot;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NET);
+	cv_init(&sc->sc_cv, "tiiic");
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_acquire_bus = ti_iic_acquire_bus;
 	sc->sc_ic.ic_release_bus = ti_iic_release_bus;
@@ -194,6 +218,16 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 		aprint_error(": couldn't map address space\n");
 		return;
 	}
+	if (obio->obio_intr == OBIOCF_INTR_DEFAULT) {
+		aprint_error(": no interrupt\n");
+		bus_space_unmap(obio->obio_iot, sc->sc_ioh,
+		    obio->obio_size);
+		return;
+	}
+	sc->sc_ih = intr_establish(obio->obio_intr, IPL_NET, IST_LEVEL,
+	    ti_iic_intr, sc);
+	KASSERT(sc->sc_ih != NULL);
+
 #ifdef TI_AM335X
 	for (i = 0; i < __arraycount(am335x_iic); i++) {
 		if ((obio->obio_addr == am335x_iic[i].as_base_addr) &&
@@ -258,6 +292,24 @@ ti_iic_childdet(device_t self, device_t child)
 }
 
 static int
+ti_iic_intr(void *arg)
+{
+	struct ti_iic_softc *sc = arg;
+	uint32_t stat;
+
+	mutex_enter(&sc->sc_mtx);
+	stat = I2C_READ_REG(sc, OMAP2_I2C_IRQSTATUS);
+	I2C_WRITE_REG(sc, OMAP2_I2C_IRQSTATUS, stat);
+	ti_iic_handle_intr(sc, stat);
+	if (sc->sc_op == TI_I2CERROR || sc->sc_op == TI_I2CDONE) {
+		cv_signal(&sc->sc_cv);
+	}
+	mutex_exit(&sc->sc_mtx);
+	DPRINTF(("ti_iic_intr status 0x%x\n", stat));
+	return 1;
+}
+
+static int
 ti_iic_acquire_bus(void *opaque, int flags)
 {
 	struct ti_iic_softc *sc = opaque;
@@ -291,7 +343,8 @@ ti_iic_exec(void *opaque, i2c_op_t op, i2c_addr_t addr,
 	    op, cmdlen, len, flags));
 
 	if (cmdlen > 0) {
-		err = ti_iic_write(sc, addr, cmdbuf, cmdlen,
+		err = ti_iic_op(sc, addr, TI_I2CWRITE,
+		    __UNCONST(cmdbuf), cmdlen,
 		    I2C_OP_READ_P(op) ? 0 : I2C_F_STOP);
 		if (err)
 			goto done;
@@ -309,9 +362,9 @@ ti_iic_exec(void *opaque, i2c_op_t op, i2c_addr_t addr,
 	}
 
 	if (I2C_OP_READ_P(op)) {
-		err = ti_iic_read(sc, addr, buf, len, flags);
+		err = ti_iic_op(sc, addr, TI_I2CREAD, buf, len, flags);
 	} else {
-		err = ti_iic_write(sc, addr, buf, len, flags);
+		err = ti_iic_op(sc, addr, TI_I2CWRITE, buf, len, flags);
 	}
 
 done:
@@ -376,16 +429,24 @@ ti_iic_reset(struct ti_iic_softc *sc)
 }
 
 static int
-ti_iic_read(struct ti_iic_softc *sc, i2c_addr_t addr, uint8_t *buf,
-    size_t buflen, int flags)
+ti_iic_op(struct ti_iic_softc *sc, i2c_addr_t addr, ti_i2cop_t op,
+    uint8_t *buf, size_t buflen, int flags)
 {
-	uint16_t con, stat;
-	int err, i, retry;
-	size_t len;
+	uint16_t con, stat, mask;
+	int err, retry;
 
-	err = ti_iic_wait(sc, I2C_IRQSTATUS_BB, 0);
+	KASSERT(op == TI_I2CREAD || op == TI_I2CWRITE);
+
+	mask = I2C_IRQSTATUS_ARDY | I2C_IRQSTATUS_NACK | I2C_IRQSTATUS_AL;
+	if (op == TI_I2CREAD) {
+		mask |= I2C_IRQSTATUS_RDR | I2C_IRQSTATUS_RRDY;
+	} else {
+		mask |= I2C_IRQSTATUS_XDR | I2C_IRQSTATUS_XRDY;
+	}
+
+	err = ti_iic_wait(sc, I2C_IRQSTATUS_BB, 0, flags);
 	if (err) {
-		DPRINTF(("ti_iic_read: wait error %d\n", err));
+		DPRINTF(("ti_iic_op: wait error %d\n", err));
 		return err;
 	}
 
@@ -396,140 +457,141 @@ ti_iic_read(struct ti_iic_softc *sc, i2c_addr_t addr, uint8_t *buf,
 		con |= I2C_CON_STP;
 	if (addr & ~0x7f)
 		con |= I2C_CON_XSA;
+	if (op == TI_I2CWRITE)
+		con |= I2C_CON_TRX;
+
+	mutex_enter(&sc->sc_mtx);
+	sc->sc_op = op;
+	sc->sc_buf = buf;
+	sc->sc_buflen = buflen;
+	sc->sc_bufidx = 0;
 
 	I2C_WRITE_REG(sc, OMAP2_I2C_CON, I2C_CON_EN | I2C_CON_MST | I2C_CON_STP);
-	DPRINTF(("ti_iic_read: con 0x%x ", con));
+	DPRINTF(("ti_iic_op: op %d con 0x%x ", op, con));
 	I2C_WRITE_REG(sc, OMAP2_I2C_CNT, buflen);
 	I2C_WRITE_REG(sc, OMAP2_I2C_SA, (addr & I2C_SA_MASK));
 	DPRINTF(("SA 0x%x len %d\n", I2C_READ_REG(sc, OMAP2_I2C_SA), I2C_READ_REG(sc, OMAP2_I2C_CNT)));
+
+	if ((flags & I2C_F_POLL) == 0) {
+		/* clear any pending interrupt */
+		I2C_WRITE_REG(sc, OMAP2_I2C_IRQSTATUS,
+		    I2C_READ_REG(sc, OMAP2_I2C_IRQSTATUS));
+		/* and enable */
+		I2C_WRITE_REG(sc, OMAP2_I2C_IRQENABLE_SET, mask);
+	}
+	/* start transfer */
 	I2C_WRITE_REG(sc, OMAP2_I2C_CON, con);
 
-	i = 0;
-	while (1) {
-		stat = ti_iic_stat(sc);
-		DPRINTF(("ti_iic_read stat 0x%x\n", stat));
-		if (stat & (I2C_IRQSTATUS_NACK|I2C_IRQSTATUS_AL)) {
-			err = EIO;
-			break;
+	if ((flags & I2C_F_POLL) == 0) {
+		/* and wait for completion */
+		while (sc->sc_op == op) {
+			if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx,
+			    mstohz(5000)) == EWOULDBLOCK) {
+				/* timeout */
+				op = TI_I2CERROR;
+			}
 		}
-		if (stat & I2C_IRQSTATUS_ARDY) {
-			err = 0;
-			break;
+		/* disable interrupts */
+		I2C_WRITE_REG(sc, OMAP2_I2C_IRQENABLE_CLR, 0xffff);
+	} else {
+		/* poll for completion */
+		while (sc->sc_op == op) {
+			stat = ti_iic_stat(sc, mask);
+			DPRINTF(("ti_iic_op stat 0x%x\n", stat));
+			if (stat == 0) {
+				/* timeout */
+				sc->sc_op = TI_I2CERROR;
+			} else {
+				ti_iic_handle_intr(sc, stat);
+			}
+			I2C_WRITE_REG(sc, OMAP2_I2C_IRQSTATUS, stat);
 		}
-			
-		if (stat & I2C_IRQSTATUS_RDR) {
-			len = I2C_READ_REG(sc, OMAP2_I2C_BUFSTAT);
-			len = I2C_BUFSTAT_RXSTAT(len);
-			DPRINTF(("ti_iic_read receive drain len %zd left %d\n",
-			    len, I2C_READ_REG(sc, OMAP2_I2C_CNT)));
-		} else if (stat & I2C_IRQSTATUS_RRDY) {
-			len = sc->sc_rxthres + 1;
-			DPRINTF(("ti_iic_read receive len %zd left %d\n",
-			    len, I2C_READ_REG(sc, OMAP2_I2C_CNT)));
-		} else {
-			DELAY(1);
-			continue;
-		}
-		for (; i < buflen && len > 0; i++, len--) {
-			buf[i] = I2C_READ_DATA(sc);
-			DPRINTF(("ti_iic_read got b[%d]=0x%x\n",
-			    i, buf[i]));
-		}
-		I2C_WRITE_REG(sc, OMAP2_I2C_IRQSTATUS, stat);
 	}
-
-	I2C_WRITE_REG(sc, OMAP2_I2C_IRQSTATUS, stat);
+	mutex_exit(&sc->sc_mtx);
 	retry = 10000;
 	I2C_WRITE_REG(sc, OMAP2_I2C_CON, 0);
-	while (I2C_READ_REG(sc, OMAP2_I2C_IRQSTATUS_RAW) ||
-	       (I2C_READ_REG(sc, OMAP2_I2C_CON) & I2C_CON_MST)) {
+	while (I2C_READ_REG(sc, OMAP2_I2C_CON) & I2C_CON_MST) {
 		delay(100);
 		if (--retry == 0)
 			break;
 	}
-
-	return err;
+	return (sc->sc_op == TI_I2CDONE) ? 0 : EIO;
 }
 
-static int
-ti_iic_write(struct ti_iic_softc *sc, i2c_addr_t addr, const uint8_t *buf,
-    size_t buflen, int flags)
+static void
+ti_iic_handle_intr(struct ti_iic_softc *sc, uint32_t stat)
 {
-	uint16_t con, stat;
-	int err, i, retry;
-	size_t len;
-
-	err = ti_iic_wait(sc, I2C_IRQSTATUS_BB, 0);
-	if (err) {
-		DPRINTF(("ti_iic_write wait error %d\n", err));
-		return err;
+	KASSERT(mutex_owned(&sc->sc_mtx));
+	KASSERT(stat != 0);
+	if (stat &
+	    (I2C_IRQSTATUS_NACK|I2C_IRQSTATUS_AL)) {
+		sc->sc_op = TI_I2CERROR;
+		return;
 	}
-
-	con = I2C_CON_EN;
-	con |= I2C_CON_MST;
-	con |= I2C_CON_STT;
-	if (flags & I2C_F_STOP)
-		con |= I2C_CON_STP;
-	con |= I2C_CON_TRX;
-	if (addr & ~0x7f)
-		con |= I2C_CON_XSA;
-
-	I2C_WRITE_REG(sc, OMAP2_I2C_CON, I2C_CON_EN | I2C_CON_MST | I2C_CON_STP);
-	DPRINTF(("ti_iic_write: con 0x%x ", con));
-	I2C_WRITE_REG(sc, OMAP2_I2C_SA, (addr & I2C_SA_MASK));
-	I2C_WRITE_REG(sc, OMAP2_I2C_CNT, buflen);
-	DPRINTF(("SA 0x%x len %d\n", I2C_READ_REG(sc, OMAP2_I2C_SA), I2C_READ_REG(sc, OMAP2_I2C_CNT)));
-	I2C_WRITE_REG(sc, OMAP2_I2C_CON, con);
-
-	i = 0;
-	while (1) {
-		stat = ti_iic_stat(sc);
-		DPRINTF(("ti_iic_write stat 0x%x\n", stat));
-		if (stat & (I2C_IRQSTATUS_NACK|I2C_IRQSTATUS_AL)) {
-			err = EIO;
-			break;
-		}
-		if (stat & I2C_IRQSTATUS_ARDY) {
-			err = 0;
-			break;
-		}
-
-		if (stat & I2C_IRQSTATUS_XDR) {
-			len = I2C_READ_REG(sc, OMAP2_I2C_BUFSTAT);
-			len = I2C_BUFSTAT_TXSTAT(len);
-			DPRINTF(("ti_iic_write transmit drain len %zd left %d\n",
-			    len, I2C_READ_REG(sc, OMAP2_I2C_CNT)));
-		} else if (stat & I2C_IRQSTATUS_XRDY) {
-			len = sc->sc_txthres + 1;
-			DPRINTF(("ti_iic_write transmit len %zd left %d\n",
-			    len, I2C_READ_REG(sc, OMAP2_I2C_CNT)));
-		} else {
-			DELAY(1);
-			continue;
-		}
-		for (; i < buflen && len > 0; i++, len--) {
-			DPRINTF(("ti_iic_write send b[%d]=0x%x\n",
-			    i, buf[i]));
-			I2C_WRITE_DATA(sc, buf[i]);
-		}
-		I2C_WRITE_REG(sc, OMAP2_I2C_IRQSTATUS, stat);
+	if (stat & I2C_IRQSTATUS_ARDY) {
+		sc->sc_op = TI_I2CDONE;
+		return;
 	}
+	if (sc->sc_op == TI_I2CREAD)
+		ti_iic_do_read(sc, stat);
+	else if (sc->sc_op == TI_I2CWRITE)
+		ti_iic_do_write(sc, stat);
+	else
+		return;
+}
 
-	I2C_WRITE_REG(sc, OMAP2_I2C_IRQSTATUS, stat);
-	retry = 10000;
-	I2C_WRITE_REG(sc, OMAP2_I2C_CON, 0);
-	while (I2C_READ_REG(sc, OMAP2_I2C_IRQSTATUS_RAW) ||
-	       (I2C_READ_REG(sc, OMAP2_I2C_CON) & I2C_CON_MST)) {
-		delay(100);
-		if (--retry == 0)
-			break;
+void
+ti_iic_do_read(struct ti_iic_softc *sc, uint32_t stat)
+{
+	int len;
+
+	KASSERT(mutex_owned(&sc->sc_mtx));
+	if (stat & I2C_IRQSTATUS_RDR) {
+		len = I2C_READ_REG(sc, OMAP2_I2C_BUFSTAT);
+		len = I2C_BUFSTAT_RXSTAT(len);
+		DPRINTF(("ti_iic_do_read receive drain len %d left %d\n",
+		    len, I2C_READ_REG(sc, OMAP2_I2C_CNT)));
+	} else if (stat & I2C_IRQSTATUS_RRDY) {
+		len = sc->sc_rxthres + 1;
+		DPRINTF(("ti_iic_do_read receive len %d left %d\n",
+		    len, I2C_READ_REG(sc, OMAP2_I2C_CNT)));
 	}
+	for (;
+	    sc->sc_bufidx < sc->sc_buflen && len > 0;
+	    sc->sc_bufidx++, len--) {
+		sc->sc_buf[sc->sc_bufidx] = I2C_READ_DATA(sc);
+		DPRINTF(("ti_iic_do_read got b[%d]=0x%x\n", sc->sc_bufidx,
+		    sc->sc_buf[sc->sc_bufidx]));
+	}
+}
 
-	return err;
+void
+ti_iic_do_write(struct ti_iic_softc *sc, uint32_t stat)
+{
+	int len;
+
+	KASSERT(mutex_owned(&sc->sc_mtx));
+	if (stat & I2C_IRQSTATUS_XDR) {
+		len = I2C_READ_REG(sc, OMAP2_I2C_BUFSTAT);
+		len = I2C_BUFSTAT_TXSTAT(len);
+		DPRINTF(("ti_iic_do_write xmit drain len %d left %d\n",
+		    len, I2C_READ_REG(sc, OMAP2_I2C_CNT)));
+	} else if (stat & I2C_IRQSTATUS_XRDY) {
+		len = sc->sc_txthres + 1;
+		DPRINTF(("ti_iic_do_write xmit len %d left %d\n",
+		    len, I2C_READ_REG(sc, OMAP2_I2C_CNT)));
+	}
+	for (;
+	    sc->sc_bufidx < sc->sc_buflen && len > 0;
+	    sc->sc_bufidx++, len--) {
+		DPRINTF(("ti_iic_do_write send b[%d]=0x%x\n",
+		    sc->sc_bufidx, sc->sc_buf[sc->sc_bufidx]));
+		I2C_WRITE_DATA(sc, sc->sc_buf[sc->sc_bufidx]);
+	}
 }
 
 static int
-ti_iic_wait(struct ti_iic_softc *sc, uint16_t mask, uint16_t val)
+ti_iic_wait(struct ti_iic_softc *sc, uint16_t mask, uint16_t val, int flags)
 {
 	int retry = 10;
 	uint16_t v;
@@ -542,29 +604,27 @@ ti_iic_wait(struct ti_iic_softc *sc, uint16_t mask, uint16_t val)
 			    mask, val, v);
 			return EBUSY;
 		}
-		delay(50000);
+		if (flags & I2C_F_POLL) {
+			delay(50000);
+		} else {
+			kpause("tiiic", false, mstohz(50), NULL);
+		}
 	}
 
 	return 0;
 }
 
-static int
-ti_iic_stat(struct ti_iic_softc *sc)
+static uint32_t
+ti_iic_stat(struct ti_iic_softc *sc, uint32_t mask)
 {
-	uint16_t v;
-	int retry = 100;
-
+	uint32_t v;
+	int retry = 500;
 	while (--retry > 0) {
-		v = I2C_READ_REG(sc, OMAP2_I2C_IRQSTATUS_RAW);
-		if ((v & (I2C_IRQSTATUS_ROVR|I2C_IRQSTATUS_XUDF|
-			  I2C_IRQSTATUS_XDR|I2C_IRQSTATUS_RDR|
-			  I2C_IRQSTATUS_XRDY|I2C_IRQSTATUS_RRDY|
-			  I2C_IRQSTATUS_ARDY|I2C_IRQSTATUS_NACK|
-			  I2C_IRQSTATUS_AL)) != 0)
+		v = I2C_READ_REG(sc, OMAP2_I2C_IRQSTATUS_RAW) & mask;
+		if (v != 0)
 			break;
 		delay(100);
 	}
-
 	return v;
 }
 
