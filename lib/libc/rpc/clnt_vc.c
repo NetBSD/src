@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.21 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.22 2013/04/17 16:36:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -38,7 +38,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.21 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.22 2013/04/17 16:36:47 christos Exp $");
 #endif
 #endif
  
@@ -713,7 +713,7 @@ read_vc(char *ctp, char *buf, int len)
 		/* premature eof */
 		ct->ct_error.re_errno = ECONNRESET;
 		ct->ct_error.re_status = RPC_CANTRECV;
-		len = -1;  /* it's really an error */
+		nread = -1;  /* it's really an error */
 		break;
 
 	case -1:
