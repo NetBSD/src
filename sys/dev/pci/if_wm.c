@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.246 2013/03/30 03:21:08 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.247 2013/04/18 12:42:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.246 2013/03/30 03:21:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.247 2013/04/18 12:42:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1022,6 +1022,29 @@ static const struct wm_product {
 	  "I350 Gigabit Connection",
 	  WM_T_I350,		WMP_F_1000T },
 #endif
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_T1,
+	  "I210-T1 Ethernet Server Adapter",
+	  WM_T_I210,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_COPPER_OEM1,
+	  "I210 Ethernet (Copper OEM)",
+	  WM_T_I210,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_COPPER_IT,
+	  "I210 Ethernet (Copper IT)",
+	  WM_T_I210,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_FIBER,
+	  "I210 Gigabit Ethernet (Fiber)",
+	  WM_T_I210,		WMP_F_1000X },
+#if 0
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SERDES,
+	  "I210 Gigabit Ethernet (SERDES)",
+	  WM_T_I210,		WMP_F_SERDES },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SGMII,
+	  "I210 Gigabit Ethernet (SGMII)",
+	  WM_T_I210,		WMP_F_SERDES },
+#endif
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I211_COPPER,
+	  "I211 Ethernet (COPPER)",
+	  WM_T_I211,		WMP_F_1000T },
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -1173,7 +1196,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
 	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
-	    || (sc->sc_type == WM_T_I350))
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210)
+	    || (sc->sc_type == WM_T_I211))
 		sc->sc_flags |= WM_F_NEWQUEUE;
 
 	/* Set device properties (mactype) */
@@ -1607,6 +1631,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 		sc->sc_ich8_flash_bank_size *= ICH_FLASH_SECTOR_SIZE;
 		sc->sc_ich8_flash_bank_size /= 2 * sizeof(uint16_t);
 		break;
+	case WM_T_I210:
+	case WM_T_I211:
+#if 1
+		sc->sc_flags |= WM_F_EEPROM_FLASH_HW;
+		sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_SWFW_SYNC;
+#endif
+		break;
 	default:
 		break;
 	}
@@ -1634,7 +1665,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
 		aprint_verbose_dev(sc->sc_dev, "No EEPROM\n");
-	else if (sc->sc_flags & WM_F_EEPROM_FLASH) {
+	else if (sc->sc_flags & WM_F_EEPROM_FLASH_HW) {
+		aprint_verbose_dev(sc->sc_dev, "FLASH(HW)\n");
+	} else if (sc->sc_flags & WM_F_EEPROM_FLASH) {
 		aprint_verbose_dev(sc->sc_dev, "FLASH\n");
 	} else {
 		if (sc->sc_flags & WM_F_EEPROM_SPI)
@@ -1848,6 +1881,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 		case WM_T_82580:
 		case WM_T_82580ER:
 		case WM_T_I350:
+		case WM_T_I210:
+		case WM_T_I211:
 			reg = CSR_READ(sc, WMREG_CTRL_EXT);
 			switch (reg & CTRL_EXT_LINK_MODE_MASK) {
 			case CTRL_EXT_LINK_MODE_SGMII:
@@ -1912,6 +1947,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I210:
+	case WM_T_I211:
 	case WM_T_80003:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
@@ -3644,7 +3681,7 @@ wm_rxintr(struct wm_softc *sc)
 
 		/*
 		 * Okay, we have the entire packet now.  The chip is
-		 * configured to include the FCS except I350
+		 * configured to include the FCS except I350 and I21[01]
 		 * (not all chips can be configured to strip it),
 		 * so we need to trim it.
 		 * May need to adjust length of previous mbuf in the
@@ -3652,7 +3689,8 @@ wm_rxintr(struct wm_softc *sc)
 		 * For an eratta, the RCTL_SECRC bit in RCTL register
 		 * is always set in I350, so we don't trim it.
 		 */
-		if (sc->sc_type != WM_T_I350) {
+		if ((sc->sc_type != WM_T_I350) && (sc->sc_type != WM_T_I210)
+		    && (sc->sc_type != WM_T_I211)) {
 			if (m->m_len < ETHER_CRC_LEN) {
 				sc->sc_rxtail->m_len
 				    -= (ETHER_CRC_LEN - m->m_len);
@@ -3992,6 +4030,10 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82580ER:
 		sc->sc_pba = PBA_35K;
 		break;
+	case WM_T_I210:
+	case WM_T_I211:
+		sc->sc_pba = PBA_34K;
+		break;
 	case WM_T_82576:
 		sc->sc_pba = PBA_64K;
 		break;
@@ -4162,6 +4204,8 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82580ER:
 	case WM_T_82583:
 	case WM_T_I350:
+	case WM_T_I210:
+	case WM_T_I211:
 	default:
 		/* Everything else can safely use the documented method. */
 		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
@@ -4222,6 +4266,8 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I210:
+	case WM_T_I211:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -4696,7 +4742,7 @@ wm_init(struct ifnet *ifp)
 	 * The I350 has a bug where it always strips the CRC whether
 	 * asked to or not. So ask for stripped CRC here and cope in rxeof
 	 */
-	if (sc->sc_type == WM_T_I350)
+	if ((sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210))
 		sc->sc_rctl |= RCTL_SECRC;
 
 	if (((sc->sc_ethercom.ec_capabilities & ETHERCAP_JUMBO_MTU) != 0)
@@ -4855,6 +4901,8 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I210:
+	case WM_T_I211:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -4943,6 +4991,8 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I210:
+	case WM_T_I211:
 		if (sc->sc_type == WM_T_82571) {
 			/* Only 82571 shares port 0 */
 			mask = EEMNGCTL_CFGDONE_0;
@@ -5264,6 +5314,10 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 
 	checksum = 0;
 
+	/* Don't check for I211 */
+	if (sc->sc_type == WM_T_I211)
+		return 0;
+
 #ifdef WM_DEBUG
 	/* Dump EEPROM image for debug */
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
@@ -5320,7 +5374,7 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
-		 || (sc->sc_type == WM_T_PCH2))
+	    || (sc->sc_type == WM_T_PCH2))
 		rv = wm_read_eeprom_ich8(sc, word, wordcnt, data);
 	else if (sc->sc_flags & WM_F_EEPROM_EERDEEWR)
 		rv = wm_read_eeprom_eerd(sc, word, wordcnt, data);
@@ -5437,6 +5491,8 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_80003:
+	case WM_T_I210:
+	case WM_T_I211:
 		if (wm_check_alt_mac_addr(sc) != 0) {
 			/* reset the offset to LAN0 */
 			offset = EEPROM_OFF_MACADDR;
@@ -6032,6 +6088,8 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I210:
+	case WM_T_I211:
 	case WM_T_80003:
 		rv = wm_get_swfw_semaphore(sc, swfwphysem[sc->sc_funcid]);
 		break;
@@ -6103,6 +6161,8 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I210:
+	case WM_T_I211:
 	case WM_T_82583:
 	case WM_T_80003:
 		/* generic reset */
@@ -6151,6 +6211,8 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I210:
+	case WM_T_I211:
 	case WM_T_80003:
 		wm_put_swfw_semaphore(sc, swfwphysem[sc->sc_funcid]);
 		break;
@@ -6192,6 +6254,8 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I210:
+	case WM_T_I211:
 	case WM_T_82583:
 	case WM_T_80003:
 		/* null */
@@ -6329,6 +6393,9 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		} else if (sc->sc_type >= WM_T_80003) {
 			mii->mii_readreg = wm_gmii_i80003_readreg;
 			mii->mii_writereg = wm_gmii_i80003_writereg;
+		} else if (sc->sc_type >= WM_T_I210) {
+			mii->mii_readreg = wm_gmii_i82544_readreg;
+			mii->mii_writereg = wm_gmii_i82544_writereg;
 		} else if (sc->sc_type >= WM_T_82580) {
 			sc->sc_phytype = WMPHY_82580;
 			mii->mii_readreg = wm_gmii_82580_readreg;
@@ -6352,7 +6419,8 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
 	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
-	    || (sc->sc_type == WM_T_I350)) {
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210)
+	    || (sc->sc_type == WM_T_I211)) {
 		if ((sc->sc_flags & WM_F_SGMII) == 0) {
 			/* Attach only one port */
 			mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
