@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.9 2013/04/11 13:27:11 isaki Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.10 2013/04/18 13:40:25 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.9 2013/04/11 13:27:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.10 2013/04/18 13:40:25 isaki Exp $");
 
 #include "fpu_emulate.h"
 
@@ -277,14 +277,10 @@ fpu_cos(struct fpemu *fe)
 	 */
 	CPYFPN(&fe->fe_f1, &x);
 	CPYFPN(&fe->fe_f2, &p);
-	r = fpu_cmp(fe);
+	fe->fe_f2.fp_sign = 1;
+	r = fpu_add(fe);
 	if (r->fp_sign == 0) {
-		CPYFPN(&fe->fe_f1, &x);
-		CPYFPN(&fe->fe_f2, &p);
-		fe->fe_f2.fp_sign = 1;
-		r = fpu_add(fe);
 		CPYFPN(&x, r);
-
 		sign ^= 1;
 	}
 
@@ -299,13 +295,9 @@ fpu_cos(struct fpemu *fe)
 	 */
 	CPYFPN(&fe->fe_f1, &x);
 	CPYFPN(&fe->fe_f2, &p);
-	r = fpu_cmp(fe);
+	fe->fe_f2.fp_sign = 1;
+	r = fpu_add(fe);
 	if (r->fp_sign == 0) {
-		CPYFPN(&fe->fe_f1, &x);
-		CPYFPN(&fe->fe_f2, &p);
-		fe->fe_f2.fp_sign = 1;
-		r = fpu_add(fe);
-
 		CPYFPN(&fe->fe_f2, r);
 		r = fpu_sin_halfpi(fe);
 		sign ^= 1;
@@ -389,14 +381,10 @@ fpu_sin(struct fpemu *fe)
 	 */
 	CPYFPN(&fe->fe_f1, &x);
 	CPYFPN(&fe->fe_f2, &p);
-	r = fpu_cmp(fe);
+	fe->fe_f2.fp_sign = 1;
+	r = fpu_add(fe);
 	if (r->fp_sign == 0) {
-		CPYFPN(&fe->fe_f1, &x);
-		CPYFPN(&fe->fe_f2, &p);
-		fe->fe_f2.fp_sign = 1;
-		r = fpu_add(fe);
 		CPYFPN(&x, r);
-
 		sign ^= 1;
 	}
 
@@ -411,13 +399,9 @@ fpu_sin(struct fpemu *fe)
 	 */
 	CPYFPN(&fe->fe_f1, &x);
 	CPYFPN(&fe->fe_f2, &p);
-	r = fpu_cmp(fe);
+	fe->fe_f2.fp_sign = 1;
+	r = fpu_add(fe);
 	if (r->fp_sign == 0) {
-		CPYFPN(&fe->fe_f1, &x);
-		CPYFPN(&fe->fe_f2, &p);
-		fe->fe_f2.fp_sign = 1;
-		r = fpu_add(fe);
-
 		CPYFPN(&fe->fe_f2, r);
 		r = fpu_cos_halfpi(fe);
 	} else {
