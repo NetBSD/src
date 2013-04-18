@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1144 2013/04/18 02:55:17 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1145 2013/04/18 12:36:26 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1152 2013/04/18 02:54:49 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1153 2013/04/18 12:35:57 msaitoh Exp
  */
 
 /*
@@ -2732,8 +2732,8 @@
 #define	PCI_PRODUCT_INTEL_82801J_D_BM_V	0x1525		/* 82567V LAN Controller */
 #define	PCI_PRODUCT_INTEL_82580_QUAD_FIBER	0x1527		/* 82580 quad-1000BaseX Ethernet */
 #define	PCI_PRODUCT_INTEL_I210_T1	0x1533		/* I210-T1 Ethernet Server Adapter */
-#define	PCI_PRODUCT_INTEL_I210_COPPER_OEM1	0x1534		/* I210-T1 Ethernet (COPPER OEM) */
-#define	PCI_PRODUCT_INTEL_I210_COPPER_IT	0x1535		/* I210-T1 Ethernet (COPPER IT) */
+#define	PCI_PRODUCT_INTEL_I210_COPPER_OEM1	0x1534		/* I210 Ethernet (COPPER OEM) */
+#define	PCI_PRODUCT_INTEL_I210_COPPER_IT	0x1535		/* I210 Ethernet (COPPER IT) */
 #define	PCI_PRODUCT_INTEL_I210_FIBER	0x1536		/* I210 Ethernet (FIBER) */
 #define	PCI_PRODUCT_INTEL_I210_SERDES	0x1537		/* I210 Ethernet (SERDES) */
 #define	PCI_PRODUCT_INTEL_I210_SGMII	0x1538		/* I210 Ethernet (SGMII) */
