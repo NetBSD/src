@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.99 2012/01/24 04:33:11 macallan Exp $
+#	$NetBSD: files.macppc,v 1.100 2013/04/18 16:42:46 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -25,13 +25,16 @@ file arch/macppc/dev/dbdma.c
 # interrupt controllers
 define pic_ohare
 define pic_heathrow
+define pic_u3_ht
 
 defflag opt_interrupt.h PIC_OHARE: pic_ohare
 defflag opt_interrupt.h OHARE_DEBUG
 defflag opt_interrupt.h PIC_HEATHROW: pic_heathrow
+defflag opt_interrupt.h PIC_U3_HT: pic_u3_ht
 
 file arch/macppc/macppc/pic_ohare.c		pic_ohare	needs-flag
 file arch/macppc/macppc/pic_heathrow.c		pic_heathrow	needs-flag
+file arch/macppc/macppc/pic_u3_ht.c		pic_u3_ht	needs-flag
 
 # IPI interface
 define ipi_hammerhead
@@ -108,7 +111,7 @@ device grackle: pcibus, pic_heathrow
 attach grackle at mainbus
 file arch/macppc/pci/grackle.c			grackle
 
-device uninorth: pcibus, pic_openpic, ipi_openpic
+device uninorth: pcibus, pic_openpic, ipi_openpic, pic_u3_ht
 attach uninorth at mainbus
 file arch/macppc/pci/uninorth.c			uninorth
 
@@ -121,7 +124,7 @@ file arch/macppc/dev/uni-n.c			uni_n
 include "dev/usb/files.usb"
 include "dev/bluetooth/files.bluetooth"
 
-device ibmcpc: pcibus, pic_openpic, ipi_openpic
+device ibmcpc: pcibus, pic_openpic, ipi_openpic, pic_u3_ht
 attach ibmcpc at mainbus
 file arch/macppc/pci/u3.c			ibmcpc
 
