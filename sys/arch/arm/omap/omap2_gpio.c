@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.14 2012/12/12 00:33:45 matt Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.15 2013/04/18 01:33:18 khorben Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.14 2012/12/12 00:33:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.15 2013/04/18 01:33:18 khorben Exp $");
 
 #define _INTR_PRIVATE
 
@@ -187,6 +187,8 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	case IST_LEVEL_HIGH: gpio->gpio_level_hi_mask |= irq_mask; break;
 	case IST_EDGE_FALLING: gpio->gpio_edge_falling_mask |= irq_mask; break;
 	case IST_EDGE_RISING: gpio->gpio_edge_rising_mask |= irq_mask; break;
+	case IST_EDGE_BOTH: gpio->gpio_edge_falling_mask |= irq_mask;
+			    gpio->gpio_edge_rising_mask |= irq_mask; break;
 	}
 	gpio->gpio_edge_mask =
 	    gpio->gpio_edge_rising_mask | gpio->gpio_edge_falling_mask;
