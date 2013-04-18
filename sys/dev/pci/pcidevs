@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1152 2013/04/18 02:54:49 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1153 2013/04/18 12:35:57 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2725,8 +2725,8 @@ product INTEL I350_SGMII 	0x1524	I350 Gigabit Connection
 product INTEL 82801J_D_BM_V	0x1525	82567V LAN Controller
 product INTEL 82580_QUAD_FIBER 	0x1527	82580 quad-1000BaseX Ethernet
 product INTEL I210_T1 		0x1533	I210-T1 Ethernet Server Adapter
-product INTEL I210_COPPER_OEM1	0x1534	I210-T1 Ethernet (COPPER OEM)
-product INTEL I210_COPPER_IT	0x1535	I210-T1 Ethernet (COPPER IT)
+product INTEL I210_COPPER_OEM1	0x1534	I210 Ethernet (COPPER OEM)
+product INTEL I210_COPPER_IT	0x1535	I210 Ethernet (COPPER IT)
 product INTEL I210_FIBER	0x1536	I210 Ethernet (FIBER)
 product INTEL I210_SERDES	0x1537	I210 Ethernet (SERDES)
 product INTEL I210_SGMII	0x1538	I210 Ethernet (SGMII)
