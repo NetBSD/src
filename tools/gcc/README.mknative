@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.14 2012/12/26 19:11:27 martin Exp $
+$NetBSD: README.mknative,v 1.15 2013/04/18 05:20:00 skrll Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -26,7 +26,7 @@ work.
    to build.sh. Use -M instead. (The difference is only a minor layout/
    pathname prefixe in the object directory pointed to bei either option.)
 
-3. In src/tools/gcc, do "nbmake-MACHINE bootstrap-libgcc".
+3. In src/tools/gcc, do "nbmake-MACHINE HAVE_GCC=45 bootstrap-libgcc".
 
    This will create just enough glue in src/external/gpl3/gcc/lib/libgcc/arch
    to make it possible to build, based on the toolchain built in
@@ -54,11 +54,7 @@ work.
 
 8. In each of src/external/lgpl3/gmp/lib/libgmp,
    src/external/lgpl3/mpfr/lib/libmpfr, src/external/lgpl2/mpc/lib/libmpc
-   do "nbmake-MACHINE obj includes LIBISPRIVATE=no", and
-   "nbmake-MACHINE dependall install".
-
-   It is important to have LIBISPRIVATE=no while doing includes as this
-   installs a header file that is not part of standard build.
+   do "nbmake-MACHINE obj dependall".
 
 9. In src/lib, do
    "nbmake-MACHINE dependall install MKGCC=no HAVE_GCC=45".
