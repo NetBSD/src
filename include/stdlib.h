@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.101 2013/04/16 21:44:06 joerg Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.102 2013/04/18 21:54:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -334,6 +334,10 @@ qdiv_t	 qdiv(quad_t, quad_t);
 typedef struct _locale		*locale_t;
 #  define __LOCALE_T_DECLARED
 #  endif
+double		strtod_l(const char * __restrict, char ** __restrict, locale_t);
+float		strtof_l(const char * __restrict, char ** __restrict, locale_t);
+long double	strtold_l(const char * __restrict, char ** __restrict,
+			  locale_t);
 long	 strtol_l(const char * __restrict, char ** __restrict, int, locale_t);
 unsigned long
 	 strtoul_l(const char * __restrict, char ** __restrict, int, locale_t);
