@@ -1,4 +1,4 @@
-/*	$NetBSD: n900_acad.c,v 1.3 2013/04/17 01:10:28 khorben Exp $ */
+/*	$NetBSD: n900_acad.c,v 1.4 2013/04/18 02:08:11 khorben Exp $ */
 
 /*
  * AC adapter driver for the Nokia N900.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: n900_acad.c,v 1.3 2013/04/17 01:10:28 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: n900_acad.c,v 1.4 2013/04/18 02:08:11 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,8 @@ n900acad_attach(device_t parent, device_t self, void *aux)
 	gpio_pin_ctl(sc->sc_gpio, &sc->sc_map, N900ACAD_PIN_INPUT,
 			GPIO_PIN_INPUT);
 
-	sc->sc_intr = intr_establish(N900ACAD_GPIO_BASE + ga->ga_offset,
-			IST_EDGE_BOTH, IPL_VM, n900acad_intr, sc);
+	sc->sc_intr = intr_establish(N900ACAD_GPIO_BASE + ga->ga_offset, IPL_VM,
+			IST_EDGE_RISING, n900acad_intr, sc);
 	if (sc->sc_intr == NULL) {
 		aprint_error(": could not establish interrupt\n");
 		gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
@@ -178,8 +178,10 @@ static void
 n900acad_refresh(struct n900acad_softc *sc)
 {
 	int i;
+	int event;
 
 	i = gpio_pin_read(sc->sc_gpio, &sc->sc_map, N900ACAD_PIN_INPUT);
-	sysmon_pswitch_event(&sc->sc_smpsw, (i == GPIO_PIN_HIGH)
-			? PSWITCH_EVENT_RELEASED : PSWITCH_EVENT_PRESSED);
+	event = (i == GPIO_PIN_HIGH)
+		? PSWITCH_EVENT_RELEASED : PSWITCH_EVENT_PRESSED;
+	sysmon_pswitch_event(&sc->sc_smpsw, event);
 }
