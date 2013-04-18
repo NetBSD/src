@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_c90.c,v 1.8 2010/06/13 04:14:57 tnozaki Exp $	*/
+/*	$NetBSD: multibyte_c90.c,v 1.9 2013/04/18 22:22:21 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002, 2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: multibyte_c90.c,v 1.8 2010/06/13 04:14:57 tnozaki Exp $");
+__RCSID("$NetBSD: multibyte_c90.c,v 1.9 2013/04/18 22:22:21 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,19 +46,42 @@ __RCSID("$NetBSD: multibyte_c90.c,v 1.8 2010/06/13 04:14:57 tnozaki Exp $");
 #include "citrus_ctype.h"
 #include "runetype_local.h"
 
-#define _RUNE_LOCALE() \
-    ((_RuneLocale *)(*_current_locale())->part_impl[(size_t)LC_CTYPE])
-
-#define _CITRUS_CTYPE() \
-    (_RUNE_LOCALE()->rl_citrus_ctype)
+#define _CITRUS_CTYPE(loc) \
+    (((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))->rl_citrus_ctype)
 
 int
-mblen(const char *s, size_t n)
+mblen_l(const char *s, size_t n, locale_t loc)
 {
 	int ret;
 	int err0;
 
-	err0 = _citrus_ctype_mblen(_CITRUS_CTYPE(), s, n, &ret);
+	if (loc == NULL)
+		loc = _C_locale;
+
+	err0 = _citrus_ctype_mblen(_CITRUS_CTYPE(loc), s, n, &ret);
+	if (err0)
+		errno = err0;
+
+	return ret;
+}
+
+
+int
+mblen(const char *s, size_t n)
+{
+	return mblen_l(s, n, *_current_locale());
+}
+
+size_t
+mbstowcs_l(wchar_t *pwcs, const char *s, size_t n, locale_t loc)
+{
+	size_t ret;
+	int err0;
+
+	if (loc == NULL)
+		loc = _C_locale;
+
+	err0 = _citrus_ctype_mbstowcs(_CITRUS_CTYPE(loc), pwcs, s, n, &ret);
 	if (err0)
 		errno = err0;
 
@@ -68,10 +91,19 @@ mblen(const char *s, size_t n)
 size_t
 mbstowcs(wchar_t *pwcs, const char *s, size_t n)
 {
-	size_t ret;
+	return mbstowcs_l(pwcs, s, n, *_current_locale());
+}
+
+int
+mbtowc_l(wchar_t *pw, const char *s, size_t n, locale_t loc)
+{
+	int ret;
 	int err0;
 
-	err0 = _citrus_ctype_mbstowcs(_CITRUS_CTYPE(), pwcs, s, n, &ret);
+	if (loc == NULL)
+		loc = _C_locale;
+
+	err0 = _citrus_ctype_mbtowc(_CITRUS_CTYPE(loc), pw, s, n, &ret);
 	if (err0)
 		errno = err0;
 
@@ -81,10 +113,19 @@ mbstowcs(wchar_t *pwcs, const char *s, size_t n)
 int
 mbtowc(wchar_t *pw, const char *s, size_t n)
 {
-	int ret;
+	return mbtowc_l(pw, s, n, *_current_locale());
+}
+
+size_t
+wcstombs_l(char *s, const wchar_t *wcs, size_t n, locale_t loc)
+{
+	size_t ret;
 	int err0;
 
-	err0 = _citrus_ctype_mbtowc(_CITRUS_CTYPE(), pw, s, n, &ret);
+	if (loc == NULL)
+		loc = _C_locale;
+
+	err0 = _citrus_ctype_wcstombs(_CITRUS_CTYPE(loc), s, wcs, n, &ret);
 	if (err0)
 		errno = err0;
 
@@ -94,10 +135,19 @@ mbtowc(wchar_t *pw, const char *s, size_t n)
 size_t
 wcstombs(char *s, const wchar_t *wcs, size_t n)
 {
-	size_t ret;
+	return wcstombs_l(s, wcs, n, *_current_locale());
+}
+
+int
+wctomb_l(char *s, wchar_t wc, locale_t loc)
+{
+	int ret;
 	int err0;
 
-	err0 = _citrus_ctype_wcstombs(_CITRUS_CTYPE(), s, wcs, n, &ret);
+	if (loc == NULL)
+		loc = _C_locale;
+
+	err0 = _citrus_ctype_wctomb(_CITRUS_CTYPE(loc), s, wc, &ret);
 	if (err0)
 		errno = err0;
 
@@ -107,12 +157,5 @@ wcstombs(char *s, const wchar_t *wcs, size_t n)
 int
 wctomb(char *s, wchar_t wc)
 {
-	int ret;
-	int err0;
-
-	err0 = _citrus_ctype_wctomb(_CITRUS_CTYPE(), s, wc, &ret);
-	if (err0)
-		errno = err0;
-
-	return ret;
+	return wctomb_l(s, wc, *_current_locale());
 }
