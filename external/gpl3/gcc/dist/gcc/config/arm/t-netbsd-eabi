@@ -17,22 +17,20 @@
 # <http://www.gnu.org/licenses/>.
 
 # Use a version of div0 which raises SIGFPE, and a special __clear_cache.
-#LIB1ASMFUNCS += \
-#	_ashldi3 _ashrdi3 _divdi3 _floatdidf _udivmoddi4 _umoddi3 \
-#	_udivdi3 _lshrdi3 _moddi3 _muldi3 _negdi2 _cmpdi2 \
-#	_fixdfdi _fixsfdi _fixunsdfdi _fixunssfdi _floatdisf \
-#	_negdf2 _addsubdf3 _muldivdf3 _cmpdf2 _unorddf2 _fixdfsi _fixunsdfsi \
-#	_truncdfsf2 _negsf2 _addsubsf3 _muldivsf3 _cmpsf2 _unordsf2 \
-#	_fixsfsi _fixunssfsi
-#LIB1ASMFUNCS += \
-#	_floatundisf
 
-# Add the BPABI C functions.
-LIB2FUNCS_EXTRA = $(srcdir)/config/arm/bpabi-netbsd.c \
-		  $(srcdir)/config/arm/unaligned-funcs.c
+LIB1ASMFUNCS += \
+	_dvmd_tls _bb_init_func _call_via_rX _interwork_call_via_rX \
+	_clzsi2 _clzdi2
 
-# we don't have this
-LIB2FUNCS_STATIC_EXTRA = 
+# Add the BPABI C functions that aren't already in libc
+LIB2FUNCS_EXTRA = $(srcdir)/config/arm/unaligned-funcs.c
 
-# to make compat easier.
-UNWIND_H = $(srcdir)/config/arm/unwind-arm.h 
+LIB2FUNCS_STATIC_EXTRA =
+
+UNWIND_H = $(srcdir)/config/arm/unwind-arm.h
+LIB2ADDEH = $(srcdir)/config/arm/unwind-arm.c \
+  $(srcdir)/config/arm/libunwind.S \
+  $(srcdir)/config/arm/pr-support.c $(srcdir)/unwind-c.c
+LIB2ADDEHDEP = $(UNWIND_H) $(srcdir)/config/$(LIB1ASMSRC)
+
+SHLIB_MAPFILES += $(srcdir)/config/arm/libgcc-bpabi.ver
