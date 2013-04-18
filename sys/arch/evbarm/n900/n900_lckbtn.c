@@ -1,4 +1,4 @@
-/*	$NetBSD: n900_lckbtn.c,v 1.1 2013/04/17 01:06:14 khorben Exp $ */
+/*	$NetBSD: n900_lckbtn.c,v 1.2 2013/04/18 02:08:11 khorben Exp $ */
 
 /*
  * Lock button driver for the Nokia N900.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: n900_lckbtn.c,v 1.1 2013/04/17 01:06:14 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: n900_lckbtn.c,v 1.2 2013/04/18 02:08:11 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ n900lckbtn_attach(device_t parent, device_t self, void *aux)
 			GPIO_PIN_INPUT);
 
 	sc->sc_intr = intr_establish(N900LCKBTN_GPIO_BASE + ga->ga_offset,
-			IST_EDGE_BOTH, IPL_VM, n900lckbtn_intr, sc);
+			IPL_VM, IST_EDGE_BOTH, n900lckbtn_intr, sc);
 	if (sc->sc_intr == NULL) {
 		aprint_error(": could not establish interrupt\n");
 		gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
