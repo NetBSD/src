@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.14 2013/02/12 03:11:43 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.15 2013/04/18 12:42:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -94,6 +94,7 @@
 #define WM_F_HAS_MANAGE		0x00080000
 #define WM_F_WOL		0x00100000
 #define WM_F_EEE		0x00200000  /* Energy Efficiency Ethernet */
+#define	WM_F_EEPROM_FLASH_HW	0x00400000	/* EEPROM is FLASH */
 
 typedef enum {
 	WM_T_unknown		= 0,
@@ -120,12 +121,17 @@ typedef enum {
 	WM_T_82580,			/* i82580 */
 	WM_T_82580ER,			/* i82580ER */
 	WM_T_I350,			/* I350 */
+	WM_T_I210,			/* I210 */
+	WM_T_I211,			/* I211 */
 	WM_T_80003,			/* i80003 */
 	WM_T_ICH8,			/* ICH8 LAN */
 	WM_T_ICH9,			/* ICH9 LAN */
 	WM_T_ICH10,			/* ICH10 LAN */
 	WM_T_PCH,			/* PCH LAN */
 	WM_T_PCH2,			/* PCH2 LAN */
+#if 0
+	WM_T_PCH_LPT,			/* PCH LPT LAN (I21[78]) */
+#endif
 } wm_chip_type;
 
 typedef enum {
