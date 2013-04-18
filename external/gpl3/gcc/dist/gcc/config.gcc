@@ -731,7 +731,7 @@ arm*-*-netbsdelf*)
 	arm*-*-netbsdelf-*eabi*)
 	    tm_file="$tm_file arm/bpabi.h arm/netbsd-elf.h arm/netbsd-eabi.h"
 	    #tmake_file="$tmake_file arm/t-arm-elf"
-	    tmake_file="$tmake_file arm/t-bpabi"
+	    #tmake_file="$tmake_file arm/t-bpabi"
 	    tmake_file="$tmake_file arm/t-netbsd-eabi"
   	    # The BPABI long long divmod functions return a 128-bit value in
 	    # registers r0-r3.  Correctly modeling that requires the use of
