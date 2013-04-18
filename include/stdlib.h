@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.102 2013/04/18 21:54:10 joerg Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.103 2013/04/18 22:22:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -351,7 +351,17 @@ unsigned long long int
 #  if defined(_NETBSD_SOURCE)
 quad_t	 strtoq_l(const char * __restrict, char ** __restrict, int, locale_t);
 u_quad_t strtouq_l(const char * __restrict, char ** __restrict, int, locale_t);
-#  endif
+
+int	 mblen_l(const char *, size_t, locale_t);
+size_t	 mbstowcs_l(wchar_t * __restrict, const char * __restrict, size_t,
+		    locale_t);
+int	 wctomb_l(char *, wchar_t, locale_t);
+int	 mbtowc_l(wchar_t * __restrict, const char * __restrict, size_t,
+	          locale_t);
+size_t	 wcstombs_l(char * __restrict, const wchar_t * __restrict, size_t,
+		    locale_t);
+
+#  endif /* _NETBSD_SOURCE */
 #endif /* _POSIX_C_SOURCE >= 200809 || _NETBSD_SOURCE */
 
 __END_DECLS
