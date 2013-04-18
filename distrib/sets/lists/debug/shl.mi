@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.23 2013/04/11 17:43:19 christos Exp $
+# $NetBSD: shl.mi,v 1.24 2013/04/18 21:53:55 rjs Exp $
 ./usr/libdata/debug/lib/libc.so.12.185.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.1.debug		comp-sys-debug	debug
@@ -16,7 +16,7 @@
 ./usr/libdata/debug/lib/libppath.so.0.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libprop.so.1.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libradius.so.4.0.debug		comp-sys-debug	debug
-./usr/libdata/debug/lib/librumpclient.so.0.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/lib/librumpclient.so.0.0.debug	comp-sys-debug	debug,rump
 ./usr/libdata/debug/lib/libterminfo.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libutil.so.7.21.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libz.so.1.0.debug		comp-sys-debug	debug

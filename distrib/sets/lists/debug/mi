@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.18 2013/04/11 17:43:19 christos Exp $
+# $NetBSD: mi,v 1.19 2013/04/18 21:53:55 rjs Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -1809,8 +1809,8 @@
 ./usr/libdata/debug/usr/tests/net/bpf/t_div-by-zero.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpfilter/t_bpfilter.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/carp/t_basic.debug		tests-net-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/net/fdpass/fdpass32.debug		tests-net-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/net/fdpass/fdpass64.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/fdpass/fdpass32.debug		tests-net-debug		debug,atf
+./usr/libdata/debug/usr/tests/net/fdpass/fdpass64.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/icmp/t_forward.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/icmp/t_ping.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/if/t_compat.debug		tests-net-debug		debug,atf,rump
