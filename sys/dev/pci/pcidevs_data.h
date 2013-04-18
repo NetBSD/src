@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1143 2013/04/18 02:55:19 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1144 2013/04/18 12:36:26 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1152 2013/04/18 02:54:49 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1153 2013/04/18 12:35:57 msaitoh Exp
  */
 
 /*
@@ -4226,15 +4226,15 @@ static const uint16_t pci_products[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_T1, 
 	    18204, 5487, 5995, 5679, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_COPPER_OEM1, 
-	    18204, 5487, 18212, 18220, 0,
+	    18212, 5487, 18217, 18225, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_COPPER_IT, 
-	    18204, 5487, 18212, 18225, 0,
+	    18212, 5487, 18217, 18230, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_FIBER, 
-	    18229, 5487, 18234, 0,
+	    18212, 5487, 18234, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_SERDES, 
-	    18229, 5487, 17125, 0,
+	    18212, 5487, 17125, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_SGMII, 
-	    18229, 5487, 18138, 0,
+	    18212, 5487, 18138, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I211_COPPER, 
 	    18242, 5487, 18247, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I217_LM, 
@@ -11487,11 +11487,11 @@ static const char pci_words[] = { "."
 	    "Backplane\0" /* 1 refs @ 18172 */
 	    "82567V\0" /* 1 refs @ 18182 */
 	    "quad-1000BaseX\0" /* 1 refs @ 18189 */
-	    "I210-T1\0" /* 3 refs @ 18204 */
-	    "(COPPER\0" /* 2 refs @ 18212 */
-	    "OEM)\0" /* 1 refs @ 18220 */
-	    "IT)\0" /* 1 refs @ 18225 */
-	    "I210\0" /* 3 refs @ 18229 */
+	    "I210-T1\0" /* 1 refs @ 18204 */
+	    "I210\0" /* 5 refs @ 18212 */
+	    "(COPPER\0" /* 2 refs @ 18217 */
+	    "OEM)\0" /* 1 refs @ 18225 */
+	    "IT)\0" /* 1 refs @ 18230 */
 	    "(FIBER)\0" /* 1 refs @ 18234 */
 	    "I211\0" /* 1 refs @ 18242 */
 	    "(COPPER)\0" /* 1 refs @ 18247 */
