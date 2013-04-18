@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.159 2013/04/18 21:54:11 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.160 2013/04/18 22:23:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -707,8 +707,11 @@
 #define wcsdup			_wcsdup
 #define wcsncasecmp		_wcsncasecmp
 #define wcstof			_wcstof
+#define wcstof_l		_wcstof_l
 #define wcstod			_wcstod
+#define wcstod_l		_wcstod_l
 #define wcstold			_wcstold
+#define wcstold_l		_wcstold_l
 #define wcwidth			_wcwidth
 #define wcwidth_l		_wcwidth_l
 #define xdr_accepted_reply	_xdr_accepted_reply
