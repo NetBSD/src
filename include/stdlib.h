@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.103 2013/04/18 22:22:20 joerg Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.104 2013/04/19 14:35:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -352,6 +352,8 @@ unsigned long long int
 quad_t	 strtoq_l(const char * __restrict, char ** __restrict, int, locale_t);
 u_quad_t strtouq_l(const char * __restrict, char ** __restrict, int, locale_t);
 
+size_t	_mb_cur_max_l(locale_t);
+#define	MB_CUR_MAX_L(loc)	_mb_cur_max_l(loc)
 int	 mblen_l(const char *, size_t, locale_t);
 size_t	 mbstowcs_l(wchar_t * __restrict, const char * __restrict, size_t,
 		    locale_t);
