@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.10 2013/04/18 13:40:25 isaki Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.11 2013/04/19 13:31:11 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,12 +57,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.10 2013/04/18 13:40:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.11 2013/04/19 13:31:11 isaki Exp $");
 
 #include "fpu_emulate.h"
-
-static inline struct fpn *fpu_cos_halfpi(struct fpemu *);
-static inline struct fpn *fpu_sin_halfpi(struct fpemu *);
 
 struct fpn *
 fpu_acos(struct fpemu *fe)
@@ -85,127 +82,23 @@ fpu_atan(struct fpemu *fe)
 	return &fe->fe_f2;
 }
 
-/*
- * taylor expansion used by sin(), cos(), sinh(), cosh().
- * hyperb is for sinh(), cosh().
- */
-struct fpn *
-fpu_sincos_taylor(struct fpemu *fe, struct fpn *s0, uint32_t f, int hyperb)
-{
-	struct fpn res;
-	struct fpn x2;
-	struct fpn *s1;
-	struct fpn *r;
-	int sign;
-	uint32_t k;
-
-	/* x2 := x * x */
-	CPYFPN(&fe->fe_f1, &fe->fe_f2);
-	r = fpu_mul(fe);
-	CPYFPN(&x2, r);
-
-	/* res := s0 */
-	CPYFPN(&res, s0);
-
-	sign = 1;	/* sign := (-1)^n */
-
-	for (;;) {
-		/* (f1 :=) s0 * x^2 */
-		CPYFPN(&fe->fe_f1, s0);
-		CPYFPN(&fe->fe_f2, &x2);
-		r = fpu_mul(fe);
-		CPYFPN(&fe->fe_f1, r);
-
-		/*
-		 * for sin(),  s1 := s0 * x^2 / (2n+1)2n
-		 * for cos(),  s1 := s0 * x^2 / 2n(2n-1)
-		 */
-		k = f * (f + 1);
-		fpu_explode(fe, &fe->fe_f2, FTYPE_LNG, &k);
-		s1 = fpu_div(fe);
-
-		/* break if s1 is enough small */
-		if (ISZERO(s1))
-			break;
-		if (res.fp_exp - s1->fp_exp >= FP_NMANT)
-			break;
-
-		/* s0 := s1 for next loop */
-		CPYFPN(s0, s1);
-
-		CPYFPN(&fe->fe_f2, s1);
-		if (!hyperb) {
-			/* (-1)^n */
-			fe->fe_f2.fp_sign = sign;
-		}
-
-		/* res += s1 */
-		CPYFPN(&fe->fe_f1, &res);
-		r = fpu_add(fe);
-		CPYFPN(&res, r);
-
-		f += 2;
-		sign ^= 1;
-	}
-
-	CPYFPN(&fe->fe_f2, &res);
-	return &fe->fe_f2;
-}
 
 /*
- *           inf   (-1)^n    2n
- * cos(x) = \sum { ------ * x   }
- *           n=0     2n!
- *
- *              x^2   x^4   x^6
- *        = 1 - --- + --- - --- + ...
- *               2!    4!    6!
- *
- *        = s0 - s1 + s2  - s3  + ...
- *
- *               x*x           x*x           x*x
- * s0 = 1,  s1 = ---*s0,  s2 = ---*s1,  s3 = ---*s2, ...
- *               1*2           3*4           5*6
- *
- * here 0 <= x < pi/2
+ * fe_f1 := sin(in)
+ * fe_f2 := cos(in)
  */
-static inline struct fpn *
-fpu_cos_halfpi(struct fpemu *fe)
+static void
+__fpu_sincos_cordic(struct fpemu *fe, const struct fpn *in)
 {
-	struct fpn s0;
+	struct fpn a;
+	struct fpn v;
 
-	/* s0 := 1 */
-	fpu_const(&s0, FPU_CONST_1);
-
-	return fpu_sincos_taylor(fe, &s0, 1, 0);
-}
-
-/*
- *          inf    (-1)^n     2n+1
- * sin(x) = \sum { ------- * x     }
- *          n=0    (2n+1)!
- *
- *              x^3   x^5   x^7
- *        = x - --- + --- - --- + ...
- *               3!    5!    7!
- *
- *        = s0 - s1 + s2  - s3  + ...
- *
- *               x*x           x*x           x*x
- * s0 = x,  s1 = ---*s0,  s2 = ---*s1,  s3 = ---*s2, ...
- *               2*3           4*5           6*7
- *
- * here 0 <= x < pi/2
- */
-static inline struct fpn *
-fpu_sin_halfpi(struct fpemu *fe)
-{
-	struct fpn s0;
-
-	/* s0 := x */
-	CPYFPN(&s0, &fe->fe_f2);
-
-	return fpu_sincos_taylor(fe, &s0, 2, 0);
+	CPYFPN(&a, in);
+	fpu_const(&fe->fe_f1, FPU_CONST_0);
+	CPYFPN(&fe->fe_f2, &fpu_cordic_inv_gain1);
+	fpu_const(&v, FPU_CONST_1);
+	v.fp_sign = 1;
+	fpu_cordit1(fe, &fe->fe_f2, &fe->fe_f1, &a, &v);
 }
 
 /*
@@ -298,18 +191,15 @@ fpu_cos(struct fpemu *fe)
 	fe->fe_f2.fp_sign = 1;
 	r = fpu_add(fe);
 	if (r->fp_sign == 0) {
-		CPYFPN(&fe->fe_f2, r);
-		r = fpu_sin_halfpi(fe);
+		__fpu_sincos_cordic(fe, r);
+		r = &fe->fe_f1;
 		sign ^= 1;
 	} else {
-		CPYFPN(&fe->fe_f2, &x);
-		r = fpu_cos_halfpi(fe);
+		__fpu_sincos_cordic(fe, &x);
+		r = &fe->fe_f2;
 	}
-
-	CPYFPN(&fe->fe_f2, r);
-	fe->fe_f2.fp_sign = sign;
-
-	return &fe->fe_f2;
+	r->fp_sign = sign;
+	return r;
 }
 
 /*
@@ -402,17 +292,14 @@ fpu_sin(struct fpemu *fe)
 	fe->fe_f2.fp_sign = 1;
 	r = fpu_add(fe);
 	if (r->fp_sign == 0) {
-		CPYFPN(&fe->fe_f2, r);
-		r = fpu_cos_halfpi(fe);
+		__fpu_sincos_cordic(fe, r);
+		r = &fe->fe_f2;
 	} else {
-		CPYFPN(&fe->fe_f2, &x);
-		r = fpu_sin_halfpi(fe);
+		__fpu_sincos_cordic(fe, &x);
+		r = &fe->fe_f1;
 	}
-
-	CPYFPN(&fe->fe_f2, r);
-	fe->fe_f2.fp_sign = sign;
-
-	return &fe->fe_f2;
+	r->fp_sign = sign;
+	return r;
 }
 
 /*
@@ -453,17 +340,11 @@ fpu_tan(struct fpemu *fe)
 struct fpn *
 fpu_sincos(struct fpemu *fe, int regc)
 {
-	struct fpn x;
-	struct fpn *r;
-
-	CPYFPN(&x, &fe->fe_f2);
+	__fpu_sincos_cordic(fe, &fe->fe_f2);
 
 	/* cos(x) */
-	r = fpu_cos(fe);
-	fpu_implode(fe, r, FTYPE_EXT, &fe->fe_fpframe->fpf_regs[regc]);
+	fpu_implode(fe, &fe->fe_f2, FTYPE_EXT, &fe->fe_fpframe->fpf_regs[regc]);
 
 	/* sin(x) */
-	CPYFPN(&fe->fe_f2, &x);
-	r = fpu_sin(fe);
-	return r;
+	return &fe->fe_f1;
 }
