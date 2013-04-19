@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.36 2013/04/19 18:46:50 christos Exp $
+.\" $NetBSD: lint.1,v 1.37 2013/04/19 18:51:14 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -446,7 +446,7 @@ At the beginning of a file, mark all functions and variables defined
 in this file as
 .Em used .
 Also shut off complaints about unused function arguments.
-.It Li /* LINTED Ns Ar n Li Oo Ar comment Oc Li */ No or Li /* NOSTRICT Oo Ar comment Oc Li */
+.It Li /* LINTED Ns Ar n Li Oo Ar comment Oc Li */ No or Li /* NOSTRICT Ns Ar n Li Oo Ar comment Oc Li */
 Suppresses any intra-file warning except those dealing with
 unused variables or functions.
 This directive should be placed
