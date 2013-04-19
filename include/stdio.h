@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.84 2013/04/19 15:22:24 joerg Exp $	*/
+/*	$NetBSD: stdio.h,v 1.85 2013/04/19 23:32:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -559,6 +559,21 @@ int	 sprintf_l(char * __restrict, locale_t, const char * __restrict, ...)
 int	 vsprintf_l(char * __restrict, locale_t, const char * __restrict,
 		    __va_list) __printflike(3, 0);
 #endif
+
+int	 fscanf_l(FILE * __restrict, locale_t, const char * __restrict, ...)
+    __scanflike(3, 4);
+int	 scanf_l(locale_t, const char * __restrict, ...)
+    __scanflike(2, 3);
+int	 sscanf_l(const char * __restrict, locale_t,
+    const char * __restrict, ...) __scanflike(3, 4);
+int	 vscanf_l(locale_t, const char * __restrict, __va_list)
+    __scanflike(2, 0);
+int	 vscanf_l(locale_t, const char * __restrict, __va_list)
+    __scanflike(2, 0);
+int	 vfscanf_l(FILE * __restrict, locale_t, const char * __restrict,
+    __va_list) __scanflike(3, 0);
+int	 vsscanf_l(const char * __restrict, locale_t, const char * __restrict,
+    __va_list) __scanflike(3, 0);
 #endif
 
 #if _FORTIFY_SOURCE > 0

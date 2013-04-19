@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.35 2013/04/19 15:22:24 joerg Exp $	*/
+/*	$NetBSD: wchar.h,v 1.36 2013/04/19 23:32:16 joerg Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -257,6 +257,16 @@ int vswprintf_l(wchar_t * __restrict, size_t, locale_t,
     const wchar_t * __restrict, __va_list);
 int vwprintf_l(locale_t, const wchar_t * __restrict, __va_list);
 int wprintf_l(locale_t, const wchar_t * __restrict, ...);
+
+int fwscanf_l(FILE * __restrict, locale_t, const wchar_t * __restrict, ...);
+int swscanf_l(const wchar_t * __restrict, locale_t, const wchar_t *
+    __restrict, ...);
+int wscanf_l(locale_t, const wchar_t * __restrict, ...);
+int vfwscanf_l(FILE * __restrict, locale_t, const wchar_t * __restrict,
+    __va_list);
+int vswscanf_l(const wchar_t * __restrict, locale_t, const wchar_t * __restrict,
+    __va_list);
+int vwscanf_l(locale_t, const wchar_t * __restrict, __va_list);
 #endif /* _NETBSD_SOURCE */
 
 #endif /* !_WCHAR_H_ */
