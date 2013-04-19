@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.35 2011/04/29 09:23:29 wiz Exp $
+.\" $NetBSD: lint.1,v 1.36 2013/04/19 18:46:50 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 2, 2008
+.Dd April 19, 2013
 .Dt LINT 1
 .Os
 .Sh NAME
@@ -446,11 +446,15 @@ At the beginning of a file, mark all functions and variables defined
 in this file as
 .Em used .
 Also shut off complaints about unused function arguments.
-.It Li /* LINTED Oo Ar comment Oc Li */ No or Li /* NOSTRICT Oo Ar comment Oc Li */
+.It Li /* LINTED Ns Ar n Li Oo Ar comment Oc Li */ No or Li /* NOSTRICT Oo Ar comment Oc Li */
 Suppresses any intra-file warning except those dealing with
 unused variables or functions.
 This directive should be placed
 on the line immediately preceding where the lint warning occurred.
+The optional numeric argument suppresses the specific numbered 
+message instead of every message.
+A list of messages and ids can be found in
+.Xr lint 7 .
 .It Li /* LONGLONG */
 Suppress complaints about use of long long integer types.
 .It Li /* NOTREACHED */
