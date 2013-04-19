@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.26 2013/02/17 01:26:19 christos Exp $ */
+/* $NetBSD: lint1.h,v 1.27 2013/04/19 17:43:05 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -49,6 +49,10 @@
 #endif
 #define WORST_ALIGN(x) (((x) + AVAL) & ~AVAL)
 #endif
+
+#define LWARN_BAD	-3
+#define LWARN_ALL	-2
+#define LWARN_NONE	-1
 
 /*
  * Describes the position of a declaration or anything else.
