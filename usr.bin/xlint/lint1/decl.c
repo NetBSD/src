@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.56 2013/04/19 17:43:05 christos Exp $ */
+/* $NetBSD: decl.c,v 1.57 2013/04/19 18:51:14 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.56 2013/04/19 17:43:05 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.57 2013/04/19 18:51:14 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -425,7 +425,7 @@ tdeferr(type_t *td, tspec_t t)
 			return (td);
 		}
 		break;
-		/* LINTED (enumeration values not handled in switch) */
+		/* LINTED206: (enumeration values not handled in switch) */
 	case NOTSPEC:
 	case USHORT:
 	case UCHAR:
@@ -2878,7 +2878,7 @@ chkusage(dinfo_t *di)
 	sym_t	*sym;
 	int	mklwarn;
 
-	/* for this warnings LINTED has no effect */
+	/* for this warning LINTED has no effect */
 	mklwarn = lwarn;
 	lwarn = LWARN_ALL;
 
