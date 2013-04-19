@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_amd1.c,v 1.10 2013/04/18 23:24:27 joerg Exp $	*/
+/*	$NetBSD: multibyte_amd1.c,v 1.11 2013/04/19 14:35:33 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002, 2008 Citrus Project,
@@ -28,13 +28,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: multibyte_amd1.c,v 1.10 2013/04/18 23:24:27 joerg Exp $");
+__RCSID("$NetBSD: multibyte_amd1.c,v 1.11 2013/04/19 14:35:33 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <assert.h>
 #include <errno.h>
 #include <langinfo.h>
+#include <stdlib.h>
 #define __SETLOCALE_SOURCE__
 #include <locale.h>
 #include <wchar.h>
@@ -254,4 +255,13 @@ int
 wctob(wint_t wc)
 {
 	return wctob_l(wc, *_current_locale());
+}
+
+size_t
+_mb_cur_max_l(locale_t loc)
+{
+	if (loc == NULL)
+		loc = _C_locale;
+
+	return _citrus_ctype_get_mb_cur_max(_CITRUS_CTYPE(loc));
 }
