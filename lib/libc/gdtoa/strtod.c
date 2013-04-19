@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.12 2013/04/18 21:54:10 joerg Exp $ */
+/* $NetBSD: strtod.c,v 1.13 2013/04/19 10:41:53 joerg Exp $ */
 
 /****************************************************************
 
@@ -175,7 +175,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 #else
 #define fpi1 fpi
 #endif
-			switch((i = gethex(&s, &fpi1, &expt, &bb, sign)) & STRTOG_Retmask) {
+			switch((i = gethex(&s, &fpi1, &expt, &bb, sign, loc)) & STRTOG_Retmask) {
 			  case STRTOG_NoNumber:
 				s = s00;
 				sign = 0;
