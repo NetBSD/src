@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.162 2013/04/19 15:22:24 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.163 2013/04/19 23:28:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -606,6 +606,7 @@
 #define srandom			_srandom
 #define statvfs(a, b)		_statvfs(a, b)
 #define strcasecmp		_strcasecmp
+#define strcoll_l		_strcoll_l
 #define strdup			_strdup
 #define stresep			_stresep
 #define strftime_z		_strftime_z
@@ -619,6 +620,7 @@
 #define strtok_r		_strtok_r
 #define strnunvisx		_strnunvisx
 #define strvisx			_strvisx
+#define strxfrm_l		_strxfrm_l
 #define svc_auth_reg		_svc_auth_reg
 #define svc_create		_svc_create
 #define svc_dg_create		_svc_dg_create
