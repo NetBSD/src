@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.5 2005/10/16 17:26:24 christos Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.6 2013/04/19 16:50:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -56,6 +56,7 @@ ENTRY(__sigsetjmp14)
 ENTRY(__siglongjmp14)
 	ldr	r2, .L_setjmp_magic
 	ldr	r3, [r0]
+	bic	r3, r3, #(_JB_MAGIC_SETJMP ^ _JB_MAGIC_SETJMP_VFP)
 	teq	r2, r3
 	beq	PIC_SYM(_C_LABEL(_longjmp), PLT)
 	b	PIC_SYM(_C_LABEL(__longjmp14), PLT)
