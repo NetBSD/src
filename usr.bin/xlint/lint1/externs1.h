@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.30 2011/02/05 17:14:14 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.31 2013/04/19 17:43:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -228,7 +228,7 @@ extern	int	scflstrg;
 extern	pos_t	scflpos;
 extern	int	ccflg;
 extern	int	llibflg;
-extern	int	nowarn;
+extern	int	lwarn;
 extern	int	bitfieldtype_ok;
 extern	int	plibflg;
 extern	int	quadflg;
