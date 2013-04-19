@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.36 2013/04/19 23:32:16 joerg Exp $	*/
+/*	$NetBSD: wchar.h,v 1.37 2013/04/19 23:45:15 joerg Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -211,6 +211,7 @@ __END_DECLS
 typedef struct _locale		*locale_t;
 #  define __LOCALE_T_DECLARED
 #  endif
+__BEGIN_DECLS
 int	wcscoll_l(const wchar_t *, const wchar_t *, locale_t);
 size_t	wcsxfrm_l(wchar_t *, const wchar_t *, size_t, locale_t);
 int wcsncasecmp_l(const wchar_t *, const wchar_t *, size_t, locale_t);
@@ -232,9 +233,11 @@ unsigned long long int wcstoull_l(const wchar_t * __restrict,
 				  wchar_t ** __restrict, int, locale_t);
 int	wcwidth_l(wchar_t, locale_t);
 int	wcswidth_l(const wchar_t *, size_t, locale_t);
+__END_DECLS
 #endif /* _POSIX_C_SOURCE || _NETBSD_SOURCE */
 
 #if defined(_NETBSD_SOURCE)
+__BEGIN_DECLS
 wint_t	btowc_l(int, locale_t);
 size_t	mbrlen_l(const char * __restrict, size_t, mbstate_t * __restrict,
 		locale_t);
@@ -267,6 +270,7 @@ int vfwscanf_l(FILE * __restrict, locale_t, const wchar_t * __restrict,
 int vswscanf_l(const wchar_t * __restrict, locale_t, const wchar_t * __restrict,
     __va_list);
 int vwscanf_l(locale_t, const wchar_t * __restrict, __va_list);
+__END_DECLS
 #endif /* _NETBSD_SOURCE */
 
 #endif /* !_WCHAR_H_ */
