@@ -1,4 +1,4 @@
-/* $NetBSD: strtodg.c,v 1.11 2013/04/18 21:54:10 joerg Exp $ */
+/* $NetBSD: strtodg.c,v 1.12 2013/04/19 10:41:53 joerg Exp $ */
 
 /****************************************************************
 
@@ -377,7 +377,7 @@ strtodg(CONST char *s00, char **se, CONST FPI *fpi, Long *expt, ULong *bits,
 		switch(s[1]) {
 		  case 'x':
 		  case 'X':
-			irv = gethex(&s, fpi, expt, &rvb, sign);
+			irv = gethex(&s, fpi, expt, &rvb, sign, loc);
 			if (irv == STRTOG_NoNumber) {
 				s = s00;
 				sign = 0;
