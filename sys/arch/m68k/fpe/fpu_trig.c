@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.11 2013/04/19 13:31:11 isaki Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.12 2013/04/19 13:57:52 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,28 +57,120 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.11 2013/04/19 13:31:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.12 2013/04/19 13:57:52 isaki Exp $");
 
 #include "fpu_emulate.h"
 
+/*
+ * arccos(x) = pi/2 - arcsin(x)
+ */
 struct fpn *
 fpu_acos(struct fpemu *fe)
 {
-	/* stub */
-	return &fe->fe_f2;
+	struct fpn *r;
+
+	if (ISNAN(&fe->fe_f2))
+		return &fe->fe_f2;
+	if (ISINF(&fe->fe_f2))
+		return fpu_newnan(fe);
+
+	r = fpu_asin(fe);
+	CPYFPN(&fe->fe_f2, r);
+
+	/* pi/2 - asin(x) */
+	fpu_const(&fe->fe_f1, FPU_CONST_PI);
+	fe->fe_f1.fp_exp--;
+	fe->fe_f2.fp_sign = !fe->fe_f2.fp_sign;
+	r = fpu_add(fe);
+
+	return r;
 }
 
+/*
+ *                          x
+ * arcsin(x) = arctan(---------------)
+ *                     sqrt(1 - x^2) 
+ */
 struct fpn *
 fpu_asin(struct fpemu *fe)
 {
-	/* stub */
-	return &fe->fe_f2;
+	struct fpn x;
+	struct fpn *r;
+
+	if (ISNAN(&fe->fe_f2))
+		return &fe->fe_f2;
+	if (ISZERO(&fe->fe_f2))
+		return &fe->fe_f2;
+
+	if (ISINF(&fe->fe_f2))
+		return fpu_newnan(fe);
+
+	CPYFPN(&x, &fe->fe_f2);
+
+	/* x^2 */
+	CPYFPN(&fe->fe_f1, &fe->fe_f2);
+	r = fpu_mul(fe);
+
+	/* 1 - x^2 */
+	CPYFPN(&fe->fe_f2, r);
+	fe->fe_f2.fp_sign = 1;
+	fpu_const(&fe->fe_f1, FPU_CONST_1);
+	r = fpu_add(fe);
+
+	/* sqrt(1-x^2) */
+	CPYFPN(&fe->fe_f2, r);
+	r = fpu_sqrt(fe);
+
+	/* x/sqrt */
+	CPYFPN(&fe->fe_f2, r);
+	CPYFPN(&fe->fe_f1, &x);
+	r = fpu_div(fe);
+
+	/* arctan */
+	CPYFPN(&fe->fe_f2, r);
+	return fpu_atan(fe);
 }
 
+/*
+ * arctan(x):
+ *
+ *	if (x < 0) {
+ *		x = abs(x);
+ *		sign = 1;
+ *	}
+ *	y = arctan(x);
+ *	if (sign) {
+ *		y = -y;
+ *	}
+ */
 struct fpn *
 fpu_atan(struct fpemu *fe)
 {
-	/* stub */
+	struct fpn a;
+	struct fpn x;
+	struct fpn v;
+
+	if (ISNAN(&fe->fe_f2))
+		return &fe->fe_f2;
+	if (ISZERO(&fe->fe_f2))
+		return &fe->fe_f2;
+
+	CPYFPN(&a, &fe->fe_f2);
+
+	if (ISINF(&fe->fe_f2)) {
+		/* f2 <- pi/2 */
+		fpu_const(&fe->fe_f2, FPU_CONST_PI);
+		fe->fe_f2.fp_exp--;
+
+		fe->fe_f2.fp_sign = a.fp_sign;
+		return &fe->fe_f2;
+	}
+
+	fpu_const(&x, FPU_CONST_1);
+	fpu_const(&fe->fe_f2, FPU_CONST_0);
+	CPYFPN(&v, &fe->fe_f2);
+	fpu_cordit1(fe, &x, &a, &fe->fe_f2, &v);
+
 	return &fe->fe_f2;
 }
 
