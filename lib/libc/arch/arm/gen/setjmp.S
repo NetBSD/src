@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.12 2013/01/29 19:23:09 matt Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.13 2013/04/19 13:14:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -105,6 +105,7 @@ ENTRY(__longjmp14)
 	ldr	ip, .Lsetjmp_magic
 	bic	r3, r2, #(_JB_MAGIC_SETJMP ^ _JB_MAGIC_SETJMP_VFP)
 	teq	r3, ip
+	bne	.Lbotch
 
 	/* Restore the signal mask. */
 	stmfd	sp!, {r0-r2, r14}
@@ -118,10 +119,10 @@ ENTRY(__longjmp14)
 	tst	r2, #(_JB_MAGIC_SETJMP ^ _JB_MAGIC_SETJMP_VFP)
 						/* is this a VFP magic? */
 	beq	1f				/*   no, don't restore VFP */
-	add	r1, r0, #(_JB_REG_D8 * 4)
-	vldmia	r1, {d8-d15}
-	ldr	r1, [r0, #(_JB_REG_FPSCR * 4)]
-	vmsr	fpscr, r1
+	add	ip, r0, #(_JB_REG_D8 * 4)
+	vldmia	ip, {d8-d15}
+	ldr	ip, [r0, #(_JB_REG_FPSCR * 4)]
+	vmsr	fpscr, ip
 1:
 #endif /* __ARM_EABI__ */
 
