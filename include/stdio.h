@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.85 2013/04/19 23:32:16 joerg Exp $	*/
+/*	$NetBSD: stdio.h,v 1.86 2013/04/19 23:42:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -532,6 +532,7 @@ FILE *fmemopen(void * __restrict, size_t, const char * __restrict);
 typedef struct _locale		*locale_t;
 #  define __LOCALE_T_DECLARED
 #  endif
+__BEGIN_DECLS
 int	 fprintf_l(FILE * __restrict, locale_t, const char * __restrict, ...)
 		__printflike(3, 4);
 int	 vfprintf_l(FILE * __restrict, locale_t, const char * __restrict,
@@ -574,6 +575,7 @@ int	 vfscanf_l(FILE * __restrict, locale_t, const char * __restrict,
     __va_list) __scanflike(3, 0);
 int	 vsscanf_l(const char * __restrict, locale_t, const char * __restrict,
     __va_list) __scanflike(3, 0);
+__END_DECLS
 #endif
 
 #if _FORTIFY_SOURCE > 0
