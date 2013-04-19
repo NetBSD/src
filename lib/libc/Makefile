@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.152 2013/04/19 21:02:43 matt Exp $
+#	$NetBSD: Makefile,v 1.153 2013/04/19 22:24:10 matt Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -55,6 +55,11 @@ COMPATDIR=${.CURDIR}/compat
 # Marker for compat code that can't be easily isolated
 CPPFLAGS+=	-D__BUILD_LEGACY
 .endif
+.else # XXX temp
+COMPATDIR=${.CURDIR}/compat
+.PATH: ${COMPATDIR}/sys
+SRCS+= compat___lwp_park50.c
+CPPFLAGS+=	-D__BUILD_LEGACY
 .endif
 
 .include "${.CURDIR}/../../common/lib/libc/Makefile.inc"
