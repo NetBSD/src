@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.163 2013/04/19 23:28:47 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.164 2013/04/19 23:32:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -290,6 +290,7 @@
 #define freenetconfigent	_freenetconfigent
 #define freeaddrinfo		_freeaddrinfo
 #define freeifaddrs		_freeifaddrs
+#define fscanf_l		_fscanf_l
 #define fstatvfs		_fstatvfs
 #define ftok			_ftok
 #define ftruncate		_ftruncate
@@ -299,6 +300,7 @@
 #define fts_read		_fts_read
 #define fts_set			_fts_set
 #define fwprintf_l		_fwprintf_l
+#define fwscanf_l		_fwscanf_l
 #define gai_strerror		_gai_strerror
 #define get_myaddress		_get_myaddress
 #define getaddrinfo		_getaddrinfo
@@ -550,6 +552,7 @@
 #define rpcb_uaddr2taddr	_rpcb_uaddr2taddr
 #define rpcb_unset		_rpcb_unset
 #define scandir			_scandir
+#define scanf_l			_scanf_l
 #define seed48			_seed48
 #define seekdir			_seekdir
 #define select			_select
@@ -604,6 +607,7 @@
 #define sradixsort		_sradixsort
 #define srand48			_srand48
 #define srandom			_srandom
+#define sscanf_l		_sscanf_l
 #define statvfs(a, b)		_statvfs(a, b)
 #define strcasecmp		_strcasecmp
 #define strcoll_l		_strcoll_l
@@ -654,6 +658,7 @@
 #define svcudp_enablecache	_svcudp_enablecache
 #define sysarch			_sys_sysarch
 #define swprintf_l		_swprintf_l
+#define swscanf_l		_swscanf_l
 #define sysctl			_sysctl
 #define sysctlbyname		_sysctlbyname
 #define sysctlgetmibinfo	_sysctlgetmibinfo
@@ -708,11 +713,15 @@
 #define vfprintf_l		_vfprintf_l
 #define vfwprintf_l		_vfwprintf_l
 #define vprintf_l		_vprintf_l
+#define vscanf_l		_vscanf_l
+#define vsscanf_l		_vsscanf_l
+#define vswscanf_l		_vswscanf_l
 #define vsnprintf_l		_vsnprintf_l
 #define vsnprintf_ss		_vsnprintf_ss
 #define vsprintf_l		_vsprintf_l
 #define vswprintf_l		_vswprintf_l
 #define vwprintf_l		_vwprintf_l
+#define vwscanf_l		_vwscanf_l
 #define vsyslog			_vsyslog
 #define vsyslog_r		_vsyslog_r
 #define vsyslog_ss		_vsyslog_ss
@@ -737,6 +746,7 @@
 #define wcwidth			_wcwidth
 #define wcwidth_l		_wcwidth_l
 #define wprintf_l		_wprintf_l
+#define wscanf_l		_wscanf_l
 #define xdr_accepted_reply	_xdr_accepted_reply
 #define xdr_array		_xdr_array
 #define xdr_authunix_parms	_xdr_authunix_parms
