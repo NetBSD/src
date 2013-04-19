@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.8 2008/02/09 02:37:21 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2013/04/19 20:18:33 joerg Exp $
 
 # gdtoa sources
 .PATH: ${.CURDIR}/gdtoa
-CPPFLAGS+=-I${.CURDIR}/gdtoa
+CPPFLAGS+=-I${.CURDIR}/gdtoa -I${.CURDIR}/locale
 
 CPPFLAGS+=-DNO_FENV_H
 
