@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_hyperb.c,v 1.9 2013/04/19 13:31:11 isaki Exp $	*/
+/*	$NetBSD: fpu_hyperb.c,v 1.10 2013/04/19 14:05:12 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.9 2013/04/19 13:31:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.10 2013/04/19 14:05:12 isaki Exp $");
 
 #include "fpu_emulate.h"
 
@@ -67,11 +67,73 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.9 2013/04/19 13:31:11 isaki Exp $")
  *	fpu_atanh(), fpu_cosh(), fpu_sinh(), and fpu_tanh()
  */
 
+/*
+ *             1       1 + x
+ * atanh(x) = ---*log(-------)
+ *             2       1 - x
+ */
 struct fpn *
 fpu_atanh(struct fpemu *fe)
 {
-	/* stub */
-	return &fe->fe_f2;
+	struct fpn x;
+	struct fpn t;
+	struct fpn *r;
+
+	if (ISNAN(&fe->fe_f2))
+		return &fe->fe_f2;
+	if (ISINF(&fe->fe_f2))
+		return fpu_newnan(fe);
+
+	/*
+	 * if x is +0/-0, 68000PRM.pdf says it returns +0/-0 but
+	 * my real 68882 returns +0 for both.
+	 */
+	if (ISZERO(&fe->fe_f2)) {
+		fe->fe_f2.fp_sign = 0;
+		return &fe->fe_f2;
+	}
+
+	/*
+	 * -INF if x == -1
+	 * +INF if x ==  1
+	 */
+	r = &fe->fe_f2;
+	if (r->fp_exp == 0 && r->fp_mant[0] == FP_1 &&
+	    r->fp_mant[1] == 0 && r->fp_mant[2] == 0) {
+		r->fp_class = FPC_INF;
+		return r;
+	}
+
+	/* NAN if |x| > 1 */
+	if (fe->fe_f2.fp_exp >= 0)
+		return fpu_newnan(fe);
+
+	CPYFPN(&x, &fe->fe_f2);
+
+	/* t := 1 - x */
+	fpu_const(&fe->fe_f1, FPU_CONST_1);
+	fe->fe_f2.fp_sign = !fe->fe_f2.fp_sign;
+	r = fpu_add(fe);
+	CPYFPN(&t, r);
+
+	/* r := 1 + x */
+	fpu_const(&fe->fe_f1, FPU_CONST_1);
+	CPYFPN(&fe->fe_f2, &x);
+	r = fpu_add(fe);
+
+	/* (1-x)/(1+x) */
+	CPYFPN(&fe->fe_f1, r);
+	CPYFPN(&fe->fe_f2, &t);
+	r = fpu_div(fe);
+
+	/* log((1-x)/(1+x)) */
+	CPYFPN(&fe->fe_f2, r);
+	r = fpu_logn(fe);
+
+	/* r /= 2 */
+	r->fp_exp--;
+
+	return r;
 }
 
 /*
