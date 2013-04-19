@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.13 2013/04/19 13:14:10 skrll Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.14 2013/04/19 13:45:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -136,9 +136,7 @@ ENTRY(__longjmp14)
 	beq	.Lbotch
 
 	/* Set return value */
-
-	mov	r0, r1
-	teq	r0, #0x00000000
+	movs	r0, r1
 	moveq	r0, #0x00000001
 	RET
 
