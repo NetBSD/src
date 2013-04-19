@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_hyperb.c,v 1.8 2013/04/11 13:27:11 isaki Exp $	*/
+/*	$NetBSD: fpu_hyperb.c,v 1.9 2013/04/19 13:31:11 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.8 2013/04/11 13:27:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.9 2013/04/19 13:31:11 isaki Exp $");
 
 #include "fpu_emulate.h"
 
@@ -74,12 +74,72 @@ fpu_atanh(struct fpemu *fe)
 	return &fe->fe_f2;
 }
 
+/*
+ * taylor expansion used by sinh(), cosh().
+ */
+static struct fpn *
+__fpu_sinhcosh_taylor(struct fpemu *fe, struct fpn *s0, uint32_t f)
+{
+	struct fpn res;
+	struct fpn x2;
+	struct fpn *s1;
+	struct fpn *r;
+	int sign;
+	uint32_t k;
+
+	/* x2 := x * x */
+	CPYFPN(&fe->fe_f1, &fe->fe_f2);
+	r = fpu_mul(fe);
+	CPYFPN(&x2, r);
+
+	/* res := s0 */
+	CPYFPN(&res, s0);
+
+	sign = 1;	/* sign := (-1)^n */
+
+	for (;;) {
+		/* (f1 :=) s0 * x^2 */
+		CPYFPN(&fe->fe_f1, s0);
+		CPYFPN(&fe->fe_f2, &x2);
+		r = fpu_mul(fe);
+		CPYFPN(&fe->fe_f1, r);
+
+		/*
+		 * for sin(),  s1 := s0 * x^2 / (2n+1)2n
+		 * for cos(),  s1 := s0 * x^2 / 2n(2n-1)
+		 */
+		k = f * (f + 1);
+		fpu_explode(fe, &fe->fe_f2, FTYPE_LNG, &k);
+		s1 = fpu_div(fe);
+
+		/* break if s1 is enough small */
+		if (ISZERO(s1))
+			break;
+		if (res.fp_exp - s1->fp_exp >= FP_NMANT)
+			break;
+
+		/* s0 := s1 for next loop */
+		CPYFPN(s0, s1);
+
+		/* res += s1 */
+		CPYFPN(&fe->fe_f2, s1);
+		CPYFPN(&fe->fe_f1, &res);
+		r = fpu_add(fe);
+		CPYFPN(&res, r);
+
+		f += 2;
+		sign ^= 1;
+	}
+
+	CPYFPN(&fe->fe_f2, &res);
+	return &fe->fe_f2;
+}
+
 struct fpn *
 fpu_cosh(struct fpemu *fe)
 {
 	struct fpn s0;
 	struct fpn *r;
-	int hyperb = 1;
 
 	if (ISNAN(&fe->fe_f2))
 		return &fe->fe_f2;
@@ -90,7 +150,7 @@ fpu_cosh(struct fpemu *fe)
 	}
 
 	fpu_const(&s0, FPU_CONST_1);
-	r = fpu_sincos_taylor(fe, &s0, 1, hyperb);
+	r = __fpu_sinhcosh_taylor(fe, &s0, 1);
 	CPYFPN(&fe->fe_f2, r);
 
 	return &fe->fe_f2;
@@ -101,7 +161,6 @@ fpu_sinh(struct fpemu *fe)
 {
 	struct fpn s0;
 	struct fpn *r;
-	int hyperb = 1;
 
 	if (ISNAN(&fe->fe_f2))
 		return &fe->fe_f2;
@@ -109,7 +168,7 @@ fpu_sinh(struct fpemu *fe)
 		return &fe->fe_f2;
 
 	CPYFPN(&s0, &fe->fe_f2);
-	r = fpu_sincos_taylor(fe, &s0, 2, hyperb);
+	r = __fpu_sinhcosh_taylor(fe, &s0, 2);
 	CPYFPN(&fe->fe_f2, r);
 
 	return &fe->fe_f2;
