@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.83 2013/04/17 09:07:32 joerg Exp $	*/
+/*	$NetBSD: stdio.h,v 1.84 2013/04/19 15:22:24 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -525,6 +525,40 @@ int	 dprintf(int, const char * __restrict, ...)
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
     defined(_NETBSD_SOURCE)
 FILE *fmemopen(void * __restrict, size_t, const char * __restrict);
+#endif
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+int	 fprintf_l(FILE * __restrict, locale_t, const char * __restrict, ...)
+		__printflike(3, 4);
+int	 vfprintf_l(FILE * __restrict, locale_t, const char * __restrict,
+		__va_list) __printflike(3, 0);
+int	 printf_l(locale_t, const char * __restrict, ...)
+		__printflike(2, 3);
+int	 vprintf_l(locale_t, const char * __restrict, __va_list)
+		__printflike(2, 0);
+int	 asprintf_l(char ** __restrict, locale_t, const char * __restrict, ...)
+		__printflike(3, 4);
+int	 vasprintf_l(char ** __restrict, locale_t, const char * __restrict,
+    __va_list)
+		__printflike(3, 0);
+int	 vdprintf_l(int, locale_t, const char * __restrict, __va_list)
+		__printflike(3, 0);
+int	 dprintf_l(int, locale_t, const char * __restrict, ...)
+		__printflike(3, 4);
+int	 snprintf_l(char * __restrict, size_t, locale_t,
+		    const char * __restrict, ...) __printflike(4, 5);
+int	 vsnprintf_l(char * __restrict, size_t, locale_t,
+		     const char * __restrict, __va_list) __printflike(4, 0);
+#ifndef __AUDIT__
+int	 sprintf_l(char * __restrict, locale_t, const char * __restrict, ...)
+		   __printflike(3, 4);
+int	 vsprintf_l(char * __restrict, locale_t, const char * __restrict,
+		    __va_list) __printflike(3, 0);
+#endif
 #endif
 
 #if _FORTIFY_SOURCE > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.161 2013/04/18 23:24:26 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.162 2013/04/19 15:22:24 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -168,6 +168,7 @@
 #define arc4random_uniform	_arc4random_uniform
 #define asctime_r		_asctime_r
 #define asprintf		_asprintf
+#define asprintf_l		_asprintf_l
 #define atoll			_atoll
 #define authnone_create		_authnone_create
 #define authunix_create		_authunix_create
@@ -240,6 +241,7 @@
 #define difftime		_difftime
 #define dirname			_dirname
 #define dn_expand		_dn_expand
+#define dprintf_l		_dprintf_l
 #define drand48			_drand48
 #define endfsent		_endfsent
 #define endgrent		_endgrent
@@ -276,6 +278,7 @@
 #define funlockfile		_funlockfile
 #define fnmatch			_fnmatch
 #define fparseln		_fparseln
+#define fprintf_l		_fprintf_l
 #define fpgetmask		_fpgetmask
 #define fpgetprec		_fpgetprec
 #define fpgetround		_fpgetround
@@ -295,6 +298,7 @@
 #define fts_open		_fts_open
 #define fts_read		_fts_read
 #define fts_set			_fts_set
+#define fwprintf_l		_fwprintf_l
 #define gai_strerror		_gai_strerror
 #define get_myaddress		_get_myaddress
 #define getaddrinfo		_getaddrinfo
@@ -497,6 +501,7 @@
 #define posix2time		_posix2time
 #define posix2time_z		_posix2time_z
 #define pread			_pread
+#define printf_l		_printf_l
 #define pselect			_pselect
 #define psignal			_psignal
 #define pthread_atfork		_pthread_atfork
@@ -593,7 +598,9 @@
 #ifndef snprintf
 #define snprintf		_snprintf
 #endif
+#define snprintf_l		_snprintf_l
 #define snprintf_ss		_snprintf_ss
+#define sprintf_l		_sprintf_l
 #define sradixsort		_sradixsort
 #define srand48			_srand48
 #define srandom			_srandom
@@ -644,6 +651,7 @@
 #define svcudp_create		_svcudp_create
 #define svcudp_enablecache	_svcudp_enablecache
 #define sysarch			_sys_sysarch
+#define swprintf_l		_swprintf_l
 #define sysctl			_sysctl
 #define sysctlbyname		_sysctlbyname
 #define sysctlgetmibinfo	_sysctlgetmibinfo
@@ -687,12 +695,22 @@
 #define uuid_create_nil		_uuid_create_nil
 #define uuid_is_nil		_uuid_is_nil
 #define valloc			_valloc
-#define vdprintf		_vdprintf
+#define vasprintf		_vasprintf
+#define vasprintf_l		_vasprintf_l
 #define	vdprintf		_vdprintf
 #ifndef vsnprintf
 #define vsnprintf		_vsnprintf
 #endif
+#define vdprintf_l		_vdprintf_l
+#define vdprintf_l		_vdprintf_l
+#define vfprintf_l		_vfprintf_l
+#define vfwprintf_l		_vfwprintf_l
+#define vprintf_l		_vprintf_l
+#define vsnprintf_l		_vsnprintf_l
 #define vsnprintf_ss		_vsnprintf_ss
+#define vsprintf_l		_vsprintf_l
+#define vswprintf_l		_vswprintf_l
+#define vwprintf_l		_vwprintf_l
 #define vsyslog			_vsyslog
 #define vsyslog_r		_vsyslog_r
 #define vsyslog_ss		_vsyslog_ss
@@ -716,6 +734,7 @@
 #define wcstold_l		_wcstold_l
 #define wcwidth			_wcwidth
 #define wcwidth_l		_wcwidth_l
+#define wprintf_l		_wprintf_l
 #define xdr_accepted_reply	_xdr_accepted_reply
 #define xdr_array		_xdr_array
 #define xdr_authunix_parms	_xdr_authunix_parms

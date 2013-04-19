@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.34 2013/04/18 23:24:26 joerg Exp $	*/
+/*	$NetBSD: wchar.h,v 1.35 2013/04/19 15:22:24 joerg Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -247,6 +247,16 @@ size_t	wcrtomb_l(char * __restrict, wchar_t, mbstate_t * __restrict, locale_t);
 size_t	wcsrtombs_l(char * __restrict, const wchar_t ** __restrict, size_t,
 	    mbstate_t * __restrict, locale_t);
 int	wctob_l(wint_t, locale_t);
+
+int fwprintf_l(FILE * __restrict, locale_t, const wchar_t * __restrict, ...);
+int swprintf_l(wchar_t * __restrict, size_t n, locale_t,
+    const wchar_t * __restrict, ...);
+int vfwprintf_l(FILE * __restrict, locale_t,
+    const wchar_t * __restrict, __va_list);
+int vswprintf_l(wchar_t * __restrict, size_t, locale_t,
+    const wchar_t * __restrict, __va_list);
+int vwprintf_l(locale_t, const wchar_t * __restrict, __va_list);
+int wprintf_l(locale_t, const wchar_t * __restrict, ...);
 #endif /* _NETBSD_SOURCE */
 
 #endif /* !_WCHAR_H_ */
