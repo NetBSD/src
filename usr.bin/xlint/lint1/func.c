@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.24 2008/11/16 07:06:37 dholland Exp $	*/
+/*	$NetBSD: func.c,v 1.25 2013/04/19 17:43:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.24 2008/11/16 07:06:37 dholland Exp $");
+__RCSID("$NetBSD: func.c,v 1.25 2013/04/19 17:43:05 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -130,8 +130,12 @@ int	llibflg;
 
 /*
  * Nonzero if warnings are suppressed by a LINTED directive
+ * LWARN_BAD:	error
+ * LWARN_ALL: 	warnings on
+ * LWARN_NONE:	all warnings ignored
+ * 0..n: warning n ignored
  */
-int	nowarn;
+int	lwarn = LWARN_ALL;
 
 /*
  * Nonzero if bitfield type errors are suppressed by a BITFIELDTYPE
@@ -1241,9 +1245,9 @@ linted(int n)
 {
 
 #ifdef DEBUG
-	printf("%s, %d: nowarn = 1\n", curr_pos.p_file, curr_pos.p_line);
+	printf("%s, %d: lwarn = %d\n", curr_pos.p_file, curr_pos.p_line, n);
 #endif
-	nowarn = 1;
+	lwarn = n;
 }
 
 /*

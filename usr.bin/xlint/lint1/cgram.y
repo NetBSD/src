@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.54 2012/03/27 19:24:03 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.55 2013/04/19 17:43:05 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.54 2012/03/27 19:24:03 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.55 2013/04/19 17:43:05 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -63,7 +63,7 @@ int	mblklev;
  * Save the no-warns state and restore it to avoid the problem where
  * if (expr) { stmt } / * NOLINT * / stmt;
  */
-static int onowarn = -1;
+static int olwarn = LWARN_BAD;
 
 static	int	toicon(tnode_t *, int);
 static	void	idecl(sym_t *, int, sbuf_t *);
@@ -76,34 +76,34 @@ static inline void CLRWFLGS(const char *file, size_t line)
 	printf("%s, %d: clear flags %s %zu\n", curr_pos.p_file,
 	    curr_pos.p_line, file, line);
 	clrwflgs();
-	onowarn = -1;
+	olwarn = LWARN_BAD;
 }
 
 static inline void SAVE(const char *file, size_t line);
 static inline void SAVE(const char *file, size_t line)
 {
-	if (onowarn != -1)
+	if (olwarn != LWARN_BAD)
 		abort();
 	printf("%s, %d: save flags %s %zu = %d\n", curr_pos.p_file,
-	    curr_pos.p_line, file, line, nowarn);
-	onowarn = nowarn;
+	    curr_pos.p_line, file, line, lwarn);
+	olwarn = lwarn;
 }
 
 static inline void RESTORE(const char *file, size_t line);
 static inline void RESTORE(const char *file, size_t line)
 {
-	if (onowarn != -1) {
-		nowarn = onowarn;
+	if (olwarn != LWARN_BAD) {
+		lwarn = olwarn;
 		printf("%s, %d: restore flags %s %zu = %d\n", curr_pos.p_file,
-		    curr_pos.p_line, file, line, nowarn);
-		onowarn = -1;
+		    curr_pos.p_line, file, line, lwarn);
+		olwarn = LWARN_BAD;
 	} else
 		CLRWFLGS(file, line);
 }
 #else
-#define CLRWFLGS(f, l) clrwflgs(), onowarn = -1
-#define SAVE(f, l)	onowarn = nowarn
-#define RESTORE(f, l) (void)(onowarn == -1 ? (clrwflgs(), 0) : (nowarn = onowarn))
+#define CLRWFLGS(f, l) clrwflgs(), olwarn = LWARN_BAD
+#define SAVE(f, l)	olwarn = lwarn
+#define RESTORE(f, l) (void)(olwarn == LWARN_BAD ? (clrwflgs(), 0) : (lwarn = olwarn))
 #endif
 %}
 
@@ -373,7 +373,7 @@ func_def:
 		funcdef($1);
 		blklev++;
 		pushdecl(ARG);
-		if (nowarn)
+		if (lwarn == LWARN_NONE)
 			$1->s_used = 1;
 	  } opt_arg_declaration_list {
 		popdecl();

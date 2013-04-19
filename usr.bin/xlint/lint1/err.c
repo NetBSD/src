@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.45 2012/04/20 18:35:28 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.46 2013/04/19 17:43:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.45 2012/04/20 18:35:28 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.46 2013/04/19 17:43:05 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ static	void	vwarning(int, va_list);
 
 
 const	char *msgs[] = {
-	"syntax error: empty declaration",			      /* 0 */
+	"empty declaration",					      /* 0 */
 	"old style declaration; add int",			      /* 1 */
 	"empty declaration",					      /* 2 */
 	"%s declared in argument declaration list",		      /* 3 */
@@ -439,14 +439,17 @@ verror( int n, va_list ap)
 }
 
 static void
-vwarning( int n, va_list ap)
+vwarning(int n, va_list ap)
 {
 	const	char *fn;
 
 	if (ERR_ISSET(n, &msgset))
 		return;
 
-	if (nowarn)
+#ifdef DEBUG
+	printf("%s: lwarn=%d n=%d\n", __func__, lwarn, n);
+#endif
+	if (lwarn == LWARN_NONE || lwarn == n)
 		/* this warning is suppressed by a LINTED comment */
 		return;
 

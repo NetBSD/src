@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.55 2013/02/17 01:26:19 christos Exp $ */
+/* $NetBSD: decl.c,v 1.56 2013/04/19 17:43:05 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.55 2013/02/17 01:26:19 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.56 2013/04/19 17:43:05 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2876,21 +2876,22 @@ void
 chkusage(dinfo_t *di)
 {
 	sym_t	*sym;
-	int	mknowarn;
+	int	mklwarn;
 
 	/* for this warnings LINTED has no effect */
-	mknowarn = nowarn;
-	nowarn = 0;
+	mklwarn = lwarn;
+	lwarn = LWARN_ALL;
 
 #ifdef DEBUG
-	printf("%s, %d: >temp nowarn = 0\n", curr_pos.p_file, curr_pos.p_line);
+	printf("%s, %d: >temp lwarn = %d\n", curr_pos.p_file, curr_pos.p_line,
+	    lwarn);
 #endif
 	for (sym = di->d_dlsyms; sym != NULL; sym = sym->s_dlnxt)
 		chkusg1(di->d_asm, sym);
-	nowarn = mknowarn;
+	lwarn = mklwarn;
 #ifdef DEBUG
-	printf("%s, %d: <temp nowarn = %d\n", curr_pos.p_file, curr_pos.p_line,
-	    nowarn);
+	printf("%s, %d: <temp lwarn = %d\n", curr_pos.p_file, curr_pos.p_line,
+	    lwarn);
 #endif
 }
 

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.50 2012/03/27 19:24:03 christos Exp $ */
+/* $NetBSD: scan.l,v 1.51 2013/04/19 17:43:05 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.50 2012/03/27 19:24:03 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.51 2013/04/19 17:43:05 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1111,7 +1111,7 @@ comment(void)
 		{ "FALLTHRU",		0,	fallthru	},
 		{ "FALLTHROUGH",	0,	fallthru	},
 		{ "LINTLIBRARY",	0,	lintlib		},
-		{ "LINTED",		0,	linted		},
+		{ "LINTED",		1,	linted		},
 		{ "LONGLONG",		0,	longlong	},
 		{ "NOSTRICT",		0,	linted		},
 		{ "NOTREACHED",		0,	notreach	},
@@ -1222,7 +1222,7 @@ void
 clrwflgs(void)
 {
 
-	nowarn = 0;
+	lwarn = LWARN_ALL;
 	quadflg = 0;
 	ccflg = 0;
 }
