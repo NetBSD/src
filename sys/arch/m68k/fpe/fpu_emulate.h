@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.23 2013/04/11 13:27:11 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.24 2013/04/19 13:31:11 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -246,7 +246,13 @@ int fpu_emul_fscale(struct fpemu *, struct instruction *);
 int fpu_emulate(struct frame *, struct fpframe *, ksiginfo_t *);
 struct fpn *fpu_cmp(struct fpemu *);
 
-struct fpn *fpu_sincos_taylor(struct fpemu *, struct fpn *, uint32_t, int);
+/* fpu_cordic.c */
+extern const struct fpn fpu_cordic_inv_gain1;
+extern const struct fpn fpu_cordic_inv_gain2;
+void fpu_cordit1(struct fpemu *,
+	struct fpn *, struct fpn *, struct fpn *, const struct fpn *);
+void fpu_cordit2(struct fpemu *,
+	struct fpn *, struct fpn *, struct fpn *, const struct fpn *);
 
 /*
  * "helper" functions
@@ -254,6 +260,7 @@ struct fpn *fpu_sincos_taylor(struct fpemu *, struct fpn *, uint32_t, int);
 /* return values from constant rom */
 struct fpn *fpu_const(struct fpn *, uint32_t);
 #define FPU_CONST_PI	(0x00)	/* pi */
+#define FPU_CONST_0 	(0x0f)	/* 0.0 */
 #define FPU_CONST_LN_2	(0x30)	/* ln(2) */
 #define FPU_CONST_LN_10	(0x31)	/* ln(10) */
 #define FPU_CONST_1 	(0x32)	/* 1.0 */
