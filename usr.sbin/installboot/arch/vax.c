@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.13 2009/04/05 11:55:39 lukem Exp $	*/
+/*	$NetBSD: vax.c,v 1.13.8.1 2013/04/20 09:58:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -68,19 +68,25 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.13 2009/04/05 11:55:39 lukem Exp $");
+__RCSID("$NetBSD: vax.c,v 1.13.8.1 2013/04/20 09:58:23 bouyer Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
+#include <sys/disklabel.h>
 
 #include <assert.h>
 #include <err.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "installboot.h"
+
+#ifndef __CTASSERT
+#define	__CTASSERT(X)
+#endif
 
 static int	load_bootstrap(ib_params *, char **,
 		    uint32_t *, uint32_t *, size_t *);
@@ -101,7 +107,7 @@ vax_clearboot(ib_params *params)
 	assert(params != NULL);
 	assert(params->fsfd != -1);
 	assert(params->filesystem != NULL);
-	assert(sizeof(struct vax_boot_block) == VAX_BOOT_BLOCK_BLOCKSIZE);
+	__CTASSERT(sizeof(bb)==VAX_BOOT_BLOCK_BLOCKSIZE);
 
 	rv = pread(params->fsfd, &bb, sizeof(bb), VAX_BOOT_BLOCK_OFFSET);
 	if (rv == -1) {
@@ -112,7 +118,7 @@ vax_clearboot(ib_params *params)
 		return (0);
 	}
 
-	if (bb.bb_id_offset * 2 != offsetof(struct vax_boot_block, bb_magic1)
+	if (bb.bb_id_offset*2 >= VAX_BOOT_BLOCK_BLOCKSIZE
 	    || bb.bb_magic1 != VAX_BOOT_MAGIC1) {
 		warnx(
 		    "Old boot block magic number invalid; boot block invalid");
@@ -154,10 +160,10 @@ static int
 vax_setboot(ib_params *params)
 {
 	struct stat		bootstrapsb;
-	struct vax_boot_block	bb;
+	struct vax_boot_block	*bb;
 	uint32_t		startblock;
 	int			retval;
-	char			*bootstrapbuf;
+	char			*bootstrapbuf, oldbb[VAX_BOOT_BLOCK_BLOCKSIZE];
 	size_t			bootstrapsize;
 	uint32_t		bootstrapload, bootstrapexec;
 	ssize_t			rv;
@@ -167,8 +173,12 @@ vax_setboot(ib_params *params)
 	assert(params->filesystem != NULL);
 	assert(params->s1fd != -1);
 	assert(params->stage1 != NULL);
-	assert(sizeof(struct vax_boot_block) == VAX_BOOT_BLOCK_BLOCKSIZE);
 
+	/* see sys/arch/vax/boot/xxboot/start.S for explanation */
+	__CTASSERT(offsetof(struct vax_boot_block,bb_magic1) == 0x19e);
+	__CTASSERT(sizeof(struct vax_boot_block) == VAX_BOOT_BLOCK_BLOCKSIZE);
+
+	startblock = 0;
 	retval = 0;
 	bootstrapbuf = NULL;
 
@@ -184,16 +194,29 @@ vax_setboot(ib_params *params)
 	    &bootstrapexec, &bootstrapsize))
 		goto done;
 
-	rv = pread(params->fsfd, &bb, sizeof(bb), VAX_BOOT_BLOCK_OFFSET);
+	/* read old boot block */
+	rv = pread(params->fsfd, oldbb, sizeof(oldbb), VAX_BOOT_BLOCK_OFFSET);
 	if (rv == -1) {
 		warn("Reading `%s'", params->filesystem);
 		goto done;
-	} else if (rv != sizeof(bb)) {
+	} else if (rv != sizeof(oldbb)) {
 		warnx("Reading `%s': short read", params->filesystem);
 		goto done;
 	}
 
-		/* fill in the updated boot block fields */
+	/*
+	 * Copy disklabel from old boot block to new.
+	 * Assume everything between LABELOFFSET and the start of
+	 * the param block is scratch area and can be copied over.
+	 */
+	memcpy(bootstrapbuf+LABELOFFSET,
+	    oldbb+LABELOFFSET,
+	    offsetof(struct vax_boot_block,bb_magic1)-LABELOFFSET);
+
+	/* point to bootblock at begining of bootstrap */
+	bb = (struct vax_boot_block*)bootstrapbuf;
+
+	/* fill in the updated boot block fields */
 	if (params->flags & IB_APPEND) {
 		struct stat	filesyssb;
 
@@ -209,46 +232,21 @@ vax_setboot(ib_params *params)
 		}
 		startblock = howmany(filesyssb.st_size,
 		    VAX_BOOT_BLOCK_BLOCKSIZE);
-	} else if (params->flags & IB_STAGE1START) {
-		startblock = params->s1start;
-	} else {
-		startblock = VAX_BOOT_BLOCK_OFFSET / VAX_BOOT_BLOCK_BLOCKSIZE
-		    + 1;
+		bb->bb_lbn_hi = htole16((uint16_t) (startblock >> 16));
+		bb->bb_lbn_low = htole16((uint16_t) (startblock >>  0));
 	}
-
-	bb.bb_id_offset = offsetof(struct vax_boot_block, bb_magic1) / 2;
-	bb.bb_mbone = 1;
-	bb.bb_lbn_hi = htole16((uint16_t) (startblock >> 16));
-	bb.bb_lbn_low = htole16((uint16_t) (startblock >>  0));
-	/*
-	 * Now the identification block
-	 */
-	bb.bb_magic1 = VAX_BOOT_MAGIC1;
-	bb.bb_mbz1 = 0;
-	bb.bb_sum1 = ~(bb.bb_magic1 + bb.bb_mbz1 + bb.bb_pad1);
-
-	bb.bb_mbz2 = 0;
-	bb.bb_volinfo = VAX_BOOT_VOLINFO_NONE;
-	bb.bb_pad2a = 0;
-	bb.bb_pad2b = 0;
-
-	bb.bb_size = htole32(bootstrapsize / VAX_BOOT_BLOCK_BLOCKSIZE);
-	bb.bb_load = htole32(VAX_BOOT_LOAD);
-	bb.bb_entry = htole32(VAX_BOOT_ENTRY);
-	bb.bb_sum3 = htole32(le32toh(bb.bb_size) + le32toh(bb.bb_load) \
-	    + le32toh(bb.bb_entry));
 
 	if (params->flags & IB_SUNSUM) {
 		uint16_t	sum;
 
-		sum = compute_sunsum((uint16_t *)&bb);
-		if (! set_sunsum(params, (uint16_t *)&bb, sum))
+		sum = compute_sunsum((uint16_t *)bb);
+		if (! set_sunsum(params, (uint16_t *)bb, sum))
 			goto done;
 	}
 
 	if (params->flags & IB_VERBOSE) {
 		printf("Bootstrap start sector: %u\n", startblock);
-		printf("Bootstrap sector count: %u\n", le32toh(bb.bb_size));
+		printf("Bootstrap sector count: %u\n", le32toh(bb->bb_size));
 		printf("%sriting bootstrap\n",
 		    (params->flags & IB_NOWRITE) ? "Not w" : "W");
 	}
@@ -256,8 +254,7 @@ vax_setboot(ib_params *params)
 		retval = 1;
 		goto done;
 	}
-	rv = pwrite(params->fsfd, bootstrapbuf, bootstrapsize,
-	     startblock * VAX_BOOT_BLOCK_BLOCKSIZE);
+	rv = pwrite(params->fsfd, bootstrapbuf, bootstrapsize, 0);
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;
@@ -265,19 +262,7 @@ vax_setboot(ib_params *params)
 		warnx("Writing `%s': short write", params->filesystem);
 		goto done;
 	}
-
-	if (params->flags & IB_VERBOSE)
-		printf("Writing boot block\n");
-	rv = pwrite(params->fsfd, &bb, sizeof(bb), VAX_BOOT_BLOCK_OFFSET);
-	if (rv == -1) {
-		warn("Writing `%s'", params->filesystem);
-		goto done;
-	} else if (rv != sizeof(bb)) {
-		warnx("Writing `%s': short write", params->filesystem);
-		goto done;
-	} else {
-		retval = 1;
-	}
+	retval = 1;
 
  done:
 	if (bootstrapbuf)
