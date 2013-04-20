@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.119 2013/04/20 14:00:40 bouyer Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.120 2013/04/20 15:21:25 bouyer Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8886,4 +8886,16 @@ sys/kern/subr_kmem.c				1.47
 	properly return NULL for failed allocations not 0x8 with size checks
 	enabled.
 	[para, ticket #876]
+
+lib/libpthread/pthread_cond.c			1.60, 1.61
+
+	PR/47703: Yasushi Oshima: pthread_cond_timedwait() does not wait
+	after call pthread_condattr_setclock(CLOCK_MONOTONIC)
+
+	_lwp_park(2) expects a realtime clock, and it gets passed a monotonic
+	one.  Since monotonic < real, it never sleeps. This patch adjusts
+	the monotonic clock to be a real one before it passes is to
+	_lwp_park(2). This is the minimal hacky fix and it will be fixed
+	properly in _lwp_park(2) in the future.
+	[christos, ticket #862]
 
