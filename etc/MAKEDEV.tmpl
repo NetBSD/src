@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.166 2013/04/11 19:13:46 martin Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.167 2013/04/20 11:41:51 rkujawa Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1137,6 +1137,12 @@ flash[0-9]*)
 	flash=flash$unit
 	mkdev flash$unit b %flash_blk% $unit
 	mkdev rflash$unit c %flash_chr% $unit
+	;;
+
+spiflash[0-9]*)
+	unit=${i#spiflash}
+	spiflash=spiflash$unit
+	mkdev spiflash$unit b %spiflash_blk% $unit
 	;;
 
 altmem[0-9]*)
