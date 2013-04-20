@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.13 2013/04/20 05:09:41 isaki Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.14 2013/04/20 05:27:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.13 2013/04/20 05:09:41 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.14 2013/04/20 05:27:05 isaki Exp $");
 
 #include "fpu_emulate.h"
 
@@ -427,10 +427,7 @@ fpu_tan(struct fpemu *fe)
 
 	CPYFPN(&fe->fe_f1, &s);
 	r = fpu_div(fe);
-
-	CPYFPN(&fe->fe_f2, r);
-
-	return &fe->fe_f2;
+	return r;
 }
 
 struct fpn *
