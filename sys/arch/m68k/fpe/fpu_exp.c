@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_exp.c,v 1.7 2013/04/20 04:38:51 isaki Exp $	*/
+/*	$NetBSD: fpu_exp.c,v 1.8 2013/04/20 04:54:22 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.7 2013/04/20 04:38:51 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.8 2013/04/20 04:54:22 isaki Exp $");
+
+#include <machine/ieee.h>
 
 #include "fpu_emulate.h"
 
@@ -80,7 +82,7 @@ fpu_etox_taylor(struct fpemu *fe)
 		/* break if s1 is enough small */
 		if (ISZERO(s1))
 			break;
-		if (res.fp_exp - s1->fp_exp >= FP_NMANT)
+		if (res.fp_exp - s1->fp_exp >= EXT_FRACBITS)
 			break;
 
 		/* s0 := s1 for next loop */
