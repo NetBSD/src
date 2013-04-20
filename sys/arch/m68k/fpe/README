@@ -1,4 +1,4 @@
-* $NetBSD: README,v 1.5 2011/10/15 15:24:28 tsutsui Exp $
+* $NetBSD: README,v 1.6 2013/04/20 03:26:11 isaki Exp $
 * NetBSD/m68k FPE (floating point emulation) README file
 * Created Oct/??/95 by kenn@remus.rutgers.edu (Ken Nakata)
 * Last updated Oct/15/2011 by tsutsui
@@ -68,7 +68,8 @@ Type=0: FMOVE (mem->FPr), FINT, FINTRZ, FSQRT, FABS, FNEG, FGETEXP,
 	FGETMAN, FDIV, FADD, FMUL, FSGLDIV(*), FSCALE, FSGLMUL(*), FSUB,
 	FCMP, FTST, FMOVE (FPr->mem), FMOVEM (FPr), FMOVEM (FPcr),
 	FMOVECR, FLOGNP1, FLOGN, FLOG10, FLOG2, FMOD, FREM,
-	FCOSH, FSINH, FTANH, FCOS, FSIN, FTAN, FSINCOS
+	FCOSH, FSINH, FTANH, FCOS, FSIN, FTAN, FSINCOS,
+	FETOX, FETOXM1, FTENTOX, FTWOTOX, FATANH, FACOS, FASIN, FATAN
 
 Type=1: FDBcc, FScc, FTRAPcc,
 
@@ -85,7 +86,7 @@ Type=5: none
 
 * Unimplemented Instructions
 
-Type=0: FETOX, FETOXM1, FTENTOX, FTWOTOX, FATANH, FACOS, FASIN, FATAN
+Type=0: none
 
 Type=1: none
 
