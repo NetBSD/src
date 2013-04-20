@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.117 2013/03/31 22:24:11 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.118 2013/04/20 10:23:52 bouyer Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8820,4 +8820,76 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 6.1_RC3!
 	[riz]
+
+sys/dev/usb/ohci.c				1.234, 1.236
+
+	Don't leak memory if ohci_alloc_std_chain fails.
+
+	When dumping the done list in ohci_softintr / OHCI_DEBUG use the correct
+	list next pointer.
+
+	PR/33450 and part of PR/35379.
+	[skrll, ticket #864]
+
+sys/arch/vax/boot/xxboot/start.S		1.5
+sys/arch/vax/include/disklabel.h		1.7
+sys/kern/sys_generic.c				1.129
+sys/sys/bootblock.h				1.55
+sys/sys/disklabel.h				1.113
+usr.sbin/installboot/arch/vax.c			1.14, 1.15
+
+	Revert VAX MAXPARTITION bump to 16, adjusting it to 12 instead.
+	Fix bootblocks and installboot for VAX 780 and other machines booting
+	via VMB.EXE.
+
+	[martin, ticket #865]
+
+sys/arch/amd64/amd64/machdep.c			1.193
+
+	Use printf_nolog() as i386 when print remaing bytes at crash dump to
+	prevent message buffer with cound down.
+	[taca, ticket #866]
+
+usr.sbin/dumpfs/dumpfs.c			1.60
+
+	Show in-filesystem quotas flag instead of unknown flag bit.
+	[taca, ticket #867]
+
+sys/kern/subr_xcall.c				1.15
+
+	xc_highpri: fix assert.
+	[rmind, ticket #868]
+
+external/gpl3/gcc/dist/gcc/config/vax/vax.c	1.3
+external/gpl3/gcc/dist/gcc/config/vax/vax.md	1.4
+gnu/dist/gcc4/gcc/config/vax/vax.c		1.19
+gnu/dist/gcc4/gcc/config/vax/vax.md		1.17
+
+	Fix "ashq" second argument sign extension (the assembler does not treat
+	-1 as a 64bit value).
+	Upstream reported as http://gcc.gnu.org/bugzilla/show_bug.cgi?id=56875
+	Problemm noted by Jonny Billquist (in lint), hint for solution from
+	mouse.
+	[martin, ticket #870]
+
+lib/libc/gen/getcwd.c				1.52
+lib/libc/gen/realpath.3				1.13
+
+	PR/46618: Onno van der Linden: realpath(3) isn't SUSv4 compliant
+	(and causes flactag 2.0.4 to dump core). Fix to accept a NULL
+	argument for resolvedpath.
+	[christos, ticket #874]
+
+lib/libc/rpc/clnt_vc.c				1.22
+
+	PR/47747: Thorsten Brehm: TCP-based RPC client calls no longer
+	terminate when connections break. Return proper error code.
+	[christos, ticket #875]
+
+sys/kern/subr_kmem.c				1.47
+
+	addresses PR/47512
+	properly return NULL for failed allocations not 0x8 with size checks
+	enabled.
+	[para, ticket #876]
 
