@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.209.2.11 2013/01/05 23:10:34 riz Exp $
+# $NetBSD: shl.mi,v 1.209.2.12 2013/04/20 15:24:43 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -328,7 +328,7 @@
 ./usr/libdata/debug/usr/lib/libposix.so.0.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libppath.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libprop.so.1.1.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libpthread.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libpthread.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libpthread_dbg.so.2.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libpuffs.so.2.0.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/lib/libquota.so.1.0.debug	comp-sys-debug	debug
