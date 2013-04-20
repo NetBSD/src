@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_hyperb.c,v 1.12 2013/04/20 04:54:22 isaki Exp $	*/
+/*	$NetBSD: fpu_hyperb.c,v 1.13 2013/04/20 04:55:44 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.12 2013/04/20 04:54:22 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.13 2013/04/20 04:55:44 isaki Exp $");
 
 #include <machine/ieee.h>
 
@@ -172,8 +172,8 @@ __fpu_sinhcosh_taylor(struct fpemu *fe, struct fpn *s0, uint32_t f)
 		CPYFPN(&fe->fe_f1, r);
 
 		/*
-		 * for sin(),  s1 := s0 * x^2 / (2n+1)2n
-		 * for cos(),  s1 := s0 * x^2 / 2n(2n-1)
+		 * for sinh(),  s1 := s0 * x^2 / (2n+1)2n
+		 * for cosh(),  s1 := s0 * x^2 / 2n(2n-1)
 		 */
 		k = f * (f + 1);
 		fpu_explode(fe, &fe->fe_f2, FTYPE_LNG, &k);
