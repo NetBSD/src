@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_hyperb.c,v 1.14 2013/04/20 05:27:05 isaki Exp $	*/
+/*	$NetBSD: fpu_hyperb.c,v 1.15 2013/04/20 07:33:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.14 2013/04/20 05:27:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.15 2013/04/20 07:33:05 isaki Exp $");
 
 #include <machine/ieee.h>
 
@@ -233,6 +233,10 @@ fpu_sinh(struct fpemu *fe)
 	if (ISINF(&fe->fe_f2))
 		return &fe->fe_f2;
 
+	/* if x is +0/-0, return +0/-0 */
+	if (ISZERO(&fe->fe_f2))
+		return &fe->fe_f2;
+
 	CPYFPN(&s0, &fe->fe_f2);
 	r = __fpu_sinhcosh_taylor(fe, &s0, 2);
 
@@ -248,6 +252,10 @@ fpu_tanh(struct fpemu *fe)
 	int sign;
 
 	if (ISNAN(&fe->fe_f2))
+		return &fe->fe_f2;
+
+	/* if x is +0/-0, return +0/-0 */
+	if (ISZERO(&fe->fe_f2))
 		return &fe->fe_f2;
 
 	if (ISINF(&fe->fe_f2)) {
