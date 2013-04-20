@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.118 2013/04/20 10:23:52 bouyer Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.119 2013/04/20 14:00:40 bouyer Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8879,12 +8879,6 @@ lib/libc/gen/realpath.3				1.13
 	(and causes flactag 2.0.4 to dump core). Fix to accept a NULL
 	argument for resolvedpath.
 	[christos, ticket #874]
-
-lib/libc/rpc/clnt_vc.c				1.22
-
-	PR/47747: Thorsten Brehm: TCP-based RPC client calls no longer
-	terminate when connections break. Return proper error code.
-	[christos, ticket #875]
 
 sys/kern/subr_kmem.c				1.47
 
