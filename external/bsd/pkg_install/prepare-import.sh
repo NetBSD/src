@@ -1,7 +1,7 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.3 2009/02/02 20:47:20 joerg Exp $
+# $NetBSD: prepare-import.sh,v 1.4 2013/04/20 15:30:34 wiz Exp $
 #
-# Copy new pkgsrc/pkg_install/files to dist.
+# Copy new pkgsrc/pkgtools/pkg_install/files to dist.
 # Run this script and check for additional files and
 # directories to prune, only relevant content is included.
 
