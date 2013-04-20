@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1816 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1817 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -227,3 +227,6 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	tcpdump(8): Import 4.3.0 [christos 20130406]
 	libevent: Upgrade 2.0.21-stable [christos 20130411]
 	wm(4): Add support for I210 and I211 [msaitoh 20130419]
+	m68k: Add inverse trigonometric functions, hyperbolic arctangent,
+		exponential and power functions to m68k FPE.  As a result,
+		m68k FPE supports all mathematics functions. [isaki 20130420]
