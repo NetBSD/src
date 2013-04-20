@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.52.14.1 2012/07/05 18:16:15 riz Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.52.14.2 2013/04/20 09:58:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -1389,7 +1389,7 @@ struct vax_boot_block {
 	uint8_t		bb_mbone;	/* must be one */
 	uint16_t	bb_lbn_hi;	/* lbn (hi word) of bootstrap */
 	uint16_t	bb_lbn_low;	/* lbn (low word) of bootstrap */
-	uint8_t		pad1[460];
+	uint8_t		pad1[406];
 	/* disklabel offset is 64 from base, or 56 from start of pad1 */
 
 	/* The rest of these fields are identification area and describe
@@ -1412,7 +1412,7 @@ struct vax_boot_block {
 
 	/* The rest is unused.
 	 */
-	uint8_t		pad2[20];
+	uint8_t		pad2[74];
 } __packed;
 
 #define	VAX_BOOT_MAGIC1			0x18	/* size of BB info? */
