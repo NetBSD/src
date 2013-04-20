@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.58 2011/08/30 18:24:17 joerg Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.58.4.1 2013/04/20 10:03:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.58 2011/08/30 18:24:17 joerg Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.58.4.1 2013/04/20 10:03:04 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -424,9 +424,11 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 		printf("fs_flags expanded ");
 	if (fs->fs_flags & FS_DOWAPBL)
 		printf("wapbl ");
+	if (fs->fs_flags & FS_DOQUOTA2)
+		printf("quotas ");
 	fsflags = fs->fs_flags & ~(FS_UNCLEAN | FS_DOSOFTDEP | FS_NEEDSFSCK |
 			FS_INDEXDIRS | FS_ACLS | FS_MULTILABEL |
-			FS_FLAGS_UPDATED | FS_DOWAPBL);
+			FS_FLAGS_UPDATED | FS_DOWAPBL | FS_DOQUOTA2);
 	if (fsflags != 0)
 		printf("unknown flags (%#x)", fsflags);
 	printf("\nfsmnt\t%s\n", fs->fs_fsmnt);
