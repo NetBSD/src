@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_hyperb.c,v 1.13 2013/04/20 04:55:44 isaki Exp $	*/
+/*	$NetBSD: fpu_hyperb.c,v 1.14 2013/04/20 05:27:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.13 2013/04/20 04:55:44 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.14 2013/04/20 05:27:05 isaki Exp $");
 
 #include <machine/ieee.h>
 
@@ -218,9 +218,8 @@ fpu_cosh(struct fpemu *fe)
 
 	fpu_const(&s0, FPU_CONST_1);
 	r = __fpu_sinhcosh_taylor(fe, &s0, 1);
-	CPYFPN(&fe->fe_f2, r);
 
-	return &fe->fe_f2;
+	return r;
 }
 
 struct fpn *
@@ -236,9 +235,8 @@ fpu_sinh(struct fpemu *fe)
 
 	CPYFPN(&s0, &fe->fe_f2);
 	r = __fpu_sinhcosh_taylor(fe, &s0, 2);
-	CPYFPN(&fe->fe_f2, r);
 
-	return &fe->fe_f2;
+	return r;
 }
 
 struct fpn *
@@ -274,7 +272,5 @@ fpu_tanh(struct fpemu *fe)
 	CPYFPN(&fe->fe_f1, &s);
 	r = fpu_div(fe);
 
-	CPYFPN(&fe->fe_f2, r);
-
-	return &fe->fe_f2;
+	return r;
 }
