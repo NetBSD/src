@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.28 2013/03/31 20:27:15 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.29 2013/04/20 10:24:36 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -201,4 +201,41 @@ lib/libc/rpc/clnt_vc.c				1.19
 
 	Wrong memcpy() can cause memory corruption.  PR#13082.
 	[christos, ticket #854]
+
+sys/arch/amd64/amd64/machdep.c			1.193
+
+	Use printf_nolog() as i386 when print remaing bytes at crash dump to
+	prevent message buffer with cound down.
+	[taca, ticket #866]
+
+usr.sbin/dumpfs/dumpfs.c			1.60
+
+	Show in-filesystem quotas flag instead of unknown flag bit.
+	[taca, ticket #867]
+
+sys/kern/subr_xcall.c				1.15
+
+	xc_highpri: fix assert.
+	[rmind, ticket #868]
+
+lib/libc/gen/getcwd.c				1.52
+lib/libc/gen/realpath.3				1.13
+
+	PR/46618: Onno van der Linden: realpath(3) isn't SUSv4 compliant
+	(and causes flactag 2.0.4 to dump core). Fix to accept a NULL
+	argument for resolvedpath.
+	[christos, ticket #874]
+
+lib/libc/rpc/clnt_vc.c				1.22
+
+	PR/47747: Thorsten Brehm: TCP-based RPC client calls no longer
+	terminate when connections break. Return proper error code.
+	[christos, ticket #875]
+
+sys/kern/subr_kmem.c				1.47
+
+	addresses PR/47512
+	properly return NULL for failed allocations not 0x8 with size checks
+	enabled.
+	[para, ticket #876]
 
