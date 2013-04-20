@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.120 2013/04/20 15:21:25 bouyer Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.121 2013/04/20 15:26:10 bouyer Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8898,4 +8898,20 @@ lib/libpthread/pthread_cond.c			1.60, 1.61
 	_lwp_park(2). This is the minimal hacky fix and it will be fixed
 	properly in _lwp_park(2) in the future.
 	[christos, ticket #862]
+
+distrib/sets/lists/base/ad.mips64eb		patch
+distrib/sets/lists/base/ad.mips64el		patch
+distrib/sets/lists/base/md.amd64		patch
+distrib/sets/lists/base/md.sparc64		patch
+distrib/sets/lists/base/shl.mi			patch
+distrib/sets/lists/comp/ad.mips64eb		patch
+distrib/sets/lists/comp/ad.mips64el		patch
+distrib/sets/lists/comp/md.amd64		patch
+distrib/sets/lists/comp/md.sparc64		patch
+distrib/sets/lists/comp/shl.mi			patch
+lib/libpthread/shlib_version			patch
+	
+	bump libpthread minor for pthread_cond_setclock to libpthread.so.1.1.
+	Note that this is not the same as libpthread.so.1.1 from HEAD.
+	[christos, ticket #863]
 
