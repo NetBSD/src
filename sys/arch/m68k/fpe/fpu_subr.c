@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_subr.c,v 1.10 2013/03/26 11:30:21 isaki Exp $ */
+/*	$NetBSD: fpu_subr.c,v 1.11 2013/04/20 09:32:28 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.10 2013/03/26 11:30:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.11 2013/04/20 09:32:28 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -54,6 +54,25 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.10 2013/03/26 11:30:21 isaki Exp $");
 
 #include "fpu_emulate.h"
 #include "fpu_arith.h"
+
+/*
+ * m68020 or later has a BFFFO instruction, therefore use it.
+ * Otherwise, use C version.
+ */
+static inline int
+bfffo(uint32_t src)
+{
+	int offset;
+#if defined(__m68k__) && !defined(M68010)
+	__asm volatile("bfffo %1{#0:#32},%0" : "=d"(offset) : "g"(src));
+#else
+	int width = 32;
+	for (offset = 0; width-- > 0 && (int)src >= 0; src <<= 1) {
+		offset++;
+	}
+#endif
+	return offset;
+}
 
 /*
  * Shift the given number right rsh bits.  Any bits that `fall off' will get
@@ -165,7 +184,7 @@ fpu_norm(struct fpn *fp)
 		 * We have a supernormal number.  We need to shift it right.
 		 * We may assume m2==0.
 		 */
-		__asm volatile("bfffo %1{#0:#32},%0" : "=d"(rsh) : "g"(m0));
+		rsh = bfffo(m0);
 		rsh = 31 - rsh - FP_LG;
 		exp += rsh;
 		lsh = 32 - rsh;
@@ -177,7 +196,7 @@ fpu_norm(struct fpn *fp)
 		 * We have a regular denorm (a subnormal number), and need
 		 * to shift it left.
 		 */
-		__asm volatile("bfffo %1{#0:#32},%0" : "=d"(lsh) : "g"(m0));
+		lsh = bfffo(m0);
 		lsh = FP_LG - 31 + lsh;
 		exp -= lsh;
 		rsh = 32 - lsh;
