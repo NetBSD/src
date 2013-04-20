@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_exp.c,v 1.6 2013/04/20 03:06:19 isaki Exp $	*/
+/*	$NetBSD: fpu_exp.c,v 1.7 2013/04/20 04:38:51 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,9 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.6 2013/04/20 03:06:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.7 2013/04/20 04:38:51 isaki Exp $");
 
 #include "fpu_emulate.h"
+
+/* The number of items to terminate the Taylor expansion */
+#define MAX_ITEMS	(2000)
 
 /*
  * fpu_exp.c: defines fpu_etox(), fpu_etoxm1(), fpu_tentox(), and fpu_twotox();
@@ -64,7 +67,7 @@ fpu_etox_taylor(struct fpemu *fe)
 	CPYFPN(&res, r);
 
 	k = 2;
-	for (;; k++) {
+	for (; k < MAX_ITEMS; k++) {
 		/* s1 = s0 * x / k */
 		CPYFPN(&fe->fe_f1, &s0);
 		CPYFPN(&fe->fe_f2, &x);
