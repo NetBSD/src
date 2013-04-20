@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.42.2.2 2012/08/12 14:45:31 martin Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.42.2.3 2013/04/20 10:17:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.42.2.2 2012/08/12 14:45:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.42.2.3 2013/04/20 10:17:55 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -223,8 +223,10 @@ kmem_intr_alloc(size_t size, km_flag_t kmflags)
 		kmem_poison_check(p, size);
 		FREECHECK_OUT(&kmem_freecheck, p);
 		kmem_size_set(p, size);
+
+		return p + SIZE_SIZE;
 	}
-	return p + SIZE_SIZE;
+	return p;
 }
 
 /*
