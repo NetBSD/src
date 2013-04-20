@@ -1,4 +1,4 @@
-#	$NetBSD: files.n900,v 1.3 2013/04/17 01:06:14 khorben Exp $
+#	$NetBSD: files.n900,v 1.4 2013/04/20 03:37:55 khorben Exp $
 #
 # Nokia N900 configuration info
 #
@@ -20,10 +20,25 @@ attach com at obio with obiouart
 file	arch/arm/omap/obio_com.c		obiouart
 defparam opt_com.h				CONSADDR CONSPEED CONMODE
 
+# Camera button
+device n900cambtn: sysmon_envsys
+attach n900cambtn at gpio with n900cambtn
+file	arch/evbarm/n900/n900_cambtn.c		n900cambtn
+
+# Camera cover
+device n900camcvr: sysmon_envsys
+attach n900camcvr at gpio with n900camcvr
+file	arch/evbarm/n900/n900_camcvr.c		n900camcvr
+
 # Charging sensor
 device n900acad: sysmon_envsys
 attach n900acad at gpio with n900acad
 file	arch/evbarm/n900/n900_acad.c		n900acad
+
+# Keyboard slide
+device n900kbdsld: sysmon_envsys
+attach n900kbdsld at gpio with n900kbdsld
+file	arch/evbarm/n900/n900_kbdsld.c	n900kbdsld
 
 # Lock button
 device n900lckbtn: sysmon_envsys

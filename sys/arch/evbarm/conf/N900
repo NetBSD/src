@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.10 2013/04/17 01:06:13 khorben Exp $
+#	$NetBSD: N900,v 1.11 2013/04/20 03:37:55 khorben Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -217,6 +217,15 @@ gpio*		at omapgpio?
 # Charging sensor
 n900acad0	at gpio0 offset 7 mask 0x1 #intr 103
 
+# Camera button
+n900cambtn0	at gpio2 offset 4 mask 0x3 #intr 164, 165
+
+# Keyboard slide
+n900kbdsld0	at gpio2 offset 7 mask 0x1 #intr 167
+
+# Camera cover
+n900camcvr0	at gpio3 offset 14 mask 0x1 #intr 206
+
 # Lock button
 n900lckbtn0	at gpio3 offset 17 mask 0x1 #intr 209
 
@@ -229,7 +238,8 @@ omapiic1	at obio0 addr 0x48072000 size 0x80
 omapiic2	at obio0 addr 0x48060000 size 0x80
 iic*		at omapiic?
 
-# Power Managent and System Companion Device
+# I2C devices
+# Power Management and System Companion Device
 tps65950pm0	at iic0 addr 0x48
 tps65950pm1	at iic0 addr 0x49
 tps65950pm2	at iic0 addr 0x4a
