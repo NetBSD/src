@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_cordic.c,v 1.1 2013/04/19 13:31:11 isaki Exp $	*/
+/*	$NetBSD: fpu_cordic.c,v 1.2 2013/04/20 01:48:20 isaki Exp $	*/
 
 /*
  * Copyright (c) 2013 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_cordic.c,v 1.1 2013/04/19 13:31:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_cordic.c,v 1.2 2013/04/20 01:48:20 isaki Exp $");
 
 #include <machine/ieee.h>
 
@@ -59,7 +59,7 @@ struct sfpn {
 static void prepare_cordic_const(struct fpemu *);
 static struct fpn *fpu_gain1_cordic(struct fpemu *);
 static struct fpn *fpu_gain2_cordic(struct fpemu *);
-static struct fpn *fpu_atan_tayler(struct fpemu *);
+static struct fpn *fpu_atan_taylor(struct fpemu *);
 static void printf_fpn(const struct fpn *);
 static void printf_sfpn(const struct sfpn *);
 static void fpn_to_sfpn(struct sfpn *, const struct fpn *);
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 
 /*
  * This routine uses fpu_const(), fpu_add(), fpu_div(), fpu_logn()
- * and fpu_atan_tayler() as bootstrap.
+ * and fpu_atan_taylor() as bootstrap.
  */
 static void
 prepare_cordic_const(struct fpemu *fe)
@@ -122,7 +122,7 @@ prepare_cordic_const(struct fpemu *fe)
 	for (i = 0; i < EXT_FRACBITS; i++) {
 		/* atan(t) */
 		CPYFPN(&fe->fe_f2, &t);
-		r = fpu_atan_tayler(fe);
+		r = fpu_atan_taylor(fe);
 		fpn_to_sfpn(&atan_table[i], r);
 
 		/* t /= 2 */
@@ -216,7 +216,7 @@ fpu_gain2_cordic(struct fpemu *fe)
  *                  3     5     7
  */
 static struct fpn *
-fpu_atan_tayler(struct fpemu *fe)
+fpu_atan_taylor(struct fpemu *fe)
 {
 	struct fpn res;
 	struct fpn x2;
