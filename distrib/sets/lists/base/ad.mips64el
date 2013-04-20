@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.81.2.9 2013/01/05 23:10:31 riz Exp $
+# $NetBSD: ad.mips64el,v 1.81.2.10 2013/04/20 15:24:39 bouyer Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -198,7 +198,7 @@
 ./usr/lib/64/libprop.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libprop.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libpthread.so.1			base-compat-shlib	compat,pic
-./usr/lib/64/libpthread.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/64/libpthread.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libpthread_dbg.so.2		base-compat-shlib	compat,pic
 ./usr/lib/64/libpthread_dbg.so.2.0		base-compat-shlib	compat,pic
 ./usr/lib/64/libpuffs.so.2			base-compat-shlib	compat,pic
@@ -506,7 +506,7 @@
 ./usr/lib/o32/libprop.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libprop.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libpthread.so.1			base-compat-shlib	compat,pic
-./usr/lib/o32/libpthread.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libpthread.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libpthread_dbg.so.2		base-compat-shlib	compat,pic
 ./usr/lib/o32/libpthread_dbg.so.2.0		base-compat-shlib	compat,pic
 ./usr/lib/o32/libpuffs.so.2			base-compat-shlib	compat,pic

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.616.2.9 2012/12/15 23:45:57 riz Exp $
+# $NetBSD: shl.mi,v 1.616.2.10 2013/04/20 15:24:40 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -385,7 +385,7 @@
 ./usr/lib/libprop.so.1.1			base-sys-shlib
 ./usr/lib/libpthread.so				base-sys-shlib
 ./usr/lib/libpthread.so.1			base-sys-shlib
-./usr/lib/libpthread.so.1.0			base-sys-shlib
+./usr/lib/libpthread.so.1.1			base-sys-shlib
 ./usr/lib/libpthread_dbg.so			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.2			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.2.0			base-sys-shlib
