@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.17 2011/05/28 19:30:19 matt Exp $	*/
+/*	$NetBSD: comreg.h,v 1.18 2013/04/20 11:52:41 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -62,6 +62,9 @@
 #define	IIR_MLSC	0x0	/* Modem status */
 #define	IIR_NOPEND	0x1	/* No pending interrupts */
 #define	IIR_FIFO_MASK	0xc0	/* set if FIFOs are enabled */
+#ifdef COM_16750
+#define IIR_BUSY	0x7	/* Busy indicator */
+#endif
 
 /* fifo control register */
 #define	FIFO_ENABLE	0x01	/* Turn the FIFO on */
