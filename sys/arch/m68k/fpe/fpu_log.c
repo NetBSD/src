@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_log.c,v 1.16 2013/04/11 13:27:11 isaki Exp $	*/
+/*	$NetBSD: fpu_log.c,v 1.17 2013/04/20 05:27:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.16 2013/04/11 13:27:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.17 2013/04/20 05:27:05 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -599,8 +599,7 @@ fpu_lognp1(struct fpemu *fe)
 	fp = fpu_add(fe);
 
 	/* copy the result to the src opr */
-	if (&fe->fe_f2 != fp)
-		CPYFPN(&fe->fe_f2, fp);
+	CPYFPN(&fe->fe_f2, fp);
 
 	return fpu_logn(fe);
 }
