@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.50 2011/02/21 00:40:07 joerg Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.50.10.1 2013/04/20 10:11:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.50 2011/02/21 00:40:07 joerg Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.50.10.1 2013/04/20 10:11:43 bouyer Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,28 +61,34 @@ __weak_alias(realpath,_realpath)
 #endif
 
 /*
- * char *realpath(const char *path, char resolved[MAXPATHLEN]);
+ * char *realpath(const char *path, char *resolved);
  *
  * Find the real name of path, by removing all ".", ".." and symlink
  * components.  Returns (resolved) on success, or (NULL) on failure,
  * in which case the path which caused trouble is left in (resolved).
  */
 char *
-realpath(const char *path, char *resolved)
+realpath(const char * __restrict path, char * __restrict resolved)
 {
 	struct stat sb;
 	int idx = 0, n, nlnk = 0;
 	const char *q;
-	char *p, wbuf[2][MAXPATHLEN];
+	char *p, wbuf[2][MAXPATHLEN], *fres;
 	size_t len;
-
-	_DIAGASSERT(resolved != NULL);
 
 	/* POSIX sez we must test for this */
 	if (path == NULL) {
 		errno = EINVAL;
 		return NULL;
 	}
+
+	if (resolved == NULL) {
+		fres = resolved = malloc(MAXPATHLEN);
+		if (resolved == NULL)
+			return NULL;
+	} else
+		fres = NULL;
+
 
 	/*
 	 * Build real path one by one with paying an attention to .,
@@ -95,10 +101,10 @@ realpath(const char *path, char *resolved)
 	 */
 	p = resolved;
 
-	if (*path == 0) {
-		*p = 0;
+	if (*path == '\0') {
+		*p = '\0';
 		errno = ENOENT;
-		return (NULL);
+		goto out;
 	}
 
 	/* If relative path, start from current working directory. */
@@ -106,8 +112,8 @@ realpath(const char *path, char *resolved)
 		/* check for resolved pointer to appease coverity */
 		if (resolved && getcwd(resolved, MAXPATHLEN) == NULL) {
 			p[0] = '.';
-			p[1] = 0;
-			return (NULL);
+			p[1] = '\0';
+			goto out;
 		}
 		len = strlen(resolved);
 		if (len > 1)
@@ -119,18 +125,18 @@ loop:
 	while (*path == '/')
 		path++;
 
-	if (*path == 0) {
+	if (*path == '\0') {
 		if (p == resolved)
 			*p++ = '/';
-		*p = 0;
-		return (resolved);
+		*p = '\0';
+		return resolved;
 	}
 
 	/* Find the end of this component. */
 	q = path;
 	do
 		q++;
-	while (*q != '/' && *q != 0);
+	while (*q != '/' && *q != '\0');
 
 	/* Test . or .. */
 	if (path[0] == '.') {
@@ -142,7 +148,7 @@ loop:
 			/* Trim the last component. */
 			if (p != resolved)
 				while (*--p != '/')
-					;
+					continue;
 			path = q;
 			goto loop;
 		}
@@ -153,39 +159,39 @@ loop:
 		errno = ENAMETOOLONG;
 		if (p == resolved)
 			*p++ = '/';
-		*p = 0;
-		return (NULL);
+		*p = '\0';
+		goto out;
 	}
 	p[0] = '/';
 	memcpy(&p[1], path,
 	    /* LINTED We know q > path. */
 	    q - path);
-	p[1 + q - path] = 0;
+	p[1 + q - path] = '\0';
 
 	/*
 	 * If this component is a symlink, toss it and prepend link
 	 * target to unresolved path.
 	 */
-	if (lstat(resolved, &sb) == -1) {
-		return (NULL);
-	}
+	if (lstat(resolved, &sb) == -1)
+		goto out;
+
 	if (S_ISLNK(sb.st_mode)) {
 		if (nlnk++ >= MAXSYMLINKS) {
 			errno = ELOOP;
-			return (NULL);
+			goto out;
 		}
 		n = readlink(resolved, wbuf[idx], sizeof(wbuf[0]) - 1);
 		if (n < 0)
 			return (NULL);
 		if (n == 0) {
 			errno = ENOENT;
-			return (NULL);
+			goto out;
 		}
 
 		/* Append unresolved path to link target and switch to it. */
 		if (n + (len = strlen(q)) + 1 > sizeof(wbuf[0])) {
 			errno = ENAMETOOLONG;
-			return (NULL);
+			goto out;
 		}
 		memcpy(&wbuf[idx][n], q, len + 1);
 		path = wbuf[idx];
@@ -198,13 +204,16 @@ loop:
 	}
 	if (*q == '/' && !S_ISDIR(sb.st_mode)) {
 		errno = ENOTDIR;
-		return (NULL);
+		goto out;
 	}
 
 	/* Advance both resolved and unresolved path. */
 	p += 1 + q - path;
 	path = q;
 	goto loop;
+out:
+	free(fres);
+	return NULL;
 }
 
 char *
