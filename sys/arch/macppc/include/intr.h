@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.31 2013/04/18 16:42:46 macallan Exp $	*/
+/*	$NetBSD: intr.h,v 1.32 2013/04/20 13:32:40 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef _LOCORE
 
-#define ICU_LEN		64
+#define ICU_LEN		128
 
 #ifdef MULTIPROCESSOR
 struct cpu_info;
