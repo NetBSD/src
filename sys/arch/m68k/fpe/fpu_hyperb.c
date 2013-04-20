@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_hyperb.c,v 1.10 2013/04/19 14:05:12 isaki Exp $	*/
+/*	$NetBSD: fpu_hyperb.c,v 1.11 2013/04/20 04:38:51 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,9 +57,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.10 2013/04/19 14:05:12 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.11 2013/04/20 04:38:51 isaki Exp $");
 
 #include "fpu_emulate.h"
+
+/* The number of items to terminate the Taylor expansion */
+#define MAX_ITEMS	(2000)
 
 /*
  * fpu_hyperb.c: defines the following functions
@@ -159,7 +162,7 @@ __fpu_sinhcosh_taylor(struct fpemu *fe, struct fpn *s0, uint32_t f)
 
 	sign = 1;	/* sign := (-1)^n */
 
-	for (;;) {
+	for (; f < (2 * MAX_ITEMS); ) {
 		/* (f1 :=) s0 * x^2 */
 		CPYFPN(&fe->fe_f1, s0);
 		CPYFPN(&fe->fe_f2, &x2);
