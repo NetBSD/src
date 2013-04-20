@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.156.2.9 2013/01/05 23:10:31 riz Exp $
+# $NetBSD: md.amd64,v 1.156.2.10 2013/04/20 15:24:39 bouyer Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -205,7 +205,7 @@
 ./usr/lib/i386/libprop.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libprop.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libpthread.so.1			base-compat-shlib	compat,pic
-./usr/lib/i386/libpthread.so.1.0		base-compat-shlib	compat,pic
+./usr/lib/i386/libpthread.so.1.1		base-compat-shlib	compat,pic
 ./usr/lib/i386/libpthread_dbg.so.2		base-compat-shlib	compat,pic
 ./usr/lib/i386/libpthread_dbg.so.2.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libpuffs.so.2			base-compat-shlib	compat,pic
