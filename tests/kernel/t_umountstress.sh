@@ -1,4 +1,4 @@
-# $NetBSD: t_umountstress.sh,v 1.1 2013/04/16 22:05:44 mlelstv Exp $
+# $NetBSD: t_umountstress.sh,v 1.2 2013/04/20 09:00:03 mlelstv Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,42 +63,54 @@ EOF
 	echo "*** Testing unmount"
 
 	touch ${TMPMP}/hold
-	exec 3< ${TMPMP}/hold
+	exec 9< ${TMPMP}/hold
 
 	(
-		for l in 0 1 2 3 4 5 6 7 8 9 10; do
-		for i in 0 1 2 3; do
 		for j in 0 1 2 3 4 5 6 7 8 9; do
 		for k in 0 1 2 3 4 5 6 7 8 9; do
-			dd msgfmt=quiet if=/dev/zero count=1 of=test$i$j$k
-			if [ $? -ne 0 ]; then
-				atf_fail "File operation failed"
+			if ! dd msgfmt=quiet if=/dev/zero \
+				count=1 of=${TMPMP}/test$i$j$k; then
+				echo 1
+				exit
 			fi
 		done
 		done
-		done
-		done
-	) &
+		echo 0
+	) > result &
 	busypid=$!
 
 	while kill 2>/dev/null -0 $busypid; do
 		if err=$(umount ${TMPMP} 2>&1); then
 			kill $busypid
+			exec 9<&-
 			wait
 			atf_fail "Unmount succeeded while busy"
-		else
-			case $err in
-			*:\ Device\ busy)
-				;;
-			*)
-				kill $busypid
-				wait
-				atf_fail "Unmount failed: $err"
-				;;
-			esac
+			return
 		fi
+
+		case $err in
+		*:\ Device\ busy)
+			;;
+		*)
+			kill $busypid
+			exec 9<&-
+			wait
+			atf_fail "Unmount failed: $err"
+			return
+			;;
+		esac
 	done
+
+	exec 9<&-
 	wait
+
+	rc=`cat result`
+	rm -f result
+
+	case $rc in
+	0) ;;
+	*) atf_fail "File operation failed with rc $rc"
+	esac
 }
 umountstress_cleanup()
 {
