@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_exp.c,v 1.5 2011/07/18 07:44:30 isaki Exp $	*/
+/*	$NetBSD: fpu_exp.c,v 1.6 2013/04/20 03:06:19 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.5 2011/07/18 07:44:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.6 2013/04/20 03:06:19 isaki Exp $");
 
 #include "fpu_emulate.h"
 
@@ -40,30 +40,146 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.5 2011/07/18 07:44:30 isaki Exp $");
  * fpu_exp.c: defines fpu_etox(), fpu_etoxm1(), fpu_tentox(), and fpu_twotox();
  */
 
+/*
+ *                  x^2   x^3   x^4
+ * exp(x) = 1 + x + --- + --- + --- + ...
+ *                   2!    3!    4!
+ */
+static struct fpn *
+fpu_etox_taylor(struct fpemu *fe)
+{
+	struct fpn res;
+	struct fpn x;
+	struct fpn s0;
+	struct fpn *s1;
+	struct fpn *r;
+	uint32_t k;
+
+	CPYFPN(&x, &fe->fe_f2);
+	CPYFPN(&s0, &fe->fe_f2);
+
+	/* res := 1 + x */
+	fpu_const(&fe->fe_f1, FPU_CONST_1);
+	r = fpu_add(fe);
+	CPYFPN(&res, r);
+
+	k = 2;
+	for (;; k++) {
+		/* s1 = s0 * x / k */
+		CPYFPN(&fe->fe_f1, &s0);
+		CPYFPN(&fe->fe_f2, &x);
+		r = fpu_mul(fe);
+
+		CPYFPN(&fe->fe_f1, r);
+		fpu_explode(fe, &fe->fe_f2, FTYPE_LNG, &k);
+		s1 = fpu_div(fe);
+
+		/* break if s1 is enough small */
+		if (ISZERO(s1))
+			break;
+		if (res.fp_exp - s1->fp_exp >= FP_NMANT)
+			break;
+
+		/* s0 := s1 for next loop */
+		CPYFPN(&s0, s1);
+
+		/* res += s1 */
+		CPYFPN(&fe->fe_f2, s1);
+		CPYFPN(&fe->fe_f1, &res);
+		r = fpu_add(fe);
+		CPYFPN(&res, r);
+	}
+
+	CPYFPN(&fe->fe_f2, &res);
+	return &fe->fe_f2;
+}
+
+/*
+ * exp(x)
+ */
 struct fpn *
 fpu_etox(struct fpemu *fe)
 {
-	/* stub */
-	return &fe->fe_f2;
+	struct fpn *fp;
+
+	if (ISNAN(&fe->fe_f2))
+		return &fe->fe_f2;
+	if (ISINF(&fe->fe_f2)) {
+		if (fe->fe_f2.fp_sign)
+			fpu_const(&fe->fe_f2, FPU_CONST_0);
+		return &fe->fe_f2;
+	}
+
+	if (fe->fe_f2.fp_sign == 0) {
+		/* exp(x) */
+		fp = fpu_etox_taylor(fe);
+	} else {
+		/* 1/exp(-x) */
+		fe->fe_f2.fp_sign = 0;
+		fp = fpu_etox_taylor(fe);
+
+		CPYFPN(&fe->fe_f2, fp);
+		fpu_const(&fe->fe_f1, FPU_CONST_1);
+		fp = fpu_div(fe);
+	}
+	
+	return fp;
 }
 
+/*
+ * exp(x) - 1
+ */
 struct fpn *
 fpu_etoxm1(struct fpemu *fe)
 {
-	/* stub */
-	return &fe->fe_f2;
+	struct fpn *fp;
+
+	fp = fpu_etox(fe);
+
+	CPYFPN(&fe->fe_f1, fp);
+	/* build a 1.0 */
+	fp = fpu_const(&fe->fe_f2, FPU_CONST_1);
+	fe->fe_f2.fp_sign = !fe->fe_f2.fp_sign;
+	/* fp = f2 - 1.0 */
+	fp = fpu_add(fe);
+
+	return fp;
 }
 
+/*
+ * 10^x = exp(x * ln10)
+ */
 struct fpn *
 fpu_tentox(struct fpemu *fe)
 {
-	/* stub */
-	return &fe->fe_f2;
+	struct fpn *fp;
+
+	/* build a ln10 */
+	fp = fpu_const(&fe->fe_f1, FPU_CONST_LN_10);
+	/* fp = ln10 * f2 */
+	fp = fpu_mul(fe);
+
+	/* copy the result to the src opr */
+	CPYFPN(&fe->fe_f2, fp);
+
+	return fpu_etox(fe);
 }
 
+/*
+ * 2^x = exp(x * ln2)
+ */
 struct fpn *
 fpu_twotox(struct fpemu *fe)
 {
-	/* stub */
-	return &fe->fe_f2;
+	struct fpn *fp;
+
+	/* build a ln2 */
+	fp = fpu_const(&fe->fe_f1, FPU_CONST_LN_2);
+	/* fp = ln2 * f2 */
+	fp = fpu_mul(fe);
+
+	/* copy the result to the src opr */
+	CPYFPN(&fe->fe_f2, fp);
+
+	return fpu_etox(fe);
 }
