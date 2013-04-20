@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1153 2013/04/18 12:35:57 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1154 2013/04/20 09:26:23 rkujawa Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2308,7 +2308,12 @@ product MARVELL MV64360		0x6460	MV6436x System Controller
 product MARVELL MV64460		0x6480	MV6446x System Controller
 product MARVELL 88SX7042	0x7042	88SX7042 SATA IIe
 product MARVELL MV78100		0x7810	MV78100 SoC Discovery Innovation
+product MARVELL MV78130		0x7813	MV78130 SoC Armada XP
+product MARVELL MV78160		0x7816	MV78160 SoC Armada XP
 product MARVELL MV78200		0x7820	MV78200 SoC Discovery Innovation
+product MARVELL MV78230		0x7823	MV78230 SoC Armada XP
+product MARVELL MV78260		0x7826	MV78260 SoC Armada XP
+product MARVELL MV78460		0x7846	MV78460 SoC Armada XP
 product MARVELL 88W8660		0x8660	88W8660 SoC Orion1
 
 product MARVELL2 88SE9123	0x9123	88SE9123 SATA II PCI-E AHCI Controller
