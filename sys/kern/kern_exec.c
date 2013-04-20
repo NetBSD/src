@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.359 2013/04/20 18:04:41 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.360 2013/04/20 22:28:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,9 +59,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.359 2013/04/20 18:04:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.360 2013/04/20 22:28:58 christos Exp $");
 
 #include "opt_exec.h"
+#include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_modular.h"
 #include "opt_syscall_debug.h"
@@ -527,17 +528,13 @@ exec_autoload(void)
 #ifdef MODULAR
 	static const char * const native[] = {
 		"exec_elf32",
-#ifdef _LP64
 		"exec_elf64",
-#endif
 		"exec_script",
 		NULL
 	};
 	static const char * const compat[] = {
 		"exec_elf32",
-#ifdef _LP64
 		"exec_elf64",
-#endif
 		"exec_script",
 		"exec_aout",
 		"exec_coff",
