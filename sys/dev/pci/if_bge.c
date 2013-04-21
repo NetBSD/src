@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.237 2013/04/12 03:33:17 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.238 2013/04/21 19:59:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.237 2013/04/12 03:33:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.238 2013/04/21 19:59:40 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -826,8 +826,8 @@ bge_set_max_readrq(struct bge_softc *sc)
 	pcireg_t val;
 
 	val = pci_conf_read(sc->sc_pc, sc->sc_pcitag, sc->bge_pciecap
-	    + PCI_PCIE_DCSR);
-	val &= ~PCI_PCIE_DCSR_MAX_READ_REQ;
+	    + PCIE_DCSR);
+	val &= ~PCIE_DCSR_MAX_READ_REQ;
 	switch (sc->bge_expmrq) {
 	case 2048:
 		val |= BGE_PCIE_DEVCTL_MAX_READRQ_2048;
@@ -840,7 +840,7 @@ bge_set_max_readrq(struct bge_softc *sc)
 		break;
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, sc->bge_pciecap
-	    + PCI_PCIE_DCSR, val);
+	    + PCIE_DCSR, val);
 }
 
 #ifdef notdef
@@ -4062,19 +4062,19 @@ bge_reset(struct bge_softc *sc)
 			    reg | (1 << 15));
 		}
 		devctl = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
-		    sc->bge_pciecap + PCI_PCIE_DCSR);
+		    sc->bge_pciecap + PCIE_DCSR);
 		/* Clear enable no snoop and disable relaxed ordering. */
-		devctl &= ~(PCI_PCIE_DCSR_ENA_RELAX_ORD |
-		    PCI_PCIE_DCSR_ENA_NO_SNOOP);
+		devctl &= ~(PCIE_DCSR_ENA_RELAX_ORD |
+		    PCIE_DCSR_ENA_NO_SNOOP);
 
 		/* Set PCIE max payload size to 128 for older PCIe devices */
 		if ((sc->bge_flags & BGE_CPMU_PRESENT) == 0)
 			devctl &= ~(0x00e0);
 		/* Clear device status register. Write 1b to clear */
-		devctl |= PCI_PCIE_DCSR_URD | PCI_PCIE_DCSR_FED
-		    | PCI_PCIE_DCSR_NFED | PCI_PCIE_DCSR_CED;
+		devctl |= PCIE_DCSR_URD | PCIE_DCSR_FED
+		    | PCIE_DCSR_NFED | PCIE_DCSR_CED;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
-		    sc->bge_pciecap + PCI_PCIE_DCSR, devctl);
+		    sc->bge_pciecap + PCIE_DCSR, devctl);
 		bge_set_max_readrq(sc);
 	}
 
@@ -4104,9 +4104,9 @@ bge_reset(struct bge_softc *sc)
 	/* Step 11: disable PCI-X Relaxed Ordering. */
 	if (sc->bge_flags & BGE_PCIX) {
 		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, sc->bge_pcixcap
-		    + PCI_PCIX_CMD);
+		    + PCIX_CMD);
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, sc->bge_pcixcap
-		    + PCI_PCIX_CMD, reg & ~PCI_PCIX_CMD_RELAXED_ORDER);
+		    + PCIX_CMD, reg & ~PCIX_CMD_RELAXED_ORDER);
 	}
 
 	/* 5718 reset step 10, 57XX step 12 */

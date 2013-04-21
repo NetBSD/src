@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.64 2013/03/30 03:21:43 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.65 2013/04/21 19:59:40 msaitoh Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.64 2013/03/30 03:21:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.65 2013/04/21 19:59:40 msaitoh Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -4067,8 +4067,8 @@ iwn_set_pslevel(struct iwn_softc *sc, int dtim, int level, int async)
 		cmd.flags |= htole16(IWN_PS_FAST_PD);
 	/* Retrieve PCIe Active State Power Management (ASPM). */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-	    sc->sc_cap_off + PCI_PCIE_LCSR);
-	if (!(reg & PCI_PCIE_LCSR_ASPM_L0S))	/* L0s Entry disabled. */
+	    sc->sc_cap_off + PCIE_LCSR);
+	if (!(reg & PCIE_LCSR_ASPM_L0S))	/* L0s Entry disabled. */
 		cmd.flags |= htole16(IWN_PS_PCI_PMGT);
 	cmd.rxtimeout = htole32(pmgt->rxtimeout * 1024);
 	cmd.txtimeout = htole32(pmgt->txtimeout * 1024);
@@ -5475,9 +5475,9 @@ iwn_apm_init(struct iwn_softc *sc)
 
 	/* Retrieve PCIe Active State Power Management (ASPM). */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-	    sc->sc_cap_off + PCI_PCIE_LCSR);
+	    sc->sc_cap_off + PCIE_LCSR);
 	/* Workaround for HW instability in PCIe L0->L0s->L1 transition. */
-	if (reg & PCI_PCIE_LCSR_ASPM_L1)	/* L1 Entry enabled. */
+	if (reg & PCIE_LCSR_ASPM_L1)	/* L1 Entry enabled. */
 		IWN_SETBITS(sc, IWN_GIO, IWN_GIO_L0S_ENA);
 	else
 		IWN_CLRBITS(sc, IWN_GIO, IWN_GIO_L0S_ENA);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.51 2013/03/06 11:50:32 yamt Exp $	*/
+/*	$NetBSD: ppb.c,v 1.52 2013/04/21 19:59:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.51 2013/03/06 11:50:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.52 2013/04/21 19:59:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,9 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.51 2013/03/06 11:50:32 yamt Exp $");
 #include <dev/pci/ppbreg.h>
 #include <dev/pci/pcidevs.h>
 
-#define	PCI_PCIE_SLCSR_NOTIFY_MASK					\
-	(PCI_PCIE_SLCSR_ABE | PCI_PCIE_SLCSR_PFE | PCI_PCIE_SLCSR_MSE |	\
-	 PCI_PCIE_SLCSR_PDE | PCI_PCIE_SLCSR_CCE | PCI_PCIE_SLCSR_HPE)
+#define	PCIE_SLCSR_NOTIFY_MASK					\
+	(PCIE_SLCSR_ABE | PCIE_SLCSR_PFE | PCIE_SLCSR_MSE |	\
+	 PCIE_SLCSR_PDE | PCIE_SLCSR_CCE | PCIE_SLCSR_HPE)
 
 struct ppb_softc {
 	device_t sc_dev;		/* generic device glue */
@@ -109,52 +109,52 @@ ppb_fix_pcie(device_t self)
 		return; /* Not a PCIe device */
 
 	aprint_normal_dev(self, "PCI Express ");
-	switch (reg & PCI_PCIE_XCAP_VER_MASK) {
-	case PCI_PCIE_XCAP_VER_1_0:
+	switch (reg & PCIE_XCAP_VER_MASK) {
+	case PCIE_XCAP_VER_1_0:
 		aprint_normal("1.0");
 		break;
-	case PCI_PCIE_XCAP_VER_2_0:
+	case PCIE_XCAP_VER_2_0:
 		aprint_normal("2.0");
 		break;
 	default:
 		aprint_normal_dev(self,
 		    "version unsupported (0x%" PRIxMAX ")\n",
-		    __SHIFTOUT(reg, PCI_PCIE_XCAP_VER_MASK));
+		    __SHIFTOUT(reg, PCIE_XCAP_VER_MASK));
 		return;
 	}
 	aprint_normal(" <");
-	switch (reg & PCI_PCIE_XCAP_TYPE_MASK) {
-	case PCI_PCIE_XCAP_TYPE_PCIE_DEV:
+	switch (reg & PCIE_XCAP_TYPE_MASK) {
+	case PCIE_XCAP_TYPE_PCIE_DEV:
 		aprint_normal("PCI-E Endpoint device");
 		break;
-	case PCI_PCIE_XCAP_TYPE_PCI_DEV:
+	case PCIE_XCAP_TYPE_PCI_DEV:
 		aprint_normal("Legacy PCI-E Endpoint device");
 		break;
-	case PCI_PCIE_XCAP_TYPE_ROOT:
+	case PCIE_XCAP_TYPE_ROOT:
 		aprint_normal("Root Port of PCI-E Root Complex");
 		break;
-	case PCI_PCIE_XCAP_TYPE_UP:
+	case PCIE_XCAP_TYPE_UP:
 		aprint_normal("Upstream Port of PCI-E Switch");
 		break;
-	case PCI_PCIE_XCAP_TYPE_DOWN:
+	case PCIE_XCAP_TYPE_DOWN:
 		aprint_normal("Downstream Port of PCI-E Switch");
 		break;
-	case PCI_PCIE_XCAP_TYPE_PCIE2PCI:
+	case PCIE_XCAP_TYPE_PCIE2PCI:
 		aprint_normal("PCI-E to PCI/PCI-X Bridge");
 		break;
-	case PCI_PCIE_XCAP_TYPE_PCI2PCIE:
+	case PCIE_XCAP_TYPE_PCI2PCIE:
 		aprint_normal("PCI/PCI-X to PCI-E Bridge");
 		break;
 	default:
 		aprint_normal("Device/Port Type 0x%" PRIxMAX,
-		    __SHIFTOUT(reg, PCI_PCIE_XCAP_TYPE_MASK));
+		    __SHIFTOUT(reg, PCIE_XCAP_TYPE_MASK));
 		break;
 	}
 
-	switch (reg & PCI_PCIE_XCAP_TYPE_MASK) {
-	case PCI_PCIE_XCAP_TYPE_ROOT:
-	case PCI_PCIE_XCAP_TYPE_DOWN:
-	case PCI_PCIE_XCAP_TYPE_PCI2PCIE:
+	switch (reg & PCIE_XCAP_TYPE_MASK) {
+	case PCIE_XCAP_TYPE_ROOT:
+	case PCIE_XCAP_TYPE_DOWN:
+	case PCIE_XCAP_TYPE_PCI2PCIE:
 		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + 0x0c);
 		u_int mlw = (reg >> 4) & 0x1f;
 		u_int mls = (reg >> 0) & 0x0f;
@@ -188,12 +188,12 @@ ppb_fix_pcie(device_t self)
 		break;
 	}
 
-	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + PCI_PCIE_SLCSR);
-	if (reg & PCI_PCIE_SLCSR_NOTIFY_MASK) {
+	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + PCIE_SLCSR);
+	if (reg & PCIE_SLCSR_NOTIFY_MASK) {
 		aprint_debug_dev(self, "disabling notification events\n");
-		reg &= ~PCI_PCIE_SLCSR_NOTIFY_MASK;
+		reg &= ~PCIE_SLCSR_NOTIFY_MASK;
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
-		    off + PCI_PCIE_SLCSR, reg);
+		    off + PCIE_SLCSR, reg);
 	}
 }
 

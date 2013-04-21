@@ -567,7 +567,7 @@ alc_aspm(struct alc_softc *sc, int media)
 	if ((sc->alc_flags & (ALC_FLAG_APS | ALC_FLAG_PCIE)) ==
 	    (ALC_FLAG_APS | ALC_FLAG_PCIE))
 		linkcfg = CSR_READ_2(sc, sc->alc_expcap +
-		    PCI_PCIE_LCSR);
+		    PCIE_LCSR);
 	else
 		linkcfg = 0;
 	pmcfg &= ~PM_CFG_SERDES_PD_EX_L1;
@@ -582,7 +582,7 @@ alc_aspm(struct alc_softc *sc, int media)
 		if (sc->alc_ident->deviceid == PCI_PRODUCT_ATTANSIC_AR8152_B &&
 		    sc->alc_rev == ATHEROS_AR8152_B_V10)
 			linkcfg |= 0x80;
-		CSR_WRITE_2(sc, sc->alc_expcap + PCI_PCIE_LCSR,
+		CSR_WRITE_2(sc, sc->alc_expcap + PCIE_LCSR,
 		    linkcfg);
 		pmcfg &= ~(PM_CFG_EN_BUFS_RX_L0S | PM_CFG_SA_DLY_ENB |
 		    PM_CFG_HOTRST);
@@ -719,7 +719,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 		sc->alc_flags |= ALC_FLAG_PCIE;
 		sc->alc_expcap = base;
 		burst = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-		    base + PCI_PCIE_DCSR) >> 16;
+		    base + PCIE_DCSR) >> 16;
 		sc->alc_dma_rd_burst = (burst & 0x7000) >> 12;
 		sc->alc_dma_wr_burst = (burst & 0x00e0) >> 5;
 		if (alcdebug) {
@@ -750,10 +750,10 @@ alc_attach(device_t parent, device_t self, void *aux)
 		}
 		/* Disable ASPM L0S and L1. */
 		cap = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-		    base + PCI_PCIE_LCAP) >> 16;
+		    base + PCIE_LCAP) >> 16;
 		if ((cap & 0x00000c00) != 0) {
 			ctl = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-			    base + PCI_PCIE_LCSR) >> 16;
+			    base + PCIE_LCSR) >> 16;
 			if ((ctl & 0x08) != 0)
 				sc->alc_rcb = DMA_CFG_RCB_128;
 			if (alcdebug)

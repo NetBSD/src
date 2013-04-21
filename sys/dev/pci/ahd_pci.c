@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.33 2011/12/30 18:20:46 christos Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.34 2013/04/21 19:59:40 msaitoh Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.33 2011/12/30 18:20:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.34 2013/04/21 19:59:40 msaitoh Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -1033,7 +1033,7 @@ ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat)
 	 * additionally have SG engine splits to look at.
 	 */
 	pcix_status = pci_conf_read(bd->pc, bd->tag,
-	    bd->pcix_off + PCI_PCIX_STATUS);
+	    bd->pcix_off + PCIX_STATUS);
 	printf("%s: PCI Split Interrupt - PCI-X status = 0x%x\n",
 	       ahd_name(ahd), pcix_status);
 
@@ -1082,7 +1082,7 @@ ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat)
 	/*
 	 * Clear PCI-X status bits.
 	 */
-	pci_conf_write(bd->pc, bd->tag, bd->pcix_off + PCI_PCIX_STATUS,
+	pci_conf_write(bd->pc, bd->tag, bd->pcix_off + PCIX_STATUS,
 	    pcix_status);
 	ahd_outb(ahd, CLRINT, CLRSPLTINT);
 	ahd_restore_modes(ahd, saved_modes);
