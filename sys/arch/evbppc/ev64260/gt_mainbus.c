@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.17 2011/07/01 20:46:39 dyoung Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.18 2013/04/21 15:42:11 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.17 2011/07/01 20:46:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.18 2013/04/21 15:42:11 kiyohara Exp $");
 
 #include "opt_ev64260.h"
 #include "opt_pci.h"
@@ -203,13 +203,13 @@ gt_attach(device_t parent, device_t self, void *aux)
 	    GPP_EXTERNAL_INTERRUPS);
 
 	discovery_pic->pic_cookie = sc;
-	intr_establish(IRQ_GPP7_0, IST_LEVEL, IPL_NONE,
+	intr_establish(IRQ_GPP7_0, IST_LEVEL, IPL_HIGH,
 	    pic_handle_intr, discovery_gpp_pic[0]);
-	intr_establish(IRQ_GPP15_8, IST_LEVEL, IPL_NONE,
+	intr_establish(IRQ_GPP15_8, IST_LEVEL, IPL_HIGH,
 	    pic_handle_intr, discovery_gpp_pic[1]);
-	intr_establish(IRQ_GPP23_16, IST_LEVEL, IPL_NONE,
+	intr_establish(IRQ_GPP23_16, IST_LEVEL, IPL_HIGH,
 	    pic_handle_intr, discovery_gpp_pic[2]);
-	intr_establish(IRQ_GPP31_24, IST_LEVEL, IPL_NONE,
+	intr_establish(IRQ_GPP31_24, IST_LEVEL, IPL_HIGH,
 	    pic_handle_intr, discovery_gpp_pic[3]);
 
 	cpumstr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GT_CPU_Master_Ctl);

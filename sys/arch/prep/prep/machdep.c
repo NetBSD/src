@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2011/06/30 00:53:00 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2013/04/21 15:42:11 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2011/06/30 00:53:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2013/04/21 15:42:11 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -361,7 +361,7 @@ prep_setup_openpic(PPC_DEVICE *dev)
 		openpic_write(OPENPIC_TIMER_FREQ, busfreq/8);
 		primary_pic = 1;
 		/* set up the IVR as a cascade on openpic 0 */
-		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr,
+		intr_establish(16, IST_LEVEL, IPL_HIGH, pic_handle_intr,
 		    isa_pic);
 		oea_install_extint(pic_ext_intr);
 #ifdef MULTIPROCESSOR
