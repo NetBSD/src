@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.9 2013/02/19 02:15:18 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.10 2013/04/21 19:59:39 msaitoh Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -299,21 +299,21 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	 * This will force the device to negotiate to a max of gen1.
 	 */
 	if (cf->cf_flags & 1) {
-		bcmpax_conf_write(sc, 0, offset + PCI_PCIE_LCSR2, 1); 
+		bcmpax_conf_write(sc, 0, offset + PCIE_LCSR2, 1); 
 	}
 
 	/*
 	 * Now we wait (.25 sec) for the link to come up.
 	 */
-	offset += PCI_PCIE_LCSR;
+	offset += PCIE_LCSR;
 	for (size_t timo = 0;; timo++) {
 		const pcireg_t lcsr = bcmpax_conf_read(sc, 0, offset); 
-		sc->sc_linkup = __SHIFTOUT(lcsr, PCI_PCIE_LCSR_NLW) != 0
-		    && (1 || (lcsr & PCI_PCIE_LCSR_DLACTIVE) != 0);
+		sc->sc_linkup = __SHIFTOUT(lcsr, PCIE_LCSR_NLW) != 0
+		    && (1 || (lcsr & PCIE_LCSR_DLACTIVE) != 0);
 		if (sc->sc_linkup || timo == 250) {
 			aprint_debug_dev(self,
 			    "lcsr=%#x nlw=%jd linkup=%d, timo=%zu\n",
-			    lcsr, __SHIFTOUT(lcsr, PCI_PCIE_LCSR_NLW),
+			    lcsr, __SHIFTOUT(lcsr, PCIE_LCSR_NLW),
 			    sc->sc_linkup, timo);
 			break;
 		}

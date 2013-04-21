@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.74 2013/04/11 10:12:48 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.75 2013/04/21 19:59:40 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -175,8 +175,8 @@
 #define BGE_PCI_MAXLAT			0x3F
 #define BGE_PCI_PCIXCAP			0x40
 #define BGE_PCI_NEXTPTR_PM		0x41
-#define BGE_PCI_PCIX_CMD		0x42
-#define BGE_PCI_PCIX_STS		0x44
+#define BGE_PCIX_CMD			0x42
+#define BGE_PCIX_STS			0x44
 #define BGE_PCI_PWRMGMT_CAPID		0x48
 #define BGE_PCI_NEXTPTR_VPD		0x49
 #define BGE_PCI_PWRMGMT_CAPS		0x4A
