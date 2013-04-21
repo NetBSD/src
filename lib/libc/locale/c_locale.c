@@ -1,4 +1,4 @@
-/* $NetBSD: c_locale.c,v 1.1 2013/04/14 23:44:54 joerg Exp $ */
+/* $NetBSD: c_locale.c,v 1.2 2013/04/21 17:45:46 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c_locale.c,v 1.1 2013/04/14 23:44:54 joerg Exp $");
+__RCSID("$NetBSD: c_locale.c,v 1.2 2013/04/21 17:45:46 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/ctype_bits.h>
@@ -168,6 +168,8 @@ static const struct _locale __C_locale = {
 	    __UNCONST(&_DefaultNumericLocale),
 	[(size_t)LC_MESSAGES] = (_locale_part_t)
 	    __UNCONST(&_DefaultMessagesLocale),
+	[(size_t)LC_TIME] = (_locale_part_t)
+	    __UNCONST(&_DefaultTimeLocale),
     },
 };
 
