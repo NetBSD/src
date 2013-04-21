@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.47 2013/04/16 21:13:38 para Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.48 2013/04/21 02:44:15 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.47 2013/04/16 21:13:38 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.48 2013/04/21 02:44:15 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -208,7 +208,7 @@ kmem_intr_alloc(size_t size, km_flag_t kmflags)
 	} else if ((index = ((allocsz - 1) >> KMEM_BIG_SHIFT))
             < kmem_cache_big_maxidx) {
 		pc = kmem_cache_big[index];
-	} else {	
+	} else {
 		int ret = uvm_km_kmem_alloc(kmem_va_arena,
 		    (vsize_t)round_page(size),
 		    ((kmflags & KM_SLEEP) ? VM_SLEEP : VM_NOSLEEP)
@@ -483,7 +483,7 @@ kmem_poison_check(void *p, size_t sz)
 static void
 kmem_size_set(void *p, size_t sz)
 {
-	
+
 	memcpy(p, &sz, sizeof(sz));
 }
 
@@ -509,7 +509,7 @@ kmem_asprintf(const char *fmt, ...)
 	int size, len;
 	va_list va;
 	char *str;
-	
+
 	va_start(va, fmt);
 	len = vsnprintf(NULL, 0, fmt, va);
 	va_end(va);
