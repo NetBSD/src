@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.51 2013/04/18 12:42:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.52 2013/04/21 19:59:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -969,7 +969,7 @@ struct livengood_tcpip_ctxdesc {
 #define ICH_NVM_SIG_VALUE	0x80
 
 /* for PCI express Capability registers */
-#define	WM_PCI_PCIE_DCSR2_16MS	0x00000005
+#define	WM_PCIE_DCSR2_16MS	0x00000005
 
 /* advanced TX descriptor for 82575 and newer */
 typedef union nq_txdesc {

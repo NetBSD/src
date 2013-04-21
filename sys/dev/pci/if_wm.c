@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.247 2013/04/18 12:42:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.248 2013/04/21 19:59:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.247 2013/04/18 12:42:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.248 2013/04/21 19:59:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1377,25 +1377,25 @@ wm_attach(device_t parent, device_t self, void *aux)
 				 * incorrectly.
 				 */
 				pcix_cmd = pci_conf_read(pa->pa_pc, pa->pa_tag,
-				    sc->sc_pcixe_capoff + PCI_PCIX_CMD);
+				    sc->sc_pcixe_capoff + PCIX_CMD);
 				pcix_sts = pci_conf_read(pa->pa_pc, pa->pa_tag,
-				    sc->sc_pcixe_capoff + PCI_PCIX_STATUS);
+				    sc->sc_pcixe_capoff + PCIX_STATUS);
 
 				bytecnt =
-				    (pcix_cmd & PCI_PCIX_CMD_BYTECNT_MASK) >>
-				    PCI_PCIX_CMD_BYTECNT_SHIFT;
+				    (pcix_cmd & PCIX_CMD_BYTECNT_MASK) >>
+				    PCIX_CMD_BYTECNT_SHIFT;
 				maxb =
-				    (pcix_sts & PCI_PCIX_STATUS_MAXB_MASK) >>
-				    PCI_PCIX_STATUS_MAXB_SHIFT;
+				    (pcix_sts & PCIX_STATUS_MAXB_MASK) >>
+				    PCIX_STATUS_MAXB_SHIFT;
 				if (bytecnt > maxb) {
 					aprint_verbose_dev(sc->sc_dev,
 					    "resetting PCI-X MMRBC: %d -> %d\n",
 					    512 << bytecnt, 512 << maxb);
 					pcix_cmd = (pcix_cmd &
-					    ~PCI_PCIX_CMD_BYTECNT_MASK) |
-					   (maxb << PCI_PCIX_CMD_BYTECNT_SHIFT);
+					    ~PCIX_CMD_BYTECNT_MASK) |
+					   (maxb << PCIX_CMD_BYTECNT_SHIFT);
 					pci_conf_write(pa->pa_pc, pa->pa_tag,
-					    sc->sc_pcixe_capoff + PCI_PCIX_CMD,
+					    sc->sc_pcixe_capoff + PCIX_CMD,
 					    pcix_cmd);
 				}
 			}
@@ -8269,10 +8269,10 @@ wm_set_pcie_completion_timeout(struct wm_softc *sc)
 	}
 
 	ctrl2 = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
-	    sc->sc_pcixe_capoff + PCI_PCIE_DCSR2);
-	ctrl2 |= WM_PCI_PCIE_DCSR2_16MS;
+	    sc->sc_pcixe_capoff + PCIE_DCSR2);
+	ctrl2 |= WM_PCIE_DCSR2_16MS;
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag,
-	    sc->sc_pcixe_capoff + PCI_PCIE_DCSR2, ctrl2);
+	    sc->sc_pcixe_capoff + PCIE_DCSR2, ctrl2);
 
 out:
 	/* Disable completion timeout resend */
