@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.17 2010/05/04 19:16:22 macallan Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.18 2013/04/21 04:28:05 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.17 2010/05/04 19:16:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.18 2013/04/21 04:28:05 kiyohara Exp $");
 
 #include "opt_rasops.h"
 
@@ -229,10 +229,24 @@ rasops2_makestamp(struct rasops_info *ri, long attr)
 	stamp_attr = attr;
 
 	for (i = 0; i < 16; i++) {
-		stamp[i] = (i & 1 ? fg : bg);
-		stamp[i] |= (i & 2 ? fg : bg) << 2;
-		stamp[i] |= (i & 4 ? fg : bg) << 4;
-		stamp[i] |= (i & 8 ? fg : bg) << 6;
+#if BYTE_ORDER == BIG_ENDIAN
+#define NEED_LITTLE_ENDIAN_STAMP RI_BSWAP
+#else
+#define NEED_LITTLE_ENDIAN_STAMP 0
+#endif
+		if ((ri->ri_flg & RI_BSWAP) == NEED_LITTLE_ENDIAN_STAMP) {
+			/* littel endian */
+			stamp[i] = (i & 8 ? fg : bg);
+			stamp[i] |= (i & 4 ? fg : bg) << 2;
+			stamp[i] |= (i & 2 ? fg : bg) << 4;
+			stamp[i] |= (i & 1 ? fg : bg) << 6;
+		} else {
+			/* big endian */
+			stamp[i] = (i & 1 ? fg : bg);
+			stamp[i] |= (i & 2 ? fg : bg) << 2;
+			stamp[i] |= (i & 4 ? fg : bg) << 4;
+			stamp[i] |= (i & 8 ? fg : bg) << 6;
+		}
 	}
 }
 
