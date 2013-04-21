@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.104 2013/04/21 23:46:06 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.105 2013/04/21 23:54:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.104 2013/04/21 23:46:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.105 2013/04/21 23:54:44 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -857,32 +857,64 @@ pci_print_pcie_L1_latency(uint32_t val)
 }
 
 static void
+pci_print_pcie_compl_timeout(uint32_t val)
+{
+
+	switch (val) {
+	case 0x0:
+		printf("50us to 50ms\n");
+		break;
+	case 0x5:
+		printf("16ms to 55ms\n");
+		break;
+	case 0x6:
+		printf("65ms to 210ms\n");
+		break;
+	case 0x9:
+		printf("260ms to 900ms\n");
+		break;
+	case 0xa:
+		printf("1s to 3.5s\n");
+		break;
+	default:
+		printf("unknown %u value\n", val);
+		break;
+	}
+}
+
+static void
 pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 {
 	pcireg_t reg; /* for each register */
 	pcireg_t val; /* for each bitfield */
+	bool check_link = false;
 	bool check_slot = false;
 	bool check_rootport = false;
+	unsigned int pciever;
 	static const char * const linkspeeds[] = {"2.5", "5.0", "8.0"};
+	int i;
 
 	printf("\n  PCI Express Capabilities Register\n");
 	/* Capability Register */
 	reg = regs[o2i(capoff)];
 	printf("    Capability register: %04x\n", reg >> 16);
-	printf("      Capability version: %x\n",
-	    (unsigned int)((reg & 0x000f0000) >> 16));
+	pciever = (unsigned int)((reg & 0x000f0000) >> 16);
+	printf("      Capability version: %u\n", pciever);
 	printf("      Device type: ");
 	switch ((reg & 0x00f00000) >> 20) {
 	case 0x0:
 		printf("PCI Express Endpoint device\n");
+		check_link = true;
 		break;
 	case 0x1:
 		printf("Legacy PCI Express Endpoint device\n");
+		check_link = true;
 		break;
 	case 0x4:
 		printf("Root Port of PCI Express Root Complex\n");
+		check_link = true;
 		check_slot = true;
-		check_rootport = true; /* XXX right? */
+		check_rootport = true;
 		break;
 	case 0x5:
 		printf("Upstream Port of PCI Express Switch\n");
@@ -890,7 +922,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	case 0x6:
 		printf("Downstream Port of PCI Express Switch\n");
 		check_slot = true;
-		check_rootport = true; /* XXX right? */
+		check_rootport = true;
 		break;
 	case 0x7:
 		printf("PCI Express to PCI/PCI-X Bridge\n");
@@ -900,9 +932,9 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		break;
 	case 0x9:
 		printf("Root Complex Integrated Endpoint\n");
-		check_rootport = true; /* XXX right? */
 		break;
 	case 0xa:
+		check_rootport = true;
 		printf("Root Complex Event Collector\n");
 		break;
 	default:
@@ -997,103 +1029,104 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	printf("      Transaction Pending: %s\n",
 	    (reg & PCIE_DCSR_TRANSACTION_PND) != 0 ? "on" : "off");
 
-	/* Link Capability Register */
-	reg = regs[o2i(capoff + PCIE_LCAP)];
-	printf("    Link Capabilities Register: 0x%08x\n", reg);
-	printf("      Maximum Link Speed: ");
-	val = reg & PCIE_LCAP_MAX_SPEED;
-	if (val < 1 || val > 3) {
-		printf("unknown %u value\n", val);
-	} else {
-		printf("%sGb/s\n", linkspeeds[val - 1]);
-	}
-	printf("      Maximum Link Width: x%u lanes\n",
-	    (unsigned int)(reg & PCIE_LCAP_MAX_WIDTH) >> 4);
-	printf("      Active State PM Support: ");
-	val = (reg & PCIE_LCAP_ASPM) >> 10;
-	switch (val) {
-	case 0x1:
-		printf("L0s Entry supported\n");
-		break;
-	case 0x3:
-		printf("L0s and L1 supported\n");
-		break;
-	default:
-		printf("Reserved value\n");
-		break;
-	}
-	printf("      L0 Exit Latency: ");
-	pci_print_pcie_L0s_latency((reg & PCIE_LCAP_L0S_EXIT) >> 12);
-	printf("      L1 Exit Latency: ");
-	pci_print_pcie_L1_latency((reg & PCIE_LCAP_L1_EXIT) >> 15);
-	printf("      Port Number: %u\n", reg >> 24);
+	if (check_link) {
+		/* Link Capability Register */
+		reg = regs[o2i(capoff + PCIE_LCAP)];
+		printf("    Link Capabilities Register: 0x%08x\n", reg);
+		printf("      Maximum Link Speed: ");
+		val = reg & PCIE_LCAP_MAX_SPEED;
+		if (val < 1 || val > 3) {
+			printf("unknown %u value\n", val);
+		} else {
+			printf("%sGT/s\n", linkspeeds[val - 1]);
+		}
+		printf("      Maximum Link Width: x%u lanes\n",
+		    (unsigned int)(reg & PCIE_LCAP_MAX_WIDTH) >> 4);
+		printf("      Active State PM Support: ");
+		val = (reg & PCIE_LCAP_ASPM) >> 10;
+		switch (val) {
+		case 0x1:
+			printf("L0s Entry supported\n");
+			break;
+		case 0x3:
+			printf("L0s and L1 supported\n");
+			break;
+		default:
+			printf("Reserved value\n");
+			break;
+		}
+		printf("      L0 Exit Latency: ");
+		pci_print_pcie_L0s_latency((reg & PCIE_LCAP_L0S_EXIT) >> 12);
+		printf("      L1 Exit Latency: ");
+		pci_print_pcie_L1_latency((reg & PCIE_LCAP_L1_EXIT) >> 15);
+		printf("      Port Number: %u\n", reg >> 24);
 
-	/* Link Control Register */
-	reg = regs[o2i(capoff + PCIE_LCSR)];
-	printf("    Link Control Register: 0x%04x\n", reg & 0xffff);
-	printf("      Active State PM Control: ");
-	val = reg & (PCIE_LCSR_ASPM_L1 | PCIE_LCSR_ASPM_L0S);
-	switch (val) {
-	case 0:
-		printf("disabled\n");
-		break;
-	case 1:
-		printf("L0s Entry Enabled\n");
-		break;
-	case 2:
-		printf("L1 Entry Enabled\n");
-		break;
-	case 3:
-		printf("L0s and L1 Entry Enabled\n");
-		break;
-	}
-	printf("      Read Completion Boundary Control: %dbyte\n",
-	    (reg & PCIE_LCSR_RCB) != 0 ? 128 : 64);
-	printf("      Link Disable: %s\n",
-	    (reg & PCIE_LCSR_LINK_DIS) != 0 ? "on" : "off");
-	printf("      Retrain Link: %s\n",
-	    (reg & PCIE_LCSR_RETRAIN) != 0 ? "on" : "off");
-	printf("      Common Clock Configuration: %s\n",
-	    (reg & PCIE_LCSR_COMCLKCFG) != 0 ? "on" : "off");
-	printf("      Extended Synch: %s\n",
-	    (reg & PCIE_LCSR_EXTNDSYNC) != 0 ? "on" : "off");
-	printf("      Enable Clock Power Management: %s\n",
-	    (reg & PCIE_LCSR_ENCLKPM) != 0 ? "on" : "off");
-	printf("      Hardware Autonomous Width Disable: %s\n",
-	    (reg & PCIE_LCSR_HAWD) != 0 ? "on" : "off");
-	printf("      Link Bandwidth Management Interrupt Enable: %s\n",
-	    (reg & PCIE_LCSR_LBMIE) != 0 ? "on" : "off");
-	printf("      Link Autonomous Bandwidth Interrupt Enable: %s\n",
-	    (reg & PCIE_LCSR_LABIE) != 0 ? "on" : "off");
+		/* Link Control Register */
+		reg = regs[o2i(capoff + PCIE_LCSR)];
+		printf("    Link Control Register: 0x%04x\n", reg & 0xffff);
+		printf("      Active State PM Control: ");
+		val = reg & (PCIE_LCSR_ASPM_L1 | PCIE_LCSR_ASPM_L0S);
+		switch (val) {
+		case 0:
+			printf("disabled\n");
+			break;
+		case 1:
+			printf("L0s Entry Enabled\n");
+			break;
+		case 2:
+			printf("L1 Entry Enabled\n");
+			break;
+		case 3:
+			printf("L0s and L1 Entry Enabled\n");
+			break;
+		}
+		printf("      Read Completion Boundary Control: %dbyte\n",
+		    (reg & PCIE_LCSR_RCB) != 0 ? 128 : 64);
+		printf("      Link Disable: %s\n",
+		    (reg & PCIE_LCSR_LINK_DIS) != 0 ? "on" : "off");
+		printf("      Retrain Link: %s\n",
+		    (reg & PCIE_LCSR_RETRAIN) != 0 ? "on" : "off");
+		printf("      Common Clock Configuration: %s\n",
+		    (reg & PCIE_LCSR_COMCLKCFG) != 0 ? "on" : "off");
+		printf("      Extended Synch: %s\n",
+		    (reg & PCIE_LCSR_EXTNDSYNC) != 0 ? "on" : "off");
+		printf("      Enable Clock Power Management: %s\n",
+		    (reg & PCIE_LCSR_ENCLKPM) != 0 ? "on" : "off");
+		printf("      Hardware Autonomous Width Disable: %s\n",
+		    (reg & PCIE_LCSR_HAWD) != 0 ? "on" : "off");
+		printf("      Link Bandwidth Management Interrupt Enable: %s\n",
+		    (reg & PCIE_LCSR_LBMIE) != 0 ? "on" : "off");
+		printf("      Link Autonomous Bandwidth Interrupt Enable: %s\n",
+		    (reg & PCIE_LCSR_LABIE) != 0 ? "on" : "off");
 
-	/* Link Status Register */
-	reg = regs[o2i(capoff + PCIE_LCSR)];
-	printf("    Link Status Register: 0x%04x\n", reg >> 16);
-	printf("      Negotiated Link Speed: ");
-	if (((reg >> 16) & 0x000f) < 1 ||
-	    ((reg >> 16) & 0x000f) > 3) {
-		printf("unknown %u value\n",
-		    (unsigned int)(reg & PCIE_LCSR_LINKSPEED) >> 16);
-	} else {
-		printf("%sGb/s\n",
-		    linkspeeds[((reg & PCIE_LCSR_LINKSPEED) >> 16) - 1]);
+		/* Link Status Register */
+		reg = regs[o2i(capoff + PCIE_LCSR)];
+		printf("    Link Status Register: 0x%04x\n", reg >> 16);
+		printf("      Negotiated Link Speed: ");
+		if (((reg >> 16) & 0x000f) < 1 ||
+		    ((reg >> 16) & 0x000f) > 3) {
+			printf("unknown %u value\n",
+			    (unsigned int)(reg & PCIE_LCSR_LINKSPEED) >> 16);
+		} else {
+			printf("%sGb/s\n",
+			    linkspeeds[((reg & PCIE_LCSR_LINKSPEED) >> 16) - 1]);
+		}
+		printf("      Negotiated Link Width: x%u lanes\n",
+		    (reg >> 20) & 0x003f);
+		printf("      Training Error: %s\n",
+		    (reg & PCIE_LCSR_LINKTRAIN_ERR) != 0 ? "on" : "off");
+		printf("      Link Training: %s\n",
+		    (reg & PCIE_LCSR_LINKTRAIN) != 0 ? "on" : "off");
+		printf("      Slot Clock Configuration: %s\n",
+		    (reg & PCIE_LCSR_SLOTCLKCFG) != 0 ? "on" : "off");
+		printf("      Data Link Layer Link Active: %s\n",
+		    (reg & PCIE_LCSR_DLACTIVE) != 0 ? "on" : "off");
+		printf("      Link Bandwidth Management Status: %s\n",
+		    (reg & PCIE_LCSR_LINK_BW_MGMT) != 0 ? "on" : "off");
+		printf("      Link Autonomous Bandwidth Status: %s\n",
+		    (reg & PCIE_LCSR_LINK_AUTO_BW) != 0 ? "on" : "off");
 	}
-	printf("      Negotiated Link Width: x%u lanes\n",
-	    (reg >> 20) & 0x003f);
-	printf("      Training Error: %s\n",
-	    (reg & PCIE_LCSR_LINKTRAIN_ERR) != 0 ? "on" : "off");
-	printf("      Link Training: %s\n",
-	    (reg & PCIE_LCSR_LINKTRAIN) != 0 ? "on" : "off");
-	printf("      Slot Clock Configuration: %s\n",
-	    (reg & PCIE_LCSR_SLOTCLKCFG) != 0 ? "on" : "off");
-	printf("      Data Link Layer Link Active: %s\n",
-	    (reg & PCIE_LCSR_DLACTIVE) != 0 ? "on" : "off");
-	printf("      Link Bandwidth Management Status: %s\n",
-	    (reg & PCIE_LCSR_LINK_BW_MGMT) != 0 ? "on" : "off");
-	printf("      Link Autonomous Bandwidth Status: %s\n",
-	    (reg & PCIE_LCSR_LINK_AUTO_BW) != 0 ? "on" : "off");
 
-	/* XXX Is this check right? */
 	if (check_slot == true) {
 		/* Slot Capability Register */
 		reg = regs[o2i(capoff + PCIE_SLCAP)];
@@ -1200,7 +1233,6 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			printf("      Data Link Layer State Changed\n");
 	}
 
-	/* XXX Is this check right? */
 	if (check_rootport == true) {
 		/* Root Control Register */
 		reg = regs[o2i(capoff + PCIE_RCR)];
@@ -1228,6 +1260,148 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		if ((reg & PCIE_RSR_PME_PEND) != 0)
 			printf("      another PME is pending\n");
 	}
+
+	/* PCIe DW9 to DW14 is for PCIe 2.0 and newer */
+	if (pciever < 2)
+		return;
+
+	/* Device Capabilities 2 */
+	reg = regs[o2i(capoff + PCIE_DCAP2)];
+	printf("    Device Capabilities 2: 0x%08x\n", reg);
+	printf("      Completion Timeout Ranges Supported: %u \n",
+	    (unsigned int)(reg & PCIE_DCAP2_COMPT_RANGE));
+	printf("      Completion Timeout Disable Supported: %s\n",
+	    (reg & PCIE_DCAP2_COMPT_DIS) != 0 ? "yes" : "no");
+	printf("      ARI Forwarding Supported: %s\n",
+	    (reg & PCIE_DCAP2_ARI_FWD) != 0 ? "yes" : "no");
+	printf("      AtomicOp Routing Supported: %s\n",
+	    (reg & PCIE_DCAP2_ATOM_ROUT) != 0 ? "yes" : "no");
+	printf("      32bit AtomicOp Completer Supported: %s\n",
+	    (reg & PCIE_DCAP2_32ATOM) != 0 ? "yes" : "no");
+	printf("      64bit AtomicOp Completer Supported: %s\n",
+	    (reg & PCIE_DCAP2_64ATOM) != 0 ? "yes" : "no");
+	printf("      128-bit CAS Completer Supported: %s\n",
+	    (reg & PCIE_DCAP2_128CAS) != 0 ? "yes" : "no");
+	printf("      No RO-enabled PR-PR passing: %s\n",
+	    (reg & PCIE_DCAP2_NO_ROPR_PASS) != 0 ? "yes" : "no");
+	printf("      LTR Mechanism Supported: %s\n",
+	    (reg & PCIE_DCAP2_LTR_MEC) != 0 ? "yes" : "no");
+	printf("      TPH Completer Supported: %u\n",
+	    (unsigned int)(reg & PCIE_DCAP2_TPH_COMP) >> 12);
+	printf("      OBFF Supported: ");
+	switch ((reg & PCIE_DCAP2_OBFF) >> 18) {
+	case 0x0:
+		printf("Not supported\n");
+		break;
+	case 0x1:
+		printf("Message only\n");
+		break;
+	case 0x2:
+		printf("WAKE# only\n");
+		break;
+	case 0x3:
+		printf("Both\n");
+		break;
+	}
+	printf("      Extended Fmt Field Supported: %s\n",
+	    (reg & PCIE_DCAP2_EXTFMT_FLD) != 0 ? "yes" : "no");
+	printf("      End-End TLP Prefix Supported: %s\n",
+	    (reg & PCIE_DCAP2_EETLP_PREF) != 0 ? "yes" : "no");
+	printf("      Max End-End TLP Prefixes: %u\n",
+	    (unsigned int)(reg & PCIE_DCAP2_MAX_EETLP) >> 22);
+
+	/* Device Control 2 */
+	reg = regs[o2i(capoff + PCIE_DCSR2)];
+	printf("    Device Control 2: 0x%04x\n", reg & 0xffff);
+	printf("      Completion Timeout Value: ");
+	pci_print_pcie_compl_timeout(reg & PCIE_DCSR2_COMPT_VAL);
+	if ((reg & PCIE_DCSR2_COMPT_DIS) != 0)
+		printf("      Completion Timeout Disabled\n");
+	if ((reg & PCIE_DCSR2_ARI_FWD) != 0)
+		printf("      ARI Forwarding Enabled\n");
+	if ((reg & PCIE_DCSR2_ATOM_REQ) != 0)
+		printf("      AtomicOp Rquester Enabled\n");
+	if ((reg & PCIE_DCSR2_ATOM_EBLK) != 0)
+		printf("      AtomicOp Egress Blocking on\n");
+	if ((reg & PCIE_DCSR2_IDO_REQ) != 0)
+		printf("      IDO Request Enabled\n");
+	if ((reg & PCIE_DCSR2_IDO_COMP) != 0)
+		printf("      IDO Completion Enabled\n");
+	if ((reg & PCIE_DCSR2_LTR_MEC) != 0)
+		printf("      LTR Mechanism Enabled\n");
+	printf("      OBFF: ");
+	switch ((reg & PCIE_DCSR2_OBFF_EN) >> 13) {
+	case 0x0:
+		printf("Disabled\n");
+		break;
+	case 0x1:
+		printf("Enabled with Message Signaling Variation A\n");
+		break;
+	case 0x2:
+		printf("Enabled with Message Signaling Variation B\n");
+		break;
+	case 0x3:
+		printf("Enabled using WAKE# signaling\n");
+		break;
+	}
+	if ((reg & PCIE_DCSR2_EETLP) != 0)
+		printf("      End-End TLP Prefix Blocking on\n");
+
+	if (check_link) {
+		/* Link Capability 2 */
+		reg = regs[o2i(capoff + PCIE_LCAP2)];
+		printf("    Link Capabilities 2: 0x%08x\n", reg);
+		val = (reg & PCIE_LCAP2_SUP_LNKSV) >> 1;
+		printf("      Supported Link Speed Vector:");
+		for (i = 0; i <= 2; i++) {
+			if (((val >> i) & 0x01) != 0)
+				printf(" %sGT/s", linkspeeds[i]);
+		}
+		printf("\n");
+
+		/* Link Control 2 */
+		reg = regs[o2i(capoff + PCIE_LCSR2)];
+		printf("    Link Control 2: 0x%04x\n", reg & 0xffff);
+		printf("      Target Link Speed: ");
+		val = reg & PCIE_LCSR2_TGT_LSPEED;
+		if (val < 1 || val > 3) {
+			printf("unknown %u value\n", val);
+		} else {
+			printf("%sGT/s\n", linkspeeds[val - 1]);
+		}
+		if ((reg & PCIE_LCSR2_ENT_COMPL) != 0)
+			printf("      Enter Compliance Enabled\n");
+		if ((reg & PCIE_LCSR2_HW_AS_DIS) != 0)
+			printf("      HW Autonomous Speed Disabled\n");
+		if ((reg & PCIE_LCSR2_SEL_DEEMP) != 0)
+			printf("      Selectable De-emphasis\n");
+		printf("      Transmit Margin: %u\n",
+		    (unsigned int)(reg & PCIE_LCSR2_TX_MARGIN) >> 7);
+		if ((reg & PCIE_LCSR2_EN_MCOMP) != 0)
+			printf("      Enter Modified Compliance\n");
+		if ((reg & PCIE_LCSR2_COMP_SOS) != 0)
+			printf("      Compliance SOS\n");
+		printf("      Compliance Present/De-emphasis: %u\n",
+		    (unsigned int)(reg & PCIE_LCSR2_COMP_DEEMP) >> 12);
+
+		/* Link Status 2 */
+		if ((reg & PCIE_LCSR2_DEEMP_LVL) != 0)
+			printf("      Current De-emphasis Level\n");
+		if ((reg & PCIE_LCSR2_EQ_COMPL) != 0)
+			printf("      Equalization Complete\n");
+		if ((reg & PCIE_LCSR2_EQP1_SUC) != 0)
+			printf("      Equalization Phase 1 Successful\n");
+		if ((reg & PCIE_LCSR2_EQP2_SUC) != 0)
+			printf("      Equalization Phase 2 Successful\n");
+		if ((reg & PCIE_LCSR2_EQP3_SUC) != 0)
+			printf("      Equalization Phase 3 Successful\n");
+		if ((reg & PCIE_LCSR2_LNKEQ_REQ) != 0)
+			printf("      Link Equalization Request\n");
+	}
+
+	/* Slot Capability 2 */
+	/* Slot Control 2 */
+	/* Slot Status 2 */
 }
 
 static const char *
