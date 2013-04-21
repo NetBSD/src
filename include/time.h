@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.41 2012/10/02 01:42:06 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.42 2013/04/21 17:45:46 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -203,6 +203,21 @@ const char *tzgetname(const timezone_t, int) __RENAME(__tzgetname50);
 size_t strftime_z(const timezone_t, char * __restrict, size_t,
     const char * __restrict, const struct tm * __restrict)
     __attribute__((__format__(__strftime__, 4, 0)));
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+size_t strftime_l(char * __restrict, size_t, const char * __restrict,
+    const struct tm * __restrict, locale_t)
+    __attribute__((__format__(__strftime__, 3, 0)));
+size_t strftime_lz(const timezone_t, char * __restrict, size_t,
+    const char * __restrict, const struct tm * __restrict, locale_t)
+    __attribute__((__format__(__strftime__, 4, 0)));
+char *strptime_l(const char * __restrict, const char * __restrict,
+    struct tm * __restrict, locale_t);
+#endif
 
 #endif /* _NETBSD_SOURCE */
 

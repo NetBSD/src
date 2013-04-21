@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_time_misc.h,v 1.3 2010/03/27 15:25:22 tnozaki Exp $ */
+/* $NetBSD: nb_lc_time_misc.h,v 1.4 2013/04/21 17:45:46 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -78,8 +78,6 @@ static __inline void
 _PREFIX(fixup)(_TimeLocale *data)
 {
 	_DIAGASSERT(data != NULL);
-
-	_CurrentTimeLocale = data;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: _def_time.c,v 1.10 2008/05/17 03:49:54 ginsbach Exp $	*/
+/*	$NetBSD: _def_time.c,v 1.11 2013/04/21 17:45:46 joerg Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _def_time.c,v 1.10 2008/05/17 03:49:54 ginsbach Exp $");
+__RCSID("$NetBSD: _def_time.c,v 1.11 2013/04/21 17:45:46 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -38,5 +38,3 @@ const _TimeLocale _DefaultTimeLocale =
 	"%H:%M:%S",
 	"%I:%M:%S %p"
 };
-
-const _TimeLocale *_CurrentTimeLocale = &_DefaultTimeLocale;

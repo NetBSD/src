@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.164 2013/04/19 23:32:16 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.165 2013/04/21 17:45:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -613,10 +613,13 @@
 #define strcoll_l		_strcoll_l
 #define strdup			_strdup
 #define stresep			_stresep
+#define strftime_l		_strftime_l
+#define strftime_lz		_strftime_lz
 #define strftime_z		_strftime_z
 #define strndup			_strndup
 #define strncasecmp		_strncasecmp
 #define strptime		_strptime
+#define strptime_l		_strptime_l
 #define strsep			_strsep
 #define strsignal		_strsignal
 #define strsuftoll	 	_strsuftoll
