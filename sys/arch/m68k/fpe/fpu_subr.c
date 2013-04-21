@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_subr.c,v 1.11 2013/04/20 09:32:28 isaki Exp $ */
+/*	$NetBSD: fpu_subr.c,v 1.12 2013/04/21 02:50:48 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.11 2013/04/20 09:32:28 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.12 2013/04/21 02:50:48 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ static inline int
 bfffo(uint32_t src)
 {
 	int offset;
-#if defined(__m68k__) && !defined(M68010)
+#if defined(__m68k__) && !defined(__mc68010__)
 	__asm volatile("bfffo %1{#0:#32},%0" : "=d"(offset) : "g"(src));
 #else
 	int width = 32;
