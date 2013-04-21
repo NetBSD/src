@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.42 2013/04/19 23:28:47 joerg Exp $	*/
+/*	$NetBSD: string.h,v 1.43 2013/04/21 18:41:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -119,8 +119,10 @@ __END_DECLS
 typedef struct _locale		*locale_t;
 #  define __LOCALE_T_DECLARED
 #  endif
+__BEGIN_DECLS
 int	 strcoll_l(const char *, const char *, locale_t);
 size_t	 strxfrm_l(char * __restrict, const char * __restrict, size_t, locale_t);
+__END_DECLS
 #endif /* _POSIX_C_SOURCE || _NETBSD_SOURCE */
 
 #if _FORTIFY_SOURCE > 0
