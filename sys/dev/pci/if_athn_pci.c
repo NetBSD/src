@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_pci.c,v 1.7 2013/04/06 16:52:47 martin Exp $	*/
+/*	$NetBSD: if_athn_pci.c,v 1.8 2013/04/21 19:59:40 msaitoh Exp $	*/
 /*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.7 2013/04/06 16:52:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.8 2013/04/21 19:59:40 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -340,8 +340,8 @@ athn_pci_disable_aspm(struct athn_softc *sc)
 
 	/* Disable PCIe Active State Power Management (ASPM). */
 	reg = pci_conf_read(psc->psc_pc, psc->psc_tag,
-	    psc->psc_cap_off + PCI_PCIE_LCSR);
-	reg &= ~(PCI_PCIE_LCSR_ASPM_L0S | PCI_PCIE_LCSR_ASPM_L1);
+	    psc->psc_cap_off + PCIE_LCSR);
+	reg &= ~(PCIE_LCSR_ASPM_L0S | PCIE_LCSR_ASPM_L1);
 	pci_conf_write(psc->psc_pc, psc->psc_tag,
-	    psc->psc_cap_off + PCI_PCIE_LCSR, reg);
+	    psc->psc_cap_off + PCIE_LCSR, reg);
 }
