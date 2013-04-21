@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.103 2013/04/21 19:59:41 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.104 2013/04/21 23:46:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.103 2013/04/21 19:59:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.104 2013/04/21 23:46:06 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1222,10 +1222,10 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		reg = regs[o2i(capoff + PCIE_RSR)];
 		printf("    Root Status Register: %08x\n", reg);
 		printf("      PME Requester ID: %04x\n",
-		    (unsigned int)(reg & PCIE_RSR_REQESTER));
-		if ((reg & PCIE_RSR_PMESTAT) != 0)
+		    (unsigned int)(reg & PCIE_RSR_PME_REQESTER));
+		if ((reg & PCIE_RSR_PME_STAT) != 0)
 			printf("      PME was asserted\n");
-		if ((reg & PCIE_RSR_PMEPEND) != 0)
+		if ((reg & PCIE_RSR_PME_PEND) != 0)
 			printf("      another PME is pending\n");
 	}
 }

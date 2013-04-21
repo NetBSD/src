@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.83 2013/04/21 19:59:41 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.84 2013/04/21 23:46:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -629,143 +629,179 @@ struct pci_msix_table_entry {
 /*
  * PCI Express; access via capability pointer.
  */
-#define PCIE_XCAP		0x00	/* Capability List & Capabilities
-					 * Register
-					 */
-#define	PCIE_XCAP_MASK	__BITS(31, 16)
+#define PCIE_XCAP	0x00	/* Capability List & Capabilities Register */
+#define	PCIE_XCAP_MASK		__BITS(31, 16)
 /* Capability Version */
 #define PCIE_XCAP_VER_MASK	__SHIFTIN(__BITS(3, 0), PCIE_XCAP_MASK)
-#define	 PCIE_XCAP_VER_1_0		__SHIFTIN(1, PCIE_XCAP_VER_MASK)
-#define	 PCIE_XCAP_VER_2_0		__SHIFTIN(2, PCIE_XCAP_VER_MASK)
+#define	 PCIE_XCAP_VER_1_0	__SHIFTIN(1, PCIE_XCAP_VER_MASK)
+#define	 PCIE_XCAP_VER_2_0	__SHIFTIN(2, PCIE_XCAP_VER_MASK)
 #define	PCIE_XCAP_TYPE_MASK	__SHIFTIN(__BITS(7, 4), PCIE_XCAP_MASK)
-#define	 PCIE_XCAP_TYPE_PCIE_DEV	__SHIFTIN(0x0, PCIE_XCAP_TYPE_MASK)
+#define	 PCIE_XCAP_TYPE_PCIE_DEV __SHIFTIN(0x0, PCIE_XCAP_TYPE_MASK)
 #define	 PCIE_XCAP_TYPE_PCI_DEV	__SHIFTIN(0x1, PCIE_XCAP_TYPE_MASK)
 #define	 PCIE_XCAP_TYPE_ROOT	__SHIFTIN(0x4, PCIE_XCAP_TYPE_MASK)
-#define	 PCIE_XCAP_TYPE_UP		__SHIFTIN(0x5, PCIE_XCAP_TYPE_MASK)
+#define	 PCIE_XCAP_TYPE_UP	__SHIFTIN(0x5, PCIE_XCAP_TYPE_MASK)
 #define	 PCIE_XCAP_TYPE_DOWN	__SHIFTIN(0x6, PCIE_XCAP_TYPE_MASK)
-#define	 PCIE_XCAP_TYPE_PCIE2PCI	__SHIFTIN(0x7, PCIE_XCAP_TYPE_MASK)
-#define	 PCIE_XCAP_TYPE_PCI2PCIE	__SHIFTIN(0x8, PCIE_XCAP_TYPE_MASK)
-#define	 PCIE_XCAP_TYPE_ROOT_INTEP	__SHIFTIN(0x9, PCIE_XCAP_TYPE_MASK)
-#define	 PCIE_XCAP_TYPE_ROOT_EVNTC	__SHIFTIN(0xa, PCIE_XCAP_TYPE_MASK)
-#define PCIE_XCAP_SI	__SHIFTIN(__BIT(8), PCIE_XCAP_MASK)		/* Slot Implemented */
-#define PCIE_XCAP_IRQ	__SHIFTIN(__BITS(13, 9), PCIE_XCAP_MASK)
-#define PCIE_DCAP		0x04	/* Device Capabilities Register */
-#define PCIE_DCAP_MAX_PAYLOAD	__BITS(2, 0)
-#define PCIE_DCAP_PHANTOM_FUNCS	__BITS(4, 3)
-#define PCIE_DCAP_EXT_TAG_FIELD	__BIT(5)
-#define PCIE_DCAP_L0S_LATENCY	__BITS(8, 6)
-#define PCIE_DCAP_L1_LATENCY	__BITS(11, 9)
-#define PCIE_DCAP_ATTN_BUTTON	__BIT(12)
-#define PCIE_DCAP_ATTN_IND		__BIT(13)
-#define PCIE_DCAP_PWR_IND		__BIT(14)
-#define PCIE_DCAP_ROLE_ERR_RPT	__BIT(15)
-#define PCIE_DCAP_SLOT_PWR_LIM_VAL	__BITS(25, 18)
-#define PCIE_DCAP_SLOT_PWR_LIM_SCALE __BITS(27, 26)
-#define PCIE_DCAP_FLR		__BIT(28)
-#define PCIE_DCSR		0x08	/* Device Control & Status Register */
-#define PCIE_DCSR_ENA_COR_ERR	__BIT(0)
-#define PCIE_DCSR_ENA_NFER		__BIT(1)
-#define PCIE_DCSR_ENA_FER		__BIT(2)
-#define PCIE_DCSR_ENA_URR		__BIT(3)
-#define PCIE_DCSR_ENA_RELAX_ORD	__BIT(4)
-#define PCIE_DCSR_MAX_PAYLOAD	__BITS(7, 5)
-#define PCIE_DCSR_EXT_TAG_FIELD	__BIT(8)
-#define PCIE_DCSR_PHANTOM_FUNCS	__BIT(9)
-#define PCIE_DCSR_AUX_POWER_PM	__BIT(10)
-#define PCIE_DCSR_ENA_NO_SNOOP	__BIT(11)
-#define PCIE_DCSR_MAX_READ_REQ	__BITS(14, 12)
-#define PCIE_DCSR_BRDG_CFG_RETRY	__BIT(15)
-#define PCIE_DCSR_INITIATE_FLR	__BIT(15)
-#define PCIE_DCSR_CED		__BIT(0 + 16)
-#define PCIE_DCSR_NFED		__BIT(1 + 16)
-#define PCIE_DCSR_FED		__BIT(2 + 16)
-#define PCIE_DCSR_URD		__BIT(3 + 16)
-#define PCIE_DCSR_AUX_PWR		__BIT(4 + 16)
-#define PCIE_DCSR_TRANSACTION_PND	__BIT(5 + 16)
-#define PCIE_LCAP		0x0c	/* Link Capabilities Register */
-#define PCIE_LCAP_MAX_SPEED		__BITS(3, 0)
-#define PCIE_LCAP_MAX_WIDTH		__BITS(9, 4)
-#define PCIE_LCAP_ASPM		__BITS(11, 10)
-#define PCIE_LCAP_L0S_EXIT		__BITS(14, 12)
-#define PCIE_LCAP_L1_EXIT		__BITS(17, 15)
-#define PCIE_LCAP_CLOCK_PM		__BIT(18)
-#define PCIE_LCAP_SURPRISE_DOWN	__BIT(19)
-#define PCIE_LCAP_DL_ACTIVE		__BIT(20)
-#define PCIE_LCAP_LINK_BW_NOTIFY	__BIT(21)
-#define PCIE_LCAP_ASPM_COMPLIANCE	__BIT(22)
-#define PCIE_LCAP_PORT		__BITS(31, 24)
-#define PCIE_LCSR		0x10	/* Link Control & Status Register */
-#define PCIE_LCSR_ASPM_L0S	__BIT(0)
-#define PCIE_LCSR_ASPM_L1	__BIT(1)
-#define PCIE_LCSR_RCB	__BIT(3)
-#define PCIE_LCSR_LINK_DIS	__BIT(4)
-#define PCIE_LCSR_RETRAIN	__BIT(5)
-#define PCIE_LCSR_COMCLKCFG	__BIT(6)
-#define PCIE_LCSR_EXTNDSYNC	__BIT(7)
-#define PCIE_LCSR_ENCLKPM	__BIT(8)
-#define PCIE_LCSR_HAWD	__BIT(9)
-#define PCIE_LCSR_LBMIE	__BIT(10)
-#define PCIE_LCSR_LABIE	__BIT(11)
-#define	PCIE_LCSR_LINKSPEED	__BITS(19,16)
-#define	PCIE_LCSR_NLW	__BITS(25,20)
-#define	PCIE_LCSR_LINKTRAIN_ERR	__BIT(26)
-#define	PCIE_LCSR_LINKTRAIN	__BIT(27)
-#define	PCIE_LCSR_SLOTCLKCFG __BIT(28)
-#define	PCIE_LCSR_DLACTIVE	__BIT(29)
-#define	PCIE_LCSR_LINK_BW_MGMT	__BIT(30)
-#define	PCIE_LCSR_LINK_AUTO_BW	__BIT(31)
-#define PCIE_SLCAP		0x14	/* Slot Capabilities Register */
-#define PCIE_SLCAP_ABP	__BIT(0)	/* Attention Button Present */
-#define PCIE_SLCAP_PCP	__BIT(1)	/* Power Controller Present */
-#define PCIE_SLCAP_MSP	__BIT(2)	/* MRL Sensor Present */
-#define PCIE_SLCAP_AIP	__BIT(3)	/* Attention Indicator
-						 * Present
-						 */
-#define PCIE_SLCAP_PIP	__BIT(4)	/* Power Indicator Present */
-#define PCIE_SLCAP_HPS	__BIT(5)	/* Hot-Plug Surprise */
-#define PCIE_SLCAP_HPC	__BIT(6)	/* Hot-Plug Capable */
-#define	PCIE_SLCAP_SPLV	__BITS(14, 7)
-#define	PCIE_SLCAP_SPLS	__BITS(16, 15)
-#define	PCIE_SLCAP_EIP	__BIT(17)
-#define	PCIE_SLCAP_NCCS	__BIT(18)
-#define	PCIE_SLCAP_PSN	__BITS(31, 19)
-#define PCIE_SLCSR		0x18	/* Slot Control & Status Register */
-#define PCIE_SLCSR_ABE	__BIT(0)
-#define PCIE_SLCSR_PFE	__BIT(1)
-#define PCIE_SLCSR_MSE	__BIT(2)
-#define PCIE_SLCSR_PDE	__BIT(3)
-#define PCIE_SLCSR_CCE	__BIT(4)
-#define PCIE_SLCSR_HPE	__BIT(5)
-#define PCIE_SLCSR_AIC	__BITS(7, 6)
-#define PCIE_SLCSR_PIC	__BITS(9, 8)
-#define PCIE_SLCSR_PCC	__BIT(10)
-#define PCIE_SLCSR_EIC	__BIT(11)
-#define PCIE_SLCSR_DLLSCE	__BIT(12)
+#define	 PCIE_XCAP_TYPE_PCIE2PCI __SHIFTIN(0x7, PCIE_XCAP_TYPE_MASK)
+#define	 PCIE_XCAP_TYPE_PCI2PCIE __SHIFTIN(0x8, PCIE_XCAP_TYPE_MASK)
+#define	 PCIE_XCAP_TYPE_ROOT_INTEP __SHIFTIN(0x9, PCIE_XCAP_TYPE_MASK)
+#define	 PCIE_XCAP_TYPE_ROOT_EVNTC __SHIFTIN(0xa, PCIE_XCAP_TYPE_MASK)
+#define PCIE_XCAP_SI		__SHIFTIN(__BIT(8), PCIE_XCAP_MASK) /* Slot Implemented */
+#define PCIE_XCAP_IRQ		__SHIFTIN(__BITS(13, 9), PCIE_XCAP_MASK)
+#define PCIE_DCAP	0x04	/* Device Capabilities Register */
+#define PCIE_DCAP_MAX_PAYLOAD	__BITS(2, 0)   /* Max Payload Size Supported */
+#define PCIE_DCAP_PHANTOM_FUNCS	__BITS(4, 3)   /* Phantom Functions Supported*/
+#define PCIE_DCAP_EXT_TAG_FIELD	__BIT(5)       /* Extended Tag Field Support */
+#define PCIE_DCAP_L0S_LATENCY	__BITS(8, 6)   /* Endpoint L0 Accptbl Latency*/
+#define PCIE_DCAP_L1_LATENCY	__BITS(11, 9)  /* Endpoint L1 Accptbl Latency*/
+#define PCIE_DCAP_ATTN_BUTTON	__BIT(12)      /* Attention Indicator Button */
+#define PCIE_DCAP_ATTN_IND	__BIT(13)      /* Attention Indicator Present*/
+#define PCIE_DCAP_PWR_IND	__BIT(14)      /* Power Indicator Present */
+#define PCIE_DCAP_ROLE_ERR_RPT	__BIT(15)      /* Role-Based Error Reporting */
+#define PCIE_DCAP_SLOT_PWR_LIM_VAL __BITS(25, 18) /* Cap. Slot PWR Limit Val */
+#define PCIE_DCAP_SLOT_PWR_LIM_SCALE __BITS(27, 26) /* Cap. SlotPWRLimit Scl */
+#define PCIE_DCAP_FLR		__BIT(28)      /* Function-Level Reset Cap. */
+#define PCIE_DCSR	0x08	/* Device Control & Status Register */
+#define PCIE_DCSR_ENA_COR_ERR	__BIT(0)       /* Correctable Error Report En*/
+#define PCIE_DCSR_ENA_NFER	__BIT(1)       /* Non-Fatal Error Report En. */
+#define PCIE_DCSR_ENA_FER	__BIT(2)       /* Fatal Error Reporting Enabl*/
+#define PCIE_DCSR_ENA_URR	__BIT(3)       /* Unsupported Request Rpt En */
+#define PCIE_DCSR_ENA_RELAX_ORD	__BIT(4)       /* Enable Relaxed Ordering */
+#define PCIE_DCSR_MAX_PAYLOAD	__BITS(7, 5)   /* Max Payload Size */
+#define PCIE_DCSR_EXT_TAG_FIELD	__BIT(8)       /* Extended Tag Field Enable */
+#define PCIE_DCSR_PHANTOM_FUNCS	__BIT(9)       /* Phantom Functions Enable */
+#define PCIE_DCSR_AUX_POWER_PM	__BIT(10)      /* Aux Power PM Enable */
+#define PCIE_DCSR_ENA_NO_SNOOP	__BIT(11)      /* Enable No Snoop */
+#define PCIE_DCSR_MAX_READ_REQ	__BITS(14, 12) /* Max Read Request Size */
+#define PCIE_DCSR_BRDG_CFG_RETRY __BIT(15)     /* Bridge Config Retry Enable */
+#define PCIE_DCSR_INITIATE_FLR	__BIT(15)      /* Initiate Function-Level Rst*/
+#define PCIE_DCSR_CED		__BIT(0 + 16)  /* Correctable Error Detected */
+#define PCIE_DCSR_NFED		__BIT(1 + 16)  /* Non-Fatal Error Detected */
+#define PCIE_DCSR_FED		__BIT(2 + 16)  /* Fatal Error Detected */
+#define PCIE_DCSR_URD		__BIT(3 + 16)  /* Unsupported Req. Detected */
+#define PCIE_DCSR_AUX_PWR	__BIT(4 + 16)  /* Aux Power Detected */
+#define PCIE_DCSR_TRANSACTION_PND __BIT(5 + 16) /* Transaction Pending */
+#define PCIE_LCAP	0x0c	/* Link Capabilities Register */
+#define PCIE_LCAP_MAX_SPEED	__BITS(3, 0)   /* Max Link Speed */
+#define PCIE_LCAP_MAX_WIDTH	__BITS(9, 4)   /* Maximum Link Width */
+#define PCIE_LCAP_ASPM		__BITS(11, 10) /* Active State Link PM Supp. */
+#define PCIE_LCAP_L0S_EXIT	__BITS(14, 12) /* L0s Exit Latency */
+#define PCIE_LCAP_L1_EXIT	__BITS(17, 15) /* L1 Exit Latency */
+#define PCIE_LCAP_CLOCK_PM	__BIT(18)      /* Clock Power Management */
+#define PCIE_LCAP_SURPRISE_DOWN	__BIT(19)      /* Surprise Down Err Rpt Cap. */
+#define PCIE_LCAP_DL_ACTIVE	__BIT(20)      /* Data Link Layer Link Active*/
+#define PCIE_LCAP_LINK_BW_NOTIFY __BIT(21)     /* Link BW Notification Capabl*/
+#define PCIE_LCAP_ASPM_COMPLIANCE __BIT(22)    /* ASPM Optionally Compliance */
+#define PCIE_LCAP_PORT		__BITS(31, 24) /* Port Number */
+#define PCIE_LCSR	0x10	/* Link Control & Status Register */
+#define PCIE_LCSR_ASPM_L0S	__BIT(0)       /* Active State PM Control L0s*/
+#define PCIE_LCSR_ASPM_L1	__BIT(1)       /* Active State PM Control L1 */
+#define PCIE_LCSR_RCB		__BIT(3)       /* Read Completion Boundry Ctl*/
+#define PCIE_LCSR_LINK_DIS	__BIT(4)       /* Link Disable */
+#define PCIE_LCSR_RETRAIN	__BIT(5)       /* Retrain Link */
+#define PCIE_LCSR_COMCLKCFG	__BIT(6)       /* Common Clock Configuration */
+#define PCIE_LCSR_EXTNDSYNC	__BIT(7)       /* Extended Synch */
+#define PCIE_LCSR_ENCLKPM	__BIT(8)       /* Enable Clock Power Managmt */
+#define PCIE_LCSR_HAWD		__BIT(9)       /* HW Autonomous Width Disable*/
+#define PCIE_LCSR_LBMIE		__BIT(10)      /* Link BW Management Intr En */
+#define PCIE_LCSR_LABIE		__BIT(11)      /* Link Autonomous BW Intr En */
+#define	PCIE_LCSR_LINKSPEED	__BITS(19, 16) /* Link Speed */
+#define	PCIE_LCSR_NLW		__BITS(25, 20) /* Negotiated Link Width */
+#define	PCIE_LCSR_LINKTRAIN_ERR	__BIT(10 + 16) /* Link Training Error */
+#define	PCIE_LCSR_LINKTRAIN	__BIT(11 + 16) /* Link Training */
+#define	PCIE_LCSR_SLOTCLKCFG 	__BIT(12 + 16) /* Slot Clock Configuration */
+#define	PCIE_LCSR_DLACTIVE	__BIT(13 + 16) /* Data Link Layer Link Active*/
+#define	PCIE_LCSR_LINK_BW_MGMT	__BIT(14 + 16) /* Link BW Management Status */
+#define	PCIE_LCSR_LINK_AUTO_BW	__BIT(15 + 16) /* Link Autonomous BW Status */
+#define PCIE_SLCAP	0x14	/* Slot Capabilities Register */
+#define PCIE_SLCAP_ABP		__BIT(0)       /* Attention Button Present */
+#define PCIE_SLCAP_PCP		__BIT(1)       /* Power Controller Present */
+#define PCIE_SLCAP_MSP		__BIT(2)       /* MRL Sensor Present */
+#define PCIE_SLCAP_AIP		__BIT(3)       /* Attention Indicator Present*/
+#define PCIE_SLCAP_PIP		__BIT(4)       /* Power Indicator Present */
+#define PCIE_SLCAP_HPS		__BIT(5)       /* Hot-Plug Surprise */
+#define PCIE_SLCAP_HPC		__BIT(6)       /* Hot-Plug Capable */
+#define	PCIE_SLCAP_SPLV		__BITS(14, 7)  /* Slot Power Limit Value */
+#define	PCIE_SLCAP_SPLS		__BITS(16, 15) /* Slot Power Limit Scale */
+#define	PCIE_SLCAP_EIP		__BIT(17)      /* Electromechanical Interlock*/
+#define	PCIE_SLCAP_NCCS		__BIT(18)      /* No Command Completed Supp. */
+#define	PCIE_SLCAP_PSN		__BITS(31, 19) /* Physical Slot Number */
+#define PCIE_SLCSR	0x18	/* Slot Control & Status Register */
+#define PCIE_SLCSR_ABE		__BIT(0)       /* Attention Button Pressed En*/
+#define PCIE_SLCSR_PFE		__BIT(1)       /* Power Button Pressed Enable*/
+#define PCIE_SLCSR_MSE		__BIT(2)       /* MRL Sensor Changed Enable */
+#define PCIE_SLCSR_PDE		__BIT(3)       /* Presence Detect Changed Ena*/
+#define PCIE_SLCSR_CCE		__BIT(4)       /* Command Completed Intr. En */
+#define PCIE_SLCSR_HPE		__BIT(5)       /* Hot Plug Interrupt Enable */
+#define PCIE_SLCSR_AIC		__BITS(7, 6)   /* Attention Indicator Control*/
+#define PCIE_SLCSR_PIC		__BITS(9, 8)   /* Power Indicator Control */
+#define PCIE_SLCSR_PCC		__BIT(10)      /* Power Controller Control */
+#define PCIE_SLCSR_EIC		__BIT(11)      /* Electromechanical Interlock*/
+#define PCIE_SLCSR_DLLSCE	__BIT(12)      /* DataLinkLayer State Changed*/
+#define PCIE_SLCSR_ABP		__BIT(0 + 16)  /* Attention Button Pressed */
+#define PCIE_SLCSR_PFD		__BIT(1 + 16)  /* Power Fault Detected */
+#define PCIE_SLCSR_MSC		__BIT(2 + 16)  /* MRL Sensor Changed */
+#define PCIE_SLCSR_PDC		__BIT(3 + 16)  /* Presence Detect Changed */
+#define PCIE_SLCSR_CC		__BIT(4 + 16)  /* Command Completed */
+#define PCIE_SLCSR_MS		__BIT(5 + 16)  /* MRL Sensor State */
+#define PCIE_SLCSR_PDS		__BIT(6 + 16)  /* Presence Detect State */
+#define PCIE_SLCSR_EIS		__BIT(7 + 16)  /* Electromechanical Interlock*/
+#define PCIE_SLCSR_LACS		__BIT(8 + 16)  /* Data Link Layer State Chg. */
+#define PCIE_RCR	0x1c	/* Root Control & Capabilities Reg. */
+#define PCIE_RCR_SERR_CER	__BIT(0)       /* SERR on Correctable Err. En*/
+#define PCIE_RCR_SERR_NFER	__BIT(1)       /* SERR on Non-Fatal Error En */
+#define PCIE_RCR_SERR_FER	__BIT(2)       /* SERR on Fatal Error Enable */
+#define PCIE_RCR_PME_IE		__BIT(3)       /* PME Interrupt Enable */
+#define PCIE_RSR	0x20	/* Root Status Register */
+#define PCIE_RSR_PME_REQESTER	__BITS(15, 0)  /* PME Requester ID */
+#define PCIE_RSR_PME_STAT	__BIT(16)      /* PME Status */
+#define PCIE_RSR_PME_PEND	__BIT(17)      /* PME Pending */
+#define PCIE_DCAP2	0x24	/* Device Capabilities 2 Register */
+#define PCIE_DCAP2_COMPT_RANGE	__BITS(3,0)    /* Compl. Timeout Ranges Supp */
+#define PCIE_DCAP2_COMPT_DIS	__BIT(4)       /* Compl. Timeout Disable Supp*/
+#define PCIE_DCAP2_ARI_FWD	__BIT(5)       /* ARI Forward Supported */
+#define PCIE_DCAP2_ATOM_ROUT	__BIT(6)       /* AtomicOp Routing Supported */
+#define PCIE_DCAP2_32ATOM	__BIT(7)       /* 32bit AtomicOp Compl. Supp */
+#define PCIE_DCAP2_64ATOM	__BIT(8)       /* 64bit AtomicOp Compl. Supp */
+#define PCIE_DCAP2_128CAS	__BIT(9)       /* 128bit Cas Completer Supp. */
+#define PCIE_DCAP2_NO_ROPR_PASS	__BIT(10)      /* No RO-enabled PR-PR Passng */
+#define PCIE_DCAP2_LTR_MEC	__BIT(11)      /* LTR Mechanism Supported */
+#define PCIE_DCAP2_TPH_COMP	__BITS(13, 12) /* TPH Completer Supported */
+#define PCIE_DCAP2_OBFF		__BITS(19, 18) /* OBPF */
+#define PCIE_DCAP2_EXTFMT_FLD	__BIT(20)      /* Extended Fmt Field Support */
+#define PCIE_DCAP2_EETLP_PREF	__BIT(21)      /* End-End TLP Prefix Support */
+#define PCIE_DCAP2_MAX_EETLP	__BITS(23, 22) /* Max End-End TLP Prefix Sup */
+#define PCIE_DCSR2	0x28	/* Device Control & Status 2 Register */
+#define PCIE_DCSR2_COMPT_VAL	__BITS(3, 0)   /* Completion Timeout Value */
+#define PCIE_DCSR2_COMPT_DIS	__BIT(4)       /* Completion Timeout Disable */
+#define PCIE_DCSR2_ARI_FWD	__BIT(5)       /* ARI Forwarding Enable */
+#define PCIE_DCSR2_ATOM_REQ	__BIT(6)       /* AtomicOp Requester Enable */
+#define PCIE_DCSR2_ATOM_EBLK	__BIT(7)       /* AtomicOp Egress Blocking */
+#define PCIE_DCSR2_IDO_REQ	__BIT(8)       /* IDO Request Enable */
+#define PCIE_DCSR2_IDO_COMP	__BIT(9)       /* IDO Completion Enable */
+#define PCIE_DCSR2_LTR_MEC	__BIT(10)      /* LTR Mechanism Enable */
+#define PCIE_DCSR2_OBFF_EN	__BITS(14, 13) /* OBPF Enable */
+#define PCIE_DCSR2_EETLP	__BIT(15)      /* End-End TLP Prefix Blcking */
+#define PCIE_LCAP2	0x2c	/* Link Capabilities 2 Register */
+#define PCIE_LCAP2_SUP_LNKSV	__BITS(7, 1)   /* Supported Link Speeds Vect */
+#define PCIE_LCAP2_CROSSLNK	__BIT(8)       /* Crosslink Supported */
+#define PCIE_LCSR2	0x30	/* Link Control & Status 2 Register */
+#define PCIE_LCSR2_TGT_LSPEED	__BITS(3, 0)   /* Target Link Speed */
+#define PCIE_LCSR2_ENT_COMPL	__BIT(4)       /* Enter Compliance */
+#define PCIE_LCSR2_HW_AS_DIS	__BIT(5)       /* HW Autonomous Speed Disabl */
+#define PCIE_LCSR2_SEL_DEEMP	__BIT(6)       /* Selectable De-emphasis */
+#define PCIE_LCSR2_TX_MARGIN	__BITS(9, 7)   /* Transmit Margin */
+#define PCIE_LCSR2_EN_MCOMP	__BIT(10)      /* Enter Modified Compliance */
+#define PCIE_LCSR2_COMP_SOS	__BIT(11)      /* Compliance SOS */
+#define PCIE_LCSR2_COMP_DEEMP	__BITS(15, 12) /* Compliance Present/De-emph */
+#define PCIE_LCSR2_DEEMP_LVL	__BIT(0 + 16)  /* Current De-emphasis Level */
+#define PCIE_LCSR2_EQ_COMPL	__BIT(1 + 16)  /* Equalization Complete */
+#define PCIE_LCSR2_EQP1_SUC	__BIT(2 + 16)  /* Equaliz Phase 1 Successful */
+#define PCIE_LCSR2_EQP2_SUC	__BIT(3 + 16)  /* Equaliz Phase 2 Successful */
+#define PCIE_LCSR2_EQP3_SUC	__BIT(4 + 16)  /* Equaliz Phase 3 Successful */
+#define PCIE_LCSR2_LNKEQ_REQ	__BIT(5 + 16)  /* Link Equalization Request */
 
-#define PCIE_SLCSR_ABP	__BIT(0 + 16)
-#define PCIE_SLCSR_PFD	__BIT(1 + 16)
-#define PCIE_SLCSR_MSC	__BIT(2 + 16)
-#define PCIE_SLCSR_PDC	__BIT(3 + 16)
-#define PCIE_SLCSR_CC	__BIT(4 + 16)
-#define PCIE_SLCSR_MS	__BIT(5 + 16)
-#define PCIE_SLCSR_PDS	__BIT(6 + 16)
-#define PCIE_SLCSR_EIS	__BIT(7 + 16)
-#define PCIE_SLCSR_LACS	__BIT(8 + 16)
-#define PCIE_RCR		0x1c	/* Root Control & Capabilities Reg. */
-#define PCIE_RCR_SERR_CER	__BIT(0)
-#define PCIE_RCR_SERR_NFER	__BIT(1)
-#define PCIE_RCR_SERR_FER	__BIT(2)
-#define PCIE_RCR_PME_IE	__BIT(3)
-#define PCIE_RSR		0x20	/* Root Status Register */
-#define PCIE_RSR_REQESTER	__BITS(15, 0)
-#define PCIE_RSR_PMESTAT	__BIT(16)
-#define PCIE_RSR_PMEPEND	__BIT(17)
-#define PCIE_DCAP2		0x24	/* Device Capabilities 2 Register */
-#define PCIE_DCSR2		0x28	/* Device Control & Status 2 Reg. */
-#define PCIE_LCAP2		0x2c	/* Link Capabilities 2 Register */
-#define PCIE_LCSR2		0x30	/* Link Control & Status 2 Register */
-#define PCIE_SLCAP2		0x34	/* Slot Capabilities 2 Register */
-#define PCIE_SLCSR2		0x38	/* Slot Control & Status 2 Register */
+#define PCIE_SLCAP2	0x34	/* Slot Capabilities 2 Register */
+#define PCIE_SLCSR2	0x38	/* Slot Control & Status 2 Register */
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.
