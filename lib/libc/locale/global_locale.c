@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.15 2013/04/14 23:30:16 joerg Exp $ */
+/* $NetBSD: global_locale.c,v 1.16 2013/04/21 17:45:46 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.15 2013/04/14 23:30:16 joerg Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.16 2013/04/21 17:45:46 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -170,5 +170,7 @@ struct _locale _global_locale = {
 	    __UNCONST(&_DefaultNumericLocale),
 	[(size_t)LC_MESSAGES] = (_locale_part_t)
 	    __UNCONST(&_DefaultMessagesLocale),
+	[(size_t)LC_TIME] = (_locale_part_t)
+	    __UNCONST(&_DefaultTimeLocale),
     },
 };
