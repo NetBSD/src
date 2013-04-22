@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178.2.14 2012/04/17 00:09:00 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.15 2013/04/22 13:09:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.14 2012/04/17 00:09:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.15 2013/04/22 13:09:02 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -86,7 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.14 2012/04/17 00:09:00 yamt Exp
 #include <uvm/uvm_ddb.h>
 #include <uvm/uvm_pdpolicy.h>
 
-CTASSERT(UVM_PAGE_DIRTY_TAG < RADIX_TREE_TAG_ID_MAX);
+CTASSERT(UVM_PAGE_DIRTY_TAG < (1 << RADIX_TREE_TAG_ID_MAX));
+CTASSERT(UVM_PAGE_WRITEBACK_TAG < (1 << RADIX_TREE_TAG_ID_MAX));
 
 /*
  * global vars... XXXCDC: move to uvm. structure.
