@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.17 2012/11/02 08:30:05 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.18 2013/04/22 13:08:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.17 2012/11/02 08:30:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.18 2013/04/22 13:08:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,7 +592,7 @@ startover:
 		if (blkno == (daddr_t)-1) {
 			int holepages = (round_page(offset + iobytes) -
 			    trunc_page(offset)) >> PAGE_SHIFT;
-			UVMHIST_LOG(ubchist, "lbn 0x%x -> RDONLY", lbn,0,0,0);
+			UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", lbn,0,0,0);
 
 			sawhole = true;
 			memset((char *)kva + (offset - startoffset), 0,
