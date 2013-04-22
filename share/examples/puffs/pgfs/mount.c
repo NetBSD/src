@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.2 2012/04/11 14:25:54 yamt Exp $	*/
+/*	$NetBSD: mount.c,v 1.3 2013/04/22 13:27:49 yamt Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -28,11 +28,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount.c,v 1.2 2012/04/11 14:25:54 yamt Exp $");
+__RCSID("$NetBSD: mount.c,v 1.3 2013/04/22 13:27:49 yamt Exp $");
 #endif /* not lint */
 
 #include <err.h>
 #include <errno.h>
+#include <locale.h>
 #include <mntopts.h>
 #include <paths.h>
 #include <puffs.h>
@@ -77,6 +78,8 @@ main(int argc, char *argv[])
 	unsigned int nconn = 8;
 	bool debug = false;
 	bool dosync;
+
+	setlocale(LC_ALL, "");
 
 	mntflags = 0;
 	altmntflags = 0;
