@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.48 2013/04/21 02:44:15 uebayasi Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.49 2013/04/22 13:13:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.48 2013/04/21 02:44:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.49 2013/04/22 13:13:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -380,7 +380,7 @@ kmem_create_caches(const struct kmem_cache_info *array,
 		pa = &pool_allocator_kmem;
 #if defined(KMEM_POISON)
 		pc = pool_cache_init(cache_size, align, 0, flags,
-		    name, pa, ipl,kmem_poison_ctor,
+		    name, pa, ipl, kmem_poison_ctor,
 		    NULL, (void *)cache_size);
 #else /* defined(KMEM_POISON) */
 		pc = pool_cache_init(cache_size, align, 0, flags,
