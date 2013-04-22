@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 2012/08/03 08:11:40 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.18 2013/04/22 07:53:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -52,29 +52,49 @@
  */
 
 #if defined(_KERNEL)
-#ifndef MACHINE_ARCH			/* XXX For now */
-#ifndef __ARMEB__
-#define	_MACHINE_ARCH	arm
-#define	MACHINE_ARCH	"arm"
+# ifndef MACHINE_ARCH			/* XXX For now */
+#  ifndef __ARMEB__
+#   ifdef __ARM_EABI__
+#    define	_MACHINE_ARCH	earm
+#    define	MACHINE_ARCH	"earm"
+#   else
+#    define	_MACHINE_ARCH	arm
+#    define	MACHINE_ARCH	"arm"
+#   endif
+#  else
+#   ifdef __ARM_EABI__
+#    define	_MACHINE_ARCH	earmeb
+#    define	MACHINE_ARCH	"earmeb"
+#   else
+#    define	_MACHINE_ARCH	armeb
+#    define	MACHINE_ARCH	"armeb"
+#   endif
+#  endif /* __ARMEB__ */
+# endif /* MACHINE_ARCH */
 #else
-#define	_MACHINE_ARCH	armeb
-#define	MACHINE_ARCH	"armeb"
-#endif /* __ARMEB__ */
-#endif /* MACHINE_ARCH */
-#else
-#undef _MACHINE
-#undef MACHINE
-#undef _MACHINE_ARCH
-#undef MACHINE_ARCH
-#define	_MACHINE	arm
-#define	MACHINE		"arm"
-#ifndef __ARMEB__
-#define	_MACHINE_ARCH	arm
-#define	MACHINE_ARCH	"arm"
-#else
-#define	_MACHINE_ARCH	armeb
-#define	MACHINE_ARCH	"armeb"
-#endif /* __ARMEB__ */
+# undef _MACHINE
+# undef MACHINE
+# undef _MACHINE_ARCH
+# undef MACHINE_ARCH
+# define	_MACHINE	arm
+# define	MACHINE		"arm"
+# ifndef __ARMEB__
+#  ifdef __ARM_EABI__
+#   define	_MACHINE_ARCH	earm
+#   define	MACHINE_ARCH	"earm"
+#  else
+#   define	_MACHINE_ARCH	arm
+#   define	MACHINE_ARCH	"arm"
+#  endif
+# else
+#  ifdef __ARM_EABI__
+#   define	_MACHINE_ARCH	earmeb
+#   define	MACHINE_ARCH	"earmeb"
+#  else
+#   define	_MACHINE_ARCH	armeb
+#   define	MACHINE_ARCH	"armeb"
+#  endif
+# endif /* __ARMEB__ */
 #endif /* !_KERNEL */
 
 #define	MID_MACHINE	MID_ARM6
