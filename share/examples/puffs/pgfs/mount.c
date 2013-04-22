@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.3 2013/04/22 13:27:49 yamt Exp $	*/
+/*	$NetBSD: mount.c,v 1.4 2013/04/22 13:28:28 yamt Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount.c,v 1.3 2013/04/22 13:27:49 yamt Exp $");
+__RCSID("$NetBSD: mount.c,v 1.4 2013/04/22 13:28:28 yamt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -40,12 +40,28 @@ __RCSID("$NetBSD: mount.c,v 1.3 2013/04/22 13:27:49 yamt Exp $");
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "pgfs.h"
 #include "pgfs_db.h"
 
 #define	PGFS_MNT_ALT_DUMMY	1
 #define	PGFS_MNT_ALT_DEBUG	2
+
+static char *
+xstrcpy(const char *str)
+{
+	char *n;
+	size_t len;
+
+	if (str == NULL) {
+		return NULL;
+	}
+	len = strlen(str);
+	n = emalloc(len + 1);
+	memcpy(n, str, len + 1);
+	return n;
+}
 
 int
 main(int argc, char *argv[])
@@ -94,8 +110,8 @@ main(int argc, char *argv[])
 				err(EXIT_FAILURE, "getmntopts");
 			}
 			getmnt_silent = 1; /* XXX silly api */
-			dbname = getmntoptstr(mp, "dbname");
-			dbuser = getmntoptstr(mp, "dbuser");
+			dbname = xstrcpy(getmntoptstr(mp, "dbname"));
+			dbuser = xstrcpy(getmntoptstr(mp, "dbuser"));
 			v = getmntoptnum(mp, "nconn");
 			getmnt_silent = 0;
 			if (v != -1) {
@@ -143,6 +159,8 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "puffs_init");
 	}
 	error = pgfs_connectdb(pu, dbname, dbuser, debug, dosync, nconn);
+	free(__UNCONST(dbname));
+	free(__UNCONST(dbuser));
 	if (error != 0) {
 		errno = error;
 		err(EXIT_FAILURE, "pgfs_connectdb");
