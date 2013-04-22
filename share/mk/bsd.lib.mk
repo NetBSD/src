@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.334 2013/04/11 01:27:47 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.335 2013/04/22 22:16:14 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -46,17 +46,6 @@ realinstall:	checkver libinstall
 CFLAGS+=        ${PIE_CFLAGS}
 AFLAGS+=        ${PIE_AFLAGS}
 .endif
-
-.if (defined(MKDEBUG) && (${MKDEBUG} != "no")) || \
-    (defined(CFLAGS) && !empty(CFLAGS:M*-g*))
-# We only add -g to the shared library objects
-# because we don't currently split .a archives.
-CSHLIBFLAGS+=	-g
-.if ${LIBISPRIVATE} == "yes"
-CFLAGS+=	-g
-.endif
-.endif
-
 
 ##### Libraries that this may depend upon.
 .if defined(LIBDPLIBS) && ${MKPIC} != "no"				# {
@@ -202,6 +191,16 @@ CSHLIBFLAGS+= ${CPICFLAGS}
 MKSHLIBOBJS= yes
 .else
 MKSHLIBOBJS= no
+.endif
+
+.if (defined(MKDEBUG) && (${MKDEBUG} != "no")) || \
+    (defined(CFLAGS) && !empty(CFLAGS:M*-g*))
+# We only add -g to the shared library objects
+# because we don't currently split .a archives.
+CSHLIBFLAGS+=	-g
+.if ${LIBISPRIVATE} == "yes"
+CFLAGS+=	-g
+.endif
 .endif
 
 # Platform-independent linker flags for ELF shared libraries
