@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.10 2012/08/05 04:12:46 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.11 2013/04/24 22:35:23 matt Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
@@ -116,6 +116,9 @@
 #define PF_ARM_SB		0x10000000
 #define PF_ARM_PI		0x20000000
 #define PF_ARM_ENTRY		0x80000000
+
+/* Processor specific program header types */
+#define PT_ARM_EXIDX		(PT_LOPROC + 1)
 
 /* Processor specific section header flags */
 #define SHF_ENTRYSECT		0x10000000
