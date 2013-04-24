@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.115 2013/04/05 20:16:40 christos Exp $
+#	$NetBSD: Makefile,v 1.116 2013/04/24 22:37:20 matt Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -91,6 +91,9 @@ CPPFLAGS+=	-DCOMBRELOC
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC
+.if !empty(MACHINE_ARCH:Mearm*)
+CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libexecinfo
+.endif
 #DBG=		-g
 COPTS=		-O3 -fomit-frame-pointer
 
