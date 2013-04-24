@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.110 2012/08/15 03:46:06 matt Exp $	 */
+/*	$NetBSD: rtld.h,v 1.111 2013/04/24 22:37:20 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -45,6 +45,10 @@
 #include <sys/tls.h>
 #include "rtldenv.h"
 #include "link.h"
+
+#ifdef __ARM_EABI__
+#include "unwind.h"
+#endif
 
 #if defined(_RTLD_SOURCE)
 
@@ -284,6 +288,10 @@ typedef struct Struct_Obj_Entry {
 	size_t		init_arraysz;	/* # of entries in it */
 	fptr_t		*fini_array;	/* start of fini array */
 	size_t		fini_arraysz;	/* # of entries in it */
+#ifdef __ARM_EABI__
+	_Unwind_Ptr	exidx_start;
+	size_t		exidx_sz;
+#endif
 } Obj_Entry;
 
 typedef struct Struct_DoneList {
@@ -339,6 +347,14 @@ __dso_public int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
     void *);
 
 __dso_public void *_dlauxinfo(void) __pure;
+
+#ifdef __ARM_EABI__
+/*
+ * This is used by libgcc to find the start and length of the exception table
+ * associated with a PC.
+ */
+__dso_public _Unwind_Ptr __gnu_Unwind_Find_exidx(_Unwind_Ptr, int *);
+#endif
 
 /* These aren't exported */
 void _rtld_error(const char *, ...)

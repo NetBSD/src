@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.61 2012/08/15 03:46:07 matt Exp $	 */
+/*	$NetBSD: symbol.c,v 1.62 2013/04/24 22:37:20 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.61 2012/08/15 03:46:07 matt Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.62 2013/04/24 22:37:20 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -100,6 +100,9 @@ _rtld_is_exported(const Elf_Sym *def)
 #ifdef __i386__
 		(fptr_t)___tls_get_addr,
 #endif
+#endif
+#ifdef __ARM_EABI__
+		(fptr_t)__gnu_Unwind_Find_exidx,	/* for gcc EHABI */
 #endif
 		NULL
 	};
