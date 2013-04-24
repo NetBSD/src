@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.43 2012/08/15 03:46:06 matt Exp $	 */
+/*	$NetBSD: headers.c,v 1.44 2013/04/24 22:37:20 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.43 2012/08/15 03:46:06 matt Exp $");
+__RCSID("$NetBSD: headers.c,v 1.44 2013/04/24 22:37:20 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -412,6 +412,12 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 			obj->tlsalign = ph->p_align;
 			obj->tlsinitsize = ph->p_filesz;
 			obj->tlsinit = (void *)(uintptr_t)ph->p_vaddr;
+			break;
+#endif
+#ifdef __ARM_EABI__
+		case PT_ARM_EXIDX:
+			obj->exidx_start = (void *)(uintptr_t)vaddr;
+			obj->exidx_sz = ph->p_memsz;
 			break;
 #endif
 		}
