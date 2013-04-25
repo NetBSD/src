@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/02/04 15:00:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2013/04/25 13:59:58 joerg Exp $
 
 LIB=	clangAST
 
@@ -27,6 +27,7 @@ SRCS+=	APValue.cpp \
 	DeclFriend.cpp \
 	DeclGroup.cpp \
 	DeclObjC.cpp \
+	DeclOpenMP.cpp \
 	DeclPrinter.cpp \
 	DeclTemplate.cpp \
 	DumpXML.cpp \
