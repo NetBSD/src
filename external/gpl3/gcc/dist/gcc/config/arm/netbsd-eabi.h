@@ -27,6 +27,9 @@
 #define TARGET_ENDIAN_DEFAULT 0
 #endif
 
+#undef MUST_USE_SJLJ_EXCEPTIONS
+#define MUST_USE_SJLJ_EXCEPTIONS (!TARGET_AAPCS_BASED)
+
 /* TARGET_BIG_ENDIAN_DEFAULT is set in
    config.gcc for big endian configurations.  */
 #undef  TARGET_LINKER_EMULATION
