@@ -279,7 +279,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 
 	bi->buf = buf;
 	bi->size = size;
-	bi->pagelist_size = sizeof(PAGELIST_T) + 
+	bi->pagelist_size = sizeof(PAGELIST_T) +
 	    (maxsegs * sizeof(unsigned long));
 	bi->vmspace = curproc->p_vmspace;
 
@@ -322,10 +322,10 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 			goto fail5;
 		}
 	}
-	
+
 	ret = bus_dmamap_create(&bcm2835_bus_dma_tag, size, maxsegs, size, 0,
 	    BUS_DMA_WAITOK, &bi->dmamap);
-	
+
 	if (ret != 0)
 		goto fail6;
 
@@ -369,7 +369,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 		pagelist->type = PAGELIST_READ_WITH_FRAGMENTS +
 		    (fragments - g_fragments_base);
 	}
-	
+
 	/*
 	 * Store the BULKINFO_T address in remote_data, which isn't used by the
 	 * slave.
@@ -394,7 +394,7 @@ fail6:
 
 fail5:
 	bus_dmamap_unload(&bcm2835_bus_dma_tag, bi->pagelist_map);
-	
+
 fail4:
 	bus_dmamap_destroy(&bcm2835_bus_dma_tag, bi->pagelist_map);
 
@@ -404,7 +404,7 @@ fail3:
 fail2:
 	bus_dmamem_free(&bcm2835_bus_dma_tag, bi->pagelist_sgs,
 	    __arraycount(bi->pagelist_sgs));
-	
+
 fail1:
 	kmem_free(bi, sizeof(*bi));
 
