@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.10 2013/03/29 16:19:45 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.11 2013/04/25 20:10:28 christos Exp $	*/
 /* $OpenBSD: packet.c,v 1.181 2013/02/10 23:35:24 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.10 2013/03/29 16:19:45 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.11 2013/04/25 20:10:28 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
@@ -1456,7 +1456,7 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 			case SSH2_MSG_DISCONNECT:
 				reason = packet_get_int();
 				msg = packet_get_string(NULL);
-				error("Received disconnect from %s: %u: %.400s",
+				logit("Received disconnect from %s: %u: %.400s",
 				    get_remote_ipaddr(), reason, msg);
 				xfree(msg);
 				cleanup_exit(255);
@@ -1481,7 +1481,7 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 				break;
 			case SSH_MSG_DISCONNECT:
 				msg = packet_get_string(NULL);
-				error("Received disconnect from %s: %.400s",
+				logit("Received disconnect from %s: %.400s",
 				    get_remote_ipaddr(), msg);
 				cleanup_exit(255);
 				break;
