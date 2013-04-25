@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/01/23 15:02:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/04/25 13:59:57 joerg Exp $
 
 LIB=	LLVMIR
 
