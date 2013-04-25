@@ -41,6 +41,7 @@ namespace __cxxabiv1
 #endif
 
 #ifdef __ARM_EABI__
+bollocks;
   // The ARM EABI uses the least significant bit of a 32-bit
   // guard variable.  */
 #define _GLIBCXX_GUARD_TEST(x) ((*(x) & 1) != 0)
