@@ -1,3 +1,7 @@
+.\" $NetBSD: src.7,v 1.2 2013/04/25 21:52:48 wiz Exp $
+.\"
+.\" XXX: missing licence
+.\"
 .Dd November 30, 2012
 .Dt SRC 7
 .Os
@@ -31,7 +35,7 @@ subdirectory, where it and its
 Makefile are located.
 .It Pa lib/
 Libraries.
-Every library has its own subdirectory, 
+Every library has its own subdirectory,
 where it and its Makefile are located.
 .El
 .It Pa compat/
@@ -42,14 +46,14 @@ for different ABI than the default for
 that platform.
 .Bl -tag -width "compat/<arch1>/<arch2>/" -compact
 .It Pa compat/<arch1>/<arch2>/
-Every 
+Every
 .Pa compat/<arch1>/<arch2>/
 directory contains a Makefile and a makefile
-fragment for building an 
+fragment for building an
 .Pa <arch2>
 compat libraries for
 .Pa <arch1> .
-E. g., 
+E. g.,
 .Pa compat/amd64/i386/
 is where the 32-bit compat libraries for the
 amd64 port are being built.
@@ -83,7 +87,7 @@ given package's config files.
 .El
 .It Pa dist/
 Unmodified sources from third parties.
-This is deprecated; 
+This is deprecated;
 .Pa external/
 should be used instead.
 .It Pa distrib/
@@ -134,7 +138,7 @@ grouped by license.
 They are built with so-called "reachover"
 Makefiles which can be found in
 .Pa src/*bin/
-hierarchies. 
+hierarchies.
 Every
 .Pa external/<license>/<package>/
 may contain:
@@ -144,10 +148,10 @@ Unmodified third party source for a given package
 .It Pa bin/
 .It Pa usr.bin/
 .It Pa usr.sbin/
-.It Pa etc.
+.It etc.
 Such subdirectories contain reachover Makefiles,
 README's and various import helper scripts.
-E. g., 
+E. g.,
 .Pa external/public-domain/
 contains
 sources licensed under Public Domain
@@ -166,7 +170,7 @@ Optional developer-provided sources that are built if
 as a way to include extra components in the
 build.
 .It Pa games/
-Sources for utilities/files in 
+Sources for utilities/files in
 .Pa /usr/games ;
 each utility has it's own subdirectory, where
 its sources and Makefiles are located.
@@ -188,7 +192,7 @@ Files to be put into
 .Pa /usr/include .
 .It Pa lib/
 Source for libraries in
-.Pa /usr/lib 
+.Pa /usr/lib
 and some scripts for them.
 Every directory contains source for given library
 and Makefiles.
@@ -203,14 +207,14 @@ Various regression tests in
 This is deprecated; most tests are being migrated
 into
 .Pa tests/
-once they are migrated to the 
+once they are migrated to the
 .Xr atf 7
 test framework.
 .It Pa rescue/
 Makefiles for copying utilities to
 .Pa /rescue .
 .It Pa share/
-Source for utilities/files in 
+Source for utilities/files in
 .Pa /usr/share .
 Every utility has its own subdirectory,
 where its source and Makefile are located.
@@ -224,7 +228,11 @@ Files to specific hardware platforms.
 .It Pa coda/
 Coda file system driver.
 .It Pa compat/
-Support for older version NetBSD binaries and non-NetBSD binaries.
+Support for older version
+.Nx
+binaries and
+.Pf non- Nx
+binaries.
 .It Pa conf/
 Misc files for building kernel.
 .It Pa crypto/
@@ -234,7 +242,7 @@ Client code for local kernel debugger.
 .It Pa dev/
 Device drivers.
 .It Pa dist/
-Parent directory for the 
+Parent directory for the
 .Ox
 packet filter
 .Xr pf 4 .
@@ -248,7 +256,8 @@ macros.
 .It Pa ipkdb/
 Client code for remote kernel debugger.
 .It Pa kern/
-NetBSD's Kernel code, such as resource management, signal delivering, etc.
+.Nx Ap s
+Kernel code, such as resource management, signal delivering, etc.
 .It Pa lib/
 Libraries used by the kernel.
 .It Pa miscfs/
@@ -299,7 +308,9 @@ Rump kernel
 Security model framework
 .Xr secmodel 9 .
 .It Pa stand/
-Source for several standalone programs that aren't used by NetBSD currently.
+Source for several standalone programs that aren't used by
+.Nx
+currently.
 .It Pa sys/
 Header files that get installed into
 .Pa /usr/include/sys .
@@ -311,7 +322,7 @@ Virtual memory manager.
 .It Pa tests/
 Source for test programs in
 .Pa /usr/tests .
-These tests use the 
+These tests use the
 .Xr atf 7
 test framework.
 For library routines, including system calls, the
@@ -326,13 +337,14 @@ Equivalently, all tests for userland utilities
 should try to follow their location in the source tree.
 If this can not be satisfied, the tests for
 a utility should be located under the directory to which
-the utility is installed. Thus, a test for
+the utility is installed.
+Thus, a test for
 .Xr env 1
 should go to
-.Pa src/tests/usr.bin/env.
+.Pa src/tests/usr.bin/env .
 Likewise, a test for
 .Xr tcpdump 8
-should be in 
+should be in
 .Pa src/tests/usr.sbin/tcpdump ,
 even though the source code for the program is located under
 .Pa src/external .
@@ -341,17 +353,19 @@ Reachover build structure for the host build tools.
 Every utility has its own directory, where its Makefile
 is located.
 .It Pa x11/
-Reachover build structure for X11R7; the source is in 
+Reachover build structure for X11R7; the source is in
 .Pa X11SRCDIR .
 The directory structure copies the system\'s;
 every directory contains a Makefile.
 .Sh SEE ALSO
 .Xr hier 7
-.Sh AUTHOR
+.Sh HISTORY
+This file was created as a part of Google Code-in 2012/2013.
+.Sh AUTHORS
+.An -nosplit
 This manpage was written by
 .An Elvira Khabirova Aq skinder0@gmail.com ,
 the
 .Pa sys/
-part by Mingzhe Wang.
-.Sh HISTORY
-This file was created as a part of Google Code-in 2012/2013.
+part by
+.An Mingzhe Wang .
