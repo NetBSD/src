@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.45 2013/04/25 13:14:41 matt Exp $	 */
+/*	$NetBSD: headers.c,v 1.46 2013/04/25 13:26:17 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.45 2013/04/25 13:14:41 matt Exp $");
+__RCSID("$NetBSD: headers.c,v 1.46 2013/04/25 13:26:17 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -371,8 +371,8 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 		if (ph->p_type != PT_PHDR)
 			continue;
 		
-		obj->phdr = (void *)(uintptr_t)phdr->p_vaddr;
-		obj->phsize = phdr->p_memsz;
+		obj->phdr = (void *)(uintptr_t)ph->p_vaddr;
+		obj->phsize = ph->p_memsz;
 		obj->relocbase = (caddr_t)((uintptr_t)ph - (uintptr_t)ph->p_vaddr);
 		dbg(("headers: phdr %p phsize %zu relocbase %lx", obj->phdr,
 		    obj->phsize, (long)obj->relocbase));
