@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.229 2013/02/24 03:06:15 jmmv Exp $
+# $NetBSD: mi,v 1.230 2013/04/25 17:10:50 christos Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -93,6 +93,7 @@
 ./etc/mtree/special				etc-sys-etc
 ./etc/named.conf				etc-bind-etc
 ./etc/namedb/127				etc-bind-etc
+./etc/namedb/bind.keys				etc-bind-etc
 ./etc/namedb/localhost				etc-bind-etc
 ./etc/namedb/loopback.v6			etc-bind-etc
 ./etc/namedb/root.cache				etc-bind-etc
