@@ -379,7 +379,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->pagelist_map, 0,
 	    bi->pagelist_size, BUS_DMASYNC_PREREAD);
 
-	bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->dmamap, 0, size,
+	bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->dmamap, 0, bi->size,
 	    pagelist->type == PAGELIST_WRITE ?
 	    BUS_DMASYNC_PREWRITE : BUS_DMASYNC_PREREAD);
 
