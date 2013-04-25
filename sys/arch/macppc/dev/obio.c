@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.39 2013/04/17 12:25:15 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.40 2013/04/25 11:22:22 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.39 2013/04/17 12:25:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.40 2013/04/25 11:22:22 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	int node, child, namelen, error;
 	u_int reg[20];
 	int intr[6], parent_intr = 0, parent_nintr = 0;
+	int map_size = 0x1000;
 	char name[32];
 	char compat[32];
 
@@ -161,6 +162,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_APPLE_K2:
 	case PCI_PRODUCT_APPLE_SHASTA:
 		node = OF_finddevice("mac-io");
+		map_size = 0x10000;
 		break;
 
 	default:
@@ -196,7 +198,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	ca.ca_baseaddr = reg[2];
 	ca.ca_tag = pa->pa_memt;
 	sc->sc_tag = pa->pa_memt;
-	error = bus_space_map (pa->pa_memt, ca.ca_baseaddr, 0x80, 0, &bsh);
+	error = bus_space_map (pa->pa_memt, ca.ca_baseaddr, map_size, 0, &bsh);
 	if (error)
 		panic(": failed to map mac-io %#x", ca.ca_baseaddr);
 	sc->sc_bh = bsh;
