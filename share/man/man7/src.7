@@ -1,0 +1,357 @@
+.Dd November 30, 2012
+.Dt SRC 7
+.Os
+.Sh NAME
+.Nm src
+.Nd layout of NetBSD sources
+.Sh DESCRIPTION
+An outline of the
+.Nx
+source code hierarchy.
+.Bl -tag -width "external/"
+.It Pa bin/
+Critical utilities for the system and users.
+.It Pa sbin/
+Critical utilities for the system and the superuser.
+.It Pa usr.bin/
+Not-so critical utilities for the system and users.
+.It Pa usr.sbin/
+Not-so critical utilities for the system and the superuser.
+.It Pa common/
+Sources shared between kernel and userland.
+.Bl -tag -width "include/" -compact
+.It Pa dist/
+Utilities.
+Every utility has its own subdirectory,
+where its source and Makefile are located.
+.It Pa include/
+Include headers.
+Every group of header files has its own
+subdirectory, where it and its
+Makefile are located.
+.It Pa lib/
+Libraries.
+Every library has its own subdirectory, 
+where it and its Makefile are located.
+.El
+.It Pa compat/
+A framework to (re)build the libraries
+shipped with
+.Nx
+for different ABI than the default for
+that platform.
+.Bl -tag -width "compat/<arch1>/<arch2>/" -compact
+.It Pa compat/<arch1>/<arch2>/
+Every 
+.Pa compat/<arch1>/<arch2>/
+directory contains a Makefile and a makefile
+fragment for building an 
+.Pa <arch2>
+compat libraries for
+.Pa <arch1> .
+E. g., 
+.Pa compat/amd64/i386/
+is where the 32-bit compat libraries for the
+amd64 port are being built.
+.It Pa compatsubdir.mk
+The list of subdirectories (the libraries and
+ld.elf_so) to build with this ABI.
+.It Pa archdirs.mk
+The list of subdirectories for each port.
+.It Pa Makefile.compat
+The basic framework to force the right paths for
+library and ld.elf_so linkage.
+.It Pa dirshack/Makefile
+A hack to get objdirs created timely.
+.El
+.It Pa crypto/
+Cryptographic source, which may have import or
+export restrictions.
+.Bl -tag -width "external/" -compact
+.It Pa dist/
+Original sources.
+This is deprecated;
+.Pa crypto/external/
+should be used instead.
+.It Pa external/
+Original sources, grouped by license, and then
+package per license.
+.Pa crypto/external/<license>/<package>/dist/
+contain original sources for given package;
+other directories contain Makefiles and
+given package's config files.
+.El
+.It Pa dist/
+Unmodified sources from third parties.
+This is deprecated; 
+.Pa external/
+should be used instead.
+.It Pa distrib/
+Tools and data-files for making distributions.
+.Bl -tag -width "distrib/notes/<arch>/" -compact
+.It Pa <arch>/
+Architecture-specific files, grouped by
+image type.
+E. g.,
+.Pa distrib/<arch>/floppies/
+contains Makefiles for making images for
+various types of floppies;
+.Pa <arch>/ramdisk/
+contains makefiles for making ramdisks etc.
+.It Pa cdrom/
+Was used to create bootable CD images.
+This is deprecated;
+.Pa build.sh
+\'s
+.Pa iso-image
+target should be used instead.
+.It Pa common/
+Common files for images generation.
+.It Pa miniroot/
+Files for miniroot.
+.It Pa notes/<arch>
+Architecture-specific parts of release notes.
+.It Pa sets/
+Scripts for making file sets.
+.It Pa utils/
+Utilities for installation ramdisk.
+.El
+.It Pa doc/
+Development documentation files: changelogs,
+build readmes etc.
+.Pa doc/roadmaps/
+contains roadmaps.
+.It Pa etc/
+Default configuration files to be put into
+.Pa /etc .
+.Bl -tag -width "compat/<arch1>/<arch2>/" -compact
+.It Pa etc/etc.<arch>/
+Architecture-specific config files.
+.El
+.It Pa external/
+Unmodified sources from third parties,
+grouped by license.
+They are built with so-called "reachover"
+Makefiles which can be found in
+.Pa src/*bin/
+hierarchies. 
+Every
+.Pa external/<license>/<package>/
+may contain:
+.Bl -tag -width "usr.sbin/" -compact
+.It Pa dist/
+Unmodified third party source for a given package
+.It Pa bin/
+.It Pa usr.bin/
+.It Pa usr.sbin/
+.It Pa etc.
+Such subdirectories contain reachover Makefiles,
+README's and various import helper scripts.
+E. g., 
+.Pa external/public-domain/
+contains
+sources licensed under Public Domain
+license;
+.Pa external/public-domain/sqlite/dist/
+contains original sources;
+.Pa external/public-domain/sqlite/bin/ ,
+.Pa external/public-domain/sqlite/lib/
+and
+.Pa external/public-domain/sqlite/
+itself contain reachover Makefiles.
+.El
+.It Pa extsrc/
+Optional developer-provided sources that are built if
+.Pa MKEXTSRC=yes ,
+as a way to include extra components in the
+build.
+.It Pa games/
+Sources for utilities/files in 
+.Pa /usr/games ;
+each utility has it's own subdirectory, where
+its sources and Makefiles are located.
+.It Pa gnu/
+Sources licensed under GNU GPL.
+This is deprecated;
+.Pa external/gpl2/
+or
+.Pa external/gpl3/
+should be used instead.
+.Pa gnu/dists
+contains the original GNU sources plus changes that
+were submitted to maintainers and that are not
+yet published.
+Other folders contain files that are never expected
+to be submitted to the FSF (reachover Makefiles, etc.)
+.It Pa include/
+Files to be put into
+.Pa /usr/include .
+.It Pa lib/
+Source for libraries in
+.Pa /usr/lib 
+and some scripts for them.
+Every directory contains source for given library
+and Makefiles.
+.It Pa libexec/
+Source for utilities in
+.Pa /usr/libexec .
+Every directory contains source for given utility
+and Makefiles.
+.It Pa regress/
+Various regression tests in
+.Pa /usr/tests .
+This is deprecated; most tests are being migrated
+into
+.Pa tests/
+once they are migrated to the 
+.Xr atf 7
+test framework.
+.It Pa rescue/
+Makefiles for copying utilities to
+.Pa /rescue .
+.It Pa share/
+Source for utilities/files in 
+.Pa /usr/share .
+Every utility has its own subdirectory,
+where its source and Makefile are located.
+.It Pa sys/
+Kernel source.
+.Bl -tag -width "opencrypto/" -compact
+.It Pa altq/
+Network packet alternate queueing.
+.It Pa arch/
+Files to specific hardware platforms.
+.It Pa coda/
+Coda file system driver.
+.It Pa compat/
+Support for older version NetBSD binaries and non-NetBSD binaries.
+.It Pa conf/
+Misc files for building kernel.
+.It Pa crypto/
+Crypt alogorithms used by IPsec.
+.It Pa ddb/
+Client code for local kernel debugger.
+.It Pa dev/
+Device drivers.
+.It Pa dist/
+Parent directory for the 
+.Ox
+packet filter
+.Xr pf 4 .
+.It Pa external/
+Sources from third parties, grouped by license.
+.It Pa fs/
+File systems storing data on physical drives.
+.It Pa gdbscripts/
+.Xr gdb 1
+macros.
+.It Pa ipkdb/
+Client code for remote kernel debugger.
+.It Pa kern/
+NetBSD's Kernel code, such as resource management, signal delivering, etc.
+.It Pa lib/
+Libraries used by the kernel.
+.It Pa miscfs/
+Drivers for file systems used to store layered data for kernel features.
+.It Pa modules/
+Kernel components, including hardware specific drivers and upper-level drivers.
+.It Pa net/
+Lowlevel network: protocol drivers, packet filters and access interfaces for NICs.
+.It Pa net80211/
+Drivers for 802.11 wireless network.
+.It Pa netatalk/
+Appletalk protocol stack
+.Xr atalk 4 .
+.It Pa netbt/
+Bluetooth stack
+.Xr bluetooth 4 .
+.It Pa netinet/
+IPv4 protocol stack
+.Xr ip 4 .
+.It Pa netinet6/
+IPv6 protocol stack.
+.It Pa netipsec/
+IPsec protocol stack
+.Xr ipsec 4 .
+.It Pa netisdn/
+ISDN protocol stack
+.Xr isdn 4 .
+.It Pa netkey/
+Key management for IPsec.
+.It Pa netmpls/
+MPLS protocol stack
+.Xr mpls 4 .
+.It Pa netnatm/
+Native Mode ATM protocol stack.
+.It Pa netns/
+Xerox network protocol stack.
+.It Pa netsmb/
+SMB network protocol stack.
+.It Pa nfs/
+Network file system driver.
+.It Pa opencrypto/
+Cryptographic hardware framework
+.Xr opencrypto 9 .
+.It Pa rump/
+Rump kernel
+.Xr rump 3 .
+.It Pa secmodel/
+Security model framework
+.Xr secmodel 9 .
+.It Pa stand/
+Source for several standalone programs that aren't used by NetBSD currently.
+.It Pa sys/
+Header files that get installed into
+.Pa /usr/include/sys .
+.It Pa ufs/
+UFS file system driver.
+.It Pa uvm/
+Virtual memory manager.
+.El
+.It Pa tests/
+Source for test programs in
+.Pa /usr/tests .
+These tests use the 
+.Xr atf 7
+test framework.
+For library routines, including system calls, the
+directory structure of the tests should follow the
+directory structure of the real source tree.
+For instance, interfaces available via the C
+library should follow:
+.Pa src/lib/libc/gen -> Pa src/tests/lib/libc/gen ,
+.Pa src/lib/libc/sys -> Pa src/tests/lib/libc/sys ,
+etc.
+Equivalently, all tests for userland utilities
+should try to follow their location in the source tree.
+If this can not be satisfied, the tests for
+a utility should be located under the directory to which
+the utility is installed. Thus, a test for
+.Xr env 1
+should go to
+.Pa src/tests/usr.bin/env.
+Likewise, a test for
+.Xr tcpdump 8
+should be in 
+.Pa src/tests/usr.sbin/tcpdump ,
+even though the source code for the program is located under
+.Pa src/external .
+.It Pa tools/
+Reachover build structure for the host build tools.
+Every utility has its own directory, where its Makefile
+is located.
+.It Pa x11/
+Reachover build structure for X11R7; the source is in 
+.Pa X11SRCDIR .
+The directory structure copies the system\'s;
+every directory contains a Makefile.
+.Sh SEE ALSO
+.Xr hier 7
+.Sh AUTHOR
+This manpage was written by
+.An Elvira Khabirova Aq skinder0@gmail.com ,
+the
+.Pa sys/
+part by Mingzhe Wang.
+.Sh HISTORY
+This file was created as a part of Google Code-in 2012/2013.
