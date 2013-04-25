@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prog,v 1.6 2013/02/14 21:29:35 christos Exp $
+#	$NetBSD: Makefile.prog,v 1.7 2013/04/25 14:53:35 matt Exp $
 #
 # Common Makefile fragment for a binutils program.
 #
@@ -36,8 +36,8 @@ PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty
 
 .include <bsd.prog.mk>
 
-LDADD+=		-lintl -lz
-DPADD+=		${LIBINTL} ${LIBZ}
+LDADD+=		-lintl -lz -lm
+DPADD+=		${LIBINTL} ${LIBZ} ${LIBM}
 
 # Override the .y.c and .y.l rules *after* <bsd.prog.mk>
 .y.c .l.c:
