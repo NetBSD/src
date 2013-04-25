@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 2011/06/20 05:50:39 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 2013/04/25 00:11:35 macallan Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2011/06/20 05:50:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2013/04/25 00:11:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -185,8 +185,11 @@ decr_intr(struct clockframe *cfp)
 void
 delay(unsigned int n)
 {
-	u_quad_t tb;
-	u_long tbh, tbl, scratch;
+#ifdef _ARCH_PPC64
+	uint64_t tb, scratch;
+#else
+	uint64_t tb;
+	uint32_t tbh, tbl, scratch;
 
 #ifdef PPC_OEA601
 	if ((mfpvr() >> 16) == MPC601) {
@@ -208,16 +211,23 @@ delay(unsigned int n)
 		    : "r"(rtc[0]), "r"(rtc[1]), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R)
 		    : "cr0");
 	} else
-#endif
+#endif /* PPC_OEA601 */
+#endif /* !_ARCH_PPC64 */
 	{
 		tb = mftb();
 		tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
+#ifdef _ARCH_PPC64
+		__asm volatile ("1: mftb %0; cmpld %0,%1; blt 1b;"
+			      : "=&r"(scratch) : "r"(tb)
+			      : "cr0");
+#else
 		tbh = tb >> 32;
 		tbl = tb;
 		__asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 			      "mftb %0; cmplw %0,%2; blt 1b; 2:"
 			      : "=&r"(scratch) : "r"(tbh), "r"(tbl)
 			      : "cr0");
+#endif
 	}
 }
 
