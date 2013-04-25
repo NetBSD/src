@@ -2,7 +2,7 @@
 # Generated from: 	NetBSD: mknative-gcc,v 1.68 2012/09/25 06:55:10 skrll Exp 
 # Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp 
 #
-G_INCLUDES=-I. -I. -I${GNUHOSTDIST}/gcc -I${GNUHOSTDIST}/gcc/. -I${GNUHOSTDIST}/gcc/../include -I./../intl -I${GNUHOSTDIST}/gcc/../libcpp/include -I/usr/src/external/lgpl3/gmp/lib/libgmp/arch/earm -I/usr/src/external/lgpl3/mpfr/dist -I/usr/src/external/lgpl2/mpc/dist/src  -I${GNUHOSTDIST}/gcc/../libdecnumber -I${GNUHOSTDIST}/gcc/../libdecnumber/dpd -I../libdecnumber   -I/usr/include/libelf
+G_INCLUDES=-I. -I. -I${GNUHOSTDIST}/gcc -I${GNUHOSTDIST}/gcc/. -I${GNUHOSTDIST}/gcc/../include -I./../intl -I${GNUHOSTDIST}/gcc/../libcpp/include     -I${GNUHOSTDIST}/gcc/../libdecnumber -I${GNUHOSTDIST}/gcc/../libdecnumber/dpd -I../libdecnumber   -I/usr/include/libelf
 G_LIB2ADD=${GNUHOSTDIST}/gcc/config/arm/unaligned-funcs.c
 G_LIB2ADDEH=${GNUHOSTDIST}/gcc/config/arm/unwind-arm.c ${GNUHOSTDIST}/gcc/config/arm/libunwind.S ${GNUHOSTDIST}/gcc/config/arm/pr-support.c ${GNUHOSTDIST}/gcc/unwind-c.c
 G_LIB2ADD_ST=
