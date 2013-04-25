@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.68 2012/09/25 06:55:10 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.69 2013/04/25 16:18:43 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -394,8 +394,12 @@ get_libgcc () {
 			SHLIB_MAPFILES SHLIB_NM_FLAGS \
 			EXTRA_HEADERS xm_defines \
 			tm_defines ${_extravars}
-	} | sed "s,-I$_DESTDIR/usr/include,,g" \
-	| write_mk $_OUTDIRBASE/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH.mk
+	} | sed \
+		-e "s,-I$_DESTDIR/usr/include,,g" \
+		-e "s,-I$_TOP/external/lgpl3/mpfr/dist,,g" \
+		-e "s,-I$_TOP/external/lgpl2/mpc/dist/src,,g" \
+		-e "s,-I$_TOP/external/lgpl3/gmp/lib/libgmp/arch/$MACHINE_ARCH,,g" \
+		| write_mk $_OUTDIRBASE/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH.mk
 
 	# Generate new style files.
 	if [ -n "${MKNATIVE_LIBGCC_NEW}" ]; then
@@ -600,7 +604,10 @@ get_gcc () {
 			tm_defines host_xm_file host_xm_defines tm_p_file \
 			target_cpu_default ${_extravars} ${_extravars2} \
 			lang_specs_files ${_extravars3} \
-				| sed "s,-I$_DESTDIR/usr/include,,g"
+				| sed -e "s,-I$_DESTDIR/usr/include,,g" \
+					-e "s,-I$_TOP/external/lgpl3/mpfr/dist,,g" \
+					-e "s,-I$_TOP/external/lgpl2/mpc/dist/src,,g" \
+					-e "s,-I$_TOP/external/lgpl3/gmp/lib/libgmp/arch/$MACHINE_ARCH,,g"
 		getvars gcc/Makefile \
 			LIB2ADDEHDEP | sed 's/unwind.inc//'
 		getvars gcc/Makefile \
