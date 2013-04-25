@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: find_exidx.c,v 1.1 2013/04/24 22:32:29 matt Exp $");
+__RCSID("$NetBSD: find_exidx.c,v 1.2 2013/04/25 13:15:26 matt Exp $");
 #endif /* not lint */
 
 #include "debug.h"
@@ -62,7 +62,7 @@ __gnu_Unwind_Find_exidx(_Unwind_Ptr pc, int * pcount)
 	 * need to see if the address matches a PT_LOAD section.
 	 */
 	if (obj != NULL && obj->exidx_start != NULL) {
-		va -= (vaddr_t)obj->mapbase;
+		va -= (vaddr_t)obj->relocbase;
 		const Elf_Phdr *ph = obj->phdr;
 		const Elf_Phdr * const phlimit = ph + obj->phsize / sizeof(*ph);
 		for (; ph < phlimit; ph++) {
