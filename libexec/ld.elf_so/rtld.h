@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.111 2013/04/24 22:37:20 matt Exp $	 */
+/*	$NetBSD: rtld.h,v 1.112 2013/04/25 06:37:40 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -46,11 +46,11 @@
 #include "rtldenv.h"
 #include "link.h"
 
+#if defined(_RTLD_SOURCE)
+
 #ifdef __ARM_EABI__
 #include "unwind.h"
 #endif
-
-#if defined(_RTLD_SOURCE)
 
 #ifndef	RTLD_DEFAULT_LIBRARY_PATH
 #define	RTLD_DEFAULT_LIBRARY_PATH	"/usr/lib"
@@ -289,7 +289,7 @@ typedef struct Struct_Obj_Entry {
 	fptr_t		*fini_array;	/* start of fini array */
 	size_t		fini_arraysz;	/* # of entries in it */
 #ifdef __ARM_EABI__
-	_Unwind_Ptr	exidx_start;
+	void		*exidx_start;
 	size_t		exidx_sz;
 #endif
 } Obj_Entry;
