@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.10 2013/04/17 14:38:04 bouyer Exp $
+#	$NetBSD: BEAGLEBONE,v 1.11 2013/04/25 20:56:20 rkujawa Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -219,6 +219,7 @@ ld*		at sdmmc?
 tiiic0		at obio0 addr 0x44e0b000 size 0x1000 intr 70
 iic*		at tiiic?
 seeprom*	at iic0 addr 0x50 size 32768
+tps65217pmic*	at iic0 addr 0x24
 
 # On-board 16550 UARTs
 com0		at obio0 addr 0x44e09000 size 0x1000 intr 72 mult 4	# UART0
