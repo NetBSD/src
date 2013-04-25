@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.50 2013/01/12 14:03:42 asau Exp $
+#	$NetBSD: airport,v 1.51 2013/04/25 13:34:10 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -5801,7 +5801,7 @@ PAL:Palanquero, Colombia
 PAM:Panama City (Tyndall Air Force Base), FL, USA
 PAN:Pattani, Thailand
 PAO:Palo Alto Municipal, California, USA
-PAP:Port-au-Prince, Haiti
+PAP:Aeroport international Toussaint Louverture, Port-au-Prince, Haiti
 PAQ:Palmer Municipal Airport, AK, USA
 PAR:All Airports around Paris, France
 PAS:Paros, Greece
