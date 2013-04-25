@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.45 2012/10/13 21:13:07 dholland Exp $	 */
+/*	$NetBSD: map_object.c,v 1.46 2013/04/25 09:01:23 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.45 2012/10/13 21:13:07 dholland Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.46 2013/04/25 09:01:23 skrll Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -216,6 +216,12 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 			phtls = phdr;
 			dbg(("%s: %s %p phsize %" PRImemsz, obj->path, "PT_TLS",
 			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
+			break;
+#endif
+#ifdef __ARM_EABI__
+		case PT_ARM_EXIDX:
+			obj->exidx_start = (void *)(uintptr_t)phdr->p_vaddr;
+			obj->exidx_sz = phdr->p_memsz;
 			break;
 #endif
 		}
