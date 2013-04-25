@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.112 2013/04/25 06:37:40 matt Exp $	 */
+/*	$NetBSD: rtld.h,v 1.113 2013/04/25 14:16:37 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -357,9 +357,8 @@ __dso_public _Unwind_Ptr __gnu_Unwind_Find_exidx(_Unwind_Ptr, int *);
 #endif
 
 /* These aren't exported */
-void _rtld_error(const char *, ...)
-     __attribute__((__format__(__printf__,1,2)));
-void _rtld_die(void) __attribute__((__noreturn__));
+void _rtld_error(const char *, ...) __printflike(1,2);
+void _rtld_die(void) __dead;
 void *_rtld_objmain_sym(const char *);
 __dso_public void _rtld_debug_state(void) __noinline;
 void _rtld_linkmap_add(Obj_Entry *);
