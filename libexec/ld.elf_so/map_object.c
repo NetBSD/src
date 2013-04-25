@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.46 2013/04/25 09:01:23 skrll Exp $	 */
+/*	$NetBSD: map_object.c,v 1.47 2013/04/25 12:28:59 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.46 2013/04/25 09:01:23 skrll Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.47 2013/04/25 12:28:59 skrll Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -401,6 +401,10 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		obj->interp = (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->interp);
 	if (obj->phdr_loaded)
 		obj->phdr =  (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->phdr);
+#ifdef __ARM_EABI__
+	if (obj->exidx_start)
+		obj->exidx_start = (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->exidx_start);
+#endif
 
 	return obj;
 
