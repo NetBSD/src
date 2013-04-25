@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/02/14 21:29:35 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2013/04/25 14:53:36 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -39,5 +39,5 @@ as.info:	bfdver.texi
 .include <bsd.prog.mk>
 .include <bsd.info.mk>
 
-LDADD+=		-lintl -lz
-DPADD+=		${LIBINTL} ${LIBZ}
+LDADD+=		-lintl -lz -lm
+DPADD+=		${LIBINTL} ${LIBZ} ${LIBM}
