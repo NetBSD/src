@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2013/02/19 12:35:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2013/04/25 13:59:55 joerg Exp $
 
 PROG_CXX=	llc
 NOMAN=		yes
@@ -11,6 +11,7 @@ SRCS=	llc.cpp
 
 LLVM_LIBS+= \
 	AsmPrinter \
+	IRReader \
 	AsmParser \
 	BitReader \
 	AArch64CodeGen \

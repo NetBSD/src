@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2013/02/19 12:35:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2013/04/25 13:59:56 joerg Exp $
 
 PROG_CXX=	opt
 NOMAN=		yes
@@ -15,6 +15,7 @@ SRCS=	AnalysisWrappers.cpp \
 LLVM_LIBS+= \
 	ObjCARC \
 	ipo \
+	IRReader \
 	AsmParser \
 	BitReader \
 	BitWriter \

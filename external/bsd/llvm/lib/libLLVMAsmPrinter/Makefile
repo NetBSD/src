@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/11/18 15:56:53 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2013/04/25 13:59:57 joerg Exp $
 
 LIB=	LLVMAsmPrinter
 
@@ -16,6 +16,7 @@ SRCS+=	ARMException.cpp \
 	DwarfCompileUnit.cpp \
 	DwarfDebug.cpp \
 	DwarfException.cpp \
+	ErlangGCPrinter.cpp \
 	OcamlGCPrinter.cpp \
 	Win64Exception.cpp
 

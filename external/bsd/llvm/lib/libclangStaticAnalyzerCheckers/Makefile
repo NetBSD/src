@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2013/03/24 13:02:17 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2013/04/25 13:59:58 joerg Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -6,7 +6,8 @@ LIB=	clangStaticAnalyzerCheckers
 
 .PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Checkers
 
-SRCS+=	AnalyzerStatsChecker.cpp \
+SRCS+=	AllocationDiagnostics.cpp \
+	AnalyzerStatsChecker.cpp \
 	ArrayBoundChecker.cpp \
 	ArrayBoundCheckerV2.cpp \
 	BasicObjCFoundationChecks.cpp \

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.29 2013/02/27 21:25:09 joerg Exp $
+# $NetBSD: Makefile,v 1.30 2013/04/25 13:59:56 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ SUBDIR=	\
 	libLLVMBitWriter \
 	libLLVMCodeGen \
 	libLLVMIR \
+	libLLVMIRReader \
 	libLLVMInstCombine \
 	libLLVMInstrumentation \
 	libLLVMipa \

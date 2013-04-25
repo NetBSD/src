@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2013/02/04 15:00:33 joerg Exp $
+#	$NetBSD: Makefile,v 1.18 2013/04/25 13:59:56 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -24,6 +24,8 @@ INCS=	__wmmintrin_aes.h \
 	nmmintrin.h \
 	pmmintrin.h \
 	popcntintrin.h \
+	prfchwintrin.h \
+	rdseedintrin.h \
 	rtmintrin.h \
 	smmintrin.h \
 	tmmintrin.h \
