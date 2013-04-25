@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2013/02/04 15:00:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2013/04/25 13:59:57 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -61,6 +61,7 @@ SRCS+=	APFloat.cpp \
 	ToolOutputFile.cpp \
 	Triple.cpp \
 	Twine.cpp \
+	Watchdog.cpp \
 	YAMLParser.cpp \
 	YAMLTraits.cpp \
 	raw_os_ostream.cpp \
@@ -103,6 +104,7 @@ SRCS+=	Host.inc \
 	Program.inc \
 	RWMutex.inc \
 	Signals.inc \
+	Watchdog.inc \
 	system_error.inc \
 	ThreadLocal.inc \
 	TimeValue.inc
