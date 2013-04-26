@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_bcs_strtol.c,v 1.3 2013/04/16 21:44:07 joerg Exp $ */
+/* $NetBSD: citrus_bcs_strtol.c,v 1.4 2013/04/26 21:20:47 joerg Exp $ */
 
 /*-
  * Copyright (c) 2005 The DragonFly Project.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: citrus_bcs_strtol.c,v 1.3 2013/04/16 21:44:07 joerg Exp $");
+__RCSID("$NetBSD: citrus_bcs_strtol.c,v 1.4 2013/04/26 21:20:47 joerg Exp $");
 
 #include <assert.h>
 #include <errno.h>
@@ -39,12 +39,23 @@ __RCSID("$NetBSD: citrus_bcs_strtol.c,v 1.3 2013/04/16 21:44:07 joerg Exp $");
 #include "citrus_namespace.h"
 #include "citrus_bcs.h"
 
-long int
-_bcs_strtol(const char * __restrict nptr, char ** __restrict endptr, int base)
-{
-#if defined(HAVE_NBTOOL_CONFIG_H)
-	return strtol(nptr, endptr, base);
-#else
-	return strtol_l(nptr, endptr, base, 0);
-#endif
-}
+#define	BCS_ONLY
+
+#define	_FUNCNAME	_bcs_strtol
+#define	__INT		long int
+#define	__INT_MIN	LONG_MIN
+#define	__INT_MAX	LONG_MAX
+
+#undef isspace
+#define isspace(c)	_bcs_isspace(c)
+
+#undef isdigit
+#define isdigit(c)	_bcs_isdigit(c)
+
+#undef isalpha
+#define isalpha(c)	_bcs_isalpha(c)
+
+#undef isupper
+#define isupper(c)	_bcs_isupper(c)
+
+#include "_strtol.h"

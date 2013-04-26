@@ -1,4 +1,4 @@
-/* $NetBSD: _strtoul.h,v 1.5 2013/04/16 21:44:06 joerg Exp $ */
+/* $NetBSD: _strtoul.h,v 1.6 2013/04/26 21:20:48 joerg Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,8 @@
  *      __UINT     : return type
  *      __UINT_MAX : upper limit of the return type
  */
-#if defined(_KERNEL) || defined(_STANDALONE) || defined(HAVE_NBTOOL_CONFIG_H)
+#if defined(_KERNEL) || defined(_STANDALONE) || \
+    defined(HAVE_NBTOOL_CONFIG_H) || defined(BCS_ONLY)
 __UINT
 _FUNCNAME(const char *nptr, char **endptr, int base)
 #else
@@ -78,7 +79,8 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char *nptr, char **endptr,
 	 * assume decimal; if base is already 16, allow 0x.
 	 */
 	s = nptr;
-#if defined(_KERNEL) || defined(_STANDALONE) || defined(HAVE_NBTOOL_CONFIG_H)
+#if defined(_KERNEL) || defined(_STANDALONE) || \
+    defined(HAVE_NBTOOL_CONFIG_H) || defined(BCS_ONLY)
 	do {
 		c = *s++;
 	} while (isspace(c));
@@ -145,7 +147,8 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char *nptr, char **endptr,
 	return(acc);
 }
 
-#if !defined(_KERNEL) && !defined(_STANDALONE) && !defined(HAVE_NBTOOL_CONFIG_H)
+#if !defined(_KERNEL) && !defined(_STANDALONE) && \
+    !defined(HAVE_NBTOOL_CONFIG_H) && !defined(BCS_ONLY)
 __UINT
 _FUNCNAME(const char *nptr, char **endptr, int base)
 {
