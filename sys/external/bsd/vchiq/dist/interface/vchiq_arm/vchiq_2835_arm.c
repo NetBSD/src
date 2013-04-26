@@ -248,7 +248,7 @@ typedef struct bulkinfo_struct {
 	bus_size_t	pagelist_size;
 	bus_dmamap_t	pagelist_map;
 	bus_dmamap_t	dmamap;
-	struct vmspace *vmspace;
+	struct proc	*proc;
 	void		*buf;
 	int		size;
 } BULKINFO_T;
@@ -281,7 +281,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	bi->size = size;
 	bi->pagelist_size = sizeof(PAGELIST_T) +
 	    (maxsegs * sizeof(unsigned long));
-	bi->vmspace = curproc->p_vmspace;
+	bi->proc = curproc;
 
 	ret = bus_dmamem_alloc(&bcm2835_bus_dma_tag, bi->pagelist_size,
 	    0 /*CACHE_LINE_SIZE*/, 0, bi->pagelist_sgs,
@@ -316,7 +316,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	 * Need to wire the buffer pages in.
 	 */
 	if (IS_USER_ADDRESS(buf)) {
-		ret = uvm_vslock(curproc->p_vmspace, buf, size, uvmflags);
+		ret = uvm_vslock(bi->proc->p_vmspace, buf, size, uvmflags);
 		if (ret != 0) {
 			printf("%s: uvm_vslock failed (%d)\n", __func__, ret);
 			goto fail5;
@@ -368,6 +368,9 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 		up(&g_free_fragments_mutex);
 		pagelist->type = PAGELIST_READ_WITH_FRAGMENTS +
 		    (fragments - g_fragments_base);
+		bus_dmamap_sync(&bcm2835_bus_dma_tag, dma_map,
+		    (char *)fragments - g_slot_mem, sizeof(*fragments),
+		    BUS_DMASYNC_PREREAD);
 	}
 
 	/*
@@ -417,11 +420,68 @@ vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 {
 	if (bulk && bulk->remote_data && bulk->actual) {
 		BULKINFO_T *bi = bulk->remote_data;
+		PAGELIST_T *pagelist = bi->pagelist;
+
+		/* Deal with any partial cache lines (fragments) */
+		if (pagelist->type >= PAGELIST_READ_WITH_FRAGMENTS) {
+			FRAGMENTS_T *fragments = g_fragments_base +
+				(pagelist->type - PAGELIST_READ_WITH_FRAGMENTS);
+			int head_bytes, tail_bytes;
+			int actual = bulk->actual;
+
+			bus_dmamap_sync(&bcm2835_bus_dma_tag, dma_map,
+			    (char *)fragments - g_slot_mem, sizeof(*fragments),
+			    BUS_DMASYNC_POSTREAD);
+
+			head_bytes = (arm_dcache_align - pagelist->offset) &
+				(arm_dcache_align - 1);
+			tail_bytes = (pagelist->offset + actual) &
+				(arm_dcache_align - 1);
+
+			if ((actual >= 0) && (head_bytes != 0)) {
+				if (head_bytes > actual)
+					head_bytes = actual;
+
+				if (IS_USER_ADDRESS(bi->buf)) {
+					copyout_proc(bi->proc,
+					    fragments->headbuf, bi->buf,
+					    head_bytes);
+				} else {
+					kcopy(fragments->headbuf, bi->buf,
+					    head_bytes);
+				}
+			}
+			if ((actual >= 0) && (head_bytes < actual) &&
+			    (tail_bytes != 0)) {
+				void *t = (char *)bi->buf + bi->size -
+				    tail_bytes;
+
+				 if (IS_USER_ADDRESS(bi->buf)) {
+					copyout_proc(bi->proc,
+					    fragments->tailbuf, t, tail_bytes);
+				} else {
+					kcopy(fragments->tailbuf, t,
+					    tail_bytes);
+				}
+			}
+
+			down(&g_free_fragments_mutex);
+			*(FRAGMENTS_T **) fragments = g_free_fragments;
+			g_free_fragments = fragments;
+			up(&g_free_fragments_mutex);
+			up(&g_free_fragments_sema);
+		}
+		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->pagelist_map, 0,
+		    bi->pagelist_size, BUS_DMASYNC_POSTREAD);
+
+		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->dmamap, 0, bi->size,
+		    pagelist->type == PAGELIST_WRITE ?
+		    BUS_DMASYNC_POSTWRITE : BUS_DMASYNC_POSTREAD);
 
 		bus_dmamap_unload(&bcm2835_bus_dma_tag, bi->dmamap);
 		bus_dmamap_destroy(&bcm2835_bus_dma_tag, bi->dmamap);
 		if (IS_USER_ADDRESS(bi->buf))
-			uvm_vsunlock(bi->vmspace, bi->buf, bi->size);
+			uvm_vsunlock(bi->proc->p_vmspace, bi->buf, bi->size);
 
 		bus_dmamap_unload(&bcm2835_bus_dma_tag, bi->pagelist_map);
 		bus_dmamap_destroy(&bcm2835_bus_dma_tag, bi->pagelist_map);
