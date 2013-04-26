@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.27 2011/06/30 20:09:29 wiz Exp $
+#	$NetBSD: majors.evbmips,v 1.28 2013/04/26 18:35:43 christos Exp $
 #
 # Device majors for evbmips
 #
@@ -80,7 +80,6 @@ device-major	uart		char 77			uart
 
 device-major	nsmb		char 98			nsmb
 device-major	athflash	char 99			athflash
-device-major	spiflash	char 100 block 19	spiflash
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
