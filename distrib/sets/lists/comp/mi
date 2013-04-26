@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1816 2013/04/12 00:55:12 christos Exp $
+#	$NetBSD: mi,v 1.1817 2013/04/26 18:32:41 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4674,6 +4674,7 @@
 ./usr/share/man/cat3/asprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/assert.0			comp-c-catman		.cat
 ./usr/share/man/cat3/assume_default_colors.0	comp-c-catman		.cat
+./usr/share/man/cat3/at_quick_exit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atan.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atan2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atan2f.0			comp-c-catman		.cat
@@ -7630,6 +7631,7 @@
 ./usr/share/man/cat3/qiflush.0			comp-c-catman		.cat
 ./usr/share/man/cat3/qsort.0			comp-c-catman		.cat
 ./usr/share/man/cat3/queue.0			comp-c-catman		.cat
+./usr/share/man/cat3/quick_exit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/quota_close.0		comp-c-catman		.cat
 ./usr/share/man/cat3/quota_delete.0		comp-c-catman		.cat
 ./usr/share/man/cat3/quota_get.0		comp-c-catman		.cat
@@ -11262,6 +11264,7 @@
 ./usr/share/man/html3/asprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/assert.html		comp-c-htmlman		html
 ./usr/share/man/html3/assume_default_colors.html	comp-c-htmlman		html
+./usr/share/man/html3/at_quick_exit.html		comp-c-htmlman		html
 ./usr/share/man/html3/atan.html			comp-c-htmlman		html
 ./usr/share/man/html3/atan2.html		comp-c-htmlman		html
 ./usr/share/man/html3/atan2f.html		comp-c-htmlman		html
@@ -14120,6 +14123,7 @@
 ./usr/share/man/html3/qiflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/qsort.html		comp-c-htmlman		html
 ./usr/share/man/html3/queue.html		comp-c-htmlman		html
+./usr/share/man/html3/quick_exit.html		comp-c-htmlman		html
 ./usr/share/man/html3/quota_close.html		comp-c-htmlman		html
 ./usr/share/man/html3/quota_delete.html		comp-c-htmlman		html
 ./usr/share/man/html3/quota_get.html		comp-c-htmlman		html
@@ -17652,6 +17656,7 @@
 ./usr/share/man/man3/asprintf.3			comp-c-man		.man
 ./usr/share/man/man3/assert.3			comp-c-man		.man
 ./usr/share/man/man3/assume_default_colors.3	comp-c-man		.man
+./usr/share/man/man3/at_quick_exit.3		comp-c-man		.man
 ./usr/share/man/man3/atan.3			comp-c-man		.man
 ./usr/share/man/man3/atan2.3			comp-c-man		.man
 ./usr/share/man/man3/atan2f.3			comp-c-man		.man
@@ -20608,6 +20613,7 @@
 ./usr/share/man/man3/qiflush.3			comp-c-man		.man
 ./usr/share/man/man3/qsort.3			comp-c-man		.man
 ./usr/share/man/man3/queue.3			comp-c-man		.man
+./usr/share/man/man3/quick_exit.3		comp-c-man		.man
 ./usr/share/man/man3/quota_close.3		comp-c-man		.man
 ./usr/share/man/man3/quota_delete.3		comp-c-man		.man
 ./usr/share/man/man3/quota_get.3		comp-c-man		.man
