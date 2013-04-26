@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.104 2013/04/19 14:35:31 joerg Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.105 2013/04/26 17:36:24 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -65,7 +65,7 @@ typedef struct {
 
 #if !defined(_ANSI_SOURCE) && \
     (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-     defined(_NETBSD_SOURCE))
+     (__cplusplus - 0) >= 201103L || defined(_NETBSD_SOURCE))
 typedef struct {
 	/* LONGLONG */
 	long long int quot;	/* quotient */
@@ -207,7 +207,8 @@ char	*ptsname(int);
  * ISO C99
  */
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-    defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE) || (__cplusplus - 0) >= 201103L
+
 /* LONGLONG */
 long long int	atoll(const char *);
 /* LONGLONG */
