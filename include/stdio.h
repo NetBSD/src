@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.86 2013/04/19 23:42:26 joerg Exp $	*/
+/*	$NetBSD: stdio.h,v 1.87 2013/04/26 17:37:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -485,7 +485,7 @@ static __inline int __sputc(int _c, FILE *_p) {
 #define	__sfileno(p)	\
     ((p)->_file == -1 ? -1 : (int)(unsigned short)(p)->_file)
 
-#ifndef __lint__
+#if !defined(__lint__) && !defined(__cplusplus)
 #if !defined(_REENTRANT) && !defined(_PTHREADS)
 #define	feof(p)		__sfeof(p)
 #define	ferror(p)	__sferror(p)
@@ -494,17 +494,18 @@ static __inline int __sputc(int _c, FILE *_p) {
 #define	getc(fp)	__sgetc(fp)
 #define putc(x, fp)	__sputc(x, fp)
 #endif /* !_REENTRANT && !_PTHREADS */
-#endif /* __lint__ */
 
 #define	getchar()	getc(stdin)
 #define	putchar(x)	putc(x, stdout)
 
-#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
-    defined(_NETBSD_SOURCE)
+#endif /* !__lint__ && !__cplusplus */
+
+#if (defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)) && !defined(__cplusplus)
 #if !defined(_REENTRANT) && !defined(_PTHREADS)
 #define	fileno(p)	__sfileno(p)
 #endif /* !_REENTRANT && !_PTHREADS */
-#endif /* !_ANSI_SOURCE */
+#endif /* !_ANSI_SOURCE && !__cplusplus*/
 
 #if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
 int	 vdprintf(int, const char * __restrict, __va_list)
@@ -514,7 +515,7 @@ int	 dprintf(int, const char * __restrict, ...)
 #endif /* (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE) */
 
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
-    defined(_REENTRANT) || defined(_NETBSD_SOURCE)
+    defined(_REENTRANT) || defined(_NETBSD_SOURCE) && !defined(__cplusplus)
 #define getc_unlocked(fp)	__sgetc(fp)
 #define putc_unlocked(x, fp)	__sputc(x, fp)
 
