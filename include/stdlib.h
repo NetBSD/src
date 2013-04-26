@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.105 2013/04/26 17:36:24 joerg Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.106 2013/04/26 18:07:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -222,6 +222,12 @@ unsigned long long int
 		strtoull(const char * __restrict, char ** __restrict, int);
 float		strtof(const char * __restrict, char ** __restrict);
 long double	strtold(const char * __restrict, char ** __restrict);
+#endif
+
+#if defined(_ISOC11_SOURCE) || (__STDC_VERSION__ - 0) >= 201101L || \
+    defined(_NETBSD_SOURCE) || (__cplusplus - 0) >= 201103L
+int	at_quick_exit(void (*)(void));
+__dead void quick_exit(int);
 #endif
 
 /*
