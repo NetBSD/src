@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.17 2013/02/13 14:03:48 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.18 2013/04/26 22:27:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.17 2013/02/13 14:03:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.18 2013/04/26 22:27:16 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,7 +139,7 @@ vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 	mp->mnt_op = vfsops;
 	mp->mnt_refcnt = 1;
 	TAILQ_INIT(&mp->mnt_vnodelist);
-	rw_init(&mp->mnt_unmounting);
+	mutex_init(&mp->mnt_unmounting, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
 	error = vfs_busy(mp, NULL);
@@ -263,7 +263,7 @@ vfs_destroy(struct mount *mp)
 	 */
 	KASSERT(mp->mnt_refcnt == 0);
 	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
-	rw_destroy(&mp->mnt_unmounting);
+	mutex_destroy(&mp->mnt_unmounting);
 	mutex_destroy(&mp->mnt_updating);
 	mutex_destroy(&mp->mnt_renamelock);
 	if (mp->mnt_op != NULL) {
@@ -276,6 +276,9 @@ vfs_destroy(struct mount *mp)
  * Mark a mount point as busy, and gain a new reference to it.  Used to
  * prevent the file system from being unmounted during critical sections.
  *
+ * vfs_busy can be called multiple times and by multiple threads
+ * and must be accompanied by the same number of vfs_unbusy calls.
+ *
  * => The caller must hold a pre-existing reference to the mount.
  * => Will fail if the file system is being unmounted, or is unmounted.
  */
@@ -285,21 +288,18 @@ vfs_busy(struct mount *mp, struct mount **nextp)
 
 	KASSERT(mp->mnt_refcnt > 0);
 
-	if (__predict_false(!rw_tryenter(&mp->mnt_unmounting, RW_READER))) {
-		if (nextp != NULL) {
-			KASSERT(mutex_owned(&mountlist_lock));
-			*nextp = CIRCLEQ_NEXT(mp, mnt_list);
-		}
-		return EBUSY;
-	}
+	mutex_enter(&mp->mnt_unmounting);
 	if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
-		rw_exit(&mp->mnt_unmounting);
+		mutex_exit(&mp->mnt_unmounting);
 		if (nextp != NULL) {
 			KASSERT(mutex_owned(&mountlist_lock));
 			*nextp = CIRCLEQ_NEXT(mp, mnt_list);
 		}
 		return ENOENT;
 	}
+	++mp->mnt_busynest;
+	KASSERT(mp->mnt_busynest != 0);
+	mutex_exit(&mp->mnt_unmounting);
 	if (nextp != NULL) {
 		mutex_exit(&mountlist_lock);
 	}
@@ -309,6 +309,8 @@ vfs_busy(struct mount *mp, struct mount **nextp)
 
 /*
  * Unbusy a busy filesystem.
+ *
+ * Every successful vfs_busy() call must be undone by a vfs_unbusy() call.
  *
  * => If keepref is true, preserve reference added by vfs_busy().
  * => If nextp != NULL, acquire mountlist_lock.
@@ -322,7 +324,10 @@ vfs_unbusy(struct mount *mp, bool keepref, struct mount **nextp)
 	if (nextp != NULL) {
 		mutex_enter(&mountlist_lock);
 	}
-	rw_exit(&mp->mnt_unmounting);
+	mutex_enter(&mp->mnt_unmounting);
+	KASSERT(mp->mnt_busynest != 0);
+	mp->mnt_busynest--;
+	mutex_exit(&mp->mnt_unmounting);
 	if (!keepref) {
 		vfs_destroy(mp);
 	}
@@ -796,9 +801,22 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	 * mount point.  See dounmount() for details.
 	 */
 	mutex_enter(&syncer_mutex);
-	rw_enter(&mp->mnt_unmounting, RW_WRITER);
+
+	/*
+	 * Abort unmount attempt when the filesystem is in use
+	 */
+	mutex_enter(&mp->mnt_unmounting);
+	if (mp->mnt_busynest != 0) {
+		mutex_exit(&mp->mnt_unmounting);
+		mutex_exit(&syncer_mutex);
+		return EBUSY;
+	}
+
+	/*
+	 * Abort unmount attempt when the filesystem is not mounted
+	 */
 	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
-		rw_exit(&mp->mnt_unmounting);
+		mutex_exit(&mp->mnt_unmounting);
 		mutex_exit(&syncer_mutex);
 		return ENOENT;
 	}
@@ -821,6 +839,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mutex_exit(&syncer_mutex);
 	}
 	mp->mnt_iflag |= IMNT_UNMOUNT;
+	mutex_enter(&mp->mnt_updating);
 	async = mp->mnt_flag & MNT_ASYNC;
 	mp->mnt_flag &= ~MNT_ASYNC;
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
@@ -835,15 +854,17 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		error = VFS_UNMOUNT(mp, flags);
 	}
 	if (error) {
+		mp->mnt_iflag &= ~IMNT_UNMOUNT;
+		mutex_exit(&mp->mnt_unmounting);
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			(void) vfs_allocate_syncvnode(mp);
-		mp->mnt_iflag &= ~IMNT_UNMOUNT;
 		mp->mnt_flag |= async;
-		rw_exit(&mp->mnt_unmounting);
+		mutex_exit(&mp->mnt_updating);
 		if (used_syncer)
 			mutex_exit(&syncer_mutex);
 		return (error);
 	}
+	mutex_exit(&mp->mnt_updating);
 	vfs_scrubvnlist(mp);
 	mutex_enter(&mountlist_lock);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
@@ -856,7 +877,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	if (used_syncer)
 		mutex_exit(&syncer_mutex);
 	vfs_hooks_unmount(mp);
-	rw_exit(&mp->mnt_unmounting);
+	mutex_exit(&mp->mnt_unmounting);
 	vfs_destroy(mp);	/* reference from mount() */
 	if (coveredvp != NULLVP) {
 		vrele(coveredvp);
