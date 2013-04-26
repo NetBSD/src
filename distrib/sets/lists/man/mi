@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1426 2013/04/09 13:31:08 njoly Exp $
+# $NetBSD: mi,v 1.1427 2013/04/26 20:10:56 rkujawa Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1703,6 +1703,7 @@
 ./usr/share/man/cat4/tp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/tpm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tprof.0			man-sys-catman		.cat
+./usr/share/man/cat4/tps65217pmic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/tqphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tra.0			man-sys-catman		.cat
@@ -4591,6 +4592,7 @@
 ./usr/share/man/html4/tp.html			man-obsolete		obsolete
 ./usr/share/man/html4/tpm.html			man-sys-htmlman		html
 ./usr/share/man/html4/tprof.html		man-sys-htmlman		html
+./usr/share/man/html4/tps65217pmic.html		man-sys-htmlman		html
 ./usr/share/man/html4/tqphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/tr.html			man-sys-htmlman		html
 ./usr/share/man/html4/tra.html			man-sys-htmlman		html
@@ -7397,6 +7399,7 @@
 ./usr/share/man/man4/tp.4			man-obsolete		obsolete
 ./usr/share/man/man4/tpm.4			man-sys-man		.man
 ./usr/share/man/man4/tprof.4			man-sys-man		.man
+./usr/share/man/man4/tps65217pmic.4		man-sys-man		.man
 ./usr/share/man/man4/tqphy.4			man-sys-man		.man
 ./usr/share/man/man4/tr.4			man-sys-man		.man
 ./usr/share/man/man4/tra.4			man-sys-man		.man
