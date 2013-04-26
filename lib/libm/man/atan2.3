@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)atan2.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: atan2.3,v 1.17 2013/01/29 02:54:30 matt Exp $
+.\"	$NetBSD: atan2.3,v 1.18 2013/04/26 18:18:22 njoly Exp $
 .\"
 .Dd January 29, 2013
 .Dt ATAN2 3
@@ -84,7 +84,7 @@ if
 .Ar x
 \*[Gt] 0,
 .It Ta sign( Ns Ar y Ns )*(\*(Pi -
-.Fn atan "\\*(Bay/x\\*(Ba" ) Ta
+.Fn atan "\*(Bay/x\*(Ba" ) Ta
 if
 .Ar x
 \*[Lt] 0,
@@ -92,7 +92,7 @@ if
 .No 0 Ta
 if x = y = 0, or
 .It Ta
-.Pf sign( Ar y Ns )*\\*(Pi/2 Ta
+.Pf sign( Ar y Ns )*\*(Pi/2 Ta
 if
 .Ar x
 = 0 \*(!=
