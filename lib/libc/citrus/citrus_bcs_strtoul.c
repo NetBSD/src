@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_bcs_strtoul.c,v 1.4 2013/04/16 21:44:07 joerg Exp $ */
+/* $NetBSD: citrus_bcs_strtoul.c,v 1.5 2013/04/26 21:20:48 joerg Exp $ */
 
 /*-
  * Copyright (c) 2005 The DragonFly Project.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: citrus_bcs_strtoul.c,v 1.4 2013/04/16 21:44:07 joerg Exp $");
+__RCSID("$NetBSD: citrus_bcs_strtoul.c,v 1.5 2013/04/26 21:20:48 joerg Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -45,12 +45,22 @@ __RCSID("$NetBSD: citrus_bcs_strtoul.c,v 1.4 2013/04/16 21:44:07 joerg Exp $");
 #include "citrus_namespace.h"
 #include "citrus_bcs.h"
 
-unsigned long int
-_bcs_strtoul(const char * __restrict nptr, char ** __restrict endptr, int base)
-{
-#if defined(HAVE_NBTOOL_CONFIG_H)
-	return strtoul(nptr, endptr, base);
-#else
-	return strtoul_l(nptr, endptr, base, 0);
-#endif
-}
+#define	BCS_ONLY
+
+#define	_FUNCNAME	_bcs_strtoul
+#define	__UINT		unsigned long int
+#define	__UINT_MAX	ULONG_MAX
+
+#undef isspace
+#define isspace(c)	_bcs_isspace(c)
+
+#undef isdigit
+#define isdigit(c)	_bcs_isdigit(c)
+
+#undef isalpha
+#define isalpha(c)	_bcs_isalpha(c)
+
+#undef isupper
+#define isupper(c)	_bcs_isupper(c)
+
+#include "_strtoul.h"
