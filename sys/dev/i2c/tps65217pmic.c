@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.2 2013/04/26 15:31:03 rkujawa Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.3 2013/04/26 19:32:43 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,34 +31,42 @@
 
 /* 
  * Texas Instruments TPS65217 Power Management IC driver. 
- * TODO: battery, sequencer
+ * TODO: battery, sequencer, pgood
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.2 2013/04/26 15:31:03 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.3 2013/04/26 19:32:43 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/mutex.h>
 
 #include <sys/bus.h>
 #include <dev/i2c/i2cvar.h>
 
+#include <dev/sysmon/sysmonvar.h>
+
 #include <dev/i2c/tps65217pmicreg.h>
 
+#define NTPS_REG	7
+
 struct tps65217pmic_softc {
-	device_t	sc_dev;
+	device_t		sc_dev;
 
-	i2c_tag_t	sc_tag;
-	i2c_addr_t	sc_addr;
+	i2c_tag_t		sc_tag;
+	i2c_addr_t		sc_addr;
 
-	uint8_t		sc_version;
-	uint8_t		sc_revision;
+	uint8_t			sc_version;
+	uint8_t			sc_revision;
+
+	/* envsys(4) stuff */
+	struct sysmon_envsys	*sc_sme;
+	envsys_data_t		sc_sensor[NTPS_REG];
+	kmutex_t		sc_lock;
 };
 
-
-#define NTPS_REG	7
 /* Voltage regulators */
 enum tps_reg_num {
 	TPS65217PMIC_LDO1,
@@ -107,21 +115,23 @@ struct tps_reg_param {
 static int tps65217pmic_match(device_t, cfdata_t, void *);
 static void tps65217pmic_attach(device_t, device_t, void *);
 
-static uint8_t tps65217pmic_reg_read(struct tps65217pmic_softc *sc, 
-    uint8_t regno);
+static uint8_t tps65217pmic_reg_read(struct tps65217pmic_softc *, uint8_t);
 
-static void tps65217pmic_refresh(struct tps65217pmic_softc *sc);
+static void tps65217pmic_refresh(struct tps65217pmic_softc *);
 
-static uint16_t tps65217pmic_ppath_max_usb_current(uint8_t ppath);
-static uint16_t tps65217pmic_ppath_max_ac_current(uint8_t ppath);
+static uint16_t tps65217pmic_ppath_max_usb_current(uint8_t);
+static uint16_t tps65217pmic_ppath_max_ac_current(uint8_t);
 
-static void tps65217pmic_regulator_read_config(struct tps65217pmic_softc 
-    *sc, struct tps_reg_param *regulator);
+static void tps65217pmic_regulator_read_config(struct tps65217pmic_softc *,
+    struct tps_reg_param *);
 
-static void tps65217pmic_print_ppath(struct tps65217pmic_softc *sc);
-static void tps65217pmic_print_ldos(struct tps65217pmic_softc *sc);
+static void tps65217pmic_print_ppath(struct tps65217pmic_softc *);
+static void tps65217pmic_print_ldos(struct tps65217pmic_softc *);
 
-static void tps65217pmic_version(struct tps65217pmic_softc *sc);
+static void tps65217pmic_version(struct tps65217pmic_softc *);
+
+static void tps65217pmic_envsys_register(struct tps65217pmic_softc *);
+static void tps65217pmic_envsys_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 CFATTACH_DECL_NEW(tps65217pmic, sizeof (struct tps65217pmic_softc),
     tps65217pmic_match, tps65217pmic_attach, NULL, NULL);
@@ -289,10 +299,14 @@ tps65217pmic_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(" Power Management Multi-Channel IC (rev 1.%d)\n", 
 	    sc->sc_revision);
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	tps65217pmic_refresh(sc);
 
 	tps65217pmic_print_ppath(sc);
 	tps65217pmic_print_ldos(sc);
+
+	tps65217pmic_envsys_register(sc);
 }
 
 static void
@@ -428,13 +442,12 @@ tps65217pmic_print_ldos(struct tps65217pmic_softc *sc)
 	for (i = 0; i < NTPS_REG; i++) {
 		c_reg = &tps_regulators[i];
 
-		if(c_reg->is_enabled) {
-
-			if (c_reg->is_ls) {
+		if (c_reg->is_enabled) {
+			if (c_reg->is_ls)
 				aprint_normal("[%s: LS] ", c_reg->name);
-			} else if (c_reg->is_xadj) {
+			else if (c_reg->is_xadj)
 				aprint_normal("[%s: XADJ] ", c_reg->name);
-			} else
+			else
 				aprint_normal("[%s: %d mV] ", c_reg->name,
 				    c_reg->current_voltage);
 		}
@@ -472,7 +485,6 @@ tps65217pmic_print_ppath(struct tps65217pmic_softc *sc)
 	}
 
 	aprint_normal("\n");
-
 }
 
 static uint8_t
@@ -497,5 +509,51 @@ tps65217pmic_reg_read(struct tps65217pmic_softc *sc, uint8_t reg)
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
 	return rv;
+}
+
+static void
+tps65217pmic_envsys_register(struct tps65217pmic_softc *sc)
+{
+	int i;
+
+	sc->sc_sme = sysmon_envsys_create();
+
+	/* iterate over all regulators and register them as sensors */
+	for(i = 0; i < NTPS_REG; i++) {
+		/* set name */
+		strlcpy(sc->sc_sensor[i].desc, tps_regulators[i].name, 
+		    sizeof(sc->sc_sensor[i].desc));
+		sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC; 
+		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+
+		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[i]))
+			aprint_error_dev(sc->sc_dev, 
+			    "error attaching sensor %d\n", i);
+	}
+
+	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = tps65217pmic_envsys_refresh;
+
+	if (sysmon_envsys_register(sc->sc_sme)) {
+		aprint_error_dev(sc->sc_dev, "unable to register in sysmon\n");
+		sysmon_envsys_destroy(sc->sc_sme);
+	}
+}
+
+static void
+tps65217pmic_envsys_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	struct tps65217pmic_softc *sc = sme->sme_cookie;	
+
+	mutex_enter(&sc->sc_lock);
+
+	tps65217pmic_refresh(sc);
+
+	/* TODO: handle special cases like LS, XADJ... */
+	edata->value_cur = tps_regulators[edata->sensor].current_voltage * 1000;
+	edata->state = ENVSYS_SVALID;
+	
+	mutex_exit(&sc->sc_lock);
 }
 
