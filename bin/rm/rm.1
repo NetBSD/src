@@ -1,4 +1,4 @@
-.\"	$NetBSD: rm.1,v 1.26 2013/04/26 18:43:22 christos Exp $
+.\"	$NetBSD: rm.1,v 1.27 2013/04/26 19:34:34 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994, 2003
 .\"	The Regents of the University of California.  All rights reserved.
@@ -146,31 +146,6 @@ can be accomplished as follows:
 or
 .Pp
 .Ic "rm ./-file"
-.Sh SEE ALSO
-.Xr rmdir 1 ,
-.Xr undelete 2 ,
-.Xr unlink 2 ,
-.Xr fts 3 ,
-.Xr getopt 3 ,
-.Xr symlink 7
-.Sh BUGS
-The
-.Fl P
-option assumes that the underlying file system is a fixed-block file
-system.
-FFS is a fixed-block file system, LFS is not.
-In addition, only regular files are overwritten, other types of files
-are not.
-Recent research indicates that as many as 35 overwrite passes with
-carefully chosen data patterns may be necessary to actually prevent
-recovery of data from a magnetic disk.
-Thus the
-.Fl P
-option is likely both insufficient for its design purpose and far
-too costly for default operation.
-However, it will at least prevent the recovery of data from FFS
-volumes with
-.Xr fsdb 8 .
 .Sh COMPATIBILITY
 The
 .Nm
@@ -183,6 +158,13 @@ Also, historical
 .Bx
 implementations prompted on the standard output,
 not the standard error output.
+.Sh SEE ALSO
+.Xr rmdir 1 ,
+.Xr undelete 2 ,
+.Xr unlink 2 ,
+.Xr fts 3 ,
+.Xr getopt 3 ,
+.Xr symlink 7
 .Sh STANDARDS
 The
 .Nm
@@ -208,3 +190,21 @@ magnetic disk.
 .Em Because these requirements are not met, the
 .Fl P
 .Em option does not conform to the standard .
+.Sh BUGS
+The
+.Fl P
+option assumes that the underlying file system is a fixed-block file
+system.
+FFS is a fixed-block file system, LFS is not.
+In addition, only regular files are overwritten, other types of files
+are not.
+Recent research indicates that as many as 35 overwrite passes with
+carefully chosen data patterns may be necessary to actually prevent
+recovery of data from a magnetic disk.
+Thus the
+.Fl P
+option is likely both insufficient for its design purpose and far
+too costly for default operation.
+However, it will at least prevent the recovery of data from FFS
+volumes with
+.Xr fsdb 8 .
