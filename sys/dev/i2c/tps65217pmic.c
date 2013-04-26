@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.1 2013/04/25 20:55:34 rkujawa Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.2 2013/04/26 15:31:03 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,8 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* 
+ * Texas Instruments TPS65217 Power Management IC driver. 
+ * TODO: battery, sequencer
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.1 2013/04/25 20:55:34 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.2 2013/04/26 15:31:03 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,23 +57,10 @@ struct tps65217pmic_softc {
 	uint8_t		sc_revision;
 };
 
-static int tps65217pmic_match(device_t, cfdata_t, void *);
-static void tps65217pmic_attach(device_t, device_t, void *);
 
-static uint8_t tps65217pmic_reg_read(struct tps65217pmic_softc *sc, 
-    uint8_t reg);
-
-static uint16_t tps65217pmic_ppath_max_usb_current(uint8_t ppath);
-static uint16_t tps65217pmic_ppath_max_ac_current(uint8_t ppath);
-
-static void tps65217pmic_print_status(struct tps65217pmic_softc *sc);
-static void tps65217pmic_version(struct tps65217pmic_softc *sc);
-
-CFATTACH_DECL_NEW(tps65217pmic, sizeof (struct tps65217pmic_softc),
-    tps65217pmic_match, tps65217pmic_attach, NULL, NULL);
-
+#define NTPS_REG	7
 /* Voltage regulators */
-enum tpsreg {
+enum tps_reg_num {
 	TPS65217PMIC_LDO1,
 	TPS65217PMIC_LDO2,
 	TPS65217PMIC_LDO3LS,
@@ -77,6 +69,62 @@ enum tpsreg {
 	TPS65217PMIC_DCDC2,
 	TPS65217PMIC_DCDC3
 }; 
+
+struct tps_reg_param {
+	/* parameters configured statically */
+
+	const char* name;
+	uint16_t voltage_min;		/* in mV */
+	uint16_t voltage_max;		/* in mV */
+	const uint16_t *voltages;	/* all possible voltage settings */
+	uint8_t nvoltages;		/* number of voltage settings */
+
+	bool can_track;			/* regulator can track U of other r. */
+	struct tps_reg_param *tracked_reg; /* ptr to tracked regulator */
+	bool can_xadj;			/* voltage can be adjusted externally */
+	bool can_ls;			/* can be a load switch instead of r. */
+
+	uint8_t defreg_num;		/* DEF register */
+	uint8_t enable_bit;		/* position in ENABLE register */
+	
+	/*
+	 * Run-time parameters configured during attachment and later, these
+	 * probably should be split into separate struct that would be a part
+	 * of softc. But since we can have only one TPS chip, that should be
+	 * okay for now.
+	 */
+
+	bool is_enabled;		/* regulator is enabled */
+	bool is_pg;			/* regulator is "power good" */
+	bool is_tracking;		/* voltage is tracking other reg. */
+	bool is_ls;			/* is a load switch */
+	bool is_xadj;			/* voltage is adjusted externally */
+
+	uint16_t current_voltage;	/* in mV */
+
+};
+
+static int tps65217pmic_match(device_t, cfdata_t, void *);
+static void tps65217pmic_attach(device_t, device_t, void *);
+
+static uint8_t tps65217pmic_reg_read(struct tps65217pmic_softc *sc, 
+    uint8_t regno);
+
+static void tps65217pmic_refresh(struct tps65217pmic_softc *sc);
+
+static uint16_t tps65217pmic_ppath_max_usb_current(uint8_t ppath);
+static uint16_t tps65217pmic_ppath_max_ac_current(uint8_t ppath);
+
+static void tps65217pmic_regulator_read_config(struct tps65217pmic_softc 
+    *sc, struct tps_reg_param *regulator);
+
+static void tps65217pmic_print_ppath(struct tps65217pmic_softc *sc);
+static void tps65217pmic_print_ldos(struct tps65217pmic_softc *sc);
+
+static void tps65217pmic_version(struct tps65217pmic_softc *sc);
+
+CFATTACH_DECL_NEW(tps65217pmic, sizeof (struct tps65217pmic_softc),
+    tps65217pmic_match, tps65217pmic_attach, NULL, NULL);
 
 /* Possible settings of LDO1 in mV. */
 static const uint16_t ldo1voltages[] = { 1000, 1100, 1200, 1250, 1300, 1350, 
@@ -90,17 +138,120 @@ static const uint16_t ldo2voltages[] = { 900, 925, 950, 975, 1000, 1025, 1050,
     3200, 3300, 3300, 3300, 3300, 3300, 3300, 3300, 3300 };
 /* Possible settings of LDO3, LDO4 in mV. */
 static const uint16_t ldo3voltages[] = { 1500, 1550, 1600, 1650, 1700, 1750, 
-    1800, 1850,1900, 2000, 2100, 2200, 2300, 2400, 2450, 2500,2550, 2600, 
+    1800, 1850, 1900, 2000, 2100, 2200, 2300, 2400, 2450, 2500, 2550, 2600, 
     2650, 2700, 2750, 2800, 2850, 2900,2950, 3000, 3050, 3100, 3150, 3200, 
     3250, 3300 };
+
+static struct tps_reg_param tps_regulators[] = {
+	{ 
+		.name = "LDO1", 
+		.voltage_min = 1000, 
+		.voltage_max = 3300, 
+		.voltages = ldo1voltages,
+		.nvoltages = 16,
+		.can_track = false,
+		.tracked_reg = NULL,
+		.can_xadj =  false,
+		.can_ls = false,
+		.defreg_num = TPS65217PMIC_DEFLDO1,
+		.enable_bit = TPS65217PMIC_ENABLE_LDO1
+	},
+	{ 
+		.name = "LDO2",
+		.voltage_min = 900, 
+		.voltage_max = 3300,
+		.voltages = ldo2voltages,
+		.nvoltages = 64,
+		.can_track = true,
+		.tracked_reg = &(tps_regulators[TPS65217PMIC_DCDC3]), 
+		.can_xadj = false,
+		.can_ls = false,
+		.defreg_num = TPS65217PMIC_DEFLDO2,
+		.enable_bit = TPS65217PMIC_ENABLE_LDO2
+	},
+	{ 
+		.name = "LDO3",
+		.voltage_min = 1500, 
+		.voltage_max = 3300,
+		.voltages = ldo3voltages,
+		.nvoltages = 32,
+		.can_track = false,
+		.tracked_reg = NULL, 
+		.can_xadj = false,
+		.can_ls = true,
+		.defreg_num = TPS65217PMIC_DEFLDO3,
+		.enable_bit = TPS65217PMIC_ENABLE_LDO3
+	},
+	{ 
+		.name = "LDO4",
+		.voltage_min = 1500, 
+		.voltage_max = 3300,
+		.voltages = ldo3voltages,
+		.nvoltages = 32,
+		.can_track = false,
+		.tracked_reg = NULL, 
+		.can_xadj = false,
+		.can_ls = true,
+		.defreg_num = TPS65217PMIC_DEFLDO4,
+		.enable_bit = TPS65217PMIC_ENABLE_LDO4
+	},
+	{ 
+		.name = "DCDC1",
+		.voltage_min = 900, 
+		.voltage_max = 3300,
+		.voltages = ldo2voltages,
+		.nvoltages = 64,
+		.can_track = false,
+		.tracked_reg = NULL, 
+		.can_xadj = true,
+		.can_ls = false,
+		.defreg_num = TPS65217PMIC_DEFDCDC1,
+		.enable_bit = TPS65217PMIC_ENABLE_DCDC1
+	},
+	{ 
+		.name = "DCDC2",
+		.voltage_min = 900, 
+		.voltage_max = 3300,
+		.voltages = ldo2voltages,
+		.nvoltages = 64,
+		.can_track = false,
+		.tracked_reg = NULL, 
+		.can_xadj = true,
+		.can_ls = false,
+		.defreg_num = TPS65217PMIC_DEFDCDC2,
+		.enable_bit = TPS65217PMIC_ENABLE_DCDC2	
+	},
+	{ 
+		.name = "DCDC3",
+		.voltage_min = 900, 
+		.voltage_max = 3300,
+		.voltages = ldo2voltages,
+		.nvoltages = 64,
+		.can_track = false,
+		.tracked_reg = NULL, 
+		.can_xadj = true,
+		.can_ls = false,
+		.defreg_num = TPS65217PMIC_DEFDCDC3,
+		.enable_bit = TPS65217PMIC_ENABLE_DCDC3
+	}
+};
+
+static bool matched = false;
 
 static int
 tps65217pmic_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (ia->ia_addr == TPS65217PMIC_ADDR)
+	if (ia->ia_addr == TPS65217PMIC_ADDR) {
+		/* we can only have one */
+		if (matched)
+			return 0;
+		else
+			matched = true;
+
 		return 1;
+	}
 	return 0;
 }
 
@@ -138,7 +289,22 @@ tps65217pmic_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(" Power Management Multi-Channel IC (rev 1.%d)\n", 
 	    sc->sc_revision);
 
-	tps65217pmic_print_status(sc);
+	tps65217pmic_refresh(sc);
+
+	tps65217pmic_print_ppath(sc);
+	tps65217pmic_print_ldos(sc);
+}
+
+static void
+tps65217pmic_refresh(struct tps65217pmic_softc *sc)
+{
+	int i;
+	struct tps_reg_param *c_reg;
+
+	for (i = 0; i < NTPS_REG; i++) {
+		c_reg = &tps_regulators[i];
+		tps65217pmic_regulator_read_config(sc, c_reg); 
+	}
 }
 
 /* Get version and revision of the chip. */
@@ -186,56 +352,100 @@ tps65217pmic_ppath_max_usb_current(uint8_t ppath)
 	return 0;
 }
 
-static uint16_t
-tps65217pmic_regulator_voltage(struct tps65217pmic_softc *sc, uint8_t regulator)
+/* Read regulator state and save it to tps_reg_param. */
+static void 
+tps65217pmic_regulator_read_config(struct tps65217pmic_softc *sc, struct 
+    tps_reg_param *regulator)
 {
-	uint8_t defreg;
+	uint8_t defreg, regenable;
+	uint16_t voltage;
 
-	switch (regulator) {
-	case TPS65217PMIC_LDO1:
-		defreg = tps65217pmic_reg_read(sc, TPS65217PMIC_DEFLDO1);
-		return ldo1voltages[defreg];
-	case TPS65217PMIC_LDO2:
-		defreg = tps65217pmic_reg_read(sc, TPS65217PMIC_DEFLDO2);
-		if (defreg & TPS65217PMIC_DEFLDO2_TRACKING)
-			return tps65217pmic_regulator_voltage(sc, 
-			    TPS65217PMIC_DCDC3);
-		return ldo2voltages[defreg & TPS65217PMIC_DEFLDO2_VOLTAGE];
-	case TPS65217PMIC_LDO3LS:
-		defreg = tps65217pmic_reg_read(sc, TPS65217PMIC_DEFLDO3);
-		if (!(defreg & TPS65217PMIC_DEFLDOX_LS))
-			return 0;
-		return ldo3voltages[defreg & TPS65217PMIC_DEFLDO3_VOLTAGE];
-	case TPS65217PMIC_LDO4LS:
-		defreg = tps65217pmic_reg_read(sc, TPS65217PMIC_DEFLDO4);
-		if (!(defreg & TPS65217PMIC_DEFLDOX_LS))
-			return 0;
-		return ldo3voltages[defreg & TPS65217PMIC_DEFLDO4_VOLTAGE];
-	case TPS65217PMIC_DCDC1:
-		defreg = tps65217pmic_reg_read(sc, TPS65217PMIC_DEFDCDC1);
-		/* if (defreg & TPS65217PMIC_DEFDCDCX_XADJ) XXX */
-		return ldo2voltages[defreg & TPS65217PMIC_DEFDCDCX_VOLTAGE];
-	case TPS65217PMIC_DCDC2:
-		defreg = tps65217pmic_reg_read(sc, TPS65217PMIC_DEFDCDC2);
-		/* if (defreg & TPS65217PMIC_DEFDCDCX_XADJ) XXX */
-		return ldo2voltages[defreg & TPS65217PMIC_DEFDCDCX_VOLTAGE];
-	case TPS65217PMIC_DCDC3:
-		defreg = tps65217pmic_reg_read(sc, TPS65217PMIC_DEFDCDC3);
-		/* if (defreg & TPS65217PMIC_DEFDCDCX_XADJ) XXX */
-		return ldo2voltages[defreg & TPS65217PMIC_DEFDCDCX_VOLTAGE];
+	regenable = tps65217pmic_reg_read(sc, TPS65217PMIC_ENABLE);
+
+	if (regenable & (regulator->enable_bit))
+		regulator->is_enabled = true;
+	else {
+		regulator->is_enabled = false;
+		return;
+	}
+
+	defreg = tps65217pmic_reg_read(sc, 
+	    regulator->defreg_num);
+
+	switch (regulator->nvoltages) {
+	case 16:
+		voltage = regulator->voltages[defreg & 
+		    TPS65217PMIC_DEFX_VOLTAGE_16];
+		break;
+	case 32:
+		voltage = regulator->voltages[defreg & 
+		    TPS65217PMIC_DEFX_VOLTAGE_32];
+		break;
+	case 64:
+		voltage = regulator->voltages[defreg & 
+		    TPS65217PMIC_DEFX_VOLTAGE_64];
+		break;
 	default:
-		aprint_error_dev(sc->sc_dev, "unknown regulator %x", regulator);
+		/* unsupported number of voltage settings? */
+		voltage = 0;
 		break;
 	}
 
-	return 0;
+	/* Handle regulator tracking other regulator voltage. */
+	if (regulator->can_track)
+		if (defreg & TPS65217PMIC_DEFX_TRACKING) {
+			regulator->is_tracking = true;
+			voltage = 0; /* see regulator->tracked_reg */
+		}
+
+	/* Handle regulator configured into load switch mode. */
+	if (regulator->can_ls)
+		if (!(defreg & TPS65217PMIC_DEFX_LS)) {
+			regulator->is_ls = true;
+			voltage = 0;	
+		}
+
+	if (regulator->can_xadj)
+		if (defreg & TPS65217PMIC_DEFX_XADJ) {
+			regulator->is_xadj = true;
+			voltage = 0;
+
+		}
+
+	/* TODO: add PGOOD checking */
+
+	regulator->current_voltage = voltage;
+}
+
+static void
+tps65217pmic_print_ldos(struct tps65217pmic_softc *sc)
+{
+	int i;
+	struct tps_reg_param *c_reg;
+
+	aprint_normal_dev(sc->sc_dev, "");
+
+	for (i = 0; i < NTPS_REG; i++) {
+		c_reg = &tps_regulators[i];
+
+		if(c_reg->is_enabled) {
+
+			if (c_reg->is_ls) {
+				aprint_normal("[%s: LS] ", c_reg->name);
+			} else if (c_reg->is_xadj) {
+				aprint_normal("[%s: XADJ] ", c_reg->name);
+			} else
+				aprint_normal("[%s: %d mV] ", c_reg->name,
+				    c_reg->current_voltage);
+		}
+	}
+	aprint_normal("\n");
 }
 
 static void 
-tps65217pmic_print_status(struct tps65217pmic_softc *sc)
+tps65217pmic_print_ppath(struct tps65217pmic_softc *sc)
 {
 	uint8_t status, ppath, regenable;
-	bool ldols;
 
 	ppath = tps65217pmic_reg_read(sc, TPS65217PMIC_PPATH);
 	status = tps65217pmic_reg_read(sc, TPS65217PMIC_STATUS);
@@ -263,50 +473,6 @@ tps65217pmic_print_status(struct tps65217pmic_softc *sc)
 
 	aprint_normal("\n");
 
-	aprint_normal_dev(sc->sc_dev, "");
-	if(regenable & TPS65217PMIC_ENABLE_LDO1)
-		aprint_normal("[LDO1: %d mV] ", 
-		    tps65217pmic_regulator_voltage(sc, TPS65217PMIC_LDO1));
-
-	if(regenable & TPS65217PMIC_ENABLE_LDO2)
-		aprint_normal("[LDO2: %d mV] ", 
-		    tps65217pmic_regulator_voltage(sc, TPS65217PMIC_LDO2));
-
-	if(regenable & TPS65217PMIC_ENABLE_LDO3) {
-		ldols = tps65217pmic_reg_read(sc, TPS65217PMIC_DEFLDO3) &
-		    TPS65217PMIC_DEFLDOX_LS;
-		if (!ldols)
-			aprint_normal("[LDO3: LS] ");
-		else	
-			aprint_normal("[LDO3: %d mV] ", 
-			    tps65217pmic_regulator_voltage(sc, 
-			        TPS65217PMIC_LDO3LS));
-	}
-
-	if(regenable & TPS65217PMIC_ENABLE_LDO4) {
-		ldols = tps65217pmic_reg_read(sc, TPS65217PMIC_DEFLDO4) &
-		    TPS65217PMIC_DEFLDOX_LS;
-		if (!ldols)
-			aprint_normal("[LDO4: LS]");
-		else	
-			aprint_normal("[LDO4: %d mV] ", 
-			    tps65217pmic_regulator_voltage(sc, 
-			        TPS65217PMIC_LDO4LS));
-	}
-
-	if(regenable & TPS65217PMIC_ENABLE_DCDC1)
-		aprint_normal("[DCDC1: %d mV] ", 
-		    tps65217pmic_regulator_voltage(sc, TPS65217PMIC_DCDC1));
-
-	if(regenable & TPS65217PMIC_ENABLE_DCDC2)
-		aprint_normal("[DCDC2: %d mV] ", 
-		    tps65217pmic_regulator_voltage(sc, TPS65217PMIC_DCDC2));
-
-	if(regenable & TPS65217PMIC_ENABLE_DCDC3)
-		aprint_normal("[DCDC3: %d mV] ", 
-		    tps65217pmic_regulator_voltage(sc, TPS65217PMIC_DCDC3));
-
-	aprint_normal("\n");
 }
 
 static uint8_t
