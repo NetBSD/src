@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.32 2013/04/16 11:29:12 joerg Exp $	*/
+/*	$NetBSD: ctype.h,v 1.33 2013/04/26 17:35:52 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -92,7 +92,8 @@ int	isblank(int);
 #endif
 __END_DECLS
 
-#if defined(_NETBSD_SOURCE) && !defined(_CTYPE_NOINLINE)
+#if defined(_NETBSD_SOURCE) && !defined(_CTYPE_NOINLINE) && \
+    !defined(__cplusplus)
 #include <sys/ctype_inline.h>
 #endif
 
