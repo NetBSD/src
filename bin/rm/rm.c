@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.52 2012/06/13 07:35:37 dholland Exp $ */
+/* $NetBSD: rm.c,v 1.53 2013/04/26 18:43:22 christos Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.52 2012/06/13 07:35:37 dholland Exp $");
+__RCSID("$NetBSD: rm.c,v 1.53 2013/04/26 18:43:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: rm.c,v 1.52 2012/06/13 07:35:37 dholland Exp $");
 #include <unistd.h>
 
 static int dflag, eval, fflag, iflag, Pflag, stdin_ok, vflag, Wflag;
+static int xflag;
 static sig_atomic_t pinfo;
 
 static int	check(char *, char *, struct stat *);
@@ -94,8 +95,8 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	Pflag = rflag = 0;
-	while ((ch = getopt(argc, argv, "dfiPRrvW")) != -1)
+	Pflag = rflag = xflag = 0;
+	while ((ch = getopt(argc, argv, "dfiPRrvWx")) != -1)
 		switch (ch) {
 		case 'd':
 			dflag = 1;
@@ -117,6 +118,9 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			vflag = 1;
+			break;
+		case 'x':
+			xflag = 1;
 			break;
 		case 'W':
 			Wflag = 1;
@@ -175,6 +179,8 @@ rm_tree(char **argv)
 		flags |= FTS_NOSTAT;
 	if (Wflag)
 		flags |= FTS_WHITEOUT;
+	if (xflag)
+		flags |= FTS_XDEV;
 	if ((fts = fts_open(argv, flags, NULL)) == NULL)
 		err(1, "fts_open failed");
 	while ((p = fts_read(fts)) != NULL) {
@@ -591,7 +597,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-f|-i] [-dPRrvW] file ...\n",
+	(void)fprintf(stderr, "usage: %s [-f|-i] [-dPRrvWx] file ...\n",
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
