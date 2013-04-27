@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.12 2013/02/11 16:02:31 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.13 2013/04/27 13:59:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.12 2013/02/11 16:02:31 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.13 2013/04/27 13:59:46 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -58,10 +58,12 @@ do {									\
 	}								\
 } while (/*CONSTCOND*/0)
 
+#define MTX_KMUTEX 0x1
+#define MTX_ISSPIN 0x2
 struct rumpuser_mtx {
 	pthread_mutex_t pthmtx;
 	struct lwp *owner;
-	int iskmutex;
+	int flags;
 };
 
 #define RURW_AMWRITER(rw) (rw->writer == rumpuser_get_curlwp()		\
@@ -295,22 +297,22 @@ rumpuser_mutex_init(struct rumpuser_mtx **mtx)
 	pthread_mutexattr_destroy(&att);
 
 	(*mtx)->owner = NULL;
-	(*mtx)->iskmutex = 0;
+	(*mtx)->flags = MTX_ISSPIN;
 }
 
 void
-rumpuser_mutex_init_kmutex(struct rumpuser_mtx **mtx)
+rumpuser_mutex_init_kmutex(struct rumpuser_mtx **mtx, int isspin)
 {
 
 	rumpuser_mutex_init(mtx);
-	(*mtx)->iskmutex = 1;
+	(*mtx)->flags = MTX_KMUTEX | (isspin ? MTX_ISSPIN : 0);
 }
 
 static void
 mtxenter(struct rumpuser_mtx *mtx)
 {
 
-	if (!mtx->iskmutex)
+	if (!(mtx->flags & MTX_KMUTEX))
 		return;
 
 	assert(mtx->owner == NULL);
@@ -321,7 +323,7 @@ static void
 mtxexit(struct rumpuser_mtx *mtx)
 {
 
-	if (!mtx->iskmutex)
+	if (!(mtx->flags & MTX_KMUTEX))
 		return;
 
 	assert(mtx->owner != NULL);
@@ -332,6 +334,11 @@ void
 rumpuser_mutex_enter(struct rumpuser_mtx *mtx)
 {
 
+	if (mtx->flags & MTX_ISSPIN) {
+		rumpuser_mutex_enter_nowrap(mtx);
+		return;
+	}
+
 	if (pthread_mutex_trylock(&mtx->pthmtx) != 0)
 		KLOCK_WRAP(NOFAIL_ERRNO(pthread_mutex_lock(&mtx->pthmtx)));
 	mtxenter(mtx);
@@ -341,6 +348,7 @@ void
 rumpuser_mutex_enter_nowrap(struct rumpuser_mtx *mtx)
 {
 
+	assert(mtx->flags & MTX_ISSPIN);
 	NOFAIL_ERRNO(pthread_mutex_lock(&mtx->pthmtx));
 	mtxenter(mtx);
 }
@@ -378,7 +386,7 @@ struct lwp *
 rumpuser_mutex_owner(struct rumpuser_mtx *mtx)
 {
 
-	if (__predict_false(!mtx->iskmutex)) {
+	if (__predict_false(!(mtx->flags & MTX_KMUTEX))) {
 		printf("panic: rumpuser_mutex_held unsupported on non-kmtx\n");
 		abort();
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: locks_up.c,v 1.6 2012/04/28 18:04:02 stacktic Exp $	*/
+/*	$NetBSD: locks_up.c,v 1.7 2013/04/27 13:59:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.6 2012/04/28 18:04:02 stacktic Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.7 2013/04/27 13:59:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -69,6 +69,13 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 
 	CTASSERT(sizeof(kmutex_t) >= sizeof(void *));
 	checkncpu();
+
+	/*
+	 * In uniprocessor locking we don't need to differentiate
+	 * between spin mutexes and adaptive ones.  We could
+	 * replace mutex_enter() with a NOP for spin mutexes, but
+	 * not bothering with that for now.
+	 */
 
 	/*
 	 * XXX: pool_cache would be nice, but not easily possible,
