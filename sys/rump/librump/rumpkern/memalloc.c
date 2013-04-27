@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.20 2013/03/10 17:05:12 pooka Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.21 2013/04/27 15:34:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.20 2013/03/10 17:05:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.21 2013/04/27 15:34:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -44,52 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.20 2013/03/10 17:05:12 pooka Exp $");
  * libc malloc.
  *
  * Supported:
- *   + malloc
  *   + kmem
  *   + pool
  *   + pool_cache
  */
-
-/*
- * malloc
- */
-
-void
-kmeminit(void)
-{
-
-	return;
-}
-
-void *
-kern_malloc(unsigned long size, int flags)
-{
-	void *rv;
-
-	rv = rumpuser_malloc(size, 0);
-
-	if (__predict_false(rv == NULL && (flags & (M_CANFAIL|M_NOWAIT)) == 0))
-		panic("malloc %lu bytes failed", size);
-
-	if (rv && flags & M_ZERO)
-		memset(rv, 0, size);
-
-	return rv;
-}
-
-void *
-kern_realloc(void *ptr, unsigned long size, int flags)
-{
-
-	return rumpuser_realloc(ptr, size);
-}
-
-void
-kern_free(void *ptr)
-{
-
-	rumpuser_free(ptr);
-}
 
 /*
  * Kmem
@@ -125,7 +83,7 @@ void
 kmem_free(void *p, size_t size)
 {
 
-	rumpuser_free(p);
+	rumpuser_free(p, size);
 }
 
 __strong_alias(kmem_intr_alloc, kmem_alloc);
@@ -198,7 +156,7 @@ pool_cache_destroy(pool_cache_t pc)
 {
 
 	pool_destroy(&pc->pc_pool);
-	rumpuser_free(pc);
+	rumpuser_free(pc, sizeof(*pc));
 }
 
 void *
@@ -255,7 +213,7 @@ void
 pool_put(struct pool *pp, void *item)
 {
 
-	rumpuser_free(item);
+	rumpuser_free(item, pp->pr_size);
 }
 
 void
