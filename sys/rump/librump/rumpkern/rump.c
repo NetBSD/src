@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.258 2013/04/27 14:59:09 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.259 2013/04/27 15:13:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.258 2013/04/27 14:59:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.259 2013/04/27 15:13:11 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -229,7 +229,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
 }
 
 int
-rump__init(int rump_version)
+rump_init(void)
 {
 	char buf[256];
 	struct timespec ts;
@@ -280,12 +280,6 @@ rump__init(int rump_version)
 
 	initmsgbuf(rump_msgbuf, sizeof(rump_msgbuf));
 	aprint_verbose("%s%s", copyright, version);
-
-	if (rump_version != RUMP_VERSION) {
-		printf("rump version mismatch, %d vs. %d\n",
-		    rump_version, RUMP_VERSION);
-		return EPROGMISMATCH;
-	}
 
 	rump_intr_init(numcpu);
 	rump_tsleep_init();
@@ -534,6 +528,8 @@ rump__init(int rump_version)
 
 	return 0;
 }
+/* historic compat */
+__strong_alias(rump__init,rump_init);
 
 int
 rump_init_server(const char *url)
