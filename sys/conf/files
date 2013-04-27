@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1067 2013/04/27 17:16:43 christos Exp $
+#	$NetBSD: files,v 1.1068 2013/04/27 17:22:58 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1443,7 +1443,7 @@ file	dev/audiobell.c			audiobell
 file	dev/aurateconv.c		aurateconv		needs-flag
 file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd
-file	dev/cgd.c			cgd			needs-flag
+file	dev/cgd.c			cgd
 file	dev/cgd_crypto.c		cgd
 file	dev/clock_subr.c
 file	dev/clockctl.c			clockctl		needs-flag
