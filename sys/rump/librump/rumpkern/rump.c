@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.259 2013/04/27 15:13:11 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.260 2013/04/27 16:02:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.259 2013/04/27 15:13:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.260 2013/04/27 16:02:56 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -101,7 +101,7 @@ int rump_threads = 0;
 int rump_threads = 1;
 #endif
 
-static int rump_proxy_syscall(int, void *, register_t *);
+static int rump_proxy_syscall(int, void *, long *);
 static int rump_proxy_rfork(void *, int, const char *);
 static void rump_proxy_lwpexit(void);
 static void rump_proxy_execnotify(const char *);
@@ -781,8 +781,9 @@ rump_kernelfsym_load(void *symtab, uint64_t symsize,
 }
 
 static int
-rump_proxy_syscall(int num, void *arg, register_t *retval)
+rump_proxy_syscall(int num, void *arg, long *retval)
 {
+	register_t regrv[2] = {0, 0};
 	struct lwp *l;
 	struct sysent *callp;
 	int rv;
@@ -792,7 +793,9 @@ rump_proxy_syscall(int num, void *arg, register_t *retval)
 
 	callp = rump_sysent + num;
 	l = curlwp;
-	rv = sy_call(callp, l, (void *)arg, retval);
+	rv = sy_call(callp, l, (void *)arg, regrv);
+	retval[0] = regrv[0];
+	retval[1] = regrv[1];
 
 	return rv;
 }

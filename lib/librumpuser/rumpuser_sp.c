@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.52 2013/04/27 14:59:08 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.53 2013/04/27 16:02:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.52 2013/04/27 14:59:08 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.53 2013/04/27 16:02:56 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -260,14 +260,17 @@ lwproc_lwpexit(void)
 }
 
 static int
-rumpsyscall(int sysnum, void *data, register_t *retval)
+rumpsyscall(int sysnum, void *data, register_t *regrv)
 {
+	long retval[2] = {0, 0};
 	int rv;
 
 	spops.spop_schedule();
 	rv = spops.spop_syscall(sysnum, data, retval);
 	spops.spop_unschedule();
 
+	regrv[0] = retval[0];
+	regrv[1] = retval[1];
 	return rv;
 }
 
