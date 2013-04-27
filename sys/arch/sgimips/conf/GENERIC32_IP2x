@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.96 2013/04/27 21:43:40 christos Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.97 2013/04/27 22:21:16 christos Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.96 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.97 $"
 
 maxusers	32
 
@@ -314,7 +314,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	sequencer		# MIDI sequencer
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsmux                   # mouse & keyboard multiplexor

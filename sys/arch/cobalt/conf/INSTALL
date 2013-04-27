@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.52 2013/04/27 21:43:19 christos Exp $
+# $NetBSD: INSTALL,v 1.53 2013/04/27 22:21:13 christos Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.52 $"
+#ident 		"INSTALL-$Revision: 1.53 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -323,7 +323,7 @@ pseudo-device	loop				# network loopback
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
 options 	NO_DEV_PTM
-#pseudo-device	sequencer	1		# MIDI sequencer
+#pseudo-device	sequencer			# MIDI sequencer
 #options 	RND_COM				# use "com" randomness (BROKEN)
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	nullcons			# no-op console

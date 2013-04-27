@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.12 2013/04/27 21:43:21 christos Exp $
+#	$NetBSD: HPT5325,v 1.13 2013/04/27 22:21:13 christos Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -483,7 +483,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

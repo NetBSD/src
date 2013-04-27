@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.92 2013/04/27 21:43:40 christos Exp $
+# $NetBSD: GENERIC,v 1.93 2013/04/27 22:21:15 christos Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.92 $"
+#ident 		"GENERIC-$Revision: 1.93 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -213,7 +213,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter

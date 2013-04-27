@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.40 2013/03/02 02:42:12 christos Exp $
+#	$NetBSD: ARMADILLO9,v 1.41 2013/04/27 22:21:13 christos Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -293,7 +293,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	crypto			# /dev/crypto device
 #pseudo-device	swcrypto		# software crypto implementation
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 
 #
 # wscons options

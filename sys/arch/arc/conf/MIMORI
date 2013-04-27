@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.63 2013/04/27 21:43:17 christos Exp $
+#	$NetBSD: MIMORI,v 1.64 2013/04/27 22:21:13 christos Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -274,7 +274,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 # rnd works; RND_COM does not on port arc yet.
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem

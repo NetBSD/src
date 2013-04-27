@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.121 2013/04/27 21:43:26 christos Exp $
+# $NetBSD: GENERIC,v 1.122 2013/04/27 22:21:14 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.121 $"
+#ident 		"GENERIC-$Revision: 1.122 $"
 
 maxusers	32		# estimated number of users
 
@@ -759,7 +759,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	sequencer		# MIDI sequencer
 # rnd works; RND_COM does not on port hp700 yet.
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem

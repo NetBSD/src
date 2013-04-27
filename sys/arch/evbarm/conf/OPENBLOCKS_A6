@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.12 2013/04/27 21:43:22 christos Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.13 2013/04/27 22:21:14 christos Exp $
 #
 #  OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -376,7 +376,7 @@ pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

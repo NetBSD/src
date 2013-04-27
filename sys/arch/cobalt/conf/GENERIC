@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.139 2013/04/27 21:43:19 christos Exp $
+# $NetBSD: GENERIC,v 1.140 2013/04/27 22:21:13 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.139 $"
+#ident 		"GENERIC-$Revision: 1.140 $"
 
 maxusers	32
 
@@ -353,7 +353,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
-#pseudo-device	sequencer	1		# MIDI sequencer
+#pseudo-device	sequencer			# MIDI sequencer
 #options 	RND_COM				# use "com" randomness (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	nullcons			# no-op console

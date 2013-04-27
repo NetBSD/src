@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.15 2013/04/27 21:43:23 christos Exp $
+#	$NetBSD: XLSATX,v 1.16 2013/04/27 22:21:14 christos Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.15 $"
+#ident 		"XLSATX-$Revision: 1.16 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -190,7 +190,7 @@ sd*		at scsibus? target ? lun ?
 #pseudo-device	ccd				# concatenated disk devices
 #pseudo-device	raid				# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG			# auto-configuration of RAID
-#pseudo-device	fss		4		# file system snapshot device
+#pseudo-device	fss				# file system snapshot device
 pseudo-device	vnd				# disk-like interface to files
 
 # Network pseudo-devices
@@ -213,7 +213,7 @@ pseudo-device	kttcp				# kernel ttcp
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
-#pseudo-device	sequencer	1		# MIDI sequencer
+#pseudo-device	sequencer			# MIDI sequencer
 pseudo-device	clockctl			# user control of clock subsystem
 pseudo-device	ksyms				# /dev/ksyms
 

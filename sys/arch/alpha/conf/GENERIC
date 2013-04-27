@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.350 2013/04/27 21:43:11 christos Exp $
+# $NetBSD: GENERIC,v 1.351 2013/04/27 22:21:12 christos Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.350 $"
+ident		"GENERIC-$Revision: 1.351 $"
 
 maxusers 32
 
@@ -733,7 +733,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM			# use "com" randomness too
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda			# coda minicache <-> venus comm.

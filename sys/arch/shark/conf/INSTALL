@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.53 2013/04/27 18:19:51 christos Exp $
+#	$NetBSD: INSTALL,v 1.54 2013/04/27 22:21:16 christos Exp $
 #
 #	Shark installation kernel
 #
@@ -253,6 +253,6 @@ pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	md			# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device
-#pseudo-device	sequencer 1		# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
