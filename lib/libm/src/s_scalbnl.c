@@ -1,4 +1,4 @@
-/*	$NetBSD: s_scalbnl.c,v 1.4 2013/02/11 02:45:15 christos Exp $	*/
+/*	$NetBSD: s_scalbnl.c,v 1.5 2013/04/27 17:20:36 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_scalbnl.c,v 1.4 2013/02/11 02:45:15 christos Exp $");
+__RCSID("$NetBSD: s_scalbnl.c,v 1.5 2013/04/27 17:20:36 joerg Exp $");
 
 #include "namespace.h"
 
@@ -56,14 +56,6 @@ __weak_alias(ldexpl, _scalblnl);
 #define	TO_UNDERFLOW	0x1p-114L
 #else
 #error Unsupported long double format
-#endif
-
-#ifdef _LP64
-long double
-scalbnl(long double x, int n)
-{
-	return scalblnl(x, n);
-}
 #endif
 
 long double
