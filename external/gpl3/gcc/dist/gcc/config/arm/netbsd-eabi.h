@@ -22,21 +22,23 @@
 #undef TARGET_VERSION
 #define TARGET_VERSION fputs (" (NetBSD/earm ELF)", stderr);
 
-/* This defaults us to little-endian.  */
-#ifndef TARGET_ENDIAN_DEFAULT
-#define TARGET_ENDIAN_DEFAULT 0
-#endif
+#undef MULTILIB_DEFAULTS
+#define MULTILIB_DEFAULTS { "mabi=aapcs-linux" }
 
 #undef MUST_USE_SJLJ_EXCEPTIONS
 #define MUST_USE_SJLJ_EXCEPTIONS (!TARGET_AAPCS_BASED)
 
+#define TARGET_LINKER_EABI_SUFFIX "%{!mabi=apcs-gnu:%{!mabi=atpcs:_nbsd_eabi}}"
+#define TARGET_LINKER_BIG_EMULATION "armelfb%(linker_eabi_suffix)"
+#define TARGET_LINKER_LITTLE_EMULATION "armelf%(linker_eabi_suffix)"
+
 /* TARGET_BIG_ENDIAN_DEFAULT is set in
    config.gcc for big endian configurations.  */
 #undef  TARGET_LINKER_EMULATION
-#if TARGET_ENDIAN_DEFAULT == MASK_BIG
-#define TARGET_LINKER_EMULATION "-m armelfb_nbsd_eabi"
+#if TARGET_BIG_ENDIAN_DEFAULT
+#define TARGET_LINKER_EMULATION TARGET_LINKER_BIG_EMULATION
 #else
-#define TARGET_LINKER_EMULATION "-m armelf_nbsd_eabi"
+#define TARGET_LINKER_EMULATION TARGET_LINKER_LITTLE_EMULATION
 #endif
 
 #undef MULTILIB_DEFAULTS
@@ -84,6 +86,10 @@
   { "subtarget_extra_asm_spec",	SUBTARGET_EXTRA_ASM_SPEC }, \
   { "subtarget_asm_float_spec", SUBTARGET_ASM_FLOAT_SPEC }, \
   { "netbsd_link_spec",		NETBSD_LINK_SPEC_ELF },	\
+  { "linker_eabi_suffix",	TARGET_LINKER_EABI_SUFFIX }, \
+  { "linker_emulation",		TARGET_LINKER_EMULATION }, \
+  { "linker_big_emulation",	TARGET_LINKER_BIG_EMULATION }, \
+  { "linker_little_emulation",	TARGET_LINKER_LITTLE_EMULATION }, \
   { "be8_link_spec",		BE8_LINK_SPEC }, \
   { "target_fix_v4bx_spec",	TARGET_FIX_V4BX_SPEC }, \
   { "netbsd_entry_point",	NETBSD_ENTRY_POINT },
@@ -92,7 +98,8 @@
 
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "-X %{mbig-endian:-EB -m armelfb_nbsd_eabi} \
-   %{mlittle-endian:-EL -m armelf_nbsd_eabi} \
+  "-X %{mbig-endian:-EB -m %(linker_big_emulation)} \
+   %{mlittle-endian:-EL -m %(linker_liitle_emulation)} \
+   %{!mbig-endian:%{!mlittle-endian:-m %(linker_emulation)}} \
    %(be8_link_spec) %(target_fix_v4bx_spec) \
    %(netbsd_link_spec)"
