@@ -1,4 +1,4 @@
-/*	$NetBSD: s_scalbn.S,v 1.8 2010/04/23 19:17:07 drochner Exp $	*/
+/*	$NetBSD: s_scalbn.S,v 1.9 2013/04/27 18:39:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,10 +38,11 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_scalbn.S,v 1.8 2010/04/23 19:17:07 drochner Exp $")
+RCSID("$NetBSD: s_scalbn.S,v 1.9 2013/04/27 18:39:28 joerg Exp $")
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(scalbn,_scalbn)
+WEAK_ALIAS(ldexp,_scalbln)
 #endif
 
 | scalbn(x, N)
