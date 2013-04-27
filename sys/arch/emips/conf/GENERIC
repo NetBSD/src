@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.9 2013/04/27 18:19:30 christos Exp $
+# $NetBSD: GENERIC,v 1.10 2013/04/27 21:43:20 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/emips/conf/std.emips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.9 $"
+#ident		"GENERIC-$Revision: 1.10 $"
 
 maxusers	64
 
@@ -208,7 +208,7 @@ pseudo-device	vnd		 	# virtual disk ick
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		 	# concatenated disks
 #pseudo-device	cgd		 	# cryptographic disk devices
-#pseudo-device	raid		 8	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1

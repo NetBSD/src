@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.56 2013/04/27 18:19:47 christos Exp $
+# 	$NetBSD: NEWS1200,v 1.57 2013/04/27 21:43:37 christos Exp $
 
 #	news1200 config file
 #
@@ -138,7 +138,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	md			# memory disk device
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd			# concatenated and striped disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 pseudo-device	sl			# SLIP interfaces
 pseudo-device	ppp			# PPP interfaces
 pseudo-device	tun			# Network "tunnel" device
@@ -148,5 +148,5 @@ pseudo-device	ipfilter		# ip filter
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem

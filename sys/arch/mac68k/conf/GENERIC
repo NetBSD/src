@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.211 2013/04/27 18:19:41 christos Exp $
+# $NetBSD: GENERIC,v 1.212 2013/04/27 21:43:31 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.211 $"
+#ident 		"GENERIC-$Revision: 1.212 $"
 
 maxusers	16		# estimated number of users
 
@@ -301,7 +301,7 @@ asc0	at obio?			# ASC/EASC audio
 # disk/mass storage pseudo-devices
 pseudo-device	ccd			# concatenated/striped disk devices
 #pseudo-device	cgd			# cryptographic disk devices
-#pseudo-device	raid		8	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1
@@ -313,7 +313,7 @@ pseudo-device	ccd			# concatenated/striped disk devices
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk device (ramdisk)
-pseudo-device	vcoda		1	# Venus/Coda distributed file system
+pseudo-device	vcoda			# Venus/Coda distributed file system
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
@@ -359,7 +359,7 @@ pseudo-device	ksyms			# /dev/ksyms
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.138 2013/04/27 18:19:29 christos Exp $
+# $NetBSD: GENERIC,v 1.139 2013/04/27 21:43:19 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138 $"
+#ident 		"GENERIC-$Revision: 1.139 $"
 
 maxusers	32
 
@@ -311,7 +311,7 @@ pseudo-device	swcrypto			# software crypto implementation
 # Disk/mass storage pseudo-devices
 #pseudo-device	ccd				# concatenated disk devices
 #pseudo-device	cgd				# cryptographic disk devices
-pseudo-device	raid		8		# RAIDframe disk driver
+pseudo-device	raid				# RAIDframe disk driver
 options 	RAID_AUTOCONFIG			# auto-configuration of RAID
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1
@@ -359,7 +359,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	nullcons			# no-op console
 
 # A pseudo device needed for Coda		# also needs CODA (above)
-#pseudo-device	vcoda		4		# coda minicache <-> venus comm.
+#pseudo-device	vcoda				# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb				# experimental - SMB requester
@@ -371,7 +371,7 @@ pseudo-device	ksyms				# /dev/ksyms
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

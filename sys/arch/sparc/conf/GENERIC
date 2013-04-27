@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.239 2013/04/27 18:19:51 christos Exp $
+# $NetBSD: GENERIC,v 1.240 2013/04/27 21:43:40 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.239 $"
+#ident 		"GENERIC-$Revision: 1.240 $"
 
 maxusers	32
 
@@ -504,7 +504,7 @@ pseudo-device	ccd
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
-pseudo-device	raid	8
+pseudo-device	raid	
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options 	RF_INCLUDE_EVENODD=1
@@ -736,7 +736,7 @@ pseudo-device	pty			# pseudo-terminals
 
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
@@ -752,7 +752,7 @@ pseudo-device	putter			# for puffs and pud
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

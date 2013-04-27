@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.63 2013/04/27 18:19:34 christos Exp $
+#	$NetBSD: WALNUT,v 1.64 2013/04/27 21:43:24 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -257,7 +257,7 @@ ds1743rtc0	at pbus? addr ?			# RTC
 pseudo-device	vnd			# disk-like interface to files
 pseudo-device	ccd			# concatenated/striped disk devices
 #pseudo-device	cgd			# cryptographic disk devices
-pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# network loopback
