@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.176 2013/04/27 18:19:35 christos Exp $
+# $NetBSD: GENERIC,v 1.177 2013/04/27 21:43:25 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.176 $"
+#ident 		"GENERIC-$Revision: 1.177 $"
 
 maxusers	32		# estimated number of users
 
@@ -280,7 +280,7 @@ uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 # disk pseudo-devices
 pseudo-device	ccd			# concatenated disk devices
 #pseudo-device	cgd			# cryptographic disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
@@ -322,7 +322,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 # miscellaneous pseudo-devices
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	vcoda			# coda minicache <-> venus comm.
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
@@ -335,7 +335,7 @@ pseudo-device	wsfont
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

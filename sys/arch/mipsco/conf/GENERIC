@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82 2013/04/27 18:19:44 christos Exp $
+# $NetBSD: GENERIC,v 1.83 2013/04/27 21:43:33 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -175,7 +175,7 @@ pseudo-device	bpfilter		# Berkeley Packet Filter
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd			# concatenated and striped disks
 #pseudo-device	cgd			# cryptographic disks
-#pseudo-device	raid		8	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1
 # options	RF_INCLUDE_RAID5_RS=1
@@ -202,7 +202,7 @@ pseudo-device	ksyms			# /dev/ksyms
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

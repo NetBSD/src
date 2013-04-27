@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.37 2013/04/27 18:19:34 christos Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.38 2013/04/27 21:43:24 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -212,7 +212,7 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 pseudo-device	vnd			# disk-like interface to files
 pseudo-device	ccd			# concatenated/striped disk devices
 #pseudo-device	cgd			# cryptographic disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk device

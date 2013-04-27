@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.65 2013/04/27 18:19:55 christos Exp $
+#	$NetBSD: INSTALL,v 1.66 2013/04/27 21:43:43 christos Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -253,7 +253,7 @@ pseudo-device	bpfilter
 #pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	vnd	
 #pseudo-device	ccd	
-pseudo-device	raid	8		# RAIDframe disk driver
+pseudo-device	raid			# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md	
