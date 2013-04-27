@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.115 2013/04/27 21:43:15 christos Exp $
+# $NetBSD: GENERIC.in,v 1.116 2013/04/27 22:29:56 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.115 $"
+#ident 		"GENERIC-$Revision: 1.116 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -629,6 +629,16 @@ bthidev* at bthub?
 
 # Bluetooth Audio support
 #btsco* at bthub?
+
+# USB
+slhci*		at zbus?                # Thylacine
+usb*		at slhci?
+
+uhub*		at usb?
+uhub*		at uhub? port ?
+
+uhidev*		at uhub? port ? configuration ? interface ?
+uhid*		at uhidev? reportid ?
 
 ')m4_dnl
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
