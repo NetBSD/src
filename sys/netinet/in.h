@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.87 2012/06/22 14:54:35 christos Exp $	*/
+/*	$NetBSD: in.h,v 1.88 2013/04/27 21:35:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,6 +39,7 @@
 #ifndef _NETINET_IN_H_
 #define	_NETINET_IN_H_
 
+#include <sys/featuretest.h>
 #include <machine/int_types.h>
 
 #ifndef uint8_t

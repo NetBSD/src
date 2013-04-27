@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.7 2012/03/22 03:06:06 dholland Exp $	*/
+/*	$NetBSD: fenv.h,v 1.8 2013/04/27 21:35:25 joerg Exp $	*/
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,6 +32,7 @@
 #ifndef _FENV_H_
 #define _FENV_H_
 
+#include <sys/featuretest.h>
 #include <machine/fenv.h>
 
 __BEGIN_DECLS

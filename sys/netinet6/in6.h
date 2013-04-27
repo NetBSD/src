@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.70 2012/06/22 14:54:35 christos Exp $	*/
+/*	$NetBSD: in6.h,v 1.71 2013/04/27 21:35:24 joerg Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -63,6 +63,8 @@
 
 #ifndef _NETINET6_IN6_H_
 #define _NETINET6_IN6_H_
+
+#include <sys/featuretest.h>
 
 #ifndef __KAME_NETINET_IN_H_INCLUDED_
 #error "do not include netinet6/in6.h directly, include netinet/in.h.  see RFC2553"
