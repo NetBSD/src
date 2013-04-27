@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_int.h,v 1.4 2010/11/15 15:23:32 pooka Exp $	*/
+/*	$NetBSD: rumpuser_int.h,v 1.5 2013/04/27 14:59:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,18 +29,17 @@
 
 #include <rump/rumpuser.h>
 
-extern kernel_lockfn rumpuser__klock;
-extern kernel_unlockfn rumpuser__kunlock;
-extern int rumpuser__wantthreads;
+extern rump_unschedulefn rumpuser__unschedule;
+extern rump_reschedulefn rumpuser__reschedule;
 
 #define seterror(value) do { if (error) *error = value;} while (/*CONSTCOND*/0)
 
 #define KLOCK_WRAP(a)							\
 do {									\
 	int nlocks;							\
-	rumpuser__kunlock(0, &nlocks, NULL);				\
+	rumpuser__unschedule(0, &nlocks, NULL);				\
 	a;								\
-	rumpuser__klock(nlocks, NULL);					\
+	rumpuser__reschedule(nlocks, NULL);				\
 } while (/*CONSTCOND*/0)
 
 #define DOCALL(rvtype, call)						\
@@ -58,12 +57,14 @@ do {									\
 {									\
 	rvtype rv;							\
 	int nlocks;							\
-	rumpuser__kunlock(0, &nlocks, NULL);				\
+	rumpuser__unschedule(0, &nlocks, NULL);				\
 	rv = call;							\
-	rumpuser__klock(nlocks, NULL);					\
+	rumpuser__reschedule(nlocks, NULL);				\
 	if (rv == -1)							\
 		seterror(errno);					\
 	else								\
 		seterror(0);						\
 	return rv;							\
 }
+
+void rumpuser__thrinit(void);

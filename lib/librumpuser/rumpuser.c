@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.29 2013/03/18 21:00:52 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.30 2013/04/27 14:59:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.29 2013/03/18 21:00:52 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.30 2013/04/27 14:59:08 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -66,11 +66,41 @@ __RCSID("$NetBSD: rumpuser.c,v 1.29 2013/03/18 21:00:52 pooka Exp $");
 
 #include "rumpuser_int.h"
 
+rump_unschedulefn	rumpuser__unschedule;
+rump_reschedulefn	rumpuser__reschedule;
+
 int
-rumpuser_getversion(void)
+rumpuser_init(int version,
+	rump_reschedulefn rumpkern_resched, rump_unschedulefn rumpkern_unsched)
 {
 
-	return RUMPUSER_VERSION;
+	if (version != RUMPUSER_VERSION) {
+		fprintf(stderr, "rumpuser mismatch, kern: %d, hypervisor %d\n",
+		    version, RUMPUSER_VERSION);
+		return 1;
+	}
+
+#ifdef RUMPUSER_USE_RANDOM
+	uint32_t rv;
+	int fd;
+
+	if ((fd = open("/dev/urandom", O_RDONLY)) == -1) {
+		srandom(time(NULL));
+	} else {
+		if (read(fd, &rv, sizeof(rv)) != sizeof(rv))
+			srandom(time(NULL));
+		else
+			srandom(rv);
+		close(fd);
+	}
+#endif
+
+	rumpuser__thrinit();
+
+	rumpuser__unschedule = rumpkern_unsched;
+	rumpuser__reschedule = rumpkern_resched;
+
+	return 0;
 }
 
 int

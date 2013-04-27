@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.8 2013/04/27 13:59:46 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.9 2013/04/27 14:59:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.8 2013/04/27 13:59:46 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.9 2013/04/27 14:59:08 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -63,16 +63,11 @@ struct rumpuser_cv rumpuser_aio_cv;
 int rumpuser_aio_head, rumpuser_aio_tail;
 struct rumpuser_aio rumpuser_aios[N_AIOS];
 
-kernel_lockfn	rumpuser__klock;
-kernel_unlockfn	rumpuser__kunlock;
-
-/*ARGSUSED*/
 void
-rumpuser_thrinit(kernel_lockfn lockfn, kernel_unlockfn unlockfn, int threads)
+rumpuser__thrinit(void)
 {
 
-	rumpuser__klock = lockfn;
-	rumpuser__kunlock = unlockfn;
+	return;
 }
 
 /*ARGSUSED*/

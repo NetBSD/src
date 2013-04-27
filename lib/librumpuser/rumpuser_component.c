@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_component.c,v 1.1 2013/03/01 18:15:36 pooka Exp $	*/
+/*	$NetBSD: rumpuser_component.c,v 1.2 2013/04/27 14:59:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_component.c,v 1.1 2013/03/01 18:15:36 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_component.c,v 1.2 2013/04/27 14:59:08 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -47,7 +47,7 @@ rumpuser_component_unschedule(void)
 {
 	int nlocks;
 
-	rumpuser__kunlock(0, &nlocks, NULL);
+	rumpuser__unschedule(0, &nlocks, NULL);
 	return (void *)(intptr_t)nlocks;
 }
 
@@ -56,5 +56,5 @@ rumpuser_component_schedule(void *cookie)
 {
 	int nlocks = (int)(intptr_t)cookie;
 
-	rumpuser__klock(nlocks, NULL);
+	rumpuser__reschedule(nlocks, NULL);
 }

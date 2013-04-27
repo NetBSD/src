@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.77 2013/04/27 14:02:17 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.78 2013/04/27 14:59:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -39,15 +39,15 @@
 #endif
 
 #define RUMPUSER_VERSION 16
-int rumpuser_getversion(void);
 
 int rumpuser_daemonize_begin(void);
 int rumpuser_daemonize_done(int);
 
 struct pollfd;
 
-typedef void (*kernel_lockfn)(int, void *);
-typedef void (*kernel_unlockfn)(int, int *, void *);
+typedef void (*rump_reschedulefn)(int, void *);
+typedef void (*rump_unschedulefn)(int, int *, void *);
+int rumpuser_init(int, rump_reschedulefn, rump_unschedulefn);
 
 int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
 #define RUMPUSER_FT_OTHER 0
@@ -129,8 +129,6 @@ int rumpuser_getnhostcpu(void);
 
 uint32_t rumpuser_arc4random(void);
 
-/* rumpuser_pth */
-void rumpuser_thrinit(kernel_lockfn, kernel_unlockfn, int);
 __dead void rumpuser_biothread(void *);
 
 int  rumpuser_thread_create(void *(*f)(void *), void *, const char *, int,
