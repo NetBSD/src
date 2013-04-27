@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.100 2013/04/11 17:43:17 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.101 2013/04/27 23:02:18 joerg Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -203,6 +203,10 @@
 ./usr/lib/64/libc.so				base-sys-shlib		compat,pic
 ./usr/lib/64/libc_p.a				comp-c-proflib		compat,profile
 ./usr/lib/64/libc_pic.a				comp-c-piclib		compat,pic
+./usr/lib/64/libc++.a				comp-c-lib		compat,libcxx
+./usr/lib/64/libc++.so				comp-sys-shlib		compat,pic,libcxx
+./usr/lib/64/libc++_p.a				comp-c-proflib		compat,profile,libcxx
+./usr/lib/64/libc++_pic.a			comp-c-piclib		compat,pic,libcxx
 ./usr/lib/64/libcom_err.a			comp-c-lib		compat,kerberos
 ./usr/lib/64/libcom_err.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libcom_err_p.a			comp-c-proflib		compat,profile,kerberos
@@ -810,6 +814,10 @@
 ./usr/lib/o32/libc.so				base-sys-shlib		compat,pic
 ./usr/lib/o32/libc_p.a				comp-c-proflib		compat,profile
 ./usr/lib/o32/libc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/libc++.a				comp-c-lib		compat,libcxx
+./usr/lib/o32/libc++.so				comp-sys-shlib		compat,pic,libcxx
+./usr/lib/o32/libc++_p.a			comp-c-proflib		compat,profile,libcxx
+./usr/lib/o32/libc++_pic.a			comp-c-piclib		compat,pic,libcxx
 ./usr/lib/o32/libcom_err.a			comp-c-lib		compat,kerberos
 ./usr/lib/o32/libcom_err.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libcom_err_p.a			comp-c-proflib		compat,profile,kerberos
