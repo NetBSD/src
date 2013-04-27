@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.106 2013/03/02 02:42:20 christos Exp $
+#	$NetBSD: GENERIC,v 1.107 2013/04/27 18:19:51 christos Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.106 $"
+#ident		"GENERIC-$Revision: 1.107 $"
 
 # estimated number of users
 maxusers	32
@@ -281,13 +281,13 @@ cinclude "arch/shark/conf/GENERIC.local"
 pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 
-pseudo-device	loop	1		# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
 #pseudo-device	tun			# network tunneling over tty
-#pseudo-device	ipfilter 1		# ip filter
+#pseudo-device	ipfilter		# ip filter
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
@@ -295,9 +295,9 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
-#pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	ccd			# concatenated disk devices
 pseudo-device	fss			# file system snapshot device
-#pseudo-device	cgd	4		# cryptographic disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 
 #pseudo-device	md			# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device

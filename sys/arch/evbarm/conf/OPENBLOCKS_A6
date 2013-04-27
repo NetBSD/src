@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.10 2013/03/02 02:42:12 christos Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.11 2013/04/27 18:19:33 christos Exp $
 #
 #  OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -332,8 +332,8 @@ pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 #pseudo-device	bio			# RAID control device driver
-#pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

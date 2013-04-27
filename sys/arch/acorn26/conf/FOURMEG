@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.42 2013/03/02 02:42:07 christos Exp $
+# $NetBSD: FOURMEG,v 1.43 2013/04/27 18:19:19 christos Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -178,7 +178,7 @@ arcvideo0	at root			# On-board video
 wsdisplay0	at arcvideo0
 
 #pseudo-device	bpfilter
-#pseudo-device	ccd		4
+#pseudo-device	ccd
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device

@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.9 2013/03/02 02:42:14 christos Exp $
+#	$NetBSD: NETBOOKPRO,v 1.10 2013/04/27 18:19:36 christos Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 # estimated number of users
 maxusers	32
@@ -310,8 +310,8 @@ pseudo-device	tun			# network tunneling over tty
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	ccd	2		# concatenated disk devices
-#pseudo-device	cgd	2		# cryptographic disk devices
+#pseudo-device	ccd			# concatenated disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device

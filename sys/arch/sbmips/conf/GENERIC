@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.90 2013/03/02 02:42:20 christos Exp $
+# $NetBSD: GENERIC,v 1.91 2013/04/27 18:19:50 christos Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90 $"
+#ident 		"GENERIC-$Revision: 1.91 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -176,8 +176,8 @@ ucom*   	at uplcom? portno ?
 # Pseudo-devices
 
 # Disk/mass storage pseudo-devices
-pseudo-device	ccd		4	# concatenated disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	ccd			# concatenated disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID
 pseudo-device	md			# memory disk device (ramdisk)

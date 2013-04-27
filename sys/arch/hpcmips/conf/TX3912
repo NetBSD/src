@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.81 2013/03/02 02:42:15 christos Exp $
+#	$NetBSD: TX3912,v 1.82 2013/04/27 18:19:37 christos Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -260,7 +260,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # disk/mass storage pseudo-devices
-#pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	ccd			# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
@@ -270,7 +270,7 @@ pseudo-device	vnd			# disk-like interface to files
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 
 # mouse & keyboard multiplexor pseudo-devices

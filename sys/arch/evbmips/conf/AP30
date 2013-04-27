@@ -1,10 +1,10 @@
-#	$NetBSD: AP30,v 1.26 2013/03/02 02:42:13 christos Exp $
+#	$NetBSD: AP30,v 1.27 2013/04/27 18:19:33 christos Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.26 $"
+#ident 		"AP30-$Revision: 1.27 $"
 
 maxusers	32
 
@@ -167,7 +167,7 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 # Pseudo-devices
 
 # Disk/mass storage pseudo-devices
-#pseudo-device	ccd		4		# concatenated disk devices
+#pseudo-device	ccd				# concatenated disk devices
 #pseudo-device	raid		4		# RAIDframe disk driver
 #pseudo-device	fss				# file system snapshot device
 #pseudo-device	md				# memory disk device (ramdisk)

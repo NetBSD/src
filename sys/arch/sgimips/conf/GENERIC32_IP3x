@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.96 2013/03/02 02:42:20 christos Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.97 2013/04/27 18:19:50 christos Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.96 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.97 $"
 
 maxusers	32
 
@@ -421,8 +421,8 @@ pseudo-device	crypto			# /dev/crypto device
 pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
-pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss			# file system snapshot device

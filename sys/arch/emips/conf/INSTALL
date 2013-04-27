@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.3 2012/08/17 20:11:38 abs Exp $
+# 	$NetBSD: INSTALL,v 1.4 2013/04/27 18:19:31 christos Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -83,7 +83,7 @@ eflash* at  ebus0 addr ?        # flash memory
 # Pseudo-devices							#
 #########################################################################
 
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
 pseudo-device	loop
-#pseudo-device	ccd		 4	# concatenated disks
+#pseudo-device	ccd			# concatenated disks

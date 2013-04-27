@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.41 2013/03/02 02:42:14 christos Exp $
+# $NetBSD: GENERIC,v 1.42 2013/04/27 18:19:35 christos Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.41 $"
+#ident		"GENERIC-$Revision: 1.42 $"
 
 maxusers	16
 
@@ -224,8 +224,8 @@ le*	at sbdio?			# TR2A
 # Pseudo-Devices
 
 # disk/mass strage pseudo-devices
-pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

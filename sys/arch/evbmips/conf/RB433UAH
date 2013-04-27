@@ -1,10 +1,10 @@
-#	$NetBSD: RB433UAH,v 1.5 2013/03/02 02:42:13 christos Exp $
+#	$NetBSD: RB433UAH,v 1.6 2013/04/27 18:19:33 christos Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"RB433UAH-$Revision: 1.5 $"
+#ident 		"RB433UAH-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -176,7 +176,7 @@ sd*		at scsibus? target ? lun ?
 # Pseudo-devices
 
 # Disk/mass storage pseudo-devices
-#pseudo-device	ccd		4		# concatenated disk devices
+#pseudo-device	ccd				# concatenated disk devices
 #pseudo-device	raid		4		# RAIDframe disk driver
 #pseudo-device	fss				# file system snapshot device
 #pseudo-device	md				# memory disk device (ramdisk)

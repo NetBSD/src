@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.166 2013/03/02 02:42:22 christos Exp $
+# $NetBSD: GENERIC,v 1.167 2013/04/27 18:19:55 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.166 $"
+#ident 		"GENERIC-$Revision: 1.167 $"
 
 maxusers	8
 
@@ -440,11 +440,11 @@ pseudo-device	vnd
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
-#pseudo-device	ccd	4
+#pseudo-device	ccd
 
 ## Cryptographic disk devices.  See cgd(4).
 
-#pseudo-device	cgd	4
+#pseudo-device	cgd
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 

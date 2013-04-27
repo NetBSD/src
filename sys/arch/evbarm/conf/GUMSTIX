@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.72 2013/03/02 02:42:11 christos Exp $
+#	$NetBSD: GUMSTIX,v 1.73 2013/04/27 18:19:31 christos Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -346,8 +346,8 @@ btsco*	at bthub?
 
 # disk/mass storage pseudo-devices
 #pseudo-device	bio			# RAID control device driver
-#pseudo-device	ccd		4	# concatenated/striped disk devices
-pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	ccd			# concatenated/striped disk devices
+pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

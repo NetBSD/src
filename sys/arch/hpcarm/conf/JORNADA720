@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.90 2013/03/02 02:42:14 christos Exp $
+#	$NetBSD: JORNADA720,v 1.91 2013/04/27 18:19:36 christos Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90 $"
+#ident 		"GENERIC-$Revision: 1.91 $"
 
 # estimated number of users
 maxusers	32
@@ -294,13 +294,13 @@ hpcapm0		at j720pwr?		# power management
 apmdev0		at hpcapm0		# APM
 
 # Pseudo-devices
-pseudo-device	loop	1		# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	bpfilter 		# packet filter
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
 pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter 1		# ip filter
+#pseudo-device	ipfilter 		# ip filter
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
@@ -309,8 +309,8 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	ccd	2		# concatenated disk devices
-#pseudo-device	cgd	2		# cryptographic disk devices
+#pseudo-device	ccd			# concatenated disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device

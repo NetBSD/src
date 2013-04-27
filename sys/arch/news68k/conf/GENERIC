@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113 2013/03/02 02:42:18 christos Exp $
+# $NetBSD: GENERIC,v 1.114 2013/04/27 18:19:46 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.114 $"
 
 maxusers	8
 
@@ -232,8 +232,8 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	md			# memory disk device
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	ccd		4	# concatenated and striped disks
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	ccd			# concatenated and striped disks
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

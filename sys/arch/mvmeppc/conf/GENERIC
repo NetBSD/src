@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.17 2013/03/02 02:42:18 christos Exp $
+# $NetBSD: GENERIC,v 1.18 2013/04/27 18:19:45 christos Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.17 $"
+ident		"GENERIC-$Revision: 1.18 $"
 
 maxusers	8
 
@@ -206,8 +206,8 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

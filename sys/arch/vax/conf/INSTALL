@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.64 2012/10/17 14:48:18 apb Exp $
+#	$NetBSD: INSTALL,v 1.65 2013/04/27 18:19:55 christos Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -246,13 +246,13 @@ wskbd*		at lkkbd? console ?
 #pseudo-device   accf_data		# "dataready" accept filter
 #pseudo-device   accf_http		# "httpready" accept filter
 
-pseudo-device	loop	1
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+pseudo-device	loop	
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter
 #pseudo-device	tun	
 #pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	vnd	
-#pseudo-device	ccd	4
+#pseudo-device	ccd	
 pseudo-device	raid	8		# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.17 2013/03/01 18:25:44 joerg Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.18 2013/04/27 18:19:39 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -751,7 +751,7 @@ cinclude "arch/i386/conf/INSTALL.local"
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	ccd			# concatenated/striped disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
@@ -769,7 +769,7 @@ pseudo-device	sl			# Serial Line IP
 #pseudo-device	gre			# generic L3 over IP tunnel
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+pseudo-device	pty			# pseudo-terminals
 options NO_DEV_PTM
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.

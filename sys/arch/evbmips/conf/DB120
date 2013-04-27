@@ -1,4 +1,4 @@
-#	$NetBSD: DB120,v 1.8 2013/03/02 02:42:13 christos Exp $
+#	$NetBSD: DB120,v 1.9 2013/04/27 18:19:33 christos Exp $
 #
 # Qualcomm Atheros AR9344 DB120 evaluation board.
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DB120-$Revision: 1.8 $"
+#ident 		"DB120-$Revision: 1.9 $"
 
 maxusers	32
 
@@ -185,7 +185,7 @@ sd*		at scsibus? target ? lun ?
 # Pseudo-devices
 
 # Disk/mass storage pseudo-devices
-#pseudo-device	ccd		4		# concatenated disk devices
+#pseudo-device	ccd				# concatenated disk devices
 #pseudo-device	raid		4		# RAIDframe disk driver
 #pseudo-device	fss				# file system snapshot device
 #pseudo-device	md				# memory disk device (ramdisk)

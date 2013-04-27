@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.18 2013/03/02 02:42:20 christos Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.19 2013/04/27 18:19:50 christos Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -32,7 +32,7 @@ makeoptions	TEXTADDR=0x80002000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.18 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.19 $"
 
 maxusers	32
 
@@ -235,8 +235,8 @@ zsms0		at zsc1 channel 1
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss			# file system snapshot device

@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.48 2013/03/02 02:42:19 christos Exp $
+# $NetBSD: SLAB,v 1.49 2013/04/27 18:19:47 christos Exp $
 #
 # deberg's development machine
 #
@@ -186,7 +186,7 @@ scsibus* at scsi?
 pseudo-device	md		
 
 # Misc.
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
@@ -204,5 +204,5 @@ pseudo-device	vnd			# paging to files
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	ccd		4	# concatenated disks
+pseudo-device	ccd			# concatenated disks
 pseudo-device	clockctl		# user control of clock subsystem

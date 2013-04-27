@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.55 2013/03/02 02:42:18 christos Exp $
+# 	$NetBSD: NEWS1200,v 1.56 2013/04/27 18:19:47 christos Exp $
 
 #	news1200 config file
 #
@@ -137,7 +137,7 @@ pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	md			# memory disk device
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	ccd		4	# concatenated and striped disks
+#pseudo-device	ccd			# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	sl			# SLIP interfaces
 pseudo-device	ppp			# PPP interfaces

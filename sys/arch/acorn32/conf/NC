@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.59 2013/03/02 02:42:07 christos Exp $
+#	$NetBSD: NC,v 1.60 2013/04/27 18:19:21 christos Exp $
 #
 #	NC - with wscons
 #
@@ -266,7 +266,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	strip			# STRIP
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	ccd			# concatenated disk devices
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# Ramdisk driver
 pseudo-device	clockctl		# user control of clock subsystem

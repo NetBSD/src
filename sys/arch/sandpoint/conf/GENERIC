@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.76 2013/03/02 02:42:20 christos Exp $
+# $NetBSD: GENERIC,v 1.77 2013/04/27 18:19:49 christos Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.76 $"
+#ident 		"GENERIC-$Revision: 1.77 $"
 
 maxusers	32
 
@@ -270,8 +270,8 @@ cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 #pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
-#pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	fss			# file system snapshot device
 #pseudo-device	putter			# for puffs and pud
 

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.42 2013/03/02 02:42:17 christos Exp $
+# 	$NetBSD: RC3230,v 1.43 2013/04/27 18:19:44 christos Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -140,7 +140,7 @@ pseudo-device	tun			# Network "tunnel" device
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	bpfilter		# Berkeley Packet Filter
 pseudo-device	vnd			# disk-like interface to files
-pseudo-device	ccd		4	# concatenated and striped disks
+pseudo-device	ccd			# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	strip			# radio clock

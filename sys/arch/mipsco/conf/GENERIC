@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.81 2013/03/01 18:25:48 joerg Exp $
+# $NetBSD: GENERIC,v 1.82 2013/04/27 18:19:44 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -173,8 +173,8 @@ pseudo-device	bpfilter		# Berkeley Packet Filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
-#pseudo-device	ccd		4	# concatenated and striped disks
-#pseudo-device	cgd		4	# cryptographic disks
+#pseudo-device	ccd			# concatenated and striped disks
+#pseudo-device	cgd			# cryptographic disks
 #pseudo-device	raid		8	# RAIDframe disk driver
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1

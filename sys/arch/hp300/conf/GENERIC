@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.175 2013/03/02 02:42:14 christos Exp $
+# $NetBSD: GENERIC,v 1.176 2013/04/27 18:19:35 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.175 $"
+#ident 		"GENERIC-$Revision: 1.176 $"
 
 maxusers	32		# estimated number of users
 
@@ -278,8 +278,8 @@ uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 #
 
 # disk pseudo-devices
-pseudo-device	ccd		4	# concatenated disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	ccd			# concatenated disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.69 2012/08/17 20:11:41 abs Exp $
+# 	$NetBSD: INSTALL,v 1.70 2013/04/27 18:19:48 christos Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -175,10 +175,10 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 # Pseudo-devices							#
 #########################################################################
 
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
 pseudo-device	loop
-pseudo-device	ccd		 4	# concatenated disks
+pseudo-device	ccd		 	# concatenated disks
 #pseudo-device	fss		 	# file system snapshot device
 #pseudo-device	wsfont			# wsfont control device
 pseudo-device	wsmux			# wsmux control device

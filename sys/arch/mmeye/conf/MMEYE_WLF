@@ -1,4 +1,4 @@
-# $NetBSD: MMEYE_WLF,v 1.9 2013/03/02 02:42:17 christos Exp $
+# $NetBSD: MMEYE_WLF,v 1.10 2013/04/27 18:19:45 christos Exp $
 #
 # MMEYE_WLF -- Brains Inc. MMEYE-WLF platforms kernel
 #
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 maxusers	16		# estimated number of users
 
@@ -226,8 +226,8 @@ btsco* at bthub?
 pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 
-pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
