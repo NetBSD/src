@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.76 2013/04/27 21:43:29 christos Exp $
+#	$NetBSD: XEN3_DOM0,v 1.77 2013/04/27 22:21:14 christos Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -797,7 +797,7 @@ pseudo-device	accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	sequencer		# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
