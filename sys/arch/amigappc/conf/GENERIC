@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.15 2013/03/02 02:42:09 christos Exp $
+# $NetBSD: GENERIC,v 1.16 2013/04/27 18:19:25 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.15 $"
+#ident          "GENERIC-$Revision: 1.16 $"
 
 maxusers	8
 
@@ -428,8 +428,8 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	vnd			# vnode pseudo-disks
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	ccd		4	# concatenated disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	ccd			# concatenated disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
