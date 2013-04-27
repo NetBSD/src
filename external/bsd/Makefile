@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2013/03/24 22:22:32 christos Exp $
+#	$NetBSD: Makefile,v 1.42 2013/04/27 23:03:10 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,9 @@ SUBDIR+= lutok kyua-testers kyua-cli kyua-atf-compat
 .endif
 .if (${MKLDAP} != "no")
 SUBDIR+= openldap
+.endif
+.if (${MKLIBCXX} != "no)
+SUBDIR+= libc++
 .endif
 .if (${MKLLVM} != "no")
 SUBDIR+= llvm
