@@ -1,4 +1,4 @@
-# $NetBSD: t_umountstress.sh,v 1.2 2013/04/20 09:00:03 mlelstv Exp $
+# $NetBSD: t_umountstress.sh,v 1.3 2013/04/27 07:45:07 mlelstv Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,7 +66,7 @@ EOF
 	exec 9< ${TMPMP}/hold
 
 	(
-		for j in 0 1 2 3 4 5 6 7 8 9; do
+		for j in 0 1 2 3 4; do
 		for k in 0 1 2 3 4 5 6 7 8 9; do
 			if ! dd msgfmt=quiet if=/dev/zero \
 				count=1 of=${TMPMP}/test$i$j$k; then
@@ -109,7 +109,7 @@ EOF
 
 	case $rc in
 	0) ;;
-	*) atf_fail "File operation failed with rc $rc"
+	*) atf_fail "File operation failed"
 	esac
 }
 umountstress_cleanup()
