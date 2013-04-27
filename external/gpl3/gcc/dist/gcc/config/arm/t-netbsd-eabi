@@ -34,3 +34,7 @@ LIB2ADDEH = $(srcdir)/config/arm/unwind-arm.c \
 LIB2ADDEHDEP = $(UNWIND_H) $(srcdir)/config/$(LIB1ASMSRC)
 
 SHLIB_MAPFILES += $(srcdir)/config/arm/libgcc-bpabi.ver
+
+MULTILIB_OPTIONS = mabi=aapcs-linux/mabi=aapcs/mabi=atpcs/mabi=apcs-gnu/mabi=iwmmxt
+MULTILIB_DIRNAMES = aapcs-linux aapcs atpcs oabi iwmmxt
+MULTILIB_OSDIRNAMES = . ../lib/aapcs ../lib/atpcs ../lib/oabi ../lib/iwmmxt
