@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.134 2013/04/06 12:16:49 uebayasi Exp $
+#  $NetBSD: Makefile,v 1.135 2013/04/27 22:58:15 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -153,7 +153,7 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	s_erff.c s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c s_fabsf.c s_fabsl.c \
 	s_finite.c s_finitef.c \
 	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c s_ilogbl.c \
-	s_isinff.c s_isnanf.c s_ldexpf.c s_lib_version.c s_log1p.c \
+	s_isinff.c s_isnanf.c s_lib_version.c s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_logbl.c \
 	s_matherr.c s_modff.c s_nextafter.c s_nextafterl.c \
 	s_nextafterf.c s_remquo.c s_remquof.c s_rint.c s_rintf.c s_round.c s_roundf.c s_scalbn.c \
@@ -169,7 +169,7 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	w_pow.c w_powf.c w_remainder.c w_remainderf.c w_scalb.c w_scalbf.c \
 	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c \
 	lrint.c lrintf.c llrint.c llrintf.c lround.c lroundf.c llround.c \
-	llroundf.c s_frexp.c s_frexpl.c s_ldexp.c s_modf.c \
+	llroundf.c s_frexp.c s_frexpl.c s_modf.c \
 	s_fmax.c s_fmaxf.c s_fmaxl.c \
 	s_fmin.c s_fminf.c s_fminl.c s_fdim.c
 
