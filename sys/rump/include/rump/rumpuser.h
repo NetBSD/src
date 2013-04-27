@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.84 2013/04/27 16:32:56 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.85 2013/04/27 16:56:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -121,7 +121,10 @@ int rumpuser_dprintf(const char *, ...) __printflike(1, 2);
 
 int rumpuser_getnhostcpu(void);
 
-uint32_t rumpuser_arc4random(void);
+/* always succeeds unless NOWAIT is given */
+#define RUMPUSER_RANDOM_HARD	0x01
+#define RUMPUSER_RANDOM_NOWAIT	0x02
+size_t rumpuser_getrandom(void *, size_t, int);
 
 __dead void rumpuser_biothread(void *);
 
