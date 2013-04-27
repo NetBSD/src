@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1817 2013/04/26 18:32:41 christos Exp $
+#	$NetBSD: mi,v 1.1818 2013/04/27 23:02:19 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -204,6 +204,104 @@
 ./usr/include/bluetooth.h			comp-c-include
 ./usr/include/bm.h				comp-c-include
 ./usr/include/bzlib.h				comp-c-include
+./usr/include/c++/__bit_reference		comp-cxx-include	libcxx
+./usr/include/c++/__config			comp-cxx-include	libcxx
+./usr/include/c++/__debug			comp-cxx-include	libcxx
+./usr/include/c++/__functional_03		comp-cxx-include	libcxx
+./usr/include/c++/__functional_base		comp-cxx-include	libcxx
+./usr/include/c++/__functional_base_03		comp-cxx-include	libcxx
+./usr/include/c++/__hash_table			comp-cxx-include	libcxx
+./usr/include/c++/__locale			comp-cxx-include	libcxx
+./usr/include/c++/__mutex_base			comp-cxx-include	libcxx
+./usr/include/c++/__split_buffer		comp-cxx-include	libcxx
+./usr/include/c++/__sso_allocator		comp-cxx-include	libcxx
+./usr/include/c++/__std_stream			comp-cxx-include	libcxx
+./usr/include/c++/__tree			comp-cxx-include	libcxx
+./usr/include/c++/__tuple			comp-cxx-include	libcxx
+./usr/include/c++/__tuple_03			comp-cxx-include	libcxx
+./usr/include/c++/__undef_min_max		comp-cxx-include	libcxx
+./usr/include/c++/algorithm			comp-cxx-include	libcxx
+./usr/include/c++/array				comp-cxx-include	libcxx
+./usr/include/c++/atomic			comp-cxx-include	libcxx
+./usr/include/c++/bitset			comp-cxx-include	libcxx
+./usr/include/c++/cassert			comp-cxx-include	libcxx
+./usr/include/c++/ccomplex			comp-cxx-include	libcxx
+./usr/include/c++/cctype			comp-cxx-include	libcxx
+./usr/include/c++/cerrno			comp-cxx-include	libcxx
+./usr/include/c++/cfenv				comp-cxx-include	libcxx
+./usr/include/c++/cfloat			comp-cxx-include	libcxx
+./usr/include/c++/chrono			comp-cxx-include	libcxx
+./usr/include/c++/cinttypes			comp-cxx-include	libcxx
+./usr/include/c++/ciso646			comp-cxx-include	libcxx
+./usr/include/c++/climits			comp-cxx-include	libcxx
+./usr/include/c++/clocale			comp-cxx-include	libcxx
+./usr/include/c++/cmath				comp-cxx-include	libcxx
+./usr/include/c++/codecvt			comp-cxx-include	libcxx
+./usr/include/c++/complex			comp-cxx-include	libcxx
+./usr/include/c++/complex.h			comp-cxx-include	libcxx
+./usr/include/c++/condition_variable		comp-cxx-include	libcxx
+./usr/include/c++/csetjmp			comp-cxx-include	libcxx
+./usr/include/c++/csignal			comp-cxx-include	libcxx
+./usr/include/c++/cstdarg			comp-cxx-include	libcxx
+./usr/include/c++/cstdbool			comp-cxx-include	libcxx
+./usr/include/c++/cstddef			comp-cxx-include	libcxx
+./usr/include/c++/cstdint			comp-cxx-include	libcxx
+./usr/include/c++/cstdio			comp-cxx-include	libcxx
+./usr/include/c++/cstdlib			comp-cxx-include	libcxx
+./usr/include/c++/cstring			comp-cxx-include	libcxx
+./usr/include/c++/ctgmath			comp-cxx-include	libcxx
+./usr/include/c++/ctime				comp-cxx-include	libcxx
+./usr/include/c++/cwchar			comp-cxx-include	libcxx
+./usr/include/c++/cwctype			comp-cxx-include	libcxx
+./usr/include/c++/deque				comp-cxx-include	libcxx
+./usr/include/c++/exception			comp-cxx-include	libcxx
+./usr/include/c++/ext/__hash			comp-cxx-include	libcxx
+./usr/include/c++/ext/hash_map			comp-cxx-include	libcxx
+./usr/include/c++/ext/hash_set			comp-cxx-include	libcxx
+./usr/include/c++/forward_list			comp-cxx-include	libcxx
+./usr/include/c++/fstream			comp-cxx-include	libcxx
+./usr/include/c++/functional			comp-cxx-include	libcxx
+./usr/include/c++/future			comp-cxx-include	libcxx
+./usr/include/c++/initializer_list		comp-cxx-include	libcxx
+./usr/include/c++/iomanip			comp-cxx-include	libcxx
+./usr/include/c++/ios				comp-cxx-include	libcxx
+./usr/include/c++/iosfwd			comp-cxx-include	libcxx
+./usr/include/c++/iostream			comp-cxx-include	libcxx
+./usr/include/c++/istream			comp-cxx-include	libcxx
+./usr/include/c++/iterator			comp-cxx-include	libcxx
+./usr/include/c++/limits			comp-cxx-include	libcxx
+./usr/include/c++/list				comp-cxx-include	libcxx
+./usr/include/c++/locale			comp-cxx-include	libcxx
+./usr/include/c++/map				comp-cxx-include	libcxx
+./usr/include/c++/memory			comp-cxx-include	libcxx
+./usr/include/c++/mutex				comp-cxx-include	libcxx
+./usr/include/c++/new				comp-cxx-include	libcxx
+./usr/include/c++/numeric			comp-cxx-include	libcxx
+./usr/include/c++/ostream			comp-cxx-include	libcxx
+./usr/include/c++/queue				comp-cxx-include	libcxx
+./usr/include/c++/random			comp-cxx-include	libcxx
+./usr/include/c++/ratio				comp-cxx-include	libcxx
+./usr/include/c++/regex				comp-cxx-include	libcxx
+./usr/include/c++/scoped_allocator		comp-cxx-include	libcxx
+./usr/include/c++/set				comp-cxx-include	libcxx
+./usr/include/c++/sstream			comp-cxx-include	libcxx
+./usr/include/c++/stack				comp-cxx-include	libcxx
+./usr/include/c++/stdexcept			comp-cxx-include	libcxx
+./usr/include/c++/streambuf			comp-cxx-include	libcxx
+./usr/include/c++/string			comp-cxx-include	libcxx
+./usr/include/c++/strstream			comp-cxx-include	libcxx
+./usr/include/c++/system_error			comp-cxx-include	libcxx
+./usr/include/c++/tgmath.h			comp-cxx-include	libcxx
+./usr/include/c++/thread			comp-cxx-include	libcxx
+./usr/include/c++/tuple				comp-cxx-include	libcxx
+./usr/include/c++/type_traits			comp-cxx-include	libcxx
+./usr/include/c++/typeindex			comp-cxx-include	libcxx
+./usr/include/c++/typeinfo			comp-cxx-include	libcxx
+./usr/include/c++/unordered_map			comp-cxx-include	libcxx
+./usr/include/c++/unordered_set			comp-cxx-include	libcxx
+./usr/include/c++/utility			comp-cxx-include	libcxx
+./usr/include/c++/valarray			comp-cxx-include	libcxx
+./usr/include/c++/vector			comp-cxx-include	libcxx
 ./usr/include/cdbr.h				comp-c-include
 ./usr/include/cdbw.h				comp-c-include
 ./usr/include/cdk/alphalist.h			comp-obsolete		obsolete
@@ -2787,6 +2885,8 @@
 ./usr/lib/libbz2_p.a				comp-c-proflib		profile
 ./usr/lib/libc.a				comp-c-lib
 ./usr/lib/libc_p.a				comp-c-proflib		profile
+./usr/lib/libc++.a				comp-c-lib		libcxx
+./usr/lib/libc++_p.a				comp-c-proflib		libcxx,profile
 ./usr/lib/libcdk.a				comp-obsolete		obsolete
 ./usr/lib/libcdk_p.a				comp-obsolete		obsolete
 ./usr/lib/libcom_err.a				comp-krb5-lib		kerberos

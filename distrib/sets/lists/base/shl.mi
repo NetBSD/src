@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.663 2013/04/11 17:43:16 christos Exp $
+# $NetBSD: shl.mi,v 1.664 2013/04/27 23:02:18 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -195,6 +195,9 @@
 ./usr/lib/libc.so				base-sys-shlib
 ./usr/lib/libc.so.12				base-sys-shlib
 ./usr/lib/libc.so.12.185			base-sys-shlib
+./usr/lib/libc++.so				base-sys-shlib		libcxx
+./usr/lib/libc++.so.1				base-sys-shlib		libcxx
+./usr/lib/libc++.so.1.0				base-sys-shlib		libcxx
 ./usr/lib/libcdk.so				base-obsolete		obsolete
 ./usr/lib/libcom_err.so				base-krb5-shlib		kerberos
 ./usr/lib/libcom_err.so.7			base-krb5-shlib		kerberos
