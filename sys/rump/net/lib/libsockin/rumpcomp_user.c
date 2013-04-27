@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.2 2013/03/19 02:07:43 christos Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.3 2013/04/27 15:01:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -30,6 +30,7 @@
 #include <sys/socket.h>
 
 #include <errno.h>
+#include <poll.h>
 
 #include <rump/rumpuser_component.h>
 
@@ -161,6 +162,20 @@ rumpcomp_sockin_setsockopt(int s, int level, int name,
 	int rv;
 
 	rv = setsockopt(s, level, name, data, slen);
+
+	seterror();
+	return rv;
+}
+
+int
+rumpcomp_sockin_poll(struct pollfd *fds, int nfds, int timeout, int *error)
+{
+	void *cookie;
+	int rv;
+
+	cookie = rumpuser_component_unschedule();
+	rv = poll(fds, (nfds_t)nfds, timeout);
+	rumpuser_component_schedule(cookie);
 
 	seterror();
 	return rv;
