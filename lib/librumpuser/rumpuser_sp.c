@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.51 2013/01/14 21:00:16 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.52 2013/04/27 14:59:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.51 2013/01/14 21:00:16 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.52 2013/04/27 14:59:08 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -781,7 +781,7 @@ sp_copyin(void *arg, const void *raddr, void *laddr, size_t *len, int wantstr)
 	void *rdata = NULL; /* XXXuninit */
 	int rv, nlocks;
 
-	rumpuser__kunlock(0, &nlocks, NULL);
+	rumpuser__unschedule(0, &nlocks, NULL);
 
 	rv = copyin_req(spc, raddr, len, wantstr, &rdata);
 	if (rv)
@@ -791,7 +791,7 @@ sp_copyin(void *arg, const void *raddr, void *laddr, size_t *len, int wantstr)
 	free(rdata);
 
  out:
-	rumpuser__klock(nlocks, NULL);
+	rumpuser__reschedule(nlocks, NULL);
 	if (rv)
 		return EFAULT;
 	return 0;
@@ -817,9 +817,9 @@ sp_copyout(void *arg, const void *laddr, void *raddr, size_t dlen)
 	struct spclient *spc = arg;
 	int nlocks, rv;
 
-	rumpuser__kunlock(0, &nlocks, NULL);
+	rumpuser__unschedule(0, &nlocks, NULL);
 	rv = send_copyout_req(spc, raddr, laddr, dlen);
-	rumpuser__klock(nlocks, NULL);
+	rumpuser__reschedule(nlocks, NULL);
 
 	if (rv)
 		return EFAULT;
@@ -847,7 +847,7 @@ rumpuser_sp_anonmmap(void *arg, size_t howmuch, void **addr)
 	void *resp, *rdata;
 	int nlocks, rv;
 
-	rumpuser__kunlock(0, &nlocks, NULL);
+	rumpuser__unschedule(0, &nlocks, NULL);
 
 	rv = anonmmap_req(spc, howmuch, &rdata);
 	if (rv) {
@@ -865,7 +865,7 @@ rumpuser_sp_anonmmap(void *arg, size_t howmuch, void **addr)
 	*addr = resp;
 
  out:
-	rumpuser__klock(nlocks, NULL);
+	rumpuser__reschedule(nlocks, NULL);
 
 	if (rv)
 		return rv;
@@ -878,9 +878,9 @@ rumpuser_sp_raise(void *arg, int signo)
 	struct spclient *spc = arg;
 	int rv, nlocks;
 
-	rumpuser__kunlock(0, &nlocks, NULL);
+	rumpuser__unschedule(0, &nlocks, NULL);
 	rv = send_raise_req(spc, signo);
-	rumpuser__klock(nlocks, NULL);
+	rumpuser__reschedule(nlocks, NULL);
 
 	return rv;
 }

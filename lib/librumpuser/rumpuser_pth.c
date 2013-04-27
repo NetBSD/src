@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.13 2013/04/27 13:59:46 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.14 2013/04/27 14:59:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.13 2013/04/27 13:59:46 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.14 2013/04/27 14:59:08 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -113,9 +113,14 @@ struct rumpuser_cv rumpuser_aio_cv;
 int rumpuser_aio_head, rumpuser_aio_tail;
 struct rumpuser_aio rumpuser_aios[N_AIOS];
 
-kernel_lockfn	rumpuser__klock;
-kernel_unlockfn	rumpuser__kunlock;
-int		rumpuser__wantthreads;
+void
+rumpuser__thrinit(void)
+{
+
+	pthread_mutex_init(&rumpuser_aio_mtx.pthmtx, NULL);
+	pthread_cond_init(&rumpuser_aio_cv.pthcv, NULL);
+	pthread_key_create(&curlwpkey, NULL);
+}
 
 void
 /*ARGSUSED*/
@@ -127,7 +132,7 @@ rumpuser_biothread(void *arg)
 	int error, dummy;
 
 	/* unschedule from CPU.  we reschedule before running the interrupt */
-	rumpuser__kunlock(0, &dummy, NULL);
+	rumpuser__unschedule(0, &dummy, NULL);
 	assert(dummy == 0);
 
 	NOFAIL_ERRNO(pthread_mutex_lock(&rumpuser_aio_mtx.pthmtx));
@@ -165,9 +170,9 @@ rumpuser_biothread(void *arg)
 #endif
 			}
 		}
-		rumpuser__klock(0, NULL);
+		rumpuser__reschedule(0, NULL);
 		biodone(rua->rua_bp, (size_t)rv, error);
-		rumpuser__kunlock(0, &dummy, NULL);
+		rumpuser__unschedule(0, &dummy, NULL);
 
 		rua->rua_bp = NULL;
 
@@ -180,44 +185,6 @@ rumpuser_biothread(void *arg)
 	fprintf(stderr, "error: rumpuser_biothread reached unreachable\n");
 	abort();
 }
-
-void
-rumpuser_thrinit(kernel_lockfn lockfn, kernel_unlockfn unlockfn, int threads)
-{
-#ifdef RUMPUSER_USE_RANDOM
-	/* XXX: there's no rumpuser_bootstrap, so do this here */
-	uint32_t rv;
-	int fd;
-
-	if ((fd = open("/dev/urandom", O_RDONLY)) == -1) {
-		srandom(time(NULL));
-	} else {
-		if (read(fd, &rv, sizeof(rv)) != sizeof(rv))
-			srandom(time(NULL));
-		else
-			srandom(rv);
-		close(fd);
-	}
-#endif
-
-	pthread_mutex_init(&rumpuser_aio_mtx.pthmtx, NULL);
-	pthread_cond_init(&rumpuser_aio_cv.pthcv, NULL);
-
-	pthread_key_create(&curlwpkey, NULL);
-
-	rumpuser__klock = lockfn;
-	rumpuser__kunlock = unlockfn;
-	rumpuser__wantthreads = threads;
-}
-
-#if 0
-void
-rumpuser__thrdestroy(void)
-{
-
-	pthread_key_delete(curlwpkey);
-}
-#endif
 
 int
 rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
@@ -504,11 +471,11 @@ rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 	int nlocks;
 
 	cv->nwaiters++;
-	rumpuser__kunlock(0, &nlocks, mtx);
+	rumpuser__unschedule(0, &nlocks, mtx);
 	mtxexit(mtx);
 	NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx));
 	mtxenter(mtx);
-	rumpuser__klock(nlocks, mtx);
+	rumpuser__reschedule(nlocks, mtx);
 	cv->nwaiters--;
 }
 
@@ -534,11 +501,11 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	ts.tv_sec = sec; ts.tv_nsec = nsec;
 
 	cv->nwaiters++;
-	rumpuser__kunlock(0, &nlocks, mtx);
+	rumpuser__unschedule(0, &nlocks, mtx);
 	mtxexit(mtx);
 	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
 	mtxenter(mtx);
-	rumpuser__klock(nlocks, mtx);
+	rumpuser__reschedule(nlocks, mtx);
 	cv->nwaiters--;
 	if (rv != 0 && rv != ETIMEDOUT)
 		abort();

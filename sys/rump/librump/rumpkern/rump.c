@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.257 2013/03/10 17:05:12 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.258 2013/04/27 14:59:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.257 2013/03/10 17:05:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.258 2013/04/27 14:59:09 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -246,18 +246,21 @@ rump__init(int rump_version)
 	else
 		rump_inited = 1;
 
-	if (rumpuser_getversion() != RUMPUSER_VERSION) {
-		/* let's hope the ABI of rumpuser_dprintf is the same ;) */
-		rumpuser_dprintf("rumpuser version mismatch: %d vs. %d\n",
-		    rumpuser_getversion(), RUMPUSER_VERSION);
-		return EPROGMISMATCH;
+	/* initialize hypervisor */
+	if (rumpuser_init(RUMPUSER_VERSION,
+	    rump_user_schedule, rump_user_unschedule) != 0) {
+		rumpuser_dprintf("rumpuser init failed\n");
+		return EINVAL;
 	}
 
+	/* retrieve env vars which affect the early stage of bootstrap */
+	if (rumpuser_getenv("RUMP_THREADS", buf, sizeof(buf), &error) == 0) {
+		rump_threads = *buf != '0';
+	}
 	if (rumpuser_getenv("RUMP_VERBOSE", buf, sizeof(buf), &error) == 0) {
 		if (*buf != '0')
 			boothowto = AB_VERBOSE;
 	}
-
 	if (rumpuser_getenv("RUMP_NCPU", buf, sizeof(buf), &error) == 0)
 		error = 0;
 	if (error == 0) {
@@ -267,6 +270,7 @@ rump__init(int rump_version)
 	} else {
 		numcpu = rumpuser_getnhostcpu();
 	}
+
 	rump_thread_init();
 	rump_cpus_bootstrap(&numcpu);
 
@@ -283,11 +287,6 @@ rump__init(int rump_version)
 		return EPROGMISMATCH;
 	}
 
-	if (rumpuser_getenv("RUMP_THREADS", buf, sizeof(buf), &error) == 0) {
-		rump_threads = *buf != '0';
-	}
-	rumpuser_thrinit(rump_user_schedule, rump_user_unschedule,
-	    rump_threads);
 	rump_intr_init(numcpu);
 	rump_tsleep_init();
 
