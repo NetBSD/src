@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.44 2013/04/27 21:43:10 christos Exp $
+# $NetBSD: FOURMEG,v 1.45 2013/04/27 22:21:12 christos Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -194,7 +194,7 @@ pseudo-device	pty
 #pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 pseudo-device	wsmux			# keyboard/mouse multiplexor
 pseudo-device	clockctl		# user control of clock subsystem
 
