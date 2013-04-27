@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.78 2013/04/27 14:59:09 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.79 2013/04/27 15:01:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -42,8 +42,6 @@
 
 int rumpuser_daemonize_begin(void);
 int rumpuser_daemonize_done(int);
-
-struct pollfd;
 
 typedef void (*rump_reschedulefn)(int, void *);
 typedef void (*rump_unschedulefn)(int, int *, void *);
@@ -108,8 +106,6 @@ int rumpuser_gettime(uint64_t *, uint64_t *, int *);
 int rumpuser_getenv(const char *, char *, size_t, int *);
 
 int rumpuser_gethostname(char *, size_t, int *);
-
-int rumpuser_poll(struct pollfd *, int, int, int *);
 
 int rumpuser_putchar(int, int *);
 

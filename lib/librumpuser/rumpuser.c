@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.30 2013/04/27 14:59:08 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.31 2013/04/27 15:01:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.30 2013/04/27 14:59:08 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.31 2013/04/27 15:01:21 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: rumpuser.c,v 1.30 2013/04/27 14:59:08 pooka Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <poll.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -588,13 +587,6 @@ rumpuser_gethostname(char *name, size_t namelen, int *error)
 
 	*error = 0;
 	return 0;
-}
-
-int
-rumpuser_poll(struct pollfd *fds, int nfds, int timeout, int *error)
-{
-
-	DOCALL_KLOCK(int, (poll(fds, (nfds_t)nfds, timeout)));
 }
 
 int

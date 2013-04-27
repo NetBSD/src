@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.27 2013/03/18 13:14:11 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.28 2013/04/27 15:01:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.27 2013/03/18 13:14:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.28 2013/04/27 15:01:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -300,7 +300,7 @@ sockinworker(void *arg)
 		}
 
 		/* find affected sockets & process */
-		rv = rumpuser_poll(pfds, cursock, POLLTIMEOUT, &error);
+		rv = rumpcomp_sockin_poll(pfds, cursock, POLLTIMEOUT, &error);
 		for (i = 0; i < cursock && rv > 0; i++) {
 			if (pfds[i].revents & POLLIN) {
 				mutex_enter(&su_mtx);

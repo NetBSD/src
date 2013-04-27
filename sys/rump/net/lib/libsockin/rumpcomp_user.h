@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.h,v 1.1 2013/03/18 13:14:11 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.h,v 1.2 2013/04/27 15:01:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -40,3 +40,4 @@ int  rumpcomp_sockin_listen(int, int, int *);
 int  rumpcomp_sockin_getname(int, struct sockaddr *, int *,
 			      enum rumpcomp_sockin_getnametype, int *);
 int  rumpcomp_sockin_setsockopt(int, int, int, const void *, int, int *);
+int  rumpcomp_sockin_poll(struct pollfd *, int, int, int *);
