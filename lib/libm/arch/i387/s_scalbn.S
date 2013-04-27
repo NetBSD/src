@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_scalbn.S,v 1.10 2013/02/11 01:19:33 matt Exp $")
+RCSID("$NetBSD: s_scalbn.S,v 1.11 2013/04/27 18:36:41 joerg Exp $")
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(scalbn,_scalbln)
@@ -28,7 +28,7 @@ STRONG_ALIAS(_scalbn, scalbln)
 
 ENTRY(_scalbln)
 #ifdef __x86_64__
-	movq %rdx,-16(%rsp)
+	movq %rdi,-16(%rsp)
 	fildq -16(%rsp)
 	movsd %xmm0,-8(%rsp)
 	fldl -8(%rsp)
