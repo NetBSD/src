@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.31 2013/04/27 16:32:57 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.32 2013/04/27 22:26:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.31 2013/04/27 16:32:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.32 2013/04/27 22:26:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -165,14 +165,14 @@ rump_scheduler_init(int numcpu)
 		ci = &rump_cpus[i];
 		rcpu->rcpu_ci = ci;
 		ci->ci_schedstate.spc_mutex =
-		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
 		ci->ci_schedstate.spc_flags = SPCF_RUNNING;
 		rcpu->rcpu_wanted = 0;
 		rumpuser_cv_init(&rcpu->rcpu_cv);
 		rumpuser_mutex_init(&rcpu->rcpu_mtx, RUMPUSER_MTX_SPIN);
 	}
 
-	mutex_init(&unruntime_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&unruntime_lock, MUTEX_DEFAULT, IPL_SCHED);
 }
 
 /*
