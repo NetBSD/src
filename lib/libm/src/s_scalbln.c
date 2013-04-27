@@ -1,4 +1,4 @@
-/*	$NetBSD: s_scalbln.c,v 1.2 2013/02/11 01:47:04 christos Exp $	*/
+/*	$NetBSD: s_scalbln.c,v 1.3 2013/04/27 16:43:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
@@ -30,12 +30,15 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_scalbln.c,v 1.2 2005/03/07 04:57:50 das Exp $");
 #else
-__RCSID("$NetBSD: s_scalbln.c,v 1.2 2013/02/11 01:47:04 christos Exp $");
+__RCSID("$NetBSD: s_scalbln.c,v 1.3 2013/04/27 16:43:13 joerg Exp $");
 #endif
+
+#include "namespace.h"
 
 #include <limits.h>
 #include <math.h>
 
+__weak_alias(scalbln, _scalbln)
 double
 scalbln (double x, long n)
 {
@@ -51,6 +54,7 @@ scalbln (double x, long n)
 	return (scalbn(x, in));
 }
 
+__weak_alias(scalblnf, _scalblnf)
 float
 scalblnf (float x, long n)
 {
@@ -66,6 +70,9 @@ scalblnf (float x, long n)
 	return (scalbnf(x, in));
 }
 
+#ifndef _LP64
+__weak_alias(scalblnl, _scalblnl)
+
 long double
 scalblnl (long double x, long n)
 {
@@ -80,3 +87,4 @@ scalblnl (long double x, long n)
 	}
 	return (scalbnl(x, (int)n));
 }
+#endif
