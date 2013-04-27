@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.72 2013/04/27 21:43:10 christos Exp $
+# $NetBSD: GENERIC,v 1.73 2013/04/27 22:21:12 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -255,7 +255,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	sequencer		# MIDI sequencer
 pseudo-device	wsmux			# keyboard/mouse multiplexor
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

@@ -1,4 +1,4 @@
-#	$NetBSD: RB800,v 1.23 2013/03/02 02:42:14 christos Exp $
+#	$NetBSD: RB800,v 1.24 2013/04/27 22:21:14 christos Exp $
 #
 #	RB800 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB800-$Revision: 1.23 $"
+ident 		"RB800-$Revision: 1.24 $"
 
 maxusers	32
 
@@ -225,7 +225,7 @@ wm*		at pci? dev ? function ?	# Intel Ethernet
 makphy* 	at mii? phy ?			# Marvell PHYs
 ukphy*		at mii? phy ?			# generic unknown PHYs
 
-pseudo-device	md		1	# memory disk device
+pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	clockctl		# user control of clock subsystem
