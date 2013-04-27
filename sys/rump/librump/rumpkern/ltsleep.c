@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.29 2012/01/28 12:22:33 rmind Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.30 2013/04/27 16:32:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.29 2012/01/28 12:22:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.30 2013/04/27 16:32:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -174,5 +174,5 @@ void
 rump_tsleep_init()
 {
 
-	rumpuser_mutex_init(&qlock);
+	rumpuser_mutex_init(&qlock, RUMPUSER_MTX_SPIN);
 }

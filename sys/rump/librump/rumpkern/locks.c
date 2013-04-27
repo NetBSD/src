@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.56 2013/04/27 13:59:46 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.57 2013/04/27 16:32:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.56 2013/04/27 13:59:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.57 2013/04/27 16:32:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -90,7 +90,10 @@ static lockops_t rw_lockops = {
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 {
+	int ruflags = RUMPUSER_MTX_KMUTEX;
 	int isspin;
+
+	CTASSERT(sizeof(kmutex_t) >= sizeof(void *));
 
 	/*
 	 * Try to figure out if the caller wanted a spin mutex or
@@ -110,9 +113,9 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 		isspin = 1;
 	}
 
-	CTASSERT(sizeof(kmutex_t) >= sizeof(void *));
-
-	rumpuser_mutex_init_kmutex((struct rumpuser_mtx **)mtx, isspin);
+	if (isspin)
+		ruflags |= RUMPUSER_MTX_SPIN;
+	rumpuser_mutex_init((struct rumpuser_mtx **)mtx, ruflags);
 	ALLOCK(mtx, &mutex_lockops);
 }
 

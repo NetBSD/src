@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.18 2013/03/10 16:51:31 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.19 2013/04/27 16:32:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.18 2013/03/10 16:51:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.19 2013/04/27 16:32:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -91,7 +91,7 @@ void
 rump_thread_init(void)
 {
 
-	rumpuser_mutex_init(&thrmtx);
+	rumpuser_mutex_init(&thrmtx, RUMPUSER_MTX_SPIN);
 	rumpuser_cv_init(&thrcv);
 }
 
