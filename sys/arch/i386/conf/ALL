@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.355 2013/04/27 21:43:28 christos Exp $
+# $NetBSD: ALL,v 1.356 2013/04/27 22:21:14 christos Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.355 $"
+#ident 		"ALL-$Revision: 1.356 $"
 
 maxusers	64		# estimated number of users
 
@@ -1717,7 +1717,7 @@ pseudo-device	accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	sequencer		# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem

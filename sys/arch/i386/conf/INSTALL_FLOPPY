@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.19 2013/04/27 21:43:29 christos Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.20 2013/04/27 22:21:14 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -771,7 +771,7 @@ pseudo-device	sl			# Serial Line IP
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 options NO_DEV_PTM
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 

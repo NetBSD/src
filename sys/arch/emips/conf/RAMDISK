@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.1 2011/01/26 01:18:50 pooka Exp $
+# 	$NetBSD: RAMDISK,v 1.2 2013/04/27 22:21:13 christos Exp $
 #
 # Install kernel with ramdisk added.
 # The ramdisk is be too big to netboot directly via ECOFF on some machines,
@@ -23,4 +23,4 @@ file-system 	MFS		# memory file system
 # Extra Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)

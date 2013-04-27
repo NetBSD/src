@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.27 2013/04/27 21:43:22 christos Exp $
+#	$NetBSD: OVERO,v 1.28 2013/04/27 22:21:14 christos Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo COMS platforms kernel
 #
@@ -294,7 +294,7 @@ pseudo-device	cgd			# cryptographic disk devices
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 #pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
@@ -326,7 +326,7 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 options 	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
