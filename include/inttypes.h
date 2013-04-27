@@ -1,4 +1,4 @@
-/*	$NetBSD: inttypes.h,v 1.9 2013/04/16 21:44:06 joerg Exp $	*/
+/*	$NetBSD: inttypes.h,v 1.10 2013/04/27 21:24:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _INTTYPES_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/inttypes.h>
 #include <machine/ansi.h>
 
