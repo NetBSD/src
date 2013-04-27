@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.75 2013/03/02 02:42:08 christos Exp $
+#	$NetBSD: P5064,v 1.76 2013/04/27 18:19:21 christos Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.75 $"
+#ident 		"P5064-$Revision: 1.76 $"
 
 maxusers 32
 
@@ -376,13 +376,13 @@ fd*	at	fdc? drive ?
 #wsmouse*	at	pms?
 
 pseudo-device	bpfilter
-pseudo-device	ccd		4
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	ccd		
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid		4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG	# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	ipfilter	1
-pseudo-device	loop		1
+pseudo-device	ipfilter
+pseudo-device	loop		
 pseudo-device	md		
 pseudo-device	ppp		
 pseudo-device	pty			# pseudo-terminals

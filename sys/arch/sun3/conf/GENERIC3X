@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.118 2013/03/02 02:42:21 christos Exp $
+# $NetBSD: GENERIC3X,v 1.119 2013/04/27 18:19:54 christos Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -7,7 +7,7 @@ include 	"arch/sun3/conf/std.sun3x"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC3X-$Revision: 1.118 $"
+#ident		"GENERIC3X-$Revision: 1.119 $"
 
 makeoptions	COPTS="-Os"	# bootloader has size limit (~2MB)
 
@@ -250,7 +250,7 @@ pseudo-device	accf_http		# "httpready" accept filter
 pseudo-device	md		
 
 # Misc.
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	sl			# CSLIP
@@ -271,8 +271,8 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# paging to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
-#pseudo-device	ccd		4	# concatenated disks
-#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	ccd			# concatenated disks
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

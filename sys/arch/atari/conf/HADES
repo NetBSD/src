@@ -1,5 +1,5 @@
 #
-# $NetBSD: HADES,v 1.101 2012/10/17 14:48:09 apb Exp $
+# $NetBSD: HADES,v 1.102 2013/04/27 18:19:27 christos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -93,7 +93,7 @@ pseudo-device tun # network tunnel
 pseudo-device tap # virtual Ethernet
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
-pseudo-device ccd 4 # concatenating disk driver
+pseudo-device ccd # concatenating disk driver
 pseudo-device fss # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device clockctl # user control of clock subsystem

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.219 2013/03/02 02:42:15 christos Exp $
+# $NetBSD: GENERIC,v 1.220 2013/04/27 18:19:36 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.219 $"
+#ident 		"GENERIC-$Revision: 1.220 $"
 
 maxusers	16
 
@@ -657,7 +657,7 @@ audio*	at uaudio?
 pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
@@ -667,9 +667,9 @@ pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd			# virtual disk ick
 #options 	VND_COMPRESSION		# compressed vnd(4)
-#pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	ccd			# concatenated disks
 pseudo-device	fss			# file system snapshot device
-#pseudo-device	cgd		4	# cryptographic disks
+#pseudo-device	cgd			# cryptographic disks
 pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	biconsdev	1	# build-in console device

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.48 2013/03/02 02:42:15 christos Exp $
+# 	$NetBSD: LROUTER,v 1.49 2013/04/27 18:19:37 christos Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -167,14 +167,14 @@ cd*	at atapibus? drive ? flags 0x0ff0 # ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0ff0 # ATAPI disk drives
 st*	at atapibus? drive ? flags 0x0ff0 # ATAPI tape drives
 
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd			# virtual disk ick
-#pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	ccd			# concatenated disks
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem
 

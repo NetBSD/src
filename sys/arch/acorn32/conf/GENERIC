@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.107 2013/03/02 02:42:07 christos Exp $
+# 	$NetBSD: GENERIC,v 1.108 2013/04/27 18:19:20 christos Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.107 $"
+#ident		"GENERIC-$Revision: 1.108 $"
 
 # estimated number of users
 maxusers	32
@@ -318,8 +318,8 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	ccd	2		# concatenated disk devices
-#pseudo-device	cgd	4		# cryptographic disk devices
+pseudo-device	ccd			# concatenated disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid	8		# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

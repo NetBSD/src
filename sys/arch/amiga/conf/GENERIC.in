@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.113 2013/03/02 02:42:09 christos Exp $
+# $NetBSD: GENERIC.in,v 1.114 2013/04/27 18:19:24 christos Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.114 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -670,7 +670,7 @@ pseudo-device	putter			# for puffs and pud
 
 pseudo-device	view		4	# views (needed for grfcc)
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
-pseudo-device	pty		2	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 ', `m4_dnl
 pseudo-device	pty			# pseudo-terminals
 ')m4_dnl
@@ -681,8 +681,8 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	vnd			# vnode pseudo-disks
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	ccd		4	# concatenated disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	ccd			# concatenated disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

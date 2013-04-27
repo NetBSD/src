@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.136 2013/03/01 18:25:45 joerg Exp $
+#	$NetBSD: INSTALL_TINY,v 1.137 2013/04/27 18:19:39 christos Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -497,7 +497,7 @@ cinclude "arch/i386/conf/INSTALL.local"
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	ccd			# concatenated/striped disk devices
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
@@ -512,6 +512,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	tun			# network tunneling over tty
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+pseudo-device	pty			# pseudo-terminals
 options 	NO_DEV_PTM
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

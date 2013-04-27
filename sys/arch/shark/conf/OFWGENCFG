@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.40 2013/03/01 18:25:52 joerg Exp $
+#	$NetBSD: OFWGENCFG,v 1.41 2013/04/27 18:19:51 christos Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -128,16 +128,16 @@ ofrom*		at ofbus?
 # Pull in optional local configuration
 cinclude "arch/shark/conf/GENERIC.local"
 
-pseudo-device	loop	1		# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 #pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
 #pseudo-device	tun			# network tunneling over tty
-#pseudo-device	ipfilter 1		# ip filter
+#pseudo-device	ipfilter 		# ip filter
 
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	ccd			# concatenated disk devices
 #pseudo-device	fss			# file system snapshot device
 
 #pseudo-device	md			# Ramdisk driver

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.50 2013/03/02 02:42:11 christos Exp $
+# $NetBSD: INSTALL,v 1.51 2013/04/27 18:19:30 christos Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.50 $"
+#ident 		"INSTALL-$Revision: 1.51 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -287,8 +287,8 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 #pseudo-device	swcrypto			# software crypto implementation
 
 # Disk/mass storage pseudo-devices
-#pseudo-device	ccd		4		# concatenated disk devices
-#pseudo-device	cgd		4		# cryptographic disk devices
+#pseudo-device	ccd				# concatenated disk devices
+#pseudo-device	cgd				# cryptographic disk devices
 #pseudo-device	raid		8		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG			# auto-configuration of RAID
 # Options to enable various other RAIDframe RAID types.

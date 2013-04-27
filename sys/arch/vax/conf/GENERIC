@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.185 2013/03/02 02:42:22 christos Exp $
+# $NetBSD: GENERIC,v 1.186 2013/04/27 18:19:54 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.185 $"
+#ident 		"GENERIC-$Revision: 1.186 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -300,7 +300,7 @@ wsmouse*	at lkms?
 pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 
-pseudo-device	loop	1
+pseudo-device	loop	
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter
 #pseudo-device	carp			# Common Address Redundancy Protocol
@@ -320,8 +320,8 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	vnd
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	ccd	4
-#pseudo-device	cgd	4		# cryptographic disk devices
+pseudo-device	ccd	
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid	8		# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

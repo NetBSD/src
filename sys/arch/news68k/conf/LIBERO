@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.57 2013/03/02 02:42:18 christos Exp $
+# 	$NetBSD: LIBERO,v 1.58 2013/04/27 18:19:46 christos Exp $
 
 #	NEWS1750 config file;
 #
@@ -159,7 +159,7 @@ pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	md			# memory disk device
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	ccd		4	# concatenated and striped disks
+#pseudo-device	ccd			# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	sl			# SLIP interfaces
