@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.247 2013/04/11 17:43:19 christos Exp $
+# $NetBSD: shl.mi,v 1.248 2013/04/27 23:02:21 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -17,6 +17,7 @@
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib
 ./usr/lib/libbz2_pic.a				comp-c-piclib
 ./usr/lib/libc_pic.a				comp-c-piclib
+./usr/lib/libc++_pic.a				comp-c-piclib		libcxx
 ./usr/lib/libcdk_pic.a				comp-obsolete		obsolete
 ./usr/lib/libcom_err_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libcompat_pic.a			comp-c-piclib
