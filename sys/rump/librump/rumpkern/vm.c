@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.137 2013/03/10 17:05:12 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.138 2013/04/27 15:34:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.137 2013/03/10 17:05:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.138 2013/04/27 15:34:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -742,7 +742,7 @@ uvm_km_free(struct vm_map *map, vaddr_t vaddr, vsize_t size, uvm_flag_t flags)
 	if (__predict_false(map == module_map))
 		rumpuser_unmap((void *)vaddr, size);
 	else
-		rumpuser_free((void *)vaddr);
+		rumpuser_free((void *)vaddr, size);
 }
 
 struct vm_map *
@@ -1189,5 +1189,5 @@ rump_hyperfree(void *what, size_t size)
 	if (rump_physmemlimit != RUMPMEM_UNLIMITED) {
 		atomic_add_long(&curphysmem, -size);
 	}
-	rumpuser_free(what);
+	rumpuser_free(what, size);
 }

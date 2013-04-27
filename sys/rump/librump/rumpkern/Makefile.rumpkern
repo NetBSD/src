@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.124 2013/03/15 12:09:58 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.125 2013/04/27 15:34:53 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -66,6 +66,7 @@ SRCS+=	init_sysctl_base.c	\
 	kern_event.c		\
 	kern_hook.c		\
 	kern_ksyms.c		\
+	kern_malloc.c		\
 	kern_module.c		\
 	kern_mutex_obj.c	\
 	kern_ntptime.c		\
@@ -139,7 +140,7 @@ SRCS+=	kern_select_50.c
 .if defined(RUMP_UNREAL_ALLOCATORS) && ${RUMP_UNREAL_ALLOCATORS} == "yes"
 SRCS+=		memalloc.c
 .else
-SRCS+=		kern_malloc.c subr_kmem.c subr_pool.c
+SRCS+=		subr_kmem.c subr_pool.c
 .endif
 
 .ifdef RUMP_LOCKDEBUG
