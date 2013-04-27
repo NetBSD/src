@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.174 2013/03/02 02:42:10 christos Exp $
+# $NetBSD: GENERIC,v 1.175 2013/04/27 18:19:25 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.174 $"
+#ident		"GENERIC-$Revision: 1.175 $"
 
 maxusers	32		# estimated number of users
 
@@ -442,8 +442,8 @@ pseudo-device 	crypto			# /dev/crypto device
 pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
-pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG
 # Options to enable various other RAIDframe RAID types.
@@ -464,7 +464,7 @@ pseudo-device	putter			# for puffs and pud
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# Serial Line IP

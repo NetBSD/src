@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.70 2013/03/02 02:42:07 christos Exp $
+# $NetBSD: GENERIC,v 1.71 2013/04/27 18:19:20 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -223,8 +223,8 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	bpfilter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ccd		4
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	ccd
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

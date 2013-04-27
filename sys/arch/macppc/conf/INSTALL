@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.117 2012/08/17 20:11:40 abs Exp $
+#	$NetBSD: INSTALL,v 1.118 2013/04/27 18:19:43 christos Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -198,7 +198,7 @@ umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
 pseudo-device	md			# memory disk
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# network loopback
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	openfirm		# /dev/openfirm

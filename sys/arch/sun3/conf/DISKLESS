@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.65 2013/03/01 18:25:53 joerg Exp $
+# $NetBSD: DISKLESS,v 1.66 2013/04/27 18:19:53 christos Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -144,7 +144,7 @@ include "arch/sun3/conf/cg4.sun3"
 # cgnine0 at vme5 addr 0x08000000 ipl 4 vect 0xAA
 
 # Misc.
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP

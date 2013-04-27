@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.60 2013/03/02 02:42:10 christos Exp $
+#	$NetBSD: ARCTIC,v 1.61 2013/04/27 18:19:25 christos Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -239,7 +239,7 @@ uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown
 #### Pseudo devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	ccd		4	# concatenated/striped disk devices
+pseudo-device	ccd			# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk device (ramdisk)
@@ -248,7 +248,7 @@ pseudo-device	vnd			# disk-like interface to files
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
