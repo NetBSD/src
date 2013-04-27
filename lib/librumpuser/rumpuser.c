@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.31 2013/04/27 15:01:21 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.32 2013/04/27 15:34:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.31 2013/04/27 15:01:21 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.32 2013/04/27 15:34:53 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -261,15 +261,9 @@ rumpuser_malloc(size_t howmuch, int alignment)
 	return mem;
 }
 
-void *
-rumpuser_realloc(void *ptr, size_t howmuch)
-{
-
-	return realloc(ptr, howmuch);
-}
-
+/*ARGSUSED1*/
 void
-rumpuser_free(void *ptr)
+rumpuser_free(void *ptr, size_t size)
 {
 
 	free(ptr);
