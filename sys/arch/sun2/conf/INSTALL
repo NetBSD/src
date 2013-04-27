@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.45 2013/04/27 18:19:53 christos Exp $
+# $NetBSD: INSTALL,v 1.46 2013/04/27 21:43:42 christos Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
@@ -6,7 +6,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.45 $"
+#ident 		"INSTALL-$Revision: 1.46 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -223,6 +223,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# paging to files
 #pseudo-device	ccd			# concatenated disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device

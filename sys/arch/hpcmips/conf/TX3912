@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.82 2013/04/27 18:19:37 christos Exp $
+#	$NetBSD: TX3912,v 1.83 2013/04/27 21:43:28 christos Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -261,7 +261,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd			# concatenated disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk
@@ -277,7 +277,7 @@ pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	wsmux
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

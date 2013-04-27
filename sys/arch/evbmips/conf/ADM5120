@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120,v 1.13 2013/03/02 02:42:13 christos Exp $
+#	$NetBSD: ADM5120,v 1.14 2013/04/27 21:43:22 christos Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 maxusers	32
 
@@ -117,22 +117,22 @@ mainbus0 	at root
 cpu0 		at mainbus?
 
 # Network pseudo-devices
-pseudo-device	bpfilter	8		# Berkeley packet filter
+pseudo-device	bpfilter			# Berkeley packet filter
 pseudo-device	loop				# network loopback
-#pseudo-device	ppp		2		# Point-to-Point Protocol
-#pseudo-device	sl		2		# Serial Line IP
-#pseudo-device	strip		2		# Starmode Radio IP (Metricom)
-#pseudo-device	tun		2		# network tunneling over tty
-#pseudo-device	gre		2		# generic L3 over IP tunnel
-#pseudo-device	ipip		2		# RFC 2003 IP Encapsulation
+#pseudo-device	ppp				# Point-to-Point Protocol
+#pseudo-device	sl				# Serial Line IP
+#pseudo-device	strip				# Starmode Radio IP (Metricom)
+#pseudo-device	tun				# network tunneling over tty
+#pseudo-device	gre				# generic L3 over IP tunnel
+#pseudo-device	ipip				# RFC 2003 IP Encapsulation
 #pseudo-device	gif				# RFC1933 tunnel
-#pseudo-device	faith		1		# IPv[46] tcp relay translation
+#pseudo-device	faith				# IPv[46] tcp relay translation
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer	1		# MIDI sequencer
 
 # A pseudo device needed for Coda		# also needs CODA (above)
-#pseudo-device	vcoda		4		# coda minicache <-> venus comm.
+#pseudo-device	vcoda				# coda minicache <-> venus comm.
 pseudo-device	ksyms
 
 obio*		at mainbus?

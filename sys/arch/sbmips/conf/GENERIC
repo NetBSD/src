@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.91 2013/04/27 18:19:50 christos Exp $
+# $NetBSD: GENERIC,v 1.92 2013/04/27 21:43:40 christos Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.91 $"
+#ident 		"GENERIC-$Revision: 1.92 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -178,7 +178,7 @@ ucom*   	at uplcom? portno ?
 # Disk/mass storage pseudo-devices
 pseudo-device	ccd			# concatenated disk devices
 #pseudo-device	cgd			# cryptographic disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID
 pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
@@ -197,7 +197,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipip		2	# RFC 2003 IP Encapsulation
+#pseudo-device	ipip			# RFC 2003 IP Encapsulation
 #pseudo-device	gif			# RFC1933 tunnel
 #pseudo-device	faith			# IPv[46] tcp relay translation
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
@@ -220,12 +220,12 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # A pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
