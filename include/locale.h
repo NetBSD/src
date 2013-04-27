@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.h,v 1.19 2013/04/17 20:40:13 joerg Exp $	*/
+/*	$NetBSD: locale.h,v 1.20 2013/04/27 21:24:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -33,6 +33,8 @@
 
 #ifndef _LOCALE_H_
 #define _LOCALE_H_
+
+#include <sys/featuretest.h>
 
 struct lconv {
 	char	*decimal_point;
