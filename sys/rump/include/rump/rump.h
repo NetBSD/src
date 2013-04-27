@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.55 2012/11/21 17:41:27 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.56 2013/04/27 15:13:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -91,13 +91,6 @@ enum rump_etfs_type {
 	RUMP_ETFS_DIR_SUBDIRS	/* dir + subdirectories (recursive) */
 };
 
-/*
- * Something like rump capabilities would be nicer, but let's
- * do this for a start.
- */
-#define RUMP_VERSION			01
-#define rump_init()			rump__init(RUMP_VERSION)
-
 /* um, what's the point ?-) */
 #ifdef _BEGIN_DECLS
 _BEGIN_DECLS
@@ -113,7 +106,7 @@ void	rump_unschedule(void);
 void	rump_printevcnts(void);
 
 int	rump_daemonize_begin(void);
-int	rump__init(int);
+int	rump_init(void);
 int	rump_init_server(const char *);
 int	rump_daemonize_done(int);
 #define RUMP_DAEMONIZE_SUCCESS 0
