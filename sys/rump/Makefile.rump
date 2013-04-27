@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.78 2013/03/17 01:13:00 christos Exp $
+#	$NetBSD: Makefile.rump,v 1.79 2013/04/27 12:51:45 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -37,6 +37,8 @@ CPPFLAGS+=	-I${RUMPTOP}/../arch
 CPPFLAGS+=	-I${RUMPTOP}/..
 .endif
 
+RUMP_LDSCRIPT?=yes
+.if ${RUMP_LDSCRIPT} != "no"
 # my ld or yours?
 .ifdef HAVE_SUN_LD
 LDFLAGS+=	-Wl,-M ${RUMPTOP}/ldscript_sun.rump
@@ -44,6 +46,7 @@ SRCS+=		linksyms_sun.c
 .PATH:		${RUMPTOP}
 .else
 LDFLAGS+=	-Wl,-T ${RUMPTOP}/ldscript.rump
+.endif
 .endif
 
 RUMP_DIAGNOSTIC?=yes
