@@ -1,0 +1,13 @@
+#	$NetBSD: NetBSD.dist.earm,v 1.1 2013/04/27 07:59:09 matt Exp $
+
+./lib/oabi
+./lib/oabi/npf
+./usr/lib/oabi
+./usr/lib/oabi/i18n
+./usr/lib/oabi/lua
+./usr/lib/oabi/lua/5.1
+./usr/lib/oabi/security
+./usr/libdata/debug/lib/oabi
+./usr/libdata/debug/lib/oabi/npf
+./usr/libdata/debug/usr/lib/oabi
+./usr/libdata/debug/usr/lib/oabi/i18n
