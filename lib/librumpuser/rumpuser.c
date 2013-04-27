@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.32 2013/04/27 15:34:53 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.33 2013/04/27 16:56:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.32 2013/04/27 15:34:53 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.33 2013/04/27 16:56:29 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -79,7 +79,7 @@ rumpuser_init(int version,
 		return 1;
 	}
 
-#ifdef RUMPUSER_USE_RANDOM
+#ifdef RUMPUSER_USE_DEVRANDOM
 	uint32_t rv;
 	int fd;
 
@@ -808,10 +808,21 @@ rumpuser_getnhostcpu(void)
 	return ncpu;
 }
 
-/* XXX: this hypercall needs a better name */
-uint32_t
-rumpuser_arc4random(void)
+size_t
+rumpuser_getrandom(void *buf, size_t buflen, int flags)
 {
+	size_t origlen = buflen;
+	uint32_t *p = buf;
+	uint32_t tmp;
+	int chunk;
 
-	return arc4random();
+	do {
+		chunk = buflen < 4 ? buflen : 4; /* portable MIN ... */
+		tmp = RUMPUSER_RANDOM();
+		memcpy(p, &tmp, chunk);
+		p++;
+		buflen -= chunk;
+	} while (chunk);
+
+	return origlen;
 }
