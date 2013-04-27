@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.242 2013/04/27 18:17:37 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.243 2013/04/27 20:13:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.242 2013/04/27 18:17:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.243 2013/04/27 20:13:16 christos Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1636,8 +1636,9 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		DPRINTF(("%s: bad type\n", __func__));
 		return EINVAL;
 	}
-	if (error)
+	if (error) {
 		DPRINTF(("%s: copyin %d\n", __func__, error));
+	}
 
 	return error;
 }
