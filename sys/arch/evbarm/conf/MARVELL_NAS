@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.13 2013/04/27 21:43:21 christos Exp $
+#	$NetBSD: MARVELL_NAS,v 1.14 2013/04/27 22:21:13 christos Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -282,7 +282,7 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
