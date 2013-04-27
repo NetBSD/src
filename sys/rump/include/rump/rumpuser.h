@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.76 2013/04/27 13:59:46 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.77 2013/04/27 14:02:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -44,9 +44,7 @@ int rumpuser_getversion(void);
 int rumpuser_daemonize_begin(void);
 int rumpuser_daemonize_done(int);
 
-struct msghdr;
 struct pollfd;
-struct sockaddr;
 
 typedef void (*kernel_lockfn)(int, void *);
 typedef void (*kernel_unlockfn)(int, int *, void *);
@@ -197,20 +195,6 @@ extern struct rumpuser_mtx rumpuser_aio_mtx;
 extern struct rumpuser_cv rumpuser_aio_cv;
 extern struct rumpuser_aio rumpuser_aios[N_AIOS];
 extern int rumpuser_aio_head, rumpuser_aio_tail;
-
-/* rumpuser_net */
-
-int  rumpuser_net_socket(int, int, int, int *);
-int  rumpuser_net_sendmsg(int, const struct msghdr *, int, int *);
-int  rumpuser_net_recvmsg(int, struct msghdr *, int, int *);
-int  rumpuser_net_connect(int, const struct sockaddr *, int, int *);
-int  rumpuser_net_bind(int, const struct sockaddr *, int, int *);
-int  rumpuser_net_accept(int, struct sockaddr *, int *, int *);
-int  rumpuser_net_listen(int, int, int *);
-enum rumpuser_getnametype { RUMPUSER_SOCKNAME, RUMPUSER_PEERNAME };
-int  rumpuser_net_getname(int, struct sockaddr *, int *,
-			      enum rumpuser_getnametype, int *);
-int  rumpuser_net_setsockopt(int, int, int, const void *, int, int *);
 
 /* rumpuser dynloader */
 
