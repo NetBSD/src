@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_stub.c,v 1.4 2011/12/17 20:05:40 tls Exp $ */
+/*	$NetBSD: cprng_stub.c,v 1.5 2013/04/27 16:56:30 pooka Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -100,37 +100,25 @@ cprng_strong_destroy(cprng_strong_t *c)
 size_t
 cprng_fast(void *p, size_t len)
 {
-	uint8_t *resp, *pchar = (uint8_t *)p;
-	uint32_t res;
-	size_t i;
 
-	do {
-		res = rumpuser_arc4random();
-		resp = (uint8_t *)&res;
-
-		for (i = 0; i < sizeof(res); i++) {
-		    *pchar++ = resp[i];
-		    if (pchar == (uint8_t *)p + len) {
-			return len;
-		    }
-		}
-	} while(1);
+	rumpuser_getrandom(p, len, 0);
+	return len;
 }
 
 uint32_t
 cprng_fast32(void)
 {
-	return rumpuser_arc4random();
+	uint32_t ret;
+
+	rumpuser_getrandom(&ret, sizeof(ret), 0);
+	return ret;
 }
 
 uint64_t
 cprng_fast64(void)
 {
 	uint64_t ret;
-	uint32_t *ret32;
 
-	ret32 = (uint32_t *)&ret;
-	ret32[0] = rumpuser_arc4random();
-	ret32[1] = rumpuser_arc4random();
+	rumpuser_getrandom(&ret, sizeof(ret), 0);
 	return ret;
 }

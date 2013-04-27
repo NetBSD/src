@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.16 2013/03/20 12:59:10 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.17 2013/04/27 16:56:29 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -151,8 +151,10 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #endif
 
 #if defined(__linux__) || defined(__sun__) || defined (__CYGWIN__)
-#define arc4random() random()
-#define RUMPUSER_USE_RANDOM
+#define RUMPUSER_RANDOM() random()
+#define RUMPUSER_USE_DEVRANDOM
+#else
+#define RUMPUSER_RANDOM() arc4random()
 #endif
 
 #ifndef __NetBSD_Prereq__
