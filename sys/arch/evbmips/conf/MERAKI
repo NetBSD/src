@@ -1,10 +1,10 @@
-#	$NetBSD: MERAKI,v 1.20 2013/03/02 02:42:13 christos Exp $
+#	$NetBSD: MERAKI,v 1.21 2013/04/27 18:19:33 christos Exp $
 
 include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MERAKI-$Revision: 1.20 $"
+#ident 		"MERAKI-$Revision: 1.21 $"
 
 maxusers	32
 
@@ -174,7 +174,7 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 # Pseudo-devices
 
 # Disk/mass storage pseudo-devices
-#pseudo-device	ccd		4		# concatenated disk devices
+#pseudo-device	ccd				# concatenated disk devices
 #pseudo-device	raid		4		# RAIDframe disk driver
 #pseudo-device	fss				# file system snapshot device
 #pseudo-device	md				# memory disk device (ramdisk)

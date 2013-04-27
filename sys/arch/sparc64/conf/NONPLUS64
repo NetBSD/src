@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.37 2013/03/02 02:42:21 christos Exp $
+# 	$NetBSD: NONPLUS64,v 1.38 2013/04/27 18:19:52 christos Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.37 $"
+#ident		"NONPLUS64-$Revision: 1.38 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -307,7 +307,7 @@ pseudo-device	vnd
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
-pseudo-device	ccd	4
+pseudo-device	ccd
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.

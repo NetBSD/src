@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.25 2013/03/02 02:42:11 christos Exp $
+#	$NetBSD: OVERO,v 1.26 2013/04/27 18:19:33 christos Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo COMS platforms kernel
 #
@@ -282,8 +282,8 @@ wd*		at umass?
 
 # disk/mass storage pseudo-devices
 #pseudo-device	bio			# RAID control device driver
-#pseudo-device	ccd		4	# concatenated/striped disk devices
-pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	ccd			# concatenated/striped disk devices
+pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
