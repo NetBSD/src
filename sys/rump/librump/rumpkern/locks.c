@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.55 2011/12/06 18:04:31 njoly Exp $	*/
+/*	$NetBSD: locks.c,v 1.56 2013/04/27 13:59:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.55 2011/12/06 18:04:31 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.56 2013/04/27 13:59:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -90,10 +90,29 @@ static lockops_t rw_lockops = {
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 {
+	int isspin;
+
+	/*
+	 * Try to figure out if the caller wanted a spin mutex or
+	 * not with this easy set of conditionals.  The difference
+	 * between a spin mutex and an adaptive mutex for a rump
+	 * kernel is that the hypervisor does not relinquish the
+	 * rump kernel CPU context for a spin mutex.  The
+	 * hypervisor itself may block even when "spinning".
+	 */
+	if (type == MUTEX_SPIN) {
+		isspin = 1;
+	} else if (ipl == IPL_NONE || ipl == IPL_SOFTCLOCK ||
+	    ipl == IPL_SOFTBIO || ipl == IPL_SOFTNET ||
+	    ipl == IPL_SOFTSERIAL) {
+		isspin = 0;
+	} else {
+		isspin = 1;
+	}
 
 	CTASSERT(sizeof(kmutex_t) >= sizeof(void *));
 
-	rumpuser_mutex_init_kmutex((struct rumpuser_mtx **)mtx);
+	rumpuser_mutex_init_kmutex((struct rumpuser_mtx **)mtx, isspin);
 	ALLOCK(mtx, &mutex_lockops);
 }
 
@@ -113,7 +132,15 @@ mutex_enter(kmutex_t *mtx)
 	rumpuser_mutex_enter(RUMPMTX(mtx));
 	LOCKED(mtx, false);
 }
-__strong_alias(mutex_spin_enter,mutex_enter);
+
+void
+mutex_spin_enter(kmutex_t *mtx)
+{
+
+	WANTLOCK(mtx, false, false);
+	rumpuser_mutex_enter_nowrap(RUMPMTX(mtx));
+	LOCKED(mtx, false);
+}
 
 int
 mutex_tryenter(kmutex_t *mtx)

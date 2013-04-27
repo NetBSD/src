@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.75 2013/03/08 19:04:28 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.76 2013/04/27 13:59:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
 #include <stdint.h>
 #endif
 
-#define RUMPUSER_VERSION 15
+#define RUMPUSER_VERSION 16
 int rumpuser_getversion(void);
 
 int rumpuser_daemonize_begin(void);
@@ -143,7 +143,7 @@ int  rumpuser_thread_join(void *);
 struct rumpuser_mtx;
 
 void rumpuser_mutex_init(struct rumpuser_mtx **);
-void rumpuser_mutex_init_kmutex(struct rumpuser_mtx **);
+void rumpuser_mutex_init_kmutex(struct rumpuser_mtx **, int);
 void rumpuser_mutex_enter(struct rumpuser_mtx *);
 void rumpuser_mutex_enter_nowrap(struct rumpuser_mtx *);
 int  rumpuser_mutex_tryenter(struct rumpuser_mtx *);
