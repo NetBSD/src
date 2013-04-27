@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.72 2013/04/27 18:19:36 christos Exp $
+#	$NetBSD: IPAQ,v 1.73 2013/04/27 21:43:26 christos Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -201,7 +201,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd			# concatenated disk devices
 #pseudo-device	cgd			# cryptographic disk devices
-#pseudo-device	raid	4		# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 

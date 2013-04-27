@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.18 2013/04/27 18:19:39 christos Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.19 2013/04/27 21:43:29 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -752,7 +752,7 @@ cinclude "arch/i386/conf/INSTALL.local"
 
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd			# concatenated/striped disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk device (ramdisk)
@@ -776,7 +776,7 @@ options NO_DEV_PTM
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

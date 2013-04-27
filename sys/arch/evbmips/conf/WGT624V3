@@ -1,10 +1,10 @@
-#	$NetBSD: WGT624V3,v 1.18 2013/04/27 18:19:34 christos Exp $
+#	$NetBSD: WGT624V3,v 1.19 2013/04/27 21:43:23 christos Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"WGT624V3-$Revision: 1.18 $"
+#ident 		"WGT624V3-$Revision: 1.19 $"
 
 maxusers	32
 
@@ -154,7 +154,7 @@ mvphy*		at mii? phy ?
 
 # Disk/mass storage pseudo-devices
 #pseudo-device	ccd				# concatenated disk devices
-#pseudo-device	raid		4		# RAIDframe disk driver
+#pseudo-device	raid				# RAIDframe disk driver
 #pseudo-device	fss				# file system snapshot device
 #pseudo-device	md				# memory disk device (ramdisk)
 #pseudo-device	vnd				# disk-like interface to files
@@ -169,7 +169,7 @@ pseudo-device	loop				# network loopback
 #pseudo-device	tun				# network tunneling over tty
 #pseudo-device	tap				# virtual Ethernet
 #pseudo-device	gre				# generic L3 over IP tunnel
-#pseudo-device	ipip		2		# RFC 2003 IP Encapsulation
+#pseudo-device	ipip				# RFC 2003 IP Encapsulation
 #pseudo-device	gif				# RFC1933 tunnel
 #pseudo-device	faith				# IPv[46] tcp relay translation
 #pseudo-device	stf				# 6to4 IPv6 over IPv4 encapsulation
@@ -182,4 +182,4 @@ pseudo-device	clockctl			# user control of clock subsystem
 pseudo-device	ksyms				# /dev/ksyms
 
 # A pseudo device needed for Coda		# also needs CODA (above)
-#pseudo-device	vcoda		4		# coda minicache <-> venus comm.
+#pseudo-device	vcoda				# coda minicache <-> venus comm.

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.86 2013/04/27 18:19:51 christos Exp $
+#	$NetBSD: INSTALL,v 1.87 2013/04/27 21:43:41 christos Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -418,7 +418,7 @@ fd*	at fdc0					# the drive itself
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
-#pseudo-device	raid	4
+#pseudo-device	raid
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.

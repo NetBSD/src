@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.371 2013/04/27 18:19:22 christos Exp $
+# $NetBSD: GENERIC,v 1.372 2013/04/27 21:43:12 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.371 $"
+#ident 		"GENERIC-$Revision: 1.372 $"
 
 maxusers	64		# estimated number of users
 
@@ -1166,7 +1166,7 @@ pseudo-device	swcrypto		# software crypto implementation
 pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd			# concatenated/striped disk devices
 pseudo-device	cgd			# cryptographic disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
@@ -1230,7 +1230,7 @@ pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester
@@ -1250,7 +1250,7 @@ options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 # Veriexec
 #
 # a pseudo device needed for veriexec
-pseudo-device	veriexec		1
+pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
