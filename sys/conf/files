@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1068 2013/04/27 17:22:58 christos Exp $
+#	$NetBSD: files,v 1.1069 2013/04/27 22:56:39 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1446,7 +1446,7 @@ file	dev/ccd.c			ccd
 file	dev/cgd.c			cgd
 file	dev/cgd_crypto.c		cgd
 file	dev/clock_subr.c
-file	dev/clockctl.c			clockctl		needs-flag
+file	dev/clockctl.c			clockctl
 file	dev/dksubr.c			cgd | xbd | ccd | raid | dm
 file	dev/dkwedge/dk.c
 file	dev/dkwedge/dkwedge_apple.c	dkwedge_method_apple
@@ -1466,9 +1466,9 @@ file	dev/mulaw.c			mulaw			needs-flag
 file	dev/nullcons_subr.c		nullcons		needs-flag
 file	dev/radio.c			radio			needs-flag
 file	dev/rndpseudo.c			rnd			needs-flag
-file	dev/sequencer.c			sequencer		needs-flag
+file	dev/sequencer.c			sequencer
 file	dev/video.c			video			needs-flag
-file	dev/vnd.c			vnd			needs-flag
+file	dev/vnd.c			vnd	
 file	kern/bufq_disksort.c		bufq_disksort
 file	kern/bufq_fcfs.c		bufq_fcfs
 file	kern/bufq_priocscan.c		bufq_priocscan
@@ -1663,33 +1663,33 @@ file	net/bpf_filter.c		bpf_filter
 file	net/bpf_stub.c
 file	net/bsd-comp.c			ppp & ppp_bsdcomp
 file	net/if.c
-file	net/if_arcsubr.c		arcnet			needs-flag
+file	net/if_arcsubr.c		arcnet		
 file	net/if_atmsubr.c		atm
-file	net/if_bridge.c			bridge			needs-flag
+file	net/if_bridge.c			bridge		
 file	net/bridgestp.c			bridge
 file	net/if_ecosubr.c		eco
-file	net/if_etherip.c		etherip			needs-flag
+file	net/if_etherip.c		etherip		
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
 					    wlan
-file	net/if_faith.c			faith & (inet | inet6)	needs-flag
-file	net/if_fddisubr.c		fddi			needs-flag
-file	net/if_gif.c			gif			needs-flag
-file	net/if_gre.c			gre			needs-flag
+file	net/if_faith.c			faith & (inet | inet6)
+file	net/if_fddisubr.c		fddi		
+file	net/if_gif.c			gif		
+file	net/if_gre.c			gre		
 file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
-file	net/if_loop.c			loop			needs-flag
+file	net/if_loop.c			loop	
 file	net/if_media.c
 file	net/if_mpls.c			ifmpls			needs-flag
-file	net/if_ppp.c			ppp			needs-flag
+file	net/if_ppp.c			ppp			
 file	net/if_srt.c			srt
-file	net/if_stf.c			stf & (inet | inet6)	needs-flag
-file	net/if_sl.c			sl			needs-flag
+file	net/if_stf.c			stf & (inet | inet6)
+file	net/if_sl.c			sl		
 file	net/if_spppsubr.c		sppp
-file	net/if_strip.c			strip			needs-flag
+file	net/if_strip.c			strip
 file	net/if_tokensubr.c		token			needs-flag
-file	net/if_tap.c			tap			needs-flag
-file	net/if_tun.c			tun			needs-flag
-file	net/if_vlan.c			vlan			needs-flag
+file	net/if_tap.c			tap	
+file	net/if_tun.c			tun
+file	net/if_vlan.c			vlan
 file	net/if_pppoe.c			pppoe			needs-flag
 file	net/pfil.c			pfil_hooks | ipfilter | pf
 file	net/ppp-deflate.c		ppp & ppp_deflate
