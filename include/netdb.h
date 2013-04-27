@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.65 2012/03/17 21:57:48 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.66 2013/04/27 21:22:05 joerg Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -90,10 +90,9 @@
 #ifndef _NETDB_H_
 #define	_NETDB_H_
 
-#include <machine/ansi.h>
+#include <sys/cdefs.h>
 #include <machine/endian_machdep.h>
 #include <sys/ansi.h>
-#include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <inttypes.h>
 /*
