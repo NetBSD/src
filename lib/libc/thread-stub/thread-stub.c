@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.25 2013/04/12 18:14:22 joerg Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.26 2013/04/27 20:36:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.25 2013/04/12 18:14:22 joerg Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.26 2013/04/27 20:36:47 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: thread-stub.c,v 1.25 2013/04/12 18:14:22 joerg Exp $");
 
 #define	__LIBC_THREAD_STUBS
 
+#define pthread_join	__libc_pthread_join
+#define pthread_detach	__libc_pthread_detach
 #include "namespace.h"
 #include "reentrant.h"
 
@@ -66,6 +68,27 @@ do {					\
 #else
 #define	CHECK_NOT_THREADED()	/* nothing */
 #endif
+
+__weak_alias(pthread_join, __libc_pthread_join)
+__weak_alias(pthread_detach, __libc_pthread_detach)
+
+int
+pthread_join(pthread_t thread, void **valptr)
+{
+
+	if (thread == pthread_self())
+		return EDEADLK;
+	return ESRCH;
+}
+
+int
+pthread_detach(pthread_t thread)
+{
+
+	if (thread == pthread_self())
+		return 0;
+	return ESRCH;
+}
 
 /* mutexes */
 
