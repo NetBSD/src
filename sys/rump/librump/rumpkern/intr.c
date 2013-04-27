@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.36 2011/03/21 16:41:08 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.37 2013/04/27 16:32:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36 2011/03/21 16:41:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37 2013/04/27 16:32:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -117,7 +117,7 @@ doclock(void *noarg)
 
 	/* XXX: dummies */
 	rumpuser_cv_init(&clockcv);
-	rumpuser_mutex_init(&clockmtx);
+	rumpuser_mutex_init(&clockmtx, RUMPUSER_MTX_SPIN);
 
 	rumpuser_mutex_enter_nowrap(clockmtx);
 	for (;;) {
