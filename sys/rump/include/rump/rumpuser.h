@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.82 2013/04/27 16:02:55 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.83 2013/04/27 16:05:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -130,8 +130,11 @@ int  rumpuser_thread_create(void *(*f)(void *), void *, const char *, int,
 void rumpuser_thread_exit(void) __dead;
 int  rumpuser_thread_join(void *);
 
-struct rumpuser_mtx;
+struct lwp;
+void rumpuser_set_curlwp(struct lwp *);
+struct lwp *rumpuser_get_curlwp(void);
 
+struct rumpuser_mtx;
 void rumpuser_mutex_init(struct rumpuser_mtx **);
 void rumpuser_mutex_init_kmutex(struct rumpuser_mtx **, int);
 void rumpuser_mutex_enter(struct rumpuser_mtx *);
@@ -142,7 +145,6 @@ void rumpuser_mutex_destroy(struct rumpuser_mtx *);
 struct lwp *rumpuser_mutex_owner(struct rumpuser_mtx *);
 
 struct rumpuser_rw;
-
 void rumpuser_rw_init(struct rumpuser_rw **);
 void rumpuser_rw_enter(struct rumpuser_rw *, int);
 int  rumpuser_rw_tryenter(struct rumpuser_rw *, int);
@@ -153,7 +155,6 @@ int  rumpuser_rw_rdheld(struct rumpuser_rw *);
 int  rumpuser_rw_wrheld(struct rumpuser_rw *);
 
 struct rumpuser_cv;
-
 void rumpuser_cv_init(struct rumpuser_cv **);
 void rumpuser_cv_destroy(struct rumpuser_cv *);
 void rumpuser_cv_wait(struct rumpuser_cv *, struct rumpuser_mtx *);
@@ -163,11 +164,6 @@ int  rumpuser_cv_timedwait(struct rumpuser_cv *, struct rumpuser_mtx *,
 void rumpuser_cv_signal(struct rumpuser_cv *);
 void rumpuser_cv_broadcast(struct rumpuser_cv *);
 int  rumpuser_cv_has_waiters(struct rumpuser_cv *);
-
-struct lwp;
-
-void rumpuser_set_curlwp(struct lwp *);
-struct lwp *rumpuser_get_curlwp(void);
 
 /* "aio" stuff for being able to fire of a B_ASYNC I/O and continue */
 struct rumpuser_aio {
