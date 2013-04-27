@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.66 2013/04/27 18:19:21 christos Exp $
+#	$NetBSD: P4032,v 1.67 2013/04/27 21:43:11 christos Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.66 $"
+#ident 		"P4032-$Revision: 1.67 $"
 
 maxusers 32
 
@@ -314,7 +314,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 pseudo-device	bpfilter
 pseudo-device	ccd		
 #pseudo-device	cgd			# cryptographic disk devices
-#pseudo-device	raid		4		# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	ipfilter	

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.11 2013/04/27 18:19:41 christos Exp $
+# $NetBSD: INSTALL,v 1.12 2013/04/27 21:43:31 christos Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -175,7 +175,7 @@ pseudo-device	md			# memory disk device
 #pseudo-device	ppp			# PPP interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	raid		2	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	sl			# SLIP interfaces
 #pseudo-device	tun			# Network "tunnel" device
@@ -194,7 +194,7 @@ pseudo-device	pty			# pseudo-terminals
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

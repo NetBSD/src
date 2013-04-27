@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.35 2013/04/27 18:19:31 christos Exp $
+# $NetBSD: HDL_G,v 1.36 2013/04/27 21:43:21 christos Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -388,7 +388,7 @@ midi*   at midibus?
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd			# concatenated/striped disk devices
 #pseudo-device	cgd			# cryptographic disk devices
-#pseudo-device	raid		8	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
@@ -402,7 +402,7 @@ midi*   at midibus?
 #pseudo-device	putter			# for puffs and pud
 
 #pseudo-device	md			# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
@@ -434,13 +434,13 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester
 
 # a pseudo device needed for verified exec
-#pseudo-device	veriexec	1
+#pseudo-device	veriexec
 
 # data mover pseudo-devices
 pseudo-device	swdmover		# software dmover(9) back-end

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.58 2012/08/17 20:11:41 abs Exp $
+#	$NetBSD: INSTALL,v 1.59 2013/04/27 21:43:39 christos Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -265,7 +265,7 @@ include "arch/prep/conf/INSTALL.local"
 # disk/mass storage pseudo-devices
 pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 # network pseudo-devices

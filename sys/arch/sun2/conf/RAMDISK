@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.52 2013/04/27 18:19:53 christos Exp $
+# $NetBSD: RAMDISK,v 1.53 2013/04/27 21:43:42 christos Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -235,6 +235,6 @@ pseudo-device	sl			# CSLIP
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# paging to files
 #pseudo-device	ccd			# concatenated disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device

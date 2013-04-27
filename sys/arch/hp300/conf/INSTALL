@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.52 2013/04/27 18:19:35 christos Exp $
+# $NetBSD: INSTALL,v 1.53 2013/04/27 21:43:25 christos Exp $
 #
 # INSTALL machine description file
 #
@@ -228,7 +228,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	vnd			# vnode pseudo-disks
 #pseudo-device	ccd			# concatenated disk devices
-#pseudo-device	raid		8	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1

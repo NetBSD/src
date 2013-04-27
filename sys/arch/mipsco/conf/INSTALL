@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.28 2013/04/27 18:19:44 christos Exp $
+# 	$NetBSD: INSTALL,v 1.29 2013/04/27 21:43:33 christos Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -92,6 +92,6 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	ppp			# PPP interfaces
 #pseudo-device	tun			# Network "tunnel" device
 pseudo-device	ccd			# concatenated and striped disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 

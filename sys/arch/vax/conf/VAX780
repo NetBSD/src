@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.13 2013/04/27 18:19:55 christos Exp $
+# $NetBSD: VAX780,v 1.14 2013/04/27 21:43:43 christos Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -306,7 +306,7 @@ pseudo-device	pty			# pseudo-terminals
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd	
 #pseudo-device	cgd			# cryptographic disk devices
-#pseudo-device	raid	8		# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1
@@ -327,7 +327,7 @@ pseudo-device	ksyms			# /dev/ksyms
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

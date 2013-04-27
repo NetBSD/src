@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.107 2013/04/27 18:19:51 christos Exp $
+#	$NetBSD: GENERIC,v 1.108 2013/04/27 21:43:40 christos Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.107 $"
+#ident		"GENERIC-$Revision: 1.108 $"
 
 # estimated number of users
 maxusers	32
@@ -303,7 +303,7 @@ pseudo-device	fss			# file system snapshot device
 #pseudo-device	profiler 1		# fiq based profiling device
 pseudo-device	sequencer 1		# MIDI sequencer
 pseudo-device	openfirm		# /dev/openfirm
-#pseudo-device	vcoda	4		# coda kernel <-> cachemanager
+#pseudo-device	vcoda			# coda kernel <-> cachemanager
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
@@ -315,7 +315,7 @@ pseudo-device	putter			# for puffs and pud
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

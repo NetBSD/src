@@ -1,4 +1,4 @@
-#	$NetBSD: CP3100,v 1.33 2013/04/27 18:19:31 christos Exp $
+#	$NetBSD: CP3100,v 1.34 2013/04/27 21:43:20 christos Exp $
 #
 #	CP3100 -- Certance CP3100 Kernel
 #
@@ -212,7 +212,7 @@ makphy* at mii? phy ?			# Marvell 88E1000 PHYs
 # disk/mass storage pseudo-devices
 pseudo-device	ccd			# concatenated/striped disk devices
 #pseudo-device	cgd			# cryptographic disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1

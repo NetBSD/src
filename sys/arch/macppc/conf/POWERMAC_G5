@@ -172,7 +172,7 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 #pseudo-device 	crypto			# opencrypto framework
 					# (disabled, requires generic softints)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals

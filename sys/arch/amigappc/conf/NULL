@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.39 2013/04/27 18:19:25 christos Exp $
+# $NetBSD: NULL,v 1.40 2013/04/27 21:43:16 christos Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.39 $"
+#ident          "GENERIC-$Revision: 1.40 $"
 
 maxusers	8
 
@@ -416,7 +416,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd			# concatenated disk devices
 #pseudo-device	cgd			# cryptographic disk devices
-#pseudo-device	raid		8	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options 	RF_INCLUDE_EVENODD=1
@@ -435,7 +435,7 @@ pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

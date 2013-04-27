@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.167 2013/04/27 18:19:55 christos Exp $
+# $NetBSD: GENERIC,v 1.168 2013/04/27 21:43:43 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.167 $"
+#ident 		"GENERIC-$Revision: 1.168 $"
 
 maxusers	8
 
@@ -448,7 +448,7 @@ pseudo-device	vnd
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
-pseudo-device	raid	8
+pseudo-device	raid	
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options 	RF_INCLUDE_EVENODD=1
@@ -527,7 +527,7 @@ pseudo-device	ksyms			# /dev/ksyms
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

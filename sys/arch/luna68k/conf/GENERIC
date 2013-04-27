@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.104 2013/04/27 18:19:40 christos Exp $
+# $NetBSD: GENERIC,v 1.105 2013/04/27 21:43:31 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.104 $"
+#ident 		"GENERIC-$Revision: 1.105 $"
 
 maxusers	8
 
@@ -188,7 +188,7 @@ pseudo-device	md			# memory disk device
 #pseudo-device	ppp			# PPP interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	raid		2	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 pseudo-device	fss			# file system snapshot device
 #pseudo-device	sl			# SLIP interfaces
 #pseudo-device	tun			# Network "tunnel" device
@@ -207,7 +207,7 @@ pseudo-device	ksyms			# /dev/ksyms
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

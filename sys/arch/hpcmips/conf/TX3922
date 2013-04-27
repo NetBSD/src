@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.96 2013/04/27 18:19:37 christos Exp $
+#	$NetBSD: TX3922,v 1.97 2013/04/27 21:43:28 christos Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -339,7 +339,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd			# concatenated disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk
@@ -359,7 +359,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # for IPv6
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)

@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.11 2013/04/27 18:19:33 christos Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.12 2013/04/27 21:43:22 christos Exp $
 #
 #  OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -334,7 +334,7 @@ pseudo-device	swcrypto		# software crypto implementation
 #pseudo-device	bio			# RAID control device driver
 #pseudo-device	ccd			# concatenated/striped disk devices
 #pseudo-device	cgd			# cryptographic disk devices
-#pseudo-device	raid		8	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
@@ -382,7 +382,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 #pseudo-device	nsmb			# experimental - SMB requester

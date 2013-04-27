@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98 2012/10/17 14:48:12 apb Exp $
+# $NetBSD: GENERIC,v 1.99 2013/04/27 21:43:28 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -371,7 +371,7 @@ pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 #pseudo-device	nsmb			# experimental - SMB requester
@@ -385,7 +385,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

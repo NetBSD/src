@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.117 2013/04/27 18:19:46 christos Exp $
+# $NetBSD: GENERIC,v 1.118 2013/04/27 21:43:34 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -313,7 +313,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

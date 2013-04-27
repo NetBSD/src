@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.86 2013/04/27 18:19:29 christos Exp $
+#	$NetBSD: INSTALL,v 1.87 2013/04/27 21:43:19 christos Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -456,7 +456,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux

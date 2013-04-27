@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.49 2013/04/27 18:19:47 christos Exp $
+# $NetBSD: SLAB,v 1.50 2013/04/27 21:43:38 christos Exp $
 #
 # deberg's development machine
 #
@@ -201,7 +201,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# paging to files
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	ccd			# concatenated disks

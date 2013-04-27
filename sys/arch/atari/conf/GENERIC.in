@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.102 2013/04/27 18:19:27 christos Exp $
+#	$NetBSD: GENERIC.in,v 1.103 2013/04/27 21:43:18 christos Exp $
 #
 # Generic atari
 #
@@ -274,7 +274,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #endif /* NO_PHYS_NETWORK */
 pseudo-device	ccd			# concatenating disk driver
 #pseudo-device	cgd			# cryptographic disk driver
-#pseudo-device	raid		8	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1

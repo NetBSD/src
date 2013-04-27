@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.57 2013/04/27 18:19:26 christos Exp $
+#	$NetBSD: M403,v 1.58 2013/04/27 21:43:17 christos Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -187,7 +187,7 @@ wsmouse*	at pms?
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd			# concatenated/striped disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
@@ -214,7 +214,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
 #pseudo-device	wsmux

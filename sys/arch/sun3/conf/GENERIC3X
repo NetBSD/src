@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.119 2013/04/27 18:19:54 christos Exp $
+# $NetBSD: GENERIC3X,v 1.120 2013/04/27 21:43:42 christos Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -7,7 +7,7 @@ include 	"arch/sun3/conf/std.sun3x"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC3X-$Revision: 1.119 $"
+#ident		"GENERIC3X-$Revision: 1.120 $"
 
 makeoptions	COPTS="-Os"	# bootloader has size limit (~2MB)
 
@@ -273,7 +273,7 @@ pseudo-device	vnd			# paging to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd			# concatenated disks
 #pseudo-device	cgd			# cryptographic disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
@@ -292,7 +292,7 @@ pseudo-device	ksyms			# /dev/ksyms
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

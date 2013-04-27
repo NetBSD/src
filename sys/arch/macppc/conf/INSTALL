@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.118 2013/04/27 18:19:43 christos Exp $
+#	$NetBSD: INSTALL,v 1.119 2013/04/27 21:43:32 christos Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -203,5 +203,5 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	openfirm		# /dev/openfirm
 
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
