@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccdconfig.8,v 1.25 2009/08/22 00:14:21 joerg Exp $
+.\"	$NetBSD: ccdconfig.8,v 1.26 2013/04/27 17:12:36 christos Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,8 +56,6 @@
 .Op Fl f Ar config_file
 .Nm
 .Fl g
-.Op Fl M Ar core
-.Op Fl N Ar system
 .Oo
 .Ar ccd Oo ...
 .Oc
@@ -87,16 +85,6 @@ Dump the current ccd configuration in a format suitable
 for use as the ccd configuration file.
 If no arguments are specified, every configured ccd is dumped.
 Otherwise, the configuration of each listed ccd is dumped.
-.It Fl M Ar core
-Extract values associated with the name list from
-.Pa core
-instead of the default
-.Pa /dev/mem .
-.It Fl N Ar system
-Extract the name list from
-.Pa system
-instead of the default
-.Pa /netbsd .
 .It Fl u
 Unconfigure a ccd.
 .It Fl U
