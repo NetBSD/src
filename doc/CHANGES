@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1818 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1819 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -232,3 +232,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		m68k FPE supports all mathematics functions. [isaki 20130420]
 	tps65217pmic(4): Add support for TPS65217 PMIC as found on BeagleBone
 		and other AM335x based boards. [rkujawa 20130425]
+	amiga: Add minimal support for Thylacine USB card using slhci(4).
+		Works at least with some keyboards and mice. [rkujawa 20130428]
