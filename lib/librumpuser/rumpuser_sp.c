@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.53 2013/04/27 16:02:56 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.54 2013/04/27 16:56:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.53 2013/04/27 16:02:56 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.54 2013/04/27 16:56:29 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1104,9 +1104,8 @@ handlereq(struct spclient *spc)
 		}
 
 		/* Ok, we have a new process context and a new curlwp */
-		for (i = 0; i < AUTHLEN; i++) {
-			pf->pf_auth[i] = auth[i] = arc4random();
-		}
+		rumpuser_getrandom(auth, sizeof(auth), 0);
+		memcpy(pf->pf_auth, auth, sizeof(pf->pf_auth));
 		pf->pf_lwp = lwproc_curlwp();
 		lwproc_switch(NULL);
 
