@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.10 2012/02/22 12:36:14 nisimura Exp $
+# $NetBSD: ENCPP1,v 1.11 2013/04/27 18:19:49 christos Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.10 $"
+#ident 		"ENCPP1-$Revision: 1.11 $"
 
 maxusers	32
 
@@ -114,7 +114,7 @@ pseudo-device	loop
 # miscellaneous pseudo-devices
 #pseudo-device	vnd		
 #options 	VND_COMPRESSION		# compressed vnd(4)
-#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	pty
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.75 2013/03/02 02:42:16 christos Exp $
+#	$NetBSD: GENERIC,v 1.76 2013/04/27 18:19:40 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.75 $"
+#ident 		"GENERIC-$Revision: 1.76 $"
 
 maxusers	32		# estimated number of users
 
@@ -780,8 +780,8 @@ com0	at obio? addr 0x900002f8 xint 1 # on-board UART
 # disk/mass storage pseudo-devices
 
 #pseudo-device	bio			# RAID control device driver
-#pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

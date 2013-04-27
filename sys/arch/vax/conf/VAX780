@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.12 2013/03/02 02:42:22 christos Exp $
+# $NetBSD: VAX780,v 1.13 2013/04/27 18:19:55 christos Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -284,7 +284,7 @@ mt*		at mscpbus? drive?	# MSCP tape
 #pseudo-device   accf_data		# "dataready" accept filter
 #pseudo-device   accf_http		# "httpready" accept filter
 
-pseudo-device	loop	1
+pseudo-device	loop	
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	bpfilter
 #pseudo-device	carp			# Common Address Redundancy Protocol
@@ -304,8 +304,8 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	vnd	
 #options 	VND_COMPRESSION		# compressed vnd(4)
-#pseudo-device	ccd	4
-#pseudo-device	cgd	4		# cryptographic disk devices
+#pseudo-device	ccd	
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid	8		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

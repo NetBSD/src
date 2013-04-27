@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.23 2013/03/02 02:42:21 christos Exp $
+# $NetBSD: GENERIC,v 1.24 2013/04/27 18:19:49 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.23 $"
+#ident		"GENERIC-$Revision: 1.24 $"
 
 maxusers	32
 
@@ -212,8 +212,8 @@ cinclude "arch/rs6000/conf/GENERIC.local"
 #pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
-#pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

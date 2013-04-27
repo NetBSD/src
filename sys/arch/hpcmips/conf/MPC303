@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.62 2013/03/02 02:42:15 christos Exp $
+# 	$NetBSD: MPC303,v 1.63 2013/04/27 18:19:37 christos Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,7 +9,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.62 $"
+#ident 		"GENERIC-$Revision: 1.63 $"
 
 maxusers	16
 
@@ -472,14 +472,14 @@ scsibus* at esp?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd			# virtual disk ick
-#pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	ccd			# concatenated disks
 pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	biconsdev	1	# build-in console device
