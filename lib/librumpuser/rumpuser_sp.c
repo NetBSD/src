@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.54 2013/04/27 16:56:29 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.55 2013/04/27 17:35:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.54 2013/04/27 16:56:29 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.55 2013/04/27 17:35:10 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -951,7 +951,7 @@ static void
 handlereq(struct spclient *spc)
 {
 	uint64_t reqno;
-	int error, i;
+	int error;
 
 	reqno = spc->spc_hdr.rsp_reqno;
 	if (__predict_false(spc->spc_state == SPCSTATE_NEW)) {
