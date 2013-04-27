@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.63 2013/04/27 18:19:34 christos Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.64 2013/04/27 21:43:24 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs266"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.63 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.64 $"
 
 maxusers	32
 
@@ -189,7 +189,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd			# concatenated/striped disk devices
 #pseudo-device	cgd			# cryptographic disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	md			# memory disk device

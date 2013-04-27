@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.63 2013/04/27 18:19:37 christos Exp $
+# 	$NetBSD: MPC303,v 1.64 2013/04/27 21:43:27 christos Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,7 +9,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.63 $"
+#ident 		"GENERIC-$Revision: 1.64 $"
 
 maxusers	16
 
@@ -492,7 +492,7 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 pseudo-device	md			# memory disk device (ramdisk)
 
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 

@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD2,v 1.19 2013/03/02 02:42:13 christos Exp $
+#	$NetBSD: VIRTEX_GSRD2,v 1.20 2013/04/27 21:43:24 christos Exp $
 #
 # VIRTEX_GSRD2
 #
@@ -166,10 +166,10 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 
 pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	ppp		2	# Point-to-Point Protocol
-pseudo-device	sl		2	# Serial Line IP
+pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	sl			# Serial Line IP
 pseudo-device	pty			# pseudo-terminals
 
 pseudo-device 	wsmux
