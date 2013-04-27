@@ -1,4 +1,4 @@
-/*	$NetBSD: s_scalbln.c,v 1.3 2013/04/27 16:43:13 joerg Exp $	*/
+/*	$NetBSD: s_scalbln.c,v 1.4 2013/04/27 17:19:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_scalbln.c,v 1.2 2005/03/07 04:57:50 das Exp $");
 #else
-__RCSID("$NetBSD: s_scalbln.c,v 1.3 2013/04/27 16:43:13 joerg Exp $");
+__RCSID("$NetBSD: s_scalbln.c,v 1.4 2013/04/27 17:19:47 joerg Exp $");
 #endif
 
 #include "namespace.h"
@@ -42,32 +42,24 @@ __weak_alias(scalbln, _scalbln)
 double
 scalbln (double x, long n)
 {
-	int in;
 
-	in = (int)n;
-	if (in != n) {
-		if (n > 0)
-			in = INT_MAX;
-		else
-			in = INT_MIN;
-	}
-	return (scalbn(x, in));
+	if (n > INT_MAX)
+		n = INT_MAX;
+	else if (n < INT_MIN)
+		n = INT_MIN;
+	return (scalbn(x, n));
 }
 
 __weak_alias(scalblnf, _scalblnf)
 float
 scalblnf (float x, long n)
 {
-	int in;
 
-	in = (int)n;
-	if (in != n) {
-		if (n > 0)
-			in = INT_MAX;
-		else
-			in = INT_MIN;
-	}
-	return (scalbnf(x, in));
+	if (n > INT_MAX)
+		n = INT_MAX;
+	else if (n < INT_MIN)
+		n = INT_MIN;
+	return (scalbnf(x, n));
 }
 
 #ifndef _LP64
@@ -76,15 +68,10 @@ __weak_alias(scalblnl, _scalblnl)
 long double
 scalblnl (long double x, long n)
 {
-	int in;
-
-	in = (int)n;
-	if (in != n) {
-		if (n > 0)
-			in = INT_MAX;
-		else
-			in = INT_MIN;
-	}
-	return (scalbnl(x, (int)n));
+	if (n > INT_MAX)
+		n = INT_MAX;
+	else if (n < INT_MIN)
+		n = INT_MIN;
+	return (scalbnl(x, n));
 }
 #endif
