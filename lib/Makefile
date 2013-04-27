@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.200 2013/04/12 16:32:37 skrll Exp $
+#	$NetBSD: Makefile,v 1.201 2013/04/27 08:43:19 matt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -39,8 +39,11 @@ SUBDIR+=	libarch \
 		libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
 
-.if (${MACHINE_ARCH:C/e[bl]$//} == "arm" || ${MACHINE_ARCH:C/e[bl]$//} == "earm")
+.if (${MACHINE_CPU} == "arm")
+LIBC_MACHINE_ARCH?=${MACHINE_ARCH}
+.if empty(LIBC_MACHINE_ARCH:M*hf*)
 SUBDIR+=	libc_vfp
+.endif
 .endif
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpclient
