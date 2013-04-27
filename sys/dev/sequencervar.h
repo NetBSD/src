@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.15 2012/10/27 17:18:14 chs Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.16 2013/04/27 22:12:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -104,6 +104,8 @@ struct sequencer_softc {
 
 	struct	sequencer_queue inq; /* input event queue */
 	u_long	input_stamp;
+	int	sc_unit;
+	LIST_ENTRY(sequencer_softc) sc_link;
 };
 
 void seq_event_intr(void *, seq_event_t *);
