@@ -134,7 +134,7 @@ along with GCC; see the file COPYING3.  If not see
 	        %{!msupersparc:-mcpu=ultrasparc}}}}}}} \
     %{!mno-vis:%{!mcpu=v9:-mvis}} \
     %{p:-mcmodel=medlow} \
-    %{pg:-mcmodel=medlow}}" \
+    %{pg:-mcmodel=medlow}} " \
   NETBSD_CC1_AND_CC1PLUS_SPEC
 
 #define CC1_SPEC64 \
@@ -155,7 +155,7 @@ along with GCC; see the file COPYING3.  If not see
 		%{!msupersparc:-mcpu=cypress}}}}}}}} \
   %{!m32: \
       %{p:-mcmodel=medlow} \
-      %{pg:-mcmodel=medlow}}" \
+      %{pg:-mcmodel=medlow}} " \
   NETBSD_CC1_AND_CC1PLUS_SPEC
 
 /* Make sure we use the right output format.  Pick a default and then
