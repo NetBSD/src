@@ -43,8 +43,6 @@
 #include <arch/arm/broadcom/bcm2835_mbox.h>
 #include <arch/arm/broadcom/bcm2835var.h>
 
-MALLOC_DEFINE(M_VCPAGELIST, "vcpagelist", "VideoCore pagelist memory");
-
 #define TOTAL_SLOTS (VCHIQ_SLOT_ZERO_SLOTS + 2 * 32)
 
 #define VCHIQ_DOORBELL_IRQ IRQ_ARM_DOORBELL_0
