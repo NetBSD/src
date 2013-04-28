@@ -31,8 +31,6 @@
 //   anoncvs@anoncvs.netbsd.org:/cvsroot/basesrc/include/ctype.h
 // See www.netbsd.org for details of access.
 
-#include <sys/ctype_bits.h>
-  
 _GLIBCXX_BEGIN_NAMESPACE(std)
 
   /// @brief  Base class for ctype.
