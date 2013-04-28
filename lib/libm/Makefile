@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.135 2013/04/27 22:58:15 joerg Exp $
+#  $NetBSD: Makefile,v 1.136 2013/04/28 14:46:14 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -69,8 +69,7 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .PATH:	${.CURDIR}/arch/i387
 
 COMMON_SRCS+= fenv.c s_nexttoward.c s_nexttowardf.c \
-	s_nearbyint.c s_rintl.c \
-	s_scalbln.c # s_nan.c
+	s_nearbyint.c s_rintl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
