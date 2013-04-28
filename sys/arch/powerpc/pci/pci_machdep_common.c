@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.17 2013/04/11 18:14:40 macallan Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.18 2013/04/28 00:45:45 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.17 2013/04/11 18:14:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.18 2013/04/28 00:45:45 macallan Exp $");
 
 #define _POWERPC_BUS_DMA_PRIVATE
 
@@ -167,17 +167,12 @@ genppc_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	printf("%s: pin: %d, line: %d\n", __func__, pin, line);
 #endif
 
-/*
- * XXX
- * on my G5 some devices are configured with pin == 0 but a valid IRQ line
- */
-#ifndef PMAC_G5
 	if (pin == 0) {
 		/* No IRQ used. */
 		aprint_error("pci_intr_map: interrupt pin %d\n", pin);
 		goto bad;
 	}
-#endif
+
 	if (pin > 4) {
 		aprint_error("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
