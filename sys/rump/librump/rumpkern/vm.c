@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.139 2013/04/28 13:17:25 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.140 2013/04/28 23:21:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.139 2013/04/28 13:17:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.140 2013/04/28 23:21:00 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -335,11 +335,11 @@ uvm_init(void)
 #undef FAKE_PAGE_SHIFT
 #endif
 
-	mutex_init(&pagermtx, MUTEX_DEFAULT, 0);
-	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
-	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, 0);
+	mutex_init(&pagermtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	mutex_init(&pdaemonmtx, MUTEX_DEFAULT, 0);
+	mutex_init(&pdaemonmtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&pdaemoncv, "pdaemon");
 	cv_init(&oomwait, "oomwait");
 
