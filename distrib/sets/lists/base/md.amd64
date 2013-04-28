@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.205 2013/04/27 23:02:17 joerg Exp $
+# $NetBSD: md.amd64,v 1.206 2013/04/28 04:05:37 joerg Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -285,9 +285,9 @@
 ./usr/lib/i386/libssh.so.21.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.10			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.10.1			base-compat-shlib	compat,pic
-./usr/lib/i386/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds
-./usr/lib/i386/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic
-./usr/lib/i386/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic
+./usr/lib/i386/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds,libstdcxx
+./usr/lib/i386/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,libstdcxx
+./usr/lib/i386/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,libstdcxx
 ./usr/lib/i386/libsupc++.so.1			base-obsolete		obsolete
 ./usr/lib/i386/libsupc++.so.1.0			base-obsolete		obsolete
 ./usr/lib/i386/libtermcap.so.0			base-compat-shlib	compat,pic
