@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.36 2013/04/28 13:17:25 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.37 2013/04/28 13:39:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.36 2013/04/28 13:17:25 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.37 2013/04/28 13:39:13 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: rumpuser.c,v 1.36 2013/04/28 13:17:25 pooka Exp $");
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
-#include <sys/event.h>
 #endif
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
