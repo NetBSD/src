@@ -1,4 +1,4 @@
-# $NetBSD: ad.earm,v 1.2 2013/04/28 04:05:38 joerg Exp $
+# $NetBSD: ad.earm,v 1.3 2013/04/28 05:41:26 matt Exp $
 ./usr/include/gcc-4.5/arm_neon.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
@@ -243,6 +243,10 @@
 ./usr/lib/oabi/libc_vfp.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libc_vfp_p.a			comp-c-proflib		compat,profile
 ./usr/lib/oabi/libc_vfp_pic.a			comp-c-piclib		compat,pic
+./usr/lib/oabi/libc++.a				comp-c-lib		compat,libcxx
+./usr/lib/oabi/libc++.so			comp-sys-shlib		compat,pic,libcxx
+./usr/lib/oabi/libc++_p.a			comp-c-proflib		compat,profile,libcxx
+./usr/lib/oabi/libc++_pic.a			comp-c-piclib		compat,pic,libcxx
 ./usr/lib/oabi/libcom_err.a			comp-c-lib		compat,kerberos
 ./usr/lib/oabi/libcom_err.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/oabi/libcom_err_p.a			comp-c-proflib		compat,profile,kerberos
