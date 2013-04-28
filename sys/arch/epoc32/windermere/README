@@ -1,0 +1,11 @@
+What is Windermere?
+
+I don't know...  Open Psion guys says it.
+
+  http://linux-7110.sourceforge.net/
+
+It is SoC for Psion.
+Alos I have not found this datasheet. This written with reference to
+
+  http://svn.exactcode.de/linux24-psionw/
+  svn co http://svn.exactcode.de/linux24-psionw/ linux24-psion
