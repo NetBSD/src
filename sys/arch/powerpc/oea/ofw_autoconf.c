@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.17 2012/07/29 18:05:45 mlelstv Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.18 2013/04/28 00:44:27 macallan Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.17 2012/07/29 18:05:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.18 2013/04/28 00:44:27 macallan Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -346,6 +346,15 @@ device_register(device_t dev, void *aux)
 				    "shared-pins");
 			}
 		}
+#ifdef macppc
+		/*
+		 * XXX
+		 * some macppc boxes have onboard devices where parts or all of
+		 * the PCI_INTERRUPT register are hardwired to 0
+		 */
+		if (pa->pa_intrpin == 0)
+			pa->pa_intrpin = 1;
+#endif
 	}
 
 	if (booted_device)
