@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.80 2013/04/28 10:25:04 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.81 2013/04/28 12:54:39 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -87,7 +87,7 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 #
 
 
-.ifdef RUMPCOMP_USER
+.ifdef RUMPCOMP_USER && !defined(RUMPTEST_BUILDSH)
 .if empty(DESTDIR)
 DESTDIR=/
 .endif
