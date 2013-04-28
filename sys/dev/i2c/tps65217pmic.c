@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.3 2013/04/26 19:32:43 rkujawa Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.4 2013/04/28 00:41:22 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,13 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
- * Texas Instruments TPS65217 Power Management IC driver. 
+/*
+ * Texas Instruments TPS65217 Power Management IC driver.
  * TODO: battery, sequencer, pgood
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.3 2013/04/26 19:32:43 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.4 2013/04/28 00:41:22 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ enum tps_reg_num {
 	TPS65217PMIC_DCDC1,
 	TPS65217PMIC_DCDC2,
 	TPS65217PMIC_DCDC3
-}; 
+};
 
 struct tps_reg_param {
 	/* parameters configured statically */
@@ -94,7 +94,7 @@ struct tps_reg_param {
 
 	uint8_t defreg_num;		/* DEF register */
 	uint8_t enable_bit;		/* position in ENABLE register */
-	
+
 	/*
 	 * Run-time parameters configured during attachment and later, these
 	 * probably should be split into separate struct that would be a part
@@ -137,26 +137,26 @@ CFATTACH_DECL_NEW(tps65217pmic, sizeof (struct tps65217pmic_softc),
     tps65217pmic_match, tps65217pmic_attach, NULL, NULL);
 
 /* Possible settings of LDO1 in mV. */
-static const uint16_t ldo1voltages[] = { 1000, 1100, 1200, 1250, 1300, 1350, 
+static const uint16_t ldo1voltages[] = { 1000, 1100, 1200, 1250, 1300, 1350,
     1400, 1500, 1600, 1800, 2500, 2750, 2800, 3000, 3100, 3300 };
 /* Possible settings of LDO2, DCDC1, DCDC2, DCDC3 in mV. */
-static const uint16_t ldo2voltages[] = { 900, 925, 950, 975, 1000, 1025, 1050, 
-    1075, 1100, 1125, 1150, 1175, 1200, 1225, 1250, 1275, 1300, 1325, 1350, 
-    1375, 1400, 1425, 1450, 1475, 1500, 1550, 1600, 1650, 1700, 1750, 1800, 
-    1850, 1900, 1950, 2000, 2050, 2100, 2150, 2200, 2250, 2300, 2350, 2400, 
-    2450, 2500, 2550, 2600, 2650, 2700, 2750, 2800, 2850, 2900, 3000, 3100, 
+static const uint16_t ldo2voltages[] = { 900, 925, 950, 975, 1000, 1025, 1050,
+    1075, 1100, 1125, 1150, 1175, 1200, 1225, 1250, 1275, 1300, 1325, 1350,
+    1375, 1400, 1425, 1450, 1475, 1500, 1550, 1600, 1650, 1700, 1750, 1800,
+    1850, 1900, 1950, 2000, 2050, 2100, 2150, 2200, 2250, 2300, 2350, 2400,
+    2450, 2500, 2550, 2600, 2650, 2700, 2750, 2800, 2850, 2900, 3000, 3100,
     3200, 3300, 3300, 3300, 3300, 3300, 3300, 3300, 3300 };
 /* Possible settings of LDO3, LDO4 in mV. */
-static const uint16_t ldo3voltages[] = { 1500, 1550, 1600, 1650, 1700, 1750, 
-    1800, 1850, 1900, 2000, 2100, 2200, 2300, 2400, 2450, 2500, 2550, 2600, 
-    2650, 2700, 2750, 2800, 2850, 2900,2950, 3000, 3050, 3100, 3150, 3200, 
+static const uint16_t ldo3voltages[] = { 1500, 1550, 1600, 1650, 1700, 1750,
+    1800, 1850, 1900, 2000, 2100, 2200, 2300, 2400, 2450, 2500, 2550, 2600,
+    2650, 2700, 2750, 2800, 2850, 2900,2950, 3000, 3050, 3100, 3150, 3200,
     3250, 3300 };
 
 static struct tps_reg_param tps_regulators[] = {
-	{ 
-		.name = "LDO1", 
-		.voltage_min = 1000, 
-		.voltage_max = 3300, 
+	{
+		.name = "LDO1",
+		.voltage_min = 1000,
+		.voltage_max = 3300,
 		.voltages = ldo1voltages,
 		.nvoltages = 16,
 		.can_track = false,
@@ -166,79 +166,79 @@ static struct tps_reg_param tps_regulators[] = {
 		.defreg_num = TPS65217PMIC_DEFLDO1,
 		.enable_bit = TPS65217PMIC_ENABLE_LDO1
 	},
-	{ 
+	{
 		.name = "LDO2",
-		.voltage_min = 900, 
+		.voltage_min = 900,
 		.voltage_max = 3300,
 		.voltages = ldo2voltages,
 		.nvoltages = 64,
 		.can_track = true,
-		.tracked_reg = &(tps_regulators[TPS65217PMIC_DCDC3]), 
+		.tracked_reg = &(tps_regulators[TPS65217PMIC_DCDC3]),
 		.can_xadj = false,
 		.can_ls = false,
 		.defreg_num = TPS65217PMIC_DEFLDO2,
 		.enable_bit = TPS65217PMIC_ENABLE_LDO2
 	},
-	{ 
+	{
 		.name = "LDO3",
-		.voltage_min = 1500, 
+		.voltage_min = 1500,
 		.voltage_max = 3300,
 		.voltages = ldo3voltages,
 		.nvoltages = 32,
 		.can_track = false,
-		.tracked_reg = NULL, 
+		.tracked_reg = NULL,
 		.can_xadj = false,
 		.can_ls = true,
 		.defreg_num = TPS65217PMIC_DEFLDO3,
 		.enable_bit = TPS65217PMIC_ENABLE_LDO3
 	},
-	{ 
+	{
 		.name = "LDO4",
-		.voltage_min = 1500, 
+		.voltage_min = 1500,
 		.voltage_max = 3300,
 		.voltages = ldo3voltages,
 		.nvoltages = 32,
 		.can_track = false,
-		.tracked_reg = NULL, 
+		.tracked_reg = NULL,
 		.can_xadj = false,
 		.can_ls = true,
 		.defreg_num = TPS65217PMIC_DEFLDO4,
 		.enable_bit = TPS65217PMIC_ENABLE_LDO4
 	},
-	{ 
+	{
 		.name = "DCDC1",
-		.voltage_min = 900, 
+		.voltage_min = 900,
 		.voltage_max = 3300,
 		.voltages = ldo2voltages,
 		.nvoltages = 64,
 		.can_track = false,
-		.tracked_reg = NULL, 
+		.tracked_reg = NULL,
 		.can_xadj = true,
 		.can_ls = false,
 		.defreg_num = TPS65217PMIC_DEFDCDC1,
 		.enable_bit = TPS65217PMIC_ENABLE_DCDC1
 	},
-	{ 
+	{
 		.name = "DCDC2",
-		.voltage_min = 900, 
+		.voltage_min = 900,
 		.voltage_max = 3300,
 		.voltages = ldo2voltages,
 		.nvoltages = 64,
 		.can_track = false,
-		.tracked_reg = NULL, 
+		.tracked_reg = NULL,
 		.can_xadj = true,
 		.can_ls = false,
 		.defreg_num = TPS65217PMIC_DEFDCDC2,
-		.enable_bit = TPS65217PMIC_ENABLE_DCDC2	
+		.enable_bit = TPS65217PMIC_ENABLE_DCDC2
 	},
-	{ 
+	{
 		.name = "DCDC3",
-		.voltage_min = 900, 
+		.voltage_min = 900,
 		.voltage_max = 3300,
 		.voltages = ldo2voltages,
 		.nvoltages = 64,
 		.can_track = false,
-		.tracked_reg = NULL, 
+		.tracked_reg = NULL,
 		.can_xadj = true,
 		.can_ls = false,
 		.defreg_num = TPS65217PMIC_DEFDCDC3,
@@ -296,7 +296,7 @@ tps65217pmic_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	aprint_normal(" Power Management Multi-Channel IC (rev 1.%d)\n", 
+	aprint_normal(" Power Management Multi-Channel IC (rev 1.%d)\n",
 	    sc->sc_revision);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -317,12 +317,12 @@ tps65217pmic_refresh(struct tps65217pmic_softc *sc)
 
 	for (i = 0; i < NTPS_REG; i++) {
 		c_reg = &tps_regulators[i];
-		tps65217pmic_regulator_read_config(sc, c_reg); 
+		tps65217pmic_regulator_read_config(sc, c_reg);
 	}
 }
 
 /* Get version and revision of the chip. */
-static void 
+static void
 tps65217pmic_version(struct tps65217pmic_softc *sc)
 {
 	uint8_t chipid;
@@ -333,10 +333,10 @@ tps65217pmic_version(struct tps65217pmic_softc *sc)
 	sc->sc_revision = chipid & TPS65217PMIC_CHIPID_REV_MASK;
 }
 
-static uint16_t 
-tps65217pmic_ppath_max_ac_current(uint8_t ppath) 
+static uint16_t
+tps65217pmic_ppath_max_ac_current(uint8_t ppath)
 {
-	switch ((ppath & TPS65217PMIC_PPATH_IAC) >> 
+	switch ((ppath & TPS65217PMIC_PPATH_IAC) >>
 	    TPS65217PMIC_PPATH_IAC_RSHFIT) {
 	case TPS65217PMIC_PPATH_IAC_100MA:
 		return 100;
@@ -350,7 +350,7 @@ tps65217pmic_ppath_max_ac_current(uint8_t ppath)
 	return 0;
 }
 
-static uint16_t 
+static uint16_t
 tps65217pmic_ppath_max_usb_current(uint8_t ppath)
 {
 	switch (ppath & TPS65217PMIC_PPATH_IUSB) {
@@ -367,8 +367,8 @@ tps65217pmic_ppath_max_usb_current(uint8_t ppath)
 }
 
 /* Read regulator state and save it to tps_reg_param. */
-static void 
-tps65217pmic_regulator_read_config(struct tps65217pmic_softc *sc, struct 
+static void
+tps65217pmic_regulator_read_config(struct tps65217pmic_softc *sc, struct
     tps_reg_param *regulator)
 {
 	uint8_t defreg, regenable;
@@ -383,20 +383,20 @@ tps65217pmic_regulator_read_config(struct tps65217pmic_softc *sc, struct
 		return;
 	}
 
-	defreg = tps65217pmic_reg_read(sc, 
+	defreg = tps65217pmic_reg_read(sc,
 	    regulator->defreg_num);
 
 	switch (regulator->nvoltages) {
 	case 16:
-		voltage = regulator->voltages[defreg & 
+		voltage = regulator->voltages[defreg &
 		    TPS65217PMIC_DEFX_VOLTAGE_16];
 		break;
 	case 32:
-		voltage = regulator->voltages[defreg & 
+		voltage = regulator->voltages[defreg &
 		    TPS65217PMIC_DEFX_VOLTAGE_32];
 		break;
 	case 64:
-		voltage = regulator->voltages[defreg & 
+		voltage = regulator->voltages[defreg &
 		    TPS65217PMIC_DEFX_VOLTAGE_64];
 		break;
 	default:
@@ -416,7 +416,7 @@ tps65217pmic_regulator_read_config(struct tps65217pmic_softc *sc, struct
 	if (regulator->can_ls)
 		if (!(defreg & TPS65217PMIC_DEFX_LS)) {
 			regulator->is_ls = true;
-			voltage = 0;	
+			voltage = 0;
 		}
 
 	if (regulator->can_xadj)
@@ -455,7 +455,7 @@ tps65217pmic_print_ldos(struct tps65217pmic_softc *sc)
 	aprint_normal("\n");
 }
 
-static void 
+static void
 tps65217pmic_print_ppath(struct tps65217pmic_softc *sc)
 {
 	uint8_t status, ppath, regenable;
@@ -471,7 +471,7 @@ tps65217pmic_print_ppath(struct tps65217pmic_softc *sc)
 			aprint_normal("[USB] ");
 		else
 			aprint_normal("USB ");
-		aprint_normal("max %d mA, ", 
+		aprint_normal("max %d mA, ",
 		    tps65217pmic_ppath_max_usb_current(ppath));
 	}
 
@@ -480,7 +480,7 @@ tps65217pmic_print_ppath(struct tps65217pmic_softc *sc)
 			aprint_normal("[AC] ");
 		else
 			aprint_normal("AC ");
-		aprint_normal("max %d mA", 
+		aprint_normal("max %d mA",
 		    tps65217pmic_ppath_max_ac_current(ppath));
 	}
 
@@ -500,7 +500,7 @@ tps65217pmic_reg_read(struct tps65217pmic_softc *sc, uint8_t reg)
 
 	wbuf[0] = reg;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, wbuf, 
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, wbuf,
 	    1, &rv, 1, I2C_F_POLL)) {
 		aprint_error_dev(sc->sc_dev, "cannot execute operation\n");
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
@@ -521,13 +521,13 @@ tps65217pmic_envsys_register(struct tps65217pmic_softc *sc)
 	/* iterate over all regulators and register them as sensors */
 	for(i = 0; i < NTPS_REG; i++) {
 		/* set name */
-		strlcpy(sc->sc_sensor[i].desc, tps_regulators[i].name, 
+		strlcpy(sc->sc_sensor[i].desc, tps_regulators[i].name,
 		    sizeof(sc->sc_sensor[i].desc));
-		sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC; 
+		sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
 		sc->sc_sensor[i].state = ENVSYS_SINVALID;
 
 		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[i]))
-			aprint_error_dev(sc->sc_dev, 
+			aprint_error_dev(sc->sc_dev,
 			    "error attaching sensor %d\n", i);
 	}
 
@@ -544,7 +544,7 @@ tps65217pmic_envsys_register(struct tps65217pmic_softc *sc)
 static void
 tps65217pmic_envsys_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	struct tps65217pmic_softc *sc = sme->sme_cookie;	
+	struct tps65217pmic_softc *sc = sme->sme_cookie;
 
 	mutex_enter(&sc->sc_lock);
 
@@ -553,7 +553,7 @@ tps65217pmic_envsys_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	/* TODO: handle special cases like LS, XADJ... */
 	edata->value_cur = tps_regulators[edata->sensor].current_voltage * 1000;
 	edata->state = ENVSYS_SVALID;
-	
+
 	mutex_exit(&sc->sc_lock);
 }
 
