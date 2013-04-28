@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.265 2013/03/07 04:51:58 oki Exp $
+#	$NetBSD: build.sh,v 1.266 2013/04/28 12:54:39 pooka Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1730,7 +1730,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.265 2013/03/07 04:51:58 oki Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.266 2013/04/28 12:54:39 pooka Exp $
 # with these arguments: ${_args}
 #
 
@@ -1958,6 +1958,7 @@ dorump()
 	[ "${1}" != "rumptest" ] && bomb 'build.sh rump not yet functional. ' \
 	    'did you mean "rumptest"?'
 
+	export RUMPTEST_BUILDSH=1
 	# create obj and distrib dirs
 	if [ "${MKOBJDIRS}" != "no" ]; then
 		make_in_dir "${NETBSDSRCDIR}/etc/mtree" obj
@@ -1998,7 +1999,7 @@ dorump()
 			/undefined reference/ &&
 			    !/more undefined references.*follow/{
 				if (match($NF,
-				    "`(rumpuser_|__" quirks ")") == 0)
+				    "`(rumpuser_|rumpcomp_|__" quirks ")") == 0)
 					fails[NR] = $0
 			}
 			/cannot find -l/{fails[NR] = $0}
