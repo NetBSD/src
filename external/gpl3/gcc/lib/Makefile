@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2013/04/28 04:05:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2013/04/28 06:14:52 joerg Exp $
+
+.include <bsd.own.mk>
 
 # crtstuff is built out of elsewhere, or not at all
 SUBDIR+= libgcc libiberty libobjc libgomp
