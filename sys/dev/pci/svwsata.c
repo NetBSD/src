@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.16 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.17 2013/04/28 00:47:56 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.16 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.17 2013/04/28 00:47:56 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,9 +109,6 @@ svwsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	pcireg_t interface;
 	const char *intrstr;
 	int channel;
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	/* The 4-port version has a dummy second function. */
 	if (pci_conf_read(sc->sc_pc, sc->sc_tag,
@@ -313,6 +310,16 @@ svwsata_mapchan(struct pciide_channel *cp)
 		    wdc_cp->ch_channel);
 		goto bad;
 	}
+
+	bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh,
+	    (wdc_cp->ch_channel << 8) + SVWSATA_SICR1,
+	    bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh,
+	        (wdc_cp->ch_channel << 8) + SVWSATA_SICR1)
+	    & ~0x00040000);
+	bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh,
+	    (wdc_cp->ch_channel << 8) + SVWSATA_SERROR, 0xffffffff);
+	bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh,
+	    (wdc_cp->ch_channel << 8) + SVWSATA_SIM, 0);
 
 	wdcattach(wdc_cp);
 	return;
