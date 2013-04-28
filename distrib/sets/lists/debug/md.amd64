@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.21 2013/04/16 15:03:18 christos Exp $
+# $NetBSD: md.amd64,v 1.22 2013/04/28 04:05:40 joerg Exp $
 ./usr/libdata/debug/lib/i386/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/i386/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/i386/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -153,8 +153,8 @@
 ./usr/libdata/debug/usr/lib/i386/libss.so.6.0.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libssh.so.21.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libssl.so.10.1.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug,libstdcxx
+./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/i386/libterminfo.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libtpm_unseal.so.1.0.debug	comp-compat-shlib	compat,pic,debug,tpm
 ./usr/libdata/debug/usr/lib/i386/libtspi.so.3.0.debug	comp-compat-shlib	compat,pic,debug,tpm
@@ -308,8 +308,8 @@
 ./usr/lib/i386/libss_g.a			comp-obsolete		obsolete
 ./usr/lib/i386/libssh_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libssl_g.a			comp-c-proflib		compat,debuglib
-./usr/lib/i386/libstdc++_g.a			comp-c-proflib		compat,debuglib,cxx,gcccmds
-./usr/lib/i386/libsupc++_g.a			comp-c-proflib		compat,debuglib,cxx,gcccmds
+./usr/lib/i386/libstdc++_g.a			comp-c-proflib		compat,debuglib,cxx,gcccmds,libstdcxx
+./usr/lib/i386/libsupc++_g.a			comp-c-proflib		compat,debuglib,cxx,gcccmds,libstdcxx
 ./usr/lib/i386/libtddl_g.a			comp-c-proflib		compat,debug,tpm
 ./usr/lib/i386/libterminfo_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libtpm_unseal_g.a		comp-c-proflib		compat,debug,tpm

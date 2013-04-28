@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.24 2013/04/18 21:53:55 rjs Exp $
+# $NetBSD: shl.mi,v 1.25 2013/04/28 04:05:41 joerg Exp $
 ./usr/libdata/debug/lib/libc.so.12.185.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.1.debug		comp-sys-debug	debug
@@ -230,9 +230,9 @@
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libssh.so.21.0.debug	comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libssl.so.10.1.debug		comp-crypto-debug	crypto,debug
-./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug
-./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug
-./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug
+./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,libstdcxx
+./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,libstdcxx
+./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.1.0.debug	comp-tpm-debug	tpm,debug
 ./usr/libdata/debug/usr/lib/libtre.so.0.8.debug		comp-sys-debug	debug

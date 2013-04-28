@@ -1,4 +1,4 @@
-# $NetBSD: ad.earm,v 1.1 2013/04/27 06:17:53 matt Exp $
+# $NetBSD: ad.earm,v 1.2 2013/04/28 04:05:40 joerg Exp $
 ./usr/lib/libarm_g.a				-unknown-		debuglib
 ./usr/lib/libc_vfp_g.a				-unknown-		debuglib,softfloat
 ./usr/lib/libpmc_g.a				-unknown-		debuglib
@@ -172,9 +172,9 @@
 ./usr/libdata/debug/usr/lib/oabi/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/oabi/libssh.so.21.0.debug	comp-secsh-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libssl.so.10.1.debug		comp-crypto-debug	crypto,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
+./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx
+./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libterminfo.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libtre.so.0.8.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libukfs.so.1.0.debug	comp-sys-debug	debug,compat,rump

@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.103 2013/04/27 23:02:19 joerg Exp $
+# $NetBSD: ad.mips64el,v 1.104 2013/04/28 04:05:38 joerg Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -620,11 +620,11 @@
 ./usr/lib/64/libssl.so				base-sys-shlib		compat,crypto,pic
 ./usr/lib/64/libssl_p.a				comp-c-proflib		compat,crypto,profile
 ./usr/lib/64/libssl_pic.a			comp-c-piclib		compat,crypto,pic
-./usr/lib/64/libstdc++.a			comp-c-lib		compat,cxx,gcccmds
-./usr/lib/64/libstdc++.so			base-sys-shlib		compat,pic,cxx,gcccmds
-./usr/lib/64/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,gcccmds
-./usr/lib/64/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,gcccmds
-./usr/lib/64/libsupc++.a			comp-c-lib		compat,cxx,gcccmds
+./usr/lib/64/libstdc++.a			comp-c-lib		compat,cxx,gcccmds,libstdcxx
+./usr/lib/64/libstdc++.so			base-sys-shlib		compat,pic,cxx,gcccmds,libstdcxx
+./usr/lib/64/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,gcccmds,libstdcxx
+./usr/lib/64/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,gcccmds,libstdcxx
+./usr/lib/64/libsupc++.a			comp-c-lib		compat,cxx,gcccmds,libstdcxx
 ./usr/lib/64/libsupc++.so			base-obsolete		obsolete
 ./usr/lib/64/libsupc++_pic.a			comp-obsolete		obsolete
 ./usr/lib/64/libtermcap.a			comp-c-lib		compat
@@ -1225,11 +1225,11 @@
 ./usr/lib/o32/libssl.so				base-sys-shlib		compat,crypto,pic
 ./usr/lib/o32/libssl_p.a			comp-c-proflib		compat,crypto,profile
 ./usr/lib/o32/libssl_pic.a			comp-c-piclib		compat,crypto,pic
-./usr/lib/o32/libstdc++.a			comp-c-lib		compat,cxx
-./usr/lib/o32/libstdc++.so			base-sys-shlib		compat,pic,cxx
-./usr/lib/o32/libstdc++_p.a			comp-c-proflib		compat,profile,cxx
-./usr/lib/o32/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx
-./usr/lib/o32/libsupc++.a			comp-c-lib		compat,cxx,gcccmds
+./usr/lib/o32/libstdc++.a			comp-c-lib		compat,cxx,libstdcxx
+./usr/lib/o32/libstdc++.so			base-sys-shlib		compat,pic,cxx,libstdcxx
+./usr/lib/o32/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,libstdcxx
+./usr/lib/o32/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,libstdcxx
+./usr/lib/o32/libsupc++.a			comp-c-lib		compat,cxx,gcccmds,libstdcxx
 ./usr/lib/o32/libsupc++.so			base-obsolete		obsolete
 ./usr/lib/o32/libsupc++_pic.a			comp-obsolete		obsolete
 ./usr/lib/o32/libtermcap.a			comp-c-lib		compat

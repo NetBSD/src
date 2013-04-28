@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.248 2013/04/27 23:02:21 joerg Exp $
+# $NetBSD: shl.mi,v 1.249 2013/04/28 04:05:40 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -224,7 +224,7 @@
 ./usr/lib/libssh_pic.a				comp-c-piclib		crypto
 ./usr/lib/libssl_pic.a				comp-c-piclib		crypto
 ./usr/lib/libssp_pic.a				comp-obsolete		obsolete
-./usr/lib/libstdc++_pic.a			comp-cxx-piclib		cxx,gcccmds
+./usr/lib/libstdc++_pic.a			comp-cxx-piclib		cxx,gcccmds,libstdcxx
 ./usr/lib/libtddl_pic.a				comp-c-piclib		tpm
 ./usr/lib/libtspi_pic.a				comp-c-piclib		tpm
 ./usr/lib/libtelnet_pic.a			comp-obsolete		obsolete

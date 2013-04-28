@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.23 2013/04/16 15:03:18 christos Exp $
+# $NetBSD: md.sparc64,v 1.24 2013/04/28 04:05:40 joerg Exp $
 ./usr/libdata/debug/lib/sparc/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -148,8 +148,8 @@
 ./usr/libdata/debug/usr/lib/sparc/libss.so.6.0.debug			comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/sparc/libssh.so.21.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libssl.so.10.1.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.0.debug		comp-compat-shlib	gcc=4,compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.1.debug		comp-compat-shlib	gcc=45,compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.0.debug		comp-compat-shlib	gcc=4,compat,pic,debug,libstdcxx
+./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.1.debug		comp-compat-shlib	gcc=45,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/sparc/libterminfo.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libtre.so.0.8.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libukfs.so.1.0.debug			comp-compat-shlib	compat,pic,debug,rump
@@ -300,8 +300,8 @@
 ./usr/lib/sparc/libss_g.a			-unknown-		obsolete
 ./usr/lib/sparc/libssh_g.a			-unknown-		compat,debuglib,crypto
 ./usr/lib/sparc/libssl_g.a			-unknown-		compat,debuglib,crypto
-./usr/lib/sparc/libstdc++_g.a			-unknown-		compat,debuglib,cxx,gcccmds
-./usr/lib/sparc/libsupc++_g.a			-unknown-		compat,debuglib,gcccmds
+./usr/lib/sparc/libstdc++_g.a			-unknown-		compat,debuglib,cxx,gcccmds,libstdcxx
+./usr/lib/sparc/libsupc++_g.a			-unknown-		compat,debuglib,gcccmds,libstdcxx
 ./usr/lib/sparc/libtermcap_g.a			obsolete		compat,obsolete
 ./usr/lib/sparc/libterminfo_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/libtermlib_g.a			obsolete		compat,obsolete

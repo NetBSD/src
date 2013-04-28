@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.664 2013/04/27 23:02:18 joerg Exp $
+# $NetBSD: shl.mi,v 1.665 2013/04/28 04:05:38 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -704,13 +704,13 @@
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
 ./usr/lib/libssl.so.10				base-crypto-shlib	crypto
 ./usr/lib/libssl.so.10.1				base-crypto-shlib	crypto
-./usr/lib/libstdc++.so				base-sys-shlib		gcc,cxx
-./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3
-./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx
-./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=4,cxx
-./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=45,cxx
-./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4,cxx
-./usr/lib/libstdc++.so.7.1			base-sys-shlib		gcc=45,cxx
+./usr/lib/libstdc++.so				base-sys-shlib		gcc,cxx,libstdcxx
+./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3,libstdcxx
+./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx,libstdcxx
+./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=4,cxx,libstdcxx
+./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=45,cxx,libstdcxx
+./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4,cxx,libstdcxx
+./usr/lib/libstdc++.so.7.1			base-sys-shlib		gcc=45,cxx,libstdcxx
 ./usr/lib/libtelnet.so				base-obsolete		obsolete
 ./usr/lib/libtermcap.so				base-sys-shlib
 ./usr/lib/libtermcap.so.0			base-sys-shlib

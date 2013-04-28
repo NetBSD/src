@@ -1,4 +1,4 @@
-# $NetBSD: ad.earm,v 1.1 2013/04/27 06:17:53 matt Exp $
+# $NetBSD: ad.earm,v 1.2 2013/04/28 04:05:37 joerg Exp $
 ./sbin/ldconfig					base-sysutil-root	pic
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
@@ -295,9 +295,9 @@
 ./usr/lib/oabi/libssh.so.21.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libssl.so.10			base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libssl.so.10.1			base-compat-shlib	compat,pic,crypto
-./usr/lib/oabi/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds
-./usr/lib/oabi/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx
-./usr/lib/oabi/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx
+./usr/lib/oabi/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx
+./usr/lib/oabi/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx,libstdcxx
+./usr/lib/oabi/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx,libstdcxx
 ./usr/lib/oabi/libsupc++.so.0			base-compat-shlib	obsolete
 ./usr/lib/oabi/libsupc++.so.0.0			base-compat-shlib	obsolete
 ./usr/lib/oabi/libtermcap.so.0			base-compat-shlib	compat,pic
