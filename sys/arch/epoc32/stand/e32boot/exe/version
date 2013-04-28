@@ -1,0 +1,10 @@
+$NetBSD: version,v 1.1 2013/04/28 12:11:26 kiyohara Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+0.1:		Initial version.  It is E32 console application.
+0.2:		Load specific kernel.
+0.3:		Support SERIES5.
+1.0:		Initial release version.
