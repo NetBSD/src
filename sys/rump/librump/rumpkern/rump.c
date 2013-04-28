@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.261 2013/04/27 16:32:57 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.262 2013/04/28 13:17:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.261 2013/04/27 16:32:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.262 2013/04/28 13:17:25 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -274,7 +274,7 @@ rump_init(void)
 	rump_thread_init();
 	rump_cpus_bootstrap(&numcpu);
 
-	rumpuser_gettime(&sec, &nsec, &error);
+	rumpuser_clock_gettime(&sec, &nsec, RUMPUSER_CLOCK_RELWALL);
 	boottime.tv_sec = sec;
 	boottime.tv_nsec = nsec;
 
@@ -352,9 +352,7 @@ rump_init(void)
 	inittimecounter();
 	ntp_init();
 
-	rumpuser_gettime(&sec, &nsec, &error);
-	ts.tv_sec = sec;
-	ts.tv_nsec = nsec;
+	ts = boottime;
 	tc_setclock(&ts);
 
 	/* we are mostly go.  do per-cpu subsystem init */
@@ -568,10 +566,7 @@ cpu_reboot(int howto, char *bootstr)
 		printf("rump kernel halted\n");
 		rumpuser_sp_fini(finiarg);
 		for (;;) {
-			uint64_t sec = 5, nsec = 0;
-			int error;
-
-			rumpuser_nanosleep(&sec, &nsec, &error);
+			rumpuser_clock_sleep(10, 0, RUMPUSER_CLOCK_RELWALL);
 		}
 	}
 
