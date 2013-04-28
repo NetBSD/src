@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.49 2013/04/28 10:53:21 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.50 2013/04/28 13:17:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.49 2013/04/28 10:53:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.50 2013/04/28 13:17:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -122,12 +122,9 @@ shmif_lockbus(struct shmif_mem *busmem)
 	while (__predict_false(atomic_cas_32(&busmem->shm_lock,
 	    LOCK_UNLOCKED, LOCK_LOCKED) == LOCK_LOCKED)) {
 		if (__predict_false(++i > LOCK_COOLDOWN)) {
-			uint64_t sec, nsec;
-			int error;
-
-			sec = 0;
-			nsec = 1000*1000; /* 1ms */
-			rumpuser_nanosleep(&sec, &nsec, &error);
+			/* wait 1ms */
+			rumpuser_clock_sleep(0, 1000*1000,
+			    RUMPUSER_CLOCK_RELWALL);
 			i = 0;
 		}
 		continue;
