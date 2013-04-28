@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.15 2007/03/11 06:01:05 isaki Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.16 2013/04/28 14:44:46 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.15 2007/03/11 06:01:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.16 2013/04/28 14:44:46 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -283,10 +283,10 @@ tv_putc_nm(struct ite_softc *ip, int ch, char *p)
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
 		/* multibyte character */
 		kf = (volatile short *)tv_kfont[hi];
-		kf += (ch & 0x7f) * FONTHEIGHT;
+		kf += ch * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
 			*(u_short *)p = *kf++;
@@ -312,10 +312,10 @@ tv_putc_in(struct ite_softc *ip, int ch, char *p)
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
 		/* multibyte character */
 		kf = (volatile short *)tv_kfont[hi];
-		kf += (ch & 0x7f) * FONTHEIGHT;
+		kf += ch * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
 			*(u_short *)p = ~*kf++;
@@ -341,10 +341,10 @@ tv_putc_bd(struct ite_softc *ip, int ch, char *p)
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
 		/* multibyte character */
 		kf = (volatile short *)tv_kfont[hi];
-		kf += (ch & 0x7f) * FONTHEIGHT;
+		kf += ch * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
 			ch = *kf++;
@@ -388,10 +388,10 @@ tv_putc_ul(struct ite_softc *ip, int ch, char *p)
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
 		/* multibyte character */
 		kf = (volatile short *)tv_kfont[hi];
-		kf += (ch & 0x7f) * FONTHEIGHT;
+		kf += ch * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES)
 			*(u_short *)p = *kf++;
@@ -425,10 +425,10 @@ tv_putc_bd_in(struct ite_softc *ip, int ch, char *p)
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
 		/* multibyte character */
 		kf = (volatile short *)tv_kfont[hi];
-		kf += (ch & 0x7f) * FONTHEIGHT;
+		kf += ch * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
 			ch = *kf++;
@@ -458,10 +458,10 @@ tv_putc_ul_in(struct ite_softc *ip, int ch, char *p)
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
 		/* multibyte character */
 		kf = (volatile short *)tv_kfont[hi];
-		kf += (ch & 0x7f) * FONTHEIGHT;
+		kf += ch * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES)
 			*(u_short *)p = ~*kf++;
@@ -495,10 +495,10 @@ tv_putc_bd_ul(struct ite_softc *ip, int ch, char *p)
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
 		/* multibyte character */
 		kf = (volatile short *)tv_kfont[hi];
-		kf += (ch & 0x7f) * FONTHEIGHT;
+		kf += ch * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES) {
 			ch = *kf++;
@@ -542,10 +542,10 @@ tv_putc_bd_ul_in(struct ite_softc *ip, int ch, char *p)
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
 		/* multibyte character */
 		kf = (volatile short *)tv_kfont[hi];
-		kf += (ch & 0x7f) * FONTHEIGHT;
+		kf += ch * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES) {
 			ch = *kf++;
