@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.315 2013/04/11 01:27:46 christos Exp $
+#	$NetBSD: bsd.README,v 1.316 2013/04/28 04:44:21 joerg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -244,6 +244,12 @@ MKKYUA		If "no", don't build Kyua nor its dependent library Lutok.
 
 MKLDAP		If "no", disables building of LDAP infrastructure
 		(libraries and support programs).
+		Default: yes
+
+MKLIBCXX	If not "no", build and install libc++.
+		Default: no
+
+MKLIBSTDCXX	If not "no", build and install libstdc++.
 		Default: yes
 
 MKLINKLIB	If "no", act as "MKLINT=no MKPICINSTALL=no MKPROFILE=no".
