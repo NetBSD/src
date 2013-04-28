@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.20 2013/03/07 18:49:13 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.21 2013/04/28 23:19:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.20 2013/03/07 18:49:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.21 2013/04/28 23:19:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -149,7 +149,7 @@ lwproc_newproc(struct proc *parent, int flags)
 	LIST_INIT(&p->p_children);
 
 	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p->p_reflock);
 	cv_init(&p->p_waitcv, "pwait");
