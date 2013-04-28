@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.169 2013/04/28 04:05:39 joerg Exp $
+# $NetBSD: md.sparc64,v 1.170 2013/04/28 15:24:12 joerg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -278,7 +278,7 @@
 ./usr/lib/sparc/libc.so				base-sys-shlib		compat,pic
 ./usr/lib/sparc/libc_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libc_pic.a			comp-c-piclib		compat,pic
-./usr/lib/soarc/libc++.a			comp-c-lib		compat,libcxx
+./usr/lib/sparc/libc++.a			comp-c-lib		compat,libcxx
 ./usr/lib/sparc/libc++.so			comp-sys-shlib		compat,pic,libcxx
 ./usr/lib/sparc/libc++_p.a			comp-c-proflib		compat,profile,libcxx
 ./usr/lib/sparc/libc++_pic.a			comp-c-piclib		compat,pic,libcxx
