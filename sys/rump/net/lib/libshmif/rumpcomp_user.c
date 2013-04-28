@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.2 2013/04/28 10:53:22 pooka Exp $	*/
+/*      $NetBSD: rumpcomp_user.c,v 1.3 2013/04/28 11:03:25 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -34,6 +34,8 @@
 
 #include "rumpcomp_user.h"
 
+#define seterr(_v_) if ((_v_) == -1) *error = errno; else *error = 0;
+
 /*
  * On NetBSD we use kqueue, on Linux we use inotify.  The underlying
  * interface requirements aren't quite the same, but we have a very
@@ -58,7 +60,7 @@ rumpcomp_shmif_watchsetup(int kq, int fd, int *error)
 	EV_SET(&kev, fd, EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR,
 	    NOTE_WRITE, 0, 0);
 	rv = kevent(kq, &kev, 1, NULL, 0, NULL);
-	*error = errno;
+	seterr(rv);
 	if (rv == -1)
 		return -1;
 	return kq;
@@ -75,9 +77,9 @@ rumpcomp_shmif_watchwait(int kq, int *error)
 	do {
 		rv = kevent(kq, NULL, 0, &kev, 1, NULL);
 	} while (rv == -1 && errno == EINTR);
-	*error = errno;
-
+	seterr(rv);
 	rumpuser_component_schedule(cookie);
+
 	return rv;
 }
 
@@ -117,6 +119,7 @@ rumpcomp_shmif_watchsetup(int inotify, int fd, int *error)
 		close(inotify);
 		return -1;
 	}
+	*error = 0;
 
 	return inotify;
 }
@@ -132,7 +135,7 @@ rumpcomp_shmif_watchwait(int kq, int *error)
 	do {
 		nn = read(kq, &iev, sizeof(iev));
 	} while (errno == EINTR);
-	*error = errno;
+	seterr(nn);
 	rumpuser_component_schedule(cookie);
 
 	if (nn == -1) {
