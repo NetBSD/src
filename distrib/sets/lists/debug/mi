@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.20 2013/04/22 21:06:26 christos Exp $
+# $NetBSD: mi,v 1.21 2013/04/28 04:05:40 joerg Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -2095,8 +2095,8 @@
 ./usr/lib/libss_g.a				-unknown-		obsolete
 ./usr/lib/libssh_g.a				-unknown-		debuglib
 ./usr/lib/libssl_g.a				-unknown-		debuglib
-./usr/lib/libstdc++_g.a				-unknown-		debuglib,cxx,gcccmds
-./usr/lib/libsupc++_g.a				-unknown-		debuglib,cxx,gcccmds
+./usr/lib/libstdc++_g.a				-unknown-		debuglib,cxx,gcccmds,libstdcxx
+./usr/lib/libsupc++_g.a				-unknown-		debuglib,cxx,gcccmds,libstdcxx
 ./usr/lib/libtddl_g.a				comp-c-lib		tpm,debuglib
 ./usr/lib/libtermcap_g.a			comp-obsolete		obsolete
 ./usr/lib/libterminfo_g.a			-unknown-		debuglib
