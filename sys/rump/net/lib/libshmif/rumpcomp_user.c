@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.3 2013/04/28 11:03:25 pooka Exp $	*/
+/*      $NetBSD: rumpcomp_user.c,v 1.4 2013/04/28 13:38:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/event.h>
 
 #include <errno.h>
 
@@ -43,6 +42,8 @@
  * so just keep the existing interfaces for now.
  */
 #if defined(__NetBSD__)
+#include <sys/event.h>
+
 int
 rumpcomp_shmif_watchsetup(int kq, int fd, int *error)
 {
