@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.18 2013/04/26 22:27:16 mlelstv Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.19 2013/04/28 21:34:31 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.18 2013/04/26 22:27:16 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.19 2013/04/28 21:34:31 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -866,18 +866,29 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	}
 	mutex_exit(&mp->mnt_updating);
 	vfs_scrubvnlist(mp);
+
+	/*
+	 * release mnt_umounting lock here, because other code calls
+	 * vfs_busy() while holding the mountlist_lock.
+	 *
+	 * mark filesystem as gone to prevent further umounts
+	 * after mnt_umounting lock is gone, this also prevents
+	 * vfs_busy() from succeeding.
+	 */
+	mp->mnt_iflag |= IMNT_GONE;
+	mutex_exit(&mp->mnt_unmounting);
+
 	mutex_enter(&mountlist_lock);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
 		coveredvp->v_mountedhere = NULL;
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
-	mp->mnt_iflag |= IMNT_GONE;
 	mutex_exit(&mountlist_lock);
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	if (used_syncer)
 		mutex_exit(&syncer_mutex);
 	vfs_hooks_unmount(mp);
-	mutex_exit(&mp->mnt_unmounting);
+
 	vfs_destroy(mp);	/* reference from mount() */
 	if (coveredvp != NULLVP) {
 		vrele(coveredvp);
