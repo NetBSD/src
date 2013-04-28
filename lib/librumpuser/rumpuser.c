@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.34 2013/04/28 09:58:11 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.35 2013/04/28 10:43:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.34 2013/04/28 09:58:11 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.35 2013/04/28 10:43:45 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -599,139 +599,6 @@ rumpuser_seterrno(int error)
 
 	errno = error;
 }
-
-/*
- * On NetBSD we use kqueue, on Linux we use inotify.  The underlying
- * interface requirements aren't quite the same, but we have a very
- * good chance of doing the fd->path mapping on Linux thanks to dcache,
- * so just keep the existing interfaces for now.
- */
-#if defined(__NetBSD__)
-int
-rumpuser_writewatchfile_setup(int kq, int fd, intptr_t opaque, int *error)
-{
-	struct kevent kev;
-
-	if (kq == -1) {
-		kq = kqueue();
-		if (kq == -1) {
-			seterror(errno);
-			return -1;
-		}
-	}
-
-	EV_SET(&kev, fd, EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR,
-	    NOTE_WRITE, 0, opaque);
-	if (kevent(kq, &kev, 1, NULL, 0, NULL) == -1) {
-		seterror(errno);
-		return -1;
-	}
-
-	return kq;
-}
-
-int
-rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
-{
-	struct kevent kev;
-	int rv;
-
- again:
-	KLOCK_WRAP(rv = kevent(kq, NULL, 0, &kev, 1, NULL));
-	if (rv == -1) {
-		if (errno == EINTR)
-			goto again;
-		seterror(errno);
-		return -1;
-	}
-
-	if (opaque)
-		*opaque = kev.udata;
-	return rv;
-}
-
-#elif defined(__linux__)
-#include <sys/inotify.h>
-
-int
-rumpuser_writewatchfile_setup(int inotify, int fd, intptr_t notused, int *error)
-{
-	char procbuf[PATH_MAX], linkbuf[PATH_MAX];
-	ssize_t nn;
-
-	if (inotify == -1) {
-		inotify = inotify_init();
-		if (inotify == -1) {
-			seterror(errno);
-			return -1;
-		}
-	}
-
-	/* ok, need to map fd into path for inotify */
-	snprintf(procbuf, sizeof(procbuf), "/proc/self/fd/%d", fd);
-	nn = readlink(procbuf, linkbuf, sizeof(linkbuf)-1);
-	if (nn >= (ssize_t)sizeof(linkbuf)-1) {
-		nn = -1;
-		errno = E2BIG; /* pick something */
-	}
-	if (nn == -1) {
-		seterror(errno);
-		close(inotify);
-		return -1;
-	}
-
-	linkbuf[nn] = '\0';
-	if (inotify_add_watch(inotify, linkbuf, IN_MODIFY) == -1) {
-		seterror(errno);
-		close(inotify);
-		return -1;
-	}
-
-	return inotify;
-}
-
-int
-rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
-{
-	struct inotify_event iev;
-	ssize_t nn;
-
-	do {
-		KLOCK_WRAP(nn = read(kq, &iev, sizeof(iev)));
-	} while (errno == EINTR);
-
-	if (nn == -1) {
-		seterror(errno);
-		return -1;
-	}
-	return (nn/sizeof(iev));
-}
-
-#else
-
-/* a polling default implementation */
-int
-rumpuser_writewatchfile_setup(int inotify, int fd, intptr_t notused, int *error)
-{
-	static int warned = 0;
-
-	if (!warned) {
-		fprintf(stderr, "WARNING: rumpuser writewatchfile routines are "
-		    "polling-only on this platform\n");
-		warned = 1;
-	}
-
-	return 0;
-}
-
-int
-rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
-{
-
-	KLOCK_WRAP(usleep(10000));
-	return 0;
-}
-#endif
 
 /*
  * This is meant for safe debugging prints from the kernel.
