@@ -1,4 +1,4 @@
-/*	$NetBSD: locks_up.c,v 1.7 2013/04/27 13:59:46 pooka Exp $	*/
+/*	$NetBSD: locks_up.c,v 1.8 2013/04/28 13:37:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.7 2013/04/27 13:59:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.8 2013/04/28 13:37:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -375,21 +375,15 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 int
 cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 {
-	struct timespec ts, tstick;
+	struct timespec ts;
 
 #ifdef DIAGNOSTIC
 	UPMTX(mtx);
 	KASSERT(upm->upm_owner == curlwp);
 #endif
 
-	/*
-	 * XXX: this fetches rump kernel time, but rumpuser_cv_timedwait
-	 * uses host time.
-	 */
-	nanotime(&ts);
-	tstick.tv_sec = ticks / hz;
-	tstick.tv_nsec = (ticks % hz) * (1000000000/hz);
-	timespecadd(&ts, &tstick, &ts);
+	ts.tv_sec = ticks / hz;
+	ts.tv_nsec = (ticks % hz) * (1000000000/hz);
 
 	if (ticks == 0) {
 		cv_wait(cv, mtx);
