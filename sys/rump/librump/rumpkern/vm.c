@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.138 2013/04/27 15:34:53 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.139 2013/04/28 13:17:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.138 2013/04/27 15:34:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.139 2013/04/28 13:17:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1078,11 +1078,7 @@ uvm_pageout(void *arg)
 		 * the game soon.
 		 */
 		if (cleaned == 0 && lockrunning) {
-			uint64_t sec, nsec;
-
-			sec = 0;
-			nsec = 1;
-			rumpuser_nanosleep(&sec, &nsec, NULL);
+			rumpuser_clock_sleep(0, 1, RUMPUSER_CLOCK_RELWALL);
 
 			lockrunning = false;
 			skip = 0;

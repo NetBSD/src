@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.37 2013/04/27 16:32:57 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.38 2013/04/28 13:17:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37 2013/04/27 16:32:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.38 2013/04/28 13:17:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -99,38 +99,27 @@ static struct timecounter rumptc = {
 static void
 doclock(void *noarg)
 {
-	struct timespec clockbase, clockup;
-	struct timespec thetick, curtime;
-	struct rumpuser_cv *clockcv;
-	struct rumpuser_mtx *clockmtx;
+	struct timespec thetick, curclock;
 	uint64_t sec, nsec;
 	int error;
 	extern int hz;
 
-	memset(&clockup, 0, sizeof(clockup));
-	rumpuser_gettime(&sec, &nsec, &error);
-	clockbase.tv_sec = sec;
-	clockbase.tv_nsec = nsec;
-	curtime = clockbase;
+	error = rumpuser_clock_gettime(&sec, &nsec, RUMPUSER_CLOCK_ABSMONO);
+	if (error)
+		panic("clock: cannot get monotonic time");
+
+	curclock.tv_sec = sec;
+	curclock.tv_nsec = nsec;
 	thetick.tv_sec = 0;
 	thetick.tv_nsec = 1000000000/hz;
 
-	/* XXX: dummies */
-	rumpuser_cv_init(&clockcv);
-	rumpuser_mutex_init(&clockmtx, RUMPUSER_MTX_SPIN);
-
-	rumpuser_mutex_enter_nowrap(clockmtx);
 	for (;;) {
 		callout_hardclock();
 
-		/* wait until the next tick. XXX: what if the clock changes? */
-		while (rumpuser_cv_timedwait(clockcv, clockmtx,
-		    curtime.tv_sec, curtime.tv_nsec) == 0)
-			continue;
-
-		/* XXX: sync with a) virtual clock b) host clock */
-		timespecadd(&clockup, &clockbase, &curtime);
-		timespecadd(&clockup, &thetick, &clockup);
+		error = rumpuser_clock_sleep(curclock.tv_sec, curclock.tv_nsec,
+		    RUMPUSER_CLOCK_ABSMONO);
+		KASSERT(!error);
+		timespecadd(&curclock, &thetick, &curclock);
 
 #if 0
 		/* CPU_IS_PRIMARY is MD and hence unreliably correct here */

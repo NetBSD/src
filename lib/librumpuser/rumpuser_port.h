@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.17 2013/04/27 16:56:29 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.18 2013/04/28 13:17:26 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -31,11 +31,20 @@
 #define PLATFORM_HAS_NBQUOTA
 #endif
 
+#if __NetBSD_Prereq__(6,99,16)
+#define HAVE_CLOCK_NANOSLEEP
+#endif
+
 /*
  * This includes also statvfs1() and fstatvfs1().  They could be
  * reasonably easily emulated on other platforms.
  */
 #define PLATFORM_HAS_NBVFSSTAT
+#endif /* __NetBSD__ */
+
+/* might not be 100% accurate, maybe need to revisit later */
+#if defined(__linux__) || defined(__sun__)
+#define HAVE_CLOCK_NANOSLEEP
 #endif
 
 #ifdef __linux__
