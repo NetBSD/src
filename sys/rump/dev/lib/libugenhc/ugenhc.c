@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.12 2012/10/27 17:18:40 chs Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.13 2013/04/28 09:58:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.12 2012/10/27 17:18:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.13 2013/04/28 09:58:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -80,6 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.12 2012/10/27 17:18:40 chs Exp $");
 #include <dev/usb/usbroothub_subr.h>
 
 #include <rump/rumpuser.h>
+
+#include "rumpcomp_user.h"
 
 #include "rump_private.h"
 #include "rump_dev_private.h"
@@ -387,7 +389,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 			usb_device_descriptor_t uddesc;
 			totlen = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
 			memset(buf, 0, totlen);
-			if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
+			if (rumpcomp_ugenhc_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
 			    USB_GET_DEVICE_DESC, &uddesc, &ru_error) == -1) {
 				err = EIO;
 				goto ret;
@@ -403,7 +405,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 			ufdesc.ufd_size = len;
 			ufdesc.ufd_data = buf;
 			memset(buf, 0, len);
-			if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
+			if (rumpcomp_ugenhc_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
 			    USB_GET_FULL_DESC, &ufdesc, &ru_error) == -1) {
 				err = USBD_IOERROR;
 				goto ret;
@@ -416,7 +418,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 			{
 			struct usb_device_info udi;
 
-			if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
+			if (rumpcomp_ugenhc_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
 			    USB_GET_DEVICEINFO, &udi, &ru_error) == -1) {
 				printf("ugenhc: get dev info failed: %d\n",
 				    ru_error);
@@ -451,7 +453,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 		break;
 
 	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
-		if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
+		if (rumpcomp_ugenhc_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
 		    USB_SET_CONFIG, &value, &ru_error) == -1) {
 			printf("ugenhc: set config failed: %d\n",
 			    ru_error);
@@ -467,7 +469,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 		totlen = 0;
 		uai.uai_interface_index = UGETW(req->wIndex);
 		uai.uai_alt_no = value;
-		if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
+		if (rumpcomp_ugenhc_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
 		    USB_SET_ALTINTERFACE, &uai, &ru_error) == -1) {
 			printf("ugenhc: set alt interface failed: %d\n",
 			    ru_error);
@@ -517,7 +519,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 
 		memcpy(&ucr.ucr_request, req, sizeof(ucr.ucr_request));
 		ucr.ucr_data = buf;
-		if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
+		if (rumpcomp_ugenhc_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
 		    USB_DO_REQUEST, &ucr, &ru_error) == -1) {
 			if (!mightfail) {
 				panic("request failed: %d", ru_error);
@@ -748,7 +750,7 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 
 	while (RUSB(xfer)->rusb_status == 0) {
 		if (isread) {
-			rumpuser_ioctl(sc->sc_ugenfd[endpt],
+			rumpcomp_ugenhc_ioctl(sc->sc_ugenfd[endpt],
 			    USB_SET_SHORT_XFER, &shortval, &error);
 			n = rumpuser_read(sc->sc_ugenfd[endpt],
 			    buf+done, len-done, &error);
@@ -977,7 +979,7 @@ ugenhc_open(struct usbd_pipe *pipe)
 				return USBD_INVAL; /* XXX: no mapping */
 			}
 			val = 100;
-			if (rumpuser_ioctl(fd, USB_SET_TIMEOUT, &val,
+			if (rumpcomp_ugenhc_ioctl(fd, USB_SET_TIMEOUT, &val,
 			    &error) == -1)
 				panic("timeout set failed");
 			sc->sc_ugenfd[endpt] = fd;
