@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/04/28 10:06:16 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2013/04/28 10:16:52 pooka Exp $
 #
 
 LIB=	rumpdev_ugenhc
@@ -8,7 +8,7 @@ SRCS=	ugenhc.c ugenhc_at_mainbus.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 
-RUMPCOMP_USER= ioctl
+#RUMPCOMP_USER= #ioctl
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
