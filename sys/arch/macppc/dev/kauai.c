@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.33 2012/07/31 15:50:33 bouyer Exp $	*/
+/*	$NetBSD: kauai.c,v 1.34 2013/04/28 00:42:29 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.33 2012/07/31 15:50:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.34 2013/04/28 00:42:29 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,11 +112,11 @@ kauai_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	paddr_t regbase, dmabase;
 	int node, reg[5], i;
+	uint32_t intrs[4], intr;
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
-
 	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 	if (node == 0) {
 		aprint_error(": cannot find kauai node\n");
@@ -132,12 +132,30 @@ kauai_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * XXX PCI_INTERRUPT_REG seems to be wired to 0.
-	 * XXX So use fixed intrpin and intrline values.
+	 * XXX So use fixed intrpin and intrline values if the interrupts
+	 * XXX property contains no IRQ line
 	 */
-	if (pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_INTERRUPT_REG) == 0) {
-		pa->pa_intrpin = 1;
-		pa->pa_intrline = 39;
+	intr = 0;
+	pa->pa_intrpin = 1;
+	if (OF_getprop(node, "interrupts", intrs, sizeof(intrs)) >= 4) {
+		intr = intrs[0];
+		/*
+		 * the interrupts property on my iBook G4's kauai contains
+		 * 0x00000001 0x00000000, so fix that up here
+		 * TODO: use parent's interrupt-map property to do this right
+		 */
+		if (intr < 10)
+			intr = 0;
+		aprint_debug_dev(self,
+		    "got %d from interrupts property\n", intr);
+	}	
+	if (intr == 0) {
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_ATA) {
+			intr = 38;
+		} else
+			intr = 39;		
 	}
+	pa->pa_intrline = intr;
 
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error(": unable to map interrupt\n");
@@ -188,7 +206,7 @@ kauai_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.dma_finish = kauai_dma_finish;
 	sc->sc_wdcdev.sc_atac.atac_set_modes = kauai_set_modes;
 	sc->sc_calc_timing = calc_timing_kauai;
-	sc->sc_dmareg = (void *)dmabase;
+	sc->sc_dmareg = mapiodev(dmabase, 0x1000, false);
 
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
