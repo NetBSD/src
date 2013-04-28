@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.1 2013/04/28 10:43:45 pooka Exp $	*/
+/*      $NetBSD: rumpcomp_user.c,v 1.2 2013/04/28 10:53:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 #if defined(__NetBSD__)
 int
-rumpcomp_shmif_watchsetup(int kq, int fd, intptr_t opaque, int *error)
+rumpcomp_shmif_watchsetup(int kq, int fd, int *error)
 {
 	struct kevent kev;
 	int rv;
@@ -56,14 +56,16 @@ rumpcomp_shmif_watchsetup(int kq, int fd, intptr_t opaque, int *error)
 	}
 
 	EV_SET(&kev, fd, EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR,
-	    NOTE_WRITE, 0, opaque);
+	    NOTE_WRITE, 0, 0);
 	rv = kevent(kq, &kev, 1, NULL, 0, NULL);
 	*error = errno;
-	return rv;
+	if (rv == -1)
+		return -1;
+	return kq;
 }
 
 int
-rumpcomp_shmif_watchwait(int kq, intptr_t *opaque, int *error)
+rumpcomp_shmif_watchwait(int kq, int *error)
 {
 	void *cookie;
 	struct kevent kev;
@@ -73,10 +75,8 @@ rumpcomp_shmif_watchwait(int kq, intptr_t *opaque, int *error)
 	do {
 		rv = kevent(kq, NULL, 0, &kev, 1, NULL);
 	} while (rv == -1 && errno == EINTR);
-
 	*error = errno;
-	if (rv != -1 && opaque)
-		*opaque = kev.udata;
+
 	rumpuser_component_schedule(cookie);
 	return rv;
 }
@@ -85,7 +85,7 @@ rumpcomp_shmif_watchwait(int kq, intptr_t *opaque, int *error)
 #include <sys/inotify.h>
 
 int
-rumpcomp_shmif_watchsetup(int inotify, int fd, intptr_t notused, int *error)
+rumpcomp_shmif_watchsetup(int inotify, int fd, int *error)
 {
 	char procbuf[PATH_MAX], linkbuf[PATH_MAX];
 	ssize_t nn;
@@ -122,7 +122,7 @@ rumpcomp_shmif_watchsetup(int inotify, int fd, intptr_t notused, int *error)
 }
 
 int
-rumpcomp_shmif_watchwait(int kq, intptr_t *opaque, int *error)
+rumpcomp_shmif_watchwait(int kq, int *error)
 {
 	struct inotify_event iev;
 	void *cookie;
@@ -145,7 +145,7 @@ rumpcomp_shmif_watchwait(int kq, intptr_t *opaque, int *error)
 
 /* a polling default implementation */
 int
-rumpcomp_shmif_watchsetup(int inotify, int fd, intptr_t notused, int *error)
+rumpcomp_shmif_watchsetup(int inotify, int fd, int *error)
 {
 	static int warned = 0;
 
@@ -159,7 +159,7 @@ rumpcomp_shmif_watchsetup(int inotify, int fd, intptr_t notused, int *error)
 }
 
 int
-rumpcomp_shmif_watchwait(int kq, intptr_t *opaque, int *error)
+rumpcomp_shmif_watchwait(int kq, int *error)
 {
 	void *cookie;
 

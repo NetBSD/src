@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.48 2013/04/28 10:43:45 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.49 2013/04/28 10:53:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.48 2013/04/28 10:43:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.49 2013/04/28 10:53:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -251,7 +251,7 @@ initbackend(struct shmif_sc *sc, int memfd)
 #endif
 	shmif_unlockbus(sc->sc_busmem);
 
-	sc->sc_kq = rumpcomp_shmif_watchsetup(-1, memfd, 0, &error);
+	sc->sc_kq = rumpcomp_shmif_watchsetup(-1, memfd, &error);
 	if (sc->sc_kq == -1) {
 		rumpuser_unmap(sc->sc_busmem, BUSMEM_SIZE);
 		return error;
@@ -669,7 +669,7 @@ shmif_rcv(void *arg)
 		     == sc->sc_nextpacket) {
 			shmif_unlockbus(busmem);
 			error = 0;
-			rumpcomp_shmif_watchwait(sc->sc_kq, NULL, &error);
+			rumpcomp_shmif_watchwait(sc->sc_kq, &error);
 			if (__predict_false(error))
 				printf("shmif_rcv: wait failed %d\n", error);
 			membar_consumer();
