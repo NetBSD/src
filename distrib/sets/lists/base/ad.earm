@@ -1,4 +1,4 @@
-# $NetBSD: ad.earm,v 1.2 2013/04/28 04:05:37 joerg Exp $
+# $NetBSD: ad.earm,v 1.3 2013/04/28 05:41:25 matt Exp $
 ./sbin/ldconfig					base-sysutil-root	pic
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
@@ -97,6 +97,8 @@
 ./usr/lib/oabi/libc.so.12.185			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libc_vfp.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libc_vfp.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libc++.so.1			base-compat-shlib	compat,pic,libcxx
+./usr/lib/oabi/libc++.so.1.0			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/oabi/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libcom_err.so.7.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libcrypt.so.1			base-compat-shlib	compat,pic
