@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.8 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.9 2013/04/28 23:42:23 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -47,18 +47,6 @@
 #define	MB_READ	/* nothing */
 #define	MB_MEM	/* nothing */
 #endif
-
-#ifdef __arch64__
-#define	CASPTR	casx
-#define	LDPTR	ldx
-#define	STPTR	stx
-#define	CCCR	%xcc
-#else
-#define	CASPTR	cas
-#define	LDPTR	ld
-#define	STPTR	st
-#define	CCCR	%icc
-#endif /* __arch64__ */
 
 /*
  * int _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);

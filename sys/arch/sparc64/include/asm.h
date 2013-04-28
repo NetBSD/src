@@ -1,4 +1,4 @@
-/*       $NetBSD: asm.h,v 1.20 2013/03/16 23:04:22 christos Exp $        */
+/*       $NetBSD: asm.h,v 1.21 2013/04/28 23:42:23 nakayama Exp $        */
 
 #include <sparc/asm.h>
 
@@ -25,7 +25,8 @@
 #define LDPTRA		ldxa
 #define STPTR		stx
 #define STPTRA		stxa
-#define	CASPTR		casxa
+#define	CASPTR		casx
+#define	CASPTRA		casxa
 /* Now something to calculate the stack bias */
 #define STKB		BIAS
 #define	CCCR		%xcc
@@ -46,7 +47,8 @@
 #define LDPTRA		lduwa
 #define STPTR		stw
 #define STPTRA		stwa
-#define	CASPTR		casa
+#define	CASPTR		cas
+#define	CASPTRA		casa
 #define STKB		0
 #define	CCCR		%icc
 #endif
