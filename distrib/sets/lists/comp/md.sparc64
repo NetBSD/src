@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.168 2013/04/27 23:02:19 joerg Exp $
+# $NetBSD: md.sparc64,v 1.169 2013/04/28 04:05:39 joerg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -694,11 +694,11 @@
 ./usr/lib/sparc/libssl.so			base-sys-shlib		compat,pic,crypto
 ./usr/lib/sparc/libssl_p.a			comp-c-proflib		compat,profile,crypto
 ./usr/lib/sparc/libssl_pic.a			comp-c-piclib		compat,pic,crypto
-./usr/lib/sparc/libstdc++.a			comp-c-lib		compat,cxx,gcccmds
-./usr/lib/sparc/libstdc++.so			base-sys-shlib		compat,pic,cxx,gcccmds
-./usr/lib/sparc/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,gcccmds
-./usr/lib/sparc/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,gcccmds
-./usr/lib/sparc/libsupc++.a			comp-c-lib		compat,cxx,gcccmds
+./usr/lib/sparc/libstdc++.a			comp-c-lib		compat,cxx,gcccmds,libstdcxx
+./usr/lib/sparc/libstdc++.so			base-sys-shlib		compat,pic,cxx,gcccmds,libstdcxx
+./usr/lib/sparc/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,gcccmds,libstdcxx
+./usr/lib/sparc/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,gcccmds,libstdcxx
+./usr/lib/sparc/libsupc++.a			comp-c-lib		compat,cxx,gcccmds,libstdcxx
 ./usr/lib/sparc/libsupc++.so			base-obsolete		obsolete
 ./usr/lib/sparc/libsupc++_pic.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libtermcap.a			comp-c-lib		compat

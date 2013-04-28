@@ -1,4 +1,4 @@
-# $NetBSD: ad.earm,v 1.1 2013/04/27 06:17:53 matt Exp $
+# $NetBSD: ad.earm,v 1.2 2013/04/28 04:05:38 joerg Exp $
 ./usr/include/gcc-4.5/arm_neon.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
@@ -660,11 +660,11 @@
 ./usr/lib/oabi/libssl.so			base-sys-shlib		compat,crypto,pic
 ./usr/lib/oabi/libssl_p.a			comp-c-proflib		compat,crypto,profile
 ./usr/lib/oabi/libssl_pic.a			comp-c-piclib		compat,crypto,pic
-./usr/lib/oabi/libstdc++.a			comp-c-lib		compat,cxx,gcccmds
-./usr/lib/oabi/libstdc++.so			base-sys-shlib		compat,pic,cxx,gcccmds
-./usr/lib/oabi/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,gcccmds
-./usr/lib/oabi/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,gcccmds
-./usr/lib/oabi/libsupc++.a			comp-c-lib		compat,cxx,gcccmds
+./usr/lib/oabi/libstdc++.a			comp-c-lib		compat,cxx,gcccmds,libstdcxx
+./usr/lib/oabi/libstdc++.so			base-sys-shlib		compat,pic,cxx,gcccmds,libstdcxx
+./usr/lib/oabi/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,gcccmds,libstdcxx
+./usr/lib/oabi/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,gcccmds,libstdcxx
+./usr/lib/oabi/libsupc++.a			comp-c-lib		compat,cxx,gcccmds,libstdcxx
 ./usr/lib/oabi/libsupc++.so			base-obsolete		obsolete
 ./usr/lib/oabi/libsupc++_pic.a			comp-obsolete		obsolete
 ./usr/lib/oabi/libtermcap.a			comp-c-lib		compat
@@ -1261,11 +1261,11 @@
 ./usr/lib/oabi/libssl.so				base-sys-shlib		compat,crypto,pic
 ./usr/lib/oabi/libssl_p.a			comp-c-proflib		compat,crypto,profile
 ./usr/lib/oabi/libssl_pic.a			comp-c-piclib		compat,crypto,pic
-./usr/lib/oabi/libstdc++.a			comp-c-lib		compat,cxx,gcccmds
-./usr/lib/oabi/libstdc++.so			base-sys-shlib		compat,pic,cxx,gcccmds
-./usr/lib/oabi/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,gcccmds
-./usr/lib/oabi/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,gcccmds
-./usr/lib/oabi/libsupc++.a			comp-c-lib		compat,cxx,gcccmds
+./usr/lib/oabi/libstdc++.a			comp-c-lib		compat,cxx,gcccmds,libstdcxx
+./usr/lib/oabi/libstdc++.so			base-sys-shlib		compat,pic,cxx,gcccmds,libstdcxx
+./usr/lib/oabi/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,gcccmds,libstdcxx
+./usr/lib/oabi/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,gcccmds,libstdcxx
+./usr/lib/oabi/libsupc++.a			comp-c-lib		compat,cxx,gcccmds,libstdcxx
 ./usr/lib/oabi/libsupc++.so			base-obsolete		obsolete
 ./usr/lib/oabi/libsupc++_pic.a			comp-obsolete		obsolete
 ./usr/lib/oabi/libtermcap.a			comp-c-lib		compat
