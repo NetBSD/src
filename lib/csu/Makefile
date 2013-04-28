@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2012/06/16 19:19:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.32 2013/04/28 06:09:52 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,8 @@
 .  if !exists(${.CURDIR}/arch/${CSU_MACHINE_ARCH}/Makefile.inc)
 .  error CSU_MACHINE_ARCH (${CSU_MACHINE_ARCH}) is unsupported
 .  endif
+.elif !empty(MACHINE_ARCH:Mearm*)
+CSU_MACHINE_ARCH=	earm
 .elif exists(${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc)
 CSU_MACHINE_ARCH=	${MACHINE_ARCH}
 .elif exists(${.CURDIR}/arch/${MACHINE_CPU}/Makefile.inc)
