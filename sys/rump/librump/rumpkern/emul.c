@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.155 2013/03/18 13:36:23 para Exp $	*/
+/*	$NetBSD: emul.c,v 1.156 2013/04/28 13:17:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.155 2013/03/18 13:36:23 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.156 2013/04/28 13:17:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -144,7 +144,7 @@ int
 kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 {
 	extern int hz;
-	int rv, error;
+	int rv;
 	uint64_t sec, nsec;
 
 	if (mtx)
@@ -152,13 +152,11 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 
 	sec = timeo / hz;
 	nsec = (timeo % hz) * (1000000000 / hz);
-	rv = rumpuser_nanosleep(&sec, &nsec, &error);
-	
+	rv = rumpuser_clock_sleep(sec, nsec, RUMPUSER_CLOCK_RELWALL);
+	KASSERT(rv == 0);
+
 	if (mtx)
 		mutex_enter(mtx);
-
-	if (rv)
-		return error;
 
 	return 0;
 }
@@ -225,7 +223,6 @@ static void
 rump_delay(unsigned int us)
 {
 	uint64_t sec, nsec;
-	int error;
 
 	sec = us / 1000000;
 	nsec = (us % 1000000) * 1000;
@@ -233,7 +230,7 @@ rump_delay(unsigned int us)
 	if (__predict_false(sec != 0))
 		printf("WARNING: over 1s delay\n");
 
-	rumpuser_nanosleep(&sec, &nsec, &error);
+	rumpuser_clock_sleep(sec, nsec, RUMPUSER_CLOCK_RELWALL);
 }
 void (*delay_func)(unsigned int) = rump_delay;
 

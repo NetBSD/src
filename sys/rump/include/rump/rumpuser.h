@@ -1,7 +1,7 @@
-/*	$NetBSD: rumpuser.h,v 1.87 2013/04/28 10:43:45 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.88 2013/04/28 13:17:24 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,7 +52,6 @@ int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
 #define RUMPUSER_FT_REG 2
 #define RUMPUSER_FT_BLK 3
 #define RUMPUSER_FT_CHR 4
-int rumpuser_nanosleep(uint64_t *, uint64_t *, int *);
 
 void *rumpuser_malloc(size_t, int);
 void rumpuser_free(void *, size_t);
@@ -99,7 +98,10 @@ struct rumpuser_iovec {
 ssize_t rumpuser_readv(int, const struct rumpuser_iovec *, int, int *);
 ssize_t rumpuser_writev(int, const struct rumpuser_iovec *, int, int *);
 
-int rumpuser_gettime(uint64_t *, uint64_t *, int *);
+enum rumpclock { RUMPUSER_CLOCK_RELWALL, RUMPUSER_CLOCK_ABSMONO };
+int rumpuser_clock_gettime(uint64_t *, uint64_t *, enum rumpclock);
+int rumpuser_clock_sleep(uint64_t, uint64_t, enum rumpclock);
+
 int rumpuser_getenv(const char *, char *, size_t, int *);
 
 int rumpuser_gethostname(char *, size_t, int *);
