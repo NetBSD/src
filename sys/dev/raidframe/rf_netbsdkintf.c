@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.300 2013/04/27 21:18:42 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.301 2013/04/28 03:12:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,12 +101,11 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.300 2013/04/27 21:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.301 2013/04/28 03:12:37 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_raid_autoconfig.h"
-#include "raid.h"
 #endif
 
 #include <sys/param.h>
