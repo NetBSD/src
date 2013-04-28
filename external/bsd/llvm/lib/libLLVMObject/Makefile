@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/10/11 13:53:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/04/28 00:41:01 joerg Exp $
 
 LIB=	LLVMObject
 NOGCCERROR=	yes
@@ -12,7 +12,6 @@ SRCS+=	Archive.cpp \
 	COFFObjectFile.cpp \
 	ELFObjectFile.cpp \
 	Error.cpp \
-	MachOObject.cpp \
 	MachOObjectFile.cpp \
 	Object.cpp \
 	ObjectFile.cpp
