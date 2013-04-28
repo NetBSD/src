@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.4 2013/04/28 13:38:35 pooka Exp $	*/
+/*      $NetBSD: rumpcomp_user.c,v 1.5 2013/04/28 14:11:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -146,6 +146,8 @@ rumpcomp_shmif_watchwait(int kq, int *error)
 }
 
 #else
+#include <stdio.h>
+#include <unistd.h>
 
 /* a polling default implementation */
 int
