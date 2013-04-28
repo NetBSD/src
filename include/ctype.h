@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.33 2013/04/26 17:35:52 joerg Exp $	*/
+/*	$NetBSD: ctype.h,v 1.34 2013/04/28 19:39:56 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -95,6 +95,8 @@ __END_DECLS
 #if defined(_NETBSD_SOURCE) && !defined(_CTYPE_NOINLINE) && \
     !defined(__cplusplus)
 #include <sys/ctype_inline.h>
+#else
+#include <sys/ctype_bits.h>
 #endif
 
 #endif /* !_CTYPE_H_ */
