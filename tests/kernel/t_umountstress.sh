@@ -1,4 +1,4 @@
-# $NetBSD: t_umountstress.sh,v 1.3 2013/04/27 07:45:07 mlelstv Exp $
+# $NetBSD: t_umountstress.sh,v 1.4 2013/04/28 15:49:58 mlelstv Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,13 +33,13 @@ BVND=/dev/${VND}
 CVND=/dev/r${VND}
 MPART=a
 
-atf_test_case umountstress cleanup
-umountstress_head()
+atf_test_case fileop cleanup
+fileop_head()
 {
-	atf_set "descr" "Checks stressing unmounting a busy filesystem"
+	atf_set "descr" "Checks unmounting a filesystem doing file operations"
 	atf_set "require.user" "root"
 }
-umountstress_body()
+fileop_body()
 {
 	cat >disktab <<EOF
 floppy288|2.88MB 3.5in Extra High Density Floppy:\
@@ -53,20 +53,19 @@ EOF
 	     "${TMPMP} mounted on ${TMPIM}"
 
 	atf_check -o ignore -e ignore mkdir ${TMPMP}
-	atf_check -o ignore -e ignore touch ${TMPMP}/under_the_mount
 	atf_check -o ignore -e ignore dd if=/dev/zero of=${TMPIM} count=5860
 	atf_check -o ignore -e ignore vnconfig -v ${VND} ${TMPIM}
 	atf_check -o ignore -e ignore disklabel -f disktab -rw ${VND} floppy288
 	atf_check -o ignore -e ignore newfs -i 500 -b 8192 -f 1024 ${CVND}${MPART}
 	atf_check -o ignore -e ignore mount -o async ${BVND}${MPART} ${TMPMP}
 
-	echo "*** Testing unmount"
+	echo "*** Testing fileops"
 
 	touch ${TMPMP}/hold
 	exec 9< ${TMPMP}/hold
 
 	(
-		for j in 0 1 2 3 4; do
+		for j in 0 1 2; do
 		for k in 0 1 2 3 4 5 6 7 8 9; do
 			if ! dd msgfmt=quiet if=/dev/zero \
 				count=1 of=${TMPMP}/test$i$j$k; then
@@ -112,7 +111,91 @@ EOF
 	*) atf_fail "File operation failed"
 	esac
 }
-umountstress_cleanup()
+fileop_cleanup()
+{
+	echo "*** Cleaning up ${TMPMP}, ${TMPIM}."
+	umount -f "${TMPMP}"
+	vnconfig -u "${VND}"
+}
+
+atf_test_case mountlist cleanup
+mountlist_head()
+{
+	atf_set "descr" "Checks unmounting a filesystem using mountlist"
+	atf_set "require.user" "root"
+}
+mountlist_body()
+{
+	cat >disktab <<EOF
+floppy288|2.88MB 3.5in Extra High Density Floppy:\
+	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
+	:pa#5760:oa#0:ba#4096:fa#512:ta=4.2BSD:\
+	:pb#5760:ob#0:\
+	:pc#5760:oc#0:
+EOF
+
+	echo "*** Creating a dummy directory tree at" \
+	     "${TMPMP} mounted on ${TMPIM}"
+
+	atf_check -o ignore -e ignore mkdir ${TMPMP}
+	atf_check -o ignore -e ignore dd if=/dev/zero of=${TMPIM} count=5860
+	atf_check -o ignore -e ignore vnconfig -v ${VND} ${TMPIM}
+	atf_check -o ignore -e ignore disklabel -f disktab -rw ${VND} floppy288
+	atf_check -o ignore -e ignore newfs -i 500 -b 8192 -f 1024 ${CVND}${MPART}
+	atf_check -o ignore -e ignore mount -o async ${BVND}${MPART} ${TMPMP}
+
+	echo "*** Testing mountlist"
+
+	(
+		for j in 0 1 2 3 4 5 6 7 8 9; do
+		for k in 0 1 2 3 4 5 6 7 8 9; do
+			if ! out=$(mount); then
+				echo 1
+				exit
+			fi
+		done
+		done
+		echo 0
+	) > result &
+	busypid=$!
+
+	while kill 2>/dev/null -0 $busypid; do
+		if err=$(umount ${TMPMP} 2>&1); then
+			if ! mount -o async ${BVND}${MPART} ${TMPMP}; then
+				kill $busypid
+				exec 9<&-
+				wait
+				atf_fail "Remount failed"
+				return
+			fi
+			continue
+		fi
+
+		case $err in
+		*:\ Device\ busy)
+			;;
+		*)
+			kill $busypid
+			exec 9<&-
+			wait
+			atf_fail "Unmount failed: $err"
+			return
+			;;
+		esac
+	done
+
+	exec 9<&-
+	wait
+
+	rc=`cat result`
+	rm -f result
+
+	case $rc in
+	0) ;;
+	*) atf_fail "Mountlist operation failed"
+	esac
+}
+mountlist_cleanup()
 {
 	echo "*** Cleaning up ${TMPMP}, ${TMPIM}."
 	umount -f "${TMPMP}"
@@ -121,5 +204,6 @@ umountstress_cleanup()
 
 atf_init_test_cases()
 {
-	atf_add_test_case umountstress
+	atf_add_test_case fileop
+	atf_add_test_case mountlist
 }
