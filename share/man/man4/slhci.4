@@ -1,4 +1,4 @@
-.\" $NetBSD: slhci.4,v 1.8 2010/01/15 19:24:49 joerg Exp $
+.\" $NetBSD: slhci.4,v 1.9 2013/04/28 10:23:03 rkujawa Exp $
 .\"
 .\" Not (c) 2007 Matthew Orgass
 .\" This file is public domain, meaning anyone can make any use of part or all
@@ -14,6 +14,8 @@
 .Nm slhci
 .Nd Cypress/ScanLogic SL811HS USB Host Controller driver
 .Sh SYNOPSIS
+.Ss amiga 
+.Cd "slhci*   at zbus?"
 .Ss PCMCIA (CF) controllers
 .Cd "slhci*   at pcmcia? function ?"
 .Cd "usb*     at slhci?"
@@ -94,6 +96,9 @@ driver includes:
 .It
 .Tn Nereid
 Ethernet/USB/Memory board
+.It
+.Tn Thylacine
+USB Host Controller
 .El
 .Sh SEE ALSO
 .Xr config 1 ,
