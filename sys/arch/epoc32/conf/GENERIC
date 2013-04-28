@@ -1,0 +1,198 @@
+#	$NetBSD: GENERIC,v 1.1 2013/04/28 12:11:25 kiyohara Exp $
+#
+# GENERIC machine description file
+#
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+include		"arch/epoc32/conf/std.epoc32"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.1 $"
+
+maxusers	32			# estimated number of users
+
+# CPU options
+options 	CPU_ARM7		# Series 5/Geofox one/Osaris
+options 	CPU_ARM7TDMI		# Series 5mx/Revo/Revo+
+#options 	CPU_SA1100		# Series 7/netBook
+
+# Standard system options
+#options 	INSECURE	# disable kernel security levels
+
+# File systems
+file-system	FFS		# UFS
+#file-system	EXT2FS		# second extended file system (linux)
+file-system	MFS		# memory file system
+file-system	NFS		# Network File System client
+file-system	MSDOSFS		# MS-DOS file system
+#file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+file-system	NULLFS		# loopback file system
+file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
+
+# File system options
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
+options 	FFS_EI		# FFS Endian Independent support
+#options 	NFSSERVER
+options 	WAPBL		# File system journaling support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+
+# Networking options
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPv6
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+
+# Compatibility options
+#options 	COMPAT_09	# NetBSD 0.9,
+#options 	COMPAT_10	# NetBSD 1.0,
+#options 	COMPAT_11	# NetBSD 1.1,
+#options 	COMPAT_12	# NetBSD 1.2,
+#options 	COMPAT_13	# NetBSD 1.3,
+#options 	COMPAT_14	# NetBSD 1.4,
+#options 	COMPAT_15	# NetBSD 1.5,
+#options 	COMPAT_16	# NetBSD 1.6,
+#options 	COMPAT_20	# NetBSD 2.0,
+#options 	COMPAT_30	# NetBSD 3.0,
+#options 	COMPAT_40	# NetBSD 4.0,
+#options 	COMPAT_50	# NetBSD 5.0 compatibility.
+#options 	COMPAT_43	# and 4.3BSD
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+
+#options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Shared memory options
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
+#options 	SYSVSHM		# System V-like memory sharing
+
+# Loadable kernel module support
+#options 	MODULAR		# new style module(7) framework
+
+#
+# wscons options
+#
+# builtin terminal emulations
+options 	WSEMUL_VT100
+# allocate a number of virtual screens at autoconfiguration time
+#options 	WSDISPLAY_DEFAULTSCREENS=2
+
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+
+# Development and Debugging options
+
+#options 	DIAGNOSTIC      # internal consistency checks
+#options 	DEBUG
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	DDB             # in-kernel debugger
+options 	DDB_HISTORY_SIZE=100    # Enable history editing in DDB
+#makeoptions 	DEBUG="-g"  # compile full symbol table
+options 	SYMTAB_SPACE=500000
+
+
+# Kernel root file system and dump configuration.
+config		netbsd		root on ? type ?
+
+mainbus0 at root
+
+cpu0 at mainbus?
+
+internal0 at mainbus? base 0x80000000		# Internal Register Space
+external0 at mainbus?
+
+# SoC
+clpssoc0 at internal?				# Cirrus CL-PS711x
+windermere0 at internal?			# Windermere
+#saip0	at internal?				# StrongARM SA-1100
+
+#options CONSPEED=115200			# EPOC use 115200bps
+
+# CL-PS711x Peripherals
+#clpsaudio* at clpssoc?				# Audio
+clpscom* at clpssoc?				# UART/IrDA
+clpslcd* at clpssoc?				# LCD
+#clpspm* at clpssoc?				# Power
+clpsrtc* at clpssoc?				# RTC
+#clpsssi* at clpssoc?				# SSI bus
+
+# Windermere Peripherals
+#wmaudio* at windermere?			# Audio
+wmcom*	at windermere?				# IrDA/UART
+wmlcd*	at windermere?				# LCD
+#wmpm*	at windermere?				# Power
+wmrtc*	at windermere?				# RTC
+#wmssi*	at clpssoc?				# SSI bus
+
+# SA-1100 Peripherals
+#sacom*	at saip? addr 0x80050000 size 0x24 intr 17 # Serial
+#saost*	at saip? addr 0x90000000 size 0x20	#OS Timer
+
+wsdisplay* at clpslcd? console ?
+wsdisplay* at wmlcd? console ?
+
+epockbd* at clpssoc?
+epockbd* at windermere?
+#epockbd* at external? addr 0x10000030, 0x10000004
+wskbd*	at epockbd?
+
+#spi*	at clpsssi*
+#spi*	at wmssi*
+#tp*	at spi*					# ADS7843 Touch screen
+
+#audio* at audio?
+
+# External devices
+etna* at external?				# ETNA Controller
+pcmcia* at etna?
+
+wdc* at pcmcia?					# CF
+atabus* at wdc? channel ?
+wd* at atabus? drive ? flags 0x0000
+
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+#pseudo-device	md			# memory disk device (ramdisk)
+#pseudo-device	vnd			# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
+
+# network pseudo-devices
+#pseudo-device	bpfilter                # Berkeley packet filter
+pseudo-device	loop			# network loopback
+pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	sl			# Serial Line IP
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+
+# wscons pseudo-devices
+#pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont
