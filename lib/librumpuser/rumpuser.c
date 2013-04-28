@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.35 2013/04/28 10:43:45 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.36 2013/04/28 13:17:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.35 2013/04/28 10:43:45 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.36 2013/04/28 13:17:25 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -214,27 +214,6 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 		*ftp = ft;
 	if (fd != -1)
 		close(fd);
-
-	return rv;
-}
-
-int
-rumpuser_nanosleep(uint64_t *sec, uint64_t *nsec, int *error)
-{
-	struct timespec rqt, rmt;
-	int rv;
-
-	/*LINTED*/
-	rqt.tv_sec = *sec;
-	/*LINTED*/
-	rqt.tv_nsec = *nsec;
-
-	KLOCK_WRAP(rv = nanosleep(&rqt, &rmt));
-	if (rv == -1)
-		seterror(errno);
-
-	*sec = rmt.tv_sec;
-	*nsec = rmt.tv_nsec;
 
 	return rv;
 }
@@ -536,21 +515,94 @@ rumpuser_writev(int fd, const struct rumpuser_iovec *riov, int iovcnt,
 }
 
 int
-rumpuser_gettime(uint64_t *sec, uint64_t *nsec, int *error)
+rumpuser_clock_gettime(uint64_t *sec, uint64_t *nsec, enum rumpclock rclk)
 {
-	struct timeval tv;
+	struct timespec ts;
+	clockid_t clk;
 	int rv;
 
-	rv = gettimeofday(&tv, NULL);
-	if (rv == -1) {
-		seterror(errno);
-		return rv;
+	switch (rclk) {
+	case RUMPUSER_CLOCK_RELWALL:
+		clk = CLOCK_REALTIME;
+		break;
+	case RUMPUSER_CLOCK_ABSMONO:
+#ifdef HAVE_CLOCK_NANOSLEEP
+		clk = CLOCK_MONOTONIC;
+#else
+		clk = CLOCK_REALTIME;
+#endif
+		break;
+	default:
+		abort();
 	}
 
-	*sec = tv.tv_sec;
-	*nsec = tv.tv_usec * 1000;
+	rv = clock_gettime(clk, &ts);
+	if (rv == -1) {
+		return errno;
+	}
+	*sec = ts.tv_sec;
+	*nsec = ts.tv_nsec;
 
 	return 0;
+}
+
+int
+rumpuser_clock_sleep(uint64_t sec, uint64_t nsec, enum rumpclock clk)
+{
+	struct timespec rqt, rmt;
+	int nlocks;
+	int rv;
+
+	rumpuser__unschedule(0, &nlocks, NULL);
+
+	/*LINTED*/
+	rqt.tv_sec = sec;
+	/*LINTED*/
+	rqt.tv_nsec = nsec;
+
+	switch (clk) {
+	case RUMPUSER_CLOCK_RELWALL:
+		do {
+			rv = nanosleep(&rqt, &rmt);
+			rqt = rmt;
+		} while (rv == -1 && errno == EINTR);
+		if (rv == -1) {
+			rv = errno;
+		}
+		break;
+	case RUMPUSER_CLOCK_ABSMONO:
+		do {
+#ifdef HAVE_CLOCK_NANOSLEEP
+			rv = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
+			    &rqt, NULL);
+#else
+			/* le/la/der/die/das sigh. timevalspec tailspin */
+			struct timespec ts, tsr;
+			clock_gettime(CLOCK_REALTIME, &ts);
+			if (ts.tv_sec == rqt.tv_sec ?
+			    ts.tv_nsec > rqt.tv_nsec : ts.tv_sec > rqt.tv_sec) {
+				rv = 0;
+			} else {
+				tsr.tv_sec = rqt.tv_sec - ts.tv_sec;
+				tsr.tv_nsec = rqt.tv_nsec - ts.tv_nsec;
+				if (tsr.tv_nsec < 0) {
+					tsr.tv_sec--;
+					tsr.tv_nsec += 1000*1000*1000;
+				}
+				rv = nanosleep(&tsr, NULL);
+			}
+#endif
+		} while (rv == -1 && errno == EINTR);
+		if (rv == -1) {
+			rv = errno;
+		}
+		break;
+	default:
+		abort();
+	}
+
+	rumpuser__reschedule(nlocks, NULL);
+	return rv;
 }
 
 int
