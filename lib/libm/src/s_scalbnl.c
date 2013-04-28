@@ -1,4 +1,4 @@
-/*	$NetBSD: s_scalbnl.c,v 1.6 2013/04/27 18:43:25 joerg Exp $	*/
+/*	$NetBSD: s_scalbnl.c,v 1.7 2013/04/28 14:46:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_scalbnl.c,v 1.6 2013/04/27 18:43:25 joerg Exp $");
+__RCSID("$NetBSD: s_scalbnl.c,v 1.7 2013/04/28 14:46:16 joerg Exp $");
 
 #include "namespace.h"
 
@@ -40,7 +40,13 @@ __RCSID("$NetBSD: s_scalbnl.c,v 1.6 2013/04/27 18:43:25 joerg Exp $");
 
 #ifdef __HAVE_LONG_DOUBLE
 
-#ifndef _LP64
+#ifdef _LP64
+long double
+scalbnl(long double x, int n)
+{
+	return scalblnl(x, n);
+}
+#else
 __strong_alias(_scalbnl, _scalblnl)
 #endif
 
