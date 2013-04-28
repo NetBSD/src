@@ -1,4 +1,4 @@
-/*	$NetBSD: mystring.c,v 1.16 2003/08/07 09:05:35 agc Exp $	*/
+/*	$NetBSD: mystring.c,v 1.17 2013/04/28 17:01:28 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mystring.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mystring.c,v 1.16 2003/08/07 09:05:35 agc Exp $");
+__RCSID("$NetBSD: mystring.c,v 1.17 2013/04/28 17:01:28 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: mystring.c,v 1.16 2003/08/07 09:05:35 agc Exp $");
 #include "mystring.h"
 
 
-char nullstr[1];		/* zero length string */
+const char nullstr[1];		/* zero length string */
 
 /*
  * equal - #defined in mystring.h
