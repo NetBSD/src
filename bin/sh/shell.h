@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.17 2003/08/07 09:05:38 agc Exp $	*/
+/*	$NetBSD: shell.h,v 1.18 2013/04/28 17:01:28 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -71,7 +71,7 @@ typedef void *pointer;
 
 #include <sys/cdefs.h>
 
-extern char nullstr[1];		/* null string */
+extern const char nullstr[1];		/* null string */
 
 
 #ifdef DEBUG
