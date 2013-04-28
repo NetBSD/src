@@ -58,7 +58,7 @@
 #define KEEPALIVE_VER 1
 #define KEEPALIVE_VER_MIN KEEPALIVE_VER
 
-MALLOC_DEFINE(M_VCHIQ, "vchiq_cdev", "VideoCore cdev memroy");
+MALLOC_DEFINE(M_VCHIQ, "vchiq_cdev", "VideoCore cdev memory");
 
 /* Run time control of log level, based on KERN_XXX level. */
 int vchiq_arm_log_level = VCHIQ_LOG_DEFAULT;
