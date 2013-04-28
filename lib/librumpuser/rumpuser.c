@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.33 2013/04/27 16:56:29 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.34 2013/04/28 09:58:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.33 2013/04/27 16:56:29 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.34 2013/04/28 09:58:11 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -385,13 +385,6 @@ rumpuser_open(const char *path, int ruflags, int *error)
 #undef TESTSET
 
 	DOCALL_KLOCK(int, (open(path, flags, 0644)));
-}
-
-int
-rumpuser_ioctl(int fd, u_long cmd, void *data, int *error)
-{
-
-	DOCALL_KLOCK(int, (ioctl(fd, cmd, data)));
 }
 
 int
