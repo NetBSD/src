@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.15 2013/04/27 16:32:58 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.16 2013/04/28 13:37:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.15 2013/04/27 16:32:58 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.16 2013/04/28 13:37:51 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -489,12 +489,25 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	struct timespec ts;
 	int rv, nlocks;
 
-	/* LINTED */
-	ts.tv_sec = sec; ts.tv_nsec = nsec;
+	/*
+	 * Get clock already here, just in case we will be put to sleep
+	 * after releasing the kernel context.
+	 *
+	 * The condition variables should use CLOCK_MONOTONIC, but since
+	 * that's not available everywhere, leave it for another day.
+	 */
+	clock_gettime(CLOCK_REALTIME, &ts);
 
 	cv->nwaiters++;
 	rumpuser__unschedule(0, &nlocks, mtx);
 	mtxexit(mtx);
+
+	ts.tv_sec += sec;
+	ts.tv_nsec += nsec;
+	if (ts.tv_nsec >= 1000*1000*1000) {
+		ts.tv_sec++;
+		ts.tv_nsec -= 1000*1000*1000;
+	}
 	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
 	mtxenter(mtx);
 	rumpuser__reschedule(nlocks, mtx);
