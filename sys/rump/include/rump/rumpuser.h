@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.86 2013/04/28 09:58:11 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.87 2013/04/28 10:43:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -112,9 +112,6 @@ int rumpuser_kill(int64_t, int, int *);
 #define RUMPUSER_PANIC (-1)
 void rumpuser_exit(int) __dead;
 void rumpuser_seterrno(int);
-
-int rumpuser_writewatchfile_setup(int, int, intptr_t, int *);
-int rumpuser_writewatchfile_wait(int, intptr_t *, int *);
 
 int rumpuser_dprintf(const char *, ...) __printflike(1, 2);
 
