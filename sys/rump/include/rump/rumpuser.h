@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.85 2013/04/27 16:56:30 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.86 2013/04/28 09:58:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -80,7 +80,6 @@ int   rumpuser_memsync(void *, size_t, int *);
 #define RUMPUSER_OPEN_DIRECT	0x080000
 int rumpuser_open(const char *, int, int *);
 
-int rumpuser_ioctl(int, u_long, void *, int *);
 int rumpuser_close(int, int *);
 int rumpuser_fsync(int, int *);
 
