@@ -1,4 +1,4 @@
-# $NetBSD: ad.earm,v 1.2 2013/04/28 04:05:40 joerg Exp $
+# $NetBSD: ad.earm,v 1.3 2013/04/28 05:41:26 matt Exp $
 ./usr/lib/libarm_g.a				-unknown-		debuglib
 ./usr/lib/libc_vfp_g.a				-unknown-		debuglib,softfloat
 ./usr/lib/libpmc_g.a				-unknown-		debuglib
@@ -59,10 +59,11 @@
 ./usr/libdata/debug/usr/lib/oabi/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libc.so.12.185.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libc_vfp.so.0.0.debug           comp-sys-debug  debug,pic,softfloat,compat
-./usr/libdata/debug/usr/lib/oabi/libcom_err.so.6.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
-./usr/libdata/debug/usr/lib/oabi/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libc.so.12.185.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libc_vfp.so.0.0.debug		comp-sys-debug	debug,compat,pic,softfloat
+./usr/libdata/debug/usr/lib/oabi/libc++.so.1.0.debug		comp-sys-debug	debug,compat,pic,libcxx
+./usr/libdata/debug/usr/lib/oabi/libcom_err.so.6.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/oabi/libcom_err.so.7.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcrypto.so.8.1.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
