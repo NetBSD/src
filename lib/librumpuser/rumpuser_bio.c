@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_bio.c,v 1.2 2013/04/29 13:53:46 pooka Exp $	*/
+/*	$NetBSD: rumpuser_bio.c,v 1.3 2013/04/29 13:57:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -126,7 +126,7 @@ rumpuser_bio(int fd, int op, void *data, size_t dlen, off_t doff,
 {
 	struct rumpuser_bio bio;
 	static int inited = 0;
-	static int usethread = 0;
+	static int usethread = 1;
 	int nlocks;
 
 	rumpuser__unschedule(0, &nlocks, NULL);
@@ -145,7 +145,8 @@ rumpuser_bio(int fd, int op, void *data, size_t dlen, off_t doff,
 			if (getenv_r("RUMP_THREADS", buf, sizeof(buf)) == 0)
 				usethread = *buf != '0';
 
-			pthread_create(&pt, NULL, biothread, NULL);
+			if (usethread)
+				pthread_create(&pt, NULL, biothread, NULL);
 			inited = 1;
 		}
 		pthread_mutex_unlock(&biomtx);
