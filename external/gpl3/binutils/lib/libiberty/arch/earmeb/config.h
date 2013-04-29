@@ -115,13 +115,13 @@
 #define HAVE_GETPAGESIZE 1
 
 /* Define to 1 if you have the `getrusage' function. */
-/* #undef HAVE_GETRUSAGE */
+#define HAVE_GETRUSAGE 1
 
 /* Define to 1 if you have the `getsysinfo' function. */
 /* #undef HAVE_GETSYSINFO */
 
 /* Define to 1 if you have the `gettimeofday' function. */
-/* #undef HAVE_GETTIMEOFDAY */
+#define HAVE_GETTIMEOFDAY 1
 
 /* Define to 1 if you have the `index' function. */
 #define HAVE_INDEX 1
@@ -190,7 +190,7 @@
 /* #undef HAVE_PSTAT_GETSTATIC */
 
 /* Define to 1 if you have the `putenv' function. */
-/* #undef HAVE_PUTENV */
+#define HAVE_PUTENV 1
 
 /* Define to 1 if you have the `random' function. */
 #define HAVE_RANDOM 1
@@ -295,7 +295,7 @@
 /* #undef HAVE_SYSMP */
 
 /* Define if you have the sys_errlist variable. */
-/* #undef HAVE_SYS_ERRLIST */
+#define HAVE_SYS_ERRLIST 1
 
 /* Define to 1 if you have the <sys/file.h> header file. */
 #define HAVE_SYS_FILE_H 1
@@ -304,7 +304,7 @@
 #define HAVE_SYS_MMAN_H 1
 
 /* Define if you have the sys_nerr variable. */
-/* #undef HAVE_SYS_NERR */
+#define HAVE_SYS_NERR 1
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
@@ -316,7 +316,7 @@
 #define HAVE_SYS_RESOURCE_H 1
 
 /* Define if you have the sys_siglist variable. */
-/* #undef HAVE_SYS_SIGLIST */
+#define HAVE_SYS_SIGLIST 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -349,7 +349,7 @@
 /* #undef HAVE_TABLE */
 
 /* Define to 1 if you have the `times' function. */
-/* #undef HAVE_TIMES */
+#define HAVE_TIMES 1
 
 /* Define to 1 if you have the <time.h> header file. */
 #define HAVE_TIME_H 1
@@ -367,7 +367,7 @@
 #define HAVE_VASPRINTF 1
 
 /* Define to 1 if you have the `vfork' function. */
-/* #undef HAVE_VFORK */
+#define HAVE_VFORK 1
 
 /* Define to 1 if you have the <vfork.h> header file. */
 /* #undef HAVE_VFORK_H */
@@ -382,10 +382,10 @@
 #define HAVE_VSPRINTF 1
 
 /* Define to 1 if you have the `wait3' function. */
-/* #undef HAVE_WAIT3 */
+#define HAVE_WAIT3 1
 
 /* Define to 1 if you have the `wait4' function. */
-/* #undef HAVE_WAIT4 */
+#define HAVE_WAIT4 1
 
 /* Define to 1 if you have the `waitpid' function. */
 #define HAVE_WAITPID 1
@@ -394,7 +394,7 @@
 #define HAVE_WORKING_FORK 1
 
 /* Define to 1 if `vfork' works. */
-/* #undef HAVE_WORKING_VFORK */
+#define HAVE_WORKING_VFORK 1
 
 /* Define to 1 if you have the `_doprnt' function. */
 /* #undef HAVE__DOPRNT */
@@ -492,4 +492,4 @@
 /* #undef uintptr_t */
 
 /* Define as `fork' if `vfork' does not work. */
-#define vfork fork
+/* #undef vfork */
