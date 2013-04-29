@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_component.c,v 1.3 2013/04/29 14:51:39 pooka Exp $	*/
+/*	$NetBSD: rumpuser_component.c,v 1.4 2013/04/29 15:20:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_component.c,v 1.3 2013/04/29 14:51:39 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_component.c,v 1.4 2013/04/29 15:20:05 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -57,4 +57,43 @@ rumpuser_component_schedule(void *cookie)
 	int nlocks = (int)(intptr_t)cookie;
 
 	rumpkern_sched(nlocks, NULL);
+}
+
+void
+rumpuser_component_kthread(void)
+{
+
+	rumpuser__hyp.hyp_schedule();
+	rumpuser__hyp.hyp_lwproc_newlwp(0);
+	rumpuser__hyp.hyp_unschedule();
+}
+
+struct lwp *
+rumpuser_component_curlwp(void)
+{
+	struct lwp *l;
+
+	rumpuser__hyp.hyp_schedule();
+	l = rumpuser__hyp.hyp_lwproc_curlwp();
+	rumpuser__hyp.hyp_unschedule();
+
+	return l;
+}
+
+void
+rumpuser_component_switchlwp(struct lwp *l)
+{
+
+	rumpuser__hyp.hyp_schedule();
+	rumpuser__hyp.hyp_lwproc_switch(l);
+	rumpuser__hyp.hyp_unschedule();
+}
+
+void
+rumpuser_component_kthread_release(void)
+{
+
+	rumpuser__hyp.hyp_schedule();
+	rumpuser__hyp.hyp_lwproc_release();
+	rumpuser__hyp.hyp_unschedule();
 }
