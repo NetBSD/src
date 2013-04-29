@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.35.6.1 2012/04/09 18:15:27 riz Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.35.6.2 2013/04/29 01:50:18 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.35.6.1 2012/04/09 18:15:27 riz Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.35.6.2 2013/04/29 01:50:18 riz Exp $");
 
 #ifndef lint
 
@@ -81,6 +81,7 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.35.6.1 2012/04/09 18:15:27 riz Exp $"
 
 #include "pthread.h"
 #include "pthread_int.h"
+#include "reentrant.h"
 
 int	pthread__cancel_stub_binder;
 
@@ -128,7 +129,8 @@ int	____sigtimedwait50(const sigset_t * __restrict, siginfo_t * __restrict,
 int	__sigsuspend14(const sigset_t *);
 
 #define TESTCANCEL(id) 	do {						\
-	if (__predict_false((id)->pt_cancel))				\
+	if (__predict_true(!__uselibcstub) &&				\
+	    __predict_false((id)->pt_cancel))				\
 		pthread__cancelled();					\
 	} while (/*CONSTCOND*/0)
 

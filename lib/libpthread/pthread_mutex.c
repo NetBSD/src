@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.51 2008/08/02 19:46:30 matt Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.51.22.1 2013/04/29 01:50:18 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.51 2008/08/02 19:46:30 matt Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.51.22.1 2013/04/29 01:50:18 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -56,11 +56,13 @@ __RCSID("$NetBSD: pthread_mutex.c,v 1.51 2008/08/02 19:46:30 matt Exp $");
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include <stdio.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
+#include "reentrant.h"
 
 #define	MUTEX_WAITERS_BIT		((uintptr_t)0x01)
 #define	MUTEX_RECURSIVE_BIT		((uintptr_t)0x02)
@@ -105,6 +107,9 @@ pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
 {
 	intptr_t type;
 
+	if (__predict_false(__uselibcstub))
+		return __libc_mutex_init_stub(ptm, attr);
+
 	if (attr == NULL)
 		type = PTHREAD_MUTEX_NORMAL;
 	else
@@ -137,6 +142,9 @@ int
 pthread_mutex_destroy(pthread_mutex_t *ptm)
 {
 
+	if (__predict_false(__uselibcstub))
+		return __libc_mutex_destroy_stub(ptm);
+
 	pthread__error(EINVAL, "Invalid mutex",
 	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
 	pthread__error(EBUSY, "Destroying locked mutex",
@@ -151,6 +159,9 @@ pthread_mutex_lock(pthread_mutex_t *ptm)
 {
 	pthread_t self;
 	void *val;
+
+	if (__predict_false(__uselibcstub))
+		return __libc_mutex_lock_stub(ptm);
 
 	self = pthread__self();
 	val = atomic_cas_ptr(&ptm->ptm_owner, NULL, self);
@@ -335,6 +346,9 @@ pthread_mutex_trylock(pthread_mutex_t *ptm)
 	pthread_t self;
 	void *val, *new, *next;
 
+	if (__predict_false(__uselibcstub))
+		return __libc_mutex_trylock_stub(ptm);
+
 	self = pthread__self();
 	val = atomic_cas_ptr(&ptm->ptm_owner, NULL, self);
 	if (__predict_true(val == NULL)) {
@@ -371,6 +385,9 @@ pthread_mutex_unlock(pthread_mutex_t *ptm)
 {
 	pthread_t self;
 	void *value;
+
+	if (__predict_false(__uselibcstub))
+		return __libc_mutex_unlock_stub(ptm);
 
 	/*
 	 * Note this may be a non-interlocked CAS.  See lock_slow()
@@ -532,6 +549,8 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 int
 pthread_mutexattr_init(pthread_mutexattr_t *attr)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_mutexattr_init_stub(attr);
 
 	attr->ptma_magic = _PT_MUTEXATTR_MAGIC;
 	attr->ptma_private = (void *)PTHREAD_MUTEX_DEFAULT;
@@ -541,6 +560,8 @@ pthread_mutexattr_init(pthread_mutexattr_t *attr)
 int
 pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_mutexattr_destroy_stub(attr);
 
 	pthread__error(EINVAL, "Invalid mutex attribute",
 	    attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
@@ -552,7 +573,6 @@ pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 int
 pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *typep)
 {
-
 	pthread__error(EINVAL, "Invalid mutex attribute",
 	    attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
 
@@ -564,6 +584,8 @@ pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *typep)
 int
 pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_mutexattr_settype_stub(attr, type);
 
 	pthread__error(EINVAL, "Invalid mutex attribute",
 	    attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
@@ -591,6 +613,8 @@ once_cleanup(void *closure)
 int
 pthread_once(pthread_once_t *once_control, void (*routine)(void))
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_once_stub(once_control, routine);
 
 	if (once_control->pto_done == 0) {
 		pthread_mutex_lock(&once_control->pto_mutex);
