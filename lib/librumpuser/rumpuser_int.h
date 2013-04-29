@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_int.h,v 1.6 2013/04/29 12:56:04 pooka Exp $	*/
+/*	$NetBSD: rumpuser_int.h,v 1.7 2013/04/29 14:51:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,17 +29,30 @@
 
 #include <rump/rumpuser.h>
 
-extern rump_unschedulefn rumpuser__unschedule;
-extern rump_reschedulefn rumpuser__reschedule;
-
 #define seterror(value) do { if (error) *error = value;} while (/*CONSTCOND*/0)
+
+extern struct rumpuser_hyperup rumpuser__hyp;
+
+static inline void
+rumpkern_unsched(int *nlocks, void *interlock)
+{
+
+	rumpuser__hyp.hyp_backend_unschedule(0, nlocks, interlock);
+}
+
+static inline void
+rumpkern_sched(int nlocks, void *interlock)
+{
+
+	rumpuser__hyp.hyp_backend_schedule(nlocks, interlock);
+}
 
 #define KLOCK_WRAP(a)							\
 do {									\
 	int nlocks;							\
-	rumpuser__unschedule(0, &nlocks, NULL);				\
+	rumpkern_unsched(&nlocks, NULL);				\
 	a;								\
-	rumpuser__reschedule(nlocks, NULL);				\
+	rumpkern_sched(nlocks, NULL);					\
 } while (/*CONSTCOND*/0)
 
 #define DOCALL(rvtype, call)						\
@@ -57,9 +70,9 @@ do {									\
 {									\
 	rvtype rv;							\
 	int nlocks;							\
-	rumpuser__unschedule(0, &nlocks, NULL);				\
+	rumpkern_unsched(&nlocks, NULL);				\
 	rv = call;							\
-	rumpuser__reschedule(nlocks, NULL);				\
+	rumpkern_sched(nlocks, NULL);					\
 	if (rv == -1)							\
 		seterror(errno);					\
 	else								\
