@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.6 2013/04/29 13:17:32 pooka Exp $	*/
+/*      $NetBSD: rumpcomp_user.c,v 1.7 2013/04/29 18:17:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
+#ifndef _KERNEL
 #include <sys/types.h>
 #include <sys/mman.h>
 
@@ -200,3 +200,4 @@ rumpcomp_shmif_mmap(int fd, size_t len, int *error)
 
 	return rv;
 }
+#endif
