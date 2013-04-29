@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.43 2013/04/29 17:31:05 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.44 2013/04/29 20:08:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.43 2013/04/29 17:31:05 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.44 2013/04/29 20:08:48 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -319,12 +319,23 @@ rumpuser_close(int fd, int *error)
 	return 0;
 }
 
+/*
+ * Assume "struct rumpuser_iovec" and "struct iovec" are the same.
+ * If you encounter POSIX platforms where they aren't, add some
+ * translation for iovlen > 1.
+ */
 ssize_t
-rumpuser_read(int fd, void *data, size_t size, int *error)
+rumpuser_iovread(int fd, struct rumpuser_iovec *ruiov, size_t iovlen,
+	off_t off, int *error)
 {
+	struct iovec *iov = (struct iovec *)ruiov;
 	ssize_t rv;
 
-	KLOCK_WRAP(rv = read(fd, data, size));
+	if (off == RUMPUSER_IOV_NOSEEK)
+		KLOCK_WRAP(rv = readv(fd, iov, iovlen));
+	else
+		KLOCK_WRAP(rv = preadv(fd, iov, iovlen, off));
+
 	if (rv == -1)
 		seterror(errno);
 
@@ -332,91 +343,19 @@ rumpuser_read(int fd, void *data, size_t size, int *error)
 }
 
 ssize_t
-rumpuser_pread(int fd, void *data, size_t size, off_t offset, int *error)
+rumpuser_iovwrite(int fd, const struct rumpuser_iovec *ruiov, size_t iovlen,
+	off_t off, int *error)
 {
+	const struct iovec *iov = (const struct iovec *)ruiov;
 	ssize_t rv;
 
-	KLOCK_WRAP(rv = pread(fd, data, size, offset));
+	if (off == RUMPUSER_IOV_NOSEEK)
+		KLOCK_WRAP(rv = writev(fd, iov, iovlen));
+	else 
+		KLOCK_WRAP(rv = pwritev(fd, iov, iovlen, off));
+
 	if (rv == -1)
 		seterror(errno);
-
-	return rv;
-}
-
-ssize_t
-rumpuser_write(int fd, const void *data, size_t size, int *error)
-{
-	ssize_t rv;
-
-	KLOCK_WRAP(rv = write(fd, data, size));
-	if (rv == -1)
-		seterror(errno);
-
-	return rv;
-}
-
-ssize_t
-rumpuser_pwrite(int fd, const void *data, size_t size, off_t offset, int *error)
-{
-	ssize_t rv;
-
-	KLOCK_WRAP(rv = pwrite(fd, data, size, offset));
-	if (rv == -1)
-		seterror(errno);
-
-	return rv;
-}
-
-ssize_t
-rumpuser_readv(int fd, const struct rumpuser_iovec *riov, int iovcnt,
-	int *error)
-{
-	struct iovec *iovp;
-	ssize_t rv;
-	int i;
-
-	iovp = malloc(iovcnt * sizeof(struct iovec));
-	if (iovp == NULL) {
-		seterror(ENOMEM);
-		return -1;
-	}
-	for (i = 0; i < iovcnt; i++) {
-		iovp[i].iov_base = riov[i].iov_base;
-		/*LINTED*/
-		iovp[i].iov_len = riov[i].iov_len;
-	}
-
-	KLOCK_WRAP(rv = readv(fd, iovp, iovcnt));
-	if (rv == -1)
-		seterror(errno);
-	free(iovp);
-
-	return rv;
-}
-
-ssize_t
-rumpuser_writev(int fd, const struct rumpuser_iovec *riov, int iovcnt,
-	int *error)
-{
-	struct iovec *iovp;
-	ssize_t rv;
-	int i;
-
-	iovp = malloc(iovcnt * sizeof(struct iovec));
-	if (iovp == NULL) {
-		seterror(ENOMEM);
-		return -1;
-	}
-	for (i = 0; i < iovcnt; i++) {
-		iovp[i].iov_base = riov[i].iov_base;
-		/*LINTED*/
-		iovp[i].iov_len = riov[i].iov_len;
-	}
-
-	KLOCK_WRAP(rv = writev(fd, iovp, iovcnt));
-	if (rv == -1)
-		seterror(errno);
-	free(iovp);
 
 	return rv;
 }
