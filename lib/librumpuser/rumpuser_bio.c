@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_bio.c,v 1.4 2013/04/29 14:51:39 pooka Exp $	*/
+/*	$NetBSD: rumpuser_bio.c,v 1.5 2013/04/29 14:54:03 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -100,7 +100,12 @@ static void *
 biothread(void *arg)
 {
 	struct rumpuser_bio *biop;
+	int rv;
 
+	rumpuser__hyp.hyp_schedule();
+	rv = rumpuser__hyp.hyp_lwproc_newlwp(0);
+	assert(rv == 0);
+	rumpuser__hyp.hyp_unschedule();
 	NOFAIL_ERRNO(pthread_mutex_lock(&biomtx));
 	for (;;) {
 		while (bio_head == bio_tail)
