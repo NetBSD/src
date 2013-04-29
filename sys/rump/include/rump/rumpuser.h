@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.91 2013/04/29 13:21:03 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.92 2013/04/29 14:07:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -37,27 +37,27 @@
 #error The rump/rumpuser.h interface is not for non-kernel consumers
 #endif
 
+/*
+ * init
+ */
+
 #define RUMPUSER_VERSION 16
-
-int rumpuser_daemonize_begin(void);
-int rumpuser_daemonize_done(int);
-
 typedef void (*rump_reschedulefn)(int, void *);
 typedef void (*rump_unschedulefn)(int, int *, void *);
 int rumpuser_init(int, rump_reschedulefn, rump_unschedulefn);
 
-int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
-#define RUMPUSER_FT_OTHER 0
-#define RUMPUSER_FT_DIR 1
-#define RUMPUSER_FT_REG 2
-#define RUMPUSER_FT_BLK 3
-#define RUMPUSER_FT_CHR 4
+/*
+ * memory allocation
+ */
 
 void *rumpuser_malloc(size_t, int);
 void rumpuser_free(void *, size_t);
-
 void *rumpuser_anonmmap(void *, size_t, int, int, int *);
 void  rumpuser_unmap(void *, size_t);
+
+/*
+ * files and I/O
+ */
 
 #define RUMPUSER_OPEN_RDONLY	0x0000
 #define RUMPUSER_OPEN_WRONLY	0x0001
@@ -67,6 +67,13 @@ void  rumpuser_unmap(void *, size_t);
 #define RUMPUSER_OPEN_EXCL	0x0008 /* exclusive open */
 #define RUMPUSER_OPEN_BIO	0x0010 /* open device for block i/o */
 int rumpuser_open(const char *, int, int *);
+
+#define RUMPUSER_FT_OTHER 0
+#define RUMPUSER_FT_DIR 1
+#define RUMPUSER_FT_REG 2
+#define RUMPUSER_FT_BLK 3
+#define RUMPUSER_FT_CHR 4
+int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
 
 int rumpuser_close(int, int *);
 int rumpuser_fsync(int, int *);
@@ -89,32 +96,56 @@ struct rumpuser_iovec {
 ssize_t rumpuser_readv(int, const struct rumpuser_iovec *, int, int *);
 ssize_t rumpuser_writev(int, const struct rumpuser_iovec *, int, int *);
 
+/*
+ * clock and zzz
+ */
+
 enum rumpclock { RUMPUSER_CLOCK_RELWALL, RUMPUSER_CLOCK_ABSMONO };
 int rumpuser_clock_gettime(uint64_t *, uint64_t *, enum rumpclock);
 int rumpuser_clock_sleep(uint64_t, uint64_t, enum rumpclock);
 
-int rumpuser_getenv(const char *, char *, size_t, int *);
+/*
+ * host information retrieval
+ */
 
+int rumpuser_getenv(const char *, char *, size_t, int *);
+int rumpuser_getnhostcpu(void);
 int rumpuser_gethostname(char *, size_t, int *);
 
-int rumpuser_putchar(int, int *);
+/*
+ * system call emulation, set errno is TLS
+ */
+
+void rumpuser_seterrno(int);
+
+/*
+ * termination
+ */
 
 #define RUMPUSER_PID_SELF ((int64_t)-1)
 int rumpuser_kill(int64_t, int, int *);
-
 #define RUMPUSER_PANIC (-1)
 void rumpuser_exit(int) __dead;
-void rumpuser_seterrno(int);
 
+/*
+ * console output
+ */
+
+int rumpuser_putchar(int, int *);
 int rumpuser_dprintf(const char *, ...) __printflike(1, 2);
 
-int rumpuser_getnhostcpu(void);
+/*
+ * access to host random pool
+ */
 
 /* always succeeds unless NOWAIT is given */
 #define RUMPUSER_RANDOM_HARD	0x01
 #define RUMPUSER_RANDOM_NOWAIT	0x02
 size_t rumpuser_getrandom(void *, size_t, int);
 
+/*
+ * threads, scheduling (host) and synchronization
+ */
 int  rumpuser_thread_create(void *(*f)(void *), void *, const char *, int,
 			    void **);
 void rumpuser_thread_exit(void) __dead;
@@ -156,7 +187,9 @@ void rumpuser_cv_signal(struct rumpuser_cv *);
 void rumpuser_cv_broadcast(struct rumpuser_cv *);
 int  rumpuser_cv_has_waiters(struct rumpuser_cv *);
 
-/* rumpuser dynloader */
+/*
+ * dynloader
+ */
 
 struct modinfo;
 struct rump_component;
@@ -166,7 +199,16 @@ typedef void (*rump_compload_fn)(const struct rump_component *);
 void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn, rump_compload_fn);
 void *rumpuser_dl_globalsym(const char *);
 
-/* syscall proxy routines */
+/*
+ * misc management
+ */
+
+int rumpuser_daemonize_begin(void);
+int rumpuser_daemonize_done(int);
+
+/*
+ * syscall proxy
+ */
 
 struct rumpuser_sp_ops {
 	void (*spop_schedule)(void);
