@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.5 2013/04/28 14:11:43 pooka Exp $	*/
+/*      $NetBSD: rumpcomp_user.c,v 1.6 2013/04/29 13:17:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/mman.h>
 
 #include <errno.h>
 
@@ -176,3 +177,26 @@ rumpcomp_shmif_watchwait(int kq, int *error)
 	return 0;
 }
 #endif
+
+void *
+rumpcomp_shmif_mmap(int fd, size_t len, int *error)
+{
+	void *rv;
+
+	*error = 0;
+	if (ftruncate(fd, len) == -1) {
+		*error = errno;
+		return NULL;
+	}
+
+#if defined(__sun__) && !defined(MAP_FILE)
+#define MAP_FILE 0
+#endif
+	
+	rv = mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED, fd, 0);
+	if (rv == MAP_FAILED) {
+		*error = errno;
+	}
+
+	return rv;
+}
