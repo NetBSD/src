@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.17 2013/04/29 12:56:04 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.18 2013/04/29 14:51:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.17 2013/04/29 12:56:04 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.18 2013/04/29 14:51:40 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -381,11 +381,11 @@ rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 	int nlocks;
 
 	cv->nwaiters++;
-	rumpuser__unschedule(0, &nlocks, mtx);
+	rumpkern_unsched(&nlocks, mtx);
 	mtxexit(mtx);
 	NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx));
 	mtxenter(mtx);
-	rumpuser__reschedule(nlocks, mtx);
+	rumpkern_sched(nlocks, mtx);
 	cv->nwaiters--;
 }
 
@@ -417,7 +417,7 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	clock_gettime(CLOCK_REALTIME, &ts);
 
 	cv->nwaiters++;
-	rumpuser__unschedule(0, &nlocks, mtx);
+	rumpkern_unsched(&nlocks, mtx);
 	mtxexit(mtx);
 
 	ts.tv_sec += sec;
@@ -428,7 +428,7 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	}
 	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
 	mtxenter(mtx);
-	rumpuser__reschedule(nlocks, mtx);
+	rumpkern_sched(nlocks, mtx);
 	cv->nwaiters--;
 	if (rv != 0 && rv != ETIMEDOUT)
 		abort();

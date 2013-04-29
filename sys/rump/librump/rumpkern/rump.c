@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.262 2013/04/28 13:17:25 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.263 2013/04/29 14:51:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.262 2013/04/28 13:17:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.263 2013/04/29 14:51:41 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -101,10 +101,10 @@ int rump_threads = 0;
 int rump_threads = 1;
 #endif
 
-static int rump_proxy_syscall(int, void *, long *);
-static int rump_proxy_rfork(void *, int, const char *);
-static void rump_proxy_lwpexit(void);
-static void rump_proxy_execnotify(const char *);
+static int rump_hyp_syscall(int, void *, long *);
+static int rump_hyp_rfork(void *, int, const char *);
+static void rump_hyp_lwpexit(void);
+static void rump_hyp_execnotify(const char *);
 
 static void rump_component_load(const struct rump_component *);
 static struct lwp *bootlwp;
@@ -184,18 +184,20 @@ spgetpid(void)
 	return curproc->p_pid;
 }
 
-static const struct rumpuser_sp_ops spops = {
-	.spop_schedule		= rump_schedule,
-	.spop_unschedule	= rump_unschedule,
-	.spop_lwproc_switch	= rump_lwproc_switch,
-	.spop_lwproc_release	= rump_lwproc_releaselwp,
-	.spop_lwproc_rfork	= rump_proxy_rfork,
-	.spop_lwproc_newlwp	= rump_lwproc_newlwp,
-	.spop_lwproc_curlwp	= rump_lwproc_curlwp,
-	.spop_lwpexit		= rump_proxy_lwpexit,
-	.spop_syscall		= rump_proxy_syscall,
-	.spop_execnotify	= rump_proxy_execnotify,
-	.spop_getpid		= spgetpid,
+static const struct rumpuser_hyperup hyp = {
+	.hyp_schedule		= rump_schedule,
+	.hyp_unschedule		= rump_unschedule,
+	.hyp_backend_unschedule	= rump_user_unschedule,
+	.hyp_backend_schedule	= rump_user_schedule,
+	.hyp_lwproc_switch	= rump_lwproc_switch,
+	.hyp_lwproc_release	= rump_lwproc_releaselwp,
+	.hyp_lwproc_rfork	= rump_hyp_rfork,
+	.hyp_lwproc_newlwp	= rump_lwproc_newlwp,
+	.hyp_lwproc_curlwp	= rump_lwproc_curlwp,
+	.hyp_lwpexit		= rump_hyp_lwpexit,
+	.hyp_syscall		= rump_hyp_syscall,
+	.hyp_execnotify		= rump_hyp_execnotify,
+	.hyp_getpid		= spgetpid,
 };
 
 int
@@ -247,8 +249,7 @@ rump_init(void)
 		rump_inited = 1;
 
 	/* initialize hypervisor */
-	if (rumpuser_init(RUMPUSER_VERSION,
-	    rump_user_schedule, rump_user_unschedule) != 0) {
+	if (rumpuser_init(RUMPUSER_VERSION, &hyp) != 0) {
 		rumpuser_dprintf("rumpuser init failed\n");
 		return EINVAL;
 	}
@@ -533,7 +534,7 @@ int
 rump_init_server(const char *url)
 {
 
-	return rumpuser_sp_init(url, &spops, ostype, osrelease, MACHINE);
+	return rumpuser_sp_init(url, ostype, osrelease, MACHINE);
 }
 
 void
@@ -776,7 +777,7 @@ rump_kernelfsym_load(void *symtab, uint64_t symsize,
 }
 
 static int
-rump_proxy_syscall(int num, void *arg, long *retval)
+rump_hyp_syscall(int num, void *arg, long *retval)
 {
 	register_t regrv[2] = {0, 0};
 	struct lwp *l;
@@ -796,7 +797,7 @@ rump_proxy_syscall(int num, void *arg, long *retval)
 }
 
 static int
-rump_proxy_rfork(void *priv, int flags, const char *comm)
+rump_hyp_rfork(void *priv, int flags, const char *comm)
 {
 	struct vmspace *newspace;
 	struct proc *p;
@@ -825,7 +826,7 @@ rump_proxy_rfork(void *priv, int flags, const char *comm)
  * Order all lwps in a process to exit.  does *not* wait for them to drain.
  */
 static void
-rump_proxy_lwpexit(void)
+rump_hyp_lwpexit(void)
 {
 	struct proc *p = curproc;
 	uint64_t where;
@@ -877,7 +878,7 @@ rump_proxy_lwpexit(void)
  * Notify process that all threads have been drained and exec is complete.
  */
 static void
-rump_proxy_execnotify(const char *comm)
+rump_hyp_execnotify(const char *comm)
 {
 	struct proc *p = curproc;
 
