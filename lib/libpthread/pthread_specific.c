@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.21.22.2 2012/12/02 18:47:36 riz Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.21.22.3 2013/04/29 01:50:18 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_specific.c,v 1.21.22.2 2012/12/02 18:47:36 riz Exp $");
+__RCSID("$NetBSD: pthread_specific.c,v 1.21.22.3 2013/04/29 01:50:18 riz Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 
 #include "pthread.h"
 #include "pthread_int.h"
+#include "reentrant.h"
 
 #include <sys/lwpctl.h>
 
@@ -47,6 +48,9 @@ int
 pthread_setspecific(pthread_key_t key, const void *value)
 {
 	pthread_t self;
+
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_setspecific_stub(key, value);
 
 	self = pthread__self();
 	/*
@@ -65,6 +69,8 @@ pthread_setspecific(pthread_key_t key, const void *value)
 void *
 pthread_getspecific(pthread_key_t key)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_getspecific_stub(key);
 
 	return pthread__self()->pt_specific[key];
 }
@@ -72,6 +78,8 @@ pthread_getspecific(pthread_key_t key)
 unsigned int
 pthread_curcpu_np(void)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_curcpu_stub();
 
 	return pthread__self()->pt_lwpctl->lc_curcpu;
 }
