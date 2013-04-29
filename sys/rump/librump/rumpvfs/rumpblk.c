@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.48 2012/09/14 16:29:21 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.49 2013/04/29 12:56:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.48 2012/09/14 16:29:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.49 2013/04/29 12:56:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -504,9 +504,11 @@ backend_open(struct rblkdev *rblk, const char *path)
 	int error, fd;
 
 	KASSERT(rblk->rblk_fd == -1);
-	fd = rumpuser_open(path, RUMPUSER_OPEN_RDWR, &error);
+	fd = rumpuser_open(path,
+	    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_BIO, &error);
 	if (error) {
-		fd = rumpuser_open(path, RUMPUSER_OPEN_RDONLY, &error);
+		fd = rumpuser_open(path,
+		    RUMPUSER_OPEN_RDONLY | RUMPUSER_OPEN_BIO, &error);
 		if (error)
 			return error;
 		rblk->rblk_mode = FREAD;
@@ -689,7 +691,7 @@ dostrategy(struct buf *bp)
 	struct rblkdev *rblk = &minors[minor(bp->b_dev)];
 	off_t off;
 	int async = bp->b_flags & B_ASYNC;
-	int error;
+	int error, op;
 
 	if (bp->b_bcount % (1<<sectshift) != 0) {
 		rump_biodone(bp, 0, EINVAL);
@@ -780,73 +782,13 @@ dostrategy(struct buf *bp)
 		}
 
 		rump_biodone(bp, bp->b_bcount, 0);
-		return;
-	}
-
-	/*
-	 * Do I/O.  We have different paths for async and sync I/O.
-	 * Async I/O is done by passing a request to rumpuser where
-	 * it is executed.  The rumpuser routine then calls
-	 * biodone() to signal any waiters in the kernel.  I/O's are
-	 * executed in series.  Technically executing them in parallel
-	 * would produce better results, but then we'd need either
-	 * more threads or posix aio.  Maybe worth investigating
-	 * this later.
-	 * 
-	 * Using bufq here might be a good idea.
-	 */
-
-	if (rump_threads) {
-		struct rumpuser_aio *rua;
-		int op, fd;
-
-		fd = rblk->rblk_fd;
-		if (BUF_ISREAD(bp)) {
-			op = RUA_OP_READ;
-		} else {
-			op = RUA_OP_WRITE;
-			if (!async) {
-				/* O_DIRECT not fully automatic yet */
-#ifdef HAS_ODIRECT
-				if ((off & ((1<<sectshift)-1)) == 0
-				    && ((intptr_t)bp->b_data
-				      & ((1<<sectshift)-1)) == 0
-				    && (bp->b_bcount & ((1<<sectshift)-1)) == 0)
-					fd = rblk->rblk_dfd;
-				else
-#endif
-					op |= RUA_OP_SYNC;
-			}
-		}
-
-		rumpuser_mutex_enter(&rumpuser_aio_mtx);
-		while ((rumpuser_aio_head+1) % N_AIOS == rumpuser_aio_tail) {
-			rumpuser_cv_wait(&rumpuser_aio_cv, &rumpuser_aio_mtx);
-		}
-
-		rua = &rumpuser_aios[rumpuser_aio_head];
-		KASSERT(rua->rua_bp == NULL);
-		rua->rua_fd = fd;
-		rua->rua_data = bp->b_data;
-		rua->rua_dlen = bp->b_bcount;
-		rua->rua_off = off;
-		rua->rua_bp = bp;
-		rua->rua_op = op;
-
-		/* insert into queue & signal */
-		rumpuser_aio_head = (rumpuser_aio_head+1) % N_AIOS;
-		rumpuser_cv_signal(&rumpuser_aio_cv);
-		rumpuser_mutex_exit(&rumpuser_aio_mtx);
 	} else {
-		if (BUF_ISREAD(bp)) {
-			rumpuser_read_bio(rblk->rblk_fd, bp->b_data,
-			    bp->b_bcount, off, rump_biodone, bp);
-		} else {
-			rumpuser_write_bio(rblk->rblk_fd, bp->b_data,
-			    bp->b_bcount, off, rump_biodone, bp);
-		}
+		op = BUF_ISREAD(bp) ? RUMPUSER_BIO_READ : RUMPUSER_BIO_WRITE;
 		if (BUF_ISWRITE(bp) && !async)
-			rumpuser_fsync(rblk->rblk_fd, &error);
+			op |= RUMPUSER_BIO_SYNC;
+
+		rumpuser_bio(rblk->rblk_fd, op, bp->b_data, bp->b_bcount, off,
+		    rump_biodone, bp);
 	}
 }
 

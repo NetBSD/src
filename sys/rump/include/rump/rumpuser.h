@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.88 2013/04/28 13:17:24 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.89 2013/04/29 12:56:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -65,31 +65,29 @@ void *rumpuser_filemmap(int fd, off_t, size_t, int, int *);
 void  rumpuser_unmap(void *, size_t);
 int   rumpuser_memsync(void *, size_t, int *);
 
-/*
- * Open modes.  these "accidentally" happen to match the respective
- * NetBSD bit representations to preserve NetBSD binary compat for
- * current users.  If you need to add new ones, just pick any numbers.
- */
-#define RUMPUSER_OPEN_RDONLY	0x000000
-#define RUMPUSER_OPEN_WRONLY	0x000001
-#define RUMPUSER_OPEN_RDWR	0x000002
-#define RUMPUSER_OPEN_ACCMODE	0x000003 /* "yay" */
-#define RUMPUSER_OPEN_CREATE	0x000200
-#define RUMPUSER_OPEN_EXCL	0x000800
-#define RUMPUSER_OPEN_DIRECT	0x080000
+#define RUMPUSER_OPEN_RDONLY	0x0000
+#define RUMPUSER_OPEN_WRONLY	0x0001
+#define RUMPUSER_OPEN_RDWR	0x0002
+#define RUMPUSER_OPEN_ACCMODE	0x0003 /* "yay" */
+#define RUMPUSER_OPEN_CREATE	0x0004 /* create file if it doesn't exist */
+#define RUMPUSER_OPEN_EXCL	0x0008 /* exclusive open */
+#define RUMPUSER_OPEN_DIRECT	0x0010 /* use direct i/o */
+#define RUMPUSER_OPEN_BIO	0x0020 /* open device for block i/o */
 int rumpuser_open(const char *, int, int *);
 
 int rumpuser_close(int, int *);
 int rumpuser_fsync(int, int *);
 
+#define RUMPUSER_BIO_READ	0x01
+#define RUMPUSER_BIO_WRITE	0x02
+#define RUMPUSER_BIO_SYNC	0x04
 typedef void (*rump_biodone_fn)(void *, size_t, int);
+void rumpuser_bio(int, int, void *, size_t, off_t, rump_biodone_fn, void *);
 
 ssize_t rumpuser_read(int, void *, size_t, int *);
 ssize_t rumpuser_pread(int, void *, size_t, off_t, int *);
 ssize_t rumpuser_write(int, const void *, size_t, int *);
 ssize_t rumpuser_pwrite(int, const void *, size_t, off_t, int *);
-void rumpuser_read_bio(int, void *, size_t, off_t, rump_biodone_fn, void *);
-void rumpuser_write_bio(int, const void *, size_t, off_t,rump_biodone_fn,void*);
 
 struct rumpuser_iovec {
 	void *iov_base;
@@ -123,8 +121,6 @@ int rumpuser_getnhostcpu(void);
 #define RUMPUSER_RANDOM_HARD	0x01
 #define RUMPUSER_RANDOM_NOWAIT	0x02
 size_t rumpuser_getrandom(void *, size_t, int);
-
-__dead void rumpuser_biothread(void *);
 
 int  rumpuser_thread_create(void *(*f)(void *), void *, const char *, int,
 			    void **);
@@ -166,25 +162,6 @@ int  rumpuser_cv_timedwait(struct rumpuser_cv *, struct rumpuser_mtx *,
 void rumpuser_cv_signal(struct rumpuser_cv *);
 void rumpuser_cv_broadcast(struct rumpuser_cv *);
 int  rumpuser_cv_has_waiters(struct rumpuser_cv *);
-
-/* "aio" stuff for being able to fire of a B_ASYNC I/O and continue */
-struct rumpuser_aio {
-	int	rua_fd;
-	uint8_t	*rua_data;
-	size_t	rua_dlen;
-	off_t	rua_off;
-	void	*rua_bp;
-	int	rua_op;
-};
-#define RUA_OP_READ	0x01
-#define RUA_OP_WRITE	0x02
-#define RUA_OP_SYNC	0x04
-
-#define N_AIOS 1024
-extern struct rumpuser_mtx rumpuser_aio_mtx;
-extern struct rumpuser_cv rumpuser_aio_cv;
-extern struct rumpuser_aio rumpuser_aios[N_AIOS];
-extern int rumpuser_aio_head, rumpuser_aio_tail;
 
 /* rumpuser dynloader */
 

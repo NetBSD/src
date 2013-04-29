@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_int.h,v 1.5 2013/04/27 14:59:08 pooka Exp $	*/
+/*	$NetBSD: rumpuser_int.h,v 1.6 2013/04/29 12:56:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -68,3 +68,15 @@ do {									\
 }
 
 void rumpuser__thrinit(void);
+
+#define NOFAIL(a) do {if (!(a)) abort();} while (/*CONSTCOND*/0)
+
+#define NOFAIL_ERRNO(a)							\
+do {									\
+	int fail_rv = (a);						\
+	if (fail_rv) {							\
+		printf("panic: rumpuser fatal failure %d (%s)\n",	\
+		    fail_rv, strerror(fail_rv));			\
+		abort();						\
+	}								\
+} while (/*CONSTCOND*/0)
