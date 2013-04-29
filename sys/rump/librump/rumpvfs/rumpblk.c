@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.50 2013/04/29 13:07:37 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.51 2013/04/29 15:40:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.50 2013/04/29 13:07:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.51 2013/04/29 15:40:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -347,7 +347,6 @@ backend_close(struct rblkdev *rblk)
 {
 	int dummy;
 
-	rumpuser_fsync(rblk->rblk_fd, &dummy);
 	rumpuser_close(rblk->rblk_fd, &dummy);
 	rblk->rblk_fd = -1;
 
