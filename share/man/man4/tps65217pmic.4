@@ -1,4 +1,4 @@
-.\" $NetBSD: tps65217pmic.4,v 1.2 2013/04/26 20:57:48 wiz Exp $
+.\" $NetBSD: tps65217pmic.4,v 1.3 2013/04/29 13:28:55 rkujawa Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 26, 2013
+.Dd April 29, 2013
 .Dt TPS65217PMIC 4
 .Os
 .Sh NAME
@@ -42,6 +42,25 @@ driver provides minimal support for the TPS65217 chip and allows reporting
 regulated voltages through the
 .Xr envsys 4
 API.
+.Pp
+The TPS65217 consists of low-dropout regulators (LDO) and step-down converters 
+with integrated switching FETs (DCDC):
+.Bl -bullet -compact
+.It
+LDO1: 1.0V - 3.3V
+.It
+LDO2: 0.9V - 3.3V
+.It
+LDO3: 1.5V - 3.3V
+.It
+LDO4: 1.5V - 3.3V
+.It
+DCDC1: 0.9V - 1.8V
+.It
+DCDC2: 0.9V - 3.3V
+.It
+DCDC1: 0.9V - 1.5V
+.El
 .Sh SEE ALSO
 .Xr envsys 4
 .Sh HISTORY
@@ -64,4 +83,4 @@ Modifying voltage regulator parameters was deliberately left unimplemented, as
 these parameters should only be set at the firmware level.
 Setting wrong parameters may result in permanent hardware damage.
 .Sh BUGS
-Battery and interrupt support is not implemented.
+Battery, interrupt and WLED (backlight) support is not implemented.
