@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.c,v 1.11 2012/12/12 17:42:40 christos Exp $	*/
-/* $OpenBSD: ssh.c,v 1.370 2012/07/06 01:47:38 djm Exp $ */
+/*	$NetBSD: ssh.c,v 1.12 2013/04/29 17:59:50 mlelstv Exp $	*/
+/* $OpenBSD: ssh.c,v 1.372 2013/02/22 04:45:09 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.11 2012/12/12 17:42:40 christos Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.12 2013/04/29 17:59:50 mlelstv Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -379,12 +379,7 @@ main(int ac, char **av)
 				    strerror(errno));
 				break;
 			}
-			if (options.num_identity_files >=
-			    SSH_MAX_IDENTITY_FILES)
-				fatal("Too many identity files specified "
-				    "(max %d)", SSH_MAX_IDENTITY_FILES);
-			options.identity_files[options.num_identity_files++] =
-			    xstrdup(optarg);
+			add_identity_file(&options, NULL, optarg, 1);
 			break;
 		case 'I':
 #ifdef ENABLE_PKCS11
@@ -563,7 +558,8 @@ main(int ac, char **av)
 			dummy = 1;
 			line = xstrdup(optarg);
 			if (process_config_line(&options, host ? host : "",
-			    line, "command-line", 0, &dummy) != 0)
+			    line, "command-line", 0, &dummy, SSHCONF_USERCONF)
+			    != 0)
 				exit(255);
 			xfree(line);
 			break;
@@ -657,14 +653,15 @@ main(int ac, char **av)
 	 * file if the user specifies a config file on the command line.
 	 */
 	if (config != NULL) {
-		if (!read_config_file(config, host, &options, 0))
+		if (!read_config_file(config, host, &options, SSHCONF_USERCONF))
 			fatal("Can't open user config file %.100s: "
 			    "%.100s", config, strerror(errno));
 	} else {
 		r = snprintf(buf, sizeof buf, "%s/%s", pw->pw_dir,
 		    _PATH_SSH_USER_CONFFILE);
 		if (r > 0 && (size_t)r < sizeof(buf))
-			(void)read_config_file(buf, host, &options, 1);
+			(void)read_config_file(buf, host, &options,
+			     SSHCONF_CHECKPERM|SSHCONF_USERCONF);
 
 		/* Read systemwide configuration file after user config. */
 		(void)read_config_file(_PATH_HOST_CONFIG_FILE, host,

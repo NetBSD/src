@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.12 2013/03/29 16:19:45 christos Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.191 2013/02/15 00:21:01 dtucker Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.13 2013/04/29 17:59:50 mlelstv Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.192 2013/02/17 23:16:57 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.12 2013/03/29 16:19:45 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.13 2013/04/29 17:59:50 mlelstv Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -1423,7 +1423,7 @@ pubkey_prepare(Authctxt *authctxt)
 		id = xcalloc(1, sizeof(*id));
 		id->key = key;
 		id->filename = xstrdup(options.identity_files[i]);
-		id->userprovided = 1;
+		id->userprovided = options.identity_file_userprovided[i];
 		TAILQ_INSERT_TAIL(&files, id, next);
 	}
 	/* Prefer PKCS11 keys that are explicitly listed */
