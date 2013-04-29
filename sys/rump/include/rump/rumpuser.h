@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.90 2013/04/29 13:19:11 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.91 2013/04/29 13:21:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -65,8 +65,7 @@ void  rumpuser_unmap(void *, size_t);
 #define RUMPUSER_OPEN_ACCMODE	0x0003 /* "yay" */
 #define RUMPUSER_OPEN_CREATE	0x0004 /* create file if it doesn't exist */
 #define RUMPUSER_OPEN_EXCL	0x0008 /* exclusive open */
-#define RUMPUSER_OPEN_DIRECT	0x0010 /* use direct i/o */
-#define RUMPUSER_OPEN_BIO	0x0020 /* open device for block i/o */
+#define RUMPUSER_OPEN_BIO	0x0010 /* open device for block i/o */
 int rumpuser_open(const char *, int, int *);
 
 int rumpuser_close(int, int *);
