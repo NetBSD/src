@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.408.2.10 2013/03/31 22:24:10 riz Exp $	*/
+/*	$NetBSD: param.h,v 1.408.2.11 2013/04/29 03:32:43 riz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	601000000	/* NetBSD 6.1_RC3 */
+#define	__NetBSD_Version__	601000000	/* NetBSD 6.1_RC4 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
