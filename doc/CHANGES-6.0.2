@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.30 2013/04/20 14:02:50 bouyer Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.31 2013/04/29 03:30:05 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -232,4 +232,20 @@ sys/kern/subr_kmem.c				1.47
 	properly return NULL for failed allocations not 0x8 with size checks
 	enabled.
 	[para, ticket #876]
+
+sys/dev/scsipi/ses.c				1.45 via patch
+
+	Add detach support for ses(4), fixing a panic. PR#44283.
+	[jakllsch, ticket #878]
+
+distrib/hp300/ramdisk/Makefile			1.32
+etc/etc.hp300/MAKEDEV.conf			1.14
+
+	Fix an openpty() failed error during install for hp300.
+	[tsutsui, ticket #880]
+
+sys/arch/x68k/dev/ite_tv.c			1.16
+
+	Fix a kernel panic which can be triggered by printf(1) on x68k.
+	[isaki, ticket #881]
 
