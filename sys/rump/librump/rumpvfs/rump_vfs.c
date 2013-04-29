@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.73 2013/04/04 11:21:37 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.74 2013/04/29 12:56:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.73 2013/04/04 11:21:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.74 2013/04/29 12:56:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -125,12 +125,6 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 	lf_init();
 	spec_init();
 	fstrans_init();
-
-	if (rump_threads) {
-		if ((rv = kthread_create(PRI_BIO, KTHREAD_MPSAFE, NULL,
-		    rumpuser_biothread, rump_biodone, NULL, "rmpabio")) != 0)
-			panic("syncer thread create failed: %d", rv);
-	}
 
 	root_device = &rump_rootdev;
 
