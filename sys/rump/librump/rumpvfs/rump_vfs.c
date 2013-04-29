@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.75 2013/04/29 17:31:05 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.76 2013/04/29 19:31:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.75 2013/04/29 17:31:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.76 2013/04/29 19:31:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -93,7 +93,6 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 {
 	extern struct vfsops rumpfs_vfsops;
 	char buf[64];
-	int error;
 	int rv, i;
 
 	/* initialize indirect interfaces */
