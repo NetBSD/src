@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.74 2013/04/29 12:56:03 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.75 2013/04/29 17:31:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.74 2013/04/29 12:56:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.75 2013/04/29 17:31:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -100,7 +100,7 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 	rump_vfs_fini = fini;
 	rump_vfs_drainbufs = drainbufs;
 
-	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
+	if (rumpuser_getparam("RUMP_NVNODES", buf, sizeof(buf)) == 0) {
 		desiredvnodes = strtoul(buf, NULL, 10);
 	} else {
 		desiredvnodes = 1<<10;
@@ -158,7 +158,7 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 	{
 	char *mbase;
 
-	if (rumpuser_getenv("RUMP_MODULEBASE", buf, sizeof(buf), &error) == 0)
+	if (rumpuser_getparam("RUMP_MODULEBASE", buf, sizeof(buf)) == 0)
 		mbase = buf;
 	else
 		mbase = module_base;
