@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.41 2013/04/29 14:51:39 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.42 2013/04/29 15:40:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.41 2013/04/29 14:51:39 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.42 2013/04/29 15:40:38 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -309,15 +309,14 @@ rumpuser_open(const char *path, int ruflags, int *error)
 int
 rumpuser_close(int fd, int *error)
 {
+	int nlocks;
 
-	DOCALL(int, close(fd));
-}
+	rumpkern_unsched(&nlocks, NULL);
+	fsync(fd);
+	close(fd);
+	rumpkern_sched(nlocks, NULL);
 
-int
-rumpuser_fsync(int fd, int *error)
-{
-
-	DOCALL_KLOCK(int, fsync(fd));
+	return 0;
 }
 
 ssize_t
