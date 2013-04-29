@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.49 2013/04/29 12:56:03 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.50 2013/04/29 13:07:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,25 +34,10 @@
  *
  * We provide fault injection.  The driver can be made to fail
  * I/O occasionally.
- *
- * The driver also provides an optimization for regular files by
- * using memory-mapped I/O.  This avoids kernel access for every
- * I/O operation.  It also gives finer-grained control of how to
- * flush data.  Additionally, in case the rump kernel dumps core,
- * we get way less carnage.
- *
- * However, it is quite costly in writing large amounts of
- * file data, since old contents cannot merely be overwritten, but
- * must be paged in first before replacing (i.e. r/m/w).  Ideally,
- * we should use directio.  The problem is that directio can fail
- * silently causing improper file system semantics (i.e. unflushed
- * data).  Therefore, default to mmap for now.  Even so, directio
- * _should_ be safe and can be enabled by compiling this module
- * with -DHAS_DIRECTIO.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.49 2013/04/29 12:56:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.50 2013/04/29 13:07:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -72,67 +57,28 @@ __KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.49 2013/04/29 12:56:03 pooka Exp $");
 #include "rump_private.h"
 #include "rump_vfs_private.h"
 
-/*
- * O_DIRECT is the fastest alternative, but since it falls back to
- * non-direct writes silently, I am not sure it will always be 100% safe.
- * Use it and play with it, but do that with caution.
- */
-#if 0
-#define HAS_ODIRECT
-#endif
-
 #if 0
 #define DPRINTF(x) printf x
 #else
 #define DPRINTF(x)
 #endif
 
-/* Default: 16 x 1MB windows */
-unsigned memwinsize = (1<<20);
-unsigned memwincnt = 16;
-
-#define STARTWIN(off)		((off) & ~((off_t)memwinsize-1))
-#define INWIN(win,off)		((win)->win_off == STARTWIN(off))
-#define WINSIZE(rblk, win)	(MIN((rblk->rblk_hostsize-win->win_off), \
-				      memwinsize))
-#define WINVALID(win)		((win)->win_off != (off_t)-1)
-#define WINVALIDATE(win)	((win)->win_off = (off_t)-1)
-struct blkwin {
-	off_t win_off;
-	void *win_mem;
-	int win_refcnt;
-
-	TAILQ_ENTRY(blkwin) win_lru;
-};
-
 #define RUMPBLK_SIZE 16
 static struct rblkdev {
 	char *rblk_path;
 	int rblk_fd;
 	int rblk_mode;
-#ifdef HAS_ODIRECT
-	int rblk_dfd;
-#endif
+
 	uint64_t rblk_size;
 	uint64_t rblk_hostoffset;
 	uint64_t rblk_hostsize;
 	int rblk_ftype;
-
-	/* for mmap */
-	int rblk_mmflags;
-	kmutex_t rblk_memmtx;
-	kcondvar_t rblk_memcv;
-	TAILQ_HEAD(winlru, blkwin) rblk_lruq;
-	bool rblk_waiting;
 
 	struct disklabel rblk_label;
 } minors[RUMPBLK_SIZE];
 
 static struct evcnt ev_io_total;
 static struct evcnt ev_io_async;
-
-static struct evcnt ev_memblk_hits;
-static struct evcnt ev_memblk_busy;
 
 static struct evcnt ev_bwrite_total;
 static struct evcnt ev_bwrite_async;
@@ -209,105 +155,6 @@ makedefaultlabel(struct disklabel *lp, off_t size, int part)
 	lp->d_checksum = 0; /* XXX */
 }
 
-static struct blkwin *
-getwindow(struct rblkdev *rblk, off_t off, int *wsize, int *error)
-{
-	struct blkwin *win;
-
-	mutex_enter(&rblk->rblk_memmtx);
- retry:
-	/* search for window */
-	TAILQ_FOREACH(win, &rblk->rblk_lruq, win_lru) {
-		if (INWIN(win, off) && WINVALID(win))
-			break;
-	}
-
-	/* found?  return */
-	if (win) {
-		ev_memblk_hits.ev_count++;
-		TAILQ_REMOVE(&rblk->rblk_lruq, win, win_lru);
-		goto good;
-	}
-
-	/*
-	 * Else, create new window.  If the least recently used is not
-	 * currently in use, reuse that.  Otherwise we need to wait.
-	 */
-	win = TAILQ_LAST(&rblk->rblk_lruq, winlru);
-	if (win->win_refcnt == 0) {
-		TAILQ_REMOVE(&rblk->rblk_lruq, win, win_lru);
-		mutex_exit(&rblk->rblk_memmtx);
-
-		if (WINVALID(win)) {
-			DPRINTF(("win %p, unmap mem %p, off 0x%" PRIx64 "\n",
-			    win, win->win_mem, win->win_off));
-			rumpuser_unmap(win->win_mem, WINSIZE(rblk, win));
-			WINVALIDATE(win);
-		}
-
-		win->win_off = STARTWIN(off);
-		win->win_mem = rumpuser_filemmap(rblk->rblk_fd, win->win_off,
-		    WINSIZE(rblk, win), rblk->rblk_mmflags, error);
-		DPRINTF(("win %p, off 0x%" PRIx64 ", mem %p\n",
-		    win, win->win_off, win->win_mem));
-
-		mutex_enter(&rblk->rblk_memmtx);
-		if (win->win_mem == NULL) {
-			WINVALIDATE(win);
-			TAILQ_INSERT_TAIL(&rblk->rblk_lruq, win, win_lru);
-			mutex_exit(&rblk->rblk_memmtx);
-			return NULL;
-		}
-	} else {
-		DPRINTF(("memwin wait\n"));
-		ev_memblk_busy.ev_count++;
-
-		rblk->rblk_waiting = true;
-		cv_wait(&rblk->rblk_memcv, &rblk->rblk_memmtx);
-		goto retry;
-	}
-
- good:
-	KASSERT(win);
-	win->win_refcnt++;
-	TAILQ_INSERT_HEAD(&rblk->rblk_lruq, win, win_lru);
-	mutex_exit(&rblk->rblk_memmtx);
-	*wsize = MIN(*wsize, memwinsize - (off-win->win_off));
-	KASSERT(*wsize);
-
-	return win;
-}
-
-static void
-putwindow(struct rblkdev *rblk, struct blkwin *win)
-{
-
-	mutex_enter(&rblk->rblk_memmtx);
-	if (--win->win_refcnt == 0 && rblk->rblk_waiting) {
-		rblk->rblk_waiting = false;
-		cv_broadcast(&rblk->rblk_memcv);
-	}
-	KASSERT(win->win_refcnt >= 0);
-	mutex_exit(&rblk->rblk_memmtx);
-}
-
-static void
-wincleanup(struct rblkdev *rblk)
-{
-	struct blkwin *win;
-
-	while ((win = TAILQ_FIRST(&rblk->rblk_lruq)) != NULL) {
-		TAILQ_REMOVE(&rblk->rblk_lruq, win, win_lru);
-		if (WINVALID(win)) {
-			DPRINTF(("cleanup win %p addr %p\n",
-			    win, win->win_mem));
-			rumpuser_unmap(win->win_mem, WINSIZE(rblk, win));
-		}
-		kmem_free(win, sizeof(*win));
-	}
-	rblk->rblk_mmflags = 0;
-}
-
 int
 rumpblk_init(void)
 {
@@ -335,24 +182,6 @@ rumpblk_init(void)
 		blkfail = 0;
 	}
 
-	if (rumpuser_getenv("RUMP_BLKWINSIZE", buf, sizeof(buf), &error) == 0) {
-		printf("rumpblk: ");
-		tmp = strtoul(buf, NULL, 10);
-		if (tmp && !(tmp & (tmp-1)))
-			memwinsize = tmp;
-		else
-			printf("invalid RUMP_BLKWINSIZE %d, ", tmp);
-		printf("using %d for memwinsize\n", memwinsize);
-	}
-	if (rumpuser_getenv("RUMP_BLKWINCOUNT", buf, sizeof(buf), &error) == 0){
-		printf("rumpblk: ");
-		tmp = strtoul(buf, NULL, 10);
-		if (tmp)
-			memwincnt = tmp;
-		else
-			printf("invalid RUMP_BLKWINCOUNT %d, ", tmp);
-		printf("using %d for memwincount\n", memwincnt);
-	}
 	if (rumpuser_getenv("RUMP_BLKSECTSHIFT", buf, sizeof(buf), &error)==0){
 		printf("rumpblk: ");
 		tmp = strtoul(buf, NULL, 10);
@@ -367,8 +196,6 @@ rumpblk_init(void)
 
 	memset(minors, 0, sizeof(minors));
 	for (i = 0; i < RUMPBLK_SIZE; i++) {
-		mutex_init(&minors[i].rblk_memmtx, MUTEX_DEFAULT, IPL_NONE);
-		cv_init(&minors[i].rblk_memcv, "rblkmcv");
 		minors[i].rblk_fd = -1;
 	}
 
@@ -383,11 +210,6 @@ rumpblk_init(void)
 	    "rumpblk", "bytes written");
 	evcnt_attach_dynamic(&ev_bwrite_async, EVCNT_TYPE_MISC, NULL,
 	    "rumpblk", "bytes written async");
-
-	evcnt_attach_dynamic(&ev_memblk_hits, EVCNT_TYPE_MISC, NULL,
-	    "rumpblk", "window hits");
-	evcnt_attach_dynamic(&ev_memblk_busy, EVCNT_TYPE_MISC, NULL,
-	    "rumpblk", "all windows busy");
 
 	if (blkfail) {
 		return devsw_attach("rumpblk",
@@ -490,7 +312,6 @@ rumpblk_deregister(const char *path)
 	rblk = &minors[i];
 	backend_close(rblk);
 
-	wincleanup(rblk);
 	free(rblk->rblk_path, M_TEMP);
 	memset(&rblk->rblk_label, 0, sizeof(rblk->rblk_label));
 	rblk->rblk_path = NULL;
@@ -512,74 +333,11 @@ backend_open(struct rblkdev *rblk, const char *path)
 		if (error)
 			return error;
 		rblk->rblk_mode = FREAD;
-
-#ifdef HAS_ODIRECT
-		rblk->rblk_dfd = rumpuser_open(path,
-		    RUMPUSER_OPEN_RDONLY | RUMPUSER_OPEN_DIRECT, &error);
-		if (error) {
-			close(fd);
-			return error;
-		}
-#endif
 	} else {
 		rblk->rblk_mode = FREAD|FWRITE;
-
-#ifdef HAS_ODIRECT
-		rblk->rblk_dfd = rumpuser_open(path,
-		    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_DIRECT, &error);
-		if (error) {
-			close(fd);
-			return error;
-		}
-#endif
 	}
 
-	if (rblk->rblk_ftype == RUMPUSER_FT_REG) {
-		uint64_t fsize= rblk->rblk_hostsize, off= rblk->rblk_hostoffset;
-		struct blkwin *win;
-		int i, winsize;
-
-		/*
-		 * Use mmap to access a regular file.  Allocate and
-		 * cache initial windows here.  Failure to allocate one
-		 * means fallback to read/write i/o.
-		 */
-
-		rblk->rblk_mmflags = 0;
-		if (rblk->rblk_mode & FREAD)
-			rblk->rblk_mmflags |= RUMPUSER_FILEMMAP_READ;
-		if (rblk->rblk_mode & FWRITE) {
-			rblk->rblk_mmflags |= RUMPUSER_FILEMMAP_WRITE;
-			rblk->rblk_mmflags |= RUMPUSER_FILEMMAP_SHARED;
-		}
-
-		TAILQ_INIT(&rblk->rblk_lruq);
-		rblk->rblk_fd = fd;
-
-		for (i = 0; i < memwincnt && off + i*memwinsize < fsize; i++) {
-			win = kmem_zalloc(sizeof(*win), KM_SLEEP);
-			WINVALIDATE(win);
-			TAILQ_INSERT_TAIL(&rblk->rblk_lruq, win, win_lru);
-
-			/*
-			 * Allocate first windows.  Here we just generally
-			 * make sure a) we can mmap at all b) we have the
-			 * necessary VA available
-			 */
-			winsize = memwinsize;
-			win = getwindow(rblk, off + i*memwinsize, &winsize,
-			    &error); 
-			if (win) {
-				putwindow(rblk, win);
-			} else {
-				wincleanup(rblk);
-				break;
-			}
-		}
-	} else {
-		rblk->rblk_fd = fd;
-	}
-
+	rblk->rblk_fd = fd;
 	KASSERT(rblk->rblk_fd != -1);
 	return 0;
 }
@@ -589,17 +347,9 @@ backend_close(struct rblkdev *rblk)
 {
 	int dummy;
 
-	if (rblk->rblk_mmflags)
-		wincleanup(rblk);
 	rumpuser_fsync(rblk->rblk_fd, &dummy);
 	rumpuser_close(rblk->rblk_fd, &dummy);
 	rblk->rblk_fd = -1;
-#ifdef HAS_ODIRECT
-	if (rblk->rblk_dfd != -1) {
-		rumpuser_close(rblk->rblk_dfd, &dummy);
-		rblk->rblk_dfd = -1;
-	}
-#endif
 
 	return 0;
 }
@@ -691,7 +441,7 @@ dostrategy(struct buf *bp)
 	struct rblkdev *rblk = &minors[minor(bp->b_dev)];
 	off_t off;
 	int async = bp->b_flags & B_ASYNC;
-	int error, op;
+	int op;
 
 	if (bp->b_bcount % (1<<sectshift) != 0) {
 		rump_biodone(bp, 0, EINVAL);
@@ -747,49 +497,12 @@ dostrategy(struct buf *bp)
 	    bp->b_bcount, BUF_ISREAD(bp) ? "READ" : "WRITE",
 	    off, off, (off + bp->b_bcount), async ? "a" : ""));
 
-	/* mmap?  handle here and return */
-	if (rblk->rblk_mmflags) {
-		struct blkwin *win;
-		int winsize, iodone;
-		uint8_t *ioaddr, *bufaddr;
+	op = BUF_ISREAD(bp) ? RUMPUSER_BIO_READ : RUMPUSER_BIO_WRITE;
+	if (BUF_ISWRITE(bp) && !async)
+		op |= RUMPUSER_BIO_SYNC;
 
-		for (iodone = 0; iodone < bp->b_bcount;
-		    iodone += winsize, off += winsize) {
-			winsize = bp->b_bcount - iodone;
-			win = getwindow(rblk, off, &winsize, &error); 
-			if (win == NULL) {
-				rump_biodone(bp, iodone, error);
-				return;
-			}
-
-			ioaddr = (uint8_t *)win->win_mem + (off-STARTWIN(off));
-			bufaddr = (uint8_t *)bp->b_data + iodone;
-
-			DPRINTF(("strat: %p off 0x%" PRIx64
-			    ", ioaddr %p (%p)/buf %p\n", win,
-			    win->win_off, ioaddr, win->win_mem, bufaddr));
-			if (BUF_ISREAD(bp)) {
-				memcpy(bufaddr, ioaddr, winsize);
-			} else {
-				memcpy(ioaddr, bufaddr, winsize);
-			}
-
-			/* synchronous write, sync bits back to disk */
-			if (BUF_ISWRITE(bp) && !async) {
-				rumpuser_memsync(ioaddr, winsize, &error);
-			}
-			putwindow(rblk, win);
-		}
-
-		rump_biodone(bp, bp->b_bcount, 0);
-	} else {
-		op = BUF_ISREAD(bp) ? RUMPUSER_BIO_READ : RUMPUSER_BIO_WRITE;
-		if (BUF_ISWRITE(bp) && !async)
-			op |= RUMPUSER_BIO_SYNC;
-
-		rumpuser_bio(rblk->rblk_fd, op, bp->b_data, bp->b_bcount, off,
-		    rump_biodone, bp);
-	}
+	rumpuser_bio(rblk->rblk_fd, op, bp->b_data, bp->b_bcount, off,
+	    rump_biodone, bp);
 }
 
 void
