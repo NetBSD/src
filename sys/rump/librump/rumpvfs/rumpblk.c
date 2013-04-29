@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.52 2013/04/29 17:31:05 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.53 2013/04/29 19:52:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.52 2013/04/29 17:31:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.53 2013/04/29 19:52:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -161,7 +161,7 @@ rumpblk_init(void)
 	char buf[64];
 	devmajor_t rumpblkmaj = RUMPBLK_DEVMAJOR;
 	unsigned tmp;
-	int error, i;
+	int i;
 
 	mutex_init(&rumpblk_lock, MUTEX_DEFAULT, IPL_NONE);
 
