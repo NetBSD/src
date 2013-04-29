@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.140 2013/04/28 23:21:00 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.141 2013/04/29 17:31:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.140 2013/04/28 23:21:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.141 2013/04/29 17:31:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -273,9 +273,8 @@ void
 uvm_init(void)
 {
 	char buf[64];
-	int error;
 
-	if (rumpuser_getenv("RUMP_MEMLIMIT", buf, sizeof(buf), &error) == 0) {
+	if (rumpuser_getparam("RUMP_MEMLIMIT", buf, sizeof(buf)) == 0) {
 		unsigned long tmp;
 		char *ep;
 		int mult;

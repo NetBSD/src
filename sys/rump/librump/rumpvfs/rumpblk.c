@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.51 2013/04/29 15:40:39 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.52 2013/04/29 17:31:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.51 2013/04/29 15:40:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.52 2013/04/29 17:31:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -165,13 +165,13 @@ rumpblk_init(void)
 
 	mutex_init(&rumpblk_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	if (rumpuser_getenv("RUMP_BLKFAIL", buf, sizeof(buf), &error) == 0) {
+	if (rumpuser_getparam("RUMP_BLKFAIL", buf, sizeof(buf)) == 0) {
 		blkfail = strtoul(buf, NULL, 10);
 		/* fail everything */
 		if (blkfail > BLKFAIL_MAX)
 			blkfail = BLKFAIL_MAX;
-		if (rumpuser_getenv("RUMP_BLKFAIL_SEED", buf, sizeof(buf),
-		    &error) == 0) {
+		if (rumpuser_getparam("RUMP_BLKFAIL_SEED",
+		    buf, sizeof(buf)) == 0) {
 			randstate = strtoul(buf, NULL, 10);
 		} else {
 			randstate = cprng_fast32();
@@ -182,7 +182,7 @@ rumpblk_init(void)
 		blkfail = 0;
 	}
 
-	if (rumpuser_getenv("RUMP_BLKSECTSHIFT", buf, sizeof(buf), &error)==0){
+	if (rumpuser_getparam("RUMP_BLKSECTSHIFT", buf, sizeof(buf)) == 0) {
 		printf("rumpblk: ");
 		tmp = strtoul(buf, NULL, 10);
 		if (tmp >= DEV_BSHIFT)
