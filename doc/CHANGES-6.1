@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.121 2013/04/20 15:26:10 bouyer Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.122 2013/04/29 01:57:15 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -947,6 +947,7 @@ sys/arch/arm/broadcom/bcm2835_tmr.c		1.2
 
 distrib/x68k/floppies/ramdisk/Makefile		1.41
 sys/arch/x68k/conf/INSTALL			1.96
+etc/etc.x68k/MAKEDEV.conf                       1.14
 	- add dhcpcd support to x68k install ramdisk
 	- enable bpf(4) in INSTALL kernel for dhcpcd
 	- bump ramdisk size from 1400k to 1440k
@@ -8914,4 +8915,21 @@ lib/libpthread/shlib_version			patch
 	bump libpthread minor for pthread_cond_setclock to libpthread.so.1.1.
 	Note that this is not the same as libpthread.so.1.1 from HEAD.
 	[christos, ticket #863]
+
+lib/libc/include/reentrant.h			1.16 via patch
+lib/libc/thread-stub/thread-stub.c		1.23 via patch
+lib/libpthread/Makefile				1.80 via patch
+lib/libpthread/pthread.c			1.143 via patch
+lib/libpthread/pthread_cancelstub.c		1.38 via patch
+lib/libpthread/pthread_cond.c			1.59 via patch
+lib/libpthread/pthread_int.h			1.89 via patch
+lib/libpthread/pthread_misc.c			1.15 via patch
+lib/libpthread/pthread_mutex.c			1.56 via patch
+lib/libpthread/pthread_rwlock.c			1.33 via patch
+lib/libpthread/pthread_specific.c		1.26 via patch
+lib/libpthread/pthread_tsd.c			1.11 via patch
+
+	Allow libpthread to be dlopened again, by providing libc stubs to
+	libpthread.
+	[manu, ticket #869]
 
