@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.40 2013/04/29 13:21:03 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.41 2013/04/29 14:51:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.40 2013/04/29 13:21:03 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.41 2013/04/29 14:51:39 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -64,12 +64,10 @@ __RCSID("$NetBSD: rumpuser.c,v 1.40 2013/04/29 13:21:03 pooka Exp $");
 
 #include "rumpuser_int.h"
 
-rump_unschedulefn	rumpuser__unschedule;
-rump_reschedulefn	rumpuser__reschedule;
+struct rumpuser_hyperup rumpuser__hyp;
 
 int
-rumpuser_init(int version,
-	rump_reschedulefn rumpkern_resched, rump_unschedulefn rumpkern_unsched)
+rumpuser_init(int version, const struct rumpuser_hyperup *hyp)
 {
 
 	if (version != RUMPUSER_VERSION) {
@@ -94,9 +92,7 @@ rumpuser_init(int version,
 #endif
 
 	rumpuser__thrinit();
-
-	rumpuser__unschedule = rumpkern_unsched;
-	rumpuser__reschedule = rumpkern_resched;
+	rumpuser__hyp = *hyp;
 
 	return 0;
 }
@@ -465,7 +461,7 @@ rumpuser_clock_sleep(uint64_t sec, uint64_t nsec, enum rumpclock clk)
 	int nlocks;
 	int rv;
 
-	rumpuser__unschedule(0, &nlocks, NULL);
+	rumpkern_unsched(&nlocks, NULL);
 
 	/*LINTED*/
 	rqt.tv_sec = sec;
@@ -513,7 +509,7 @@ rumpuser_clock_sleep(uint64_t sec, uint64_t nsec, enum rumpclock clk)
 		abort();
 	}
 
-	rumpuser__reschedule(nlocks, NULL);
+	rumpkern_sched(nlocks, NULL);
 	return rv;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_bio.c,v 1.3 2013/04/29 13:57:46 pooka Exp $	*/
+/*	$NetBSD: rumpuser_bio.c,v 1.4 2013/04/29 14:51:39 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -88,9 +88,9 @@ dobio(struct rumpuser_bio *biop)
 #endif
 		}
 	}
-	rumpuser__reschedule(0, NULL);
+	rumpkern_sched(0, NULL);
 	biop->bio_done(biop->bio_donearg, (size_t)rv, error);
-	rumpuser__unschedule(0, &dummy, NULL);
+	rumpkern_unsched(&dummy, NULL);
 
 	/* paranoia */
 	biop->bio_donearg = NULL;
@@ -129,7 +129,7 @@ rumpuser_bio(int fd, int op, void *data, size_t dlen, off_t doff,
 	static int usethread = 1;
 	int nlocks;
 
-	rumpuser__unschedule(0, &nlocks, NULL);
+	rumpkern_unsched(&nlocks, NULL);
 
 	if (!inited) {
 		pthread_mutex_lock(&biomtx);
@@ -175,5 +175,5 @@ rumpuser_bio(int fd, int op, void *data, size_t dlen, off_t doff,
 		pthread_mutex_unlock(&biomtx);
 	}
 
-	rumpuser__reschedule(nlocks, NULL);
+	rumpkern_sched(nlocks, NULL);
 }
