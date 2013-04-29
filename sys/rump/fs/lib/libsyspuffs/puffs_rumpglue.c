@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_rumpglue.c,v 1.11 2009/10/14 18:18:53 pooka Exp $	*/
+/*	$NetBSD: puffs_rumpglue.c,v 1.12 2013/04/29 20:08:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.11 2009/10/14 18:18:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.12 2013/04/29 20:08:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -97,7 +97,13 @@ readthread(void *arg)
 		inited = 1;
 
 		while (rv) {
-			n = rumpuser_write(pap->comfd, buf, rv, &error);
+			struct rumpuser_iovec iov;
+
+			iov.iov_base = buf;
+			iov.iov_len = rv;
+
+			n = rumpuser_iovwrite(pap->comfd, &iov, 1,
+			    RUMPUSER_IOV_NOSEEK, &error);
 			if (n == -1)
 				panic("fileread failed: %d", error);
 			if (n == 0)
@@ -135,7 +141,12 @@ writethread(void *arg)
 		off = 0;
 		toread = sizeof(struct putter_hdr);
 		do {
-			n = rumpuser_read(pap->comfd, buf+off, toread, &error);
+			struct rumpuser_iovec iov;
+
+			iov.iov_base = buf+off;
+			iov.iov_len = toread;
+			n = rumpuser_iovread(pap->comfd, &iov, 1,
+			    RUMPUSER_IOV_NOSEEK, &error);
 			if (n <= 0) {
 				if (n == 0)
 					goto out;
