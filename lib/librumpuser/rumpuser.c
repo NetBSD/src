@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.42 2013/04/29 15:40:38 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.43 2013/04/29 17:31:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.42 2013/04/29 15:40:38 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.43 2013/04/29 17:31:05 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -512,27 +512,71 @@ rumpuser_clock_sleep(uint64_t sec, uint64_t nsec, enum rumpclock clk)
 	return rv;
 }
 
-int
-rumpuser_getenv(const char *name, char *buf, size_t blen, int *error)
+static int
+gethostncpu(void)
 {
+	int ncpu = 1;
 
-	DOCALL(int, getenv_r(name, buf, blen));
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
+	size_t sz = sizeof(ncpu);
+
+	sysctlbyname("hw.ncpu", &ncpu, &sz, NULL, 0);
+#elif defined(__linux__) || defined(__CYGWIN__)
+	FILE *fp;
+	char *line = NULL;
+	size_t n = 0;
+
+	/* If anyone knows a better way, I'm all ears */
+	if ((fp = fopen("/proc/cpuinfo", "r")) != NULL) {
+		ncpu = 0;
+		while (getline(&line, &n, fp) != -1) {
+			if (strncmp(line,
+			    "processor", sizeof("processor")-1) == 0)
+			    	ncpu++;
+		}
+		if (ncpu == 0)
+			ncpu = 1;
+		free(line);
+		fclose(fp);
+	}
+#elif __sun__
+	/* XXX: this is just a rough estimate ... */
+	ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+	
+	return ncpu;
 }
 
 int
-rumpuser_gethostname(char *name, size_t namelen, int *error)
+rumpuser_getparam(const char *name, void *buf, size_t blen)
 {
-	char tmp[MAXHOSTNAMELEN];
 
-	if (gethostname(tmp, sizeof(tmp)) == -1) {
-		snprintf(name, namelen, "rump-%05d.rumpdomain", (int)getpid());
+	if (strcmp(name, RUMPUSER_PARAM_NCPU) == 0) {
+		int ncpu;
+
+		if (getenv_r("RUMP_NCPU", buf, blen) == -1) {
+			ncpu = gethostncpu();
+			snprintf(buf, blen, "%d", ncpu);
+		}
+		return 0;
+	} else if (strcmp(name, RUMPUSER_PARAM_HOSTNAME) == 0) {
+		char tmp[MAXHOSTNAMELEN];
+
+		if (gethostname(tmp, sizeof(tmp)) == -1) {
+			snprintf(buf, blen, "rump-%05d", (int)getpid());
+		} else {
+			snprintf(buf, blen, "rump-%05d.%s",
+			    (int)getpid(), tmp);
+		}
+		return 0;
+	} else if (*name == '_') {
+		return EINVAL;
 	} else {
-		snprintf(name, namelen, "rump-%05d.%s.rumpdomain",
-		    (int)getpid(), tmp);
+		if (getenv_r(name, buf, blen) == -1)
+			return errno;
+		else
+			return 0;
 	}
-
-	*error = 0;
-	return 0;
 }
 
 int
@@ -590,41 +634,6 @@ rumpuser_kill(int64_t pid, int sig, int *error)
 	seterror(EOPNOTSUPP);
 	return -1;
 #endif
-}
-
-int
-rumpuser_getnhostcpu(void)
-{
-	int ncpu = 1;
-
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
-	size_t sz = sizeof(ncpu);
-
-	sysctlbyname("hw.ncpu", &ncpu, &sz, NULL, 0);
-#elif defined(__linux__) || defined(__CYGWIN__)
-	FILE *fp;
-	char *line = NULL;
-	size_t n = 0;
-
-	/* If anyone knows a better way, I'm all ears */
-	if ((fp = fopen("/proc/cpuinfo", "r")) != NULL) {
-		ncpu = 0;
-		while (getline(&line, &n, fp) != -1) {
-			if (strncmp(line,
-			    "processor", sizeof("processor")-1) == 0)
-			    	ncpu++;
-		}
-		if (ncpu == 0)
-			ncpu = 1;
-		free(line);
-		fclose(fp);
-	}
-#elif __sun__
-	/* XXX: this is just a rough estimate ... */
-	ncpu = sysconf(_SC_NPROCESSORS_ONLN);
-#endif
-	
-	return ncpu;
 }
 
 size_t
