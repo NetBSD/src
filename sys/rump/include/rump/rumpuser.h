@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.94 2013/04/29 15:40:38 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.95 2013/04/29 17:31:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -124,9 +124,9 @@ int rumpuser_clock_sleep(uint64_t, uint64_t, enum rumpclock);
  * host information retrieval
  */
 
-int rumpuser_getenv(const char *, char *, size_t, int *);
-int rumpuser_getnhostcpu(void);
-int rumpuser_gethostname(char *, size_t, int *);
+#define RUMPUSER_PARAM_NCPU "_RUMPUSER_NCPU"
+#define RUMPUSER_PARAM_HOSTNAME "_RUMPUSER_HOSTNAME"
+int rumpuser_getparam(const char *, void *, size_t);
 
 /*
  * system call emulation, set errno is TLS

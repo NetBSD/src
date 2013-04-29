@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.263 2013/04/29 14:51:41 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.264 2013/04/29 17:31:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.263 2013/04/29 14:51:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.264 2013/04/29 17:31:05 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -238,7 +238,6 @@ rump_init(void)
 	uint64_t sec, nsec;
 	struct lwp *l;
 	int i, numcpu;
-	int error;
 
 	/* not reentrant */
 	if (rump_inited)
@@ -255,21 +254,20 @@ rump_init(void)
 	}
 
 	/* retrieve env vars which affect the early stage of bootstrap */
-	if (rumpuser_getenv("RUMP_THREADS", buf, sizeof(buf), &error) == 0) {
+	if (rumpuser_getparam("RUMP_THREADS", buf, sizeof(buf)) == 0) {
 		rump_threads = *buf != '0';
 	}
-	if (rumpuser_getenv("RUMP_VERBOSE", buf, sizeof(buf), &error) == 0) {
+	if (rumpuser_getparam("RUMP_VERBOSE", buf, sizeof(buf)) == 0) {
 		if (*buf != '0')
 			boothowto = AB_VERBOSE;
 	}
-	if (rumpuser_getenv("RUMP_NCPU", buf, sizeof(buf), &error) == 0)
-		error = 0;
-	if (error == 0) {
-		numcpu = strtoll(buf, NULL, 10);
-		if (numcpu < 1)
-			numcpu = 1;
-	} else {
-		numcpu = rumpuser_getnhostcpu();
+
+	if (rumpuser_getparam(RUMPUSER_PARAM_NCPU, buf, sizeof(buf)) != 0)
+		panic("mandatory hypervisor configuration (NCPU) missing");
+	numcpu = strtoll(buf, NULL, 10);
+	if (numcpu < 1) {
+		panic("rump kernels are not lightweight enough for \"%d\" CPUs",
+		    numcpu);
 	}
 
 	rump_thread_init();
@@ -441,7 +439,10 @@ rump_init(void)
 
 	module_init_class(MODULE_CLASS_ANY);
 
-	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
+	if (rumpuser_getparam(RUMPUSER_PARAM_HOSTNAME,
+	    hostname, MAXHOSTNAMELEN) != 0) {
+		panic("mandatory hypervisor configuration (HOSTNAME) missing");
+	}
 	hostnamelen = strlen(hostname);
 
 	sigemptyset(&sigcantmask);
