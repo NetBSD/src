@@ -192,7 +192,7 @@
 /* #undef HAVE_PXSTATUS_T */
 
 /* Define to 1 if you have the `setitimer' function. */
-/* #undef HAVE_SETITIMER */
+#define HAVE_SETITIMER 1
 
 /* Define to 1 if you have the <stddef.h> header file. */
 #define HAVE_STDDEF_H 1
