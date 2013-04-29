@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.122 2013/04/29 01:57:15 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.123 2013/04/29 03:30:32 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -8932,4 +8932,25 @@ lib/libpthread/pthread_tsd.c			1.11 via patch
 	Allow libpthread to be dlopened again, by providing libc stubs to
 	libpthread.
 	[manu, ticket #869]
+
+lib/libpthread/pthread_condattr.3		1.9
+
+	Fix cut-and-paste error.
+	[enami, ticket #877]
+
+sys/dev/scsipi/ses.c				1.45 via patch
+
+	Add detach support for ses(4), fixing a panic. PR#44283.
+	[jakllsch, ticket #878]
+
+distrib/hp300/ramdisk/Makefile			1.32
+etc/etc.hp300/MAKEDEV.conf			1.14
+
+	Fix an openpty() failed error during install for hp300.
+	[tsutsui, ticket #880]
+
+sys/arch/x68k/dev/ite_tv.c			1.16
+
+	Fix a kernel panic which can be triggered by printf(1) on x68k.
+	[isaki, ticket #881]
 
