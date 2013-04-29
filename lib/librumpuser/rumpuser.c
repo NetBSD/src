@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.37 2013/04/28 13:39:13 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.38 2013/04/29 12:56:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.37 2013/04/28 13:39:13 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.38 2013/04/29 12:56:04 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -403,22 +403,6 @@ rumpuser_pread(int fd, void *data, size_t size, off_t offset, int *error)
 	return rv;
 }
 
-void
-rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
-	rump_biodone_fn biodone, void *biodonecookie)
-{
-	ssize_t rv;
-	int error = 0;
-
-	rv = rumpuser_pread(fd, data, size, offset, &error);
-	/* check against <0 instead of ==-1 to get typing below right */
-	if (rv < 0)
-		rv = 0;
-
-	/* LINTED: see above */
-	biodone(biodonecookie, rv, error);
-}
-
 ssize_t
 rumpuser_write(int fd, const void *data, size_t size, int *error)
 {
@@ -441,22 +425,6 @@ rumpuser_pwrite(int fd, const void *data, size_t size, off_t offset, int *error)
 		seterror(errno);
 
 	return rv;
-}
-
-void
-rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
-	rump_biodone_fn biodone, void *biodonecookie)
-{
-	ssize_t rv;
-	int error = 0;
-
-	rv = rumpuser_pwrite(fd, data, size, offset, &error);
-	/* check against <0 instead of ==-1 to get typing below right */
-	if (rv < 0)
-		rv = 0;
-
-	/* LINTED: see above */
-	biodone(biodonecookie, rv, error);
 }
 
 ssize_t
