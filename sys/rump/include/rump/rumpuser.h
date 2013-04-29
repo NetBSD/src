@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.92 2013/04/29 14:07:01 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.93 2013/04/29 14:51:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -36,15 +36,33 @@
 #if !defined(_KERNEL) && !defined(LIBRUMPUSER)
 #error The rump/rumpuser.h interface is not for non-kernel consumers
 #endif
+struct lwp;
 
 /*
  * init
  */
 
 #define RUMPUSER_VERSION 16
-typedef void (*rump_reschedulefn)(int, void *);
-typedef void (*rump_unschedulefn)(int, int *, void *);
-int rumpuser_init(int, rump_reschedulefn, rump_unschedulefn);
+
+/* hypervisor upcall routines */
+struct rumpuser_hyperup {
+	void (*hyp_schedule)(void);
+	void (*hyp_unschedule)(void);
+	void (*hyp_backend_unschedule)(int, int *, void *);
+	void (*hyp_backend_schedule)(int, void *);
+	void (*hyp_lwproc_switch)(struct lwp *);
+	void (*hyp_lwproc_release)(void);
+	int (*hyp_lwproc_rfork)(void *, int, const char *);
+	int (*hyp_lwproc_newlwp)(pid_t);
+	struct lwp * (*hyp_lwproc_curlwp)(void);
+	int (*hyp_syscall)(int, void *, long *);
+	void (*hyp_lwpexit)(void);
+	void (*hyp_execnotify)(const char *);
+	pid_t (*hyp_getpid)(void);
+	void *hyp__extra[8];
+};
+int rumpuser_init(int, const struct rumpuser_hyperup *);
+void rumpuser_fini(void);
 
 /*
  * memory allocation
@@ -151,7 +169,6 @@ int  rumpuser_thread_create(void *(*f)(void *), void *, const char *, int,
 void rumpuser_thread_exit(void) __dead;
 int  rumpuser_thread_join(void *);
 
-struct lwp;
 void rumpuser_set_curlwp(struct lwp *);
 struct lwp *rumpuser_get_curlwp(void);
 
@@ -210,22 +227,7 @@ int rumpuser_daemonize_done(int);
  * syscall proxy
  */
 
-struct rumpuser_sp_ops {
-	void (*spop_schedule)(void);
-	void (*spop_unschedule)(void);
-
-	void (*spop_lwproc_switch)(struct lwp *);
-	void (*spop_lwproc_release)(void);
-	int (*spop_lwproc_rfork)(void *, int, const char *);
-	int (*spop_lwproc_newlwp)(pid_t);
-	struct lwp * (*spop_lwproc_curlwp)(void);
-	int (*spop_syscall)(int, void *, long *);
-	void (*spop_lwpexit)(void);
-	void (*spop_execnotify)(const char *);
-	pid_t (*spop_getpid)(void);
-};
-
-int	rumpuser_sp_init(const char *, const struct rumpuser_sp_ops *,
+int	rumpuser_sp_init(const char *,
 			 const char *, const char *, const char *);
 int	rumpuser_sp_copyin(void *, const void *, void *, size_t);
 int	rumpuser_sp_copyinstr(void *, const void *, void *, size_t *);
