@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.301 2013/04/28 03:12:37 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.302 2013/04/29 21:21:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.301 2013/04/28 03:12:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.302 2013/04/29 21:21:10 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -329,7 +329,6 @@ raidcreate(int unit) {
 		return NULL;
 	}
 	sc->sc_unit = unit;
-	sc->sc_r.softc = sc;
 	bufq_alloc(&sc->buf_queue, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 	return sc;
 }
@@ -1168,6 +1167,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 *  reconfiguration
 		 */
 		memset(raidPtr, 0, sizeof(*raidPtr));
+		raidPtr->softc = rs;
 		raidPtr->raidid = unit;
 
 		retcode = rf_Configure(raidPtr, k_cfg, NULL);
@@ -3735,6 +3735,7 @@ rf_auto_config_set(RF_ConfigSet_t *cset)
 	raidPtr = &sc->sc_r;
 
 	/* XXX all this stuff should be done SOMEWHERE ELSE! */
+	raidPtr->softc = sc;
 	raidPtr->raidid = raidID;
 	raidPtr->openings = RAIDOUTSTANDING;
 
