@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.16 2013/04/28 13:37:51 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.17 2013/04/29 12:56:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.16 2013/04/28 13:37:51 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.17 2013/04/29 12:56:04 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -46,17 +46,6 @@ __RCSID("$NetBSD: rumpuser_pth.c,v 1.16 2013/04/28 13:37:51 pooka Exp $");
 #include "rumpuser_int.h"
 
 static pthread_key_t curlwpkey;
-
-#define NOFAIL(a) do {if (!(a)) abort();} while (/*CONSTCOND*/0)
-#define NOFAIL_ERRNO(a)							\
-do {									\
-	int fail_rv = (a);						\
-	if (fail_rv) {							\
-		printf("panic: rumpuser fatal failure %d (%s)\n",	\
-		    fail_rv, strerror(fail_rv));			\
-		abort();						\
-	}								\
-} while (/*CONSTCOND*/0)
 
 struct rumpuser_mtx {
 	pthread_mutex_t pthmtx;
@@ -106,82 +95,11 @@ struct rumpuser_cv {
 	int nwaiters;
 };
 
-struct rumpuser_mtx rumpuser_aio_mtx;
-struct rumpuser_cv rumpuser_aio_cv;
-int rumpuser_aio_head, rumpuser_aio_tail;
-struct rumpuser_aio rumpuser_aios[N_AIOS];
-
 void
 rumpuser__thrinit(void)
 {
 
-	pthread_mutex_init(&rumpuser_aio_mtx.pthmtx, NULL);
-	pthread_cond_init(&rumpuser_aio_cv.pthcv, NULL);
 	pthread_key_create(&curlwpkey, NULL);
-}
-
-void
-/*ARGSUSED*/
-rumpuser_biothread(void *arg)
-{
-	struct rumpuser_aio *rua;
-	rump_biodone_fn biodone = arg;
-	ssize_t rv;
-	int error, dummy;
-
-	/* unschedule from CPU.  we reschedule before running the interrupt */
-	rumpuser__unschedule(0, &dummy, NULL);
-	assert(dummy == 0);
-
-	NOFAIL_ERRNO(pthread_mutex_lock(&rumpuser_aio_mtx.pthmtx));
-	for (;;) {
-		while (rumpuser_aio_head == rumpuser_aio_tail) {
-			NOFAIL_ERRNO(pthread_cond_wait(&rumpuser_aio_cv.pthcv,
-			    &rumpuser_aio_mtx.pthmtx));
-		}
-
-		rua = &rumpuser_aios[rumpuser_aio_tail];
-		assert(rua->rua_bp != NULL);
-		pthread_mutex_unlock(&rumpuser_aio_mtx.pthmtx);
-
-		if (rua->rua_op & RUA_OP_READ) {
-			error = 0;
-			rv = pread(rua->rua_fd, rua->rua_data,
-			    rua->rua_dlen, rua->rua_off);
-			if (rv < 0) {
-				rv = 0;
-				error = errno;
-			}
-		} else {
-			error = 0;
-			rv = pwrite(rua->rua_fd, rua->rua_data,
-			    rua->rua_dlen, rua->rua_off);
-			if (rv < 0) {
-				rv = 0;
-				error = errno;
-			} else if (rua->rua_op & RUA_OP_SYNC) {
-#ifdef __NetBSD__
-				fsync_range(rua->rua_fd, FDATASYNC,
-				    rua->rua_off, rua->rua_dlen);
-#else
-				fsync(rua->rua_fd);
-#endif
-			}
-		}
-		rumpuser__reschedule(0, NULL);
-		biodone(rua->rua_bp, (size_t)rv, error);
-		rumpuser__unschedule(0, &dummy, NULL);
-
-		rua->rua_bp = NULL;
-
-		NOFAIL_ERRNO(pthread_mutex_lock(&rumpuser_aio_mtx.pthmtx));
-		rumpuser_aio_tail = (rumpuser_aio_tail+1) % N_AIOS;
-		pthread_cond_signal(&rumpuser_aio_cv.pthcv);
-	}
-
-	/*NOTREACHED*/
-	fprintf(stderr, "error: rumpuser_biothread reached unreachable\n");
-	abort();
 }
 
 int
