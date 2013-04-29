@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.51 2013/04/29 13:17:32 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.52 2013/04/29 20:08:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.51 2013/04/29 13:17:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.52 2013/04/29 20:08:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -108,6 +108,18 @@ static void shmif_rcv(void *);
 #define LOCK_COOLDOWN	1001
 
 vmem_t *shmif_units;
+
+static void
+dowakeup(struct shmif_sc *sc)
+{
+	struct rumpuser_iovec iov;
+	uint32_t ver = SHMIF_VERSION;
+	int error;
+
+	iov.iov_base = &ver;
+	iov.iov_len = sizeof(ver);
+	rumpuser_iovwrite(sc->sc_memfd, &iov, 1, IFMEM_WAKEUP, &error);
+}
 
 /*
  * This locking needs work and will misbehave severely if:
@@ -505,7 +517,6 @@ shmif_start(struct ifnet *ifp)
 	uint32_t pktsize, pktwrote;
 	bool wrote = false;
 	bool wrap;
-	int error;
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -562,9 +573,9 @@ shmif_start(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* wakeup? */
-	if (wrote)
-		rumpuser_pwrite(sc->sc_memfd,
-		    &busversion, sizeof(busversion), IFMEM_WAKEUP, &error);
+	if (wrote) {
+		dowakeup(sc);
+	}
 }
 
 static void
@@ -579,9 +590,9 @@ shmif_stop(struct ifnet *ifp, int disable)
 	 * wakeup thread.  this will of course wake up all bus
 	 * listeners, but that's life.
 	 */
-	if (sc->sc_memfd != -1)
-		rumpuser_pwrite(sc->sc_memfd,
-		    &busversion, sizeof(busversion), IFMEM_WAKEUP, NULL);
+	if (sc->sc_memfd != -1) {
+		dowakeup(sc);
+	}
 }
 
 

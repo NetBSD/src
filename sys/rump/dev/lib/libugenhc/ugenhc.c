@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.13 2013/04/28 09:58:11 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.14 2013/04/29 20:08:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.13 2013/04/28 09:58:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.14 2013/04/29 20:08:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -750,10 +750,14 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 
 	while (RUSB(xfer)->rusb_status == 0) {
 		if (isread) {
+			struct rumpuser_iovec iov;
+
 			rumpcomp_ugenhc_ioctl(sc->sc_ugenfd[endpt],
 			    USB_SET_SHORT_XFER, &shortval, &error);
-			n = rumpuser_read(sc->sc_ugenfd[endpt],
-			    buf+done, len-done, &error);
+			iov.iov_base = buf+done;
+			iov.iov_len = len-done;
+			n = rumpuser_iovread(sc->sc_ugenfd[endpt], &iov, 1,
+			    RUMPUSER_IOV_NOSEEK, &error);
 			if (n == -1) {
 				n = 0;
 				if (done == 0) {
@@ -767,8 +771,12 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 			if (done == len)
 				break;
 		} else {
-			n = rumpuser_write(sc->sc_ugenfd[endpt],
-			    buf, len, &error);
+			struct rumpuser_iovec iov;
+
+			iov.iov_base = buf;
+			iov.iov_len = len;
+			n = rumpuser_iovwrite(sc->sc_ugenfd[endpt], &iov, 1,
+			    RUMPUSER_IOV_NOSEEK, &error);
 			done = n;
 			if (done == len)
 				break;

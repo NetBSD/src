@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.96 2013/04/29 17:35:04 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.97 2013/04/29 20:08:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -99,17 +99,20 @@ int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
 typedef void (*rump_biodone_fn)(void *, size_t, int);
 void rumpuser_bio(int, int, void *, size_t, off_t, rump_biodone_fn, void *);
 
-ssize_t rumpuser_read(int, void *, size_t, int *);
-ssize_t rumpuser_pread(int, void *, size_t, off_t, int *);
-ssize_t rumpuser_write(int, const void *, size_t, int *);
-ssize_t rumpuser_pwrite(int, const void *, size_t, off_t, int *);
+/*
+ * Reading and writing.  Since hypercalls are relatively uncommon, we don't
+ * need tons of syntactic sugar; fold everything into two.
+ */
 
+/* this one "accidentally" matches the NetBSD kernel ... */
 struct rumpuser_iovec {
 	void *iov_base;
-	uint64_t iov_len;
+	size_t iov_len;
 };
-ssize_t rumpuser_readv(int, const struct rumpuser_iovec *, int, int *);
-ssize_t rumpuser_writev(int, const struct rumpuser_iovec *, int, int *);
+#define RUMPUSER_IOV_NOSEEK -1
+ssize_t rumpuser_iovread(int, struct rumpuser_iovec *, size_t, off_t, int *);
+ssize_t rumpuser_iovwrite(int, const struct rumpuser_iovec *, size_t,
+			  off_t, int *);
 
 /*
  * clock and zzz
