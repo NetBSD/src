@@ -1,4 +1,4 @@
-/*	$NetBSD: klock.c,v 1.6 2013/04/29 14:51:41 pooka Exp $	*/
+/*	$NetBSD: klock.c,v 1.7 2013/04/29 14:53:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.6 2013/04/29 14:51:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.7 2013/04/29 14:53:32 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,15 +165,4 @@ rump_user_schedule(int nlocks, void *interlock)
 
 	if (nlocks)
 		_kernel_lock(nlocks);
-}
-
-void
-rump_user_kthread(void)
-{
-
-	KASSERT(curlwp == NULL);
-	rump_schedule();
-	if (rump_lwproc_newlwp(0) != 0)
-		panic("kthread create failed");
-	rump_unschedule();
 }
