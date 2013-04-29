@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/03/18 13:14:10 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2013/04/29 12:56:04 pooka Exp $
 #
 
 WARNS?=		5
@@ -13,7 +13,7 @@ CPPFLAGS+=	-DLIBRUMPUSER
 
 SRCS=		rumpuser.c
 SRCS+=		rumpuser_pth.c
-SRCS+=		rumpuser_dl.c rumpuser_sp.c rumpuser_daemonize.c
+SRCS+=		rumpuser_dl.c rumpuser_sp.c rumpuser_daemonize.c rumpuser_bio.c
 SRCS+=		rumpuser_component.c
 
 INCSDIR=	/usr/include/rump
