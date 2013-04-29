@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.2 2013/04/28 10:23:36 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.3 2013/04/29 18:06:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
+#ifndef _KERNEL
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
@@ -50,3 +50,4 @@ rumpcomp_ugenhc_ioctl(int fd, u_long cmd, void *data, int *error)
 
 	return rv;
 }
+#endif
