@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.50 2013/04/28 13:17:25 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.51 2013/04/29 13:17:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.50 2013/04/28 13:17:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.51 2013/04/29 13:17:32 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -205,9 +205,7 @@ initbackend(struct shmif_sc *sc, int memfd)
 	volatile uint8_t *p;
 	int error;
 
-	sc->sc_busmem = rumpuser_filemmap(memfd, 0, BUSMEM_SIZE,
-	    RUMPUSER_FILEMMAP_TRUNCATE | RUMPUSER_FILEMMAP_SHARED
-	    | RUMPUSER_FILEMMAP_READ | RUMPUSER_FILEMMAP_WRITE, &error);
+	sc->sc_busmem = rumpcomp_shmif_mmap(memfd, BUSMEM_SIZE, &error);
 	if (error)
 		return error;
 
