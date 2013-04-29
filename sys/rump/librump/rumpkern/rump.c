@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.264 2013/04/29 17:31:05 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.265 2013/04/29 18:00:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.264 2013/04/29 17:31:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.265 2013/04/29 18:00:19 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -106,6 +106,7 @@ static int rump_hyp_rfork(void *, int, const char *);
 static void rump_hyp_lwpexit(void);
 static void rump_hyp_execnotify(const char *);
 
+static void rump_component_addlocal(void);
 static void rump_component_load(const struct rump_component *);
 static struct lwp *bootlwp;
 
@@ -219,8 +220,7 @@ rump_daemonize_done(int error)
 
 RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
 {
-	extern void *__start_link_set_rump_components;
-	extern void *__stop_link_set_rump_components;
+	__link_set_decl(rump_components, struct rump_component);
 
 	/*
 	 * Trick compiler into generating references so that statically
@@ -402,6 +402,7 @@ rump_init(void)
 	rumpuser_dl_bootstrap(add_linkedin_modules,
 	    rump_kernelfsym_load, rump_component_load);
 
+	rump_component_addlocal();
 	rump_component_init(RUMP_COMPONENT_KERN);
 
 	/* initialize factions, if present */
@@ -678,6 +679,20 @@ struct compstore {
 	LIST_ENTRY(compstore) cs_entries;
 };
 static LIST_HEAD(, compstore) cshead = LIST_HEAD_INITIALIZER(cshead);
+
+/*
+ * add components which are visible from the current object.
+ */
+static void
+rump_component_addlocal(void)
+{
+	__link_set_decl(rump_components, struct rump_component);
+	struct rump_component *const *rc;
+
+	__link_set_foreach(rc, rump_components) {
+		rump_component_load(*rc);
+	}
+}
 
 static void
 rump_component_load(const struct rump_component *rc)
