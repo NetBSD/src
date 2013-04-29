@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.107 2013/01/31 10:57:30 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.108 2013/04/29 13:39:47 kiyohara Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -107,6 +107,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_ZAURUS	22	/* Sharp Zaurus keyboard */
 #define	WSKBD_TYPE_LUNA		23	/* OMRON SX-9100 LUNA */
 #define	WSKBD_TYPE_RFB		24	/* Usermode vnc remote keyboard */
+#define	WSKBD_TYPE_EPOC		25	/* Psion EPOC machine keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -331,6 +332,8 @@ struct wsmouse_repeat {
 #define WSDISPLAY_TYPE_IMXIPU	55	/* i.MX ipu */
 #define WSDISPLAY_TYPE_VC4	56	/* Broadcom VideoCore 4 */
 #define WSDISPLAY_TYPE_OMAP3	57	/* OMAP 3530 */
+#define WSDISPLAY_TYPE_WINDERMERE 58	/* SoC for EPOC32 Series 5mx */
+#define WSDISPLAY_TYPE_CLPS711X	59	/* CL PS-711x  */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
