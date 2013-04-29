@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.93 2013/04/29 14:51:40 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.94 2013/04/29 15:40:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -85,6 +85,7 @@ void  rumpuser_unmap(void *, size_t);
 #define RUMPUSER_OPEN_EXCL	0x0008 /* exclusive open */
 #define RUMPUSER_OPEN_BIO	0x0010 /* open device for block i/o */
 int rumpuser_open(const char *, int, int *);
+int rumpuser_close(int, int *);
 
 #define RUMPUSER_FT_OTHER 0
 #define RUMPUSER_FT_DIR 1
@@ -92,9 +93,6 @@ int rumpuser_open(const char *, int, int *);
 #define RUMPUSER_FT_BLK 3
 #define RUMPUSER_FT_CHR 4
 int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
-
-int rumpuser_close(int, int *);
-int rumpuser_fsync(int, int *);
 
 #define RUMPUSER_BIO_READ	0x01
 #define RUMPUSER_BIO_WRITE	0x02
