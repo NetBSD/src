@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.112 2013/04/07 18:42:49 stacktic Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.113 2013/04/29 20:08:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.112 2013/04/07 18:42:49 stacktic Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.113 2013/04/29 20:08:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1338,6 +1338,7 @@ rump_vop_readdir(void *v)
 static int
 etread(struct rumpfs_node *rn, struct uio *uio)
 {
+	struct rumpuser_iovec iov;
 	uint8_t *buf;
 	size_t bufsize;
 	ssize_t n;
@@ -1347,7 +1348,9 @@ etread(struct rumpfs_node *rn, struct uio *uio)
 	if (bufsize == 0)
 		return 0;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
-	if ((n = rumpuser_pread(rn->rn_readfd, buf, bufsize,
+	iov.iov_base = buf;
+	iov.iov_len = bufsize;
+	if ((n = rumpuser_iovread(rn->rn_readfd, &iov, 1,
 	    uio->uio_offset + rn->rn_offset, &error)) == -1)
 		goto out;
 	KASSERT(n <= bufsize);
@@ -1399,6 +1402,7 @@ rump_vop_read(void *v)
 static int
 etwrite(struct rumpfs_node *rn, struct uio *uio)
 {
+	struct rumpuser_iovec iov;
 	uint8_t *buf;
 	size_t bufsize;
 	ssize_t n;
@@ -1412,7 +1416,9 @@ etwrite(struct rumpfs_node *rn, struct uio *uio)
 	if (error)
 		goto out;
 	KASSERT(uio->uio_resid == 0);
-	n = rumpuser_pwrite(rn->rn_writefd, buf, bufsize,
+	iov.iov_base = buf;
+	iov.iov_len = bufsize;
+	n = rumpuser_iovwrite(rn->rn_writefd, &iov, 1,
 	    (uio->uio_offset-bufsize) + rn->rn_offset, &error);
 	if (n >= 0) {
 		KASSERT(n <= bufsize);
