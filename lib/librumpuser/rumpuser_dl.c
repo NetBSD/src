@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.17 2013/03/20 12:59:10 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.18 2013/04/29 18:00:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.17 2013/03/20 12:59:10 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.18 2013/04/29 18:00:20 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -455,22 +455,14 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 }
 #else
 /*
- * "default" implementation for platforms where we don't support
- * dynamic linking.  Assumes that all rump kernel components are
- * statically linked with the local client.  No need to handle modules
- * since the module code does that all by itself.
+ * no dynamic linking supported
  */
 void
 rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	rump_symload_fn symload, rump_compload_fn compload)
 {
-	extern void *__start_link_set_rump_components;
-	extern void *__stop_link_set_rump_components;
-	void **rc = &__start_link_set_rump_components;
-	void **rc_end = &__stop_link_set_rump_components;
 
-	for (; rc < rc_end; rc++)
-		compload(*rc);
+	return;
 }
 #endif
 
