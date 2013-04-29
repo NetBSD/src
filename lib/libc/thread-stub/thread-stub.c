@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.22.4.1 2013/04/29 01:50:20 riz Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.22.4.2 2013/04/29 23:35:31 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.22.4.1 2013/04/29 01:50:20 riz Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.22.4.2 2013/04/29 23:35:31 riz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -155,13 +155,12 @@ int __libc_cond_catchall_stub(cond_t *);
 __weak_alias(__libc_cond_init,__libc_cond_init_stub)
 __weak_alias(__libc_cond_signal,__libc_cond_catchall_stub)
 __weak_alias(__libc_cond_broadcast,__libc_cond_catchall_stub)
-__weak_alias(__libc_cond_wait,__libc_cond_wait_stub)
+__weak_alias(__libc_cond_wait,__libc_cond_catchall_stub)
 __weak_alias(__libc_cond_timedwait,__libc_cond_timedwait_stub)
 __weak_alias(__libc_cond_destroy,__libc_cond_catchall_stub)
 
 __strong_alias(__libc_cond_signal_stub,__libc_cond_catchall_stub)
 __strong_alias(__libc_cond_broadcast_stub,__libc_cond_catchall_stub)
-__strong_alias(__libc_cond_wait_stub,__libc_cond_catchall_stub)
 __strong_alias(__libc_cond_destroy_stub,__libc_cond_catchall_stub)
 
 int
