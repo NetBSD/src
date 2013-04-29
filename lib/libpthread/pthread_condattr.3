@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_condattr.3,v 1.7.8.1 2012/11/28 23:47:38 riz Exp $
+.\" $NetBSD: pthread_condattr.3,v 1.7.8.2 2013/04/29 02:27:29 riz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .Ft int
 .Fn pthread_condattr_init "pthread_condattr_t *attr"
 .Ft int
-.Fn pthread_condattr_init "pthread_condattr_t *attr" "clockid_t clock"
+.Fn pthread_condattr_setclock "pthread_condattr_t *attr" "clockid_t clock"
 .Ft int
 .Fn pthread_condattr_destroy "pthread_condattr_t *attr"
 .Sh DESCRIPTION
