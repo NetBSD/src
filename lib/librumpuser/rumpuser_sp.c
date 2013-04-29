@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.55 2013/04/27 17:35:10 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.56 2013/04/29 14:51:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.55 2013/04/27 17:35:10 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.56 2013/04/29 14:51:40 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -82,8 +82,6 @@ static struct pollfd pfdlist[MAXCLI];
 static struct spclient spclist[MAXCLI];
 static unsigned int disco;
 static volatile int spfini;
-
-static struct rumpuser_sp_ops spops;
 
 static char banner[MAXBANNER];
 
@@ -179,18 +177,18 @@ static void
 lwproc_switch(struct lwp *l)
 {
 
-	spops.spop_schedule();
-	spops.spop_lwproc_switch(l);
-	spops.spop_unschedule();
+	rumpuser__hyp.hyp_schedule();
+	rumpuser__hyp.hyp_lwproc_switch(l);
+	rumpuser__hyp.hyp_unschedule();
 }
 
 static void
 lwproc_release(void)
 {
 
-	spops.spop_schedule();
-	spops.spop_lwproc_release();
-	spops.spop_unschedule();
+	rumpuser__hyp.hyp_schedule();
+	rumpuser__hyp.hyp_lwproc_release();
+	rumpuser__hyp.hyp_unschedule();
 }
 
 static int
@@ -198,9 +196,9 @@ lwproc_rfork(struct spclient *spc, int flags, const char *comm)
 {
 	int rv;
 
-	spops.spop_schedule();
-	rv = spops.spop_lwproc_rfork(spc, flags, comm);
-	spops.spop_unschedule();
+	rumpuser__hyp.hyp_schedule();
+	rv = rumpuser__hyp.hyp_lwproc_rfork(spc, flags, comm);
+	rumpuser__hyp.hyp_unschedule();
 
 	return rv;
 }
@@ -210,9 +208,9 @@ lwproc_newlwp(pid_t pid)
 {
 	int rv;
 
-	spops.spop_schedule();
-	rv = spops.spop_lwproc_newlwp(pid);
-	spops.spop_unschedule();
+	rumpuser__hyp.hyp_schedule();
+	rv = rumpuser__hyp.hyp_lwproc_newlwp(pid);
+	rumpuser__hyp.hyp_unschedule();
 
 	return rv;
 }
@@ -222,9 +220,9 @@ lwproc_curlwp(void)
 {
 	struct lwp *l;
 
-	spops.spop_schedule();
-	l = spops.spop_lwproc_curlwp();
-	spops.spop_unschedule();
+	rumpuser__hyp.hyp_schedule();
+	l = rumpuser__hyp.hyp_lwproc_curlwp();
+	rumpuser__hyp.hyp_unschedule();
 
 	return l;
 }
@@ -234,9 +232,9 @@ lwproc_getpid(void)
 {
 	pid_t p;
 
-	spops.spop_schedule();
-	p = spops.spop_getpid();
-	spops.spop_unschedule();
+	rumpuser__hyp.hyp_schedule();
+	p = rumpuser__hyp.hyp_getpid();
+	rumpuser__hyp.hyp_unschedule();
 
 	return p;
 }
@@ -245,18 +243,18 @@ static void
 lwproc_execnotify(const char *comm)
 {
 
-	spops.spop_schedule();
-	spops.spop_execnotify(comm);
-	spops.spop_unschedule();
+	rumpuser__hyp.hyp_schedule();
+	rumpuser__hyp.hyp_execnotify(comm);
+	rumpuser__hyp.hyp_unschedule();
 }
 
 static void
 lwproc_lwpexit(void)
 {
 
-	spops.spop_schedule();
-	spops.spop_lwpexit();
-	spops.spop_unschedule();
+	rumpuser__hyp.hyp_schedule();
+	rumpuser__hyp.hyp_lwpexit();
+	rumpuser__hyp.hyp_unschedule();
 }
 
 static int
@@ -265,9 +263,9 @@ rumpsyscall(int sysnum, void *data, register_t *regrv)
 	long retval[2] = {0, 0};
 	int rv;
 
-	spops.spop_schedule();
-	rv = spops.spop_syscall(sysnum, data, retval);
-	spops.spop_unschedule();
+	rumpuser__hyp.hyp_schedule();
+	rv = rumpuser__hyp.hyp_syscall(sysnum, data, retval);
+	rumpuser__hyp.hyp_unschedule();
 
 	regrv[0] = retval[0];
 	regrv[1] = retval[1];
@@ -784,7 +782,7 @@ sp_copyin(void *arg, const void *raddr, void *laddr, size_t *len, int wantstr)
 	void *rdata = NULL; /* XXXuninit */
 	int rv, nlocks;
 
-	rumpuser__unschedule(0, &nlocks, NULL);
+	rumpkern_unsched(&nlocks, NULL);
 
 	rv = copyin_req(spc, raddr, len, wantstr, &rdata);
 	if (rv)
@@ -794,7 +792,7 @@ sp_copyin(void *arg, const void *raddr, void *laddr, size_t *len, int wantstr)
 	free(rdata);
 
  out:
-	rumpuser__reschedule(nlocks, NULL);
+	rumpkern_sched(nlocks, NULL);
 	if (rv)
 		return EFAULT;
 	return 0;
@@ -820,9 +818,9 @@ sp_copyout(void *arg, const void *laddr, void *raddr, size_t dlen)
 	struct spclient *spc = arg;
 	int nlocks, rv;
 
-	rumpuser__unschedule(0, &nlocks, NULL);
+	rumpkern_unsched(&nlocks, NULL);
 	rv = send_copyout_req(spc, raddr, laddr, dlen);
-	rumpuser__reschedule(nlocks, NULL);
+	rumpkern_sched(nlocks, NULL);
 
 	if (rv)
 		return EFAULT;
@@ -850,7 +848,7 @@ rumpuser_sp_anonmmap(void *arg, size_t howmuch, void **addr)
 	void *resp, *rdata;
 	int nlocks, rv;
 
-	rumpuser__unschedule(0, &nlocks, NULL);
+	rumpkern_unsched(&nlocks, NULL);
 
 	rv = anonmmap_req(spc, howmuch, &rdata);
 	if (rv) {
@@ -868,7 +866,7 @@ rumpuser_sp_anonmmap(void *arg, size_t howmuch, void **addr)
 	*addr = resp;
 
  out:
-	rumpuser__reschedule(nlocks, NULL);
+	rumpkern_sched(nlocks, NULL);
 
 	if (rv)
 		return rv;
@@ -881,9 +879,9 @@ rumpuser_sp_raise(void *arg, int signo)
 	struct spclient *spc = arg;
 	int rv, nlocks;
 
-	rumpuser__unschedule(0, &nlocks, NULL);
+	rumpkern_unsched(&nlocks, NULL);
 	rv = send_raise_req(spc, signo);
-	rumpuser__reschedule(nlocks, NULL);
+	rumpkern_sched(nlocks, NULL);
 
 	return rv;
 }
@@ -1298,7 +1296,7 @@ spserver(void *arg)
 static unsigned cleanupidx;
 static struct sockaddr *cleanupsa;
 int
-rumpuser_sp_init(const char *url, const struct rumpuser_sp_ops *spopsp,
+rumpuser_sp_init(const char *url,
 	const char *ostype, const char *osrelease, const char *machine)
 {
 	pthread_t pt;
@@ -1323,7 +1321,6 @@ rumpuser_sp_init(const char *url, const struct rumpuser_sp_ops *spopsp,
 	if (s == -1)
 		return errno;
 
-	spops = *spopsp;
 	sarg = malloc(sizeof(*sarg));
 	if (sarg == NULL) {
 		close(s);
