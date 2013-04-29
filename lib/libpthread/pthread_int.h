@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.82.2.2 2012/12/02 18:47:36 riz Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.82.2.3 2013/04/29 01:50:19 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -183,6 +183,8 @@ extern int	pthread__nspins;
 extern int	pthread__concurrency;
 extern int 	pthread__osrev;
 extern int 	pthread__unpark_max;
+
+extern int	__uselibcstub;
 
 /* Flag to be used in a ucontext_t's uc_flags indicating that
  * the saved register state is "user" state only, not full
