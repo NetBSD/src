@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.95 2013/04/29 17:31:05 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.96 2013/04/29 17:35:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -62,7 +62,6 @@ struct rumpuser_hyperup {
 	void *hyp__extra[8];
 };
 int rumpuser_init(int, const struct rumpuser_hyperup *);
-void rumpuser_fini(void);
 
 /*
  * memory allocation
