@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2010/02/11 09:06:48 roy Exp $
+#	$NetBSD: Makefile,v 1.30.14.1 2013/04/29 03:26:35 riz Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -14,7 +14,7 @@ CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
-MAKEDEVTARGETS=	all
+MAKEDEVTARGETS=	ramdisk
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile \
 		${DESTDIR}/usr/mdec/installboot ${DESTDIR}/usr/mdec/uboot.lif \
