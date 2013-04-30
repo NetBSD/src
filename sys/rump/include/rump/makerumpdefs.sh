@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.13 2012/12/13 17:17:00 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.14 2013/04/30 11:29:12 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -38,7 +38,7 @@ sed -n '/#define	O_[A-Z]*	*0x/s/O_/RUMP_O_/gp' \
     < ../../../sys/fcntl.h
 
 fromvers ../../../sys/vnode.h
-sed -n '/enum vtype.*{/{s/vtype/rump_&/;s/ V/ RUMP_V/gp}' < ../../../sys/vnode.h
+sed -n '/enum vtype.*{/{s/vtype/rump_&/;s/ V/ RUMP_V/gp;}' <../../../sys/vnode.h
 sed -n '/#define.*LK_[A-Z]/s/LK_/RUMP_LK_/gp' <../../../sys/vnode.h	\
     | sed 's,/\*.*$,,'
 
