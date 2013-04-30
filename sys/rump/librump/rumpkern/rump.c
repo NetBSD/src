@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.265 2013/04/29 18:00:19 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.266 2013/04/30 16:03:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.265 2013/04/29 18:00:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.266 2013/04/30 16:03:44 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -273,7 +273,7 @@ rump_init(void)
 	rump_thread_init();
 	rump_cpus_bootstrap(&numcpu);
 
-	rumpuser_clock_gettime(&sec, &nsec, RUMPUSER_CLOCK_RELWALL);
+	rumpuser_clock_gettime(RUMPUSER_CLOCK_RELWALL, &sec, &nsec);
 	boottime.tv_sec = sec;
 	boottime.tv_nsec = nsec;
 
@@ -569,7 +569,7 @@ cpu_reboot(int howto, char *bootstr)
 		printf("rump kernel halted\n");
 		rumpuser_sp_fini(finiarg);
 		for (;;) {
-			rumpuser_clock_sleep(10, 0, RUMPUSER_CLOCK_RELWALL);
+			rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, 10, 0);
 		}
 	}
 

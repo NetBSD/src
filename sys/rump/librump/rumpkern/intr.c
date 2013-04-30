@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.38 2013/04/28 13:17:24 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.39 2013/04/30 16:03:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.38 2013/04/28 13:17:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.39 2013/04/30 16:03:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -104,7 +104,7 @@ doclock(void *noarg)
 	int error;
 	extern int hz;
 
-	error = rumpuser_clock_gettime(&sec, &nsec, RUMPUSER_CLOCK_ABSMONO);
+	error = rumpuser_clock_gettime(RUMPUSER_CLOCK_ABSMONO, &sec, &nsec);
 	if (error)
 		panic("clock: cannot get monotonic time");
 
@@ -116,8 +116,8 @@ doclock(void *noarg)
 	for (;;) {
 		callout_hardclock();
 
-		error = rumpuser_clock_sleep(curclock.tv_sec, curclock.tv_nsec,
-		    RUMPUSER_CLOCK_ABSMONO);
+		error = rumpuser_clock_sleep(RUMPUSER_CLOCK_ABSMONO,
+		    curclock.tv_sec, curclock.tv_nsec);
 		KASSERT(!error);
 		timespecadd(&curclock, &thetick, &curclock);
 
