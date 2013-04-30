@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.99 2013/04/30 13:29:28 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.100 2013/04/30 16:03:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -114,8 +114,8 @@ int rumpuser_iovwrite(int, const struct rumpuser_iovec *, size_t,
  */
 
 enum rumpclock { RUMPUSER_CLOCK_RELWALL, RUMPUSER_CLOCK_ABSMONO };
-int rumpuser_clock_gettime(uint64_t *, uint64_t *, enum rumpclock);
-int rumpuser_clock_sleep(uint64_t, uint64_t, enum rumpclock);
+int rumpuser_clock_gettime(enum rumpclock, uint64_t *, uint64_t *);
+int rumpuser_clock_sleep(enum rumpclock, uint64_t, uint64_t);
 
 /*
  * host information retrieval

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.47 2013/04/30 12:39:20 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.48 2013/04/30 16:03:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.47 2013/04/30 12:39:20 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.48 2013/04/30 16:03:44 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -395,7 +395,7 @@ rumpuser_iovwrite(int fd, const struct rumpuser_iovec *ruiov, size_t iovlen,
 }
 
 int
-rumpuser_clock_gettime(uint64_t *sec, uint64_t *nsec, enum rumpclock rclk)
+rumpuser_clock_gettime(enum rumpclock rclk, uint64_t *sec, uint64_t *nsec)
 {
 	struct timespec ts;
 	clockid_t clk;
@@ -428,7 +428,7 @@ rumpuser_clock_gettime(uint64_t *sec, uint64_t *nsec, enum rumpclock rclk)
 }
 
 int
-rumpuser_clock_sleep(uint64_t sec, uint64_t nsec, enum rumpclock clk)
+rumpuser_clock_sleep(enum rumpclock clk, uint64_t sec, uint64_t nsec)
 {
 	struct timespec rqt, rmt;
 	int nlocks;
