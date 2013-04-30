@@ -28,20 +28,20 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.1 2013/04/28 21:06:34 matt Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.2 2013/04/30 01:45:13 matt Exp $");
 
 #include <sys/types.h>
 #include <assert.h>
 #include <fenv.h>
 #include <string.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #ifdef __SOFTFP__
 #include <ieeefp.h>
 #include <sys/signal.h>
 #include <sys/siginfo.h>
 #else
-#include <inttypes.h>
 #include <arm/armreg.h>
 #endif
 
@@ -56,7 +56,9 @@ const fenv_t __fe_dfl_env = VFP_FPSCR_FZ|VFP_FPSCR_DN|VFP_FPSCR_RN;
 int
 feclearexcept(int excepts)
 {
+#ifndef lint
 	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+#endif
 #ifdef __SOFTFP__
 	int old = fpresetsticky(excepts);
 	return old & ~excepts;
@@ -93,7 +95,9 @@ fegetexceptflag(fexcept_t *flagp, int excepts)
 int
 feraiseexcept(int excepts)
 {
+#ifndef lint
 	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+#endif
 #ifdef __SOFTFP__
 	excepts &= fpgetsticky();
 
@@ -116,7 +120,7 @@ feraiseexcept(int excepts)
 		sigqueueinfo(getpid(), &info);
 	}
 #else
-	uint32_t fpscr = armreg_fpscr_read();
+	int fpscr = armreg_fpscr_read();
 	fpscr = (fpscr & ~VFP_FPSCR_ESUM) | __SHIFTIN(excepts, VFP_FPSCR_ESUM);
 	armreg_fpscr_write(fpscr);
 #endif
@@ -135,7 +139,9 @@ feraiseexcept(int excepts)
 int
 fesetexceptflag(const fexcept_t *flagp, int excepts)
 {
+#ifndef lint
 	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+#endif
 #ifdef __SOFTFP__
 	fpsetsticky((fpgetsticky() & ~excepts) | (excepts & *flagp));
 #else
@@ -184,7 +190,9 @@ fegetround(void)
 int
 fesetround(int round)
 {
+#ifndef lint
 	_DIAGASSERT(!(round & ~__SHIFTOUT(VFP_FPSCR_RMODE, VFP_FPSCR_RMODE)));
+#endif
 #ifdef __SOFTFP__
 	(void)fpsetround(round);
 #else
@@ -262,8 +270,9 @@ fesetenv(const fenv_t *envp)
 int
 feupdateenv(const fenv_t *envp)
 {
+#ifndef lint
 	_DIAGASSERT(envp != NULL);
-
+#endif
 #ifdef __SOFTFP__
 	(void)fpsetround(__SHIFTIN(*envp, VFP_FPSCR_RMODE));
 	(void)fpsetmask(fpgetmask() | __SHIFTOUT(*envp, VFP_FPSCR_ESUM));
