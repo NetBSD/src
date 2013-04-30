@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.141 2013/04/29 17:31:05 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.142 2013/04/30 00:03:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.141 2013/04/29 17:31:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.142 2013/04/30 00:03:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -421,12 +421,12 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 		panic("uvm_mmap() variant unsupported");
 
 	if (RUMP_LOCALPROC_P(curproc)) {
-		uaddr = rumpuser_anonmmap(NULL, size, 0, 0, &error);
+		error = rumpuser_anonmmap(NULL, size, 0, 0, uaddr);
 	} else {
 		error = rumpuser_sp_anonmmap(curproc->p_vmspace->vm_map.pmap,
 		    size, &uaddr);
 	}
-	if (uaddr == NULL)
+	if (error)
 		return error;
 
 	*addr = (vaddr_t)uaddr;
@@ -715,13 +715,13 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 		if (align) {
 			alignbit = ffs(align)-1;
 		}
-		rv = rumpuser_anonmmap(desired, size, alignbit,
-		    flags & UVM_KMF_EXEC, &error);
+		error = rumpuser_anonmmap(desired, size, alignbit,
+		    flags & UVM_KMF_EXEC, &rv);
 	} else {
-		rv = rumpuser_malloc(size, align);
+		error = rumpuser_malloc(size, align, &rv);
 	}
 
-	if (rv == NULL) {
+	if (error) {
 		if (flags & (UVM_KMF_CANFAIL | UVM_KMF_NOWAIT))
 			return 0;
 		else
@@ -1149,6 +1149,7 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 {
 	unsigned long newmem;
 	void *rv;
+	int error;
 
 	uvm_kick_pdaemon(); /* ouch */
 
@@ -1168,8 +1169,8 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 
 	/* second, we must get something from the backend */
  again:
-	rv = rumpuser_malloc(howmuch, alignment);
-	if (__predict_false(rv == NULL && waitok)) {
+	error = rumpuser_malloc(howmuch, alignment, &rv);
+	if (__predict_false(error && waitok)) {
 		uvm_wait(wmsg);
 		goto again;
 	}

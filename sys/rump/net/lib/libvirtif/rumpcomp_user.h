@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.h,v 1.2 2013/03/13 21:17:32 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.h,v 1.3 2013/04/30 00:03:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -27,9 +27,9 @@
 
 struct virtif_user;
 
-struct virtif_user *rumpcomp_virtif_create(int);
-void rumpcomp_virtif_dying(struct virtif_user *);
-void rumpcomp_virtif_destroy(struct virtif_user *);
+int 	rumpcomp_virtif_create(int, struct virtif_user **);
+void	rumpcomp_virtif_dying(struct virtif_user *);
+void	rumpcomp_virtif_destroy(struct virtif_user *);
 
 void	rumpcomp_virtif_send(struct virtif_user *, struct iovec *, size_t);
-ssize_t	rumpcomp_virtif_recv(struct virtif_user *, void *, size_t);
+int	rumpcomp_virtif_recv(struct virtif_user *, void *, size_t, size_t *);
