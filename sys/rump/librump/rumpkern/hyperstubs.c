@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperstubs.c,v 1.1 2013/04/30 13:54:53 pooka Exp $	*/
+/*	$NetBSD: hyperstubs.c,v 1.2 2013/04/30 14:28:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperstubs.c,v 1.1 2013/04/30 13:54:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperstubs.c,v 1.2 2013/04/30 14:28:52 pooka Exp $");
 
 #include <sys/errno.h>
 
@@ -48,6 +48,11 @@ __weak_alias(rumpuser_daemonize_done,rump_hypernotsupp);
 /* process env */
 
 __weak_alias(rumpuser_kill,rump_hypernotsupp);
+
+/* anonmmap (for proplib and modules) */
+
+__weak_alias(rumpuser_anonmmap,rump_hypernotsupp);
+__weak_alias(rumpuser_unmap,rump_hypernotsupp);
 
 /* syscall proxy */
 
