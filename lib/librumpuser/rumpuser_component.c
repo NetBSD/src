@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_component.c,v 1.4 2013/04/29 15:20:05 pooka Exp $	*/
+/*	$NetBSD: rumpuser_component.c,v 1.5 2013/04/30 12:39:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_component.c,v 1.4 2013/04/29 15:20:05 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_component.c,v 1.5 2013/04/30 12:39:20 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -96,4 +96,11 @@ rumpuser_component_kthread_release(void)
 	rumpuser__hyp.hyp_schedule();
 	rumpuser__hyp.hyp_lwproc_release();
 	rumpuser__hyp.hyp_unschedule();
+}
+
+int
+rumpuser_component_errtrans(int hosterr)
+{
+
+	return rumpuser__errtrans(hosterr);
 }

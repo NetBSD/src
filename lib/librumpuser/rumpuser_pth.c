@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.19 2013/04/30 00:03:52 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.20 2013/04/30 12:39:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.19 2013/04/30 00:03:52 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.20 2013/04/30 12:39:20 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -144,7 +144,7 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
 
 	pthread_attr_destroy(&pattr);
 
-	return rv;
+	ET(rv);
 }
 
 __dead void
@@ -164,7 +164,7 @@ rumpuser_thread_join(void *ptcookie)
 	if (rv == 0)
 		free(pt);
 
-	return rv;
+	ET(rv);
 }
 
 void
@@ -240,7 +240,7 @@ rumpuser_mutex_tryenter(struct rumpuser_mtx *mtx)
 		mtxenter(mtx);
 	}
 
-	return rv;
+	ET(rv);
 }
 
 void
@@ -314,7 +314,7 @@ rumpuser_rw_tryenter(struct rumpuser_rw *rw, int iswrite)
 			RURW_INCREAD(rw);
 	}
 
-	return rv;
+	ET(rv);
 }
 
 void
@@ -431,7 +431,7 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	rumpkern_sched(nlocks, mtx);
 	cv->nwaiters--;
 
-	return rv;
+	ET(rv);
 }
 
 void
