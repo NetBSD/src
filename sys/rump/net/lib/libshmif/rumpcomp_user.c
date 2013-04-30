@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.8 2013/04/30 00:03:54 pooka Exp $	*/
+/*      $NetBSD: rumpcomp_user.c,v 1.9 2013/04/30 00:33:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -167,7 +167,7 @@ rumpcomp_shmif_watchwait(int kq)
 
 /* a polling default implementation */
 int
-rumpcomp_shmif_watchsetup(int inotify, int fd)
+rumpcomp_shmif_watchsetup(int *nono, int fd)
 {
 	static int warned = 0;
 
