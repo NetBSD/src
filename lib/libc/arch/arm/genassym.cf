@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2012/09/27 11:20:20 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.2 2013/04/30 12:24:31 skrll Exp $
 
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,5 +32,6 @@
 include <sys/types.h>
 include <ucontext.h>
 
+define _UC_REGS_R0	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_R0])
 define _UC_REGS_SP	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_SP])
 define _UC_REGS_PC	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_PC])
