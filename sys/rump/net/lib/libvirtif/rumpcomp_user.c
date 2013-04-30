@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.3 2013/03/16 21:37:04 christos Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.4 2013/04/30 00:03:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -92,26 +92,34 @@ opentapdev(int devnum)
 	return fd;
 }
 
-struct virtif_user *
-rumpcomp_virtif_create(int devnum)
+int
+rumpcomp_virtif_create(int devnum, struct virtif_user **viup)
 {
-	struct virtif_user *viu;
+	struct virtif_user *viu = NULL;
 	void *cookie;
+	int rv;
 
 	cookie = rumpuser_component_unschedule();
 
 	viu = malloc(sizeof(*viu));
+	if (viu == NULL) {
+		rv = errno;
+		goto out;
+	}
+
 	viu->viu_fd = opentapdev(devnum);
+	if (viu->viu_fd == -1) {
+		rv = errno;
+		free(viu);
+		goto out;
+	}
 	viu->viu_dying = 0;
 
  out:
-	if (viu->viu_fd == -1) {
-		free(viu);
-		viu = NULL;
-	}
-
 	rumpuser_component_schedule(cookie);
-	return viu;
+
+	*viup = viu;
+	return rv;
 }
 
 void
@@ -128,13 +136,14 @@ rumpcomp_virtif_send(struct virtif_user *viu,
 
 /* how often to check for interface going south */
 #define POLLTIMO_MS 10
-ssize_t
-rumpcomp_virtif_recv(struct virtif_user *viu, void *data, size_t dlen)
+int
+rumpcomp_virtif_recv(struct virtif_user *viu,
+	void *data, size_t dlen, size_t *rcv)
 {
 	void *cookie = rumpuser_component_unschedule();
 	struct pollfd pfd;
 	ssize_t nn = 0;
-	int rv;
+	int rv, prv;
 
 	pfd.fd = viu->viu_fd;
 	pfd.events = POLLIN;
@@ -143,23 +152,29 @@ rumpcomp_virtif_recv(struct virtif_user *viu, void *data, size_t dlen)
 		if (viu->viu_dying)
 			break;
 
-		rv = poll(&pfd, 1, POLLTIMO_MS);
-		if (rv == 0)
+		prv = poll(&pfd, 1, POLLTIMO_MS);
+		if (prv == 0)
 			continue;
-		if (rv == -1) {
-			nn = -1;
+		if (prv == -1) {
+			rv = errno;
 			break;
 		}
 
 		nn = read(viu->viu_fd, data, dlen);
-		if (nn == -1 && errno == EAGAIN)
-			continue;
+		if (nn == -1) {
+			if (errno == EAGAIN)
+				continue;
+			rv = errno;
+		} else {
+			*rcv = (size_t)nn;
+			rv = 0;
+		}
 
 		break;
 	}
 
 	rumpuser_component_schedule(cookie);
-	return nn;
+	return rv;
 }
 #undef POLLTIMO_MS
 

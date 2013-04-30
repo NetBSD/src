@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_stub.c,v 1.5 2013/04/27 16:56:30 pooka Exp $ */
+/*	$NetBSD: cprng_stub.c,v 1.6 2013/04/30 00:03:53 pooka Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -100,17 +100,19 @@ cprng_strong_destroy(cprng_strong_t *c)
 size_t
 cprng_fast(void *p, size_t len)
 {
+	size_t randlen;
 
-	rumpuser_getrandom(p, len, 0);
+	rumpuser_getrandom(p, len, 0, &randlen);
 	return len;
 }
 
 uint32_t
 cprng_fast32(void)
 {
+	size_t randlen;
 	uint32_t ret;
 
-	rumpuser_getrandom(&ret, sizeof(ret), 0);
+	rumpuser_getrandom(&ret, sizeof(ret), 0, &randlen);
 	return ret;
 }
 
@@ -119,6 +121,7 @@ cprng_fast64(void)
 {
 	uint64_t ret;
 
-	rumpuser_getrandom(&ret, sizeof(ret), 0);
+	size_t randlen;
+	rumpuser_getrandom(&ret, sizeof(ret), 0, &randlen);
 	return ret;
 }

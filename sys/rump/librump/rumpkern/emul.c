@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.156 2013/04/28 13:17:24 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.157 2013/04/30 00:03:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.156 2013/04/28 13:17:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.157 2013/04/30 00:03:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -261,9 +261,8 @@ __weak_alias(tputchar,rump_tputchar);
 void
 cnputc(int c)
 {
-	int error;
 
-	rumpuser_putchar(c, &error);
+	rumpuser_putchar(c);
 }
 
 void

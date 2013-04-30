@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.14 2013/04/29 20:08:48 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.15 2013/04/30 00:03:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.14 2013/04/29 20:08:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.15 2013/04/30 00:03:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -604,8 +604,8 @@ rhscintr(void *arg)
 		 */
 
 		for (;;) {
-			fd = rumpuser_open(buf, RUMPUSER_OPEN_RDWR, &error);
-			if (fd != -1)
+			error = rumpuser_open(buf, RUMPUSER_OPEN_RDWR, &fd);
+			if (error != 0)
 				break;
 			kpause("ugwait", false, hz/4, NULL);
 		}
@@ -633,7 +633,7 @@ rhscintr(void *arg)
 			if (fd == -1)
 				break;
 
-			rumpuser_close(fd, &error);
+			error = rumpuser_close(fd);
 			kpause("ugwait2", false, hz/4, NULL);
 		}
 
@@ -641,7 +641,7 @@ rhscintr(void *arg)
 		    | UPS_PORT_ENABLED | UPS_PORT_POWER);
 		sc->sc_port_change = UPS_C_CONNECT_STATUS | UPS_C_PORT_RESET;
 
-		rumpuser_close(sc->sc_ugenfd[UGEN_EPT_CTRL], &error);
+		error = rumpuser_close(sc->sc_ugenfd[UGEN_EPT_CTRL]);
 		sc->sc_ugenfd[UGEN_EPT_CTRL] = -1;
 
 		xfer = sc->sc_intrxfer;
@@ -723,8 +723,7 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 {
 	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
 	usb_endpoint_descriptor_t *ed = xfer->pipe->endpoint->edesc;
-	ssize_t n;
-	ssize_t done;
+	size_t n, done;
 	bool isread;
 	int len, error, endpt;
 	uint8_t *buf;
@@ -756,9 +755,9 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 			    USB_SET_SHORT_XFER, &shortval, &error);
 			iov.iov_base = buf+done;
 			iov.iov_len = len-done;
-			n = rumpuser_iovread(sc->sc_ugenfd[endpt], &iov, 1,
-			    RUMPUSER_IOV_NOSEEK, &error);
-			if (n == -1) {
+			error = rumpuser_iovread(sc->sc_ugenfd[endpt], &iov, 1,
+			    RUMPUSER_IOV_NOSEEK, &n);
+			if (error) {
 				n = 0;
 				if (done == 0) {
 					if (error == ETIMEDOUT)
@@ -775,12 +774,12 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 
 			iov.iov_base = buf;
 			iov.iov_len = len;
-			n = rumpuser_iovwrite(sc->sc_ugenfd[endpt], &iov, 1,
-			    RUMPUSER_IOV_NOSEEK, &error);
+			error = rumpuser_iovwrite(sc->sc_ugenfd[endpt], &iov, 1,
+			    RUMPUSER_IOV_NOSEEK, &n);
 			done = n;
 			if (done == len)
 				break;
-			else if (n != -1)
+			else if (!error)
 				panic("short write");
 
 			xfererr = USBD_IOERROR;
@@ -882,14 +881,13 @@ rumpusb_device_bulk_close(usbd_pipe_handle pipe)
 	struct ugenhc_softc *sc = pipe->device->bus->hci_private;
 	int endpt = pipe->endpoint->edesc->bEndpointAddress;
 	usbd_xfer_handle xfer;
-	int error;
 
 	endpt = UE_GET_ADDR(endpt);
 
 	while ((xfer = SIMPLEQ_FIRST(&pipe->queue)) != NULL)
 		rumpusb_device_bulk_abort(xfer);
 
-	rumpuser_close(sc->sc_ugenfd[endpt], &error);
+	rumpuser_close(sc->sc_ugenfd[endpt]);
 	sc->sc_ugenfd[endpt] = -1;
 	sc->sc_fdmodes[endpt] = -1;
 }
@@ -976,14 +974,14 @@ ugenhc_open(struct usbd_pipe *pipe)
 
 			if (sc->sc_fdmodes[endpt] != -1) {
 				/* XXX: closing from under someone? */
-				rumpuser_close(sc->sc_ugenfd[endpt], &error);
+				error = rumpuser_close(sc->sc_ugenfd[endpt]);
 				oflags = O_RDWR;
 			}
 
 			makeugendevstr(sc->sc_devnum, endpt, buf);
 			/* XXX: theoretically should convert oflags */
-			fd = rumpuser_open(buf, oflags, &error);
-			if (fd == -1) {
+			error = rumpuser_open(buf, oflags, &fd);
+			if (error != 0) {
 				return USBD_INVAL; /* XXX: no mapping */
 			}
 			val = 100;
@@ -1067,10 +1065,9 @@ static int
 ugenhc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	char buf[UGENDEV_BUFSIZE];
-	int error;
 
 	makeugendevstr(match->cf_unit, 0, buf);
-	if (rumpuser_getfileinfo(buf, NULL, NULL, &error) == -1)
+	if (rumpuser_getfileinfo(buf, NULL, NULL) != 0)
 		return 0;
 
 	return 1;

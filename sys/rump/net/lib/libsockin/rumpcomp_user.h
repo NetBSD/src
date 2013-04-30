@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.h,v 1.2 2013/04/27 15:01:21 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.h,v 1.3 2013/04/30 00:03:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -31,13 +31,13 @@ enum rumpcomp_sockin_getnametype {
 };
 
 int  rumpcomp_sockin_socket(int, int, int, int *);
-int  rumpcomp_sockin_sendmsg(int, const struct msghdr *, int, int *);
-int  rumpcomp_sockin_recvmsg(int, struct msghdr *, int, int *);
-int  rumpcomp_sockin_connect(int, const struct sockaddr *, int, int *);
-int  rumpcomp_sockin_bind(int, const struct sockaddr *, int, int *);
+int  rumpcomp_sockin_sendmsg(int, const struct msghdr *, int, size_t *);
+int  rumpcomp_sockin_recvmsg(int, struct msghdr *, int, size_t *);
+int  rumpcomp_sockin_connect(int, const struct sockaddr *, int);
+int  rumpcomp_sockin_bind(int, const struct sockaddr *, int);
 int  rumpcomp_sockin_accept(int, struct sockaddr *, int *, int *);
-int  rumpcomp_sockin_listen(int, int, int *);
+int  rumpcomp_sockin_listen(int, int);
 int  rumpcomp_sockin_getname(int, struct sockaddr *, int *,
-			      enum rumpcomp_sockin_getnametype, int *);
-int  rumpcomp_sockin_setsockopt(int, int, int, const void *, int, int *);
+			      enum rumpcomp_sockin_getnametype);
+int  rumpcomp_sockin_setsockopt(int, int, int, const void *, int);
 int  rumpcomp_sockin_poll(struct pollfd *, int, int, int *);

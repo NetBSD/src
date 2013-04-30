@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.7 2013/04/29 18:17:53 christos Exp $	*/
+/*      $NetBSD: rumpcomp_user.c,v 1.8 2013/04/30 00:03:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -46,30 +46,35 @@
 #include <sys/event.h>
 
 int
-rumpcomp_shmif_watchsetup(int kq, int fd, int *error)
+rumpcomp_shmif_watchsetup(int *kqp, int fd)
 {
 	struct kevent kev;
-	int rv;
+	int rv, kq;
 
+	kq = *kqp;
 	if (kq == -1) {
 		kq = kqueue();
 		if (kq == -1) {
-			*error = errno;
-			return -1;
+			rv = errno;
+			goto out;
 		}
 	}
 
 	EV_SET(&kev, fd, EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR,
 	    NOTE_WRITE, 0, 0);
-	rv = kevent(kq, &kev, 1, NULL, 0, NULL);
-	seterr(rv);
-	if (rv == -1)
-		return -1;
-	return kq;
+	if (kevent(kq, &kev, 1, NULL, 0, NULL) == -1) {
+		rv = errno;
+	} else {
+		rv = 0;
+		*kqp = kq;
+	}
+
+ out:
+	return rv;
 }
 
 int
-rumpcomp_shmif_watchwait(int kq, int *error)
+rumpcomp_shmif_watchwait(int kq)
 {
 	void *cookie;
 	struct kevent kev;
@@ -79,7 +84,11 @@ rumpcomp_shmif_watchwait(int kq, int *error)
 	do {
 		rv = kevent(kq, NULL, 0, &kev, 1, NULL);
 	} while (rv == -1 && errno == EINTR);
-	seterr(rv);
+	if (rv == -1) {
+		rv = errno;
+	} else {
+		rv = 0;
+	}
 	rumpuser_component_schedule(cookie);
 
 	return rv;
@@ -89,16 +98,18 @@ rumpcomp_shmif_watchwait(int kq, int *error)
 #include <sys/inotify.h>
 
 int
-rumpcomp_shmif_watchsetup(int inotify, int fd, int *error)
+rumpcomp_shmif_watchsetup(int *inotifyp, int fd)
 {
 	char procbuf[PATH_MAX], linkbuf[PATH_MAX];
 	ssize_t nn;
+	int inotify, rv;
 
+	inotify = *inotifyp;
 	if (inotify == -1) {
 		inotify = inotify_init();
 		if (inotify == -1) {
-			*error = errno;
-			return -1;
+			rv = errno;
+			goto out;
 		}
 	}
 
@@ -110,40 +121,44 @@ rumpcomp_shmif_watchsetup(int inotify, int fd, int *error)
 		errno = E2BIG; /* pick something */
 	}
 	if (nn == -1) {
-		*error = errno;
+		rv = errno;
 		close(inotify);
-		return -1;
+		goto out;
 	}
 
 	linkbuf[nn] = '\0';
 	if (inotify_add_watch(inotify, linkbuf, IN_MODIFY) == -1) {
-		*error = errno;
+		rv = errno;
 		close(inotify);
-		return -1;
+		goto out;
 	}
-	*error = 0;
+	rv = 0;
 
-	return inotify;
+ out:
+	return rv;
 }
 
 int
-rumpcomp_shmif_watchwait(int kq, int *error)
+rumpcomp_shmif_watchwait(int kq)
 {
 	struct inotify_event iev;
 	void *cookie;
 	ssize_t nn;
+	int rv;
 
 	cookie = rumpuser_component_unschedule();
 	do {
 		nn = read(kq, &iev, sizeof(iev));
-	} while (errno == EINTR);
-	seterr(nn);
+	} while (nn == -1 && errno == EINTR);
+	if (nn == -1) {
+		rv = errno;
+	} else {
+		rv = 0;
+	}
+		
 	rumpuser_component_schedule(cookie);
 
-	if (nn == -1) {
-		return -1;
-	}
-	return (nn/sizeof(iev));
+	return rv;
 }
 
 #else
@@ -152,7 +167,7 @@ rumpcomp_shmif_watchwait(int kq, int *error)
 
 /* a polling default implementation */
 int
-rumpcomp_shmif_watchsetup(int inotify, int fd, int *error)
+rumpcomp_shmif_watchsetup(int inotify, int fd)
 {
 	static int warned = 0;
 
@@ -166,7 +181,7 @@ rumpcomp_shmif_watchsetup(int inotify, int fd, int *error)
 }
 
 int
-rumpcomp_shmif_watchwait(int kq, int *error)
+rumpcomp_shmif_watchwait(int kq)
 {
 	void *cookie;
 
@@ -178,26 +193,30 @@ rumpcomp_shmif_watchwait(int kq, int *error)
 }
 #endif
 
-void *
-rumpcomp_shmif_mmap(int fd, size_t len, int *error)
+int
+rumpcomp_shmif_mmap(int fd, size_t len, void **memp)
 {
-	void *rv;
+	void *mem;
+	int rv;
 
-	*error = 0;
 	if (ftruncate(fd, len) == -1) {
-		*error = errno;
-		return NULL;
+		rv = errno;
+		goto out;
 	}
 
 #if defined(__sun__) && !defined(MAP_FILE)
 #define MAP_FILE 0
 #endif
 	
-	rv = mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED, fd, 0);
-	if (rv == MAP_FAILED) {
-		*error = errno;
+	mem = mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED, fd, 0);
+	if (mem == MAP_FAILED) {
+		rv = errno;
+	} else {
+		rv = 0;
+		*memp = mem;
 	}
 
+ out:
 	return rv;
 }
 #endif

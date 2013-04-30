@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.3 2013/04/27 15:01:21 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.4 2013/04/30 00:03:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -36,109 +36,113 @@
 
 #include "rumpcomp_user.h"
 
-#define seterror() if (rv == -1) *error = errno; else *error = 0;
+#define seterror(_v_) if ((_v_) == -1) rv = errno; else rv = 0;
 
 int
-rumpcomp_sockin_socket(int domain, int type, int proto, int *error)
+rumpcomp_sockin_socket(int domain, int type, int proto, int *s)
 {
 	void *cookie;
 	int rv;
 
 	cookie = rumpuser_component_unschedule();
-	rv = socket(domain, type, proto);
+	*s = socket(domain, type, proto);
+	seterror(*s);
 	rumpuser_component_schedule(cookie);
 
-	seterror();
 	return rv;
 }
 
 int
-rumpcomp_sockin_sendmsg(int s, const struct msghdr *msg, int flags, int *error)
+rumpcomp_sockin_sendmsg(int s, const struct msghdr *msg, int flags, size_t *snd)
 {
 	void *cookie;
-	ssize_t rv;
+	ssize_t nn;
+	int rv;
 
 	cookie = rumpuser_component_unschedule();
-	rv = sendmsg(s, msg, flags);
+	nn = sendmsg(s, msg, flags);
+	seterror(nn);
+	*snd = (size_t)nn;
 	rumpuser_component_schedule(cookie);
 
-	seterror();
 	return rv;
 }
 
 int
-rumpcomp_sockin_recvmsg(int s, struct msghdr *msg, int flags, int *error)
+rumpcomp_sockin_recvmsg(int s, struct msghdr *msg, int flags, size_t *rcv)
 {
 	void *cookie;
-	ssize_t rv;
+	ssize_t nn;
+	int rv;
 
 	cookie = rumpuser_component_unschedule();
-	rv = recvmsg(s, msg, flags);
+	nn = recvmsg(s, msg, flags);
+	seterror(nn);
+	*rcv = (size_t)nn;
 	rumpuser_component_schedule(cookie);
 
-	seterror();
 	return rv;
 }
 
 int
-rumpcomp_sockin_connect(int s, const struct sockaddr *name, int len, int *error)
+rumpcomp_sockin_connect(int s, const struct sockaddr *name, int len)
 {
 	void *cookie;
 	int rv;
 
 	cookie = rumpuser_component_unschedule();
 	rv = connect(s, name, (socklen_t)len);
+	seterror(rv);
 	rumpuser_component_schedule(cookie);
 
-	seterror();
 	return rv;
 }
 
 int
-rumpcomp_sockin_bind(int s, const struct sockaddr *name, int len, int *error)
+rumpcomp_sockin_bind(int s, const struct sockaddr *name, int len)
 {
 	void *cookie;
 	int rv;
 
 	cookie = rumpuser_component_unschedule();
 	rv = bind(s, name, (socklen_t)len);
+	seterror(rv);
 	rumpuser_component_schedule(cookie);
 
-	seterror();
 	return rv;
 }
 
 int
-rumpcomp_sockin_accept(int s, struct sockaddr *name, int *lenp, int *error)
+rumpcomp_sockin_accept(int s, struct sockaddr *name, int *lenp, int *s2)
 {
 	void *cookie;
 	int rv;
 
 	cookie = rumpuser_component_unschedule();
-	rv = accept(s, name, (socklen_t *)lenp);
+	*s2 = accept(s, name, (socklen_t *)lenp);
+	seterror(*s2);
 	rumpuser_component_schedule(cookie);
 
-	seterror();
 	return rv;
 }
 
 int
-rumpcomp_sockin_listen(int s, int backlog, int *error)
+rumpcomp_sockin_listen(int s, int backlog)
 {
 	void *cookie;
 	int rv;
 
 	cookie = rumpuser_component_unschedule();
 	rv = listen(s, backlog);
+	seterror(rv);
 	rumpuser_component_schedule(cookie);
 
-	seterror();
 	return rv;
 }
 
 int
 rumpcomp_sockin_getname(int s, struct sockaddr *so, int *lenp,
-	enum rumpcomp_sockin_getnametype which, int *error)
+	enum rumpcomp_sockin_getnametype which)
 {
 	socklen_t slen = *lenp;
 	int rv;
@@ -147,37 +151,36 @@ rumpcomp_sockin_getname(int s, struct sockaddr *so, int *lenp,
 		rv = getsockname(s, so, &slen);
 	else
 		rv = getpeername(s, so, &slen);
-
+	seterror(rv);
 	*lenp = slen;
-	seterror();
 
 	return rv;
 }
 
 int
 rumpcomp_sockin_setsockopt(int s, int level, int name,
-	const void *data, int dlen, int *error)
+	const void *data, int dlen)
 {
 	socklen_t slen = dlen;
 	int rv;
 
 	rv = setsockopt(s, level, name, data, slen);
+	seterror(rv);
 
-	seterror();
 	return rv;
 }
 
 int
-rumpcomp_sockin_poll(struct pollfd *fds, int nfds, int timeout, int *error)
+rumpcomp_sockin_poll(struct pollfd *fds, int nfds, int timeout, int *nready)
 {
 	void *cookie;
 	int rv;
 
 	cookie = rumpuser_component_unschedule();
-	rv = poll(fds, (nfds_t)nfds, timeout);
+	*nready = poll(fds, (nfds_t)nfds, timeout);
+	seterror(*nready);
 	rumpuser_component_schedule(cookie);
 
-	seterror();
 	return rv;
 }
 #endif
