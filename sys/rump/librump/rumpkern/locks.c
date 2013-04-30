@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.59 2013/04/29 09:30:18 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.60 2013/04/30 00:03:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.59 2013/04/29 09:30:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.60 2013/04/30 00:03:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -151,14 +151,14 @@ mutex_spin_enter(kmutex_t *mtx)
 int
 mutex_tryenter(kmutex_t *mtx)
 {
-	int rv;
+	int error;
 
-	rv = rumpuser_mutex_tryenter(RUMPMTX(mtx));
-	if (rv) {
+	error = rumpuser_mutex_tryenter(RUMPMTX(mtx));
+	if (error == 0) {
 		WANTLOCK(mtx, false, true);
 		LOCKED(mtx, false);
 	}
-	return rv;
+	return error == 0;
 }
 
 void
@@ -180,8 +180,10 @@ mutex_owned(kmutex_t *mtx)
 struct lwp *
 mutex_owner(kmutex_t *mtx)
 {
+	struct lwp *l;
 
-	return rumpuser_mutex_owner(RUMPMTX(mtx));
+	rumpuser_mutex_owner(RUMPMTX(mtx), &l);
+	return l;
 }
 
 #define RUMPRW(rw) (*(struct rumpuser_rw **)(rw))
@@ -219,14 +221,14 @@ rw_enter(krwlock_t *rw, const krw_t op)
 int
 rw_tryenter(krwlock_t *rw, const krw_t op)
 {
-	int rv;
+	int error;
 
-	rv = rumpuser_rw_tryenter(RUMPRW(rw), op == RW_WRITER);
-	if (rv) {
+	error = rumpuser_rw_tryenter(RUMPRW(rw), op == RW_WRITER);
+	if (error == 0) {
 		WANTLOCK(rw, op == RW_READER, true);
 		LOCKED(rw, op == RW_READER);
 	}
-	return rv;
+	return error == 0;
 }
 
 void
@@ -266,22 +268,28 @@ rw_downgrade(krwlock_t *rw)
 int
 rw_write_held(krwlock_t *rw)
 {
+	int rv;
 
-	return rumpuser_rw_wrheld(RUMPRW(rw));
+	rumpuser_rw_wrheld(RUMPRW(rw), &rv);
+	return rv;
 }
 
 int
 rw_read_held(krwlock_t *rw)
 {
+	int rv;
 
-	return rumpuser_rw_rdheld(RUMPRW(rw));
+	rumpuser_rw_rdheld(RUMPRW(rw), &rv);
+	return rv;
 }
 
 int
 rw_lock_held(krwlock_t *rw)
 {
+	int rv;
 
-	return rumpuser_rw_held(RUMPRW(rw));
+	rumpuser_rw_held(RUMPRW(rw), &rv);
+	return rv;
 }
 
 /* curriculum vitaes */
@@ -418,8 +426,10 @@ cv_broadcast(kcondvar_t *cv)
 bool
 cv_has_waiters(kcondvar_t *cv)
 {
+	int rv;
 
-	return rumpuser_cv_has_waiters(RUMPCV(cv));
+	rumpuser_cv_has_waiters(RUMPCV(cv), &rv);
+	return rv != 0;
 }
 
 /* this is not much of an attempt, but ... */

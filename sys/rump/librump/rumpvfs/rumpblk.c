@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.53 2013/04/29 19:52:35 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.54 2013/04/30 00:03:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.53 2013/04/29 19:52:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.54 2013/04/30 00:03:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -232,7 +232,7 @@ rumpblk_register(const char *path, devminor_t *dmin,
 	int ftype, error, i;
 
 	/* devices might not report correct size unless they're open */
-	if (rumpuser_getfileinfo(path, &flen, &ftype, &error) == -1)
+	if ((error = rumpuser_getfileinfo(path, &flen, &ftype)) != 0)
 		return error;
 
 	/* verify host file is of supported type */
@@ -325,11 +325,11 @@ backend_open(struct rblkdev *rblk, const char *path)
 	int error, fd;
 
 	KASSERT(rblk->rblk_fd == -1);
-	fd = rumpuser_open(path,
-	    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_BIO, &error);
+	error = rumpuser_open(path,
+	    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_BIO, &fd);
 	if (error) {
-		fd = rumpuser_open(path,
-		    RUMPUSER_OPEN_RDONLY | RUMPUSER_OPEN_BIO, &error);
+		error = rumpuser_open(path,
+		    RUMPUSER_OPEN_RDONLY | RUMPUSER_OPEN_BIO, &fd);
 		if (error)
 			return error;
 		rblk->rblk_mode = FREAD;
@@ -345,9 +345,8 @@ backend_open(struct rblkdev *rblk, const char *path)
 static int
 backend_close(struct rblkdev *rblk)
 {
-	int dummy;
 
-	rumpuser_close(rblk->rblk_fd, &dummy);
+	rumpuser_close(rblk->rblk_fd);
 	rblk->rblk_fd = -1;
 
 	return 0;
