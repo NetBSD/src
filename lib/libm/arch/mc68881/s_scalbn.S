@@ -1,4 +1,4 @@
-/*	$NetBSD: s_scalbn.S,v 1.9 2013/04/27 18:39:28 joerg Exp $	*/
+/*	$NetBSD: s_scalbn.S,v 1.10 2013/04/30 21:55:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,12 +38,12 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_scalbn.S,v 1.9 2013/04/27 18:39:28 joerg Exp $")
+RCSID("$NetBSD: s_scalbn.S,v 1.10 2013/04/30 21:55:31 joerg Exp $")
 
-#ifdef WEAK_ALIAS
 WEAK_ALIAS(scalbn,_scalbn)
 WEAK_ALIAS(ldexp,_scalbln)
-#endif
+STRONG_ALIAS(_scalbln,_scalbn)
+WEAK_ALIAS(scalbln,_scalbln)
 
 | scalbn(x, N)
 | returns  x * (2**N), for integer values N.
