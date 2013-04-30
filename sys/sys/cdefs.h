@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.105 2013/01/29 01:23:12 gdt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.106 2013/04/30 14:45:15 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -281,6 +281,7 @@
 #if __GNUC_PREREQ__(4, 0)
 #  define __dso_public	__attribute__((__visibility__("default")))
 #  define __dso_hidden	__attribute__((__visibility__("hidden")))
+#  define __dso_protected	__attribute__((__visibility__("protected")))
 #  define __BEGIN_PUBLIC_DECLS	\
 	_Pragma("GCC visibility push(default)") __BEGIN_EXTERN_C
 #  define __END_PUBLIC_DECLS	__END_EXTERN_C _Pragma("GCC visibility pop")
@@ -289,6 +290,7 @@
 #  define __END_HIDDEN_DECLS	__END_EXTERN_C _Pragma("GCC visibility pop")
 #else
 #  define __dso_public
+#  define __dso_protected
 #  define __dso_hidden
 #  define __BEGIN_PUBLIC_DECLS	__BEGIN_EXTERN_C
 #  define __END_PUBLIC_DECLS	__END_EXTERN_C
