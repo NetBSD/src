@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.20 2013/04/30 12:39:20 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.21 2013/04/30 13:29:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.20 2013/04/30 12:39:20 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.21 2013/04/30 13:29:28 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -104,7 +104,7 @@ rumpuser__thrinit(void)
 
 int
 rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
-	int joinable, void **ptcookie)
+	int joinable, int priority, int cpuidx, void **ptcookie)
 {
 	pthread_t ptid;
 	pthread_t *ptidp;
