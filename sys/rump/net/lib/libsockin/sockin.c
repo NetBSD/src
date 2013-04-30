@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.29 2013/04/30 00:03:54 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.30 2013/04/30 00:12:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.29 2013/04/30 00:03:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.30 2013/04/30 00:12:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -173,8 +173,7 @@ sockin_process(struct socket *so)
 	struct iovec io;
 	struct msghdr rmsg;
 	struct mbuf *m;
-	ssize_t n;
-	size_t plen;
+	size_t n, plen;
 	int error;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
@@ -198,8 +197,8 @@ sockin_process(struct socket *so)
 	rmsg.msg_name = (struct sockaddr *)&from;
 	rmsg.msg_namelen = sizeof(from);
 
-	n = rumpcomp_sockin_recvmsg(SO2S(so), &rmsg, 0, &error);
-	if (n <= 0) {
+	error = rumpcomp_sockin_recvmsg(SO2S(so), &rmsg, 0, &n);
+	if (error) {
 		m_freem(m);
 
 		/* Treat a TCP socket a goner */
@@ -371,9 +370,9 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				break;
 		}
 
-		news = rumpcomp_sockin_socket(PF_INET, so->so_proto->pr_type,
-		    0, &error);
-		if (news == -1)
+		error = rumpcomp_sockin_socket(PF_INET, so->so_proto->pr_type,
+		    0, &news);
+		if (error)
 			break;
 
 		/* for UDP sockets, make sure we can send&recv max */
@@ -422,7 +421,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		size_t iov_max, i;
 		struct iovec iov_buf[32], *iov;
 		struct mbuf *m2;
-		size_t tot;
+		size_t tot, n;
 		int s;
 
 		bpf_mtap_af(&sockin_if, AF_UNSPEC, m);
@@ -457,7 +456,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			mhdr.msg_namelen = saddr->sa_len;
 		}
 
-		rumpcomp_sockin_sendmsg(s, &mhdr, 0, &error);
+		rumpcomp_sockin_sendmsg(s, &mhdr, 0, &n);
 
 		if (iov != iov_buf)
 			kmem_free(iov, sizeof(struct iovec) * iov_max);
