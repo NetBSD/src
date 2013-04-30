@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.18 2013/04/29 14:51:40 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.19 2013/04/30 00:03:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.18 2013/04/29 14:51:40 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.19 2013/04/30 00:03:52 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -240,7 +240,7 @@ rumpuser_mutex_tryenter(struct rumpuser_mtx *mtx)
 		mtxenter(mtx);
 	}
 
-	return rv == 0;
+	return rv;
 }
 
 void
@@ -259,8 +259,8 @@ rumpuser_mutex_destroy(struct rumpuser_mtx *mtx)
 	free(mtx);
 }
 
-struct lwp *
-rumpuser_mutex_owner(struct rumpuser_mtx *mtx)
+void
+rumpuser_mutex_owner(struct rumpuser_mtx *mtx, struct lwp **lp)
 {
 
 	if (__predict_false(!(mtx->flags & RUMPUSER_MTX_KMUTEX))) {
@@ -268,7 +268,7 @@ rumpuser_mutex_owner(struct rumpuser_mtx *mtx)
 		abort();
 	}
 
-	return mtx->owner;
+	*lp = mtx->owner;
 }
 
 void
@@ -314,7 +314,7 @@ rumpuser_rw_tryenter(struct rumpuser_rw *rw, int iswrite)
 			RURW_INCREAD(rw);
 	}
 
-	return rv == 0;
+	return rv;
 }
 
 void
@@ -337,25 +337,25 @@ rumpuser_rw_destroy(struct rumpuser_rw *rw)
 	free(rw);
 }
 
-int
-rumpuser_rw_held(struct rumpuser_rw *rw)
+void
+rumpuser_rw_held(struct rumpuser_rw *rw, int *rv)
 {
 
-	return rw->readers != 0;
+	*rv = rw->readers != 0;
 }
 
-int
-rumpuser_rw_rdheld(struct rumpuser_rw *rw)
+void
+rumpuser_rw_rdheld(struct rumpuser_rw *rw, int *rv)
 {
 
-	return RURW_HASREAD(rw);
+	*rv = RURW_HASREAD(rw);
 }
 
-int
-rumpuser_rw_wrheld(struct rumpuser_rw *rw)
+void
+rumpuser_rw_wrheld(struct rumpuser_rw *rw, int *rv)
 {
 
-	return RURW_AMWRITER(rw);
+	*rv = RURW_AMWRITER(rw);
 }
 
 void
@@ -430,10 +430,8 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	mtxenter(mtx);
 	rumpkern_sched(nlocks, mtx);
 	cv->nwaiters--;
-	if (rv != 0 && rv != ETIMEDOUT)
-		abort();
 
-	return rv == ETIMEDOUT;
+	return rv;
 }
 
 void
@@ -450,11 +448,11 @@ rumpuser_cv_broadcast(struct rumpuser_cv *cv)
 	NOFAIL_ERRNO(pthread_cond_broadcast(&cv->pthcv));
 }
 
-int
-rumpuser_cv_has_waiters(struct rumpuser_cv *cv)
+void
+rumpuser_cv_has_waiters(struct rumpuser_cv *cv, int *nwaiters)
 {
 
-	return cv->nwaiters;
+	*nwaiters = cv->nwaiters;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.97 2013/04/29 20:08:48 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.98 2013/04/30 00:03:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -67,9 +67,9 @@ int rumpuser_init(int, const struct rumpuser_hyperup *);
  * memory allocation
  */
 
-void *rumpuser_malloc(size_t, int);
+int rumpuser_malloc(size_t, int, void **);
 void rumpuser_free(void *, size_t);
-void *rumpuser_anonmmap(void *, size_t, int, int, int *);
+int rumpuser_anonmmap(void *, size_t, int, int, void **);
 void  rumpuser_unmap(void *, size_t);
 
 /*
@@ -84,14 +84,14 @@ void  rumpuser_unmap(void *, size_t);
 #define RUMPUSER_OPEN_EXCL	0x0008 /* exclusive open */
 #define RUMPUSER_OPEN_BIO	0x0010 /* open device for block i/o */
 int rumpuser_open(const char *, int, int *);
-int rumpuser_close(int, int *);
+int rumpuser_close(int);
 
 #define RUMPUSER_FT_OTHER 0
 #define RUMPUSER_FT_DIR 1
 #define RUMPUSER_FT_REG 2
 #define RUMPUSER_FT_BLK 3
 #define RUMPUSER_FT_CHR 4
-int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
+int rumpuser_getfileinfo(const char *, uint64_t *, int *);
 
 #define RUMPUSER_BIO_READ	0x01
 #define RUMPUSER_BIO_WRITE	0x02
@@ -99,20 +99,15 @@ int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
 typedef void (*rump_biodone_fn)(void *, size_t, int);
 void rumpuser_bio(int, int, void *, size_t, off_t, rump_biodone_fn, void *);
 
-/*
- * Reading and writing.  Since hypercalls are relatively uncommon, we don't
- * need tons of syntactic sugar; fold everything into two.
- */
-
 /* this one "accidentally" matches the NetBSD kernel ... */
 struct rumpuser_iovec {
 	void *iov_base;
 	size_t iov_len;
 };
 #define RUMPUSER_IOV_NOSEEK -1
-ssize_t rumpuser_iovread(int, struct rumpuser_iovec *, size_t, off_t, int *);
-ssize_t rumpuser_iovwrite(int, const struct rumpuser_iovec *, size_t,
-			  off_t, int *);
+int rumpuser_iovread(int, struct rumpuser_iovec *, size_t, off_t, size_t *);
+int rumpuser_iovwrite(int, const struct rumpuser_iovec *, size_t,
+		      off_t, size_t *);
 
 /*
  * clock and zzz
@@ -141,7 +136,7 @@ void rumpuser_seterrno(int);
  */
 
 #define RUMPUSER_PID_SELF ((int64_t)-1)
-int rumpuser_kill(int64_t, int, int *);
+int rumpuser_kill(int64_t, int);
 #define RUMPUSER_PANIC (-1)
 void rumpuser_exit(int) __dead;
 
@@ -149,8 +144,8 @@ void rumpuser_exit(int) __dead;
  * console output
  */
 
-int rumpuser_putchar(int, int *);
-int rumpuser_dprintf(const char *, ...) __printflike(1, 2);
+void rumpuser_putchar(int);
+void rumpuser_dprintf(const char *, ...) __printflike(1, 2);
 
 /*
  * access to host random pool
@@ -159,7 +154,7 @@ int rumpuser_dprintf(const char *, ...) __printflike(1, 2);
 /* always succeeds unless NOWAIT is given */
 #define RUMPUSER_RANDOM_HARD	0x01
 #define RUMPUSER_RANDOM_NOWAIT	0x02
-size_t rumpuser_getrandom(void *, size_t, int);
+int rumpuser_getrandom(void *, size_t, int, size_t *);
 
 /*
  * threads, scheduling (host) and synchronization
@@ -181,7 +176,7 @@ void rumpuser_mutex_enter_nowrap(struct rumpuser_mtx *);
 int  rumpuser_mutex_tryenter(struct rumpuser_mtx *);
 void rumpuser_mutex_exit(struct rumpuser_mtx *);
 void rumpuser_mutex_destroy(struct rumpuser_mtx *);
-struct lwp *rumpuser_mutex_owner(struct rumpuser_mtx *);
+void rumpuser_mutex_owner(struct rumpuser_mtx *, struct lwp **);
 
 struct rumpuser_rw;
 void rumpuser_rw_init(struct rumpuser_rw **);
@@ -189,9 +184,9 @@ void rumpuser_rw_enter(struct rumpuser_rw *, int);
 int  rumpuser_rw_tryenter(struct rumpuser_rw *, int);
 void rumpuser_rw_exit(struct rumpuser_rw *);
 void rumpuser_rw_destroy(struct rumpuser_rw *);
-int  rumpuser_rw_held(struct rumpuser_rw *);
-int  rumpuser_rw_rdheld(struct rumpuser_rw *);
-int  rumpuser_rw_wrheld(struct rumpuser_rw *);
+void rumpuser_rw_held(struct rumpuser_rw *, int *);
+void rumpuser_rw_rdheld(struct rumpuser_rw *, int *);
+void rumpuser_rw_wrheld(struct rumpuser_rw *, int *);
 
 struct rumpuser_cv;
 void rumpuser_cv_init(struct rumpuser_cv **);
@@ -202,7 +197,7 @@ int  rumpuser_cv_timedwait(struct rumpuser_cv *, struct rumpuser_mtx *,
 			   int64_t, int64_t);
 void rumpuser_cv_signal(struct rumpuser_cv *);
 void rumpuser_cv_broadcast(struct rumpuser_cv *);
-int  rumpuser_cv_has_waiters(struct rumpuser_cv *);
+void rumpuser_cv_has_waiters(struct rumpuser_cv *, int *);
 
 /*
  * dynloader

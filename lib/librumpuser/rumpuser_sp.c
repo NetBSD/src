@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.56 2013/04/29 14:51:40 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.57 2013/04/30 00:03:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.56 2013/04/29 14:51:40 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.57 2013/04/30 00:03:52 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -794,8 +794,8 @@ sp_copyin(void *arg, const void *raddr, void *laddr, size_t *len, int wantstr)
  out:
 	rumpkern_sched(nlocks, NULL);
 	if (rv)
-		return EFAULT;
-	return 0;
+		rv = EFAULT;
+	return rv;
 }
 
 int
@@ -823,7 +823,7 @@ sp_copyout(void *arg, const void *laddr, void *raddr, size_t dlen)
 	rumpkern_sched(nlocks, NULL);
 
 	if (rv)
-		return EFAULT;
+		rv = EFAULT;
 	return 0;
 }
 
@@ -867,10 +867,7 @@ rumpuser_sp_anonmmap(void *arg, size_t howmuch, void **addr)
 
  out:
 	rumpkern_sched(nlocks, NULL);
-
-	if (rv)
-		return rv;
-	return 0;
+	return rv;
 }
 
 int
@@ -1067,6 +1064,7 @@ handlereq(struct spclient *spc)
 	if (__predict_false(spc->spc_hdr.rsp_type == RUMPSP_PREFORK)) {
 		struct prefork *pf;
 		uint32_t auth[AUTHLEN];
+		size_t randlen;
 		int inexec;
 
 		DPRINTF(("rump_sp: prefork handler executing for %p\n", spc));
@@ -1102,7 +1100,7 @@ handlereq(struct spclient *spc)
 		}
 
 		/* Ok, we have a new process context and a new curlwp */
-		rumpuser_getrandom(auth, sizeof(auth), 0);
+		rumpuser_getrandom(auth, sizeof(auth), 0, &randlen);
 		memcpy(pf->pf_auth, auth, sizeof(pf->pf_auth));
 		pf->pf_lwp = lwproc_curlwp();
 		lwproc_switch(NULL);
@@ -1307,24 +1305,29 @@ rumpuser_sp_init(const char *url,
 	int error, s;
 
 	p = strdup(url);
-	if (p == NULL)
-		return ENOMEM;
+	if (p == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
 	error = parseurl(p, &sap, &idx, 1);
 	free(p);
 	if (error)
-		return error;
+		goto out;
 
 	snprintf(banner, sizeof(banner), "RUMPSP-%d.%d-%s-%s/%s\n",
 	    PROTOMAJOR, PROTOMINOR, ostype, osrelease, machine);
 
 	s = socket(parsetab[idx].domain, SOCK_STREAM, 0);
-	if (s == -1)
-		return errno;
+	if (s == -1) {
+		error = errno;
+		goto out;
+	}
 
 	sarg = malloc(sizeof(*sarg));
 	if (sarg == NULL) {
 		close(s);
-		return ENOMEM;
+		error = ENOMEM;
+		goto out;
 	}
 
 	sarg->sps_sock = s;
@@ -1337,22 +1340,25 @@ rumpuser_sp_init(const char *url,
 
 	/*LINTED*/
 	if (bind(s, sap, parsetab[idx].slen) == -1) {
+		error = errno;
 		fprintf(stderr, "rump_sp: server bind failed\n");
-		return errno;
+		goto out;
 	}
 
 	if (listen(s, MAXCLI) == -1) {
+		error = errno;
 		fprintf(stderr, "rump_sp: server listen failed\n");
-		return errno;
+		goto out;
 	}
 
 	if ((error = pthread_create(&pt, NULL, spserver, sarg)) != 0) {
 		fprintf(stderr, "rump_sp: cannot create wrkr thread\n");
-		return errno;
+		goto out;
 	}
 	pthread_detach(pt);
 
-	return 0;
+ out:
+	return error;
 }
 
 void
