@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.113 2013/04/29 20:08:49 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.114 2013/04/30 00:03:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.113 2013/04/29 20:08:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.114 2013/04/30 00:03:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -341,7 +341,7 @@ doregister(const char *key, const char *hostpath,
 		key++;
 	}
 
-	if (rumpuser_getfileinfo(hostpath, &fsize, &hft, &error))
+	if ((error = rumpuser_getfileinfo(hostpath, &fsize, &hft)) != 0)
 		return error;
 
 	/* etfs directory requires a directory on the host */
@@ -731,7 +731,7 @@ rump_vop_lookup(void *v)
 		strlcat(newpath, "/", newpathlen);
 		strlcat(newpath, cnp->cn_nameptr, newpathlen);
 
-		if (rumpuser_getfileinfo(newpath, &fsize, &hft, &error)) {
+		if ((error = rumpuser_getfileinfo(newpath, &fsize, &hft)) != 0){
 			free(newpath, M_TEMP);
 			return error;
 		}
@@ -1251,15 +1251,15 @@ rump_vop_open(void *v)
 	if (mode & FREAD) {
 		if (rn->rn_readfd != -1)
 			return 0;
-		rn->rn_readfd = rumpuser_open(rn->rn_hostpath,
-		    RUMPUSER_OPEN_RDONLY, &error);
+		error = rumpuser_open(rn->rn_hostpath,
+		    RUMPUSER_OPEN_RDONLY, &rn->rn_readfd);
 	}
 
 	if (mode & FWRITE) {
 		if (rn->rn_writefd != -1)
 			return 0;
-		rn->rn_writefd = rumpuser_open(rn->rn_hostpath,
-		    RUMPUSER_OPEN_WRONLY, &error);
+		error = rumpuser_open(rn->rn_hostpath,
+		    RUMPUSER_OPEN_WRONLY, &rn->rn_writefd);
 	}
 
 	return error;
@@ -1340,26 +1340,24 @@ etread(struct rumpfs_node *rn, struct uio *uio)
 {
 	struct rumpuser_iovec iov;
 	uint8_t *buf;
-	size_t bufsize;
-	ssize_t n;
+	size_t bufsize, n;
 	int error = 0;
 
 	bufsize = uio->uio_resid;
 	if (bufsize == 0)
 		return 0;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
+
 	iov.iov_base = buf;
 	iov.iov_len = bufsize;
-	if ((n = rumpuser_iovread(rn->rn_readfd, &iov, 1,
-	    uio->uio_offset + rn->rn_offset, &error)) == -1)
-		goto out;
-	KASSERT(n <= bufsize);
-	error = uiomove(buf, n, uio);
+	if ((error = rumpuser_iovread(rn->rn_readfd, &iov, 1,
+	    uio->uio_offset + rn->rn_offset, &n)) == 0) {
+		KASSERT(n <= bufsize);
+		error = uiomove(buf, n, uio);
+	}
 
- out:
 	kmem_free(buf, bufsize);
 	return error;
-
 }
 
 static int
@@ -1404,8 +1402,7 @@ etwrite(struct rumpfs_node *rn, struct uio *uio)
 {
 	struct rumpuser_iovec iov;
 	uint8_t *buf;
-	size_t bufsize;
-	ssize_t n;
+	size_t bufsize, n;
 	int error = 0;
 
 	bufsize = uio->uio_resid;
@@ -1415,12 +1412,12 @@ etwrite(struct rumpfs_node *rn, struct uio *uio)
 	error = uiomove(buf, bufsize, uio);
 	if (error)
 		goto out;
+
 	KASSERT(uio->uio_resid == 0);
 	iov.iov_base = buf;
 	iov.iov_len = bufsize;
-	n = rumpuser_iovwrite(rn->rn_writefd, &iov, 1,
-	    (uio->uio_offset-bufsize) + rn->rn_offset, &error);
-	if (n >= 0) {
+	if ((error = rumpuser_iovwrite(rn->rn_writefd, &iov, 1,
+	    (uio->uio_offset-bufsize) + rn->rn_offset, &n)) == 0) {
 		KASSERT(n <= bufsize);
 		uio->uio_resid = bufsize - n;
 	}
@@ -1626,15 +1623,14 @@ rump_vop_inactive(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct rumpfs_node *rn = vp->v_data;
-	int error;
 
 	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST && vp->v_type == VREG) {
 		if (rn->rn_readfd != -1) {
-			rumpuser_close(rn->rn_readfd, &error);
+			rumpuser_close(rn->rn_readfd);
 			rn->rn_readfd = -1;
 		}
 		if (rn->rn_writefd != -1) {
-			rumpuser_close(rn->rn_writefd, &error);
+			rumpuser_close(rn->rn_writefd);
 			rn->rn_writefd = -1;
 		}
 	}

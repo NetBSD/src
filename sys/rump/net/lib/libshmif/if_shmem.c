@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.52 2013/04/29 20:08:49 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.53 2013/04/30 00:03:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.52 2013/04/29 20:08:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.53 2013/04/30 00:03:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -114,11 +114,11 @@ dowakeup(struct shmif_sc *sc)
 {
 	struct rumpuser_iovec iov;
 	uint32_t ver = SHMIF_VERSION;
-	int error;
+	size_t n;
 
 	iov.iov_base = &ver;
 	iov.iov_len = sizeof(ver);
-	rumpuser_iovwrite(sc->sc_memfd, &iov, 1, IFMEM_WAKEUP, &error);
+	rumpuser_iovwrite(sc->sc_memfd, &iov, 1, IFMEM_WAKEUP, &n);
 }
 
 /*
@@ -215,11 +215,13 @@ initbackend(struct shmif_sc *sc, int memfd)
 {
 	volatile uint8_t v;
 	volatile uint8_t *p;
+	void *mem;
 	int error;
 
-	sc->sc_busmem = rumpcomp_shmif_mmap(memfd, BUSMEM_SIZE, &error);
+	error = rumpcomp_shmif_mmap(memfd, BUSMEM_SIZE, &mem);
 	if (error)
 		return error;
+	sc->sc_busmem = mem;
 
 	if (sc->sc_busmem->shm_magic
 	    && sc->sc_busmem->shm_magic != SHMIF_MAGIC) {
@@ -258,8 +260,9 @@ initbackend(struct shmif_sc *sc, int memfd)
 #endif
 	shmif_unlockbus(sc->sc_busmem);
 
-	sc->sc_kq = rumpcomp_shmif_watchsetup(-1, memfd, &error);
-	if (sc->sc_kq == -1) {
+	sc->sc_kq = -1;
+	error = rumpcomp_shmif_watchsetup(&sc->sc_kq, memfd);
+	if (error) {
 		rumpuser_unmap(sc->sc_busmem, BUSMEM_SIZE);
 		return error;
 	}
@@ -283,8 +286,8 @@ finibackend(struct shmif_sc *sc)
 	}
 
 	rumpuser_unmap(sc->sc_busmem, BUSMEM_SIZE);
-	rumpuser_close(sc->sc_memfd, NULL);
-	rumpuser_close(sc->sc_kq, NULL);
+	rumpuser_close(sc->sc_memfd);
+	rumpuser_close(sc->sc_kq);
 
 	sc->sc_memfd = -1;
 }
@@ -298,9 +301,9 @@ rump_shmif_create(const char *path, int *ifnum)
 	int memfd = -1; /* XXXgcc */
 
 	if (path) {
-		memfd = rumpuser_open(path,
-		    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_CREATE, &error);
-		if (memfd == -1)
+		error = rumpuser_open(path,
+		    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_CREATE, &memfd);
+		if (error)
 			return error;
 	}
 
@@ -309,7 +312,7 @@ rump_shmif_create(const char *path, int *ifnum)
 
 	if (error != 0) {
 		if (path)
-			rumpuser_close(memfd, NULL);
+			rumpuser_close(memfd);
 		return error;
 	}
 
@@ -317,7 +320,7 @@ rump_shmif_create(const char *path, int *ifnum)
 
 	if ((error = allocif(unit, &sc)) != 0) {
 		if (path)
-			rumpuser_close(memfd, NULL);
+			rumpuser_close(memfd);
 		return error;
 	}
 
@@ -479,16 +482,16 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			kmem_free(path, ifd->ifd_len);
 			break;
 		}
-		memfd = rumpuser_open(path,
-		    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_CREATE, &rv);
-		if (memfd == -1) {
+		rv = rumpuser_open(path,
+		    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_CREATE, &memfd);
+		if (rv) {
 			kmem_free(path, ifd->ifd_len);
 			break;
 		}
 		rv = initbackend(sc, memfd);
 		if (rv) {
 			kmem_free(path, ifd->ifd_len);
-			rumpuser_close(memfd, NULL);
+			rumpuser_close(memfd);
 			break;
 		}
 		sc->sc_backfile = path;
@@ -675,7 +678,7 @@ shmif_rcv(void *arg)
 		     == sc->sc_nextpacket) {
 			shmif_unlockbus(busmem);
 			error = 0;
-			rumpcomp_shmif_watchwait(sc->sc_kq, &error);
+			rumpcomp_shmif_watchwait(sc->sc_kq);
 			if (__predict_false(error))
 				printf("shmif_rcv: wait failed %d\n", error);
 			membar_consumer();

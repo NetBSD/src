@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.3 2013/04/29 18:06:59 christos Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.4 2013/04/30 00:03:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -35,17 +35,17 @@
 #include "rumpcomp_user.h"
 
 int
-rumpcomp_ugenhc_ioctl(int fd, u_long cmd, void *data, int *error)
+rumpcomp_ugenhc_ioctl(int fd, u_long cmd, void *data, int *ioctlrv)
 {
 	void *cookie;
 	int rv;
 
 	cookie = rumpuser_component_unschedule();
-	rv = ioctl(fd, cmd, data);
-	if (rv == -1)
-		*error = errno;
+	*ioctlrv = ioctl(fd, cmd, data);
+	if (*ioctlrv == -1)
+		rv = errno;
 	else
-		*error = 0;
+		rv = 0;
 	rumpuser_component_schedule(cookie);
 
 	return rv;

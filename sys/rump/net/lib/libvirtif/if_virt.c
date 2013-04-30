@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.30 2013/03/15 11:30:23 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.31 2013/04/30 00:03:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.30 2013/03/15 11:30:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.31 2013/04/30 00:03:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -97,8 +97,8 @@ rump_virtif_create(int num)
 	if (num >= 0x100)
 		return E2BIG;
 
-	if ((viu = rumpcomp_virtif_create(num)) == NULL)
-		return ENXIO;
+	if ((error = rumpcomp_virtif_create(num, &viu)) != 0)
+		return error;
 
 	enaddr[2] = cprng_fast32() & 0xff;
 	enaddr[5] = num;
@@ -250,7 +250,8 @@ virtif_receiver(void *arg)
 	struct virtif_sc *sc = ifp->if_softc;
 	struct mbuf *m;
 	size_t plen = ETHER_MAX_LEN_JUMBO+1;
-	ssize_t n;
+	size_t n;
+	int error;
 
 	for (;;) {
 		m = m_gethdr(M_WAIT, MT_DATA);
@@ -262,10 +263,11 @@ virtif_receiver(void *arg)
 			break;
 		}
 		
-		n = rumpcomp_virtif_recv(sc->sc_viu, mtod(m, void *), plen);
-		if (n < 0) {
-			printf("%s: read hypercall failed. host if down?\n",
-			    ifp->if_xname);
+		error = rumpcomp_virtif_recv(sc->sc_viu,
+		    mtod(m, void *), plen, &n);
+		if (error) {
+			printf("%s: read hypercall failed %d. host if down?\n",
+			    ifp->if_xname, error);
 			mutex_enter(&sc->sc_mtx);
 			/* could check if need go, done soon anyway */
 			cv_timedwait(&sc->sc_cv, &sc->sc_mtx, hz);
