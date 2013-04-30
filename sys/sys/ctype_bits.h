@@ -1,4 +1,4 @@
-/* $NetBSD: ctype_bits.h,v 1.4 2013/04/15 11:01:40 joerg Exp $ */
+/* $NetBSD: ctype_bits.h,v 1.5 2013/04/30 00:42:31 joerg Exp $ */
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -55,6 +55,7 @@
 #define	_CTYPE_T	0x1000	/* Special   */
 #define	_CTYPE_Q	0x2000	/* Phonogram */
 
+__BEGIN_DECLS
 extern const unsigned short	*_ctype_tab_;
 extern const short	*_tolower_tab_;
 extern const short	*_toupper_tab_;
@@ -62,5 +63,6 @@ extern const short	*_toupper_tab_;
 extern const unsigned short _C_ctype_tab_[];
 extern const short _C_toupper_tab_[];
 extern const short _C_tolower_tab_[];
+__END_DECLS
 
 #endif /* !_SYS_CTYPE_BITS_H_ */
