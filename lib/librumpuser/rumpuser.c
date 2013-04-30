@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.46 2013/04/30 11:26:26 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.47 2013/04/30 12:39:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.46 2013/04/30 11:26:26 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.47 2013/04/30 12:39:20 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -206,7 +206,7 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp)
 	if (fd != -1)
 		close(fd);
 
-	return rv;
+	ET(rv);
 }
 
 int
@@ -228,7 +228,7 @@ rumpuser_malloc(size_t howmuch, int alignment, void **memp)
 	}
 
 	*memp = mem;
-	return rv;
+	ET(rv);
 }
 
 /*ARGSUSED1*/
@@ -265,16 +265,14 @@ rumpuser_anonmmap(void *prefaddr, size_t size, int alignbit,
 		rv = 0;
 	}
 
-	return rv;
+	ET(rv);
 }
 
 void
 rumpuser_unmap(void *addr, size_t len)
 {
-	int rv;
 
-	rv = munmap(addr, len);
-	assert(rv == 0);
+	munmap(addr, len);
 }
 
 int
@@ -311,7 +309,7 @@ rumpuser_open(const char *path, int ruflags, int *fdp)
 	}
 
  out:
-	return rv;
+	ET(rv);
 }
 
 int
@@ -324,7 +322,7 @@ rumpuser_close(int fd)
 	close(fd);
 	rumpkern_sched(nlocks, NULL);
 
-	return 0;
+	ET(0);
 }
 
 /*
@@ -361,7 +359,7 @@ rumpuser_iovread(int fd, struct rumpuser_iovec *ruiov, size_t iovlen,
 		rv = 0;
 	}
 
-	return rv;
+	ET(rv);
 }
 
 int
@@ -393,7 +391,7 @@ rumpuser_iovwrite(int fd, const struct rumpuser_iovec *ruiov, size_t iovlen,
 		rv = 0;
 	}
 
-	return rv;
+	ET(rv);
 }
 
 int
@@ -418,8 +416,7 @@ rumpuser_clock_gettime(uint64_t *sec, uint64_t *nsec, enum rumpclock rclk)
 		abort();
 	}
 
-	rv = clock_gettime(clk, &ts);
-	if (rv == -1) {
+	if (clock_gettime(clk, &ts) == -1) {
 		rv = errno;
 	} else {
 		*sec = ts.tv_sec;
@@ -427,7 +424,7 @@ rumpuser_clock_gettime(uint64_t *sec, uint64_t *nsec, enum rumpclock rclk)
 		rv = 0;
 	}
 
-	return rv;
+	ET(rv);
 }
 
 int
@@ -486,7 +483,8 @@ rumpuser_clock_sleep(uint64_t sec, uint64_t nsec, enum rumpclock clk)
 	}
 
 	rumpkern_sched(nlocks, NULL);
-	return rv;
+
+	ET(rv);
 }
 
 static int
@@ -556,7 +554,7 @@ rumpuser_getparam(const char *name, void *buf, size_t blen)
 			rv = 0;
 	}
 
-	return rv;
+	ET(rv);
 }
 
 void
@@ -616,7 +614,7 @@ rumpuser_kill(int64_t pid, int sig)
 	rv = EOPNOTSUPP;
 #endif
 
-	return rv;
+	ET(rv);
 }
 
 int
@@ -636,5 +634,5 @@ rumpuser_getrandom(void *buf, size_t buflen, int flags, size_t *retp)
 	} while (chunk);
 
 	*retp = origlen;
-	return 0;
+	ET(0);
 }
