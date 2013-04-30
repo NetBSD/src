@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.38 2013/04/15 18:56:38 bouyer Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.39 2013/04/30 00:18:01 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.38 2013/04/15 18:56:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.39 2013/04/30 00:18:01 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -234,6 +234,7 @@ static void omap4_cpu_clk(void);
 #endif
 #if defined(TI_AM335X)
 static void am335x_cpu_clk(void);
+static psize_t am335x_memprobe(void);
 #endif
 
 #if defined(OMAP_3430) || defined(OMAP_3530)
@@ -312,6 +313,18 @@ static const struct pmap_devmap devmap[] = {
 		.pd_va = _A(OMAP_L4_FAST_VBASE),
 		.pd_pa = _A(OMAP_L4_FAST_BASE),
 		.pd_size = _S(OMAP_L4_FAST_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+#endif
+#ifdef OMAP_EMIF_BASE
+	{
+		/*
+		 * Map all of the L4 EMIF area
+		 */
+		.pd_va = _A(OMAP_EMIF_VBASE),
+		.pd_pa = _A(OMAP_EMIF_BASE),
+		.pd_size = _S(OMAP_EMIF_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
@@ -460,6 +473,9 @@ initarm(void *arg)
 	 */
 #if defined(OMAP_3430) || defined(OMAP_3530)
 	ram_size = omap3530_memprobe();
+#endif
+#if defined(TI_AM335X)
+	ram_size = am335x_memprobe();
 #endif
 	/*
 	 * If MEMSIZE specified less than what we really have, limit ourselves
@@ -688,6 +704,19 @@ am335x_cpu_clk(void)
 	printf("%s: %"PRIu64": sys_clk=%u m=%u n=%u (%u) m2=%u\n",
 	    __func__, curcpu()->ci_data.cpu_cc_freq,
 	    sys_clk, m, n, n+1, m2);
+}
+
+static psize_t 
+am335x_memprobe(void)
+{
+	const vaddr_t emif_base = OMAP_EMIF_VBASE;
+	const uint32_t sdram_config = *(const volatile uint32_t *)(emif_base + EMIF_SDRAM_CONFIG);
+	const u_int ibank = __SHIFTOUT(sdram_config, SDRAM_CONFIG_IBANK);
+	const u_int rsize = 9 + __SHIFTOUT(sdram_config, SDRAM_CONFIG_RSIZE);
+	const u_int pagesize = 8 + __SHIFTOUT(sdram_config, SDRAM_CONFIG_PAGESIZE);
+	const u_int width = 2 - __SHIFTOUT(sdram_config, SDRAM_CONFIG_WIDTH);
+	printf("sdram_config = %#x\n", sdram_config);
+	return 1L << (ibank + rsize + pagesize + width);
 }
 #endif
 

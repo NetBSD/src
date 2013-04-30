@@ -98,7 +98,7 @@
 #define INIT_MEMSIZE	128
 #endif
 
-RCSID("$NetBSD: beagle_start.S,v 1.12 2012/12/13 01:16:39 matt Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.13 2013/04/30 00:18:02 matt Exp $")
 
 #define Invalidate_I_cache(reg) \
 	mcr	p15, 0, reg, c7, c5, 0	/* Invalidate Entire I cache */
@@ -300,6 +300,13 @@ mmu_init_table:
 	/* Map first 1MB of L4 FAST (so console will work) */
 	MMU_INIT(OMAP_L4_FAST_VBASE, OMAP_L4_FAST_BASE,
 		(OMAP_L4_FAST_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO | L1_S_APv7_KRW)
+#endif
+
+#ifdef OMAP_EMIF_BASE
+	/* Map first 1MB of EMIF0 (so we can probe memory size) */
+	MMU_INIT(OMAP_EMIF_VBASE, OMAP_EMIF_BASE,
+		(OMAP_EMIF_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW)
 #endif
 
