@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.165 2013/04/21 17:45:46 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.166 2013/04/30 00:45:04 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -243,6 +243,7 @@
 #define dn_expand		_dn_expand
 #define dprintf_l		_dprintf_l
 #define drand48			_drand48
+#define duplocale		_duplocale
 #define endfsent		_endfsent
 #define endgrent		_endgrent
 #define endhostent		_endhostent
@@ -290,6 +291,7 @@
 #define freenetconfigent	_freenetconfigent
 #define freeaddrinfo		_freeaddrinfo
 #define freeifaddrs		_freeifaddrs
+#define freelocale		_freelocale
 #define fscanf_l		_fscanf_l
 #define fstatvfs		_fstatvfs
 #define ftok			_ftok
@@ -479,6 +481,7 @@
 #define nc_perror		_nc_perror
 #define nc_sperror		_nc_sperror
 #define nanosleep		_nanosleep
+#define newlocale		_newlocale
 #define nice			_nice
 #if 0
 #define nlist			_nlist

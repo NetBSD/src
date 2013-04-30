@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.h,v 1.20 2013/04/27 21:24:27 joerg Exp $	*/
+/*	$NetBSD: locale.h,v 1.21 2013/04/30 00:45:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -98,7 +98,17 @@ char *setlocale(int, const char *) __RENAME(__setlocale50);
 typedef struct _locale		*locale_t;
 #  define __LOCALE_T_DECLARED
 #  endif
+#define	LC_ALL_MASK		((int)~0)
+#define	LC_COLLATE_MASK		((int)(1 << LC_COLLATE))
+#define	LC_CTYPE_MASK		((int)(1 << LC_CTYPE))
+#define	LC_MONETARY_MASK	((int)(1 << LC_MONETARY))
+#define	LC_NUMERIC_MASK		((int)(1 << LC_NUMERIC))
+#define	LC_TIME_MASK		((int)(1 << LC_TIME))
+#define	LC_MESSAGES_MASK	((int)(1 << LC_MESSAGES))
+locale_t	duplocale(locale_t);
+void		freelocale(locale_t);
 struct lconv	*localeconv_l(locale_t);
+locale_t	newlocale(int, const char *, locale_t);
 #endif
 __END_DECLS
 
