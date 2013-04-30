@@ -1,6 +1,6 @@
-.\"     $NetBSD: rumpuser.3,v 1.2 2010/03/01 17:20:44 pooka Exp $
+.\"     $NetBSD: rumpuser.3,v 1.3 2013/04/30 21:18:40 pooka Exp $
 .\"
-.\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
+.\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -23,42 +23,587 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 1, 2010
+.Dd April 30, 2013
 .Dt RUMPUSER 3
 .Os
 .Sh NAME
 .Nm rumpuser
-.Nd rump hypervisor interface
+.Nd rump kernel hypercall interface
 .Sh LIBRARY
 rump User Library (librumpuser, \-lrumpuser)
 .Sh SYNOPSIS
 .In rump/rumpuser.h
 .Sh DESCRIPTION
-.Nm
-is the hypervisor interface for
-.Xr rump 3
-style kernel virtualization.
-A virtual rump kernel can make calls to the host operating system
-libraries and kernel (system calls) using
-.Nm
-interfaces.
-Any "slow" hypervisor calls such as file I/O, sychronization wait,
-or sleep will cause rump to unschedule the calling kernel thread
-from the virtual CPU and free it for other consumers.
-When the hypervisor call returns to the kernel, a new scheduling
-operation takes place.
-.Pp
-For example, rump implements kernel threads directly as hypervisor
-calls to host
-.Xr pthread 3 .
-This avoids the common virtualization drawback of multiple overlapping
-and possibly conflicting implementations of same functionality in
-the software stack.
-.Pp
 The
 .Nm
-interface is still under development and interface documentation
-is available only in source form from
-.Pa src/lib/librumpuser .
+hypercall interfaces allow a rump kernel to access host resources.
+A hypervisor implementation must implement the routines described in
+this document to allow a rump kernel to run on the host.
+The implementation included in
+.Nx
+is for POSIX hosts.
+This document is divided into sections based on the functionality
+group of each hypercall.
+.Sh UPCALLS AND RUMP KERNEL CONTEXT
+A hypercall is always entered with the calling thread scheduled in
+the rump kernel.
+In case the hypercall intends to block while waiting for an event,
+the hypervisor must first release the rump kernel scheduling context.
+In other words, the rump kernel context is a resource and holding
+on to it while waiting for a rump kernel event/resource may lead
+to a deadlock.
+Even when there is no possibility of deadlock in the strict sense
+of the term, holding on to the rump kernel context while performing
+a slow hypercall such as reading a device will prevent other threads
+(including the clock interrupt) from using that rump kernel context.
+.Pp
+Releasing the context is done by calling the
+.Fn hyp_backend_unschedule
+upcall which the hypervisor received from rump kernel as a parameter
+for
+.Fn rumpuser_init .
+Before a hypercall returns back to the rump kernel, the returning thread
+must carry a rump kernel context.
+In case the hypercall unscheduled itself, it must reschedule itself
+by calling
+.Fn hyp_backend_schedule .
+.Sh HYPERCALL INTERFACES
+.Ss Initialization
+.Ft int
+.Fn rumpuser_init "int version" "struct rump_hyperup *hyp"
+.Pp
+Initialize the hypervisor.
+.Bl -tag -width "xalignmentx"
+.It Fa version
+hypercall interface version number that the kernel expects to be used.
+In case the hypervisor cannot provide an exact match, this routine must
+return a non-zero value.
+.It Fa hyp
+pointer to a set of upcalls the hypervisor can make into the rump kernel
+.El
+.Ss Memory allocation
+.Ft int
+.Fn rumpuser_malloc "size_t len" "int alignment" "void **memp"
+.Bl -tag -width "xalignmentx"
+.It Fa len
+amount of memory to allocate
+.It Fa alignment
+size the returned memory must be aligned to.
+For example, if the value passed is 4096, the returned memory
+must be aligned to a 4k boundary.
+.It Fa memp
+return pointer for allocated memory
+.El
+.Pp
+.Ft void
+.Fn rumpuser_free "void *mem" "size_t len"
+.Bl -tag -width "xalignmentx"
+.It Fa mem
+memory to free
+.It Fa len
+length of allocation.
+This is always equal to the amount the caller requested from the
+.Fn rumpuser_malloc
+which returned
+.Fa mem .
+.El
+.Ss Files and I/O
+.Ft int
+.Fn rumpuser_open "const char *name" "int mode" "int *fdp"
+.Pp
+Open a file for I/O.
+Notably, there needs to be no mapping between
+.Fa name
+and the host, but for example on a POSIX system it may be convenient
+to let
+.Fa name
+denote the host file system namespace.
+.Bl -tag -width "xalignmentx"
+.It Fa name
+the identifier of the file to open for I/O
+.It Fa mode
+combination of the following:
+.Bl -tag -width "XRUMPUSER_OPEN_CREATE"
+.It Dv RUMPUSER_OPEN_RDONLY
+open only for reading
+.It Dv RUMPUSER_OPEN_WRONLY
+open only for writing
+.It Dv RUMPUSER_OPEN_RDWR
+open for reading and writing
+.It Dv RUMPUSER_OPEN_CREATE
+do not treat missing
+.Fa name
+as an error
+.It Dv RUMPUSER_OPEN_EXCL
+combined with
+.Dv RUMPUSER_OPEN_CREATE ,
+flag an error if
+.Fa name
+already exists
+.It Dv RUMPUSER_OPEN_BIO
+the caller will use this file for block I/O, usually used in
+conjunction with accessing file system media.
+The hypervisor should treat this flag as advisory and possibly
+enable some optimizations for
+.Fa *fdp
+based on it.
+.El
+Notably, the permissions of the created file are left up to the
+hypervisor implementation.
+.It Fa fdp
+An integer value denoting the open file is returned here.
+.El
+.Pp
+.Ft int
+.Fn rumpuser_close "int fd"
+.Pp
+Close a previously opened file descriptor.
+.Pp
+.Ft int
+.Fn rumpuser_getfileinfo "const char *name" "uint64_t *size" "int *type"
+.Bl -tag -width "xalignmentx"
+.It Fa name
+file for which information is returned.
+The namespace is equal to that of
+.Fn rumpuser_open .
+.It Fa size
+If non-NULL, size of the file is returned here.
+.It Fa type
+If non-NULL, type of the file is returned here.
+The options are
+.Dv RUMPUSER_FT_DIR ,
+.Dv RUMPUSER_FT_REG ,
+.Dv RUMPUSER_FT_BLK ,
+.Dv RUMPUSER_FT_CHR ,
+or
+.Dv RUMPUSER_FT_OTHER
+for directory, regular file, block device, character device or unknown,
+respectively.
+.El
+.Pp
+.Ft void
+.Fo rumpuser_bio
+.Fa "int fd" "int op" "void *data" "size_t dlen" "off_t off"
+.Fa "rump_biodone_fn biodone" "void *donearg"
+.Fc
+.Pp
+Initiate block I/O and return immediately.
+.Bl -tag -width "xalignmentx"
+.It Fa fd
+perform I/O on this file descriptor.
+The file descriptor must have been opened with
+.Dv RUMPUSER_OPEN_BIO .
+.It Fa op
+Transfer data from the file descriptor with
+.Dv RUMPUSER_BIO_READ
+and transfer data to the file descriptor with
+.Dv RUMPUSER_BIO_WRITE .
+Unless
+.Dv RUMPUSER_BIO_SYNC
+is specified, the hypervisor may cache a write instead of
+committing it to permanent storage.
+.It Fa data
+memory address to transfer data to/from
+.It Fa dlen
+length of I/O.
+The length is guaranteed to be a multiple of 512.
+.It Fa off
+offset into
+.Fa fd
+where I/O is performed
+.It Fa biodone
+To be called when the I/O is complete.
+Accessing
+.Fa data
+is not legal after the call is made.
+.It Fa donearg
+opaque arg that must be passed to
+.Fa biodone .
+.El
+.Pp
+.Ft int
+.Fo rumpuser_iovread
+.Fa "int fd" "struct rumpuser_iovec *ruiov" "size_t iovlen"
+.Fa "off_t off" "size_t *retv"
+.Fc
+.Pp
+.Ft int
+.Fo rumpuser_iovwrite
+.Fa "int fd" "struct rumpuser_iovec *ruiov" "size_t iovlen"
+.Fa "off_t off" "size_t *retv"
+.Fc
+.Pp
+These routines perform scatter-gather I/O which is not
+block I/O by nature and therefore cannot be handled by
+.Fn rumpuser_bio .
+.Pp
+.Bl -tag -width "xalignmentx"
+.It Fa fd
+file descriptor to perform I/O on
+.It Fa ruiov
+an array of I/O descriptors.
+It is defined as follows:
+.Bd -literal -offset indent -compact
+struct rumpuser_iovec {
+	void *iov_base;
+	size_t iov_len;
+};
+.Ed
+.It Fa iovlen
+number of elements in
+.Fa ruiov
+.It Fa off
+offset of
+.Fa fd
+to perform I/O on.
+This can either be a non-negative value or
+.Dv RUMPUSER_IOV_NOSEEK .
+The latter denotes that no attempt to change the underlying objects
+offset should be made.
+Using both types of offsets on a single instance of
+.Fa fd
+results in undefined behavior.
+.It Fa retv
+number of bytes successfully transferred is returned here
+.El
+.Ss Clocks
+The hypervisor should support two clocks, one for wall time and one
+for monotonically increasing time, the latter of which may be based
+on some arbitrary time (e.g. system boot time).
+If this is not possible, the hypervisor must make a reasonable effort to
+retain semantics.
+.Pp
+.Ft int
+.Fn rumpuser_clock_gettime "enum rumpclock clk" "uint64_t *sec" "uint64_t *nsec"
+.Pp
+.Bl -tag -width "xalignmentx"
+.It Fa clk
+specifies the clock type.
+In case of
+.Dv RUMPUSER_CLOCK_RELWALL
+the wall time should be returned.
+In case of
+.Dv RUMPUSER_CLOCK_ABSMONO
+the time of a monotonic clock should be returned.
+.It Fa sec
+return value for seconds
+.It Fa nsec
+return value for nanoseconds
+.El
+.Pp
+.Ft int
+.Fn rumpuser_clock_sleep "enum rumpclock clk" "uint64_t sec" "uint64_t nsec"
+.Bl -tag -width "xalignmentx"
+.It Fa clk
+In case of
+.Dv RUMPUSER_CLOCK_RELWALL ,
+the sleep should last at least as long as specified.
+In case of
+.Dv RUMPUSER_CLOCK_ABSMONO ,
+the sleep should last until the hypervisor monotonic clock hits
+the specified absolute time.
+.It Fa sec
+sleep duration, seconds.
+exact semantics depend on
+.Fa clk .
+.It Fa nsec
+sleep duration, nanoseconds.
+exact semantics depend on
+.Fa clk .
+.El
+.Ss Parameter retrieval
+.Ft int
+.Fn rumpuser_getparam "const char *name" "void *buf" "size_t buflen"
+.Pp
+Retrieve a configuration parameter from the hypervisor.
+It is up to the hypervisor to decide how the parameters can be set.
+.Bl -tag -width "xalignmentx"
+.It Fa name
+name of the parameter.
+If the name starts with an underscore, it means a mandatory parameter.
+The mandatory parameters are
+.Dv RUMPUSER_PARAM_NCPU
+which specifies the amount of virtual CPUs bootstrapped by the
+rump kernel and
+.Dv RUMPUSER_PARAM_HOSTNAME
+which returns a preferably unique instance name for the rump kernel.
+.It Fa buf
+buffer to return the data in as a string
+.It Fa buflen
+length of buffer
+.El
+.Ss Termination
+.Ft void
+.Fn rumpuser_exit "int value"
+.Pp
+Terminate the rump kernel with exit value
+.Fa value .
+If
+.Fa value
+is
+.Dv RUMPUSER_PANIC
+the hypervisor should attempt to provide something akin to a core dump.
+.Ss Console output
+.Pp
+Console output is divided into two routines: a per-character
+one and printf-like one.
+The former is used e.g. by the rump kernel's internal printf
+routine.
+The latter can be used for direct debug prints e.g. very early
+on in the rump kernel's bootstrap or when using the in-kernel
+routine causes too much skew in the debug print results
+(the hypercall runs outside of the rump kernel and therefore does not
+cause any locking or scheduling events inside the rump kernel).
+.Pp
+.Ft void
+.Fn rumpuser_putchar "int ch"
+.Pp
+Output
+.Fa ch
+on the console.
+.Pp
+.Ft void
+.Fn rumpuser_dprintf "const char *fmt" "..."
+.Pp
+Do output based on printf-like parameters.
+.Ss Random pool
+.Ft int
+.Fn rumpuser_getrandom "void *buf" "size_t buflen" "int flags" "size_t *retp"
+.Pp
+.Bl -tag -width "xalignmentx"
+.It Fa buf
+buffer that the randomness is written to
+.It Fa buflen
+number of bytes of randomness requested
+.It Fa flags
+The value 0 or a combination of
+.Dv RUMPUSER_RANDOM_HARD
+(return true randomness instead of something from a PRNG)
+and
+.Dv RUMPUSER_RANDOM_NOWAIT
+(do not block in case the requested amount of bytes is not available).
+.It Fa retp
+The number of random bytes written into
+.Fa buf .
+.El
+.Ss Threads
+.Pp
+.Ft int
+.Fo rumpuser_thread_create
+.Fa "void *(*fun)(void *)" "void *arg" "const char *thrname" "int mustjoin"
+.Fa "int priority" "int cpuidx" "void **cookie"
+.Fc
+.Pp
+Create a thread.
+In case the hypervisor wants to optimize the scheduling of the
+threads, it can perform heuristics on the
+.Fa thrname ,
+.Fa priority
+and
+.Fa cpuidx
+parameters.
+.Bl -tag -width "xalignmentx"
+.It Fa fun
+function that the new thread must call
+.It Fa arg
+argument to be passed to
+.Fa fun
+.It Fa thrname
+Name of the new thread.
+.It Fa mustjoin
+If 1, the thread will be waited for by
+.Fn rumpuser_thread_join
+when the thread exits.
+.It Fa priority
+The priority that the kernel requested the thread to be created at.
+Higher values mean higher priority.
+The exact kernel semantics for each value are not available through
+this interface.
+.It Fa cpuidx
+The index of the virtual CPU that the thread is bound to, or \-1
+if the thread is not bound.
+The mapping between the virtual CPUs and physical CPUs, if any,
+is hypervisor implementation specific.
+.It Fa cookie
+In case
+.Fa mustjoin
+is set, the value returned in
+.Fa cookie
+will be passed to
+.Fn rumpuser_thread_join .
+.El
+.Pp
+.Ft void
+.Fn rumpuser_thread_exit "void"
+.Pp
+Called when a thread created with
+.Fn rumpuser_thread_create
+exits.
+.Pp
+.Ft int
+.Fn rumpuser_thread_join "void *cookie"
+.Pp
+Wait for a joinable thread to exit.
+The cookie matches the value from
+.Fn rumpuser_thread_create .
+.Pp
+.Ft void
+.Fn rumpuser_set_curlwp "struct lwp *l"
+.Pp
+Set
+.Fa l
+as the rump kernel thread context for the calling host thread.
+The value
+.Dv NULL
+means that an existing rump kernel context (which must exist)
+must be cleared.
+.Pp
+.Ft struct lwp *
+.Fn rumpuser_get_curlwp "void"
+.Pp
+Retrieve the rump kernel thread context previously set by
+.Fn rumpuser_set_curlwp .
+This routine can be called when a context does not exist and
+the routine must return
+.Dv NULL
+in that case.
+.Pp
+.Ft void
+.Fn rumpuser_seterrno "int errno"
+.Pp
+Set an errno value in the calling thread's TLS.
+Note: this is used only if rump kernel clients make rump system calls.
+.Ss Mutexes, rwlocks and condition variables
+The locking interfaces have standard semantics, so we will not
+discuss each one in detail.
+The data types
+.Vt struct rumpuser_mtx ,
+.Vt struct rumpuser_rw
+and
+.Vt struct rumpuser_cv
+used by these interfaces are opaque to the rump kernel, i.e. the
+hypervisor has complete freedom over them.
+.Pp
+Most of these interfaces will (and must) relinquish the rump kernel
+CPU context in case they block (or intend to block).
+The exceptions are the "nowrap" variants of the interfaces which
+may not relinquish rump kernel context.
+.Pp
+.Ft void
+.Fn rumpuser_mutex_init "struct rumpuser_mtx **mtxp" "int flags"
+.Pp
+.Ft void
+.Fn rumpuser_mutex_enter "struct rumpuser_mtx *mtx"
+.Pp
+.Ft void
+.Fn rumpuser_mutex_enter_nowrap "struct rumpuser_mtx *mtx"
+.Pp
+.Ft int
+.Fn rumpuser_mutex_tryenter "struct rumpuser_mtx *mtx"
+.Pp
+.Ft void
+.Fn rumpuser_mutex_exit "struct rumpuser_mtx *mtx"
+.Pp
+.Ft void
+.Fn rumpuser_mutex_destroy "struct rumpuser_mtx *mtx"
+.Pp
+.Ft void
+.Fn rumpuser_mutex_owner "struct rumpuser_mtx *mtx" "struct lwp **lp"
+.Pp
+Mutexes provide mutually exclusive locking.
+The flags for initialization are as follows:
+.Bl -tag -width "XRUMPUSER_MTX_KMUTEX"
+.It Dv RUMPUSER_MTX_SPIN
+Create a spin mutex.
+Locking this type of mutex must not relinquish rump kernel context
+even when
+.Fn rumpuser_mutex_enter
+is used.
+.It Dv RUMPUSER_MTX_KMUTEX
+The mutex must track and be able to return the rump kernel thread
+that owns the mutex (if any).
+If this flag is not specified,
+.Fn rumpuser_mutex_owner
+will never be called for that particular mutex.
+.El
+.Pp
+.Ft void
+.Fn rumpuser_rw_init "struct rumpuser_rw **rwp"
+.Pp
+.Ft void
+.Fn rumpuser_rw_enter "struct rumpuser_rw *rw" "int writelock"
+.Pp
+.Ft int
+.Fn rumpuser_rw_tryenter "struct rumpuser_rw *rw" "int writelock"
+.Pp
+.Ft void
+.Fn rumpuser_rw_exit "struct rumpuser_rw *rw"
+.Pp
+.Ft void
+.Fn rumpuser_rw_destroy "struct rumpuser_rw *rw"
+.Pp
+.Ft void
+.Fn rumpuser_rw_held "struct rumpuser_rw *rw" "int *heldp"
+.Pp
+.Ft void
+.Fn rumpuser_rw_rdheld "struct rumpuser_rw *rw" "int *heldp"
+.Pp
+.Ft void
+.Fn rumpuser_rw_wrheld "struct rumpuser_rw *rw" "int *heldp"
+.Pp
+Read/write locks acquire an exclusive version of the lock if the
+.Fa writelock
+parameter is non-zero and a shared lock otherwise.
+.Pp
+.Pp
+.Ft void
+.Fn rumpuser_cv_init "struct rumpuser_cv **cvp"
+.Pp
+.Ft void
+.Fn rumpuser_cv_destroy "struct rumpuser_cv *cv"
+.Pp
+.Ft void
+.Fn rumpuser_cv_wait "struct rumpuser_cv *cv" "struct rumpuser_mtx *mtx"
+.Pp
+.Ft void
+.Fn rumpuser_cv_wait_nowrap "struct rumpuser_cv *cv" "struct rumpuser_mtx *mtx"
+.Pp
+.Ft int
+.Fo rumpuser_cv_timedwait
+.Fa "struct rumpuser_cv *cv" "struct rumpuser_mtx *mtx"
+.Fa "int64_t sec" "int64_t nsec"
+.Fc
+.Pp
+.Ft void
+.Fn rumpuser_cv_signal "struct rumpuser_cv *cv";
+.Pp
+.Ft void
+.Fn rumpuser_cv_broadcast "struct rumpuser_cv *cv";
+.Pp
+.Ft void
+.Fn rumpuser_cv_has_waiters "struct rumpuser_cv *cv" "int *waitersp"
+.Pp
+Condition variables wait for an event.
+The
+.Fa mtx
+interlock eliminates a race between checking the predicate and
+sleeping on the condition variable; the mutex should be released
+for the duration of the sleep in the normal atomic manner.
+The timedwait variant takes a specifier indicating a relative
+sleep duration after which the routine will return with
+.Er ETIMEDOUT .
+If a timedwait is signalled before the timeout expires, the
+routine will return 0.
+.Sh RETURN VALUES
+All routines which return an integer return an errno value.
+The hypervisor must translate the value to the the native errno
+namespace used by the rump kernel.
+Routines which do not return an integer may never fail.
 .Sh SEE ALSO
 .Xr rump 3
+.Rs
+.%A Antti Kantee
+.%D 2012
+.%J Aalto University Doctoral Dissertations
+.%T Flexible Operating System Internals: The Design and Implementation of the Anykernel and Rump Kernerls
+.Re
