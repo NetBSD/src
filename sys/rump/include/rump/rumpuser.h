@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.98 2013/04/30 00:03:53 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.99 2013/04/30 13:29:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -160,7 +160,7 @@ int rumpuser_getrandom(void *, size_t, int, size_t *);
  * threads, scheduling (host) and synchronization
  */
 int  rumpuser_thread_create(void *(*f)(void *), void *, const char *, int,
-			    void **);
+			    int, int, void **);
 void rumpuser_thread_exit(void) __dead;
 int  rumpuser_thread_join(void *);
 
