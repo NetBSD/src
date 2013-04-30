@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.h,v 1.3 2013/04/29 13:17:33 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.h,v 1.4 2013/04/30 00:03:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -25,6 +25,6 @@
  * SUCH DAMAGE.
  */
 
-int	rumpcomp_shmif_watchsetup(int, int, int *);
-int	rumpcomp_shmif_watchwait(int, int *);
-void	*rumpcomp_shmif_mmap(int, size_t, int *);
+int	rumpcomp_shmif_watchsetup(int *, int);
+int	rumpcomp_shmif_watchwait(int);
+int	rumpcomp_shmif_mmap(int, size_t, void **);
