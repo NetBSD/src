@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/04/27 23:02:21 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/04/30 00:34:15 joerg Exp $
 
 LIB=		c++
 WARNS=		4
@@ -29,7 +29,7 @@ CLEANFILES+=	rt_${src}
 
 .include <bsd.own.mk>
 
-CPPFLAGS+=	-cxx-isystem ${LIBCXX_SRCDIR}/include -I${LIBCXXRT_SRCDIR}/src
+CPPFLAGS+=	-nostdinc++ -cxx-isystem ${LIBCXX_SRCDIR}/include -I${LIBCXXRT_SRCDIR}/src
 CPPFLAGS+=	-DLIBCXXRT
 CXXFLAGS+=	${${ACTIVE_CC} == "clang":? -std=c++11 : -std=c++0x}
 
