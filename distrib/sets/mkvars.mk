@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.9 2013/04/30 16:26:26 matt Exp $
+# $NetBSD: mkvars.mk,v 1.10 2013/04/30 20:54:22 matt Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -26,7 +26,9 @@ MKEXTRAVARS= \
 	USE_YP \
 	NETBSDSRCDIR \
 	MAKEVERBOSE \
-	TARGET_ENDIANNESS
+	TARGET_ENDIANNESS \
+	EABI \
+	ARCH64
 
 #####
 
@@ -49,6 +51,18 @@ MKXORG:=no
 . endif
 .endif
 
+.if (!empty(MACHINE_ARCH:Mearm*))
+EABI=yes
+.else
+EABI=no
+.endif
+
+.if (!empty(MACHINE_ARCH:M*64*) || ${MACHINE_ARCH} == alpha)
+ARCH64=yes
+.else
+ARCH64=no
+.endif
+
 #####
 
 mkvars: mkvarsyesno mkextravars mksolaris .PHONY
@@ -65,10 +79,6 @@ mkextravars: .PHONY
 .for i in ${MKEXTRAVARS}
 	@echo $i="${$i}"
 .endfor
-
-.if (!empty(MACHINE_ARCH:Mearm*))
-	@echo EABI=yes
-.endif
 
 mksolaris: .PHONY
 .if (${MKDTRACE} != "no" || ${MKZFS} != "no")
