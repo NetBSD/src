@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.16 2013/01/08 19:03:16 macallan Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.17 2013/04/30 00:17:24 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -97,6 +97,9 @@
 
 #define TI_AM335X_L4_FAST_BASE		0x4A000000
 #define TI_AM335X_L4_FAST_SIZE		0x01000000	/* 16MB */
+
+#define TI_AM335X_L4_EMIF_BASE		0x4C000000
+#define TI_AM335X_L4_EMIF_SIZE		0x01000000	/* 16MB */
 
 /* TI Sitara DM37xx (OMAP like) */
 
@@ -735,5 +738,15 @@
  */
 #define OMAP3530_SDMA_BASE		0x48056000
 #define OMAP3530_SDMA_SIZE		0x00001000	/* 4KB */
+
+#ifdef TI_AM335X
+#define	TI_AM335X_EMIF0_BASE		0x4c000000
+#define	TI_AM335X_EMIF0_SIZE		0x00100000
+#define	EMIF_SDRAM_CONFIG		8
+#define	SDRAM_CONFIG_WIDTH		__BITS(15,14)
+#define	SDRAM_CONFIG_RSIZE		__BITS(9,7)
+#define	SDRAM_CONFIG_IBANK		__BITS(6,4)
+#define	SDRAM_CONFIG_PAGESIZE		__BITS(2,0)
+#endif
 	
 #endif	/* _ARM_OMAP_OMAP2_REG_H_ */
