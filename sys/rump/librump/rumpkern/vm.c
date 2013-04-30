@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.142 2013/04/30 00:03:53 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.143 2013/04/30 00:29:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.142 2013/04/30 00:03:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.143 2013/04/30 00:29:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -421,7 +421,7 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 		panic("uvm_mmap() variant unsupported");
 
 	if (RUMP_LOCALPROC_P(curproc)) {
-		error = rumpuser_anonmmap(NULL, size, 0, 0, uaddr);
+		error = rumpuser_anonmmap(NULL, size, 0, 0, &uaddr);
 	} else {
 		error = rumpuser_sp_anonmmap(curproc->p_vmspace->vm_map.pmap,
 		    size, &uaddr);
