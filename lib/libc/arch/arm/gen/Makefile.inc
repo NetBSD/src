@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.21 2013/01/26 07:09:41 matt Exp $
+# $NetBSD: Makefile.inc,v 1.22 2013/04/30 01:42:04 matt Exp $
 
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c divsi3.S \
 	fabs.c flt_rounds.c modsi3.S umodsi3.S divide.S divsi3.S udivsi3.S
@@ -11,7 +11,7 @@ SRCS+=	isinff_ieee754.c isinfd_ieee754.c
 SRCS+=	isnanf_ieee754.c isnand_ieee754.c
 SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 
-.if ${MACHINE_ARCH:Mearm*} != ""
+.if !empty(LIBC_MACHINE_ARCH:Mearm*)
 SRCS+=	__aeabi_fcmpun.c __aeabi_dcmpun.c
 SRCS+=	__aeabi_idiv0.c __aeabi_ldiv0.c
 .endif
