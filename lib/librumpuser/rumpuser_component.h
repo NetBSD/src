@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_component.h,v 1.2 2013/04/29 15:20:05 pooka Exp $	*/
+/*	$NetBSD: rumpuser_component.h,v 1.3 2013/04/30 12:39:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -30,6 +30,7 @@
 
 void *	rumpuser_component_unschedule(void);
 void	rumpuser_component_schedule(void *);
+int	rumpuser_component_errtrans(int);
 
 void	rumpuser_component_kthread(void);
 struct lwp *rumpuser_component_curlwp(void);

@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.9 2013/04/30 00:33:16 pooka Exp $	*/
+/*      $NetBSD: rumpcomp_user.c,v 1.10 2013/04/30 12:39:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -70,7 +70,7 @@ rumpcomp_shmif_watchsetup(int *kqp, int fd)
 	}
 
  out:
-	return rv;
+	return rumpuser_component_errtrans(rv);
 }
 
 int
@@ -91,7 +91,7 @@ rumpcomp_shmif_watchwait(int kq)
 	}
 	rumpuser_component_schedule(cookie);
 
-	return rv;
+	return rumpuser_component_errtrans(rv);
 }
 
 #elif defined(__linux__)
@@ -135,7 +135,7 @@ rumpcomp_shmif_watchsetup(int *inotifyp, int fd)
 	rv = 0;
 
  out:
-	return rv;
+	return rumpuser_component_errtrans(rv);
 }
 
 int
@@ -158,7 +158,7 @@ rumpcomp_shmif_watchwait(int kq)
 		
 	rumpuser_component_schedule(cookie);
 
-	return rv;
+	return rumpuser_component_errtrans(rv);
 }
 
 #else
@@ -217,6 +217,6 @@ rumpcomp_shmif_mmap(int fd, size_t len, void **memp)
 	}
 
  out:
-	return rv;
+	return rumpuser_component_errtrans(rv);
 }
 #endif

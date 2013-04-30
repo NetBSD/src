@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.17 2012/12/13 17:17:21 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.18 2013/04/30 12:39:21 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -9,7 +9,7 @@
 
 #include <rump/rump_namei.h>
 
-/*	NetBSD: fcntl.h,v 1.43 2012/11/18 17:41:54 manu Exp 	*/
+/*	NetBSD: fcntl.h,v 1.45 2013/01/13 08:15:03 dholland Exp 	*/
 #define	RUMP_O_RDONLY	0x00000000	/* open for reading only */
 #define	RUMP_O_WRONLY	0x00000001	/* open for writing only */
 #define	RUMP_O_RDWR		0x00000002	/* open for reading and writing */
@@ -40,7 +40,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_LK_NOWAIT	0x00000010	
 #define	RUMP_LK_RETRY	0x00020000	
 
-/*	NetBSD: errno.h,v 1.39 2006/10/31 00:38:07 cbiere Exp 	*/
+/*	NetBSD: errno.h,v 1.40 2013/01/02 18:51:53 dsl Exp 	*/
 #define	RUMP_EPERM		1		/* Operation not permitted */
 #define	RUMP_ENOENT		2		/* No such file or directory */
 #define	RUMP_ESRCH		3		/* No such process */
@@ -170,7 +170,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_AB_SILENT	0x00040000	
 #define	RUMP_AB_DEBUG	0x00080000	
 
-/*	NetBSD: socket.h,v 1.107 2012/06/22 18:26:35 christos Exp 	*/
+/*	NetBSD: socket.h,v 1.108 2013/01/31 14:30:47 joerg Exp 	*/
 #define	RUMP_SOCK_STREAM	1		
 #define	RUMP_SOCK_DGRAM	2		
 #define	RUMP_SOCK_RAW	3		

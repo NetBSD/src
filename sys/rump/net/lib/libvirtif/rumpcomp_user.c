@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.4 2013/04/30 00:03:54 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.5 2013/04/30 12:39:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -119,7 +119,7 @@ rumpcomp_virtif_create(int devnum, struct virtif_user **viup)
 	rumpuser_component_schedule(cookie);
 
 	*viup = viu;
-	return rv;
+	return rumpuser_component_errtrans(rv);
 }
 
 void
@@ -174,7 +174,7 @@ rumpcomp_virtif_recv(struct virtif_user *viu,
 	}
 
 	rumpuser_component_schedule(cookie);
-	return rv;
+	return rumpuser_component_errtrans(rv);
 }
 #undef POLLTIMO_MS
 

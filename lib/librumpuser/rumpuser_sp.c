@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.57 2013/04/30 00:03:52 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.58 2013/04/30 12:39:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.57 2013/04/30 00:03:52 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.58 2013/04/30 12:39:20 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -795,21 +795,25 @@ sp_copyin(void *arg, const void *raddr, void *laddr, size_t *len, int wantstr)
 	rumpkern_sched(nlocks, NULL);
 	if (rv)
 		rv = EFAULT;
-	return rv;
+	ET(rv);
 }
 
 int
 rumpuser_sp_copyin(void *arg, const void *raddr, void *laddr, size_t len)
 {
+	int rv;
 
-	return sp_copyin(arg, raddr, laddr, &len, 0);
+	rv = sp_copyin(arg, raddr, laddr, &len, 0);
+	ET(rv);
 }
 
 int
 rumpuser_sp_copyinstr(void *arg, const void *raddr, void *laddr, size_t *len)
 {
+	int rv;
 
-	return sp_copyin(arg, raddr, laddr, len, 1);
+	rv = sp_copyin(arg, raddr, laddr, len, 1);
+	ET(rv);
 }
 
 static int
@@ -824,21 +828,25 @@ sp_copyout(void *arg, const void *laddr, void *raddr, size_t dlen)
 
 	if (rv)
 		rv = EFAULT;
-	return 0;
+	ET(rv);
 }
 
 int
 rumpuser_sp_copyout(void *arg, const void *laddr, void *raddr, size_t dlen)
 {
+	int rv;
 
-	return sp_copyout(arg, laddr, raddr, dlen);
+	rv = sp_copyout(arg, laddr, raddr, dlen);
+	ET(rv);
 }
 
 int
 rumpuser_sp_copyoutstr(void *arg, const void *laddr, void *raddr, size_t *dlen)
 {
+	int rv;
 
-	return sp_copyout(arg, laddr, raddr, *dlen);
+	rv = sp_copyout(arg, laddr, raddr, *dlen);
+	ET(rv);
 }
 
 int
@@ -867,7 +875,7 @@ rumpuser_sp_anonmmap(void *arg, size_t howmuch, void **addr)
 
  out:
 	rumpkern_sched(nlocks, NULL);
-	return rv;
+	ET(rv);
 }
 
 int
@@ -1358,7 +1366,7 @@ rumpuser_sp_init(const char *url,
 	pthread_detach(pt);
 
  out:
-	return error;
+	ET(error);
 }
 
 void

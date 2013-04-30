@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_int.h,v 1.7 2013/04/29 14:51:39 pooka Exp $	*/
+/*	$NetBSD: rumpuser_int.h,v 1.8 2013/04/30 12:39:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -93,3 +93,10 @@ do {									\
 		abort();						\
 	}								\
 } while (/*CONSTCOND*/0)
+
+int  rumpuser__errtrans(int);
+#ifdef __NetBSD__
+#define ET(_v_) return (_v_);
+#else
+#define ET(_v_) return (_v_) ? rumpuser__errtrans(_v_) : 0;
+#endif

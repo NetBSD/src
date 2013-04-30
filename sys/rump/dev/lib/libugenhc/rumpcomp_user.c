@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.4 2013/04/30 00:03:52 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.5 2013/04/30 12:39:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -48,6 +48,6 @@ rumpcomp_ugenhc_ioctl(int fd, u_long cmd, void *data, int *ioctlrv)
 		rv = 0;
 	rumpuser_component_schedule(cookie);
 
-	return rv;
+	return rumpuser_component_errtrans(rv);
 }
 #endif
