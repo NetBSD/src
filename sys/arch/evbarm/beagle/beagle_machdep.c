@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.39 2013/04/30 00:18:01 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.40 2013/04/30 05:39:44 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.39 2013/04/30 00:18:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.40 2013/04/30 05:39:44 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -691,9 +691,14 @@ omap4_cpu_clk(void)
 void
 am335x_cpu_clk(void)
 {
+	static const uint32_t sys_clks[4] = {
+		[0] = 19200000, [1] = 24000000, [2] = 25000000, [3] = 26000000
+	};
 	const vaddr_t cm_base = OMAP2_CM_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
 	const vaddr_t cm_wkup_base = cm_base + AM335X_PRCM_CM_WKUP;
-	const uint32_t sys_clk = 24000000;
+	const vaddr_t ctlmod_base = TI_AM335X_CTLMOD_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
+	const uint32_t control_status = *(const volatile uint32_t *)(ctlmod_base + CTLMOD_CONTROL_STATUS);
+	const uint32_t sys_clk = sys_clks[__SHIFTOUT(control_status, CTLMOD_CONTROL_STATUS_SYSBOOT1)];
 	const uint32_t clksel_dpll_mpu = *(volatile uint32_t *)(cm_wkup_base + TI_AM335X_CM_CLKSEL_DPLL_MPU);
 	const uint32_t div_m2_dpll_mpu = *(volatile uint32_t *)(cm_wkup_base + TI_AM335X_CM_DIV_M2_DPLL_MPU);
 	const uint32_t m = __SHIFTOUT(clksel_dpll_mpu, TI_AM335X_CM_CLKSEL_DPLL_MPU_DPLL_MULT);
