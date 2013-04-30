@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.8 2013/01/28 13:46:47 nakayama Exp $
+# $NetBSD: mkvars.mk,v 1.9 2013/04/30 16:26:26 matt Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -17,6 +17,7 @@ MKEXTRAVARS= \
 	MKDYNAMICROOT \
 	MKMANPAGES \
 	MKSLJIT \
+	MKSOFTFLOAT \
 	MKXORG \
 	X11FLAVOR \
 	USE_INET6 \
@@ -24,12 +25,14 @@ MKEXTRAVARS= \
 	USE_LDAP \
 	USE_YP \
 	NETBSDSRCDIR \
-	MAKEVERBOSE
+	MAKEVERBOSE \
+	TARGET_ENDIANNESS
 
 #####
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
+.include <bsd.endian.mk>
 
 .if (${MKMAN} == "no" || empty(MANINSTALL:Mmaninstall))
 MKMANPAGES=no
@@ -62,6 +65,10 @@ mkextravars: .PHONY
 .for i in ${MKEXTRAVARS}
 	@echo $i="${$i}"
 .endfor
+
+.if (!empty(MACHINE_ARCH:Mearm*))
+	@echo EABI=yes
+.endif
 
 mksolaris: .PHONY
 .if (${MKDTRACE} != "no" || ${MKZFS} != "no")
