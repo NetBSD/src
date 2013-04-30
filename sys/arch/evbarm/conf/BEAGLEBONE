@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.11 2013/04/25 20:56:20 rkujawa Exp $
+#	$NetBSD: BEAGLEBONE,v 1.12 2013/04/30 00:26:19 matt Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -169,7 +169,7 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # Specify the memory size in megabytes.
-options 	MEMSIZE=256
+#options 	MEMSIZE=256
 
 # L3 Interconnect
 #L3i0		at mainbus?
@@ -199,7 +199,7 @@ sitaracm0	at obio0 addr 0x44e10000 size 0x2000
 # from other omap3.  (What about omap4?)  Need to adapt the omap sdhc
 # driver to handle this.
 sdhc0		at obio0 addr 0x48060100 size 0x0f00 intr 64
-#sdhc1		at obio0 addr 0x481d8100 size 0x0f00 intr 28
+sdhc1		at obio0 addr 0x481d8100 size 0x0f00 intr 28 # BB Black
 #sdhc2		at obio0 addr 0x47810100 size 0xff00 intr 29
 sdmmc*		at sdhc?		# SD/MMC bus
 ld*		at sdmmc?
