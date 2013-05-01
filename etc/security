@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.111 2012/04/05 09:09:27 spz Exp $
+#	$NetBSD: security,v 1.112 2013/05/01 05:36:25 agc Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -20,6 +20,9 @@ TZ=UTC; export TZ
 
 if [ -s /etc/security.conf ]; then
 	. /etc/security.conf
+fi
+if [ -s /etc/pkgpath.conf ]; then
+	. /etc/pkgpath.conf
 fi
 
 # Set reasonable defaults (if they're not set in security.conf)
@@ -926,7 +929,7 @@ fi
 if checkyesno check_pkgs && have_pkgs; then
 	pkgs=$work_dir/pkgs
 	migrate_file "$backup_dir/pkgs" "$pkgs"
-	pkg_dbdir=$(pkg_admin config-var PKG_DBDIR)
+	pkg_dbdir=$(${pkg_admin} config-var PKG_DBDIR)
 	: ${pkg_dbdir:=/var/db/pkg}
 	(	cd $pkg_dbdir
 		$pkg_info | sort
@@ -1009,7 +1012,7 @@ fi
 
 if have_pkgs; then
 	if checkyesno check_pkg_vulnerabilities; then
-		pkg_admin ${_compat_K_flag} audit >${OUTPUT} 2>&1
+		${pkg_admin} ${_compat_K_flag} audit >${OUTPUT} 2>&1
 		if [ -s ${OUTPUT} ]; then
 			printf "\nInstalled vulnerable packages:\n"
 			cat ${OUTPUT}
@@ -1017,7 +1020,7 @@ if have_pkgs; then
 	fi
 
 	if checkyesno check_pkg_signatures; then
-		pkg_admin ${_compat_K_flag} check >${OUTPUT} 2>&1
+		${pkg_admin} ${_compat_K_flag} check >${OUTPUT} 2>&1
 		if [ $? -ne 0 ]; then
 			printf "\nFiles with invalid signatures:\n"
 			cat ${OUTPUT}
