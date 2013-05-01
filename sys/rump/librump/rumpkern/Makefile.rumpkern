@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.126 2013/04/30 13:54:53 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.127 2013/05/01 17:52:34 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -21,8 +21,10 @@ LIB=		rump
 # 
 SRCS+=	rump.c rumpcopy.c emul.c intr.c lwproc.c klock.c	\
 	kobj_rename.c ltsleep.c scheduler.c			\
-	signals.c sleepq.c threads.c vm.c cprng_stub.c		\
-	hyperstubs.c
+	signals.c sleepq.c threads.c vm.c cprng_stub.c
+
+# optional hypervisor interfaces
+#SRCS+=	hyperstubs.c
 
 # Multiprocessor or uniprocessor locking.  TODO: select right
 # locking at runtime.
