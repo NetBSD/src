@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2013/04/28 12:11:27 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.2 2013/05/01 22:57:37 matt Exp $
 
-.include <bsd.own.mk>
+.include <bsd.endian.mk>
+
+.if ${MACHINE} == "epoc32" && ${TARGET_ENDIANNESS} == "1234"
 
 SUBDIR+=	e32boot
+
+.endif
 
 .include <bsd.subdir.mk>

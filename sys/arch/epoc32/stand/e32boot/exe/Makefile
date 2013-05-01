@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/05/01 13:15:26 kiyohara Exp $
-
-.include <../Makefile.inc>
+#	$NetBSD: Makefile,v 1.3 2013/05/01 22:57:37 matt Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
@@ -44,6 +42,7 @@ LIBS+=$(EPOC32_LIBRARY_PATH)/WS32.LIB
 all: check_epoc32_cross $(PROG)
 
 $(PROG): $(OBJS) $(IN)
+	${_MKTARGET_LINK}
 	$(LD) -s --base-file $(PROG:.exe=.bas) \
 	    -o $@ --whole-archive $(IN) --no-whole-archive $(LIBS)
 	TMP=. $(EXTERNAL_TOOLCHAIN)/bin/$(MACHINE_GNU_PLATFORM)-dlltool \
