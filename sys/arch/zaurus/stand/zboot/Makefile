@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2012/01/18 23:12:21 nonaka Exp $
+#	$NetBSD: Makefile,v 1.9 2013/05/01 22:16:16 matt Exp $
 
 PROG=		zboot
 
@@ -20,6 +20,8 @@ CFLAGS+=	-fno-stack-protector -fno-builtin -ffreestanding
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S}
 CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
 CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
+CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft -mcpu=xscale
+CPUFLAGS=
 AFLAGS+=	-D_LOCORE
 LDFLAGS+=	-nostdlib -Bstatic
 
@@ -50,6 +52,7 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes SA_ENABLE_LS_OP=yes
 LIBSA=		${SALIB}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${VERSIONFILE}
+	${_MKTARGET_LINK}
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
 	    ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
 	${CC} -c vers.c
