@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.buildboot,v 1.14 2011/01/22 19:19:14 joerg Exp $
+#	$NetBSD: Makefile.buildboot,v 1.15 2013/05/01 22:30:39 matt Exp $
 
 S?=	${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../lib
+
+MACHINE=	acorn32
 
 SRCS=	${PROGSOURCE}
 NOMAN=# defined
@@ -40,6 +42,8 @@ vers.c: ${.CURDIR}/version
 CPPFLAGS+=	-D_STANDALONE 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
+CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft -march=armv3m
+CPUFLAGS=
 CFLAGS=		-O2
 CFLAGS+=	-ffreestanding
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
