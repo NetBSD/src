@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.44 2013/03/03 10:26:18 mlelstv Exp $	*/
+/*	$NetBSD: plcom.c,v 1.45 2013/05/01 07:38:01 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.44 2013/03/03 10:26:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.45 2013/05/01 07:38:01 mlelstv Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -2450,6 +2450,7 @@ void
 plcomcnpollc(dev_t dev, int on)
 {
 
+	plcom_readaheadcount = 0;
 }
 
 #ifdef KGDB
