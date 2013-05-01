@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2013/04/23 05:42:23 matt Exp $
+#	$NetBSD: Makefile,v 1.46 2013/05/01 12:00:51 matt Exp $
 
 INCSDIR= /usr/include/arm
 
@@ -18,7 +18,7 @@ INCS=	aeabi.h ansi.h aout_machdep.h armreg.h asm.h atomic.h \
 	reg.h rwlock.h \
 	setjmp.h signal.h swi.h sysarch.h \
 	trap.h types.h \
-	vfpreg.h \
+	vfpreg.h vmparam.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>
