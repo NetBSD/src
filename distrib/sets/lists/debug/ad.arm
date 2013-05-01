@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.6 2013/04/30 20:31:23 matt Exp $
+# $NetBSD: ad.arm,v 1.7 2013/05/01 04:02:55 matt Exp $
 ./usr/lib/libarm_g.a				-unknown-		debuglib
 ./usr/lib/libc_vfp_g.a				-unknown-		debuglib,softfloat
 ./usr/lib/libpmc_g.a				-unknown-		debuglib
@@ -13,7 +13,7 @@
 ./usr/libdata/debug/lib/oabi/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/oabi/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/oabi/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
-./usr/libdata/debug/libexec/ld.elf_so-oabi.debug		comp-sys-debug		debug
+./usr/libdata/debug/libexec/ld.elf_so-oabi.debug		comp-sys-debug		debug,compat
 ./usr/libdata/debug/usr/libexec/ld.elf_so-oabi	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/oabi		-unknown-	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/i18n		-unknown-	debug,compat
