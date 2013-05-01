@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.13 2013/04/30 20:31:22 matt Exp $
+# $NetBSD: ad.arm,v 1.14 2013/05/01 04:02:54 matt Exp $
 ./sbin/ldconfig					base-sysutil-root	pic
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
@@ -21,10 +21,10 @@
 ./usr/lib/libpmc.so.1.0				base-sys-shlib		pic
 ./usr/libexec/ld.so				base-sys-shlib		pic,endian=1234
 ./usr/libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
-./usr/lib/oabi					base-compat-lib
+./usr/lib/oabi					base-compat-lib		eabi
 ./usr/lib/oabi/libarm.so.0			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libarm.so.0.0			base-sys-shlib		compat,pic
-./usr/lib/oabi/i18n				base-compat-lib
+./usr/lib/oabi/i18n				base-compat-lib		eabi
 ./usr/lib/oabi/i18n/libBIG5.so.5		base-i18n-shlib		compat,pic
 ./usr/lib/oabi/i18n/libBIG5.so.5.0		base-i18n-shlib		compat,pic
 ./usr/lib/oabi/i18n/libDECHanyu.so.5		base-i18n-shlib		compat,pic
@@ -336,7 +336,7 @@
 ./usr/lib/oabi/npf/ext_rndblock.so		base-obsolete		obsolete
 ./usr/lib/oabi/npf/ext_rndblock.so.0		base-obsolete		obsolete
 ./usr/lib/oabi/npf/ext_rndblock.so.0.0		base-obsolete		obsolete
-./usr/lib/oabi/security				base-compat-shlib
+./usr/lib/oabi/security				base-compat-shlib	eabi
 ./usr/lib/oabi/security/pam_afslog.so.4		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/oabi/security/pam_chroot.so.4		base-compat-shlib	compat,pic,pam
 ./usr/lib/oabi/security/pam_deny.so.4		base-compat-shlib	compat,pic,pam
