@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.38 2012/10/27 17:17:40 chs Exp $ */
+/*	$NetBSD: sscom.c,v 1.39 2013/05/01 07:38:01 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.38 2012/10/27 17:17:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.39 2013/05/01 07:38:01 mlelstv Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -1977,6 +1977,7 @@ void
 sscomcnpollc(dev_t dev, int on)
 {
 
+	sscom_readaheadcount = 0;
 }
 
 #endif /* SSCOM0CONSOLE||SSCOM1CONSOLE */
