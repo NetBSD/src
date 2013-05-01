@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.309 2013/04/20 11:52:40 rkujawa Exp $ */
+/* $NetBSD: com.c,v 1.310 2013/05/01 07:38:00 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.309 2013/04/20 11:52:40 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.310 2013/05/01 07:38:00 mlelstv Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2352,6 +2352,7 @@ void
 comcnpollc(dev_t dev, int on)
 {
 
+	com_readaheadcount = 0;
 }
 
 #ifdef KGDB
