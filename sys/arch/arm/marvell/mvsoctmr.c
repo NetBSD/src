@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmr.c,v 1.8 2012/07/22 19:35:04 jakllsch Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.9 2013/05/01 12:45:31 rkujawa Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,9 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.8 2012/07/22 19:35:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.9 2013/05/01 12:45:31 rkujawa Exp $");
 
 #include "opt_ddb.h"
+#include "opt_mvsoc.h"
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -67,6 +68,9 @@ struct mvsoctmr_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+#if defined(ARMADAXP)
+	int sc_irq;
+#endif
 };
 
 
@@ -133,6 +137,10 @@ mvsoctmr_attach(device_t parent, device_t self, void *aux)
 	if (mvsoctmr_sc == NULL)
 		mvsoctmr_sc = sc;
 
+#if defined(ARMADAXP)
+	sc->sc_irq = mva->mva_irq;
+#endif
+
 	sc->sc_dev = self;
 	sc->sc_iot = mva->mva_iot;
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh,
@@ -177,6 +185,12 @@ clockhandler(void *arg)
 {
 	struct clockframe *frame = arg;
 
+#if defined(ARMADAXP)
+	/* Acknowledge all timers-related interrupts */
+	bus_space_write_4(mvsoctmr_sc->sc_iot, mvsoctmr_sc->sc_ioh,
+	    MVSOCTMR_TESR, 0x0);
+#endif
+
 	hardclock(frame);
 
 	return 1;
@@ -211,16 +225,33 @@ cpu_initclocks(void)
 		panic("cpu_initclocks: mvsoctmr not found");
 
 	mvsoctmr_timecounter.tc_priv = sc;
-	mvsoctmr_timecounter.tc_frequency = mvTclk;
 
-	timer0_tval = (mvTclk * 2) / (u_long) hz;
+#if defined(ARMADAXP)
+	/* We set global timer and counter to 25 MHz mode */
+	mvsoctmr_timecounter.tc_frequency = 25000000;
+#else
+	mvsoctmr_timecounter.tc_frequency = mvTclk;
+#endif
+
+	timer0_tval = (mvsoctmr_timecounter.tc_frequency * 2) / (u_long) hz;
 	timer0_tval = (timer0_tval / 2) + (timer0_tval & 1);
 
 	mvsoctmr_cntl(sc, MVSOCTMR_TIMER0, timer0_tval, en, autoen);
 	mvsoctmr_cntl(sc, MVSOCTMR_TIMER1, 0xffffffff, en, autoen);
 
+#if defined(ARMADAXP)
+	/*
+	 * Establishing timer interrupts is slightly different for Armada XP
+	 * than for other supported SoCs from Marvell.
+	 * Timer interrupt is no different from any other interrupt in Armada
+	 * XP, so we use generic marvell_intr_establish().
+	 */
+	clock_ih = marvell_intr_establish(sc->sc_irq, IPL_CLOCK,
+	    clockhandler, NULL);
+#else
 	clock_ih = mvsoc_bridge_intr_establish(MVSOC_MLMB_MLMBI_CPUTIMER0INTREQ,
 	    IPL_CLOCK, clockhandler, NULL);
+#endif
 	if (clock_ih == NULL)
 		panic("cpu_initclocks: unable to register timer interrupt");
 
@@ -303,6 +334,10 @@ mvsoctmr_cntl(struct mvsoctmr_softc *sc, int num, u_int ticks, int en,
 		ctrl |= MVSOCTMR_CTCR_CPUTIMERAUTO(num);
 	else
 		ctrl &= ~MVSOCTMR_CTCR_CPUTIMERAUTO(num);
+#if defined(ARMADAXP)
+	/* Set timer and counter to 25MHz mode */
+	ctrl |= MVSOCTMR_CTCR_25MHZEN(num);
+#endif
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSOCTMR_CTCR, ctrl);
 }
 
