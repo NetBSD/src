@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.75 2013/04/28 11:51:41 kiyohara Exp $	*/
+/*	$NetBSD: armreg.h,v 1.76 2013/05/01 12:51:27 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -244,6 +244,18 @@
 #define	CPU_ID_IXP425_533	0x690541c0
 #define	CPU_ID_IXP425_400	0x690541d0
 #define	CPU_ID_IXP425_266	0x690541f0
+#define CPU_ID_MV88SV58XX_P(n)	((n & 0xff0fff00) == 0x560f5800)
+#define CPU_ID_MV88SV581X_V6	0x560f5810 /* Marvell Sheeva 88SV581x v6 Core */
+#define CPU_ID_MV88SV581X_V7	0x561f5810 /* Marvell Sheeva 88SV581x v7 Core */
+#define CPU_ID_MV88SV584X_V6	0x561f5840 /* Marvell Sheeva 88SV584x v6 Core */
+#define CPU_ID_MV88SV584X_V7	0x562f5840 /* Marvell Sheeva 88SV584x v7 Core */
+/* Marvell's CPUIDs with ARM ID in implementor field */
+#define CPU_ID_ARM_88SV581X_V6	0x410fb760 /* Marvell Sheeva 88SV581x v6 Core */
+#define CPU_ID_ARM_88SV581X_V7	0x413fc080 /* Marvell Sheeva 88SV581x v7 Core */
+#define CPU_ID_ARM_88SV584X_V6	0x410fb020 /* Marvell Sheeva 88SV584x v6 Core */
+
+/* CPUID registers */
+#define ARM_PFR0_THUMBEE_MASK	0x0000f000
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1
@@ -380,6 +392,9 @@
 #define	MPCORE_AUXCTL_F 	0x00000008 /* instruction folding enable */
 #define	MPCORE_AUXCTL_EX	0x00000010 /* exclusive L1/L2 cache */
 #define	MPCORE_AUXCTL_SA	0x00000020 /* SMP/AMP */
+
+/* Marvell PJ4B Auxillary Control Register */
+#define PJ4B_AUXCTL_SMPNAMP	0x00000040 /* SMP/AMP */
 
 /* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode 1) */
 #define	CORTEXA9_AUXCTL_FW	0x00000001 /* Cache and TLB updates broadcast */
