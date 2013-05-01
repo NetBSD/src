@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.167 2013/04/20 11:41:51 rkujawa Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.168 2013/05/01 13:12:00 kiyohara Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -124,6 +124,7 @@
 #	ixpcom	IXP12x0 COM ports
 #	epcom	EP93xx COM ports
 #	plcom	ARM PL01[01] serial ports
+#	wmcom	EPOC Windermere COM ports
 #	ttyM?	HP200/300 4 port serial mux interface (hp300)
 #	ttya	"ttya" system console (luna68k)
 #	ttyb	second system serial port (luna68k)
@@ -1912,6 +1913,11 @@ epcom[0-9]*)
 plcom[0-9]*)
 	unit=${i#plcom}
 	mkdev plcom$unit c %plcom_chr% $unit "" "" $u_uucp
+	;;
+
+wmcom[0-9]*)
+	unit=${i#wmcom}
+	mkdev wmcom$unit c %wmcom_chr% $unit "" "" $u_uucp
 	;;
 
 ucbsnd)
