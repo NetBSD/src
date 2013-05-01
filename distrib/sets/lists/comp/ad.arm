@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.47 2013/04/30 20:31:22 matt Exp $
+# $NetBSD: ad.arm,v 1.48 2013/05/01 16:18:14 matt Exp $
 ./usr/include/gcc-4.5/arm_neon.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
@@ -74,6 +74,7 @@
 ./usr/include/arm/types.h			comp-c-include
 ./usr/include/arm/vfpreg.h			comp-c-include
 ./usr/include/arm/varargs.h			comp-obsolete		obsolete
+./usr/include/arm/vmparam.h			comp-c-include
 ./usr/include/arm/wchar_limits.h		comp-c-include
 ./usr/include/arm32/bootconfig.h		comp-obsolete		obsolete
 ./usr/include/arm32/cpufunc.h			comp-obsolete		obsolete
