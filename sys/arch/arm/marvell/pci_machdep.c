@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 2012/09/07 04:25:36 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5 2013/05/01 12:38:06 rkujawa Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4 2012/09/07 04:25:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2013/05/01 12:38:06 rkujawa Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -127,6 +127,7 @@ struct arm32_pci_chipset arm32_mvpex0_chipset = {
 #ifdef __HAVE_PCI_CONF_HOOK
 	mvpex_conf_hook,
 #endif
+	mvpex_conf_interrupt,
 };
 struct arm32_pci_chipset arm32_mvpex1_chipset = {
 	NULL,	/* conf_v */
@@ -151,8 +152,99 @@ struct arm32_pci_chipset arm32_mvpex1_chipset = {
 #endif
 	mvpex_conf_interrupt,
 };
+struct arm32_pci_chipset arm32_mvpex2_chipset = {
+	NULL,	/* conf_v */
+	mvpex_attach_hook,
+	mvpex_bus_maxdevs,
+	mvpex_make_tag,
+	mvpex_decompose_tag,
+#if NMVPEX_MBUS > 0
+	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+#else
+	mvpex_conf_read,
 #endif
-
+	mvpex_conf_write,
+	NULL,	/* intr_v */
+	mvpex_intr_map,
+	mvpex_intr_string,
+	mvpex_intr_evcnt,
+	mvpex_intr_establish,
+	mvpex_intr_disestablish,
+#ifdef __HAVE_PCI_CONF_HOOK
+	mvpex_conf_hook,
+#endif
+	mvpex_conf_interrupt,
+};
+struct arm32_pci_chipset arm32_mvpex3_chipset = {
+	NULL,	/* conf_v */
+	mvpex_attach_hook,
+	mvpex_bus_maxdevs,
+	mvpex_make_tag,
+	mvpex_decompose_tag,
+#if NMVPEX_MBUS > 0
+	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+#else
+	mvpex_conf_read,
+#endif
+	mvpex_conf_write,
+	NULL,	/* intr_v */
+	mvpex_intr_map,
+	mvpex_intr_string,
+	mvpex_intr_evcnt,
+	mvpex_intr_establish,
+	mvpex_intr_disestablish,
+#ifdef __HAVE_PCI_CONF_HOOK
+	mvpex_conf_hook,
+#endif
+	mvpex_conf_interrupt,
+};
+struct arm32_pci_chipset arm32_mvpex4_chipset = {
+	NULL,	/* conf_v */
+	mvpex_attach_hook,
+	mvpex_bus_maxdevs,
+	mvpex_make_tag,
+	mvpex_decompose_tag,
+#if NMVPEX_MBUS > 0
+	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+#else
+	mvpex_conf_read,
+#endif
+	mvpex_conf_write,
+	NULL,	/* intr_v */
+	mvpex_intr_map,
+	mvpex_intr_string,
+	mvpex_intr_evcnt,
+	mvpex_intr_establish,
+	mvpex_intr_disestablish,
+#ifdef __HAVE_PCI_CONF_HOOK
+	mvpex_conf_hook,
+#endif
+	mvpex_conf_interrupt,
+};
+struct arm32_pci_chipset arm32_mvpex5_chipset = {
+	NULL,	/* conf_v */
+	mvpex_attach_hook,
+	mvpex_bus_maxdevs,
+	mvpex_make_tag,
+	mvpex_decompose_tag,
+#if NMVPEX_MBUS > 0
+	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+#else
+	mvpex_conf_read,
+#endif
+	mvpex_conf_write,
+	NULL,	/* intr_v */
+	mvpex_intr_map,
+	mvpex_intr_string,
+	mvpex_intr_evcnt,
+	mvpex_intr_establish,
+	mvpex_intr_disestablish,
+#ifdef __HAVE_PCI_CONF_HOOK
+	mvpex_conf_hook,
+#endif
+	mvpex_conf_interrupt,
+};
+#endif /* NMVPEX > 0 */
 
 #if NGTPCI > 0
 /* ARGSUSED */
