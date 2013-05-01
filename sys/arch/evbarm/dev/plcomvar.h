@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.13 2012/08/17 09:38:51 skrll Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.14 2013/05/01 07:33:24 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -50,7 +50,7 @@ int  plcomcnattach	(struct plcom_instance *, int, int, tcflag_t, int);
 void plcomcndetach	(void);
 
 #ifdef KGDB
-int  plcom_kgdb_attach	(struct plcom_instance *, int, int, tcflag_t);
+int  plcom_kgdb_attach	(struct plcom_instance *, int, int, tcflag_t, int);
 #endif
 
 int  plcom_is_console	(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
