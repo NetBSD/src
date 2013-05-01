@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.2 2010/10/16 05:29:29 kiyohara Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.3 2013/05/01 12:30:02 rkujawa Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.2 2010/10/16 05:29:29 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.3 2013/05/01 12:30:02 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -290,59 +290,72 @@ mvusb_init(struct mvusb_softc *sc)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_IPGR,
 		    reg);
 	}
+	if (!(sc->sc_model == MARVELL_ARMADAXP_MV78460)) {
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PCR);
+		reg &= ~MARVELL_USB_PCR_BGVSEL_MASK;
+		reg |= MARVELL_USB_PCR_BGVSEL_CONNECT_ANAGRP;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PCR, reg);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PCR);
-	reg &= ~MARVELL_USB_PCR_BGVSEL_MASK;
-	reg |= MARVELL_USB_PCR_BGVSEL_CONNECT_ANAGRP;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PCR, reg);
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    MARVELL_USB_PTCR);
+		if (sc->sc_model == MARVELL_ORION_1_88F5181 && sc->sc_rev <= 1)
+			/* For OrionI A1/A0 rev: bit[21]=0 (TXDATA_BLOCK_EN=0) */
+			reg &= ~(1 << 21);
+		else
+			reg |= (1 << 21);
+		/* bit[13]=1, (REG_EXT_RCAL_EN=1) */
+		reg |= (1 << 13);
+		/* bits[6:3]=8 (IMP_CAL=8) */
+		reg &= ~(0xf << 3);
+		reg |= (8 << 3);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PTCR,
+		    reg);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PTCR);
-	if (sc->sc_model == MARVELL_ORION_1_88F5181 && sc->sc_rev <= 1)
-		/* For OrionI A1/A0 rev:  bit[21]=0 (TXDATA_BLOCK_EN=0) */
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    MARVELL_USB_PRCR);
+		/* bits[8:9] - (DISCON_THRESHOLD ) */
+		/*
+		 * Orion1-A0/A1/B0=11, Orion2-A0=10,
+		 * Orion1-B1 and Orion2-B0 later=00 
+		 */
+		reg &= ~(3 << 8);
+		if (sc->sc_model == MARVELL_ORION_1_88F5181 && sc->sc_rev <= 2)
+			reg |= (3 << 8);
+		else if (sc->sc_model == MARVELL_ORION_2_88F5281 &&
+		    sc->sc_rev == 0)
+			reg |= (2 << 8);
+		/* bit[21]=0 (CDR_FASTLOCK_EN=0) */
 		reg &= ~(1 << 21);
-	else
-		reg |= (1 << 21);
-	/* bit[13]=1, (REG_EXT_RCAL_EN=1) */
-	reg |= (1 << 13);
-	/* bits[6:3]=8 (IMP_CAL=8) */
-	reg &= ~(0xf << 3);
-	reg |= (8 << 3);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PTCR, reg);
+		/* bits[27:26]=0 (EDGE_DET_SEL=0) */
+		reg &= ~(3 << 26);
+		/* bits[31:30]=3 (RXDATA_BLOCK_LENGHT=3) */
+		reg |= (3 << 30);
+		/* bits[7:4]=1 (SQ_THRESH=1) */
+		reg &= ~(0xf << 4);
+		reg |= (1 << 4);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PRCR,
+		    reg);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PRCR);
-	/* bits[8:9] - (DISCON_THRESHOLD ) */
-	/* Orion1-A0/A1/B0=11, Orion2-A0=10, Orion1-B1 and Orion2-B0 later=00 */
-	reg &= ~(3 << 8);
-	if (sc->sc_model == MARVELL_ORION_1_88F5181 && sc->sc_rev <= 2)
-		reg |= (3 << 8);
-	else if (sc->sc_model == MARVELL_ORION_2_88F5281 && sc->sc_rev == 0)
-		reg |= (2 << 8);
-	/* bit[21]=0 (CDR_FASTLOCK_EN=0) */
-	reg &= ~(1 << 21);
-	/* bits[27:26]=0 (EDGE_DET_SEL=0) */
-	reg &= ~(3 << 26);
-	/* bits[31:30]=3 (RXDATA_BLOCK_LENGHT=3) */
-	reg |= (3 << 30);
-	/* bits[7:4]=1 (SQ_THRESH=1) */
-	reg &= ~(0xf << 4);
-	reg |= (1 << 4);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PRCR, reg);
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    MARVELL_USB_PIVREFFCR);
+		/* bits[1:0]=2 (PLLVDD12=2)*/
+		reg &= ~(3 << 0);
+		reg |= (2 << 0);
+		/* bits[5:4]=3 (RXVDD=3) */
+		reg &= ~(3 << 4);
+		reg |= (3 << 4);
+		/* bit[19] (Reserved) */
+		reg &= ~(1 << 19);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    MARVELL_USB_PIVREFFCR, reg);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PIVREFFCR);
-	/* bits[1:0]=2 (PLLVDD12=2)*/
-	reg &= ~(3 << 0);
-	reg |= (2 << 0);
-	/* bits[5:4]=3 (RXVDD=3) */
-	reg &= ~(3 << 4);
-	reg |= (3 << 4);
-	/* bit[19] (Reserved) */
-	reg &= ~(1 << 19);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PIVREFFCR, reg);
-
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PTGCR);
-	/* bit[15]=0 (REG_FIFO_SQ_RST=0) */
-	reg &= ~(1 << 15);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PTGCR, reg);
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    MARVELL_USB_PTGCR);
+		/* bit[15]=0 (REG_FIFO_SQ_RST=0) */
+		reg &= ~(1 << 15);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PTGCR,
+		    reg);
+	}
 
 	mvusb_wininit(sc);
 }
