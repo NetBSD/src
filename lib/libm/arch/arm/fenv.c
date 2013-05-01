@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.2 2013/04/30 01:45:13 matt Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.3 2013/05/01 04:04:54 matt Exp $");
 
 #include <sys/types.h>
 #include <assert.h>
@@ -60,12 +60,12 @@ feclearexcept(int excepts)
 	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
 #endif
 #ifdef __SOFTFP__
-	int old = fpresetsticky(excepts);
-	return old & ~excepts;
+	fpsetsticky(fpgetsticky() & ~excepts);
+	return 0;
 #else
 	int tmp = armreg_fpscr_read() & ~__SHIFTIN(excepts, VFP_FPSCR_CSUM);
 	armreg_fpscr_write(tmp);
-	return __SHIFTOUT(tmp, VFP_FPSCR_CSUM);
+	return 0;
 #endif
 }
 
