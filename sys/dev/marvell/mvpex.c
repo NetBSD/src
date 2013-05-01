@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.7 2012/09/07 04:25:37 matt Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.8 2013/05/01 12:21:47 rkujawa Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.7 2012/09/07 04:25:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.8 2013/05/01 12:21:47 rkujawa Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -590,6 +590,14 @@ mvpex_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
 
 	if (bus == 0 && dev == 0)	/* don't configure GT */
+		return 0;
+
+	/* 
+	 * Do not configure PCI Express root complex on MV78460 - avoid
+	 * setting up IO and memory windows. 
+	 * XXX: should also avoid that other Aramadas.
+	 */
+	else if ((dev == 0) && (PCI_PRODUCT(id) == MARVELL_ARMADAXP_MV78460))
 		return 0;
 
 	return PCI_CONF_DEFAULT;
