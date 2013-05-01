@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2013/04/28 12:11:27 kiyohara Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2013/05/01 22:57:37 matt Exp $
 
 # Require pkgsrc/cross/psion-gcc.
 ARM_EPOC_PE_GCC?=	/usr/pkg/bin/arm-epoc-pe-gcc
@@ -24,11 +24,11 @@ check_psion_utils:
 	@false
 .endif
 
-check_psion_utils:
+check_psion_sdk:
 .if !exists(${EPOC32_SDKDIR}/include/e32base.h)
 	@echo "Error: File does not exist: ${EPOC32_SDKDIR}/include/e32base.h"
 	@echo "Please build and install pkgsrc/cross/psion-sdk-e32."
 	@false
 .endif
 
-check_epoc32_cross: check_psion_gcc check_psion_utils check_psion_utils
+check_epoc32_cross: check_psion_gcc check_psion_utils check_psion_sdk
