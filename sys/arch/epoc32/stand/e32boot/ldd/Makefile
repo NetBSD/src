@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2013/04/28 12:11:27 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.2 2013/05/01 13:15:26 kiyohara Exp $
 
 .include <../Makefile.inc>
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
+.include <bsd.obj.mk>
+.include <bsd.inc.mk>
 
 PROG=e32boot.ldd
 
