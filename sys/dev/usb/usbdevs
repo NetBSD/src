@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.646 2013/05/02 23:10:53 rkujawa Exp $
+$NetBSD: usbdevs,v 1.647 2013/05/02 23:13:12 rkujawa Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1392,9 +1392,6 @@ product EGALAX2 TPANEL		0x0001	Touch Panel
 /* Eicon Networks */
 product EICON DIVA852		0x4905	Diva 852 ISDN TA
 
-/* Mad Catz, Inc. */
-product	MADCATZ CYBORG_RAT7	0x1708	Cyborg R.A.T. 7
-
 /* EIZO products */
 product EIZO HUB		0x0000	hub
 product EIZO MONITOR		0x0001	monitor
@@ -2010,6 +2007,9 @@ product LUWEN EASYDISK		0x0005	EasyDisc
 
 /* Macally products */
 product MACALLY MOUSE1		0x0101	mouse
+
+/* Mad Catz, Inc. */
+product	MADCATZ CYBORG_RAT7	0x1708	Cyborg R.A.T. 7
 
 /* MCT Corp. products */
 product MCT HUB0100		0x0100	Hub
