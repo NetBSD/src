@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.47 2013/04/25 13:45:15 matt Exp $	 */
+/*	$NetBSD: headers.c,v 1.48 2013/05/02 21:11:03 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.47 2013/04/25 13:45:15 matt Exp $");
+__RCSID("$NetBSD: headers.c,v 1.48 2013/05/02 21:11:03 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -403,6 +403,8 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 
 		case PT_DYNAMIC:
 			obj->dynamic = (Elf_Dyn *)(uintptr_t)vaddr;
+			dbg(("headers: PT_DYNAMIC %p phsize %zu",
+			    obj->dynamic, (size_t)ph->p_memsz));
 			break;
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
