@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.7 2013/05/02 03:56:39 matt Exp $
+# $NetBSD: Makefile,v 1.8 2013/05/02 07:01:55 matt Exp $
 
-.include <bsd.init.mk>
+.include <bsd.own.mk>
 .include <bsd.endian.mk>
 
 .if ${MACHINE_CPU} == "arm" && ${TARGET_ENDIANNESS} == "1234"
@@ -40,7 +40,6 @@ SRCS=		AESKey.cpp \
 		options.cpp \
 		rijndael.cpp \
 		stdafx.cpp
-.include <bsd.lib.mk>
-.else
-${.TARGETS}:
 .endif
+
+.include <bsd.lib.mk>
