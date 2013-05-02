@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpuser.3,v 1.5 2013/05/02 15:32:19 pooka Exp $
+.\"     $NetBSD: rumpuser.3,v 1.6 2013/05/02 19:14:59 pooka Exp $
 .\"
 .\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
@@ -450,25 +450,53 @@ The cookie matches the value from
 .Fn rumpuser_thread_create .
 .Pp
 .Ft void
-.Fn rumpuser_set_curlwp "struct lwp *l"
+.Fn rumpuser_curlwpop "enum rumplwpop op" "struct lwp *l"
 .Pp
+Manipulate the hypervisor's thread context database.
+The possible operations are create, destroy and set as specified by
+.Fa op :
+.Bl -tag -width "XRUMPUSER_LWP_DESTROY"
+.It Dv RUMPUSER_LWP_CREATE
+Inform the hypervisor that
+.Fa l
+is now a valid thread context which may be set.
+A currently valid value of
+.Fa l
+may not be specified.
+This operation is informational and does not mandate any action
+from the hypervisor.
+.It Dv RUMPUSER_LWP_DESTROY
+Inform the hypervisor that
+.Fa l
+is no longer a valid thread context.
+This means that it may no longer be set as the current context.
+A currently set context or an invalid one may not be destroyed.
+This operation is informational and does not mandate any action
+from the hypervisor.
+.It Dv RUMPUSER_LWP_SET
 Set
 .Fa l
-as the rump kernel thread context for the calling host thread.
+as the current host thread's rump kernel context.
 The value
 .Dv NULL
 means that an existing rump kernel context (which must exist)
 must be cleared.
+.El
 .Pp
 .Ft struct lwp *
-.Fn rumpuser_get_curlwp "void"
+.Fn rumpuser_curlwp "void"
 .Pp
-Retrieve the rump kernel thread context previously set by
-.Fn rumpuser_set_curlwp .
-This routine can be called when a context does not exist and
+Retrieve the rump kernel thread context associated with the current host
+thread, as set by
+.Fn rumpuser_curlwpop .
+This routine may be called when a context is not set and
 the routine must return
 .Dv NULL
 in that case.
+This interface is expected to be called very often.
+Any optimizations pertaining to the execution speed of this routine
+should be done in
+.Fn rumpuser_curlwpop .
 .Pp
 .Ft void
 .Fn rumpuser_seterrno "int errno"
