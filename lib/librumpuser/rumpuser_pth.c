@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.21 2013/04/30 13:29:28 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.22 2013/05/02 16:49:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.21 2013/04/30 13:29:28 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.22 2013/05/02 16:49:08 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -65,8 +65,9 @@ do {									\
 } while (/*CONSTCOND*/0)
 #define RURW_CLRWRITE(rw)						\
 do {									\
-	assert(rw->readers == -1 && RURW_AMWRITER(rw));			\
+	assert(RURW_AMWRITER(rw));					\
 	rw->readers = 0;						\
+	rw->writer = NULL;						\
 } while (/*CONSTCOND*/0)
 #define RURW_INCREAD(rw)						\
 do {									\
