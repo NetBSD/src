@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1819 2013/04/28 04:05:39 joerg Exp $
+#	$NetBSD: mi,v 1.1820 2013/05/02 13:30:10 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5801,6 +5801,7 @@
 ./usr/share/man/cat3/getbkgd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getbootfile.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getbsize.0			comp-c-catman		.cat
+./usr/share/man/cat3/getbyteorder.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getc_unlocked.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getcap.0			comp-obsolete		obsolete
@@ -12335,6 +12336,7 @@
 ./usr/share/man/html3/getbkgd.html		comp-c-htmlman		html
 ./usr/share/man/html3/getbootfile.html		comp-c-htmlman		html
 ./usr/share/man/html3/getbsize.html		comp-c-htmlman		html
+./usr/share/man/html3/getbyteorder.html		comp-c-htmlman		html
 ./usr/share/man/html3/getc.html			comp-c-htmlman		html
 ./usr/share/man/html3/getc_unlocked.html	comp-c-htmlman		html
 ./usr/share/man/html3/getcap.html		comp-obsolete		obsolete
@@ -18783,6 +18785,7 @@
 ./usr/share/man/man3/getbkgd.3			comp-c-man		.man
 ./usr/share/man/man3/getbootfile.3		comp-c-man		.man
 ./usr/share/man/man3/getbsize.3			comp-c-man		.man
+./usr/share/man/man3/getbyteorder.3		comp-c-man		.man
 ./usr/share/man/man3/getc.3			comp-c-man		.man
 ./usr/share/man/man3/getc_unlocked.3		comp-c-man		.man
 ./usr/share/man/man3/getcap.3			comp-obsolete		obsolete
