@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.62 2013/05/02 20:37:32 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.63 2013/05/02 21:35:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.62 2013/05/02 20:37:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.63 2013/05/02 21:35:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -187,6 +187,20 @@ mutex_owner(kmutex_t *mtx)
 
 /* reader/writer locks */
 
+static enum rumprwlock
+krw2rumprw(const krw_t op)
+{
+
+	switch (op) {
+	case RW_READER:
+		return RUMPUSER_RW_READER;
+	case RW_WRITER:
+		return RUMPUSER_RW_WRITER;
+	default:
+		panic("unknown rwlock type");
+	}
+}
+
 void
 rw_init(krwlock_t *rw)
 {
@@ -211,7 +225,7 @@ rw_enter(krwlock_t *rw, const krw_t op)
 
 
 	WANTLOCK(rw, op == RW_READER, false);
-	rumpuser_rw_enter(RUMPRW(rw), op == RW_WRITER);
+	rumpuser_rw_enter(RUMPRW(rw), krw2rumprw(op));
 	LOCKED(rw, op == RW_READER);
 }
 
@@ -220,7 +234,7 @@ rw_tryenter(krwlock_t *rw, const krw_t op)
 {
 	int error;
 
-	error = rumpuser_rw_tryenter(RUMPRW(rw), op == RW_WRITER);
+	error = rumpuser_rw_tryenter(RUMPRW(rw), krw2rumprw(op));
 	if (error == 0) {
 		WANTLOCK(rw, op == RW_READER, true);
 		LOCKED(rw, op == RW_READER);
@@ -242,33 +256,28 @@ rw_exit(krwlock_t *rw)
 	rumpuser_rw_exit(RUMPRW(rw));
 }
 
-/* always fails */
 int
 rw_tryupgrade(krwlock_t *rw)
 {
+	int rv;
 
-	return 0;
+	rv = rumpuser_rw_tryupgrade(RUMPRW(rw));
+	if (rv == 0) {
+		UNLOCKED(rw, 1);
+		WANTLOCK(rw, 0, true);
+		LOCKED(rw, 0);
+	}
+	return rv == 0;
 }
 
 void
 rw_downgrade(krwlock_t *rw)
 {
 
-	/*
-	 * XXX HACK: How we can downgrade re lock in rump properly.
-	 */
-	rw_exit(rw);
-	rw_enter(rw, RW_READER);
-	return;
-}
-
-int
-rw_write_held(krwlock_t *rw)
-{
-	int rv;
-
-	rumpuser_rw_wrheld(RUMPRW(rw), &rv);
-	return rv;
+	rumpuser_rw_downgrade(RUMPRW(rw));
+	UNLOCKED(rw, 0);
+	WANTLOCK(rw, 1, false);
+	LOCKED(rw, 1);
 }
 
 int
@@ -276,17 +285,24 @@ rw_read_held(krwlock_t *rw)
 {
 	int rv;
 
-	rumpuser_rw_rdheld(RUMPRW(rw), &rv);
+	rumpuser_rw_held(RUMPRW(rw), RUMPUSER_RW_READER, &rv);
+	return rv;
+}
+
+int
+rw_write_held(krwlock_t *rw)
+{
+	int rv;
+
+	rumpuser_rw_held(RUMPRW(rw), RUMPUSER_RW_WRITER, &rv);
 	return rv;
 }
 
 int
 rw_lock_held(krwlock_t *rw)
 {
-	int rv;
 
-	rumpuser_rw_held(RUMPRW(rw), &rv);
-	return rv;
+	return rw_read_held(rw) || rw_write_held(rw);
 }
 
 /* curriculum vitaes */

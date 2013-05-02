@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpuser.3,v 1.6 2013/05/02 19:14:59 pooka Exp $
+.\"     $NetBSD: rumpuser.3,v 1.7 2013/05/02 21:35:19 pooka Exp $
 .\"
 .\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
@@ -561,10 +561,16 @@ will never be called for that particular mutex.
 .Fn rumpuser_rw_init "struct rumpuser_rw **rwp"
 .Pp
 .Ft void
-.Fn rumpuser_rw_enter "struct rumpuser_rw *rw" "int writelock"
+.Fn rumpuser_rw_enter "struct rumpuser_rw *rw" "const enum rumprwlock lk"
 .Pp
 .Ft int
-.Fn rumpuser_rw_tryenter "struct rumpuser_rw *rw" "int writelock"
+.Fn rumpuser_rw_tryenter "struct rumpuser_rw *rw" "const enum rumprwlock lk"
+.Pp
+.Ft int
+.Fn rumpuser_rw_tryupgrade "struct rumpuser_rw *rw"
+.Pp
+.Ft void
+.Fn rumpuser_rw_downgrade "struct rumpuser_rw *rw"
 .Pp
 .Ft void
 .Fn rumpuser_rw_exit "struct rumpuser_rw *rw"
@@ -573,18 +579,20 @@ will never be called for that particular mutex.
 .Fn rumpuser_rw_destroy "struct rumpuser_rw *rw"
 .Pp
 .Ft void
-.Fn rumpuser_rw_held "struct rumpuser_rw *rw" "int *heldp"
+.Fo rumpuser_rw_held
+.Fa "struct rumpuser_rw *rw" "const enum rumprwlock lk" "int *heldp"
+.Fc
 .Pp
-.Ft void
-.Fn rumpuser_rw_rdheld "struct rumpuser_rw *rw" "int *heldp"
-.Pp
-.Ft void
-.Fn rumpuser_rw_wrheld "struct rumpuser_rw *rw" "int *heldp"
-.Pp
-Read/write locks acquire an exclusive version of the lock if the
-.Fa writelock
-parameter is non-zero and a shared lock otherwise.
-.Pp
+Read/write locks provide either shared or exclusive locking.
+The possible values for
+.Fa lk
+are
+.Dv RUMPUSER_RW_READER
+and
+.Dv RUMPUSER_RW_WRITER .
+Upgrading means trying to migrate from an already owned shared
+lock to an exclusive lock and downgrading means migrating from
+an already owned exclusive lock to a shared lock.
 .Pp
 .Ft void
 .Fn rumpuser_cv_init "struct rumpuser_cv **cvp"
