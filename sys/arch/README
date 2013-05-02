@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.59 2012/01/29 10:32:53 tsutsui Exp $
+$NetBSD: README,v 1.60 2013/05/02 12:09:40 kiyohara Exp $
 
 acorn26	arm	20000509	Acorn ARM2- and ARM3-based machines
 acorn32	arm	20011118	Acorn computers Ltd. ARM 6/7/SA based machines
@@ -15,6 +15,7 @@ cesfic	m68k	20010514	FIC8234 VME processor board
 cobalt	mipsel,mips64el	20000319	Cobalt Networks Microservers
 dreamcast	sh3el	20010107	SEGA Dreamcast
 emips	mipseb	20110126	Machines based on Extensible MIPS
+epoc32	arm	20130502	32bit EPOC OS machines
 evbarm	armeb	20010905	ARM-based eval boards
 evbmips	mipseb,mipsel,mips64eb,mips64el	20020307	MIPS-based eval boards
 evbppc	powerpc,powerpc64	20021209	PowerPC-based eval boards
