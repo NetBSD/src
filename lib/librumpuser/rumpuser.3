@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpuser.3,v 1.7 2013/05/02 21:35:19 pooka Exp $
+.\"     $NetBSD: rumpuser.3,v 1.8 2013/05/02 21:47:12 pooka Exp $
 .\"
 .\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
@@ -276,7 +276,7 @@ If this is not possible, the hypervisor must make a reasonable effort to
 retain semantics.
 .Pp
 .Ft int
-.Fn rumpuser_clock_gettime "enum rumpclock clk" "uint64_t *sec" "uint64_t *nsec"
+.Fn rumpuser_clock_gettime "enum rumpclock clk" "int64_t *sec" "long *nsec"
 .Pp
 .Bl -tag -width "xalignmentx"
 .It Fa clk
@@ -294,7 +294,7 @@ return value for nanoseconds
 .El
 .Pp
 .Ft int
-.Fn rumpuser_clock_sleep "enum rumpclock clk" "uint64_t sec" "uint64_t nsec"
+.Fn rumpuser_clock_sleep "enum rumpclock clk" "int64_t sec" "long nsec"
 .Bl -tag -width "xalignmentx"
 .It Fa clk
 In case of
