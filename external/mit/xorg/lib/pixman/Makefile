@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2013/02/28 12:40:47 macallan Exp $
+#	$NetBSD: Makefile,v 1.22 2013/05/02 21:40:57 skrll Exp $
 
 NOLINT=	1	# defined
 
@@ -71,9 +71,9 @@ SRCS+=		pixman-arm-neon.c		\
 		pixman-arm-neon-asm-bilinear.S
 CPPFLAGS+=	-DUSE_ARM_NEON
 # ARM iwMMX
-SRCS+=		pixman-mmx.c
-COPTS.pixman-mmx.c=	-mcpu=iwmmxt
-CPPFLAGS+=	-DUSE_ARM_IWMMXT
+#SRCS+=		pixman-mmx.c
+#COPTS.pixman-mmx.c=	-mcpu=iwmmxt
+#CPPFLAGS+=	-DUSE_ARM_IWMMXT
 .endif
 
 .if ${MACHINE} == "evbmips"
