@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.buildboot,v 1.14 2013/05/01 22:36:52 matt Exp $
+#	$NetBSD: Makefile.buildboot,v 1.15 2013/05/02 04:22:44 matt Exp $
 
 S?=	${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../lib
 
-MACHINE= acorn26
+KLINK_MACHINE= acorn26
 SRCS=	${PROGSOURCE}
 NOMAN=# defined
 BINDIR=/usr/mdec
@@ -20,6 +20,7 @@ LIBCRTEND=
 RISCOSTYPE ?= ff8
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
