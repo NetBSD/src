@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.21 2013/04/28 23:19:33 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.22 2013/05/02 19:15:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.21 2013/04/28 23:19:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.22 2013/05/02 19:15:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -196,7 +196,7 @@ lwproc_freelwp(struct lwp *l)
 		KASSERT(p != &proc0);
 		p->p_stat = SDEAD;
 	}
-	cv_broadcast(&p->p_lwpcv); /* nobody sleeps on this in rump? */
+	cv_broadcast(&p->p_lwpcv); /* nobody sleeps on this in a rump kernel? */
 	kauth_cred_free(l->l_cred);
 	mutex_exit(p->p_lock);
 
@@ -208,6 +208,8 @@ lwproc_freelwp(struct lwp *l)
 		kmem_free(l->l_name, MAXCOMLEN);
 	lwp_finispecific(l);
 
+	rumpuser_curlwpop(RUMPUSER_LWP_DESTROY, l);
+	membar_exit();
 	kmem_free(l, sizeof(*l));
 
 	if (p->p_stat == SDEAD)
@@ -241,6 +243,8 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 	lwp_update_creds(l);
 	lwp_initspecific(l);
 
+	membar_enter();
+	rumpuser_curlwpop(RUMPUSER_LWP_CREATE, l);
 	if (doswitch) {
 		rump_lwproc_switch(l);
 	}
@@ -348,13 +352,13 @@ rump_lwproc_switch(struct lwp *newlwp)
 		fd_free();
 	}
 
-	rumpuser_set_curlwp(NULL);
+	rumpuser_curlwpop(RUMPUSER_LWP_SET, NULL);
 
 	newlwp->l_cpu = newlwp->l_target_cpu = l->l_cpu;
 	newlwp->l_mutex = l->l_mutex;
 	newlwp->l_pflag |= LP_RUNNING;
 
-	rumpuser_set_curlwp(newlwp);
+	rumpuser_curlwpop(RUMPUSER_LWP_SET, newlwp);
 
 	/*
 	 * Check if the thread should get a signal.  This is

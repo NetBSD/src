@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.266 2013/04/30 16:03:44 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.267 2013/05/02 19:15:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.266 2013/04/30 16:03:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.267 2013/05/02 19:15:01 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -288,7 +288,10 @@ rump_init(void)
 	l->l_lid = 1;
 	l->l_cpu = l->l_target_cpu = rump_cpu;
 	l->l_fd = &filedesc0;
-	rumpuser_set_curlwp(l);
+
+	/* lwp0 isn't created like other threads, so notify hypervisor here */
+	rumpuser_curlwpop(RUMPUSER_LWP_CREATE, l);
+	rumpuser_curlwpop(RUMPUSER_LWP_SET, l);
 
 	rumpuser_mutex_init(&rump_giantlock, RUMPUSER_MTX_SPIN);
 	ksyms_init();
@@ -342,7 +345,7 @@ rump_init(void)
 
 	rump_scheduler_init(numcpu);
 	/* revert temporary context and schedule a semireal context */
-	rumpuser_set_curlwp(NULL);
+	rumpuser_curlwpop(RUMPUSER_LWP_SET, NULL);
 	initproc = &proc0; /* borrow proc0 before we get initproc started */
 	rump_schedule();
 	bootlwp = curlwp;

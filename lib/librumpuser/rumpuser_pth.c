@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.22 2013/05/02 16:49:08 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.23 2013/05/02 19:14:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,8 +28,10 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.22 2013/05/02 16:49:08 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.23 2013/05/02 19:14:59 pooka Exp $");
 #endif /* !lint */
+
+#include <sys/queue.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -53,14 +55,14 @@ struct rumpuser_mtx {
 	int flags;
 };
 
-#define RURW_AMWRITER(rw) (rw->writer == rumpuser_get_curlwp()		\
+#define RURW_AMWRITER(rw) (rw->writer == rumpuser_curlwp()		\
 				&& rw->readers == -1)
 #define RURW_HASREAD(rw)  (rw->readers > 0)
 
 #define RURW_SETWRITE(rw)						\
 do {									\
 	assert(rw->readers == 0);					\
-	rw->writer = rumpuser_get_curlwp();				\
+	rw->writer = rumpuser_curlwp();					\
 	rw->readers = -1;						\
 } while (/*CONSTCOND*/0)
 #define RURW_CLRWRITE(rw)						\
@@ -193,7 +195,7 @@ mtxenter(struct rumpuser_mtx *mtx)
 		return;
 
 	assert(mtx->owner == NULL);
-	mtx->owner = rumpuser_get_curlwp();
+	mtx->owner = rumpuser_curlwp();
 }
 
 static void
@@ -460,17 +462,106 @@ rumpuser_cv_has_waiters(struct rumpuser_cv *cv, int *nwaiters)
  * curlwp
  */
 
-void
-rumpuser_set_curlwp(struct lwp *l)
-{
+/*
+ * the if0'd curlwp implementation is not used by this hypervisor,
+ * but serves as test code to check that the intended usage works.
+ */
+#if 0
+struct rumpuser_lwp {
+	struct lwp *l;
+	LIST_ENTRY(rumpuser_lwp) l_entries;
+};
+static LIST_HEAD(, rumpuser_lwp) lwps = LIST_HEAD_INITIALIZER(lwps);
+static pthread_mutex_t lwplock = PTHREAD_MUTEX_INITIALIZER;
 
-	assert(pthread_getspecific(curlwpkey) == NULL || l == NULL);
-	pthread_setspecific(curlwpkey, l);
+void
+rumpuser_curlwpop(enum rumplwpop op, struct lwp *l)
+{
+	struct rumpuser_lwp *rl, *rliter;
+
+	switch (op) {
+	case RUMPUSER_LWP_CREATE:
+		rl = malloc(sizeof(*rl));
+		rl->l = l;
+		pthread_mutex_lock(&lwplock);
+		LIST_FOREACH(rliter, &lwps, l_entries) {
+			if (rliter->l == l) {
+				fprintf(stderr, "LWP_CREATE: %p exists\n", l);
+				abort();
+			}
+		}
+		LIST_INSERT_HEAD(&lwps, rl, l_entries);
+		pthread_mutex_unlock(&lwplock);
+		break;
+	case RUMPUSER_LWP_DESTROY:
+		pthread_mutex_lock(&lwplock);
+		LIST_FOREACH(rl, &lwps, l_entries) {
+			if (rl->l == l)
+				break;
+		}
+		if (!rl) {
+			fprintf(stderr, "LWP_DESTROY: %p does not exist\n", l);
+			abort();
+		}
+		LIST_REMOVE(rl, l_entries);
+		pthread_mutex_unlock(&lwplock);
+		free(rl);
+		break;
+	case RUMPUSER_LWP_SET:
+		assert(pthread_getspecific(curlwpkey) == NULL || l == NULL);
+
+		if (l) {
+			pthread_mutex_lock(&lwplock);
+			LIST_FOREACH(rl, &lwps, l_entries) {
+				if (rl->l == l)
+					break;
+			}
+			if (!rl) {
+				fprintf(stderr,
+				    "LWP_SET: %p does not exist\n", l);
+				abort();
+			}
+			pthread_mutex_unlock(&lwplock);
+		} else {
+			rl = NULL;
+		}
+
+		pthread_setspecific(curlwpkey, rl);
+		break;
+	}
 }
 
 struct lwp *
-rumpuser_get_curlwp(void)
+rumpuser_curlwp(void)
+{
+	struct rumpuser_lwp *rl;
+
+	rl = pthread_getspecific(curlwpkey);
+	return rl ? rl->l : NULL;
+}
+
+#else
+
+void
+rumpuser_curlwpop(enum rumplwpop op, struct lwp *l)
+{
+
+	switch (op) {
+	case RUMPUSER_LWP_CREATE:
+		break;
+	case RUMPUSER_LWP_DESTROY:
+		break;
+	case RUMPUSER_LWP_SET:
+		assert(pthread_getspecific(curlwpkey) == NULL || l == NULL);
+		pthread_setspecific(curlwpkey, l);
+		break;
+	}
+}
+
+struct lwp *
+rumpuser_curlwp(void)
 {
 
 	return pthread_getspecific(curlwpkey);
 }
+#endif
