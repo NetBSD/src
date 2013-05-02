@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.32 2013/04/27 22:26:57 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.33 2013/05/02 19:15:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.32 2013/04/27 22:26:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.33 2013/05/02 19:15:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -225,7 +225,8 @@ lwp0rele(void)
 
 /*
  * rump_schedule: ensure that the calling host thread has a valid lwp context.
- * ie. ensure that rumpuser_get_curlwp() != NULL.
+ * ie. ensure that curlwp != NULL.  Also, ensure that there
+ * a 1:1 mapping between the lwp and rump kernel cpu.
  */
 void
 rump_schedule()
@@ -239,7 +240,7 @@ rump_schedule()
 	 * for this case -- anyone who cares about performance will
 	 * start a real thread.
 	 */
-	if (__predict_true((l = rumpuser_get_curlwp()) != NULL)) {
+	if (__predict_true((l = rumpuser_curlwp()) != NULL)) {
 		rump_schedule_cpu(l);
 		LWP_CACHE_CREDS(l, l->l_proc);
 	} else {
@@ -247,7 +248,7 @@ rump_schedule()
 
 		/* schedule cpu and use lwp0 */
 		rump_schedule_cpu(&lwp0);
-		rumpuser_set_curlwp(&lwp0);
+		rumpuser_curlwpop(RUMPUSER_LWP_SET, &lwp0);
 
 		/* allocate thread, switch to it, and release lwp0 */
 		l = rump__lwproc_alloclwp(initproc);
@@ -364,7 +365,7 @@ rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
 void
 rump_unschedule()
 {
-	struct lwp *l = rumpuser_get_curlwp();
+	struct lwp *l = rumpuser_curlwp();
 #ifdef DIAGNOSTIC
 	int nlock;
 
@@ -398,10 +399,10 @@ rump_unschedule()
 		lwp0.l_mutex = &unruntime_lock;
 		lwp0.l_pflag &= ~LP_RUNNING;
 		lwp0rele();
-		rumpuser_set_curlwp(NULL);
+		rumpuser_curlwpop(RUMPUSER_LWP_SET, NULL);
 
 	} else if (__predict_false(l->l_flag & LW_RUMP_CLEAR)) {
-		rumpuser_set_curlwp(NULL);
+		rumpuser_curlwpop(RUMPUSER_LWP_SET, NULL);
 		l->l_flag &= ~LW_RUMP_CLEAR;
 	}
 }
