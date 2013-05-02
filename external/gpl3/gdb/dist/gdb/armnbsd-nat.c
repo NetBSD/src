@@ -30,6 +30,7 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
+#include <arm/arm32/frame.h>
 
 /* Support for debugging kernel virtual memory images.  */
 #include <machine/pcb.h>

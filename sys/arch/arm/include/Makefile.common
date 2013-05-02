@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile.common,v 1.1 2013/05/01 12:01:55 matt Exp $
-
-INCSDIR= /usr/include/${MACHINE}
+#	$NetBSD: Makefile.common,v 1.2 2013/05/02 03:56:40 matt Exp $
 
 .PATH: ../../arm/include/common
 
+.if 0
 INCS+=	ansi.h aout_machdep.h asm.h \
 	bswap.h \
 	cdefs.h cpu.h \
@@ -19,5 +18,9 @@ INCS+=	ansi.h aout_machdep.h asm.h \
 	trap.h types.h \
 	vmparam.h \
 	wchar_limits.h
+.else
+INCS+=	disklabel.h \
+	intr.h
+.endif
 
 .include <bsd.kinc.mk>

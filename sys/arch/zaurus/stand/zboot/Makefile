@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/05/01 22:16:16 matt Exp $
+#	$NetBSD: Makefile,v 1.10 2013/05/02 03:56:42 matt Exp $
 
 PROG=		zboot
 
@@ -55,7 +55,7 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${VERSIONFILE}
 	${_MKTARGET_LINK}
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
 	    ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
-	${CC} -c vers.c
+	${CC} ${CFLAGS} ${CPPFLAGS} -c vers.c
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
 
 .include <bsd.klinks.mk>
