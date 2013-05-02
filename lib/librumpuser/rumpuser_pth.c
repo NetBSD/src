@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.25 2013/05/02 21:35:19 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.26 2013/05/02 22:07:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.25 2013/05/02 21:35:19 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.26 2013/05/02 22:07:57 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
@@ -46,64 +46,6 @@ __RCSID("$NetBSD: rumpuser_pth.c,v 1.25 2013/05/02 21:35:19 pooka Exp $");
 #include <rump/rumpuser.h>
 
 #include "rumpuser_int.h"
-
-static pthread_key_t curlwpkey;
-
-struct rumpuser_mtx {
-	pthread_mutex_t pthmtx;
-	struct lwp *owner;
-	int flags;
-};
-
-#define RURW_AMWRITER(rw) (rw->writer == rumpuser_curlwp()		\
-				&& rw->readers == -1)
-#define RURW_HASREAD(rw)  (rw->readers > 0)
-
-#define RURW_SETWRITE(rw)						\
-do {									\
-	assert(rw->readers == 0);					\
-	rw->writer = rumpuser_curlwp();					\
-	rw->readers = -1;						\
-} while (/*CONSTCOND*/0)
-#define RURW_CLRWRITE(rw)						\
-do {									\
-	assert(RURW_AMWRITER(rw));					\
-	rw->readers = 0;						\
-	rw->writer = NULL;						\
-} while (/*CONSTCOND*/0)
-#define RURW_INCREAD(rw)						\
-do {									\
-	pthread_spin_lock(&rw->spin);					\
-	assert(rw->readers >= 0);					\
-	++(rw)->readers;						\
-	pthread_spin_unlock(&rw->spin);					\
-} while (/*CONSTCOND*/0)
-#define RURW_DECREAD(rw)						\
-do {									\
-	pthread_spin_lock(&rw->spin);					\
-	assert(rw->readers > 0);					\
-	--(rw)->readers;						\
-	pthread_spin_unlock(&rw->spin);					\
-} while (/*CONSTCOND*/0)
-
-struct rumpuser_rw {
-	pthread_rwlock_t pthrw;
-	pthread_spinlock_t spin;
-	int readers;
-	struct lwp *writer;
-};
-
-struct rumpuser_cv {
-	pthread_cond_t pthcv;
-	int nwaiters;
-};
-
-void
-rumpuser__thrinit(void)
-{
-
-	pthread_key_create(&curlwpkey, NULL);
-}
 
 int
 rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
@@ -169,6 +111,12 @@ rumpuser_thread_join(void *ptcookie)
 
 	ET(rv);
 }
+
+struct rumpuser_mtx {
+	pthread_mutex_t pthmtx;
+	struct lwp *owner;
+	int flags;
+};
 
 void
 rumpuser_mutex_init(struct rumpuser_mtx **mtx, int flags)
@@ -273,6 +221,48 @@ rumpuser_mutex_owner(struct rumpuser_mtx *mtx, struct lwp **lp)
 
 	*lp = mtx->owner;
 }
+
+/*
+ * rwlocks
+ */
+
+struct rumpuser_rw {
+	pthread_rwlock_t pthrw;
+	pthread_spinlock_t spin;
+	int readers;
+	struct lwp *writer;
+};
+
+#define RURW_AMWRITER(rw) (rw->writer == rumpuser_curlwp()		\
+				&& rw->readers == -1)
+#define RURW_HASREAD(rw)  (rw->readers > 0)
+
+#define RURW_SETWRITE(rw)						\
+do {									\
+	assert(rw->readers == 0);					\
+	rw->writer = rumpuser_curlwp();					\
+	rw->readers = -1;						\
+} while (/*CONSTCOND*/0)
+#define RURW_CLRWRITE(rw)						\
+do {									\
+	assert(RURW_AMWRITER(rw));					\
+	rw->readers = 0;						\
+	rw->writer = NULL;						\
+} while (/*CONSTCOND*/0)
+#define RURW_INCREAD(rw)						\
+do {									\
+	pthread_spin_lock(&rw->spin);					\
+	assert(rw->readers >= 0);					\
+	++(rw)->readers;						\
+	pthread_spin_unlock(&rw->spin);					\
+} while (/*CONSTCOND*/0)
+#define RURW_DECREAD(rw)						\
+do {									\
+	pthread_spin_lock(&rw->spin);					\
+	assert(rw->readers > 0);					\
+	--(rw)->readers;						\
+	pthread_spin_unlock(&rw->spin);					\
+} while (/*CONSTCOND*/0)
 
 void
 rumpuser_rw_init(struct rumpuser_rw **rw)
@@ -385,6 +375,15 @@ rumpuser_rw_held(struct rumpuser_rw *rw, const enum rumprwlock lk, int *rv)
 		break;
 	}
 }
+
+/*
+ * condvar
+ */
+
+struct rumpuser_cv {
+	pthread_cond_t pthcv;
+	int nwaiters;
+};
 
 void
 rumpuser_cv_init(struct rumpuser_cv **cv)
@@ -522,6 +521,8 @@ rumpuser_cv_has_waiters(struct rumpuser_cv *cv, int *nwaiters)
  * curlwp
  */
 
+static pthread_key_t curlwpkey;
+
 /*
  * the if0'd curlwp implementation is not used by this hypervisor,
  * but serves as test code to check that the intended usage works.
@@ -625,3 +626,10 @@ rumpuser_curlwp(void)
 	return pthread_getspecific(curlwpkey);
 }
 #endif
+
+
+void
+rumpuser__thrinit(void)
+{
+	pthread_key_create(&curlwpkey, NULL);
+}
