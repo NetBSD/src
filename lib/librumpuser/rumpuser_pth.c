@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.23 2013/05/02 19:14:59 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.24 2013/05/02 20:33:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.23 2013/05/02 19:14:59 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.24 2013/05/02 20:33:54 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
@@ -378,17 +378,53 @@ rumpuser_cv_destroy(struct rumpuser_cv *cv)
 	free(cv);
 }
 
+static void
+cv_unschedule(struct rumpuser_mtx *mtx, int *nlocks)
+{
+
+	rumpkern_unsched(nlocks, mtx);
+	mtxexit(mtx);
+}
+
+static void
+cv_reschedule(struct rumpuser_mtx *mtx, int nlocks)
+{
+
+	/*
+	 * If the cv interlock is a spin mutex, we must first release
+	 * the mutex that was reacquired by pthread_cond_wait(),
+	 * acquire the CPU context and only then relock the mutex.
+	 * This is to preserve resource allocation order so that
+	 * we don't deadlock.  Non-spinning mutexes don't have this
+	 * problem since they don't use a hold-and-wait approach
+	 * to acquiring the mutex wrt the rump kernel CPU context.
+	 *
+	 * The more optimal solution would be to rework rumpkern_sched()
+	 * so that it's possible to tell the scheduler
+	 * "if you need to block, drop this lock first", but I'm not
+	 * going poking there without some numbers on how often this
+	 * path is taken for spin mutexes.
+	 */
+	if ((mtx->flags & (RUMPUSER_MTX_SPIN | RUMPUSER_MTX_KMUTEX)) ==
+	    (RUMPUSER_MTX_SPIN | RUMPUSER_MTX_KMUTEX)) {
+		NOFAIL_ERRNO(pthread_mutex_unlock(&mtx->pthmtx));
+		rumpkern_sched(nlocks, mtx);
+		rumpuser_mutex_enter_nowrap(mtx);
+	} else {
+		mtxenter(mtx);
+		rumpkern_sched(nlocks, mtx);
+	}
+}
+
 void
 rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 {
 	int nlocks;
 
 	cv->nwaiters++;
-	rumpkern_unsched(&nlocks, mtx);
-	mtxexit(mtx);
+	cv_unschedule(mtx, &nlocks);
 	NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx));
-	mtxenter(mtx);
-	rumpkern_sched(nlocks, mtx);
+	cv_reschedule(mtx, nlocks);
 	cv->nwaiters--;
 }
 
@@ -420,8 +456,7 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	clock_gettime(CLOCK_REALTIME, &ts);
 
 	cv->nwaiters++;
-	rumpkern_unsched(&nlocks, mtx);
-	mtxexit(mtx);
+	cv_unschedule(mtx, &nlocks);
 
 	ts.tv_sec += sec;
 	ts.tv_nsec += nsec;
@@ -430,8 +465,8 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 		ts.tv_nsec -= 1000*1000*1000;
 	}
 	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
-	mtxenter(mtx);
-	rumpkern_sched(nlocks, mtx);
+
+	cv_reschedule(mtx, nlocks);
 	cv->nwaiters--;
 
 	ET(rv);
