@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpuser.3,v 1.3 2013/04/30 21:18:40 pooka Exp $
+.\"     $NetBSD: rumpuser.3,v 1.4 2013/05/02 12:27:08 pooka Exp $
 .\"
 .\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
@@ -111,13 +111,15 @@ which returned
 .Ft int
 .Fn rumpuser_open "const char *name" "int mode" "int *fdp"
 .Pp
-Open a file for I/O.
+Open
+.Fa name
+for I/O and associate a file descriptor with it.
 Notably, there needs to be no mapping between
 .Fa name
-and the host, but for example on a POSIX system it may be convenient
-to let
-.Fa name
-denote the host file system namespace.
+and the host's file system namespace.
+For example, it is possible to associate the file descriptor with
+device I/O registers for special values of
+.Fa name .
 .Bl -tag -width "xalignmentx"
 .It Fa name
 the identifier of the file to open for I/O
