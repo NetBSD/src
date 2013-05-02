@@ -1,13 +1,12 @@
-# $NetBSD: Makefile,v 1.3 2013/02/05 07:27:03 matt Exp $
+# $NetBSD: Makefile,v 1.4 2013/05/02 03:56:39 matt Exp $
 
 .include <bsd.init.mk>
 .include <bsd.endian.mk>
+.include <bsd.own.mk>
 
 .PATH:		${DIST}/keygen
 
-.if ${MACHINE} == "evbarm" \
-    && ${MACHINE_CPU} == "arm" \
-    && ${TARGET_ENDIANNESS} == "1234"
+.if ${MACHINE_CPU} == "arm" && ${TARGET_ENDIANNESS} == "1234"
 
 PROG_CXX=	sbkeygen
 SRCS=		keygen.cpp
