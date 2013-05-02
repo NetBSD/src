@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.645 2013/03/30 03:03:48 christos Exp $
+$NetBSD: usbdevs,v 1.646 2013/05/02 23:10:53 rkujawa Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -273,6 +273,7 @@ vendor MCT		0x0711	MCT
 vendor IMATION		0x0718	Imation
 vendor SUSTEEN		0x0731	Susteen
 vendor EICON		0x0734	Eicon Networks
+vendor MADCATZ		0x0738	Mad Catz, Inc.
 vendor DIGITALSTREAM	0x074e	Digital Stream
 vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
@@ -1390,6 +1391,9 @@ product EGALAX2 TPANEL		0x0001	Touch Panel
 
 /* Eicon Networks */
 product EICON DIVA852		0x4905	Diva 852 ISDN TA
+
+/* Mad Catz, Inc. */
+product	MADCATZ CYBORG_RAT7	0x1708	Cyborg R.A.T. 7
 
 /* EIZO products */
 product EIZO HUB		0x0000	hub
