@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.7 2013/05/01 04:02:55 matt Exp $
+# $NetBSD: ad.arm,v 1.8 2013/05/02 03:56:39 matt Exp $
 ./usr/lib/libarm_g.a				-unknown-		debuglib
 ./usr/lib/libc_vfp_g.a				-unknown-		debuglib,softfloat
 ./usr/lib/libpmc_g.a				-unknown-		debuglib
@@ -199,3 +199,11 @@
 ./usr/lib/oabi/libperfuse_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/oabi/libppath_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/oabi/libwind_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/elftosb.debug	comp-util-debug		debug,endian=1234
+./usr/libdata/debug/usr/sbin/eeprom.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/sbin/ofctl.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/sbin/sbkeygen.debug	comp-util-debug		debug,endian=1234
+./usr/libdata/debug/usr/sbin/sbtool.debug	comp-util-debug		debug,endian=1234
+./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug
