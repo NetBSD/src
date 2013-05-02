@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.24 2013/05/02 20:33:54 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.25 2013/05/02 21:35:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.24 2013/05/02 20:33:54 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.25 2013/05/02 21:35:19 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
@@ -286,38 +286,70 @@ rumpuser_rw_init(struct rumpuser_rw **rw)
 }
 
 void
-rumpuser_rw_enter(struct rumpuser_rw *rw, int iswrite)
+rumpuser_rw_enter(struct rumpuser_rw *rw, const enum rumprwlock lk)
 {
 
-	if (iswrite) {
+	switch (lk) {
+	case RUMPUSER_RW_WRITER:
 		if (pthread_rwlock_trywrlock(&rw->pthrw) != 0)
 			KLOCK_WRAP(NOFAIL_ERRNO(
 			    pthread_rwlock_wrlock(&rw->pthrw)));
 		RURW_SETWRITE(rw);
-	} else {
+		break;
+	case RUMPUSER_RW_READER:
 		if (pthread_rwlock_tryrdlock(&rw->pthrw) != 0)
 			KLOCK_WRAP(NOFAIL_ERRNO(
 			    pthread_rwlock_rdlock(&rw->pthrw)));
 		RURW_INCREAD(rw);
+		break;
 	}
 }
 
 int
-rumpuser_rw_tryenter(struct rumpuser_rw *rw, int iswrite)
+rumpuser_rw_tryenter(struct rumpuser_rw *rw, const enum rumprwlock lk)
 {
 	int rv;
 
-	if (iswrite) {
+	switch (lk) {
+	case RUMPUSER_RW_WRITER:
 		rv = pthread_rwlock_trywrlock(&rw->pthrw);
 		if (rv == 0)
 			RURW_SETWRITE(rw);
-	} else {
+		break;
+	case RUMPUSER_RW_READER:
 		rv = pthread_rwlock_tryrdlock(&rw->pthrw);
 		if (rv == 0)
 			RURW_INCREAD(rw);
+		break;
+	default:
+		rv = EINVAL;
+		break;
 	}
 
 	ET(rv);
+}
+
+int
+rumpuser_rw_tryupgrade(struct rumpuser_rw *rw)
+{
+
+	/* not supported by pthreads */
+	ET(EBUSY);
+}
+
+void
+rumpuser_rw_downgrade(struct rumpuser_rw *rw)
+{
+
+	/*
+	 * I guess this is not strictly speaking correct,
+	 * but the option is to provide a complete implementation
+	 * of rwlocks here, or at least wrap acquiry in 1) lock
+	 * 2) check if someone is downgrading. if not, we're done
+	 * 3) unlock 4) yield 5) goto 1.
+	 */
+	rumpuser_rw_exit(rw);
+	rumpuser_rw_enter(rw, RUMPUSER_RW_READER);
 }
 
 void
@@ -341,24 +373,17 @@ rumpuser_rw_destroy(struct rumpuser_rw *rw)
 }
 
 void
-rumpuser_rw_held(struct rumpuser_rw *rw, int *rv)
+rumpuser_rw_held(struct rumpuser_rw *rw, const enum rumprwlock lk, int *rv)
 {
 
-	*rv = rw->readers != 0;
-}
-
-void
-rumpuser_rw_rdheld(struct rumpuser_rw *rw, int *rv)
-{
-
-	*rv = RURW_HASREAD(rw);
-}
-
-void
-rumpuser_rw_wrheld(struct rumpuser_rw *rw, int *rv)
-{
-
-	*rv = RURW_AMWRITER(rw);
+	switch (lk) {
+	case RUMPUSER_RW_WRITER:
+		*rv = RURW_AMWRITER(rw);
+		break;
+	case RUMPUSER_RW_READER:
+		*rv = RURW_HASREAD(rw);
+		break;
+	}
 }
 
 void
