@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.39 2013/04/30 16:03:44 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.40 2013/05/02 21:45:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.39 2013/04/30 16:03:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40 2013/05/02 21:45:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -100,7 +100,8 @@ static void
 doclock(void *noarg)
 {
 	struct timespec thetick, curclock;
-	uint64_t sec, nsec;
+	int64_t sec;
+	long nsec;
 	int error;
 	extern int hz;
 
