@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.61 2013/05/02 20:33:54 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.62 2013/05/02 20:37:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.61 2013/05/02 20:33:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.62 2013/05/02 20:37:32 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -113,7 +113,6 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 		isspin = 1;
 	}
 
-	/* spin mutex support needs some cpu scheduler rework  */
 	if (isspin)
 		ruflags |= RUMPUSER_MTX_SPIN;
 	rumpuser_mutex_init((struct rumpuser_mtx **)mtx, ruflags);
