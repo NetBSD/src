@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.101 2013/05/02 19:15:01 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.102 2013/05/02 21:35:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -180,14 +180,15 @@ void rumpuser_mutex_destroy(struct rumpuser_mtx *);
 void rumpuser_mutex_owner(struct rumpuser_mtx *, struct lwp **);
 
 struct rumpuser_rw;
+enum rumprwlock { RUMPUSER_RW_READER, RUMPUSER_RW_WRITER };
 void rumpuser_rw_init(struct rumpuser_rw **);
-void rumpuser_rw_enter(struct rumpuser_rw *, int);
-int  rumpuser_rw_tryenter(struct rumpuser_rw *, int);
+void rumpuser_rw_enter(struct rumpuser_rw *, const enum rumprwlock);
+int  rumpuser_rw_tryenter(struct rumpuser_rw *, const enum rumprwlock);
+int  rumpuser_rw_tryupgrade(struct rumpuser_rw *);
+void rumpuser_rw_downgrade(struct rumpuser_rw *);
 void rumpuser_rw_exit(struct rumpuser_rw *);
 void rumpuser_rw_destroy(struct rumpuser_rw *);
-void rumpuser_rw_held(struct rumpuser_rw *, int *);
-void rumpuser_rw_rdheld(struct rumpuser_rw *, int *);
-void rumpuser_rw_wrheld(struct rumpuser_rw *, int *);
+void rumpuser_rw_held(struct rumpuser_rw *, const enum rumprwlock, int *);
 
 struct rumpuser_cv;
 void rumpuser_cv_init(struct rumpuser_cv **);
