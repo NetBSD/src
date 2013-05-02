@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.19 2013/05/01 12:02:55 matt Exp $
+#	$NetBSD: Makefile,v 1.20 2013/05/02 03:56:40 matt Exp $
 
-INCS+=	disklabel.h \
-	intr.h \
-	joystick.h \
-	pmap.h 
+INCSDIR=	/usr/include/evbarm
+
+INCS=
 
 .include "../../arm/include/Makefile.common"
