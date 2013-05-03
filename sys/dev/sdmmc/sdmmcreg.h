@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.13 2012/12/15 00:03:00 jakllsch Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.14 2013/05/03 16:38:35 matt Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -132,8 +132,17 @@
 #define EXT_CSD_STRUCTURE_VER_1_2	2	/* Version 4.1-4.2-4.3 */
 
 /* EXT_CSD_CARD_TYPE */
-#define EXT_CSD_CARD_TYPE_26M		(1 << 0)
-#define EXT_CSD_CARD_TYPE_52M		(1 << 1)
+/* The only currently valid values for this field are 0x01, 0x03, 0x07,
+ * 0x0B and 0x0F. */
+#define EXT_CSD_CARD_TYPE_F_26M		(1 << 0)
+#define EXT_CSD_CARD_TYPE_F_52M		(1 << 1)
+#define EXT_CSD_CARD_TYPE_F_52M_1_8V	(1 << 2)
+#define EXT_CSD_CARD_TYPE_F_52M_1_2V	(1 << 3)
+#define EXT_CSD_CARD_TYPE_26M		0x01
+#define EXT_CSD_CARD_TYPE_52M		0x03
+#define EXT_CSD_CARD_TYPE_52M_V18	0x07
+#define EXT_CSD_CARD_TYPE_52M_V12	0x0b
+#define EXT_CSD_CARD_TYPE_52M_V12_18	0x0f
 
 /* MMC_SWITCH access mode */
 #define MMC_SWITCH_MODE_CMD_SET		0x00	/* Change the command set */
