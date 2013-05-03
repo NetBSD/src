@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.373 2013/04/27 22:21:13 christos Exp $
+# $NetBSD: GENERIC,v 1.374 2013/05/03 15:45:24 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.373 $"
+#ident 		"GENERIC-$Revision: 1.374 $"
 
 maxusers	64		# estimated number of users
 
@@ -1137,6 +1137,7 @@ btsco* at bthub?
 
 # SD/MMC controller
 sdhc*	at pci?		# SD Host Controller
+sdhc*	at cardbus?	# SD Host Controller
 sdmmc*	at sdhc?	# SD/MMC bus
 
 ld*	at sdmmc?
