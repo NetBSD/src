@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump.3,v 1.12 2013/05/02 11:32:44 pooka Exp $
+.\"     $NetBSD: rump.3,v 1.13 2013/05/03 20:24:26 wiz Exp $
 .\"
 .\" Copyright (c) 2008-2011 Antti Kantee.  All rights reserved.
 .\"
@@ -35,13 +35,17 @@ rump Library (librump, \-lrump)
 .In rump/rump.h
 .Sh DESCRIPTION
 A rump kernel is a virtualized kernel instance which retains only part
-of the NetBSD kernel.
+of the
+.Nx
+kernel.
 Rump kernels are aimed at virtualizing kernel drivers and do not support
 for example creating processes, managing virtual memory address spaces
 or scheduling threads.
 These features are unnecessary overhead when virtualizing drivers.
 Rump kernels are created by linking a desired set of components together.
-On NetBSD, these components are available as userspace libraries with
+On
+.Nx ,
+these components are available as userspace libraries with
 the prefix
 .Pa librump .
 The high-level
@@ -64,7 +68,7 @@ rump kernel with function calls and direct memory references.
 Remote and microkernel clients are disjoint from the rump kernel
 and make requests though various protocols, see for example
 .Xr p2k 3 ,
-.Xr rump_sp 7
+.Xr rump_sp 7 ,
 and
 .Xr rumphijack 3 .
 Remote clients will also work over a TCP/IP network, or other similar
@@ -74,7 +78,7 @@ A rump kernel is bootstrapped by calling
 .Fn rump_init .
 A number of environment variables set before a rump kernel is bootstrapped
 will affect how it works.
-Some examples includes:
+Some examples include:
 .Bl -tag -width RUMP_MEMLIMITXX
 .It Dv RUMP_NCPU
 If set, indicates the number of virtual CPUs configured into a
@@ -110,11 +114,15 @@ is to use rump kernel system calls, which have equivalent syntax and
 semantics with regular
 .Nx
 system calls.
-The parameters are expected to be in the NetBSD type system unless a system
+The parameters are expected to be in the
+.Nx
+type system unless a system
 call translation component, for example librumpkern_sys_linux,
 is linked into the rump kernel, in which case system call parameters
 will be automatically translated from the client type system into
-the NetBSD type system and back.
+the
+.Nx
+type system and back.
 The rump kernel system calls are made available to a client by
 including
 .In rump/rump_syscalls.h .
