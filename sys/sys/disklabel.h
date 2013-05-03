@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.113 2013/04/04 12:52:25 martin Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.114 2013/05/03 16:05:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -49,7 +49,7 @@
  * paritition are machine dependent.
  */
 #if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/machine/disklabel.h>
+#define MAXPARTITIONS		MAXMAXPARTITIONS
 #else
 #include <machine/disklabel.h>
 #endif /* HAVE_NBTOOL_CONFIG_H */

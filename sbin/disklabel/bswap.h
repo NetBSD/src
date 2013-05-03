@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap.h,v 1.1 2010/01/05 15:45:26 tsutsui Exp $	*/
+/*	$NetBSD: bswap.h,v 1.2 2013/05/03 16:05:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Izumi Tsutsui.  All rights reserved.
@@ -34,31 +34,18 @@
 #define BYTE_ORDER		LITTLE_ENDIAN
 #endif
 #endif
-#endif
-
-#ifndef TARGET_BYTE_ORDER
-#define TARGET_BYTE_ORDER	BYTE_ORDER
-#endif
-
-#if TARGET_BYTE_ORDER != BYTE_ORDER
-#define htotarget16(x)		bswap16(x)
-#define target16toh(x)		bswap16(x)
-#define htotarget32(x)		bswap32(x)
-#define target32toh(x)		bswap32(x)
-#define dkcksum_target(lp)	dkcksum_re(lp)
-
-void htotargetlabel(struct disklabel *, struct disklabel *);
-void targettohlabel(struct disklabel *, struct disklabel *);
-uint16_t dkcksum_re(struct disklabel *);
-
 #else
-#define htotarget16(x)		(x)
-#define target16toh(x)		(x)
-#define htotarget32(x)		(x)
-#define target32toh(x)		(x)
-#define dkcksum_target(lp)	dkcksum(lp)
-#define htotargetlabel(tlp, hlp)					\
-	    do {*(tlp) = *(hlp);} while (/* CONSTCOND */0)
-#define targettohlabel(hlp, tlp)					\
-	    do {*(hlp) = *(tlp);} while (/* CONSTCOND */0)
+#include <sys/endian.h>
 #endif
+
+extern int bswap_p;
+extern u_int maxpartitions;
+
+#define htotarget16(x)		(bswap_p ? bswap16(x) : (x))
+#define target16toh(x)		(bswap_p ? bswap16(x) : (x))
+#define htotarget32(x)		(bswap_p ? bswap32(x) : (x))
+#define target32toh(x)		(bswap_p ? bswap32(x) : (x))
+
+void htotargetlabel(struct disklabel *, const struct disklabel *);
+void targettohlabel(struct disklabel *, const struct disklabel *);
+uint16_t dkcksum_target(struct disklabel *);
