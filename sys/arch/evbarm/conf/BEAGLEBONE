@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.12 2013/04/30 00:26:19 matt Exp $
+#	$NetBSD: BEAGLEBONE,v 1.13 2013/05/03 15:46:53 jakllsch Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -34,7 +34,7 @@ file-system	FFS		# UFS
 file-system	MFS		# memory file system
 file-system	NFS		# Network file system
 #file-system 	ADOSFS		# AmigaDOS-compatible file system
-#file-system 	EXT2FS		# second extended file system (linux)
+file-system 	EXT2FS		# second extended file system (linux)
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
