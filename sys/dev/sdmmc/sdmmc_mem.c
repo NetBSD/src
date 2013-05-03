@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.27 2012/12/20 03:51:04 jakllsch Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.28 2013/05/03 16:13:48 matt Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.27 2012/12/20 03:51:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.28 2013/05/03 16:13:48 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -724,7 +724,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 		default:
 			aprint_error_dev(sc->sc_dev,
-			    "unknwon CARD_TYPE: 0x%x\n",
+			    "unknown CARD_TYPE: 0x%x\n",
 			    ext_csd[EXT_CSD_CARD_TYPE]);
 			return error;
 		}
