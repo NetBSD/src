@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.17 2013/04/27 06:25:03 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2013/05/03 09:37:17 skrll Exp $
+
+LDELFSO_MACHINE_ARCH?=	${MACHINE_ARCH}
 
 SRCS+=		rtld_start.S mdreloc.c
 
