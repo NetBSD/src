@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.56 2012/03/01 20:16:27 jakllsch Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.57 2013/05/03 15:42:29 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56 2012/03/01 20:16:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.57 2013/05/03 15:42:29 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -803,10 +803,10 @@ einval:
 static void
 x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
 {
-	outb(0x3c0 + VGA_DAC_ADDRW, index);
-	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)r >> 2);
-	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)g >> 2);
-	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)b >> 2);
+	outb(IO_VGA + VGA_DAC_ADDRW, index);
+	outb(IO_VGA + VGA_DAC_PALETTE, (uint8_t)r >> 2);
+	outb(IO_VGA + VGA_DAC_PALETTE, (uint8_t)g >> 2);
+	outb(IO_VGA + VGA_DAC_PALETTE, (uint8_t)b >> 2);
 }
 
 static bool
