@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.116 2013/04/24 22:37:20 matt Exp $
+#	$NetBSD: Makefile,v 1.117 2013/05/03 15:52:31 matt Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
 
 WARNS?=4
+
+LDELFSO_MACHINE_ARCH?= ${MACHINE_ARCH}
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -24,18 +26,18 @@ ARCHSUBDIR=	${MACHINE_CPU}
 .endif
 M=		${.CURDIR}/arch/${ARCHSUBDIR}
 
-.if ((${MACHINE_ARCH} == "alpha") ||					\
+.if ((${LDELFSO_MACHINE_ARCH} == "alpha") ||				\
      (${MACHINE_CPU} == "arm") ||					\
-     (${MACHINE_ARCH} == "hppa") ||					\
-     (${MACHINE_ARCH} == "i386") ||					\
-     (${MACHINE_ARCH} == "m68k") ||					\
+     (${LDELFSO_MACHINE_ARCH} == "hppa") ||				\
+     (${LDELFSO_MACHINE_ARCH} == "i386") ||				\
+     (${LDELFSO_MACHINE_ARCH} == "m68k") ||				\
      (${MACHINE_CPU} == "mips") ||					\
-     (${MACHINE_ARCH} == "powerpc") ||					\
+     (${LDELFSO_MACHINE_ARCH} == "powerpc") ||				\
      (${MACHINE_CPU} == "sh3") ||					\
-     (${MACHINE_ARCH} == "sparc") ||					\
-     (${MACHINE_ARCH} == "sparc64") ||					\
-     (${MACHINE_ARCH} == "x86_64") ||					\
-     (${MACHINE_ARCH} == "vax")) &&					\
+     (${LDELFSO_MACHINE_ARCH} == "sparc") ||				\
+     (${LDELFSO_MACHINE_ARCH} == "sparc64") ||				\
+     (${LDELFSO_MACHINE_ARCH} == "x86_64") ||				\
+     (${LDELFSO_MACHINE_ARCH} == "vax")) &&				\
     ${MKPIC} != "no"
 
 LDFLAGS+=	${${ACTIVE_CC} == "clang":? -Wl,-Bsymbolic : -symbolic} \
@@ -91,13 +93,13 @@ CPPFLAGS+=	-DCOMBRELOC
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC
-.if !empty(MACHINE_ARCH:Mearm*)
+.if !empty(LDELFSO_MACHINE_ARCH:Mearm*)
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libexecinfo
 .endif
 #DBG=		-g
 COPTS=		-O3 -fomit-frame-pointer
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${LDELFSO_MACHINE_ARCH} == "i386" || ${LDELFSO_MACHINE_ARCH} == "x86_64"
 COPTS+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3
 .endif
 
