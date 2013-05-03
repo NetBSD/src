@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.66 2013/04/27 21:22:05 joerg Exp $	*/
+/*	$NetBSD: netdb.h,v 1.67 2013/05/03 19:34:13 christos Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -266,11 +266,17 @@ struct addrinfo {
 #define	AI_CANONNAME	0x00000002 /* fill ai_canonname */
 #define	AI_NUMERICHOST	0x00000004 /* prevent host name resolution */
 #define	AI_NUMERICSERV	0x00000008 /* prevent service name resolution */
+#define	AI_ADDRCONFIG	0x00000400 /* only if any address is assigned */
 /* valid flags for addrinfo (not a standard def, apps should not use it) */
+#ifdef _NETBSD_SOURCE
+#define	AI_SRV		0x00000800 /* do _srv lookups */
+#define	AI_MASK	\
+    (AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST | AI_NUMERICSERV | \
+    AI_ADDRCONFIG | AI_SRV)
+#else
 #define	AI_MASK	\
     (AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST | AI_NUMERICSERV | \
     AI_ADDRCONFIG)
-#define	AI_ADDRCONFIG	0x00000400 /* only if any address is assigned */
 #endif
 
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
