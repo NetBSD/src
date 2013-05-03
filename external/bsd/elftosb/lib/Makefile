@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2013/05/02 07:01:55 matt Exp $
+# $NetBSD: Makefile,v 1.9 2013/05/03 18:37:54 matt Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -40,6 +40,8 @@ SRCS=		AESKey.cpp \
 		options.cpp \
 		rijndael.cpp \
 		stdafx.cpp
+.include <bsd.lib.mk>
+.else
+.include <bsd.subdir.mk>
 .endif
 
-.include <bsd.lib.mk>
