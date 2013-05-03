@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.52 2013/04/27 17:12:36 christos Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.53 2013/05/03 00:01:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996, 1997\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.52 2013/04/27 17:12:36 christos Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.53 2013/05/03 00:01:15 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -532,7 +532,7 @@ dump_ccd(int argc, char **argv, int action)
 
 	/* Dump ccd configuration to stdout. */
 	while (argc) {
-		int i;
+		int i = 0;	/* XXX: vax gcc */
 		int error;
 		char *cp = *argv++; --argc;
 		char *ccd;
