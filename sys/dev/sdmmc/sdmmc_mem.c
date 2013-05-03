@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.28 2013/05/03 16:13:48 matt Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.29 2013/05/03 16:38:35 matt Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.28 2013/05/03 16:13:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.29 2013/05/03 16:38:35 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -717,7 +717,10 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sf->csd.tran_speed = 26000;	/* 26MHz */
 			break;
 
-		case EXT_CSD_CARD_TYPE_52M | EXT_CSD_CARD_TYPE_26M:
+		case EXT_CSD_CARD_TYPE_52M:
+		case EXT_CSD_CARD_TYPE_52M_V18:
+		case EXT_CSD_CARD_TYPE_52M_V12:
+		case EXT_CSD_CARD_TYPE_52M_V12_18:
 			sf->csd.tran_speed = 52000;	/* 52MHz */
 			hs_timing = 1;
 			break;
