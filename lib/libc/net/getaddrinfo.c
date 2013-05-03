@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.101 2012/06/08 07:54:14 martin Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.102 2013/05/03 19:24:52 christos Exp $ */
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.101 2012/06/08 07:54:14 martin Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.102 2013/05/03 19:24:52 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -118,7 +118,7 @@ static const struct afd {
 	int a_socklen;
 	int a_off;
 	const char *a_addrany;
-	const char *a_loopback;	
+	const char *a_loopback;
 	int a_scoped;
 } afdl [] = {
 #ifdef INET6
@@ -170,8 +170,8 @@ static const struct explore explore[] = {
 #endif
 
 static const ns_src default_dns_files[] = {
-	{ NSSRC_FILES, 	NS_SUCCESS },
-	{ NSSRC_DNS, 	NS_SUCCESS },
+	{ NSSRC_FILES,	NS_SUCCESS },
+	{ NSSRC_DNS,	NS_SUCCESS },
 	{ 0, 0 }
 };
 
@@ -193,17 +193,17 @@ struct res_target {
 
 static int str2number(const char *);
 static int explore_fqdn(const struct addrinfo *, const char *,
-	const char *, struct addrinfo **, struct servent_data *);
+    const char *, struct addrinfo **, struct servent_data *);
 static int explore_null(const struct addrinfo *,
-	const char *, struct addrinfo **, struct servent_data *);
+    const char *, struct addrinfo **, struct servent_data *);
 static int explore_numeric(const struct addrinfo *, const char *,
-	const char *, struct addrinfo **, const char *, struct servent_data *);
+    const char *, struct addrinfo **, const char *, struct servent_data *);
 static int explore_numeric_scope(const struct addrinfo *, const char *,
-	const char *, struct addrinfo **, struct servent_data *);
+    const char *, struct addrinfo **, struct servent_data *);
 static int get_canonname(const struct addrinfo *,
-	struct addrinfo *, const char *);
+    struct addrinfo *, const char *);
 static struct addrinfo *get_ai(const struct addrinfo *,
-	const struct afd *, const char *);
+    const struct afd *, const char *);
 static int get_portmatch(const struct addrinfo *, const char *,
     struct servent_data *);
 static int get_port(const struct addrinfo *, const char *, int,
@@ -215,7 +215,7 @@ static int ip6_str2scopeid(char *, struct sockaddr_in6 *, u_int32_t *);
 #endif
 
 static struct addrinfo *getanswer(const querybuf *, int, const char *, int,
-	const struct addrinfo *);
+    const struct addrinfo *);
 static void aisort(struct addrinfo *s, res_state res);
 static int _dns_getaddrinfo(void *, void *, va_list);
 static void _sethtent(FILE **);
@@ -231,67 +231,67 @@ static int _yp_getaddrinfo(void *, void *, va_list);
 static int res_queryN(const char *, struct res_target *, res_state);
 static int res_searchN(const char *, struct res_target *, res_state);
 static int res_querydomainN(const char *, const char *,
-	struct res_target *, res_state);
+    struct res_target *, res_state);
 
 static const char * const ai_errlist[] = {
 	"Success",
 	"Address family for hostname not supported",	/* EAI_ADDRFAMILY */
-	"Temporary failure in name resolution",		/* EAI_AGAIN      */
-	"Invalid value for ai_flags",		       	/* EAI_BADFLAGS   */
-	"Non-recoverable failure in name resolution", 	/* EAI_FAIL       */
-	"ai_family not supported",			/* EAI_FAMILY     */
-	"Memory allocation failure", 			/* EAI_MEMORY     */
-	"No address associated with hostname", 		/* EAI_NODATA     */
-	"hostname nor servname provided, or not known",	/* EAI_NONAME     */
-	"servname not supported for ai_socktype",	/* EAI_SERVICE    */
-	"ai_socktype not supported", 			/* EAI_SOCKTYPE   */
-	"System error returned in errno", 		/* EAI_SYSTEM     */
+	"Temporary failure in name resolution",		/* EAI_AGAIN	  */
+	"Invalid value for ai_flags",			/* EAI_BADFLAGS	  */
+	"Non-recoverable failure in name resolution",	/* EAI_FAIL	  */
+	"ai_family not supported",			/* EAI_FAMILY	  */
+	"Memory allocation failure",			/* EAI_MEMORY	  */
+	"No address associated with hostname",		/* EAI_NODATA	  */
+	"hostname nor servname provided, or not known", /* EAI_NONAME	  */
+	"servname not supported for ai_socktype",	/* EAI_SERVICE	  */
+	"ai_socktype not supported",			/* EAI_SOCKTYPE	  */
+	"System error returned in errno",		/* EAI_SYSTEM	  */
 	"Invalid value for hints",			/* EAI_BADHINTS	  */
-	"Resolved protocol is unknown",			/* EAI_PROTOCOL   */
-	"Argument buffer overflow",			/* EAI_OVERFLOW   */
-	"Unknown error", 				/* EAI_MAX        */
+	"Resolved protocol is unknown",			/* EAI_PROTOCOL	  */
+	"Argument buffer overflow",			/* EAI_OVERFLOW	  */
+	"Unknown error",				/* EAI_MAX	  */
 };
 
 /* XXX macros that make external reference is BAD. */
 
-#define GET_AI(ai, afd, addr) 					\
-do { 								\
-	/* external reference: pai, error, and label free */ 	\
-	(ai) = get_ai(pai, (afd), (addr)); 			\
-	if ((ai) == NULL) { 					\
-		error = EAI_MEMORY; 				\
-		goto free; 					\
-	} 							\
+#define GET_AI(ai, afd, addr)					\
+do {								\
+	/* external reference: pai, error, and label free */	\
+	(ai) = get_ai(pai, (afd), (addr));			\
+	if ((ai) == NULL) {					\
+		error = EAI_MEMORY;				\
+		goto free;					\
+	}							\
 } while (/*CONSTCOND*/0)
 
-#define GET_PORT(ai, serv, svd) 				\
-do { 								\
-	/* external reference: error and label free */ 		\
-	error = get_port((ai), (serv), 0, (svd)); 		\
-	if (error != 0) 					\
-		goto free; 					\
+#define GET_PORT(ai, serv, svd)					\
+do {								\
+	/* external reference: error and label free */		\
+	error = get_port((ai), (serv), 0, (svd));		\
+	if (error != 0)						\
+		goto free;					\
 } while (/*CONSTCOND*/0)
 
-#define GET_CANONNAME(ai, str) 					\
-do { 								\
-	/* external reference: pai, error and label free */ 	\
-	error = get_canonname(pai, (ai), (str)); 		\
-	if (error != 0) 					\
-		goto free; 					\
+#define GET_CANONNAME(ai, str)					\
+do {								\
+	/* external reference: pai, error and label free */	\
+	error = get_canonname(pai, (ai), (str));		\
+	if (error != 0)						\
+		goto free;					\
 } while (/*CONSTCOND*/0)
 
-#define ERR(err) 						\
-do { 								\
-	/* external reference: error, and label bad */ 		\
-	error = (err); 						\
-	goto bad; 						\
-	/*NOTREACHED*/ 						\
+#define ERR(err)						\
+do {								\
+	/* external reference: error, and label bad */		\
+	error = (err);						\
+	goto bad;						\
+	/*NOTREACHED*/						\
 } while (/*CONSTCOND*/0)
 
-#define MATCH_FAMILY(x, y, w) 						\
-	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == PF_UNSPEC || 	\
-	    (y) == PF_UNSPEC)))	
-#define MATCH(x, y, w) 							\
+#define MATCH_FAMILY(x, y, w)						\
+	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == PF_UNSPEC ||	\
+	    (y) == PF_UNSPEC)))
+#define MATCH(x, y, w)							\
 	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == ANY || (y) == ANY)))
 
 const char *
@@ -370,7 +370,7 @@ getaddrinfo(const char *hostname, const char *servname,
 	pai->ai_canonname = NULL;
 	pai->ai_addr = NULL;
 	pai->ai_next = NULL;
-	
+
 	if (hostname == NULL && servname == NULL)
 		return EAI_NONAME;
 	if (hints) {
@@ -892,14 +892,14 @@ get_ai(const struct addrinfo *pai, const struct afd *afd, const char *addr)
 	if (ai == NULL)
 		return NULL;
 
-        save = ai->ai_addr;
+	save = ai->ai_addr;
 	memcpy(ai, pai, sizeof(struct addrinfo));
 
-        /* since we just overwrote all of ai, we have
-           to restore ai_addr and ai_addrlen */
-        ai->ai_addr = save;
-        ai->ai_addrlen = (socklen_t)afd->a_socklen;
-        
+	/* since we just overwrote all of ai, we have
+	   to restore ai_addr and ai_addrlen */
+	ai->ai_addr = save;
+	ai->ai_addrlen = (socklen_t)afd->a_socklen;
+
 	ai->ai_addr->sa_family = ai->ai_family = afd->a_af;
 	p = (char *)(void *)(ai->ai_addr);
 	memcpy(p + afd->a_off, addr, (size_t)afd->a_addrlen);
@@ -950,7 +950,7 @@ get_port(const struct addrinfo *ai, const char *servname, int matchonly,
 		break;
 	case ANY:
 		/*
-		 * This was 0.  It is now 1 so that queries specifying
+		 * This was 0.	It is now 1 so that queries specifying
 		 * a NULL hint, or hint without socktype (but, hopefully,
 		 * with protocol) and numeric address actually work.
 		 */
@@ -1183,9 +1183,9 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		}
 		cp += n;			/* name */
 		type = _getshort(cp);
- 		cp += INT16SZ;			/* type */
+		cp += INT16SZ;			/* type */
 		class = _getshort(cp);
- 		cp += INT16SZ + INT32SZ;	/* class, TTL */
+		cp += INT16SZ + INT32SZ;	/* class, TTL */
 		n = _getshort(cp);
 		cp += INT16SZ;			/* len */
 		if (class != C_IN) {
@@ -1329,7 +1329,7 @@ aisort(struct addrinfo *s, res_state res)
 
 /*ARGSUSED*/
 static int
-_dns_getaddrinfo(void *rv, void	*cb_data, va_list ap)
+_dns_getaddrinfo(void *rv, void *cb_data, va_list ap)
 {
 	struct addrinfo *ai;
 	querybuf *buf, *buf2;
@@ -1813,7 +1813,7 @@ res_queryN(const char *name, /* domain name */ struct res_target *target,
  * Formulate a normal query, send, and retrieve answer in supplied buffer.
  * Return the size of the response on success, -1 on error.
  * If enabled, implement search rules until answer or unrecoverable failure
- * is detected.  Error code, if any, is left in h_errno.
+ * is detected.	 Error code, if any, is left in h_errno.
  */
 static int
 res_searchN(const char *name, struct res_target *target, res_state res)
@@ -1918,7 +1918,7 @@ res_searchN(const char *name, struct res_target *target, res_state res)
 			 * we only wanted one iteration of the loop, so stop.
 			 */
 			if (!(res->options & RES_DNSRCH))
-			        done++;
+				done++;
 		}
 	}
 
