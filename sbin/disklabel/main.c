@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2013/05/03 16:05:12 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2013/05/03 16:39:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.29 2013/05/03 16:05:12 matt Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2013/05/03 16:39:00 matt Exp $");
 #endif
 #endif	/* not lint */
 
@@ -560,7 +560,7 @@ main(int argc, char *argv[])
 	}
 	bswap_p = (byteorder != BYTE_ORDER);
 #ifdef DEBUG
-	printf("labelusesmbr=%d labelsector=%u labeloffset=%u maxparitions=%u\n",
+	printf("labelusesmbr=%d labelsector=%u labeloffset=%u maxpartitions=%u\n",
 	    labelusesmbr, labelsector, labeloffset, maxpartitions);
 	printf("byteorder=%d bswap_p=%d\n", byteorder, bswap_p);
 #endif
@@ -573,7 +573,7 @@ main(int argc, char *argv[])
 	native_p = native_params.labelusesmbr == labelusesmbr
 	    && native_params.labelsector == labelsector
 	    && native_params.labeloffset == labeloffset
-	    && maxparitions <= native_params.maxpartitions
+	    && maxpartitions <= native_params.maxpartitions
 	    && !bswap_p;
 	if (!native_p)
 		Fflag = rflag = 1;
