@@ -1,4 +1,4 @@
-.\"	$NetBSD: getbyteorder.3,v 1.1 2013/05/02 07:17:09 matt Exp $
+.\"	$NetBSD: getbyteorder.3,v 1.2 2013/05/03 20:21:24 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,9 @@
 .Fn getbyteorder void
 .Sh DESCRIPTION
 .Fn getbyteorder
-returns LITTLE_ENDIAN, BIG_ENDIAN,
+returns
+.Dv LITTLE_ENDIAN ,
+.Dv BIG_ENDIAN ,
 or \-1 in case of an error, setting the global
 .Va errno
 variable.
