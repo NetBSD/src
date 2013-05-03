@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: find_exidx.c,v 1.2 2013/04/25 13:15:26 matt Exp $");
+__RCSID("$NetBSD: find_exidx.c,v 1.3 2013/05/03 10:27:06 skrll Exp $");
 #endif /* not lint */
 
 #include "debug.h"
@@ -46,7 +46,7 @@ __gnu_Unwind_Find_exidx(_Unwind_Ptr pc, int * pcount)
 
 	_rtld_shared_enter();
 
-	vaddr_t va = (vaddr_t)pc; 
+	vaddr_t va = (vaddr_t)pc;
 	for (obj = _rtld_objlist; obj != NULL; obj = obj->next) {
 		/*
 		 * If the address we are looking for is inside this object,
@@ -58,7 +58,7 @@ __gnu_Unwind_Find_exidx(_Unwind_Ptr pc, int * pcount)
 	}
 
 	/*
-	 * If we found an object and it has some exception data, we 
+	 * If we found an object and it has some exception data, we
 	 * need to see if the address matches a PT_LOAD section.
 	 */
 	if (obj != NULL && obj->exidx_start != NULL) {
