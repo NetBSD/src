@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.728 2013/04/28 04:05:41 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.729 2013/05/03 15:55:21 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -702,7 +702,7 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 # In order to identify NetBSD to GNU packages, we sometimes need
 # an "elf" tag for historically a.out platforms.
 #
-.if (${MACHINE_ARCH:Mearm*} != "")
+.if (!empty(MACHINE_ARCH:Mearm*))
 MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf-${MACHINE_ARCH:C/eb//:S/earm/eabi/}
 .elif (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_GNU_ARCH} == "armeb" || \
