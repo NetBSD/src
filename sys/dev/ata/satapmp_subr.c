@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.11 2013/04/17 12:22:43 jakllsch Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.12 2013/05/03 20:02:08 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.11 2013/04/17 12:22:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.12 2013/05/03 20:02:08 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,8 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 	ata_c.r_features = reg;
 	ata_c.r_device = port;
 	ata_c.timeout = 3000; /* 3s */
-	ata_c.r_st_bmask = WDCS_DRDY;
-	ata_c.r_st_pmask = 0;
+	ata_c.r_st_bmask = 0;
+	ata_c.r_st_pmask = WDCS_DRDY;
 	ata_c.flags = AT_LBA48 | AT_READREG | AT_WAIT;
 
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
@@ -134,8 +134,8 @@ satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
 	ata_c.r_count = (((value >> 32) & 0xff) << 8) |
 			(((value >>  0) & 0xff) << 0);
 	ata_c.timeout = 3000; /* 3s */
-	ata_c.r_st_bmask = WDCS_DRDY;
-	ata_c.r_st_pmask = 0;
+	ata_c.r_st_bmask = 0;
+	ata_c.r_st_pmask = WDCS_DRDY;
 	ata_c.flags = AT_LBA48 | AT_WAIT;
 
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
