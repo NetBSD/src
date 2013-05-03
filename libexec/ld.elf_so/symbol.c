@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.62 2013/04/24 22:37:20 matt Exp $	 */
+/*	$NetBSD: symbol.c,v 1.63 2013/05/03 10:27:05 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.62 2013/04/24 22:37:20 matt Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.63 2013/05/03 10:27:05 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -149,7 +149,7 @@ _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	const Objlist_Entry *elm;
-	
+
 	def = NULL;
 	defobj = NULL;
 	SIMPLEQ_FOREACH(elm, objlist, link) {
@@ -433,7 +433,7 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 		def = ref;
 		defobj = refobj;
 	}
-		
+
 	/*
 	 * If we found no definition and the reference is weak, treat the
 	 * symbol as having the value zero.
@@ -546,7 +546,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 			defobj = obj;
 		}
 	}
-	
+
 	/* Search all dlopened DAGs containing the referencing object. */
 	SIMPLEQ_FOREACH(elm, &refobj->dldags, link) {
 		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
