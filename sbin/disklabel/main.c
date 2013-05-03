@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2013/05/03 16:39:00 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2013/05/03 21:23:36 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2013/05/03 16:39:00 matt Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2013/05/03 21:23:36 matt Exp $");
 #endif
 #endif	/* not lint */
 
@@ -447,7 +447,7 @@ main(int argc, char *argv[])
 	labelsector = native_params.labelsector = getlabelsector();
 	labelusesmbr = native_params.labelusesmbr = getlabelusesmbr();
 	maxpartitions = native_params.maxpartitions = getmaxpartitions();
-	native_params.byteorder = BYTE_ORDER;
+	byteorder = native_params.byteorder = BYTE_ORDER;
 #endif
 
 	if ((cp = getenv("MACHINE")) != NULL) {
