@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.8 2013/05/03 23:28:15 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.9 2013/05/04 10:21:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.8 2013/05/03 23:28:15 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.9 2013/05/04 10:21:27 joerg Exp $");
 
 #include <sys/endian.h>
 
@@ -116,11 +116,11 @@ static void	compress_maybe_checkpoint(struct compress_state *);
 static void	compress_checkpoint(struct compress_state *);
 static void	compress_exit(struct compress_state *);
 static ssize_t	read_block(int, void *, size_t);
-static void	err_ss(int, const char *);
-static void	errx_ss(int, const char *, ...) __printflike(2, 3);
+static void	err_ss(int, const char *) __dead;
+static void	errx_ss(int, const char *, ...) __printflike(2, 3) __dead;
 static void	warn_ss(const char *);
 static void	warnx_ss(const char *, ...) __printflike(1, 2);
-static void	vwarnx_ss(const char *, va_list);
+static void	vwarnx_ss(const char *, va_list) __printflike(1, 0);
 
 /*
  * Compression entry point.
