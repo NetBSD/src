@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.11 2013/05/04 15:27:39 riz Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.12 2013/05/04 15:37:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.11 2013/05/04 15:27:39 riz Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.12 2013/05/04 15:37:39 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -52,7 +52,8 @@ __RCSID("$NetBSD: vndcompress.c,v 1.11 2013/05/04 15:27:39 riz Exp $");
 /* XXX Seems to be missing from <stdio.h>...  */
 int	snprintf_ss(char *restrict, size_t, const char *restrict, ...)
 	    __printflike(3, 4);
-int	vsnprintf_ss(char *restrict, size_t, const char *restrict, va_list);
+int	vsnprintf_ss(char *restrict, size_t, const char *restrict, va_list)
+	    __printflike(3, 0);
 
 #include "common.h"
 
