@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.21 2012/10/11 17:09:56 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.22 2013/05/04 18:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -60,11 +60,6 @@ void	syslogp_ss(int, struct syslog_data *, const char *, const char *,
 void	vsyslogp_ss(int, struct syslog_data *, const char *, const char *, 
     const char *, va_list) __RENAME(__vsyslogp_ss60) __printflike(5, 0);
 #endif
-
-int	snprintf_ss(char * __restrict, size_t, const char * __restrict, ...)
-    __printflike(3, 4);
-int	vsnprintf_ss(char * __restrict, size_t, const char * __restrict,
-    va_list) __printflike(3, 0);
 
 void	_malloc_prefork(void);
 void	_malloc_postfork(void);
