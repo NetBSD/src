@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.87 2013/04/26 17:37:06 joerg Exp $	*/
+/*	$NetBSD: stdio.h,v 1.88 2013/05/04 18:30:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -576,6 +576,12 @@ int	 vfscanf_l(FILE * __restrict, locale_t, const char * __restrict,
     __va_list) __scanflike(3, 0);
 int	 vsscanf_l(const char * __restrict, locale_t, const char * __restrict,
     __va_list) __scanflike(3, 0);
+#ifdef _NETBSD_SOURCE
+int	snprintf_ss(char *restrict, size_t, const char * __restrict, ...)
+    __printflike(3, 4);
+int	vsnprintf_ss(char *restrict, size_t, const char * __restrict, __va_list)
+    __printflike(3, 0);
+#endif
 __END_DECLS
 #endif
 
