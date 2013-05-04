@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.67 2013/05/03 19:34:13 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.68 2013/05/04 00:37:47 riz Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -277,6 +277,7 @@ struct addrinfo {
 #define	AI_MASK	\
     (AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST | AI_NUMERICSERV | \
     AI_ADDRCONFIG)
+#endif
 #endif
 
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
