@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.10 2013/05/04 14:29:48 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.11 2013/05/04 15:27:39 riz Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.10 2013/05/04 14:29:48 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.11 2013/05/04 15:27:39 riz Exp $");
 
 #include <sys/endian.h>
 
@@ -815,7 +815,7 @@ compress_block(int in_fd, int out_fd, uint32_t blkno, uint32_t blocksize,
 		err(1, "write block %"PRIu32, blkno);
 	assert(n_written >= 0);
 	if ((uint32_t)n_written != complen)
-		errx(1, "partial write of block %"PRIu32": %zd <= %zu", blkno,
+		errx(1, "partial write of block %"PRIu32": %zd <= %lu", blkno,
 		    n_written, complen);
 
 	return n_written;
