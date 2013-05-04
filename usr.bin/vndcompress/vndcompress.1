@@ -1,4 +1,4 @@
-.\"	$NetBSD: vndcompress.1,v 1.8 2013/05/03 23:28:15 riastradh Exp $
+.\"	$NetBSD: vndcompress.1,v 1.9 2013/05/04 07:13:23 wiz Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,9 +38,9 @@
 .Nm
 .Op Fl c
 .Op Fl rR
-.Op Fl s Ar blocksize
-.Op Fl p Ar partial-offset
 .Op Fl k Ar checkpoint-blocks
+.Op Fl p Ar partial-offset
+.Op Fl s Ar blocksize
 .Ar image
 .Ar compressed-image
 .Op Ar blocksize
@@ -97,6 +97,11 @@ Stop after writing
 .Ar partial-blocks
 blocks of output.
 This option is mainly useful for automatic testing of restarts.
+.It Fl R
+With the
+.Fl r
+option, if restarting fails, then abort right now and don't touch the
+output file.
 .It Fl r
 Try to restart a partial compression from the last checkpoint.
 If restarting fails, and the
@@ -107,11 +112,6 @@ Restarting may fail for various reasons: if there have been no
 checkpoints, or if the output file has been corrupted in some easily
 recognizable ways, or if the input file's size has changed, or if the
 block size does not match, and so on.
-.It Fl R
-With the
-.Fl r
-option, if restarting fails, then abort right now and don't touch the
-output file.
 .It Fl s Ar blocksize
 Set the compression block size to
 .Ar blocksize ,
@@ -125,7 +125,7 @@ For compatibility with the old version of
 the compression block size may instead be specified at the end of the
 command line.
 .El
-.Pp
+.Sh EXIT STATUS
 .Ex -std
 .Sh EXAMPLES
 Compress an ISO 9660 CD-ROM image:
