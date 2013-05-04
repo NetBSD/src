@@ -1,4 +1,4 @@
-/*	$NetBSD: find.h,v 1.24 2007/02/06 13:25:01 elad Exp $	*/
+/*	$NetBSD: find.h,v 1.25 2013/05/04 06:29:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -35,6 +35,7 @@
  */
 
 #include <regex.h>
+#include <time.h>
 
 /* node type */
 enum ntype {
@@ -71,6 +72,7 @@ typedef struct _plandata {
 		nlink_t _l_data;		/* link count */
 		off_t _o_data;			/* file size */
 		time_t _t_data;			/* time value */
+		struct timespec _ts_data;	/* time value */
 		uid_t _u_data;			/* uid */
 		short _mt_data;			/* mount flags */
 		struct _plandata *_p_data[2];	/* PLAN trees */
@@ -106,6 +108,7 @@ typedef struct _plandata {
 #define	o_data		p_un._o_data
 #define	p_data		p_un._p_data
 #define	t_data		p_un._t_data
+#define	ts_data		p_un._ts_data
 #define	u_data		p_un._u_data
 #define	e_argv		p_un.ex._e_argv
 #define	e_orig		p_un.ex._e_orig
