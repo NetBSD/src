@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.71 2012/08/26 14:26:37 wiz Exp $	*/
+/*	$NetBSD: function.c,v 1.72 2013/05/04 06:29:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.71 2012/08/26 14:26:37 wiz Exp $");
+__RCSID("$NetBSD: function.c,v 1.72 2013/05/04 06:29:32 uebayasi Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ int
 f_anewer(PLAN *plan, FTSENT *entry)
 {
 
-	return (entry->fts_statp->st_atime > plan->t_data);
+	return timespeccmp(&entry->fts_statp->st_atim, &plan->ts_data, >);
 }
 
 PLAN *
@@ -234,7 +234,7 @@ c_anewer(char ***argvp, int isok)
 	if (stat(filename, &sb))
 		err(1, "%s", filename);
 	new = palloc(N_ANEWER, f_anewer);
-	new->t_data = sb.st_atime;
+	new->ts_data = sb.st_atim;
 	return (new);
 }
 
@@ -265,6 +265,7 @@ c_atime(char ***argvp, int isok)
 	TIME_CORRECT(new, N_ATIME);
 	return (new);
 }
+
 /*
  * -cmin n functions --
  *
@@ -304,7 +305,7 @@ int
 f_cnewer(PLAN *plan, FTSENT *entry)
 {
 
-	return (entry->fts_statp->st_ctime > plan->t_data);
+	return timespeccmp(&entry->fts_statp->st_ctim, &plan->ts_data, >);
 }
 
 PLAN *
@@ -320,7 +321,7 @@ c_cnewer(char ***argvp, int isok)
 	if (stat(filename, &sb))
 		err(1, "%s", filename);
 	new = palloc(N_CNEWER, f_cnewer);
-	new->t_data = sb.st_ctime;
+	new->ts_data = sb.st_ctim;
 	return (new);
 }
 
@@ -1212,6 +1213,7 @@ c_mindepth(char ***argvp, int isok)
 	new->min_data = atoi(arg);
 	return (new);
 }
+
 /*
  * -mmin n functions --
  *
@@ -1239,6 +1241,7 @@ c_mmin(char ***argvp, int isok)
 	TIME_CORRECT(new, N_MMIN);
 	return (new);
 }
+
 /*
  * -mtime n functions --
  *
@@ -1327,7 +1330,7 @@ int
 f_newer(PLAN *plan, FTSENT *entry)
 {
 
-	return (entry->fts_statp->st_mtime > plan->t_data);
+	return timespeccmp(&entry->fts_statp->st_mtim, &plan->ts_data, >);
 }
 
 PLAN *
@@ -1343,7 +1346,7 @@ c_newer(char ***argvp, int isok)
 	if (stat(filename, &sb))
 		err(1, "%s", filename);
 	new = palloc(N_NEWER, f_newer);
-	new->t_data = sb.st_mtime;
+	new->ts_data = sb.st_mtim;
 	return (new);
 }
 
