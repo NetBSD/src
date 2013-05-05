@@ -119,13 +119,6 @@ extern initialize_file_ftype _initialize_mi_out;
 extern initialize_file_ftype _initialize_mi_cmds;
 extern initialize_file_ftype _initialize_mi_cmd_env;
 extern initialize_file_ftype _initialize_mi_interp;
-extern initialize_file_ftype _initialize_tui_hooks;
-extern initialize_file_ftype _initialize_tui_interp;
-extern initialize_file_ftype _initialize_tui_layout;
-extern initialize_file_ftype _initialize_tui_out;
-extern initialize_file_ftype _initialize_tui_regs;
-extern initialize_file_ftype _initialize_tui_stack;
-extern initialize_file_ftype _initialize_tui_win;
 extern initialize_file_ftype _initialize_python;
 void
 initialize_all_files (void)
@@ -243,12 +236,5 @@ initialize_all_files (void)
   _initialize_mi_cmds ();
   _initialize_mi_cmd_env ();
   _initialize_mi_interp ();
-  _initialize_tui_hooks ();
-  _initialize_tui_interp ();
-  _initialize_tui_layout ();
-  _initialize_tui_out ();
-  _initialize_tui_regs ();
-  _initialize_tui_stack ();
-  _initialize_tui_win ();
   _initialize_python ();
 }
