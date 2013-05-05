@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.27 2013/05/03 00:23:49 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.28 2013/05/05 12:27:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.27 2013/05/03 00:23:49 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.28 2013/05/05 12:27:38 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
@@ -317,6 +317,7 @@ rumpuser_rw_init(struct rumpuser_rw **rw)
 	NOFAIL_ERRNO(pthread_spin_init(&((*rw)->spin),PTHREAD_PROCESS_PRIVATE));
 	(*rw)->readers = 0;
 	(*rw)->writer = NULL;
+	(*rw)->downgrade = 0;
 }
 
 void
