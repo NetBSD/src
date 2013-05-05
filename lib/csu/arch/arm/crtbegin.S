@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.4 2012/08/25 15:39:05 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.5 2013/05/05 10:26:57 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.4 2012/08/25 15:39:05 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.5 2013/05/05 10:26:57 skrll Exp $")
 
 	.section	.ctors, "aw", %progbits
 	.p2align 2
@@ -186,7 +186,7 @@ __do_global_dtors_aux:
 
 	.type __do_global_ctors_aux, %function
 __do_global_ctors_aux:
-	GOT_INIT(r3, .Lctors_got, .Lctors) 
+	GOT_INIT(r3, .Lctors_got, .Lctors)
 	ldr	r1, .L__initialized
 #ifdef PIC
         ldrb	r0, [r1, r3]!
@@ -249,7 +249,7 @@ __do_global_ctors_aux:
 	/*
 	 * Get the start and end of the CTOR list.
 	 */
-	
+
 	ldr	r4, .L__CTOR_LIST__
 	ldr	r5, .L__CTOR_LIST_END__
 #ifdef PIC
