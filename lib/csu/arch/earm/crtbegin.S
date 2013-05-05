@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.1 2012/08/13 02:49:04 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.2 2013/05/05 10:26:57 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.1 2012/08/13 02:49:04 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.2 2013/05/05 10:26:57 skrll Exp $")
 
 	.section	.eh_frame, "a", %progbits
 	.p2align 2
@@ -129,7 +129,7 @@ __do_global_dtors_aux:
 
 	.type __do_global_ctors_aux, %function
 __do_global_ctors_aux:
-	GOT_INIT(r3, .Lctors_got, .Lctors) 
+	GOT_INIT(r3, .Lctors_got, .Lctors)
 	ldr	r1, .L__initialized		/* GOTOFF if PIC */
 #ifdef PIC
 	ldrb	r0, [r1, r3]!			/* r1 = r1 + got */
