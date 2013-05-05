@@ -120,7 +120,7 @@
 #define HAVE_UNLINK 1
 
 /* Define to 1 if you have the <zlib.h> header file. */
-#define HAVE_ZLIB_H 1
+/* #undef HAVE_ZLIB_H */
 
 /* Using i386 COFF? */
 /* #undef I386COFF */
@@ -225,16 +225,16 @@
 /* #undef STRICTCOFF */
 
 /* Target alias. */
-#define TARGET_ALIAS "arm--netbsdelf-eabihf"
+#define TARGET_ALIAS "armeb--netbsdelf-eabihf"
 
 /* Define as 1 if big endian. */
-#define TARGET_BYTES_BIG_ENDIAN 0
+#define TARGET_BYTES_BIG_ENDIAN 1
 
 /* Canonical target. */
-#define TARGET_CANONICAL "arm--netbsdelf-eabihf"
+#define TARGET_CANONICAL "armeb--netbsdelf-eabihf"
 
 /* Target CPU. */
-#define TARGET_CPU "arm"
+#define TARGET_CPU "armeb"
 
 /* Target OS. */
 #define TARGET_OS "netbsdelf-eabihf"
@@ -293,13 +293,13 @@
 # endif
 #else
 # ifndef WORDS_BIGENDIAN
-/* #  undef WORDS_BIGENDIAN */
+#  define WORDS_BIGENDIAN 1
 # endif
 #endif
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
-#define YYTEXT_POINTER 1
+/* #undef YYTEXT_POINTER */
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

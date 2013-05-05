@@ -96,10 +96,10 @@
 #define HAVE_STRING_H 1
 
 /* Define if <sys/stat.h> has struct stat.st_mtim.tv_nsec */
-/* #undef HAVE_ST_MTIM_TV_NSEC */
+#define HAVE_ST_MTIM_TV_NSEC 1
 
 /* Define if <sys/stat.h> has struct stat.st_mtim.tv_sec */
-/* #undef HAVE_ST_MTIM_TV_SEC */
+#define HAVE_ST_MTIM_TV_SEC 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
