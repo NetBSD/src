@@ -713,7 +713,7 @@
 /* #undef HAVE_XML_STOPPARSER */
 
 /* Define to 1 if you have the <zlib.h> header file. */
-/* #undef HAVE_ZLIB_H */
+#define HAVE_ZLIB_H 1
 
 /* Define to 1 if your system has the _etext variable. */
 #define HAVE__ETEXT 1
