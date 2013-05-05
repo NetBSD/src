@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.69 2013/04/25 16:18:43 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.70 2013/05/05 07:11:34 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -26,6 +26,14 @@ fi
 _OUTDIR="$_TOP/gnu"
 _OUTDIRBASE="gnu"
 
+sanitise_includes () {
+	sed \
+		-e "s,-I$_DESTDIR/usr/include,,g" \
+		-e "s,-I$_TOP/external/lgpl3/mpfr/dist,,g" \
+		-e "s,-I$_TOP/external/lgpl2/mpc/dist/src,,g" \
+		-e "s,-I$_TOP/external/lgpl3/gmp/lib/libgmp/arch/$MACHINE_ARCH,,g"
+}
+
 ##### gnu/lib/crtstuff #####
 
 get_crtstuff () {
@@ -35,7 +43,7 @@ get_crtstuff () {
 	getvars gcc/Makefile \
 		INCLUDES CRTSTUFF_CFLAGS CRTSTUFF_T_CFLAGS CRTSTUFF_T_CFLAGS_S \
 		tm_defines xm_file xm_defines \
-		| sed "s,-I$_DESTDIR/usr/include,,g" \
+		| sanitise_includes \
 		| write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH.mk
 }
 
@@ -394,11 +402,7 @@ get_libgcc () {
 			SHLIB_MAPFILES SHLIB_NM_FLAGS \
 			EXTRA_HEADERS xm_defines \
 			tm_defines ${_extravars}
-	} | sed \
-		-e "s,-I$_DESTDIR/usr/include,,g" \
-		-e "s,-I$_TOP/external/lgpl3/mpfr/dist,,g" \
-		-e "s,-I$_TOP/external/lgpl2/mpc/dist/src,,g" \
-		-e "s,-I$_TOP/external/lgpl3/gmp/lib/libgmp/arch/$MACHINE_ARCH,,g" \
+	}	| sanitise_includes \
 		| write_mk $_OUTDIRBASE/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH.mk
 
 	# Generate new style files.
@@ -573,7 +577,7 @@ get_gcc () {
 		_extravars2="tm_file_list build_xm_include_list"
 		_extravars3="tm_p_include_list"
 		;;
-		
+
 	gcc)
 		_buildname="BUILD_"
 		_libcppsubdir=""
@@ -604,10 +608,7 @@ get_gcc () {
 			tm_defines host_xm_file host_xm_defines tm_p_file \
 			target_cpu_default ${_extravars} ${_extravars2} \
 			lang_specs_files ${_extravars3} \
-				| sed -e "s,-I$_DESTDIR/usr/include,,g" \
-					-e "s,-I$_TOP/external/lgpl3/mpfr/dist,,g" \
-					-e "s,-I$_TOP/external/lgpl2/mpc/dist/src,,g" \
-					-e "s,-I$_TOP/external/lgpl3/gmp/lib/libgmp/arch/$MACHINE_ARCH,,g"
+				| sanitise_includes
 		getvars gcc/Makefile \
 			LIB2ADDEHDEP | sed 's/unwind.inc//'
 		getvars gcc/Makefile \
