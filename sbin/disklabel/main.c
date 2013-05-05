@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2013/05/03 21:23:36 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2013/05/05 15:59:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.31 2013/05/03 21:23:36 matt Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 2013/05/05 15:59:42 skrll Exp $");
 #endif
 #endif	/* not lint */
 
@@ -305,6 +305,7 @@ static const struct arch_endian {
 	{ LITTLE_ENDIAN, "mips64el" },
 	{ LITTLE_ENDIAN, "sh3el" },
 	{ LITTLE_ENDIAN, "vax" },
+	{ LITTLE_ENDIAN, "x86_64" },
 
 	{ BIG_ENDIAN, "armeb" },
 	{ BIG_ENDIAN, "earmeb" },
