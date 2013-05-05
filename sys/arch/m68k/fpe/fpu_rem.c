@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.14 2013/05/05 13:17:15 isaki Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.15 2013/05/05 13:25:20 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.14 2013/05/05 13:17:15 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.15 2013/05/05 13:25:20 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -117,8 +117,8 @@ __fpu_modrem(struct fpemu *fe, int is_mod)
 	l = x->fp_exp - y->fp_exp;
 	k = 0;
 	q = 0;
+	CPYFPN(r, x);
 	if (l >= 0) {
-		CPYFPN(r, x);
 		r->fp_exp -= l;
 		j = l;
 
