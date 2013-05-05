@@ -29,13 +29,13 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.3 2013/04/19 05:36:16 skrll Exp $")
+RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.4 2013/05/05 19:02:22 skrll Exp $")
 
 ENTRY(__aeabi_ldivmod)
 	push	{r4-r5, sl, lr}
 #define	NEG	r5
 	mov	NEG, #0
-	
+
 #ifdef __ARMEB__
 #define	ALO	r1	/* incoming numerator, outgoing quotient */
 #define	AHI	r0	/* incoming numerator, outgoing quotient */
@@ -103,7 +103,7 @@ ENTRY(__aeabi_ldivmod)
 	 * them to see if the numerator has the same value.  We
 	 * don't have to worry about sign.
 	 */
-	teq	BHI, AHI 
+	teq	BHI, AHI
 	teqeq	BLO, ALO
 	bne	1f
 
