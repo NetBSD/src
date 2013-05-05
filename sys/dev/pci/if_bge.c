@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.238 2013/04/21 19:59:40 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.239 2013/05/05 11:28:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.238 2013/04/21 19:59:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.239 2013/05/05 11:28:34 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -3912,11 +3912,13 @@ bge_release_resources(struct bge_softc *sc)
 		sc->bge_intrhand = NULL;
 	}
 
-	bus_dmamap_unload(sc->bge_dmatag, sc->bge_ring_map);
-	bus_dmamap_destroy(sc->bge_dmatag, sc->bge_ring_map);
-	bus_dmamem_unmap(sc->bge_dmatag, (void *)sc->bge_rdata,
-	    sizeof(struct bge_ring_data));
-	bus_dmamem_free(sc->bge_dmatag, &sc->bge_ring_seg, sc->bge_ring_rseg);
+	if (sc->bge_dmatag != NULL) {
+		bus_dmamap_unload(sc->bge_dmatag, sc->bge_ring_map);
+		bus_dmamap_destroy(sc->bge_dmatag, sc->bge_ring_map);
+		bus_dmamem_unmap(sc->bge_dmatag, (void *)sc->bge_rdata,
+		    sizeof(struct bge_ring_data));
+		bus_dmamem_free(sc->bge_dmatag, &sc->bge_ring_seg, sc->bge_ring_rseg);
+	}
 
 	/* Unmap the device registers */
 	if (sc->bge_bsize != 0) {
