@@ -689,7 +689,7 @@
 /* #undef HAVE_WAIT_H */
 
 /* Define to 1 if you have the `wborder' function. */
-#define HAVE_WBORDER 1
+/* #undef HAVE_WBORDER */
 
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
@@ -707,7 +707,7 @@
 #define HAVE_WORKING_VFORK 1
 
 /* Define to 1 if you have the `wresize' function. */
-#define HAVE_WRESIZE 1
+/* #undef HAVE_WRESIZE */
 
 /* Define to 1 if you have the `XML_StopParser' function. */
 /* #undef HAVE_XML_STOPPARSER */
