@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_reboot.c,v 1.3 2013/01/19 10:22:25 skrll Exp $	*/
+/*	$NetBSD: arm32_reboot.c,v 1.4 2013/05/05 10:30:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.3 2013/01/19 10:22:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.4 2013/05/05 10:30:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -184,7 +184,9 @@ cpu_reboot(int howto, char *bootstr)
 	if (howto & RB_HALT) {
 		printf("The operating system has halted.\r\n");
 		printf("Please press any key to reboot.\r\n");
+		cnpollc(true);	/* for proper keyboard command handling */
 		cngetc();
+		cnpollc(false);		
 	}
 
 	printf("rebooting...\r\n");
