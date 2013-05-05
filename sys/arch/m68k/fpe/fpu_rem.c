@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.13 2013/03/26 11:30:21 isaki Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.14 2013/05/05 13:17:15 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.13 2013/03/26 11:30:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.14 2013/05/05 13:17:15 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -85,10 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.13 2013/03/26 11:30:21 isaki Exp $");
  *                R := 0. Return signQ, last 7 bits of Q, and R.
  */
 
-static struct fpn * __fpu_modrem(struct fpemu *fe, int modrem);
+static struct fpn * __fpu_modrem(struct fpemu *fe, int is_mod);
 
 static struct fpn *
-__fpu_modrem(struct fpemu *fe, int modrem)
+__fpu_modrem(struct fpemu *fe, int is_mod)
 {
 	static struct fpn X, Y;
 	struct fpn *x, *y, *r;
@@ -157,7 +157,7 @@ __fpu_modrem(struct fpemu *fe, int modrem)
 	}
  Step4:
 	Last_Subtract = 0;
-	if (modrem == 0)
+	if (is_mod)
 		goto Step6;
 
 	/*
@@ -226,11 +226,11 @@ __fpu_modrem(struct fpemu *fe, int modrem)
 struct fpn *
 fpu_rem(struct fpemu *fe)
 {
-	return __fpu_modrem(fe, 1);
+	return __fpu_modrem(fe, 0);
 }
 
 struct fpn *
 fpu_mod(struct fpemu *fe)
 {
-	return __fpu_modrem(fe, 0);
+	return __fpu_modrem(fe, 1);
 }
