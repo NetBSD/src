@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.40 2013/04/30 05:39:44 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.41 2013/05/06 23:12:53 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.40 2013/04/30 05:39:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.41 2013/05/06 23:12:53 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -715,7 +715,14 @@ static psize_t
 am335x_memprobe(void)
 {
 	const vaddr_t emif_base = OMAP_EMIF_VBASE;
-	const uint32_t sdram_config = *(const volatile uint32_t *)(emif_base + EMIF_SDRAM_CONFIG);
+	uint32_t sdram_config = *(const volatile uint32_t *)(emif_base + EMIF_SDRAM_CONFIG);
+	/*
+	 * The original bbone's u-boot misprograms the EMIF so correct it
+	 * if we detect if it has the wrong value.
+	 */
+	if (sdram_config == 0x41805332)
+		sdram_config -= __SHIFTOUT(1, SDRAM_CONFIG_RSIZE);
+
 	const u_int ibank = __SHIFTOUT(sdram_config, SDRAM_CONFIG_IBANK);
 	const u_int rsize = 9 + __SHIFTOUT(sdram_config, SDRAM_CONFIG_RSIZE);
 	const u_int pagesize = 8 + __SHIFTOUT(sdram_config, SDRAM_CONFIG_PAGESIZE);
