@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.30 2013/04/03 17:15:07 bouyer Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.31 2013/05/06 14:52:51 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.30 2013/04/03 17:15:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.31 2013/05/06 14:52:51 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1468,6 +1468,8 @@ mvsata_bio_ready(struct mvsata_port *mvport, struct ata_bio *ata_bio, int drive,
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 	const char *errstring;
+
+	flags |= AT_POLL;	/* XXX */
 
 	/*
 	 * disable interrupts, all commands here should be quick
