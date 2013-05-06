@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.113 2013/04/25 14:16:37 matt Exp $	 */
+/*	$NetBSD: rtld.h,v 1.114 2013/05/06 08:02:20 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -219,9 +219,9 @@ typedef struct Struct_Obj_Entry {
 			mainref:1,	/* True if on _rtld_list_main */
 			globalref:1,	/* True if on _rtld_list_global */
 			init_done:1,	/* True if .init has been added */
-			init_called:1,	/* True if .init function has been 
+			init_called:1,	/* True if .init function has been
 					 * called */
-			fini_called:1,	/* True if .fini function has been 
+			fini_called:1,	/* True if .fini function has been
 					 * called */
 			z_now:1,	/* True if object's symbols should be
 					   bound immediately */
@@ -410,7 +410,7 @@ const Elf_Sym *_rtld_symlook_obj(const char *, unsigned long,
     const Obj_Entry *, u_int, const Ver_Entry *);
 const Elf_Sym *_rtld_find_symdef(unsigned long, const Obj_Entry *,
     const Obj_Entry **, u_int);
-const Elf_Sym *_rtld_find_plt_symdef(unsigned long, const Obj_Entry *, 
+const Elf_Sym *_rtld_find_plt_symdef(unsigned long, const Obj_Entry *,
     const Obj_Entry **, bool);
 
 const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
@@ -471,7 +471,7 @@ Obj_Entry *_rtld_obj_new(void);
 
 /* function descriptors */
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
-Elf_Addr _rtld_function_descriptor_alloc(const Obj_Entry *, 
+Elf_Addr _rtld_function_descriptor_alloc(const Obj_Entry *,
     const Elf_Sym *, Elf_Addr);
 const void *_rtld_function_descriptor_function(const void *);
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */

@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.49 2013/05/06 07:54:04 skrll Exp $	 */
+/*	$NetBSD: headers.c,v 1.50 2013/05/06 08:02:20 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.49 2013/05/06 07:54:04 skrll Exp $");
+__RCSID("$NetBSD: headers.c,v 1.50 2013/05/06 08:02:20 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -257,7 +257,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			break;
 
 		case DT_FINI_ARRAYSZ:
-			obj->fini_arraysz = dynp->d_un.d_val / sizeof(fptr_t); 
+			obj->fini_arraysz = dynp->d_un.d_val / sizeof(fptr_t);
 			dbg(("headers: DT_FINI_ARRAYZ %zu",
 			    obj->fini_arraysz));
 			break;
@@ -380,7 +380,7 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 	for (ph = phdr; ph < phlimit; ++ph) {
 		if (ph->p_type != PT_PHDR)
 			continue;
-		
+
 		obj->phdr = (void *)(uintptr_t)ph->p_vaddr;
 		obj->phsize = ph->p_memsz;
 		obj->relocbase = (caddr_t)((uintptr_t)phdr - (uintptr_t)ph->p_vaddr);
@@ -388,7 +388,7 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 		    obj->phdr, phdr, obj->phsize, obj->relocbase));
 		break;
 	}
-	
+
 	for (ph = phdr; ph < phlimit; ++ph) {
 		vaddr = (Elf_Addr)(uintptr_t)(obj->relocbase + ph->p_vaddr);
 		switch (ph->p_type) {

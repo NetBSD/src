@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.47 2013/04/25 12:28:59 skrll Exp $	 */
+/*	$NetBSD: map_object.c,v 1.48 2013/05/06 08:02:20 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.47 2013/04/25 12:28:59 skrll Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.48 2013/05/06 08:02:20 skrll Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -204,7 +204,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 			dbg(("%s: %s %p phsize %" PRImemsz, obj->path, "PT_PHDR",
 			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
 			break;
-		
+
 		case PT_DYNAMIC:
 			obj->dynamic = (void *)(uintptr_t)phdr->p_vaddr;
 			dbg(("%s: %s %p phsize %" PRImemsz, obj->path, "PT_DYNAMIC",
