@@ -1,4 +1,4 @@
-/*	$NetBSD: vnduncompress.c,v 1.1 2013/05/03 23:28:15 riastradh Exp $	*/
+/*	$NetBSD: vnduncompress.c,v 1.2 2013/05/06 22:53:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vnduncompress.c,v 1.1 2013/05/03 23:28:15 riastradh Exp $");
+__RCSID("$NetBSD: vnduncompress.c,v 1.2 2013/05/06 22:53:24 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -75,7 +75,8 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 		err(1, "read header");
 	assert(h_read >= 0);
 	if ((size_t)h_read != sizeof(header))
-		errx(1, "partial read of header: %zu", (size_t)h_read);
+		errx(1, "partial read of header: %zu != %zu",
+		    (size_t)h_read, sizeof(header));
 
 	const uint32_t blocksize = be32toh(header.cl2h_blocksize);
 	const uint32_t n_blocks = be32toh(header.cl2h_n_blocks);
@@ -116,7 +117,8 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 		err(1, "read offset table");
 	assert(ot_read >= 0);
 	if ((size_t)ot_read != (n_offsets * sizeof(uint64_t)))
-		errx(1, "partial read of offset table: %zu", (size_t)ot_read);
+		errx(1, "partial read of offset table: %zu != %zu",
+		    (size_t)ot_read, (size_t)(n_offsets * sizeof(uint64_t)));
 
 	/* Allocate compression buffers.  */
 	/* XXX compression ratio bound */
@@ -164,8 +166,8 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 			err(1, "read block %"PRIu32, blkno);
 		assert(n_read >= 0);
 		if ((size_t)n_read != (end - start))
-			errx(1, "partial read of block %"PRIu32": %zu", blkno,
-			    (size_t)n_read);
+			errx(1, "partial read of block %"PRIu32": %zu != %zu",
+			    blkno, (size_t)n_read, (size_t)(end - start));
 
 		/* Uncompress the block.  */
 		const unsigned long complen = (end - start);
@@ -189,8 +191,8 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 			err(1, "write block %"PRIu32, blkno);
 		assert(n_written >= 0);
 		if ((size_t)n_written != uncomplen)
-			errx(1, "partial write of block %"PRIu32": %zu", blkno,
-			    (size_t)n_written);
+			errx(1, "partial write of block %"PRIu32": %zu != %lu",
+			    blkno, (size_t)n_written, uncomplen);
 
 		/* Advance our position.  */
 		assert((size_t)n_read <= (MIN(OFF_MAX, UINT64_MAX) - offset));
