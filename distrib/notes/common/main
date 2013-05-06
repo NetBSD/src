@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.494 2013/01/13 00:19:41 htodd Exp $
+.\"	$NetBSD: main,v 1.495 2013/05/06 21:21:14 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1039,6 +1039,8 @@ If you're one of them, and would like to be mentioned, tell us!)
 .
 .br_ne 2i
 .It Em "The portmasters (and their ports):"
+.\"
+.\" Please keep src/doc/RESPONSIBLE in sync with this list.
 .\"
 .\" XXX created by list-portmasters.pl
 .\"
