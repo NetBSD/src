@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.12 2013/05/04 15:37:39 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.13 2013/05/06 22:53:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.12 2013/05/04 15:37:39 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.13 2013/05/06 22:53:24 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -241,8 +241,8 @@ vndcompress(int argc, char **argv, const struct options *O)
 		assert(n_written >= 0);
 		if ((size_t)n_written != n_padding)
 			errx(1, "partial write of final padding bytes"
-			    ": %zd <= %"PRIu32,
-			    n_written, n_padding);
+			    ": %zu != %"PRIu32,
+			    (size_t)n_written, n_padding);
 
 		/* Account for the extra bytes in the output file.  */
 		assert(n_padding <= (MIN(UINT64_MAX, OFF_MAX) - S->offset));
@@ -565,8 +565,8 @@ compress_init(int argc, char **argv, const struct options *O,
 		err(1, "write header");
 	assert(h_written >= 0);
 	if ((size_t)h_written != sizeof(zero_header))
-		errx(1, "partial write of header: %zd <= %zu", h_written,
-		    sizeof(zero_header));
+		errx(1, "partial write of header: %zu != %zu",
+		    (size_t)h_written, sizeof(zero_header));
 
 	/* Write the initial (empty) offset table.  */
 	const ssize_t ot_written = write(S->cloop2_fd, S->offset_table,
@@ -575,8 +575,9 @@ compress_init(int argc, char **argv, const struct options *O,
 		err(1, "write initial offset table");
 	assert(ot_written >= 0);
 	if ((size_t)ot_written != (S->n_offsets * sizeof(uint64_t)))
-		errx(1, "partial write of initial offset bytes: %zd <= %zu",
-		    ot_written, (size_t)(S->n_offsets * sizeof(uint64_t)));
+		errx(1, "partial write of initial offset bytes: %zu <= %zu",
+		    (size_t)ot_written,
+		    (size_t)(S->n_offsets * sizeof(uint64_t)));
 
 	/* Start at the beginning of the image.  */
 	S->blkno = 0;
@@ -792,10 +793,9 @@ compress_block(int in_fd, int out_fd, uint32_t blkno, uint32_t blocksize,
 	if (n_read == -1)
 		err(1, "read block %"PRIu32, blkno);
 	assert(n_read >= 0);
-	assert((uintmax_t)n_read <= (uintmax_t)readsize);
-	if ((uint32_t)n_read < readsize)
-		errx(1, "partial read of block %"PRIu32": %zd <= %"PRIu32,
-		    blkno, n_read, readsize);
+	if ((size_t)n_read != readsize)
+		errx(1, "partial read of block %"PRIu32": %zu != %"PRIu32,
+		    blkno, (size_t)n_read, readsize);
 
 	/* Compress the block.  */
 	/* XXX compression ratio bound */
@@ -815,11 +815,11 @@ compress_block(int in_fd, int out_fd, uint32_t blkno, uint32_t blocksize,
 	if (n_written == -1)
 		err(1, "write block %"PRIu32, blkno);
 	assert(n_written >= 0);
-	if ((uint32_t)n_written != complen)
-		errx(1, "partial write of block %"PRIu32": %zd <= %lu", blkno,
-		    n_written, complen);
+	if ((size_t)n_written != complen)
+		errx(1, "partial write of block %"PRIu32": %zu != %lu",
+		    blkno, (size_t)n_written, complen);
 
-	return n_written;
+	return (size_t)n_written;
 }
 
 /*
@@ -882,8 +882,9 @@ compress_checkpoint(struct compress_state *S)
 		err_ss(1, "write partial offset table");
 	assert(n_written >= 0);
 	if ((size_t)n_written != (n_offsets * sizeof(uint64_t)))
-		errx_ss(1, "partial write of partial offset table: %zd <= %zu",
-		    n_written, (size_t)(n_offsets * sizeof(uint64_t)));
+		errx_ss(1, "partial write of partial offset table: %zu != %zu",
+		    (size_t)n_written,
+		    (size_t)(n_offsets * sizeof(uint64_t)));
 
 	/*
 	 * If this is the first checkpoint, initialize the header.
@@ -919,8 +920,8 @@ compress_checkpoint(struct compress_state *S)
 			err_ss(1, "write header");
 		assert(h_written >= 0);
 		if ((size_t)h_written != sizeof(header))
-			errx_ss(1, "partial write of header: %zd <= %zu",
-			    h_written, sizeof(header));
+			errx_ss(1, "partial write of header: %zu != %zu",
+			    (size_t)h_written, sizeof(header));
 	}
 
 	/* Record how many blocks we've checkpointed.  */
