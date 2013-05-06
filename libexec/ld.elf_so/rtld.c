@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.165 2013/05/06 08:02:20 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.166 2013/05/06 19:59:30 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.165 2013/05/06 08:02:20 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.166 2013/05/06 19:59:30 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1372,6 +1372,7 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *), void *pa
 
 	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next) {
 		phdr_info.dlpi_addr = (Elf_Addr)obj->relocbase;
+		/* XXX: wrong but not fixing it yet */
 		phdr_info.dlpi_name = STAILQ_FIRST(&obj->names) ?
 		    STAILQ_FIRST(&obj->names)->name : obj->path;
 		phdr_info.dlpi_phdr = obj->phdr;
