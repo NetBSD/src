@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2013/03/19 22:16:53 garbled Exp $
+#	$NetBSD: Makefile,v 1.20 2013/05/06 17:42:30 skrll Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -22,12 +22,20 @@ MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-	\
 			OPENRD_INSTALL		${RAMDISK}	-	\
 			TS7200_INSTALL		${RAMDISK}	- 	\
 			TEAMASA_NPWR_INSTALL	${RAMDISK}	-	\
-			RPI_INSTALL		${SSHRAMDISK}	-	\
 			KUROBOX_PRO_INSTALL	${RAMDISK}	-
 .else
 # Big endian platforms.
 MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-
 .endif
+
+.if \
+    ${MACHINE_ARCH} == "arm" || \
+    ${MACHINE_ARCH} == "earm" || \
+    ${MACHINE_ARCH} == "earmhf"
+# Little endian (any ABI) platforms.
+MDSETTARGETS+=		RPI_INSTALL		${SSHRAMDISK}	-
+.endif
+
 MDSET_RELEASEDIR=	installation/instkernel
 
 MDSET_SUFFIXES.-=	srec create-srec  bin create-bin
