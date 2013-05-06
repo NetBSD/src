@@ -1,4 +1,4 @@
-/*	$NetBSD: symver.c,v 1.1 2011/06/25 05:45:12 nonaka Exp $	*/
+/*	$NetBSD: symver.c,v 1.2 2013/05/06 19:59:30 christos Exp $	*/
 
 /*-
  * Copyright 1996, 1997, 1998, 1999, 2000 John D. Polstra.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symver.c,v 1.1 2011/06/25 05:45:12 nonaka Exp $");
+__RCSID("$NetBSD: symver.c,v 1.2 2013/05/06 19:59:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/exec_elf.h>
@@ -68,6 +68,20 @@ __RCSID("$NetBSD: symver.c,v 1.1 2011/06/25 05:45:12 nonaka Exp $");
 #include "debug.h"
 #include "rtld.h"
 
+void
+_rtld_object_add_name(Obj_Entry *obj, const char *name)
+{
+    Name_Entry *entry;
+    size_t len;
+
+    len = strlen(name);
+    entry = xmalloc(sizeof(Name_Entry) + len);
+
+    if (entry != NULL) {
+	strcpy(entry->name, name);
+	STAILQ_INSERT_TAIL(&obj->names, entry, link);
+    }
+}
 
 int
 _rtld_object_match_name(const Obj_Entry *obj, const char *name)

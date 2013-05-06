@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.114 2013/05/06 08:02:20 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.115 2013/05/06 19:59:30 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -425,6 +425,7 @@ void _rtld_combreloc_reset(const Obj_Entry *);
 #endif
 
 /* symver.c */
+void _rtld_object_add_name(Obj_Entry *, const char *);
 int _rtld_object_match_name(const Obj_Entry *, const char *);
 int _rtld_verify_object_versions(Obj_Entry *);
 
