@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.48 2013/05/06 08:02:20 skrll Exp $	 */
+/*	$NetBSD: map_object.c,v 1.49 2013/05/06 19:59:30 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.48 2013/05/06 08:02:20 skrll Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.49 2013/05/06 19:59:30 christos Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -432,6 +432,11 @@ _rtld_obj_free(Obj_Entry *obj)
 		obj->needed = needed->next;
 		xfree(needed);
 	}
+	while (!STAILQ_EMPTY(&obj->names)) {
+		Name_Entry *entry = STAILQ_FIRST(&obj->names);
+		STAILQ_REMOVE_HEAD(&obj->names, link);
+		free(entry);
+	}
 	while ((elm = SIMPLEQ_FIRST(&obj->dldags)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&obj->dldags, link);
 		xfree(elm);
@@ -454,6 +459,7 @@ _rtld_obj_new(void)
 	Obj_Entry *obj;
 
 	obj = CNEW(Obj_Entry);
+	STAILQ_INIT(&obj->names);
 	SIMPLEQ_INIT(&obj->dldags);
 	SIMPLEQ_INIT(&obj->dagmembers);
 	return obj;
