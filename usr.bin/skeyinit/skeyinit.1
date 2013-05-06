@@ -1,4 +1,4 @@
-.\"	$NetBSD: skeyinit.1,v 1.14 2005/09/19 15:12:09 elad Exp $
+.\"	$NetBSD: skeyinit.1,v 1.15 2013/05/06 11:00:16 jdf Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
 .Dd September 19, 2005
@@ -27,7 +27,8 @@ or using S/Key one-time passwords.
 .Nm
 requires you to type a secret password, so it should be used
 only on a secure terminal.
-.Sh OPTIONS
+.Pp
+The following options are available:
 .Bl -tag -width Ds
 .It Fl k Ar passphrase
 Use pass phrase
@@ -63,7 +64,7 @@ Available choices are md4 (the default), md5, or sha1.
 .It Fl x
 Displays one-time password in hexadecimal instead of ASCII.
 .It Fl z
-Allows the user to zero their S/Key entry.
+allows the user to zero their S/Key entry.
 .It Ar user
 The username to be changed/added.
 By default the current user is operated on, only root may
