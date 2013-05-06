@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.11 2013/04/20 03:37:55 khorben Exp $
+#	$NetBSD: N900,v 1.12 2013/05/06 22:49:27 khorben Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -130,6 +130,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
+#options 	LOCKDEBUG	# expensive locking checks/support
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -157,7 +158,7 @@ options UHUB_DEBUG
 #  verbose		Show aprint_normal and aprint_verbose output
 options		BOOT_ARGS="\"\""
 
-config		netbsd		root on ? type ?
+config		netbsd		root on ld0a type ?
 
 # The main bus device
 mainbus0	at root
