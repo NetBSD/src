@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.328 2013/03/26 02:05:48 agc Exp $
+#	$NetBSD: BRANCHES,v 1.329 2013/05/06 23:27:06 khorben Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -441,6 +441,15 @@ Notes:		http://mail-index.netbsd.org/tech-kern/2004/12/03/0007.html
 		Please consult with the maintainer before committing
 		to this branch.
 		This branch is not expected to be compilable yet.
+
+Branch:		khorben-n900
+Description:	Supporting the Nokia N900 smartphone
+Status:		Active
+Start Date:	2013-05-07
+Maintainer:	Pierre Pronchery <khorben@netbsd.org>
+Scope:		kernel (OMAP3 support, device drivers)
+Notes:		Do not hesitate to communicate any change that would be welcome
+		in HEAD.
 
 Branch:		matt-timespec
 Description:	Convert the kernel to struct timespec as its primary time
