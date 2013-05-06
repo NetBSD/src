@@ -1,4 +1,4 @@
-/* $NetBSD: am335x_cm_padconf.c,v 1.1 2013/04/17 14:31:02 bouyer Exp $ */
+/* $NetBSD: am335x_cm_padconf.c,v 1.2 2013/05/06 18:53:40 rkujawa Exp $ */
 /*-
  * Copyright (c) 2012 Damjan Marion <dmarion@FreeBSD.org>
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_cm_padconf.c,v 1.1 2013/04/17 14:31:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_cm_padconf.c,v 1.2 2013/05/06 18:53:40 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ const struct sitara_cm_padconf ti_padconf_devmap[] = {
 	_PIN(0x948, "MDIO",		0, 7, "mdio_data", "timer6", "uart5_rxd", "uart3_ctsn", "mmc0_sdcd","mmc1_cmd", "mmc2_cmd","gpio0_0"),
 	_PIN(0x94c, "MDC",		1, 7, "mdio_clk", "timer5", "uart5_txd", "uart3_rtsn", "mmc0_sdwp", "mmc1_clk", "mmc2_clk", "gpio0_1"),
 	_PIN(0x950, "SPI0_SCLK",	2, 7, "spi0_sclk", "uart2_rxd", "I2C2_SDA", "ehrpwm0A", "pr1_uart0_cts_n", "pr1_edio_sof", "EMU2", "gpio0_2"),
-	_PIN(0x954, "SPI0_D0",		3, 7, "spi0_d0", "uart2_txd", "i2C2_SCL", "ehrpwm0B", "pr1_uart0_rts_n", "pr1_edio_latch_in", "EMU3", "gpio0_3"),
+	_PIN(0x954, "SPI0_D0",		3, 7, "spi0_d0", "uart2_txd", "I2C2_SCL", "ehrpwm0B", "pr1_uart0_rts_n", "pr1_edio_latch_in", "EMU3", "gpio0_3"),
 	_PIN(0x958, "SPIO_D1",		4, 7, "spi0_d1", "mmc1_sdwp", "I2C1_SDA", "ehrpwm0_tripzone_input", "pr1_uart0_rxd", "pr1_edio_data_in0", "pr1_edio_data_out0", "gpio0_4"),
 	_PIN(0x95c, "SPI0_CS0",		5, 7, "spi0_cs0", "mmc2_sdwp", "I2C1_SCL", "ehrpwm0_synci", "pr1_uart0_txd", "pr1_edio_data_in1", "pr1_edio_data_out1", "gpio0_5"),
 	_PIN(0x960, "SPI0_CS1",		6, 7, "spi0_cs1", "uart3_rxd", "eCAP1_in_PWM1_out", "mcc0_pow", "xdm_event_intr2", "mmc0_sdcd", "EMU4", "gpio0_6"),
