@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.50 2013/05/06 08:02:20 skrll Exp $	 */
+/*	$NetBSD: headers.c,v 1.51 2013/05/06 19:59:29 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.50 2013/05/06 08:02:20 skrll Exp $");
+__RCSID("$NetBSD: headers.c,v 1.51 2013/05/06 19:59:29 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -68,6 +68,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 {
 	Elf_Dyn        *dynp;
 	Needed_Entry  **needed_tail = &obj->needed;
+	const Elf_Dyn  *dyn_soname = NULL;
 	const Elf_Dyn  *dyn_rpath = NULL;
 	bool		use_pltrel = false;
 	bool		use_pltrela = false;
@@ -222,7 +223,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			break;
 
 		case DT_SONAME:
-			/* Not used by the dynamic linker. */
+			dyn_soname = dynp;
 			break;
 
 		case DT_INIT:
@@ -357,6 +358,10 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 	if (dyn_rpath != NULL) {
 		_rtld_add_paths(execname, &obj->rpaths, obj->strtab +
 		    dyn_rpath->d_un.d_val);
+	}
+	if (dyn_soname != NULL) {
+		_rtld_object_add_name(obj, obj->strtab +
+		    dyn_soname->d_un.d_val);
 	}
 }
 
