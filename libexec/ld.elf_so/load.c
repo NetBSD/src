@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.43 2013/05/06 08:02:20 skrll Exp $	 */
+/*	$NetBSD: load.c,v 1.44 2013/05/06 19:59:30 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.43 2013/05/06 08:02:20 skrll Exp $");
+__RCSID("$NetBSD: load.c,v 1.44 2013/05/06 19:59:30 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -199,7 +199,7 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
     int flags)
 {
 	Library_Xform *x = _rtld_xforms;
-	Obj_Entry *o = NULL;
+	Obj_Entry *o;
 	size_t j;
 	ssize_t i;
 	bool got = false;
@@ -210,6 +210,12 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 	} val;
 
 	dbg(("load by name %s %p", name, x));
+	for (o = _rtld_objlist->next; o != NULL; o = o->next)
+		if (_rtld_object_match_name(o, name)) {
+			(*needed)->obj = o;
+			return true;
+		}
+
 	for (; x; x = x->next) {
 		if (strcmp(x->name, name) != 0)
 			continue;
