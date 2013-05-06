@@ -249,9 +249,7 @@ int
 mvspi_transfer(void *cookie, struct spi_transfer *st)
 {
 	struct mvspi_softc *sc = cookie;
-	int s, er;
-
-	er = 0;
+	int s;
 
 	s = splbio();
 	spi_transq_enqueue(&sc->sc_transq, st);
