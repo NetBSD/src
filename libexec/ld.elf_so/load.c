@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.42 2010/12/24 12:41:43 skrll Exp $	 */
+/*	$NetBSD: load.c,v 1.43 2013/05/06 08:02:20 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.42 2010/12/24 12:41:43 skrll Exp $");
+__RCSID("$NetBSD: load.c,v 1.43 2013/05/06 08:02:20 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -68,7 +68,7 @@ Objlist _rtld_list_main =	/* Objects loaded at program startup */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
 Objlist _rtld_list_global =	/* Objects dlopened with RTLD_GLOBAL */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_global);
-  
+
 void
 _rtld_objlist_push_head(Objlist *list, Obj_Entry *obj)
 {
@@ -117,7 +117,7 @@ _rtld_load_object(const char *filepath, int flags)
 	size_t pathlen = strlen(filepath);
 
 	for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next)
-		if (pathlen == obj->pathlen && !strcmp(obj->path, filepath)) 
+		if (pathlen == obj->pathlen && !strcmp(obj->path, filepath))
 			break;
 
 	/*
@@ -271,9 +271,9 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 				(*needed)->next = ne;
 				*needed = ne;
 			}
-				
+
 		}
-		
+
 	}
 
 	if (got)
