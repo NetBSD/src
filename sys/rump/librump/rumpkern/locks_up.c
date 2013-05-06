@@ -1,4 +1,4 @@
-/*	$NetBSD: locks_up.c,v 1.8 2013/04/28 13:37:52 pooka Exp $	*/
+/*	$NetBSD: locks_up.c,v 1.9 2013/05/06 16:28:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.8 2013/04/28 13:37:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.9 2013/05/06 16:28:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -426,8 +426,11 @@ cv_broadcast(kcondvar_t *cv)
 bool
 cv_has_waiters(kcondvar_t *cv)
 {
+	int n;
 
-	return rumpuser_cv_has_waiters(RUMPCV(cv));
+	rumpuser_cv_has_waiters(RUMPCV(cv), &n);
+
+	return n > 0;
 }
 
 /* this is not much of an attempt, but ... */
