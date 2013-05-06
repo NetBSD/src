@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.48 2013/04/25 20:55:34 rkujawa Exp $
+#	$NetBSD: files.i2c,v 1.49 2013/05/06 22:04:12 rkujawa Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -181,4 +181,9 @@ file	dev/i2c/tps65950.c		tps65950pm
 device	tps65217pmic: sysmon_envsys
 attach	tps65217pmic at iic
 file	dev/i2c/tps65217pmic.c 		tps65217pmic
+
+# Microchip MCP980x
+device	mcp980x: sysmon_envsys
+attach	mcp980x at iic
+file	dev/i2c/mcp980x.c 		mcp980x
 
