@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.121 2013/01/22 09:39:16 dholland Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.122 2013/05/07 09:40:54 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.121 2013/01/22 09:39:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.122 2013/05/07 09:40:54 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -345,11 +345,17 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	KASSERT(LIST_FIRST(&vp->v_dirtyblkhd) == NULL);
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		KASSERT((bp->b_cflags & BC_BUSY) == 0);
-		if (bp->b_bcount < fs->fs_bsize) {
-			bp->b_cflags |= BC_BUSY;
-			brelsel(bp, BC_INVAL | BC_VFLUSH);
+		if (bp->b_bcount == fs->fs_bsize)
+			continue;
+		error = bbusy(bp, false, 0, NULL);
+		if (error != 0) {
+			if (error == EPASSTHROUGH) {
+				nbp = LIST_FIRST(&vp->v_cleanblkhd);
+				continue;
+			}
+			break;
 		}
+		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
 	mutex_exit(&bufcache_lock);
 
