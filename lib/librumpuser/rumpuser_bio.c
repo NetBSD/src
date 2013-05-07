@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_bio.c,v 1.5 2013/04/29 14:54:03 pooka Exp $	*/
+/*	$NetBSD: rumpuser_bio.c,v 1.6 2013/05/07 15:18:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
