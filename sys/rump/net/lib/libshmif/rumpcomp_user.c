@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.10 2013/04/30 12:39:21 pooka Exp $	*/
+/*      $NetBSD: rumpcomp_user.c,v 1.11 2013/05/07 16:18:48 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -96,6 +96,10 @@ rumpcomp_shmif_watchwait(int kq)
 
 #elif defined(__linux__)
 #include <sys/inotify.h>
+
+#include <limits.h>
+#include <stdio.h>
+#include <unistd.h>
 
 int
 rumpcomp_shmif_watchsetup(int *inotifyp, int fd)
