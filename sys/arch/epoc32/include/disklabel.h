@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 2013/05/02 03:56:40 matt Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3 2013/05/07 20:42:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -33,44 +33,12 @@
 #ifndef _EPOC32_DISKLABEL_H_
 #define _EPOC32_DISKLABEL_H_
 
-#define LABELUSESMBR		1	/* use MBR partitionning */
-#define	LABELSECTOR		1	/* sector containing label */
-#define	LABELOFFSET		0	/* offset of label in sector */
-#define	MAXPARTITIONS		16	/* number of partitions */
-#define	OLDMAXPARTITIONS 	8	/* number of partitions before 1.6 */
 #define	RAW_PART		3	/* raw partition: XX?d (XXX) */
 
-/*
- * We use the highest bit of the minor number for the partition number.
- * This maintains backward compatibility with device nodes created before
- * MAXPARTITIONS was increased.
- */
-#define	__EPOC32_MAXDISKS	((1 << 20) / MAXPARTITIONS)
-#define	DISKUNIT(dev)	((minor(dev) / OLDMAXPARTITIONS) % __EPOC32_MAXDISKS)
-#define	DISKPART(dev)	((minor(dev) % OLDMAXPARTITIONS) + \
-    ((minor(dev) / (__EPOC32_MAXDISKS * OLDMAXPARTITIONS)) * OLDMAXPARTITIONS))
-#define	DISKMINOR(unit, part) \
-    (((unit) * OLDMAXPARTITIONS) + ((part) % OLDMAXPARTITIONS) + \
-     ((part) / OLDMAXPARTITIONS) * (__EPOC32_MAXDISKS * OLDMAXPARTITIONS))
-
-/* Pull in MBR partition definitions. */
 #if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/sys/bootblock.h>
+#include <nbinclude/arm/disklabel.h>
 #else
-#include <sys/bootblock.h>
+#include <arm/disklabel.h>
 #endif /* HAVE_NBTOOL_CONFIG_H */
-
-#ifndef __ASSEMBLER__
-#if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/sys/dkbad.h>
-#else
-#include <sys/dkbad.h>
-#endif /* HAVE_NBTOOL_CONFIG_H */
-struct cpu_disklabel {
-	struct mbr_partition dosparts[MBR_PART_COUNT];
-#define __HAVE_DISKLABEL_DKBAD
-	struct dkbad bad;
-};
-#endif
 
 #endif /* _EPOC32_DISKLABEL_H_ */
