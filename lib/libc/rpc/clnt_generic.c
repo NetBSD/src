@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.30 2013/03/11 20:19:28 tron Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.31 2013/05/07 21:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_generic.c 1.32 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_generic.c,v 1.30 2013/03/11 20:19:28 tron Exp $");
+__RCSID("$NetBSD: clnt_generic.c,v 1.31 2013/05/07 21:08:45 christos Exp $");
 #endif
 #endif
 
@@ -380,4 +380,21 @@ err:
 err1:	if (madefd)
 		(void) close(fd);
 	return (NULL);
+}
+
+/*
+ * Don't block thse so interactive programs don't get stuck in lalaland.
+ * (easier to do this than making connect(2) non-blocking..)
+ */
+int
+__clnt_sigfillset(sigset_t *ss) {
+	static const int usersig[] = {
+	    SIGHUP, SIGINT, SIGQUIT, SIGTERM, SIGTSTP
+	};
+	if (sigfillset(ss) == -1)
+		return -1;
+	for (size_t i = 0; i < __arraycount(usersig); i++)
+		if (sigdelset(ss, usersig[i]) == -1)
+			return -1;
+	return 0;
 }

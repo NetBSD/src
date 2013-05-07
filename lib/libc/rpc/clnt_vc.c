@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.22 2013/04/17 16:36:47 christos Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.23 2013/05/07 21:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -38,7 +38,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.22 2013/04/17 16:36:47 christos Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.23 2013/05/07 21:08:45 christos Exp $");
 #endif
 #endif
  
@@ -194,7 +194,7 @@ clnt_vc_create(
 		goto fooy;
 	}
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 #ifdef _REENTRANT
 	mutex_lock(&clnt_fd_lock);
@@ -205,9 +205,7 @@ clnt_vc_create(
 		fd_allocsz = dtbsize * sizeof (int);
 		vc_fd_locks = mem_alloc(fd_allocsz);
 		if (vc_fd_locks == NULL) {
-			mutex_unlock(&clnt_fd_lock);
-			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
-			goto fooy;
+			goto blooy;
 		} else
 			memset(vc_fd_locks, '\0', fd_allocsz);
 
@@ -217,9 +215,7 @@ clnt_vc_create(
 		if (vc_cv == NULL) {
 			mem_free(vc_fd_locks, fd_allocsz);
 			vc_fd_locks = NULL;
-			mutex_unlock(&clnt_fd_lock);
-			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
-			goto fooy;
+			goto blooy;
 		} else {
 			int i;
 
@@ -238,16 +234,12 @@ clnt_vc_create(
 		if (errno != ENOTCONN) {
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			rpc_createerr.cf_error.re_errno = errno;
-			mutex_unlock(&clnt_fd_lock);
-			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
-			goto fooy;
+			goto blooy;
 		}
 		if (connect(fd, (struct sockaddr *)raddr->buf, raddr->len) < 0){
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			rpc_createerr.cf_error.re_errno = errno;
-			mutex_unlock(&clnt_fd_lock);
-			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
-			goto fooy;
+			goto blooy;
 		}
 	}
 	mutex_unlock(&clnt_fd_lock);
@@ -306,6 +298,9 @@ clnt_vc_create(
 	    h->cl_private, read_vc, write_vc);
 	return (h);
 
+blooy:
+	mutex_unlock(&clnt_fd_lock);
+	thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
 fooy:
 	/*
 	 * Something goofed, free stuff and barf
@@ -344,7 +339,7 @@ clnt_vc_call(
 	ct = (struct ct_data *) h->cl_private;
 
 #ifdef _REENTRANT
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	while (vc_fd_locks[ct->ct_fd])
@@ -483,7 +478,7 @@ clnt_vc_freeres(
 	ct = (struct ct_data *)cl->cl_private;
 	xdrs = &(ct->ct_xdrs);
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 #ifdef _REENTRANT
@@ -524,7 +519,7 @@ clnt_vc_control(
 
 	ct = (struct ct_data *)cl->cl_private;
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 #ifdef _REENTRANT
@@ -652,7 +647,7 @@ clnt_vc_destroy(CLIENT *cl)
 	ct = (struct ct_data *) cl->cl_private;
 	ct_fd = ct->ct_fd;
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 #ifdef _REENTRANT
@@ -753,7 +748,7 @@ clnt_vc_ops(void)
 
 	/* VARIABLES PROTECTED BY ops_lock: ops */
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&ops_lock);
 	if (ops.cl_call == NULL) {
