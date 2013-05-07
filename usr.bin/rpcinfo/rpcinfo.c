@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.34 2011/09/16 15:39:28 joerg Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.35 2013/05/07 21:41:51 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -141,12 +141,12 @@ __dead static void	brdcst(int, char **);
 static void	addrping(const char *, const char *, int, char **);
 static void	progping(const char *, int, char **);
 static CLIENT	*clnt_addr_create(const char *, const struct netconfig *,
-    rpcprog_t, rpcvers_t);
+    rpcprog_t, rpcvers_t, in_port_t *);
 static CLIENT   *clnt_rpcbind_create(const char *, rpcvers_t, struct netbuf **);
 static CLIENT   *getclnthandle(const char *, const struct netconfig *,
     rpcvers_t, struct netbuf **);
 static CLIENT	*local_rpcb(rpcprog_t, rpcvers_t);
-static int	pstatus(CLIENT *, rpcprog_t, rpcvers_t);
+static int	pstatus(CLIENT *, rpcprog_t, rpcvers_t, in_port_t);
 static void	rpcbdump(int, const char *, int, char **);
 static void	rpcbgetstat(int, char **);
 static void	rpcbaddrlist(const char *, int, char **);
@@ -156,6 +156,7 @@ static void	print_getaddrstat(int, const rpcb_stat *);
 static void	usage(void) __dead;
 static rpcprog_t	getprognum(const char *);
 static rpcvers_t	getvers(const char *);
+static in_port_t	getport(const struct netbuf *);
 static const char *spaces(size_t);
 static bool_t	add_version(struct rpcbdump_short *, rpcvers_t);
 static bool_t	add_netid(struct rpcbdump_short *, char *);
@@ -401,7 +402,7 @@ ip_ping(u_short portnum, const char *trans, int argc, char **argv)
 	    NULL, (xdrproc_t)xdr_void, NULL, to);
 	if (argc != 2) {
 		/* Version number was known */
-		if (pstatus(client, prognum, vers) < 0)
+		if (pstatus(client, prognum, vers, portnum) < 0)
 			exit(1);
 		(void)CLNT_DESTROY(client);
 		return;
@@ -437,11 +438,11 @@ ip_ping(u_short portnum, const char *trans, int argc, char **argv)
 			minvers = 0;
 			maxvers = MAX_VERS;
 		} else {
-			(void)pstatus(client, prognum, MAX_VERS);
+			(void)pstatus(client, prognum, MAX_VERS, portnum);
 			exit(1);
 		}
 	} else {
-		(void)pstatus(client, prognum, MIN_VERS);
+		(void)pstatus(client, prognum, MIN_VERS, portnum);
 		exit(1);
 	}
 	(void)CLNT_DESTROY(client);
@@ -450,7 +451,7 @@ ip_ping(u_short portnum, const char *trans, int argc, char **argv)
 		client = clnt_com_create(&addr, prognum, vers, &fd, trans);
 		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
 		    NULL, (xdrproc_t)xdr_void, NULL, to);
-		if (pstatus(client, prognum, vers) < 0)
+		if (pstatus(client, prognum, vers, portnum) < 0)
 		    failure = 1;
 		(void)CLNT_DESTROY(client);
 	}
@@ -1249,7 +1250,7 @@ deletereg(const char *netid, int argc, char **argv)
  */
 static CLIENT *
 clnt_addr_create(const char *address, const struct netconfig *nconf,
-    rpcprog_t prog, rpcvers_t vers)
+    rpcprog_t prog, rpcvers_t vers, in_port_t *port)
 {
 	CLIENT *client;
 	static struct netbuf *nbuf;
@@ -1265,6 +1266,7 @@ clnt_addr_create(const char *address, const struct netconfig *nconf,
 		nbuf = uaddr2taddr(nconf, address);
 		if (nbuf == NULL)
 			errx(1, "No address for client handle");
+		*port = getport(nbuf);
 	}
 	client = clnt_tli_create(fd, nconf, nbuf, prog, vers, 0, 0);
 	if (client == NULL) {
@@ -1290,6 +1292,7 @@ addrping(const char *address, const char *netid, int argc, char **argv)
 	struct rpc_err rpcerr;
 	int failure = 0;
 	struct netconfig *nconf;
+	in_port_t portnum;
 	int fd;
 
 	if (argc < 1 || argc > 2 || (netid == NULL))
@@ -1309,12 +1312,12 @@ addrping(const char *address, const char *netid, int argc, char **argv)
 	} else {
 		versnum = getvers(argv[1]);
 	}
-	client = clnt_addr_create(address, nconf, prognum, versnum);
+	client = clnt_addr_create(address, nconf, prognum, versnum, &portnum);
 	rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
 	    NULL, (xdrproc_t)xdr_void, NULL, to);
 	if (argc == 2) {
 		/* Version number was known */
-		if (pstatus(client, prognum, versnum) < 0)
+		if (pstatus(client, prognum, versnum, portnum) < 0)
 			failure = 1;
 		(void)CLNT_DESTROY(client);
 		if (failure)
@@ -1334,7 +1337,8 @@ addrping(const char *address, const char *netid, int argc, char **argv)
 		 * Let's try version MAX_VERS.
 		 */
 		(void)CLNT_DESTROY(client);
-		client = clnt_addr_create(address, nconf, prognum, MAX_VERS);
+		client = clnt_addr_create(address, nconf, prognum, MAX_VERS,
+		    &portnum);
 		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
 		    NULL, (xdrproc_t)xdr_void, NULL, to);
 		if (rpc_stat == RPC_PROGVERSMISMATCH) {
@@ -1351,19 +1355,20 @@ addrping(const char *address, const char *netid, int argc, char **argv)
 			minvers = 0;
 			maxvers = MAX_VERS;
 		} else {
-			(void)pstatus(client, prognum, MAX_VERS);
+			(void)pstatus(client, prognum, MAX_VERS, portnum);
 			exit(1);
 		}
 	} else {
-		(void)pstatus(client, prognum, MIN_VERS);
+		(void)pstatus(client, prognum, MIN_VERS, portnum);
 		exit(1);
 	}
 	(void)CLNT_DESTROY(client);
 	for (versnum = minvers; versnum <= maxvers; versnum++) {
-		client = clnt_addr_create(address, nconf, prognum, versnum);
+		client = clnt_addr_create(address, nconf, prognum, versnum,
+		    &portnum);
 		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
 		    NULL, (xdrproc_t)xdr_void, NULL, to);
-		if (pstatus(client, prognum, versnum) < 0)
+		if (pstatus(client, prognum, versnum, portnum) < 0)
 			failure = 1;
 		(void)CLNT_DESTROY(client);
 	}
@@ -1421,7 +1426,7 @@ progping(const char *netid, int argc, char **argv)
 	    NULL, (xdrproc_t)xdr_void, NULL, to);
 	if (argc == 3) {
 		/* Version number was known */
-		if (pstatus(client, prognum, versnum) < 0)
+		if (pstatus(client, prognum, versnum, -1) < 0)
 			failure = 1;
 		(void)CLNT_DESTROY(client);
 		if (failure)
@@ -1457,11 +1462,11 @@ progping(const char *netid, int argc, char **argv)
 			minvers = 0;
 			maxvers = MAX_VERS;
 		} else {
-			(void)pstatus(client, prognum, MAX_VERS);
+			(void)pstatus(client, prognum, MAX_VERS, -1);
 			exit(1);
 		}
 	} else {
-		(void)pstatus(client, prognum, MIN_VERS);
+		(void)pstatus(client, prognum, MIN_VERS, -1);
 		exit(1);
 	}
 	for (versnum = minvers; versnum <= maxvers; versnum++) {
@@ -1469,7 +1474,7 @@ progping(const char *netid, int argc, char **argv)
 		    (char *)(void *)&versnum);
 		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
 		    NULL, (xdrproc_t)xdr_void, NULL, to);
-		if (pstatus(client, prognum, versnum) < 0)
+		if (pstatus(client, prognum, versnum, -1) < 0)
 			failure = 1;
 	}
 	(void)CLNT_DESTROY(client);
@@ -1540,6 +1545,20 @@ getvers(const char *arg)
 	return (rpcvers_t)vers;
 }
 
+static in_port_t
+getport(const struct netbuf *nb)
+{
+	const struct sockaddr *sa = nb->buf;
+	switch (sa->sa_family) {
+	case AF_INET:
+		return ((const struct sockaddr_in *)nb->buf)->sin_port;
+	case AF_INET6:
+		return ((const struct sockaddr_in6 *)nb->buf)->sin6_port;
+	default:
+		return -1;
+	}
+}
+
 /*
  * This routine should take a pointer to an "rpc_err" structure, rather than
  * a pointer to a CLIENT structure, but "clnt_sperror" takes a pointer to
@@ -1548,7 +1567,7 @@ getvers(const char *arg)
  * a good error message.
  */
 static int
-pstatus(CLIENT *client, rpcprog_t prog, rpcvers_t vers)
+pstatus(CLIENT *client, rpcprog_t prog, rpcvers_t vers, in_port_t portnum)
 {
 	struct rpc_err rpcerr;
 
@@ -1559,8 +1578,14 @@ pstatus(CLIENT *client, rpcprog_t prog, rpcvers_t vers)
 		    clnt_sperror(client, "") + 2);
 		return -1;
 	} else {
-		(void)printf("program %lu version %lu ready and waiting\n",
-		    (unsigned long)prog, (unsigned long)vers);
+		if (portnum == (in_port_t)-1) {
+			struct netbuf nb;
+			CLNT_CONTROL(client, CLGET_SVC_ADDR, (char *)&nb);
+			portnum = getport(&nb);
+		}
+		(void)printf("program %lu version %lu ready and waiting"
+		    " at port %u\n", (unsigned long)prog, (unsigned long)vers,
+		    ntohs(portnum));
 		return 0;
 	}
 }
