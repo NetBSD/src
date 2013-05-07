@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.12 2011/06/12 03:35:36 rmind Exp $ */
+/* $NetBSD: types.h,v 1.13 2013/05/07 20:42:45 matt Exp $ */
 
 #ifndef	_ACORN26_TYPES_H_
 #define	_ACORN26_TYPES_H_
@@ -8,5 +8,6 @@
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_MM_MD_KERNACC
+#define __HAVE_OLD_DISKLABEL
 
 #endif	/* _ACORN26_TYPES_H_ */
