@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_component.c,v 1.5 2013/04/30 12:39:20 pooka Exp $	*/
+/*	$NetBSD: rumpuser_component.c,v 1.6 2013/05/07 15:18:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -28,8 +28,10 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_component.c,v 1.5 2013/04/30 12:39:20 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_component.c,v 1.6 2013/05/07 15:18:35 pooka Exp $");
 #endif /* !lint */
+
+#include <stdint.h>
 
 /*
  * These interfaces affect the shlib major/minor; they can be called from
