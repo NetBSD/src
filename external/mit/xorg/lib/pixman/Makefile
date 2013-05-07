@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2013/05/02 21:40:57 skrll Exp $
+#	$NetBSD: Makefile,v 1.23 2013/05/07 07:01:37 martin Exp $
 
 NOLINT=	1	# defined
 
@@ -43,10 +43,12 @@ SRCS=					\
 # XXX
 
 .if ${MACHINE_ARCH} == "i386"
-# SSE2 does not work, for unknown reasons
 SRCS+= pixman-mmx.c
 COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
-MKDEPFLAGS+=		-mmmx -fvisibility=hidden
+MKDEPFLAGS+=		-mmmx -msse2 -fvisibility=hidden
+SRCS+=	pixman-sse2.c
+COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
+CPPFLAGS+=	-DUSE_SSE2 -DUSE_X86_MMX
 .elif ${MACHINE_ARCH} == "x86_64"
 SRCS+=	pixman-sse2.c
 COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
