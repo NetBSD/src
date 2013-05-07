@@ -1,4 +1,4 @@
-/*	$NetBSD: symver.c,v 1.2 2013/05/06 19:59:30 christos Exp $	*/
+/*	$NetBSD: symver.c,v 1.3 2013/05/07 13:01:07 christos Exp $	*/
 
 /*-
  * Copyright 1996, 1997, 1998, 1999, 2000 John D. Polstra.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symver.c,v 1.2 2013/05/06 19:59:30 christos Exp $");
+__RCSID("$NetBSD: symver.c,v 1.3 2013/05/07 13:01:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/exec_elf.h>
@@ -96,6 +96,7 @@ _rtld_object_match_name(const Obj_Entry *obj, const char *name)
 	return 0;
 }
 
+#ifdef RTLD_LOADER
 static Obj_Entry *
 locate_dependency(const Obj_Entry *obj, const char *name)
 {
@@ -329,3 +330,4 @@ _rtld_verify_object_versions(Obj_Entry *obj)
 
 	return 0;
 }
+#endif
