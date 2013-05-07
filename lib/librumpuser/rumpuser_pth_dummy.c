@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.14 2013/05/07 15:37:05 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.15 2013/05/07 16:40:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.14 2013/05/07 15:37:05 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.15 2013/05/07 16:40:31 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -207,6 +207,26 @@ rumpuser_rw_held(struct rumpuser_rw *rw, enum rumprwlock lk, int *rvp)
 		*rvp = rw->v < 0;
 		break;
 	}
+}
+
+void
+rumpuser_rw_downgrade(struct rumpuser_rw *rw)
+{
+
+	assert(rw->v == 1);
+	rw->v = -1;
+}
+
+int
+rumpuser_rw_tryupgrade(struct rumpuser_rw *rw)
+{
+
+	if (rw->v == -1) {
+		rw->v = 1;
+		return 0;
+	}
+
+	return EBUSY;
 }
 
 /*ARGSUSED*/
