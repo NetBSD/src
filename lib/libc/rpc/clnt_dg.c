@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.28 2013/03/11 20:19:28 tron Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.29 2013/05/07 21:08:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.28 2013/03/11 20:19:28 tron Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.29 2013/05/07 21:08:44 christos Exp $");
 #endif
 #endif
 
@@ -175,7 +175,7 @@ clnt_dg_create(
 	struct __rpc_sockinfo si;
 	int one = 1;
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	if (dg_fd_locks == NULL) {
@@ -188,9 +188,7 @@ clnt_dg_create(
 		fd_allocsz = dtbsize * sizeof (int);
 		dg_fd_locks = mem_alloc(fd_allocsz);
 		if (dg_fd_locks == NULL) {
-			mutex_unlock(&clnt_fd_lock);
-			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
-			goto err1;
+			goto err0;
 		} else
 			memset(dg_fd_locks, '\0', fd_allocsz);
 
@@ -200,9 +198,7 @@ clnt_dg_create(
 		if (dg_cv == NULL) {
 			mem_free(dg_fd_locks, fd_allocsz);
 			dg_fd_locks = NULL;
-			mutex_unlock(&clnt_fd_lock);
-			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
-			goto err1;
+			goto err0;
 		} else {
 			int i;
 
@@ -294,6 +290,9 @@ clnt_dg_create(
 	cl->cl_tp = NULL;
 	cl->cl_netid = NULL;
 	return (cl);
+err0:
+	mutex_unlock(&clnt_fd_lock);
+	thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
 err1:
 	warnx(mem_err_clnt_dg);
 	rpc_createerr.cf_stat = RPC_SYSTEMERROR;
@@ -341,7 +340,7 @@ clnt_dg_call(
 
 	cu = (struct cu_data *)cl->cl_private;
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	while (dg_fd_locks[cu->cu_fd])
@@ -532,7 +531,7 @@ clnt_dg_freeres(CLIENT *cl, xdrproc_t xdr_res, caddr_t res_ptr)
 	cu = (struct cu_data *)cl->cl_private;
 	xdrs = &(cu->cu_outxdrs);
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	while (dg_fd_locks[cu->cu_fd])
@@ -566,7 +565,7 @@ clnt_dg_control(CLIENT *cl, u_int request, char *info)
 
 	cu = (struct cu_data *)cl->cl_private;
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	while (dg_fd_locks[cu->cu_fd])
@@ -706,7 +705,7 @@ clnt_dg_destroy(CLIENT *cl)
 	cu = (struct cu_data *)cl->cl_private;
 	cu_fd = cu->cu_fd;
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	while (dg_fd_locks[cu_fd])
@@ -737,7 +736,7 @@ clnt_dg_ops(void)
 
 /* VARIABLES PROTECTED BY ops_lock: ops */
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&ops_lock);
 	if (ops.cl_call == NULL) {
