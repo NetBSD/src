@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.26 2013/02/04 20:28:24 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.27 2013/05/08 08:57:45 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -1144,8 +1144,8 @@ recv_session_pdu(struct ldp_peer * p)
 			}
 
 			if (!p->master) {
-				keep_alive(p);
 				send_initialize(p);
+				keep_alive(p);
 			} else {
 				p->state = LDP_PEER_ESTABLISHED;
 				p->established_t = time(NULL);
