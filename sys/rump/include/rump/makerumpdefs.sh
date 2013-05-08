@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.15 2013/05/08 00:25:31 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.16 2013/05/08 00:57:06 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -60,6 +60,12 @@ sed -n '/#define[ 	]*SO_[A-Z]/s/SO_/RUMP_&/gp' <../../../sys/socket.h \
     | sed 's,/\*.*$,,'
 sed -n '/#define[ 	]*SOL_[A-Z]/s/SOL_/RUMP_&/gp' <../../../sys/socket.h \
     | sed 's,/\*.*$,,'
+
+fromvers ../../../sys/mount.h
+sed -n '/#define[ 	]*MOUNT_[A-Z]/s/MOUNT_/RUMP_MOUNT_/gp' <../../../sys/mount.h | sed 's,/\*.*$,,'
+
+fromvers ../../../sys/fstypes.h
+sed -n '/#define[ 	]*MNT_[A-Z].*[^\]$/s/MNT_/RUMP_MNT_/gp' <../../../sys/fstypes.h | sed 's,/\*.*$,,'
 
 fromvers ../../../sys/module.h
 getstruct ../../../sys/module.h modctl_load
