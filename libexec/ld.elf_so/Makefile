@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.118 2013/05/06 22:49:10 christos Exp $
+#	$NetBSD: Makefile,v 1.119 2013/05/08 15:33:45 christos Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -150,6 +150,10 @@ _PROGDEBUG.${PROG} := ${PROG}.debug
 
 .if ${SHLINKINSTALLDIR} != "/usr/libexec"
 SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
+.if ${MKDEBUG} != "no"
+SYMLINKS+=	${DESTDIR}${DEBUGDIR}${BINDIR}/${PROG}.debug \
+		${DESTDIR}${DEBUGDIR}/usr${BINDIR}/${PROG}.debug
+.endif
 .endif
 
 .include <bsd.prog.mk>
