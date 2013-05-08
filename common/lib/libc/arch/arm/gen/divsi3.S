@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.4 2012/10/30 12:42:13 christos Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.5 2013/05/08 05:13:56 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -18,5 +18,9 @@
 
 ENTRY_NP(__aeabi_idivmod)
 ENTRY_NP(__aeabi_idiv)
+#if defined(__ARM_EABI__) && defined(PIC_SYMVER)
+	.symver	__aeabi_idiv,__aeabi_idiv@@GCC_3.5
+	.symver	__aeabi_idivmod,__aeabi_idivmod@@GCC_3.5
+#endif
 ENTRY(__divsi3)
 	b	__divide
