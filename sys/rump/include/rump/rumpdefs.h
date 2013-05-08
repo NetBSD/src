@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.19 2013/05/08 00:25:55 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.20 2013/05/08 00:57:24 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -275,6 +275,78 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define RUMP_SO_SNDTIMEO	0x100b		
 #define RUMP_SO_RCVTIMEO	0x100c		
 #define	RUMP_SOL_SOCKET	0xffff		
+
+/*	NetBSD: mount.h,v 1.209 2013/04/26 22:27:16 mlelstv Exp 	*/
+#define	RUMP_MOUNT_FFS	"ffs"		
+#define	RUMP_MOUNT_UFS	RUMP_MOUNT_FFS	
+#define	RUMP_MOUNT_NFS	"nfs"		
+#define	RUMP_MOUNT_MFS	"mfs"		
+#define	RUMP_MOUNT_MSDOS	"msdos"		
+#define	RUMP_MOUNT_LFS	"lfs"		
+#define	RUMP_MOUNT_FDESC	"fdesc"		
+#define	RUMP_MOUNT_NULL	"null"		
+#define	RUMP_MOUNT_OVERLAY	"overlay"	
+#define	RUMP_MOUNT_UMAP	"umap"	
+#define	RUMP_MOUNT_KERNFS	"kernfs"	
+#define	RUMP_MOUNT_PROCFS	"procfs"	
+#define	RUMP_MOUNT_AFS	"afs"		
+#define	RUMP_MOUNT_CD9660	"cd9660"	
+#define	RUMP_MOUNT_UNION	"union"		
+#define	RUMP_MOUNT_ADOSFS	"adosfs"	
+#define	RUMP_MOUNT_EXT2FS	"ext2fs"	
+#define	RUMP_MOUNT_CFS	"coda"		
+#define	RUMP_MOUNT_CODA	RUMP_MOUNT_CFS	
+#define	RUMP_MOUNT_FILECORE	"filecore"	
+#define	RUMP_MOUNT_NTFS	"ntfs"		
+#define	RUMP_MOUNT_SMBFS	"smbfs"		
+#define	RUMP_MOUNT_PTYFS	"ptyfs"		
+#define	RUMP_MOUNT_TMPFS	"tmpfs"		
+#define RUMP_MOUNT_UDF	"udf"		
+#define	RUMP_MOUNT_SYSVBFS	"sysvbfs"	
+#define RUMP_MOUNT_PUFFS	"puffs"		
+#define RUMP_MOUNT_HFS	"hfs"		
+#define RUMP_MOUNT_EFS	"efs"		
+#define RUMP_MOUNT_ZFS	"zfs"		
+#define RUMP_MOUNT_NILFS	"nilfs"		
+#define RUMP_MOUNT_RUMPFS	"rumpfs"	
+#define	RUMP_MOUNT_V7FS	"v7fs"		
+
+/*	NetBSD: fstypes.h,v 1.32 2012/11/26 16:22:21 drochner Exp 	*/
+#define	RUMP_MNT_RDONLY	0x00000001	
+#define	RUMP_MNT_SYNCHRONOUS	0x00000002	
+#define	RUMP_MNT_NOEXEC	0x00000004	
+#define	RUMP_MNT_NOSUID	0x00000008	
+#define	RUMP_MNT_NODEV	0x00000010	
+#define	RUMP_MNT_UNION	0x00000020	
+#define	RUMP_MNT_ASYNC	0x00000040	
+#define	RUMP_MNT_NOCOREDUMP	0x00008000	
+#define	RUMP_MNT_RELATIME	0x00020000	
+#define	RUMP_MNT_IGNORE	0x00100000	
+#define	RUMP_MNT_DISCARD	0x00800000	
+#define	RUMP_MNT_EXTATTR	0x01000000	
+#define	RUMP_MNT_LOG		0x02000000	
+#define	RUMP_MNT_NOATIME	0x04000000	
+#define	RUMP_MNT_SYMPERM	0x20000000	
+#define	RUMP_MNT_NODEVMTIME	0x40000000	
+#define	RUMP_MNT_SOFTDEP	0x80000000	
+#define	RUMP_MNT_EXRDONLY	0x00000080	
+#define	RUMP_MNT_EXPORTED	0x00000100	
+#define	RUMP_MNT_DEFEXPORTED	0x00000200	
+#define	RUMP_MNT_EXPORTANON	0x00000400	
+#define	RUMP_MNT_EXKERB	0x00000800	
+#define	RUMP_MNT_EXNORESPORT	0x08000000	
+#define	RUMP_MNT_EXPUBLIC	0x10000000	
+#define	RUMP_MNT_LOCAL	0x00001000	
+#define	RUMP_MNT_QUOTA	0x00002000	
+#define	RUMP_MNT_ROOTFS	0x00004000	
+#define	RUMP_MNT_UPDATE	0x00010000	
+#define	RUMP_MNT_RELOAD	0x00040000	
+#define	RUMP_MNT_FORCE	0x00080000	
+#define	RUMP_MNT_GETARGS	0x00400000	
+#define	RUMP_MNT_OP_FLAGS	(RUMP_MNT_UPDATE|RUMP_MNT_RELOAD|RUMP_MNT_FORCE|RUMP_MNT_GETARGS)
+#define	RUMP_MNT_WAIT	1	
+#define	RUMP_MNT_NOWAIT	2	
+#define	RUMP_MNT_LAZY 	3	
 
 /*	NetBSD: module.h,v 1.32 2012/10/17 17:48:48 dyoung Exp 	*/
 struct rump_modctl_load {
