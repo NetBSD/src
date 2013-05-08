@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.14 2013/04/30 11:29:12 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.15 2013/05/08 00:25:31 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -66,5 +66,8 @@ getstruct ../../../sys/module.h modctl_load
 
 fromvers ../../../ufs/ufs/ufsmount.h
 getstruct ../../../ufs/ufs/ufsmount.h ufs_args
+
+fromvers ../../../fs/sysvbfs/sysvbfs_args.h
+getstruct ../../../fs/sysvbfs/sysvbfs_args.h sysvbfs_args
 
 printf '\n#endif /* _RUMP_RUMPDEFS_H_ */\n'
