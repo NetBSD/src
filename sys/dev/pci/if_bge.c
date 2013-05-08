@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.239 2013/05/05 11:28:34 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.240 2013/05/08 03:13:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.239 2013/05/05 11:28:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.240 2013/05/08 03:13:35 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -4491,6 +4491,10 @@ bge_intr(void *xsc)
 	 */
 
 	/* read status word from status block */
+	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
+	    offsetof(struct bge_ring_data, bge_status_block),
+	    sizeof (struct bge_status_block),
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	statusword = sc->bge_rdata->bge_status_block.bge_status;
 
 	if ((statusword & BGE_STATFLAG_UPDATED) ||
