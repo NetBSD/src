@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolver.3,v 1.25 2013/05/08 18:06:46 christos Exp $
+.\"	$NetBSD: resolver.3,v 1.26 2013/05/08 18:18:32 wiz Exp $
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -34,7 +34,7 @@
 .\"	Id: resolver.man3,v 1.2 2009/01/21 00:12:34 each Exp
 .\"
 .Dd May 8, 2013
-.Dt RESOLVER 3 
+.Dt RESOLVER 3
 .Os
 .Sh NAME
 .Nm res_ninit ,
@@ -208,7 +208,7 @@ kept in the structure
 rather than that referenced through
 .Ft statp .
 .Pp
-Most of the values in 
+Most of the values in
 .Ft statp
 and
 .Ft _res
@@ -225,7 +225,7 @@ stored in
 are defined in
 .Pa resolv.h
 and are as follows.
-Options are stored as a simple bit mask containing the bitwise 
+Options are stored as a simple bit mask containing the bitwise
 .Dq OR
 of the options enabled.
 .Bl -tag -width "RES_USE_INET6"
@@ -245,8 +245,8 @@ Currently this is not implemented.
 .It Dv RES_USEVC
 Use TCP connections for queries instead of UDP datagrams.
 .It Dv RES_STAYOPEN
-Used with 
-.Dv RES_USEVC 
+Used with
+.Dv RES_USEVC
 to keep the TCP connection open between queries.
 This is useful only in programs that regularly do many queries.
 UDP should be the normal mode used.
@@ -294,8 +294,8 @@ DNS query packets with EDNS0 extension is not compatible with
 non-EDNS0 DNS servers.
 .It Dv RES_NOALIASES
 This option turns off the user level aliasing feature controlled by
-the 
-.Ev HOSTALIASES 
+the
+.Ev HOSTALIASES
 environment variable.
 Network daemons should set this option.
 .It Dv RES_ROTATE
@@ -338,16 +338,17 @@ the Internet address of the local name server(s).
 If no server is configured, the host running the resolver is tried.
 The current domain name is defined by the hostname
 if not specified in the configuration file;
-it can be overridden by the environment variable 
+it can be overridden by the environment variable
 .Ev LOCALDOMAIN .
 This environment variable may contain several blank-separated
 tokens if you wish to override the
 .Fa search list
-on a per-process basis.  This is similar to the
+on a per-process basis.
+This is similar to the
 .Fa search
 command in the configuration file.
-Another environment variable 
-.Ev RES_OPTIONS 
+Another environment variable
+.Ev RES_OPTIONS
 can be set to override certain internal resolver options which are otherwise
 set by changing fields in the
 .Ft statp
@@ -356,8 +357,8 @@ set by changing fields in the
 structure or are inherited from the configuration file's
 .Fa options
 command.
-The syntax of the 
-.Ev RES_OPTIONS 
+The syntax of the
+.Ev RES_OPTIONS
 environment variable is explained in
 .Xr resolv.conf 5 .
 Initialization normally occurs on the first call
@@ -369,7 +370,7 @@ must be set to all zeros prior to the first call to
 .Fn res_ninit .
 .Fn res_ndestroy
 should be call to free memory allocated by
-.Fn res_ninit 
+.Fn res_ninit
 after last use.
 .Pp
 The
@@ -393,7 +394,7 @@ supplied by the caller.
 .Fn res_nquery
 /
 .Fn res_query
-return -1 on error or the length of the answer.
+return \-1 on error or the length of the answer.
 .Pp
 The
 .Fn res_nsearch
@@ -404,14 +405,14 @@ routines make a query and awaits a response like
 /
 .Fn res_query ,
 but in addition, it implements the default and search rules
-controlled by the 
-.Dv RES_DEFNAMES 
-and 
-.Dv RES_DNSRCH 
+controlled by the
+.Dv RES_DEFNAMES
+and
+.Dv RES_DNSRCH
 options.
 It returns the length of the first successful reply which is stored in
 .Ft answer
-or -1 on error.
+or \-1 on error.
 .Pp
 The remaining routines are lower-level routines used by
 .Fn res_nquery
@@ -429,10 +430,10 @@ larger than
 .Fa buflen .
 The query type
 .Fa op
-is usually 
-.Dv QUERY , 
+is usually
+.Dv QUERY ,
 but can be any of the query types defined in
-.Pa <arpa/nameser.h> .
+.Aq Pa arpa/nameser.h .
 The domain name for the query is given by
 .Fa dname .
 .Fa newrr
@@ -450,13 +451,15 @@ It will call
 .Fn res_ninit
 /
 .Fn res_init
-if 
-.Dv RES_INIT 
+if
+.Dv RES_INIT
 is not set, send the query to the local name server, and
-handle timeouts and retries.  Additionally,
+handle timeouts and retries.
+Additionally,
 .Fn res_nsendsigned
 will use TSIG signatures to add authentication to the query and verify the
-response.  In this case, only one nameserver will be contacted.
+response.
+In this case, only one nameserver will be contacted.
 The length of the reply message is returned, or \-1 if there were errors.
 .Pp
 .Fn res_nquery
@@ -477,13 +480,13 @@ a buffer that bigger that the answer returned by the previous
 query is recommended.
 .Pp
 .Fa answer
-MUST be big enough to receive a maximum UDP response from the server or 
+MUST be big enough to receive a maximum UDP response from the server or
 parts of the answer will be silently discarded.
 The default maximum UDP response size is 512 bytes.
 .Pp
 The function
 .Fn res_ourserver_p
-returns true when 
+returns true when
 .Fa inp
 is one of the servers in
 .Fa statp->nsaddr_list
@@ -509,7 +512,7 @@ The function
 .Fn fp_resstat
 prints out the active flag bits in
 .Fa statp->options
-preceeded by the text ";; res options:" on 
+preceeded by the text ";; res options:" on
 .Fa file .
 .Pp
 The functions
@@ -541,8 +544,9 @@ take a list of ns_updrec
 .Fa rrecp_in .
 Identifies the containing zone for each record and groups the records
 according to containing zone maintaining in zone order then sends and update
-request to the servers for these zones.  The number of zones updated is
-returned or -1 on error.  Note that
+request to the servers for these zones.
+The number of zones updated is returned or \-1 on error.
+Note that
 .Fn res_nupdate
 will perform TSIG authenticated dynamic update operations if the key is not
 NULL.
@@ -552,7 +556,7 @@ The function
 discovers the closest enclosing zone cut for a specified domain name,
 and finds the IP addresses of the zone's master servers.
 .Pp
-The functions 
+The functions
 .Fn res_nmkupdate
 /
 .Fn res_mkupdate
@@ -566,19 +570,19 @@ and construct a UPDATE message in
 return the length of the constructed message on no error or one of the
 following error values.
 .Bl -inset -width "-5"
-.It -1
-An error occurred parsing 
+.It \-1
+An error occurred parsing
 .Fa rrecp_in .
-.It -2
-The buffer 
+.It \-2
+The buffer
 .Fa buf
 was too small.
-.It -3
+.It \-3
 The first record was not a zone section or there was a section order problem.
-The section order is S_ZONE, S_PREREQ and S_UPDATE. 
-.It -4
+The section order is S_ZONE, S_PREREQ and S_UPDATE.
+.It \-4
 A number overflow occurred.
-.It -5
+.It \-5
 Unknown operation or no records.
 .El
 .Pp
@@ -615,21 +619,23 @@ an array of pointers
 .Fa dnptrs
 to previously-compressed names in the current message.
 The first pointer points to
-the beginning of the message and the list ends with 
+the beginning of the message and the list ends with
 .Dv NULL .
 The limit to the array is specified by
 .Fa lastdnptr .
 A side effect of
 .Fn dn_comp
 is to update the list of pointers for labels inserted into the message
-as the name is compressed.  If
+as the name is compressed.
+If
 .Fa dnptr
-is 
-.Dv NULL , 
-names are not compressed.  If
+is
+.Dv NULL ,
+names are not compressed.
+If
 .Fa lastdnptr
-is 
-.Dv NULL , 
+is
+.Dv NULL ,
 the list of labels is not updated.
 .Pp
 The
@@ -654,21 +660,22 @@ The variables
 .Ft _res.res_h_errno
 and external variable
 .Ft h_errno
-is set whenever an error occurs during resolver operation.  The following
+is set whenever an error occurs during resolver operation.
+The following
 definitions are given in
-.Pa <netdb.h> :
+.Aq Pa netdb.h :
 .Bd -literal
-#define NETDB_INTERNAL -1 
+#define NETDB_INTERNAL -1
 /* see errno */
-#define NETDB_SUCCESS  0  
+#define NETDB_SUCCESS  0
 /* no problem */
-#define HOST_NOT_FOUND 1  
+#define HOST_NOT_FOUND 1
 /* Authoritative Answer Host not found */
-#define TRY_AGAIN      2  
+#define TRY_AGAIN      2
 /* Non-Authoritative not found, or SERVFAIL */
-#define NO_RECOVERY    3  
+#define NO_RECOVERY    3
 /* Non-Recoverable: FORMERR, REFUSED, NOTIMP */
-#define NO_DATA        4  
+#define NO_DATA        4
 /* Valid name, no data for requested type */
 .Ed
 .\" .Pp
@@ -691,7 +698,7 @@ The following functions are only in
 .Dv libresolv :
 .Fn res_findzonecut ,
 .Fn res_nmkupdate ,
-.Fn res_nsendsigned , 
+.Fn res_nsendsigned ,
 and
 .Fn res_nupdate .
 All the rest are in both
@@ -705,10 +712,10 @@ The configuration file, see
 .Xr resolv.conf 5 .
 .El
 .Sh SEE ALSO
-.Xr getaddrinfo 3 , 
-.Xr getnameinfo 3 , 
-.Xr gethostbyaddr 3 , 
-.Xr gethostbyname 3 , 
+.Xr getaddrinfo 3 ,
+.Xr getnameinfo 3 ,
+.Xr gethostbyaddr 3 ,
+.Xr gethostbyname 3 ,
 .Xr hostname 7 ,
 .Xr resolv.conf 5 ,
 .Xr named 8
