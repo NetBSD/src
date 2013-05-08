@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.22 2013/05/08 10:29:22 reinoud Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.23 2013/05/08 10:39:17 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.22 2013/05/08 10:29:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.23 2013/05/08 10:39:17 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -316,7 +316,7 @@ return EIO;
  * bmap functionality that translates logical block numbers to the virtual
  * block numbers to be stored on the vnode itself.
  *
- * Important allert!
+ * Important alert!
  *
  * If runp is not NULL, the number of contiguous blocks __starting from the
  * next block after the queried block__ will be returned in runp.
