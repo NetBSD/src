@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.148 2013/01/19 00:51:52 rmind Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.149 2013/05/08 11:08:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.148 2013/01/19 00:51:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.149 2013/05/08 11:08:45 pooka Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -706,7 +706,7 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 		off += n->m_len;
 #ifdef DIAGNOSTIC
 		if (off > m->m_len)
-			panic("m_copym0 overrun");
+			panic("m_copym0 overrun %d %d", off, m->m_len);
 #endif
 		if (off == m->m_len) {
 			m = m->m_next;
