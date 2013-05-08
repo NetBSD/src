@@ -1,4 +1,4 @@
-/*	$NetBSD: interror.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: interror.c,v 1.3 2013/05/08 18:20:14 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -503,7 +503,7 @@ log" },
 /* -------------------------------------------------------------------------- */
 	{	130001,	"ioctl denied by system security level" },
 	{	130002,	"ioctl operation on invalid minor device" },
-	{	130003,	"ioctl on device denied, ipfitler is disabled" },
+	{	130003,	"ioctl on device denied, ipfilter is disabled" },
 	{	130004,	"ioctl command not allowed when disabled" },
 	{	130005,	"ioctl denied due to insufficient authorisation" },
 	{	130006,	"cannot read while ipfilter is disabled" },
