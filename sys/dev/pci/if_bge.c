@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.240 2013/05/08 03:13:35 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.241 2013/05/08 04:05:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.240 2013/05/08 03:13:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.241 2013/05/08 04:05:46 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -3260,7 +3260,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t	pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
-	uint32_t		hwcfg = 0;
+	uint32_t 		hwcfg, hwcfg2, hwcfg3, hwcfg4;
 	uint32_t		command;
 	struct ifnet		*ifp;
 	uint32_t		misccfg;
@@ -3593,6 +3593,33 @@ bge_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	/*
+	 * Read the hardware config word in the first 32k of NIC internal
+	 * memory, or fall back to the config word in the EEPROM.
+	 * Note: on some BCM5700 cards, this value appears to be unset.
+	 */
+	hwcfg = hwcfg2 = hwcfg3 = hwcfg4 = 0;
+	if (bge_readmem_ind(sc, BGE_SRAM_DATA_SIG) ==
+	    BGE_SRAM_DATA_SIG_MAGIC) {
+		uint32_t tmp;
+
+		hwcfg = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG);
+		tmp = bge_readmem_ind(sc, BGE_SRAM_DATA_VER) >>
+		    BGE_SRAM_DATA_VER_SHIFT;
+		if ((0 < tmp) && (tmp < 0x100))
+			hwcfg2 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_2);
+		if (sc->bge_flags & BGE_PCIE)
+			hwcfg3 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_3);
+		if (BGE_ASICREV(sc->bge_chipid == BGE_ASICREV_BCM5785))
+			hwcfg4 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_4);
+	} else if (!(sc->bge_flags & BGE_NO_EEPROM)) {
+		bge_read_eeprom(sc, (void *)&hwcfg,
+		    BGE_EE_HWCFG_OFFSET, sizeof(hwcfg));
+		hwcfg = be32toh(hwcfg);
+	}
+	aprint_normal_dev(sc->bge_dev, "HW config %08x, %08x, %08x, %08x\n",
+	    hwcfg, hwcfg2, hwcfg3, hwcfg4);
+
 #if 0
 	/*
 	 * Reset NVRAM before bge_reset(). It's required to acquire NVRAM
@@ -3758,20 +3785,11 @@ bge_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * Figure out what sort of media we have by checking the hardware
-	 * config word in the first 32k of NIC internal memory, or fall back to
-	 * the config word in the EEPROM. Note: on some BCM5700 cards,
-	 * this value appears to be unset. If that's the case, we have to rely
-	 * on identifying the NIC by its PCI subsystem ID, as we do below for
-	 * the SysKonnect SK-9D41.
+	 * config word.  Note: on some BCM5700 cards, this value appears to be
+	 * unset. If that's the case, we have to rely on identifying the NIC
+	 * by its PCI subsystem ID, as we do below for the SysKonnect SK-9D41.
+	 * The SysKonnect SK-9D41 is a 1000baseSX card.
 	 */
-	if (bge_readmem_ind(sc, BGE_SRAM_DATA_SIG) == BGE_SRAM_DATA_SIG_MAGIC) {
-		hwcfg = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG);
-	} else if (!(sc->bge_flags & BGE_NO_EEPROM)) {
-		bge_read_eeprom(sc, (void *)&hwcfg,
-		    BGE_EE_HWCFG_OFFSET, sizeof(hwcfg));
-		hwcfg = be32toh(hwcfg);
-	}
-	/* The SysKonnect SK-9D41 is a 1000baseSX card. */
 	if (PCI_PRODUCT(pa->pa_id) == SK_SUBSYSID_9D41 ||
 	    (hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER) {
 		if (BGE_IS_5714_FAMILY(sc))
