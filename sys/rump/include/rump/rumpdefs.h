@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.18 2013/04/30 12:39:21 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.19 2013/05/08 00:25:55 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -289,6 +289,11 @@ struct rump_modctl_load {
 /*	NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp 	*/
 struct rump_ufs_args {
 	char	*fspec;			/* block special device to mount */
+};
+
+/*	NetBSD: sysvbfs_args.h,v 1.1 2008/09/04 12:07:30 pooka Exp 	*/
+struct rump_sysvbfs_args {
+	char	*fspec;		/* blocks special holding the fs to mount */
 };
 
 #endif /* _RUMP_RUMPDEFS_H_ */
