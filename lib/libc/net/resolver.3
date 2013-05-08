@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolver.3,v 1.24 2012/11/07 15:48:13 christos Exp $
+.\"	$NetBSD: resolver.3,v 1.25 2013/05/08 18:06:46 christos Exp $
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -33,7 +33,7 @@
 .\"	@(#)resolver.3	6.5 (Berkeley) 6/23/90
 .\"	Id: resolver.man3,v 1.2 2009/01/21 00:12:34 each Exp
 .\"
-.Dd November 7, 2012
+.Dd May 8, 2013
 .Dt RESOLVER 3 
 .Os
 .Sh NAME
@@ -74,6 +74,7 @@
 .Nd resolver routines
 .Sh LIBRARY
 .Lb libc
+.Lb libresolv
 .Sh SYNOPSIS
 .In resolv.h
 .In res_update.h
@@ -685,14 +686,28 @@ definitions are given in
 .\" value of the
 .\" .Fa err
 .\" parameter.
+.Pp
+The following functions are only in
+.Dv libresolv :
+.Fn res_findzonecut ,
+.Fn res_nmkupdate ,
+.Fn res_nsendsigned , 
+and
+.Fn res_nupdate .
+All the rest are in both
+.Dv libc
+and
+.Dv libresolv .
 .Sh FILES
 .Bl -tag -width "/etc/resolv.conf    "
-.It Pa
-/etc/resolv.conf
+.It Pa /etc/resolv.conf
 The configuration file, see
 .Xr resolv.conf 5 .
 .El
 .Sh SEE ALSO
+.Xr getaddrinfo 3 , 
+.Xr getnameinfo 3 , 
+.Xr gethostbyaddr 3 , 
 .Xr gethostbyname 3 , 
 .Xr hostname 7 ,
 .Xr resolv.conf 5 ,
