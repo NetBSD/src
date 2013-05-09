@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.5 2013/05/08 05:13:56 matt Exp $")
+RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.6 2013/05/09 07:12:59 skrll Exp $")
 
 ENTRY(__aeabi_ldivmod)
 	orrs	ip, r2, r3
@@ -132,7 +132,7 @@ ENTRY(__aeabi_ldivmod)
 
 .Ldivbyzero:
 	push	{r0-r1, ip, lr}
-	cmps	AHI, #0
+	cmp	AHI, #0
 	mvnge	ALO, #0
 	movge	AHI, ALO, lsr #1
 	movlt	ALO, #0
