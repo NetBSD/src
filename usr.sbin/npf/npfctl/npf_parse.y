@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.22 2013/03/20 00:29:47 christos Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.23 2013/05/09 19:12:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ yyerror(const char *fmt, ...)
 
 %type	<str>		addr, some_name, list_elem, table_store, string
 %type	<str>		proc_param_val, opt_apply
-%type	<num>		ifindex, port, opt_final, on_ifindex
+%type	<num>		ifindex, port, opt_final, on_ifindex, number
 %type	<num>		afamily, opt_family
 %type	<num>		block_or_pass, rule_dir, block_opts
 %type	<num>		opt_stateful, icmp_type, table_type, map_sd, map_type
@@ -240,12 +240,12 @@ list_elem
 		npfvar_add_element(vp, NPFVAR_STRING, $1, strlen($1) + 1);
 		npfvar_add_elements(cvar, vp);
 	}
-	| NUM MINUS NUM
+	| number MINUS number
 	{
 		npfvar_t *vp = npfctl_parse_port_range($1, $3);
 		npfvar_add_elements(cvar, vp);
 	}
-	| NUM
+	| number
 	{
 		npfvar_t *vp = npfvar_create(".num");
 		npfvar_add_element(vp, NPFVAR_NUM, &$1, sizeof($1));
@@ -377,7 +377,7 @@ proc_param
 
 proc_param_val
 	: some_name	{ $$ = $1; }
-	| NUM		{ (void)asprintf(&$$, "%ld", $1); }
+	| number	{ (void)asprintf(&$$, "%ld", $1); }
 	| FPNUM		{ (void)asprintf(&$$, "%lf", $1); }
 	|		{ $$ = NULL; }
 	;
@@ -540,7 +540,7 @@ opt_proto
 		$$.op_proto = npfctl_protono($2);
 		$$.op_opts = NULL;
 	}
-	| PROTO NUM
+	| PROTO number
 	{
 		$$.op_proto = $2;
 		$$.op_opts = NULL;
@@ -611,11 +611,7 @@ filt_addr
 	;
 
 addr_and_mask
-	: addr SLASH NUM
-	{
-		$$ = npfctl_parse_fam_addr_mask($1, NULL, &$3);
-	}
-	| addr SLASH HEX
+	: addr SLASH number
 	{
 		$$ = npfctl_parse_fam_addr_mask($1, NULL, &$3);
 	}
@@ -697,7 +693,7 @@ port_range
 	;
 
 port
-	: NUM		{ $$ = $1; }
+	: number	{ $$ = $1; }
 	| IDENTIFIER	{ $$ = npfctl_portno($1); }
 	| STRING	{ $$ = npfctl_portno($1); }
 	;
@@ -707,7 +703,7 @@ icmp_type_and_code
 	{
 		$$ = npfctl_parse_icmp($<num>0, $2, -1);
 	}
-	| ICMPTYPE icmp_type CODE NUM
+	| ICMPTYPE icmp_type CODE number
 	{
 		$$ = npfctl_parse_icmp($<num>0, $2, $4);
 	}
@@ -748,7 +744,7 @@ tcp_flags
 	;
 
 icmp_type
-	: NUM		{ $$ = $1; }
+	: number	{ $$ = $1; }
 	| IDENTIFIER	{ $$ = npfctl_icmptype($<num>-1, $1); }
 	| VAR_ID
 	{
@@ -828,6 +824,11 @@ ifindex
 			break;
 		}
 	}
+	;
+
+number
+	: HEX		{ $$ = $1; }
+	| NUM		{ $$ = $1; }
 	;
 
 some_name
