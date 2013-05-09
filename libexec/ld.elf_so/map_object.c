@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.50 2013/05/08 15:25:01 christos Exp $	 */
+/*	$NetBSD: map_object.c,v 1.51 2013/05/09 15:38:14 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.50 2013/05/08 15:25:01 christos Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.51 2013/05/09 15:38:14 christos Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -421,6 +421,7 @@ void
 _rtld_obj_free(Obj_Entry *obj)
 {
 	Objlist_Entry *elm;
+	Name_Entry *entry;
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 	if (obj->tls_done)
@@ -432,9 +433,8 @@ _rtld_obj_free(Obj_Entry *obj)
 		obj->needed = needed->next;
 		xfree(needed);
 	}
-	while (!STAILQ_EMPTY(&obj->names)) {
-		Name_Entry *entry = STAILQ_FIRST(&obj->names);
-		STAILQ_REMOVE_HEAD(&obj->names, link);
+	while ((entry = SIMPLEQ_FIRST(&obj->names)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&obj->names, link);
 		xfree(entry);
 	}
 	while ((elm = SIMPLEQ_FIRST(&obj->dldags)) != NULL) {
@@ -459,7 +459,7 @@ _rtld_obj_new(void)
 	Obj_Entry *obj;
 
 	obj = CNEW(Obj_Entry);
-	STAILQ_INIT(&obj->names);
+	SIMPLEQ_INIT(&obj->names);
 	SIMPLEQ_INIT(&obj->dldags);
 	SIMPLEQ_INIT(&obj->dagmembers);
 	return obj;
