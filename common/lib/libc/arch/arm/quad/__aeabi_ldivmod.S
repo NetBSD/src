@@ -29,11 +29,13 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.6 2013/05/09 07:12:59 skrll Exp $")
+RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.7 2013/05/09 15:03:40 matt Exp $")
 
 ENTRY(__aeabi_ldivmod)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 	orrs	ip, r2, r3
 	beq	.Ldivbyzero
+#endif
 
 	push	{r4-r5, sl, lr}
 #define	NEG	r5
@@ -130,6 +132,7 @@ ENTRY(__aeabi_ldivmod)
 	pop	{r4-r5, sl, lr}
 	RET
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 .Ldivbyzero:
 	push	{r0-r1, ip, lr}
 	cmp	AHI, #0
@@ -140,4 +143,5 @@ ENTRY(__aeabi_ldivmod)
 	bl	PLT_SYM(__aeabi_ldiv0)
 	pop	{r2-r3, ip, lr}
 	RET
+#endif
 END(__aeabi_ldivmod)
