@@ -1,4 +1,4 @@
-.\" $NetBSD: aubtfwl.4,v 1.3 2013/05/09 12:46:21 aymeric Exp $
+.\" $NetBSD: aubtfwl.4,v 1.4 2013/05/09 13:54:11 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation
 .\" All rights reserved.
@@ -51,21 +51,26 @@ driver.
 For AR3011 chipsets, you will need the
 .Pa ath3k-1.fw
 firmware file in
-.Pa ubt/
-, and for AR3012 chipsets, the files
+.Pa ubt/ ,
+and for AR3012 chipsets, the files
 .Pa ar3k/AthrBT_*.dfu
 and
 .Pa ar3k/ramps_*.dfu
 in
-.Pa ubt/ar3k/
+.Pa ubt/ar3k/ .
 .Pp
 The firmware files can be obtained from the Linux firmware
 git repository at
 .Lk http://git.kernel.org/?p=linux/kernel/git/firmware/linux-firmware.git .
 .Sh FILES
+.Bl -bullet
+.It
 .Pa ath3k-1.fw
+.It
 .Pa ar3k/AthrBT_*.dfu
+.It
 .Pa ar3k/ramps_*.dfu
+.El
 .Sh SEE ALSO
 .Xr bluetooth 4 ,
 .Xr ubt 4 ,
