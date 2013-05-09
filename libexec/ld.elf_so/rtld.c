@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.167 2013/05/09 15:38:14 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.168 2013/05/09 15:39:10 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.167 2013/05/09 15:38:14 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.168 2013/05/09 15:39:10 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -884,7 +884,6 @@ _rtld_unload_object(sigset_t *mask, Obj_Entry *root, bool do_fini_funcs)
 				_rtld_linkmap_delete(obj);
 				*linkp = obj->next;
 				_rtld_objcount--;
-xprintf("%s, %d: %s\n", __FILE__, __LINE__, obj->path);
 				_rtld_obj_free(obj);
 			} else
 				linkp = &obj->next;
