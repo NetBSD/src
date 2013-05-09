@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.44 2013/05/06 19:59:30 christos Exp $	 */
+/*	$NetBSD: load.c,v 1.45 2013/05/09 15:37:58 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.44 2013/05/06 19:59:30 christos Exp $");
+__RCSID("$NetBSD: load.c,v 1.45 2013/05/09 15:37:58 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -212,6 +212,7 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 	dbg(("load by name %s %p", name, x));
 	for (o = _rtld_objlist->next; o != NULL; o = o->next)
 		if (_rtld_object_match_name(o, name)) {
+			++o->refcount;
 			(*needed)->obj = o;
 			return true;
 		}
