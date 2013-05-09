@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.115 2013/05/06 19:59:30 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.116 2013/05/09 15:38:14 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -92,7 +92,7 @@ typedef struct Struct_Objlist_Entry {
 typedef SIMPLEQ_HEAD(Struct_Objlist, Struct_Objlist_Entry) Objlist;
 
 typedef struct Struct_Name_Entry {
-	STAILQ_ENTRY(Struct_Name_Entry)	link;
+	SIMPLEQ_ENTRY(Struct_Name_Entry) link;
 	char	name[1];
 } Name_Entry;
 
@@ -255,8 +255,8 @@ typedef struct Struct_Obj_Entry {
 	uint8_t         nbuckets_s1;
 	uint8_t         nbuckets_s2;
 	size_t		pathlen;	/* Pathname length */
-	STAILQ_HEAD(, Struct_Name_Entry) names;	/* List of names for this object we
-						   know about. */
+	SIMPLEQ_HEAD(, Struct_Name_Entry) names; /* List of names for this
+						  * object we know about. */
 
 #ifdef __powerpc__
 	Elf_Addr       *gotptr;		/* GOT table (secure-plt only) */

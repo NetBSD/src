@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.166 2013/05/06 19:59:30 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.167 2013/05/09 15:38:14 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.166 2013/05/06 19:59:30 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.167 2013/05/09 15:38:14 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -884,6 +884,7 @@ _rtld_unload_object(sigset_t *mask, Obj_Entry *root, bool do_fini_funcs)
 				_rtld_linkmap_delete(obj);
 				*linkp = obj->next;
 				_rtld_objcount--;
+xprintf("%s, %d: %s\n", __FILE__, __LINE__, obj->path);
 				_rtld_obj_free(obj);
 			} else
 				linkp = &obj->next;
@@ -1373,8 +1374,8 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *), void *pa
 	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next) {
 		phdr_info.dlpi_addr = (Elf_Addr)obj->relocbase;
 		/* XXX: wrong but not fixing it yet */
-		phdr_info.dlpi_name = STAILQ_FIRST(&obj->names) ?
-		    STAILQ_FIRST(&obj->names)->name : obj->path;
+		phdr_info.dlpi_name = SIMPLEQ_FIRST(&obj->names) ?
+		    SIMPLEQ_FIRST(&obj->names)->name : obj->path;
 		phdr_info.dlpi_phdr = obj->phdr;
 		phdr_info.dlpi_phnum = obj->phsize / sizeof(obj->phdr[0]);
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
