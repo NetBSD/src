@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.23 2011/11/29 13:15:27 drochner Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.24 2013/05/09 19:21:50 gdt Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -144,8 +144,10 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 	int need_if_start = 0;
 	int s = splnet();
 
+	KERNEL_LOCK(1, NULL);
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
+		KERNEL_UNLOCK_ONE(NULL);
 		splx(s);
 		m_freem(m);
 		return (0);
@@ -159,6 +161,7 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 	IF_ENQUEUE(ifq, m);
 	if (need_if_start)
 		(*ifp->if_start)(ifp);
+	KERNEL_UNLOCK_ONE(NULL);
 	splx(s);
 	return (1);
 }
