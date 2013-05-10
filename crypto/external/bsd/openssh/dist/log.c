@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.8 2013/03/29 16:19:45 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.9 2013/05/10 16:38:47 christos Exp $	*/
 /* $OpenBSD: log.c,v 1.43 2012/09/06 04:37:39 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.8 2013/03/29 16:19:45 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.9 2013/05/10 16:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -411,7 +411,6 @@ do_log(LogLevel level, const char *fmt, va_list args)
 			{ visbuf, len3 },
 			{ __UNCONST("\r\n"), 2 },
 		};
-/*###414 [lint] warning conversion to 'int' due to prototype, arg #3 [259]%%%*/
 		writev(STDERR_FILENO, iov, __arraycount(iov));
 	} else {
 #ifdef SYSLOG_DATA_INIT
