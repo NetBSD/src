@@ -1,4 +1,4 @@
-.\"	$NetBSD: hdaudio.4,v 1.10 2012/08/13 20:31:15 rkujawa Exp $
+.\"	$NetBSD: hdaudio.4,v 1.11 2013/05/10 11:05:14 wiz Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 13, 2012
+.Dd May 10, 2013
 .Dt HDAUDIO 4
 .Os
 .Sh NAME
@@ -88,6 +88,12 @@ controls and configuring/discovering appropriate widget link routes to fit.
 By following the published mechanisms for common implementations of widget
 parsing, it is expected that nearly all High Definition Audio devices will
 be supported without requiring per-device quirks.
+.Sh HARDWARE
+Except for very many on-board sound cards included in mainboards, the following
+add-on card is supported:
+.Bl -tag
+.It TerraTec Aureon 7.1 PCIe
+.El
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr mixer 4 ,
