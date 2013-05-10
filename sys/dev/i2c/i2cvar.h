@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.8 2010/02/28 15:33:21 snj Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.8.28.1 2013/05/10 01:10:03 khorben Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -117,6 +117,8 @@ struct i2c_attach_args {
 	i2c_tag_t	ia_tag;		/* our controller */
 	i2c_addr_t	ia_addr;	/* address of device */
 	int		ia_size;	/* size (for EEPROMs) */
+	int		ia_intr;	/* interrupt */
+	int		ia_intrbase;	/* interrupt base */
 	int		ia_type;	/* bus type */
 	/* only set if using direct config */
 	const char *	ia_name;	/* name of the device */
