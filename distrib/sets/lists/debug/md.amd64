@@ -1,8 +1,9 @@
-# $NetBSD: md.amd64,v 1.22 2013/04/28 04:05:40 joerg Exp $
+# $NetBSD: md.amd64,v 1.23 2013/05/10 00:50:50 htodd Exp $
 ./usr/libdata/debug/lib/i386/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/i386/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/i386/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug
+./usr/libdata/debug/usr/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		debug
