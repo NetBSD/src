@@ -1,4 +1,0 @@
-@set UPDATED 8 May 2011
-@set UPDATED-MONTH May 2011
-@set EDITION 5.0.2
-@set VERSION 5.0.2

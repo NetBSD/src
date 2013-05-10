@@ -1,3 +1,0 @@
-bar = yes
-config_directory = .
-./postconf: warning: ./main.cf: unused parameter: baz=xx
