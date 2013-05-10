@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.48 2013/05/10 15:31:22 christos Exp $
+#	$NetBSD: Makefile,v 1.49 2013/05/10 15:40:21 christos Exp $
 
 .include <bsd.own.mk>
 
 PROG=		lint1
-SRCS=		cgram.y decl.c emit.c emit1.c err.c func.c init.c inittyp.c \
-		main1.c mem.c mem1.c print.c scan.l tree.c tyname.c
+SRCS=		cgram.y decl.c emit.c emit1.c err.c func.c init.c \
+		inittyp.c main1.c mem.c mem1.c print.c scan.l tree.c tyname.c
 
 MAN=		lint.7
 YHEADER=
