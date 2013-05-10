@@ -1,3 +1,0 @@
-config_directory = .
-foo = yes
-smtpd_restriction_classes = foo bar
