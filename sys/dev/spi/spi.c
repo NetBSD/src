@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.8 2013/02/15 17:44:40 rkujawa Exp $ */
+/* $NetBSD: spi.c,v 1.8.6.1 2013/05/10 01:25:07 khorben Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.8 2013/02/15 17:44:40 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.8.6.1 2013/05/10 01:25:07 khorben Exp $");
 
 #include "locators.h"
 
@@ -119,6 +119,7 @@ spi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	}
 
 	sa.sa_handle = &sc->sc_slaves[addr];
+	sa.sa_intr = cf->cf_loc[SPICF_INTR];
 
 	if (config_match(parent, cf, &sa) > 0)
 		config_attach(parent, cf, &sa, spi_print);
