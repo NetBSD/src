@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.138 2013/05/10 14:05:57 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.139 2013/05/10 14:55:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.138 2013/05/10 14:05:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.139 2013/05/10 14:55:08 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.138 2013/05/10 14:05:57 tsutsui Exp $"
 #include <netinet/ip.h>		/* XXX for IP_MAXPACKET */
 
 #include <net/bpf.h>
+#include <sys/rnd.h>
 
 #include <sys/bus.h>
 
@@ -860,6 +861,9 @@ re_attach(struct rtk_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
+	    RND_TYPE_NET, 0);
+
 	if (pmf_device_register(sc->sc_dev, NULL, NULL))
 		pmf_class_network_register(sc->sc_dev, ifp);
 	else
@@ -951,6 +955,7 @@ re_detach(struct rtk_softc *sc)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->mii.mii_media, IFM_INST_ANY);
 
+	rnd_detach_source(&sc->rnd_source);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
@@ -1475,6 +1480,8 @@ re_intr(void *arg)
 
 	if (handled && !IFQ_IS_EMPTY(&ifp->if_snd))
 		re_start(ifp);
+
+	rnd_add_uint32(&sc->rnd_source, status);
 
 	return handled;
 }
