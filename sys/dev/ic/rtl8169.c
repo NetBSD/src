@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.137 2013/04/06 01:53:14 khorben Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.138 2013/05/10 14:05:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.137 2013/04/06 01:53:14 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.138 2013/05/10 14:05:57 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -554,9 +554,8 @@ void
 re_attach(struct rtk_softc *sc)
 {
 	uint8_t eaddr[ETHER_ADDR_LEN];
-	uint16_t val;
 	struct ifnet *ifp;
-	int error = 0, i, addr_len;
+	int error = 0, i;
 
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
 		uint32_t hwrev;
@@ -644,6 +643,12 @@ re_attach(struct rtk_softc *sc)
 	/* Reset the adapter. */
 	re_reset(sc);
 
+	/*
+	 * RTL81x9 chips automatically read EEPROM to init MAC address,
+	 * and some NAS override its MAC address per own configuration,
+	 * so no need to explicitely read EEPROM and set ID registers.
+	 */
+#ifdef RE_USE_EECMD
 	if ((sc->sc_quirk & RTKQ_NOEECMD) != 0) {
 		/*
 		 * Get station address from ID registers.
@@ -651,6 +656,9 @@ re_attach(struct rtk_softc *sc)
 		for (i = 0; i < ETHER_ADDR_LEN; i++)
 			eaddr[i] = CSR_READ_1(sc, RTK_IDR0 + i);
 	} else {
+		uint16_t val;
+		int addr_len;
+
 		/*
 		 * Get station address from the EEPROM.
 		 */
@@ -668,6 +676,13 @@ re_attach(struct rtk_softc *sc)
 			eaddr[(i * 2) + 1] = val >> 8;
 		}
 	}
+#else
+	/*
+	 * Get station address from ID registers.
+	 */
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		eaddr[i] = CSR_READ_1(sc, RTK_IDR0 + i);
+#endif
 
 	/* Take PHY out of power down mode. */
 	if ((sc->sc_quirk & RTKQ_PHYWAKE_PM) != 0)
@@ -1726,11 +1741,13 @@ static int
 re_init(struct ifnet *ifp)
 {
 	struct rtk_softc *sc = ifp->if_softc;
-	const uint8_t *enaddr;
 	uint32_t rxcfg = 0;
-	uint32_t reg;
 	uint16_t cfg;
 	int error;
+#ifdef RE_USE_EECMD
+	const uint8_t *enaddr;
+	uint32_t reg;
+#endif
 
 	if ((error = re_enable(sc)) != 0)
 		goto out;
@@ -1775,6 +1792,7 @@ re_init(struct ifnet *ifp)
 
 	DELAY(10000);
 
+#ifdef RE_USE_EECMD
 	/*
 	 * Init our MAC address.  Even though the chipset
 	 * documentation doesn't mention it, we need to enter "Config
@@ -1788,6 +1806,7 @@ re_init(struct ifnet *ifp)
 	reg = enaddr[4] | (enaddr[5] << 8);
 	CSR_WRITE_4(sc, RTK_IDR4, reg);
 	CSR_WRITE_1(sc, RTK_EECMD, RTK_EEMODE_OFF);
+#endif
 
 	/*
 	 * For C+ mode, initialize the RX descriptors and mbufs.
