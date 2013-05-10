@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.18 2013/04/30 05:37:51 matt Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.18.2.1 2013/05/10 01:16:21 khorben Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -712,6 +712,14 @@
 #define I2C1_BASE_3530			0x48070000
 #define I2C2_BASE_3530			0x48072000
 #define I2C3_BASE_3530			0x48060000
+
+/*
+ * SPI
+ */
+#define SPI1_BASE_3530			0x48098000
+#define SPI2_BASE_3530			0x4809a000
+#define SPI3_BASE_3530			0x480b8000
+#define SPI4_BASE_3530			0x480ba000
 
 /*
  * USB Host
