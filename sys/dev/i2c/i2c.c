@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.39 2013/02/03 16:28:51 jdc Exp $	*/
+/*	$NetBSD: i2c.c,v 1.39.6.1 2013/05/10 01:10:03 khorben Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.39 2013/02/03 16:28:51 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.39.6.1 2013/05/10 01:10:03 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,8 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_tag = sc->sc_tag;
 	ia.ia_addr = cf->cf_loc[IICCF_ADDR];
 	ia.ia_size = cf->cf_loc[IICCF_SIZE];
+	ia.ia_intr = cf->cf_loc[IICCF_INTR];
+	ia.ia_intrbase = cf->cf_loc[IICCF_INTRBASE];
 	ia.ia_type = sc->sc_type;
 
 	ia.ia_name = NULL;
@@ -192,6 +194,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 		prop_dictionary_t dev;
 		prop_data_t cdata;
 		uint32_t addr, size;
+		int intr, intrbase;
 		uint64_t cookie;
 		const char *name;
 		struct i2c_attach_args ia;
@@ -214,6 +217,11 @@ iic_attach(device_t parent, device_t self, void *aux)
 				loc[1] = size;
 			else
 				loc[1] = -1;
+			if (!prop_dictionary_get_uint32(dev, "intr", &intr))
+				intr = -1;
+			if (!prop_dictionary_get_uint32(dev, "intrbase",
+						&intrbase))
+				intrbase = -1;
 
 			memset(&ia, 0, sizeof ia);
 			ia.ia_addr = addr;
@@ -222,6 +230,8 @@ iic_attach(device_t parent, device_t self, void *aux)
 			ia.ia_name = name;
 			ia.ia_cookie = cookie;
 			ia.ia_size = size;
+			ia.ia_intr = intr;
+			ia.ia_intrbase = intrbase;
 
 			buf = NULL;
 			cdata = prop_dictionary_get(dev, "compatible");
