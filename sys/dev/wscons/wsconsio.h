@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.108 2013/04/29 13:39:47 kiyohara Exp $ */
+/* $NetBSD: wsconsio.h,v 1.108.2.1 2013/05/10 00:38:20 khorben Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -108,6 +108,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_LUNA		23	/* OMRON SX-9100 LUNA */
 #define	WSKBD_TYPE_RFB		24	/* Usermode vnc remote keyboard */
 #define	WSKBD_TYPE_EPOC		25	/* Psion EPOC machine keyboard */
+#define	WSKBD_TYPE_N900		26	/* Nokia N900 keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -331,7 +332,7 @@ struct wsmouse_repeat {
 #define WSDISPLAY_TYPE_VALKYRIE	54	/* Apple onboard video 'valkyrie' */
 #define WSDISPLAY_TYPE_IMXIPU	55	/* i.MX ipu */
 #define WSDISPLAY_TYPE_VC4	56	/* Broadcom VideoCore 4 */
-#define WSDISPLAY_TYPE_OMAP3	57	/* OMAP 3530 */
+#define WSDISPLAY_TYPE_OMAP3	57	/* OMAP 3430/3530 */
 #define WSDISPLAY_TYPE_WINDERMERE 58	/* SoC for EPOC32 Series 5mx */
 #define WSDISPLAY_TYPE_CLPS711X	59	/* CL PS-711x  */
 

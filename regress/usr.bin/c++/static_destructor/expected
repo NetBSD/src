@@ -1,4 +1,0 @@
-constructor A
-constructor B
-destructor B : i = 1
-destructor A : i = 10
