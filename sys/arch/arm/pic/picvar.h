@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.7 2012/09/01 00:00:42 matt Exp $	*/
+/*	$NetBSD: picvar.h,v 1.7.8.1 2013/05/10 00:57:56 khorben Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -64,11 +64,13 @@ void	*pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 int	pic_alloc_irq(struct pic_softc *pic);
 void	pic_disestablish_source(struct intrsource *is);
 void	pic_do_pending_ints(register_t psw, int newipl, void *frame);
-void	pic_dispatch(struct intrsource *is, void *frame);
+int	pic_dispatch(struct intrsource *is, void *frame);
 
 void	*intr_establish(int irq, int ipl, int type, int (*func)(void *),
 	    void *arg);
 void	intr_disestablish(void *);
+void	intr_enable(void *);
+void	intr_disable(void *);
 #ifdef MULTIPROCESSOR
 void	intr_cpu_init(struct cpu_info *);
 void	intr_ipi_send(const kcpuset_t *, u_long ipi);

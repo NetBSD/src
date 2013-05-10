@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.15 2012/10/30 07:42:35 msaitoh Exp $	*/
+/*	$NetBSD: pic.c,v 1.15.6.1 2013/05/10 00:57:56 khorben Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.15 2012/10/30 07:42:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.15.6.1 2013/05/10 00:57:56 khorben Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -201,7 +201,7 @@ pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 		return ipl_mask;
 
 	KASSERT((irq_base & 31) == 0);
-	
+
 	(*pic->pic_ops->pic_block_irqs)(pic, irq_base, pending);
 
 	atomic_or_32(ipending, pending);
@@ -252,7 +252,7 @@ pic_find_pending_irqs_by_ipl(struct pic_softc *pic, size_t irq_base,
 	}
 }
 
-void
+int
 pic_dispatch(struct intrsource *is, void *frame)
 {
 	int rv;
@@ -265,13 +265,15 @@ pic_dispatch(struct intrsource *is, void *frame)
 		rv = (*is->is_func)(is->is_arg);
 	} else {
 		pic_deferral_ev.ev_count++;
-		return;
+		return 1;
 	}
 
 	struct pic_percpu * const pcpu = percpu_getref(is->is_pic->pic_percpu);
 	KASSERT(pcpu->pcpu_magic == PICPERCPU_MAGIC);
 	pcpu->pcpu_evs[is->is_irq].ev_count++;
 	percpu_putref(is->is_pic->pic_percpu);
+
+	return rv;
 }
 
 void
@@ -290,6 +292,7 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 	uint32_t blocked_irqs;
 	int irq;
 	bool progress = false;
+	int rv;
 	
 	KASSERT(pic->pic_pending_ipls & ipl_mask);
 
@@ -336,7 +339,7 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 			is = pic->pic_sources[irq_base + irq];
 			if (is != NULL) {
 				cpsie(I32_bit);
-				pic_dispatch(is, frame);
+				rv = pic_dispatch(is, frame);
 				cpsid(I32_bit);
 #if PIC_MAXSOURCES > 32
 				/*
@@ -345,7 +348,8 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 				 */
 				poi = 1;
 #endif
-				blocked_irqs |= __BIT(irq);
+				if (rv)
+					blocked_irqs |= __BIT(irq);
 			} else {
 				KASSERT(0);
 			}
@@ -724,4 +728,24 @@ intr_disestablish(void *ih)
 	KASSERT(!cpu_softintr_p());
 
 	pic_disestablish_source(is);
+}
+
+void
+intr_enable(void *ih)
+{
+	const struct intrsource const *is = ih;
+	struct pic_softc * const pic = is->is_pic;
+	const int irq = is->is_irq;
+
+	(*pic->pic_ops->pic_unblock_irqs)(pic, irq & ~0x1f, __BIT(irq & 0x1f));
+}
+
+void
+intr_disable(void *ih)
+{
+	const struct intrsource * const is = ih;
+	struct pic_softc * const pic = is->is_pic;
+	const int irq = is->is_irq;
+
+	(*pic->pic_ops->pic_block_irqs)(pic, irq & ~0x1f, __BIT(irq & 0x1f));
 }
