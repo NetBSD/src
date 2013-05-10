@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430_intr.h,v 1.4 2012/07/14 07:42:57 matt Exp $ */
+/*	$NetBSD: omap2430_intr.h,v 1.4.8.1 2013/05/10 00:50:34 khorben Exp $ */
 
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
@@ -162,7 +162,7 @@ uint32_t omap_microtimer_interval(uint32_t start, uint32_t end);
 #define	IRQ_GPT12_3530		95	/* (3530) GPT12 */
 
 #define	PIC_MAXSOURCES		96
-#define	PIC_MAXMAXSOURCES	(PIC_MAXSOURCES+192)
+#define	PIC_MAXMAXSOURCES	(PIC_MAXSOURCES+256)
 
 void omap_irq_handler(void *);
 
