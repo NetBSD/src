@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.241 2013/05/08 04:05:46 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.242 2013/05/10 16:37:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,9 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.241 2013/05/08 04:05:46 msaitoh Exp $");
-
-#include "vlan.h"
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.242 2013/05/10 16:37:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
