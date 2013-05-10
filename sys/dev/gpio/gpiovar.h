@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.15 2011/11/13 13:20:02 mbalmer Exp $ */
+/* $NetBSD: gpiovar.h,v 1.15.18.1 2013/05/10 01:20:05 khorben Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -71,6 +71,7 @@ struct gpio_attach_args {
 	uint32_t	 ga_mask;
 	char		*ga_dvname;
 	uint32_t	 ga_flags;
+	int		 ga_intr;
 };
 
 /* GPIO pin map */

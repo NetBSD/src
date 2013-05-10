@@ -1,6 +1,6 @@
-# $NetBSD: files.gpio,v 1.10 2011/11/13 12:33:00 mbalmer Exp $
+# $NetBSD: files.gpio,v 1.10.18.1 2013/05/10 01:20:05 khorben Exp $
 
-define	gpio {[offset = -1], [mask = 0], [flag = 0]}
+define	gpio {[offset = -1], [mask = 0], [flag = 0], [intr = -1]}
 
 device	gpio: gpio
 attach	gpio at gpiobus

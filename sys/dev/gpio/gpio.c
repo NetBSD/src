@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.51 2012/10/17 21:35:39 dyoung Exp $ */
+/* $NetBSD: gpio.c,v 1.51.6.1 2013/05/10 01:20:04 khorben Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.51 2012/10/17 21:35:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.51.6.1 2013/05/10 01:20:04 khorben Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -249,6 +249,7 @@ gpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ga.ga_offset = cf->cf_loc[GPIOCF_OFFSET];
 	ga.ga_mask = cf->cf_loc[GPIOCF_MASK];
 	ga.ga_flags = cf->cf_loc[GPIOCF_FLAG];
+	ga.ga_intr = cf->cf_loc[GPIOCF_INTR];
 	namlen = strlen(cf->cf_name) + 1;
 	ga.ga_dvname = kmem_alloc(namlen, KM_NOSLEEP);
 	if (ga.ga_dvname == NULL)
