@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_genfb.c,v 1.4 2013/01/31 11:00:44 macallan Exp $ */
+/* $NetBSD: bcm2835_genfb.c,v 1.5 2013/05/11 07:42:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.4 2013/01/31 11:00:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.5 2013/05/11 07:42:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,6 +58,12 @@ static void	bcmgenfb_attach(device_t, device_t, void *);
 
 static int	bcmgenfb_ioctl(void *, void *, u_long, void *, int, lwp_t *);
 static paddr_t	bcmgenfb_mmap(void *, void *, off_t, int);
+static bool	bcmgenfb_shutdown(device_t, int);
+
+void		bcmgenfb_set_console_dev(device_t);
+void		bcmgenfb_ddb_trap_callback(int);
+
+static device_t bcmgenfb_console_dev = NULL;
 
 CFATTACH_DECL_NEW(bcmgenfb, sizeof(struct bcmgenfb_softc),
     bcmgenfb_match, bcmgenfb_attach, NULL, NULL);
@@ -94,6 +100,8 @@ bcmgenfb_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": disabled\n");
 		return;
 	}
+
+	pmf_device_register1(self, NULL, NULL, bcmgenfb_shutdown);
 
 	error = bus_space_map(sc->sc_iot, sc->sc_gen.sc_fboffset,
 	    sc->sc_gen.sc_fbsize,
@@ -158,4 +166,30 @@ bcmgenfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	return bus_space_mmap(sc->sc_iot, sc->sc_gen.sc_fboffset, offset,
 	    prot, BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE);
+}
+
+static bool
+bcmgenfb_shutdown(device_t self, int flags)
+{
+	genfb_enable_polling(self);
+	return true;
+}
+void
+bcmgenfb_set_console_dev(device_t dev)
+{
+	KASSERT(bcmgenfb_console_dev == NULL);
+	bcmgenfb_console_dev = dev;
+}
+
+void
+bcmgenfb_ddb_trap_callback(int where)
+{
+	if (bcmgenfb_console_dev == NULL)
+		return;
+
+	if (where) {
+		genfb_enable_polling(bcmgenfb_console_dev);
+	} else {
+		genfb_disable_polling(bcmgenfb_console_dev);
+	}
 }
