@@ -1,4 +1,4 @@
-/* $NetBSD: tps65950.c,v 1.3 2012/12/31 21:45:36 jmcneill Exp $ */
+/* $NetBSD: tps65950.c,v 1.3.10.1 2013/05/11 17:48:22 khorben Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3 2012/12/31 21:45:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.1 2013/05/11 17:48:22 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,48 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3 2012/12/31 21:45:36 jmcneill Exp $"
 #include <dev/clock_subr.h>
 #include <dev/sysmon/sysmonvar.h>
 
+#include <dev/i2c/tps65950reg.h>
+
 /* Default watchdog period, in seconds */
 #ifndef TPS65950_WDOG_DEFAULT_PERIOD
 #define TPS65950_WDOG_DEFAULT_PERIOD	30
 #endif
-
-/* I2C Bus Addressing */
-#define	TPS65950_ADDR_ID1		0x48	/* GP */
-#define TPS65950_ADDR_ID2		0x49	/* GP */
-#define TPS65950_ADDR_ID3		0x4a	/* GP */
-#define TPS65950_ADDR_ID4		0x4b	/* GP */
-#define TPS65950_ADDR_ID5		0x12	/* SmartReflex */
-
-/* ID2 */
-#define TPS65950_ID2_IDCODE_7_0		0x85
-#define TPS65950_ID2_IDCODE_15_8	0x86
-#define TPS65950_ID2_IDCODE_23_16	0x87
-#define TPS65950_ID2_IDCODE_31_24	0x88
-#define TPS65950_ID2_UNLOCK_TEST_REG	0x97
-#define TPS65950_ID2_UNLOCK_TEST_REG_MAGIC 0x49
-
-/* ID3 */
-#define TPS65950_LED_BASE		0xee
-#define	TPS65950_ID3_REG_LED		(TPS65950_LED_BASE + 0)
-#define	TPS65950_ID3_REG_LED_LEDAON	__BIT(0)
-#define	TPS65950_ID3_REG_LED_LEDBON	__BIT(1)
-#define TPS65950_ID3_REG_LED_LEDAPWM	__BIT(4)
-#define TPS65950_ID3_REG_LED_LEDBPWM	__BIT(5)
-
-/* ID4 */
-#define TPS65950_PM_RECEIVER_BASE	0x5b
-#define TPS65950_ID4_REG_WATCHDOG_CFG	(TPS65950_PM_RECEIVER_BASE + 3)
-#define TPS65950_RTC_BASE		0x1c
-#define TPS65950_ID4_REG_SECONDS_REG	(TPS65950_RTC_BASE + 0)
-#define TPS65950_ID4_REG_MINUTES_REG	(TPS65950_RTC_BASE + 1)
-#define TPS65950_ID4_REG_HOURS_REG	(TPS65950_RTC_BASE + 2)
-#define TPS65950_ID4_REG_DAYS_REG	(TPS65950_RTC_BASE + 3)
-#define TPS65950_ID4_REG_MONTHS_REG	(TPS65950_RTC_BASE + 4)
-#define TPS65950_ID4_REG_YEARS_REG	(TPS65950_RTC_BASE + 5)
-#define TPS65950_ID4_REG_WEEKS_REG	(TPS65950_RTC_BASE + 6)
-#define TPS65950_ID4_REG_RTC_CTRL_REG	(TPS65950_RTC_BASE + 13)
-#define TPS65950_ID4_REG_RTC_CTRL_REG_GET_TIME __BIT(6)
-#define TPS65950_ID4_REG_RTC_CTRL_REG_STOP_RTC __BIT(1)
 
 struct tps65950_softc {
 	device_t	sc_dev;

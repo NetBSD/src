@@ -1,0 +1,74 @@
+/* $NetBSD: tps65950reg.h,v 1.1.2.1 2013/05/11 17:48:22 khorben Exp $ */
+
+/*-
+ * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef _DEV_I2C_TPS65950REG_H_
+#define _DEV_I2C_TPS65950REG_H_
+
+/*
+ * TI TPS65950 OMAP Power Management and System Companion Device
+ */
+
+/* I2C Bus Addressing */
+#define	TPS65950_ADDR_ID1		0x48	/* GP */
+#define TPS65950_ADDR_ID2		0x49	/* GP */
+#define TPS65950_ADDR_ID3		0x4a	/* GP */
+#define TPS65950_ADDR_ID4		0x4b	/* GP */
+#define TPS65950_ADDR_ID5		0x12	/* SmartReflex */
+
+/* ID2 */
+#define TPS65950_ID2_IDCODE_7_0		0x85
+#define TPS65950_ID2_IDCODE_15_8	0x86
+#define TPS65950_ID2_IDCODE_23_16	0x87
+#define TPS65950_ID2_IDCODE_31_24	0x88
+#define TPS65950_ID2_UNLOCK_TEST_REG	0x97
+#define TPS65950_ID2_UNLOCK_TEST_REG_MAGIC 0x49
+
+/* ID3 */
+#define TPS65950_LED_BASE		0xee
+#define	TPS65950_ID3_REG_LED		(TPS65950_LED_BASE + 0)
+#define	TPS65950_ID3_REG_LED_LEDAON	__BIT(0)
+#define	TPS65950_ID3_REG_LED_LEDBON	__BIT(1)
+#define TPS65950_ID3_REG_LED_LEDAPWM	__BIT(4)
+#define TPS65950_ID3_REG_LED_LEDBPWM	__BIT(5)
+
+/* ID4 */
+#define TPS65950_PM_RECEIVER_BASE	0x5b
+#define TPS65950_ID4_REG_WATCHDOG_CFG	(TPS65950_PM_RECEIVER_BASE + 3)
+#define TPS65950_RTC_BASE		0x1c
+#define TPS65950_ID4_REG_SECONDS_REG	(TPS65950_RTC_BASE + 0)
+#define TPS65950_ID4_REG_MINUTES_REG	(TPS65950_RTC_BASE + 1)
+#define TPS65950_ID4_REG_HOURS_REG	(TPS65950_RTC_BASE + 2)
+#define TPS65950_ID4_REG_DAYS_REG	(TPS65950_RTC_BASE + 3)
+#define TPS65950_ID4_REG_MONTHS_REG	(TPS65950_RTC_BASE + 4)
+#define TPS65950_ID4_REG_YEARS_REG	(TPS65950_RTC_BASE + 5)
+#define TPS65950_ID4_REG_WEEKS_REG	(TPS65950_RTC_BASE + 6)
+#define TPS65950_ID4_REG_RTC_CTRL_REG	(TPS65950_RTC_BASE + 13)
+#define TPS65950_ID4_REG_RTC_CTRL_REG_GET_TIME __BIT(6)
+#define TPS65950_ID4_REG_RTC_CTRL_REG_STOP_RTC __BIT(1)
+
+#endif /* !_DEV_I2C_TPS65950REG_H_ */
