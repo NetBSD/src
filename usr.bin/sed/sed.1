@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.27 2008/09/21 16:46:01 wiz Exp $
+.\"	$NetBSD: sed.1,v 1.27.20.1 2013/05/11 21:59:29 riz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd September 21, 2008
+.Dd March 17, 2013
 .Dt SED 1
 .Os
 .Sh NAME
@@ -290,6 +290,7 @@ Delete the pattern space.
 With 0 or 1 address or at the end of a 2-address range,
 .Em text
 is written to the standard output.
+Start the next cycle.
 .sp
 .It [2addr]d
 Delete the pattern space and start the next cycle.
