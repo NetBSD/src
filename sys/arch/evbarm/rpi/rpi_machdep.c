@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.35 2013/03/19 22:16:55 garbled Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.36 2013/05/11 07:42:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.35 2013/03/19 22:16:55 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.36 2013/05/11 07:42:34 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -73,6 +73,12 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.35 2013/03/19 22:16:55 garbled Exp
 #include <evbarm/rpi/vcprop.h>
 
 #include <evbarm/rpi/rpi.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
 
 #if NPLCOM > 0
 #include <evbarm/dev/plcomreg.h>
@@ -345,6 +351,9 @@ static struct {
 		.vpt_tag = VCPROPTAG_NULL,
 	},
 };
+
+extern void bcmgenfb_set_console_dev(device_t dev);
+extern void bcmgenfb_ddb_trap_callback(int where);
 #endif
 
 static void
@@ -771,6 +780,12 @@ rpi_device_register(device_t dev, void *aux)
 #if NGENFB > 0
 	if (device_is_a(dev, "genfb")) {
 		char *ptr;
+
+		bcmgenfb_set_console_dev(dev);
+#ifdef DDB
+		db_trap_callback = bcmgenfb_ddb_trap_callback;
+#endif
+
 		if (rpi_fb_init(dict) == false)
 			return;
 		if (get_bootconf_option(boot_args, "console",
