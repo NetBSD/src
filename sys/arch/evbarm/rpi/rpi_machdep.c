@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.36 2013/05/11 07:42:34 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.37 2013/05/11 14:19:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.36 2013/05/11 07:42:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.37 2013/05/11 14:19:44 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include "sdhc.h"
 #include "dotg.h"
@@ -146,8 +148,21 @@ int plcomcnmode = PLCONMODE;
 #endif
 
 #include "opt_kgdb.h"
+#if (NPLCOM == 0)
+#error Enable plcom for KGDB support
+#endif
 #ifdef KGDB
 #include <sys/kgdb.h>
+static void kgdb_port_init(void);
+#endif
+
+#if (NPLCOM > 0 && (defined(PLCONSOLE) || defined(KGDB)))
+static struct plcom_instance rpi_pi = {
+	.pi_type = PLCOM_TYPE_PL011,
+	.pi_flags = PLC_FLAG_32BIT_ACCESS,
+	.pi_iot = &bcm2835_bs_tag,
+	.pi_size = BCM2835_UART0_SIZE
+    };
 #endif
 
 /* Smallest amount of RAM start.elf could give us. */
@@ -534,6 +549,10 @@ initarm(void *arg)
 	printf("done.\n");
 #endif
 
+#ifdef KGDB
+	kgdb_port_init();
+#endif
+
 #ifdef __HAVE_MEMORY_DISK__
 	md_root_setconf(memory_disk, sizeof memory_disk);
 #endif
@@ -557,14 +576,7 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
-#if (NPLCOM > 0 && defined(PLCONSOLE))
-	static struct plcom_instance rpi_pi = {
-		.pi_type = PLCOM_TYPE_PL011,
-		.pi_flags = PLC_FLAG_32BIT_ACCESS,
-		.pi_iot = &bcm2835_bs_tag,
-		.pi_size = BCM2835_UART0_SIZE
-	};
-#endif
+
 	if (consinit_called != 0)
 		return;
 
@@ -582,6 +594,31 @@ consinit(void)
 
 #endif
 }
+
+#ifdef KGDB
+#if !defined(KGDB_PLCOMUNIT) || !defined(KGDB_DEVRATE) || !defined(KGDB_CONMODE)
+#error Specify KGDB_PLCOMUNIT, KGDB_DEVRATE and KGDB_CONMODE for KGDB.
+#endif
+
+void
+static kgdb_port_init(void)
+{
+	static int kgdbsinit_called = 0;
+	int res;
+
+	if (kgdbsinit_called != 0)
+		return;
+
+	kgdbsinit_called = 1;
+
+	rpi_pi.pi_iobase = consaddr;
+
+	res = plcom_kgdb_attach(&rpi_pi, KGDB_DEVRATE, BCM2835_UART0_CLK,
+	    KGDB_CONMODE, KGDB_PLCOMUNIT);
+	if (res)
+		panic("KGDB uart can not be initialized, err=%d.", res);
+}
+#endif
 
 #if NGENFB > 0
 static bool
