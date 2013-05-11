@@ -1,4 +1,4 @@
-/*	$NetBSD: n900_cambtn.c,v 1.1 2013/04/20 03:37:55 khorben Exp $ */
+/*	$NetBSD: n900_cambtn.c,v 1.1.2.1 2013/05/11 18:01:04 khorben Exp $ */
 
 /*
  * Camera button driver for the Nokia N900.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: n900_cambtn.c,v 1.1 2013/04/20 03:37:55 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: n900_cambtn.c,v 1.1.2.1 2013/05/11 18:01:04 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,11 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: n900_cambtn.c,v 1.1 2013/04/20 03:37:55 khorben Exp 
 
 #include <arm/omap/omap2_gpio.h>
 
-
-/* The base interrupt for the corresponding GPIO device where this driver
- * attaches. This is an ugly workaround the current limitations of gpio(4),
- * which does not seem to allow a better way to locate the interrupt yet. */
-#define N900CAMBTN_GPIO_BASE	160
 
 #define N900CAMBTN_PIN_FOCUS	0
 #define N900CAMBTN_PIN_CAPTURE	1
@@ -140,15 +135,15 @@ n900cambtn_attach(device_t parent, device_t self, void *aux)
 	gpio_pin_ctl(sc->sc_gpio, &sc->sc_map, N900CAMBTN_PIN_FOCUS,
 			GPIO_PIN_INPUT);
 
-	sc->sc_intr[0] = intr_establish(N900CAMBTN_GPIO_BASE + ga->ga_offset,
-			IPL_VM, IST_EDGE_BOTH, n900cambtn_intr, sc);
+	sc->sc_intr[0] = intr_establish(ga->ga_intr, IPL_VM, IST_EDGE_BOTH,
+			n900cambtn_intr, sc);
 	if (sc->sc_intr[0] == NULL) {
 		aprint_error(": couldn't establish interrupt\n");
 		return;
 	}
 
-	sc->sc_intr[1] = intr_establish(N900CAMBTN_GPIO_BASE + ga->ga_offset
-			+ 1, IPL_VM, IST_EDGE_BOTH, n900cambtn_intr, sc);
+	sc->sc_intr[1] = intr_establish(ga->ga_intr + 1, IPL_VM, IST_EDGE_BOTH,
+			n900cambtn_intr, sc);
 	if (sc->sc_intr[1] == NULL) {
 		aprint_error(": couldn't establish interrupt\n");
 		intr_disestablish(sc->sc_intr[0]);

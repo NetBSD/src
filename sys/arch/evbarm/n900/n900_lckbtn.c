@@ -1,4 +1,4 @@
-/*	$NetBSD: n900_lckbtn.c,v 1.3 2013/04/20 03:37:55 khorben Exp $ */
+/*	$NetBSD: n900_lckbtn.c,v 1.3.2.1 2013/05/11 18:01:04 khorben Exp $ */
 
 /*
  * Lock button driver for the Nokia N900.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: n900_lckbtn.c,v 1.3 2013/04/20 03:37:55 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: n900_lckbtn.c,v 1.3.2.1 2013/05/11 18:01:04 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,11 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: n900_lckbtn.c,v 1.3 2013/04/20 03:37:55 khorben Exp 
 
 #include <arm/omap/omap2_gpio.h>
 
-
-/* The base interrupt for the corresponding GPIO device where this driver
- * attaches. This is an ugly workaround the current limitations of gpio(4),
- * which does not seem to allow a better way to locate the interrupt yet. */
-#define N900LCKBTN_GPIO_BASE	192
 
 #define N900LCKBTN_PIN_INPUT	0
 #define N900LCKBTN_NPINS	1
@@ -128,8 +123,8 @@ n900lckbtn_attach(device_t parent, device_t self, void *aux)
 	gpio_pin_ctl(sc->sc_gpio, &sc->sc_map, N900LCKBTN_PIN_INPUT,
 			GPIO_PIN_INPUT);
 
-	sc->sc_intr = intr_establish(N900LCKBTN_GPIO_BASE + ga->ga_offset,
-			IPL_VM, IST_EDGE_BOTH, n900lckbtn_intr, sc);
+	sc->sc_intr = intr_establish(ga->ga_intr, IPL_VM, IST_EDGE_BOTH,
+			n900lckbtn_intr, sc);
 	if (sc->sc_intr == NULL) {
 		aprint_error(": couldn't establish interrupt\n");
 		gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
