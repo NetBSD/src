@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.13 2013/05/06 22:56:55 khorben Exp $
+#	$NetBSD: N900,v 1.13.2.1 2013/05/11 17:28:51 khorben Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -251,6 +251,14 @@ tps65950pm0	at iic0 addr 0x48
 tps65950pm1	at iic0 addr 0x49
 tps65950pm2	at iic0 addr 0x4a
 tps65950pm3	at iic0 addr 0x4b
+
+# SPI devices
+omapspi0	at obio0 addr 0x48098000 size 0x1000 intr 65
+omapspi1	at obio0 addr 0x4809a000 size 0x1000 intr 66
+omapspi2	at obio0 addr 0x480b8000 size 0x1000 intr 91
+omapspi3	at obio0 addr 0x480ba000 size 0x1000 intr 48
+
+spi*		at omapspi?
 
 # On-board 16550 UARTs
 #com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
