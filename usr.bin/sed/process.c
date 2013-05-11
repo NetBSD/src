@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.38 2009/04/13 07:29:55 lukem Exp $	*/
+/*	$NetBSD: process.c,v 1.38.8.1 2013/05/11 21:59:29 riz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: process.c,v 1.38 2009/04/13 07:29:55 lukem Exp $");
+__RCSID("$NetBSD: process.c,v 1.38.8.1 2013/05/11 21:59:29 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ redirect:
 				psl = 0;
 				if (cp->a2 == NULL || lastaddr)
 					(void)printf("%s", cp->t);
-				break;
+				goto new;
 			case 'd':
 				pd = 1;
 				goto new;
