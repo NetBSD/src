@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.25 2012/07/28 00:43:24 matt Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.26 2013/05/11 15:44:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.25 2012/07/28 00:43:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.26 2013/05/11 15:44:46 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -345,7 +345,8 @@ kgdb_trap(int type, db_regs_t *regs)
 
 	db_clear_single_step(regs);
 
-	if (db_trap_callback) db_trap_callback(1);
+	if (db_trap_callback)
+		db_trap_callback(1);
 
 	/* Detect and recover from unexpected traps. */
 	if (kgdb_recover != 0) {
@@ -378,7 +379,8 @@ kgdb_trap(int type, db_regs_t *regs)
 	if (kgdb_active == 0) {
 		if (!IS_BREAKPOINT_TRAP(type, 0)) {
 			/* No debugger active -- let trap handle this. */
-			if (db_trap_callback) db_trap_callback(0);
+			if (db_trap_callback)
+				db_trap_callback(0);
 			return (0);
 		}
 		/* Make the PC point at the breakpoint... */
@@ -540,7 +542,8 @@ kgdb_trap(int type, db_regs_t *regs)
 		}
 	}
  out:
-	if (db_trap_callback) db_trap_callback(0);
+	if (db_trap_callback)
+		db_trap_callback(0);
 	kgdb_recover = 0;
 	return (1);
 }
