@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.3,v 1.1.2.38 2013/05/11 22:29:56 riz Exp $
+# $NetBSD: CHANGES-5.1.3,v 1.1.2.39 2013/05/11 22:42:21 riz Exp $
 
 A complete list of changes from the NetBSD 5.1.2 release to the NetBSD 5.1.3
 release:
@@ -2386,4 +2386,10 @@ share/zoneinfo/zone.tab				patch
 	Merge tzdata2013c from
 	ftp://ftp.iana.org/tz/releases/tzdata2013c.tar.gz
 	[apb, ticket #1860]
+
+distrib/utils/sysinst/menus.mi		1.35, 1.43
+
+	Some v6 dns server are outdated, so replace them with google's
+	public servers.
+	[msaitoh, ticket #1846]
 
