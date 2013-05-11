@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.65 2013/01/25 13:17:39 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.66 2013/05/11 07:35:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65 2013/01/25 13:17:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66 2013/05/11 07:35:58 skrll Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -99,7 +99,7 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
  * Finish a fork operation, with LWP l2 nearly set up.
  *
  * Copy and update the pcb and trapframe, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * lwp_trampoline() which will call the specified func with the argument arg.
  *
@@ -134,7 +134,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_flags = l1->l_md.md_flags & MDLWP_VFPUSED;
 #endif
 
-	/* 
+	/*
 	 * Set up the kernel stack for the process.
 	 * Note: this stack is not in use if we are forking from p1
 	 */
@@ -222,7 +222,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		printf("vmapbuf: bp=%08x buf=%08x len=%08x\n", (u_int)bp,
 		    (u_int)bp->b_data, (u_int)len);
 #endif	/* PMAP_DEBUG */
-    
+
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
@@ -276,7 +276,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
-	
+
 	pmap_remove(pmap_kernel(), addr, addr + len);
 	pmap_update(pmap_kernel());
 	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
