@@ -1,4 +1,4 @@
-/* $NetBSD: tps65950.c,v 1.3.10.1 2013/05/11 17:48:22 khorben Exp $ */
+/* $NetBSD: tps65950.c,v 1.3.10.2 2013/05/11 18:22:47 khorben Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.1 2013/05/11 17:48:22 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.2 2013/05/11 18:22:47 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/workqueue.h>
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
@@ -60,9 +61,23 @@ struct tps65950_softc {
 	i2c_addr_t	sc_addr;
 
 	struct sysctllog *sc_sysctllog;
+
+	/* PIH */
+	void			*sc_intr;
+	struct workqueue	*sc_workq;
+	struct work		sc_work;
+	bool			sc_queued;
+
+	/* WATCHDOG */
 	struct sysmon_wdog sc_smw;
 	struct todr_chip_handle sc_todr;
 };
+
+
+/* XXX global workqueue to re-enable interrupts once handled */
+static struct workqueue		*tps65950_pih_workqueue;
+static struct work		tps65950_pih_workqueue_work;
+static bool			tps65950_pih_workqueue_available;
 
 static int	tps65950_match(device_t, cfdata_t, void *);
 static void	tps65950_attach(device_t, device_t, void *);
@@ -71,6 +86,12 @@ static int	tps65950_read_1(struct tps65950_softc *, uint8_t, uint8_t *);
 static int	tps65950_write_1(struct tps65950_softc *, uint8_t, uint8_t);
 
 static void	tps65950_sysctl_attach(struct tps65950_softc *);
+
+static int	tps65950_intr(void *);
+static void	tps65950_intr_work(struct work *, void *);
+
+static void	tps65950_pih_attach(struct tps65950_softc *, int);
+static void	tps65950_pih_intr_work(struct work *, void *);
 
 static void	tps65950_rtc_attach(struct tps65950_softc *);
 static int	tps65950_rtc_enable(struct tps65950_softc *, bool);
@@ -128,7 +149,10 @@ tps65950_attach(device_t parent, device_t self, void *aux)
 		iic_release_bus(sc->sc_i2c, 0);
 		idcode = (buf[0] << 0) | (buf[1] << 8) |
 			 (buf[2] << 16) | (buf[3] << 24);
-		aprint_normal(": IDCODE %08X\n", idcode);
+		aprint_normal(": IDCODE %08X", idcode);
+
+		aprint_normal(": PIH\n");
+		tps65950_pih_attach(sc, ia->ia_intr);
 		break;
 	case TPS65950_ADDR_ID3:
 		aprint_normal(": LED\n");
@@ -260,6 +284,85 @@ tps65950_sysctl_attach(struct tps65950_softc *sc)
 	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
 	if (error)
 		return;
+}
+
+static int
+tps65950_intr(void *v)
+{
+	struct tps65950_softc *sc = v;
+
+	if (sc->sc_queued == false) {
+		workqueue_enqueue(sc->sc_workq, &sc->sc_work, NULL);
+		sc->sc_queued = true;
+	}
+
+	/* disable the interrupt until it's properly handled */
+	return 0;
+}
+
+static void
+tps65950_intr_work(struct work *work, void *v)
+{
+	struct tps65950_softc *sc = v;
+	uint8_t u8;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+
+	/* acknowledge the interrupt */
+	tps65950_read_1(sc, TPS65950_PIH_REG_ISR_P1, &u8);
+	tps65950_write_1(sc, TPS65950_PIH_REG_ISR_P1, u8);
+
+	iic_release_bus(sc->sc_i2c, 0);
+
+	/* allow the workqueue to be entered again */
+	sc->sc_queued = false;
+
+	/* restore the main interrupt handler */
+	if (tps65950_pih_workqueue_available) {
+		tps65950_pih_workqueue_available = false;
+		workqueue_enqueue(tps65950_pih_workqueue,
+				&tps65950_pih_workqueue_work, NULL);
+	}
+}
+
+static void
+tps65950_pih_attach(struct tps65950_softc *sc, int intr)
+{
+	int error;
+
+	/* create the workqueues */
+	error = workqueue_create(&sc->sc_workq, device_xname(sc->sc_dev),
+			tps65950_intr_work, sc, PRIO_MAX, IPL_VM, 0);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't create workqueue\n");
+		return;
+	}
+	sc->sc_queued = false;
+
+	error = workqueue_create(&tps65950_pih_workqueue,
+			device_xname(sc->sc_dev), tps65950_pih_intr_work, sc,
+			PRIO_MAX, IPL_HIGH, 0);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't create workqueue\n");
+		return;
+	}
+	tps65950_pih_workqueue_available = true;
+
+	/* establish the interrupt handler */
+	sc->sc_intr = intr_establish(intr, IPL_VM, IST_LEVEL, tps65950_intr,
+			sc);
+	if (sc->sc_intr == NULL) {
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
+	}
+}
+
+static void
+tps65950_pih_intr_work(struct work *work, void *v)
+{
+	struct tps65950_softc *sc = v;
+
+	tps65950_pih_workqueue_available = true;
+	intr_enable(sc->sc_intr);
 }
 
 static void
