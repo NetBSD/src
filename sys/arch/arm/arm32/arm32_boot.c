@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.2 2012/10/17 18:53:45 matt Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.3 2013/05/11 10:15:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,7 +123,10 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.2 2012/10/17 18:53:45 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.3 2013/05/11 10:15:10 skrll Exp $");
+
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -139,6 +142,10 @@ __KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.2 2012/10/17 18:53:45 matt Exp $");
 #include <ddb/db_extern.h>
 
 #include <machine/bootconfig.h>
+
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 
 vaddr_t
 initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
