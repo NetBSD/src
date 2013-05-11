@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_reboot.c,v 1.4 2013/05/05 10:30:21 skrll Exp $	*/
+/*	$NetBSD: arm32_reboot.c,v 1.5 2013/05/11 07:38:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.4 2013/05/05 10:30:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.5 2013/05/11 07:38:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -166,17 +166,22 @@ cpu_reboot(int howto, char *bootstr)
 	if (!(howto & RB_NOSYNC))
 		bootsync();
 
-	/* Say NO to interrupts */
-	splhigh();
+	/* Say NO to interrupts for the duration of the dump */
+	int s = splhigh();
 
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
 
-	/* Run any shutdown hooks */
-	doshutdownhooks();
+	splx(s);
 
 	pmf_system_shutdown(boothowto);
+
+	/* Say NO to interrupts for good */
+	splhigh();
+
+	/* Run any shutdown hooks */
+	doshutdownhooks();
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
