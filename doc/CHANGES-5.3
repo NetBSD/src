@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.8 2013/05/11 22:30:39 riz Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.9 2013/05/11 22:42:58 riz Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -207,4 +207,17 @@ share/zoneinfo/zone.tab				patch
 	Merge tzdata2013c from
 	ftp://ftp.iana.org/tz/releases/tzdata2013c.tar.gz
 	[apb, ticket #1860]
+
+sys/dev/pci/pcireg.h			1.69
+sys/dev/pci/ppb.c			1.44-1.45
+
+	Support PCI Express 2.0.
+	Print version and device/port type information
+	[msaitoh, ticket #1844]
+
+distrib/utils/sysinst/menus.mi		1.35, 1.43
+
+	Some v6 dns server are outdated, so replace them with google's
+	public servers.
+	[msaitoh, ticket #1846]
 
