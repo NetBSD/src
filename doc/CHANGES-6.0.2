@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.2,v 1.1.2.31 2013/04/29 03:30:05 riz Exp $
+# $NetBSD: CHANGES-6.0.2,v 1.1.2.32 2013/05/11 21:54:50 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.1 release to the NetBSD 6.0.2
 release:
@@ -248,4 +248,19 @@ sys/arch/x68k/dev/ite_tv.c			1.16
 
 	Fix a kernel panic which can be triggered by printf(1) on x68k.
 	[isaki, ticket #881]
+
+distrib/hp700/ramdisk/Makefile			1.12
+
+	Fix PR/47123 (sysinst failure) for hp700 as well.
+	[skrll, ticket #882]
+
+share/zoneinfo/antarctica			patch
+share/zoneinfo/asia				patch
+share/zoneinfo/australasia			patch
+share/zoneinfo/southamerica			patch
+share/zoneinfo/zone.tab				patch
+
+	Merge tzdata2013c from
+	ftp://ftp.iana.org/tz/releases/tzdata2013c.tar.gz
+	[apb, ticket #886]
 
