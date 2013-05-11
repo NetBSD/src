@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.254 2013/03/29 13:27:08 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.255 2013/05/11 10:15:43 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.254 2013/03/29 13:27:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.255 2013/05/11 10:15:43 skrll Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4126,7 +4126,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	 */
 	if (rv == 0 && pm->pm_l1->l1_domain_use_count == 1) {
 		extern int last_fault_code;
-		extern int kernel_debug;
 		printf("fixup: pm %p, va 0x%lx, ftype %d - nothing to do!\n",
 		    pm, va, ftype);
 		printf("fixup: l2 %p, l2b %p, ptep %p, pl1pd %p\n",
@@ -4134,6 +4133,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		printf("fixup: pte 0x%x, l1pd 0x%x, last code 0x%x\n",
 		    pte, l1pd, last_fault_code);
 #ifdef DDB
+		extern int kernel_debug;
+
 		if (kernel_debug & 2)
 			Debugger();
 #endif
