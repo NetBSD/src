@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.13.2.2 2013/05/11 18:01:04 khorben Exp $
+#	$NetBSD: N900,v 1.13.2.3 2013/05/11 18:22:47 khorben Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -248,7 +248,7 @@ iic*		at omapiic?
 # I2C devices
 # Power Management and System Companion Device
 tps65950pm0	at iic0 addr 0x48
-tps65950pm1	at iic0 addr 0x49
+tps65950pm1	at iic0 addr 0x49 intr 7
 tps65950pm2	at iic0 addr 0x4a
 tps65950pm3	at iic0 addr 0x4b
 
