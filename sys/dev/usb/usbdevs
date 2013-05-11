@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.648 2013/05/09 12:40:17 aymeric Exp $
+$NetBSD: usbdevs,v 1.649 2013/05/11 07:03:52 kiyohara Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2502,12 +2502,6 @@ product PLANEX2 GWUSH300N	0xed18	GW-USH300N
 product PLANEX3 GWUS54GZ	0xab10	GW-US54GZ
 product PLANEX3 GU1000T		0xab11	GU-1000T
 product PLANEX3 GWUS54MINI	0xab13	GW-US54Mini
-product PLANEX2 GWUS300MINIS	0xab24	GW-US300MiniS
-product PLANEX2	RT3070		0xab25	RT3070
-product PLANEX2 GWUS54GD	0xed01	GW-US54GD
-product PLANEX2 GWUSMM		0xed02	GW-USMM
-product PLANEX2 GWUS300MINIX	0xed06	GW-US300Mini-X/MiniW
-product PLANEX2 RTL8188CU_2	0xed17	RTL8188CU
 
 /* Plantronics products */
 product PLANTRONICS HEADSET	0x0ca1	Platronics DSP-400 Headset
