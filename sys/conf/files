@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1070 2013/04/28 03:11:32 christos Exp $
+#	$NetBSD: files,v 1.1070.2.1 2013/05/12 01:49:44 khorben Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -322,6 +322,17 @@ attach	midi at midibus
 # console bell via audio device
 #
 define	audiobell
+
+# display attributes, display with emulator, keyboard, and mouse
+#
+define	wsdisplaydev		{[kbdmux = 1]}
+define	wsemuldisplaydev	{[console = -1], [kbdmux = 1]}
+define	wskbddev		{[console = -1], [mux = 1]}
+define	wsmousedev		{[mux = 0]}
+define	vcons
+# attribute to pull in raster support
+#
+define	wsrasteremulops
 
 # video devices, attaches to video hardware driver
 #
@@ -1100,16 +1111,6 @@ include "dev/drm/files.drm"
 
 
 # Definitions for wscons
-# device attributes: display, display with emulator, keyboard, and mouse
-#
-define	wsdisplaydev		{[kbdmux = 1]}
-define	wsemuldisplaydev	{[console = -1], [kbdmux = 1]}
-define	wskbddev		{[console = -1], [mux = 1]}
-define	wsmousedev		{[mux = 0]}
-define	vcons
-# attribute to pull in raster support
-#
-define	wsrasteremulops
 # common PC display functions
 #
 defflag	opt_pcdisplay.h		PCDISPLAY_SOFTCURSOR

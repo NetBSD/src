@@ -1,4 +1,4 @@
-/* $NetBSD: tps65950.c,v 1.3.10.3 2013/05/12 00:42:50 khorben Exp $ */
+/* $NetBSD: tps65950.c,v 1.3.10.4 2013/05/12 01:49:44 khorben Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.3 2013/05/12 00:42:50 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.4 2013/05/12 01:49:44 khorben Exp $");
 
 #define _INTR_PRIVATE
 
@@ -54,6 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.3 2013/05/12 00:42:50 khorben Ex
 #include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>
 #endif /* NGPIO > 0 */
+
+#if defined(OMAP_3430)
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wskbdvar.h>
+#include <dev/wscons/wsksymdef.h>
+#include <dev/wscons/wsksymvar.h>
+#endif
 
 #include <dev/clock_subr.h>
 #include <dev/sysmon/sysmonvar.h>
@@ -89,16 +96,28 @@ struct tps65950_softc {
 		offsetof(struct tps65950_softc, sc_gpio_pic)))
 #endif /* NGPIO > 0 */
 
+#if defined(OMAP_3430)
+	/* KEYPAD */
+	device_t		sc_wskbddev;
+	uint8_t			sc_keycodes[8];
+#endif
+
 	/* WATCHDOG */
 	struct sysmon_wdog sc_smw;
 	struct todr_chip_handle sc_todr;
 };
 
-
 /* XXX global workqueue to re-enable interrupts once handled */
 static struct workqueue		*tps65950_pih_workqueue;
 static struct work		tps65950_pih_workqueue_work;
 static bool			tps65950_pih_workqueue_available;
+
+#if defined(OMAP_3430)
+/* XXX global workqueue to handle keyboard events on the right address */
+static struct workqueue		*tps65950_kbd_workqueue;
+static struct work		tps65950_kbd_workqueue_work;
+static bool			tps65950_kbd_workqueue_available;
+#endif
 
 static int	tps65950_match(device_t, cfdata_t, void *);
 static void	tps65950_attach(device_t, device_t, void *);
@@ -138,6 +157,92 @@ const struct pic_ops tps65950_gpio_pic_ops = {
 	.pic_establish_irq = tps65950_gpio_pic_establish_irq
 };
 #endif /* NGPIO > 0 */
+
+#if defined(OMAP_3430)
+static void	tps65950_kbd_attach(struct tps65950_softc *);
+
+static void	tps65950_kbd_intr(struct tps65950_softc *);
+static void	tps65950_kbd_intr_work(struct work *, void *);
+
+static int	tps65950_kbd_enable(void *, int);
+static void	tps65950_kbd_set_leds(void *, int);
+static int	tps65950_kbd_ioctl(void *, u_long, void *, int, struct lwp *);
+
+#define KC(n)		KS_KEYCODE(n)
+static const keysym_t n900_keydesc_us[] = {
+	KC(0),			KS_q,
+	KC(1),			KS_o,
+	KC(2),			KS_p,
+	KC(3),			KS_comma,
+	KC(4),			KS_BackSpace,
+	KC(6),			KS_a,
+	KC(7),			KS_s,
+	KC(8),			KS_w,
+	KC(9),			KS_d,
+	KC(10),			KS_f,
+	KC(11),			KS_g,
+	KC(12),			KS_h,
+	KC(13),			KS_j,
+	KC(14),			KS_k,
+	KC(15),			KS_l,
+	KC(16),			KS_e,
+	KC(17),			KS_period,
+	KC(18),			KS_Up,
+	KC(19),			KS_Return,
+	KC(21),			KS_z,
+	KC(22),			KS_x,
+	KC(23),			KS_c,
+	KC(24),			KS_r,
+	KC(25),			KS_v,
+	KC(26),			KS_b,
+	KC(27),			KS_n,
+	KC(28),			KS_m,
+	KC(29),			KS_space,
+	KC(30),			KS_space,
+	KC(31),			KS_Left,
+	KC(32),			KS_t,
+	KC(33),			KS_Down,
+	KC(35),			KS_Right,
+	KC(36),			KS_Control_L,
+	KC(37),			KS_Alt_R,
+	KC(38),			KS_Shift_L,
+	KC(40),			KS_y,
+	KC(48),			KS_u,
+	KC(56),			KS_i,
+	/* XXX report these differently according to the current profile? */
+	KC(57),			KS_f7,
+	KC(58),			KS_f8
+};
+
+#define KBD_MAP(name, base, map) \
+			{ name, base, sizeof(map)/sizeof(keysym_t), map }
+const struct wscons_keydesc tps65950_kbd_keydesctab[] =
+{
+	KBD_MAP(KB_US,			0,	n900_keydesc_us),
+	{0, 0, 0, 0}
+};
+#undef KBD_MAP
+
+const struct wskbd_mapdata tps65950_kbd_keymapdata = {
+	tps65950_kbd_keydesctab,
+	KB_US
+};
+
+static struct wskbd_accessops tps65950_kbd_accessops = {
+	tps65950_kbd_enable,
+	tps65950_kbd_set_leds,
+	tps65950_kbd_ioctl
+};
+
+static void	tps65950_kbd_cngetc(void *, u_int *, int *);
+static void	tps65950_kbd_cnpollc(void *, int);
+
+static const struct wskbd_consops tps65950_kbd_consops = {
+	tps65950_kbd_cngetc,
+	tps65950_kbd_cnpollc,
+	NULL
+};
+#endif
 
 static void	tps65950_rtc_attach(struct tps65950_softc *);
 static int	tps65950_rtc_enable(struct tps65950_softc *, bool);
@@ -210,6 +315,13 @@ tps65950_attach(device_t parent, device_t self, void *aux)
 	case TPS65950_ADDR_ID3:
 		aprint_normal(": LED\n");
 		tps65950_sysctl_attach(sc);
+
+#if defined(OMAP_3430)
+		aprint_normal(", KEYPAD\n");
+		tps65950_kbd_attach(sc);
+#else
+		aprint_normal("\n");
+#endif
 		break;
 	case TPS65950_ADDR_ID4:
 		aprint_normal(": RTC, WATCHDOG\n");
@@ -370,6 +482,10 @@ tps65950_intr_work(struct work *work, void *v)
 	if (u8 & TPS65950_PIH_REG_ISR_P1_ISR0)
 		tps65950_gpio_intr(sc);
 #endif /* NGPIO > 0 */
+#ifdef OMAP_3430
+	if (u8 & TPS65950_PIH_REG_ISR_P1_ISR1)
+		tps65950_kbd_intr(sc);
+#endif
 
 	iic_release_bus(sc->sc_i2c, 0);
 
@@ -652,7 +768,6 @@ tps65950_gpio_pic_find_pending_irqs(struct pic_softc *pic)
 	tps65950_read_1(sc, TPS65950_GPIO_GPIO_ISR3A, &u8);
 	pending |= ((u8 & 0x3) << 16);
 	iic_release_bus(sc->sc_i2c, 0);
-	aprint_normal_dev(sc->sc_dev, "%s() 0x%08x\n", __func__, pending);
 	return pending;
 }
 
@@ -698,6 +813,226 @@ tps65950_gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	iic_release_bus(sc->sc_i2c, 0);
 }
 #endif /* NGPIO > 0 */
+
+#if defined(OMAP_3430)
+static void
+tps65950_kbd_attach(struct tps65950_softc *sc)
+{
+	uint8_t u8;
+	struct wskbddev_attach_args a;
+	int error;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+
+	/* reset the keyboard */
+	tps65950_write_1(sc, TPS65950_KEYPAD_REG_CTRL_REG, 0);
+
+	/* configure the keyboard */
+	u8 = TPS65950_KEYPAD_REG_CTRL_REG_KBD_ON
+		| TPS65950_KEYPAD_REG_CTRL_REG_SOFTMODEN
+		| TPS65950_KEYPAD_REG_CTRL_REG_SOFT_NRST;
+	tps65950_write_1(sc, TPS65950_KEYPAD_REG_CTRL_REG, u8);
+	u8 = 0 /* TPS65950_KEYPAD_REG_SIH_CTRL_COR */
+		| TPS65950_KEYPAD_REG_SIH_CTRL_EXCLEN;
+	tps65950_write_1(sc, TPS65950_KEYPAD_REG_SIH_CTRL, u8);
+
+	iic_release_bus(sc->sc_i2c, 0);
+
+	wskbd_cnattach(&tps65950_kbd_consops, sc, &tps65950_kbd_keymapdata);
+
+	a.console = 1;
+	a.keymap = &tps65950_kbd_keymapdata;
+	a.accessops = &tps65950_kbd_accessops;
+	a.accesscookie = sc;
+
+	sc->sc_wskbddev = config_found_sm_loc(sc->sc_dev, NULL, NULL, &a,
+			wskbddevprint, NULL);
+
+	/* create the workqueue */
+	error = workqueue_create(&tps65950_kbd_workqueue,
+			device_xname(sc->sc_dev), tps65950_kbd_intr_work, sc,
+			PRIO_MAX, IPL_VM, 0);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't create workqueue\n");
+		return;
+	}
+	tps65950_kbd_workqueue_available = true;
+}
+
+static void
+tps65950_kbd_intr(struct tps65950_softc *sc)
+{
+	if (tps65950_kbd_workqueue_available) {
+		workqueue_enqueue(tps65950_kbd_workqueue,
+				&tps65950_kbd_workqueue_work, NULL);
+		tps65950_kbd_workqueue_available = false;
+	}
+}
+
+static void
+tps65950_kbd_intr_work(struct work *work, void *v)
+{
+	struct tps65950_softc *sc = v;
+	uint8_t u8;
+	uint8_t code[8];
+	int i;
+	int j;
+	u_int type;
+	int data;
+	int s;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	tps65950_read_1(sc, TPS65950_KEYPAD_REG_ISR1, &u8);
+
+	/* check if there is anything to do */
+	if (u8 == 0) {
+		iic_release_bus(sc->sc_i2c, 0);
+
+		/* allow queueing again */
+		tps65950_kbd_workqueue_available = true;
+		return;
+	}
+
+	/* read the keycodes pressed */
+	for (i = 0; i < sizeof(code); i++) {
+		/* XXX assumes registers are successive */
+		tps65950_read_1(sc, TPS65950_KEYPAD_REG_FULL_CODE_7_0 + i,
+				&code[i]);
+	}
+
+	/* compare with the last read */
+	for (i = 0; i < sizeof(sc->sc_keycodes); i++) {
+		if (sc->sc_keycodes[i] == code[i])
+			continue;
+		for (j = 0; j < 8; j++) {
+			if ((sc->sc_keycodes[i] & (1 << j))
+					== (code[i] & (1 << j)))
+				continue;
+			/* report the keyboard event */
+			type = (code[i] & (1 << j)) ? WSCONS_EVENT_KEY_DOWN
+					: WSCONS_EVENT_KEY_UP;
+			data = (i * 8) + j;
+			s = spltty();
+			wskbd_input(sc->sc_wskbddev, type, data);
+			splx(s);
+#if 1 /* XXX ugly hack */
+			if (type == WSCONS_EVENT_KEY_DOWN)
+			{
+				type = WSCONS_EVENT_KEY_UP;
+				s = spltty();
+				wskbd_input(sc->sc_wskbddev, type, data);
+				splx(s);
+			}
+#endif
+		}
+		sc->sc_keycodes[i] = code[i];
+	}
+
+	/* acknowledge the interrupt */
+	tps65950_write_1(sc, TPS65950_KEYPAD_REG_ISR1, 0xff);
+	iic_release_bus(sc->sc_i2c, 0);
+
+	/* allow queueing again */
+	tps65950_kbd_workqueue_available = true;
+}
+
+static int
+tps65950_kbd_enable(void *v, int on)
+{
+	struct tps65950_softc *sc = v;
+	uint8_t u8 = 0;
+
+	if (sc->sc_intr == NULL)
+		return ENXIO;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	if (on)
+		u8 |= TPS65950_KEYPAD_REG_IMR1_ITKPIMR1;
+	else
+		u8 &= ~(TPS65950_KEYPAD_REG_IMR1_ITKPIMR1);
+	tps65950_write_1(sc, TPS65950_KEYPAD_REG_IMR1, u8);
+	iic_release_bus(sc->sc_i2c, 0);
+
+	return 0;
+}
+
+static void
+tps65950_kbd_set_leds(void *v, int leds)
+{
+}
+
+static int
+tps65950_kbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
+{
+	switch (cmd) {
+		case WSKBDIO_GTYPE:
+			*(int *)data = WSKBD_TYPE_N900;
+			return 0;
+		case WSKBDIO_SETLEDS:
+			return 0;
+		case WSKBDIO_GETLEDS:
+			*(int *)data = 0;
+			return 0;
+	}
+	return EPASSTHROUGH;
+}
+
+static void
+tps65950_kbd_cngetc(void *v, u_int *type, int *data)
+{
+	struct tps65950_softc *sc = v;
+	uint8_t u8;
+	uint8_t code[8];
+	int i;
+	int j;
+
+	for (;;) {
+		/* poll for keycodes */
+		tps65950_read_1(sc, TPS65950_KEYPAD_REG_ISR1, &u8);
+		if (u8 != 0)
+			break;
+		delay(100);
+	}
+
+	/* read the keycodes pressed */
+	for (i = 0; i < sizeof(code); i++) {
+		/* XXX assumes registers are successive */
+		tps65950_read_1(sc, TPS65950_KEYPAD_REG_FULL_CODE_7_0 + i,
+				&code[i]);
+	}
+
+	/* acknowledge the interrupt */
+	tps65950_write_1(sc, TPS65950_KEYPAD_REG_ISR1, 0xff);
+
+	/* compare with the last read */
+	for (i = 0; i < sizeof(sc->sc_keycodes); i++) {
+		if (sc->sc_keycodes[i] == code[i])
+			continue;
+		for (j = 0; j < 8; j++) {
+			if ((sc->sc_keycodes[i] & (1 << j))
+					== (code[i] & (1 << j)))
+				continue;
+			*type = (code[i] & (1 << j)) ? WSCONS_EVENT_KEY_DOWN
+					: WSCONS_EVENT_KEY_UP;
+			*data = (i * 8) + j;
+			sc->sc_keycodes[i] = code[i];
+			break;
+		}
+		break;
+	}
+}
+
+static void
+tps65950_kbd_cnpollc(void *v, int on)
+{
+	struct tps65950_softc *sc = v;
+
+	if (on)
+		iic_acquire_bus(sc->sc_i2c, 0);
+	else
+		iic_release_bus(sc->sc_i2c, 0);
+}
+#endif
 
 static void
 tps65950_rtc_attach(struct tps65950_softc *sc)

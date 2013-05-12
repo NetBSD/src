@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.13.2.4 2013/05/12 00:42:50 khorben Exp $
+#	$NetBSD: N900,v 1.13.2.5 2013/05/12 01:49:44 khorben Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -254,6 +254,9 @@ tps65950pm3	at iic0 addr 0x4b
 #tps65950pm4	at iic1 addr 0x12
 
 gpio*		at tps65950pm1
+
+# Integrated keyboard
+wskbd*		at tps65950pm2 mux 1
 
 # SPI devices
 omapspi0	at obio0 addr 0x48098000 size 0x1000 intr 65
