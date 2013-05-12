@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_spi.c,v 1.1.2.1 2013/05/11 17:19:41 khorben Exp $ */
+/* $NetBSD: omap2_spi.c,v 1.1.2.2 2013/05/12 01:19:54 khorben Exp $ */
 
 /*
  * Texas Instruments OMAP2/3 Multichannel SPI driver.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_spi.c,v 1.1.2.1 2013/05/11 17:19:41 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_spi.c,v 1.1.2.2 2013/05/12 01:19:54 khorben Exp $");
 
 #include "opt_omap.h"
 
@@ -188,8 +188,6 @@ omap2_spi_configure(void *cookie, int slave, int mode, int speed)
 	uint32_t conf = 0;
 	uint32_t div;
 
-	aprint_normal_dev(sc->sc_dev, "%s(%d)\n", __func__, slave);
-
 	if (slave >= sc->sc_spi.sct_nslaves)
 		return EINVAL;
 
@@ -273,8 +271,6 @@ omap2_spi_start(struct omap2_spi_softc * const sc, int channel)
 	uint32_t ctrlval;
 	uint32_t u32;
 
-	aprint_normal_dev(sc->sc_dev, "%s(%d)\n", __func__, channel);
-
 	chan = &sc->sc_channels[channel];
 	if (chan->running)
 		return;
@@ -353,8 +349,6 @@ omap2_spi_intr(void *v)
 	uint32_t tx_empty = 0;
 	uint32_t rx_full = 0;
 
-	aprint_normal_dev(sc->sc_dev, "%s()\n", __func__);
-
 	/* reset the channel status bits */
 	status = SPI_READ_REG(sc, OMAP2_MCSPI_IRQSTATUS);
 	u32 = 0;
@@ -414,8 +408,6 @@ omap2_spi_intr(void *v)
 			omap2_spi_recv(sc, i);
 		}
 
-		aprint_normal_dev(sc->sc_dev, "%s() %p %p\n", __func__,
-				chan->wchunk, chan->rchunk);
 		if (chan->wchunk == NULL && chan->rchunk == NULL) {
 			st = chan->transfer;
 			chan->transfer = NULL;
@@ -444,8 +436,6 @@ omap2_spi_reset(struct omap2_spi_softc * const sc)
 	int retry;
 	uint32_t status;
 	int i;
-
-	aprint_normal_dev(sc->sc_dev, "%s()\n", __func__);
 
 	/* proceed to a software reset */
 	SPI_WRITE_REG(sc, OMAP2_MCSPI_SYSCONFIG,
@@ -484,8 +474,6 @@ omap2_spi_send(struct omap2_spi_softc * const sc, int channel)
 	uint32_t u32;
 	uint32_t data;
 
-	aprint_normal_dev(sc->sc_dev, "%s(%d)\n", __func__, channel);
-
 	if ((chunk = sc->sc_channels[channel].wchunk) == NULL)
 		return;
 
@@ -512,8 +500,6 @@ omap2_spi_recv(struct omap2_spi_softc * const sc, int channel)
 	const uint32_t stat = OMAP2_MCSPI_CHXSTAT(channel);
 	uint32_t u32;
 	uint32_t data;
-
-	aprint_normal_dev(sc->sc_dev, "%s(%d)\n", __func__, channel);
 
 	while ((chunk = sc->sc_channels[channel].rchunk) != NULL
 			&& chunk->chunk_rresid == 0) {
