@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.15 2012/10/29 12:52:43 chs Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.16 2013/05/12 13:23:08 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.15 2012/10/29 12:52:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.16 2013/05/12 13:23:08 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -88,7 +88,7 @@ extern struct consdev consdev_zs;
 #include <dev/ic/pckbcvar.h>
 #endif
 
-extern int console_node, console_instance;
+int console_node = 0, console_instance = 0;
 
 int chosen, stdin, stdout;
 int ofkbd_ihandle;
