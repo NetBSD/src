@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.21 2011/07/17 20:54:46 joerg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.22 2013/05/12 13:50:11 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.21 2011/07/17 20:54:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.22 2013/05/12 13:50:11 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -720,6 +720,23 @@ OF_interpret(const char *cmd, int nargs, int nreturns, ...)
 	}
 	va_end(ap);
 	return status;
+}
+
+void
+OF_quiesce(void)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+	} args = {
+		"quiesce",
+		0,
+		0,
+	};
+
+	ofw_stack();
+	openfirmware(&args);
 }
 
 /*
