@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.41 2013/05/06 23:12:53 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.42 2013/05/12 02:55:54 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.41 2013/05/06 23:12:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.42 2013/05/12 02:55:54 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -721,7 +721,7 @@ am335x_memprobe(void)
 	 * if we detect if it has the wrong value.
 	 */
 	if (sdram_config == 0x41805332)
-		sdram_config -= __SHIFTOUT(1, SDRAM_CONFIG_RSIZE);
+		sdram_config -= __SHIFTIN(1, SDRAM_CONFIG_RSIZE);
 
 	const u_int ibank = __SHIFTOUT(sdram_config, SDRAM_CONFIG_IBANK);
 	const u_int rsize = 9 + __SHIFTOUT(sdram_config, SDRAM_CONFIG_RSIZE);
