@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.22 2013/04/11 19:55:10 macallan Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.23 2013/05/12 13:42:39 macallan Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.22 2013/04/11 19:55:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.23 2013/05/12 13:42:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -69,31 +69,29 @@ static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
 void
 mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
-	int phandle, i, cnt, regcnt, acells, scells;
+	const char *macrisc[] = {"MacRISC", "MacRISC2", "MacRISC4", NULL};
+	int hroot, hmem, i, cnt, regcnt, acells, scells;
 	int numregs;
 	uint32_t regs[OFMEM_REGIONS * 4]; /* 2 values + 2 for 64bit */
 
 	DPRINTF("calling mem_regions\n");
 	/* determine acell size */
-	if ((phandle = OF_finddevice("/")) == -1)
+	if ((hroot = OF_finddevice("/")) == -1)
 		goto error;
-	cnt = OF_getprop(phandle, "#address-cells", &acells, sizeof(int));
+	cnt = OF_getprop(hroot, "#address-cells", &acells, sizeof(int));
 	if (cnt <= 0)
 		acells = 1;
 
 	/* determine scell size */
-	if ((phandle = OF_finddevice("/")) == -1)
-		goto error;
-	cnt = OF_getprop(phandle, "#size-cells", &scells, sizeof(int));
+	cnt = OF_getprop(hroot, "#size-cells", &scells, sizeof(int));
 	if (cnt <= 0)
 		scells = 1;
 
 	/* Get memory */
-	if ((phandle = OF_finddevice("/memory")) == -1)
-		goto error;
-
 	memset(regs, 0, sizeof(regs));
-	regcnt = OF_getprop(phandle, "reg", regs,
+	if ((hmem = OF_finddevice("/memory")) == -1)
+		goto error;
+	regcnt = OF_getprop(hmem, "reg", regs,
 	    sizeof(regs[0]) * OFMEM_REGIONS * 4);
 	if (regcnt <= 0)
 		goto error;
@@ -142,7 +140,7 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 
 	/* now do the same thing again, for the available counts */
 	memset(regs, 0, sizeof(regs));
-	regcnt = OF_getprop(phandle, "available", regs,
+	regcnt = OF_getprop(hmem, "available", regs,
 	    sizeof(regs[0]) * OFMEM_REGIONS * 4);
 	if (regcnt <= 0)
 		goto error;
@@ -150,15 +148,15 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 	DPRINTF("%08x %08x %08x %08x\n", regs[0], regs[1], regs[2], regs[3]);
 
 	/*
-	 * some(?) G5s have messed up 'available' properties which don't obey
-	 * #address-cells. Try to detect this here.
-	 * XXX this needs a better test
+	 * according to comments in FreeBSD all Apple OF has 32bit values in
+	 * "available", no matter what the cell sizes are
 	 */
-	if (((regcnt >> 2) % (acells + scells)) != 0) {
-		aprint_normal("messed up 'available' property detected\n");
+	if (of_compatible(hroot, macrisc) != -1) {
+		DPRINTF("this appears to be a mac...\n");
 		acells = 1;
+		scells = 1;
 	}
-	
+		
 	/* how many mem regions did we get? */
 	numregs = regcnt / (sizeof(uint32_t) * (acells + scells));
 	DPRINTF("regcnt=%d num=%d acell=%d scell=%d\n",
@@ -189,7 +187,7 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 #ifndef _LP64
 		if (addr > 0xFFFFFFFF || size > 0xFFFFFFFF ||
 			(addr + size) > 0xFFFFFFFF) {
-			aprint_error("Base addr of %llx or size of %llx too"
+			aprint_verbose("Base addr of %llx or size of %llx too"
 			    " large for 32 bit OS. Skipping.", addr, size);
 			continue;
 		}
