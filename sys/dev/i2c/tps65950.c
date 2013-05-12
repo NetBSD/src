@@ -1,4 +1,4 @@
-/* $NetBSD: tps65950.c,v 1.3.10.2 2013/05/11 18:22:47 khorben Exp $ */
+/* $NetBSD: tps65950.c,v 1.3.10.3 2013/05/12 00:42:50 khorben Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.2 2013/05/11 18:22:47 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.3 2013/05/12 00:42:50 khorben Exp $");
+
+#define _INTR_PRIVATE
+
+#include "gpio.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +48,12 @@ __KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.2 2013/05/11 18:22:47 khorben Ex
 #include <sys/wdog.h>
 
 #include <dev/i2c/i2cvar.h>
+
+#if NGPIO > 0
+#include <arm/pic/picvar.h>
+#include <sys/gpio.h>
+#include <dev/gpio/gpiovar.h>
+#endif /* NGPIO > 0 */
 
 #include <dev/clock_subr.h>
 #include <dev/sysmon/sysmonvar.h>
@@ -67,6 +77,17 @@ struct tps65950_softc {
 	struct workqueue	*sc_workq;
 	struct work		sc_work;
 	bool			sc_queued;
+
+#if NGPIO > 0
+	/* GPIO */
+	struct gpio_chipset_tag	sc_gpio;
+	gpio_pin_t		sc_gpio_pins[18];
+	struct pic_softc	sc_gpio_pic;
+
+#define PIC_TO_SOFTC(pic) \
+	((struct tps65950_softc *)((char *)(pic) - \
+		offsetof(struct tps65950_softc, sc_gpio_pic)))
+#endif /* NGPIO > 0 */
 
 	/* WATCHDOG */
 	struct sysmon_wdog sc_smw;
@@ -92,6 +113,31 @@ static void	tps65950_intr_work(struct work *, void *);
 
 static void	tps65950_pih_attach(struct tps65950_softc *, int);
 static void	tps65950_pih_intr_work(struct work *, void *);
+
+#if NGPIO > 0
+static void	tps65950_gpio_attach(struct tps65950_softc *, int);
+
+static void	tps65950_gpio_intr(struct tps65950_softc *);
+
+static int	tps65950_gpio_pin_read(void *, int);
+static void	tps65950_gpio_pin_write(void *, int, int);
+static void	tps65950_gpio_pin_ctl(void *, int, int);
+
+static void	tps65950_gpio_pic_block_irqs(struct pic_softc *, size_t,
+		uint32_t);
+static void	tps65950_gpio_pic_unblock_irqs(struct pic_softc *, size_t,
+		uint32_t);
+static int	tps65950_gpio_pic_find_pending_irqs(struct pic_softc *);
+static void	tps65950_gpio_pic_establish_irq(struct pic_softc *,
+		struct intrsource *);
+
+const struct pic_ops tps65950_gpio_pic_ops = {
+	.pic_block_irqs = tps65950_gpio_pic_block_irqs,
+	.pic_unblock_irqs = tps65950_gpio_pic_unblock_irqs,
+	.pic_find_pending_irqs = tps65950_gpio_pic_find_pending_irqs,
+	.pic_establish_irq = tps65950_gpio_pic_establish_irq
+};
+#endif /* NGPIO > 0 */
 
 static void	tps65950_rtc_attach(struct tps65950_softc *);
 static int	tps65950_rtc_enable(struct tps65950_softc *, bool);
@@ -151,8 +197,15 @@ tps65950_attach(device_t parent, device_t self, void *aux)
 			 (buf[2] << 16) | (buf[3] << 24);
 		aprint_normal(": IDCODE %08X", idcode);
 
-		aprint_normal(": PIH\n");
+		aprint_normal(": PIH");
 		tps65950_pih_attach(sc, ia->ia_intr);
+
+#if NGPIO > 0
+		aprint_normal(", GPIO");
+		tps65950_gpio_attach(sc, ia->ia_intrbase);
+#else
+		aprint_normal("\n");
+#endif /* NGPIO > 0 */
 		break;
 	case TPS65950_ADDR_ID3:
 		aprint_normal(": LED\n");
@@ -312,6 +365,12 @@ tps65950_intr_work(struct work *work, void *v)
 	tps65950_read_1(sc, TPS65950_PIH_REG_ISR_P1, &u8);
 	tps65950_write_1(sc, TPS65950_PIH_REG_ISR_P1, u8);
 
+	/* dispatch the interrupt */
+#if NGPIO > 0
+	if (u8 & TPS65950_PIH_REG_ISR_P1_ISR0)
+		tps65950_gpio_intr(sc);
+#endif /* NGPIO > 0 */
+
 	iic_release_bus(sc->sc_i2c, 0);
 
 	/* allow the workqueue to be entered again */
@@ -364,6 +423,281 @@ tps65950_pih_intr_work(struct work *work, void *v)
 	tps65950_pih_workqueue_available = true;
 	intr_enable(sc->sc_intr);
 }
+
+#if NGPIO > 0
+static void
+tps65950_gpio_attach(struct tps65950_softc *sc, int intrbase)
+{
+	struct gpio_chipset_tag * const gp = &sc->sc_gpio;
+	struct gpiobus_attach_args gba;
+	gpio_pin_t *pins;
+	uint32_t mask;
+	int pin;
+
+	/* disable interrupts */
+	iic_acquire_bus(sc->sc_i2c, 0);
+	tps65950_write_1(sc, TPS65950_GPIO_GPIO_IMR1A, 0);
+	tps65950_write_1(sc, TPS65950_GPIO_GPIO_IMR2A, 0);
+	tps65950_write_1(sc, TPS65950_GPIO_GPIO_IMR3A, 0);
+	iic_release_bus(sc->sc_i2c, 0);
+
+	/* map interrupts */
+	if (sc->sc_intr == NULL || intrbase < 0) {
+		aprint_normal("\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map GPIO interrupts\n");
+		return;
+	} else {
+		sc->sc_gpio_pic.pic_ops = &tps65950_gpio_pic_ops;
+		strlcpy(sc->sc_gpio_pic.pic_name, device_xname(sc->sc_dev),
+				sizeof(sc->sc_gpio_pic.pic_name));
+		sc->sc_gpio_pic.pic_maxsources = 18;
+		pic_add(&sc->sc_gpio_pic, intrbase);
+		aprint_normal(": interrupts %d..%d\n", intrbase, intrbase + 17);
+	}
+
+	gp->gp_cookie = sc;
+	gp->gp_pin_read = tps65950_gpio_pin_read;
+	gp->gp_pin_write = tps65950_gpio_pin_write;
+	gp->gp_pin_ctl = tps65950_gpio_pin_ctl;
+
+	gba.gba_gc = gp;
+	gba.gba_pins = sc->sc_gpio_pins;
+	gba.gba_npins = __arraycount(sc->sc_gpio_pins);
+
+	for (pin = 0, mask = 1, pins = sc->sc_gpio_pins;
+			pin < 18; pin++, mask <<= 1, pins++) {
+		pins->pin_num = pin;
+		pins->pin_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
+		pins->pin_flags = GPIO_PIN_INPUT;
+		pins->pin_state = GPIO_PIN_HIGH;
+	}
+
+	config_found_ia(sc->sc_dev, "gpiobus", &gba, gpiobus_print);
+}
+
+static void
+tps65950_gpio_intr(struct tps65950_softc *sc)
+{
+	pic_handle_intr(&sc->sc_gpio_pic);
+}
+
+static int
+tps65950_gpio_pin_read(void *v, int pin)
+{
+	struct tps65950_softc *sc = v;
+	uint8_t reg;
+	uint8_t bit;
+	uint8_t val;
+
+	if (pin < 0)
+		return ENODEV;
+	else if (pin < 8)
+	{
+		reg = TPS65950_GPIO_GPIODATAIN1;
+		bit = pin;
+	}
+	else if (pin < 16)
+	{
+		reg = TPS65950_GPIO_GPIODATAIN2;
+		bit = pin - 8;
+	}
+	else if (pin < 18)
+	{
+		reg = TPS65950_GPIO_GPIODATAIN3;
+		bit = pin - 16;
+	}
+	else
+		return ENODEV;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	tps65950_read_1(sc, reg, &val);
+	iic_release_bus(sc->sc_i2c, 0);
+
+	return val & (1 << bit);
+}
+
+static void
+tps65950_gpio_pin_write(void *v, int pin, int value)
+{
+	struct tps65950_softc *sc = v;
+	uint8_t reg;
+	uint8_t bit;
+	uint8_t val;
+	uint8_t new;
+
+	if (pin < 0)
+		return;
+	else if (pin < 8)
+	{
+		reg = TPS65950_GPIO_GPIODATAOUT1;
+		bit = pin;
+	}
+	else if (pin < 16)
+	{
+		reg = TPS65950_GPIO_GPIODATAOUT2;
+		bit = pin - 8;
+	}
+	else if (pin < 18)
+	{
+		reg = TPS65950_GPIO_GPIODATAOUT3;
+		bit = pin - 16;
+	}
+	else
+		return;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	tps65950_read_1(sc, reg, &val);
+	new = val;
+	if (value)
+		new |= (1 << bit);
+	else
+		new &= ~(1 << bit);
+	if (new != val)
+		tps65950_write_1(sc, reg, new);
+	iic_release_bus(sc->sc_i2c, 0);
+}
+
+static void
+tps65950_gpio_pin_ctl(void *v, int pin, int flags)
+{
+	struct tps65950_softc *sc = v;
+	uint8_t reg;
+	uint8_t bit;
+	uint8_t val;
+	uint8_t new;
+
+	if (pin < 0)
+		return;
+	else if (pin < 8)
+	{
+		reg = TPS65950_GPIO_GPIODATADIR1;
+		bit = pin;
+	}
+	else if (pin < 16)
+	{
+		reg = TPS65950_GPIO_GPIODATADIR2;
+		bit = pin - 8;
+	}
+	else if (pin < 18)
+	{
+		reg = TPS65950_GPIO_GPIODATADIR3;
+		bit = pin - 16;
+	}
+	else
+		return;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	tps65950_read_1(sc, reg, &val);
+	new = val;
+	switch (flags & (GPIO_PIN_INPUT | GPIO_PIN_OUTPUT)) {
+		case GPIO_PIN_INPUT:	new &= ~(1 << bit); break;
+		case GPIO_PIN_OUTPUT:	new |= (1 << bit); break;
+		default:		break;
+	}
+	if (new != val)
+		tps65950_write_1(sc, reg, new);
+	iic_release_bus(sc->sc_i2c, 0);
+}
+
+static void
+tps65950_gpio_pic_block_irqs(struct pic_softc *pic, size_t irq_base,
+		uint32_t irq_mask)
+{
+	struct tps65950_softc *sc = PIC_TO_SOFTC(pic);
+	int i;
+	const uint32_t reg[3] = { TPS65950_GPIO_GPIO_IMR1A,
+		TPS65950_GPIO_GPIO_IMR2A, TPS65950_GPIO_GPIO_IMR3A };
+	uint8_t u8;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	for (i = 0; i < 3; i++) {
+		tps65950_read_1(sc, reg[i], &u8);
+		u8 &= ~((irq_mask >> (i * 8)) & 0xff);
+		tps65950_write_1(sc, reg[i], u8);
+	}
+	iic_release_bus(sc->sc_i2c, 0);
+}
+
+static void
+tps65950_gpio_pic_unblock_irqs(struct pic_softc *pic, size_t irq_base,
+		uint32_t irq_mask)
+{
+	struct tps65950_softc *sc = PIC_TO_SOFTC(pic);
+	int i;
+	const uint32_t reg[3] = { TPS65950_GPIO_GPIO_IMR1A,
+		TPS65950_GPIO_GPIO_IMR2A, TPS65950_GPIO_GPIO_IMR3A };
+	uint8_t u8;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	for (i = 0; i < 3; i++) {
+		tps65950_read_1(sc, reg[i], &u8);
+		u8 |= (irq_mask >> (i * 8)) & 0xff;
+		tps65950_write_1(sc, reg[i], u8);
+	}
+	iic_release_bus(sc->sc_i2c, 0);
+}
+
+static int
+tps65950_gpio_pic_find_pending_irqs(struct pic_softc *pic)
+{
+	struct tps65950_softc *sc = PIC_TO_SOFTC(pic);
+	uint32_t pending;
+	uint8_t u8;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	tps65950_read_1(sc, TPS65950_GPIO_GPIO_ISR1A, &u8);
+	pending = u8;
+	tps65950_read_1(sc, TPS65950_GPIO_GPIO_ISR2A, &u8);
+	pending |= (u8 << 8);
+	tps65950_read_1(sc, TPS65950_GPIO_GPIO_ISR3A, &u8);
+	pending |= ((u8 & 0x3) << 16);
+	iic_release_bus(sc->sc_i2c, 0);
+	aprint_normal_dev(sc->sc_dev, "%s() 0x%08x\n", __func__, pending);
+	return pending;
+}
+
+static void
+tps65950_gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
+{
+	struct tps65950_softc *sc = PIC_TO_SOFTC(pic);
+	int index;
+	int shift;
+	const uint32_t edge[5] = { TPS65950_GPIO_GPIO_EDR1,
+		TPS65950_GPIO_GPIO_EDR2, TPS65950_GPIO_GPIO_EDR3,
+		TPS65950_GPIO_GPIO_EDR4, TPS65950_GPIO_GPIO_EDR5 };
+	uint32_t reg;
+	uint8_t bits;
+	uint8_t u8;
+
+	index = is->is_irq / 4;
+	shift = (is->is_irq % 4) * 2;
+	switch (is->is_type) {
+		case IST_LEVEL_LOW:
+		case IST_LEVEL_HIGH:
+			/* FIXME implement */
+			return;
+		case IST_EDGE_FALLING:
+			reg = edge[index];
+			bits = 0x1;
+			break;
+		case IST_EDGE_RISING:
+			reg = edge[index];
+			bits = 0x2;
+			break;
+		case IST_EDGE_BOTH:
+			reg = edge[index];
+			bits = 0x3;
+			break;
+		default:
+			return;
+	}
+	iic_acquire_bus(sc->sc_i2c, 0);
+	tps65950_read_1(sc, reg, &u8);
+	u8 |= bits << shift;
+	tps65950_write_1(sc, reg, u8);
+	iic_release_bus(sc->sc_i2c, 0);
+}
+#endif /* NGPIO > 0 */
 
 static void
 tps65950_rtc_attach(struct tps65950_softc *sc)
