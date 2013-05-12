@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.135 2013/01/24 08:22:38 mrg Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.136 2013/05/12 09:54:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.135 2013/01/24 08:22:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.136 2013/05/12 09:54:55 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.135 2013/01/24 08:22:38 mrg Exp $");
 #include <sys/module.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -393,7 +394,7 @@ CFATTACH_DECL2_NEW(uaudio, sizeof(struct uaudio_softc),
     uaudio_match, uaudio_attach, uaudio_detach, uaudio_activate, NULL,
     uaudio_childdet);
 
-int 
+int
 uaudio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
@@ -407,7 +408,7 @@ uaudio_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_IFACECLASS_IFACESUBCLASS;
 }
 
-void 
+void
 uaudio_attach(device_t parent, device_t self, void *aux)
 {
 	struct uaudio_softc *sc = device_private(self);
@@ -2221,7 +2222,6 @@ uaudio_halt_out_dma(void *addr)
 	mutex_spin_exit(&sc->sc_intr_lock);
 	if (sc->sc_playchan.pipe != NULL) {
 		uaudio_chan_close(sc, &sc->sc_playchan);
-		sc->sc_playchan.pipe = NULL;
 		uaudio_chan_free_buffers(sc, &sc->sc_playchan);
 		sc->sc_playchan.intr = NULL;
 	}
@@ -2240,7 +2240,6 @@ uaudio_halt_in_dma(void *addr)
 	mutex_spin_exit(&sc->sc_intr_lock);
 	if (sc->sc_recchan.pipe != NULL) {
 		uaudio_chan_close(sc, &sc->sc_recchan);
-		sc->sc_recchan.pipe = NULL;
 		uaudio_chan_free_buffers(sc, &sc->sc_recchan);
 		sc->sc_recchan.intr = NULL;
 	}
@@ -2689,8 +2688,6 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 		}
 	}
 
-	ch->pipe = 0;
-	ch->sync_pipe = 0;
 	DPRINTF("create pipe to 0x%02x\n", endpt);
 	err = usbd_open_pipe(as->ifaceh, endpt, USBD_MPSAFE, &ch->pipe);
 	if (err)
@@ -2707,6 +2704,7 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 Static void
 uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 {
+	usbd_pipe_handle pipe;
 	struct as_info *as;
 
 	as = &sc->sc_alts[ch->altidx];
@@ -2716,13 +2714,15 @@ uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 		DPRINTF("set null alt=%d\n", sc->sc_nullalt);
 		usbd_set_interface(as->ifaceh, sc->sc_nullalt);
 	}
-	if (ch->pipe) {
-		usbd_abort_pipe(ch->pipe);
-		usbd_close_pipe(ch->pipe);
+	pipe = atomic_swap_ptr(&ch->pipe, NULL);
+	if (pipe) {
+		usbd_abort_pipe(pipe);
+		usbd_close_pipe(pipe);
 	}
-	if (ch->sync_pipe) {
-		usbd_abort_pipe(ch->sync_pipe);
-		usbd_close_pipe(ch->sync_pipe);
+	pipe = atomic_swap_ptr(&ch->sync_pipe, NULL);
+	if (pipe) {
+		usbd_abort_pipe(pipe);
+		usbd_close_pipe(pipe);
 	}
 }
 
