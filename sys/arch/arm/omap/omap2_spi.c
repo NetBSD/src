@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_spi.c,v 1.1.2.2 2013/05/12 01:19:54 khorben Exp $ */
+/* $NetBSD: omap2_spi.c,v 1.1.2.3 2013/05/12 20:11:39 khorben Exp $ */
 
 /*
  * Texas Instruments OMAP2/3 Multichannel SPI driver.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_spi.c,v 1.1.2.2 2013/05/12 01:19:54 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_spi.c,v 1.1.2.3 2013/05/12 20:11:39 khorben Exp $");
 
 #include "opt_omap.h"
 
@@ -408,11 +408,10 @@ omap2_spi_intr(void *v)
 			omap2_spi_recv(sc, i);
 		}
 
-		if (chan->wchunk == NULL && chan->rchunk == NULL) {
+		if (chan->wchunk == NULL && chan->rchunk == NULL
+				&& chan->transfer != NULL) {
 			st = chan->transfer;
 			chan->transfer = NULL;
-
-			KASSERT(st != NULL);
 			spi_done(st, 0);
 
 			spi_transq_dequeue(&chan->queue);
