@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.484.2.4.2.1 2012/12/17 17:52:06 riz Exp $
+.\"	$NetBSD: main,v 1.484.2.4.2.2 2013/05/12 16:56:05 riz Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -458,89 +458,98 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 6.0 and 6.0.1 Releases
+.Ss Changes Between The NetBSD 6.0.1 and 6.0.2 Releases
 .Pp
 The complete list of changes can be found in the
-CHANGES-6.0.1:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0.1/CHANGES-6.0.1
-file in the top level directory of the NetBSD 6.0.1 release tree. An abbreviated list is as follows:
+CHANGES-6.0.2:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0.2/CHANGES-6.0.2
+file in the top level directory of the NetBSD 6.0.2 release tree. An abbreviated list is as follows:
+.Ss2 Security Advisory Fixes
+.(bullet
+NetBSD-SA2013-001:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-001.txt.asc ,
+Kernel panic triggered from userland
+.It
+NetBSD-SA2013-003:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-003.txt.asc ,
+RNG Bug May Result in Weak Cryptographic Keys
+.It
+NetBSD-SA2013-004:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-004.txt.asc ,
+Vulnerabilities in grep
+.bullet)
+.
 .Ss2 Security Fixes
 .(bullet
-expat: Fix CVE-2012-1147, CVE-2012-1148 and CVE-2012-0876.
+Fixed a crash which could happen with sysctl security.curtain=1 set.
+(PR#47598):
+.Lk http://gnats.NetBSD.org/47598
 .It
-BIND: Address CVE-2012-5688: Named could die on specific queries with dns64 enabled.
+Address CVE-2012-5667: Multiple integer overflows in GNU grep.
+.It
+Fixes to entropy handling in the kernel.
+.It
+Prevent ktrace from being able to crash the kernel.
 .bullet)
 .
 .Ss2 General kernel
 .(bullet
-posix_spawn(): Fix processes with attributes.
-.It
 Resolve races between vget() and vrele() resulting in vget() returning dead vnodes.
-.It
-Prevent crash when unsupported fd's are used with kevent.
-.It
 .bullet)
 .
 .Ss2 Networking
 .(bullet
-Fix "atomic fragments" for IPv6.
+Fixed sendto(2) issue with IPv6 UDP datagrams.
+(PR#47408):
+.Lk http://gnats.NetBSD.org/47408
 .It
-ipf: Fix alignment issues in ipmon.
-(PR#47101):
-.Lk http://gnats.NetBSD.org/47101
-.It
-npf: handle delayed checksums in the network stack.
-(PR#47235):
-.Lk http://gnats.NetBSD.org/47235
-.bullet)
-.
-.Ss2 File systems
-.(bullet
-smbfs: Make smbfs actually work on big-endian ports.
+.Xr vioif 4 :
+Fixed an issue which caused recent QEMU to crash.
 .bullet)
 .
 .Ss2 Drivers
 .(bullet
-.Xr ciss 4 :
-don't try to handle sensors if there aren't any.
+.Xr fss 4 :
+Don't crash when running multiple dump -X.
+(PR#47514):
+.Lk http://gnats.NetBSD.org/47514
+.It
+.Xr fss 4 :
+Fixed panic.
+(PR#47020):
+.Lk http://gnats.NetBSD.org/47020
 .bullet)
 .
 .Ss2 Platforms
 .(bullet
-x86 (
-i386,
-amd64):
+alpha:
 .(bullet
-Work around a possible gcc bug generating bad assembler code.
-(PR#45673):
-.Lk http://gnats.NetBSD.org/45673
-.It
-Disable C1E on AMD K8 CPUs, to prevent freeze during boot.
-.bullet)
-.
-.It
-xen:
-.(bullet
-Prevent a memory corruption issue that locks up a Xen DomU, and can potentially cause file system corruption. (
-PR#47056,:
-.Lk http://gnats.NetBSD.org/47056
- PR#47057:
-.Lk http://gnats.NetBSD.org/47057
-)
-.It
-Fix: Xen Dom0 NetBSD kernel could crash by adding duplicate xenwatches.
+Fixed longjmp/setjmp on alpha for statically linked programs such as those in /rescue.
 .bullet)
 .
 .bullet)
 .
-.Ss2 Userland changes
+.Ss2 Userland fixes
 .(bullet
-Update to tzdata2012j.
+Library Updates
+.(bullet
+libc: fix memory corruption in rpc.
+(PR#13082):
+.Lk http://gnats.NetBSD.org/13082
 .It
-cdb: don't refuse to open databases without entries or keys.
+libutil: Fixed a bug in
+.Xr parsedate 3
+where it would treat all input as if it were in the local time zone.
+.bullet)
+.
+.It
+Update to tzdata2013c.
 .It
 Address graphics corruption in recent Cairo, manifested most commonly by certain rendered text sections appearing as solid rectangular blocks of color.
+.It
+openssl: Fixed a multiple-free bug.
 .bullet)
+.
 .
 .
 .Ss "The NetBSD Foundation"
@@ -585,6 +594,8 @@ Changes between the 5.0 and 6.0 releases.
 Changes between the initial 6.0 branch and final release of 6.0.
 .It Li CHANGES-6.0.1
 Changes between the 6.0 and 6.0.1 releases.
+.It Li CHANGES-6.0.2
+Changes between the 6.0.1 and 6.0.2 releases.
 .It Li CHANGES.prev
 Changes in previous
 .Nx

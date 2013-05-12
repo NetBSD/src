@@ -1,6 +1,8 @@
-#	$NetBSD: README.files,v 1.4.20.1.2.1 2012/12/17 18:49:09 riz Exp $
+#	$NetBSD: README.files,v 1.4.20.1.2.2 2013/05/12 16:56:05 riz Exp $
 
 What's in this directory:
+
+CHANGES-6.0.2	Changes between the 6.0.1 and 6.0.2 releases.
 
 CHANGES-6.0.1	Changes between the 6.0 and 6.0.1 releases.
 
