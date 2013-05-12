@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.18 2013/04/28 00:44:27 macallan Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.19 2013/05/12 13:23:08 macallan Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.18 2013/04/28 00:44:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.19 2013/05/12 13:23:08 macallan Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.18 2013/04/28 00:44:27 macallan E
 
 extern char bootpath[256];
 char cbootpath[256];
-int console_node = 0, console_instance = 0;
 
 static void canonicalize_bootpath(void);
 
