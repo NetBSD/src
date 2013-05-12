@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.484.2.5 2012/10/23 16:25:21 riz Exp $
+.\"	$NetBSD: main,v 1.484.2.6 2013/05/12 16:44:03 riz Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -458,1305 +458,305 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 5.0 and 6.0 Releases
+.Ss Changes Between The NetBSD 6.0 and 6.1 Releases
 .Pp
 The
 .Nx
 \*V release
 provides numerous significant functional enhancements, including
-support for many new devices, integration of hundreds of bug fixes,
-new and updated kernel subsystems, and many user-land enhancements.
+support for new devices, integration of hundreds of bug fixes,
+updated kernel subsystems, and many user-land enhancements.
 The result of these improvements is a stable operating system fit for
 production use that rivals most commercially available systems.
 .Pp
-It is impossible to completely summarize the massive development that
-went into the
-.Nx
-\*V release.
 The complete list of changes can be found in the
-CHANGES:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0/CHANGES
-and
-CHANGES-6.0:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0/CHANGES-6.0
-files in the top level directory of the NetBSD 6.0 release tree.
-.Pp
-Some highlights include:
+CHANGES-6.1:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.1/CHANGES-6.1
+file in the top level directory of the NetBSD 6.1 release tree. An abbreviated list is as follows:
+.Ss2 Security Advisory Fixes
+.(bullet
+NetBSD-SA2013-001:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-001.txt.asc ,
+Kernel panic triggered from userland
+.It
+NetBSD-SA2013-002:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-002.txt.asc ,
+kqueue related kernel panic triggered from userland
+.It
+NetBSD-SA2013-003:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-003.txt.asc ,
+RNG Bug May Result in Weak Cryptographic Keys
+.It
+NetBSD-SA2013-004:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-004.txt.asc ,
+Vulnerabilities in grep
+.bullet)
+.
+.Ss2 Security Fixes
+.(bullet
+expat: Fix CVE-2012-1147, CVE-2012-1148 and CVE-2012-0876.
+.It
+BIND: Address CVE-2012-5688: Named could die on specific queries with dns64 enabled.
+.It
+Fixed a crash which could happen with sysctl security.curtain=1 set.
+(PR#47598):
+.Lk http://gnats.NetBSD.org/47598
+.It
+Address CVE-2012-5667: Multiple integer overflows in GNU grep.
+.It
+Several fixes to entropy handling in the kernel.
+.It
+Prevent ktrace from being able to crash the kernel.
+.bullet)
+.
 .Ss2 General kernel
 .(bullet
-.Dv "time_t"
-and
-.Dv "dev_t"
-are now 64 bits.
+posix_spawn(): Fix processes with attributes.
 .It
-Much-improved compat_linux support for running Linux binaries.
+Resolve races between vget() and vrele() resulting in vget() returning dead vnodes.
 .It
-Added a generic producer/consumer queue.
+Prevent crash when unsupported fd's are used with kevent.
 .It
-Added a new ptree ( Patricia / RADIX tree ) implementation.
+Fix a bug where kmem_alloc() could be called from interrupt context.
 .It
-Removed
-.Dv "MALLOC()"
-and
-.Dv "FREE()"
-macros.
-.It
-Compute
-.Dv "kern.ipc.shmmaxpages"
-on startup based on physical memory. Can be overridden via
-.Xr sysctl 8 .
-.It
-.Xr kmem_alloc 9 :
-Add more extensive runtime debugging facilities.
-.It
-File descriptor access performance improvements were made.
-.It
-.Xr cpu_reboot 9 :
-tear down stacks of devices and file systems in an orderly fashion during shutdown.
-.It
-Added 'show vmem' and 'show all vmems' commands to
-.Xr ddb 4 .
-.It
-Added high-priority
-.Xr xcall 9
-support.
-.It
-Added direct select()/poll() support.
-.It
-Add PCU (Per-CPU Unit) interface to unify synchronization of per CPU context, like lazy FPU management.
-.It
-Added new system calls
-.Xr pipe2 2 ,
-.Xr paccept 2 ,
-.Xr kqueue1 2 ,
-flags SOCK_CLOEXEC/SOCK_NONBLOCK to
-.Xr socket 2 ,
-.Xr socketpair 2 ,
-F_DUPFD_CLOEXEC to
-.Xr fcntl 2 ,
-and a MSG_CMSG_CLOEXEC to
-.Xr recvfrom 2
-to be able to set close-on-exec to all newly created file descriptors.
-.It
-Major improvements to
-.Xr uvm_map 9 ,
-.Xr uvm_km 9 ,
-.Xr vmem 9 ,
-and
-.Xr kmem 9
-layers.
-.It
-Removed
-.Xr ltsleep 9
-and wakeup_one(9).
-.It
-Rewrote most of the entropy-gathering and entropy-distributing code, separating the
-.Xr rnd 4
-pseudodevice from the bitstream generation code
-.Xr cprng 9
-and entropy-pool code
-.Xr rnd 9 .
-.It
-Kernel support for
-.Xr posix_spawn 3 .
+WAPBL: coalesce writes to the journal to speed up wapbl_flush() on raid5 by a factor of 3 to 4.
 .bullet)
 .
 .Ss2 Networking
 .(bullet
-.Xr ip 4 :
-added IP_RECVTTL option to let
-.Xr recvmsg 2
-return the TTL of the received datagram.
+Fix "atomic fragments" for IPv6.
 .It
-.Xr ip 4 :
-added IP_MINTTL option to discard packets with a TTL lower than the option value.
+ipf: Fix alignment issues in ipmon.
+(PR#47101):
+.Lk http://gnats.NetBSD.org/47101
 .It
-Added SOCK_SEQPACKET for local sockets.
+npf: handle delayed checksums in the network stack.
+(PR#47235):
+.Lk http://gnats.NetBSD.org/47235
 .It
-Added
-.Dv "net.inet.icmp.bmcastecho"
-.Xr sysctl 7 ,
-to disable ICMP replies to the braodcast address.
+Fixed some locking issues in
+.Xr ipf 4
 .It
-Make TCP window size autoscaling the default.
+.Xr npf 3 :
+Many fixes and updates. Config syntax has changed somewhat, please check your config files.
 .It
-Derive the mbuf cluster (NMBCLUSTERS) at boot time from the available memory. The default can be raised by changing
-.Dv "kern.mbuf.nmbclusters"
-.
-.It
-Added NPF, the NetBSD Packet Filter.
-.It
-.Xr udp 4 :
-implement RFC6056 port selection algorithms.
+Fixed sendto(2) issue with IPv6 UDP datagrams.
+(PR#47408):
+.Lk http://gnats.NetBSD.org/47408
 .bullet)
 .
 .Ss2 File systems
 .(bullet
-Added CHFS, a file system for flash devices.
+smbfs: Make smbfs actually work on big-endian ports.
 .It
-The default behavior when mounting empty msdosfs file systems has been changed to assume long filenames. The behavior with populated file systems has not changed.
+smbfs: various fixes.
+(PR#25070):
+.Lk http://gnats.NetBSD.org/25070
 .It
-UDF: Added support for session opening/closing on sequential media.
+Allow mounting ext2fs and msdosfs in 32-bit compat mode.
 .It
-ext2fs: Added support for >128 byte inodes.
-.It
-Import OpenSolaris ZFS code. Experimental-only; does not work yet.
-.It
-ffs: New quota support. This adds a new on-disk format to store disk quota usage and limits, integrated with ffs metadata. Usage is checked by
-.Xr fsck_ffs 8
-(no more quotacheck) and is covered by the WAPBL journal. Enabled with kernel option QUOTA2.
-.bullet)
-.
-.Ss2 Security
-.(bullet
-.Xr secmodel_bsd44 9 ,
-.Xr secmodel_securelevel 9 :
-Add provisions to control access to
-.Xr gpio 4
-pins.
-.It
-.Xr security.conf 5 :
-Add check_pkg_vulnerabilities and check_pkg_signatures to validate the installed packages against the vulnerabilities database and the expected checksums for their files.
+v7fs: fix off-by-one error.
 .bullet)
 .
 .Ss2 Drivers
 .(bullet
-Audio:
-.(bullet
-Added
-.Xr gcscaudio 4
-driver for AMD Geode CS5536.
+.Xr ciss 4 :
+don't try to handle sensors if there aren't any.
 .It
-Added
-.Xr hdaudio 4 ,
-a new standards-compliant Intel High Definition Audio driver written to replace
-.Xr azalia 4 .
-.It
-.Xr audio 9 :
-Audio drivers are now MP-safe.
-.bullet)
-.
-.It
-Hardware Monitoring:
-.(bullet
-.Xr sysmon_envsys 9 :
-Enhancements to allow access to driver-internal limit values.
-.It
-.Xr acpicpu 4 :
-Add a driver for ACPI-based processor functionality.
-.It
-.Xr acpipmtr 4 :
-Add a driver for ACPI power meters.
-.It
-.Xr acpismbus 4 :
-ACPI SMBus Control Method Interface driver.
-.It
-.Xr acpiwdrt 4 :
-ACPI Watchdog Resource Tables driver.
-.It
-.Xr acpiwmi 4 :
-Windows Management Instrumentation support for ACPI. Also added mappings for
-.Xr wmidell 4 ,
-.Xr wmieeepc 4 ,
-.Xr wmihp 4 ,
-and
-.Xr wmimsi 4 .
-.It
-.Xr aibs 4 :
-New driver for ASUSTeK AI Booster (ACPI ASOC ATK0110) hardware monitor with limit support.
-.It
-.Xr amdtemp 4 :
-Add support for Family 12h.
-.It
-.Xr dbcool 4 :
-Added support for ADM1031 thermal sensor / fan controller.
-.bullet)
-.
-.It
-Networking:
-.(bullet
-Added support for more chip revisions to
-.Xr re 4 .
-Added hardware checksum support for newer PCIe 8168C/8111C/8102E chips.
-.It
-Switch
-.Xr ath 4
-from the binary HAL to the open-source HAL from Sam Leffler.
-.It
-Added
-.Xr bwi 4
-driver for Broadcom AirForce / Apple Airport Extreme network cards.
-.It
-Added flow control and RTL8211C(L) PHY support to
-.Xr rgephy 4 .
-.It
-Added
-.Xr age 4
-and
-.Xr atphy 4
-drivers for Attansic/Atheros L1 Gigabit Ethernet and F1 PHY, respectively.
-.It
-Added support for flow control to
-.Xr sk 4 .
-.It
-Added support for flow control on MCP65 to
-.Xr nfe 4 .
-.It
-Added TCPv4/UDPv4 RX hardware checksum support for i82559 and later chips to
-.Xr fxp 4 .
-.It
-.Xr wm 4 :
-Added ICH10, PCH, PCH2, 82575, 82576, 82580 and I350 devices support. Added some other improvements and workarounds.
-.It
-.Xr bge 4 :
-added misc quirk code for chip specific bugs.
-.It
-Added
-.Xr ale 4 :
-Attansic/Atheros L1E Gigabit Ethernet.
-.It
-.Xr agr 4 :
-added support for layering vlans on top, and allow LACP to be disabled.
-.It
-.Xr alc 4 :
-Add a driver for Atheros AR813x/AR815x Ethernet.
-.It
-.Xr aue 4 :
-Add support for I-O DATA ETX-US2.
-.It
-.Xr bnx 4 :
-Added support for Broadcom BCM5709 and BCM5716 chips. Add support for Broadcom BCM5709S (SerDes) chip.
-.It
-.Xr et 4 ,
-.Xr etphy 4 :
-Add a driver for Agere/LSI ET1310/ET1301 10/100/Gigabit Ethernet device and the Agere/LSI ET1011 TruePHY Gigabit Ethernet PHY.
-.It
-.Xr kue 4 :
-fixed unaligned memory accesses so it now works on ARM and MIPS machines.
-.It
-.Xr ne 4 :
-add proper support for NE2000 8-bit mode.
-.It
-.Xr nfe 4 :
-Add support for flow control for MCP65.
-.It
-.Xr otus 4 :
-Atheros AR9100U driver.
-.It
-.Xr smsh 4 :
-Add a SMSC LAN9118 Family Ethernet driver.
-.It
-.Xr upgt 4 :
-Add a driver for Conexant/Intersil PrismGT SoftMAC USB IEEE 802.11b/g WLAN.
-.bullet)
-.
-.It
-Storage:
-.(bullet
-Added an experimental in-kernel iSCSI initiator, from Wasabi Systems.
-.It
-.Xr viaide 4 :
-Added VT8237S Integrated SATA controller support, and VT6410 PATA RAID controller support (without RAID).
-.It
-Added LVM functionality with
-.Xr dm 4
-driver and lvm2 userland tools.
-.It
-Added support for 82965PM to
-.Xr piixide 4 .
-.It
-.Xr vnd 4 :
-implemented DIOCCACHESYNC. Also, allow
-.Xr vnd 4
-to be backed by a sparse file.
-.It
-Added
-.Xr sdmmc 4
-driver for SD/MMC.
-.It
-.Xr mvsata 4 :
-support the Marvell Hercules-I/II SATA controllers.
-.It
-.Xr flash 9 :
-Add a subsystem to handle flash memory devices, and
-.Xr nand 9 ,
-a subsystem to handle NAND controllers.
+.Xr isp 4 :
+Fix FC-AL devices on QLogic ISP2100.
+(PR#47302):
+.Lk http://gnats.NetBSD.org/47302
 .It
 .Xr mfi 4 :
-Add support for LSI's newer (GEN2) RAID controller.
+Add support for LSI Thunderbolt (SAS2208) controllers.
 .It
-.Xr nside 4 :
-Add a driver for the National Semiconductor PC87415 IDE controller.
+.Xr mfi 4 :
+Add support for running the MegaCLI Linux binary to manage the controller.
 .It
-.Xr raid 4 :
-.(bullet
-RAIDFrame parity maps, which greatly improve parity rewrite times after unclean shutdown.
+.Xr puc 4 :
+Additional device support.
 .It
-Added support for non 512-byte sector devices.
+.Xr bge 4 :
+Add support for Apple's Thunderbolt to Gigabit Ethernet adapter.
+(PR#46961):
+.Lk http://gnats.NetBSD.org/46961
 .It
-Added support for >2TB devices.
-.bullet)
-.
-.bullet)
-.
+.Xr mvgbe 4 :
+fix a number of issues
 .It
-USB:
-.(bullet
-.Xr uftdi 4 :
-Added support for REX-USB60F.
+.Xr nfe 4 :
+Avoid bounce buffering and improve performance.
 .It
-.Xr ehci 4 :
-work around USB subsystem freeze for SB600/SB700 chipsets.
+.Xr wm 4 :
+Fix handling of 82578D and 82579V chips. Various other fixes.
 .It
-.Xr ums 4 :
-Added touchpanel support.
-.bullet)
-.
+.Xr fss 4 :
+Don't crash when running multiple dump -X.
+(PR#47514):
+.Lk http://gnats.NetBSD.org/47514
 .It
-Graphics and Video:
-.(bullet
-.Xr drm 4 :
-updated to mesa-drm 85b9f737db0d2a845e4d7e2bbf9ad12ff9e2227c.
-.It
-.Xr acpivga 4 :
-ACPI Video Extensions driver.
-.It
-.Xr agp 4 :
-Added support for Intel G35, Intel G45, and Intel 82855GM.
-.It
-.Xr auvitek 4 :
-Add a driver for Auvitek AU0828 family USB video capture controllers.
-.It
-.Xr dtv 4 :
-Add new digital TV framework.
-.It
-.Xr cxdtv 4 :
-Add driver for Conexant CX23880-based DTV cards.
-.It
-.Xr emdtv 4 :
-Add a driver for Empia EM28xx family USB video capture controllers.
-.It
-.Xr omapfb 4 :
-a simple driver for OMAP 3xxx on-chip video, especially the Beagleboard.
-.bullet)
-.
-.It
-Miscellaneous:
-.(bullet
-Added Elantech multi-touch trackpad support to
-.Xr pms 4 .
-.It
-Added the
-.Xr altmem 4
-.Dq alternative memory
-
-disk driver, which allows memory that is normally inaccessible by the machine-dependent
-.Xr pmap 9
-to be used (as swap space).
-.It
-.Xr ichlpcib 4 :
-support 82801IEM LPC Interface Bridge.
-.It
-Complete rework of
-.Xr gpio 4
-to integrate with
-.Xr kauth 9 ,
-allow for runtime driver attachment, and naming of individual pins. Add
-.Xr gpiosim 4
-driver to simulate a
-.Xr gpio 4
-device for testing purposes.
-.It
-Added
-.Xr gpioiic 4
-driver to bit-bang an I2C bus using GPIO pins.
-.It
-.Xr btmagic 4 :
-Apple Magic Mouse driver.
-.It
-.Xr vmt 4 :
-Add a VMware Tools driver, from OpenBSD.
-.bullet)
-.
+.Xr fss 4 :
+Fixed panic.
+(PR#47020):
+.Lk http://gnats.NetBSD.org/47020
 .bullet)
 .
 .Ss2 Platforms
 .(bullet
-x86 (
-i386,
-amd64):
-.(bullet
-.Xr pxeboot 8
-now parses
-.Xr boot.cfg 5 .
-.It
-The bootloader has been enhanced to support framebuffer consoles using VESA BIOS extensions. x86 ports now work with the
-.Xr genfb 4
-framebuffer, and the i386-only
-.Xr vesafb 4
-framebuffer has been obsoleted.
-.It
-Added
-.Xr ucas 9
-support for x86.
-.It
-.Xr sysinst 8
-now defaults to UFS2 for x86 platforms.
-.It
-CPU topology detection suport for AMD processors.
-.It
-Enable Ext2fs support in bootloader.
-.It
-Booting from a disk with a GUID Partition Table (GPT) is now possible.
-.It
-Support
-.Xr userconf 4
-command in
-.Xr boot.cfg 5 .
-.bullet)
-.
-.It
-i386:
-.(bullet
-Use
-.Dq i486
-
-as GNU_ARCH.
-.It
-Added PAE (Physical Address Extension) support.
-.It
-Better support for VIA C7 CPUs.
-.bullet)
-.
-.It
-amd64:
-.(bullet
-Added direct map support (mapping of all physical memory using large pages).
-.bullet)
-.
-.It
 alpha:
 .(bullet
-X11: add support for X11FLAVOUR=xorg.
-.It
-Support for Avalon A12 removed.
-.It
-Converted Alpha to use PCU to manage FPU.
+Fixed longjmp/setjmp on alpha for statically linked programs such as those in /rescue.
 .bullet)
 .
 .It
 amiga:
 .(bullet
-Added basic PCI support.
-.It
-.Xr efa 4 :
-ELBOX FastATA 1200 driver.
-.It
-Add a driver for BlizzardPPC 603e+ SCSI.
+New
+.Xr ed 4
+device driver for Hydra and ASDG Zorro2 bus network cards.
 .bullet)
 .
 .It
-amigappc:
+arm:
 .(bullet
-A CSPPC system with
-.Xr ahsc 4
-or
-.Xr cbiiisc 4
-boots into multiuser;
+Fix gcc bugid 51408 for arm.
+(PR#46972):
+.Lk http://gnats.NetBSD.org/46972
 .It
-Onboard serial now works.
+Fixed a bit check in the Kirkwood IRQ code.
 .It
-.Xr efa 4 :
-ELBOX FastATA 1200 driver.
+Fixed incorrect counts for 'vmstat -e' on Kirkwood.
+.It
+Make bigendian ARM get the MBR partition and offset correct.
+(PR#47081):
+.Lk http://gnats.NetBSD.org/47081
+.It
+Fixed bug where IRQ masks of GPIO were set incorrectly on Marvell SoCs.
+.It
+Fixed static linking on ARM platforms.
+(PR#47139):
+.Lk http://gnats.NetBSD.org/47139
+.It
+Properly block IRQs >= 32.
+(PR#45371):
+.Lk http://gnats.NetBSD.org/45371
+.It
+Greatly improved Raspberry Pi support - USB and onboard Ethernet now work.
+.It
+Enabled DCache Streaming Switch and Write Allocate for Sheeva CPUs.
+.It
+Added support for the watchdog timer in some Marvell SoCs.
+.It
+Fix for non-MBR disks on ARM.
+(PR#47463):
+.Lk http://gnats.NetBSD.org/47463
 .bullet)
 .
 .It
-ARM ports(
-acorn26,
-acorn32,
-cats,
-evbarm,
-hpcarm,
-iyonix,
-netwinder,
-shark,
-zaurus):
+mips:
 .(bullet
-Cortex-A8 CPU support is available.
-.It
-i.MX51 SoC support is available.
+MIPS ports have switched to gdb 7.3.1. GDB6 is removed.
 .bullet)
 .
 .It
-atari:
+vax:
 .(bullet
-Add support for the SMC Elite Ultra Ethernet with the SMC_TT VME-ISA bridge.
-.It
-Add support for the EtherNEC, ISA NE2000 based Ethernet connected to Atari ROM cartridge slot.
-.bullet)
-.
-.It
-bebox:
-.(bullet
-Support xserver. Tested on s3(TRIO 64V+).
-.bullet)
-.
-.It
-cobalt:
-.(bullet
-Add LBA48 support to bootloader so that it can safely load a kernel from NetBSD partition beyond >137GB boundary.
-.bullet)
-.
-.It
-dreamcast:
-.(bullet
-Fixed a long standing GD-ROM driver bug so that file system on GD-ROM works properly.
-.It
-Build and put a raw binary format kernel into distribution.
-.It
-Switch to using Xorg servers and binaries.
-.bullet)
-.
-.It
-evbarm:
-.(bullet
-.It
-Added support for Gumstix Verdex and Verdex Pro.
-.It
-Support Marvell Sheevaplug and some Marvell SoC NAS boxes.
-.It
-Add initial support for Sharp NetWalker MID.
-.It
-Add driver for OMAP NAND controllers.
-.It
-Add FriendlyARM Mini2440 support.
-.It
-Add initial support for the RaspberryPi. No support yet for the USB controller, the Ethernet interface, or the video chip. Serial console works, and boots multiuser.
-.bullet)
-.
-.It
-evbmips:
-.(bullet
-Added
-.Xr voyagerfb 4
-driver, for the Gdium Liberty 1000's video controller.
-.It
-Added support for RMI XLS6ATX_7A board and XL SoC family.
-.It
-Added support for RMI (NetLogic) XLS/XLR models.
-.bullet)
-.
-.It
-evbppc:
-.(bullet
-Enable builds for OEA, ibm4xx and Book-E modules.
-.bullet)
-.
-.It
-evbsh3:
-.(bullet
-Add support for Alpha Project MS104-SH4, TAC T-SH7706LAN Rev.3 and TAC T-SH7706LSR Rev.1.
-.bullet)
-.
-.It
-hp300:
-.(bullet
-Switch NetBSD/hp300 to wscons with rasops.
-.It
-Add support for framebuffers on HP362 and HP382.
-.It
-Add support for Apollo Domain keyboard.
-.bullet)
-.
-.It
-hp700:
-.(bullet
-Added support for UFS2 boot.
-.It
-pmap update: Support PA 2.0 machines in 32 bit mode. Improve support for machines without the PA7100LC or PA7300LC CPUs.
-.It
-Added
-.Xr ucas 9
-support for hp700.
-.It
-com at dino now works.
-.It
-.Xr lcd 4 :
-Driver for hp700 lcds added.
-.It
-Add support for
-.Xr elroy 4 ,
-.Xr astro 4 ,
-and
-.Xr ssio 4
-based 64-bit machines running in 32-bit mode.
-.It
-Update
-.Xr sti 4
-and add
-.Xr pci 4
-attachment.
-.It
-Add support for HIL devices.
-.It
-Support added for machines with the uturn(4) I/O subsystem.
-.bullet)
-.
-.It
-hpcarm:
-.(bullet
-Add support for Sharp W-ZERO3 series.
-.It
-Use rtc_offset passed from hpcboot.
-.It
-Bump MAXPARTITIONS from 8 to 16.
-.It
-Switch to using Xorg servers and binaries.
-.It
-Improve console speed on W-ZERO3 machines using write through mapping for framebuffer memory.
-.It
-Improve install on JORNADA720.
-.bullet)
-.
-.It
-hpcmips:
-.(bullet
-Switch to using Xorg servers and binaries.
-.bullet)
-.
-.It
-hpcsh:
-.(bullet
-Switch to using Xorg servers and binaries.
-.It
-Add
-.Xr sysinst 8
-support.
-.bullet)
-.
-.It
-landisk:
-.(bullet
-Added UFS2 boot support.
-.It
-Enable to build a bootable install disk image.
-.bullet)
-.
-.It
-luna68k:
-.(bullet
-Enable LUNA to load -current kernels director from firmware.
-.It
-Make SCSI work properly.
-.It
-Use the original OMRON font derived from 4.4BSD-Lite/luna68k rather than gallant19 which is used on Sun workstations.
-.It
-Complete LUNA-II support.
-.bullet)
-.
-.It
-mac68k:
-.(bullet
-Add timecounter support to the CSI Hurdler Centronics Parallel Interface
-.Xr cpi 4
-driver.
-.bullet)
-.
-.It
-macppc:
-.(bullet
-Support new-style
-.Xr module 7
-kernel modules.
-.bullet)
-.
-.It
-m68k ports (
-amiga,
-atari,
-cesfic,
-hp300,
-luna68k,
-mac68k,
-mvme68k,
-news68k,
-next68k,
-sun2,
-sun3,
-x68k):
-.(bullet
-Re-enable m68k optimized in_cksum routine.
-.It
-Support
-.Xr module 7
-loading.
-.It
-Fixed a regression in FPU_EMULATE code that caused weird
-.Xr awk 1
-behavior.
-.It
-Add hyperbotic and trigonometric functions to m68k FPE.
-.bullet)
-.
-.It
-mips ports (
-algor,
-arc,
-cobalt,
-emips,
-evbmips,
-ews4800,
-hpcmips,
-mipsco,
-newsmips,
-pmax,
-sbmips,
-sgimips):
-.(bullet
-Added support for 64-bit MIPS processors (O32, N32, N64 ABIs are supported).
-.It
-Added SMP support for MIPS architecture.
-.It
-Rewritten interrupt handling to be much more efficient, added "fast" software interrupts and kernel preemption.
-.It
-Converted MIPS to use PCU to manage FPU.
-.It
-Added MIPS32R2 and MIPS64R2 support.
-.It
-Rework Atheros MIPS-based SoC support. Add initial support for AR71xx (24K) and AR9344 (74K) SoCs
-.It
-Added support for ralink RT3883 SoC from CradlePoint Technologies.
-.It
-Added support for MIPS DSP v2 ASE.
-.bullet)
-.
-.It
-ofppc:
-.(bullet
-Support Gigabit Ethernet Controller for MV64361 on PegasosII.
-.It
-Support for RDB partitions.
-.bullet)
-.
-.It
-pmax:
-.(bullet
-Added UFS2 boot support.
-.bullet)
-.
-.It
-powerpc ports (
-amigappc,
-bebox,
-evbppc,
-ibmnws,
-macppc,
-mvmeppc,
-ofppc,
-pmppc,
-prep,
-rs6000,
-sandpoint,
-walnut):
-.(bullet
-Add support for using secure PLT (thereby allowing data and bss of powerpc programs and shared library to be set non-executable).
-.It
-Added support for Book E Freescale MPC85xx (e500 core) processors. Added "fast" software interrupts support and SOFTFLOAT for PowerPC (Book E only), reworked FPU/VEC support for e500 SPE, other improvements.
-.It
-Converted PowerPC to use PCU to manage FPU/AltiVec/SPE.
-.It
-Initial SMP support for MPC85xx, reworked and unified IPI code, various other improvements.
-.It
-Switch to using direct-mapped uareas (pcb + kernel stacks).
-.It
-The generic PIC code now supports Matt Thomas's fast softintr code.
-.bullet)
-.
-.It
-prep:
-.(bullet
-Support Xserver. Tested with on-board s3(864).
-.bullet)
-.
-.It
-sandpoint:
-.(bullet
-Added support for Marvell-SKnet in netboot.
-.It
-D-Link DSM-G600 support.
-.It
-Add support for booting from RAID 1.
-.It
-Iomega Storcenter support.
-.It
-Netronix NH-230/231 and compatible NAS are supported.
-.bullet)
-.
-.It
-sgimips:
-.(bullet
-Added support for Personal IRIS 4D/20 and 4D/25 (IP6 and IP10).
-.It
-.Xr mec 4 :
-Added RX hardware checksum support on O2.
-.It
-.bullet)
-.
-.It
-sh3ports (
-dreamcast,
-evbsh3,
-hpcsh,
-landisk,
-mmeye):
-.(bullet
-Add some support for SH7706.
-.bullet)
-.
-.It
-shark:
-.(bullet
-Added support for
-.Xr module 7
--style kernel modules.
-.It
-.Xr chipsfb 4
-now works on shark.
-.bullet)
-.
-.It
-sparc:
-.(bullet
-Switch sparc port to use
-.Xr wscons 4
-.It
-.Xr zx 4 :
-added
-.Xr wscons 4
-support.
-.It
-.Xr tcx 4 :
-support
-.Xr wsdisplay 4
-and acceleration.
-.It
-.Xr apc 4 :
-a driver for the Aurora Personality Chip (APC) found on SPARCstation-4/5 and qemu. Allows to idle the CPU when in the idle loop.
-.It
-Re-enable sparc optimized in_cksum routine.
-.It
-Added support for
-.Xr module 7
--style kernel modules.
-.bullet)
-.
-.It
-sparc64:
-.(bullet
-.Xr zx 4 :
-added
-.Xr wscons 4
-support.
-.It
-Add a driver for LOMlite lights out management hardware monitor and watchdog timer.
-.It
-Add real UltraSPARC-III* CPU support.
-.It
-Add initial support for Fujitsu SPARC64 systems, not yet stable.
-.It
-.Xr ffb 4 :
-Added EDID (Extended Display Identification Data) reading, and video mode setting support.
-.It
-Added fast
-.Xr softint 9
-support.
-.It
-Add support for Enterprise systems (Ex[45]00) systems.
+Reverted MAXPARTITION bump to 16, lowering it to 12 instead, to fix bootblocks and installboot for VAX 780 and other machines booting via VMB.EXE.
 .bullet)
 .
 .It
 x68k:
 .(bullet
-Switched
-.Xr pow 4
-to use
-.Xr powerd 8 .
+Update bootloader: cdboot, netboot support and bugfixes.
 .It
-Fix bootloader failure on X68030+060turbo.
+Add floppy format support.
+.bullet)
+.
 .It
-Removed pow(4) and rtcalarm(8).
+x86 (
+i386,
+amd64):
+.(bullet
+Work around a possible gcc bug generating bad assembler code.
+(PR#45673):
+.Lk http://gnats.NetBSD.org/45673
 .It
-.Xr powsw 4 :
-a revised power switch driver.
+Disable C1E on AMD K8 CPUs, to prevent freeze during boot.
+.It
+Fix running BSDi and NetBSD <= 1.0 binaries.
+(PR#41341):
+.Lk http://gnats.NetBSD.org/41341
+.It
+Add support in ld.elf_so for relocation type R_386_TLS_TPOFF32.
+(PR#47061):
+.Lk http://gnats.NetBSD.org/47061
+.It
+Fix some ACPI panics.
+(PR#47016):
+.Lk http://gnats.NetBSD.org/47016
+.It
+The amd64 port now supports dtrace. (Not compiled in by default)
 .bullet)
 .
 .It
 xen:
 .(bullet
-Add PCI pass-through support for Xen3. Dom0 kernel gets a
-.Xr pciback 4
-driver, to which the device specified in the pciback.hide boot parameter will attach. DomU kernels get a
-.Xr xpci 4
-driver, to which PCI busses will attach.
+Prevent a memory corruption issue that locks up a Xen DomU, and can potentially cause file system corruption. (
+PR#47056,:
+.Lk http://gnats.NetBSD.org/47056
+ PR#47057:
+.Lk http://gnats.NetBSD.org/47057
+)
 .It
-Added XEN3PAE_DOM0, an i386 dom0 kernel with PAE support. Requires an i386PAE or x86_64 hypervisor.
-.It
-.Xr balloon 4 :
-Balloon driver now enabled for all Xen kernels.
-.It
-Dropped Xen 2 support. Xen 3.1 or later is now required.
-.It
-Added support for request-rx-copy in the virtual network device backend.
-.It
-Provide experimental support for suspend/resume in NetBSD domUs.
-.It
-Enable no-execute bit feature for i386pae and amd64 kernels.
-.It
-Added support for feature-flush-cache in block device backend, used in block device frontend for DIOCCACHESYNC.
-.bullet)
-.
-.It
-zaurus:
-.(bullet
-Added zboot.
-.It
-Added playback and recording support to
-.Xr zaudio 4 .
-.It
-Add Xorg support.
-.It
-Add ioexp driver for SL-C1000.
-.It
-Add PXA25x based Zaurus SL-C700/750/760/860 support.
+Fix: Xen Dom0 NetBSD kernel could crash by adding duplicate xenwatches.
 .bullet)
 .
 .bullet)
 .
-.Ss2 Userland
+.Ss2 Userland fixes
 .(bullet
-3rd party software updates:
+Library Updates
 .(bullet
-.Xr acpi 4 :
-ACPICA updated to 20110623.
+.Xr pthread 3 :
+libpthread minor number was bumped for the addition of pthread_cond_setclock(). Threaded binaries built on NetBSD 6.1 will not function on NetBSD 6.0.
 .It
-.Xr atf 7
-is version 0.15.
+.Xr pthread 3 :
+libpthread can be dlopen()ed again.
 .It
-ISC
-.Xr cron 8
-4.1.
+.Xr terminfo 3 :
+Various fixes to libterminfo.
 .It
-OpenSSH version 1.0.1c
+libc: fix memory corruption in rpc.
+(PR#13082):
+.Lk http://gnats.NetBSD.org/13082
 .It
-lvm2tools 2.02.44 and libdevmapper 1.02.30
-.It
-dhcpcd-5.5.4
-.It
-am-utils updated from head; adds UDF support and
-.Dv "-uu"
-.It
-CVS 1.12.13
-.It
-BIND 9.9.1-P4.
-.It
-libbind 6.0-rc1.
-.It
-FSF binutils 2.21.1a.
-.It
-.Xr httpd 8 :
-bozohttpd-20111118
-.It
-.Xr file 1
-5.09
-.It
-ntp 4.2.6p5
-.It
-.Xr flex 1
-version 2.5.35.
-.It
-.Xr gcc 1
-version 4.5.3.
-.It
-.Xr gdb 1
-version 7.3.1.
-.It
-GNU MP 5.0.2.
-.It
-.Xr less 1
-version 444.
-.It
-libfetch 2.23
-.It
-Lua 5.1.4
-.It
-OpenLDAP 2.4.23
-.It
-SQLite 3.6.9
-.It
-.Xr tmux 1
-1.5
-.It
-trousers-0.3.8; tmp-tools 1.3.7.1
-.It
-.Xr xz 1
-5.0.0
-.It
-byacc-20110908
-.It
-tzdata2011n
-.It
-.Xr dns-sd 1 :
-Import mDNSResponder 212.1.
+libutil: Fixed a bug in
+.Xr parsedate 3
+where it would treat all input as if it were in the local time zone.
 .bullet)
 .
 .It
-Libraries:
-.(bullet
-libc:
-.(bullet
-Add new ptree (Patricia / RADIX tree) implementation.
+Update to tzdata2013c.
+.It
+cdb: don't refuse to open databases without entries or keys.
+.It
+Address graphics corruption in recent Cairo, manifested most commonly by certain rendered text sections appearing as solid rectangular blocks of color.
 .It
 Added
-.Xr fopendir 3 .
+.Xr flock 1 ,
+inspired by the Linux program of the same name.
 .It
-Added RFC 2045 MIME Quoted-Printable support.
+Updated Postfix to version 2.8.13.
 .It
-Added
-.Xr glob_pattern_p 3 .
+.Xr wsconsctl 8 :
+add support for touchscreen calibration.
+(PR#45872):
+.Lk http://gnats.NetBSD.org/45872
 .It
-Added
-.Xr memrchr 3 .
-.It
-Added
-.Xr stpcpy 3 ,
-.Xr stpncpy 3 ,
-and
-.Xr strnlen 3 .
-.It
-Added %s (seconds since the Epoch) to
-.Xr strptime 3 ,
-for symmetry with
-.Xr strftime 3 .
-.It
-Added the getdate(3) and getdate_err value, conforming to IEEE Std 1003.1 (
-.Dq POSIX.1
-
-) and the Open Group Base Specifications X/Open System Interfaces extension (
-.Dq XSI
-
-).
-.It
-Added
-.Xr getdelim 3
-and
-.Xr getline 3 .
-.It
-Added
-.Xr posix_spawn 3 .
-.It
-Added a space-efficient write-once database (
-.Xr cdbr 3 ,
-.Xr cdbw 3
-).
-.It
-Provide a re-entrant and thread-safe set of timezone APIs that don't require locking and can operate on user-specified timezones.
+openssl: Fixed a multiple-free bug.
 .bullet)
 .
-.It
-libm: Add f{dim,max,min}{,f,l} from FreeBSD.
-.It
-Replaced termcap with
-.Xr terminfo 3 .
-.It
-perfuse: Add the PUFFS RElay to FUSE library, which bridges the kernel level API for FUSE filesystems with native PUFFS.
-.It
-.Xr rump 3
-.(bullet
-Moved VFS functionality from librump to a new library, librumpvfs.
-.It
-Added support for remote system calls.
-.It
-Add IPv6 support to rumpnet.
-.It
-Support kernel config framework and devices in rumpdev.
-.It
-rumpfs: support registering exernal files which are accessed from the host OS file system namespace instead of from within the rump virtual kernel.
-.It
-rumpvfs: Use the unmodified kernel vnode pager.
-.bullet)
-.
-.It
-.Xr bluetooth 3 :
-updated the Bluetooth service discovery API and merged it into libbluetooth, retiring the separate libsdp.
-.bullet)
-.
-.It
-Installer (sysinst):
-.(bullet
-Default to
-.Xr wapbl 4
-logging for UFS partitions.
-.It
-Make sure the installer rejects UFS2 for root partitions on ports whose bootloaders don't support booting from UFS2.
-.bullet)
-.
-.It
-Changes to the way
-.Xr make 1
-processes
-.Dv ".for"
-loops.
-.It
-.Xr makefs 8 :
-Added support for encoding RISC OS metadata into ISO9660 file systems.
-.It
-.Xr mount 8 :
-Added
-.Dv "-o rump"
-, which mounts the file system as a userspace server via
-.Xr puffs 4
-and
-.Xr rump 3
-instead of using a kernel drver.
-.It
-.Xr dkctl 8 :
-Display cache, strategy and list of wedges if no command is specified on the command line.
-.It
-.Xr ar 1 :
-Added support for
-.Dq deterministic mode
-
-.
-.It
-Added
-.Xr crash 8 ,
-a new utility to debug kernel images, based on the in-kernel debugger,
-.Xr ddb 4 .
-.It
-.Xr eject 1
-now has
-.Xr amd 8
-support.
-.It
-.Xr mtree 8 :
-add -S option to sort entries.
-.It
-Imported
-.Xr netpgp 1 ,
-a BSD-licensed PGP implementation.
-.It
-.Xr install 1 :
-Added support for writing sha256, sha384, or sha512 hashes to a METALOG.
-.It
-.Xr rpcgen 1 :
-Added support for
-.Dv "hyper"
-and
-.Dv "quad"
-keywords.
-.It
-New
-.Xr wakeonlan 8
-command to send Wake-on-LAN packets to machines on the local Ethernet.
-.It
-Added
-.Xr nbperf 1 ,
-a minimal perfect hash function generator.
-.It
-.Xr unzip 1 :
-a libarchive-based unzip frontend.
-.It
-.Xr apropos 1 :
-new implementation using SQLite Full Text Index.
-.It
-.Xr audiocfg 1 :
-new tool to control audio defaults.
-.It
-.Xr devpubd 8 :
-Add a device publishing daemon for automatic device node creation.
-.It
-.Xr disklabel 8 :
-Disable COMPAT_386BSD_MBRPART.
-.It
-.Xr dkctl 8 :
-Display cache, strategy, and list of wedges if no command is specified in the command line.
-.It
-.Xr fincore 1 :
-Add a utility to query file cache.
-.It
-.Xr ifconfig 8 :
-Add the
-.Dv "linkstr"
-command which can be used to communicate an arbitrary string with the interface driver.
-.It
-.Xr man 1 :
-display a manpage when specified with a path.
-.It
-.Xr mkubootimage 1 :
-Added a tool to generate u-boot kernel images.
-.bullet)
-.
-.Pp
-Besides this list, there have also been innumerable bug fixes and miscellaneous enhancements.
-.Ss2 Components removed from NetBSD
-.Pp
-In this release of NetBSD, the following software components have been removed from the system. Some were not useful anymore, or their utility did not justify the maintenance overhead. Others were not working properly and there was a lack of interest in fixing them.
-.(bullet
-Support for Xen 2 has been dropped. Xen 3.1 or later is now required to run NetBSD.
-.It
-Support for LKMs (Loadable Kernel Modules) was dropped; use the new
-.Xr module 7
-framework.
-.It
-.Dq softdep
-
-support is no longer available in FFS; use
-.Xr wapbl 4
-logging instead.
-.It
-The
-
-      playstation2:
-.Lk http://www.NetBSD.org/ports/playstation2/
-port.
-.It
-tn3270 was removed from base; it is available in pkgsrc.
-.It
-Support for Darwin, Mach, IRIX and PECOFF emulation was retired.
-.bullet)
-.
-.
-.\} \" \n[FOR_RELEASE]
-.
-.Ss "Features to be removed in a later release"
-The following features are to be removed from
-.Nx
-in the future:
-.(bullet
-.Xr dhclient 8
-and
-.Xr rtsol 8
-in favor of
-.Xr dhcpcd 8 .
-.It
-.Xr groff 1
-is being phased out.
-Man pages are handled with
-.Xr mandoc 1 ,
-and
-.Xr groff 1
-can still be found in pkgsrc as
-.Pa textproc/groff .
-.It
-.Xr kame_ipsec 4
-has been replaced by
-.Xr fast_ipsec 4 .
-The option to use the old implementation (see
-.Xr options 4 )
-will be removed in the next
-.Nx
-release.
-.bullet)
 .
 .Ss "The NetBSD Foundation"
 .Pp
@@ -1798,6 +798,8 @@ The root directory of the
 Changes between the 5.0 and 6.0 releases.
 .It Li CHANGES-6.0
 Changes between the initial 6.0 branch and final release of 6.0.
+.It Li CHANGES-6.1
+Changes between the final release of 6.0 and final release of 6.1.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
