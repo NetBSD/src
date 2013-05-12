@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.2 2011/11/19 12:32:54 jmcneill Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.2.14.1 2013/05/12 16:38:33 riz Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.2 2011/11/19 12:32:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.2.14.1 2013/05/12 16:38:33 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,6 @@ struct vioif_softc {
 
 	uint8_t			sc_mac[ETHER_ADDR_LEN];
 	struct ethercom		sc_ethercom;
-	uint32_t		sc_features;
 	short			sc_ifflags;
 
 	/* bus_dmamem */
@@ -654,7 +653,7 @@ vioif_stop(struct ifnet *ifp, int disable)
 		vioif_rx_drain(sc);
 	
 	virtio_reinit_start(vsc);
-	virtio_negotiate_features(vsc, sc->sc_features);
+	virtio_negotiate_features(vsc, vsc->sc_features);
 	virtio_start_vq_intr(vsc, &sc->sc_vq[0]);
 	virtio_stop_vq_intr(vsc, &sc->sc_vq[1]);
 	if (vsc->sc_nvqs >= 3)
