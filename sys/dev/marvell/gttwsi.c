@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi.c,v 1.7 2013/05/01 12:25:31 rkujawa Exp $	*/
+/*	$NetBSD: gttwsi.c,v 1.8 2013/05/13 15:47:18 christos Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.7 2013/05/01 12:25:31 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.8 2013/05/13 15:47:18 christos Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -85,8 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.7 2013/05/01 12:25:31 rkujawa Exp $");
 
 #include <dev/marvell/marvellvar.h>
 #include <dev/marvell/gttwsireg.h>
-
-#include "opt_mvsoc.h"
 
 struct gttwsi_softc {
 	device_t sc_dev;
