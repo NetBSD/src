@@ -35,8 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 *******************************************************************************/
 
-#include "opt_mvsoc.h"
-
 #ifndef _MVSPIREG_H_
 #define _MVSPIREG_H_
 
