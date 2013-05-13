@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.85 2012/04/07 16:44:10 christos Exp $	*/
+/*	$NetBSD: savecore.c,v 1.86 2013/05/13 18:44:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.85 2012/04/07 16:44:10 christos Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.86 2013/05/13 18:44:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,30 +154,32 @@ static long	panicstr;
 static char	vers[1024];
 static char	gzmode[3];
 
-static int	clear, compress, force, verbose;	/* flags */
-
 static void	check_kmem(void);
 static int	check_space(void);
 static void	clear_dump(void);
 static int	Create(char *, int);
-static int	dump_exists(void);
+static int	dump_exists(int);
 static char	*find_dev(dev_t, mode_t);
 static int	get_crashtime(void);
-static void	kmem_setup(void);
+static void	kmem_setup(int);
 static void	Lseek(int, off_t, int);
 static int	Open(const char *, int rw);
-static void	save_core(void);
+static void	save_core(int);
 __dead static void	usage(const char *fmt, ...) __printflike(1, 2);
 
 int
 main(int argc, char *argv[])
 {
-	int ch, level, testonly;
+	int ch, level, testonly, compress, force, clear, verbose;
 	char *ep;
 
 	kernel = NULL;
 	level = 1;		/* default to fastest gzip compression */
+	force = 0;
+	clear = 0;
 	testonly = 0;
+	verbose = 0;
+	compress = 0;
 	gzmode[0] = 'w';
 
 	openlog("savecore", LOG_PERROR, LOG_DAEMON);
@@ -224,14 +226,14 @@ main(int argc, char *argv[])
 	gzmode[1] = level + '0';
 
 	(void)time(&now);
-	kmem_setup();
+	kmem_setup(verbose);
 
 	if (clear && !testonly) {
 		clear_dump();
 		exit(0);
 	}
 
-	if (!dump_exists() && !force)
+	if (!dump_exists(verbose) && !force)
 		exit(1);
 
 	if (testonly)
@@ -248,14 +250,14 @@ main(int argc, char *argv[])
 	if ((!get_crashtime() || !check_space()) && !force)
 		exit(1);
 
-	save_core();
+	save_core(compress);
 
 	clear_dump();
 	exit(0);
 }
 
 static void
-kmem_setup(void)
+kmem_setup(int verbose)
 {
 	kvm_t *kd_kern;
 	char errbuf[_POSIX2_LINE_MAX];
@@ -473,7 +475,7 @@ nomsguf:
 }
 
 static int
-dump_exists(void)
+dump_exists(int verbose)
 {
 	u_int32_t newdumpmag;
 
@@ -516,16 +518,13 @@ clear_dump(void)
 static char buf[1024 * 1024];
 
 static void
-save_kernel(int ofd, FILE *fp, char *path)
+save_kernel(FILE *fp, char *path)
 {
 	int nw, nr, ifd;
 
 	ifd = Open(kernel, O_RDONLY);
 	while ((nr = read(ifd, buf, sizeof(buf))) > 0) {
-		if (compress)
-			nw = fwrite(buf, 1, nr, fp);
-		else
-			nw = write(ofd, buf, nr);
+		nw = fwrite(buf, 1, nr, fp);
 		if (nw != nr) {
 			syslog(LOG_ERR, "%s: %s",
 			    path, strerror(nw == 0 ? EIO : errno));
@@ -553,7 +552,7 @@ ksymsget(u_long addr, void *ptr, size_t size)
 }
 
 static int
-save_ksyms(int ofd, FILE *fp, char *path)
+save_ksyms(FILE *fp, char *path)
 {
 	struct ksyms_hdr khdr;
 	int nw, symsz, strsz;
@@ -579,10 +578,7 @@ save_ksyms(int ofd, FILE *fp, char *path)
 	khdr.kh_shdr[STRTAB].sh_size = strsz;
 
 	/* Write out the ELF headers. */
-	if (compress)
-		nw = fwrite(&khdr, 1, sizeof(khdr), fp);
-	else
-		nw = write(ofd, &khdr, sizeof(khdr));
+	nw = fwrite(&khdr, 1, sizeof(khdr), fp);
 	if (nw != sizeof(khdr)) {
 		syslog(LOG_ERR, "%s: %s",
 		    path, strerror(nw == 0 ? EIO : errno));
@@ -605,10 +601,7 @@ save_ksyms(int ofd, FILE *fp, char *path)
 			free(p);
 			return 1;
 		}
-		if (compress)
-			nw = fwrite(p, 1, st.sd_symsize, fp);
-		else
-			nw = write(ofd, p, st.sd_symsize);
+		nw = fwrite(p, 1, st.sd_symsize, fp);
 		free(p);
 		if (nw != st.sd_symsize) {
 			syslog(LOG_ERR, "%s: %s",
@@ -633,10 +626,7 @@ save_ksyms(int ofd, FILE *fp, char *path)
 			free(p);
 			return 1;
 		}
-		if (compress)
-			nw = fwrite(p, 1, st.sd_strsize, fp);
-		else
-			nw = write(ofd, p, st.sd_strsize);
+		nw = fwrite(p, 1, st.sd_strsize, fp);
 		free(p);
 		if (nw != st.sd_strsize) {
 			syslog(LOG_ERR, "%s: %s",
@@ -651,7 +641,7 @@ save_ksyms(int ofd, FILE *fp, char *path)
 }
 
 static void
-save_core(void)
+save_core(int compress)
 {
 	FILE *fp;
 	int bounds, ifd, nr, nw, ofd, tryksyms;
@@ -768,25 +758,25 @@ err2:			syslog(LOG_WARNING,
 				syslog(LOG_ERR, "%s: %m", path);
 				exit(1);
 			}
-		} else
+		} else {
 			ofd = Create(path, S_IRUSR | S_IWUSR);
+			fp  = fdopen(ofd, "w");
+			if (fp == NULL) {
+				syslog(LOG_ERR, "fdopen: %m");
+				exit(1);
+			}
+		}
 		if (tryksyms) {
-			if (!save_ksyms(ofd, fp, path))
+			if (!save_ksyms(fp, path))
 				break;
-			if (compress)
-				(void)fclose(fp);
-			else
-				(void)close(ofd);
+			(void)fclose(fp);
 			unlink(path);
 		} else {
-			save_kernel(ofd, fp, path);
+			save_kernel(fp, path);
 			break;
 		}
 	}
-	if (compress)
-		(void)fclose(fp);
-	else
-		(void)close(ofd);
+	(void)fclose(fp);
 
 	/*
 	 * For development systems where the crash occurs during boot
