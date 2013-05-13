@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.243 2013/05/13 17:08:20 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.244 2013/05/13 17:10:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.243 2013/05/13 17:08:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.244 2013/05/13 17:10:58 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2860,7 +2860,13 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* 5718 step 29, 57XX step 58 */
 	/* Inialize RX list placement stats mask. */
-	CSR_WRITE_4(sc, BGE_RXLP_STATS_ENABLE_MASK, 0x007FFFFF);
+	if (BGE_IS_575X_PLUS(sc)) {
+		val = CSR_READ_4(sc, BGE_RXLP_STATS_ENABLE_MASK);
+		val &= ~BGE_RXLPSTATCONTROL_DACK_FIX;
+		CSR_WRITE_4(sc, BGE_RXLP_STATS_ENABLE_MASK, val);
+	} else
+		CSR_WRITE_4(sc, BGE_RXLP_STATS_ENABLE_MASK, 0x007FFFFF);
+
 	/* 5718 step 30, 57XX step 59 */
 	CSR_WRITE_4(sc, BGE_RXLP_STATS_CTL, 0x1);
 
