@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.103 2013/05/03 19:31:13 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.104 2013/05/13 13:59:39 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.103 2013/05/03 19:31:13 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.104 2013/05/13 13:59:39 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1405,6 +1405,11 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		}
 		res = __res_get_state();
 		if (res == NULL) {
+			while (srvlist != NULL) {
+				srv = srvlist;
+				srvlist = srvlist->next;
+				free(srv);
+			}
 			h_errno = NETDB_INTERNAL;
 			return NULL;
 		}
