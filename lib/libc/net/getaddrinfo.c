@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.104 2013/05/13 13:59:39 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.105 2013/05/13 17:54:55 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.104 2013/05/13 13:59:39 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.105 2013/05/13 17:54:55 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1669,6 +1669,7 @@ _dns_host_lookup(const char *name, const struct addrinfo *pai)
 		q.qtype = T_AAAA;
 		break;
 	default:
+		__res_put_state(res);
 		h_errno = NETDB_INTERNAL;
 		return NULL;
 	}
