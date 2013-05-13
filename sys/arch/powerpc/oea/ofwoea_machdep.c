@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.32 2013/04/11 17:13:15 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.33 2013/05/13 00:12:01 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.32 2013/04/11 17:13:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.33 2013/05/13 00:12:01 macallan Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -174,6 +174,10 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 		model_init();
 	}
 
+	if (strcmp(model_name, "PowerMac11,2") == 0 ||
+	    strcmp(model_name, "PowerMac11,1") == 0)
+		OF_quiesce();
+
 	/* Initialize bus_space */
 	ofwoea_bus_space_init();
 
@@ -242,7 +246,8 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 		paddr_t pa;
 		int i;
 
-		pmap_setup_segment0_map(0, 0x0);
+		pmap_setup_segment0_map(0, msgbuf_paddr, msgbuf_paddr,
+		    round_page(MSGBUFSIZE), 0x0);
 
 		/* Map OFW code+data */
 
