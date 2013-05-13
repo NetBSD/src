@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2013/05/13 17:58:50 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2013/05/13 18:01:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.33 2013/05/13 17:58:50 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2013/05/13 18:01:08 christos Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1136,7 +1136,7 @@ find_label(int f, u_int sector)
 {
 	struct disklabel *disk_lp, hlp;
 	int i;
-	u_int offset;
+	off_t offset;
 	const char *is_deleted;
 
 	bootarea_len = pread(f, bootarea, sizeof bootarea,
@@ -1172,19 +1172,19 @@ find_label(int f, u_int sector)
 			if (target32toh(disk_lp->d_magic) == DISKMAGIC_REV &&
 			    target32toh(disk_lp->d_magic2) == DISKMAGIC_REV)
 				warnx("ignoring %sbyteswapped label"
-				    " at offset %u from sector %u",
+				    " at offset %td from sector %u",
 				    is_deleted, offset, sector);
 			continue;
 		}
 		if (target16toh(disk_lp->d_npartitions) > maxpartitions ||
 		    dkcksum_target(disk_lp) != 0) {
 			if (verbose > 0)
-				warnx("corrupt label found at offset %u in "
+				warnx("corrupt label found at offset %td in "
 				    "sector %u", offset, sector);
 			continue;
 		}
 		if (verbose > 1)
-			warnx("%slabel found at offset %u from sector %u",
+			warnx("%slabel found at offset %td from sector %u",
 			    is_deleted, offset, sector);
 		if (!read_all)
 			return disk_lp;
@@ -1192,7 +1192,7 @@ find_label(int f, u_int sector)
 		/* To print all the labels we have to do it here */
 		/* XXX: maybe we should compare them? */
 		targettohlabel(&hlp, disk_lp);
-		printf("# %ssector %u offset %u bytes\n",
+		printf("# %ssector %u offset %td bytes\n",
 		    is_deleted, sector, offset);
 		if (tflag)
 			makedisktab(stdout, &hlp);
