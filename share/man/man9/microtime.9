@@ -1,4 +1,4 @@
-.\"     $NetBSD: microtime.9,v 1.18 2010/06/08 05:50:01 jruoho Exp $
+.\"     $NetBSD: microtime.9,v 1.19 2013/05/13 12:07:44 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/microtime.9,v 1.11 2005/10/13 16:01:28 jhb Exp $
 .\"
-.Dd June 8, 2010
+.Dd May 13, 2013
 .Dt MICROTIME 9
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@
 .Fc
 .Ft void
 .Fo nanotime
-.Fa "struct timespec *ts"
+.Fa "struct timespec *tsp"
 .Fc
 .Ft void
 .Fo getnanotime
@@ -177,7 +177,7 @@ This manual page was written by
 .An Jeremy Cooper
 and
 .An Kelly Yancey Aq kbyanc@posi.net .
-.Sh BUGS
+.Sh CAVEATS
 Despite the guarantee that the system realtime clock will always be
 monotonically increasing,
 it is always possible for the system clock to be manually reset by the
