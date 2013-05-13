@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2013/05/05 15:59:42 skrll Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2013/05/13 17:58:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.32 2013/05/05 15:59:42 skrll Exp $");
+__RCSID("$NetBSD: main.c,v 1.33 2013/05/13 17:58:50 christos Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1832,6 +1832,12 @@ getasciilabel(FILE *f, struct disklabel *lp)
 
 		if (part >= maxpartitions) {
 			warnx("line %d: bad partition name: %s", lineno, cp);
+			errors++;
+			continue;
+		}
+		if (part >= __arraycount(lp->d_partitions)) {
+			warnx("line %d: partition id %s, >= %zu", lineno,
+			    cp, __arraycount(lp->d_partitions));
 			errors++;
 			continue;
 		}
