@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.77 2013/05/08 07:50:28 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.78 2013/05/14 00:27:39 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1101,6 +1101,10 @@
 #define BGE_RXLPSTAT_CLASS0_ATTN	0x00000004
 #define BGE_RXLPSTAT_MAPOUTRANGE_ATTN	0x00000008
 #define BGE_RXLPSTAT_STATSOFLOW_ATTN	0x00000010
+
+/* Receive List Placement Statistics Enable Mask register */
+#define BGE_RXLPSTATCONTROL_DACK_FIX	0x00040000
+#define BGE_RXLPSTATCONTROL_LBIRST_FIX	0x00400000
 
 /*
  * Receive Data and Receive BD Initiator Control Registers
