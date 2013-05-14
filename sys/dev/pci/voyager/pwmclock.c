@@ -1,4 +1,4 @@
-/*	$NetBSD: pwmclock.c,v 1.9 2013/05/13 16:01:31 christos Exp $	*/
+/*	$NetBSD: pwmclock.c,v 1.10 2013/05/14 09:19:36 macallan Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.9 2013/05/13 16:01:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.10 2013/05/14 09:19:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ static u_int get_pwmclock_timecount(struct timecounter *);
 
 struct pwmclock_softc *pwmclock;
 extern void (*initclocks_ptr)(void);
+extern struct clockframe cf;
 
 /* 0, 1/4, 3/8, 1/2, 5/8, 3/4, 7/8, 1 */
 static int scale_m[] = {1, 1, 3, 1, 5, 3, 7, 1};
@@ -305,14 +306,8 @@ pwmclock_intr(void *cookie)
 	if (sc->sc_step_wanted != sc->sc_step) {
 		sc->sc_step = sc->sc_step_wanted;
 	}
-#ifdef notyet
-	struct clockframe cf;
 		 
-	cf.pc = pc;
-	cf.sr = status;
-	cf.intr = (curcpu()->ci_idepth > 1);
 	hardclock(&cf);
-#endif
 
 	return 1;
 }
