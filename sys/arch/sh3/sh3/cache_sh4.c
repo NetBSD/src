@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.23 2012/12/12 16:24:49 tsutsui Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.24 2013/05/14 14:11:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.23 2012/12/12 16:24:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.24 2013/05/14 14:11:43 tsutsui Exp $");
 
 #include "opt_cache.h"
 
@@ -118,8 +118,11 @@ sh4_cache_config(void)
 	r |= SH4_CCR_CB;
 #endif
 
-	sh4_icache_sync_all();
 	RUN_P2;
+	if (r & SH4_CCR_EMODE)
+		SH4_EMODE_CACHE_FLUSH();
+	else
+		SH4_CACHE_FLUSH();
 	_reg_write_4(SH4_CCR, SH4_CCR_ICI|SH4_CCR_OCI);
 	_reg_write_4(SH4_CCR, r);
 	RUN_P1;
