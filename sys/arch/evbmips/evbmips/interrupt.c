@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.18 2011/09/27 01:02:33 jym Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.19 2013/05/14 09:16:59 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18 2011/09/27 01:02:33 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.19 2013/05/14 09:16:59 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18 2011/09/27 01:02:33 jym Exp $");
 
 #include <mips/locore.h>
 #include <mips/mips3_clock.h>
+
+struct clockframe cf;
 
 void
 intr_init(void)
@@ -69,15 +71,15 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 		    "%s: cpl (%d) != ipl (%d)", __func__, ci->ci_cpl, ipl);
 		KASSERT(pending != 0);
 
+		cf.pc = pc;
+		cf.sr = status;
+		cf.intr = (ci->ci_idepth > 1);
+
 		if (pending & MIPS_INT_MASK_5) {
-			struct clockframe cf;
 			KASSERTMSG(ipl == IPL_SCHED,
 			    "%s: ipl (%d) != IPL_SCHED (%d)",
 			     __func__, ipl, IPL_SCHED);
 			/* call the common MIPS3 clock interrupt handler */ 
-			cf.pc = pc;
-			cf.sr = status;
-			cf.intr = (ci->ci_idepth > 1);
 			mips3_clockintr(&cf);
 			pending ^= MIPS_INT_MASK_5;
 		}
