@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.9 2013/04/29 17:59:50 mlelstv Exp $	*/
+/*	$NetBSD: readconf.c,v 1.10 2013/05/14 05:18:11 mlelstv Exp $	*/
 /* $OpenBSD: readconf.c,v 1.196 2013/02/22 04:45:08 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.9 2013/04/29 17:59:50 mlelstv Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.10 2013/05/14 05:18:11 mlelstv Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -1334,8 +1334,6 @@ initialize_options(Options * options)
 void
 fill_default_options(Options * options)
 {
-	int len;
-
 	if (options->forward_agent == -1)
 		options->forward_agent = 0;
 	if (options->forward_x11 == -1)
@@ -1413,30 +1411,16 @@ fill_default_options(Options * options)
 		options->protocol = SSH_PROTO_2;
 	if (options->num_identity_files == 0) {
 		if (options->protocol & SSH_PROTO_1) {
-			len = 2 + strlen(_PATH_SSH_CLIENT_IDENTITY) + 1;
-			options->identity_files[options->num_identity_files] =
-			    xmalloc(len);
-			snprintf(options->identity_files[options->num_identity_files++],
-			    len, "~/%.100s", _PATH_SSH_CLIENT_IDENTITY);
+			add_identity_file(options, "~/",
+			    _PATH_SSH_CLIENT_IDENTITY, 0);
 		}
 		if (options->protocol & SSH_PROTO_2) {
-			len = 2 + strlen(_PATH_SSH_CLIENT_ID_RSA) + 1;
-			options->identity_files[options->num_identity_files] =
-			    xmalloc(len);
-			snprintf(options->identity_files[options->num_identity_files++],
-			    len, "~/%.100s", _PATH_SSH_CLIENT_ID_RSA);
-
-			len = 2 + strlen(_PATH_SSH_CLIENT_ID_DSA) + 1;
-			options->identity_files[options->num_identity_files] =
-			    xmalloc(len);
-			snprintf(options->identity_files[options->num_identity_files++],
-			    len, "~/%.100s", _PATH_SSH_CLIENT_ID_DSA);
-
-			len = 2 + strlen(_PATH_SSH_CLIENT_ID_ECDSA) + 1;
-			options->identity_files[options->num_identity_files] =
-			    xmalloc(len);
-			snprintf(options->identity_files[options->num_identity_files++],
-			    len, "~/%.100s", _PATH_SSH_CLIENT_ID_ECDSA);
+			add_identity_file(options, "~/",
+			    _PATH_SSH_CLIENT_ID_RSA, 0);
+			add_identity_file(options, "~/",
+			    _PATH_SSH_CLIENT_ID_DSA, 0);
+			add_identity_file(options, "~/",
+			    _PATH_SSH_CLIENT_ID_ECDSA, 0);
 		}
 	}
 	if (options->escape_char == -1)
