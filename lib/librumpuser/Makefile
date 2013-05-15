@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2013/04/30 15:48:29 pooka Exp $
+#	$NetBSD: Makefile,v 1.13 2013/05/15 20:27:00 pooka Exp $
 #
 
 WARNS?=		5
@@ -8,6 +8,10 @@ WARNS?=		5
 
 LIB=		rumpuser
 LIBDPLIBS+=	pthread ${.CURDIR}/../libpthread
+.for lib in ${RUMPUSER_EXTERNAL_DPLIBS}
+LIBDO.${lib}=	_external
+LIBDPLIBS+=	${lib} lib
+.endfor
 CPPFLAGS+=	-DLIBRUMPUSER
 #CPPFLAGS+=	-D_DIAGNOSTIC
 
