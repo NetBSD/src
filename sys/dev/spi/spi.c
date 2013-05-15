@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.8.6.1 2013/05/10 01:25:07 khorben Exp $ */
+/* $NetBSD: spi.c,v 1.8.6.2 2013/05/15 13:52:19 khorben Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.8.6.1 2013/05/10 01:25:07 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.8.6.2 2013/05/15 13:52:19 khorben Exp $");
 
 #include "locators.h"
 
@@ -120,6 +120,7 @@ spi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	sa.sa_handle = &sc->sc_slaves[addr];
 	sa.sa_intr = cf->cf_loc[SPICF_INTR];
+	sa.sa_speed = cf->cf_loc[SPICF_SPEED];
 
 	if (config_match(parent, cf, &sa) > 0)
 		config_attach(parent, cf, &sa, spi_print);
@@ -197,8 +198,7 @@ spi_configure(struct spi_handle *sh, int mode, int speed)
 	if (sc->sc_speed)
 		speed = min(sc->sc_speed, speed);
 
-	rv = (*tag->sct_configure)(tag->sct_cookie, sh->sh_slave,
-	    mode, speed);
+	rv = (*tag->sct_configure)(tag->sct_cookie, sh->sh_slave, mode, speed);
 
 	if (rv == 0) {
 		sc->sc_mode = mode;
@@ -211,7 +211,6 @@ spi_configure(struct spi_handle *sh, int mode, int speed)
 void
 spi_transfer_init(struct spi_transfer *st)
 {
-
 	mutex_init(&st->st_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&st->st_cv, "spicv");
 
