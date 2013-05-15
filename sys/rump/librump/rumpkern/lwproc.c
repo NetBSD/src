@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.22 2013/05/02 19:15:01 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.23 2013/05/15 14:07:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.22 2013/05/02 19:15:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.23 2013/05/15 14:07:26 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -352,7 +352,7 @@ rump_lwproc_switch(struct lwp *newlwp)
 		fd_free();
 	}
 
-	rumpuser_curlwpop(RUMPUSER_LWP_SET, NULL);
+	rumpuser_curlwpop(RUMPUSER_LWP_CLEAR, l);
 
 	newlwp->l_cpu = newlwp->l_target_cpu = l->l_cpu;
 	newlwp->l_mutex = l->l_mutex;
