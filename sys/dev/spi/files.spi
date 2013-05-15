@@ -1,8 +1,8 @@
-#	$NetBSD: files.spi,v 1.2.114.1 2013/05/10 01:25:07 khorben Exp $
+#	$NetBSD: files.spi,v 1.2.114.2 2013/05/15 13:52:19 khorben Exp $
 
 define	spibus { }
 
-device	spi { slave, [intr = -1] }
+device	spi { slave, [intr = -1], [speed = -1] }
 attach	spi at spibus
 file	dev/spi/spi.c			spi | spibus
 
