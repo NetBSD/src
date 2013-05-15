@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.18 2013/02/10 23:24:18 christos Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.19 2013/05/15 00:35:02 christos Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.18 2013/02/10 23:24:18 christos Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.19 2013/05/15 00:35:02 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -349,8 +349,12 @@ main(int argc, char *argv[])
 		manconf = MANCONF;
 	}
 
-	if (mflags.recreate)
-		remove(get_dbpath(manconf));
+	if (mflags.recreate) {
+		char *dbp = get_dbpath(manconf);
+		/* No error here, it will fail in init_db in the same call */
+		if (dbp != NULL)
+			remove(dbp);
+	}
 
 	if ((db = init_db(MANDB_CREATE, manconf)) == NULL)
 		exit(EXIT_FAILURE);
