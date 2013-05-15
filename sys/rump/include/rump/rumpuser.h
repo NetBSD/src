@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.105 2013/05/15 14:52:49 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.106 2013/05/15 14:58:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -97,7 +97,7 @@ int rumpuser_getfileinfo(const char *, uint64_t *, int *);
 #define RUMPUSER_BIO_WRITE	0x02
 #define RUMPUSER_BIO_SYNC	0x04
 typedef void (*rump_biodone_fn)(void *, size_t, int);
-void rumpuser_bio(int, int, void *, size_t, off_t, rump_biodone_fn, void *);
+void rumpuser_bio(int, int, void *, size_t, int64_t, rump_biodone_fn, void *);
 
 /* this one "accidentally" matches the NetBSD kernel ... */
 struct rumpuser_iovec {
@@ -105,9 +105,9 @@ struct rumpuser_iovec {
 	size_t iov_len;
 };
 #define RUMPUSER_IOV_NOSEEK -1
-int rumpuser_iovread(int, struct rumpuser_iovec *, size_t, off_t, size_t *);
+int rumpuser_iovread(int, struct rumpuser_iovec *, size_t, int64_t, size_t *);
 int rumpuser_iovwrite(int, const struct rumpuser_iovec *, size_t,
-		      off_t, size_t *);
+		      int64_t, size_t *);
 
 /*
  * clock and zzz
