@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.52 2013/05/15 14:58:24 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.53 2013/05/15 15:57:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.52 2013/05/15 14:58:24 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.53 2013/05/15 15:57:01 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -393,6 +393,43 @@ rumpuser_iovwrite(int fd, const struct rumpuser_iovec *ruiov, size_t iovlen,
 		rv = 0;
 	}
 
+	ET(rv);
+}
+
+int
+rumpuser_syncfd(int fd, int flags, uint64_t start, uint64_t len)
+{
+	int rv = 0;
+	
+	/*
+	 * For now, assume fd is regular file and does not care
+	 * about read syncing
+	 */
+	if ((flags & RUMPUSER_SYNCFD_BOTH) == 0) {
+		rv = EINVAL;
+		goto out;
+	}
+	if ((flags & RUMPUSER_SYNCFD_WRITE) == 0) {
+		rv = 0;
+		goto out;
+	}
+
+#ifdef __NetBSD__
+	{
+	int fsflags = FDATASYNC;
+
+	if (fsflags & RUMPUSER_SYNCFD_SYNC)
+		fsflags |= FDISKSYNC;
+	if (fsync_range(fd, fsflags, start, len) == -1)
+		rv = errno;
+	}
+#else
+	/* el-simplo */
+	if (fsync(fd) == -1)
+		rv = errno;
+#endif
+
+ out:
 	ET(rv);
 }
 
