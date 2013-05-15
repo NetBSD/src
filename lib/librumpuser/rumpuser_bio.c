@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_bio.c,v 1.6 2013/05/07 15:18:35 pooka Exp $	*/
+/*	$NetBSD: rumpuser_bio.c,v 1.7 2013/05/15 14:58:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -127,7 +127,7 @@ biothread(void *arg)
 }
 
 void
-rumpuser_bio(int fd, int op, void *data, size_t dlen, off_t doff,
+rumpuser_bio(int fd, int op, void *data, size_t dlen, int64_t doff,
 	rump_biodone_fn biodone, void *bioarg)
 {
 	struct rumpuser_bio bio;
@@ -163,7 +163,7 @@ rumpuser_bio(int fd, int op, void *data, size_t dlen, off_t doff,
 	bio.bio_op = op;
 	bio.bio_data = data;
 	bio.bio_dlen = dlen;
-	bio.bio_off = doff;
+	bio.bio_off = (off_t)doff;
 	bio.bio_done = biodone;
 	bio.bio_donearg = bioarg;
 
