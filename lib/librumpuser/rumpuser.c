@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.50 2013/05/02 21:45:29 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.51 2013/05/15 14:52:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.50 2013/05/02 21:45:29 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.51 2013/05/15 14:52:49 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -395,8 +395,9 @@ rumpuser_iovwrite(int fd, const struct rumpuser_iovec *ruiov, size_t iovlen,
 }
 
 int
-rumpuser_clock_gettime(enum rumpclock rclk, int64_t *sec, long *nsec)
+rumpuser_clock_gettime(int enum_rumpclock, int64_t *sec, long *nsec)
 {
+	enum rumpclock rclk = enum_rumpclock;
 	struct timespec ts;
 	clockid_t clk;
 	int rv;
@@ -428,8 +429,9 @@ rumpuser_clock_gettime(enum rumpclock rclk, int64_t *sec, long *nsec)
 }
 
 int
-rumpuser_clock_sleep(enum rumpclock clk, int64_t sec, long nsec)
+rumpuser_clock_sleep(int enum_rumpclock, int64_t sec, long nsec)
 {
+	enum rumpclock rclk = enum_rumpclock;
 	struct timespec rqt, rmt;
 	int nlocks;
 	int rv;
@@ -441,7 +443,7 @@ rumpuser_clock_sleep(enum rumpclock clk, int64_t sec, long nsec)
 	/*LINTED*/
 	rqt.tv_nsec = nsec;
 
-	switch (clk) {
+	switch (rclk) {
 	case RUMPUSER_CLOCK_RELWALL:
 		do {
 			rv = nanosleep(&rqt, &rmt);

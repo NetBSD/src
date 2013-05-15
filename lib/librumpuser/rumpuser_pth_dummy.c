@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.15 2013/05/07 16:40:31 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.16 2013/05/15 14:52:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.15 2013/05/07 16:40:31 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.16 2013/05/15 14:52:49 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -153,8 +153,9 @@ rumpuser_rw_init(struct rumpuser_rw **rw)
 }
 
 void
-rumpuser_rw_enter(struct rumpuser_rw *rw, enum rumprwlock lk)
+rumpuser_rw_enter(int enum_rumprwlock, struct rumpuser_rw *rw)
 {
+	enum rumprwlock lk = enum_rumprwlock;
 
 	switch (lk) {
 	case RUMPUSER_RW_WRITER:
@@ -169,10 +170,10 @@ rumpuser_rw_enter(struct rumpuser_rw *rw, enum rumprwlock lk)
 }
 
 int
-rumpuser_rw_tryenter(struct rumpuser_rw *rw, enum rumprwlock lk)
+rumpuser_rw_tryenter(int enum_rumprwlock, struct rumpuser_rw *rw)
 {
 
-	rumpuser_rw_enter(rw, lk);
+	rumpuser_rw_enter(enum_rumprwlock, rw);
 	return 0;
 }
 
@@ -196,8 +197,9 @@ rumpuser_rw_destroy(struct rumpuser_rw *rw)
 }
 
 void
-rumpuser_rw_held(struct rumpuser_rw *rw, enum rumprwlock lk, int *rvp)
+rumpuser_rw_held(int enum_rumprwlock, struct rumpuser_rw *rw, int *rvp)
 {
+	enum rumprwlock lk = enum_rumprwlock;
 
 	switch (lk) {
 	case RUMPUSER_RW_WRITER:
@@ -300,8 +302,9 @@ rumpuser_cv_has_waiters(struct rumpuser_cv *cv, int *rvp)
  */
 
 void
-rumpuser_curlwpop(enum rumplwpop op, struct lwp *l)
+rumpuser_curlwpop(int enum_rumplwpop, struct lwp *l)
 {
+	enum rumplwpop op = enum_rumplwpop;
 
 	switch (op) {
 	case RUMPUSER_LWP_CREATE:
@@ -309,6 +312,10 @@ rumpuser_curlwpop(enum rumplwpop op, struct lwp *l)
 		break;
 	case RUMPUSER_LWP_SET:
 		curlwp = l;
+		break;
+	case RUMPUSER_LWP_CLEAR:
+		assert(curlwp == l);
+		curlwp = NULL;
 		break;
 	}
 }
