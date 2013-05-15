@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.63 2013/05/02 21:35:19 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.64 2013/05/15 14:52:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.63 2013/05/02 21:35:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.64 2013/05/15 14:52:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -225,7 +225,7 @@ rw_enter(krwlock_t *rw, const krw_t op)
 
 
 	WANTLOCK(rw, op == RW_READER, false);
-	rumpuser_rw_enter(RUMPRW(rw), krw2rumprw(op));
+	rumpuser_rw_enter(krw2rumprw(op), RUMPRW(rw));
 	LOCKED(rw, op == RW_READER);
 }
 
@@ -234,7 +234,7 @@ rw_tryenter(krwlock_t *rw, const krw_t op)
 {
 	int error;
 
-	error = rumpuser_rw_tryenter(RUMPRW(rw), krw2rumprw(op));
+	error = rumpuser_rw_tryenter(krw2rumprw(op), RUMPRW(rw));
 	if (error == 0) {
 		WANTLOCK(rw, op == RW_READER, true);
 		LOCKED(rw, op == RW_READER);
@@ -285,7 +285,7 @@ rw_read_held(krwlock_t *rw)
 {
 	int rv;
 
-	rumpuser_rw_held(RUMPRW(rw), RUMPUSER_RW_READER, &rv);
+	rumpuser_rw_held(RUMPUSER_RW_READER, RUMPRW(rw), &rv);
 	return rv;
 }
 
@@ -294,7 +294,7 @@ rw_write_held(krwlock_t *rw)
 {
 	int rv;
 
-	rumpuser_rw_held(RUMPRW(rw), RUMPUSER_RW_WRITER, &rv);
+	rumpuser_rw_held(RUMPUSER_RW_WRITER, RUMPRW(rw), &rv);
 	return rv;
 }
 
