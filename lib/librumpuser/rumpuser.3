@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpuser.3,v 1.13 2013/05/15 15:57:01 pooka Exp $
+.\"     $NetBSD: rumpuser.3,v 1.14 2013/05/15 17:53:09 pooka Exp $
 .\"
 .\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
@@ -600,7 +600,7 @@ may not relinquish rump kernel context.
 .Fn rumpuser_mutex_owner "struct rumpuser_mtx *mtx" "struct lwp **lp"
 .Pp
 Mutexes provide mutually exclusive locking.
-The flags for initialization are as follows:
+The flags, of which at least one must be given, are as follows:
 .Bl -tag -width "XRUMPUSER_MTX_KMUTEX"
 .It Dv RUMPUSER_MTX_SPIN
 Create a spin mutex.
@@ -691,6 +691,19 @@ sleep duration after which the routine will return with
 .Er ETIMEDOUT .
 If a timedwait is signalled before the timeout expires, the
 routine will return 0.
+.Pp
+The order in which the hypervisor
+reacquires the rump kernel context and interlock mutex before
+returning into the rump kernel is as follows.
+In case the interlock mutex was initialized with both
+.Dv RUMPUSER_MTX_SPIN
+and
+.Dv RUMPUSER_MTX_KMUTEX ,
+the rump kernel context is scheduled before the mutex is reacquired.
+In case of a purely
+.Dv RUMPUSER_MTX_SPIN
+mutex, the mutex is acquired first.
+In the final case the order is implementation-defined.
 .Sh RETURN VALUES
 All routines which return an integer return an errno value.
 The hypervisor must translate the value to the the native errno
