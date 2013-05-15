@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/03/08 19:11:27 pooka Exp $
+#	$NetBSD: Makefile,v 1.8 2013/05/15 20:27:00 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../sys/rump/librump/rumpkern
@@ -11,6 +11,11 @@ MAN=		rumpclient.3
 
 INCS=		rumpclient.h
 INCSDIR=	/usr/include/rump
+
+.for lib in ${RUMPCLIENT_EXTERNAL_DPLIBS}
+LIBDO.${lib}=	_external
+LIBDPLIBS+=	${lib} lib
+.endfor
 
 CPPFLAGS+=	-DRUMP_CLIENT
 CPPFLAGS+=	-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../librumpuser
