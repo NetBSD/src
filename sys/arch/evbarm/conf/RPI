@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.32 2013/05/07 20:11:54 skrll Exp $
+#	$NetBSD: RPI,v 1.33 2013/05/15 12:16:41 reinoud Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -42,6 +42,9 @@ file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	TMPFS		# memory file system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
+#file-system	NILFS		# experimental - NTT's NiLFS(2)
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
@@ -139,7 +142,7 @@ options 	DEBUG
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-#options 	KGDB
+#options 	KGDB,KGDB_PLCOMUNIT=0,KGDB_DEVRATE=115200,KGDB_CONMODE=0xB00
 makeoptions	DEBUG="-g"	# compile full symbol table
 options 	SYMTAB_SPACE=800000
 options 	PLCONSOLE
