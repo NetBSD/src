@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.28 2013/05/05 12:27:38 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.29 2013/05/15 14:07:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.28 2013/05/05 12:27:38 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.29 2013/05/15 14:07:26 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
@@ -627,25 +627,26 @@ rumpuser_curlwpop(enum rumplwpop op, struct lwp *l)
 		free(rl);
 		break;
 	case RUMPUSER_LWP_SET:
-		assert(pthread_getspecific(curlwpkey) == NULL || l == NULL);
+		assert(pthread_getspecific(curlwpkey) == NULL && l != NULL);
 
-		if (l) {
-			pthread_mutex_lock(&lwplock);
-			LIST_FOREACH(rl, &lwps, l_entries) {
-				if (rl->l == l)
-					break;
-			}
-			if (!rl) {
-				fprintf(stderr,
-				    "LWP_SET: %p does not exist\n", l);
-				abort();
-			}
-			pthread_mutex_unlock(&lwplock);
-		} else {
-			rl = NULL;
+		pthread_mutex_lock(&lwplock);
+		LIST_FOREACH(rl, &lwps, l_entries) {
+			if (rl->l == l)
+				break;
 		}
+		if (!rl) {
+			fprintf(stderr,
+			    "LWP_SET: %p does not exist\n", l);
+			abort();
+		}
+		pthread_mutex_unlock(&lwplock);
 
 		pthread_setspecific(curlwpkey, rl);
+		break;
+	case RUMPUSER_LWP_CLEAR:
+		assert(((struct rumpuser_lwp *)
+		    pthread_getspecific(curlwpkey))->l == l);
+		pthread_setspecific(curlwpkey, NULL);
 		break;
 	}
 }
@@ -671,8 +672,12 @@ rumpuser_curlwpop(enum rumplwpop op, struct lwp *l)
 	case RUMPUSER_LWP_DESTROY:
 		break;
 	case RUMPUSER_LWP_SET:
-		assert(pthread_getspecific(curlwpkey) == NULL || l == NULL);
+		assert(pthread_getspecific(curlwpkey) == NULL);
 		pthread_setspecific(curlwpkey, l);
+		break;
+	case RUMPUSER_LWP_CLEAR:
+		assert(pthread_getspecific(curlwpkey) == l);
+		pthread_setspecific(curlwpkey, NULL);
 		break;
 	}
 }
