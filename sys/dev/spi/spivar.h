@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.4.20.1 2013/05/10 01:25:07 khorben Exp $ */
+/* $NetBSD: spivar.h,v 1.4.20.2 2013/05/15 13:52:19 khorben Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -83,6 +83,7 @@ struct spibus_attach_args {
 struct spi_attach_args {
 	struct spi_handle	*sa_handle;
 	int			sa_intr;
+	int			sa_speed;
 };
 
 /*
