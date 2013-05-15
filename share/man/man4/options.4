@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.420 2013/05/15 05:30:33 msaitoh Exp $
+.\"	$NetBSD: options.4,v 1.421 2013/05/15 05:47:10 msaitoh Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -641,17 +641,31 @@ problems.
 .It Cd options MALLOCLOGSIZE=integer
 Defines the number of entries in the malloc log.
 Default is 100000 entries.
+.It Cd options KERNHIST
+Enables the kernel history logs, which create in-memory traces of
+various kernel activities.
+These logs can be displayed by using
+.Cm show kernhist
+from DDB.
+See the kernel source file sys/kern/kern_history.c for details.
+.It Cd options KERNHIST_PRINT
+Prints the kernel history logs on the system console as entries are added.
+Note that the output is
+.Em extremely
+voluminous, so this option is really only useful for debugging
+the very earliest parts of kernel initialization.
 .It Cd options UVMHIST
-Enables the UVM history logs, which create in-memory traces of
-various UVM activities.
-These logs can be displayed by calling
-.Fn uvmhist_dump
-or
-.Fn uvm_hist
-with appropriate arguments from DDB.
+Like
+.Em KERNHIST ,
+it enables the UVM history logs.
+These logs can be displayed by using
+.Cm show kernhist
+from DDB.
 See the kernel source file sys/uvm/uvm_stat.c for details.
 .It Cd options UVMHIST_PRINT
-Prints the UVM history logs on the system console as entries are added.
+Like
+.Em UVMHIST ,
+it prints the UVM history logs on the system console as entries are added.
 Note that the output is
 .Em extremely
 voluminous, so this option is really only useful for debugging
