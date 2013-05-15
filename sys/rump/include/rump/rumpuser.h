@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.107 2013/05/15 15:57:01 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.108 2013/05/15 16:00:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,11 @@ struct lwp;
  * init
  */
 
-#define RUMPUSER_VERSION 16
+/*
+ * Bumping this causes all kinds of havoc for implementations
+ * outside of the NetBSD tree, so try to avoid it.
+ */
+#define RUMPUSER_VERSION 17
 
 /* hypervisor upcall routines */
 struct rumpuser_hyperup {
