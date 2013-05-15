@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.33 2013/05/02 19:15:01 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.34 2013/05/15 14:07:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.33 2013/05/02 19:15:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.34 2013/05/15 14:07:26 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -399,10 +399,10 @@ rump_unschedule()
 		lwp0.l_mutex = &unruntime_lock;
 		lwp0.l_pflag &= ~LP_RUNNING;
 		lwp0rele();
-		rumpuser_curlwpop(RUMPUSER_LWP_SET, NULL);
+		rumpuser_curlwpop(RUMPUSER_LWP_CLEAR, &lwp0);
 
 	} else if (__predict_false(l->l_flag & LW_RUMP_CLEAR)) {
-		rumpuser_curlwpop(RUMPUSER_LWP_SET, NULL);
+		rumpuser_curlwpop(RUMPUSER_LWP_CLEAR, l);
 		l->l_flag &= ~LW_RUMP_CLEAR;
 	}
 }
