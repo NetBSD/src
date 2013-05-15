@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpuser.3,v 1.12 2013/05/15 14:58:24 pooka Exp $
+.\"     $NetBSD: rumpuser.3,v 1.13 2013/05/15 15:57:01 pooka Exp $
 .\"
 .\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
@@ -279,6 +279,51 @@ Using both types of offsets on a single instance of
 results in undefined behavior.
 .It Fa retv
 number of bytes successfully transferred is returned here
+.El
+.Pp
+.Ft int
+.Fo rumpuser_syncfd
+.Fa "int fd" "int flags" "uint64_t start" "uint64_t len"
+.Fc
+.Pp
+Synchronizes
+.Fa fd
+with respect to backing storage.
+The other arguments are:
+.Pp
+.Bl -tag -width "xenum_rumpclock"
+.It Fa flags
+controls how syncronization happens.
+It must contain one of the following:
+.Bl -tag -width "XRUMPUSER_SYNCFD_BARRIER"
+.It Dv RUMPUSER_SYNCFD_READ
+Make sure that the next read sees writes from all other parties.
+This is useful for example in the case that
+.Fa fd
+represents memory to write a DMA read is being performed.
+.It Dv RUMPUSER_SYNCFD_WRITE
+Flush cached writes.
+.El
+.Pp
+The following additional parameters may be passed in
+.Fa flags :
+.Pp
+.Bl -tag -width "XRUMPUSER_SYNCFD_BARRIER"
+.It Dv RUMPUSER_SYNCFD_BARRIER
+Issue a barrier.
+Outstanding I/O operations which were started before the barrier
+complete before any operations after the barrier are performed.
+.It Dv RUMPUSER_SYNCFD_SYNC
+Wait for the synchronization operation to fully complete before
+returning.
+For example, this could mean that the data to be written to a disk
+has hit either the disk or non-volatile memory.
+.El
+.It Fa start
+offset into the object.
+.It Fa len
+the number of bytes to synchronize.
+The value 0 denotes until the end of the object.
 .El
 .Ss Clocks
 The hypervisor should support two clocks, one for wall time and one

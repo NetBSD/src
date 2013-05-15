@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.106 2013/05/15 14:58:24 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.107 2013/05/15 15:57:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -108,6 +108,13 @@ struct rumpuser_iovec {
 int rumpuser_iovread(int, struct rumpuser_iovec *, size_t, int64_t, size_t *);
 int rumpuser_iovwrite(int, const struct rumpuser_iovec *, size_t,
 		      int64_t, size_t *);
+
+#define RUMPUSER_SYNCFD_READ	0x01
+#define RUMPUSER_SYNCFD_WRITE	0x02
+#define RUMPUSER_SYNCFD_BOTH	(RUMPUSER_SYNCFD_READ | RUMPUSER_SYNCFD_WRITE)
+#define RUMPUSER_SYNCFD_BARRIER	0x04
+#define RUMPUSER_SYNCFD_SYNC	0x08
+int rumpuser_syncfd(int, int, uint64_t, uint64_t);
 
 /*
  * clock and zzz
