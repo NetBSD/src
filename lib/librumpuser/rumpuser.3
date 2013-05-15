@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpuser.3,v 1.10 2013/05/15 14:07:26 pooka Exp $
+.\"     $NetBSD: rumpuser.3,v 1.11 2013/05/15 14:52:49 pooka Exp $
 .\"
 .\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
@@ -44,6 +44,18 @@ The implementation included in
 is for POSIX hosts.
 This document is divided into sections based on the functionality
 group of each hypercall.
+.Pp
+Since the hypercall interface is a C function interface, both the
+rump kernel and the hypervisor must conform to the same ABI.
+The interface itself attempts to assume as little as possible from
+the type systems, and for example
+.Vt off_t
+is passed as
+.Vt int64_t
+and enums are passed as ints.
+It is recommended that the hypervisor converts these to the native
+types before starting to process the hypercall, for example by
+assigning the ints back to enums.
 .Sh UPCALLS AND RUMP KERNEL CONTEXT
 A hypercall is always entered with the calling thread scheduled in
 the rump kernel.
@@ -73,7 +85,7 @@ by calling
 .Fn rumpuser_init "int version" "struct rump_hyperup *hyp"
 .Pp
 Initialize the hypervisor.
-.Bl -tag -width "xalignmentx"
+.Bl -tag -width "xenum_rumpclock"
 .It Fa version
 hypercall interface version number that the kernel expects to be used.
 In case the hypervisor cannot provide an exact match, this routine must
@@ -84,7 +96,7 @@ pointer to a set of upcalls the hypervisor can make into the rump kernel
 .Ss Memory allocation
 .Ft int
 .Fn rumpuser_malloc "size_t len" "int alignment" "void **memp"
-.Bl -tag -width "xalignmentx"
+.Bl -tag -width "xenum_rumpclock"
 .It Fa len
 amount of memory to allocate
 .It Fa alignment
@@ -97,7 +109,7 @@ return pointer for allocated memory
 .Pp
 .Ft void
 .Fn rumpuser_free "void *mem" "size_t len"
-.Bl -tag -width "xalignmentx"
+.Bl -tag -width "xenum_rumpclock"
 .It Fa mem
 memory to free
 .It Fa len
@@ -120,7 +132,7 @@ and the host's file system namespace.
 For example, it is possible to associate the file descriptor with
 device I/O registers for special values of
 .Fa name .
-.Bl -tag -width "xalignmentx"
+.Bl -tag -width "xenum_rumpclock"
 .It Fa name
 the identifier of the file to open for I/O
 .It Fa mode
@@ -163,7 +175,7 @@ Close a previously opened file descriptor.
 .Pp
 .Ft int
 .Fn rumpuser_getfileinfo "const char *name" "uint64_t *size" "int *type"
-.Bl -tag -width "xalignmentx"
+.Bl -tag -width "xenum_rumpclock"
 .It Fa name
 file for which information is returned.
 The namespace is equal to that of
@@ -190,7 +202,7 @@ respectively.
 .Fc
 .Pp
 Initiate block I/O and return immediately.
-.Bl -tag -width "xalignmentx"
+.Bl -tag -width "xenum_rumpclock"
 .It Fa fd
 perform I/O on this file descriptor.
 The file descriptor must have been opened with
@@ -239,7 +251,7 @@ These routines perform scatter-gather I/O which is not
 block I/O by nature and therefore cannot be handled by
 .Fn rumpuser_bio .
 .Pp
-.Bl -tag -width "xalignmentx"
+.Bl -tag -width "xenum_rumpclock"
 .It Fa fd
 file descriptor to perform I/O on
 .It Fa ruiov
@@ -276,10 +288,10 @@ If this is not possible, the hypervisor must make a reasonable effort to
 retain semantics.
 .Pp
 .Ft int
-.Fn rumpuser_clock_gettime "enum rumpclock clk" "int64_t *sec" "long *nsec"
+.Fn rumpuser_clock_gettime "int enum_rumpclock" "int64_t *sec" "long *nsec"
 .Pp
-.Bl -tag -width "xalignmentx"
-.It Fa clk
+.Bl -tag -width "xenum_rumpclock"
+.It Fa enum_rumpclock
 specifies the clock type.
 In case of
 .Dv RUMPUSER_CLOCK_RELWALL
@@ -294,9 +306,9 @@ return value for nanoseconds
 .El
 .Pp
 .Ft int
-.Fn rumpuser_clock_sleep "enum rumpclock clk" "int64_t sec" "long nsec"
-.Bl -tag -width "xalignmentx"
-.It Fa clk
+.Fn rumpuser_clock_sleep "int enum_rumpclock" "int64_t sec" "long nsec"
+.Bl -tag -width "xenum_rumpclock"
+.It Fa enum_rumpclock
 In case of
 .Dv RUMPUSER_CLOCK_RELWALL ,
 the sleep should last at least as long as specified.
@@ -319,7 +331,7 @@ exact semantics depend on
 .Pp
 Retrieve a configuration parameter from the hypervisor.
 It is up to the hypervisor to decide how the parameters can be set.
-.Bl -tag -width "xalignmentx"
+.Bl -tag -width "xenum_rumpclock"
 .It Fa name
 name of the parameter.
 If the name starts with an underscore, it means a mandatory parameter.
@@ -371,7 +383,7 @@ Do output based on printf-like parameters.
 .Ft int
 .Fn rumpuser_getrandom "void *buf" "size_t buflen" "int flags" "size_t *retp"
 .Pp
-.Bl -tag -width "xalignmentx"
+.Bl -tag -width "xenum_rumpclock"
 .It Fa buf
 buffer that the randomness is written to
 .It Fa buflen
@@ -402,7 +414,7 @@ threads, it can perform heuristics on the
 and
 .Fa cpuidx
 parameters.
-.Bl -tag -width "xalignmentx"
+.Bl -tag -width "xenum_rumpclock"
 .It Fa fun
 function that the new thread must call
 .It Fa arg
@@ -448,11 +460,11 @@ The cookie matches the value from
 .Fn rumpuser_thread_create .
 .Pp
 .Ft void
-.Fn rumpuser_curlwpop "enum rumplwpop op" "struct lwp *l"
+.Fn rumpuser_curlwpop "int enum_rumplwpop" "struct lwp *l"
 .Pp
 Manipulate the hypervisor's thread context database.
 The possible operations are create, destroy, and set as specified by
-.Fa op :
+.Fa enum_rumplwpop :
 .Bl -tag -width "XRUMPUSER_LWP_DESTROY"
 .It Dv RUMPUSER_LWP_CREATE
 Inform the hypervisor that
@@ -563,10 +575,10 @@ will never be called for that particular mutex.
 .Fn rumpuser_rw_init "struct rumpuser_rw **rwp"
 .Pp
 .Ft void
-.Fn rumpuser_rw_enter "struct rumpuser_rw *rw" "const enum rumprwlock lk"
+.Fn rumpuser_rw_enter "int enum_rumprwlock" "struct rumpuser_rw *rw"
 .Pp
 .Ft int
-.Fn rumpuser_rw_tryenter "struct rumpuser_rw *rw" "const enum rumprwlock lk"
+.Fn rumpuser_rw_tryenter "int enum_rumprwlock" "struct rumpuser_rw *rw"
 .Pp
 .Ft int
 .Fn rumpuser_rw_tryupgrade "struct rumpuser_rw *rw"
@@ -582,7 +594,7 @@ will never be called for that particular mutex.
 .Pp
 .Ft void
 .Fo rumpuser_rw_held
-.Fa "struct rumpuser_rw *rw" "const enum rumprwlock lk" "int *heldp"
+.Fa "int enum_rumprwlock" "struct rumpuser_rw *rw" "int *heldp"
 .Fc
 .Pp
 Read/write locks provide either shared or exclusive locking.

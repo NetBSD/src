@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.104 2013/05/15 14:07:26 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.105 2013/05/15 14:52:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -114,8 +114,8 @@ int rumpuser_iovwrite(int, const struct rumpuser_iovec *, size_t,
  */
 
 enum rumpclock { RUMPUSER_CLOCK_RELWALL, RUMPUSER_CLOCK_ABSMONO };
-int rumpuser_clock_gettime(enum rumpclock, int64_t *, long *);
-int rumpuser_clock_sleep(enum rumpclock, int64_t, long);
+int rumpuser_clock_gettime(int, int64_t *, long *);
+int rumpuser_clock_sleep(int, int64_t, long);
 
 /*
  * host information retrieval
@@ -168,7 +168,7 @@ enum rumplwpop {
 	RUMPUSER_LWP_CREATE, RUMPUSER_LWP_DESTROY,
 	RUMPUSER_LWP_SET, RUMPUSER_LWP_CLEAR
 };
-void rumpuser_curlwpop(enum rumplwpop, struct lwp *);
+void rumpuser_curlwpop(int, struct lwp *);
 struct lwp *rumpuser_curlwp(void);
 
 struct rumpuser_mtx;
@@ -185,13 +185,13 @@ void rumpuser_mutex_owner(struct rumpuser_mtx *, struct lwp **);
 struct rumpuser_rw;
 enum rumprwlock { RUMPUSER_RW_READER, RUMPUSER_RW_WRITER };
 void rumpuser_rw_init(struct rumpuser_rw **);
-void rumpuser_rw_enter(struct rumpuser_rw *, const enum rumprwlock);
-int  rumpuser_rw_tryenter(struct rumpuser_rw *, const enum rumprwlock);
+void rumpuser_rw_enter(int, struct rumpuser_rw *);
+int  rumpuser_rw_tryenter(int, struct rumpuser_rw *);
 int  rumpuser_rw_tryupgrade(struct rumpuser_rw *);
 void rumpuser_rw_downgrade(struct rumpuser_rw *);
 void rumpuser_rw_exit(struct rumpuser_rw *);
 void rumpuser_rw_destroy(struct rumpuser_rw *);
-void rumpuser_rw_held(struct rumpuser_rw *, const enum rumprwlock, int *);
+void rumpuser_rw_held(int, struct rumpuser_rw *, int *);
 
 struct rumpuser_cv;
 void rumpuser_cv_init(struct rumpuser_cv **);
