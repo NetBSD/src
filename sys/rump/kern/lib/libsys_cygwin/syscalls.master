@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 2013/04/10 16:44:54 pooka Exp $
+	$NetBSD: syscalls.master,v 1.2 2013/05/15 21:39:30 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -508,10 +508,12 @@
 417	UNIMPL		select
 418	UNIMPL		gettimeofday
 419	UNIMPL		settimeofday
-420	UNIMPL		utimes
+420	NOARGS		{ int|compat_50_sys||utimes(char *path, \
+			    struct timeval50 *tptr); }
 421	UNIMPL		adjtime
 422	UNIMPL		lfs_segwait
-423	UNIMPL		futimes
+423	NOARGS		{ int|compat_50_sys||futimes(int fd, \
+			    struct timeval50 *tptr); }
 424	UNIMPL		lutimes
 425	UNIMPL		setitimer
 426	UNIMPL		getitimer
