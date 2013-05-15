@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_spi.c,v 1.1.2.3 2013/05/12 20:11:39 khorben Exp $ */
+/* $NetBSD: omap2_spi.c,v 1.1.2.4 2013/05/15 02:44:48 khorben Exp $ */
 
 /*
  * Texas Instruments OMAP2/3 Multichannel SPI driver.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_spi.c,v 1.1.2.3 2013/05/12 20:11:39 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_spi.c,v 1.1.2.4 2013/05/15 02:44:48 khorben Exp $");
 
 #include "opt_omap.h"
 
@@ -266,6 +266,7 @@ omap2_spi_start(struct omap2_spi_softc * const sc, int channel)
 {
 	struct omap2_spi_channel *chan;
 	struct spi_transfer *st;
+	uint32_t statusval = 0;
 	uint32_t enableval = 0;
 	uint32_t ctrlreg;
 	uint32_t ctrlval;
@@ -287,26 +288,44 @@ omap2_spi_start(struct omap2_spi_softc * const sc, int channel)
 
 	switch (channel) {
 		case 0:
+			statusval = OMAP2_MCSPI_IRQSTATUS_RX0_OVERFLOW
+				| OMAP2_MCSPI_IRQSTATUS_RX0_FULL
+				| OMAP2_MCSPI_IRQSTATUS_TX0_UNDERFLOW
+				| OMAP2_MCSPI_IRQSTATUS_TX0_EMPTY;
 			enableval = OMAP2_MCSPI_IRQENABLE_RX0_FULL
 				| OMAP2_MCSPI_IRQENABLE_TX0_UNDERFLOW
 				| OMAP2_MCSPI_IRQENABLE_TX0_EMPTY;
 			break;
 		case 1:
+			statusval = OMAP2_MCSPI_IRQSTATUS_RX1_FULL
+				| OMAP2_MCSPI_IRQSTATUS_TX1_UNDERFLOW
+				| OMAP2_MCSPI_IRQSTATUS_TX1_EMPTY;
 			enableval = OMAP2_MCSPI_IRQENABLE_RX1_FULL
 				| OMAP2_MCSPI_IRQENABLE_TX1_UNDERFLOW
 				| OMAP2_MCSPI_IRQENABLE_TX1_EMPTY;
 			break;
 		case 2:
+			statusval = OMAP2_MCSPI_IRQSTATUS_RX2_FULL
+				| OMAP2_MCSPI_IRQSTATUS_TX2_UNDERFLOW
+				| OMAP2_MCSPI_IRQSTATUS_TX2_EMPTY;
 			enableval = OMAP2_MCSPI_IRQENABLE_RX2_FULL
 				| OMAP2_MCSPI_IRQENABLE_TX2_UNDERFLOW
 				| OMAP2_MCSPI_IRQENABLE_TX2_EMPTY;
 			break;
 		case 3:
+			statusval = OMAP2_MCSPI_IRQSTATUS_RX3_FULL
+				| OMAP2_MCSPI_IRQSTATUS_TX3_UNDERFLOW
+				| OMAP2_MCSPI_IRQSTATUS_TX3_EMPTY;
 			enableval = OMAP2_MCSPI_IRQENABLE_RX3_FULL
 				| OMAP2_MCSPI_IRQENABLE_TX3_UNDERFLOW
 				| OMAP2_MCSPI_IRQENABLE_TX3_EMPTY;
 			break;
 	}
+
+	/* clear the interrupts for this channel */
+	u32 = SPI_READ_REG(sc, OMAP2_MCSPI_IRQSTATUS);
+	u32 |= statusval;
+	SPI_WRITE_REG(sc, OMAP2_MCSPI_IRQSTATUS, u32);
 
 	/* enable interrupts */
 	u32 = SPI_READ_REG(sc, OMAP2_MCSPI_IRQENABLE);
@@ -356,6 +375,9 @@ omap2_spi_intr(void *v)
 	/* check every channel */
 	for (i = 0; i < sc->sc_spi.sct_nslaves; i++) {
 		chan = &sc->sc_channels[i];
+
+		if (!chan->running)
+			continue;
 
 		switch (i) {
 			case 0:
@@ -408,17 +430,15 @@ omap2_spi_intr(void *v)
 			omap2_spi_recv(sc, i);
 		}
 
-		if (chan->wchunk == NULL && chan->rchunk == NULL
-				&& chan->transfer != NULL) {
+		if (chan->wchunk == NULL && chan->rchunk == NULL)
+		{
 			st = chan->transfer;
 			chan->transfer = NULL;
+			KASSERT(st != NULL);
 			spi_done(st, 0);
 
-			spi_transq_dequeue(&chan->queue);
-			if ((st = spi_transq_first(&chan->queue)) == NULL)
-				omap2_spi_stop(sc, i);
-			else
-				chan->transfer = st;
+			omap2_spi_stop(sc, i);
+			omap2_spi_start(sc, i);
 
 		}
 	}
