@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.31 2013/04/28 13:37:52 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.32 2013/05/15 12:49:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.31 2013/04/28 13:37:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.32 2013/05/15 12:49:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,7 +58,7 @@ struct ltsleeper {
 #define kcv u.kern
 
 static LIST_HEAD(, ltsleeper) sleepers = LIST_HEAD_INITIALIZER(sleepers);
-static struct rumpuser_mtx *qlock;
+static kmutex_t *qlock;
 
 static int
 sleeper(wchan_t ident, int timo, kmutex_t *kinterlock)
@@ -76,9 +76,9 @@ sleeper(wchan_t ident, int timo, kmutex_t *kinterlock)
 		rumpuser_cv_init(&lts.ucv);
 	}
 
-	rumpuser_mutex_enter_nowrap(qlock);
+	mutex_spin_enter(&qlock);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
-	rumpuser_mutex_exit(qlock);
+	mutex_exit(&qlock);
 
 	if (timo) {
 		if (kinterlock) {
@@ -104,9 +104,9 @@ sleeper(wchan_t ident, int timo, kmutex_t *kinterlock)
 		rv = 0;
 	}
 
-	rumpuser_mutex_enter_nowrap(qlock);
+	mutex_spin_enter(&qlock);
 	LIST_REMOVE(&lts, entries);
-	rumpuser_mutex_exit(qlock);
+	mutex_exit(&qlock);
 
 	if (kinterlock)
 		cv_destroy(&lts.kcv);
@@ -152,7 +152,7 @@ wakeup(wchan_t ident)
 {
 	struct ltsleeper *ltsp;
 
-	rumpuser_mutex_enter_nowrap(qlock);
+	mutex_spin_enter(&qlock);
 	LIST_FOREACH(ltsp, &sleepers, entries) {
 		if (ltsp->id == ident) {
 			if (ltsp->iskwait) {
@@ -162,12 +162,12 @@ wakeup(wchan_t ident)
 			}
 		}
 	}
-	rumpuser_mutex_exit(qlock);
+	mutex_exit(&qlock);
 }
 
 void
 rump_tsleep_init()
 {
 
-	rumpuser_mutex_init(&qlock, RUMPUSER_MTX_SPIN);
+	mutex_init(&qlock, MUTEX_SPIN, IPL_NONE);
 }
