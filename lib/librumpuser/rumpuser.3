@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpuser.3,v 1.14 2013/05/15 17:53:09 pooka Exp $
+.\"     $NetBSD: rumpuser.3,v 1.15 2013/05/15 22:09:32 wiz Exp $
 .\"
 .\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
@@ -181,9 +181,13 @@ file for which information is returned.
 The namespace is equal to that of
 .Fn rumpuser_open .
 .It Fa size
-If non-NULL, size of the file is returned here.
+If
+.Pf non- Dv NULL ,
+size of the file is returned here.
 .It Fa type
-If non-NULL, type of the file is returned here.
+If
+.Pf non- Dv NULL ,
+type of the file is returned here.
 The options are
 .Dv RUMPUSER_FT_DIR ,
 .Dv RUMPUSER_FT_REG ,
@@ -293,7 +297,7 @@ The other arguments are:
 .Pp
 .Bl -tag -width "xenum_rumpclock"
 .It Fa flags
-controls how syncronization happens.
+controls how synchronization happens.
 It must contain one of the following:
 .Bl -tag -width "XRUMPUSER_SYNCFD_BARRIER"
 .It Dv RUMPUSER_SYNCFD_READ
@@ -539,7 +543,7 @@ Clear the context previous set by
 The value passed in
 .Fa l
 is the current thread and is never
-.Dv NULL.
+.Dv NULL .
 .El
 .Pp
 .Ft struct lwp *
@@ -689,7 +693,7 @@ for the duration of the sleep in the normal atomic manner.
 The timedwait variant takes a specifier indicating a relative
 sleep duration after which the routine will return with
 .Er ETIMEDOUT .
-If a timedwait is signalled before the timeout expires, the
+If a timedwait is signaled before the timeout expires, the
 routine will return 0.
 .Pp
 The order in which the hypervisor
