@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.103 2013/05/02 21:45:28 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.104 2013/05/15 14:07:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -164,7 +164,10 @@ int  rumpuser_thread_create(void *(*f)(void *), void *, const char *, int,
 void rumpuser_thread_exit(void) __dead;
 int  rumpuser_thread_join(void *);
 
-enum rumplwpop { RUMPUSER_LWP_CREATE, RUMPUSER_LWP_DESTROY, RUMPUSER_LWP_SET };
+enum rumplwpop {
+	RUMPUSER_LWP_CREATE, RUMPUSER_LWP_DESTROY,
+	RUMPUSER_LWP_SET, RUMPUSER_LWP_CLEAR
+};
 void rumpuser_curlwpop(enum rumplwpop, struct lwp *);
 struct lwp *rumpuser_curlwp(void);
 
