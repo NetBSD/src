@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.51 2013/05/15 14:52:49 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.52 2013/05/15 14:58:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.51 2013/05/15 14:52:49 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.52 2013/05/15 14:58:24 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -332,9 +332,10 @@ rumpuser_close(int fd)
  */
 int
 rumpuser_iovread(int fd, struct rumpuser_iovec *ruiov, size_t iovlen,
-	off_t off, size_t *retp)
+	int64_t roff, size_t *retp)
 {
 	struct iovec *iov = (struct iovec *)ruiov;
+	off_t off = (off_t)roff;
 	ssize_t nn;
 	int rv;
 
@@ -364,9 +365,10 @@ rumpuser_iovread(int fd, struct rumpuser_iovec *ruiov, size_t iovlen,
 
 int
 rumpuser_iovwrite(int fd, const struct rumpuser_iovec *ruiov, size_t iovlen,
-	off_t off, size_t *retp)
+	int64_t roff, size_t *retp)
 {
 	const struct iovec *iov = (const struct iovec *)ruiov;
+	off_t off = (off_t)roff;
 	ssize_t nn;
 	int rv;
 
