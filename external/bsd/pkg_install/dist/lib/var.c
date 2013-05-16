@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1.1.3 2009/08/06 16:55:29 joerg Exp $	*/
+/*	$NetBSD: var.c,v 1.2 2013/05/16 19:19:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: var.c,v 1.1.1.3 2009/08/06 16:55:29 joerg Exp $");
+__RCSID("$NetBSD: var.c,v 1.2 2013/05/16 19:19:44 martin Exp $");
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -156,7 +156,7 @@ var_get_memory(const char *buf, const char *variable)
 	value = NULL;
 	valuelen = 0;
 
-	for (; *buf; buf = next) {
+	for (; buf && *buf; buf = next) {
 		if ((eol = strchr(buf, '\n')) != NULL) {
 			next = eol + 1;
 			len = eol - buf;
