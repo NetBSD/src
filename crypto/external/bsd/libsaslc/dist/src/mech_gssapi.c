@@ -1,4 +1,4 @@
-/* $NetBSD: mech_gssapi.c,v 1.6 2011/02/20 01:59:46 christos Exp $ */
+/* $NetBSD: mech_gssapi.c,v 1.7 2013/05/16 13:02:12 elric Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_gssapi.c,v 1.6 2011/02/20 01:59:46 christos Exp $");
+__RCSID("$NetBSD: mech_gssapi.c,v 1.7 2013/05/16 13:02:12 elric Exp $");
 
 #include <assert.h>
 #include <errno.h>
@@ -582,21 +582,18 @@ wrap_output_token(saslc_sess_t *sess, gss_buffer_t outbuf)
 	/* through fourth octets containing in network byte order the       */
 	/* maximum size output_message the client is able to receive, and   */
 	/* the remaining octets containing the authorization identity.  The */
-	/* client passes the data to GSS_Wrap with conf_flag set to FALSE,  */
-	/* and responds with the generated output_message.  The client can  */
-	/* then consider the server authenticated.                          */
+	/* authorization identity is optional in mechanisms where it is     */
+	/* encoded in the exchange such as GSSAPI.  The client passes the   */
+	/* data to GSS_Wrap with conf_flag set to FALSE, and responds with  */
+	/* the generated output_message.  The client can then consider the  */
+	/* server authenticated.                                            */
 	/********************************************************************/
 
 	ms = sess->mech_sess;
 
-	if ((authcid = saslc_sess_getprop(sess, SASLC_GSSAPI_AUTHCID))
-	    == NULL) {
-		saslc__error_set(ERR(sess), ERROR_MECH,
-		    "authcid is required for an authentication");
-		return -1;
-	}
+	authcid = saslc_sess_getprop(sess, SASLC_GSSAPI_AUTHCID);
 
-	len = asprintf(&input_value, "qmax%s", authcid);
+	len = asprintf(&input_value, "qmax%s", authcid ? authcid : "");
 	if (len == -1) {
 		saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
 		return -1;
