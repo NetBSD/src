@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_spi.c,v 1.1.2.5 2013/05/15 23:27:49 khorben Exp $ */
+/* $NetBSD: omap2_spi.c,v 1.1.2.6 2013/05/16 18:24:26 khorben Exp $ */
 
 /*
  * Texas Instruments OMAP2/3 Multichannel SPI driver.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_spi.c,v 1.1.2.5 2013/05/15 23:27:49 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_spi.c,v 1.1.2.6 2013/05/16 18:24:26 khorben Exp $");
 
 #include "opt_omap.h"
 
@@ -186,6 +186,7 @@ static int
 omap2_spi_configure(void *cookie, int slave, int mode, int speed)
 {
 	struct omap2_spi_softc *sc = cookie;
+	const int freq = 48000000; /* XXX hardcoded */
 	uint32_t conf = 0;
 	uint32_t div;
 
@@ -196,25 +197,10 @@ omap2_spi_configure(void *cookie, int slave, int mode, int speed)
 		return EINVAL;
 
 	/* set the speed */
-	/* XXX implement lower speeds */
-	if (speed <= 187500)
-		div = 0x8;
-	else if (speed <= 375000)
-		div = 0x7;
-	else if (speed <= 750000)
-		div = 0x6;
-	else if (speed <= 1500000)
-		div = 0x5;
-	else if (speed <= 3000000)
-		div = 0x4;
-	else if (speed <= 6000000)
-		div = 0x3;
-	else if (speed <= 12000000)
-		div = 0x2;
-	else if (speed <= 24000000)
-		div = 0x1;
-	else
-		div = 0;
+	for (div = 0; div < 0xf; div++) {
+		if (speed >= freq / (1 << div))
+			break;
+	}
 	conf |= (div << OMAP2_MCSPI_CHXCONF_CLKD_SHIFT);
 
 	/* set the word size to 8 bits */
