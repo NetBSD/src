@@ -1,4 +1,4 @@
-/*	$NetBSD: n900_lckbtn.c,v 1.3.2.1 2013/05/11 18:01:04 khorben Exp $ */
+/*	$NetBSD: n900_lckbtn.c,v 1.3.2.2 2013/05/16 21:41:15 khorben Exp $ */
 
 /*
  * Lock button driver for the Nokia N900.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: n900_lckbtn.c,v 1.3.2.1 2013/05/11 18:01:04 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: n900_lckbtn.c,v 1.3.2.2 2013/05/16 21:41:15 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: n900_lckbtn.c,v 1.3.2.1 2013/05/11 18:01:04 khorben 
 
 #include <dev/gpio/gpiovar.h>
 #include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
 
 #include <arm/omap/omap2_gpio.h>
 
@@ -69,9 +70,9 @@ static int	n900lckbtn_detach(device_t, int);
 CFATTACH_DECL_NEW(n900lckbtn, sizeof(struct n900lckbtn_softc),
 	n900lckbtn_match, n900lckbtn_attach, n900lckbtn_detach, NULL);
 
-static void	n900lckbtn_refresh(struct n900lckbtn_softc *);
+static void	n900lckbtn_refresh(void *);
 
-static int	n900lckbtn_intr(void *v);
+static int	n900lckbtn_intr(void *);
 
 
 static int
@@ -139,6 +140,7 @@ n900lckbtn_attach(device_t parent, device_t self, void *aux)
 		    "couldn't establish power handler\n");
 	}
 
+	sysmon_task_queue_init();
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_HOTKEY;
 	sc->sc_state = PSWITCH_EVENT_RELEASED;
@@ -156,6 +158,7 @@ n900lckbtn_detach(device_t self, int flags)
 
 	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 	pmf_device_deregister(self);
+	sysmon_task_queue_fini();
 
 	return 0;
 }
@@ -165,13 +168,14 @@ n900lckbtn_intr(void *v)
 {
 	struct n900lckbtn_softc *sc = v;
 
-	n900lckbtn_refresh(sc);
+	sysmon_task_queue_sched(0, n900lckbtn_refresh, sc);
 	return 1;
 }
 
 static void
-n900lckbtn_refresh(struct n900lckbtn_softc *sc)
+n900lckbtn_refresh(void *v)
 {
+	struct n900lckbtn_softc *sc = v;
 	int i;
 	int event;
 

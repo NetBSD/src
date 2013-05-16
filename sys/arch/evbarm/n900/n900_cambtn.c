@@ -1,4 +1,4 @@
-/*	$NetBSD: n900_cambtn.c,v 1.1.2.1 2013/05/11 18:01:04 khorben Exp $ */
+/*	$NetBSD: n900_cambtn.c,v 1.1.2.2 2013/05/16 21:41:15 khorben Exp $ */
 
 /*
  * Camera button driver for the Nokia N900.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: n900_cambtn.c,v 1.1.2.1 2013/05/11 18:01:04 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: n900_cambtn.c,v 1.1.2.2 2013/05/16 21:41:15 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: n900_cambtn.c,v 1.1.2.1 2013/05/11 18:01:04 khorben 
 
 #include <dev/gpio/gpiovar.h>
 #include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
 
 #include <arm/omap/omap2_gpio.h>
 
@@ -71,9 +72,10 @@ static int	n900cambtn_detach(device_t, int);
 CFATTACH_DECL_NEW(n900cambtn, sizeof(struct n900cambtn_softc),
 	n900cambtn_match, n900cambtn_attach, n900cambtn_detach, NULL);
 
+static void	n900cambtn_refresh(void *);
 static void	n900cambtn_refresh_pin(struct n900cambtn_softc *, int);
 
-static int	n900cambtn_intr(void *v);
+static int	n900cambtn_intr(void *);
 
 
 static int
@@ -158,6 +160,8 @@ n900cambtn_attach(device_t parent, device_t self, void *aux)
 		    "couldn't establish power handler\n");
 	}
 
+	sysmon_task_queue_init();
+
 	/* focus button */
 	sc->sc_smpsw[0].smpsw_name = kmem_asprintf("%s%s", device_xname(self),
 			"focus");
@@ -188,6 +192,7 @@ n900cambtn_detach(device_t self, int flags)
 
 	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 	pmf_device_deregister(self);
+	sysmon_task_queue_fini();
 
 	return 0;
 }
@@ -197,9 +202,17 @@ n900cambtn_intr(void *v)
 {
 	struct n900cambtn_softc *sc = v;
 
+	sysmon_task_queue_sched(0, n900cambtn_refresh, sc);
+	return 1;
+}
+
+static void
+n900cambtn_refresh(void *v)
+{
+	struct n900cambtn_softc *sc = v;
+
 	n900cambtn_refresh_pin(sc, N900CAMBTN_PIN_CAPTURE);
 	n900cambtn_refresh_pin(sc, N900CAMBTN_PIN_FOCUS);
-	return 1;
 }
 
 static void
