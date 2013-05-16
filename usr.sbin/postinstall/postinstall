@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.147 2012/09/22 09:20:06 ast Exp $
+# $NetBSD: postinstall,v 1.148 2013/05/16 07:37:05 yamt Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1150,7 +1150,7 @@ do_rc()
 		DAEMON DISKS LOGIN NETWORKING SERVERS \
 		accounting altqd amd apmd \
 		bluetooth bootconf.sh bootparams \
-		ccd cgd cleartmp cron \
+		ccd cgd cleartmp cron devpubd \
 		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
 		fsck fsck_root ftp_proxy ftpd \
 		gpio \
@@ -1158,16 +1158,16 @@ do_rc()
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
 		irdaattach iscsi_target isdnd isibootd \
 		kdc \
-		ldconfig ldpd local lpd lvm\
+		ldconfig ldpd local lpd lvm \
 		makemandb mdnsd mixerctl mopd motd mountall mountcritlocal \
 		mountcritremote mountd moused mrouted \
-		named ndbootd network newsyslog nfsd nfslocking npf \
-		ntpd ntpdate \
+		named ndbootd network newsyslog nfsd nfslocking npf ntpd \
+		ntpdate \
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
-		racoon rpcbind raidframe raidframeparity random_seed \
-		rarpd rbootd rndctl \
-		root route6d routed rtadvd rtclocaltime rtsold rwho \
+		racoon rpcbind raidframe raidframeparity random_seed rarpd \
+		rbootd rndctl root route6d routed rtadvd rtclocaltime \
+		rtsold rwho \
 		savecore screenblank securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
