@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.29 2010/02/28 13:59:05 martin Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.30 2013/05/16 18:43:09 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -71,32 +71,34 @@ struct ofbus_attach_args {
  */
 extern char *OF_buf;
 
-int	OF_peer(int);
-int	OF_child(int);
-int	OF_parent(int);
-int	OF_instance_to_package(int);
-int	OF_getproplen(int, const char *);
-int	OF_getprop(int, const char *, void *, int);
-int	OF_nextprop(int, const char *, void *);
-int	OF_setprop(int, const char *, const void *, int);
-int	OF_finddevice(const char *);
-int	OF_instance_to_path(int, char *, int);
-int	OF_package_to_path(int, char *, int);
-int	OF_call_method_1(const char *, int, int, ...);
-int	OF_call_method(const char *, int, int, int, ...);
-int	OF_open(const char *);
-void	OF_close(int);
-int	OF_read(int, void *, int);
-int	OF_write(int, const void *, int);
-int	OF_seek(int, u_quad_t);
-void	*OF_claim(void *, u_int, u_int);
-void	OF_release(void *, u_int);
-int	OF_milliseconds(void);
 void	OF_boot(const char *) __dead;
+int	OF_call_method(const char *, int, int, int, ...);
+int	OF_call_method_1(const char *, int, int, ...);
+int	OF_child(int);
+void	*OF_claim(void *, u_int, u_int);
+void	OF_close(int);
 void	OF_enter(void);
 void	OF_exit(void) __dead;
+int	OF_finddevice(const char *);
+int	OF_getprop(int, const char *, void *, int);
+int	OF_getproplen(int, const char *);
+int	OF_instance_to_package(int);
+int	OF_instance_to_path(int, char *, int);
 int	OF_interpret(const char *, int, int, ...);
+int	OF_milliseconds(void);
+int	OF_nextprop(int, const char *, void *);
+int	OF_open(const char *);
+int	OF_package_to_path(int, char *, int);
+int	OF_parent(int);
+int	OF_peer(int);
+void	OF_quiesce(void);
+int	OF_read(int, void *, int);
+void	OF_release(void *, u_int);
+int	OF_seek(int, u_quad_t);
 void	(*OF_set_callback(void(*)(void *)))(void *);
+int	OF_setprop(int, const char *, const void *, int);
+int	OF_write(int, const void *, int);
+
 int	openfirmware(void *);
 
 /*
