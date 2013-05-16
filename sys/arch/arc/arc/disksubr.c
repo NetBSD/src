@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 2008/01/02 11:48:22 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.29 2013/05/16 19:06:44 christos Exp $	*/
 /*	$OpenBSD: disksubr.c,v 1.14 1997/05/08 00:14:29 deraadt Exp $	*/
 /*	NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28 2008/01/02 11:48:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.29 2013/05/16 19:06:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (!osdep)
 		goto nombrpart;
-	dp = osdep->dosparts;
+	dp = osdep->mbrparts;
 
 	/* XXX - OpenBSD supports disklabel in EXT partition, but we don't */
 	/* read master boot record */
@@ -431,7 +431,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (!osdep)
 		goto nombrpart;
-	dp = osdep->dosparts;
+	dp = osdep->mbrparts;
 
 	/* read master boot record */
 	bp->b_blkno = MBR_BBSECTOR;
