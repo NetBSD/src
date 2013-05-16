@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.4 2013/04/28 00:41:22 jakllsch Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.5 2013/05/16 21:25:27 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.4 2013/04/28 00:41:22 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.5 2013/05/16 21:25:27 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ tps65217pmic_ppath_max_ac_current(uint8_t ppath)
 	case TPS65217PMIC_PPATH_IAC_100MA:
 		return 100;
 	case TPS65217PMIC_PPATH_IAC_500MA:
-		return 300;
+		return 500;
 	case TPS65217PMIC_PPATH_IAC_1300MA:
 		return 1300;
 	case TPS65217PMIC_PPATH_IAC_2500MA:
@@ -357,7 +357,7 @@ tps65217pmic_ppath_max_usb_current(uint8_t ppath)
 	case TPS65217PMIC_PPATH_IUSB_100MA:
 		return 100;
 	case TPS65217PMIC_PPATH_IUSB_500MA:
-		return 300;
+		return 500;
 	case TPS65217PMIC_PPATH_IUSB_1300MA:
 		return 1300;
 	case TPS65217PMIC_PPATH_IUSB_1800MA:
