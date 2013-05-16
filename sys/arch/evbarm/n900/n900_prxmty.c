@@ -1,4 +1,4 @@
-/*	$NetBSD: n900_prxmty.c,v 1.1.2.1 2013/05/11 18:01:04 khorben Exp $ */
+/*	$NetBSD: n900_prxmty.c,v 1.1.2.2 2013/05/16 21:41:15 khorben Exp $ */
 
 /*
  * Proximity sensor driver for the Nokia N900.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: n900_prxmty.c,v 1.1.2.1 2013/05/11 18:01:04 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: n900_prxmty.c,v 1.1.2.2 2013/05/16 21:41:15 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: n900_prxmty.c,v 1.1.2.1 2013/05/11 18:01:04 khorben 
 
 #include <dev/gpio/gpiovar.h>
 #include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
 
 #include <arm/omap/omap2_gpio.h>
 
@@ -68,9 +69,9 @@ static int	n900prxmty_detach(device_t, int);
 CFATTACH_DECL_NEW(n900prxmty, sizeof(struct n900prxmty_softc),
 	n900prxmty_match, n900prxmty_attach, n900prxmty_detach, NULL);
 
-static void	n900prxmty_refresh(struct n900prxmty_softc *);
+static void	n900prxmty_refresh(void *);
 
-static int	n900prxmty_intr(void *v);
+static int	n900prxmty_intr(void *);
 
 
 static int
@@ -138,6 +139,7 @@ n900prxmty_attach(device_t parent, device_t self, void *aux)
 		    "couldn't establish power handler\n");
 	}
 
+	sysmon_task_queue_init();
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_HOTKEY;
 	sysmon_pswitch_register(&sc->sc_smpsw);
@@ -156,6 +158,7 @@ n900prxmty_detach(device_t self, int flags)
 
 	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 	pmf_device_deregister(self);
+	sysmon_task_queue_fini();
 
 	return 0;
 }
@@ -165,13 +168,14 @@ n900prxmty_intr(void *v)
 {
 	struct n900prxmty_softc *sc = v;
 
-	n900prxmty_refresh(sc);
+	sysmon_task_queue_sched(0, n900prxmty_refresh, sc);
 	return 1;
 }
 
 static void
-n900prxmty_refresh(struct n900prxmty_softc *sc)
+n900prxmty_refresh(void *v)
 {
+	struct n900prxmty_softc *sc = v;
 	int i;
 	int event;
 
