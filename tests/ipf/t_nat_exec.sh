@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_exec.sh,v 1.16 2013/03/19 13:23:58 martin Exp $
+# $NetBSD: t_nat_exec.sh,v 1.17 2013/05/16 07:20:29 martin Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,13 +67,13 @@ test_case n4 nattest text text
 test_case n5 nattest text text
 test_case n6 nattest text text
 test_case n7 nattest text text
-failing_test_case n8 nattest "See PR kern/47665" hex hex -T update_ipid=0
-failing_test_case n9 nattest "See PR kern/47665" hex hex -T update_ipid=0
+failing_test_case_be n8 nattest "See PR kern/47665" hex hex -T update_ipid=0
+failing_test_case_be n9 nattest "See PR kern/47665" hex hex -T update_ipid=0
 test_case n10 nattest hex hex -T update_ipid=0
 test_case n11 nattest text text
 failing_test_case n12 nattest "Known to be broken" hex hex -T update_ipid=0 -v
 test_case n13 nattest text text
-failing_test_case n14 nattest "See PR kern/47665" text text
+failing_test_case_be n14 nattest "See PR kern/47665" text text
 test_case n15 nattest text text -T update_ipid=0
 test_case n16 nattest hex hex -D
 test_case n17 nattest hex hex -D
