@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.144 2013/03/11 23:17:34 christos Exp $
+#	$NetBSD: special,v 1.145 2013/05/16 07:37:05 yamt Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -193,6 +193,7 @@
 ./etc/rc.d/cgd			type=file mode=0555
 ./etc/rc.d/cleartmp		type=file mode=0555
 ./etc/rc.d/cron			type=file mode=0555
+./etc/rc.d/devpubd		type=file mode=0555
 ./etc/rc.d/dhclient		type=file mode=0555
 ./etc/rc.d/dhcpd		type=file mode=0555
 ./etc/rc.d/dhcrelay		type=file mode=0555
