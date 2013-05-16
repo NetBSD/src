@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.20 2009/03/16 23:11:15 dsl Exp $ */
+/* $NetBSD: disksubr.c,v 1.21 2013/05/16 19:06:45 christos Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20 2009/03/16 23:11:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.21 2013/05/16 19:06:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (!osdep)
 		goto nombrpart;
-	dp = osdep->dosparts;
+	dp = osdep->mbrparts;
 
 	/* read master boot record */
 	bp->b_blkno = MBR_BBSECTOR;
@@ -334,7 +334,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, str
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (!osdep)
 		goto nombrpart;
-	dp = osdep->dosparts;
+	dp = osdep->mbrparts;
 
 	/* read master boot record */
 	bp->b_blkno = MBR_BBSECTOR;

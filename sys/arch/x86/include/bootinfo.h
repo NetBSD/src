@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.19 2011/11/28 07:56:54 tls Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.22 2013/05/16 19:06:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -157,7 +157,7 @@ struct bi_biosgeom_entry {
 	unsigned int	cksum;			/* MBR checksum */
 	int		res0, res1, res2, res3;	/* future expansion; 0 now */
 #endif
-	struct mbr_partition dosparts[MBR_PART_COUNT]; /* MBR itself */
+	struct mbr_partition mbrparts[MBR_PART_COUNT]; /* MBR itself */
 } __packed;
 
 struct btinfo_biosgeom {
