@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.67 2013/04/28 14:32:55 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.68 2013/05/16 19:06:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.67 2013/04/28 14:32:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.68 2013/05/16 19:06:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ matchbiosdisks(void)
 				if (be->flags & BI_GEOM_INVALID)
 					continue;
 				if (be->cksum == ck &&
-				    memcmp(&mbr[MBR_PART_OFFSET], be->dosparts,
+				    memcmp(&mbr[MBR_PART_OFFSET], be->mbrparts,
 				        MBR_PART_COUNT *
 					  sizeof(struct mbr_partition)) == 0) {
 #ifdef GEOM_DEBUG
