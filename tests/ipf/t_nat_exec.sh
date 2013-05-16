@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_exec.sh,v 1.17 2013/05/16 07:20:29 martin Exp $
+# $NetBSD: t_nat_exec.sh,v 1.18 2013/05/16 07:43:02 martin Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -92,8 +92,8 @@ test_case n4_6 nattest text text -6
 test_case n5_6 nattest text text -6
 test_case n6_6 nattest text text -6
 test_case n7_6 nattest text text -6
-failing_test_case n8_6 nattest "See PR kern/47665" hex hex -6
-failing_test_case n9_6 nattest "See PR kern/47665" hex hex -6
+failing_test_case_be n8_6 nattest "See PR kern/47665" hex hex -6
+failing_test_case_be n9_6 nattest "See PR kern/47665" hex hex -6
 test_case n11_6 nattest text text -6
 test_case n12_6 nattest hex hex -6
 test_case n15_6 nattest text text -6
