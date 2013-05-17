@@ -1,4 +1,4 @@
-/* $NetBSD: h_macros.h,v 1.8 2012/03/15 02:02:22 joerg Exp $ */
+/* $NetBSD: h_macros.h,v 1.9 2013/05/17 15:42:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
 #ifndef SRC_TESTS_H_MACROS_H_
 #define SRC_TESTS_H_MACROS_H_
 
+#include <sys/types.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
