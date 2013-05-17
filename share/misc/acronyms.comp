@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.133 2013/04/16 14:03:33 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.134 2013/05/17 17:43:04 dholland Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -437,6 +437,7 @@ FSF	Free Software Foundation
 FSK	frequency shift keying
 FSM	finite-state machine
 FTA	fault tree analysis
+FTL	flash translation layer
 FTP	File Transfer Protocol
 FTPS	File Transfer Protocol Secure
 FUS	fast user switching
