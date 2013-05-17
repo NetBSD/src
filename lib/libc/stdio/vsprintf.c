@@ -1,4 +1,4 @@
-/*	$NetBSD: vsprintf.c,v 1.18 2013/04/19 15:22:25 joerg Exp $	*/
+/*	$NetBSD: vsprintf.c,v 1.19 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsprintf.c,v 1.18 2013/04/19 15:22:25 joerg Exp $");
+__RCSID("$NetBSD: vsprintf.c,v 1.19 2013/05/17 12:55:57 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,7 +83,7 @@ vsprintf_l(char *str, locale_t loc, const char *fmt, va_list ap)
 int
 vsprintf(char *str, const char *fmt, va_list ap)
 {
-	return vsprintf_l(str, *_current_locale(), fmt, ap);
+	return vsprintf_l(str, _current_locale(), fmt, ap);
 }
 
 int

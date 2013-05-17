@@ -1,4 +1,4 @@
-/*	$NetBSD: wcscoll.c,v 1.3 2013/04/18 23:24:27 joerg Exp $	*/
+/*	$NetBSD: wcscoll.c,v 1.4 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcscoll.c,v 1.3 2013/04/18 23:24:27 joerg Exp $");
+__RCSID("$NetBSD: wcscoll.c,v 1.4 2013/05/17 12:55:57 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,8 +44,6 @@ __RCSID("$NetBSD: wcscoll.c,v 1.3 2013/04/18 23:24:27 joerg Exp $");
 int
 wcscoll_l(const wchar_t *s1, const wchar_t *s2, locale_t loc)
 {
-	if (loc == NULL)
-		loc = _C_locale;
 	/* XXX: LC_COLLATE should be implemented. */
 	/* LINTED */ (void)loc;
 	return (wcscmp(s1, s2));
@@ -54,5 +52,5 @@ wcscoll_l(const wchar_t *s1, const wchar_t *s2, locale_t loc)
 int
 wcscoll(const wchar_t *s1, const wchar_t *s2)
 {
-	return wcscoll_l(s1, s2, *_current_locale());
+	return wcscoll_l(s1, s2, _current_locale());
 }

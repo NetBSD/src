@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwscanf.c,v 1.9 2013/04/19 23:32:17 joerg Exp $	*/
+/*	$NetBSD: vfwscanf.c,v 1.10 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwscanf.c,v 1.12 2004/05/02 20:13:29 obrien Exp $");
 #else
-__RCSID("$NetBSD: vfwscanf.c,v 1.9 2013/04/19 23:32:17 joerg Exp $");
+__RCSID("$NetBSD: vfwscanf.c,v 1.10 2013/05/17 12:55:57 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -114,7 +114,7 @@ static int parsefloat(FILE *, wchar_t *, wchar_t *, locale_t);
 int
 vfwscanf(FILE * __restrict fp, const wchar_t * __restrict fmt, va_list ap)
 {
-	return vfwscanf_l(fp, *_current_locale(), fmt, ap);
+	return vfwscanf_l(fp, _current_locale(), fmt, ap);
 }
 
 int
@@ -170,9 +170,6 @@ __vfwscanf_unlocked_l(FILE * __restrict fp, locale_t loc,
 	/* `basefix' is used to avoid `if' tests in the integer scanner */
 	static short basefix[17] =
 		{ 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
-
-	if (loc == NULL)
-		loc = _C_locale;
 
 	nassigned = 0;
 	nconversions = 0;

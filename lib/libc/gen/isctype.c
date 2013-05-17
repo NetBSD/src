@@ -1,4 +1,4 @@
-/* $NetBSD: isctype.c,v 1.23 2013/04/16 11:29:13 joerg Exp $ */
+/* $NetBSD: isctype.c,v 1.24 2013/05/17 12:55:57 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isctype.c,v 1.23 2013/04/16 11:29:13 joerg Exp $");
+__RCSID("$NetBSD: isctype.c,v 1.24 2013/05/17 12:55:57 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -57,8 +57,6 @@ is##name(int c) \
 int \
 is##name ## _l(int c, locale_t loc) \
 { \
-	if (loc == NULL) \
-		loc = _C_locale; \
 	return (int)(((loc->cache->ctype_tab + 1)[c]) & (bit)); \
 }
 
@@ -84,8 +82,6 @@ toupper(int c)
 int
 toupper_l(int c, locale_t loc)
 {
-	if (loc == NULL)
-		loc = _C_locale;
 	return (int)(((loc->cache->toupper_tab + 1)[c]));
 }
 
@@ -98,8 +94,6 @@ tolower(int c)
 int
 tolower_l(int c, locale_t loc)
 {
-	if (loc == NULL)
-		loc = _C_locale;
 	return (int)(((loc->cache->tolower_tab + 1)[c]));
 }
 

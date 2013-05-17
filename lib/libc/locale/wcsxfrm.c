@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsxfrm.c,v 1.4 2013/04/18 23:24:27 joerg Exp $	*/
+/*	$NetBSD: wcsxfrm.c,v 1.5 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcsxfrm.c,v 1.4 2013/04/18 23:24:27 joerg Exp $");
+__RCSID("$NetBSD: wcsxfrm.c,v 1.5 2013/05/17 12:55:57 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,8 +46,6 @@ wcsxfrm_l(wchar_t *s1, const wchar_t *s2, size_t n, locale_t loc)
 {
 	size_t len;
 
-	if (loc == NULL)
-		loc = _C_locale;
 	/* XXX: LC_COLLATE should be implemented. */
 	/* LINTED */(void)loc;
 
@@ -69,5 +67,5 @@ wcsxfrm_l(wchar_t *s1, const wchar_t *s2, size_t n, locale_t loc)
 size_t
 wcsxfrm(wchar_t *s1, const wchar_t *s2, size_t n)
 {
-	return wcsxfrm_l(s1, s2, n, *_current_locale());
+	return wcsxfrm_l(s1, s2, n, _current_locale());
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: strtold_subr.c,v 1.2 2013/04/18 21:54:11 joerg Exp $ */
+/* $NetBSD: strtold_subr.c,v 1.3 2013/05/17 12:55:57 joerg Exp $ */
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.org>, November 16, 2005.
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtold_subr.c,v 1.2 2013/04/18 21:54:11 joerg Exp $");
+__RCSID("$NetBSD: strtold_subr.c,v 1.3 2013/05/17 12:55:57 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -53,13 +53,11 @@ _int_strtold_l(const char *nptr, char **endptr, locale_t loc)
 long double
 strtold(CONST char *s, char **sp)
 {
-	return _int_strtold_l(s, sp, *_current_locale());
+	return _int_strtold_l(s, sp, _current_locale());
 }
 
 long double
 strtold_l(CONST char *s, char **sp, locale_t loc)
 {
-	if (loc == NULL)
-		loc = _C_locale;
 	return _int_strtold_l(s, sp, loc);
 }

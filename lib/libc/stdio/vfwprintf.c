@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.31 2013/04/19 15:22:25 joerg Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.32 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.31 2013/04/19 15:22:25 joerg Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.32 2013/05/17 12:55:57 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -552,7 +552,7 @@ WDECL(vf,printf)(FILE * __restrict fp, const CHAR_T * __restrict fmt0, va_list a
 	int ret;
 
 	FLOCKFILE(fp);
-	ret = WDECL(__vf,printf_unlocked_l)(fp, *_current_locale(), fmt0, ap);
+	ret = WDECL(__vf,printf_unlocked_l)(fp, _current_locale(), fmt0, ap);
 	FUNLOCKFILE(fp);
 	return ret;
 }
@@ -704,9 +704,6 @@ WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_lis
 
 	static const char xdigs_lower[16] = "0123456789abcdef";
 	static const char xdigs_upper[16] = "0123456789ABCDEF";
-
-	if (loc == NULL)
-		loc = _C_locale;
 
 	/*
 	 * BEWARE, these `goto error' on error, PRINT uses `n2' and

@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.16 2013/04/21 17:45:46 joerg Exp $ */
+/* $NetBSD: global_locale.c,v 1.17 2013/05/17 12:55:57 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.16 2013/04/21 17:45:46 joerg Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.17 2013/05/17 12:55:57 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: global_locale.c,v 1.16 2013/04/21 17:45:46 joerg Exp $");
 #define NBCHAR_MAX (char)CHAR_MAX
 #endif
 
-static struct lconv _global_ldata = {
+static const struct lconv _C_ldata = {
 	.decimal_point		= __UNCONST("."),
 	.thousands_sep		= __UNCONST(""),
 	.grouping		= __UNCONST(""),
@@ -74,7 +74,7 @@ static struct lconv _global_ldata = {
 	.int_n_sign_posn	= NBCHAR_MAX,
 };
 
-static const char *_global_items[(size_t)ALT_DIGITS + 1] = {
+static const char * const _C_items [(size_t)ALT_DIGITS + 1] = {
 	[(size_t)D_T_FMT    ] = "%a %b %e %H:%M:%S %Y",
 	[(size_t)D_FMT      ] = "%m/%d/%y",
 	[(size_t)T_FMT      ] = "%H:%M:%S",
@@ -139,16 +139,57 @@ static struct _locale_cache_t _global_cache = {
     .tolower_tab = (const short *)&_C_tolower_tab_[0],
     .toupper_tab = (const short *)&_C_toupper_tab_[0],
     .mb_cur_max = (size_t)1,
-    .ldata = &_global_ldata,
-    .items = &_global_items[0],
+    .ldata = __UNCONST(&_C_ldata),
+    .items = __UNCONST(&_C_items[0]),
 
 #ifdef __BUILD_LEGACY
     .compat_bsdctype = (const unsigned char *)&_C_compat_bsdctype[0],
 #endif
 };
 
-struct _locale _global_locale = {
+__dso_protected struct _locale _lc_global_locale = {
     .cache = &_global_cache,
+    .query = { _C_LOCALE },
+    .part_name = {
+	[(size_t)LC_ALL     ] = _C_LOCALE,
+	[(size_t)LC_COLLATE ] = _C_LOCALE,
+	[(size_t)LC_CTYPE   ] = _C_LOCALE,
+	[(size_t)LC_MONETARY] = _C_LOCALE,
+	[(size_t)LC_NUMERIC ] = _C_LOCALE,
+	[(size_t)LC_TIME    ] = _C_LOCALE,
+	[(size_t)LC_MESSAGES] = _C_LOCALE,
+    },
+    .part_impl = {
+	[(size_t)LC_ALL     ] = (_locale_part_t)NULL,
+	[(size_t)LC_COLLATE ] = (_locale_part_t)NULL,
+	[(size_t)LC_CTYPE   ] = (_locale_part_t)
+	    __UNCONST(&_DefaultRuneLocale),
+	[(size_t)LC_MONETARY] = (_locale_part_t)
+	    __UNCONST(&_DefaultMonetaryLocale),
+	[(size_t)LC_NUMERIC ] = (_locale_part_t)
+	    __UNCONST(&_DefaultNumericLocale),
+	[(size_t)LC_MESSAGES] = (_locale_part_t)
+	    __UNCONST(&_DefaultMessagesLocale),
+	[(size_t)LC_TIME] = (_locale_part_t)
+	    __UNCONST(&_DefaultTimeLocale),
+    },
+};
+
+static const struct _locale_cache_t _C_cache = {
+    .ctype_tab = (const unsigned short *)&_C_ctype_tab_[0],
+    .tolower_tab = (const short *)&_C_tolower_tab_[0],
+    .toupper_tab = (const short *)&_C_toupper_tab_[0],
+    .mb_cur_max = (size_t)1,
+    .ldata = __UNCONST(&_C_ldata),
+    .items = __UNCONST(&_C_items[0]),
+
+#ifdef __BUILD_LEGACY
+    .compat_bsdctype = (const unsigned char *)&_C_compat_bsdctype[0],
+#endif
+};
+
+__dso_protected const struct _locale _lc_C_locale = {
+    .cache = __UNCONST(&_C_cache),
     .query = { _C_LOCALE },
     .part_name = {
 	[(size_t)LC_ALL     ] = _C_LOCALE,

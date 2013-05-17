@@ -1,4 +1,4 @@
-/* $NetBSD: _wcstod.h,v 1.3 2013/04/18 22:23:17 joerg Exp $ */
+/* $NetBSD: _wcstod.h,v 1.4 2013/05/17 12:55:57 joerg Exp $ */
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -134,15 +134,13 @@ _RETURN_TYPE
 INT_NAME(, _FUNCNAME, )(const wchar_t * __restrict nptr,
     wchar_t ** __restrict endptr)
 {
-	return INT_NAME(_int_, _FUNCNAME, _l)(nptr, endptr, *_current_locale());
+	return INT_NAME(_int_, _FUNCNAME, _l)(nptr, endptr, _current_locale());
 }
 
 _RETURN_TYPE
 INT_NAME(, _FUNCNAME, _l)(const wchar_t * __restrict nptr,
     wchar_t ** __restrict endptr, locale_t loc)
 {
-	if (loc == NULL)
-		loc = _C_locale;
 	return INT_NAME(_int_, _FUNCNAME, _l)(nptr, endptr, loc);
 }
 #endif /*__WCSTOD_H_*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: vdprintf.c,v 1.3 2013/04/19 15:22:25 joerg Exp $	*/
+/*	$NetBSD: vdprintf.c,v 1.4 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vdprintf.c,v 1.3 2013/04/19 15:22:25 joerg Exp $");
+__RCSID("$NetBSD: vdprintf.c,v 1.4 2013/05/17 12:55:57 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -121,5 +121,5 @@ vdprintf_l(int fd, locale_t loc, const char * __restrict fmt, va_list ap)
 int
 vdprintf(int fd, const char * __restrict fmt, va_list ap)
 {
-	return vdprintf_l(fd, *_current_locale(), fmt, ap);
+	return vdprintf_l(fd, _current_locale(), fmt, ap);
 }

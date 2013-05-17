@@ -1,4 +1,4 @@
-/*	$NetBSD: strcoll.c,v 1.11 2013/04/19 23:28:47 joerg Exp $	*/
+/*	$NetBSD: strcoll.c,v 1.12 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)strcoll.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcoll.c,v 1.11 2013/04/19 23:28:47 joerg Exp $");
+__RCSID("$NetBSD: strcoll.c,v 1.12 2013/05/17 12:55:57 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ int
 strcoll(const char *s1, const char *s2)
 {
 
-	return strcoll_l(s1, s2, *_current_locale());
+	return strcoll_l(s1, s2, _current_locale());
 }
 
 int
@@ -65,9 +65,6 @@ strcoll_l(const char *s1, const char *s2, locale_t loc)
 {
 	_DIAGASSERT(s1 != NULL);
 	_DIAGASSERT(s2 != NULL);
-
-	if (loc == NULL)
-		loc = _C_locale;
 
 	/* LC_COLLATE is unimplemented, hence always "C" */
 	/* LINTED */ (void)loc;

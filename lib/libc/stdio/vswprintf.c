@@ -1,4 +1,4 @@
-/*	$NetBSD: vswprintf.c,v 1.4 2013/04/19 15:22:25 joerg Exp $	*/
+/*	$NetBSD: vswprintf.c,v 1.5 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vswprintf.c,v 1.6 2005/02/21 19:41:44 fjoe Exp $");
 #else
-__RCSID("$NetBSD: vswprintf.c,v 1.4 2013/04/19 15:22:25 joerg Exp $");
+__RCSID("$NetBSD: vswprintf.c,v 1.5 2013/05/17 12:55:57 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,5 +109,5 @@ int
 vswprintf(wchar_t * __restrict s, size_t n, const wchar_t * __restrict fmt,
     va_list ap)
 {
-	return vswprintf_l(s, n, *_current_locale(), fmt, ap);
+	return vswprintf_l(s, n, _current_locale(), fmt, ap);
 }

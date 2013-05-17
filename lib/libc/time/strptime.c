@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.37 2013/04/21 17:45:47 joerg Exp $	*/
+/*	$NetBSD: strptime.c,v 1.38 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.37 2013/04/21 17:45:47 joerg Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.38 2013/05/17 12:55:57 joerg Exp $");
 #endif
 
 #include "namespace.h"
@@ -77,7 +77,7 @@ static const u_char *find_string(const u_char *, int *, const char * const *,
 char *
 strptime(const char *buf, const char *fmt, struct tm *tm)
 {
-	return strptime_l(buf, fmt, tm, *_current_locale());
+	return strptime_l(buf, fmt, tm, _current_locale());
 }
 
 char *
@@ -87,9 +87,6 @@ strptime_l(const char *buf, const char *fmt, struct tm *tm, locale_t loc)
 	const unsigned char *bp, *ep;
 	int alt_format, i, split_year = 0, neg = 0, offs;
 	const char *new_fmt;
-
-	if (loc == NULL)
-		loc = _C_locale;
 
 	bp = (const u_char *)buf;
 
