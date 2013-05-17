@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.h,v 1.23 2013/05/17 13:00:40 joerg Exp $	*/
+/*	$NetBSD: locale.h,v 1.24 2013/05/17 14:11:55 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -112,7 +112,6 @@ extern struct _locale	_lc_global_locale;
 extern __dso_protected struct _locale	_lc_global_locale;
 #endif
 #define LC_GLOBAL_LOCALE	(&_lc_global_locale)
-#endif
 #endif /* _POSIX_SOURCE >= 200809 || _NETBSD_SOURCE */
 
 #if defined(_NETBSD_SOURCE)
