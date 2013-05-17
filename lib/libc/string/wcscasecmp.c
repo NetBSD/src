@@ -1,4 +1,4 @@
-/*	$NetBSD: wcscasecmp.c,v 1.3 2013/04/18 23:24:27 joerg Exp $	*/
+/*	$NetBSD: wcscasecmp.c,v 1.4 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*
  * Copyright (C) 2006 Aleksey Cheusov
@@ -13,7 +13,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint) 
-__RCSID("$NetBSD: wcscasecmp.c,v 1.3 2013/04/18 23:24:27 joerg Exp $"); 
+__RCSID("$NetBSD: wcscasecmp.c,v 1.4 2013/05/17 12:55:57 joerg Exp $"); 
 #endif /* LIBC_SCCS and not lint */ 
 
 #include "namespace.h"
@@ -32,9 +32,6 @@ wcscasecmp_l(const wchar_t *s1, const wchar_t *s2, locale_t loc)
 	int lc1  = 0;
 	int lc2  = 0;
 	int diff = 0;
-
-	if (loc == NULL)
-		loc = _C_locale;
 
 	_DIAGASSERT(s1);
 	_DIAGASSERT(s2);
@@ -58,5 +55,5 @@ wcscasecmp_l(const wchar_t *s1, const wchar_t *s2, locale_t loc)
 int
 wcscasecmp(const wchar_t *s1, const wchar_t *s2)
 {
-	return wcscasecmp_l(s1, s2, *_current_locale());
+	return wcscasecmp_l(s1, s2, _current_locale());
 }
