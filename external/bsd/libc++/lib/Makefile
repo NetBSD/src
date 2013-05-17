@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/04/30 00:34:15 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/05/17 22:57:27 joerg Exp $
 
 LIB=		c++
 WARNS=		4
@@ -11,12 +11,15 @@ NOLINT=		# defined
 SRCS=	algorithm.cpp bind.cpp chrono.cpp condition_variable.cpp debug.cpp \
 	exception.cpp future.cpp hash.cpp ios.cpp iostream.cpp locale.cpp \
 	memory.cpp mutex.cpp new.cpp random.cpp regex.cpp stdexcept.cpp \
-	string.cpp strstream.cpp system_error.cpp thread.cpp typeinfo.cpp \
+	string.cpp strstream.cpp system_error.cpp thread.cpp \
 	utility.cpp valarray.cpp
+# typeinfo.cc: prefer libcxxrt's version
 
 LIBCXXRT_SRCS+= \
-	auxhelper.cc dynamic_cast.cc exception.cc guard.cc memory.cc \
-	stdexcept.cc terminate.cc typeinfo.cc cxa_atexit.c libelftc_dem_gnu3.c
+	auxhelper.cc dynamic_cast.cc exception.cc guard.cc \
+	stdexcept.cc terminate.cc typeinfo.cc libelftc_dem_gnu3.c
+# cxa_atexit.c: Solaris-only
+# memory.cc: already provided by libc++'s new.cpp
 
 .for src in ${LIBCXXRT_SRCS}
 rt_${src}: ${LIBCXXRT_SRCDIR}/src/${src}
