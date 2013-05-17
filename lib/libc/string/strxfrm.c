@@ -1,4 +1,4 @@
-/*	$NetBSD: strxfrm.c,v 1.13 2013/04/19 23:28:47 joerg Exp $	*/
+/*	$NetBSD: strxfrm.c,v 1.14 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)strxfrm.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strxfrm.c,v 1.13 2013/04/19 23:28:47 joerg Exp $");
+__RCSID("$NetBSD: strxfrm.c,v 1.14 2013/05/17 12:55:57 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,8 +62,6 @@ strxfrm_l(char *dst, const char *src, size_t n, locale_t loc)
 
 	_DIAGASSERT(src != NULL);
 
-	if (loc == NULL)
-		loc = _C_locale;
 	/* XXX: LC_COLLATE should be implemented. */
 	/* LINTED */(void)loc;
 
@@ -83,5 +81,5 @@ strxfrm_l(char *dst, const char *src, size_t n, locale_t loc)
 size_t
 strxfrm(char *dst, const char *src, size_t n)
 {
-	return strxfrm_l(dst, src, n, *_current_locale());
+	return strxfrm_l(dst, src, n, _current_locale());
 }
