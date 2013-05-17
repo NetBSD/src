@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/04/27 23:02:21 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/05/17 22:59:29 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -104,10 +104,18 @@ INCS=	__bit_reference \
 	hash_map \
 	hash_set
 
+INCS+=		cxxabi.h
+
 INCSDIR=	/usr/include/c++
 .for f in __hash hash_map hash_set
 INCSDIR_${f}=	/usr/include/c++/ext
 .endfor
+
+cxxabi.h: ${LIBCXXRT_SRCDIR}/src/cxxabi.h
+	cp ${LIBCXXRT_SRCDIR}/src/cxxabi.h .
+
+DPSRCS+=	cxxabi.h
+CLEANFILES+=	cxxabi.h
 
 .include <bsd.inc.mk>
 .include <bsd.obj.mk>

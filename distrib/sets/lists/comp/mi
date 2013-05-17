@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1820 2013/05/02 13:30:10 matt Exp $
+#	$NetBSD: mi,v 1.1821 2013/05/17 22:59:29 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -227,6 +227,7 @@
 ./usr/include/c++/cassert			comp-cxx-include	libcxx
 ./usr/include/c++/ccomplex			comp-cxx-include	libcxx
 ./usr/include/c++/cctype			comp-cxx-include	libcxx
+./usr/include/c++/cxxabi.h			comp-cxx-include	libcxx
 ./usr/include/c++/cerrno			comp-cxx-include	libcxx
 ./usr/include/c++/cfenv				comp-cxx-include	libcxx
 ./usr/include/c++/cfloat			comp-cxx-include	libcxx
