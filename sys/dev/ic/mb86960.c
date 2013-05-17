@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.78 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.79 2013/05/17 10:48:54 mbalmer Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.78 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.79 2013/05/17 10:48:54 mbalmer Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -675,7 +675,7 @@ mb86960_start(struct ifnet *ifp)
 		 * reset the entire interface.  I don't want to do it.)
 		 *
 		 * If txb_count is incorrect, leaving it as is will cause
-		 * sending of gabages after next interrupt.  We have to
+		 * sending of garbage after the next interrupt.  We have to
 		 * avoid it.  Hence, we reset the txb_count here.  If
 		 * txb_free was incorrect, resetting txb_count just loose
 		 * some packets.  We can live with it.
