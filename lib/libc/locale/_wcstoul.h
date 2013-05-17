@@ -1,4 +1,4 @@
-/* $NetBSD: _wcstoul.h,v 1.5 2013/04/16 16:52:13 joerg Exp $ */
+/* $NetBSD: _wcstoul.h,v 1.6 2013/05/17 12:55:57 joerg Exp $ */
 
 /*
  * Copyright (c) 1990, 1993
@@ -126,14 +126,12 @@ __UINT
 _FUNCNAME(const wchar_t *nptr, wchar_t **endptr, int base)
 {
 	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(nptr, endptr, base,
-						  *_current_locale());
+						  _current_locale());
 }
 
 __UINT
 INT_FUNCNAME(, _FUNCNAME, _l)(const wchar_t *nptr, wchar_t **endptr,
 			      int base, locale_t loc)
 {
-	if (loc == NULL)
-		loc = _C_locale;
 	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(nptr, endptr, base, loc);
 }
