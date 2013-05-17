@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.13 2013/04/19 10:41:53 joerg Exp $ */
+/* $NetBSD: strtod.c,v 1.14 2013/05/17 12:55:57 joerg Exp $ */
 
 /****************************************************************
 
@@ -1103,7 +1103,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 double
 strtod(CONST char *s, char **sp)
 {
-	return _int_strtod_l(s, sp, *_current_locale());
+	return _int_strtod_l(s, sp, _current_locale());
 }
 
 #ifdef __weak_alias
@@ -1113,7 +1113,5 @@ __weak_alias(strtod_l, _strtod_l)
 double
 strtod_l(CONST char *s, char **sp, locale_t loc)
 {
-	if (loc == NULL)
-		loc = _C_locale;
 	return _int_strtod_l(s, sp, loc);
 }

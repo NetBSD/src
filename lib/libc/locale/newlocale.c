@@ -1,4 +1,4 @@
-/* $NetBSD: newlocale.c,v 1.1 2013/04/30 00:45:05 joerg Exp $ */
+/* $NetBSD: newlocale.c,v 1.2 2013/05/17 12:55:57 joerg Exp $ */
 
 /*-
  * Copyright (c)2008, 2011 Citrus Project,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: newlocale.c,v 1.1 2013/04/30 00:45:05 joerg Exp $");
+__RCSID("$NetBSD: newlocale.c,v 1.2 2013/05/17 12:55:57 joerg Exp $");
 
 #include "namespace.h"
 #include <assert.h>
@@ -55,7 +55,7 @@ newlocale(int mask, const char *name, locale_t src)
 	if (dst == NULL)
 		return (locale_t)NULL;
 	if (src == NULL)
-		src = *_current_locale();
+		src = _current_locale();
 	memcpy(dst, src, sizeof(*src));
 	strlcpy(&head[0], name, sizeof(head));
 	tokens[0] = (const char *)&head[0];

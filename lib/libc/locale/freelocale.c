@@ -1,4 +1,4 @@
-/* $NetBSD: freelocale.c,v 1.1 2013/04/30 00:45:05 joerg Exp $ */
+/* $NetBSD: freelocale.c,v 1.2 2013/05/17 12:55:57 joerg Exp $ */
 
 /*-
  * Copyright (c)2008, 2011 Citrus Project,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: freelocale.c,v 1.1 2013/04/30 00:45:05 joerg Exp $");
+__RCSID("$NetBSD: freelocale.c,v 1.2 2013/05/17 12:55:57 joerg Exp $");
 
 #include "namespace.h"
 
@@ -44,8 +44,8 @@ void
 freelocale(locale_t locale)
 {
 
-	_DIAGASSERT(locale != _LC_GLOBAL_LOCALE);
+	_DIAGASSERT(locale != LC_GLOBAL_LOCALE);
+	_DIAGASSERT(locale != LC_C_LOCALE);
 	_DIAGASSERT(locale != NULL);
-	_DIAGASSERT(locale != &_global_locale);
 	free(locale);
 }

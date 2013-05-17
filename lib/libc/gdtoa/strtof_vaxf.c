@@ -1,4 +1,4 @@
-/* $NetBSD: strtof_vaxf.c,v 1.7 2013/04/18 21:54:11 joerg Exp $ */
+/* $NetBSD: strtof_vaxf.c,v 1.8 2013/05/17 12:55:57 joerg Exp $ */
 
 /****************************************************************
 
@@ -83,13 +83,11 @@ _int_strtof_l(CONST char *s, char **sp, locale_t loc)
 float
 strtof(CONST char *s, char **sp)
 {
-	return _int_strtof_l(s, sp, *_current_locale());
+	return _int_strtof_l(s, sp, _current_locale());
 }
 
 float
 strtof_l(CONST char *s, char **sp, locale_t loc)
 {
-	if (loc == NULL)
-		loc = _C_locale;
 	return _int_strtof_l(s, sp, loc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.44 2013/04/19 23:32:17 joerg Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.45 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfscanf.c,v 1.41 2007/01/09 00:28:07 imp Exp $");
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.44 2013/04/19 23:32:17 joerg Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.45 2013/05/17 12:55:57 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -132,7 +132,7 @@ __collate_range_cmp(int c1, int c2, locale_t loc)
 int
 __svfscanf(FILE *fp, char const *fmt0, va_list ap)
 {
-	return __svfscanf_l(fp, *_current_locale(), fmt0, ap);
+	return __svfscanf_l(fp, _current_locale(), fmt0, ap);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: localeconv.c,v 1.20 2013/04/17 20:40:13 joerg Exp $ */
+/* $NetBSD: localeconv.c,v 1.21 2013/05/17 12:55:57 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeconv.c,v 1.20 2013/04/17 20:40:13 joerg Exp $");
+__RCSID("$NetBSD: localeconv.c,v 1.21 2013/05/17 12:55:57 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,7 +47,5 @@ localeconv(void)
 struct lconv *
 localeconv_l(locale_t loc)
 {
-	if (loc == NULL)
-		loc = _C_locale;
 	return loc->cache->ldata;
 }

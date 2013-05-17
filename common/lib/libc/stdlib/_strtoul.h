@@ -1,4 +1,4 @@
-/* $NetBSD: _strtoul.h,v 1.6 2013/04/26 21:20:48 joerg Exp $ */
+/* $NetBSD: _strtoul.h,v 1.7 2013/05/17 12:55:56 joerg Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -152,14 +152,12 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char *nptr, char **endptr,
 __UINT
 _FUNCNAME(const char *nptr, char **endptr, int base)
 {
-	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(nptr, endptr, base, *_current_locale());
+	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(nptr, endptr, base, _current_locale());
 }
 
 __UINT
 INT_FUNCNAME(, _FUNCNAME, _l)(const char *nptr, char **endptr, int base, locale_t loc)
 {
-	if (loc == NULL)
-		loc = _C_locale;
 	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(nptr, endptr, base, loc);
 }
 #endif
