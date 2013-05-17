@@ -1,4 +1,4 @@
-# $NetBSD: t_grep.sh,v 1.1 2012/03/17 16:33:13 jruoho Exp $
+# $NetBSD: t_grep.sh,v 1.2 2013/05/17 15:39:17 christos Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,7 +43,7 @@ binary_head()
 }
 binary_body()
 {
-	atf_check -o file:"$(atf_get_srcdir)/d_binary.out" grep NetBSD /bin/sh
+	atf_check -o file:"$(atf_get_srcdir)/d_binary.out" grep $(uname) /bin/sh
 }
 
 atf_test_case recurse
