@@ -1,7 +1,7 @@
-/* $NetBSD: gpioctl.c,v 1.19 2011/11/13 13:20:02 mbalmer Exp $ */
+/* $NetBSD: gpioctl.c,v 1.20 2013/05/19 15:31:23 mbalmer Exp $ */
 
 /*
- * Copyright (c) 2008, 2010, 2011 Marc Balmer <mbalmer@NetBSD.org>
+ * Copyright (c) 2008, 2010, 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -39,6 +39,7 @@
 static char *dev;
 static int devfd = -1;
 static int quiet = 0;
+static int state = 0;
 
 static void getinfo(void);
 static void gpioread(int, char *);
@@ -84,10 +85,13 @@ main(int argc, char *argv[])
 	char *flags;
 	char devn[32];
 
-	while ((ch = getopt(argc, argv, "q")) != -1)
+	while ((ch = getopt(argc, argv, "qs")) != -1)
 		switch (ch) {
 		case 'q':
 			quiet = 1;
+			break;
+		case 's':
+			quiet = state = 1;
 			break;
 		default:
 			usage();
@@ -192,7 +196,6 @@ main(int argc, char *argv[])
 		} else
 			gpioread(pin, nm);
 	}
-
 	return EXIT_SUCCESS;
 }
 
@@ -203,6 +206,9 @@ getinfo(void)
 
 	if (ioctl(devfd, GPIOINFO, &info) == -1)
 		err(EXIT_FAILURE, "GPIOINFO");
+
+	if (state)
+		printf("%d\n", info.gpio_npins);
 
 	if (quiet)
 		return;
@@ -223,6 +229,9 @@ gpioread(int pin, char *gp_name)
 
 	if (ioctl(devfd, GPIOREAD, &req) == -1)
 		err(EXIT_FAILURE, "GPIOREAD");
+
+	if (state)
+		printf("%d\n", req.gp_value);
 
 	if (quiet)
 		return;
@@ -255,6 +264,9 @@ gpiowrite(int pin, char *gp_name, int value)
 		if (ioctl(devfd, GPIOTOGGLE, &req) == -1)
 			err(EXIT_FAILURE, "GPIOTOGGLE");
 	}
+
+	if (state)
+		printf("%d\n", value < 2 ? value : 1 - req.gp_value);
 
 	if (quiet)
 		return;
@@ -344,7 +356,7 @@ usage(void)
 	const char *progname;
 
 	progname = getprogname();
-	fprintf(stderr, "usage: %s [-q] device [pin] [0 | 1 | 2 | "
+	fprintf(stderr, "usage: %s [-qs] device [pin] [0 | 1 | 2 | "
 	    "on | off | toggle]\n", progname);
 	fprintf(stderr, "       %s [-q] device pin set [flags] [name]\n",
 	    progname);
