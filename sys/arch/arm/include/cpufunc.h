@@ -221,6 +221,8 @@ void	cpufunc_domains		(u_int);
 u_int	cpufunc_faultstatus	(void);
 u_int	cpufunc_faultaddress	(void);
 
+u_int	cpu_pfr			(int);
+
 #if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3)
 void	arm3_cache_flush	(void);
 #endif	/* CPU_ARM2 || CPU_ARM250 || CPU_ARM3 */
@@ -468,8 +470,6 @@ void	armv7_dcache_wbinv_range(vaddr_t, vsize_t);
 void	armv7_dcache_inv_range(vaddr_t, vsize_t);
 void	armv7_idcache_wbinv_range(vaddr_t, vsize_t);
 
-void 	armv7_dcache_wbinv_all (void);
-void	armv7_idcache_wbinv_all(void);
 void	armv7_icache_sync_all(void);
 void	armv7_cpu_sleep(int);
 void	armv7_context_switch(u_int);
@@ -478,6 +478,33 @@ void	armv7_drain_writebuf(void);
 void	armv7_setup(char *string);
 #endif
 
+#if defined(CPU_CORTEX) || defined(CPU_PJ4B)
+void 	armv7_dcache_wbinv_all (void);
+void	armv7_idcache_wbinv_all(void);
+#endif
+
+#if defined(CPU_PJ4B)
+void	pj4b_setttb(u_int, bool);
+void	pj4b_tlb_flushID(void);
+void	pj4b_tlb_flushID_SE(u_int);
+
+void	pj4b_icache_sync_range(vm_offset_t, vm_size_t);
+void	pj4b_idcache_wbinv_range(vm_offset_t, vm_size_t);
+void	pj4b_dcache_wbinv_range(vm_offset_t, vm_size_t);
+void	pj4b_dcache_inv_range(vm_offset_t, vm_size_t);
+void	pj4b_dcache_wb_range(vm_offset_t, vm_size_t);
+
+void	pj4b_drain_writebuf(void);
+void	pj4b_drain_readbuf(void);
+void	pj4b_flush_brnchtgt_all(void);
+void	pj4b_flush_brnchtgt_va(u_int);
+void	pj4b_context_switch(u_int);
+void	pj4b_sleep(int);
+
+void	pj4bv7_setup(char *string);
+void	pj4b_config(void);
+
+#endif /* CPU_PJ4B */
 
 #if defined(CPU_ARM1136) || defined(CPU_ARM1176)
 void	arm11x6_setttb			(u_int, bool);
