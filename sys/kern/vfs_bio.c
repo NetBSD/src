@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.243 2013/03/18 13:36:22 para Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.244 2013/05/19 11:02:12 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.243 2013/03/18 13:36:22 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.244 2013/05/19 11:02:12 njoly Exp $");
 
 #include "opt_bufcache.h"
 
@@ -396,7 +396,7 @@ u_long
 buf_memcalc(void)
 {
 	u_long n;
-	vsize_t mapsz;
+	vsize_t mapsz = 0;
 
 	/*
 	 * Determine the upper bound of memory to use for buffers.
@@ -418,7 +418,8 @@ buf_memcalc(void)
 			printf("forcing bufcache %d -> 95", bufcache);
 			bufcache = 95;
 		}
-		mapsz = vm_map_max(buf_map) - vm_map_min(buf_map);
+		if (buf_map != NULL)
+			mapsz = vm_map_max(buf_map) - vm_map_min(buf_map);
 		n = calc_cache_size(mapsz, bufcache,
 		    (buf_map != kernel_map) ? 100 : BUFCACHE_VA_MAXPCT)
 		    / PAGE_SIZE;
