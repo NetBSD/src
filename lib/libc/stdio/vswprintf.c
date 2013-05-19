@@ -1,4 +1,4 @@
-/*	$NetBSD: vswprintf.c,v 1.5 2013/05/17 12:55:57 joerg Exp $	*/
+/*	$NetBSD: vswprintf.c,v 1.6 2013/05/19 21:45:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vswprintf.c,v 1.6 2005/02/21 19:41:44 fjoe Exp $");
 #else
-__RCSID("$NetBSD: vswprintf.c,v 1.5 2013/05/17 12:55:57 joerg Exp $");
+__RCSID("$NetBSD: vswprintf.c,v 1.6 2013/05/19 21:45:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,7 +70,7 @@ vswprintf_l(wchar_t * __restrict s, size_t n, locale_t loc,
 	_FILEEXT_SETUP(&f, &fext);
 	f._file = -1;
 	f._flags = __SWR | __SSTR | __SALC;
-	f._bf._base = f._p = (unsigned char *)malloc(128);
+	f._bf._base = f._p = malloc(128);
 	if (f._bf._base == NULL) {
 		errno = ENOMEM;
 		return -1;
