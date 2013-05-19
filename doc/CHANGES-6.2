@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.1 2013/05/19 21:22:29 riz Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.2 2013/05/19 22:20:17 riz Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -7,4 +7,22 @@ gnu/usr.bin/groff/tmac/mdoc.local		patched by hand
 sys/sys/param.h					patched by hand
 
 	Welcome to 6.1_STABLE!
+
+sys/dev/usb/usb_quirks.c			1.78
+sys/dev/usb/usbdevs				1.639
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Fix the detection of the tripplite USB SMARTLCD UPS.
+	[garbled, ticket #849]
+
+sys/dev/usb/usb.h				1.101-1.103
+
+	Add some defines and macros.
+	[skrll, ticket #850]
+
+crypto/external/bsd/heimdal/bin/krb5-config/Makefile 1.2
+
+	Don't force pthread linkage.
+	[joerg, ticket #871]
 
