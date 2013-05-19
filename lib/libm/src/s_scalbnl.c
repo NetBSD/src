@@ -1,4 +1,4 @@
-/*	$NetBSD: s_scalbnl.c,v 1.7 2013/04/28 14:46:16 joerg Exp $	*/
+/*	$NetBSD: s_scalbnl.c,v 1.8 2013/05/19 20:50:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_scalbnl.c,v 1.7 2013/04/28 14:46:16 joerg Exp $");
+__RCSID("$NetBSD: s_scalbnl.c,v 1.8 2013/05/19 20:50:02 martin Exp $");
 
 #include "namespace.h"
 
@@ -82,7 +82,7 @@ scalblnl(long double x, long n)
 	/* Protect against integer overflow in calculation of new exponent */
 	if (n > LDBL_MAX_EXP - LDBL_MIN_EXP + LDBL_MANT_DIG)
 		goto overflow;
-	if (n < LDBL_MAX_EXP - LDBL_MIN_EXP + LDBL_MANT_DIG)
+	if (n < LDBL_MIN_EXP - LDBL_MAX_EXP - LDBL_MANT_DIG)
 		goto underflow;
 
 	/* Scale denormalized numbers slightly, so that they are normal */
