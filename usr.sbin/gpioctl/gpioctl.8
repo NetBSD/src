@@ -1,6 +1,6 @@
-.\" $NetBSD: gpioctl.8,v 1.16 2011/11/13 14:39:42 mbalmer Exp $
+.\" $NetBSD: gpioctl.8,v 1.17 2013/05/19 14:06:35 mbalmer Exp $
 .\"
-.\" Copyright (c) 2009, 2010, 2011 Marc Balmer <marc@msys.ch>
+.\" Copyright (c) 2009, 2010, 2011, 2013 Marc Balmer <marc@msys.ch>
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd November 13, 2011
+.Dd May 19, 2013
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
@@ -97,8 +97,6 @@ Instead of the numerical values, the word
 or
 .Ar toggle
 can be used.
-.Pp
-To
 .Pp
 Only pins that have been configured at securelevel 0, typically during system
 startup, are accessible once the securelevel has been raised.
