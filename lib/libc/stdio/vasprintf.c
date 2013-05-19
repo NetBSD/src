@@ -1,4 +1,4 @@
-/*	$NetBSD: vasprintf.c,v 1.16 2013/05/17 12:55:57 joerg Exp $	*/
+/*	$NetBSD: vasprintf.c,v 1.17 2013/05/19 21:45:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vasprintf.c,v 1.16 2013/05/17 12:55:57 joerg Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.17 2013/05/19 21:45:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -63,7 +63,7 @@ vasprintf_l(char **str, locale_t loc, const char *fmt, va_list ap)
 	_FILEEXT_SETUP(&f, &fext);
 	f._file = -1;
 	f._flags = __SWR | __SSTR | __SALC;
-	f._bf._base = f._p = (unsigned char *)malloc(128);
+	f._bf._base = f._p = malloc(128);
 	if (f._bf._base == NULL)
 		goto err;
 	f._bf._size = f._w = 127;		/* Leave room for the NUL */
