@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.24 2013/03/20 00:29:47 christos Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.25 2013/05/19 20:45:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.24 2013/03/20 00:29:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.25 2013/05/19 20:45:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -812,6 +812,9 @@ npfctl_table(void *data)
 	case NPF_CMD_TABLE_LIST:
 		error = npf_table_list(tblset, nct->nct_tid,
 		    nct->nct_data.buf.buf, nct->nct_data.buf.len);
+		break;
+	case NPF_CMD_TABLE_FLUSH:
+		error = npf_table_flush(tblset, nct->nct_tid);
 		break;
 	default:
 		error = EINVAL;
