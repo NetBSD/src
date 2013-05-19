@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.168 2013/05/01 13:12:00 kiyohara Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.169 2013/05/19 16:09:04 mbalmer Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -496,6 +496,7 @@ setup()
 
 	u_root="%uid_root%"
 	u_uucp="%uid_uucp%"
+	g_gpio="%gid_gpio%"
 	g_kmem="%gid_kmem%"
 	g_ntpd="%gid_ntpd%"
 	g_operator="%gid_operator%"
@@ -1458,7 +1459,7 @@ hdaudio[0-9]*)
 
 gpio[0-9]*)
 	unit=${i#gpio}
-	mkdev gpio$unit c %gpio_chr% $unit 644
+	mkdev gpio$unit c %gpio_chr% $unit 664 $g_gpio
 	;;
 
 rmidi[0-9]*)
