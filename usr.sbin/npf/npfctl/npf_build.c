@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.23 2013/03/20 00:29:47 christos Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.24 2013/05/19 20:45:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.23 2013/03/20 00:29:47 christos Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.24 2013/05/19 20:45:34 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -384,8 +384,10 @@ npfctl_build_ncode(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	 */
 	code = npfctl_ncgen_complete(nc, &len);
 	if (npf_debug) {
+		extern char *yytext;
 		extern int yylineno;
-		printf("RULE AT LINE %d\n", yylineno);
+
+		printf("RULE AT LINE %d\n", yylineno - (int)(*yytext == '\n'));
 		npfctl_ncgen_print(code, len);
 	}
 	assert(code && len > 0);

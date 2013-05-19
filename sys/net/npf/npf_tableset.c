@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.17 2013/02/09 03:35:32 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.18 2013/05/19 20:45:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.17 2013/02/09 03:35:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.18 2013/05/19 20:45:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -223,6 +223,19 @@ table_hash_lookup(const npf_table_t *t, const npf_addr_t *addr,
 }
 
 static void
+table_hash_destroy(npf_table_t *t)
+{
+	for (unsigned n = 0; n <= t->t_hashmask; n++) {
+		npf_tblent_t *ent;
+
+		while ((ent = LIST_FIRST(&t->t_hashl[n])) != NULL) {
+			LIST_REMOVE(ent, te_entry.hashq);
+			pool_cache_put(tblent_cache, ent);
+		}
+	}
+}
+
+static void
 table_tree_destroy(pt_tree_t *tree)
 {
 	npf_tblent_t *ent;
@@ -282,14 +295,7 @@ npf_table_destroy(npf_table_t *t)
 
 	switch (t->t_type) {
 	case NPF_TABLE_HASH:
-		for (unsigned n = 0; n <= t->t_hashmask; n++) {
-			npf_tblent_t *ent;
-
-			while ((ent = LIST_FIRST(&t->t_hashl[n])) != NULL) {
-				LIST_REMOVE(ent, te_entry.hashq);
-				pool_cache_put(tblent_cache, ent);
-			}
-		}
+		table_hash_destroy(t);
 		hashdone(t->t_hashl, HASH_LIST, t->t_hashmask);
 		break;
 	case NPF_TABLE_TREE:
@@ -591,4 +597,35 @@ npf_table_list(npf_tableset_t *tset, u_int tid, void *ubuf, size_t len)
 	rw_exit(&t->t_lock);
 
 	return error;
+}
+
+/*
+ * npf_table_flush: remove all table entries.
+ */
+int
+npf_table_flush(npf_tableset_t *tset, u_int tid)
+{
+	npf_table_t *t;
+
+	if ((u_int)tid >= NPF_TABLE_SLOTS || (t = tset[tid]) == NULL) {
+		return EINVAL;
+	}
+
+	rw_enter(&t->t_lock, RW_WRITER);
+	switch (t->t_type) {
+	case NPF_TABLE_HASH:
+		table_hash_destroy(t);
+		t->t_nitems = 0;
+		break;
+	case NPF_TABLE_TREE:
+		table_tree_destroy(&t->t_tree[0]);
+		table_tree_destroy(&t->t_tree[1]);
+		t->t_nitems = 0;
+		break;
+	default:
+		KASSERT(false);
+	}
+	rw_exit(&t->t_lock);
+
+	return 0;
 }

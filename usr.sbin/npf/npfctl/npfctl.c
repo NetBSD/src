@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.36 2013/03/18 02:17:49 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.37 2013/05/19 20:45:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.36 2013/03/18 02:17:49 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.37 2013/05/19 20:45:34 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -115,10 +115,7 @@ usage(void)
 	const char *progname = getprogname();
 
 	fprintf(stderr,
-	    "Usage:\t%s start | stop | flush | show | stats\n", 
-	    progname);
-	fprintf(stderr,
-	    "\t%s sess-load | sess-save\n",
+	    "Usage:\t%s start | stop | flush | show | stats\n",
 	    progname);
 	fprintf(stderr,
 	    "\t%s validate | reload [<rule-file>]\n",
@@ -137,6 +134,9 @@ usage(void)
 	    progname);
 	fprintf(stderr,
 	    "\t%s table <tid> { list | flush }\n",
+	    progname);
+	fprintf(stderr,
+	    "\t%s sess-load | sess-save\n",
 	    progname);
 	exit(EXIT_FAILURE);
 }
@@ -279,6 +279,7 @@ npfctl_table(int fd, int argc, char **argv)
 		{ "del",	NPF_CMD_TABLE_REMOVE		},
 		{ "test",	NPF_CMD_TABLE_LOOKUP		},
 		{ "list",	NPF_CMD_TABLE_LIST		},
+		{ "flush",	NPF_CMD_TABLE_FLUSH		},
 		{ NULL,		0				}
 	};
 	npf_ioctl_table_t nct;
@@ -302,17 +303,27 @@ npfctl_table(int fd, int argc, char **argv)
 	if (tblops[n].cmd == NULL) {
 		errx(EXIT_FAILURE, "invalid command '%s'", cmd);
 	}
-	if (nct.nct_cmd != NPF_CMD_TABLE_LIST) {
+
+	switch (nct.nct_cmd) {
+	case NPF_CMD_TABLE_LIST:
+	case NPF_CMD_TABLE_FLUSH:
+		break;
+	default:
 		if (argc < 3) {
 			usage();
 		}
 		arg = argv[2];
 	}
+
 again:
-	if (nct.nct_cmd == NPF_CMD_TABLE_LIST) {
+	switch (nct.nct_cmd) {
+	case NPF_CMD_TABLE_LIST:
 		nct.nct_data.buf.buf = ecalloc(1, buflen);
 		nct.nct_data.buf.len = buflen;
-	} else {
+		break;
+	case NPF_CMD_TABLE_FLUSH:
+		break;
+	default:
 		if (!npfctl_parse_cidr(arg, &fam, &alen)) {
 			errx(EXIT_FAILURE, "invalid CIDR '%s'", arg);
 		}
