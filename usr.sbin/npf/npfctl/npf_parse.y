@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.23 2013/05/09 19:12:03 christos Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.24 2013/05/19 20:45:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -326,12 +326,13 @@ rproc
 	}
 	;
 
-alg	
+alg
 	: ALG STRING
 	{
 		npfctl_build_alg($2);
 	}
 	;
+
 procs
 	: proc_call SEPLINE procs
 	{
@@ -478,6 +479,7 @@ rule_group
 	| group
 	| ruleset
 	|
+	;
 
 rule
 	: block_or_pass opt_stateful rule_dir opt_final on_ifindex
