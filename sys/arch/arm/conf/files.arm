@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.116 2013/02/14 07:26:23 matt Exp $
+#	$NetBSD: files.arm,v 1.117 2013/05/19 15:51:10 rkujawa Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -8,7 +8,7 @@ defflag	opt_cputypes.h		CPU_ARM2 CPU_ARM250 CPU_ARM3
 defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_ARM9 CPU_ARM9E CPU_ARM10 CPU_ARM11
 				CPU_SA110 CPU_SA1100 CPU_SA1110 CPU_IXP12X0
-				CPU_FA526 CPU_CORTEX
+				CPU_FA526 CPU_CORTEX CPU_PJ4B
 				CPU_XSCALE_80200 CPU_XSCALE_80321
 				CPU_XSCALE_PXA250 CPU_XSCALE_PXA270
 				CPU_XSCALE_IXP425 
@@ -136,7 +136,8 @@ file	arch/arm/arm/cpufunc_asm_armv5.S	cpu_arm10 | cpu_arm11mpcore
 file	arch/arm/arm/cpufunc_asm_armv5_ec.S	cpu_arm9e | cpu_arm10 |
 							cpu_sheeva
 file	arch/arm/arm/cpufunc_asm_armv6.S	cpu_arm11 | cpu_cortex
-file	arch/arm/arm/cpufunc_asm_armv7.S	cpu_cortex
+file	arch/arm/arm/cpufunc_asm_armv7.S	cpu_cortex | cpu_pj4b
+file	arch/arm/arm/cpufunc_asm_pj4b.S		cpu_pj4b
 file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110 | cpu_sa1100 |
 							cpu_sa1110 |
 							cpu_ixp12x0
