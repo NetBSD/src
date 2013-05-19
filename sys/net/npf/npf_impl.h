@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.29 2013/03/20 00:29:47 christos Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.30 2013/05/19 20:45:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -220,6 +220,7 @@ int		npf_table_remove(npf_tableset_t *, u_int,
 int		npf_table_lookup(npf_tableset_t *, u_int,
 		    const int, const npf_addr_t *);
 int		npf_table_list(npf_tableset_t *, u_int, void *, size_t);
+int		npf_table_flush(npf_tableset_t *, u_int);
 
 /* Ruleset interface. */
 npf_ruleset_t *	npf_ruleset_create(size_t);
