@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.38 2013/04/03 19:37:43 htodd Exp $
+# $NetBSD: mkimage,v 1.39 2013/05/20 19:27:17 christos Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -68,13 +68,18 @@ getsize() {
 
 usage() {
 	cat << EOF 1>&2
-Usage: $PROG -h <host-arch> [-b] [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
+Usage: $PROG -h <host-arch> [-bmx] [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
+
+-b	Boot only, no sets loaded
+-d	Add the debug sets
+-m	Mimimize disk writes for sd cards
+-x	Load the x sets too, not just the base ones
 EOF
 	exit 1
 }
 
 # First pass for options to get the host and src directories
-OPTS="K:D:S:bc:h:s:x"
+OPTS="K:D:S:bc:dh:ms:x"
 while getopts "$OPTS" f
 do
 	case $f in
@@ -98,6 +103,9 @@ fi
 . "${DIR}/conf/${h}.conf"
 
 selected_sets="$sets"
+dsets=false
+xsets=false
+minwrites=false
 
 OPTIND=1
 while getopts "$OPTS" f
@@ -107,10 +115,22 @@ do
 	K)	kernel="$OPTARG";;
 	S)	;;
 	b)	bootonly="true";;
+	d)	dsets=true
+		selected_sets="$selected_sets debug"
+		if $xsets; then
+			selected_sets="$selected_sets xdebug"
+		fi
+		;;
 	c)	custom="$OPTARG";;
 	h)	;;
+	m)	minwrites=true;;
 	s)	size="$OPTARG";;
-	x)	selected_sets="$sets $xsets";;
+	x)	xsets=true
+		selected_sets="$selected_sets $xsets"
+		if $dsets; then
+		    selected_sets="$selected_sets xdebug"
+		fi
+		;;
 	*)	usage;;
 	esac
 done
