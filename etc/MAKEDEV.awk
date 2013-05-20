@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.23 2013/04/14 13:47:37 skrll Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.24 2013/05/20 11:37:02 mbalmer Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -211,7 +211,7 @@ BEGIN {
 	print "# Generated from:"
 
 	# MAKEDEV.awk (this script) RCS Id
-	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.23 2013/04/14 13:47:37 skrll Exp $"
+	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.24 2013/05/20 11:37:02 mbalmer Exp $"
 	gsub(/\$/, "", ARCSID)
 	print "#	" ARCSID
 	
@@ -264,7 +264,7 @@ BEGIN {
 	sub(/%CONSOLE_CMAJOR%/, CONSOLE_CMAJOR)
 	parsed = ""
 	line = $0
-	while (match(line, /%[gu]id_[a-z]*%/)) {
+	while (match(line, /%[gu]id_[_a-z]*%/)) {
 		typ = substr(line, RSTART + 1, 3);
 		nam = substr(line, RSTART + 5, RLENGTH - 6);
 		if (typ == "uid") {
