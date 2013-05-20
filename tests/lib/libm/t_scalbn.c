@@ -1,4 +1,4 @@
-/* $NetBSD: t_scalbn.c,v 1.7 2011/09/13 07:07:32 jruoho Exp $ */
+/* $NetBSD: t_scalbn.c,v 1.8 2013/05/20 12:21:42 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,18 +29,68 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_scalbn.c,v 1.7 2011/09/13 07:07:32 jruoho Exp $");
+__RCSID("$NetBSD: t_scalbn.c,v 1.8 2013/05/20 12:21:42 martin Exp $");
 
 #include <math.h>
 #include <limits.h>
+#include <float.h>
+#include <errno.h>
 
 #include <atf-c.h>
 
 static const int exps[] = { 0, 1, -1, 100, -100 };
 
+/* tests here do not require specific precision, so we just use double */
+struct testcase {
+	int exp;
+	double inval;
+	double result;
+	int error;
+};
+struct testcase test_vals[] = {
+	{ 0,		1.00085,	1.00085,	0 },
+	{ 0,		0.99755,	0.99755,	0 },
+	{ 0,		-1.00085,	-1.00085,	0 },
+	{ 0,		-0.99755,	-0.99755,	0 },
+	{ 1,		1.00085,	2.0* 1.00085,	0 },
+	{ 1,		0.99755,	2.0* 0.99755,	0 },
+	{ 1,		-1.00085,	2.0* -1.00085,	0 },
+	{ 1,		-0.99755,	2.0* -0.99755,	0 },
+
+	/*
+	 * We could add more corner test cases here, but we would have to
+	 * add some ifdefs for the exact format and use a reliable
+	 * generator program - bail for now and only do trivial stuff above.
+	 */
+};
+
 /*
  * scalbn(3)
  */
+ATF_TC(scalbn_val);
+ATF_TC_HEAD(scalbn_val, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test scalbn() for a few values");
+}
+
+ATF_TC_BODY(scalbn_val, tc)
+{
+	const struct testcase *tests = test_vals;
+	const size_t tcnt = __arraycount(test_vals);
+	size_t i;
+	double rv;
+
+	for (i = 0; i < tcnt; i++) {
+		rv = scalbn(tests[i].inval, tests[i].exp);
+		ATF_CHECK_EQ_MSG(errno, tests[i].error,
+		    "test %zu: errno %d instead of %d", i, errno,
+		    tests[i].error);
+		ATF_CHECK_MSG(fabs(rv-tests[i].result)<2.0*DBL_EPSILON,
+		    "test %zu: return value %g instead of %g (difference %g)",
+		    i, rv, tests[i].result, tests[i].result-rv);
+	}
+}
+
 ATF_TC(scalbn_nan);
 ATF_TC_HEAD(scalbn_nan, tc)
 {
@@ -113,7 +163,9 @@ ATF_TC_BODY(scalbn_ldexp, tc)
 
 	for (i = 0; i < __arraycount(exps); i++) {
 		y = scalbn(x, exps[i]);
-		ATF_CHECK(y == ldexp(x, exps[i]));
+		ATF_CHECK_MSG(y == ldexp(x, exps[i]), "test %zu: exponent=%d, "
+		    "y=%g, expected %g (diff: %g)", i, exps[i], y, 
+		    ldexp(x, exps[i]), y - ldexp(x, exps[i]));
 	}
 #endif
 #endif
@@ -168,6 +220,30 @@ ATF_TC_BODY(scalbn_zero_pos, tc)
 /*
  * scalbnf(3)
  */
+ATF_TC(scalbnf_val);
+ATF_TC_HEAD(scalbnf_val, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test scalbnf() for a few values");
+}
+
+ATF_TC_BODY(scalbnf_val, tc)
+{
+	const struct testcase *tests = test_vals;
+	const size_t tcnt = __arraycount(test_vals);
+	size_t i;
+	double rv;
+
+	for (i = 0; i < tcnt; i++) {
+		rv = scalbnf(tests[i].inval, tests[i].exp);
+		ATF_CHECK_EQ_MSG(errno, tests[i].error,
+		    "test %zu: errno %d instead of %d", i, errno,
+		    tests[i].error);
+		ATF_CHECK_MSG(fabs(rv-tests[i].result)<2.0*FLT_EPSILON,
+		    "test %zu: return value %g instead of %g (difference %g)",
+		    i, rv, tests[i].result, tests[i].result-rv);
+	}
+}
+
 ATF_TC(scalbnf_nan);
 ATF_TC_HEAD(scalbnf_nan, tc)
 {
@@ -240,7 +316,9 @@ ATF_TC_BODY(scalbnf_ldexpf, tc)
 
 	for (i = 0; i < __arraycount(exps); i++) {
 		y = scalbnf(x, exps[i]);
-		ATF_CHECK(y == ldexpf(x, exps[i]));
+		ATF_CHECK_MSG(y == ldexpf(x, exps[i]),
+		    "test %zu: exponent=%d, y=%g ldexpf returns %g (diff: %g)",
+		    i, exps[i], y, ldexpf(x, exps[i]), y-ldexpf(x, exps[i]));
 	}
 #endif
 #endif
@@ -295,6 +373,34 @@ ATF_TC_BODY(scalbnf_zero_pos, tc)
 /*
  * scalbnl(3)
  */
+ATF_TC(scalbnl_val);
+ATF_TC_HEAD(scalbnl_val, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test scalbnl() for a few values");
+}
+
+ATF_TC_BODY(scalbnl_val, tc)
+{
+#ifndef __HAVE_LONG_DOUBLE
+	atf_tc_skip("Requires long double support");
+#else
+	const struct testcase *tests = test_vals;
+	const size_t tcnt = __arraycount(test_vals);
+	size_t i;
+	long double rv;
+
+	for (i = 0; i < tcnt; i++) {
+		rv = scalbnl(tests[i].inval, tests[i].exp);
+		ATF_CHECK_EQ_MSG(errno, tests[i].error,
+		    "test %zu: errno %d instead of %d", i, errno,
+		    tests[i].error);
+		ATF_CHECK_MSG(fabsl(rv-(long double)tests[i].result)<2.0*LDBL_EPSILON,
+		    "test %zu: return value %Lg instead of %Lg (difference %Lg)",
+		    i, rv, (long double)tests[i].result, (long double)tests[i].result-rv);
+	}
+#endif
+}
+
 ATF_TC(scalbnl_nan);
 ATF_TC_HEAD(scalbnl_nan, tc)
 {
@@ -423,6 +529,7 @@ ATF_TC_BODY(scalbnl_zero_pos, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, scalbn_val);
 	ATF_TP_ADD_TC(tp, scalbn_nan);
 	ATF_TP_ADD_TC(tp, scalbn_inf_neg);
 	ATF_TP_ADD_TC(tp, scalbn_inf_pos);
@@ -430,6 +537,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, scalbn_zero_neg);
 	ATF_TP_ADD_TC(tp, scalbn_zero_pos);
 
+	ATF_TP_ADD_TC(tp, scalbnf_val);
 	ATF_TP_ADD_TC(tp, scalbnf_nan);
 	ATF_TP_ADD_TC(tp, scalbnf_inf_neg);
 	ATF_TP_ADD_TC(tp, scalbnf_inf_pos);
@@ -437,6 +545,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, scalbnf_zero_neg);
 	ATF_TP_ADD_TC(tp, scalbnf_zero_pos);
 
+	ATF_TP_ADD_TC(tp, scalbnl_val);
 	ATF_TP_ADD_TC(tp, scalbnl_nan);
 	ATF_TP_ADD_TC(tp, scalbnl_inf_neg);
 	ATF_TP_ADD_TC(tp, scalbnl_inf_pos);
