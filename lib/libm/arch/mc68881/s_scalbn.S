@@ -1,4 +1,4 @@
-/*	$NetBSD: s_scalbn.S,v 1.10 2013/04/30 21:55:31 joerg Exp $	*/
+/*	$NetBSD: s_scalbn.S,v 1.11 2013/05/20 20:27:43 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,10 +38,10 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_scalbn.S,v 1.10 2013/04/30 21:55:31 joerg Exp $")
+RCSID("$NetBSD: s_scalbn.S,v 1.11 2013/05/20 20:27:43 mlelstv Exp $")
 
 WEAK_ALIAS(scalbn,_scalbn)
-WEAK_ALIAS(ldexp,_scalbln)
+WEAK_ALIAS(ldexp,_scalbn)
 STRONG_ALIAS(_scalbln,_scalbn)
 WEAK_ALIAS(scalbln,_scalbln)
 
