@@ -5,12 +5,12 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_scalbn.S,v 1.13 2013/05/20 15:13:36 mlelstv Exp $")
+RCSID("$NetBSD: s_scalbn.S,v 1.14 2013/05/20 19:40:09 joerg Exp $")
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(scalbn,_scalbn)
 WEAK_ALIAS(scalbln,_scalbln)
-WEAK_ALIAS(ldexp,_scalbln)
+WEAK_ALIAS(ldexp,_scalbn)
 #endif
 #ifdef __x86_64__
 ENTRY(_scalbn)
