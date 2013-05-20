@@ -1,6 +1,6 @@
-.\" $NetBSD: gpiosim.4,v 1.2 2009/08/02 22:38:29 wiz Exp $
+.\" $NetBSD: gpiosim.4,v 1.3 2013/05/20 15:49:03 mbalmer Exp $
 .\"
-.\" Copyright (c) 2009 Marc Balmer <marc@msys.ch>
+.\" Copyright (c) 2009, 2013 Marc Balmer <marc@msys.ch>
 .\" All rights reserved.
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd August 1, 2009
+.Dd May 20, 2013
 .Dt GPIOSIM 4
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-pseudo-device simulates a 32-bit wide
+pseudo-device simulates a 64-bit wide
 .Xr gpio 4
 device.
 The state of the simulated device can be manipulated through the
