@@ -30,5 +30,5 @@ utmp:*:45:
 authpf:*:72:
 users:*:100:
 dialer:*:117:
-gpio:*:118:
+_gpio:*:118:
 nogroup:*:32766:
