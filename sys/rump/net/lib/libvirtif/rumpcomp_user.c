@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.5 2013/04/30 12:39:21 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.6 2013/05/20 10:24:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -114,6 +114,7 @@ rumpcomp_virtif_create(int devnum, struct virtif_user **viup)
 		goto out;
 	}
 	viu->viu_dying = 0;
+	rv = 0;
 
  out:
 	rumpuser_component_schedule(cookie);
