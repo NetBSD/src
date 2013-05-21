@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.13 2013/05/21 15:50:09 tsutsui Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.14 2013/05/21 15:57:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -205,8 +205,6 @@ NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 	int32_t *sp, *dp, *srp, *drp, *dhp = NULL, *hp = NULL;
 	struct rasops_info *ri;
 
-	sp = NULL;	/* XXX gcc */
-
 	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
@@ -294,7 +292,7 @@ NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 		db = dst & 31;
 
 		if ((src -= db) < 0) {
-			sp--;
+			srp--;
 			src += 32;
 		}
 
