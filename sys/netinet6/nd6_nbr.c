@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.97 2013/05/21 08:37:27 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.98 2013/05/21 09:54:12 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.97 2013/05/21 08:37:27 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.98 2013/05/21 09:54:12 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1078,11 +1078,11 @@ nd6_newaddrmsg(struct ifaddr *ifa)
 
 	if (nrt) {
 		rt_newaddrmsg(RTM_ADD, ifa, e, nrt);
-//#if 0
+#if 0
 		log(LOG_DEBUG, "nd6_newaddrmsg: announced %s\n",
 		    ip6_sprintf(&((struct in6_ifaddr *)ifa)->ia_addr.sin6_addr)
 		);
-//#endif
+#endif
 		nrt->rt_refcnt--;
 	}
 }
