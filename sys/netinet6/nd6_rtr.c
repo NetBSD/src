@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.86 2013/02/18 16:45:50 christos Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.87 2013/05/21 08:37:27 roy Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.86 2013/02/18 16:45:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.87 2013/05/21 08:37:27 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1580,10 +1580,14 @@ pfxlist_onlink_check(void)
 					ifa->ia6_flags |= IN6_IFF_TENTATIVE;
 					nd6_dad_start((struct ifaddr *)ifa,
 					    0);
+					/* We will notify the routing socket
+					 * of the DAD result, so no need to
+					 * here */
 				}
 			} else {
 				if ((ifa->ia6_flags & IN6_IFF_DETACHED) == 0) {
 					ifa->ia6_flags |= IN6_IFF_DETACHED;
+					nd6_newaddrmsg((struct ifaddr *)ifa);
 				}
 			}
 		}

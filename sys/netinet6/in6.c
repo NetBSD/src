@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.161 2012/06/23 03:14:03 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.162 2013/05/21 08:37:27 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.161 2012/06/23 03:14:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.162 2013/05/21 08:37:27 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -191,13 +191,29 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 		rt_replace_ifa(nrt, ifa);
 
 	/*
-	 * Report the addition/removal of the address to the routing socket.
+	 * Report the addition/removal of the address to the routing socket
+	 * unless the address is marked tentative, where it will be reported
+	 * once DAD completes.
 	 * XXX: since we called rtinit for a p2p interface with a destination,
 	 *      we end up reporting twice in such a case.  Should we rather
 	 *      omit the second report?
 	 */
 	if (nrt) {
-		rt_newaddrmsg(cmd, ifa, e, nrt);
+		if (cmd != RTM_ADD ||
+		    !(((struct in6_ifaddr *)ifa)->ia6_flags &IN6_IFF_TENTATIVE))
+		{
+#if 0
+			struct in6_ifaddr *ia;
+
+			ia = (struct in6_ifaddr *)ifa;
+			log(LOG_DEBUG,
+			    "in6_ifloop_request: announced %s (%s %d)\n",
+			    ip6_sprintf(&ia->ia_addr.sin6_addr),
+			    cmd == RTM_ADD ? "RTM_ADD" : "RTM_DELETE",
+			    ia->ia6_flags);
+#endif
+			rt_newaddrmsg(cmd, ifa, e, nrt);
+		}
 		if (cmd == RTM_DELETE) {
 			if (nrt->rt_refcnt <= 0) {
 				/* XXX: we should free the entry ourselves. */
@@ -1058,10 +1074,6 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	} else
 		ia->ia6_lifetime.ia6t_preferred = 0;
 
-	/* reset the interface and routing table appropriately. */
-	if ((error = in6_ifinit(ifp, ia, &ifra->ifra_addr, hostIsNew)) != 0)
-		goto unlink;
-
 	/*
 	 * configure address flags.
 	 */
@@ -1083,6 +1095,10 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	ia->ia6_flags &= ~IN6_IFF_DUPLICATED;	/* safety */
 	if (hostIsNew && in6if_do_dad(ifp)) 
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
+
+	/* reset the interface and routing table appropriately. */
+	if ((error = in6_ifinit(ifp, ia, &ifra->ifra_addr, hostIsNew)) != 0)
+		goto unlink;
 
 	/*
 	 * We are done if we have simply modified an existing address.

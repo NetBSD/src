@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.18 2011/07/03 07:25:52 kefren Exp $
+.\"	$NetBSD: route.4,v 1.19 2013/05/21 08:37:27 roy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd November 13, 2010
+.Dd May 21, 2013
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -128,6 +128,11 @@ to most significant bit within the vector.
 .Pp
 Any messages sent to the kernel are returned, and copies are sent
 to all interested listeners.
+The exception to this is a new address marked as tentative, where copies
+will be sent once Duplicate Address Detection has completed and
+the tentative flag cleared or the duplicated flag set.
+Also, new address messages will also be emitted when other flags on the address
+change such as deprecated and detached.
 The kernel will provide the process ID for the sender, and the
 sender may use an additional sequence field to distinguish between
 outstanding messages.
@@ -328,6 +333,20 @@ Specifiers for which addresses are present in the messages are:
 #define RTA_AUTHOR    0x40   /* sockaddr for author of redirect */
 #define RTA_BRD       0x80   /* for NEWADDR, broadcast or p-p dest addr */
 #define RTA_TAG       0x100  /* route tag */
+.Ed
+.Pp
+Flags for IPv6 addresses:
+.Bd -literal
+#define IN6_IFF_ANYCAST		0x01	/* anycast address */
+#define IN6_IFF_TENTATIVE	0x02	/* tentative address */
+#define IN6_IFF_DUPLICATED	0x04	/* DAD detected duplicate */
+#define IN6_IFF_DETACHED	0x08	/* may be detached from the link */
+#define IN6_IFF_DEPRECATED	0x10	/* deprecated address */
+#define IN6_IFF_NODAD		0x20	/* don't perform DAD on this address
+					 * (used only at first SIOC* call)
+					 */
+#define IN6_IFF_AUTOCONF	0x40	/* autoconfigurable address. */
+#define IN6_IFF_TEMPORARY	0x80	/* temporary (anonymous) address. */
 .Ed
 .Sh SEE ALSO
 .Xr socket 2 ,
