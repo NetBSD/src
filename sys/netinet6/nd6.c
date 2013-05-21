@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.144 2013/01/24 14:23:09 joerg Exp $	*/
+/*	$NetBSD: nd6.c,v 1.145 2013/05/21 08:37:27 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.144 2013/01/24 14:23:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.145 2013/05/21 08:37:27 roy Exp $");
 
 #include "opt_ipsec.h"
 
@@ -582,7 +582,10 @@ nd6_timer(void *ignored_arg)
 		} else if (IFA6_IS_DEPRECATED(ia6)) {
 			int oldflags = ia6->ia6_flags;
 
- 			ia6->ia6_flags |= IN6_IFF_DEPRECATED;
+			if ((oldflags & IN6_IFF_DEPRECATED) == 0) {
+				ia6->ia6_flags |= IN6_IFF_DEPRECATED;
+				nd6_newaddrmsg((struct ifaddr *)ia6);
+			}
 
 			/*
 			 * If a temporary address has just become deprecated,
@@ -613,7 +616,10 @@ nd6_timer(void *ignored_arg)
 			 * A new RA might have made a deprecated address
 			 * preferred.
 			 */
-			ia6->ia6_flags &= ~IN6_IFF_DEPRECATED;
+			if (ia6->ia6_flags & IN6_IFF_DEPRECATED) {
+				ia6->ia6_flags &= ~IN6_IFF_DEPRECATED;
+				nd6_newaddrmsg((struct ifaddr *)ia6);
+			}
 		}
 	}
 
