@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.244 2013/05/13 17:10:58 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.245 2013/05/21 06:59:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.244 2013/05/13 17:10:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.245 2013/05/21 06:59:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3584,7 +3584,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 
 	sc->bge_asf_mode = 0;
 	/* No ASF if APE present. */
-	if ((sc->bge_flags & BGE_APE) == 0) {
+	if (0 && (sc->bge_flags & BGE_APE) == 0) {
 		if (bge_allow_asf && (bge_readmem_ind(sc, BGE_SRAM_DATA_SIG) ==
 			BGE_SRAM_DATA_SIG_MAGIC)) {
 			if (bge_readmem_ind(sc, BGE_SRAM_DATA_CFG) &
@@ -3609,7 +3609,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * Note: on some BCM5700 cards, this value appears to be unset.
 	 */
 	hwcfg = hwcfg2 = hwcfg3 = hwcfg4 = 0;
-	if (bge_readmem_ind(sc, BGE_SRAM_DATA_SIG) ==
+	if (0 && bge_readmem_ind(sc, BGE_SRAM_DATA_SIG) ==
 	    BGE_SRAM_DATA_SIG_MAGIC) {
 		uint32_t tmp;
 
