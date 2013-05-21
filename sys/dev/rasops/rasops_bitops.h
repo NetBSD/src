@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.12 2010/04/08 16:45:53 macallan Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.13 2013/05/21 15:50:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 				PUTBITS(tmp, 0, db, dp);
 				if (ri->ri_hwbits) {
 					PUTBITS(tmp, 0, db, hp);
-					hp++;
+					hp--;
 				}
 				dp--;
 				sp--;
