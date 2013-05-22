@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.19 2013/05/21 08:37:27 roy Exp $
+.\"	$NetBSD: route.4,v 1.20 2013/05/22 18:29:41 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -143,14 +143,14 @@ by filling in the
 .Ar rtm_errno
 field.
 The routing code returns
-.Dv EEXIST
+.Er EEXIST
 if
 requested to duplicate an existing entry,
-.Dv ESRCH
+.Er ESRCH
 if
 requested to delete a non-existent entry,
 or
-.Dv ENOBUFS
+.Er ENOBUFS
 if insufficient resources were available
 to install a new route.
 In the current implementation, all routing processes run locally,
