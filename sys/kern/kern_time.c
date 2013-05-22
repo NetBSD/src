@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.178 2013/03/31 16:45:06 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.179 2013/05/22 16:00:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.178 2013/03/31 16:45:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179 2013/05/22 16:00:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -345,8 +345,12 @@ again:
 
 		(void)clock_gettime1(clock_id, &rmtend);
 		t = (rmt != NULL) ? rmt : &t0;
-		timespecsub(&rmtend, &rmtstart, t);
-		timespecsub(rqt, t, t);
+		if (flags & TIMER_ABSTIME) {
+			timespecsub(rqt, &rmtend, t);
+		} else {
+			timespecsub(&rmtend, &rmtstart, t);
+			timespecsub(rqt, t, t);
+		}
 		if (t->tv_sec < 0)
 			timespecclear(t);
 		if (error == 0) {
