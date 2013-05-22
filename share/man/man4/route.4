@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.20 2013/05/22 18:29:41 uwe Exp $
+..\"	$NetBSD: route.4,v 1.21 2013/05/22 18:41:08 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -140,7 +140,7 @@ However, message replies may be lost when kernel buffers are exhausted.
 .Pp
 The kernel may reject certain messages, and will indicate this
 by filling in the
-.Ar rtm_errno
+.Fa rtm_errno
 field.
 The routing code returns
 .Er EEXIST
@@ -155,7 +155,7 @@ if insufficient resources were available
 to install a new route.
 In the current implementation, all routing processes run locally,
 and the values for
-.Ar rtm_errno
+.Fa rtm_errno
 are available through the normal
 .Em errno
 mechanism, even if the routing reply message is lost.
@@ -256,22 +256,22 @@ struct if_announcemsghdr {
 The
 .Dv RTM_IFINFO
 message uses a
-.Ar if_msghdr
+.Vt if_msghdr
 header, the
 .Dv RTM_NEWADDR ,
 .Dv RTM_CHGADDR ,
 and
 .Dv RTM_DELADDR
 messages use a
-.Ar ifa_msghdr
+.Vt ifa_msghdr
 header,
 the
 .Dv RTM_IFANNOUNCE
 message uses a
-.Ar if_announcemsghdr
+.Vt if_announcemsghdr
 header,
 and all other messages use the
-.Ar rt_msghdr
+.Vt rt_msghdr
 header.
 .Pp
 The metrics structure is:
