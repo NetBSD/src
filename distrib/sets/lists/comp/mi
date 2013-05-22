@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1821 2013/05/17 22:59:29 joerg Exp $
+#	$NetBSD: mi,v 1.1822 2013/05/22 16:03:43 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9970,6 +9970,7 @@
 ./usr/share/man/cat9/transferlockers.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/trapsignal.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/trunc_page.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ts2timo.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tsleep.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ttyldisc_add.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ttyldisc_lookup.0		comp-sys-catman		.cat
@@ -16353,6 +16354,7 @@
 ./usr/share/man/html9/transferlockers.html	comp-sys-htmlman	html
 ./usr/share/man/html9/trapsignal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/trunc_page.html		comp-sys-htmlman	html
+./usr/share/man/html9/ts2timo.html		comp-sys-htmlman	html
 ./usr/share/man/html9/tsleep.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ttyldisc_add.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ttyldisc_lookup.html	comp-sys-htmlman	html
@@ -22949,6 +22951,7 @@
 ./usr/share/man/man9/transferlockers.9		comp-sys-man		.man
 ./usr/share/man/man9/trapsignal.9		comp-sys-man		.man
 ./usr/share/man/man9/trunc_page.9		comp-sys-man		.man
+./usr/share/man/man9/ts2timo.9			comp-sys-man		.man
 ./usr/share/man/man9/tsleep.9			comp-sys-man		.man
 ./usr/share/man/man9/ttyldisc_add.9		comp-sys-man		.man
 ./usr/share/man/man9/ttyldisc_lookup.9		comp-sys-man		.man
