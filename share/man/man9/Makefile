@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.370 2013/03/28 11:17:41 wiz Exp $
+#       $NetBSD: Makefile,v 1.371 2013/05/22 16:01:44 christos Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -51,7 +51,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	signal.9 skpc.9 sockopt.9 softintr.9 spl.9 splraiseipl.9 \
 	store.9 suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 sysmon_pswitch.9 sysmon_taskq.9 tc.9 \
-	tcp_congctl.9 timecounter.9 time_second.9 todr.9 tvtohz.9 \
+	tcp_congctl.9 timecounter.9 time_second.9 todr.9 ts2timo.9 tvtohz.9 \
 	ucas.9 uiomove.9 ucom.9 userret.9 \
 	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
 	video.9 vme.9 \
