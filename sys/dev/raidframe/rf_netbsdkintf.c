@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.302 2013/04/29 21:21:10 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.303 2013/05/23 14:15:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.302 2013/04/29 21:21:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.303 2013/05/23 14:15:52 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -3841,7 +3841,10 @@ static int
 raid_detach(device_t self, int flags)
 {
 	int error;
-	struct raid_softc *rs = device_private(self);
+	struct raid_softc *rs = raidget(device_unit(self));
+
+	if (rs == NULL)
+		return ENXIO;
 
 	if ((error = raidlock(rs)) != 0)
 		return (error);
@@ -3849,6 +3852,8 @@ raid_detach(device_t self, int flags)
 	error = raid_detach_unlocked(rs);
 
 	raidunlock(rs);
+
+	/* XXXkd: raidput(rs) ??? */
 
 	return error;
 }
