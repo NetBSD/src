@@ -1,4 +1,4 @@
-/* $NetBSD: t_scalbn.c,v 1.9 2013/05/23 20:45:47 christos Exp $ */
+/* $NetBSD: t_scalbn.c,v 1.10 2013/05/24 11:47:13 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_scalbn.c,v 1.9 2013/05/23 20:45:47 christos Exp $");
+__RCSID("$NetBSD: t_scalbn.c,v 1.10 2013/05/24 11:47:13 martin Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -75,7 +75,6 @@ ATF_TC_HEAD(scalbn_val, tc)
 
 ATF_TC_BODY(scalbn_val, tc)
 {
-#ifndef __vax__
 	const struct testcase *tests = test_vals;
 	const size_t tcnt = __arraycount(test_vals);
 	size_t i;
@@ -90,7 +89,6 @@ ATF_TC_BODY(scalbn_val, tc)
 		    "test %zu: return value %g instead of %g (difference %g)",
 		    i, rv, tests[i].result, tests[i].result-rv);
 	}
-#endif
 }
 
 ATF_TC(scalbn_nan);
