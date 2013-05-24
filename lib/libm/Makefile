@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.137 2013/05/01 04:04:31 matt Exp $
+#  $NetBSD: Makefile,v 1.138 2013/05/24 12:45:40 martin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -122,7 +122,7 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 #ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_support.S n_sincos.S n_tan.S
 # XXX - ripped out due to lack of the insn polyd in the Mariah chip,
 # and emulation code isn't written yet.
-ARCHS_SRCS = n_scalbn.S
+ARCH_SRCS = n_scalbn.S
 WARNS?=5
 .endif
 
@@ -217,7 +217,7 @@ SRCS+= ${ARCH_ADDS}
 .if (${MACHINE_ARCH} == "vax") # XXX until POLYD is written.
 .PATH:	${.CURDIR}/arch/vax
 SRCS:=${SRCS} n_sqrt.S n_argred.S n_infnan.S n_atan2.S n_cabs.S n_cbrt.S \
-	n_support.S
+	n_support.S n_scalbn.S
 .endif
 
 .if (${MACHINE_ARCH} == "i386")
