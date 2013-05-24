@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/01/12 07:56:31 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.10 2013/05/24 15:34:59 christos Exp $
 
 LIB=	dos
 
@@ -14,47 +14,48 @@ SRCS=	dos_rename.S
 SRCS+=	dos_cerror.S dos_procerr.S dos_errno.c dos_strerror.S
 CLEANFILES+=	dos_strerror.S
 
-ASM=	exit.o getchar.o putchar.o cominp.o comout.o prnout.o inpout.o \
-	inkey.o getc.o print.o gets.o keysns.o kflushgp.o kflushio.o \
-	kflushin.o kflushgc.o kflushgs.o fflush.o chgdrv.o drvctrl.o \
-	consns.o prnsns.o cinsns.o coutsns.o fatchk.o fatchk2.o hendspmo.o \
-	hendspmp.o hendspmr.o hendspmc.o hendspio.o hendspip.o hendspir.o \
-	hendspic.o hendspso.o hendspsp.o hendspsr.o hendspsc.o curdrv.o \
-	getss.o fgetc.o fgets.o fputc.o fputs.o allclose.o super.o fnckeygt.o \
-	fnckeyst.o c_putc.o c_print.o c_color.o c_locate.o c_down_s.o \
-	c_up_s.o c_up.o c_down.o c_right.o c_left.o c_cls_ed.o c_cls_st.o \
-	c_cls_al.o c_era_ed.o c_era_st.o c_era_al.o c_ins.o c_del.o \
-	c_fnkmod.o c_window.o c_width.o c_curon.o c_curoff.o k_keyinp.o \
-	k_keysns.o k_sftsns.o k_keybit.o k_insmod.o intvcs.o pspset.o \
-	gettim2.o settim2.o namests.o getdate.o setdate.o gettime.o settime.o \
-	verify.o dup0.o vernum.o keeppr.o getdpb.o breakck.o drvxchg.o \
-	intvcg.o dskfre.o nameck.o mkdir.o rmdir.o chdir.o create.o open.o \
-	close.o read.o write.o delete.o seek.o chmod.o ioctrlgt.o ioctrlst.o \
-	ioctrlrh.o ioctrlwh.o ioctrlrd.o ioctrlwd.o ioctrlis.o ioctrlos.o \
-	ioctrldvgt.o ioctrlfdgt.o ioctrlrtset.o ioctrldvctl.o ioctrlfdctl.o \
-	dup.o dup2.o curdir.o malloc.o mfree.o setblock.o loadexec.o load.o \
-	pathchk.o loadonly.o execonly.o bindno.o exec2.o exit2.o wait.o \
-	files.o exfiles.o nfiles.o exnfiles.o setpdb.o getpdb.o setenv.o \
-	getenv.o verifyg.o common_ck.o common_rd.o common_wt.o common_lk.o \
-	common_fre.o common_del.o move.o filedate.o malloc2.o malloc0.o \
-	maketmp.o newfile.o lock.o unlock.o getassign.o makeassign.o \
-	rassign.o fflush_set.o os_patch.o get_fcb_adr.o s_malloc.o \
-	s_malloc0.o s_mfree.o s_process.o retshell.o ctlabort.o errabort.o \
-	diskred.o diskred2.o diskwrt.o diskwrt2.o indosflg.o super_jsr.o \
-	memcpy.o open_pr.o kill_pr.o get_pr.o suspend_pr.o sleep_pr.o \
-	send_pr.o time_pr.o change_pr.o
+ASM=	exit.S getchar.S putchar.S .Sminp.S .S.Sut.S pr.Sut.S in.Sut.S \
+	inkey.S getc.S print.S gets.S keysns.S kflushgp.S kflush.S.S \
+	kflushin.S kflushgc.S kflushgs.S fflush.S chgdrv.S drvctrl.S \
+	.Snsns.S prnsns.S cinsns.S .Sutsns.S fatchk.S fatchk2.S hendsp.S.S \
+	hendspmp.S hendspmr.S hendspmc.S hendsp.S.S hendspip.S hendspir.S \
+	hendspic.S hendsp.S.S hendspsp.S hendspsr.S hendspsc.S curdrv.S \
+	getss.S fgetc.S fgets.S fputc.S fputs.S allc.Sse.S super.S fnckeygt.S \
+	fnckeyst.S c_putc.S c_print.S c_.S.Sr.S c_.Scate.S c_.Swn_s.S \
+	c_up_s.S c_up.S c_.Swn.S c_right.S c_left.S c_cls_ed.S c_cls_st.S \
+	c_cls_al.S c_era_ed.S c_era_st.S c_era_al.S c_ins.S c_del.S \
+	c_fnk.Sd.S c_win.Sw.S c_width.S c_cu.Sn.S c_cu.Sff.S k_keyinp.S \
+	k_keysns.S k_sftsns.S k_keybit.S k_ins.Sd.S intvcs.S pspset.S \
+	gettim2.S settim2.S namests.S getdate.S setdate.S gettime.S settime.S \
+	verify.S dup0.S vernum.S keeppr.S getdpb.S breakck.S drvxchg.S \
+	intvcg.S dskfre.S nameck.S mkdir.S rmdir.S chdir.S create.S.Spen.S \
+	c.Sse.S read.S write.S delete.S seek.S ch.Sd.S .Sctrlgt.S .Sctrlst.S \
+	.Sctrlrh.S .Sctrlwh.S .Sctrlrd.S .Sctrlwd.S .Sctrlis.S .Sctr.Ss.S \
+	.Sctrldvgt.S .Sctrlfdgt.S .Sctrlrtset.S .Sctrldvctl.S .Sctrlfdctl.S \
+	dup.S dup2.S curdir.S mal.Sc.S mfree.S setb.Sck.S .Sadexec.S .Sad.S \
+	pathchk.S .Sa.Snly.S exe.Snly.S bind.S.S exec2.S exit2.S wait.S \
+	files.S exfiles.S nfiles.S exnfiles.S setpdb.S getpdb.S setenv.S \
+	getenv.S verifyg.S .Sm.Sn_ck.S .Sm.Sn_rd.S .Sm.Sn_wt.S .Sm.Sn_lk.S \
+	.Sm.Sn_fre.S .Sm.Sn_del.S .Sve.S filedate.S mal.Sc2.S mal.Sc0.S \
+	maketmp.S newfile.S .Sck.S un.Sck.S getassign.S makeassign.S \
+	rassign.S fflush_set.S.Ss_patch.S get_fcb_adr.S s_mal.Sc.S \
+	s_mal.Sc0.S s_mfree.S s_p.Scess.S retshell.S ctla.Srt.S erra.Srt.S \
+	diskred.S diskred2.S diskwrt.S diskwrt2.S in.Ssflg.S super_jsr.S \
+	memcpy.S.Spen_pr.S kill_pr.S get_pr.S suspend_pr.S sleep_pr.S \
+	send_pr.S time_pr.S change_pr.S
 
-OBJS+=	${ASM}
+SRCS+=	${ASM}
 
 MAKECALL=${.CURDIR}/makedoscalls.awk
 
 ${ASM}: ${.CURDIR}/dos.h ${MAKECALL}
 	${_MKTARGET_COMPILE}
 	@grep -i 'DOS_${.PREFIX} ' ${.CURDIR}/dos.h | \
-	    ${TOOL_AWK} -f ${MAKECALL} | ${CPP} ${CPPFLAGS} | \
-	    ${AS} -o ${.TARGET}
+	    ${TOOL_AWK} -f ${MAKECALL} | ${CPP} ${CPPFLAGS} > ${.TARGET}
 
 MAKESTRERR=${.CURDIR}/makestrerror.awk
+
+CLEANFILES+=${ASM}
 
 dos_strerror.S: ${.CURDIR}/dos_errno.h ${MAKESTRERR}
 	${_MKTARGET_CREATE}
