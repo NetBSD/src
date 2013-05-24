@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.245 2013/05/21 06:59:28 martin Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.246 2013/05/24 02:29:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.245 2013/05/21 06:59:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.246 2013/05/24 02:29:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1965,7 +1965,7 @@ bge_init_tx_ring(struct bge_softc *sc)
 		bge_writembx(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 
 	SLIST_INIT(&sc->txdma_list);
-	for (i = 0; i < BGE_RSLOTS; i++) {
+	for (i = 0; i < BGE_TX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->bge_dmatag, BGE_TXDMA_MAX,
 		    BGE_NTXSEG, ETHER_MAX_LEN_JUMBO, 0, BUS_DMA_NOWAIT,
 		    &dmamap))
