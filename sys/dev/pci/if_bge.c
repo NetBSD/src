@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.246 2013/05/24 02:29:36 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.247 2013/05/24 02:35:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.246 2013/05/24 02:29:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.247 2013/05/24 02:35:28 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.246 2013/05/24 02:29:36 msaitoh Exp $")
 #include <netinet/ip.h>
 #endif
 
-/* Headers for TCP  Segmentation Offload (TSO) */
+/* Headers for TCP Segmentation Offload (TSO) */
 #include <netinet/in_systm.h>		/* n_time for <netinet/ip.h>... */
 #include <netinet/in.h>			/* ip_{src,dst}, for <netinet/ip.h> */
 #include <netinet/ip.h>			/* for struct ip */
@@ -4505,9 +4505,14 @@ bge_intr(void *xsc)
 	struct bge_softc *sc;
 	struct ifnet *ifp;
 	uint32_t statusword;
+	uint32_t intrmask = BGE_PCISTATE_INTR_NOT_ACTIVE;
 
 	sc = xsc;
 	ifp = &sc->ethercom.ec_if;
+
+	/* 5717 and newer chips have no BGE_PCISTATE_INTR_NOT_ACTIVE bit */
+	if (BGE_IS_5717_PLUS(sc))
+		intrmask = 0;
 
 	/* It is possible for the interrupt to arrive before
 	 * the status block is updated prior to the interrupt.
@@ -4523,7 +4528,7 @@ bge_intr(void *xsc)
 	statusword = sc->bge_rdata->bge_status_block.bge_status;
 
 	if ((statusword & BGE_STATFLAG_UPDATED) ||
-	    (!(CSR_READ_4(sc, BGE_PCI_PCISTATE) & BGE_PCISTATE_INTR_NOT_ACTIVE))) {
+	    (~CSR_READ_4(sc, BGE_PCI_PCISTATE) & intrmask)) {
 		/* Ack interrupt and stop others from occuring. */
 		bge_writembx_flush(sc, BGE_MBX_IRQ0_LO, 1);
 
