@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/05/24 15:35:36 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2013/05/24 16:04:37 christos Exp $
 
 LIB=	dos
 
@@ -42,7 +42,8 @@ ASM=	exit.S getchar.S putchar.S .Sminp.S .S.Sut.S pr.Sut.S in.Sut.S \
 	s_mal.Sc0.S s_mfree.S s_p.Scess.S retshell.S ctla.Srt.S erra.Srt.S \
 	diskred.S diskred2.S diskwrt.S diskwrt2.S in.Ssflg.S super_jsr.S \
 	memcpy.S.Spen_pr.S kill_pr.S get_pr.S suspend_pr.S sleep_pr.S \
-	send_pr.S time_pr.S change_pr.S
+	send_pr.S time_pr.S change_pr.S bus_err.S open.S malloc.S close.S \
+	fflush_set.S
 
 SRCS+=	${ASM}
 
