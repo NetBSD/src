@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2009/01/12 07:56:31 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.11 2013/05/24 16:00:16 christos Exp $
 
 LIB=	iocs
 
@@ -10,55 +10,56 @@ NOPIC=# defined
 
 CPPFLAGS+=	-I.
 
-ASM=	b_keyinp.o b_keysns.o b_sftsns.o bitsns.o skeyset.o tvctrl.o \
-	ledmod.o tgusemd.o defchr.o crtmod.o contrast.o hsvtorgb.o tpalet.o \
-	tpalet2.o tcolor.o fntget.o textget.o textput.o clipput.o scroll.o \
-	b_curon.o b_curoff.o b_putc.o b_print.o b_color.o b_locate.o \
-	b_down_s.o b_up_s.o b_up.o b_down.o b_right.o b_left.o b_clr_ed.o \
-	b_clr_st.o b_clr_al.o b_era_ed.o b_era_st.o b_era_al.o b_ins.o \
-	b_del.o b_consol.o b_putmes.o set232c.o lof232c.o inp232c.o \
-	isns232c.o osns232c.o out232c.o joyget.o init_prn.o snsprn.o \
-	outlpt.o outprn.o b_seek.o b_verify.o b_readdi.o b_dskini.o \
-	b_drvsns.o b_write.o b_read.o b_recali.o b_assign.o b_writed.o \
-	b_readid.o b_badfmt.o b_readdl.o b_format.o b_drvchk.o b_eject.o \
-	bindatebcd.o bindateset.o timebcd.o timeset.o bindateget.o datebin.o \
-	timeget.o timebin.o datecnv.o timecnv.o dateasc.o timeasc.o dayasc.o \
-	alarmmod.o alarmset.o alarmget.o adpcmout.o adpcminp.o adpcmaot.o \
-	adpcmain.o adpcmlot.o adpcmlin.o adpcmsns.o adpcmmod.o opmset.o \
-	opmsns.o opmintst.o timerdst.o vdispst.o crtcras.o hsyncst.o \
-	prnintst.o ms_init.o ms_curon.o ms_curof.o ms_stat.o ms_getdt.o \
-	ms_curgt.o ms_curst.o ms_limit.o ms_offtm.o ms_ontm.o ms_patst.o \
-	ms_sel.o ms_sel2.o skey_mod.o densns.o ontime.o b_intvcs.o b_super.o \
-	b_bpeek.o b_wpeek.o b_lpeek.o b_memstr.o b_bpoke.o b_wpoke.o \
-	b_lpoke.o b_memset.o dmamove.o dmamov_a.o dmamov_l.o dmamode.o \
-	bootinf.o romver.o g_clr_on.o gpalet.o sftjis.o jissft.o akconv.o \
-	rmacnv.o dakjob.o hanjob.o mpu_stat.o cache_st.o cache_md.o \
-	b_curmod.o b_curpat.o b_curpat1.o b_curdef.o b_scroll.o os_curon.o \
-	os_curof.o drawmode.o apage.o vpage.o home.o window.o wipe.o pset.o \
-	point.o line.o box.o fill.o circle.o paint.o symbol.o getgrm.o \
-	putgrm.o sp_init.o sp_on.o sp_off.o sp_cgclr.o sp_defcg.o sp_gtpcg.o \
-	sp_regst.o sp_reggt.o bgscrlst.o bgscrlgt.o bgctrlst.o bgctrlgt.o \
-	bgtextcl.o bgtextst.o bgtextgt.o spalet.o txxline.o txyline.o \
-	txline.o txbox.o txfill.o txrev.o txrascpy.o abortrst.o iplerr.o \
-	abortjob.o trap15.o
+ASM=	b_keyinp.S b_keysns.S b_sftsns.S bitsns.S skeyset.S tvctrl.S \
+	ledmod.S tgusemd.S defchr.S crtmod.S contrast.S hsvtorgb.S tpalet.S \
+	tpalet2.S tcolor.S fntget.S textget.S textput.S clipput.S scroll.S \
+	b_curon.S b_curoff.S b_putc.S b_print.S b_color.S b_locate.S \
+	b_down_s.S b_up_s.S b_up.S b_down.S b_right.S b_left.S b_clr_ed.S \
+	b_clr_st.S b_clr_al.S b_era_ed.S b_era_st.S b_era_al.S b_ins.S \
+	b_del.S b_consol.S b_putmes.S set232c.S lof232c.S inp232c.S \
+	isns232c.S osns232c.S out232c.S joyget.S init_prn.S snsprn.S \
+	outlpt.S outprn.S b_seek.S b_verify.S b_readdi.S b_dskini.S \
+	b_drvsns.S b_write.S b_read.S b_recali.S b_assign.S b_writed.S \
+	b_readid.S b_badfmt.S b_readdl.S b_format.S b_drvchk.S b_eject.S \
+	bindatebcd.S bindateset.S timebcd.S timeset.S bindateget.S datebin.S \
+	timeget.S timebin.S datecnv.S timecnv.S dateasc.S timeasc.S dayasc.S \
+	alarmmod.S alarmset.S alarmget.S adpcmout.S adpcminp.S adpcmaot.S \
+	adpcmain.S adpcmlot.S adpcmlin.S adpcmsns.S adpcmmod.S opmset.S \
+	opmsns.S opmintst.S timerdst.S vdispst.S crtcras.S hsyncst.S \
+	prnintst.S ms_init.S ms_curon.S ms_curof.S ms_stat.S ms_getdt.S \
+	ms_curgt.S ms_curst.S ms_limit.S ms_offtm.S ms_ontm.S ms_patst.S \
+	ms_sel.S ms_sel2.S skey_mod.S densns.S ontime.S b_intvcs.S b_super.S \
+	b_bpeek.S b_wpeek.S b_lpeek.S b_memstr.S b_bpoke.S b_wpoke.S \
+	b_lpoke.S b_memset.S dmamove.S dmamov_a.S dmamov_l.S dmamode.S \
+	bootinf.S romver.S g_clr_on.S gpalet.S sftjis.S jissft.S akconv.S \
+	rmacnv.S dakjob.S hanjob.S mpu_stat.S cache_st.S cache_md.S \
+	b_curmod.S b_curpat.S b_curpat1.S b_curdef.S b_scroll.S os_curon.S \
+	os_curof.S drawmode.S apage.S vpage.S home.S window.S wipe.S pset.S \
+	point.S line.S box.S fill.S circle.S paint.S symbol.S getgrm.S \
+	putgrm.S sp_init.S sp_on.S sp_off.S sp_cgclr.S sp_defcg.S sp_gtpcg.S \
+	sp_regst.S sp_reggt.S bgscrlst.S bgscrlgt.S bgctrlst.S bgctrlgt.S \
+	bgtextcl.S bgtextst.S bgtextgt.S spalet.S txxline.S txyline.S \
+	txline.S txbox.S txfill.S txrev.S txrascpy.S abortrst.S iplerr.S \
+	abortjob.S trap15.S
 
 # SCSI calls
-ASM+=	s_reset.o s_select.o s_cmdout.o s_datain.o s_dataout.o s_stsin.o \
-	s_msgin.o s_msgout.o s_phase.o s_inquiry.o s_read.o s_write.o \
-	s_format.o s_testunit.o s_readcap.o s_readext.o s_writeext.o \
-	s_rezerounit.o s_request.o s_seek.o s_startstop.o s_reassign.o \
-	s_pamedium.o
+ASM+=	s_reset.S s_select.S s_cmdout.S s_datain.S s_dataout.S s_stsin.S \
+	s_msgin.S s_msgout.S s_phase.S s_inquiry.S s_read.S s_write.S \
+	s_format.S s_testunit.S s_readcap.S s_readext.S s_writeext.S \
+	s_rezerounit.S s_request.S s_seek.S s_startstop.S s_reassign.S \
+	s_pamedium.S
 
-OBJS+=	${ASM}
+SRCS+=	${ASM}
 
 MAKECALL=${.CURDIR}/makeiocscalls.awk
 
 ${ASM}: ${.CURDIR}/iocs.h ${MAKECALL}
-	${_MKTARGET_COMPILE}
+	${_MKTARGET_CREATE}
 	@grep -i 'IOCS_${.PREFIX} ' ${.CURDIR}/iocs.h | \
 	    ${TOOL_AWK} -f ${MAKECALL} | \
-	    ${CPP} ${CPPFLAGS} | \
-	    ${AS} -o ${.TARGET}
+	    ${CPP} ${CPPFLAGS} > ${.TARGET}
+
+CLEANFILES+=	${ASM}
 
 # only needed during build
 libinstall::
