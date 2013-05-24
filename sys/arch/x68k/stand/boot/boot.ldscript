@@ -47,5 +47,20 @@ SECTIONS
    end = ALIGN(4) ;
    _end = ALIGN(4) ;
   }
-  /DISCARD/ : { *(.ident) *(.stab) *(.stabstr) *(.comment) }
+  /DISCARD/ : {
+      *(.ident)
+      *(.stab)
+      *(.stabstr)
+      *(.comment)
+      *(.debug_abbrev)
+      *(.debug_info)
+      *(.debug_line)
+      *(.debug_loc)
+      *(.debug_pubnames)
+      *(.debug_pubtypes)
+      *(.debug_aranges)
+      *(.debug_ranges)
+      *(.debug_str)
+      *(.debug_frame)
+  }
 }
