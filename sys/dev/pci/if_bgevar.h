@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.14 2013/03/24 22:33:59 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.15 2013/05/24 02:29:36 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -152,7 +152,6 @@
 #define BGE_SSLOTS	256
 #define BGE_MSLOTS	256
 #define BGE_JSLOTS	384
-#define BGE_RSLOTS	256
 
 #define BGE_JRAWLEN (BGE_JUMBO_FRAMELEN + ETHER_ALIGN)
 #define BGE_JLEN (BGE_JRAWLEN + (sizeof(uint64_t) - \
