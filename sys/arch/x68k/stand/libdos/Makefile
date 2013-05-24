@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2013/05/24 15:34:59 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2013/05/24 15:35:36 christos Exp $
 
 LIB=	dos
 
@@ -49,7 +49,7 @@ SRCS+=	${ASM}
 MAKECALL=${.CURDIR}/makedoscalls.awk
 
 ${ASM}: ${.CURDIR}/dos.h ${MAKECALL}
-	${_MKTARGET_COMPILE}
+	${_MKTARGET_CREATE}
 	@grep -i 'DOS_${.PREFIX} ' ${.CURDIR}/dos.h | \
 	    ${TOOL_AWK} -f ${MAKECALL} | ${CPP} ${CPPFLAGS} > ${.TARGET}
 
