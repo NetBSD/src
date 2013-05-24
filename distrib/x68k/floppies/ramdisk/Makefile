@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2012/11/10 17:40:09 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.42 2013/05/24 21:33:00 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,7 +8,7 @@ IMAGESIZE=		1440k
 # `floppy-root' cannot be used now, due to size issue.
 #IMAGE_RELEASEDIR=	installation/floppy
 
-MAKEFS_FLAGS=	-f 10
+MAKEFS_FLAGS=	-f 5
 WARNS=		1
 DBG=		-Os
 
@@ -27,7 +27,7 @@ IMAGEDEPENDS+= 	${CRUNCHBIN} \
 SMALLPROG_INET6=1
 
 .if ${USE_INET6} != "no"
-LISTS+=		${DISTRIBDIR}/common/list.inet6
+#LISTS+=		${DISTRIBDIR}/common/list.inet6
 .endif
 
 # Use stubs to eliminate some large stuff from libc
