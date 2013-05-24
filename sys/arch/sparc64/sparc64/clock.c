@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.107 2012/11/08 00:34:38 macallan Exp $ */
+/*	$NetBSD: clock.c,v 1.108 2013/05/24 23:02:08 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.107 2012/11/08 00:34:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.108 2013/05/24 23:02:08 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.107 2012/11/08 00:34:38 macallan Exp $")
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/cpu.h>
-#include <machine/cpu_counter.h>
 
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
@@ -161,7 +160,7 @@ static struct timecounter stick_timecounter = {
 	~0u,			/* counter_mask */
 	0,                      /* frequency - set at initialisation */
 	"stick-counter",	/* name */
-	100,			/* quality */
+	200,			/* quality */
 	0,			/* private reference - UNUSED */
 	NULL			/* next timecounter */
 };
@@ -172,7 +171,7 @@ static struct timecounter stick_timecounter = {
 static u_int
 tick_get_timecount(struct timecounter *tc)
 {
-	return cpu_counter();
+	return gettick();
 }
 
 static u_int
