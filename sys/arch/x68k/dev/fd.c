@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.105 2012/10/14 19:06:25 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.106 2013/05/24 18:24:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.105 2012/10/14 19:06:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.106 2013/05/24 18:24:27 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -296,7 +296,7 @@ void fdctimeout(void *);
 void fdcpseudointr(void *);
 void fdcretry(struct fdc_softc *);
 void fdfinish(struct fd_softc *, struct buf *);
-inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
 static int fdcpoll(struct fdc_softc *);
 static int fdgetdisklabel(struct fd_softc *, dev_t);
@@ -648,12 +648,12 @@ fdattach(device_t parent, device_t self, void *aux)
 	    RND_TYPE_DISK, 0);
 }
 
-inline struct fd_type *
+struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
-	int type = FDTYPE(dev);
+	size_t type = FDTYPE(dev);
 
-	if (type > (sizeof(fd_types) / sizeof(fd_types[0])))
+	if (type > __arraycount(fd_types))
 		return NULL;
 	return &fd_types[type];
 }
