@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.247 2013/05/24 02:35:28 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.248 2013/05/24 11:47:47 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.247 2013/05/24 02:35:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.248 2013/05/24 11:47:47 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3584,7 +3584,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 
 	sc->bge_asf_mode = 0;
 	/* No ASF if APE present. */
-	if (0 && (sc->bge_flags & BGE_APE) == 0) {
+	if ((sc->bge_flags & BGE_APE) == 0) {
 		if (bge_allow_asf && (bge_readmem_ind(sc, BGE_SRAM_DATA_SIG) ==
 			BGE_SRAM_DATA_SIG_MAGIC)) {
 			if (bge_readmem_ind(sc, BGE_SRAM_DATA_CFG) &
@@ -3597,11 +3597,19 @@ bge_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	/* 5718 reset step 5, 57XX step 5b-5d */
-	/* Set swap options before using bge_readmem_ind() */
-	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
-	    BGE_PCIMISCCTL_INDIRECT_ACCESS | BGE_PCIMISCCTL_MASK_PCI_INTR |
-	    BGE_HIF_SWAP_OPTIONS | BGE_PCIMISCCTL_PCISTATE_RW);
+	/*
+	 * Reset NVRAM before bge_reset(). It's required to acquire NVRAM
+	 * lock in bge_reset().
+	 */
+	CSR_WRITE_4(sc, BGE_EE_ADDR,
+	    BGE_EEADDR_RESET | BGE_EEHALFCLK(BGE_HALFCLK_384SCL));
+	delay(1000);
+	BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_AUTO_EEPROM);
+
+	bge_stop_fw(sc);
+	bge_sig_pre_reset(sc, BGE_RESET_START);
+	if (bge_reset(sc))
+		aprint_error_dev(sc->bge_dev, "chip reset failed\n");
 
 	/*
 	 * Read the hardware config word in the first 32k of NIC internal
@@ -3609,7 +3617,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * Note: on some BCM5700 cards, this value appears to be unset.
 	 */
 	hwcfg = hwcfg2 = hwcfg3 = hwcfg4 = 0;
-	if (0 && bge_readmem_ind(sc, BGE_SRAM_DATA_SIG) ==
+	if (bge_readmem_ind(sc, BGE_SRAM_DATA_SIG) ==
 	    BGE_SRAM_DATA_SIG_MAGIC) {
 		uint32_t tmp;
 
@@ -3629,20 +3637,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(sc->bge_dev, "HW config %08x, %08x, %08x, %08x\n",
 	    hwcfg, hwcfg2, hwcfg3, hwcfg4);
-
-	/*
-	 * Reset NVRAM before bge_reset(). It's required to acquire NVRAM
-	 * lock in bge_reset().
-	 */
-	CSR_WRITE_4(sc, BGE_EE_ADDR,
-	    BGE_EEADDR_RESET | BGE_EEHALFCLK(BGE_HALFCLK_384SCL));
-	delay(1000);
-	BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_AUTO_EEPROM);
-
-	bge_stop_fw(sc);
-	bge_sig_pre_reset(sc, BGE_RESET_START);
-	if (bge_reset(sc))
-		aprint_error_dev(sc->bge_dev, "chip reset failed\n");
 
 	bge_sig_legacy(sc, BGE_RESET_START);
 	bge_sig_post_reset(sc, BGE_RESET_START);
