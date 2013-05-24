@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.348 2013/04/28 23:42:23 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.349 2013/05/24 23:02:27 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -2234,7 +2234,6 @@ Ldatafault_internal:
 	call	_C_LABEL(data_access_fault)	! data_access_fault(&tf, type, 
 						!	pc, addr, sfva, sfsr)
 	 add	%sp, CC64FSZ + STKB, %o0	! (argument: &tf)
-	wrpr	%g0, PSTATE_KERN, %pstate		! disable interrupts
 
 data_recover:
 #ifdef TRAPSTATS
@@ -2243,6 +2242,7 @@ data_recover:
 	set	_C_LABEL(iveccnt), %g1
 	stw	%g0, [%g1]
 #endif
+	wrpr	%g0, PSTATE_KERN, %pstate		! disable interrupts
 	b	return_from_trap			! go return
 	 ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1		! Load this for return_from_trap
 	NOTREACHED
