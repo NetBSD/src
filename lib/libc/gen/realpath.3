@@ -1,4 +1,4 @@
-.\"	$NetBSD: realpath.3,v 1.17 2013/05/24 03:20:18 enami Exp $
+.\"	$NetBSD: realpath.3,v 1.18 2013/05/24 09:35:11 wiz Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,13 +118,14 @@ argument is
 Too many symbolic links were encountered in translating the
 .Fa pathname .
 .It Bq Er ENAMETOOLONG
-The resulting absolute pathname exceeds MAXPATHLEN characters.
+The resulting absolute pathname exceeds
+.Dv MAXPATHLEN
+characters.
 .It Bq Er ENOENT
 The value of the
 .Fa pathname
-argument is an empty string.
-.It Bq Er ENOENT
-A symbolic link to an empty string is encountered.
+argument is an empty string;
+or a symbolic link to an empty string is encountered.
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .El
