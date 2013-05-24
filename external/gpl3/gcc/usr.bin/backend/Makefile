@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2013/01/14 16:00:49 pooka Exp $
+#	$NetBSD: Makefile,v 1.17 2013/05/24 16:37:32 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -321,7 +321,7 @@ i386.d i386.o: tm-constrs.h
 
 CFLAGS+=	-Wno-stack-protector
 
-.if ${MACHINE_ARCH} == "m68000"
+.if ${MACHINE_ARCH} == "m68000" || ${MACHINE_ARCH} == "m68k"
 COPTS.lambda-code.c=		-O0
 COPTS.tree-loop-linear.c=	-O0
 .endif
