@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.36 2013/05/08 00:34:50 christos Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.37 2013/05/24 23:09:45 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -538,6 +538,8 @@ pmapdump(int argc, char **argv)
 				(void)printf("%6s", "udp");
 			else if (head->pml_map.pm_prot == IPPROTO_TCP)
 				(void)printf("%6s", "tcp");
+			else if (head->pml_map.pm_prot == 0)
+				(void)printf("%6s", "local");
 			else
 				(void)printf("%6ld", head->pml_map.pm_prot);
 			(void)printf("%7ld", head->pml_map.pm_port);
