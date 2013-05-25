@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.134 2013/05/17 17:43:04 dholland Exp $
+$NetBSD: acronyms.comp,v 1.135 2013/05/25 21:17:51 jdf Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -135,13 +135,16 @@ BPSK	binary phase shift keying
 BQS	Berkeley quality software
 BRE	basic regular expression
 BS	binary sequence
+BSA	basic service area
 BSD	Berkeley Software Distribution
 BSF	bit scan forward
 BSOD	blue screen of death
 BSP	binary space partition
 BSP	bootstrap processor
 BSR	bit scan reverse
+BSS	basic service set
 BSS	block started by symbol
+BSSID	basic service set identifier
 BT	BitTorrent
 BT	Bluetooth
 BT	bit test
@@ -391,6 +394,8 @@ ERD	emergency recovery disk
 ERE	extended regular expression
 ESDRAM	enhanced synchronous dynamic random access memory
 ESS	electronic switching system
+ESS	extended service set
+ESSID	extended service set identifier
 EST	enhanced speedstep
 ETL	extract, transform, load
 EU	execution unit
@@ -507,6 +512,7 @@ IANA	Internet Assigned Numbers Authority
 IBC	iterated block cipher
 IBM	International Business Machines
 IBS	instruction based sampling
+IBSS	independent basic service set
 IC	integrated circuit
 ICA	independent computer architecture
 ICB	Internet Citizen's Band
@@ -1096,6 +1102,7 @@ SSE	streaming SIMD extensions
 SSFDC	solid state floppy disc card
 SSH	secure shell
 SSI	server side includes
+SSID	service set identifier
 SSL	secure sockets layer
 SSP	stack smashing protection
 STC	software thermal control
@@ -1140,6 +1147,7 @@ TIAS	try it and see
 TIFF	tagged image file format
 TITS	try it to see
 TK	temporal key
+TKIP	Temporal Key Integrity Protocol
 TLA	top level aggregator
 TLB	transition lookaside buffer
 TLD	top level domain
@@ -1254,6 +1262,7 @@ W	watt
 W3C	World Wide Web Consortium
 WAN	wide area network
 WAP	Wireless Application Protocol
+WAP	wireless access point
 WDT	watchdog timer
 WEP	Wired Equivalent Privacy
 WFI	wait for interrupt
@@ -1270,7 +1279,9 @@ WORM	write once read many
 WP	WordPerfect
 WP	word processor
 WP	write protect
-WPA	wi-fi protected access
+WPA	Wi-Fi Protected Access
+WPA2	Wi-Fi Protected Access II
+WPS	Wi-Fi Protected Setup
 WRAM	window random access memory
 WS	web services
 WTC	write through caching
