@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.22 2012/11/26 17:56:17 phx Exp $
+$NetBSD: README.NAS,v 1.23 2013/05/25 15:07:49 phx Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -31,10 +31,11 @@ stge.15	acardide.16	D-Link DSM-G600 (Rev.B only!), Conceptronic CH3WNAS
 
 			>> Board type BRD_NH230NAS <<
 re.15	iteide.16	Netronix NH-230, Allnet ALL6250, Encore ENNHD-1000,
-			Planex NAS-01G
+			Planex NAS-01G, Lindy NAS Personal Server Premium - IDE
 re.15	satalink.16	Netronix NH-231, Allnet ALL6260, Longshine LCS-8311,
 			Fujitsu-Siemens AMS150, Fujitsu-Siemens SBLAN2,
-			Vibe NS-349-S
+			Vibe NS-349-S, SinanPower GigaBit LAN NAS-349,
+			Lindy NAS Personal Server Premium - SATA
 
 
 PCI line/pin and EPIC IRQ assignments
