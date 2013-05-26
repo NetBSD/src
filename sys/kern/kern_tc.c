@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.44 2012/11/13 20:10:02 pooka Exp $ */
+/* $NetBSD: kern_tc.c,v 1.45 2013/05/26 18:07:42 kardel Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.44 2012/11/13 20:10:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.45 2013/05/26 18:07:42 kardel Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -688,7 +688,8 @@ tc_setclock(const struct timespec *ts)
 
 	if (timestepwarnings) {
 		bintime2timespec(&bt2, &ts2);
-		log(LOG_INFO, "Time stepped from %lld.%09ld to %lld.%09ld\n",
+		log(LOG_INFO,
+		    "Time stepped from %lld.%09ld to %lld.%09ld\n",
 		    (long long)ts2.tv_sec, ts2.tv_nsec,
 		    (long long)ts->tv_sec, ts->tv_nsec);
 	}
@@ -859,7 +860,8 @@ pps_ioctl(u_long cmd, void *data, struct pps_state *pps)
 
 	KASSERT(mutex_owned(&timecounter_lock));
 
-	KASSERT(pps != NULL); /* XXX ("NULL pps pointer in pps_ioctl") */
+	KASSERT(pps != NULL);
+
 	switch (cmd) {
 	case PPS_IOC_CREATE:
 		return (0);
@@ -913,6 +915,9 @@ pps_init(struct pps_state *pps)
 		pps->ppscap |= PPS_OFFSETCLEAR;
 }
 
+/*
+ * capture a timetamp in the pps structure
+ */
 void
 pps_capture(struct pps_state *pps)
 {
@@ -929,44 +934,155 @@ pps_capture(struct pps_state *pps)
 		pps->capgen = 0;
 }
 
+#ifdef PPS_DEBUG
+int ppsdebug = 0;
+#endif
+
+/*
+ * process a pps_capture()ed event
+ */
 void
 pps_event(struct pps_state *pps, int event)
 {
-	struct bintime bt;
+	pps_ref_event(pps, event, NULL, PPS_REFEVNT_PPS|PPS_REFEVNT_CAPTURE);
+}
+
+/*
+ * extended pps api /  kernel pll/fll entry point
+ *
+ * feed reference time stamps to PPS engine
+ *
+ * will simulate a PPS event and feed
+ * the NTP PLL/FLL if requested.
+ *
+ * the ref time stamps should be roughly once
+ * a second but do not need to be exactly in phase
+ * with the UTC second but should be close to it.
+ * this relaxation of requirements allows callout
+ * driven timestamping mechanisms to feed to pps 
+ * capture/kernel pll logic.
+ *
+ * calling pattern is:
+ *  pps_capture() (for PPS_REFEVNT_{CAPTURE|CAPCUR})
+ *  read timestamp from reference source
+ *  pps_ref_event()
+ *
+ * supported refmodes:
+ *  PPS_REFEVNT_CAPTURE
+ *    use system timestamp of pps_capture()
+ *  PPS_REFEVNT_CURRENT
+ *    use system timestamp of this call
+ *  PPS_REFEVNT_CAPCUR
+ *    use average of read capture and current system time stamp
+ *  PPS_REFEVNT_PPS
+ *    assume timestamp on second mark - ref_ts is ignored
+ *
+ */
+
+void
+pps_ref_event(struct pps_state *pps,
+	      int event,
+	      struct bintime *ref_ts,
+	      int refmode
+	)
+{
+	struct bintime bt;	/* current time */
+	struct bintime btd;	/* time difference */
+	struct bintime bt_ref;	/* reference time */
 	struct timespec ts, *tsp, *osp;
-	u_int64_t tcount, *pcount;
-	int foff;
-#ifdef PPS_SYNC
-	int fhard;
-#endif
+	struct timehands *th;
+	u_int64_t tcount, acount, dcount, *pcount;
+	int foff, fhard, gen;
 	pps_seq_t *pseq;
 
 	KASSERT(mutex_owned(&timecounter_lock));
 
-	KASSERT(pps != NULL); /* XXX ("NULL pps pointer in pps_event") */
-	/* If the timecounter was wound up underneath us, bail out. */
-	if (pps->capgen == 0 || pps->capgen != pps->capth->th_generation)
-		return;
+	KASSERT(pps != NULL);
 
-	/* Things would be easier with arrays. */
+        /* pick up current time stamp if needed */
+	if (refmode & (PPS_REFEVNT_CURRENT|PPS_REFEVNT_CAPCUR)) {
+		/* pick up current time stamp */
+		th = timehands;
+		gen = th->th_generation;
+		tcount = (u_int64_t)tc_delta(th) + th->th_offset_count;
+		if (gen != th->th_generation)
+			gen = 0;
+
+		/* If the timecounter was wound up underneath us, bail out. */
+		if (pps->capgen == 0 ||
+		    pps->capgen != pps->capth->th_generation ||
+		    gen == 0 ||
+		    gen != pps->capgen) {
+#ifdef PPS_DEBUG
+			if (ppsdebug & 0x1) {
+				log(LOG_DEBUG,
+				    "pps_ref_event(pps=%p, event=%d, ...): DROP (wind-up)\n",
+				    pps, event);
+			}
+#endif
+			return;
+		}
+	} else {
+		tcount = 0;	/* keep GCC happy */
+	}
+
+#ifdef PPS_DEBUG
+	if (ppsdebug & 0x1) {
+		struct timespec tmsp;
+	
+		if (ref_ts == NULL) {
+			tmsp.tv_sec = 0;
+			tmsp.tv_nsec = 0;
+		} else {
+			bintime2timespec(ref_ts, &tmsp);
+		}
+
+		log(LOG_DEBUG,
+		    "pps_ref_event(pps=%p, event=%d, ref_ts=%"PRIi64
+		    ".%09"PRIi32", refmode=0x%1x)\n",
+		    pps, event, tmsp.tv_sec, (int32_t)tmsp.tv_nsec, refmode);
+	}
+#endif
+
+	/* setup correct event references */
 	if (event == PPS_CAPTUREASSERT) {
 		tsp = &pps->ppsinfo.assert_timestamp;
 		osp = &pps->ppsparam.assert_offset;
 		foff = pps->ppsparam.mode & PPS_OFFSETASSERT;
-#ifdef PPS_SYNC
 		fhard = pps->kcmode & PPS_CAPTUREASSERT;
-#endif
 		pcount = &pps->ppscount[0];
 		pseq = &pps->ppsinfo.assert_sequence;
 	} else {
 		tsp = &pps->ppsinfo.clear_timestamp;
 		osp = &pps->ppsparam.clear_offset;
 		foff = pps->ppsparam.mode & PPS_OFFSETCLEAR;
-#ifdef PPS_SYNC
 		fhard = pps->kcmode & PPS_CAPTURECLEAR;
-#endif
 		pcount = &pps->ppscount[1];
 		pseq = &pps->ppsinfo.clear_sequence;
+	}
+
+	/* determine system time stamp according to refmode */
+	dcount = 0;		/* keep GCC happy */
+	switch (refmode & PPS_REFEVNT_RMASK) {
+	case PPS_REFEVNT_CAPTURE:
+		acount = pps->capcount;	/* use capture timestamp */
+		break;
+
+	case PPS_REFEVNT_CURRENT:
+		acount = tcount; /* use current timestamp */
+		break;
+
+	case PPS_REFEVNT_CAPCUR:
+		/*
+		 * calculate counter value between pps_capture() and
+		 * pps_ref_event()
+		 */
+		dcount = tcount - pps->capcount;
+		acount = (dcount / 2) + pps->capcount;
+		break;
+
+	default:		/* ignore call error silently */
+		return;
 	}
 
 	/*
@@ -975,26 +1091,66 @@ pps_event(struct pps_state *pps, int event)
 	 */
 	if (pps->ppstc != pps->capth->th_counter) {
 		pps->ppstc = pps->capth->th_counter;
-		*pcount = pps->capcount;
-		pps->ppscount[2] = pps->capcount;
+		pps->capcount = acount;
+		*pcount = acount;
+		pps->ppscount[2] = acount;
+#ifdef PPS_DEBUG
+		if (ppsdebug & 0x1) {
+			log(LOG_DEBUG,
+			    "pps_ref_event(pps=%p, event=%d, ...): DROP (time-counter change)\n",
+			    pps, event);
+		}
+#endif
 		return;
 	}
 
-	/* Convert the count to a timespec. */
-	tcount = pps->capcount - pps->capth->th_offset_count;
+	pps->capcount = acount;
+
+	/* Convert the count to a bintime. */
 	bt = pps->capth->th_offset;
-	bintime_addx(&bt, pps->capth->th_scale * tcount);
+	bintime_addx(&bt, pps->capth->th_scale * (acount - pps->capth->th_offset_count));
 	bintime_add(&bt, &timebasebin);
+
+	if ((refmode & PPS_REFEVNT_PPS) == 0) {
+		/* determine difference to reference time stamp */
+		bt_ref = *ref_ts;
+
+		btd = bt;
+		bintime_sub(&btd, &bt_ref);
+
+		/* 
+		 * simulate a PPS timestamp by dropping the fraction
+		 * and applying the offset
+		 */
+		if (bt.frac >= (uint64_t)1<<63)	/* skip to nearest second */
+			bt.sec++;
+		bt.frac = 0;
+		bintime_add(&bt, &btd);
+	} else {
+		/*
+		 * create ref_ts from current time - 
+		 * we are supposed to be called on
+		 * the second mark
+		 */
+		bt_ref = bt;
+		if (bt_ref.frac >= (uint64_t)1<<63)	/* skip to nearest second */
+			bt_ref.sec++;
+		bt_ref.frac = 0;
+	}
+
+	/* convert bintime to timestamp */
 	bintime2timespec(&bt, &ts);
 
 	/* If the timecounter was wound up underneath us, bail out. */
 	if (pps->capgen != pps->capth->th_generation)
 		return;
 
+	/* store time stamp */
 	*pcount = pps->capcount;
 	(*pseq)++;
 	*tsp = ts;
 
+	/* add offset correction */
 	if (foff) {
 		timespecadd(tsp, osp, tsp);
 		if (tsp->tv_nsec < 0) {
@@ -1002,26 +1158,107 @@ pps_event(struct pps_state *pps, int event)
 			tsp->tv_sec -= 1;
 		}
 	}
+
+#ifdef PPS_DEBUG
+	if (ppsdebug & 0x2) {
+		struct timespec ts2;
+		struct timespec ts3;
+
+		bintime2timespec(&bt_ref, &ts2);
+
+		bt.sec = 0;
+		bt.frac = 0;
+
+		if (refmode & PPS_REFEVNT_CAPCUR) {
+			    bintime_addx(&bt, pps->capth->th_scale * dcount);
+		}
+		bintime2timespec(&bt, &ts3);
+
+		log(LOG_DEBUG, "ref_ts=%"PRIi64".%09"PRIi32
+		    ", ts=%"PRIi64".%09"PRIi32", read latency=%"PRIi64" ns\n",
+		    ts2.tv_sec, (int32_t)ts2.tv_nsec,
+		    tsp->tv_sec, (int32_t)tsp->tv_nsec,
+		    timespec2ns(&ts3));
+	}
+#endif
+
 #ifdef PPS_SYNC
 	if (fhard) {
-		u_int64_t scale;
+		uint64_t scale;
+		uint64_t div;
 
 		/*
 		 * Feed the NTP PLL/FLL.
 		 * The FLL wants to know how many (hardware) nanoseconds
-		 * elapsed since the previous event.
+		 * elapsed since the previous event (mod 1 second) thus
+		 * we are actually looking at the frequency difference scaled
+		 * in nsec.
+		 * As the counter time stamps are not truly at 1Hz
+		 * we need to scale the count by the elapsed
+		 * reference time.
+		 * valid sampling interval: [0.5..2[ sec
 		 */
+
+		/* calculate elapsed raw count */
 		tcount = pps->capcount - pps->ppscount[2];
 		pps->ppscount[2] = pps->capcount;
 		tcount &= pps->capth->th_counter->tc_counter_mask;
-		scale = (u_int64_t)1 << 63;
-		scale /= pps->capth->th_counter->tc_frequency;
+		
+		/* calculate elapsed ref time */
+		btd = bt_ref;
+		bintime_sub(&btd, &pps->ref_time);
+		pps->ref_time = bt_ref;
+
+		/* check that we stay below 2 sec */
+		if (btd.sec < 0 || btd.sec > 1)
+			return;
+
+		/* we want at least 0.5 sec between samples */
+		if (btd.sec == 0 && btd.frac < (uint64_t)1<<63)
+			return;
+
+		/*
+		 * calculate cycles per period by multiplying
+		 * the frequency with the elapsed period
+		 * we pick a fraction of 30 bits
+		 * ~1ns resolution for elapsed time
+		 */ 
+		div   = (uint64_t)btd.sec << 30;
+		div  |= (btd.frac >> 34) & (((uint64_t)1 << 30) - 1);
+		div  *= pps->capth->th_counter->tc_frequency;
+		div >>= 30;
+
+		if (div == 0)	/* safeguard */
+			return;
+
+		scale = (uint64_t)1 << 63;
+		scale /= div;
 		scale *= 2;
+
 		bt.sec = 0;
 		bt.frac = 0;
 		bintime_addx(&bt, scale * tcount);
 		bintime2timespec(&bt, &ts);
-		hardpps(tsp, ts.tv_nsec + 1000000000 * ts.tv_sec);
+
+#ifdef PPS_DEBUG
+		if (ppsdebug & 0x4) {
+			struct timespec ts2;
+			int64_t df;
+
+			bintime2timespec(&bt_ref, &ts2);
+			df = timespec2ns(&ts);
+			if (df > 500000000)
+				df -= 1000000000;
+			log(LOG_DEBUG, "hardpps: ref_ts=%"PRIi64
+			    ".%09"PRIi32", ts=%"PRIi64".%09"PRIi32
+			    ", freqdiff=%"PRIi64" ns/s\n",
+			    ts2.tv_sec, (int32_t)ts2.tv_nsec,
+			    tsp->tv_sec, (int32_t)tsp->tv_nsec,
+			    df);
+		}
+#endif
+
+		hardpps(tsp, timespec2ns(&ts));
 	}
 #endif
 }
