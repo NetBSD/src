@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1070 2013/04/28 03:11:32 christos Exp $
+#	$NetBSD: files,v 1.1071 2013/05/26 18:07:42 kardel Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -64,7 +64,7 @@ defflag opt_dtrace.h		KDTRACE_HOOKS
 defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
 defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
 
-defflag	opt_ntp.h		PPS_SYNC NTP
+defflag	opt_ntp.h		PPS_SYNC PPS_DEBUG NTP
 
 defflag	opt_ptm.h		NO_DEV_PTM COMPAT_BSDPTY
 
