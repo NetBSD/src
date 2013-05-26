@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.33 2013/05/24 21:33:00 christos Exp $
+#	$NetBSD: list,v 1.34 2013/05/26 12:15:51 isaki Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin sys/arch/x68k/stand
 
@@ -7,7 +7,7 @@ PROG	bin/cat
 PROG	bin/chmod
 PROG	bin/cp
 PROG	bin/dd
-#PROG	bin/df
+PROG	bin/df
 #PROG	bin/ed
 PROG	bin/ln
 PROG	bin/ls
@@ -15,16 +15,16 @@ PROG	bin/mkdir
 #PROG	bin/mt
 PROG	bin/mv
 PROG	bin/pax		usr/bin/tar
-#PROG	bin/pwd
+PROG	bin/pwd
 PROG	bin/rm
 PROG	bin/sh
 #PROG	bin/sleep
 PROG	bin/stty
-#PROG	bin/sync
+PROG	bin/sync
 
 PROG	sbin/chown	bin/chgrp
 PROG	sbin/disklabel
-#PROG	sbin/dmesg
+PROG	sbin/dmesg
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
 PROG	sbin/ifconfig
