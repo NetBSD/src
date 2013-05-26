@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.13 2013/04/13 18:32:01 jakllsch Exp $");
+__RCSID("$NetBSD: add.c,v 1.14 2013/05/26 21:26:17 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -130,7 +130,7 @@ add(int fd)
 
 	map = map_alloc(block, size);
 	if (map == NULL) {
-		warnx("%s: error: no space available on device", device_name);
+		warnx("%s: error: not enough space available on device", device_name);
 		return;
 	}
 
