@@ -1,4 +1,4 @@
-/*	$NetBSD: sir.h,v 1.7 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: sir.h,v 1.8 2013/05/27 16:23:20 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,39 @@
 
 #define SIR_ESC_BIT              0x20
 
+enum framefsmstate {
+	FSTATE_END_OF_FRAME,
+	FSTATE_START_OF_FRAME,
+	FSTATE_IN_DATA,
+	FSTATE_IN_END
+};
+
+enum frameresult {
+	FR_IDLE,
+	FR_INPROGRESS,
+	FR_FRAMEOK,
+	FR_FRAMEBADFCS,
+	FR_FRAMEMALFORMED,
+	FR_BUFFEROVERRUN
+};
+
+struct framestate {
+	u_int8_t *buffer;
+	size_t buflen;
+	size_t bufindex;
+
+	enum framefsmstate fsmstate;
+	u_int escaped;
+	u_int state_index;
+};
+
+#define deframe_isclear(fs) ((fs)->fsmstate == FSTATE_END_OF_FRAME)
+
 int irda_sir_frame(u_int8_t *, u_int, struct uio *, u_int);
+void deframe_init(struct framestate *, u_int8_t *, size_t);
+void deframe_clear(struct framestate *);
+enum frameresult deframe_process(struct framestate *, u_int8_t const **,
+				 size_t *);
 
 /*
  * CRC computation
@@ -55,3 +87,5 @@ extern const u_int16_t irda_fcstab[];
 static __inline u_int16_t updateFCS(u_int16_t fcs, int c) {
 	return (fcs >> 8) ^ irda_fcstab[(fcs^c) & 0xff];
 }
+
+u_int32_t crc_ccitt_16(u_int32_t, u_int8_t const*, size_t);
