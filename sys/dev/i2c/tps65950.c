@@ -1,4 +1,4 @@
-/* $NetBSD: tps65950.c,v 1.3.10.4 2013/05/12 01:49:44 khorben Exp $ */
+/* $NetBSD: tps65950.c,v 1.3.10.5 2013/05/27 20:23:28 khorben Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.4 2013/05/12 01:49:44 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.5 2013/05/27 20:23:28 khorben Exp $");
 
 #define _INTR_PRIVATE
 
@@ -503,11 +503,12 @@ tps65950_intr_work(struct work *work, void *v)
 static void
 tps65950_pih_attach(struct tps65950_softc *sc, int intr)
 {
+	const int wqflags = WQ_MPSAFE;
 	int error;
 
 	/* create the workqueues */
 	error = workqueue_create(&sc->sc_workq, device_xname(sc->sc_dev),
-			tps65950_intr_work, sc, PRIO_MAX, IPL_VM, 0);
+			tps65950_intr_work, sc, PRI_BIO, IPL_SOFTBIO, wqflags);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "couldn't create workqueue\n");
 		return;
@@ -516,7 +517,7 @@ tps65950_pih_attach(struct tps65950_softc *sc, int intr)
 
 	error = workqueue_create(&tps65950_pih_workqueue,
 			device_xname(sc->sc_dev), tps65950_pih_intr_work, sc,
-			PRIO_MAX, IPL_HIGH, 0);
+			PRI_IDLE, IPL_SOFTBIO, wqflags);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "couldn't create workqueue\n");
 		return;
@@ -818,6 +819,7 @@ tps65950_gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 static void
 tps65950_kbd_attach(struct tps65950_softc *sc)
 {
+	const int wqflags = WQ_MPSAFE;
 	uint8_t u8;
 	struct wskbddev_attach_args a;
 	int error;
@@ -851,7 +853,7 @@ tps65950_kbd_attach(struct tps65950_softc *sc)
 	/* create the workqueue */
 	error = workqueue_create(&tps65950_kbd_workqueue,
 			device_xname(sc->sc_dev), tps65950_kbd_intr_work, sc,
-			PRIO_MAX, IPL_VM, 0);
+			PRI_BIO, IPL_SOFTBIO, wqflags);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "couldn't create workqueue\n");
 		return;
