@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.10 2012/06/06 00:33:45 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.11 2013/05/27 23:15:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.10 2012/06/06 00:33:45 christos Exp $");
+__RCSID("$NetBSD: tls.c,v 1.11 2013/05/27 23:15:51 christos Exp $");
 
 #ifndef DISABLE_TLS
 #include "syslogd.h"
@@ -851,6 +851,7 @@ socksetup_tls(const int af, const char *bindhostname, const char *port)
 			logerror("socket() failed: %s", strerror(errno));
 			continue;
 		}
+		s->af = r->ai_family;
 		if (r->ai_family == AF_INET6
 		 && setsockopt(s->fd, IPPROTO_IPV6, IPV6_V6ONLY,
 			&on, sizeof(on)) == -1) {
