@@ -1,4 +1,4 @@
-/* $NetBSD: tps65950.c,v 1.3.10.5 2013/05/27 20:23:28 khorben Exp $ */
+/* $NetBSD: tps65950.c,v 1.3.10.6 2013/05/27 20:29:13 khorben Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.5 2013/05/27 20:23:28 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.10.6 2013/05/27 20:29:13 khorben Exp $");
 
 #define _INTR_PRIVATE
 
@@ -685,31 +685,30 @@ tps65950_gpio_pin_ctl(void *v, int pin, int flags)
 
 	if (pin < 0)
 		return;
-	else if (pin < 8)
-	{
+	else if (pin < 8) {
 		reg = TPS65950_GPIO_GPIODATADIR1;
 		bit = pin;
-	}
-	else if (pin < 16)
-	{
+	} else if (pin < 16) {
 		reg = TPS65950_GPIO_GPIODATADIR2;
 		bit = pin - 8;
-	}
-	else if (pin < 18)
-	{
+	} else if (pin < 18) {
 		reg = TPS65950_GPIO_GPIODATADIR3;
 		bit = pin - 16;
-	}
-	else
+	} else
 		return;
 
 	iic_acquire_bus(sc->sc_i2c, 0);
 	tps65950_read_1(sc, reg, &val);
 	new = val;
 	switch (flags & (GPIO_PIN_INPUT | GPIO_PIN_OUTPUT)) {
-		case GPIO_PIN_INPUT:	new &= ~(1 << bit); break;
-		case GPIO_PIN_OUTPUT:	new |= (1 << bit); break;
-		default:		break;
+	case GPIO_PIN_INPUT:
+		new &= ~(1 << bit);
+		break;
+	case GPIO_PIN_OUTPUT:
+		new |= (1 << bit);
+		break;
+	default:
+		break;
 	}
 	if (new != val)
 		tps65950_write_1(sc, reg, new);
