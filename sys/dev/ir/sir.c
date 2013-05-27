@@ -1,4 +1,4 @@
-/*	$NetBSD: sir.c,v 1.5 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: sir.c,v 1.6 2013/05/27 16:23:20 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sir.c,v 1.5 2008/04/28 20:23:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sir.c,v 1.6 2013/05/27 16:23:20 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: sir.c,v 1.5 2008/04/28 20:23:51 martin Exp $");
 /*
  * CRC computation table
  */
-const u_int16_t irda_fcstab[] = {
+const uint16_t irda_fcstab[] = {
 	0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
 	0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
 	0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
@@ -81,7 +81,6 @@ const u_int16_t irda_fcstab[] = {
 	0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
 };
 
-
 #define MAX_IRDA_FRAME 5000	/* XXX what is it? */
 
 #define PUTC(c) if (p < end) *p++ = (c)
@@ -96,15 +95,15 @@ const u_int16_t irda_fcstab[] = {
 #define CHUNK 512
 
 int
-irda_sir_frame(u_int8_t *obuf, u_int maxlen, struct uio *uio, u_int ebofs)
+irda_sir_frame(uint8_t *obuf, u_int maxlen, struct uio *uio, u_int ebofs)
 {
-	u_int8_t ibuf[CHUNK];
-	u_int8_t *p, *end, *cp;
+	uint8_t ibuf[CHUNK];
+	uint8_t *p, *end, *cp;
 	size_t n;
 	int error;
 	int i;
 	int c;
-	u_int16_t ofcs;
+	uint16_t ofcs;
 
 	p = obuf;
 	end = p + maxlen;
@@ -141,4 +140,133 @@ irda_sir_frame(u_int8_t *obuf, u_int maxlen, struct uio *uio, u_int ebofs)
 		return (p - obuf);
 	else
 		return (-EINVAL);
+}
+
+void
+deframe_init(struct framestate *fstate, uint8_t *buf, size_t buflen)
+{
+
+	fstate->buffer = buf;
+	fstate->buflen = buflen;
+
+	deframe_clear(fstate);
+}
+
+void
+deframe_clear(struct framestate *fstate)
+{
+
+	fstate->bufindex = 0;
+	fstate->fsmstate = FSTATE_END_OF_FRAME;
+	fstate->escaped = 0;
+}
+
+enum frameresult
+deframe_process(struct framestate *fstate, uint8_t const **bptr, size_t *blen)
+{
+	uint8_t const *cptr;
+	size_t ibuflen, obufindex, obuflen;
+	enum framefsmstate fsmstate;
+	enum frameresult result;
+
+	cptr = *bptr;
+	fsmstate = fstate->fsmstate;
+	obufindex = fstate->bufindex;
+	obuflen = fstate->buflen;
+	ibuflen = *blen;
+
+	while (ibuflen-- > 0) {
+		uint8_t chr;
+
+		chr = *cptr++;
+
+		if (fstate->escaped) {
+			fstate->escaped = 0;
+			chr ^= SIR_ESC_BIT;
+		} else if (chr == SIR_CE) {
+			fstate->escaped = 1;
+			continue;
+		}
+
+		switch (fsmstate) {
+		case FSTATE_IN_DATA:
+			if (chr == SIR_EOF) {
+				fsmstate = FSTATE_IN_END;
+				fstate->state_index = 1;
+				goto state_in_end;
+			}
+			if (obufindex >= obuflen) {
+				result = FR_BUFFEROVERRUN;
+				fsmstate = FSTATE_END_OF_FRAME;
+				goto complete;
+			}
+			fstate->buffer[obufindex++] = chr;
+			break;
+
+		state_in_end:
+			/* FALLTHROUGH */
+
+		case FSTATE_IN_END:
+			if (--fstate->state_index == 0) {
+				uint32_t crc;
+				const size_t fcslen = 2;
+
+				fsmstate = FSTATE_END_OF_FRAME;
+
+				if (obufindex < fcslen) {
+					result = FR_FRAMEMALFORMED;
+					goto complete;
+				}
+
+				crc = crc_ccitt_16(INITFCS, fstate->buffer,
+				    obufindex);
+
+				/* Remove check bytes from buffer length */
+				obufindex -= fcslen;
+
+				if (crc == GOODFCS)
+					result = FR_FRAMEOK;
+				else
+					result = FR_FRAMEBADFCS;
+
+				goto complete;
+			}
+			break;
+
+		case FSTATE_END_OF_FRAME:
+			if (chr != SIR_BOF)
+				break;
+
+			fsmstate = FSTATE_START_OF_FRAME;
+			fstate->state_index = 1;
+			/* FALLTHROUGH */
+		case FSTATE_START_OF_FRAME:
+			if (--fstate->state_index == 0) {
+				fsmstate = FSTATE_IN_DATA;
+				obufindex = 0;
+			}
+			break;
+		}
+	}
+
+	result = (fsmstate == FSTATE_END_OF_FRAME) ? FR_IDLE : FR_INPROGRESS;
+
+ complete:
+	fstate->bufindex = obufindex;
+	fstate->fsmstate = fsmstate;
+	*blen = ibuflen;
+
+	return result;
+}
+
+uint32_t
+crc_ccitt_16(uint32_t crcinit, uint8_t const *buf, size_t blen)
+{
+
+	while (blen-- > 0) {
+		uint8_t chr;
+		chr = *buf++;
+		crcinit = updateFCS(crcinit, chr);
+	}
+	return crcinit;
 }

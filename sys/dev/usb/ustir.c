@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.32 2012/03/06 03:35:30 mrg Exp $	*/
+/*	$NetBSD: ustir.c,v 1.33 2013/05/27 16:23:20 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.32 2012/03/06 03:35:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33 2013/05/27 16:23:20 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,69 +87,6 @@ Static struct ustir_speedrec const ustir_speeds[USTIR_NSPEEDS] = {
 	{ 9600, STIR_BRMODE_9600 },
 	{ 2400, STIR_BRMODE_2400 }
 };
-
-struct framedefn {
-	unsigned int bof_count;
-	u_int8_t bof_byte;
-
-	u_int8_t esc_byte;
-	u_int8_t esc_xor;
-
-	unsigned int eof_count;
-	u_int8_t eof_byte;
-
-	unsigned int fcs_count;
-	u_int32_t fcs_init;
-	u_int32_t fcs_correct;
-
-	u_int32_t (*fcs_calc)(u_int32_t, u_int8_t const*, size_t);
-};
-
-Static u_int32_t crc_ccitt_16(u_int32_t, u_int8_t const*, size_t);
-
-struct framedefn const framedef_sir = {
-	1, 0xc0,
-	0x7d, 0x20,
-	1, 0xc1,
-	2, INITFCS, GOODFCS,
-	crc_ccitt_16
-};
-
-enum framefsmstate {
-	FSTATE_END_OF_FRAME,
-	FSTATE_START_OF_FRAME,
-	FSTATE_IN_DATA,
-	FSTATE_IN_END
-};
-
-enum frameresult {
-	FR_IDLE,
-	FR_INPROGRESS,
-	FR_FRAMEOK,
-	FR_FRAMEBADFCS,
-	FR_FRAMEMALFORMED,
-	FR_BUFFEROVERRUN
-};
-
-struct framestate {
-	struct framedefn const *definition;
-
-	u_int8_t *buffer;
-	size_t buflen;
-	size_t bufindex;
-
-	enum framefsmstate fsmstate;
-	u_int escaped;
-	u_int state_index;
-};
-
-#define deframe_isclear(fs) ((fs)->fsmstate == FSTATE_END_OF_FRAME)
-
-Static void deframe_clear(struct framestate *);
-Static void deframe_init(struct framestate *, struct framedefn const *,
-			 u_int8_t *, size_t);
-Static enum frameresult deframe_process(struct framestate *, u_int8_t const **,
-					size_t *);
 
 struct ustir_softc {
 	device_t		sc_dev;
@@ -229,17 +166,6 @@ Static void ustir_rd_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static usbd_status ustir_start_read(struct ustir_softc *);
 Static void ustir_periodic(struct ustir_softc *);
 Static void ustir_thread(void *);
-
-Static u_int32_t
-crc_ccitt_16(u_int32_t crcinit, u_int8_t const *buf, size_t blen)
-{
-	while (blen-- > 0) {
-		u_int8_t chr;
-		chr = *buf++;
-		crcinit = updateFCS(crcinit, chr);
-	}
-	return crcinit;
-}
 
 static usbd_status
 ustir_read_reg(struct ustir_softc *sc, unsigned int reg, u_int8_t *data)
@@ -433,130 +359,6 @@ ustir_detach(device_t self, int flags)
 	seldestroy(&sc->sc_wr_sel);
 
 	return rv;
-}
-
-Static void
-deframe_clear(struct framestate *fstate)
-{
-	fstate->bufindex = 0;
-	fstate->fsmstate = FSTATE_END_OF_FRAME;
-	fstate->escaped = 0;
-}
-
-Static void
-deframe_init(struct framestate *fstate, struct framedefn const *definition,
-	     u_int8_t *buf, size_t buflen)
-{
-	fstate->definition = definition;
-	fstate->buffer = buf;
-	fstate->buflen = buflen;
-
-	deframe_clear(fstate);
-}
-
-Static enum frameresult
-deframe_process(struct framestate *fstate, u_int8_t const **bptr, size_t *blen)
-{
-	struct framedefn const *definition;
-	u_int8_t const *cptr;
-	u_int8_t escchr;
-	size_t ibuflen, obufindex, obuflen;
-	enum framefsmstate fsmstate;
-	enum frameresult result;
-
-	cptr = *bptr;
-	fsmstate = fstate->fsmstate;
-	definition = fstate->definition;
-	escchr = definition->esc_byte;
-	obufindex = fstate->bufindex;
-	obuflen = fstate->buflen;
-	ibuflen = *blen;
-
-	while (ibuflen-- > 0) {
-		u_int8_t chr;
-
-		chr = *cptr++;
-
-		if (fstate->escaped) {
-			fstate->escaped = 0;
-			chr ^= definition->esc_xor;
-		} else if (chr == escchr) {
-			fstate->escaped = 1;
-			continue;
-		}
-
-		switch (fsmstate) {
-		case FSTATE_IN_DATA:
-			if (chr == definition->eof_byte) {
-				fsmstate = FSTATE_IN_END;
-				fstate->state_index = definition->eof_count;
-				goto state_in_end;
-			}
-			if (obufindex >= obuflen) {
-				result = FR_BUFFEROVERRUN;
-				fsmstate = FSTATE_END_OF_FRAME;
-				goto complete;
-			}
-			fstate->buffer[obufindex++] = chr;
-			break;
-
-		state_in_end:
-			/* FALLTHROUGH */
-
-		case FSTATE_IN_END:
-			if (--fstate->state_index == 0) {
-				u_int32_t crc;
-				size_t fcslen;
-
-				fsmstate = FSTATE_END_OF_FRAME;
-
-				fcslen = definition->fcs_count;
-
-				if (obufindex < fcslen) {
-					result = FR_FRAMEMALFORMED;
-					goto complete;
-				}
-
-				crc = definition->
-					fcs_calc(definition->fcs_init,
-						 fstate->buffer, obufindex);
-
-				/* Remove check bytes from buffer length */
-				obufindex -= fcslen;
-
-				if (crc == definition->fcs_correct)
-					result = FR_FRAMEOK;
-				else
-					result = FR_FRAMEBADFCS;
-
-				goto complete;
-			}
-			break;
-
-		case FSTATE_END_OF_FRAME:
-			if (chr != definition->bof_byte)
-				break;
-
-			fsmstate = FSTATE_START_OF_FRAME;
-			fstate->state_index = definition->bof_count;
-			/* FALLTHROUGH */
-		case FSTATE_START_OF_FRAME:
-			if (--fstate->state_index == 0) {
-				fsmstate = FSTATE_IN_DATA;
-				obufindex = 0;
-			}
-			break;
-		}
-	}
-
-	result = (fsmstate == FSTATE_END_OF_FRAME) ? FR_IDLE : FR_INPROGRESS;
-
- complete:
-	fstate->bufindex = obufindex;
-	fstate->fsmstate = fsmstate;
-	*blen = ibuflen;
-
-	return result;
 }
 
 /* Returns 0 if more data required, 1 if a complete frame was extracted */
@@ -934,8 +736,7 @@ ustir_open(void *h, int flag, int mode,
 	sc->sc_params.ebofs = 0;
 	sc->sc_params.maxsize = IRDA_MAX_FRAME_SIZE;
 
-	deframe_init(&sc->sc_framestate, &framedef_sir, sc->sc_ur_buf,
-		     IRDA_MAX_FRAME_SIZE);
+	deframe_init(&sc->sc_framestate, sc->sc_ur_buf, IRDA_MAX_FRAME_SIZE);
 
 	/* Increment reference for thread */
 	sc->sc_refcnt++;
