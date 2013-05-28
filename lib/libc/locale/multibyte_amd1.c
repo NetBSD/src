@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_amd1.c,v 1.12 2013/05/17 12:55:57 joerg Exp $	*/
+/*	$NetBSD: multibyte_amd1.c,v 1.13 2013/05/28 16:57:56 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002, 2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: multibyte_amd1.c,v 1.12 2013/05/17 12:55:57 joerg Exp $");
+__RCSID("$NetBSD: multibyte_amd1.c,v 1.13 2013/05/28 16:57:56 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -148,6 +148,29 @@ size_t
 mbsrtowcs(wchar_t *pwcs, const char **s, size_t n, mbstate_t *ps)
 {
 	return mbsrtowcs_l(pwcs, s, n, ps, _current_locale());
+}
+
+size_t
+mbsnrtowcs_l(wchar_t *pwcs, const char **s, size_t in, size_t n, mbstate_t *ps,
+    locale_t loc)
+{
+	size_t ret;
+	int err0;
+
+	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
+
+	err0 = _citrus_ctype_mbsnrtowcs(_ps_to_ctype(ps), pwcs, s, in, n,
+					_ps_to_private(ps), &ret);
+	if (err0)
+		errno = err0;
+
+	return ret;
+}
+
+size_t
+mbsnrtowcs(wchar_t *pwcs, const char **s, size_t in, size_t n, mbstate_t *ps)
+{
+	return mbsnrtowcs_l(pwcs, s, in, n, ps, _current_locale());
 }
 
 size_t

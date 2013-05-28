@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2013/02/28 21:52:02 christos Exp $
+# $NetBSD: Makefile,v 1.6 2013/05/28 16:57:56 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ TESTSDIR=	${TESTSBASE}/lib/libc/locale
 
 TESTS_C+=	t_mbrtowc
 TESTS_C+=	t_mbstowcs
+TESTS_C+=	t_mbsnrtowcs
 TESTS_C+=	t_mbtowc
 TESTS_C+=	t_wcscspn
 TESTS_C+=	t_wcspbrk

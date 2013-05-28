@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.535 2013/04/22 21:06:28 christos Exp $
+# $NetBSD: mi,v 1.536 2013/05/28 16:57:56 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1942,6 +1942,7 @@
 ./usr/tests/lib/libc/locale/t_io		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_mbrtowc		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_mbstowcs		tests-lib-tests		atf
+./usr/tests/lib/libc/locale/t_mbsnrtowcs	tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_mbtowc		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_wcscspn		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_wcspbrk		tests-lib-tests		atf

@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.37 2013/04/19 23:45:15 joerg Exp $	*/
+/*	$NetBSD: wchar.h,v 1.38 2013/05/28 16:57:56 joerg Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -212,6 +212,11 @@ typedef struct _locale		*locale_t;
 #  define __LOCALE_T_DECLARED
 #  endif
 __BEGIN_DECLS
+size_t	mbsnrtowcs(wchar_t * __restrict, const char ** __restrict, size_t,
+	    size_t, mbstate_t * __restrict);
+size_t	wcsnrtombs(char * __restrict, const wchar_t ** __restrict, size_t,
+	    size_t, mbstate_t * __restrict);
+
 int	wcscoll_l(const wchar_t *, const wchar_t *, locale_t);
 size_t	wcsxfrm_l(wchar_t *, const wchar_t *, size_t, locale_t);
 int wcsncasecmp_l(const wchar_t *, const wchar_t *, size_t, locale_t);
@@ -246,9 +251,13 @@ size_t	mbrtowc_l(wchar_t * __restrict, const char * __restrict, size_t,
 int	mbsinit_l(const mbstate_t *, locale_t);
 size_t	mbsrtowcs_l(wchar_t * __restrict, const char ** __restrict, size_t,
 	    mbstate_t * __restrict, locale_t);
+size_t	mbsnrtowcs_l(wchar_t * __restrict, const char ** __restrict, size_t,
+	    size_t, mbstate_t * __restrict, locale_t);
 size_t	wcrtomb_l(char * __restrict, wchar_t, mbstate_t * __restrict, locale_t);
 size_t	wcsrtombs_l(char * __restrict, const wchar_t ** __restrict, size_t,
 	    mbstate_t * __restrict, locale_t);
+size_t	wcsnrtombs_l(char * __restrict, const wchar_t ** __restrict, size_t,
+	    size_t, mbstate_t * __restrict, locale_t);
 int	wctob_l(wint_t, locale_t);
 
 int fwprintf_l(FILE * __restrict, locale_t, const wchar_t * __restrict, ...);
