@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.248 2013/05/24 11:47:47 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.249 2013/05/28 05:55:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.248 2013/05/24 11:47:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.249 2013/05/28 05:55:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3267,7 +3267,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	uint32_t 		hwcfg, hwcfg2, hwcfg3, hwcfg4;
 	uint32_t		command;
 	struct ifnet		*ifp;
-	uint32_t		misccfg;
+	uint32_t		misccfg, mimode;
 	void *			kva;
 	u_char			eaddr[ETHER_ADDR_LEN];
 	pcireg_t		memtype, subid, reg;
@@ -3460,10 +3460,13 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 		sc->bge_flags |= BGE_CPMU_PRESENT;
 
+	/* Set MI_MODE */
+	mimode = BGE_MIMODE_PHYADDR(sc->bge_phy_addr);
 	if ((sc->bge_flags & BGE_CPMU_PRESENT) != 0)
-		CSR_WRITE_4(sc, BGE_MI_MODE, BGE_MIMODE_500KHZ_CONST);
+		mimode |= BGE_MIMODE_500KHZ_CONST;
 	else
-		CSR_WRITE_4(sc, BGE_MI_MODE, BGE_MIMODE_BASE);
+		mimode |= BGE_MIMODE_BASE;
+	CSR_WRITE_4(sc, BGE_MI_MODE, mimode);
 
 	/*
 	 * When using the BCM5701 in PCI-X mode, data corruption has
