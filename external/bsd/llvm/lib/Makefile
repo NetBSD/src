@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2013/04/25 13:59:56 joerg Exp $
+# $NetBSD: Makefile,v 1.31 2013/05/28 17:37:34 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,7 @@ SUBDIR=	\
 	libLLVMMCDisassembler \
 	libLLVMMCParser \
 	libLLVMObjCARC \
+	libLLVMObject \
 	libLLVMScalarOpts \
 	libLLVMSelectionDAG \
 	libLLVMSupport \
@@ -59,6 +60,7 @@ SUBDIR+= \
 	libLLVMMipsTargetInfo
 
 SUBDIR+= \
+	libLLVMPowerPCAsmParser \
 	libLLVMPowerPCAsmPrinter \
 	libLLVMPowerPCMCTargetDesc \
 	libLLVMPowerPCTargetInfo
@@ -86,7 +88,6 @@ SUBDIR+= \
 	libLLVMInterpreter \
 	libLLVMJIT \
 	libLLVMMCJIT \
-	libLLVMObject \
 	libLLVMOption \
 	libLLVMRuntimeDyld
 .endif
@@ -115,6 +116,7 @@ SUBDIR+= \
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
 	libclangASTMatchers \
+	libclangASTMatchersDynamic \
 	libclangFormat \
 	libclangTooling
 .endif

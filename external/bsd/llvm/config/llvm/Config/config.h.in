@@ -14,7 +14,7 @@
 #define CLANG_RESOURCE_DIR ""
 
 /* Directories clang will search for headers */
-#define C_INCLUDE_DIRS "/usr/include/clang-3.3:/usr/include"
+#define C_INCLUDE_DIRS "/usr/include/clang-3.4:/usr/include"
 
 /* Default <path> to all compiler invocations for --sysroot=<path>. */
 #define DEFAULT_SYSROOT ""
@@ -226,6 +226,9 @@
 
 /* Define to 1 if you have the `udis86' library (-ludis86). */
 /* #undef HAVE_LIBUDIS86 */
+
+/* Define to 1 if you have the `z' library (-lz). */
+#define HAVE_LIBZ 1
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
@@ -504,6 +507,9 @@
 /* Define if the xdot.py program is available */
 /* #undef HAVE_XDOT_PY */
 
+/* Define to 1 if you have the <zlib.h> header file. */
+#define HAVE_ZLIB_H 1
+
 /* Have host's _alloca */
 /* #undef HAVE__ALLOCA */
 
@@ -583,7 +589,7 @@
 #define LLVM_HAS_ATOMICS 1
 
 /* Host triple LLVM will be executed on */
-#define LLVM_HOSTTRIPLE "x86_64--netbsd"
+#define LLVM_HOST_TRIPLE "x86_64--netbsd"
 
 /* Installation directory for include files */
 #define LLVM_INCLUDEDIR "/usr/include"
@@ -664,7 +670,7 @@
 #define LLVM_VERSION_MAJOR 3
 
 /* Minor version of the LLVM API */
-#define LLVM_VERSION_MINOR 3
+#define LLVM_VERSION_MINOR 4
 
 /* Define if the OS needs help to load dependent libraries for dlopen(). */
 /* #undef LTDL_DLOPEN_DEPLIBS */
@@ -697,13 +703,13 @@
 #define PACKAGE_NAME "LLVM"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "LLVM 3.3svn"
+#define PACKAGE_STRING "LLVM 3.4svn"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "llvm"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.3svn"
+#define PACKAGE_VERSION "3.4svn"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1029 2013/04/27 23:02:17 joerg Exp $
+# $NetBSD: mi,v 1.1030 2013/05/28 17:37:33 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -808,7 +808,8 @@
 ./usr/include/cdk				base-obsolete		obsolete
 ./usr/include/clang-3.0				base-obsolete		obsolete
 ./usr/include/clang-3.2				base-obsolete		obsolete
-./usr/include/clang-3.3				base-c-usr
+./usr/include/clang-3.3				base-obsolete		obsolete
+./usr/include/clang-3.4				base-c-usr
 ./usr/include/compat				base-obsolete		obsolete
 ./usr/include/crypto				base-c-usr
 ./usr/include/dev				base-c-usr

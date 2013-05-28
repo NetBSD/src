@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2013/04/25 13:59:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.26 2013/05/28 17:37:33 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -62,6 +62,7 @@ LLVM_LIBS+= \
 	PowerPCCodeGen \
 	PowerPCTargetInfo \
 	PowerPCMCTargetDesc \
+	PowerPCAsmParser \
 	PowerPCAsmPrinter \
 	SparcCodeGen \
 	SparcTargetInfo \
@@ -72,6 +73,7 @@ LLVM_LIBS+= \
 	X86Utils \
 	X86AsmParser \
 	X86AsmPrinter \
+	Object \
 	SelectionDAG \
 	AsmPrinter \
 	CodeGen \
