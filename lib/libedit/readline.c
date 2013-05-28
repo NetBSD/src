@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.107 2013/01/13 15:46:57 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.108 2013/05/28 00:10:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.107 2013/01/13 15:46:57 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.108 2013/05/28 00:10:34 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -84,6 +84,14 @@ VFunction *rl_event_hook = NULL;
 KEYMAP_ENTRY_ARRAY emacs_standard_keymap,
     emacs_meta_keymap,
     emacs_ctlx_keymap;
+/*
+ * The following is not implemented; we always catch signals in the
+ * libedit fashion: set handlers on entry to el_gets() and clear them
+ * on the way out. This simplistic approach works for most cases; if
+ * it does not work for your application, please let us know.
+ */
+int rl_catch_signals = 1;
+int rl_catch_sigwinch = 1;
 
 int history_base = 1;		/* probably never subject to change */
 int history_length = 0;
@@ -109,7 +117,6 @@ char *rl_terminal_name = NULL;
 int rl_already_prompted = 0;
 int rl_filename_completion_desired = 0;
 int rl_ignore_completion_duplicates = 0;
-int rl_catch_signals = 1;
 int readline_echoing_p = 1;
 int _rl_print_completions_horizontally = 0;
 VFunction *rl_redisplay_function = NULL;
