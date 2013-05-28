@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.86 2012/10/27 17:18:34 chs Exp $	*/
+/*	$NetBSD: machfb.c,v 1.87 2013/05/28 10:55:34 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.86 2012/10/27 17:18:34 chs Exp $");
+	"$NetBSD: machfb.c,v 1.87 2013/05/28 10:55:34 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -859,7 +859,7 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_width = sc->sc_my_mode->hdisplay;
 	ri->ri_height = sc->sc_my_mode->vdisplay;
 	ri->ri_stride = ri->ri_width;
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 	if (ri->ri_depth == 8)
 		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 
@@ -1703,10 +1703,18 @@ mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
 	int32_t x, y, width, height, fg, bg, ul;
 	
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x = ri->ri_xorigin;
-		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
-		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight * nrows;
+		if ((row == 0) && (nrows == ri->ri_rows)) {
+			/* clear full screen */ 
+			x = 0;
+			y = 0;
+			width = sc->virt_x;
+			height = sc->virt_y;
+		} else {
+			x = ri->ri_xorigin;
+			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+			width = ri->ri_emuwidth;
+			height = ri->ri_font->fontheight * nrows;
+		}
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
 		mach64_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
