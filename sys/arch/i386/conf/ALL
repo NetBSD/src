@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.356 2013/04/27 22:21:14 christos Exp $
+# $NetBSD: ALL,v 1.357 2013/05/28 12:13:55 kiyohara Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.356 $"
+#ident 		"ALL-$Revision: 1.357 $"
 
 maxusers	64		# estimated number of users
 
@@ -1271,6 +1271,10 @@ irframe* at stuirda?
 # SigmaTel STIr4200 USB/IrDA Bridge
 ustir* at uhub? port ?
 irframe* at ustir?
+
+# KingSun/DonShine USB/IrDA Bridge
+udsir*	at uhub? port ?
+irframe* at udsir?
 
 # Windows Media Center IR tranceiver
 irmce*	at uhub? port ?
