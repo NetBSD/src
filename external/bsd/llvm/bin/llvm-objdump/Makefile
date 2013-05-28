@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/02/19 12:35:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2013/05/28 17:37:34 joerg Exp $
 
 PROG_CXX=	llvm-objdump
 NOMAN=		yes
@@ -10,8 +10,7 @@ NOMAN=		yes
 SRCS=	llvm-objdump.cpp \
 	COFFDump.cpp \
 	ELFDump.cpp \
-	MachODump.cpp \
-	MCFunction.cpp \
+	MachODump.cpp
 
 LLVM_LIBS+= \
 	Object \
