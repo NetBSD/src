@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.27 2012/01/04 08:25:03 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.28 2013/05/28 11:04:04 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.27 2012/01/04 08:25:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.28 2013/05/28 11:04:04 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,12 +402,14 @@ vcons_do_switch(void *arg)
 void
 vcons_redraw_screen(struct vcons_screen *scr)
 {
-	uint32_t *charptr = scr->scr_chars;
-	long *attrptr = scr->scr_attrs;
+	uint32_t *charptr = scr->scr_chars, c;
+	long *attrptr = scr->scr_attrs, a, last_a = 0, mask, cmp, acmp;
 	struct rasops_info *ri = &scr->scr_ri;
 	struct vcons_data *vd = scr->scr_vd;
-	int i, j, offset, boffset = 0;
+	int i, j, offset, boffset = 0, start = -1;
 
+	mask = 0x00ff00ff;	/* background and flags */
+	cmp = -1;		/* never match anything */
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 
@@ -418,6 +420,7 @@ vcons_redraw_screen(struct vcons_screen *scr)
 		if (ri->ri_flg & RI_FULLCLEAR) {
 			vd->eraserows(ri, 0, ri->ri_rows,
 			    scr->scr_defattr);
+			cmp = scr->scr_defattr & mask;
 		}
 
 		/* redraw the screen */
@@ -427,6 +430,7 @@ vcons_redraw_screen(struct vcons_screen *scr)
 		offset = 0;
 #endif
 		for (i = 0; i < ri->ri_rows; i++) {
+			start = -1;
 			for (j = 0; j < ri->ri_cols; j++) {
 				/*
 				 * no need to use the wrapper function - we 
@@ -434,8 +438,46 @@ vcons_redraw_screen(struct vcons_screen *scr)
 				 * and we already made sure the screen we're
 				 * working on is visible
 				 */
-				vd->putchar(ri, i, j, 
-				    charptr[offset], attrptr[offset]);
+				c = charptr[offset];
+				a = attrptr[offset];
+				acmp = a & mask;
+				if (c == ' ') {
+					/*
+					 * if we already erased the background
+					 * and this blank uses the same colour
+					 * and flags we don't need to do
+					 * anything here
+					 */
+					if (acmp == cmp)
+						goto next;
+					/*
+					 * see if we can optimize things a
+					 * little bit by drawing stretches of
+					 * blanks using erasecols
+					 */
+					
+					if (start == -1) {
+						start = j;
+						last_a = acmp;
+					} else if (acmp != last_a) {
+						/*
+						 * different attr, need to
+						 * flush 
+						 */
+						vd->erasecols(ri, i, start,
+						    j - start, last_a);
+						start = -1;
+					}
+				} else {
+					if (start != -1) {
+						vd->erasecols(ri, i, start,
+						    j - start, last_a);
+						start = -1;
+					}
+							
+					vd->putchar(ri, i, j, c, a);
+				}
+next:
 #ifdef VCONS_DRAW_INTR
 				vd->chars[boffset] = charptr[offset];
 				vd->attrs[boffset] = attrptr[offset];
@@ -443,6 +485,10 @@ vcons_redraw_screen(struct vcons_screen *scr)
 				offset++;
 				boffset++;
 			}
+			/* end of the line - draw all defered blanks, if any */
+			if (start != -1) {
+				vd->erasecols(ri, i, start, j - start, last_a);
+			}			
 		}
 		ri->ri_flg &= ~RI_CURSOR;
 		scr->scr_vd->cursor(ri, 1, ri->ri_crow, ri->ri_ccol);
