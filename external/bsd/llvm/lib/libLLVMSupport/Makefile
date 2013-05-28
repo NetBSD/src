@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2013/04/28 00:41:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.18 2013/05/28 17:37:35 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -41,6 +41,7 @@ SRCS+=	APFloat.cpp \
 	IsNAN.cpp \
 	Locale.cpp \
 	LockFileManager.cpp \
+	MD5.cpp \
 	ManagedStatic.cpp \
 	MemoryBuffer.cpp \
 	MemoryObject.cpp \
@@ -56,6 +57,7 @@ SRCS+=	APFloat.cpp \
 	StringMap.cpp \
 	StringPool.cpp \
 	StringRef.cpp \
+	StringRefMemoryObject.cpp \
 	SystemUtils.cpp \
 	TargetRegistry.cpp \
 	Timer.cpp \
