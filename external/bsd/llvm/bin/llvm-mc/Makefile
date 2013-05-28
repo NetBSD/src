@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2013/02/19 12:35:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2013/05/28 17:37:34 joerg Exp $
 
 PROG_CXX=	llvm-mc
 NOMAN=		yes
@@ -45,6 +45,7 @@ LLVM_LIBS+= \
 	X86Disassembler \
 	X86AsmPrinter \
 	X86Utils \
+	Object \
 	SelectionDAG \
 	CodeGen \
 	Target \

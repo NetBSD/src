@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/04/25 13:59:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2013/05/28 17:37:34 joerg Exp $
 
 LIB=	LLVMARMMCTargetDesc
 
@@ -16,6 +16,7 @@ SRCS+=	ARMAsmBackend.cpp \
 	ARMMCCodeEmitter.cpp \
 	ARMMCExpr.cpp \
 	ARMMCTargetDesc.cpp \
+	ARMMachORelocationInfo.cpp \
 	ARMMachObjectWriter.cpp \
 	ARMUnwindOpAsm.cpp
 

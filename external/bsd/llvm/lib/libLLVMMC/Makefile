@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/01/23 15:02:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2013/05/28 17:37:34 joerg Exp $
 
 LIB=	LLVMMC
 
@@ -23,6 +23,8 @@ SRCS+=	ELFObjectWriter.cpp \
 	MCELFObjectTargetWriter.cpp \
 	MCELFStreamer.cpp \
 	MCExpr.cpp \
+	MCExternalSymbolizer.cpp \
+	MCFunction.cpp \
 	MCInst.cpp \
 	MCInstrAnalysis.cpp \
 	MCInstPrinter.cpp \
@@ -31,17 +33,21 @@ SRCS+=	ELFObjectWriter.cpp \
 	MCMachOStreamer.cpp \
 	MCMachObjectTargetWriter.cpp \
 	MCNullStreamer.cpp \
+	MCObjectDisassembler.cpp \
 	MCObjectFileInfo.cpp \
 	MCObjectStreamer.cpp \
+	MCObjectSymbolizer.cpp \
 	MCObjectWriter.cpp \
 	MCPureStreamer.cpp \
 	MCRegisterInfo.cpp \
+	MCRelocationInfo.cpp \
 	MCSection.cpp \
 	MCSectionCOFF.cpp \
 	MCSectionELF.cpp \
 	MCSectionMachO.cpp \
 	MCStreamer.cpp \
 	MCSubtargetInfo.cpp \
+	MCSymbolizer.cpp \
 	MCSymbol.cpp \
 	MCValue.cpp \
 	MCWin64EH.cpp \
