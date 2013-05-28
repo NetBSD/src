@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.26 2013/04/27 20:36:47 joerg Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.27 2013/05/28 17:29:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.26 2013/04/27 20:36:47 joerg Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.27 2013/05/28 17:29:41 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -421,7 +421,7 @@ __libc_thr_create_stub(thr_t *tp, const thrattr_t *ta,
 	return (EOPNOTSUPP);
 }
 
-void
+__dead void
 __libc_thr_exit_stub(void *v)
 {
 	/* LINTED deliberate lack of effect */
