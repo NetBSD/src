@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.78 2013/05/14 00:27:39 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.79 2013/05/28 05:55:40 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -855,10 +855,13 @@
 
 #define BGE_MIMODE_SHORTPREAMBLE	0x00000002
 #define BGE_MIMODE_AUTOPOLL		0x00000010
+#define BGE_MIMODE_PHYADDR_SHIFT	5
+#define BGE_MIMODE_PHYADDR_MASK		0x000003E0
 #define BGE_MIMODE_CLKCNT		0x001F0000
 #define	BGE_MIMODE_500KHZ_CONST		0x00008000
 #define	BGE_MIMODE_BASE			0x000C0000
 
+#define BGE_MIMODE_PHYADDR(x)		((x) << BGE_MIMODE_PHYADDR_SHIFT)
 
 /*
  * Send data initiator control registers.
