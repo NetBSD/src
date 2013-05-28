@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.22 2013/05/08 17:41:31 christos Exp $
+# $NetBSD: mi,v 1.23 2013/05/28 16:57:56 joerg Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -1543,6 +1543,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_io.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbrtowc.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbstowcs.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbsnrtowcs.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbtowc.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcscspn.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcspbrk.debug		tests-lib-debug		debug,atf
