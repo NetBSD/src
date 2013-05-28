@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.9 2012/07/10 22:34:32 macallan Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.10 2013/05/28 15:25:37 macallan Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -83,13 +83,13 @@
 #define	FHC_FBID_SHIFT	24
 #define	FHC_REV_MASK	0x00f00000	/* bits 20..23 are revision */
 #define	FHC_REV_SHIFT	20
-#define	FHC_FROP_DISABLE 0x00080000	/* disable fast/font? rasterops */
-#define	FHC_ROW_DISABLE	0x00040000	/* ??? */
-#define	FHC_SRC_DISABLE	0x00020000	/* ??? */
+#define	FHC_FROP_DISABLE 0x00080000	/* disable fast rasterops */
+#define	FHC_ROW_DISABLE	0x00040000	/* disable row cache */
+#define	FHC_SRC_DISABLE	0x00020000	/* disable source cache */
 #define	FHC_DST_DISABLE	0x00010000	/* disable destination cache */
-#define	FHC_RESET	0x00008000	/* ??? */
-#define	FHC_XXX0	0x00004000	/* ??? */
-#define	FHC_LEBO	0x00002000	/* set little endian byte order? */
+#define	FHC_RESET	0x00008000	/* reset FBC */
+#define	FHC_XXX0	0x00004000	/* unused */
+#define	FHC_LEBO	0x00002000	/* set little endian byte order */
 #define	FHC_RES_MASK	0x00001800	/* bits 11&12 are resolution */
 #define	FHC_RES_1024	 0x00000000		/* res = 1024x768 */
 #define	FHC_RES_1152	 0x00000800		/* res = 1152x900 */
@@ -99,8 +99,8 @@
 #define	FHC_CPU_SPARC	 0x00000000		/* cpu = sparc */
 #define	FHC_CPU_68020	 0x00000200		/* cpu = 68020 */
 #define	FHC_CPU_386	 0x00000400		/* cpu = 80386 */
-#define	FHC_CPU_XXX	 0x00000600		/* ??? */
-#define	FHC_TEST	0x00000100	/* ??? test window ??? */
+#define	FHC_CPU_XXX	 0x00000600		/* unused */
+#define	FHC_TEST	0x00000100	/* modify TESTX and TESTY */
 #define	FHC_TESTX_MASK	0x000000f0	/* bits 4..7 are test window X */
 #define	FHC_TESTX_SHIFT	4
 #define	FHC_TESTY_MASK	0x0000000f	/* bits 0..3 are test window Y */
@@ -132,8 +132,8 @@ struct cg6_thc {
 #define	THC_MISC_RESET		0x00001000	/* ??? */
 #define	THC_MISC_XXX2		0x00000800	/* unused */
 #define	THC_MISC_VIDEN		0x00000400	/* video enable */
-#define	THC_MISC_SYNC		0x00000200	/* not sure what ... */
-#define	THC_MISC_VSYNC		0x00000100	/* ... these really are */
+#define	THC_MISC_SYNC		0x00000200	/* sync status */
+#define	THC_MISC_VSYNC		0x00000100	/* vsync status */
 #define	THC_MISC_SYNCEN		0x00000080	/* sync enable */
 #define	THC_MISC_CURSRES	0x00000040	/* cursor resolution */
 #define	THC_MISC_INTEN		0x00000020	/* v.retrace intr enable */
@@ -162,9 +162,9 @@ struct cg6_tec_xxx {
  * stuff canned values in them (eg, offx).
  */
 struct cg6_fbc {
-	u_int32_t fbc_pad1[1];
-	volatile u_int32_t fbc_mode;		/* mode setting */
-	u_int32_t fbc_clip;		/* function unknown */
+	u_int32_t fbc_config;		/* r/o CONFIG register */
+	volatile u_int32_t fbc_mode;	/* mode setting */
+	u_int32_t fbc_clip;		/* TEC clip check */
 	u_int32_t fbc_pad2[1];
 	u_int32_t fbc_s;		/* global status */
 	u_int32_t fbc_draw;		/* drawing pipeline status */
@@ -353,10 +353,33 @@ struct cg6_fbc {
 
 #define GX_BLT_INPROGRESS       0x20000000
 
-#define GX_INPROGRESS           0x10000000
+/* status register(s) */
+#define GX_EXCEPTION		0x80000000
+#define GX_TEC_EXCEPTION	0x40000000
 #define GX_FULL                 0x20000000
+#define GX_INPROGRESS           0x10000000
+#define GX_UNSUPPORTED_ATTR	0x02000000
+#define GX_HRMONO		0x01000000
+#define GX_OVERFLOW		0x00200000
+#define GX_PICK			0x00100000
+#define GX_TEC_HIDDEN		0x00040000
+#define GX_TEC_INTERSECT	0x00020000
+#define GX_TEC_VISIBLE		0x00010000
+#define GX_BLIT_HARDWARE	0x00008000	/* hardware can blit this */
+#define GX_BLIT_SOFTWARE	0x00004000	/* software must blit this */
+#define GX_BLIT_SRC_HIDDEN	0x00002000
+#define GX_BLIT_SRC_INTERSECT	0x00001000
+#define GX_BLIT_SRC_VISIBLE	0x00000800
+#define GX_BLIT_DST_HIDDEN	0x00000400
+#define GX_BLIT_DST_INTERSECT	0x00000200
+#define GX_BLIT_DST_VISIBLE	0x00000100
+#define GX_DRAW_HARDWARE	0x00000010	/* hardware can draw this */
+#define GX_DRAW_SOFTAWRE	0x00000008	/* software must draw this */
+#define GX_DRAW_HIDDEN		0x00000004
+#define GX_DRAW_INTERSECT	0x00000002
+#define GX_DRAW_VISIBLE		0x00000001
 
-/* modes */
+/* MISC register */
 #define GX_INDEX(n)         ((n) << 4)
 #define GX_INDEX_ALL        0x00000030
 #define GX_INDEX_MOD        0x00000040
