@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1092 2013/04/27 22:21:14 christos Exp $
+# $NetBSD: GENERIC,v 1.1093 2013/05/28 12:13:55 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1092 $"
+#ident 		"GENERIC-$Revision: 1.1093 $"
 
 maxusers	64		# estimated number of users
 
@@ -1218,6 +1218,10 @@ irframe* at stuirda?
 # SigmaTel STIr4200 USB/IrDA Bridge
 ustir*	at uhub? port ?
 irframe* at ustir?
+
+# KingSun/DonShine USB/IrDA Bridge
+udsir*	at uhub? port ?
+irframe* at udsir?
 
 # Windows Media Center IR transceiver
 irmce*	at uhub? port ?
