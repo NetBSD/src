@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.128 2013/03/30 02:37:18 christos Exp $
+#	$NetBSD: files.usb,v 1.129 2013/05/28 12:03:26 kiyohara Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -453,3 +453,8 @@ file	dev/usb/if_athn_usb.c		athn_usb		needs-flag
 device	rsu: arp, ether, firmload, ifnet, wlan
 attach	rsu at usbdevif
 file	dev/usb/if_rsu.c		rsu
+
+# KingSun/DonShine IrDA adaptors
+device	udsir: irbus, irdasir
+attach	udsir at usbifif
+file	dev/usb/udsir.c			udsir
