@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.249 2013/05/28 05:55:40 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.250 2013/05/28 17:03:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.249 2013/05/28 05:55:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.250 2013/05/28 17:03:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3969,7 +3969,7 @@ bge_reset(struct bge_softc *sc)
 	mac_mode_mask = BGE_MACMODE_HALF_DUPLEX | BGE_MACMODE_PORTMODE;
 	if ((sc->bge_mfw_flags & BGE_MFW_ON_APE) != 0)
 		mac_mode_mask |= BGE_MACMODE_APE_RX_EN | BGE_MACMODE_APE_TX_EN;
-	mac_mode = CSR_READ_4(sc, BGE_MAC_MODE) & mac_mode_mask;
+	mac_mode = CSR_READ_4(sc, BGE_MAC_MODE) & ~mac_mode_mask;
 
 	if (BGE_IS_575X_PLUS(sc) && !BGE_IS_5714_FAMILY(sc) &&
 	    (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906)) {
