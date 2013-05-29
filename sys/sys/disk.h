@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.57 2012/06/10 17:05:18 mlelstv Exp $	*/
+/*	$NetBSD: disk.h,v 1.58 2013/05/29 15:11:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -421,6 +421,7 @@ struct disk {
 	TAILQ_ENTRY(disk) dk_link;	/* link in global disklist */
 	const char	*dk_name;	/* disk name */
 	prop_dictionary_t dk_info;	/* reference to disk-info dictionary */
+	struct disk_geom dk_geom;	/* cooked version of dk_info */
 	int		dk_bopenmask;	/* block devices open */
 	int		dk_copenmask;	/* character devices open */
 	int		dk_openmask;	/* composite (bopen|copen) */
