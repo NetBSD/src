@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocvar.h,v 1.3 2012/07/18 09:45:58 kiyohara Exp $	*/
+/*	$NetBSD: mvsocvar.h,v 1.4 2013/05/29 20:47:14 rkujawa Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -47,6 +47,11 @@ extern int nwindow, nremap;
 extern int gpp_npins, gpp_irqbase;
 extern struct bus_space mvsoc_bs_tag;
 extern struct arm32_bus_dma_tag mvsoc_bus_dma_tag;
+#if defined(ARMADAXP)
+extern vaddr_t misc_base;
+#define read_miscreg(o)		(*(volatile uint32_t *)(misc_base + (o)))
+#define write_miscreg(o, v)	(*(volatile uint32_t *)(misc_base + (o)) = (v))
+#endif
 
 #define read_mlmbreg(o)		(*(volatile uint32_t *)(mlmb_base + (o)))
 #define write_mlmbreg(o, v)	(*(volatile uint32_t *)(mlmb_base + (o)) = (v))
@@ -82,8 +87,24 @@ enum mvsoc_tags {
 	KIRKWOOD_TAG_SPI,
 	KIRKWOOD_TAG_BOOTROM,
 	KIRKWOOD_TAG_CRYPT,
+
+	ARMADAXP_TAG_PEX00_MEM,
+	ARMADAXP_TAG_PEX00_IO,
+	ARMADAXP_TAG_PEX01_MEM,
+	ARMADAXP_TAG_PEX01_IO,
+	ARMADAXP_TAG_PEX02_MEM,
+	ARMADAXP_TAG_PEX02_IO,
+	ARMADAXP_TAG_PEX03_MEM,
+	ARMADAXP_TAG_PEX03_IO,
+	ARMADAXP_TAG_PEX2_MEM,
+	ARMADAXP_TAG_PEX2_IO,
+	ARMADAXP_TAG_PEX3_MEM,
+	ARMADAXP_TAG_PEX3_IO,
 };
 int mvsoc_target(int, uint32_t *, uint32_t *, uint32_t *, uint32_t *);
+
+void armadaxp_getclks(void);
+void armadaxp_intr_bootstrap(void);
 
 void orion_intr_bootstrap(void);
 void orion_getclks(bus_addr_t);

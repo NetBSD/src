@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_space.c,v 1.5 2012/07/28 23:13:16 matt Exp $	*/
+/*	$NetBSD: mvsoc_space.c,v 1.6 2013/05/29 20:47:14 rkujawa Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.5 2012/07/28 23:13:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.6 2013/05/29 20:47:14 rkujawa Exp $");
 
 #include "opt_mvsoc.h"
 #include "mvpex.h"
@@ -214,6 +214,81 @@ struct bus_space kirkwood_pex1_io_bs_tag = {
 #endif
 };
 #endif
+
+#if defined(ARMADAXP)
+struct bus_space armadaxp_pex00_mem_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX00_MEM,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex00_io_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX00_IO,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex01_mem_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX01_MEM,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex01_io_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX01_IO,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex02_mem_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX02_MEM,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex02_io_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX02_IO,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex03_mem_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX03_MEM,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex03_io_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX03_IO,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex2_mem_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX2_MEM,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex2_io_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX2_IO,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex3_mem_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX3_MEM,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex3_io_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX3_IO,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+#endif
 #endif
 
 #if NGTPCI > 0
@@ -248,6 +323,14 @@ mvsoc_bs_map(void *space, bus_addr_t address, bus_size_t size, int flags,
 	paddr_t startpa, endpa, offset, pa;
 	pt_entry_t *pte;
 	vaddr_t va;
+
+/*
+ * XXX: We are not configuring any decode windows for Armada XP
+ * 	at the moment. We rely on those that have been set by u-boot.
+ *	Hence we don't want to mess around with decode windows,
+ *	till we get full controll over them.
+ */
+
 	int tag = (int)space;
 
 	if (tag != 0) {
