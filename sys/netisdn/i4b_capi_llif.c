@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_llif.c,v 1.5 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: i4b_capi_llif.c,v 1.6 2013/05/29 09:26:02 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_capi_llif.c,v 1.5 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_capi_llif.c,v 1.6 2013/05/29 09:26:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_capi_llif.c,v 1.5 2009/04/18 14:58:06 tsutsui Ex
 */
 
 int
-capi_ll_control(capi_softc_t *sc, int op, int arg)
+capi_ll_control(capi_softc_t *sc, int op, intptr_t arg)
 {
     switch (op) {
     case CAPI_CTRL_READY:

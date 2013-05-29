@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi.h,v 1.5 2006/10/16 13:03:03 pooka Exp $	*/
+/*	$NetBSD: i4b_capi.h,v 1.6 2013/05/29 09:26:02 martin Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -119,7 +119,7 @@ typedef struct capi_softc {
 #define I4BCAPI_APPLID 1
 
 extern int capi_ll_attach(capi_softc_t *, const char *, const char *);
-extern int capi_ll_control(capi_softc_t *, int op, int arg);
+extern int capi_ll_control(capi_softc_t *, int op, intptr_t arg);
 extern int capi_ll_detach(capi_softc_t *);
 
 #define CAPI_CTRL_READY     0 /* ctrl ready, value=TRUE/FALSE */
