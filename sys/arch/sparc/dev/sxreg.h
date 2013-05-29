@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.3 2013/02/06 20:39:03 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.4 2013/05/29 22:25:23 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 /*
  * registers are repeated at 0x1000 with certain parts read only
- * ( like the PAGE_BOUND registers ) which userlanf has no business writing to
+ * ( like the PAGE_BOUND registers ) which userland has no business writing to
  */
 
 /* SX_CONTROL_STATUS */
