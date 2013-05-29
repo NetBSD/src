@@ -1,0 +1,34 @@
+#	$NetBSD: std.armadaxp,v 1.1 2013/05/29 22:52:19 rkujawa Exp $
+#
+# standard NetBSD/evbarm for ARMADAXP options
+
+machine		evbarm arm
+include		"conf/std"	# MI standard options
+
+include 	"arch/evbarm/conf/files.armadaxp"
+
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_PCI_CONF_HOOK		# should be in types.h
+
+
+# Build for armv7-a, soft-floats only
+makeoptions	CPUFLAGS="-march=armv7-a -msoft-float"
+
+options 	KERNEL_BASE_EXT=0xc0000000
+options 	STARTUP_PAGETABLE_ADDR=0x00100000
+options 	MEMSTART=0x00000000
+makeoptions	LOADADDRESS="0x00200000"
+
+makeoptions	BOARDTYPE="armadaxp"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.armadaxp"
+
+options 	EVBARM_BOARDTYPE="Armada XP"
+options 	ARM_INTR_IMPL="<arch/arm/marvell/mvsoc_intr.h>"
+options 	COM_REGMAP
+options 	COM_16750
+options 	PIC_MAXSOURCES=128
