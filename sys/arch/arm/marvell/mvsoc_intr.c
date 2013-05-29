@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_intr.c,v 1.5 2012/07/29 00:07:10 matt Exp $	*/
+/*	$NetBSD: mvsoc_intr.c,v 1.6 2013/05/29 20:47:14 rkujawa Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.5 2012/07/29 00:07:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.6 2013/05/29 20:47:14 rkujawa Exp $");
 
 #define _INTR_PRIVATE
 
@@ -39,6 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.5 2012/07/29 00:07:10 matt Exp $");
 #include <arm/pic/picvar.h>
 #include <arm/marvell/mvsocreg.h>
 #include <arm/marvell/mvsocvar.h>
+
+#include "opt_mvsoc.h"
+
+#if defined(ARMADAXP)
+extern void armadaxp_handle_irq(void *);
+#endif
 
 int (*find_pending_irqs)(void);
 
@@ -74,6 +80,10 @@ void
 mvsoc_irq_handler(void *frame)
 {
 	struct cpu_info * const ci = curcpu();
+#if defined(ARMADAXP)
+	ci->ci_data.cpu_nintr++;
+	armadaxp_handle_irq(frame);
+#else
 	const int oldipl = ci->ci_cpl;
 	const uint32_t oldipl_mask = __BIT(oldipl);
 	int ipl_mask = 0;
@@ -87,6 +97,7 @@ mvsoc_irq_handler(void *frame)
 	 */
 	if ((ipl_mask & ~oldipl_mask) > oldipl_mask)
 		pic_do_pending_ints(I32_bit, oldipl, frame);
+#endif
 }
 
 /*
