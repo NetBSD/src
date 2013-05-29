@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.58 2013/05/29 15:11:11 martin Exp $	*/
+/*	$NetBSD: disk.h,v 1.59 2013/05/29 15:22:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -524,6 +524,7 @@ bool	disk_isbusy(struct disk *);
 void	disk_blocksize(struct disk *, int);
 struct disk *disk_find(const char *);
 int	disk_ioctl(struct disk *, u_long, void *, int, struct lwp *);
+void	disk_set_info(device_t, struct disk *, const char *);
 
 void	dkwedge_init(void);
 int	dkwedge_add(struct dkwedge_info *);
