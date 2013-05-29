@@ -1,3 +1,4 @@
+/*	$NetBSD: armadaxp_splfuncs.c,v 1.2 2013/05/29 23:50:35 rkujawa Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -36,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_splfuncs.c,v 1.1 2013/05/29 22:35:34 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_splfuncs.c,v 1.2 2013/05/29 23:50:35 rkujawa Exp $");
 
 #define _INTR_PRIVATE
 
