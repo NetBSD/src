@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.15 2013/02/06 04:10:54 macallan Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.16 2013/05/29 22:26:39 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -120,6 +120,7 @@ struct cgfourteen_softc {
 #define CG14_CLUT1_VOFF		0x00004000	/* Color Look Up Table */
 #define CG14_CLUT2_VOFF		0x00005000	/* Color Look Up Table */
 #define CG14_CLUT3_VOFF		0x00006000	/* Color Look Up Table */
+#define CG14_SXREG_VOFF		0x00010000	/* SX userspace registers */
 #define CG14_DIRECT_VOFF	0x10000000
 #define CG14_CTLREG_VOFF	0x20000000
 #define CG14_CURSOR_VOFF	0x30000000
@@ -132,3 +133,4 @@ struct cgfourteen_softc {
 #define CG14_B32_VOFF		0xa0000000
 #define CG14_G32_VOFF		0xb0000000
 #define CG14_R32_VOFF		0xc0000000
+#define CG14_SXIO_VOFF		0xd0000000

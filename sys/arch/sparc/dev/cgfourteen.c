@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.72 2013/02/12 22:24:47 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.73 2013/05/29 22:26:39 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -554,8 +554,26 @@ cgfourteenmmap(dev_t dev, off_t off, int prot)
 		   off < CG14_R32_VOFF + (sc->sc_vramsize >> 2)) {
 		offset = sc->sc_fbaddr + CG14_FB_PR32;
 		off -= CG14_R32_VOFF;
+#if NSX > 0
+	} else if (sc->sc_sx == NULL) {
+		return -1;
+	} else if (off >= CG14_SXREG_VOFF &&
+		   off < (CG14_SXREG_VOFF + 0x400)) {
+		return (bus_space_mmap(sc->sc_sx->sc_tag, sc->sc_sx->sc_uregs,
+			0, prot, BUS_SPACE_MAP_LINEAR));
+	} else if (off >= CG14_SXIO_VOFF &&
+		   off < (CG14_SXIO_VOFF + 0x03ffffff)) {
+		return (bus_space_mmap(sc->sc_sx->sc_tag, 0x800000000LL,
+			sc->sc_fb_paddr, prot, BUS_SPACE_MAP_LINEAR));
+#endif
 	} else
 		return -1;
+	/*
+	 * for convenience we also map the SX ranges here:
+	 * - one page userland registers
+	 * - CG14-sized IO space at 0x800000000 ( not a typo, it's above 4GB )
+	 * bus_space_mmap() should accept 64bit bus_addr_t's by the look of it
+	 */
 	return (bus_space_mmap(sc->sc_bustag, offset, off, prot,
 		    BUS_SPACE_MAP_LINEAR));
 }
@@ -1203,6 +1221,7 @@ cg14_rectfill(struct cgfourteen_softc *sc, int x, int y, int wi, int he,
 	 * until we're 32bit aligned, then do the rest in 32bit
 	 * mode. Assumes that stride is always a multiple of 4. 
 	 */ 
+	/* TODO: use 32bit writes with byte mask instead */
 	pre = addr & 3;
 	if (pre != 0) pre = 4 - pre;
 	for (line = 0; line < he; line++) {
@@ -1241,6 +1260,7 @@ cg14_invert(struct cgfourteen_softc *sc, int x, int y, int wi, int he)
 	 * until we're 32bit aligned, then do the rest in 32bit
 	 * mode. Assumes that stride is always a multiple of 4. 
 	 */ 
+	/* TODO: use 32bit writes with byte mask instead */
 	pre = addr & 3;
 	if (pre != 0) pre = 4 - pre;
 	for (line = 0; line < he; line++) {
@@ -1356,6 +1376,7 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 		}
 	} else {
 		/* unaligned, have to use byte mode */
+		/* funnel shifter & byte mask trickery? */
 		for (line = 0; line < he; line++) {
 			sptr = saddr;
 			dptr = daddr;
