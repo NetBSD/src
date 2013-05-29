@@ -1,4 +1,4 @@
-#       $NetBSD: files.marvell,v 1.7 2012/08/01 10:38:41 kiyohara Exp $
+#       $NetBSD: files.marvell,v 1.8 2013/05/29 22:35:34 rkujawa Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
@@ -15,6 +15,7 @@ file	arch/arm/arm32/irq_dispatch.S
 
 defflag opt_mvsoc.h				ORION KIRKWOOD MV78XX0
 file	arch/arm/marvell/mvsoc_intr.c
+file	arch/arm/marvell/armadaxp.c		armadaxp
 file	arch/arm/marvell/orion.c		orion
 file	arch/arm/marvell/kirkwood.c		kirkwood
 #file	arch/arm/marvell/mv78xx0.c		mv78xx0
