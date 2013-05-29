@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.46 2013/05/29 00:47:48 christos Exp $ */
+/* $NetBSD: dksubr.c,v 1.47 2013/05/29 23:25:55 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.46 2013/05/29 00:47:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.47 2013/05/29 23:25:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,12 +340,12 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	switch (cmd) {
 #ifdef DIOCGSECTORSIZE
 	case DIOCGSECTORSIZE:
-		*(u_int *)data = dksc->sc_geom.pdg_secsize;
+		*(u_int *)data = dksc->sc_dkdev.dk_geom.dg_secsize;
 		return 0;
 	case DIOCGMEDIASIZE:
 		*(off_t *)data =
-		    (off_t)dksc->sc_geom.pdg_secsize *
-		    dksc->sc_geom.pdg_nsectors;
+		    (off_t)dksc->sc_dkdev.dk_geom.dg_secsize *
+		    dksc->sc_dkdev.dk_geom.dg_nsectors;
 		return 0;
 #endif
 
@@ -548,15 +548,15 @@ void
 dk_getdefaultlabel(struct dk_intf *di, struct dk_softc *dksc,
 		      struct disklabel *lp)
 {
-	struct dk_geom *pdg = &dksc->sc_geom;
+	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 
 	memset(lp, 0, sizeof(*lp));
 
-	lp->d_secperunit = dksc->sc_size;
-	lp->d_secsize = pdg->pdg_secsize;
-	lp->d_nsectors = pdg->pdg_nsectors;
-	lp->d_ntracks = pdg->pdg_ntracks;
-	lp->d_ncylinders = pdg->pdg_ncylinders;
+	lp->d_secperunit = dg->dg_secperunit;
+	lp->d_secsize = dg->dg_secsize;
+	lp->d_nsectors = dg->dg_nsectors;
+	lp->d_ntracks = dg->dg_ntracks;
+	lp->d_ncylinders = dg->dg_ncylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
 	strncpy(lp->d_typename, di->di_dkname, sizeof(lp->d_typename));
@@ -624,23 +624,6 @@ dk_makedisklabel(struct dk_intf *di, struct dk_softc *dksc)
 	lp->d_partitions[RAW_PART].p_fstype = FS_BSDFFS;
 	strncpy(lp->d_packname, "default label", sizeof(lp->d_packname));
 	lp->d_checksum = dkcksum(lp);
-}
-
-void
-dk_set_geometry(struct dk_intf *di, struct dk_softc *dksc)
-{
-	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
-
-	memset(dg, 0, sizeof(*dg));
-
-	dg->dg_secperunit = dksc->sc_size;
-	dg->dg_secsize = dksc->sc_geom.pdg_secsize;
-	dg->dg_nsectors = dksc->sc_geom.pdg_nsectors;
-	dg->dg_ntracks = dksc->sc_geom.pdg_ntracks;
-	dg->dg_ncylinders = dksc->sc_geom.pdg_ncylinders;
-
-	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, NULL);
-
 }
 
 /* This function is taken from ccd.c:1.76  --rcd */

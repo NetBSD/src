@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.17 2013/05/29 00:47:48 christos Exp $ */
+/* $NetBSD: dkvar.h,v 1.18 2013/05/29 23:25:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,14 +32,6 @@
 struct pathbuf; /* from namei.h */
 
 
-/* XXX: GC */
-struct dk_geom {
-	u_int32_t	pdg_secsize;
-	u_int32_t	pdg_nsectors;
-	u_int32_t	pdg_ntracks;
-	u_int32_t	pdg_ncylinders;
-};
-
 /* literally this is not a softc, but is intended to be included in
  * the pseudo-disk's softc and passed to calls in dksubr.c.  It
  * should include the common elements of the pseudo-disk's softc.
@@ -50,8 +42,6 @@ struct dk_geom {
 struct dk_softc {
 	device_t		 sc_dev;
 	u_int32_t		 sc_flags;	/* flags */
-	size_t			 sc_size;	/* size of disk */
-	struct dk_geom		 sc_geom;	/* geometry info */
 #define DK_XNAME_SIZE 8
 	char			 sc_xname[DK_XNAME_SIZE]; /* external name */
 	struct disk		 sc_dkdev;	/* generic disk info */
@@ -113,7 +103,5 @@ int	dk_dump(struct dk_intf *, struct dk_softc *, dev_t,
 void	dk_getdisklabel(struct dk_intf *, struct dk_softc *, dev_t);
 void	dk_getdefaultlabel(struct dk_intf *, struct dk_softc *,
 			   struct disklabel *);
-/* XXX: GC use disk_set_info() */
-void	dk_set_geometry(struct dk_intf *, struct dk_softc *);
 
 int	dk_lookup(struct pathbuf *, struct lwp *, struct vnode **);
