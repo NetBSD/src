@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.2 2012/08/04 03:53:56 riastradh Exp $ */
+/* $NetBSD: fenv.c,v 1.3 2013/05/29 00:53:19 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das (at) FreeBSD.ORG>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.2 2012/08/04 03:53:56 riastradh Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.3 2013/05/29 00:53:19 riastradh Exp $");
 
 #include <assert.h>
 #include <fenv.h>
@@ -519,6 +519,6 @@ fegetexcept(void)
 	 */
 	__fnstcw(&control);
 
-	return (control & FE_ALL_EXCEPT);
+	return (~control & FE_ALL_EXCEPT);
 }
 
