@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.70 2012/10/27 17:18:14 chs Exp $	*/
+/*	$NetBSD: ld.c,v 1.71 2013/05/29 00:47:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.70 2012/10/27 17:18:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.71 2013/05/29 00:47:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static void	ldminphys(struct buf *bp);
 static bool	ld_suspend(device_t, const pmf_qual_t *);
 static bool	ld_shutdown(device_t, int);
 static void	ldstart(struct ld_softc *, struct buf *);
-static void	ld_set_properties(struct ld_softc *);
+static void	ld_set_geometry(struct ld_softc *);
 static void	ld_config_interrupts (device_t);
 static int	ldlastclose(device_t);
 
@@ -143,7 +143,7 @@ ldattach(struct ld_softc *sc)
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
 	sc->sc_disksize512 = sc->sc_secperunit * sc->sc_secsize / DEV_BSIZE;
 
-	ld_set_properties(sc);
+	ld_set_geometry(sc);
 
 	/* Attach the device into the rnd source list. */
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
@@ -889,44 +889,19 @@ ldminphys(struct buf *bp)
 }
 
 static void
-ld_set_properties(struct ld_softc *ld)
+ld_set_geometry(struct ld_softc *ld)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
+	struct disk_geom *dg = &ld->sc_dk.dk_geom;
 
-	disk_info = prop_dictionary_create();
+	memset(dg, 0, sizeof(*dg));
 
-	geom = prop_dictionary_create();
+	dg->dg_secperunit = ld->sc_secperunit;
+	dg->dg_secsize = ld->sc_secsize;
+	dg->dg_nsectors = ld->sc_nsectors;
+	dg->dg_ntracks = ld->sc_nheads;
+	dg->dg_ncylinders = ld->sc_ncylinders;
 
-	prop_dictionary_set_uint64(geom, "sectors-per-unit",
-	    ld->sc_secperunit);
-
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    ld->sc_secsize);
-
-	prop_dictionary_set_uint16(geom, "sectors-per-track",
-	    ld->sc_nsectors);
-
-	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-	    ld->sc_nheads);
-
-	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-	    ld->sc_ncylinders);
-
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	prop_dictionary_set(device_properties(ld->sc_dv),
-	    "disk-info", disk_info);
-
-	/*
-	 * Don't release disk_info here; we keep a reference to it.
-	 * disk_detach() will release it when we go away.
-	 */
-
-	odisk_info = ld->sc_dk.dk_info;
-	ld->sc_dk.dk_info = disk_info;
-	if (odisk_info)
-		prop_object_release(odisk_info);
+	disk_set_info(ld->sc_dv, &ld->sc_dk, NULL);
 }
 
 static void
