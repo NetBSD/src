@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.58 2013/05/29 00:47:48 christos Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.59 2013/05/29 23:11:56 christos Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.58 2013/05/29 00:47:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.59 2013/05/29 23:11:56 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -512,7 +512,7 @@ abort_transaction:
 static void xbd_backend_changed(void *arg, XenbusState new_state)
 {
 	struct xbd_xenbus_softc *sc = device_private((device_t)arg);
-	struct dk_geom *pdg;
+	struct disk_geom *dg;
 
 	char buf[9];
 	int s;
@@ -553,12 +553,15 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 
 		sc->sc_xbdsize =
 		    sc->sc_sectors * (uint64_t)sc->sc_secsize / DEV_BSIZE;
-		sc->sc_dksc.sc_size = sc->sc_xbdsize;
-		pdg = &sc->sc_dksc.sc_geom;
-		pdg->pdg_secsize = DEV_BSIZE;
-		pdg->pdg_ntracks = 1;
-		pdg->pdg_nsectors = 1024 * (1024 / pdg->pdg_secsize);
-		pdg->pdg_ncylinders = sc->sc_dksc.sc_size / pdg->pdg_nsectors;
+		dg = &sc->sc_dksc.sc_dkdev.dk_geom;
+		memset(dg, 0, sizeof(*dg));	
+
+		dg->dg_secperunit = sc->sc_xbdsize;
+		dg->dg_secsize = DEV_BSIZE;
+		dg->dg_ntracks = 1;
+		// XXX: Ok to hard-code DEV_BSIZE?
+		dg->dg_nsectors = 1024 * (1024 / dg->dg_secsize);
+		dg->dg_ncylinders = dg->dg_secperunit / dg->dg_nsectors;
 
 		bufq_alloc(&sc->sc_dksc.sc_bufq, "fcfs", 0);
 		sc->sc_dksc.sc_flags |= DKF_INITED;
@@ -571,18 +574,9 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 		format_bytes(buf, sizeof(buf), sc->sc_sectors * sc->sc_secsize);
 		aprint_verbose_dev(sc->sc_dksc.sc_dev,
 				"%s, %d bytes/sect x %" PRIu64 " sectors\n",
-				buf, (int)pdg->pdg_secsize, sc->sc_xbdsize);
+				buf, (int)dg->dg_secsize, sc->sc_xbdsize);
 		/* Discover wedges on this disk. */
 		dkwedge_discover(&sc->sc_dksc.sc_dkdev);
-
-		struct disk_geom *dg = &sc->sc_dksc.sc_dkdev.dk_geom;
-		memset(dg, 0, sizeof(*dg));	
-
-		dg->dg_secperunit = sc->sc_dksc.sc_size;
-		dg->dg_secsize = pdg->pdg_secsize;
-		dg->dg_nsectors = pdg->pdg_nsectors;
-		dg->dg_ntracks = pdg->pdg_ntracks;
-		dg->dg_ncylinders = pdg->pdg_ncylinders;
 
 		disk_set_info(sc->sc_dksc.sc_dev, &sc->sc_dksc.sc_dkdev, NULL);
 
