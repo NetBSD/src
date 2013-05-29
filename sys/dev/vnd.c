@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.221 2012/06/09 06:20:45 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.222 2013/05/29 00:47:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.221 2012/06/09 06:20:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.222 2013/05/29 00:47:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -126,8 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.221 2012/06/09 06:20:45 mlelstv Exp $");
 
 #include <dev/dkvar.h>
 #include <dev/vndvar.h>
-
-#include <prop/proplib.h>
 
 #if defined(VNDDEBUG) && !defined(DEBUG)
 #define DEBUG
@@ -187,7 +185,7 @@ static void	handle_with_rdwr(struct vnd_softc *, const struct buf *,
 		    struct buf *);
 static void	handle_with_strategy(struct vnd_softc *, const struct buf *,
 		    struct buf *);
-static void	vnd_set_properties(struct vnd_softc *);
+static void	vnd_set_geometry(struct vnd_softc *);
 
 static dev_type_open(vndopen);
 static dev_type_close(vndclose);
@@ -1296,7 +1294,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			vnd->sc_geom.vng_ncylinders = vnd->sc_size;
 		}
 
-		vnd_set_properties(vnd);
+		vnd_set_geometry(vnd);
 
 		if (vio->vnd_flags & VNDIOF_READONLY) {
 			vnd->sc_flags |= VNF_READONLY;
@@ -1998,45 +1996,20 @@ vnd_free(void *aux, void *ptr)
 #endif /* VND_COMPRESSION */
 
 static void
-vnd_set_properties(struct vnd_softc *vnd)
+vnd_set_geometry(struct vnd_softc *vnd)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
+	struct disk_geom *dg = &vnd->sc_dkdev.dk_geom;
 
-	disk_info = prop_dictionary_create();
+	memset(dg, 0, sizeof(*dg));
 
-	geom = prop_dictionary_create();
+	dg->dg_secperunit = vnd->sc_geom.vng_nsectors *
+	    vnd->sc_geom.vng_ntracks * vnd->sc_geom.vng_ncylinders;
+	dg->dg_secsize = vnd->sc_geom.vng_secsize;
+	dg->dg_nsectors = vnd->sc_geom.vng_nsectors;
+	dg->dg_ntracks = vnd->sc_geom.vng_ntracks;
+	dg->dg_ncylinders = vnd->sc_geom.vng_ncylinders;
 
-	prop_dictionary_set_uint64(geom, "sectors-per-unit",
-	    vnd->sc_geom.vng_nsectors * vnd->sc_geom.vng_ntracks *
-	    vnd->sc_geom.vng_ncylinders);
-
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    vnd->sc_geom.vng_secsize);
-
-	prop_dictionary_set_uint16(geom, "sectors-per-track",
-	    vnd->sc_geom.vng_nsectors);
-
-	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-	    vnd->sc_geom.vng_ntracks);
-
-	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-	    vnd->sc_geom.vng_ncylinders);
-
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	prop_dictionary_set(device_properties(vnd->sc_dev),
-	    "disk-info", disk_info);
-
-	/*
-	 * Don't release disk_info here; we keep a reference to it.
-	 * disk_detach() will release it when we go away.
-	 */
-
-	odisk_info = vnd->sc_dkdev.dk_info;
-	vnd->sc_dkdev.dk_info = disk_info;
-	if (odisk_info)
-		prop_object_release(odisk_info);
+	disk_set_info(vnd->sc_dev, &vnd->sc_dkdev, NULL);
 }
 
 #ifdef _MODULE

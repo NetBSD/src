@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.16 2012/05/25 10:53:46 elric Exp $ */
+/* $NetBSD: dkvar.h,v 1.17 2013/05/29 00:47:48 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 struct pathbuf; /* from namei.h */
 
 
+/* XXX: GC */
 struct dk_geom {
 	u_int32_t	pdg_secsize;
 	u_int32_t	pdg_nsectors;
@@ -112,6 +113,7 @@ int	dk_dump(struct dk_intf *, struct dk_softc *, dev_t,
 void	dk_getdisklabel(struct dk_intf *, struct dk_softc *, dev_t);
 void	dk_getdefaultlabel(struct dk_intf *, struct dk_softc *,
 			   struct disklabel *);
-void	dk_set_properties(struct dk_intf *, struct dk_softc *);
+/* XXX: GC use disk_set_info() */
+void	dk_set_geometry(struct dk_intf *, struct dk_softc *);
 
 int	dk_lookup(struct pathbuf *, struct lwp *, struct vnode **);

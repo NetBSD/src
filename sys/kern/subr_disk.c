@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.101 2013/02/09 00:31:21 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.102 2013/05/29 00:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.101 2013/02/09 00:31:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.102 2013/05/29 00:47:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -507,4 +507,85 @@ disk_ioctl(struct disk *diskp, u_long cmd, void *data, int flag,
 	}
 
 	return (error);
+}
+
+void
+disk_set_info(device_t dev, struct disk *dk, const char *type)
+{
+	struct disk_geom *dg = &dk->dk_geom;
+
+	if (dg->dg_secperunit == 0 && dg->dg_ncylinders == 0) {
+#ifdef DIAGNOSTIC
+		printf("%s: secperunit and ncylinders are zero\n", dk->dk_name);
+#endif
+		return;
+	}
+
+	if (dg->dg_secperunit == 0) {
+		if (dg->dg_nsectors == 0 || dg->dg_ntracks == 0) {
+#ifdef DIAGNOSTIC
+			printf("%s: secperunit and (sectors or tracks) "
+			    "are zero\n", dk->dk_name);
+#endif
+			return;
+		}
+		dg->dg_secperunit = dg->dg_nsectors *
+		    dg->dg_ntracks * dg->dg_ncylinders;
+	}
+
+	if (dg->dg_ncylinders == 0) {
+		if (dg->dg_ntracks && dg->dg_nsectors)
+			dg->dg_ncylinders = dg->dg_secperunit /
+			    (dg->dg_ntracks * dg->dg_nsectors);
+	}
+
+	if (dg->dg_secsize == 0) {
+#ifdef DIAGNOSTIC
+		printf("%s: fixing 0 sector size\n", dk->dk_name);
+#endif
+		dg->dg_secsize = DEV_BSIZE;
+	}
+
+	prop_dictionary_t disk_info, odisk_info, geom;
+
+	disk_info = prop_dictionary_create();
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+	    dg->dg_secperunit);
+
+	prop_dictionary_set_uint32(geom, "sector-size", dg->dg_secsize);
+
+	if (dg->dg_nsectors)
+		prop_dictionary_set_uint16(geom, "sectors-per-track",
+		    dg->dg_nsectors);
+
+	if (dg->dg_ntracks)
+		prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+		    dg->dg_ntracks);
+
+	if (dg->dg_ncylinders)
+		prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+		    dg->dg_ncylinders);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+
+	if (type)
+		prop_dictionary_set_cstring_nocopy(disk_info, "type", type);
+
+	prop_object_release(geom);
+
+	odisk_info = dk->dk_info;
+	dk->dk_info = disk_info;
+
+	if (dev)
+		prop_dictionary_set(device_properties(dev), "disk-info",
+		    disk_info);
+
+	/*
+	 * Don't release disk_info here; we keep a reference to it.
+	 * disk_detach() will release it when we go away.
+	 */
+	if (odisk_info)
+		prop_object_release(odisk_info);
 }

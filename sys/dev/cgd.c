@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.78 2012/12/05 02:23:20 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.79 2013/05/29 00:47:48 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.78 2012/12/05 02:23:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.79 2013/05/29 00:47:48 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -694,7 +694,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 
 	cs->sc_dksc.sc_flags |= DKF_INITED;
 
-	dk_set_properties(di, &cs->sc_dksc);
+	dk_set_geometry(di, &cs->sc_dksc);
 
 	/* Attach the disk. */
 	disk_attach(&cs->sc_dksc.sc_dkdev);

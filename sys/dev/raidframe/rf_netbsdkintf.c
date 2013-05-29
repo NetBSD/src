@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.303 2013/05/23 14:15:52 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.304 2013/05/29 00:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.303 2013/05/23 14:15:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.304 2013/05/29 00:47:49 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -280,7 +280,7 @@ static void raidunlock(struct raid_softc *);
 static int raid_detach_unlocked(struct raid_softc *);
 
 static void rf_markalldirty(RF_Raid_t *);
-static void rf_set_properties(struct raid_softc *, RF_Raid_t *);
+static void rf_set_geometry(struct raid_softc *, RF_Raid_t *);
 
 void rf_ReconThread(struct rf_recon_req *);
 void rf_RewriteParityThread(RF_Raid_t *raidPtr);
@@ -1961,7 +1961,7 @@ raidinit(struct raid_softc *rs)
 
 	dkwedge_discover(&rs->sc_dkdev);
 
-	rf_set_properties(rs, raidPtr);
+	rf_set_geometry(rs, raidPtr);
 
 }
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
@@ -3859,33 +3859,18 @@ raid_detach(device_t self, int flags)
 }
 
 static void
-rf_set_properties(struct raid_softc *rs, RF_Raid_t *raidPtr)
+rf_set_geometry(struct raid_softc *rs, RF_Raid_t *raidPtr)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
-	disk_info = prop_dictionary_create();
-	geom = prop_dictionary_create();
-	prop_dictionary_set_uint64(geom, "sectors-per-unit",
-				   raidPtr->totalSectors);
-	prop_dictionary_set_uint32(geom, "sector-size",
-				   raidPtr->bytesPerSector);
-	
-	prop_dictionary_set_uint16(geom, "sectors-per-track",
-				   raidPtr->Layout.dataSectorsPerStripe);
-	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-				   4 * raidPtr->numCol);
-	
-	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-	   raidPtr->totalSectors / (raidPtr->Layout.dataSectorsPerStripe *
-	   (4 * raidPtr->numCol)));
-				   
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-	prop_dictionary_set(device_properties(rs->sc_dev),
-			    "disk-info", disk_info);
-	odisk_info = rs->sc_dkdev.dk_info;
-	rs->sc_dkdev.dk_info = disk_info;
-	if (odisk_info)
-		prop_object_release(odisk_info);
+	struct disk_geom *dg = &rs->sc_dkdev.dk_geom;
+
+	memset(dg, 0, sizeof(*dg));
+
+	dg->dg_secperunit = raidPtr->totalSectors;
+	dg->dg_secsize = raidPtr->bytesPerSector;
+	dg->dg_nsectors = raidPtr->Layout.dataSectorsPerStripe;
+	dg->dg_ntracks = 4 * raidPtr->numCol;
+
+	disk_set_info(rs->sc_dev, &rs->sc_dkdev, NULL);
 }
 
 /* 
