@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.45 2012/05/29 10:20:33 elric Exp $ */
+/* $NetBSD: dksubr.c,v 1.46 2013/05/29 00:47:48 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.45 2012/05/29 10:20:33 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.46 2013/05/29 00:47:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,43 +627,20 @@ dk_makedisklabel(struct dk_intf *di, struct dk_softc *dksc)
 }
 
 void
-dk_set_properties(struct dk_intf *di, struct dk_softc *dksc)
+dk_set_geometry(struct dk_intf *di, struct dk_softc *dksc)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
+	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 
-	disk_info = prop_dictionary_create();
+	memset(dg, 0, sizeof(*dg));
 
-	geom = prop_dictionary_create();
+	dg->dg_secperunit = dksc->sc_size;
+	dg->dg_secsize = dksc->sc_geom.pdg_secsize;
+	dg->dg_nsectors = dksc->sc_geom.pdg_nsectors;
+	dg->dg_ntracks = dksc->sc_geom.pdg_ntracks;
+	dg->dg_ncylinders = dksc->sc_geom.pdg_ncylinders;
 
-	prop_dictionary_set_uint64(geom, "sectors-per-unit", dksc->sc_size);
+	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, NULL);
 
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    dksc->sc_geom.pdg_secsize);
-
-	prop_dictionary_set_uint16(geom, "sectors-per-track",
-	    dksc->sc_geom.pdg_nsectors);
-
-	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-	    dksc->sc_geom.pdg_ntracks);
-
-	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-	    dksc->sc_geom.pdg_ncylinders);
-
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	prop_dictionary_set(device_properties(dksc->sc_dev),
-	    "disk-info", disk_info);
-
-	/*
-	 * Don't release disk_info here; we keep a reference to it.
-	 * disk_detach() will release it when we go away.
-	 */
-
-	odisk_info = dksc->sc_dkdev.dk_info;
-	dksc->sc_dkdev.dk_info = disk_info;
-	if (odisk_info)
-		prop_object_release(odisk_info);
 }
 
 /* This function is taken from ccd.c:1.76  --rcd */

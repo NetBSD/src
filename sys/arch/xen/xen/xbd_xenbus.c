@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.57 2012/05/25 15:03:38 elric Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.58 2013/05/29 00:47:48 christos Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.57 2012/05/25 15:03:38 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.58 2013/05/29 00:47:48 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -513,7 +513,6 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 {
 	struct xbd_xenbus_softc *sc = device_private((device_t)arg);
 	struct dk_geom *pdg;
-	prop_dictionary_t disk_info, odisk_info, geom;
 
 	char buf[9];
 	int s;
@@ -576,30 +575,16 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 		/* Discover wedges on this disk. */
 		dkwedge_discover(&sc->sc_dksc.sc_dkdev);
 
-		disk_info = prop_dictionary_create();
-		geom = prop_dictionary_create();
-		prop_dictionary_set_uint64(geom, "sectors-per-unit",
-		    sc->sc_dksc.sc_size);
-		prop_dictionary_set_uint32(geom, "sector-size",
-		    pdg->pdg_secsize);
-		prop_dictionary_set_uint16(geom, "sectors-per-track",
-		    pdg->pdg_nsectors);
-		prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-		    pdg->pdg_ntracks);
-		prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-		    pdg->pdg_ncylinders);
-		prop_dictionary_set(disk_info, "geometry", geom);
-		prop_object_release(geom);
-		prop_dictionary_set(device_properties(sc->sc_dksc.sc_dev),
-		    "disk-info", disk_info);
-		/*
-		 * Don't release disk_info here; we keep a reference to it.
-		 * disk_detach() will release it when we go away.
-		 */
-		odisk_info = sc->sc_dksc.sc_dkdev.dk_info;
-		sc->sc_dksc.sc_dkdev.dk_info = disk_info;
-		if (odisk_info)
-			prop_object_release(odisk_info);
+		struct disk_geom *dg = &sc->sc_dksc.sc_dkdev.dk_geom;
+		memset(dg, 0, sizeof(*dg));	
+
+		dg->dg_secperunit = sc->sc_dksc.sc_size;
+		dg->dg_secsize = pdg->pdg_secsize;
+		dg->dg_nsectors = pdg->pdg_nsectors;
+		dg->dg_ntracks = pdg->pdg_ntracks;
+		dg->dg_ncylinders = pdg->pdg_ncylinders;
+
+		disk_set_info(sc->sc_dksc.sc_dev, &sc->sc_dksc.sc_dkdev, NULL);
 
 		/* the disk should be working now */
 		config_pending_decr();
