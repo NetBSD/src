@@ -1,4 +1,4 @@
-.\"	$NetBSD: ep.4,v 1.36 2009/05/18 09:45:54 wiz Exp $
+.\"	$NetBSD: ep.4,v 1.37 2013/05/29 15:03:09 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -47,7 +47,7 @@
 .Cd "ep* at pcmcia? function ?"
 .Sh DESCRIPTION
 The
-.Nm ep
+.Nm
 device driver supports the 3Com EtherLink III family of Ethernet cards.
 .Pp
 The 3c515 is an ISA 10/100 card with DMA capability.
@@ -124,7 +124,6 @@ and
 for more information.
 .Sh HARDWARE
 Supported cards include:
-.Pp
 .Bl -tag -width xxxxxx -offset indent
 .It 3c509
 ISA 10Mbps card, in BNC and multiport variants
@@ -178,7 +177,7 @@ type sensed and saved when the configuration utility was run.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "ep0: reset (status: %x)"
-the driver has encountered a FIFO underrun or overrun.
+The driver has encountered a FIFO underrun or overrun.
 The driver will reset the card and the packet will be lost.
 This is not fatal.
 .It "ep0: eeprom failed to come ready"
@@ -188,7 +187,7 @@ This probably means the card is wedged.
 This means that someone has scribbled with pencil in the test area on the
 card.
 Erase the pencil mark and reboot.
-(This is not a joke).
+(This is not a joke.)
 .El
 .Sh SEE ALSO
 .Xr eisa 4 ,
