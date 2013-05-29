@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19 2013/03/20 13:43:39 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.20 2013/05/29 23:29:44 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -89,8 +89,8 @@
 #define USPACE_SVC_STACK_TOP		(USPACE)
 #define USPACE_SVC_STACK_BOTTOM		(sizeof(struct pcb))
 
-#define arm_btop(x)			((x) >> PGSHIFT)
-#define arm_ptob(x)			((x) << PGSHIFT)
+#define arm_btop(x)			((unsigned)(x) >> PGSHIFT)
+#define arm_ptob(x)			((unsigned)(x) << PGSHIFT)
 #define arm_trunc_page(x)		((unsigned)(x) & ~PGOFSET)
     
 #ifdef _KERNEL
