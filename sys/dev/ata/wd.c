@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.402 2013/01/09 22:03:49 riastradh Exp $ */
+/*	$NetBSD: wd.c,v 1.403 2013/05/29 00:47:48 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.402 2013/01/09 22:03:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.403 2013/05/29 00:47:48 christos Exp $");
 
 #include "opt_ata.h"
 
@@ -1727,56 +1727,22 @@ bad144intern(struct wd_softc *wd)
 static void
 wd_params_to_properties(struct wd_softc *wd, struct ataparams *params)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
-	const char *cp;
+	struct disk_geom *dg = &wd->sc_dk.dk_geom;
 
-	disk_info = prop_dictionary_create();
+	memset(dg, 0, sizeof(*dg));
 
-	if (strcmp(wd->sc_params.atap_model, "ST506") == 0)
-		cp = "ST506";
-	else {
-		/* XXX Should have a case for ATA here, too. */
-		cp = "ESDI";
-	}
-	prop_dictionary_set_cstring_nocopy(disk_info, "type", cp);
+	dg->dg_secperunit = wd->sc_capacity;
+	dg->dg_secsize = DEV_BSIZE /* XXX 512? */;
+	dg->dg_nsectors = wd->sc_params.atap_sectors;
+	dg->dg_ntracks = wd->sc_params.atap_heads;
+	if ((wd->sc_flags & WDF_LBA) == 0)
+		dg->dg_ncylinders = wd->sc_params.atap_cylinders;
 
-	geom = prop_dictionary_create();
+	/* XXX Should have a case for ATA here, too. */
+	const char *cp = strcmp(wd->sc_params.atap_model, "ST506") ?
+	    "ST506" : "ESDI";
 
-	prop_dictionary_set_uint64(geom, "sectors-per-unit", wd->sc_capacity);
-
-	prop_dictionary_set_uint32(geom, "sector-size",
-				   DEV_BSIZE /* XXX 512? */);
-
-	prop_dictionary_set_uint16(geom, "sectors-per-track",
-				   wd->sc_params.atap_sectors);
-
-	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-				   wd->sc_params.atap_heads);
-
-	if (wd->sc_flags & WDF_LBA)
-		prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-					   wd->sc_capacity /
-					       (wd->sc_params.atap_heads *
-					        wd->sc_params.atap_sectors));
-	else
-		prop_dictionary_set_uint16(geom, "cylinders-per-unit",
-					   wd->sc_params.atap_cylinders);
-
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	prop_dictionary_set(device_properties(wd->sc_dev),
-			    "disk-info", disk_info);
-
-	/*
-	 * Don't release disk_info here; we keep a reference to it.
-	 * disk_detach() will release it when we go away.
-	 */
-
-	odisk_info = wd->sc_dk.dk_info;
-	wd->sc_dk.dk_info = disk_info;
-	if (odisk_info)
-		prop_object_release(odisk_info);
+	disk_set_info(wd->sc_dev, &wd->sc_dk, cp);
 }
 
 int

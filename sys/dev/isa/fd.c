@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.100 2012/02/02 19:43:04 tls Exp $	*/
+/*	$NetBSD: fd.c,v 1.101 2013/05/29 00:47:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.100 2012/02/02 19:43:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.101 2013/05/29 00:47:48 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -252,7 +252,7 @@ void fdcretry(struct fdc_softc *fdc);
 void fdfinish(struct fd_softc *fd, struct buf *bp);
 static const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
-static void fd_set_properties(struct fd_softc *fd);
+static void fd_set_geometry(struct fd_softc *fd);
 
 void	fd_mountroot_hook(device_t);
 
@@ -572,7 +572,7 @@ fdattach(device_t parent, device_t self, void *aux)
 	rnd_attach_source(&fd->rnd_source, device_xname(fd->sc_dev),
 			  RND_TYPE_DISK, 0);
 
-	fd_set_properties(fd);
+	fd_set_geometry(fd);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "cannot set power mgmt handler\n");
@@ -600,7 +600,7 @@ fddetach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 #if 0 /* XXX need to undo at detach? */
-	fd_set_properties(fd);
+	fd_set_geometry(fd);
 #endif
 
 	rnd_detach_source(&fd->rnd_source);
@@ -917,7 +917,7 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	fd->sc_cylin = -1;
 	fd->sc_flags |= FD_OPEN;
 
-	fd_set_properties(fd);
+	fd_set_geometry(fd);
 
 	return 0;
 }
@@ -1651,11 +1651,9 @@ fd_mountroot_hook(device_t dev)
 }
 
 static void
-fd_set_properties(struct fd_softc *fd)
+fd_set_geometry(struct fd_softc *fd)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
 	const struct fd_type *fdt;
-	int secsize;
 
 	fdt = fd->sc_type;
 	if (fdt == NULL) {
@@ -1664,49 +1662,22 @@ fd_set_properties(struct fd_softc *fd)
 			return;
 	}
 
-	disk_info = prop_dictionary_create();
+	struct disk_geom *dg = &fd->sc_dk.dk_geom;
 
-	geom = prop_dictionary_create();
-
-	prop_dictionary_set_uint64(geom, "sectors-per-unit",
-	    fdt->size);
-
+	memset(dg, 0, sizeof(*dg));
+	dg->dg_secperunit = fdt->size;
+	dg->dg_nsectors = fdt->sectrac;
 	switch (fdt->secsize) {
 	case 2:
-		secsize = 512;
+		dg->dg_secsize = 512;
 		break;
 	case 3:
-		secsize = 1024;
+		dg->dg_secsize = 1024;
 		break;
 	default:
-		secsize = 0;
+		break;
 	}
-
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    secsize);
-
-	prop_dictionary_set_uint16(geom, "sectors-per-track",
-	    fdt->sectrac);
-
-	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-	    fdt->heads);
-
-	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-	    fdt->cyls);
-
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	prop_dictionary_set(device_properties(fd->sc_dev),
-	    "disk-info", disk_info);
-
-	/*
-	 * Don't release disk_info here; we keep a reference to it.
-	 * disk_detach() will release it when we go away.
-	 */
-
-	odisk_info = fd->sc_dk.dk_info;
-	fd->sc_dk.dk_info = disk_info;
-	if (odisk_info)
-		prop_object_release(odisk_info);
+	dg->dg_ntracks = fdt->heads;
+	dg->dg_ncylinders = fdt->cyls;
+	disk_set_info(fd->sc_dev, &fd->sc_dk, NULL);
 }
