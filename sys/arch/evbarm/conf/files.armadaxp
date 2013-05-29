@@ -1,0 +1,23 @@
+#	$NetBSD: files.armadaxp,v 1.1 2013/05/29 22:52:19 rkujawa Exp $
+#
+# Marvell Armada XP configuration info
+#
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+
+file	arch/evbarm/armadaxp/armadaxp_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h			BOOT_ARGS
+defflag	opt_cputypes.h			L2CACHE_ENABLE
+defflag	opt_cputypes.h			AURORA_IO_CACHE_COHERENCY AURORA_L2_PT_WALK
+
+# CPU support and integrated peripherals
+include	"arch/arm/marvell/files.marvell"
+
+# SPI Serial Peripheral Interface
+device 	mvspi: spibus
+attach	mvspi at mvsoc with mvspi_mbus
+file	dev/marvell/mvspi.c			mvspi
+
