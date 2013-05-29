@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.162 2013/05/21 08:37:27 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.163 2013/05/29 12:07:58 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.162 2013/05/21 08:37:27 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.163 2013/05/29 12:07:58 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1802,6 +1802,9 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 		/* set the rtrequest function to create llinfo */
 		ia->ia_ifa.ifa_rtrequest = nd6_rtrequest;
 		in6_ifaddloop(&ia->ia_ifa);
+	} else {
+		/* Inform the routing socket of new flags/timings */
+		nd6_newaddrmsg(&ia->ia_ifa);
 	}
 
 	if (ifp->if_flags & IFF_MULTICAST)
