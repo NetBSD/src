@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.251 2013/05/29 08:24:06 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.252 2013/05/30 05:50:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.251 2013/05/29 08:24:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.252 2013/05/30 05:50:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4149,24 +4149,13 @@ bge_reset(struct bge_softc *sc)
 		BGE_SETBIT(sc, BGE_TLP_CONTROL_REG, BGE_TLP_DATA_FIFO_PROTECT);
 	}
 
+	/* 57XX step 17 */
+	/* Poll until the firmware initialization is complete */
+	bge_poll_fw(sc);
+
 	/* 5718 reset step 12, 57XX step 15 and 16 */
 	/* Fix up byte swapping */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS);
-
-	/* 5718 reset step 13, 57XX step 17 */
-	/*
-	 * Wait for the bootcode to complete initialization.
-	 * See BCM5718 programmer's guide's "step 13, Device reset Procedure,
-	 * Section 7". For 57XX, it's optional.
-	 */
-	if (BGE_IS_5717_PLUS(sc)) {
-		for (i = 0; i < 1000*1000; i++) {
-			val = bge_readmem_ind(sc, BGE_SRAM_FW_MB);
-			if (val == BGE_SRAM_FW_MB_RESET_MAGIC)
-				break;
-			DELAY(10);
-		}
-	}
 
 	/* 57XX step 21 */
 	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX) {
@@ -4189,10 +4178,6 @@ bge_reset(struct bge_softc *sc)
 	DELAY(40);
 
 	bge_ape_unlock(sc, BGE_APE_LOCK_GRC);
-
-	/* 57XX step 17 */
-	/* Poll until the firmware initialization is complete */
-	bge_poll_fw(sc);
 
 	/*
 	 * The 5704 in TBI mode apparently needs some special
