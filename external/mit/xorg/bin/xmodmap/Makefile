@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/11/20 23:17:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/05/30 23:42:19 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,9 @@ LDADD+=	-lX11
 DPADD+=	${LIBX11}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
+
+COPTS.handle.c+=-Wno-error	# uses XKeycodeToKeysym
+COPTS.exec.c+=	-Wno-error	# uses XKeycodeToKeysym
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
