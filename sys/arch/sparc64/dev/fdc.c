@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.37 2013/05/29 00:47:48 christos Exp $	*/
+/*	$NetBSD: fdc.c,v 1.38 2013/05/30 16:01:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.37 2013/05/29 00:47:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.38 2013/05/30 16:01:25 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -2575,7 +2575,7 @@ fd_set_geometry(struct fd_softc *fd)
 			return;
 	}
 
-	struct disk_geom *dg = &fd->sc_dkdev.dk_geom;
+	struct disk_geom *dg = &fd->sc_dk.dk_geom;
 
 	memset(dg, 0, sizeof(*dg));
 	dg->dg_secperunit = fdt->size;
@@ -2591,6 +2591,6 @@ fd_set_geometry(struct fd_softc *fd)
 		break;
 	}
 	dg->dg_ntracks = fdt->heads;
-	dg->dg_ncylinders = fdt->cyls;
-	disk_set_info(fd->sc_dev, &fd->sc_dkdev, NULL);
+	dg->dg_ncylinders = fdt->cylinders;
+	disk_set_info(fd->sc_dev, &fd->sc_dk, NULL);
 }
