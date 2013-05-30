@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2012/03/22 23:46:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2013/05/30 23:42:19 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,8 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 SUBDIR=	resize uxterm
 
 .PATH:	${X11SRCDIR.${PROG}}
+
+COPTS.input.c+=	-Wno-error	# uses XKeycodeToKeysym
 
 .include "Makefile.inc"
 

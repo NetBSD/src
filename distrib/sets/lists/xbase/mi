@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.114 2012/06/13 18:51:36 martin Exp $
+# $NetBSD: mi,v 1.115 2013/05/30 23:42:19 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1694,18 +1694,18 @@
 ./usr/X11R7/lib/X11/locale/ja.JIS/Compose		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/ja.JIS/XI18N_OBJS		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/ja.JIS/XLC_LOCALE		-unknown-	xorg
-./usr/X11R7/lib/X11/locale/ja.S90			base-x11-root	xorg
-./usr/X11R7/lib/X11/locale/ja.S90/Compose		-unknown-	xorg
-./usr/X11R7/lib/X11/locale/ja.S90/XI18N_OBJS		-unknown-	xorg
-./usr/X11R7/lib/X11/locale/ja.S90/XLC_LOCALE		-unknown-	xorg
+./usr/X11R7/lib/X11/locale/ja.S90			base-x11-obsolete	obsolete
+./usr/X11R7/lib/X11/locale/ja.S90/Compose		-unknown-	obsolete
+./usr/X11R7/lib/X11/locale/ja.S90/XI18N_OBJS		-unknown-	obsolete
+./usr/X11R7/lib/X11/locale/ja.S90/XLC_LOCALE		-unknown-	obsolete
 ./usr/X11R7/lib/X11/locale/ja.SJIS			base-x11-root	xorg
 ./usr/X11R7/lib/X11/locale/ja.SJIS/Compose		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/ja.SJIS/XI18N_OBJS		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/ja.SJIS/XLC_LOCALE		-unknown-	xorg
-./usr/X11R7/lib/X11/locale/ja.U90			base-x11-root	xorg
-./usr/X11R7/lib/X11/locale/ja.U90/Compose		-unknown-	xorg
-./usr/X11R7/lib/X11/locale/ja.U90/XI18N_OBJS		-unknown-	xorg
-./usr/X11R7/lib/X11/locale/ja.U90/XLC_LOCALE		-unknown-	xorg
+./usr/X11R7/lib/X11/locale/ja.U90			base-x11-obsolete	obsolete
+./usr/X11R7/lib/X11/locale/ja.U90/Compose		-unknown-	obsolete
+./usr/X11R7/lib/X11/locale/ja.U90/XI18N_OBJS		-unknown-	obsolete
+./usr/X11R7/lib/X11/locale/ja.U90/XLC_LOCALE		-unknown-	obsolete
 ./usr/X11R7/lib/X11/locale/ja/Compose			-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/ja/XI18N_OBJS		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/ja/XLC_LOCALE		-unknown-	xorg
