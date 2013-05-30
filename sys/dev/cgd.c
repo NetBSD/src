@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.80 2013/05/29 23:25:39 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.81 2013/05/30 08:28:13 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.80 2013/05/29 23:25:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.81 2013/05/30 08:28:13 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -747,7 +747,7 @@ cgd_ioctl_clr(struct cgd_softc *cs, struct lwp *l)
 static int
 cgd_ioctl_get(dev_t dev, void *data, struct lwp *l)
 {
-	struct cgd_softc *cs;
+	struct cgd_softc *cs = getcgd_softc(dev);
 	struct cgd_user *cgu;
 	int unit;
 	struct	dk_softc *dksc = &cs->sc_dksc;
