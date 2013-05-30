@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.4 2013/05/29 22:25:23 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.5 2013/05/30 20:09:23 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -170,5 +170,7 @@
 #define SX_SELS (0x7 << 21)	/* register select scalar */
 
 #define SX_ROP(sa, sb, d, cnt) (0x90000000 | ((cnt) << 24) | SX_ROPL | \
+		((sa) << 14) | (sb) | ((d) << 7))
+#define SX_SELECT_S(sa, sb, d, cnt) (0x90000000 | ((cnt) << 24) | SX_SELS | \
 		((sa) << 14) | (sb) | ((d) << 7))
 #endif /* SXREG_H */
