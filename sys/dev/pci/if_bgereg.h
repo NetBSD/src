@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.79 2013/05/28 05:55:40 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.80 2013/05/30 05:50:06 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2191,8 +2191,7 @@
  * firmware mailbox at 0xB50 in order to prevent the PXE boot
  * code from running.
  */
-#define	BGE_SRAM_FW_MB_MAGIC	0x4B657654
-#define	BGE_SRAM_FW_MB_RESET_MAGIC	0xB49A89AB
+#define	BGE_SRAM_FW_MB_MAGIC	0x4B657654 /* == ~0xB49A89AB */
 
 typedef struct {
 	volatile u_int32_t	bge_addr_hi;
