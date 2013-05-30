@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/25 22:27:35 apb Exp $
+#	$NetBSD: Makefile,v 1.3 2013/05/30 23:42:19 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ SUBDIR=	\
 	iso8859-1 iso8859-2 iso8859-3 iso8859-4 iso8859-5 iso8859-6 \
 	iso8859-7 iso8859-8 iso8859-9 iso8859-9e iso8859-10 iso8859-11 \
 	iso8859-13 iso8859-14 iso8859-15 \
-	ja ja.JIS ja.S90 ja.SJIS ja.U90 ja_JP.UTF-8 \
+	ja ja.JIS ja.SJIS ja_JP.UTF-8 \
 	ko ko_KR.UTF-8 koi8-c koi8-r koi8-u \
 	microsoft-cp1251 microsoft-cp1255 microsoft-cp1256 mulelao-1 \
 	nokhchi-1 \
@@ -59,6 +59,6 @@ realall: ${FILES}
 build_subdirs:
 .for _dir in ${SUBDIR}
 	mkdir ${.CURDIR}/${_dir}
-	printf '#	$$NetBSD: Makefile,v 1.2 2008/10/25 22:27:35 apb Exp $$\n\nNLS_SUBDIR=	${_dir}\n\n.include "../Makefile.nls"\n' > ${.CURDIR}/${_dir}/Makefile
+	printf '#	$$NetBSD: Makefile,v 1.3 2013/05/30 23:42:19 mrg Exp $$\n\nNLS_SUBDIR=	${_dir}\n\n.include "../Makefile.nls"\n' > ${.CURDIR}/${_dir}/Makefile
 
 .endfor
