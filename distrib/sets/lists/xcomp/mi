@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.135 2013/01/16 16:01:08 christos Exp $
+#	 $NetBSD: mi,v 1.136 2013/05/31 09:10:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9102,6 +9102,7 @@
 ./usr/X11R7/share/xcb/damage.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/dpms.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/dri2.xml				-unknown-	xorg
+./usr/X11R7/share/xcb/ge.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/glx.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/randr.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/record.xml			-unknown-	xorg
@@ -9115,12 +9116,14 @@
 ./usr/X11R7/share/xcb/xcb.xsd				-unknown-	xorg
 ./usr/X11R7/share/xcb/xevie.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xf86dri.xml			-unknown-	xorg
+./usr/X11R7/share/xcb/xf86vidmode.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xfixes.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xinerama.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xinput.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xprint.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xproto.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xselinux.xml			-unknown-	xorg
+./usr/X11R7/share/xcb/xkb.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xtest.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xv.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xvmc.xml				-unknown-	xorg
