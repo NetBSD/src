@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/05/22 02:41:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/05/31 09:33:17 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,8 @@ LIB=	Xtst
 .PATH:	${X11SRCDIR.${LIB}}/include/X11/extensions
 
 SRCS=	XTest.c XRecord.c
+
+CPPFLAGS+=	-DHAVE__XEATDATAWORDS
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
