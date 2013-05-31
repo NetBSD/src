@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/05/22 02:40:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2013/05/31 06:24:05 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ DPADD+= ${LIBXTST} ${LIBXI} ${LIBXRENDER} ${LIBXINERAMA} \
 	${LIBXXF86VM} ${LIBXXF86DGA} ${LIBXEXT} ${LIBX11}
 
 .PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}}/man
 
 COPTS.xdpyinfo.c+=	-Wno-error	# xf86vmstr.h
 
