@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.15 2013/05/24 02:29:36 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.16 2013/05/31 17:48:12 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -276,6 +276,7 @@ struct bge_softc {
 	bus_dma_tag_t		bge_dmatag;
 	uint32_t		bge_pcixcap;
 	uint32_t		bge_pciecap;
+	uint16_t		bge_mps;
 	int			bge_expmrq;
 	u_int32_t		bge_mfw_flags;  /* Management F/W flags */
 #define	BGE_MFW_ON_RXCPU	0x00000001
