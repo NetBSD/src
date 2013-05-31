@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.80 2013/05/30 05:50:06 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.81 2013/05/31 17:15:19 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -248,14 +248,6 @@
 #define BGE_PCI_GEN15_PRODID_ASICREV	0xFC
 
 #define BGE_PCI_UNKNOWN0		0xC4
-/* XXX:
- * Used in PCI-Express code for 575x chips.
- * Should be replaced with checking for a PCI config-space
- * capability for PCI-Express, and PCI-Express standard
- * offsets into that capability block.
- */
-#define BGE_PCI_CONF_DEV_CTRL		0xD8
-#define BGE_PCI_CONF_DEV_STUS		0xDA
 
 /* PCI Misc. Host control register */
 #define BGE_PCIMISCCTL_CLEAR_INTA	0x00000001
