@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/05/31 06:24:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/05/31 06:50:45 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ SRCS=	xditview.c Dvi.c draw.c font.c lex.c page.c parse.c \
 CPPFLAGS+=	-DHAS_MKSTEMP
 CPPFLAGS+=	-DUSE_XFT -DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2
 
-APPDEFS=Xditview.ad Xditview-chrtr.ad
+APPDEFS=Xditview Xditview-chrtr
 
 LDADD+=	-lXft -lfontconfig -lfreetype -lexpat -lXrender
 DPADD+=	${LIBXFT} ${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} ${LIBXRENDER}
@@ -21,6 +21,7 @@ FILES=	ldblarrow rdblarrow
 FILESDIR=${X11INCDIR}/X11/bitmaps
 
 .PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man
 
 .include <bsd.x11.mk>
