@@ -1,4 +1,4 @@
-# $NetBSD: t_umountstress.sh,v 1.4 2013/04/28 15:49:58 mlelstv Exp $
+# $NetBSD: t_umountstress.sh,v 1.5 2013/05/31 14:40:48 gson Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -69,16 +69,16 @@ EOF
 		for k in 0 1 2 3 4 5 6 7 8 9; do
 			if ! dd msgfmt=quiet if=/dev/zero \
 				count=1 of=${TMPMP}/test$i$j$k; then
-				echo 1
+				echo 1 >result
 				exit
 			fi
 		done
 		done
-		echo 0
-	) > result &
+		echo 0 >result
+	) &
 	busypid=$!
 
-	while kill 2>/dev/null -0 $busypid; do
+	while ! test -f result; do
 		if err=$(umount ${TMPMP} 2>&1); then
 			kill $busypid
 			exec 9<&-
@@ -150,16 +150,16 @@ EOF
 		for j in 0 1 2 3 4 5 6 7 8 9; do
 		for k in 0 1 2 3 4 5 6 7 8 9; do
 			if ! out=$(mount); then
-				echo 1
+				echo 1 >result
 				exit
 			fi
 		done
 		done
-		echo 0
-	) > result &
+		echo 0 >result
+	) &
 	busypid=$!
 
-	while kill 2>/dev/null -0 $busypid; do
+	while ! test -f result; do
 		if err=$(umount ${TMPMP} 2>&1); then
 			if ! mount -o async ${BVND}${MPART} ${TMPMP}; then
 				kill $busypid
