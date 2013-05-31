@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/10/25 16:56:23 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2013/05/31 22:49:15 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ SRCS=		access.c auth.c choose.c daemon.c dm.c dpylist.c \
 		error.c file.c genauth.c mitauth.c netaddr.c policy.c \
 		protodpy.c reset.c resource.c server.c session.c socket.c \
 		streams.c util.c xdmauth.c xdmcp.c \
-		Login.c greet.c verify.c
+		Login.c greet.c verify.c prngc.c
 
 CPPFLAGS+=		-DRETSIGTYPE=void
 CPPFLAGS.auth.c=	-DBSD44SOCKETS
@@ -40,11 +40,6 @@ DPADD+= ${LIBPAM} ${PAM_STATIC_DPADD}
 
 SUBDIR=		chooser config
 TARGETS+=	configinstall
-
-.PATH:		${X11SRCDIR.${PROG}}
-.PATH:		${X11SRCDIR.${PROG}}/greeter
-
-BUILDSYMLINKS+=	xdm.man.cpp xdm.man
 
 .include "Makefile.xdm"
 
