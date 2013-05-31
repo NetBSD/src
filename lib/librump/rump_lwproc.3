@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump_lwproc.3,v 1.4 2011/01/02 13:03:29 pooka Exp $
+.\"     $NetBSD: rump_lwproc.3,v 1.5 2013/05/31 16:25:24 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .Os
 .Sh NAME
 .Nm rump_lwproc
-.Nd rump process/lwp management
+.Nd rump kernel process/lwp management
 .Sh LIBRARY
 rump kernel (librump, \-lrump)
 .Sh SYNOPSIS
@@ -52,10 +52,11 @@ The current lwp (curlwp) indicates the current process and determines
 which resources, such as UID/GID, current working directory, and
 file descriptor table, are currently used.
 These basic principles apply to rump kernels as well, but since
-rump uses the host's thread and process context directly, the rules
+a rump kernel uses the host's thread and process context directly, the rules
 for how thread context is determined are different.
 .Pp
-In the rump model, each host thread (pthread) is either bound to
+In the rump kernel model, each host thread (implemented for example
+with pthreads) is either bound to
 a rump kernel lwp or accesses the rump kernel with an implicit thread
 context associated with pid 1.
 An implicit thread context is created every time the rump kernel
@@ -69,7 +70,7 @@ The association between host threads and the rump kernel curlwp is
 left to the caller.
 It is possible to create a dedicated host thread for every
 rump kernel lwp or multiplex them on top of a single host thread.
-After rump lwps have been created, switching curlwp is very cheap
+After rump kernel lwps have been created, switching curlwp is very cheap
 -- faster than a thread context switch on the host.
 In case multiple lwps/processes are created, it is the caller's
 responsibility to keep track of them and release them when they
