@@ -210,7 +210,7 @@ xcb_generic_iterator_t
 xcb_damage_damage_end (xcb_damage_damage_iterator_t i  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -235,7 +235,7 @@ xcb_damage_query_version (xcb_connection_t *c  /**< */,
                           uint32_t          client_minor_version  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -294,7 +294,7 @@ xcb_damage_query_version_reply (xcb_connection_t                   *c  /**< */,
                                 xcb_generic_error_t               **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -324,7 +324,7 @@ xcb_damage_create_checked (xcb_connection_t    *c  /**< */,
                            uint8_t              level  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -351,7 +351,7 @@ xcb_damage_create (xcb_connection_t    *c  /**< */,
                    uint8_t              level  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -377,7 +377,7 @@ xcb_damage_destroy_checked (xcb_connection_t    *c  /**< */,
                             xcb_damage_damage_t  damage  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -400,7 +400,7 @@ xcb_damage_destroy (xcb_connection_t    *c  /**< */,
                     xcb_damage_damage_t  damage  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -430,7 +430,7 @@ xcb_damage_subtract_checked (xcb_connection_t    *c  /**< */,
                              xcb_xfixes_region_t  parts  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -457,7 +457,7 @@ xcb_damage_subtract (xcb_connection_t    *c  /**< */,
                      xcb_xfixes_region_t  parts  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -485,7 +485,7 @@ xcb_damage_add_checked (xcb_connection_t    *c  /**< */,
                         xcb_xfixes_region_t  region  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
