@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/11/09 07:21:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/05/31 23:50:35 mrg Exp $
 
 NOMAN=	1
 
@@ -8,7 +8,7 @@ PROG=	chooser
 
 CPPFLAGS.chooser.c=	-DBSD44SOCKETS -DRETSIGTYPE=void
 
-APPDEFS=Chooser.ad
+APPDEFS=Chooser
 
 LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lXdmcp -lXinerama
 DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
