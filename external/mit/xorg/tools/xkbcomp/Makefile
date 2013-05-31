@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/08/22 01:03:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2013/05/31 23:43:05 mrg Exp $
 
 NOMAN=		1
 
@@ -34,7 +34,9 @@ HOST_CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
 		-I${X11SRCDIR.xkbfile}/include/X11/extensions \
 		-I${X11SRCDIR.${HOSTPROG}} \
 		-DDFLT_XKB_CONFIG_ROOT=\"${X11LIBDIR}/xkb\" -DXKB \
-		-DHAVE_STRCASECMP -DHAVE_STRDUP
+		-DHAVE_STRCASECMP -DHAVE_STRDUP \
+		-DPACKAGE_STRING="\"NetBSD tool xkbcomp 1.2.4\"" \
+		-DPACKAGE_VERSION="\"1.2.4\""
 
 
 .include "${NETBSDSRCDIR}/external/mit/xorg/tools/makekeys/Makefile.makekeys"
