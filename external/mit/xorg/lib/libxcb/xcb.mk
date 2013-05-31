@@ -1,4 +1,4 @@
-#	$NetBSD: xcb.mk,v 1.1 2010/07/17 23:43:27 mrg Exp $
+#	$NetBSD: xcb.mk,v 1.2 2013/05/31 09:14:19 mrg Exp $
 
 # define XCBEXT to something before including this
 
@@ -15,10 +15,10 @@ LIBDPLIBS=\
 	Xdmcp	${.CURDIR}/../../libXdmcp
 
 SHLIB_MAJOR=	0
-SHLIB_MINOR=	0
+SHLIB_MINOR=	1
 
 PKGCONFIG=	xcb-${XCBEXT}
-PKGCONFIG_VERSION.${PKGCONFIG}=     1.6
+PKGCONFIG_VERSION.${PKGCONFIG}=     1.9
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
