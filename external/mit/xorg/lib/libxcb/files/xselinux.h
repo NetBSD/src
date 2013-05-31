@@ -643,7 +643,7 @@ typedef struct xcb_selinux_get_client_context_reply_t {
 } xcb_selinux_get_client_context_reply_t;
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -668,7 +668,7 @@ xcb_selinux_query_version (xcb_connection_t *c  /**< */,
                            uint8_t           client_minor  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -726,8 +726,11 @@ xcb_selinux_query_version_reply (xcb_connection_t                    *c  /**< */
                                  xcb_selinux_query_version_cookie_t   cookie  /**< */,
                                  xcb_generic_error_t                **e  /**< */);
 
+int
+xcb_selinux_set_device_create_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -755,7 +758,7 @@ xcb_selinux_set_device_create_context_checked (xcb_connection_t *c  /**< */,
                                                const char       *context  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -779,8 +782,11 @@ xcb_selinux_set_device_create_context (xcb_connection_t *c  /**< */,
                                        uint32_t          context_len  /**< */,
                                        const char       *context  /**< */);
 
+int
+xcb_selinux_get_device_create_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -801,7 +807,7 @@ xcb_selinux_get_device_create_context_cookie_t
 xcb_selinux_get_device_create_context (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -894,8 +900,11 @@ xcb_selinux_get_device_create_context_reply (xcb_connection_t                   
                                              xcb_selinux_get_device_create_context_cookie_t   cookie  /**< */,
                                              xcb_generic_error_t                            **e  /**< */);
 
+int
+xcb_selinux_set_device_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -925,7 +934,7 @@ xcb_selinux_set_device_context_checked (xcb_connection_t *c  /**< */,
                                         const char       *context  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -951,8 +960,11 @@ xcb_selinux_set_device_context (xcb_connection_t *c  /**< */,
                                 uint32_t          context_len  /**< */,
                                 const char       *context  /**< */);
 
+int
+xcb_selinux_get_device_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -975,7 +987,7 @@ xcb_selinux_get_device_context (xcb_connection_t *c  /**< */,
                                 uint32_t          device  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1070,8 +1082,11 @@ xcb_selinux_get_device_context_reply (xcb_connection_t                         *
                                       xcb_selinux_get_device_context_cookie_t   cookie  /**< */,
                                       xcb_generic_error_t                     **e  /**< */);
 
+int
+xcb_selinux_set_window_create_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1099,7 +1114,7 @@ xcb_selinux_set_window_create_context_checked (xcb_connection_t *c  /**< */,
                                                const char       *context  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1123,8 +1138,11 @@ xcb_selinux_set_window_create_context (xcb_connection_t *c  /**< */,
                                        uint32_t          context_len  /**< */,
                                        const char       *context  /**< */);
 
+int
+xcb_selinux_get_window_create_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1145,7 +1163,7 @@ xcb_selinux_get_window_create_context_cookie_t
 xcb_selinux_get_window_create_context (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1238,8 +1256,11 @@ xcb_selinux_get_window_create_context_reply (xcb_connection_t                   
                                              xcb_selinux_get_window_create_context_cookie_t   cookie  /**< */,
                                              xcb_generic_error_t                            **e  /**< */);
 
+int
+xcb_selinux_get_window_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1262,7 +1283,7 @@ xcb_selinux_get_window_context (xcb_connection_t *c  /**< */,
                                 xcb_window_t      window  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1356,6 +1377,9 @@ xcb_selinux_get_window_context_reply_t *
 xcb_selinux_get_window_context_reply (xcb_connection_t                         *c  /**< */,
                                       xcb_selinux_get_window_context_cookie_t   cookie  /**< */,
                                       xcb_generic_error_t                     **e  /**< */);
+
+int
+xcb_selinux_list_item_sizeof (const void  *_buffer  /**< */);
 
 
 /*****************************************************************************
@@ -1478,8 +1502,11 @@ xcb_selinux_list_item_next (xcb_selinux_list_item_iterator_t *i  /**< */);
 xcb_generic_iterator_t
 xcb_selinux_list_item_end (xcb_selinux_list_item_iterator_t i  /**< */);
 
+int
+xcb_selinux_set_property_create_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1507,7 +1534,7 @@ xcb_selinux_set_property_create_context_checked (xcb_connection_t *c  /**< */,
                                                  const char       *context  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1531,8 +1558,11 @@ xcb_selinux_set_property_create_context (xcb_connection_t *c  /**< */,
                                          uint32_t          context_len  /**< */,
                                          const char       *context  /**< */);
 
+int
+xcb_selinux_get_property_create_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1553,7 +1583,7 @@ xcb_selinux_get_property_create_context_cookie_t
 xcb_selinux_get_property_create_context (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1646,8 +1676,11 @@ xcb_selinux_get_property_create_context_reply (xcb_connection_t                 
                                                xcb_selinux_get_property_create_context_cookie_t   cookie  /**< */,
                                                xcb_generic_error_t                              **e  /**< */);
 
+int
+xcb_selinux_set_property_use_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1675,7 +1708,7 @@ xcb_selinux_set_property_use_context_checked (xcb_connection_t *c  /**< */,
                                               const char       *context  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1699,8 +1732,11 @@ xcb_selinux_set_property_use_context (xcb_connection_t *c  /**< */,
                                       uint32_t          context_len  /**< */,
                                       const char       *context  /**< */);
 
+int
+xcb_selinux_get_property_use_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1721,7 +1757,7 @@ xcb_selinux_get_property_use_context_cookie_t
 xcb_selinux_get_property_use_context (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1814,8 +1850,11 @@ xcb_selinux_get_property_use_context_reply (xcb_connection_t                    
                                             xcb_selinux_get_property_use_context_cookie_t   cookie  /**< */,
                                             xcb_generic_error_t                           **e  /**< */);
 
+int
+xcb_selinux_get_property_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1840,7 +1879,7 @@ xcb_selinux_get_property_context (xcb_connection_t *c  /**< */,
                                   xcb_atom_t        property  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1937,8 +1976,11 @@ xcb_selinux_get_property_context_reply (xcb_connection_t                        
                                         xcb_selinux_get_property_context_cookie_t   cookie  /**< */,
                                         xcb_generic_error_t                       **e  /**< */);
 
+int
+xcb_selinux_get_property_data_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1963,7 +2005,7 @@ xcb_selinux_get_property_data_context (xcb_connection_t *c  /**< */,
                                        xcb_atom_t        property  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2060,8 +2102,11 @@ xcb_selinux_get_property_data_context_reply (xcb_connection_t                   
                                              xcb_selinux_get_property_data_context_cookie_t   cookie  /**< */,
                                              xcb_generic_error_t                            **e  /**< */);
 
+int
+xcb_selinux_list_properties_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2084,7 +2129,7 @@ xcb_selinux_list_properties (xcb_connection_t *c  /**< */,
                              xcb_window_t      window  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2166,8 +2211,11 @@ xcb_selinux_list_properties_reply (xcb_connection_t                      *c  /**
                                    xcb_selinux_list_properties_cookie_t   cookie  /**< */,
                                    xcb_generic_error_t                  **e  /**< */);
 
+int
+xcb_selinux_set_selection_create_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2195,7 +2243,7 @@ xcb_selinux_set_selection_create_context_checked (xcb_connection_t *c  /**< */,
                                                   const char       *context  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2219,8 +2267,11 @@ xcb_selinux_set_selection_create_context (xcb_connection_t *c  /**< */,
                                           uint32_t          context_len  /**< */,
                                           const char       *context  /**< */);
 
+int
+xcb_selinux_get_selection_create_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2241,7 +2292,7 @@ xcb_selinux_get_selection_create_context_cookie_t
 xcb_selinux_get_selection_create_context (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2334,8 +2385,11 @@ xcb_selinux_get_selection_create_context_reply (xcb_connection_t                
                                                 xcb_selinux_get_selection_create_context_cookie_t   cookie  /**< */,
                                                 xcb_generic_error_t                               **e  /**< */);
 
+int
+xcb_selinux_set_selection_use_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2363,7 +2417,7 @@ xcb_selinux_set_selection_use_context_checked (xcb_connection_t *c  /**< */,
                                                const char       *context  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2387,8 +2441,11 @@ xcb_selinux_set_selection_use_context (xcb_connection_t *c  /**< */,
                                        uint32_t          context_len  /**< */,
                                        const char       *context  /**< */);
 
+int
+xcb_selinux_get_selection_use_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2409,7 +2466,7 @@ xcb_selinux_get_selection_use_context_cookie_t
 xcb_selinux_get_selection_use_context (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2502,8 +2559,11 @@ xcb_selinux_get_selection_use_context_reply (xcb_connection_t                   
                                              xcb_selinux_get_selection_use_context_cookie_t   cookie  /**< */,
                                              xcb_generic_error_t                            **e  /**< */);
 
+int
+xcb_selinux_get_selection_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2526,7 +2586,7 @@ xcb_selinux_get_selection_context (xcb_connection_t *c  /**< */,
                                    xcb_atom_t        selection  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2621,8 +2681,11 @@ xcb_selinux_get_selection_context_reply (xcb_connection_t                       
                                          xcb_selinux_get_selection_context_cookie_t   cookie  /**< */,
                                          xcb_generic_error_t                        **e  /**< */);
 
+int
+xcb_selinux_get_selection_data_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2645,7 +2708,7 @@ xcb_selinux_get_selection_data_context (xcb_connection_t *c  /**< */,
                                         xcb_atom_t        selection  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2740,8 +2803,11 @@ xcb_selinux_get_selection_data_context_reply (xcb_connection_t                  
                                               xcb_selinux_get_selection_data_context_cookie_t   cookie  /**< */,
                                               xcb_generic_error_t                             **e  /**< */);
 
+int
+xcb_selinux_list_selections_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2762,7 +2828,7 @@ xcb_selinux_list_selections_cookie_t
 xcb_selinux_list_selections (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2842,8 +2908,11 @@ xcb_selinux_list_selections_reply (xcb_connection_t                      *c  /**
                                    xcb_selinux_list_selections_cookie_t   cookie  /**< */,
                                    xcb_generic_error_t                  **e  /**< */);
 
+int
+xcb_selinux_get_client_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2866,7 +2935,7 @@ xcb_selinux_get_client_context (xcb_connection_t *c  /**< */,
                                 uint32_t          resource  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *

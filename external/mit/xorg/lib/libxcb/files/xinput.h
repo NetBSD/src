@@ -2087,8 +2087,11 @@ xcb_input_event_class_next (xcb_input_event_class_iterator_t *i  /**< */);
 xcb_generic_iterator_t
 xcb_input_event_class_end (xcb_input_event_class_iterator_t i  /**< */);
 
+int
+xcb_input_get_extension_version_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2113,7 +2116,7 @@ xcb_input_get_extension_version (xcb_connection_t *c  /**< */,
                                  const char       *name  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2214,8 +2217,11 @@ xcb_input_device_info_next (xcb_input_device_info_iterator_t *i  /**< */);
 xcb_generic_iterator_t
 xcb_input_device_info_end (xcb_input_device_info_iterator_t i  /**< */);
 
+int
+xcb_input_list_input_devices_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2236,7 +2242,7 @@ xcb_input_list_input_devices_cookie_t
 xcb_input_list_input_devices (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2501,6 +2507,9 @@ xcb_input_axis_info_next (xcb_input_axis_info_iterator_t *i  /**< */);
 xcb_generic_iterator_t
 xcb_input_axis_info_end (xcb_input_axis_info_iterator_t i  /**< */);
 
+int
+xcb_input_valuator_info_sizeof (const void  *_buffer  /**< */);
+
 
 /*****************************************************************************
  **
@@ -2626,8 +2635,11 @@ xcb_input_input_class_info_next (xcb_input_input_class_info_iterator_t *i  /**< 
 xcb_generic_iterator_t
 xcb_input_input_class_info_end (xcb_input_input_class_info_iterator_t i  /**< */);
 
+int
+xcb_input_open_device_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2650,7 +2662,7 @@ xcb_input_open_device (xcb_connection_t *c  /**< */,
                        uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2746,7 +2758,7 @@ xcb_input_open_device_reply (xcb_connection_t                *c  /**< */,
                              xcb_generic_error_t            **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2772,7 +2784,7 @@ xcb_input_close_device_checked (xcb_connection_t *c  /**< */,
                                 uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2795,7 +2807,7 @@ xcb_input_close_device (xcb_connection_t *c  /**< */,
                         uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2820,7 +2832,7 @@ xcb_input_set_device_mode (xcb_connection_t *c  /**< */,
                            uint8_t           mode  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2878,8 +2890,11 @@ xcb_input_set_device_mode_reply (xcb_connection_t                    *c  /**< */
                                  xcb_input_set_device_mode_cookie_t   cookie  /**< */,
                                  xcb_generic_error_t                **e  /**< */);
 
+int
+xcb_input_select_extension_event_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2909,7 +2924,7 @@ xcb_input_select_extension_event_checked (xcb_connection_t              *c  /**<
                                           const xcb_input_event_class_t *classes  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2935,8 +2950,11 @@ xcb_input_select_extension_event (xcb_connection_t              *c  /**< */,
                                   uint16_t                       num_classes  /**< */,
                                   const xcb_input_event_class_t *classes  /**< */);
 
+int
+xcb_input_get_selected_extension_events_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2959,7 +2977,7 @@ xcb_input_get_selected_extension_events (xcb_connection_t *c  /**< */,
                                          xcb_window_t      window  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3093,8 +3111,11 @@ xcb_input_get_selected_extension_events_reply (xcb_connection_t                 
                                                xcb_input_get_selected_extension_events_cookie_t   cookie  /**< */,
                                                xcb_generic_error_t                              **e  /**< */);
 
+int
+xcb_input_change_device_dont_propagate_list_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3126,7 +3147,7 @@ xcb_input_change_device_dont_propagate_list_checked (xcb_connection_t           
                                                      const xcb_input_event_class_t *classes  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3154,8 +3175,11 @@ xcb_input_change_device_dont_propagate_list (xcb_connection_t              *c  /
                                              uint8_t                        mode  /**< */,
                                              const xcb_input_event_class_t *classes  /**< */);
 
+int
+xcb_input_get_device_dont_propagate_list_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3178,7 +3202,7 @@ xcb_input_get_device_dont_propagate_list (xcb_connection_t *c  /**< */,
                                           xcb_window_t      window  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3274,7 +3298,7 @@ xcb_input_get_device_dont_propagate_list_reply (xcb_connection_t                
                                                 xcb_generic_error_t                               **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3301,7 +3325,7 @@ xcb_input_get_device_motion_events (xcb_connection_t *c  /**< */,
                                     uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3405,7 +3429,7 @@ xcb_generic_iterator_t
 xcb_input_device_time_coord_end (xcb_input_device_time_coord_iterator_t i  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3428,7 +3452,7 @@ xcb_input_change_keyboard_device (xcb_connection_t *c  /**< */,
                                   uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3485,7 +3509,7 @@ xcb_input_change_keyboard_device_reply (xcb_connection_t                        
                                         xcb_generic_error_t                       **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3512,7 +3536,7 @@ xcb_input_change_pointer_device (xcb_connection_t *c  /**< */,
                                  uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3572,8 +3596,11 @@ xcb_input_change_pointer_device_reply (xcb_connection_t                         
                                        xcb_input_change_pointer_device_cookie_t   cookie  /**< */,
                                        xcb_generic_error_t                      **e  /**< */);
 
+int
+xcb_input_grab_device_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3610,7 +3637,7 @@ xcb_input_grab_device (xcb_connection_t              *c  /**< */,
                        const xcb_input_event_class_t *classes  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3681,7 +3708,7 @@ xcb_input_grab_device_reply (xcb_connection_t                *c  /**< */,
                              xcb_generic_error_t            **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3709,7 +3736,7 @@ xcb_input_ungrab_device_checked (xcb_connection_t *c  /**< */,
                                  uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3733,8 +3760,11 @@ xcb_input_ungrab_device (xcb_connection_t *c  /**< */,
                          xcb_timestamp_t   time  /**< */,
                          uint8_t           device_id  /**< */);
 
+int
+xcb_input_grab_device_key_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3778,7 +3808,7 @@ xcb_input_grab_device_key_checked (xcb_connection_t              *c  /**< */,
                                    const xcb_input_event_class_t *classes  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3819,7 +3849,7 @@ xcb_input_grab_device_key (xcb_connection_t              *c  /**< */,
                            const xcb_input_event_class_t *classes  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3853,7 +3883,7 @@ xcb_input_ungrab_device_key_checked (xcb_connection_t *c  /**< */,
                                      uint8_t           grabbed_device  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3883,8 +3913,11 @@ xcb_input_ungrab_device_key (xcb_connection_t *c  /**< */,
                              uint8_t           key  /**< */,
                              uint8_t           grabbed_device  /**< */);
 
+int
+xcb_input_grab_device_button_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3928,7 +3961,7 @@ xcb_input_grab_device_button_checked (xcb_connection_t              *c  /**< */,
                                       const xcb_input_event_class_t *classes  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3969,7 +4002,7 @@ xcb_input_grab_device_button (xcb_connection_t              *c  /**< */,
                               const xcb_input_event_class_t *classes  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -4003,7 +4036,7 @@ xcb_input_ungrab_device_button_checked (xcb_connection_t *c  /**< */,
                                         uint8_t           grabbed_device  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -4034,7 +4067,7 @@ xcb_input_ungrab_device_button (xcb_connection_t *c  /**< */,
                                 uint8_t           grabbed_device  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -4064,7 +4097,7 @@ xcb_input_allow_device_events_checked (xcb_connection_t *c  /**< */,
                                        uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -4091,7 +4124,7 @@ xcb_input_allow_device_events (xcb_connection_t *c  /**< */,
                                uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -4114,7 +4147,7 @@ xcb_input_get_device_focus (xcb_connection_t *c  /**< */,
                             uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -4171,7 +4204,7 @@ xcb_input_get_device_focus_reply (xcb_connection_t                     *c  /**< 
                                   xcb_generic_error_t                 **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -4203,7 +4236,7 @@ xcb_input_set_device_focus_checked (xcb_connection_t *c  /**< */,
                                     uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -4232,7 +4265,7 @@ xcb_input_set_device_focus (xcb_connection_t *c  /**< */,
                             uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -4255,7 +4288,7 @@ xcb_input_get_feedback_control (xcb_connection_t *c  /**< */,
                                 uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -4482,6 +4515,9 @@ xcb_input_integer_feedback_state_next (xcb_input_integer_feedback_state_iterator
  
 xcb_generic_iterator_t
 xcb_input_integer_feedback_state_end (xcb_input_integer_feedback_state_iterator_t i  /**< */);
+
+int
+xcb_input_string_feedback_state_sizeof (const void  *_buffer  /**< */);
 
 
 /*****************************************************************************
@@ -4823,6 +4859,9 @@ xcb_input_integer_feedback_ctl_next (xcb_input_integer_feedback_ctl_iterator_t *
 xcb_generic_iterator_t
 xcb_input_integer_feedback_ctl_end (xcb_input_integer_feedback_ctl_iterator_t i  /**< */);
 
+int
+xcb_input_string_feedback_ctl_sizeof (const void  *_buffer  /**< */);
+
 
 /*****************************************************************************
  **
@@ -4991,8 +5030,11 @@ xcb_input_led_feedback_ctl_next (xcb_input_led_feedback_ctl_iterator_t *i  /**< 
 xcb_generic_iterator_t
 xcb_input_led_feedback_ctl_end (xcb_input_led_feedback_ctl_iterator_t i  /**< */);
 
+int
+xcb_input_get_device_key_mapping_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5019,7 +5061,7 @@ xcb_input_get_device_key_mapping (xcb_connection_t     *c  /**< */,
                                   uint8_t               count  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5118,8 +5160,11 @@ xcb_input_get_device_key_mapping_reply (xcb_connection_t                        
                                         xcb_input_get_device_key_mapping_cookie_t   cookie  /**< */,
                                         xcb_generic_error_t                       **e  /**< */);
 
+int
+xcb_input_change_device_key_mapping_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5153,7 +5198,7 @@ xcb_input_change_device_key_mapping_checked (xcb_connection_t     *c  /**< */,
                                              const xcb_keysym_t   *keysyms  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5183,8 +5228,11 @@ xcb_input_change_device_key_mapping (xcb_connection_t     *c  /**< */,
                                      uint8_t               keycode_count  /**< */,
                                      const xcb_keysym_t   *keysyms  /**< */);
 
+int
+xcb_input_get_device_modifier_mapping_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5207,7 +5255,7 @@ xcb_input_get_device_modifier_mapping (xcb_connection_t *c  /**< */,
                                        uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5302,8 +5350,11 @@ xcb_input_get_device_modifier_mapping_reply (xcb_connection_t                   
                                              xcb_input_get_device_modifier_mapping_cookie_t   cookie  /**< */,
                                              xcb_generic_error_t                            **e  /**< */);
 
+int
+xcb_input_set_device_modifier_mapping_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5330,7 +5381,7 @@ xcb_input_set_device_modifier_mapping (xcb_connection_t *c  /**< */,
                                        const uint8_t    *keymaps  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5390,8 +5441,11 @@ xcb_input_set_device_modifier_mapping_reply (xcb_connection_t                   
                                              xcb_input_set_device_modifier_mapping_cookie_t   cookie  /**< */,
                                              xcb_generic_error_t                            **e  /**< */);
 
+int
+xcb_input_get_device_button_mapping_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5414,7 +5468,7 @@ xcb_input_get_device_button_mapping (xcb_connection_t *c  /**< */,
                                      uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5509,8 +5563,11 @@ xcb_input_get_device_button_mapping_reply (xcb_connection_t                     
                                            xcb_input_get_device_button_mapping_cookie_t   cookie  /**< */,
                                            xcb_generic_error_t                          **e  /**< */);
 
+int
+xcb_input_set_device_button_mapping_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5537,7 +5594,7 @@ xcb_input_set_device_button_mapping (xcb_connection_t *c  /**< */,
                                      const uint8_t    *map  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5598,7 +5655,7 @@ xcb_input_set_device_button_mapping_reply (xcb_connection_t                     
                                            xcb_generic_error_t                          **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5621,7 +5678,7 @@ xcb_input_query_device_state (xcb_connection_t *c  /**< */,
                               uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5806,6 +5863,9 @@ xcb_input_button_state_next (xcb_input_button_state_iterator_t *i  /**< */);
 xcb_generic_iterator_t
 xcb_input_button_state_end (xcb_input_button_state_iterator_t i  /**< */);
 
+int
+xcb_input_valuator_state_sizeof (const void  *_buffer  /**< */);
+
 
 /*****************************************************************************
  **
@@ -5888,8 +5948,11 @@ xcb_input_valuator_state_next (xcb_input_valuator_state_iterator_t *i  /**< */);
 xcb_generic_iterator_t
 xcb_input_valuator_state_end (xcb_input_valuator_state_iterator_t i  /**< */);
 
+int
+xcb_input_send_extension_event_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5927,7 +5990,7 @@ xcb_input_send_extension_event_checked (xcb_connection_t              *c  /**< *
                                         const xcb_input_event_class_t *classes  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5962,7 +6025,7 @@ xcb_input_send_extension_event (xcb_connection_t              *c  /**< */,
                                 const xcb_input_event_class_t *classes  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -5994,7 +6057,7 @@ xcb_input_device_bell_checked (xcb_connection_t *c  /**< */,
                                int8_t            percent  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -6022,8 +6085,11 @@ xcb_input_device_bell (xcb_connection_t *c  /**< */,
                        uint8_t           feedback_class  /**< */,
                        int8_t            percent  /**< */);
 
+int
+xcb_input_set_device_valuators_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -6052,7 +6118,7 @@ xcb_input_set_device_valuators (xcb_connection_t *c  /**< */,
                                 const int32_t    *valuators  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -6115,7 +6181,7 @@ xcb_input_set_device_valuators_reply (xcb_connection_t                         *
                                       xcb_generic_error_t                     **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -6140,7 +6206,7 @@ xcb_input_get_device_control (xcb_connection_t *c  /**< */,
                               uint8_t           device_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -6240,6 +6306,9 @@ xcb_input_device_state_next (xcb_input_device_state_iterator_t *i  /**< */);
  
 xcb_generic_iterator_t
 xcb_input_device_state_end (xcb_input_device_state_iterator_t i  /**< */);
+
+int
+xcb_input_device_resolution_state_sizeof (const void  *_buffer  /**< */);
 
 
 /*****************************************************************************
@@ -6615,6 +6684,9 @@ xcb_input_device_ctl_next (xcb_input_device_ctl_iterator_t *i  /**< */);
  
 xcb_generic_iterator_t
 xcb_input_device_ctl_end (xcb_input_device_ctl_iterator_t i  /**< */);
+
+int
+xcb_input_device_resolution_ctl_sizeof (const void  *_buffer  /**< */);
 
 
 /*****************************************************************************
