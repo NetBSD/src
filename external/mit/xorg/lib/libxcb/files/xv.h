@@ -1009,6 +1009,9 @@ xcb_xv_format_next (xcb_xv_format_iterator_t *i  /**< */);
 xcb_generic_iterator_t
 xcb_xv_format_end (xcb_xv_format_iterator_t i  /**< */);
 
+int
+xcb_xv_adaptor_info_sizeof (const void  *_buffer  /**< */);
+
 
 /*****************************************************************************
  **
@@ -1130,6 +1133,9 @@ xcb_xv_adaptor_info_next (xcb_xv_adaptor_info_iterator_t *i  /**< */);
 xcb_generic_iterator_t
 xcb_xv_adaptor_info_end (xcb_xv_adaptor_info_iterator_t i  /**< */);
 
+int
+xcb_xv_encoding_info_sizeof (const void  *_buffer  /**< */);
+
 
 /*****************************************************************************
  **
@@ -1211,6 +1217,9 @@ xcb_xv_encoding_info_next (xcb_xv_encoding_info_iterator_t *i  /**< */);
  
 xcb_generic_iterator_t
 xcb_xv_encoding_info_end (xcb_xv_encoding_info_iterator_t i  /**< */);
+
+int
+xcb_xv_image_sizeof (const void  *_buffer  /**< */);
 
 
 /*****************************************************************************
@@ -1372,6 +1381,9 @@ xcb_xv_image_next (xcb_xv_image_iterator_t *i  /**< */);
 xcb_generic_iterator_t
 xcb_xv_image_end (xcb_xv_image_iterator_t i  /**< */);
 
+int
+xcb_xv_attribute_info_sizeof (const void  *_buffer  /**< */);
+
 
 /*****************************************************************************
  **
@@ -1498,7 +1510,7 @@ xcb_generic_iterator_t
 xcb_xv_image_format_info_end (xcb_xv_image_format_info_iterator_t i  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1519,7 +1531,7 @@ xcb_xv_query_extension_cookie_t
 xcb_xv_query_extension (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1573,8 +1585,11 @@ xcb_xv_query_extension_reply (xcb_connection_t                 *c  /**< */,
                               xcb_xv_query_extension_cookie_t   cookie  /**< */,
                               xcb_generic_error_t             **e  /**< */);
 
+int
+xcb_xv_query_adaptors_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1597,7 +1612,7 @@ xcb_xv_query_adaptors (xcb_connection_t *c  /**< */,
                        xcb_window_t      window  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1679,8 +1694,11 @@ xcb_xv_query_adaptors_reply (xcb_connection_t                *c  /**< */,
                              xcb_xv_query_adaptors_cookie_t   cookie  /**< */,
                              xcb_generic_error_t            **e  /**< */);
 
+int
+xcb_xv_query_encodings_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1703,7 +1721,7 @@ xcb_xv_query_encodings (xcb_connection_t *c  /**< */,
                         xcb_xv_port_t     port  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1786,7 +1804,7 @@ xcb_xv_query_encodings_reply (xcb_connection_t                 *c  /**< */,
                               xcb_generic_error_t             **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1811,7 +1829,7 @@ xcb_xv_grab_port (xcb_connection_t *c  /**< */,
                   xcb_timestamp_t   time  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1870,7 +1888,7 @@ xcb_xv_grab_port_reply (xcb_connection_t           *c  /**< */,
                         xcb_generic_error_t       **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1898,7 +1916,7 @@ xcb_xv_ungrab_port_checked (xcb_connection_t *c  /**< */,
                             xcb_timestamp_t   time  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1923,7 +1941,7 @@ xcb_xv_ungrab_port (xcb_connection_t *c  /**< */,
                     xcb_timestamp_t   time  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1969,7 +1987,7 @@ xcb_xv_put_video_checked (xcb_connection_t *c  /**< */,
                           uint16_t          drw_h  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2012,7 +2030,7 @@ xcb_xv_put_video (xcb_connection_t *c  /**< */,
                   uint16_t          drw_h  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2058,7 +2076,7 @@ xcb_xv_put_still_checked (xcb_connection_t *c  /**< */,
                           uint16_t          drw_h  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2101,7 +2119,7 @@ xcb_xv_put_still (xcb_connection_t *c  /**< */,
                   uint16_t          drw_h  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2147,7 +2165,7 @@ xcb_xv_get_video_checked (xcb_connection_t *c  /**< */,
                           uint16_t          drw_h  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2190,7 +2208,7 @@ xcb_xv_get_video (xcb_connection_t *c  /**< */,
                   uint16_t          drw_h  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2236,7 +2254,7 @@ xcb_xv_get_still_checked (xcb_connection_t *c  /**< */,
                           uint16_t          drw_h  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2279,7 +2297,7 @@ xcb_xv_get_still (xcb_connection_t *c  /**< */,
                   uint16_t          drw_h  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2307,7 +2325,7 @@ xcb_xv_stop_video_checked (xcb_connection_t *c  /**< */,
                            xcb_drawable_t    drawable  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2332,7 +2350,7 @@ xcb_xv_stop_video (xcb_connection_t *c  /**< */,
                    xcb_drawable_t    drawable  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2360,7 +2378,7 @@ xcb_xv_select_video_notify_checked (xcb_connection_t *c  /**< */,
                                     uint8_t           onoff  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2385,7 +2403,7 @@ xcb_xv_select_video_notify (xcb_connection_t *c  /**< */,
                             uint8_t           onoff  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2413,7 +2431,7 @@ xcb_xv_select_port_notify_checked (xcb_connection_t *c  /**< */,
                                    uint8_t           onoff  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2438,7 +2456,7 @@ xcb_xv_select_port_notify (xcb_connection_t *c  /**< */,
                            uint8_t           onoff  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2471,7 +2489,7 @@ xcb_xv_query_best_size (xcb_connection_t *c  /**< */,
                         uint8_t           motion  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2538,7 +2556,7 @@ xcb_xv_query_best_size_reply (xcb_connection_t                 *c  /**< */,
                               xcb_generic_error_t             **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2568,7 +2586,7 @@ xcb_xv_set_port_attribute_checked (xcb_connection_t *c  /**< */,
                                    int32_t           value  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2595,7 +2613,7 @@ xcb_xv_set_port_attribute (xcb_connection_t *c  /**< */,
                            int32_t           value  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2620,7 +2638,7 @@ xcb_xv_get_port_attribute (xcb_connection_t *c  /**< */,
                            xcb_atom_t        attribute  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2678,8 +2696,11 @@ xcb_xv_get_port_attribute_reply (xcb_connection_t                    *c  /**< */
                                  xcb_xv_get_port_attribute_cookie_t   cookie  /**< */,
                                  xcb_generic_error_t                **e  /**< */);
 
+int
+xcb_xv_query_port_attributes_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2702,7 +2723,7 @@ xcb_xv_query_port_attributes (xcb_connection_t *c  /**< */,
                               xcb_xv_port_t     port  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2784,8 +2805,11 @@ xcb_xv_query_port_attributes_reply (xcb_connection_t                       *c  /
                                     xcb_xv_query_port_attributes_cookie_t   cookie  /**< */,
                                     xcb_generic_error_t                   **e  /**< */);
 
+int
+xcb_xv_list_image_formats_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2808,7 +2832,7 @@ xcb_xv_list_image_formats (xcb_connection_t *c  /**< */,
                            xcb_xv_port_t     port  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2903,8 +2927,11 @@ xcb_xv_list_image_formats_reply (xcb_connection_t                    *c  /**< */
                                  xcb_xv_list_image_formats_cookie_t   cookie  /**< */,
                                  xcb_generic_error_t                **e  /**< */);
 
+int
+xcb_xv_query_image_attributes_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -2933,7 +2960,7 @@ xcb_xv_query_image_attributes (xcb_connection_t *c  /**< */,
                                uint16_t          height  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3073,8 +3100,12 @@ xcb_xv_query_image_attributes_reply (xcb_connection_t                        *c 
                                      xcb_xv_query_image_attributes_cookie_t   cookie  /**< */,
                                      xcb_generic_error_t                    **e  /**< */);
 
+int
+xcb_xv_put_image_sizeof (const void  *_buffer  /**< */,
+                         uint32_t     data_len  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3130,7 +3161,7 @@ xcb_xv_put_image_checked (xcb_connection_t *c  /**< */,
                           const uint8_t    *data  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3183,7 +3214,7 @@ xcb_xv_put_image (xcb_connection_t *c  /**< */,
                   const uint8_t    *data  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -3241,7 +3272,7 @@ xcb_xv_shm_put_image_checked (xcb_connection_t *c  /**< */,
                               uint8_t           send_event  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *

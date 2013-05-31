@@ -198,7 +198,7 @@ typedef struct xcb_screensaver_notify_event_t {
 } xcb_screensaver_notify_event_t;
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -223,7 +223,7 @@ xcb_screensaver_query_version (xcb_connection_t *c  /**< */,
                                uint8_t           client_minor_version  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -282,7 +282,7 @@ xcb_screensaver_query_version_reply (xcb_connection_t                        *c 
                                      xcb_generic_error_t                    **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -305,7 +305,7 @@ xcb_screensaver_query_info (xcb_connection_t *c  /**< */,
                             xcb_drawable_t    drawable  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -362,7 +362,7 @@ xcb_screensaver_query_info_reply (xcb_connection_t                     *c  /**< 
                                   xcb_generic_error_t                 **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -390,7 +390,7 @@ xcb_screensaver_select_input_checked (xcb_connection_t *c  /**< */,
                                       uint32_t          event_mask  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -414,8 +414,11 @@ xcb_screensaver_select_input (xcb_connection_t *c  /**< */,
                               xcb_drawable_t    drawable  /**< */,
                               uint32_t          event_mask  /**< */);
 
+int
+xcb_screensaver_set_attributes_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -461,7 +464,7 @@ xcb_screensaver_set_attributes_checked (xcb_connection_t *c  /**< */,
                                         const uint32_t   *value_list  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -504,7 +507,7 @@ xcb_screensaver_set_attributes (xcb_connection_t *c  /**< */,
                                 const uint32_t   *value_list  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -530,7 +533,7 @@ xcb_screensaver_unset_attributes_checked (xcb_connection_t *c  /**< */,
                                           xcb_drawable_t    drawable  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -553,7 +556,7 @@ xcb_screensaver_unset_attributes (xcb_connection_t *c  /**< */,
                                   xcb_drawable_t    drawable  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -579,7 +582,7 @@ xcb_screensaver_suspend_checked (xcb_connection_t *c  /**< */,
                                  uint8_t           suspend  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
