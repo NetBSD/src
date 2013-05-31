@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xdm,v 1.5 2011/10/25 16:56:23 christos Exp $
+#	$NetBSD: Makefile.xdm,v 1.6 2013/05/31 22:49:15 mrg Exp $
 
 XDMVARDIR=	/var/db/xdm
 XDMDIR=		${X11ETCDIR}/xdm
@@ -13,16 +13,17 @@ CPPFLAGS+=	-DBINDIR=\"${X11BINDIR}\" -DXDMDIR=\"${XDMDIR}\" \
 		-DFRAGILE_DEV_MEM -DARC4_RANDOM \
 		-DXPM -DUSE_XFT -DUSE_XINERAMA \
 		-UIPv6 \
-		-DHAS_CRYPT \
-		-DHAS_DAEMON \
-		-DHAS_GETIFADDRS \
-		-DHAS_IFREQ \
-		-DHAS_MKSTEMP \
-		-DHAS_SETPROCTITLE \
-		-DHAS_SETSID \
-		-DHAS_SETUSERCONTEXT \
-		-DHAS_VFORK \
+		-DHAVE_SYS_PARAM_H \
+		-DHAVE_DAEMON \
+		-DHAVE_GETIFADDRS \
+		-DHAVE_MKSTEMP \
+		-DHAVE_SETPROCTITLE \
+		-DHAVE_SETUSERCONTEXT \
+		-DHAVE_ARC4RANDOM \
+		-DHAVE_SIGACTION \
+		-DHAVE_ASPRINTF \
 		-I${X11SRCDIR.xdm} \
+		-I${X11SRCDIR.xdm}/include \
 		${X11FLAGS.VERSION}
 
 .if (${USE_PAM} != "no")
@@ -30,3 +31,8 @@ CPPFLAGS+=      -DUSE_PAM
 .endif
 
 .PATH:		${X11SRCDIR.xdm}
+.PATH:		${X11SRCDIR.xdm}/xdm
+.PATH:		${X11SRCDIR.xdm}/man
+.PATH:		${X11SRCDIR.xdm}/chooser
+.PATH:		${X11SRCDIR.xdm}/greeter
+.PATH:		${X11SRCDIR.xdm}/app-defaults
