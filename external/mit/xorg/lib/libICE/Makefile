@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/05/31 00:54:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/05/31 08:18:41 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,8 @@ CPPFLAGS+=	$(TRANS_INCLUDES) $(CONN_DEFINES) $(SOCK_DEFINES)
 PKGDIST=	${LIB}
 
 CWARNFLAGS.clang+=	-Wno-string-plus-int
+
+COPTS.icetrans.c+=	-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
