@@ -278,7 +278,7 @@ xcb_generic_iterator_t
 xcb_xinerama_screen_info_end (xcb_xinerama_screen_info_iterator_t i  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -303,7 +303,7 @@ xcb_xinerama_query_version (xcb_connection_t *c  /**< */,
                             uint8_t           minor  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -362,7 +362,7 @@ xcb_xinerama_query_version_reply (xcb_connection_t                     *c  /**< 
                                   xcb_generic_error_t                 **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -385,7 +385,7 @@ xcb_xinerama_get_state (xcb_connection_t *c  /**< */,
                         xcb_window_t      window  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -442,7 +442,7 @@ xcb_xinerama_get_state_reply (xcb_connection_t                 *c  /**< */,
                               xcb_generic_error_t             **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -465,7 +465,7 @@ xcb_xinerama_get_screen_count (xcb_connection_t *c  /**< */,
                                xcb_window_t      window  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -522,7 +522,7 @@ xcb_xinerama_get_screen_count_reply (xcb_connection_t                        *c 
                                      xcb_generic_error_t                    **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -547,7 +547,7 @@ xcb_xinerama_get_screen_size (xcb_connection_t *c  /**< */,
                               uint32_t          screen  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -606,7 +606,7 @@ xcb_xinerama_get_screen_size_reply (xcb_connection_t                       *c  /
                                     xcb_generic_error_t                   **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -627,7 +627,7 @@ xcb_xinerama_is_active_cookie_t
 xcb_xinerama_is_active (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -681,8 +681,11 @@ xcb_xinerama_is_active_reply (xcb_connection_t                 *c  /**< */,
                               xcb_xinerama_is_active_cookie_t   cookie  /**< */,
                               xcb_generic_error_t             **e  /**< */);
 
+int
+xcb_xinerama_query_screens_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -703,7 +706,7 @@ xcb_xinerama_query_screens_cookie_t
 xcb_xinerama_query_screens (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
