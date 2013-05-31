@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.316 2013/04/28 04:44:21 joerg Exp $
+#	$NetBSD: bsd.README,v 1.317 2013/05/31 06:48:43 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1584,6 +1584,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBICE?=	${DESTDIR}/usr/X11R7/lib/libICE.a
 		LIBSM?=		${DESTDIR}/usr/X11R7/lib/libSM.a
 		LIBX11?=	${DESTDIR}/usr/X11R7/lib/libX11.a
+		LIBX11_XCB?=	${DESTDIR}/usr/X11R7/lib/libX11-xcb.a
 		LIBXTRAP?=	${DESTDIR}/usr/X11R7/lib/libXTrap.a
 		LIBXAU?=	${DESTDIR}/usr/X11R7/lib/libXau.a
 		LIBXAW?=	${DESTDIR}/usr/X11R7/lib/libXaw.a
