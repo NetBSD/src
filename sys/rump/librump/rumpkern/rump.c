@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.269 2013/05/15 14:07:26 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.270 2013/05/31 16:16:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.269 2013/05/15 14:07:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.270 2013/05/31 16:16:40 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -567,6 +567,8 @@ cpu_reboot(int howto, char *bootstr)
 		if (rump_vfs_fini)
 			rump_vfs_fini();
 	}
+
+	doshutdownhooks();
 
 	/* your wish is my command */
 	if (howto & RB_HALT) {
