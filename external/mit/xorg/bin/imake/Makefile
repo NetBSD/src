@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/05/21 05:55:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2013/05/31 05:41:26 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,8 @@ CPPFLAGS+=	-DCPP_PROGRAM=\"$(CPP_PROGRAM)\"
 X11EXTRAMANDEFS=-e 's,__cpp__,$(CPP_PROGRAM),g'
 
 .PATH:	${X11SRCDIR.${PROG}}
+
+COPTS.imake.c+=	-Wno-error	# const issues
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
