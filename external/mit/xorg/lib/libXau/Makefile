@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2009/11/09 00:41:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/05/31 00:38:16 mrg Exp $
 
 .include <bsd.own.mk>
 
 LIB=	Xau
 .PATH:	${X11SRCDIR.${LIB}}
+.PATH:	${X11SRCDIR.${LIB}}/man
 .PATH:	${X11SRCDIR.${LIB}}/include/X11
 
 SRCS=	AuDispose.c AuFileName.c AuGetAddr.c AuGetBest.c AuLock.c \
