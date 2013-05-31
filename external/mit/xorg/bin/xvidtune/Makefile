@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/05/21 06:37:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2013/05/31 08:02:00 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ DPADD+=	${LIBXXF86VM} ${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 	${LIBXPM} ${LIBXEXT} ${LIBX11}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
+.PATH:	${X11SRCDIR.${PROG}}/man
 
 VENDOR_NAME=The Xorg Foundation
 
