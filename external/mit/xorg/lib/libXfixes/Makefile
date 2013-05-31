@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/11/06 22:28:25 veego Exp $
+#	$NetBSD: Makefile,v 1.5 2013/05/31 00:47:53 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,8 @@ SRCS=		Cursor.c Region.c SaveSet.c Selection.c Xfixes.c
 
 INCS=	Xfixes.h
 INCSDIR=${X11INCDIR}/X11/extensions
+
+CPPFLAGS+=	-DHAVE__XEATDATAWORDS 
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/extensions
 
