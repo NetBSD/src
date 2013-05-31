@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.252 2013/05/30 05:50:06 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.253 2013/05/31 17:48:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.252 2013/05/30 05:50:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.253 2013/05/31 17:48:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2331,7 +2331,10 @@ bge_chipinit(struct bge_softc *sc)
 		/* Read watermark not used, 128 bytes for write. */
 		DPRINTFN(4, ("(%s: PCI-Express DMA setting)\n",
 		    device_xname(sc->bge_dev)));
-		dma_rw_ctl |= BGE_PCIDMARWCTL_WR_WAT_SHIFT(3);
+		if (sc->bge_mps >= 256)
+			dma_rw_ctl |= BGE_PCIDMARWCTL_WR_WAT_SHIFT(7);
+		else
+			dma_rw_ctl |= BGE_PCIDMARWCTL_WR_WAT_SHIFT(3);
 	} else if (sc->bge_flags & BGE_PCIX) {
 	  	DPRINTFN(4, ("(:%s: PCI-X DMA setting)\n",
 		    device_xname(sc->bge_dev)));
@@ -3348,6 +3351,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    || (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785)) {
 		/* PCIe */
 		sc->bge_flags |= BGE_PCIE;
+		/* Extract supported maximum payload size. */
+		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+		    sc->bge_pciecap + PCIE_DCAP);
+		sc->bge_mps = 128 << (reg & PCIE_DCAP_MAX_PAYLOAD);
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720)
 			sc->bge_expmrq = 2048;
@@ -3966,11 +3973,13 @@ bge_reset(struct bge_softc *sc)
 	int i, val;
 	void (*write_op)(struct bge_softc *, int, int);
 
+	/* Make mask for BGE_MAC_MODE register. */
 	mac_mode_mask = BGE_MACMODE_HALF_DUPLEX | BGE_MACMODE_PORTMODE;
 	if ((sc->bge_mfw_flags & BGE_MFW_ON_APE) != 0)
 		mac_mode_mask |= BGE_MACMODE_APE_RX_EN | BGE_MACMODE_APE_TX_EN;
-	mac_mode = CSR_READ_4(sc, BGE_MAC_MODE) & ~mac_mode_mask;
-
+	/* Keep mac_mode_mask's bits of BGE_MAC_MODE register into mac_mode */
+	mac_mode = CSR_READ_4(sc, BGE_MAC_MODE) & mac_mode_mask;
+	
 	if (BGE_IS_575X_PLUS(sc) && !BGE_IS_5714_FAMILY(sc) &&
 	    (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906)) {
 	    	if (sc->bge_flags & BGE_PCIE)
@@ -4149,7 +4158,7 @@ bge_reset(struct bge_softc *sc)
 		BGE_SETBIT(sc, BGE_TLP_CONTROL_REG, BGE_TLP_DATA_FIFO_PROTECT);
 	}
 
-	/* 57XX step 17 */
+	/* 5718 reset step 13, 57XX step 17 */
 	/* Poll until the firmware initialization is complete */
 	bge_poll_fw(sc);
 
@@ -4169,10 +4178,9 @@ bge_reset(struct bge_softc *sc)
 	}
 
 	/* 57XX step 18 */
-	/* Write mac mode. 
-	 * XXX Write 0x0c for 5703S and 5704S
-	 */
+	/* Write mac mode. */
 	val = CSR_READ_4(sc, BGE_MAC_MODE);
+	/* Restore mac_mode_mask's bits using mac_mode */
 	val = (val & ~mac_mode_mask) | mac_mode;
 	CSR_WRITE_4_FLUSH(sc, BGE_MAC_MODE, val);
 	DELAY(40);
