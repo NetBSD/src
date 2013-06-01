@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2013/06/01 10:54:24 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2013/06/01 11:02:42 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netinet ${.CURDIR}/../../../../netinet6
@@ -26,6 +26,9 @@ SRCS+=	tcp_congctl.c tcp_input.c tcp_output.c tcp_sack.c tcp_subr.c \
 SRCS+=	udp_usrreq.c
 
 CPPFLAGS+=	-I${.CURDIR}/opt -I${.CURDIR}/../libnet/opt
+
+CPPFLAGS+=	-DPORTALGO_INET4_DEFAULT=PORTALGO_RANDOM_START
+CPPFLAGS+=	-DPORTALGO_INET6_DEFAULT=PORTALGO_RANDOM_START
 
 # TCP debugging
 #SRCS+=		tcp_debug.c
