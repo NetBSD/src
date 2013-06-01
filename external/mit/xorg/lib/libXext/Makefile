@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/02/24 08:18:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2013/06/01 07:53:11 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,7 @@ SRCS=	DPMS.c \
 	globals.c
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	-DHAVE__XEATDATAWORDS
 
 LIBDPLIBS=	X11	${.CURDIR}/../libX11/dynamic
 
