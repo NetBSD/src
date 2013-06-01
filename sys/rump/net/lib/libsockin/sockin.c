@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.31 2013/06/01 10:10:57 stacktic Exp $	*/
+/*	$NetBSD: sockin.c,v 1.32 2013/06/01 11:44:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.31 2013/06/01 10:10:57 stacktic Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.32 2013/06/01 11:44:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -400,6 +400,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	{
 		int news;
 		int sbsize;
+		int family;
 
 		sosetlock(so);
 		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
@@ -408,8 +409,9 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				break;
 		}
 
-		error = rumpcomp_sockin_socket(
-		    so->so_proto->pr_domain->dom_family,
+		family = so->so_proto->pr_domain->dom_family;
+		KASSERT(family == PF_INET || family == PF_INET6);
+		error = rumpcomp_sockin_socket(family,
 		    so->so_proto->pr_type, 0, &news);
 		if (error)
 			break;
