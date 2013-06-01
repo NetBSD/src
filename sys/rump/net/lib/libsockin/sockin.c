@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.32 2013/06/01 11:44:37 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.33 2013/06/01 20:22:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.32 2013/06/01 11:44:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.33 2013/06/01 20:22:27 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -236,7 +236,7 @@ sockin_process(struct socket *so)
 	rmsg.msg_namelen = sizeof(from);
 
 	error = rumpcomp_sockin_recvmsg(SO2S(so), &rmsg, 0, &n);
-	if (error) {
+	if (error || n == 0) {
 		m_freem(m);
 
 		/* Treat a TCP socket a goner */
