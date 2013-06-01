@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.30 2013/04/30 00:12:35 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.31 2013/06/01 10:10:57 stacktic Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.30 2013/04/30 00:12:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.31 2013/06/01 10:10:57 stacktic Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.30 2013/04/30 00:12:35 pooka Exp $");
  */
 
 DOMAIN_DEFINE(sockindomain);
+DOMAIN_DEFINE(sockin6domain);
+
 
 static void	sockin_init(void);
 static int	sockin_usrreq(struct socket *, int, struct mbuf *,
@@ -85,6 +87,23 @@ const struct protosw sockinsw[] = {
 	.pr_usrreq = sockin_usrreq,
 	.pr_ctloutput = sockin_ctloutput,
 }};
+const struct protosw sockin6sw[] = {
+{
+	.pr_type = SOCK_DGRAM,
+	.pr_domain = &sockin6domain,
+	.pr_protocol = IPPROTO_UDP,
+	.pr_flags = PR_ATOMIC|PR_ADDR,
+	.pr_usrreq = sockin_usrreq,
+	.pr_ctloutput = sockin_ctloutput,
+},
+{
+	.pr_type = SOCK_STREAM,
+	.pr_domain = &sockin6domain,
+	.pr_protocol = IPPROTO_TCP,
+	.pr_flags = PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
+	.pr_usrreq = sockin_usrreq,
+	.pr_ctloutput = sockin_ctloutput,
+}};
 
 struct domain sockindomain = {
 	.dom_family = PF_INET,
@@ -97,6 +116,25 @@ struct domain sockindomain = {
 	.dom_rtattach = rt_inithead,
 	.dom_rtoffset = 32,
 	.dom_maxrtkey = sizeof(struct sockaddr_in),
+	.dom_ifattach = NULL,
+	.dom_ifdetach = NULL,
+	.dom_ifqueues = { NULL },
+	.dom_link = { NULL },
+	.dom_mowner = MOWNER_INIT("",""),
+	.dom_rtcache = { NULL },
+	.dom_sockaddr_cmp = NULL
+};
+struct domain sockin6domain = {
+	.dom_family = PF_INET6,
+	.dom_name = "socket_inet6",
+	.dom_init = sockin_init,
+	.dom_externalize = NULL,
+	.dom_dispose = NULL,
+	.dom_protosw = sockin6sw,
+	.dom_protoswNPROTOSW = &sockin6sw[__arraycount(sockin6sw)],
+	.dom_rtattach = rt_inithead,
+	.dom_rtoffset = 32,
+	.dom_maxrtkey = sizeof(struct sockaddr_in6),
 	.dom_ifattach = NULL,
 	.dom_ifdetach = NULL,
 	.dom_ifqueues = { NULL },
@@ -169,7 +207,7 @@ removesock(struct socket *so)
 static void
 sockin_process(struct socket *so)
 {
-	struct sockaddr_in from;
+	struct sockaddr_in6 from;
 	struct iovec io;
 	struct msghdr rmsg;
 	struct mbuf *m;
@@ -231,7 +269,7 @@ static void
 sockin_accept(struct socket *so)
 {
 	struct socket *nso;
-	struct sockaddr_in sin;
+	struct sockaddr_in6 sin;
 	int news, error, slen;
 
 	slen = sizeof(sin);
@@ -331,7 +369,7 @@ sockinworker(void *arg)
 		}
 		KASSERT(rv <= 0);
 	}
-	
+
 }
 
 static void
@@ -370,8 +408,9 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				break;
 		}
 
-		error = rumpcomp_sockin_socket(PF_INET, so->so_proto->pr_type,
-		    0, &news);
+		error = rumpcomp_sockin_socket(
+		    so->so_proto->pr_domain->dom_family,
+		    so->so_proto->pr_type, 0, &news);
 		if (error)
 			break;
 
@@ -400,12 +439,12 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_BIND:
 		error = rumpcomp_sockin_bind(SO2S(so),
 		    mtod(nam, const struct sockaddr *),
-		    sizeof(struct sockaddr_in));
+		    nam->m_len);
 		break;
 
 	case PRU_CONNECT:
 		error = rumpcomp_sockin_connect(SO2S(so),
-		    mtod(nam, struct sockaddr *), sizeof(struct sockaddr_in));
+		    mtod(nam, struct sockaddr *), nam->m_len);
 		if (error == 0)
 			soisconnected(so);
 		break;
