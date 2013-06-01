@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.244 2013/05/31 10:39:02 mrg Exp $
+$NetBSD: UPDATING,v 1.245 2013/06/01 08:25:17 mrg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20130531:
+	The xdm update may cause build failure due to xdm.man being
+	in the obj tree.  Make sure to ensure any like this:
+		nbmake: nbmake: don't know how to make xdm.man. Stop
+	is fixed by deleting the xdm.man in the obj tree.
 
 20130530:
 	Updates of many xsrc packages will leave old .pc files around.
