@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.6 2013/06/01 10:09:05 stacktic Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.7 2013/06/01 11:46:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -25,13 +25,18 @@
  * SUCH DAMAGE.
  */
 
+/* for struct msghdr content visibility */
+#define _XOPEN_SOURCE 4
+#define _XOPEN_SOURCE_EXTENDED 1
+
 #ifndef _KERNEL
 #include <sys/types.h>
 #include <sys/socket.h>
 
 #include <errno.h>
 #include <poll.h>
-
+#include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 
 #include <rump/rumpuser_component.h>
@@ -52,9 +57,6 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
-
-#include <stdlib.h>
-#include <string.h>
 
 
 static int translate_so_sockopt(int);
@@ -120,16 +122,8 @@ translate_domain(int domain)
 {
 
 	switch (domain) {
-	translate(AF_UNIX);
 	translate(AF_INET);
-	translate(AF_SNA);
-	translate(AF_DECnet);
-	translate(AF_APPLETALK);
-	translate(AF_IPX);
 	translate(AF_INET6);
-	translate(AF_ISDN);
-	translate(AF_BLUETOOTH);
-	translate(AF_ROUTE);
 	default: return AF_UNSPEC;
 	}
 }
@@ -142,16 +136,8 @@ translate_domain_back(int domain)
 {
 
 	switch (domain) {
-	translate_back(AF_UNIX);
 	translate_back(AF_INET);
-	translate_back(AF_SNA);
-	translate_back(AF_DECnet);
-	translate_back(AF_APPLETALK);
-	translate_back(AF_IPX);
 	translate_back(AF_INET6);
-	translate_back(AF_ISDN);
-	translate_back(AF_BLUETOOTH);
-	translate_back(AF_ROUTE);
 	default: return RUMP_AF_UNSPEC;
 	}
 }
@@ -215,7 +201,11 @@ static const struct {
 	{RUMP_MSG_CTRUNC,	MSG_CTRUNC},
 	{RUMP_MSG_WAITALL,	MSG_WAITALL},
 	{RUMP_MSG_DONTWAIT,	MSG_DONTWAIT},
+
+	/* might be better to always set NOSIGNAL ... */
+#ifdef MSG_NOSIGNAL
 	{RUMP_MSG_NOSIGNAL,	MSG_NOSIGNAL},
+#endif
 };
 
 static int native_to_bsd_msg_flags(int);
@@ -264,8 +254,8 @@ bsd_to_native_msg_flags(int bflag)
 #endif
 
 struct rump_sockaddr {
-	__uint8_t	sa_len;	    /* total length */
-	__uint8_t	sa_family;	/* address family */
+	uint8_t	sa_len;	    /* total length */
+	uint8_t	sa_family;	/* address family */
 	char	sa_data[14];	/* actually longer; address value */
 };
 
