@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.16 2013/05/08 00:57:06 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.17 2013/06/01 09:49:37 stacktic Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -59,6 +59,18 @@ sed -n '/#define[ 	]*[AP]F_[A-Z]/s/[AP]F_/RUMP_&/gp' <../../../sys/socket.h \
 sed -n '/#define[ 	]*SO_[A-Z]/s/SO_/RUMP_&/gp' <../../../sys/socket.h \
     | sed 's,/\*.*$,,'
 sed -n '/#define[ 	]*SOL_[A-Z]/s/SOL_/RUMP_&/gp' <../../../sys/socket.h \
+    | sed 's,/\*.*$,,'
+sed -n '/#define[ 	]*MSG_[A-Z]/s/MSG_/RUMP_&/gp' <../../../sys/socket.h \
+    | sed 's,/\*.*$,,'
+
+fromvers ../../../netinet/in.h
+sed -n '/#define[ 	]*IP_[A-Z]/s/IP_/RUMP_&/gp' <../../../netinet/in.h \
+    | sed 's,/\*.*$,,'
+sed -n '/#define[ 	]*IPPROTO_[A-Z]/s/IPPROTO_/RUMP_&/gp' <../../../netinet/in.h \
+    | sed 's,/\*.*$,,'
+
+fromvers ../../../netinet/tcp.h
+sed -n '/#define[ 	]*TCP_[A-Z]/s/TCP_/RUMP_&/gp' <../../../netinet/tcp.h \
     | sed 's,/\*.*$,,'
 
 fromvers ../../../sys/mount.h
