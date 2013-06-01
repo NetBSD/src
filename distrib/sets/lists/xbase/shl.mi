@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.46 2013/05/31 09:10:49 mrg Exp $
+# $NetBSD: shl.mi,v 1.47 2013/06/01 10:52:38 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -326,7 +326,7 @@
 ./usr/X11R7/lib/liblbxutil.so.2.0		-obsolete-		obsolete
 ./usr/X11R7/lib/libpciaccess.so			-unknown-		xorg
 ./usr/X11R7/lib/libpciaccess.so.0		-unknown-		xorg
-./usr/X11R7/lib/libpciaccess.so.0.2		-unknown-		xorg
+./usr/X11R7/lib/libpciaccess.so.0.3		-unknown-		xorg
 ./usr/X11R7/lib/libpixman-1.so			-unknown-		xorg
 ./usr/X11R7/lib/libpixman-1.so.2		-unknown-		xorg
 ./usr/X11R7/lib/libpixman-1.so.2.1		-unknown-		xorg
