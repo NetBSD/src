@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.12 2013/03/12 20:47:48 christos Exp $
+# $NetBSD: files.npf,v 1.13 2013/06/02 02:20:04 rmind Exp $
 #
 # Public Domain.
 #
@@ -28,6 +28,7 @@ file	net/npf/npf_state_tcp.c			npf
 file	net/npf/npf_nat.c			npf
 file	net/npf/npf_alg.c			npf
 file	net/npf/npf_sendpkt.c			npf
+file	net/npf/npf_worker.c			npf
 
 # Built-in extensions.
 file	net/npf/npf_ext_log.c			npf

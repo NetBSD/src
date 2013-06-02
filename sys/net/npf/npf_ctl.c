@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.25 2013/05/19 20:45:34 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.26 2013/06/02 02:20:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.25 2013/05/19 20:45:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.26 2013/06/02 02:20:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -743,36 +743,36 @@ npfctl_sessions_load(u_long cmd, void *data)
 
 	/* Create a session hash table. */
 	sehasht = sess_htable_create();
-	if (sehasht == NULL) {
-		prop_object_release(selist);
-		return ENOMEM;
-	}
 
 	/*
 	 * Iterate through and construct each session.  Note: acquire the
 	 * config lock as we access NAT policies during the restore.
 	 */
 	error = 0;
-	npf_config_enter();
 	it = prop_array_iterator(selist);
+
+	npf_config_enter();
 	while ((sedict = prop_object_iterator_next(it)) != NULL) {
 		/* Session - dictionary. */
 		if (prop_object_type(sedict) != PROP_TYPE_DICTIONARY) {
 			error = EINVAL;
-			goto fail;
+			break;
 		}
 		/* Construct and insert real session structure. */
 		error = npf_session_restore(sehasht, sedict);
 		if (error) {
-			goto fail;
+			break;
 		}
 	}
-	sess_htable_reload(sehasht);
-fail:
 	npf_config_exit();
+
 	prop_object_iterator_release(it);
 	prop_object_release(selist);
-	if (error) {
+
+	if (!error) {
+		/* Finally, load the new table. */
+		npf_session_load(sehasht);
+	} else {
 		/* Destroy session table. */
 		sess_htable_destroy(sehasht);
 	}
