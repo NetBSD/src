@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2011/01/20 18:36:46 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2 2013/06/02 03:13:41 christos Exp $
 
 .include <bsd.own.mk>
 
 LIB=	chromeXvMCPro
 .PATH:	${X11SRCDIR.xf86-video-openchrome}/libxvmc
 .PATH:	${X11SRCDIR.xf86-video-openchrome}/src
+.PATH:	${X11SRCDIR.xf86-video-openchrome}/src/xvmc
 
 SRCS=	viaLowLevelPro.c \
 	driDrawable.c \
