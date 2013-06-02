@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.15 2013/04/18 12:42:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.16 2013/06/02 09:36:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -129,9 +129,7 @@ typedef enum {
 	WM_T_ICH10,			/* ICH10 LAN */
 	WM_T_PCH,			/* PCH LAN */
 	WM_T_PCH2,			/* PCH2 LAN */
-#if 0
 	WM_T_PCH_LPT,			/* PCH LPT LAN (I21[78]) */
-#endif
 } wm_chip_type;
 
 typedef enum {
