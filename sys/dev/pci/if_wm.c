@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.249 2013/06/02 09:36:22 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.250 2013/06/02 17:23:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.249 2013/06/02 09:36:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.250 2013/06/02 17:23:33 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -5397,13 +5397,6 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 		printf("%s: NVM checksum mismatch (%04x != %04x)\n",
 		    device_xname(sc->sc_dev), checksum, NVM_CHECKSUM);
 #endif
-		/*
-		 * XXX quick hack for non-updated NVM.
-		 * Check only last 12bit until wm_write_eeprom() will be
-		 * implemented.
-		 */
-		if ((checksum & 0x0fff) != ((uint16_t)NVM_CHECKSUM & 0x0fff))
-			return 1;
 	}
 
 	return 0;
@@ -7505,32 +7498,42 @@ wm_put_swfwhw_semaphore(struct wm_softc *sc)
 static int
 wm_valid_nvm_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 {
+	uint32_t eecd;
 	uint32_t act_offset = ICH_NVM_SIG_WORD * 2 + 1;
 	uint32_t bank1_offset = sc->sc_ich8_flash_bank_size * sizeof(uint16_t);
+	uint8_t sig_byte = 0;
 
-	if ((sc->sc_type != WM_T_ICH10) && (sc->sc_type != WM_T_PCH)) {
-		/* Value of bit 22 corresponds to the flash bank we're on. */
-		*bank = (CSR_READ(sc, WMREG_EECD) & EECD_SEC1VAL) ? 1 : 0;
-	} else {
-		uint8_t sig_byte;
+	switch (sc->sc_type) {
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+		eecd = CSR_READ(sc, WMREG_EECD);
+		if ((eecd & EECD_SEC1VAL_VALMASK) == EECD_SEC1VAL_VALMASK) {
+			*bank = ((eecd & EECD_SEC1VAL) != 0) ? 1 : 0;
+			return 0;
+		}
+		/* FALLTHROUGH */
+	default:
+		/* Default to 0 */
+		*bank = 0;
+
+		/* Check bank 0 */
 		wm_read_ich8_byte(sc, act_offset, &sig_byte);
-		if ((sig_byte & ICH_NVM_VALID_SIG_MASK) == ICH_NVM_SIG_VALUE)
+		if ((sig_byte & ICH_NVM_VALID_SIG_MASK) == ICH_NVM_SIG_VALUE) {
 			*bank = 0;
-		else {
-			wm_read_ich8_byte(sc, act_offset + bank1_offset,
-			    &sig_byte);
-			if ((sig_byte & ICH_NVM_VALID_SIG_MASK)
-			    == ICH_NVM_SIG_VALUE)
-				*bank = 1;
-			else {
-				aprint_error_dev(sc->sc_dev,
-				    "EEPROM not present\n");
-				return -1;
-			}
+			return 0;
+		}
+
+		/* Check bank 1 */
+		wm_read_ich8_byte(sc, act_offset + bank1_offset,
+		    &sig_byte);
+		if ((sig_byte & ICH_NVM_VALID_SIG_MASK) == ICH_NVM_SIG_VALUE) {
+			*bank = 1;
+			return 0;
 		}
 	}
 
-	return 0;
+	aprint_error_dev(sc->sc_dev, "EEPROM not present\n");
+	return -1;
 }
 
 /******************************************************************************
