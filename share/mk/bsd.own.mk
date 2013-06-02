@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.730 2013/05/03 16:05:11 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.731 2013/06/02 11:02:40 mbalmer Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -898,7 +898,7 @@ _MKVARS.no= \
 	MKPIGZGZIP \
 	MKREPRO \
 	MKSOFTFLOAT MKSTRIPIDENT MKTPM \
-	MKUNPRIVED MKUPDATE MKX11 MKZFS
+	MKUNPRIVED MKUPDATE MKX11 MKX11MOTIF MKZFS
 .for var in ${_MKVARS.no}
 ${var}?=no
 .endfor
