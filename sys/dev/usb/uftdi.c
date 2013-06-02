@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.57 2013/03/24 23:00:48 cheusov Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.58 2013/06/02 12:45:00 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.57 2013/03/24 23:00:48 cheusov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.58 2013/06/02 12:45:00 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -631,7 +631,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	if (ISSET(t->c_cflag, CRTSCTS)) {
 		flow = FTDI_SIO_RTS_CTS_HS;
 		USETW(req.wValue, 0);
-	} else if (ISSET(t->c_iflag, IXON|IXOFF)) {
+	} else if (ISSET(t->c_iflag, IXON) && ISSET(t->c_iflag, IXOFF)) {
 		flow = FTDI_SIO_XON_XOFF_HS;
 		USETW2(req.wValue, t->c_cc[VSTOP], t->c_cc[VSTART]);
 	} else {
