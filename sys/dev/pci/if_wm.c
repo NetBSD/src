@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.248 2013/04/21 19:59:41 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.249 2013/06/02 09:36:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.248 2013/04/21 19:59:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.249 2013/06/02 09:36:22 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1045,6 +1045,18 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I211_COPPER,
 	  "I211 Ethernet (COPPER)",
 	  WM_T_I211,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I217_V,
+	  "I217 V Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I217_LM,
+	  "I217 LM Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_V,
+	  "I218 V Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_LM,
+	  "I218 LM Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_1000T },
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -1347,7 +1359,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 		if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9)
 		    && (sc->sc_type != WM_T_ICH10)
 		    && (sc->sc_type != WM_T_PCH)
-		    && (sc->sc_type != WM_T_PCH2)) {
+		    && (sc->sc_type != WM_T_PCH2)
+		    && (sc->sc_type != WM_T_PCH_LPT)) {
 			sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
 			/* ICH* and PCH* have no PCIe capability registers */
 			if (pci_get_capability(pa->pa_pc, pa->pa_tag,
@@ -1516,7 +1529,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	CSR_READ(sc, WMREG_RXERRC);
 
 	/* get PHY control from SMBus to PCIe */
-	if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2))
+	if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)
+	    || (sc->sc_type == WM_T_PCH_LPT))
 		wm_smbustopci(sc);
 
 	/*
@@ -1536,6 +1550,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		if (wm_check_mng_mode(sc) != 0)
 			wm_get_hw_control(sc);
 		break;
@@ -1612,6 +1627,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		/* FLASH */
 		sc->sc_flags |= WM_F_EEPROM_FLASH | WM_F_SWFWHW_SYNC;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WM_ICH8_FLASH);
@@ -1762,6 +1778,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		/* XXX The funcid should be checked on some devices */
 		apme_mask = WUC_APME;
 		eeprom_data = CSR_READ(sc, WMREG_WUC);
@@ -1864,7 +1881,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (sc->sc_type == WM_T_ICH8 || sc->sc_type == WM_T_ICH9
 	    || sc->sc_type == WM_T_ICH10 || sc->sc_type == WM_T_PCH
-	    || sc->sc_type == WM_T_PCH2 || sc->sc_type == WM_T_82573
+	    || sc->sc_type == WM_T_PCH2 || sc->sc_type == WM_T_PCH_LPT
+	    || sc->sc_type == WM_T_82573
 	    || sc->sc_type == WM_T_82574 || sc->sc_type == WM_T_82583) {
 		/* STATUS_TBIMODE reserved/reused, can't rely on it */
 		wm_gmii_mediainit(sc, wmp->wmp_product);
@@ -1953,6 +1971,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_ICH9:
 	case WM_T_ICH10:
 	case WM_T_PCH2:	/* PCH2 supports 9K frame size */
+	case WM_T_PCH_LPT:
 		/* XXX limited to 9234 */
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 		break;
@@ -4054,6 +4073,7 @@ wm_reset(struct wm_softc *sc)
 		break;
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		sc->sc_pba = PBA_26K;
 		break;
 	default:
@@ -4168,6 +4188,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		reg = CSR_READ(sc, WMREG_CTRL) | CTRL_RST;
 		if (wm_check_reset_block(sc) == 0) {
 			/*
@@ -4277,6 +4298,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		wm_lan_init_done(sc);
 		break;
 	default:
@@ -4410,6 +4432,7 @@ wm_init(struct ifnet *ifp)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		if (wm_check_mng_mode(sc) != 0)
 			wm_get_hw_control(sc);
 		break;
@@ -4592,6 +4615,7 @@ wm_init(struct ifnet *ifp)
 		case WM_T_ICH10:
 		case WM_T_PCH:
 		case WM_T_PCH2:
+		case WM_T_PCH_LPT:
 			/*
 			 * Set the mac to wait the maximum time between each
 			 * iteration and increase the max iterations when
@@ -4932,6 +4956,7 @@ wm_lan_init_done(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		for (i = 0; i < WM_ICH8_LAN_INIT_TIMEOUT; i++) {
 			reg = CSR_READ(sc, WMREG_STATUS);
 			if ((reg & STATUS_LAN_INIT_DONE) != 0)
@@ -5013,6 +5038,7 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		if (sc->sc_type >= WM_T_PCH) {
 			reg = CSR_READ(sc, WMREG_STATUS);
 			if ((reg & STATUS_PHYRA) != 0)
@@ -5297,8 +5323,12 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	return 0;
 }
 
-#define EEPROM_CHECKSUM		0xBABA
-#define EEPROM_SIZE		0x0040
+#define NVM_CHECKSUM			0xBABA
+#define EEPROM_SIZE			0x0040
+#define NVM_COMPAT			0x0003
+#define NVM_COMPAT_VALID_CHECKSUM	0x0001
+#define NVM_FUTURE_INIT_WORD1			0x0019
+#define NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM	0x0040
 
 /*
  * wm_validate_eeprom_checksum
@@ -5308,8 +5338,9 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 static int
 wm_validate_eeprom_checksum(struct wm_softc *sc)
 {
-	uint16_t checksum;
+	uint16_t checksum, valid_checksum;
 	uint16_t eeprom_data;
+	uint16_t csum_wordaddr;
 	int i;
 
 	checksum = 0;
@@ -5318,15 +5349,26 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 	if (sc->sc_type == WM_T_I211)
 		return 0;
 
+	if (sc->sc_type == WM_T_PCH_LPT) {
+		printf("[PCH_LPT]");
+		csum_wordaddr = NVM_COMPAT;
+		valid_checksum = NVM_COMPAT_VALID_CHECKSUM;
+	} else {
+		csum_wordaddr = NVM_FUTURE_INIT_WORD1;
+		valid_checksum = NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM;
+	}
+
 #ifdef WM_DEBUG
 	/* Dump EEPROM image for debug */
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
-	    || (sc->sc_type == WM_T_PCH2)) {
-		wm_read_eeprom(sc, 0x19, 1, &eeprom_data);
-		if ((eeprom_data & 0x40) == 0) {
-			DPRINTF(WM_DEBUG_NVM,("%s: NVM need to be updated\n",
-				device_xname(sc->sc_dev)));
+	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT)) {
+		wm_read_eeprom(sc, csum_wordaddr, 1, &eeprom_data);
+		if ((eeprom_data & valid_checksum) == 0) {
+			DPRINTF(WM_DEBUG_NVM,
+			    ("%s: NVM need to be updated (%04x != %04x)\n",
+				device_xname(sc->sc_dev), eeprom_data,
+				    valid_checksum));
 		}
 	}
 
@@ -5350,8 +5392,19 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 		checksum += eeprom_data;
 	}
 
-	if (checksum != (uint16_t) EEPROM_CHECKSUM)
-		return 1;
+	if (checksum != (uint16_t) NVM_CHECKSUM) {
+#ifdef WM_DEBUG
+		printf("%s: NVM checksum mismatch (%04x != %04x)\n",
+		    device_xname(sc->sc_dev), checksum, NVM_CHECKSUM);
+#endif
+		/*
+		 * XXX quick hack for non-updated NVM.
+		 * Check only last 12bit until wm_write_eeprom() will be
+		 * implemented.
+		 */
+		if ((checksum & 0x0fff) != ((uint16_t)NVM_CHECKSUM & 0x0fff))
+			return 1;
+	}
 
 	return 0;
 }
@@ -5374,7 +5427,7 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
-	    || (sc->sc_type == WM_T_PCH2))
+	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT))
 		rv = wm_read_eeprom_ich8(sc, word, wordcnt, data);
 	else if (sc->sc_flags & WM_F_EEPROM_EERDEEWR)
 		rv = wm_read_eeprom_eerd(sc, word, wordcnt, data);
@@ -5654,7 +5707,7 @@ wm_mchash(struct wm_softc *sc, const uint8_t *enaddr)
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
-	    || (sc->sc_type == WM_T_PCH2)) {
+	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT)) {
 		hash = (enaddr[4] >> ich8_lo_shift[sc->sc_mchash_type]) |
 		    (((uint16_t) enaddr[5]) << ich8_hi_shift[sc->sc_mchash_type]);
 		return (hash & 0x3ff);
@@ -5702,7 +5755,8 @@ wm_set_filter(struct wm_softc *sc)
 	if (sc->sc_type == WM_T_ICH8)
 		size = WM_RAL_TABSIZE_ICH8 -1;
 	else if ((sc->sc_type == WM_T_ICH9) || (sc->sc_type == WM_T_ICH10)
-	    || (sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2))
+	    || (sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)
+	    || (sc->sc_type == WM_T_PCH_LPT))
 		size = WM_RAL_TABSIZE_ICH8;
 	else if (sc->sc_type == WM_T_82575)
 		size = WM_RAL_TABSIZE_82575;
@@ -5718,7 +5772,7 @@ wm_set_filter(struct wm_softc *sc)
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
-	    || (sc->sc_type == WM_T_PCH2))
+	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT))
 		size = WM_ICH8_MC_TABSIZE;
 	else
 		size = WM_MC_TABSIZE;
@@ -5745,7 +5799,8 @@ wm_set_filter(struct wm_softc *sc)
 		reg = (hash >> 5);
 		if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 		    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
-		    || (sc->sc_type == WM_T_PCH2))
+		    || (sc->sc_type == WM_T_PCH2)
+		    || (sc->sc_type == WM_T_PCH_LPT))
 			reg &= 0x1f;
 		else
 			reg &= 0x7f;
@@ -6098,6 +6153,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		rv = wm_get_swfwhw_semaphore(sc);
 		break;
 	default:
@@ -6184,6 +6240,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		/* generic reset */
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
 		delay(100);
@@ -6221,6 +6278,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		wm_put_swfwhw_semaphore(sc);
 		break;
 	default:
@@ -6269,6 +6327,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		/* Allow time for h/w to get to a quiescent state afer reset */
 		delay(10*1000);
 
@@ -6450,10 +6509,10 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	}
 
 	/*
-	 * If the MAC is PCH2 and failed to detect MII PHY, call
+	 * If the MAC is PCH2 or PCH_LPT and failed to detect MII PHY, call
 	 * wm_set_mdio_slow_mode_hv() for a workaround and retry.
 	 */
-	if ((sc->sc_type == WM_T_PCH2) &&
+	if (((sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT)) &&
 	    (LIST_FIRST(&mii->mii_phys) == NULL)) {
 		wm_set_mdio_slow_mode_hv(sc);
 		mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
@@ -7769,6 +7828,7 @@ wm_check_mng_mode(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		rv = wm_check_mng_mode_ich8lan(sc);
 		break;
 	case WM_T_82574:
@@ -7870,6 +7930,7 @@ wm_check_reset_block(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		reg = CSR_READ(sc, WMREG_FWSM);
 		if ((reg & FWSM_RSPCIPHY) != 0)
 			return 0;
@@ -7916,6 +7977,7 @@ wm_get_hw_control(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_DRV_LOAD);
 		break;
@@ -8381,6 +8443,7 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		sc->sc_flags |= WM_F_HAS_AMT;
 		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;
 		break;
@@ -8456,6 +8519,7 @@ wm_enable_wakeup(struct wm_softc *sc)
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
 		/* Disable gig during WOL */
 		reg = CSR_READ(sc, WMREG_PHY_CTRL);
 		reg |= PHY_CTRL_D0A_LPLU | PHY_CTRL_GBE_DIS;
