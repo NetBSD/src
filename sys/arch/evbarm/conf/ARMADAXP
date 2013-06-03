@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.1 2013/05/29 22:52:19 rkujawa Exp $
+#	$NetBSD: ARMADAXP,v 1.2 2013/06/03 14:50:59 rkujawa Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -223,6 +223,11 @@ ugen*		at uhub? port ?
 
 # USB Network interface
 udav*		at uhub? port ?
+
+mvsdio*		at mvsoc? offset ? irq ?
+sdmmc*		at mvsdio?
+
+ld*		at sdmmc?
 
 # On-chip Serial-ATA II Host Controller (SATAHC)
 mvsata*		at mvsoc? offset ? irq ?

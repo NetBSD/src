@@ -120,6 +120,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ARMADAXP_IRQ_GBE2_TH_RXTX_Int	12	/* GBE2_TH_RXTX_Int */
 #define ARMADAXP_IRQ_GBE3_TH_RXTX_Int	14	/* GBE3_TH_RXTX_Int */
 
+#define ARMADAXP_IRQ_SDIO		54	/* SDIO */
+
 /*
  * Physical address of integrated peripherals
  */
@@ -173,6 +175,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Serial-ATA Host Controller (SATAHC) Registers
  */
 #define ARMADAXP_SATAHC_BASE	(UNITID2PHYS(SATA))	/* 0xa0000 */
+
+/*
+ * SDIO Registers
+ */
+#define ARMADAXP_SDIO_BASE	0xD4000			/* XXX: UNIT ID ? */
 
 /*
  * SoC MISC Registers
