@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.160 2013/02/14 21:57:59 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.161 2013/06/03 23:45:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.160 2013/02/14 21:57:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.161 2013/06/03 23:45:31 christos Exp $");
 
 #include "opt_pipe.h"
 
@@ -1346,7 +1346,7 @@ copyout_sockname(struct sockaddr *asa, unsigned int *alen, int flags,
 		if (len > addr->m_len)
 			len = addr->m_len;
 		/* Maybe this ought to copy a chain ? */
-		ktrkuser("sockname", mtod(addr, void *), len);
+		ktrkuser(mbuftypes[MT_SONAME], mtod(addr, void *), len);
 		error = copyout(mtod(addr, void *), asa, len);
 	}
 
