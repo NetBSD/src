@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.4 2013/06/03 20:23:40 mrg Exp $
+# $NetBSD: mi,v 1.5 2013/06/03 23:25:43 mrg Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/libdata/debug/usr/X11R6/bin/Xdmx.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/Xnest.debug		-unknown-	debug,x11
@@ -329,6 +329,7 @@
 ./usr/X11R7/lib/libXcomposite_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXcursor_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXdamage_g.a				-unknown-	debuglib,xorg
+./usr/X11R7/lib/libXdmGreet_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXdmcp_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXevie_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXext_g.a				-unknown-	debuglib,xorg

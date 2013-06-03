@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.137 2013/06/03 07:08:21 mrg Exp $
+#	 $NetBSD: mi,v 1.138 2013/06/03 23:25:43 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6123,6 +6123,8 @@
 ./usr/X11R7/lib/libXcursor_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libXdamage.a				-unknown-	xorg
 ./usr/X11R7/lib/libXdamage_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libXdmGreet.a				-unknown-	xorg
+./usr/X11R7/lib/libXdmGreet_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libXdmcp.a				-unknown-	xorg
 ./usr/X11R7/lib/libXdmcp_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libXevie.a				-unknown-	xorg
@@ -9170,6 +9172,7 @@
 ./usr/libdata/lint/llib-lXcursor.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lXcursor.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXdamage.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXdmGreet.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXdmcp.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lXdmcp.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXevie.ln			-unknown-	lint,xorg
