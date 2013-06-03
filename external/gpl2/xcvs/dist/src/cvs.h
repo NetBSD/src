@@ -19,7 +19,7 @@
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>		/* this is stuff found via autoconf */
-#endif /* CONFIG_H */
+#endif /* HAVE_CONFIG_H */
 
 /* Add GNU attribute suppport.  */
 #ifndef __attribute__
@@ -188,6 +188,11 @@ char *strerror (int);
 #define CVSROOTADM_VERIFYMSG    "verifymsg"
 #define CVSROOTADM_WRAPPER	"cvswrappers"
 #define CVSROOTADM_WRITERS	"writers"
+
+/* cvsacl patch */
+#define CVSROOTADM_ACLCONFIG	"aclconfig"
+#define CVSROOTADM_ACCESS	"access"
+#define CVSROOTADM_GROUP	"group"
 
 #define CVSNULLREPOS		"Emptydir"	/* an empty directory */
 
@@ -459,6 +464,22 @@ int diff_exec (const char *file1, const char *file2,
  */
 extern int error_use_protocol;
 
+/* cvsacl patch */
+/* ACL Patch settings from CVSROOT/config */
+extern int use_cvs_acl;
+extern char *cvs_acl_default_permissions;
+extern int use_cvs_groups;
+extern int use_system_groups;
+extern int use_separate_acl_file_for_each_dir;
+extern char *cvs_acl_file_location;
+extern char *cvs_groups_file_location;
+extern char *cvs_server_run_as;
+extern int stop_at_first_permission_denied;
+
+int given_perms_valid (const char *cperms);
+int
+access_allowed (const char *file, const char *repos, const char *tag,
+		int perm, char **mline, int *mpos, int usecache);
 
 DBM *open_module (void);
 List *Find_Directories (char *repository, int which, List *entries);
@@ -857,6 +878,9 @@ char *expand_path (const char *name, const char *cvsroot, bool formatsafe,
 
 /* User variables.  */
 extern List *variable_list;
+
+/* cvsacl patch */
+extern int cvsacl (int argc, char **argv);
 
 void variable_set (char *nameval);
 

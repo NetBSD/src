@@ -1503,7 +1503,7 @@ output_diff3 (diff, mapping, rev_mapping)
 	      line = 0;
 	      do
 		{
-		  printf_output (line_prefix);
+		  printf_output ("%s", line_prefix);
 		  cp = D_RELNUM (ptr, realfile, line);
 		  length = D_RELLEN (ptr, realfile, line);
 		  write_output (cp, length);

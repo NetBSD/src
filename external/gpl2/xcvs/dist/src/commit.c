@@ -1379,6 +1379,34 @@ commit_fileproc (void *callerdat, struct file_info *finfo)
 	return 0;
 
     ci = p->data;
+
+/* cvsacl patch */
+#ifdef SERVER_SUPPORT
+    if (use_cvs_acl /* && server_active */)
+    {
+	int whichperm;
+	if (ci->status == T_MODIFIED)
+	    whichperm = 3;
+	else if (ci->status == T_ADDED)
+	    whichperm = 6;
+	else if (ci->status == T_REMOVED)	
+	    whichperm = 7;
+
+	if (!access_allowed (finfo->file, finfo->repository, ci->tag, whichperm,
+			     NULL, NULL, 1))
+	{
+	    if (stop_at_first_permission_denied)
+		error (1, 0, "permission denied for %s",
+		       Short_Repository (finfo->repository));
+	    else
+		error (0, 0, "permission denied for %s/%s",
+		       Short_Repository (finfo->repository), finfo->file);
+			
+		return (0);
+	}
+    }
+#endif
+
     if (ci->status == T_MODIFIED)
     {
 	if (finfo->rcs == NULL)
