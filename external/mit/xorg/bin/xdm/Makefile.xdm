@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.xdm,v 1.6 2013/05/31 22:49:15 mrg Exp $
+#	$NetBSD: Makefile.xdm,v 1.7 2013/06/03 23:25:43 mrg Exp $
 
 XDMVARDIR=	/var/db/xdm
 XDMDIR=		${X11ETCDIR}/xdm
 XDMCHOOSERPATH=	${X11ROOTDIR}/libexec/chooser
-XDMGREETERLIB=	${X11ROOTDIR}/libexec/libXdmGreet.so
+XDMGREETERLIB=	${X11ROOTDIR}/lib/libXdmGreet.so
 XDMLOGDIR=	/var/log
 XDMPIDDIR=	/var/run
 
@@ -25,6 +25,8 @@ CPPFLAGS+=	-DBINDIR=\"${X11BINDIR}\" -DXDMDIR=\"${XDMDIR}\" \
 		-I${X11SRCDIR.xdm} \
 		-I${X11SRCDIR.xdm}/include \
 		${X11FLAGS.VERSION}
+
+LDFLAGS+=	-Wl,--export-dynamic
 
 .if (${USE_PAM} != "no")
 CPPFLAGS+=      -DUSE_PAM
