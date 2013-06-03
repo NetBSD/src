@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1154 2013/04/20 09:26:23 rkujawa Exp $
+$NetBSD: pcidevs,v 1.1155 2013/06/03 16:20:53 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3458,6 +3458,7 @@ product INTEL EG20T_SPI		0x8816	EG20T PCH SPI
 product INTEL EG20T_I2C		0x8817	EG20T PCH I2C Interface
 product INTEL EG20T_CAN		0x8818	EG20T PCH CAN Controller
 product INTEL EG20T_IEEE1588	0x8819	EG20T PCH IEEE1588
+product INTEL 8SERIES_KT	0x8c3d	8 Series KT
 product INTEL PINEVIEW_HB	0xa000	Pineview Host Bridge
 product INTEL PINEVIEW_IGD	0xa001	Pineview Integrated Graphics Device
 product INTEL PINEVIEW_M_HB	0xa010	Pineview Host Bridge
