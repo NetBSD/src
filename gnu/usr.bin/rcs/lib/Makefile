@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2011/05/26 12:56:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.23.6.1 2013/06/03 02:45:25 riz Exp $
 
 LIBISPRIVATE=	yes
 
@@ -19,6 +19,6 @@ SRCS=	maketime.c merger.c partime.c rcsedit.c rcsfcmp.c rcsfnms.c rcsgen.c \
 	rcskeep.c rcskeys.c rcslex.c rcsmap.c rcsrev.c rcssyn.c rcstime.c \
 	rcsutil.c version.c
 
-CWARNFLAGS.clang+=	-Wno-format-security
+CWARNFLAGS.clang+=	-Wno-format-security -Wno-string-plus-int
 
 .include <bsd.lib.mk>

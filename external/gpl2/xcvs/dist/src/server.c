@@ -582,8 +582,6 @@ supported_response (char *name)
 static inline bool
 isProxyServer (void)
 {
-    assert (current_parsed_root);
-
     /***
      *** The following is done as a series of if/return combinations an an
      *** optimization.
@@ -595,7 +593,7 @@ isProxyServer (void)
     if (!config || !config->PrimaryServer) return false;
 
     /* The directory must not match for all methods.  */
-    if (!isSamePath (config->PrimaryServer->directory,
+    if (current_parsed_root && !isSamePath (config->PrimaryServer->directory,
 		     current_parsed_root->directory))
 	return true;
 
@@ -692,7 +690,8 @@ error ENOMEM Virtual memory exhausted.\n";
      */
 
     /* If this gives an error, not much we could do.  syslog() it?  */
-    write (STDOUT_FILENO, msg, sizeof (msg) - 1);
+    if (write (STDOUT_FILENO, msg, sizeof (msg) - 1) == -1)
+    	exit(EXIT_FAILURE);
 # ifdef HAVE_SYSLOG_H
     syslog (LOG_DAEMON | LOG_ERR, "virtual memory exhausted");
 # endif /* HAVE_SYSLOG_H */
@@ -977,12 +976,16 @@ error ENOMEM Virtual memory exhausted.\n");
 	if (forced && !quiet
 	    && alloc_pending_warning (120 + strlen (program_name)))
 	    sprintf (pending_warning_text,
-"E %s server: Forcing compression level %d (allowed: %d <= z <= %d).",
+"E %s server: Forcing compression level %d (allowed: %zu <= z <= %zu).",
 		     program_name, gzip_level, config->MinCompressionLevel,
 		     config->MaxCompressionLevel);
     }
 
-    if (!nolock) {
+    /* cvsacl patch */
+    parse_aclconfig (current_parsed_root->directory);
+
+    if (!nolock)
+    {
     path = xmalloc (strlen (current_parsed_root->directory)
 		   + sizeof (CVSROOTADM)
 		   + 2);
@@ -4623,7 +4626,20 @@ serve_rls (char *arg)
   do_cvs_command ("rls", ls);
 }
 
-
+/* cvsacl patch */
+static void
+serve_acl (char *arg)
+{
+    do_cvs_command ("acl", cvsacl);
+}
+ 
+/* cvsacl patch */
+static void
+serve_racl (char *arg)
+{
+    cvs_cmd_name = "racl";
+    do_cvs_command ("racl", cvsacl);
+}
 
 static void
 serve_add (char *arg)
@@ -5488,7 +5504,7 @@ serve_gzip_contents (char *arg)
     if (forced && !quiet
 	&& alloc_pending_warning (120 + strlen (program_name)))
 	sprintf (pending_warning_text,
-"E %s server: Forcing compression level %d (allowed: %d <= z <= %d).",
+"E %s server: Forcing compression level %d (allowed: %zu <= z <= %zu).",
 		 program_name, level, config->MinCompressionLevel,
 		 config->MaxCompressionLevel);
 
@@ -5519,7 +5535,7 @@ serve_gzip_stream (char *arg)
     if (forced && !quiet
 	&& alloc_pending_warning (120 + strlen (program_name)))
 	sprintf (pending_warning_text,
-"E %s server: Forcing compression level %d (allowed: %d <= z <= %d).",
+"E %s server: Forcing compression level %d (allowed: %zu <= z <= %zu).",
 		 program_name, level, config->MinCompressionLevel,
 		 config->MaxCompressionLevel);
 	
@@ -5936,6 +5952,11 @@ struct request requests[] =
   REQ_LINE("diff", serve_diff, 0),
   REQ_LINE("log", serve_log, 0),
   REQ_LINE("rlog", serve_rlog, 0),
+
+  /* cvsacl patch */
+  REQ_LINE("acl", serve_acl, 0),
+  REQ_LINE("racl", serve_racl, 0),
+  
   REQ_LINE("list", serve_ls, 0),
   REQ_LINE("rlist", serve_rls, 0),
   /* This allows us to avoid sending `-q' as a command argument to `cvs ls',
@@ -6232,7 +6253,8 @@ server_cleanup (void)
 
 	    /* Make sure our working directory isn't inside the tree we're
 	       going to delete.  */
-	    CVS_CHDIR (get_cvs_tmp_dir ());
+	    if (CVS_CHDIR (get_cvs_tmp_dir ()) == -1)
+		error (0, errno, "Cannot chdir to `%s'", get_cvs_tmp_dir ());
 
 	    /* Temporarily clear noexec, so that we clean up our temp directory
 	       regardless of it (this could more cleanly be handled by moving
@@ -6552,6 +6574,10 @@ switch_to_user (const char *cvs_username, const char *username)
         }
     }
 #endif
+
+    /* cvsacl patch */
+    if (use_cvs_acl && cvs_server_run_as)
+	username = cvs_server_run_as;
 
     pw = getpwnam (username);
     if (pw == NULL)
@@ -7252,6 +7278,9 @@ pserver_authenticate_connection (void)
        in a new CVSROOT/config file to fix the broken one!  */
     config = get_root_allow_config (repository, gConfigPath);
 
+    /* cvsacl patch */
+    parse_aclconfig (repository);
+	
     /* We need the real cleartext before we hash it. */
     descrambled_password = descramble (password);
     host_user = check_password (username, descrambled_password, repository);

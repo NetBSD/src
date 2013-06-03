@@ -498,6 +498,46 @@ diff_fileproc (void *callerdat, struct file_info *finfo)
     {
 	/* Skip all the following checks regarding the user file; we're
 	   not using it.  */
+
+/* cvsacl patch */
+#ifdef SERVER_SUPPORT
+	if (use_cvs_acl /* && server_active */)
+	{
+	    if (diff_rev1)
+	    {
+		if (!access_allowed (NULL, finfo->repository, diff_rev1, 5,
+				     NULL, NULL, 1))
+		{
+		    if (stop_at_first_permission_denied)
+			error (1, 0, "permission denied for %s",
+			       Short_Repository (finfo->repository));
+		    else
+			error (0, 0, "permission denied for %s/%s",
+			       Short_Repository (finfo->repository),
+			       finfo->file);
+			    
+		    return (0);
+		}
+	    }
+	    if (diff_rev2)
+	    {
+		if (!access_allowed (NULL, finfo->repository, diff_rev2, 5,
+				     NULL, NULL, 1))
+		{
+		    if (stop_at_first_permission_denied)
+			error (1, 0, "permission denied for %s",
+			       Short_Repository (finfo->repository));
+		    else
+			error (0, 0, "permission denied for %s/%s",
+			       Short_Repository (finfo->repository),
+			       finfo->file);
+			    
+		    return (0);
+		}
+	    }
+	}
+#endif
+
     }
     else if (vers->vn_user == NULL)
     {
@@ -840,6 +880,40 @@ diff_dirproc (void *callerdat, const char *dir, const char *pos_repos,
     if (!isdir (dir))
 	return R_SKIP_ALL;
 
+/* cvsacl patch */
+#ifdef SERVER_SUPPORT
+    if (use_cvs_acl /* && server_active */)
+    {
+	if (diff_rev1)
+	{
+	    if (!access_allowed (NULL, update_dir, diff_rev1, 5, NULL, NULL, 1))
+	    {
+		if (stop_at_first_permission_denied)
+		    error (1, 0, "permission denied for %s",
+			   Short_Repository (update_dir));
+		else
+		    error (0, 0, "permission denied for %s/%s",
+			   Short_Repository (update_dir), update_dir);
+		    
+		return (0);
+	    }
+	}
+	if (diff_rev2)
+	{
+	    if (!access_allowed (NULL, update_dir, diff_rev2, 5, NULL, NULL, 1))
+	    {
+		if (stop_at_first_permission_denied)
+		    error (1, 0, "permission denied for %s",
+			   Short_Repository (update_dir));
+		else
+		    error (0, 0, "permission denied for %s/%s",
+			   Short_Repository (update_dir), update_dir);
+		    
+		return (0);
+	    }
+	}
+    }
+#endif
     if (!quiet)
 	error (0, 0, "Diffing %s", update_dir);
     return R_PROCESS;

@@ -546,7 +546,8 @@ ls_dirleaveproc (void *callerdat, const char *dir, int err,
 		    set_tag = false;
 		}
 
-		(void)CVS_CHDIR ("..");
+		if (CVS_CHDIR ("..") == -1)
+		    error (0, errno, "Failed to chdir ..");
 		if (unlink_file_dir (dir))
 		    error (0, errno, "Failed to remove directory `%s'",
 			   created_dir);

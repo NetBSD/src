@@ -250,7 +250,7 @@ readSizeT (const char *infopath, const char *option, const char *p,
 		       infopath, option, p[strlen(p)]);
 		return false;
 	}
-	TRACE (TRACE_DATA, "readSizeT(): Found factor %u for %s",
+	TRACE (TRACE_DATA, "readSizeT(): Found factor %zu for %s",
 	       factor, option);
     }
 
@@ -274,9 +274,9 @@ readSizeT (const char *infopath, const char *option, const char *p,
 	/* Don't return an error, just max out.  */
 	num = SIZE_MAX;
 
-    TRACE (TRACE_DATA, "readSizeT(): read number %u for %s", num, option);
+    TRACE (TRACE_DATA, "readSizeT(): read number %zu for %s", num, option);
     *val = xtimes (strtoul (p, NULL, 10), factor);
-    TRACE (TRACE_DATA, "readSizeT(): returnning %u for %s", *val, option);
+    TRACE (TRACE_DATA, "readSizeT(): returnning %zu for %s", *val, option);
     return true;
 }
 
@@ -730,4 +730,192 @@ parse_config (const char *cvsroot, const char *path)
     if (buf) free (buf);
 
     return retval;
+}
+
+/* cvsacl patch */
+int
+parse_aclconfig (const char *cvsroot)
+{
+    char *infopath;
+    FILE *fp_info;
+    char *line = NULL;
+    size_t line_allocated = 0;
+    size_t len;
+    char *p;
+    /* FIXME-reentrancy: If we do a multi-threaded server, this would need
+       to go to the per-connection data structures.  */
+    static int parsed = 0;
+
+    /* Authentication code and serve_root might both want to call us.
+       Let this happen smoothly.  */
+    if (parsed)
+	return 0;
+    parsed = 1;
+
+    infopath = xmalloc (strlen (cvsroot)
+			+ sizeof (CVSROOTADM_ACLCONFIG)
+			+ sizeof (CVSROOTADM)
+			+ 10);
+    if (infopath == NULL)
+    {
+	error (0, 0, "out of memory; cannot allocate infopath");
+	goto error_return;
+    }
+
+    strcpy (infopath, cvsroot);
+    strcat (infopath, "/");
+    strcat (infopath, CVSROOTADM);
+    strcat (infopath, "/");
+    strcat (infopath, CVSROOTADM_ACLCONFIG);
+
+    fp_info = CVS_FOPEN (infopath, "r");
+    if (fp_info == NULL)
+    {
+	/* If no file, don't do anything special.  */
+	if (!existence_error (errno))
+	{
+	    /* Just a warning message; doesn't affect return
+	       value, currently at least.  */
+	    error (0, errno, "cannot open %s", infopath);
+	}
+	free (infopath);
+	return 0;
+    }
+
+    while (getline (&line, &line_allocated, fp_info) >= 0)
+    {
+	/* Skip comments.  */
+	if (line[0] == '#')
+	    continue;
+
+	len = strlen (line) - 1;
+	if (line[len] == '\n')
+	    line[len] = '\0';
+
+	/* Skip blank lines.  */
+	if (line[0] == '\0')
+	    continue;
+
+	/* The first '=' separates keyword from value.  */
+	p = strchr (line, '=');
+	if (p == NULL)
+	{
+	    /* Probably should be printing line number.  */
+	    error (0, 0, "syntax error in %s: line '%s' is missing '='",
+		   infopath, line);
+	    goto error_return;
+	}
+
+	*p++ = '\0';
+
+	if (strcmp (line, "UseCVSACL") == 0)
+	{
+	    if (strcmp (p, "no") == 0)
+		use_cvs_acl = 0;
+	    else if (strcmp (p, "yes") == 0)
+		use_cvs_acl = 1;
+	    else
+	    {
+		error (0, 0, "unrecognized value '%s' for UseCVSACL", p);
+		goto error_return;
+	    }
+	}
+	else if (strcmp (line, "UseSeperateACLFileForEachDir") == 0)
+	{
+	    if (strcmp (p, "no") == 0)
+		use_separate_acl_file_for_each_dir = 0;
+	    else if (strcmp (p, "yes") == 0)
+		use_separate_acl_file_for_each_dir = 1;
+	    else
+	    {
+		error (0, 0, "unrecognized value '%s' for UseSeperateACLFileForEachDir", p);
+		goto error_return;
+	    }
+	}
+	else if (strcmp (line, "StopAtFirstPermissionDenied") == 0)
+	{
+	    if (strcmp (p, "no") == 0)
+		stop_at_first_permission_denied = 0;
+	    else if (strcmp (p, "yes") == 0)
+		stop_at_first_permission_denied = 1;
+	    else
+	    {
+		error (0, 0, "unrecognized value '%s' for StopAtFirstPermissionDenied", p);
+		goto error_return;
+	    }
+	}
+	else if (strcmp (line, "CVSACLDefaultPermissions") == 0)
+	{
+	    if (cvs_acl_default_permissions != NULL)
+		free (cvs_acl_default_permissions);
+			if (!given_perms_valid (p))
+				error (1,0,"Invalid CVS ACL Default Permissions: '%s' in CVSROOT/aclconfig", p);
+		cvs_acl_default_permissions = xstrdup (p);
+	}
+	else if (strcmp (line, "UseCVSGroups") == 0)
+	{
+	    if (strcmp (p, "no") == 0)
+		use_cvs_groups = 0;
+	    else if (strcmp (p, "yes") == 0)
+		use_cvs_groups = 1;
+	    else
+	    {
+		error (0, 0, "unrecognized value '%s' for UseCVSGroups", p);
+		goto error_return;
+	    }
+	}
+	else if (strcmp (line, "UseSystemGroups") == 0)
+	{
+	    if (strcmp (p, "no") == 0)
+		use_system_groups = 0;
+	    else if (strcmp (p, "yes") == 0)
+		use_system_groups = 1;
+	    else
+	    {
+		error (0, 0, "unrecognized value '%s' for UseSystemGroups", p);
+		goto error_return;
+	    }
+	}
+	else if (strcmp (line, "CVSACLFileLocation") == 0)
+	{
+	    if (cvs_acl_file_location != NULL)
+		free (cvs_acl_file_location);
+		cvs_acl_file_location = xstrdup (p);
+	}
+	else if (strcmp (line, "CVSGroupsFileLocation") == 0)
+	{
+	    if (cvs_groups_file_location != NULL)
+		free (cvs_groups_file_location);
+		cvs_groups_file_location = xstrdup (p);
+	}
+	else if (strcmp (line, "CVSServerRunAsUser") == 0)
+	{
+	    if (cvs_server_run_as != NULL)
+		free (cvs_server_run_as);
+		cvs_server_run_as = xstrdup (p);
+	}
+
+    }
+	
+    if (ferror (fp_info))
+    {
+	error (0, errno, "cannot read %s", infopath);
+	goto error_return;
+    }
+    if (fclose (fp_info) < 0)
+    {
+	error (0, errno, "cannot close %s", infopath);
+	goto error_return;
+    }
+    free (infopath);
+    if (line != NULL)
+	free (line);
+    return 0;
+
+ error_return:
+    if (infopath != NULL)
+	free (infopath);
+    if (line != NULL)
+	free (line);
+    return -1;
 }

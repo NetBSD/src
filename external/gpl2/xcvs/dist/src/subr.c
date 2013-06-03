@@ -1285,7 +1285,7 @@ format_cmdline (const char *format, ...)
 	    		dellist(&pflist);
 	    		free(b);
 			error (1, 0,
-"internal error:  unknown integer arg size (%d)",
+"internal error:  unknown integer arg size (%zu)",
                                length);
 			break;
 		}
@@ -1328,7 +1328,7 @@ format_cmdline (const char *format, ...)
 	    		dellist(&pflist);
 	    		free(b);
 			error (1, 0,
-"internal error:  unknown floating point arg size (%d)",
+"internal error:  unknown floating point arg size (%zu)",
                                length);
 			break;
 		}
@@ -1458,6 +1458,7 @@ format_cmdline (const char *format, ...)
      *        output string into separate arguments
      *
      * %X means sub var "X" into location
+     * NB: The meaning of the following 2 formats is reversed in the new mode
      * %{VWXYZ} means sub V,W,X,Y,Z into location as a single arg.  The shell
      *        || would be to quote the comma separated arguments.  Each list
      *        that V, W, X, Y, and Z represent attributes of will cause a new
@@ -1567,6 +1568,12 @@ format_cmdline (const char *format, ...)
 		    }
 		}
 #endif /* SUPPORT_OLD_INFO_FMT_STRINGS */
+		if (*s == ',') {
+#ifdef SUPPORT_OLD_INFO_FMT_STRINGS
+		    if (!oldway)
+#endif /* SUPPORT_OLD_INFO_FMT_STRINGS */
+			s++, onearg = 1;
+		}
 		    
 		/* parse the format string and sub in... */
 		if (*s == '{')

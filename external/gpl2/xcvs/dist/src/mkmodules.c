@@ -28,6 +28,80 @@ static void rename_dbmfile (char *temp);
 static void write_dbmfile (char *temp);
 #endif				/* !MY_NDBM */
 
+/* cvsacl patch */
+static const char *const aclconfig_contents[] = {
+	"# Set `UseCVSACL' to yes to use CVSACL feature.\n",
+	"UseCVSACL=yes\n",
+	"\n",
+	"# Default CVSACL Permission to use.\n",
+	"#CVSACLDefaultPermissions=p\n",
+	"\n",
+	"# Default file location for CVS ACL file (access) is CVSROOT/access.\n",
+	"# If you want to use a different location, define it below.\n",
+	"#CVSACLFileLocation=/path/to/cvs/access\n",
+	"\n",
+	"# Set `UseSystemGroups' to yes to use system group definitions (/etc/group).\n",
+	"UseSystemGroups=yes\n",
+	"\n",
+	"# Set `UseCVSGroups' to yes to use another group file.\n",
+	"#UseCVSGroups=yes\n",
+	"\n",
+	"# Default file location for CVS groups file is CVSROOT/group.\n",
+	"# If you want to use a different location, define it below.\n",
+	"#CVSGroupsFileLocation=/path/to/cvs/group\n",
+	"\n",
+	"# Set UseSeperateACLFileForEachDir to yes in order to use a\n",
+	"# seperate 'access' file for each directory.\n",
+	"# This increased the performance if you have really big repository.\n",
+	"#UseSeperateACLFileForEachDir=no\n",
+	"\n",
+	"# If StopAtFirstPermissionDenied is set to yes\n",
+	"# operation will stop at first permission denied message.\n",
+	"# Default is no.\n",
+	"#StopAtFirstPermissionDenied=no\n",
+	"\n",
+	"# Set CVSServerRunAsUser to a system user, in order CVS server\n",
+	"# to run as.\n",
+	"#CVSServerRunAsUser=runascvsuser",
+	NULL
+};
+
+static const char *const access_contents[] = {
+	"# CVS ACL definitions file. DO NOT EDIT MANUALLY\n",
+	"#\n",
+	"# BNF:\n",
+	"#     <entry>:           "
+	    "<filetype>:<path>:<tag-branch>:<permission-list>:\n",
+	"#     <filetype>:        d|f\n",
+	"#     <path>:            ALL | unix-file-path\n",
+	"#     <tag-branch>:      ALL | HEAD | name\n",
+	"#     <permission-list>: <permission>\n",
+	"#                        | <permission-list> , <permission>\n",
+	"#     <permission>:      <actor>!<privilege>\n",
+	"#     <actor>:           ALL | user | group\n",
+	"#     <privilege>        n | a | w | t | r | c | d | p\n",
+	"#\n",
+	"# Valid privileges are:\n",
+	"# * - no permission      (n) (1)\n",
+	"# * - all permissions    (a) (2)\n",
+	"# * - write permission   (w) (3)\n",
+	"# * - tag permission     (t) (4)\n",
+	"# * - read permission    (r) (5)\n",
+	"# * - add permission     (c) (6)\n",
+	"# * - remove permission  (d) (7)\n",
+	"# * - permission change  (p) (8)\n",
+	"#\n",
+	"# Valid filetypes are:\n",
+	"# * - plain file (f)\n",
+	"# * - directory  (d)\n",
+	"#\n",
+	NULL
+};
+
+static const char *const group_contents[] = {
+	NULL
+};
+
 /* Structure which describes an administrative file.  */
 struct admin_file {
    /* Name of the file, within the CVSROOT directory.  */
@@ -73,6 +147,7 @@ static const char *const loginfo_contents[] = {
 #endif
     "#    %p = path relative to repository\n",
     "#    %r = repository (path portion of $CVSROOT)\n",
+    "#    %t = tagname\n",
     "#    %{sVv} = attribute list = file name, old version number (pre-checkin),\n",
     "#           new version number (post-checkin).  When either old or new revision\n",
     "#           is unknown, doesn't exist, or isn't applicable, the string \"NONE\"\n",
@@ -168,6 +243,7 @@ static const char *const commitinfo_contents[] = {
 #endif
     "#    %p = path relative to repository\n",
     "#    %r = repository (path portion of $CVSROOT)\n",
+    "#    %t = tagname\n",
     "#    %{s} = file name, file name, ...\n",
     "#\n",
     "# If no format strings are present in the filter string, a default of\n",
@@ -677,6 +753,20 @@ static const struct admin_file filelist[] = {
     {CVSROOTADM_CONFIG,
 	 "a %s file configures various behaviors",
 	 config_contents},
+
+     /* cvsacl patch */
+    {CVSROOTADM_ACLCONFIG,
+	 "a %s file configures Access Control List behaviors",
+	 aclconfig_contents},
+
+    {CVSROOTADM_ACCESS,
+	 "a %s file configures Access Control Lists",
+	 access_contents},
+
+    {CVSROOTADM_GROUP,
+	 "a %s file configures Access Control List group definitions",
+	 group_contents},
+
     {NULL, NULL, NULL}
 };
 
@@ -1259,13 +1349,13 @@ init (int argc, char **argv)
 	fp = xfopen (info, "w");
 	if (fclose (fp) < 0)
 	    error (1, errno, "cannot close %s", info);
- 
+
         /* Make the new history file world-writeable, since every CVS
            user will need to be able to write to it.  We use chmod()
            because xchmod() is too shy. */
         chmod (info, 0666);
     }
-
+    
     /* Make an empty val-tags file to prevent problems creating it later.  */
     strcpy (info, adm);
     strcat (info, "/");
