@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.250 2013/06/02 17:23:33 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.251 2013/06/03 01:31:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.250 2013/06/02 17:23:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.251 2013/06/03 01:31:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1649,10 +1649,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 		break;
 	case WM_T_I210:
 	case WM_T_I211:
-#if 1
 		sc->sc_flags |= WM_F_EEPROM_FLASH_HW;
 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_SWFW_SYNC;
-#endif
 		break;
 	default:
 		break;
@@ -5350,7 +5348,6 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 		return 0;
 
 	if (sc->sc_type == WM_T_PCH_LPT) {
-		printf("[PCH_LPT]");
 		csum_wordaddr = NVM_COMPAT;
 		valid_checksum = NVM_COMPAT_VALID_CHECKSUM;
 	} else {
