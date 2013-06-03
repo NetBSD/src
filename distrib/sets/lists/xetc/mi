@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.19 2013/06/03 07:08:21 mrg Exp $
+# $NetBSD: mi,v 1.20 2013/06/03 17:50:28 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -65,7 +65,7 @@
 ./etc/fonts/conf.avail/11-lcdfilter-default.conf	-unknown-	xorg
 ./etc/fonts/conf.avail/11-lcdfilter-legacy.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/11-lcdfilter-light.conf		-unknown-	xorg
-./etc/fonts/conf.avail/20-fix-globaladvance.conf	-unknown-	xorg
+./etc/fonts/conf.avail/20-fix-globaladvance.conf	-unknown-	obsolete
 ./etc/fonts/conf.avail/20-unhint-small-vera.conf	-unknown-	xorg
 ./etc/fonts/conf.avail/25-unhint-nonlatin.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/30-metric-aliases.conf		-unknown-	xorg
