@@ -1,4 +1,4 @@
-/*	$NetBSD: n900_camcvr.c,v 1.1 2013/04/20 03:37:55 khorben Exp $ */
+/*	$NetBSD: n900_camcvr.c,v 1.2 2013/06/03 01:47:58 khorben Exp $ */
 
 /*
  * Camera cover driver for the Nokia N900.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: n900_camcvr.c,v 1.1 2013/04/20 03:37:55 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: n900_camcvr.c,v 1.2 2013/06/03 01:47:58 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: n900_camcvr.c,v 1.1 2013/04/20 03:37:55 khorben Exp 
 
 #include <dev/gpio/gpiovar.h>
 #include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
 
 #include <arm/omap/omap2_gpio.h>
 
@@ -73,9 +74,9 @@ static int	n900camcvr_detach(device_t, int);
 CFATTACH_DECL_NEW(n900camcvr, sizeof(struct n900camcvr_softc),
 	n900camcvr_match, n900camcvr_attach, n900camcvr_detach, NULL);
 
-static void	n900camcvr_refresh(struct n900camcvr_softc *);
+static void	n900camcvr_refresh(void *);
 
-static int	n900camcvr_intr(void *v);
+static int	n900camcvr_intr(void *);
 
 
 static int
@@ -143,6 +144,7 @@ n900camcvr_attach(device_t parent, device_t self, void *aux)
 		    "couldn't establish power handler\n");
 	}
 
+	sysmon_task_queue_init();
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_HOTKEY;
 	sysmon_pswitch_register(&sc->sc_smpsw);
@@ -162,6 +164,7 @@ n900camcvr_detach(device_t self, int flags)
 
 	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 	pmf_device_deregister(self);
+	sysmon_task_queue_fini();
 
 	return 0;
 }
@@ -171,13 +174,14 @@ n900camcvr_intr(void *v)
 {
 	struct n900camcvr_softc *sc = v;
 
-	n900camcvr_refresh(sc);
+	sysmon_task_queue_sched(0, n900camcvr_refresh, sc);
 	return 1;
 }
 
 static void
-n900camcvr_refresh(struct n900camcvr_softc *sc)
+n900camcvr_refresh(void *v)
 {
+	struct n900camcvr_softc *sc = v;
 	int i;
 	int event;
 
