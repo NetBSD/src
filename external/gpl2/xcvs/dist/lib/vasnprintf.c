@@ -562,13 +562,7 @@ VASNPRINTF (CHAR_T *resultbuf, size_t *lengthp, const CHAR_T *format, va_list ar
 		    break;
 		  }
 		*p = dp->conversion;
-#if USE_SNPRINTF
-		p[1] = '%';
-		p[2] = 'n';
-		p[3] = '\0';
-#else
 		p[1] = '\0';
-#endif
 
 		/* Construct the arguments for calling snprintf or sprintf.  */
 		prefix_count = 0;
@@ -596,28 +590,25 @@ VASNPRINTF (CHAR_T *resultbuf, size_t *lengthp, const CHAR_T *format, va_list ar
 		  {
 		    size_t maxlen;
 		    int count;
-		    int retcount;
 
 		    maxlen = allocated - length;
 		    count = -1;
-		    retcount = 0;
 
 #if USE_SNPRINTF
 # define SNPRINTF_BUF(arg) \
 		    switch (prefix_count)				    \
 		      {							    \
 		      case 0:						    \
-			retcount = SNPRINTF (result + length, maxlen, buf,  \
-					     arg, &count);		    \
+			count = SNPRINTF (result + length, maxlen, buf,     \
+					     arg);            		    \
 			break;						    \
 		      case 1:						    \
-			retcount = SNPRINTF (result + length, maxlen, buf,  \
-					     prefixes[0], arg, &count);	    \
+			count = SNPRINTF (result + length, maxlen, buf,     \
+					     prefixes[0], arg);	            \
 			break;						    \
 		      case 2:						    \
-			retcount = SNPRINTF (result + length, maxlen, buf,  \
-					     prefixes[0], prefixes[1], arg, \
-					     &count);			    \
+			count = SNPRINTF (result + length, maxlen, buf,     \
+					  prefixes[0], prefixes[1], arg);   \
 			break;						    \
 		      default:						    \
 			abort ();					    \
@@ -768,39 +759,6 @@ VASNPRINTF (CHAR_T *resultbuf, size_t *lengthp, const CHAR_T *format, va_list ar
 			   result.  */
 			if (count < maxlen && result[length + count] != '\0')
 			  abort ();
-			/* Portability hack.  */
-			if (retcount > count)
-			  count = retcount;
-		      }
-		    else
-		      {
-			/* snprintf() doesn't understand the '%n'
-			   directive.  */
-			if (p[1] != '\0')
-			  {
-			    /* Don't use the '%n' directive; instead, look
-			       at the snprintf() return value.  */
-			    p[1] = '\0';
-			    continue;
-			  }
-			else
-			  {
-			    /* Look at the snprintf() return value.  */
-			    if (retcount < 0)
-			      {
-				/* HP-UX 10.20 snprintf() is doubly deficient:
-				   It doesn't understand the '%n' directive,
-				   *and* it returns -1 (rather than the length
-				   that would have been required) when the
-				   buffer is too small.  */
-				size_t bigger_need =
-				  xsum (xtimes (allocated, 2), 12);
-				ENSURE_ALLOCATION (bigger_need);
-				continue;
-			      }
-			    else
-			      count = retcount;
-			  }
 		      }
 #endif
 

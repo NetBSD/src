@@ -498,6 +498,43 @@ patch_fileproc (void *callerdat, struct file_info *finfo)
 	goto out2;
     }
 
+/* cvsacl patch */
+#ifdef SERVER_SUPPORT
+    if (use_cvs_acl /* && server_active */)
+    {
+	if (rev1)
+	{
+	    if (!access_allowed (finfo->file, finfo->repository, rev1, 5,
+				 NULL, NULL, 1))
+	    {
+		if (stop_at_first_permission_denied)
+		    error (1, 0, "permission denied for %s",
+			   Short_Repository (finfo->repository));
+		else
+		    error (0, 0, "permission denied for %s/%s",
+			   Short_Repository (finfo->repository), finfo->file);
+			
+		return (0);
+	    }
+	}
+	if (rev2)
+	{
+	    if (!access_allowed (finfo->file, finfo->repository, rev2, 5,
+				 NULL, NULL, 1))
+	    {
+		if (stop_at_first_permission_denied)
+		    error (1, 0, "permission denied for %s",
+			   Short_Repository (finfo->repository));
+		else
+		    error (0, 0, "permission denied for %s/%s",
+			   Short_Repository (finfo->repository), finfo->file);
+		    
+		return (0);
+	    }
+	}
+    }
+#endif
+
     /* Create 3 empty files.  I'm not really sure there is any advantage
      * to doing so now rather than just waiting until later.
      *
@@ -619,14 +656,18 @@ patch_fileproc (void *callerdat, struct file_info *finfo)
 	    if (getline (&line1, &line1_chars_allocated, fp) < 0 ||
 		getline (&line2, &line2_chars_allocated, fp) < 0)
 	    {
-		if (feof (fp))
-		    error (0, 0, "\
+		if (line1 && strncmp("Binary files ", line1, 13) == 0) {
+		    cvs_output ("Binary files are different\n", 0);
+		} else {
+		    if (feof (fp))
+			error (0, 0, "\
 failed to read diff file header %s for %s: end of file", tmpfile3, rcs);
-		else
-		    error (0, errno,
-			   "failed to read diff file header %s for %s",
-			   tmpfile3, rcs);
-		ret = 1;
+		    else
+			error (0, errno,
+			       "failed to read diff file header %s for %s",
+			       tmpfile3, rcs);
+		    ret = 1;
+		}
 		if (fclose (fp) < 0)
 		    error (0, errno, "error closing %s", tmpfile3);
 		goto out;

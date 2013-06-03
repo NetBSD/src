@@ -823,7 +823,7 @@ warning: duplicate key `%s' in version `%s' of RCS file `%s'",
 			    error (1, 0, "\
 unrecognized operation '\\x%x' in %s",
 				   op, rcs->print_path);
-			(void) strtoul (cp, (char **) &cp, 10);
+			count = strtoul (cp, (char **) &cp, 10);
 			if (*cp++ != ' ')
 			    error (1, 0, "space expected in %s revision %s",
 				   rcs->print_path, vnode->version);

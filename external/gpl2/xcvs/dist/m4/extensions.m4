@@ -10,6 +10,7 @@
 # Enable extensions on systems that normally disable them,
 # typically due to standards-conformance issues.
 AC_DEFUN([gl_USE_SYSTEM_EXTENSIONS], [
+  AC_BEFORE([$0], [AC_USE_SYSTEM_EXTENSIONS])
   AC_BEFORE([$0], [AC_COMPILE_IFELSE])
   AC_BEFORE([$0], [AC_RUN_IFELSE])
 

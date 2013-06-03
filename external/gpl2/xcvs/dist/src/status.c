@@ -127,6 +127,26 @@ status_fileproc (void *callerdat, struct file_info *finfo)
     Node *node;
 
     status = Classify_File (finfo, NULL, NULL, NULL, 1, 0, &vers, 0);
+
+/* cvsacl patch */
+#ifdef SERVER_SUPPORT
+    if (use_cvs_acl /* && server_active */)
+    {
+	if (!access_allowed (finfo->file, finfo->repository, vers->tag, 5,
+			     NULL, NULL, 1))
+	{
+	    if (stop_at_first_permission_denied)
+		error (1, 0, "permission denied for %s",
+		       Short_Repository (finfo->repository));
+	    else
+		error (0, 0, "permission denied for %s/%s",
+		       Short_Repository (finfo->repository), finfo->file);
+			
+	    return (0);
+	}
+    }
+#endif
+
     sstat = "Classify Error";
     switch (status)
     {
