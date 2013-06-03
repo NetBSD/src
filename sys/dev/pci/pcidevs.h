@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1146 2013/04/20 09:38:16 rkujawa Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1147 2013/06/03 16:21:17 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1154 2013/04/20 09:26:23 rkujawa Exp
+ *	NetBSD: pcidevs,v 1.1155 2013/06/03 16:20:53 msaitoh Exp
  */
 
 /*
@@ -3465,6 +3465,7 @@
 #define	PCI_PRODUCT_INTEL_EG20T_I2C	0x8817		/* EG20T PCH I2C Interface */
 #define	PCI_PRODUCT_INTEL_EG20T_CAN	0x8818		/* EG20T PCH CAN Controller */
 #define	PCI_PRODUCT_INTEL_EG20T_IEEE1588	0x8819		/* EG20T PCH IEEE1588 */
+#define	PCI_PRODUCT_INTEL_8SERIES_KT	0x8c3d		/* 8 Series KT */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_HB	0xa000		/* Pineview Host Bridge */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGD	0xa001		/* Pineview Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_HB	0xa010		/* Pineview Host Bridge */
