@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.6 2013/05/29 00:47:48 christos Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.7 2013/06/03 20:26:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.6 2013/05/29 00:47:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.7 2013/06/03 20:26:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1462,7 +1462,7 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: ace_ebus.c,v 1.6 2013/05/29 00:47:48 christos Exp $ */
+/*	$NetBSD: ace_ebus.c,v 1.7 2013/06/03 20:26:31 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -2475,5 +2475,5 @@ ace_set_geometry(struct ace_softc *ace)
 	dg->dg_nsectors = ace->sc_params.CurrentSectorsPerTrack;
 	dg->dg_ntracks = ace->sc_params.CurrentNumberOfHeads;
 
-	disk_set_info(sc->sc_dev, &sc->sc_dk, ST506);
+	disk_set_info(ace->sc_dev, &ace->sc_dk, ST506);
 }
