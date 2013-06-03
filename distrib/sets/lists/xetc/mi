@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.21 2013/06/03 17:58:28 mrg Exp $
+# $NetBSD: mi,v 1.22 2013/06/03 20:23:40 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -57,6 +57,7 @@
 ./etc/X11/xsm/system.xsm				-unknown-	xorg
 ./etc/fonts/conf.avail/10-autohint.conf			-unknown-	xorg
 ./etc/fonts/conf.avail/10-no-sub-pixel.conf		-unknown-	xorg
+./etc/fonts/conf.avail/10-scale-bitmap-fonts.conf	-unknown-	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-bgr.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-rgb.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-vbgr.conf		-unknown-	xorg
@@ -84,6 +85,7 @@
 ./etc/fonts/conf.avail/70-yes-bitmaps.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/80-delicious.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/90-synthetic.conf		-unknown-	xorg
+./etc/fonts/conf.d/10-scale-bitmap-fonts.conf		-unknown-	xorg
 ./etc/fonts/conf.d/20-fix-globaladvance.conf		-unknown-	obsolete
 ./etc/fonts/conf.d/20-unhint-small-vera.conf		-unknown-	xorg
 ./etc/fonts/conf.d/30-metric-aliases.conf		-unknown-	xorg

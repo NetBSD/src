@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/06/03 07:23:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2013/06/03 20:23:39 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,18 +10,21 @@ SRCS=	fcatomic.c \
 	fccache.c \
 	fccfg.c \
 	fccharset.c \
+	fccompat.c \
 	fcdbg.c \
 	fcdefault.c \
 	fcdir.c \
 	fcformat.c \
 	fcfreetype.c \
 	fcfs.c \
+	fchash.c \
 	fcinit.c \
 	fclang.c \
 	fclist.c \
 	fcmatch.c \
 	fcmatrix.c \
 	fcname.c \
+	fcobjs.c \
 	fcpat.c \
 	fcserialize.c \
 	fcstat.c \
@@ -113,7 +116,6 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I. \
 		-I${X11SRCDIR.${LIB}}
 
-FCARCH_DEPFILE=	fccache.c
 .include "Makefile.fcarch"
 
 CLEANFILES+= fcarch.h

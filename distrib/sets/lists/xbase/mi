@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.117 2013/06/03 07:08:20 mrg Exp $
+# $NetBSD: mi,v 1.118 2013/06/03 20:23:40 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1371,6 +1371,7 @@
 ./usr/X11R7/bin/fc-query				-unknown-	xorg
 ./usr/X11R7/bin/fc-scan					-unknown-	xorg
 ./usr/X11R7/bin/fc-pattern				-unknown-	xorg
+./usr/X11R7/bin/fc-validate				-unknown-	xorg
 ./usr/X11R7/bin/fillblnk				-unknown-	xorg
 ./usr/X11R7/bin/fonttosfnt				-unknown-	xorg
 ./usr/X11R7/bin/fslsfonts				-unknown-	xorg
@@ -2499,6 +2500,7 @@
 ./usr/X11R7/man/cat1/fc-query.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-scan.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-pattern.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/fc-validate.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fonttosfnt.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fslsfonts.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fstobdf.0				-unknown-	.cat,xorg
@@ -2638,6 +2640,7 @@
 ./usr/X11R7/man/html1/fc-query.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-scan.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-pattern.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/fc-validate.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fonttosfnt.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fslsfonts.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fstobdf.html			-unknown-	html,xorg
@@ -2777,6 +2780,7 @@
 ./usr/X11R7/man/man1/fc-query.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-scan.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-pattern.1			-unknown-	.man,xorg
+./usr/X11R7/man/man1/fc-validate.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fonttosfnt.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fslsfonts.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fstobdf.1				-unknown-	.man,xorg
