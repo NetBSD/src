@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.223 2013/06/03 16:42:32 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.224 2013/06/03 21:01:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.223 2013/06/03 16:42:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.224 2013/06/03 21:01:18 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -2002,7 +2002,7 @@ vnd_set_geometry(struct vnd_softc *vnd)
 
 	memset(dg, 0, sizeof(*dg));
 
-	dg->dg_secperunit = vnd->sc_geom.vng_nsectors *
+	dg->dg_secperunit = (int64_t)vnd->sc_geom.vng_nsectors *
 	    vnd->sc_geom.vng_ntracks * vnd->sc_geom.vng_ncylinders;
 	dg->dg_secsize = vnd->sc_geom.vng_secsize;
 	dg->dg_nsectors = vnd->sc_geom.vng_nsectors;
