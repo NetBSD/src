@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.136 2013/05/31 09:10:49 mrg Exp $
+#	 $NetBSD: mi,v 1.137 2013/06/03 07:08:21 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6418,6 +6418,12 @@
 ./usr/X11R7/man/cat3/FcCacheNumFont.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCacheNumSubdir.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCacheSubdir.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcCacheCreateTagFile.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcCharSetDelChar.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcGetDefaultLangs.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcLangSetDel.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcLangSetSubtract.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcLangSetUnion.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetAddChar.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetCopy.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetCount.0			-unknown-	.cat,xorg
@@ -7318,6 +7324,7 @@
 ./usr/X11R7/man/html3/FcBlanksDestroy.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcBlanksIsMember.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCacheCopySet.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/FcCacheCreateTagFile.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCacheDir.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCacheNumFont.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCacheNumSubdir.html		-unknown-	html,xorg
@@ -7327,6 +7334,7 @@
 ./usr/X11R7/man/html3/FcCharSetCount.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCharSetCoverage.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCharSetCreate.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/FcCharSetDelChar.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCharSetDestroy.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCharSetEqual.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCharSetFirstPage.html		-unknown-	html,xorg
@@ -7392,6 +7400,7 @@
 ./usr/X11R7/man/html3/FcFreeTypeCharSetAndSpacing.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcFreeTypeQuery.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcFreeTypeQueryFace.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/FcGetDefaultLangs.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcGetLangs.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcGetVersion.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcInit.html			-unknown-	html,xorg
@@ -7407,10 +7416,13 @@
 ./usr/X11R7/man/html3/FcLangSetContains.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcLangSetCopy.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcLangSetCreate.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/FcLangSetDel.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcLangSetDestroy.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcLangSetEqual.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcLangSetHasLang.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcLangSetHash.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/FcLangSetSubtract.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/FcLangSetUnion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcMatrixCopy.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcMatrixEqual.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcMatrixInit.html			-unknown-	html,xorg
@@ -8221,6 +8233,7 @@
 ./usr/X11R7/man/man3/FcBlanksDestroy.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcBlanksIsMember.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCacheCopySet.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcCacheCreateTagFile.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCacheDir.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCacheNumFont.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCacheNumSubdir.3			-unknown-	.man,xorg
@@ -8230,6 +8243,7 @@
 ./usr/X11R7/man/man3/FcCharSetCount.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetCoverage.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetCreate.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcCharSetDelChar.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetDestroy.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetEqual.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetFirstPage.3		-unknown-	.man,xorg
@@ -8295,6 +8309,7 @@
 ./usr/X11R7/man/man3/FcFreeTypeCharSetAndSpacing.3	-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcFreeTypeQuery.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcFreeTypeQueryFace.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcGetDefaultLangs.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcGetLangs.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcGetVersion.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcInit.3				-unknown-	.man,xorg
@@ -8310,10 +8325,13 @@
 ./usr/X11R7/man/man3/FcLangSetContains.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcLangSetCopy.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcLangSetCreate.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcLangSetDel.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcLangSetDestroy.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcLangSetEqual.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcLangSetHasLang.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcLangSetHash.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcLangSetSubtract.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcLangSetUnion.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcMatrixCopy.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcMatrixEqual.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcMatrixInit.3			-unknown-	.man,xorg
