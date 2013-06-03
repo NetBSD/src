@@ -1,4 +1,4 @@
-/*	$NetBSD: n900_acad.c,v 1.5 2013/04/20 03:37:55 khorben Exp $ */
+/*	$NetBSD: n900_acad.c,v 1.6 2013/06/03 01:47:58 khorben Exp $ */
 
 /*
  * AC adapter driver for the Nokia N900.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: n900_acad.c,v 1.5 2013/04/20 03:37:55 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: n900_acad.c,v 1.6 2013/06/03 01:47:58 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: n900_acad.c,v 1.5 2013/04/20 03:37:55 khorben Exp $"
 
 #include <dev/gpio/gpiovar.h>
 #include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
 
 #include <arm/omap/omap2_gpio.h>
 
@@ -73,9 +74,9 @@ static int	n900acad_detach(device_t, int);
 CFATTACH_DECL_NEW(n900acad, sizeof(struct n900acad_softc),
 	n900acad_match, n900acad_attach, n900acad_detach, NULL);
 
-static void	n900acad_refresh(struct n900acad_softc *);
+static void	n900acad_refresh(void *);
 
-static int	n900acad_intr(void *v);
+static int	n900acad_intr(void *);
 
 
 static int
@@ -143,6 +144,7 @@ n900acad_attach(device_t parent, device_t self, void *aux)
 		    "couldn't establish power handler\n");
 	}
 
+	sysmon_task_queue_init();
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_ACADAPTER;
 	sysmon_pswitch_register(&sc->sc_smpsw);
@@ -161,6 +163,7 @@ n900acad_detach(device_t self, int flags)
 
 	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 	pmf_device_deregister(self);
+	sysmon_task_queue_fini();
 
 	return 0;
 }
@@ -170,13 +173,14 @@ n900acad_intr(void *v)
 {
 	struct n900acad_softc *sc = v;
 
-	n900acad_refresh(sc);
+	sysmon_task_queue_sched(0, n900acad_refresh, sc);
 	return 1;
 }
 
 static void
-n900acad_refresh(struct n900acad_softc *sc)
+n900acad_refresh(void *v)
 {
+	struct n900acad_softc *sc = v;
 	int i;
 	int event;
 

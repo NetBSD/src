@@ -1,4 +1,4 @@
-/*	$NetBSD: n900_audjck.c,v 1.1 2013/05/06 22:56:54 khorben Exp $ */
+/*	$NetBSD: n900_audjck.c,v 1.2 2013/06/03 01:47:58 khorben Exp $ */
 
 /*
  * Audio jack driver for the Nokia N900.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: n900_audjck.c,v 1.1 2013/05/06 22:56:54 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: n900_audjck.c,v 1.2 2013/06/03 01:47:58 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: n900_audjck.c,v 1.1 2013/05/06 22:56:54 khorben Exp 
 
 #include <dev/gpio/gpiovar.h>
 #include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
 
 #include <arm/omap/omap2_gpio.h>
 
@@ -74,9 +75,9 @@ static int	n900audjck_detach(device_t, int);
 CFATTACH_DECL_NEW(n900audjck, sizeof(struct n900audjck_softc),
 	n900audjck_match, n900audjck_attach, n900audjck_detach, NULL);
 
-static void	n900audjck_refresh(struct n900audjck_softc *);
+static void	n900audjck_refresh(void *);
 
-static int	n900audjck_intr(void *v);
+static int	n900audjck_intr(void *);
 
 
 static int
@@ -144,6 +145,7 @@ n900audjck_attach(device_t parent, device_t self, void *aux)
 		    "couldn't establish power handler\n");
 	}
 
+	sysmon_task_queue_init();
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_HOTKEY;
 	sc->sc_state = PSWITCH_EVENT_RELEASED;
@@ -164,6 +166,7 @@ n900audjck_detach(device_t self, int flags)
 
 	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 	pmf_device_deregister(self);
+	sysmon_task_queue_fini();
 
 	return 0;
 }
@@ -173,13 +176,14 @@ n900audjck_intr(void *v)
 {
 	struct n900audjck_softc *sc = v;
 
-	n900audjck_refresh(sc);
+	sysmon_task_queue_sched(0, n900audjck_refresh, sc);
 	return 1;
 }
 
 static void
-n900audjck_refresh(struct n900audjck_softc *sc)
+n900audjck_refresh(void *v)
 {
+	struct n900audjck_softc *sc = v;
 	int i;
 	int event;
 
