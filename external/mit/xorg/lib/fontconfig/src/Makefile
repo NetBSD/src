@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2013/06/03 06:46:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2013/06/03 07:23:02 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -28,8 +28,6 @@ SRCS=	fcatomic.c \
 	fcstr.c \
 	fcxml.c \
 	ftglue.c
-
-SRCS+=	fcarch.c
 
 .PATH:	${X11SRCDIR.${LIB}}/doc
 MAN=	FcAtomicCreate.3 FcAtomicDeleteNew.3 FcAtomicDestroy.3 FcAtomicLock.3 \
