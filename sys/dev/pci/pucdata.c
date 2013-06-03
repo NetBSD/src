@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.83 2012/12/19 05:50:06 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.84 2013/06/03 16:21:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.83 2012/12/19 05:50:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.84 2013/06/03 16:21:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1525,6 +1525,15 @@ const struct puc_device_description puc_devices[] = {
 	/* Intel 7 Series KT */
 	{   "Intel 7 Series KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 8 Series KT */
+	{   "Intel 8 Series KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_KT, 0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
