@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.106 2012/04/04 10:59:47 joerg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.107 2013/06/03 07:39:07 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -130,13 +130,13 @@ X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
 .if ${X11FLAVOUR} == "Xorg"
 XVENDORNAMESHORT=	'"X.Org"'
 XVENDORNAME=		'"The X.Org Foundation"'
-XORG_RELEASE=		'"Release 1.10.3"'
+XORG_RELEASE=		'"Release 1.10.6"'
 __XKBDEFRULES__=	'"xorg"'
 XLOCALE.DEFINES=	-DXLOCALEDIR=\"${X11LIBDIR}/locale\" \
 			-DXLOCALELIBDIR=\"${X11LIBDIR}/locale\"
 
 # XXX oh yeah, fix me later
-XORG_VERSION_CURRENT="(((1) * 10000000) + ((10) * 100000) + ((3) * 1000) + 0)"
+XORG_VERSION_CURRENT="(((1) * 10000000) + ((10) * 100000) + ((6) * 1000) + 0)"
 .endif
 
 PRINT_PACKAGE_VERSION=	awk '/^PACKAGE_VERSION=/ {			\
