@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/06/03 06:46:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/06/03 17:50:28 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,6 @@ CONFIGFILES= \
 	11-lcdfilter-default.conf \
 	11-lcdfilter-legacy.conf \
 	11-lcdfilter-light.conf \
-	20-fix-globaladvance.conf \
 	20-unhint-small-vera.conf \
 	25-unhint-nonlatin.conf \
 	30-metric-aliases.conf \
