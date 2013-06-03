@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/06/03 08:51:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2013/06/03 09:12:28 mrg Exp $
 
 DRIVER=		xf86-video-siliconmotion
 DRIVER_NAME=	siliconmotion_drv
@@ -11,6 +11,5 @@ SRCS+=		smi501_crtc.c smi501_output.c
 MAN=		siliconmotion.4
 
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/../include -DHAVE_CONFIG_H
-CPPFLAGS+=	-DHAVE_XAA_H
 
 .include "../Makefile.xf86-driver"
