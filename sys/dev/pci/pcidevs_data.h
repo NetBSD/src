@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1145 2013/04/20 09:38:17 rkujawa Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1146 2013/06/03 16:21:17 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1154 2013/04/20 09:26:23 rkujawa Exp
+ *	NetBSD: pcidevs,v 1.1155 2013/06/03 16:20:53 msaitoh Exp
  */
 
 /*
@@ -5689,6 +5689,8 @@ static const uint16_t pci_products[] = {
 	    20138, 17701, 20184, 6225, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_IEEE1588, 
 	    20138, 17701, 20188, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_KT, 
+	    6581, 6246, 18395, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PINEVIEW_HB, 
 	    20197, 6729, 6333, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PINEVIEW_IGD, 
@@ -9828,7 +9830,7 @@ static const char pci_words[] = { "."
 	    "RAID\0" /* 43 refs @ 6220 */
 	    "Controller\0" /* 840 refs @ 6225 */
 	    "7000/8000\0" /* 1 refs @ 6236 */
-	    "Series\0" /* 83 refs @ 6246 */
+	    "Series\0" /* 84 refs @ 6246 */
 	    "9000\0" /* 5 refs @ 6253 */
 	    "9550\0" /* 1 refs @ 6258 */
 	    "9650\0" /* 1 refs @ 6263 */
@@ -9875,7 +9877,7 @@ static const char pci_words[] = { "."
 	    "port\0" /* 9 refs @ 6558 */
 	    "PCI-1612\0" /* 1 refs @ 6563 */
 	    "PCI-1620\0" /* 2 refs @ 6572 */
-	    "8\0" /* 8 refs @ 6581 */
+	    "8\0" /* 9 refs @ 6581 */
 	    "(1-4)\0" /* 1 refs @ 6583 */
 	    "(5-8)\0" /* 1 refs @ 6589 */
 	    "M1445\0" /* 1 refs @ 6595 */
@@ -11524,7 +11526,7 @@ static const char pci_words[] = { "."
 	    "Thermal\0" /* 7 refs @ 18375 */
 	    "DMI-PCI\0" /* 1 refs @ 18383 */
 	    "MEI\0" /* 8 refs @ 18391 */
-	    "KT\0" /* 16 refs @ 18395 */
+	    "KT\0" /* 17 refs @ 18395 */
 	    "P67\0" /* 1 refs @ 18398 */
 	    "UM67\0" /* 1 refs @ 18402 */
 	    "HM65\0" /* 1 refs @ 18407 */
