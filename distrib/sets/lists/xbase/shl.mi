@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.49 2013/06/03 20:23:40 mrg Exp $
+# $NetBSD: shl.mi,v 1.50 2013/06/03 23:25:43 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -219,6 +219,9 @@
 ./usr/X11R7/lib/libXdamage.so			-unknown-		xorg
 ./usr/X11R7/lib/libXdamage.so.2			-unknown-		xorg
 ./usr/X11R7/lib/libXdamage.so.2.0		-unknown-		xorg
+./usr/X11R7/lib/libXdmGreet.so			-unknown-		xorg
+./usr/X11R7/lib/libXdmGreet.so.0		-unknown-		xorg
+./usr/X11R7/lib/libXdmGreet.so.0.0		-unknown-		xorg
 ./usr/X11R7/lib/libXdmcp.so			-unknown-		xorg
 ./usr/X11R7/lib/libXdmcp.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libXdmcp.so.7.0			-unknown-		xorg
