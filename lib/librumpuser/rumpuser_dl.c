@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.18 2013/04/29 18:00:20 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.19 2013/06/04 15:17:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.18 2013/04/29 18:00:20 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.19 2013/06/04 15:17:28 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -151,7 +151,7 @@ do {									\
  */
 #if defined(__linux__)
 #define adjptr(_map_, _ptr_) ((void *)(_ptr_))
-#elif defined(__sun__) || defined(__DragonFly__)
+#elif defined(__sun__) || defined(__DragonFly__) || defined(__FreeBSD__)
 #define adjptr(_map_, _ptr_) \
     (ismainobj ? (void *)(_ptr_) : (void *)(_map_->l_addr + (_ptr_)))
 #else
