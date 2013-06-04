@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.218 2013/02/02 07:00:40 kefren Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.219 2013/06/04 22:47:37 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.218 2013/02/02 07:00:40 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.219 2013/06/04 22:47:37 christos Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.218 2013/02/02 07:00:40 kefren Exp $
 #include <netinet/ip_private.h>
 #include <netinet/in_offload.h>
 #include <netinet/portalgo.h>
+#include <netinet/udp.h>
 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
@@ -137,9 +138,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.218 2013/02/02 07:00:40 kefren Exp $
 #include <netipsec/xform.h>
 #endif	/* FAST_IPSEC*/
 
-#ifdef IPSEC_NAT_T
-#include <netinet/udp.h>
-#endif
 
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static struct ifnet *ip_multicast_if(struct in_addr *, int *);
@@ -179,9 +177,7 @@ ip_output(struct mbuf *m0, ...)
 	struct ip_moptions *imo;
 	struct socket *so;
 	va_list ap;
-#ifdef IPSEC_NAT_T
 	int natt_frag = 0;
-#endif
 #ifdef FAST_IPSEC
 	struct inpcb *inp;
 	struct secpolicy *sp = NULL;
@@ -518,22 +514,20 @@ sendit:
 		 *    sp == NULL, error != 0	    discard packet, report error
 		 */
 		if (sp != NULL) {
-#ifdef IPSEC_NAT_T
 			/*
-			 * NAT-T ESP fragmentation: don't do IPSec processing now,
-			 * we'll do it on each fragmented packet.
+			 * NAT-T ESP fragmentation: don't do IPSec processing
+			 * now, we'll do it on each fragmented packet.
 			 */
-			if (sp->req->sav &&
-					((sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP) ||
-					 (sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP_NON_IKE))) {
-				if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
+			if (sp->req->sav && (sp->req->sav->natt_type &
+			    (UDP_ENCAP_ESPINUDP|UDP_ENCAP_ESPINUDP_NON_IKE))) {
+				if (ntohs(ip->ip_len) > sp->req->sav->esp_frag)
+				{
 					natt_frag = 1;
 					mtu = sp->req->sav->esp_frag;
 					splx(s);
 					goto spd_done;
 				}
 			}
-#endif /* IPSEC_NAT_T */
 
 			/*
 			 * Do delayed checksums now because we send before
@@ -711,19 +705,17 @@ spd_done:
 				ia->ia_ifa.ifa_data.ifad_outbytes +=
 				    ntohs(ip->ip_len);
 #endif
-#ifdef IPSEC_NAT_T
 			/*
-			 * If we get there, the packet has not been handeld by
+			 * If we get there, the packet has not been handled by
 			 * IPSec whereas it should have. Now that it has been
 			 * fragmented, re-inject it in ip_output so that IPsec
 			 * processing can occur.
 			 */
 			if (natt_frag) {
-				error = ip_output(m, opt,
-				    ro, flags | IP_RAWOUTPUT | IP_NOIPNEWID, imo, so, mtu_p);
-			} else
-#endif /* IPSEC_NAT_T */
-			{
+				error = ip_output(m, opt, ro,
+				    flags | IP_RAWOUTPUT | IP_NOIPNEWID,
+				    imo, so, mtu_p);
+			} else {
 				KASSERT((m->m_pkthdr.csum_flags &
 				    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
 				KERNEL_LOCK(1, NULL);
