@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.73 2013/05/29 22:26:39 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.74 2013/06/04 13:42:37 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -564,7 +564,8 @@ cgfourteenmmap(dev_t dev, off_t off, int prot)
 	} else if (off >= CG14_SXIO_VOFF &&
 		   off < (CG14_SXIO_VOFF + 0x03ffffff)) {
 		return (bus_space_mmap(sc->sc_sx->sc_tag, 0x800000000LL,
-			sc->sc_fb_paddr, prot, BUS_SPACE_MAP_LINEAR));
+			sc->sc_fb_paddr + (off - CG14_SXIO_VOFF),
+			prot, BUS_SPACE_MAP_LINEAR));
 #endif
 	} else
 		return -1;
