@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.375 2013/05/28 12:13:55 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.376 2013/06/04 14:39:31 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.375 $"
+#ident 		"GENERIC-$Revision: 1.376 $"
 
 maxusers	64		# estimated number of users
 
@@ -393,6 +393,7 @@ radeondrm*	at drm?		# ATI Radeon DRM driver
 savagedrm*	at drm?		# S3 Savage DRM driver
 sisdrm* 	at drm?		# SiS DRM driver
 tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
+viadrm*		at drm?		# VIA DRM driver
 
 # Cryptographic Devices
 
