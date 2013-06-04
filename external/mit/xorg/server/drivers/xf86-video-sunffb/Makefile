@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/02/14 13:32:13 abs Exp $
+#	$NetBSD: Makefile,v 1.4 2013/06/04 22:45:08 mrg Exp $
 
 DRIVER=		xf86-video-sunffb
 DRIVER_NAME=	sunffb_drv
@@ -17,6 +17,7 @@ COPTS= -mv8plus
 .endif
 
 CPPFLAGS+=	${X11FLAGS.DRI} -DUSE_VIS
+CPPFLAGS+=	-DHAVE_XAA_H
 
 MAN=		sunffb.4
 
