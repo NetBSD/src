@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1155 2013/06/03 16:20:53 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1156 2013/06/04 13:57:48 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3458,7 +3458,52 @@ product INTEL EG20T_SPI		0x8816	EG20T PCH SPI
 product INTEL EG20T_I2C		0x8817	EG20T PCH I2C Interface
 product INTEL EG20T_CAN		0x8818	EG20T PCH CAN Controller
 product INTEL EG20T_IEEE1588	0x8819	EG20T PCH IEEE1588
+product INTEL 8SER_DT_SATA	0x8c00	8 Series (desktop) SATA Controller
+product INTEL 8SER_MO_SATA	0x8c01	8 Series (mobile) SATA Controller
+product INTEL 8SER_DT_SATA_AHCI	0x8c02	8 Series (desktop) SATA Controller (AHCI)
+product INTEL 8SER_MO_SATA_AHCI	0x8c03	8 Series (mobile) SATA Controller (AHCI)
+product INTEL 8SER_DT_SATA_RAID 0x8c04	8 Series (desktop) SATA Controller (RAID)
+product INTEL 8SER_MO_SATA_RAID 0x8c05	8 Series (mobile) SATA Controller (RAID)
+product INTEL 8SER_DT_SATA_RAID_SR 0x8c06 8 Series (desktop) SATA Controller (RAID) + Smart Response
+product INTEL 8SER_MO_SATA_RAID_SR 0x8c07 8 Series (mobile) SATA Controller (RAID) + Smart Response
+product INTEL 8SER_DT_SATA_2	0x8c08	8 Series (desktop) SATA Controller
+product INTEL 8SER_MO_SATA_2	0x8c09	8 Series (mobile) SATA Controller
+product INTEL 8SER_DT_SATA_RAID1 0x8c0e	8 Series (desktop) SATA Controller (RAID1)
+product INTEL 8SER_MO_SATA_RAID1 0x8c0f	8 Series (mobile) SATA Controller (RAID1)
+product INTEL 8SERIES_PCIE_1	0x8c10	8 Series PCIE
+product INTEL 8SERIES_PCIE_2	0x8c12	8 Series PCIE
+product INTEL 8SERIES_PCIE_3	0x8c14	8 Series PCIE
+product INTEL 8SERIES_PCIE_4	0x8c16	8 Series PCIE
+product INTEL 8SERIES_PCIE_5	0x8c18	8 Series PCIE
+product INTEL 8SERIES_PCIE_6	0x8c1a	8 Series PCIE
+product INTEL 8SERIES_PCIE_7	0x8c1c	8 Series PCIE
+product INTEL 8SERIES_PCIE_8	0x8c1e	8 Series PCIE
+product INTEL 8SERIES_HDA	0x8c20	8 Series HD Audio
+product INTEL 8SERIES_SMB	0x8c22	8 Series SMBus Controller
+product INTEL 8SERIES_THERM	0x8c24	8 Series Thermal
+product INTEL 8SERIES_EHCI_1	0x8c26	8 Series USB EHCI
+product INTEL 8SERIES_EHCI_2	0x8c2d	8 Series USB EHCI
+product INTEL 8SERIES_XHCI	0x8c31	8 Series USB xHCI
+product INTEL 8SERIES_LAN	0x8c33	8 Series LAN
+product INTEL 8SERIES_MEI_1	0x8c3a	8 Series MEI Controller
+product INTEL 8SERIES_MEI_2	0x8c3b	8 Series MEI Controller
+product INTEL 8SERIES_IDE_R	0x8c3c	8 Series IDE-R
 product INTEL 8SERIES_KT	0x8c3d	8 Series KT
+product INTEL 8SERIES_M_LPC	0x8c41	8 Series Mobile Full Featured ES LPC
+product INTEL 8SERIES_D_LPC	0x8c42	8 Series Desktop Full Featured ES LPC
+product INTEL Z87_LPC		0x8c44	Z87 LPC
+product INTEL Z85_LPC		0x8c46	Z85 LPC
+product INTEL HM86_LPC		0x8c49	HM86 LPC
+product INTEL H87_LPC		0x8c4a	H87 LPC
+product INTEL HM87_LPC		0x8c4b	HM87 LPC
+product INTEL Q85_LPC		0x8c4c	Q85 LPC
+product INTEL Q87_LPC		0x8c4e	Q87 LPC
+product INTEL QM87_LPC		0x8c4f	QM87 LPC
+product INTEL B85_LPC		0x8c50	B85 LPC
+product INTEL C222_LPC		0x8c52	C222 LPC
+product INTEL C224_LPC		0x8c54	C224 LPC
+product INTEL C226_LPC		0x8c56	C226 LPC
+product INTEL H81_LPC		0x8c5c	H81 LPC
 product INTEL PINEVIEW_HB	0xa000	Pineview Host Bridge
 product INTEL PINEVIEW_IGD	0xa001	Pineview Integrated Graphics Device
 product INTEL PINEVIEW_M_HB	0xa010	Pineview Host Bridge
