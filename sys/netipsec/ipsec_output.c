@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.38 2012/01/10 20:01:57 drochner Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.39 2013/06/04 22:47:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.38 2012/01/10 20:01:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.39 2013/06/04 22:47:37 christos Exp $");
 
 /*
  * IPsec output processing.
@@ -72,9 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.38 2012/01/10 20:01:57 drochner E
 #ifdef INET6
 #include <netinet/icmp6.h>
 #endif
-#ifdef IPSEC_NAT_T
 #include <netinet/udp.h>
-#endif
 
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
@@ -172,12 +170,10 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 #ifdef INET6
 	struct ip6_hdr * ip6;
 #endif /* INET6 */
-#ifdef IPSEC_NAT_T
 	struct mbuf * mo;
 	struct udphdr *udp = NULL;
 	uint64_t * data = NULL;
 	int hlen, roff;
-#endif /* IPSEC_NAT_T */
 
 	IPSEC_SPLASSERT_SOFTNET("ipsec_process_done");
 
@@ -189,7 +185,6 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 
 	saidx = &sav->sah->saidx;
 
-#ifdef IPSEC_NAT_T
 	if(sav->natt_type != 0) {
 		ip = mtod(m, struct ip *);
 
@@ -222,7 +217,6 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 		udp->uh_sum = 0;
 		udp->uh_ulen = htons(m->m_pkthdr.len - (ip->ip_hl << 2));
 	}
-#endif /* IPSEC_NAT_T */
 	
 	switch (saidx->dst.sa.sa_family) {
 #ifdef INET
@@ -230,10 +224,8 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 		/* Fix the header length, for AH processing. */
 		ip = mtod(m, struct ip *);
 		ip->ip_len = htons(m->m_pkthdr.len);
-#ifdef IPSEC_NAT_T
 		if (sav->natt_type != 0)
 			ip->ip_p = IPPROTO_UDP;
-#endif /* IPSEC_NAT_T */
 		break;
 #endif /* INET */
 #ifdef INET6
@@ -250,10 +242,8 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
-#ifdef IPSEC_NAT_T
 		if (sav->natt_type != 0)
 			ip6->ip6_nxt = IPPROTO_UDP;
-#endif /* IPSEC_NAT_T */
 		break;
 #endif /* INET6 */
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.29 2012/01/25 20:31:23 drochner Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.30 2013/06/04 22:47:37 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.29 2012/01/25 20:31:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.30 2013/06/04 22:47:37 christos Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -243,11 +243,8 @@ ipcomp_input_cb(struct cryptop *crp)
 	int s, hlen = IPCOMP_HLENGTH, error, clen;
 	u_int8_t nproto;
 	void *addr;
-	u_int16_t dport = 0;
-	u_int16_t sport = 0;
-#ifdef IPSEC_NAT_T
-	struct m_tag * tag = NULL;
-#endif
+	u_int16_t dport;
+	u_int16_t sport;
 
 	crd = crp->crp_desc;
 
@@ -258,13 +255,8 @@ ipcomp_input_cb(struct cryptop *crp)
 	mtag = (struct mtag *) tc->tc_ptr;
 	m = (struct mbuf *) crp->crp_buf;
 
-#ifdef IPSEC_NAT_T
 	/* find the source port for NAT-T */
-	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL))) {
-		sport = ((u_int16_t *)(tag + 1))[0];
-		dport = ((u_int16_t *)(tag + 1))[1];
-	}
-#endif
+	nat_t_ports_get(m, &dport, &sport);
 
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
