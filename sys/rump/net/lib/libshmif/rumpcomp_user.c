@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.11 2013/05/07 16:18:48 pooka Exp $	*/
+/*      $NetBSD: rumpcomp_user.c,v 1.12 2013/06/04 14:54:34 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -137,6 +137,7 @@ rumpcomp_shmif_watchsetup(int *inotifyp, int fd)
 		goto out;
 	}
 	rv = 0;
+	*inotifyp = inotify;
 
  out:
 	return rumpuser_component_errtrans(rv);
