@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.74 2013/06/04 13:42:37 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.75 2013/06/04 22:31:30 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -228,7 +228,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	struct cgfourteen_softc *sc = device_private(self);
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
-	int node, ramsize;
+	int node;
 	volatile uint32_t *lut;
 	int i, isconsole, items;
 	uint32_t fbva[2] = {0, 0};
@@ -254,10 +254,8 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	fb->fb_type.fb_depth = 32;
 
 	fb_setsize_obp(fb, sc->sc_fb.fb_type.fb_depth, 1152, 900, node);
-	ramsize = roundup(fb->fb_type.fb_height * fb->fb_linebytes, NBPG);
 
 	fb->fb_type.fb_cmsize = CG14_CLUT_SIZE;
-	fb->fb_type.fb_size = ramsize + COLOUR_OFFSET;
 
 	if (sa->sa_nreg < 2) {
 		printf("%s: only %d register sets\n",
@@ -268,6 +266,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	      sa->sa_nreg * sizeof(struct sbus_reg));
 
 	sc->sc_vramsize = sc->sc_physadr[CG14_PXL_IDX].sbr_size;
+	fb->fb_type.fb_size = sc->sc_vramsize;
 
 	printf(": %d MB VRAM", (uint32_t)(sc->sc_vramsize >> 20));
 	/*
@@ -329,7 +328,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 		if (sbus_bus_map( sc->sc_bustag,
 		    sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
 		    sc->sc_physadr[CG14_PXL_IDX].sbr_offset,
-		    ramsize, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
+		    sc->sc_vramsize, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
 		    &bh) != 0) {
 			printf("%s: cannot map pixels\n", 
 				device_xname(sc->sc_dev));
