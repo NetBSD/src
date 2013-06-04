@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/01/20 10:18:32 martin Exp $
+#	$NetBSD: Makefile,v 1.3 2013/06/04 22:45:08 mrg Exp $
 
 DRIVER=		xf86-video-suncg6
 DRIVER_NAME=	suncg6_drv
@@ -6,6 +6,7 @@ DRIVER_NAME=	suncg6_drv
 SRCS=		cg6_driver.c cg6_cursor.c cg6_accel.c
 
 CPPFLAGS+=	${X11FLAGS.DRI}
+CPPFLAGS+=	-DHAVE_XAA_H
 
 MAN=		suncg6.4
 
