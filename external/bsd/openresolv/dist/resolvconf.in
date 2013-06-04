@@ -28,6 +28,10 @@ RESOLVCONF="$0"
 SYSCONFDIR=@SYSCONFDIR@
 LIBEXECDIR=@LIBEXECDIR@
 VARDIR=@VARDIR@
+
+# Disregard dhcpcd setting
+unset interface_order
+
 # Support original resolvconf configuration layout
 # as well as the openresolv config file
 if [ -f "$SYSCONFDIR"/resolvconf.conf ]; then
