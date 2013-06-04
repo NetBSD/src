@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1147 2013/06/03 16:21:17 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1148 2013/06/04 13:58:12 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1155 2013/06/03 16:20:53 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1156 2013/06/04 13:57:48 msaitoh Exp
  */
 
 /*
@@ -3465,7 +3465,52 @@
 #define	PCI_PRODUCT_INTEL_EG20T_I2C	0x8817		/* EG20T PCH I2C Interface */
 #define	PCI_PRODUCT_INTEL_EG20T_CAN	0x8818		/* EG20T PCH CAN Controller */
 #define	PCI_PRODUCT_INTEL_EG20T_IEEE1588	0x8819		/* EG20T PCH IEEE1588 */
+#define	PCI_PRODUCT_INTEL_8SER_DT_SATA	0x8c00		/* 8 Series (desktop) SATA Controller */
+#define	PCI_PRODUCT_INTEL_8SER_MO_SATA	0x8c01		/* 8 Series (mobile) SATA Controller */
+#define	PCI_PRODUCT_INTEL_8SER_DT_SATA_AHCI	0x8c02		/* 8 Series (desktop) SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_8SER_MO_SATA_AHCI	0x8c03		/* 8 Series (mobile) SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_8SER_DT_SATA_RAID	0x8c04		/* 8 Series (desktop) SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_8SER_MO_SATA_RAID	0x8c05		/* 8 Series (mobile) SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_8SER_DT_SATA_RAID_SR	0x8c06		/* 8 Series (desktop) SATA Controller (RAID) + Smart Response */
+#define	PCI_PRODUCT_INTEL_8SER_MO_SATA_RAID_SR	0x8c07		/* 8 Series (mobile) SATA Controller (RAID) + Smart Response */
+#define	PCI_PRODUCT_INTEL_8SER_DT_SATA_2	0x8c08		/* 8 Series (desktop) SATA Controller */
+#define	PCI_PRODUCT_INTEL_8SER_MO_SATA_2	0x8c09		/* 8 Series (mobile) SATA Controller */
+#define	PCI_PRODUCT_INTEL_8SER_DT_SATA_RAID1	0x8c0e		/* 8 Series (desktop) SATA Controller (RAID1) */
+#define	PCI_PRODUCT_INTEL_8SER_MO_SATA_RAID1	0x8c0f		/* 8 Series (mobile) SATA Controller (RAID1) */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_1	0x8c10		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_2	0x8c12		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_3	0x8c14		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_4	0x8c16		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_5	0x8c18		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_6	0x8c1a		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_7	0x8c1c		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_8	0x8c1e		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_HDA	0x8c20		/* 8 Series HD Audio */
+#define	PCI_PRODUCT_INTEL_8SERIES_SMB	0x8c22		/* 8 Series SMBus Controller */
+#define	PCI_PRODUCT_INTEL_8SERIES_THERM	0x8c24		/* 8 Series Thermal */
+#define	PCI_PRODUCT_INTEL_8SERIES_EHCI_1	0x8c26		/* 8 Series USB EHCI */
+#define	PCI_PRODUCT_INTEL_8SERIES_EHCI_2	0x8c2d		/* 8 Series USB EHCI */
+#define	PCI_PRODUCT_INTEL_8SERIES_XHCI	0x8c31		/* 8 Series USB xHCI */
+#define	PCI_PRODUCT_INTEL_8SERIES_LAN	0x8c33		/* 8 Series LAN */
+#define	PCI_PRODUCT_INTEL_8SERIES_MEI_1	0x8c3a		/* 8 Series MEI Controller */
+#define	PCI_PRODUCT_INTEL_8SERIES_MEI_2	0x8c3b		/* 8 Series MEI Controller */
+#define	PCI_PRODUCT_INTEL_8SERIES_IDE_R	0x8c3c		/* 8 Series IDE-R */
 #define	PCI_PRODUCT_INTEL_8SERIES_KT	0x8c3d		/* 8 Series KT */
+#define	PCI_PRODUCT_INTEL_8SERIES_M_LPC	0x8c41		/* 8 Series Mobile Full Featured ES LPC */
+#define	PCI_PRODUCT_INTEL_8SERIES_D_LPC	0x8c42		/* 8 Series Desktop Full Featured ES LPC */
+#define	PCI_PRODUCT_INTEL_Z87_LPC	0x8c44		/* Z87 LPC */
+#define	PCI_PRODUCT_INTEL_Z85_LPC	0x8c46		/* Z85 LPC */
+#define	PCI_PRODUCT_INTEL_HM86_LPC	0x8c49		/* HM86 LPC */
+#define	PCI_PRODUCT_INTEL_H87_LPC	0x8c4a		/* H87 LPC */
+#define	PCI_PRODUCT_INTEL_HM87_LPC	0x8c4b		/* HM87 LPC */
+#define	PCI_PRODUCT_INTEL_Q85_LPC	0x8c4c		/* Q85 LPC */
+#define	PCI_PRODUCT_INTEL_Q87_LPC	0x8c4e		/* Q87 LPC */
+#define	PCI_PRODUCT_INTEL_QM87_LPC	0x8c4f		/* QM87 LPC */
+#define	PCI_PRODUCT_INTEL_B85_LPC	0x8c50		/* B85 LPC */
+#define	PCI_PRODUCT_INTEL_C222_LPC	0x8c52		/* C222 LPC */
+#define	PCI_PRODUCT_INTEL_C224_LPC	0x8c54		/* C224 LPC */
+#define	PCI_PRODUCT_INTEL_C226_LPC	0x8c56		/* C226 LPC */
+#define	PCI_PRODUCT_INTEL_H81_LPC	0x8c5c		/* H81 LPC */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_HB	0xa000		/* Pineview Host Bridge */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGD	0xa001		/* Pineview Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_HB	0xa010		/* Pineview Host Bridge */
