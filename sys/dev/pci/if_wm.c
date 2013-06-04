@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.252 2013/06/03 18:47:52 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.253 2013/06/04 16:55:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.252 2013/06/03 18:47:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.253 2013/06/04 16:55:07 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4288,16 +4288,15 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_80003:
-	case WM_T_ICH8:
-	case WM_T_ICH9:
 		/* check EECD_EE_AUTORD */
 		wm_get_auto_rd_done(sc);
 		break;
+	case WM_T_ICH8:
+	case WM_T_ICH9:
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
 	case WM_T_PCH_LPT:
-		wm_lan_init_done(sc);
 		break;
 	default:
 		panic("%s: unknown type\n", __func__);
@@ -5037,13 +5036,15 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_PCH:
 	case WM_T_PCH2:
 	case WM_T_PCH_LPT:
-		if (sc->sc_type >= WM_T_PCH) {
-			reg = CSR_READ(sc, WMREG_STATUS);
-			if ((reg & STATUS_PHYRA) != 0)
-				CSR_WRITE(sc, WMREG_STATUS,
-				    reg & ~STATUS_PHYRA);
-		}
 		delay(10*1000);
+		if (sc->sc_type >= WM_T_ICH10)
+			wm_lan_init_done(sc);
+		else
+			wm_get_auto_rd_done(sc);
+
+		reg = CSR_READ(sc, WMREG_STATUS);
+		if ((reg & STATUS_PHYRA) != 0)
+			CSR_WRITE(sc, WMREG_STATUS, reg & ~STATUS_PHYRA);
 		break;
 	default:
 		panic("%s: %s: unknown type\n", device_xname(sc->sc_dev),
