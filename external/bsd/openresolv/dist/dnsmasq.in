@@ -47,23 +47,17 @@ newresolv="$newconf"
 # Check for DBus support in the binary
 dbus=false
 dbus_ex=false
-: ${dbus_pid:=/var/run/dbus/dbus.pid}
-[ -s "$dbus_pid" ] || dbus_pid=/var/run/dbus.pid
-[ -s "$dbus_pid" ] || dbus_pid=/var/run/dbus/pid
-if [ -s "$dbus_pid" -a -s "$dnsmasq_pid" ]; then
-	if dnsmasq --version 2>/dev/null | \
-		grep -q "^Compile time options.*[[:space:]]DBus[[:space:]]"
+dbus_introspect=$(dbus-send --print-reply --system \
+	--dest=uk.org.thekelleys.dnsmasq \
+	/uk/org/thekelleys/dnsmasq \
+	org.freedesktop.DBus.Introspectable.Introspect \
+	2>/dev/null)
+if [ $? = 0 ]; then
+	dbus=true
+	if printf %s "$dbus_introspect" | \
+	    grep -q '<method name="SetDomainServers">'
 	then
-		# Sanity - check that dnsmasq and dbus are running
-		if kill -0 $(cat "$dbus_pid") 2>/dev/null && \
-			kill -0 $(cat "$dnsmasq_pid") 2>/dev/null
-		then
-			dbus=true
-			if dbus-send --print-reply --system --dest=uk.org.thekelleys.dnsmasq /uk/org/thekelleys/dnsmasq org.freedesktop.DBus.Introspectable.Introspect | grep -q '<method name="SetDomainServers">'
-			then
-				dbus_ex=true
-			fi
-		fi
+		dbus_ex=true
 	fi
 fi
 
@@ -151,7 +145,7 @@ done
 
 if $dbus; then
 	newconf="$newconf$NL# Domain specific servers will"
-	newconf="$newconf be sent over dbus${NL}enable-dbus$NL"
+	newconf="$newconf be sent over dbus${NL}"
 else
 	newconf="$newconf$conf"
 fi
