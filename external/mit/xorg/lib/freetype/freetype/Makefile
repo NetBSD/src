@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2011/07/25 18:23:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2013/06/05 08:42:56 mrg Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	config internal
+SUBDIR=	config
 
 .PATH:	${X11SRCDIR.freetype}/include/freetype
 
@@ -14,7 +14,8 @@ INCS=	freetype.h ftadvanc.h ftbbox.h ftbdf.h ftbitmap.h ftbzip2.h ftcache.h \
 	ftlzw.h ftmac.h ftmm.h ftmodapi.h ftmoderr.h ftotval.h ftoutln.h \
 	ftpfr.h ftrender.h ftsizes.h ftsnames.h ftstroke.h ftsynth.h \
 	ftsystem.h fttrigon.h fttypes.h ftwinfnt.h ftxf86.h \
-	t1tables.h ttnameid.h tttables.h tttags.h ttunpat.h
+	t1tables.h ttnameid.h tttables.h tttags.h ttunpat.h \
+	ftautoh.h ftcffdrv.h
 
 SCRIPTS=	freetype-config
 
