@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.189 2013/06/05 00:48:32 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.190 2013/06/05 19:01:26 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.189 2013/06/05 00:48:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.190 2013/06/05 19:01:26 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -118,7 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.189 2013/06/05 00:48:32 christos Ex
 #include <net/if_faith.h>
 #endif
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
 #include <netipsec/ipsec_private.h>
@@ -126,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.189 2013/06/05 00:48:32 christos Ex
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
-#endif	/* FAST_IPSEC */
+#endif	/* IPSEC */
 
 #ifdef COMPAT_50
 #include <compat/sys/socket.h>
@@ -148,7 +148,7 @@ struct	inpcbtable udbtable;
 percpu_t *udpstat_percpu;
 
 #ifdef INET
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 static int udp4_espinudp (struct mbuf **, int, struct sockaddr *,
 	struct socket *);
 #endif
@@ -634,7 +634,7 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 		return;
 	}
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec4_in_reject_so(m, so)) {
 		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
@@ -684,7 +684,7 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 		return;
 	in6p = sotoin6pcb(so);
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec6_in_reject_so(m, so)) {
 		IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
@@ -812,7 +812,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 				return rcvcnt;
 		}
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 		/* Handle ESP over UDP */
 		if (inp->inp_flags & INP_ESPINUDP_ALL) {
 			struct sockaddr *sa = (struct sockaddr *)src;
@@ -1443,7 +1443,7 @@ udp_statinc(u_int stat)
 	UDP_STATINC(stat);
 }
 
-#if defined(INET) && defined(FAST_IPSEC)
+#if defined(INET) && defined(IPSEC)
 /*
  * Returns:
  * 1 if the packet was processed
@@ -1567,7 +1567,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	((u_int16_t *)(tag + 1))[1] = dport;
 	m_tag_prepend(m, tag);
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	ipsec4_common_input(m, iphdrlen, IPPROTO_ESP);
 #else
 	esp4_input(m, iphdrlen);
