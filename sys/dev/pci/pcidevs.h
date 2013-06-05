@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1148 2013/06/04 13:58:12 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1149 2013/06/05 05:19:11 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1156 2013/06/04 13:57:48 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1157 2013/06/05 05:18:44 msaitoh Exp
  */
 
 /*
@@ -2539,6 +2539,7 @@
 #define	PCI_PRODUCT_INTEL_SRCZCRX	0x0407		/* RAID Controller */
 #define	PCI_PRODUCT_INTEL_SRCU42E	0x0408		/* SCSI RAID Controller */
 #define	PCI_PRODUCT_INTEL_SRCS28X	0x0409		/* SATA RAID Controller */
+#define	PCI_PRODUCT_INTEL_HASWELL_IGD	0x0402		/* Haswell Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB/SB PCI-EISA Bridge */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache and DRAM Controller */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378ZB System I/O */
@@ -2550,6 +2551,11 @@
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_2230_2	0x0888		/* Centrino Wireless-N 2230 */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
+#define	PCI_PRODUCT_INTEL_HASWELL_HOST_DRAM	0x0c00		/* Haswell Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_HASWELL_PCIE16	0x0c01		/* Haswell PCI-E x16 Controller */
+#define	PCI_PRODUCT_INTEL_HASWELL_PCIE8	0x0c05		/* Haswell PCI-E x8 Controller */
+#define	PCI_PRODUCT_INTEL_HASWELL_PCIE4	0x0c09		/* Haswell PCI-E x4 Controller */
+#define	PCI_PRODUCT_INTEL_HASWELL_MINI_HDA	0x0c0c		/* Haswell Mini HD Audio Controller */
 #define	PCI_PRODUCT_INTEL_82542	0x1000		/* i82542 Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82543GC_FIBER	0x1001		/* i82453GC 1000baseX Ethernet */
 #define	PCI_PRODUCT_INTEL_MODEM56	0x1002		/* 56k Modem */
