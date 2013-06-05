@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.245 2013/06/01 08:25:17 mrg Exp $
+$NetBSD: UPDATING,v 1.246 2013/06/05 21:59:59 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20130605:
+	Previous freetype installations eroneously installed private
+	header files. If you are building against a non-empty $DESTDIR,
+	please remove ${DESTDIR}//usr/X11R7/include/freetype2/freetype/.
 
 20130531:
 	The xdm update may cause build failure due to xdm.man being
