@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.135 2013/05/25 21:17:51 jdf Exp $
+$NetBSD: acronyms.comp,v 1.136 2013/06/05 20:52:07 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -854,6 +854,7 @@ PDP	page descriptor page
 PDS	product data sheet
 PDU	protocol data unit
 PE	protection enable
+PEBCAK	problem exists between chair and keyboard
 PECI	platform environment control interface
 PEP	protocol extension protocol
 PER	packed encoding rules
@@ -865,6 +866,7 @@ PHB	PCI host bridge
 PHP	PHP: Hypertext Preprocessor
 PIC	position independent code
 PIC	programmable interrupt controller
+PICNIC	problem in chair, not in computer
 PID	process id
 PIE	position independent executable
 PIM	personal information manager
