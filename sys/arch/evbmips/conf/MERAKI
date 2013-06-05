@@ -1,10 +1,10 @@
-#	$NetBSD: MERAKI,v 1.22 2013/04/27 21:43:23 christos Exp $
+#	$NetBSD: MERAKI,v 1.23 2013/06/05 23:08:01 christos Exp $
 
 include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MERAKI-$Revision: 1.22 $"
+#ident 		"MERAKI-$Revision: 1.23 $"
 
 maxusers	32
 
@@ -96,13 +96,9 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# Xerox NS networking
-#options 	NSIP		# Xerox NS tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

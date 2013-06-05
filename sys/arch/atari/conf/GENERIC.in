@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.103 2013/04/27 21:43:18 christos Exp $
+#	$NetBSD: GENERIC.in,v 1.104 2013/06/05 23:08:00 christos Exp $
 #
 # Generic atari
 #
@@ -66,7 +66,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #if !defined(SMALL030_KERNEL)
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding
 #options 	MROUTING	# IP multicast routing

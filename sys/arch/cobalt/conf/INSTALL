@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.53 2013/04/27 22:21:13 christos Exp $
+# $NetBSD: INSTALL,v 1.54 2013/06/05 23:08:00 christos Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.53 $"
+#ident 		"INSTALL-$Revision: 1.54 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -95,7 +95,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast

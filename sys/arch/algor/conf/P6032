@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.69 2013/04/27 22:21:12 christos Exp $
+#	$NetBSD: P6032,v 1.70 2013/06/05 23:07:59 christos Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.69 $"
+#ident 		"P6032-$Revision: 1.70 $"
 
 maxusers 32
 
@@ -49,7 +49,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
-options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.

@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.40 2013/04/27 21:43:16 christos Exp $
+# $NetBSD: NULL,v 1.41 2013/06/05 23:08:00 christos Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.40 $"
+#ident          "GENERIC-$Revision: 1.41 $"
 
 maxusers	8
 
@@ -122,7 +122,6 @@ file-system	TMPFS		# Efficient memory file-system
 options 	INET		# IP networking support (Required)
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets

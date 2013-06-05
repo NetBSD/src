@@ -1,4 +1,4 @@
-#	$NetBSD: MV2120,v 1.16 2013/04/27 22:21:14 christos Exp $
+#	$NetBSD: MV2120,v 1.17 2013/06/05 23:08:00 christos Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
@@ -77,7 +77,6 @@ options UDP_CSUM_COUNTERS
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

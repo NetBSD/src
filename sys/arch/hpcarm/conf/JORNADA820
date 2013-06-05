@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA820,v 1.32 2013/04/27 21:43:26 christos Exp $
+#	$NetBSD: JORNADA820,v 1.33 2013/06/05 23:08:01 christos Exp $
 #
 #	JORNADA -- Windows-CE based jornada 820
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.32 $"
+#ident 		"GENERIC-$Revision: 1.33 $"
 
 # estimated number of users
 maxusers	32
@@ -58,7 +58,6 @@ options 	WAPBL		# File system journaling support
 #options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

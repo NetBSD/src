@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.19 2013/04/27 21:43:23 christos Exp $
+# $NetBSD: LOONGSON,v 1.20 2013/06/05 23:08:01 christos Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.19 $"
+#ident 		"LOONGSON-$Revision: 1.20 $"
 
 maxusers	16
 
@@ -102,7 +102,6 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast

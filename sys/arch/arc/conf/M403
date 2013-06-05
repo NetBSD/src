@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.59 2013/04/27 22:21:13 christos Exp $
+#	$NetBSD: M403,v 1.60 2013/06/05 23:08:00 christos Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -90,7 +90,6 @@ options 	NFSSERVER	# Network File System server
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.12 2013/04/27 21:43:31 christos Exp $
+# $NetBSD: INSTALL,v 1.13 2013/06/05 23:08:01 christos Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -90,7 +90,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP protocol stack support
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing

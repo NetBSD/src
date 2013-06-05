@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.149 2013/04/27 21:43:38 christos Exp $
+# $NetBSD: GENERIC,v 1.150 2013/06/05 23:08:02 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.149 $"
+#ident 		"GENERIC-$Revision: 1.150 $"
 
 maxusers	32
 
@@ -126,7 +126,6 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

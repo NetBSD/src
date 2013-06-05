@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8536DS,v 1.17 2013/03/02 02:42:13 christos Exp $
+#	$NetBSD: MPC8536DS,v 1.18 2013/06/05 23:08:01 christos Exp $
 #
 #	MPC8536DS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8536DS-$Revision: 1.17 $"
+ident 		"MPC8536DS-$Revision: 1.18 $"
 
 maxusers	32
 
@@ -106,7 +106,6 @@ options 	TCP_CSUM_COUNTERS
 options 	UDP_CSUM_COUNTERS
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
