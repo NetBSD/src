@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.194 2013/04/12 16:59:40 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.195 2013/06/05 14:37:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2013/04/12 16:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.195 2013/06/05 14:37:04 christos Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -290,10 +290,6 @@ void (*delay_func)(unsigned int) = xen_delay;
 void (*initclock_func)(void) = xen_initclocks;
 #endif
 
-
-#ifdef MTRR
-struct mtrr_funcs *mtrr_funcs;
-#endif
 
 /*
  * Size of memory segments, before any memory is stolen.
