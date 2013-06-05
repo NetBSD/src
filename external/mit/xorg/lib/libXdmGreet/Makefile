@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/06/03 23:25:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/06/05 00:01:16 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,14 +11,21 @@ SRCS=	\
 	verify.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xdm}/include -DRETSIGTYPE=void
+CPPFLAGS+=	-DGREET_LIB
 
-.if 0
-CPPFLAGS+=	${X11FLAGS.THREADLIB} \
-		-DHAVE_XEXTPROTO_71 \
-		-DXSERVER_LIBPCIACCESS \
-		-DTRUE=1 -DFALSE=0 \
-		-I${DESTDIR}${X11INCDIR}/xorg 
-.endif
+LIBDPLIBS=\
+	Xext	${.CURDIR}/../libXext \
+	Xt	${.CURDIR}/../libXt \
+	Xdmcp	${.CURDIR}/../libXdmcp \
+	Xinerama	${.CURDIR}/../libXinerama \
+	Xft	${.CURDIR}/../libXft \
+	Xpm	${.CURDIR}/../libXpm \
+	X11	${.CURDIR}/../libX11/dynamic \
+	pam	${.CURDIR}/../../../../../lib/libpam/libpam \
+	crypt	${.CURDIR}/../../../../../lib/libcrypt \
+	util	${.CURDIR}/../../../../../lib/libutil
+
+.include "../../bin/xdm/Makefile.xdm"
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
