@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.140 2013/06/05 07:36:22 mrg Exp $
+#	 $NetBSD: mi,v 1.141 2013/06/05 09:06:21 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5661,12 +5661,14 @@
 ./usr/X11R7/include/freetype2/freetype/config/ftstdlib.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/freetype.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftadvanc.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftautoh.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbbox.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbdf.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbitmap.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbzip2.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcache.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftchapters.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftcffdrv.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcid.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrdef.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrors.h	-unknown-	xorg
@@ -5696,35 +5698,35 @@
 ./usr/X11R7/include/freetype2/freetype/fttypes.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftwinfnt.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftxf86.h		-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/autohint.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftcalc.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftdebug.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftdriver.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftgloadr.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftmemory.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftobjs.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftrfork.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftserv.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftstream.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/fttrace.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/internal.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/internal/autohint.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftcalc.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftdebug.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftdriver.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftgloadr.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftmemory.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftobjs.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftrfork.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftserv.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftstream.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/fttrace.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/internal.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/internal/pcftypes.h	-unknown-	obsolete
-./usr/X11R7/include/freetype2/freetype/internal/psaux.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/pshints.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svbdf.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svgldict.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svmm.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svpfr.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svpostnm.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svpscmap.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svpsinfo.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svsfnt.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svttcmap.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svwinfnt.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svxf86nm.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/sfnt.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/t1types.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/tttypes.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/internal/psaux.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/pshints.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svbdf.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svgldict.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svmm.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svpfr.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svpostnm.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svpscmap.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svpsinfo.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svsfnt.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svttcmap.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svwinfnt.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svxf86nm.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/sfnt.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/t1types.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/tttypes.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/t1tables.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ttnameid.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/tttables.h	-unknown-	xorg
