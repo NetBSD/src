@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.13 2013/04/27 22:21:14 christos Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.14 2013/06/05 23:12:37 christos Exp $
 #
 #  OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -74,7 +74,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 options 	IPSEC		# IP security
-options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
