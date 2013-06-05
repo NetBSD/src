@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.129 2013/06/03 23:02:43 christos Exp $
+# $NetBSD: HACKS,v 1.130 2013/06/05 13:54:26 joerg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -790,3 +790,14 @@ port	x68k
 		workaround for:
 		internal compiler error: in cselib_record_set, at cselib.c:1999
 	kcah
+
+hack	fallback to /usr/bin/clang-cpp in rpcgen
+cdate	Wed Jun  5 15:49:27 CEST 2013
+who	joerg
+file	src/usr.bin/rpcgen/rpc_main.c
+descr
+	It is undecided which compiler owns /usr/bin/cpp whether it should
+	exist in a MKGCC=no world. To allow rpcgen to work out-of-the-box,
+	if either gcc or clang is installed, use /usr/bin/clang-cpp as fallback.
+	This applies only if RPCGEN_CPP is not set and /usr/bin/cpp is not executable.
+kcah
