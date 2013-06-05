@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.138 2013/06/03 23:25:43 mrg Exp $
+#	 $NetBSD: mi,v 1.139 2013/06/05 07:29:45 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5973,6 +5973,7 @@
 ./usr/X11R7/include/xorg/xkbrules.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xkbsrv.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xkbstr.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xorg-mouse.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xorg-server.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xorgVersion.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xserver-properties.h		-unknown-	xorg
@@ -6368,6 +6369,7 @@
 ./usr/X11R7/lib/pkgconfig/xkeyboard-config.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xmu.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xmuu.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xorg-mouse.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xorg-server.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xp.pc				-obsolete-	obsolete
 ./usr/X11R7/lib/pkgconfig/xpm.pc			-unknown-	xorg
