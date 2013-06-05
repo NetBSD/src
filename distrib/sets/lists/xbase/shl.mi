@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.50 2013/06/03 23:25:43 mrg Exp $
+# $NetBSD: shl.mi,v 1.51 2013/06/05 00:52:22 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -245,7 +245,7 @@
 ./usr/X11R7/lib/libXft.so.3.0			-unknown-		xorg
 ./usr/X11R7/lib/libXi.so			-unknown-		xorg
 ./usr/X11R7/lib/libXi.so.7			-unknown-		xorg
-./usr/X11R7/lib/libXi.so.7.0			-unknown-		xorg
+./usr/X11R7/lib/libXi.so.7.1			-unknown-		xorg
 ./usr/X11R7/lib/libXinerama.so			-unknown-		xorg
 ./usr/X11R7/lib/libXinerama.so.2		-unknown-		xorg
 ./usr/X11R7/lib/libXinerama.so.2.0		-unknown-		xorg
