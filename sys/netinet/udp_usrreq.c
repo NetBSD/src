@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.188 2013/06/04 22:47:37 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.189 2013/06/05 00:48:32 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.188 2013/06/04 22:47:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.189 2013/06/05 00:48:32 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -148,8 +148,10 @@ struct	inpcbtable udbtable;
 percpu_t *udpstat_percpu;
 
 #ifdef INET
+#ifdef FAST_IPSEC
 static int udp4_espinudp (struct mbuf **, int, struct sockaddr *,
 	struct socket *);
+#endif
 static void udp4_sendup (struct mbuf *, int, struct sockaddr *,
 	struct socket *);
 static int udp4_realinput (struct sockaddr_in *, struct sockaddr_in *,
@@ -810,6 +812,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 				return rcvcnt;
 		}
 
+#ifdef FAST_IPSEC
 		/* Handle ESP over UDP */
 		if (inp->inp_flags & INP_ESPINUDP_ALL) {
 			struct sockaddr *sa = (struct sockaddr *)src;
@@ -835,6 +838,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 				break;
 			}
 		}
+#endif
 
 		/*
 		 * Check the minimum TTL for socket.
@@ -1439,7 +1443,7 @@ udp_statinc(u_int stat)
 	UDP_STATINC(stat);
 }
 
-#if defined(INET)
+#if defined(INET) && defined(FAST_IPSEC)
 /*
  * Returns:
  * 1 if the packet was processed
