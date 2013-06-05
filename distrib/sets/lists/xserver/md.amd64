@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.68 2013/06/05 01:18:35 mrg Exp $
+# $NetBSD: md.amd64,v 1.69 2013/06/05 06:27:51 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -478,9 +478,9 @@
 ./usr/X11R7/lib/modules/drivers/vmmouse_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vmmouse_drv.so.13	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vmware_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vmware_drv.so.11	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so.11	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmware_drv.so.13	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so	-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so.11	-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/ws_drv.so		-unknown-	xorg
