@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.303 2012/11/29 02:07:20 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.304 2013/06/05 19:01:26 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.303 2012/11/29 02:07:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.304 2013/06/05 19:01:26 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -141,10 +141,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.303 2012/11/29 02:07:20 christos Exp 
 #endif
 #include <netinet/portalgo.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
-#endif	/* FAST_IPSEC*/
+#endif	/* IPSEC*/
 
 #ifndef	IPFORWARDING
 #ifdef GATEWAY
@@ -405,12 +405,12 @@ ip_input(struct mbuf *m)
 	int downmatch;
 	int checkif;
 	int srcrt = 0;
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct secpolicy *sp;
 	int error, s;
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 	MCLAIM(m, &ip_rx_mowner);
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
@@ -550,7 +550,7 @@ ip_input(struct mbuf *m)
 	 * let ipfilter look at packet on the wire,
 	 * not the decapsulated packet.
 	 */
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	if (!ipsec_indone(m))
 #else
 	if (1)
@@ -732,7 +732,7 @@ ip_input(struct mbuf *m)
 			IP_STATINC(IP_STAT_CANTFORWARD);
 			return;
 		}
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
 		s = splsoftnet();
 		if (mtag != NULL) {
@@ -779,7 +779,7 @@ ip_input(struct mbuf *m)
 			}
 			splx(s);
 		}
-#endif	/* FAST_IPSEC */
+#endif	/* IPSEC */
 
 		ip_forward(m, srcrt);
 	}
@@ -809,7 +809,7 @@ ours:
 		hlen = ip->ip_hl << 2;
 	}
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	/*
 	 * enforce IPsec policy checking if we are seeing last header.
 	 * note that we do not visit this with protocols with pcb layer
@@ -846,7 +846,7 @@ DPRINTF(("ip_input: no SP, packet discarded\n"));/*XXX*/
 		if (error)
 			goto bad;
 	}
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 	/*
 	 * Switch out to protocol's input routine.
@@ -1423,7 +1423,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		if ((rt = rtcache_validate(&ipforward_rt)) != NULL)
 			destmtu = rt->rt_ifp->if_mtu;
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 		{
 			/*
 			 * If the packet is routed over IPsec tunnel, tell the
@@ -1468,7 +1468,7 @@ ip_forward(struct mbuf *m, int srcrt)
 				KEY_FREESP(&sp);
 			}
 		}
-#endif /*defined(FAST_IPSEC)*/
+#endif /*defined(IPSEC)*/
 		IP_STATINC(IP_STAT_CANTFRAG);
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.110 2012/03/22 20:34:41 drochner Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.111 2013/06/05 19:01:26 christos Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.110 2012/03/22 20:34:41 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.111 2013/06/05 19:01:26 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.110 2012/03/22 20:34:41 drochner Exp $
 #include <netinet6/scope6_var.h>
 #include <netinet6/raw_ip6.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
 #include <netipsec/ipsec_private.h>
@@ -201,12 +201,12 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		if (last) {
 			struct	mbuf *n;
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 			/*
 			 * Check AH/ESP integrity
 			 */
 			if (!ipsec6_in_reject(m,last)) 
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
 					ip6_savecontrol(last, &opts, ip6, n);
@@ -226,7 +226,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		}
 		last = in6p;
 	}
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	if (last && ipsec6_in_reject(m, last)) {
 		m_freem(m);
 		/*
@@ -239,7 +239,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 			IP6_STATDEC(IP6_STAT_DELIVERED);
 			/* do not inject data into pcb */
 		} else
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 	if (last) {
 		if (last->in6p_flags & IN6P_CONTROLOPTS)
 			ip6_savecontrol(last, &opts, ip6, m);
