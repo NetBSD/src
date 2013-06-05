@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.40 2013/04/27 22:21:12 christos Exp $
+# $NetBSD: INSTALL,v 1.41 2013/06/05 23:07:59 christos Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -63,7 +63,6 @@ options 	EXEC_SCRIPT
 options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

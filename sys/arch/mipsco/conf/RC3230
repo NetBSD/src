@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.44 2013/04/27 21:43:33 christos Exp $
+# 	$NetBSD: RC3230,v 1.45 2013/06/05 23:08:01 christos Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -74,7 +74,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocols
 options 	INET6		# Internet protocols
 options 	IPSEC		# Internet protocols
-options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast

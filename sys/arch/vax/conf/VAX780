@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.14 2013/04/27 21:43:43 christos Exp $
+# $NetBSD: VAX780,v 1.15 2013/06/05 23:08:03 christos Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -51,12 +51,9 @@ options 	KTRACE
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

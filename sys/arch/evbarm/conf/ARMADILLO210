@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.27 2013/03/02 02:42:12 christos Exp $
+#	$NetBSD: ARMADILLO210,v 1.28 2013/06/05 23:08:00 christos Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -54,7 +54,6 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options	PIM		# Protocol Independent Multicast

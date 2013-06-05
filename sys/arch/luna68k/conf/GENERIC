@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.106 2013/05/10 16:30:50 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.107 2013/06/05 23:08:01 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.106 $"
+#ident 		"GENERIC-$Revision: 1.107 $"
 
 maxusers	8
 
@@ -104,7 +104,6 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP protocol stack support
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing
