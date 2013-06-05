@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.139 2013/06/05 07:29:45 mrg Exp $
+#	 $NetBSD: mi,v 1.140 2013/06/05 07:36:22 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5932,6 +5932,7 @@
 ./usr/X11R7/include/xorg/xaarop.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf1bpp.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf4bpp.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/xf86-mouse-properties.h	-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Crtc.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Cursor.h			-unknown-	xorg
@@ -5973,7 +5974,6 @@
 ./usr/X11R7/include/xorg/xkbrules.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xkbsrv.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xkbstr.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xorg-mouse.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xorg-server.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xorgVersion.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xserver-properties.h		-unknown-	xorg
