@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.86 2013/01/16 16:01:09 christos Exp $
+# $NetBSD: md.i386,v 1.87 2013/06/05 01:18:35 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -516,7 +516,7 @@
 ./usr/X11R7/lib/modules/drivers/via_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/via_drv.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/vmmouse_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vmmouse_drv.so.12	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmmouse_drv.so.13	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vmware_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vmware_drv.so.11	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so	-unknown-	xorg
