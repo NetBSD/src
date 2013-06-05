@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.107 2013/06/03 07:39:07 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.108 2013/06/05 23:14:13 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -229,7 +229,8 @@ pkgconfig-install:
 realall:	${_PKGCONFIG_FILES:O:u}
 realinstall:	pkgconfig-install
 
-.for _pkg in ${PKGCONFIG:O:u}
+.for _pkg in ${PKGCONFIG:O:u}	# {
+
 PKGDIST.${_pkg}?=	${X11SRCDIR.${PKGDIST:U${_pkg}}}
 _PKGDEST.${_pkg}=	${DESTDIR}${X11USRLIBDIR}/pkgconfig/${_pkg}.pc
 
@@ -241,7 +242,14 @@ FILESMODE_${_pkg}.pc=	${NONBINMODE}
 
 ${_PKGDEST.${_pkg}}: ${_pkg}.pc __fileinstall
 pkgconfig-install: ${_PKGDEST.${_pkg}}
-.endfor
+
+# Add a dependancy on the configure file if it exists; this way we
+# will rebuild the .pc file if the version in configure changes.
+.if exists(${PKGDIST.${_pkg}}/configure)
+${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
+.endif
+
+.endfor				# }
 
 # XXX
 # The sed script is very, very ugly.  What we actually need is a
