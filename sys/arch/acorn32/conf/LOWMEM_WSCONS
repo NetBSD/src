@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.62 2013/04/27 18:19:21 christos Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.63 2013/06/05 23:07:59 christos Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -60,7 +60,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

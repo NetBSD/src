@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.97 2013/04/27 22:21:16 christos Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.98 2013/06/05 23:08:03 christos Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.97 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.98 $"
 
 maxusers	32
 
@@ -128,7 +128,6 @@ options 	NFSSERVER	# Network File System server
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

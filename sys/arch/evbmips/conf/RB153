@@ -1,10 +1,10 @@
-#	$NetBSD: RB153,v 1.12 2013/03/02 02:42:13 christos Exp $
+#	$NetBSD: RB153,v 1.13 2013/06/05 23:08:01 christos Exp $
 #
 # Example kernel config for the RouterBOARD 153.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"RB153-$Revision: 1.12 $"
+#ident 		"RB153-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -71,9 +71,6 @@ options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
-#options 	NS		# Xerox NS networking
-#options 	NSIP		# Xerox NS tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

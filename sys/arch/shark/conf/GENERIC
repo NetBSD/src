@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.109 2013/04/27 22:21:16 christos Exp $
+#	$NetBSD: GENERIC,v 1.110 2013/06/05 23:08:03 christos Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.109 $"
+#ident		"GENERIC-$Revision: 1.110 $"
 
 # estimated number of users
 maxusers	32
@@ -72,7 +72,6 @@ options 	NFSSERVER
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

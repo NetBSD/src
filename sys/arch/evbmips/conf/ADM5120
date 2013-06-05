@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120,v 1.15 2013/04/27 22:21:14 christos Exp $
+#	$NetBSD: ADM5120,v 1.16 2013/06/05 23:08:01 christos Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.15 $"
+#ident 		"GENERIC-$Revision: 1.16 $"
 
 maxusers	32
 
@@ -86,9 +86,6 @@ options 	INET		# Internet protocols
 #options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
-#options 	NS		# Xerox NS networking
-#options 	NSIP		# Xerox NS tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
