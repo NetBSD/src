@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/05/31 22:49:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2013/06/05 00:01:16 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -44,7 +44,6 @@ TARGETS+=	configinstall
 .include "Makefile.xdm"
 
 CPPFLAGS.resource.c+=	-DDEF_CHOOSER=\"${XDMCHOOSERPATH}\"
-CPPFLAGS+=		-I${DESTDIR}${X11INCDIR}/freetype2
 
 X11MANCPP=	yes
 X11EXTRAMANDEFS+=	-DARC4_RANDOM \
