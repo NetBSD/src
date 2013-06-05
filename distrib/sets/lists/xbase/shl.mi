@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.51 2013/06/05 00:52:22 mrg Exp $
+# $NetBSD: shl.mi,v 1.52 2013/06/05 09:06:21 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -320,7 +320,7 @@
 ./usr/X11R7/lib/libfontenc.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libfreetype.so			-unknown-		xorg
 ./usr/X11R7/lib/libfreetype.so.7		-unknown-		xorg
-./usr/X11R7/lib/libfreetype.so.7.3		-unknown-		xorg
+./usr/X11R7/lib/libfreetype.so.7.4		-unknown-		xorg
 ./usr/X11R7/lib/libglut.so			-unknown-		xorg
 ./usr/X11R7/lib/libglut.so.4			-unknown-		xorg
 ./usr/X11R7/lib/libglut.so.4.0			-unknown-		xorg
@@ -332,7 +332,7 @@
 ./usr/X11R7/lib/libpciaccess.so.0.3		-unknown-		xorg
 ./usr/X11R7/lib/libpixman-1.so			-unknown-		xorg
 ./usr/X11R7/lib/libpixman-1.so.2		-unknown-		xorg
-./usr/X11R7/lib/libpixman-1.so.2.1		-unknown-		xorg
+./usr/X11R7/lib/libpixman-1.so.2.2		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-atom.so			-unknown-		xorg
 ./usr/X11R7/lib/libxcb-atom.so.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-atom.so.1.0		-unknown-		xorg
