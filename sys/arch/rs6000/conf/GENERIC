@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.26 2013/04/27 22:21:15 christos Exp $
+# $NetBSD: GENERIC,v 1.27 2013/06/05 23:08:02 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.26 $"
+#ident		"GENERIC-$Revision: 1.27 $"
 
 maxusers	32
 
@@ -117,7 +117,6 @@ options 	NFSSERVER	# Network File System server
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

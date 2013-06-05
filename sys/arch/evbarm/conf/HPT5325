@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.13 2013/04/27 22:21:13 christos Exp $
+#	$NetBSD: HPT5325,v 1.14 2013/06/05 23:08:00 christos Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -74,7 +74,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
