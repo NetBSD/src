@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.105 2013/03/02 02:42:22 christos Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.106 2013/06/05 19:01:26 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.105 2013/03/02 02:42:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.106 2013/06/05 19:01:26 christos Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -114,10 +114,10 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.105 2013/03/02 02:42:22 christos Exp 
  * TCP/IP protocol family: IP, ICMP, UDP, TCP.
  */
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
-#endif	/* FAST_IPSEC */
+#endif	/* IPSEC */
 
 #include "carp.h"
 #if NCARP > 0
@@ -163,7 +163,7 @@ PR_WRAP_CTLOUTPUT(tcp_ctloutput)
 #define	udp_ctloutput	udp_ctloutput_wrapper
 #define	tcp_ctloutput	tcp_ctloutput_wrapper
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 PR_WRAP_CTLINPUT(ah4_ctlinput)
 
 #define	ah4_ctlinput	ah4_ctlinput_wrapper
@@ -231,7 +231,7 @@ const struct protosw inetsw[] = {
 	.pr_init = ipflow_poolinit,
 },
 #endif /* GATEWAY */
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_AH,
@@ -252,7 +252,7 @@ const struct protosw inetsw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = ipsec4_common_input,
 },
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_IPV4,
