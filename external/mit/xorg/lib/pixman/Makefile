@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2013/05/07 07:01:37 martin Exp $
+#	$NetBSD: Makefile,v 1.24 2013/06/05 09:04:16 mrg Exp $
 
 NOLINT=	1	# defined
 
@@ -17,13 +17,10 @@ SRCS=					\
 	pixman-combine32.c		\
 	pixman-combine-float.c		\
 	pixman-conical-gradient.c	\
-	pixman-x86.c			\
-	pixman-mips.c			\
-	pixman-arm.c			\
-	pixman-ppc.c			\
 	pixman-edge.c			\
 	pixman-edge-accessors.c		\
 	pixman-fast-path.c		\
+	pixman-filter.c			\
 	pixman-glyph.c			\
 	pixman-general.c		\
 	pixman-gradient-walker.c	\
@@ -39,6 +36,12 @@ SRCS=					\
 	pixman-timer.c			\
 	pixman-trap.c			\
 	pixman-utils.c
+
+SRCS+=					\
+	pixman-x86.c			\
+	pixman-mips.c			\
+	pixman-arm.c			\
+	pixman-ppc.c			\
 
 # XXX
 
@@ -65,7 +68,8 @@ MKDEPFLAGS+=		-maltivec
 .if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmhf"
 # ARM SIMD
 SRCS+=		pixman-arm-simd.c 		\
-		pixman-arm-simd-asm.S
+		pixman-arm-simd-asm.S		\
+		pixman-arm-simd-asm-scaled.S
 CPPFLAGS+=	-DUSE_ARM_SIMD
 # ARM NEON
 SRCS+=		pixman-arm-neon.c		\
