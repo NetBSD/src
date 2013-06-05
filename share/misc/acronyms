@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.217 2013/05/27 21:32:38 dholland Exp $
+$NetBSD: acronyms,v 1.218 2013/06/05 21:03:57 dholland Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -370,6 +370,7 @@ PC	player character
 PC	politically correct
 PDQ	pretty darn quick
 PDS	please don't shout
+PEBCAK	problem exists between chair and keyboard
 PEBKAC	problem exists between keyboard and chair
 PFI	pay for inclusion
 PFO	please fuck off
