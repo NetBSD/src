@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.60 2013/04/27 18:19:21 christos Exp $
+#	$NetBSD: NC,v 1.61 2013/06/05 23:07:59 christos Exp $
 #
 #	NC - with wscons
 #
@@ -53,7 +53,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	GATEWAY		# packet forwarding
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing

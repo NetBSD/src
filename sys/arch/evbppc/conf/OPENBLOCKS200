@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.38 2013/04/27 21:43:24 christos Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.39 2013/06/05 23:08:01 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -97,7 +97,6 @@ options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

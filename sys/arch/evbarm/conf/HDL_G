@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.36 2013/04/27 21:43:21 christos Exp $
+# $NetBSD: HDL_G,v 1.37 2013/06/05 23:08:00 christos Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -65,7 +65,6 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
