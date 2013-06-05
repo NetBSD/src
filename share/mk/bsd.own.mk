@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.731 2013/06/02 11:02:40 mbalmer Exp $
+#	$NetBSD: bsd.own.mk,v 1.732 2013/06/05 07:41:56 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1118,7 +1118,7 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 	xsetmode xsetpointer xsetroot xsm xstdcmap xvidtune xvinfo \
 	xwininfo xwud xprehashprinterlist xplsprinters xkbprint xkbevd \
 	xterm xwd xfs xfsinfo xphelloworld xtrap xkbutils xkbcomp \
-	xkeyboard-config xinput xcb-util \
+	xkeyboard-config xinput xcb-util xorg-docs \
 	font-adobe-100dpi font-adobe-75dpi font-adobe-utopia-100dpi \
 	font-adobe-utopia-75dpi font-adobe-utopia-type1 \
 	font-alias \
