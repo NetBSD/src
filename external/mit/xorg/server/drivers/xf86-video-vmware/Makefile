@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/06/05 06:28:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2013/06/05 08:42:21 mrg Exp $
 
 DRIVER=		xf86-video-vmware
 DRIVER_NAME=	vmware_drv
@@ -13,6 +13,8 @@ SRCS=	\
 	vmwaremodes.c \
 	vmware_bootstrap.c \
 	vmware_common.c
+
+MAN=	vmware.4
 
 CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/../include -DHAVE_CONFIG_H \
