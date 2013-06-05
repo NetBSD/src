@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 2013/06/05 06:27:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2013/06/05 06:28:57 mrg Exp $
 
 DRIVER=		xf86-video-vmware
-DRIVER_NAME=	vmwware_drv
+DRIVER_NAME=	vmware_drv
 
 SRCS=	\
 	bits2pixels.c \
