@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.6 2013/06/04 22:30:30 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.7 2013/06/05 18:15:06 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -150,6 +150,14 @@
 				SX_UBYTE_0 | (dreg << 7) | (o))
 #define SX_LDP(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
 				SX_PACKED | (dreg << 7) | (o))
+#define SX_LDUQ0(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
+				SX_UQUAD_0 | (dreg << 7) | (o))
+#define SX_LDUQ8(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
+				SX_UQUAD_8 | (dreg << 7) | (o))
+#define SX_LDUQ16(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
+				SX_UQUAD_16 | (dreg << 7) | (o))
+#define SX_LDUQ24(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
+				SX_UQUAD_24 | (dreg << 7) | (o))
 #define SX_ST(sreg, cnt, o)  (0x80000000 | ((cnt) << 23) | SX_STORE | \
 				SX_LONG | (sreg << 7) | (o))
 #define SX_STM(sreg, cnt, o)  (0x80000000 | ((cnt) << 23) | SX_STORE_MASK | \
@@ -162,8 +170,16 @@
 				| SX_LONG | (sreg << 7) | (o))
 #define SX_STBS(reg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_SELECT \
 				| SX_UBYTE_0 | (reg << 7) | (o))
+#define SX_STUQ0(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_UQUAD_0 | (sreg << 7) | (o))
+#define SX_STUQ8(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_UQUAD_8 | (sreg << 7) | (o))
+#define SX_STUQ16(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_UQUAD_16 | (sreg << 7) | (o))
+#define SX_STUQ24(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_UQUAD_24 | (sreg << 7) | (o))
 
-/* ROP instruction */
+/* ROP and SELECT instructions */
 #define SX_ROPB	(0x0 << 21)	/* mask bits apply to bytes */
 #define SX_ROPM	(0x1 << 21)	/* mask bits apply to each bit */
 #define SX_ROPL	(0x2 << 21)	/* mask bits apply per register */
@@ -175,4 +191,65 @@
 		((sa) << 14) | (sb) | ((d) << 7))
 #define SX_SELECT_S(sa, sb, d, cnt) (0x90000000 | ((cnt) << 24) | SX_SELS | \
 		((sa) << 14) | (sb) | ((d) << 7))
+
+/* multiply group */
+#define SX_M16X16SR0	(0x0 << 28)	/* 16bit multiply, no shift */
+#define SX_M16X16SR8	(0x1 << 28)	/* 16bit multiply, shift right 8 */
+#define SX_M16X16SR16	(0x2 << 28)	/* 16bit multiply, shift right 16 */
+#define SX_M32X16SR0	(0x4 << 28)	/* 32x16bit multiply, no shift */
+#define SX_M32X16SR8	(0x5 << 28)	/* 32x16bit multiply, shift right 8 */
+#define SX_M32X16SR16	(0x6 << 28)	/* 32x16bit multiply, shift right 16 */
+
+#define SX_MULTIPLY	(0x0 << 21)	/* normal multiplication */
+#define SX_DOT		(0x1 << 21)	/* dot product of A and B */
+#define SX_SAXP		(0x2 << 21)	/* A * SCAM + B */
+
+#define SX_ROUND	(0x1 << 23)	/* round results */
+
+#define SX_MUL16X16(sa, sb, d, cnt) (SX_M16X16SR0 | ((cnt) << 24) | \
+		SX_MULTIPLY | ((sa) << 14) | ((sb) << 7) | (d))	
+#define SX_MUL16X16R(sa, sb, d, cnt) (SX_M16X16SR0 | ((cnt) << 24) | \
+		SX_MULTIPLY | ((sa) << 14) | ((sb) << 7) | (d) | SX_ROUND)	
+#define SX_MUL16X16SR8(sa, sb, d, cnt) (SX_M16X16SR8 | ((cnt) << 24) | \
+		SX_MULTIPLY | ((sa) << 14) | ((sb) << 7) | (d))	
+#define SX_MUL16X16SR8R(sa, sb, d, cnt) (SX_M16X16SR8 | ((cnt) << 24) | \
+		SX_MULTIPLY | ((sa) << 14) | ((sb) << 7) | (d) | SX_ROUND)	
+
+#define SX_SAXP16X16(sa, sb, d, cnt) (SX_M16X16SR0 | ((cnt) << 24) | \
+		SX_SAXP | ((sa) << 14) | ((sb) << 7) | (d))	
+#define SX_SAXP16X16R(sa, sb, d, cnt) (SX_M16X16SR0 | ((cnt) << 24) | \
+		SX_SAXP | ((sa) << 14) | ((sb) << 7) | (d) | SX_ROUND)	
+#define SX_SAXP16X16SR8(sa, sb, d, cnt) (SX_M16X16SR8 | ((cnt) << 24) | \
+		SX_SAXP | ((sa) << 14) | ((sb) << 7) | (d))	
+#define SX_SAXP16X16SR8R(sa, sb, d, cnt) (SX_M16X16SR8 | ((cnt) << 24) | \
+		SX_SAXP | ((sa) << 14) | ((sb) << 7) | (d) | SX_ROUND)	
+
+/* logic group */
+#define SX_AND_V	(0x0 << 21)	/* vector AND vector */
+#define SX_AND_S	(0x1 << 21)	/* vector AND scalar */
+#define SX_AND_I	(0x2 << 21)	/* vector AND immediate */
+#define SX_XOR_V	(0x3 << 21)	/* vector XOR vector */
+#define SX_XOR_S	(0x4 << 21)	/* vector XOR scalar */
+#define SX_XOR_I	(0x5 << 21)	/* vector XOR immediate */
+#define SX_OR_V		(0x6 << 21)	/* vector OR vector */
+#define SX_OR_S		(0x7 << 21)	/* vector OR scalar */
+/* immediates are 7bit sign extended to 32bit */
+
+#define SX_ANDV(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_AND_V | \
+		((sa) << 14) | ((sb) << 7) | (d))
+#define SX_ANDS(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_AND_S | \
+		((sa) << 14) | ((sb) << 7) | (d))
+#define SX_ANDI(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_AND_I | \
+		((sa) << 14) | ((sb) << 7) | (d))
+#define SX_XORV(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_XOR_V | \
+		((sa) << 14) | ((sb) << 7) | (d))
+#define SX_XORS(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_XOR_S | \
+		((sa) << 14) | ((sb) << 7) | (d))
+#define SX_XORI(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_XOR_I | \
+		((sa) << 14) | ((sb) << 7) | (d))
+#define SX_ORV(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_OR_V | \
+		((sa) << 14) | ((sb) << 7) | (d))
+#define SX_ORS(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_OR_S | \
+		((sa) << 14) | ((sb) << 7) | (d))
+
 #endif /* SXREG_H */
