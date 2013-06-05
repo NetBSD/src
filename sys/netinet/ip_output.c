@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.219 2013/06/04 22:47:37 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.220 2013/06/05 19:01:26 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.219 2013/06/04 22:47:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.220 2013/06/05 19:01:26 christos Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.219 2013/06/04 22:47:37 christos Exp
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/kauth.h>
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <sys/domain.h>
 #endif
 #include <sys/systm.h>
@@ -132,11 +132,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.219 2013/06/04 22:47:37 christos Exp
 #include <netinet/ip_mroute.h>
 #endif
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
 #include <netipsec/xform.h>
-#endif	/* FAST_IPSEC*/
+#endif	/* IPSEC*/
 
 
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
@@ -178,7 +178,7 @@ ip_output(struct mbuf *m0, ...)
 	struct socket *so;
 	va_list ap;
 	int natt_frag = 0;
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	struct inpcb *inp;
 	struct secpolicy *sp = NULL;
 	int s;
@@ -205,12 +205,12 @@ ip_output(struct mbuf *m0, ...)
 	va_end(ap);
 
 	MCLAIM(m, &ip_tx_mowner);
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	if (so != NULL && so->so_proto->pr_domain->dom_family == AF_INET)
 		inp = (struct inpcb *)so->so_pcb;
 	else
 		inp = NULL;
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -487,7 +487,7 @@ sendit:
 	    (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 		ip->ip_off |= htons(IP_DF);
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	/*
 	 * Check the security policy (SP) for the packet and, if
 	 * required, do IPsec-related processing.  There are two
@@ -575,7 +575,7 @@ sendit:
 		}
 	}
 spd_done:
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 #ifdef PFIL_HOOKS
 	/*
@@ -734,10 +734,10 @@ spd_done:
 done:
 	rtcache_free(&iproute);
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	if (sp != NULL)
 		KEY_FREESP(&sp);
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 	return (error);
 bad:
@@ -1023,7 +1023,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	struct inpcb *inp = sotoinpcb(so);
 	int optval = 0;
 	int error = 0;
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	struct lwp *l = curlwp;	/*XXX*/
 #endif
 
@@ -1139,7 +1139,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			    (struct inpcb_hdr *)inp, optval);
 			break;
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 		case IP_IPSEC_POLICY:
 			error = ipsec4_set_policy(inp, sopt->sopt_name,
 			    sopt->sopt_data, sopt->sopt_size, l->l_cred);
@@ -1221,7 +1221,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			error = sockopt_setint(sopt, optval);
 			break;
 
-#if 0	/* defined(FAST_IPSEC) */
+#if 0	/* defined(IPSEC) */
 		case IP_IPSEC_POLICY:
 		{
 			struct mbuf *m = NULL;

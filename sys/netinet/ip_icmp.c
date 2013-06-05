@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.130 2013/03/25 18:43:30 christos Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.131 2013/06/05 19:01:26 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.130 2013/03/25 18:43:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.131 2013/06/05 19:01:26 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -123,10 +123,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.130 2013/03/25 18:43:30 christos Exp $
 #include <netinet/icmp_var.h>
 #include <netinet/icmp_private.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
-#endif	/* FAST_IPSEC*/
+#endif	/* IPSEC*/
 
 /*
  * ICMP routines: error generation, receive packet processing, and
@@ -640,7 +640,7 @@ reflect:
 			rtfree(rt);
 
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 		key_sa_routechange((struct sockaddr *)&icmpsrc);
 #endif
 		break;

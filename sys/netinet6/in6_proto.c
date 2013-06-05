@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.98 2013/03/01 18:25:58 joerg Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.99 2013/06/05 19:01:26 christos Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.98 2013/03/01 18:25:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.99 2013/06/05 19:01:26 christos Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -106,11 +106,11 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.98 2013/03/01 18:25:58 joerg Exp $")
 
 #include <netinet6/nd6.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 
 #include "carp.h"
@@ -163,13 +163,13 @@ PR_WRAP_CTLOUTPUT(icmp6_ctloutput)
 #define	udp6_ctloutput	udp6_ctloutput_wrapper
 #define	icmp6_ctloutput	icmp6_ctloutput_wrapper
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 PR_WRAP_CTLINPUT(ah6_ctlinput)
 
 #define	ah6_ctlinput	ah6_ctlinput_wrapper
 #endif
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 PR_WRAP_CTLINPUT(esp6_ctlinput)
 
 #define	esp6_ctlinput	esp6_ctlinput_wrapper
@@ -254,7 +254,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = frag6_input,
 },
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_AH,
@@ -275,7 +275,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = ipsec6_common_input,
 },
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 #ifdef INET
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
