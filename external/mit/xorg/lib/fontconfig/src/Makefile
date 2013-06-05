@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2013/06/03 20:23:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2013/06/05 22:42:19 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -121,8 +121,6 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 CLEANFILES+= fcarch.h
 
 PKGCONFIG=	fontconfig
-# fontconfig uses VERSION and not PACKAGE_VERSION
-PKGCONFIG_VERSION.fontconfig=	2.6.0
 
 # XXX
 CPPFLAGS.fcxml.c=	-Wno-error
