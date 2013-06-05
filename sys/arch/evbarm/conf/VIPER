@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.30 2013/03/02 02:42:11 christos Exp $
+#	$NetBSD: VIPER,v 1.31 2013/06/05 23:08:01 christos Exp $
 #
 #	Arcom Viper
 #
@@ -55,7 +55,6 @@ options 	NFSSERVER
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NETATALK	# AppleTalk networking
