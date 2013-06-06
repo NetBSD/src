@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.25 2013/01/22 09:39:12 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.26 2013/06/06 00:52:50 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,9 +35,9 @@
 #include <sys/buf.h>
 #include <sys/mount.h>
 
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/dir.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_dir.h>
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
 #undef vnode
@@ -62,7 +62,7 @@
 extern u_int32_t cksum(void *, size_t);
 extern u_int32_t lfs_sb_cksum(struct dlfs *);
 
-extern ufs_daddr_t badblk;
+extern ulfs_daddr_t badblk;
 extern SEGUSE *seg_table;
 
 static int nnewblocks;
@@ -73,16 +73,16 @@ static int nnewblocks;
  * segment.
  *
  * Change the given block's address to ndaddr, finding its previous
- * location using ufs_bmaparray().
+ * location using ulfs_bmaparray().
  *
  * Account for this change in the segment table.
  */
 static void
-rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
+rfw_update_single(struct uvnode *vp, daddr_t lbn, ulfs_daddr_t ndaddr, int size)
 {
 	SEGUSE *sup;
 	struct ubuf *bp;
-	struct indir a[UFS_NIADDR + 2], *ap;
+	struct indir a[ULFS_NIADDR + 2], *ap;
 	struct inode *ip;
 	daddr_t daddr, ooff;
 	int num, error;
@@ -93,9 +93,9 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	ip = VTOI(vp);
 	ip->i_flag |= IN_MODIFIED;
 
-	error = ufs_bmaparray(fs, vp, lbn, &daddr, a, &num);
+	error = ulfs_bmaparray(fs, vp, lbn, &daddr, a, &num);
 	if (error)
-		errx(1, "lfs_updatemeta: ufs_bmaparray returned %d"
+		errx(1, "lfs_updatemeta: ulfs_bmaparray returned %d"
 		     " looking up lbn %" PRId64 "\n", error, lbn);
 	if (daddr > 0)
 		daddr = dbtofsb(fs, daddr);
@@ -125,10 +125,10 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 			errx(1, "lfs_updatemeta: bread bno %" PRId64,
 			    ap->in_lbn);
 
-		ooff = ((ufs_daddr_t *) bp->b_data)[ap->in_off];
+		ooff = ((ulfs_daddr_t *) bp->b_data)[ap->in_off];
 		if (ooff <= 0)
 			ip->i_ffs1_blocks += frags;
-		((ufs_daddr_t *) bp->b_data)[ap->in_off] = ndaddr;
+		((ulfs_daddr_t *) bp->b_data)[ap->in_off] = ndaddr;
 		(void) VOP_BWRITE(bp);
 	}
 
@@ -138,7 +138,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	 */
 	if (daddr > 0) {
 		oldsn = dtosn(fs, daddr);
-		if (lbn >= 0 && lbn < UFS_NDADDR)
+		if (lbn >= 0 && lbn < ULFS_NDADDR)
 			osize = ip->i_lfs_fragsize[lbn];
 		else
 			osize = fs->lfs_bsize;
@@ -158,7 +158,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	}
 
 	/* If block frag size is too large for old EOF, update size */
-	if (lbn < UFS_NDADDR) {
+	if (lbn < ULFS_NDADDR) {
 		off_t minsize;
 
 		minsize = (lbn << fs->lfs_bshift);
@@ -197,7 +197,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	 * segment no longer owns it, we can forget about its
 	 * old size.
 	 */
-	if (lbn >= 0 && lbn < UFS_NDADDR)
+	if (lbn >= 0 && lbn < ULFS_NDADDR)
 		ip->i_lfs_fragsize[lbn] = size;
 }
 
@@ -214,7 +214,7 @@ remove_ino(struct uvnode *vp, ino_t ino)
 	CLEANERINFO *cip;
 	struct ubuf *bp, *sbp, *cbp;
 	struct inodesc idesc;
-	ufs_daddr_t daddr;
+	ulfs_daddr_t daddr;
 	int obfree;
 
 	if (debug)
@@ -256,7 +256,7 @@ remove_ino(struct uvnode *vp, ino_t ino)
  * Use FIP records to update blocks, if the generation number matches.
  */
 static void
-pass6harvest(ufs_daddr_t daddr, FINFO *fip)
+pass6harvest(ulfs_daddr_t daddr, FINFO *fip)
 {
 	struct uvnode *vp;
 	int i;
@@ -329,7 +329,7 @@ pass6check(struct inodesc * idesc)
 }
 
 static void
-account_indir(struct uvnode *vp, struct ufs1_dinode *dp, daddr_t ilbn, daddr_t daddr, int lvl)
+account_indir(struct uvnode *vp, struct ulfs1_dinode *dp, daddr_t ilbn, daddr_t daddr, int lvl)
 {
 	struct ubuf *bp;
 	int32_t *dap, *odap, *buf, *obuf;
@@ -376,7 +376,7 @@ account_indir(struct uvnode *vp, struct ufs1_dinode *dp, daddr_t ilbn, daddr_t d
  * Account block changes between new found inode and existing inode.
  */
 static void
-account_block_changes(struct ufs1_dinode *dp)
+account_block_changes(struct ulfs1_dinode *dp)
 {
 	int i;
 	daddr_t lbn, off, odaddr;
@@ -387,7 +387,7 @@ account_block_changes(struct ufs1_dinode *dp)
 	ip = (vp ? VTOI(vp) : NULL);
 
 	/* Check direct block holdings between existing and new */
-	for (i = 0; i < UFS_NDADDR; i++) {
+	for (i = 0; i < ULFS_NDADDR; i++) {
 		odaddr = (ip ? ip->i_ffs1_db[i] : 0x0);
 		if (dp->di_db[i] > 0 && dp->di_db[i] != odaddr)
 			rfw_update_single(vp, i, dp->di_db[i],
@@ -396,10 +396,10 @@ account_block_changes(struct ufs1_dinode *dp)
 
 	/* Check indirect block holdings between existing and new */
 	off = 0;
-	for (i = 0; i < UFS_NIADDR; i++) {
+	for (i = 0; i < ULFS_NIADDR; i++) {
 		odaddr = (ip ? ip->i_ffs1_ib[i] : 0x0);
 		if (dp->di_ib[i] > 0 && dp->di_ib[i] != odaddr) {
-			lbn = -(UFS_NDADDR + off + i);
+			lbn = -(ULFS_NDADDR + off + i);
 			rfw_update_single(vp, i, dp->di_ib[i], fs->lfs_bsize);
 			account_indir(vp, dp, lbn, dp->di_ib[i], i);
 		}
@@ -418,13 +418,13 @@ account_block_changes(struct ufs1_dinode *dp)
  * free list accounting is done.
  */
 static void
-readdress_inode(struct ufs1_dinode *dp, ufs_daddr_t daddr)
+readdress_inode(struct ulfs1_dinode *dp, ulfs_daddr_t daddr)
 {
 	IFILE *ifp;
 	SEGUSE *sup;
 	struct ubuf *bp;
 	int sn;
-	ufs_daddr_t odaddr;
+	ulfs_daddr_t odaddr;
 	ino_t thisino = dp->di_inumber;
 	struct uvnode *vp;
 
@@ -467,7 +467,7 @@ readdress_inode(struct ufs1_dinode *dp, ufs_daddr_t daddr)
  * Allocate the given inode from the free list.
  */
 static void
-alloc_inode(ino_t thisino, ufs_daddr_t daddr)
+alloc_inode(ino_t thisino, ulfs_daddr_t daddr)
 {
 	ino_t ino, nextfree, oldhead;
 	IFILE *ifp;
@@ -544,13 +544,13 @@ alloc_inode(ino_t thisino, ufs_daddr_t daddr)
 void
 pass6(void)
 {
-	ufs_daddr_t daddr, ibdaddr, odaddr, lastgood, nextseg, *idaddrp;
+	ulfs_daddr_t daddr, ibdaddr, odaddr, lastgood, nextseg, *idaddrp;
 	struct uvnode *vp, *devvp;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	SEGSUM *sp;
 	struct ubuf *bp, *ibp, *sbp, *cbp;
-	struct ufs1_dinode *dp;
+	struct ulfs1_dinode *dp;
 	struct inodesc idesc;
 	int i, j, bc, hassuper;
 	int nnewfiles, ndelfiles, nmvfiles;
@@ -646,7 +646,7 @@ pass6(void)
 							    INOPB(fs)) *
 						fs->lfs_ibsize);
 		}
-		idaddrp = ((ufs_daddr_t *)((char *)bp->b_data + fs->lfs_sumsize));
+		idaddrp = ((ulfs_daddr_t *)((char *)bp->b_data + fs->lfs_sumsize));
 		for (i = 0; i < howmany(sp->ss_ninos, INOPB(fs)); i++) {
 			ino_t *inums;
 			
@@ -660,8 +660,8 @@ pass6(void)
 			brelse(ibp, 0);
 
 			j = 0;
-			for (dp = (struct ufs1_dinode *)ibbuf;
-			     dp < (struct ufs1_dinode *)ibbuf + INOPB(fs);
+			for (dp = (struct ulfs1_dinode *)ibbuf;
+			     dp < (struct ulfs1_dinode *)ibbuf + INOPB(fs);
 			     ++dp) {
 				if (dp->di_u.inumber == 0 ||
 				    dp->di_u.inumber == fs->lfs_ifile)
@@ -759,8 +759,8 @@ pass6(void)
 				if (debug)
 					pwarn("alloc ino %d nlink %d\n",
 						(int)inums[j], VTOD(vp)->di_nlink);
-				memset(VTOD(vp)->di_db, 0, (UFS_NDADDR + UFS_NIADDR) *
-				       sizeof(ufs_daddr_t));
+				memset(VTOD(vp)->di_db, 0, (ULFS_NDADDR + ULFS_NIADDR) *
+				       sizeof(ulfs_daddr_t));
 				VTOD(vp)->di_blocks = 0;
 
 				vp->v_uflag |= VU_DIROP;

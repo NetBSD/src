@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.39 2013/01/22 09:39:12 dholland Exp $ */
+/* $NetBSD: setup.c,v 1.40 2013/06/06 00:52:50 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,8 +71,8 @@
 #include <sys/disk.h>
 #include <sys/file.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfsmount.h>
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
 #undef vnode
@@ -98,7 +98,7 @@
 extern u_int32_t cksum(void *, size_t);
 static uint64_t calcmaxfilesize(int);
 
-ufs_daddr_t *din_table;
+ulfs_daddr_t *din_table;
 SEGUSE *seg_table;
 
 #ifdef DKTYPENAMES
@@ -124,7 +124,7 @@ calcmaxfilesize(int bshift)
 	uint64_t maxblock;
 
 	nptr = (1 << bshift) / sizeof(uint32_t);
-	maxblock = UFS_NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
+	maxblock = ULFS_NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
 
 	return maxblock << bshift;
 }
@@ -388,10 +388,10 @@ setup(const char *dev)
 			sbdirty();
 		}
 	}
-	if (fs->lfs_maxsymlinklen != UFS1_MAXSYMLINKLEN) {
+	if (fs->lfs_maxsymlinklen != ULFS1_MAXSYMLINKLEN) {
 		pwarn("INCORRECT MAXSYMLINKLEN=%d IN SUPERBLOCK",
 		    fs->lfs_maxsymlinklen);
-		fs->lfs_maxsymlinklen = UFS1_MAXSYMLINKLEN;
+		fs->lfs_maxsymlinklen = ULFS1_MAXSYMLINKLEN;
 		if (preen)
 			printf(" (FIXED)\n");
 		if (preen || reply("FIX") == 1) {

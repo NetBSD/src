@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.18 2013/01/22 09:39:12 dholland Exp $	 */
+/* $NetBSD: pass2.c,v 1.19 2013/06/06 00:52:50 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -35,8 +35,8 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/dir.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_dir.h>
 #include <ufs/lfs/lfs.h>
 
 #include <err.h>
@@ -60,29 +60,29 @@ static int blksort(const void *, const void *);
 void
 pass2(void)
 {
-	struct ufs1_dinode *dp;
+	struct ulfs1_dinode *dp;
 	struct uvnode *vp;
 	struct inoinfo **inpp, *inp;
 	struct inoinfo **inpend;
 	struct inodesc curino;
-	struct ufs1_dinode dino;
+	struct ulfs1_dinode dino;
 	char pathbuf[MAXPATHLEN + 1];
 
-	switch (statemap[UFS_ROOTINO]) {
+	switch (statemap[ULFS_ROOTINO]) {
 
 	case USTATE:
 		pfatal("ROOT INODE UNALLOCATED");
 		if (reply("ALLOCATE") == 0)
 			err(EEXIT, "%s", "");
-		if (allocdir(UFS_ROOTINO, UFS_ROOTINO, 0755) != UFS_ROOTINO)
+		if (allocdir(ULFS_ROOTINO, ULFS_ROOTINO, 0755) != ULFS_ROOTINO)
 			err(EEXIT, "CANNOT ALLOCATE ROOT INODE\n");
 		break;
 
 	case DCLEAR:
 		pfatal("DUPS/BAD IN ROOT INODE");
 		if (reply("REALLOCATE")) {
-			freeino(UFS_ROOTINO);
-			if (allocdir(UFS_ROOTINO, UFS_ROOTINO, 0755) != UFS_ROOTINO)
+			freeino(ULFS_ROOTINO);
+			if (allocdir(ULFS_ROOTINO, ULFS_ROOTINO, 0755) != ULFS_ROOTINO)
 				err(EEXIT, "CANNOT ALLOCATE ROOT INODE\n");
 			break;
 		}
@@ -94,14 +94,14 @@ pass2(void)
 	case FCLEAR:
 		pfatal("ROOT INODE NOT DIRECTORY");
 		if (reply("REALLOCATE")) {
-			freeino(UFS_ROOTINO);
-			if (allocdir(UFS_ROOTINO, UFS_ROOTINO, 0755) != UFS_ROOTINO)
+			freeino(ULFS_ROOTINO);
+			if (allocdir(ULFS_ROOTINO, ULFS_ROOTINO, 0755) != ULFS_ROOTINO)
 				err(EEXIT, "CANNOT ALLOCATE ROOT INODE\n");
 			break;
 		}
 		if (reply("FIX") == 0)
 			errx(EEXIT, "%s", "");
-		vp = vget(fs, UFS_ROOTINO);
+		vp = vget(fs, ULFS_ROOTINO);
 		dp = VTOD(vp);
 		dp->di_mode &= ~IFMT;
 		dp->di_mode |= IFDIR;
@@ -112,10 +112,10 @@ pass2(void)
 		break;
 
 	default:
-		errx(EEXIT, "BAD STATE %d FOR ROOT INODE\n", statemap[UFS_ROOTINO]);
+		errx(EEXIT, "BAD STATE %d FOR ROOT INODE\n", statemap[ULFS_ROOTINO]);
 	}
-	statemap[UFS_WINO] = FSTATE;
-	typemap[UFS_WINO] = DT_WHT;
+	statemap[ULFS_WINO] = FSTATE;
+	typemap[ULFS_WINO] = DT_WHT;
 	/*
 	 * Sort the directory list into disk block order.
 	 */
@@ -155,7 +155,7 @@ pass2(void)
 				inodirty(VTOI(vp));
 			}
 		}
-		memset(&dino, 0, sizeof(struct ufs1_dinode));
+		memset(&dino, 0, sizeof(struct ulfs1_dinode));
 		dino.di_mode = IFDIR;
 		dino.di_size = inp->i_isize;
 		memcpy(&dino.di_db[0], &inp->i_blks[0], (size_t) inp->i_numblks);
@@ -204,7 +204,7 @@ pass2check(struct inodesc * idesc)
 	struct direct *dirp = idesc->id_dirp;
 	struct inoinfo *inp;
 	int n, entrysize, ret = 0;
-	struct ufs1_dinode *dp;
+	struct ulfs1_dinode *dp;
 	const char *errmsg;
 	struct direct proto;
 	char namebuf[MAXPATHLEN + 1];
@@ -340,7 +340,7 @@ chk2:
 		fileerror(idesc->id_number, dirp->d_ino, "I OUT OF RANGE");
 		n = reply("REMOVE");
 	} else if (dirp->d_ino == LFS_IFILE_INUM &&
-	    idesc->id_number == UFS_ROOTINO) {
+	    idesc->id_number == ULFS_ROOTINO) {
 		if (dirp->d_type != DT_REG) {
 			fileerror(idesc->id_number, dirp->d_ino,
 			    "BAD TYPE FOR IFILE");
@@ -348,10 +348,10 @@ chk2:
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
 		}
-	} else if (((dirp->d_ino == UFS_WINO && (dirp->d_type != DT_WHT)) ||
-		(dirp->d_ino != UFS_WINO && dirp->d_type == DT_WHT))) {
+	} else if (((dirp->d_ino == ULFS_WINO && (dirp->d_type != DT_WHT)) ||
+		(dirp->d_ino != ULFS_WINO && dirp->d_type == DT_WHT))) {
 		fileerror(idesc->id_number, dirp->d_ino, "BAD WHITEOUT ENTRY");
-		dirp->d_ino = UFS_WINO;
+		dirp->d_ino = ULFS_WINO;
 		dirp->d_type = DT_WHT;
 		if (reply("FIX") == 1)
 			ret |= ALTERED;

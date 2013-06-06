@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.32 2013/01/22 09:39:12 dholland Exp $	 */
+/* $NetBSD: pass0.c,v 1.33 2013/06/06 00:52:50 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -63,8 +63,8 @@
 #include <sys/buf.h>
 #include <sys/mount.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/dir.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_dir.h>
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
 #undef vnode
@@ -167,7 +167,7 @@ pass0(void)
 	/*
 	 * Make sure all free inodes were found on the list
 	 */
-	for (ino = maxino - 1; ino > UFS_ROOTINO; --ino) {
+	for (ino = maxino - 1; ino > ULFS_ROOTINO; --ino) {
 		if (visited[ino])
 			continue;
 

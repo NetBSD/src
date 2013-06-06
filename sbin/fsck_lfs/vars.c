@@ -1,4 +1,4 @@
-/* $NetBSD: vars.c,v 1.14 2010/02/16 23:20:30 mlelstv Exp $	 */
+/* $NetBSD: vars.c,v 1.15 2013/06/06 00:52:50 dholland Exp $	 */
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,8 +30,8 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <ufs/ufs/dinode.h>
-#include <ufs/ufs/dir.h>
+#include <ufs/lfs/ulfs_dinode.h>
+#include <ufs/lfs/ulfs_dir.h>
 #include <sys/mount.h>		/* XXX */
 #include <ufs/lfs/lfs.h>
 #include "fsck.h"
@@ -79,6 +79,6 @@ int lfmode;			/* lost & found directory creation mode */
 daddr_t n_blks;			/* number of blocks in use */
 ino_t n_files;			/* number of files in use */
 
-struct ufs1_dinode zino;
+struct ulfs1_dinode zino;
 
 int no_roll_forward = 0;	/* don't roll forward */
