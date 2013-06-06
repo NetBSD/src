@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.20 2013/01/22 09:39:13 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.21 2013/06/06 00:53:12 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.20 2013/01/22 09:39:13 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.21 2013/06/06 00:53:12 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,9 +72,9 @@ __RCSID("$NetBSD: make_lfs.c,v 1.20 2013/01/22 09:39:13 dholland Exp $");
 #include <sys/mount.h>
 #include <sys/stat.h>
 
-#include <ufs/ufs/dir.h>
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/inode.h>
+#include <ufs/lfs/ulfs_dir.h>
+#include <ufs/lfs/ulfs_quotacommon.h>
+#include <ufs/lfs/ulfs_inode.h>
 
 /* Override certain things to make <ufs/lfs/lfs.h> work */
 # undef simple_lock
@@ -103,12 +103,12 @@ __RCSID("$NetBSD: make_lfs.c,v 1.20 2013/01/22 09:39:13 dholland Exp $");
 #include "segwrite.h"
 
 extern int Nflag; /* Don't write anything */
-ufs_daddr_t ifibc; /* How many indirect blocks */
+ulfs_daddr_t ifibc; /* How many indirect blocks */
 
 #ifdef MAKE_LF_DIR
 # define HIGHEST_USED_INO LOSTFOUNDINO
 #else
-# define HIGHEST_USED_INO UFS_ROOTINO
+# define HIGHEST_USED_INO ULFS_ROOTINO
 #endif
 
 static struct lfs lfs_default =  {
@@ -137,7 +137,7 @@ static struct lfs lfs_default =  {
 		/* dlfs_minfree */	MINFREE,
 		/* dlfs_maxfilesize */	0,
 		/* dlfs_fsbpseg */	0,
-		/* dlfs_inopb */	DFL_LFSBLOCK/sizeof(struct ufs1_dinode),
+		/* dlfs_inopb */	DFL_LFSBLOCK/sizeof(struct ulfs1_dinode),
 		/* dlfs_ifpb */		DFL_LFSBLOCK/sizeof(IFILE),
 		/* dlfs_sepb */		DFL_LFSBLOCK/sizeof(SEGUSE),
 		/* XXX ondisk32 */
@@ -156,7 +156,7 @@ static struct lfs lfs_default =  {
 		/* dlfs_fbmask */	DFL_LFS_FBMASK,
 		/* dlfs_blktodb */	0,
 		/* dlfs_sushift */	0,
-		/* dlfs_maxsymlinklen */	UFS1_MAXSYMLINKLEN,
+		/* dlfs_maxsymlinklen */	ULFS1_MAXSYMLINKLEN,
 		/* dlfs_sboffs */	{ 0 },
 		/* dlfs_nclean */       0,
 		/* dlfs_fsmnt */        { 0 },
@@ -182,8 +182,8 @@ static struct lfs lfs_default =  {
 #define	UMASK	0755
 
 struct direct lfs_root_dir[] = {
-	{ UFS_ROOTINO, sizeof(struct direct), DT_DIR, 1, "."},
-	{ UFS_ROOTINO, sizeof(struct direct), DT_DIR, 2, ".."},
+	{ ULFS_ROOTINO, sizeof(struct direct), DT_DIR, 1, "."},
+	{ ULFS_ROOTINO, sizeof(struct direct), DT_DIR, 2, ".."},
 	/* { LFS_IFILE_INUM, sizeof(struct direct), DT_REG, 5, "ifile"}, */
 #ifdef MAKE_LF_DIR
 	{ LOSTFOUNDINO, sizeof(struct direct), DT_DIR, 10, "lost+found"},
@@ -193,12 +193,12 @@ struct direct lfs_root_dir[] = {
 #ifdef MAKE_LF_DIR
 struct direct lfs_lf_dir[] = {
         { LOSTFOUNDINO, sizeof(struct direct), DT_DIR, 1, "." },
-        { UFS_ROOTINO, sizeof(struct direct), DT_DIR, 2, ".." },
+        { ULFS_ROOTINO, sizeof(struct direct), DT_DIR, 2, ".." },
 };
 #endif
 
 void pwarn(const char *, ...);
-static void make_dinode(ino_t, struct ufs1_dinode *, int, struct lfs *);
+static void make_dinode(ino_t, struct ulfs1_dinode *, int, struct lfs *);
 static void make_dir( void *, struct direct *, int);
 static uint64_t maxfilesize(int);
 
@@ -212,7 +212,7 @@ maxfilesize(int bshift)
 	uint64_t maxblock;
 
 	nptr = (1 << bshift) / sizeof(uint32_t);
-	maxblock = UFS_NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
+	maxblock = ULFS_NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
 
 	return maxblock << bshift;
 }
@@ -222,13 +222,13 @@ maxfilesize(int bshift)
  * directory.
  */
 static void
-make_dinode(ino_t ino, struct ufs1_dinode *dip, int nfrags, struct lfs *fs)
+make_dinode(ino_t ino, struct ulfs1_dinode *dip, int nfrags, struct lfs *fs)
 {
 	int fsb_per_blk, i;
 	int nblocks, bb, base, factor, lvl;
 
 	nblocks = howmany(nfrags, fs->lfs_frag);
-	if (nblocks >= UFS_NDADDR)
+	if (nblocks >= ULFS_NDADDR)
 		nfrags = roundup(nfrags, fs->lfs_frag);
 
 	dip->di_nlink = 1;
@@ -242,10 +242,10 @@ make_dinode(ino_t ino, struct ufs1_dinode *dip, int nfrags, struct lfs *fs)
 
 	fsb_per_blk = blkstofrags(fs, 1);
 
-	if (UFS_NDADDR < nblocks) {
+	if (ULFS_NDADDR < nblocks) {
 		/* Count up how many indirect blocks we need, recursively */
 		/* XXX We are only called with nblocks > 1 for Ifile */
-		bb = nblocks - UFS_NDADDR;
+		bb = nblocks - ULFS_NDADDR;
 		while (bb > 0) {
 			bb = howmany(bb, NINDIR(fs));
 			ifibc += bb;
@@ -255,14 +255,14 @@ make_dinode(ino_t ino, struct ufs1_dinode *dip, int nfrags, struct lfs *fs)
 	}
 
 	/* Assign the block addresses for the ifile */
-	for (i = 0; i < MIN(nblocks,UFS_NDADDR); i++) {
+	for (i = 0; i < MIN(nblocks,ULFS_NDADDR); i++) {
 		dip->di_db[i] = 0x0;
 	}
-	if (nblocks > UFS_NDADDR) {
+	if (nblocks > ULFS_NDADDR) {
 		dip->di_ib[0] = 0x0;
-		bb = howmany(nblocks - UFS_NDADDR, NINDIR(fs)) - 1;
+		bb = howmany(nblocks - ULFS_NDADDR, NINDIR(fs)) - 1;
 		factor = NINDIR(fs);
-		base = -UFS_NDADDR - factor;
+		base = -ULFS_NDADDR - factor;
 		lvl = 1;
 		while (bb > 0) {
 			dip->di_ib[lvl] = 0x0;
@@ -303,7 +303,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 int resvseg, int version, daddr_t start, int ibsize, int interleave,
 	 u_int32_t roll_id)
 {
-	struct ufs1_dinode *dip;	/* Pointer to a disk inode */
+	struct ulfs1_dinode *dip;	/* Pointer to a disk inode */
 	CLEANERINFO *cip;	/* Segment cleaner information table */
 	IFILE *ip;		/* Pointer to array of ifile structures */
 	IFILE_V1 *ip_v1 = NULL;
@@ -338,7 +338,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	bufinit(tnseg / tsepb);
 
 	/* Initialize LFS subsystem with blank superblock and ifile. */
-	fs = lfs_init(devfd, start, (ufs_daddr_t)0, 1, 1/* XXX debug*/);
+	fs = lfs_init(devfd, start, (ulfs_daddr_t)0, 1, 1/* XXX debug*/);
 	save_devvp = fs->lfs_devvp;
 	vp = fs->lfs_ivnode;
 	*fs = lfs_default;
@@ -448,7 +448,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		fs->lfs_ssize = ssize;
 		fs->lfs_ibsize = ibsize;
 	}
-	fs->lfs_inopb = fs->lfs_ibsize / sizeof(struct ufs1_dinode);
+	fs->lfs_inopb = fs->lfs_ibsize / sizeof(struct ulfs1_dinode);
 	fs->lfs_minfree = minfree;
 
 	if (version > 1) {
@@ -610,7 +610,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 * Initialize the Ifile inode.  Do this before we do anything
 	 * with the Ifile or segment tables.
 	 */
-	dip = VTOI(fs->lfs_ivnode)->i_din.ffs1_din = (struct ufs1_dinode *)
+	dip = VTOI(fs->lfs_ivnode)->i_din.ffs1_din = (struct ulfs1_dinode *)
 		malloc(sizeof(*dip));
 	if (dip == NULL)
 		err(1, NULL);
@@ -620,7 +620,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	make_dinode(LFS_IFILE_INUM, dip,
 		blkstofrags(fs, fs->lfs_cleansz + fs->lfs_segtabsz + 1), fs);
 	dip->di_size = (fs->lfs_cleansz + fs->lfs_segtabsz + 1) << fs->lfs_bshift;
-	for (i = 0; i < UFS_NDADDR && i < (dip->di_size >> fs->lfs_bshift); i++)
+	for (i = 0; i < ULFS_NDADDR && i < (dip->di_size >> fs->lfs_bshift); i++)
 		VTOI(fs->lfs_ivnode)->i_lfs_fragsize[i] = fs->lfs_bsize;
 
 	/*
@@ -677,9 +677,9 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	}
 
 	/* Initialize root directory */
-	vp = lfs_raw_vget(fs, UFS_ROOTINO, devfd, 0x0);
+	vp = lfs_raw_vget(fs, ULFS_ROOTINO, devfd, 0x0);
 	dip = VTOI(vp)->i_din.ffs1_din;
-	make_dinode(UFS_ROOTINO, dip, howmany(DIRBLKSIZ,fs->lfs_fsize), fs);
+	make_dinode(ULFS_ROOTINO, dip, howmany(DIRBLKSIZ,fs->lfs_fsize), fs);
 	dip->di_mode = IFDIR | UMASK;
 	VTOI(vp)->i_lfs_osize = dip->di_size = DIRBLKSIZ;
 #ifdef MAKE_LF_DIR
@@ -689,7 +689,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 #endif
         VTOI(vp)->i_lfs_effnblks = dip->di_blocks =
 		btofsb(fs, roundup(DIRBLKSIZ,fs->lfs_fsize));
-	for (i = 0; i < UFS_NDADDR && i < howmany(DIRBLKSIZ, fs->lfs_bsize); i++)
+	for (i = 0; i < ULFS_NDADDR && i < howmany(DIRBLKSIZ, fs->lfs_bsize); i++)
 		VTOI(vp)->i_lfs_fragsize[i] = fs->lfs_bsize;
 	if (DIRBLKSIZ < fs->lfs_bsize)
 		VTOI(vp)->i_lfs_fragsize[i - 1] =
@@ -709,7 +709,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
         VTOI(vp)->i_nlink = dip->di_nlink = 2;
         VTOI(vp)->i_lfs_effnblks = dip->di_blocks =
 		btofsb(fs, roundup(DIRBLKSIZ,fs->lfs_fsize));
-	for (i = 0; i < UFS_NDADDR && i < howmany(DIRBLKSIZ, fs->lfs_bsize); i++)
+	for (i = 0; i < ULFS_NDADDR && i < howmany(DIRBLKSIZ, fs->lfs_bsize); i++)
 		VTOI(vp)->i_lfs_fragsize[i] = fs->lfs_bsize;
 	if (DIRBLKSIZ < fs->lfs_bsize)
 		VTOI(vp)->i_lfs_fragsize[i - 1] =
