@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.11 2010/02/16 23:20:30 mlelstv Exp $ */
+/* $NetBSD: vnode.c,v 1.12 2013/06/06 00:52:50 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,8 +35,8 @@
 #include <sys/mount.h>
 #include <sys/queue.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfsmount.h>
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
 #undef vnode
