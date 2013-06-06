@@ -1,4 +1,4 @@
-/* $NetBSD: pass3.c,v 1.10 2013/01/22 09:39:12 dholland Exp $	 */
+/* $NetBSD: pass3.c,v 1.11 2013/06/06 00:52:50 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <ufs/ufs/dinode.h>
+#include <ufs/lfs/ulfs_dinode.h>
 #include <sys/mount.h>
 #include <ufs/lfs/lfs.h>
 #include "fsck.h"
@@ -46,7 +46,7 @@ pass3(void)
 
 	for (inpp = &inpsort[inplast - 1]; inpp >= inpsort; inpp--) {
 		inp = *inpp;
-		if (inp->i_number == UFS_ROOTINO || inp->i_number == LFS_IFILE_INUM ||
+		if (inp->i_number == ULFS_ROOTINO || inp->i_number == LFS_IFILE_INUM ||
 		    !(inp->i_parent == 0 || statemap[inp->i_number] == DSTATE))
 			continue;
 		if (statemap[inp->i_number] == DCLEAR)
