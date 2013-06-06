@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dinode.h,v 1.3 2013/06/06 00:51:50 dholland Exp $	*/
+/*	$NetBSD: ulfs_dinode.h,v 1.4 2013/06/06 01:25:25 dholland Exp $	*/
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -146,12 +146,6 @@ struct ulfs2_dinode {
 #define ULFS_MAXSYMLINKLEN(ip) \
 	((ip)->i_ump->um_fstype == ULFS1) ? \
 	ULFS1_MAXSYMLINKLEN : ULFS2_MAXSYMLINKLEN
-
-/* NeXT used to keep short symlinks in the inode even when using
- * FS_42INODEFMT.  In that case fs->fs_maxsymlinklen is probably -1,
- * but short symlinks were stored in inodes shorter than this:
- */
-#define	APPLEUFS_MAXSYMLINKLEN 60
 
 /* File permissions. */
 #define	IEXEC		0000100		/* Executable. */
