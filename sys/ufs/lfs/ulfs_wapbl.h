@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_wapbl.h,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_wapbl.h,v 1.2 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: ufs_wapbl.h,v 1.7 2011/09/19 11:18:01 gdt Exp  */
 
 /*-
@@ -31,8 +31,8 @@
  */
 
 
-#ifndef _UFS_UFS_UFS_WAPBL_H_
-#define	_UFS_UFS_UFS_WAPBL_H_
+#ifndef _UFS_LFS_ULFS_WAPBL_H_
+#define	_UFS_LFS_ULFS_WAPBL_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_wapbl.h"
@@ -46,26 +46,26 @@
  */
 
 /* fs->fs_journal_version */
-#define	UFS_WAPBL_VERSION			1
+#define	ULFS_WAPBL_VERSION			1
 
 /* fs->fs_journal_location */
-#define	UFS_WAPBL_JOURNALLOC_NONE		0
+#define	ULFS_WAPBL_JOURNALLOC_NONE		0
 
-#define	UFS_WAPBL_JOURNALLOC_END_PARTITION	1
-#define	 UFS_WAPBL_EPART_ADDR			  0 /* locator slots */
-#define	 UFS_WAPBL_EPART_COUNT			  1
-#define	 UFS_WAPBL_EPART_BLKSZ			  2
-#define	 UFS_WAPBL_EPART_UNUSED			  3
+#define	ULFS_WAPBL_JOURNALLOC_END_PARTITION	1
+#define	 ULFS_WAPBL_EPART_ADDR			  0 /* locator slots */
+#define	 ULFS_WAPBL_EPART_COUNT			  1
+#define	 ULFS_WAPBL_EPART_BLKSZ			  2
+#define	 ULFS_WAPBL_EPART_UNUSED			  3
 
-#define	UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM	2
-#define	 UFS_WAPBL_INFS_ADDR			  0 /* locator slots */
-#define	 UFS_WAPBL_INFS_COUNT			  1
-#define	 UFS_WAPBL_INFS_BLKSZ			  2
-#define	 UFS_WAPBL_INFS_INO			  3
+#define	ULFS_WAPBL_JOURNALLOC_IN_FILESYSTEM	2
+#define	 ULFS_WAPBL_INFS_ADDR			  0 /* locator slots */
+#define	 ULFS_WAPBL_INFS_COUNT			  1
+#define	 ULFS_WAPBL_INFS_BLKSZ			  2
+#define	 ULFS_WAPBL_INFS_INO			  3
 
 /* fs->fs_journal_flags */
-#define	UFS_WAPBL_FLAGS_CREATE_LOG		0x1
-#define	UFS_WAPBL_FLAGS_CLEAR_LOG		0x2
+#define	ULFS_WAPBL_FLAGS_CREATE_LOG		0x1
+#define	ULFS_WAPBL_FLAGS_CLEAR_LOG		0x2
 
 
 /*
@@ -76,9 +76,9 @@
  *
  * XXX: Is 64MB too limiting?  If user explicitly asks for more, allow it?
  */
-#define	UFS_WAPBL_JOURNAL_SCALE			1024
-#define	UFS_WAPBL_MIN_JOURNAL_SIZE		(1024 * 1024)
-#define	UFS_WAPBL_MAX_JOURNAL_SIZE		(64 * 1024 * 1024)
+#define	ULFS_WAPBL_JOURNAL_SCALE			1024
+#define	ULFS_WAPBL_MIN_JOURNAL_SIZE		(1024 * 1024)
+#define	ULFS_WAPBL_MAX_JOURNAL_SIZE		(64 * 1024 * 1024)
 
 
 #if defined(WAPBL)
@@ -92,11 +92,11 @@
 #endif
 
 #ifdef WAPBL_DEBUG_INODES
-void	ufs_wapbl_verify_inodes(struct mount *, const char *);
+void	ulfs_wapbl_verify_inodes(struct mount *, const char *);
 #endif
 
 static __inline int
-ufs_wapbl_begin2(struct mount *mp, struct vnode *vp1, struct vnode *vp2,
+ulfs_wapbl_begin2(struct mount *mp, struct vnode *vp1, struct vnode *vp2,
 		 const char *file, int line)
 {
 	if (mp->mnt_wapbl) {
@@ -111,19 +111,19 @@ ufs_wapbl_begin2(struct mount *mp, struct vnode *vp1, struct vnode *vp2,
 			return error;
 #ifdef WAPBL_DEBUG_INODES
 		if (mp->mnt_wapbl->wl_lock.lk_exclusivecount == 1)
-			ufs_wapbl_verify_inodes(mp, "wapbl_begin");
+			ulfs_wapbl_verify_inodes(mp, "wapbl_begin");
 #endif
 	}
 	return 0;
 }
 
 static __inline void
-ufs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
+ulfs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
 {
 	if (mp->mnt_wapbl) {
 #ifdef WAPBL_DEBUG_INODES
 		if (mp->mnt_wapbl->wl_lock.lk_exclusivecount == 1)
-			ufs_wapbl_verify_inodes(mp, "wapbl_end");
+			ulfs_wapbl_verify_inodes(mp, "wapbl_end");
 #endif
 		wapbl_end(mp->mnt_wapbl);
 		if (vp2)
@@ -133,47 +133,47 @@ ufs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
 	}
 }
 
-#define	UFS_WAPBL_BEGIN(mp)						\
-	ufs_wapbl_begin2(mp, NULL, NULL, __FUNCTION__, __LINE__)
-#define	UFS_WAPBL_BEGIN1(mp, v1)					\
-	ufs_wapbl_begin2(mp, v1, NULL, __FUNCTION__, __LINE__)
-#define	UFS_WAPBL_END(mp)	ufs_wapbl_end2(mp, NULL, NULL)
-#define	UFS_WAPBL_END1(mp, v1)	ufs_wapbl_end2(mp, v1, NULL)
+#define	ULFS_WAPBL_BEGIN(mp)						\
+	ulfs_wapbl_begin2(mp, NULL, NULL, __FUNCTION__, __LINE__)
+#define	ULFS_WAPBL_BEGIN1(mp, v1)					\
+	ulfs_wapbl_begin2(mp, v1, NULL, __FUNCTION__, __LINE__)
+#define	ULFS_WAPBL_END(mp)	ulfs_wapbl_end2(mp, NULL, NULL)
+#define	ULFS_WAPBL_END1(mp, v1)	ulfs_wapbl_end2(mp, v1, NULL)
 
-#define	UFS_WAPBL_UPDATE(vp, access, modify, flags)			\
+#define	ULFS_WAPBL_UPDATE(vp, access, modify, flags)			\
 	if ((vp)->v_mount->mnt_wapbl) {					\
-		UFS_UPDATE(vp, access, modify, flags);			\
+		ULFS_UPDATE(vp, access, modify, flags);			\
 	}
 
-#ifdef UFS_WAPBL_DEBUG_JLOCK
-#define	UFS_WAPBL_JLOCK_ASSERT(mp)					\
+#ifdef ULFS_WAPBL_DEBUG_JLOCK
+#define	ULFS_WAPBL_JLOCK_ASSERT(mp)					\
 	if (mp->mnt_wapbl) wapbl_jlock_assert(mp->mnt_wapbl)
-#define	UFS_WAPBL_JUNLOCK_ASSERT(mp)					\
+#define	ULFS_WAPBL_JUNLOCK_ASSERT(mp)					\
 	if (mp->mnt_wapbl) wapbl_junlock_assert(mp->mnt_wapbl)
 #else
-#define	UFS_WAPBL_JLOCK_ASSERT(mp)
-#define	UFS_WAPBL_JUNLOCK_ASSERT(mp)
+#define	ULFS_WAPBL_JLOCK_ASSERT(mp)
+#define	ULFS_WAPBL_JUNLOCK_ASSERT(mp)
 #endif
 
-#define	UFS_WAPBL_REGISTER_INODE(mp, ino, mode)				\
+#define	ULFS_WAPBL_REGISTER_INODE(mp, ino, mode)				\
 	if (mp->mnt_wapbl) wapbl_register_inode(mp->mnt_wapbl, ino, mode)
-#define	UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)			\
+#define	ULFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)			\
 	if (mp->mnt_wapbl) wapbl_unregister_inode(mp->mnt_wapbl, ino, mode)
 
-#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)			\
+#define	ULFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)			\
 	if (mp->mnt_wapbl) wapbl_register_deallocation(mp->mnt_wapbl, blk, len)
 
 #else /* ! WAPBL */
-#define	UFS_WAPBL_BEGIN(mp) 0
-#define	UFS_WAPBL_BEGIN1(mp, v1) 0
-#define	UFS_WAPBL_END(mp)	do { } while (0)
-#define	UFS_WAPBL_END1(mp, v1)
-#define	UFS_WAPBL_UPDATE(vp, access, modify, flags)	do { } while (0)
-#define	UFS_WAPBL_JLOCK_ASSERT(mp)
-#define	UFS_WAPBL_JUNLOCK_ASSERT(mp)
-#define	UFS_WAPBL_REGISTER_INODE(mp, ino, mode)		do { } while (0)
-#define	UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)	do { } while (0)
-#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)
+#define	ULFS_WAPBL_BEGIN(mp) 0
+#define	ULFS_WAPBL_BEGIN1(mp, v1) 0
+#define	ULFS_WAPBL_END(mp)	do { } while (0)
+#define	ULFS_WAPBL_END1(mp, v1)
+#define	ULFS_WAPBL_UPDATE(vp, access, modify, flags)	do { } while (0)
+#define	ULFS_WAPBL_JLOCK_ASSERT(mp)
+#define	ULFS_WAPBL_JUNLOCK_ASSERT(mp)
+#define	ULFS_WAPBL_REGISTER_INODE(mp, ino, mode)		do { } while (0)
+#define	ULFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)	do { } while (0)
+#define	ULFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)
 #endif
 
-#endif /* !_UFS_UFS_UFS_WAPBL_H_ */
+#endif /* !_UFS_LFS_ULFS_WAPBL_H_ */

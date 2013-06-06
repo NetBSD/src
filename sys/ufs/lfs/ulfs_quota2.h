@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.h,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.h,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: quota2.h,v 1.9 2012/02/05 14:19:04 dholland Exp  */
 
 /*-
@@ -27,8 +27,8 @@
   * POSSIBILITY OF SUCH DAMAGE.
   */
 
-#ifndef _UFS_UFS_QUOTA2_H_
-#define _UFS_UFS_QUOTA2_H_
+#ifndef _UFS_LFS_ULFS_QUOTA2_H_
+#define _UFS_LFS_ULFS_QUOTA2_H_
 #include <ufs/lfs/ulfs_quotacommon.h>
 
 
@@ -106,8 +106,8 @@ struct quota2_header {
 /* quota2_subr.c */
 void quota2_addfreeq2e(struct quota2_header *, void *, uint64_t, uint64_t, int);
 void quota2_create_blk0(uint64_t, void *bp, int, int, int);
-void quota2_ufs_rwq2v(const struct quota2_val *, struct quota2_val *, int);
-void quota2_ufs_rwq2e(const struct quota2_entry *, struct quota2_entry *, int);
+void quota2_ulfs_rwq2v(const struct quota2_val *, struct quota2_val *, int);
+void quota2_ulfs_rwq2e(const struct quota2_entry *, struct quota2_entry *, int);
 
 /*
  * Return codes for quota_check_limit()
@@ -123,7 +123,7 @@ void quota2_ufs_rwq2e(const struct quota2_entry *, struct quota2_entry *, int);
 #define QL_STATUS(x)	((x) & 0x0f)
 #define QL_FLAGS(x)	((x) & 0xf0)
 
-/* check a quota usage against limits (assumes UFS semantic) */
+/* check a quota usage against limits */
 int quota_check_limit(uint64_t, uint64_t,  uint64_t, uint64_t, time_t, time_t);
 
-#endif /*  _UFS_UFS_QUOTA2_H_ */
+#endif /*  _UFS_LFS_ULFS_QUOTA2_H_ */

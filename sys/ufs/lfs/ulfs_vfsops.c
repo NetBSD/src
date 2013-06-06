@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.3 2013/06/06 00:46:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.4 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.52 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.3 2013/06/06 00:46:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.4 2013/06/06 00:48:04 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -65,10 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.3 2013/06/06 00:46:40 dholland Exp
 #include <ufs/lfs/ulfs_dirhash.h>
 #endif
 
-/* how many times ufs_init() was called */
-static int ufs_initcount = 0;
+/* how many times ulfs_init() was called */
+static int ulfs_initcount = 0;
 
-pool_cache_t ufs_direct_cache;
+pool_cache_t ulfs_direct_cache;
 
 /*
  * Make a filesystem operational.
@@ -76,7 +76,7 @@ pool_cache_t ufs_direct_cache;
  */
 /* ARGSUSED */
 int
-ufs_start(struct mount *mp, int flags)
+ulfs_start(struct mount *mp, int flags)
 {
 
 	return (0);
@@ -86,12 +86,12 @@ ufs_start(struct mount *mp, int flags)
  * Return the root of a filesystem.
  */
 int
-ufs_root(struct mount *mp, struct vnode **vpp)
+ulfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)UFS_ROOTINO, &nvp)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)ULFS_ROOTINO, &nvp)) != 0)
 		return (error);
 	*vpp = nvp;
 	return (0);
@@ -101,7 +101,7 @@ ufs_root(struct mount *mp, struct vnode **vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(struct mount *mp, struct quotactl_args *args)
+ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 {
 
 #if !defined(LFS_QUOTA) && !defined(LFS_QUOTA2)
@@ -213,7 +213,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
  * filesystem has validated the file handle.
  */
 int
-ufs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
+ulfs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	struct inode *ip;
@@ -235,56 +235,56 @@ ufs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
 }
 
 /*
- * Initialize UFS filesystems, done only once.
+ * Initialize ULFS filesystems, done only once.
  */
 void
-ufs_init(void)
+ulfs_init(void)
 {
-	if (ufs_initcount++ > 0)
+	if (ulfs_initcount++ > 0)
 		return;
 
-	ufs_direct_cache = pool_cache_init(sizeof(struct direct), 0, 0, 0,
-	    "ufsdir", NULL, IPL_NONE, NULL, NULL, NULL);
+	ulfs_direct_cache = pool_cache_init(sizeof(struct direct), 0, 0, 0,
+	    "ulfsdir", NULL, IPL_NONE, NULL, NULL, NULL);
 
-	ufs_ihashinit();
+	ulfs_ihashinit();
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	dqinit();
 #endif
 #ifdef LFS_DIRHASH
-	ufsdirhash_init();
+	ulfsdirhash_init();
 #endif
 #ifdef LFS_EXTATTR
-	ufs_extattr_init();
+	ulfs_extattr_init();
 #endif
 }
 
 void
-ufs_reinit(void)
+ulfs_reinit(void)
 {
-	ufs_ihashreinit();
+	ulfs_ihashreinit();
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	dqreinit();
 #endif
 }
 
 /*
- * Free UFS filesystem resources, done only once.
+ * Free ULFS filesystem resources, done only once.
  */
 void
-ufs_done(void)
+ulfs_done(void)
 {
-	if (--ufs_initcount > 0)
+	if (--ulfs_initcount > 0)
 		return;
 
-	ufs_ihashdone();
+	ulfs_ihashdone();
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	dqdone();
 #endif
-	pool_cache_destroy(ufs_direct_cache);
+	pool_cache_destroy(ulfs_direct_cache);
 #ifdef LFS_DIRHASH
-	ufsdirhash_done();
+	ulfsdirhash_done();
 #endif
 #ifdef LFS_EXTATTR
-	ufs_extattr_done();
+	ulfs_extattr_done();
 #endif
 }

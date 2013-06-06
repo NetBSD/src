@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_ihash.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_ihash.c,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: ufs_ihash.c,v 1.31 2011/06/12 03:36:02 rmind Exp  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_ihash.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_ihash.c,v 1.3 2013/06/06 00:48:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,18 +51,18 @@ static LIST_HEAD(ihashhead, inode) *ihashtbl;
 static u_long	ihash;		/* size of hash table - 1 */
 #define INOHASH(device, inum)	(((device) + (inum)) & ihash)
 
-kmutex_t	ufs_ihash_lock;
-kmutex_t	ufs_hashlock;
+kmutex_t	ulfs_ihash_lock;
+kmutex_t	ulfs_hashlock;
 
 /*
  * Initialize inode hash table.
  */
 void
-ufs_ihashinit(void)
+ulfs_ihashinit(void)
 {
 
-	mutex_init(&ufs_hashlock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&ufs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&ulfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&ulfs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
 	ihashtbl = hashinit(desiredvnodes, HASH_LIST, true, &ihash);
 }
 
@@ -71,7 +71,7 @@ ufs_ihashinit(void)
  */
 
 void
-ufs_ihashreinit(void)
+ulfs_ihashreinit(void)
 {
 	struct inode *ip;
 	struct ihashhead *oldhash, *hash;
@@ -79,7 +79,7 @@ ufs_ihashreinit(void)
 	int i;
 
 	hash = hashinit(desiredvnodes, HASH_LIST, true, &mask);
-	mutex_enter(&ufs_ihash_lock);
+	mutex_enter(&ulfs_ihash_lock);
 	oldhash = ihashtbl;
 	oldmask = ihash;
 	ihashtbl = hash;
@@ -91,7 +91,7 @@ ufs_ihashreinit(void)
 			LIST_INSERT_HEAD(&hash[val], ip, i_hash);
 		}
 	}
-	mutex_exit(&ufs_ihash_lock);
+	mutex_exit(&ulfs_ihash_lock);
 	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
@@ -99,12 +99,12 @@ ufs_ihashreinit(void)
  * Free inode hash table.
  */
 void
-ufs_ihashdone(void)
+ulfs_ihashdone(void)
 {
 
 	hashdone(ihashtbl, HASH_LIST, ihash);
-	mutex_destroy(&ufs_hashlock);
-	mutex_destroy(&ufs_ihash_lock);
+	mutex_destroy(&ulfs_hashlock);
+	mutex_destroy(&ulfs_ihash_lock);
 }
 
 /*
@@ -112,12 +112,12 @@ ufs_ihashdone(void)
  * to it. If it is in core, return it, even if it is locked.
  */
 struct vnode *
-ufs_ihashlookup(dev_t dev, ino_t inum)
+ulfs_ihashlookup(dev_t dev, ino_t inum)
 {
 	struct inode *ip;
 	struct ihashhead *ipp;
 
-	KASSERT(mutex_owned(&ufs_ihash_lock));
+	KASSERT(mutex_owned(&ulfs_ihash_lock));
 
 	ipp = &ihashtbl[INOHASH(dev, inum)];
 	LIST_FOREACH(ip, ipp, i_hash) {
@@ -134,30 +134,30 @@ ufs_ihashlookup(dev_t dev, ino_t inum)
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-ufs_ihashget(dev_t dev, ino_t inum, int flags)
+ulfs_ihashget(dev_t dev, ino_t inum, int flags)
 {
 	struct ihashhead *ipp;
 	struct inode *ip;
 	struct vnode *vp;
 
  loop:
-	mutex_enter(&ufs_ihash_lock);
+	mutex_enter(&ulfs_ihash_lock);
 	ipp = &ihashtbl[INOHASH(dev, inum)];
 	LIST_FOREACH(ip, ipp, i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
 			if (flags == 0) {
-				mutex_exit(&ufs_ihash_lock);
+				mutex_exit(&ulfs_ihash_lock);
 			} else {
 				mutex_enter(vp->v_interlock);
-				mutex_exit(&ufs_ihash_lock);
+				mutex_exit(&ulfs_ihash_lock);
 				if (vget(vp, flags))
 					goto loop;
 			}
 			return (vp);
 		}
 	}
-	mutex_exit(&ufs_ihash_lock);
+	mutex_exit(&ulfs_ihash_lock);
 	return (NULL);
 }
 
@@ -165,28 +165,28 @@ ufs_ihashget(dev_t dev, ino_t inum, int flags)
  * Insert the inode into the hash table, and return it locked.
  */
 void
-ufs_ihashins(struct inode *ip)
+ulfs_ihashins(struct inode *ip)
 {
 	struct ihashhead *ipp;
 
-	KASSERT(mutex_owned(&ufs_hashlock));
+	KASSERT(mutex_owned(&ulfs_hashlock));
 
 	/* lock the inode, then put it on the appropriate hash list */
 	VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
 
-	mutex_enter(&ufs_ihash_lock);
+	mutex_enter(&ulfs_ihash_lock);
 	ipp = &ihashtbl[INOHASH(ip->i_dev, ip->i_number)];
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
-	mutex_exit(&ufs_ihash_lock);
+	mutex_exit(&ulfs_ihash_lock);
 }
 
 /*
  * Remove the inode from the hash table.
  */
 void
-ufs_ihashrem(struct inode *ip)
+ulfs_ihashrem(struct inode *ip)
 {
-	mutex_enter(&ufs_ihash_lock);
+	mutex_enter(&ulfs_ihash_lock);
 	LIST_REMOVE(ip, i_hash);
-	mutex_exit(&ufs_ihash_lock);
+	mutex_exit(&ulfs_ihash_lock);
 }

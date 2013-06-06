@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.3 2013/06/06 00:46:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.4 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.212 2013/03/18 19:35:48 plunky Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.3 2013/06/06 00:46:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.4 2013/06/06 00:48:04 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -117,8 +117,8 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.3 2013/06/06 00:46:40 dholland Exp 
 __CTASSERT(EXT2FS_MAXNAMLEN == FFS_MAXNAMLEN);
 __CTASSERT(LFS_MAXNAMLEN == FFS_MAXNAMLEN);
 
-static int ufs_chmod(struct vnode *, int, kauth_cred_t, struct lwp *);
-static int ufs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
+static int ulfs_chmod(struct vnode *, int, kauth_cred_t, struct lwp *);
+static int ulfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
     struct lwp *);
 
 /*
@@ -133,7 +133,7 @@ static const struct dirtemplate mastertemplate = {
  * Create a regular file
  */
 int
-ufs_create(void *v)
+ulfs_create(void *v)
 {
 	struct vop_create_args /* {
 		struct vnode		*a_dvp;
@@ -143,25 +143,25 @@ ufs_create(void *v)
 	} */ *ap = v;
 	int	error;
 	struct vnode *dvp = ap->a_dvp;
-	struct ufs_lookup_results *ulr;
+	struct ulfs_lookup_results *ulr;
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
-	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
+	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	/*
-	 * UFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
-	 * ufs_makeinode
+	 * ULFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
+	 * ulfs_makeinode
 	 */
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	error =
-	    ufs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
+	    ulfs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
 			  dvp, ulr, ap->a_vpp, ap->a_cnp);
 	if (error) {
 		fstrans_done(dvp->v_mount);
 		return (error);
 	}
-	UFS_WAPBL_END1(dvp->v_mount, dvp);
+	ULFS_WAPBL_END1(dvp->v_mount, dvp);
 	fstrans_done(dvp->v_mount);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	return (0);
@@ -172,7 +172,7 @@ ufs_create(void *v)
  */
 /* ARGSUSED */
 int
-ufs_mknod(void *v)
+ulfs_mknod(void *v)
 {
 	struct vop_mknod_args /* {
 		struct vnode		*a_dvp;
@@ -186,22 +186,22 @@ ufs_mknod(void *v)
 	int		error;
 	struct mount	*mp;
 	ino_t		ino;
-	struct ufs_lookup_results *ulr;
+	struct ulfs_lookup_results *ulr;
 
 	vap = ap->a_vap;
 	vpp = ap->a_vpp;
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(ap->a_dvp)->i_crap;
-	UFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
+	ULFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
 
 	/*
-	 * UFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
-	 * ufs_makeinode
+	 * ULFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
+	 * ulfs_makeinode
 	 */
 	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
 	if ((error =
-	    ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
+	    ulfs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
 	    ap->a_dvp, ulr, vpp, ap->a_cnp)) != 0)
 		goto out;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
@@ -210,20 +210,20 @@ ufs_mknod(void *v)
 	ino = ip->i_number;
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {
-		struct ufsmount *ump = ip->i_ump;
+		struct ulfsmount *ump = ip->i_ump;
 		/*
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
 		 */
-		if (ump->um_fstype == UFS1)
-			ip->i_ffs1_rdev = ufs_rw32(vap->va_rdev,
-			    UFS_MPNEEDSWAP(ump));
+		if (ump->um_fstype == ULFS1)
+			ip->i_ffs1_rdev = ulfs_rw32(vap->va_rdev,
+			    ULFS_MPNEEDSWAP(ump));
 		else
-			ip->i_ffs2_rdev = ufs_rw64(vap->va_rdev,
-			    UFS_MPNEEDSWAP(ump));
+			ip->i_ffs2_rdev = ulfs_rw64(vap->va_rdev,
+			    ULFS_MPNEEDSWAP(ump));
 	}
-	UFS_WAPBL_UPDATE(*vpp, NULL, NULL, 0);
-	UFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
+	ULFS_WAPBL_UPDATE(*vpp, NULL, NULL, 0);
+	ULFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
 	/*
 	 * Remove inode so that it will be reloaded by VFS_VGET and
 	 * checked to see if it is an alias of an existing entry in
@@ -249,7 +249,7 @@ out:
  */
 /* ARGSUSED */
 int
-ufs_open(void *v)
+ulfs_open(void *v)
 {
 	struct vop_open_args /* {
 		struct vnode	*a_vp;
@@ -273,7 +273,7 @@ ufs_open(void *v)
  */
 /* ARGSUSED */
 int
-ufs_close(void *v)
+ulfs_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode	*a_vp;
@@ -287,13 +287,13 @@ ufs_close(void *v)
 	ip = VTOI(vp);
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	if (vp->v_usecount > 1)
-		UFS_ITIMES(vp, NULL, NULL, NULL);
+		ULFS_ITIMES(vp, NULL, NULL, NULL);
 	fstrans_done(vp->v_mount);
 	return (0);
 }
 
 static int
-ufs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
+ulfs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
     kauth_cred_t cred)
 {
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
@@ -342,7 +342,7 @@ ufs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
 }
 
 static int
-ufs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
+ulfs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
     kauth_cred_t cred)
 {
 
@@ -352,7 +352,7 @@ ufs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
 }
 
 int
-ufs_access(void *v)
+ulfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode	*a_vp;
@@ -368,18 +368,18 @@ ufs_access(void *v)
 	ip = VTOI(vp);
 	mode = ap->a_mode;
 
-	error = ufs_check_possible(vp, ip, mode, ap->a_cred);
+	error = ulfs_check_possible(vp, ip, mode, ap->a_cred);
 	if (error)
 		return error;
 
-	error = ufs_check_permitted(vp, ip, mode, ap->a_cred);
+	error = ulfs_check_permitted(vp, ip, mode, ap->a_cred);
 
 	return error;
 }
 
 /* ARGSUSED */
 int
-ufs_getattr(void *v)
+ulfs_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode	*a_vp;
@@ -394,7 +394,7 @@ ufs_getattr(void *v)
 	ip = VTOI(vp);
 	vap = ap->a_vap;
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
-	UFS_ITIMES(vp, NULL, NULL, NULL);
+	ULFS_ITIMES(vp, NULL, NULL, NULL);
 
 	/*
 	 * Copy from inode table
@@ -406,9 +406,9 @@ ufs_getattr(void *v)
 	vap->va_uid = ip->i_uid;
 	vap->va_gid = ip->i_gid;
 	vap->va_size = vp->v_size;
-	if (ip->i_ump->um_fstype == UFS1) {
-		vap->va_rdev = (dev_t)ufs_rw32(ip->i_ffs1_rdev,
-		    UFS_MPNEEDSWAP(ip->i_ump));
+	if (ip->i_ump->um_fstype == ULFS1) {
+		vap->va_rdev = (dev_t)ulfs_rw32(ip->i_ffs1_rdev,
+		    ULFS_MPNEEDSWAP(ip->i_ump));
 		vap->va_atime.tv_sec = ip->i_ffs1_atime;
 		vap->va_atime.tv_nsec = ip->i_ffs1_atimensec;
 		vap->va_mtime.tv_sec = ip->i_ffs1_mtime;
@@ -419,8 +419,8 @@ ufs_getattr(void *v)
 		vap->va_birthtime.tv_nsec = 0;
 		vap->va_bytes = dbtob((u_quad_t)ip->i_ffs1_blocks);
 	} else {
-		vap->va_rdev = (dev_t)ufs_rw64(ip->i_ffs2_rdev,
-		    UFS_MPNEEDSWAP(ip->i_ump));
+		vap->va_rdev = (dev_t)ulfs_rw64(ip->i_ffs2_rdev,
+		    ULFS_MPNEEDSWAP(ip->i_ump));
 		vap->va_atime.tv_sec = ip->i_ffs2_atime;
 		vap->va_atime.tv_nsec = ip->i_ffs2_atimensec;
 		vap->va_mtime.tv_sec = ip->i_ffs2_mtime;
@@ -451,7 +451,7 @@ ufs_getattr(void *v)
  * Set attribute vnode op. called from several syscalls
  */
 int
-ufs_setattr(void *v)
+ulfs_setattr(void *v)
 {
 	struct vop_setattr_args /* {
 		struct vnode	*a_vp;
@@ -516,13 +516,13 @@ ufs_setattr(void *v)
 			goto out;
 
 		if (changing_sysflags) {
-			error = UFS_WAPBL_BEGIN(vp->v_mount);
+			error = ULFS_WAPBL_BEGIN(vp->v_mount);
 			if (error)
 				goto out;
 			ip->i_flags = vap->va_flags;
 			DIP_ASSIGN(ip, flags, ip->i_flags);
 		} else {
-			error = UFS_WAPBL_BEGIN(vp->v_mount);
+			error = ULFS_WAPBL_BEGIN(vp->v_mount);
 			if (error)
 				goto out;
 			ip->i_flags &= SF_SETTABLE;
@@ -530,8 +530,8 @@ ufs_setattr(void *v)
 			DIP_ASSIGN(ip, flags, ip->i_flags);
 		}
 		ip->i_flag |= IN_CHANGE;
-		UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
-		UFS_WAPBL_END(vp->v_mount);
+		ULFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
+		ULFS_WAPBL_END(vp->v_mount);
 		if (vap->va_flags & (IMMUTABLE | APPEND)) {
 			error = 0;
 			goto out;
@@ -549,11 +549,11 @@ ufs_setattr(void *v)
 			error = EROFS;
 			goto out;
 		}
-		error = UFS_WAPBL_BEGIN(vp->v_mount);
+		error = ULFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
 			goto out;
-		error = ufs_chown(vp, vap->va_uid, vap->va_gid, cred, l);
-		UFS_WAPBL_END(vp->v_mount);
+		error = ulfs_chown(vp, vap->va_uid, vap->va_gid, cred, l);
+		ULFS_WAPBL_END(vp->v_mount);
 		if (error)
 			goto out;
 	}
@@ -580,7 +580,7 @@ ufs_setattr(void *v)
 				error = EPERM;
 				goto out;
 			}
-			error = UFS_WAPBL_BEGIN(vp->v_mount);
+			error = ULFS_WAPBL_BEGIN(vp->v_mount);
 			if (error)
 				goto out;
 			/*
@@ -590,7 +590,7 @@ ufs_setattr(void *v)
 			if (vp->v_mount->mnt_wapbl) {
 				uint64_t incr = MNINDIR(ip->i_ump) <<
 				    vp->v_mount->mnt_fs_bshift; /* Power of 2 */
-				uint64_t base = UFS_NDADDR <<
+				uint64_t base = ULFS_NDADDR <<
 				    vp->v_mount->mnt_fs_bshift;
 				while (!error && ip->i_size > base + incr &&
 				    ip->i_size > vap->va_size + incr) {
@@ -601,18 +601,18 @@ ufs_setattr(void *v)
 					uint64_t nsize = base +
 					    ((ip->i_size - base - 1) &
 					    ~(incr - 1));
-					error = UFS_TRUNCATE(vp, nsize, 0,
+					error = ULFS_TRUNCATE(vp, nsize, 0,
 					    cred);
 					if (error == 0) {
-						UFS_WAPBL_END(vp->v_mount);
+						ULFS_WAPBL_END(vp->v_mount);
 						error =
-						   UFS_WAPBL_BEGIN(vp->v_mount);
+						   ULFS_WAPBL_BEGIN(vp->v_mount);
 					}
 				}
 			}
 			if (!error)
-				error = UFS_TRUNCATE(vp, vap->va_size, 0, cred);
-			UFS_WAPBL_END(vp->v_mount);
+				error = ULFS_TRUNCATE(vp, vap->va_size, 0, cred);
+			ULFS_WAPBL_END(vp->v_mount);
 			if (error)
 				goto out;
 			break;
@@ -636,7 +636,7 @@ ufs_setattr(void *v)
 		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid, cred));
 		if (error)
 			goto out;
-		error = UFS_WAPBL_BEGIN(vp->v_mount);
+		error = ULFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
 			goto out;
 		if (vap->va_atime.tv_sec != VNOVAL)
@@ -648,12 +648,12 @@ ufs_setattr(void *v)
 				ip->i_flag |= IN_ACCESS;
 		}
 		if (vap->va_birthtime.tv_sec != VNOVAL &&
-		    ip->i_ump->um_fstype == UFS2) {
+		    ip->i_ump->um_fstype == ULFS2) {
 			ip->i_ffs2_birthtime = vap->va_birthtime.tv_sec;
 			ip->i_ffs2_birthnsec = vap->va_birthtime.tv_nsec;
 		}
-		error = UFS_UPDATE(vp, &vap->va_atime, &vap->va_mtime, 0);
-		UFS_WAPBL_END(vp->v_mount);
+		error = ULFS_UPDATE(vp, &vap->va_atime, &vap->va_mtime, 0);
+		ULFS_WAPBL_END(vp->v_mount);
 		if (error)
 			goto out;
 	}
@@ -669,11 +669,11 @@ ufs_setattr(void *v)
 			error = EPERM;
 			goto out;
 		}
-		error = UFS_WAPBL_BEGIN(vp->v_mount);
+		error = ULFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
 			goto out;
-		error = ufs_chmod(vp, (int)vap->va_mode, cred, l);
-		UFS_WAPBL_END(vp->v_mount);
+		error = ulfs_chmod(vp, (int)vap->va_mode, cred, l);
+		ULFS_WAPBL_END(vp->v_mount);
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 out:
@@ -686,12 +686,12 @@ out:
  * Inode must be locked before calling.
  */
 static int
-ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
+ulfs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 {
 	struct inode	*ip;
 	int		error;
 
-	UFS_WAPBL_JLOCK_ASSERT(vp->v_mount);
+	ULFS_WAPBL_JLOCK_ASSERT(vp->v_mount);
 
 	ip = VTOI(vp);
 
@@ -705,7 +705,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	ip->i_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
 	DIP_ASSIGN(ip, mode, ip->i_mode);
-	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
+	ULFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	fstrans_done(vp->v_mount);
 	return (0);
 }
@@ -715,7 +715,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
  * inode must be locked prior to call.
  */
 static int
-ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
+ulfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
     	struct lwp *l)
 {
 	struct inode	*ip;
@@ -768,13 +768,13 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
  good:
 #endif /* LFS_QUOTA || LFS_QUOTA2 */
 	ip->i_flag |= IN_CHANGE;
-	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
+	ULFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	fstrans_done(vp->v_mount);
 	return (0);
 }
 
 int
-ufs_remove(void *v)
+ulfs_remove(void *v)
 {
 	struct vop_remove_args /* {
 		struct vnode		*a_dvp;
@@ -784,7 +784,7 @@ ufs_remove(void *v)
 	struct vnode	*vp, *dvp;
 	struct inode	*ip;
 	int		error;
-	struct ufs_lookup_results *ulr;
+	struct ulfs_lookup_results *ulr;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
@@ -792,18 +792,18 @@ ufs_remove(void *v)
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
-	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
+	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	if (vp->v_type == VDIR || (ip->i_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_flags & APPEND))
 		error = EPERM;
 	else {
-		error = UFS_WAPBL_BEGIN(dvp->v_mount);
+		error = ULFS_WAPBL_BEGIN(dvp->v_mount);
 		if (error == 0) {
-			error = ufs_dirremove(dvp, ulr,
+			error = ulfs_dirremove(dvp, ulr,
 					      ip, ap->a_cnp->cn_flags, 0);
-			UFS_WAPBL_END(dvp->v_mount);
+			ULFS_WAPBL_END(dvp->v_mount);
 		}
 	}
 	VN_KNOTE(vp, NOTE_DELETE);
@@ -818,10 +818,10 @@ ufs_remove(void *v)
 }
 
 /*
- * ufs_link: create hard link.
+ * ulfs_link: create hard link.
  */
 int
-ufs_link(void *v)
+ulfs_link(void *v)
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
@@ -834,7 +834,7 @@ ufs_link(void *v)
 	struct inode *ip;
 	struct direct *newdir;
 	int error;
-	struct ufs_lookup_results *ulr;
+	struct ulfs_lookup_results *ulr;
 
 	KASSERT(dvp != vp);
 	KASSERT(vp->v_type != VDIR);
@@ -842,7 +842,7 @@ ufs_link(void *v)
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
-	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
+	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	error = vn_lock(vp, LK_EXCLUSIVE);
@@ -861,7 +861,7 @@ ufs_link(void *v)
 		error = EPERM;
 		goto out1;
 	}
-	error = UFS_WAPBL_BEGIN(vp->v_mount);
+	error = ULFS_WAPBL_BEGIN(vp->v_mount);
 	if (error) {
 		VOP_ABORTOP(dvp, cnp);
 		goto out1;
@@ -869,20 +869,20 @@ ufs_link(void *v)
 	ip->i_nlink++;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_flag |= IN_CHANGE;
-	error = UFS_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
+	error = ULFS_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	if (!error) {
-		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
-		ufs_makedirentry(ip, cnp, newdir);
-		error = ufs_direnter(dvp, ulr, vp, newdir, cnp, NULL);
-		pool_cache_put(ufs_direct_cache, newdir);
+		newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
+		ulfs_makedirentry(ip, cnp, newdir);
+		error = ulfs_direnter(dvp, ulr, vp, newdir, cnp, NULL);
+		pool_cache_put(ulfs_direct_cache, newdir);
 	}
 	if (error) {
 		ip->i_nlink--;
 		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
-		UFS_WAPBL_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
+		ULFS_WAPBL_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	}
-	UFS_WAPBL_END(vp->v_mount);
+	ULFS_WAPBL_END(vp->v_mount);
  out1:
 	VOP_UNLOCK(vp);
  out2:
@@ -897,7 +897,7 @@ ufs_link(void *v)
  * whiteout vnode call
  */
 int
-ufs_whiteout(void *v)
+ulfs_whiteout(void *v)
 {
 	struct vop_whiteout_args /* {
 		struct vnode		*a_dvp;
@@ -908,12 +908,12 @@ ufs_whiteout(void *v)
 	struct componentname	*cnp = ap->a_cnp;
 	struct direct		*newdir;
 	int			error;
-	struct ufsmount		*ump = VFSTOUFS(dvp->v_mount);
-	struct ufs_lookup_results *ulr;
+	struct ulfsmount	*ump = VFSTOULFS(dvp->v_mount);
+	struct ulfs_lookup_results *ulr;
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
-	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
+	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	error = 0;
 	switch (ap->a_flags) {
@@ -926,50 +926,50 @@ ufs_whiteout(void *v)
 	case CREATE:
 		/* create a new directory whiteout */
 		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-		error = UFS_WAPBL_BEGIN(dvp->v_mount);
+		error = ULFS_WAPBL_BEGIN(dvp->v_mount);
 		if (error)
 			break;
 #ifdef DIAGNOSTIC
 		if (ump->um_maxsymlinklen <= 0)
-			panic("ufs_whiteout: old format filesystem");
+			panic("ulfs_whiteout: old format filesystem");
 #endif
 
-		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
-		newdir->d_ino = UFS_WINO;
+		newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
+		newdir->d_ino = ULFS_WINO;
 		newdir->d_namlen = cnp->cn_namelen;
 		memcpy(newdir->d_name, cnp->cn_nameptr,
 		    (size_t)cnp->cn_namelen);
 		newdir->d_name[cnp->cn_namelen] = '\0';
 		newdir->d_type = DT_WHT;
-		error = ufs_direnter(dvp, ulr, NULL, newdir, cnp, NULL);
-		pool_cache_put(ufs_direct_cache, newdir);
+		error = ulfs_direnter(dvp, ulr, NULL, newdir, cnp, NULL);
+		pool_cache_put(ulfs_direct_cache, newdir);
 		break;
 
 	case DELETE:
 		/* remove an existing directory whiteout */
 		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-		error = UFS_WAPBL_BEGIN(dvp->v_mount);
+		error = ULFS_WAPBL_BEGIN(dvp->v_mount);
 		if (error)
 			break;
 #ifdef DIAGNOSTIC
 		if (ump->um_maxsymlinklen <= 0)
-			panic("ufs_whiteout: old format filesystem");
+			panic("ulfs_whiteout: old format filesystem");
 #endif
 
 		cnp->cn_flags &= ~DOWHITEOUT;
-		error = ufs_dirremove(dvp, ulr, NULL, cnp->cn_flags, 0);
+		error = ulfs_dirremove(dvp, ulr, NULL, cnp->cn_flags, 0);
 		break;
 	default:
-		panic("ufs_whiteout: unknown op");
+		panic("ulfs_whiteout: unknown op");
 		/* NOTREACHED */
 	}
-	UFS_WAPBL_END(dvp->v_mount);
+	ULFS_WAPBL_END(dvp->v_mount);
 	fstrans_done(dvp->v_mount);
 	return (error);
 }
 
 int
-ufs_mkdir(void *v)
+ulfs_mkdir(void *v)
 {
 	struct vop_mkdir_args /* {
 		struct vnode		*a_dvp;
@@ -985,15 +985,15 @@ ufs_mkdir(void *v)
 	struct dirtemplate	dirtemplate;
 	struct direct		*newdir;
 	int			error, dmode;
-	struct ufsmount		*ump = dp->i_ump;
+	struct ulfsmount	*ump = dp->i_ump;
 	int			dirblksiz = ump->um_dirblksiz;
-	struct ufs_lookup_results *ulr;
+	struct ulfs_lookup_results *ulr;
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 
 	/* XXX should handle this material another way */
 	ulr = &dp->i_crap;
-	UFS_CHECK_CRAPCOUNTER(dp);
+	ULFS_CHECK_CRAPCOUNTER(dp);
 
 	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
 		error = EMLINK;
@@ -1002,19 +1002,19 @@ ufs_mkdir(void *v)
 	dmode = vap->va_mode & ACCESSPERMS;
 	dmode |= IFDIR;
 	/*
-	 * Must simulate part of ufs_makeinode here to acquire the inode,
+	 * Must simulate part of ulfs_makeinode here to acquire the inode,
 	 * but not have it entered in the parent directory. The entry is
 	 * made later after writing "." and ".." entries.
 	 */
-	if ((error = UFS_VALLOC(dvp, dmode, cnp->cn_cred, ap->a_vpp)) != 0)
+	if ((error = ULFS_VALLOC(dvp, dmode, cnp->cn_cred, ap->a_vpp)) != 0)
 		goto out;
 
 	tvp = *ap->a_vpp;
 	ip = VTOI(tvp);
 
-	error = UFS_WAPBL_BEGIN(ap->a_dvp->v_mount);
+	error = ULFS_WAPBL_BEGIN(ap->a_dvp->v_mount);
 	if (error) {
-		UFS_VFREE(tvp, ip->i_number, dmode);
+		ULFS_VFREE(tvp, ip->i_number, dmode);
 		vput(tvp);
 		goto out;
 	}
@@ -1024,8 +1024,8 @@ ufs_mkdir(void *v)
 	DIP_ASSIGN(ip, gid, ip->i_gid);
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	if ((error = chkiq(ip, 1, cnp->cn_cred, 0))) {
-		UFS_VFREE(tvp, ip->i_number, dmode);
-		UFS_WAPBL_END(dvp->v_mount);
+		ULFS_VFREE(tvp, ip->i_number, dmode);
+		ULFS_WAPBL_END(dvp->v_mount);
 		fstrans_done(dvp->v_mount);
 		vput(tvp);
 		vput(dvp);
@@ -1051,7 +1051,7 @@ ufs_mkdir(void *v)
 	dp->i_nlink++;
 	DIP_ASSIGN(dp, nlink, dp->i_nlink);
 	dp->i_flag |= IN_CHANGE;
-	if ((error = UFS_UPDATE(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
+	if ((error = ULFS_UPDATE(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
 
 	/*
@@ -1059,17 +1059,17 @@ ufs_mkdir(void *v)
 	 */
 	dirtemplate = mastertemplate;
 	dirtemplate.dotdot_reclen = dirblksiz - dirtemplate.dot_reclen;
-	dirtemplate.dot_ino = ufs_rw32(ip->i_number, UFS_MPNEEDSWAP(ump));
-	dirtemplate.dotdot_ino = ufs_rw32(dp->i_number, UFS_MPNEEDSWAP(ump));
-	dirtemplate.dot_reclen = ufs_rw16(dirtemplate.dot_reclen,
-	    UFS_MPNEEDSWAP(ump));
-	dirtemplate.dotdot_reclen = ufs_rw16(dirtemplate.dotdot_reclen,
-	    UFS_MPNEEDSWAP(ump));
+	dirtemplate.dot_ino = ulfs_rw32(ip->i_number, ULFS_MPNEEDSWAP(ump));
+	dirtemplate.dotdot_ino = ulfs_rw32(dp->i_number, ULFS_MPNEEDSWAP(ump));
+	dirtemplate.dot_reclen = ulfs_rw16(dirtemplate.dot_reclen,
+	    ULFS_MPNEEDSWAP(ump));
+	dirtemplate.dotdot_reclen = ulfs_rw16(dirtemplate.dotdot_reclen,
+	    ULFS_MPNEEDSWAP(ump));
 	if (ump->um_maxsymlinklen <= 0) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		if (UFS_MPNEEDSWAP(ump) == 0)
+		if (ULFS_MPNEEDSWAP(ump) == 0)
 #else
-		if (UFS_MPNEEDSWAP(ump) != 0)
+		if (ULFS_MPNEEDSWAP(ump) != 0)
 #endif
 		{
 			dirtemplate.dot_type = dirtemplate.dot_namlen;
@@ -1078,7 +1078,7 @@ ufs_mkdir(void *v)
 		} else
 			dirtemplate.dot_type = dirtemplate.dotdot_type = 0;
 	}
-	if ((error = UFS_BALLOC(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
+	if ((error = ULFS_BALLOC(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
 	    B_CLRBUF, &bp)) != 0)
 		goto bad;
 	ip->i_size = dirblksiz;
@@ -1094,33 +1094,33 @@ ufs_mkdir(void *v)
 	 */
 	if ((error = VOP_BWRITE(bp->b_vp, bp)) != 0)
 		goto bad;
-	if ((error = UFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
+	if ((error = ULFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
 		goto bad;
 	}
-	newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
-	ufs_makedirentry(ip, cnp, newdir);
-	error = ufs_direnter(dvp, ulr, tvp, newdir, cnp, bp);
-	pool_cache_put(ufs_direct_cache, newdir);
+	newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
+	ulfs_makedirentry(ip, cnp, newdir);
+	error = ulfs_direnter(dvp, ulr, tvp, newdir, cnp, bp);
+	pool_cache_put(ulfs_direct_cache, newdir);
  bad:
 	if (error == 0) {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-		UFS_WAPBL_END(dvp->v_mount);
+		ULFS_WAPBL_END(dvp->v_mount);
 	} else {
 		dp->i_nlink--;
 		DIP_ASSIGN(dp, nlink, dp->i_nlink);
 		dp->i_flag |= IN_CHANGE;
-		UFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
+		ULFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
 		/*
-		 * No need to do an explicit UFS_TRUNCATE here, vrele will
+		 * No need to do an explicit ULFS_TRUNCATE here, vrele will
 		 * do this for us because we set the link count to 0.
 		 */
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
 		ip->i_flag |= IN_CHANGE;
 		/* If IN_ADIROP, account for it */
-		UFS_UNMARK_VNODE(tvp);
-		UFS_WAPBL_UPDATE(tvp, NULL, NULL, UPDATE_DIROP);
-		UFS_WAPBL_END(dvp->v_mount);
+		ULFS_UNMARK_VNODE(tvp);
+		ULFS_WAPBL_UPDATE(tvp, NULL, NULL, UPDATE_DIROP);
+		ULFS_WAPBL_END(dvp->v_mount);
 		vput(tvp);
 	}
  out:
@@ -1130,7 +1130,7 @@ ufs_mkdir(void *v)
 }
 
 int
-ufs_rmdir(void *v)
+ulfs_rmdir(void *v)
 {
 	struct vop_rmdir_args /* {
 		struct vnode		*a_dvp;
@@ -1141,7 +1141,7 @@ ufs_rmdir(void *v)
 	struct componentname	*cnp;
 	struct inode		*ip, *dp;
 	int			error;
-	struct ufs_lookup_results *ulr;
+	struct ulfs_lookup_results *ulr;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
@@ -1151,7 +1151,7 @@ ufs_rmdir(void *v)
 
 	/* XXX should handle this material another way */
 	ulr = &dp->i_crap;
-	UFS_CHECK_CRAPCOUNTER(dp);
+	ULFS_CHECK_CRAPCOUNTER(dp);
 
 	/*
 	 * No rmdir "." or of mounted directories please.
@@ -1175,7 +1175,7 @@ ufs_rmdir(void *v)
 	 */
 	error = 0;
 	if (ip->i_nlink != 2 ||
-	    !ufs_dirempty(ip, dp->i_number, cnp->cn_cred)) {
+	    !ulfs_dirempty(ip, dp->i_number, cnp->cn_cred)) {
 		error = ENOTEMPTY;
 		goto out;
 	}
@@ -1184,7 +1184,7 @@ ufs_rmdir(void *v)
 		error = EPERM;
 		goto out;
 	}
-	error = UFS_WAPBL_BEGIN(dvp->v_mount);
+	error = ULFS_WAPBL_BEGIN(dvp->v_mount);
 	if (error)
 		goto out;
 	/*
@@ -1192,9 +1192,9 @@ ufs_rmdir(void *v)
 	 * inode.  If we crash in between, the directory
 	 * will be reattached to lost+found,
 	 */
-	error = ufs_dirremove(dvp, ulr, ip, cnp->cn_flags, 1);
+	error = ulfs_dirremove(dvp, ulr, ip, cnp->cn_flags, 1);
 	if (error) {
-		UFS_WAPBL_END(dvp->v_mount);
+		ULFS_WAPBL_END(dvp->v_mount);
 		goto out;
 	}
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
@@ -1207,20 +1207,20 @@ ufs_rmdir(void *v)
 	dp->i_nlink--;
 	DIP_ASSIGN(dp, nlink, dp->i_nlink);
 	dp->i_flag |= IN_CHANGE;
-	UFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
+	ULFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
 	ip->i_nlink--;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_flag |= IN_CHANGE;
-	error = UFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
+	error = ULFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(vp);
 	/*
 	 * Unlock the log while we still have reference to unlinked
 	 * directory vp so that it will not get locked for recycling
 	 */
-	UFS_WAPBL_END(dvp->v_mount);
+	ULFS_WAPBL_END(dvp->v_mount);
 #ifdef LFS_DIRHASH
 	if (ip->i_dirhash != NULL)
-		ufsdirhash_free(ip);
+		ulfsdirhash_free(ip);
 #endif
  out:
 	VN_KNOTE(vp, NOTE_DELETE);
@@ -1234,7 +1234,7 @@ ufs_rmdir(void *v)
  * symlink -- make a symbolic link
  */
 int
-ufs_symlink(void *v)
+ulfs_symlink(void *v)
 {
 	struct vop_symlink_args /* {
 		struct vnode		*a_dvp;
@@ -1246,20 +1246,20 @@ ufs_symlink(void *v)
 	struct vnode	*vp, **vpp;
 	struct inode	*ip;
 	int		len, error;
-	struct ufs_lookup_results *ulr;
+	struct ulfs_lookup_results *ulr;
 
 	vpp = ap->a_vpp;
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(ap->a_dvp)->i_crap;
-	UFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
+	ULFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
 
 	/*
-	 * UFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
-	 * ufs_makeinode
+	 * ULFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
+	 * ulfs_makeinode
 	 */
 	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
-	error = ufs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp, ulr,
+	error = ulfs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp, ulr,
 			      vpp, ap->a_cnp);
 	if (error)
 		goto out;
@@ -1275,12 +1275,12 @@ ufs_symlink(void *v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (vp->v_mount->mnt_flag & MNT_RELATIME)
 			ip->i_flag |= IN_ACCESS;
-		UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
+		ULFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED | IO_JOURNALLOCKED,
 		    ap->a_cnp->cn_cred, NULL, NULL);
-	UFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
+	ULFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
 	if (error)
 		vput(vp);
 out:
@@ -1296,7 +1296,7 @@ out:
  * byte swapping the entries if necessary.
  */
 int
-ufs_readdir(void *v)
+ulfs_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		struct vnode	*a_vp;
@@ -1317,8 +1317,8 @@ ufs_readdir(void *v)
 	off_t		off, *ccp;
 	off_t		startoff;
 	size_t		skipbytes;
-	struct ufsmount	*ump = VFSTOUFS(vp->v_mount);
-	int nswap = UFS_MPNEEDSWAP(ump);
+	struct ulfsmount *ump = VFSTOULFS(vp->v_mount);
+	int nswap = ULFS_MPNEEDSWAP(ump);
 #if BYTE_ORDER == LITTLE_ENDIAN
 	int needswap = ump->um_maxsymlinklen <= 0 && nswap == 0;
 #else
@@ -1373,7 +1373,7 @@ ufs_readdir(void *v)
 	}
 
 	while (cdp < ecdp) {
-		cdp->d_reclen = ufs_rw16(cdp->d_reclen, nswap);
+		cdp->d_reclen = ulfs_rw16(cdp->d_reclen, nswap);
 		if (skipbytes > 0) {
 			if (cdp->d_reclen <= skipbytes) {
 				skipbytes -= cdp->d_reclen;
@@ -1405,7 +1405,7 @@ ufs_readdir(void *v)
 		if ((char *)(void *)ndp + ndp->d_reclen +
 		    _DIRENT_MINSIZE(ndp) > endp)
 			break;
-		ndp->d_fileno = ufs_rw32(cdp->d_ino, nswap);
+		ndp->d_fileno = ulfs_rw32(cdp->d_ino, nswap);
 		(void)memcpy(ndp->d_name, cdp->d_name, ndp->d_namlen);
 		memset(&ndp->d_name[ndp->d_namlen], 0,
 		    ndp->d_reclen - _DIRENT_NAMEOFF(ndp) - ndp->d_namlen);
@@ -1441,7 +1441,7 @@ out:
  * Return target name of a symbolic link
  */
 int
-ufs_readlink(void *v)
+ulfs_readlink(void *v)
 {
 	struct vop_readlink_args /* {
 		struct vnode	*a_vp;
@@ -1450,7 +1450,7 @@ ufs_readlink(void *v)
 	} */ *ap = v;
 	struct vnode	*vp = ap->a_vp;
 	struct inode	*ip = VTOI(vp);
-	struct ufsmount	*ump = VFSTOUFS(vp->v_mount);
+	struct ulfsmount *ump = VFSTOULFS(vp->v_mount);
 	int		isize;
 
 	isize = ip->i_size;
@@ -1467,7 +1467,7 @@ ufs_readlink(void *v)
  * then call the device strategy routine.
  */
 int
-ufs_strategy(void *v)
+ulfs_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
@@ -1483,7 +1483,7 @@ ufs_strategy(void *v)
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
-		panic("ufs_strategy: spec");
+		panic("ulfs_strategy: spec");
 	KASSERT(bp->b_bcount != 0);
 	if (bp->b_blkno == bp->b_lblkno) {
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno,
@@ -1532,7 +1532,7 @@ ufs_strategy(void *v)
  * Print out the contents of an inode.
  */
 int
-ufs_print(void *v)
+ulfs_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode	*a_vp;
@@ -1542,7 +1542,7 @@ ufs_print(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	printf("tag VT_UFS, ino %llu, on dev %llu, %llu",
+	printf("tag VT_ULFS, ino %llu, on dev %llu, %llu",
 	    (unsigned long long)ip->i_number,
 	    (unsigned long long)major(ip->i_dev),
 	    (unsigned long long)minor(ip->i_dev));
@@ -1561,7 +1561,7 @@ ufs_print(void *v)
  * Read wrapper for special devices.
  */
 int
-ufsspec_read(void *v)
+ulfsspec_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode	*a_vp;
@@ -1582,7 +1582,7 @@ ufsspec_read(void *v)
  * Write wrapper for special devices.
  */
 int
-ufsspec_write(void *v)
+ulfsspec_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode	*a_vp;
@@ -1605,7 +1605,7 @@ ufsspec_write(void *v)
  * Update the times on the inode then do device close.
  */
 int
-ufsspec_close(void *v)
+ulfsspec_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode	*a_vp;
@@ -1618,7 +1618,7 @@ ufsspec_close(void *v)
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	if (vp->v_usecount > 1)
-		UFS_ITIMES(vp, NULL, NULL, NULL);
+		ULFS_ITIMES(vp, NULL, NULL, NULL);
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
@@ -1626,7 +1626,7 @@ ufsspec_close(void *v)
  * Read wrapper for fifo's
  */
 int
-ufsfifo_read(void *v)
+ulfsfifo_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode	*a_vp;
@@ -1646,7 +1646,7 @@ ufsfifo_read(void *v)
  * Write wrapper for fifo's.
  */
 int
-ufsfifo_write(void *v)
+ulfsfifo_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode	*a_vp;
@@ -1668,7 +1668,7 @@ ufsfifo_write(void *v)
  * Update the times on the inode then do device close.
  */
 int
-ufsfifo_close(void *v)
+ulfsfifo_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode	*a_vp;
@@ -1681,15 +1681,15 @@ ufsfifo_close(void *v)
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	if (ap->a_vp->v_usecount > 1)
-		UFS_ITIMES(vp, NULL, NULL, NULL);
+		ULFS_ITIMES(vp, NULL, NULL, NULL);
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
 /*
- * Return POSIX pathconf information applicable to ufs filesystems.
+ * Return POSIX pathconf information applicable to ulfs filesystems.
  */
 int
-ufs_pathconf(void *v)
+ulfs_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode	*a_vp;
@@ -1738,7 +1738,7 @@ ufs_pathconf(void *v)
  * Advisory record locking support
  */
 int
-ufs_advlock(void *v)
+ulfs_advlock(void *v)
 {
 	struct vop_advlock_args /* {
 		struct vnode	*a_vp;
@@ -1758,14 +1758,14 @@ ufs_advlock(void *v)
  * vnodes.
  */
 void
-ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
+ulfs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	struct vnode **vpp)
 {
 	struct timeval	tv;
 	struct inode	*ip;
 	struct vnode	*vp;
 	dev_t		rdev;
-	struct ufsmount	*ump;
+	struct ulfsmount *ump;
 
 	vp = *vpp;
 	ip = VTOI(vp);
@@ -1774,12 +1774,12 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	case VBLK:
 		vp->v_op = specops;
 		ump = ip->i_ump;
-		if (ump->um_fstype == UFS1)
-			rdev = (dev_t)ufs_rw32(ip->i_ffs1_rdev,
-			    UFS_MPNEEDSWAP(ump));
+		if (ump->um_fstype == ULFS1)
+			rdev = (dev_t)ulfs_rw32(ip->i_ffs1_rdev,
+			    ULFS_MPNEEDSWAP(ump));
 		else
-			rdev = (dev_t)ufs_rw64(ip->i_ffs2_rdev,
-			    UFS_MPNEEDSWAP(ump));
+			rdev = (dev_t)ulfs_rw64(ip->i_ffs2_rdev,
+			    ULFS_MPNEEDSWAP(ump));
 		spec_node_init(vp, rdev);
 		break;
 	case VFIFO:
@@ -1793,7 +1793,7 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	case VREG:
 		break;
 	}
-	if (ip->i_number == UFS_ROOTINO)
+	if (ip->i_number == ULFS_ROOTINO)
                 vp->v_vflag |= VV_ROOT;
 	/*
 	 * Initialize modrev times
@@ -1808,7 +1808,7 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
  * Allocate a new inode.
  */
 int
-ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
+ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	struct vnode **vpp, struct componentname *cnp)
 {
 	struct inode	*ip, *pdir;
@@ -1816,14 +1816,14 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	struct vnode	*tvp;
 	int		error;
 
-	UFS_WAPBL_JUNLOCK_ASSERT(dvp->v_mount);
+	ULFS_WAPBL_JUNLOCK_ASSERT(dvp->v_mount);
 
 	pdir = VTOI(dvp);
 
 	if ((mode & IFMT) == 0)
 		mode |= IFREG;
 
-	if ((error = UFS_VALLOC(dvp, mode, cnp->cn_cred, vpp)) != 0) {
+	if ((error = ULFS_VALLOC(dvp, mode, cnp->cn_cred, vpp)) != 0) {
 		vput(dvp);
 		return (error);
 	}
@@ -1833,7 +1833,7 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	DIP_ASSIGN(ip, gid, ip->i_gid);
 	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
 	DIP_ASSIGN(ip, uid, ip->i_uid);
-	error = UFS_WAPBL_BEGIN1(dvp->v_mount, dvp);
+	error = ULFS_WAPBL_BEGIN1(dvp->v_mount, dvp);
 	if (error) {
 		/*
 		 * Note, we can't VOP_VFREE(tvp) here like we should
@@ -1846,8 +1846,8 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	}
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	if ((error = chkiq(ip, 1, cnp->cn_cred, 0))) {
-		UFS_VFREE(tvp, ip->i_number, mode);
-		UFS_WAPBL_END1(dvp->v_mount, dvp);
+		ULFS_VFREE(tvp, ip->i_number, mode);
+		ULFS_WAPBL_END1(dvp->v_mount, dvp);
 		vput(tvp);
 		vput(dvp);
 		return (error);
@@ -1879,12 +1879,12 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	/*
 	 * Make sure inode goes to disk before directory entry.
 	 */
-	if ((error = UFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
+	if ((error = ULFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
-	newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
-	ufs_makedirentry(ip, cnp, newdir);
-	error = ufs_direnter(dvp, ulr, tvp, newdir, cnp, NULL);
-	pool_cache_put(ufs_direct_cache, newdir);
+	newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
+	ulfs_makedirentry(ip, cnp, newdir);
+	error = ulfs_direnter(dvp, ulr, tvp, newdir, cnp, NULL);
+	pool_cache_put(ulfs_direct_cache, newdir);
 	if (error)
 		goto bad;
 	vput(dvp);
@@ -1900,10 +1900,10 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	DIP_ASSIGN(ip, nlink, 0);
 	ip->i_flag |= IN_CHANGE;
 	/* If IN_ADIROP, account for it */
-	UFS_UNMARK_VNODE(tvp);
-	UFS_WAPBL_UPDATE(tvp, NULL, NULL, 0);
+	ULFS_UNMARK_VNODE(tvp);
+	ULFS_WAPBL_UPDATE(tvp, NULL, NULL, 0);
 	tvp->v_type = VNON;		/* explodes later if VBLK */
-	UFS_WAPBL_END1(dvp->v_mount, dvp);
+	ULFS_WAPBL_END1(dvp->v_mount, dvp);
 	vput(tvp);
 	vput(dvp);
 	return (error);
@@ -1913,12 +1913,12 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
  * Allocate len bytes at offset off.
  */
 int
-ufs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
+ulfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
     kauth_cred_t cred)
 {
         struct inode *ip = VTOI(vp);
         int error, delta, bshift, bsize;
-        UVMHIST_FUNC("ufs_gop_alloc"); UVMHIST_CALLED(ubchist);
+        UVMHIST_FUNC("ulfs_gop_alloc"); UVMHIST_CALLED(ubchist);
 
         error = 0;
         bshift = vp->v_mount->mnt_fs_bshift;
@@ -1931,13 +1931,13 @@ ufs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
         while (len > 0) {
                 bsize = MIN(bsize, len);
 
-                error = UFS_BALLOC(vp, off, bsize, cred, flags, NULL);
+                error = ULFS_BALLOC(vp, off, bsize, cred, flags, NULL);
                 if (error) {
                         goto out;
                 }
 
                 /*
-                 * increase file size now, UFS_BALLOC() requires that
+                 * increase file size now, ULFS_BALLOC() requires that
                  * EOF be up-to-date before each call.
                  */
 
@@ -1953,12 +1953,12 @@ ufs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
         }
 
 out:
-	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
+	ULFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	return error;
 }
 
 void
-ufs_gop_markupdate(struct vnode *vp, int flags)
+ulfs_gop_markupdate(struct vnode *vp, int flags)
 {
 	u_int32_t mask = 0;
 

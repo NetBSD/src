@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_wapbl.c,v 1.2 2013/06/06 00:44:41 dholland Exp $	*/
+/*	$NetBSD: ulfs_wapbl.c,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: ufs_wapbl.c,v 1.23 2012/01/27 19:22:50 para Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_wapbl.c,v 1.2 2013/06/06 00:44:41 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_wapbl.c,v 1.3 2013/06/06 00:48:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,9 +102,9 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_wapbl.c,v 1.2 2013/06/06 00:44:41 dholland Exp 
 #include <uvm/uvm.h>
 
 #ifdef WAPBL_DEBUG_INODES
-#error WAPBL_DEBUG_INODES: not functional before ufs_wapbl.c is updated
+#error WAPBL_DEBUG_INODES: not functional before ulfs_wapbl.c is updated
 void
-ufs_wapbl_verify_inodes(struct mount *mp, const char *str)
+ulfs_wapbl_verify_inodes(struct mount *mp, const char *str)
 {
 	struct vnode *vp, *nvp;
 	struct inode *ip;
@@ -149,7 +149,7 @@ ufs_wapbl_verify_inodes(struct mount *mp, const char *str)
 	}
 	mutex_exit(&mntvnode_lock);
 
-	vp = VFSTOUFS(mp)->um_devvp;
+	vp = VFSTOULFS(mp)->um_devvp;
 	mutex_enter(&vp->v_interlock);
 	mutex_enter(&bufcache_lock);
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {

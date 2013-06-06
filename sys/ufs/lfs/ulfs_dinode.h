@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dinode.h,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_dinode.h,v 1.2 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -50,8 +50,8 @@
  * NOTE: COORDINATE ON-DISK FORMAT CHANGES WITH THE FREEBSD PROJECT.
  */
 
-#ifndef	_UFS_UFS_DINODE_H_
-#define	_UFS_UFS_DINODE_H_
+#ifndef	_UFS_LFS_ULFS_DINODE_H_
+#define	_UFS_LFS_ULFS_DINODE_H_
 
 /*
  * The root inode is the root of the file system.  Inode 0 can't be used for
@@ -59,28 +59,28 @@
  * the root inode is 2.  (Inode 1 is no longer used for this purpose, however
  * numerous dump tapes make this assumption, so we are stuck with it).
  */
-#define	UFS_ROOTINO	((ino_t)2)
+#define	ULFS_ROOTINO	((ino_t)2)
 
 /*
  * The Whiteout inode# is a dummy non-zero inode number which will
  * never be allocated to a real file.  It is used as a place holder
  * in the directory entry which has been tagged as a DT_W entry.
- * See the comments about UFS_ROOTINO above.
+ * See the comments about ULFS_ROOTINO above.
  */
-#define	UFS_WINO	((ino_t)1)
+#define	ULFS_WINO	((ino_t)1)
 
 /*
- * A dinode contains all the meta-data associated with a UFS file.
+ * A dinode contains all the meta-data associated with a ULFS file.
  * This structure defines the on-disk format of a dinode. Since
  * this structure describes an on-disk structure, all its fields
  * are defined by types with precise widths.
  */
 
-#define UFS_NXADDR	2
-#define	UFS_NDADDR	12		/* Direct addresses in inode. */
-#define	UFS_NIADDR	3		/* Indirect addresses in inode. */
+#define ULFS_NXADDR	2
+#define	ULFS_NDADDR	12		/* Direct addresses in inode. */
+#define	ULFS_NIADDR	3		/* Indirect addresses in inode. */
 
-struct ufs1_dinode {
+struct ulfs1_dinode {
 	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
 	int16_t		di_nlink;	/*   2: File link count. */
 	union {
@@ -94,8 +94,8 @@ struct ufs1_dinode {
 	int32_t		di_mtimensec;	/*  28: Last modified time. */
 	int32_t		di_ctime;	/*  32: Last inode change time. */
 	int32_t		di_ctimensec;	/*  36: Last inode change time. */
-	int32_t		di_db[UFS_NDADDR]; /*  40: Direct disk blocks. */
-	int32_t		di_ib[UFS_NIADDR]; /*  88: Indirect disk blocks. */
+	int32_t		di_db[ULFS_NDADDR]; /*  40: Direct disk blocks. */
+	int32_t		di_ib[ULFS_NIADDR]; /*  88: Indirect disk blocks. */
 	u_int32_t	di_flags;	/* 100: Status flags (chflags). */
 	u_int32_t	di_blocks;	/* 104: Blocks actually held. */
 	int32_t		di_gen;		/* 108: Generation number. */
@@ -104,7 +104,7 @@ struct ufs1_dinode {
 	u_int64_t	di_modrev;	/* 120: i_modrev for NFSv4 */
 };
 
-struct ufs2_dinode {
+struct ulfs2_dinode {
 	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
 	int16_t		di_nlink;	/*   2: File link count. */
 	u_int32_t	di_uid;		/*   4: File owner. */
@@ -124,9 +124,9 @@ struct ufs2_dinode {
 	u_int32_t	di_kernflags;	/*  84: Kernel flags. */
 	u_int32_t	di_flags;	/*  88: Status flags (chflags). */
 	int32_t		di_extsize;	/*  92: External attributes block. */
-	int64_t		di_extb[UFS_NXADDR];/* 96: External attributes block. */
-	int64_t		di_db[UFS_NDADDR]; /* 112: Direct disk blocks. */
-	int64_t		di_ib[UFS_NIADDR]; /* 208: Indirect disk blocks. */
+	int64_t		di_extb[ULFS_NXADDR];/* 96: External attributes block. */
+	int64_t		di_db[ULFS_NDADDR]; /* 112: Direct disk blocks. */
+	int64_t		di_ib[ULFS_NIADDR]; /* 208: Indirect disk blocks. */
 	u_int64_t	di_modrev;	/* 232: i_modrev for NFSv4 */
 	int64_t		di_spare[2];	/* 240: Reserved; currently unused */
 };
@@ -142,12 +142,12 @@ struct ufs2_dinode {
 #define	di_ogid		di_u.oldids[1]
 #define	di_ouid		di_u.oldids[0]
 #define	di_rdev		di_db[0]
-#define UFS1_MAXSYMLINKLEN	((UFS_NDADDR + UFS_NIADDR) * sizeof(int32_t))
-#define UFS2_MAXSYMLINKLEN	((UFS_NDADDR + UFS_NIADDR) * sizeof(int64_t))
+#define ULFS1_MAXSYMLINKLEN	((ULFS_NDADDR + ULFS_NIADDR) * sizeof(int32_t))
+#define ULFS2_MAXSYMLINKLEN	((ULFS_NDADDR + ULFS_NIADDR) * sizeof(int64_t))
 
-#define UFS_MAXSYMLINKLEN(ip) \
-	((ip)->i_ump->um_fstype == UFS1) ? \
-	UFS1_MAXSYMLINKLEN : UFS2_MAXSYMLINKLEN
+#define ULFS_MAXSYMLINKLEN(ip) \
+	((ip)->i_ump->um_fstype == ULFS1) ? \
+	ULFS1_MAXSYMLINKLEN : ULFS2_MAXSYMLINKLEN
 
 /* NeXT used to keep short symlinks in the inode even when using
  * FS_42INODEFMT.  In that case fs->fs_maxsymlinklen is probably -1,
@@ -175,7 +175,7 @@ struct ufs2_dinode {
 #define	IFWHT		0160000		/* Whiteout. */
 
 /* Size of the on-disk inode. */
-#define	DINODE1_SIZE	(sizeof(struct ufs1_dinode))		/* 128 */
-#define	DINODE2_SIZE	(sizeof(struct ufs2_dinode))
+#define	DINODE1_SIZE	(sizeof(struct ulfs1_dinode))		/* 128 */
+#define	DINODE2_SIZE	(sizeof(struct ulfs2_dinode))
 
-#endif /* !_UFS_UFS_DINODE_H_ */
+#endif /* !_UFS_LFS_ULFS_DINODE_H_ */

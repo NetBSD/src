@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quotacommon.h,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_quotacommon.h,v 1.2 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: quota.h,v 1.30 2012/08/26 02:32:14 dholland Exp  */
 
 /*
@@ -35,8 +35,8 @@
  *	@(#)quota.h	8.3 (Berkeley) 8/19/94
  */
 
-#ifndef	_UFS_UFS_QUOTA_H_
-#define	_UFS_UFS_QUOTA_H_
+#ifndef	_UFS_LFS_ULFS_QUOTACOMMON_H_
+#define	_UFS_LFS_ULFS_QUOTACOMMON_H_
 
 /*
  * These definitions are common to the original disk quota implementation
@@ -45,46 +45,46 @@
 
 /*
  * The following constants define the usage of the quota file array in the
- * ufsmount structure and dquot array in the inode structure.  The semantics
+ * ulfsmount structure and dquot array in the inode structure.  The semantics
  * of the elements of these arrays are defined in the routine getinoquota;
  * the remainder of the quota code treats them generically and need not be
  * inspected when changing the size of the array.
  */
-#define	MAXQUOTAS	2
-#define	USRQUOTA	0	/* element used for user quotas */
-#define	GRPQUOTA	1	/* element used for group quotas */
+#define	ULFS_MAXQUOTAS	2
+#define	ULFS_USRQUOTA	0	/* element used for user quotas */
+#define	ULFS_GRPQUOTA	1	/* element used for group quotas */
 
 /*
  * Initializer for the strings corresponding to the quota ID types.
  * (in quota1 these are also the default names of the quota files)
  */
 #define INITQFNAMES { \
-	"user",		/* USRQUOTA */ \
-	"group",	/* GRPQUOTA */ \
+	"user",		/* ULFS_USRQUOTA */ \
+	"group",	/* ULFS_GRPQUOTA */ \
 }
 
 #if !defined(HAVE_NBTOOL_CONFIG_H)
 #include <sys/quota.h>
 __inline static int __unused
-quota_idtype_to_ufs(int idtype)
+quota_idtype_to_ulfs(int idtype)
 {
 	switch (idtype) {
 	case QUOTA_IDTYPE_USER:
-		return USRQUOTA;
+		return ULFS_USRQUOTA;
 	case QUOTA_IDTYPE_GROUP:
-		return GRPQUOTA;
+		return ULFS_GRPQUOTA;
 	default:
 		return -1;
 	}
 }
 
 static __inline int __unused
-quota_idtype_from_ufs(int ufstype)
+quota_idtype_from_ulfs(int ulfstype)
 {
-	switch (ufstype) {
-	case USRQUOTA:
+	switch (ulfstype) {
+	case ULFS_USRQUOTA:
 		return QUOTA_IDTYPE_USER;
-	case GRPQUOTA:
+	case ULFS_GRPQUOTA:
 		return QUOTA_IDTYPE_GROUP;
 	default:
 		return -1;
@@ -103,4 +103,4 @@ void	dqdone(void);
 __END_DECLS
 #endif /* _KERNEL */
 
-#endif /* !_UFS_UFS_QUOTA_H_ */
+#endif /* !_UFS_LFS_ULFS_QUOTACOMMON_H_ */

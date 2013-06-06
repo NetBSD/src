@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1.c,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: ufs_quota1.c,v 1.18 2012/02/02 03:00:48 matt Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.3 2013/06/06 00:48:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -72,7 +72,7 @@ chkdq1(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 	if (change == 0)
 		return (0);
 	if (change < 0) {
-		for (i = 0; i < MAXQUOTAS; i++) {
+		for (i = 0; i < ULFS_MAXQUOTAS; i++) {
 			if ((dq = ip->i_dquot[i]) == NODQUOT)
 				continue;
 			mutex_enter(&dq->dq_interlock);
@@ -87,7 +87,7 @@ chkdq1(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 		}
 		return (0);
 	}
-	for (i = 0; i < MAXQUOTAS; i++) {
+	for (i = 0; i < ULFS_MAXQUOTAS; i++) {
 		if ((dq = ip->i_dquot[i]) == NODQUOT)
 			continue;
 		if ((flags & FORCE) == 0 &&
@@ -101,7 +101,7 @@ chkdq1(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 				return (error);
 		}
 	}
-	for (i = 0; i < MAXQUOTAS; i++) {
+	for (i = 0; i < ULFS_MAXQUOTAS; i++) {
 		if ((dq = ip->i_dquot[i]) == NODQUOT)
 			continue;
 		mutex_enter(&dq->dq_interlock);
@@ -180,7 +180,7 @@ chkiq1(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 	if (change == 0)
 		return (0);
 	if (change < 0) {
-		for (i = 0; i < MAXQUOTAS; i++) {
+		for (i = 0; i < ULFS_MAXQUOTAS; i++) {
 			if ((dq = ip->i_dquot[i]) == NODQUOT)
 				continue;
 			mutex_enter(&dq->dq_interlock);
@@ -195,7 +195,7 @@ chkiq1(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 		}
 		return (0);
 	}
-	for (i = 0; i < MAXQUOTAS; i++) {
+	for (i = 0; i < ULFS_MAXQUOTAS; i++) {
 		if ((dq = ip->i_dquot[i]) == NODQUOT)
 			continue;
 		if ((flags & FORCE) == 0 && kauth_authorize_system(cred,
@@ -208,7 +208,7 @@ chkiq1(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 				return (error);
 		}
 	}
-	for (i = 0; i < MAXQUOTAS; i++) {
+	for (i = 0; i < ULFS_MAXQUOTAS; i++) {
 		if ((dq = ip->i_dquot[i]) == NODQUOT)
 			continue;
 		mutex_enter(&dq->dq_interlock);
@@ -276,16 +276,16 @@ int
 quota1_umount(struct mount *mp, int flags)
 {
 	int i, error;
-	struct ufsmount *ump = VFSTOUFS(mp);
+	struct ulfsmount *ump = VFSTOULFS(mp);
 	struct lwp *l = curlwp;
 
-	if ((ump->um_flags & UFS_QUOTA) == 0)
+	if ((ump->um_flags & ULFS_QUOTA) == 0)
 		return 0;
 
 	if ((error = vflush(mp, NULLVP, SKIPSYSTEM | flags)) != 0)
 		return (error);
 
-	for (i = 0; i < MAXQUOTAS; i++) {
+	for (i = 0; i < ULFS_MAXQUOTAS; i++) {
 		if (ump->um_quotas[i] != NULLVP) {
 			quota1_handle_cmd_quotaoff(l, ump, i);
 		}
@@ -301,7 +301,7 @@ quota1_umount(struct mount *mp, int flags)
  * set up a quota file for a particular file system.
  */
 int
-quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
+quota1_handle_cmd_quotaon(struct lwp *l, struct ulfsmount *ump, int type,
     const char *fname)
 {
 	struct mount *mp = ump->um_mountp;
@@ -311,7 +311,7 @@ quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
 	struct pathbuf *pb;
 	struct nameidata nd;
 
-	if (ump->um_flags & UFS_QUOTA2) {
+	if (ump->um_flags & ULFS_QUOTA2) {
 		uprintf("%s: quotas v2 already enabled\n",
 		    mp->mnt_stat.f_mntonname);
 		return (EBUSY);
@@ -407,7 +407,7 @@ again:
 	ump->umq1_qflags[type] &= ~QTF_OPENING;
 	cv_broadcast(&dqcv);
 	if (error == 0)
-		ump->um_flags |= UFS_QUOTA;
+		ump->um_flags |= ULFS_QUOTA;
 	mutex_exit(&dqlock);
 	if (error)
 		quota1_handle_cmd_quotaoff(l, ump, type);
@@ -418,7 +418,7 @@ again:
  * turn off disk quotas for a filesystem.
  */
 int
-quota1_handle_cmd_quotaoff(struct lwp *l, struct ufsmount *ump, int type)
+quota1_handle_cmd_quotaoff(struct lwp *l, struct ulfsmount *ump, int type)
 {
 	struct mount *mp = ump->um_mountp;
 	struct vnode *vp;
@@ -440,7 +440,7 @@ quota1_handle_cmd_quotaoff(struct lwp *l, struct ufsmount *ump, int type)
 		return (0);
 	}
 	ump->umq1_qflags[type] |= QTF_CLOSING;
-	ump->um_flags &= ~UFS_QUOTA;
+	ump->um_flags &= ~ULFS_QUOTA;
 	mutex_exit(&dqlock);
 	/*
 	 * Search vnodes associated with this mount point,
@@ -480,20 +480,20 @@ again:
 	ump->um_quotas[type] = NULLVP;
 	cred = ump->um_cred[type];
 	ump->um_cred[type] = NOCRED;
-	for (i = 0; i < MAXQUOTAS; i++)
+	for (i = 0; i < ULFS_MAXQUOTAS; i++)
 		if (ump->um_quotas[i] != NULLVP)
 			break;
 	ump->umq1_qflags[type] &= ~QTF_CLOSING;
 	cv_broadcast(&dqcv);
 	mutex_exit(&dqlock);
 	kauth_cred_free(cred);
-	if (i == MAXQUOTAS)
+	if (i == ULFS_MAXQUOTAS)
 		mp->mnt_flag &= ~MNT_QUOTA;
 	return (error);
 }
 
 int             
-quota1_handle_cmd_get(struct ufsmount *ump, const struct quotakey *qk,
+quota1_handle_cmd_get(struct ulfsmount *ump, const struct quotakey *qk,
     struct quotaval *qv)
 {
 	struct dquot *dq;
@@ -553,7 +553,7 @@ quota1_encode_limit(uint64_t lim)
 }
 
 int
-quota1_handle_cmd_put(struct ufsmount *ump, const struct quotakey *key,
+quota1_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
     const struct quotaval *val)
 {
 	struct dquot *dq;
@@ -669,7 +669,7 @@ setquota1(struct mount *mp, u_long id, int type, struct dqblk *dqb)
 {
 	struct dquot *dq;
 	struct dquot *ndq;
-	struct ufsmount *ump = VFSTOUFS(mp);
+	struct ulfsmount *ump = VFSTOULFS(mp);
 	
 
 	if ((error = dqget(NULLVP, id, ump, type, &ndq)) != 0)
@@ -718,7 +718,7 @@ int
 setuse(struct mount *mp, u_long id, int type, void *addr)
 {
 	struct dquot *dq;
-	struct ufsmount *ump = VFSTOUFS(mp);
+	struct ulfsmount *ump = VFSTOULFS(mp);
 	struct dquot *ndq;
 	struct dqblk usage;
 	int error;
@@ -759,7 +759,7 @@ setuse(struct mount *mp, u_long id, int type, void *addr)
 int
 q1sync(struct mount *mp)
 {
-	struct ufsmount *ump = VFSTOUFS(mp);
+	struct ulfsmount *ump = VFSTOULFS(mp);
 	struct vnode *vp, *mvp;
 	struct dquot *dq;
 	int i, error;
@@ -768,10 +768,10 @@ q1sync(struct mount *mp)
 	 * Check if the mount point has any quotas.
 	 * If not, simply return.
 	 */
-	for (i = 0; i < MAXQUOTAS; i++)
+	for (i = 0; i < ULFS_MAXQUOTAS; i++)
 		if (ump->um_quotas[i] != NULLVP)
 			break;
-	if (i == MAXQUOTAS)
+	if (i == ULFS_MAXQUOTAS)
 		return (0);
 
 	/* Allocate a marker vnode. */
@@ -802,7 +802,7 @@ q1sync(struct mount *mp)
 			}
 			continue;
 		}
-		for (i = 0; i < MAXQUOTAS; i++) {
+		for (i = 0; i < ULFS_MAXQUOTAS; i++) {
 			dq = VTOI(vp)->i_dquot[i];
 			if (dq == NODQUOT)
 				continue;
@@ -824,7 +824,7 @@ q1sync(struct mount *mp)
  * reading the information from the file if necessary.
  */
 int
-dq1get(struct vnode *dqvp, u_long id, struct ufsmount *ump, int type,
+dq1get(struct vnode *dqvp, u_long id, struct ulfsmount *ump, int type,
     struct dquot *dq)
 {
 	struct iovec aiov;

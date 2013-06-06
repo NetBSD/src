@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.137 2013/01/22 09:39:17 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.138 2013/06/06 00:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -303,7 +303,7 @@ struct lfid {
  */
 
 /* Address calculations for metadata located in the inode */
-#define	S_INDIR(fs)	-UFS_NDADDR
+#define	S_INDIR(fs)	-ULFS_NDADDR
 #define	D_INDIR(fs)	(S_INDIR(fs) - NINDIR(fs) - 1)
 #define	T_INDIR(fs)	(D_INDIR(fs) - NINDIR(fs) * NINDIR(fs) - 1)
 
@@ -856,7 +856,7 @@ struct lfs {
 #define INOPF(fs)	((fs)->lfs_inopf)
 
 #define	blksize(fs, ip, lbn) \
-	(((lbn) >= UFS_NDADDR || (ip)->i_ffs1_size >= ((lbn) + 1) << (fs)->lfs_bshift) \
+	(((lbn) >= ULFS_NDADDR || (ip)->i_ffs1_size >= ((lbn) + 1) << (fs)->lfs_bshift) \
 	    ? (fs)->lfs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (ip)->i_ffs1_size))))
 #define	blkoff(fs, loc)		((int)((loc) & (fs)->lfs_bmask))
@@ -892,7 +892,7 @@ struct lfs {
 #define blknum(fs, fsb)		/* calculates rounddown(fsb, fs->lfs_frag) */ \
 	((fsb) &~ ((fs)->lfs_frag - 1))
 #define dblksize(fs, dp, lbn) \
-	(((lbn) >= UFS_NDADDR || (dp)->di_size >= ((lbn) + 1) << (fs)->lfs_bshift)\
+	(((lbn) >= ULFS_NDADDR || (dp)->di_size >= ((lbn) + 1) << (fs)->lfs_bshift)\
 	    ? (fs)->lfs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (dp)->di_size))))
 
@@ -939,7 +939,7 @@ struct segment {
 	struct buf	**cbpp;		/* pointer to next available bp */
 	struct buf	**start_bpp;	/* pointer to first bp in this set */
 	struct buf	 *ibp;		/* buffer pointer to inode page */
-	struct ufs1_dinode    *idp;          /* pointer to ifile dinode */
+	struct ulfs1_dinode    *idp;          /* pointer to ifile dinode */
 	struct finfo	 *fip;		/* current fileinfo pointer */
 	struct vnode	 *vp;		/* vnode being gathered */
 	void	 *segsum;		/* segment summary info */
@@ -991,7 +991,7 @@ struct lbnentry {
 struct lfs_inode_ext {
 	off_t	  lfs_osize;		/* size of file on disk */
 	u_int32_t lfs_effnblocks;  /* number of blocks when i/o completes */
-	size_t	  lfs_fragsize[UFS_NDADDR]; /* size of on-disk direct blocks */
+	size_t	  lfs_fragsize[ULFS_NDADDR]; /* size of on-disk direct blocks */
 	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
 #define LFSI_NO_GOP_WRITE 0x01
@@ -1069,10 +1069,10 @@ struct lfs_inode_ext {
 
 /*
  * The minimum number of blocks to create a new inode.  This is:
- * directory direct block (1) + UFS_NIADDR indirect blocks + inode block (1) +
- * ifile direct block (1) + UFS_NIADDR indirect blocks = 3 + 2 * UFS_NIADDR blocks.
+ * directory direct block (1) + ULFS_NIADDR indirect blocks + inode block (1) +
+ * ifile direct block (1) + ULFS_NIADDR indirect blocks = 3 + 2 * ULFS_NIADDR blocks.
  */
-#define LFS_NRESERVE(F) (btofsb((F), (2 * UFS_NIADDR + 3) << (F)->lfs_bshift))
+#define LFS_NRESERVE(F) (btofsb((F), (2 * ULFS_NIADDR + 3) << (F)->lfs_bshift))
 
 /* Statistics Counters */
 struct lfs_stats {	/* Must match sysctl list in lfs_vfsops.h ! */

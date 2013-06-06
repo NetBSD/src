@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_bswap.h,v 1.2 2013/06/06 00:46:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_bswap.h,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: ufs_bswap.h,v 1.19 2009/10/19 18:41:17 bouyer Exp  */
 
 /*
@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _UFS_UFS_BSWAP_H_
-#define _UFS_UFS_BSWAP_H_
+#ifndef _UFS_LFS_ULFS_BSWAP_H_
+#define _UFS_LFS_ULFS_BSWAP_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -35,47 +35,47 @@
 
 #include <sys/bswap.h>
 
-/* Macros to access UFS flags */
+/* Macros to access ULFS flags */
 #ifdef LFS_EI
-#define	UFS_MPNEEDSWAP(ump)	((ump)->um_flags & UFS_NEEDSWAP)
-#define UFS_FSNEEDSWAP(fs)	((fs)->fs_flags & FS_SWAPPED)
-#define	UFS_IPNEEDSWAP(ip)	UFS_MPNEEDSWAP((ip)->i_ump)
+#define	ULFS_MPNEEDSWAP(ump)	((ump)->um_flags & ULFS_NEEDSWAP)
+#define ULFS_FSNEEDSWAP(fs)	((fs)->fs_flags & FS_SWAPPED)
+#define	ULFS_IPNEEDSWAP(ip)	ULFS_MPNEEDSWAP((ip)->i_ump)
 #else
-#define	UFS_MPNEEDSWAP(ump)	(0)
-#define UFS_FSNEEDSWAP(fs)	(0)
-#define	UFS_IPNEEDSWAP(ip)	(0)
+#define	ULFS_MPNEEDSWAP(ump)	(0)
+#define ULFS_FSNEEDSWAP(fs)	(0)
+#define	ULFS_IPNEEDSWAP(ip)	(0)
 #endif
 
 #if !defined(_KERNEL) || defined(LFS_EI)
 /* inlines for access to swapped data */
 static inline u_int16_t
-ufs_rw16(uint16_t a, int ns)
+ulfs_rw16(uint16_t a, int ns)
 {
 	return ((ns) ? bswap16(a) : (a));
 }
 
 static inline u_int32_t
-ufs_rw32(uint32_t a, int ns)
+ulfs_rw32(uint32_t a, int ns)
 {
 	return ((ns) ? bswap32(a) : (a));
 }
 
 static inline u_int64_t
-ufs_rw64(uint64_t a, int ns)
+ulfs_rw64(uint64_t a, int ns)
 {
 	return ((ns) ? bswap64(a) : (a));
 }
 #else
-#define ufs_rw16(a, ns) ((uint16_t)(a))
-#define ufs_rw32(a, ns) ((uint32_t)(a))
-#define ufs_rw64(a, ns) ((uint64_t)(a))
+#define ulfs_rw16(a, ns) ((uint16_t)(a))
+#define ulfs_rw32(a, ns) ((uint32_t)(a))
+#define ulfs_rw64(a, ns) ((uint64_t)(a))
 #endif
 
-#define ufs_add16(a, b, ns) \
-	(a) = ufs_rw16(ufs_rw16((a), (ns)) + (b), (ns))
-#define ufs_add32(a, b, ns) \
-	(a) = ufs_rw32(ufs_rw32((a), (ns)) + (b), (ns))
-#define ufs_add64(a, b, ns) \
-	(a) = ufs_rw64(ufs_rw64((a), (ns)) + (b), (ns))
+#define ulfs_add16(a, b, ns) \
+	(a) = ulfs_rw16(ulfs_rw16((a), (ns)) + (b), (ns))
+#define ulfs_add32(a, b, ns) \
+	(a) = ulfs_rw32(ulfs_rw32((a), (ns)) + (b), (ns))
+#define ulfs_add64(a, b, ns) \
+	(a) = ulfs_rw64(ulfs_rw64((a), (ns)) + (b), (ns))
 
-#endif /* !_UFS_UFS_BSWAP_H_ */
+#endif /* !_UFS_LFS_ULFS_BSWAP_H_ */
