@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.3 2013/06/03 02:47:23 riz Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.4 2013/06/06 02:55:27 riz Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -116,4 +116,9 @@ gnu/usr.bin/rcs/rlog/rlog.c				patch
 	Update CVS for setuid fixes, acl support, pathname resolution
 	fixes.  Update RCS to handle CVS changes.
 	[christos, ticket #889]
+
+sys/arch/amiga/dev/if_ne_zbus.c			1.15
+
+	Fix kernel panic on Amigas with Deneb cards.
+	[rkujawa, ticket #892]
 
