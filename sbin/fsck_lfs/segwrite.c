@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.22 2013/06/06 00:52:50 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.23 2013/06/06 00:54:49 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,14 +67,15 @@
 #include <sys/buf.h>
 #include <sys/mount.h>
 
-#include <ufs/lfs/ulfs_inode.h>
-#include <ufs/lfs/ulfsmount.h>
-
 /* Override certain things to make <ufs/lfs/lfs.h> work */
+#define _SYS_VNODE_H_ /* XXX */
+#define VU_DIROP 0x01000000 /* XXX XXX from sys/vnode.h */
 #define vnode uvnode
 #define buf ubuf
 #define panic call_panic
 
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/lfs.h>
 
 #include <assert.h>

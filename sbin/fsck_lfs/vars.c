@@ -1,4 +1,4 @@
-/* $NetBSD: vars.c,v 1.15 2013/06/06 00:52:50 dholland Exp $	 */
+/* $NetBSD: vars.c,v 1.16 2013/06/06 00:54:49 dholland Exp $	 */
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,9 +30,9 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/mount.h>		/* XXX */
 #include <ufs/lfs/ulfs_dinode.h>
 #include <ufs/lfs/ulfs_dir.h>
-#include <sys/mount.h>		/* XXX */
 #include <ufs/lfs/lfs.h>
 #include "fsck.h"
 

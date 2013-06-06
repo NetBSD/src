@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota.c,v 1.5 2013/06/06 00:49:28 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota.c,v 1.6 2013/06/06 00:54:49 dholland Exp $	*/
 /*  from NetBSD: ufs_quota.c,v 1.112 2012/09/09 04:27:49 manu Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.5 2013/06/06 00:49:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.6 2013/06/06 00:54:49 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -966,6 +966,10 @@ int
 lfs_qsync(struct mount *mp)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
+
+	/* avoid compiler warning when quotas aren't enabled */
+	(void)ump;
+
 #ifdef LFS_QUOTA
 	if (ump->um_flags & ULFS_QUOTA)
 		return lfs_q1sync(mp);

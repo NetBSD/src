@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.32 2013/06/06 00:52:50 dholland Exp $	 */
+/* $NetBSD: pass1.c,v 1.33 2013/06/06 00:54:49 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,9 +34,10 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 
+#define vnode uvnode
+#define _SYS_VNODE_H_ /* XXX */
 #include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/ulfs_dir.h>
-#define vnode uvnode
 #include <ufs/lfs/lfs.h>
 #undef vnode
 

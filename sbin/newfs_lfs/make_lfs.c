@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.21 2013/06/06 00:53:12 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.22 2013/06/06 00:54:49 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.21 2013/06/06 00:53:12 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.22 2013/06/06 00:54:49 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,11 +72,8 @@ __RCSID("$NetBSD: make_lfs.c,v 1.21 2013/06/06 00:53:12 dholland Exp $");
 #include <sys/mount.h>
 #include <sys/stat.h>
 
-#include <ufs/lfs/ulfs_dir.h>
-#include <ufs/lfs/ulfs_quotacommon.h>
-#include <ufs/lfs/ulfs_inode.h>
-
 /* Override certain things to make <ufs/lfs/lfs.h> work */
+#define _SYS_VNODE_H_ /* XXX */
 # undef simple_lock
 # define simple_lock(x)
 # undef simple_unlock
@@ -84,6 +81,9 @@ __RCSID("$NetBSD: make_lfs.c,v 1.21 2013/06/06 00:53:12 dholland Exp $");
 # define vnode uvnode
 # define buf ubuf
 # define panic call_panic
+#include <ufs/lfs/ulfs_dir.h>
+#include <ufs/lfs/ulfs_quotacommon.h>
+#include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs.h>
 
 #include <err.h>
