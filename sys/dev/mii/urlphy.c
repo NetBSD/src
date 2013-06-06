@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.25 2009/01/31 05:44:05 hira Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.26 2013/06/06 03:10:48 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.25 2009/01/31 05:44:05 hira Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.26 2013/06/06 03:10:48 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,6 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (++sc->mii_ticks <= sc->mii_anegticks)
 			return (0);
 
-		sc->mii_ticks = 0;
 		PHY_RESET(sc);
 
 		if (mii_phy_auto(sc, 0) == EJUSTRETURN)

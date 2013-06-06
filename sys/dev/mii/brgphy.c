@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.63 2013/04/01 13:41:37 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.64 2013/06/06 03:10:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.63 2013/04/01 13:41:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.64 2013/06/06 03:10:48 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -581,6 +581,7 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 {
 	int anar, ktcr = 0;
 
+	sc->mii_ticks = 0;
 	brgphy_loop(sc);
 	PHY_RESET(sc);
 
