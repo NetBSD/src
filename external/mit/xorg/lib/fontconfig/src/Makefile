@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.4.1 2009/09/17 04:24:31 snj Exp $
+#	$NetBSD: Makefile,v 1.4.4.2 2013/06/06 16:49:27 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -97,6 +97,8 @@ CLEANFILES+= fcarch.h
 PKGCONFIG=	fontconfig
 # fontconfig uses VERSION and not PACKAGE_VERSION
 PKGCONFIG_VERSION.fontconfig=	2.6.0
+
+COPTS.Font.c+=	-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
