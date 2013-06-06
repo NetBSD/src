@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.4 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.5 2013/06/06 00:49:28 dholland Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.89 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.4 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.5 2013/06/06 00:49:28 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -139,7 +139,7 @@ ulfs_inactive(void *v)
 				error = ULFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-		(void)chkiq(ip, -1, NOCRED, 0);
+		(void)lfs_chkiq(ip, -1, NOCRED, 0);
 #endif
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;

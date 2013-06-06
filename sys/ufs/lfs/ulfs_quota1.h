@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1.h,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1.h,v 1.4 2013/06/06 00:49:28 dholland Exp $	*/
 /*  from NetBSD: quota1.h,v 1.7 2012/08/26 02:32:14 dholland Exp  */
 
 /*
@@ -97,9 +97,9 @@ struct dqblk {
 };
 
 /* quota1_subr.c */
-void dqblk_to_quotavals(const struct dqblk *,
+void lfs_dqblk_to_quotavals(const struct dqblk *,
 			struct quotaval *, struct quotaval *);
-void quotavals_to_dqblk(const struct quotaval *, const struct quotaval *,
+void lfs_quotavals_to_dqblk(const struct quotaval *, const struct quotaval *,
 			struct dqblk *);
 
 #endif /* !_UFS_LFS_ULFS_QUOTA1_H_ */
