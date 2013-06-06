@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1.h,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1.h,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
 /*  from NetBSD: quota1.h,v 1.7 2012/08/26 02:32:14 dholland Exp  */
 
 /*
@@ -39,7 +39,7 @@
 #define	_UFS_UFS_QUOTA1_H_
 
 #include <sys/quota.h>
-#include <ufs/ufs/quota.h>
+#include <ufs/lfs/ulfs_quotacommon.h>
 
 /*
  * These definitions are for the original disk quota implementation, which

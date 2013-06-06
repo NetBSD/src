@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.212 2013/03/18 19:35:48 plunky Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.1 2013/06/06 00:40:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -97,14 +97,14 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.1 2013/06/06 00:40:55 dholland Exp 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/dir.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_bswap.h>
-#include <ufs/ufs/ufs_extern.h>
-#include <ufs/ufs/ufs_wapbl.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_dir.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_bswap.h>
+#include <ufs/lfs/ulfs_extern.h>
+#include <ufs/lfs/ulfs_wapbl.h>
 #ifdef UFS_DIRHASH
-#include <ufs/ufs/dirhash.h>
+#include <ufs/lfs/ulfs_dirhash.h>
 #endif
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
