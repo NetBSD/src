@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/06/05 00:52:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2013/06/06 21:42:36 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -79,6 +79,10 @@ PKGDIST=	${LIB}
 
 COPTS.XExtInt.c+=	-Wno-error	# XXX
 COPTS.XSndExEv.c+=	-Wno-error	# XXX
+
+.if ${HAVE_GCC} < 45
+COPTS.XGetFCtl.c+=	-Wno-error	# XXX
+.endif
 
 CWARNFLAGS.clang+=	-Wno-pointer-sign
 
