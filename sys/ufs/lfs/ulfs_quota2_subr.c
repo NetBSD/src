@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2_subr.c,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2_subr.c,v 1.4 2013/06/06 00:49:28 dholland Exp $	*/
 /*  from NetBSD: quota2_subr.c,v 1.5 2012/02/05 14:19:04 dholland Exp  */
 
 /*-
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2_subr.c,v 1.3 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2_subr.c,v 1.4 2013/06/06 00:49:28 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_quota2_subr.c,v 1.3 2013/06/06 00:48:04 dhollan
 #endif
 
 void
-quota2_addfreeq2e(struct quota2_header *q2h, void *bp, uint64_t baseoff,
+lfsquota2_addfreeq2e(struct quota2_header *q2h, void *bp, uint64_t baseoff,
     uint64_t bsize, int ns)
 {
 	uint64_t blkoff = baseoff % bsize;
@@ -60,7 +60,7 @@ quota2_addfreeq2e(struct quota2_header *q2h, void *bp, uint64_t baseoff,
 }
 
 void
-quota2_create_blk0(uint64_t bsize, void *bp, int q2h_hash_shift, int type,
+lfsquota2_create_blk0(uint64_t bsize, void *bp, int q2h_hash_shift, int type,
     int ns)
 {
 	struct quota2_header *q2h;
@@ -85,11 +85,11 @@ quota2_create_blk0(uint64_t bsize, void *bp, int q2h_hash_shift, int type,
 	}
 
 	/* first quota entry, after the hash table */
-	quota2_addfreeq2e(q2h, bp, quota2_full_header_size, bsize, ns);
+	lfsquota2_addfreeq2e(q2h, bp, quota2_full_header_size, bsize, ns);
 }
 
 void
-quota2_ulfs_rwq2v(const struct quota2_val *s, struct quota2_val *d, int needswap)
+lfsquota2_ulfs_rwq2v(const struct quota2_val *s, struct quota2_val *d, int needswap)
 {
 	d->q2v_hardlimit = ulfs_rw64(s->q2v_hardlimit, needswap);
 	d->q2v_softlimit = ulfs_rw64(s->q2v_softlimit, needswap);
@@ -99,18 +99,18 @@ quota2_ulfs_rwq2v(const struct quota2_val *s, struct quota2_val *d, int needswap
 }
 
 void
-quota2_ulfs_rwq2e(const struct quota2_entry *s, struct quota2_entry *d,
+lfsquota2_ulfs_rwq2e(const struct quota2_entry *s, struct quota2_entry *d,
 int needswap)
 {
-	quota2_ulfs_rwq2v(&s->q2e_val[QL_BLOCK], &d->q2e_val[QL_BLOCK],
+	lfsquota2_ulfs_rwq2v(&s->q2e_val[QL_BLOCK], &d->q2e_val[QL_BLOCK],
 	    needswap);
-	quota2_ulfs_rwq2v(&s->q2e_val[QL_FILE], &d->q2e_val[QL_FILE],
+	lfsquota2_ulfs_rwq2v(&s->q2e_val[QL_FILE], &d->q2e_val[QL_FILE],
 	    needswap);
 	d->q2e_uid = ulfs_rw32(s->q2e_uid, needswap);
 }
 
 int
-quota_check_limit(uint64_t cur, uint64_t change, uint64_t soft, uint64_t hard,
+lfsquota_check_limit(uint64_t cur, uint64_t change, uint64_t soft, uint64_t hard,
     time_t expire, time_t now)
 { 
 	if (cur + change > hard) {

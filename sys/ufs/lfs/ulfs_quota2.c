@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.4 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.5 2013/06/06 00:49:28 dholland Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 
 /*-
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.4 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.5 2013/06/06 00:49:28 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -147,18 +147,18 @@ getq2h(struct ulfsmount *ump, int type,
 	struct buf *bp;
 	struct quota2_header *q2h;
 
-	KASSERT(mutex_owned(&dqlock));
+	KASSERT(mutex_owned(&lfs_dqlock));
 	error = bread(ump->um_quotas[type], 0, ump->umq2_bsize,
 	    ump->um_cred[type], flags, &bp);
 	if (error)
 		return error;
 	if (bp->b_resid != 0) 
-		panic("dq2get: %s quota file truncated", quotatypes[type]);
+		panic("dq2get: %s quota file truncated", lfs_quotatypes[type]);
 
 	q2h = (void *)bp->b_data;
 	if (ulfs_rw32(q2h->q2h_magic_number, needswap) != Q2_HEAD_MAGIC ||
 	    q2h->q2h_type != type)
-		panic("dq2get: corrupted %s quota header", quotatypes[type]);
+		panic("dq2get: corrupted %s quota header", lfs_quotatypes[type]);
 	*bpp = bp;
 	*q2hp = q2h;
 	return 0;
@@ -173,7 +173,7 @@ getq2e(struct ulfsmount *ump, int type, daddr_t lblkno, int blkoffset,
 
 	if (blkoffset & (sizeof(uint64_t) - 1)) {
 		panic("dq2get: %s quota file corrupted",
-		    quotatypes[type]);
+		    lfs_quotatypes[type]);
 	}
 	error = bread(ump->um_quotas[type], lblkno, ump->umq2_bsize,
 	    ump->um_cred[type], flags, &bp);
@@ -181,7 +181,7 @@ getq2e(struct ulfsmount *ump, int type, daddr_t lblkno, int blkoffset,
 		return error;
 	if (bp->b_resid != 0) {
 		panic("dq2get: %s quota file corrupted",
-		    quotatypes[type]);
+		    lfs_quotatypes[type]);
 	}
 	*q2ep = (void *)((char *)bp->b_data + blkoffset);
 	*bpp = bp;
@@ -205,7 +205,7 @@ quota2_walk_list(struct ulfsmount *ump, struct buf *hbp, int type,
 	struct quota2_entry *q2e;
 	daddr_t lblkno, blkoff, olblkno = 0;
 
-	KASSERT(mutex_owner(&dqlock));
+	KASSERT(mutex_owner(&lfs_dqlock));
 
 	while (off != 0) {
 		lblkno = (off >> ump->um_mountp->mnt_fs_bshift);
@@ -224,7 +224,7 @@ quota2_walk_list(struct ulfsmount *ump, struct buf *hbp, int type,
 				return ret;
 			if (bp->b_resid != 0) {
 				panic("quota2_walk_list: %s quota file corrupted",
-				    quotatypes[type]);
+				    lfs_quotatypes[type]);
 			}
 		}
 		q2e = (void *)((char *)(bp->b_data) + blkoff);
@@ -268,7 +268,7 @@ quota2_walk_list(struct ulfsmount *ump, struct buf *hbp, int type,
 }
 
 int
-quota2_umount(struct mount *mp, int flags)
+lfsquota2_umount(struct mount *mp, int flags)
 {
 	int i, error;
 	struct ulfsmount *ump = VFSTOULFS(mp);
@@ -303,7 +303,7 @@ quota2_q2ealloc(struct ulfsmount *ump, int type, uid_t uid, struct dquot *dq)
 	const int needswap = ULFS_MPNEEDSWAP(ump);
 
 	KASSERT(mutex_owned(&dq->dq_interlock));
-	KASSERT(mutex_owned(&dqlock));
+	KASSERT(mutex_owned(&lfs_dqlock));
 	error = getq2h(ump, type, &hbp, &q2h, B_MODIFY);
 	if (error)
 		return error;
@@ -324,7 +324,7 @@ quota2_q2ealloc(struct ulfsmount *ump, int type, uid_t uid, struct dquot *dq)
 		DIP_ASSIGN(ip, size, ip->i_size);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		uvm_vnp_setsize(vp, ip->i_size);
-		quota2_addfreeq2e(q2h, bp->b_data, size, ump->umq2_bsize,
+		lfsquota2_addfreeq2e(q2h, bp->b_data, size, ump->umq2_bsize,
 		    needswap);
 		error = bwrite(bp);
 		error2 = ULFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
@@ -376,7 +376,7 @@ getinoquota2(struct inode *ip, bool alloc, bool modify, struct buf **bpp,
 	struct ulfsmount *ump = ip->i_ump;
 	u_int32_t ino_ids[ULFS_MAXQUOTAS];
 
-	error = getinoquota(ip);
+	error = lfs_getinoquota(ip);
 	if (error)
 		return error;
 
@@ -405,7 +405,7 @@ getinoquota2(struct inode *ip, bool alloc, bool modify, struct buf **bpp,
 			 * at umount time.
 			 */
 			mutex_exit(&dq->dq_interlock);
-			dqrele(NULLVP, dq);
+			lfs_dqrele(NULLVP, dq);
 			ip->i_dquot[i] = NULL;
 			continue;
 		}
@@ -415,9 +415,9 @@ getinoquota2(struct inode *ip, bool alloc, bool modify, struct buf **bpp,
 				continue;
 			}
 			/* need to alloc a new on-disk quot */
-			mutex_enter(&dqlock);
+			mutex_enter(&lfs_dqlock);
 			error = quota2_q2ealloc(ump, i, ino_ids[i], dq);
-			mutex_exit(&dqlock);
+			mutex_exit(&lfs_dqlock);
 			if (error)
 				return error;
 		}
@@ -432,9 +432,9 @@ getinoquota2(struct inode *ip, bool alloc, bool modify, struct buf **bpp,
 }
 
 __inline static int __unused
-quota2_check_limit(struct quota2_val *q2v, uint64_t change, time_t now)
+lfsquota2_check_limit(struct quota2_val *q2v, uint64_t change, time_t now)
 {
-	return quota_check_limit(q2v->q2v_cur, change, q2v->q2v_softlimit,
+	return lfsquota_check_limit(q2v->q2v_cur, change, q2v->q2v_softlimit,
 	    q2v->q2v_hardlimit, q2v->q2v_time, now);
 }
 
@@ -495,8 +495,8 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 		if (dq == NODQUOT)
 			continue;
 		KASSERT(q2e[i] != NULL);
-		quota2_ulfs_rwq2v(&q2e[i]->q2e_val[vtype], &q2v, needswap);
-		ql_stat = quota2_check_limit(&q2v, change, time_second);
+		lfsquota2_ulfs_rwq2v(&q2e[i]->q2e_val[vtype], &q2v, needswap);
+		ql_stat = lfsquota2_check_limit(&q2v, change, time_second);
 
 		if ((flags & FORCE) == 0 &&
 		    kauth_authorize_system(cred, KAUTH_SYSTEM_FS_QUOTA,
@@ -509,7 +509,7 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 					uprintf("\n%s: write failed, %s %s "
 					    "limit reached\n",
 					    mp->mnt_stat.f_mntonname,
-					    quotatypes[i], limnames[vtype]);
+					    lfs_quotatypes[i], limnames[vtype]);
 					dq->dq_flags |= DQ_WARN(vtype);
 				}
 				error = EDQUOT;
@@ -519,7 +519,7 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 					uprintf("\n%s: write failed, %s %s "
 					    "limit reached\n",
 					    mp->mnt_stat.f_mntonname,
-					    quotatypes[i], limnames[vtype]);
+					    lfs_quotatypes[i], limnames[vtype]);
 					dq->dq_flags |= DQ_WARN(vtype);
 				}
 				error = EDQUOT;
@@ -529,7 +529,7 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 					uprintf("\n%s: warning, %s %s "
 					    "quota exceeded\n",
 					    mp->mnt_stat.f_mntonname,
-					    quotatypes[i], limnames[vtype]);
+					    lfs_quotatypes[i], limnames[vtype]);
 					dq->dq_flags |= DQ_WARN(vtype);
 				}
 				break;
@@ -542,7 +542,7 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 		 */
 		if (ql_stat & QL_F_CROSS) {
 			q2v.q2v_time = time_second + q2v.q2v_grace;
-			quota2_ulfs_rwq2v(&q2v, &q2e[i]->q2e_val[vtype],
+			lfsquota2_ulfs_rwq2v(&q2v, &q2e[i]->q2e_val[vtype],
 			    needswap);
 		}
 	}
@@ -566,19 +566,19 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 }
 
 int
-chkdq2(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
+lfs_chkdq2(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 {
 	return quota2_check(ip, QL_BLOCK, change, cred, flags);
 }
 
 int
-chkiq2(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
+lfs_chkiq2(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 {
 	return quota2_check(ip, QL_FILE, change, cred, flags);
 }
 
 int
-quota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
+lfsquota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
     const struct quotaval *val)
 {
 	int error;
@@ -599,30 +599,30 @@ quota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
 		return error;
 	
 	if (key->qk_id == QUOTA_DEFAULTID) {
-		mutex_enter(&dqlock);
+		mutex_enter(&lfs_dqlock);
 		error = getq2h(ump, key->qk_idtype, &bp, &q2h, B_MODIFY);
 		if (error) {
-			mutex_exit(&dqlock);
+			mutex_exit(&lfs_dqlock);
 			goto out_wapbl;
 		}
-		quota2_ulfs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
+		lfsquota2_ulfs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
 		quota2_dict_update_q2e_limits(key->qk_objtype, val, &q2e);
-		quota2_ulfs_rwq2e(&q2e, &q2h->q2h_defentry, needswap);
-		mutex_exit(&dqlock);
+		lfsquota2_ulfs_rwq2e(&q2e, &q2h->q2h_defentry, needswap);
+		mutex_exit(&lfs_dqlock);
 		quota2_bwrite(ump->um_mountp, bp);
 		goto out_wapbl;
 	}
 
-	error = dqget(NULLVP, key->qk_id, ump, key->qk_idtype, &dq);
+	error = lfs_dqget(NULLVP, key->qk_id, ump, key->qk_idtype, &dq);
 	if (error)
 		goto out_wapbl;
 
 	mutex_enter(&dq->dq_interlock);
 	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
 		/* need to alloc a new on-disk quot */
-		mutex_enter(&dqlock);
+		mutex_enter(&lfs_dqlock);
 		error = quota2_q2ealloc(ump, key->qk_idtype, key->qk_id, dq);
-		mutex_exit(&dqlock);
+		mutex_exit(&lfs_dqlock);
 		if (error)
 			goto out_il;
 	}
@@ -632,14 +632,14 @@ quota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
 	if (error)
 		goto out_il;
 	
-	quota2_ulfs_rwq2e(q2ep, &q2e, needswap);
+	lfsquota2_ulfs_rwq2e(q2ep, &q2e, needswap);
 	quota2_dict_update_q2e_limits(key->qk_objtype, val, &q2e);
-	quota2_ulfs_rwq2e(&q2e, q2ep, needswap);
+	lfsquota2_ulfs_rwq2e(&q2e, q2ep, needswap);
 	quota2_bwrite(ump->um_mountp, bp);
 
 out_il:
 	mutex_exit(&dq->dq_interlock);
-	dqrele(NULLVP, dq);
+	lfs_dqrele(NULLVP, dq);
 out_wapbl:
 	ULFS_WAPBL_END(ump->um_mountp);
 	return error;
@@ -676,7 +676,7 @@ dq2clear_callback(struct ulfsmount *ump, uint64_t *offp, struct quota2_entry *q2
 	return 0;
 }
 int
-quota2_handle_cmd_delete(struct ulfsmount *ump, const struct quotakey *qk)
+lfsquota2_handle_cmd_delete(struct ulfsmount *ump, const struct quotakey *qk)
 {
 	int idtype;
 	id_t id;
@@ -699,18 +699,18 @@ quota2_handle_cmd_delete(struct ulfsmount *ump, const struct quotakey *qk)
 		return EOPNOTSUPP;
 
 	/* get the default entry before locking the entry's buffer */
-	mutex_enter(&dqlock);
+	mutex_enter(&lfs_dqlock);
 	error = getq2h(ump, idtype, &hbp, &q2h, 0);
 	if (error) {
-		mutex_exit(&dqlock);
+		mutex_exit(&lfs_dqlock);
 		return error;
 	}
 	/* we'll copy to another disk entry, so no need to swap */
 	memcpy(&q2e, &q2h->q2h_defentry, sizeof(q2e));
-	mutex_exit(&dqlock);
+	mutex_exit(&lfs_dqlock);
 	brelse(hbp, 0);
 
-	error = dqget(NULLVP, id, ump, idtype, &dq);
+	error = lfs_dqget(NULLVP, id, ump, idtype, &dq);
 	if (error)
 		return error;
 
@@ -764,7 +764,7 @@ quota2_handle_cmd_delete(struct ulfsmount *ump, const struct quotakey *qk)
 	}
 	/* we can free it. release bp so we can walk the list */
 	brelse(bp, 0);
-	mutex_enter(&dqlock);
+	mutex_enter(&lfs_dqlock);
 	error = getq2h(ump, idtype, &hbp, &q2h, 0);
 	if (error)
 		goto out_dqlock;
@@ -780,13 +780,13 @@ quota2_handle_cmd_delete(struct ulfsmount *ump, const struct quotakey *qk)
 	bwrite(hbp);
 
 out_dqlock:
-	mutex_exit(&dqlock);
+	mutex_exit(&lfs_dqlock);
 out_wapbl:
 	ULFS_WAPBL_END(ump->um_mountp);
 out_il:
 	mutex_exit(&dq->dq_interlock);
 out_dq:
-	dqrele(NULLVP, dq);
+	lfs_dqrele(NULLVP, dq);
 	return error;
 }
 
@@ -800,27 +800,27 @@ quota2_fetch_q2e(struct ulfsmount *ump, const struct quotakey *qk,
 	struct buf *bp;
 	const int needswap = ULFS_MPNEEDSWAP(ump);
 
-	error = dqget(NULLVP, qk->qk_id, ump, qk->qk_idtype, &dq);
+	error = lfs_dqget(NULLVP, qk->qk_id, ump, qk->qk_idtype, &dq);
 	if (error)
 		return error;
 
 	mutex_enter(&dq->dq_interlock);
 	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
 		mutex_exit(&dq->dq_interlock);
-		dqrele(NULLVP, dq);
+		lfs_dqrele(NULLVP, dq);
 		return ENOENT;
 	}
 	error = getq2e(ump, qk->qk_idtype, dq->dq2_lblkno, dq->dq2_blkoff,
 	    &bp, &q2ep, 0);
 	if (error) {
 		mutex_exit(&dq->dq_interlock);
-		dqrele(NULLVP, dq);
+		lfs_dqrele(NULLVP, dq);
 		return error;
 	}
-	quota2_ulfs_rwq2e(q2ep, ret, needswap);
+	lfsquota2_ulfs_rwq2e(q2ep, ret, needswap);
 	brelse(bp, 0);
 	mutex_exit(&dq->dq_interlock);
-	dqrele(NULLVP, dq);
+	lfs_dqrele(NULLVP, dq);
 
 	return 0;
 }
@@ -836,27 +836,27 @@ quota2_fetch_quotaval(struct ulfsmount *ump, const struct quotakey *qk,
 	const int needswap = ULFS_MPNEEDSWAP(ump);
 	id_t id2;
 
-	error = dqget(NULLVP, qk->qk_id, ump, qk->qk_idtype, &dq);
+	error = lfs_dqget(NULLVP, qk->qk_id, ump, qk->qk_idtype, &dq);
 	if (error)
 		return error;
 
 	mutex_enter(&dq->dq_interlock);
 	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
 		mutex_exit(&dq->dq_interlock);
-		dqrele(NULLVP, dq);
+		lfs_dqrele(NULLVP, dq);
 		return ENOENT;
 	}
 	error = getq2e(ump, qk->qk_idtype, dq->dq2_lblkno, dq->dq2_blkoff,
 	    &bp, &q2ep, 0);
 	if (error) {
 		mutex_exit(&dq->dq_interlock);
-		dqrele(NULLVP, dq);
+		lfs_dqrele(NULLVP, dq);
 		return error;
 	}
-	quota2_ulfs_rwq2e(q2ep, &q2e, needswap);
+	lfsquota2_ulfs_rwq2e(q2ep, &q2e, needswap);
 	brelse(bp, 0);
 	mutex_exit(&dq->dq_interlock);
-	dqrele(NULLVP, dq);
+	lfs_dqrele(NULLVP, dq);
 
 	q2e_to_quotaval(&q2e, 0, &id2, qk->qk_objtype, ret);
 	KASSERT(id2 == qk->qk_id);
@@ -864,7 +864,7 @@ quota2_fetch_quotaval(struct ulfsmount *ump, const struct quotakey *qk,
 }
 
 int
-quota2_handle_cmd_get(struct ulfsmount *ump, const struct quotakey *qk,
+lfsquota2_handle_cmd_get(struct ulfsmount *ump, const struct quotakey *qk,
     struct quotaval *qv)
 {
 	int error;
@@ -890,14 +890,14 @@ quota2_handle_cmd_get(struct ulfsmount *ump, const struct quotakey *qk,
 	if (ump->um_quotas[qk->qk_idtype] == NULLVP)
 		return ENODEV;
 	if (qk->qk_id == QUOTA_DEFAULTID) {
-		mutex_enter(&dqlock);
+		mutex_enter(&lfs_dqlock);
 		error = getq2h(ump, qk->qk_idtype, &bp, &q2h, 0);
 		if (error) {
-			mutex_exit(&dqlock);
+			mutex_exit(&lfs_dqlock);
 			return error;
 		}
-		quota2_ulfs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
-		mutex_exit(&dqlock);
+		lfsquota2_ulfs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
+		mutex_exit(&lfs_dqlock);
 		brelse(bp, 0);
 		q2e_to_quotaval(&q2e, qk->qk_id == QUOTA_DEFAULTID, &id2,
 				qk->qk_objtype, qv);
@@ -1136,10 +1136,10 @@ q2cursor_getkeys(struct ulfsmount *ump, int idtype, struct ulfsq2_cursor *cursor
 	 * Read the header block.
 	 */
 
-	mutex_enter(&dqlock);
+	mutex_enter(&lfs_dqlock);
 	error = getq2h(ump, idtype, &hbp, &q2h, 0);
 	if (error) {
-		mutex_exit(&dqlock);
+		mutex_exit(&lfs_dqlock);
 		return error;
 	}
 
@@ -1153,7 +1153,7 @@ q2cursor_getkeys(struct ulfsmount *ump, int idtype, struct ulfsq2_cursor *cursor
 	}
 
 	/* grab the entry with the default values out of the header */
-	quota2_ulfs_rwq2e(&q2h->q2h_defentry, default_q2e_ret, needswap);
+	lfsquota2_ulfs_rwq2e(&q2h->q2h_defentry, default_q2e_ret, needswap);
 
 	/* If we haven't done the defaults yet, that goes first. */
 	if (cursor->q2c_defaults_done == 0) {
@@ -1205,7 +1205,7 @@ q2cursor_getkeys(struct ulfsmount *ump, int idtype, struct ulfsq2_cursor *cursor
 	}
 
 scanfail:
-	mutex_exit(&dqlock);
+	mutex_exit(&lfs_dqlock);
 	brelse(hbp, 0);
 	if (error)
 		return error;
@@ -1270,7 +1270,7 @@ q2cursor_getvals(struct ulfsmount *ump, struct q2cursor_state *state,
  * the keys to fetch the values.
  */
 int
-quota2_handle_cmd_cursorget(struct ulfsmount *ump, struct quotakcursor *qkc,
+lfsquota2_handle_cmd_cursorget(struct ulfsmount *ump, struct quotakcursor *qkc,
     struct quotakey *keys, struct quotaval *vals, unsigned maxreturn,
     unsigned *ret)
 {
@@ -1386,7 +1386,7 @@ quota2_handle_cmd_cursorget(struct ulfsmount *ump, struct quotakcursor *qkc,
 }
 
 int
-quota2_handle_cmd_cursoropen(struct ulfsmount *ump, struct quotakcursor *qkc)
+lfsquota2_handle_cmd_cursoropen(struct ulfsmount *ump, struct quotakcursor *qkc)
 {
 	struct ulfsq2_cursor *cursor;
 
@@ -1406,7 +1406,7 @@ quota2_handle_cmd_cursoropen(struct ulfsmount *ump, struct quotakcursor *qkc)
 }
 
 int
-quota2_handle_cmd_cursorclose(struct ulfsmount *ump, struct quotakcursor *qkc)
+lfsquota2_handle_cmd_cursorclose(struct ulfsmount *ump, struct quotakcursor *qkc)
 {
 	struct ulfsq2_cursor *cursor;
 	int error;
@@ -1423,7 +1423,7 @@ quota2_handle_cmd_cursorclose(struct ulfsmount *ump, struct quotakcursor *qkc)
 }
 
 int
-quota2_handle_cmd_cursorskipidtype(struct ulfsmount *ump,
+lfsquota2_handle_cmd_cursorskipidtype(struct ulfsmount *ump,
     struct quotakcursor *qkc, int idtype)
 {
 	struct ulfsq2_cursor *cursor;
@@ -1450,7 +1450,7 @@ quota2_handle_cmd_cursorskipidtype(struct ulfsmount *ump,
 }
 
 int
-quota2_handle_cmd_cursoratend(struct ulfsmount *ump, struct quotakcursor *qkc,
+lfsquota2_handle_cmd_cursoratend(struct ulfsmount *ump, struct quotakcursor *qkc,
     int *ret)
 {
 	struct ulfsq2_cursor *cursor;
@@ -1467,7 +1467,7 @@ quota2_handle_cmd_cursoratend(struct ulfsmount *ump, struct quotakcursor *qkc,
 }
 
 int
-quota2_handle_cmd_cursorrewind(struct ulfsmount *ump, struct quotakcursor *qkc)
+lfsquota2_handle_cmd_cursorrewind(struct ulfsmount *ump, struct quotakcursor *qkc)
 {
 	struct ulfsq2_cursor *cursor;
 	int error;
@@ -1491,7 +1491,7 @@ quota2_handle_cmd_cursorrewind(struct ulfsmount *ump, struct quotakcursor *qkc)
 }
 
 int
-q2sync(struct mount *mp)
+lfs_q2sync(struct mount *mp)
 {
 	return 0;
 }
@@ -1524,7 +1524,7 @@ dq2get_callback(struct ulfsmount *ump, uint64_t *offp, struct quota2_entry *q2e,
 }
 
 int
-dq2get(struct vnode *dqvp, u_long id, struct ulfsmount *ump, int type,
+lfs_dq2get(struct vnode *dqvp, u_long id, struct ulfsmount *ump, int type,
     struct dquot *dq)
 {
 	struct buf *bp;
@@ -1538,7 +1538,7 @@ dq2get(struct vnode *dqvp, u_long id, struct ulfsmount *ump, int type,
 	};
 
 	KASSERT(mutex_owned(&dq->dq_interlock));
-	mutex_enter(&dqlock);
+	mutex_enter(&lfs_dqlock);
 	error = getq2h(ump, type, &bp, &q2h, 0);
 	if (error)
 		goto out_mutex;
@@ -1549,12 +1549,12 @@ dq2get(struct vnode *dqvp, u_long id, struct ulfsmount *ump, int type,
 	    dq2get_callback);
 	brelse(bp, 0);
 out_mutex:
-	mutex_exit(&dqlock);
+	mutex_exit(&lfs_dqlock);
 	return error;
 }
 
 int
-dq2sync(struct vnode *vp, struct dquot *dq)
+lfs_dq2sync(struct vnode *vp, struct dquot *dq)
 {
 	return 0;
 }
