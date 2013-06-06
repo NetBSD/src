@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.26 2013/01/22 09:39:12 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.27 2013/06/06 00:52:50 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -35,9 +35,9 @@
 #include <sys/buf.h>
 #include <sys/mount.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/dir.h>
-#include <ufs/ufs/ufsmount.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_dir.h>
+#include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/lfs.h>
 
 #include <err.h>
@@ -82,7 +82,7 @@ struct odirtemplate odirhead = {
 	.dotdot_name = ".."
 };
 
-static int expanddir(struct uvnode *, struct ufs1_dinode *, char *);
+static int expanddir(struct uvnode *, struct ulfs1_dinode *, char *);
 static void freedir(ino_t, ino_t);
 static struct direct *fsck_readdir(struct uvnode *, struct inodesc *);
 static int lftempname(char *, ino_t);
@@ -105,14 +105,14 @@ propagate(void)
 	for (inpp = inpsort; inpp < inpend; inpp++) {
 		inp = *inpp;
 		if (inp->i_parent == 0 ||
-		    inp->i_number == UFS_ROOTINO)
+		    inp->i_number == ULFS_ROOTINO)
 			continue;
 		pinp = getinoinfo(inp->i_parent);
 		inp->i_parentp = pinp;
 		inp->i_sibling = pinp->i_child;
 		pinp->i_child = inp;
 	}
-	inp = getinoinfo(UFS_ROOTINO);
+	inp = getinoinfo(ULFS_ROOTINO);
 	while (inp) {
 		statemap[inp->i_number] = DFOUND;
 		if (inp->i_child &&
@@ -307,7 +307,7 @@ fileerror(ino_t cwd, ino_t ino, const char *errmesg)
 	printf("\n");
 	pwarn("PARENT=%lld\n", (long long)cwd);
 	getpathname(pathbuf, sizeof(pathbuf), cwd, ino);
-	if (ino < UFS_ROOTINO || ino >= maxino) {
+	if (ino < ULFS_ROOTINO || ino >= maxino) {
 		pfatal("NAME=%s\n", pathbuf);
 		return;
 	}
@@ -328,7 +328,7 @@ void
 adjust(struct inodesc *idesc, short lcnt)
 {
 	struct uvnode *vp;
-	struct ufs1_dinode *dp;
+	struct ulfs1_dinode *dp;
 
 	vp = vget(fs, idesc->id_number);
 	dp = VTOD(vp);
@@ -396,7 +396,7 @@ chgino(struct inodesc *idesc)
 int
 linkup(ino_t orphan, ino_t parentdir)
 {
-	struct ufs1_dinode *dp;
+	struct ulfs1_dinode *dp;
 	int lostdir;
 	ino_t oldlfdir;
 	struct inodesc idesc;
@@ -416,23 +416,23 @@ linkup(ino_t orphan, ino_t parentdir)
 	else if (reply("RECONNECT") == 0)
 		return (0);
 	if (lfdir == 0) {
-		dp = ginode(UFS_ROOTINO);
+		dp = ginode(ULFS_ROOTINO);
 		idesc.id_name = lfname;
 		idesc.id_type = DATA;
 		idesc.id_func = findino;
-		idesc.id_number = UFS_ROOTINO;
+		idesc.id_number = ULFS_ROOTINO;
 		if ((ckinode(dp, &idesc) & FOUND) != 0) {
 			lfdir = idesc.id_parent;
 		} else {
 			pwarn("NO lost+found DIRECTORY");
 			if (preen || reply("CREATE")) {
-				lfdir = allocdir(UFS_ROOTINO, (ino_t) 0, lfmode);
+				lfdir = allocdir(ULFS_ROOTINO, (ino_t) 0, lfmode);
 				if (lfdir != 0) {
-					if (makeentry(UFS_ROOTINO, lfdir, lfname) != 0) {
+					if (makeentry(ULFS_ROOTINO, lfdir, lfname) != 0) {
 						if (preen)
 							printf(" (CREATED)\n");
 					} else {
-						freedir(lfdir, UFS_ROOTINO);
+						freedir(lfdir, ULFS_ROOTINO);
 						lfdir = 0;
 						if (preen)
 							printf("\n");
@@ -453,11 +453,11 @@ linkup(ino_t orphan, ino_t parentdir)
 		if (reply("REALLOCATE") == 0)
 			return (0);
 		oldlfdir = lfdir;
-		if ((lfdir = allocdir(UFS_ROOTINO, (ino_t) 0, lfmode)) == 0) {
+		if ((lfdir = allocdir(ULFS_ROOTINO, (ino_t) 0, lfmode)) == 0) {
 			pfatal("SORRY. CANNOT CREATE lost+found DIRECTORY\n\n");
 			return (0);
 		}
-		if ((changeino(UFS_ROOTINO, lfname, lfdir) & ALTERED) == 0) {
+		if ((changeino(ULFS_ROOTINO, lfname, lfdir) & ALTERED) == 0) {
 			pfatal("SORRY. CANNOT CREATE lost+found DIRECTORY\n\n");
 			return (0);
 		}
@@ -524,13 +524,13 @@ changeino(ino_t dir, const char *name, ino_t newnum)
 int
 makeentry(ino_t parent, ino_t ino, const char *name)
 {
-	struct ufs1_dinode *dp;
+	struct ulfs1_dinode *dp;
 	struct inodesc idesc;
 	char pathbuf[MAXPATHLEN + 1];
 	struct uvnode *vp;
 
-	if (parent < UFS_ROOTINO || parent >= maxino ||
-	    ino < UFS_ROOTINO || ino >= maxino)
+	if (parent < ULFS_ROOTINO || parent >= maxino ||
+	    ino < ULFS_ROOTINO || ino >= maxino)
 		return (0);
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = DATA;
@@ -559,14 +559,14 @@ makeentry(ino_t parent, ino_t ino, const char *name)
  * Attempt to expand the size of a directory
  */
 static int
-expanddir(struct uvnode *vp, struct ufs1_dinode *dp, char *name)
+expanddir(struct uvnode *vp, struct ulfs1_dinode *dp, char *name)
 {
 	daddr_t lastbn;
 	struct ubuf *bp;
 	char *cp, firstblk[DIRBLKSIZ];
 
 	lastbn = lblkno(fs, dp->di_size);
-	if (lastbn >= UFS_NDADDR - 1 || dp->di_db[lastbn] == 0 || dp->di_size == 0)
+	if (lastbn >= ULFS_NDADDR - 1 || dp->di_db[lastbn] == 0 || dp->di_size == 0)
 		return (0);
 	dp->di_db[lastbn + 1] = dp->di_db[lastbn];
 	dp->di_db[lastbn] = 0;
@@ -617,7 +617,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 {
 	ino_t ino;
 	char *cp;
-	struct ufs1_dinode *dp;
+	struct ulfs1_dinode *dp;
 	struct ubuf *bp;
 	struct dirtemplate *dirp;
 	struct uvnode *vp;
@@ -642,7 +642,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 	VOP_BWRITE(bp);
 	dp->di_nlink = 2;
 	inodirty(VTOI(vp));
-	if (ino == UFS_ROOTINO) {
+	if (ino == ULFS_ROOTINO) {
 		lncntp[ino] = dp->di_nlink;
 		cacheino(dp, ino);
 		return (ino);

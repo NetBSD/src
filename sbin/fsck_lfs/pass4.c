@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.18 2013/01/22 09:39:12 dholland Exp $	 */
+/* $NetBSD: pass4.c,v 1.19 2013/06/06 00:52:50 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/mount.h>
-#include <ufs/ufs/inode.h>
+#include <ufs/lfs/ulfs_inode.h>
 
 #define vnode uvnode
 #define buf ubuf
@@ -81,14 +81,14 @@ pass4(void)
 {
 	ino_t inumber;
 	struct zlncnt *zlnp;
-	struct ufs1_dinode *dp;
+	struct ulfs1_dinode *dp;
 	struct inodesc idesc;
 	int n;
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
 	idesc.id_func = pass4check;
-	for (inumber = UFS_ROOTINO; inumber <= lastino; inumber++) {
+	for (inumber = ULFS_ROOTINO; inumber <= lastino; inumber++) {
 		idesc.id_number = inumber;
 		switch (statemap[inumber]) {
 
