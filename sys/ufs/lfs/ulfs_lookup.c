@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.3 2013/06/06 00:46:40 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,10 +38,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.3 2013/06/06 00:46:40 dholland Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_ffs.h"
+#include "opt_lfs.h"
 #endif
 
 #include <sys/param.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.2 2013/06/06 00:44:40 dholland Exp
 
 #include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/ulfs_dir.h>
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 #include <ufs/lfs/ulfs_dirhash.h>
 #endif
 #include <ufs/lfs/ulfsmount.h>
@@ -237,7 +237,7 @@ ufs_lookup(void *v)
 	 */
 	bmask = vdp->v_mount->mnt_stat.f_iosize - 1;
 
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 	/*
 	 * Use dirhash for fast operations on large directories. The logic
 	 * to determine whether to hash the directory is contained within
@@ -274,7 +274,7 @@ ufs_lookup(void *v)
 			break;
 		}
 	}
-#endif /* UFS_DIRHASH */
+#endif /* LFS_DIRHASH */
 
 	if (nameiop != LOOKUP || results->ulr_diroff == 0 ||
 	    results->ulr_diroff >= dp->i_size) {
@@ -391,7 +391,7 @@ searchloop:
 			if (namlen == cnp->cn_namelen &&
 			    !memcmp(cnp->cn_nameptr, ep->d_name,
 			    (unsigned)namlen)) {
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 foundentry:
 #endif
 				/*
@@ -868,7 +868,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		}
 		blkoff = ulr->ulr_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
 		memcpy((char *)bp->b_data + blkoff, dirp, newentrysize);
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 		if (dp->i_dirhash != NULL) {
 			ufsdirhash_newblk(dp, ulr->ulr_offset);
 			ufsdirhash_add(dp, dirp, ulr->ulr_offset);
@@ -953,7 +953,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		}
 		dsize = DIRSIZ(FSFMT(dvp), nep, needswap);
 		spacefree += reclen - dsize;
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 		if (dp->i_dirhash != NULL)
 			ufsdirhash_move(dp, nep,
 			    ulr->ulr_offset + ((char *)nep - dirbuf),
@@ -996,13 +996,13 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 			dirp->d_type = tmp;
 		}
 	}
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 	if (dp->i_dirhash != NULL && (ep->d_ino == 0 ||
 	    dirp->d_reclen == spacefree))
 		ufsdirhash_add(dp, dirp, ulr->ulr_offset + ((char *)ep - dirbuf));
 #endif
 	memcpy((void *)ep, (void *)dirp, (u_int)newentrysize);
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 	if (dp->i_dirhash != NULL)
 		ufsdirhash_checkblock(dp, dirbuf -
 		    (ulr->ulr_offset & (dirblksiz - 1)),
@@ -1018,7 +1018,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	 * lock on the newly entered node.
 	 */
 	if (error == 0 && ulr->ulr_endoff && ulr->ulr_endoff < dp->i_size) {
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 		if (dp->i_dirhash != NULL)
 			ufsdirhash_dirtrunc(dp, ulr->ulr_endoff);
 #endif
@@ -1071,7 +1071,7 @@ ufs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	struct direct *ep;
 	struct buf *bp;
 	int error;
-#ifdef FFS_EI
+#ifdef LFS_EI
 	const int needswap = UFS_MPNEEDSWAP(dp->i_ump);
 #endif
 
@@ -1094,7 +1094,7 @@ ufs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	    (off_t)(ulr->ulr_offset - ulr->ulr_count), (void *)&ep, &bp, true)) != 0)
 		return (error);
 
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 	/*
 	 * Remove the dirhash entry. This is complicated by the fact
 	 * that `ep' is the previous entry when ulr_count != 0.
@@ -1119,7 +1119,7 @@ ufs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 			needswap);
 	}
 
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 	if (dp->i_dirhash != NULL) {
 		int dirblksiz = ip->i_ump->um_dirblksiz;
 		ufsdirhash_checkblock(dp, (char *)ep -
