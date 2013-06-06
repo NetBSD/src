@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_wapbl.c,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_wapbl.c,v 1.2 2013/06/06 00:44:41 dholland Exp $	*/
 /*  from NetBSD: ufs_wapbl.c,v 1.23 2012/01/27 19:22:50 para Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_wapbl.c,v 1.1 2013/06/06 00:40:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_wapbl.c,v 1.2 2013/06/06 00:44:41 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,13 +89,13 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_wapbl.c,v 1.1 2013/06/06 00:40:55 dholland Exp 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/dir.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_bswap.h>
-#include <ufs/ufs/ufs_extern.h>
-#include <ufs/ufs/ufs_wapbl.h>
+#include <ufs/lfs/ulfs_quotacommon.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_dir.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_bswap.h>
+#include <ufs/lfs/ulfs_extern.h>
+#include <ufs/lfs/ulfs_wapbl.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/lfs/lfs_extern.h>
 

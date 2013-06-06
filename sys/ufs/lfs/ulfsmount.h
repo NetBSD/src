@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfsmount.h,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfsmount.h,v 1.2 2013/06/06 00:44:41 dholland Exp $	*/
 /*  from NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp  */
 
 /*
@@ -62,8 +62,8 @@ struct mfs_args {
 
 #include <sys/mutex.h>
 
-#include <ufs/ufs/extattr.h>
-#include <ufs/ufs/quota.h>
+#include <ufs/lfs/ulfs_extattr.h>
+#include <ufs/lfs/ulfs_quotacommon.h>
 
 struct buf;
 struct inode;

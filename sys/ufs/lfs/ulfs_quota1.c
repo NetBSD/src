@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1.c,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
 /*  from NetBSD: ufs_quota1.c,v 1.18 2012/02/02 03:00:48 matt Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.1 2013/06/06 00:40:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,11 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.1 2013/06/06 00:40:55 dholland Exp
 #include <sys/mount.h>
 #include <sys/kauth.h>
 
-#include <ufs/ufs/quota1.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
-#include <ufs/ufs/ufs_quota.h>
+#include <ufs/lfs/ulfs_quota1.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_extern.h>
+#include <ufs/lfs/ulfs_quota.h>
 
 static int chkdqchg(struct inode *, int64_t, kauth_cred_t, int);
 static int chkiqchg(struct inode *, int32_t, kauth_cred_t, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.243 2013/01/22 09:39:18 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.244 2013/06/06 00:44:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.243 2013/01/22 09:39:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.244 2013/06/06 00:44:40 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -88,11 +88,11 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.243 2013/01/22 09:39:18 dholland Exp
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/dir.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_bswap.h>
-#include <ufs/ufs/ufs_extern.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_dir.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_bswap.h>
+#include <ufs/lfs/ulfs_extern.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pmap.h>
@@ -253,7 +253,7 @@ const struct vnodeopv_desc lfs_fifoop_opv_desc =
 static int check_dirty(struct lfs *, struct vnode *, off_t, off_t, off_t, int, int, struct vm_page **);
 
 #define	LFS_READWRITE
-#include <ufs/ufs/ufs_readwrite.c>
+#include <ufs/lfs/ulfs_readwrite.c>
 #undef	LFS_READWRITE
 
 /*

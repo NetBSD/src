@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_ihash.c,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_ihash.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
 /*  from NetBSD: ufs_ihash.c,v 1.31 2011/06/12 03:36:02 rmind Exp  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_ihash.c,v 1.1 2013/06/06 00:40:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_ihash.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_ihash.c,v 1.1 2013/06/06 00:40:55 dholland Exp 
 #include <sys/proc.h>
 #include <sys/mutex.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufs_extern.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_extern.h>
 
 /*
  * Structures associated with inode cacheing.

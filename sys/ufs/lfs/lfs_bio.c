@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.122 2012/02/16 02:47:55 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.123 2013/06/06 00:44:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.122 2012/02/16 02:47:55 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.123 2013/06/06 00:44:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.122 2012/02/16 02:47:55 perseant Exp $
 #include <sys/kernel.h>
 #include <sys/kauth.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_extern.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>

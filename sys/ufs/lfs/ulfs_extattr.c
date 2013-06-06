@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extattr.c,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_extattr.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
 /*  from NetBSD: ufs_extattr.c,v 1.41 2012/12/08 13:42:36 manu Exp  */
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.1 2013/06/06 00:40:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -71,12 +71,12 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.1 2013/06/06 00:40:55 dholland Ex
 #include <sys/extattr.h>
 #include <sys/sysctl.h>
 
-#include <ufs/ufs/dir.h>
-#include <ufs/ufs/extattr.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufs_bswap.h>
-#include <ufs/ufs/ufs_extern.h>
+#include <ufs/lfs/ulfs_dir.h>
+#include <ufs/lfs/ulfs_extattr.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_bswap.h>
+#include <ufs/lfs/ulfs_extern.h>
 
 int ufs_extattr_sync = 1;
 int ufs_extattr_autocreate = 1024;
