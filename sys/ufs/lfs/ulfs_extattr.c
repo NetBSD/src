@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extattr.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_extattr.c,v 1.3 2013/06/06 00:46:40 dholland Exp $	*/
 /*  from NetBSD: ufs_extattr.c,v 1.41 2012/12/08 13:42:36 manu Exp  */
 
 /*-
@@ -49,10 +49,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.3 2013/06/06 00:46:40 dholland Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_ffs.h"
+#include "opt_lfs.h"
 #endif
 
 #include <sys/param.h>

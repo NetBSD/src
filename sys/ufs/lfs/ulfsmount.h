@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfsmount.h,v 1.2 2013/06/06 00:44:41 dholland Exp $	*/
+/*	$NetBSD: ulfsmount.h,v 1.3 2013/06/06 00:46:40 dholland Exp $	*/
 /*  from NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp  */
 
 /*
@@ -57,7 +57,7 @@ struct mfs_args {
 #ifdef _KERNEL
 
 #if defined(_KERNEL_OPT)
-#include "opt_ffs.h"
+#include "opt_lfs.h"
 #endif
 
 #include <sys/mutex.h>
@@ -181,7 +181,7 @@ struct ufs_ops {
 /* Convert mount ptr to ufsmount ptr. */
 #define VFSTOUFS(mp)	((struct ufsmount *)((mp)->mnt_data))
 
-#ifdef APPLE_UFS
+#if 0 /*def APPLE_UFS*/
 #define UFS_MPISAPPLEUFS(ump)	((ump)->um_flags & UFS_ISAPPLEUFS)
 #else
 #define UFS_MPISAPPLEUFS(ump)	(0)
