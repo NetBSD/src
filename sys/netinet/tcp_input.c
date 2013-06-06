@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.326 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.327 2013/06/06 00:03:14 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.326 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.327 2013/06/06 00:03:14 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3393,7 +3393,9 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 		}
 	}
 
-#ifdef TCP_SIGNATURE
+#ifndef TCP_SIGNATURE
+	return 0;
+#else
 	if (tp->t_flags & TF_SIGNATURE) {
 
 		sav = tcp_signature_getsav(m, th);
@@ -3402,12 +3404,8 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 			return (-1);
 	}
 
-	if ((sigp ? TF_SIGNATURE : 0) ^ (tp->t_flags & TF_SIGNATURE)) {
-		if (sav == NULL)
-			return (-1);
-		KEY_FREESAV(&sav);
-		return (-1);
-	}
+	if ((sigp ? TF_SIGNATURE : 0) ^ (tp->t_flags & TF_SIGNATURE))
+		goto out;
 
 	if (sigp) {
 		char sig[TCP_SIGLEN];
@@ -3415,28 +3413,25 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 		tcp_fields_to_net(th);
 		if (tcp_signature(m, th, toff, sav, sig) < 0) {
 			tcp_fields_to_host(th);
-			if (sav == NULL)
-				return (-1);
-			KEY_FREESAV(sav);
-			return (-1);
+			goto out;
 		}
 		tcp_fields_to_host(th);
 
 		if (memcmp(sig, sigp, TCP_SIGLEN)) {
 			TCP_STATINC(TCP_STAT_BADSIG);
-			if (sav == NULL)
-				return (-1);
-			KEY_FREESAV(sav);
-			return (-1);
+			goto out;
 		} else
 			TCP_STATINC(TCP_STAT_GOODSIG);
 
 		key_sa_recordxfer(sav, m);
 		KEY_FREESAV(&sav);
 	}
+	return 0;
+out:
+	if (sav != NULL)
+		KEY_FREESAV(&sav);
+	return -1;
 #endif
-
-	return (0);
 }
 
 /*
