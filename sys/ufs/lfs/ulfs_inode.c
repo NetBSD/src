@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.3 2013/06/06 00:46:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.4 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.89 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.3 2013/06/06 00:46:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.4 2013/06/06 00:48:04 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -77,7 +77,7 @@ extern int prtactive;
  * Last reference to an inode.  If necessary, write or delete it.
  */
 int
-ufs_inactive(void *v)
+ulfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -90,7 +90,7 @@ ufs_inactive(void *v)
 	int error = 0;
 	int logged = 0;
 
-	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
+	ULFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
 
 	transmp = vp->v_mount;
 	fstrans_start(transmp, FSTRANS_LAZY);
@@ -101,9 +101,9 @@ ufs_inactive(void *v)
 		goto out;
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 #ifdef LFS_EXTATTR
-		ufs_extattr_vnode_inactive(vp, curlwp);
+		ulfs_extattr_vnode_inactive(vp, curlwp);
 #endif
-		error = UFS_WAPBL_BEGIN(vp->v_mount);
+		error = ULFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
 			goto out;
 		logged = 1;
@@ -115,7 +115,7 @@ ufs_inactive(void *v)
 			if (vp->v_mount->mnt_wapbl) {
 				uint64_t incr = MNINDIR(ip->i_ump) <<
 				    vp->v_mount->mnt_fs_bshift; /* Power of 2 */
-				uint64_t base = UFS_NDADDR <<
+				uint64_t base = ULFS_NDADDR <<
 				    vp->v_mount->mnt_fs_bshift;
 				while (!error && ip->i_size > base + incr) {
 					/*
@@ -125,18 +125,18 @@ ufs_inactive(void *v)
 					uint64_t nsize = base +
 					    ((ip->i_size - base - 1) &
 					    ~(incr - 1));
-					error = UFS_TRUNCATE(vp, nsize, 0,
+					error = ULFS_TRUNCATE(vp, nsize, 0,
 					    NOCRED);
 					if (error)
 						break;
-					UFS_WAPBL_END(vp->v_mount);
-					error = UFS_WAPBL_BEGIN(vp->v_mount);
+					ULFS_WAPBL_END(vp->v_mount);
+					error = ULFS_WAPBL_BEGIN(vp->v_mount);
 					if (error)
 						goto out;
 				}
 			}
 			if (!error)
-				error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
+				error = ULFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 		(void)chkiq(ip, -1, NOCRED, 0);
@@ -148,21 +148,21 @@ ufs_inactive(void *v)
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		/*
-		 * Defer final inode free and update to ufs_reclaim().
+		 * Defer final inode free and update to ulfs_reclaim().
 		 */
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		if (!logged++) {
 			int err;
-			err = UFS_WAPBL_BEGIN(vp->v_mount);
+			err = ULFS_WAPBL_BEGIN(vp->v_mount);
 			if (err)
 				goto out;
 		}
-		UFS_UPDATE(vp, NULL, NULL, 0);
+		ULFS_UPDATE(vp, NULL, NULL, 0);
 	}
 	if (logged)
-		UFS_WAPBL_END(vp->v_mount);
+		ULFS_WAPBL_END(vp->v_mount);
 out:
 	/*
 	 * If we are done with the inode, reclaim it
@@ -178,34 +178,34 @@ out:
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-ufs_reclaim(struct vnode *vp)
+ulfs_reclaim(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
 
 	if (prtactive && vp->v_usecount > 1)
-		vprint("ufs_reclaim: pushing active", vp);
+		vprint("ulfs_reclaim: pushing active", vp);
 
-	if (!UFS_WAPBL_BEGIN(vp->v_mount)) {
-		UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
-		UFS_WAPBL_END(vp->v_mount);
+	if (!ULFS_WAPBL_BEGIN(vp->v_mount)) {
+		ULFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
+		ULFS_WAPBL_END(vp->v_mount);
 	}
-	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
+	ULFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
 
 	/*
 	 * Remove the inode from its hash chain.
 	 */
-	ufs_ihashrem(ip);
+	ulfs_ihashrem(ip);
 
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;
 	}
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-	ufsquota_free(ip);
+	ulfsquota_free(ip);
 #endif
 #ifdef LFS_DIRHASH
 	if (ip->i_dirhash != NULL)
-		ufsdirhash_free(ip);
+		ulfsdirhash_free(ip);
 #endif
 	return (0);
 }
@@ -218,7 +218,7 @@ ufs_reclaim(struct vnode *vp)
  */
 
 int
-ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
+ulfs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
     int flags)
 {
 	off_t neweof;	/* file size after the operation */
@@ -232,7 +232,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	int ppb = MAX(bsize >> PAGE_SHIFT, 1);
 	struct vm_page **pgs;
 	size_t pgssize;
-	UVMHIST_FUNC("ufs_balloc_range"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC("ulfs_balloc_range"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
 		    vp, off, len, vp->v_size);
 
