@@ -38,6 +38,7 @@
 
 #include "drmP.h"
 
+
 #if defined(__NetBSD__)
 # ifdef DRM_NO_AGP
 #  define NAGP_I810 0
@@ -55,6 +56,9 @@
 # endif
 # if NGENFB > 0
 #  include <dev/wsfb/genfbvar.h>
+# endif
+# if defined(_KERNEL_OPT)
+#   include "opt_mtrr.h"
 # endif
 #endif
 
@@ -300,7 +304,7 @@ drm_mtrr_del(int __unused handle, unsigned long offset, size_t size, int flags)
 int
 drm_mtrr_add(unsigned long offset, size_t size, int flags)
 {
-#ifdef MTRR_GETSET_KERNEL
+#if defined(MTRR) && defined(MTRR_GETSET_KERNEL)
 	struct mtrr mtrrmap;
 	int one = 1;
 
@@ -317,7 +321,7 @@ drm_mtrr_add(unsigned long offset, size_t size, int flags)
 int
 drm_mtrr_del(int __unused handle, unsigned long offset, size_t size, int flags)
 {
-#ifdef MTRR_GETSET_KERNEL
+#if defined(MTRR) && defined(MTRR_GETSET_KERNEL)
 	struct mtrr mtrrmap;
 	int one = 1;
 
