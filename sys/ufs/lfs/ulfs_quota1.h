@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1.h,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1.h,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: quota1.h,v 1.7 2012/08/26 02:32:14 dholland Exp  */
 
 /*
@@ -35,8 +35,8 @@
  *	@(#)quota.h	8.3 (Berkeley) 8/19/94
  */
 
-#ifndef	_UFS_UFS_QUOTA1_H_
-#define	_UFS_UFS_QUOTA1_H_
+#ifndef	_UFS_LFS_ULFS_QUOTA1_H_
+#define	_UFS_LFS_ULFS_QUOTA1_H_
 
 #include <sys/quota.h>
 #include <ufs/lfs/ulfs_quotacommon.h>
@@ -82,7 +82,7 @@
  * The following structure defines the format of the disk quota file
  * (as it appears on disk) - the file is an array of these structures
  * indexed by user or group number.  The setquota system call establishes
- * the vnode for each quota file (a pointer is retained in the ufsmount
+ * the vnode for each quota file (a pointer is retained in the ulfsmount
  * structure).
  */
 struct dqblk {
@@ -102,4 +102,4 @@ void dqblk_to_quotavals(const struct dqblk *,
 void quotavals_to_dqblk(const struct quotaval *, const struct quotaval *,
 			struct dqblk *);
 
-#endif /* !_UFS_UFS_QUOTA1_H_ */
+#endif /* !_UFS_LFS_ULFS_QUOTA1_H_ */

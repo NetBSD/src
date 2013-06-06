@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.h,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_dirhash.h,v 1.2 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: dirhash.h,v 1.6 2008/06/04 11:33:19 ad Exp  */
 
 /*
@@ -28,8 +28,8 @@
  * $FreeBSD: src/sys/ufs/ufs/dirhash.h,v 1.2.2.2 2004/12/08 11:54:13 dwmalone Exp $
  */
 
-#ifndef _UFS_UFS_DIRHASH_H_
-#define _UFS_UFS_DIRHASH_H_
+#ifndef _UFS_LFS_ULFS_DIRHASH_H_
+#define _UFS_LFS_ULFS_DIRHASH_H_
 
 /*
  * For fast operations on large directories, we maintain a hash
@@ -102,9 +102,9 @@ struct dirhash {
 
 	int	dh_score;	/* access count for this dirhash */
 
-	int	dh_onlist;	/* true if on the ufsdirhash_list chain */
+	int	dh_onlist;	/* true if on the ulfsdirhash_list chain */
 
-	/* Protected by ufsdirhash_lock. */
+	/* Protected by ulfsdirhash_lock. */
 	TAILQ_ENTRY(dirhash) dh_list;	/* chain of all dirhashes */
 };
 
@@ -112,19 +112,19 @@ struct dirhash {
 /*
  * Dirhash functions.
  */
-int	ufsdirhash_build(struct inode *);
-doff_t	ufsdirhash_findfree(struct inode *, int, int *);
-doff_t	ufsdirhash_enduseful(struct inode *);
-int	ufsdirhash_lookup(struct inode *, const char *, int, doff_t *,
+int	ulfsdirhash_build(struct inode *);
+doff_t	ulfsdirhash_findfree(struct inode *, int, int *);
+doff_t	ulfsdirhash_enduseful(struct inode *);
+int	ulfsdirhash_lookup(struct inode *, const char *, int, doff_t *,
 	    struct buf **, doff_t *);
-void	ufsdirhash_newblk(struct inode *, doff_t);
-void	ufsdirhash_add(struct inode *, struct direct *, doff_t);
-void	ufsdirhash_remove(struct inode *, struct direct *, doff_t);
-void	ufsdirhash_move(struct inode *, struct direct *, doff_t, doff_t);
-void	ufsdirhash_dirtrunc(struct inode *, doff_t);
-void	ufsdirhash_free(struct inode *);
-void	ufsdirhash_checkblock(struct inode *, char *, doff_t);
-void	ufsdirhash_init(void);
-void	ufsdirhash_done(void);
+void	ulfsdirhash_newblk(struct inode *, doff_t);
+void	ulfsdirhash_add(struct inode *, struct direct *, doff_t);
+void	ulfsdirhash_remove(struct inode *, struct direct *, doff_t);
+void	ulfsdirhash_move(struct inode *, struct direct *, doff_t, doff_t);
+void	ulfsdirhash_dirtrunc(struct inode *, doff_t);
+void	ulfsdirhash_free(struct inode *);
+void	ulfsdirhash_checkblock(struct inode *, char *, doff_t);
+void	ulfsdirhash_init(void);
+void	ulfsdirhash_done(void);
 
-#endif /* !_UFS_UFS_DIRHASH_H_ */
+#endif /* !_UFS_LFS_ULFS_DIRHASH_H_ */

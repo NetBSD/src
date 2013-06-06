@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.123 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.124 2013/06/06 00:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.123 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.124 2013/06/06 00:48:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,7 +426,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	int fsb;
 
 	vp = bp->b_vp;
-	fs = VFSTOUFS(vp->v_mount)->um_lfs;
+	fs = VFSTOULFS(vp->v_mount)->um_lfs;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(bp->b_cflags & BC_BUSY);
@@ -577,7 +577,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 			}
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
 			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
-				tfs = VFSTOUFS(mp)->um_lfs;
+				tfs = VFSTOULFS(mp)->um_lfs;
 				mutex_enter(&lfs_lock);
 				lfs_flush_fs(tfs, flags);
 				mutex_exit(&lfs_lock);
@@ -597,7 +597,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 }
 
 #define INOCOUNT(fs) howmany((fs)->lfs_uinodes, INOPB(fs))
-#define INOBYTES(fs) ((fs)->lfs_uinodes * sizeof (struct ufs1_dinode))
+#define INOBYTES(fs) ((fs)->lfs_uinodes * sizeof (struct ulfs1_dinode))
 
 /*
  * make sure that we don't have too many locked buffers.

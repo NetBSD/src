@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.14 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.15 2013/06/06 00:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.14 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.15 2013/06/06 00:48:04 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -182,7 +182,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 		ip = VTOI(vp);
 		ip->i_mode = ip->i_ffs1_mode = IFREG;
 		ip->i_nlink = ip->i_ffs1_nlink = 1;
-		ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
+		ulfs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 		ip = VTOI(vp);
 
 		DLOG((DLOG_RF, "lfs_rf_valloc: ino %d vp %p\n", ino, vp));
@@ -216,7 +216,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 	struct inode *ip;
 #ifdef DEBUG
 	daddr_t odaddr;
-	struct indir a[UFS_NIADDR];
+	struct indir a[ULFS_NIADDR];
 	int num;
 	int i;
 #endif /* DEBUG */
@@ -253,7 +253,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 	if (ip->i_size <= (lbn << fs->lfs_bshift)) {
 		u_int64_t newsize;
 
-		if (lbn < UFS_NDADDR)
+		if (lbn < ULFS_NDADDR)
 			newsize = ip->i_ffs1_size = (lbn << fs->lfs_bshift) +
 				(size - fs->lfs_fsize) + 1;
 		else
@@ -276,13 +276,13 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 	LFS_WRITESEGENTRY(sup, fs, dtosn(fs, ndaddr), bp);
 
 	/* differences here should be due to UNWRITTEN indirect blocks. */
-	KASSERT((lblkno(fs, ip->i_size) > UFS_NDADDR &&
+	KASSERT((lblkno(fs, ip->i_size) > ULFS_NDADDR &&
 	    ip->i_lfs_effnblks == ip->i_ffs1_blocks) ||
 	    ip->i_lfs_effnblks >= ip->i_ffs1_blocks);
 
 #ifdef DEBUG
 	/* Now look again to make sure it worked */
-	ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL, NULL);
+	ulfs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL, NULL);
 	for (i = num; i > 0; i--) {
 		if (!a[i].in_exists)
 			panic("update_meta: absent %d lv indirect block", i);
@@ -301,7 +301,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 {
 	struct vnode *devvp, *vp;
 	struct inode *ip;
-	struct ufs1_dinode *dip;
+	struct ulfs1_dinode *dip;
 	struct buf *dbp, *ibp;
 	int error;
 	daddr_t daddr;
@@ -320,8 +320,8 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 		DLOG((DLOG_RF, "update_inoblk: bread returned %d\n", error));
 		return error;
 	}
-	dip = ((struct ufs1_dinode *)(dbp->b_data)) + INOPB(fs);
-	while (--dip >= (struct ufs1_dinode *)dbp->b_data) {
+	dip = ((struct ulfs1_dinode *)(dbp->b_data)) + INOPB(fs);
+	while (--dip >= (struct ulfs1_dinode *)dbp->b_data) {
 		if (dip->di_inumber > LFS_IFILE_INUM) {
 			error = lfs_rf_valloc(fs, dip->di_inumber, dip->di_gen,
 					      l, &vp);
@@ -335,7 +335,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 				lfs_truncate(vp, dip->di_size, 0, NOCRED);
 			/* Get mode, link count, size, and times */
 			memcpy(ip->i_din.ffs1_din, dip,
-			       offsetof(struct ufs1_dinode, di_db[0]));
+			       offsetof(struct ulfs1_dinode, di_db[0]));
 
 			/* Then the rest, except di_blocks */
 			ip->i_flags = ip->i_ffs1_flags = dip->di_flags;
@@ -350,7 +350,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
 
 			/* Re-initialize to get type right */
-			ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p,
+			ulfs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p,
 				  &vp);
 			vput(vp);
 
@@ -364,14 +364,14 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 				if (daddr > 0) {
 					LFS_SEGENTRY(sup, fs, dtosn(fs, daddr),
 						     ibp);
-					sup->su_nbytes -= sizeof (struct ufs1_dinode);
+					sup->su_nbytes -= sizeof (struct ulfs1_dinode);
 					LFS_WRITESEGENTRY(sup, fs,
 							  dtosn(fs, daddr),
 							  ibp);
 				}
 				LFS_SEGENTRY(sup, fs, dtosn(fs, dbtofsb(fs, dbp->b_blkno)),
 					     ibp);
-				sup->su_nbytes += sizeof (struct ufs1_dinode);
+				sup->su_nbytes += sizeof (struct ulfs1_dinode);
 				LFS_WRITESEGENTRY(sup, fs,
 						  dtosn(fs, dbtofsb(fs, dbp->b_blkno)),
 						  ibp);
