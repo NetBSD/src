@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.1,v 1.1.2.1 2013/05/19 21:44:51 riz Exp $
+# $NetBSD: CHANGES-6.1.1,v 1.1.2.2 2013/06/06 02:57:34 riz Exp $
 
 A complete list of changes from the NetBSD 6.1 release to the NetBSD 6.1.1
 release:
@@ -9,4 +9,9 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 6.1.0_PATCH.
 	[riz]
+
+sys/arch/amiga/dev/if_ne_zbus.c			1.15
+
+	Fix kernel panic on Amigas with Deneb cards.
+	[rkujawa, ticket #892]
 
