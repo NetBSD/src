@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota.c,v 1.4 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota.c,v 1.5 2013/06/06 00:49:28 dholland Exp $	*/
 /*  from NetBSD: ufs_quota.c,v 1.112 2012/09/09 04:27:49 manu Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.4 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.5 2013/06/06 00:49:28 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -58,9 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.4 2013/06/06 00:48:04 dholland Exp 
 #include <ufs/lfs/ulfs_extern.h>
 #include <ufs/lfs/ulfs_quota.h>
 
-kmutex_t dqlock;
-kcondvar_t dqcv;
-const char *quotatypes[ULFS_MAXQUOTAS] = INITQFNAMES;
+kmutex_t lfs_dqlock;
+kcondvar_t lfs_dqcv;
+const char *lfs_quotatypes[ULFS_MAXQUOTAS] = INITQFNAMES;
 
 /*
  * Code pertaining to management of the in-core dquot data structures.
@@ -122,7 +122,7 @@ ulfsquota_free(struct inode *ip)
 	int i;
 
 	for (i = 0; i < ULFS_MAXQUOTAS; i++) {
-		dqrele(ITOV(ip), ip->i_dquot[i]);
+		lfs_dqrele(ITOV(ip), ip->i_dquot[i]);
 		ip->i_dquot[i] = NODQUOT;
 	}
 }
@@ -131,7 +131,7 @@ ulfsquota_free(struct inode *ip)
  * Update disk usage, and take corrective action.
  */
 int
-chkdq(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
+lfs_chkdq(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 {
 	/* do not track snapshot usage, or we will deadlock */
 	if ((ip->i_flags & SF_SNAPSHOT) != 0)
@@ -139,11 +139,11 @@ chkdq(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 
 #ifdef LFS_QUOTA
 	if (ip->i_ump->um_flags & ULFS_QUOTA)
-		return chkdq1(ip, change, cred, flags);
+		return lfs_chkdq1(ip, change, cred, flags);
 #endif
 #ifdef LFS_QUOTA2
 	if (ip->i_ump->um_flags & ULFS_QUOTA2)
-		return chkdq2(ip, change, cred, flags);
+		return lfs_chkdq2(ip, change, cred, flags);
 #endif
 	return 0;
 }
@@ -152,24 +152,24 @@ chkdq(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
  * Check the inode limit, applying corrective action.
  */
 int
-chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
+lfs_chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 {
 	/* do not track snapshot usage, or we will deadlock */
 	if ((ip->i_flags & SF_SNAPSHOT) != 0)
 		return 0;
 #ifdef LFS_QUOTA
 	if (ip->i_ump->um_flags & ULFS_QUOTA)
-		return chkiq1(ip, change, cred, flags);
+		return lfs_chkiq1(ip, change, cred, flags);
 #endif
 #ifdef LFS_QUOTA2
 	if (ip->i_ump->um_flags & ULFS_QUOTA2)
-		return chkiq2(ip, change, cred, flags);
+		return lfs_chkiq2(ip, change, cred, flags);
 #endif
 	return 0;
 }
 
 int
-quota_handle_cmd(struct mount *mp, struct lwp *l,
+lfsquota_handle_cmd(struct mount *mp, struct lwp *l,
 		 struct quotactl_args *args)
 {
 	int error = 0;
@@ -363,12 +363,12 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 		return error;
 #ifdef LFS_QUOTA
 	if (ump->um_flags & ULFS_QUOTA) {
-		error = quota1_handle_cmd_get(ump, qk, qv);
+		error = lfsquota1_handle_cmd_get(ump, qk, qv);
 	} else
 #endif
 #ifdef LFS_QUOTA2
 	if (ump->um_flags & ULFS_QUOTA2) {
-		error = quota2_handle_cmd_get(ump, qk, qv);
+		error = lfsquota2_handle_cmd_get(ump, qk, qv);
 	} else
 #endif
 		panic("quota_handle_cmd_get: no support ?");
@@ -410,12 +410,12 @@ quota_handle_cmd_put(struct mount *mp, struct lwp *l,
 
 #ifdef LFS_QUOTA
 	if (ump->um_flags & ULFS_QUOTA)
-		error = quota1_handle_cmd_put(ump, qk, qv);
+		error = lfsquota1_handle_cmd_put(ump, qk, qv);
 	else
 #endif
 #ifdef LFS_QUOTA2
 	if (ump->um_flags & ULFS_QUOTA2) {
-		error = quota2_handle_cmd_put(ump, qk, qv);
+		error = lfsquota2_handle_cmd_put(ump, qk, qv);
 	} else
 #endif
 		panic("quota_handle_cmd_get: no support ?");
@@ -456,7 +456,7 @@ quota_handle_cmd_delete(struct mount *mp, struct lwp *l,
 			goto err;
 #ifdef LFS_QUOTA2
 		if (ump->um_flags & ULFS_QUOTA2) {
-			error = quota2_handle_cmd_delete(ump, qk);
+			error = lfsquota2_handle_cmd_delete(ump, qk);
 		} else
 #endif
 			panic("quota_handle_cmd_get: no support ?");
@@ -499,7 +499,7 @@ quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l,
 		
 #ifdef LFS_QUOTA2
 	if (ump->um_flags & ULFS_QUOTA2) {
-		error = quota2_handle_cmd_cursorget(ump, cursor, keys, vals,
+		error = lfsquota2_handle_cmd_cursorget(ump, cursor, keys, vals,
 						    maxnum, ret);
 	} else
 #endif
@@ -528,7 +528,7 @@ quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l,
 
 #ifdef LFS_QUOTA2
 	if (ump->um_flags & ULFS_QUOTA2) {
-		error = quota2_handle_cmd_cursoropen(ump, cursor);
+		error = lfsquota2_handle_cmd_cursoropen(ump, cursor);
 	} else
 #endif
 		error = EOPNOTSUPP;
@@ -556,7 +556,7 @@ quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l,
 
 #ifdef LFS_QUOTA2
 	if (ump->um_flags & ULFS_QUOTA2) {
-		error = quota2_handle_cmd_cursorclose(ump, cursor);
+		error = lfsquota2_handle_cmd_cursorclose(ump, cursor);
 	} else
 #endif
 		error = EOPNOTSUPP;
@@ -581,7 +581,7 @@ quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l,
 
 #ifdef LFS_QUOTA2
 	if (ump->um_flags & ULFS_QUOTA2) {
-		error = quota2_handle_cmd_cursorskipidtype(ump, cursor, idtype);
+		error = lfsquota2_handle_cmd_cursorskipidtype(ump, cursor, idtype);
 	} else
 #endif
 		error = EOPNOTSUPP;
@@ -606,7 +606,7 @@ quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l,
 
 #ifdef LFS_QUOTA2
 	if (ump->um_flags & ULFS_QUOTA2) {
-		error = quota2_handle_cmd_cursoratend(ump, cursor, ret);
+		error = lfsquota2_handle_cmd_cursoratend(ump, cursor, ret);
 	} else
 #endif
 		error = EOPNOTSUPP;
@@ -629,7 +629,7 @@ quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l,
 
 #ifdef LFS_QUOTA2
 	if (ump->um_flags & ULFS_QUOTA2) {
-		error = quota2_handle_cmd_cursorrewind(ump, cursor);
+		error = lfsquota2_handle_cmd_cursorrewind(ump, cursor);
 	} else
 #endif
 		error = EOPNOTSUPP;
@@ -659,7 +659,7 @@ quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
 		return error;
 	}
 #ifdef LFS_QUOTA
-	error = quota1_handle_cmd_quotaon(l, ump, idtype, qfile);
+	error = lfsquota1_handle_cmd_quotaon(l, ump, idtype, qfile);
 #else
 	error = EOPNOTSUPP;
 #endif
@@ -687,7 +687,7 @@ quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l,
 		return error;
 	}
 #ifdef LFS_QUOTA
-	error = quota1_handle_cmd_quotaoff(l, ump, idtype);
+	error = lfsquota1_handle_cmd_quotaoff(l, ump, idtype);
 #else
 	error = EOPNOTSUPP;
 #endif
@@ -699,18 +699,18 @@ quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l,
  * Initialize the quota system.
  */
 void
-dqinit(void)
+lfs_dqinit(void)
 {
 
-	mutex_init(&dqlock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&dqcv, "quota");
+	mutex_init(&lfs_dqlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&lfs_dqcv, "quota");
 	dqhashtbl = hashinit(desiredvnodes, HASH_LIST, true, &dqhash);
 	dquot_cache = pool_cache_init(sizeof(struct dquot), 0, 0, 0, "lfsdq",
 	    NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 void
-dqreinit(void)
+lfs_dqreinit(void)
 {
 	struct dquot *dq;
 	struct dqhashhead *oldhash, *hash;
@@ -719,7 +719,7 @@ dqreinit(void)
 	int i;
 
 	hash = hashinit(desiredvnodes, HASH_LIST, true, &mask);
-	mutex_enter(&dqlock);
+	mutex_enter(&lfs_dqlock);
 	oldhash = dqhashtbl;
 	oldmask = dqhash;
 	dqhashtbl = hash;
@@ -732,7 +732,7 @@ dqreinit(void)
 			LIST_INSERT_HEAD(&dqhashtbl[hashval], dq, dq_hash);
 		}
 	}
-	mutex_exit(&dqlock);
+	mutex_exit(&lfs_dqlock);
 	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
@@ -740,13 +740,13 @@ dqreinit(void)
  * Free resources held by quota system.
  */
 void
-dqdone(void)
+lfs_dqdone(void)
 {
 
 	pool_cache_destroy(dquot_cache);
 	hashdone(dqhashtbl, HASH_LIST, dqhash);
-	cv_destroy(&dqcv);
-	mutex_destroy(&dqlock);
+	cv_destroy(&lfs_dqcv);
+	mutex_destroy(&lfs_dqlock);
 }
 
 /*
@@ -758,7 +758,7 @@ dqdone(void)
  * additional dquots set up here.
  */
 int
-getinoquota(struct inode *ip)
+lfs_getinoquota(struct inode *ip)
 {
 	struct ulfsmount *ump = ip->i_ump;
 	struct vnode *vp = ITOV(ip);
@@ -781,7 +781,7 @@ getinoquota(struct inode *ip)
 		 */
 		if (ip->i_dquot[i] != NODQUOT &&
 		    ip->i_dquot[i]->dq_id != ino_ids[i]) {
-			dqrele(ITOV(ip), ip->i_dquot[i]);
+			lfs_dqrele(ITOV(ip), ip->i_dquot[i]);
 			ip->i_dquot[i] = NODQUOT;
 		}
 		/*
@@ -789,7 +789,7 @@ getinoquota(struct inode *ip)
 		 * ENODEV means that quotas are not enabled.
 		 */
 		if (ip->i_dquot[i] == NODQUOT &&
-		    (error = dqget(vp, ino_ids[i], ump, i, &ip->i_dquot[i])) &&
+		    (error = lfs_dqget(vp, ino_ids[i], ump, i, &ip->i_dquot[i])) &&
 		    error != ENODEV)
 			return (error);
 	}
@@ -801,7 +801,7 @@ getinoquota(struct inode *ip)
  * reading the information from the file if necessary.
  */
 int
-dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
+lfs_dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
     struct dquot **dqp)
 {
 	struct dquot *dq, *ndq;
@@ -810,9 +810,9 @@ dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
 	int error = 0; /* XXX gcc */
 
 	/* Lock to see an up to date value for QTF_CLOSING. */
-	mutex_enter(&dqlock);
+	mutex_enter(&lfs_dqlock);
 	if ((ump->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0) {
-		mutex_exit(&dqlock);
+		mutex_exit(&lfs_dqlock);
 		*dqp = NODQUOT;
 		return (ENODEV);
 	}
@@ -820,7 +820,7 @@ dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
 #ifdef LFS_QUOTA
 	if (ump->um_flags & ULFS_QUOTA) {
 		if (dqvp == NULLVP || (ump->umq1_qflags[type] & QTF_CLOSING)) {
-			mutex_exit(&dqlock);
+			mutex_exit(&lfs_dqlock);
 			*dqp = NODQUOT;
 			return (ENODEV);
 		}
@@ -829,7 +829,7 @@ dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
 #ifdef LFS_QUOTA2
 	if (ump->um_flags & ULFS_QUOTA2) {
 		if (dqvp == NULLVP) {
-			mutex_exit(&dqlock);
+			mutex_exit(&lfs_dqlock);
 			*dqp = NODQUOT;
 			return (ENODEV);
 		}
@@ -845,15 +845,15 @@ dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
 		    dq->dq_ump->um_quotas[dq->dq_type] != dqvp)
 			continue;
 		KASSERT(dq->dq_cnt > 0);
-		dqref(dq);
-		mutex_exit(&dqlock);
+		lfs_dqref(dq);
+		mutex_exit(&lfs_dqlock);
 		*dqp = dq;
 		return (0);
 	}
 	/*
 	 * Not in cache, allocate a new one.
 	 */
-	mutex_exit(&dqlock);
+	mutex_exit(&lfs_dqlock);
 	ndq = pool_cache_get(dquot_cache, PR_WAITOK);
 	/*
 	 * Initialize the contents of the dquot structure.
@@ -864,7 +864,7 @@ dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
 	ndq->dq_ump = ump;
 	ndq->dq_type = type;
 	mutex_init(&ndq->dq_interlock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_enter(&dqlock);
+	mutex_enter(&lfs_dqlock);
 	dqh = &dqhashtbl[DQHASH(dqvp, id)];
 	LIST_FOREACH(dq, dqh, dq_hash) {
 		if (dq->dq_id != id ||
@@ -874,8 +874,8 @@ dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
 		 * Another thread beat us allocating this dquot.
 		 */
 		KASSERT(dq->dq_cnt > 0);
-		dqref(dq);
-		mutex_exit(&dqlock);
+		lfs_dqref(dq);
+		mutex_exit(&lfs_dqlock);
 		mutex_destroy(&ndq->dq_interlock);
 		pool_cache_put(dquot_cache, ndq);
 		*dqp = dq;
@@ -883,27 +883,27 @@ dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
 	}
 	dq = ndq;
 	LIST_INSERT_HEAD(dqh, dq, dq_hash);
-	dqref(dq);
+	lfs_dqref(dq);
 	mutex_enter(&dq->dq_interlock);
-	mutex_exit(&dqlock);
+	mutex_exit(&lfs_dqlock);
 #ifdef LFS_QUOTA
 	if (ump->um_flags & ULFS_QUOTA)
-		error = dq1get(dqvp, id, ump, type, dq);
+		error = lfs_dq1get(dqvp, id, ump, type, dq);
 #endif
 #ifdef LFS_QUOTA2
 	if (ump->um_flags & ULFS_QUOTA2)
-		error = dq2get(dqvp, id, ump, type, dq);
+		error = lfs_dq2get(dqvp, id, ump, type, dq);
 #endif
 	/*
 	 * I/O error in reading quota file, release
 	 * quota structure and reflect problem to caller.
 	 */
 	if (error) {
-		mutex_enter(&dqlock);
+		mutex_enter(&lfs_dqlock);
 		LIST_REMOVE(dq, dq_hash);
-		mutex_exit(&dqlock);
+		mutex_exit(&lfs_dqlock);
 		mutex_exit(&dq->dq_interlock);
-		dqrele(vp, dq);
+		lfs_dqrele(vp, dq);
 		*dqp = NODQUOT;
 		return (error);
 	}
@@ -916,10 +916,10 @@ dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
  * Obtain a reference to a dquot.
  */
 void
-dqref(struct dquot *dq)
+lfs_dqref(struct dquot *dq)
 {
 
-	KASSERT(mutex_owned(&dqlock));
+	KASSERT(mutex_owned(&lfs_dqlock));
 	dq->dq_cnt++;
 	KASSERT(dq->dq_cnt > 0);
 }
@@ -928,51 +928,51 @@ dqref(struct dquot *dq)
  * Release a reference to a dquot.
  */
 void
-dqrele(struct vnode *vp, struct dquot *dq)
+lfs_dqrele(struct vnode *vp, struct dquot *dq)
 {
 
 	if (dq == NODQUOT)
 		return;
 	mutex_enter(&dq->dq_interlock);
 	for (;;) {
-		mutex_enter(&dqlock);
+		mutex_enter(&lfs_dqlock);
 		if (dq->dq_cnt > 1) {
 			dq->dq_cnt--;
-			mutex_exit(&dqlock);
+			mutex_exit(&lfs_dqlock);
 			mutex_exit(&dq->dq_interlock);
 			return;
 		}
 		if ((dq->dq_flags & DQ_MOD) == 0)
 			break;
-		mutex_exit(&dqlock);
+		mutex_exit(&lfs_dqlock);
 #ifdef LFS_QUOTA
 		if (dq->dq_ump->um_flags & ULFS_QUOTA)
-			(void) dq1sync(vp, dq);
+			(void) lfs_dq1sync(vp, dq);
 #endif
 #ifdef LFS_QUOTA2
 		if (dq->dq_ump->um_flags & ULFS_QUOTA2)
-			(void) dq2sync(vp, dq);
+			(void) lfs_dq2sync(vp, dq);
 #endif
 	}
 	KASSERT(dq->dq_cnt == 1 && (dq->dq_flags & DQ_MOD) == 0);
 	LIST_REMOVE(dq, dq_hash);
-	mutex_exit(&dqlock);
+	mutex_exit(&lfs_dqlock);
 	mutex_exit(&dq->dq_interlock);
 	mutex_destroy(&dq->dq_interlock);
 	pool_cache_put(dquot_cache, dq);
 }
 
 int
-qsync(struct mount *mp)
+lfs_qsync(struct mount *mp)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
 #ifdef LFS_QUOTA
 	if (ump->um_flags & ULFS_QUOTA)
-		return q1sync(mp);
+		return lfs_q1sync(mp);
 #endif
 #ifdef LFS_QUOTA2
 	if (ump->um_flags & ULFS_QUOTA2)
-		return q2sync(mp);
+		return lfs_q2sync(mp);
 #endif
 	return 0;
 }
@@ -982,15 +982,15 @@ qsync(struct mount *mp)
  * Check the hash chains for stray dquot's.
  */
 void
-dqflush(struct vnode *vp)
+lfs_dqflush(struct vnode *vp)
 {
 	struct dquot *dq;
 	int i;
 
-	mutex_enter(&dqlock);
+	mutex_enter(&lfs_dqlock);
 	for (i = 0; i <= dqhash; i++)
 		LIST_FOREACH(dq, &dqhashtbl[i], dq_hash)
 			KASSERT(dq->dq_ump->um_quotas[dq->dq_type] != vp);
-	mutex_exit(&dqlock);
+	mutex_exit(&lfs_dqlock);
 }
 #endif

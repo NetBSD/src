@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.4 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.5 2013/06/06 00:49:28 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.4 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.5 2013/06/06 00:49:28 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -72,9 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.4 2013/06/06 00:48:04 dholland Exp
 #include <miscfs/genfs/genfs.h>
 
 #ifdef DIAGNOSTIC
-int	dirchk = 1;
+int	lfs_dirchk = 1;
 #else
-int	dirchk = 0;
+int	lfs_dirchk = 0;
 #endif
 
 /*
@@ -324,12 +324,12 @@ searchloop:
 		 * Full validation checks are slow, so we only check
 		 * enough to insure forward progress through the
 		 * directory. Complete checks can be run by patching
-		 * "dirchk" to be true.
+		 * "lfs_dirchk" to be true.
 		 */
 		KASSERT(bp != NULL);
 		ep = (struct direct *)((char *)bp->b_data + entryoffsetinblock);
 		if (ep->d_reclen == 0 ||
-		    (dirchk && ulfs_dirbadentry(vdp, ep, entryoffsetinblock))) {
+		    (lfs_dirchk && ulfs_dirbadentry(vdp, ep, entryoffsetinblock))) {
 			int i;
 
 			ulfs_dirbad(dp, results->ulr_offset, "mangled entry");
