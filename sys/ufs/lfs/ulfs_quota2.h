@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.h,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.h,v 1.4 2013/06/06 00:49:28 dholland Exp $	*/
 /*  from NetBSD: quota2.h,v 1.9 2012/02/05 14:19:04 dholland Exp  */
 
 /*-
@@ -104,13 +104,13 @@ struct quota2_header {
 	((daddr_t)(idx) * sizeof(struct quota2_entry) + (hsize))
 
 /* quota2_subr.c */
-void quota2_addfreeq2e(struct quota2_header *, void *, uint64_t, uint64_t, int);
-void quota2_create_blk0(uint64_t, void *bp, int, int, int);
-void quota2_ulfs_rwq2v(const struct quota2_val *, struct quota2_val *, int);
-void quota2_ulfs_rwq2e(const struct quota2_entry *, struct quota2_entry *, int);
+void lfsquota2_addfreeq2e(struct quota2_header *, void *, uint64_t, uint64_t, int);
+void lfsquota2_create_blk0(uint64_t, void *bp, int, int, int);
+void lfsquota2_ulfs_rwq2v(const struct quota2_val *, struct quota2_val *, int);
+void lfsquota2_ulfs_rwq2e(const struct quota2_entry *, struct quota2_entry *, int);
 
 /*
- * Return codes for quota_check_limit()
+ * Return codes for lfsquota_check_limit()
  */
 
 #define QL_S_ALLOW_OK	0x00 /* below soft limit */
@@ -124,6 +124,6 @@ void quota2_ulfs_rwq2e(const struct quota2_entry *, struct quota2_entry *, int);
 #define QL_FLAGS(x)	((x) & 0xf0)
 
 /* check a quota usage against limits */
-int quota_check_limit(uint64_t, uint64_t,  uint64_t, uint64_t, time_t, time_t);
+int lfsquota_check_limit(uint64_t, uint64_t, uint64_t, uint64_t, time_t, time_t);
 
 #endif /*  _UFS_LFS_ULFS_QUOTA2_H_ */

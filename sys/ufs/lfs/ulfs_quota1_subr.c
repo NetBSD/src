@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1_subr.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1_subr.c,v 1.3 2013/06/06 00:49:28 dholland Exp $	*/
 /*  from NetBSD: quota1_subr.c,v 1.7 2012/01/29 06:23:20 dholland Exp  */
 
 /*-
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1_subr.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1_subr.c,v 1.3 2013/06/06 00:49:28 dholland Exp $");
 
 #include <sys/types.h>
 #include <machine/limits.h>
@@ -55,7 +55,7 @@ q2e2dqblk_limit(uint64_t lim)
 }
 
 void
-dqblk_to_quotavals(const struct dqblk *dqblk,
+lfs_dqblk_to_quotavals(const struct dqblk *dqblk,
 		   struct quotaval *blocks, struct quotaval *files)
 {
 	/* XXX is qv_grace getting handled correctly? */
@@ -72,7 +72,7 @@ dqblk_to_quotavals(const struct dqblk *dqblk,
 }
 
 void
-quotavals_to_dqblk(const struct quotaval *blocks, const struct quotaval *files,
+lfs_quotavals_to_dqblk(const struct quotaval *blocks, const struct quotaval *files,
 		   struct dqblk *dqblk)
 {
 	/* XXX is qv_grace getting handled correctly? */

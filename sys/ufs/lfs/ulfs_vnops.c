@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.4 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.5 2013/06/06 00:49:28 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.212 2013/03/18 19:35:48 plunky Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.4 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.5 2013/06/06 00:49:28 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -314,7 +314,7 @@ ulfs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
 				return (EROFS);
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 			fstrans_start(vp->v_mount, FSTRANS_SHARED);
-			error = chkdq(ip, 0, cred, 0);
+			error = lfs_chkdq(ip, 0, cred, 0);
 			fstrans_done(vp->v_mount);
 			if (error != 0)
 				return error;
@@ -743,26 +743,26 @@ ulfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	ogid = ip->i_gid;
 	ouid = ip->i_uid;
 	change = DIP(ip, blocks);
-	(void) chkdq(ip, -change, cred, 0);
-	(void) chkiq(ip, -1, cred, 0);
+	(void) lfs_chkdq(ip, -change, cred, 0);
+	(void) lfs_chkiq(ip, -1, cred, 0);
 #endif
 	ip->i_gid = gid;
 	DIP_ASSIGN(ip, gid, gid);
 	ip->i_uid = uid;
 	DIP_ASSIGN(ip, uid, uid);
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-	if ((error = chkdq(ip, change, cred, 0)) == 0) {
-		if ((error = chkiq(ip, 1, cred, 0)) == 0)
+	if ((error = lfs_chkdq(ip, change, cred, 0)) == 0) {
+		if ((error = lfs_chkiq(ip, 1, cred, 0)) == 0)
 			goto good;
 		else
-			(void) chkdq(ip, -change, cred, FORCE);
+			(void) lfs_chkdq(ip, -change, cred, FORCE);
 	}
 	ip->i_gid = ogid;
 	DIP_ASSIGN(ip, gid, ogid);
 	ip->i_uid = ouid;
 	DIP_ASSIGN(ip, uid, ouid);
-	(void) chkdq(ip, change, cred, FORCE);
-	(void) chkiq(ip, 1, cred, FORCE);
+	(void) lfs_chkdq(ip, change, cred, FORCE);
+	(void) lfs_chkiq(ip, 1, cred, FORCE);
 	fstrans_done(vp->v_mount);
 	return (error);
  good:
@@ -1023,7 +1023,7 @@ ulfs_mkdir(void *v)
 	ip->i_gid = dp->i_gid;
 	DIP_ASSIGN(ip, gid, ip->i_gid);
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-	if ((error = chkiq(ip, 1, cnp->cn_cred, 0))) {
+	if ((error = lfs_chkiq(ip, 1, cnp->cn_cred, 0))) {
 		ULFS_VFREE(tvp, ip->i_number, dmode);
 		ULFS_WAPBL_END(dvp->v_mount);
 		fstrans_done(dvp->v_mount);
@@ -1845,7 +1845,7 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 		return (error);
 	}
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-	if ((error = chkiq(ip, 1, cnp->cn_cred, 0))) {
+	if ((error = lfs_chkiq(ip, 1, cnp->cn_cred, 0))) {
 		ULFS_VFREE(tvp, ip->i_number, mode);
 		ULFS_WAPBL_END1(dvp->v_mount, dvp);
 		vput(tvp);

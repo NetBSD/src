@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.4 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.5 2013/06/06 00:49:28 dholland Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.52 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.4 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.5 2013/06/06 00:49:28 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -119,7 +119,7 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 	}
 	mutex_enter(&mp->mnt_updating);
 
-	error = quota_handle_cmd(mp, l, args);
+	error = lfsquota_handle_cmd(mp, l, args);
 
 	mutex_exit(&mp->mnt_updating);
 	vfs_unbusy(mp, false, NULL);
@@ -197,7 +197,7 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 		break;
 
 	case Q_SYNC:
-		error = qsync(mp);
+		error = lfs_qsync(mp);
 		break;
 
 	default:
@@ -248,7 +248,7 @@ ulfs_init(void)
 
 	ulfs_ihashinit();
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-	dqinit();
+	lfs_dqinit();
 #endif
 #ifdef LFS_DIRHASH
 	ulfsdirhash_init();
@@ -263,7 +263,7 @@ ulfs_reinit(void)
 {
 	ulfs_ihashreinit();
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-	dqreinit();
+	lfs_dqreinit();
 #endif
 }
 
@@ -278,7 +278,7 @@ ulfs_done(void)
 
 	ulfs_ihashdone();
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-	dqdone();
+	lfs_dqdone();
 #endif
 	pool_cache_destroy(ulfs_direct_cache);
 #ifdef LFS_DIRHASH

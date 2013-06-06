@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quotacommon.h,v 1.2 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_quotacommon.h,v 1.3 2013/06/06 00:49:28 dholland Exp $	*/
 /*  from NetBSD: quota.h,v 1.30 2012/08/26 02:32:14 dholland Exp  */
 
 /*
@@ -46,7 +46,7 @@
 /*
  * The following constants define the usage of the quota file array in the
  * ulfsmount structure and dquot array in the inode structure.  The semantics
- * of the elements of these arrays are defined in the routine getinoquota;
+ * of the elements of these arrays are defined in the routine lfs_getinoquota;
  * the remainder of the quota code treats them generically and need not be
  * inspected when changing the size of the array.
  */
@@ -97,9 +97,9 @@ quota_idtype_from_ulfs(int ulfstype)
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void	dqinit(void);
-void	dqreinit(void);
-void	dqdone(void);
+void	lfs_dqinit(void);
+void	lfs_dqreinit(void);
+void	lfs_dqdone(void);
 __END_DECLS
 #endif /* _KERNEL */
 
