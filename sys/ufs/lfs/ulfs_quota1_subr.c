@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1_subr.c,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1_subr.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
 /*  from NetBSD: quota1_subr.c,v 1.7 2012/01/29 06:23:20 dholland Exp  */
 
 /*-
@@ -28,13 +28,13 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1_subr.c,v 1.1 2013/06/06 00:40:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1_subr.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
 
 #include <sys/types.h>
 #include <machine/limits.h>
 
 #include <sys/quota.h>
-#include <ufs/ufs/quota1.h>
+#include <ufs/lfs/ulfs_quota1.h>
 
 static uint64_t
 dqblk2q2e_limit(uint32_t lim)

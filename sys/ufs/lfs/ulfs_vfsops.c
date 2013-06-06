@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.52 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.1 2013/06/06 00:40:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -57,12 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.1 2013/06/06 00:40:55 dholland Exp
 #include <miscfs/specfs/specdev.h>
 
 #include <sys/quotactl.h>
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
+#include <ufs/lfs/ulfs_quotacommon.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_extern.h>
 #ifdef UFS_DIRHASH
-#include <ufs/ufs/dirhash.h>
+#include <ufs/lfs/ulfs_dirhash.h>
 #endif
 
 /* how many times ufs_init() was called */

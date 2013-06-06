@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
 /*
@@ -41,9 +41,9 @@
 #define	_UFS_UFS_INODE_H_
 
 #include <sys/vnode.h>
-#include <ufs/ufs/dinode.h>
-#include <ufs/ufs/dir.h>
-#include <ufs/ufs/quota.h>
+#include <ufs/lfs/ulfs_dinode.h>
+#include <ufs/lfs/ulfs_dir.h>
+#include <ufs/lfs/ulfs_quotacommon.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <miscfs/genfs/genfs_node.h>
 
