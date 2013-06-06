@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2_subr.c,v 1.5 2013/06/06 00:51:25 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2_subr.c,v 1.6 2013/06/06 00:51:50 dholland Exp $	*/
 /*  from NetBSD: quota2_subr.c,v 1.5 2012/02/05 14:19:04 dholland Exp  */
 
 /*-
@@ -28,14 +28,15 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2_subr.c,v 1.5 2013/06/06 00:51:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2_subr.c,v 1.6 2013/06/06 00:51:50 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
 
-#include <ufs/lfs/ulfs_dinode.h>
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_dinode.h>
 #include <ufs/lfs/ulfs_bswap.h>
 #include <ufs/lfs/ulfs_quota2.h>
 
