@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.73 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.74 2013/06/06 00:46:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.73 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.74 2013/06/06 00:46:40 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -411,7 +411,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	if (bpp && (error = bread(vp, lbn, osize, NOCRED, 0, bpp))) {
 		goto out;
 	}
-#ifdef QUOTA
+#ifdef LFS_QUOTA
 	if ((error = chkdq(ip, frags, cred, 0))) {
 		if (bpp)
 			brelse(*bpp, 0);
@@ -429,7 +429,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 		if (!lfs_fits(fs, frags)) {
 			if (bpp)
 				brelse(*bpp, 0);
-#ifdef QUOTA
+#ifdef LFS_QUOTA
 			chkdq(ip, -frags, cred, 0);
 #endif
 			rw_exit(&fs->lfs_fraglock);
