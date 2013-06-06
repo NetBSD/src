@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.5 2013/06/06 00:49:28 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.6 2013/06/06 00:50:51 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.5 2013/06/06 00:49:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.6 2013/06/06 00:50:51 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -1151,7 +1151,7 @@ out:
 	 */
 	if (ip != 0 && (ip->i_flags & SF_SNAPSHOT) != 0 &&
 	    ip->i_nlink == 0)
-		lfs_snapgone(ip);
+		ulfs_snapgone(ip);
 	ULFS_WAPBL_UPDATE(dvp, NULL, NULL, 0);
 	return (error);
 }
@@ -1200,7 +1200,7 @@ ulfs_dirrewrite(struct inode *dp, off_t offset,
 	 * when last open reference goes away.
 	 */
 	if ((oip->i_flags & SF_SNAPSHOT) != 0 && oip->i_nlink == 0)
-		lfs_snapgone(oip);
+		ulfs_snapgone(oip);
 	ULFS_WAPBL_UPDATE(vdp, NULL, NULL, UPDATE_DIROP);
 	return (error);
 }
