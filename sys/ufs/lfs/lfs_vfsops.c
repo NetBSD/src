@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.299 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.300 2013/06/06 00:46:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.299 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.300 2013/06/06 00:46:40 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1190,7 +1190,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 			&lfs_lock);
 	mutex_exit(&lfs_lock);
 
-#ifdef QUOTA
+#ifdef LFS_QUOTA
         if ((error = quota1_umount(mp, flags)) != 0)
 		return (error);
 #endif
@@ -1328,7 +1328,7 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	DLOG((DLOG_FLUSH, "lfs_sync at 0x%x\n", fs->lfs_offset));
 	error = lfs_segwrite(mp, SEGM_CKP | (waitfor ? SEGM_SYNC : 0));
 	lfs_writer_leave(fs);
-#ifdef QUOTA
+#ifdef LFS_QUOTA
 	qsync(mp);
 #endif
 	return (error);

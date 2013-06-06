@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.3 2013/06/06 00:46:40 dholland Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.89 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,10 +38,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.3 2013/06/06 00:46:40 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_ffs.h"
+#include "opt_lfs.h"
 #include "opt_quota.h"
 #include "opt_wapbl.h"
 #endif
@@ -62,10 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.2 2013/06/06 00:44:40 dholland Exp 
 #include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/ulfs_extern.h>
 #include <ufs/lfs/ulfs_wapbl.h>
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 #include <ufs/lfs/ulfs_dirhash.h>
 #endif
-#ifdef UFS_EXTATTR
+#ifdef LFS_EXTATTR
 #include <ufs/lfs/ulfs_extattr.h>
 #endif
 
@@ -100,7 +100,7 @@ ufs_inactive(void *v)
 	if (ip->i_mode == 0)
 		goto out;
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-#ifdef UFS_EXTATTR
+#ifdef LFS_EXTATTR
 		ufs_extattr_vnode_inactive(vp, curlwp);
 #endif
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
@@ -138,7 +138,7 @@ ufs_inactive(void *v)
 			if (!error)
 				error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}
-#if defined(QUOTA) || defined(QUOTA2)
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 		(void)chkiq(ip, -1, NOCRED, 0);
 #endif
 		DIP_ASSIGN(ip, rdev, 0);
@@ -200,10 +200,10 @@ ufs_reclaim(struct vnode *vp)
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;
 	}
-#if defined(QUOTA) || defined(QUOTA2)
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	ufsquota_free(ip);
 #endif
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 	if (ip->i_dirhash != NULL)
 		ufsdirhash_free(ip);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_bswap.h,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_bswap.h,v 1.2 2013/06/06 00:46:40 dholland Exp $	*/
 /*  from NetBSD: ufs_bswap.h,v 1.19 2009/10/19 18:41:17 bouyer Exp  */
 
 /*
@@ -30,13 +30,13 @@
 #define _UFS_UFS_BSWAP_H_
 
 #if defined(_KERNEL_OPT)
-#include "opt_ffs.h"
+#include "opt_lfs.h"
 #endif
 
 #include <sys/bswap.h>
 
 /* Macros to access UFS flags */
-#ifdef FFS_EI
+#ifdef LFS_EI
 #define	UFS_MPNEEDSWAP(ump)	((ump)->um_flags & UFS_NEEDSWAP)
 #define UFS_FSNEEDSWAP(fs)	((fs)->fs_flags & FS_SWAPPED)
 #define	UFS_IPNEEDSWAP(ip)	UFS_MPNEEDSWAP((ip)->i_ump)
@@ -46,7 +46,7 @@
 #define	UFS_IPNEEDSWAP(ip)	(0)
 #endif
 
-#if !defined(_KERNEL) || defined(FFS_EI)
+#if !defined(_KERNEL) || defined(LFS_EI)
 /* inlines for access to swapped data */
 static inline u_int16_t
 ufs_rw16(uint16_t a, int ns)
