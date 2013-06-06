@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2010/07/28 22:35:52 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2013/06/06 00:54:49 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 WARNS?=3		# XXX: too many sign-compare issues
@@ -19,3 +19,6 @@ CPPFLAGS+="-Dmutex_enter(x)=" "-Dmutex_exit(x)="
 CPPFLAGS+="-DKASSERT(x)="
 #CPPFLAGS+=-DREPAIR_ZERO_FINFO
 #CPPFLAGS+=-DTEST_PATTERN
+
+# XXX
+CPPFLAGS+=-I${NETBSDSRCDIR}/sys
