@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dinode.h,v 1.2 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_dinode.h,v 1.3 2013/06/06 00:51:50 dholland Exp $	*/
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -53,6 +53,8 @@
 #ifndef	_UFS_LFS_ULFS_DINODE_H_
 #define	_UFS_LFS_ULFS_DINODE_H_
 
+#include <ufs/lfs/lfs.h>
+
 /*
  * The root inode is the root of the file system.  Inode 0 can't be used for
  * normal purposes and historically bad blocks were linked to inode 1, thus
@@ -75,10 +77,6 @@
  * this structure describes an on-disk structure, all its fields
  * are defined by types with precise widths.
  */
-
-#define ULFS_NXADDR	2
-#define	ULFS_NDADDR	12		/* Direct addresses in inode. */
-#define	ULFS_NIADDR	3		/* Indirect addresses in inode. */
 
 struct ulfs1_dinode {
 	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
