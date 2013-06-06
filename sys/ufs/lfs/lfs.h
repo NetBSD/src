@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.140 2013/06/06 00:51:50 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.141 2013/06/06 00:52:14 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
 #define	LFS_UNUSED_INUM	0		/* 0: out of band inode number */
 #define	LFS_IFILE_INUM	1		/* 1: IFILE inode number */
 					/* 2: Root inode number */
-#define	LOSTFOUNDINO	3		/* 3: lost+found inode number */
+#define	LFS_LOSTFOUNDINO 3		/* 3: lost+found inode number */
 #define	LFS_FIRST_INUM	4		/* 4: first free inode number */
 
 #define	LFS_V1_SUMMARY_SIZE	512     /* V1 fixed summary size */
@@ -297,7 +297,7 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 
 #ifdef _KERNEL
 /* This overlays the fid structure (see fstypes.h). */
-struct ufid {
+struct ulfs_ufid {
 	u_int16_t ufid_len;	/* Length of structure. */
 	u_int16_t ufid_pad;	/* Force 32-bit alignment. */
 	u_int32_t ufid_ino;	/* File number (ino). */
@@ -305,7 +305,7 @@ struct ufid {
 };
 /* Filehandle structure for exported LFSes */
 struct lfid {
-	struct ufid lfid_ufid;
+	struct ulfs_ufid lfid_ufid;
 #define lfid_len lfid_ufid.ufid_len
 #define lfid_ino lfid_ufid.ufid_ino
 #define lfid_gen lfid_ufid.ufid_gen
