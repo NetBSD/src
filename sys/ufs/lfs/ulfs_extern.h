@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.3 2013/06/06 00:49:28 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.4 2013/06/06 00:50:51 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -204,7 +204,7 @@ void	ulfs_gop_markupdate(struct vnode *, int);
  * Snapshot function prototypes.
  */
 
-void	lfs_snapgone(struct inode *);
+void	ulfs_snapgone(struct inode *);
 
 __END_DECLS
 
