@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.2 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.3 2013/06/06 00:49:28 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -165,23 +165,23 @@ int	ulfs_gro_lock_directory(struct mount *, struct vnode *);
 
 /* ulfs_quota.c */
 /*
- * Flags to chkdq() and chkiq()
+ * Flags to lfs_chkdq() and lfs_chkiq()
  */
 #define	FORCE	0x01	/* force usage changes independent of limits */
 void	ulfsquota_init(struct inode *);
 void	ulfsquota_free(struct inode *);
-int	chkdq(struct inode *, int64_t, kauth_cred_t, int);
-int	chkiq(struct inode *, int32_t, kauth_cred_t, int);
-int	quota_handle_cmd(struct mount *, struct lwp *,
+int	lfs_chkdq(struct inode *, int64_t, kauth_cred_t, int);
+int	lfs_chkiq(struct inode *, int32_t, kauth_cred_t, int);
+int	lfsquota_handle_cmd(struct mount *, struct lwp *,
 			 struct quotactl_args *);
 
-int	qsync(struct mount *);
+int	lfs_qsync(struct mount *);
 
 /* ulfs_quota1.c */
-int	quota1_umount(struct mount *, int);
+int	lfsquota1_umount(struct mount *, int);
 
 /* ulfs_quota2.c */
-int	quota2_umount(struct mount *, int);
+int	lfsquota2_umount(struct mount *, int);
 
 /* ulfs_vfsops.c */
 void	ulfs_init(void);
