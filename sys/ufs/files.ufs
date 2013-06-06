@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.30 2013/06/06 00:46:40 dholland Exp $
+#	$NetBSD: files.ufs,v 1.31 2013/06/06 00:50:51 dholland Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -83,6 +83,7 @@ file	ufs/lfs/ulfs_quota2.c		lfs & lfs_quota2
 file	ufs/lfs/ulfs_quota1_subr.c	lfs
 file	ufs/lfs/ulfs_quota2_subr.c	lfs & lfs_quota2
 file	ufs/lfs/ulfs_rename.c		lfs
+file	ufs/lfs/ulfs_snapshot.c		lfs
 file	ufs/lfs/ulfs_vfsops.c		lfs
 file	ufs/lfs/ulfs_vnops.c		lfs
 file	ufs/lfs/ulfs_wapbl.c		lfs
