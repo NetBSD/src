@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.4 2013/06/06 00:51:25 dholland Exp $	*/
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
 /*
@@ -44,7 +44,6 @@
 #include <ufs/lfs/ulfs_dinode.h>
 #include <ufs/lfs/ulfs_dir.h>
 #include <ufs/lfs/ulfs_quotacommon.h>
-#include <ufs/ext2fs/ext2fs_dinode.h>
 #include <miscfs/genfs/genfs_node.h>
 
 /*
@@ -69,18 +68,6 @@ struct ulfs_lookup_results {
 /*
  * Per-filesystem inode extensions.
  */
-struct ffs_inode_ext {
-	daddr_t *ffs_snapblklist;	/* Collect expunged snapshot blocks. */
-	/* follow two fields are used by contiguous allocation code only. */
-	daddr_t ffs_first_data_blk;	/* first data block on disk. */
-	daddr_t ffs_first_indir_blk;	/* first indirect block on disk. */
-};
-
-struct ext2fs_inode_ext {
-	daddr_t ext2fs_last_lblk;	/* last logical block allocated */
-	daddr_t ext2fs_last_blk;	/* last block allocated on disk */
-};
-
 struct lfs_inode_ext;
 
 /*
@@ -104,13 +91,9 @@ struct inode {
 	ino_t	  i_number;	/* The identity of the inode. */
 
 	union {			/* Associated filesystem. */
-		struct	fs *fs;		/* FFS */
 		struct	lfs *lfs;	/* LFS */
-		struct	m_ext2fs *e2fs;	/* EXT2FS */
 	} inode_u;
-#define	i_fs	inode_u.fs
 #define	i_lfs	inode_u.lfs
-#define	i_e2fs	inode_u.e2fs
 
 	void	*i_unused1;	/* Unused. */
 	struct	 dquot *i_dquot[ULFS_MAXQUOTAS]; /* Dquot structures. */
@@ -129,20 +112,12 @@ struct inode {
 	 */
 	union {
 		/* Other extensions could go here... */
-		struct	ffs_inode_ext ffs;
-		struct	ext2fs_inode_ext e2fs;
 		struct  lfs_inode_ext *lfs;
 	} inode_ext;
-#define	i_snapblklist		inode_ext.ffs.ffs_snapblklist
-#define	i_ffs_first_data_blk	inode_ext.ffs.ffs_first_data_blk
-#define	i_ffs_first_indir_blk	inode_ext.ffs.ffs_first_indir_blk
-#define	i_e2fs_last_lblk	inode_ext.e2fs.ext2fs_last_lblk
-#define	i_e2fs_last_blk		inode_ext.e2fs.ext2fs_last_blk
 	/*
 	 * Copies from the on-disk dinode itself.
 	 *
-	 * These fields are currently only used by FFS and LFS,
-	 * do NOT use them with ext2fs.
+	 * These fields are currently only used by LFS.
 	 */
 	u_int16_t i_mode;	/* IFMT, permissions; see below. */
 	int16_t   i_nlink;	/* File link count. */
@@ -161,8 +136,6 @@ struct inode {
 	union {
 		struct	ulfs1_dinode *ffs1_din;	/* 128 bytes of the on-disk dinode. */
 		struct	ulfs2_dinode *ffs2_din;
-		struct	ext2fs_dinode *e2fs_din; /* 128 bytes of the on-disk
-						   dinode. */
 	} i_din;
 };
 
@@ -209,29 +182,6 @@ struct inode {
 #define	i_ffs2_kernflags	i_din.ffs2_din->di_kernflags
 #define	i_ffs2_extsize		i_din.ffs2_din->di_extsize
 #define	i_ffs2_extb		i_din.ffs2_din->di_extb
-
-#define	i_e2fs_mode		i_din.e2fs_din->e2di_mode
-#define	i_e2fs_uid		i_din.e2fs_din->e2di_uid
-#define	i_e2fs_size		i_din.e2fs_din->e2di_size
-#define	i_e2fs_atime		i_din.e2fs_din->e2di_atime
-#define	i_e2fs_ctime		i_din.e2fs_din->e2di_ctime
-#define	i_e2fs_mtime		i_din.e2fs_din->e2di_mtime
-#define	i_e2fs_dtime		i_din.e2fs_din->e2di_dtime
-#define	i_e2fs_gid		i_din.e2fs_din->e2di_gid
-#define	i_e2fs_nlink		i_din.e2fs_din->e2di_nlink
-#define	i_e2fs_nblock		i_din.e2fs_din->e2di_nblock
-#define	i_e2fs_flags		i_din.e2fs_din->e2di_flags
-#define	i_e2fs_version		i_din.e2fs_din->e2di_version
-#define	i_e2fs_blocks		i_din.e2fs_din->e2di_blocks
-#define	i_e2fs_rdev		i_din.e2fs_din->e2di_rdev
-#define	i_e2fs_gen		i_din.e2fs_din->e2di_gen
-#define	i_e2fs_facl		i_din.e2fs_din->e2di_facl
-#define	i_e2fs_dacl		i_din.e2fs_din->e2di_dacl
-#define	i_e2fs_faddr		i_din.e2fs_din->e2di_faddr
-#define	i_e2fs_nblock_high	i_din.e2fs_din->e2di_nblock_high
-#define	i_e2fs_facl_high	i_din.e2fs_din->e2di_facl_high
-#define	i_e2fs_uid_high		i_din.e2fs_din->e2di_uid_high
-#define	i_e2fs_gid_high		i_din.e2fs_din->e2di_gid_high
 
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */
