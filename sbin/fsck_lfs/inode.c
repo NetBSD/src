@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.43 2013/01/22 09:39:12 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.44 2013/06/06 00:52:50 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -64,8 +64,8 @@
 #include <sys/buf.h>
 #include <sys/mount.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/dir.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_dir.h>
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
 #undef vnode
@@ -88,7 +88,7 @@
 #include "extern.h"
 
 extern SEGUSE *seg_table;
-extern ufs_daddr_t *din_table;
+extern ulfs_daddr_t *din_table;
 
 static int iblock(struct inodesc *, long, u_int64_t);
 int blksreqd(struct lfs *, int);
@@ -98,7 +98,7 @@ int lfs_maxino(void);
  * Get a dinode of a given inum.
  * XXX combine this function with vget.
  */
-struct ufs1_dinode *
+struct ulfs1_dinode *
 ginode(ino_t ino)
 {
 	struct uvnode *vp;
@@ -122,11 +122,11 @@ ginode(ino_t ino)
  * Check validity of held blocks in an inode, recursing through all blocks.
  */
 int
-ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
+ckinode(struct ulfs1_dinode *dp, struct inodesc *idesc)
 {
-	ufs_daddr_t *ap, lbn;
+	ulfs_daddr_t *ap, lbn;
 	long ret, n, ndb, offset;
-	struct ufs1_dinode dino;
+	struct ulfs1_dinode dino;
 	u_int64_t remsize, sizepb;
 	mode_t mode;
 	char pathbuf[MAXPATHLEN + 1];
@@ -146,7 +146,7 @@ ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 	ndb = howmany(dino.di_size, fs->lfs_bsize);
 
 	thisvp = vget(fs, idesc->id_number);
-	for (lbn = 0; lbn < UFS_NDADDR; lbn++) {
+	for (lbn = 0; lbn < ULFS_NDADDR; lbn++) {
 		ap = dino.di_db + lbn;
 		if (thisvp)
 			idesc->id_numfrags =
@@ -189,9 +189,9 @@ ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 			return (ret);
 	}
 	idesc->id_numfrags = fs->lfs_frag;
-	remsize = dino.di_size - fs->lfs_bsize * UFS_NDADDR;
+	remsize = dino.di_size - fs->lfs_bsize * ULFS_NDADDR;
 	sizepb = fs->lfs_bsize;
-	for (ap = &dino.di_ib[0], n = 1; n <= UFS_NIADDR; ap++, n++) {
+	for (ap = &dino.di_ib[0], n = 1; n <= ULFS_NIADDR; ap++, n++) {
 		if (*ap) {
 			idesc->id_blkno = *ap;
 			ret = iblock(idesc, n, remsize);
@@ -227,7 +227,7 @@ ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 static int
 iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 {
-	ufs_daddr_t *ap, *aplim;
+	ulfs_daddr_t *ap, *aplim;
 	struct ubuf *bp;
 	int i, n, (*func) (struct inodesc *), nif;
 	u_int64_t sizepb;
@@ -256,8 +256,8 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 	else
 		nif = howmany(isize, sizepb);
 	if (idesc->id_func == pass1check && nif < NINDIR(fs)) {
-		aplim = ((ufs_daddr_t *) bp->b_data) + NINDIR(fs);
-		for (ap = ((ufs_daddr_t *) bp->b_data) + nif; ap < aplim; ap++) {
+		aplim = ((ulfs_daddr_t *) bp->b_data) + NINDIR(fs);
+		for (ap = ((ulfs_daddr_t *) bp->b_data) + nif; ap < aplim; ap++) {
 			if (*ap == 0)
 				continue;
 			(void) sprintf(buf, "PARTIALLY TRUNCATED INODE I=%llu",
@@ -268,8 +268,8 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 			}
 		}
 	}
-	aplim = ((ufs_daddr_t *) bp->b_data) + nif;
-	for (ap = ((ufs_daddr_t *) bp->b_data); ap < aplim; ap++) {
+	aplim = ((ulfs_daddr_t *) bp->b_data) + nif;
+	for (ap = ((ulfs_daddr_t *) bp->b_data); ap < aplim; ap++) {
 		if (*ap) {
 			idesc->id_blkno = *ap;
 			if (ilevel == 0) {
@@ -350,29 +350,29 @@ chkrange(daddr_t blk, int cnt)
  * Enter inodes into the cache.
  */
 void
-cacheino(struct ufs1_dinode * dp, ino_t inumber)
+cacheino(struct ulfs1_dinode * dp, ino_t inumber)
 {
 	struct inoinfo *inp;
 	struct inoinfo **inpp, **ninpsort;
 	unsigned int blks;
 
 	blks = howmany(dp->di_size, fs->lfs_bsize);
-	if (blks > UFS_NDADDR)
-		blks = UFS_NDADDR + UFS_NIADDR;
-	inp = emalloc(sizeof(*inp) + (blks - 1) * sizeof(ufs_daddr_t));
+	if (blks > ULFS_NDADDR)
+		blks = ULFS_NDADDR + ULFS_NIADDR;
+	inp = emalloc(sizeof(*inp) + (blks - 1) * sizeof(ulfs_daddr_t));
 	inpp = &inphead[inumber % numdirs];
 	inp->i_nexthash = *inpp;
 	*inpp = inp;
 	inp->i_child = inp->i_sibling = inp->i_parentp = 0;
-	if (inumber == UFS_ROOTINO)
-		inp->i_parent = UFS_ROOTINO;
+	if (inumber == ULFS_ROOTINO)
+		inp->i_parent = ULFS_ROOTINO;
 	else
 		inp->i_parent = (ino_t) 0;
 	inp->i_dotdot = (ino_t) 0;
 	inp->i_number = inumber;
 	inp->i_isize = dp->di_size;
 
-	inp->i_numblks = blks * sizeof(ufs_daddr_t);
+	inp->i_numblks = blks * sizeof(ulfs_daddr_t);
 	memcpy(&inp->i_blks[0], &dp->di_db[0], (size_t) inp->i_numblks);
 	if (inplast == listmax) {
 		ninpsort = erealloc(inpsort,
@@ -509,7 +509,7 @@ findino(struct inodesc * idesc)
 	if (dirp->d_ino == 0)
 		return (KEEPON);
 	if (strcmp(dirp->d_name, idesc->id_name) == 0 &&
-	    dirp->d_ino >= UFS_ROOTINO && dirp->d_ino < maxino) {
+	    dirp->d_ino >= ULFS_ROOTINO && dirp->d_ino < maxino) {
 		idesc->id_parent = dirp->d_ino;
 		return (STOP | FOUND);
 	}
@@ -519,11 +519,11 @@ findino(struct inodesc * idesc)
 void
 pinode(ino_t ino)
 {
-	struct ufs1_dinode *dp;
+	struct ulfs1_dinode *dp;
 	struct passwd *pw;
 
 	printf(" I=%llu ", (unsigned long long)ino);
-	if (ino < UFS_ROOTINO || ino >= maxino)
+	if (ino < ULFS_ROOTINO || ino >= maxino)
 		return;
 	dp = ginode(ino);
 	if (dp) {
@@ -578,13 +578,13 @@ ino_t
 allocino(ino_t request, int type)
 {
 	ino_t ino;
-	struct ufs1_dinode *dp;
+	struct ulfs1_dinode *dp;
 	time_t t;
 	struct uvnode *vp;
 	struct ubuf *bp;
 
 	if (request == 0)
-		request = UFS_ROOTINO;
+		request = ULFS_ROOTINO;
 	else if (statemap[request] != USTATE)
 		return (0);
 	for (ino = request; ino < maxino; ino++)

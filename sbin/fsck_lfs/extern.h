@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.9 2011/06/09 19:57:53 christos Exp $	 */
+/* $NetBSD: extern.h,v 1.10 2013/06/06 00:52:50 dholland Exp $	 */
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -28,13 +28,13 @@ void adjust(struct inodesc *, short);
 int allocblk(long);
 int allocdir(ino_t, ino_t, int);
 void blkerror(ino_t, const char *, daddr_t);
-void cacheino(struct ufs1_dinode *, ino_t);
+void cacheino(struct ulfs1_dinode *, ino_t);
 int changeino(ino_t, const char *, ino_t);
 struct fstab;
 void checkinode(ino_t, struct inodesc *);
 int chkrange(daddr_t, int);
 void ckfini(int);
-int ckinode(struct ufs1_dinode *, struct inodesc *);
+int ckinode(struct ulfs1_dinode *, struct inodesc *);
 void clri(struct inodesc *, const char *, int);
 int dircheck(struct inodesc *, struct direct *);
 void direrror(ino_t, const char *);
@@ -47,7 +47,7 @@ void flush(int, struct ubufarea *);
 void freeblk(daddr_t, long);
 void freeino(ino_t);
 void freeinodebuf(void);
-int ftypeok(struct ufs1_dinode *);
+int ftypeok(struct ulfs1_dinode *);
 void getpathname(char *, size_t, ino_t, ino_t);
 void inocleanup(void);
 void inodirty(struct inode *);

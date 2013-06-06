@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.31 2013/01/22 09:39:12 dholland Exp $	 */
+/* $NetBSD: pass1.c,v 1.32 2013/06/06 00:52:50 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,8 +34,8 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/dir.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_dir.h>
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
 #undef vnode
@@ -56,15 +56,15 @@
 #include "fsutil.h"
 
 SEGUSE *seg_table;
-extern ufs_daddr_t *din_table;
+extern ulfs_daddr_t *din_table;
 
-ufs_daddr_t badblk;
-static ufs_daddr_t dupblk;
+ulfs_daddr_t badblk;
+static ulfs_daddr_t dupblk;
 static int i_d_cmp(const void *, const void *);
 
 struct ino_daddr {
 	ino_t ino;
-	ufs_daddr_t daddr;
+	ulfs_daddr_t daddr;
 };
 
 static int
@@ -90,7 +90,7 @@ pass1(void)
 	ino_t inumber;
 	int i;
 	struct inodesc idesc;
-	struct ufs1_dinode *tinode;
+	struct ulfs1_dinode *tinode;
 	struct ifile *ifp;
 	struct ubuf *bp;
 	struct ino_daddr **dins;
@@ -162,7 +162,7 @@ pass1(void)
 void
 checkinode(ino_t inumber, struct inodesc * idesc)
 {
-	struct ufs1_dinode *dp;
+	struct ulfs1_dinode *dp;
 	struct uvnode  *vp;
 	struct zlncnt *zlnp;
 	struct ubuf *bp;
@@ -184,8 +184,8 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 
 	/* XXX - LFS doesn't have this particular problem (?) */
 	if (mode == 0) {
-		if (memcmp(dp->di_db, zino.di_db, UFS_NDADDR * sizeof(ufs_daddr_t)) ||
-		    memcmp(dp->di_ib, zino.di_ib, UFS_NIADDR * sizeof(ufs_daddr_t)) ||
+		if (memcmp(dp->di_db, zino.di_db, ULFS_NDADDR * sizeof(ulfs_daddr_t)) ||
+		    memcmp(dp->di_ib, zino.di_ib, ULFS_NIADDR * sizeof(ulfs_daddr_t)) ||
 		    dp->di_mode || dp->di_size) {
 			pwarn("mode=o%o, ifmt=o%o\n", dp->di_mode, mode);
 			pfatal("PARTIALLY ALLOCATED INODE I=%llu",
@@ -230,25 +230,25 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		 */
 		if (dp->di_size < fs->lfs_maxsymlinklen ||
 		    (fs->lfs_maxsymlinklen == 0 && dp->di_blocks == 0)) {
-			ndb = howmany(dp->di_size, sizeof(ufs_daddr_t));
-			if (ndb > UFS_NDADDR) {
-				j = ndb - UFS_NDADDR;
+			ndb = howmany(dp->di_size, sizeof(ulfs_daddr_t));
+			if (ndb > ULFS_NDADDR) {
+				j = ndb - ULFS_NDADDR;
 				for (ndb = 1; j > 1; j--)
 					ndb *= NINDIR(fs);
-				ndb += UFS_NDADDR;
+				ndb += ULFS_NDADDR;
 			}
 		}
 	}
-	for (j = ndb; j < UFS_NDADDR; j++)
+	for (j = ndb; j < ULFS_NDADDR; j++)
 		if (dp->di_db[j] != 0) {
 			if (debug)
 				printf("bad direct addr for size %lld lbn %d: 0x%x\n",
 					(long long)dp->di_size, j, (unsigned)dp->di_db[j]);
 			goto unknown;
 		}
-	for (j = 0, ndb -= UFS_NDADDR; ndb > 0; j++)
+	for (j = 0, ndb -= ULFS_NDADDR; ndb > 0; j++)
 		ndb /= NINDIR(fs);
-	for (; j < UFS_NIADDR; j++)
+	for (; j < ULFS_NIADDR; j++)
 		if (dp->di_ib[j] != 0) {
 			if (debug)
 				printf("bad indirect addr for size %lld # %d: 0x%x\n",
