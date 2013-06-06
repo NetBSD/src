@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfsmount.h,v 1.5 2013/06/06 00:51:25 dholland Exp $	*/
+/*	$NetBSD: ulfsmount.h,v 1.6 2013/06/06 01:25:25 dholland Exp $	*/
 /*  from NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp  */
 
 /*
@@ -144,7 +144,7 @@ struct ulfs_ops {
 
 /* ULFS-specific flags */
 #define ULFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */
-#define ULFS_ISAPPLEUFS	0x02	/* filesystem is Apple UFS */
+/*	unused		0x02	   */
 #define ULFS_QUOTA	0x04	/* filesystem has QUOTA (v1) */
 #define ULFS_QUOTA2	0x08	/* filesystem has QUOTA2 */
 
@@ -163,12 +163,6 @@ struct ulfs_ops {
 
 /* Convert mount ptr to ulfsmount ptr. */
 #define VFSTOULFS(mp)	((struct ulfsmount *)((mp)->mnt_data))
-
-#if 0 /*def APPLE_UFS*/
-#define ULFS_MPISAPPLEUFS(ump)	((ump)->um_flags & ULFS_ISAPPLEUFS)
-#else
-#define ULFS_MPISAPPLEUFS(ump)	(0)
-#endif
 
 /*
  * Macros to access file system parameters in the ulfsmount structure.

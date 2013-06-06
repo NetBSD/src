@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dir.h,v 1.2 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_dir.h,v 1.3 2013/06/06 01:25:25 dholland Exp $	*/
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
 
 /*
@@ -76,7 +76,6 @@
 #undef	DIRBLKSIZ
 #define	DIRBLKSIZ	DEV_BSIZE
 #define	FFS_MAXNAMLEN	255
-#define APPLEUFS_DIRBLKSIZ 1024
 
 #define d_ino d_fileno
 struct	direct {
