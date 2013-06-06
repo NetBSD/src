@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2_subr.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2_subr.c,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: quota2_subr.c,v 1.5 2012/02/05 14:19:04 dholland Exp  */
 
 /*-
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2_subr.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2_subr.c,v 1.3 2013/06/06 00:48:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -55,7 +55,7 @@ quota2_addfreeq2e(struct quota2_header *q2h, void *bp, uint64_t baseoff,
 	nq2e = (bsize - blkoff) / sizeof(*q2e);
 	for (i = 0; i < nq2e; i++) {
 		q2e[i].q2e_next = q2h->q2h_free;
-		q2h->q2h_free = ufs_rw64(i * sizeof(*q2e) + baseoff, ns);
+		q2h->q2h_free = ulfs_rw64(i * sizeof(*q2e) + baseoff, ns);
 	}
 }
 
@@ -71,17 +71,17 @@ quota2_create_blk0(uint64_t bsize, void *bp, int q2h_hash_shift, int type,
 
 	memset(bp, 0, bsize);
 	q2h = bp;
-	q2h->q2h_magic_number = ufs_rw32(Q2_HEAD_MAGIC, ns);
+	q2h->q2h_magic_number = ulfs_rw32(Q2_HEAD_MAGIC, ns);
 	q2h->q2h_type = type;
 	q2h->q2h_hash_shift = q2h_hash_shift;
-	q2h->q2h_hash_size = ufs_rw16(quota2_hash_size, ns);
+	q2h->q2h_hash_size = ulfs_rw16(quota2_hash_size, ns);
 	/* setup defaut entry: unlimited, 7 days grace */
 	for (i = 0; i < N_QL; i++) {
 		q2h->q2h_defentry.q2e_val[i].q2v_hardlimit =
 		    q2h->q2h_defentry.q2e_val[i].q2v_softlimit =
-		    ufs_rw64(UQUAD_MAX, ns);
+		    ulfs_rw64(UQUAD_MAX, ns);
 		q2h->q2h_defentry.q2e_val[i].q2v_grace =
-		    ufs_rw64(7ULL * 24ULL * 3600ULL, ns);
+		    ulfs_rw64(7ULL * 24ULL * 3600ULL, ns);
 	}
 
 	/* first quota entry, after the hash table */
@@ -89,24 +89,24 @@ quota2_create_blk0(uint64_t bsize, void *bp, int q2h_hash_shift, int type,
 }
 
 void
-quota2_ufs_rwq2v(const struct quota2_val *s, struct quota2_val *d, int needswap)
+quota2_ulfs_rwq2v(const struct quota2_val *s, struct quota2_val *d, int needswap)
 {
-	d->q2v_hardlimit = ufs_rw64(s->q2v_hardlimit, needswap);
-	d->q2v_softlimit = ufs_rw64(s->q2v_softlimit, needswap);
-	d->q2v_cur = ufs_rw64(s->q2v_cur, needswap);
-	d->q2v_time = ufs_rw64(s->q2v_time, needswap);
-	d->q2v_grace = ufs_rw64(s->q2v_grace, needswap);
+	d->q2v_hardlimit = ulfs_rw64(s->q2v_hardlimit, needswap);
+	d->q2v_softlimit = ulfs_rw64(s->q2v_softlimit, needswap);
+	d->q2v_cur = ulfs_rw64(s->q2v_cur, needswap);
+	d->q2v_time = ulfs_rw64(s->q2v_time, needswap);
+	d->q2v_grace = ulfs_rw64(s->q2v_grace, needswap);
 }
 
 void
-quota2_ufs_rwq2e(const struct quota2_entry *s, struct quota2_entry *d,
+quota2_ulfs_rwq2e(const struct quota2_entry *s, struct quota2_entry *d,
 int needswap)
 {
-	quota2_ufs_rwq2v(&s->q2e_val[QL_BLOCK], &d->q2e_val[QL_BLOCK],
+	quota2_ulfs_rwq2v(&s->q2e_val[QL_BLOCK], &d->q2e_val[QL_BLOCK],
 	    needswap);
-	quota2_ufs_rwq2v(&s->q2e_val[QL_FILE], &d->q2e_val[QL_FILE],
+	quota2_ulfs_rwq2v(&s->q2e_val[QL_FILE], &d->q2e_val[QL_FILE],
 	    needswap);
-	d->q2e_uid = ufs_rw32(s->q2e_uid, needswap);
+	d->q2e_uid = ulfs_rw32(s->q2e_uid, needswap);
 }
 
 int

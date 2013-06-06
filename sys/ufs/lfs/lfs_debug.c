@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.41 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.42 2013/06/06 00:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.41 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.42 2013/06/06 00:48:04 dholland Exp $");
 
 #ifdef DEBUG
 
@@ -188,7 +188,7 @@ lfs_dump_super(struct lfs *lfsp)
 }
 
 void
-lfs_dump_dinode(struct ufs1_dinode *dip)
+lfs_dump_dinode(struct ulfs1_dinode *dip)
 {
 	int i;
 
@@ -201,12 +201,12 @@ lfs_dump_dinode(struct ufs1_dinode *dip)
 	       "blocks ", dip->di_blocks);
 	printf("inum  %d\n", dip->di_inumber);
 	printf("Direct Addresses\n");
-	for (i = 0; i < UFS_NDADDR; i++) {
+	for (i = 0; i < ULFS_NDADDR; i++) {
 		printf("\t%x", dip->di_db[i]);
 		if ((i % 6) == 5)
 			printf("\n");
 	}
-	for (i = 0; i < UFS_NIADDR; i++)
+	for (i = 0; i < ULFS_NIADDR; i++)
 		printf("\t%x", dip->di_ib[i]);
 	printf("\n");
 }

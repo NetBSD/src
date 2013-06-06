@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_rename.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_rename.c,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -31,11 +31,11 @@
  */
 
 /*
- * UFS Rename
+ * ULFS Rename
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.3 2013/06/06 00:48:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -62,23 +62,23 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.2 2013/06/06 00:44:40 dholland Exp
  * Forward declarations
  */
 
-static int ufs_sane_rename(struct vnode *, struct componentname *,
+static int ulfs_sane_rename(struct vnode *, struct componentname *,
     struct vnode *, struct componentname *,
     kauth_cred_t, bool);
-static bool ufs_rename_ulr_overlap_p(const struct ufs_lookup_results *,
-    const struct ufs_lookup_results *);
-static int ufs_rename_recalculate_fulr(struct vnode *,
-    struct ufs_lookup_results *, const struct ufs_lookup_results *,
+static bool ulfs_rename_ulr_overlap_p(const struct ulfs_lookup_results *,
+    const struct ulfs_lookup_results *);
+static int ulfs_rename_recalculate_fulr(struct vnode *,
+    struct ulfs_lookup_results *, const struct ulfs_lookup_results *,
     const struct componentname *);
-static int ufs_direct_namlen(const struct direct *, const struct vnode *);
-static int ufs_read_dotdot(struct vnode *, kauth_cred_t, ino_t *);
-static int ufs_dirbuf_dotdot_namlen(const struct dirtemplate *,
+static int ulfs_direct_namlen(const struct direct *, const struct vnode *);
+static int ulfs_read_dotdot(struct vnode *, kauth_cred_t, ino_t *);
+static int ulfs_dirbuf_dotdot_namlen(const struct dirtemplate *,
     const struct vnode *);
 
-static const struct genfs_rename_ops ufs_genfs_rename_ops;
+static const struct genfs_rename_ops ulfs_genfs_rename_ops;
 
 /*
- * ufs_sane_rename: The hairiest vop, with the saner API.
+ * ulfs_sane_rename: The hairiest vop, with the saner API.
  *
  * Arguments:
  *
@@ -92,37 +92,37 @@ static const struct genfs_rename_ops ufs_genfs_rename_ops;
  * fdvp and tdvp may be the same, and must be referenced and unlocked.
  */
 static int
-ufs_sane_rename(
+ulfs_sane_rename(
     struct vnode *fdvp, struct componentname *fcnp,
     struct vnode *tdvp, struct componentname *tcnp,
     kauth_cred_t cred, bool posixly_correct)
 {
-	struct ufs_lookup_results fulr, tulr;
+	struct ulfs_lookup_results fulr, tulr;
 
-	return genfs_sane_rename(&ufs_genfs_rename_ops,
+	return genfs_sane_rename(&ulfs_genfs_rename_ops,
 	    fdvp, fcnp, &fulr, tdvp, tcnp, &tulr,
 	    cred, posixly_correct);
 }
 
 /*
- * ufs_rename: The hairiest vop, with the insanest API.  Defer to
+ * ulfs_rename: The hairiest vop, with the insanest API.  Defer to
  * genfs_insane_rename immediately.
  */
 int
-ufs_rename(void *v)
+ulfs_rename(void *v)
 {
 
-	return genfs_insane_rename(v, &ufs_sane_rename);
+	return genfs_insane_rename(v, &ulfs_sane_rename);
 }
 
 /*
- * ufs_gro_directory_empty_p: Return true if the directory vp is
+ * ulfs_gro_directory_empty_p: Return true if the directory vp is
  * empty.  dvp is its parent.
  *
  * vp and dvp must be locked and referenced.
  */
 bool
-ufs_gro_directory_empty_p(struct mount *mp, kauth_cred_t cred,
+ulfs_gro_directory_empty_p(struct mount *mp, kauth_cred_t cred,
     struct vnode *vp, struct vnode *dvp)
 {
 
@@ -136,15 +136,15 @@ ufs_gro_directory_empty_p(struct mount *mp, kauth_cred_t cred,
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
-	return ufs_dirempty(VTOI(vp), VTOI(dvp)->i_number, cred);
+	return ulfs_dirempty(VTOI(vp), VTOI(dvp)->i_number, cred);
 }
 
 /*
- * ufs_gro_rename_check_possible: Check whether a rename is possible
+ * ulfs_gro_rename_check_possible: Check whether a rename is possible
  * independent of credentials.
  */
 int
-ufs_gro_rename_check_possible(struct mount *mp,
+ulfs_gro_rename_check_possible(struct mount *mp,
     struct vnode *fdvp, struct vnode *fvp,
     struct vnode *tdvp, struct vnode *tvp)
 {
@@ -178,11 +178,11 @@ ufs_gro_rename_check_possible(struct mount *mp,
 }
 
 /*
- * ufs_gro_rename_check_permitted: Check whether a rename is permitted
+ * ulfs_gro_rename_check_permitted: Check whether a rename is permitted
  * given our credentials.
  */
 int
-ufs_gro_rename_check_permitted(struct mount *mp, kauth_cred_t cred,
+ulfs_gro_rename_check_permitted(struct mount *mp, kauth_cred_t cred,
     struct vnode *fdvp, struct vnode *fvp,
     struct vnode *tdvp, struct vnode *tvp)
 {
@@ -216,11 +216,11 @@ ufs_gro_rename_check_permitted(struct mount *mp, kauth_cred_t cred,
 }
 
 /*
- * ufs_gro_remove_check_possible: Check whether a remove is possible
+ * ulfs_gro_remove_check_possible: Check whether a remove is possible
  * independent of credentials.
  */
 int
-ufs_gro_remove_check_possible(struct mount *mp,
+ulfs_gro_remove_check_possible(struct mount *mp,
     struct vnode *dvp, struct vnode *vp)
 {
 
@@ -242,11 +242,11 @@ ufs_gro_remove_check_possible(struct mount *mp,
 }
 
 /*
- * ufs_gro_remove_check_permitted: Check whether a remove is permitted
+ * ulfs_gro_remove_check_permitted: Check whether a remove is permitted
  * given our credentials.
  */
 int
-ufs_gro_remove_check_permitted(struct mount *mp, kauth_cred_t cred,
+ulfs_gro_remove_check_permitted(struct mount *mp, kauth_cred_t cred,
     struct vnode *dvp, struct vnode *vp)
 {
 
@@ -269,7 +269,7 @@ ufs_gro_remove_check_permitted(struct mount *mp, kauth_cred_t cred,
 /*
  * A virgin directory (no blushing please).
  *
- * XXX Copypasta from ufs_vnops.c.  Kill!
+ * XXX Copypasta from ulfs_vnops.c.  Kill!
  */
 static const struct dirtemplate mastertemplate = {
 	0,	12,		DT_DIR,	1,	".",
@@ -277,17 +277,17 @@ static const struct dirtemplate mastertemplate = {
 };
 
 /*
- * ufs_gro_rename: Actually perform the rename operation.
+ * ulfs_gro_rename: Actually perform the rename operation.
  */
 int
-ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
+ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
     struct vnode *fdvp, struct componentname *fcnp,
     void *fde, struct vnode *fvp,
     struct vnode *tdvp, struct componentname *tcnp,
     void *tde, struct vnode *tvp)
 {
-	struct ufs_lookup_results *fulr = fde;
-	struct ufs_lookup_results *tulr = tde;
+	struct ulfs_lookup_results *fulr = fde;
+	struct ulfs_lookup_results *tulr = tde;
 	bool directory_p, reparent_p;
 	struct direct *newdir;
 	int error;
@@ -336,7 +336,7 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 */
 
 	fstrans_start(mp, FSTRANS_SHARED);
-	error = UFS_WAPBL_BEGIN(mp);
+	error = ULFS_WAPBL_BEGIN(mp);
 	if (error)
 		goto ihateyou;
 
@@ -351,7 +351,7 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	VTOI(fvp)->i_nlink++;
 	DIP_ASSIGN(VTOI(fvp), nlink, VTOI(fvp)->i_nlink);
 	VTOI(fvp)->i_flag |= IN_CHANGE;
-	error = UFS_UPDATE(fvp, NULL, NULL, UPDATE_DIROP);
+	error = ULFS_UPDATE(fvp, NULL, NULL, UPDATE_DIROP);
 	if (error)
 		goto whymustithurtsomuch;
 
@@ -378,7 +378,7 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 			VTOI(tdvp)->i_nlink++;
 			DIP_ASSIGN(VTOI(tdvp), nlink, VTOI(tdvp)->i_nlink);
 			VTOI(tdvp)->i_flag |= IN_CHANGE;
-			error = UFS_UPDATE(tdvp, NULL, NULL, UPDATE_DIROP);
+			error = ULFS_UPDATE(tdvp, NULL, NULL, UPDATE_DIROP);
 			if (error) {
 				/*
 				 * Link count update didn't take --
@@ -393,10 +393,10 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 			}
 		}
 
-		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
-		ufs_makedirentry(VTOI(fvp), tcnp, newdir);
-		error = ufs_direnter(tdvp, tulr, NULL, newdir, tcnp, NULL);
-		pool_cache_put(ufs_direct_cache, newdir);
+		newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
+		ulfs_makedirentry(VTOI(fvp), tcnp, newdir);
+		error = ulfs_direnter(tdvp, tulr, NULL, newdir, tcnp, NULL);
+		pool_cache_put(ulfs_direct_cache, newdir);
 		if (error) {
 			if (directory_p && reparent_p) {
 				/*
@@ -410,7 +410,7 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 				DIP_ASSIGN(VTOI(tdvp), nlink,
 				    VTOI(tdvp)->i_nlink);
 				VTOI(tdvp)->i_flag |= IN_CHANGE;
-				(void)UFS_UPDATE(tdvp, NULL, NULL,
+				(void)ULFS_UPDATE(tdvp, NULL, NULL,
 				    UPDATE_WAIT | UPDATE_DIROP);
 			}
 			goto whymustithurtsomuch;
@@ -424,11 +424,11 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 		 * Make the target directory's entry for tcnp point at
 		 * the source node.
 		 *
-		 * XXX ufs_dirrewrite decrements tvp's link count, but
+		 * XXX ulfs_dirrewrite decrements tvp's link count, but
 		 * doesn't touch the link count of the new inode.  Go
 		 * figure.
 		 */
-		error = ufs_dirrewrite(VTOI(tdvp), tulr->ulr_offset,
+		error = ulfs_dirrewrite(VTOI(tdvp), tulr->ulr_offset,
 		    VTOI(tvp), VTOI(fvp)->i_number, IFTODT(VTOI(fvp)->i_mode),
 		    ((directory_p && reparent_p) ? reparent_p : directory_p),
 		    IN_CHANGE | IN_UPDATE);
@@ -449,13 +449,13 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 			VTOI(tdvp)->i_nlink--;
 			DIP_ASSIGN(VTOI(tdvp), nlink, VTOI(tdvp)->i_nlink);
 			VTOI(tdvp)->i_flag |= IN_CHANGE;
-			UFS_WAPBL_UPDATE(tdvp, NULL, NULL, 0);
+			ULFS_WAPBL_UPDATE(tdvp, NULL, NULL, 0);
 		}
 
 		if (directory_p) {
 			/*
 			 * XXX I don't understand the following comment
-			 * from ufs_rename -- in particular, the part
+			 * from ulfs_rename -- in particular, the part
 			 * about `there may be other hard links'.
 			 *
 			 * Truncate inode. The only stuff left in the directory
@@ -464,15 +464,15 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 			 * reference and the reference in the parent directory,
 			 * but there may be other hard links.
 			 *
-			 * XXX The ufs_dirempty call earlier does
+			 * XXX The ulfs_dirempty call earlier does
 			 * not guarantee anything about nlink.
 			 */
 			if (VTOI(tvp)->i_nlink != 1)
-				ufs_dirbad(VTOI(tvp), (doff_t)0,
+				ulfs_dirbad(VTOI(tvp), (doff_t)0,
 				    "hard-linked directory");
 			VTOI(tvp)->i_nlink = 0;
 			DIP_ASSIGN(VTOI(tvp), nlink, 0);
-			error = UFS_TRUNCATE(tvp, (off_t)0, IO_SYNC, cred);
+			error = ULFS_TRUNCATE(tvp, (off_t)0, IO_SYNC, cred);
 			if (error)
 				goto whymustithurtsomuch;
 		}
@@ -483,13 +483,13 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * count of the old parent directory must be decremented and
 	 * ".." set to point to the new parent.
 	 *
-	 * XXX ufs_dirrewrite updates the link count of fdvp, but not
+	 * XXX ulfs_dirrewrite updates the link count of fdvp, but not
 	 * the link count of fvp or the link count of tdvp.  Go figure.
 	 */
 	if (directory_p && reparent_p) {
-		error = ufs_dirrewrite(VTOI(fvp), mastertemplate.dot_reclen,
+		error = ulfs_dirrewrite(VTOI(fvp), mastertemplate.dot_reclen,
 		    VTOI(fdvp), VTOI(tdvp)->i_number, DT_DIR, 0, IN_CHANGE);
-#if 0		/* XXX This branch was not in ufs_rename! */
+#if 0		/* XXX This branch was not in ulfs_rename! */
 		if (error)
 			goto whymustithurtsomuch;
 #endif
@@ -503,14 +503,14 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 */
 
 	/*
-	 * ufs_direnter may compact the directory in the process of
+	 * ulfs_direnter may compact the directory in the process of
 	 * inserting a new entry.  That may invalidate fulr, which we
 	 * need in order to remove the old entry.  In that case, we
 	 * need to recalculate what fulr should be.
 	 */
 	if (!reparent_p && (tvp == NULL) &&
-	    ufs_rename_ulr_overlap_p(fulr, tulr)) {
-		error = ufs_rename_recalculate_fulr(fdvp, fulr, tulr, fcnp);
+	    ulfs_rename_ulr_overlap_p(fulr, tulr)) {
+		error = ulfs_rename_recalculate_fulr(fdvp, fulr, tulr, fcnp);
 #if 0				/* XXX */
 		if (error)	/* XXX Try to back out changes?  */
 			goto whymustithurtsomuch;
@@ -519,14 +519,14 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 
 	/*
 	 * XXX 0 means !isrmdir.  But can't this be an rmdir?
-	 * XXX Well, turns out that argument to ufs_dirremove is ignored...
-	 * XXX And it turns out ufs_dirremove updates the link count of fvp.
+	 * XXX Well, turns out that argument to ulfs_dirremove is ignored...
+	 * XXX And it turns out ulfs_dirremove updates the link count of fvp.
 	 * XXX But it doesn't update the link count of fdvp.  Go figure.
-	 * XXX fdvp's link count is updated in ufs_dirrewrite instead.
+	 * XXX fdvp's link count is updated in ulfs_dirrewrite instead.
 	 * XXX Actually, sometimes it doesn't update fvp's link count.
 	 * XXX I hate the world.
 	 */
-	error = ufs_dirremove(fdvp, fulr, VTOI(fvp), fcnp->cn_flags, 0);
+	error = ulfs_dirremove(fdvp, fulr, VTOI(fvp), fcnp->cn_flags, 0);
 	if (error)
 #if 0				/* XXX */
 		goto whymustithurtsomuch;
@@ -550,10 +550,10 @@ whymustithurtsomuch:
 	VTOI(fvp)->i_nlink--;
 	DIP_ASSIGN(VTOI(fvp), nlink, VTOI(fvp)->i_nlink);
 	VTOI(fvp)->i_flag |= IN_CHANGE;
-	UFS_WAPBL_UPDATE(fvp, NULL, NULL, 0);
+	ULFS_WAPBL_UPDATE(fvp, NULL, NULL, 0);
 
 arghmybrainhurts:
-	UFS_WAPBL_END(mp);
+	ULFS_WAPBL_END(mp);
 
 ihateyou:
 	fstrans_done(mp);
@@ -561,12 +561,12 @@ ihateyou:
 }
 
 /*
- * ufs_rename_ulr_overlap_p: True iff tulr overlaps with fulr so that
+ * ulfs_rename_ulr_overlap_p: True iff tulr overlaps with fulr so that
  * entering a directory entry at tulr may move fulr.
  */
 static bool
-ufs_rename_ulr_overlap_p(const struct ufs_lookup_results *fulr,
-    const struct ufs_lookup_results *tulr)
+ulfs_rename_ulr_overlap_p(const struct ulfs_lookup_results *fulr,
+    const struct ulfs_lookup_results *tulr)
 {
 	doff_t from_prev_start, from_prev_end, to_start, to_end;
 
@@ -596,19 +596,19 @@ ufs_rename_ulr_overlap_p(const struct ufs_lookup_results *fulr,
 }
 
 /*
- * ufs_rename_recalculate_fulr: If we have just entered a directory into
+ * ulfs_rename_recalculate_fulr: If we have just entered a directory into
  * dvp at tulr, and we were about to remove one at fulr for an entry
  * named fcnp, fulr may be invalid.  So, if necessary, recalculate it.
  */
 static int
-ufs_rename_recalculate_fulr(struct vnode *dvp,
-    struct ufs_lookup_results *fulr, const struct ufs_lookup_results *tulr,
+ulfs_rename_recalculate_fulr(struct vnode *dvp,
+    struct ulfs_lookup_results *fulr, const struct ulfs_lookup_results *tulr,
     const struct componentname *fcnp)
 {
 	struct mount *mp;
-	struct ufsmount *ump;
+	struct ulfsmount *ump;
 	int needswap;
-	/* XXX int is a silly type for this; blame ufsmount::um_dirblksiz.  */
+	/* XXX int is a silly type for this; blame ulfsmount::um_dirblksiz.  */
 	int dirblksiz;
 	doff_t search_start, search_end;
 	doff_t offset;		/* Offset of entry we're examining.  */
@@ -616,7 +616,7 @@ ufs_rename_recalculate_fulr(struct vnode *dvp,
 	char *dirbuf;		/* Pointer into directory at search_start.  */
 	struct direct *ep;	/* Pointer to the entry we're examining.  */
 	/* XXX direct::d_reclen is 16-bit;
-	 * ufs_lookup_results::ulr_reclen is 32-bit.  Blah.  */
+	 * ulfs_lookup_results::ulr_reclen is 32-bit.  Blah.  */
 	uint32_t reclen;	/* Length of the entry we're examining.  */
 	uint32_t prev_reclen;	/* Length of the preceding entry.  */
 	int error;
@@ -627,14 +627,14 @@ ufs_rename_recalculate_fulr(struct vnode *dvp,
 	KASSERT(fulr != NULL);
 	KASSERT(tulr != NULL);
 	KASSERT(fulr != tulr);
-	KASSERT(ufs_rename_ulr_overlap_p(fulr, tulr));
+	KASSERT(ulfs_rename_ulr_overlap_p(fulr, tulr));
 
 	mp = dvp->v_mount;
-	ump = VFSTOUFS(mp);
+	ump = VFSTOULFS(mp);
 	KASSERT(ump != NULL);
 	KASSERT(ump == VTOI(dvp)->i_ump);
 
-	needswap = UFS_MPNEEDSWAP(ump);
+	needswap = ULFS_MPNEEDSWAP(ump);
 
 	dirblksiz = ump->um_dirblksiz;
 	KASSERT(0 < dirblksiz);
@@ -654,7 +654,7 @@ ufs_rename_recalculate_fulr(struct vnode *dvp,
 
 	dirbuf = NULL;
 	bp = NULL;
-	error = ufs_blkatoff(dvp, (off_t)search_start, &dirbuf, &bp, false);
+	error = ulfs_blkatoff(dvp, (off_t)search_start, &dirbuf, &bp, false);
 	if (error)
 		return error;
 	KASSERT(dirbuf != NULL);
@@ -684,15 +684,15 @@ ufs_rename_recalculate_fulr(struct vnode *dvp,
 		 * Examine the directory entry at offset.
 		 */
 		ep = (struct direct *)(dirbuf + (offset - search_start));
-		reclen = ufs_rw16(ep->d_reclen, needswap);
+		reclen = ulfs_rw16(ep->d_reclen, needswap);
 
 		if (ep->d_ino == 0)
 			goto next;	/* Entry is unused.  */
 
-		if (ufs_rw32(ep->d_ino, needswap) == UFS_WINO)
+		if (ulfs_rw32(ep->d_ino, needswap) == ULFS_WINO)
 			goto next;	/* Entry is whiteout.  */
 
-		if (fcnp->cn_namelen != ufs_direct_namlen(ep, dvp))
+		if (fcnp->cn_namelen != ulfs_direct_namlen(ep, dvp))
 			goto next;	/* Wrong name length.  */
 
 		if (memcmp(ep->d_name, fcnp->cn_nameptr, fcnp->cn_namelen))
@@ -740,11 +740,11 @@ next:
 }
 
 /*
- * ufs_direct_namlen: Return the namlen of the directory entry ep from
+ * ulfs_direct_namlen: Return the namlen of the directory entry ep from
  * the directory vp.
  */
 static int			/* XXX int?  uint8_t?  */
-ufs_direct_namlen(const struct direct *ep, const struct vnode *vp)
+ulfs_direct_namlen(const struct direct *ep, const struct vnode *vp)
 {
 	bool swap;
 
@@ -754,23 +754,23 @@ ufs_direct_namlen(const struct direct *ep, const struct vnode *vp)
 	KASSERT(VTOI(vp)->i_ump != NULL);
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-	swap = (UFS_MPNEEDSWAP(VTOI(vp)->i_ump) == 0);
+	swap = (ULFS_MPNEEDSWAP(VTOI(vp)->i_ump) == 0);
 #else
-	swap = (UFS_MPNEEDSWAP(VTOI(vp)->i_ump) != 0);
+	swap = (ULFS_MPNEEDSWAP(VTOI(vp)->i_ump) != 0);
 #endif
 
 	return ((FSFMT(vp) && swap)? ep->d_type : ep->d_namlen);
 }
 
 /*
- * ufs_gro_remove: Rename an object over another link to itself,
+ * ulfs_gro_remove: Rename an object over another link to itself,
  * effectively removing just the original link.
  */
 int
-ufs_gro_remove(struct mount *mp, kauth_cred_t cred,
+ulfs_gro_remove(struct mount *mp, kauth_cred_t cred,
     struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp)
 {
-	struct ufs_lookup_results *ulr = de;
+	struct ulfs_lookup_results *ulr = de;
 	int error;
 
 	KASSERT(mp != NULL);
@@ -788,31 +788,31 @@ ufs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	KASSERT(cnp->cn_nameiop == DELETE);
 
 	fstrans_start(mp, FSTRANS_SHARED);
-	error = UFS_WAPBL_BEGIN(mp);
+	error = ULFS_WAPBL_BEGIN(mp);
 	if (error)
 		goto out0;
 
-	/* XXX ufs_dirremove decrements vp's link count for us.  */
-	error = ufs_dirremove(dvp, ulr, VTOI(vp), cnp->cn_flags, 0);
+	/* XXX ulfs_dirremove decrements vp's link count for us.  */
+	error = ulfs_dirremove(dvp, ulr, VTOI(vp), cnp->cn_flags, 0);
 	if (error)
 		goto out1;
 
 	VN_KNOTE(dvp, NOTE_WRITE);
 	VN_KNOTE(vp, (VTOI(vp)->i_nlink? NOTE_LINK : NOTE_DELETE));
 
-out1:	UFS_WAPBL_END(mp);
+out1:	ULFS_WAPBL_END(mp);
 out0:	fstrans_done(mp);
 	return error;
 }
 
 /*
- * ufs_gro_lookup: Look up and save the lookup results.
+ * ulfs_gro_lookup: Look up and save the lookup results.
  */
 int
-ufs_gro_lookup(struct mount *mp, struct vnode *dvp,
+ulfs_gro_lookup(struct mount *mp, struct vnode *dvp,
     struct componentname *cnp, void *de_ret, struct vnode **vp_ret)
 {
-	struct ufs_lookup_results *ulr_ret = de_ret;
+	struct ulfs_lookup_results *ulr_ret = de_ret;
 	struct vnode *vp = NULL;
 	int error;
 
@@ -824,7 +824,7 @@ ufs_gro_lookup(struct mount *mp, struct vnode *dvp,
 	KASSERT(vp_ret != NULL);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
-	/* Kludge cargo-culted from dholland's ufs_rename.  */
+	/* Kludge cargo-culted from dholland's ulfs_rename.  */
 	cnp->cn_flags &=~ MODMASK;
 	cnp->cn_flags |= (LOCKPARENT | LOCKLEAF);
 
@@ -849,12 +849,12 @@ out:	*ulr_ret = VTOI(dvp)->i_crap;
 }
 
 /*
- * ufs_rmdired_p: Check whether the directory vp has been rmdired.
+ * ulfs_rmdired_p: Check whether the directory vp has been rmdired.
  *
  * vp must be locked and referenced.
  */
 static bool
-ufs_rmdired_p(struct vnode *vp)
+ulfs_rmdired_p(struct vnode *vp)
 {
 
 	KASSERT(vp != NULL);
@@ -866,11 +866,11 @@ ufs_rmdired_p(struct vnode *vp)
 }
 
 /*
- * ufs_read_dotdot: Store in *ino_ret the inode number of the parent
+ * ulfs_read_dotdot: Store in *ino_ret the inode number of the parent
  * of the directory vp.
  */
 static int
-ufs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
+ulfs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
 {
 	struct dirtemplate dirbuf;
 	int error;
@@ -884,24 +884,24 @@ ufs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
 	if (error)
 		return error;
 
-	if (ufs_dirbuf_dotdot_namlen(&dirbuf, vp) != 2 ||
+	if (ulfs_dirbuf_dotdot_namlen(&dirbuf, vp) != 2 ||
 	    dirbuf.dotdot_name[0] != '.' ||
 	    dirbuf.dotdot_name[1] != '.')
 		/* XXX Panic?  Print warning?  */
 		return ENOTDIR;
 
-	*ino_ret = ufs_rw32(dirbuf.dotdot_ino,
-	    UFS_MPNEEDSWAP(VTOI(vp)->i_ump));
+	*ino_ret = ulfs_rw32(dirbuf.dotdot_ino,
+	    ULFS_MPNEEDSWAP(VTOI(vp)->i_ump));
 	return 0;
 }
 
 /*
- * ufs_dirbuf_dotdot_namlen: Return the namlen of the directory buffer
+ * ulfs_dirbuf_dotdot_namlen: Return the namlen of the directory buffer
  * dirbuf that came from the directory vp.  Swap byte order if
  * necessary.
  */
 static int			/* XXX int?  uint8_t?  */
-ufs_dirbuf_dotdot_namlen(const struct dirtemplate *dirbuf,
+ulfs_dirbuf_dotdot_namlen(const struct dirtemplate *dirbuf,
     const struct vnode *vp)
 {
 	bool swap;
@@ -912,9 +912,9 @@ ufs_dirbuf_dotdot_namlen(const struct dirtemplate *dirbuf,
 	KASSERT(VTOI(vp)->i_ump != NULL);
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-	swap = (UFS_MPNEEDSWAP(VTOI(vp)->i_ump) == 0);
+	swap = (ULFS_MPNEEDSWAP(VTOI(vp)->i_ump) == 0);
 #else
-	swap = (UFS_MPNEEDSWAP(VTOI(vp)->i_ump) != 0);
+	swap = (ULFS_MPNEEDSWAP(VTOI(vp)->i_ump) != 0);
 #endif
 
 	return ((FSFMT(vp) && swap)?
@@ -922,11 +922,11 @@ ufs_dirbuf_dotdot_namlen(const struct dirtemplate *dirbuf,
 }
 
 /*
- * ufs_gro_genealogy: Analyze the genealogy of the source and target
+ * ulfs_gro_genealogy: Analyze the genealogy of the source and target
  * directories.
  */
 int
-ufs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
+ulfs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
     struct vnode *fdvp, struct vnode *tdvp,
     struct vnode **intermediate_node_ret)
 {
@@ -948,7 +948,7 @@ ufs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 	 * We need to provisionally lock tdvp to keep rmdir from
 	 * deleting it -- or any ancestor -- at an inopportune moment.
 	 */
-	error = ufs_gro_lock_directory(mp, tdvp);
+	error = ulfs_gro_lock_directory(mp, tdvp);
 	if (error)
 		return error;
 
@@ -960,16 +960,16 @@ ufs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 		KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 		KASSERT(vp->v_mount == mp);
 		KASSERT(vp->v_type == VDIR);
-		KASSERT(!ufs_rmdired_p(vp));
+		KASSERT(!ulfs_rmdired_p(vp));
 
 		/* Did we hit the root without finding fdvp?  */
-		if (VTOI(vp)->i_number == UFS_ROOTINO) {
+		if (VTOI(vp)->i_number == ULFS_ROOTINO) {
 			vput(vp);
 			*intermediate_node_ret = NULL;
 			return 0;
 		}
 
-		error = ufs_read_dotdot(vp, cred, &dotdot_ino);
+		error = ulfs_read_dotdot(vp, cred, &dotdot_ino);
 		if (error) {
 			vput(vp);
 			return error;
@@ -1014,7 +1014,7 @@ ufs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 			return ENOTDIR;
 		}
 
-		if (ufs_rmdired_p(vp)) {
+		if (ulfs_rmdired_p(vp)) {
 			vput(vp);
 			return ENOENT;
 		}
@@ -1022,11 +1022,11 @@ ufs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 }
 
 /*
- * ufs_gro_lock_directory: Lock the directory vp, but fail if it has
+ * ulfs_gro_lock_directory: Lock the directory vp, but fail if it has
  * been rmdir'd.
  */
 int
-ufs_gro_lock_directory(struct mount *mp, struct vnode *vp)
+ulfs_gro_lock_directory(struct mount *mp, struct vnode *vp)
 {
 
 	(void)mp;
@@ -1036,7 +1036,7 @@ ufs_gro_lock_directory(struct mount *mp, struct vnode *vp)
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
-	if (ufs_rmdired_p(vp)) {
+	if (ulfs_rmdired_p(vp)) {
 		VOP_UNLOCK(vp);
 		return ENOENT;
 	}
@@ -1044,15 +1044,15 @@ ufs_gro_lock_directory(struct mount *mp, struct vnode *vp)
 	return 0;
 }
 
-static const struct genfs_rename_ops ufs_genfs_rename_ops = {
-	.gro_directory_empty_p		= ufs_gro_directory_empty_p,
-	.gro_rename_check_possible	= ufs_gro_rename_check_possible,
-	.gro_rename_check_permitted	= ufs_gro_rename_check_permitted,
-	.gro_remove_check_possible	= ufs_gro_remove_check_possible,
-	.gro_remove_check_permitted	= ufs_gro_remove_check_permitted,
-	.gro_rename			= ufs_gro_rename,
-	.gro_remove			= ufs_gro_remove,
-	.gro_lookup			= ufs_gro_lookup,
-	.gro_genealogy			= ufs_gro_genealogy,
-	.gro_lock_directory		= ufs_gro_lock_directory,
+static const struct genfs_rename_ops ulfs_genfs_rename_ops = {
+	.gro_directory_empty_p		= ulfs_gro_directory_empty_p,
+	.gro_rename_check_possible	= ulfs_gro_rename_check_possible,
+	.gro_rename_check_permitted	= ulfs_gro_rename_check_permitted,
+	.gro_remove_check_possible	= ulfs_gro_remove_check_possible,
+	.gro_remove_check_permitted	= ulfs_gro_remove_check_permitted,
+	.gro_rename			= ulfs_gro_rename,
+	.gro_remove			= ulfs_gro_remove,
+	.gro_lookup			= ulfs_gro_lookup,
+	.gro_genealogy			= ulfs_gro_genealogy,
+	.gro_lock_directory		= ulfs_gro_lock_directory,
 };
