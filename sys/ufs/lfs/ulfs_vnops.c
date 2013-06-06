@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.5 2013/06/06 00:49:28 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.6 2013/06/06 00:51:25 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.212 2013/03/18 19:35:48 plunky Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.5 2013/06/06 00:49:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.6 2013/06/06 00:51:25 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -106,16 +106,10 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.5 2013/06/06 00:49:28 dholland Exp 
 #ifdef LFS_DIRHASH
 #include <ufs/lfs/ulfs_dirhash.h>
 #endif
-#include <ufs/ext2fs/ext2fs_extern.h>
-#include <ufs/ext2fs/ext2fs_dir.h>
-#include <ufs/ffs/ffs_extern.h>
 #include <ufs/lfs/lfs_extern.h>
 #include <ufs/lfs/lfs.h>
 
 #include <uvm/uvm.h>
-
-__CTASSERT(EXT2FS_MAXNAMLEN == FFS_MAXNAMLEN);
-__CTASSERT(LFS_MAXNAMLEN == FFS_MAXNAMLEN);
 
 static int ulfs_chmod(struct vnode *, int, kauth_cred_t, struct lwp *);
 static int ulfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
@@ -1702,7 +1696,7 @@ ulfs_pathconf(void *v)
 		*ap->a_retval = LINK_MAX;
 		return (0);
 	case _PC_NAME_MAX:
-		*ap->a_retval = FFS_MAXNAMLEN;
+		*ap->a_retval = LFS_MAXNAMLEN;
 		return (0);
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;

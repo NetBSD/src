@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfsmount.h,v 1.4 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfsmount.h,v 1.5 2013/06/06 00:51:25 dholland Exp $	*/
 /*  from NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp  */
 
 /*
@@ -44,16 +44,6 @@ struct ulfs_args {
 	char	*fspec;			/* block special device to mount */
 };
 
-/*
- * Arguments to mount MFS
- */
-struct mfs_args {
-	char	*fspec;			/* name to export for statfs */
-	struct	export_args30 _pad1; /* compat with old userland tools */
-	void *	base;			/* base of file system in memory */
-	u_long	size;			/* size of file system */
-};
-
 #ifdef _KERNEL
 
 #if defined(_KERNEL_OPT)
@@ -80,16 +70,9 @@ struct ulfsmount {
 	u_long	um_fstype;
 	u_int32_t um_flags;			/* ULFS-specific flags - see below */
 	union {					/* pointer to superblock */
-		struct	fs *fs;			/* FFS */
 		struct	lfs *lfs;		/* LFS */
-		struct  m_ext2fs *e2fs;		/* EXT2FS */
-		struct  chfs_mount *chfs;	/* CHFS */
 	} ulfsmount_u;
-#define	um_fs	ulfsmount_u.fs
 #define	um_lfs	ulfsmount_u.lfs
-#define um_e2fs	ulfsmount_u.e2fs
-#define um_e2fsb ulfsmount_u.e2fs->s_es
-#define um_chfs	ulfsmount_u.chfs
 
 	/* Extended attribute information. */
 	struct ulfs_extattr_per_mount um_extattr;
