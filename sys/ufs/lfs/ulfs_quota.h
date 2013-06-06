@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota.h,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota.h,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: ufs_quota.h,v 1.21 2012/02/18 06:13:23 matt Exp  */
 
 /*
@@ -64,7 +64,7 @@ struct dquot {
 	u_int16_t dq_type;		/* d: quota type of this dquot */
 	u_int32_t dq_cnt;		/* h: count of active references */
 	u_int32_t dq_id;		/* d: identifier this applies to */
-	struct	ufsmount *dq_ump;	/* d: filesystem this is taken from */
+	struct	ulfsmount *dq_ump;	/* d: filesystem this is taken from */
 	kmutex_t dq_interlock;		/* d: lock this dquot */
 	union {
 		struct dqblk dq1_dqb;	/* d: actual usage & quotas */
@@ -104,10 +104,10 @@ extern kcondvar_t dqcv;
 /*
  * Quota name to error message mapping.
  */
-extern const char *quotatypes[MAXQUOTAS];
+extern const char *quotatypes[ULFS_MAXQUOTAS];
 
 int  getinoquota(struct inode *);
-int  dqget(struct vnode *, u_long, struct ufsmount *, int, struct dquot **);
+int  dqget(struct vnode *, u_long, struct ulfsmount *, int, struct dquot **);
 void dqref(struct dquot *);
 void dqrele(struct vnode *, struct dquot *);
 void dqflush(struct vnode *);
@@ -115,32 +115,32 @@ void dqflush(struct vnode *);
 int chkdq1(struct inode *, int64_t, kauth_cred_t, int);
 int chkiq1(struct inode *, int32_t, kauth_cred_t, int);
 int q1sync(struct mount *);
-int dq1get(struct vnode *, u_long, struct ufsmount *, int, struct dquot *);
+int dq1get(struct vnode *, u_long, struct ulfsmount *, int, struct dquot *);
 int dq1sync(struct vnode *, struct dquot *);
-int quota1_handle_cmd_get(struct ufsmount *, const struct quotakey *,
+int quota1_handle_cmd_get(struct ulfsmount *, const struct quotakey *,
     struct quotaval *);
-int quota1_handle_cmd_put(struct ufsmount *, const struct quotakey *,
+int quota1_handle_cmd_put(struct ulfsmount *, const struct quotakey *,
     const struct quotaval *);
-int quota1_handle_cmd_quotaon(struct lwp *, struct ufsmount *, int,
+int quota1_handle_cmd_quotaon(struct lwp *, struct ulfsmount *, int,
     const char *);
-int quota1_handle_cmd_quotaoff(struct lwp *, struct ufsmount *, int);
+int quota1_handle_cmd_quotaoff(struct lwp *, struct ulfsmount *, int);
 
 int chkdq2(struct inode *, int64_t, kauth_cred_t, int);
 int chkiq2(struct inode *, int32_t, kauth_cred_t, int);
-int quota2_handle_cmd_get(struct ufsmount *, const struct quotakey *,
+int quota2_handle_cmd_get(struct ulfsmount *, const struct quotakey *,
     struct quotaval *);
-int quota2_handle_cmd_put(struct ufsmount *, const struct quotakey *,
+int quota2_handle_cmd_put(struct ulfsmount *, const struct quotakey *,
     const struct quotaval *);
-int quota2_handle_cmd_delete(struct ufsmount *, const struct quotakey *);
-int quota2_handle_cmd_cursorget(struct ufsmount *, struct quotakcursor *,
+int quota2_handle_cmd_delete(struct ulfsmount *, const struct quotakey *);
+int quota2_handle_cmd_cursorget(struct ulfsmount *, struct quotakcursor *,
     struct quotakey *, struct quotaval *, unsigned, unsigned *);
-int quota2_handle_cmd_cursoropen(struct ufsmount *, struct quotakcursor *);
-int quota2_handle_cmd_cursorclose(struct ufsmount *, struct quotakcursor *);
-int quota2_handle_cmd_cursorskipidtype(struct ufsmount *, struct quotakcursor *,
+int quota2_handle_cmd_cursoropen(struct ulfsmount *, struct quotakcursor *);
+int quota2_handle_cmd_cursorclose(struct ulfsmount *, struct quotakcursor *);
+int quota2_handle_cmd_cursorskipidtype(struct ulfsmount *, struct quotakcursor *,
     int);
-int quota2_handle_cmd_cursoratend(struct ufsmount *, struct quotakcursor *,
+int quota2_handle_cmd_cursoratend(struct ulfsmount *, struct quotakcursor *,
     int *);
-int quota2_handle_cmd_cursorrewind(struct ufsmount *, struct quotakcursor *);
+int quota2_handle_cmd_cursorrewind(struct ulfsmount *, struct quotakcursor *);
 int q2sync(struct mount *);
-int dq2get(struct vnode *, u_long, struct ufsmount *, int, struct dquot *);
+int dq2get(struct vnode *, u_long, struct ulfsmount *, int, struct dquot *);
 int dq2sync(struct vnode *, struct dquot *);

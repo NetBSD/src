@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dir.h,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_dir.h,v 1.2 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
 
 /*
@@ -37,8 +37,8 @@
  *	@(#)dir.h	8.5 (Berkeley) 4/27/95
  */
 
-#ifndef _UFS_UFS_DIR_H_
-#define	_UFS_UFS_DIR_H_
+#ifndef _UFS_LFS_ULFS_DIR_H_
+#define	_UFS_LFS_ULFS_DIR_H_
 
 /*
  * Theoretically, directories can be more than 2Gb in length; however, in
@@ -158,4 +158,4 @@ struct odirtemplate {
 	u_int16_t	dotdot_namlen;
 	char		dotdot_name[4];	/* ditto */
 };
-#endif /* !_UFS_UFS_DIR_H_ */
+#endif /* !_UFS_LFS_ULFS_DIR_H_ */

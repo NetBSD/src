@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.98 2012/02/23 22:33:33 joerg Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.99 2013/06/06 00:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ struct timeval;
 struct inode;
 struct uio;
 struct mbuf;
-struct ufs1_dinode;
+struct ulfs1_dinode;
 struct buf;
 struct vnode;
 struct dlfs;
@@ -153,7 +153,7 @@ int lfs_reserve(struct lfs *, struct vnode *, struct vnode *, int);
 int lfs_bwrite_log(struct buf *, const char *, int);
 void lfs_dumplog(void);
 void lfs_dump_super(struct lfs *);
-void lfs_dump_dinode(struct ufs1_dinode *);
+void lfs_dump_dinode(struct ulfs1_dinode *);
 void lfs_check_bpp(struct lfs *, struct segment *, char *, int);
 void lfs_check_segsum(struct lfs *, struct segment *, char *, int);
 void lfs_debug_log(int, const char *, ...);
@@ -163,7 +163,7 @@ void lfs_debug_log(int, const char *, ...);
 int lfs_update(struct vnode *, const struct timespec *, const struct timespec *,
     int);
 int lfs_truncate(struct vnode *, off_t, int, kauth_cred_t);
-struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
+struct ulfs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 void lfs_finalize_ino_seguse(struct lfs *, struct inode *);
 void lfs_finalize_fs_seguse(struct lfs *);
 
@@ -212,7 +212,7 @@ void lfs_writer_leave(struct lfs *);
 void lfs_wakeup_cleaner(struct lfs *);
 
 /* lfs_syscalls.c */
-int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct ufs1_dinode *);
+int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct ulfs1_dinode *);
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, void *);
 int lfs_do_segclean(struct lfs *, unsigned long);
 int lfs_segwait(fsid_t *, struct timeval *);
