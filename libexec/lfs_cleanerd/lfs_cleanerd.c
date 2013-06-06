@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.32 2013/01/22 09:39:11 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.33 2013/06/06 00:53:35 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-#include <ufs/ufs/inode.h>
+#include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs.h>
 
 #include <assert.h>
@@ -93,7 +93,7 @@ struct cleaner_stats {
 extern u_int32_t cksum(void *, size_t);
 extern u_int32_t lfs_sb_cksum(struct dlfs *);
 extern u_int32_t lfs_cksum_part(void *, size_t, u_int32_t);
-extern int ufs_getlbns(struct lfs *, struct uvnode *, daddr_t, struct indir *, int *);
+extern int ulfs_getlbns(struct lfs *, struct uvnode *, daddr_t, struct indir *, int *);
 
 /* Compat */
 void pwarn(const char *unused, ...) { /* Does nothing */ };
@@ -342,9 +342,9 @@ lfs_ientry(IFILE **ifpp, struct clfs *fs, ino_t ino, struct ubuf **bpp)
 
 #ifdef TEST_PATTERN
 /*
- * Check UFS_ROOTINO for file data.  The assumption is that we are running
+ * Check ULFS_ROOTINO for file data.  The assumption is that we are running
  * the "twofiles" test with the rest of the filesystem empty.  Files
- * created by "twofiles" match the test pattern, but UFS_ROOTINO and the
+ * created by "twofiles" match the test pattern, but ULFS_ROOTINO and the
  * executable itself (assumed to be inode 3) should not match.
  */
 static void
@@ -355,7 +355,7 @@ check_test_pattern(BLOCK_INFO *bip)
 
 	/* Check inode sanity */
 	if (bip->bi_lbn == LFS_UNUSED_LBN) {
-		assert(((struct ufs1_dinode *)bip->bi_bp)->di_inumber ==
+		assert(((struct ulfs1_dinode *)bip->bi_bp)->di_inumber ==
 			bip->bi_inode);
 	}
 
@@ -384,7 +384,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 	int32_t *iaddrp, idaddr, odaddr;
 	FINFO *fip;
 	struct ubuf *ifbp;
-	struct ufs1_dinode *dip;
+	struct ulfs1_dinode *dip;
 	u_int32_t ck, vers;
 	int fic, inoc, obic;
 	int i;
@@ -450,7 +450,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 		if (inoc < ssp->ss_ninos && *iaddrp == daddr) {
 			cp = fd_ptrget(fs->clfs_devvp, daddr);
 			ck = lfs_cksum_part(cp, sizeof(u_int32_t), ck);
-			dip = (struct ufs1_dinode *)cp;
+			dip = (struct ulfs1_dinode *)cp;
 			for (i = 0; i < fs->lfs_inopb; i++) {
 				if (dip[i].di_inumber == 0)
 					break;
@@ -950,7 +950,7 @@ static off_t
 check_hidden_cost(struct clfs *fs, BLOCK_INFO *bip, int bic, off_t *ifc)
 {
 	int start;
-	struct indir in[UFS_NIADDR + 1];
+	struct indir in[ULFS_NIADDR + 1];
 	int num;
 	int i, j, ebic;
 	BLOCK_INFO *ebip;
@@ -974,10 +974,10 @@ check_hidden_cost(struct clfs *fs, BLOCK_INFO *bip, int bic, off_t *ifc)
 		}
 		if (bip[i].bi_lbn == LFS_UNUSED_LBN)
 			continue;
-		if (bip[i].bi_lbn < UFS_NDADDR)
+		if (bip[i].bi_lbn < ULFS_NDADDR)
 			continue;
 
-		ufs_getlbns((struct lfs *)fs, NULL, (daddr_t)bip[i].bi_lbn, in, &num);
+		ulfs_getlbns((struct lfs *)fs, NULL, (daddr_t)bip[i].bi_lbn, in, &num);
 		for (j = 0; j < num; j++) {
 			check_or_add(bip[i].bi_inode, in[j].in_lbn,
 				     bip + start, bic - start, &ebip, &ebic);
