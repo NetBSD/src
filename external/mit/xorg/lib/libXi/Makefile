@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.6.1 2009/09/17 04:24:31 snj Exp $
+#	$NetBSD: Makefile,v 1.3.6.1.6.1 2013/06/06 16:47:03 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -49,6 +49,8 @@ MLINKS=	XGetDeviceControl.3 XChangeDeviceControl.3 \
 	XSelectExtensionEvent.3 XGetSelectedExtensionEvents.3
 
 PKGDIST=	${LIB}
+
+COPTS.XGetFCtl.c+= -Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
