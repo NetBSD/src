@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/06/05 00:01:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/06/06 09:13:41 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,10 @@ SRCS=	\
 	verify.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xdm}/include -DRETSIGTYPE=void
-CPPFLAGS+=	-DGREET_LIB
+# XXX: Enabling this, which should allow --export-dynamic to
+# be elided, causes xdm to fail to accept password input and
+# then crash at login "failure".
+#CPPFLAGS+=	-DGREET_LIB
 
 LIBDPLIBS=\
 	Xext	${.CURDIR}/../libXext \
