@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.139 2013/06/06 00:51:25 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.140 2013/06/06 00:51:50 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -66,9 +66,8 @@
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/condvar.h>
-
-/* XXX this should not be exposed */
-#include <ufs/lfs/ulfs_inode.h>
+#include <sys/mount.h>
+#include <sys/pool.h>
 
 /*
  * Compile-time options for LFS.
@@ -96,7 +95,13 @@
 
 #define LFS_MAXNAMLEN	255		/* maximum name length in a dir */
 
-/* Adjustable filesystem parameters */
+#define ULFS_NXADDR	2
+#define	ULFS_NDADDR	12		/* Direct addresses in inode. */
+#define	ULFS_NIADDR	3		/* Indirect addresses in inode. */
+
+/*
+ * Adjustable filesystem parameters
+ */
 #define MIN_FREE_SEGS	20
 #define MIN_RESV_SEGS	15
 #ifndef LFS_ATIME_IFILE
@@ -291,6 +296,13 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 #endif /* _KERNEL */
 
 #ifdef _KERNEL
+/* This overlays the fid structure (see fstypes.h). */
+struct ufid {
+	u_int16_t ufid_len;	/* Length of structure. */
+	u_int16_t ufid_pad;	/* Force 32-bit alignment. */
+	u_int32_t ufid_ino;	/* File number (ino). */
+	int32_t	  ufid_gen;	/* Generation number. */
+};
 /* Filehandle structure for exported LFSes */
 struct lfid {
 	struct ufid lfid_ufid;

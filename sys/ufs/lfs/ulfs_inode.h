@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.4 2013/06/06 00:51:25 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp $	*/
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
 /*
@@ -243,13 +243,6 @@ struct indir {
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
 #define	ITOV(ip)	((ip)->i_vnode)
 
-/* This overlays the fid structure (see fstypes.h). */
-struct ufid {
-	u_int16_t ufid_len;	/* Length of structure. */
-	u_int16_t ufid_pad;	/* Force 32-bit alignment. */
-	u_int32_t ufid_ino;	/* File number (ino). */
-	int32_t	  ufid_gen;	/* Generation number. */
-};
 #endif /* _KERNEL */
 
 #endif /* !_UFS_LFS_ULFS_INODE_H_ */
