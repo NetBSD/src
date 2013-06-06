@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.72 2013/01/22 09:39:17 dholland Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.73 2013/06/06 00:44:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.72 2013/01/22 09:39:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.73 2013/06/06 00:44:40 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -79,10 +79,10 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.72 2013/01/22 09:39:17 dholland Exp
 
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
+#include <ufs/lfs/ulfs_quotacommon.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_extern.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
