@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.138 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.139 2013/06/06 00:51:25 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/condvar.h>
+
+/* XXX this should not be exposed */
+#include <ufs/lfs/ulfs_inode.h>
 
 /*
  * Compile-time options for LFS.
