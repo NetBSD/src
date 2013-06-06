@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota.h,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota.h,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
 /*  from NetBSD: ufs_quota.h,v 1.21 2012/02/18 06:13:23 matt Exp  */
 
 /*
@@ -34,8 +34,8 @@
  *
  *	@(#)ufs_quota.c	8.5 (Berkeley) 5/20/95
  */
-#include <ufs/ufs/quota1.h>
-#include <ufs/ufs/quota2.h>
+#include <ufs/lfs/ulfs_quota1.h>
+#include <ufs/lfs/ulfs_quota2.h>
 
 struct quotakcursor; /* from <sys/quotactl.h> */
 

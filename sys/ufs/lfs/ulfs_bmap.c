@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_bmap.c,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_bmap.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
 /*  from NetBSD: ufs_bmap.c,v 1.50 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_bmap.c,v 1.1 2013/06/06 00:40:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_bmap.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_bmap.c,v 1.1 2013/06/06 00:40:55 dholland Exp $
 
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
-#include <ufs/ufs/ufs_bswap.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_extern.h>
+#include <ufs/lfs/ulfs_bswap.h>
 
 static bool
 ufs_issequential(const struct ufsmount *ump, daddr_t daddr0, daddr_t daddr1)

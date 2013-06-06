@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_rename.c,v 1.1 2013/06/06 00:40:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_rename.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.1 2013/06/06 00:40:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -51,12 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.1 2013/06/06 00:40:55 dholland Exp
 
 #include <miscfs/genfs/genfs.h>
 
-#include <ufs/ufs/dir.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufs_bswap.h>
-#include <ufs/ufs/ufs_extern.h>
-#include <ufs/ufs/ufs_wapbl.h>
-#include <ufs/ufs/ufsmount.h>
+#include <ufs/lfs/ulfs_dir.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfs_bswap.h>
+#include <ufs/lfs/ulfs_extern.h>
+#include <ufs/lfs/ulfs_wapbl.h>
+#include <ufs/lfs/ulfsmount.h>
 
 /*
  * Forward declarations

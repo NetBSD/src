@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.40 2013/01/22 09:39:17 dholland Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.41 2013/06/06 00:44:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.40 2013/01/22 09:39:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.41 2013/06/06 00:44:40 dholland Exp $");
 
 #ifdef DEBUG
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.40 2013/01/22 09:39:17 dholland Exp 
 #include <sys/syslog.h>
 #include <sys/proc.h>
 
-#include <ufs/ufs/inode.h>
+#include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
