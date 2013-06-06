@@ -18,3 +18,9 @@ lfs-total	3537	26796	30333
 
 A few extra lines appeared copying ufs because I preserved a copy of
 the old rcsids.
+
+As of 20130606 (committed the initial split and made things buildable):
+
+lfs-native	1482	13858	15340
+lfs-ulfs	1994	13028	15022
+lfs-total	3476	26886	30362
