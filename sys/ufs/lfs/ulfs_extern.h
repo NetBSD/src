@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.4 2013/06/06 00:50:51 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.5 2013/06/06 00:52:14 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -50,7 +50,7 @@ struct mbuf;
 struct mount;
 struct nameidata;
 struct lwp;
-struct ufid;
+struct ulfs_ufid;
 struct ulfs_args;
 struct ulfs_lookup_results;
 struct ulfsmount;
@@ -190,7 +190,7 @@ void	ulfs_done(void);
 int	ulfs_start(struct mount *, int);
 int	ulfs_root(struct mount *, struct vnode **);
 int	ulfs_quotactl(struct mount *, struct quotactl_args *);
-int	ulfs_fhtovp(struct mount *, struct ufid *, struct vnode **);
+int	ulfs_fhtovp(struct mount *, struct ulfs_ufid *, struct vnode **);
 
 /* ulfs_vnops.c */
 void	ulfs_vinit(struct mount *, int (**)(void *),
