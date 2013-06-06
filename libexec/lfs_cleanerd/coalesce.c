@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.20 2013/01/22 09:39:11 dholland Exp $  */
+/*      $NetBSD: coalesce.c,v 1.21 2013/06/06 00:53:35 dholland Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <sys/wait.h>
 #include <sys/mman.h>
 
-#include <ufs/ufs/dinode.h>
+#include <ufs/lfs/ulfs_dinode.h>
 #include <ufs/lfs/lfs.h>
 
 #include <fcntl.h>
@@ -104,13 +104,13 @@ const char *coalesce_return[] = {
 	"No such error"
 };
 
-static struct ufs1_dinode *
+static struct ulfs1_dinode *
 get_dinode(struct clfs *fs, ino_t ino)
 {
 	IFILE *ifp;
 	daddr_t daddr;
 	struct ubuf *bp;
-	struct ufs1_dinode *dip, *r;
+	struct ulfs1_dinode *dip, *r;
 
 	lfs_ientry(&ifp, fs, ino, &bp);
 	daddr = ifp->if_daddr;
@@ -120,10 +120,10 @@ get_dinode(struct clfs *fs, ino_t ino)
 		return NULL;
 
 	bread(fs->clfs_devvp, daddr, fs->lfs_ibsize, NOCRED, 0, &bp);
-	for (dip = (struct ufs1_dinode *)bp->b_data;
-	     dip < (struct ufs1_dinode *)(bp->b_data + fs->lfs_ibsize); dip++)
+	for (dip = (struct ulfs1_dinode *)bp->b_data;
+	     dip < (struct ulfs1_dinode *)(bp->b_data + fs->lfs_ibsize); dip++)
 		if (dip->di_inumber == ino) {
-			r = (struct ufs1_dinode *)malloc(sizeof(*r));
+			r = (struct ulfs1_dinode *)malloc(sizeof(*r));
 			if (r == NULL)
 				break;
 			memcpy(r, dip, sizeof(*r));
@@ -144,7 +144,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	BLOCK_INFO *bip = NULL, *tbip;
 	CLEANERINFO cip;
 	struct ubuf *bp;
-	struct ufs1_dinode *dip;
+	struct ulfs1_dinode *dip;
 	struct clfs_seguse *sup;
 	struct lfs_fcntl_markv /* {
 		BLOCK_INFO *blkiov;
@@ -164,7 +164,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	onb = nb = lblkno(fs, dip->di_size);
 
 	/* XXX for now, don't do any file small enough to have fragments */
-	if (nb < UFS_NDADDR) {
+	if (nb < ULFS_NDADDR) {
 		free(dip);
 		return COALESCE_TOOSMALL;
 	}
