@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.3 2013/06/06 00:46:40 dholland Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.52 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,10 +38,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.3 2013/06/06 00:46:40 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_ffs.h"
+#include "opt_lfs.h"
 #include "opt_quota.h"
 #endif
 
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.2 2013/06/06 00:44:40 dholland Exp
 #include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/ulfs_extern.h>
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 #include <ufs/lfs/ulfs_dirhash.h>
 #endif
 
@@ -104,7 +104,7 @@ int
 ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 {
 
-#if !defined(QUOTA) && !defined(QUOTA2)
+#if !defined(LFS_QUOTA) && !defined(LFS_QUOTA2)
 	(void) mp;
 	(void) args;
 	return (EOPNOTSUPP);
@@ -247,13 +247,13 @@ ufs_init(void)
 	    "ufsdir", NULL, IPL_NONE, NULL, NULL, NULL);
 
 	ufs_ihashinit();
-#if defined(QUOTA) || defined(QUOTA2)
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	dqinit();
 #endif
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 	ufsdirhash_init();
 #endif
-#ifdef UFS_EXTATTR
+#ifdef LFS_EXTATTR
 	ufs_extattr_init();
 #endif
 }
@@ -262,7 +262,7 @@ void
 ufs_reinit(void)
 {
 	ufs_ihashreinit();
-#if defined(QUOTA) || defined(QUOTA2)
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	dqreinit();
 #endif
 }
@@ -277,14 +277,14 @@ ufs_done(void)
 		return;
 
 	ufs_ihashdone();
-#if defined(QUOTA) || defined(QUOTA2)
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	dqdone();
 #endif
 	pool_cache_destroy(ufs_direct_cache);
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 	ufsdirhash_done();
 #endif
-#ifdef UFS_EXTATTR
+#ifdef LFS_EXTATTR
 	ufs_extattr_done();
 #endif
 }

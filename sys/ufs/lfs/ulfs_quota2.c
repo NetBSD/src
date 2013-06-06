@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.3 2013/06/06 00:46:40 dholland Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 
 /*-
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.3 2013/06/06 00:46:40 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -140,7 +140,7 @@ static int
 getq2h(struct ufsmount *ump, int type,
     struct buf **bpp, struct quota2_header **q2hp, int flags)
 {
-#ifdef FFS_EI
+#ifdef LFS_EI
 	const int needswap = UFS_MPNEEDSWAP(ump);
 #endif
 	int error;
@@ -196,7 +196,7 @@ quota2_walk_list(struct ufsmount *ump, struct buf *hbp, int type,
     uint64_t *offp, int flags, void *a,
     int (*func)(struct ufsmount *, uint64_t *, struct quota2_entry *, uint64_t, void *))
 {
-#ifdef FFS_EI
+#ifdef LFS_EI
 	const int needswap = UFS_MPNEEDSWAP(ump);
 #endif
 	daddr_t off = ufs_rw64(*offp, needswap);
@@ -656,7 +656,7 @@ dq2clear_callback(struct ufsmount *ump, uint64_t *offp, struct quota2_entry *q2e
     uint64_t off, void *v)
 {
 	struct dq2clear_callback *c = v;
-#ifdef FFS_EI
+#ifdef LFS_EI
 	const int needswap = UFS_MPNEEDSWAP(ump);
 #endif
 	uint64_t myoff;
@@ -1097,7 +1097,7 @@ q2cursor_getids_callback(struct ufsmount *ump, uint64_t *offp,
 {
 	struct q2cursor_getids *gi = v;
 	id_t id;
-#ifdef FFS_EI
+#ifdef LFS_EI
 	const int needswap = UFS_MPNEEDSWAP(ump);
 #endif
 
@@ -1508,7 +1508,7 @@ dq2get_callback(struct ufsmount *ump, uint64_t *offp, struct quota2_entry *q2e,
 	struct dq2get_callback *c = v;
 	daddr_t lblkno;
 	int blkoff;
-#ifdef FFS_EI
+#ifdef LFS_EI
 	const int needswap = UFS_MPNEEDSWAP(ump);
 #endif
 

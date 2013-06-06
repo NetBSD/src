@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.2 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.3 2013/06/06 00:46:40 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.212 2013/03/18 19:35:48 plunky Exp  */
 
 /*-
@@ -67,10 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.2 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.3 2013/06/06 00:46:40 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_ffs.h"
+#include "opt_lfs.h"
 #include "opt_quota.h"
 #endif
 
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.2 2013/06/06 00:44:40 dholland Exp 
 #include <ufs/lfs/ulfs_bswap.h>
 #include <ufs/lfs/ulfs_extern.h>
 #include <ufs/lfs/ulfs_wapbl.h>
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 #include <ufs/lfs/ulfs_dirhash.h>
 #endif
 #include <ufs/ext2fs/ext2fs_extern.h>
@@ -296,7 +296,7 @@ static int
 ufs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
     kauth_cred_t cred)
 {
-#if defined(QUOTA) || defined(QUOTA2)
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	int error;
 #endif
 
@@ -312,7 +312,7 @@ ufs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
 		case VREG:
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
-#if defined(QUOTA) || defined(QUOTA2)
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 			fstrans_start(vp->v_mount, FSTRANS_SHARED);
 			error = chkdq(ip, 0, cred, 0);
 			fstrans_done(vp->v_mount);
@@ -720,7 +720,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 {
 	struct inode	*ip;
 	int		error = 0;
-#if defined(QUOTA) || defined(QUOTA2)
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	uid_t		ouid;
 	gid_t		ogid;
 	int64_t		change;
@@ -739,7 +739,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 		return (error);
 
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
-#if defined(QUOTA) || defined(QUOTA2)
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	ogid = ip->i_gid;
 	ouid = ip->i_uid;
 	change = DIP(ip, blocks);
@@ -750,7 +750,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	DIP_ASSIGN(ip, gid, gid);
 	ip->i_uid = uid;
 	DIP_ASSIGN(ip, uid, uid);
-#if defined(QUOTA) || defined(QUOTA2)
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	if ((error = chkdq(ip, change, cred, 0)) == 0) {
 		if ((error = chkiq(ip, 1, cred, 0)) == 0)
 			goto good;
@@ -766,7 +766,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	fstrans_done(vp->v_mount);
 	return (error);
  good:
-#endif /* QUOTA || QUOTA2 */
+#endif /* LFS_QUOTA || LFS_QUOTA2 */
 	ip->i_flag |= IN_CHANGE;
 	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	fstrans_done(vp->v_mount);
@@ -1022,7 +1022,7 @@ ufs_mkdir(void *v)
 	DIP_ASSIGN(ip, uid, ip->i_uid);
 	ip->i_gid = dp->i_gid;
 	DIP_ASSIGN(ip, gid, ip->i_gid);
-#if defined(QUOTA) || defined(QUOTA2)
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	if ((error = chkiq(ip, 1, cnp->cn_cred, 0))) {
 		UFS_VFREE(tvp, ip->i_number, dmode);
 		UFS_WAPBL_END(dvp->v_mount);
@@ -1218,7 +1218,7 @@ ufs_rmdir(void *v)
 	 * directory vp so that it will not get locked for recycling
 	 */
 	UFS_WAPBL_END(dvp->v_mount);
-#ifdef UFS_DIRHASH
+#ifdef LFS_DIRHASH
 	if (ip->i_dirhash != NULL)
 		ufsdirhash_free(ip);
 #endif
@@ -1844,7 +1844,7 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		vput(dvp);
 		return (error);
 	}
-#if defined(QUOTA) || defined(QUOTA2)
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	if ((error = chkiq(ip, 1, cnp->cn_cred, 0))) {
 		UFS_VFREE(tvp, ip->i_number, mode);
 		UFS_WAPBL_END1(dvp->v_mount, dvp);
