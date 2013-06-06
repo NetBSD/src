@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.29 2010/07/18 03:00:39 jakllsch Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.30 2013/06/06 03:10:48 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.29 2010/07/18 03:00:39 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.30 2013/06/06 03:10:48 msaitoh Exp $");
 
 
 /*
@@ -319,7 +319,6 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (sc->mii_ticks <= sc->mii_anegticks)
 			return 0;
 
-		sc->mii_ticks = 0;
 		rgephy_mii_phy_auto(sc);
 		break;
 	}
@@ -428,6 +427,7 @@ rgephy_mii_phy_auto(struct mii_softc *mii)
 {
 	int anar;
 
+	mii->mii_ticks = 0;
 	rgephy_loop(mii);
 	rgephy_reset(mii);
 
