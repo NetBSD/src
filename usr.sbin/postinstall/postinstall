@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.149 2013/05/21 12:07:03 prlw1 Exp $
+# $NetBSD: postinstall,v 1.150 2013/06/06 07:06:42 mrg Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -818,12 +818,50 @@ do_fontconfig()
 	op="$1"
 	failed=0
 
+	# First, check for updates we can handle.
+	populate_dir "$op" false "${SRC_DIR}/etc/fonts/conf.avail" "${DEST_DIR}/etc/fonts/conf.avail" 444 \
+		10-autohint.conf \
+		10-no-sub-pixel.conf \
+		10-scale-bitmap-fonts.conf \
+		10-sub-pixel-bgr.conf \
+		10-sub-pixel-rgb.conf \
+		10-sub-pixel-vbgr.conf \
+		10-sub-pixel-vrgb.conf \
+		10-unhinted.conf \
+		11-lcdfilter-default.conf \
+		11-lcdfilter-legacy.conf \
+		11-lcdfilter-light.conf \
+		20-unhint-small-vera.conf \
+		25-unhint-nonlatin.conf \
+		30-metric-aliases.conf \
+		30-urw-aliases.conf \
+		40-nonlatin.conf \
+		45-latin.conf \
+		49-sansserif.conf \
+		50-user.conf \
+		51-local.conf \
+		60-latin.conf \
+		65-fonts-persian.conf \
+		65-khmer.conf \
+		65-nonlatin.conf \
+		69-unifont.conf \
+		70-no-bitmaps.conf \
+		70-yes-bitmaps.conf \
+		80-delicious.conf \
+		90-synthetic.conf
+	failed=$(( ${failed} + $? ))
+		
+	# We can't modify conf.d easily; someone might have removed a file.
+
+	conf_d_failed=0
+	# Look for old files that need to be deleted.
 	if [ -f "${DEST_DIR}/etc/fonts/conf.d/10-unhinted.conf" -a \
 	     -f "${DEST_DIR}/etc/fonts/conf.d/10-autohint.conf" ]; then
-		failed=1
+		conf_d_failed=1
+		failed=$(( ${failed} + 1 ))
 	fi
 
-	if [ "$failed" = 1 ]; then
+	if [ "$conf_d_failed" = 1 ]; then
 		msg \
     "Broken fontconfig configuration found; please delete these files"
 		msg \
