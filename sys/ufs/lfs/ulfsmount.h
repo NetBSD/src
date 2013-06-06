@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfsmount.h,v 1.3 2013/06/06 00:46:40 dholland Exp $	*/
+/*	$NetBSD: ulfsmount.h,v 1.4 2013/06/06 00:48:04 dholland Exp $	*/
 /*  from NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp  */
 
 /*
@@ -32,15 +32,15 @@
  *	@(#)ufsmount.h	8.6 (Berkeley) 3/30/95
  */
 
-#ifndef _UFS_UFS_UFSMOUNT_H_
-#define _UFS_UFS_UFSMOUNT_H_
+#ifndef _UFS_LFS_ULFSMOUNT_H_
+#define _UFS_LFS_ULFSMOUNT_H_
 
 #include <sys/mount.h> /* struct export_args30 */
 
 /*
- * Arguments to mount UFS-based filesystems
+ * Arguments to mount ULFS-based filesystems
  */
-struct ufs_args {
+struct ulfs_args {
 	char	*fspec;			/* block special device to mount */
 };
 
@@ -72,30 +72,30 @@ struct timeval;
 struct uio;
 struct vnode;
 
-/* This structure describes the UFS specific mount structure data. */
-struct ufsmount {
+/* This structure describes the ULFS specific mount structure data. */
+struct ulfsmount {
 	struct	mount *um_mountp;		/* filesystem vfs structure */
 	dev_t	um_dev;				/* device mounted */
 	struct	vnode *um_devvp;		/* block device mounted vnode */
 	u_long	um_fstype;
-	u_int32_t um_flags;			/* UFS-specific flags - see below */
+	u_int32_t um_flags;			/* ULFS-specific flags - see below */
 	union {					/* pointer to superblock */
 		struct	fs *fs;			/* FFS */
 		struct	lfs *lfs;		/* LFS */
 		struct  m_ext2fs *e2fs;		/* EXT2FS */
 		struct  chfs_mount *chfs;	/* CHFS */
-	} ufsmount_u;
-#define	um_fs	ufsmount_u.fs
-#define	um_lfs	ufsmount_u.lfs
-#define um_e2fs	ufsmount_u.e2fs
-#define um_e2fsb ufsmount_u.e2fs->s_es
-#define um_chfs	ufsmount_u.chfs
+	} ulfsmount_u;
+#define	um_fs	ulfsmount_u.fs
+#define	um_lfs	ulfsmount_u.lfs
+#define um_e2fs	ulfsmount_u.e2fs
+#define um_e2fsb ulfsmount_u.e2fs->s_es
+#define um_chfs	ulfsmount_u.chfs
 
 	/* Extended attribute information. */
-	struct ufs_extattr_per_mount um_extattr;
+	struct ulfs_extattr_per_mount um_extattr;
 
-	struct	vnode *um_quotas[MAXQUOTAS];	/* pointer to quota files */
-	kauth_cred_t   um_cred[MAXQUOTAS];	/* quota file access cred */
+	struct	vnode *um_quotas[ULFS_MAXQUOTAS];	/* pointer to quota files */
+	kauth_cred_t   um_cred[ULFS_MAXQUOTAS];	/* quota file access cred */
 	u_long	um_nindir;			/* indirect ptrs per block */
 	u_long	um_lognindir;			/* log2 of um_nindir */
 	u_long	um_bptrtodb;			/* indir ptr to disk block */
@@ -103,9 +103,9 @@ struct ufsmount {
 	kmutex_t um_lock;			/* lock on global data */
 	union {
 	    struct um_q1 {
-		time_t	q1_btime[MAXQUOTAS];	/* block quota time limit */
-		time_t	q1_itime[MAXQUOTAS];	/* inode quota time limit */
-		char	q1_qflags[MAXQUOTAS];	/* quota specific flags */
+		time_t	q1_btime[ULFS_MAXQUOTAS];	/* block quota time limit */
+		time_t	q1_itime[ULFS_MAXQUOTAS];	/* inode quota time limit */
+		char	q1_qflags[ULFS_MAXQUOTAS];	/* quota specific flags */
 	    } um_q1;
 	    struct um_q2 {
 		uint64_t q2_bsize;		/* block size of quota file */
@@ -124,12 +124,12 @@ struct ufsmount {
 	u_int64_t um_maxfilesize;
 	void	*um_snapinfo;			/* snapshot private data */
 
-	const struct ufs_ops *um_ops;
+	const struct ulfs_ops *um_ops;
 
 	void *um_discarddata;
 };
 
-struct ufs_ops {
+struct ulfs_ops {
 	void (*uo_itimes)(struct inode *ip, const struct timespec *,
 	    const struct timespec *, const struct timespec *);
 	int (*uo_update)(struct vnode *, const struct timespec *,
@@ -142,34 +142,34 @@ struct ufs_ops {
         void (*uo_unmark_vnode)(struct vnode *);
 };
 
-#define	UFS_OPS(vp)	(VFSTOUFS((vp)->v_mount)->um_ops)
+#define	ULFS_OPS(vp)	(VFSTOULFS((vp)->v_mount)->um_ops)
 
-#define	UFS_ITIMES(vp, acc, mod, cre) \
-	(*UFS_OPS(vp)->uo_itimes)(VTOI(vp), (acc), (mod), (cre))
-#define	UFS_UPDATE(vp, acc, mod, flags) \
-	(*UFS_OPS(vp)->uo_update)((vp), (acc), (mod), (flags))
-#define	UFS_TRUNCATE(vp, off, flags, cr) \
-	(*UFS_OPS(vp)->uo_truncate)((vp), (off), (flags), (cr))
-#define	UFS_VALLOC(vp, mode, cr, vpp) \
-	(*UFS_OPS(vp)->uo_valloc)((vp), (mode), (cr), (vpp))
-#define	UFS_VFREE(vp, ino, mode) \
-	(*UFS_OPS(vp)->uo_vfree)((vp), (ino), (mode))
-#define	UFS_BALLOC(vp, off, size, cr, flags, bpp) \
-	(*UFS_OPS(vp)->uo_balloc)((vp), (off), (size), (cr), (flags), (bpp))
-#define	UFS_UNMARK_VNODE(vp) \
-	(*UFS_OPS(vp)->uo_unmark_vnode)((vp))
+#define	ULFS_ITIMES(vp, acc, mod, cre) \
+	(*ULFS_OPS(vp)->uo_itimes)(VTOI(vp), (acc), (mod), (cre))
+#define	ULFS_UPDATE(vp, acc, mod, flags) \
+	(*ULFS_OPS(vp)->uo_update)((vp), (acc), (mod), (flags))
+#define	ULFS_TRUNCATE(vp, off, flags, cr) \
+	(*ULFS_OPS(vp)->uo_truncate)((vp), (off), (flags), (cr))
+#define	ULFS_VALLOC(vp, mode, cr, vpp) \
+	(*ULFS_OPS(vp)->uo_valloc)((vp), (mode), (cr), (vpp))
+#define	ULFS_VFREE(vp, ino, mode) \
+	(*ULFS_OPS(vp)->uo_vfree)((vp), (ino), (mode))
+#define	ULFS_BALLOC(vp, off, size, cr, flags, bpp) \
+	(*ULFS_OPS(vp)->uo_balloc)((vp), (off), (size), (cr), (flags), (bpp))
+#define	ULFS_UNMARK_VNODE(vp) \
+	(*ULFS_OPS(vp)->uo_unmark_vnode)((vp))
 
-/* UFS-specific flags */
-#define UFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */
-#define UFS_ISAPPLEUFS	0x02	/* filesystem is Apple UFS */
-#define UFS_QUOTA	0x04	/* filesystem has QUOTA (v1) */
-#define UFS_QUOTA2	0x08	/* filesystem has QUOTA2 */
+/* ULFS-specific flags */
+#define ULFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */
+#define ULFS_ISAPPLEUFS	0x02	/* filesystem is Apple UFS */
+#define ULFS_QUOTA	0x04	/* filesystem has QUOTA (v1) */
+#define ULFS_QUOTA2	0x08	/* filesystem has QUOTA2 */
 
 /*
  * Filesystem types
  */
-#define UFS1  1
-#define UFS2  2
+#define ULFS1  1
+#define ULFS2  2
 
 
 /*
@@ -178,18 +178,18 @@ struct ufs_ops {
 #define	QTF_OPENING	0x01			/* Q_QUOTAON in progress */
 #define	QTF_CLOSING	0x02			/* Q_QUOTAOFF in progress */
 
-/* Convert mount ptr to ufsmount ptr. */
-#define VFSTOUFS(mp)	((struct ufsmount *)((mp)->mnt_data))
+/* Convert mount ptr to ulfsmount ptr. */
+#define VFSTOULFS(mp)	((struct ulfsmount *)((mp)->mnt_data))
 
 #if 0 /*def APPLE_UFS*/
-#define UFS_MPISAPPLEUFS(ump)	((ump)->um_flags & UFS_ISAPPLEUFS)
+#define ULFS_MPISAPPLEUFS(ump)	((ump)->um_flags & ULFS_ISAPPLEUFS)
 #else
-#define UFS_MPISAPPLEUFS(ump)	(0)
+#define ULFS_MPISAPPLEUFS(ump)	(0)
 #endif
 
 /*
- * Macros to access file system parameters in the ufsmount structure.
- * Used by ufs_bmap.
+ * Macros to access file system parameters in the ulfsmount structure.
+ * Used by ulfs_bmap.
  */
 #define MNINDIR(ump)			((ump)->um_nindir)
 #define	blkptrtodb(ump, b)		((b) << (ump)->um_bptrtodb)
@@ -201,4 +201,4 @@ struct ufs_ops {
 
 #endif /* _KERNEL */
 
-#endif /* !_UFS_UFS_UFSMOUNT_H_ */
+#endif /* !_UFS_LFS_ULFSMOUNT_H_ */

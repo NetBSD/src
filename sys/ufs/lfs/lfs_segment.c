@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.226 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.227 2013/06/06 00:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.226 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.227 2013/06/06 00:48:04 dholland Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -198,7 +198,7 @@ lfs_vflush(struct vnode *vp)
 	int loopcount;
 
 	ip = VTOI(vp);
-	fs = VFSTOUFS(vp->v_mount)->um_lfs;
+	fs = VFSTOULFS(vp->v_mount)->um_lfs;
 	relock = 0;
 
     top:
@@ -625,7 +625,7 @@ lfs_segwrite(struct mount *mp, int flags)
 	int um_error;
 	int loopcount;
 
-	fs = VFSTOUFS(mp)->um_lfs;
+	fs = VFSTOULFS(mp)->um_lfs;
 	ASSERT_MAYBE_SEGLOCK(fs);
 
 	if (fs->lfs_ronly)
@@ -908,7 +908,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	 */
 	frag = 0;
 	if (sp->seg_flags & SEGM_CLEAN) {
-		for (i = 0; i < UFS_NDADDR; i++)
+		for (i = 0; i < ULFS_NDADDR; i++)
 			if (ip->i_lfs_fragsize[i] > 0 &&
 			    ip->i_lfs_fragsize[i] < fs->lfs_bsize)
 				++frag;
@@ -1006,26 +1006,26 @@ lfs_update_iaddr(struct lfs *fs, struct segment *sp, struct inode *ip, daddr_t n
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes +
-		    sizeof (struct ufs1_dinode) * ndupino
-		      < sizeof (struct ufs1_dinode)) {
+		    sizeof (struct ulfs1_dinode) * ndupino
+		      < sizeof (struct ulfs1_dinode)) {
 			printf("lfs_writeinode: negative bytes "
 			       "(segment %" PRIu32 " short by %d, "
 			       "oldsn=%" PRIu32 ", cursn=%" PRIu32
 			       ", daddr=%" PRId64 ", su_nbytes=%u, "
 			       "ndupino=%d)\n",
 			       dtosn(fs, daddr),
-			       (int)sizeof (struct ufs1_dinode) *
+			       (int)sizeof (struct ulfs1_dinode) *
 				   (1 - sp->ndupino) - sup->su_nbytes,
 			       oldsn, sp->seg_number, daddr,
 			       (unsigned int)sup->su_nbytes,
 			       sp->ndupino);
 			panic("lfs_writeinode: negative bytes");
-			sup->su_nbytes = sizeof (struct ufs1_dinode);
+			sup->su_nbytes = sizeof (struct ulfs1_dinode);
 		}
 #endif
 		DLOG((DLOG_SU, "seg %d -= %d for ino %d inode\n",
-		      dtosn(fs, daddr), sizeof (struct ufs1_dinode), ino));
-		sup->su_nbytes -= sizeof (struct ufs1_dinode);
+		      dtosn(fs, daddr), sizeof (struct ulfs1_dinode), ino));
+		sup->su_nbytes -= sizeof (struct ulfs1_dinode);
 		redo_ifile |=
 			(ino == LFS_IFILE_INUM && !(bp->b_flags & B_GATHERED));
 		if (redo_ifile) {
@@ -1045,7 +1045,7 @@ int
 lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 {
 	struct buf *bp;
-	struct ufs1_dinode *cdp;
+	struct ulfs1_dinode *cdp;
 	struct vnode *vp = ITOV(ip);
 	daddr_t daddr;
 	int32_t *daddrp;	/* XXX ondisk32 */
@@ -1120,7 +1120,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 
 		/* Zero out inode numbers */
 		for (i = 0; i < INOPB(fs); ++i)
-			((struct ufs1_dinode *)sp->ibp->b_data)[i].di_inumber =
+			((struct ulfs1_dinode *)sp->ibp->b_data)[i].di_inumber =
 			    0;
 
 		++sp->start_bpp;
@@ -1157,7 +1157,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	}
 
 	bp = sp->ibp;
-	cdp = ((struct ufs1_dinode *)bp->b_data) + (sp->ninodes % INOPB(fs));
+	cdp = ((struct ulfs1_dinode *)bp->b_data) + (sp->ninodes % INOPB(fs));
 	*cdp = *ip->i_din.ffs1_din;
 
 	/*
@@ -1219,7 +1219,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		DLOG((DLOG_SEG, "lfs_writeinode: cleansing ino %d eff %d != nblk %d)"
 		      " at %x\n", ip->i_number, ip->i_lfs_effnblks,
 		      ip->i_ffs1_blocks, fs->lfs_offset));
-		for (daddrp = cdp->di_db; daddrp < cdp->di_ib + UFS_NIADDR;
+		for (daddrp = cdp->di_db; daddrp < cdp->di_ib + ULFS_NIADDR;
 		     daddrp++) {
 			if (*daddrp == UNWRITTEN) {
 				DLOG((DLOG_SEG, "lfs_writeinode: wiping UNWRITTEN\n"));
@@ -1234,7 +1234,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 * This should be identical to the check in lfs_vget().
 	 */
 	for (i = (cdp->di_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
-	     i < UFS_NDADDR; i++) {
+	     i < ULFS_NDADDR; i++) {
 		KASSERT(i >= 0);
 		if ((cdp->di_mode & IFMT) == IFLNK)
 			continue;
@@ -1267,7 +1267,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 
 	if (ip->i_number == LFS_IFILE_INUM) {
 		/* We know sp->idp == NULL */
-		sp->idp = ((struct ufs1_dinode *)bp->b_data) +
+		sp->idp = ((struct ulfs1_dinode *)bp->b_data) +
 			(sp->ninodes % INOPB(fs));
 
 		/* Not dirty any more */
@@ -1448,7 +1448,7 @@ loop:
 
 /*
  * Change the given block's address to ndaddr, finding its previous
- * location using ufs_bmaparray().
+ * location using ulfs_bmaparray().
  *
  * Account for this change in the segment table.
  *
@@ -1460,7 +1460,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 {
 	SEGUSE *sup;
 	struct buf *bp;
-	struct indir a[UFS_NIADDR + 2], *ap;
+	struct indir a[ULFS_NIADDR + 2], *ap;
 	struct inode *ip;
 	daddr_t daddr, ooff;
 	int num, error;
@@ -1470,9 +1470,9 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 	KASSERT(sp == NULL || sp->vp == vp);
 	ip = VTOI(vp);
 
-	error = ufs_bmaparray(vp, lbn, &daddr, a, &num, NULL, NULL);
+	error = ulfs_bmaparray(vp, lbn, &daddr, a, &num, NULL, NULL);
 	if (error)
-		panic("lfs_updatemeta: ufs_bmaparray returned %d", error);
+		panic("lfs_updatemeta: ulfs_bmaparray returned %d", error);
 
 	daddr = (daddr_t)((int32_t)daddr); /* XXX ondisk32 */
 	KASSERT(daddr <= LFS_MAX_DADDR);
@@ -1545,19 +1545,19 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 		}
 #endif
 		KASSERT(oldsn < fs->lfs_nseg);
-		if (lbn >= 0 && lbn < UFS_NDADDR)
+		if (lbn >= 0 && lbn < ULFS_NDADDR)
 			osize = ip->i_lfs_fragsize[lbn];
 		else
 			osize = fs->lfs_bsize;
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
 #ifdef DIAGNOSTIC
-		if (sup->su_nbytes + sizeof (struct ufs1_dinode) * ndupino
+		if (sup->su_nbytes + sizeof (struct ulfs1_dinode) * ndupino
 		    < osize) {
 			printf("lfs_updatemeta: negative bytes "
 			       "(segment %" PRIu32 " short by %" PRId64
 			       ")\n", dtosn(fs, daddr),
 			       (int64_t)osize -
-			       (sizeof (struct ufs1_dinode) * ndupino +
+			       (sizeof (struct ulfs1_dinode) * ndupino +
 				sup->su_nbytes));
 			printf("lfs_updatemeta: ino %llu, lbn %" PRId64
 			       ", addr = 0x%" PRIx64 "\n",
@@ -1565,7 +1565,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 			printf("lfs_updatemeta: ndupino=%d\n", ndupino);
 			panic("lfs_updatemeta: negative bytes");
 			sup->su_nbytes = osize -
-			    sizeof (struct ufs1_dinode) * ndupino;
+			    sizeof (struct ulfs1_dinode) * ndupino;
 		}
 #endif
 		DLOG((DLOG_SU, "seg %" PRIu32 " -= %d for ino %d lbn %" PRId64
@@ -1585,7 +1585,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 	 * segment no longer owns it, we can forget about its
 	 * old size.
 	 */
-	if (lbn >= 0 && lbn < UFS_NDADDR)
+	if (lbn >= 0 && lbn < ULFS_NDADDR)
 		ip->i_lfs_fragsize[lbn] = size;
 }
 
@@ -2058,9 +2058,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 
 	ninos = (ssp->ss_ninos + INOPB(fs) - 1) / INOPB(fs);
 	DLOG((DLOG_SU, "seg %d += %d for %d inodes\n",
-	      sp->seg_number, ssp->ss_ninos * sizeof (struct ufs1_dinode),
+	      sp->seg_number, ssp->ss_ninos * sizeof (struct ulfs1_dinode),
 	      ssp->ss_ninos));
-	sup->su_nbytes += ssp->ss_ninos * sizeof (struct ufs1_dinode);
+	sup->su_nbytes += ssp->ss_ninos * sizeof (struct ulfs1_dinode);
 	/* sup->su_nbytes += fs->lfs_sumsize; */
 	if (fs->lfs_version == 1)
 		sup->su_olastmod = time_second;
@@ -2455,7 +2455,7 @@ lfs_match_indir(struct lfs *fs, struct buf *bp)
 
 	ASSERT_SEGLOCK(fs);
 	lbn = bp->b_lblkno;
-	return (lbn < 0 && (-lbn - UFS_NDADDR) % NINDIR(fs) == 0);
+	return (lbn < 0 && (-lbn - ULFS_NDADDR) % NINDIR(fs) == 0);
 }
 
 int
@@ -2465,7 +2465,7 @@ lfs_match_dindir(struct lfs *fs, struct buf *bp)
 
 	ASSERT_SEGLOCK(fs);
 	lbn = bp->b_lblkno;
-	return (lbn < 0 && (-lbn - UFS_NDADDR) % NINDIR(fs) == 1);
+	return (lbn < 0 && (-lbn - ULFS_NDADDR) % NINDIR(fs) == 1);
 }
 
 int
@@ -2475,7 +2475,7 @@ lfs_match_tindir(struct lfs *fs, struct buf *bp)
 
 	ASSERT_SEGLOCK(fs);
 	lbn = bp->b_lblkno;
-	return (lbn < 0 && (-lbn - UFS_NDADDR) % NINDIR(fs) == 2);
+	return (lbn < 0 && (-lbn - ULFS_NDADDR) % NINDIR(fs) == 2);
 }
 
 static void
