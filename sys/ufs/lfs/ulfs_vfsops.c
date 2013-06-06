@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.6 2013/06/06 00:51:50 dholland Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.7 2013/06/06 00:52:14 dholland Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.52 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.6 2013/06/06 00:51:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.7 2013/06/06 00:52:14 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -214,7 +214,7 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
  * filesystem has validated the file handle.
  */
 int
-ulfs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
+ulfs_fhtovp(struct mount *mp, struct ulfs_ufid *ufhp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	struct inode *ip;
