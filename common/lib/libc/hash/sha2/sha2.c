@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.21 2010/01/24 21:11:18 joerg Exp $ */
+/* $NetBSD: sha2.c,v 1.22 2013/06/07 22:40:34 christos Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.21 2010/01/24 21:11:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.22 2013/06/07 22:40:34 christos Exp $");
 
 #include <sys/param.h>	/* XXX: to pull <machine/macros.h> for vax memset(9) */
 #include <lib/libkern/libkern.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.21 2010/01/24 21:11:18 joerg Exp $");
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.21 2010/01/24 21:11:18 joerg Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.22 2013/06/07 22:40:34 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -63,13 +63,13 @@ __RCSID("$NetBSD: sha2.c,v 1.21 2010/01/24 21:11:18 joerg Exp $");
 #include <sys/sha2.h>
 
 #if HAVE_NBTOOL_CONFIG_H
-#  if HAVE_SYS_ENDIAN_H
-#    include <sys/endian.h>
-#  else
-#   undef htobe32
-#   undef htobe64
-#   undef be32toh
-#   undef be64toh
+# if HAVE_SYS_ENDIAN_H
+#  include <sys/endian.h>
+# else
+#  undef htobe32
+#  undef htobe64
+#  undef be32toh
+#  undef be64toh
 
 static uint32_t
 htobe32(uint32_t x)
@@ -104,7 +104,15 @@ be64toh(uint64_t x)
 {
 	return htobe64(x);
 }
-#  endif
+# define align(a) (&adata, (a))
+# endif
+#endif
+
+#ifndef align
+# define align(a) \
+    (((uintptr_t)(a) & (sizeof(adata) - 1)) ? \
+	(memcpy(&adata, (a), sizeof(adata)), &adata) : \
+	(a))
 #endif
 
 /*** SHA-256/384/512 Various Length Definitions ***********************/
@@ -326,7 +334,7 @@ SHA256_Init(SHA256_CTX *context)
 /* Unrolled SHA-256 round macros: */
 
 #define ROUND256_0_TO_15(a,b,c,d,e,f,g,h)	\
-	W256[j] = be32toh(*data);		\
+	W256[j] = be32toh(*align(data));		\
 	++data;					\
 	T1 = (h) + Sigma1_256(e) + Ch((e), (f), (g)) + \
              K256[j] + W256[j]; \
@@ -351,6 +359,7 @@ SHA256_Transform(SHA256_CTX *context, const uint32_t *data)
 	uint32_t	a, b, c, d, e, f, g, h, s0, s1;
 	uint32_t	T1, *W256;
 	int		j;
+	uint32_t	adata;
 
 	W256 = (uint32_t *)context->buffer;
 
@@ -411,6 +420,7 @@ SHA256_Transform(SHA256_CTX *context, const uint32_t *data)
 	uint32_t	a, b, c, d, e, f, g, h, s0, s1;
 	uint32_t	T1, T2, *W256;
 	int		j;
+	uint32_t	adata;
 
 	W256 = (uint32_t *)(void *)context->buffer;
 
@@ -426,7 +436,7 @@ SHA256_Transform(SHA256_CTX *context, const uint32_t *data)
 
 	j = 0;
 	do {
-		W256[j] = be32toh(*data);
+		W256[j] = be32toh(*align(data));
 		++data;
 		/* Apply the SHA-256 compression function to update a..h */
 		T1 = h + Sigma1_256(e) + Ch(e, f, g) + K256[j] + W256[j];
@@ -672,7 +682,7 @@ SHA512_Init(SHA512_CTX *context)
 
 /* Unrolled SHA-512 round macros: */
 #define ROUND512_0_TO_15(a,b,c,d,e,f,g,h)	\
-	W512[j] = be64toh(*data);		\
+	W512[j] = be64toh(*align(data));		\
 	++data;					\
 	T1 = (h) + Sigma1_512(e) + Ch((e), (f), (g)) + \
              K512[j] + W512[j]; \
@@ -697,6 +707,7 @@ SHA512_Transform(SHA512_CTX *context, const uint64_t *data)
 	uint64_t	a, b, c, d, e, f, g, h, s0, s1;
 	uint64_t	T1, *W512 = (uint64_t *)context->buffer;
 	int		j;
+	uint64_t	adata;
 
 	/* Initialize registers with the prev. intermediate value */
 	a = context->state[0];
@@ -754,6 +765,7 @@ SHA512_Transform(SHA512_CTX *context, const uint64_t *data)
 	uint64_t	a, b, c, d, e, f, g, h, s0, s1;
 	uint64_t	T1, T2, *W512 = (void *)context->buffer;
 	int		j;
+	uint64_t	adata;
 
 	/* Initialize registers with the prev. intermediate value */
 	a = context->state[0];
@@ -767,7 +779,7 @@ SHA512_Transform(SHA512_CTX *context, const uint64_t *data)
 
 	j = 0;
 	do {
-		W512[j] = be64toh(*data);
+		W512[j] = be64toh(*align(data));
 		++data;
 		/* Apply the SHA-512 compression function to update a..h */
 		T1 = h + Sigma1_512(e) + Ch(e, f, g) + K512[j] + W512[j];
