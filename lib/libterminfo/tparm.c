@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.14 2013/01/25 17:28:50 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.15 2013/06/07 13:16:18 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011, 2013 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.14 2013/01/25 17:28:50 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.15 2013/06/07 13:16:18 roy Exp $");
 #include <sys/param.h>
 
 #include <assert.h>
@@ -44,9 +44,9 @@ __RCSID("$NetBSD: tparm.c,v 1.14 2013/01/25 17:28:50 roy Exp $");
 #define LONG_STR_MAX ((CHAR_BIT * sizeof(long)) / 3)
 #define BUFINC 128	/* Size to increament the terminal buffer by */
 
-#define VA_LONG_LONG	1 
+#define VA_LONG_LONG	1
 #define VA_CHAR_INT	2
-//#define VA_CHAR_LONG	3
+//#define VA_CHAR_LONG	3	/* No need for this yet */
 
 static TERMINAL *dumbterm; /* For non thread safe functions */
 
@@ -97,7 +97,7 @@ static char *
 checkbuf(TERMINAL *term, size_t len)
 {
 	char *buf;
-	
+
 	if (term->_bufpos + len >= term->_buflen) {
 		len = term->_buflen + MAX(len, BUFINC);
 		buf = realloc(term->_buf, len);
@@ -562,7 +562,7 @@ tiparm(const char *str, ...)
 {
 	va_list va;
 	char *ret;
-	
+
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
@@ -592,7 +592,7 @@ tlparm(const char *str, ...)
 {
 	va_list va;
 	char *ret;
-	
+
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
@@ -607,7 +607,7 @@ _tparm(const char *str, ...)
 {
 	va_list va;
 	char *ret;
-	
+
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
