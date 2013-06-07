@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.15 2013/03/15 14:27:41 njoly Exp $ */
+/* $NetBSD: term.h,v 1.16 2013/06/07 13:16:18 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 /* Define available terminfo flags */
 enum TIFLAGS {
-       	TICODE_bw,
+	TICODE_bw,
 	TICODE_am,
 	TICODE_bce,
 	TICODE_ccc,
