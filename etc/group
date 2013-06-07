@@ -24,11 +24,11 @@ _mdnsd:*:25:
 _tests:*:26:
 _tcpdump:*:27:
 _tss:*:28:
+_gpio:*:29:
 guest:*:31:root
 nobody:*:39:
 utmp:*:45:
 authpf:*:72:
 users:*:100:
 dialer:*:117:
-_gpio:*:118:
 nogroup:*:32766:
