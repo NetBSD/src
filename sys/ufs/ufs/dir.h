@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp $	*/
+/*	$NetBSD: dir.h,v 1.22 2013/06/07 23:37:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -145,7 +145,7 @@ struct dirtemplate {
 };
 
 /*
- * This is the old format of directories, sanz type element.
+ * This is the old format of directories, sans type element.
  */
 struct odirtemplate {
 	u_int32_t	dot_ino;
