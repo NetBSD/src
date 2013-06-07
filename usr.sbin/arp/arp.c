@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.50 2013/06/07 01:09:10 christos Exp $ */
+/*	$NetBSD: arp.c,v 1.51 2013/06/07 17:18:33 christos Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.50 2013/06/07 01:09:10 christos Exp $");
+__RCSID("$NetBSD: arp.c,v 1.51 2013/06/07 17:18:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ main(int argc, char **argv)
 		}
 		break;
 	case 's':
-		if (argc < 2 || argc > 5)
+		if (argc < 2 || argc > 7)
 			usage();
 		return (set(argc, argv) ? 1 : 0);
 	case 'f':
