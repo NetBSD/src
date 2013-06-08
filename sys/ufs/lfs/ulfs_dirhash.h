@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.h,v 1.3 2013/06/08 02:12:56 dholland Exp $	*/
+/*	$NetBSD: ulfs_dirhash.h,v 1.4 2013/06/08 02:13:33 dholland Exp $	*/
 /*  from NetBSD: dirhash.h,v 1.6 2008/06/04 11:33:19 ad Exp  */
 
 /*
@@ -48,7 +48,7 @@
 #define DIRHASH_DEL	(-2)	/* deleted entry; may be part of chain */
 
 #define DIRALIGN	4
-#define DH_NFSTATS	(DIRECTSIZ(FFS_MAXNAMLEN + 1) / DIRALIGN)
+#define DH_NFSTATS	(DIRECTSIZ(LFS_MAXNAMLEN + 1) / DIRALIGN)
 				 /* max DIRALIGN words in a directory entry */
 
 /*
