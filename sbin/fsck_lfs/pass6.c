@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.29 2013/06/08 02:16:03 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.30 2013/06/08 23:12:13 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -662,8 +662,8 @@ pass6(void)
 			for (dp = (struct ulfs1_dinode *)ibbuf;
 			     dp < (struct ulfs1_dinode *)ibbuf + INOPB(fs);
 			     ++dp) {
-				if (dp->di_u.inumber == 0 ||
-				    dp->di_u.inumber == fs->lfs_ifile)
+				if (dp->di_inumber == 0 ||
+				    dp->di_inumber == fs->lfs_ifile)
 					continue;
 				/* Basic sanity checks */
 				if (dp->di_nlink < 0 
@@ -679,7 +679,7 @@ pass6(void)
 					goto out;
 				}
 
-				vp = vget(fs, dp->di_u.inumber);
+				vp = vget(fs, dp->di_inumber);
 
 				/*
 				 * Four cases:
@@ -687,7 +687,7 @@ pass6(void)
 				 *     If currently allocated, remove.
 				 */
 				if (dp->di_nlink == 0) {
-					remove_ino(vp, dp->di_u.inumber);
+					remove_ino(vp, dp->di_inumber);
 					++ndelfiles;
 					continue;
 				}
@@ -701,7 +701,7 @@ pass6(void)
 					if (!(sp->ss_flags & SS_DIROP))
 						pfatal("NEW FILE IN NON-DIROP PARTIAL SEGMENT");
 					else {
-						inums[j++] = dp->di_u.inumber;
+						inums[j++] = dp->di_inumber;
 						nnewfiles++;
 					}
 					continue;
@@ -712,11 +712,11 @@ pass6(void)
 				 *     and proceed as in (2).
 				 */
 				if (vp && VTOI(vp)->i_ffs1_gen < dp->di_gen) {
-					remove_ino(vp, dp->di_u.inumber);
+					remove_ino(vp, dp->di_inumber);
 					if (!(sp->ss_flags & SS_DIROP))
 						pfatal("NEW FILE VERSION IN NON-DIROP PARTIAL SEGMENT");
 					else {
-						inums[j++] = dp->di_u.inumber;
+						inums[j++] = dp->di_inumber;
 						ndelfiles++;
 						nnewfiles++;
 					}
