@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.2 2013/06/08 23:04:49 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.3 2013/06/08 23:12:51 dholland Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
@@ -106,10 +106,7 @@ struct inode {
 	dev_t	  i_dev;	/* Device associated with the inode. */
 	ino_t	  i_number;	/* The identity of the inode. */
 
-	union {			/* Associated filesystem. */
-		struct	lfs *lfs;	/* LFS */
-	} inode_u;
-#define	i_lfs	inode_u.lfs
+	struct lfs *i_lfs;	/* The LFS volume we belong to. */
 
 	void	*i_unused1;	/* Unused. */
 	struct	 dquot *i_dquot[ULFS_MAXQUOTAS]; /* Dquot structures. */
