@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.9 2013/06/08 02:14:46 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.10 2013/06/08 22:05:15 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.9 2013/06/08 02:14:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.10 2013/06/08 22:05:15 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.9 2013/06/08 02:14:46 dholland Exp
 #include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/ulfs_extern.h>
 #include <ufs/lfs/ulfs_bswap.h>
-#include <ufs/lfs/ulfs_wapbl.h>
 
 #include <miscfs/genfs/genfs.h>
 
@@ -535,7 +534,6 @@ found:
 		    results->ulr_offset + LFS_DIRSIZ(FSFMT(vdp), ep, needswap);
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
-		ULFS_WAPBL_UPDATE(vdp, NULL, NULL, UPDATE_DIROP);
 	}
 	brelse(bp, 0);
 
@@ -827,8 +825,6 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	const int needswap = ULFS_MPNEEDSWAP(ump);
 	int dirblksiz = ump->um_dirblksiz;
 
-	ULFS_WAPBL_JLOCK_ASSERT(dvp->v_mount);
-
 	error = 0;
 	cr = cnp->cn_cred;
 	l = curlwp;
@@ -908,7 +904,6 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 		dp->i_size = ulr->ulr_offset + ulr->ulr_count;
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
-		ULFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
 	}
 	/*
 	 * Get the block containing the space for the new directory entry.
@@ -1024,7 +1019,6 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 #endif
 		(void) ULFS_TRUNCATE(dvp, (off_t)ulr->ulr_endoff, IO_SYNC, cr);
 	}
-	ULFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
 	return (error);
 }
 
@@ -1074,8 +1068,6 @@ ulfs_dirremove(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 #ifdef LFS_EI
 	const int needswap = ULFS_MPNEEDSWAP(dp->i_ump);
 #endif
-
-	ULFS_WAPBL_JLOCK_ASSERT(dvp->v_mount);
 
 	if (flags & DOWHITEOUT) {
 		/*
@@ -1133,7 +1125,6 @@ out:
 		ip->i_nlink--;
 		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
-		ULFS_WAPBL_UPDATE(ITOV(ip), NULL, NULL, 0);
 	}
 	/*
 	 * XXX did it ever occur to anyone that it might be a good
@@ -1152,7 +1143,6 @@ out:
 	if (ip != 0 && (ip->i_flags & SF_SNAPSHOT) != 0 &&
 	    ip->i_nlink == 0)
 		ulfs_snapgone(ip);
-	ULFS_WAPBL_UPDATE(dvp, NULL, NULL, 0);
 	return (error);
 }
 
@@ -1191,7 +1181,6 @@ ulfs_dirrewrite(struct inode *dp, off_t offset,
 	oip->i_nlink--;
 	DIP_ASSIGN(oip, nlink, oip->i_nlink);
 	oip->i_flag |= IN_CHANGE;
-	ULFS_WAPBL_UPDATE(ITOV(oip), NULL, NULL, UPDATE_DIROP);
 	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= iflags;
 	/*
@@ -1201,7 +1190,6 @@ ulfs_dirrewrite(struct inode *dp, off_t offset,
 	 */
 	if ((oip->i_flags & SF_SNAPSHOT) != 0 && oip->i_nlink == 0)
 		ulfs_snapgone(oip);
-	ULFS_WAPBL_UPDATE(vdp, NULL, NULL, UPDATE_DIROP);
 	return (error);
 }
 

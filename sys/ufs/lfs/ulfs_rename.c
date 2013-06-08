@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_rename.c,v 1.6 2013/06/08 02:14:46 dholland Exp $	*/
+/*	$NetBSD: ulfs_rename.c,v 1.7 2013/06/08 22:05:15 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.6 2013/06/08 02:14:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.7 2013/06/08 22:05:15 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.6 2013/06/08 02:14:46 dholland Exp
 #include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/ulfs_bswap.h>
 #include <ufs/lfs/ulfs_extern.h>
-#include <ufs/lfs/ulfs_wapbl.h>
 #include <ufs/lfs/ulfsmount.h>
 
 /*
@@ -336,9 +335,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 */
 
 	fstrans_start(mp, FSTRANS_SHARED);
-	error = ULFS_WAPBL_BEGIN(mp);
-	if (error)
-		goto ihateyou;
+	error = 0;
 
 	/*
 	 * 1) Bump link count while we're moving stuff
@@ -449,7 +446,6 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 			VTOI(tdvp)->i_nlink--;
 			DIP_ASSIGN(VTOI(tdvp), nlink, VTOI(tdvp)->i_nlink);
 			VTOI(tdvp)->i_flag |= IN_CHANGE;
-			ULFS_WAPBL_UPDATE(tdvp, NULL, NULL, 0);
 		}
 
 		if (directory_p) {
@@ -550,12 +546,9 @@ whymustithurtsomuch:
 	VTOI(fvp)->i_nlink--;
 	DIP_ASSIGN(VTOI(fvp), nlink, VTOI(fvp)->i_nlink);
 	VTOI(fvp)->i_flag |= IN_CHANGE;
-	ULFS_WAPBL_UPDATE(fvp, NULL, NULL, 0);
 
 arghmybrainhurts:
-	ULFS_WAPBL_END(mp);
-
-ihateyou:
+/*ihateyou:*/
 	fstrans_done(mp);
 	return error;
 }
@@ -788,9 +781,6 @@ ulfs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	KASSERT(cnp->cn_nameiop == DELETE);
 
 	fstrans_start(mp, FSTRANS_SHARED);
-	error = ULFS_WAPBL_BEGIN(mp);
-	if (error)
-		goto out0;
 
 	/* XXX ulfs_dirremove decrements vp's link count for us.  */
 	error = ulfs_dirremove(dvp, ulr, VTOI(vp), cnp->cn_flags, 0);
@@ -800,8 +790,8 @@ ulfs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	VN_KNOTE(dvp, NOTE_WRITE);
 	VN_KNOTE(vp, (VTOI(vp)->i_nlink? NOTE_LINK : NOTE_DELETE));
 
-out1:	ULFS_WAPBL_END(mp);
-out0:	fstrans_done(mp);
+out1:
+	fstrans_done(mp);
 	return error;
 }
 
