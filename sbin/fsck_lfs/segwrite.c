@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.23 2013/06/06 00:54:49 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.24 2013/06/08 02:09:35 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -346,7 +346,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	if (daddr != LFS_UNUSED_DADDR) {
 		u_int32_t oldsn = dtosn(fs, daddr);
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
-		sup->su_nbytes -= DINODE1_SIZE;
+		sup->su_nbytes -= LFS_DINODE1_SIZE;
 		redo_ifile =
 		    (ino == LFS_IFILE_INUM && !(bp->b_flags & B_GATHERED));
 		if (redo_ifile)
@@ -769,7 +769,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	ssp->ss_flags |= SS_RFW;
 
 	ninos = (ssp->ss_ninos + INOPB(fs) - 1) / INOPB(fs);
-	sup->su_nbytes += ssp->ss_ninos * DINODE1_SIZE;
+	sup->su_nbytes += ssp->ss_ninos * LFS_DINODE1_SIZE;
 
 	if (fs->lfs_version == 1)
 		sup->su_olastmod = write_time;
