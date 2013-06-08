@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.142 2013/06/08 02:04:31 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.143 2013/06/08 02:09:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
 #define LFS_INVERSE_MAX_BYTES(n) LFS_INVERSE_MAX_RESOURCE(n, PAGE_SIZE)
 #define LFS_WAIT_BYTES	    LFS_WAIT_RESOURCE(bufmem_lowater, PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
-#define SIZEOF_DIROP(fs)	(2 * ((fs)->lfs_bsize + DINODE1_SIZE))
+#define SIZEOF_DIROP(fs)	(2 * ((fs)->lfs_bsize + LFS_DINODE1_SIZE))
 #define LFS_MAX_FSDIROP(fs)						\
 	((fs)->lfs_nclean <= (fs)->lfs_resvseg ? 0 :			\
 	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * (fs)->lfs_ssize) /	\
@@ -192,6 +192,84 @@ typedef struct lfs_res_blk {
 #define	doff_t		int32_t
 #define	lfs_doff_t	int32_t
 #define	MAXDIRSIZE	(0x7fffffff)
+
+/*
+ * Inodes
+ */
+
+/*
+ * A dinode contains all the meta-data associated with a ULFS file.
+ * This structure defines the on-disk format of a dinode. Since
+ * this structure describes an on-disk structure, all its fields
+ * are defined by types with precise widths.
+ */
+
+struct ulfs1_dinode {
+	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
+	int16_t		di_nlink;	/*   2: File link count. */
+	union {
+		u_int16_t oldids[2];	/*   4: Ffs: old user and group ids. */
+		u_int32_t inumber;	/*   4: Lfs: inode number. */
+	} di_u;
+	u_int64_t	di_size;	/*   8: File byte count. */
+	int32_t		di_atime;	/*  16: Last access time. */
+	int32_t		di_atimensec;	/*  20: Last access time. */
+	int32_t		di_mtime;	/*  24: Last modified time. */
+	int32_t		di_mtimensec;	/*  28: Last modified time. */
+	int32_t		di_ctime;	/*  32: Last inode change time. */
+	int32_t		di_ctimensec;	/*  36: Last inode change time. */
+	int32_t		di_db[ULFS_NDADDR]; /*  40: Direct disk blocks. */
+	int32_t		di_ib[ULFS_NIADDR]; /*  88: Indirect disk blocks. */
+	u_int32_t	di_flags;	/* 100: Status flags (chflags). */
+	u_int32_t	di_blocks;	/* 104: Blocks actually held. */
+	int32_t		di_gen;		/* 108: Generation number. */
+	u_int32_t	di_uid;		/* 112: File owner. */
+	u_int32_t	di_gid;		/* 116: File group. */
+	u_int64_t	di_modrev;	/* 120: i_modrev for NFSv4 */
+};
+
+struct ulfs2_dinode {
+	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
+	int16_t		di_nlink;	/*   2: File link count. */
+	u_int32_t	di_uid;		/*   4: File owner. */
+	u_int32_t	di_gid;		/*   8: File group. */
+	u_int32_t	di_blksize;	/*  12: Inode blocksize. */
+	u_int64_t	di_size;	/*  16: File byte count. */
+	u_int64_t	di_blocks;	/*  24: Bytes actually held. */
+	int64_t		di_atime;	/*  32: Last access time. */
+	int64_t		di_mtime;	/*  40: Last modified time. */
+	int64_t		di_ctime;	/*  48: Last inode change time. */
+	int64_t		di_birthtime;	/*  56: Inode creation time. */
+	int32_t		di_mtimensec;	/*  64: Last modified time. */
+	int32_t		di_atimensec;	/*  68: Last access time. */
+	int32_t		di_ctimensec;	/*  72: Last inode change time. */
+	int32_t		di_birthnsec;	/*  76: Inode creation time. */
+	int32_t		di_gen;		/*  80: Generation number. */
+	u_int32_t	di_kernflags;	/*  84: Kernel flags. */
+	u_int32_t	di_flags;	/*  88: Status flags (chflags). */
+	int32_t		di_extsize;	/*  92: External attributes block. */
+	int64_t		di_extb[ULFS_NXADDR];/* 96: External attributes block. */
+	int64_t		di_db[ULFS_NDADDR]; /* 112: Direct disk blocks. */
+	int64_t		di_ib[ULFS_NIADDR]; /* 208: Indirect disk blocks. */
+	u_int64_t	di_modrev;	/* 232: i_modrev for NFSv4 */
+	int64_t		di_spare[2];	/* 240: Reserved; currently unused */
+};
+
+/*
+ * The di_db fields may be overlaid with other information for
+ * file types that do not have associated disk storage. Block
+ * and character devices overlay the first data block with their
+ * dev_t value. Short symbolic links place their path in the
+ * di_db area.
+ */
+#define	di_inumber	di_u.inumber
+#define	di_ogid		di_u.oldids[1]
+#define	di_ouid		di_u.oldids[0]
+#define	di_rdev		di_db[0]
+
+/* Size of the on-disk inode. */
+#define	LFS_DINODE1_SIZE	(sizeof(struct ulfs1_dinode))	/* 128 */
+#define	LFS_DINODE2_SIZE	(sizeof(struct ulfs2_dinode))
 
 /*
  * "struct buf" associated definitions

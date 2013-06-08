@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dinode.h,v 1.4 2013/06/06 01:25:25 dholland Exp $	*/
+/*	$NetBSD: ulfs_dinode.h,v 1.5 2013/06/08 02:09:35 dholland Exp $	*/
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -72,74 +72,8 @@
 #define	ULFS_WINO	((ino_t)1)
 
 /*
- * A dinode contains all the meta-data associated with a ULFS file.
- * This structure defines the on-disk format of a dinode. Since
- * this structure describes an on-disk structure, all its fields
- * are defined by types with precise widths.
+ * Maximum length of a symlink that can be stored within the inode.
  */
-
-struct ulfs1_dinode {
-	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
-	int16_t		di_nlink;	/*   2: File link count. */
-	union {
-		u_int16_t oldids[2];	/*   4: Ffs: old user and group ids. */
-		u_int32_t inumber;	/*   4: Lfs: inode number. */
-	} di_u;
-	u_int64_t	di_size;	/*   8: File byte count. */
-	int32_t		di_atime;	/*  16: Last access time. */
-	int32_t		di_atimensec;	/*  20: Last access time. */
-	int32_t		di_mtime;	/*  24: Last modified time. */
-	int32_t		di_mtimensec;	/*  28: Last modified time. */
-	int32_t		di_ctime;	/*  32: Last inode change time. */
-	int32_t		di_ctimensec;	/*  36: Last inode change time. */
-	int32_t		di_db[ULFS_NDADDR]; /*  40: Direct disk blocks. */
-	int32_t		di_ib[ULFS_NIADDR]; /*  88: Indirect disk blocks. */
-	u_int32_t	di_flags;	/* 100: Status flags (chflags). */
-	u_int32_t	di_blocks;	/* 104: Blocks actually held. */
-	int32_t		di_gen;		/* 108: Generation number. */
-	u_int32_t	di_uid;		/* 112: File owner. */
-	u_int32_t	di_gid;		/* 116: File group. */
-	u_int64_t	di_modrev;	/* 120: i_modrev for NFSv4 */
-};
-
-struct ulfs2_dinode {
-	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
-	int16_t		di_nlink;	/*   2: File link count. */
-	u_int32_t	di_uid;		/*   4: File owner. */
-	u_int32_t	di_gid;		/*   8: File group. */
-	u_int32_t	di_blksize;	/*  12: Inode blocksize. */
-	u_int64_t	di_size;	/*  16: File byte count. */
-	u_int64_t	di_blocks;	/*  24: Bytes actually held. */
-	int64_t		di_atime;	/*  32: Last access time. */
-	int64_t		di_mtime;	/*  40: Last modified time. */
-	int64_t		di_ctime;	/*  48: Last inode change time. */
-	int64_t		di_birthtime;	/*  56: Inode creation time. */
-	int32_t		di_mtimensec;	/*  64: Last modified time. */
-	int32_t		di_atimensec;	/*  68: Last access time. */
-	int32_t		di_ctimensec;	/*  72: Last inode change time. */
-	int32_t		di_birthnsec;	/*  76: Inode creation time. */
-	int32_t		di_gen;		/*  80: Generation number. */
-	u_int32_t	di_kernflags;	/*  84: Kernel flags. */
-	u_int32_t	di_flags;	/*  88: Status flags (chflags). */
-	int32_t		di_extsize;	/*  92: External attributes block. */
-	int64_t		di_extb[ULFS_NXADDR];/* 96: External attributes block. */
-	int64_t		di_db[ULFS_NDADDR]; /* 112: Direct disk blocks. */
-	int64_t		di_ib[ULFS_NIADDR]; /* 208: Indirect disk blocks. */
-	u_int64_t	di_modrev;	/* 232: i_modrev for NFSv4 */
-	int64_t		di_spare[2];	/* 240: Reserved; currently unused */
-};
-
-/*
- * The di_db fields may be overlaid with other information for
- * file types that do not have associated disk storage. Block
- * and character devices overlay the first data block with their
- * dev_t value. Short symbolic links place their path in the
- * di_db area.
- */
-#define	di_inumber	di_u.inumber
-#define	di_ogid		di_u.oldids[1]
-#define	di_ouid		di_u.oldids[0]
-#define	di_rdev		di_db[0]
 #define ULFS1_MAXSYMLINKLEN	((ULFS_NDADDR + ULFS_NIADDR) * sizeof(int32_t))
 #define ULFS2_MAXSYMLINKLEN	((ULFS_NDADDR + ULFS_NIADDR) * sizeof(int64_t))
 
@@ -165,9 +99,5 @@ struct ulfs2_dinode {
 #define	IFLNK		0120000		/* Symbolic link. */
 #define	IFSOCK		0140000		/* UNIX domain socket. */
 #define	IFWHT		0160000		/* Whiteout. */
-
-/* Size of the on-disk inode. */
-#define	DINODE1_SIZE	(sizeof(struct ulfs1_dinode))		/* 128 */
-#define	DINODE2_SIZE	(sizeof(struct ulfs2_dinode))
 
 #endif /* !_UFS_LFS_ULFS_DINODE_H_ */
