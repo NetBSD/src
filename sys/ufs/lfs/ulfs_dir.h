@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dir.h,v 1.7 2013/06/08 02:14:46 dholland Exp $	*/
+/*	$NetBSD: ulfs_dir.h,v 1.8 2013/06/08 02:15:12 dholland Exp $	*/
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
 
 /*
@@ -39,8 +39,5 @@
 
 #ifndef _UFS_LFS_ULFS_DIR_H_
 #define	_UFS_LFS_ULFS_DIR_H_
-
-#define LFS_OLDDIRFMT	1
-#define LFS_NEWDIRFMT	0
 
 #endif /* !_UFS_LFS_ULFS_DIR_H_ */
