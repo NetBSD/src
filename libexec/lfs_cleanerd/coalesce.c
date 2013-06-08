@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.21 2013/06/06 00:53:35 dholland Exp $  */
+/*      $NetBSD: coalesce.c,v 1.22 2013/06/08 21:15:30 dholland Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 #include <sys/wait.h>
 #include <sys/mman.h>
 
-#include <ufs/lfs/ulfs_dinode.h>
 #include <ufs/lfs/lfs.h>
 
 #include <fcntl.h>
