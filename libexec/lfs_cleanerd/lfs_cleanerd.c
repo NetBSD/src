@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.34 2013/06/08 02:09:35 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.35 2013/06/08 21:15:30 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-#include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs.h>
 
 #include <assert.h>
