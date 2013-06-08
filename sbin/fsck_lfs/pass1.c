@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.34 2013/06/08 02:11:11 dholland Exp $	 */
+/* $NetBSD: pass1.c,v 1.35 2013/06/08 02:14:46 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -293,7 +293,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		brelse(bp, 0);
 	}
 
-	typemap[inumber] = IFTODT(mode);
+	typemap[inumber] = LFS_IFTODT(mode);
 	badblk = dupblk = 0;
 	idesc->id_number = inumber;
 	(void) ckinode(VTOD(vp), idesc);

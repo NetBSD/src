@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.25 2013/06/08 02:12:56 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.26 2013/06/08 02:14:46 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.25 2013/06/08 02:12:56 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.26 2013/06/08 02:14:46 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,16 +285,16 @@ make_dir(void *bufp, struct lfs_direct *protodir, int entries)
 	char *cp;
 	int i, spcleft;
 
-	spcleft = DIRBLKSIZ;
+	spcleft = LFS_DIRBLKSIZ;
 	for (cp = bufp, i = 0; i < entries - 1; i++) {
-		protodir[i].d_reclen = DIRSIZ(NEWDIRFMT, &protodir[i], 0);
+		protodir[i].d_reclen = LFS_DIRSIZ(LFS_NEWDIRFMT, &protodir[i], 0);
 		memmove(cp, &protodir[i], protodir[i].d_reclen);
 		cp += protodir[i].d_reclen;
 		if ((spcleft -= protodir[i].d_reclen) < 0)
 			fatal("%s: %s", special, "directory too big");
 	}
 	protodir[i].d_reclen = spcleft;
-	memmove(cp, &protodir[i], DIRSIZ(NEWDIRFMT, &protodir[i], 0));
+	memmove(cp, &protodir[i], LFS_DIRSIZ(LFS_NEWDIRFMT, &protodir[i], 0));
 }
 
 int
@@ -679,21 +679,21 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	/* Initialize root directory */
 	vp = lfs_raw_vget(fs, ULFS_ROOTINO, devfd, 0x0);
 	dip = VTOI(vp)->i_din.ffs1_din;
-	make_dinode(ULFS_ROOTINO, dip, howmany(DIRBLKSIZ,fs->lfs_fsize), fs);
+	make_dinode(ULFS_ROOTINO, dip, howmany(LFS_DIRBLKSIZ,fs->lfs_fsize), fs);
 	dip->di_mode = LFS_IFDIR | UMASK;
-	VTOI(vp)->i_lfs_osize = dip->di_size = DIRBLKSIZ;
+	VTOI(vp)->i_lfs_osize = dip->di_size = LFS_DIRBLKSIZ;
 #ifdef MAKE_LF_DIR
 	VTOI(vp)->i_nlink = dip->di_nlink = 3;
 #else
 	VTOI(vp)->i_nlink = dip->di_nlink = 2;
 #endif
         VTOI(vp)->i_lfs_effnblks = dip->di_blocks =
-		btofsb(fs, roundup(DIRBLKSIZ,fs->lfs_fsize));
-	for (i = 0; i < ULFS_NDADDR && i < howmany(DIRBLKSIZ, fs->lfs_bsize); i++)
+		btofsb(fs, roundup(LFS_DIRBLKSIZ,fs->lfs_fsize));
+	for (i = 0; i < ULFS_NDADDR && i < howmany(LFS_DIRBLKSIZ, fs->lfs_bsize); i++)
 		VTOI(vp)->i_lfs_fragsize[i] = fs->lfs_bsize;
-	if (DIRBLKSIZ < fs->lfs_bsize)
+	if (LFS_DIRBLKSIZ < fs->lfs_bsize)
 		VTOI(vp)->i_lfs_fragsize[i - 1] =
-			roundup(DIRBLKSIZ,fs->lfs_fsize);
+			roundup(LFS_DIRBLKSIZ,fs->lfs_fsize);
 	bread(vp, 0, fs->lfs_fsize, NOCRED, 0, &bp);
 	make_dir(bp->b_data, lfs_root_dir, 
 		 sizeof(lfs_root_dir) / sizeof(struct lfs_direct));

@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.29 2013/06/08 02:12:56 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.30 2013/06/08 02:14:46 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -57,7 +57,7 @@ const char *lfname = "lost+found";
 int lfmode = 01700;
 struct lfs_dirtemplate emptydir = {
 	.dot_ino = 0,
-	.dot_reclen = DIRBLKSIZ,
+	.dot_reclen = LFS_DIRBLKSIZ,
 };
 struct lfs_dirtemplate dirhead = {
 	.dot_ino = 0,
@@ -66,7 +66,7 @@ struct lfs_dirtemplate dirhead = {
 	.dot_namlen = 1,
 	.dot_name = ".",
 	.dotdot_ino = 0,
-	.dotdot_reclen = DIRBLKSIZ - 12,
+	.dotdot_reclen = LFS_DIRBLKSIZ - 12,
 	.dotdot_type = LFS_DT_DIR,
 	.dotdot_namlen = 2,
 	.dotdot_name = ".."
@@ -77,7 +77,7 @@ struct lfs_odirtemplate odirhead = {
 	.dot_namlen = 1,
 	.dot_name = ".",
 	.dotdot_ino = 0,
-	.dotdot_reclen = DIRBLKSIZ - 12,
+	.dotdot_reclen = LFS_DIRBLKSIZ - 12,
 	.dotdot_namlen = 2,
 	.dotdot_name = ".."
 };
@@ -135,14 +135,14 @@ dirscan(struct inodesc *idesc)
 	struct ubuf *bp;
 	int dsize, n;
 	long blksiz;
-	char dbuf[DIRBLKSIZ];
+	char dbuf[LFS_DIRBLKSIZ];
 	struct uvnode *vp;
 
 	if (idesc->id_type != DATA)
 		errexit("wrong type to dirscan %d", idesc->id_type);
 	if (idesc->id_entryno == 0 &&
-	    (idesc->id_filesize & (DIRBLKSIZ - 1)) != 0)
-		idesc->id_filesize = roundup(idesc->id_filesize, DIRBLKSIZ);
+	    (idesc->id_filesize & (LFS_DIRBLKSIZ - 1)) != 0)
+		idesc->id_filesize = roundup(idesc->id_filesize, LFS_DIRBLKSIZ);
 	blksiz = idesc->id_numfrags * fs->lfs_fsize;
 	if (chkrange(idesc->id_blkno, idesc->id_numfrags)) {
 		idesc->id_filesize -= blksiz;
@@ -181,7 +181,7 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 
 	blksiz = idesc->id_numfrags * fs->lfs_fsize;
 	bread(vp, idesc->id_lblkno, blksiz, NOCRED, 0, &bp);
-	if (idesc->id_loc % DIRBLKSIZ == 0 && idesc->id_filesize > 0 &&
+	if (idesc->id_loc % LFS_DIRBLKSIZ == 0 && idesc->id_filesize > 0 &&
 	    idesc->id_loc < blksiz) {
 		dp = (struct lfs_direct *) (bp->b_data + idesc->id_loc);
 		if (dircheck(idesc, dp))
@@ -192,7 +192,7 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bread(vp, idesc->id_lblkno, blksiz, NOCRED, 0, &bp);
 		dp = (struct lfs_direct *) (bp->b_data + idesc->id_loc);
-		dp->d_reclen = DIRBLKSIZ;
+		dp->d_reclen = LFS_DIRBLKSIZ;
 		dp->d_ino = 0;
 		dp->d_type = 0;
 		dp->d_namlen = 0;
@@ -201,8 +201,8 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 			VOP_BWRITE(bp);
 		else
 			brelse(bp, 0);
-		idesc->id_loc += DIRBLKSIZ;
-		idesc->id_filesize -= DIRBLKSIZ;
+		idesc->id_loc += LFS_DIRBLKSIZ;
+		idesc->id_filesize -= LFS_DIRBLKSIZ;
 		return (dp);
 	}
 dpok:
@@ -214,7 +214,7 @@ dpok:
 	dp = (struct lfs_direct *) (bp->b_data + dploc);
 	idesc->id_loc += dp->d_reclen;
 	idesc->id_filesize -= dp->d_reclen;
-	if ((idesc->id_loc % DIRBLKSIZ) == 0) {
+	if ((idesc->id_loc % LFS_DIRBLKSIZ) == 0) {
 		brelse(bp, 0);
 		return dp;
 	}
@@ -222,7 +222,7 @@ dpok:
 	if (idesc->id_loc < blksiz && idesc->id_filesize > 0 &&
 	    dircheck(idesc, ndp) == 0) {
 		brelse(bp, 0);
-		size = DIRBLKSIZ - (idesc->id_loc % DIRBLKSIZ);
+		size = LFS_DIRBLKSIZ - (idesc->id_loc % LFS_DIRBLKSIZ);
 		idesc->id_loc += size;
 		idesc->id_filesize -= size;
 		if (idesc->id_fix == IGNORE)
@@ -253,7 +253,7 @@ dircheck(struct inodesc *idesc, struct lfs_direct *dp)
 	u_char namlen, type;
 	int spaceleft;
 
-	spaceleft = DIRBLKSIZ - (idesc->id_loc % DIRBLKSIZ);
+	spaceleft = LFS_DIRBLKSIZ - (idesc->id_loc % LFS_DIRBLKSIZ);
 	if (dp->d_ino >= maxino ||
 	    dp->d_reclen == 0 ||
 	    dp->d_reclen > spaceleft ||
@@ -267,7 +267,7 @@ dircheck(struct inodesc *idesc, struct lfs_direct *dp)
 	}
 	if (dp->d_ino == 0)
 		return (1);
-	size = DIRSIZ(0, dp, 0);
+	size = LFS_DIRSIZ(0, dp, 0);
 	namlen = dp->d_namlen;
 	type = dp->d_type;
 	if (dp->d_reclen < size ||
@@ -363,9 +363,9 @@ mkentry(struct inodesc *idesc)
 	int newlen, oldlen;
 
 	newent.d_namlen = strlen(idesc->id_name);
-	newlen = DIRSIZ(0, &newent, 0);
+	newlen = LFS_DIRSIZ(0, &newent, 0);
 	if (dirp->d_ino != 0)
-		oldlen = DIRSIZ(0, dirp, 0);
+		oldlen = LFS_DIRSIZ(0, dirp, 0);
 	else
 		oldlen = 0;
 	if (dirp->d_reclen - oldlen < newlen)
@@ -541,8 +541,8 @@ makeentry(ino_t parent, ino_t ino, const char *name)
 	idesc.id_name = name;
 	vp = vget(fs, parent);
 	dp = VTOD(vp);
-	if (dp->di_size % DIRBLKSIZ) {
-		dp->di_size = roundup(dp->di_size, DIRBLKSIZ);
+	if (dp->di_size % LFS_DIRBLKSIZ) {
+		dp->di_size = roundup(dp->di_size, LFS_DIRBLKSIZ);
 		inodirty(VTOI(vp));
 	}
 	if ((ckinode(dp, &idesc) & ALTERED) != 0)
@@ -563,7 +563,7 @@ expanddir(struct uvnode *vp, struct ulfs1_dinode *dp, char *name)
 {
 	daddr_t lastbn;
 	struct ubuf *bp;
-	char *cp, firstblk[DIRBLKSIZ];
+	char *cp, firstblk[LFS_DIRBLKSIZ];
 
 	lastbn = lblkno(fs, dp->di_size);
 	if (lastbn >= ULFS_NDADDR - 1 || dp->di_db[lastbn] == 0 || dp->di_size == 0)
@@ -578,14 +578,14 @@ expanddir(struct uvnode *vp, struct ulfs1_dinode *dp, char *name)
 	    (long) dblksize(fs, dp, lastbn + 1), NOCRED, 0, &bp);
 	if (bp->b_flags & B_ERROR)
 		goto bad;
-	memcpy(firstblk, bp->b_data, DIRBLKSIZ);
+	memcpy(firstblk, bp->b_data, LFS_DIRBLKSIZ);
 	bread(vp, lastbn, fs->lfs_bsize, NOCRED, 0, &bp);
 	if (bp->b_flags & B_ERROR)
 		goto bad;
-	memcpy(bp->b_data, firstblk, DIRBLKSIZ);
-	for (cp = &bp->b_data[DIRBLKSIZ];
+	memcpy(bp->b_data, firstblk, LFS_DIRBLKSIZ);
+	for (cp = &bp->b_data[LFS_DIRBLKSIZ];
 	    cp < &bp->b_data[fs->lfs_bsize];
-	    cp += DIRBLKSIZ)
+	    cp += LFS_DIRBLKSIZ)
 		memcpy(cp, &emptydir, sizeof emptydir);
 	VOP_BWRITE(bp);
 	bread(vp, dp->di_db[lastbn + 1],
@@ -635,9 +635,9 @@ allocdir(ino_t parent, ino_t request, int mode)
 		return (0);
 	}
 	memcpy(bp->b_data, dirp, sizeof(struct lfs_dirtemplate));
-	for (cp = &bp->b_data[DIRBLKSIZ];
+	for (cp = &bp->b_data[LFS_DIRBLKSIZ];
 	    cp < &bp->b_data[fs->lfs_fsize];
-	    cp += DIRBLKSIZ)
+	    cp += LFS_DIRBLKSIZ)
 		memcpy(cp, &emptydir, sizeof emptydir);
 	VOP_BWRITE(bp);
 	dp->di_nlink = 2;
