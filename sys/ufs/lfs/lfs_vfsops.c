@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.302 2013/06/06 00:49:28 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.303 2013/06/08 02:11:11 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.302 2013/06/06 00:49:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.303 2013/06/08 02:11:11 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1999,7 +1999,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 # endif
 		panic("lfs_vinit: ino %llu is type VNON! (ifmt=%o)\n",
 		      (unsigned long long)ip->i_number,
-		      (ip->i_mode & IFMT) >> 12);
+		      (ip->i_mode & LFS_IFMT) >> 12);
 	}
 #endif /* DIAGNOSTIC */
 
