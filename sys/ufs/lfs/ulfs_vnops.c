@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.11 2013/06/08 21:40:27 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.12 2013/06/08 22:05:15 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.11 2013/06/08 21:40:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.12 2013/06/08 22:05:15 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -102,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.11 2013/06/08 21:40:27 dholland Exp
 #include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/ulfs_bswap.h>
 #include <ufs/lfs/ulfs_extern.h>
-#include <ufs/lfs/ulfs_wapbl.h>
 #ifdef LFS_DIRHASH
 #include <ufs/lfs/ulfs_dirhash.h>
 #endif
@@ -143,10 +142,6 @@ ulfs_create(void *v)
 	ulr = &VTOI(dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	/*
-	 * ULFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
-	 * ulfs_makeinode
-	 */
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	error =
 	    ulfs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
@@ -155,7 +150,6 @@ ulfs_create(void *v)
 		fstrans_done(dvp->v_mount);
 		return (error);
 	}
-	ULFS_WAPBL_END1(dvp->v_mount, dvp);
 	fstrans_done(dvp->v_mount);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	return (0);
@@ -189,10 +183,6 @@ ulfs_mknod(void *v)
 	ulr = &VTOI(ap->a_dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
 
-	/*
-	 * ULFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
-	 * ulfs_makeinode
-	 */
 	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
 	if ((error =
 	    ulfs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
@@ -216,8 +206,6 @@ ulfs_mknod(void *v)
 			ip->i_ffs2_rdev = ulfs_rw64(vap->va_rdev,
 			    ULFS_MPNEEDSWAP(ump));
 	}
-	ULFS_WAPBL_UPDATE(*vpp, NULL, NULL, 0);
-	ULFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
 	/*
 	 * Remove inode so that it will be reloaded by VFS_VGET and
 	 * checked to see if it is an alias of an existing entry in
@@ -510,22 +498,14 @@ ulfs_setattr(void *v)
 			goto out;
 
 		if (changing_sysflags) {
-			error = ULFS_WAPBL_BEGIN(vp->v_mount);
-			if (error)
-				goto out;
 			ip->i_flags = vap->va_flags;
 			DIP_ASSIGN(ip, flags, ip->i_flags);
 		} else {
-			error = ULFS_WAPBL_BEGIN(vp->v_mount);
-			if (error)
-				goto out;
 			ip->i_flags &= SF_SETTABLE;
 			ip->i_flags |= (vap->va_flags & UF_SETTABLE);
 			DIP_ASSIGN(ip, flags, ip->i_flags);
 		}
 		ip->i_flag |= IN_CHANGE;
-		ULFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
-		ULFS_WAPBL_END(vp->v_mount);
 		if (vap->va_flags & (IMMUTABLE | APPEND)) {
 			error = 0;
 			goto out;
@@ -543,11 +523,7 @@ ulfs_setattr(void *v)
 			error = EROFS;
 			goto out;
 		}
-		error = ULFS_WAPBL_BEGIN(vp->v_mount);
-		if (error)
-			goto out;
 		error = ulfs_chown(vp, vap->va_uid, vap->va_gid, cred, l);
-		ULFS_WAPBL_END(vp->v_mount);
 		if (error)
 			goto out;
 	}
@@ -574,12 +550,7 @@ ulfs_setattr(void *v)
 				error = EPERM;
 				goto out;
 			}
-			error = ULFS_WAPBL_BEGIN(vp->v_mount);
-			if (error)
-				goto out;
-			if (!error)
-				error = ULFS_TRUNCATE(vp, vap->va_size, 0, cred);
-			ULFS_WAPBL_END(vp->v_mount);
+			error = ULFS_TRUNCATE(vp, vap->va_size, 0, cred);
 			if (error)
 				goto out;
 			break;
@@ -603,9 +574,6 @@ ulfs_setattr(void *v)
 		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid, cred));
 		if (error)
 			goto out;
-		error = ULFS_WAPBL_BEGIN(vp->v_mount);
-		if (error)
-			goto out;
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
 				ip->i_flag |= IN_ACCESS;
@@ -620,7 +588,6 @@ ulfs_setattr(void *v)
 			ip->i_ffs2_birthnsec = vap->va_birthtime.tv_nsec;
 		}
 		error = ULFS_UPDATE(vp, &vap->va_atime, &vap->va_mtime, 0);
-		ULFS_WAPBL_END(vp->v_mount);
 		if (error)
 			goto out;
 	}
@@ -636,11 +603,7 @@ ulfs_setattr(void *v)
 			error = EPERM;
 			goto out;
 		}
-		error = ULFS_WAPBL_BEGIN(vp->v_mount);
-		if (error)
-			goto out;
 		error = ulfs_chmod(vp, (int)vap->va_mode, cred, l);
-		ULFS_WAPBL_END(vp->v_mount);
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 out:
@@ -658,8 +621,6 @@ ulfs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	struct inode	*ip;
 	int		error;
 
-	ULFS_WAPBL_JLOCK_ASSERT(vp->v_mount);
-
 	ip = VTOI(vp);
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
@@ -672,7 +633,6 @@ ulfs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	ip->i_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
 	DIP_ASSIGN(ip, mode, ip->i_mode);
-	ULFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	fstrans_done(vp->v_mount);
 	return (0);
 }
@@ -735,7 +695,6 @@ ulfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
  good:
 #endif /* LFS_QUOTA || LFS_QUOTA2 */
 	ip->i_flag |= IN_CHANGE;
-	ULFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	fstrans_done(vp->v_mount);
 	return (0);
 }
@@ -766,12 +725,8 @@ ulfs_remove(void *v)
 	    (VTOI(dvp)->i_flags & APPEND))
 		error = EPERM;
 	else {
-		error = ULFS_WAPBL_BEGIN(dvp->v_mount);
-		if (error == 0) {
-			error = ulfs_dirremove(dvp, ulr,
-					      ip, ap->a_cnp->cn_flags, 0);
-			ULFS_WAPBL_END(dvp->v_mount);
-		}
+		error = ulfs_dirremove(dvp, ulr,
+				      ip, ap->a_cnp->cn_flags, 0);
 	}
 	VN_KNOTE(vp, NOTE_DELETE);
 	VN_KNOTE(dvp, NOTE_WRITE);
@@ -828,11 +783,6 @@ ulfs_link(void *v)
 		error = EPERM;
 		goto out1;
 	}
-	error = ULFS_WAPBL_BEGIN(vp->v_mount);
-	if (error) {
-		VOP_ABORTOP(dvp, cnp);
-		goto out1;
-	}
 	ip->i_nlink++;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_flag |= IN_CHANGE;
@@ -847,9 +797,7 @@ ulfs_link(void *v)
 		ip->i_nlink--;
 		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
-		ULFS_WAPBL_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	}
-	ULFS_WAPBL_END(vp->v_mount);
  out1:
 	VOP_UNLOCK(vp);
  out2:
@@ -893,9 +841,6 @@ ulfs_whiteout(void *v)
 	case CREATE:
 		/* create a new directory whiteout */
 		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-		error = ULFS_WAPBL_BEGIN(dvp->v_mount);
-		if (error)
-			break;
 #ifdef DIAGNOSTIC
 		if (ump->um_maxsymlinklen <= 0)
 			panic("ulfs_whiteout: old format filesystem");
@@ -915,9 +860,6 @@ ulfs_whiteout(void *v)
 	case DELETE:
 		/* remove an existing directory whiteout */
 		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-		error = ULFS_WAPBL_BEGIN(dvp->v_mount);
-		if (error)
-			break;
 #ifdef DIAGNOSTIC
 		if (ump->um_maxsymlinklen <= 0)
 			panic("ulfs_whiteout: old format filesystem");
@@ -930,7 +872,6 @@ ulfs_whiteout(void *v)
 		panic("ulfs_whiteout: unknown op");
 		/* NOTREACHED */
 	}
-	ULFS_WAPBL_END(dvp->v_mount);
 	fstrans_done(dvp->v_mount);
 	return (error);
 }
@@ -979,12 +920,6 @@ ulfs_mkdir(void *v)
 	tvp = *ap->a_vpp;
 	ip = VTOI(tvp);
 
-	error = ULFS_WAPBL_BEGIN(ap->a_dvp->v_mount);
-	if (error) {
-		ULFS_VFREE(tvp, ip->i_number, dmode);
-		vput(tvp);
-		goto out;
-	}
 	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
 	DIP_ASSIGN(ip, uid, ip->i_uid);
 	ip->i_gid = dp->i_gid;
@@ -992,7 +927,6 @@ ulfs_mkdir(void *v)
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	if ((error = lfs_chkiq(ip, 1, cnp->cn_cred, 0))) {
 		ULFS_VFREE(tvp, ip->i_number, dmode);
-		ULFS_WAPBL_END(dvp->v_mount);
 		fstrans_done(dvp->v_mount);
 		vput(tvp);
 		vput(dvp);
@@ -1071,12 +1005,10 @@ ulfs_mkdir(void *v)
  bad:
 	if (error == 0) {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-		ULFS_WAPBL_END(dvp->v_mount);
 	} else {
 		dp->i_nlink--;
 		DIP_ASSIGN(dp, nlink, dp->i_nlink);
 		dp->i_flag |= IN_CHANGE;
-		ULFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
 		/*
 		 * No need to do an explicit ULFS_TRUNCATE here, vrele will
 		 * do this for us because we set the link count to 0.
@@ -1086,8 +1018,6 @@ ulfs_mkdir(void *v)
 		ip->i_flag |= IN_CHANGE;
 		/* If IN_ADIROP, account for it */
 		ULFS_UNMARK_VNODE(tvp);
-		ULFS_WAPBL_UPDATE(tvp, NULL, NULL, UPDATE_DIROP);
-		ULFS_WAPBL_END(dvp->v_mount);
 		vput(tvp);
 	}
  out:
@@ -1151,9 +1081,6 @@ ulfs_rmdir(void *v)
 		error = EPERM;
 		goto out;
 	}
-	error = ULFS_WAPBL_BEGIN(dvp->v_mount);
-	if (error)
-		goto out;
 	/*
 	 * Delete reference to directory before purging
 	 * inode.  If we crash in between, the directory
@@ -1161,7 +1088,6 @@ ulfs_rmdir(void *v)
 	 */
 	error = ulfs_dirremove(dvp, ulr, ip, cnp->cn_flags, 1);
 	if (error) {
-		ULFS_WAPBL_END(dvp->v_mount);
 		goto out;
 	}
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
@@ -1174,17 +1100,11 @@ ulfs_rmdir(void *v)
 	dp->i_nlink--;
 	DIP_ASSIGN(dp, nlink, dp->i_nlink);
 	dp->i_flag |= IN_CHANGE;
-	ULFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
 	ip->i_nlink--;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_flag |= IN_CHANGE;
 	error = ULFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(vp);
-	/*
-	 * Unlock the log while we still have reference to unlinked
-	 * directory vp so that it will not get locked for recycling
-	 */
-	ULFS_WAPBL_END(dvp->v_mount);
 #ifdef LFS_DIRHASH
 	if (ip->i_dirhash != NULL)
 		ulfsdirhash_free(ip);
@@ -1221,10 +1141,6 @@ ulfs_symlink(void *v)
 	ulr = &VTOI(ap->a_dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
 
-	/*
-	 * ULFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
-	 * ulfs_makeinode
-	 */
 	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
 	error = ulfs_makeinode(LFS_IFLNK | ap->a_vap->va_mode, ap->a_dvp, ulr,
 			      vpp, ap->a_cnp);
@@ -1242,12 +1158,10 @@ ulfs_symlink(void *v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (vp->v_mount->mnt_flag & MNT_RELATIME)
 			ip->i_flag |= IN_ACCESS;
-		ULFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED | IO_JOURNALLOCKED,
 		    ap->a_cnp->cn_cred, NULL, NULL);
-	ULFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
 	if (error)
 		vput(vp);
 out:
@@ -1763,8 +1677,6 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	struct vnode	*tvp;
 	int		error;
 
-	ULFS_WAPBL_JUNLOCK_ASSERT(dvp->v_mount);
-
 	pdir = VTOI(dvp);
 
 	if ((mode & LFS_IFMT) == 0)
@@ -1780,21 +1692,9 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	DIP_ASSIGN(ip, gid, ip->i_gid);
 	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
 	DIP_ASSIGN(ip, uid, ip->i_uid);
-	error = ULFS_WAPBL_BEGIN1(dvp->v_mount, dvp);
-	if (error) {
-		/*
-		 * Note, we can't VOP_VFREE(tvp) here like we should
-		 * because we can't write to the disk.  Instead, we leave
-		 * the vnode dangling from the journal.
-		 */
-		vput(tvp);
-		vput(dvp);
-		return (error);
-	}
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	if ((error = lfs_chkiq(ip, 1, cnp->cn_cred, 0))) {
 		ULFS_VFREE(tvp, ip->i_number, mode);
-		ULFS_WAPBL_END1(dvp->v_mount, dvp);
 		vput(tvp);
 		vput(dvp);
 		return (error);
@@ -1848,9 +1748,7 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	ip->i_flag |= IN_CHANGE;
 	/* If IN_ADIROP, account for it */
 	ULFS_UNMARK_VNODE(tvp);
-	ULFS_WAPBL_UPDATE(tvp, NULL, NULL, 0);
 	tvp->v_type = VNON;		/* explodes later if VBLK */
-	ULFS_WAPBL_END1(dvp->v_mount, dvp);
 	vput(tvp);
 	vput(dvp);
 	return (error);
@@ -1900,7 +1798,6 @@ ulfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
         }
 
 out:
-	ULFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	return error;
 }
 

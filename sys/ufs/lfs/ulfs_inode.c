@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.6 2013/06/08 21:40:27 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.7 2013/06/08 22:05:15 dholland Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.89 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.6 2013/06/08 21:40:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.7 2013/06/08 22:05:15 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.6 2013/06/08 21:40:27 dholland Exp 
 #include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/ulfs_extern.h>
-#include <ufs/lfs/ulfs_wapbl.h>
 #ifdef LFS_DIRHASH
 #include <ufs/lfs/ulfs_dirhash.h>
 #endif
@@ -88,9 +87,6 @@ ulfs_inactive(void *v)
 	struct mount *transmp;
 	mode_t mode;
 	int error = 0;
-	int logged = 0;
-
-	ULFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
 
 	transmp = vp->v_mount;
 	fstrans_start(transmp, FSTRANS_LAZY);
@@ -103,13 +99,8 @@ ulfs_inactive(void *v)
 #ifdef LFS_EXTATTR
 		ulfs_extattr_vnode_inactive(vp, curlwp);
 #endif
-		error = ULFS_WAPBL_BEGIN(vp->v_mount);
-		if (error)
-			goto out;
-		logged = 1;
 		if (ip->i_size != 0) {
-			if (!error)
-				error = ULFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
+			error = ULFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 		(void)lfs_chkiq(ip, -1, NOCRED, 0);
@@ -126,16 +117,9 @@ ulfs_inactive(void *v)
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
-		if (!logged++) {
-			int err;
-			err = ULFS_WAPBL_BEGIN(vp->v_mount);
-			if (err)
-				goto out;
-		}
 		ULFS_UPDATE(vp, NULL, NULL, 0);
 	}
-	if (logged)
-		ULFS_WAPBL_END(vp->v_mount);
+
 out:
 	/*
 	 * If we are done with the inode, reclaim it
@@ -158,10 +142,9 @@ ulfs_reclaim(struct vnode *vp)
 	if (prtactive && vp->v_usecount > 1)
 		vprint("ulfs_reclaim: pushing active", vp);
 
-	if (!ULFS_WAPBL_BEGIN(vp->v_mount)) {
-		ULFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
-		ULFS_WAPBL_END(vp->v_mount);
-	}
+	/* XXX: do we really need two of these? */
+	/* note: originally the first was inside a wapbl txn */
+	ULFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
 	ULFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
 
 	/*

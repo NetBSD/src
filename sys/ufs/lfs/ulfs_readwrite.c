@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.2 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.3 2013/06/08 22:05:15 dholland Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.2 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.3 2013/06/08 22:05:15 dholland Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -44,9 +44,6 @@ __KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.2 2013/06/06 00:48:04 dholland 
 #define	WRITE_S			"lfs_write"
 #define	fs_bsize		lfs_bsize
 #define	fs_bmask		lfs_bmask
-#define	ULFS_WAPBL_BEGIN(mp)	0
-#define	ULFS_WAPBL_END(mp)	do { } while (0)
-#define	ULFS_WAPBL_UPDATE(vp, access, modify, flags)	do { } while (0)
 #else
 #define	FS			struct fs
 #define	I_FS			i_fs
@@ -186,13 +183,7 @@ READ(void *v)
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
-			error = ULFS_WAPBL_BEGIN(vp->v_mount);
-			if (error) {
-				fstrans_done(vp->v_mount);
-				return error;
-			}
 			error = ULFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
-			ULFS_WAPBL_END(vp->v_mount);
 		}
 	}
 
@@ -284,14 +275,6 @@ WRITE(void *v)
 	error = 0;
 
 	usepc = vp->v_type == VREG;
-
-	if ((ioflag & IO_JOURNALLOCKED) == 0) {
-		error = ULFS_WAPBL_BEGIN(vp->v_mount);
-		if (error) {
-			fstrans_done(vp->v_mount);
-			return error;
-		}
-	}
 
 #ifdef LFS_READWRITE
 	async = true;
@@ -534,13 +517,12 @@ out:
 		(void) ULFS_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
-	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
+	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC) {
 		error = ULFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
-	else
-		ULFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
+	} else {
+		/* nothing */
+	}
 	KASSERT(vp->v_size == ip->i_size);
-	if ((ioflag & IO_JOURNALLOCKED) == 0)
-		ULFS_WAPBL_END(vp->v_mount);
 	fstrans_done(vp->v_mount);
 
 	return (error);

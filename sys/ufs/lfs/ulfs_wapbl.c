@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_wapbl.c,v 1.4 2013/06/06 00:51:25 dholland Exp $	*/
+/*	$NetBSD: ulfs_wapbl.c,v 1.5 2013/06/08 22:05:15 dholland Exp $	*/
 /*  from NetBSD: ufs_wapbl.c,v 1.23 2012/01/27 19:22:50 para Exp  */
 
 /*-
@@ -67,99 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_wapbl.c,v 1.4 2013/06/06 00:51:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_wapbl.c,v 1.5 2013/06/08 22:05:15 dholland Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/namei.h>
-#include <sys/resourcevar.h>
-#include <sys/kernel.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/buf.h>
-#include <sys/proc.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/dirent.h>
-#include <sys/lockf.h>
-#include <sys/kauth.h>
-#include <sys/wapbl.h>
-#include <sys/fstrans.h>
-
-#include <miscfs/specfs/specdev.h>
-#include <miscfs/fifofs/fifo.h>
-
-#include <ufs/lfs/ulfs_quotacommon.h>
-#include <ufs/lfs/ulfs_inode.h>
-#include <ufs/lfs/ulfs_dir.h>
-#include <ufs/lfs/ulfsmount.h>
-#include <ufs/lfs/ulfs_bswap.h>
-#include <ufs/lfs/ulfs_extern.h>
 #include <ufs/lfs/ulfs_wapbl.h>
-#include <ufs/lfs/lfs_extern.h>
-
-#include <uvm/uvm.h>
-
-#ifdef WAPBL_DEBUG_INODES
-#error WAPBL_DEBUG_INODES: not functional before ulfs_wapbl.c is updated
-void
-ulfs_wapbl_verify_inodes(struct mount *mp, const char *str)
-{
-	struct vnode *vp, *nvp;
-	struct inode *ip;
-	struct buf *bp, *nbp;
-
-	mutex_enter(&mntvnode_lock);
- loop:
-	TAILQ_FOREACH_REVERSE(vp, &mp->mnt_vnodelist, vnodelst, v_mntvnodes) {
-		/*
-		 * If the vnode that we are about to sync is no longer
-		 * associated with this mount point, start over.
-		 */
-		if (vp->v_mount != mp)
-			goto loop;
-		mutex_enter(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-		ip = VTOI(vp);
-		if (vp->v_type == VNON) {
-			mutex_exit(&vp->v_interlock);
-			continue;
-		}
-		/* verify that update has been called on all inodes */
-		if (ip->i_flag & (IN_CHANGE | IN_UPDATE)) {
-			panic("wapbl_verify: mp %p: dirty vnode %p (inode %p): 0x%x\n",
-				mp, vp, ip, ip->i_flag);
-		}
-		mutex_exit(&mntvnode_lock);
-
-		mutex_enter(&bufcache_lock);
-		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
-			nbp = LIST_NEXT(bp, b_vnbufs);
-			if ((bp->b_cflags & BC_BUSY)) {
-				continue;
-			}
-			KASSERT((bp->b_oflags & BO_DELWRI) != 0);
-			KASSERT((bp->b_flags & B_LOCKED) != 0);
-		}
-		mutex_exit(&bufcache_lock);
-		mutex_exit(&vp->v_interlock);
-
-		mutex_enter(&mntvnode_lock);
-	}
-	mutex_exit(&mntvnode_lock);
-
-	vp = VFSTOULFS(mp)->um_devvp;
-	mutex_enter(&vp->v_interlock);
-	mutex_enter(&bufcache_lock);
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
-		nbp = LIST_NEXT(bp, b_vnbufs);
-		if ((bp->b_cflags & BC_BUSY)) {
-			continue;
-		}
-		KASSERT((bp->b_oflags & BO_DELWRI) != 0);
-		KASSERT((bp->b_flags & B_LOCKED) != 0);
-	}
-	mutex_exit(&bufcache_lock);
-	mutex_exit(&vp->v_interlock);
-}
-#endif /* WAPBL_DEBUG_INODES */
