@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.5 2013/06/06 00:49:28 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.6 2013/06/08 22:05:15 dholland Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 
 /*-
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.5 2013/06/06 00:49:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.6 2013/06/08 22:05:15 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.5 2013/06/06 00:49:28 dholland Exp
 #include <ufs/lfs/ulfs_bswap.h>
 #include <ufs/lfs/ulfs_extern.h>
 #include <ufs/lfs/ulfs_quota.h>
-#include <ufs/lfs/ulfs_wapbl.h>
 
 /*
  * LOCKING:
@@ -380,9 +379,6 @@ getinoquota2(struct inode *ip, bool alloc, bool modify, struct buf **bpp,
 	if (error)
 		return error;
 
-	if (alloc) {
-		ULFS_WAPBL_JLOCK_ASSERT(ump->um_mountp);
-	}
         ino_ids[ULFS_USRQUOTA] = ip->i_uid;
         ino_ids[ULFS_GRPQUOTA] = ip->i_gid;
 	/* first get the interlock for all dquot */
@@ -594,9 +590,6 @@ lfsquota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
 
 	if (ump->um_quotas[key->qk_idtype] == NULLVP)
 		return ENODEV;
-	error = ULFS_WAPBL_BEGIN(ump->um_mountp);
-	if (error)
-		return error;
 	
 	if (key->qk_id == QUOTA_DEFAULTID) {
 		mutex_enter(&lfs_dqlock);
@@ -641,7 +634,6 @@ out_il:
 	mutex_exit(&dq->dq_interlock);
 	lfs_dqrele(NULLVP, dq);
 out_wapbl:
-	ULFS_WAPBL_END(ump->um_mountp);
 	return error;
 }
 
@@ -720,10 +712,7 @@ lfsquota2_handle_cmd_delete(struct ulfsmount *ump, const struct quotakey *qk)
 		error = ENOENT;
 		goto out_il;
 	}
-	error = ULFS_WAPBL_BEGIN(ump->um_mountp);
-	if (error)
-		goto out_dq;
-	
+
 	error = getq2e(ump, idtype, dq->dq2_lblkno, dq->dq2_blkoff,
 	    &bp, &q2ep, B_MODIFY);
 	if (error)
@@ -782,10 +771,8 @@ lfsquota2_handle_cmd_delete(struct ulfsmount *ump, const struct quotakey *qk)
 out_dqlock:
 	mutex_exit(&lfs_dqlock);
 out_wapbl:
-	ULFS_WAPBL_END(ump->um_mountp);
 out_il:
 	mutex_exit(&dq->dq_interlock);
-out_dq:
 	lfs_dqrele(NULLVP, dq);
 	return error;
 }
