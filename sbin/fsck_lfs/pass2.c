@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.22 2013/06/08 02:14:46 dholland Exp $	 */
+/* $NetBSD: pass2.c,v 1.23 2013/06/08 02:16:03 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -35,9 +35,8 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 
-#include <ufs/lfs/ulfs_inode.h>
-#include <ufs/lfs/ulfs_dir.h>
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_inode.h>
 
 #include <err.h>
 #include <stdio.h>
