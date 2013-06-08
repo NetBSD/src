@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dinode.h,v 1.10 2013/06/08 02:15:12 dholland Exp $	*/
+/*	$NetBSD: ulfs_dinode.h,v 1.11 2013/06/08 22:19:01 dholland Exp $	*/
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -44,10 +44,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)dinode.h	8.9 (Berkeley) 3/29/95
- */
-
-/*
- * NOTE: COORDINATE ON-DISK FORMAT CHANGES WITH THE FREEBSD PROJECT.
  */
 
 #ifndef	_UFS_LFS_ULFS_DINODE_H_
