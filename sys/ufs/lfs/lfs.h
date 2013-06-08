@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.148 2013/06/08 02:16:30 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.149 2013/06/08 22:19:01 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -139,6 +139,10 @@
  * SUCH DAMAGE.
  *
  *	@(#)dir.h	8.5 (Berkeley) 4/27/95
+ */
+
+/*
+ * NOTE: COORDINATE ON-DISK FORMAT CHANGES WITH THE FREEBSD PROJECT.
  */
 
 #ifndef _UFS_LFS_LFS_H_
