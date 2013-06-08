@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.58 2013/06/04 22:47:37 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.59 2013/06/08 03:26:05 rmind Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.58 2013/06/04 22:47:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.59 2013/06/08 03:26:05 rmind Exp $");
 
 /*
  * IPsec controller part.
@@ -731,6 +731,102 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 		DPRINTF(("%s: done, error %d\n", __func__, *error));
 	}
 	return sp;
+}
+
+int
+ipsec4_output(struct mbuf *m, struct socket *so, int flags,
+    struct secpolicy **sp_out, u_long *mtu, bool *natt_frag, bool *done)
+{
+	const struct ip *ip = mtod(m, const struct ip *);
+	struct secpolicy *sp = NULL;
+	struct inpcb *inp;
+	int error, s;
+
+	inp = (so && so->so_proto->pr_domain->dom_family == AF_INET) ?
+	    (struct inpcb *)so->so_pcb : NULL;
+
+	/*
+	 * Check the security policy (SP) for the packet and, if required,
+	 * do IPsec-related processing.  There are two cases here; the first
+	 * time a packet is sent through it will be untagged and handled by
+	 * ipsec4_checkpolicy().  If the packet is resubmitted to ip_output
+	 * (e.g. after AH, ESP, etc. processing), there will be a tag to
+	 * bypass the lookup and related policy checking.
+	 */
+	if (ipsec_outdone(m)) {
+		return 0;
+	}
+	s = splsoftnet();
+	if (inp && IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND)) {
+		splx(s);
+		return 0;
+	}
+	sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error, inp);
+
+	/*
+	 * There are four return cases:
+	 *	sp != NULL			apply IPsec policy
+	 *	sp == NULL, error == 0		no IPsec handling needed
+	 *	sp == NULL, error == -EINVAL	discard packet w/o error
+	 *	sp == NULL, error != 0		discard packet, report error
+	 */
+	if (sp == NULL) {
+		splx(s);
+		if (error) {
+			/*
+			 * Hack: -EINVAL is used to signal that a packet
+			 * should be silently discarded.  This is typically
+			 * because we asked key management for an SA and
+			 * it was delayed (e.g. kicked up to IKE).
+			 */
+			if (error == -EINVAL)
+				error = 0;
+			m_freem(m);
+			*done = true;
+			return error;
+		}
+		/* No IPsec processing for this packet. */
+		return 0;
+	}
+	*sp_out = sp;
+
+	/*
+	 * NAT-T ESP fragmentation: do not do IPSec processing now,
+	 * we will do it on each fragmented packet.
+	 */
+	if (sp->req->sav && (sp->req->sav->natt_type &
+	    (UDP_ENCAP_ESPINUDP|UDP_ENCAP_ESPINUDP_NON_IKE))) {
+		if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
+			*mtu = sp->req->sav->esp_frag;
+			*natt_frag = true;
+			splx(s);
+			return 0;
+		}
+	}
+
+	/*
+	 * Do delayed checksums now because we send before
+	 * this is done in the normal processing path.
+	 */
+	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+		in_delayed_cksum(m);
+		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+	}
+
+	/* Note: callee frees mbuf */
+	error = ipsec4_process_packet(m, sp->req, flags, 0);
+	/*
+	 * Preserve KAME behaviour: ENOENT can be returned
+	 * when an SA acquire is in progress.  Don't propagate
+	 * this to user-level; it confuses applications.
+	 *
+	 * XXX this will go away when the SADB is redone.
+	 */
+	if (error == ENOENT)
+		error = 0;
+	splx(s);
+	*done = true;
+	return error;
 }
 
 #ifdef INET6
