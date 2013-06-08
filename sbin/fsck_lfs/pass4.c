@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.20 2013/06/06 00:54:49 dholland Exp $	 */
+/* $NetBSD: pass4.c,v 1.21 2013/06/08 02:16:03 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -33,12 +33,11 @@
 #include <sys/time.h>
 #include <sys/mount.h>
 
-#define _SYS_VNODE_H_ /* XXX */
 #define vnode uvnode
 #define buf ubuf
 #define panic call_panic
-#include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_inode.h>
 
 #include <err.h>
 #include <stdlib.h>
