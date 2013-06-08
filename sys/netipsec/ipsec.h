@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.32 2013/06/04 22:47:37 christos Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.33 2013/06/08 03:26:05 rmind Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -256,7 +256,8 @@ struct secpolicy *ipsec4_checkpolicy (struct mbuf *, u_int, u_int,
 	int *, struct inpcb *);
 struct secpolicy * ipsec_getpolicybyaddr(struct mbuf *, u_int,
 	int, int *);
-
+int ipsec4_output(struct mbuf *, struct socket *, int,
+	struct secpolicy **, u_long *, bool *, bool *);
 
 static __inline struct secpolicy*
 ipsec4_getpolicybysock(
