@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.33 2013/06/06 00:53:35 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.34 2013/06/08 02:09:35 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -485,7 +485,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 				bip[*bic - 1].bi_segcreate = ssp->ss_create;
 				bip[*bic - 1].bi_version = dip[i].di_gen;
 				bip[*bic - 1].bi_bp = &(dip[i]);
-				bip[*bic - 1].bi_size = DINODE1_SIZE;
+				bip[*bic - 1].bi_size = LFS_DINODE1_SIZE;
 			}
 			inoc += i;
 			daddr += btofsb(fs, fs->lfs_ibsize);
