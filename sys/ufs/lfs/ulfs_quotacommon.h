@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quotacommon.h,v 1.3 2013/06/06 00:49:28 dholland Exp $	*/
+/*	$NetBSD: ulfs_quotacommon.h,v 1.4 2013/06/08 02:04:31 dholland Exp $	*/
 /*  from NetBSD: quota.h,v 1.30 2012/08/26 02:32:14 dholland Exp  */
 
 /*
@@ -38,21 +38,13 @@
 #ifndef	_UFS_LFS_ULFS_QUOTACOMMON_H_
 #define	_UFS_LFS_ULFS_QUOTACOMMON_H_
 
+#include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_inode.h>
+
 /*
  * These definitions are common to the original disk quota implementation
  * (quota1) and the newer implementation (quota2)
  */
-
-/*
- * The following constants define the usage of the quota file array in the
- * ulfsmount structure and dquot array in the inode structure.  The semantics
- * of the elements of these arrays are defined in the routine lfs_getinoquota;
- * the remainder of the quota code treats them generically and need not be
- * inspected when changing the size of the array.
- */
-#define	ULFS_MAXQUOTAS	2
-#define	ULFS_USRQUOTA	0	/* element used for user quotas */
-#define	ULFS_GRPQUOTA	1	/* element used for group quotas */
 
 /*
  * Initializer for the strings corresponding to the quota ID types.
