@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/06/07 19:28:25 martin Exp $
+#	$NetBSD: Makefile,v 1.14 2013/06/08 00:37:33 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -31,15 +31,15 @@ CONFIG_SUBST=	${TOOL_SED} \
 		-e 's,%includedir%,${X11INCDIR},' \
 		-e 's,%ft_version%,${FT_VERSION},' \
 		-e 's,%build_libtool_libs%,yes,' \
-		-e 's,@FT2_EXTRA_LIBS@,,' \
-		-e 's,@LIBZ@,-lz,' \
-		-e 's,@LIBBZ2@,-lbz2,' \
+		-e 's,%FT2_EXTRA_LIBS%,,' \
+		-e 's,%LIBZ%,-lz,' \
+		-e 's,%LIBBZ2%,-lbz2,' \
 		-e 's,@FT2_EXTRA_LIBS@,,' \
 		-e 's,@LIBZ@,-lz,' \
 		-e 's,@LIBBZ2@,-lbz2,'
 
 .PATH: ${X11SRCDIR.freetype}/builds/unix
-freetype-config: freetype-config.in
+freetype-config: freetype-config.in Makefile
 	${_MKTARGET_CREATE}
 	${CONFIG_SUBST} < ${.ALLSRC} > ${.TARGET}
 
