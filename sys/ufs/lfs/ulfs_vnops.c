@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.10 2013/06/08 20:43:35 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.11 2013/06/08 21:40:27 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.10 2013/06/08 20:43:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.11 2013/06/08 21:40:27 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -577,33 +577,6 @@ ulfs_setattr(void *v)
 			error = ULFS_WAPBL_BEGIN(vp->v_mount);
 			if (error)
 				goto out;
-			/*
-			 * When journaling, only truncate one indirect block
-			 * at a time.
-			 */
-			if (vp->v_mount->mnt_wapbl) {
-				uint64_t incr = MNINDIR(ip->i_ump) <<
-				    vp->v_mount->mnt_fs_bshift; /* Power of 2 */
-				uint64_t base = ULFS_NDADDR <<
-				    vp->v_mount->mnt_fs_bshift;
-				while (!error && ip->i_size > base + incr &&
-				    ip->i_size > vap->va_size + incr) {
-					/*
-					 * round down to next full indirect
-					 * block boundary.
-					 */
-					uint64_t nsize = base +
-					    ((ip->i_size - base - 1) &
-					    ~(incr - 1));
-					error = ULFS_TRUNCATE(vp, nsize, 0,
-					    cred);
-					if (error == 0) {
-						ULFS_WAPBL_END(vp->v_mount);
-						error =
-						   ULFS_WAPBL_BEGIN(vp->v_mount);
-					}
-				}
-			}
 			if (!error)
 				error = ULFS_TRUNCATE(vp, vap->va_size, 0, cred);
 			ULFS_WAPBL_END(vp->v_mount);
@@ -1470,7 +1443,6 @@ ulfs_strategy(void *v)
 	struct buf	*bp;
 	struct vnode	*vp;
 	struct inode	*ip;
-	struct mount	*mp;
 	int		error;
 
 	bp = ap->a_bp;
@@ -1500,26 +1472,7 @@ ulfs_strategy(void *v)
 	if (error)
 		return error;
 
-	if (!BUF_ISREAD(bp))
-		return 0;
-
-	mp = wapbl_vptomp(vp);
-	if (mp == NULL || mp->mnt_wapbl_replay == NULL ||
-	    !WAPBL_REPLAY_ISOPEN(mp) ||
-	    !WAPBL_REPLAY_CAN_READ(mp, bp->b_blkno, bp->b_bcount))
-		return 0;
-
-	error = biowait(bp);
-	if (error)
-		return error;
-
-	error = WAPBL_REPLAY_READ(mp, bp->b_data, bp->b_blkno, bp->b_bcount);
-	if (error) {
-		mutex_enter(&bufcache_lock);
-		SET(bp->b_cflags, BC_INVAL);
-		mutex_exit(&bufcache_lock);
-	}
-	return error;
+	return 0;
 }
 
 /*
