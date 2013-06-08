@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.304 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.305 2013/06/08 13:50:22 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.304 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.305 2013/06/08 13:50:22 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -143,8 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.304 2013/06/05 19:01:26 christos Exp 
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
-#include <netipsec/key.h>
-#endif	/* IPSEC*/
+#endif
 
 #ifndef	IPFORWARDING
 #ifdef GATEWAY
@@ -405,12 +404,6 @@ ip_input(struct mbuf *m)
 	int downmatch;
 	int checkif;
 	int srcrt = 0;
-#ifdef IPSEC
-	struct m_tag *mtag;
-	struct tdb_ident *tdbi;
-	struct secpolicy *sp;
-	int error, s;
-#endif /* IPSEC */
 
 	MCLAIM(m, &ip_rx_mowner);
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
@@ -733,54 +726,12 @@ ip_input(struct mbuf *m)
 			return;
 		}
 #ifdef IPSEC
-		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-		s = splsoftnet();
-		if (mtag != NULL) {
-			tdbi = (struct tdb_ident *)(mtag + 1);
-			sp = ipsec_getpolicy(tdbi, IPSEC_DIR_INBOUND);
-		} else {
-			sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
-						   IP_FORWARDING, &error);
-		}
-		if (sp == NULL) {	/* NB: can happen if error */
-			splx(s);
-			/*XXX error stat???*/
-			DPRINTF(("ip_input: no SP for forwarding\n"));	/*XXX*/
+		/* Perform IPsec, if any. */
+		if (ipsec4_input(m, IP_FORWARDING | (ip_directedbcast ?
+		    IP_ALLOWBROADCAST : 0)) != 0) {
 			goto bad;
 		}
-
-		/*
-		 * Check security policy against packet attributes.
-		 */
-		error = ipsec_in_reject(sp, m);
-		KEY_FREESP(&sp);
-		splx(s);
-		if (error) {
-			IP_STATINC(IP_STAT_CANTFORWARD);
-			goto bad;
-		}
-
-		/*
-		 * Peek at the outbound SP for this packet to determine if
-		 * it's a Fast Forward candidate.
-		 */
-		mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
-		if (mtag != NULL)
-			m->m_flags &= ~M_CANFASTFWD;
-		else {
-			s = splsoftnet();
-			sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND,
-			    (IP_FORWARDING |
-			     (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
-			    &error, NULL);
-			if (sp != NULL) {
-				m->m_flags &= ~M_CANFASTFWD;
-				KEY_FREESP(&sp);
-			}
-			splx(s);
-		}
-#endif	/* IPSEC */
-
+#endif
 		ip_forward(m, srcrt);
 	}
 	return;
@@ -811,42 +762,16 @@ ours:
 
 #ifdef IPSEC
 	/*
-	 * enforce IPsec policy checking if we are seeing last header.
-	 * note that we do not visit this with protocols with pcb layer
-	 * code - like udp/tcp/raw ip.
+	 * Enforce IPsec policy checking if we are seeing last header.
+	 * Note that we do not visit this with protocols with PCB layer
+	 * code - like UDP/TCP/raw IP.
 	 */
 	if ((inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0) {
-		/*
-		 * Check if the packet has already had IPsec processing
-		 * done.  If so, then just pass it along.  This tag gets
-		 * set during AH, ESP, etc. input handling, before the
-		 * packet is returned to the ip input queue for delivery.
-		 */
-		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-		s = splsoftnet();
-		if (mtag != NULL) {
-			tdbi = (struct tdb_ident *)(mtag + 1);
-			sp = ipsec_getpolicy(tdbi, IPSEC_DIR_INBOUND);
-		} else {
-			sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
-						   IP_FORWARDING, &error);
-		}
-		if (sp != NULL) {
-			/*
-			 * Check security policy against packet attributes.
-			 */
-			error = ipsec_in_reject(sp, m);
-			KEY_FREESP(&sp);
-		} else {
-			/* XXX error stat??? */
-			error = EINVAL;
-DPRINTF(("ip_input: no SP, packet discarded\n"));/*XXX*/
-		}
-		splx(s);
-		if (error)
+		if (ipsec4_input(m, 0) != 0) {
 			goto bad;
+		}
 	}
-#endif /* IPSEC */
+#endif
 
 	/*
 	 * Switch out to protocol's input routine.
@@ -1422,53 +1347,9 @@ ip_forward(struct mbuf *m, int srcrt)
 
 		if ((rt = rtcache_validate(&ipforward_rt)) != NULL)
 			destmtu = rt->rt_ifp->if_mtu;
-
-#if defined(IPSEC)
-		{
-			/*
-			 * If the packet is routed over IPsec tunnel, tell the
-			 * originator the tunnel MTU.
-			 *	tunnel MTU = if MTU - sizeof(IP) - ESP/AH hdrsiz
-			 * XXX quickhack!!!
-			 */
-
-			struct secpolicy *sp;
-			int ipsecerror;
-			size_t ipsechdr;
-			struct route *ro;
-
-			sp = ipsec4_getpolicybyaddr(mcopy,
-			    IPSEC_DIR_OUTBOUND, IP_FORWARDING,
-			    &ipsecerror);
-
-			if (sp != NULL) {
-				/* count IPsec header size */
-				ipsechdr = ipsec4_hdrsiz(mcopy,
-				    IPSEC_DIR_OUTBOUND, NULL);
-
-				/*
-				 * find the correct route for outer IPv4
-				 * header, compute tunnel MTU.
-				 */
-
-				if (sp->req != NULL
-				 && sp->req->sav != NULL
-				 && sp->req->sav->sah != NULL) {
-					ro = &sp->req->sav->sah->sa_route;
-					rt = rtcache_validate(ro);
-					if (rt && rt->rt_ifp) {
-						destmtu =
-						    rt->rt_rmx.rmx_mtu ?
-						    rt->rt_rmx.rmx_mtu :
-						    rt->rt_ifp->if_mtu;
-						destmtu -= ipsechdr;
-					}
-				}
-
-				KEY_FREESP(&sp);
-			}
-		}
-#endif /*defined(IPSEC)*/
+#ifdef IPSEC
+		(void)ipsec4_forward(mcopy, &destmtu);
+#endif
 		IP_STATINC(IP_STAT_CANTFRAG);
 		break;
 

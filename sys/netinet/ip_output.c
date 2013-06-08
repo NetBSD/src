@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.221 2013/06/08 03:26:05 rmind Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.222 2013/06/08 13:50:22 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.221 2013/06/08 03:26:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.222 2013/06/08 13:50:22 rmind Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -474,7 +474,7 @@ sendit:
 		ip->ip_off |= htons(IP_DF);
 
 #ifdef IPSEC
-	/* Perform IPSec processing, if any. */
+	/* Perform IPsec processing, if any. */
 	error = ipsec4_output(m, so, flags, &sp, &mtu, &natt_frag, &done);
 	if (error || done) {
 		goto done;
@@ -611,7 +611,7 @@ sendit:
 #endif
 			/*
 			 * If we get there, the packet has not been handled by
-			 * IPSec whereas it should have. Now that it has been
+			 * IPsec whereas it should have. Now that it has been
 			 * fragmented, re-inject it in ip_output so that IPsec
 			 * processing can occur.
 			 */
