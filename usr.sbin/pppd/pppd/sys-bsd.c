@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.66 2013/06/07 17:17:14 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.67 2013/06/08 13:13:34 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.66 2013/06/07 17:17:14 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.67 2013/06/08 13:13:34 christos Exp $");
 #endif
 #endif
 
@@ -1540,27 +1540,6 @@ cifdefaultroute(int u, u_int32_t l, u_int32_t g)
     return dodefaultroute(g, 'c');
 }
 
-#if RTM_VERSION >= 3
-static struct {
-    struct rt_msghdr		hdr;
-    char			space[512];
-} arpmsg;
-
-static int arpmsg_valid;
-
-static void
-consume(int routes) {
-    ssize_t l;
-    pid_t pid = getpid();
-    struct rt_msghdr *rtm = &arpmsg.hdr;
-
-    do
-	l = read(routes, &arpmsg, sizeof(arpmsg));
-    while (l > 0 && (rtm->rtm_seq != rtm_seq || rtm->rtm_pid != pid));
-    if (l < 0)
-	warn("read from routing socket");
-}
-
 /*
  * dodefaultroute - talk to a routing socket to add/delete a default route.
  */
@@ -1576,7 +1555,7 @@ dodefaultroute(u_int32_t g, int cmd)
 	struct sockaddr_dl	ifp;
     } rtmsg;
 
-    if ((routes = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
+    if ((routes = socket(PF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
 	if (!doing_cleanup)
 	    error("%s: Couldn't %s default route: socket: %m", __func__,
 		cmd == 's' ? "add" : "delete");
@@ -1617,55 +1596,42 @@ dodefaultroute(u_int32_t g, int cmd)
 	close(routes);
 	return 0;
     }
-    consume(routes);
 
     close(routes);
     default_route_gateway = (cmd == 's') ? g : 0;
     return 1;
 }
 
-
-#if 0
-static void
-hdrprint(const struct rt_msghdr *rtm) {
-	printf("rtm_msglen=%u\n", rtm->rtm_msglen);
-	printf("rtm_version=%u\n", rtm->rtm_version);
-	printf("rtm_type=%u\n", rtm->rtm_type);
-	printf("rtm_index=%u\n", rtm->rtm_index);
-	printf("rtm_flags=%x\n", rtm->rtm_flags);
-	printf("rtm_addrs=%d\n", rtm->rtm_addrs);
-	printf("rtm_pid=%lu\n", (unsigned long)rtm->rtm_pid);
-	printf("rtm_seq=%d\n", rtm->rtm_seq);
-	printf("rtm_errno=%d\n", rtm->rtm_errno);
-	printf("rtm_use=%d\n", rtm->rtm_use);
-	printf("rtm_inits=%d\n", rtm->rtm_inits);
-	printf("rtm_rmx.rmx_expire=%lld\n", (long long)rtm->rtm_rmx.rmx_expire);
-}
-#endif
-
+#if RTM_VERSION >= 3
 
 /*
  * sifproxyarp - Make a proxy ARP entry for the peer.
  */
+static struct {
+    struct rt_msghdr		hdr;
+    struct sockaddr_inarp	dst;
+    struct sockaddr_dl		hwa;
+    char			extra[128];
+} arpmsg;
+
+static int arpmsg_valid;
+
 int
 sifproxyarp(int unit, u_int32_t hisaddr)
 {
     int routes;
-    struct sockaddr_inarp dst;
-    struct sockaddr_dl sdl;
-    char *cp;
 
     /*
      * Get the hardware address of an interface on the same subnet
      * as our local address.
      */
     memset(&arpmsg, 0, sizeof(arpmsg));
-    if (!get_ether_addr(hisaddr, &sdl)) {
+    if (!get_ether_addr(hisaddr, &arpmsg.hwa)) {
 	error("%s: Cannot determine ethernet address for proxy ARP", __func__);
 	return 0;
     }
 
-    if ((routes = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
+    if ((routes = socket(PF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
 	error("%s: Couldn't add proxy arp entry: socket: %m", __func__);
 	return 0;
     }
@@ -1676,28 +1642,18 @@ sifproxyarp(int unit, u_int32_t hisaddr)
     arpmsg.hdr.rtm_seq = ++rtm_seq;
     arpmsg.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY;
     arpmsg.hdr.rtm_inits = RTV_EXPIRE;
+    arpmsg.dst.sin_len = sizeof(struct sockaddr_inarp);
+    arpmsg.dst.sin_family = AF_INET;
+    arpmsg.dst.sin_addr.s_addr = hisaddr;
+    arpmsg.dst.sin_other = SIN_PROXY;
 
-    memset(&dst, 0, sizeof(dst));
-    dst.sin_len = sizeof(struct sockaddr_in);
-    dst.sin_family = AF_INET;
-    dst.sin_addr.s_addr = hisaddr;
-    dst.sin_other = SIN_PROXY;
-
-    cp = arpmsg.space;
-#define NEXTADDR(s) \
-    (void)memcpy(cp, &s, (size_t)((struct sockaddr *)(void *)&s)->sa_len), \
-    RT_ADVANCE(cp, ((struct sockaddr *)(void *)&s))
-    NEXTADDR(dst);
-    NEXTADDR(sdl);
-    arpmsg.hdr.rtm_msglen = cp - (char *)(void *)&arpmsg;
-
+    arpmsg.hdr.rtm_msglen = (char *) &arpmsg.hwa - (char *) &arpmsg
+	+ RT_ROUNDUP(arpmsg.hwa.sdl_len);
     if (write(routes, &arpmsg, arpmsg.hdr.rtm_msglen) < 0) {
 	error("%s: Couldn't add proxy arp entry: %m", __func__);
 	close(routes);
 	return 0;
     }
-
-    consume(routes);
 
     close(routes);
     arpmsg_valid = 1;
@@ -1720,7 +1676,7 @@ cifproxyarp(int unit, u_int32_t hisaddr)
     arpmsg.hdr.rtm_type = RTM_DELETE;
     arpmsg.hdr.rtm_seq = ++rtm_seq;
 
-    if ((routes = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
+    if ((routes = socket(PF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
 	if (!doing_cleanup)
 	    error("%s: Couldn't delete proxy arp entry: socket: %m", __func__);
 	return 0;
@@ -1732,8 +1688,6 @@ cifproxyarp(int unit, u_int32_t hisaddr)
 	close(routes);
 	return 0;
     }
-    consume(routes);
-
 
     close(routes);
     proxy_arp_addr = 0;
@@ -1800,16 +1754,6 @@ cifproxyarp(int unit, u_int32_t hisaddr)
 }
 #endif	/* RTM_VERSION */
 
-static struct ifaddrs *
-getlink(struct ifaddrs *ifa, const char *name)
-{
-    for (; ifa; ifa = ifa->ifa_next)
-	if (strcmp(ifa->ifa_name, name) == 0 &&
-	    ifa->ifa_addr->sa_family == AF_LINK)
-	    return ifa;
-    return NULL;
-}
-
 
 /*
  * get_ether_addr - get the hardware address of an interface on the
@@ -1818,8 +1762,9 @@ getlink(struct ifaddrs *ifa, const char *name)
 static int
 get_ether_addr(u_int32_t ipaddr, struct sockaddr_dl *hwaddr)
 {
+    u_int32_t ina, mask;
     struct sockaddr_dl *dla;
-    struct ifaddrs *ifap, *ifa, *ifp, *iflink;
+    struct ifaddrs *ifap, *ifa, *ifp;
 
     /*
      * Scan through looking for an interface with an Internet
@@ -1830,68 +1775,55 @@ get_ether_addr(u_int32_t ipaddr, struct sockaddr_dl *hwaddr)
 	return 0;
     }
 
-    for (ifp = NULL, ifa = ifap; ifa; ifa = ifa->ifa_next) {
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+	if (ifa->ifa_addr->sa_family != AF_INET)
+	    continue;
+	ina = ((struct sockaddr_in *) ifa->ifa_addr)->sin_addr.s_addr;
 	/*
 	 * Check that the interface is up, and not point-to-point
 	 * or loopback.
 	 */
 	if ((ifa->ifa_flags &
 	     (IFF_UP|IFF_BROADCAST|IFF_POINTOPOINT|IFF_LOOPBACK|IFF_NOARP))
-	     != (IFF_UP|IFF_BROADCAST)) {
+	     != (IFF_UP|IFF_BROADCAST))
 	    continue;
-	}
-
-	switch (ifa->ifa_addr->sa_family) {
-	case AF_INET:
-	case AF_INET6:
-	    /*
-	     * See if it has a link address and remember it.
-	     */
-	    if ((iflink = getlink(ifap, ifa->ifa_name)) == NULL)
-		continue;
-	    if (ifp == NULL)
-		ifp = iflink;
-	    else
-		info("more than one interfaces match for proxy arp");
-	    break;
-	default:
+	/*
+	 * Get its netmask and check that it's on the right subnet.
+	 */
+	mask = ((struct sockaddr_in *) ifa->ifa_netmask)->sin_addr.s_addr;
+	if ((ipaddr & mask) != (ina & mask))
 	    continue;
-	}
-
-	switch (ifa->ifa_addr->sa_family) {
-	    u_int32_t ina, mask;
-	case AF_INET:
-	    /*
-	     * Get its netmask and check that it's on the right subnet.
-	     */
-	    ina = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
-	    mask = ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
-	    if ((ipaddr & mask) != (ina & mask))
-		continue;
-	    ifp = iflink;
-	    break;
-	case AF_INET6:
-	    /* XXX */
-	    break;
-	default:
-	    abort();
-	}
 	break;
     }
 
-    if (!ifp) {
+    if (!ifa) {
 	freeifaddrs(ifap);
 	return 0;
     }
-    info("found interface %s for proxy arp", ifp->ifa_name);
+    info("found interface %s for proxy arp", ifa->ifa_name);
+
+    ifp = ifa;
 
     /*
-     * copy out the link-level address
+     * Now scan through again looking for a link-level address
+     * for this interface.
      */
-    dla = (struct sockaddr_dl *) ifp->ifa_addr;
-    BCOPY(dla, hwaddr, sizeof(*dla));
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+	if (strcmp(ifp->ifa_name, ifa->ifa_name) != 0)
+	    continue;
+	if (ifa->ifa_addr->sa_family != AF_LINK)
+	    continue;
+	/*
+	 * Found the link-level address - copy it out
+	 */
+	dla = (struct sockaddr_dl *) ifa->ifa_addr;
+	BCOPY(dla, hwaddr, dla->sdl_len);
+	freeifaddrs(ifap);
+	return 1;
+    }
+
     freeifaddrs(ifap);
-    return 1;
+    return 0;
 }
 
 /*
