@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.39 2013/01/22 09:39:19 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.40 2013/06/08 23:27:34 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.39 2013/01/22 09:39:19 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.40 2013/06/08 23:27:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: dumplfs.c,v 1.39 2013/01/22 09:39:19 dholland Exp $");
 #include <sys/mount.h>
 #include <sys/time.h>
 
-#include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
 
 #include <err.h>
@@ -64,7 +63,7 @@ __RCSID("$NetBSD: dumplfs.c,v 1.39 2013/01/22 09:39:19 dholland Exp $");
 
 static void	addseg(char *);
 static void	dump_cleaner_info(struct lfs *, void *);
-static void	dump_dinode(struct ufs1_dinode *);
+static void	dump_dinode(struct ulfs1_dinode *);
 static void	dump_ifile(int, struct lfs *, int, int, daddr_t);
 static int	dump_ipage_ifile(struct lfs *, int, char *, int);
 static int	dump_ipage_segusage(struct lfs *, int, char *, int);
@@ -266,7 +265,7 @@ static void
 dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t addr)
 {
 	char *ipage;
-	struct ufs1_dinode *dip, *dpage;
+	struct ulfs1_dinode *dip, *dpage;
 	/* XXX ondisk32 */
 	int32_t *addrp, *dindir, *iaddrp, *indir;
 	int block_limit, i, inum, j, nblocks, psize;
@@ -294,7 +293,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 
 	(void)printf("\nIFILE contents\n");
 	nblocks = dip->di_size >> lfsp->lfs_bshift;
-	block_limit = MIN(nblocks, UFS_NDADDR);
+	block_limit = MIN(nblocks, ULFS_NDADDR);
 
 	/* Get the direct block */
 	if ((ipage = malloc(psize)) == NULL)
@@ -325,7 +324,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 			inum = dump_ipage_ifile(lfsp, inum, ipage, lfsp->lfs_ifpb);
 	}
 
-	if (nblocks <= UFS_NDADDR)
+	if (nblocks <= ULFS_NDADDR)
 		goto e0;
 
 	/* Dump out blocks off of single indirect block */
@@ -451,7 +450,7 @@ dump_ipage_segusage(struct lfs *lfsp, int i, char *pp, int tot)
 }
 
 static void
-dump_dinode(struct ufs1_dinode *dip)
+dump_dinode(struct ulfs1_dinode *dip)
 {
 	int i;
 	time_t at, mt, ct;
@@ -472,12 +471,12 @@ dump_dinode(struct ufs1_dinode *dip)
 		"ctime ", ctime(&ct));
 	(void)printf("    inum  %d\n", dip->di_inumber);
 	(void)printf("    Direct Addresses\n");
-	for (i = 0; i < UFS_NDADDR; i++) {
+	for (i = 0; i < ULFS_NDADDR; i++) {
 		(void)printf("\t0x%x", dip->di_db[i]);
 		if ((i % 6) == 5)
 			(void)printf("\n");
 	}
-	for (i = 0; i < UFS_NIADDR; i++)
+	for (i = 0; i < ULFS_NIADDR; i++)
 		(void)printf("\t0x%x", dip->di_ib[i]);
 	(void)printf("\n");
 }
@@ -491,7 +490,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	int ck;
 	int numbytes, numblocks;
 	char *datap;
-	struct ufs1_dinode *inop;
+	struct ulfs1_dinode *inop;
 	size_t el_size;
 	u_int32_t datasum;
 	time_t t;
