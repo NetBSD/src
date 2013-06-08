@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.10 2013/06/08 22:05:15 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.11 2013/06/08 22:23:52 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.10 2013/06/08 22:05:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.11 2013/06/08 22:23:52 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.10 2013/06/08 22:05:15 dholland Ex
 #include <sys/kmem.h>
 
 #include <ufs/lfs/ulfs_inode.h>
-#include <ufs/lfs/ulfs_dir.h>
 #ifdef LFS_DIRHASH
 #include <ufs/lfs/ulfs_dirhash.h>
 #endif
