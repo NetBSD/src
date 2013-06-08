@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.146 2013/06/08 02:14:46 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.147 2013/06/08 02:15:12 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -258,6 +258,10 @@ typedef struct lfs_res_blk {
     LFS_DIRECTSIZ((dp)->d_type) : LFS_DIRECTSIZ((dp)->d_namlen))
 #endif
 
+/* Constants for the first argument of LFS_DIRSIZ */
+#define LFS_OLDDIRFMT	1
+#define LFS_NEWDIRFMT	0
+
 /*
  * Theoretically, directories can be more than 2Gb in length; however, in
  * practice this seems unlikely. So, we define the type doff_t as a 32-bit
@@ -413,6 +417,16 @@ struct ulfs2_dinode {
 #define	LFS_IFLNK	0120000		/* Symbolic link. */
 #define	LFS_IFSOCK	0140000		/* UNIX domain socket. */
 #define	LFS_IFWHT	0160000		/* Whiteout. */
+
+/*
+ * Maximum length of a symlink that can be stored within the inode.
+ */
+#define ULFS1_MAXSYMLINKLEN	((ULFS_NDADDR + ULFS_NIADDR) * sizeof(int32_t))
+#define ULFS2_MAXSYMLINKLEN	((ULFS_NDADDR + ULFS_NIADDR) * sizeof(int64_t))
+
+#define ULFS_MAXSYMLINKLEN(ip) \
+	((ip)->i_ump->um_fstype == ULFS1) ? \
+	ULFS1_MAXSYMLINKLEN : ULFS2_MAXSYMLINKLEN
 
 /*
  * "struct buf" associated definitions
