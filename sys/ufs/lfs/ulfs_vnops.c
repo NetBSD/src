@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.7 2013/06/08 02:11:11 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.8 2013/06/08 02:12:56 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.212 2013/03/18 19:35:48 plunky Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.7 2013/06/08 02:11:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.8 2013/06/08 02:12:56 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -118,9 +118,9 @@ static int ulfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
 /*
  * A virgin directory (no blushing please).
  */
-static const struct dirtemplate mastertemplate = {
-	0,	12,		DT_DIR,	1,	".",
-	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
+static const struct lfs_dirtemplate mastertemplate = {
+	0,	12,		LFS_DT_DIR,	1,	".",
+	0,	DIRBLKSIZ - 12,	LFS_DT_DIR,	2,	".."
 };
 
 /*
@@ -826,7 +826,7 @@ ulfs_link(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
 	struct inode *ip;
-	struct direct *newdir;
+	struct lfs_direct *newdir;
 	int error;
 	struct ulfs_lookup_results *ulr;
 
@@ -900,7 +900,7 @@ ulfs_whiteout(void *v)
 	} */ *ap = v;
 	struct vnode		*dvp = ap->a_dvp;
 	struct componentname	*cnp = ap->a_cnp;
-	struct direct		*newdir;
+	struct lfs_direct		*newdir;
 	int			error;
 	struct ulfsmount	*ump = VFSTOULFS(dvp->v_mount);
 	struct ulfs_lookup_results *ulr;
@@ -934,7 +934,7 @@ ulfs_whiteout(void *v)
 		memcpy(newdir->d_name, cnp->cn_nameptr,
 		    (size_t)cnp->cn_namelen);
 		newdir->d_name[cnp->cn_namelen] = '\0';
-		newdir->d_type = DT_WHT;
+		newdir->d_type = LFS_DT_WHT;
 		error = ulfs_direnter(dvp, ulr, NULL, newdir, cnp, NULL);
 		pool_cache_put(ulfs_direct_cache, newdir);
 		break;
@@ -976,8 +976,8 @@ ulfs_mkdir(void *v)
 	struct componentname	*cnp = ap->a_cnp;
 	struct inode		*ip, *dp = VTOI(dvp);
 	struct buf		*bp;
-	struct dirtemplate	dirtemplate;
-	struct direct		*newdir;
+	struct lfs_dirtemplate	dirtemplate;
+	struct lfs_direct		*newdir;
 	int			error, dmode;
 	struct ulfsmount	*ump = dp->i_ump;
 	int			dirblksiz = ump->um_dirblksiz;
@@ -1286,7 +1286,7 @@ out:
  * Vnode op for reading directories.
  *
  * This routine handles converting from the on-disk directory format
- * "struct direct" to the in-memory format "struct dirent" as well as
+ * "struct lfs_direct" to the in-memory format "struct dirent" as well as
  * byte swapping the entries if necessary.
  */
 int
@@ -1301,7 +1301,7 @@ ulfs_readdir(void *v)
 		int		*ncookies;
 	} */ *ap = v;
 	struct vnode	*vp = ap->a_vp;
-	struct direct	*cdp, *ecdp;
+	struct lfs_direct	*cdp, *ecdp;
 	struct dirent	*ndp;
 	char		*cdbuf, *ndbuf, *endp;
 	struct uio	auio, *uio;
@@ -1347,8 +1347,8 @@ ulfs_readdir(void *v)
 
 	rcount -= auio.uio_resid;
 
-	cdp = (struct direct *)(void *)cdbuf;
-	ecdp = (struct direct *)(void *)&cdbuf[rcount];
+	cdp = (struct lfs_direct *)(void *)cdbuf;
+	ecdp = (struct lfs_direct *)(void *)&cdbuf[rcount];
 
 	ndbufsz = count;
 	ndbuf = kmem_alloc(ndbufsz, KM_SLEEP);
@@ -1806,7 +1806,7 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	struct vnode **vpp, struct componentname *cnp)
 {
 	struct inode	*ip, *pdir;
-	struct direct	*newdir;
+	struct lfs_direct	*newdir;
 	struct vnode	*tvp;
 	int		error;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.20 2013/06/08 02:11:11 dholland Exp $	 */
+/* $NetBSD: pass2.c,v 1.21 2013/06/08 02:12:56 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -52,7 +52,7 @@
 #include "fsutil.h"
 #include "extern.h"
 
-#define MINDIRSIZE	(sizeof (struct dirtemplate))
+#define MINDIRSIZE	(sizeof (struct lfs_dirtemplate))
 
 static int pass2check(struct inodesc *);
 static int blksort(const void *, const void *);
@@ -115,7 +115,7 @@ pass2(void)
 		errx(EEXIT, "BAD STATE %d FOR ROOT INODE\n", statemap[ULFS_ROOTINO]);
 	}
 	statemap[ULFS_WINO] = FSTATE;
-	typemap[ULFS_WINO] = DT_WHT;
+	typemap[ULFS_WINO] = LFS_DT_WHT;
 	/*
 	 * Sort the directory list into disk block order.
 	 */
@@ -201,12 +201,12 @@ pass2(void)
 static int
 pass2check(struct inodesc * idesc)
 {
-	struct direct *dirp = idesc->id_dirp;
+	struct lfs_direct *dirp = idesc->id_dirp;
 	struct inoinfo *inp;
 	int n, entrysize, ret = 0;
 	struct ulfs1_dinode *dp;
 	const char *errmsg;
-	struct direct proto;
+	struct lfs_direct proto;
 	char namebuf[MAXPATHLEN + 1];
 	char pathbuf[MAXPATHLEN + 1];
 
@@ -222,9 +222,9 @@ pass2check(struct inodesc * idesc)
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
 		}
-		if (dirp->d_type != DT_DIR) {
+		if (dirp->d_type != LFS_DT_DIR) {
 			direrror(idesc->id_number, "BAD TYPE VALUE FOR '.'");
-			dirp->d_type = DT_DIR;
+			dirp->d_type = LFS_DT_DIR;
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
 		}
@@ -232,7 +232,7 @@ pass2check(struct inodesc * idesc)
 	}
 	direrror(idesc->id_number, "MISSING '.'");
 	proto.d_ino = idesc->id_number;
-	proto.d_type = DT_DIR;
+	proto.d_type = LFS_DT_DIR;
 	proto.d_namlen = 1;
 	(void) strlcpy(proto.d_name, ".", sizeof(proto.d_name));
 	entrysize = DIRSIZ(0, &proto, 0);
@@ -252,7 +252,7 @@ pass2check(struct inodesc * idesc)
 		memcpy(dirp, &proto, (size_t) entrysize);
 		idesc->id_entryno++;
 		lncntp[dirp->d_ino]--;
-		dirp = (struct direct *) ((char *) (dirp) + entrysize);
+		dirp = (struct lfs_direct *) ((char *) (dirp) + entrysize);
 		memset(dirp, 0, (size_t) n);
 		dirp->d_reclen = n;
 		if (reply("FIX") == 1)
@@ -263,7 +263,7 @@ chk1:
 		goto chk2;
 	inp = getinoinfo(idesc->id_number);
 	proto.d_ino = inp->i_parent;
-	proto.d_type = DT_DIR;
+	proto.d_type = LFS_DT_DIR;
 	proto.d_namlen = 2;
 	(void) strlcpy(proto.d_name, "..", sizeof(proto.d_name));
 	entrysize = DIRSIZ(0, &proto, 0);
@@ -275,15 +275,15 @@ chk1:
 		dirp->d_reclen = n;
 		idesc->id_entryno++;
 		lncntp[dirp->d_ino]--;
-		dirp = (struct direct *) ((char *) (dirp) + n);
+		dirp = (struct lfs_direct *) ((char *) (dirp) + n);
 		memset(dirp, 0, (size_t) proto.d_reclen);
 		dirp->d_reclen = proto.d_reclen;
 	}
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") == 0) {
 		inp->i_dotdot = dirp->d_ino;
-		if (dirp->d_type != DT_DIR) {
+		if (dirp->d_type != LFS_DT_DIR) {
 			direrror(idesc->id_number, "BAD TYPE VALUE FOR '..'");
-			dirp->d_type = DT_DIR;
+			dirp->d_type = LFS_DT_DIR;
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
 		}
@@ -341,18 +341,18 @@ chk2:
 		n = reply("REMOVE");
 	} else if (dirp->d_ino == LFS_IFILE_INUM &&
 	    idesc->id_number == ULFS_ROOTINO) {
-		if (dirp->d_type != DT_REG) {
+		if (dirp->d_type != LFS_DT_REG) {
 			fileerror(idesc->id_number, dirp->d_ino,
 			    "BAD TYPE FOR IFILE");
-			dirp->d_type = DT_REG;
+			dirp->d_type = LFS_DT_REG;
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
 		}
-	} else if (((dirp->d_ino == ULFS_WINO && (dirp->d_type != DT_WHT)) ||
-		(dirp->d_ino != ULFS_WINO && dirp->d_type == DT_WHT))) {
+	} else if (((dirp->d_ino == ULFS_WINO && (dirp->d_type != LFS_DT_WHT)) ||
+		(dirp->d_ino != ULFS_WINO && dirp->d_type == LFS_DT_WHT))) {
 		fileerror(idesc->id_number, dirp->d_ino, "BAD WHITEOUT ENTRY");
 		dirp->d_ino = ULFS_WINO;
-		dirp->d_type = DT_WHT;
+		dirp->d_type = LFS_DT_WHT;
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
 	} else {
