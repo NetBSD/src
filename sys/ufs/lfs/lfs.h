@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.141 2013/06/06 00:52:14 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.142 2013/06/08 02:04:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -179,6 +179,19 @@ typedef struct lfs_res_blk {
 #define LFS_N_CL	LFS_N_CLUSTERS
 #define LFS_N_BPP	2
 #define LFS_N_SEG	2
+
+/*
+ * Directories
+ */
+
+/*
+ * Theoretically, directories can be more than 2Gb in length; however, in
+ * practice this seems unlikely. So, we define the type doff_t as a 32-bit
+ * quantity to keep down the cost of doing lookup on a 32-bit machine.
+ */
+#define	doff_t		int32_t
+#define	lfs_doff_t	int32_t
+#define	MAXDIRSIZE	(0x7fffffff)
 
 /*
  * "struct buf" associated definitions
