@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_itimes.c,v 1.14 2013/06/06 00:54:49 dholland Exp $	*/
+/*	$NetBSD: lfs_itimes.c,v 1.15 2013/06/08 02:16:03 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.14 2013/06/06 00:54:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.15 2013/06/08 02:16:03 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -43,15 +43,14 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.14 2013/06/06 00:54:49 dholland Exp
 #define vnode uvnode
 #define buf ubuf
 #define panic call_panic
-// XXX
-#define _SYS_VNODE_H_
 #else
+#include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs_extern.h>
 #include <sys/kauth.h>
 #endif
 
-#include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_inode.h>
 
 void
 lfs_itimes(struct inode *ip, const struct timespec *acc,

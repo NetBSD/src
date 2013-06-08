@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.26 2013/06/08 02:14:46 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.27 2013/06/08 02:16:03 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.26 2013/06/08 02:14:46 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.27 2013/06/08 02:16:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,6 @@ __RCSID("$NetBSD: make_lfs.c,v 1.26 2013/06/08 02:14:46 dholland Exp $");
 #include <sys/stat.h>
 
 /* Override certain things to make <ufs/lfs/lfs.h> work */
-#define _SYS_VNODE_H_ /* XXX */
 # undef simple_lock
 # define simple_lock(x)
 # undef simple_unlock
@@ -81,10 +80,8 @@ __RCSID("$NetBSD: make_lfs.c,v 1.26 2013/06/08 02:14:46 dholland Exp $");
 # define vnode uvnode
 # define buf ubuf
 # define panic call_panic
-#include <ufs/lfs/ulfs_dir.h>
-#include <ufs/lfs/ulfs_quotacommon.h>
-#include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_inode.h>
 
 #include <err.h>
 #include <errno.h>
@@ -615,7 +612,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	if (dip == NULL)
 		err(1, NULL);
 	memset(dip, 0, sizeof(*dip));
-	dip->di_mode  = LFS_IFREG|IREAD|IWRITE;
+	dip->di_mode  = LFS_IFREG | 0600;
 	dip->di_flags = SF_IMMUTABLE;
 	make_dinode(LFS_IFILE_INUM, dip,
 		blkstofrags(fs, fs->lfs_cleansz + fs->lfs_segtabsz + 1), fs);

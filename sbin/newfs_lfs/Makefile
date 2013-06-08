@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2013/06/06 00:54:49 dholland Exp $
+#	$NetBSD: Makefile,v 1.11 2013/06/08 02:16:03 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 WARNS?=	3	# XXX: sign-compare issues
@@ -25,8 +25,5 @@ DPADD+=${LIBPROP}
 
 CPPFLAGS+=-I${FSCK_LFS} -I${FSCK} "-Dmutex_enter(x)=" "-Dmutex_exit(x)=" # -DNDEBUG # -DVERBOSE_BLOCKMAP
 CPPFLAGS+="-DKASSERT(x)="
-
-# XXX
-CPPFLAGS+=-I${NETBSDSRCDIR}/sys
 
 .include <bsd.prog.mk>
