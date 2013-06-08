@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.149 2013/06/08 22:19:01 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.150 2013/06/08 22:23:52 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -373,7 +373,7 @@ typedef struct lfs_res_blk {
 #define	LFS_DT_WHT	14
 
 /*
- * (See notes in ulfs_dir.h)
+ * (See notes above)
  */
 #define d_ino d_fileno
 struct lfs_direct {

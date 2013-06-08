@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.6 2013/06/08 02:04:31 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.7 2013/06/08 22:23:52 dholland Exp $	*/
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/vnode.h>
 #include <ufs/lfs/lfs_inode.h>
 #include <ufs/lfs/ulfs_dinode.h>
-#include <ufs/lfs/ulfs_dir.h>
 #include <ufs/lfs/ulfs_quotacommon.h>
 
 #if defined(_KERNEL)

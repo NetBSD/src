@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.246 2013/06/08 02:11:11 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.247 2013/06/08 22:23:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.246 2013/06/08 02:11:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.247 2013/06/08 22:23:52 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.246 2013/06/08 02:11:11 dholland Exp
 #include <miscfs/specfs/specdev.h>
 
 #include <ufs/lfs/ulfs_inode.h>
-#include <ufs/lfs/ulfs_dir.h>
 #include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/ulfs_bswap.h>
 #include <ufs/lfs/ulfs_extern.h>
