@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.34 2013/06/08 02:11:11 dholland Exp $	 */
+/* $NetBSD: utilities.c,v 1.35 2013/06/08 02:16:03 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -33,8 +33,6 @@
 #include <sys/time.h>
 #include <sys/mount.h>
 
-#include <ufs/lfs/ulfs_inode.h>
-#include <ufs/lfs/ulfs_dir.h>
 #define buf ubuf
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
