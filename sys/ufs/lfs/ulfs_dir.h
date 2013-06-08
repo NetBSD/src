@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dir.h,v 1.3 2013/06/06 01:25:25 dholland Exp $	*/
+/*	$NetBSD: ulfs_dir.h,v 1.4 2013/06/08 02:04:31 dholland Exp $	*/
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
 
 /*
@@ -39,14 +39,6 @@
 
 #ifndef _UFS_LFS_ULFS_DIR_H_
 #define	_UFS_LFS_ULFS_DIR_H_
-
-/*
- * Theoretically, directories can be more than 2Gb in length; however, in
- * practice this seems unlikely. So, we define the type doff_t as a 32-bit
- * quantity to keep down the cost of doing lookup on a 32-bit machine.
- */
-#define	doff_t		int32_t
-#define	MAXDIRSIZE	(0x7fffffff)
 
 /*
  * A directory consists of some number of blocks of DIRBLKSIZ
