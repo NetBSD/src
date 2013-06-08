@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.143 2013/06/08 02:09:35 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.144 2013/06/08 02:11:49 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -270,6 +270,17 @@ struct ulfs2_dinode {
 /* Size of the on-disk inode. */
 #define	LFS_DINODE1_SIZE	(sizeof(struct ulfs1_dinode))	/* 128 */
 #define	LFS_DINODE2_SIZE	(sizeof(struct ulfs2_dinode))
+
+/* File types, found in the upper bits of di_mode. */
+#define	LFS_IFMT	0170000		/* Mask of file type. */
+#define	LFS_IFIFO	0010000		/* Named pipe (fifo). */
+#define	LFS_IFCHR	0020000		/* Character device. */
+#define	LFS_IFDIR	0040000		/* Directory file. */
+#define	LFS_IFBLK	0060000		/* Block device. */
+#define	LFS_IFREG	0100000		/* Regular file. */
+#define	LFS_IFLNK	0120000		/* Symbolic link. */
+#define	LFS_IFSOCK	0140000		/* UNIX domain socket. */
+#define	LFS_IFWHT	0160000		/* Whiteout. */
 
 /*
  * "struct buf" associated definitions
