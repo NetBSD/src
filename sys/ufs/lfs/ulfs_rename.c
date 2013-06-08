@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_rename.c,v 1.5 2013/06/08 02:12:56 dholland Exp $	*/
+/*	$NetBSD: ulfs_rename.c,v 1.6 2013/06/08 02:14:46 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.5 2013/06/08 02:12:56 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.6 2013/06/08 02:14:46 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -272,8 +272,8 @@ ulfs_gro_remove_check_permitted(struct mount *mp, kauth_cred_t cred,
  * XXX Copypasta from ulfs_vnops.c.  Kill!
  */
 static const struct lfs_dirtemplate mastertemplate = {
-	0,	12,		LFS_DT_DIR,	1,	".",
-	0,	DIRBLKSIZ - 12,	LFS_DT_DIR,	2,	".."
+	0,	12,			LFS_DT_DIR,	1,	".",
+	0,	LFS_DIRBLKSIZ - 12,	LFS_DT_DIR,	2,	".."
 };
 
 /*
@@ -429,7 +429,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 		 * figure.
 		 */
 		error = ulfs_dirrewrite(VTOI(tdvp), tulr->ulr_offset,
-		    VTOI(tvp), VTOI(fvp)->i_number, IFTODT(VTOI(fvp)->i_mode),
+		    VTOI(tvp), VTOI(fvp)->i_number, LFS_IFTODT(VTOI(fvp)->i_mode),
 		    ((directory_p && reparent_p) ? reparent_p : directory_p),
 		    IN_CHANGE | IN_UPDATE);
 		if (error)

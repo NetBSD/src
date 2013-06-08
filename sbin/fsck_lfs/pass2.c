@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.21 2013/06/08 02:12:56 dholland Exp $	 */
+/* $NetBSD: pass2.c,v 1.22 2013/06/08 02:14:46 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -133,21 +133,21 @@ pass2(void)
 			continue;
 		if (inp->i_isize < MINDIRSIZE) {
 			direrror(inp->i_number, "DIRECTORY TOO SHORT");
-			inp->i_isize = roundup(MINDIRSIZE, DIRBLKSIZ);
+			inp->i_isize = roundup(MINDIRSIZE, LFS_DIRBLKSIZ);
 			if (reply("FIX") == 1) {
 				vp = vget(fs, inp->i_number);
 				dp = VTOD(vp);
 				dp->di_size = inp->i_isize;
 				inodirty(VTOI(vp));
 			}
-		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
+		} else if ((inp->i_isize & (LFS_DIRBLKSIZ - 1)) != 0) {
 			getpathname(pathbuf, sizeof(pathbuf), inp->i_number,
 			    inp->i_number);
 			pwarn("DIRECTORY %s: LENGTH %lu NOT MULTIPLE OF %d",
-			    pathbuf, (unsigned long) inp->i_isize, DIRBLKSIZ);
+			    pathbuf, (unsigned long) inp->i_isize, LFS_DIRBLKSIZ);
 			if (preen)
 				printf(" (ADJUSTED)\n");
-			inp->i_isize = roundup(inp->i_isize, DIRBLKSIZ);
+			inp->i_isize = roundup(inp->i_isize, LFS_DIRBLKSIZ);
 			if (preen || reply("ADJUST") == 1) {
 				vp = vget(fs, inp->i_number);
 				dp = VTOD(vp);
@@ -235,7 +235,7 @@ pass2check(struct inodesc * idesc)
 	proto.d_type = LFS_DT_DIR;
 	proto.d_namlen = 1;
 	(void) strlcpy(proto.d_name, ".", sizeof(proto.d_name));
-	entrysize = DIRSIZ(0, &proto, 0);
+	entrysize = LFS_DIRSIZ(0, &proto, 0);
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
 		    dirp->d_name);
@@ -266,9 +266,9 @@ chk1:
 	proto.d_type = LFS_DT_DIR;
 	proto.d_namlen = 2;
 	(void) strlcpy(proto.d_name, "..", sizeof(proto.d_name));
-	entrysize = DIRSIZ(0, &proto, 0);
+	entrysize = LFS_DIRSIZ(0, &proto, 0);
 	if (idesc->id_entryno == 0) {
-		n = DIRSIZ(0, dirp, 0);
+		n = LFS_DIRSIZ(0, dirp, 0);
 		if (dirp->d_reclen < n + entrysize)
 			goto chk2;
 		proto.d_reclen = dirp->d_reclen - n;

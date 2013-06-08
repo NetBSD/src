@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.48 2013/06/08 02:12:56 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.49 2013/06/08 02:14:46 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -619,7 +619,7 @@ allocino(ino_t request, int type)
 	dp->di_blocks = btofsb(fs, fs->lfs_fsize);
 	n_files++;
 	inodirty(VTOI(vp));
-	typemap[ino] = IFTODT(type);
+	typemap[ino] = LFS_IFTODT(type);
 	return (ino);
 }
 

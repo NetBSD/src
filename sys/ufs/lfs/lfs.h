@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.145 2013/06/08 02:13:33 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.146 2013/06/08 02:14:46 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -200,6 +200,63 @@ typedef struct lfs_res_blk {
 /*
  * Directories
  */
+
+/*
+ * A directory consists of some number of blocks of LFS_DIRBLKSIZ
+ * bytes, where LFS_DIRBLKSIZ is chosen such that it can be transferred
+ * to disk in a single atomic operation (e.g. 512 bytes on most machines).
+ *
+ * Each LFS_DIRBLKSIZ byte block contains some number of directory entry
+ * structures, which are of variable length.  Each directory entry has
+ * a struct lfs_direct at the front of it, containing its inode number,
+ * the length of the entry, and the length of the name contained in
+ * the entry.  These are followed by the name padded to a 4 byte boundary.
+ * All names are guaranteed null terminated.
+ * The maximum length of a name in a directory is LFS_MAXNAMLEN.
+ *
+ * The macro DIRSIZ(fmt, dp) gives the amount of space required to represent
+ * a directory entry.  Free space in a directory is represented by
+ * entries which have dp->d_reclen > DIRSIZ(fmt, dp).  All LFS_DIRBLKSIZ bytes
+ * in a directory block are claimed by the directory entries.  This
+ * usually results in the last entry in a directory having a large
+ * dp->d_reclen.  When entries are deleted from a directory, the
+ * space is returned to the previous entry in the same directory
+ * block by increasing its dp->d_reclen.  If the first entry of
+ * a directory block is free, then its dp->d_ino is set to 0.
+ * Entries other than the first in a directory do not normally have
+ * dp->d_ino set to 0.
+ */
+
+/*
+ * Directory block size.
+ */
+#undef	LFS_DIRBLKSIZ
+#define	LFS_DIRBLKSIZ	DEV_BSIZE
+
+/*
+ * Convert between stat structure types and directory types.
+ */
+#define	LFS_IFTODT(mode)	(((mode) & 0170000) >> 12)
+#define	LFS_DTTOIF(dirtype)	((dirtype) << 12)
+
+/*
+ * The LFS_DIRSIZ macro gives the minimum record length which will hold
+ * the directory entry.  This requires the amount of space in struct lfs_direct
+ * without the d_name field, plus enough space for the name with a terminating
+ * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
+ */
+#define	LFS_DIRECTSIZ(namlen) \
+	((sizeof(struct lfs_direct) - (LFS_MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
+
+#if (BYTE_ORDER == LITTLE_ENDIAN)
+#define LFS_DIRSIZ(oldfmt, dp, needswap)	\
+    (((oldfmt) && !(needswap)) ?		\
+    LFS_DIRECTSIZ((dp)->d_type) : LFS_DIRECTSIZ((dp)->d_namlen))
+#else
+#define LFS_DIRSIZ(oldfmt, dp, needswap)	\
+    (((oldfmt) && (needswap)) ?			\
+    LFS_DIRECTSIZ((dp)->d_type) : LFS_DIRECTSIZ((dp)->d_namlen))
+#endif
 
 /*
  * Theoretically, directories can be more than 2Gb in length; however, in
