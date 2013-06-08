@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extattr.c,v 1.5 2013/06/08 02:14:46 dholland Exp $	*/
+/*	$NetBSD: ulfs_extattr.c,v 1.6 2013/06/08 22:23:52 dholland Exp $	*/
 /*  from NetBSD: ufs_extattr.c,v 1.41 2012/12/08 13:42:36 manu Exp  */
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.5 2013/06/08 02:14:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.6 2013/06/08 22:23:52 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.5 2013/06/08 02:14:46 dholland Ex
 #include <sys/extattr.h>
 #include <sys/sysctl.h>
 
-#include <ufs/lfs/ulfs_dir.h>
 #include <ufs/lfs/ulfs_extattr.h>
 #include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/ulfs_inode.h>
