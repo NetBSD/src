@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfsmount.h,v 1.6 2013/06/06 01:25:25 dholland Exp $	*/
+/*	$NetBSD: ulfsmount.h,v 1.7 2013/06/08 02:13:33 dholland Exp $	*/
 /*  from NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp  */
 
 /*
@@ -36,13 +36,6 @@
 #define _UFS_LFS_ULFSMOUNT_H_
 
 #include <sys/mount.h> /* struct export_args30 */
-
-/*
- * Arguments to mount ULFS-based filesystems
- */
-struct ulfs_args {
-	char	*fspec;			/* block special device to mount */
-};
 
 #ifdef _KERNEL
 
