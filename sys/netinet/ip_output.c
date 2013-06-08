@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.220 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.221 2013/06/08 03:26:05 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.220 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.221 2013/06/08 03:26:05 rmind Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -132,12 +132,8 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.220 2013/06/05 19:01:26 christos Exp
 #include <netinet/ip_mroute.h>
 #endif
 
-#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
-#include <netipsec/xform.h>
-#endif	/* IPSEC*/
-
 
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static struct ifnet *ip_multicast_if(struct in_addr *, int *);
@@ -171,18 +167,14 @@ ip_output(struct mbuf *m0, ...)
 	struct ifaddr *xifa;
 	struct mbuf *opt;
 	struct route *ro;
-	int flags, sw_csum;
-	int *mtu_p;
+	int flags, sw_csum, *mtu_p;
 	u_long mtu;
 	struct ip_moptions *imo;
 	struct socket *so;
 	va_list ap;
-	int natt_frag = 0;
-#ifdef IPSEC
-	struct inpcb *inp;
 	struct secpolicy *sp = NULL;
-	int s;
-#endif
+	bool natt_frag = false;
+	bool __unused done = false;
 	union {
 		struct sockaddr		dst;
 		struct sockaddr_in	dst4;
@@ -205,12 +197,6 @@ ip_output(struct mbuf *m0, ...)
 	va_end(ap);
 
 	MCLAIM(m, &ip_tx_mowner);
-#ifdef IPSEC
-	if (so != NULL && so->so_proto->pr_domain->dom_family == AF_INET)
-		inp = (struct inpcb *)so->so_pcb;
-	else
-		inp = NULL;
-#endif /* IPSEC */
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -488,94 +474,12 @@ sendit:
 		ip->ip_off |= htons(IP_DF);
 
 #ifdef IPSEC
-	/*
-	 * Check the security policy (SP) for the packet and, if
-	 * required, do IPsec-related processing.  There are two
-	 * cases here; the first time a packet is sent through
-	 * it will be untagged and handled by ipsec4_checkpolicy.
-	 * If the packet is resubmitted to ip_output (e.g. after
-	 * AH, ESP, etc. processing), there will be a tag to bypass
-	 * the lookup and related policy checking.
-	 */
-	if (!ipsec_outdone(m)) {
-		s = splsoftnet();
-		if (inp != NULL &&
-		    IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND)) {
-			splx(s);
-			goto spd_done;
-		}
-		sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags,
-				&error, inp);
-		/*
-		 * There are four return cases:
-		 *    sp != NULL	 	    apply IPsec policy
-		 *    sp == NULL, error == 0	    no IPsec handling needed
-		 *    sp == NULL, error == -EINVAL  discard packet w/o error
-		 *    sp == NULL, error != 0	    discard packet, report error
-		 */
-		if (sp != NULL) {
-			/*
-			 * NAT-T ESP fragmentation: don't do IPSec processing
-			 * now, we'll do it on each fragmented packet.
-			 */
-			if (sp->req->sav && (sp->req->sav->natt_type &
-			    (UDP_ENCAP_ESPINUDP|UDP_ENCAP_ESPINUDP_NON_IKE))) {
-				if (ntohs(ip->ip_len) > sp->req->sav->esp_frag)
-				{
-					natt_frag = 1;
-					mtu = sp->req->sav->esp_frag;
-					splx(s);
-					goto spd_done;
-				}
-			}
-
-			/*
-			 * Do delayed checksums now because we send before
-			 * this is done in the normal processing path.
-			 */
-			if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-				in_delayed_cksum(m);
-				m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
-			}
-
-#ifdef __FreeBSD__
-			ip->ip_len = htons(ip->ip_len);
-			ip->ip_off = htons(ip->ip_off);
-#endif
-
-			/* NB: callee frees mbuf */
-			error = ipsec4_process_packet(m, sp->req, flags, 0);
-			/*
-			 * Preserve KAME behaviour: ENOENT can be returned
-			 * when an SA acquire is in progress.  Don't propagate
-			 * this to user-level; it confuses applications.
-			 *
-			 * XXX this will go away when the SADB is redone.
-			 */
-			if (error == ENOENT)
-				error = 0;
-			splx(s);
-			goto done;
-		} else {
-			splx(s);
-
-			if (error != 0) {
-				/*
-				 * Hack: -EINVAL is used to signal that a packet
-				 * should be silently discarded.  This is typically
-				 * because we asked key management for an SA and
-				 * it was delayed (e.g. kicked up to IKE).
-				 */
-				if (error == -EINVAL)
-					error = 0;
-				goto bad;
-			} else {
-				/* No IPsec processing for this packet. */
-			}
-		}
+	/* Perform IPSec processing, if any. */
+	error = ipsec4_output(m, so, flags, &sp, &mtu, &natt_frag, &done);
+	if (error || done) {
+		goto done;
 	}
-spd_done:
-#endif /* IPSEC */
+#endif
 
 #ifdef PFIL_HOOKS
 	/*
@@ -733,13 +637,12 @@ spd_done:
 		IP_STATINC(IP_STAT_FRAGMENTED);
 done:
 	rtcache_free(&iproute);
-
+	if (sp) {
 #ifdef IPSEC
-	if (sp != NULL)
 		KEY_FREESP(&sp);
-#endif /* IPSEC */
-
-	return (error);
+#endif
+	}
+	return error;
 bad:
 	m_freem(m);
 	goto done;
