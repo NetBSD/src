@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dinode.h,v 1.6 2013/06/08 02:11:11 dholland Exp $	*/
+/*	$NetBSD: ulfs_dinode.h,v 1.7 2013/06/08 02:11:49 dholland Exp $	*/
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -88,16 +88,5 @@
 #define	ISVTX		0001000		/* Sticky bit. */
 #define	ISGID		0002000		/* Set-gid. */
 #define	ISUID		0004000		/* Set-uid. */
-
-/* File types. */
-#define	LFS_IFMT	0170000		/* Mask of file type. */
-#define	LFS_IFIFO	0010000		/* Named pipe (fifo). */
-#define	LFS_IFCHR	0020000		/* Character device. */
-#define	LFS_IFDIR	0040000		/* Directory file. */
-#define	LFS_IFBLK	0060000		/* Block device. */
-#define	LFS_IFREG	0100000		/* Regular file. */
-#define	LFS_IFLNK	0120000		/* Symbolic link. */
-#define	LFS_IFSOCK	0140000		/* UNIX domain socket. */
-#define	LFS_IFWHT	0160000		/* Whiteout. */
 
 #endif /* !_UFS_LFS_ULFS_DINODE_H_ */
