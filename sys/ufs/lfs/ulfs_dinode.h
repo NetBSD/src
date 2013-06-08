@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dinode.h,v 1.9 2013/06/08 02:13:33 dholland Exp $	*/
+/*	$NetBSD: ulfs_dinode.h,v 1.10 2013/06/08 02:15:12 dholland Exp $	*/
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -54,16 +54,6 @@
 #define	_UFS_LFS_ULFS_DINODE_H_
 
 #include <ufs/lfs/lfs.h>
-
-/*
- * Maximum length of a symlink that can be stored within the inode.
- */
-#define ULFS1_MAXSYMLINKLEN	((ULFS_NDADDR + ULFS_NIADDR) * sizeof(int32_t))
-#define ULFS2_MAXSYMLINKLEN	((ULFS_NDADDR + ULFS_NIADDR) * sizeof(int64_t))
-
-#define ULFS_MAXSYMLINKLEN(ip) \
-	((ip)->i_ump->um_fstype == ULFS1) ? \
-	ULFS1_MAXSYMLINKLEN : ULFS2_MAXSYMLINKLEN
 
 /* File permissions. */
 #define	IEXEC		0000100		/* Executable. */
