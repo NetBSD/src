@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dir.h,v 1.5 2013/06/08 02:12:56 dholland Exp $	*/
+/*	$NetBSD: ulfs_dir.h,v 1.6 2013/06/08 02:13:33 dholland Exp $	*/
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
 
 /*
@@ -51,7 +51,7 @@
  * the length of the entry, and the length of the name contained in
  * the entry.  These are followed by the name padded to a 4 byte boundary.
  * All names are guaranteed null terminated.
- * The maximum length of a name in a directory is FFS_MAXNAMLEN.
+ * The maximum length of a name in a directory is LFS_MAXNAMLEN.
  *
  * The macro DIRSIZ(fmt, dp) gives the amount of space required to represent
  * a directory entry.  Free space in a directory is represented by
@@ -67,29 +67,6 @@
  */
 #undef	DIRBLKSIZ
 #define	DIRBLKSIZ	DEV_BSIZE
-#define	FFS_MAXNAMLEN	255
-
-#define d_ino d_fileno
-struct lfs_direct {
-	u_int32_t d_fileno;		/* inode number of entry */
-	u_int16_t d_reclen;		/* length of this record */
-	u_int8_t  d_type; 		/* file type, see below */
-	u_int8_t  d_namlen;		/* length of string in d_name */
-	char	  d_name[FFS_MAXNAMLEN + 1];/* name with length <= FFS_MAXNAMLEN */
-};
-
-/*
- * File types
- */
-#define	LFS_DT_UNKNOWN	 0
-#define	LFS_DT_FIFO	 1
-#define	LFS_DT_CHR	 2
-#define	LFS_DT_DIR	 4
-#define	LFS_DT_BLK	 6
-#define	LFS_DT_REG	 8
-#define	LFS_DT_LNK	10
-#define	LFS_DT_SOCK	12
-#define	LFS_DT_WHT	14
 
 /*
  * Convert between stat structure types and directory types.
@@ -104,7 +81,7 @@ struct lfs_direct {
  * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
  */
 #define	DIRECTSIZ(namlen) \
-	((sizeof(struct lfs_direct) - (FFS_MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
+	((sizeof(struct lfs_direct) - (LFS_MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define DIRSIZ(oldfmt, dp, needswap)	\
@@ -119,34 +96,4 @@ struct lfs_direct {
 #define OLDDIRFMT	1
 #define NEWDIRFMT	0
 
-/*
- * Template for manipulating directories.  Should use struct direct's,
- * but the name field is FFS_MAXNAMLEN - 1, and this just won't do.
- */
-struct lfs_dirtemplate {
-	u_int32_t	dot_ino;
-	int16_t		dot_reclen;
-	u_int8_t	dot_type;
-	u_int8_t	dot_namlen;
-	char		dot_name[4];	/* must be multiple of 4 */
-	u_int32_t	dotdot_ino;
-	int16_t		dotdot_reclen;
-	u_int8_t	dotdot_type;
-	u_int8_t	dotdot_namlen;
-	char		dotdot_name[4];	/* ditto */
-};
-
-/*
- * This is the old format of directories, sanz type element.
- */
-struct lfs_odirtemplate {
-	u_int32_t	dot_ino;
-	int16_t		dot_reclen;
-	u_int16_t	dot_namlen;
-	char		dot_name[4];	/* must be multiple of 4 */
-	u_int32_t	dotdot_ino;
-	int16_t		dotdot_reclen;
-	u_int16_t	dotdot_namlen;
-	char		dotdot_name[4];	/* ditto */
-};
 #endif /* !_UFS_LFS_ULFS_DIR_H_ */

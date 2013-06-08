@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.7 2013/06/08 02:12:56 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.8 2013/06/08 02:13:33 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.7 2013/06/08 02:12:56 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.8 2013/06/08 02:13:33 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -707,7 +707,7 @@ ulfs_dirbad(struct inode *ip, doff_t offset, const char *how)
  *	record length must be multiple of 4
  *	entry must fit in rest of its DIRBLKSIZ block
  *	record must be large enough to contain entry
- *	name is not longer than FFS_MAXNAMLEN
+ *	name is not longer than LFS_MAXNAMLEN
  *	name must be as long as advertised, and null terminated
  */
 int
@@ -735,7 +735,7 @@ ulfs_dirbadentry(struct vnode *dp, struct lfs_direct *ep, int entryoffsetinblock
 		dirblksiz - (entryoffsetinblock & (dirblksiz - 1)) ||
 	    ulfs_rw16(ep->d_reclen, needswap) <
 		DIRSIZ(FSFMT(dp), ep, needswap) ||
-	    namlen > FFS_MAXNAMLEN) {
+	    namlen > LFS_MAXNAMLEN) {
 		/*return (1); */
 		printf("First bad, reclen=%#x, DIRSIZ=%lu, namlen=%d, "
 			"flags=%#x, entryoffsetinblock=%d, dirblksiz = %d\n",

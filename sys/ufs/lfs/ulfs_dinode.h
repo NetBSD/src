@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dinode.h,v 1.8 2013/06/08 02:12:56 dholland Exp $	*/
+/*	$NetBSD: ulfs_dinode.h,v 1.9 2013/06/08 02:13:33 dholland Exp $	*/
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -54,22 +54,6 @@
 #define	_UFS_LFS_ULFS_DINODE_H_
 
 #include <ufs/lfs/lfs.h>
-
-/*
- * The root inode is the root of the file system.  Inode 0 can't be used for
- * normal purposes and historically bad blocks were linked to inode 1, thus
- * the root inode is 2.  (Inode 1 is no longer used for this purpose, however
- * numerous dump tapes make this assumption, so we are stuck with it).
- */
-#define	ULFS_ROOTINO	((ino_t)2)
-
-/*
- * The Whiteout inode# is a dummy non-zero inode number which will
- * never be allocated to a real file.  It is used as a place holder
- * in the directory entry which has been tagged as a LFS_DT_WHT entry.
- * See the comments about ULFS_ROOTINO above.
- */
-#define	ULFS_WINO	((ino_t)1)
 
 /*
  * Maximum length of a symlink that can be stored within the inode.
