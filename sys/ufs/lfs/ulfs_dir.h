@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dir.h,v 1.4 2013/06/08 02:04:31 dholland Exp $	*/
+/*	$NetBSD: ulfs_dir.h,v 1.5 2013/06/08 02:12:56 dholland Exp $	*/
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
 
 /*
@@ -47,7 +47,7 @@
  *
  * Each DIRBLKSIZ byte block contains some number of directory entry
  * structures, which are of variable length.  Each directory entry has
- * a struct direct at the front of it, containing its inode number,
+ * a struct lfs_direct at the front of it, containing its inode number,
  * the length of the entry, and the length of the name contained in
  * the entry.  These are followed by the name padded to a 4 byte boundary.
  * All names are guaranteed null terminated.
@@ -70,7 +70,7 @@
 #define	FFS_MAXNAMLEN	255
 
 #define d_ino d_fileno
-struct	direct {
+struct lfs_direct {
 	u_int32_t d_fileno;		/* inode number of entry */
 	u_int16_t d_reclen;		/* length of this record */
 	u_int8_t  d_type; 		/* file type, see below */
@@ -81,15 +81,15 @@ struct	direct {
 /*
  * File types
  */
-#define	DT_UNKNOWN	 0
-#define	DT_FIFO		 1
-#define	DT_CHR		 2
-#define	DT_DIR		 4
-#define	DT_BLK		 6
-#define	DT_REG		 8
-#define	DT_LNK		10
-#define	DT_SOCK		12
-#define	DT_WHT		14
+#define	LFS_DT_UNKNOWN	 0
+#define	LFS_DT_FIFO	 1
+#define	LFS_DT_CHR	 2
+#define	LFS_DT_DIR	 4
+#define	LFS_DT_BLK	 6
+#define	LFS_DT_REG	 8
+#define	LFS_DT_LNK	10
+#define	LFS_DT_SOCK	12
+#define	LFS_DT_WHT	14
 
 /*
  * Convert between stat structure types and directory types.
@@ -99,12 +99,12 @@ struct	direct {
 
 /*
  * The DIRSIZ macro gives the minimum record length which will hold
- * the directory entry.  This requires the amount of space in struct direct
+ * the directory entry.  This requires the amount of space in struct lfs_direct
  * without the d_name field, plus enough space for the name with a terminating
  * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
  */
 #define	DIRECTSIZ(namlen) \
-	((sizeof(struct direct) - (FFS_MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
+	((sizeof(struct lfs_direct) - (FFS_MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define DIRSIZ(oldfmt, dp, needswap)	\
@@ -123,7 +123,7 @@ struct	direct {
  * Template for manipulating directories.  Should use struct direct's,
  * but the name field is FFS_MAXNAMLEN - 1, and this just won't do.
  */
-struct dirtemplate {
+struct lfs_dirtemplate {
 	u_int32_t	dot_ino;
 	int16_t		dot_reclen;
 	u_int8_t	dot_type;
@@ -139,7 +139,7 @@ struct dirtemplate {
 /*
  * This is the old format of directories, sanz type element.
  */
-struct odirtemplate {
+struct lfs_odirtemplate {
 	u_int32_t	dot_ino;
 	int16_t		dot_reclen;
 	u_int16_t	dot_namlen;

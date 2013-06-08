@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.24 2013/06/08 02:11:11 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.25 2013/06/08 02:12:56 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.24 2013/06/08 02:11:11 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.25 2013/06/08 02:12:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,25 +181,25 @@ static struct lfs lfs_default =  {
 
 #define	UMASK	0755
 
-struct direct lfs_root_dir[] = {
-	{ ULFS_ROOTINO, sizeof(struct direct), DT_DIR, 1, "."},
-	{ ULFS_ROOTINO, sizeof(struct direct), DT_DIR, 2, ".."},
-	/* { LFS_IFILE_INUM, sizeof(struct direct), DT_REG, 5, "ifile"}, */
+struct lfs_direct lfs_root_dir[] = {
+	{ ULFS_ROOTINO, sizeof(struct lfs_direct), LFS_DT_DIR, 1, "."},
+	{ ULFS_ROOTINO, sizeof(struct lfs_direct), LFS_DT_DIR, 2, ".."},
+	/* { LFS_IFILE_INUM, sizeof(struct lfs_direct), LFS_DT_REG, 5, "ifile"}, */
 #ifdef MAKE_LF_DIR
-	{ LOSTFOUNDINO, sizeof(struct direct), DT_DIR, 10, "lost+found"},
+	{ LOSTFOUNDINO, sizeof(struct lfs_direct), LFS_DT_DIR, 10, "lost+found"},
 #endif
 };
 
 #ifdef MAKE_LF_DIR
-struct direct lfs_lf_dir[] = {
-        { LOSTFOUNDINO, sizeof(struct direct), DT_DIR, 1, "." },
-        { ULFS_ROOTINO, sizeof(struct direct), DT_DIR, 2, ".." },
+struct lfs_direct lfs_lf_dir[] = {
+        { LOSTFOUNDINO, sizeof(struct lfs_direct), LFS_DT_DIR, 1, "." },
+        { ULFS_ROOTINO, sizeof(struct lfs_direct), LFS_DT_DIR, 2, ".." },
 };
 #endif
 
 void pwarn(const char *, ...);
 static void make_dinode(ino_t, struct ulfs1_dinode *, int, struct lfs *);
-static void make_dir( void *, struct direct *, int);
+static void make_dir( void *, struct lfs_direct *, int);
 static uint64_t maxfilesize(int);
 
 /*
@@ -280,7 +280,7 @@ make_dinode(ino_t ino, struct ulfs1_dinode *dip, int nfrags, struct lfs *fs)
  * entries in protodir fir in the first DIRBLKSIZ.  
  */
 static void
-make_dir(void *bufp, struct direct *protodir, int entries)
+make_dir(void *bufp, struct lfs_direct *protodir, int entries)
 {
 	char *cp;
 	int i, spcleft;
@@ -696,7 +696,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 			roundup(DIRBLKSIZ,fs->lfs_fsize);
 	bread(vp, 0, fs->lfs_fsize, NOCRED, 0, &bp);
 	make_dir(bp->b_data, lfs_root_dir, 
-		 sizeof(lfs_root_dir) / sizeof(struct direct));
+		 sizeof(lfs_root_dir) / sizeof(struct lfs_direct));
 	VOP_BWRITE(bp);
 
 #ifdef MAKE_LF_DIR
@@ -716,7 +716,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 			roundup(DIRBLKSIZ,fs->lfs_fsize);
 	bread(vp, 0, fs->lfs_fsize, NOCRED, 0, &bp);
 	make_dir(bp->b_data, lfs_lf_dir, 
-		 sizeof(lfs_lf_dir) / sizeof(struct direct));
+		 sizeof(lfs_lf_dir) / sizeof(struct lfs_direct));
 	VOP_BWRITE(bp);
 #endif /* MAKE_LF_DIR */
 

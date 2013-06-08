@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dinode.h,v 1.7 2013/06/08 02:11:49 dholland Exp $	*/
+/*	$NetBSD: ulfs_dinode.h,v 1.8 2013/06/08 02:12:56 dholland Exp $	*/
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -66,7 +66,7 @@
 /*
  * The Whiteout inode# is a dummy non-zero inode number which will
  * never be allocated to a real file.  It is used as a place holder
- * in the directory entry which has been tagged as a DT_W entry.
+ * in the directory entry which has been tagged as a LFS_DT_WHT entry.
  * See the comments about ULFS_ROOTINO above.
  */
 #define	ULFS_WINO	((ino_t)1)

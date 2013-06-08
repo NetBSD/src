@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.5 2013/06/06 00:52:14 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.6 2013/06/08 02:12:56 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -39,7 +39,6 @@
 
 struct buf;
 struct componentname;
-struct direct;
 struct disklabel;
 struct dquot;
 struct fid;
@@ -49,16 +48,17 @@ struct inode;
 struct mbuf;
 struct mount;
 struct nameidata;
+struct lfs_direct;
 struct lwp;
-struct ulfs_ufid;
 struct ulfs_args;
 struct ulfs_lookup_results;
+struct ulfs_ufid;
 struct ulfsmount;
 struct uio;
 struct vattr;
 struct vnode;
 
-extern pool_cache_t ulfs_direct_cache;	/* memory pool for directs */
+extern pool_cache_t ulfs_direct_cache;	/* memory pool for lfs_directs */
 
 __BEGIN_DECLS
 #define	ulfs_abortop	genfs_abortop
@@ -124,11 +124,11 @@ int	ulfs_balloc_range(struct vnode *, off_t, off_t, kauth_cred_t, int);
 
 /* ulfs_lookup.c */
 void	ulfs_dirbad(struct inode *, doff_t, const char *);
-int	ulfs_dirbadentry(struct vnode *, struct direct *, int);
+int	ulfs_dirbadentry(struct vnode *, struct lfs_direct *, int);
 void	ulfs_makedirentry(struct inode *, struct componentname *,
-			 struct direct *);
+			 struct lfs_direct *);
 int	ulfs_direnter(struct vnode *, const struct ulfs_lookup_results *,
-		     struct vnode *, struct direct *,
+		     struct vnode *, struct lfs_direct *,
 		     struct componentname *, struct buf *);
 int	ulfs_dirremove(struct vnode *, const struct ulfs_lookup_results *,
 		      struct inode *, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_rename.c,v 1.4 2013/06/08 02:11:11 dholland Exp $	*/
+/*	$NetBSD: ulfs_rename.c,v 1.5 2013/06/08 02:12:56 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.4 2013/06/08 02:11:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.5 2013/06/08 02:12:56 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -70,9 +70,9 @@ static bool ulfs_rename_ulr_overlap_p(const struct ulfs_lookup_results *,
 static int ulfs_rename_recalculate_fulr(struct vnode *,
     struct ulfs_lookup_results *, const struct ulfs_lookup_results *,
     const struct componentname *);
-static int ulfs_direct_namlen(const struct direct *, const struct vnode *);
+static int ulfs_direct_namlen(const struct lfs_direct *, const struct vnode *);
 static int ulfs_read_dotdot(struct vnode *, kauth_cred_t, ino_t *);
-static int ulfs_dirbuf_dotdot_namlen(const struct dirtemplate *,
+static int ulfs_dirbuf_dotdot_namlen(const struct lfs_dirtemplate *,
     const struct vnode *);
 
 static const struct genfs_rename_ops ulfs_genfs_rename_ops;
@@ -271,9 +271,9 @@ ulfs_gro_remove_check_permitted(struct mount *mp, kauth_cred_t cred,
  *
  * XXX Copypasta from ulfs_vnops.c.  Kill!
  */
-static const struct dirtemplate mastertemplate = {
-	0,	12,		DT_DIR,	1,	".",
-	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
+static const struct lfs_dirtemplate mastertemplate = {
+	0,	12,		LFS_DT_DIR,	1,	".",
+	0,	DIRBLKSIZ - 12,	LFS_DT_DIR,	2,	".."
 };
 
 /*
@@ -289,7 +289,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	struct ulfs_lookup_results *fulr = fde;
 	struct ulfs_lookup_results *tulr = tde;
 	bool directory_p, reparent_p;
-	struct direct *newdir;
+	struct lfs_direct *newdir;
 	int error;
 
 	KASSERT(mp != NULL);
@@ -488,7 +488,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 */
 	if (directory_p && reparent_p) {
 		error = ulfs_dirrewrite(VTOI(fvp), mastertemplate.dot_reclen,
-		    VTOI(fdvp), VTOI(tdvp)->i_number, DT_DIR, 0, IN_CHANGE);
+		    VTOI(fdvp), VTOI(tdvp)->i_number, LFS_DT_DIR, 0, IN_CHANGE);
 #if 0		/* XXX This branch was not in ulfs_rename! */
 		if (error)
 			goto whymustithurtsomuch;
@@ -614,7 +614,7 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
 	doff_t offset;		/* Offset of entry we're examining.  */
 	struct buf *bp;		/* I/O block we're examining.  */
 	char *dirbuf;		/* Pointer into directory at search_start.  */
-	struct direct *ep;	/* Pointer to the entry we're examining.  */
+	struct lfs_direct *ep;	/* Pointer to the entry we're examining.  */
 	/* XXX direct::d_reclen is 16-bit;
 	 * ulfs_lookup_results::ulr_reclen is 32-bit.  Blah.  */
 	uint32_t reclen;	/* Length of the entry we're examining.  */
@@ -683,7 +683,7 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
 		/*
 		 * Examine the directory entry at offset.
 		 */
-		ep = (struct direct *)(dirbuf + (offset - search_start));
+		ep = (struct lfs_direct *)(dirbuf + (offset - search_start));
 		reclen = ulfs_rw16(ep->d_reclen, needswap);
 
 		if (ep->d_ino == 0)
@@ -744,7 +744,7 @@ next:
  * the directory vp.
  */
 static int			/* XXX int?  uint8_t?  */
-ulfs_direct_namlen(const struct direct *ep, const struct vnode *vp)
+ulfs_direct_namlen(const struct lfs_direct *ep, const struct vnode *vp)
 {
 	bool swap;
 
@@ -872,7 +872,7 @@ ulfs_rmdired_p(struct vnode *vp)
 static int
 ulfs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
 {
-	struct dirtemplate dirbuf;
+	struct lfs_dirtemplate dirbuf;
 	int error;
 
 	KASSERT(vp != NULL);
@@ -901,7 +901,7 @@ ulfs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
  * necessary.
  */
 static int			/* XXX int?  uint8_t?  */
-ulfs_dirbuf_dotdot_namlen(const struct dirtemplate *dirbuf,
+ulfs_dirbuf_dotdot_namlen(const struct lfs_dirtemplate *dirbuf,
     const struct vnode *vp)
 {
 	bool swap;
