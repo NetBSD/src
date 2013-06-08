@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.c,v 1.4 2013/06/08 02:12:56 dholland Exp $	*/
+/*	$NetBSD: ulfs_dirhash.c,v 1.5 2013/06/08 02:14:46 dholland Exp $	*/
 /*  from NetBSD: ufs_dirhash.c,v 1.34 2009/10/05 23:48:08 rmind Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.4 2013/06/08 02:12:56 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.5 2013/06/08 02:14:46 dholland Exp $");
 
 /*
  * This implements a hash-based lookup scheme for ULFS directories.
@@ -147,7 +147,7 @@ ulfsdirhash_build(struct inode *ip)
 	vp = ip->i_vnode;
 	/* Allocate 50% more entries than this dir size could ever need. */
 	KASSERT(ip->i_size >= dirblksiz);
-	nslots = ip->i_size / DIRECTSIZ(1);
+	nslots = ip->i_size / LFS_DIRECTSIZ(1);
 	nslots = (nslots * 3 + 1) / 2;
 	narrays = howmany(nslots, DH_NBLKOFF);
 	nslots = narrays * DH_NBLKOFF;
@@ -240,7 +240,7 @@ ulfsdirhash_build(struct inode *ip)
 				slot = WRAPINCR(slot, dh->dh_hlen);
 			dh->dh_hused++;
 			DH_ENTRY(dh, slot) = pos;
-			ulfsdirhash_adjfree(dh, pos, -DIRSIZ(0, ep, needswap),
+			ulfsdirhash_adjfree(dh, pos, -LFS_DIRSIZ(0, ep, needswap),
 			    dirblksiz);
 		}
 		pos += ep->d_reclen;
@@ -449,7 +449,7 @@ restart:
 			/* Check for sequential access, and update offset. */
 			if (dh->dh_seqopt == 0 && dh->dh_seqoff == offset)
 				dh->dh_seqopt = 1;
-			dh->dh_seqoff = offset + DIRSIZ(0, dp, needswap);
+			dh->dh_seqoff = offset + LFS_DIRSIZ(0, dp, needswap);
 			DIRHASH_UNLOCK(dh);
 
 			*bpp = bp;
@@ -541,7 +541,7 @@ ulfsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 			brelse(bp, 0);
 			return (-1);
 		}
-		if (dp->d_ino == 0 || dp->d_reclen > DIRSIZ(0, dp, needswap))
+		if (dp->d_ino == 0 || dp->d_reclen > LFS_DIRSIZ(0, dp, needswap))
 			break;
 		i += dp->d_reclen;
 		dp = (struct lfs_direct *)((char *)dp + dp->d_reclen);
@@ -558,7 +558,7 @@ ulfsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 	while (i < dirblksiz && freebytes < slotneeded) {
 		freebytes += dp->d_reclen;
 		if (dp->d_ino != 0)
-			freebytes -= DIRSIZ(0, dp, needswap);
+			freebytes -= LFS_DIRSIZ(0, dp, needswap);
 		if (dp->d_reclen == 0) {
 			DIRHASH_UNLOCK(dh);
 			brelse(bp, 0);
@@ -656,7 +656,7 @@ ulfsdirhash_add(struct inode *ip, struct lfs_direct *dirp, doff_t offset)
 	DH_ENTRY(dh, slot) = offset;
 
 	/* Update the per-block summary info. */
-	ulfsdirhash_adjfree(dh, offset, -DIRSIZ(0, dirp, needswap), dirblksiz);
+	ulfsdirhash_adjfree(dh, offset, -LFS_DIRSIZ(0, dirp, needswap), dirblksiz);
 	DIRHASH_UNLOCK(dh);
 }
 
@@ -691,7 +691,7 @@ ulfsdirhash_remove(struct inode *ip, struct lfs_direct *dirp, doff_t offset)
 	ulfsdirhash_delslot(dh, slot);
 
 	/* Update the per-block summary info. */
-	ulfsdirhash_adjfree(dh, offset, DIRSIZ(0, dirp, needswap), dirblksiz);
+	ulfsdirhash_adjfree(dh, offset, LFS_DIRSIZ(0, dirp, needswap), dirblksiz);
 	DIRHASH_UNLOCK(dh);
 }
 
@@ -869,7 +869,7 @@ ulfsdirhash_checkblock(struct inode *ip, char *sbuf, doff_t offset)
 		/* Check that the entry	exists (will panic if it doesn't). */
 		ulfsdirhash_findslot(dh, dp->d_name, dp->d_namlen, offset + i);
 
-		nfree += dp->d_reclen - DIRSIZ(0, dp, needswap);
+		nfree += dp->d_reclen - LFS_DIRSIZ(0, dp, needswap);
 	}
 	if (i != dirblksiz)
 		panic("ulfsdirhash_checkblock: bad dir end");
