@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.126 2012/01/30 20:01:08 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.127 2013/06/08 02:42:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.126 2012/01/30 20:01:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.127 2013/06/08 02:42:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -594,7 +594,7 @@ ifa_ifwithroute(int flags, const struct sockaddr *dst,
 		 * we can use the local address.
 		 */
 		ifa = NULL;
-		if (flags & RTF_HOST)
+		if ((flags & RTF_HOST) && gateway->sa_family != AF_LINK)
 			ifa = ifa_ifwithdstaddr(dst);
 		if (ifa == NULL)
 			ifa = ifa_ifwithaddr(gateway);
@@ -619,7 +619,7 @@ ifa_ifwithroute(int flags, const struct sockaddr *dst,
 	if (ifa->ifa_addr->sa_family != dst->sa_family) {
 		struct ifaddr *oifa = ifa;
 		ifa = ifaof_ifpforaddr(dst, ifa->ifa_ifp);
-		if (ifa == 0)
+		if (ifa == NULL)
 			ifa = oifa;
 	}
 	return ifa;
