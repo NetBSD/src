@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.358 2013/06/05 23:08:01 christos Exp $
+# $NetBSD: ALL,v 1.359 2013/06/08 02:43:10 dholland Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.358 $"
+#ident 		"ALL-$Revision: 1.359 $"
 
 maxusers	64		# estimated number of users
 
@@ -200,6 +200,12 @@ options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	UFS_EXTATTR
+options 	LFS_EI		# LFS endian-independent support - experimental
+options 	LFS_DIRHASH	# LFS version of UFS_DIRHASH - experimental
+options 	LFS_EXTATTR	# extended attributes for LFS - experimental
+options 	LFS_EXTATTR_AUTOSTART	# like UFS_EXTATTR_AUTOSTART
+options 	LFS_QUOTA	# quotas for LFS - experimental
+options 	LFS_QUOTA2	# new-style quotas for LFS - experimental
 options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
