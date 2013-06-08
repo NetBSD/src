@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.6 2013/06/06 00:51:25 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.7 2013/06/08 02:11:11 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.212 2013/03/18 19:35:48 plunky Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.6 2013/06/06 00:51:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.7 2013/06/08 02:11:11 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -994,7 +994,7 @@ ulfs_mkdir(void *v)
 		goto out;
 	}
 	dmode = vap->va_mode & ACCESSPERMS;
-	dmode |= IFDIR;
+	dmode |= LFS_IFDIR;
 	/*
 	 * Must simulate part of ulfs_makeinode here to acquire the inode,
 	 * but not have it entered in the parent directory. The entry is
@@ -1253,7 +1253,7 @@ ulfs_symlink(void *v)
 	 * ulfs_makeinode
 	 */
 	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
-	error = ulfs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp, ulr,
+	error = ulfs_makeinode(LFS_IFLNK | ap->a_vap->va_mode, ap->a_dvp, ulr,
 			      vpp, ap->a_cnp);
 	if (error)
 		goto out;
@@ -1814,8 +1814,8 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 
 	pdir = VTOI(dvp);
 
-	if ((mode & IFMT) == 0)
-		mode |= IFREG;
+	if ((mode & LFS_IFMT) == 0)
+		mode |= LFS_IFREG;
 
 	if ((error = ULFS_VALLOC(dvp, mode, cnp->cn_cred, vpp)) != 0) {
 		vput(dvp);
