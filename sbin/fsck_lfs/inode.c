@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.46 2013/06/08 02:09:35 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.47 2013/06/08 02:11:11 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,9 +137,9 @@ ckinode(struct ulfs1_dinode *dp, struct inodesc *idesc)
 		idesc->id_fix = DONTKNOW;
 	idesc->id_entryno = 0;
 	idesc->id_filesize = dp->di_size;
-	mode = dp->di_mode & IFMT;
-	if (mode == IFBLK || mode == IFCHR ||
-	    (mode == IFLNK && (dp->di_size < fs->lfs_maxsymlinklen ||
+	mode = dp->di_mode & LFS_IFMT;
+	if (mode == LFS_IFBLK || mode == LFS_IFCHR ||
+	    (mode == LFS_IFLNK && (dp->di_size < fs->lfs_maxsymlinklen ||
 		    (fs->lfs_maxsymlinklen == 0 &&
 			dp->di_blocks == 0))))
 		return (KEEPON);
@@ -432,7 +432,7 @@ clri(struct inodesc * idesc, const char *type, int flag)
 	vp = vget(fs, idesc->id_number);
 	if (flag & 0x1) {
 		pwarn("%s %s", type,
-		      (VTOI(vp)->i_ffs1_mode & IFMT) == IFDIR ? "DIR" : "FILE");
+		      (VTOI(vp)->i_ffs1_mode & LFS_IFMT) == LFS_IFDIR ? "DIR" : "FILE");
 		pinode(idesc->id_number);
 	}
 	if ((flag & 0x2) || preen || reply("CLEAR") == 1) {
@@ -594,12 +594,12 @@ allocino(ino_t request, int type)
 	if (ino == maxino)
 		extend_ifile(fs);
 
-	switch (type & IFMT) {
-	case IFDIR:
+	switch (type & LFS_IFMT) {
+	case LFS_IFDIR:
 		statemap[ino] = DSTATE;
 		break;
-	case IFREG:
-	case IFLNK:
+	case LFS_IFREG:
+	case LFS_IFLNK:
 		statemap[ino] = FSTATE;
 		break;
 	default:
