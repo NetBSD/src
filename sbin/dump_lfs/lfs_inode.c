@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.16 2013/01/22 09:39:11 dholland Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.17 2013/06/08 23:37:37 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,14 +39,13 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.16 2013/01/22 09:39:11 dholland Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.17 2013/06/08 23:37:37 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
 #include <sys/mount.h>
 #include <ufs/lfs/lfs.h>
@@ -187,22 +186,22 @@ fs_mapinodes(ino_t maxino, u_int64_t *tapesz, int *anydirskipped)
 {
 	ino_t ino;
 
-	for (ino = UFS_ROOTINO; ino < maxino; ino++)
+	for (ino = ULFS_ROOTINO; ino < maxino; ino++)
 		mapfileino(ino, tapesz, anydirskipped);
 }
 
 /*
  * XXX KS - I know there's a better way to do this.
  */
-#define BASE_SINDIR (UFS_NDADDR)
-#define BASE_DINDIR (UFS_NDADDR+NINDIR(fs))
-#define BASE_TINDIR (UFS_NDADDR+NINDIR(fs)+NINDIR(fs)*NINDIR(fs))
+#define BASE_SINDIR (ULFS_NDADDR)
+#define BASE_DINDIR (ULFS_NDADDR+NINDIR(fs))
+#define BASE_TINDIR (ULFS_NDADDR+NINDIR(fs)+NINDIR(fs)*NINDIR(fs))
 
 #define D_UNITS (NINDIR(fs))
 #define T_UNITS (NINDIR(fs)*NINDIR(fs))
 
 static daddr_t
-lfs_bmap(struct lfs *fs, struct ufs1_dinode *idinode, daddr_t lbn)
+lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
 {
 	daddr_t residue, up;
 	int off=0;
@@ -221,7 +220,7 @@ lfs_bmap(struct lfs *fs, struct ufs1_dinode *idinode, daddr_t lbn)
 	 */
 	if(lbn < 0) {
 		lbn *= -1;
-		if (lbn == UFS_NDADDR) {
+		if (lbn == ULFS_NDADDR) {
 			/* printf("lbn %d: single indir base\n", -lbn); */
 			return idinode->di_ib[0]; /* single indirect */
 		} else if(lbn == BASE_DINDIR+1) {
@@ -236,7 +235,7 @@ lfs_bmap(struct lfs *fs, struct ufs1_dinode *idinode, daddr_t lbn)
 		 * Find the immediate parent. This is essentially finding the
 		 * residue of modulus, and then rounding accordingly.
 		 */
-		residue = (lbn-UFS_NDADDR) % NINDIR(fs);
+		residue = (lbn-ULFS_NDADDR) % NINDIR(fs);
 		if(residue == 1) {
 			/* Double indirect.  Parent is the triple. */
 			up = idinode->di_ib[2];
@@ -265,12 +264,12 @@ lfs_bmap(struct lfs *fs, struct ufs1_dinode *idinode, daddr_t lbn)
 		}
 	} else {
 		/* Direct block.  Its parent must be a single indirect. */
-		if (lbn < UFS_NDADDR)
+		if (lbn < ULFS_NDADDR)
 			return idinode->di_db[lbn];
 		else {
 			/* Parent is an indirect block. */
-			up = -(((lbn-UFS_NDADDR) / D_UNITS) * D_UNITS + UFS_NDADDR);
-			off = (lbn-UFS_NDADDR) % D_UNITS;
+			up = -(((lbn-ULFS_NDADDR) / D_UNITS) * D_UNITS + ULFS_NDADDR);
+			off = (lbn-ULFS_NDADDR) % D_UNITS;
 			/* printf("lbn %d: parent is %d/%d\n", lbn,up,off); */
 		}
 	}
@@ -290,10 +289,13 @@ lfs_ientry(ino_t ino)
 	daddr_t lbn;
 	daddr_t blkno;
 	union dinode *dp;
+	struct ulfs1_dinode *ldp;
     
 	lbn = ino/sblock->lfs_ifpb + sblock->lfs_cleansz + sblock->lfs_segtabsz;
 	dp = getino(sblock->lfs_ifile);
-	blkno = lfs_bmap(sblock, &dp->dp1 ,lbn);
+	/* XXX XXX this is horribly unsafe */
+	ldp = (struct ulfs1_dinode *)dp;
+	blkno = lfs_bmap(sblock, ldp ,lbn);
 	if (blkno != ifblkno)
 		bread(fsbtodb(sblock, blkno), (char *)ifileblock,
 		    sblock->lfs_bsize);
@@ -301,8 +303,8 @@ lfs_ientry(ino_t ino)
 }
 
 /* Search a block for a specific dinode. */
-static struct ufs1_dinode *
-lfs_ifind(struct lfs *fs, ino_t ino, struct ufs1_dinode *dip)
+static struct ulfs1_dinode *
+lfs_ifind(struct lfs *fs, ino_t ino, struct ulfs1_dinode *dip)
 {
 	int cnt;
 
@@ -317,14 +319,14 @@ getino(ino_t inum)
 {
 	static daddr_t inoblkno;
 	daddr_t blkno;
-	static struct ufs1_dinode inoblock[MAXBSIZE / sizeof (struct ufs1_dinode)];
-	static struct ufs1_dinode ifile_dinode; /* XXX fill this in */
-	static struct ufs1_dinode empty_dinode; /* Always stays zeroed */
-	struct ufs1_dinode *dp;
+	static struct ulfs1_dinode inoblock[MAXBSIZE / sizeof (struct ulfs1_dinode)];
+	static struct ulfs1_dinode ifile_dinode; /* XXX fill this in */
+	static struct ulfs1_dinode empty_dinode; /* Always stays zeroed */
+	struct ulfs1_dinode *dp;
 
 	if(inum == sblock->lfs_ifile) {
 		/* Load the ifile inode if not already */
-		if(ifile_dinode.di_u.inumber == 0) {
+		if(ifile_dinode.di_inumber == 0) {
 			blkno = sblock->lfs_idaddr;
 			bread(fsbtodb(sblock, blkno), (char *)inoblock, 
 				(int)sblock->lfs_bsize);
@@ -348,6 +350,7 @@ getino(ino_t inum)
 				ffs_dinode_swap(&inoblock[i], &inoblock[i]);
 #endif
 	}
+	/* XXX XXX: this cast is horribly unsafe */
 	return (union dinode *)lfs_ifind(sblock, inum, inoblock);
 }
 
