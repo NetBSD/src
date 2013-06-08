@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.12 2013/06/08 22:05:15 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.13 2013/06/08 22:23:52 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.12 2013/06/08 22:05:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.13 2013/06/08 22:23:52 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.12 2013/06/08 22:05:15 dholland Exp
 #include <miscfs/genfs/genfs.h>
 
 #include <ufs/lfs/ulfs_inode.h>
-#include <ufs/lfs/ulfs_dir.h>
 #include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/ulfs_bswap.h>
 #include <ufs/lfs/ulfs_extern.h>

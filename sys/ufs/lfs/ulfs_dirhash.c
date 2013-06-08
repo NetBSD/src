@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.c,v 1.5 2013/06/08 02:14:46 dholland Exp $	*/
+/*	$NetBSD: ulfs_dirhash.c,v 1.6 2013/06/08 22:23:52 dholland Exp $	*/
 /*  from NetBSD: ufs_dirhash.c,v 1.34 2009/10/05 23:48:08 rmind Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.5 2013/06/08 02:14:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.6 2013/06/08 22:23:52 dholland Exp $");
 
 /*
  * This implements a hash-based lookup scheme for ULFS directories.
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.5 2013/06/08 02:14:46 dholland Ex
 #include <sys/atomic.h>
 
 #include <ufs/lfs/ulfs_inode.h>
-#include <ufs/lfs/ulfs_dir.h>
 #include <ufs/lfs/ulfs_dirhash.h>
 #include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/ulfs_bswap.h>
