@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.27 2013/06/06 00:52:50 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.28 2013/06/08 02:11:11 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -317,7 +317,7 @@ fileerror(ino_t cwd, ino_t ino, const char *errmesg)
 	else {
 		if (ftypeok(VTOD(vp)))
 			pfatal("%s=%s\n",
-			    (VTOI(vp)->i_ffs1_mode & IFMT) == IFDIR ?
+			    (VTOI(vp)->i_ffs1_mode & LFS_IFMT) == LFS_IFDIR ?
 			    "DIR" : "FILE", pathbuf);
 		else
 			pfatal("NAME=%s\n", pathbuf);
@@ -337,7 +337,7 @@ adjust(struct inodesc *idesc, short lcnt)
 			clri(idesc, "UNREF", 0);
 	} else {
 		pwarn("LINK COUNT %s", (lfdir == idesc->id_number) ? lfname :
-		    ((dp->di_mode & IFMT) == IFDIR ? "DIR" : "FILE"));
+		    ((dp->di_mode & LFS_IFMT) == LFS_IFDIR ? "DIR" : "FILE"));
 		pinode(idesc->id_number);
 		printf(" COUNT %d SHOULD BE %d",
 		    dp->di_nlink, dp->di_nlink - lcnt);
@@ -406,7 +406,7 @@ linkup(ino_t orphan, ino_t parentdir)
 	memset(&idesc, 0, sizeof(struct inodesc));
 	vp = vget(fs, orphan);
 	dp = VTOD(vp);
-	lostdir = (dp->di_mode & IFMT) == IFDIR;
+	lostdir = (dp->di_mode & LFS_IFMT) == LFS_IFDIR;
 	pwarn("UNREF %s ", lostdir ? "DIR" : "FILE");
 	pinode(orphan);
 	if (preen && dp->di_size == 0)
@@ -448,7 +448,7 @@ linkup(ino_t orphan, ino_t parentdir)
 	}
 	vp = vget(fs, lfdir);
 	dp = VTOD(vp);
-	if ((dp->di_mode & IFMT) != IFDIR) {
+	if ((dp->di_mode & LFS_IFMT) != LFS_IFDIR) {
 		pfatal("lost+found IS NOT A DIRECTORY");
 		if (reply("REALLOCATE") == 0)
 			return (0);
@@ -622,7 +622,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 	struct dirtemplate *dirp;
 	struct uvnode *vp;
 
-	ino = allocino(request, IFDIR | mode);
+	ino = allocino(request, LFS_IFDIR | mode);
 	dirp = &dirhead;
 	dirp->dot_ino = ino;
 	dirp->dotdot_ino = parent;

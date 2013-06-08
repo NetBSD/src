@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.227 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.228 2013/06/08 02:11:11 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.227 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.228 2013/06/08 02:11:11 dholland Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1208,8 +1208,8 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 */
 
 	/* Check file size based on highest allocated block */
-	if (((ip->i_ffs1_mode & IFMT) == IFREG ||
-	     (ip->i_ffs1_mode & IFMT) == IFDIR) &&
+	if (((ip->i_ffs1_mode & LFS_IFMT) == LFS_IFREG ||
+	     (ip->i_ffs1_mode & LFS_IFMT) == LFS_IFDIR) &&
 	    ip->i_size > ((ip->i_lfs_hiblk + 1) << fs->lfs_bshift)) {
 		cdp->di_size = (ip->i_lfs_hiblk + 1) << fs->lfs_bshift;
 		DLOG((DLOG_SEG, "lfs_writeinode: ino %d size %" PRId64 " -> %"
@@ -1236,10 +1236,10 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	for (i = (cdp->di_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
 	     i < ULFS_NDADDR; i++) {
 		KASSERT(i >= 0);
-		if ((cdp->di_mode & IFMT) == IFLNK)
+		if ((cdp->di_mode & LFS_IFMT) == LFS_IFLNK)
 			continue;
-		if (((cdp->di_mode & IFMT) == IFBLK ||
-		     (cdp->di_mode & IFMT) == IFCHR) && i == 0)
+		if (((cdp->di_mode & LFS_IFMT) == LFS_IFBLK ||
+		     (cdp->di_mode & LFS_IFMT) == LFS_IFCHR) && i == 0)
 			continue;
 		if (cdp->di_db[i] != 0) {
 # ifdef DEBUG

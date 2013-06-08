@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.33 2013/06/06 00:54:49 dholland Exp $	 */
+/* $NetBSD: pass1.c,v 1.34 2013/06/08 02:11:11 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -132,7 +132,7 @@ pass1(void)
 		if (inumber == 0 || dins[i]->daddr == 0)
 			continue;
 		tinode = ginode(inumber);
-		if (tinode && (tinode->di_mode & IFMT) == IFDIR)
+		if (tinode && (tinode->di_mode & LFS_IFMT) == LFS_IFDIR)
 			numdirs++;
 	}
 
@@ -181,7 +181,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		statemap[inumber] = USTATE;
 		return;
 	}
-	mode = dp->di_mode & IFMT;
+	mode = dp->di_mode & LFS_IFMT;
 
 	/* XXX - LFS doesn't have this particular problem (?) */
 	if (mode == 0) {
@@ -208,11 +208,11 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 			    (unsigned long long) dp->di_size);
 		goto unknown;
 	}
-	if (!preen && mode == IFMT && reply("HOLD BAD BLOCK") == 1) {
+	if (!preen && mode == LFS_IFMT && reply("HOLD BAD BLOCK") == 1) {
 		vp = vget(fs, inumber);
 		dp = VTOD(vp);
 		dp->di_size = fs->lfs_fsize;
-		dp->di_mode = IFREG | 0600;
+		dp->di_mode = LFS_IFREG | 0600;
 		inodirty(VTOI(vp));
 	}
 	ndb = howmany(dp->di_size, fs->lfs_bsize);
@@ -222,9 +222,9 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 			    (unsigned long long) dp->di_size, ndb);
 		goto unknown;
 	}
-	if (mode == IFBLK || mode == IFCHR)
+	if (mode == LFS_IFBLK || mode == LFS_IFCHR)
 		ndb++;
-	if (mode == IFLNK) {
+	if (mode == LFS_IFLNK) {
 		/*
 		 * Fake ndb value so direct/indirect block checks below
 		 * will detect any garbage after symlink string.
@@ -266,7 +266,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		zlnp->next = zlnhead;
 		zlnhead = zlnp;
 	}
-	if (mode == IFDIR) {
+	if (mode == LFS_IFDIR) {
 		if (dp->di_size == 0)
 			statemap[inumber] = DCLEAR;
 		else
@@ -283,7 +283,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	if (dp->di_nlink <= 0) {
 		LFS_IENTRY(ifp, fs, inumber, bp);
 		if (ifp->if_nextfree == LFS_ORPHAN_NEXTFREE) {
-			statemap[inumber] = (mode == IFDIR ? DCLEAR : FCLEAR);
+			statemap[inumber] = (mode == LFS_IFDIR ? DCLEAR : FCLEAR);
 			/* Add this to our list of orphans */
 			zlnp = emalloc(sizeof *zlnp);
 			zlnp->zlncnt = inumber;

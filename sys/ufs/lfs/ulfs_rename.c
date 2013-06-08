@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_rename.c,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_rename.c,v 1.4 2013/06/08 02:11:11 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.3 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.4 2013/06/08 02:11:11 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -323,10 +323,10 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 		return EMLINK;
 
 	directory_p = (fvp->v_type == VDIR);
-	KASSERT(directory_p == ((VTOI(fvp)->i_mode & IFMT) == IFDIR));
+	KASSERT(directory_p == ((VTOI(fvp)->i_mode & LFS_IFMT) == LFS_IFDIR));
 	KASSERT((tvp == NULL) || (directory_p == (tvp->v_type == VDIR)));
 	KASSERT((tvp == NULL) || (directory_p ==
-		((VTOI(tvp)->i_mode & IFMT) == IFDIR)));
+		((VTOI(tvp)->i_mode & LFS_IFMT) == LFS_IFDIR)));
 
 	reparent_p = (fdvp != tdvp);
 	KASSERT(reparent_p == (VTOI(fdvp)->i_number != VTOI(tdvp)->i_number));

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.245 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.246 2013/06/08 02:11:11 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.245 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.246 2013/06/08 02:11:11 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -953,7 +953,7 @@ lfs_getattr(void *v)
 	 */
 	vap->va_fsid = ip->i_dev;
 	vap->va_fileid = ip->i_number;
-	vap->va_mode = ip->i_mode & ~IFMT;
+	vap->va_mode = ip->i_mode & ~LFS_IFMT;
 	vap->va_nlink = ip->i_nlink;
 	vap->va_uid = ip->i_uid;
 	vap->va_gid = ip->i_gid;

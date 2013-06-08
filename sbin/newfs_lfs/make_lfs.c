@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.23 2013/06/08 02:09:35 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.24 2013/06/08 02:11:11 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.23 2013/06/08 02:09:35 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.24 2013/06/08 02:11:11 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -615,7 +615,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	if (dip == NULL)
 		err(1, NULL);
 	memset(dip, 0, sizeof(*dip));
-	dip->di_mode  = IFREG|IREAD|IWRITE;
+	dip->di_mode  = LFS_IFREG|IREAD|IWRITE;
 	dip->di_flags = SF_IMMUTABLE;
 	make_dinode(LFS_IFILE_INUM, dip,
 		blkstofrags(fs, fs->lfs_cleansz + fs->lfs_segtabsz + 1), fs);
@@ -680,7 +680,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	vp = lfs_raw_vget(fs, ULFS_ROOTINO, devfd, 0x0);
 	dip = VTOI(vp)->i_din.ffs1_din;
 	make_dinode(ULFS_ROOTINO, dip, howmany(DIRBLKSIZ,fs->lfs_fsize), fs);
-	dip->di_mode = IFDIR | UMASK;
+	dip->di_mode = LFS_IFDIR | UMASK;
 	VTOI(vp)->i_lfs_osize = dip->di_size = DIRBLKSIZ;
 #ifdef MAKE_LF_DIR
 	VTOI(vp)->i_nlink = dip->di_nlink = 3;

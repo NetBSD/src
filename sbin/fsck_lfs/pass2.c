@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.19 2013/06/06 00:52:50 dholland Exp $	 */
+/* $NetBSD: pass2.c,v 1.20 2013/06/08 02:11:11 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -103,8 +103,8 @@ pass2(void)
 			errx(EEXIT, "%s", "");
 		vp = vget(fs, ULFS_ROOTINO);
 		dp = VTOD(vp);
-		dp->di_mode &= ~IFMT;
-		dp->di_mode |= IFDIR;
+		dp->di_mode &= ~LFS_IFMT;
+		dp->di_mode |= LFS_IFDIR;
 		inodirty(VTOI(vp));
 		break;
 
@@ -156,7 +156,7 @@ pass2(void)
 			}
 		}
 		memset(&dino, 0, sizeof(struct ulfs1_dinode));
-		dino.di_mode = IFDIR;
+		dino.di_mode = LFS_IFDIR;
 		dino.di_size = inp->i_isize;
 		memcpy(&dino.di_db[0], &inp->i_blks[0], (size_t) inp->i_numblks);
 		curino.id_number = inp->i_number;
@@ -382,7 +382,7 @@ again:
 				break;
 			dp = ginode(dirp->d_ino);
 			statemap[dirp->d_ino] =
-			    (dp->di_mode & IFMT) == IFDIR ? DSTATE : FSTATE;
+			    (dp->di_mode & LFS_IFMT) == LFS_IFDIR ? DSTATE : FSTATE;
 			lncntp[dirp->d_ino] = dp->di_nlink;
 			goto again;
 

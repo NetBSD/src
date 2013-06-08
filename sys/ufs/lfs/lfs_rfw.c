@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.15 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.16 2013/06/08 02:11:11 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.15 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.16 2013/06/08 02:11:11 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -180,7 +180,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 		 * this later if it turns out to be some other kind of file.
 		 */
 		ip = VTOI(vp);
-		ip->i_mode = ip->i_ffs1_mode = IFREG;
+		ip->i_mode = ip->i_ffs1_mode = LFS_IFREG;
 		ip->i_nlink = ip->i_ffs1_nlink = 1;
 		ulfs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 		ip = VTOI(vp);

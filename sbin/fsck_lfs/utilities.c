@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.33 2013/06/06 00:52:50 dholland Exp $	 */
+/* $NetBSD: utilities.c,v 1.34 2013/06/08 02:11:11 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -66,15 +66,15 @@ extern off_t locked_queue_bytes;
 int
 ftypeok(struct ulfs1_dinode * dp)
 {
-	switch (dp->di_mode & IFMT) {
+	switch (dp->di_mode & LFS_IFMT) {
 
-	case IFDIR:
-	case IFREG:
-	case IFBLK:
-	case IFCHR:
-	case IFLNK:
-	case IFSOCK:
-	case IFIFO:
+	case LFS_IFDIR:
+	case LFS_IFREG:
+	case LFS_IFBLK:
+	case LFS_IFCHR:
+	case LFS_IFLNK:
+	case LFS_IFSOCK:
+	case LFS_IFIFO:
 		return (1);
 
 	default:
