@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extattr.c,v 1.4 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_extattr.c,v 1.5 2013/06/08 02:14:46 dholland Exp $	*/
 /*  from NetBSD: ufs_extattr.c,v 1.41 2012/12/08 13:42:36 manu Exp  */
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.4 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.5 2013/06/08 02:14:46 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -546,7 +546,7 @@ ulfs_extattr_iterate_directory(struct ulfsmount *ump, struct vnode *dvp,
 	if (dvp->v_type != VDIR)
 		return (ENOTDIR);
 
-	dirbuf = kmem_alloc(DIRBLKSIZ, KM_SLEEP);
+	dirbuf = kmem_alloc(LFS_DIRBLKSIZ, KM_SLEEP);
 
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -563,9 +563,9 @@ ulfs_extattr_iterate_directory(struct ulfsmount *ump, struct vnode *dvp,
 	vargs.a_cookies = NULL;
 
 	while (!eofflag) {
-		auio.uio_resid = DIRBLKSIZ;
+		auio.uio_resid = LFS_DIRBLKSIZ;
 		aiov.iov_base = dirbuf;
-		aiov.iov_len = DIRBLKSIZ;
+		aiov.iov_len = LFS_DIRBLKSIZ;
 		error = ulfs_readdir(&vargs);
 		if (error) {
 			printf("ulfs_extattr_iterate_directory: ulfs_readdir "
@@ -574,12 +574,12 @@ ulfs_extattr_iterate_directory(struct ulfsmount *ump, struct vnode *dvp,
 		}
 
 		/*
-		 * XXXRW: While in ULFS, we always get DIRBLKSIZ returns from
+		 * XXXRW: While in LFS, we always get LFS_DIRBLKSIZ returns from
 		 * the directory code on success, on other file systems this
 		 * may not be the case.  For portability, we should check the
 		 * read length on return from ulfs_readdir().
 		 */
-		edp = (struct dirent *)&dirbuf[DIRBLKSIZ];
+		edp = (struct dirent *)&dirbuf[LFS_DIRBLKSIZ];
 		for (dp = (struct dirent *)dirbuf; dp < edp; ) {
 			if (dp->d_reclen == 0)
 				break;
@@ -618,7 +618,7 @@ ulfs_extattr_iterate_directory(struct ulfsmount *ump, struct vnode *dvp,
 				break;
 		}
 	}
-	kmem_free(dirbuf, DIRBLKSIZ);
+	kmem_free(dirbuf, LFS_DIRBLKSIZ);
 	
 	return (0);
 }
