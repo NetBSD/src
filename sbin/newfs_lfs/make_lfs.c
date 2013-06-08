@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.22 2013/06/06 00:54:49 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.23 2013/06/08 02:09:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.22 2013/06/06 00:54:49 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.23 2013/06/08 02:09:35 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -452,7 +452,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	fs->lfs_minfree = minfree;
 
 	if (version > 1) {
-		fs->lfs_inopf = secsize/DINODE1_SIZE;
+		fs->lfs_inopf = secsize/LFS_DINODE1_SIZE;
 		fs->lfs_interleave = interleave;
 		if (roll_id == 0)
 			roll_id = arc4random();
