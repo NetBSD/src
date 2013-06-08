@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.27 2013/06/06 00:54:49 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.28 2013/06/08 02:09:35 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -237,9 +237,9 @@ remove_ino(struct uvnode *vp, ino_t ino)
 			vp = lfs_raw_vget(fs, ino, fs->lfs_ivnode->v_fd, daddr);
 
 		LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), sbp);
-		sup->su_nbytes -= DINODE1_SIZE;
+		sup->su_nbytes -= LFS_DINODE1_SIZE;
 		VOP_BWRITE(sbp);
-		seg_table[dtosn(fs, daddr)].su_nbytes -= DINODE1_SIZE;
+		seg_table[dtosn(fs, daddr)].su_nbytes -= LFS_DINODE1_SIZE;
 	} else
 		brelse(bp, 0);
 
@@ -454,15 +454,15 @@ readdress_inode(struct ulfs1_dinode *dp, ulfs_daddr_t daddr)
 	/* Finally account the inode itself */
 	sn = dtosn(fs, odaddr);
 	LFS_SEGENTRY(sup, fs, sn, bp);
-	sup->su_nbytes -= DINODE1_SIZE;
+	sup->su_nbytes -= LFS_DINODE1_SIZE;
 	VOP_BWRITE(bp);
-	seg_table[sn].su_nbytes -= DINODE1_SIZE;
+	seg_table[sn].su_nbytes -= LFS_DINODE1_SIZE;
 
 	sn = dtosn(fs, daddr);
 	LFS_SEGENTRY(sup, fs, sn, bp);
-	sup->su_nbytes += DINODE1_SIZE;
+	sup->su_nbytes += LFS_DINODE1_SIZE;
 	VOP_BWRITE(bp);
-	seg_table[sn].su_nbytes += DINODE1_SIZE;
+	seg_table[sn].su_nbytes += LFS_DINODE1_SIZE;
 }
 
 /*
@@ -521,9 +521,9 @@ alloc_inode(ino_t thisino, ulfs_daddr_t daddr)
 	
 	/* Account for new location */
 	LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), bp);
-	sup->su_nbytes += DINODE1_SIZE;
+	sup->su_nbytes += LFS_DINODE1_SIZE;
 	VOP_BWRITE(bp);
-	seg_table[dtosn(fs, daddr)].su_nbytes += DINODE1_SIZE;
+	seg_table[dtosn(fs, daddr)].su_nbytes += LFS_DINODE1_SIZE;
 }
 
 /*
