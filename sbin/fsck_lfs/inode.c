@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.45 2013/06/06 00:54:49 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.46 2013/06/08 02:09:35 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ ginode(ino_t ino)
 	if (din_table[ino] == 0x0) {
 		LFS_IENTRY(ifp, fs, ino, bp);
 		din_table[ino] = ifp->if_daddr;
-		seg_table[dtosn(fs, ifp->if_daddr)].su_nbytes += DINODE1_SIZE;
+		seg_table[dtosn(fs, ifp->if_daddr)].su_nbytes += LFS_DINODE1_SIZE;
 		brelse(bp, 0);
 	}
 	return (VTOI(vp)->i_din.ffs1_din);
@@ -476,9 +476,9 @@ clearinode(ino_t inumber)
 		SEGUSE *sup;
 		u_int32_t oldsn = dtosn(fs, daddr);
 
-		seg_table[oldsn].su_nbytes -= DINODE1_SIZE;
+		seg_table[oldsn].su_nbytes -= LFS_DINODE1_SIZE;
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
-		sup->su_nbytes -= DINODE1_SIZE;
+		sup->su_nbytes -= LFS_DINODE1_SIZE;
 		LFS_WRITESEGENTRY(sup, fs, oldsn, bp);	/* Ifile */
 	}
 }
