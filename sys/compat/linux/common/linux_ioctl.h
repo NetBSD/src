@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.26 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.27 2013/06/08 12:50:32 stacktic Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __END_DECLS
 
 #define	_LINUX_IOC_NRMASK	((1 << _LINUX_IOC_NRBITS) - 1)
 #define	_LINUX_IOC_TYPEMASK	((1 << _LINUX_IOC_TYPEBITS) - 1)
-#define	_LINUX_IOC_SIZEMAEK	((1 << _LINUX_IOC_SIZEBITS) - 1)
+#define	_LINUX_IOC_SIZEMASK	((1 << _LINUX_IOC_SIZEBITS) - 1)
 #define _LINUX_IOC_DIRMASK	((1 << _LINUX_IOC_DIRBITS) - 1)
 
 #define	_LINUX_IOC_TYPESHIFT	(_LINUX_IOC_NRSHIFT + _LINUX_IOC_NRBITS)
