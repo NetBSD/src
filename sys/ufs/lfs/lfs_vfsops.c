@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.303 2013/06/08 02:11:11 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.304 2013/06/08 02:14:46 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.303 2013/06/08 02:11:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.304 2013/06/08 02:14:46 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1027,7 +1027,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	for (i = 0; i < ULFS_MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
 	ump->um_maxsymlinklen = fs->lfs_maxsymlinklen;
-	ump->um_dirblksiz = DIRBLKSIZ;
+	ump->um_dirblksiz = LFS_DIRBLKSIZ;
 	ump->um_maxfilesize = fs->lfs_maxfilesize;
 	if (ump->um_maxsymlinklen > 0)
 		mp->mnt_iflag |= IMNT_DTYPE;

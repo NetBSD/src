@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.8 2013/06/08 02:12:56 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.9 2013/06/08 02:14:46 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.212 2013/03/18 19:35:48 plunky Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.8 2013/06/08 02:12:56 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.9 2013/06/08 02:14:46 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -119,8 +119,8 @@ static int ulfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
  * A virgin directory (no blushing please).
  */
 static const struct lfs_dirtemplate mastertemplate = {
-	0,	12,		LFS_DT_DIR,	1,	".",
-	0,	DIRBLKSIZ - 12,	LFS_DT_DIR,	2,	".."
+	0,	12,			LFS_DT_DIR,	1,	".",
+	0,	LFS_DIRBLKSIZ - 12,	LFS_DT_DIR,	2,	".."
 };
 
 /*
