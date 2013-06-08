@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.5 2013/06/06 00:49:28 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.6 2013/06/08 21:40:27 dholland Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.89 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.5 2013/06/06 00:49:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.6 2013/06/08 21:40:27 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -108,33 +108,6 @@ ulfs_inactive(void *v)
 			goto out;
 		logged = 1;
 		if (ip->i_size != 0) {
-			/*
-			 * When journaling, only truncate one indirect block
-			 * at a time
-			 */
-			if (vp->v_mount->mnt_wapbl) {
-				uint64_t incr = MNINDIR(ip->i_ump) <<
-				    vp->v_mount->mnt_fs_bshift; /* Power of 2 */
-				uint64_t base = ULFS_NDADDR <<
-				    vp->v_mount->mnt_fs_bshift;
-				while (!error && ip->i_size > base + incr) {
-					/*
-					 * round down to next full indirect
-					 * block boundary.
-					 */
-					uint64_t nsize = base +
-					    ((ip->i_size - base - 1) &
-					    ~(incr - 1));
-					error = ULFS_TRUNCATE(vp, nsize, 0,
-					    NOCRED);
-					if (error)
-						break;
-					ULFS_WAPBL_END(vp->v_mount);
-					error = ULFS_WAPBL_BEGIN(vp->v_mount);
-					if (error)
-						goto out;
-				}
-			}
 			if (!error)
 				error = ULFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}

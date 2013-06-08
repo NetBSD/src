@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_wapbl.h,v 1.2 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_wapbl.h,v 1.3 2013/06/08 21:40:27 dholland Exp $	*/
 /*  from NetBSD: ufs_wapbl.h,v 1.7 2011/09/19 11:18:01 gdt Exp  */
 
 /*-
@@ -99,69 +99,26 @@ static __inline int
 ulfs_wapbl_begin2(struct mount *mp, struct vnode *vp1, struct vnode *vp2,
 		 const char *file, int line)
 {
-	if (mp->mnt_wapbl) {
-		int error;
-
-		if (vp1)
-			vref(vp1);
-		if (vp2)
-			vref(vp2);
-		error = wapbl_begin(mp->mnt_wapbl, file, line);
-		if (error)
-			return error;
-#ifdef WAPBL_DEBUG_INODES
-		if (mp->mnt_wapbl->wl_lock.lk_exclusivecount == 1)
-			ulfs_wapbl_verify_inodes(mp, "wapbl_begin");
-#endif
-	}
 	return 0;
 }
 
 static __inline void
 ulfs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
 {
-	if (mp->mnt_wapbl) {
-#ifdef WAPBL_DEBUG_INODES
-		if (mp->mnt_wapbl->wl_lock.lk_exclusivecount == 1)
-			ulfs_wapbl_verify_inodes(mp, "wapbl_end");
-#endif
-		wapbl_end(mp->mnt_wapbl);
-		if (vp2)
-			vrele(vp2);
-		if (vp1)
-			vrele(vp1);
-	}
 }
 
-#define	ULFS_WAPBL_BEGIN(mp)						\
-	ulfs_wapbl_begin2(mp, NULL, NULL, __FUNCTION__, __LINE__)
-#define	ULFS_WAPBL_BEGIN1(mp, v1)					\
-	ulfs_wapbl_begin2(mp, v1, NULL, __FUNCTION__, __LINE__)
-#define	ULFS_WAPBL_END(mp)	ulfs_wapbl_end2(mp, NULL, NULL)
-#define	ULFS_WAPBL_END1(mp, v1)	ulfs_wapbl_end2(mp, v1, NULL)
+#define	ULFS_WAPBL_BEGIN(mp) 0
+#define	ULFS_WAPBL_BEGIN1(mp, v1) 0
+#define	ULFS_WAPBL_END(mp)	do { } while (0)
+#define	ULFS_WAPBL_END1(mp, v1)
+#define	ULFS_WAPBL_UPDATE(vp, access, modify, flags)	do { } while (0)
 
-#define	ULFS_WAPBL_UPDATE(vp, access, modify, flags)			\
-	if ((vp)->v_mount->mnt_wapbl) {					\
-		ULFS_UPDATE(vp, access, modify, flags);			\
-	}
-
-#ifdef ULFS_WAPBL_DEBUG_JLOCK
-#define	ULFS_WAPBL_JLOCK_ASSERT(mp)					\
-	if (mp->mnt_wapbl) wapbl_jlock_assert(mp->mnt_wapbl)
-#define	ULFS_WAPBL_JUNLOCK_ASSERT(mp)					\
-	if (mp->mnt_wapbl) wapbl_junlock_assert(mp->mnt_wapbl)
-#else
 #define	ULFS_WAPBL_JLOCK_ASSERT(mp)
 #define	ULFS_WAPBL_JUNLOCK_ASSERT(mp)
-#endif
 
-#define	ULFS_WAPBL_REGISTER_INODE(mp, ino, mode)				\
-	if (mp->mnt_wapbl) wapbl_register_inode(mp->mnt_wapbl, ino, mode)
-#define	ULFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)			\
-	if (mp->mnt_wapbl) wapbl_unregister_inode(mp->mnt_wapbl, ino, mode)
-
-#define	ULFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)			\
-	if (mp->mnt_wapbl) wapbl_register_deallocation(mp->mnt_wapbl, blk, len)
+#define	ULFS_WAPBL_REGISTER_INODE(mp, ino, mode)	do { } while (0)
+#define	ULFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)	do { } while (0)
+#define	ULFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)
 
 #else /* ! WAPBL */
 #define	ULFS_WAPBL_BEGIN(mp) 0
