@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1.c,v 1.4 2013/06/06 00:49:28 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1.c,v 1.5 2013/06/08 21:40:27 dholland Exp $	*/
 /*  from NetBSD: ufs_quota1.c,v 1.18 2012/02/02 03:00:48 matt Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.4 2013/06/06 00:49:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.5 2013/06/08 21:40:27 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -317,12 +317,6 @@ lfsquota1_handle_cmd_quotaon(struct lwp *l, struct ulfsmount *ump, int type,
 		return (EBUSY);
 	}
 		
-	if (mp->mnt_wapbl != NULL) {
-		printf("%s: quota v1 cannot be used with -o log\n",
-		    mp->mnt_stat.f_mntonname);
-		return (EOPNOTSUPP);
-	}
-
 	vpp = &ump->um_quotas[type];
 
 	pb = pathbuf_create(fname);
