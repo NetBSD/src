@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.31 2013/06/09 08:42:16 msaitoh Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.32 2013/06/09 09:31:32 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.31 2013/06/09 08:42:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.32 2013/06/09 09:31:32 msaitoh Exp $");
 
 
 /*
@@ -289,8 +289,14 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * Only used for autonegotiation.
 		 */
 		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
-		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T))
+		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
+			/*
+			 * Reset autonegotiation timer to 0 to make sure
+			 * the future autonegotiation start with 0.
+			 */
+			sc->mii_ticks = 0;
 			break;
+		}
 
 		/*
 		 * Check to see if we have link.  If we do, we don't
