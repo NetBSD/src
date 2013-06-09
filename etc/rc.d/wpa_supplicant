@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: wpa_supplicant,v 1.1.26.1 2008/11/18 02:30:35 snj Exp $
+# $NetBSD: wpa_supplicant,v 1.1.26.2 2013/06/09 11:01:41 msaitoh Exp $
 #
 
 # PROVIDE: wpa_supplicant
@@ -12,7 +12,7 @@ $_rc_subr_loaded . /etc/rc.subr
 name="wpa_supplicant"
 rcvar=$name
 command="/usr/sbin/wpa_supplicant"
-reload_command="/usr/sbin/wpa_cli reconfigure"
+reload_cmd="/usr/sbin/wpa_cli reconfigure"
 extra_commands="reload"
 
 load_rc_config $name
