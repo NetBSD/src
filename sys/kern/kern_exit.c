@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.242 2012/09/27 20:43:15 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.243 2013/06/09 01:13:47 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.242 2012/09/27 20:43:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.243 2013/06/09 01:13:47 riz Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -123,7 +123,7 @@ static void proc_free(struct proc *, struct rusage *);
 /*
  * DTrace SDT provider definitions
  */
-SDT_PROBE_DEFINE(proc,,,exit, 
+SDT_PROBE_DEFINE(proc,,,exit,exit,
 	    "int", NULL, 		/* reason */
 	    NULL, NULL, NULL, NULL,
 	    NULL, NULL, NULL, NULL);
