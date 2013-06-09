@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.25 2008/09/08 23:36:55 gmcgarry Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.25.4.1 2013/06/09 22:21:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -144,6 +144,9 @@ struct icmp {
 #define		ICMP_UNREACH_ADMIN_PROHIBIT 13		/* communication
 							   administratively
 							   prohibited */
+#define		ICMP_UNREACH_HOST_PREC	14		/* host precedence
+							   violation */
+#define		ICMP_UNREACH_PREC_CUTOFF 15		/* precedence cutoff */
 #define	ICMP_SOURCEQUENCH	4		/* packet lost, slow down */
 #define	ICMP_REDIRECT		5		/* shorter route, codes: */
 #define		ICMP_REDIRECT_NET	0		/* for network */
