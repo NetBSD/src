@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.76 2013/06/06 03:10:48 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.77 2013/06/09 09:31:32 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.76 2013/06/06 03:10:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.77 2013/06/09 09:31:32 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -324,27 +324,47 @@ mii_phy_tick(struct mii_softc *sc)
 	/*
 	 * If we're not doing autonegotiation, we don't need to do
 	 * any extra work here.  However, we need to check the link
-	 * status so we can generate an announcement if the status
-	 * changes.
+	 * status so we can generate an announcement by returning
+	 * with 0 if the status changes.
 	 */
 	if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
-	(IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T))
+	    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
+		/*
+		 * Reset autonegotiation timer to 0 just to make sure
+		 * the future autonegotiation start with 0.
+		 */
+		sc->mii_ticks = 0;
 		return (0);
+	}
 
 	/* Read the status register twice; BMSR_LINK is latch-low. */
 	reg = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
 	if (reg & BMSR_LINK) {
 		/*
-		 * See above.
+		 * Reset autonegotiation timer to 0 in case the link
+		 * goes down in the next tick.
 		 */
+		sc->mii_ticks = 0;
+		/* See above. */
 		return (0);
 	}
+
+	/*
+	 * mii_tick == 0 means it's the first tick after changing the media or
+	 * the link became down since the last tick (see above), so return with
+	 * 0 to update the status.
+	 */
+	if (sc->mii_ticks == 0)
+		return (0);
+
+	/* Now increment the tick */
+	sc->mii_ticks++;
 
 	/*
 	 * Only retry autonegotiation every N seconds.
 	 */
 	KASSERT(sc->mii_anegticks != 0);
-	if (++sc->mii_ticks <= sc->mii_anegticks)
+	if (sc->mii_ticks <= sc->mii_anegticks)
 		return (EJUSTRETURN);
 
 	PHY_RESET(sc);

@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.22 2013/06/09 08:45:32 msaitoh Exp $ */
+/* $NetBSD: ciphy.c,v 1.23 2013/06/09 09:31:32 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.22 2013/06/09 08:45:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.23 2013/06/09 09:31:32 msaitoh Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -258,8 +258,14 @@ setit:
 		 * Only used for autonegotiation.
 		 */
 		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
-		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T))
+		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
+			/*
+			 * Reset autonegotiation timer to 0 just to make sure
+			 * the future autonegotiation start with 0.
+			 */
+			sc->mii_ticks = 0;
 			break;
+		}
 
 		/*
 		 * Check to see if we have link.  If we do, we don't
@@ -267,8 +273,15 @@ setit:
 		 * the BMSR twice in case it's latched.
 		 */
 		reg = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
-		if (reg & BMSR_LINK)
+		if (reg & BMSR_LINK) {
+			/*
+			 * Reset autonegotiation timer to 0 in case the link
+			 * goes down in the next tick.
+			 */
+			sc->mii_ticks = 0;
+			/* See above. */
 			break;
+		}
 
 		/*
 		 * Only retry autonegotiation every N seconds.
