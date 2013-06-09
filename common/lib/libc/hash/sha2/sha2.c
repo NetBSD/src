@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.23 2013/06/09 02:58:58 christos Exp $ */
+/* $NetBSD: sha2.c,v 1.24 2013/06/09 19:46:56 christos Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.23 2013/06/09 02:58:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.24 2013/06/09 19:46:56 christos Exp $");
 
 #include <sys/param.h>	/* XXX: to pull <machine/macros.h> for vax memset(9) */
 #include <lib/libkern/libkern.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.23 2013/06/09 02:58:58 christos Exp $");
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.23 2013/06/09 02:58:58 christos Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.24 2013/06/09 19:46:56 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -62,29 +62,8 @@ __RCSID("$NetBSD: sha2.c,v 1.23 2013/06/09 02:58:58 christos Exp $");
 #include <sys/types.h>
 #include <sys/sha2.h>
 
-#if HAVE_NBTOOL_CONFIG_H
-# if HAVE_SYS_ENDIAN_H
-#  include <sys/endian.h>
-# else
-#  undef be32dec
-#  undef be64dec
-
-static __inline uint32_t __unused
-be32dec(const void *buf)
-{
-	const uint8_t *p = __CAST(const uint8_t *, buf);
-
-	return ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
-}
-
-static __inline uint64_t __unused
-be64dec(const void *buf)
-{
-	const uint8_t *p = (const uint8_t *)buf;
-
-	return ((__CAST(uint64_t, be32dec(p)) << 32) | be32dec(p + 4));
-}
-# endif
+#if HAVE_SYS_ENDIAN_H
+# include <sys/endian.h>
 #endif
 
 /*** SHA-256/384/512 Various Length Definitions ***********************/
