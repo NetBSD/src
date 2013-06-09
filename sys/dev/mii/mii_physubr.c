@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.77 2013/06/09 09:31:32 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.78 2013/06/09 09:56:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.77 2013/06/09 09:31:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.78 2013/06/09 09:56:17 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -350,15 +350,12 @@ mii_phy_tick(struct mii_softc *sc)
 	}
 
 	/*
-	 * mii_tick == 0 means it's the first tick after changing the media or
+	 * mii_ticks == 0 means it's the first tick after changing the media or
 	 * the link became down since the last tick (see above), so return with
 	 * 0 to update the status.
 	 */
-	if (sc->mii_ticks == 0)
+	if (sc->mii_ticks++ == 0)
 		return (0);
-
-	/* Now increment the tick */
-	sc->mii_ticks++;
 
 	/*
 	 * Only retry autonegotiation every N seconds.
