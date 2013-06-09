@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.48 2012/11/05 17:24:11 dholland Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.49 2013/06/09 18:29:25 dholland Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.48 2012/11/05 17:24:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.49 2013/06/09 18:29:25 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,8 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 
 	fileno = va.va_fileid;
 
-	dirbuflen = DIRBLKSIZ;
+	/* I guess UFS_DIRBLKSIZ is a good guess at a good size to use? */
+	dirbuflen = UFS_DIRBLKSIZ;
 	if (dirbuflen < va.va_blocksize)
 		dirbuflen = va.va_blocksize;
 	dirbuf = kmem_alloc(dirbuflen, KM_SLEEP);
