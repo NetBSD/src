@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.52 2009/10/19 18:41:13 bouyer Exp $	*/
+/*	$NetBSD: exphy.c,v 1.53 2013/06/09 09:15:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.52 2009/10/19 18:41:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.53 2013/06/09 09:15:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * Only used for autonegotiation.
 		 */
 		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			return (0);
+			break;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);

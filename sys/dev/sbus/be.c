@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.79 2012/07/22 14:33:05 matt Exp $	*/
+/*	$NetBSD: be.c,v 1.80 2013/06/09 09:23:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.79 2012/07/22 14:33:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.80 2013/06/09 09:23:35 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1516,13 +1516,13 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 		if (IFM_INST(ife->ifm_media) != sc->sc_mii_inst)
 			return 0;
 
-		/* Only used for automatic media selection */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			return 0;
-
 		/* Is the interface even up? */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			return 0;
+
+		/* Only used for automatic media selection */
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+			break;
 
 		/*
 		 * Check link status; if we don't have a link, try another
@@ -1555,7 +1555,7 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 				    device_xname(self),
 				    (bmcr & BMCR_S100) ? "100" : "10");
 			}
-			return 0;
+			break;
 		}
 
 		if ((sc->sc_mii_flags & MIIF_DOINGAUTO) == 0) {

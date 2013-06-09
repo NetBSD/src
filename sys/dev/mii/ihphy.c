@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.3 2013/06/09 08:42:16 msaitoh Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.4 2013/06/09 09:15:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.3 2013/06/09 08:42:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.4 2013/06/09 09:15:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 */
 		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
 		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T))
-			return 0;
+			break;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return 0;
