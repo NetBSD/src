@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.24 2013/04/03 17:15:07 bouyer Exp $ */
+/* $NetBSD: siisata.c,v 1.25 2013/06/09 09:44:51 njoly Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.24 2013/04/03 17:15:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.25 2013/06/09 09:44:51 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -118,7 +118,7 @@ int siisata_debug_mask = 0;
 static inline uint32_t
 bus_space_read_stream_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
-	return htole32(bus_space_read_4(t, h, o);
+	return htole32(bus_space_read_4(t, h, o));
 }
 
 static inline void
