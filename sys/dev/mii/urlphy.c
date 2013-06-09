@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.26 2013/06/06 03:10:48 msaitoh Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.27 2013/06/09 09:15:51 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.26 2013/06/06 03:10:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.27 2013/06/09 09:15:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,12 +182,12 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * changes.
 		 */
 		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			return (0);
+			break;
 
 		/* Read the status register twice; MSR_LINK is latch-low. */
 		reg = PHY_READ(sc, URLPHY_MSR) | PHY_READ(sc, URLPHY_MSR);
 		if (reg & URLPHY_MSR_LINK)
-			return (0);
+			break;
 
 		/*
 		 * Only retry autonegotiation every N seconds.
