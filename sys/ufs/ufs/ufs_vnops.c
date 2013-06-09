@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.214 2013/06/09 17:57:09 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.214 2013/06/09 17:57:09 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -124,8 +124,8 @@ static int ufs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
  * A virgin directory (no blushing please).
  */
 static const struct dirtemplate mastertemplate = {
-	0,	12,		DT_DIR,	1,	".",
-	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
+	0,	12,			DT_DIR,	1,	".",
+	0,	UFS_DIRBLKSIZ - 12,	DT_DIR,	2,	".."
 };
 
 /*

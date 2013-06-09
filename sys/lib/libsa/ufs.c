@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.59 2013/01/22 09:39:14 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.60 2013/06/09 17:57:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -895,7 +895,7 @@ ufs_ls(struct open_file *f, const char *pattern)
 		if (rc)
 			goto out;
 		/* some firmware might use block size larger than DEV_BSIZE */
-		if (buf_size < DIRBLKSIZ)
+		if (buf_size < UFS_DIRBLKSIZ)
 			goto out;
 
 		dp = (struct direct *)buf;
