@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.114 2013/03/17 12:25:36 mlelstv Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.115 2013/06/09 18:29:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.114 2013/03/17 12:25:36 mlelstv Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.115 2013/06/09 18:29:41 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -1253,14 +1253,14 @@ makedir(struct direct *protodir, int entries)
 {
 	char *cp;
 	int i, spcleft;
-	int dirblksiz = DIRBLKSIZ;
+	int dirblksiz = UFS_DIRBLKSIZ;
 	if (isappleufs)
 		dirblksiz = APPLEUFS_DIRBLKSIZ;
 
-	memset(buf, 0, DIRBLKSIZ);
+	memset(buf, 0, UFS_DIRBLKSIZ);
 	spcleft = dirblksiz;
 	for (cp = buf, i = 0; i < entries - 1; i++) {
-		protodir[i].d_reclen = DIRSIZ(Oflag == 0, &protodir[i], 0);
+		protodir[i].d_reclen = UFS_DIRSIZ(Oflag == 0, &protodir[i], 0);
 		copy_dir(&protodir[i], (struct direct*)cp);
 		cp += protodir[i].d_reclen;
 		spcleft -= protodir[i].d_reclen;
@@ -1539,7 +1539,7 @@ setblock(struct fs *fs, unsigned char *cp, int h)
 static void
 copy_dir(struct direct *dir, struct direct *dbuf)
 {
-	memcpy(dbuf, dir, DIRSIZ(Oflag == 0, dir, 0));
+	memcpy(dbuf, dir, UFS_DIRSIZ(Oflag == 0, dir, 0));
 	if (needswap) {
 		dbuf->d_ino = bswap32(dir->d_ino);
 		dbuf->d_reclen = bswap16(dir->d_reclen);
