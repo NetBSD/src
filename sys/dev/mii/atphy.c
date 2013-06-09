@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.13 2013/06/06 03:10:48 msaitoh Exp $ */
+/*	$NetBSD: atphy.c,v 1.14 2013/06/09 08:42:16 msaitoh Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.13 2013/06/06 03:10:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.14 2013/06/09 08:42:16 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,8 @@ done:
 		/*
 		 * Only used for autonegotiation.
 		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
+		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
 			sc->mii_ticks = 0;
 			break;
 		}
