@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.360 2013/04/20 22:28:58 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.361 2013/06/09 01:13:47 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.360 2013/04/20 22:28:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.361 2013/06/09 01:13:47 riz Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -126,15 +126,15 @@ static int exec_sigcode_map(struct proc *, const struct emul *);
 /*
  * DTrace SDT provider definitions
  */
-SDT_PROBE_DEFINE(proc,,,exec, 
+SDT_PROBE_DEFINE(proc,,,exec,exec,
 	    "char *", NULL,
 	    NULL, NULL, NULL, NULL,
 	    NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,exec_success, 
+SDT_PROBE_DEFINE(proc,,,exec_success,exec-success, 
 	    "char *", NULL,
 	    NULL, NULL, NULL, NULL,
 	    NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,exec_failure, 
+SDT_PROBE_DEFINE(proc,,,exec_failure,exec-failure, 
 	    "int", NULL,
 	    NULL, NULL, NULL, NULL,
 	    NULL, NULL, NULL, NULL);

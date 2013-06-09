@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.174 2012/12/16 22:21:03 dsl Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.175 2013/06/09 01:13:47 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.174 2012/12/16 22:21:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.175 2013/06/09 01:13:47 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -251,15 +251,15 @@ struct lwplist		alllwp		__cacheline_aligned;
 static void		lwp_dtor(void *, void *);
 
 /* DTrace proc provider probes */
-SDT_PROBE_DEFINE(proc,,,lwp_create,
+SDT_PROBE_DEFINE(proc,,,lwp_create,lwp-create,
 	"struct lwp *", NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,lwp_start,
+SDT_PROBE_DEFINE(proc,,,lwp_start,lwp-start,
 	"struct lwp *", NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,lwp_exit,
+SDT_PROBE_DEFINE(proc,,,lwp_exit,lwp-exit,
 	"struct lwp *", NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL);
