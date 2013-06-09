@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.54 2013/01/22 09:39:11 dholland Exp $	*/
+/*	$NetBSD: dir.c,v 1.55 2013/06/09 17:57:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.54 2013/01/22 09:39:11 dholland Exp $");
+__RCSID("$NetBSD: dir.c,v 1.55 2013/06/09 17:57:09 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ int	lfmode = 01700;
 ino_t	lfdir;
 struct	dirtemplate emptydir = {
 	.dot_ino = 0,
-	.dot_reclen = DIRBLKSIZ,
+	.dot_reclen = UFS_DIRBLKSIZ,
 };
 struct	dirtemplate dirhead = {
 	.dot_ino = 0,
@@ -68,7 +68,7 @@ struct	dirtemplate dirhead = {
 	.dot_namlen = 1,
 	.dot_name = ".",
 	.dotdot_ino = 0,
-	.dotdot_reclen = DIRBLKSIZ - 12,
+	.dotdot_reclen = UFS_DIRBLKSIZ - 12,
 	.dotdot_type = DT_DIR,
 	.dotdot_namlen = 2,
 	.dotdot_name = "..",
@@ -79,7 +79,7 @@ struct	odirtemplate odirhead = {
 	.dot_namlen = 1,
 	.dot_name = ".",
 	.dotdot_ino = 0,
-	.dotdot_reclen = DIRBLKSIZ - 12,
+	.dotdot_reclen = UFS_DIRBLKSIZ - 12,
 	.dotdot_namlen = 2,
 	.dotdot_name = "..",
 };
@@ -154,8 +154,8 @@ dirscan(struct inodesc *idesc)
 	struct bufarea *bp;
 	int dsize, n;
 	long blksiz;
-#if DIRBLKSIZ > APPLEUFS_DIRBLKSIZ
-	char dbuf[DIRBLKSIZ];
+#if UFS_DIRBLKSIZ > APPLEUFS_DIRBLKSIZ
+	char dbuf[UFS_DIRBLKSIZ];
 #else
 	char dbuf[APPLEUFS_DIRBLKSIZ];
 #endif
@@ -324,7 +324,7 @@ dircheck(struct inodesc *idesc, struct direct *dp)
 		return (0);
 	if (dp->d_ino == 0)
 		return (1);
-	size = DIRSIZ(!newinofmt, dp, needswap);
+	size = UFS_DIRSIZ(!newinofmt, dp, needswap);
 #	if (BYTE_ORDER == LITTLE_ENDIAN)
 		if (!newinofmt && !needswap) {
 #	else
@@ -450,9 +450,9 @@ mkentry(struct inodesc *idesc)
 	int newlen, oldlen;
 
 	newent.d_namlen = strlen(idesc->id_name);
-	newlen = DIRSIZ(0, &newent, 0);
+	newlen = UFS_DIRSIZ(0, &newent, 0);
 	if (dirp->d_ino != 0)
-		oldlen = DIRSIZ(0, dirp, 0);
+		oldlen = UFS_DIRSIZ(0, dirp, 0);
 	else
 		oldlen = 0;
 	if (iswap16(dirp->d_reclen) - oldlen < newlen)
