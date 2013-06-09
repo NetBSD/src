@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.10 2013/06/06 16:49:42 riz Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.11 2013/06/09 11:56:20 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -280,3 +280,45 @@ external/mit/xorg/lib/libXi/Makefile			patch
 	Silence gcc 4.1 warnings from ticket #1865.
 	[mrg, ticket #1866]
 
+etc/MAKEDEV.tmpl				1.161
+
+	The console major number is not always 0; when creating a temporary
+	console while populating a memory disk, use %CONSOLE_CMAJOR% instead
+	of 0, and let MAKEDEV.awk substitute the appropriate machine-dependent
+	major number.
+
+	This fixes a bug that I introduced in revision 1.82 dated 2007-03-11.
+	[apb, ticket #1848]
+
+etc/rc.d/wpa_supplicant				1.4
+
+	Make custom "reload" target work. Before this fix it would have tried
+	to send a HUP signal to "wpa_supplicant" instead.
+	[tron, ticket #1849]
+
+bin/sh/expand.c					1.88
+bin/sh/expand.h					revision 1.19
+
+	Fix the expansion of "$(foo-$bar}" so that IFS isn't applied when
+	expanding $bar.	Noted by Greg Troxel on tech-userlevel running some
+	'git' tests. Should fix PR bin/47361.
+
+	[gdt, ticket #1851]
+
+sys/dev/fss.c					1.84
+
+	Don't crash when running multiple dump -X. PR#47514.
+	[gdt, ticket #1853]
+
+sys/arch/amd64/conf/XEN3_DOMU			patch
+sys/arch/i386/conf/Attic/XEN2_DOMU		patch
+
+	Add wedge support in DOMU kernels.
+	[sborrill, ticket #1858]
+
+sys/dev/pci/if_vioif.c				1.4
+
+	Fix a typo, and remove an unused member.
+	This should fix the problem that recent Qemu dies during configuring
+	a vioif. Fixes PR#47780.
+	[minoura, ticket #1861]
