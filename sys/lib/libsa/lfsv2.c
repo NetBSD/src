@@ -1,4 +1,4 @@
-/* $NetBSD: lfsv2.c,v 1.5 2012/05/21 21:34:16 dsl Exp $ */
+/* $NetBSD: lfsv2.c,v 1.6 2013/06/09 00:02:33 dholland Exp $ */
 
 #define	LIBSA_LFS
 #define	REQUIRED_LFS_VERSION	2
@@ -12,6 +12,9 @@
 #if defined(LIBSA_ENABLE_LS_OP)
 #define	ufs_ls			lfsv2_ls
 #endif
+
+/* XXX wrong! but for now it won't build with ulfs2_dinode */
+#define ufs_dinode		ulfs1_dinode
 
 #define	fs_bsize		lfs_bsize
 #define	IFILE_Vx		IFILE
