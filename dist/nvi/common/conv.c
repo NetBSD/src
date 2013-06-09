@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.3.6.2 2009/01/20 02:47:43 snj Exp $ */
+/*	$NetBSD: conv.c,v 1.3.6.3 2013/06/09 16:03:04 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -62,6 +62,21 @@ raw2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, size_t *tolen,
     return 0;
 }
 
+#ifndef ERROR_ON_CONVERT
+#define HANDLE_ICONV_ERROR(o, i, ol, il) do {				\
+		*o++ = *i++;						\
+		ol--; il--;						\
+	} while (/*CONSTCOND*/0)
+#define HANDLE_MBR_ERROR(n, mbs, d, s) do {				\
+		d = s;							\
+		MEMSET(&mbs, 0, 1); 					\
+		n = 1; 							\
+	} while (/*CONSTCOND*/0)
+#else
+#define HANDLE_ICONV_ERROR goto err
+#define	HANDLE_MBR_ERROR goto err
+#endif
+
 #define CONV_BUFFER_SIZE    512
 /* fill the buffer with codeset encoding of string pointed to by str
  * left has the number of bytes left in str and is adjusted
@@ -74,9 +89,9 @@ raw2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, size_t *tolen,
 	char *bp = buffer;						\
 	outleft = CONV_BUFFER_SIZE;					\
 	errno = 0;							\
-	if (iconv(id, (const char **)&str, &left, &bp, &outleft) == -1	\
-		/* && errno != E2BIG */)				\
-	    goto err;							\
+	if (iconv(id, (const char **)&str, &left, &bp, &outleft) 	\
+	    == (size_t)-1 /* && errno != E2BIG */)			\
+		HANDLE_ICONV_ERROR(bp, str, outleft, left);		\
 	if ((len = CONV_BUFFER_SIZE - outleft) == 0) {			\
 	    error = -left;						\
 	    goto err;							\
@@ -118,8 +133,9 @@ default_char2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw,
     for (i = 0, j = 0; j < len; ) {
 	n = mbrtowc((*tostr)+i, src+j, len-j, &mbs);
 	/* NULL character converted */
-	if (n == -2) error = -(len-j);
-	if (n == -1 || n == -2) goto err;
+	if (n == (size_t)-2) error = -(len-j);
+	if (n == (size_t)-1 || n == (size_t)-2)
+	    HANDLE_MBR_ERROR(n, mbs, (*tostr)[i], src[j]); 
 	if (n == 0) n = 1;
 	j += n;
 	if (++i >= *blen) {
@@ -242,8 +258,8 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 	    }						    		\
 	    errno = 0;						    	\
 	    if (iconv(id, &bp, &len, &obp, &outleft) == -1 && 		\
-		    errno != E2BIG)					\
-		goto err;						\
+		errno != E2BIG) 					\
+		    HANDLE_ICONV_ERROR(obp, bp, outleft, len);		\
 	    offset = cw->blen1 - outleft;			        \
 	}							        \
     } while (0)
@@ -267,7 +283,8 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 
     for (i = 0, j = 0; i < len; ++i) {
 	n = wcrtomb(dst+j, str[i], &mbs);
-	if (n == -1) goto err;
+	if (n == (size_t)-1) 
+	    HANDLE_MBR_ERROR(n, mbs, dst[j], str[i]);
 	j += n;
 	if (buflen < j + MB_CUR_MAX) {
 	    if (id != (iconv_t)-1) {
