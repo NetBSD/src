@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.12 2013/06/09 16:04:40 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.13 2013/06/09 16:31:55 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -282,12 +282,7 @@ external/mit/xorg/lib/libXi/Makefile			patch
 
 etc/MAKEDEV.tmpl				1.161
 
-	The console major number is not always 0; when creating a temporary
-	console while populating a memory disk, use %CONSOLE_CMAJOR% instead
-	of 0, and let MAKEDEV.awk substitute the appropriate machine-dependent
-	major number.
-
-	This fixes a bug that I introduced in revision 1.82 dated 2007-03-11.
+	The console major number is not always 0.
 	[apb, ticket #1848]
 
 etc/rc.d/wpa_supplicant				1.4
@@ -302,7 +297,6 @@ bin/sh/expand.h					1.19
 	Fix the expansion of "$(foo-$bar}" so that IFS isn't applied when
 	expanding $bar.	Noted by Greg Troxel on tech-userlevel running some
 	'git' tests. Should fix PR bin/47361.
-
 	[gdt, ticket #1851]
 
 sys/dev/fss.c					1.84
