@@ -1,4 +1,4 @@
-/*	$NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp $	*/
+/*	$NetBSD: dinode.h,v 1.23 2013/06/09 00:10:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -137,7 +137,6 @@ struct ufs2_dinode {
  * dev_t value. Short symbolic links place their path in the
  * di_db area.
  */
-#define	di_inumber	di_u.inumber
 #define	di_ogid		di_u.oldids[1]
 #define	di_ouid		di_u.oldids[0]
 #define	di_rdev		di_db[0]
