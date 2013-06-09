@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.7 2013/06/09 17:57:09 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.7 2013/06/09 17:57:09 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -271,8 +271,8 @@ ufs_gro_remove_check_permitted(struct mount *mp, kauth_cred_t cred,
  * XXX Copypasta from ufs_vnops.c.  Kill!
  */
 static const struct dirtemplate mastertemplate = {
-	0,	12,		DT_DIR,	1,	".",
-	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
+	0,	12,			DT_DIR,	1,	".",
+	0,	UFS_DIRBLKSIZ - 12,	DT_DIR,	2,	".."
 };
 
 /*

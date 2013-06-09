@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.96 2013/01/22 09:39:12 dholland Exp $	*/
+/*	$NetBSD: setup.c,v 1.97 2013/06/09 17:57:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.96 2013/01/22 09:39:12 dholland Exp $");
+__RCSID("$NetBSD: setup.c,v 1.97 2013/06/09 17:57:09 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -534,7 +534,7 @@ setup(const char *dev, const char *origdev)
 	if (readappleufs())
 		isappleufs = 1;
 
-	dirblksiz = DIRBLKSIZ;
+	dirblksiz = UFS_DIRBLKSIZ;
 	if (isappleufs)
 		dirblksiz = APPLEUFS_DIRBLKSIZ;
 
