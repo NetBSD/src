@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.30 2013/06/06 03:10:48 msaitoh Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.31 2013/06/09 08:42:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.30 2013/06/06 03:10:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.31 2013/06/09 08:42:16 msaitoh Exp $");
 
 
 /*
@@ -288,7 +288,8 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		/*
 		 * Only used for autonegotiation.
 		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
+		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T))
 			break;
 
 		/*

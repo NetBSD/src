@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.20 2013/06/06 03:10:48 msaitoh Exp $ */
+/* $NetBSD: ciphy.c,v 1.21 2013/06/09 08:42:16 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.20 2013/06/06 03:10:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.21 2013/06/09 08:42:16 msaitoh Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -257,7 +257,8 @@ setit:
 		/*
 		 * Only used for autonegotiation.
 		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
+		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T))
 			break;
 
 		/*
