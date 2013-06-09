@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.45 2013/01/22 09:39:12 dholland Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.46 2013/06/09 17:57:09 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.45 2013/01/22 09:39:12 dholland Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.46 2013/06/09 17:57:09 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -990,7 +990,7 @@ chnamefunc(struct inodesc *idesc)
 	if (slotcount++ == desired) {
 		/* will name fit? */
 		testdir.d_namlen = strlen(idesc->id_name);
-		if (DIRSIZ(NEWDIRFMT, &testdir, 0) <= iswap16(dirp->d_reclen)) {
+		if (UFS_DIRSIZ(UFS_NEWDIRFMT, &testdir, 0) <= iswap16(dirp->d_reclen)) {
 			dirp->d_namlen = testdir.d_namlen;
 			strlcpy(dirp->d_name, idesc->id_name,
 			    sizeof(dirp->d_name));
