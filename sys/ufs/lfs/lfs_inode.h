@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.3 2013/06/08 23:12:51 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.4 2013/06/09 00:13:55 dholland Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
@@ -209,5 +209,41 @@ struct inode {
 #define	IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
 #define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
 #define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
+
+/*
+ * LFS inode extensions.
+ */
+struct lfs_inode_ext {
+	off_t	  lfs_osize;		/* size of file on disk */
+	u_int32_t lfs_effnblocks;  /* number of blocks when i/o completes */
+	size_t	  lfs_fragsize[ULFS_NDADDR]; /* size of on-disk direct blocks */
+	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
+	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
+#define LFSI_NO_GOP_WRITE 0x01
+#define LFSI_DELETED      0x02
+#define LFSI_WRAPBLOCK    0x04
+#define LFSI_WRAPWAIT     0x08
+#define LFSI_BMAP         0x10
+	u_int32_t lfs_iflags;           /* Inode flags */
+	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
+#ifdef _KERNEL
+	SPLAY_HEAD(lfs_splay, lbnentry) lfs_lbtree; /* Tree of balloc'd lbns */
+	int	  lfs_nbtree;		/* Size of tree */
+	LIST_HEAD(, segdelta) lfs_segdhd;
+#endif
+	int16_t	  lfs_odnlink;		/* on-disk nlink count for cleaner */
+};
+#define i_lfs_osize		inode_ext.lfs->lfs_osize
+#define i_lfs_effnblks		inode_ext.lfs->lfs_effnblocks
+#define i_lfs_fragsize		inode_ext.lfs->lfs_fragsize
+#define i_lfs_dchain		inode_ext.lfs->lfs_dchain
+#define i_lfs_pchain		inode_ext.lfs->lfs_pchain
+#define i_lfs_iflags		inode_ext.lfs->lfs_iflags
+#define i_lfs_hiblk		inode_ext.lfs->lfs_hiblk
+#define i_lfs_lbtree		inode_ext.lfs->lfs_lbtree
+#define i_lfs_nbtree		inode_ext.lfs->lfs_nbtree
+#define i_lfs_segdhd		inode_ext.lfs->lfs_segdhd
+#define i_lfs_odnlink		inode_ext.lfs->lfs_odnlink
+
 
 #endif /* _UFS_LFS_LFS_INODE_H_ */
