@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.h,v 1.17 2007/03/25 06:29:27 apb Exp $	*/
+/*	$NetBSD: expand.h,v 1.17.18.1 2013/06/09 11:13:11 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -56,6 +56,7 @@ struct arglist {
 #define	EXP_REDIR	0x8	/* file glob for a redirection (1 match only) */
 #define EXP_CASE	0x10	/* keeps quotes around for CASE pattern */
 #define EXP_IFS_SPLIT	0x20	/* need to record arguments for ifs breakup */
+#define EXP_IN_QUOTES	0x40	/* don't set EXP_IFS_SPLIT again */
 
 
 union node;
