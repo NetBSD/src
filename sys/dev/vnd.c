@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.224 2013/06/03 21:01:18 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.225 2013/06/09 13:26:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.224 2013/06/03 21:01:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.225 2013/06/09 13:26:25 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -953,7 +953,7 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 
 	vnd = device_lookup_private(&vnd_cd, *un);
 	if (vnd == NULL)
-		return (*un >= vnd_cd.cd_ndevs) ? ENXIO : -1;
+		return -1;
 
 	if ((vnd->sc_flags & VNF_INITED) == 0)
 		return -1;
