@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.27 2013/06/09 09:15:51 msaitoh Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.28 2013/06/09 09:31:32 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.27 2013/06/09 09:15:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.28 2013/06/09 09:31:32 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,14 +186,32 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 		/* Read the status register twice; MSR_LINK is latch-low. */
 		reg = PHY_READ(sc, URLPHY_MSR) | PHY_READ(sc, URLPHY_MSR);
-		if (reg & URLPHY_MSR_LINK)
+		if (reg & URLPHY_MSR_LINK) {
+			/*
+			 * Reset autonegotiation timer to 0 in case the link
+			 * goes down in the next tick.
+			 */
+			sc->mii_ticks = 0;
+			/* See above. */
 			break;
+		}
+
+		/*
+		 * mii_tick == 0 means it's the first tick after changing the
+		 * media or the link became down since the last tick (see
+		 * above), so break to update the status.
+		 */
+		if (sc->mii_ticks == 0)
+			break;
+
+		/* Now increment the tick */
+		sc->mii_ticks++;
 
 		/*
 		 * Only retry autonegotiation every N seconds.
 		 */
 		KASSERT(sc->mii_anegticks != 0);
-		if (++sc->mii_ticks <= sc->mii_anegticks)
+		if (sc->mii_ticks <= sc->mii_anegticks)
 			return (0);
 
 		PHY_RESET(sc);
