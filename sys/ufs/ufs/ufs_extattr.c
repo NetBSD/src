@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.41 2012/12/08 13:42:36 manu Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.42 2013/06/09 17:57:09 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.41 2012/12/08 13:42:36 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.42 2013/06/09 17:57:09 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -545,7 +545,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 	if (dvp->v_type != VDIR)
 		return (ENOTDIR);
 
-	dirbuf = kmem_alloc(DIRBLKSIZ, KM_SLEEP);
+	dirbuf = kmem_alloc(UFS_DIRBLKSIZ, KM_SLEEP);
 
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -562,9 +562,9 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 	vargs.a_cookies = NULL;
 
 	while (!eofflag) {
-		auio.uio_resid = DIRBLKSIZ;
+		auio.uio_resid = UFS_DIRBLKSIZ;
 		aiov.iov_base = dirbuf;
-		aiov.iov_len = DIRBLKSIZ;
+		aiov.iov_len = UFS_DIRBLKSIZ;
 		error = ufs_readdir(&vargs);
 		if (error) {
 			printf("ufs_extattr_iterate_directory: ufs_readdir "
@@ -573,12 +573,12 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 		}
 
 		/*
-		 * XXXRW: While in UFS, we always get DIRBLKSIZ returns from
+		 * XXXRW: While in UFS, we always get UFS_DIRBLKSIZ returns from
 		 * the directory code on success, on other file systems this
 		 * may not be the case.  For portability, we should check the
 		 * read length on return from ufs_readdir().
 		 */
-		edp = (struct dirent *)&dirbuf[DIRBLKSIZ];
+		edp = (struct dirent *)&dirbuf[UFS_DIRBLKSIZ];
 		for (dp = (struct dirent *)dirbuf; dp < edp; ) {
 			if (dp->d_reclen == 0)
 				break;
@@ -617,7 +617,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 				break;
 		}
 	}
-	kmem_free(dirbuf, DIRBLKSIZ);
+	kmem_free(dirbuf, UFS_DIRBLKSIZ);
 	
 	return (0);
 }
