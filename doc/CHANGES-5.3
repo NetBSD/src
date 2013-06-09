@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.11 2013/06/09 11:56:20 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.12 2013/06/09 16:04:40 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -297,7 +297,7 @@ etc/rc.d/wpa_supplicant				1.4
 	[tron, ticket #1849]
 
 bin/sh/expand.c					1.88
-bin/sh/expand.h					revision 1.19
+bin/sh/expand.h					1.19
 
 	Fix the expansion of "$(foo-$bar}" so that IFS isn't applied when
 	expanding $bar.	Noted by Greg Troxel on tech-userlevel running some
@@ -322,3 +322,9 @@ sys/dev/pci/if_vioif.c				1.4
 	This should fix the problem that recent Qemu dies during configuring
 	a vioif. Fixes PR#47780.
 	[minoura, ticket #1861]
+
+dist/nvi/common/conv.c				1.7 via patch
+
+	Don't truncate files on character conversions without warning
+	and a chance for recovery.
+	[christos, ticket #1845]
