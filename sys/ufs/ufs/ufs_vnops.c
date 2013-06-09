@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.214 2013/06/09 17:57:09 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.215 2013/06/09 18:54:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.214 2013/06/09 17:57:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.215 2013/06/09 18:54:05 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -503,7 +503,8 @@ ufs_setattr(void *v)
 			action |= KAUTH_VNODE_HAS_SYSFLAGS;
 		}
 
-		if ((vap->va_flags & SF_SETTABLE) != (ip->i_flags & SF_SETTABLE)) {
+		if ((vap->va_flags & SF_SETTABLE) !=
+		    (ip->i_flags & SF_SETTABLE)) {
 			action |= KAUTH_VNODE_WRITE_SYSFLAGS;
 			changing_sysflags = true;
 		}
