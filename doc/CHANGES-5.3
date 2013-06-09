@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.13 2013/06/09 16:31:55 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.14 2013/06/09 16:42:06 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -322,3 +322,8 @@ dist/nvi/common/conv.c				1.7 via patch
 	Don't truncate files on character conversions without warning
 	and a chance for recovery.
 	[christos, ticket #1845]
+
+sys/netinet/ip_icmp.c				1.130
+
+	Add missing codes to ICMP handling.  PR#47693.
+	[fair, ticket #1855]
