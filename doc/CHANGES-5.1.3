@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.3,v 1.1.2.40 2013/06/06 16:48:58 riz Exp $
+# $NetBSD: CHANGES-5.1.3,v 1.1.2.41 2013/06/09 16:21:16 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.1.2 release to the NetBSD 5.1.3
 release:
@@ -2452,3 +2452,12 @@ external/mit/xorg/lib/libXi/Makefile			patch
 	Silence gcc 4.1 warnings from ticket #1865.
 	[mrg, ticket #1866]
 
+etc/MAKEDEV.tmpl				1.161
+
+	The console major number is not always 0.
+	[apb, ticket #1848]
+
+sys/dev/fss.c					1.84
+
+	Don't crash when running multiple dump -X. PR#47514.
+	[gdt, ticket #1853]
