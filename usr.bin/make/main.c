@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.212 2013/06/10 19:07:09 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.213 2013/06/10 20:24:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.212 2013/06/10 19:07:09 joerg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.213 2013/06/10 20:24:58 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.212 2013/06/10 19:07:09 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.213 2013/06/10 20:24:58 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -937,13 +937,11 @@ main(int argc, char **argv)
 	 * Set some other useful macros
 	 */
 	{
-	    char tmp[64];
-	    const char *ep;
+	    char tmp[64], *ep;
 
-	    if (!(ep = getenv(MAKE_LEVEL))) {
-		ep = "0";
-	    }
-	    Var_Set(MAKE_LEVEL, ep, VAR_GLOBAL, 0);
+	    snprintf(tmp, sizeof(tmp), "%d",
+		(ep = getenv("MAKELEVEL")) ? atoi(ep) + 1 : 0);
+	    Var_Set(MAKE_LEVEL, tmp, VAR_GLOBAL, 0);
 	    snprintf(tmp, sizeof(tmp), "%u", myPid);
 	    Var_Set(".MAKE.PID", tmp, VAR_GLOBAL, 0);
 	    snprintf(tmp, sizeof(tmp), "%u", getppid());
