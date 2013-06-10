@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.114 2013/04/30 00:03:54 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.115 2013/06/10 14:15:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.114 2013/04/30 00:03:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.115 2013/06/10 14:15:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -218,8 +218,9 @@ struct rumpfs_mount {
 static int lastino = 2;
 static kmutex_t reclock;
 
+#define RUMPFS_DEFAULTMODE 0755
 static void freedir(struct rumpfs_node *, struct componentname *);
-static struct rumpfs_node *makeprivate(enum vtype, dev_t, off_t, bool);
+static struct rumpfs_node *makeprivate(enum vtype, mode_t, dev_t, off_t, bool);
 
 /*
  * Extra Terrestrial stuff.  We map a given key (pathname) to a file on
@@ -373,7 +374,8 @@ doregister(const char *key, const char *hostpath,
 	et = kmem_alloc(sizeof(*et), KM_SLEEP);
 	strcpy(et->et_key, key);
 	et->et_keylen = strlen(et->et_key);
-	et->et_rn = rn = makeprivate(ettype_to_vtype(ftype), rdev, size, true);
+	et->et_rn = rn = makeprivate(ettype_to_vtype(ftype), RUMPFS_DEFAULTMODE,
+	    rdev, size, true);
 	et->et_removing = false;
 	et->et_blkmin = dmin;
 
@@ -510,12 +512,13 @@ rump_etfs_remove(const char *key)
  */
 
 static struct rumpfs_node *
-makeprivate(enum vtype vt, dev_t rdev, off_t size, bool et)
+makeprivate(enum vtype vt, mode_t mode, dev_t rdev, off_t size, bool et)
 {
 	struct rumpfs_node *rn;
 	struct vattr *va;
 	struct timespec ts;
 
+	KASSERT((mode & ~ALLPERMS) == 0);
 	rn = kmem_zalloc(sizeof(*rn), KM_SLEEP);
 
 	switch (vt) {
@@ -536,7 +539,7 @@ makeprivate(enum vtype vt, dev_t rdev, off_t size, bool et)
 
 	va = &rn->rn_va;
 	va->va_type = vt;
-	va->va_mode = 0755;
+	va->va_mode = mode;
 	if (vt == VDIR)
 		va->va_nlink = 2;
 	else
@@ -742,7 +745,8 @@ rump_vop_lookup(void *v)
 			return ENOENT;
 		}
 
-		rn = makeprivate(hft_to_vtype(hft), NODEV, fsize, true);
+		rn = makeprivate(hft_to_vtype(hft), RUMPFS_DEFAULTMODE,
+		    NODEV, fsize, true);
 		rn->rn_flags |= RUMPNODE_CANRECLAIM;
 		if (rnd->rn_flags & RUMPNODE_DIR_ETSUBS) {
 			rn->rn_flags |= RUMPNODE_DIR_ET | RUMPNODE_DIR_ETSUBS;
@@ -997,10 +1001,11 @@ rump_vop_mkdir(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
+	struct vattr *va = ap->a_vap;
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
 	int rv = 0;
 
-	rn = makeprivate(VDIR, NODEV, DEV_BSIZE, false);
+	rn = makeprivate(VDIR, va->va_mode & ALLPERMS, NODEV, DEV_BSIZE, false);
 	if ((cnp->cn_flags & ISWHITEOUT) != 0)
 		rn->rn_va.va_flags |= UF_OPAQUE;
 	rn->rn_parent = rnd;
@@ -1102,7 +1107,8 @@ rump_vop_mknod(void *v)
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
 	int rv;
 
-	rn = makeprivate(va->va_type, va->va_rdev, DEV_BSIZE, false);
+	rn = makeprivate(va->va_type, va->va_mode & ALLPERMS, va->va_rdev,
+	    DEV_BSIZE, false);
 	if ((cnp->cn_flags & ISWHITEOUT) != 0)
 		rn->rn_va.va_flags |= UF_OPAQUE;
 	rv = makevnode(dvp->v_mount, rn, vpp);
@@ -1134,7 +1140,8 @@ rump_vop_create(void *v)
 	int rv;
 
 	newsize = va->va_type == VSOCK ? DEV_BSIZE : 0;
-	rn = makeprivate(va->va_type, NODEV, newsize, false);
+	rn = makeprivate(va->va_type, va->va_mode & ALLPERMS, NODEV,
+	    newsize, false);
 	if ((cnp->cn_flags & ISWHITEOUT) != 0)
 		rn->rn_va.va_flags |= UF_OPAQUE;
 	rv = makevnode(dvp->v_mount, rn, vpp);
@@ -1161,6 +1168,7 @@ rump_vop_symlink(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
+	struct vattr *va = ap->a_vap;
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
 	const char *target = ap->a_target;
 	size_t linklen;
@@ -1168,7 +1176,7 @@ rump_vop_symlink(void *v)
 
 	linklen = strlen(target);
 	KASSERT(linklen < MAXPATHLEN);
-	rn = makeprivate(VLNK, NODEV, linklen, false);
+	rn = makeprivate(VLNK, va->va_mode & ALLPERMS, NODEV, linklen, false);
 	if ((cnp->cn_flags & ISWHITEOUT) != 0)
 		rn->rn_va.va_flags |= UF_OPAQUE;
 	rv = makevnode(dvp->v_mount, rn, vpp);
@@ -1748,7 +1756,7 @@ rumpfs_mountfs(struct mount *mp)
 
 	rfsmp = kmem_alloc(sizeof(*rfsmp), KM_SLEEP);
 
-	rn = makeprivate(VDIR, NODEV, DEV_BSIZE, false);
+	rn = makeprivate(VDIR, RUMPFS_DEFAULTMODE, NODEV, DEV_BSIZE, false);
 	rn->rn_parent = rn;
 	if ((error = makevnode(mp, rn, &rfsmp->rfsmp_rvp)) != 0)
 		return error;
