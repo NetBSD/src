@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.42 2010/02/21 09:02:19 wiz Exp $
+.\"	$NetBSD: isa.4,v 1.43 2013/06/10 07:14:01 kardel Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -271,6 +271,8 @@ AIMS Lab Radiotrack FM radio.
 AIMS Lab Radiotrack II FM radio.
 .It sf2r
 SoundForte RadioLink SF16-FMR2 FM radio.
+.It soekrisgpio
+Soekris net6501 GPIO and LEDs driver
 .It tcic
 Databook DB86082, DB86084, DB86184, and DB86072
 .Tn PCMCIA
@@ -367,6 +369,7 @@ It is usually due to a suboptimally coded driver.
 .Xr sb 4 ,
 .Xr sea 4 ,
 .Xr sf2r 4 ,
+.Xr soekrisgpio 4 ,
 .Xr sm 4 ,
 .Xr tcic 4 ,
 .Xr tcom 4 ,

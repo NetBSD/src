@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.359 2013/06/08 02:43:10 dholland Exp $
+# $NetBSD: ALL,v 1.360 2013/06/10 07:14:01 kardel Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.359 $"
+#ident 		"ALL-$Revision: 1.360 $"
 
 maxusers	64		# estimated number of users
 
@@ -776,6 +776,9 @@ owtemp* 	at onewire?			# Temperature sensors
 
 # Keylock support
 gpiolock*	at gpio?
+
+# Soekris 6501 GPIO/LED driver (provides gpiobus, needs gpio)
+soekrisgpio0	at isa? port 0x680
 
 # SCSI Controllers and Devices
 

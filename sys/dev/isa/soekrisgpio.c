@@ -1,6 +1,9 @@
-/*	$OpenBSD$ */
+/*	from $OpenBSD$ */
 
 /*
+ * ported to NetBSD by Frank Kardel
+ * (http://permalink.gmane.org/gmane.os.openbsd.tech/31317)
+ *
  * Copyright (c) 2013 Matt Dainty <matt <at> bodgit-n-scarper.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,17 +23,23 @@
  * Soekris net6501 GPIO and LEDs as implemented by the onboard Xilinx FPGA 
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: soekrisgpio.c,v 1.2 2013/06/10 07:14:02 kardel Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/types.h>
 #include <sys/device.h>
-#include <sys/gpio.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <machine/autoconf.h>
 
 #include <dev/isa/isavar.h>
 
+#include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>
+
+#include "gpio.h"
 
 #define	SOEKRIS_BASE		0x680	/* Base address of FPGA I/O */
 #define	SOEKRIS_IOSIZE		32	/* I/O region size */
@@ -51,7 +60,7 @@ const u_int soekris_led_offset[SOEKRIS_NLEDS] = {
 };
 
 struct soekris_softc {
-	struct device		 sc_dev;
+	device_t		 sc_dev;
 
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
@@ -64,62 +73,70 @@ struct soekris_softc {
 	gpio_pin_t		 sc_led_pins[SOEKRIS_NLEDS];
 };
 
-int	 soekris_match(struct device *, void *, void *);
-void	 soekris_attach(struct device *, struct device *, void *);
-int	 soekris_gpio_read(void *, int);
-void	 soekris_gpio_write(void *, int, int);
-void	 soekris_gpio_ctl(void *, int, int);
-int	 soekris_led_read(void *, int);
-void	 soekris_led_write(void *, int, int);
-void	 soekris_led_ctl(void *, int, int);
+static int	 soekris_match(device_t, cfdata_t , void *);
+static void	 soekris_attach(device_t, device_t, void *);
+static int	 soekris_detach(device_t, int);
+static int	 soekris_gpio_read(void *, int);
+static void	 soekris_gpio_write(void *, int, int);
+static void	 soekris_gpio_ctl(void *, int, int);
+static int	 soekris_led_read(void *, int);
+static void	 soekris_led_write(void *, int, int);
+static void	 soekris_led_ctl(void *, int, int);
 
-struct cfattach soekris_ca = {
-	sizeof(struct soekris_softc), soekris_match, soekris_attach
-};
+CFATTACH_DECL_NEW(soekrisgpio,
+		  sizeof(struct soekris_softc),
+		  soekris_match,
+		  soekris_attach,
+		  soekris_detach,
+		  NULL);
 
-struct cfdriver soekris_cd = {
-	NULL, "soekris", DV_DULL
-};
-
-int
-soekris_match(struct device *parent, void *match, void *aux)
+static int
+soekris_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
+	int iobase;
+
+	if (ia->ia_nio < 1)
+		return (0);
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
+		return (0);
+
+	iobase = ia->ia_io[0].ir_addr;
 
 	/* Need some sort of heuristic to match the Soekris net6501 */
 
-	if (ia->ia_iobase != SOEKRIS_BASE || bus_space_map(ia->ia_iot,
-	    ia->ia_iobase, SOEKRIS_IOSIZE, 0, &ioh) != 0)
+	if (iobase != SOEKRIS_BASE || bus_space_map(ia->ia_iot,
+	    iobase, SOEKRIS_IOSIZE, 0, &ioh) != 0)
 		return (0);
 
 	bus_space_unmap(ia->ia_iot, ioh, SOEKRIS_IOSIZE);
-	ia->ia_iosize = SOEKRIS_IOSIZE;
-	ia->ipa_nio = 1;
-	ia->ipa_nmem = 0;
-	ia->ipa_nirq = 0;
-	ia->ipa_ndrq = 0;
+
+	ia->ia_io[0].ir_size = SOEKRIS_IOSIZE;
 
 	return (1);
 }
 
-void
-soekris_attach(struct device *parent, struct device *self, void *aux)
+static void
+soekris_attach(device_t parent, device_t self, void *aux)
 {
-	struct soekris_softc *sc = (void *)self;
+	struct soekris_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	struct gpiobus_attach_args gba1, gba2;
 	u_int data;
 	int i;
 
-	if (bus_space_map(ia->ia_iot, ia->ia_iobase, ia->ia_iosize, 0,
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, ia->ia_io[0].ir_size, 0,
 	    &sc->sc_ioh) != 0) {
-		printf(": can't map i/o space\n");
+		aprint_normal(": can't map i/o space\n");
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_iot = ia->ia_iot;
 
 	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SOEKRIS_GPIO_DIR);
@@ -138,12 +155,9 @@ soekris_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpio_gc.gp_pin_write = soekris_gpio_write;
 	sc->sc_gpio_gc.gp_pin_ctl = soekris_gpio_ctl;
 
-	gba1.gba_name = "gpio";
 	gba1.gba_gc = &sc->sc_gpio_gc;
 	gba1.gba_pins = sc->sc_gpio_pins;
 	gba1.gba_npins = SOEKRIS_NPINS;
-
-	(void)config_found(&sc->sc_dev, &gba1, gpiobus_print);
 
 	for (i = 0; i < SOEKRIS_NLEDS; i++) {
 		sc->sc_led_pins[i].pin_num = i;
@@ -157,15 +171,26 @@ soekris_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_led_gc.gp_pin_write = soekris_led_write;
 	sc->sc_led_gc.gp_pin_ctl = soekris_led_ctl;
 
-	gba2.gba_name = "gpio";
 	gba2.gba_gc = &sc->sc_led_gc;
 	gba2.gba_pins = sc->sc_led_pins;
 	gba2.gba_npins = SOEKRIS_NLEDS;
 
-	(void)config_found(&sc->sc_dev, &gba2, gpiobus_print);
+#if NGPIO > 0
+	(void)config_found(sc->sc_dev, &gba1, gpiobus_print);
+	(void)config_found(sc->sc_dev, &gba2, gpiobus_print);
+#endif
 }
 
-int
+static int
+soekris_detach(device_t self, int flags)
+{
+	struct soekris_softc *sc = device_private(self);
+
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, SOEKRIS_IOSIZE);
+	return 0;
+}
+
+static int
 soekris_gpio_read(void *arg, int pin)
 {
 	struct soekris_softc *sc = arg;
@@ -176,7 +201,7 @@ soekris_gpio_read(void *arg, int pin)
 	return (data & (1 << pin)) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
 }
 
-void
+static void
 soekris_gpio_write(void *arg, int pin, int value)
 {
 	struct soekris_softc *sc = arg;
@@ -192,7 +217,7 @@ soekris_gpio_write(void *arg, int pin, int value)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SOEKRIS_GPIO_OUTPUT, data);
 }
 
-void
+static void
 soekris_gpio_ctl(void *arg, int pin, int flags)
 {
 	struct soekris_softc *sc = arg;
@@ -208,7 +233,7 @@ soekris_gpio_ctl(void *arg, int pin, int flags)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SOEKRIS_GPIO_DIR, data);
 }
 
-int
+static int
 soekris_led_read(void *arg, int pin)
 {
 	struct soekris_softc *sc = arg;
@@ -220,7 +245,7 @@ soekris_led_read(void *arg, int pin)
 	return (value & 0x1) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
 }
 
-void
+static void
 soekris_led_write(void *arg, int pin, int value)
 {
 	struct soekris_softc *sc = arg;
@@ -229,7 +254,7 @@ soekris_led_write(void *arg, int pin, int value)
 	    value);
 }
 
-void
+static void
 soekris_led_ctl(void *arg, int pin, int flags)
 {
 }

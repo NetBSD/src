@@ -1,6 +1,7 @@
-.\" $OpenBSD$
+.\" $NetBSD: soekrisgpio.4,v 1.2 2013/06/10 07:14:01 kardel Exp $
+.\" from OpenBSD
 .\"
-.\" Copyright (c) 2013 Matt Dainty <matt@...>
+.\" Copyright (c) 2013 Matt Dainty <matt <at> bodgit-n-scarper.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,14 +16,14 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate$
-.Dt SOEKRIS 4 amd64
+.Dt SOEKRIS 4 x86
 .Os
 .Sh NAME
-.Nm soekris
+.Nm soekrisgpio
 .Nd Soekris net6501 GPIO and LEDs
 .Sh SYNOPSIS
-.Cd "soekris0 at isa? port 0x680"
-.Cd "gpio* at soekris?"
+.Cd "soekrisgpio0 at isa? port 0x680"
+.Cd "gpio* at soekrisgpio?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -46,12 +47,17 @@ Both may be used with
 The
 .Nm
 driver first appeared in
-.Ox 5.3 .
+.Nx
+7.0 .
 .Sh AUTHORS
 The
 .Nm
 driver was written by
-.An Matt Dainty Aq matt@... .
+.An Matt Dainty Aq matt@...
+and imported from a patch for OpenBSD to
+.Nx
+by
+.An Frank Kardel Aq kardel@NetBSD.org .
 .Sh BUGS
-If the Xilinx FPGA is programmed with a different bistream, the driver will
+If the Xilinx FPGA is programmed with a different bitstream, the driver will
 likely not function.
