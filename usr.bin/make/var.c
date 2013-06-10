@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.176 2013/06/10 16:46:19 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.177 2013/06/10 19:07:09 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.176 2013/06/10 16:46:19 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.177 2013/06/10 19:07:09 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.176 2013/06/10 16:46:19 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.177 2013/06/10 19:07:09 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -778,7 +778,7 @@ Var_UnExport(char *str)
     if (unexport_env) {
 	char **newenv;
 
-	cp = getenv("MAKELEVEL");	/* we should preserve this */
+	cp = getenv(MAKE_LEVEL);	/* we should preserve this */
 	if (environ == savedEnv) {
 	    /* we have been here before! */
 	    newenv = bmake_realloc(environ, 2 * sizeof(char *));
@@ -795,7 +795,7 @@ Var_UnExport(char *str)
 	environ = savedEnv = newenv;
 	newenv[0] = NULL;
 	newenv[1] = NULL;
-	setenv("MAKELEVEL", cp, 1);
+	setenv(MAKE_LEVEL, cp, 1);
     } else {
 	for (; *str != '\n' && isspace((unsigned char) *str); str++)
 	    continue;
@@ -960,8 +960,14 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
      * We allow the makefiles to update .MAKE.LEVEL and ensure
      * children see a correctly incremented value.
      */
-    if (ctxt == VAR_GLOBAL && strcmp(MAKELEVEL, name) == 0)
-	setenv("MAKELEVEL", val, 1);
+    if (ctxt == VAR_GLOBAL && strcmp(MAKE_LEVEL, name) == 0) {
+	char tmp[64];
+	int level;
+	
+	level = atoi(val);
+	snprintf(tmp, sizeof(tmp), "%u", level + 1);
+	setenv(MAKE_LEVEL, tmp, 1);
+    }
 	
 	
  out:
