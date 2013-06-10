@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.141 2013/06/05 09:06:21 mrg Exp $
+#	 $NetBSD: mi,v 1.142 2013/06/10 05:04:00 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5934,7 +5934,7 @@
 ./usr/X11R7/include/xorg/xaarop.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf1bpp.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf4bpp.h			-unknown-	obsolete
-./usr/X11R7/include/xorg/xf86-mouse-properties.h	-unknown-	xorg
+./usr/X11R7/include/xorg/xf86-mouse-properties.h	-unknown-	xorg,xorg_drivers
 ./usr/X11R7/include/xorg/xf86.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Crtc.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Cursor.h			-unknown-	xorg
@@ -6371,7 +6371,7 @@
 ./usr/X11R7/lib/pkgconfig/xkeyboard-config.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xmu.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xmuu.pc			-unknown-	xorg
-./usr/X11R7/lib/pkgconfig/xorg-mouse.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xorg-mouse.pc			-unknown-	xorg,xorg_drivers
 ./usr/X11R7/lib/pkgconfig/xorg-server.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xp.pc				-obsolete-	obsolete
 ./usr/X11R7/lib/pkgconfig/xpm.pc			-unknown-	xorg
