@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.732 2013/06/05 07:41:56 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.733 2013/06/10 05:02:38 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -919,6 +919,17 @@ ${var}?=no
 X11FLAVOUR?=	XFree86
 .else
 X11FLAVOUR?=	Xorg
+.endif
+
+#
+# Which platforms build the xorg-server drivers (as opposed
+# to just Xnest and Xvfb.)
+#
+.if ${X11FLAVOUR} == "Xorg" && \
+    ${MACHINE} == "acorn26"
+MKXORG_DRIVERS?=no
+.else
+MKXORG_DRIVERS?=yes
 .endif
 
 #
