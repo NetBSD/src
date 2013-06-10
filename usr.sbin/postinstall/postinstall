@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.150 2013/06/06 07:06:42 mrg Exp $
+# $NetBSD: postinstall,v 1.151 2013/06/10 20:33:31 mrg Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -819,7 +819,13 @@ do_fontconfig()
 	failed=0
 
 	# First, check for updates we can handle.
-	populate_dir "$op" false "${SRC_DIR}/etc/fonts/conf.avail" "${DEST_DIR}/etc/fonts/conf.avail" 444 \
+	if ! $SOURCEMODE; then
+		FONTCONFIG_DIR="${SRC_DIR}/etc/fonts/conf.avail" 
+	else
+		FONTCONFIG_DIR="${XSRC_DIR}/external/mit/fontconfig/dist/conf.d"
+	fi
+
+	populate_dir "$op" false "${FONTCONFIG_DIR}" "${DEST_DIR}/etc/fonts/conf.avail" 444 \
 		10-autohint.conf \
 		10-no-sub-pixel.conf \
 		10-scale-bitmap-fonts.conf \
@@ -1856,7 +1862,7 @@ do_ptyfsoldnodes()
 usage()
 {
 	cat 1>&2 << _USAGE_
-Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
+Usage: ${PROGNAME} [-s srcdir] [-x xsrcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
 	Perform post-installation checks and/or fixes on a system's
 	configuration files.
 	If no items are provided, a default set of checks or fixes is applied.
@@ -1871,7 +1877,10 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
                           multiple such files;
 			* A temporary directory in which one or both of
 			  "etc.tgz" and "xetc.tgz" have been extracted.
-							[${SRC_DIR:-/}]
+							[${SRC_DIR:-/usr/src}]
+	-x xsrcdir      Location of the X11 source files.  This must be
+			a directory that contains a NetBSD xsrc tree.
+							[${XSRC_DIR:-/usr/src/../xsrc}]
 	-d destdir	Destination directory to check. [${DEST_DIR:-/}]
 	-m mach		MACHINE.			[${MACHINE}]
 	-a arch		MACHINE_ARCH.			[${MACHINE_ARCH}]
@@ -1914,12 +1923,13 @@ main()
 	TGZLIST=		# quoted list list of tgz files
 	SRC_ARGLIST=		# quoted list of one or more "-s" args
 	SRC_DIR="${SRC_ARG}"	# set default value for early usage()
+	XSRC_DIR="${SRC_ARG}/../xsrc"
 	N_SRC_ARGS=0		# number of "-s" args
 	TGZMODE=false		# true if "-s" specifies a tgz file
 	DIRMODE=false		# true if "-s" specified a directory
 	SOURCEMODE=false	# true if "-s" specified a source directory
 
-	while getopts s:d:m:a: ch; do
+	while getopts s:x:d:m:a: ch; do
 		case "${ch}" in
 		s)
 			qarg="$(shell_quote "${OPTARG}")"
@@ -1948,6 +1958,14 @@ main()
 				fi
 			else
 				err 2 "Invalid argument for -s option"
+			fi
+			;;
+		x)
+			if [ -d "${OPTARG}" ]; then
+				# arg refers to a directory.
+				XSRC_DIR="${OPTARG}"
+			else
+				err 2 "Not a directory for -x option"
 			fi
 			;;
 		d)
