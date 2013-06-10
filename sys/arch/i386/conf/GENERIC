@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1094 2013/06/05 23:08:01 christos Exp $
+# $NetBSD: GENERIC,v 1.1095 2013/06/10 07:14:01 kardel Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1094 $"
+#ident 		"GENERIC-$Revision: 1.1095 $"
 
 maxusers	64		# estimated number of users
 
@@ -731,6 +731,9 @@ gpiolock*	at gpio?
 
 # Software pulsing GPIO pins
 gpiopwm*	at gpio?
+
+# Soekris 6501 GPIO/LED driver (provides gpiobus, needs gpio)
+#soekrisgpio0	at isa? port 0x680
 
 # SCSI Controllers and Devices
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.162 2012/01/22 06:44:28 christos Exp $
+#	$NetBSD: files.isa,v 1.163 2013/06/10 07:14:02 kardel Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -526,6 +526,11 @@ file	dev/isa/toaster.c		toaster
 # Trusted Platform Module
 attach tpm at isa with tpm_isa
 file   dev/isa/tpm_isa.c		tpm_isa	needs-flag
+
+# Soekris GPIO & LEDs driver
+device	soekrisgpio: gpiobus
+attach	soekrisgpio at isa
+file	dev/isa/soekrisgpio.c		soekrisgpio
 
 #
 # ISA Plug 'n Play autoconfiguration glue.
