@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.10 2013/04/30 20:54:22 matt Exp $
+# $NetBSD: mkvars.mk,v 1.11 2013/06/10 05:04:00 mrg Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -19,6 +19,7 @@ MKEXTRAVARS= \
 	MKSLJIT \
 	MKSOFTFLOAT \
 	MKXORG \
+	MKXORG_DRIVERS \
 	X11FLAVOR \
 	USE_INET6 \
 	USE_KERBEROS \
