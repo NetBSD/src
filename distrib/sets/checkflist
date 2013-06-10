@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.43 2013/01/15 02:46:41 christos Exp $
+#	$NetBSD: checkflist,v 1.44 2013/06/10 05:03:20 mrg Exp $
 #
 # Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
 
@@ -55,7 +55,7 @@ while getopts xybL:M:em ch; do
 	case ${ch} in
 	x)
 		xargs="-x"
-		origin="./etc/X11 ./etc/fonts ./usr/X11R6"
+		origin="./etc/X11 ./etc/fonts ./usr/X11R6 ./usr/X11R7"
 		;;
 	y)
 		xargs="-y"
