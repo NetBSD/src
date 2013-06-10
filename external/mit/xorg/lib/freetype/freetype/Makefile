@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2013/06/08 00:37:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2013/06/10 17:37:22 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -39,7 +39,7 @@ CONFIG_SUBST=	${TOOL_SED} \
 		-e 's,@LIBBZ2@,-lbz2,'
 
 .PATH: ${X11SRCDIR.freetype}/builds/unix
-freetype-config: freetype-config.in Makefile
+freetype-config: freetype-config.in
 	${_MKTARGET_CREATE}
 	${CONFIG_SUBST} < ${.ALLSRC} > ${.TARGET}
 
