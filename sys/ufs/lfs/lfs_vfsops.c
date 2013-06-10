@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.304 2013/06/08 02:14:46 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.305 2013/06/10 09:25:05 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.304 2013/06/08 02:14:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.305 2013/06/10 09:25:05 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1471,8 +1471,8 @@ retry:
 						       (*bpp)->b_blkno);
 						dp = (struct ulfs1_dinode *)(*bpp)->b_data;
 						for (i = 0; i < INOPB(fs); i++)
-							if (dp[i].di_u.inumber)
-								printf("%d ", dp[i].di_u.inumber);
+							if (dp[i].di_inumber)
+								printf("%d ", dp[i].di_inumber);
 						printf("\n");
 					}
 				}
