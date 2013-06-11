@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.253 2013/06/04 16:55:07 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.254 2013/06/11 10:07:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.253 2013/06/04 16:55:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.254 2013/06/11 10:07:09 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3820,9 +3820,9 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 
 	if (icr & ICR_LSC) {
 		DPRINTF(WM_DEBUG_LINK,
-		    ("%s: LINK: LSC -> mii_tick\n",
+		    ("%s: LINK: LSC -> mii_pollstat\n",
 			device_xname(sc->sc_dev)));
-		mii_tick(&sc->sc_mii);
+		mii_pollstat(&sc->sc_mii);
 		if (sc->sc_type == WM_T_82543) {
 			int miistatus, active;
 
