@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.34 2012/06/02 21:36:48 dsl Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.35 2013/06/11 13:30:20 christos Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.34 2012/06/02 21:36:48 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.35 2013/06/11 13:30:20 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -371,7 +371,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 #endif /* INET6 */
 
 static int
-sysctl_fast_ipsec(SYSCTLFN_ARGS)
+sysctl_ipsec(SYSCTLFN_ARGS)
 {
 	int error, t;
 	struct sysctlnode node;
@@ -410,7 +410,7 @@ sysctl_fast_ipsec(SYSCTLFN_ARGS)
 
 #ifdef IPSEC_DEBUG
 static int
-sysctl_fast_ipsec_test(SYSCTLFN_ARGS)
+sysctl_ipsec_test(SYSCTLFN_ARGS)
 {
 	int t, error;
 	struct sysctlnode node;
@@ -426,10 +426,10 @@ sysctl_fast_ipsec_test(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	if (rnode->sysctl_data == &ipsec_replay)
-		printf("fast_ipsec: Anti-Replay service %s\n",
+		printf("ipsec: Anti-Replay service %s\n",
 		    (t == 1) ? "deactivated" : "activated");
 	else if (rnode->sysctl_data == &ipsec_integrity)
-		 printf("fast_ipsec: HMAC corruption %s\n",
+		 printf("ipsec: HMAC corruption %s\n",
 		     (t == 0) ? "deactivated" : "activated");
 
 	*(int*)rnode->sysctl_data = t;
@@ -439,7 +439,7 @@ sysctl_fast_ipsec_test(SYSCTLFN_ARGS)
 #endif
 
 static int
-sysctl_net_inet_fast_ipsec_stats(SYSCTLFN_ARGS)
+sysctl_net_inet_ipsec_stats(SYSCTLFN_ARGS)
 {
 
 	return (NETSTAT_SYSCTL(ipsecstat_percpu, IPSEC_NSTATS));
@@ -474,7 +474,7 @@ sysctl_net_inet_ipip_stats(SYSCTLFN_ARGS)
 }
 
 /* XXX will need a different oid at parent */
-SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
+SYSCTL_SETUP(sysctl_net_inet_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 {
 	const struct sysctlnode *_ipsec;
 	int ipproto_ipsec;
@@ -525,13 +525,13 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "trans_deflev", NULL,
-		       sysctl_fast_ipsec, 0, &ip4_esp_trans_deflev, 0,
+		       sysctl_ipsec, 0, &ip4_esp_trans_deflev, 0,
 		       CTL_NET, PF_INET, IPPROTO_ESP,
 		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "net_deflev", NULL,
-		       sysctl_fast_ipsec, 0, &ip4_esp_net_deflev, 0,
+		       sysctl_ipsec, 0, &ip4_esp_net_deflev, 0,
 		       CTL_NET, PF_INET, IPPROTO_ESP,
 		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -562,13 +562,13 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "trans_deflev", NULL,
-		       sysctl_fast_ipsec, 0, &ip4_ah_trans_deflev, 0,
+		       sysctl_ipsec, 0, &ip4_ah_trans_deflev, 0,
 		       CTL_NET, PF_INET, IPPROTO_AH,
 		       IPSECCTL_DEF_AH_TRANSLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "net_deflev", NULL,
-		       sysctl_fast_ipsec, 0, &ip4_ah_net_deflev, 0,
+		       sysctl_ipsec, 0, &ip4_ah_net_deflev, 0,
 		       CTL_NET, PF_INET, IPPROTO_AH,
 		       IPSECCTL_DEF_AH_NETLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -602,31 +602,31 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "def_policy", NULL,
-		       sysctl_fast_ipsec, 0, &ip4_def_policy.policy, 0,
+		       sysctl_ipsec, 0, &ip4_def_policy.policy, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_DEF_POLICY, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "esp_trans_deflev", NULL,
-		       sysctl_fast_ipsec, 0, &ip4_esp_trans_deflev, 0,
+		       sysctl_ipsec, 0, &ip4_esp_trans_deflev, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "esp_net_deflev", NULL,
-		       sysctl_fast_ipsec, 0, &ip4_esp_net_deflev, 0,
+		       sysctl_ipsec, 0, &ip4_esp_net_deflev, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "ah_trans_deflev", NULL,
-		       sysctl_fast_ipsec, 0, &ip4_ah_trans_deflev, 0,
+		       sysctl_ipsec, 0, &ip4_ah_trans_deflev, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_DEF_AH_TRANSLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "ah_net_deflev", NULL,
-		       sysctl_fast_ipsec, 0, &ip4_ah_net_deflev, 0,
+		       sysctl_ipsec, 0, &ip4_ah_net_deflev, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_DEF_AH_NETLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -662,7 +662,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ipsecstats", NULL,
-		       sysctl_net_inet_fast_ipsec_stats, 0, NULL, 0,
+		       sysctl_net_inet_ipsec_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       CTL_CREATE, CTL_EOL);
 #ifdef IPSEC_DEBUG
@@ -670,21 +670,21 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "test_replay",
 		       SYSCTL_DESCR("Emulate replay attack"),
-		       sysctl_fast_ipsec_test, 0, &ipsec_replay, 0,
+		       sysctl_ipsec_test, 0, &ipsec_replay, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "test_integrity",
 		       SYSCTL_DESCR("Emulate man-in-the-middle attack"),
-		       sysctl_fast_ipsec_test, 0, &ipsec_integrity, 0,
+		       sysctl_ipsec_test, 0, &ipsec_integrity, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       CTL_CREATE, CTL_EOL);
 #endif
 }
 
 #ifdef INET6
-SYSCTL_SETUP(sysctl_net_inet6_fast_ipsec6_setup,
+SYSCTL_SETUP(sysctl_net_inet6_ipsec6_setup,
 	     "sysctl net.inet6.ipsec6 subtree setup")
 {
 
@@ -709,14 +709,14 @@ SYSCTL_SETUP(sysctl_net_inet6_fast_ipsec6_setup,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("IPSec statistics and counters"),
-		       sysctl_net_inet_fast_ipsec_stats, 0, NULL, 0,
+		       sysctl_net_inet_ipsec_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       IPSECCTL_STATS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "def_policy",
 		       SYSCTL_DESCR("Default action for non-IPSec packets"),
-		       sysctl_fast_ipsec, 0, (void *)&ip6_def_policy, 0,
+		       sysctl_ipsec, 0, (void *)&ip6_def_policy, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       IPSECCTL_DEF_POLICY, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -724,7 +724,7 @@ SYSCTL_SETUP(sysctl_net_inet6_fast_ipsec6_setup,
 		       CTLTYPE_INT, "esp_trans_deflev",
 		       SYSCTL_DESCR("Default required security level for "
 				    "transport mode traffic"),
-		       sysctl_fast_ipsec, 0, &ip6_esp_trans_deflev, 0,
+		       sysctl_ipsec, 0, &ip6_esp_trans_deflev, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -732,7 +732,7 @@ SYSCTL_SETUP(sysctl_net_inet6_fast_ipsec6_setup,
 		       CTLTYPE_INT, "esp_net_deflev",
 		       SYSCTL_DESCR("Default required security level for "
 				    "tunneled traffic"),
-		       sysctl_fast_ipsec, 0, &ip6_esp_net_deflev, 0,
+		       sysctl_ipsec, 0, &ip6_esp_net_deflev, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -740,7 +740,7 @@ SYSCTL_SETUP(sysctl_net_inet6_fast_ipsec6_setup,
 		       CTLTYPE_INT, "ah_trans_deflev",
 		       SYSCTL_DESCR("Default required security level for "
 				    "transport mode headers"),
-		       sysctl_fast_ipsec, 0, &ip6_ah_trans_deflev, 0,
+		       sysctl_ipsec, 0, &ip6_ah_trans_deflev, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       IPSECCTL_DEF_AH_TRANSLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -748,7 +748,7 @@ SYSCTL_SETUP(sysctl_net_inet6_fast_ipsec6_setup,
 		       CTLTYPE_INT, "ah_net_deflev",
 		       SYSCTL_DESCR("Default required security level for "
 				    "tunneled headers"),
-		       sysctl_fast_ipsec, 0, &ip6_ah_net_deflev, 0,
+		       sysctl_ipsec, 0, &ip6_ah_net_deflev, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       IPSECCTL_DEF_AH_NETLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
