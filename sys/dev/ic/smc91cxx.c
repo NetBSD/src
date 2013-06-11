@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.83 2012/10/27 17:18:22 chs Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.84 2013/06/11 16:57:05 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.83 2012/10/27 17:18:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.84 2013/06/11 16:57:05 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1102,7 +1102,7 @@ smc91cxx_intr(void *arg)
 		/*
 		 * Internal PHY status change
 		 */
-		mii_tick(&sc->sc_mii);
+		mii_pollstat(&sc->sc_mii);
 	}
 
 	/*
