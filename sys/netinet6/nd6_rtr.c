@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.87 2013/05/21 08:37:27 roy Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.88 2013/06/11 12:08:29 roy Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.87 2013/05/21 08:37:27 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.88 2013/06/11 12:08:29 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1407,7 +1407,8 @@ find_pfxlist_reachable_router(struct nd_prefix *pr)
 		if ((rt = nd6_lookup(&pfxrtr->router->rtaddr, 0,
 		    pfxrtr->router->ifp)) &&
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
-		    ND6_IS_LLINFO_PROBREACH(ln))
+		    ND6_IS_LLINFO_PROBREACH(ln) &&
+		    pfxrtr->router->ifp->if_link_state != LINK_STATE_DOWN)
 			break;	/* found */
 	}
 
