@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.254 2013/06/11 10:07:09 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.255 2013/06/11 14:39:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.254 2013/06/11 10:07:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.255 2013/06/11 14:39:35 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6342,7 +6342,8 @@ wm_gmii_reset(struct wm_softc *sc)
 		 */
 
 		/* Configure the LCD with the OEM bits in NVM */
-		if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)) {
+		if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)
+		    || (sc->sc_type == WM_T_PCH_LPT)) {
 			/*
 			 * Disable LPLU.
 			 * XXX It seems that 82567 has LPLU, too.
