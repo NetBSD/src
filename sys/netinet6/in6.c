@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.163 2013/05/29 12:07:58 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.164 2013/06/11 12:08:29 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.163 2013/05/29 12:07:58 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.164 2013/06/11 12:08:29 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1078,6 +1078,19 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * configure address flags.
 	 */
 	ia->ia6_flags = ifra->ifra_flags;
+
+	/*
+	 * Make the address tentative before joining multicast addresses,
+	 * so that corresponding MLD responses would not have a tentative
+	 * source address.
+	 */
+	ia->ia6_flags &= ~IN6_IFF_DUPLICATED;	/* safety */
+	if (ifp->if_link_state == LINK_STATE_DOWN) {
+		ia->ia6_flags |= IN6_IFF_DETACHED;
+		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
+	} else if (hostIsNew && in6if_do_dad(ifp))
+		ia->ia6_flags |= IN6_IFF_TENTATIVE;
+
 	/*
 	 * backward compatibility - if IN6_IFF_DEPRECATED is set from the
 	 * userland, make it deprecated.
@@ -1087,19 +1100,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia->ia6_lifetime.ia6t_preferred = time_second;
 	}
 
-	/*
-	 * Make the address tentative before joining multicast addresses,
-	 * so that corresponding MLD responses would not have a tentative
-	 * source address.
-	 */
-	ia->ia6_flags &= ~IN6_IFF_DUPLICATED;	/* safety */
-	if (hostIsNew && in6if_do_dad(ifp)) 
-		ia->ia6_flags |= IN6_IFF_TENTATIVE;
-
 	/* reset the interface and routing table appropriately. */
 	if ((error = in6_ifinit(ifp, ia, &ifra->ifra_addr, hostIsNew)) != 0)
 		goto unlink;
-
 	/*
 	 * We are done if we have simply modified an existing address.
 	 */
@@ -2167,10 +2170,29 @@ in6_if_up(struct ifnet *ifp)
 	struct ifaddr *ifa;
 	struct in6_ifaddr *ia;
 
+	/* Ensure it's sane to run DAD */
+	if (ifp->if_link_state == LINK_STATE_DOWN)
+		return;
+	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
+		return;
+
 	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		ia = (struct in6_ifaddr *)ifa;
+
+		/* If detached then mark as tentative */
+		if (ia->ia6_flags & IN6_IFF_DETACHED) {
+			ia->ia6_flags &= ~IN6_IFF_DETACHED;
+			if (in6if_do_dad(ifp)) {
+				ia->ia6_flags |= IN6_IFF_TENTATIVE;
+				nd6log((LOG_ERR, "in6_if_up: "
+				    "%s marked tentative\n",
+				    ip6_sprintf(&ia->ia_addr.sin6_addr)));
+			} else if ((ia->ia6_flags & IN6_IFF_TENTATIVE) == 0)
+				nd6_newaddrmsg(ifa);
+		}
+
 		if (ia->ia6_flags & IN6_IFF_TENTATIVE) {
 			/*
 			 * The TENTATIVE flag was likely set by hand
@@ -2188,6 +2210,48 @@ in6_if_up(struct ifnet *ifp)
 	 * special cases, like 6to4, are handled in in6_ifattach
 	 */
 	in6_ifattach(ifp, NULL);
+
+	/* Restore any detached prefixes */
+	pfxlist_onlink_check();
+}
+
+/*
+ * Mark all addresses as detached.
+ */
+void
+in6_if_down(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+	struct in6_ifaddr *ia;
+
+	IFADDR_FOREACH(ifa, ifp) {
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+		ia = (struct in6_ifaddr *)ifa;
+
+		/* Stop DAD processing */
+		nd6_dad_stop(ifa);
+
+		/*
+		 * Mark the address as detached.
+		 * This satisfies RFC4862 Section 5.3, but we should apply
+		 * this logic to all addresses to be a good citizen and
+		 * avoid potential duplicated addresses.
+		 * When the interface comes up again, detached addresses
+		 * are marked tentative and DAD commences.
+		 */
+		if (!(ia->ia6_flags & IN6_IFF_DETACHED)) {
+			nd6log((LOG_DEBUG, "in6_if_down: "
+			    "%s marked detached\n",
+			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
+			ia->ia6_flags |= IN6_IFF_DETACHED;
+			ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
+			nd6_newaddrmsg(ifa);
+		}
+	}
+
+	/* Any prefixes on this interface should be detached as well */
+	pfxlist_onlink_check();
 }
 
 int
