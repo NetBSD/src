@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.60 2013/06/09 09:15:51 msaitoh Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.61 2013/06/11 07:22:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.60 2013/06/09 09:15:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.61 2013/06/11 07:22:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,18 +259,6 @@ tlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
-
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
-
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			break;
 
 		/*
 		 * XXX WHAT ABOUT CHECKING LINK ON THE BNC/AUI?!

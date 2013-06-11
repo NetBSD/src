@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.5 2013/06/09 09:31:32 msaitoh Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.6 2013/06/11 07:22:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.5 2013/06/09 09:31:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.6 2013/06/11 07:22:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,19 +213,6 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
-
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
-		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
-			/*
-			 * Reset autonegotiation timer to 0 just to make sure
-			 * the future autonegotiation start with 0.
-			 */
-			sc->mii_ticks = 0;
-			break;
-		}
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return 0;
