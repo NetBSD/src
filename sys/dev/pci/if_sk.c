@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.73 2013/03/30 03:21:07 christos Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.74 2013/06/11 16:37:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.73 2013/03/30 03:21:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.74 2013/06/11 16:37:10 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2219,7 +2219,6 @@ sk_tick(void *xsc_if)
 	SK_XM_CLRBIT_2(sc_if, XM_IMR, XM_IMR_GP0_SET);
 	SK_XM_READ_2(sc_if, XM_ISR);
 	mii_tick(mii);
-	mii_pollstat(mii);
 	callout_stop(&sc_if->sk_tick_ch);
 }
 
