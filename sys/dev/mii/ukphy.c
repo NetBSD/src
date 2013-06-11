@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.45 2013/06/09 09:24:29 msaitoh Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.46 2013/06/11 16:18:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.45 2013/06/09 09:24:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.46 2013/06/11 16:18:48 msaitoh Exp $");
 
 #include "opt_mii.h"
 
@@ -187,12 +187,6 @@ ukphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
-
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			break;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
