@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.23 2013/06/09 09:31:32 msaitoh Exp $ */
+/* $NetBSD: ciphy.c,v 1.24 2013/06/11 07:22:08 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.23 2013/06/09 09:31:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.24 2013/06/11 07:22:08 msaitoh Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -284,9 +284,17 @@ setit:
 		}
 
 		/*
+		 * mii_ticks == 0 means it's the first tick after changing the
+		 * media or the link became down since the last tick
+		 * (see above), so return with 0 to update the status.
+		 */
+		if (sc->mii_ticks++ == 0)
+			break;
+
+		/*
 		 * Only retry autonegotiation every N seconds.
 		 */
-		if (++sc->mii_ticks <= MII_ANEGTICKS_GIGE)
+		if (sc->mii_ticks <= MII_ANEGTICKS_GIGE)
 			break;
 
 		mii_phy_auto(sc, 0);
