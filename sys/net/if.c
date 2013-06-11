@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.262 2013/03/10 19:46:12 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.263 2013/06/11 12:08:29 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.262 2013/03/10 19:46:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.263 2013/06/11 12:08:29 roy Exp $");
 
 #include "opt_inet.h"
 
@@ -1337,14 +1337,51 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
+	int old_link_state;
+
 	if (ifp->if_link_state == link_state)
 		return;
+
+	old_link_state = ifp->if_link_state;
 	ifp->if_link_state = link_state;
+#ifdef DEBUG
+	log(LOG_DEBUG, "%s: link state %s (was %s)\n", ifp->if_xname,
+		link_state == LINK_STATE_UP ? "UP" :
+		link_state == LINK_STATE_DOWN ? "DOWN" :
+		"UNKNOWN",
+		old_link_state == LINK_STATE_UP ? "UP" :
+		old_link_state == LINK_STATE_DOWN ? "DOWN" :
+		"UNKNOWN");
+#endif
+
+#ifdef INET6
+	/*
+	 * When going from UNKNOWN to UP, we need to mark existing
+	 * IPv6 addresses as tentative and restart DAD as we may have
+	 * erroneously not found a duplicate.
+	 *
+	 * This needs to happen before rt_ifmsg to avoid a race where
+	 * listeners would have an address and expect it to work right
+	 * away.
+	 */
+	if (link_state == LINK_STATE_UP &&
+	    old_link_state == LINK_STATE_UNKNOWN)
+		in6_if_down(ifp);
+#endif
+
 	/* Notify that the link state has changed. */
 	rt_ifmsg(ifp);
+
 #if NCARP > 0
 	if (ifp->if_carp)
 		carp_carpdev_state(ifp);
+#endif
+
+#ifdef INET6
+	if (link_state == LINK_STATE_DOWN)
+		in6_if_down(ifp);
+	else if (link_state == LINK_STATE_UP)
+		in6_if_up(ifp);
 #endif
 }
 
@@ -1368,6 +1405,9 @@ if_down(struct ifnet *ifp)
 		carp_carpdev_state(ifp);
 #endif
 	rt_ifmsg(ifp);
+#ifdef INET6
+	in6_if_down(ifp);
+#endif
 }
 
 /*
