@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.102 2008/08/19 12:16:49 haad Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.102.4.1 2013/06/12 06:05:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -266,7 +266,7 @@ struct olddisklabel {
 	.set	d_ncylinders,52
 	.set	d_secpercyl,56
 	.set	d_secperunit,60
-	.set	d_end_,276		/* size of disk label */
+	.set	d_end_,148+(MAXPARTITIONS*16)
 #endif /* _LOCORE */
 
 /*
