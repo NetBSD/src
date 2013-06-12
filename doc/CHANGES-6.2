@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.5 2013/06/06 03:53:55 riz Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.6 2013/06/12 04:43:49 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -180,3 +180,13 @@ xsrc/external/mitxf86-video-openchrome/dist/libxvmc/xf86dri.c patch
 	Fix protocol handling issues in X client libraries.
 	[mrg, ticket #900]
 
+external/mit/xorg/lib/libX11/Makefile.libx11	1.11 via patch
+
+	hack for old gcc.
+	[mrg, ticket #901]
+
+external/mit/xorg/lib/libXi/Makefile		1.10
+
+	fix vax build issues - GCC 4.1 warns about always true comparisons
+	more than GCC 4.5 does.
+	[mrg, ticket #902]
