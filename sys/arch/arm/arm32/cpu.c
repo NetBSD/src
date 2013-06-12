@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.95 2013/06/12 00:44:39 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.96 2013/06/12 01:16:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.95 2013/06/12 00:44:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96 2013/06/12 01:16:48 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -74,7 +74,6 @@ uint32_t arm_cpu_marker __cacheline_aligned = 1;
 void identify_arm_cpu(device_t dv, struct cpu_info *);
 void identify_cortex_caches(device_t dv);
 void identify_features(device_t dv);
-u_int cpu_pfr(int num);
 
 /*
  * Identify the master (boot) CPU
@@ -578,26 +577,6 @@ print_cache_info(device_t dv, struct arm_cache_info *info, u_int level)
 		    wtnames[info->cache_type], level + 1);
 	}
 }
-
-u_int
-cpu_pfr(int num)
-{
-	u_int feat;
-
-	switch (num) {
-	case 0: feat = armreg_pfr0_read();
-		break;
-	case 1: feat = armreg_pfr1_read();
-		break;
-	default:
-		panic("Processor Feature Register %d not implemented", num);
-		break;
-	}
-
-	return (feat);
-}
-
-
 
 void
 identify_arm_cpu(device_t dv, struct cpu_info *ci)
