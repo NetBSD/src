@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.115 2013/06/10 14:15:03 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.116 2013/06/12 12:14:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.115 2013/06/10 14:15:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.116 2013/06/12 12:14:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -846,8 +846,9 @@ rump_check_permitted(struct vnode *vp, struct rumpfs_node *rnode,
 {
 	struct vattr *attr = &rnode->rn_va;
 
-	return genfs_can_access(vp->v_type, attr->va_mode, attr->va_uid,
-	    attr->va_gid, mode, cred);
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
+	    vp->v_type, attr->va_mode), vp, NULL, genfs_can_access(vp->v_type,
+	    attr->va_mode, attr->va_uid, attr->va_gid, mode, cred));
 }
 
 int
