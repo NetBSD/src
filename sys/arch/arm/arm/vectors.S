@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.6 2013/06/12 15:10:13 matt Exp $	*/
+/*	$NetBSD: vectors.S,v 1.7 2013/06/12 21:34:12 matt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -33,6 +33,7 @@
 
 #include "assym.h"
 #include "opt_cputypes.h"
+#include "opt_cpuoptions.h"
 #include <machine/asm.h>
 
 /*
@@ -44,11 +45,9 @@
  */
 
 	.text
-	.align	0
-	.global	_C_LABEL(page0), _C_LABEL(page0_data), _C_LABEL(page0_end)
 	.global _C_LABEL(fiqvector)
 
-#if defined(CPU_ARMV7) || defined(CPU_ARM11)
+#if defined(CPU_ARMV7) || defined(CPU_ARM11) || defined(ARM_HAS_VBAR)
 	/*
 	 * ARMv[67] processors with the Security Extension have the VBAR
 	 * which redirects the low vector to any 32-byte aligned address. 
@@ -67,11 +66,14 @@ _C_LABEL(page0rel):
 	b	irq_entry
 #ifdef __ARM_FIQ_INDIRECT
 	b	_C_LABEL(fiqvector)
-#else
+#elif !defined(ARM_HAS_VBAR)
 	b	.Lfiqvector
 #endif
-#endif
+#endif /* CPU_ARMV7 || CPU_ARM11 || ARM_HAS_VBAR */
 
+#ifndef ARM_HAS_VBAR
+	.global	_C_LABEL(page0), _C_LABEL(page0_data), _C_LABEL(page0_end)
+	.align	0
 _C_LABEL(page0):
 	ldr	pc, .Lreset_target
 	ldr	pc, .Lundefined_target
@@ -82,13 +84,20 @@ _C_LABEL(page0):
 	ldr	pc, .Lirq_target
 #ifdef __ARM_FIQ_INDIRECT
 	ldr	pc, .Lfiq_target
-#else
+#endif
+#endif /* !ARM_HAS_VBAR */
+#ifndef __ARM_FIQ_INDIRECT
 .Lfiqvector:
+#ifdef ARM_HAS_VBAR
+	.set	_C_LABEL(fiqvector), . - _C_LABEL(page0rel)
+#else
 	.set	_C_LABEL(fiqvector), . - _C_LABEL(page0)
+#endif
 	subs	pc, lr, #4
 	.org	.Lfiqvector + 0x100
 #endif
 
+#ifndef ARM_HAS_VBAR
 _C_LABEL(page0_data):
 .Lreset_target:
 	.word	reset_entry
@@ -118,6 +127,7 @@ _C_LABEL(page0_data):
 	.word	0	/* pad it out */
 #endif
 _C_LABEL(page0_end):
+#endif /* ARM_HAS_VBAR */
 
 #ifdef __ARM_FIQ_INDIRECT
 	.data
