@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.94 2013/05/19 15:42:23 rkujawa Exp $	*/
+/*	$NetBSD: cpu.c,v 1.95 2013/06/12 00:44:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.94 2013/05/19 15:42:23 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.95 2013/06/12 00:44:39 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -579,18 +579,15 @@ print_cache_info(device_t dv, struct arm_cache_info *info, u_int level)
 	}
 }
 
-u_int cpu_pfr(int num)
+u_int
+cpu_pfr(int num)
 {
 	u_int feat;
 
 	switch (num) {
-	case 0:
-		__asm __volatile("mrc p15, 0, %0, c0, c1, 0"
-		    : "=r" (feat));
+	case 0: feat = armreg_pfr0_read();
 		break;
-	case 1:
-		__asm __volatile("mrc p15, 0, %0, c0, c1, 1"
-		   : "=r" (feat));
+	case 1: feat = armreg_pfr1_read();
 		break;
 	default:
 		panic("Processor Feature Register %d not implemented", num);
