@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.118 2013/06/02 09:13:27 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.119 2013/06/12 02:51:43 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.115 2013/06/02 09:13:07 msaitoh Exp
+ *	NetBSD: miidevs,v 1.116 2013/06/12 02:51:16 msaitoh Exp
  */
 
 /*-
@@ -285,8 +285,14 @@
 #define	MII_STR_xxDAVICOM_DM9102	"DM9102 10/100 media interface"
 
 /* IC Plus Corp. PHYs */
+#define	MII_MODEL_ICPLUS_IP100	0x0004
+#define	MII_STR_ICPLUS_IP100	"IP100 10/100 PHY"
 #define	MII_MODEL_ICPLUS_IP101	0x0005
 #define	MII_STR_ICPLUS_IP101	"IP101 10/100 PHY"
+#define	MII_MODEL_ICPLUS_IP1000A	0x0008
+#define	MII_STR_ICPLUS_IP1000A	"IP1000A 10/100/1000 PHY"
+#define	MII_MODEL_ICPLUS_IP1001	0x0019
+#define	MII_STR_ICPLUS_IP1001	"IP1001 10/100/1000 PHY"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1889	0x0001
