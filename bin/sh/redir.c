@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.32.2.1 2012/04/17 00:01:38 yamt Exp $	*/
+/*	$NetBSD: redir.c,v 1.32.2.2 2013/06/12 01:08:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.32.2.1 2012/04/17 00:01:38 yamt Exp $");
+__RCSID("$NetBSD: redir.c,v 1.32.2.2 2013/06/12 01:08:16 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ MKINIT struct redirtab *redirlist;
 int fd0_redirected = 0;
 
 STATIC void openredirect(union node *, char[10], int);
-STATIC int openhere(union node *);
+STATIC int openhere(const union node *);
 
 
 /*
@@ -256,7 +256,7 @@ eopen:
  */
 
 STATIC int
-openhere(union node *redir)
+openhere(const union node *redir)
 {
 	int pip[2];
 	int len = 0;
