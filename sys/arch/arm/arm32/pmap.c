@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.255 2013/05/11 10:15:43 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.256 2013/06/12 07:13:18 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -162,8 +162,8 @@
  *       the active domain on that cpu). I guess there are lots more tlb
  *       shootdown issues too...
  *
- *     o If the vector_page is at 0x00000000 instead of 0xffff0000, then
- *       MP systems will lose big-time because of the MMU domain hack.
+ *     o If the vector_page is at 0x00000000 instead of in kernel VA space,
+ *       then MP systems will lose big-time because of the MMU domain hack.
  *       The only way this can be solved (apart from moving the vector
  *       page to 0xffff0000) is to reserve the first 1MB of user address
  *       space for kernel use only. This would require re-linking all
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.255 2013/05/11 10:15:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.256 2013/06/12 07:13:18 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -5134,6 +5134,17 @@ vector_page_setprot(int prot)
 {
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep;
+
+#if defined(CPU_ARMV7) || defined(CPU_ARM11)
+	/*
+	 * If we are using VBAR to use the vectors in the kernel, then it's
+	 * already mapped in the kernel text so no need to anything here.
+	 */
+	if (vector_page != ARM_VECTORS_LOW && vector_page != ARM_VECTORS_HIGH) {
+		KASSERT((armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0);
+		return;
+	}
+#endif
 
 	l2b = pmap_get_l2_bucket(pmap_kernel(), vector_page);
 	KDASSERT(l2b != NULL);
