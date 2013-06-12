@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.77 2013/06/12 02:08:02 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.78 2013/06/12 05:25:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -261,7 +261,7 @@
 #define ARM_PFR0_THUMBEE_MASK	0x0000f000
 #define ARM_PFR1_GTIMER_MASK	0x000f0000
 #define ARM_PFR1_VIRT_MASK	0x0000f000
-#define ARM_PFR1_SEC_MASK	0x00000f00
+#define ARM_PFR1_SEC_MASK	0x000000f0
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1
