@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.15 2013/06/09 22:50:45 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.16 2013/06/12 06:07:09 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -328,3 +328,12 @@ sys/netinet/ip_icmp.h				patch
 
 	Add missing codes to ICMP handling.  PR#47693.
 	[fair, ticket #1855]
+
+sys/arch/vax/boot/xxboot/start.S		1.5
+sys/sys/bootblock.h				1.55
+sys/sys/disklabel.h				1.113
+usr.sbin/installboot/arch/vax.c			1.14-1.15
+
+	fix VAX bootblocks and installboot for VAX 780 and similar machines
+	(booting via VMB.EXE)
+	[martin, ticket #1856]
