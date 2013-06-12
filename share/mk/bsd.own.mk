@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.733 2013/06/10 05:02:38 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.734 2013/06/12 21:35:29 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -925,11 +925,35 @@ X11FLAVOUR?=	Xorg
 # Which platforms build the xorg-server drivers (as opposed
 # to just Xnest and Xvfb.)
 #
-.if ${X11FLAVOUR} == "Xorg" && \
-    ${MACHINE} == "acorn26"
-MKXORG_DRIVERS?=no
+.if ${X11FLAVOUR} == "Xorg"	&& \
+    ${MACHINE} == "alpha"	|| \
+    ${MACHINE} == "amd64"	|| \
+    ${MACHINE} == "bebox"	|| \
+    ${MACHINE} == "cats"	|| \
+    ${MACHINE} == "dreamcast"	|| \
+    ${MACHINE} == "ews4800mips"	|| \
+    ${MACHINE} == "evbarm"	|| \
+    ${MACHINE} == "evbmips"	|| \
+    ${MACHINE} == "hp300"	|| \
+    ${MACHINE} == "hpcarm"	|| \
+    ${MACHINE} == "hpcmips"	|| \
+    ${MACHINE} == "hpcsh"	|| \
+    ${MACHINE} == "i386"	|| \
+    ${MACHINE} == "luna68k"	|| \
+    ${MACHINE} == "macppc"	|| \
+    ${MACHINE} == "netwinder"	|| \
+    ${MACHINE} == "newsmips"	|| \
+    ${MACHINE} == "prep"	|| \
+    ${MACHINE} == "ofppc"	|| \
+    ${MACHINE} == "sgimips"	|| \
+    ${MACHINE} == "shark"	|| \
+    ${MACHINE} == "sparc"	|| \
+    ${MACHINE} == "sparc64"	|| \
+    ${MACHINE} == "vax"		|| \
+    ${MACHINE} == "zaurus"
+MKXORG_SERVER?=yes
 .else
-MKXORG_DRIVERS?=yes
+MKXORG_SERVER?=no
 .endif
 
 #
