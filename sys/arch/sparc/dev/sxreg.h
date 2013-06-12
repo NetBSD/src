@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.7 2013/06/05 18:15:06 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.8 2013/06/12 04:23:46 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -207,22 +207,22 @@
 #define SX_ROUND	(0x1 << 23)	/* round results */
 
 #define SX_MUL16X16(sa, sb, d, cnt) (SX_M16X16SR0 | ((cnt) << 24) | \
-		SX_MULTIPLY | ((sa) << 14) | ((sb) << 7) | (d))	
+		SX_MULTIPLY | ((sa) << 14) | ((d) << 7) | (sb))	
 #define SX_MUL16X16R(sa, sb, d, cnt) (SX_M16X16SR0 | ((cnt) << 24) | \
-		SX_MULTIPLY | ((sa) << 14) | ((sb) << 7) | (d) | SX_ROUND)	
+		SX_MULTIPLY | ((sa) << 14) | ((d) << 7) | (sb) | SX_ROUND)	
 #define SX_MUL16X16SR8(sa, sb, d, cnt) (SX_M16X16SR8 | ((cnt) << 24) | \
-		SX_MULTIPLY | ((sa) << 14) | ((sb) << 7) | (d))	
+		SX_MULTIPLY | ((sa) << 14) | ((d) << 7) | (sb))	
 #define SX_MUL16X16SR8R(sa, sb, d, cnt) (SX_M16X16SR8 | ((cnt) << 24) | \
-		SX_MULTIPLY | ((sa) << 14) | ((sb) << 7) | (d) | SX_ROUND)	
+		SX_MULTIPLY | ((sa) << 14) | ((d) << 7) | (sb) | SX_ROUND)	
 
 #define SX_SAXP16X16(sa, sb, d, cnt) (SX_M16X16SR0 | ((cnt) << 24) | \
-		SX_SAXP | ((sa) << 14) | ((sb) << 7) | (d))	
+		SX_SAXP | ((sa) << 14) | ((d) << 7) | (sb))	
 #define SX_SAXP16X16R(sa, sb, d, cnt) (SX_M16X16SR0 | ((cnt) << 24) | \
-		SX_SAXP | ((sa) << 14) | ((sb) << 7) | (d) | SX_ROUND)	
+		SX_SAXP | ((sa) << 14) | ((d) << 7) | (sb) | SX_ROUND)	
 #define SX_SAXP16X16SR8(sa, sb, d, cnt) (SX_M16X16SR8 | ((cnt) << 24) | \
-		SX_SAXP | ((sa) << 14) | ((sb) << 7) | (d))	
+		SX_SAXP | ((sa) << 14) | ((d) << 7) | (sb))	
 #define SX_SAXP16X16SR8R(sa, sb, d, cnt) (SX_M16X16SR8 | ((cnt) << 24) | \
-		SX_SAXP | ((sa) << 14) | ((sb) << 7) | (d) | SX_ROUND)	
+		SX_SAXP | ((sa) << 14) | ((d) << 7) | (sb) | SX_ROUND)	
 
 /* logic group */
 #define SX_AND_V	(0x0 << 21)	/* vector AND vector */
@@ -236,20 +236,33 @@
 /* immediates are 7bit sign extended to 32bit */
 
 #define SX_ANDV(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_AND_V | \
-		((sa) << 14) | ((sb) << 7) | (d))
+		((sa) << 14) | ((d) << 7) | (sb))
 #define SX_ANDS(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_AND_S | \
-		((sa) << 14) | ((sb) << 7) | (d))
+		((sa) << 14) | ((d) << 7) | (sb))
 #define SX_ANDI(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_AND_I | \
-		((sa) << 14) | ((sb) << 7) | (d))
+		((sa) << 14) | ((d) << 7) | (sb))
 #define SX_XORV(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_XOR_V | \
-		((sa) << 14) | ((sb) << 7) | (d))
+		((sa) << 14) | ((d) << 7) | (sb))
 #define SX_XORS(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_XOR_S | \
-		((sa) << 14) | ((sb) << 7) | (d))
+		((sa) << 14) | ((d) << 7) | (sb))
 #define SX_XORI(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_XOR_I | \
-		((sa) << 14) | ((sb) << 7) | (d))
+		((sa) << 14) | ((d) << 7) | (sb))
 #define SX_ORV(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_OR_V | \
-		((sa) << 14) | ((sb) << 7) | (d))
+		((sa) << 14) | ((d) << 7) | (sb))
 #define SX_ORS(sa, sb, d, cnt) (0xb0000000 | ((cnt) << 24) | SX_OR_S | \
-		((sa) << 14) | ((sb) << 7) | (d))
+		((sa) << 14) | ((d) << 7) | (sb))
+
+/* arithmetic group */
+#define SX_ADD_V	(0x00 << 21)
+#define SX_ADD_S	(0x01 << 21)
+#define SX_ADD_I	(0x02 << 21)
+#define SX_SUM		(0x03 << 21)
+#define SX_SUB_V	(0x04 << 21)
+#define SX_SUB_S	(0x05 << 21)
+#define SX_SUB_I	(0x06 << 21)
+#define SX_ABS		(0x07 << 21)
+
+#define SX_ADDV(sa, sb, d, cnt) (0xa0000000 | ((cnt) << 24) | SX_ADD_V | \
+		((sa) << 14) | ((d) << 7) | (sb))
 
 #endif /* SXREG_H */
