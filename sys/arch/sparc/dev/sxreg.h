@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.8 2013/06/12 04:23:46 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.9 2013/06/12 20:43:21 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -253,14 +253,15 @@
 		((sa) << 14) | ((d) << 7) | (sb))
 
 /* arithmetic group */
-#define SX_ADD_V	(0x00 << 21)
-#define SX_ADD_S	(0x01 << 21)
-#define SX_ADD_I	(0x02 << 21)
-#define SX_SUM		(0x03 << 21)
-#define SX_SUB_V	(0x04 << 21)
-#define SX_SUB_S	(0x05 << 21)
-#define SX_SUB_I	(0x06 << 21)
-#define SX_ABS		(0x07 << 21)
+#define SX_ADD_V	(0x00 << 21)	/* vector + vector */
+#define SX_ADD_S	(0x01 << 21)	/* vector + scalar */
+#define SX_ADD_I	(0x02 << 21)	/* vector + immediate */
+#define SX_SUM		(0x03 << 21)	/* sum of vector and scalar */
+#define SX_SUB_V	(0x04 << 21)	/* vector - veector */
+#define SX_SUB_S	(0x05 << 21)	/* vector - scalar */
+#define SX_SUB_I	(0x06 << 21)	/* vector - immediate */
+#define SX_ABS		(0x07 << 21)	/* abs(sb) with sa=R0 */
+/* hardware does sa - sb for sb < 0 and sa + sb if sb > 0 */
 
 #define SX_ADDV(sa, sb, d, cnt) (0xa0000000 | ((cnt) << 24) | SX_ADD_V | \
 		((sa) << 14) | ((d) << 7) | (sb))
