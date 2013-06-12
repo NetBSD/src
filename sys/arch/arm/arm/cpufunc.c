@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.121 2013/06/12 00:35:34 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.122 2013/06/12 01:16:48 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.121 2013/06/12 00:35:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.122 2013/06/12 01:16:48 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2080,7 +2080,7 @@ set_cpufuncs(void)
 	    cputype == CPU_ID_MV88SV584X_V7 ||
 	    cputype == CPU_ID_ARM_88SV581X_V6 ||
 	    cputype == CPU_ID_ARM_88SV581X_V7) &&
-	    (cpu_pfr(0) & ARM_PFR0_THUMBEE_MASK)) {
+	    (armreg_pfr0_read() & ARM_PFR0_THUMBEE_MASK)) {
 			cpufuncs = pj4bv7_cpufuncs;
 			get_cachetype_cp15();
 			pmap_pte_init_armv7();
