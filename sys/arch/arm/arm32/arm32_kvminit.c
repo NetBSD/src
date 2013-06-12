@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.18 2013/02/27 22:15:46 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.19 2013/06/12 17:13:05 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.18 2013/02/27 22:15:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.19 2013/06/12 17:13:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -372,6 +372,12 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #else
 	const size_t cpu_num = 1;
 #endif
+#if defined(CPU_ARMV7) || defined(CPU_ARM11)
+	const bool map_vectors_p = vectors == ARM_VECTORS_LOW
+	    && !(armreg_pfr1_read() & ARM_PFR1_SEC_MASK);
+#else
+	const bool map_vectors_p = true;
+#endif
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	KASSERT(mapallmem_p);
@@ -448,15 +454,18 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 * allocate the L2 page.
 	 */
 
-	/*
-	 * First allocate L2 page for the vectors.
-	 */
+	if (map_vectors_p) {
+		/*
+		 * First allocate L2 page for the vectors.
+		 */
 #ifdef VERBOSE_INIT_ARM
-	printf(" vector");
+		printf(" vector");
 #endif
-	valloc_pages(bmi, &bmi->bmi_vector_l2pt, L2_TABLE_SIZE / PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
-	add_pages(bmi, &bmi->bmi_vector_l2pt);
+		valloc_pages(bmi, &bmi->bmi_vector_l2pt,
+		    L2_TABLE_SIZE / PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
+		    PTE_PAGETABLE, true);
+		add_pages(bmi, &bmi->bmi_vector_l2pt);
+	}
 
 	/*
 	 * Now allocate L2 pages for the kernel
@@ -525,13 +534,15 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	add_pages(bmi, &msgbuf);
 	msgbufphys = msgbuf.pv_pa;
 
-	/*
-	 * Allocate a page for the system vector page.
-	 * This page will just contain the system vectors and can be
-	 * shared by all processes.
-	 */
-	valloc_pages(bmi, &systempage, 1, VM_PROT_READ|VM_PROT_WRITE,
-	    PTE_CACHE, true);
+	if (map_vectors_p) {
+		/*
+		 * Allocate a page for the system vector page.
+		 * This page will just contain the system vectors and can be
+		 * shared by all processes.
+		 */
+		valloc_pages(bmi, &systempage, 1, VM_PROT_READ|VM_PROT_WRITE,
+		    PTE_CACHE, true);
+	}
 	systempage.pv_va = vectors;
 
 	/*
@@ -568,14 +579,17 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	vaddr_t l1pt_va = kernel_l1pt.pv_va;
 	paddr_t l1pt_pa = kernel_l1pt.pv_pa;
 
-	/* Map the L2 pages tables in the L1 page table */
-	pmap_link_l2pt(l1pt_va, systempage.pv_va & -L2_S_SEGSIZE,
-	    &bmi->bmi_vector_l2pt);
+	if (map_vectors_p) {
+		/* Map the L2 pages tables in the L1 page table */
+		pmap_link_l2pt(l1pt_va, systempage.pv_va & -L2_S_SEGSIZE,
+		    &bmi->bmi_vector_l2pt);
 #ifdef VERBOSE_INIT_ARM
-	printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx\n (vectors)",
-	    __func__, bmi->bmi_vector_l2pt.pv_va, bmi->bmi_vector_l2pt.pv_pa,
-	    systempage.pv_va);
+		printf("%s: adding L2 pt (VA %#lx, PA %#lx) "
+		    "for VA %#lx\n (vectors)",
+		    __func__, bmi->bmi_vector_l2pt.pv_va,
+		    bmi->bmi_vector_l2pt.pv_pa, systempage.pv_va);
 #endif
+	}
 
 	const vaddr_t kernel_base =
 	    KERN_PHYSTOV(bmi, bmi->bmi_kernelstart & -L2_S_SEGSIZE);
@@ -772,9 +786,11 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 * Now we map the stuff that isn't directly after the kernel
 	 */
 
-	/* Map the vector page. */
-	pmap_map_entry(l1pt_va, systempage.pv_va, systempage.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	if (map_vectors_p) {
+		/* Map the vector page. */
+		pmap_map_entry(l1pt_va, systempage.pv_va, systempage.pv_pa,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	}
 
 	/* Map the Mini-Data cache clean area. */ 
 #if ARM_MMU_XSCALE == 1
@@ -851,10 +867,12 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    msgbuf.pv_pa, msgbuf.pv_pa + (msgbuf_pgs * PAGE_SIZE) - 1,
 	    msgbuf.pv_va, msgbuf.pv_va + (msgbuf_pgs * PAGE_SIZE) - 1,
 	    (int)msgbuf_pgs);
-	printf(mem_fmt, "Exception Vectors",
-	    systempage.pv_pa, systempage.pv_pa + PAGE_SIZE - 1,
-	    systempage.pv_va, systempage.pv_va + PAGE_SIZE - 1,
-	    1);
+	if (map_vectors_p) {
+		printf(mem_fmt, "Exception Vectors",
+		    systempage.pv_pa, systempage.pv_pa + PAGE_SIZE - 1,
+		    systempage.pv_va, systempage.pv_va + PAGE_SIZE - 1,
+		    1);
+	}
 	for (size_t i = 0; i < bmi->bmi_nfreeblocks; i++) {
 		pv = &bmi->bmi_freeblocks[i];
 
