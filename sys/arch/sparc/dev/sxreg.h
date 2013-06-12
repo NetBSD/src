@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.9 2013/06/12 20:43:21 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.10 2013/06/12 20:44:20 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -257,7 +257,7 @@
 #define SX_ADD_S	(0x01 << 21)	/* vector + scalar */
 #define SX_ADD_I	(0x02 << 21)	/* vector + immediate */
 #define SX_SUM		(0x03 << 21)	/* sum of vector and scalar */
-#define SX_SUB_V	(0x04 << 21)	/* vector - veector */
+#define SX_SUB_V	(0x04 << 21)	/* vector - vector */
 #define SX_SUB_S	(0x05 << 21)	/* vector - scalar */
 #define SX_SUB_I	(0x06 << 21)	/* vector - immediate */
 #define SX_ABS		(0x07 << 21)	/* abs(sb) with sa=R0 */
