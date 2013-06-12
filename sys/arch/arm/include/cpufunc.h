@@ -221,8 +221,6 @@ void	cpufunc_domains		(u_int);
 u_int	cpufunc_faultstatus	(void);
 u_int	cpufunc_faultaddress	(void);
 
-u_int	cpu_pfr			(int);
-
 #if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3)
 void	arm3_cache_flush	(void);
 #endif	/* CPU_ARM2 || CPU_ARM250 || CPU_ARM3 */
