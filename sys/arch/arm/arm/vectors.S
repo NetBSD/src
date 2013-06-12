@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.5 2013/06/12 07:17:23 matt Exp $	*/
+/*	$NetBSD: vectors.S,v 1.6 2013/06/12 15:10:13 matt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -65,7 +65,11 @@ _C_LABEL(page0rel):
 	b	data_abort_entry
 	b	address_exception_entry
 	b	irq_entry
+#ifdef __ARM_FIQ_INDIRECT
 	b	_C_LABEL(fiqvector)
+#else
+	b	.Lfiqvector
+#endif
 #endif
 
 _C_LABEL(page0):
