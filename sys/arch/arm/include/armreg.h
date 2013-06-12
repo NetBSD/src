@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.78 2013/06/12 05:25:58 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.79 2013/06/12 17:06:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -732,8 +732,8 @@ ARMREG_WRITE_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
 ARMREG_READ_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
 ARMREG_WRITE_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
 /* cp14 c12 registers */
-ARMREG_READ_INLINE(vbar, "p15,4,%0,c12,c0,0")	/* Vector Base Address Register */
-ARMREG_WRITE_INLINE(vbar, "p15,4,%0,c12,c0,0")	/* Vector Base Address Register */
+ARMREG_READ_INLINE(vbar, "p15,0,%0,c12,c0,0")	/* Vector Base Address Register */
+ARMREG_WRITE_INLINE(vbar, "p15,0,%0,c12,c0,0")	/* Vector Base Address Register */
 /* cp15 c14 registers */
 /* cp15 Global Timer Registers */
 ARMREG_READ_INLINE(cntfrq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
