@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.15 2013/06/12 01:31:24 yamt Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.16 2013/06/12 01:46:07 yamt Exp $");
 #endif
 
 #include <stdio.h>
@@ -593,7 +593,7 @@ Convert(
     time_t	Hours,		/* Hour of day [0-24] */
     time_t	Minutes,	/* Minute of hour [0-59] */
     time_t	Seconds,	/* Second of minute [0-60] */
-    time_t	Timezone,	/* Timezone as seconds west of UTC */
+    time_t	Timezone,	/* Timezone as minutes east of UTC */
     MERIDIAN	Meridian,	/* Hours are am/pm/24 hour clock */
     DSTMODE	DSTmode		/* DST on/off/maybe */
 )
@@ -623,7 +623,7 @@ Convert(
 
     /* We rely on mktime_z(NULL, ...) working in UTC, not in local time. */
     result = mktime_z(NULL, &tm);
-    result -= Timezone;
+    result += Timezone * 60;
     return result;
 }
 
