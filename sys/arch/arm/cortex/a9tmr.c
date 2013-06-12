@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.4 2012/11/29 17:36:56 matt Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.5 2013/06/12 00:59:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.4 2012/11/29 17:36:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.5 2013/06/12 00:59:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,6 +90,9 @@ a9tmr_match(device_t parent, cfdata_t cf, void *aux)
 	struct mpcore_attach_args * const mpcaa = aux;
 
 	if (a9tmr_sc.sc_dev != NULL)
+		return 0;
+
+	if ((armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) != 0)
 		return 0;
 
 	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid))
