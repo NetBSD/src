@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.93 2013/06/12 17:13:05 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.94 2013/06/12 21:34:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.93 2013/06/12 17:13:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.94 2013/06/12 21:34:12 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -130,14 +130,16 @@ extern void configure(void);
 void
 arm32_vector_init(vaddr_t va, int which)
 {
-#if defined(CPU_ARMV7) || defined(CPU_ARM11)
+#if defined(CPU_ARMV7) || defined(CPU_ARM11) || defined(ARM_HAS_VBAR)
 	/*
 	 * If this processor has the security extension, don't bother
 	 * to move/map the vector page.  Simply point VBAR to the copy
 	 * that exists in the .text segment.
 	 */
+#ifndef ARM_HAS_VBAR
 	if (va == ARM_VECTORS_LOW
 	    && (armreg_pfr1_read() && ARM_PFR1_SEC_MASK) != 0) {
+#endif
 		extern const uint32_t page0rel[];
 		vector_page = (vaddr_t)page0rel;
 		KASSERT((vector_page & 0x1f) == 0);
@@ -147,8 +149,11 @@ arm32_vector_init(vaddr_t va, int which)
 #endif
 		cpu_control(CPU_CONTROL_VECRELOC, 0);
 		return;
+#ifndef ARM_HAS_VBAR
 	}
 #endif
+#endif
+#ifndef ARM_HAS_VBAR
 	if (CPU_IS_PRIMARY(curcpu())) {
 		extern unsigned int page0[], page0_data[];
 		unsigned int *vectors = (int *) va;
@@ -193,6 +198,7 @@ arm32_vector_init(vaddr_t va, int which)
 		 */
 		cpu_control(CPU_CONTROL_VECRELOC, CPU_CONTROL_VECRELOC);
 	}
+#endif
 }
 
 /*
@@ -257,8 +263,10 @@ cpu_startup(void)
 	/* Set the CPU control register */
 	cpu_setup(boot_args);
 
+#ifndef ARM_HAS_VBAR
 	/* Lock down zero page */
 	vector_page_setprot(VM_PROT_READ);
+#endif
 
 	/*
 	 * Give pmap a chance to set up a few more things now the vm
