@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.23 2013/05/12 13:42:39 macallan Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.24 2013/06/12 15:11:08 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.23 2013/05/12 13:42:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.24 2013/06/12 15:11:08 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -70,7 +70,7 @@ void
 mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
 	const char *macrisc[] = {"MacRISC", "MacRISC2", "MacRISC4", NULL};
-	int hroot, hmem, i, cnt, regcnt, acells, scells;
+	int hroot, hmem, i, cnt, memcnt, regcnt, acells, scells;
 	int numregs;
 	uint32_t regs[OFMEM_REGIONS * 4]; /* 2 values + 2 for 64bit */
 
@@ -103,7 +103,7 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 
 	/* move the data into OFmem */
 	memset(OFmem, 0, sizeof(OFmem));
-	for (i = 0, cnt = 0; i < numregs; i++) {
+	for (i = 0, memcnt = 0; i < numregs; i++) {
 		uint64_t addr, size;
 
 		if (acells > 1)
@@ -129,11 +129,11 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 			continue;
 		}
 #endif
-		OFmem[cnt].start = addr;
-		OFmem[cnt].size = size;
+		OFmem[memcnt].start = addr;
+		OFmem[memcnt].size = size;
 		aprint_normal("mem region %d start=%llx size=%llx\n",
-		    cnt, addr, size);
-		cnt++;
+		    memcnt, addr, size);
+		memcnt++;
 	}
 
 	DPRINTF("available\n");
@@ -208,13 +208,13 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 #define AVAIL_THRESH (0x10000000-1)
 		if (((OFavail[cnt-1].start + OFavail[cnt-1].size +
 		    AVAIL_THRESH) & ~AVAIL_THRESH) <
-		    (OFmem[regcnt-1].start + OFmem[regcnt-1].size)) {
+		    (OFmem[memcnt-1].start + OFmem[memcnt-1].size)) {
 
 			OFavail[cnt].start =
 			    (OFavail[cnt-1].start + OFavail[cnt-1].size +
 			    AVAIL_THRESH) & ~AVAIL_THRESH;
 			OFavail[cnt].size =
-			    OFmem[regcnt-1].size - OFavail[cnt].start;
+			    OFmem[memcnt-1].size - OFavail[cnt].start;
 			aprint_normal("WARNING: add memory segment %lx - %lx,"
 			    "\nWARNING: which was not recognized by "
 			    "the Firmware.\n",
