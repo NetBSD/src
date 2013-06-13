@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.105 2011/08/31 16:25:00 plunky Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.105.4.1 2013/06/13 07:11:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.105 2011/08/31 16:25:00 plunky Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.105.4.1 2013/06/13 07:11:11 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -2489,6 +2489,8 @@ udp_send(struct filed *f, char *line, size_t len)
 	for (r = f->f_un.f_forw.f_addr; r; r = r->ai_next) {
 		retry = 0;
 		for (j = 0; j < finet->fd; j++) {
+			if (finet[j+1].af != r->ai_family)
+				continue;
 sendagain:
 			lsent = sendto(finet[j+1].fd, line, len, 0,
 			    r->ai_addr, r->ai_addrlen);
@@ -3975,6 +3977,7 @@ socksetup(int af, const char *hostname)
 			logerror("socket() failed");
 			continue;
 		}
+		s->af = r->ai_family;
 		if (r->ai_family == AF_INET6 && setsockopt(s->fd, IPPROTO_IPV6,
 		    IPV6_V6ONLY, &on, sizeof(on)) < 0) {
 			logerror("setsockopt(IPV6_V6ONLY) failed");
