@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.4 2011/04/03 06:25:11 jdc Exp $	*/
+/*	$NetBSD: tda.c,v 1.4.10.1 2013/06/13 07:30:45 msaitoh Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -41,9 +41,13 @@
 #define TDA_PSFAN_ON            0x1f
 #define TDA_PSFAN_OFF           0x00
 
-/* Internal and External temperature senor numbers */
+/* Internal and External temperature sensor numbers */
 #define SENSOR_TEMP_EXT		0
 #define SENSOR_TEMP_INT		1
+
+/* Fan sensor numbers */
+#define SENSOR_FAN_CPU		0
+#define SENSOR_FAN_SYS		1
 
 #define CPU_TEMP_MAX		(67 * 1000000 + 273150000)
 #define CPU_TEMP_MIN		(57 * 1000000 + 273150000)
@@ -58,19 +62,25 @@ struct tda_softc {
 	u_int16_t		sc_cfan_speed;	/* current CPU fan speed */
 	u_int16_t		sc_sfan_speed;	/* current SYS fan speed */
 
+	struct sysmon_envsys	*sc_sme;
+	envsys_data_t		sc_sensor[2];
+
 	callout_t		sc_timer;
 };
 
 int	tda_match(struct device *, struct cfdata *, void *);
 void	tda_attach(struct device *, struct device *, void *);
+static int	tda_detach(struct device *, int);
+void	tda_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 void	tda_setspeed(struct tda_softc *);
 static void	tda_adjust(void *);
 static void	tda_timeout(void *);
 
 
-CFATTACH_DECL_NEW(tda, sizeof(struct tda_softc),
-	tda_match, tda_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(tda, sizeof(struct tda_softc),
+	tda_match, tda_attach, tda_detach, NULL, NULL, NULL,
+	DVF_DETACH_SHUTDOWN);
 
 int
 tda_match(struct device *parent, struct cfdata *match, void *aux)
@@ -112,9 +122,61 @@ tda_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_cfan_speed = sc->sc_sfan_speed = (TDA_FANSPEED_MAX+TDA_FANSPEED_MIN)/2;
 	tda_setspeed(sc);
-
+	
 	callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
 	callout_reset(&sc->sc_timer, hz*20, tda_timeout, sc);
+
+	/* Initialise sensor data */
+	sc->sc_sensor[SENSOR_FAN_CPU].state = ENVSYS_SINVALID;
+	sc->sc_sensor[SENSOR_FAN_CPU].units = ENVSYS_INTEGER;
+	sc->sc_sensor[SENSOR_FAN_CPU].flags = ENVSYS_FMONNOTSUPP;
+	strlcpy(sc->sc_sensor[SENSOR_FAN_CPU].desc,
+	    "fan.cpu",sizeof("fan.cpu"));
+	sc->sc_sensor[SENSOR_FAN_SYS].state = ENVSYS_SINVALID;
+	sc->sc_sensor[SENSOR_FAN_SYS].units = ENVSYS_INTEGER;
+	sc->sc_sensor[SENSOR_FAN_SYS].flags = ENVSYS_FMONNOTSUPP;
+	strlcpy(sc->sc_sensor[SENSOR_FAN_SYS].desc,
+	    "fan.sys",sizeof("fan.sys"));
+	sc->sc_sme = sysmon_envsys_create();
+	if (sysmon_envsys_sensor_attach(
+	    sc->sc_sme, &sc->sc_sensor[SENSOR_FAN_CPU])) {
+		sysmon_envsys_destroy(sc->sc_sme);
+		aprint_error_dev(self,
+		    "unable to attach cpu fan at sysmon\n");
+		return;
+	}
+	if (sysmon_envsys_sensor_attach(
+	    sc->sc_sme, &sc->sc_sensor[SENSOR_FAN_SYS])) {
+		sysmon_envsys_destroy(sc->sc_sme);
+		aprint_error_dev(self,
+		    "unable to attach sys fan at sysmon\n");
+		return;
+	}
+        sc->sc_sme->sme_name = device_xname(self);
+        sc->sc_sme->sme_cookie = sc;
+        sc->sc_sme->sme_refresh = tda_refresh;
+	if (sysmon_envsys_register(sc->sc_sme)) {
+		aprint_error_dev(self,
+		    "unable to register with sysmon\n");
+		sysmon_envsys_destroy(sc->sc_sme);
+		return;
+	}
+}
+
+int
+tda_detach(struct device *self, int flags)
+{
+	struct tda_softc *sc = device_private(self);
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_destroy(sc->sc_sme);
+
+	callout_halt(&sc->sc_timer, NULL);
+	callout_destroy(&sc->sc_timer);
+
+	sc->sc_cfan_speed = sc->sc_sfan_speed = TDA_FANSPEED_MAX;
+	tda_setspeed(sc);
+	return 0;
 }
 
 static void
@@ -218,7 +280,7 @@ tda_adjust(void *v)
 	if (stemp < SYS_TEMP_MIN)
 		sspeed = TDA_FANSPEED_MIN;
 	else if (stemp < SYS_TEMP_MAX)
-		sc->sc_sfan_speed = TDA_FANSPEED_MIN +
+		sspeed = TDA_FANSPEED_MIN +
 			(stemp - SYS_TEMP_MIN) * 
 			(TDA_FANSPEED_MAX - TDA_FANSPEED_MIN) / 
 			(SYS_TEMP_MAX - SYS_TEMP_MIN);
@@ -230,3 +292,22 @@ tda_adjust(void *v)
 	sc->sc_cfan_speed = cspeed;
 	tda_setspeed(sc);
 }
+
+void
+tda_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	struct tda_softc *sc = sme->sme_cookie;
+	u_int16_t speed;
+
+	if (edata->sensor == SENSOR_FAN_CPU)
+		speed = sc->sc_cfan_speed;
+	else
+		speed = sc->sc_sfan_speed;
+	if (!speed)
+		edata->state = ENVSYS_SINVALID;
+	else {
+		edata->value_cur = speed;
+		edata->state = ENVSYS_SVALID;
+	}
+}
+
