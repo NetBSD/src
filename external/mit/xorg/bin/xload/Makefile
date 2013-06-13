@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2013/05/31 08:01:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/06/13 11:25:18 christos Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xload
 SRCS=	xload.c get_load.c get_rload.c
 
-CPPFLAGS+=${X11FLAGS.VERSION}
+CPPFLAGS+=${X11FLAGS.VERSION} -DHAVE_GETLOADAVG
 
 APPDEFS=XLoad
 
