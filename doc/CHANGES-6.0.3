@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.3,v 1.1.2.4 2013/06/12 04:44:50 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.3,v 1.1.2.5 2013/06/13 10:55:10 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.2 release to the NetBSD 6.0.3
 release:
@@ -83,3 +83,9 @@ external/mit/xorg/lib/libXi/Makefile		1.10
 	fix vax build issues - GCC 4.1 warns about always true comparisons
 	more than GCC 4.5 does.
 	[mrg, ticket #902]
+
+sys/fs/nilfs/nilfs_vnops.c			1.22-1.23
+
+	Fix serious file read problem due to not-so-clear VOP_BMAP description.
+	Should fix PR 45605.
+	[reinoud, ticket #894]
