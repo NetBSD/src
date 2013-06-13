@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.2 2012/04/17 02:50:38 tls Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.3 2013/06/13 00:55:01 tls Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.2 2012/04/17 02:50:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.3 2013/06/13 00:55:01 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.2 2012/04/17 02:50:38 tls Exp $")
 
 /*
  * Let others know: the pool is full.
+ *
+ * XXX these should be per-pool if we really mean to allow multiple pools.
  */
 int rnd_full = 0;			/* Flag: is the pool full? */
 int rnd_filled = 0;			/* Count: how many times filled? */
+int rnd_empty = 1;			/* Flag: is the pool empty? */
 
 static inline void rndpool_add_one_word(rndpool_t *, u_int32_t);
 
