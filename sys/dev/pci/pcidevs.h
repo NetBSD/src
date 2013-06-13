@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1149 2013/06/05 05:19:11 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1150 2013/06/13 06:11:54 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1157 2013/06/05 05:18:44 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1158 2013/06/13 06:11:34 matt Exp
  */
 
 /*
@@ -1506,6 +1506,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD4200	0x9712		/* Radeon HD4200 Mobility */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250	0x9715		/* Radeon HD4250 GPU (RS880) */
 #define	PCI_PRODUCT_ATI_RADEON_HD6310	0x9802		/* Radeon HD6310 Graphics */
+#define	PCI_PRODUCT_ATI_RADEON_HD7340	0x9808		/* Radeon HD7340 Graphics */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_HD	0xaa08		/* Radeon HD2600 HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_HD4350_HD	0xaa38		/* Radeon HD4350 HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_HD5600_HDMI	0xaa60		/* Redwood HDMI Audio */
