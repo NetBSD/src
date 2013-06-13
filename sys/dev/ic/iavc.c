@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc.c,v 1.8 2009/01/23 19:49:16 christos Exp $	*/
+/*	$NetBSD: iavc.c,v 1.8.20.1 2013/06/13 07:22:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.8 2009/01/23 19:49:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.8.20.1 2013/06/13 07:22:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -621,7 +621,7 @@ static int iavc_receive_init(iavc_softc_t *sc, u_int8_t *dmabuf)
 		cardtype, serial, nbch, vers, prot);
 	aprint_verbose_dev(&sc->sc_dev, "%s\n", caps);
 
-        capi_ll_control(&sc->sc_capi, CAPI_CTRL_PROFILE, (int) profile);
+        capi_ll_control(&sc->sc_capi, CAPI_CTRL_PROFILE, (intptr_t) profile);
 
     } else {
 	printf("%s: no profile data in info response?\n", device_xname(&sc->sc_dev));
