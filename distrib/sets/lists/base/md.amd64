@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.156.2.10 2013/04/20 15:24:39 bouyer Exp $
+# $NetBSD: md.amd64,v 1.156.2.11 2013/06/13 04:20:30 msaitoh Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -216,8 +216,8 @@
 ./usr/lib/i386/libradius.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librefuse.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/librefuse.so.2.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libresolv.so.2			base-compat-shlib	compat,pic
-./usr/lib/i386/libresolv.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libresolv.so.3			base-compat-shlib	compat,pic
+./usr/lib/i386/libresolv.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libroken.so.19			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libroken.so.19.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/librpcsvc.so.1			base-compat-shlib	compat,pic

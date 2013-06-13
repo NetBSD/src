@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.69.2.8 2013/04/20 15:24:42 bouyer Exp $
+# $NetBSD: ad.mips64el,v 1.69.2.9 2013/06/13 04:20:30 msaitoh Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -1365,7 +1365,7 @@
 ./usr/libdata/debug/usr/lib/64/libquota.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libradius.so.4.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/librefuse.so.2.0.debug	comp-refuse-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libresolv.so.2.0.debug	comp-net-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libresolv.so.3.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libroken.so.14.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/64/libroken.so.19.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/librpcsvc.so.1.0.debug	comp-net-debug	debug,compat
@@ -1521,7 +1521,7 @@
 ./usr/libdata/debug/usr/lib/o32/libquota.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libradius.so.4.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/librefuse.so.2.0.debug	comp-refuse-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libresolv.so.2.0.debug	comp-net-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libresolv.so.3.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libroken.so.14.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/o32/libroken.so.19.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/librpcsvc.so.1.0.debug	comp-net-debug	debug,compat
