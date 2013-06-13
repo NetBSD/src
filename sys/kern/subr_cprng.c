@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.16 2013/03/28 18:06:48 tls Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.17 2013/06/13 00:55:01 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.16 2013/03/28 18:06:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.17 2013/06/13 00:55:01 tls Exp $");
 
 void
 cprng_init(void)
@@ -200,8 +200,17 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 	if (r != sizeof(key)) {
 		if (c->flags & CPRNG_INIT_ANY) {
 #ifdef DEBUG
-			printf("cprng %s: WARNING insufficient "
-			       "entropy at creation.\n", name);
+			/*
+			 * If we have ever crossed the pool's
+			 * minimum-entropy threshold, then we are
+			 * providing cryptographically strong
+			 * random output -- if not information-
+			 * theoretically strong.  Warn elsewise.
+			 */
+			if (!rnd_initial_entropy) {
+				printf("cprng %s: WARNING insufficient "
+			 		"entropy at creation.\n", name);
+			}
 #endif
 		} else {
 			hard++;

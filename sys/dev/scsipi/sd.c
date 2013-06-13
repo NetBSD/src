@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.300 2013/05/29 00:47:49 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.301 2013/06/13 00:55:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.300 2013/05/29 00:47:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.301 2013/06/13 00:55:01 tls Exp $");
 
 #include "opt_scsi.h"
 
@@ -215,7 +215,7 @@ sdattach(device_t parent, device_t self, void *aux)
 	struct sd_softc *sd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
-	int error, result, rndval = cprng_strong32();
+	int error, result;
 	struct disk_parms *dp = &sd->params;
 	char pbuf[9];
 
@@ -328,16 +328,16 @@ sdattach(device_t parent, device_t self, void *aux)
 	 * these bits, on insertion, because the deltas to the
 	 * nonexistent) previous event should never allow it.
 	 */
-	rnd_add_uint32(&sd->rnd_source, rndval);
+	rnd_add_uint32(&sd->rnd_source, 0);
 }
 
 static int
 sddetach(device_t self, int flags)
 {
 	struct sd_softc *sd = device_private(self);
-	int s, bmaj, cmaj, i, mn, rc, rndval = cprng_strong32();
+	int s, bmaj, cmaj, i, mn, rc;
 
-	rnd_add_uint32(&sd->rnd_source, rndval);
+	rnd_add_uint32(&sd->rnd_source, 0);
 
 	if ((rc = disk_begindetach(&sd->sc_dk, sdlastclose, self, flags)) != 0)
 		return rc;
