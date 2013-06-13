@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.11 2013/06/13 00:55:01 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.12 2013/06/13 01:37:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.11 2013/06/13 00:55:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.12 2013/06/13 01:37:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -102,11 +102,6 @@ typedef struct _rnd_sample_t {
  */
 SIMPLEQ_HEAD(, _rnd_sample_t)	rnd_samples;
 kmutex_t			rnd_mtx;
-
-/*
- * This lock protects dispatch of our soft interrupts.
- */
-kmutex_t			rndsoft_mtx;
 
 /*
  * Entropy sinks: usually other generators waiting to be rekeyed.
@@ -207,9 +202,9 @@ rnd_counter(void)
 static inline void
 rnd_schedule_softint(void *softint)
 {
-	mutex_spin_enter(&rndsoft_mtx);
+	kpreempt_disable();
 	softint_schedule(softint);
-	mutex_spin_exit(&rndsoft_mtx);
+	kpreempt_enable();
 }
 
 /*
@@ -453,7 +448,6 @@ rnd_init(void)
 
 	mutex_init(&rnd_mtx, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&rndsink_mtx, MUTEX_DEFAULT, IPL_VM);
-	mutex_init(&rndsoft_mtx, MUTEX_DEFAULT, IPL_VM);
 
 	/*
 	 * take a counter early, hoping that there's some variance in
