@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1157 2013/06/05 05:18:44 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1158 2013/06/13 06:11:34 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1499,6 +1499,7 @@ product ATI RADEON_HD6520G	0x9647	Radeon HD6520G
 product ATI RADEON_HD4200	0x9712	Radeon HD4200 Mobility
 product ATI RADEON_HD4250	0x9715	Radeon HD4250 GPU (RS880)
 product ATI RADEON_HD6310	0x9802	Radeon HD6310 Graphics
+product ATI RADEON_HD7340	0x9808	Radeon HD7340 Graphics
 product ATI RADEON_HD2600_HD	0xaa08	Radeon HD2600 HD Audio Controller
 product ATI RADEON_HD4350_HD	0xaa38	Radeon HD4350 HD Audio Controller
 product ATI RADEON_HD5600_HDMI	0xaa60	Redwood HDMI Audio
