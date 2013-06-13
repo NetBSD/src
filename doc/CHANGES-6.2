@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.6 2013/06/12 04:43:49 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.7 2013/06/13 10:24:05 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -190,3 +190,81 @@ external/mit/xorg/lib/libXi/Makefile		1.10
 	fix vax build issues - GCC 4.1 warns about always true comparisons
 	more than GCC 4.5 does.
 	[mrg, ticket #902]
+
+lib/libc/nameser/ns_samedomain.c		1.7-1.8
+lib/libresolv/Makefile				1.12
+lib/libresolv/dst_api.c				1.1-1.3
+lib/libresolv/dst_internal.h			1.1-1.2
+lib/libresolv/hmac_link.c			1.1-1.2
+lib/libresolv/ns_date.c				1.1
+lib/libresolv/ns_sign.c				1.1
+lib/libresolv/ns_verify.c			1.1-1.2
+lib/libresolv/res_findzonecut.c			1.1
+lib/libresolv/res_mkupdate.c			1.1-1.2
+lib/libresolv/res_mkupdate.h			1.1
+lib/libresolv/res_private.h			1.1
+lib/libresolv/res_sendsigned.c			1.1
+lib/libresolv/res_update.c			1.1
+lib/libresolv/support.c				1.1
+lib/libresolv/shlib_version			1.7
+include/res_update.h				1.8
+distrib/sets/lists/base/ad.mips64eb		1.102
+distrib/sets/lists/base/ad.mips64el		1.101
+distrib/sets/lists/base/md.amd64		1.178
+distrib/sets/lists/base/md.sparc64		1.167
+distrib/sets/lists/base/shl.mi			1.639
+distrib/sets/lists/comp/ad.mips64eb		1.91
+distrib/sets/lists/comp/ad.mips64el		1.93
+distrib/sets/lists/comp/md.amd64		1.181
+distrib/sets/lists/comp/md.sparc64		1.159
+distrib/sets/lists/comp/shl.mi			1.238
+
+	Bring libresolv to its latest version which restore missing bits such
+	as DNS update.
+	[manu, ticket #887]
+
+sys/arch/sparc64/dev/tda.c			1.7-1.8
+share/man/man4/man4.sparc64/tda.4		1.1-1.3
+share/man/man4/man4.sparc64/Makefile		1.7
+distrib/sets/lists/man/mi			1.1419
+
+	Add sysmon support to display the CPU and Sytem fan speeds for the
+	tda driver.  Add a manual page for tda(4).  Fix a bug which caused
+	the system fan to always run at full speed.
+	[jdc, ticket #893]
+
+sys/fs/nilfs/nilfs_vnops.c			1.22-1.23
+
+	Fix serious file read problem due to not-so-clear VOP_BMAP description.
+	Should fix PR 45605.
+	[reinoud, ticket #894]
+
+sys/dev/ic/iavc.c				1.10
+sys/netisdn/i4b_capi.h				1.6
+sys/netisdn/i4b_capi_llif.c			1.6
+
+	Fix signature of capi_ll_control. From Wolfgang Stukenbrock in PR
+	kern/47863.
+	[martin, ticket #896]
+
+usr.sbin/syslogd/syslogd.c			1.115
+usr.sbin/syslogd/syslogd.h			1.4
+usr.sbin/syslogd/tls.c				1.11
+
+	PR/47861: Fredrik Pettai: keep track of the address family for each
+	socket opened and don't send the a message to the wrong family type.
+	[pettai, ticket #897]
+
+sys/dev/pci/if_alc.c				1.7
+
+	Avoid illegal sleeps in the softint routine.
+	XXX could probably do better by creating a watchdog thread.
+	[mrg, ticket #898]
+
+lib/libm/arch/i387/fenv.c			1.5
+lib/libm/arch/x86_64/fenv.c			1.3-1.4
+
+	Fix amd64 feraiseexcept so that it actually traps. The call to fwait
+	got lost somewhere along the line; the i387 code has it.
+	Fix sense of fegetexcept on x86.
+	[riastradh, ticket #899]
