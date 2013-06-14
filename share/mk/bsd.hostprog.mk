@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.70 2013/04/11 01:27:47 christos Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.71 2013/06/14 16:10:02 tsutsui Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -117,7 +117,7 @@ ${HOSTPROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
 	${HOST_LINK.c} ${HOST_LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 .if !empty(.MAKE.OS:M*CYGWIN*)
-	${NETBSDSRCDIR}/tools/binstall/mkmanifest ${HOSTPROG}
+	${HOST_SH} ${NETBSDSRCDIR}/tools/binstall/mkmanifest ${HOSTPROG}
 .endif
 
 
