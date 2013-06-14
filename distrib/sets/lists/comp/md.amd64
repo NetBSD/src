@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.155.2.8 2013/06/13 04:20:30 msaitoh Exp $
+# $NetBSD: md.amd64,v 1.155.2.9 2013/06/14 04:17:36 msaitoh Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1139,7 +1139,7 @@
 ./usr/libdata/debug/usr/lib/i386/libquota.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libradius.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librefuse.so.2.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libresolv.so.3.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libresolv.so.2.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libroken.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libroken.so.19.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/librpcsvc.so.1.0.debug	comp-compat-shlib	compat,pic,debug
