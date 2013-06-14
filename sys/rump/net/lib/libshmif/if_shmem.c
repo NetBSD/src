@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.54 2013/05/01 06:58:36 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.55 2013/06/14 05:56:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.54 2013/05/01 06:58:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.55 2013/06/14 05:56:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -722,6 +722,12 @@ shmif_rcv(void *arg)
 			sc->sc_devgen++;
 			DPRINTF(("dev %p generation now %" PRIu64 "\n",
 			    sc, sc->sc_devgen));
+		}
+
+		if (__predict_false(sp.sp_len < ETHER_HDR_LEN)) {
+			DPRINTF(("shmif read packet len %d < ETHER_HDR_LEN\n",
+			    sp.sp_len));
+			continue;
 		}
 
 		m->m_len = m->m_pkthdr.len = sp.sp_len;
