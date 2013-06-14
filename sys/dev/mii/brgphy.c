@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.64 2013/06/06 03:10:48 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.65 2013/06/14 06:21:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.64 2013/06/06 03:10:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.65 2013/06/14 06:21:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,7 +389,7 @@ setit:
 
 			PHY_WRITE(sc, MII_100T2CR, gig);
 			PHY_WRITE(sc, MII_BMCR,
-			    speed|BMCR_AUTOEN|BMCR_STARTNEG);
+			    speed | BMCR_AUTOEN | BMCR_STARTNEG);
 
 			if ((sc->mii_mpd_oui != MII_OUI_BROADCOM)
 			    || (sc->mii_mpd_model != MII_MODEL_BROADCOM_BCM5701))
@@ -530,7 +530,7 @@ brgphy_status(struct mii_softc *sc)
 
 			switch (auxsts & BRGPHY_AUXSTS_AN_RES) {
 			case BRGPHY_RES_1000FD:
-				mii->mii_media_active |= IFM_1000_T|IFM_FDX;
+				mii->mii_media_active |= IFM_1000_T | IFM_FDX;
 				gtsr = PHY_READ(sc, MII_100T2SR);
 				if (gtsr & GTSR_MS_RES)
 					mii->mii_media_active |= IFM_ETH_MASTER;
@@ -544,7 +544,7 @@ brgphy_status(struct mii_softc *sc)
 				break;
 
 			case BRGPHY_RES_100FD:
-				mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+				mii->mii_media_active |= IFM_100_TX | IFM_FDX;
 				break;
 
 			case BRGPHY_RES_100T4:
@@ -556,7 +556,7 @@ brgphy_status(struct mii_softc *sc)
 				break;
 
 			case BRGPHY_RES_10FD:
-				mii->mii_media_active |= IFM_10_T|IFM_FDX;
+				mii->mii_media_active |= IFM_10_T | IFM_FDX;
 				break;
 
 			case BRGPHY_RES_10HD:
@@ -585,10 +585,10 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 	brgphy_loop(sc);
 	PHY_RESET(sc);
 
-	ktcr = GTCR_ADV_1000TFDX|GTCR_ADV_1000THDX;
+	ktcr = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
 	if ((sc->mii_mpd_oui == MII_OUI_BROADCOM)
 	    && (sc->mii_mpd_model == MII_MODEL_BROADCOM_BCM5701))
-		ktcr |= GTCR_MAN_MS|GTCR_ADV_MS;
+		ktcr |= GTCR_MAN_MS | GTCR_ADV_MS;
 	PHY_WRITE(sc, MII_100T2CR, ktcr);
 	ktcr = PHY_READ(sc, MII_100T2CR);
 	DELAY(1000);
