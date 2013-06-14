@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2013/02/17 01:47:59 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2013/06/14 16:10:02 tsutsui Exp $
 
 MODULE=		texinfo
 
@@ -9,5 +9,5 @@ CONFIGURE_ARGS=	--program-prefix=${_TOOL_PREFIX}
 .if !empty(.MAKE.OS:M*CYGWIN*) && target(install)
 .END: install-texinfo
 install-texinfo: 
-	${NETBSDSRCDIR}/tools/binstall/mkmanifest ${TOOLDIR}/bin/${_TOOL_PREFIX}install-info.exe
+	${HOST_SH} ${NETBSDSRCDIR}/tools/binstall/mkmanifest ${TOOLDIR}/bin/${_TOOL_PREFIX}install-info.exe
 .endif
