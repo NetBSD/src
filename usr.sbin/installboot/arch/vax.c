@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.12.6.1 2013/06/12 06:05:52 msaitoh Exp $	*/
+/*	$NetBSD: vax.c,v 1.12.6.2 2013/06/14 03:04:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -68,11 +68,17 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.12.6.1 2013/06/12 06:05:52 msaitoh Exp $");
+__RCSID("$NetBSD: vax.c,v 1.12.6.2 2013/06/14 03:04:20 msaitoh Exp $");
 #endif	/* !__lint */
 
-#include <sys/param.h>
+/* We need the target disklabel.h, not the hosts one..... */
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/vax/disklabel.h>
+#include <nbinclude/sys/disklabel.h>
+#else
 #include <sys/disklabel.h>
+#endif
+#include <sys/param.h>
 
 #include <assert.h>
 #include <err.h>
