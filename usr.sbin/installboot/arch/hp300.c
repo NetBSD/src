@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.14 2013/05/03 21:32:04 matt Exp $ */
+/* $NetBSD: hp300.c,v 1.15 2013/06/14 03:54:43 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.14 2013/05/03 21:32:04 matt Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.15 2013/06/14 03:54:43 msaitoh Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: hp300.c,v 1.14 2013/05/03 21:32:04 matt Exp $");
 #include "nbtool_config.h"
 #include <nbinclude/hp300/disklabel.h>
 #include <nbinclude/sys/disklabel.h>
-#else                                                                          
+#else
 #include <sys/disklabel.h>
 #endif
 #include <sys/fcntl.h>
