@@ -1,4 +1,4 @@
-/* $NetBSD: t_atan.c,v 1.8 2013/04/09 12:11:04 isaki Exp $ */
+/* $NetBSD: t_atan.c,v 1.9 2013/06/14 05:39:28 isaki Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,10 +30,7 @@
  */
 
 #include <atf-c.h>
-#include <atf-c/config.h>
 #include <math.h>
-#include <stdlib.h>
-#include <string.h>
 
 static const struct {
 	double x;
