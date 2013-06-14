@@ -1,28 +1,17 @@
-#	$NetBSD: Makefile,v 1.11.50.1 2013/06/13 04:20:30 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.11.50.2 2013/06/14 04:17:36 msaitoh Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 6/5/90
 
 .include <bsd.own.mk>
 
-LIBC=	${NETBSDSRCDIR}/lib/libc
-
 LIB=resolv
-CPPFLAGS+=-I${LIBC}/include -I${LIBC}/resolv -D_LIBRESOLV
+CPPFLAGS+=-DLIBC_SCCS -I${NETBSDSRCDIR}/lib/libc/include -D_LIBC
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
 .endif
 
-.PATH: ${LIBC}/net ${LIBC}/resolv ${LIBC}/nameser
+.PATH:	${NETBSDSRCDIR}/lib/libc/net ${NETBSDSRCDIR}/lib/libc/resolv
 
-SRCS+= res_update.c res_findzonecut.c res_mkupdate.c
-SRCS+= res_sendsigned.c 
-SRCS+= ns_date.c ns_samedomain.c ns_sign.c ns_verify.c
-SRCS+= dst_api.c support.c hmac_link.c
-
-# LIBC
-# CPPFLAGS+=-D_LIBC -DCOMPAT__RES -DUSE_POLL -DLIBC_SCCS
-# SRCS+= res_comp.c res_send.c res_data.c res_debug.c res_mkquery.c
-# SRCS+= res_query.c res_mkupdate.c res_init.c res_state.c 
-# SRCS+= ns_netint.c ns_name.c ns_print.c ns_parse.c ns_ttl.c ns_samedomain.c
+SRCS=gethnamaddr.c res_mkquery.c res_query.c res_send.c
 
 .include <bsd.lib.mk>
