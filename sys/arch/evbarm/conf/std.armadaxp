@@ -1,4 +1,4 @@
-#	$NetBSD: std.armadaxp,v 1.1 2013/05/29 22:52:19 rkujawa Exp $
+#	$NetBSD: std.armadaxp,v 1.2 2013/06/14 20:02:44 rkujawa Exp $
 #
 # standard NetBSD/evbarm for ARMADAXP options
 
@@ -28,6 +28,7 @@ makeoptions	BOARDTYPE="armadaxp"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.armadaxp"
 
 options 	EVBARM_BOARDTYPE="Armada XP"
+options		ARM_HAS_VBAR
 options 	ARM_INTR_IMPL="<arch/arm/marvell/mvsoc_intr.h>"
 options 	COM_REGMAP
 options 	COM_16750
