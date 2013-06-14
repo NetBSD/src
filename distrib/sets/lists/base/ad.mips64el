@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.81.2.11 2013/06/13 04:20:30 msaitoh Exp $
+# $NetBSD: ad.mips64el,v 1.81.2.12 2013/06/14 04:17:36 msaitoh Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -209,8 +209,8 @@
 ./usr/lib/64/libradius.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librefuse.so.2			base-compat-shlib	compat,pic
 ./usr/lib/64/librefuse.so.2.0			base-compat-shlib	compat,pic
-./usr/lib/64/libresolv.so.3			base-compat-shlib	compat,pic
-./usr/lib/64/libresolv.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/64/libresolv.so.2			base-compat-shlib	compat,pic
+./usr/lib/64/libresolv.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libroken.so.19			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libroken.so.19.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/librpcsvc.so.1			base-compat-shlib	compat,pic
@@ -517,8 +517,8 @@
 ./usr/lib/o32/libradius.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librefuse.so.2			base-compat-shlib	compat,pic
 ./usr/lib/o32/librefuse.so.2.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libresolv.so.3			base-compat-shlib	compat,pic
-./usr/lib/o32/libresolv.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libresolv.so.2			base-compat-shlib	compat,pic
+./usr/lib/o32/libresolv.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libroken.so.19			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libroken.so.19.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/librpcsvc.so.1			base-compat-shlib	compat,pic

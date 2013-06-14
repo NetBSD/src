@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.616.2.11 2013/06/13 04:20:30 msaitoh Exp $
+# $NetBSD: shl.mi,v 1.616.2.12 2013/06/14 04:17:36 msaitoh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -402,8 +402,8 @@
 ./usr/lib/librefuse.so.2			base-refuse-shlib
 ./usr/lib/librefuse.so.2.0			base-refuse-shlib
 ./usr/lib/libresolv.so				base-net-shlib
-./usr/lib/libresolv.so.3			base-net-shlib
-./usr/lib/libresolv.so.3.0			base-net-shlib
+./usr/lib/libresolv.so.2			base-net-shlib
+./usr/lib/libresolv.so.2.0			base-net-shlib
 ./usr/lib/libroken.so				base-krb5-shlib		kerberos
 ./usr/lib/libroken.so.19			base-krb5-shlib		kerberos
 ./usr/lib/libroken.so.19.0			base-krb5-shlib		kerberos
