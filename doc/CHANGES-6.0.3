@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.3,v 1.1.2.5 2013/06/13 10:55:10 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.3,v 1.1.2.6 2013/06/14 02:39:14 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.2 release to the NetBSD 6.0.3
 release:
@@ -89,3 +89,11 @@ sys/fs/nilfs/nilfs_vnops.c			1.22-1.23
 	Fix serious file read problem due to not-so-clear VOP_BMAP description.
 	Should fix PR 45605.
 	[reinoud, ticket #894]
+
+lib/libm/arch/i387/fenv.c			1.5
+lib/libm/arch/x86_64/fenv.c			1.3-1.4
+
+	Fix amd64 feraiseexcept so that it actually traps. The call to fwait
+	got lost somewhere along the line; the i387 code has it.
+	Fix sense of fegetexcept on x86.
+	[riastradh, ticket #899]
