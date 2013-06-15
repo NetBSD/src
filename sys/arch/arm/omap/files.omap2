@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.25 2013/04/17 14:34:02 bouyer Exp $
+#	$NetBSD: files.omap2,v 1.26 2013/06/15 21:55:09 matt Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -16,11 +16,13 @@ defparam opt_omap.h				OMAP_EMIFF_PBASE OMAP_EMIFF_SIZE
 defflag opt_omap.h				OMAP2
 defflag opt_omap.h				OMAP3: OMAP2
 defflag opt_omap.h				OMAP4: OMAP3
-defflag	opt_omap.h				OMAP_2430: OMAP2
+defflag opt_omap.h				OMAP5: OMAP4
+defflag opt_omap.h				OMAP_2430: OMAP2
 defflag opt_omap.h				OMAP_2420: OMAP2
 defflag opt_omap.h				OMAP_3430: OMAP3
 defflag opt_omap.h				OMAP_3530: OMAP3
 defflag opt_omap.h				OMAP_4430: OMAP4
+defflag opt_omap.h				OMAP_5430: OMAP4
 defflag opt_omap.h				TI_AM335X: OMAP3
 defflag opt_omap.h				TI_DM37XX: OMAP3
 
@@ -135,6 +137,9 @@ file	arch/arm/omap/obio_ohci.c		obioohci
 
 attach	ehci at obio with omap3_ehci
 file	arch/arm/omap/omap3_ehci.c		omap3_ehci
+
+attach	ahcisata at obio with omap5_ahcisata
+file	arch/arm/omap/omap5_ahcisata.c		omap5_ahcisata
 
 device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons, edid
 attach	omapfb at obio
