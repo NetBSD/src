@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwnreg.h,v 1.11 2013/03/30 14:14:31 christos Exp $	*/
-/*	$OpenBSD: if_iwnreg.h,v 1.40 2010/05/05 19:41:57 damien Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.12 2013/06/15 13:05:35 christos Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.43 2011/09/01 18:49:56 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
