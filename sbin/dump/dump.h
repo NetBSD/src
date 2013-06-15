@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.50 2013/01/22 09:39:11 dholland Exp $	*/
+/*	$NetBSD: dump.h,v 1.51 2013/06/15 01:27:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -32,10 +32,19 @@
  */
 
 #include <machine/bswap.h>
+#ifdef DUMP_LFS
+#include <ufs/lfs/lfs.h>
+#endif
+#include <ufs/ufs/dinode.h>
+#include <protocols/dumprestore.h>
 
 union dinode {
 	struct ufs1_dinode dp1;
 	struct ufs2_dinode dp2;
+#ifdef DUMP_LFS
+	struct ulfs1_dinode dlp1;
+	struct ulfs2_dinode dlp2;
+#endif
 };
 #define DIP(dp, field) \
 	(is_ufs2 ? (dp)->dp2.di_##field : (dp)->dp1.di_##field)
