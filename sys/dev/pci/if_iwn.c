@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwn.c,v 1.65 2013/04/21 19:59:40 msaitoh Exp $	*/
-/*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.66 2013/06/15 13:05:35 christos Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.119 2013/05/29 23:16:52 yuo Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.65 2013/04/21 19:59:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.66 2013/06/15 13:05:35 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
