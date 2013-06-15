@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.152 2013/06/11 14:39:07 christos Exp $
+# $NetBSD: postinstall,v 1.153 2013/06/15 22:53:18 christos Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -201,9 +201,9 @@ check_ids()
 	_missing="$(${AWK} -v start=$_start -F: '
 		BEGIN {
 			for (x = 1; x < ARGC; x++) {
-				if (ARGV[x] = "SKIP")
+				if (ARGV[x] == "SKIP")
 					continue;
-				idlist[ARGV[x]]++
+				idlist[ARGV[x]]++;
 				value[ARGV[x]] = start + x - 1;
 			}
 			ARGC=1
@@ -908,7 +908,7 @@ do_gid()
 	[ -n "$1" ] || err 3 "USAGE: do_gid  fix|check"
 
 	check_ids "$1" groups "${DEST_DIR}/etc/group" 14 \
-	    named ntpd sshd _pflogd _rwhod staff _proxy _timedc \
+	    named ntpd sshd SKIP _pflogd _rwhod staff _proxy _timedc \
 	    _sdpd _httpd _mdnsd _tests _tcpdump _tss _gpio
 }
 
@@ -1584,8 +1584,8 @@ do_uid()
 	[ -n "$1" ] || err 3 "USAGE: do_uid  fix|check"
 
 	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" 12 \
-	    postfix named ntpd sshd SKIP _pflogd _rwhod SKIP _proxy _timedc \
-	    _sdpd _httpd _mdnsd _tests _tcpdump _tss
+	    postfix SKIP named ntpd sshd SKIP _pflogd _rwhod SKIP _proxy \
+	    _timedc _sdpd _httpd _mdnsd _tests _tcpdump _tss
 }
 
 
