@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.52 2013/01/13 23:17:18 dholland Exp $	*/
+/*	$NetBSD: tape.c,v 1.53 2013/06/15 01:27:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.52 2013/01/13 23:17:18 dholland Exp $");
+__RCSID("$NetBSD: tape.c,v 1.53 2013/06/15 01:27:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,11 +42,8 @@ __RCSID("$NetBSD: tape.c,v 1.52 2013/01/13 23:17:18 dholland Exp $");
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/wait.h>
-#include <ufs/ufs/dinode.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
-
-#include <protocols/dumprestore.h>
 
 #include <errno.h>
 #include <fcntl.h>
