@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2011/06/20 08:46:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2013/06/15 00:40:12 christos Exp $
 
 PROG=	xxboot
 NOMAN=	# defined
@@ -6,7 +6,7 @@ SRCS=	start.S main.c readufs.c readufs_ffs.c readufs_lfs.c milli_tiny.S
 
 .PATH:	${.CURDIR}/../common
 
-CPPFLAGS+=	-mpa-risc-1-0 -I${.CURDIR}/../../../.. -I. -D_STANDALONE
+CPPFLAGS+=	-I${.CURDIR}/../../../.. -I. -D_STANDALONE
 # configuration for readufs module
 CPPFLAGS+=	-DUSE_LFS -DUSE_FFS -DUSE_UFS1 -DUSE_UFS2
 # IODC can handle only 2GB, so this is enough
@@ -14,7 +14,7 @@ CPPFLAGS+=	-D__daddr_t=int32_t
 # ANSI C feature prevents from being relocatable
 #CPPFLAGS+=	-traditional	# would be best
 CPPFLAGS+=	-Dconst=
-COPTS+=		-funsigned-char	-mdisable-fpregs
+COPTS+=		-funsigned-char	-mdisable-fpregs -mpa-risk-1-0
 
 .include <bsd.own.mk>
 
