@@ -1,4 +1,4 @@
-/*	$NetBSD: unctime.c,v 1.16 2013/01/13 22:53:01 dholland Exp $	*/
+/*	$NetBSD: unctime.c,v 1.17 2013/06/15 01:27:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,12 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)unctime.c	8.2 (Berkeley) 6/14/94";
 #else
-__RCSID("$NetBSD: unctime.c,v 1.16 2013/01/13 22:53:01 dholland Exp $");
+__RCSID("$NetBSD: unctime.c,v 1.17 2013/06/15 01:27:19 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <ufs/ufs/dinode.h>
 #include <time.h>
 #include "dump.h"
 
